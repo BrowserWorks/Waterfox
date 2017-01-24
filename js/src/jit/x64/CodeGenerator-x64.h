@@ -19,6 +19,7 @@ class CodeGeneratorX64 : public CodeGeneratorX86Shared
     }
 
   protected:
+    Operand ToOperand64(const LInt64Allocation& a);
     ValueOperand ToValue(LInstruction* ins, size_t pos);
     ValueOperand ToOutValue(LInstruction* ins);
     ValueOperand ToTempValue(LInstruction* ins, size_t pos);
@@ -27,21 +28,10 @@ class CodeGeneratorX64 : public CodeGeneratorX86Shared
                            Operand dest, MIRType slotType);
     void memoryBarrier(MemoryBarrierBits barrier);
 
-    void load(Scalar::Type type, const Operand& srcAddr, AnyRegister out);
-    void loadI64(Scalar::Type type, const Operand& srcAddr, Register64 out);
+    void wasmStore(Scalar::Type type, unsigned numSimdElems, const LAllocation* value, Operand dstAddr);
+    template <typename T> void emitWasmLoad(T* ins);
+    template <typename T> void emitWasmStore(T* ins);
 
-    void store(Scalar::Type type, const LAllocation* value, const Operand& dstAddr);
-
-    void loadSimd(Scalar::Type type, unsigned numElems, const Operand& srcAddr, FloatRegister out);
-    void storeSimd(Scalar::Type type, unsigned numElems, FloatRegister in, const Operand& dstAddr);
-
-    void emitSimdLoad(LAsmJSLoadHeap* ins);
-    void emitSimdStore(LAsmJSStoreHeap* ins);
-
-    template <typename T>
-    void emitWasmLoad(T* ins);
-    template <typename T>
-    void emitWasmStore(T* ins);
   public:
     CodeGeneratorX64(MIRGenerator* gen, LIRGraph* graph, MacroAssembler* masm);
 
@@ -77,8 +67,8 @@ class CodeGeneratorX64 : public CodeGeneratorX86Shared
     void visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins);
     void visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins);
     void visitAsmSelectI64(LAsmSelectI64* ins);
-    void visitAsmJSCall(LAsmJSCall* ins);
-    void visitAsmJSCallI64(LAsmJSCallI64* ins);
+    void visitWasmCall(LWasmCall* ins);
+    void visitWasmCallI64(LWasmCallI64* ins);
     void visitAsmJSLoadHeap(LAsmJSLoadHeap* ins);
     void visitAsmJSStoreHeap(LAsmJSStoreHeap* ins);
     void visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins);
@@ -90,8 +80,6 @@ class CodeGeneratorX64 : public CodeGeneratorX86Shared
     void visitAsmReinterpretFromI64(LAsmReinterpretFromI64* lir);
     void visitAsmReinterpretToI64(LAsmReinterpretToI64* lir);
     void visitTestI64AndBranch(LTestI64AndBranch* lir);
-
-    void visitWasmTruncateToInt32(LWasmTruncateToInt32* lir);
 };
 
 typedef CodeGeneratorX64 CodeGeneratorSpecific;

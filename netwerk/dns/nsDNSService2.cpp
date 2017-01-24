@@ -454,7 +454,7 @@ public:
     {
     }
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
         MOZ_ASSERT(NS_IsMainThread());
         nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
@@ -568,13 +568,11 @@ nsDNSService::Init()
         // If a manual proxy is in use, disable prefetch implicitly
         prefs->GetIntPref("network.proxy.type", &proxyType);
         prefs->GetBoolPref(kPrefDnsNotifyResolution, &notifyResolution);
-    }
 
-    if (mFirstTime) {
-        mFirstTime = false;
+        if (mFirstTime) {
+            mFirstTime = false;
 
-        // register as prefs observer
-        if (prefs) {
+            // register as prefs observer
             prefs->AddObserver(kPrefDnsCacheEntries, this, false);
             prefs->AddObserver(kPrefDnsCacheExpiration, this, false);
             prefs->AddObserver(kPrefDnsCacheGrace, this, false);
@@ -590,14 +588,13 @@ nsDNSService::Init()
             // If a manual proxy is in use, disable prefetch implicitly
             prefs->AddObserver("network.proxy.type", this, false);
         }
+    }
 
-        nsCOMPtr<nsIObserverService> observerService =
-            mozilla::services::GetObserverService();
-        if (observerService) {
-            observerService->AddObserver(this, "last-pb-context-exited", false);
-            observerService->AddObserver(this, NS_NETWORK_LINK_TOPIC, false);
-        }
-
+    nsCOMPtr<nsIObserverService> observerService =
+        mozilla::services::GetObserverService();
+    if (observerService) {
+        observerService->AddObserver(this, "last-pb-context-exited", false);
+        observerService->AddObserver(this, NS_NETWORK_LINK_TOPIC, false);
     }
 
     nsDNSPrefetch::Initialize(this);
@@ -949,11 +946,17 @@ nsDNSService::Observe(nsISupports *subject, const char *topic, const char16_t *d
                  strcmp(topic, NS_NETWORK_LINK_TOPIC) == 0,
                  "unexpected observe call");
 
+    bool flushCache = false;
     if (!strcmp(topic, NS_NETWORK_LINK_TOPIC)) {
         nsAutoCString converted = NS_ConvertUTF16toUTF8(data);
         if (mResolver && !strcmp(converted.get(), NS_NETWORK_LINK_DATA_CHANGED)) {
-            mResolver->FlushCache();
+            flushCache = true;
         }
+    } else if (!strcmp(topic, "last-pb-context-exited")) {
+        flushCache = true;
+    }
+    if (flushCache) {
+        mResolver->FlushCache();
         return NS_OK;
     }
 
@@ -1060,9 +1063,11 @@ NS_IMETHODIMP
 nsDNSService::CollectReports(nsIHandleReportCallback* aHandleReport,
                              nsISupports* aData, bool aAnonymize)
 {
-    return MOZ_COLLECT_REPORT(
+    MOZ_COLLECT_REPORT(
         "explicit/network/dns-service", KIND_HEAP, UNITS_BYTES,
         SizeOfIncludingThis(DNSServiceMallocSizeOf),
         "Memory used for the DNS service.");
+
+    return NS_OK;
 }
 

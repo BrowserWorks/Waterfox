@@ -6,8 +6,6 @@
 
 "use strict";
 
-const { Cu, Cc, Ci } = require("chrome");
-
 const {
   EXPAND_TAB,
   TAB_SIZE,
@@ -19,7 +17,6 @@ const ENABLE_CODE_FOLDING = "devtools.editor.enableCodeFolding";
 const KEYMAP = "devtools.editor.keymap";
 const AUTO_CLOSE = "devtools.editor.autoclosebrackets";
 const AUTOCOMPLETE = "devtools.editor.autocomplete";
-const L10N_BUNDLE = "chrome://devtools/locale/sourceeditor.properties";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const VALID_KEYMAPS = new Set(["emacs", "vim", "sublime"]);
 
@@ -36,8 +33,10 @@ const Services = require("Services");
 const promise = require("promise");
 const events = require("devtools/shared/event-emitter");
 const { PrefObserver } = require("devtools/client/styleeditor/utils");
+const { getClientCssProperties } = require("devtools/shared/fronts/css-properties");
 
-const L10N = Services.strings.createBundle(L10N_BUNDLE);
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const L10N = new LocalizationHelper("devtools/locale/sourceeditor.properties");
 
 const { OS } = Services.appinfo;
 
@@ -52,30 +51,7 @@ const CM_STYLES = [
 ];
 
 const CM_SCRIPTS = [
-  "chrome://devtools/content/shared/theme-switching.js",
-  "chrome://devtools/content/sourceeditor/codemirror/lib/codemirror.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/dialog/dialog.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/search/searchcursor.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/search/search.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/edit/matchbrackets.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/edit/closebrackets.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/comment/comment.js",
-  "chrome://devtools/content/sourceeditor/codemirror/mode/javascript.js",
-  "chrome://devtools/content/sourceeditor/codemirror/mode/xml.js",
-  "chrome://devtools/content/sourceeditor/codemirror/mode/css.js",
-  "chrome://devtools/content/sourceeditor/codemirror/mode/htmlmixed.js",
-  "chrome://devtools/content/sourceeditor/codemirror/mode/clike.js",
-  "chrome://devtools/content/sourceeditor/codemirror/mode/wasm.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/selection/active-line.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/edit/trailingspace.js",
-  "chrome://devtools/content/sourceeditor/codemirror/keymap/emacs.js",
-  "chrome://devtools/content/sourceeditor/codemirror/keymap/vim.js",
-  "chrome://devtools/content/sourceeditor/codemirror/keymap/sublime.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/fold/foldcode.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/fold/brace-fold.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/fold/comment-fold.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/fold/xml-fold.js",
-  "chrome://devtools/content/sourceeditor/codemirror/addon/fold/foldgutter.js"
+  "chrome://devtools/content/sourceeditor/codemirror/codemirror.bundle.js",
 ];
 
 const CM_IFRAME =
@@ -85,7 +61,8 @@ const CM_IFRAME =
   "    <style>" +
   "      html, body { height: 100%; }" +
   "      body { margin: 0; overflow: hidden; }" +
-  "      .CodeMirror { width: 100%; height: 100% !important; line-height: 1.25 !important;}" +
+  "      .CodeMirror { width: 100%; height: 100% !important; " +
+  "line-height: 1.25 !important;}" +
   "    </style>" +
   CM_STYLES.map(style => "<link rel='stylesheet' href='" + style + "'>").join("\n") +
   "  </head>" +
@@ -110,8 +87,6 @@ const CM_MAPPING = [
   "getScrollInfo",
   "getViewport"
 ];
-
-const { cssProperties, cssValues, cssColors } = getCSSKeywords();
 
 const editors = new WeakMap();
 
@@ -237,6 +212,14 @@ function Editor(config) {
     this.config.externalScripts = [];
   }
 
+  if (this.config.cssProperties) {
+    // Ensure that autocompletion has cssProperties if it's passed in via the options.
+    this.config.autocompleteOpts.cssProperties = this.config.cssProperties;
+  } else {
+    // Use a static client-side database of CSS values if none is provided.
+    this.config.cssProperties = getClientCssProperties();
+  }
+
   events.decorate(this);
 }
 
@@ -245,6 +228,21 @@ Editor.prototype = {
   version: null,
   config: null,
   Doc: null,
+
+  /**
+   * Exposes the CodeMirror instance. We want to get away from trying to
+   * abstract away the API entirely, and this makes it easier to integrate in
+   * various environments and do complex things.
+   */
+  get codeMirror() {
+    if (!editors.has(this)) {
+      throw new Error(
+        "CodeMirror instance does not exist. You must wait " +
+          "for it to be appended to the DOM."
+      );
+    }
+    return editors.get(this);
+  },
 
   /**
    * Appends the current Editor instance to the element specified by
@@ -269,191 +267,19 @@ Editor.prototype = {
     }
 
     let onLoad = () => {
-      // Once the iframe is loaded, we can inject CodeMirror
-      // and its dependencies into its DOM.
-
-      env.removeEventListener("load", onLoad, true);
       let win = env.contentWindow.wrappedJSObject;
 
       if (!this.config.themeSwitching) {
         win.document.documentElement.setAttribute("force-theme", "light");
       }
 
-      let scriptsToInject = CM_SCRIPTS.concat(this.config.externalScripts);
-      scriptsToInject.forEach(url => {
-        if (url.startsWith("chrome://")) {
-          Services.scriptloader.loadSubScript(url, win, "utf8");
-        }
-      });
-      // Replace the propertyKeywords, colorKeywords and valueKeywords
-      // properties of the CSS MIME type with the values provided by Gecko.
-      let cssSpec = win.CodeMirror.resolveMode("text/css");
-      cssSpec.propertyKeywords = cssProperties;
-      cssSpec.colorKeywords = cssColors;
-      cssSpec.valueKeywords = cssValues;
-      win.CodeMirror.defineMIME("text/css", cssSpec);
-
-      let scssSpec = win.CodeMirror.resolveMode("text/x-scss");
-      scssSpec.propertyKeywords = cssProperties;
-      scssSpec.colorKeywords = cssColors;
-      scssSpec.valueKeywords = cssValues;
-      win.CodeMirror.defineMIME("text/x-scss", scssSpec);
-
-      win.CodeMirror.commands.save = () => this.emit("saveRequested");
-
-      // Create a CodeMirror instance add support for context menus,
-      // overwrite the default controller (otherwise items in the top and
-      // context menus won't work).
-
-      cm = win.CodeMirror(win.document.body, this.config);
-      this.Doc = win.CodeMirror.Doc;
-
-      // Disable APZ for source editors. It currently causes the line numbers to
-      // "tear off" and swim around on top of the content. Bug 1160601 tracks
-      // finding a solution that allows APZ to work with CodeMirror.
-      cm.getScrollerElement().addEventListener("wheel", ev => {
-        // By handling the wheel events ourselves, we force the platform to
-        // scroll synchronously, like it did before APZ. However, we lose smooth
-        // scrolling for users with mouse wheels. This seems acceptible vs.
-        // doing nothing and letting the gutter slide around.
-        ev.preventDefault();
-
-        let { deltaX, deltaY } = ev;
-
-        if (ev.deltaMode == ev.DOM_DELTA_LINE) {
-          deltaX *= cm.defaultCharWidth();
-          deltaY *= cm.defaultTextHeight();
-        } else if (ev.deltaMode == ev.DOM_DELTA_PAGE) {
-          deltaX *= cm.getWrapperElement().clientWidth;
-          deltaY *= cm.getWrapperElement().clientHeight;
-        }
-
-        cm.getScrollerElement().scrollBy(deltaX, deltaY);
-      });
-
-      cm.getWrapperElement().addEventListener("contextmenu", ev => {
-        ev.preventDefault();
-
-        if (!this.config.contextMenu) {
-          return;
-        }
-
-        let popup = this.config.contextMenu;
-        if (typeof popup == "string") {
-          popup = el.ownerDocument.getElementById(this.config.contextMenu);
-        }
-
-        this.emit("popupOpen", ev, popup);
-        popup.openPopupAtScreen(ev.screenX, ev.screenY, true);
-      }, false);
-
-      // Intercept the find and find again keystroke on CodeMirror, to avoid
-      // the browser's search
-
-      let findKey = L10N.GetStringFromName("find.commandkey");
-      let findAgainKey = L10N.GetStringFromName("findAgain.commandkey");
-      let [accel, modifier] = OS === "Darwin"
-                                      ? ["metaKey", "altKey"]
-                                      : ["ctrlKey", "shiftKey"];
-
-      cm.getWrapperElement().addEventListener("keydown", ev => {
-        let key = ev.key.toUpperCase();
-        let node = ev.originalTarget;
-        let isInput = node.tagName === "INPUT";
-        let isSearchInput = isInput && node.type === "search";
-
-        // replace box is a different input instance than search, and it is
-        // located in a code mirror dialog
-        let isDialogInput = isInput &&
-                       node.parentNode &&
-                       node.parentNode.classList.contains("CodeMirror-dialog");
-
-        if (!ev[accel] || !(isSearchInput || isDialogInput)) {
-          return;
-        }
-
-        if (key === findKey) {
-          ev.preventDefault();
-
-          if (isSearchInput || ev[modifier]) {
-            node.select();
-          }
-        } else if (key === findAgainKey) {
-          ev.preventDefault();
-
-          if (!isSearchInput) {
-            return;
-          }
-
-          let query = node.value;
-
-          // If there isn't a search state, or the text in the input does not
-          // match with the current search state, we need to create a new one
-          if (!cm.state.search || cm.state.search.query !== query) {
-            cm.state.search = {
-              posFrom: null,
-              posTo: null,
-              overlay: null,
-              query
-            };
-          }
-
-          if (ev.shiftKey) {
-            cm.execCommand("findPrev");
-          } else {
-            cm.execCommand("findNext");
-          }
-        }
-      });
-
-      cm.on("focus", () => this.emit("focus"));
-      cm.on("scroll", () => this.emit("scroll"));
-      cm.on("change", () => {
-        this.emit("change");
-        if (!this._lastDirty) {
-          this._lastDirty = true;
-          this.emit("dirty-change");
-        }
-      });
-      cm.on("cursorActivity", () => this.emit("cursorActivity"));
-
-      cm.on("gutterClick", (cm, line, gutter, ev) => {
-        let head = { line: line, ch: 0 };
-        let tail = { line: line, ch: this.getText(line).length };
-
-        // Shift-click on a gutter selects the whole line.
-        if (ev.shiftKey) {
-          cm.setSelection(head, tail);
-          return;
-        }
-
-        this.emit("gutterClick", line, ev.button);
-      });
-
-      win.CodeMirror.defineExtension("l10n", (name) => {
-        return L10N.GetStringFromName(name);
-      });
-
-      cm.getInputField().controllers.insertControllerAt(0, controller(this));
-
+      Services.scriptloader.loadSubScript(
+        "chrome://devtools/content/shared/theme-switching.js",
+        win, "utf8"
+      );
       this.container = env;
-      editors.set(this, cm);
-
-      this.reloadPreferences = this.reloadPreferences.bind(this);
-      this._prefObserver = new PrefObserver("devtools.editor.");
-      this._prefObserver.on(TAB_SIZE, this.reloadPreferences);
-      this._prefObserver.on(EXPAND_TAB, this.reloadPreferences);
-      this._prefObserver.on(KEYMAP, this.reloadPreferences);
-      this._prefObserver.on(AUTO_CLOSE, this.reloadPreferences);
-      this._prefObserver.on(AUTOCOMPLETE, this.reloadPreferences);
-      this._prefObserver.on(DETECT_INDENT, this.reloadPreferences);
-      this._prefObserver.on(ENABLE_CODE_FOLDING, this.reloadPreferences);
-
-      this.reloadPreferences();
-
-      win.editor = this;
-      let editorReadyEvent = new win.CustomEvent("editorReady");
-      win.dispatchEvent(editorReadyEvent);
+      this._setup(win.document.body, el.ownerDocument);
+      env.removeEventListener("load", onLoad, true);
 
       def.resolve();
     };
@@ -464,6 +290,203 @@ Editor.prototype = {
 
     this.once("destroy", () => el.removeChild(env));
     return def.promise;
+  },
+
+  appendToLocalElement: function (el) {
+    this._setup(el);
+  },
+
+  /**
+   * Do the actual appending and configuring of the CodeMirror instance. This is
+   * used by both append functions above, and does all the hard work to
+   * configure CodeMirror with all the right options/modes/etc.
+   */
+  _setup: function (el, doc) {
+    doc = doc || el.ownerDocument;
+    let win = el.ownerDocument.defaultView;
+
+    let scriptsToInject = CM_SCRIPTS.concat(this.config.externalScripts);
+    scriptsToInject.forEach(url => {
+      if (url.startsWith("chrome://")) {
+        Services.scriptloader.loadSubScript(url, win, "utf8");
+      }
+    });
+
+    // Replace the propertyKeywords, colorKeywords and valueKeywords
+    // properties of the CSS MIME type with the values provided by the CSS properties
+    // database.
+    const {
+      propertyKeywords,
+      colorKeywords,
+      valueKeywords
+    } = getCSSKeywords(this.config.cssProperties);
+
+    let cssSpec = win.CodeMirror.resolveMode("text/css");
+    cssSpec.propertyKeywords = propertyKeywords;
+    cssSpec.colorKeywords = colorKeywords;
+    cssSpec.valueKeywords = valueKeywords;
+    win.CodeMirror.defineMIME("text/css", cssSpec);
+
+    let scssSpec = win.CodeMirror.resolveMode("text/x-scss");
+    scssSpec.propertyKeywords = propertyKeywords;
+    scssSpec.colorKeywords = colorKeywords;
+    scssSpec.valueKeywords = valueKeywords;
+    win.CodeMirror.defineMIME("text/x-scss", scssSpec);
+
+    win.CodeMirror.commands.save = () => this.emit("saveRequested");
+
+    // Create a CodeMirror instance add support for context menus,
+    // overwrite the default controller (otherwise items in the top and
+    // context menus won't work).
+
+    let cm = win.CodeMirror(el, this.config);
+    this.Doc = win.CodeMirror.Doc;
+
+    // Disable APZ for source editors. It currently causes the line numbers to
+    // "tear off" and swim around on top of the content. Bug 1160601 tracks
+    // finding a solution that allows APZ to work with CodeMirror.
+    cm.getScrollerElement().addEventListener("wheel", ev => {
+      // By handling the wheel events ourselves, we force the platform to
+      // scroll synchronously, like it did before APZ. However, we lose smooth
+      // scrolling for users with mouse wheels. This seems acceptible vs.
+      // doing nothing and letting the gutter slide around.
+      ev.preventDefault();
+
+      let { deltaX, deltaY } = ev;
+
+      if (ev.deltaMode == ev.DOM_DELTA_LINE) {
+        deltaX *= cm.defaultCharWidth();
+        deltaY *= cm.defaultTextHeight();
+      } else if (ev.deltaMode == ev.DOM_DELTA_PAGE) {
+        deltaX *= cm.getWrapperElement().clientWidth;
+        deltaY *= cm.getWrapperElement().clientHeight;
+      }
+
+      cm.getScrollerElement().scrollBy(deltaX, deltaY);
+    });
+
+    cm.getWrapperElement().addEventListener("contextmenu", ev => {
+      ev.preventDefault();
+
+      if (!this.config.contextMenu) {
+        return;
+      }
+
+      let popup = this.config.contextMenu;
+      if (typeof popup == "string") {
+        popup = doc.getElementById(this.config.contextMenu);
+      }
+
+      this.emit("popupOpen", ev, popup);
+      popup.openPopupAtScreen(ev.screenX, ev.screenY, true);
+    }, false);
+
+    // Intercept the find and find again keystroke on CodeMirror, to avoid
+    // the browser's search
+
+    let findKey = L10N.getStr("find.commandkey");
+    let findAgainKey = L10N.getStr("findAgain.commandkey");
+    let [accel, modifier] = OS === "Darwin"
+        ? ["metaKey", "altKey"]
+        : ["ctrlKey", "shiftKey"];
+
+    cm.getWrapperElement().addEventListener("keydown", ev => {
+      let key = ev.key.toUpperCase();
+      let node = ev.originalTarget;
+      let isInput = node.tagName === "INPUT";
+      let isSearchInput = isInput && node.type === "search";
+
+      // replace box is a different input instance than search, and it is
+      // located in a code mirror dialog
+      let isDialogInput = isInput &&
+          node.parentNode &&
+          node.parentNode.classList.contains("CodeMirror-dialog");
+
+      if (!ev[accel] || !(isSearchInput || isDialogInput)) {
+        return;
+      }
+
+      if (key === findKey) {
+        ev.preventDefault();
+
+        if (isSearchInput || ev[modifier]) {
+          node.select();
+        }
+      } else if (key === findAgainKey) {
+        ev.preventDefault();
+
+        if (!isSearchInput) {
+          return;
+        }
+
+        let query = node.value;
+
+        // If there isn't a search state, or the text in the input does not
+        // match with the current search state, we need to create a new one
+        if (!cm.state.search || cm.state.search.query !== query) {
+          cm.state.search = {
+            posFrom: null,
+            posTo: null,
+            overlay: null,
+            query
+          };
+        }
+
+        if (ev.shiftKey) {
+          cm.execCommand("findPrev");
+        } else {
+          cm.execCommand("findNext");
+        }
+      }
+    });
+
+    cm.on("focus", () => this.emit("focus"));
+    cm.on("scroll", () => this.emit("scroll"));
+    cm.on("change", () => {
+      this.emit("change");
+      if (!this._lastDirty) {
+        this._lastDirty = true;
+        this.emit("dirty-change");
+      }
+    });
+    cm.on("cursorActivity", () => this.emit("cursorActivity"));
+
+    cm.on("gutterClick", (cmArg, line, gutter, ev) => {
+      let head = { line: line, ch: 0 };
+      let tail = { line: line, ch: this.getText(line).length };
+
+      // Shift-click on a gutter selects the whole line.
+      if (ev.shiftKey) {
+        cmArg.setSelection(head, tail);
+        return;
+      }
+
+      this.emit("gutterClick", line, ev.button);
+    });
+
+    win.CodeMirror.defineExtension("l10n", (name) => {
+      return L10N.getStr(name);
+    });
+
+    cm.getInputField().controllers.insertControllerAt(0, controller(this));
+
+    editors.set(this, cm);
+
+    this.reloadPreferences = this.reloadPreferences.bind(this);
+    this._prefObserver = new PrefObserver("devtools.editor.");
+    this._prefObserver.on(TAB_SIZE, this.reloadPreferences);
+    this._prefObserver.on(EXPAND_TAB, this.reloadPreferences);
+    this._prefObserver.on(KEYMAP, this.reloadPreferences);
+    this._prefObserver.on(AUTO_CLOSE, this.reloadPreferences);
+    this._prefObserver.on(AUTOCOMPLETE, this.reloadPreferences);
+    this._prefObserver.on(DETECT_INDENT, this.reloadPreferences);
+    this._prefObserver.on(ENABLE_CODE_FOLDING, this.reloadPreferences);
+
+    this.reloadPreferences();
+
+    win.editor = this;
+    let editorReadyEvent = new win.CustomEvent("editorReady");
+    win.dispatchEvent(editorReadyEvent);
   },
 
   /**
@@ -822,7 +845,7 @@ Editor.prototype = {
    * You don't need to worry about removing these event listeners.
    * They're automatically orphaned when clearing markers.
    */
-  setMarkerListeners: function (line, gutterName, markerClass, events, data) {
+  setMarkerListeners: function (line, gutterName, markerClass, eventsArg, data) {
     if (!this.hasMarker(line, gutterName, markerClass)) {
       return;
     }
@@ -830,8 +853,8 @@ Editor.prototype = {
     let cm = editors.get(this);
     let marker = cm.lineInfo(line).gutterMarkers[gutterName];
 
-    for (let name in events) {
-      let listener = events[name].bind(this, line, marker, data);
+    for (let name in eventsArg) {
+      let listener = eventsArg[name].bind(this, line, marker, data);
       marker.addEventListener(name, listener);
     }
   },
@@ -974,7 +997,7 @@ Editor.prototype = {
     let div = doc.createElement("div");
     let inp = doc.createElement("input");
     let txt =
-      doc.createTextNode(L10N.GetStringFromName("gotoLineCmd.promptTitle"));
+      doc.createTextNode(L10N.getStr("gotoLineCmd.promptTitle"));
 
     inp.type = "text";
     inp.style.width = "10em";
@@ -1001,8 +1024,8 @@ Editor.prototype = {
       // Handle LINE:COLUMN as well as LINE
       let match = line.toString().match(RE_JUMP_TO_LINE);
       if (match) {
-        let [, line, column ] = match;
-        this.setCursor({line: line - 1, ch: column ? column - 1 : 0 });
+        let [, matchLine, column ] = match;
+        this.setCursor({line: matchLine - 1, ch: column ? column - 1 : 0 });
       }
     });
   },
@@ -1272,16 +1295,18 @@ Editor.accel = function (key, modifiers = {}) {
  * or disabling default shortcuts.
  */
 Editor.keyFor = function (cmd, opts = { noaccel: false }) {
-  let key = L10N.GetStringFromName(cmd + ".commandkey");
+  let key = L10N.getStr(cmd + ".commandkey");
   return opts.noaccel ? key : Editor.accel(key);
 };
 
-// Since Gecko already provide complete and up to date list of CSS property
-// names, values and color names, we compute them so that they can replace
-// the ones used in CodeMirror while initiating an editor object. This is done
-// here instead of the file codemirror/css.js so as to leave that file untouched
-// and easily upgradable.
-function getCSSKeywords() {
+/**
+ * We compute the CSS property names, values, and color names to be used with
+ * CodeMirror to more closely reflect what is supported by the target platform.
+ * The database is used to replace the values used in CodeMirror while initiating
+ * an editor object. This is done here instead of the file codemirror/css.js so
+ * as to leave that file untouched and easily upgradable.
+ */
+function getCSSKeywords(cssProperties) {
   function keySet(array) {
     let keys = {};
     for (let i = 0; i < array.length; ++i) {
@@ -1290,26 +1315,26 @@ function getCSSKeywords() {
     return keys;
   }
 
-  let domUtils = Cc["@mozilla.org/inspector/dom-utils;1"]
-                   .getService(Ci.inIDOMUtils);
-  let cssProperties = domUtils.getCSSPropertyNames(domUtils.INCLUDE_ALIASES);
-  let cssColors = {};
-  let cssValues = {};
-  cssProperties.forEach(property => {
+  let propertyKeywords = cssProperties.getNames();
+  let colorKeywords = {};
+  let valueKeywords = {};
+
+  propertyKeywords.forEach(property => {
     if (property.includes("color")) {
-      domUtils.getCSSValuesForProperty(property).forEach(value => {
-        cssColors[value] = true;
+      cssProperties.getValues(property).forEach(value => {
+        colorKeywords[value] = true;
       });
     } else {
-      domUtils.getCSSValuesForProperty(property).forEach(value => {
-        cssValues[value] = true;
+      cssProperties.getValues(property).forEach(value => {
+        valueKeywords[value] = true;
       });
     }
   });
+
   return {
-    cssProperties: keySet(cssProperties),
-    cssValues: cssValues,
-    cssColors: cssColors
+    propertyKeywords: keySet(propertyKeywords),
+    colorKeywords: colorKeywords,
+    valueKeywords: valueKeywords
   };
 }
 

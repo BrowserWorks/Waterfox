@@ -107,17 +107,6 @@ def set_vars_from_script(script, vars):
                 env[var] = "%s;%s" % (env[var], originals[var])
 
 
-def call_alternates(binaries, command_args, *args, **kwargs):
-    last_exception = None
-    for binary in binaries:
-        try:
-            return subprocess.call(['sh', '-c', binary] + command_args, *args, **kwargs)
-        except OSError as e:
-            # Assume the binary was not found.
-            last_exception = e
-    raise last_exception
-
-
 def ensure_dir_exists(name, clobber=True):
     if clobber:
         shutil.rmtree(name, ignore_errors=True)
@@ -137,12 +126,6 @@ if args.variant == 'nonunified':
         if 'moz.build' in filenames:
             subprocess.check_call(['sed', '-i', 's/UNIFIED_SOURCES/SOURCES/',
                                    os.path.join(dirpath, 'moz.build')])
-
-if not args.nobuild:
-    autoconfs = ['autoconf-2.13', 'autoconf2.13', 'autoconf213']
-    if call_alternates(autoconfs, [], cwd=DIR.js_src) != 0:
-        logging.error('autoconf failed')
-        sys.exit(1)
 
 OBJDIR = os.path.join(DIR.source, args.objdir)
 OUTDIR = os.path.join(OBJDIR, "out")
@@ -204,7 +187,8 @@ elif platform.system() == 'Windows':
     if word_bits == 64:
         os.environ['USE_64BIT'] = '1'
     set_vars_from_script(posixpath.join(PDIR.scripts, 'winbuildenv.sh'),
-                         ['PATH', 'INCLUDE', 'LIB', 'LIBPATH', 'CC', 'CXX'])
+                         ['PATH', 'INCLUDE', 'LIB', 'LIBPATH', 'CC', 'CXX',
+                          'WINDOWSSDKDIR'])
 
 # Compiler flags, based on word length
 if word_bits == 32:
@@ -270,8 +254,15 @@ for k, v in variant.get('env', {}).items():
 if not args.nobuild:
     CONFIGURE_ARGS += ' --enable-nspr-build'
     CONFIGURE_ARGS += ' --prefix={OBJDIR}/dist'.format(OBJDIR=POBJDIR)
-    run_command(['sh', '-c', posixpath.join(PDIR.js_src, 'configure') + ' ' + CONFIGURE_ARGS], check=True)
 
+    # Generate a configure script from configure.in.
+    configure = os.path.join(DIR.js_src, 'configure')
+    if not os.path.exists(configure):
+        shutil.copyfile(configure + ".in", configure)
+        os.chmod(configure, 0755)
+
+    # Run configure; make
+    run_command(['sh', '-c', posixpath.join(PDIR.js_src, 'configure') + ' ' + CONFIGURE_ARGS], check=True)
     run_command('%s -s -w %s' % (MAKE, MAKEFLAGS), shell=True, check=True)
 
 COMMAND_PREFIX = []
@@ -334,6 +325,12 @@ if 'jsapitests' in test_suites:
 if 'jstests' in test_suites:
     results.append(run_test_command([MAKE, 'check-jstests']))
 
+# FIXME bug 1291449: This would be unnecessary if we could run msan with -mllvm
+# -msan-keep-going, but in clang 3.8 it causes a hang during compilation.
+if variant.get('ignore-test-failures'):
+    print("Ignoring test results %s" % (results,))
+    results = [0]
+
 if args.variant in ('tsan', 'msan'):
     files = filter(lambda f: f.startswith("sanitize_log."), os.listdir(OUTDIR))
     fullfiles = [os.path.join(OUTDIR, f) for f in files]
@@ -346,7 +343,11 @@ if args.variant in ('tsan', 'msan'):
                 m = re.match(r'^SUMMARY: \w+Sanitizer: (?:data race|use-of-uninitialized-value) (.*)',
                              line.strip())
                 if m:
-                    sites[m.group(1)] += 1
+                    # Some reports include file:line:column, some just
+                    # file:line. Just in case it's nondeterministic, we will
+                    # canonicalize to just the line number.
+                    site = re.sub(r'^(\S+?:\d+)(:\d+)* ', r'\1 ', m.group(1))
+                    sites[site] += 1
 
     # Write a summary file and display it to stdout.
     summary_filename = os.path.join(env['MOZ_UPLOAD_DIR'], "%s_summary.txt" % args.variant)
@@ -354,6 +355,11 @@ if args.variant in ('tsan', 'msan'):
         for location, count in sites.most_common():
             print >> outfh, "%d %s" % (count, location)
     print(open(summary_filename, 'rb').read())
+
+    if 'max-errors' in variant:
+        print("Found %d errors out of %d allowed" % (len(sites), variant['max-errors']))
+        if len(sites) > variant['max-errors']:
+            results.append(1)
 
     # Gather individual results into a tarball. Note that these are
     # distinguished only by pid of the JS process running within each test, so

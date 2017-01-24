@@ -88,8 +88,8 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     class ModuleEntry : public mozilla::Module
     {
     public:
-        explicit ModuleEntry(JSContext* aCx)
-          : mozilla::Module(), obj(JS_GetRuntime(aCx)), thisObjectKey(JS_GetRuntime(aCx))
+        explicit ModuleEntry(JS::RootingContext* aRootingCx)
+          : mozilla::Module(), obj(aRootingCx), thisObjectKey(aRootingCx)
         {
             mVersion = mozilla::Module::kVersion;
             mCIDs = nullptr;
@@ -113,8 +113,8 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
                 mozilla::AutoJSContext cx;
                 JSAutoCompartment ac(cx, obj);
 
-                if (JS_HasExtensibleLexicalScope(obj)) {
-                    JS_SetAllNonReservedSlotsToUndefined(cx, JS_ExtensibleLexicalScope(obj));
+                if (JS_HasExtensibleLexicalEnvironment(obj)) {
+                    JS_SetAllNonReservedSlotsToUndefined(cx, JS_ExtensibleLexicalEnvironment(obj));
                 }
                 JS_SetAllNonReservedSlotsToUndefined(cx, obj);
                 obj = nullptr;

@@ -8,6 +8,9 @@ import org.mozilla.gecko.annotation.RobocopTarget;
 
 import android.net.Uri;
 
+import java.net.URLDecoder;
+import java.io.UnsupportedEncodingException;
+
 /**
  * Encapsulates access to values encoded in the "referrer" extra of an install intent.
  *
@@ -25,7 +28,7 @@ public class ReferrerDescriptor {
     public final String content;
     public final String campaign;
 
-    public ReferrerDescriptor(final String referrer) {
+    public ReferrerDescriptor(String referrer) {
         if (referrer == null) {
             source = null;
             medium = null;
@@ -33,6 +36,12 @@ public class ReferrerDescriptor {
             content = null;
             campaign = null;
             return;
+        }
+
+        try {
+            referrer = URLDecoder.decode(referrer, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // UTF-8 is always supported
         }
 
         final Uri u = new Uri.Builder()

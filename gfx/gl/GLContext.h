@@ -885,17 +885,21 @@ public:
     void fBindFramebuffer(GLenum target, GLuint framebuffer);
 
     void fInvalidateFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments) {
+        BeforeGLDrawCall();
         BEFORE_GL_CALL;
         ASSERT_SYMBOL_PRESENT(fInvalidateFramebuffer);
         mSymbols.fInvalidateFramebuffer(target, numAttachments, attachments);
         AFTER_GL_CALL;
+        AfterGLDrawCall();
     }
 
     void fInvalidateSubFramebuffer(GLenum target, GLsizei numAttachments, const GLenum* attachments, GLint x, GLint y, GLsizei width, GLsizei height) {
+        BeforeGLDrawCall();
         BEFORE_GL_CALL;
         ASSERT_SYMBOL_PRESENT(fInvalidateSubFramebuffer);
         mSymbols.fInvalidateSubFramebuffer(target, numAttachments, attachments, x, y, width, height);
         AFTER_GL_CALL;
+        AfterGLDrawCall();
     }
 
     void fBindTexture(GLenum target, GLuint texture) {
@@ -981,27 +985,35 @@ public:
     }
 
     void fClearBufferfi(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil) {
+        BeforeGLDrawCall();
         BEFORE_GL_CALL;
         mSymbols.fClearBufferfi(buffer, drawbuffer, depth, stencil);
         AFTER_GL_CALL;
+        AfterGLDrawCall();
     }
 
     void fClearBufferfv(GLenum buffer, GLint drawbuffer, const GLfloat* value) {
+        BeforeGLDrawCall();
         BEFORE_GL_CALL;
         mSymbols.fClearBufferfv(buffer, drawbuffer, value);
         AFTER_GL_CALL;
+        AfterGLDrawCall();
     }
 
     void fClearBufferiv(GLenum buffer, GLint drawbuffer, const GLint* value) {
+        BeforeGLDrawCall();
         BEFORE_GL_CALL;
         mSymbols.fClearBufferiv(buffer, drawbuffer, value);
         AFTER_GL_CALL;
+        AfterGLDrawCall();
     }
 
     void fClearBufferuiv(GLenum buffer, GLint drawbuffer, const GLuint* value) {
+        BeforeGLDrawCall();
         BEFORE_GL_CALL;
         mSymbols.fClearBufferuiv(buffer, drawbuffer, value);
         AFTER_GL_CALL;
+        AfterGLDrawCall();
     }
 
     void fClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
@@ -3130,11 +3142,13 @@ public:
                             GLint yoffset, GLint zoffset, GLint x,
                             GLint y, GLsizei width, GLsizei height)
     {
+        BeforeGLReadCall();
         BEFORE_GL_CALL;
         ASSERT_SYMBOL_PRESENT(fCopyTexSubImage3D);
         mSymbols.fCopyTexSubImage3D(target, level, xoffset, yoffset, zoffset,
                                     x, y, width, height);
         AFTER_GL_CALL;
+        AfterGLReadCall();
     }
 
     void fCompressedTexImage3D(GLenum target, GLint level, GLenum internalformat,

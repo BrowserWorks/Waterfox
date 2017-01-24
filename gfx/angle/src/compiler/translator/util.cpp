@@ -159,6 +159,30 @@ GLenum GLVariableType(const TType &type)
       case EbtSampler2DShadow:      return GL_SAMPLER_2D_SHADOW;
       case EbtSamplerCubeShadow:    return GL_SAMPLER_CUBE_SHADOW;
       case EbtSampler2DArrayShadow: return GL_SAMPLER_2D_ARRAY_SHADOW;
+      case EbtImage2D:
+          return GL_IMAGE_2D;
+      case EbtIImage2D:
+          return GL_INT_IMAGE_2D;
+      case EbtUImage2D:
+          return GL_UNSIGNED_INT_IMAGE_2D;
+      case EbtImage2DArray:
+          return GL_IMAGE_2D_ARRAY;
+      case EbtIImage2DArray:
+          return GL_INT_IMAGE_2D_ARRAY;
+      case EbtUImage2DArray:
+          return GL_UNSIGNED_INT_IMAGE_2D_ARRAY;
+      case EbtImage3D:
+          return GL_IMAGE_3D;
+      case EbtIImage3D:
+          return GL_INT_IMAGE_3D;
+      case EbtUImage3D:
+          return GL_UNSIGNED_INT_IMAGE_3D;
+      case EbtImageCube:
+          return GL_IMAGE_CUBE;
+      case EbtIImageCube:
+          return GL_INT_IMAGE_CUBE;
+      case EbtUImageCube:
+          return GL_UNSIGNED_INT_IMAGE_CUBE;
       default: UNREACHABLE();
     }
 
@@ -278,10 +302,18 @@ InterpolationType GetInterpolationType(TQualifier qualifier)
     }
 }
 
-TType ConvertShaderVariableTypeToTType(sh::GLenum type)
+TType GetShaderVariableBasicType(const sh::ShaderVariable &var)
 {
-    switch (type)
+    switch (var.type)
     {
+        case GL_BOOL:
+            return TType(EbtBool);
+        case GL_BOOL_VEC2:
+            return TType(EbtBool, 2);
+        case GL_BOOL_VEC3:
+            return TType(EbtBool, 3);
+        case GL_BOOL_VEC4:
+            return TType(EbtBool, 4);
         case GL_FLOAT:
             return TType(EbtFloat);
         case GL_FLOAT_VEC2:
@@ -537,4 +569,52 @@ template void GetVariableTraverser::traverse(const TType &, const TString &, std
 template void GetVariableTraverser::traverse(const TType &, const TString &, std::vector<Uniform> *);
 template void GetVariableTraverser::traverse(const TType &, const TString &, std::vector<Varying> *);
 
+// GLSL ES 1.0.17 4.6.1 The Invariant Qualifier
+bool CanBeInvariantESSL1(TQualifier qualifier)
+{
+    return IsVaryingIn(qualifier) || IsVaryingOut(qualifier) ||
+           IsBuiltinOutputVariable(qualifier) ||
+           (IsBuiltinFragmentInputVariable(qualifier) && qualifier != EvqFrontFacing);
 }
+
+// GLSL ES 3.00 Revision 6, 4.6.1 The Invariant Qualifier
+// GLSL ES 3.10 Revision 4, 4.8.1 The Invariant Qualifier
+bool CanBeInvariantESSL3OrGreater(TQualifier qualifier)
+{
+    return IsVaryingOut(qualifier) || qualifier == EvqFragmentOut ||
+           IsBuiltinOutputVariable(qualifier);
+}
+
+bool IsBuiltinOutputVariable(TQualifier qualifier)
+{
+    switch (qualifier)
+    {
+        case EvqPosition:
+        case EvqPointSize:
+        case EvqFragDepth:
+        case EvqFragDepthEXT:
+        case EvqFragColor:
+        case EvqSecondaryFragColorEXT:
+        case EvqFragData:
+        case EvqSecondaryFragDataEXT:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool IsBuiltinFragmentInputVariable(TQualifier qualifier)
+{
+    switch (qualifier)
+    {
+        case EvqFragCoord:
+        case EvqPointCoord:
+        case EvqFrontFacing:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+}  // namespace sh

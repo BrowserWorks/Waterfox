@@ -68,6 +68,8 @@ public:
 
   void Shutdown() override;
 
+  void DumpDebugInfo() override;
+
 private:
   virtual ~VideoSink();
 
@@ -96,6 +98,8 @@ private:
   // Called on the shared state machine thread.
   void UpdateRenderedVideoFrames();
   void UpdateRenderedVideoFramesByTimer();
+
+  void MaybeResolveEndPromise();
 
   void AssertOwnerThread() const
   {

@@ -61,8 +61,6 @@ typedef enum {
 typedef enum {
   /* first eight bits are used to pass a margin */
   MOZ_GTK_TAB_MARGIN_MASK     = 0xFF,
-  /* bottom tabs */
-  MOZ_GTK_TAB_BOTTOM          = 1 << 8,
   /* the first tab in the group */
   MOZ_GTK_TAB_FIRST           = 1 << 9,
   /* the selected tab */
@@ -128,6 +126,11 @@ typedef enum {
   /* Paints a GtkScale. */
   MOZ_GTK_SCALE_HORIZONTAL,
   MOZ_GTK_SCALE_VERTICAL,
+  /* Paints a GtkScale trough. */
+  MOZ_GTK_SCALE_CONTENTS_HORIZONTAL,
+  MOZ_GTK_SCALE_CONTENTS_VERTICAL,
+  MOZ_GTK_SCALE_TROUGH_HORIZONTAL,
+  MOZ_GTK_SCALE_TROUGH_VERTICAL,
   /* Paints a GtkScale thumb. */
   MOZ_GTK_SCALE_THUMB_HORIZONTAL,
   MOZ_GTK_SCALE_THUMB_VERTICAL,
@@ -173,14 +176,22 @@ typedef enum {
   MOZ_GTK_PROGRESS_CHUNK_INDETERMINATE,
   /* Paints a progress chunk of a vertical indeterminated GtkProgressBar. */
   MOZ_GTK_PROGRESS_CHUNK_VERTICAL_INDETERMINATE,
+  /* Used as root style of whole GtkNotebook widget */
+  MOZ_GTK_NOTEBOOK,
+  /* Used as root style of active GtkNotebook area which contains tabs and arrows. */
+  MOZ_GTK_NOTEBOOK_HEADER,
   /* Paints a tab of a GtkNotebook. flags is a GtkTabFlags, defined above. */
-  MOZ_GTK_TAB,
+  MOZ_GTK_TAB_TOP,
+  /* Paints a tab of a GtkNotebook. flags is a GtkTabFlags, defined above. */
+  MOZ_GTK_TAB_BOTTOM,
   /* Paints the background and border of a GtkNotebook. */
   MOZ_GTK_TABPANELS,
   /* Paints a GtkArrow for a GtkNotebook. flags is a GtkArrowType. */
   MOZ_GTK_TAB_SCROLLARROW,
-  /* Paints the background and border of a GtkTreeView */
+  /* Paints the expander and border of a GtkTreeView */
   MOZ_GTK_TREEVIEW,
+  /* Paints the border of a GtkTreeView */
+  MOZ_GTK_TREEVIEW_VIEW,
   /* Paints treeheader cells */
   MOZ_GTK_TREE_HEADER_CELL,
   /* Paints sort arrows in treeheader cells */
@@ -199,13 +210,20 @@ typedef enum {
   MOZ_GTK_MENUBARITEM,
   /* Paints items of popup menus. */
   MOZ_GTK_MENUITEM,
+  MOZ_GTK_IMAGEMENUITEM,
+  MOZ_GTK_CHECKMENUITEM_CONTAINER,
+  MOZ_GTK_RADIOMENUITEM_CONTAINER,
   MOZ_GTK_CHECKMENUITEM,
   MOZ_GTK_RADIOMENUITEM,
   MOZ_GTK_MENUSEPARATOR,
-  /* Paints a GtkVPaned separator */
+  /* GtkVPaned base class */
   MOZ_GTK_SPLITTER_HORIZONTAL,
-  /* Paints a GtkHPaned separator */
+  /* GtkHPaned base class */
   MOZ_GTK_SPLITTER_VERTICAL,
+  /* Paints a GtkVPaned separator */
+  MOZ_GTK_SPLITTER_SEPARATOR_HORIZONTAL,
+  /* Paints a GtkHPaned separator */
+  MOZ_GTK_SPLITTER_SEPARATOR_VERTICAL,
   /* Paints the background of a window, dialog or page. */
   MOZ_GTK_WINDOW,
   /* Window container for all widgets */
@@ -300,12 +318,14 @@ gint moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
  * top/bottom:  [OUT] the tab's top/bottom border
  * direction:   the text direction for the widget
  * flags:       tab-dependant flags; see the GtkTabFlags definition.
+ * widget:      tab widget
  *
  * returns:    MOZ_GTK_SUCCESS if there was no error, an error code otherwise
  */
 gint
 moz_gtk_get_tab_border(gint* left, gint* top, gint* right, gint* bottom, 
-                       GtkTextDirection direction, GtkTabFlags flags);
+                       GtkTextDirection direction, GtkTabFlags flags,
+                       WidgetNodeType widget);
 
 /**
  * Get the desired size of a GtkCheckButton
@@ -481,7 +501,8 @@ GtkWidget* moz_gtk_get_scrollbar_widget(void);
 /**
  * Get the YTHICKNESS of a tab (notebook extension).
  */
-gint moz_gtk_get_tab_thickness(void);
+gint
+moz_gtk_get_tab_thickness(WidgetNodeType aNodeType);
 
 /**
  * Get a boolean which indicates whether or not to use images in menus.

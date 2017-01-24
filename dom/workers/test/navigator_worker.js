@@ -15,6 +15,7 @@ var supportedProps = [
   "language",
   "languages",
   "hardwareConcurrency",
+  { name: "storage", nightly: true },
 ];
 
 self.onmessage = function(event) {
@@ -22,10 +23,10 @@ self.onmessage = function(event) {
     return;
   }
 
-  startTest(event.data.isB2G);
+  startTest(event.data);
 };
 
-function startTest(isB2G) {
+function startTest(channelData) {
   // Prepare the interface map showing if a propery should exist in this build.
   // For example, if interfaceMap[foo] = true means navigator.foo should exist.
   var interfaceMap = {};
@@ -36,7 +37,8 @@ function startTest(isB2G) {
       continue;
     }
 
-    if (prop.b2g === !isB2G) {
+    if (prop.nightly === !channelData.isNightly ||
+        prop.release === !channelData.isRelease) {
       interfaceMap[prop.name] = false;
       continue;
     }

@@ -99,7 +99,11 @@ class CodeGeneratorARM : public CodeGeneratorShared
     template <typename T>
     void emitWasmLoad(T* ins);
     template <typename T>
+    void emitWasmUnalignedLoad(T* ins);
+    template <typename T>
     void emitWasmStore(T* ins);
+    template <typename T>
+    void emitWasmUnalignedStore(T* ins);
 
   public:
     // Instruction visitors.
@@ -233,14 +237,18 @@ class CodeGeneratorARM : public CodeGeneratorShared
     void visitAtomicExchangeTypedArrayElement(LAtomicExchangeTypedArrayElement* lir);
     void visitAsmSelect(LAsmSelect* ins);
     void visitAsmReinterpret(LAsmReinterpret* ins);
-    void emitAsmJSCall(LAsmJSCallBase* ins);
-    void visitAsmJSCall(LAsmJSCall* ins);
-    void visitAsmJSCallI64(LAsmJSCallI64* ins);
-    void visitWasmBoundsCheck(LWasmBoundsCheck* ins);
+    void emitWasmCall(LWasmCallBase* ins);
+    void visitWasmCall(LWasmCall* ins);
+    void visitWasmCallI64(LWasmCallI64* ins);
     void visitWasmLoad(LWasmLoad* ins);
     void visitWasmLoadI64(LWasmLoadI64* ins);
+    void visitWasmUnalignedLoad(LWasmUnalignedLoad* ins);
+    void visitWasmUnalignedLoadI64(LWasmUnalignedLoadI64* ins);
+    void visitWasmAddOffset(LWasmAddOffset* ins);
     void visitWasmStore(LWasmStore* ins);
     void visitWasmStoreI64(LWasmStoreI64* ins);
+    void visitWasmUnalignedStore(LWasmUnalignedStore* ins);
+    void visitWasmUnalignedStoreI64(LWasmUnalignedStoreI64* ins);
     void visitWasmLoadGlobalVar(LWasmLoadGlobalVar* ins);
     void visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins);
     void visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins);

@@ -10,18 +10,24 @@
     "clearInterval": true,
     "clearTimeout": true,
     "console": true,
+    "CSS": true,
+    "DocumentFragment": true,
     "DOMParser": true,
     "dump": true,
+    "Element": true,
     "exports": true,
     "isWorker": true,
+    "indexedDB": true,
     "loader": true,
     "module": true,
+    "Node": true,
     "reportError": true,
     "require": true,
     "setInterval": true,
     "setTimeout": true,
     "uneval": true,
     "URL": true,
+    "WebSocket": true,
     "XMLHttpRequest": true,
     "_Iterator": true,
   },
@@ -36,6 +42,10 @@
     "mozilla/no-single-arg-cu-import": 2,
     // See bug 1224289.
     "mozilla/reject-importGlobalProperties": 2,
+    // devtools/shared/platform is special; see the README.md in that
+    // directory for details.  We reject requires using explicit
+    // subdirectories of this directory.
+    "mozilla/reject-some-requires": [2, "^devtools/shared/platform/(chome|content)/"],
     "mozilla/var-only-at-top-level": 1,
 
     // Rules from the React plugin

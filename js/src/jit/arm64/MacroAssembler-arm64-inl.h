@@ -38,6 +38,18 @@ MacroAssembler::moveGPRToFloat32(Register src, FloatRegister dest)
     MOZ_CRASH("NYI: moveGPRToFloat32");
 }
 
+void
+MacroAssembler::move8SignExtend(Register src, Register dest)
+{
+    MOZ_CRASH("NYI: move8SignExtend");
+}
+
+void
+MacroAssembler::move16SignExtend(Register src, Register dest)
+{
+    MOZ_CRASH("NYI: move16SignExtend");
+}
+
 // ===============================================================
 // Logical instructions
 
@@ -998,12 +1010,12 @@ MacroAssembler::branchTruncateDoubleToInt32(FloatRegister src, Register dest, La
     convertDoubleToInt32(src, dest, fail);
 }
 
-template <typename T>
+template <typename T, typename L>
 void
-MacroAssembler::branchAdd32(Condition cond, T src, Register dest, Label* label)
+MacroAssembler::branchAdd32(Condition cond, T src, Register dest, L label)
 {
     adds32(src, dest);
-    branch(cond, label);
+    B(label, cond);
 }
 
 template <typename T>
@@ -1512,6 +1524,39 @@ MacroAssembler::storeFloat32x3(FloatRegister src, const Address& dest)
 }
 void
 MacroAssembler::storeFloat32x3(FloatRegister src, const BaseIndex& dest)
+{
+    MOZ_CRASH("NYI");
+}
+
+// ===============================================================
+// Clamping functions.
+
+void
+MacroAssembler::clampIntToUint8(Register reg)
+{
+    vixl::UseScratchRegisterScope temps(this);
+    const ARMRegister scratch32 = temps.AcquireW();
+    const ARMRegister reg32(reg, 32);
+    MOZ_ASSERT(!scratch32.Is(reg32));
+
+    Cmp(reg32, Operand(reg32, vixl::UXTB));
+    Csel(reg32, reg32, vixl::wzr, Assembler::GreaterThanOrEqual);
+    Mov(scratch32, Operand(0xff));
+    Csel(reg32, reg32, scratch32, Assembler::LessThanOrEqual);
+}
+
+// ========================================================================
+// wasm support
+
+template <class L>
+void
+MacroAssembler::wasmBoundsCheck(Condition cond, Register index, L label)
+{
+    MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::wasmPatchBoundsCheck(uint8_t* patchAt, uint32_t limit)
 {
     MOZ_CRASH("NYI");
 }

@@ -25,7 +25,7 @@
 #include "mozilla/ProcessHangMonitor.h"
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsAutoPtr.h"
 #include "nsCRT.h"
 #include "nsIFile.h"
@@ -2848,7 +2848,8 @@ PluginModuleParent::IsRemoteDrawingCoreAnimation(NPP instance, bool *aDrawing)
 
     return i->IsRemoteDrawingCoreAnimation(aDrawing);
 }
-
+#endif
+#if defined(XP_MACOSX) || defined(XP_WIN)
 nsresult
 PluginModuleParent::ContentsScaleFactorChanged(NPP instance, double aContentsScaleFactor)
 {
@@ -3122,7 +3123,7 @@ layers::TextureClientRecycleAllocator*
 PluginModuleParent::EnsureTextureAllocator()
 {
     if (!mTextureAllocator) {
-        mTextureAllocator = new TextureClientRecycleAllocator(ImageBridgeChild::GetSingleton());
+        mTextureAllocator = new TextureClientRecycleAllocator(ImageBridgeChild::GetSingleton().get());
     }
     return mTextureAllocator;
 }
@@ -3358,4 +3359,20 @@ PluginModuleChromeParent::RecvProfile(const nsCString& aProfile)
     return true;
 }
 
+bool
+PluginModuleParent::AnswerGetKeyState(const int32_t& aVirtKey, int16_t* aRet)
+{
+    return false;
+}
 
+bool
+PluginModuleChromeParent::AnswerGetKeyState(const int32_t& aVirtKey,
+                                            int16_t* aRet)
+{
+#if defined(XP_WIN)
+    *aRet = ::GetKeyState(aVirtKey);
+    return true;
+#else
+    return PluginModuleParent::AnswerGetKeyState(aVirtKey, aRet);
+#endif
+}

@@ -11,6 +11,7 @@ const cssPropertiesSpec = generateActorSpec({
   methods: {
     getCSSDatabase: {
       request: {},
+
       response: RetVal("json"),
     }
   }

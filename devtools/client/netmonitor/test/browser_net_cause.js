@@ -16,8 +16,8 @@ const EXPECTED_REQUESTS = [
     url: CAUSE_URL,
     causeType: "document",
     causeUri: "",
-    // The document load is from JS function in e10s, native in non-e10s
-    stack: !gMultiProcessBrowser
+    // The document load has internal privileged JS code on the stack
+    stack: true
   },
   {
     method: "GET",
@@ -77,7 +77,7 @@ const EXPECTED_REQUESTS = [
   },
 ];
 
-var test = Task.async(function* () {
+add_task(function* () {
   // Async stacks aren't on by default in all builds
   yield SpecialPowers.pushPrefEnv({ set: [["javascript.options.asyncstack", true]] });
 
@@ -87,14 +87,14 @@ var test = Task.async(function* () {
   // all the requests the page is making, not only the XHRs.
   // We can't use about:blank here, because initNetMonitor checks that the
   // page has actually made at least one request.
-  let [, debuggee, monitor] = yield initNetMonitor(SIMPLE_URL);
+  let { tab, monitor } = yield initNetMonitor(SIMPLE_URL);
   let { $, NetMonitorView } = monitor.panelWin;
   let { RequestsMenu } = NetMonitorView;
   RequestsMenu.lazyUpdate = false;
 
-  debuggee.location = CAUSE_URL;
-
-  yield waitForNetworkEvents(monitor, EXPECTED_REQUESTS.length);
+  let wait = waitForNetworkEvents(monitor, EXPECTED_REQUESTS.length);
+  tab.linkedBrowser.loadURI(CAUSE_URL);
+  yield wait;
 
   is(RequestsMenu.itemCount, EXPECTED_REQUESTS.length,
     "All the page events should be recorded.");
@@ -144,5 +144,4 @@ var test = Task.async(function* () {
   });
 
   yield teardown(monitor);
-  finish();
 });

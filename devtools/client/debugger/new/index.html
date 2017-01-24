@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet"
+          type="text/css"
+          href="chrome://devtools/content/sourceeditor/codemirror/lib/codemirror.css" />
+    <link rel="stylesheet"
+          type="text/css"
+          href="chrome://devtools/content/sourceeditor/codemirror/addon/dialog/dialog.css" />
+    <link rel="stylesheet"
+          type="text/css"
+          href="chrome://devtools/content/sourceeditor/codemirror/mozilla.css" />
+    <link rel="stylesheet" type="text/css" href="resource://devtools/client/debugger/new/styles.css" />
+  </head>
+  <body>
+    <div id="mount"></div>
+    <script type="application/javascript;version=1.8"
+            src="chrome://devtools/content/shared/theme-switching.js"></script>
+    <script type="text/javascript">
+      const { BrowserLoader } = Components.utils.import("resource://devtools/client/shared/browser-loader.js", {});
+      const { require: devtoolsRequire } = BrowserLoader({
+        baseURI: "resource://devtools/client/debugger/new/",
+        window,
+      });
+    </script>
+    <script type="text/javascript" src="resource://devtools/client/debugger/new/bundle.js"></script>
+  </body>
+</html>

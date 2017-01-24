@@ -26,10 +26,10 @@ public:
   virtual ~H264Converter();
 
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Flush() override;
-  nsresult Drain() override;
-  nsresult Shutdown() override;
+  void Input(MediaRawData* aSample) override;
+  void Flush() override;
+  void Drain() override;
+  void Shutdown() override;
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
   const char* GetDescriptionName() const override
   {
@@ -38,9 +38,8 @@ public:
     }
     return "H264Converter decoder (pending)";
   }
+  void SetSeekThreshold(const media::TimeUnit& aTime) override;
 
-  // Return true if mimetype is H.264.
-  static bool IsH264(const TrackInfo& aConfig);
   nsresult GetLastError() const { return mLastError; }
 
 private:
@@ -53,7 +52,7 @@ private:
   void UpdateConfigFromExtraData(MediaByteBuffer* aExtraData);
 
   void OnDecoderInitDone(const TrackType aTrackType);
-  void OnDecoderInitFailed(MediaDataDecoder::DecoderFailureReason aReason);
+  void OnDecoderInitFailed(MediaResult aError);
 
   RefPtr<PlatformDecoderModule> mPDM;
   VideoInfo mOriginalConfig;
@@ -68,6 +67,7 @@ private:
   RefPtr<GMPCrashHelper> mGMPCrashHelper;
   bool mNeedAVCC;
   nsresult mLastError;
+  bool mNeedKeyframe = true;
 };
 
 } // namespace mozilla

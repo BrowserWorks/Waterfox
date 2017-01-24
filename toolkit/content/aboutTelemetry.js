@@ -158,9 +158,8 @@ function getMainWindowWithPreferencesPane() {
   let mainWindow = getMainWindow();
   if (mainWindow && "openAdvancedPreferences" in mainWindow) {
     return mainWindow;
-  } else {
-    return null;
   }
+  return null;
 }
 
 /**
@@ -714,7 +713,7 @@ var EnvironmentData = {
     this.createSubsection("addons", hasAddonData, addonSection, dataDiv);
   },
 
-  appendRow: function(table, id, value){
+  appendRow: function(table, id, value) {
     let row = document.createElement("tr");
     this.appendColumn(row, "td", id);
     this.appendColumn(row, "td", value);
@@ -882,7 +881,7 @@ var SlowSQL = {
    * @param aSql SQL stats object
    */
   renderTable: function SlowSQL_renderTable(aTable, aSql) {
-    for (let [sql, [hitCount, totalTime]] of Iterator(aSql)) {
+    for (let [sql, [hitCount, totalTime]] of Object.entries(aSql)) {
       let averageTime = totalTime / hitCount;
 
       let sqlRow = document.createElement("tr");
@@ -1210,7 +1209,7 @@ var Histogram = {
     copyButton.className = "copy-node";
     copyButton.appendChild(document.createTextNode(this.hgramCopyCaption));
     copyButton.histogramText = aName + EOL + stats + EOL + EOL + textData;
-    copyButton.addEventListener("click", function(){
+    copyButton.addEventListener("click", function() {
       Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper)
                                                  .copyString(this.histogramText);
     });
@@ -1478,7 +1477,7 @@ var KeyValueTable = {
    * @param aMeasurements Key/value map
    */
   renderBody: function KeyValueTable_renderBody(aTable, aMeasurements) {
-    for (let [key, value] of Iterator(aMeasurements)) {
+    for (let [key, value] of Object.entries(aMeasurements)) {
       // use .valueOf() to unbox Number, String, etc. objects
       if (value &&
          (typeof value == "object") &&
@@ -1511,7 +1510,7 @@ var KeyedHistogram = {
     divTitle.appendChild(document.createTextNode(id));
     outerDiv.appendChild(divTitle);
 
-    for (let [name, hgram] of Iterator(keyedHistogram)) {
+    for (let [name, hgram] of Object.entries(keyedHistogram)) {
       Histogram.render(outerDiv, name, hgram);
     }
 
@@ -1574,6 +1573,40 @@ var Scalars = {
     const headingValue = bundle.GetStringFromName("valuesHeader");
     const table = KeyValueTable.render(scalars, headingName, headingValue);
     scalarsSection.appendChild(table);
+  }
+};
+
+var KeyedScalars = {
+  /**
+   * Render the keyed scalar data - if present - from the payload in a simple key-value table.
+   * @param aPayload A payload object to render the data from.
+   */
+  render: function(aPayload) {
+    let scalarsSection = document.getElementById("keyed-scalars");
+    removeAllChildNodes(scalarsSection);
+
+    if (!aPayload.processes || !aPayload.processes.parent) {
+      return;
+    }
+
+    let keyedScalars = aPayload.processes.parent.keyedScalars;
+    const hasData = keyedScalars && Object.keys(keyedScalars).length > 0;
+    setHasData("keyed-scalars-section", hasData);
+    if (!hasData) {
+      return;
+    }
+
+    const headingName = bundle.GetStringFromName("namesHeader");
+    const headingValue = bundle.GetStringFromName("valuesHeader");
+    for (let scalar in keyedScalars) {
+      // Add the name of the scalar.
+      let scalarNameSection = document.createElement("h2");
+      scalarNameSection.appendChild(document.createTextNode(scalar));
+      scalarsSection.appendChild(scalarNameSection);
+      // Populate the section with the key-value pairs from the scalar.
+      const table = KeyValueTable.render(keyedScalars[scalar], headingName, headingValue);
+      scalarsSection.appendChild(table);
+    }
   }
 };
 
@@ -1924,6 +1957,7 @@ function displayPingData(ping, updatePayloadList = false) {
 
   // Show scalar data.
   Scalars.render(payload);
+  KeyedScalars.render(payload);
 
   // Show histogram data
   let hgramDiv = document.getElementById("histograms");
@@ -1934,7 +1968,7 @@ function displayPingData(ping, updatePayloadList = false) {
   setHasData("histograms-section", hasData);
 
   if (hasData) {
-    for (let [name, hgram] of Iterator(histograms)) {
+    for (let [name, hgram] of Object.entries(histograms)) {
       Histogram.render(hgramDiv, name, hgram, {unpacked: true});
     }
 
@@ -1955,7 +1989,7 @@ function displayPingData(ping, updatePayloadList = false) {
   let keyedHistograms = payload.keyedHistograms;
   if (keyedHistograms) {
     let hasData = false;
-    for (let [id, keyed] of Iterator(keyedHistograms)) {
+    for (let [id, keyed] of Object.entries(keyedHistograms)) {
       if (Object.keys(keyed).length > 0) {
         hasData = true;
         KeyedHistogram.render(keyedDiv, id, keyed, {unpacked: true});
@@ -1971,8 +2005,8 @@ function displayPingData(ping, updatePayloadList = false) {
   let addonHistogramsRendered = false;
   let addonData = payload.addonHistograms;
   if (addonData) {
-    for (let [addon, histograms] of Iterator(addonData)) {
-      for (let [name, hgram] of Iterator(histograms)) {
+    for (let [addon, histograms] of Object.entries(addonData)) {
+      for (let [name, hgram] of Object.entries(histograms)) {
         addonHistogramsRendered = true;
         Histogram.render(addonDiv, addon + ": " + name, hgram, {unpacked: true});
       }

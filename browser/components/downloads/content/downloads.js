@@ -226,6 +226,14 @@ const DownloadsPanel = {
     }
 
     this.initialize(() => {
+      let downloadsFooterButtons =
+        document.getElementById("downloadsFooterButtons");
+      if (DownloadsCommon.showPanelDropmarker) {
+        downloadsFooterButtons.classList.remove("downloadsHideDropmarker");
+      } else {
+        downloadsFooterButtons.classList.add("downloadsHideDropmarker");
+      }
+
       // Delay displaying the panel because this function will sometimes be
       // called while another window is closing (like the window for selecting
       // whether to save or open the file), and that would cause the panel to
@@ -381,6 +389,24 @@ const DownloadsPanel = {
     this._state = this.kStateHidden;
   },
 
+  onFooterPopupShowing(aEvent) {
+    let itemClearList = document.getElementById("downloadsDropdownItemClearList");
+    if (DownloadsCommon.getData(window).canRemoveFinished) {
+      itemClearList.removeAttribute("hidden");
+    } else {
+      itemClearList.setAttribute("hidden", "true");
+    }
+    DownloadsViewController.updateCommands();
+
+    document.getElementById("downloadsFooter")
+      .setAttribute("showingdropdown", true);
+  },
+
+  onFooterPopupHidden(aEvent) {
+    document.getElementById("downloadsFooter")
+      .removeAttribute("showingdropdown");
+  },
+
   //////////////////////////////////////////////////////////////////////////////
   //// Related operations
 
@@ -394,6 +420,13 @@ const DownloadsPanel = {
     this.hidePanel();
 
     BrowserDownloadsUI();
+  },
+
+  openDownloadsFolder() {
+    Downloads.getPreferredDownloadsDirectory().then(downloadsPath => {
+      DownloadsCommon.showDirectory(new FileUtils.File(downloadsPath));
+    }).catch(Cu.reportError);
+    this.hidePanel();
   },
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1206,6 +1239,9 @@ const DownloadsViewController = {
   //// nsIController
 
   supportsCommand(aCommand) {
+    if (aCommand === "downloadsCmd_clearList") {
+      return true;
+    }
     // Firstly, determine if this is a command that we can handle.
     if (!DownloadsViewUI.isCommandName(aCommand)) {
       return false;

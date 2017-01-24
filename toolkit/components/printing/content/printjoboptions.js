@@ -19,15 +19,13 @@ function checkDouble(element, maxVal)
 {
   var value = element.value;
   if (value && value.length > 0) {
-    value = value.replace(/[^\.|^0-9]/g,"");
+    value = value.replace(/[^\.|^0-9]/g, "");
     if (!value) {
       element.value = "";
+    } else if (value > maxVal) {
+      element.value = maxVal;
     } else {
-      if (value > maxVal) {
-        element.value = maxVal;
-      } else {
-        element.value = value;
-      }
+      element.value = value;
     }
   }
 }
@@ -39,7 +37,7 @@ function isListOfPrinterFeaturesAvailable()
 
   try {
     has_printerfeatures = gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".has_special_printerfeatures");
-  } catch(ex) {
+  } catch (ex) {
   }
 
   return has_printerfeatures;
@@ -287,31 +285,31 @@ function loadDialog()
     if (gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".can_change_jobtitle"))
       dialog.jobTitleInput.removeAttribute("disabled");
     else
-      dialog.jobTitleInput.setAttribute("disabled","true");
+      dialog.jobTitleInput.setAttribute("disabled", "true");
     if (gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".supports_jobtitle_change"))
       dialog.jobTitleGroup.removeAttribute("hidden");
     else
-      dialog.jobTitleGroup.setAttribute("hidden","true");
+      dialog.jobTitleGroup.setAttribute("hidden", "true");
 
     // paper size
     if (gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".can_change_paper_size"))
       dialog.paperList.removeAttribute("disabled");
     else
-      dialog.paperList.setAttribute("disabled","true");
+      dialog.paperList.setAttribute("disabled", "true");
     if (gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".supports_paper_size_change"))
       dialog.paperGroup.removeAttribute("hidden");
     else
-      dialog.paperGroup.setAttribute("hidden","true");
+      dialog.paperGroup.setAttribute("hidden", "true");
 
     // color/grayscale radio
     if (gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".can_change_printincolor"))
       dialog.colorRadioGroup.removeAttribute("disabled");
     else
-      dialog.colorRadioGroup.setAttribute("disabled","true");
+      dialog.colorRadioGroup.setAttribute("disabled", "true");
     if (gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".supports_printincolor_change"))
       dialog.colorGroup.removeAttribute("hidden");
     else
-      dialog.colorGroup.setAttribute("hidden","true");
+      dialog.colorGroup.setAttribute("hidden", "true");
   }
 
   if (print_color) {

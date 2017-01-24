@@ -59,6 +59,12 @@ HTMLObjectElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
          nsGenericHTMLFormElement::IsInteractiveHTMLContent(aIgnoreTabindex);
 }
 
+void
+HTMLObjectElement::AsyncEventRunning(AsyncEventDispatcher* aEvent)
+{
+  nsImageLoadingContent::AsyncEventRunning(aEvent);
+}
+
 bool
 HTMLObjectElement::IsDoneAddingChildren()
 {
@@ -129,7 +135,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (mElement) {
       HTMLObjectElement::sLastFocused = mElement;

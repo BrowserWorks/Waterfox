@@ -246,7 +246,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
                       "$`", "$'", Symbol.species])
 
   gPrototypeProperties['Promise'] =
-    ["constructor", "catch", "then"];
+    ["constructor", "catch", "then", Symbol.toStringTag];
   gConstructorProperties['Promise'] =
     constructorProps(["resolve", "reject", "all", "race", Symbol.species]);
 
@@ -752,6 +752,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
       is(t.wrappedJSObject.length, 42, "Set tricky expando")
       is(t.length, 10, "Length accessor works over Xrays")
       is(t.byteLength, t.length * window[c].prototype.BYTES_PER_ELEMENT, "byteLength accessor works over Xrays")
+
+      // Can create TypedArray from content ArrayBuffer
+      var buffer = new iwin.ArrayBuffer(8);
+      eval(`new ${c}(buffer);`);
 
       var xray = new iwin[c](0);
       var xrayTypedArrayProto = Object.getPrototypeOf(Object.getPrototypeOf(xray));

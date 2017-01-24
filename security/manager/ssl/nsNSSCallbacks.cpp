@@ -7,10 +7,11 @@
 #include "nsNSSCallbacks.h"
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/Casting.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsContentUtils.h"
 #include "nsICertOverrideService.h"
 #include "nsIHttpChannelInternal.h"
@@ -181,7 +182,7 @@ nsHTTPDownloadEvent::Run()
 struct nsCancelHTTPDownloadEvent : Runnable {
   RefPtr<nsHTTPListener> mListener;
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mListener->FreeLoadGroup(true);
     mListener = nullptr;
     return NS_OK;
@@ -749,10 +750,11 @@ PK11PasswordPromptRunnable::~PK11PasswordPromptRunnable()
     return;
   }
 
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
-void PK11PasswordPromptRunnable::RunOnTargetThread()
+void
+PK11PasswordPromptRunnable::RunOnTargetThread()
 {
   static NS_DEFINE_CID(kNSSComponentCID, NS_NSSCOMPONENT_CID);
 
@@ -761,60 +763,62 @@ void PK11PasswordPromptRunnable::RunOnTargetThread()
     return;
   }
 
-  nsresult rv = NS_OK;
-  char16_t *password = nullptr;
-  bool value = false;
+  nsresult rv;
   nsCOMPtr<nsIPrompt> prompt;
-
-  if (!mIR)
-  {
-    nsNSSComponent::GetNewPrompter(getter_AddRefs(prompt));
-  }
-  else
-  {
+  if (!mIR) {
+    rv = nsNSSComponent::GetNewPrompter(getter_AddRefs(prompt));
+    if (NS_FAILED(rv)) {
+      return;
+    }
+  } else {
     prompt = do_GetInterface(mIR);
-    NS_ASSERTION(prompt, "callbacks does not implement nsIPrompt");
+    MOZ_ASSERT(prompt, "Interface requestor should implement nsIPrompt");
   }
 
-  if (!prompt)
+  if (!prompt) {
     return;
+  }
 
   if (PK11_ProtectedAuthenticationPath(mSlot)) {
     mResult = ShowProtectedAuthPrompt(mSlot, mIR);
     return;
   }
 
-  nsAutoString promptString;
-  nsCOMPtr<nsINSSComponent> nssComponent(do_GetService(kNSSComponentCID, &rv));
-
-  if (NS_FAILED(rv))
-    return; 
-
-  const char16_t* formatStrings[1] = { 
-    ToNewUnicode(NS_ConvertUTF8toUTF16(PK11_GetTokenName(mSlot)))
-  };
-  rv = nssComponent->PIPBundleFormatStringFromName("CertPassPrompt",
-                                      formatStrings, 1,
-                                      promptString);
-  free(const_cast<char16_t*>(formatStrings[0]));
-
-  if (NS_FAILED(rv))
+  nsCOMPtr<nsINSSComponent> nssComponent(do_GetService(kNSSComponentCID));
+  if (!nssComponent) {
     return;
-
-  // Although the exact value is ignored, we must not pass invalid bool values
-  // through XPConnect.
-  bool checkState = false;
-  rv = prompt->PromptPassword(nullptr, promptString.get(), &password, nullptr,
-                              &checkState, &value);
-  
-  if (NS_SUCCEEDED(rv) && value) {
-    mResult = ToNewUTF8String(nsDependentString(password));
-    free(password);
   }
+
+  NS_ConvertUTF8toUTF16 tokenName(PK11_GetTokenName(mSlot));
+  const char16_t* formatStrings[] = {
+    tokenName.get(),
+  };
+  nsAutoString promptString;
+  rv = nssComponent->PIPBundleFormatStringFromName("CertPassPrompt",
+                                                   formatStrings,
+                                                   ArrayLength(formatStrings),
+                                                   promptString);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+
+  nsXPIDLString password;
+  // |checkState| is unused because |checkMsg| (the argument just before it) is
+  // null, but XPConnect requires it to point to a valid bool nonetheless.
+  bool checkState = false;
+  bool userClickedOK = false;
+  rv = prompt->PromptPassword(nullptr, promptString.get(),
+                              getter_Copies(password), nullptr, &checkState,
+                              &userClickedOK);
+  if (NS_FAILED(rv) || !userClickedOK) {
+    return;
+  }
+
+  mResult = ToNewUTF8String(password);
 }
 
 char*
-PK11PasswordPrompt(PK11SlotInfo* slot, PRBool retry, void* arg)
+PK11PasswordPrompt(PK11SlotInfo* slot, PRBool /*retry*/, void* arg)
 {
   RefPtr<PK11PasswordPromptRunnable> runnable(
     new PK11PasswordPromptRunnable(slot,
@@ -834,6 +838,7 @@ PreliminaryHandshakeDone(PRFileDesc* fd)
   SSLChannelInfo channelInfo;
   if (SSL_GetChannelInfo(fd, &channelInfo, sizeof(channelInfo)) == SECSuccess) {
     infoObject->SetSSLVersionUsed(channelInfo.protocolVersion);
+    infoObject->SetEarlyDataAccepted(channelInfo.earlyDataAccepted);
 
     SSLCipherSuiteInfo cipherInfo;
     if (SSL_GetCipherSuiteInfo(channelInfo.cipherSuite, &cipherInfo,
@@ -848,7 +853,7 @@ PreliminaryHandshakeDone(PRFileDesc* fd)
       status->mHaveCipherSuiteAndProtocol = true;
       status->mCipherSuite = channelInfo.cipherSuite;
       status->mProtocolVersion = channelInfo.protocolVersion & 0xFF;
-      infoObject->SetKEAUsed(cipherInfo.keaType);
+      infoObject->SetKEAUsed(channelInfo.keaType);
       infoObject->SetKEAKeyBits(channelInfo.keaKeyBits);
       infoObject->SetMACAlgorithmUsed(cipherInfo.macAlgorithm);
     }
@@ -917,7 +922,7 @@ CanFalseStartCallback(PRFileDesc* fd, void* client_data, PRBool *canFalseStart)
                              sizeof (cipherInfo)) != SECSuccess) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("CanFalseStartCallback [%p] failed - "
                                       " KEA %d\n", fd,
-                                      static_cast<int32_t>(cipherInfo.keaType)));
+                                      static_cast<int32_t>(channelInfo.keaType)));
     return SECSuccess;
   }
 
@@ -933,10 +938,10 @@ CanFalseStartCallback(PRFileDesc* fd, void* client_data, PRBool *canFalseStart)
   }
 
   // See bug 952863 for why ECDHE is allowed, but DHE (and RSA) are not.
-  if (cipherInfo.keaType != ssl_kea_ecdh) {
+  if (channelInfo.keaType != ssl_kea_ecdh) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("CanFalseStartCallback [%p] failed - "
                                       "unsupported KEA %d\n", fd,
-                                      static_cast<int32_t>(cipherInfo.keaType)));
+                                      static_cast<int32_t>(channelInfo.keaType)));
     reasonsForNotFalseStarting |= KEA_NOT_SUPPORTED;
   }
 
@@ -1066,9 +1071,9 @@ AccumulateCipherSuite(Telemetry::ID probe, const SSLChannelInfo& channelInfo)
     case TLS_RSA_WITH_RC4_128_SHA: value = 68; break;
     case TLS_RSA_WITH_RC4_128_MD5: value = 69; break;
     // TLS 1.3 PSK resumption
-    case TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256: value = 70; break;
-    case TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256: value = 71; break;
-    case TLS_ECDHE_PSK_WITH_AES_256_GCM_SHA384: value = 72; break;
+    case TLS_AES_128_GCM_SHA256: value = 70; break;
+    case TLS_CHACHA20_POLY1305_SHA256: value = 71; break;
+    case TLS_AES_256_GCM_SHA384: value = 72; break;
     // unknown
     default:
       value = 0;
@@ -1124,21 +1129,19 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                 sizeof cipherInfo);
     MOZ_ASSERT(rv == SECSuccess);
     if (rv == SECSuccess) {
-      usesFallbackCipher = cipherInfo.keaType == ssl_kea_dh;
+      usesFallbackCipher = channelInfo.keaType == ssl_kea_dh;
 
       // keyExchange null=0, rsa=1, dh=2, fortezza=3, ecdh=4
       Telemetry::Accumulate(
         infoObject->IsFullHandshake()
           ? Telemetry::SSL_KEY_EXCHANGE_ALGORITHM_FULL
           : Telemetry::SSL_KEY_EXCHANGE_ALGORITHM_RESUMED,
-        cipherInfo.keaType);
+        channelInfo.keaType);
 
-      DebugOnly<int16_t> KEAUsed;
-      MOZ_ASSERT(NS_SUCCEEDED(infoObject->GetKEAUsed(&KEAUsed)) &&
-                 (KEAUsed == cipherInfo.keaType));
+      MOZ_ASSERT(infoObject->GetKEAUsed() == channelInfo.keaType);
 
       if (infoObject->IsFullHandshake()) {
-        switch (cipherInfo.keaType) {
+        switch (channelInfo.keaType) {
           case ssl_kea_rsa:
             AccumulateNonECCKeySize(Telemetry::SSL_KEA_RSA_KEY_SIZE_FULL,
                                     channelInfo.keaKeyBits);
@@ -1157,12 +1160,13 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
         }
 
         Telemetry::Accumulate(Telemetry::SSL_AUTH_ALGORITHM_FULL,
-                              cipherInfo.authAlgorithm);
+                              channelInfo.authType);
 
         // RSA key exchange doesn't use a signature for auth.
-        if (cipherInfo.keaType != ssl_kea_rsa) {
-          switch (cipherInfo.authAlgorithm) {
+        if (channelInfo.keaType != ssl_kea_rsa) {
+          switch (channelInfo.authType) {
             case ssl_auth_rsa:
+            case ssl_auth_rsa_sign:
               AccumulateNonECCKeySize(Telemetry::SSL_AUTH_RSA_KEY_SIZE_FULL,
                                       channelInfo.authKeyBits);
               break;

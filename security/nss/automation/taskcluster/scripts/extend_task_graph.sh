@@ -9,5 +9,8 @@ fi
 
 mkdir -p /home/worker/artifacts
 
-# Build the task graph definition.
-nodejs nss/automation/taskcluster/graph/build.js > /home/worker/artifacts/graph.json
+# Install Node.JS dependencies.
+cd nss/automation/taskcluster/graph/ && npm install
+
+# Extend the task graph.
+node lib/index.js

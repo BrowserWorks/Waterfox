@@ -24,6 +24,7 @@ namespace mozilla {
 namespace dom {
 
 class WebVTTListener;
+class WindowDestroyObserver;
 
 class HTMLTrackElement final : public nsGenericHTMLElement
 {
@@ -110,6 +111,8 @@ public:
 
   void DropChannel();
 
+  void NotifyShutdown();
+
 protected:
   virtual ~HTMLTrackElement();
 
@@ -133,6 +136,8 @@ protected:
 private:
   void DispatchLoadResource();
   bool mLoadResourceDispatched;
+
+  RefPtr<WindowDestroyObserver> mWindowDestroyObserver;
 };
 
 } // namespace dom

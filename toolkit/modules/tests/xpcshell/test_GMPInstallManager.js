@@ -18,7 +18,7 @@ var ProductAddonCheckerScope = Cu.import("resource://gre/modules/addons/ProductA
 
 do_get_profile();
 
-function run_test() {Cu.import("resource://gre/modules/Preferences.jsm")
+function run_test() { Cu.import("resource://gre/modules/Preferences.jsm")
   Preferences.set("media.gmp.log.dump", true);
   Preferences.set("media.gmp.log.level", 0);
   run_next_test();
@@ -494,7 +494,7 @@ function* test_checkForAddons_installAddon(id, includeSize, wantInstallReject) {
     zipFile.remove(false);
     httpServer.stop(function() {});
     installManager.uninit();
-  } catch(ex) {
+  } catch (ex) {
     zipFile.remove(false);
     if (!wantInstallReject) {
       do_throw("install update should not reject " + ex.message);

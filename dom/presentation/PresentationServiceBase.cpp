@@ -14,38 +14,41 @@ namespace dom {
 NS_IMPL_ISUPPORTS0(PresentationServiceBase)
 
 nsresult
-PresentationServiceBase::GetExistentSessionIdAtLaunchInternal(
-  uint64_t aWindowId,
-  nsAString& aSessionId)
+PresentationServiceBase::SessionIdManager::GetWindowId(
+                                                   const nsAString& aSessionId,
+                                                   uint64_t* aWindowId)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsTArray<nsString>* sessionIdArray;
-  if (mRespondingSessionIds.Get(aWindowId, &sessionIdArray) &&
-      !sessionIdArray->IsEmpty()) {
-    aSessionId.Assign((*sessionIdArray)[0]);
-  }
-  else {
-    aSessionId.Truncate();
-  }
-  return NS_OK;
-}
-
-nsresult
-PresentationServiceBase::GetWindowIdBySessionIdInternal(
-  const nsAString& aSessionId,
-  uint64_t* aWindowId)
-{
   if (mRespondingWindowIds.Get(aSessionId, aWindowId)) {
     return NS_OK;
   }
   return NS_ERROR_NOT_AVAILABLE;
 }
 
-void
-PresentationServiceBase::AddRespondingSessionId(uint64_t aWindowId,
-                                                const nsAString& aSessionId)
+nsresult
+PresentationServiceBase::SessionIdManager::GetSessionIds(
+                                               uint64_t aWindowId,
+                                               nsTArray<nsString>& aSessionIds)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsTArray<nsString>* sessionIdArray;
+  if (!mRespondingSessionIds.Get(aWindowId, &sessionIdArray)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  aSessionIds.Assign(*sessionIdArray);
+  return NS_OK;
+}
+
+void
+PresentationServiceBase::SessionIdManager::AddSessionId(
+                                                   uint64_t aWindowId,
+                                                   const nsAString& aSessionId)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
   if (NS_WARN_IF(aWindowId == 0)) {
     return;
   }
@@ -61,8 +64,11 @@ PresentationServiceBase::AddRespondingSessionId(uint64_t aWindowId,
 }
 
 void
-PresentationServiceBase::RemoveRespondingSessionId(const nsAString& aSessionId)
+PresentationServiceBase::SessionIdManager::RemoveSessionId(
+                                                   const nsAString& aSessionId)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
   uint64_t windowId = 0;
   if (mRespondingWindowIds.Get(aSessionId, &windowId)) {
     mRespondingWindowIds.Remove(aSessionId);
@@ -74,6 +80,83 @@ PresentationServiceBase::RemoveRespondingSessionId(const nsAString& aSessionId)
       }
     }
   }
+}
+
+nsresult
+PresentationServiceBase::SessionIdManager::UpdateWindowId(
+                                                   const nsAString& aSessionId,
+                                                   const uint64_t aWindowId)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  RemoveSessionId(aSessionId);
+  AddSessionId(aWindowId, aSessionId);
+  return NS_OK;
+}
+
+nsresult
+PresentationServiceBase::GetWindowIdBySessionIdInternal(
+                                                   const nsAString& aSessionId,
+                                                   uint8_t aRole,
+                                                   uint64_t* aWindowId)
+{
+  MOZ_ASSERT(aRole == nsIPresentationService::ROLE_CONTROLLER ||
+             aRole == nsIPresentationService::ROLE_RECEIVER);
+
+  if (NS_WARN_IF(!aWindowId)) {
+    return NS_ERROR_INVALID_POINTER;
+  }
+
+  if (aRole == nsIPresentationService::ROLE_CONTROLLER) {
+    return mControllerSessionIdManager.GetWindowId(aSessionId, aWindowId);
+  }
+
+  return mReceiverSessionIdManager.GetWindowId(aSessionId, aWindowId);
+}
+
+void
+PresentationServiceBase::AddRespondingSessionId(uint64_t aWindowId,
+                                                const nsAString& aSessionId,
+                                                uint8_t aRole)
+{
+  MOZ_ASSERT(aRole == nsIPresentationService::ROLE_CONTROLLER ||
+             aRole == nsIPresentationService::ROLE_RECEIVER);
+
+  if (aRole == nsIPresentationService::ROLE_CONTROLLER) {
+    mControllerSessionIdManager.AddSessionId(aWindowId, aSessionId);
+  } else {
+    mReceiverSessionIdManager.AddSessionId(aWindowId, aSessionId);
+  }
+}
+
+void
+PresentationServiceBase::RemoveRespondingSessionId(const nsAString& aSessionId,
+                                                   uint8_t aRole)
+{
+  MOZ_ASSERT(aRole == nsIPresentationService::ROLE_CONTROLLER ||
+             aRole == nsIPresentationService::ROLE_RECEIVER);
+
+  if (aRole == nsIPresentationService::ROLE_CONTROLLER) {
+    mControllerSessionIdManager.RemoveSessionId(aSessionId);
+  } else {
+    mReceiverSessionIdManager.RemoveSessionId(aSessionId);
+  }
+}
+
+nsresult
+PresentationServiceBase::UpdateWindowIdBySessionIdInternal(
+                                                   const nsAString& aSessionId,
+                                                   uint8_t aRole,
+                                                   const uint64_t aWindowId)
+{
+  MOZ_ASSERT(aRole == nsIPresentationService::ROLE_CONTROLLER ||
+             aRole == nsIPresentationService::ROLE_RECEIVER);
+
+  if (aRole == nsIPresentationService::ROLE_CONTROLLER) {
+    return mControllerSessionIdManager.UpdateWindowId(aSessionId, aWindowId);
+  }
+
+  return mReceiverSessionIdManager.UpdateWindowId(aSessionId, aWindowId);
 }
 
 } // namespace dom

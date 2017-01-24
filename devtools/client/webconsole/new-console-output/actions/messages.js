@@ -9,14 +9,23 @@
 const {
   prepareMessage
 } = require("devtools/client/webconsole/new-console-output/utils/messages");
+const { IdGenerator } = require("devtools/client/webconsole/new-console-output/utils/id-generator");
 
 const {
   MESSAGE_ADD,
   MESSAGES_CLEAR,
+  MESSAGE_OPEN,
+  MESSAGE_CLOSE,
 } = require("../constants");
 
-function messageAdd(packet) {
-  let message = prepareMessage(packet);
+const defaultIdGenerator = new IdGenerator();
+
+function messageAdd(packet, idGenerator = null) {
+  if (idGenerator == null) {
+    idGenerator = defaultIdGenerator;
+  }
+  let message = prepareMessage(packet, idGenerator);
+
   return {
     type: MESSAGE_ADD,
     message
@@ -29,5 +38,21 @@ function messagesClear() {
   };
 }
 
+function messageOpen(id) {
+  return {
+    type: MESSAGE_OPEN,
+    id
+  };
+}
+
+function messageClose(id) {
+  return {
+    type: MESSAGE_CLOSE,
+    id
+  };
+}
+
 exports.messageAdd = messageAdd;
 exports.messagesClear = messagesClear;
+exports.messageOpen = messageOpen;
+exports.messageClose = messageClose;

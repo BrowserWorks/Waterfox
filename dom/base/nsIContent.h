@@ -243,6 +243,12 @@ public:
    */
   inline bool IsInHTMLDocument() const;
 
+
+  /**
+   * Returns true if in a chrome document
+   */
+  virtual bool IsInChromeDocument();
+
   /**
    * Get the namespace that this element's tag is defined in
    * @return the namespace
@@ -319,6 +325,18 @@ public:
   {
     return mNodeInfo->Equals(nsGkAtoms::children, kNameSpaceID_XBL) &&
            GetBindingParent();
+  }
+
+  bool IsGeneratedContentContainerForBefore() const
+  {
+    return IsRootOfNativeAnonymousSubtree() &&
+           mNodeInfo->NameAtom() == nsGkAtoms::mozgeneratedcontentbefore;
+  }
+
+  bool IsGeneratedContentContainerForAfter() const
+  {
+    return IsRootOfNativeAnonymousSubtree() &&
+           mNodeInfo->NameAtom() == nsGkAtoms::mozgeneratedcontentafter;
   }
 
   /**
@@ -660,7 +678,7 @@ public:
    *
    * @return The ShadowRoot currently bound to this element.
    */
-  virtual mozilla::dom::ShadowRoot *GetShadowRoot() const = 0;
+  inline mozilla::dom::ShadowRoot *GetShadowRoot() const;
 
   /**
    * Gets the root of the node tree for this content if it is in a shadow tree.
@@ -701,13 +719,15 @@ public:
   virtual void SetXBLInsertionParent(nsIContent* aContent) = 0;
 
   /**
-   * Returns the content node that is the parent of this node in the flattened
-   * tree. For nodes that are not filtered into an insertion point, this
-   * simply returns their DOM parent in the original DOM tree.
-   *
-   * @return the flattened tree parent
+   * Same as GetFlattenedTreeParentNode, but returns null if the parent is
+   * non-nsIContent.
    */
-  nsIContent *GetFlattenedTreeParent() const;
+  inline nsIContent *GetFlattenedTreeParent() const;
+
+  /**
+   * Helper method, which we leave public so that it's accessible from nsINode.
+   */
+  nsINode *GetFlattenedTreeParentNodeInternal() const;
 
   /**
    * Gets the custom element data used by web components custom element.
@@ -917,6 +937,14 @@ public:
    * element.  Also, when the content isn't editable, this returns null.
    */
   mozilla::dom::Element* GetEditingHost();
+
+
+  /**
+   * Set NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO all the way up the flattened
+   * parent chain to the document. If an ancestor is found with the bit already
+   * set, this method asserts that all of its ancestors also have the bit set.
+   */
+  void MarkAncestorsAsHavingDirtyDescendantsForServo();
 
   /**
    * Determining language. Look at the nearest ancestor element that has a lang

@@ -14,9 +14,9 @@
 #define MAX_BLOCK_SIZE 16
 
 typedef SECStatus (*freeblCipherFunc)(void *cx, unsigned char *output,
-                          unsigned int *outputLen, unsigned int maxOutputLen,
-                          const unsigned char *input, unsigned int inputLen,
-			  unsigned int blocksize);
+                                      unsigned int *outputLen, unsigned int maxOutputLen,
+                                      const unsigned char *input, unsigned int inputLen,
+                                      unsigned int blocksize);
 typedef void (*freeblDestroyFunc)(void *cx, PRBool freeit);
 
 SEC_BEGIN_PROTOS
@@ -28,7 +28,9 @@ PRBool BL_POSTRan(PRBool freeblOnly);
 
 extern PRBool bl_parentForkedAfterC_Initialize;
 
-#define SKIP_AFTER_FORK(x) if (!bl_parentForkedAfterC_Initialize) x
+#define SKIP_AFTER_FORK(x)                 \
+    if (!bl_parentForkedAfterC_Initialize) \
+    x
 
 #else
 
@@ -38,5 +40,22 @@ extern PRBool bl_parentForkedAfterC_Initialize;
 
 SEC_END_PROTOS
 
-#endif /* _BLAPII_H_ */
+#if defined(NSS_X86_OR_X64)
+#define HAVE_UNALIGNED_ACCESS 1
+#endif
 
+#if defined(__clang__)
+#define HAVE_NO_SANITIZE_ATTR __has_attribute(no_sanitize)
+#else
+#define HAVE_NO_SANITIZE_ATTR 0
+#endif
+
+#if defined(HAVE_UNALIGNED_ACCESS) && HAVE_NO_SANITIZE_ATTR
+#define NO_SANITIZE_ALIGNMENT __attribute__((no_sanitize("alignment")))
+#else
+#define NO_SANITIZE_ALIGNMENT
+#endif
+
+#undef HAVE_NO_SANITIZE_ATTR
+
+#endif /* _BLAPII_H_ */

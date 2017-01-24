@@ -6,6 +6,7 @@
 
 #include "domstubs.idl"
 #include "nsIDocShellTreeItem.idl"
+#include "nsIRequest.idl"
 
 %{ C++
 #include "js/TypeDecls.h"
@@ -45,8 +46,6 @@ interface nsITabChild;
 interface nsICommandManager;
 interface nsICommandParams;
 native TabChildRef(already_AddRefed<nsITabChild>);
-
-typedef unsigned long nsLoadFlags;
 
 [scriptable, builtinclass, uuid(049234fe-da10-478b-bc5d-bc6f9a1ba63d)]
 interface nsIDocShell : nsIDocShellTreeItem
@@ -647,12 +646,6 @@ interface nsIDocShell : nsIDocShellTreeItem
   attribute boolean isActive;
 
   /**
-   * Sets whether a docshell is active, as above, but ensuring it does
-   * not discard its layers
-   */
-  void setIsActiveAndForeground(in boolean aIsActive);
-
-  /**
    * Puts the docshell in prerendering mode. noscript because we want only
    * native code to be able to put a docshell in prerendering.
    */
@@ -1082,11 +1075,6 @@ interface nsIDocShell : nsIDocShellTreeItem
    * already be loaded by this docShell.
    */
   [infallible] readonly attribute boolean hasLoadedNonBlankURI;
-
-  /**
-   * Holds the id of the payment request associated with this docshell if any.
-   */
-  attribute DOMString paymentRequestId;
 
   /**
    * Allow usage of -moz-window-dragging:drag for content docshells.

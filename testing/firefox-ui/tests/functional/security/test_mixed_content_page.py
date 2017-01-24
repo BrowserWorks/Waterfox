@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from marionette_driver import Wait
-
 from firefox_ui_harness.testcases import FirefoxTestCase
 
 
@@ -26,8 +24,8 @@ class TestMixedContentPage(FirefoxTestCase):
         with self.marionette.using_context('content'):
             self.marionette.navigate(self.url)
 
-        self.assertIn('identity-mixed-passive-loaded',
-                      self.locationbar.connection_icon.value_of_css_property('list-style-image'))
+        self.assertEqual(self.locationbar.identity_box.get_attribute('className'),
+                         'unknownIdentity mixedDisplayContent')
 
         # Open the identity popup
         self.locationbar.open_identity_popup()

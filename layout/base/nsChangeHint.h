@@ -131,6 +131,11 @@ enum nsChangeHint {
    * that are absolutely or fixed position. Use this hint when a style change
    * has changed whether the frame is a container for fixed-pos or abs-pos
    * elements, but reframing is otherwise not needed.
+   *
+   * Note that nsStyleContext::CalcStyleDifference adjusts results
+   * returned by style struct CalcDifference methods to return this hint
+   * only if there was a change to whether the element's overall style
+   * indicates that it establishes a containing block.
    */
   nsChangeHint_UpdateContainingBlock = 1 << 17,
 
@@ -206,9 +211,21 @@ enum nsChangeHint {
    */
   nsChangeHint_UpdateBackgroundPosition = 1 << 26,
 
-  // IMPORTANT NOTE: When adding new hints, consider whether you need to
-  // add them to NS_HintsNotHandledForDescendantsIn() below.  Please also
-  // add them to RestyleManager::ChangeHintToString.
+  /**
+   * Indicates that a frame has changed to or from having the CSS
+   * transform property set.
+   */
+  nsChangeHint_AddOrRemoveTransform = 1 << 27,
+
+  // IMPORTANT NOTE: When adding new hints, consider whether you need
+  // to add them to NS_HintsNotHandledForDescendantsIn() below. Please
+  // also add them to RestyleManager::ChangeHintToString and modify
+  // nsChangeHint_AllHints below accordingly.
+
+  /**
+   * Dummy hint value for all hints. It exists for compile time check.
+   */
+  nsChangeHint_AllHints = (1 << 28) - 1,
 };
 
 // Redefine these operators to return nothing. This will catch any use
@@ -291,6 +308,7 @@ inline nsChangeHint operator^=(nsChangeHint& aLeft, nsChangeHint aRight)
           nsChangeHint_ChildrenOnlyTransform | \
           nsChangeHint_RecomputePosition | \
           nsChangeHint_UpdateContainingBlock | \
+          nsChangeHint_AddOrRemoveTransform | \
           nsChangeHint_BorderStyleNoneChange | \
           nsChangeHint_NeedReflow | \
           nsChangeHint_ReflowChangesSizeOrPosition | \
@@ -311,6 +329,7 @@ inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint)
     nsChangeHint_ChildrenOnlyTransform |
     nsChangeHint_RecomputePosition |
     nsChangeHint_UpdateContainingBlock |
+    nsChangeHint_AddOrRemoveTransform |
     nsChangeHint_BorderStyleNoneChange |
     nsChangeHint_UpdateComputedBSize |
     nsChangeHint_UpdateUsesOpacity | \

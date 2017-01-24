@@ -57,7 +57,7 @@ SVGTests::SystemLanguage()
 bool
 SVGTests::HasExtension(const nsAString& aExtension)
 {
-  return nsSVGFeatures::HasExtension(aExtension);
+  return nsSVGFeatures::HasExtension(aExtension, IsInChromeDoc());
 }
 
 bool
@@ -112,21 +112,6 @@ const nsString * const SVGTests::kIgnoreSystemLanguage = (nsString *) 0x01;
 bool
 SVGTests::PassesConditionalProcessingTests(const nsString *aAcceptLangs) const
 {
-  // Required Features
-  if (mStringListAttributes[FEATURES].IsExplicitlySet()) {
-    if (mStringListAttributes[FEATURES].IsEmpty()) {
-      return false;
-    }
-    nsCOMPtr<nsIContent> content(
-      do_QueryInterface(const_cast<SVGTests*>(this)));
-
-    for (uint32_t i = 0; i < mStringListAttributes[FEATURES].Length(); i++) {
-      if (!nsSVGFeatures::HasFeature(content, mStringListAttributes[FEATURES][i])) {
-        return false;
-      }
-    }
-  }
-
   // Required Extensions
   //
   // The requiredExtensions  attribute defines a list of required language
@@ -139,7 +124,7 @@ SVGTests::PassesConditionalProcessingTests(const nsString *aAcceptLangs) const
       return false;
     }
     for (uint32_t i = 0; i < mStringListAttributes[EXTENSIONS].Length(); i++) {
-      if (!nsSVGFeatures::HasExtension(mStringListAttributes[EXTENSIONS][i])) {
+      if (!nsSVGFeatures::HasExtension(mStringListAttributes[EXTENSIONS][i], IsInChromeDoc())) {
         return false;
       }
     }

@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "PushService",
 const PUSH_CID = Components.ID("{cde1d019-fad8-4044-b141-65fb4fb7a245}");
 
 /**
- * The Push component runs in the child process and exposes the SimplePush API
+ * The Push component runs in the child process and exposes the Push API
  * to the web application. The PushService running in the parent process is the
  * one actually performing all operations.
  */
@@ -104,8 +104,8 @@ Push.prototype = {
         }
 
         let appServerKey = options.applicationServerKey;
-        let keyView = new Uint8Array(ArrayBuffer.isView(appServerKey) ?
-                                     appServerKey.buffer : appServerKey);
+        let keyView = new this._window.Uint8Array(ArrayBuffer.isView(appServerKey) ?
+                                                  appServerKey.buffer : appServerKey);
         if (keyView.byteLength === 0) {
           callback._rejectWithError(Cr.NS_ERROR_DOM_PUSH_INVALID_KEY_ERR);
           return;
@@ -242,12 +242,14 @@ PushSubscriptionCallback.prototype = {
 
   _getKey: function(subscription, name) {
     let outKeyLen = {};
-    let rawKey = subscription.getKey(name, outKeyLen);
+    let rawKey = Cu.cloneInto(subscription.getKey(name, outKeyLen),
+                              this.pushManager._window);
     if (!outKeyLen.value) {
       return null;
     }
-    let key = new ArrayBuffer(outKeyLen.value);
-    let keyView = new Uint8Array(key);
+
+    let key = new this.pushManager._window.ArrayBuffer(outKeyLen.value);
+    let keyView = new this.pushManager._window.Uint8Array(key);
     keyView.set(rawKey);
     return key;
   },

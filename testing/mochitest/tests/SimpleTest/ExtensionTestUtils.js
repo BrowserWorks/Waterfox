@@ -1,6 +1,6 @@
 var ExtensionTestUtils = {};
 
-ExtensionTestUtils.loadExtension = function(ext, id = null)
+ExtensionTestUtils.loadExtension = function(ext)
 {
   // Cleanup functions need to be registered differently depending on
   // whether we're in browser chrome or plain mochitests.
@@ -83,7 +83,24 @@ ExtensionTestUtils.loadExtension = function(ext, id = null)
     },
   };
 
-  var extension = SpecialPowers.loadExtension(id, ext, handler);
+  // Mimic serialization of functions as done in `Extension.generateXPI` and
+  // `Extension.generateZipFile` because functions are dropped when `ext` object
+  // is sent to the main process via the message manager.
+  ext = Object.assign({}, ext);
+  if (ext.files) {
+    ext.files = Object.assign({}, ext.files);
+    for (let filename of Object.keys(ext.files)) {
+      let file = ext.files[filename];
+      if (typeof file == "function") {
+        ext.files[filename] = `(${file})();`
+      }
+    }
+  }
+  if (typeof ext.background == "function") {
+    ext.background = `(${ext.background})();`
+  }
+
+  var extension = SpecialPowers.loadExtension(ext, handler);
 
   registerCleanup(() => {
     if (extension.state == "pending" || extension.state == "running") {

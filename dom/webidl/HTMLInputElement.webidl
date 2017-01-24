@@ -65,6 +65,8 @@ interface HTMLInputElement : HTMLElement {
   [Pure, SetterThrows]
            attribute DOMString min;
   [Pure, SetterThrows]
+           attribute long minLength;
+  [Pure, SetterThrows]
            attribute boolean multiple;
   [Pure, SetterThrows]
            attribute DOMString name;
@@ -115,11 +117,11 @@ interface HTMLInputElement : HTMLElement {
 
   [Throws]
            // TODO: unsigned vs signed
-           attribute long selectionStart;
+           attribute long? selectionStart;
   [Throws]
-           attribute long selectionEnd;
+           attribute long? selectionEnd;
   [Throws]
-           attribute DOMString selectionDirection;
+           attribute DOMString? selectionDirection;
   [Throws]
   void setRangeText(DOMString replacement);
   [Throws]
@@ -227,7 +229,7 @@ HTMLInputElement implements MozPhonetic;
 // Webkit/Blink
 partial interface HTMLInputElement {
   [Pref="dom.webkitBlink.filesystem.enabled", Frozen, Cached, Pure]
-  readonly attribute sequence<Entry> webkitEntries;
+  readonly attribute sequence<FileSystemEntry> webkitEntries;
 
   [Pref="dom.webkitBlink.dirPicker.enabled", BinaryName="WebkitDirectoryAttr", SetterThrows]
           attribute boolean webkitdirectory;

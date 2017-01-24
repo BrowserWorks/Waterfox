@@ -26,6 +26,18 @@ MacroAssembler::moveGPRToFloat32(Register src, FloatRegister dest)
     moveToFloat32(src, dest);
 }
 
+void
+MacroAssembler::move8SignExtend(Register src, Register dest)
+{
+    as_seb(dest, src);
+}
+
+void
+MacroAssembler::move16SignExtend(Register src, Register dest)
+{
+    as_seh(dest, src);
+}
+
 // ===============================================================
 // Logical instructions
 
@@ -611,9 +623,9 @@ MacroAssembler::branchTruncateDoubleToInt32(FloatRegister src, Register dest, La
     convertDoubleToInt32(src, dest, fail);
 }
 
-template <typename T>
+template <typename T, typename L>
 void
-MacroAssembler::branchAdd32(Condition cond, T src, Register dest, Label* overflow)
+MacroAssembler::branchAdd32(Condition cond, T src, Register dest, L overflow)
 {
     switch (cond) {
       case Overflow:
@@ -951,6 +963,22 @@ void
 MacroAssembler::storeFloat32x3(FloatRegister src, const BaseIndex& dest)
 {
     MOZ_CRASH("NYI");
+}
+
+// ===============================================================
+// Clamping functions.
+
+void
+MacroAssembler::clampIntToUint8(Register reg)
+{
+    // If reg is < 0, then we want to clamp to 0.
+    as_slti(ScratchRegister, reg, 0);
+    as_movn(reg, zero, ScratchRegister);
+
+    // If reg is >= 255, then we want to clamp to 255.
+    ma_li(SecondScratchReg, Imm32(255));
+    as_slti(ScratchRegister, reg, 255);
+    as_movz(reg, SecondScratchReg, ScratchRegister);
 }
 
 //}}} check_macroassembler_style

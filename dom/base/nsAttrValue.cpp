@@ -17,7 +17,7 @@
 #include "nsIAtom.h"
 #include "nsUnicharUtils.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/ServoBindings.h"
+#include "mozilla/ServoBindingHelpers.h"
 #include "mozilla/css/Declaration.h"
 #include "nsContentUtils.h"
 #include "nsReadableUtils.h"
@@ -85,7 +85,7 @@ MiscContainer::Cache()
       sheet = mValue.mGeckoCSSDeclaration->GetHTMLCSSStyleSheet();
       break;
     case nsAttrValue::eServoCSSDeclaration:
-      sheet = Servo_GetDeclarationBlockCache(mValue.mServoCSSDeclaration);
+      sheet = Servo_DeclarationBlock_GetCache(mValue.mServoCSSDeclaration);
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("unexpected cached nsAttrValue type");
@@ -112,7 +112,7 @@ MiscContainer::Cache()
       mValue.mGeckoCSSDeclaration->SetImmutable();
       break;
     case nsAttrValue::eServoCSSDeclaration:
-      Servo_SetDeclarationBlockImmutable(mValue.mServoCSSDeclaration);
+      Servo_DeclarationBlock_SetImmutable(mValue.mServoCSSDeclaration);
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("unexpected cached nsAttrValue type");
@@ -139,7 +139,7 @@ MiscContainer::Evict()
       sheet = mValue.mGeckoCSSDeclaration->GetHTMLCSSStyleSheet();
       break;
     case nsAttrValue::eServoCSSDeclaration:
-      sheet = Servo_GetDeclarationBlockCache(mValue.mServoCSSDeclaration);
+      sheet = Servo_DeclarationBlock_GetCache(mValue.mServoCSSDeclaration);
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("unexpected cached nsAttrValue type");
@@ -463,12 +463,12 @@ nsAttrValue::SetTo(css::Declaration* aValue, const nsAString* aSerialized)
 }
 
 void
-nsAttrValue::SetTo(ServoDeclarationBlock* aValue,
+nsAttrValue::SetTo(already_AddRefed<ServoDeclarationBlock> aValue,
                    const nsAString* aSerialized)
 {
   MiscContainer* cont = EnsureEmptyMiscContainer();
   MOZ_ASSERT(cont->mValue.mRefCount == 0);
-  cont->mValue.mServoCSSDeclaration = aValue;
+  cont->mValue.mServoCSSDeclaration = aValue.take();
   cont->mType = eServoCSSDeclaration;
   NS_ADDREF(cont);
   SetMiscAtomOrString(aSerialized);
@@ -1554,6 +1554,34 @@ nsAttrValue::ParseIntWithBounds(const nsAString& aString,
   return true;
 }
 
+void
+nsAttrValue::ParseIntWithFallback(const nsAString& aString, int32_t aDefault,
+                                  int32_t aMax)
+{
+  ResetIfSet();
+
+  nsContentUtils::ParseHTMLIntegerResultFlags result;
+  int32_t val = nsContentUtils::ParseHTMLInteger(aString, &result);
+  bool nonStrict = false;
+  if ((result & nsContentUtils::eParseHTMLInteger_Error) || val < 1) {
+    val = aDefault;
+    nonStrict = true;
+  }
+
+  if (val > aMax) {
+    val = aMax;
+    nonStrict = true;
+  }
+
+  if ((result & nsContentUtils::eParseHTMLInteger_IsPercent) ||
+      (result & nsContentUtils::eParseHTMLInteger_NonStandard) ||
+      (result & nsContentUtils::eParseHTMLInteger_DidNotConsumeAllInput)) {
+    nonStrict = true;
+  }
+
+  SetIntValueAndType(val, eInteger, nonStrict ? &aString : nullptr);
+}
+
 bool
 nsAttrValue::ParseNonNegativeIntValue(const nsAString& aString)
 {
@@ -1706,9 +1734,9 @@ nsAttrValue::LoadImage(nsIDocument* aDocument)
 
   MiscContainer* cont = GetMiscContainer();
   mozilla::css::URLValue* url = cont->mValue.mURL;
-  mozilla::css::ImageValue* image = 
-    new css::ImageValue(url->GetURI(), url->mString, url->mReferrer,
-                        url->mOriginPrincipal, aDocument);
+  mozilla::css::ImageValue* image =
+    new css::ImageValue(url->GetURI(), url->mString, url->mBaseURI,
+                        url->mReferrer, url->mOriginPrincipal, aDocument);
 
   NS_ADDREF(image);
   cont->mValue.mImage = image;
@@ -1718,7 +1746,7 @@ nsAttrValue::LoadImage(nsIDocument* aDocument)
 
 bool
 nsAttrValue::ParseStyleAttribute(const nsAString& aString,
-                                 nsStyledElementNotElementCSSInlineStyle* aElement)
+                                 nsStyledElement* aElement)
 {
   nsIDocument* ownerDoc = aElement->OwnerDoc();
   nsHTMLCSSStyleSheet* sheet = ownerDoc->GetInlineStyleSheet();
@@ -1745,12 +1773,11 @@ nsAttrValue::ParseStyleAttribute(const nsAString& aString,
 
   if (ownerDoc->GetStyleBackendType() == StyleBackendType::Servo) {
     NS_ConvertUTF16toUTF8 value(aString);
-    ServoDeclarationBlock* decl = Servo_ParseStyleAttribute(
+    RefPtr<ServoDeclarationBlock> decl = Servo_ParseStyleAttribute(
         reinterpret_cast<const uint8_t*>(value.get()),
-        value.Length(),
-        sheet);
+        value.Length(), sheet).Consume();
     MOZ_ASSERT(decl);
-    SetTo(decl, &aString);
+    SetTo(decl.forget(), &aString);
   } else {
     css::Loader* cssLoader = ownerDoc->CSSLoader();
     nsCSSParser cssParser(cssLoader);
@@ -1862,7 +1889,7 @@ nsAttrValue::ClearMiscContainer()
           if (cont->mType == eGeckoCSSDeclaration) {
             NS_RELEASE(cont->mValue.mGeckoCSSDeclaration);
           } else {
-            Servo_DropDeclarationBlock(cont->mValue.mServoCSSDeclaration);
+            Servo_DeclarationBlock_Release(cont->mValue.mServoCSSDeclaration);
           }
           break;
         }

@@ -21,7 +21,7 @@
 #include "nsReadLine.h"
 #include "nsIClassInfoImpl.h"
 #include "mozilla/ipc/InputStreamUtils.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/FileUtils.h"
 #include "nsNetCID.h"
 #include "nsXULAppAPI.h"
@@ -32,6 +32,9 @@ typedef mozilla::ipc::FileDescriptor::PlatformHandleType FileHandleType;
 
 using namespace mozilla::ipc;
 using mozilla::DebugOnly;
+using mozilla::Maybe;
+using mozilla::Nothing;
+using mozilla::Some;
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsFileStreamBase
@@ -629,7 +632,8 @@ nsFileInputStream::Deserialize(const InputStreamParams& aParams,
     FileDescriptor fd;
     if (fileDescriptorIndex < aFileDescriptors.Length()) {
         fd = aFileDescriptors[fileDescriptorIndex];
-        NS_WARN_IF_FALSE(fd.IsValid(), "Received an invalid file descriptor!");
+        NS_WARNING_ASSERTION(fd.IsValid(),
+                             "Received an invalid file descriptor!");
     } else {
         NS_WARNING("Received a bad file descriptor index!");
     }
@@ -659,6 +663,12 @@ nsFileInputStream::Deserialize(const InputStreamParams& aParams,
     mIOFlags = params.ioFlags();
 
     return true;
+}
+
+Maybe<uint64_t>
+nsFileInputStream::ExpectedSerializedLength()
+{
+    return Nothing();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -858,6 +868,13 @@ nsPartialFileInputStream::Deserialize(
     // XXX This is so broken. Main thread IO alert.
     return NS_SUCCEEDED(nsFileInputStream::Seek(NS_SEEK_SET, mStart));
 }
+
+Maybe<uint64_t>
+nsPartialFileInputStream::ExpectedSerializedLength()
+{
+    return Some(mLength);
+}
+
 
 nsresult
 nsPartialFileInputStream::DoPendingSeek()

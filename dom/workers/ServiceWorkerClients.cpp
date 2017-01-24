@@ -97,7 +97,7 @@ class GetRunnable final : public Runnable
           new ServiceWorkerWindowClient(promise->GetParentObject(), *mValue);
         promise->MaybeResolve(windowClient.get());
       } else {
-        promise->MaybeResolve(JS::UndefinedHandleValue);
+        promise->MaybeResolveWithUndefined();
       }
       mPromiseProxy->CleanUp();
       return true;
@@ -127,10 +127,16 @@ public:
     WorkerPrivate* workerPrivate = mPromiseProxy->GetWorkerPrivate();
     MOZ_ASSERT(workerPrivate);
 
-    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    UniquePtr<ServiceWorkerClientInfo> result;
     ErrorResult rv;
-    UniquePtr<ServiceWorkerClientInfo> result = swm->GetClient(workerPrivate->GetPrincipal(),
-                                                               mClientId, rv);
+
+    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (!swm) {
+      rv = NS_ERROR_FAILURE;
+    } else {
+      result = swm->GetClient(workerPrivate->GetPrincipal(), mClientId, rv);
+    }
+
     RefPtr<ResolvePromiseWorkerRunnable> r =
       new ResolvePromiseWorkerRunnable(mPromiseProxy->GetWorkerPrivate(),
                                        mPromiseProxy, Move(result),
@@ -206,11 +212,12 @@ public:
       return NS_OK;
     }
 
-    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
     nsTArray<ServiceWorkerClientInfo> result;
-
-    swm->GetAllClients(mPromiseProxy->GetWorkerPrivate()->GetPrincipal(), mScope,
-                       mIncludeUncontrolled, result);
+    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (swm) {
+      swm->GetAllClients(mPromiseProxy->GetWorkerPrivate()->GetPrincipal(),
+                         mScope, mIncludeUncontrolled, result);
+    }
     RefPtr<ResolvePromiseWorkerRunnable> r =
       new ResolvePromiseWorkerRunnable(mPromiseProxy->GetWorkerPrivate(),
                                        mPromiseProxy, result);
@@ -246,7 +253,7 @@ public:
     MOZ_ASSERT(promise);
 
     if (NS_SUCCEEDED(mResult)) {
-      promise->MaybeResolve(JS::UndefinedHandleValue);
+      promise->MaybeResolveWithUndefined();
     } else {
       promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
     }
@@ -284,11 +291,15 @@ public:
     WorkerPrivate* workerPrivate = mPromiseProxy->GetWorkerPrivate();
     MOZ_ASSERT(workerPrivate);
 
+    nsresult rv = NS_OK;
     RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-    MOZ_ASSERT(swm);
-
-    nsresult rv = swm->ClaimClients(workerPrivate->GetPrincipal(),
-                                    mScope, mServiceWorkerID);
+    if (!swm) {
+      // browser shutdown
+      rv = NS_ERROR_FAILURE;
+    } else {
+      rv = swm->ClaimClients(workerPrivate->GetPrincipal(), mScope,
+                             mServiceWorkerID);
+    }
 
     RefPtr<ResolveClaimRunnable> r =
       new ResolveClaimRunnable(workerPrivate, mPromiseProxy, rv);
@@ -526,7 +537,10 @@ public:
       }
 
       RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-      MOZ_ASSERT(swm);
+      if (!swm) {
+        // browser shutdown
+        return NS_ERROR_FAILURE;
+      }
 
       nsCOMPtr<nsIPrincipal> principal = workerPrivate->GetPrincipal();
       MOZ_ASSERT(principal);
@@ -554,7 +568,7 @@ public:
     RefPtr<ResolveOpenWindowRunnable> resolveRunnable =
       new ResolveOpenWindowRunnable(mPromiseProxy, nullptr, rv);
 
-    NS_WARN_IF(!resolveRunnable->Dispatch());
+    Unused << NS_WARN_IF(!resolveRunnable->Dispatch());
 
     return NS_OK;
   }
@@ -675,7 +689,7 @@ ServiceWorkerClients::Get(const nsAString& aClientId, ErrorResult& aRv)
 
   RefPtr<GetRunnable> r =
     new GetRunnable(promiseProxy, aClientId);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+  MOZ_ALWAYS_SUCCEEDS(workerPrivate->DispatchToMainThread(r.forget()));
   return promise.forget();
 }
 
@@ -711,7 +725,7 @@ ServiceWorkerClients::MatchAll(const ClientQueryOptions& aOptions,
     new MatchAllRunnable(promiseProxy,
                          NS_ConvertUTF16toUTF8(scope),
                          aOptions.mIncludeUncontrolled);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+  MOZ_ALWAYS_SUCCEEDS(workerPrivate->DispatchToMainThread(r.forget()));
   return promise.forget();
 }
 
@@ -752,7 +766,7 @@ ServiceWorkerClients::OpenWindow(const nsAString& aUrl,
 
   RefPtr<OpenWindowRunnable> r = new OpenWindowRunnable(promiseProxy,
                                                           aUrl, scope);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+  MOZ_ALWAYS_SUCCEEDS(workerPrivate->DispatchToMainThread(r.forget()));
 
   return promise.forget();
 }
@@ -781,6 +795,6 @@ ServiceWorkerClients::Claim(ErrorResult& aRv)
   RefPtr<ClaimRunnable> runnable =
     new ClaimRunnable(promiseProxy, NS_ConvertUTF16toUTF8(scope));
 
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
+  MOZ_ALWAYS_SUCCEEDS(workerPrivate->DispatchToMainThread(runnable.forget()));
   return promise.forget();
 }

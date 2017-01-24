@@ -280,8 +280,8 @@ interface nsIDOMWindowUtils : nsISupports {
   const long MODIFIER_OS         = 0x1000;
 
   /** Synthesize a mouse event. The event types supported are:
-   *    mousedown, mouseup, mousemove, mouseover, mouseout, contextmenu,
-   *    MozMouseHittest
+   *    mousedown, mouseup, mousemove, mouseover, mouseout, mousecancel,
+   *    contextmenu, MozMouseHittest
    *
    * Events are sent in coordinates offset by aX and aY from the window.
    *
@@ -301,6 +301,11 @@ interface nsIDOMWindowUtils : nsISupports {
    * window under the toplevel window, in some cases it could never reach this
    * window at all.
    *
+   * NOTE: mousecancel is used to represent the vanishing of an input device
+   * such as a pen leaving its digitizer by synthesizing a WidgetMouseEvent,
+   * whose mMessage is eMouseExitFromWidget and mExitFrom is
+   * WidgetMouseEvent::eTopLevel.
+   *
    * @param aType event type
    * @param aX x offset in CSS pixels
    * @param aY y offset in CSS pixels
@@ -312,9 +317,11 @@ interface nsIDOMWindowUtils : nsISupports {
    * @param aPressure touch input pressure: 0.0 -> 1.0
    * @param aInputSourceArg input source, see nsIDOMMouseEvent for values,
    *        defaults to mouse input.
-   * @param aIsSynthesized controls nsIDOMEvent.isSynthesized value
-   *                       that helps identifying test related events,
-   *                       defaults to true
+   * @param aIsDOMEventSynthesized controls nsIDOMEvent.isSynthesized value
+   *                               that helps identifying test related events,
+   *                               defaults to true
+   * @param aIsWidgetEventSynthesized controls WidgetMouseEvent.mReason value
+   *                                  defaults to false (WidgetMouseEvent::eReal)
    *
    * returns true if the page called prevent default on this event
    */
@@ -328,7 +335,9 @@ interface nsIDOMWindowUtils : nsISupports {
                          [optional] in boolean aIgnoreRootScrollFrame,
                          [optional] in float aPressure,
                          [optional] in unsigned short aInputSourceArg,
-                         [optional] in boolean aIsSynthesized);
+                         [optional] in boolean aIsDOMEventSynthesized,
+                         [optional] in boolean aIsWidgetEventSynthesized,
+                         [optional] in long aButtons);
 
 
   /** Synthesize a pointer event. The event types supported are:
@@ -447,7 +456,9 @@ interface nsIDOMWindowUtils : nsISupports {
                               [optional] in boolean aIgnoreRootScrollFrame,
                               [optional] in float aPressure,
                               [optional] in unsigned short aInputSourceArg,
-                              [optional] in boolean aIsSynthesized);
+                              [optional] in boolean aIsDOMEventSynthesized,
+                              [optional] in boolean aIsWidgetEventSynthesized,
+                              [optional] in long aButtons);
 
   /** The same as sendPointerEvent but ensures that the event
    *  is dispatched to this DOM window or one of its children.
@@ -777,6 +788,15 @@ interface nsIDOMWindowUtils : nsISupports {
    * Will throw a DOM security error if called without chrome privileges.
    */
   void forceUpdateNativeMenuAt(in AString indexString);
+
+  /**
+   * Returns the current selection as plaintext. Note that the result may be
+   * different from the result of sendQueryContentEvent(QUERY_SELECTED_TEXT).
+   * This result is computed by native API with transferable data. In other
+   * words, when the OS treats the selection as plaintext, it treats current
+   * selection as this result.
+   */
+  AString GetSelectionAsPlaintext();
 
   /**
    * Focus the element aElement. The element should be in the same document
@@ -1740,6 +1760,13 @@ interface nsIDOMWindowUtils : nsISupports {
   readonly attribute boolean isHandlingUserInput;
 
   /**
+   * Returns milliseconds elapsed since last user input was started
+   *
+   * This relies on EventStateManager::LatestUserInputStart()
+   */
+  readonly attribute double millisSinceLastUserInput;
+
+  /**
    * After calling the method, the window for which this DOMWindowUtils
    * was created can be closed using scripts.
    */
@@ -1937,6 +1964,19 @@ interface nsIDOMWindowUtils : nsISupports {
    * can be used by tests to force execution of the interrupted reflow codepaths.
    */
   void forceReflowInterrupt();
+
+  const long MOUSE_BUTTONS_NO_BUTTON = 0x00;
+  const long MOUSE_BUTTONS_LEFT_BUTTON = 0x01;
+  const long MOUSE_BUTTONS_RIGHT_BUTTON = 0x02;
+  const long MOUSE_BUTTONS_MIDDLE_BUTTON = 0x04;
+  // Typically, "back" button being left side of 5-button
+  // mice, see "buttons" attribute document of DOM3 Events.
+  const long MOUSE_BUTTONS_4TH_BUTTON = 0x08;
+  // Typically, "forward" button being right side of 5-button
+  // mice, see "buttons" attribute document of DOM3 Events.
+  const long MOUSE_BUTTONS_5TH_BUTTON = 0x10;
+  // Buttons are not specified, will be calculated from |aButton|.
+  const long MOUSE_BUTTONS_NOT_SPECIFIED = -1;
 };
 
 [scriptable, uuid(c694e359-7227-4392-a138-33c0cc1f15a6)]

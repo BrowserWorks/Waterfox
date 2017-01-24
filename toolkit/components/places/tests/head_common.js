@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const CURRENT_SCHEMA_VERSION = 33;
+const CURRENT_SCHEMA_VERSION = 34;
 const FIRST_UPGRADABLE_SCHEMA_VERSION = 11;
 
 const NS_APP_USER_PROFILE_50_DIR = "ProfD";
@@ -236,7 +236,7 @@ function clearDB() {
     file.append("places.sqlite");
     if (file.exists())
       file.remove(false);
-  } catch(ex) { dump("Exception: " + ex); }
+  } catch (ex) { dump("Exception: " + ex); }
 }
 
 
@@ -738,10 +738,8 @@ function do_compare_arrays(a1, a2, sorted)
   if (sorted) {
     return a1.every((e, i) => e == a2[i]);
   }
-  else {
-    return a1.filter(e => !a2.includes(e)).length == 0 &&
-           a2.filter(e => !a1.includes(e)).length == 0;
-  }
+  return a1.filter(e => !a2.includes(e)).length == 0 &&
+         a2.filter(e => !a1.includes(e)).length == 0;
 }
 
 /**

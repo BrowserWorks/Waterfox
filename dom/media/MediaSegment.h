@@ -174,9 +174,13 @@ public:
    */
   virtual void AppendNullData(StreamTime aDuration) = 0;
   /**
-   * Replace contents with disabled data of the same duration
+   * Replace contents with disabled (silence/black) data of the same duration
    */
   virtual void ReplaceWithDisabled() = 0;
+  /**
+   * Replace contents with null data of the same duration
+   */
+  virtual void ReplaceWithNull() = 0;
   /**
    * Remove all contents, setting duration to 0.
    */
@@ -313,6 +317,10 @@ public:
     if (GetType() != AUDIO) {
       MOZ_CRASH("Disabling unknown segment type");
     }
+    ReplaceWithNull();
+  }
+  void ReplaceWithNull() override
+  {
     StreamTime duration = GetDuration();
     Clear();
     AppendNullData(duration);
@@ -393,6 +401,14 @@ public:
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
+  Chunk* GetLastChunk()
+  {
+    if (mChunks.IsEmpty()) {
+      return nullptr;
+    }
+    return &mChunks[mChunks.Length() - 1];
+  }
+
 protected:
   explicit MediaSegmentBase(Type aType) : MediaSegment(aType) {}
 
@@ -438,14 +454,6 @@ protected:
     c->mDuration = aDuration;
     mDuration += aDuration;
     return c;
-  }
-
-  Chunk* GetLastChunk()
-  {
-    if (mChunks.IsEmpty()) {
-      return nullptr;
-    }
-    return &mChunks[mChunks.Length() - 1];
   }
 
   void RemoveLeading(StreamTime aDuration, uint32_t aStartIndex)

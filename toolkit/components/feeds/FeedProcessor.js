@@ -56,7 +56,7 @@ function strToURI(link, base) {
   try {
     return gIoService.newURI(link, null, base);
   }
-  catch(e) {
+  catch (e) {
     return null;
   }
 }
@@ -79,7 +79,7 @@ function isIID(a, iid) {
     a.QueryInterface(iid);
     rv = true;
   }
-  catch(e) {
+  catch (e) {
   }
   return rv;
 }
@@ -93,7 +93,7 @@ function isIFeedContainer(a) {
 }
 
 function stripTags(someHTML) {
-  return someHTML.replace(/<[^>]+>/g,"");
+  return someHTML.replace(/<[^>]+>/g, "");
 }
 
 /**
@@ -157,7 +157,7 @@ function makePropGetter(key) {
     try {
       return value = bag.getProperty(key);
     }
-    catch(e) {
+    catch (e) {
     }
     return null;
   }
@@ -228,16 +228,16 @@ function Feed() {
 Feed.prototype = {
   searchLists: {
     title: ["title", "rss1:title", "atom03:title", "atom:title"],
-    subtitle: ["description","dc:description","rss1:description",
-               "atom03:tagline","atom:subtitle"],
-    items: ["items","atom03_entries","entries"],
-    id: ["atom:id","rdf:about"],
+    subtitle: ["description", "dc:description", "rss1:description",
+               "atom03:tagline", "atom:subtitle"],
+    items: ["items", "atom03_entries", "entries"],
+    id: ["atom:id", "rdf:about"],
     generator: ["generator"],
     authors : ["authors"],
     contributors: ["contributors"],
-    link:  [["link",strToURI],["rss1:link",strToURI]],
+    link:  [["link", strToURI], ["rss1:link", strToURI]],
     categories: ["categories", "dc:subject"],
-    rights: ["atom03:rights","atom:rights"],
+    rights: ["atom03:rights", "atom:rights"],
     cloud: ["cloud"],
     image: ["image", "rss1:image", "atom:logo"],
     textInput: ["textInput", "rss1:textinput"],
@@ -359,7 +359,7 @@ Feed.prototype = {
       var base = baseSpec ? strToURI(baseSpec, this.baseURI) : this.baseURI;
       uri = strToURI(linkSpec, base);
     }
-    catch(e) {
+    catch (e) {
       LOG(e);
     }
 
@@ -406,15 +406,15 @@ Entry.prototype = {
 
   searchLists: {
     title: ["title", "rss1:title", "atom03:title", "atom:title"],
-    link: [["link",strToURI],["rss1:link",strToURI]],
+    link: [["link", strToURI], ["rss1:link", strToURI]],
     id: [["guid", makePropGetter("guid")], "rdf:about",
          "atom03:id", "atom:id"],
     authors : ["authors"],
     contributors: ["contributors"],
     summary: ["description", "rss1:description", "dc:description",
               "atom03:summary", "atom:summary"],
-    content: ["content:encoded","atom03:content","atom:content"],
-    rights: ["atom03:rights","atom:rights"],
+    content: ["content:encoded", "atom03:content", "atom:content"],
+    rights: ["atom03:rights", "atom:rights"],
     published: ["pubDate", "atom03:issued", "dcterms:issued", "atom:published"],
     updated: ["pubDate", "atom03:modified", "dc:date", "dcterms:modified",
               "atom:updated"]
@@ -659,13 +659,13 @@ Generator.prototype = {
 
   set attributes(value) {
     this._attributes = value;
-    this.version = this._attributes.getValueFromName("","version");
-    var uriAttribute = this._attributes.getValueFromName("","uri") ||
-                       this._attributes.getValueFromName("","url");
+    this.version = this._attributes.getValueFromName("", "version");
+    var uriAttribute = this._attributes.getValueFromName("", "uri") ||
+                       this._attributes.getValueFromName("", "url");
     this.uri = strToURI(uriAttribute, this.baseURI);
 
     // RSS1
-    uriAttribute = this._attributes.getValueFromName(RDF_NS,"resource");
+    uriAttribute = this._attributes.getValueFromName(RDF_NS, "resource");
     if (uriAttribute) {
       this.agent = uriAttribute;
       this.uri = strToURI(uriAttribute, this.baseURI);
@@ -706,7 +706,7 @@ Person.prototype = {
  *               transformation function (like parseInt).
  */
 function fieldsToObj(container, fields) {
-  var props,prop,field,searchList;
+  var props, prop, field, searchList;
   for (var key in fields) {
     searchList = fields[key];
     for (var i=0; i < searchList.length; ++i) {
@@ -716,7 +716,7 @@ function fieldsToObj(container, fields) {
       try {
         prop = container.fields.getProperty(field);
       }
-      catch(e) {
+      catch (e) {
       }
       if (prop) {
         prop = isArray(props) ? props[1](prop) : prop;
@@ -775,7 +775,7 @@ function rssGuid(s, guid) {
 // We want to split this up and assign it to corresponding Atom
 // fields.
 //
-function rssAuthor(s,author) {
+function rssAuthor(s, author) {
   author.QueryInterface(Ci.nsIFeedPerson);
   // check for RSS2 string format
   var chars = s.trim();
@@ -1400,7 +1400,7 @@ FeedProcessor.prototype = {
     //
     if ((this._result.version == "atom" || this._result.version == "atom03") &&
         this._textConstructs[key] != null) {
-      var type = attributes.getValueFromName("","type");
+      var type = attributes.getValueFromName("", "type");
       if (type != null && type.indexOf("xhtml") >= 0) {
         this._xhtmlHandler =
           new XHTMLHandler(this, (this._result.version == "atom"));
@@ -1530,7 +1530,7 @@ FeedProcessor.prototype = {
     try {
       prop = container.getProperty(elementInfo.fieldName);
     }
-    catch(e) {
+    catch (e) {
     }
 
     if (elementInfo.isArray) {
@@ -1545,7 +1545,7 @@ FeedProcessor.prototype = {
       // off the handle in the browser, and loses track of the interface
       // on large files. Bug 335638.
       newProp.QueryInterface(Ci.nsIMutableArray);
-      newProp.appendElement(obj,false);
+      newProp.appendElement(obj, false);
 
       // If new object is an nsIFeedContainer, we want to deal with
       // its member nsIPropertyBag instead.
@@ -1556,7 +1556,7 @@ FeedProcessor.prototype = {
     else {
       // If it doesn't, set it.
       if (!prop) {
-        container.setPropertyAsInterface(elementInfo.fieldName,obj);
+        container.setPropertyAsInterface(elementInfo.fieldName, obj);
       }
       newProp = container.getProperty(elementInfo.fieldName);
     }
@@ -1607,8 +1607,7 @@ FeedProcessor.prototype = {
       return prefix + ":";
     if (uri.toLowerCase().indexOf("http://backend.userland.com") == 0)
       return "";
-    else
-      return null;
+    return null;
   },
 
   _mapAttributes: function FP__mapAttributes(bag, attributes) {
@@ -1630,7 +1629,7 @@ FeedProcessor.prototype = {
                      "0.94":"rss094" }
     if (versions[versionAttr])
       return versions[versionAttr];
-    if (versionAttr.substr(0,2) != "2.")
+    if (versionAttr.substr(0, 2) != "2.")
       return "rssUnknown";
     return "rss2";
   },
@@ -1691,16 +1690,14 @@ FeedProcessor.prototype = {
             el[propName] = propValue;
           }
         }
-        catch(e) {
+        catch (e) {
           // ignore XPConnect errors
         }
         // the rest of the function deals with entry- and feed-level stuff
         return;
       }
-      else {
-        container = container.queryElementAt(container.length - 1,
-                                             Ci.nsIWritablePropertyBag2);
-      }
+      container = container.queryElementAt(container.length - 1,
+                                           Ci.nsIWritablePropertyBag2);
     }
 
     // Make the buffer our new property
@@ -1715,7 +1712,7 @@ FeedProcessor.prototype = {
       newProp.text = chars;
       // Look up the default type in our table
       var type = this._textConstructs[propName];
-      var typeAttribute = attributes.getValueFromName("","type");
+      var typeAttribute = attributes.getValueFromName("", "type");
       if (this._result.version == "atom" && typeAttribute != null) {
         type = typeAttribute;
       }

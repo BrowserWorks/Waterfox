@@ -99,7 +99,7 @@ ImageBitmapRenderingContext::SetDimensions(int32_t aWidth, int32_t aHeight)
 
 NS_IMETHODIMP
 ImageBitmapRenderingContext::InitializeWithDrawTarget(nsIDocShell* aDocShell,
-                                                      gfx::DrawTarget* aTarget)
+                                                      NotNull<gfx::DrawTarget*> aTarget)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -125,7 +125,8 @@ ImageBitmapRenderingContext::MatchWithIntrinsicSize()
                                      temp->GetSize(),
                                      map.GetStride(),
                                      temp->GetFormat());
-  if (!dt) {
+  if (!dt || !dt->IsValid()) {
+    gfxWarning() << "ImageBitmapRenderingContext::MatchWithIntrinsicSize failed";
     return nullptr;
   }
 

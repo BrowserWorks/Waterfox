@@ -22,10 +22,14 @@ XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
                                   "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
                                   "resource://gre/modules/BrowserUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionUtils",
+                                  "resource://gre/modules/ExtensionUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "WebRequestCommon",
                                   "resource://gre/modules/WebRequestCommon.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "WebRequestUpload",
                                   "resource://gre/modules/WebRequestUpload.jsm");
+
+XPCOMUtils.defineLazyGetter(this, "ExtensionError", () => ExtensionUtils.ExtensionError);
 
 function attachToChannel(channel, key, data) {
   if (channel instanceof Ci.nsIWritablePropertyBag2) {
@@ -80,7 +84,7 @@ function parseExtra(extra, allowed = []) {
   if (extra) {
     for (let ex of extra) {
       if (allowed.indexOf(ex) == -1) {
-        throw new Error(`Invalid option ${ex}`);
+        throw new ExtensionError(`Invalid option ${ex}`);
       }
     }
   }
@@ -371,6 +375,11 @@ HttpObserverManager = {
     let headers = [];
     let visitor = {
       visitHeader(name, value) {
+        try {
+          value = channel.getProperty(`webrequest-header-${name.toLowerCase()}`);
+        } catch (e) {
+          // This will throw if the property does not exist.
+        }
         headers.push({name, value});
       },
 
@@ -379,6 +388,7 @@ HttpObserverManager = {
     };
 
     try {
+      channel.QueryInterface(Ci.nsIPropertyBag);
       channel[method](visitor);
     } catch (e) {
       Cu.reportError(`webRequest Error: ${e} trying to perform ${method} in ${event}@${channel.name}`);
@@ -592,9 +602,14 @@ HttpObserverManager = {
         Cu.reportError(e);
       }
 
-      if (!result || !opts.blocking) {
+      if (!result || !opts.blocking
+          || AddonManagerPermissions.isHostPermitted(uri.host)
+          || (loadInfo && loadInfo.loadingPrincipal
+              && loadInfo.loadingPrincipal.URI
+              && AddonManagerPermissions.isHostPermitted(loadInfo.loadingPrincipal.URI.host))) {
         continue;
       }
+
       if (result.cancel) {
         channel.cancel(Cr.NS_ERROR_ABORT);
         this.errorCheck(channel, loadContext);
@@ -613,7 +628,20 @@ HttpObserverManager = {
       if (opts.responseHeaders && result.responseHeaders) {
         this.replaceHeaders(
           result.responseHeaders, responseHeaderNames,
-          (name, value) => channel.setResponseHeader(name, value, false)
+          (name, value) => {
+            if (name.toLowerCase() === "content-type" && value) {
+              // The Content-Type header value can't be modified, so we
+              // set the channel's content type directly, instead, and
+              // record that we made the change for the sake of
+              // subsequent observers.
+              channel.contentType = value;
+
+              channel.QueryInterface(Ci.nsIWritablePropertyBag);
+              channel.setProperty("webrequest-header-content-type", value);
+            } else {
+              channel.setResponseHeader(name, value, false);
+            }
+          }
         );
       }
     }

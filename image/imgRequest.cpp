@@ -108,7 +108,10 @@ imgRequest::Init(nsIURI *aURI,
   mProperties = do_CreateInstance("@mozilla.org/properties;1");
 
   // Use ImageURL to ensure access to URI data off main thread.
-  mURI = new ImageURL(aURI);
+  nsresult rv;
+  mURI = new ImageURL(aURI, rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   mCurrentURI = aCurrentURI;
   mRequest = aRequest;
   mChannel = aChannel;
@@ -319,7 +322,7 @@ public:
     MOZ_ASSERT(aImgRequest);
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "I should be running on the main thread!");
     mImgRequest->ContinueCancel(mStatus);
@@ -368,7 +371,7 @@ public:
     MOZ_ASSERT(aImgRequest);
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "I should be running on the main thread!");
     mImgRequest->ContinueEvict();
@@ -876,7 +879,7 @@ struct mimetype_closure
 };
 
 /* prototype for these defined below */
-static NS_METHOD
+static nsresult
 sniff_mimetype_callback(nsIInputStream* in, void* closure,
                         const char* fromRawSegment, uint32_t toOffset,
                         uint32_t count, uint32_t* writeCount);
@@ -1139,7 +1142,7 @@ imgRequest::SetProperties(const nsACString& aContentType,
   }
 }
 
-static NS_METHOD
+static nsresult
 sniff_mimetype_callback(nsIInputStream* in,
                         void* data,
                         const char* fromRawSegment,
@@ -1225,12 +1228,10 @@ imgRequest::OnRedirectVerifyCallback(nsresult result)
   mNewRedirectChannel = nullptr;
 
   if (LOG_TEST(LogLevel::Debug)) {
-    nsAutoCString spec;
-    if (mCurrentURI) {
-      mCurrentURI->GetSpec(spec);
-    }
     LOG_MSG_WITH_PARAM(gImgLog,
-                       "imgRequest::OnChannelRedirect", "old", spec.get());
+                       "imgRequest::OnChannelRedirect", "old",
+                       mCurrentURI ? mCurrentURI->GetSpecOrDefault().get()
+                                   : "");
   }
 
   // If the previous URI is a non-HTTPS URI, record that fact for later use by
@@ -1263,12 +1264,9 @@ imgRequest::OnRedirectVerifyCallback(nsresult result)
   mChannel->GetURI(getter_AddRefs(mCurrentURI));
 
   if (LOG_TEST(LogLevel::Debug)) {
-    nsAutoCString spec;
-    if (mCurrentURI) {
-      mCurrentURI->GetSpec(spec);
-    }
-    LOG_MSG_WITH_PARAM(gImgLog, "imgRequest::OnChannelRedirect",
-                       "new", spec.get());
+    LOG_MSG_WITH_PARAM(gImgLog, "imgRequest::OnChannelRedirect", "new",
+                       mCurrentURI ? mCurrentURI->GetSpecOrDefault().get()
+                                   : "");
   }
 
   // Make sure we have a protocol that returns data rather than opens an

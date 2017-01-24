@@ -42,10 +42,10 @@ struct GSNCache {
 };
 
 /*
- * ScopeCoordinateName cache to avoid O(n^2) growth in finding the name
+ * EnvironmentCoordinateName cache to avoid O(n^2) growth in finding the name
  * associated with a given aliasedvar operation.
  */
-struct ScopeCoordinateNameCache {
+struct EnvironmentCoordinateNameCache {
     typedef HashMap<uint32_t,
                     jsid,
                     DefaultHasher<uint32_t>,
@@ -54,7 +54,7 @@ struct ScopeCoordinateNameCache {
     Shape* shape;
     Map map;
 
-    ScopeCoordinateNameCache() : shape(nullptr) {}
+    EnvironmentCoordinateNameCache() : shape(nullptr) {}
     void purge();
 };
 
@@ -126,17 +126,11 @@ class NativeIterCache
     }
 
   public:
-    /* Native iterator most recently started. */
-    PropertyIteratorObject* last;
-
-    NativeIterCache()
-      : last(nullptr)
-    {
+    NativeIterCache() {
         mozilla::PodArrayZero(data);
     }
 
     void purge() {
-        last = nullptr;
         mozilla::PodArrayZero(data);
     }
 
@@ -290,7 +284,7 @@ class ContextCaches
 
   public:
     js::GSNCache gsnCache;
-    js::ScopeCoordinateNameCache scopeCoordinateNameCache;
+    js::EnvironmentCoordinateNameCache envCoordinateNameCache;
     js::NewObjectCache newObjectCache;
     js::NativeIterCache nativeIterCache;
     js::UncompressedSourceCache uncompressedSourceCache;

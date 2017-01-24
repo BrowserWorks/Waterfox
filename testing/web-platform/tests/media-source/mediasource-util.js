@@ -3,61 +3,35 @@
         {
             url: 'mp4/test.mp4',
             type: 'video/mp4; codecs="mp4a.40.2,avc1.4d400d"',
-            duration: 6.0756,
-            init: { offset: 0, size: 1197 },
+            duration: 6.549,
+            init: { offset: 0, size: 1413 },
             media: [
-                { offset: 1241, size: 17845, timecode: 0.000000 },
-                { offset: 19130, size: 5551, timecode: 0.464800 },
-                { offset: 24725, size: 10944, timecode: 0.763600 },
-                { offset: 35713, size: 7131, timecode: 0.863200 },
-                { offset: 42888, size: 2513, timecode: 1.128800 },
-                { offset: 45457, size: 3022, timecode: 1.261600 },
-                { offset: 48479, size: 815, timecode: 1.427600 },
-                { offset: 49338, size: 2818, timecode: 1.460800 },
-                { offset: 52200, size: 11581, timecode: 1.593600 },
-                { offset: 63825, size: 3003, timecode: 1.726400 },
-                { offset: 66872, size: 6390, timecode: 1.892400 },
-                { offset: 73306, size: 3740, timecode: 2.124800 },
-                { offset: 77102, size: 11779, timecode: 2.324000 },
-                { offset: 88881, size: 851, timecode: 2.490000 },
-                { offset: 89776, size: 4236, timecode: 2.523200 },
-                { offset: 94056, size: 9538, timecode: 2.755600 },
-                { offset: 103638, size: 13295, timecode: 3.154000 },
-                { offset: 116977, size: 309, timecode: 3.386400 },
-                { offset: 117330, size: 5806, timecode: 3.419600 },
-                { offset: 123180, size: 4392, timecode: 3.751600 },
-                { offset: 127616, size: 15408, timecode: 3.984000 },
-                { offset: 143068, size: 9899, timecode: 4.216400 },
-                { offset: 153011, size: 11562, timecode: 4.780800 },
-                { offset: 164617, size: 7398, timecode: 4.946800 },
-                { offset: 172059, size: 5698, timecode: 5.212400 },
-                { offset: 177801, size: 11682, timecode: 5.511200 },
-                { offset: 189527, size: 3023, timecode: 5.677200 },
-                { offset: 192594, size: 5726, timecode: 5.843200 },
+                { offset: 1413, size: 24034, timev: 0.095000, timea: 0, endtimev: 0.896666, endtimea: 0.882358 },
+                { offset: 25447, size: 21757, timev: 0.896666, timea: 0.882358, endtimev: 1.696666, endtimea: 1.671836 },
+                { offset: 47204, size: 23591, timev: 1.696666, timea: 1.671836, endtimev: 2.498333, endtimea: 2.461315 },
+                { offset: 70795, size: 22614, timev: 2.498333, timea: 2.461315, endtimev: 3.298333, endtimea: 3.297233 },
+                { offset: 93409, size: 18353, timev: 3.298333, timea: 3.297233, endtimev: 4.100000, endtimea: 4.086712},
+                { offset: 111762, size: 23935, timev: 4.100000, timea: 4.086712, endtimev: 4.900000, endtimea: 4.876190 },
+                { offset: 135697, size: 21911, timev: 4.900000, timea: 4.876190, endtimev: 5.701666, endtimea: 5.665668 },
+                { offset: 157608, size: 23776, timev: 5.701666, timea: 5.665668, endtimev: 6.501666, endtimea: 6.501587 },
+                { offset: 181384, size: 5843, timev: 6.501666, timea: 6.501587, endtimev: 6.501666, endtimea: 6.501678 },
             ]
         },
         {
             url: 'webm/test.webm',
             type: 'video/webm; codecs="vp8, vorbis"',
-            duration: 6.042,
-            init: { offset: 0, size: 4357 },
+            duration: 6.552,
+            init: { offset: 0, size: 4116 },
             media: [
-                {  offset: 4357, size: 11830, timecode: 0 },
-                {  offset: 16187, size: 12588, timecode: 0.385 },
-                {  offset: 28775, size: 14588, timecode: 0.779 },
-                {  offset: 43363, size: 13023, timecode: 1.174 },
-                {  offset: 56386, size: 13127, timecode: 1.592 },
-                {  offset: 69513, size: 14456, timecode: 1.987 },
-                {  offset: 83969, size: 13458, timecode: 2.381 },
-                {  offset: 97427, size: 14566, timecode: 2.776 },
-                {  offset: 111993, size: 13201, timecode: 3.171 },
-                {  offset: 125194, size: 14061, timecode: 3.566 },
-                {  offset: 139255, size: 15353, timecode: 3.96 },
-                {  offset: 154608, size: 13618, timecode: 4.378 },
-                {  offset: 168226, size: 15094, timecode: 4.773 },
-                {  offset: 183320, size: 13069, timecode: 5.168 },
-                {  offset: 196389, size: 13788, timecode: 5.563 },
-                {  offset: 210177, size: 9009, timecode: 5.957 },
+                {  offset: 4116, size: 26583, timev: 0.112000, timea: 0, endtimev: 0.913000, endtimea: 0.912000 },
+                {  offset: 30699, size: 20555, timev: 0.913000, timea: 0.912000, endtimev: 1.714000, endtimea: 1.701000 },
+                {  offset: 51254, size: 22668, timev: 1.714000, timea: 1.701000, endtimev: 2.515000, endtimea: 2.514000 },
+                {  offset: 73922, size: 21943, timev: 2.515000, timea: 2.514000, endtimev: 3.315000, endtimea: 3.303000 },
+                {  offset: 95865, size: 23015, timev: 3.315000, timea: 3.303000, endtimev: 4.116000, endtimea: 4.093000},
+                {  offset: 118880, size: 20406, timev: 4.116000, timea: 4.093000, endtimev: 4.917000, endtimea: 4.906000 },
+                {  offset: 139286, size: 21537, timev: 4.917000, timea: 4.906000, endtimev: 5.718000, endtimea: 5.695000 },
+                {  offset: 160823, size: 24027, timev: 5.718000, timea: 5.695000, endtimev: 6.519000, endtimea: 6.508000 },
+                {  offset: 184850, size: 5955, timev: 6.519000, timea: 6.508000, endtimev: 6.577000, endtimea: 6.577000},
             ],
         }
     ];
@@ -85,8 +59,12 @@
             assert_equals(eventInfo.description, expected.description, "Descriptions match for '" +  event.type + "'.");
 
             expectations.shift(1);
-            if (t.waitCallbacks_.length > 0)
+            if (t.waitCallbacks_.length > 1)
                 setTimeout(waitHandler, 0);
+            else if (t.waitCallbacks_.length == 1) {
+                // Immediately call the callback.
+                waitHandler();
+            }
         });
         object.addEventListener(eventName, eventHandler);
     };
@@ -215,7 +193,8 @@
         var start = mediaInfo[0].offset;
         var numBytes = 0;
         var segmentIndex = 0;
-        while (segmentIndex < mediaInfo.length && mediaInfo[segmentIndex].timecode <= playbackTimeToAdd)
+        while (segmentIndex < mediaInfo.length
+               && Math.min(mediaInfo[segmentIndex].timev, mediaInfo[segmentIndex].timea) <= playbackTimeToAdd)
         {
           numBytes += mediaInfo[segmentIndex].size;
           ++segmentIndex;
@@ -362,6 +341,9 @@
         return media_test(function(test)
         {
             var mediaTag = document.createElement("video");
+            if (!document.body) {
+                document.body = document.createElement("body");
+            }
             document.body.appendChild(mediaTag);
 
             test.removeMediaElement_ = true;
@@ -413,6 +395,12 @@
     window['assertBufferedEquals'] = function(obj, expected, description)
     {
         var actual = timeRangesToString(obj.buffered);
+        assert_equals(actual, expected, description);
+    };
+
+    window['assertSeekableEquals'] = function(obj, expected, description)
+    {
+        var actual = timeRangesToString(obj.seekable);
         assert_equals(actual, expected, description);
     };
 

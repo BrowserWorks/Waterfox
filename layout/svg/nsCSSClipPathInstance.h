@@ -28,7 +28,7 @@ public:
                                     const gfxPoint& aPoint);
 private:
   explicit nsCSSClipPathInstance(nsIFrame* aFrame,
-                                 const nsStyleClipPath aClipPathStyle)
+                                 const StyleClipPath aClipPathStyle)
     : mTargetFrame(aFrame)
     , mClipPathStyle(aClipPathStyle)
   {
@@ -45,11 +45,18 @@ private:
   already_AddRefed<Path> CreateClipPathPolygon(DrawTarget* aDrawTarget,
                                                const nsRect& aRefBox);
 
+  already_AddRefed<Path> CreateClipPathInset(DrawTarget* aDrawTarget,
+                                             const nsRect& aRefBox);
+
+
+  nsRect ComputeHTMLReferenceRect();
+  nsRect ComputeSVGReferenceRect();
+
   /**
    * The frame for the element that is currently being clipped.
    */
   nsIFrame* mTargetFrame;
-  nsStyleClipPath mClipPathStyle;
+  StyleClipPath mClipPathStyle;
 };
 
 } // namespace mozilla

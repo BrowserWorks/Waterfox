@@ -17,6 +17,7 @@
 #include "mozilla/Likely.h"
 #include <algorithm>
 #include "mozilla/dom/FunctionBinding.h"
+#include "WorkerPrivate.h"
 #include "nsAXPCNativeCallContext.h"
 
 static const char kSetIntervalStr[] = "setInterval";
@@ -24,6 +25,7 @@ static const char kSetTimeoutStr[] = "setTimeout";
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::dom::workers;
 
 // Our JS nsIScriptTimeoutHandler implementation.
 class nsJSScriptTimeoutHandler final : public nsIScriptTimeoutHandler
@@ -37,13 +39,18 @@ public:
   // This will call SwapElements on aArguments with an empty array.
   nsJSScriptTimeoutHandler(JSContext* aCx, nsGlobalWindow *aWindow,
                            Function& aFunction,
-                           FallibleTArray<JS::Heap<JS::Value> >& aArguments,
+                           nsTArray<JS::Heap<JS::Value>>&& aArguments,
                            ErrorResult& aError);
   nsJSScriptTimeoutHandler(JSContext* aCx, nsGlobalWindow *aWindow,
                            const nsAString& aExpression, bool* aAllowEval,
                            ErrorResult& aError);
+  nsJSScriptTimeoutHandler(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
+                           Function& aFunction,
+                           nsTArray<JS::Heap<JS::Value>>&& aArguments);
+  nsJSScriptTimeoutHandler(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
+                           const nsAString& aExpression);
 
-  virtual const char16_t* GetHandlerText() override;
+  virtual const nsAString& GetHandlerText() override;
   virtual Function* GetCallback() override
   {
     return mFunction;
@@ -66,12 +73,16 @@ public:
 private:
   ~nsJSScriptTimeoutHandler();
 
+  void Init(JSContext* aCx,
+            nsTArray<JS::Heap<JS::Value>>&& aArguments);
+  void Init(JSContext* aCx);
+
   // filename, line number and JS language version string of the
   // caller of setTimeout()
   nsCString mFileName;
   uint32_t mLineNo;
   uint32_t mColumn;
-  nsTArray<JS::Heap<JS::Value> > mArgs;
+  nsTArray<JS::Heap<JS::Value>> mArgs;
 
   // The expression to evaluate or function to call. If mFunction is non-null
   // it should be used, else use mExpr.
@@ -198,7 +209,7 @@ nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler()
 nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler(JSContext* aCx,
                                                    nsGlobalWindow *aWindow,
                                                    Function& aFunction,
-                                                   FallibleTArray<JS::Heap<JS::Value> >& aArguments,
+                                                   nsTArray<JS::Heap<JS::Value>>&& aArguments,
                                                    ErrorResult& aError)
   : mLineNo(0)
   , mColumn(0)
@@ -211,11 +222,7 @@ nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler(JSContext* aCx,
     return;
   }
 
-  mozilla::HoldJSObjects(this);
-  mArgs.SwapElements(aArguments);
-
-  // Get the calling location.
-  nsJSUtils::GetCallingLocation(aCx, mFileName, &mLineNo, &mColumn);
+  Init(aCx, Move(aArguments));
 }
 
 nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler(JSContext* aCx,
@@ -239,13 +246,56 @@ nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler(JSContext* aCx,
     return;
   }
 
-  // Get the calling location.
-  nsJSUtils::GetCallingLocation(aCx, mFileName, &mLineNo, &mColumn);
+  Init(aCx);
+}
+
+nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler(JSContext* aCx,
+                                                   WorkerPrivate* aWorkerPrivate,
+                                                   Function& aFunction,
+                                                   nsTArray<JS::Heap<JS::Value>>&& aArguments)
+  : mLineNo(0)
+  , mColumn(0)
+  , mFunction(&aFunction)
+{
+  MOZ_ASSERT(aWorkerPrivate);
+  aWorkerPrivate->AssertIsOnWorkerThread();
+
+  Init(aCx, Move(aArguments));
+}
+
+nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler(JSContext* aCx,
+                                                   WorkerPrivate* aWorkerPrivate,
+                                                   const nsAString& aExpression)
+  : mLineNo(0)
+  , mColumn(0)
+  , mExpr(aExpression)
+{
+  MOZ_ASSERT(aWorkerPrivate);
+  aWorkerPrivate->AssertIsOnWorkerThread();
+
+  Init(aCx);
 }
 
 nsJSScriptTimeoutHandler::~nsJSScriptTimeoutHandler()
 {
   ReleaseJSObjects();
+}
+
+void
+nsJSScriptTimeoutHandler::Init(JSContext* aCx,
+                               nsTArray<JS::Heap<JS::Value>>&& aArguments)
+{
+  mozilla::HoldJSObjects(this);
+  mArgs = Move(aArguments);
+
+  Init(aCx);
+}
+
+void
+nsJSScriptTimeoutHandler::Init(JSContext* aCx)
+{
+  // Get the calling location.
+  nsJSUtils::GetCallingLocation(aCx, mFileName, &mLineNo, &mColumn);
 }
 
 void
@@ -258,11 +308,11 @@ nsJSScriptTimeoutHandler::ReleaseJSObjects()
   }
 }
 
-const char16_t *
+const nsAString&
 nsJSScriptTimeoutHandler::GetHandlerText()
 {
   NS_ASSERTION(!mFunction, "No expression, so no handler text!");
-  return mExpr.get();
+  return mExpr;
 }
 
 already_AddRefed<nsIScriptTimeoutHandler>
@@ -271,14 +321,14 @@ NS_CreateJSTimeoutHandler(JSContext *aCx, nsGlobalWindow *aWindow,
                           const Sequence<JS::Value>& aArguments,
                           ErrorResult& aError)
 {
-  FallibleTArray<JS::Heap<JS::Value> > args;
+  nsTArray<JS::Heap<JS::Value>> args;
   if (!args.AppendElements(aArguments, fallible)) {
     aError.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;
   }
 
   RefPtr<nsJSScriptTimeoutHandler> handler =
-    new nsJSScriptTimeoutHandler(aCx, aWindow, aFunction, args, aError);
+    new nsJSScriptTimeoutHandler(aCx, aWindow, aFunction, Move(args), aError);
   return aError.Failed() ? nullptr : handler.forget();
 }
 
@@ -293,5 +343,31 @@ NS_CreateJSTimeoutHandler(JSContext* aCx, nsGlobalWindow *aWindow,
     return nullptr;
   }
 
+  return handler.forget();
+}
+
+already_AddRefed<nsIScriptTimeoutHandler>
+NS_CreateJSTimeoutHandler(JSContext *aCx, WorkerPrivate* aWorkerPrivate,
+                          Function& aFunction,
+                          const Sequence<JS::Value>& aArguments,
+                          ErrorResult& aError)
+{
+  nsTArray<JS::Heap<JS::Value>> args;
+  if (!args.AppendElements(aArguments, fallible)) {
+    aError.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return nullptr;
+  }
+
+  RefPtr<nsJSScriptTimeoutHandler> handler =
+    new nsJSScriptTimeoutHandler(aCx, aWorkerPrivate, aFunction, Move(args));
+  return handler.forget();
+}
+
+already_AddRefed<nsIScriptTimeoutHandler>
+NS_CreateJSTimeoutHandler(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
+                          const nsAString& aExpression)
+{
+  RefPtr<nsJSScriptTimeoutHandler> handler =
+    new nsJSScriptTimeoutHandler(aCx, aWorkerPrivate, aExpression);
   return handler.forget();
 }

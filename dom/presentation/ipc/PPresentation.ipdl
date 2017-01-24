@@ -10,16 +10,19 @@ include protocol PPresentationBuilder;
 
 include InputStreamParams;
 
+using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
+
 namespace mozilla {
 namespace dom {
 
 struct StartSessionRequest
 {
-  nsString url;
+  nsString[] urls;
   nsString sessionId;
   nsString origin;
   nsString deviceId;
   uint64_t windowId;
+  TabId tabId;
 };
 
 struct SendSessionMessageRequest
@@ -42,12 +45,27 @@ struct TerminateSessionRequest
   uint8_t role;
 };
 
+struct ReconnectSessionRequest
+{
+  nsString[] urls;
+  nsString sessionId;
+  uint8_t role;
+};
+
+struct BuildTransportRequest
+{
+  nsString sessionId;
+  uint8_t role;
+};
+
 union PresentationIPCRequest
 {
   StartSessionRequest;
   SendSessionMessageRequest;
   CloseSessionRequest;
   TerminateSessionRequest;
+  ReconnectSessionRequest;
+  BuildTransportRequest;
 };
 
 sync protocol PPresentation
@@ -61,7 +79,7 @@ child:
   async NotifySessionStateChange(nsString aSessionId,
                                  uint16_t aState,
                                  nsresult aReason);
-  async NotifyMessage(nsString aSessionId, nsCString aData);
+  async NotifyMessage(nsString aSessionId, nsCString aData, bool aIsBinary);
   async NotifySessionConnect(uint64_t aWindowId, nsString aSessionId);
 
   async PPresentationBuilder(nsString aSessionId, uint8_t aRole);
@@ -80,7 +98,7 @@ parent:
 
   async PPresentationRequest(PresentationIPCRequest aRequest);
 
-  async NotifyReceiverReady(nsString aSessionId, uint64_t aWindowId);
+  async NotifyReceiverReady(nsString aSessionId, uint64_t aWindowId, bool aIsLoading);
   async NotifyTransportClosed(nsString aSessionId, uint8_t aRole, nsresult aReason);
 };
 

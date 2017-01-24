@@ -145,7 +145,8 @@ enum : uint32_t {
     /* Whether any objects have been iterated over. */
     OBJECT_FLAG_ITERATED              = 0x00080000,
 
-    /* 0x00100000 is not used. */
+    /* Whether any object this represents may be frozen. */
+    OBJECT_FLAG_FROZEN                = 0x00100000,
 
     /*
      * For the function on a run-once script, whether the function has actually
@@ -349,9 +350,7 @@ class TypeSet
         inline ObjectGroup* group() const;
         inline ObjectGroup* groupNoBarrier() const;
 
-        void trace(JSTracer* trc) {
-            MarkTypeUnbarriered(trc, this, "TypeSet::Type");
-        }
+        inline void trace(JSTracer* trc);
 
         bool operator == (Type o) const { return data == o.data; }
         bool operator != (Type o) const { return data != o.data; }
@@ -379,13 +378,8 @@ class TypeSet
 
     static const char* NonObjectTypeString(Type type);
 
-#ifdef DEBUG
     static const char* TypeString(Type type);
     static const char* ObjectGroupString(ObjectGroup* group);
-#else
-    static const char* TypeString(Type type) { return nullptr; }
-    static const char* ObjectGroupString(ObjectGroup* group) { return nullptr; }
-#endif
 
   protected:
     /* Flags for this type set. */
@@ -529,8 +523,6 @@ class TypeSet
     // out of Ion, such as for argument and local types.
     static inline Type GetMaybeUntrackedValueType(const Value& val);
 
-    static void MarkTypeRoot(JSTracer* trc, Type* v, const char* name);
-    static void MarkTypeUnbarriered(JSTracer* trc, Type* v, const char* name);
     static bool IsTypeMarked(Type* v);
     static bool IsTypeAllocatedDuringIncremental(Type v);
     static bool IsTypeAboutToBeFinalized(Type* v);
@@ -1292,11 +1284,13 @@ enum SpewChannel {
 
 #ifdef DEBUG
 
+bool InferSpewActive(SpewChannel channel);
 const char * InferSpewColorReset();
 const char * InferSpewColor(TypeConstraint* constraint);
 const char * InferSpewColor(TypeSet* types);
 
-void InferSpew(SpewChannel which, const char* fmt, ...);
+#define InferSpew(channel, ...) if (InferSpewActive(channel)) { InferSpewImpl(__VA_ARGS__); } else {}
+void InferSpewImpl(const char* fmt, ...);
 
 /* Check that the type property for id in group contains value. */
 bool ObjectGroupHasProperty(JSContext* cx, ObjectGroup* group, jsid id, const Value& value);
@@ -1306,12 +1300,10 @@ bool ObjectGroupHasProperty(JSContext* cx, ObjectGroup* group, jsid id, const Va
 inline const char * InferSpewColorReset() { return nullptr; }
 inline const char * InferSpewColor(TypeConstraint* constraint) { return nullptr; }
 inline const char * InferSpewColor(TypeSet* types) { return nullptr; }
-inline void InferSpew(SpewChannel which, const char* fmt, ...) {}
+
+#define InferSpew(channel, ...) do {} while (0)
 
 #endif
-
-/* Print a warning, dump state and abort the program. */
-MOZ_NORETURN MOZ_COLD void TypeFailure(JSContext* cx, const char* fmt, ...);
 
 // Prints type information for a context if spew is enabled or force is set.
 void

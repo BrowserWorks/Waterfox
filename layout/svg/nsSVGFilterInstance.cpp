@@ -24,6 +24,7 @@ using namespace mozilla::dom;
 using namespace mozilla::gfx;
 
 nsSVGFilterInstance::nsSVGFilterInstance(const nsStyleFilter& aFilter,
+                                         nsIFrame* aTargetFrame,
                                          nsIContent* aTargetContent,
                                          const UserSpaceMetrics& aMetrics,
                                          const gfxRect& aTargetBBox,
@@ -39,7 +40,7 @@ nsSVGFilterInstance::nsSVGFilterInstance(const nsStyleFilter& aFilter,
   mInitialized(false) {
 
   // Get the filter frame.
-  mFilterFrame = GetFilterFrame();
+  mFilterFrame = GetFilterFrame(aTargetFrame);
   if (!mFilterFrame) {
     return;
   }
@@ -113,22 +114,27 @@ nsSVGFilterInstance::ComputeBounds()
 }
 
 nsSVGFilterFrame*
-nsSVGFilterInstance::GetFilterFrame()
+nsSVGFilterInstance::GetFilterFrame(nsIFrame* aTargetFrame)
 {
   if (mFilter.GetType() != NS_STYLE_FILTER_URL) {
     // The filter is not an SVG reference filter.
     return nullptr;
   }
 
-  nsIURI* url = mFilter.GetURL();
-  if (!url) {
-    NS_NOTREACHED("an nsStyleFilter of type URL should have a non-null URL");
-    return nullptr;
-  }
-
   // Get the target element to use as a point of reference for looking up the
   // filter element.
   if (!mTargetContent) {
+    return nullptr;
+  }
+
+  // aTargetFrame can be null if this filter belongs to a
+  // CanvasRenderingContext2D.
+  nsCOMPtr<nsIURI> url = aTargetFrame
+    ? nsSVGEffects::GetFilterURI(aTargetFrame, mFilter)
+    : mFilter.GetURL()->Resolve(mTargetContent);
+
+  if (!url) {
+    NS_NOTREACHED("an nsStyleFilter of type URL should have a non-null URL");
     return nullptr;
   }
 
@@ -360,23 +366,10 @@ nsSVGFilterInstance::GetSourceIndices(nsSVGFE* aPrimitiveElement,
   return NS_OK;
 }
 
-static bool
-IsFilterInputTainted(nsIContent* aElement)
-{
-  // When the filter is applied during canvas drawing, we might be allowed to
-  // read from the canvas.
-  if (HTMLCanvasElement* canvas =
-        HTMLCanvasElement::FromContentOrNull(aElement)) {
-    return canvas->IsWriteOnly();
-  }
-
-  // Always treat normal filtered elements as tainted.
-  return true;
-}
-
 nsresult
 nsSVGFilterInstance::BuildPrimitives(nsTArray<FilterPrimitiveDescription>& aPrimitiveDescrs,
-                                     nsTArray<RefPtr<SourceSurface>>& aInputImages)
+                                     nsTArray<RefPtr<SourceSurface>>& aInputImages,
+                                     bool aInputIsTainted)
 {
   mSourceGraphicIndex = GetLastResultIndex(aPrimitiveDescrs);
 
@@ -404,8 +397,6 @@ nsSVGFilterInstance::BuildPrimitives(nsTArray<FilterPrimitiveDescription>& aPrim
   // The principal that we check principals of any loaded images against.
   nsCOMPtr<nsIPrincipal> principal = mTargetContent->NodePrincipal();
 
-  bool filterInputIsTainted = IsFilterInputTainted(mTargetContent);
-
   for (uint32_t primitiveElementIndex = 0;
        primitiveElementIndex < primitives.Length();
        ++primitiveElementIndex) {
@@ -421,7 +412,7 @@ nsSVGFilterInstance::BuildPrimitives(nsTArray<FilterPrimitiveDescription>& aPrim
       ComputeFilterPrimitiveSubregion(filter, aPrimitiveDescrs, sourceIndices);
 
     nsTArray<bool> sourcesAreTainted;
-    GetInputsAreTainted(aPrimitiveDescrs, sourceIndices, filterInputIsTainted, sourcesAreTainted);
+    GetInputsAreTainted(aPrimitiveDescrs, sourceIndices, aInputIsTainted, sourcesAreTainted);
 
     FilterPrimitiveDescription descr =
       filter->GetPrimitiveDescription(this, primitiveSubregion, sourcesAreTainted, aInputImages);

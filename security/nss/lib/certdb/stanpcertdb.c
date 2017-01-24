@@ -142,7 +142,7 @@ extern const NSSError NSS_ERROR_ALREADY_INITIALIZED;
 extern const NSSError NSS_ERROR_PKCS11;
 
 /* Look at the stan error stack and map it to NSS 3 errors */
-#define STAN_MAP_ERROR(x, y)                                                   \
+#define STAN_MAP_ERROR(x, y) \
     else if (error == (x)) { secError = y; }
 
 /*
@@ -157,8 +157,6 @@ CERT_MapStanError()
     NSSError error, prevError;
     int secError;
     int i;
-
-    error = 0;
 
     errorStack = NSS_GetErrorStack();
     if (errorStack == 0) {
@@ -859,7 +857,7 @@ certdb_SaveSingleProfile(CERTCertificate *cert, const char *emailAddr,
 
     if (saveit) {
         if (cc) {
-            if (stanProfile) {
+            if (stanProfile && profileTime && emailProfile) {
                 /* stanProfile is already stored in the crypto context,
                  * overwrite the data
                  */

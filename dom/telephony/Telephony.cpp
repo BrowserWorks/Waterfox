@@ -11,7 +11,7 @@
 #include "mozilla/dom/MozMobileConnectionBinding.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/TelephonyBinding.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "nsCharSeparatedTokenizer.h"
 #include "nsContentUtils.h"
@@ -773,7 +773,7 @@ Telephony::EnumerateCallStateComplete()
 
   HandleAudioAgentState();
   if (mReadyPromise) {
-    mReadyPromise->MaybeResolve(JS::UndefinedHandleValue);
+    mReadyPromise->MaybeResolveWithUndefined();
   }
 
   if (NS_FAILED(mService->RegisterListener(mListener))) {

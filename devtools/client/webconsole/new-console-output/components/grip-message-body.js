@@ -6,6 +6,12 @@
 
 "use strict";
 
+// If this is being run from Mocha, then the browser loader hasn't set up
+// define. We need to do that before loading Rep.
+if (typeof define === "undefined") {
+  require("amd-loader");
+}
+
 // React
 const {
   createFactory,
@@ -19,7 +25,11 @@ const { Grip } = require("devtools/client/shared/components/reps/grip");
 GripMessageBody.displayName = "GripMessageBody";
 
 GripMessageBody.propTypes = {
-  grip: PropTypes.object.isRequired,
+  grip: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+    PropTypes.object,
+  ]).isRequired,
 };
 
 function GripMessageBody(props) {

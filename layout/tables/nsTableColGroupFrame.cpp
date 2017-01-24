@@ -333,7 +333,7 @@ nsIFrame::LogicalSides
 nsTableColGroupFrame::GetLogicalSkipSides(const ReflowInput* aReflowInput) const
 {
   if (MOZ_UNLIKELY(StyleBorder()->mBoxDecorationBreak ==
-                     NS_STYLE_BOX_DECORATION_BREAK_CLONE)) {
+                     StyleBoxDecorationBreak::Clone)) {
     return LogicalSides();
   }
 
@@ -400,7 +400,7 @@ nsTableColFrame * nsTableColGroupFrame::GetNextColumn(nsIFrame *aChildFrame)
   }
   while (childFrame)
   {
-    if (NS_STYLE_DISPLAY_TABLE_COLUMN ==
+    if (mozilla::StyleDisplay::TableColumn ==
         childFrame->StyleDisplay()->mDisplay)
     {
       result = (nsTableColFrame *)childFrame;

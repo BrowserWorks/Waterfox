@@ -145,8 +145,8 @@ def old_configure_options(*options):
     for opt in options:
         option(opt, nargs='*', help='Help missing for old configure options')
 
-    @depends('--help')
-    def all_options(help):
+    @dependable
+    def all_options():
         return list(options)
 
     return depends(prepare_configure, extra_old_configure_args, all_options,
@@ -160,7 +160,6 @@ def old_configure_options(*options):
     '--enable-address-sanitizer',
     '--enable-alsa',
     '--enable-android-omx',
-    '--enable-approximate-location',
     '--enable-b2g-bt',
     '--enable-b2g-camera',
     '--enable-b2g-ril',
@@ -170,8 +169,6 @@ def old_configure_options(*options):
     '--enable-cookies',
     '--enable-cpp-rtti',
     '--enable-crashreporter',
-    '--enable-ctypes',
-    '--enable-dbm',
     '--enable-dbus',
     '--enable-debug-js-modules',
     '--enable-directshow',
@@ -182,31 +179,25 @@ def old_configure_options(*options):
     '--enable-faststripe',
     '--enable-feeds',
     '--enable-gamepad',
-    '--enable-gc-trace',
     '--enable-gconf',
     '--enable-gczeal',
     '--enable-gio',
     '--enable-gnomeui',
     '--enable-gold',
-    '--enable-gps-debug',
     '--enable-hardware-aec-ns',
     '--enable-icf',
     '--enable-install-strip',
     '--enable-ion',
     '--enable-ios-target',
-    '--enable-ipdl-tests',
     '--enable-jitspew',
     '--enable-libjpeg-turbo',
     '--enable-libproxy',
     '--enable-llvm-hacks',
     '--enable-logrefcnt',
     '--enable-maintenance-service',
-    '--enable-media-navigator',
     '--enable-memory-sanitizer',
     '--enable-mobile-optimize',
-    '--enable-more-deterministic',
     '--enable-mozril-geoloc',
-    '--enable-necko-protocols',
     '--enable-necko-wifi',
     '--enable-negotiateauth',
     '--enable-nfc',
@@ -216,13 +207,10 @@ def old_configure_options(*options):
     '--enable-oom-breakpoint',
     '--enable-optimize',
     '--enable-parental-controls',
-    '--enable-perf',
-    '--enable-permissions',
     '--enable-pie',
     '--enable-png-arm-neon-support',
     '--enable-posix-nspr-emulation',
     '--enable-pref-extensions',
-    '--enable-printing',
     '--enable-pulseaudio',
     '--enable-raw',
     '--enable-readline',
@@ -233,18 +221,14 @@ def old_configure_options(*options):
     '--enable-sandbox',
     '--enable-signmar',
     '--enable-simulator',
-    '--enable-skia',
-    '--enable-skia-gpu',
     '--enable-small-chunk-size',
     '--enable-startup-notification',
     '--enable-startupcache',
     '--enable-stdcxx-compat',
     '--enable-strip',
     '--enable-synth-pico',
-    '--enable-synth-speechd',
     '--enable-system-cairo',
     '--enable-system-extension-dirs',
-    '--enable-system-ffi',
     '--enable-system-pixman',
     '--enable-system-sqlite',
     '--enable-tasktracer',
@@ -257,19 +241,13 @@ def old_configure_options(*options):
     '--enable-url-classifier',
     '--enable-valgrind',
     '--enable-verify-mar',
-    '--enable-warnings-as-errors',
-    '--enable-webapp-runtime',
     '--enable-webrtc',
-    '--enable-websms-backend',
-    '--enable-webspeech',
-    '--enable-webspeechtestbackend',
     '--enable-xul',
     '--enable-zipwriter',
     '--includedir',
     '--libdir',
     '--no-create',
     '--prefix',
-    '--with-adjust-sdk-keyfile',
     '--with-android-cxx-stl',
     '--with-android-distribution-directory',
     '--with-android-max-sdk',
@@ -278,7 +256,6 @@ def old_configure_options(*options):
     '--with-app-basename',
     '--with-app-name',
     '--with-arch',
-    '--with-bing-api-keyfile',
     '--with-branding',
     '--with-crashreporter-enable-percent',
     '--with-cross-lib',
@@ -290,16 +267,12 @@ def old_configure_options(*options):
     '--with-doc-output-dir',
     '--with-float-abi',
     '--with-fpu',
-    '--with-google-api-keyfile',
-    '--with-google-oauth-api-keyfile',
     '--with-intl-api',
     '--with-ios-sdk',
     '--with-jitreport-granularity',
-    '--with-linux-headers',
     '--with-macbundlename-prefix',
     '--with-macos-private-frameworks',
     '--with-macos-sdk',
-    '--with-mozilla-api-keyfile',
     '--with-nspr-cflags',
     '--with-nspr-exec-prefix',
     '--with-nspr-libs',
@@ -308,7 +281,6 @@ def old_configure_options(*options):
     '--with-nss-prefix',
     '--with-pthreads',
     '--with-qemu-exe',
-    '--with-servo',
     '--with-sixgill',
     '--with-soft-float',
     '--with-system-bz2',
@@ -332,8 +304,6 @@ def old_configure_options(*options):
     '--enable-mapi',
     '--enable-calendar',
     '--enable-incomplete-external-linkage',
-
-    '--enable-ipc-fuzzer',
 )
 @imports(_from='__builtin__', _import='compile')
 @imports(_from='__builtin__', _import='open')
@@ -442,10 +412,10 @@ def post_old_configure(raw_config):
 # them. We only do so for options that haven't been declared so far,
 # which should be a proxy for the options that old-configure handles
 # and that we don't know anything about.
-@depends('--help')
+@dependable
 @imports('__sandbox__')
 @imports(_from='mozbuild.configure.options', _import='Option')
-def remaining_mozconfig_options(_):
+def remaining_mozconfig_options():
     helper = __sandbox__._helper
     for arg in helper:
         if helper._origins[arg] != 'mozconfig':

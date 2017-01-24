@@ -11,13 +11,18 @@ const Cc = Components.classes;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "getExtensionUUID", () => {
-  let {getExtensionUUID} = Cu.import("resource://gre/modules/Extension.jsm", {});
-  return getExtensionUUID;
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionUtils",
+                                  "resource://gre/modules/ExtensionUtils.jsm");
+
+XPCOMUtils.defineLazyGetter(this, "console", () => ExtensionUtils.getConsole());
+
+XPCOMUtils.defineLazyGetter(this, "UUIDMap", () => {
+  let {UUIDMap} = Cu.import("resource://gre/modules/Extension.jsm", {});
+  return UUIDMap;
 });
 
 /*
@@ -52,11 +57,11 @@ var Frames = {
   getId(windowId) {
     if (this.isTopWindowId(windowId)) {
       return 0;
-    } else if (windowId == 0) {
-      return -1;
-    } else {
-      return windowId;
     }
+    if (windowId == 0) {
+      return -1;
+    }
+    return windowId;
   },
 
   // Convert an outer window ID for a parent window to a frame
@@ -90,8 +95,32 @@ var Frames = {
 };
 Frames.init();
 
+var APIs = {
+  apis: new Map(),
+
+  register(namespace, schema, script) {
+    if (this.apis.has(namespace)) {
+      throw new Error(`API namespace already exists: ${namespace}`);
+    }
+
+    this.apis.set(namespace, {schema, script});
+  },
+
+  unregister(namespace) {
+    if (!this.apis.has(namespace)) {
+      throw new Error(`API namespace does not exist: ${namespace}`);
+    }
+
+    this.apis.delete(namespace);
+  },
+};
+
 function getURLForExtension(id, path = "") {
-  let uuid = getExtensionUUID(id);
+  let uuid = UUIDMap.get(id, false);
+  if (!uuid) {
+    Cu.reportError(`Called getURLForExtension on unmapped extension ${id}`);
+    return null;
+  }
   return `moz-extension://${uuid}/${path}`;
 }
 
@@ -142,6 +171,7 @@ var Service = {
     handler.setSubstitution(uuid, uri);
 
     this.uuidMap.set(uuid, extension);
+    this.aps.setAddonHasPermissionCallback(extension.id, extension.hasPermission.bind(extension));
     this.aps.setAddonLoadURICallback(extension.id, this.checkAddonMayLoad.bind(this, extension));
     this.aps.setAddonLocalizeCallback(extension.id, extension.localize.bind(extension));
     this.aps.setAddonCSP(extension.id, extension.manifest.content_security_policy);
@@ -152,6 +182,7 @@ var Service = {
   shutdownExtension(uuid) {
     let extension = this.uuidMap.get(uuid);
     this.uuidMap.delete(uuid);
+    this.aps.setAddonHasPermissionCallback(extension.id, null);
     this.aps.setAddonLoadURICallback(extension.id, null);
     this.aps.setAddonLocalizeCallback(extension.id, null);
     this.aps.setAddonCSP(extension.id, null);
@@ -284,6 +315,9 @@ this.ExtensionManagement = {
   startupExtension: Service.startupExtension.bind(Service),
   shutdownExtension: Service.shutdownExtension.bind(Service),
 
+  registerAPI: APIs.register.bind(APIs),
+  unregisterAPI: APIs.unregister.bind(APIs),
+
   getFrameId: Frames.getId.bind(Frames),
   getParentFrameId: Frames.getParentId.bind(Frames),
 
@@ -293,4 +327,6 @@ this.ExtensionManagement = {
   getAddonIdForWindow,
   getAPILevelForWindow,
   API_LEVELS,
+
+  APIs,
 };

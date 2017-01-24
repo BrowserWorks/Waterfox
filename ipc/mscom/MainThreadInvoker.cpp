@@ -6,10 +6,12 @@
 
 #include "mozilla/mscom/MainThreadInvoker.h"
 
+#include "GeckoProfiler.h"
 #include "MainThreadUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/HangMonitor.h"
 #include "mozilla/RefPtr.h"
 #include "private/prpriv.h" // For PR_GetThreadID
 
@@ -131,13 +133,15 @@ MainThreadInvoker::Invoke(already_AddRefed<nsIRunnable>&& aRunnable,
   // check for APCs during event processing. If we omit this then the main
   // thread will not check its APC queue until it is idle. Note that failing to
   // dispatch this event is non-fatal, but it will delay execution of the APC.
-  NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(sAlertRunnable)));
+  Unused << NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(sAlertRunnable)));
   return WaitForCompletion(aTimeout);
 }
 
 /* static */ VOID CALLBACK
 MainThreadInvoker::MainThreadAPC(ULONG_PTR aParam)
 {
+  GeckoProfilerWakeRAII wakeProfiler;
+  mozilla::HangMonitor::NotifyActivity(mozilla::HangMonitor::kGeneralActivity);
   MOZ_ASSERT(NS_IsMainThread());
   RefPtr<SyncRunnable> runnable(already_AddRefed<SyncRunnable>(
                                   reinterpret_cast<SyncRunnable*>(aParam)));

@@ -2,6 +2,9 @@
 
 Components.utils.import("resource://gre/modules/Schemas.jsm");
 Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
+Components.utils.import("resource://gre/modules/ExtensionUtils.jsm");
+
+let {LocalAPIImplementation, SchemaAPIInterface} = ExtensionUtils;
 
 let json = [
   {namespace: "testing",
@@ -71,6 +74,7 @@ let json = [
            name: "sub_foo",
            type: "function",
            parameters: [],
+           returns: "integer",
          },
        ],
      },
@@ -342,6 +346,12 @@ let json = [
    ],
   },
   {
+    namespace: "foreign",
+    properties: {
+      foreignRef: {$ref: "testing.submodule"},
+    },
+  },
+  {
     namespace: "inject",
     properties: {
       PROP1: {value: "should inject"},
@@ -380,6 +390,42 @@ function checkErrors(errors) {
 
 let permissions = new Set();
 
+class TallyingAPIImplementation extends SchemaAPIInterface {
+  constructor(namespace, name) {
+    super();
+    this.namespace = namespace;
+    this.name = name;
+  }
+
+  callFunction(args) {
+    tally("call", this.namespace, this.name, args);
+  }
+
+  callFunctionNoReturn(args) {
+    tally("call", this.namespace, this.name, args);
+  }
+
+  getProperty() {
+    tally("get", this.namespace, this.name);
+  }
+
+  setProperty(value) {
+    tally("set", this.namespace, this.name, value);
+  }
+
+  addListener(listener, args) {
+    tally("addListener", this.namespace, this.name, [listener, args]);
+  }
+
+  removeListener(listener) {
+    tally("removeListener", this.namespace, this.name, [listener]);
+  }
+
+  hasListener(listener) {
+    tally("hasListener", this.namespace, this.name, [listener]);
+  }
+}
+
 let wrapper = {
   url: "moz-extension://b66e3509-cdb3-44f6-8eb8-c8b39b3a1d27/",
 
@@ -401,41 +447,12 @@ let wrapper = {
     return permissions.has(permission);
   },
 
-  callFunction(path, name, args) {
-    let ns = path.join(".");
-    tally("call", ns, name, args);
-  },
-
-  callFunctionNoReturn(path, name, args) {
-    let ns = path.join(".");
-    tally("call", ns, name, args);
-  },
-
   shouldInject(ns) {
     return ns != "do-not-inject";
   },
 
-  getProperty(path, name) {
-    let ns = path.join(".");
-    tally("get", ns, name);
-  },
-
-  setProperty(path, name, value) {
-    let ns = path.join(".");
-    tally("set", ns, name, value);
-  },
-
-  addListener(path, name, listener, args) {
-    let ns = path.join(".");
-    tally("addListener", ns, name, [listener, args]);
-  },
-  removeListener(path, name, listener) {
-    let ns = path.join(".");
-    tally("removeListener", ns, name, [listener]);
-  },
-  hasListener(path, name, listener) {
-    let ns = path.join(".");
-    tally("hasListener", ns, name, [listener]);
+  getImplementation(namespace, name) {
+    return new TallyingAPIImplementation(namespace, name);
   },
 };
 
@@ -444,7 +461,9 @@ add_task(function* () {
   yield Schemas.load(url);
 
   let root = {};
+  tallied = null;
   Schemas.inject(root, wrapper);
+  do_check_eq(tallied, null);
 
   do_check_eq(root.testing.PROP1, 20, "simple value property");
   do_check_eq(root.testing.type1.VALUE1, "value1", "enum type");
@@ -781,6 +800,10 @@ add_task(function* () {
   Assert.throws(() => root.testing.prop4.sub_foo(),
                 /root.testing.prop4 is undefined/,
                 "should throw for unsupported submodule");
+
+  root.foreign.foreignRef.sub_foo();
+  verify("call", "foreign.foreignRef", "sub_foo", []);
+  tallied = null;
 });
 
 let deprecatedJson = [
@@ -1175,4 +1198,169 @@ add_task(function* testPermissions() {
   equal(typeof root.fooPerm, "object", "fooPerm namespace should exist");
   equal(typeof root.fooPerm.noPerms, "function", "noPerms.noPerms method should exist");
   equal(typeof root.fooPerm.fooBarPerm, "function", "noPerms.fooBarPerm method should exist");
+});
+
+let nestedNamespaceJson = [
+  {
+    "namespace": "nested.namespace",
+    "types": [
+      {
+        "id": "CustomType",
+        "type": "object",
+        "events": [
+          {
+            "name": "onEvent",
+          },
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+          },
+        },
+        "functions": [
+          {
+            "name": "functionOnCustomType",
+            "type": "function",
+            "parameters": [
+              {
+                "name": "title",
+                "type": "string",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    "properties": {
+      "instanceOfCustomType": {
+        "$ref": "CustomType",
+      },
+    },
+    "functions": [
+      {
+        "name": "create",
+        "type": "function",
+        "parameters": [
+          {
+            "name": "title",
+            "type": "string",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+add_task(function* testNestedNamespace() {
+  let url = "data:," + JSON.stringify(nestedNamespaceJson);
+
+  yield Schemas.load(url);
+
+  let root = {};
+  Schemas.inject(root, wrapper);
+
+  talliedErrors.length = 0;
+
+  ok(root.nested, "The root object contains the first namespace level");
+  ok(root.nested.namespace, "The first level object contains the second namespace level");
+
+  ok(root.nested.namespace.create, "Got the expected function in the nested namespace");
+  do_check_eq(typeof root.nested.namespace.create, "function",
+     "The property is a function as expected");
+
+  let {instanceOfCustomType} = root.nested.namespace;
+
+  ok(instanceOfCustomType,
+     "Got the expected instance of the CustomType defined in the schema");
+  ok(instanceOfCustomType.functionOnCustomType,
+     "Got the expected method in the CustomType instance");
+
+  // TODO: test support events and properties in a SubModuleType defined in the schema,
+  // once implemented, e.g.:
+  //
+  // ok(instanceOfCustomType.url,
+  //    "Got the expected property defined in the CustomType instance)
+  //
+  // ok(instanceOfCustomType.onEvent &&
+  //    instanceOfCustomType.onEvent.addListener &&
+  //    typeof instanceOfCustomType.onEvent.addListener == "function",
+  //    "Got the expected event defined in the CustomType instance");
+});
+
+add_task(function* testLocalAPIImplementation() {
+  let countGet2 = 0;
+  let countProp3 = 0;
+  let countProp3SubFoo = 0;
+
+  let testingApiObj = {
+    get PROP1() {
+      // PROP1 is a schema-defined constant.
+      throw new Error("Unexpected get PROP1");
+    },
+    get prop2() {
+      ++countGet2;
+      return "prop2 val";
+    },
+    get prop3() {
+      throw new Error("Unexpected get prop3");
+    },
+    set prop3(v) {
+      // prop3 is a submodule, defined as a function, so the API should not pass
+      // through assignment to prop3.
+      throw new Error("Unexpected set prop3");
+    },
+  };
+  let submoduleApiObj = {
+    get sub_foo() {
+      ++countProp3;
+      return () => {
+        return ++countProp3SubFoo;
+      };
+    },
+  };
+
+  let localWrapper = {
+    shouldInject(ns) {
+      return ns == "testing" || ns == "testing.prop3";
+    },
+    getImplementation(ns, name) {
+      do_check_true(ns == "testing" || ns == "testing.prop3");
+      if (ns == "testing.prop3" && name == "sub_foo") {
+        // It is fine to use `null` here because we don't call async functions.
+        return new LocalAPIImplementation(submoduleApiObj, name, null);
+      }
+      // It is fine to use `null` here because we don't call async functions.
+      return new LocalAPIImplementation(testingApiObj, name, null);
+    },
+  };
+
+  let root = {};
+  Schemas.inject(root, localWrapper);
+  do_check_eq(countGet2, 0);
+  do_check_eq(countProp3, 0);
+  do_check_eq(countProp3SubFoo, 0);
+
+  do_check_eq(root.testing.PROP1, 20);
+
+  do_check_eq(root.testing.prop2, "prop2 val");
+  do_check_eq(countGet2, 1);
+
+  do_check_eq(root.testing.prop2, "prop2 val");
+  do_check_eq(countGet2, 2);
+
+  do_print(JSON.stringify(root.testing));
+  do_check_eq(root.testing.prop3.sub_foo(), 1);
+  do_check_eq(countProp3, 1);
+  do_check_eq(countProp3SubFoo, 1);
+
+  do_check_eq(root.testing.prop3.sub_foo(), 2);
+  do_check_eq(countProp3, 2);
+  do_check_eq(countProp3SubFoo, 2);
+
+  root.testing.prop3.sub_foo = () => { return "overwritten"; };
+  do_check_eq(root.testing.prop3.sub_foo(), "overwritten");
+
+  root.testing.prop3 = {sub_foo() { return "overwritten again"; }};
+  do_check_eq(root.testing.prop3.sub_foo(), "overwritten again");
+  do_check_eq(countProp3SubFoo, 2);
 });

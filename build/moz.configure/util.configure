@@ -61,6 +61,75 @@ def is_absolute_or_relative(path):
 def normsep(path):
     return mozpath.normsep(path)
 
+
+@imports('ctypes')
+@imports(_from='ctypes', _import='wintypes')
+@imports(_from='mozbuild.configure.constants', _import='WindowsBinaryType')
+def windows_binary_type(path):
+    """Obtain the type of a binary on Windows.
+
+    Returns WindowsBinaryType constant.
+    """
+    GetBinaryTypeW = ctypes.windll.kernel32.GetBinaryTypeW
+    GetBinaryTypeW.argtypes = [wintypes.LPWSTR, wintypes.POINTER(wintypes.DWORD)]
+    GetBinaryTypeW.restype = wintypes.BOOL
+
+    bin_type = wintypes.DWORD()
+    res = GetBinaryTypeW(path, ctypes.byref(bin_type))
+    if not res:
+        die('could not obtain binary type of %s' % path)
+
+    if bin_type.value == 0:
+        return WindowsBinaryType('win32')
+    elif bin_type.value == 6:
+        return WindowsBinaryType('win64')
+    # If we see another binary type, something is likely horribly wrong.
+    else:
+        die('unsupported binary type on %s: %s' % (path, bin_type))
+
+
+@imports('ctypes')
+@imports(_from='ctypes', _import='wintypes')
+def get_GetShortPathNameW():
+    GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW
+    GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR,
+                                  wintypes.DWORD]
+    GetShortPathNameW.restype = wintypes.DWORD
+    return GetShortPathNameW
+
+
+@template
+@imports('ctypes')
+@imports('platform')
+@imports(_from='mozbuild.shellutil', _import='quote')
+def normalize_path():
+    # Until the build system can properly handle programs that need quoting,
+    # transform those paths into their short version on Windows (e.g.
+    # c:\PROGRA~1...).
+    if platform.system() == 'Windows':
+        GetShortPathNameW = get_GetShortPathNameW()
+
+        def normalize_path(path):
+            path = normsep(path)
+            if quote(path) == path:
+                return path
+            size = 0
+            while True:
+                out = ctypes.create_unicode_buffer(size)
+                needed = GetShortPathNameW(path, out, size)
+                if size >= needed:
+                    return normsep(out.value)
+                size = needed
+
+    else:
+        def normalize_path(path):
+            return normsep(path)
+
+    return normalize_path
+
+normalize_path = normalize_path()
+
+
 # Locates the given program using which, or returns the given path if it
 # exists.
 # The `paths` parameter may be passed to search the given paths instead of
@@ -72,15 +141,15 @@ def normsep(path):
 def find_program(file, paths=None):
     try:
         if is_absolute_or_relative(file):
-            return normsep(which(os.path.basename(file),
-                                 [os.path.dirname(file)]))
+            return normalize_path(which(os.path.basename(file),
+                                        [os.path.dirname(file)]))
         if paths:
             if not isinstance(paths, (list, tuple)):
                 die("Paths provided to find_program must be a list of strings, "
                     "not %r", paths)
             paths = list(itertools.chain(
                 *(p.split(pathsep) for p in paths if p)))
-        return normsep(which(file, path=paths))
+        return normalize_path(which(file, path=paths))
     except WhichError:
         return None
 
@@ -259,6 +328,24 @@ def namespace(**kwargs):
     return ReadOnlyNamespace(**kwargs)
 
 
+# Turn an object into an object that can be used as an argument to @depends.
+# The given object can be a literal value, a function that takes no argument,
+# or, for convenience, a @depends function.
+@template
+@imports(_from='inspect', _import='isfunction')
+@imports(_from='mozbuild.configure', _import='DependsFunction')
+def dependable(obj):
+    if isinstance(obj, DependsFunction):
+        return obj
+    if isfunction(obj):
+        return depends('--help')(lambda _: obj())
+    return depends('--help')(lambda _: obj)
+
+
+always = dependable(True)
+never = dependable(False)
+
+
 # Some @depends function return namespaces, and one could want to use one
 # specific attribute from such a namespace as a "value" given to functions
 # such as `set_config`. But those functions do not take immediate values.
@@ -306,6 +393,9 @@ def depends_when(*args, **kwargs):
     if not len(kwargs) == 1 and kwargs.get('when'):
         die('depends_when requires a single keyword argument, "when"')
     when = kwargs['when']
+    if not when:
+        return depends(*args)
+
     def decorator(fn):
         @depends(when, *args)
         def wrapper(val, *args):
@@ -313,6 +403,44 @@ def depends_when(*args, **kwargs):
                 return fn(*args)
         return wrapper
     return decorator
+
+
+# Hacks related to old-configure
+# ==============================
+
+@dependable
+def old_configure_assignments():
+    return []
+
+@dependable
+def extra_old_configure_args():
+    return []
+
+@template
+def add_old_configure_assignment(var, value):
+    var = dependable(var)
+    value = dependable(value)
+
+    @depends(old_configure_assignments, var, value)
+    @imports(_from='mozbuild.shellutil', _import='quote')
+    def add_assignment(assignments, var, value):
+        if var is None or value is None:
+            return
+        if value is True:
+            assignments.append('%s=1' % var)
+        elif value is False:
+            assignments.append('%s=' % var)
+        else:
+            if isinstance(value, (list, tuple)):
+                value = quote(*value)
+            assignments.append('%s=%s' % (var, quote(str(value))))
+
+@template
+def add_old_configure_arg(arg):
+    @depends(extra_old_configure_args, arg)
+    def add_arg(args, arg):
+        if arg:
+            args.append(arg)
 
 # Includes a file when the given condition evaluates to a truthy value.
 @template

@@ -5,9 +5,11 @@
 package org.mozilla.gecko;
 
 import android.app.Application;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -17,12 +19,17 @@ import com.squareup.leakcanary.RefWatcher;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.LocalBrowserDB;
+import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.dlc.DownloadContentService;
 import org.mozilla.gecko.home.HomePanelsManager;
 import org.mozilla.gecko.lwt.LightweightTheme;
 import org.mozilla.gecko.mdns.MulticastDNSManager;
+import org.mozilla.gecko.media.AudioFocusAgent;
 import org.mozilla.gecko.notifications.NotificationHelper;
+import org.mozilla.gecko.preferences.DistroSharedPrefsImport;
+import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.Clipboard;
+import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -115,7 +122,7 @@ public class GeckoApplication extends Application
             GeckoThread.onPause();
             mPausedGecko = true;
 
-            final BrowserDB db = GeckoProfile.get(this).getDB();
+            final BrowserDB db = BrowserDB.from(this);
             ThreadUtils.postToBackgroundThread(new Runnable() {
                 @Override
                 public void run() {
@@ -162,25 +169,10 @@ public class GeckoApplication extends Application
 
         MulticastDNSManager.getInstance(context).init();
 
-        // Make sure that all browser-ish applications default to the real LocalBrowserDB.
-        // GeckoView consumers use their own Application class, so this doesn't affect them.
-        //
-        // We need to do this before any access to the profile; it controls
-        // which database class is used.
-        //
-        // As such, this needs to occur before the GeckoView in GeckoApp is inflated -- i.e., in the
-        // GeckoApp constructor or earlier -- because GeckoView implicitly accesses the profile. This is earlier!
-        GeckoProfile.setBrowserDBFactory(new BrowserDB.Factory() {
-            @Override
-            public BrowserDB get(String profileName, File profileDir) {
-                // Note that we don't use the profile directory -- we
-                // send operations to the ContentProvider, which does
-                // its own thing.
-                return new LocalBrowserDB(profileName);
-            }
-        });
-
         GeckoService.register();
+
+        EventDispatcher.getInstance().registerBackgroundThreadListener(new EventListener(),
+                "Profile:Create");
 
         super.onCreate();
     }
@@ -208,6 +200,96 @@ public class GeckoApplication extends Application
 
         if (AppConstants.MOZ_ANDROID_DOWNLOAD_CONTENT_SERVICE) {
             DownloadContentService.startStudy(this);
+        }
+
+        GeckoAccessibility.setAccessibilityManagerListeners(this);
+
+        AudioFocusAgent.getInstance().attachToContext(this);
+    }
+
+    private class EventListener implements BundleEventListener
+    {
+        private void onProfileCreate(final String name, final String path) {
+            // Add everything when we're done loading the distribution.
+            final Context context = GeckoApplication.this;
+            final GeckoProfile profile = GeckoProfile.get(context, name);
+            final Distribution distribution = Distribution.getInstance(context);
+
+            distribution.addOnDistributionReadyCallback(new Distribution.ReadyCallback() {
+                @Override
+                public void distributionNotFound() {
+                    this.distributionFound(null);
+                }
+
+                @Override
+                public void distributionFound(final Distribution distribution) {
+                    Log.d(LOG_TAG, "Running post-distribution task: bookmarks.");
+                    // Because we are running in the background, we want to synchronize on the
+                    // GeckoProfile instance so that we don't race with main thread operations
+                    // such as locking/unlocking/removing the profile.
+                    synchronized (profile.getLock()) {
+                        distributionFoundLocked(distribution);
+                    }
+                }
+
+                @Override
+                public void distributionArrivedLate(final Distribution distribution) {
+                    Log.d(LOG_TAG, "Running late distribution task: bookmarks.");
+                    // Recover as best we can.
+                    synchronized (profile.getLock()) {
+                        distributionArrivedLateLocked(distribution);
+                    }
+                }
+
+                private void distributionFoundLocked(final Distribution distribution) {
+                    // Skip initialization if the profile directory has been removed.
+                    if (!(new File(path)).exists()) {
+                        return;
+                    }
+
+                    final ContentResolver cr = context.getContentResolver();
+                    final LocalBrowserDB db = new LocalBrowserDB(profile.getName());
+
+                    // We pass the number of added bookmarks to ensure that the
+                    // indices of the distribution and default bookmarks are
+                    // contiguous. Because there are always at least as many
+                    // bookmarks as there are favicons, we can also guarantee that
+                    // the favicon IDs won't overlap.
+                    final int offset = distribution == null ? 0 :
+                            db.addDistributionBookmarks(cr, distribution, 0);
+                    db.addDefaultBookmarks(context, cr, offset);
+
+                    Log.d(LOG_TAG, "Running post-distribution task: android preferences.");
+                    DistroSharedPrefsImport.importPreferences(context, distribution);
+                }
+
+                private void distributionArrivedLateLocked(final Distribution distribution) {
+                    // Skip initialization if the profile directory has been removed.
+                    if (!(new File(path)).exists()) {
+                        return;
+                    }
+
+                    final ContentResolver cr = context.getContentResolver();
+                    final LocalBrowserDB db = new LocalBrowserDB(profile.getName());
+
+                    // We assume we've been called very soon after startup, and so our offset
+                    // into "Mobile Bookmarks" is the number of bookmarks in the DB.
+                    final int offset = db.getCount(cr, "bookmarks");
+                    db.addDistributionBookmarks(cr, distribution, offset);
+
+                    Log.d(LOG_TAG, "Running late distribution task: android preferences.");
+                    DistroSharedPrefsImport.importPreferences(context, distribution);
+                }
+            });
+        }
+
+        @Override // BundleEventListener
+        public void handleMessage(final String event, final Bundle message,
+                                  final EventCallback callback) {
+            if ("Profile:Create".equals(event)) {
+                onProfileCreate(message.getCharSequence("name").toString(),
+                                message.getCharSequence("path").toString());
+            }
         }
     }
 

@@ -8,8 +8,10 @@
 include protocol PHttpChannel;
 include protocol PFTPChannel;
 include protocol PRtspChannel;
+include protocol PSendStream;
 include BlobTypes;
 include URIParams;
+include IPCStream;
 include InputStreamParams;
 include PBackgroundSharedTypes;
 
@@ -50,6 +52,8 @@ struct LoadInfoArgs
   nsCString[]           corsUnsafeHeaders;
   bool                  forcePreflight;
   bool                  isPreflight;
+  bool                  forceHSTSPriming;
+  bool                  mixedContentWouldBlock;
 };
 
 /**
@@ -97,7 +101,7 @@ struct HttpChannelOpenArgs
   uint32_t                    loadFlags;
   RequestHeaderTuples         requestHeaders;
   nsCString                   requestMethod;
-  OptionalInputStreamParams   uploadStream;
+  OptionalIPCStream           uploadStream;
   bool                        uploadStreamHasHeaders;
   uint16_t                    priority;
   uint32_t                    classOfService;
@@ -112,7 +116,7 @@ struct HttpChannelOpenArgs
   nsCString                   appCacheClientID;
   bool                        allowSpdy;
   bool                        allowAltSvc;
-  OptionalFileDescriptorSet   fds;
+  bool                        beConservative;
   OptionalLoadInfoArgs        loadInfo;
   OptionalHttpResponseHead    synthesizedResponseHead;
   nsCString                   synthesizedSecurityInfoSerialization;

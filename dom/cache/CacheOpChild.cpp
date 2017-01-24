@@ -128,7 +128,7 @@ CacheOpChild::Recv__delete__(const ErrorResult& aRv,
     }
     case CacheOpResult::TCachePutAllResult:
     {
-      mPromise->MaybeResolve(JS::UndefinedHandleValue);
+      mPromise->MaybeResolveWithUndefined();
       break;
     }
     case CacheOpResult::TCacheDeleteResult:
@@ -155,6 +155,17 @@ CacheOpChild::Recv__delete__(const ErrorResult& aRv,
     {
       auto actor = static_cast<CacheChild*>(
         aResult.get_StorageOpenResult().actorChild());
+
+      // If we have a success status then we should have an actor.  Gracefully
+      // reject instead of crashing, though, if we get a nullptr here.
+      MOZ_DIAGNOSTIC_ASSERT(actor);
+      if (!actor) {
+        ErrorResult status;
+        status.ThrowTypeError<MSG_CACHE_OPEN_FAILED>();
+        mPromise->MaybeReject(status);
+        break;
+      }
+
       actor->SetWorkerHolder(GetWorkerHolder());
       RefPtr<Cache> cache = new Cache(mGlobal, actor);
       mPromise->MaybeResolve(cache);
@@ -212,7 +223,7 @@ void
 CacheOpChild::HandleResponse(const CacheResponseOrVoid& aResponseOrVoid)
 {
   if (aResponseOrVoid.type() == CacheResponseOrVoid::Tvoid_t) {
-    mPromise->MaybeResolve(JS::UndefinedHandleValue);
+    mPromise->MaybeResolveWithUndefined();
     return;
   }
 

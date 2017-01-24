@@ -1090,7 +1090,7 @@ function enumWeakSetEntries(objectActor) {
  * having customized output. This object holds arrays mapped by
  * Debugger.Object.prototype.class.
  *
- * In each array you can add functions that take two
+ * In each array you can add functions that take three
  * arguments:
  *   - the ObjectActor instance and its hooks to make a preview for,
  *   - the grip object being prepared for the client,
@@ -1102,16 +1102,16 @@ function enumWeakSetEntries(objectActor) {
  * information for the debugger object, or true otherwise.
  */
 DebuggerServer.ObjectActorPreviewers = {
-  String: [function (objectActor, grip) {
-    return wrappedPrimitivePreviewer("String", String, objectActor, grip);
+  String: [function (objectActor, grip, rawObj) {
+    return wrappedPrimitivePreviewer("String", String, objectActor, grip, rawObj);
   }],
 
-  Boolean: [function (objectActor, grip) {
-    return wrappedPrimitivePreviewer("Boolean", Boolean, objectActor, grip);
+  Boolean: [function (objectActor, grip, rawObj) {
+    return wrappedPrimitivePreviewer("Boolean", Boolean, objectActor, grip, rawObj);
   }],
 
-  Number: [function (objectActor, grip) {
-    return wrappedPrimitivePreviewer("Number", Number, objectActor, grip);
+  Number: [function (objectActor, grip, rawObj) {
+    return wrappedPrimitivePreviewer("Number", Number, objectActor, grip, rawObj);
   }],
 
   Function: [function ({obj, hooks}, grip) {
@@ -1379,17 +1379,16 @@ DebuggerServer.ObjectActorPreviewers = {
  *        The result grip to fill in
  * @return Booolean true if the object was handled, false otherwise
  */
-function wrappedPrimitivePreviewer(className, classObj, objectActor, grip) {
+function wrappedPrimitivePreviewer(className, classObj, objectActor, grip, rawObj) {
   let {obj, hooks} = objectActor;
 
   if (!obj.proto || obj.proto.class != className) {
     return false;
   }
 
-  let raw = obj.unsafeDereference();
   let v = null;
   try {
-    v = classObj.prototype.valueOf.call(raw);
+    v = classObj.prototype.valueOf.call(rawObj);
   } catch (ex) {
     // valueOf() can throw if the raw JS object is "misbehaved".
     return false;
@@ -1399,7 +1398,7 @@ function wrappedPrimitivePreviewer(className, classObj, objectActor, grip) {
     return false;
   }
 
-  let canHandle = GenericObject(objectActor, grip, className === "String");
+  let canHandle = GenericObject(objectActor, grip, rawObj, className === "String");
   if (!canHandle) {
     return false;
   }
@@ -1409,7 +1408,7 @@ function wrappedPrimitivePreviewer(className, classObj, objectActor, grip) {
   return true;
 }
 
-function GenericObject(objectActor, grip, specialStringBehavior = false) {
+function GenericObject(objectActor, grip, rawObj, specialStringBehavior = false) {
   let {obj, hooks} = objectActor;
   if (grip.preview || grip.displayString || hooks.getGripDepth() > 1) {
     return false;
@@ -1793,17 +1792,45 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   },
 
   function PseudoArray({obj, hooks}, grip, rawObj) {
-    let length = 0;
+    let length;
 
-    // Making sure all keys are numbers from 0 to length-1
     let keys = obj.getOwnPropertyNames();
     if (keys.length == 0) {
       return false;
     }
-    for (let key of keys) {
-      if (isNaN(key) || key != length++) {
+
+    // If no item is going to be displayed in preview, better display as sparse object.
+    // The first key should contain the smallest integer index (if any).
+    if(keys[0] >= OBJECT_PREVIEW_MAX_ITEMS) {
+      return false;
+    }
+
+    // Pseudo-arrays should only have array indices and, optionally, a "length" property.
+    // Since integer indices are sorted first, check if the last property is "length".
+    if(keys[keys.length-1] === "length") {
+      keys.pop();
+      length = DevToolsUtils.getProperty(obj, "length");
+    } else {
+      // Otherwise, let length be the (presumably) greatest array index plus 1.
+      length = +keys[keys.length-1] + 1;
+    }
+    // Check if length is a valid array length, i.e. is a Uint32 number.
+    if(typeof length !== "number" || length >>> 0 !== length) {
+      return false;
+    }
+
+    // Ensure all keys are increasing array indices smaller than length. The order is not
+    // guaranteed for exotic objects but, in most cases, big array indices and properties
+    // which are not integer indices should be at the end. Then, iterating backwards
+    // allows us to return earlier when the object is not completely a pseudo-array.
+    let prev = length;
+    for(let i = keys.length - 1; i >= 0; --i) {
+      let key = keys[i];
+      let numKey = key >>> 0; // ToUint32(key)
+      if (numKey + '' !== key || numKey >= prev) {
         return false;
       }
+      prev = numKey;
     }
 
     grip.preview = {
@@ -1817,19 +1844,23 @@ DebuggerServer.ObjectActorPreviewers.Object = [
     }
 
     let items = grip.preview.items = [];
+    let numItems = Math.min(OBJECT_PREVIEW_MAX_ITEMS, length);
 
-    let i = 0;
-    for (let key of keys) {
-      if (rawObj.hasOwnProperty(key) && i++ < OBJECT_PREVIEW_MAX_ITEMS) {
-        let value = makeDebuggeeValueIfNeeded(obj, rawObj[key]);
-        items.push(hooks.createValueGrip(value));
+    for (let i = 0; i < numItems; ++i) {
+      let desc = obj.getOwnPropertyDescriptor(i);
+      if (desc && 'value' in desc) {
+        items.push(hooks.createValueGrip(desc.value));
+      } else {
+        items.push(null);
       }
     }
 
     return true;
   },
 
-  GenericObject,
+  function Object(objectActor, grip, rawObj) {
+    return GenericObject(objectActor, grip, rawObj, /* specialStringBehavior = */ false);
+  },
 ];
 
 /**
@@ -1847,7 +1878,14 @@ function getPromiseState(obj) {
       "Can't call `getPromiseState` on `Debugger.Object`s that don't " +
       "refer to Promise objects.");
   }
-  return obj.promiseState;
+
+  let state = { state: obj.promiseState };
+  if (state.state === "fulfilled") {
+    state.value = obj.promiseValue;
+  } else if (state.state === "rejected") {
+    state.reason = obj.promiseReason;
+  }
+  return state;
 }
 
 /**

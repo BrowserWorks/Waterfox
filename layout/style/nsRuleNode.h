@@ -20,7 +20,7 @@
 #include "nsPresContext.h"
 #include "nsStyleStruct.h"
 
-class nsCSSPropertySet;
+class nsCSSPropertyIDSet;
 class nsCSSValue;
 class nsIStyleRule;
 class nsStyleContext;
@@ -36,7 +36,7 @@ struct nsInheritedStyleData
                        nsStyleStructID_Inherited_Start,
                        nsStyleStructID_Inherited_Count> mStyleStructs;
 
-  void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
+  void* operator new(size_t sz, nsPresContext* aContext) {
     return aContext->PresShell()->
       AllocateByObjectID(mozilla::eArenaObjectID_nsInheritedStyleData, sz);
   }
@@ -84,7 +84,7 @@ struct nsResetStyleData
     }
   }
 
-  void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
+  void* operator new(size_t sz, nsPresContext* aContext) {
     return aContext->PresShell()->
       AllocateByObjectID(mozilla::eArenaObjectID_nsResetStyleData, sz);
   }
@@ -119,7 +119,7 @@ struct nsConditionalResetStyleData
           Entry* aNext)
       : mConditions(aConditions), mStyleStruct(aStyleStruct), mNext(aNext) {}
 
-    void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
+    void* operator new(size_t sz, nsPresContext* aContext) {
       return aContext->PresShell()->AllocateByObjectID(
           mozilla::eArenaObjectID_nsConditionalResetStyleDataEntry, sz);
     }
@@ -148,7 +148,7 @@ struct nsConditionalResetStyleData
     mConditionalBits = 0;
   }
 
-  void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW {
+  void* operator new(size_t sz, nsPresContext* aContext) {
     return aContext->PresShell()->AllocateByObjectID(
         mozilla::eArenaObjectID_nsConditionalResetStyleData, sz);
   }
@@ -204,8 +204,8 @@ public:
                "conditions or is uncacheable");
 #ifdef DEBUG
     for (Entry* e = static_cast<Entry*>(mEntries[aSID]); e; e = e->mNext) {
-      NS_WARN_IF_FALSE(e->mConditions != aConditions,
-                       "wasteful to have duplicate conditional style data");
+      NS_WARNING_ASSERTION(e->mConditions != aConditions,
+                           "wasteful to have duplicate conditional style data");
     }
 #endif
 
@@ -550,7 +550,7 @@ private:
 
 public:
   // Infallible overloaded new operator that allocates from a presShell arena.
-  void* operator new(size_t sz, nsPresContext* aContext) CPP_THROW_NEW;
+  void* operator new(size_t sz, nsPresContext* aContext);
   void Destroy();
 
   // Implemented in nsStyleSet.h, since it needs to know about nsStyleSet.
@@ -793,9 +793,9 @@ public:
   // This is infallible; it will never return nullptr.
   static already_AddRefed<nsRuleNode> CreateRootNode(nsPresContext* aPresContext);
 
-  static void EnsureBlockDisplay(uint8_t& display,
+  static void EnsureBlockDisplay(mozilla::StyleDisplay& display,
                                  bool aConvertListItem = false);
-  static void EnsureInlineDisplay(uint8_t& display);
+  static void EnsureInlineDisplay(mozilla::StyleDisplay& display);
 
   // Transition never returns null; on out of memory it'll just return |this|.
   nsRuleNode* Transition(nsIStyleRule* aRule, mozilla::SheetType aLevel,
@@ -862,6 +862,8 @@ public:
                            nsStyleContext* aContext,
                            bool aComputeData);
 
+  void GetDiscretelyAnimatedCSSValue(nsCSSPropertyID aProperty,
+                                     nsCSSValue* aValue);
 
   // See comments in GetStyleData for an explanation of what the
   // code below does.
@@ -962,9 +964,9 @@ public:
    */
   static void
   ComputePropertiesOverridingAnimation(
-                              const nsTArray<nsCSSProperty>& aProperties,
+                              const nsTArray<nsCSSPropertyID>& aProperties,
                               nsStyleContext* aStyleContext,
-                              nsCSSPropertySet& aPropertiesOverridden);
+                              nsCSSPropertyIDSet& aPropertiesOverridden);
 
   // Expose this so media queries can use it
   static nscoord CalcLengthWithInitialFont(nsPresContext* aPresContext,
@@ -991,11 +993,17 @@ public:
   // Compute the value of an nsStyleCoord that IsCalcUnit().
   // (Values that don't require aPercentageBasis should be handled
   // inside nsRuleNode rather than through this API.)
+  // @note the caller is expected to handle percentage of an indefinite size
+  // and NOT call this method with aPercentageBasis == NS_UNCONSTRAINEDSIZE.
+  // @note the return value may be negative, e.g. for "calc(a - b%)"
   static nscoord ComputeComputedCalc(const nsStyleCoord& aCoord,
                                      nscoord aPercentageBasis);
 
   // Compute the value of an nsStyleCoord that is either a coord, a
   // percent, or a calc expression.
+  // @note the caller is expected to handle percentage of an indefinite size
+  // and NOT call this method with aPercentageBasis == NS_UNCONSTRAINEDSIZE.
+  // @note the return value may be negative, e.g. for "calc(a - b%)"
   static nscoord ComputeCoordPercentCalc(const nsStyleCoord& aCoord,
                                          nscoord aPercentageBasis);
 
@@ -1051,6 +1059,14 @@ public:
 
   static void ComputeTimingFunction(const nsCSSValue& aValue,
                                     nsTimingFunction& aResult);
+
+  // Fill unspecified layers by cycling through their values
+  // till they all are of length aMaxItemCount
+  static void FillAllBackgroundLists(nsStyleImageLayers& aLayers,
+                                     uint32_t aMaxItemCount);
+
+  static void FillAllMaskLists(nsStyleImageLayers& aLayers,
+                               uint32_t aMaxItemCount);
 
 private:
 #ifdef DEBUG

@@ -30,6 +30,12 @@ LIRGeneratorARM64::useByteOpRegister(MDefinition* mir)
 }
 
 LAllocation
+LIRGeneratorARM64::useByteOpRegisterAtStart(MDefinition* mir)
+{
+    MOZ_CRASH("useByteOpRegister");
+}
+
+LAllocation
 LIRGeneratorARM64::useByteOpRegisterOrNonDoubleConstant(MDefinition* mir)
 {
     MOZ_CRASH("useByteOpRegisterOrNonDoubleConstant");
@@ -328,12 +334,6 @@ LIRGeneratorARM64::visitRandom(MRandom* ins)
 
 void
 LIRGeneratorARM64::visitWasmTruncateToInt64(MWasmTruncateToInt64* ins)
-{
-    MOZ_CRASH("NY");
-}
-
-void
-LIRGeneratorARM64::visitWasmBoundsCheck(MWasmBoundsCheck* ins)
 {
     MOZ_CRASH("NY");
 }

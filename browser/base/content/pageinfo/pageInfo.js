@@ -188,10 +188,9 @@ gImageView.getCellText = function(row, column) {
   if (column.index == COL_IMAGE_SIZE) {
     if (value == -1) {
       return gStrings.unknown;
-    } else {
-      var kbSize = Number(Math.round(value / 1024 * 100) / 100);
-      return gBundle.getFormattedString("mediaFileSize", [kbSize]);
     }
+    var kbSize = Number(Math.round(value / 1024 * 100) / 100);
+    return gBundle.getFormattedString("mediaFileSize", [kbSize]);
   }
   return value || "";
 };
@@ -263,7 +262,7 @@ const CERTIFICATEDIALOGS_CONTRACTID = "@mozilla.org/nsCertificateDialogs;1"
 function getClipboardHelper() {
     try {
         return Components.classes["@mozilla.org/widget/clipboardhelper;1"].getService(Components.interfaces.nsIClipboardHelper);
-    } catch(e) {
+    } catch (e) {
         // do nothing, later code will handle the error
         return null;
     }
@@ -644,7 +643,7 @@ function openURL(target)
   window.open(url, "_blank", "chrome");
 }
 
-function onBeginLinkDrag(event,urlField,descField)
+function onBeginLinkDrag(event, urlField, descField)
 {
   if (event.originalTarget.localName != "treechildren")
     return;
@@ -760,7 +759,7 @@ function saveMedia()
           try {
             uri.QueryInterface(Components.interfaces.nsIURL);
             dir.append(decodeURIComponent(uri.fileName));
-          } catch(ex) {
+          } catch (ex) {
             // data:/blob: uris
             // Supply a dummy filename, otherwise Download Manager
             // will try to delete the base directory on failure.

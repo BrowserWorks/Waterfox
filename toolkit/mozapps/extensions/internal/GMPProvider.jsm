@@ -407,7 +407,7 @@ GMPWrapper.prototype = {
     let parsedData;
     try {
       parsedData = JSON.parse(data);
-    } catch(ex) {
+    } catch (ex) {
       this._log.error("Malformed EME video message with data: " + data);
       return;
     }

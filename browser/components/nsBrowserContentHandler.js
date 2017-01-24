@@ -551,8 +551,11 @@ nsBrowserContentHandler.prototype = {
     if (startPage == "about:blank")
       startPage = "";
 
-    // Only show the startPage if we're not restoring an update session.
-    if (overridePage && startPage && !willRestoreSession)
+    let skipStartPage = override == OVERRIDE_NEW_PROFILE &&
+      prefb.getBoolPref("browser.startup.firstrunSkipsHomepage");
+    // Only show the startPage if we're not restoring an update session and are
+    // not set to skip the start page on this profile
+    if (overridePage && startPage && !willRestoreSession && !skipStartPage)
       return overridePage + "|" + startPage;
 
     return overridePage || startPage || "about:blank";
@@ -722,7 +725,7 @@ nsDefaultCommandLineHandler.prototype = {
           this._haveProfile = true;
         }
         catch (e) {
-          while ((ar = cmdLine.handleFlagWithParam("url", false))) { }
+          while ((ar = cmdLine.handleFlagWithParam("url", false)));
           cmdLine.preventDefault = true;
         }
       }
@@ -746,7 +749,7 @@ nsDefaultCommandLineHandler.prototype = {
           uriScheme = uri.scheme;
           uriHost = uri.host;
           uriPath = uri.path;
-        } catch(e) {
+        } catch (e) {
         }
 
         // Most Windows searches are "https://www.bing.com/search...", but bug

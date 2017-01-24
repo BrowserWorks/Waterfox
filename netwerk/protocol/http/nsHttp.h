@@ -30,7 +30,7 @@ namespace net {
     enum {
         // SPDY_VERSION_2 = 2, REMOVED
         // SPDY_VERSION_3 = 3, REMOVED
-        SPDY_VERSION_31 = 4,
+        // SPDY_VERSION_31 = 4, REMOVED
         HTTP_VERSION_2 = 5
 
         // leave room for official versions. telem goes to 48
@@ -83,6 +83,15 @@ typedef uint8_t nsHttpVersion;
 
 // This flag indicates the transaction should accept associated pushes
 #define NS_HTTP_ONPUSH_LISTENER      (1<<9)
+
+// Transactions with this flag should react to errors without side effects
+// First user is to prevent clearing of alt-svc cache on failed probe
+#define NS_HTTP_ERROR_SOFTLY         (1<<10)
+
+// This corresponds to nsIHttpChannelInternal.beConservative
+// it disables any cutting edge features that we are worried might result in
+// interop problems with critical infrastructure
+#define NS_HTTP_BE_CONSERVATIVE      (1<<11)
 
 //-----------------------------------------------------------------------------
 // some default values

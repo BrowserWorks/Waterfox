@@ -14,19 +14,19 @@
 /***************************************************************************/
 
 inline void
-XPCJSRuntime::AddVariantRoot(XPCTraceableVariant* variant)
+XPCJSContext::AddVariantRoot(XPCTraceableVariant* variant)
 {
     variant->AddToRootSet(&mVariantRoots);
 }
 
 inline void
-XPCJSRuntime::AddWrappedJSRoot(nsXPCWrappedJS* wrappedJS)
+XPCJSContext::AddWrappedJSRoot(nsXPCWrappedJS* wrappedJS)
 {
     wrappedJS->AddToRootSet(&mWrappedJSRoots);
 }
 
 inline void
-XPCJSRuntime::AddObjectHolderRoot(XPCJSObjectHolder* holder)
+XPCJSContext::AddObjectHolderRoot(XPCJSObjectHolder* holder)
 {
     holder->AddToRootSet(&mObjectHolderRoots);
 }
@@ -39,24 +39,24 @@ XPCCallContext::IsValid() const
     return mState != INIT_FAILED;
 }
 
-inline XPCJSRuntime*
-XPCCallContext::GetRuntime() const
+inline XPCJSContext*
+XPCCallContext::GetContext() const
 {
-    CHECK_STATE(HAVE_RUNTIME);
-    return mXPCJSRuntime;
+    CHECK_STATE(HAVE_CONTEXT);
+    return mXPCJSContext;
 }
 
 inline JSContext*
 XPCCallContext::GetJSContext() const
 {
-    CHECK_STATE(HAVE_RUNTIME);
+    CHECK_STATE(HAVE_CONTEXT);
     return mJSContext;
 }
 
 inline XPCCallContext*
 XPCCallContext::GetPrevCallContext() const
 {
-    CHECK_STATE(HAVE_RUNTIME);
+    CHECK_STATE(HAVE_CONTEXT);
     return mPrevCallContext;
 }
 
@@ -117,12 +117,6 @@ XPCCallContext::GetSet() const
 {
     CHECK_STATE(HAVE_NAME);
     return mSet;
-}
-
-inline bool
-XPCCallContext::CanGetInterface() const
-{
-    return mState >= HAVE_NAME;
 }
 
 inline XPCNativeInterface*
@@ -191,29 +185,29 @@ XPCCallContext::SetRetVal(JS::Value val)
 inline jsid
 XPCCallContext::GetResolveName() const
 {
-    CHECK_STATE(HAVE_RUNTIME);
-    return XPCJSRuntime::Get()->GetResolveName();
+    CHECK_STATE(HAVE_CONTEXT);
+    return XPCJSContext::Get()->GetResolveName();
 }
 
 inline jsid
 XPCCallContext::SetResolveName(JS::HandleId name)
 {
-    CHECK_STATE(HAVE_RUNTIME);
-    return XPCJSRuntime::Get()->SetResolveName(name);
+    CHECK_STATE(HAVE_CONTEXT);
+    return XPCJSContext::Get()->SetResolveName(name);
 }
 
 inline XPCWrappedNative*
 XPCCallContext::GetResolvingWrapper() const
 {
     CHECK_STATE(HAVE_OBJECT);
-    return XPCJSRuntime::Get()->GetResolvingWrapper();
+    return XPCJSContext::Get()->GetResolvingWrapper();
 }
 
 inline XPCWrappedNative*
 XPCCallContext::SetResolvingWrapper(XPCWrappedNative* w)
 {
     CHECK_STATE(HAVE_OBJECT);
-    return XPCJSRuntime::Get()->SetResolvingWrapper(w);
+    return XPCJSContext::Get()->SetResolvingWrapper(w);
 }
 
 inline uint16_t
@@ -285,6 +279,18 @@ XPCNativeInterface::OffsetOfMembers()
 
 /***************************************************************************/
 
+inline XPCNativeSetKey::XPCNativeSetKey(XPCNativeSet* baseSet,
+                                        XPCNativeInterface* addition)
+    : mBaseSet(baseSet)
+    , mAddition(addition)
+{
+    MOZ_ASSERT(mBaseSet);
+    MOZ_ASSERT(mAddition);
+    MOZ_ASSERT(!mBaseSet->HasInterface(mAddition));
+}
+
+/***************************************************************************/
+
 inline bool
 XPCNativeSet::FindMember(jsid name, XPCNativeMember** pMember,
                          uint16_t* pInterfaceIndex) const
@@ -321,7 +327,7 @@ XPCNativeSet::FindMember(jsid name, XPCNativeMember** pMember,
 
 inline bool
 XPCNativeSet::FindMember(jsid name, XPCNativeMember** pMember,
-                         XPCNativeInterface** pInterface) const
+                         RefPtr<XPCNativeInterface>* pInterface) const
 {
     uint16_t index;
     if (!FindMember(name, pMember, &index))
@@ -331,21 +337,20 @@ XPCNativeSet::FindMember(jsid name, XPCNativeMember** pMember,
 }
 
 inline bool
-XPCNativeSet::FindMember(jsid name,
+XPCNativeSet::FindMember(JS::HandleId name,
                          XPCNativeMember** pMember,
-                         XPCNativeInterface** pInterface,
+                         RefPtr<XPCNativeInterface>* pInterface,
                          XPCNativeSet* protoSet,
                          bool* pIsLocal) const
 {
     XPCNativeMember* Member;
-    XPCNativeInterface* Interface;
+    RefPtr<XPCNativeInterface> Interface;
     XPCNativeMember* protoMember;
 
     if (!FindMember(name, &Member, &Interface))
         return false;
 
     *pMember = Member;
-    *pInterface = Interface;
 
     *pIsLocal =
         !Member ||
@@ -354,6 +359,8 @@ XPCNativeSet::FindMember(jsid name,
          !protoSet->MatchesSetUpToInterface(this, Interface) &&
          (!protoSet->FindMember(name, &protoMember, (uint16_t*)nullptr) ||
           protoMember != Member));
+
+    *pInterface = Interface.forget();
 
     return true;
 }
@@ -441,26 +448,13 @@ XPCNativeSet::MatchesSetUpToInterface(const XPCNativeSet* other,
 
 inline void XPCNativeSet::Mark()
 {
-    if (IsMarked())
-        return;
-
-    XPCNativeInterface* const * pp = mInterfaces;
-
-    for (int i = (int) mInterfaceCount; i > 0; i--, pp++)
-        (*pp)->Mark();
-
-    MarkSelfOnly();
+    mMarked = 1;
 }
 
 #ifdef DEBUG
 inline void XPCNativeSet::ASSERT_NotMarked()
 {
     MOZ_ASSERT(!IsMarked(), "bad");
-
-    XPCNativeInterface* const * pp = mInterfaces;
-
-    for (int i = (int) mInterfaceCount; i > 0; i--, pp++)
-        MOZ_ASSERT(!(*pp)->IsMarked(), "bad");
 }
 #endif
 
@@ -542,10 +536,10 @@ xpc_ForcePropertyResolve(JSContext* cx, JS::HandleObject obj, jsid idArg)
 }
 
 inline jsid
-GetRTIdByIndex(JSContext* cx, unsigned index)
+GetJSIDByIndex(JSContext* cx, unsigned index)
 {
-  XPCJSRuntime* rt = nsXPConnect::XPConnect()->GetRuntime();
-  return rt->GetStringID(index);
+  XPCJSContext* xpcx = nsXPConnect::XPConnect()->GetContext();
+  return xpcx->GetStringID(index);
 }
 
 inline

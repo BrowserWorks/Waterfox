@@ -21,6 +21,12 @@ class js::Thread::Id::PlatformData
   unsigned id;
 };
 
+/* static */ js::HashNumber
+js::Thread::Hasher::hash(const Lookup& l)
+{
+  return mozilla::HashBytes(l.platformData_, sizeof(l.platformData_));
+}
+
 inline js::Thread::Id::PlatformData*
 js::Thread::Id::platformData()
 {
@@ -44,7 +50,7 @@ js::Thread::Id::Id()
 }
 
 bool
-js::Thread::Id::operator==(const Id& aOther)
+js::Thread::Id::operator==(const Id& aOther) const
 {
   return platformData()->id == aOther.platformData()->id;
 }
@@ -148,4 +154,11 @@ js::ThisThread::SetName(const char* name)
     // Do nothing.
   }
 #endif
+}
+
+void
+js::ThisThread::GetName(char* nameBuffer, size_t len)
+{
+  MOZ_RELEASE_ASSERT(len > 0);
+  *nameBuffer = '\0';
 }

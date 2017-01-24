@@ -26,8 +26,8 @@
 }
 
 .click-to-play-plugins-notification-button-container {
-  background-color: hsla(210,4%,10%,.07);
-  border-top: 1px solid hsla(210,4%,10%,.12);
+  background-color: var(--arrowpanel-dimmed);
+  border-top: 1px solid var(--panel-separator-color);
   padding: 10px;
   margin-top: 5px;
 }
@@ -51,8 +51,6 @@
 
 .messageImage[value="plugin-hidden"] {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#plugin);
-  filter: url(chrome://browser/skin/filters.svg#fill);
-  fill: #808080;
 }
 
 /* Keep any changes to this style in sync with pluginProblem.css */
@@ -64,6 +62,4 @@ notification.pluginVulnerable {
 
 notification.pluginVulnerable .messageImage {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#plugin-blocked);
-  filter: url(chrome://browser/skin/filters.svg#fill);
-  fill: #d92215;
 }

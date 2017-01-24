@@ -51,10 +51,11 @@ nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
                                            const nsACString &npnToken,
                                            const nsACString &username,
                                            nsProxyInfo *proxyInfo,
+                                           const NeckoOriginAttributes &originAttributes,
                                            bool endToEndSSL)
     : mRoutedPort(443)
 {
-    Init(originHost, originPort, npnToken, username, proxyInfo, endToEndSSL);
+    Init(originHost, originPort, npnToken, username, proxyInfo, originAttributes, endToEndSSL);
 }
 
 nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
@@ -62,9 +63,9 @@ nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
                                            const nsACString &npnToken,
                                            const nsACString &username,
                                            nsProxyInfo *proxyInfo,
+                                           const NeckoOriginAttributes &originAttributes,
                                            const nsACString &routedHost,
                                            int32_t routedPort)
-
 {
     mEndToEndSSL = true; // so DefaultPort() works
     mRoutedPort = routedPort == -1 ? DefaultPort() : routedPort;
@@ -72,7 +73,7 @@ nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
     if (!originHost.Equals(routedHost) || (originPort != routedPort)) {
         mRoutedHost = routedHost;
     }
-    Init(originHost, originPort, npnToken, username, proxyInfo, true);
+    Init(originHost, originPort, npnToken, username, proxyInfo, originAttributes, true);
 }
 
 void
@@ -80,6 +81,7 @@ nsHttpConnectionInfo::Init(const nsACString &host, int32_t port,
                            const nsACString &npnToken,
                            const nsACString &username,
                            nsProxyInfo* proxyInfo,
+                           const NeckoOriginAttributes &originAttributes,
                            bool e2eSSL)
 {
     LOG(("Init nsHttpConnectionInfo @%p\n", this));
@@ -89,6 +91,7 @@ nsHttpConnectionInfo::Init(const nsACString &host, int32_t port,
     mEndToEndSSL = e2eSSL;
     mUsingConnect = false;
     mNPNToken = npnToken;
+    mOriginAttributes = originAttributes;
 
     mUsingHttpsProxy = (proxyInfo && proxyInfo->IsHTTPS());
     mUsingHttpProxy = mUsingHttpsProxy || (proxyInfo && proxyInfo->IsHTTP());
@@ -142,8 +145,9 @@ void nsHttpConnectionInfo::BuildHashKey()
     // byte 3 is P/. P is for a private browising channel
     // byte 4 is I/. I is for insecure scheme on TLS for http:// uris
     // byte 5 is X/. X is for disallow_spdy flag
+    // byte 6 is C/. C is for be Conservative
 
-    mHashKey.AssignLiteral("......");
+    mHashKey.AssignLiteral(".......");
     mHashKey.Append(keyHost);
     if (!mNetworkInterfaceId.IsEmpty()) {
         mHashKey.Append('(');
@@ -218,6 +222,10 @@ void nsHttpConnectionInfo::BuildHashKey()
         mHashKey.Append(mNPNToken);
         mHashKey.AppendLiteral("}");
     }
+
+    nsAutoCString originAttributes;
+    mOriginAttributes.CreateSuffix(originAttributes);
+    mHashKey.Append(originAttributes);
 }
 
 void
@@ -233,11 +241,12 @@ nsHttpConnectionInfo::Clone() const
 {
     nsHttpConnectionInfo *clone;
     if (mRoutedHost.IsEmpty()) {
-        clone = new nsHttpConnectionInfo(mOrigin, mOriginPort, mNPNToken, mUsername, mProxyInfo, mEndToEndSSL);
+        clone = new nsHttpConnectionInfo(mOrigin, mOriginPort, mNPNToken, mUsername, mProxyInfo,
+                                         mOriginAttributes, mEndToEndSSL);
     } else {
         MOZ_ASSERT(mEndToEndSSL);
         clone = new nsHttpConnectionInfo(mOrigin, mOriginPort, mNPNToken, mUsername, mProxyInfo,
-                                         mRoutedHost, mRoutedPort);
+                                         mOriginAttributes, mRoutedHost, mRoutedPort);
     }
 
     if (!mNetworkInterfaceId.IsEmpty()) {
@@ -249,6 +258,7 @@ nsHttpConnectionInfo::Clone() const
     clone->SetPrivate(GetPrivate());
     clone->SetInsecureScheme(GetInsecureScheme());
     clone->SetNoSpdy(GetNoSpdy());
+    clone->SetBeConservative(GetBeConservative());
     MOZ_ASSERT(clone->Equals(this));
 
     return clone;
@@ -264,12 +274,14 @@ nsHttpConnectionInfo::CloneAsDirectRoute(nsHttpConnectionInfo **outCI)
 
     RefPtr<nsHttpConnectionInfo> clone =
         new nsHttpConnectionInfo(mOrigin, mOriginPort,
-                                 EmptyCString(), mUsername, mProxyInfo, mEndToEndSSL);
+                                 EmptyCString(), mUsername, mProxyInfo,
+                                 mOriginAttributes, mEndToEndSSL);
     // Make sure the anonymous, insecure-scheme, and private flags are transferred
     clone->SetAnonymous(GetAnonymous());
     clone->SetPrivate(GetPrivate());
     clone->SetInsecureScheme(GetInsecureScheme());
     clone->SetNoSpdy(GetNoSpdy());
+    clone->SetBeConservative(GetBeConservative());
     if (!mNetworkInterfaceId.IsEmpty()) {
         clone->SetNetworkInterfaceId(mNetworkInterfaceId);
     }
@@ -289,7 +301,8 @@ nsHttpConnectionInfo::CreateWildCard(nsHttpConnectionInfo **outParam)
 
     RefPtr<nsHttpConnectionInfo> clone;
     clone = new nsHttpConnectionInfo(NS_LITERAL_CSTRING("*"), 0,
-                                     mNPNToken, mUsername, mProxyInfo, true);
+                                     mNPNToken, mUsername, mProxyInfo,
+                                     mOriginAttributes, true);
     // Make sure the anonymous and private flags are transferred!
     clone->SetAnonymous(GetAnonymous());
     clone->SetPrivate(GetPrivate());

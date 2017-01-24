@@ -9,6 +9,9 @@ var {RetVal, Arg, Option} = protocol;
 var events = require("sdk/event/core");
 var {LongStringActor} = require("devtools/server/actors/string");
 
+// The test implicitly relies on this.
+require("devtools/shared/fronts/string");
+
 function simpleHello() {
   return {
     from: "root",
@@ -204,7 +207,7 @@ function run_test()
       trace.expectReceive({"from":"<actorid>"});
       expectRootChildren(0);
     }).then(() => {
-      client.close(() => {
+      client.close().then(() => {
         do_test_finished();
       });
     }).then(null, err => {

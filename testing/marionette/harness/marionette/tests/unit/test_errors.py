@@ -36,9 +36,8 @@ class TestErrors(marionette_test.MarionetteTestCase):
             message=message, cause=cause, stacktrace=stacktrace)
         r = str(exc)
         self.assertIn(message, r)
-        self.assertIn(", caused by %r" % cause[0], r)
+        self.assertIn(", caused by {0!r}".format(cause[0]), r)
         self.assertIn("\nstacktrace:\n\tfirst\n\tsecond", r)
-        self.assertIn("MarionetteException:", r)
 
     def test_cause_string(self):
         exc = errors.MarionetteException(cause="foo")
@@ -50,7 +49,7 @@ class TestErrors(marionette_test.MarionetteTestCase):
         exc = errors.MarionetteException(cause=cause)
         self.assertEqual(exc.cause, cause)
         r = str(exc)
-        self.assertIn(", caused by %r" % cause[0], r)
+        self.assertIn(", caused by {0!r}".format(cause[0]), r)
 
 
 class TestLookup(marionette_test.MarionetteTestCase):

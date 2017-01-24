@@ -14,6 +14,7 @@
 #include "MP4Decoder.h"
 #include "MockMediaDecoderOwner.h"
 #include "MockMediaResource.h"
+#include "VideoFrameContainer.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -87,7 +88,7 @@ public:
              &MediaFormatReaderBinding::OnNotDemuxed);
   }
 
-  void OnMetadataNotRead(ReadMetadataFailureReason aReason) {
+  void OnMetadataNotRead(const MediaResult& aError) {
     EXPECT_TRUE(false);
     ReaderShutdown();
   }
@@ -106,7 +107,7 @@ public:
     ReaderShutdown();
   }
 
-  void OnNotDemuxed(MediaDecoderReader::NotDecodedReason aReason)
+  void OnNotDemuxed(const MediaResult& aReason)
   {
     EXPECT_TRUE(false);
     ReaderShutdown();

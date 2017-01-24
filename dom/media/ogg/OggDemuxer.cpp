@@ -10,13 +10,13 @@
 #include "OggDemuxer.h"
 #include "OggCodecState.h"
 #include "mozilla/PodOperations.h"
-#include "mozilla/Preferences.h"
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "MediaDataDemuxer.h"
 #include "nsAutoRef.h"
 #include "XiphExtradata.h"
+#include "MediaPrefs.h"
 
 #include <algorithm>
 
@@ -127,6 +127,7 @@ OggDemuxer::OggDemuxer(MediaResource* aResource)
   : mTheoraState(nullptr)
   , mVorbisState(nullptr)
   , mOpusState(nullptr)
+  , mFlacState(nullptr)
   , mOpusEnabled(MediaDecoder::IsOpusEnabled())
   , mSkeletonState(nullptr)
   , mAudioOggState(aResource)
@@ -134,6 +135,7 @@ OggDemuxer::OggDemuxer(MediaResource* aResource)
   , mVorbisSerial(0)
   , mOpusSerial(0)
   , mTheoraSerial(0)
+  , mFlacSerial(0)
   , mOpusPreSkip(0)
   , mIsChained(false)
   , mTimedMetadataEvent(nullptr)
@@ -173,7 +175,7 @@ bool
 OggDemuxer::HasAudio()
 const
 {
-  return mVorbisState || mOpusState;
+  return mVorbisState || mOpusState || mFlacState;
 }
 
 bool
@@ -213,24 +215,19 @@ OggDemuxer::Init()
 {
   int ret = ogg_sync_init(OggSyncState(TrackInfo::kAudioTrack));
   if (ret != 0) {
-    return InitPromise::CreateAndReject(DemuxerFailureReason::DEMUXER_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_OUT_OF_MEMORY, __func__);
   }
   ret = ogg_sync_init(OggSyncState(TrackInfo::kVideoTrack));
   if (ret != 0) {
-    return InitPromise::CreateAndReject(DemuxerFailureReason::DEMUXER_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_OUT_OF_MEMORY, __func__);
   }
-  /*
-  if (InitBufferedState() != NS_OK) {
-    return InitPromise::CreateAndReject(DemuxerFailureReason::WAITING_FOR_DATA, __func__);
-  }
-  */
   if (ReadMetadata() != NS_OK) {
-    return InitPromise::CreateAndReject(DemuxerFailureReason::DEMUXER_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
   }
 
   if (!GetNumberTracks(TrackInfo::kAudioTrack) &&
       !GetNumberTracks(TrackInfo::kVideoTrack)) {
-    return InitPromise::CreateAndReject(DemuxerFailureReason::DEMUXER_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
   }
 
   return InitPromise::CreateAndResolve(NS_OK, __func__);
@@ -249,8 +246,10 @@ OggDemuxer::GetTrackCodecState(TrackInfo::TrackType aType) const
     case TrackInfo::kAudioTrack:
       if (mVorbisState) {
         return mVorbisState;
-      } else {
+      } else if (mOpusState) {
         return mOpusState;
+      } else {
+        return mFlacState;
       }
     case TrackInfo::kVideoTrack:
       return mTheoraState;
@@ -267,6 +266,7 @@ OggDemuxer::GetCodecStateType(OggCodecState* aState) const
       return TrackInfo::kVideoTrack;
     case OggCodecState::TYPE_OPUS:
     case OggCodecState::TYPE_VORBIS:
+    case OggCodecState::TYPE_FLAC:
       return TrackInfo::kAudioTrack;
     default:
       return TrackInfo::kUndefinedTrack;
@@ -462,6 +462,18 @@ OggDemuxer::SetupTargetOpus(OpusState* aOpusState, OggHeaders& aHeaders)
 }
 
 void
+OggDemuxer::SetupTargetFlac(FlacState* aFlacState, OggHeaders& aHeaders)
+{
+  if (mFlacState) {
+    mFlacState->Reset();
+  }
+
+  mInfo.mAudio = aFlacState->Info();
+  mFlacState = aFlacState;
+  mFlacSerial = aFlacState->mSerial;
+}
+
+void
 OggDemuxer::SetupTargetSkeleton()
 {
   // Setup skeleton related information after mVorbisState & mTheroState
@@ -557,6 +569,18 @@ OggDemuxer::SetupMediaTracksInfo(const nsTArray<uint32_t>& aSerials)
       mInfo.mAudio.mRate = opusState->mRate;
       mInfo.mAudio.mChannels = opusState->mChannels;
       FillTags(&mInfo.mAudio, opusState->GetTags());
+    } else if (codecState->GetType() == OggCodecState::TYPE_FLAC) {
+      FlacState* flacState = static_cast<FlacState*>(codecState);
+      if (!(mFlacState && mFlacState->mSerial == flacState->mSerial)) {
+        continue;
+      }
+
+      if (msgInfo) {
+        InitTrack(msgInfo, &mInfo.mAudio, mFlacState == flacState);
+      }
+
+      mInfo.mAudio = flacState->Info();
+      FillTags(&mInfo.mAudio, flacState->GetTags());
     }
   }
 }
@@ -662,6 +686,15 @@ OggDemuxer::ReadMetadata()
           NS_WARNING("Opus decoding disabled."
                      " See media.opus.enabled in about:config");
         }
+      } else if (MediaPrefs::FlacInOgg() &&
+                 s->GetType() == OggCodecState::TYPE_FLAC &&
+                 ReadHeaders(TrackInfo::kAudioTrack, s, headers)) {
+        if (!mFlacState) {
+          FlacState* flacState = static_cast<FlacState*>(s);
+          SetupTargetFlac(flacState, headers);
+        } else {
+          s->Deactivate();
+        }
       } else if (s->GetType() == OggCodecState::TYPE_SKELETON && !mSkeletonState) {
         mSkeletonState = static_cast<SkeletonState*>(s);
       } else {
@@ -735,6 +768,7 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
   bool chained = false;
   OpusState* newOpusState = nullptr;
   VorbisState* newVorbisState = nullptr;
+  FlacState* newFlacState = nullptr;
   nsAutoPtr<MetadataTags> tags;
 
   if (HasVideo() || HasSkeleton() || !HasAudio()) {
@@ -762,6 +796,8 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
     newVorbisState = static_cast<VorbisState*>(codecState.get());
   } else if (mOpusState && (codecState->GetType() == OggCodecState::TYPE_OPUS)) {
     newOpusState = static_cast<OpusState*>(codecState.get());
+  } else if (mFlacState && (codecState->GetType() == OggCodecState::TYPE_FLAC)) {
+    newFlacState = static_cast<FlacState*>(codecState.get());
   } else {
     return false;
   }
@@ -819,6 +855,24 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
 
     chained = true;
     tags = newOpusState->GetTags();
+  }
+
+  OggHeaders flacHeaders;
+  if ((newFlacState &&
+       ReadHeaders(TrackInfo::kAudioTrack, newFlacState, flacHeaders)) &&
+      (mFlacState->Info().mRate == newFlacState->Info().mRate) &&
+      (mFlacState->Info().mChannels == newFlacState->Info().mChannels)) {
+
+    SetupTargetFlac(newFlacState, flacHeaders);
+    LOG(LogLevel::Debug, ("New flac ogg link, serial=%d\n", mFlacSerial));
+
+    if (msgInfo) {
+      InitTrack(msgInfo, &mInfo.mAudio, true);
+    }
+
+    mInfo.mAudio = newFlacState->Info();
+    chained = true;
+    tags = newFlacState->GetTags();
   }
 
   if (chained) {
@@ -1056,6 +1110,10 @@ OggDemuxer::GetBuffered(TrackInfo::TrackType aType)
       } else if (aType == TrackInfo::kAudioTrack && mOpusState &&
                  serial == mOpusSerial) {
         startTime = OpusState::Time(mOpusPreSkip, granulepos);
+        NS_ASSERTION(startTime > 0, "Must have positive start time");
+      } else if (aType == TrackInfo::kAudioTrack && mFlacState &&
+                 serial == mFlacSerial) {
+        startTime = mFlacState->Time(granulepos);
         NS_ASSERTION(startTime > 0, "Must have positive start time");
       } else if (aType == TrackInfo::kVideoTrack && mTheoraState &&
                  serial == mTheoraSerial) {
@@ -1420,7 +1478,7 @@ OggTrackDemuxer::Seek(TimeUnit aTime)
 
     return SeekPromise::CreateAndResolve(seekTime, __func__);
   } else {
-    return SeekPromise::CreateAndReject(DemuxerFailureReason::DEMUXER_ERROR, __func__);
+    return SeekPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_DEMUXER_ERR, __func__);
   }
 }
 
@@ -1453,7 +1511,7 @@ OggTrackDemuxer::GetSamples(int32_t aNumSamples)
 {
   RefPtr<SamplesHolder> samples = new SamplesHolder;
   if (!aNumSamples) {
-    return SamplesPromise::CreateAndReject(DemuxerFailureReason::DEMUXER_ERROR, __func__);
+    return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_DEMUXER_ERR, __func__);
   }
 
   while (aNumSamples) {
@@ -1466,7 +1524,7 @@ OggTrackDemuxer::GetSamples(int32_t aNumSamples)
   }
 
   if (samples->mSamples.IsEmpty()) {
-    return SamplesPromise::CreateAndReject(DemuxerFailureReason::END_OF_STREAM, __func__);
+    return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_END_OF_STREAM, __func__);
   } else {
     return SamplesPromise::CreateAndResolve(samples, __func__);
   }
@@ -1500,7 +1558,7 @@ OggTrackDemuxer::SkipToNextRandomAccessPoint(TimeUnit aTimeThreshold)
                parsed);
     return SkipAccessPointPromise::CreateAndResolve(parsed, __func__);
   } else {
-    SkipFailureHolder failure(DemuxerFailureReason::END_OF_STREAM, parsed);
+    SkipFailureHolder failure(NS_ERROR_DOM_MEDIA_END_OF_STREAM, parsed);
     return SkipAccessPointPromise::CreateAndReject(Move(failure), __func__);
   }
 }
@@ -1715,8 +1773,8 @@ OggDemuxer::GetSeekRanges(TrackInfo::TrackType aType,
     startTime = RangeStartTime(aType, startOffset);
     if (startTime != -1 &&
         ((endTime = RangeEndTime(aType, endOffset)) != -1)) {
-      NS_WARN_IF_FALSE(startTime < endTime,
-                       "Start time must be before end time");
+      NS_WARNING_ASSERTION(startTime < endTime,
+                           "Start time must be before end time");
       aRanges.AppendElement(SeekRange(startOffset,
                                       endOffset,
                                       startTime,
@@ -2012,6 +2070,8 @@ OggDemuxer::SeekBisection(TrackInfo::TrackType aType,
               audioTime = mVorbisState->Time(granulepos);
             } else if (mOpusState && serial == mOpusState->mSerial) {
               audioTime = mOpusState->Time(granulepos);
+            } else if (mFlacState && serial == mFlacState->mSerial) {
+              audioTime = mFlacState->Time(granulepos);
             }
           }
 

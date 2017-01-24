@@ -19,6 +19,8 @@
 #include "nsTArray.h"
 #include "nsWeakPtr.h"
 
+class nsITCPDeviceInfo;
+
 namespace mozilla {
 namespace dom {
 namespace presentation {
@@ -64,6 +66,7 @@ private:
                     const nsACString& aType,
                     const nsACString& aAddress,
                     const uint16_t aPort,
+                    const nsACString& aCertFingerprint,
                     DeviceState aState,
                     MulticastDNSDeviceProvider* aProvider)
       : mId(aId)
@@ -71,6 +74,7 @@ private:
       , mType(aType)
       , mAddress(aAddress)
       , mPort(aPort)
+      , mCertFingerprint(aCertFingerprint)
       , mState(aState)
       , mProvider(aProvider)
     {
@@ -91,6 +95,11 @@ private:
       return mPort;
     }
 
+    const nsCString& CertFingerprint() const
+    {
+      return mCertFingerprint;
+    }
+
     DeviceState State() const
     {
       return mState;
@@ -104,12 +113,14 @@ private:
     void Update(const nsACString& aName,
                 const nsACString& aType,
                 const nsACString& aAddress,
-                const uint16_t aPort)
+                const uint16_t aPort,
+                const nsACString& aCertFingerprint)
     {
       mName = aName;
       mType = aType;
       mAddress = aAddress;
       mPort = aPort;
+      mCertFingerprint = aCertFingerprint;
     }
 
   private:
@@ -120,6 +131,7 @@ private:
     nsCString mType;
     nsCString mAddress;
     uint16_t mPort;
+    nsCString mCertFingerprint;
     DeviceState mState;
     MulticastDNSDeviceProvider* mProvider;
   };
@@ -137,8 +149,11 @@ private:
   };
 
   virtual ~MulticastDNSDeviceProvider();
-  nsresult RegisterService();
-  nsresult UnregisterService(nsresult aReason);
+  nsresult StartServer();
+  nsresult StopServer();
+  void AbortServerRetry();
+  nsresult RegisterMDNSService();
+  nsresult UnregisterMDNSService(nsresult aReason);
   nsresult StopDiscovery(nsresult aReason);
   nsresult Connect(Device* aDevice,
                    nsIPresentationControlChannel** aRetVal);
@@ -149,18 +164,23 @@ private:
                      const nsACString& aServiceName,
                      const nsACString& aServiceType,
                      const nsACString& aAddress,
-                     const uint16_t aPort);
+                     const uint16_t aPort,
+                     const nsACString& aCertFingerprint);
   nsresult UpdateDevice(const uint32_t aIndex,
                         const nsACString& aServiceName,
                         const nsACString& aServiceType,
                         const nsACString& aAddress,
-                        const uint16_t aPort);
+                        const uint16_t aPort,
+                        const nsACString& aCertFingerprint);
   nsresult RemoveDevice(const uint32_t aIndex);
   bool FindDeviceById(const nsACString& aId,
                       uint32_t& aIndex);
 
   bool FindDeviceByAddress(const nsACString& aAddress,
                            uint32_t& aIndex);
+
+  already_AddRefed<Device>
+  GetOrCreateDevice(nsITCPDeviceInfo* aDeviceInfo);
 
   void MarkAllDevicesUnknown();
   void ClearUnknownDevices();
@@ -189,6 +209,10 @@ private:
   nsCOMPtr<nsITimer> mDiscoveryTimer;
 
   bool mDiscoverable = false;
+  bool mDiscoverableEncrypted = false;
+  bool mIsServerRetrying = false;
+  uint32_t mServerRetryMs;
+  nsCOMPtr<nsITimer> mServerRetryTimer;
 
   nsCString mServiceName;
   nsCString mRegisteredName;

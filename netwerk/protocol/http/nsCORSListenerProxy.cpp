@@ -79,7 +79,7 @@ LogBlockedRequest(nsIRequest* aRequest,
   channel->GetURI(getter_AddRefs(aUri));
   nsAutoCString spec;
   if (aUri) {
-    aUri->GetSpec(spec);
+    spec = aUri->GetSpecOrDefault();
   }
 
   // Generate the error message
@@ -586,6 +586,19 @@ nsCORSListenerProxy::CheckRequestApproved(nsIRequest* aRequest)
   if (NS_FAILED(rv)) {
     LogBlockedRequest(aRequest, "CORSMissingAllowOrigin", nullptr);
     return rv;
+  }
+
+  // Bug 1210985 - Explicitly point out the error that the credential is
+  // not supported if the allowing origin is '*'. Note that this check
+  // has to be done before the condition
+  //
+  // >> if (mWithCredentials || !allowedOriginHeader.EqualsLiteral("*"))
+  //
+  // below since "if (A && B)" is included in "if (A || !B)".
+  //
+  if (mWithCredentials && allowedOriginHeader.EqualsLiteral("*")) {
+    LogBlockedRequest(aRequest, "CORSNotSupportingCredentials", nullptr);
+    return NS_ERROR_DOM_BAD_URI;
   }
 
   if (mWithCredentials || !allowedOriginHeader.EqualsLiteral("*")) {

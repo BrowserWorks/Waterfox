@@ -53,26 +53,34 @@ this.SitePermissions = {
     return result;
   },
 
-  /* Returns a list of objects representing all permissions that are currently
-   * set for the given URI. Each object contains the following keys:
+  /* Returns an object representing the aId permission. It contains the
+   * following keys:
    * - id: the permissionID of the permission
    * - label: the localized label
-   * - state: a constant representing the current permission state
-   *   (e.g. SitePermissions.ALLOW)
+   * - state: a constant representing the aState permission state
+   *   (e.g. SitePermissions.ALLOW), or the default if aState is omitted
    * - availableStates: an array of all available states for that permission,
    *   represented as objects with the keys:
    *   - id: the state constant
    *   - label: the translated label of that state
    */
+  getPermissionItem: function (aId, aState) {
+    let availableStates = this.getAvailableStates(aId).map(state => {
+      return { id: state, label: this.getStateLabel(aId, state) };
+    });
+    if (aState == undefined)
+      aState = this.getDefault(aId);
+    return {id: aId, label: this.getPermissionLabel(aId),
+            state: aState, availableStates};
+  },
+
+  /* Returns a list of objects representing all permissions that are currently
+   * set for the given URI. See getPermissionItem for the content of each object.
+   */
   getPermissionDetailsByURI: function (aURI) {
     let permissions = [];
     for (let {state, id} of this.getAllByURI(aURI)) {
-      let availableStates = this.getAvailableStates(id).map( state => {
-        return { id: state, label: this.getStateLabel(id, state) };
-      });
-      let label = this.getPermissionLabel(id);
-
-      permissions.push({id, label, state, availableStates});
+      permissions.push(this.getPermissionItem(id, state));
     }
 
     return permissions;
@@ -165,9 +173,11 @@ this.SitePermissions = {
   /* Returns the localized label for the given permission state, to be used in
    * a UI for managing permissions.
    */
-  getStateLabel: function (aPermissionID, aState) {
+  getStateLabel: function (aPermissionID, aState, aInUse = false) {
     switch (aState) {
       case this.UNKNOWN:
+        if (aInUse)
+          return gStringBundle.GetStringFromName("allowTemporarily");
         return gStringBundle.GetStringFromName("alwaysAsk");
       case this.ALLOW:
         return gStringBundle.GetStringFromName("allow");
@@ -176,7 +186,7 @@ this.SitePermissions = {
       case this.BLOCK:
         return gStringBundle.GetStringFromName("block");
       default:
-        throw new Error("unknown permission state");
+        return null;
     }
   }
 };
@@ -231,6 +241,9 @@ var gPermissionObject = {
 
   "camera": {},
   "microphone": {},
+  "screen": {
+    states: [ SitePermissions.UNKNOWN, SitePermissions.BLOCK ],
+  },
 
   "popup": {
     getDefault: function () {

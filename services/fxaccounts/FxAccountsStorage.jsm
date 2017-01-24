@@ -72,7 +72,7 @@ this.FxAccountsStorageManager.prototype = {
         // If accountData is passed we don't need to read any storage.
         this._needToReadSecure = false;
         // split it into the 2 parts, write it and we are done.
-        for (let [name, val] of Iterator(accountData)) {
+        for (let [name, val] of Object.entries(accountData)) {
           if (FXA_PWDMGR_PLAINTEXT_FIELDS.has(name)) {
             this.cachedPlain[name] = val;
           } else if (FXA_PWDMGR_SECURE_FIELDS.has(name)) {
@@ -156,7 +156,7 @@ this.FxAccountsStorageManager.prototype = {
     let result = {};
     if (fieldNames === null) {
       // The "old" deprecated way of fetching a logged in user.
-      for (let [name, value] of Iterator(this.cachedPlain)) {
+      for (let [name, value] of Object.entries(this.cachedPlain)) {
         result[name] = value;
       }
       // But the secure data may not have been read, so try that now.
@@ -164,7 +164,7 @@ this.FxAccountsStorageManager.prototype = {
       // .cachedSecure now has as much as it possibly can (which is possibly
       // nothing if (a) secure storage remains locked and (b) we've never updated
       // a field to be stored in secure storage.)
-      for (let [name, value] of Iterator(this.cachedSecure)) {
+      for (let [name, value] of Object.entries(this.cachedSecure)) {
         result[name] = value;
       }
       // Note we don't return cachedMemory fields here - they must be explicitly
@@ -218,7 +218,7 @@ this.FxAccountsStorageManager.prototype = {
     }
     log.debug("_updateAccountData with items", Object.keys(newFields));
     // work out what bucket.
-    for (let [name, value] of Iterator(newFields)) {
+    for (let [name, value] of Object.entries(newFields)) {
       if (FXA_PWDMGR_MEMORY_FIELDS.has(name)) {
         if (value == null) {
           delete this.cachedMemory[name];
@@ -295,7 +295,7 @@ this.FxAccountsStorageManager.prototype = {
     if (Object.keys(this.cachedPlain).length != 0) {
       throw new Error("should be impossible to have cached data already.")
     }
-    for (let [name, value] of Iterator(got.accountData)) {
+    for (let [name, value] of Object.entries(got.accountData)) {
       this.cachedPlain[name] = value;
     }
     return true;
@@ -337,7 +337,7 @@ this.FxAccountsStorageManager.prototype = {
       }
       if (readSecure && readSecure.accountData) {
         log.debug("secure read fetched items", Object.keys(readSecure.accountData));
-        for (let [name, value] of Iterator(readSecure.accountData)) {
+        for (let [name, value] of Object.entries(readSecure.accountData)) {
           if (!(name in this.cachedSecure)) {
             this.cachedSecure[name] = value;
           }
@@ -390,7 +390,7 @@ this.FxAccountsStorageManager.prototype = {
   */
   _doWriteSecure: Task.async(function* () {
     // We need to remove null items here.
-    for (let [name, value] of Iterator(this.cachedSecure)) {
+    for (let [name, value] of Object.entries(this.cachedSecure)) {
       if (value == null) {
         delete this.cachedSecure[name];
       }
@@ -401,7 +401,7 @@ this.FxAccountsStorageManager.prototype = {
       accountData: this.cachedSecure,
     }
     try {
-      yield this.secureStorage.set(this.cachedPlain.email, toWriteSecure);
+      yield this.secureStorage.set(this.cachedPlain.uid, toWriteSecure);
     } catch (ex) {
       if (!ex instanceof this.secureStorage.STORAGE_LOCKED) {
         throw ex;
@@ -511,7 +511,7 @@ LoginManagerStorage.prototype = {
     }
   }),
 
-  set: Task.async(function* (email, contents) {
+  set: Task.async(function* (uid, contents) {
     if (!contents) {
       // Nuke it from the login manager.
       let cleared = yield this._clearLoginMgrData();
@@ -541,7 +541,7 @@ LoginManagerStorage.prototype = {
       let login = new loginInfo(FXA_PWDMGR_HOST,
                                 null, // aFormSubmitURL,
                                 FXA_PWDMGR_REALM, // aHttpRealm,
-                                email, // aUsername
+                                uid, // aUsername
                                 JSON.stringify(contents), // aPassword
                                 "", // aUsernameField
                                 "");// aPasswordField
@@ -583,9 +583,8 @@ LoginManagerStorage.prototype = {
         return null;
       }
       let login = logins[0];
-      // Support either the uid or the email as the username - we plan to move
-      // to storing the uid once Fx41 hits the release channel as the code below
-      // that handles either first landed in 41. Bug 1183951 is to store the uid.
+      // Support either the uid or the email as the username - as of bug 1183951
+      // we store the uid, but we support having either for b/w compat.
       if (login.username == uid || login.username == email) {
         return JSON.parse(login.password);
       }

@@ -8,6 +8,8 @@
 include LayersSurfaces;
 include LayersMessages;
 include PlatformWidgetTypes;
+include protocol PAPZ;
+include protocol PAPZCTreeManager;
 include protocol PBrowser;
 include protocol PCompositable;
 include protocol PCompositorWidget;
@@ -45,6 +47,8 @@ namespace layers {
  */
 sync protocol PCompositorBridge
 {
+  manages PAPZ;
+  manages PAPZCTreeManager;
   // A Compositor manages a single Layer Manager (PLayerTransaction)
   manages PLayerTransaction;
   manages PTexture;
@@ -118,6 +122,13 @@ parent:
   // When out-of-process, this must be called to finish initialization.
   sync Initialize(uint64_t rootLayerTreeId);
 
+  // Returns whether this Compositor has APZ enabled or not.
+  sync AsyncPanZoomEnabled(uint64_t layersId) returns (bool aHasAPZ);
+
+  // Must be called after Initialize(), and only succeeds if AsyncPanZoomEnabled() is true.
+  async PAPZ(uint64_t layersId);
+  async PAPZCTreeManager(uint64_t layersId);
+
   /**
    * Confirmation callback for UpdatePluginConfigurations and HideAllPlugins.
    */
@@ -141,7 +152,10 @@ parent:
   sync Pause();
   sync Resume();
 
-  async NotifyChildCreated(uint64_t id);
+  // See bug 1316632 comment #33 for why this has to be sync. Otherwise,
+  // there are ordering issues with SendPLayerTransactionConstructor.
+  sync NotifyChildCreated(uint64_t id);
+
   async AdoptChild(uint64_t id);
 
   // Make a snapshot of the content that would have been drawn to our
@@ -160,10 +174,6 @@ parent:
   // Force an additional frame presentation to be executed. This is used to
   // work around a windows presentation bug (See Bug 1232042)
   async ForcePresent();
-
-  // Get the size of the tiles. This number should not change at runtime.
-  sync GetTileSize()
-    returns (int32_t tileWidth, int32_t tileHeight);
 
   sync StartFrameTimeRecording(int32_t bufferSize)
     returns (uint32_t startIndex);

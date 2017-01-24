@@ -75,7 +75,7 @@ const DATABASE_TO_MEMORY_PERC = 4;
 const DATABASE_TO_DISK_PERC = 2;
 // Maximum size of the optimal database.  High-end hardware has plenty of
 // memory and disk space, but performances don't grow linearly.
-const DATABASE_MAX_SIZE = 62914560; // 60MiB
+const DATABASE_MAX_SIZE = 73400320; // 70MiB
 // If the physical memory size is bogus, fallback to this.
 const MEMSIZE_FALLBACK_BYTES = 268435456; // 256 MiB
 // If the disk available space is bogus, fallback to this.
@@ -824,7 +824,7 @@ nsPlacesExpiration.prototype = {
       // We want to silently fail since getIntPref throws if it does not exist,
       // and use a default to fallback to.
       this._urisLimit = this._prefBranch.getIntPref(PREF_MAX_URIS);
-    } catch(ex) { /* User limit not set */ }
+    } catch (ex) { /* User limit not set */ }
 
     if (this._urisLimit < 0) {
       // Some testing code expects a pref change to be synchronous, so

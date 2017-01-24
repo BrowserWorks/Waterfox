@@ -92,7 +92,7 @@ public:
     mDocument->BlockOnload();
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (mElement->mPendingImageLoadTask == this) {
       mElement->mPendingImageLoadTask = nullptr;
@@ -174,6 +174,12 @@ bool
 HTMLImageElement::IsSrcsetEnabled()
 {
   return Preferences::GetBool(kPrefSrcsetEnabled, false);
+}
+
+void
+HTMLImageElement::AsyncEventRunning(AsyncEventDispatcher* aEvent)
+{
+  nsImageLoadingContent::AsyncEventRunning(aEvent);
 }
 
 nsresult
@@ -719,6 +725,13 @@ HTMLImageElement::IntrinsicState() const
 {
   return nsGenericHTMLElement::IntrinsicState() |
     nsImageLoadingContent::ImageState();
+}
+
+void
+HTMLImageElement::NodeInfoChanged()
+{
+  // Resetting the last selected source if adoption steps are run.
+  mLastSelectedSource = nullptr;
 }
 
 // static

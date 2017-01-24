@@ -96,7 +96,7 @@ DataTransfer::DataTransfer(nsISupports* aParent, EventMessage aEventMessage,
   , mDragImageX(0)
   , mDragImageY(0)
 {
-  mItems = new DataTransferItemList(this, aIsExternal, false /* aIsCrossDomainSubFrameDrop */);
+  mItems = new DataTransferItemList(this, aIsExternal);
   // For these events, we want to be able to add data to the data transfer, so
   // clear the readonly state. Otherwise, the data is already present. For
   // external usage, cache the data from the native clipboard or drag.
@@ -283,10 +283,10 @@ DataTransfer::GetMozUserCancelled(bool* aUserCancelled)
   return NS_OK;
 }
 
-FileList*
+already_AddRefed<FileList>
 DataTransfer::GetFiles(ErrorResult& aRv)
 {
-  return mItems->Files();
+  return mItems->Files(nsContentUtils::SubjectPrincipal());
 }
 
 NS_IMETHODIMP
@@ -296,11 +296,13 @@ DataTransfer::GetFiles(nsIDOMFileList** aFileList)
     return NS_ERROR_FAILURE;
   }
 
-  ErrorResult rv;
-  RefPtr<FileList> files = GetFiles(rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
-  }
+  // The XPCOM interface is only avaliable to system code, and thus we can
+  // assume the system principal. This is consistent with the previous behavour
+  // of this function, which also assumed the system principal.
+  //
+  // This code is also called from C++ code, which expects it to have a System
+  // Principal, and thus the SubjectPrincipal cannot be used.
+  RefPtr<FileList> files = mItems->Files(nsContentUtils::GetSystemPrincipal());
 
   files.forget(aFileList);
   return NS_OK;
@@ -312,11 +314,10 @@ DataTransfer::GetTypes(ErrorResult& aRv) const
   RefPtr<DOMStringList> types = new DOMStringList();
 
   const nsTArray<RefPtr<DataTransferItem>>* items = mItems->MozItemsAt(0);
-  if (!items || items->IsEmpty()) {
+  if (NS_WARN_IF(!items)) {
     return types.forget();
   }
 
-  bool addFile = false;
   for (uint32_t i = 0; i < items->Length(); i++) {
     DataTransferItem* item = items->ElementAt(i);
     MOZ_ASSERT(item);
@@ -327,20 +328,28 @@ DataTransfer::GetTypes(ErrorResult& aRv) const
 
     nsAutoString type;
     item->GetType(type);
-    if (NS_WARN_IF(!types->Add(type))) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return nullptr;
-    }
-
-    if (!addFile) {
-      addFile = item->Kind() == DataTransferItem::KIND_FILE;
+    if (item->Kind() == DataTransferItem::KIND_STRING || type.EqualsASCII(kFileMime)) {
+      // If the entry has kind KIND_STRING, we want to add it to the list.
+      if (NS_WARN_IF(!types->Add(type))) {
+        aRv.Throw(NS_ERROR_FAILURE);
+        return nullptr;
+      }
     }
   }
 
-  // If we have any files, we need to also add the "Files" type!
-  if (addFile && NS_WARN_IF(!types->Add(NS_LITERAL_STRING("Files")))) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return nullptr;
+  for (uint32_t i = 0; i < mItems->Length(); ++i) {
+    ErrorResult rv;
+    bool found = false;
+    DataTransferItem* item = mItems->IndexedGetter(i, found, rv);
+    if (!found || rv.Failed() || item->Kind() != DataTransferItem::KIND_FILE) {
+      rv.SuppressException();
+      continue;
+    }
+    if (NS_WARN_IF(!types->Add(NS_LITERAL_STRING("Files")))) {
+      aRv.Throw(NS_ERROR_FAILURE);
+      return nullptr;
+    }
+    break;
   }
 
   return types.forget();
@@ -609,14 +618,6 @@ DataTransfer::GetDataAtInternal(const nsAString& aFormat, uint32_t aIndex,
   nsAutoString format;
   GetRealFormat(aFormat, format);
 
-  // Check if the caller is allowed to access the drag data. Callers with
-  // chrome privileges can always read the data. During the
-  // drop event, allow retrieving the data except in the case where the
-  // source of the drag is in a child frame of the caller. In that case,
-  // we only allow access to data of the same principal. During other events,
-  // only allow access to the data with the same principal.
-  bool checkFormatItemPrincipal = mIsCrossDomainSubFrameDrop ||
-      (mEventMessage != eDrop && mEventMessage != ePaste);
   MOZ_ASSERT(aSubjectPrincipal);
 
   RefPtr<DataTransferItem> item = mItems->MozItemByTypeAt(format, aIndex);
@@ -631,34 +632,11 @@ DataTransfer::GetDataAtInternal(const nsAString& aFormat, uint32_t aIndex,
     return NS_OK;
   }
 
-  if (item->Principal() && checkFormatItemPrincipal &&
-      !aSubjectPrincipal->Subsumes(item->Principal())) {
-    return NS_ERROR_DOM_SECURITY_ERR;
-  }
-
-  nsCOMPtr<nsIVariant> data = item->Data();
-  if (!data) {
-    return NS_OK;
-  }
-
-  nsCOMPtr<nsISupports> isupportsData;
-  nsresult rv = data->GetAsISupports(getter_AddRefs(isupportsData));
-
-  if (NS_SUCCEEDED(rv) && isupportsData) {
-    // Make sure the code that is calling us is same-origin with the data.
-    nsCOMPtr<EventTarget> pt = do_QueryInterface(isupportsData);
-    if (pt) {
-      nsresult rv = NS_OK;
-      nsIScriptContext* c = pt->GetContextForEventHandlers(&rv);
-      NS_ENSURE_TRUE(c && NS_SUCCEEDED(rv), NS_ERROR_DOM_SECURITY_ERR);
-      nsIGlobalObject* go = c->GetGlobalObject();
-      NS_ENSURE_TRUE(go, NS_ERROR_DOM_SECURITY_ERR);
-      nsCOMPtr<nsIScriptObjectPrincipal> sp = do_QueryInterface(go);
-      MOZ_ASSERT(sp, "This cannot fail on the main thread.");
-      nsIPrincipal* dataPrincipal = sp->GetPrincipal();
-      NS_ENSURE_TRUE(dataPrincipal, NS_ERROR_DOM_SECURITY_ERR);
-      NS_ENSURE_TRUE(aSubjectPrincipal->Subsumes(dataPrincipal), NS_ERROR_DOM_SECURITY_ERR);
-    }
+  // DataTransferItem::Data() handles the principal checks
+  ErrorResult result;
+  nsCOMPtr<nsIVariant> data = item->Data(aSubjectPrincipal, result);
+  if (NS_WARN_IF(!data || result.Failed())) {
+    return result.StealNSResult();
   }
 
   data.forget(aData);
@@ -688,6 +666,27 @@ DataTransfer::MozGetDataAt(JSContext* aCx, const nsAString& aFormat,
     aRv = NS_ERROR_FAILURE;
     return;
   }
+}
+
+/* static */ bool
+DataTransfer::PrincipalMaySetData(const nsAString& aType,
+                                  nsIVariant* aData,
+                                  nsIPrincipal* aPrincipal)
+{
+  if (!nsContentUtils::IsSystemPrincipal(aPrincipal)) {
+    DataTransferItem::eKind kind = DataTransferItem::KindFromData(aData);
+    if (kind == DataTransferItem::KIND_OTHER) {
+      NS_WARNING("Disallowing adding non string/file types to DataTransfer");
+      return false;
+    }
+
+    if (aType.EqualsASCII(kFileMime) ||
+        aType.EqualsASCII(kFilePromiseMime)) {
+      NS_WARNING("Disallowing adding x-moz-file or x-moz-file-promize types to DataTransfer");
+      return false;
+    }
+  }
+  return true;
 }
 
 nsresult
@@ -721,20 +720,8 @@ DataTransfer::SetDataAtInternal(const nsAString& aFormat, nsIVariant* aData,
     return NS_ERROR_TYPE_ERR;
   }
 
-  // Don't allow non-chrome to add non-string or file data. We'll block file
-  // promises as well which are used internally for drags to the desktop.
-  if (!nsContentUtils::IsSystemPrincipal(aSubjectPrincipal)) {
-    if (aFormat.EqualsLiteral(kFilePromiseMime) ||
-        aFormat.EqualsLiteral(kFileMime)) {
-      return NS_ERROR_DOM_SECURITY_ERR;
-    }
-
-    uint16_t type;
-    aData->GetDataType(&type);
-    if (type == nsIDataType::VTYPE_INTERFACE ||
-        type == nsIDataType::VTYPE_INTERFACE_IS) {
-      return NS_ERROR_DOM_SECURITY_ERR;
-    }
+  if (!PrincipalMaySetData(aFormat, aData, aSubjectPrincipal)) {
+    return NS_ERROR_DOM_SECURITY_ERR;
   }
 
   return SetDataWithPrincipal(aFormat, aData, aIndex, aSubjectPrincipal);
@@ -860,7 +847,7 @@ DataTransfer::GetFilesAndDirectories(ErrorResult& aRv)
     return nullptr;
   }
 
-  RefPtr<FileList> files = mItems->Files();
+  RefPtr<FileList> files = mItems->Files(nsContentUtils::SubjectPrincipal());
   if (NS_WARN_IF(!files)) {
     return nullptr;
   }
@@ -1021,7 +1008,8 @@ DataTransfer::GetTransferable(uint32_t aIndex, nsILoadContext* aLoadContext)
   do {
     for (uint32_t f = 0; f < count; f++) {
       RefPtr<DataTransferItem> formatitem = item[f];
-      if (!formatitem->Data()) { // skip empty items
+      nsCOMPtr<nsIVariant> variant = formatitem->DataNoSecurityCheck();
+      if (!variant) { // skip empty items
         continue;
       }
 
@@ -1041,7 +1029,7 @@ DataTransfer::GetTransferable(uint32_t aIndex, nsILoadContext* aLoadContext)
       nsCOMPtr<nsISupports> convertedData;
 
       if (handlingCustomFormats) {
-        if (!ConvertFromVariant(formatitem->Data(), getter_AddRefs(convertedData),
+        if (!ConvertFromVariant(variant, getter_AddRefs(convertedData),
                                 &lengthInBytes)) {
           continue;
         }
@@ -1126,7 +1114,7 @@ DataTransfer::GetTransferable(uint32_t aIndex, nsILoadContext* aLoadContext)
       } else {
         // This is the second pass of the loop and a known type is encountered.
         // Add it as is.
-        if (!ConvertFromVariant(formatitem->Data(), getter_AddRefs(convertedData),
+        if (!ConvertFromVariant(variant, getter_AddRefs(convertedData),
                                 &lengthInBytes)) {
           continue;
         }
@@ -1487,16 +1475,17 @@ void
 DataTransfer::FillInExternalCustomTypes(uint32_t aIndex,
                                         nsIPrincipal* aPrincipal)
 {
-  RefPtr<DataTransferItem> item = new DataTransferItem(mItems,
+  RefPtr<DataTransferItem> item = new DataTransferItem(this,
                                                        NS_LITERAL_STRING(kCustomTypesMime));
   item->SetKind(DataTransferItem::KIND_STRING);
   item->SetIndex(aIndex);
 
-  if (!item->Data()) {
+  nsCOMPtr<nsIVariant> variant = item->DataNoSecurityCheck();
+  if (!variant) {
     return;
   }
 
-  FillInExternalCustomTypes(item->Data(), aIndex, aPrincipal);
+  FillInExternalCustomTypes(variant, aIndex, aPrincipal);
 }
 
 void

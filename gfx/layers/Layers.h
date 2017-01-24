@@ -36,7 +36,7 @@
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "nsAutoPtr.h"                  // for nsAutoPtr, nsRefPtr, etc
 #include "nsCOMPtr.h"                   // for already_AddRefed
-#include "nsCSSProperty.h"              // for nsCSSProperty
+#include "nsCSSPropertyID.h"              // for nsCSSPropertyID
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for Layer::Release, etc
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
@@ -47,7 +47,6 @@
 #include "nscore.h"                     // for nsACString, nsAString
 #include "mozilla/Logging.h"                      // for PRLogModuleInfo
 #include "nsIWidget.h"                  // For plugin window configuration information structs
-#include "gfxVR.h"
 #include "ImageContainer.h"
 
 class gfxContext;
@@ -354,6 +353,12 @@ public:
    * do not already have an ancestor in the return list.
    */
   void GetScrollableLayers(nsTArray<Layer*>& aArray);
+
+  /**
+   * Returns a LayerMetricsWrapper containing the Root
+   * Content Documents layer.
+   */
+  LayerMetricsWrapper GetRootContentLayer();
 
   /**
    * CONSTRUCTION PHASE ONLY
@@ -1799,20 +1804,6 @@ public:
 #endif
   }
 
-  /**
-   * Replace the current effective transform with the given one,
-   * returning the old one.  This is currently added as a hack for VR
-   * rendering, and might go away if we find a better way to do this.
-   * If you think you have a need for this method, talk with
-   * vlad/mstange/mwoodrow first.
-   */
-  virtual gfx::Matrix4x4 ReplaceEffectiveTransform(const gfx::Matrix4x4& aNewEffectiveTransform) {
-    gfx::Matrix4x4 old = mEffectiveTransform;
-    mEffectiveTransform = aNewEffectiveTransform;
-    ComputeEffectiveTransformForMaskLayers(mEffectiveTransform);
-    return old;
-  }
-
 protected:
   Layer(LayerManager* aManager, void* aImplData);
 
@@ -1987,12 +1978,11 @@ public:
     if (!gfx::ThebesPoint(residual.GetTranslation()).WithinEpsilonOf(mResidualTranslation, 1e-3f)) {
       mResidualTranslation = gfx::ThebesPoint(residual.GetTranslation());
       DebugOnly<mozilla::gfx::Point> transformedOrig =
-        idealTransform * mozilla::gfx::Point();
+        idealTransform.TransformPoint(mozilla::gfx::Point());
 #ifdef DEBUG
-      DebugOnly<mozilla::gfx::Point> transformed =
-        idealTransform * mozilla::gfx::Point(mResidualTranslation.x,
-                                             mResidualTranslation.y) -
-        *&transformedOrig;
+      DebugOnly<mozilla::gfx::Point> transformed = idealTransform.TransformPoint(
+        mozilla::gfx::Point(mResidualTranslation.x, mResidualTranslation.y)
+      ) - *&transformedOrig;
 #endif
       NS_ASSERTION(-0.5 <= (&transformed)->x && (&transformed)->x < 0.5 &&
                    -0.5 <= (&transformed)->y && (&transformed)->y < 0.5,
@@ -2213,39 +2203,6 @@ public:
     return mEventRegionsOverride;
   }
 
-  /**
-   * VR
-   */
-  void SetVRDeviceID(uint32_t aVRDeviceID) {
-    mVRDeviceID = aVRDeviceID;
-    Mutated();
-  }
-  uint32_t GetVRDeviceID() {
-    return mVRDeviceID;
-  }
-  void SetInputFrameID(int32_t aInputFrameID) {
-    mInputFrameID = aInputFrameID;
-    Mutated();
-  }
-  int32_t GetInputFrameID() {
-    return mInputFrameID;
-  }
-
-  /**
-   * Replace the current effective transform with the given one,
-   * returning the old one.  This is currently added as a hack for VR
-   * rendering, and might go away if we find a better way to do this.
-   * If you think you have a need for this method, talk with
-   * vlad/mstange/mwoodrow first.
-   */
-  gfx::Matrix4x4 ReplaceEffectiveTransform(const gfx::Matrix4x4& aNewEffectiveTransform) override {
-    gfx::Matrix4x4 old = mEffectiveTransform;
-    mEffectiveTransform = aNewEffectiveTransform;
-    ComputeEffectiveTransformsForChildren(mEffectiveTransform);
-    ComputeEffectiveTransformForMaskLayers(mEffectiveTransform);
-    return old;
-  }
-
 protected:
   friend class ReadbackProcessor;
 
@@ -2305,8 +2262,6 @@ protected:
   // the intermediate surface.
   bool mChildrenChanged;
   EventRegionsOverride mEventRegionsOverride;
-  uint32_t mVRDeviceID;
-  int32_t mInputFrameID;
 };
 
 /**

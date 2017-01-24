@@ -553,6 +553,7 @@ nsSocketTransportService::Init()
         obsSvc->AddObserver(this, "last-pb-context-exited", false);
         obsSvc->AddObserver(this, NS_WIDGET_SLEEP_OBSERVER_TOPIC, true);
         obsSvc->AddObserver(this, NS_WIDGET_WAKE_OBSERVER_TOPIC, true);
+        obsSvc->AddObserver(this, "xpcom-shutdown-threads", false);
     }
 
     mInitialized = true;
@@ -561,7 +562,7 @@ nsSocketTransportService::Init()
 
 // called from main thread only
 NS_IMETHODIMP
-nsSocketTransportService::Shutdown()
+nsSocketTransportService::Shutdown(bool aXpcomShutdown)
 {
     SOCKET_LOG(("nsSocketTransportService::Shutdown\n"));
 
@@ -584,6 +585,23 @@ nsSocketTransportService::Shutdown()
         }
     }
 
+    if (!aXpcomShutdown) {
+        return ShutdownThread();
+    }
+
+    return NS_OK;
+}
+
+nsresult
+nsSocketTransportService::ShutdownThread()
+{
+    SOCKET_LOG(("nsSocketTransportService::ShutdownThread\n"));
+
+    NS_ENSURE_STATE(NS_IsMainThread());
+
+    if (!mInitialized || !mShuttingDown)
+        return NS_OK;
+
     // join with thread
     mThread->Shutdown();
     {
@@ -603,6 +621,7 @@ nsSocketTransportService::Shutdown()
         obsSvc->RemoveObserver(this, "last-pb-context-exited");
         obsSvc->RemoveObserver(this, NS_WIDGET_SLEEP_OBSERVER_TOPIC);
         obsSvc->RemoveObserver(this, NS_WIDGET_WAKE_OBSERVER_TOPIC);
+        obsSvc->RemoveObserver(this, "xpcom-shutdown-threads");
     }
 
     if (mAfterWakeUpTimer) {
@@ -802,19 +821,9 @@ nsSocketTransportService::MarkTheLastElementOfPendingQueue()
     mServingPendingQueue = false;
 }
 
-#ifdef MOZ_NUWA_PROCESS
-#include "ipc/Nuwa.h"
-#endif
-
 NS_IMETHODIMP
 nsSocketTransportService::Run()
 {
-#ifdef MOZ_NUWA_PROCESS
-    if (IsNuwaProcess()) {
-        NuwaMarkCurrentThread(nullptr, nullptr);
-    }
-#endif
-
     SOCKET_LOG(("STS thread init %d sockets\n", gMaxCount));
 
     psm::InitializeSSLServerCertVerificationThreads();
@@ -1357,6 +1366,8 @@ nsSocketTransportService::Observe(nsISupports *subject,
                 mAfterWakeUpTimer->Init(this, 2000, nsITimer::TYPE_ONE_SHOT);
             }
         }
+    } else if (!strcmp(topic, "xpcom-shutdown-threads")) {
+        ShutdownThread();
     }
 
     return NS_OK;
@@ -1438,7 +1449,7 @@ nsSocketTransportService::ProbeMaxCount()
     }
 
     // Test
-    PR_STATIC_ASSERT(SOCKET_LIMIT_MIN >= 32U);
+    static_assert(SOCKET_LIMIT_MIN >= 32U, "Minimum Socket Limit is >= 32");
     while (gMaxCount <= numAllocated) {
         int32_t rv = PR_Poll(pfd, gMaxCount, PR_MillisecondsToInterval(0));
         
@@ -1507,7 +1518,7 @@ nsSocketTransportService::DiscoverMaxCount()
 
 #elif defined(XP_WIN) && !defined(WIN_CE)
     // >= XP is confirmed to have at least 1000
-    PR_STATIC_ASSERT(SOCKET_LIMIT_TARGET <= 1000);
+    static_assert(SOCKET_LIMIT_TARGET <= 1000, "SOCKET_LIMIT_TARGET max value is 1000");
     gMaxCount = SOCKET_LIMIT_TARGET;
 #else
     // other platforms are harder to test - so leave at safe legacy value
@@ -1533,10 +1544,15 @@ nsSocketTransportService::AnalyzeConnection(nsTArray<SocketInfo> *data,
     bool tcp = PR_GetDescType(idLayer) == PR_DESC_SOCKET_TCP;
 
     PRNetAddr peer_addr;
-    PR_GetPeerName(aFD, &peer_addr);
+    PodZero(&peer_addr);
+    PRStatus rv = PR_GetPeerName(aFD, &peer_addr);
+    if (rv != PR_SUCCESS)
+       return;
 
     char host[64] = {0};
-    PR_NetAddrToString(&peer_addr, host, sizeof(host));
+    rv = PR_NetAddrToString(&peer_addr, host, sizeof(host));
+    if (rv != PR_SUCCESS)
+       return;
 
     uint16_t port;
     if (peer_addr.raw.family == PR_AF_INET)

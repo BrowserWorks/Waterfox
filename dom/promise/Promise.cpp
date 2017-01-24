@@ -9,7 +9,7 @@
 #include "js/Debug.h"
 
 #include "mozilla/Atomics.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/OwningNonNull.h"
 #include "mozilla/Preferences.h"
 
@@ -62,7 +62,7 @@ public:
                      const JS::Value& aValue)
     : mPromise(aPromise)
     , mCallback(aCallback)
-    , mValue(CycleCollectedJSRuntime::Get()->Runtime(), aValue)
+    , mValue(CycleCollectedJSContext::Get()->Context(), aValue)
   {
     MOZ_ASSERT(aPromise);
     MOZ_ASSERT(aCallback);
@@ -187,7 +187,7 @@ public:
                             JS::Handle<JSObject*> aThenable,
                             PromiseInit* aThen)
     : mPromise(aPromise)
-    , mThenable(CycleCollectedJSRuntime::Get()->Runtime(), aThenable)
+    , mThenable(CycleCollectedJSContext::Get()->Context(), aThenable)
     , mThen(aThen)
   {
     MOZ_ASSERT(aPromise);
@@ -986,18 +986,18 @@ Promise::MaybeReject(JSContext* aCx,
 #endif // SPIDERMONKEY_PROMISE
 
 void
+Promise::MaybeResolveWithUndefined()
+{
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  MaybeResolve(JS::UndefinedHandleValue);
+}
+
+void
 Promise::MaybeReject(const RefPtr<MediaStreamError>& aArg) {
   NS_ASSERT_OWNINGTHREAD(Promise);
 
   MaybeSomething(aArg, &Promise::MaybeReject);
-}
-
-void
-Promise::MaybeRejectWithNull()
-{
-  NS_ASSERT_OWNINGTHREAD(Promise);
-
-  MaybeSomething(JS::NullHandleValue, &Promise::MaybeReject);
 }
 
 void
@@ -1007,7 +1007,6 @@ Promise::MaybeRejectWithUndefined()
 
   MaybeSomething(JS::UndefinedHandleValue, &Promise::MaybeReject);
 }
-
 
 #ifdef SPIDERMONKEY_PROMISE
 void
@@ -1042,17 +1041,17 @@ Promise::PerformMicroTaskCheckpoint()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
 
-  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+  CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
 
   // On the main thread, we always use the main promise micro task queue.
   std::queue<nsCOMPtr<nsIRunnable>>& microtaskQueue =
-    runtime->GetPromiseMicroTaskQueue();
+    context->GetPromiseMicroTaskQueue();
 
   if (microtaskQueue.empty()) {
     return false;
   }
 
-  AutoSafeJSContext cx;
+  AutoSlowOperation aso;
 
   do {
     nsCOMPtr<nsIRunnable> runnable = microtaskQueue.front().forget();
@@ -1064,8 +1063,8 @@ Promise::PerformMicroTaskCheckpoint()
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return false;
     }
-    JS_CheckForInterrupt(cx);
-    runtime->AfterProcessMicrotask();
+    aso.CheckForInterrupt();
+    context->AfterProcessMicrotask();
   } while (!microtaskQueue.empty());
 
   return true;
@@ -1076,17 +1075,17 @@ Promise::PerformWorkerMicroTaskCheckpoint()
 {
   MOZ_ASSERT(!NS_IsMainThread(), "Wrong thread!");
 
-  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+  CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
 
   for (;;) {
     // For a normal microtask checkpoint, we try to use the debugger microtask
     // queue first. If the debugger queue is empty, we use the normal microtask
     // queue instead.
     std::queue<nsCOMPtr<nsIRunnable>>* microtaskQueue =
-      &runtime->GetDebuggerPromiseMicroTaskQueue();
+      &context->GetDebuggerPromiseMicroTaskQueue();
 
     if (microtaskQueue->empty()) {
-      microtaskQueue = &runtime->GetPromiseMicroTaskQueue();
+      microtaskQueue = &context->GetPromiseMicroTaskQueue();
       if (microtaskQueue->empty()) {
         break;
       }
@@ -1101,7 +1100,7 @@ Promise::PerformWorkerMicroTaskCheckpoint()
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return;
     }
-    runtime->AfterProcessMicrotask();
+    context->AfterProcessMicrotask();
   }
 }
 
@@ -1110,13 +1109,13 @@ Promise::PerformWorkerDebuggerMicroTaskCheckpoint()
 {
   MOZ_ASSERT(!NS_IsMainThread(), "Wrong thread!");
 
-  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+  CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
 
   for (;;) {
     // For a debugger microtask checkpoint, we always use the debugger microtask
     // queue.
     std::queue<nsCOMPtr<nsIRunnable>>* microtaskQueue =
-      &runtime->GetDebuggerPromiseMicroTaskQueue();
+      &context->GetDebuggerPromiseMicroTaskQueue();
 
     if (microtaskQueue->empty()) {
       break;
@@ -1131,7 +1130,7 @@ Promise::PerformWorkerDebuggerMicroTaskCheckpoint()
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return;
     }
-    runtime->AfterProcessMicrotask();
+    context->AfterProcessMicrotask();
   }
 }
 
@@ -2716,7 +2715,7 @@ Promise::ResolveInternal(JSContext* aCx,
 {
   NS_ASSERT_OWNINGTHREAD(Promise);
 
-  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+  CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
 
   mResolvePending = true;
 
@@ -2758,7 +2757,7 @@ Promise::ResolveInternal(JSContext* aCx,
         new PromiseInit(nullptr, thenObj, mozilla::dom::GetIncumbentGlobal());
       RefPtr<PromiseResolveThenableJob> task =
         new PromiseResolveThenableJob(this, valueObj, thenCallback);
-      runtime->DispatchToMicroTask(task.forget());
+      context->DispatchToMicroTask(task.forget());
       return;
     }
   }
@@ -2829,7 +2828,7 @@ Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
     worker->AssertIsOnWorkerThread();
 
     mWorkerHolder = new PromiseReportRejectWorkerHolder(this);
-    if (NS_WARN_IF(!mWorkerHolder->HoldWorker(worker))) {
+    if (NS_WARN_IF(!mWorkerHolder->HoldWorker(worker, Closing))) {
       mWorkerHolder = nullptr;
       // Worker is shutting down, report rejection immediately since it is
       // unlikely that reject callbacks will be added after this point.
@@ -2862,7 +2861,7 @@ Promise::TriggerPromiseReactions()
 {
   NS_ASSERT_OWNINGTHREAD(Promise);
 
-  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+  CycleCollectedJSContext* runtime = CycleCollectedJSContext::Get();
 
   nsTArray<RefPtr<PromiseCallback>> callbacks;
   callbacks.SwapElements(mState == Resolved ? mResolveCallbacks
@@ -3086,7 +3085,7 @@ PromiseWorkerProxy::AddRefObject()
 
   MOZ_ASSERT(!mWorkerHolder);
   mWorkerHolder.reset(new PromiseWorkerHolder(this));
-  if (NS_WARN_IF(!mWorkerHolder->HoldWorker(mWorkerPrivate))) {
+  if (NS_WARN_IF(!mWorkerHolder->HoldWorker(mWorkerPrivate, Canceling))) {
     mWorkerHolder = nullptr;
     return false;
   }
@@ -3244,6 +3243,31 @@ Promise::GetID() {
     return mID;
   }
   return mID = ++gIDGenerator;
+}
+#endif // SPIDERMONKEY_PROMISE
+
+#ifndef SPIDERMONKEY_PROMISE
+Promise::PromiseState
+Promise::State() const
+{
+  return mState;
+}
+#else // SPIDERMONKEY_PROMISE
+Promise::PromiseState
+Promise::State() const
+{
+  JS::Rooted<JSObject*> p(RootingCx(), PromiseObj());
+  const JS::PromiseState state = JS::GetPromiseState(p);
+
+  if (state == JS::PromiseState::Fulfilled) {
+      return PromiseState::Resolved;
+  }
+
+  if (state == JS::PromiseState::Rejected) {
+      return PromiseState::Rejected;
+  }
+
+  return PromiseState::Pending;
 }
 #endif // SPIDERMONKEY_PROMISE
 

@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* eslint-disable block-spacing */
+
 var {utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/NetUtil.jsm");
@@ -102,12 +104,10 @@ function checkObjects(expected, actual) {
     do_check_neq(actual[key], undefined);
     if (expected[key] instanceof RegExp) {
       do_check_true(expected[key].test(actual[key].toString()));
+    } else if (expected[key] instanceof Object) {
+      checkObjects(expected[key], actual[key]);
     } else {
-      if (expected[key] instanceof Object) {
-        checkObjects(expected[key], actual[key]);
-      } else {
-        do_check_eq(expected[key], actual[key]);
-      }
+      do_check_eq(expected[key], actual[key]);
     }
   }
 

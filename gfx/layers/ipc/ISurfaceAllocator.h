@@ -169,14 +169,6 @@ protected:
   bool mAboutToSendAsyncMessages = false;
 };
 
-/// Specific to the CompositorBridgeParent/CrossProcessCompositorBridgeParent.
-class CompositorBridgeParentIPCAllocator : public HostIPCAllocator
-{
-public:
-  CompositorBridgeParentIPCAllocator() {}
-  virtual void NotifyNotUsed(PTextureParent* aTexture, uint64_t aTransactionId) override;
-};
-
 /// An allocator can provide shared memory.
 ///
 /// The allocated shmems can be deallocated on either process, as long as they
@@ -268,9 +260,11 @@ public:
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
                             nsISupports* aData, bool aAnonymize) override
   {
-    return MOZ_COLLECT_REPORT(
+    MOZ_COLLECT_REPORT(
       "explicit/gfx/heap-textures", KIND_HEAP, UNITS_BYTES, sAmount,
       "Heap memory shared between threads by texture clients and hosts.");
+
+    return NS_OK;
   }
 
 private:
@@ -322,26 +316,7 @@ public:
 
   ShmemAllocator* GetShmAllocator() { return mShmProvider->AsShmemAllocator(); }
 
-  /**
-    * In order to avoid shutdown crashes, we need to test for mShmProvider->AsShmemAllocator()
-    * here. Basically, there's a case where we have the following class hierarchy:
-    *
-    * ClientIPCAllocator -> TextureForwarder -> CompositableForwarder -> ShadowLayerForwarder
-    *
-    * In ShadowLayerForwarder's dtor, we tear down the actor and close the IPC channel.
-    * In TextureForwarder's dtor, we destroy the FixedSizeSmallShmemAllocator and that in turn calls
-    * ClientIPCAllocator::IPCOpen() to determine whether we can dealloc some shmem regions.
-    *
-    * This does not work. In the above class diagram, as the ShadowLayerForwarder's dtor has run
-    * its course, the ClientIPCAllocator object we're holding on to is now just a plain
-    * ClientIPCAllocator and so we call ClientIPCAllocator's IPCOpen() which unconditionally
-    * returns true. We therefore have to rely on AsShmemAllocator() to determine whether we can
-    * do these deallocs as ClientIPCAllocator::AsShmemAllocator() returns nullptr.
-    *
-    * Ideally, we should move a lot of this destruction work into non-destructor Destroy() methods
-    * which do cleanup before we destroy the objects.
-    */
-  bool IPCOpen() const { return mShmProvider->AsShmemAllocator() && mShmProvider->IPCOpen(); }
+  bool IPCOpen() const { return mShmProvider->IPCOpen(); }
 
 protected:
   std::vector<mozilla::ipc::Shmem> mUsedShmems;

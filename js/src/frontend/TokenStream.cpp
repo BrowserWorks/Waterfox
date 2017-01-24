@@ -593,13 +593,6 @@ CompileError::~CompileError()
     js_free(message);
     message = nullptr;
 
-    if (report.messageArgs) {
-        unsigned i = 0;
-        while (report.messageArgs[i])
-            js_free((void*)report.messageArgs[i++]);
-        js_free(report.messageArgs);
-    }
-
     PodZero(&report);
 }
 
@@ -648,7 +641,7 @@ TokenStream::reportCompileErrorNumberVA(uint32_t offset, unsigned flags, unsigne
     }
 
     if (!ExpandErrorArgumentsVA(cx, GetErrorMessage, nullptr, errorNumber, &err.message,
-                                ArgumentsAreASCII, &err.report, args))
+                                nullptr, ArgumentsAreASCII, &err.report, args))
     {
         return false;
     }
@@ -987,11 +980,6 @@ TokenStream::checkForKeyword(const KeywordInfo* kw, TokenKind* ttp)
 
     if (kw->tokentype == TOK_STRICT_RESERVED)
         return reportStrictModeError(JSMSG_RESERVED_ID, kw->chars);
-
-    // Treat 'let' as an identifier and contextually a keyword in sloppy mode.
-    // It is always a keyword in strict mode.
-    if (kw->tokentype == TOK_LET && !strictMode())
-        return true;
 
     // Working keyword.
     if (ttp) {

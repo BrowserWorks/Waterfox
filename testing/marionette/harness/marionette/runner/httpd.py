@@ -3,6 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
+import time
 
 from wptserve import server, handlers, routes as default_routes
 
@@ -11,7 +12,7 @@ class FixtureServer(object):
 
     def __init__(self, root, host="127.0.0.1", port=0):
         if not os.path.isdir(root):
-            raise IOError("Server root is not a valid path: %s" % root)
+            raise IOError("Server root is not a valid path: {}".format(root))
         self.root = root
         self.host = host
         self.port = port
@@ -20,7 +21,8 @@ class FixtureServer(object):
     def start(self, block=False):
         if self.alive:
             return
-        routes = [("POST", "/file_upload", upload_handler)]
+        routes = [("POST", "/file_upload", upload_handler),
+                  ("GET", "/slow", slow_loading_document)]
         routes.extend(default_routes.routes)
         self._server = server.WebTestHttpd(
             port=self.port,
@@ -57,11 +59,19 @@ def upload_handler(request, response):
     return 200, [], [request.headers.get("Content-Type")] or []
 
 
+@handlers.handler
+def slow_loading_document(request, response):
+    time.sleep(5)
+    return """<!doctype html>
+<title>ok</title>
+<p>ok"""
+
+
 if __name__ == "__main__":
     here = os.path.abspath(os.path.dirname(__file__))
     doc_root = os.path.join(os.path.dirname(here), "www")
     httpd = FixtureServer(doc_root, port=2829)
-    print "Started fixture server on http://%s:%d/" % (httpd.host, httpd.port)
+    print "Started fixture server on http://{0}:{1}/".format(httpd.host, httpd.port)
     try:
         httpd.start(True)
     except KeyboardInterrupt:

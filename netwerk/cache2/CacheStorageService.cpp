@@ -244,7 +244,7 @@ public:
   }
 
 private:
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     if (CacheStorageService::IsOnManagementThread()) {
       LOG(("WalkMemoryCacheRunnable::Run - collecting [this=%p]", this));
@@ -325,7 +325,7 @@ private:
   virtual void OnEntryInfo(const nsACString & aURISpec, const nsACString & aIdEnhance,
                            int64_t aDataSize, int32_t aFetchCount,
                            uint32_t aLastModifiedTime, uint32_t aExpirationTime,
-                           bool aPinned)
+                           bool aPinned) override
   {
     nsresult rv;
 
@@ -389,7 +389,7 @@ private:
     {
     }
 
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       MOZ_ASSERT(NS_IsMainThread());
 
@@ -422,7 +422,7 @@ private:
     bool mPinned;
   };
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     // The main loop
     nsresult rv;
@@ -472,7 +472,7 @@ private:
           if (NS_FAILED(rv))
             break; // done (or error?)
 
-          // This synchronously invokes onCacheEntryInfo on this class where we
+          // This synchronously invokes OnEntryInfo on this class where we
           // redispatch to the main thread for the consumer callback.
           CacheFileIOManager::GetEntryInfo(&hash, this);
         }
@@ -500,7 +500,7 @@ private:
   virtual void OnEntryInfo(const nsACString & aURISpec, const nsACString & aIdEnhance,
                            int64_t aDataSize, int32_t aFetchCount,
                            uint32_t aLastModifiedTime, uint32_t aExpirationTime,
-                           bool aPinned)
+                           bool aPinned) override
   {
     // Called directly from CacheFileIOManager::GetEntryInfo.
 
@@ -1748,7 +1748,7 @@ CacheStorageService::DoomStorageEntry(CacheStorage const* aStorage,
   {
   public:
     explicit Callback(nsICacheEntryDoomCallback* aCallback) : mCallback(aCallback) { }
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       mCallback->OnCacheEntryDoomed(NS_ERROR_NOT_AVAILABLE);
       return NS_OK;
@@ -1872,7 +1872,7 @@ CacheStorageService::DoomStorageEntries(nsCSubstring const& aContextKey,
   {
   public:
     explicit Callback(nsICacheEntryDoomCallback* aCallback) : mCallback(aCallback) { }
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       mCallback->OnCacheEntryDoomed(NS_OK);
       return NS_OK;
@@ -2137,34 +2137,26 @@ CacheStorageService::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) con
 }
 
 NS_IMETHODIMP
-CacheStorageService::CollectReports(nsIMemoryReporterCallback* aHandleReport,
+CacheStorageService::CollectReports(nsIHandleReportCallback* aHandleReport,
                                     nsISupports* aData, bool aAnonymize)
 {
-  nsresult rv;
-
-  rv = MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/network/cache2/io", KIND_HEAP, UNITS_BYTES,
     CacheFileIOManager::SizeOfIncludingThis(MallocSizeOf),
     "Memory used by the cache IO manager.");
-  if (NS_WARN_IF(NS_FAILED(rv)))
-    return rv;
 
-  rv = MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/network/cache2/index", KIND_HEAP, UNITS_BYTES,
     CacheIndex::SizeOfIncludingThis(MallocSizeOf),
     "Memory used by the cache index.");
-  if (NS_WARN_IF(NS_FAILED(rv)))
-    return rv;
 
   MutexAutoLock lock(mLock);
 
   // Report the service instance, this doesn't report entries, done lower
-  rv = MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/network/cache2/service", KIND_HEAP, UNITS_BYTES,
     SizeOfIncludingThis(MallocSizeOf),
     "Memory used by the cache storage service.");
-  if (NS_WARN_IF(NS_FAILED(rv)))
-    return rv;
 
   // Report all entries, each storage separately (by the context key)
   //
@@ -2206,9 +2198,7 @@ CacheStorageService::CollectReports(nsIMemoryReporterCallback* aHandleReport,
         nsPrintfCString("explicit/network/cache2/%s-storage(%s)",
           table->Type() == CacheEntryTable::MEMORY_ONLY ? "memory" : "disk",
           iter1.Key().BeginReading()),
-        nsIMemoryReporter::KIND_HEAP,
-        nsIMemoryReporter::UNITS_BYTES,
-        size,
+        nsIMemoryReporter::KIND_HEAP, nsIMemoryReporter::UNITS_BYTES, size,
         NS_LITERAL_CSTRING("Memory used by the cache storage."),
         aData);
     }

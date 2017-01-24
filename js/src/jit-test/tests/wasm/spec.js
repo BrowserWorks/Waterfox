@@ -215,8 +215,7 @@ function exec(e) {
 
     if (exprName === "module") {
         let moduleText = e.toString();
-        var m = new WebAssembly.Module(wasmTextToBinary(moduleText, 'new-format'));
-        module = new WebAssembly.Instance(m, imports).exports;
+        module = evalText(moduleText, imports).exports;
         return;
     }
 
@@ -275,18 +274,14 @@ function exec(e) {
             assert(errMsg.quoted, "assert_invalid second argument must be a string");
             errMsg.quoted = false;
         }
-        let caught = false;
+        // assert_invalid tests both the decoder *and* the parser itself.
         try {
-            new WebAssembly.Instance(
-                new WebAssembly.Module(
-                    wasmTextToBinary(moduleText, 'new-format')),
-                imports);
+            assertEq(WebAssembly.validate(textToBinary(moduleText)), false);
         } catch(e) {
-            if (errMsg && e.toString().indexOf(errMsg) === -1)
-                warn(`expected error message "${errMsg}", got "${e}"`);
-            caught = true;
+            if (/wasm text error/.test(e.toString()))
+                return;
+            throw e;
         }
-        assert(caught, "assert_invalid error");
         return;
     }
 
@@ -362,11 +357,6 @@ for (var test of targets) {
         try {
             exec(e);
         } catch(err) {
-            if (err && err.message && err.message.indexOf("i64 NYI") !== -1) {
-                assert(!hasI64(), 'i64 NYI should happen only on platforms without i64');
-                warn(`Skipping test file ${test} as it contains int64, NYI.\n`)
-                continue top_loop;
-            }
             success = false;
             debug(`Error in ${test}:${e.lineno}: ${err.stack ? err.stack : ''}\n${err}`);
             if (!softFail) {

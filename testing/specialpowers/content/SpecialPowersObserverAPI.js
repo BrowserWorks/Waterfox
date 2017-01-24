@@ -324,10 +324,10 @@ SpecialPowersObserverAPI.prototype = {
           case "BOOL":
             if (aMessage.json.op == "get")
               return(prefs.getBoolPref(prefName));
-            else 
+            else
               return(prefs.setBoolPref(prefName, prefValue));
           case "INT":
-            if (aMessage.json.op == "get") 
+            if (aMessage.json.op == "get")
               return(prefs.getIntPref(prefName));
             else
               return(prefs.setIntPref(prefName, prefValue));
@@ -563,6 +563,7 @@ SpecialPowersObserverAPI.prototype = {
         let sss = Cc["@mozilla.org/ssservice;1"].
                   getService(Ci.nsISiteSecurityService);
         sss.removeState(Ci.nsISiteSecurityService.HEADER_HSTS, uri, flags);
+        return undefined;
       }
 
       case "SPLoadExtension": {
@@ -570,20 +571,7 @@ SpecialPowersObserverAPI.prototype = {
 
         let id = aMessage.data.id;
         let ext = aMessage.data.ext;
-        let extension;
-        if (typeof(ext) == "string") {
-          let target = "resource://testing-common/extensions/" + ext + "/";
-          let resourceHandler = Services.io.getProtocolHandler("resource")
-                                        .QueryInterface(Ci.nsISubstitutingProtocolHandler);
-          let resURI = Services.io.newURI(target, null, null);
-          let uri = Services.io.newURI(resourceHandler.resolveURI(resURI), null, null);
-          extension = new Extension({
-            id,
-            resourceURI: uri
-          });
-        } else {
-          extension = Extension.generate(id, ext);
-        }
+        let extension = Extension.generate(ext);
 
         let resultListener = (...args) => {
           this._sendReply(aMessage, "SPExtensionMessage", {id, type: "testResult", args});
@@ -607,26 +595,42 @@ SpecialPowersObserverAPI.prototype = {
       }
 
       case "SPStartupExtension": {
-        let {ExtensionData} = Components.utils.import("resource://gre/modules/Extension.jsm", {});
+        let {ExtensionData, Management} = Components.utils.import("resource://gre/modules/Extension.jsm", {});
 
         let id = aMessage.data.id;
         let extension = this._extensions.get(id);
+        let startupListener = (msg, ext) => {
+          if (ext == extension) {
+            this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionSetId", args: [extension.id]});
+            Management.off("startup", startupListener);
+          }
+        };
+        Management.on("startup", startupListener);
 
         // Make sure the extension passes the packaging checks when
         // they're run on a bare archive rather than a running instance,
         // as the add-on manager runs them.
         let extensionData = new ExtensionData(extension.rootURI);
-        extensionData.readManifest().then(() => {
-          return extensionData.initAllLocales();
-        }).then(() => {
-          if (extensionData.errors.length) {
-            return Promise.reject("Extension contains packaging errors");
+        extensionData.readManifest().then(
+          () => {
+            return extensionData.initAllLocales().then(() => {
+              if (extensionData.errors.length) {
+                return Promise.reject("Extension contains packaging errors");
+              }
+            });
+          },
+          () => {
+            // readManifest() will throw if we're loading an embedded
+            // extension, so don't worry about locale errors in that
+            // case.
           }
+        ).then(() => {
           return extension.startup();
         }).then(() => {
           this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionStarted", args: []});
         }).catch(e => {
           dump(`Extension startup failed: ${e}\n${e.stack}`);
+          Management.off("startup", startupListener);
           this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionFailed", args: []});
         });
         return undefined;

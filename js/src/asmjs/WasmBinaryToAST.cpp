@@ -20,6 +20,7 @@
 
 #include "mozilla/CheckedInt.h"
 #include "mozilla/MathAlgorithms.h"
+#include "mozilla/Sprintf.h"
 
 #include "asmjs/WasmBinaryIterator.h"
 
@@ -119,7 +120,7 @@ AstDecodeFail(AstDecodeContext& c, const char* str)
 {
     uint32_t offset = c.d.currentOffset();
     char offsetStr[sizeof "4294967295"];
-    JS_snprintf(offsetStr, sizeof offsetStr, "%" PRIu32, offset);
+    SprintfLiteral(offsetStr, "%" PRIu32, offset);
     JS_ReportErrorNumber(c.cx, GetErrorMessage, nullptr, JSMSG_WASM_DECODE_FAIL, offsetStr, str);
     return false;
 }
@@ -514,6 +515,20 @@ AstDecodeUnary(AstDecodeContext& c, ValType type, Expr expr)
 }
 
 static bool
+AstDecodeNullary(AstDecodeContext& c, ExprType type, Expr expr)
+{
+    if (!c.iter().readNullary(type))
+        return false;
+
+    AstNullaryOperator* nullary = new(c.lifo) AstNullaryOperator(expr);
+    if (!nullary)
+        return false;
+
+    c.iter().setResult(AstDecodeStackItem(nullary, 0));
+    return true;
+}
+
+static bool
 AstDecodeBinary(AstDecodeContext& c, ValType type, Expr expr)
 {
     AstDecodeStackItem lhs;
@@ -713,12 +728,8 @@ AstDecodeExpr(AstDecodeContext& c)
     AstExpr* tmp;
     switch (expr) {
       case Expr::Nop:
-        if (!c.iter().readNullary())
+        if (!AstDecodeNullary(c, ExprType::Void, expr))
             return false;
-        tmp = new(c.lifo) AstNop();
-        if (!tmp)
-            return false;
-        c.iter().setResult(AstDecodeStackItem(tmp));
         break;
       case Expr::Call:
         if (!AstDecodeCall(c))
@@ -800,6 +811,7 @@ AstDecodeExpr(AstDecodeContext& c)
       case Expr::I32Clz:
       case Expr::I32Ctz:
       case Expr::I32Popcnt:
+      case Expr::GrowMemory:
         if (!AstDecodeUnary(c, ValType::I32, expr))
             return false;
         break;
@@ -1084,6 +1096,10 @@ AstDecodeExpr(AstDecodeContext& c)
         if (!AstDecodeReturn(c))
             return false;
         break;
+      case Expr::CurrentMemory:
+        if (!AstDecodeNullary(c, ExprType::I32, expr))
+            return false;
+        break;
       case Expr::Unreachable:
         if (!c.iter().readUnreachable())
             return false;
@@ -1333,7 +1349,7 @@ AstDecodeImportSection(AstDecodeContext& c)
         return AstDecodeFail(c,  "too many imports");
 
     for (uint32_t i = 0; i < numImports; i++) {
-        AstImport* import;
+        AstImport* import = nullptr;
         if (!AstDecodeImport(c, i, &import))
             return false;
         if (!c.module().append(import))
@@ -1495,7 +1511,7 @@ AstDecodeExportSection(AstDecodeContext& c)
         return AstDecodeFail(c, "too many exports");
 
     for (uint32_t i = 0; i < numExports; i++) {
-        AstExport* export_;
+        AstExport* export_ = nullptr;
         if (!AstDecodeFunctionExport(c, &export_))
             return false;
         if (!c.module().append(export_))
@@ -1640,15 +1656,11 @@ AstDecodeDataSection(AstDecodeContext &c)
         return AstDecodeFail(c, "failed to read number of data segments");
 
     const uint32_t heapLength = c.module().hasMemory() ? c.module().memory().initial() : 0;
-    uint32_t prevEnd = 0;
 
     for (uint32_t i = 0; i < numSegments; i++) {
         uint32_t dstOffset;
         if (!c.d.readVarU32(&dstOffset))
             return AstDecodeFail(c, "expected segment destination offset");
-
-        if (dstOffset < prevEnd)
-            return AstDecodeFail(c, "data segments must be disjoint and ordered");
 
         uint32_t numBytes;
         if (!c.d.readVarU32(&numBytes))
@@ -1665,12 +1677,14 @@ AstDecodeDataSection(AstDecodeContext &c)
         for (size_t i = 0; i < numBytes; i++)
             buffer[i] = src[i];
 
-        AstName name(buffer, numBytes);
-        AstDataSegment* segment = new(c.lifo) AstDataSegment(dstOffset, name);
-        if (!segment || !c.module().append(segment))
+        AstExpr* offset = new(c.lifo) AstConst(Val(dstOffset));
+        if (!offset)
             return false;
 
-        prevEnd = dstOffset + numBytes;
+        AstName name(buffer, numBytes);
+        AstDataSegment* segment = new(c.lifo) AstDataSegment(offset, name);
+        if (!segment || !c.module().append(segment))
+            return false;
     }
 
     if (!c.d.finishSection(sectionStart, sectionSize))

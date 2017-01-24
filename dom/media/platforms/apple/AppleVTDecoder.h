@@ -43,10 +43,10 @@ public:
   };
 
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Flush() override;
-  nsresult Drain() override;
-  nsresult Shutdown() override;
+  void Input(MediaRawData* aSample) override;
+  void Flush() override;
+  void Drain() override;
+  void Shutdown() override;
   void SetSeekThreshold(const media::TimeUnit& aTime) override;
 
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override
@@ -90,25 +90,17 @@ private:
   const uint32_t mDisplayWidth;
   const uint32_t mDisplayHeight;
 
-  // Number of times a sample was queued via Input(). Will be decreased upon
-  // the decoder's callback being invoked.
-  // This is used to calculate how many frames has been buffered by the decoder.
-  Atomic<uint32_t> mQueuedSamples;
-
   // Method to set up the decompression session.
   nsresult InitializeSession();
   nsresult WaitForAsynchronousFrames();
   CFDictionaryRef CreateDecoderSpecification();
   CFDictionaryRef CreateDecoderExtensions();
   // Method to pass a frame to VideoToolbox for decoding.
-  nsresult DoDecode(MediaRawData* aSample);
+  MediaResult DoDecode(MediaRawData* aSample);
 
   const RefPtr<TaskQueue> mTaskQueue;
   const uint32_t mMaxRefFrames;
   const RefPtr<layers::ImageContainer> mImageContainer;
-  // Increased when Input is called, and decreased when ProcessFrame runs.
-  // Reaching 0 indicates that there's no pending Input.
-  Atomic<uint32_t> mInputIncoming;
   Atomic<bool> mIsShutDown;
   const bool mUseSoftwareImages;
 

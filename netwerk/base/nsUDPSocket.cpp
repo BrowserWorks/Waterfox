@@ -81,7 +81,7 @@ public:
     , mOpt(aOpt)
   {}
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     return mSocket->SetSocketOption(mOpt);
   }
@@ -573,6 +573,31 @@ nsUDPSocket::Init(int32_t aPort, bool aLoopbackOnly, nsIPrincipal *aPrincipal,
 }
 
 NS_IMETHODIMP
+nsUDPSocket::Init2(const nsACString& aAddr, int32_t aPort, nsIPrincipal *aPrincipal,
+                   bool aAddressReuse, uint8_t aOptionalArgc)
+{
+  if (NS_WARN_IF(aAddr.IsEmpty())) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  PRNetAddr prAddr;
+  if (PR_StringToNetAddr(aAddr.BeginReading(), &prAddr) != PR_SUCCESS) {
+    return NS_ERROR_FAILURE;
+  }
+
+  NetAddr addr;
+
+  if (aPort < 0)
+    aPort = 0;
+
+  addr.raw.family = AF_INET;
+  addr.inet.port = htons(aPort);
+  addr.inet.ip = prAddr.inet.ip;
+
+  return InitWithAddress(&addr, aPrincipal, aAddressReuse, aOptionalArgc);
+}
+
+NS_IMETHODIMP
 nsUDPSocket::InitWithAddress(const NetAddr *aAddr, nsIPrincipal *aPrincipal,
                              bool aAddressReuse, uint8_t aOptionalArgc)
 {
@@ -596,15 +621,9 @@ nsUDPSocket::InitWithAddress(const NetAddr *aAddr, nsIPrincipal *aPrincipal,
   }
 
   if (aPrincipal) {
-    nsresult rv = aPrincipal->GetAppId(&mAppId);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-
-    rv = aPrincipal->GetIsInIsolatedMozBrowserElement(&mIsInIsolatedMozBrowserElement);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
+    mAppId = aPrincipal->GetAppId();
+    mIsInIsolatedMozBrowserElement =
+      aPrincipal->GetIsInIsolatedMozBrowserElement();
   }
 
 #ifdef MOZ_WIDGET_GONK
@@ -674,6 +693,10 @@ nsUDPSocket::Connect(const NetAddr *aAddr)
   UDPSOCKET_LOG(("nsUDPSocket::Connect [this=%p]\n", this));
 
   NS_ENSURE_ARG(aAddr);
+
+  if (NS_WARN_IF(!mFD)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
 
   bool onSTSThread = false;
   mSts->IsOnCurrentThread(&onSTSThread);

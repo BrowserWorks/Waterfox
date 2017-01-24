@@ -30,6 +30,7 @@
 #include "cubeb_ring_array.h"
 #include "cubeb_utils.h"
 #include <algorithm>
+#include <atomic>
 
 #if !defined(kCFCoreFoundationVersionNumber10_7)
 /* From CoreFoundation CFBase.h */
@@ -164,8 +165,9 @@ struct cubeb_stream {
   /* I/O AudioUnits */
   AudioUnit input_unit;
   AudioUnit output_unit;
-  /* Sample rate of input device*/
+  /* I/O device sample rate */
   Float64 input_hw_rate;
+  Float64 output_hw_rate;
   owned_critical_section mutex;
   /* Hold the input samples in every
    * input callback iteration */
@@ -180,7 +182,7 @@ struct cubeb_stream {
   int draining;
   uint64_t current_latency_frames;
   uint64_t hw_latency_frames;
-  float panning;
+  std::atomic<float> panning;
   cubeb_resampler * resampler;
 };
 
@@ -225,6 +227,8 @@ audiotimestamp_to_latency(AudioTimeStamp const * tstamp, cubeb_stream * stream)
 static void
 audiounit_make_silent(AudioBuffer * ioData)
 {
+  assert(ioData);
+  assert(ioData->mData);
   memset(ioData->mData, 0, ioData->mDataByteSize);
 }
 
@@ -253,7 +257,6 @@ audiounit_render_input(cubeb_stream * stm,
 
   if (r != noErr) {
     PRINT_ERROR_CODE("AudioUnitRender", r);
-    audiounit_make_silent(&input_buffer_list.mBuffers[0]);
     return r;
   }
 
@@ -372,9 +375,11 @@ audiounit_output_callback(void * user_ptr,
   if (stm->input_unit != NULL) {
     /* Output callback came first */
     if (stm->frames_read == 0) {
-      LOG("Output callback came first send silent.");
-      stm->input_linear_buffer->push_silence(stm->input_buffer_frames *
-                                            stm->input_desc.mChannelsPerFrame);
+      uint32_t min_input_frames_required = ceilf(stm->input_hw_rate / stm->output_hw_rate *
+                                                                      stm->input_buffer_frames);
+      LOG("Output callback came first pushed %u frames of input silence.", min_input_frames_required);
+      stm->input_linear_buffer->push_silence(min_input_frames_required *
+                                             stm->input_desc.mChannelsPerFrame);
     }
     /* Input samples stored previously in input callback. */
     if (stm->input_linear_buffer->length() == 0) {
@@ -409,7 +414,8 @@ audiounit_output_callback(void * user_ptr,
   stm->frames_queued += outframes;
 
   AudioFormatFlags outaff = stm->output_desc.mFormatFlags;
-  float panning = (stm->output_desc.mChannelsPerFrame == 2) ? stm->panning : 0.0f;
+  float panning = (stm->output_desc.mChannelsPerFrame == 2) ?
+      stm->panning.load(std::memory_order_relaxed) : 0.0f;
 
   /* Post process output samples. */
   if (stm->draining) {
@@ -1155,6 +1161,9 @@ audiounit_stream_init(cubeb * context,
 
   /* Setup Input Stream! */
   if (input_stream_params != NULL) {
+    LOG("(%p) Opening input side: rate %u, channels %u, format %d, latency in frames %u.",
+        stm, stm->input_stream_params.rate, stm->input_stream_params.channels,
+        stm->input_stream_params.format, stm->latency_frames);
     /* Get input device sample rate. */
     AudioStreamBasicDescription input_hw_desc;
     size = sizeof(AudioStreamBasicDescription);
@@ -1170,6 +1179,7 @@ audiounit_stream_init(cubeb * context,
       return CUBEB_ERROR;
     }
     stm->input_hw_rate = input_hw_desc.mSampleRate;
+    LOG("(%p) Input device sampling rate: %.2f", stm, stm->input_hw_rate);
 
     /* Set format description according to the input params. */
     r = audio_stream_desc_init(&stm->input_desc, input_stream_params);
@@ -1255,6 +1265,9 @@ audiounit_stream_init(cubeb * context,
 
   /* Setup Output Stream! */
   if (output_stream_params != NULL) {
+    LOG("(%p) Opening output side: rate %u, channels %u, format %d, latency in frames %u.",
+        stm, stm->output_stream_params.rate, stm->output_stream_params.channels,
+        stm->output_stream_params.format, stm->latency_frames);
     r = audio_stream_desc_init(&stm->output_desc, output_stream_params);
     if (r != CUBEB_OK) {
       LOG("Could not initialize the audio stream description.");
@@ -1277,6 +1290,8 @@ audiounit_stream_init(cubeb * context,
       audiounit_stream_destroy(stm);
       return CUBEB_ERROR;
     }
+    stm->output_hw_rate = output_hw_desc.mSampleRate;
+    LOG("(%p) Output device sampling rate: %.2f", stm, output_hw_desc.mSampleRate);
 
     r = AudioUnitSetProperty(stm->output_unit,
                              kAudioUnitProperty_StreamFormat,
@@ -1614,11 +1629,7 @@ int audiounit_stream_set_panning(cubeb_stream * stm, float panning)
     return CUBEB_ERROR_INVALID_PARAMETER;
   }
 
-  {
-    auto_lock lock(stm->mutex);
-    stm->panning = panning;
-  }
-
+  stm->panning.store(panning, std::memory_order_relaxed);
   return CUBEB_OK;
 }
 
@@ -1791,10 +1802,10 @@ audiounit_strref_to_cstr_utf8(CFStringRef strref)
 
   len = CFStringGetLength(strref);
   size = CFStringGetMaximumSizeForEncoding(len, kCFStringEncodingUTF8);
-  ret = new char[size];
+  ret = static_cast<char *>(malloc(size));
 
   if (!CFStringGetCString(strref, ret, size, kCFStringEncodingUTF8)) {
-    delete [] ret;
+    free(ret);
     ret = NULL;
   }
 
@@ -2079,7 +2090,7 @@ audiounit_get_devices_of_type(cubeb_device_type devtype, AudioObjectID ** devid_
   }
 
   if (devid_array && dev_count > 0) {
-    *devid_array = static_cast<AudioObjectID *>(calloc(dev_count, sizeof(AudioObjectID)));
+    *devid_array = new AudioObjectID[dev_count];
     assert(*devid_array);
     memcpy(*devid_array, &devices_in_scope, dev_count * sizeof(AudioObjectID));
   }

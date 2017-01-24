@@ -158,7 +158,7 @@ function pruneSavedDumps() {
     }
   }
 
-  entriesArray.sort(function(a,b) {
+  entriesArray.sort(function(a, b) {
     let dateA = a.lastModifiedTime;
     let dateB = b.lastModifiedTime;
     if (dateA < dateB)
@@ -277,7 +277,7 @@ Submitter.prototype = {
     let formData = Cc["@mozilla.org/files/formdata;1"]
                    .createInstance(Ci.nsIDOMFormData);
     // add the data
-    for (let [name, value] in Iterator(this.extraKeyVals)) {
+    for (let [name, value] of Object.entries(this.extraKeyVals)) {
       if (name != "ServerURL") {
         formData.append(name, value);
       }
@@ -492,7 +492,7 @@ this.CrashSubmit = {
     let [dump, extra, mem] = getPendingMinidump(id);
     return OS.File.open(dump.path + ".ignore", {create: true},
                         {unixFlags: OS.Constants.libc.O_CREAT})
-      .then((file) => {file.close(); });
+      .then((file) => { file.close(); });
   },
 
   /**
@@ -549,7 +549,7 @@ this.CrashSubmit = {
             return null;
           }
         );
-      } catch(ex) {
+      } catch (ex) {
         Cu.reportError(ex);
       } finally {
         iterator.close();

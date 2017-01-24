@@ -10,12 +10,21 @@
 #include "Compatibility.h"
 #include "HyperTextAccessibleWrap.h"
 #include "ia2AccessibleText.h"
+#include "nsIXULRuntime.h"
 #include "nsWinUtils.h"
 #include "mozilla/a11y/ProxyAccessible.h"
+#include "mozilla/mscom/InterceptorLog.h"
+#include "mozilla/mscom/Registration.h"
+#include "mozilla/StaticPtr.h"
 #include "ProxyWrappers.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
+using namespace mozilla::mscom;
+
+static StaticAutoPtr<RegisteredProxy> gRegProxy;
+static StaticAutoPtr<RegisteredProxy> gRegAccTlb;
+static StaticAutoPtr<RegisteredProxy> gRegMiscTlb;
 
 void
 a11y::PlatformInit()
@@ -24,6 +33,19 @@ a11y::PlatformInit()
 
   nsWinUtils::MaybeStartWindowEmulation();
   ia2AccessibleText::InitTextChangeData();
+  if (BrowserTabsRemoteAutostart()) {
+    mscom::InterceptorLog::Init();
+    UniquePtr<RegisteredProxy> regProxy(
+        mscom::RegisterProxy(L"ia2marshal.dll"));
+    gRegProxy = regProxy.release();
+    UniquePtr<RegisteredProxy> regAccTlb(
+        mscom::RegisterTypelib(L"oleacc.dll",
+                               RegistrationFlags::eUseSystemDirectory));
+    gRegAccTlb = regAccTlb.release();
+    UniquePtr<RegisteredProxy> regMiscTlb(
+        mscom::RegisterTypelib(L"Accessible.tlb"));
+    gRegMiscTlb = regMiscTlb.release();
+  }
 }
 
 void
@@ -32,6 +54,9 @@ a11y::PlatformShutdown()
   ::DestroyCaret();
 
   nsWinUtils::ShutdownWindowEmulation();
+  gRegProxy = nullptr;
+  gRegAccTlb = nullptr;
+  gRegMiscTlb = nullptr;
 }
 
 void
@@ -59,20 +84,6 @@ a11y::ProxyDestroyed(ProxyAccessible* aProxy)
   MOZ_ASSERT(wrapper);
   if (!wrapper)
     return;
-
-  auto doc =
-    static_cast<DocProxyAccessibleWrap*>(WrapperFor(aProxy->Document()));
-  MOZ_ASSERT(doc);
-  if (doc) {
-#ifdef _WIN64
-    uint32_t id = wrapper->GetExistingID();
-    if (id != AccessibleWrap::kNoID) {
-      doc->RemoveID(id);
-    }
-#else
-    doc->RemoveID(-reinterpret_cast<int32_t>(wrapper));
-#endif
-  }
 
   wrapper->Shutdown();
   aProxy->SetWrapper(0);

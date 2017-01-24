@@ -1,11 +1,49 @@
-FROM          taskcluster/ubuntu1204-test-upd:0.1.11.20160628204600
+FROM          ubuntu:12.04
 MAINTAINER    Jonas Finnemann Jensen <jopsen@gmail.com>
+
+RUN useradd -d /home/worker -s /bin/bash -m worker
+WORKDIR /home/worker
+
+# %include testing/docker/recipes/tooltool.py
+ADD topsrcdir/testing/docker/recipes/tooltool.py /setup/tooltool.py
+
+# %include testing/docker/recipes/install-mercurial.sh
+ADD topsrcdir/testing/docker/recipes/install-mercurial.sh /tmp/install-mercurial.sh
+
+# Add wrapper scripts for xvfb allowing tasks to easily retry starting up xvfb
+# %include testing/docker/recipes/xvfb.sh
+ADD topsrcdir/testing/docker/recipes/xvfb.sh /home/worker/scripts/xvfb.sh
+
+# %include testing/docker/recipes/ubuntu1204-test-system-setup.sh
+ADD topsrcdir/testing/docker/recipes/ubuntu1204-test-system-setup.sh /setup/system-setup.sh
+RUN bash /setup/system-setup.sh
+
+# %include testing/docker/recipes/run-task
+ADD topsrcdir/testing/docker/recipes/run-task /home/worker/bin/run-task
+
+# %include taskcluster/scripts/tester/test-ubuntu1204.sh
+ADD topsrcdir/taskcluster/scripts/tester/test-ubuntu1204.sh /home/worker/bin/test-linux.sh
+
+# This will create a host mounted filesystem when the cache is stripped
+# on Try. This cancels out some of the performance losses of aufs. See
+# bug 1291940.
+VOLUME /home/worker/hg-shared
+VOLUME /home/worker/checkouts
+VOLUME /home/worker/workspace
+
+# Set variable normally configured at login, by the shells parent process, these
+# are taken from GNU su manual
+ENV           HOME          /home/worker
+ENV           SHELL         /bin/bash
+ENV           USER          worker
+ENV           LOGNAME       worker
+ENV           HOSTNAME      taskcluster-worker
+ENV           LANG          en_US.UTF-8
+ENV           LC_ALL        en_US.UTF-8
 
 # Add utilities and configuration
 COPY           dot-files/config              /home/worker/.config
 COPY           dot-files/pulse               /home/worker/.pulse
-COPY           dot-files/hgrc                /home/worker/.hgrc
-COPY           bin                           /home/worker/bin
 RUN            chmod +x bin/*
 # TODO: remove this when buildbot is gone
 COPY           buildprops.json               /home/worker/buildprops.json
@@ -19,10 +57,6 @@ RUN chmod u+x /home/worker/bin/buildbot_step
 ADD            https://s3-us-west-2.amazonaws.com/test-caching/packages/linux64-stackwalk /usr/local/bin/linux64-minidump_stackwalk
 RUN chmod +x /usr/local/bin/linux64-minidump_stackwalk
 
-# Add wrapper scripts for xvfb allowing tasks to easily retry starting up xvfb
-# %include testing/docker/recipes/xvfb.sh
-ADD topsrcdir/testing/docker/recipes/xvfb.sh /home/worker/scripts/xvfb.sh
-
 # allow the worker user to access video devices
 RUN usermod -a -G video worker
 
@@ -33,11 +67,6 @@ RUN npm install -g taskcluster-vcs@2.3.12 \
  && npm install -g taskcluster-npm-cache@1.1.14 \
  && rm -rf ~/.npm
 ENV PATH $PATH:/home/worker/bin
-
-# Remove once running under 'worker' user.  This is necessary for pulseaudio to start
-# XXX: change this back to worker:worker once permissions issues are resolved
-RUN            chown -R root:root /home/worker
-
 
 # TODO Re-enable worker when bug 1093833 lands
 #USER          worker
@@ -70,6 +99,8 @@ ADD fonts.conf /home/worker/.fonts.conf
 ADD motd /etc/taskcluster-motd
 ADD taskcluster-interactive-shell /bin/taskcluster-interactive-shell
 RUN chmod +x /bin/taskcluster-interactive-shell
+
+RUN chown -R worker:worker /home/worker
 
 # Set a default command useful for debugging
 CMD ["/bin/bash", "--login"]

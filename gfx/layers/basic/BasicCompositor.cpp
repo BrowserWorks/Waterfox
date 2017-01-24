@@ -10,6 +10,7 @@
 #include "nsIWidget.h"
 #include "gfx2DGlue.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/gfx/Tools.h"
 #include "mozilla/gfx/ssse3-scaler.h"
@@ -171,6 +172,25 @@ public:
     mNeedsUpdate = true;
   }
 
+  void ConvertAndScale(const SurfaceFormat& aDestFormat,
+                       const IntSize& aDestSize,
+                       unsigned char* aDestBuffer,
+                       int32_t aStride)
+  {
+    MOZ_ASSERT(mTexture);
+    if (!mTexture) {
+      return;
+    }
+    MOZ_ASSERT(mTexture->GetBufferDescriptor().type() == BufferDescriptor::TYCbCrDescriptor);
+    MOZ_ASSERT(mTexture->GetSize() == mSize);
+    ImageDataSerializer::ConvertAndScaleFromYCbCrDescriptor(
+      mTexture->GetBuffer(),
+      mTexture->GetBufferDescriptor().get_YCbCrDescriptor(),
+      aDestFormat,
+      aDestSize,
+      aDestBuffer,
+      aStride);
+  }
 public:
   BufferTextureHost* mTexture;
   const gfx::IntSize mSize;
@@ -181,11 +201,11 @@ public:
 BasicCompositor::BasicCompositor(CompositorBridgeParent* aParent, widget::CompositorWidget* aWidget)
   : Compositor(aWidget, aParent)
   , mDidExternalComposition(false)
+  , mIsPendingEndRemoteDrawing(false)
 {
   MOZ_COUNT_CTOR(BasicCompositor);
 
-  mMaxTextureSize =
-    Factory::GetMaxSurfaceSize(gfxPlatform::GetPlatform()->GetContentBackendFor(LayersBackend::LAYERS_BASIC));
+  mMaxTextureSize = Factory::GetMaxSurfaceSize(gfxVars::ContentBackend());
 }
 
 BasicCompositor::~BasicCompositor()
@@ -217,6 +237,11 @@ BasicCompositingRenderTarget::BindRenderTarget()
 void BasicCompositor::DetachWidget()
 {
   if (mWidget) {
+    if (mIsPendingEndRemoteDrawing) {
+      // Force to end previous remote drawing.
+      TryToEndRemoteDrawing(/* aForceToEnd */ true);
+      MOZ_ASSERT(!mIsPendingEndRemoteDrawing);
+    }
     mWidget->CleanupRemoteDrawing();
   }
   Compositor::DetachWidget();
@@ -459,6 +484,68 @@ AttemptVideoScale(TextureSourceBasic* aSource, const SourceSurface* aSourceMask,
     return false;
 }
 
+static bool
+AttemptVideoConvertAndScale(TextureSource* aSource, const SourceSurface* aSourceMask,
+                            gfx::Float aOpacity, CompositionOp aBlendMode,
+                            const TexturedEffect* aTexturedEffect,
+                            const Matrix& aNewTransform, const gfx::Rect& aRect,
+                            const gfx::Rect& aClipRect,
+                            DrawTarget* aDest, const DrawTarget* aBuffer)
+{
+#if defined(XP_WIN) && defined(_M_X64)
+  // libyuv does not support SIMD scaling on win 64bit. See Bug 1295927.
+  return false;
+#endif
+
+  WrappingTextureSourceYCbCrBasic* wrappingSource = aSource->AsWrappingTextureSourceYCbCrBasic();
+  if (!wrappingSource)
+    return false;
+#ifdef MOZILLA_SSE_HAVE_CPUID_DETECTION
+  if (!mozilla::supports_ssse3()) // libyuv requests SSSE3 for fast YUV conversion.
+    return false;
+  if (aNewTransform.HasNonAxisAlignedTransform() || aNewTransform.HasNegativeScaling())
+      return false;
+  if (aSourceMask || aOpacity != 1.0f)
+    return false;
+  if (aBlendMode != CompositionOp::OP_OVER && aBlendMode != CompositionOp::OP_SOURCE)
+    return false;
+
+  IntRect dstRect;
+  // the compiler should know a lot about aNewTransform at this point
+  // maybe it can do some sophisticated optimization of the following
+  if (!aNewTransform.TransformBounds(aRect).ToIntRect(&dstRect))
+    return false;
+
+  IntRect clipRect;
+  if (!aClipRect.ToIntRect(&clipRect))
+    return false;
+
+  if (!(aTexturedEffect->mTextureCoords == Rect(0.0f, 0.0f, 1.0f, 1.0f)))
+    return false;
+  if (aDest->GetFormat() == SurfaceFormat::R5G6B5_UINT16)
+    return false;
+
+  if (aDest == aBuffer && !clipRect.Contains(dstRect))
+    return false;
+  if (!IntRect(IntPoint(0, 0), aDest->GetSize()).Contains(dstRect))
+    return false;
+
+  uint8_t* dstData;
+  IntSize dstSize;
+  int32_t dstStride;
+  SurfaceFormat dstFormat;
+  if (aDest->LockBits(&dstData, &dstSize, &dstStride, &dstFormat)) {
+    wrappingSource->ConvertAndScale(dstFormat,
+                                    dstRect.Size(),
+                                    dstData + ptrdiff_t(dstRect.x) * BytesPerPixel(dstFormat) + ptrdiff_t(dstRect.y) * dstStride,
+                                    dstStride);
+    aDest->ReleaseBits(dstData);
+    return true;
+  } else
+#endif // MOZILLA_SSE_HAVE_CPUID_DETECTION
+    return false;
+}
+
 void
 BasicCompositor::DrawQuad(const gfx::Rect& aRect,
                           const gfx::IntRect& aClipRect,
@@ -553,7 +640,13 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
       if (source && texturedEffect->mPremultiplied) {
         // we have a fast path for video here
         if (source->mFromYCBCR &&
-            !source->GetSurface(dest)) {
+            AttemptVideoConvertAndScale(texturedEffect->mTexture, sourceMask, aOpacity, blendMode,
+                                        texturedEffect,
+                                        newTransform, aRect, transformedClipRect,
+                                        dest, buffer)) {
+          // we succeeded in convert and scaling
+        } else if (source->mFromYCBCR &&
+                   !source->GetSurface(dest)) {
           gfxWarning() << "Failed to get YCbCr to rgb surface.";
         } else if (source->mFromYCBCR &&
             AttemptVideoScale(source, sourceMask, aOpacity, blendMode,
@@ -681,6 +774,12 @@ BasicCompositor::BeginFrame(const nsIntRegion& aInvalidRegion,
                             gfx::IntRect *aClipRectOut /* = nullptr */,
                             gfx::IntRect *aRenderBoundsOut /* = nullptr */)
 {
+  if (mIsPendingEndRemoteDrawing) {
+    // Force to end previous remote drawing.
+    TryToEndRemoteDrawing(/* aForceToEnd */ true);
+    MOZ_ASSERT(!mIsPendingEndRemoteDrawing);
+  }
+
   LayoutDeviceIntRect intRect(LayoutDeviceIntPoint(), mWidget->GetClientSize());
   IntRect rect = IntRect(0, 0, intRect.width, intRect.height);
 
@@ -799,6 +898,29 @@ BasicCompositor::EndFrame()
   // Pop aInvalidregion
   mRenderTarget->mDrawTarget->PopClip();
 
+  TryToEndRemoteDrawing();
+}
+
+void
+BasicCompositor::TryToEndRemoteDrawing(bool aForceToEnd)
+{
+  if (mIsDestroyed || !mRenderTarget) {
+    return;
+  }
+
+  // It it is not a good timing for EndRemoteDrawing, defter to call it.
+  if (!aForceToEnd && !mTarget && NeedsToDeferEndRemoteDrawing()) {
+    mIsPendingEndRemoteDrawing = true;
+
+    const uint32_t retryMs = 2;
+    RefPtr<BasicCompositor> self = this;
+    RefPtr<Runnable> runnable = NS_NewRunnableFunction([self]() {
+      self->TryToEndRemoteDrawing();
+    });
+    MessageLoop::current()->PostDelayedTask(runnable.forget(), retryMs);
+    return;
+  }
+
   if (mRenderTarget->mDrawTarget != mDrawTarget) {
     // Note: Most platforms require us to buffer drawing to the widget surface.
     // That's why we don't draw to mDrawTarget directly.
@@ -823,12 +945,32 @@ BasicCompositor::EndFrame()
     }
   }
 
-  if (!mTarget) {
+  if (aForceToEnd || !mTarget) {
     mWidget->EndRemoteDrawingInRegion(mDrawTarget, mInvalidRegion);
   }
 
   mDrawTarget = nullptr;
   mRenderTarget = nullptr;
+  mIsPendingEndRemoteDrawing = false;
+}
+
+bool
+BasicCompositor::NeedsToDeferEndRemoteDrawing()
+{
+  MOZ_ASSERT(mDrawTarget);
+  MOZ_ASSERT(mRenderTarget);
+
+  if (mTarget || mRenderTarget->mDrawTarget == mDrawTarget) {
+    return false;
+  }
+
+  return mWidget->NeedsToDeferEndRemoteDrawing();
+}
+
+void
+BasicCompositor::FinishPendingComposite()
+{
+  TryToEndRemoteDrawing(/* aForceToEnd */ true);
 }
 
 void

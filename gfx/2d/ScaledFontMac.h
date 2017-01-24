@@ -32,8 +32,12 @@ public:
   virtual SkTypeface* GetSkTypeface();
 #endif
   virtual already_AddRefed<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
-  virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint);
+  virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, const Matrix *aTransformHint);
   virtual bool GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton);
+
+#ifdef USE_CAIRO_SCALED_FONT
+  cairo_font_face_t* GetCairoFontFace();
+#endif
 
 private:
   friend class DrawTargetCG;

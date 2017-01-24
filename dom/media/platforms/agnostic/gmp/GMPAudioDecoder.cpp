@@ -8,6 +8,7 @@
 #include "nsServiceManagerUtils.h"
 #include "MediaInfo.h"
 #include "GMPDecoderModule.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
 
@@ -30,8 +31,10 @@ AudioCallbackAdapter::Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp
   MOZ_ASSERT(IsOnGMPThread());
 
   if (aRate == 0 || aChannels == 0) {
-    NS_WARNING("Invalid rate or num channels returned on GMP audio samples");
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mCallback->Error(MediaResult(
+      NS_ERROR_DOM_MEDIA_FATAL_ERR,
+      RESULT_DETAIL(
+        "Invalid rate or num channels returned on GMP audio samples")));
     return;
   }
 
@@ -39,7 +42,9 @@ AudioCallbackAdapter::Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp
   MOZ_ASSERT((aPCM.Length() % aChannels) == 0);
   AlignedAudioBuffer audioData(aPCM.Length());
   if (!audioData) {
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mCallback->Error(
+      MediaResult(NS_ERROR_OUT_OF_MEMORY,
+                  RESULT_DETAIL("Unable to allocate audio buffer")));
     return;
   }
 
@@ -51,8 +56,8 @@ AudioCallbackAdapter::Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp
     mAudioFrameSum = 0;
     auto timestamp = UsecsToFrames(aTimeStamp, aRate);
     if (!timestamp.isValid()) {
-      NS_WARNING("Invalid timestamp");
-      mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+      mCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,
+                                   RESULT_DETAIL("Invalid timestamp")));
       return;
     }
     mAudioFrameOffset = timestamp.value();
@@ -61,16 +66,18 @@ AudioCallbackAdapter::Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp
 
   auto timestamp = FramesToUsecs(mAudioFrameOffset + mAudioFrameSum, aRate);
   if (!timestamp.isValid()) {
-    NS_WARNING("Invalid timestamp on audio samples");
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mCallback->Error(
+      MediaResult(NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,
+                  RESULT_DETAIL("Invalid timestamp on audio samples")));
     return;
   }
   mAudioFrameSum += numFrames;
 
   auto duration = FramesToUsecs(numFrames, aRate);
   if (!duration.isValid()) {
-    NS_WARNING("Invalid duration on audio samples");
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mCallback->Error(
+      MediaResult(NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,
+                  RESULT_DETAIL("Invalid duration on audio samples")));
     return;
   }
 
@@ -116,14 +123,17 @@ void
 AudioCallbackAdapter::Error(GMPErr aErr)
 {
   MOZ_ASSERT(IsOnGMPThread());
-  mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+  mCallback->Error(MediaResult(aErr == GMPDecodeErr
+                               ? NS_ERROR_DOM_MEDIA_DECODE_ERR
+                               : NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                               RESULT_DETAIL("GMPErr:%x", aErr)));
 }
 
 void
 AudioCallbackAdapter::Terminated()
 {
-  NS_WARNING("AAC GMP decoder terminated.");
-  mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+  mCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                               RESULT_DETAIL("Audio GMP decoder terminated.")));
 }
 
 GMPAudioDecoderParams::GMPAudioDecoderParams(const CreateDecoderParams& aParams)
@@ -190,7 +200,7 @@ GMPAudioDecoder::GMPInitDone(GMPAudioDecoderProxy* aGMP)
   MOZ_ASSERT(IsOnGMPThread());
 
   if (!aGMP) {
-    mInitPromise.RejectIfExists(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
     return;
   }
   if (mInitPromise.IsEmpty()) {
@@ -211,7 +221,7 @@ GMPAudioDecoder::GMPInitDone(GMPAudioDecoderProxy* aGMP)
                                  mAdapter);
   if (NS_FAILED(rv)) {
     aGMP->Close();
-    mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.Reject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
     return;
   }
 
@@ -233,21 +243,22 @@ GMPAudioDecoder::Init()
   InitTags(tags);
   UniquePtr<GetGMPAudioDecoderCallback> callback(new GMPInitDoneCallback(this));
   if (NS_FAILED(mMPS->GetGMPAudioDecoder(mCrashHelper, &tags, GetNodeId(), Move(callback)))) {
-    mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.Reject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   return promise;
 }
 
-nsresult
+void
 GMPAudioDecoder::Input(MediaRawData* aSample)
 {
   MOZ_ASSERT(IsOnGMPThread());
 
   RefPtr<MediaRawData> sample(aSample);
   if (!mGMP) {
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
-    return NS_ERROR_FAILURE;
+    mCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                 RESULT_DETAIL("mGMP not initialized")));
+    return;
   }
 
   mAdapter->SetLastStreamOffset(sample->mOffset);
@@ -255,14 +266,11 @@ GMPAudioDecoder::Input(MediaRawData* aSample)
   gmp::GMPAudioSamplesImpl samples(sample, mConfig.mChannels, mConfig.mRate);
   nsresult rv = mGMP->Decode(samples);
   if (NS_FAILED(rv)) {
-    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
-    return rv;
+    mCallback->Error(MediaResult(rv, __func__));
   }
-
-  return NS_OK;
 }
 
-nsresult
+void
 GMPAudioDecoder::Flush()
 {
   MOZ_ASSERT(IsOnGMPThread());
@@ -271,11 +279,9 @@ GMPAudioDecoder::Flush()
     // Abort the flush.
     mCallback->FlushComplete();
   }
-
-  return NS_OK;
 }
 
-nsresult
+void
 GMPAudioDecoder::Drain()
 {
   MOZ_ASSERT(IsOnGMPThread());
@@ -283,22 +289,18 @@ GMPAudioDecoder::Drain()
   if (!mGMP || NS_FAILED(mGMP->Drain())) {
     mCallback->DrainComplete();
   }
-
-  return NS_OK;
 }
 
-nsresult
+void
 GMPAudioDecoder::Shutdown()
 {
-  mInitPromise.RejectIfExists(MediaDataDecoder::DecoderFailureReason::CANCELED, __func__);
+  mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
   if (!mGMP) {
-    return NS_ERROR_FAILURE;
+    return;
   }
   // Note this unblocks flush and drain operations waiting for callbacks.
   mGMP->Close();
   mGMP = nullptr;
-
-  return NS_OK;
 }
 
 } // namespace mozilla

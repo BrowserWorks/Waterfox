@@ -145,13 +145,7 @@ gl::Error Blit9::setShader(ShaderId source, const char *profile,
     {
         const BYTE* shaderCode = g_shaderCode[source];
         size_t shaderSize = g_shaderSize[source];
-
-        gl::Error error = (mRenderer->*createShader)(reinterpret_cast<const DWORD*>(shaderCode), shaderSize, &shader);
-        if (error.isError())
-        {
-            return error;
-        }
-
+        ANGLE_TRY((mRenderer->*createShader)(reinterpret_cast<const DWORD*>(shaderCode), shaderSize, &shader));
         mCompiledShaders[source] = shader;
     }
 
@@ -190,18 +184,10 @@ RECT Blit9::getSurfaceRect(IDirect3DSurface9 *surface) const
 
 gl::Error Blit9::boxFilter(IDirect3DSurface9 *source, IDirect3DSurface9 *dest)
 {
-    gl::Error error = initialize();
-    if (error.isError())
-    {
-        return error;
-    }
+    ANGLE_TRY(initialize());
 
     IDirect3DTexture9 *texture = NULL;
-    error = copySurfaceToTexture(source, getSurfaceRect(source), &texture);
-    if (error.isError())
-    {
-        return error;
-    }
+    ANGLE_TRY(copySurfaceToTexture(source, getSurfaceRect(source), &texture));
 
     IDirect3DDevice9 *device = mRenderer->getDevice();
 
@@ -230,21 +216,13 @@ gl::Error Blit9::boxFilter(IDirect3DSurface9 *source, IDirect3DSurface9 *dest)
 
 gl::Error Blit9::copy2D(const gl::Framebuffer *framebuffer, const RECT &sourceRect, GLenum destFormat, const gl::Offset &destOffset, TextureStorage *storage, GLint level)
 {
-    gl::Error error = initialize();
-    if (error.isError())
-    {
-        return error;
-    }
+    ANGLE_TRY(initialize());
 
     const gl::FramebufferAttachment *colorbuffer = framebuffer->getColorbuffer(0);
     ASSERT(colorbuffer);
 
     RenderTarget9 *renderTarget9 = nullptr;
-    error = colorbuffer->getRenderTarget(&renderTarget9);
-    if (error.isError())
-    {
-        return error;
-    }
+    ANGLE_TRY(colorbuffer->getRenderTarget(&renderTarget9));
     ASSERT(renderTarget9);
 
     IDirect3DSurface9 *source = renderTarget9->getSurface();
@@ -252,7 +230,7 @@ gl::Error Blit9::copy2D(const gl::Framebuffer *framebuffer, const RECT &sourceRe
 
     IDirect3DSurface9 *destSurface = NULL;
     TextureStorage9 *storage9      = GetAs<TextureStorage9>(storage);
-    error = storage9->getSurfaceLevel(GL_TEXTURE_2D, level, true, &destSurface);
+    gl::Error error = storage9->getSurfaceLevel(GL_TEXTURE_2D, level, true, &destSurface);
     if (error.isError())
     {
         SafeRelease(source);
@@ -514,9 +492,12 @@ gl::Error Blit9::copySurfaceToTexture(IDirect3DSurface9 *surface, const RECT &so
     D3DSURFACE_DESC sourceDesc;
     surface->GetDesc(&sourceDesc);
 
+    const auto destWidth = sourceRect.right - sourceRect.left;
+    const auto destHeight = sourceRect.bottom - sourceRect.top;
+
     // Copy the render target into a texture
     IDirect3DTexture9 *texture;
-    HRESULT result = device->CreateTexture(sourceRect.right - sourceRect.left, sourceRect.bottom - sourceRect.top, 1, D3DUSAGE_RENDERTARGET, sourceDesc.Format, D3DPOOL_DEFAULT, &texture, NULL);
+    HRESULT result = device->CreateTexture(destWidth, destHeight, 1, D3DUSAGE_RENDERTARGET, sourceDesc.Format, D3DPOOL_DEFAULT, &texture, NULL);
 
     if (FAILED(result))
     {
@@ -535,8 +516,40 @@ gl::Error Blit9::copySurfaceToTexture(IDirect3DSurface9 *surface, const RECT &so
     }
 
     mRenderer->endScene();
-    result = device->StretchRect(surface, &sourceRect, textureSurface, NULL, D3DTEXF_NONE);
 
+    if (sourceRect.left < sourceDesc.Width && sourceRect.right > 0 &&
+        sourceRect.top < sourceDesc.Height && sourceRect.bottom > 0)
+    {
+        RECT validSourceRect = sourceRect;
+        RECT validDestRect = {0, 0, destWidth, destHeight};
+
+        if (sourceRect.left < 0) {
+            validSourceRect.left += 0 - sourceRect.left;
+            validDestRect.left += 0 - sourceRect.left;
+        }
+
+        if (sourceRect.right > sourceDesc.Width) {
+            validSourceRect.right -= sourceRect.right - sourceDesc.Width;
+            validDestRect.right -= sourceRect.right - sourceDesc.Width;
+        }
+
+        if (sourceRect.top < 0) {
+            validSourceRect.top += 0 - sourceRect.top;
+            validDestRect.top += 0 - sourceRect.top;
+        }
+
+        if (sourceRect.bottom > sourceDesc.Height) {
+            validSourceRect.bottom -= sourceRect.bottom - sourceDesc.Height;
+            validDestRect.bottom -= sourceRect.bottom - sourceDesc.Height;
+        }
+
+        ASSERT(validSourceRect.left < validSourceRect.right);
+        ASSERT(validSourceRect.top < validSourceRect.bottom);
+        ASSERT(validDestRect.left < validDestRect.right);
+        ASSERT(validDestRect.top < validDestRect.bottom);
+        result = device->StretchRect(surface, &validSourceRect, textureSurface,
+                                     &validDestRect, D3DTEXF_NONE);
+    }
     SafeRelease(textureSurface);
 
     if (FAILED(result))

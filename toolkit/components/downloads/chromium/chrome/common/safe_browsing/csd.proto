@@ -1,0 +1,839 @@
+// Copyright (c) 2012 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+//
+// This proto file includes:
+// (1) Client side phishing and malware detection request and response
+//   protocol buffers.  Those protocol messages should be kept in sync
+//   with the server implementation.
+//
+// (2) Safe Browsing reporting protocol buffers.
+//   A ClientSafeBrowsingReportRequest is sent when a user opts-in to
+//   sending detailed threat reports from the safe browsing interstitial page.
+//   It is a list of Resource messages, which may contain the url of a
+//   resource such as the page in the address bar or any other resource
+//   that was loaded for this page.
+//   In addition to the url, a resource can contain HTTP request and response
+//   headers and bodies.
+//
+// If you want to change this protocol definition or you have questions
+// regarding its format please contact chrome-anti-phishing@googlegroups.com.
+
+syntax = "proto2";
+
+option optimize_for = LITE_RUNTIME;
+
+package safe_browsing;
+
+// Protocol buffer describing the Chrome user population of the user reporting
+// data.
+message ChromeUserPopulation {
+  enum UserPopulation {
+    UNKNOWN_USER_POPULATION = 0;
+    SAFE_BROWSING = 1;
+    EXTENDED_REPORTING = 2;
+  }
+  optional UserPopulation user_population = 1;
+}
+
+
+message ClientPhishingRequest {
+  // URL that the client visited.  The CGI parameters are stripped by the
+  // client.
+  optional string url = 1;
+
+  // A 5-byte SHA-256 hash prefix of the URL.  Before hashing the URL is
+  // canonicalized, converted to a suffix-prefix expression and broadened
+  // (www prefix is removed and everything past the last '/' is stripped).
+  //
+  // Marked OBSOLETE because the URL is sent for all users, making the hash
+  // prefix unnecessary.
+  optional bytes OBSOLETE_hash_prefix = 10;
+
+  // Score that was computed on the client.  Value is between 0.0 and 1.0.
+  // The larger the value the more likely the url is phishing.
+  required float client_score = 2;
+
+  // Note: we're skipping tag 3 because it was previously used.
+
+  // Is true if the features for this URL were classified as phishing.
+  // Currently, this will always be true for all client-phishing requests
+  // that are sent to the server.
+  optional bool is_phishing = 4;
+
+  message Feature {
+    // Feature name.  E.g., 'PageHasForms'.
+    required string name = 1;
+
+    // Feature value is always in the range [0.0, 1.0].  Boolean features
+    // have value 1.0.
+    required double value = 2;
+  }
+
+  // List of features that were extracted.  Those are the features that were
+  // sent to the scorer and which resulted in client_score being computed.
+  repeated Feature feature_map = 5;
+
+  // The version number of the model that was used to compute the client-score.
+  // Copied from ClientSideModel.version().
+  optional int32 model_version = 6;
+
+  // Field 7 is only used on the server.
+
+  // List of features that are extracted in the client but are not used in the
+  // machine learning model.
+  repeated Feature non_model_feature_map = 8;
+
+  // The referrer URL.  This field might not be set, for example, in the case
+  // where the referrer uses HTTPs.
+  // OBSOLETE: Use feature 'Referrer=<referrer>' instead.
+  optional string OBSOLETE_referrer_url = 9;
+
+  // Field 11 is only used on the server.
+
+  // List of shingle hashes we extracted.
+  repeated uint32 shingle_hashes = 12 [packed = true];
+
+  // The model filename (basename) that was used by the client.
+  optional string model_filename = 13;
+
+  // Population that the reporting user is part of.
+  optional ChromeUserPopulation population = 14;
+}
+
+message ClientPhishingResponse {
+  required bool phishy = 1;
+
+  // A list of SafeBrowsing host-suffix / path-prefix expressions that
+  // are whitelisted.  The client must match the current top-level URL
+  // against these whitelisted expressions and only apply a positive
+  // phishing verdict above if the URL does not match any expression
+  // on this whitelist.  The client must not cache these whitelisted
+  // expressions.  This whitelist will be empty for the vast majority
+  // of the responses but might contain up to 100 entries in emergency
+  // situations.
+  //
+  // Marked OBSOLETE because the URL is sent for all users, so the server
+  // can do whitelist matching.
+  repeated string OBSOLETE_whitelist_expression = 2;
+}
+
+message ClientMalwareRequest {
+  // URL that the client visited.  The CGI parameters are stripped by the
+  // client.
+  required string url = 1;
+
+  // Field 2 is deleted and no longer in use.
+
+  // Field 3 is only used on the server.
+
+  // The referrer URL.  This field might not be set, for example, in the case
+  // where the referrer uses HTTPS.
+  optional string referrer_url = 4;
+
+  // Field 5 and 6 are only used on the server.
+
+  message UrlInfo {
+    required string ip = 1;
+    required string url = 2;
+    optional string method = 3;
+    optional string referrer = 4;
+    // Resource type, the int value is a direct cast from the Type enum
+    // of ResourceType class defined in //src/webkit/commom/resource_type.h
+    optional int32 resource_type = 5;
+  }
+
+  // List of resource urls that match the malware IP list.
+  repeated UrlInfo bad_ip_url_info = 7;
+
+  // Population that the reporting user is part of.
+  optional ChromeUserPopulation population = 9;
+}
+
+message ClientMalwareResponse {
+  required bool blacklist = 1;
+  // The confirmed blacklisted bad IP and its url, which will be shown in
+  // malware warning, if the blacklist verdict is true.
+  // This IP string could be either in IPv4 or IPv6 format, which is the same
+  // as the ones client sent to server.
+  optional string bad_ip = 2;
+  optional string bad_url = 3;
+}
+
+message ClientDownloadRequest {
+  // The final URL of the download (after all redirects).
+  required string url = 1;
+
+  // This message contains various binary digests of the download payload.
+  message Digests {
+    optional bytes sha256 = 1;
+    optional bytes sha1 = 2;
+    optional bytes md5 = 3;
+  }
+  required Digests digests = 2;
+
+  // This is the length in bytes of the download payload.
+  required int64 length = 3;
+
+  // Type of the resources stored below.
+  enum ResourceType {
+    // The final URL of the download payload.  The resource URL should
+    // correspond to the URL field above.
+    DOWNLOAD_URL = 0;
+    // A redirect URL that was fetched before hitting the final DOWNLOAD_URL.
+    DOWNLOAD_REDIRECT = 1;
+    // The final top-level URL of the tab that triggered the download.
+    TAB_URL = 2;
+    // A redirect URL thas was fetched before hitting the final TAB_URL.
+    TAB_REDIRECT = 3;
+    // The document URL for a PPAPI plugin instance that initiated the download.
+    // This is the document.url for the container element for the plugin
+    // instance.
+    PPAPI_DOCUMENT = 4;
+    // The plugin URL for a PPAPI plugin instance that initiated the download.
+    PPAPI_PLUGIN = 5;
+  }
+
+  message Resource {
+    required string url = 1;
+    required ResourceType type = 2;
+    optional bytes remote_ip = 3;
+    // This will only be set if the referrer is available and if the
+    // resource type is either TAB_URL or DOWNLOAD_URL.
+    optional string referrer = 4;
+
+    // TODO(noelutz): add the transition type?
+  }
+
+  // This repeated field will store all the redirects as well as the
+  // final URLs for the top-level tab URL (i.e., the URL that
+  // triggered the download) as well as for the download URL itself.
+  repeated Resource resources = 4;
+
+  // A trust chain of certificates.  Each chain begins with the signing
+  // certificate of the binary, and ends with a self-signed certificate,
+  // typically from a trusted root CA.  This structure is analogous to
+  // CERT_CHAIN_CONTEXT on Windows.
+  message CertificateChain {
+    // A single link in the chain.
+    message Element {
+      // DER-encoded X.509 representation of the certificate.
+      optional bytes certificate = 1;
+      // Fields 2 - 7 are only used on the server.
+    }
+    repeated Element element = 1;
+  }
+
+  // This is an OS X only message to report extended attribute informations.
+  // Extended attributes on OS X are used for various security mechanisms,
+  // which makes them interesting to Chrome.
+  message ExtendedAttr {
+    // This is the name of the extended attribute.
+    required string key = 1;
+    // This is the value of the extended attribute.
+    optional bytes value = 2;
+  }
+
+  message SignatureInfo {
+    // All certificate chains for each of the binary's signers.  Multiple chains
+    // may be present if the binary or any certificate has multiple signers.
+    // Absence of certificate chains does not imply that the binary is not
+    // signed (in that case, SignedData blobs extracted from the binary may be
+    // preset), but does mean that trust has not been verified.
+    repeated CertificateChain certificate_chain = 1;
+
+    // True if the signature was trusted on the client.
+    optional bool trusted = 2;
+
+    // On Windows, PKCS#7 SignedData blobs extracted from a portable executable
+    // image's attribute certificate table. The presence of these does not imply
+    // that the signatures were deemed trusted by the client.
+    // On Mac, this is the code signature blob referenced by the
+    // LC_CODE_SIGNATURE load command.
+    repeated bytes signed_data = 3;
+
+    // On OS X, code signing data can be contained in the extended attributes of
+    // a file. As Gatekeeper respects this signature, we look for it and collect
+    // it.
+    repeated ExtendedAttr xattr = 4;
+  }
+
+  // This field will only be set if the binary is signed.
+  optional SignatureInfo signature = 5;
+
+  // True if the download was user initiated.
+  optional bool user_initiated = 6;
+
+  // Fields 7 and 8 are only used on the server.
+
+  // Name of the file where the download would be stored if the
+  // download completes.  E.g., "bla.exe".
+  optional string file_basename = 9;
+
+  // Starting with Chrome M19 we're also sending back pings for Chrome
+  // extensions that get downloaded by users.
+  enum DownloadType {
+    WIN_EXECUTABLE = 0;    // Currently all .exe, .cab and .msi files.
+    CHROME_EXTENSION = 1;  // .crx files.
+    ANDROID_APK = 2;       // .apk files.
+    // .zip files containing one of the other executable types.
+    ZIPPED_EXECUTABLE = 3;
+    MAC_EXECUTABLE = 4;  // .dmg, .pkg, etc.
+    ZIPPED_ARCHIVE = 5;  // .zip file containing another archive.
+    ARCHIVE = 6;         // Archive that doesn't have a specific DownloadType.
+    // A .zip that Chrome failed to unpack to the point of finding exe/zips.
+    INVALID_ZIP = 7;
+    // A .dmg, .pkg, etc, that Chrome failed to unpack to the point of finding
+    // Mach O's.
+    INVALID_MAC_ARCHIVE = 8;
+    // A download request initiated via PPAPI. Typically the requestor is
+    // a Flash applet.
+    PPAPI_SAVE_REQUEST = 9;
+    // A file we don't support, but we've decided to sample and send
+    // a light-ping.
+    SAMPLED_UNSUPPORTED_FILE = 10;
+  }
+  optional DownloadType download_type = 10 [default = WIN_EXECUTABLE];
+
+  // Locale of the device, eg en, en_US.
+  optional string locale = 11;
+
+  message PEImageHeaders {
+    // IMAGE_DOS_HEADER.
+    optional bytes dos_header = 1;
+    // IMAGE_FILE_HEADER.
+    optional bytes file_header = 2;
+    // IMAGE_OPTIONAL_HEADER32. Present only for 32-bit PE images.
+    optional bytes optional_headers32 = 3;
+    // IMAGE_OPTIONAL_HEADER64. Present only for 64-bit PE images.
+    optional bytes optional_headers64 = 4;
+    // IMAGE_SECTION_HEADER.
+    repeated bytes section_header = 5;
+    // Contents of the .edata section.
+    optional bytes export_section_data = 6;
+
+    message DebugData {
+      // IMAGE_DEBUG_DIRECTORY.
+      optional bytes directory_entry = 1;
+      optional bytes raw_data = 2;
+    }
+
+    repeated DebugData debug_data = 7;
+  }
+
+  message MachOHeaders {
+    // The mach_header or mach_header_64 struct.
+    required bytes mach_header = 1;
+
+    message LoadCommand {
+      // |command_id| is the first uint32 of |command| as well, but is
+      // extracted for easier processing.
+      required uint32 command_id = 1;
+      // The entire data stream of the load command.
+      required bytes command = 2;
+    }
+
+    // All the load commands of the Mach-O file.
+    repeated LoadCommand load_commands = 2;
+  }
+
+  message ImageHeaders {
+    // Windows Portable Executable image headers.
+    optional PEImageHeaders pe_headers = 1;
+
+    // OS X Mach-O image headers.
+    repeated MachOHeaders mach_o_headers = 2;
+  };
+
+  // Fields 12-17 are reserved for server-side use and are never sent by the
+  // client.
+
+  optional ImageHeaders image_headers = 18;
+
+  // Fields 19-21 are reserved for server-side use and are never sent by the
+  // client.
+
+  // A binary contained in an archive (e.g., a .zip archive).
+  message ArchivedBinary {
+    optional string file_basename = 1;
+    optional DownloadType download_type = 2;
+    optional Digests digests = 3;
+    optional int64 length = 4;
+    optional SignatureInfo signature = 5;
+    optional ImageHeaders image_headers = 6;
+  }
+
+  repeated ArchivedBinary archived_binary = 22;
+
+  // Population that the reporting user is part of.
+  optional ChromeUserPopulation population = 24;
+
+  // True if the .zip or DMG, etc, was 100% successfully unpacked.
+  optional bool archive_valid = 26;
+
+    // True if this ClientDownloadRequest is from a whitelisted domain.
+  optional bool skipped_url_whitelist = 28;
+
+  // True if this ClientDownloadRequest contains a whitelisted certificate.
+  optional bool skipped_certificate_whitelist = 31;
+
+  // PPAPI_SAVE_REQUEST type messages may have more than one suggested filetype.
+  // Each element in this collection indicates an alternate extension including
+  // the leading extension separator.
+  repeated string alternate_extensions = 35;
+
+  message URLChainEntry {
+    enum URLType {
+      DOWNLOAD_URL = 1;
+      DOWNLOAD_REFERRER = 2;
+      LANDING_PAGE = 3;
+      LANDING_REFERRER = 4;
+      CLIENT_REDIRECT = 5;
+      SERVER_REDIRECT = 6;
+    }
+
+    // [required] The url of this Entry.
+    optional string url = 1;
+
+    // Type of URLs, such as download url, download referrer, etc.
+    optional URLType type = 2;
+
+    // IP address corresponding to url.
+    optional string ip_address = 3;
+
+    // Referrer url of this entry.
+    optional string referrer = 4;
+
+    // Main frame URL of referrer.
+    optional string main_frame_referrer = 5;
+
+    // If this URL loads in a different tab/frame from previous one.
+    optional bool is_retargeting = 6;
+
+    // If there is a user gesture attached to this transition.
+    optional bool is_user_initiated = 7;
+
+    optional double timestamp_in_millisec = 8;
+  }  // End of URLChainEntry
+
+  // URLs transitions from landing referrer to download in reverse chronological
+  // order, i.e. download url comes first in this list, and landing referrer
+  // comes last.
+  repeated URLChainEntry url_chain = 36;
+}
+
+message ClientDownloadResponse {
+  enum Verdict {
+    // Download is considered safe.
+    SAFE = 0;
+    // Download is considered dangerous.  Chrome should show a warning to the
+    // user.
+    DANGEROUS = 1;
+    // Download is uncommon.  Chrome should display a less severe warning.
+    UNCOMMON = 2;
+    // The download is potentially unwanted.
+    POTENTIALLY_UNWANTED = 3;
+    // The download is from a dangerous host.
+    DANGEROUS_HOST = 4;
+    // The backend doesn't have confidence in its verdict of this file.
+    // Chrome should show the default warning if configured for this file type.
+    UNKNOWN = 5;
+  }
+  optional Verdict verdict = 1 [default = SAFE];
+
+  message MoreInfo {
+    // A human-readable string describing the nature of the warning.
+    // Only if verdict != SAFE. Localized based on request.locale.
+    optional string description = 1;
+
+    // A URL to get more information about this warning, if available.
+    optional string url = 2;
+  }
+  optional MoreInfo more_info = 2;
+
+  // An arbitrary token that should be sent along for further server requests.
+  optional bytes token = 3;
+}
+
+// The following protocol buffer holds the feedback report gathered
+// from the user regarding the download.
+message ClientDownloadReport {
+  // The information of user who provided the feedback.
+  // This is going to be useful for handling appeals.
+  message UserInformation {
+    optional string email = 1;
+  }
+
+  enum Reason {
+    SHARE = 0;
+    FALSE_POSITIVE = 1;
+    APPEAL = 2;
+  }
+
+  // The type of feedback for this report.
+  optional Reason reason = 1;
+
+  // The original download ping
+  optional ClientDownloadRequest download_request = 2;
+
+  // Stores the information of the user who provided the feedback.
+  optional UserInformation user_information = 3;
+
+  // Unstructed comments provided by the user.
+  optional bytes comment = 4;
+
+  // The original download response sent from the verdict server.
+  optional ClientDownloadResponse download_response = 5;
+}
+
+// This is used to send back upload status to the client after upload completion
+message ClientUploadResponse {
+  enum UploadStatus {
+    // The upload was successful and a complete response can be expected
+    SUCCESS = 0;
+
+    // The upload was unsuccessful and the response is incomplete.
+    UPLOAD_FAILURE = 1;
+  }
+
+  // Holds the upload status
+  optional UploadStatus status = 1;
+
+  // Holds the permalink where the results of scanning the binary are available
+  optional string permalink = 2;
+}
+
+message ClientIncidentReport {
+  message IncidentData {
+    message TrackedPreferenceIncident {
+      enum ValueState {
+        UNKNOWN = 0;
+        CLEARED = 1;
+        WEAK_LEGACY_OBSOLETE = 2;
+        CHANGED = 3;
+        UNTRUSTED_UNKNOWN_VALUE = 4;
+      }
+
+      optional string path = 1;
+      optional string atomic_value = 2;
+      repeated string split_key = 3;
+      optional ValueState value_state = 4;
+    }
+
+    message BinaryIntegrityIncident {
+      optional string file_basename = 1;
+      optional ClientDownloadRequest.SignatureInfo signature = 2;
+      optional ClientDownloadRequest.ImageHeaders image_headers = 3;
+      optional int32 sec_error = 4;
+
+      message ContainedFile {
+        optional string relative_path = 1;
+        optional ClientDownloadRequest.SignatureInfo signature = 2;
+        optional ClientDownloadRequest.ImageHeaders image_headers = 3;
+      }
+      repeated ContainedFile contained_file = 5;
+    }
+
+    message BlacklistLoadIncident {
+      optional string path = 1;
+      optional ClientDownloadRequest.Digests digest = 2;
+      optional string version = 3;
+      optional bool blacklist_initialized = 4;
+      optional ClientDownloadRequest.SignatureInfo signature = 5;
+      optional ClientDownloadRequest.ImageHeaders image_headers = 6;
+    }
+    message VariationsSeedSignatureIncident {
+      optional string variations_seed_signature = 1;
+    }
+    message ResourceRequestIncident {
+      enum Type {
+        UNKNOWN = 0;
+        TYPE_PATTERN = 3;
+      }
+      optional bytes digest = 1;
+      optional string origin = 2;
+      optional Type type = 3 [default = UNKNOWN];
+    }
+    message SuspiciousModuleIncident {
+      optional string path = 1;
+      optional ClientDownloadRequest.Digests digest = 2;
+      optional string version = 3;
+      optional ClientDownloadRequest.SignatureInfo signature = 4;
+      optional ClientDownloadRequest.ImageHeaders image_headers = 5;
+    }
+    optional int64 incident_time_msec = 1;
+    optional TrackedPreferenceIncident tracked_preference = 2;
+    optional BinaryIntegrityIncident binary_integrity = 3;
+    optional BlacklistLoadIncident blacklist_load = 4;
+    // Note: skip tag 5 because it was previously used.
+    optional VariationsSeedSignatureIncident variations_seed_signature = 6;
+    optional ResourceRequestIncident resource_request = 7;
+    optional SuspiciousModuleIncident suspicious_module = 8;
+  }
+
+  repeated IncidentData incident = 1;
+
+  message DownloadDetails {
+    optional bytes token = 1;
+    optional ClientDownloadRequest download = 2;
+    optional int64 download_time_msec = 3;
+    optional int64 open_time_msec = 4;
+  }
+
+  optional DownloadDetails download = 2;
+
+  message EnvironmentData {
+    message OS {
+      optional string os_name = 1;
+      optional string os_version = 2;
+
+      message RegistryValue {
+        optional string name = 1;
+        optional uint32 type = 2;
+        optional bytes data = 3;
+      }
+
+      message RegistryKey {
+        optional string name = 1;
+        repeated RegistryValue value = 2;
+        repeated RegistryKey key = 3;
+      }
+
+      repeated RegistryKey registry_key = 3;
+
+      optional bool is_enrolled_to_domain = 4;
+    }
+    optional OS os = 1;
+    message Machine {
+      optional string cpu_architecture = 1;
+      optional string cpu_vendor = 2;
+      optional uint32 cpuid = 3;
+    }
+    optional Machine machine = 2;
+    message Process {
+      optional string version = 1;
+      repeated string OBSOLETE_dlls = 2;
+      message Patch {
+        optional string function = 1;
+        optional string target_dll = 2;
+      }
+      repeated Patch patches = 3;
+      message NetworkProvider {}
+      repeated NetworkProvider network_providers = 4;
+      enum Channel {
+        CHANNEL_UNKNOWN = 0;
+        CHANNEL_CANARY = 1;
+        CHANNEL_DEV = 2;
+        CHANNEL_BETA = 3;
+        CHANNEL_STABLE = 4;
+      }
+      optional Channel chrome_update_channel = 5;
+      optional int64 uptime_msec = 6;
+      optional bool metrics_consent = 7;
+      optional bool extended_consent = 8;
+      message Dll {
+        enum Feature {
+          UNKNOWN = 0;
+          LSP = 1;
+        }
+        optional string path = 1;
+        optional uint64 base_address = 2;
+        optional uint32 length = 3;
+        repeated Feature feature = 4;
+        optional ClientDownloadRequest.ImageHeaders image_headers = 5;
+      }
+      repeated Dll dll = 9;
+      repeated string blacklisted_dll = 10;
+      message ModuleState {
+        enum ModifiedState {
+          UNKNOWN = 0;
+          MODULE_STATE_UNKNOWN = 1;
+          MODULE_STATE_UNMODIFIED = 2;
+          MODULE_STATE_MODIFIED = 3;
+        }
+        optional string name = 1;
+        optional ModifiedState modified_state = 2;
+        repeated string OBSOLETE_modified_export = 3;
+
+        message Modification {
+          optional uint32 file_offset = 1;
+          optional int32 byte_count = 2;
+          optional bytes modified_bytes = 3;
+          optional string export_name = 4;
+        }
+        repeated Modification modification = 4;
+      }
+      repeated ModuleState module_state = 11;
+      optional bool field_trial_participant = 12;
+    }
+    optional Process process = 3;
+  }
+
+  message ExtensionData {
+    message ExtensionInfo {
+      enum ExtensionState {
+        STATE_UNKNOWN = 0;
+        STATE_ENABLED = 1;
+        STATE_DISABLED = 2;
+        STATE_BLACKLISTED = 3;
+        STATE_BLOCKED = 4;
+        STATE_TERMINATED = 5;
+      }
+
+      optional string id = 1;
+      optional string version = 2;
+      optional string name = 3;
+      optional string description = 4;
+      optional ExtensionState state = 5 [default = STATE_UNKNOWN];
+      optional int32 type = 6;
+      optional string update_url = 7;
+      optional bool has_signature_validation = 8;
+      optional bool signature_is_valid = 9;
+      optional bool installed_by_custodian = 10;
+      optional bool installed_by_default = 11;
+      optional bool installed_by_oem = 12;
+      optional bool from_bookmark = 13;
+      optional bool from_webstore = 14;
+      optional bool converted_from_user_script = 15;
+      optional bool may_be_untrusted = 16;
+      optional int64 install_time_msec = 17;
+      optional int32 manifest_location_type = 18;
+      optional string manifest = 19;
+    }
+
+    optional ExtensionInfo last_installed_extension = 1;
+  }
+
+  optional EnvironmentData environment = 3;
+
+  // Population that the reporting user is part of.
+  optional ChromeUserPopulation population = 7;
+
+  optional ExtensionData extension_data = 8;
+
+  message NonBinaryDownloadDetails {
+    optional string file_type = 1;
+    optional bytes url_spec_sha256 = 2;
+    optional string host = 3;
+    optional int64 length = 4;
+  }
+
+  optional NonBinaryDownloadDetails non_binary_download = 9;
+}
+
+message ClientIncidentResponse {
+  optional bytes token = 1;
+  optional bool download_requested = 2;
+
+  message EnvironmentRequest { optional int32 dll_index = 1; }
+
+  repeated EnvironmentRequest environment_requests = 3;
+}
+
+message DownloadMetadata {
+  optional uint32 download_id = 1;
+
+  optional ClientIncidentReport.DownloadDetails download = 2;
+}
+
+// A Detailed Safebrowsing Report from clients. Chrome safebrowsing reports are
+// only sent by Chrome users who have opted into extended Safe Browsing.
+// This proto is replacing ClientMalwareReportRequest.
+// Next tag: 16
+message ClientSafeBrowsingReportRequest {
+  // Note: A lot of the "optional" fields would make sense to be
+  // "required" instead.  However, having them as optional allows the
+  // clients to send "stripped down" versions of the message in the
+  // future, if we want to.
+
+  enum ReportType {
+    UNKNOWN = 0;
+    URL_PHISHING = 1;
+    URL_MALWARE = 2;
+    URL_UNWANTED = 3;
+    CLIENT_SIDE_PHISHING_URL = 4;
+    CLIENT_SIDE_MALWARE_URL = 5;
+    DANGEROUS_DOWNLOAD_RECOVERY = 6;
+    DANGEROUS_DOWNLOAD_WARNING = 7;
+    DANGEROUS_DOWNLOAD_BY_API = 10;
+  }
+
+  message HTTPHeader {
+    required bytes name = 1;
+    optional bytes value = 2;
+  }
+
+  message HTTPRequest {
+    message FirstLine {
+      optional bytes verb = 1;
+      optional bytes uri = 2;
+      optional bytes version = 3;
+    }
+
+    optional FirstLine firstline = 1;
+    repeated HTTPHeader headers = 2;
+    optional bytes body = 3;
+
+    // bodydigest and bodylength can be useful if the report does not
+    // contain the body itself.
+    optional bytes bodydigest = 4;  // 32-byte hex md5 digest of body.
+    optional int32 bodylength = 5;  // length of body.
+  }
+
+  message HTTPResponse {
+    message FirstLine {
+      optional int32 code = 1;
+      optional bytes reason = 2;
+      optional bytes version = 3;
+    }
+
+    optional FirstLine firstline = 1;
+    repeated HTTPHeader headers = 2;
+    optional bytes body = 3;
+    optional bytes bodydigest = 4;  // 32-byte hex md5 digest of body.
+    optional int32 bodylength = 5;  // length of body.
+    optional bytes remote_ip = 6;   // IP of the server.
+  }
+
+  message Resource {
+    required int32 id = 1;
+    optional string url = 2;
+    optional HTTPRequest request = 3;
+    optional HTTPResponse response = 4;
+    optional int32 parent_id = 5;
+    repeated int32 child_ids = 6;
+    optional string tag_name = 7;
+  }
+
+  optional ReportType type = 10;
+
+  // Only set if ReportType is DANGEROUS_DOWNLOAD_RECOVERY,
+  // DANGEROUS_DOWNLOAD_WARNING or DANGEROUS_DOWNLOAD_BY_API.
+  optional ClientDownloadResponse.Verdict download_verdict = 11;
+
+  // URL of the page in the address bar.
+  optional string url = 1;
+  optional string page_url = 2;
+  optional string referrer_url = 3;
+
+  repeated Resource resources = 4;
+
+  // Whether the report is complete.
+  optional bool complete = 5;
+
+  // The ASN and country of the client IP. These fields are filled up by
+  // csd_frontend
+  repeated string client_asn = 6;
+  optional string client_country = 7;
+
+  // Whether user chose to proceed.
+  optional bool did_proceed = 8;
+
+  // Whether user visited this origin before.
+  optional bool repeat_visit = 9;
+
+  // The same token in ClientDownloadResponse. This field is only set if its
+  // report type is DANGEROUS_DOWNLOAD_RECOVERY, DANGEROUS_DOWNLOAD_WARNING or
+  // DANGEROUS_DOWNLOAD_BY_API.
+  optional bytes token = 15;
+}

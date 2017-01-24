@@ -40,6 +40,18 @@ MacroAssembler::moveGPRToFloat32(Register src, FloatRegister dest)
     ma_vxfer(src, dest);
 }
 
+void
+MacroAssembler::move8SignExtend(Register src, Register dest)
+{
+    as_sxtb(dest, src, 0);
+}
+
+void
+MacroAssembler::move16SignExtend(Register src, Register dest)
+{
+    as_sxth(dest, src, 0);
+}
+
 // ===============================================================
 // Logical instructions
 
@@ -1438,12 +1450,12 @@ MacroAssembler::branchTruncateDoubleToInt32(FloatRegister src, Register dest, La
     ma_b(fail, Assembler::Equal);
 }
 
-template <typename T>
+template <typename T, typename L>
 void
-MacroAssembler::branchAdd32(Condition cond, T src, Register dest, Label* label)
+MacroAssembler::branchAdd32(Condition cond, T src, Register dest, L label)
 {
     add32(src, dest);
-    j(cond, label);
+    as_b(label, cond);
 }
 
 template <typename T>
@@ -1943,6 +1955,52 @@ void
 MacroAssembler::storeFloat32x3(FloatRegister src, const BaseIndex& dest)
 {
     MOZ_CRASH("NYI");
+}
+
+// ===============================================================
+// Clamping functions.
+
+void
+MacroAssembler::clampIntToUint8(Register reg)
+{
+    // Look at (reg >> 8) if it is 0, then reg shouldn't be clamped if it is
+    // <0, then we want to clamp to 0, otherwise, we wish to clamp to 255
+    ScratchRegisterScope scratch(*this);
+    as_mov(scratch, asr(reg, 8), SetCC);
+    ma_mov(Imm32(0xff), reg, NotEqual);
+    ma_mov(Imm32(0), reg, Signed);
+}
+
+// ========================================================================
+// wasm support
+
+template <class L>
+void
+MacroAssembler::wasmBoundsCheck(Condition cond, Register index, L label)
+{
+    BufferOffset bo = as_cmp(index, Imm8(0));
+    append(wasm::BoundsCheck(bo.getOffset()));
+
+    as_b(label, cond);
+}
+
+void
+MacroAssembler::wasmPatchBoundsCheck(uint8_t* patchAt, uint32_t limit)
+{
+    Instruction* inst = (Instruction*) patchAt;
+    MOZ_ASSERT(inst->is<InstCMP>());
+    InstCMP* cmp = inst->as<InstCMP>();
+
+    Register index;
+    cmp->extractOp1(&index);
+
+    MOZ_ASSERT(cmp->extractOp2().isImm8());
+
+    Imm8 imm8 = Imm8(limit);
+    MOZ_RELEASE_ASSERT(!imm8.invalid);
+
+    *inst = InstALU(InvalidReg, index, imm8, OpCmp, SetCC, Always);
+    // Don't call Auto Flush Cache; the wasm caller has done this for us.
 }
 
 //}}} check_macroassembler_style

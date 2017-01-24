@@ -109,6 +109,7 @@ namespace JS {
 //   compartments. If an object needs to point to a JSObject in a different
 //   compartment, regardless of zone, it must go through a cross-compartment
 //   wrapper. Each compartment keeps track of its outgoing wrappers in a table.
+//   JSObjects find their compartment via their ObjectGroup.
 //
 // - JSStrings do not belong to any particular compartment, but they do belong
 //   to a zone. Thus, two different compartments in the same zone can point to a
@@ -116,16 +117,17 @@ namespace JS {
 //   different zone and do nothing if it's in the same zone. Thus, transferring
 //   strings within a zone is very efficient.
 //
-// - Shapes and base shapes belong to a compartment and cannot be shared between
-//   compartments. A base shape holds a pointer to its compartment. Shapes find
-//   their compartment via their base shape. JSObjects find their compartment
-//   via their shape.
+// - Shapes and base shapes belong to a zone and are shared between compartments
+//   in that zone where possible. Accessor shapes store getter and setter
+//   JSObjects which belong to a single compartment, so these shapes and all
+//   their descendants can't be shared with other compartments.
 //
 // - Scripts are also compartment-local and cannot be shared. A script points to
 //   its compartment.
 //
-// - Type objects and JitCode objects belong to a compartment and cannot be
-//   shared. However, there is no mechanism to obtain their compartments.
+// - ObjectGroup and JitCode objects belong to a compartment and cannot be
+//   shared. There is no mechanism to obtain the compartment from a JitCode
+//   object.
 //
 // A zone remains alive as long as any GC things in the zone are alive. A
 // compartment remains alive as long as any JSObjects, scripts, shapes, or base
@@ -143,12 +145,13 @@ struct Zone : public JS::shadow::Zone,
 
     void findOutgoingEdges(js::gc::ZoneComponentFinder& finder);
 
-    void discardJitCode(js::FreeOp* fop);
+    void discardJitCode(js::FreeOp* fop, bool discardBaselineCode = true);
 
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 size_t* typePool,
                                 size_t* baselineStubsOptimized,
-                                size_t* uniqueIdMap);
+                                size_t* uniqueIdMap,
+                                size_t* shapeTables);
 
     void resetGCMallocBytes();
     void setGCMaxMallocBytes(size_t value);
@@ -297,6 +300,8 @@ struct Zone : public JS::shadow::Zone,
     DebuggerVector* getDebuggers() const { return debuggers; }
     DebuggerVector* getOrCreateDebuggers(JSContext* cx);
 
+    void clearTables();
+
     /*
      * When true, skip calling the metadata callback. We use this:
      * - to avoid invoking the callback recursively;
@@ -380,12 +385,28 @@ struct Zone : public JS::shadow::Zone,
     // the current GC.
     size_t gcDelayBytes;
 
+    // Shared Shape property tree.
+    js::PropertyTree propertyTree;
+
+    // Set of all unowned base shapes in the Zone.
+    JS::WeakCache<js::BaseShapeSet> baseShapes;
+
+    // Set of initial shapes in the Zone.
+    JS::WeakCache<js::InitialShapeSet> initialShapes;
+
+#ifdef JSGC_HASH_TABLE_CHECKS
+    void checkInitialShapesTableAfterMovingGC();
+    void checkBaseShapeTableAfterMovingGC();
+#endif
+    void fixupInitialShapeTable();
+    void fixupAfterMovingGC();
+
     // Per-zone data for use by an embedder.
     void* data;
 
     bool isSystem;
 
-    bool usedByExclusiveThread;
+    mozilla::Atomic<bool> usedByExclusiveThread;
 
     // True when there are active frames.
     bool active;

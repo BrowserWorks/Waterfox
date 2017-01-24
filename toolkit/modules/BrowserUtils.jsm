@@ -9,7 +9,12 @@ this.EXPORTED_SYMBOLS = [ "BrowserUtils" ];
 
 const {interfaces: Ci, utils: Cu, classes: Cc} = Components;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+  "resource://gre/modules/PlacesUtils.jsm");
+
 Cu.importGlobalProperties(['URL']);
 
 this.BrowserUtils = {
@@ -76,7 +81,7 @@ this.BrowserUtils = {
       try {
         principalStr = " from " + aPrincipal.URI.spec;
       }
-      catch(e2) { }
+      catch (e2) { }
 
       throw "Load of " + aURL + principalStr + " denied.";
     }
@@ -166,7 +171,7 @@ this.BrowserUtils = {
     try {
       linkHost = linkURI.host;
       docHost = linkNode.ownerDocument.documentURIObject.host;
-    } catch(e) {
+    } catch (e) {
       // nsIURI.host can throw for non-nsStandardURL nsIURIs.
       // If we fail to get either host, just return originalTarget.
       return originalTarget;
@@ -303,6 +308,62 @@ this.BrowserUtils = {
     return true;
   },
 
+  _visibleToolbarsMap: new WeakMap(),
+
+  /**
+   * Return true if any or a specific toolbar that interacts with the content
+   * document is visible.
+   *
+   * @param  {nsIDocShell} docShell The docShell instance that a toolbar should
+   *                                be interacting with
+   * @param  {String}      which    Identifier of a specific toolbar
+   * @return {Boolean}
+   */
+  isToolbarVisible(docShell, which) {
+    let window = this.getRootWindow(docShell);
+    if (!this._visibleToolbarsMap.has(window))
+      return false;
+    let toolbars = this._visibleToolbarsMap.get(window);
+    return !!toolbars && toolbars.has(which);
+  },
+
+  /**
+   * Track whether a toolbar is visible for a given a docShell.
+   *
+   * @param  {nsIDocShell} docShell  The docShell instance that a toolbar should
+   *                                 be interacting with
+   * @param  {String}      which     Identifier of a specific toolbar
+   * @param  {Boolean}     [visible] Whether the toolbar is visible. Optional,
+   *                                 defaults to `true`.
+   */
+  trackToolbarVisibility(docShell, which, visible = true) {
+    // We have to get the root window object, because XPConnect WrappedNatives
+    // can't be used as WeakMap keys.
+    let window = this.getRootWindow(docShell);
+    let toolbars = this._visibleToolbarsMap.get(window);
+    if (!toolbars) {
+      toolbars = new Set();
+      this._visibleToolbarsMap.set(window, toolbars);
+    }
+    if (!visible)
+      toolbars.delete(which);
+    else
+      toolbars.add(which);
+  },
+
+  /**
+   * Retrieve the root window object (i.e. the top-most content global) for a
+   * specific docShell object.
+   *
+   * @param  {nsIDocShell} docShell
+   * @return {nsIDOMWindow}
+   */
+  getRootWindow(docShell) {
+    return docShell.QueryInterface(Ci.nsIDocShellTreeItem)
+      .sameTypeRootTreeItem.QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIDOMWindow);
+  },
+
   getSelectionDetails: function(topWindow, aCharLen) {
     // selections of more than 150 characters aren't useful
     const kMaxSelectionLen = 150;
@@ -420,4 +481,70 @@ this.BrowserUtils = {
 
     return true;
   },
+
+  /**
+   * Replaces %s or %S in the provided url or postData with the given parameter,
+   * acccording to the best charset for the given url.
+   *
+   * @return [url, postData]
+   * @throws if nor url nor postData accept a param, but a param was provided.
+   */
+  parseUrlAndPostData: Task.async(function* (url, postData, param) {
+    let hasGETParam = /%s/i.test(url)
+    let decodedPostData = postData ? unescape(postData) : "";
+    let hasPOSTParam = /%s/i.test(decodedPostData);
+
+    if (!hasGETParam && !hasPOSTParam) {
+      if (param) {
+        // If nor the url, nor postData contain parameters, but a parameter was
+        // provided, return the original input.
+        throw new Error("A param was provided but there's nothing to bind it to");
+      }
+      return [url, postData];
+    }
+
+    let charset = "";
+    const re = /^(.*)\&mozcharset=([a-zA-Z][_\-a-zA-Z0-9]+)\s*$/;
+    let matches = url.match(re);
+    if (matches) {
+      [, url, charset] = matches;
+    } else {
+      // Try to fetch a charset from History.
+      try {
+        // Will return an empty string if character-set is not found.
+        charset = yield PlacesUtils.getCharsetForURI(this.makeURI(url));
+      } catch (ex) {
+        // makeURI() throws if url is invalid.
+        Cu.reportError(ex);
+      }
+    }
+
+    // encodeURIComponent produces UTF-8, and cannot be used for other charsets.
+    // escape() works in those cases, but it doesn't uri-encode +, @, and /.
+    // Therefore we need to manually replace these ASCII characters by their
+    // encodeURIComponent result, to match the behavior of nsEscape() with
+    // url_XPAlphas.
+    let encodedParam = "";
+    if (charset && charset != "UTF-8") {
+      try {
+        let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+                          .createInstance(Ci.nsIScriptableUnicodeConverter);
+        converter.charset = charset;
+        encodedParam = converter.ConvertFromUnicode(param) + converter.Finish();
+      } catch (ex) {
+        encodedParam = param;
+      }
+      encodedParam = escape(encodedParam).replace(/[+@\/]+/g, encodeURIComponent);
+    } else {
+      // Default charset is UTF-8
+      encodedParam = encodeURIComponent(param);
+    }
+
+    url = url.replace(/%s/g, encodedParam).replace(/%S/g, param);
+    if (hasPOSTParam) {
+      postData = decodedPostData.replace(/%s/g, encodedParam)
+                                .replace(/%S/g, param);
+    }
+    return [url, postData];
+  }),
 };

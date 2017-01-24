@@ -32,6 +32,11 @@ public:
   void Reset();
 
   /**
+   * Clear In-Memory & On-Disk data for specific tables
+   */
+  void ResetTables(const nsTArray<nsCString>& aTables);
+
+  /**
    * Get the list of active tables and their chunks in a format
    * suitable for an update request.
    */
@@ -55,12 +60,19 @@ public:
    * the updates in the array and clears it.  Wacky!
    */
   nsresult ApplyUpdates(nsTArray<TableUpdate*>* aUpdates);
+
+  /**
+   * Apply full hashes retrived from gethash to cache.
+   */
+  nsresult ApplyFullHashes(nsTArray<TableUpdate*>* aUpdates);
+
   /**
    * Failed update. Spoil the entries so we don't block hosts
    * unnecessarily
    */
-  nsresult MarkSpoiled(nsTArray<nsCString>& aTables);
+  nsresult MarkSpoiled(const nsTArray<nsCString>& aTables);
   void SetLastUpdateTime(const nsACString& aTableName, uint64_t updateTime);
+  int64_t GetLastUpdateTime(const nsACString& aTableName);
   nsresult CacheCompletions(const CacheResultArray& aResults);
   uint32_t GetHashKey(void) { return mHashKey; }
   /*
@@ -73,8 +85,24 @@ public:
                             PrefixArray* aNoiseEntries);
   static void SplitTables(const nsACString& str, nsTArray<nsCString>& tables);
 
+  // Given a root store directory, return a private store directory
+  // based on the table name. To avoid migration issue, the private
+  // store directory is only different from root directory for V4 tables.
+  //
+  // For V4 tables (suffixed by '-proto'), the private directory would
+  // be [root directory path]/[provider]. The provider of V4 tables is
+  // 'google4'.
+  //
+  // Note that if the table name is not owned by any provider, just use
+  // the root directory.
+  static nsresult GetPrivateStoreDirectory(nsIFile* aRootStoreDirectory,
+                                           const nsACString& aTableName,
+                                           nsIFile** aPrivateStoreDirectory);
+
 private:
   void DropStores();
+  void DeleteTables(const nsTArray<nsCString>& aTables);
+
   nsresult CreateStoreDirectory();
   nsresult SetupPathNames();
   nsresult RecoverBackups();
@@ -84,15 +112,20 @@ private:
   nsresult RegenActiveTables();
   nsresult ScanStoreDir(nsTArray<nsCString>& aTables);
 
-  nsresult ApplyTableUpdates(nsTArray<TableUpdate*>* aUpdates,
-                             const nsACString& aTable);
+  nsresult UpdateHashStore(nsTArray<TableUpdate*>* aUpdates,
+                           const nsACString& aTable);
+
+  nsresult UpdateCache(TableUpdate* aUpdates);
 
   LookupCache *GetLookupCache(const nsACString& aTable);
+
+  bool CheckValidUpdate(nsTArray<TableUpdate*>* aUpdates,
+                        const nsACString& aTable);
 
   // Root dir of the Local profile.
   nsCOMPtr<nsIFile> mCacheDirectory;
   // Main directory where to store the databases.
-  nsCOMPtr<nsIFile> mStoreDirectory;
+  nsCOMPtr<nsIFile> mRootStoreDirectory;
   // Used for atomically updating the other dirs.
   nsCOMPtr<nsIFile> mBackupDirectory;
   nsCOMPtr<nsIFile> mToDeleteDirectory;

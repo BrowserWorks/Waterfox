@@ -24,7 +24,8 @@
   vertical-align: middle;
   cursor: pointer;
   -moz-user-select: none;
-  padding: 0 2px 1px 2px;
+  padding: 0 2px;
+  border-radius: 2px;
 }
 
 .toolbar .btn::-moz-focus-inner {
@@ -36,7 +37,7 @@
 
 .theme-firebug .toolbar {
   border-bottom: 1px solid rgb(170, 188, 207);
-  background-color: rgb(219, 234, 249) !important;
+  background-color: var(--theme-tab-toolbar-background) !important;
   background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
 }
 
@@ -71,13 +72,11 @@
 
 .theme-dark .toolbar .btn,
 .theme-light .toolbar .btn {
-  min-width: 78px;
   min-height: 18px;
   color: var(--theme-content-color1);
   text-shadow: none;
   margin: 1px 2px 1px 2px;
   border: none;
-  border-radius: 0;
   background-color: rgba(170, 170, 170, .2); /* --toolbar-tab-hover */
   transition: background 0.05s ease-in-out;
 }

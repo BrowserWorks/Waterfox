@@ -105,17 +105,22 @@ LoginManagerPrompter.prototype = {
    *
    */
   init : function (aWindow, aFactory) {
-    this._window = aWindow;
+    this._chromeWindow = this._getChromeWindow(aWindow).wrappedJSObject;
     this._factory = aFactory || null;
+    this._browser = null;
 
     var prefBranch = Services.prefs.getBranch("signon.");
     this._debug = prefBranch.getBoolPref("debug");
     this.log("===== initialized =====");
   },
 
-  setE10sData : function (aBrowser, aOpener) {
-    throw new Error("This should be filled in when Android is multiprocess");
+  set browser(aBrowser) {
+    this._browser = aBrowser;
   },
+
+  // setting this attribute is ignored because Android does not consider
+  // opener windows when displaying login notifications
+  set opener(aOpener) { },
 
   /*
    * promptToSavePassword
@@ -124,6 +129,7 @@ LoginManagerPrompter.prototype = {
   promptToSavePassword : function (aLogin) {
     this._showSaveLoginNotification(aLogin);
       Services.telemetry.getHistogramById("PWMGR_PROMPT_REMEMBER_ACTION").add(PROMPT_DISPLAYED);
+    Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save", null);
   },
 
   /*
@@ -140,10 +146,7 @@ LoginManagerPrompter.prototype = {
    *        Password string used in creating a doorhanger action
    */
   _showLoginNotification : function (aBody, aButtons, aUsername, aPassword) {
-    let notifyWin = this._window.top;
-    let chromeWin = this._getChromeWindow(notifyWin).wrappedJSObject;
-    let browser = chromeWin.BrowserApp.getBrowserForWindow(notifyWin);
-    let tabID = chromeWin.BrowserApp.getTabForBrowser(browser).id;
+    let tabID = this._chromeWindow.BrowserApp.getTabForBrowser(this._browser).id;
 
     let actionText = {
       text: aUsername,
@@ -226,6 +229,8 @@ LoginManagerPrompter.prototype = {
   promptToChangePassword : function (aOldLogin, aNewLogin) {
     this._showChangeLoginNotification(aOldLogin, aNewLogin.password);
     Services.telemetry.getHistogramById("PWMGR_PROMPT_UPDATE_ACTION").add(PROMPT_DISPLAYED);
+    let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
+    Services.obs.notifyObservers(aNewLogin, "passwordmgr-prompt-change", oldGUID);
   },
 
   /*
@@ -334,6 +339,8 @@ LoginManagerPrompter.prototype = {
    * Given a content DOM window, returns the chrome window it's in.
    */
   _getChromeWindow: function (aWindow) {
+    if (aWindow instanceof Ci.nsIDOMChromeWindow)
+      return aWindow;
     var chromeWin = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
       .getInterface(Ci.nsIWebNavigation)
       .QueryInterface(Ci.nsIDocShell)
@@ -350,8 +357,7 @@ LoginManagerPrompter.prototype = {
   _getNativeWindow : function () {
     let nativeWindow = null;
     try {
-      let notifyWin = this._window.top;
-      let chromeWin = this._getChromeWindow(notifyWin).wrappedJSObject;
+      let chromeWin = this._chromeWindow;
       if (chromeWin.NativeWindow) {
         nativeWindow = chromeWin.NativeWindow;
       } else {

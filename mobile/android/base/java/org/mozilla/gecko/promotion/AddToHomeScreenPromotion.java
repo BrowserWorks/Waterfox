@@ -25,7 +25,7 @@ import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.UrlAnnotations;
 import org.mozilla.gecko.delegates.TabsTrayVisibilityAwareDelegate;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.lang.ref.WeakReference;
@@ -209,13 +209,13 @@ public class AddToHomeScreenPromotion extends TabsTrayVisibilityAwareDelegate im
     }
 
     protected boolean hasAcceptedOrDeclinedHomeScreenShortcut(Context context, String url) {
-        final UrlAnnotations urlAnnotations = GeckoProfile.get(context).getDB().getUrlAnnotations();
+        final UrlAnnotations urlAnnotations = BrowserDB.from(context).getUrlAnnotations();
         return urlAnnotations.hasAcceptedOrDeclinedHomeScreenShortcut(context.getContentResolver(), url);
     }
 
     protected URLHistory getHistoryForURL(Context context, String url) {
         final GeckoProfile profile = GeckoProfile.get(context);
-        final BrowserDB browserDB = profile.getDB();
+        final BrowserDB browserDB = BrowserDB.from(profile);
 
         Cursor cursor = null;
         try {

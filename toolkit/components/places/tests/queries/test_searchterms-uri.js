@@ -64,7 +64,7 @@ add_task(function* test_searchterms_uri()
    root.containerOpen = true;
 
    do_print("Number of items in result set: " + root.childCount);
-   for(var i=0; i < root.childCount; ++i) {
+   for (var i=0; i < root.childCount; ++i) {
      do_print("result: " + root.getChild(i).uri + " Title: " + root.getChild(i).title);
    }
 
@@ -74,12 +74,12 @@ add_task(function* test_searchterms_uri()
    // live update.
    do_print("change title");
    var change1 = [{isDetails: true, uri:"http://foo.com/",
-                   title: "mo"},];
+                   title: "mo"}, ];
    yield task_populateDB(change1);
 
    do_check_false(isInResult({uri: "http://foo.com/"}, root));
    var change2 = [{isDetails: true, uri:"http://foo.com/",
-                   title: "moz"},];
+                   title: "moz"}, ];
    yield task_populateDB(change2);
    do_check_true(isInResult({uri: "http://foo.com/"}, root));
 

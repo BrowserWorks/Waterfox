@@ -4,32 +4,37 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 %endif
 
-#identity-box {
-  --identity-box-verified-color: hsl(92,100%,30%);
-%ifdef MOZ_OFFICIAL_BRANDING
-  --identity-box-chrome-color: rgb(229,115,0);
-%else
-%if MOZ_UPDATE_CHANNEL == aurora
-  --identity-box-chrome-color: rgb(51,30,84);
-%else
-  --identity-box-chrome-color: rgb(0,33,71);
-%endif
-%endif
+%filter substitution
 
+%define selectorPrefix
+%define selectorSuffix
+%define iconVariant
+%include icons.inc.css
+
+%define selectorPrefix
+%define selectorSuffix :-moz-lwtheme
+%define iconVariant -black
+%include icons.inc.css
+
+#identity-box {
   font-size: .9em;
   padding: 3px 5px;
   overflow: hidden;
-  /* The latter two properties have a transition to handle the delayed hiding of
+  /* The padding-left and padding-right transitions handle the delayed hiding of
      the forward button when hovered. */
-  transition: background-color 150ms ease, padding-left, padding-right;
+  transition: padding-left, padding-right;
 }
 
-#urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity {
-  color: var(--identity-box-verified-color);
+#urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity > #identity-icon-labels {
+  color: hsl(92,100%,30%);
 }
 
-#urlbar[pageproxystate="valid"] > #identity-box.chromeUI {
-  color: var(--identity-box-chrome-color);
+#urlbar[pageproxystate="valid"] > #identity-box.chromeUI > #identity-icon-labels {
+%ifdef MOZ_OFFICIAL_BRANDING
+  color: rgb(229,115,0);
+%else
+  color: inherit;
+%endif
 }
 
 #identity-icon-labels:-moz-locale-dir(ltr) {
@@ -48,7 +53,7 @@
   /* Forward button hiding is delayed when hovered, so we should use the same
      delay for the identity box. We handle both horizontal paddings (for LTR and
      RTL), the latter two delays here are for padding-left and padding-right. */
-  transition-delay: 0s, 100s, 100s;
+  transition-delay: 100s, 100s;
 }
 
 @conditionalForwardWithUrlbar@:not(:hover) > #forward-button[disabled] + #urlbar > #identity-box {
@@ -61,29 +66,10 @@
 #identity-icon {
   width: 16px;
   height: 16px;
-  list-style-image: url(chrome://browser/skin/identity-icon.svg#normal);
-}
-
-#identity-box:hover > #identity-icon:not(.no-hover),
-#identity-box[open=true] > #identity-icon {
-  list-style-image: url(chrome://browser/skin/identity-icon.svg#hover);
-}
-
-#identity-box.grantedPermissions > #identity-icon {
-  list-style-image: url(chrome://browser/skin/identity-icon.svg#notice);
-}
-
-#identity-box.grantedPermissions:hover > #identity-icon:not(.no-hover),
-#identity-box.grantedPermissions[open=true] > #identity-icon {
-  list-style-image: url(chrome://browser/skin/identity-icon.svg#notice-hover);
-}
-
-#urlbar[pageproxystate="valid"] > #identity-box.chromeUI > #identity-icon {
-  list-style-image: url(chrome://branding/content/identity-icons-brand.svg);
 }
 
 #urlbar[pageproxystate="invalid"] > #identity-box > #identity-icon {
-  opacity: 0.3;
+  opacity: .3;
 }
 
 #urlbar[actiontype="searchengine"] > #identity-box > #identity-icon {
@@ -91,7 +77,47 @@
   list-style-image: url(chrome://global/skin/icons/autocomplete-search.svg#search-icon);
   width: 16px;
   height: 16px;
-  opacity: 1;
+}
+
+/* SHARING ICON */
+
+#sharing-icon {
+  width: 16px;
+  height: 16px;
+  margin-inline-start: -16px;
+  position: relative;
+  display: none;
+}
+
+#identity-box[sharing="camera"] > #sharing-icon {
+  list-style-image: url("chrome://browser/skin/notification-icons.svg#camera-sharing");
+}
+
+#identity-box[sharing="microphone"] > #sharing-icon {
+  list-style-image: url("chrome://browser/skin/notification-icons.svg#microphone-sharing");
+}
+
+#identity-box[sharing="screen"] > #sharing-icon {
+  list-style-image: url("chrome://browser/skin/notification-icons.svg#screen-sharing");
+}
+
+#identity-box[sharing] > #sharing-icon {
+  display: -moz-box;
+  animation-delay: -1.5s;
+}
+
+#identity-box[sharing] > #identity-icon,
+#sharing-icon {
+  animation: 3s linear pulse infinite;
+}
+
+@keyframes pulse {
+  0%, 16.66%, 83.33%, 100% {
+    opacity: 0;
+  }
+  33.33%, 66.66% {
+    opacity: 1;
+  }
 }
 
 /* TRACKING PROTECTION ICON */
@@ -101,12 +127,6 @@
   height: 16px;
   margin-inline-start: 2px;
   margin-inline-end: 0;
-  list-style-image: url(chrome://browser/skin/tracking-protection-16.svg);
-  opacity: 1;
-}
-
-#tracking-protection-icon[state="loaded-tracking-content"] {
-  list-style-image: url(chrome://browser/skin/tracking-protection-disabled-16.svg);
 }
 
 #tracking-protection-icon[animate] {
@@ -134,27 +154,3 @@
   visibility: collapse;
 }
 
-#urlbar[pageproxystate="valid"] > #identity-box.verifiedDomain > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedActiveBlocked > #connection-icon {
-  list-style-image: url(chrome://browser/skin/identity-secure.svg);
-  visibility: visible;
-}
-
-#urlbar[pageproxystate="valid"] > #identity-box.certUserOverridden > #connection-icon {
-  list-style-image: url(chrome://browser/skin/identity-mixed-passive-loaded.svg);
-  visibility: visible;
-}
-
-#urlbar[pageproxystate="valid"] > #identity-box.insecureLoginForms > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedActiveContent > #connection-icon {
-  list-style-image: url(chrome://browser/skin/identity-mixed-active-loaded.svg);
-  visibility: visible;
-}
-
-#urlbar[pageproxystate="valid"] > #identity-box.weakCipher > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedDisplayContent > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedDisplayContentLoadedActiveBlocked > #connection-icon {
-  list-style-image: url(chrome://browser/skin/identity-mixed-passive-loaded.svg);
-  visibility: visible;
-}

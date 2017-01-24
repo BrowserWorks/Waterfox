@@ -305,6 +305,18 @@ add_test(function test_filterWhitespace()
 {
   var url = stringToURL(" \r\n\th\nt\rt\tp://ex\r\n\tample.com/path\r\n\t/\r\n\tto the/fil\r\n\te.e\r\n\txt?que\r\n\try#ha\r\n\tsh \r\n\t ");
   do_check_eq(url.spec, "http://example.com/path/to%20the/file.ext?query#hash");
+
+  // These setters should escape \r\n\t, not filter them.
+  var url = stringToURL("http://test.com/path?query#hash");
+  url.filePath = "pa\r\n\tth";
+  do_check_eq(url.spec, "http://test.com/pa%0D%0A%09th?query#hash");
+  url.query = "qu\r\n\tery";
+  do_check_eq(url.spec, "http://test.com/pa%0D%0A%09th?qu%0D%0A%09ery#hash");
+  url.ref = "ha\r\n\tsh";
+  do_check_eq(url.spec, "http://test.com/pa%0D%0A%09th?qu%0D%0A%09ery#ha%0D%0A%09sh");
+  url.fileName = "fi\r\n\tle.name";
+  do_check_eq(url.spec, "http://test.com/fi%0D%0A%09le.name?qu%0D%0A%09ery#ha%0D%0A%09sh");
+
   run_next_test();
 });
 
@@ -363,6 +375,58 @@ add_test(function test_encode_C0_and_space()
   do_check_eq(url.spec, "http://example.com/pa%00th?qu%00ery#ha%00sh");
   url.fileName = "fi\0le.name";
   do_check_eq(url.spec, "http://example.com/fi%00le.name?qu%00ery#ha%00sh");
+
+  run_next_test();
+});
+
+add_test(function test_ipv4Normalize()
+{
+  var localIPv4s =
+    ["http://127.0.0.1",
+     "http://127.0.1",
+     "http://127.1",
+     "http://2130706433",
+     "http://0177.00.00.01",
+     "http://0177.00.01",
+     "http://0177.01",
+     "http://00000000000000000000000000177.0000000.0000000.0001",
+     "http://000000177.0000001",
+     "http://017700000001",
+     "http://0x7f.0x00.0x00.0x01",
+     "http://0x7f.0x01",
+     "http://0x7f000001",
+     "http://0x007f.0x0000.0x0000.0x0001",
+     "http://000177.0.00000.0x0001",
+     "http://127.0.0.1.",
+    ].map(stringToURL);
+  var url;
+  for (url of localIPv4s) {
+    do_check_eq(url.spec, "http://127.0.0.1/");
+  }
+
+  // These should treated as a domain instead of an IPv4.
+  var nonIPv4s =
+    ["http://0xfffffffff/",
+     "http://0x100000000/",
+     "http://4294967296/",
+     "http://1.2.0x10000/",
+     "http://1.0x1000000/",
+     "http://256.0.0.1/",
+     "http://1.256.1/",
+     "http://-1.0.0.0/",
+     "http://1.2.3.4.5/",
+     "http://010000000000000000/",
+     "http://2+3/",
+     "http://0.0.0.-1/",
+     "http://1.2.3.4../",
+     "http://1..2/",
+     "http://.1.2.3.4/",
+    ];
+  var spec;
+  for (spec of nonIPv4s) {
+    url = stringToURL(spec);
+    do_check_eq(url.spec, spec);
+  }
 
   run_next_test();
 });

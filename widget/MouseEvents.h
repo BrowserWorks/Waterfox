@@ -250,11 +250,10 @@ public:
 #ifdef DEBUG
   virtual ~WidgetMouseEvent()
   {
-    NS_WARN_IF_FALSE(mMessage != eContextMenu ||
-                     button ==
-                       ((mContextMenuTrigger == eNormal) ? eRightButton :
-                                                           eLeftButton),
-                     "Wrong button set to eContextMenu event?");
+    NS_WARNING_ASSERTION(
+      mMessage != eContextMenu ||
+      button == ((mContextMenuTrigger == eNormal) ? eRightButton : eLeftButton),
+      "Wrong button set to eContextMenu event?");
   }
 #endif
 
@@ -666,9 +665,9 @@ class WidgetPointerEvent : public WidgetMouseEvent
   friend class mozilla::dom::PBrowserChild;
 
   WidgetPointerEvent()
-    : width(0)
-    , height(0)
-    , isPrimary(true)
+    : mWidth(0)
+    , mHeight(0)
+    , mIsPrimary(true)
   {
   }
 
@@ -677,17 +676,17 @@ public:
 
   WidgetPointerEvent(bool aIsTrusted, EventMessage aMsg, nsIWidget* w)
     : WidgetMouseEvent(aIsTrusted, aMsg, w, ePointerEventClass, eReal)
-    , width(0)
-    , height(0)
-    , isPrimary(true)
+    , mWidth(0)
+    , mHeight(0)
+    , mIsPrimary(true)
   {
   }
 
   explicit WidgetPointerEvent(const WidgetMouseEvent& aEvent)
     : WidgetMouseEvent(aEvent)
-    , width(0)
-    , height(0)
-    , isPrimary(true)
+    , mWidth(1)
+    , mHeight(1)
+    , mIsPrimary(true)
   {
     mClass = ePointerEventClass;
   }
@@ -704,9 +703,9 @@ public:
     return result;
   }
 
-  uint32_t width;
-  uint32_t height;
-  bool isPrimary;
+  uint32_t mWidth;
+  uint32_t mHeight;
+  bool mIsPrimary;
 
   // XXX Not tested by test_assign_event_data.html
   void AssignPointerEventData(const WidgetPointerEvent& aEvent,
@@ -714,9 +713,9 @@ public:
   {
     AssignMouseEventData(aEvent, aCopyTargets);
 
-    width = aEvent.width;
-    height = aEvent.height;
-    isPrimary = aEvent.isPrimary;
+    mWidth = aEvent.mWidth;
+    mHeight = aEvent.mHeight;
+    mIsPrimary = aEvent.mIsPrimary;
   }
 };
 

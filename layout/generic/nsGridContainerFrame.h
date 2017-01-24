@@ -34,7 +34,8 @@ struct ComputedGridTrackInfo
                         uint32_t aEndFragmentTrack,
                         nsTArray<nscoord>&& aPositions,
                         nsTArray<nscoord>&& aSizes,
-                        nsTArray<uint32_t>&& aStates)
+                        nsTArray<uint32_t>&& aStates,
+                        nsTArray<bool>&& aRemovedRepeatTracks)
     : mNumLeadingImplicitTracks(aNumLeadingImplicitTracks)
     , mNumExplicitTracks(aNumExplicitTracks)
     , mStartFragmentTrack(aStartFragmentTrack)
@@ -42,6 +43,7 @@ struct ComputedGridTrackInfo
     , mPositions(aPositions)
     , mSizes(aSizes)
     , mStates(aStates)
+    , mRemovedRepeatTracks(aRemovedRepeatTracks)
   {}
   uint32_t mNumLeadingImplicitTracks;
   uint32_t mNumExplicitTracks;
@@ -50,6 +52,7 @@ struct ComputedGridTrackInfo
   nsTArray<nscoord> mPositions;
   nsTArray<nscoord> mSizes;
   nsTArray<uint32_t> mStates;
+  nsTArray<bool> mRemovedRepeatTracks;
 };
 
 struct ComputedGridLineInfo
@@ -151,6 +154,22 @@ public:
     return info;
   }
 
+  typedef nsBaseHashtable<nsStringHashKey,
+                          mozilla::css::GridNamedArea,
+                          mozilla::css::GridNamedArea> ImplicitNamedAreas;
+  NS_DECLARE_FRAME_PROPERTY_DELETABLE(ImplicitNamedAreasProperty,
+                                      ImplicitNamedAreas)
+  ImplicitNamedAreas* GetImplicitNamedAreas() const {
+    return Properties().Get(ImplicitNamedAreasProperty());
+  }
+
+  typedef nsTArray<mozilla::css::GridNamedArea> ExplicitNamedAreas;
+  NS_DECLARE_FRAME_PROPERTY_DELETABLE(ExplicitNamedAreasProperty,
+                                      ExplicitNamedAreas)
+  ExplicitNamedAreas* GetExplicitNamedAreas() const {
+    return Properties().Get(ExplicitNamedAreasProperty());
+  }
+
   /**
    * Return a containing grid frame, and ensure it has computed grid info
    * @return nullptr if aFrame has no grid container, or frame was destroyed
@@ -195,14 +214,8 @@ protected:
    * grid-template-columns / grid-template-rows are stored in this frame
    * property when needed, as a ImplicitNamedAreas* value.
    */
-  typedef nsTHashtable<nsStringHashKey> ImplicitNamedAreas;
-  NS_DECLARE_FRAME_PROPERTY_DELETABLE(ImplicitNamedAreasProperty,
-                                      ImplicitNamedAreas)
   void InitImplicitNamedAreas(const nsStylePosition* aStyle);
   void AddImplicitNamedAreas(const nsTArray<nsTArray<nsString>>& aLineNameLists);
-  ImplicitNamedAreas* GetImplicitNamedAreas() const {
-    return Properties().Get(ImplicitNamedAreasProperty());
-  }
 
   /**
    * Reflow and place our children.

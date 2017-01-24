@@ -146,7 +146,7 @@ public:
   void ClearData(const mozilla::dom::Optional<nsAString>& aFormat,
                  mozilla::ErrorResult& aRv);
 
-  FileList* GetFiles(mozilla::ErrorResult& aRv);
+  already_AddRefed<FileList> GetFiles(mozilla::ErrorResult& aRv);
 
   already_AddRefed<Promise> GetFilesAndDirectories(ErrorResult& aRv);
 
@@ -195,15 +195,28 @@ public:
   nsresult GetDataAtNoSecurityCheck(const nsAString& aFormat, uint32_t aIndex,
                                     nsIVariant** aData);
 
+  DataTransferItemList* Items() const {
+    return mItems;
+  }
+
   // a readonly dataTransfer cannot have new data added or existing data
   // removed. Only the dropEffect and effectAllowed may be modified.
-  DataTransferItemList* Items() const { return mItems; }
+  bool IsReadOnly() const {
+    return mReadOnly;
+  }
+  void SetReadOnly() {
+    mReadOnly = true;
+  }
 
-  bool IsReadOnly() const { return mReadOnly; }
-  void SetReadOnly() { mReadOnly = true; }
-
-  int32_t ClipboardType() const { return mClipboardType; }
-  EventMessage GetEventMessage() const { return mEventMessage; }
+  int32_t ClipboardType() const {
+    return mClipboardType;
+  }
+  EventMessage GetEventMessage() const {
+    return mEventMessage;
+  }
+  bool IsCrossDomainSubFrameDrop() const {
+    return mIsCrossDomainSubFrameDrop;
+  }
 
   // converts the data into an array of nsITransferable objects to be used for
   // drag and drop or clipboard operations.
@@ -257,6 +270,10 @@ public:
   // converts some formats used for compatibility in aInFormat into aOutFormat.
   // Text and text/unicode become text/plain, and URL becomes text/uri-list
   void GetRealFormat(const nsAString& aInFormat, nsAString& aOutFormat) const;
+
+  static bool PrincipalMaySetData(const nsAString& aFormat,
+                                  nsIVariant* aData,
+                                  nsIPrincipal* aPrincipal);
 
 protected:
 

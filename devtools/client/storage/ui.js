@@ -7,9 +7,10 @@
 
 const {Task} = require("devtools/shared/task");
 const EventEmitter = require("devtools/shared/event-emitter");
-const {LocalizationHelper} = require("devtools/client/shared/l10n");
+const {LocalizationHelper, ELLIPSIS} = require("devtools/shared/l10n");
 const {KeyShortcuts} = require("devtools/client/shared/key-shortcuts");
 const JSOL = require("devtools/client/shared/vendor/jsol");
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 loader.lazyRequireGetter(this, "TreeWidget",
                          "devtools/client/shared/widgets/TreeWidget", true);
@@ -23,7 +24,7 @@ loader.lazyImporter(this, "VariablesView",
 /**
  * Localization convenience methods.
  */
-const STORAGE_STRINGS = "chrome://devtools/locale/storage.properties";
+const STORAGE_STRINGS = "devtools/locale/storage.properties";
 const L10N = new LocalizationHelper(STORAGE_STRINGS);
 
 const GENERIC_VARIABLES_VIEW_SETTINGS = {
@@ -49,13 +50,24 @@ const REASON = {
   UPDATE: "update"
 };
 
+const COOKIE_KEY_MAP = {
+  path: "Path",
+  host: "Domain",
+  expires: "Expires",
+  isSecure: "Secure",
+  isHttpOnly: "HttpOnly",
+  isDomain: "HostOnly",
+  creationTime: "CreationTime",
+  lastAccessed: "LastAccessed"
+};
+
 // Maximum length of item name to show in context menu label - will be
 // trimmed with ellipsis if it's longer.
 const ITEM_NAME_MAX_LENGTH = 32;
 
 function addEllipsis(name) {
   if (name.length > ITEM_NAME_MAX_LENGTH) {
-    return name.substr(0, ITEM_NAME_MAX_LENGTH) + L10N.ellipsis;
+    return name.substr(0, ITEM_NAME_MAX_LENGTH) + ELLIPSIS;
   }
 
   return name;
@@ -606,7 +618,9 @@ StorageUI.prototype = {
         let otherProps = itemProps.filter(
           e => !["name", "value", "valueActor"].includes(e));
         for (let prop of otherProps) {
-          rawObject[prop] = item[prop];
+          let cookieProp = COOKIE_KEY_MAP[prop] || prop;
+          // The pseduo property of HostOnly refers to converse of isDomain property
+          rawObject[cookieProp] = (prop === "isDomain") ? !item[prop] : item[prop];
         }
         itemVar.populate(rawObject, {sorted: true});
         itemVar.twisty = true;
@@ -776,11 +790,17 @@ StorageUI.prototype = {
       }
 
       columns[f.name] = f.name;
+      let columnName;
       try {
-        columns[f.name] = L10N.getStr("table.headers." + type + "." + f.name);
+        columnName = L10N.getStr("table.headers." + type + "." + f.name);
       } catch (e) {
-        console.error("Unable to localize table header type:" + type +
-                      " key:" + f.name);
+        columnName = COOKIE_KEY_MAP[f.name];
+      }
+
+      if (!columnName) {
+        console.error("Unable to localize table header type:" + type + " key:" + f.name);
+      } else {
+        columns[f.name] = columnName;
       }
     });
 
@@ -845,7 +865,7 @@ StorageUI.prototype = {
    *        The event passed by the keypress event.
    */
   handleKeypress: function (event) {
-    if (event.keyCode == event.DOM_VK_ESCAPE && !this.sidebar.hidden) {
+    if (event.keyCode == KeyCodes.DOM_VK_ESCAPE && !this.sidebar.hidden) {
       // Stop Propagation to prevent opening up of split console
       this.hideSidebar();
       event.stopPropagation();

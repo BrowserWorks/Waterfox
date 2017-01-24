@@ -89,6 +89,16 @@ void
 DocManager::NotifyOfDocumentShutdown(DocAccessible* aDocument,
                                      nsIDocument* aDOMDocument)
 {
+  // We need to remove listeners in both cases, when document is being shutdown
+  // or when accessibility service is being shut down as well.
+  RemoveListeners(aDOMDocument);
+
+  // Document will already be removed when accessibility service is shutting
+  // down so we do not need to remove it twice.
+  if (nsAccessibilityService::IsShutdown()) {
+    return;
+  }
+
   xpcAccessibleDocument* xpcDoc = mXPCDocumentCache.GetWeak(aDocument);
   if (xpcDoc) {
     xpcDoc->Shutdown();
@@ -96,7 +106,6 @@ DocManager::NotifyOfDocumentShutdown(DocAccessible* aDocument,
   }
 
   mDocAccessibleCache.Remove(aDOMDocument);
-  RemoveListeners(aDOMDocument);
 }
 
 void
@@ -504,8 +513,20 @@ DocManager::CreateDocOrRootAccessible(nsIDocument* aDocument)
         if (tabChild) {
           DocAccessibleChild* ipcDoc = new DocAccessibleChild(docAcc);
           docAcc->SetIPCDoc(ipcDoc);
+
           static_cast<TabChild*>(tabChild.get())->
-            SendPDocAccessibleConstructor(ipcDoc, nullptr, 0);
+            SendPDocAccessibleConstructor(ipcDoc, nullptr, 0,
+#if defined(XP_WIN)
+                                          AccessibleWrap::GetChildIDFor(docAcc)
+#else
+                                          0
+#endif
+                                          );
+
+#if defined(XP_WIN)
+          IAccessibleHolder holder(CreateHolderFromAccessible(docAcc));
+          ipcDoc->SendCOMProxy(holder);
+#endif
         }
       }
     }
@@ -530,9 +551,6 @@ DocManager::CreateDocOrRootAccessible(nsIDocument* aDocument)
 void
 DocManager::ClearDocCache()
 {
-  // This unusual do-one-element-per-iterator approach is required because each
-  // DocAccessible is removed elsewhere upon its Shutdown() method being
-  // called, which invalidates the existing iterator.
   while (mDocAccessibleCache.Count() > 0) {
     auto iter = mDocAccessibleCache.Iter();
     MOZ_ASSERT(!iter.Done());
@@ -542,7 +560,23 @@ DocManager::ClearDocCache()
     if (docAcc) {
       docAcc->Shutdown();
     }
+
+    iter.Remove();
   }
+
+  // Ensure that all xpcom accessible documents are shut down as well.
+  while (mXPCDocumentCache.Count() > 0) {
+    auto iter = mXPCDocumentCache.Iter();
+    MOZ_ASSERT(!iter.Done());
+    xpcAccessibleDocument* xpcDoc = iter.UserData();
+    NS_ASSERTION(xpcDoc, "No xpc doc for the object in xpc doc cache!");
+
+    if (xpcDoc) {
+      xpcDoc->Shutdown();
+    }
+
+    iter.Remove();
+   }
 }
 
 void

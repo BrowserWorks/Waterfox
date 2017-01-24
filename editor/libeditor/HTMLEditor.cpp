@@ -43,6 +43,7 @@
 #include "nsIContent.h"
 #include "nsIContentIterator.h"
 #include "nsISupportsArray.h"
+#include "nsIMutableArray.h"
 #include "nsContentUtils.h"
 #include "nsIDocumentEncoder.h"
 #include "nsIPresShell.h"
@@ -953,16 +954,14 @@ HTMLEditor::IsVisBreak(nsINode* aNode)
     return false;
   }
   // Check if there is a later node in block after br
-  nsCOMPtr<nsINode> priorNode = GetPriorHTMLNode(aNode, true);
-  if (priorNode && TextEditUtils::IsBreak(priorNode)) {
-    return true;
-  }
   nsCOMPtr<nsINode> nextNode = GetNextHTMLNode(aNode, true);
   if (nextNode && TextEditUtils::IsBreak(nextNode)) {
     return true;
   }
 
-  // If we are right before block boundary, then br not visible
+  // A single line break before a block boundary is not displayed, so e.g.
+  // foo<p>bar<br></p> and foo<br><p>bar</p> display the same as foo<p>bar</p>.
+  // But if there are multiple <br>s in a row, all but the last are visible.
   if (!nextNode) {
     // This break is trailer in block, it's not visible
     return false;
@@ -970,6 +969,13 @@ HTMLEditor::IsVisBreak(nsINode* aNode)
   if (IsBlockNode(nextNode)) {
     // Break is right before a block, it's not visible
     return false;
+  }
+
+  // If there's an inline node after this one that's not a break, and also a
+  // prior break, this break must be visible.
+  nsCOMPtr<nsINode> priorNode = GetPriorHTMLNode(aNode, true);
+  if (priorNode && TextEditUtils::IsBreak(priorNode)) {
+    return true;
   }
 
   // Sigh.  We have to use expensive whitespace calculation code to
@@ -3060,13 +3066,13 @@ HTMLEditor::GetURLForStyleSheet(StyleSheetHandle aStyleSheet,
 }
 
 NS_IMETHODIMP
-HTMLEditor::GetEmbeddedObjects(nsISupportsArray** aNodeList)
+HTMLEditor::GetEmbeddedObjects(nsIArray** aNodeList)
 {
   NS_ENSURE_TRUE(aNodeList, NS_ERROR_NULL_POINTER);
 
-  nsresult rv = NS_NewISupportsArray(aNodeList);
+  nsresult rv;
+  nsCOMPtr<nsIMutableArray> nodes = do_CreateInstance(NS_ARRAY_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
-  NS_ENSURE_TRUE(*aNodeList, NS_ERROR_NULL_POINTER);
 
   nsCOMPtr<nsIContentIterator> iter =
       do_CreateInstance("@mozilla.org/content/post-content-iterator;1", &rv);
@@ -3091,12 +3097,13 @@ HTMLEditor::GetEmbeddedObjects(nsISupportsArray** aNodeList)
           (element->IsHTMLElement(nsGkAtoms::body) &&
            element->HasAttr(kNameSpaceID_None, nsGkAtoms::background))) {
         nsCOMPtr<nsIDOMNode> domNode = do_QueryInterface(node);
-        (*aNodeList)->AppendElement(domNode);
-      }
-    }
-    iter->Next();
-  }
+        nodes->AppendElement(domNode, false);
+       }
+     }
+     iter->Next();
+   }
 
+  nodes.forget(aNodeList);
   return rv;
 }
 

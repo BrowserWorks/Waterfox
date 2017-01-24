@@ -50,7 +50,7 @@ SendError(CB* aCallback, ErrorCode aErrorCode)
 
   ErrorResult rv;
   aCallback->Call(response, rv);
-  NS_WARN_IF(rv.Failed());
+  NS_WARNING_ASSERTION(!rv.Failed(), "callback failed");
   // Useful exceptions already got reported.
   rv.SuppressException();
 }
@@ -104,7 +104,7 @@ U2FRegisterTask::~U2FRegisterTask()
   if (isAlreadyShutDown()) {
     return;
   }
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 void
@@ -277,7 +277,7 @@ U2FRegisterTask::Run()
 
     ErrorResult result;
     mCallback->Call(response, result);
-    NS_WARN_IF(result.Failed());
+    NS_WARNING_ASSERTION(!result.Failed(), "callback failed");
     // Useful exceptions already got reported.
     result.SuppressException();
     return NS_OK;
@@ -307,7 +307,7 @@ U2FSignTask::~U2FSignTask()
   if (isAlreadyShutDown()) {
     return;
   }
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 void
@@ -454,7 +454,7 @@ U2FSignTask::Run()
 
     ErrorResult result;
     mCallback->Call(response, result);
-    NS_WARN_IF(result.Failed());
+    NS_WARNING_ASSERTION(!result.Failed(), "callback failed");
     // Useful exceptions already got reported.
     result.SuppressException();
     return NS_OK;
@@ -555,7 +555,7 @@ U2F::~U2F()
   if (isAlreadyShutDown()) {
     return;
   }
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 /* virtual */ JSObject*

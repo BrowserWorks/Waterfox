@@ -10,10 +10,12 @@
 #include "mozilla/dom/Notification.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
+#include "mozilla/dom/PushManagerBinding.h"
+#include "mozilla/dom/PushManager.h"
 #include "mozilla/dom/ServiceWorkerRegistrationBinding.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsNetUtil.h"
 #include "nsServiceManagerUtils.h"
@@ -29,11 +31,6 @@
 #include "WorkerPrivate.h"
 #include "Workers.h"
 #include "WorkerScope.h"
-
-#ifndef MOZ_SIMPLEPUSH
-#include "mozilla/dom/PushManagerBinding.h"
-#include "mozilla/dom/PushManager.h"
-#endif
 
 using namespace mozilla::dom::workers;
 
@@ -161,9 +158,7 @@ private:
   RefPtr<ServiceWorker> mWaitingWorker;
   RefPtr<ServiceWorker> mActiveWorker;
 
-#ifndef MOZ_SIMPLEPUSH
   RefPtr<PushManager> mPushManager;
-#endif
 };
 
 NS_IMPL_ADDREF_INHERITED(ServiceWorkerRegistrationMainThread, ServiceWorkerRegistration)
@@ -172,16 +167,10 @@ NS_IMPL_RELEASE_INHERITED(ServiceWorkerRegistrationMainThread, ServiceWorkerRegi
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ServiceWorkerRegistrationMainThread)
 NS_INTERFACE_MAP_END_INHERITING(ServiceWorkerRegistration)
 
-#ifndef MOZ_SIMPLEPUSH
 NS_IMPL_CYCLE_COLLECTION_INHERITED(ServiceWorkerRegistrationMainThread,
                                    ServiceWorkerRegistration,
                                    mPushManager,
                                    mInstallingWorker, mWaitingWorker, mActiveWorker);
-#else
-NS_IMPL_CYCLE_COLLECTION_INHERITED(ServiceWorkerRegistrationMainThread,
-                                   ServiceWorkerRegistration,
-                                   mInstallingWorker, mWaitingWorker, mActiveWorker);
-#endif
 
 ServiceWorkerRegistrationMainThread::ServiceWorkerRegistrationMainThread(nsPIDOMWindowInner* aWindow,
                                                                          const nsAString& aScope)
@@ -231,8 +220,10 @@ ServiceWorkerRegistrationMainThread::GetWorkerReference(WhichServiceWorker aWhic
       MOZ_CRASH("Invalid enum value");
   }
 
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv) || rv == NS_ERROR_DOM_NOT_FOUND_ERR,
-                   "Unexpected error getting service worker instance from ServiceWorkerManager");
+  NS_WARNING_ASSERTION(
+    NS_SUCCEEDED(rv) || rv == NS_ERROR_DOM_NOT_FOUND_ERR,
+    "Unexpected error getting service worker instance from "
+    "ServiceWorkerManager");
   if (NS_FAILED(rv)) {
     return nullptr;
   }
@@ -354,7 +345,10 @@ UpdateInternal(nsIPrincipal* aPrincipal,
   MOZ_ASSERT(aCallback);
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
+  if (!swm) {
+    // browser shutdown
+    return;
+  }
 
   swm->Update(aPrincipal, NS_ConvertUTF16toUTF8(aScope), aCallback);
 }
@@ -376,7 +370,7 @@ public:
   void
   UpdateSucceeded(ServiceWorkerRegistrationInfo* aRegistration) override
   {
-    mPromise->MaybeResolve(JS::UndefinedHandleValue);
+    mPromise->MaybeResolveWithUndefined();
   }
 
   void
@@ -418,7 +412,7 @@ public:
     if (status.Failed()) {
       promise->MaybeReject(status);
     } else {
-      promise->MaybeResolve(JS::UndefinedHandleValue);
+      promise->MaybeResolveWithUndefined();
     }
     status.SuppressException();
     mPromiseProxy->CleanUp();
@@ -529,7 +523,7 @@ public:
     MOZ_ASSERT(mPromise);
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   UnregisterSucceeded(bool aState) override
   {
     AssertIsOnMainThread();
@@ -537,7 +531,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   UnregisterFailed() override
   {
     AssertIsOnMainThread();
@@ -595,7 +589,7 @@ public:
     MOZ_ASSERT(aProxy);
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   UnregisterSucceeded(bool aState) override
   {
     AssertIsOnMainThread();
@@ -603,7 +597,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   UnregisterFailed() override
   {
     AssertIsOnMainThread();
@@ -836,10 +830,6 @@ ServiceWorkerRegistrationMainThread::GetPushManager(JSContext* aCx,
 {
   AssertIsOnMainThread();
 
-#ifdef MOZ_SIMPLEPUSH
-  return nullptr;
-#else
-
   if (!mPushManager) {
     nsCOMPtr<nsIGlobalObject> globalObject = do_QueryInterface(GetOwner());
 
@@ -857,8 +847,6 @@ ServiceWorkerRegistrationMainThread::GetPushManager(JSContext* aCx,
 
   RefPtr<PushManager> ret = mPushManager;
   return ret.forget();
-
-#endif /* ! MOZ_SIMPLEPUSH */
 }
 
 ////////////////////////////////////////////////////
@@ -914,26 +902,18 @@ public:
   GetPushManager(JSContext* aCx, ErrorResult& aRv) override;
 
 private:
-  enum Reason
-  {
-    RegistrationIsGoingAway = 0,
-    WorkerIsGoingAway,
-  };
-
   ~ServiceWorkerRegistrationWorkerThread();
 
   void
   InitListener();
 
   void
-  ReleaseListener(Reason aReason);
+  ReleaseListener();
 
   WorkerPrivate* mWorkerPrivate;
   RefPtr<WorkerListener> mListener;
 
-#ifndef MOZ_SIMPLEPUSH
   RefPtr<PushManager> mPushManager;
-#endif
 };
 
 class WorkerListener final : public ServiceWorkerRegistrationListener
@@ -1055,17 +1035,14 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(ServiceWorkerRegistrationWorkerThread)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(ServiceWorkerRegistrationWorkerThread,
                                                   ServiceWorkerRegistration)
-#ifndef MOZ_SIMPLEPUSH
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPushManager)
-#endif
+
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(ServiceWorkerRegistrationWorkerThread,
                                                 ServiceWorkerRegistration)
-#ifndef MOZ_SIMPLEPUSH
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPushManager)
-#endif
-  tmp->ReleaseListener(RegistrationIsGoingAway);
+  tmp->ReleaseListener();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 ServiceWorkerRegistrationWorkerThread::ServiceWorkerRegistrationWorkerThread(WorkerPrivate* aWorkerPrivate,
@@ -1078,7 +1055,7 @@ ServiceWorkerRegistrationWorkerThread::ServiceWorkerRegistrationWorkerThread(Wor
 
 ServiceWorkerRegistrationWorkerThread::~ServiceWorkerRegistrationWorkerThread()
 {
-  ReleaseListener(RegistrationIsGoingAway);
+  ReleaseListener();
   MOZ_ASSERT(!mListener);
 }
 
@@ -1119,7 +1096,7 @@ ServiceWorkerRegistrationWorkerThread::Update(ErrorResult& aRv)
   // level script evaluation.  See:
   // https://github.com/slightlyoff/ServiceWorker/issues/800
   if (worker->LoadScriptAsPartOfLoadingServiceWorkerScript()) {
-    promise->MaybeResolve(JS::UndefinedHandleValue);
+    promise->MaybeResolveWithUndefined();
     return promise.forget();
   }
 
@@ -1130,7 +1107,7 @@ ServiceWorkerRegistrationWorkerThread::Update(ErrorResult& aRv)
   }
 
   RefPtr<UpdateRunnable> r = new UpdateRunnable(proxy, mScope);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+  MOZ_ALWAYS_SUCCEEDS(worker->DispatchToMainThread(r.forget()));
 
   return promise.forget();
 }
@@ -1162,26 +1139,10 @@ ServiceWorkerRegistrationWorkerThread::Unregister(ErrorResult& aRv)
   }
 
   RefPtr<StartUnregisterRunnable> r = new StartUnregisterRunnable(proxy, mScope);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+  MOZ_ALWAYS_SUCCEEDS(worker->DispatchToMainThread(r.forget()));
 
   return promise.forget();
 }
-
-class StartListeningRunnable final : public Runnable
-{
-  RefPtr<WorkerListener> mListener;
-public:
-  explicit StartListeningRunnable(WorkerListener* aListener)
-    : mListener(aListener)
-  {}
-
-  NS_IMETHOD
-  Run() override
-  {
-    mListener->StartListeningForEvents();
-    return NS_OK;
-  }
-};
 
 void
 ServiceWorkerRegistrationWorkerThread::InitListener()
@@ -1192,54 +1153,19 @@ ServiceWorkerRegistrationWorkerThread::InitListener()
   worker->AssertIsOnWorkerThread();
 
   mListener = new WorkerListener(worker, this);
-  if (!HoldWorker(worker)) {
+  if (!HoldWorker(worker, Closing)) {
     mListener = nullptr;
     NS_WARNING("Could not add feature");
     return;
   }
 
-  RefPtr<StartListeningRunnable> r =
-    new StartListeningRunnable(mListener);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+  nsCOMPtr<nsIRunnable> r =
+    NewRunnableMethod(mListener, &WorkerListener::StartListeningForEvents);
+  MOZ_ALWAYS_SUCCEEDS(worker->DispatchToMainThread(r.forget()));
 }
 
-class AsyncStopListeningRunnable final : public Runnable
-{
-  RefPtr<WorkerListener> mListener;
-public:
-  explicit AsyncStopListeningRunnable(WorkerListener* aListener)
-    : mListener(aListener)
-  {}
-
-  NS_IMETHOD
-  Run() override
-  {
-    mListener->StopListeningForEvents();
-    return NS_OK;
-  }
-};
-
-class SyncStopListeningRunnable final : public WorkerMainThreadRunnable
-{
-  RefPtr<WorkerListener> mListener;
-public:
-  SyncStopListeningRunnable(WorkerPrivate* aWorkerPrivate,
-                            WorkerListener* aListener)
-    : WorkerMainThreadRunnable(aWorkerPrivate,
-                               NS_LITERAL_CSTRING("ServiceWorkerRegistration :: StopListening"))
-    , mListener(aListener)
-  {}
-
-  bool
-  MainThreadRun() override
-  {
-    mListener->StopListeningForEvents();
-    return true;
-  }
-};
-
 void
-ServiceWorkerRegistrationWorkerThread::ReleaseListener(Reason aReason)
+ServiceWorkerRegistrationWorkerThread::ReleaseListener()
 {
   if (!mListener) {
     return;
@@ -1255,23 +1181,10 @@ ServiceWorkerRegistrationWorkerThread::ReleaseListener(Reason aReason)
 
   mListener->ClearRegistration();
 
-  if (aReason == RegistrationIsGoingAway) {
-    RefPtr<AsyncStopListeningRunnable> r =
-      new AsyncStopListeningRunnable(mListener);
-    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
-  } else if (aReason == WorkerIsGoingAway) {
-    RefPtr<SyncStopListeningRunnable> r =
-      new SyncStopListeningRunnable(mWorkerPrivate, mListener);
-    ErrorResult rv;
-    r->Dispatch(rv);
-    if (rv.Failed()) {
-      NS_ERROR("Failed to dispatch stop listening runnable!");
-      // And now what?
-      rv.SuppressException();
-    }
-  } else {
-    MOZ_CRASH("Bad reason");
-  }
+  nsCOMPtr<nsIRunnable> r =
+    NewRunnableMethod(mListener, &WorkerListener::StopListeningForEvents);
+  MOZ_ALWAYS_SUCCEEDS(mWorkerPrivate->DispatchToMainThread(r.forget()));
+
   mListener = nullptr;
   mWorkerPrivate = nullptr;
 }
@@ -1279,7 +1192,7 @@ ServiceWorkerRegistrationWorkerThread::ReleaseListener(Reason aReason)
 bool
 ServiceWorkerRegistrationWorkerThread::Notify(Status aStatus)
 {
-  ReleaseListener(WorkerIsGoingAway);
+  ReleaseListener();
   return true;
 }
 
@@ -1319,7 +1232,7 @@ WorkerListener::UpdateFound()
   if (mWorkerPrivate) {
     RefPtr<FireUpdateFoundRunnable> r =
       new FireUpdateFoundRunnable(mWorkerPrivate, this);
-    NS_WARN_IF(!r->Dispatch());
+    Unused << NS_WARN_IF(!r->Dispatch());
   }
 }
 
@@ -1354,18 +1267,12 @@ ServiceWorkerRegistrationWorkerThread::GetNotifications(const GetNotificationOpt
 already_AddRefed<PushManager>
 ServiceWorkerRegistrationWorkerThread::GetPushManager(JSContext* aCx, ErrorResult& aRv)
 {
-#ifdef MOZ_SIMPLEPUSH
-  return nullptr;
-#else
-
   if (!mPushManager) {
     mPushManager = new PushManager(mScope);
   }
 
   RefPtr<PushManager> ret = mPushManager;
   return ret.forget();
-
-#endif /* ! MOZ_SIMPLEPUSH */
 }
 
 ////////////////////////////////////////////////////

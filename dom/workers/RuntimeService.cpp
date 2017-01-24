@@ -28,7 +28,7 @@
 #include "jsfriendapi.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Atomics.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/dom/asmjscache/AsmJSCache.h"
@@ -58,10 +58,6 @@
 #include "nsXPCOMPrivate.h"
 #include "OSFileConstants.h"
 #include "xpcpublic.h"
-
-#ifdef MOZ_NUWA_PROCESS
-#include "ipc/Nuwa.h"
-#endif
 
 #include "Principal.h"
 #include "SharedWorker.h"
@@ -94,6 +90,15 @@ using mozilla::Preferences;
 // Half the size of the actual C stack, to be safe.
 #define WORKER_CONTEXT_NATIVE_STACK_LIMIT 128 * sizeof(size_t) * 1024
 
+// The maximum number of hardware concurrency, overridable via pref.
+#define MAX_HARDWARE_CONCURRENCY 8
+
+// The maximum number of threads to use for workers, overridable via pref.
+#define MAX_WORKERS_PER_DOMAIN 512
+
+static_assert(MAX_WORKERS_PER_DOMAIN >= 1,
+              "We should allow at least one worker per domain.");
+
 // The default number of seconds that close handlers will be allowed to run for
 // content workers.
 #define MAX_SCRIPT_RUN_TIME_SEC 10
@@ -105,6 +110,8 @@ using mozilla::Preferences;
 #define MAX_IDLE_THREADS 20
 
 #define PREF_WORKERS_PREFIX "dom.workers."
+#define PREF_WORKERS_MAX_PER_DOMAIN PREF_WORKERS_PREFIX "maxPerDomain"
+#define PREF_WORKERS_MAX_HARDWARE_CONCURRENCY "dom.maxHardwareConcurrency"
 
 #define PREF_MAX_SCRIPT_RUN_TIME_CONTENT "dom.max_script_run_time"
 #define PREF_MAX_SCRIPT_RUN_TIME_CHROME "dom.max_chrome_script_run_time"
@@ -140,6 +147,9 @@ using mozilla::Preferences;
 namespace {
 
 const uint32_t kNoIndex = uint32_t(-1);
+
+uint32_t gMaxWorkersPerDomain = MAX_WORKERS_PER_DOMAIN;
+uint32_t gMaxHardwareConcurrency = MAX_HARDWARE_CONCURRENCY;
 
 // Does not hold an owning reference.
 RuntimeService* gRuntimeService = nullptr;
@@ -703,11 +713,190 @@ AsmJSCacheOpenEntryForWrite(JS::Handle<JSObject*> aGlobal,
                                        aSize, aMemory, aHandle);
 }
 
-class WorkerJSRuntime;
+class AsyncTaskWorkerHolder final : public WorkerHolder
+{
+  bool Notify(Status aStatus) override
+  {
+    // The async task must complete in bounded time and there is not (currently)
+    // a clean way to cancel it. Async tasks do not run arbitrary content.
+    return true;
+  }
+
+public:
+  WorkerPrivate* Worker() const
+  {
+    return mWorkerPrivate;
+  }
+};
+
+template <class RunnableBase>
+class AsyncTaskBase : public RunnableBase
+{
+  UniquePtr<AsyncTaskWorkerHolder> mHolder;
+
+  // Disable the usual pre/post-dispatch thread assertions since we are
+  // dispatching from some random JS engine internal thread:
+
+  bool PreDispatch(WorkerPrivate* aWorkerPrivate) override
+  {
+    return true;
+  }
+
+  void PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override
+  { }
+
+protected:
+  explicit AsyncTaskBase(UniquePtr<AsyncTaskWorkerHolder> aHolder)
+    : RunnableBase(aHolder->Worker(),
+                   WorkerRunnable::WorkerThreadUnchangedBusyCount)
+    , mHolder(Move(aHolder))
+  {
+    MOZ_ASSERT(mHolder);
+  }
+
+  ~AsyncTaskBase()
+  {
+    MOZ_ASSERT(!mHolder);
+  }
+
+  void DestroyHolder()
+  {
+    MOZ_ASSERT(mHolder);
+    mHolder.reset();
+  }
+
+public:
+  UniquePtr<AsyncTaskWorkerHolder> StealHolder()
+  {
+    return Move(mHolder);
+  }
+};
+
+class AsyncTaskRunnable final : public AsyncTaskBase<WorkerRunnable>
+{
+  JS::AsyncTask* mTask;
+
+  ~AsyncTaskRunnable()
+  {
+    MOZ_ASSERT(!mTask);
+  }
+
+  void PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override
+  {
+    // For the benefit of the destructor assert.
+    if (!aDispatchResult) {
+      mTask = nullptr;
+    }
+  }
+
+public:
+  AsyncTaskRunnable(UniquePtr<AsyncTaskWorkerHolder> aHolder,
+                    JS::AsyncTask* aTask)
+    : AsyncTaskBase<WorkerRunnable>(Move(aHolder))
+    , mTask(aTask)
+  {
+    MOZ_ASSERT(mTask);
+  }
+
+  bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
+  {
+    MOZ_ASSERT(aWorkerPrivate == mWorkerPrivate);
+    MOZ_ASSERT(aCx == mWorkerPrivate->GetJSContext());
+    MOZ_ASSERT(mTask);
+
+    AutoJSAPI jsapi;
+    jsapi.Init();
+
+    mTask->finish(mWorkerPrivate->GetJSContext());
+    mTask = nullptr;  // mTask may delete itself
+
+    DestroyHolder();
+
+    return true;
+  }
+
+  nsresult Cancel() override
+  {
+    MOZ_ASSERT(mTask);
+
+    AutoJSAPI jsapi;
+    jsapi.Init();
+
+    mTask->cancel(mWorkerPrivate->GetJSContext());
+    mTask = nullptr;  // mTask may delete itself
+
+    DestroyHolder();
+
+    return WorkerRunnable::Cancel();
+  }
+};
+
+class AsyncTaskControlRunnable final
+  : public AsyncTaskBase<WorkerControlRunnable>
+{
+public:
+  explicit AsyncTaskControlRunnable(UniquePtr<AsyncTaskWorkerHolder> aHolder)
+    : AsyncTaskBase<WorkerControlRunnable>(Move(aHolder))
+  { }
+
+  bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
+  {
+    // See comment in FinishAsyncTaskCallback.
+    DestroyHolder();
+    return true;
+  }
+};
+
+static bool
+StartAsyncTaskCallback(JSContext* aCx, JS::AsyncTask* aTask)
+{
+  WorkerPrivate* worker = GetWorkerPrivateFromContext(aCx);
+  worker->AssertIsOnWorkerThread();
+
+  auto holder = MakeUnique<AsyncTaskWorkerHolder>();
+  if (!holder->HoldWorker(worker, Status::Closing)) {
+    return false;
+  }
+
+  // Matched by a UniquePtr in FinishAsyncTaskCallback which, by
+  // interface contract, must be called in the future.
+  aTask->user = holder.release();
+  return true;
+}
+
+static bool
+FinishAsyncTaskCallback(JS::AsyncTask* aTask)
+{
+  // May execute either on the worker thread or a random JS-internal helper
+  // thread.
+
+  // Match the release() in StartAsyncTaskCallback.
+  UniquePtr<AsyncTaskWorkerHolder> holder(
+    static_cast<AsyncTaskWorkerHolder*>(aTask->user));
+
+  RefPtr<AsyncTaskRunnable> r = new AsyncTaskRunnable(Move(holder), aTask);
+
+  // WorkerRunnable::Dispatch() can fail during worker shutdown. In that case,
+  // report failure back to the JS engine but make sure to release the
+  // WorkerHolder on the worker thread using a control runnable. Control
+  // runables aren't suitable for calling AsyncTask::finish() since they are run
+  // via the interrupt callback which breaks JS run-to-completion.
+  if (!r->Dispatch()) {
+    RefPtr<AsyncTaskControlRunnable> cr =
+      new AsyncTaskControlRunnable(r->StealHolder());
+
+    MOZ_ALWAYS_TRUE(cr->Dispatch());
+    return false;
+  }
+
+  return true;
+}
+
+class WorkerJSContext;
 
 class WorkerThreadContextPrivate : private PerThreadAtomCache
 {
-  friend class WorkerJSRuntime;
+  friend class WorkerJSContext;
 
   WorkerPrivate* mWorkerPrivate;
 
@@ -747,8 +936,8 @@ private:
   operator=(const WorkerThreadContextPrivate&) = delete;
 };
 
-JSContext*
-InitJSContextForWorker(WorkerPrivate* aWorkerPrivate, JSRuntime* aRuntime)
+bool
+InitJSContextForWorker(WorkerPrivate* aWorkerPrivate, JSContext* aWorkerCx)
 {
   aWorkerPrivate->AssertIsOnWorkerThread();
   NS_ASSERTION(!aWorkerPrivate->GetJSContext(), "Already has a context!");
@@ -756,9 +945,19 @@ InitJSContextForWorker(WorkerPrivate* aWorkerPrivate, JSRuntime* aRuntime)
   JSSettings settings;
   aWorkerPrivate->CopyJSSettings(settings);
 
-  JSContext* workerCx = JS_GetContext(aRuntime);
+  {
+    JS::UniqueChars defaultLocale = aWorkerPrivate->AdoptDefaultLocale();
+    MOZ_ASSERT(defaultLocale,
+               "failure of a WorkerPrivate to have a default locale should "
+               "have made the worker fail to spawn");
 
-  JS::ContextOptionsRef(workerCx) = settings.contextOptions;
+    if (!JS_SetDefaultLocale(aWorkerCx, defaultLocale.get())) {
+      NS_WARNING("failed to set workerCx's default locale");
+      return false;
+    }
+  }
+
+  JS::ContextOptionsRef(aWorkerCx) = settings.contextOptions;
 
   JSSettings::JSGCSettingsArray& gcSettings = settings.gcSettings;
 
@@ -767,17 +966,17 @@ InitJSContextForWorker(WorkerPrivate* aWorkerPrivate, JSRuntime* aRuntime)
     const JSSettings::JSGCSetting& setting = gcSettings[index];
     if (setting.IsSet()) {
       NS_ASSERTION(setting.value, "Can't handle 0 values!");
-      JS_SetGCParameter(workerCx, setting.key, setting.value);
+      JS_SetGCParameter(aWorkerCx, setting.key, setting.value);
     }
   }
 
-  JS_SetNativeStackQuota(workerCx, WORKER_CONTEXT_NATIVE_STACK_LIMIT);
+  JS_SetNativeStackQuota(aWorkerCx, WORKER_CONTEXT_NATIVE_STACK_LIMIT);
 
   // Security policy:
   static const JSSecurityCallbacks securityCallbacks = {
     ContentSecurityPolicyAllows
   };
-  JS_SetSecurityCallbacks(workerCx, &securityCallbacks);
+  JS_SetSecurityCallbacks(aWorkerCx, &securityCallbacks);
 
   // Set up the asm.js cache callbacks
   static const JS::AsmJSCacheOps asmJSCacheOps = {
@@ -786,22 +985,24 @@ InitJSContextForWorker(WorkerPrivate* aWorkerPrivate, JSRuntime* aRuntime)
     AsmJSCacheOpenEntryForWrite,
     asmjscache::CloseEntryForWrite
   };
-  JS::SetAsmJSCacheOps(workerCx, &asmJSCacheOps);
+  JS::SetAsmJSCacheOps(aWorkerCx, &asmJSCacheOps);
 
-  if (!JS::InitSelfHostedCode(workerCx)) {
+  JS::SetAsyncTaskCallbacks(aWorkerCx, StartAsyncTaskCallback, FinishAsyncTaskCallback);
+
+  if (!JS::InitSelfHostedCode(aWorkerCx)) {
     NS_WARNING("Could not init self-hosted code!");
-    return nullptr;
+    return false;
   }
 
-  JS_SetInterruptCallback(workerCx, InterruptCallback);
+  JS_AddInterruptCallback(aWorkerCx, InterruptCallback);
 
-  js::SetCTypesActivityCallback(workerCx, CTypesActivityCallback);
+  js::SetCTypesActivityCallback(aWorkerCx, CTypesActivityCallback);
 
 #ifdef JS_GC_ZEAL
-  JS_SetGCZeal(workerCx, settings.gcZeal, settings.gcZealFrequency);
+  JS_SetGCZeal(aWorkerCx, settings.gcZeal, settings.gcZealFrequency);
 #endif
 
-  return workerCx;
+  return true;
 }
 
 static bool
@@ -842,25 +1043,24 @@ static const JSWrapObjectCallbacks WrapObjectCallbacks = {
   nullptr,
 };
 
-class WorkerJSRuntime : public mozilla::CycleCollectedJSRuntime
+class MOZ_STACK_CLASS WorkerJSContext final : public mozilla::CycleCollectedJSContext
 {
 public:
   // The heap size passed here doesn't matter, we will change it later in the
   // call to JS_SetGCParameter inside InitJSContextForWorker.
-  explicit WorkerJSRuntime(WorkerPrivate* aWorkerPrivate)
+  explicit WorkerJSContext(WorkerPrivate* aWorkerPrivate)
     : mWorkerPrivate(aWorkerPrivate)
   {
     MOZ_ASSERT(aWorkerPrivate);
   }
 
-  ~WorkerJSRuntime()
+  ~WorkerJSContext()
   {
-    JSRuntime* rt = MaybeRuntime();
-    if (!rt) {
+    JSContext* cx = MaybeContext();
+    if (!cx) {
       return;   // Initialize() must have failed
     }
 
-    JSContext* cx = JS_GetContext(rt);
     delete static_cast<WorkerThreadContextPrivate*>(JS_GetContextPrivate(cx));
     JS_SetContextPrivate(cx, nullptr);
 
@@ -878,7 +1078,7 @@ public:
   nsresult Initialize(JSContext* aParentContext)
   {
     nsresult rv =
-      CycleCollectedJSRuntime::Initialize(aParentContext,
+      CycleCollectedJSContext::Initialize(aParentContext,
                                           WORKER_DEFAULT_RUNTIME_HEAPSIZE,
                                           WORKER_DEFAULT_NURSERY_SIZE);
      if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -942,7 +1142,10 @@ public:
     // Only perform the Promise microtask checkpoint on the outermost event
     // loop.  Don't run it, for example, during sync XHR or importScripts.
     if (aRecursionDepth == 2) {
-      CycleCollectedJSRuntime::AfterProcessTask(aRecursionDepth);
+      CycleCollectedJSContext::AfterProcessTask(aRecursionDepth);
+    } else if (aRecursionDepth > 2) {
+      AutoDisableMicroTaskCheckpoint disableMicroTaskCheckpoint;
+      CycleCollectedJSContext::AfterProcessTask(aRecursionDepth);
     }
   }
 
@@ -1234,7 +1437,9 @@ GetWorkerPrivateFromContext(JSContext* aCx)
   MOZ_ASSERT(aCx);
 
   void* cxPrivate = JS_GetContextPrivate(aCx);
-  MOZ_ASSERT(cxPrivate);
+  if (!cxPrivate) {
+    return nullptr;
+  }
 
   return
     static_cast<WorkerThreadContextPrivate*>(cxPrivate)->GetWorkerPrivate();
@@ -1245,16 +1450,22 @@ GetCurrentThreadWorkerPrivate()
 {
   MOZ_ASSERT(!NS_IsMainThread());
 
-  CycleCollectedJSRuntime* ccrt = CycleCollectedJSRuntime::Get();
-  if (!ccrt) {
+  CycleCollectedJSContext* ccjscx = CycleCollectedJSContext::Get();
+  if (!ccjscx) {
     return nullptr;
   }
 
-  JSContext* cx = ccrt->Context();
+  JSContext* cx = ccjscx->Context();
   MOZ_ASSERT(cx);
 
   void* cxPrivate = JS_GetContextPrivate(cx);
-  MOZ_ASSERT(cxPrivate);
+  if (!cxPrivate) {
+    // This can happen if the nsCycleCollector_shutdown() in ~WorkerJSContext()
+    // triggers any calls to GetCurrentThreadWorkerPrivate().  At this stage
+    // CycleCollectedJSContext::Get() will still return a context, but
+    // the context private has already been cleared.
+    return nullptr;
+  }
 
   return
     static_cast<WorkerThreadContextPrivate*>(cxPrivate)->GetWorkerPrivate();
@@ -1352,6 +1563,7 @@ RuntimeService::RegisterWorker(WorkerPrivate* aWorkerPrivate)
 
   const bool isServiceWorker = aWorkerPrivate->IsServiceWorker();
   const bool isSharedWorker = aWorkerPrivate->IsSharedWorker();
+  const bool isDedicatedWorker = aWorkerPrivate->IsDedicatedWorker();
   if (isServiceWorker) {
     AssertIsOnMainThread();
     Telemetry::Accumulate(Telemetry::SERVICE_WORKER_SPAWN_ATTEMPTS, 1);
@@ -1373,6 +1585,13 @@ RuntimeService::RegisterWorker(WorkerPrivate* aWorkerPrivate)
     NS_ASSERTION(!sharedWorkerScriptSpec.IsEmpty(), "Empty spec!");
   }
 
+  bool exemptFromPerDomainMax = false;
+  if (isServiceWorker) {
+    AssertIsOnMainThread();
+    exemptFromPerDomainMax = Preferences::GetBool("dom.serviceWorkers.exemptFromPerDomainMax",
+                                                  false);
+  }
+
   const nsCString& domain = aWorkerPrivate->Domain();
 
   WorkerDomainInfo* domainInfo;
@@ -1388,14 +1607,34 @@ RuntimeService::RegisterWorker(WorkerPrivate* aWorkerPrivate)
       mDomainMap.Put(domain, domainInfo);
     }
 
-    if (parent) {
+    queued = gMaxWorkersPerDomain &&
+             domainInfo->ActiveWorkerCount() >= gMaxWorkersPerDomain &&
+             !domain.IsEmpty() &&
+             !exemptFromPerDomainMax;
+
+    if (queued) {
+      domainInfo->mQueuedWorkers.AppendElement(aWorkerPrivate);
+
+      // Worker spawn gets queued due to hitting max workers per domain
+      // limit so let's log a warning.
+      WorkerPrivate::ReportErrorToConsole("HittingMaxWorkersPerDomain2");
+
+      if (isServiceWorker) {
+        Telemetry::Accumulate(Telemetry::SERVICE_WORKER_SPAWN_GETS_QUEUED, 1);
+      } else if (isSharedWorker) {
+        Telemetry::Accumulate(Telemetry::SHARED_WORKER_SPAWN_GETS_QUEUED, 1);
+      } else if (isDedicatedWorker) {
+        Telemetry::Accumulate(Telemetry::DEDICATED_WORKER_SPAWN_GETS_QUEUED, 1);
+      }
+    }
+    else if (parent) {
       domainInfo->mChildWorkerCount++;
     }
     else if (isServiceWorker) {
-      domainInfo->mServiceWorkers.AppendElement(aWorkerPrivate);
+      domainInfo->mActiveServiceWorkers.AppendElement(aWorkerPrivate);
     }
     else {
-      domainInfo->mWorkers.AppendElement(aWorkerPrivate);
+      domainInfo->mActiveWorkers.AppendElement(aWorkerPrivate);
     }
 
     if (isSharedWorker) {
@@ -1509,26 +1748,50 @@ RuntimeService::UnregisterWorker(WorkerPrivate* aWorkerPrivate)
       NS_ERROR("Don't have an entry for this domain!");
     }
 
-    if (parent) {
+    // Remove old worker from everywhere.
+    uint32_t index = domainInfo->mQueuedWorkers.IndexOf(aWorkerPrivate);
+    if (index != kNoIndex) {
+      // Was queued, remove from the list.
+      domainInfo->mQueuedWorkers.RemoveElementAt(index);
+    }
+    else if (parent) {
       MOZ_ASSERT(domainInfo->mChildWorkerCount, "Must be non-zero!");
       domainInfo->mChildWorkerCount--;
     }
     else if (aWorkerPrivate->IsServiceWorker()) {
-      MOZ_ASSERT(domainInfo->mServiceWorkers.Contains(aWorkerPrivate),
+      MOZ_ASSERT(domainInfo->mActiveServiceWorkers.Contains(aWorkerPrivate),
                  "Don't know about this worker!");
-      domainInfo->mServiceWorkers.RemoveElement(aWorkerPrivate);
+      domainInfo->mActiveServiceWorkers.RemoveElement(aWorkerPrivate);
     }
     else {
-      MOZ_ASSERT(domainInfo->mWorkers.Contains(aWorkerPrivate),
+      MOZ_ASSERT(domainInfo->mActiveWorkers.Contains(aWorkerPrivate),
                  "Don't know about this worker!");
-      domainInfo->mWorkers.RemoveElement(aWorkerPrivate);
+      domainInfo->mActiveWorkers.RemoveElement(aWorkerPrivate);
     }
 
     if (aWorkerPrivate->IsSharedWorker()) {
       RemoveSharedWorker(domainInfo, aWorkerPrivate);
     }
 
+    // See if there's a queued worker we can schedule.
+    if (domainInfo->ActiveWorkerCount() < gMaxWorkersPerDomain &&
+        !domainInfo->mQueuedWorkers.IsEmpty()) {
+      queuedWorker = domainInfo->mQueuedWorkers[0];
+      domainInfo->mQueuedWorkers.RemoveElementAt(0);
+
+      if (queuedWorker->GetParent()) {
+        domainInfo->mChildWorkerCount++;
+      }
+      else if (queuedWorker->IsServiceWorker()) {
+        domainInfo->mActiveServiceWorkers.AppendElement(queuedWorker);
+      }
+      else {
+        domainInfo->mActiveWorkers.AppendElement(queuedWorker);
+      }
+    }
+
     if (domainInfo->HasNoWorkers()) {
+      MOZ_ASSERT(domainInfo->mQueuedWorkers.IsEmpty());
       mDomainMap.Remove(domain);
     }
   }
@@ -1620,7 +1883,7 @@ RuntimeService::ScheduleWorker(WorkerPrivate* aWorkerPrivate)
     NS_WARNING("Could not set the thread's priority!");
   }
 
-  JSContext* cx = CycleCollectedJSRuntime::Get()->Context();
+  JSContext* cx = CycleCollectedJSContext::Get()->Context();
   nsCOMPtr<nsIRunnable> runnable =
     new WorkerThreadPrimaryRunnable(aWorkerPrivate, thread,
                                     JS_GetParentContext(cx));
@@ -1809,6 +2072,15 @@ RuntimeService::Init()
     NS_WARNING("Failed to register timeout cache!");
   }
 
+  int32_t maxPerDomain = Preferences::GetInt(PREF_WORKERS_MAX_PER_DOMAIN,
+                                             MAX_WORKERS_PER_DOMAIN);
+  gMaxWorkersPerDomain = std::max(0, maxPerDomain);
+
+  int32_t maxHardwareConcurrency =
+    Preferences::GetInt(PREF_WORKERS_MAX_HARDWARE_CONCURRENCY,
+                        MAX_HARDWARE_CONCURRENCY);
+  gMaxHardwareConcurrency = std::max(0, maxHardwareConcurrency);
+
   rv = InitOSFileConstants();
   if (NS_FAILED(rv)) {
     return rv;
@@ -1831,7 +2103,7 @@ RuntimeService::Shutdown()
   mShuttingDown = true;
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
-  NS_WARN_IF_FALSE(obs, "Failed to get observer service?!");
+  NS_WARNING_ASSERTION(obs, "Failed to get observer service?!");
 
   // Tell anyone that cares that they're about to lose worker support.
   if (obs && NS_FAILED(obs->NotifyObservers(nullptr, WORKERS_SHUTDOWN_TOPIC,
@@ -1868,7 +2140,7 @@ RuntimeService::Cleanup()
   AssertIsOnMainThread();
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
-  NS_WARN_IF_FALSE(obs, "Failed to get observer service?!");
+  NS_WARNING_ASSERTION(obs, "Failed to get observer service?!");
 
   if (mIdleThreadTimer) {
     if (NS_FAILED(mIdleThreadTimer->Cancel())) {
@@ -2000,18 +2272,26 @@ RuntimeService::AddAllTopLevelWorkersToArray(nsTArray<WorkerPrivate*>& aWorkers)
     WorkerDomainInfo* aData = iter.UserData();
 
 #ifdef DEBUG
-    for (uint32_t index = 0; index < aData->mWorkers.Length(); index++) {
-      MOZ_ASSERT(!aData->mWorkers[index]->GetParent(),
+    for (uint32_t index = 0; index < aData->mActiveWorkers.Length(); index++) {
+      MOZ_ASSERT(!aData->mActiveWorkers[index]->GetParent(),
                  "Shouldn't have a parent in this list!");
     }
-    for (uint32_t index = 0; index < aData->mServiceWorkers.Length(); index++) {
-      MOZ_ASSERT(!aData->mServiceWorkers[index]->GetParent(),
+    for (uint32_t index = 0; index < aData->mActiveServiceWorkers.Length(); index++) {
+      MOZ_ASSERT(!aData->mActiveServiceWorkers[index]->GetParent(),
                  "Shouldn't have a parent in this list!");
     }
 #endif
 
-    aWorkers.AppendElements(aData->mWorkers);
-    aWorkers.AppendElements(aData->mServiceWorkers);
+    aWorkers.AppendElements(aData->mActiveWorkers);
+    aWorkers.AppendElements(aData->mActiveServiceWorkers);
+
+    // These might not be top-level workers...
+    for (uint32_t index = 0; index < aData->mQueuedWorkers.Length(); index++) {
+      WorkerPrivate* worker = aData->mQueuedWorkers[index];
+      if (!worker->GetParent()) {
+        aWorkers.AppendElement(worker);
+      }
+    }
   }
 }
 
@@ -2377,7 +2657,9 @@ RuntimeService::ClampedHardwareConcurrency() const
     if (numberOfProcessors <= 0) {
       numberOfProcessors = 1; // Must be one there somewhere
     }
-    clampedHardwareConcurrency = numberOfProcessors;
+    uint32_t clampedValue = std::min(uint32_t(numberOfProcessors),
+                                     gMaxHardwareConcurrency);
+    clampedHardwareConcurrency.compareExchange(0, clampedValue);
   }
 
   return clampedHardwareConcurrency;
@@ -2494,13 +2776,6 @@ WorkerThreadPrimaryRunnable::Run()
 {
   using mozilla::ipc::BackgroundChild;
 
-#ifdef MOZ_NUWA_PROCESS
-  if (IsNuwaProcess()) {
-    NuwaMarkCurrentThread(nullptr, nullptr);
-    NuwaFreezeCurrentThread();
-  }
-#endif
-
   char stackBaseGuess;
 
   PR_SetCurrentThreadName("DOM Worker");
@@ -2517,7 +2792,8 @@ WorkerThreadPrimaryRunnable::Run()
   //       worker messages here.
   if (NS_WARN_IF(!BackgroundChild::SynchronouslyCreateForCurrentThread())) {
     // XXX need to fire an error at parent.
-    return NS_ERROR_UNEXPECTED;
+    // Failed in creating BackgroundChild: probably in shutdown. Continue to run
+    // without BackgroundChild created.
   }
 
   class MOZ_STACK_CLASS SetThreadHelper final
@@ -2557,18 +2833,17 @@ WorkerThreadPrimaryRunnable::Run()
   {
     nsCycleCollector_startup();
 
-    WorkerJSRuntime runtime(mWorkerPrivate);
-    nsresult rv = runtime.Initialize(mParentContext);
+    WorkerJSContext context(mWorkerPrivate);
+    nsresult rv = context.Initialize(mParentContext);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
 
-    JSRuntime* rt = runtime.Runtime();
+    JSContext* cx = context.Context();
 
-    JSContext* cx = InitJSContextForWorker(mWorkerPrivate, rt);
-    if (!cx) {
+    if (!InitJSContextForWorker(mWorkerPrivate, cx)) {
       // XXX need to fire an error at parent.
-      NS_ERROR("Failed to create runtime and context!");
+      NS_ERROR("Failed to create context!");
       return NS_ERROR_FAILURE;
     }
 
@@ -2576,7 +2851,7 @@ WorkerThreadPrimaryRunnable::Run()
 #ifdef MOZ_ENABLE_PROFILER_SPS
       PseudoStack* stack = mozilla_get_pseudo_stack();
       if (stack) {
-        stack->sampleRuntime(rt);
+        stack->sampleContext(cx);
       }
 #endif
 
@@ -2594,7 +2869,7 @@ WorkerThreadPrimaryRunnable::Run()
 
 #ifdef MOZ_ENABLE_PROFILER_SPS
       if (stack) {
-        stack->sampleRuntime(nullptr);
+        stack->sampleContext(nullptr);
       }
 #endif
     }
@@ -2615,7 +2890,7 @@ WorkerThreadPrimaryRunnable::Run()
     // cleanup.
     mWorkerPrivate->ClearMainEventQueue(WorkerPrivate::WorkerRan);
 
-    // Now WorkerJSRuntime goes out of scope and its destructor will shut
+    // Now WorkerJSContext goes out of scope and its destructor will shut
     // down the cycle collector. This breaks any remaining cycles and collects
     // any remaining C++ objects.
   }

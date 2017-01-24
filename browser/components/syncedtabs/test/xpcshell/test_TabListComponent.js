@@ -8,6 +8,7 @@ let { View } = Cu.import("resource:///modules/syncedtabs/TabListView.js", {});
 const ACTION_METHODS = [
   "onSelectRow",
   "onOpenTab",
+  "onOpenTabs",
   "onMoveSelectionDown",
   "onMoveSelectionUp",
   "onToggleBranch",
@@ -22,7 +23,7 @@ const ACTION_METHODS = [
 add_task(function* testInitUninit() {
   let store = new SyncedTabsListStore();
   let ViewMock = sinon.stub();
-  let view = {render(){}, destroy(){}};
+  let view = {render() {}, destroy() {}};
 
   ViewMock.returns(view);
 
@@ -67,6 +68,13 @@ add_task(function* testInitUninit() {
 
 add_task(function* testActions() {
   let store = new SyncedTabsListStore();
+  let chromeWindowMock = {
+    gBrowser: {
+      loadTabs() {},
+    },
+  };
+  let getChromeWindowMock = sinon.stub();
+  getChromeWindowMock.returns(chromeWindowMock);
   let clipboardHelperMock = {
     copyString() {},
   };
@@ -77,11 +85,14 @@ add_task(function* testActions() {
       },
       PlacesUtils: { bookmarksMenuFolderId: "id" }
     },
+    getBrowserURL() {},
+    openDialog() {},
     openUILinkIn() {}
   };
   let component = new TabListComponent({
     window: windowMock, store, View: null, SyncedTabs,
-    clipboardHelper: clipboardHelperMock});
+    clipboardHelper: clipboardHelperMock,
+    getChromeWindow: getChromeWindowMock });
 
   sinon.stub(store, "getData");
   component.onFilter("query");
@@ -123,6 +134,14 @@ add_task(function* testActions() {
   sinon.spy(windowMock, "openUILinkIn");
   component.onOpenTab("uri", "where", "params");
   Assert.ok(windowMock.openUILinkIn.calledWith("uri", "where", "params"));
+
+  sinon.spy(chromeWindowMock.gBrowser, "loadTabs");
+  let tabsToOpen = ["uri1", "uri2"];
+  component.onOpenTabs(tabsToOpen, "where");
+  Assert.ok(getChromeWindowMock.calledWith(windowMock));
+  Assert.ok(chromeWindowMock.gBrowser.loadTabs.calledWith(tabsToOpen, false, false));
+  component.onOpenTabs(tabsToOpen, "tabshifted");
+  Assert.ok(chromeWindowMock.gBrowser.loadTabs.calledWith(tabsToOpen, true, false));
 
   sinon.spy(clipboardHelperMock, "copyString");
   component.onCopyTabLocation("uri");

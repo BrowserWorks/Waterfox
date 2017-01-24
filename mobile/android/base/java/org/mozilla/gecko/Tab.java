@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,17 +18,17 @@ import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.URLMetadata;
-import org.mozilla.gecko.favicons.FaviconGenerator;
-import org.mozilla.gecko.favicons.Favicons;
-import org.mozilla.gecko.favicons.LoadFaviconTask;
-import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
-import org.mozilla.gecko.favicons.RemoteFavicon;
 import org.mozilla.gecko.gfx.BitmapUtils;
-import org.mozilla.gecko.gfx.Layer;
+import org.mozilla.gecko.icons.IconCallback;
+import org.mozilla.gecko.icons.IconDescriptor;
+import org.mozilla.gecko.icons.IconRequestBuilder;
+import org.mozilla.gecko.icons.IconResponse;
+import org.mozilla.gecko.icons.Icons;
 import org.mozilla.gecko.reader.ReaderModeUtils;
 import org.mozilla.gecko.reader.ReadingListHelper;
 import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.util.ThreadUtils;
+import org.mozilla.gecko.widget.SiteLogins;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -40,7 +40,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import org.mozilla.gecko.widget.SiteLogins;
 
 public class Tab {
     private static final String LOGTAG = "GeckoTab";
@@ -57,8 +56,9 @@ public class Tab {
     private String mFaviconUrl;
     private String mApplicationId; // Intended to be null after explicit user action.
 
-    // The set of all available Favicons for this tab, sorted by attractiveness.
-    final TreeSet<RemoteFavicon> mAvailableFavicons = new TreeSet<>();
+    private IconRequestBuilder mIconRequestBuilder;
+    private Future<IconResponse> mRunningIconRequest;
+
     private boolean mHasFeeds;
     private boolean mHasOpenSearch;
     private final SiteIdentity mSiteIdentity;
@@ -72,11 +72,7 @@ public class Tab {
     private int mFaviconLoadId;
     private String mContentType;
     private boolean mHasTouchListeners;
-    private ZoomConstraints mZoomConstraints;
-    private boolean mIsRTL;
     private final ArrayList<View> mPluginViews;
-    private final HashMap<Object, Layer> mPluginLayers;
-    private int mBackgroundColor;
     private int mState;
     private Bitmap mThumbnailBitmap;
     private boolean mDesktopMode;
@@ -86,6 +82,7 @@ public class Tab {
     private volatile int mLoadProgress;
     private volatile int mRecordingCount;
     private volatile boolean mIsAudioPlaying;
+    private volatile boolean mIsMediaPlaying;
     private String mMostRecentHomePanel;
     private boolean mShouldShowToolbarWithoutAnimationOnFirstSelection;
 
@@ -118,8 +115,6 @@ public class Tab {
     public static final int LOAD_PROGRESS_LOADED = 80;
     public static final int LOAD_PROGRESS_STOP = 100;
 
-    private static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
-
     public enum ErrorType {
         CERT_ERROR,  // Pages with certificate problems
         BLOCKED,     // Pages blocked for phishing or malware warnings
@@ -129,7 +124,7 @@ public class Tab {
 
     public Tab(Context context, int id, String url, boolean external, int parentId, String title) {
         mAppContext = context.getApplicationContext();
-        mDB = GeckoProfile.get(context).getDB();
+        mDB = BrowserDB.from(context);
         mId = id;
         mUrl = url;
         mBaseDomain = "";
@@ -140,16 +135,10 @@ public class Tab {
         mSiteIdentity = new SiteIdentity();
         mHistoryIndex = -1;
         mContentType = "";
-        mZoomConstraints = new ZoomConstraints(false);
         mPluginViews = new ArrayList<View>();
-        mPluginLayers = new HashMap<Object, Layer>();
         mState = shouldShowProgress(url) ? STATE_LOADING : STATE_SUCCESS;
         mLoadProgress = LOAD_PROGRESS_INIT;
-
-        // At startup, the background is set to a color specified by LayerView
-        // when the LayerView is created. Shortly after, this background color
-        // will be used before the tab's content is shown.
-        mBackgroundColor = DEFAULT_BACKGROUND_COLOR;
+        mIconRequestBuilder = Icons.with(mAppContext).pageUrl(mUrl);
 
         updateBookmark();
     }
@@ -420,22 +409,6 @@ public class Tab {
         return mState;
     }
 
-    public void setZoomConstraints(ZoomConstraints constraints) {
-        mZoomConstraints = constraints;
-    }
-
-    public ZoomConstraints getZoomConstraints() {
-        return mZoomConstraints;
-    }
-
-    public void setIsRTL(boolean aIsRTL) {
-        mIsRTL = aIsRTL;
-    }
-
-    public boolean getIsRTL() {
-        return mIsRTL;
-    }
-
     public void setHasTouchListeners(boolean aValue) {
         mHasTouchListeners = aValue;
     }
@@ -445,12 +418,15 @@ public class Tab {
     }
 
     public synchronized void addFavicon(String faviconURL, int faviconSize, String mimeType) {
-        RemoteFavicon favicon = new RemoteFavicon(faviconURL, faviconSize, mimeType);
+        mIconRequestBuilder
+                .icon(IconDescriptor.createFavicon(faviconURL, faviconSize, mimeType))
+                .deferBuild();
+    }
 
-        // Add this Favicon to the set of available Favicons.
-        synchronized (mAvailableFavicons) {
-            mAvailableFavicons.add(favicon);
-        }
+    public synchronized void addTouchicon(String iconUrl, int faviconSize, String mimeType) {
+        mIconRequestBuilder
+                .icon(IconDescriptor.createTouchicon(iconUrl, faviconSize, mimeType))
+                .deferBuild();
     }
 
     public void loadFavicon() {
@@ -459,72 +435,24 @@ public class Tab {
             return;
         }
 
-        // If we have a Favicon explicitly set, load it.
-        if (!mAvailableFavicons.isEmpty()) {
-            RemoteFavicon newFavicon = mAvailableFavicons.first();
-
-            // If the new Favicon is different, cancel the old load. Else, abort.
-            if (newFavicon.faviconUrl.equals(mFaviconUrl)) {
-                return;
-            }
-
-            Favicons.cancelFaviconLoad(mFaviconLoadId);
-            mFaviconUrl = newFavicon.faviconUrl;
-        } else {
-            // Otherwise, fallback to the default Favicon.
-            mFaviconUrl = null;
-        }
-
-        final Favicons.LoadType loadType;
-        if (mSiteIdentity.getSecurityMode() == SiteIdentity.SecurityMode.CHROMEUI) {
-            loadType = Favicons.LoadType.PRIVILEGED;
-        } else {
-            loadType = Favicons.LoadType.UNPRIVILEGED;
-        }
-
-        int flags = (isPrivate() || mErrorType != ErrorType.NONE) ? 0 : LoadFaviconTask.FLAG_PERSIST;
-        mFaviconLoadId = Favicons.getSizedFavicon(mAppContext, mUrl, mFaviconUrl,
-                loadType, Favicons.browserToolbarFaviconSize, flags,
-                new OnFaviconLoadedListener() {
+        mRunningIconRequest = mIconRequestBuilder
+                .build()
+                .execute(new IconCallback() {
                     @Override
-                    public void onFaviconLoaded(String pageUrl, String faviconURL, Bitmap favicon) {
-                        // The tab might be pointing to another URL by the time the
-                        // favicon is finally loaded, in which case we simply ignore it.
-                        if (!pageUrl.equals(mUrl)) {
-                            return;
-                        }
+                    public void onIconResponse(IconResponse response) {
+                        mFavicon = response.getBitmap();
 
-                        // That one failed. Try the next one.
-                        if (favicon == null) {
-                            // If what we just tried to load originated from the set of declared icons..
-                            if (!mAvailableFavicons.isEmpty()) {
-                                // Discard it.
-                                mAvailableFavicons.remove(mAvailableFavicons.first());
-
-                                // Load the next best, if we have one. If not, it'll fall back to the
-                                // default Favicon URL, before giving up.
-                                loadFavicon();
-
-                                return;
-                            }
-
-                            // Total failure: generate a default favicon.
-                            FaviconGenerator.generate(mAppContext, mUrl, this);
-                            return;
-                        }
-
-                        mFavicon = favicon;
-                        mFaviconLoadId = Favicons.NOT_LOADING;
                         Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.FAVICON);
                     }
-                }
-        );
+                });
     }
 
     public synchronized void clearFavicon() {
         // Cancel any ongoing favicon load (if we never finished downloading the old favicon before
         // we changed page).
-        Favicons.cancelFaviconLoad(mFaviconLoadId);
+        if (mRunningIconRequest != null) {
+            mRunningIconRequest.cancel(true);
+        }
 
         // Keep the favicon unchanged while entering reader mode
         if (mEnteringReaderMode)
@@ -532,7 +460,6 @@ public class Tab {
 
         mFavicon = null;
         mFaviconUrl = null;
-        mAvailableFavicons.clear();
     }
 
     public void setHasFeeds(boolean hasFeeds) {
@@ -675,6 +602,10 @@ public class Tab {
                 // page.
                 clearFavicon();
 
+                // Start to build a new request to load a favicon.
+                mIconRequestBuilder = Icons.with(mAppContext)
+                        .pageUrl(uri);
+
                 // Load local static Favicons immediately
                 if (AboutPages.isBuiltinIconPage(uri)) {
                     loadFavicon();
@@ -699,9 +630,7 @@ public class Tab {
         setHasOpenSearch(false);
         mSiteIdentity.reset();
         setSiteLogins(null);
-        setZoomConstraints(new ZoomConstraints(true));
         setHasTouchListeners(false);
-        setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
         setErrorType(ErrorType.NONE);
         setLoadProgressIfLoading(LOAD_PROGRESS_LOCATION_CHANGE);
 
@@ -806,62 +735,6 @@ public class Tab {
         return mPluginViews.toArray(new View[mPluginViews.size()]);
     }
 
-    public void addPluginLayer(Object surfaceOrView, Layer layer) {
-        synchronized (mPluginLayers) {
-            mPluginLayers.put(surfaceOrView, layer);
-        }
-    }
-
-    public Layer getPluginLayer(Object surfaceOrView) {
-        synchronized (mPluginLayers) {
-            return mPluginLayers.get(surfaceOrView);
-        }
-    }
-
-    public Collection<Layer> getPluginLayers() {
-        synchronized (mPluginLayers) {
-            return new ArrayList<Layer>(mPluginLayers.values());
-        }
-    }
-
-    public Layer removePluginLayer(Object surfaceOrView) {
-        synchronized (mPluginLayers) {
-            return mPluginLayers.remove(surfaceOrView);
-        }
-    }
-
-    public int getBackgroundColor() {
-        return mBackgroundColor;
-    }
-
-    /** Sets a new color for the background. */
-    public void setBackgroundColor(int color) {
-        mBackgroundColor = color;
-    }
-
-    /** Parses and sets a new color for the background. */
-    public void setBackgroundColor(String newColor) {
-        setBackgroundColor(parseColorFromGecko(newColor));
-    }
-
-    // Parses a color from an RGB triple of the form "rgb([0-9]+, [0-9]+, [0-9]+)". If the color
-    // cannot be parsed, returns white.
-    private static int parseColorFromGecko(String string) {
-        if (sColorPattern == null) {
-            sColorPattern = Pattern.compile("rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)");
-        }
-
-        Matcher matcher = sColorPattern.matcher(string);
-        if (!matcher.matches()) {
-            return Color.WHITE;
-        }
-
-        int r = Integer.parseInt(matcher.group(1));
-        int g = Integer.parseInt(matcher.group(2));
-        int b = Integer.parseInt(matcher.group(3));
-        return Color.rgb(r, g, b);
-    }
-
     public void setDesktopMode(boolean enabled) {
         mDesktopMode = enabled;
     }
@@ -920,6 +793,26 @@ public class Tab {
         return mRecordingCount > 0;
     }
 
+    /**
+     * The "MediaPlaying" is used for controling media control interface and
+     * means the tab has playing media.
+     *
+     * @param isMediaPlaying the tab has any playing media or not
+     */
+    public void setIsMediaPlaying(boolean isMediaPlaying) {
+        mIsMediaPlaying = isMediaPlaying;
+    }
+
+    public boolean isMediaPlaying() {
+        return mIsMediaPlaying;
+    }
+
+    /**
+     * The "AudioPlaying" is used for showing the tab sound indicator and means
+     * the tab has playing media and the media is audible.
+     *
+     * @param isAudioPlaying the tab has any audible playing media or not
+     */
     public void setIsAudioPlaying(boolean isAudioPlaying) {
         mIsAudioPlaying = isAudioPlaying;
     }

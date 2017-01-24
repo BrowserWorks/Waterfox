@@ -92,6 +92,10 @@ public abstract class HomeFragment extends Fragment {
          * stage.
          */
         void onStateChanged(Bundle bundle);
+
+        void setCachedRecentTabsCount(int count);
+
+        int getCachedRecentTabsCount();
     }
 
     public void restoreData(Bundle data) {
@@ -394,7 +398,7 @@ public abstract class HomeFragment extends Fragment {
             mUrl = url;
             mType = type;
             mPosition = position;
-            mDB = GeckoProfile.get(context).getDB();
+            mDB = BrowserDB.from(context);
         }
 
         @Override
@@ -410,27 +414,16 @@ public abstract class HomeFragment extends Fragment {
 
             switch (mType) {
                 case BOOKMARKS:
-                    SavedReaderViewHelper rch = SavedReaderViewHelper.getSavedReaderViewHelper(mContext);
-                    final boolean isReaderViewPage = rch.isURLCached(mUrl);
-
-                    final String extra;
-                    if (isReaderViewPage) {
-                        extra = "bookmark_reader";
-                    } else {
-                        extra = "bookmark";
-                    }
-
-                    Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.CONTEXT_MENU, extra);
-                    mDB.removeBookmarksWithURL(cr, mUrl);
-
-                    if (isReaderViewPage) {
-                        ReadingListHelper.removeCachedReaderItem(mUrl, mContext);
-                    }
-
+                    removeBookmark(cr);
                     break;
 
                 case HISTORY:
-                    mDB.removeHistoryEntry(cr, mUrl);
+                    removeHistory(cr);
+                    break;
+
+                case COMBINED:
+                    removeBookmark(cr);
+                    removeHistory(cr);
                     break;
 
                 default:
@@ -446,6 +439,29 @@ public abstract class HomeFragment extends Fragment {
                     .message(R.string.page_removed)
                     .duration(Snackbar.LENGTH_LONG)
                     .buildAndShow();
+        }
+
+        private void removeBookmark(ContentResolver cr) {
+            SavedReaderViewHelper rch = SavedReaderViewHelper.getSavedReaderViewHelper(mContext);
+            final boolean isReaderViewPage = rch.isURLCached(mUrl);
+
+            final String extra;
+            if (isReaderViewPage) {
+                extra = "bookmark_reader";
+            } else {
+                extra = "bookmark";
+            }
+
+            Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.CONTEXT_MENU, extra);
+            mDB.removeBookmarksWithURL(cr, mUrl);
+
+            if (isReaderViewPage) {
+                ReadingListHelper.removeCachedReaderItem(mUrl, mContext);
+            }
+        }
+
+        private void removeHistory(ContentResolver cr) {
+            mDB.removeHistoryEntry(cr, mUrl);
         }
     }
 

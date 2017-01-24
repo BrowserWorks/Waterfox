@@ -17,6 +17,7 @@ class FreeBSDBootstrapper(BaseBootstrapper):
             'gtar',
             'mercurial',
             'pkgconf',
+            'watchman',
             'zip',
         ]
 
@@ -39,12 +40,9 @@ class FreeBSDBootstrapper(BaseBootstrapper):
             self.browser_packages.append('gcc')
 
     def pkg_install(self, *packages):
-        if self.which('pkg'):
-            command = ['pkg', 'install']
-            if self.no_interactive:
-                command.append('-y')
-        else:
-            command = ['pkg_add', '-Fr']
+        command = ['pkg', 'install']
+        if self.no_interactive:
+            command.append('-y')
 
         command.extend(packages)
         self.run_as_root(command)
@@ -53,6 +51,13 @@ class FreeBSDBootstrapper(BaseBootstrapper):
         self.pkg_install(*self.packages)
 
     def install_browser_packages(self):
+        self.ensure_browser_packages()
+
+    def install_browser_artifact_mode_packages(self):
+        self.ensure_browser_packages(artifact_mode=True)
+
+    def ensure_browser_packages(self, artifact_mode=False):
+        # TODO: Figure out what not to install for artifact mode
         self.pkg_install(*self.browser_packages)
 
     def upgrade_mercurial(self, current):

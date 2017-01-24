@@ -7,7 +7,7 @@
 #include "mozilla/dom/cache/CacheStreamControlParent.h"
 
 #include "mozilla/DebugOnly.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/cache/CacheTypes.h"
 #include "mozilla/dom/cache/ReadStream.h"
 #include "mozilla/dom/cache/StreamList.h"
@@ -84,6 +84,11 @@ CacheStreamControlParent::ActorDestroy(ActorDestroyReason aReason)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlParent);
   CloseAllReadStreamsWithoutReporting();
+  // If the initial SendPStreamControlConstructor() fails we will
+  // be called before mStreamList is set.
+  if (!mStreamList) {
+    return;
+  }
   mStreamList->RemoveStreamControl(this);
   mStreamList->NoteClosedAll();
   mStreamList = nullptr;

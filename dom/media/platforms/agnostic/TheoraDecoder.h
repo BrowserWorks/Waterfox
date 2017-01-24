@@ -24,10 +24,10 @@ public:
   ~TheoraDecoder();
 
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Flush() override;
-  nsresult Drain() override;
-  nsresult Shutdown() override;
+  void Input(MediaRawData* aSample) override;
+  void Flush() override;
+  void Drain() override;
+  void Shutdown() override;
 
   // Return true if mimetype is a Theora codec
   static bool IsTheora(const nsACString& aMimeType);
@@ -41,7 +41,7 @@ private:
   nsresult DoDecodeHeader(const unsigned char* aData, size_t aLength);
 
   void ProcessDecode(MediaRawData* aSample);
-  int DoDecode(MediaRawData* aSample);
+  MediaResult DoDecode(MediaRawData* aSample);
   void ProcessDrain();
 
   RefPtr<ImageContainer> mImageContainer;

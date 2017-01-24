@@ -42,7 +42,7 @@ class Selection;
 // date.
 //
 // Please see the wiki page for more information.
-// https://wiki.mozilla.org/Copy_n_Paste
+// https://wiki.mozilla.org/AccessibleCaret
 //
 class AccessibleCaretManager
 {
@@ -58,7 +58,7 @@ public:
 
   // Press caret on the given point. Return NS_OK if the point is actually on
   // one of the carets.
-  virtual nsresult PressCaret(const nsPoint& aPoint);
+  virtual nsresult PressCaret(const nsPoint& aPoint, EventClassID aEventClass);
 
   // Drag caret to the given point. It's required to call PressCaret()
   // beforehand.

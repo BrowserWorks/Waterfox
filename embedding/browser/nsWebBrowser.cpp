@@ -39,6 +39,7 @@
 #include "Layers.h"
 #include "gfxContext.h"
 #include "nsILoadContext.h"
+#include "nsDocShell.h"
 
 // for painting the background window
 #include "mozilla/LookAndFeel.h"
@@ -386,6 +387,12 @@ nsWebBrowser::SetIsActive(bool aIsActive)
     return mDocShell->SetIsActive(aIsActive);
   }
   return NS_OK;
+}
+
+void
+nsWebBrowser::SetOriginAttributes(const DocShellOriginAttributes& aAttrs)
+{
+  mOriginAttributes = aAttrs;
 }
 
 //*****************************************************************************
@@ -1185,12 +1192,15 @@ nsWebBrowser::Create()
                                mInitInfo->cx, mInitInfo->cy);
 
     mInternalWidget->SetWidgetListener(this);
-    mInternalWidget->Create(nullptr, mParentNativeWindow, bounds, &widgetInit);
+    rv = mInternalWidget->Create(nullptr, mParentNativeWindow, bounds,
+                                 &widgetInit);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
 
   nsCOMPtr<nsIDocShell> docShell(
     do_CreateInstance("@mozilla.org/docshell;1", &rv));
   NS_ENSURE_SUCCESS(rv, rv);
+  nsDocShell::Cast(docShell)->SetOriginAttributes(mOriginAttributes);
   rv = SetDocShell(docShell);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1252,7 +1262,7 @@ nsWebBrowser::Create()
   if (XRE_IsParentProcess()) {
     // Hook up global history. Do not fail if we can't - just warn.
     rv = EnableGlobalHistory(mShouldEnableHistory);
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "EnableGlobalHistory() failed");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "EnableGlobalHistory() failed");
   }
 
   NS_ENSURE_SUCCESS(mDocShellAsWin->Create(), NS_ERROR_FAILURE);
@@ -1406,8 +1416,7 @@ nsWebBrowser::GetPositionAndSize(int32_t* aX, int32_t* aY,
       *aCY = mInitInfo->cy;
     }
   } else if (mInternalWidget) {
-    LayoutDeviceIntRect bounds;
-    NS_ENSURE_SUCCESS(mInternalWidget->GetBounds(bounds), NS_ERROR_FAILURE);
+    LayoutDeviceIntRect bounds = mInternalWidget->GetBounds();
 
     if (aX) {
       *aX = bounds.x;

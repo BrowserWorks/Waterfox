@@ -63,7 +63,7 @@ public:
     mInterruptStatus = status;
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     DoCopy();
     return NS_OK;
   }
@@ -181,10 +181,10 @@ public:
     return mCopyEvent != nullptr;
   }
 
-  NS_IMETHODIMP ReadSegments(nsWriteSegmentFun fun, void *closure,
-                             uint32_t count, uint32_t *result) override;
-  NS_IMETHODIMP AsyncWait(nsIInputStreamCallback *callback, uint32_t flags,
-                          uint32_t count, nsIEventTarget *target) override;
+  NS_IMETHOD ReadSegments(nsWriteSegmentFun fun, void *closure,
+                          uint32_t count, uint32_t *result) override;
+  NS_IMETHOD AsyncWait(nsIInputStreamCallback *callback, uint32_t flags,
+                       uint32_t count, nsIEventTarget *target) override;
 
 private:
   virtual ~nsFileUploadContentStream() {}

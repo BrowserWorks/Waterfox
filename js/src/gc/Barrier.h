@@ -209,18 +209,17 @@ class ArrayBufferObject;
 class ArrayBufferViewObject;
 class SharedArrayBufferObject;
 class BaseShape;
-class DebugScopeObject;
+class DebugEnvironmentProxy;
 class GlobalObject;
 class LazyScript;
 class ModuleObject;
 class ModuleEnvironmentObject;
 class ModuleNamespaceObject;
 class NativeObject;
-class NestedScopeObject;
 class PlainObject;
 class PropertyName;
 class SavedFrame;
-class ScopeObject;
+class EnvironmentObject;
 class ScriptSourceObject;
 class Shape;
 class UnownedBaseShape;
@@ -241,9 +240,6 @@ CurrentThreadIsIonCompilingSafeForMinorGC();
 
 bool
 CurrentThreadIsGCSweeping();
-
-bool
-CurrentThreadCanSkipPostBarrier(bool inNursery);
 #endif
 
 namespace gc {
@@ -270,8 +266,6 @@ struct InternalBarrierMethods<T*>
     static void postBarrier(T** vp, T* prev, T* next) { T::writeBarrierPost(vp, prev, next); }
 
     static void readBarrier(T* v) { T::readBarrier(v); }
-
-    static bool isInsideNursery(T* v) { return IsInsideNursery(v); }
 };
 
 template <typename S> struct PreBarrierFunctor : public VoidDefaultAdaptor<S> {
@@ -316,22 +310,16 @@ struct InternalBarrierMethods<Value>
     static void readBarrier(const Value& v) {
         DispatchTyped(ReadBarrierFunctor<Value>(), v);
     }
-
-    static bool isInsideNursery(const Value& v) {
-        return v.isMarkable() && IsInsideNursery(v.toGCThing());
-    }
 };
 
 template <>
 struct InternalBarrierMethods<jsid>
 {
-    static bool isMarkable(jsid id) { return JSID_IS_STRING(id) || JSID_IS_SYMBOL(id); }
+    static bool isMarkable(jsid id) { return JSID_IS_GCTHING(id); }
     static bool isMarkableTaggedPointer(jsid id) { return isMarkable(id); }
 
     static void preBarrier(jsid id) { DispatchTyped(PreBarrierFunctor<jsid>(), id); }
     static void postBarrier(jsid* idp, jsid prev, jsid next) {}
-
-    static bool isInsideNursery(jsid id) { return false; }
 };
 
 // Barrier classes can use Mixins to add methods to a set of barrier
@@ -451,10 +439,9 @@ class GCPtr : public WriteBarrieredBase<T>
 #ifdef DEBUG
     ~GCPtr() {
         // No prebarrier necessary as this only happens when we are sweeping or
-        // after we have just collected the nursery.
-        bool inNursery = InternalBarrierMethods<T>::isInsideNursery(this->value);
-        MOZ_ASSERT(CurrentThreadIsGCSweeping() ||
-                   CurrentThreadCanSkipPostBarrier(inNursery));
+        // after we have just collected the nursery.  Note that the wrapped
+        // pointer may already have been freed by this point.
+        MOZ_ASSERT(CurrentThreadIsGCSweeping());
         Poison(this, JS_FREED_HEAP_PTR_PATTERN, sizeof(*this));
     }
 #endif
@@ -901,13 +888,14 @@ struct DefaultHasher<ReadBarriered<T>> : ReadBarrieredHasher<T> { };
 
 class ArrayObject;
 class ArrayBufferObject;
-class NestedScopeObject;
-class DebugScopeObject;
 class GlobalObject;
+class Scope;
 class ScriptSourceObject;
 class Shape;
 class BaseShape;
 class UnownedBaseShape;
+class WasmInstanceObject;
+class WasmTableObject;
 namespace jit {
 class JitCode;
 } // namespace jit
@@ -939,6 +927,7 @@ typedef GCPtr<Shape*> GCPtrShape;
 typedef GCPtr<UnownedBaseShape*> GCPtrUnownedBaseShape;
 typedef GCPtr<jit::JitCode*> GCPtrJitCode;
 typedef GCPtr<ObjectGroup*> GCPtrObjectGroup;
+typedef GCPtr<Scope*> GCPtrScope;
 
 typedef PreBarriered<Value> PreBarrieredValue;
 typedef GCPtr<Value> GCPtrValue;
@@ -949,7 +938,7 @@ typedef GCPtr<jsid> GCPtrId;
 typedef ImmutableTenuredPtr<PropertyName*> ImmutablePropertyNamePtr;
 typedef ImmutableTenuredPtr<JS::Symbol*> ImmutableSymbolPtr;
 
-typedef ReadBarriered<DebugScopeObject*> ReadBarrieredDebugScopeObject;
+typedef ReadBarriered<DebugEnvironmentProxy*> ReadBarrieredDebugEnvironmentProxy;
 typedef ReadBarriered<GlobalObject*> ReadBarrieredGlobalObject;
 typedef ReadBarriered<JSObject*> ReadBarrieredObject;
 typedef ReadBarriered<JSFunction*> ReadBarrieredFunction;
@@ -959,6 +948,8 @@ typedef ReadBarriered<Shape*> ReadBarrieredShape;
 typedef ReadBarriered<jit::JitCode*> ReadBarrieredJitCode;
 typedef ReadBarriered<ObjectGroup*> ReadBarrieredObjectGroup;
 typedef ReadBarriered<JS::Symbol*> ReadBarrieredSymbol;
+typedef ReadBarriered<WasmInstanceObject*> ReadBarrieredWasmInstanceObject;
+typedef ReadBarriered<WasmTableObject*> ReadBarrieredWasmTableObject;
 
 typedef ReadBarriered<Value> ReadBarrieredValue;
 

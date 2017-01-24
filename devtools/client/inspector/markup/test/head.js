@@ -19,9 +19,9 @@ var {ActorRegistryFront} = require("devtools/shared/fronts/actor-registry");
 SimpleTest.requestCompleteLog();
 
 // Set the testing flag on DevToolsUtils and reset it when the test ends
-DevToolsUtils.testing = true;
+flags.testing = true;
 registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
 });
 
 // Clear preferences that may be set during the course of tests.
@@ -458,8 +458,8 @@ function createTestHTTPServer() {
  *
  * - moduleUrl {String}: URL of the module that contains actor implementation.
  * - prefix {String}: prefix of the actor.
- * - actorClass {ActorClass}: Constructor object for the actor.
- * - frontClass {FrontClass}: Constructor object for the front part
+ * - actorClass {ActorClassWithSpec}: Constructor object for the actor.
+ * - frontClass {FrontClassWithSpec}: Constructor object for the front part
  * of the registered actor.
  *
  * @returns {Promise} A promise that is resolved when the actor is registered.

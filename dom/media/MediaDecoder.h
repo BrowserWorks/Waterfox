@@ -7,11 +7,8 @@
 #if !defined(MediaDecoder_h_)
 #define MediaDecoder_h_
 
-#ifdef MOZ_EME
-#include "mozilla/CDMProxy.h"
-#endif
-
 #include "mozilla/Atomics.h"
+#include "mozilla/CDMProxy.h"
 #include "mozilla/MozPromise.h"
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/StateMirroring.h"
@@ -85,8 +82,6 @@ public:
     MediaDecoderOwner* GetMediaOwner() const override;
     void SetInfinite(bool aInfinite) override;
     void SetMediaSeekable(bool aMediaSeekable) override;
-    void ResetConnectionState() override;
-    nsresult FinishDecoderSetup(MediaResource* aResource) override;
     void NotifyNetworkError() override;
     void NotifyDecodeError() override;
     void NotifyDataArrived() override;
@@ -241,13 +236,11 @@ public:
   // Call on the main thread only.
   bool IsSeeking() const;
 
-  // Return true if the decoder has reached the end of playback or the decoder
-  // has shutdown.
-  // Call on the main thread only.
-  bool IsEndedOrShutdown() const;
+  // Return true if the decoder has reached the end of playback.
+  bool IsEnded() const;
 
   // Return true if the MediaDecoderOwner's error attribute is not null.
-  // If the MediaDecoder is shutting down, OwnerHasError will return true.
+  // Must be called before Shutdown().
   bool OwnerHasError() const;
 
   already_AddRefed<GMPCrashHelper> GetCrashHelper() override;
@@ -382,6 +375,10 @@ private:
   // Called from HTMLMediaElement when owner document activity changes
   virtual void SetElementVisibility(bool aIsVisible);
 
+  // Force override the visible state to hidden.
+  // Called from HTMLMediaElement when testing of video decode suspend from mochitests.
+  void SetForcedHidden(bool aForcedHidden);
+
   /******
    * The following methods must only be called on the main
    * thread.
@@ -416,14 +413,14 @@ private:
     mIgnoreProgressData = mLogicallySeeking;
   }
 
-  // Seeking has started. Inform the element on the main
-  // thread.
-  void SeekingStarted(MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable);
+  // Seeking has started. Inform the element on the main thread.
+  void SeekingStarted();
 
   void UpdateLogicalPositionInternal(MediaDecoderEventVisibility aEventVisibility);
   void UpdateLogicalPosition()
   {
     MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(!IsShutdown());
     // Per spec, offical position remains stable during pause and seek.
     if (mPlayState == PLAY_STATE_PAUSED || IsSeeking()) {
       return;
@@ -436,14 +433,13 @@ private:
   int64_t GetDownloadPosition();
 
   // Notifies the element that decoding has failed.
-  void DecodeError();
+  void DecodeError(const MediaResult& aError);
 
   // Indicate whether the media is same-origin with the element.
   void UpdateSameOriginStatus(bool aSameOrigin);
 
-  MediaDecoderOwner* GetOwner() override;
+  MediaDecoderOwner* GetOwner() const override;
 
-#ifdef MOZ_EME
   typedef MozPromise<RefPtr<CDMProxy>, bool /* aIgnored */, /* IsExclusive = */ true> CDMProxyPromise;
 
   // Resolved when a CDMProxy is available and the capabilities are known or
@@ -451,22 +447,13 @@ private:
   RefPtr<CDMProxyPromise> RequestCDMProxy() const;
 
   void SetCDMProxy(CDMProxy* aProxy);
-#endif
 
   void EnsureTelemetryReported();
-
-#ifdef MOZ_RAW
-  static bool IsRawEnabled();
-#endif
 
   static bool IsOggEnabled();
   static bool IsOpusEnabled();
   static bool IsWaveEnabled();
   static bool IsWebMEnabled();
-
-#ifdef NECKO_PROTOCOL_rtsp
-  static bool IsRtspEnabled();
-#endif
 
 #ifdef MOZ_OMX_DECODER
   static bool IsOmxEnabled();
@@ -499,9 +486,8 @@ private:
   void UpdateReadyState()
   {
     MOZ_ASSERT(NS_IsMainThread());
-    if (!IsShutdown()) {
-      mOwner->UpdateReadyState();
-    }
+    MOZ_ASSERT(!IsShutdown());
+    mOwner->UpdateReadyState();
   }
 
   virtual MediaDecoderOwner::NextFrameStatus NextFrameStatus() { return mNextFrameStatus; }
@@ -531,9 +517,6 @@ protected:
   // Cancel a timer for heuristic dormant.
   void CancelDormantTimer();
 
-  // Return true if the decoder has reached the end of playback
-  bool IsEnded() const;
-
   bool IsShutdown() const;
 
   // Called by the state machine to notify the decoder that the duration
@@ -550,6 +533,7 @@ protected:
 
   void SetExplicitDuration(double aValue)
   {
+    MOZ_ASSERT(!IsShutdown());
     mExplicitDuration.Set(Some(aValue));
 
     // We Invoke DurationChanged explicitly, rather than using a watcher, so
@@ -603,6 +587,7 @@ private:
   DataArrivedEvent() override { return &mDataArrivedEvent; }
 
   void OnPlaybackEvent(MediaEventType aEvent);
+  void OnPlaybackErrorEvent(const MediaResult& aError);
 
   void OnMediaNotSeekable()
   {
@@ -627,10 +612,8 @@ private:
 
   RefPtr<ResourceCallback> mResourceCallback;
 
-#ifdef MOZ_EME
   MozPromiseHolder<CDMProxyPromise> mCDMProxyPromiseHolder;
   RefPtr<CDMProxyPromise> mCDMProxyPromise;
-#endif
 
 protected:
   // The promise resolving/rejection is queued as a "micro-task" which will be
@@ -672,9 +655,9 @@ protected:
   void OnMetadataUpdate(TimedMetadata&& aMetadata);
 
   // This should only ever be accessed from the main thread.
-  // It is set in Init and cleared in Shutdown when the element goes away.
-  // The decoder does not add a reference the element.
-  MediaDecoderOwner* const mOwner;
+  // It is set in the constructor and cleared in Shutdown when the element goes
+  // away. The decoder does not add a reference the element.
+  MediaDecoderOwner* mOwner;
 
   // Counters related to decode and presentation of frames.
   const RefPtr<FrameStatistics> mFrameStats;
@@ -714,6 +697,12 @@ protected:
   // only be accessed from main thread.
   nsAutoPtr<MediaInfo> mInfo;
 
+  // Tracks the visiblity status from HTMLMediaElement
+  bool mElementVisible;
+
+  // If true, forces the decoder to be considered hidden.
+  bool mForcedHidden;
+
   // True if MediaDecoder is in dormant state.
   bool mIsDormant;
 
@@ -736,7 +725,7 @@ protected:
   MediaEventListener mFirstFrameLoadedListener;
 
   MediaEventListener mOnPlaybackEvent;
-  MediaEventListener mOnSeekingStart;
+  MediaEventListener mOnPlaybackErrorEvent;
   MediaEventListener mOnMediaNotSeekable;
 
 protected:
@@ -828,9 +817,6 @@ protected:
 
 public:
   AbstractCanonical<media::NullableTimeUnit>* CanonicalDurationOrNull() override;
-  AbstractCanonical<Maybe<double>>* CanonicalExplicitDuration() override {
-    return &mExplicitDuration;
-  }
   AbstractCanonical<double>* CanonicalVolume() {
     return &mVolume;
   }
@@ -842,6 +828,9 @@ public:
   }
   AbstractCanonical<media::NullableTimeUnit>* CanonicalEstimatedDuration() {
     return &mEstimatedDuration;
+  }
+  AbstractCanonical<Maybe<double>>* CanonicalExplicitDuration() {
+    return &mExplicitDuration;
   }
   AbstractCanonical<PlayState>* CanonicalPlayState() {
     return &mPlayState;
@@ -892,12 +881,6 @@ private:
   // When the media stream ends, we can know the duration, thus the stream is
   // no longer considered to be infinite.
   void SetInfinite(bool aInfinite);
-
-  // Reset the decoder and notify the media element that
-  // server connection is closed.
-  void ResetConnectionState();
-
-  nsresult FinishDecoderSetup(MediaResource* aResource);
 
   // Called by MediaResource when the principal of the resource has
   // changed. Called on main thread only.

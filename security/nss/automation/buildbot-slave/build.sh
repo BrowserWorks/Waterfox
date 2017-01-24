@@ -199,7 +199,7 @@ test_nss()
 	print_log "$ cd ${HGDIR}/nss/tests"
 	cd ${HGDIR}/nss/tests
 	print_log "$ ./all.sh"
-	./all.sh 2>&1 | tee ${LOG_TMP} | grep ${GREP_BUFFER} ": #"
+	./all.sh 2>&1 | tee ${LOG_TMP} | egrep ${GREP_BUFFER} ": #|^\[.{10}\] "
 	OUTPUTFILE=${LOG_TMP}
     fi
 
@@ -208,7 +208,7 @@ test_nss()
     RET=$?
 
     print_log "######## details of detected failures (if any) ########"
-    grep -B50 FAIL ${OUTPUTFILE}
+    grep -B50 FAILED ${OUTPUTFILE}
     [ $? -eq 1 ] || RET=1
 
     print_result "NSS - tests - ${BITS} bits - ${OPT}" ${RET} 0
@@ -293,13 +293,6 @@ prepare()
     rm -rf ${HGDIR}/tests_results/
 
     cd ${HGDIR}/nss
-
-    if [ -z "${NSS_DISABLE_ECC}" -a -n "${NSS_ECC_MORE_THAN_SUITE_B}" ]; then
-        ECF="lib/freebl/ecl/ecl-curve.h"
-	print_log "hg revert -r NSS_3_11_1_RTM ${ECF}"
-        hg revert -r NSS_3_11_1_RTM security/nss/${ECF}
-        cp -f security/nss/${ECF} ${ECF}
-    fi
 
     if [ -n "${FEWER_STRESS_ITERATIONS}" ]; then
         sed -i 's/-c_1000_/-c_500_/g' tests/ssl/sslstress.txt

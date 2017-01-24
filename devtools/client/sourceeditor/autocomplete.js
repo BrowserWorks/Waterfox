@@ -7,6 +7,7 @@
 
 const CSSCompleter = require("devtools/client/sourceeditor/css-autocompleter");
 const { AutocompletePopup } = require("devtools/client/shared/autocomplete-popup");
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const CM_TERN_SCRIPTS = [
   "chrome://devtools/content/sourceeditor/codemirror/addon/tern/tern.js",
@@ -32,9 +33,9 @@ function initializeAutoCompletion(ctx, options = {}) {
                         Editor.keyFor("autocompletion", { noaccel: true });
   if (ed.config.mode == Editor.modes.js) {
     let defs = [
-      "./tern/browser",
-      "./tern/ecma5",
-    ].map(require);
+      require("./tern/browser"),
+      require("./tern/ecma5"),
+    ];
 
     CM_TERN_SCRIPTS.forEach(ed.loadScript, ed);
     win.tern = require("./tern/tern");
@@ -71,17 +72,17 @@ function initializeAutoCompletion(ctx, options = {}) {
     let updateArgHintsCallback = cm.tern.updateArgHints.bind(cm.tern, cm);
     cm.on("cursorActivity", updateArgHintsCallback);
 
-    keyMap[autocompleteKey] = cm => {
-      cm.tern.getHint(cm, data => {
+    keyMap[autocompleteKey] = cmArg => {
+      cmArg.tern.getHint(cmArg, data => {
         CodeMirror.on(data, "shown", () => ed.emit("before-suggest"));
         CodeMirror.on(data, "close", () => ed.emit("after-suggest"));
         CodeMirror.on(data, "select", () => ed.emit("suggestion-entered"));
-        CodeMirror.showHint(cm, (cm, cb) => cb(data), { async: true });
+        CodeMirror.showHint(cmArg, (cmIgnore, cb) => cb(data), { async: true });
       });
     };
 
-    keyMap[Editor.keyFor("showInformation2", { noaccel: true })] = cm => {
-      cm.tern.showType(cm, null, () => {
+    keyMap[Editor.keyFor("showInformation2", { noaccel: true })] = cmArg => {
+      cmArg.tern.showType(cmArg, null, () => {
         ed.emit("show-information");
       });
     };
@@ -104,7 +105,8 @@ function initializeAutoCompletion(ctx, options = {}) {
     // TODO: Integrate tern autocompletion with this autocomplete API.
     return;
   } else if (ed.config.mode == Editor.modes.css) {
-    completer = new CSSCompleter({walker: options.walker});
+    completer = new CSSCompleter({walker: options.walker,
+                                  cssProperties: options.cssProperties});
   }
 
   function insertSelectedPopupItem() {
@@ -316,7 +318,7 @@ function onEditorKeypress({ ed, Editor }, cm, event) {
     return;
   }
 
-  if ((event.ctrlKey || event.metaKey) && event.keyCode == event.DOM_VK_SPACE) {
+  if ((event.ctrlKey || event.metaKey) && event.keyCode == KeyCodes.DOM_VK_SPACE) {
     // When Ctrl/Cmd + Space is pressed, two simultaneous keypresses are emitted
     // first one for just the Ctrl/Cmd and second one for combo. The first one
     // leave the autocompleteOpts.doNotAutocomplete as true, so we have to make
@@ -332,23 +334,23 @@ function onEditorKeypress({ ed, Editor }, cm, event) {
   }
 
   switch (event.keyCode) {
-    case event.DOM_VK_RETURN:
+    case KeyCodes.DOM_VK_RETURN:
       autocompleteOpts.doNotAutocomplete = true;
       break;
-    case event.DOM_VK_ESCAPE:
+    case KeyCodes.DOM_VK_ESCAPE:
       if (autocompleteOpts.popup.isOpen) {
         event.preventDefault();
       }
       break;
-    case event.DOM_VK_LEFT:
-    case event.DOM_VK_RIGHT:
-    case event.DOM_VK_HOME:
-    case event.DOM_VK_END:
+    case KeyCodes.DOM_VK_LEFT:
+    case KeyCodes.DOM_VK_RIGHT:
+    case KeyCodes.DOM_VK_HOME:
+    case KeyCodes.DOM_VK_END:
       autocompleteOpts.doNotAutocomplete = true;
       autocompleteOpts.popup.hidePopup();
       break;
-    case event.DOM_VK_BACK_SPACE:
-    case event.DOM_VK_DELETE:
+    case KeyCodes.DOM_VK_BACK_SPACE:
+    case KeyCodes.DOM_VK_DELETE:
       if (ed.config.mode == Editor.modes.css) {
         autocompleteOpts.completer.invalidateCache(ed.getCursor().line);
       }

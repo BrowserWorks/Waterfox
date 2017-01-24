@@ -41,7 +41,7 @@ using namespace mozilla;
 // now owned exclusively by its JS object. Either a weak reference will be turned into
 // a strong ref which will bring its refcount up to 2 and change the wrapper back to
 // the rooting state, or it will stay alive until the JS object dies. If the JS object
-// dies, then when XPCJSRuntime::FinalizeCallback calls FindDyingJSObjects
+// dies, then when XPCJSContext::FinalizeCallback calls FindDyingJSObjects
 // it will find the wrapper and call Release() in it, destroying the wrapper.
 // Otherwise, the wrapper will stay alive, even if it no longer has a weak reference
 // to it.
@@ -103,10 +103,9 @@ NS_CYCLE_COLLECTION_CLASSNAME(nsXPCWrappedJS)::Traverse
     if (cb.WantDebugInfo()) {
         char name[72];
         if (tmp->GetClass())
-            JS_snprintf(name, sizeof(name), "nsXPCWrappedJS (%s)",
-                        tmp->GetClass()->GetInterfaceName());
+            snprintf(name, sizeof(name), "nsXPCWrappedJS (%s)", tmp->GetClass()->GetInterfaceName());
         else
-            JS_snprintf(name, sizeof(name), "nsXPCWrappedJS");
+            snprintf(name, sizeof(name), "nsXPCWrappedJS");
         cb.DescribeRefCountedNode(refcnt, name);
     } else {
         NS_IMPL_CYCLE_COLLECTION_DESCRIBE(nsXPCWrappedJS, refcnt)
@@ -124,7 +123,7 @@ NS_CYCLE_COLLECTION_CLASSNAME(nsXPCWrappedJS)::Traverse
     if (tmp->IsValid()) {
         MOZ_ASSERT(refcnt > 1);
         NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mJSObj");
-        cb.NoteJSObject(tmp->GetJSObjectPreserveColor());
+        cb.NoteJSChild(JS::GCCellPtr(tmp->GetJSObjectPreserveColor()));
     }
 
     if (tmp->IsRootWrapper()) {
@@ -144,7 +143,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsXPCWrappedJS)
     tmp->Unlink();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-// XPCJSRuntime keeps a table of WJS, so we can remove them from
+// XPCJSContext keeps a table of WJS, so we can remove them from
 // the purple buffer in between CCs.
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(nsXPCWrappedJS)
     return true;
@@ -250,7 +249,7 @@ nsXPCWrappedJS::AddRef(void)
 
     if (2 == cnt && IsValid()) {
         GetJSObject(); // Unmark gray JSObject.
-        mClass->GetRuntime()->AddWrappedJSRoot(this);
+        mClass->GetContext()->AddWrappedJSRoot(this);
     }
 
     return cnt;
@@ -351,10 +350,10 @@ nsXPCWrappedJS::GetNewOrUsed(JS::HandleObject jsObj,
 
     // Find any existing wrapper.
     RefPtr<nsXPCWrappedJS> root = rootComp->GetWrappedJSMap()->Find(rootJSObj);
-    MOZ_ASSERT_IF(root, !nsXPConnect::GetRuntimeInstance()->GetMultiCompartmentWrappedJSMap()->
+    MOZ_ASSERT_IF(root, !nsXPConnect::GetContextInstance()->GetMultiCompartmentWrappedJSMap()->
                         Find(rootJSObj));
     if (!root) {
-        root = nsXPConnect::GetRuntimeInstance()->GetMultiCompartmentWrappedJSMap()->
+        root = nsXPConnect::GetContextInstance()->GetMultiCompartmentWrappedJSMap()->
             Find(rootJSObj);
     }
 
@@ -410,7 +409,9 @@ nsXPCWrappedJS::nsXPCWrappedJS(JSContext* cx,
 
     if (IsRootWrapper()) {
         MOZ_ASSERT(!IsMultiCompartment(), "mNext is always nullptr here");
-        xpc::CompartmentPrivate::Get(mJSObj)->GetWrappedJSMap()->Add(cx, this);
+        if (!xpc::CompartmentPrivate::Get(mJSObj)->GetWrappedJSMap()->Add(cx, this)) {
+            *rv = NS_ERROR_OUT_OF_MEMORY;
+        }
     } else {
         NS_ADDREF(mRoot);
         mNext = mRoot->mNext;
@@ -418,11 +419,13 @@ nsXPCWrappedJS::nsXPCWrappedJS(JSContext* cx,
 
         // We always start wrappers in the per-compartment table. If adding
         // this wrapper to the chain causes it to cross compartments, we need
-        // to migrate the chain to the global table on the XPCJSRuntime.
+        // to migrate the chain to the global table on the XPCJSContext.
         if (mRoot->IsMultiCompartment()) {
             xpc::CompartmentPrivate::Get(mRoot->mJSObj)->GetWrappedJSMap()->Remove(mRoot);
-            MOZ_RELEASE_ASSERT(nsXPConnect::GetRuntimeInstance()->
-                    GetMultiCompartmentWrappedJSMap()->Add(cx, mRoot));
+            auto destMap = nsXPConnect::GetContextInstance()->GetMultiCompartmentWrappedJSMap();
+            if (!destMap->Add(cx, mRoot)) {
+                *rv = NS_ERROR_OUT_OF_MEMORY;
+            }
         }
     }
 }
@@ -433,7 +436,7 @@ nsXPCWrappedJS::~nsXPCWrappedJS()
 }
 
 void
-XPCJSRuntime::RemoveWrappedJS(nsXPCWrappedJS* wrapper)
+XPCJSContext::RemoveWrappedJS(nsXPCWrappedJS* wrapper)
 {
     AssertInvalidWrappedJSNotInTable(wrapper);
     if (!wrapper->IsValid())
@@ -466,7 +469,7 @@ NotHasWrapperAssertionCallback(JSContext* cx, void* data, JSCompartment* comp)
 #endif
 
 void
-XPCJSRuntime::AssertInvalidWrappedJSNotInTable(nsXPCWrappedJS* wrapper) const
+XPCJSContext::AssertInvalidWrappedJSNotInTable(nsXPCWrappedJS* wrapper) const
 {
 #ifdef DEBUG
     if (!wrapper->IsValid()) {
@@ -483,20 +486,20 @@ nsXPCWrappedJS::Destroy()
     MOZ_ASSERT(1 == int32_t(mRefCnt), "should be stabilized for deletion");
 
     if (IsRootWrapper())
-        nsXPConnect::GetRuntimeInstance()->RemoveWrappedJS(this);
+        nsXPConnect::GetContextInstance()->RemoveWrappedJS(this);
     Unlink();
 }
 
 void
 nsXPCWrappedJS::Unlink()
 {
-    nsXPConnect::GetRuntimeInstance()->AssertInvalidWrappedJSNotInTable(this);
+    nsXPConnect::GetContextInstance()->AssertInvalidWrappedJSNotInTable(this);
 
     if (IsValid()) {
-        XPCJSRuntime* rt = nsXPConnect::GetRuntimeInstance();
-        if (rt) {
+        XPCJSContext* cx = nsXPConnect::GetContextInstance();
+        if (cx) {
             if (IsRootWrapper())
-                rt->RemoveWrappedJS(this);
+                cx->RemoveWrappedJS(this);
 
             if (mRefCnt > 1)
                 RemoveFromRootSet();
@@ -531,8 +534,8 @@ nsXPCWrappedJS::Unlink()
 
     mClass = nullptr;
     if (mOuter) {
-        XPCJSRuntime* rt = nsXPConnect::GetRuntimeInstance();
-        if (rt->GCIsRunning()) {
+        XPCJSContext* cx = nsXPConnect::GetContextInstance();
+        if (cx->GCIsRunning()) {
             DeferredFinalize(mOuter.forget().take());
         } else {
             mOuter = nullptr;

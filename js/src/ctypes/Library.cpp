@@ -39,7 +39,8 @@ static const JSClassOps sLibraryClassOps = {
 
 static const JSClass sLibraryClass = {
   "Library",
-  JSCLASS_HAS_RESERVED_SLOTS(LIBRARY_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(LIBRARY_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sLibraryClassOps
 };
 
@@ -151,9 +152,12 @@ Library::Create(JSContext* cx, Value path_, const JSCTypesCallbacks* callbacks)
   PRLibrary* library = PR_LoadLibraryWithFlags(libSpec, 0);
 
   if (!library) {
-    char* error = (char*) JS_malloc(cx, PR_GetErrorTextLength() + 1);
-    if (error)
+#define MAX_ERROR_LEN 1024
+    char error[MAX_ERROR_LEN] = "Cannot get error from NSPR.";
+    uint32_t errorLen = PR_GetErrorTextLength();
+    if (errorLen && errorLen < MAX_ERROR_LEN)
       PR_GetErrorText(error);
+#undef MAX_ERROR_LEN
 
 #ifdef XP_WIN
     JS_ReportError(cx, "couldn't open library %hs: %s", pathChars, error);
@@ -161,7 +165,6 @@ Library::Create(JSContext* cx, Value path_, const JSCTypesCallbacks* callbacks)
     JS_ReportError(cx, "couldn't open library %s: %s", pathBytes, error);
     JS_free(cx, pathBytes);
 #endif
-    JS_free(cx, error);
     return nullptr;
   }
 

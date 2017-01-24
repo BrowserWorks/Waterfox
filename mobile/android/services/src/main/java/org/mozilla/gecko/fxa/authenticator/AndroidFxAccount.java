@@ -30,6 +30,7 @@ import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.fxa.login.StateFactory;
+import org.mozilla.gecko.fxa.login.TokensAndKeysState;
 import org.mozilla.gecko.fxa.sync.FxAccountProfileService;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
@@ -144,6 +145,15 @@ public class AndroidFxAccount {
     this.context = applicationContext;
     this.account = account;
     this.accountManager = AccountManager.get(this.context);
+  }
+
+  public static AndroidFxAccount fromContext(Context context) {
+    context = context.getApplicationContext();
+    Account account = FirefoxAccounts.getFirefoxAccount(context);
+    if (account == null) {
+      return null;
+    }
+    return new AndroidFxAccount(context, account);
   }
 
   /**
@@ -598,6 +608,24 @@ public class AndroidFxAccount {
     }
   }
 
+  public byte[] getSessionToken() throws InvalidFxAState {
+    State state = getState();
+    StateLabel stateLabel = state.getStateLabel();
+    if (stateLabel == StateLabel.Cohabiting || stateLabel == StateLabel.Married) {
+      TokensAndKeysState tokensAndKeysState = (TokensAndKeysState) state;
+      return tokensAndKeysState.getSessionToken();
+    }
+    throw new InvalidFxAState("Cannot get sessionToken: not in a TokensAndKeysState state");
+  }
+
+  public static class InvalidFxAState extends Exception {
+    private static final long serialVersionUID = -8537626959811195978L;
+
+    public InvalidFxAState(String message) {
+      super(message);
+    }
+  }
+
   /**
    * <b>For debugging only!</b>
    */
@@ -648,6 +676,7 @@ public class AndroidFxAccount {
     intent.putExtra(FxAccountConstants.ACCOUNT_DELETED_INTENT_VERSION_KEY,
         Long.valueOf(FxAccountConstants.ACCOUNT_DELETED_INTENT_VERSION));
     intent.putExtra(FxAccountConstants.ACCOUNT_DELETED_INTENT_ACCOUNT_KEY, account.name);
+    intent.putExtra(FxAccountConstants.ACCOUNT_DELETED_INTENT_ACCOUNT_PROFILE, getProfile());
 
     // Get the tokens from AccountManager. Note: currently, only reading list service supports OAuth. The following logic will
     // be extended in future to support OAuth for other services.

@@ -65,6 +65,7 @@ namespace jit {
     _(Lsh)                                      \
     _(Rsh)                                      \
     _(Ursh)                                     \
+    _(SignExtend)                               \
     _(Add)                                      \
     _(Sub)                                      \
     _(Mul)                                      \
@@ -87,6 +88,7 @@ namespace jit {
     _(Atan2)                                    \
     _(Hypot)                                    \
     _(MathFunction)                             \
+    _(Random)                                   \
     _(StringSplit)                              \
     _(RegExpMatcher)                            \
     _(RegExpSearcher)                           \
@@ -240,6 +242,17 @@ class RUrsh final : public RInstruction
 {
   public:
     RINSTRUCTION_HEADER_NUM_OP_(Ursh, 2)
+
+    MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const;
+};
+
+class RSignExtend final : public RInstruction
+{
+  private:
+    uint8_t mode_;
+
+  public:
+    RINSTRUCTION_HEADER_NUM_OP_(SignExtend, 1)
 
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const;
 };
@@ -447,6 +460,13 @@ class RMathFunction final : public RInstruction
   public:
     RINSTRUCTION_HEADER_NUM_OP_(MathFunction, 1)
 
+    MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const;
+};
+
+class RRandom final : public RInstruction
+{
+    RINSTRUCTION_HEADER_NUM_OP_(Random, 0)
+  public:
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const;
 };
 

@@ -37,7 +37,8 @@ public:
                                     nsresult aReason);
 
   nsresult NotifyMessage(const nsAString& aSessionId,
-                         const nsACString& aData);
+                         const nsACString& aData,
+                         const bool& aIsBinary);
 
   nsresult NotifySessionConnect(uint64_t aWindowId,
                                 const nsAString& aSessionId);
@@ -62,14 +63,6 @@ private:
   nsRefPtrHashtable<nsUint64HashKey,
                     nsIPresentationRespondingListener> mRespondingListeners;
   RefPtr<PresentationResponderLoadingCallback> mCallback;
-
-  // Store the mapping between the window ID of the OOP page (in this process)
-  // and the ID of the responding session. It's used for an OOP receiver page
-  // to retrieve the correspondent session ID. Besides, also keep the mapping
-  // between the responding session ID and the window ID to help look up the
-  // window ID.
-  nsClassHashtable<nsUint64HashKey, nsString> mRespondingSessionIds;
-  nsDataHashtable<nsStringHashKey, uint64_t> mRespondingWindowIds;
   nsRefPtrHashtable<nsStringHashKey,
                     PresentationContentSessionInfo> mSessionInfos;
 };

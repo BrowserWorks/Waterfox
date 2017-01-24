@@ -11,6 +11,8 @@ fails == dir-9.html dir-9-ref.html # Bug 787215
 == dir-10.html dir-10-ref.html
 random-if((B2G&&browserIsRemote)||Mulet) == dir-11.html dir-11-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 == css-spacing-1.html css-spacing-1-ref.html
+pref(mathml.disabled,true) == disabled-scriptlevel-1.html disabled-scriptlevel-1-ref.html
+pref(mathml.disabled,true) == disabled-scriptlevel-1.xhtml disabled-scriptlevel-1-ref.xhtml
 == displaystyle-1.html displaystyle-1-ref.html
 == displaystyle-2.html displaystyle-2-ref.html
 == displaystyle-3.html displaystyle-3-ref.html
@@ -202,7 +204,7 @@ random-if(winWidget&&!d2d) == opentype-stretchy.html opentype-stretchy-ref.html
 == operator-1.xhtml operator-1-ref.xhtml
 == scriptshift-1.xhtml scriptshift-1-ref.xhtml
 == number-size-1.xhtml number-size-1-ref.xhtml
-random-if((B2G&&browserIsRemote)||Mulet) fails-if(winWidget&&/^Windows\x20NT\x205\.1/.test(http.oscpu)) fuzzy-if(skiaContent,1,80) == multiscripts-1.html multiscripts-1-ref.html # B2G - slight height variation from font metrics # Initial mulet triage: parity with B2G/B2G Desktop
+random-if((B2G&&browserIsRemote)||Mulet) fuzzy-if(skiaContent,1,80) fails-if(winWidget&&/^Windows\x20NT\x205\.1/.test(http.oscpu)) == multiscripts-1.html multiscripts-1-ref.html # B2G - slight height variation from font metrics # Initial mulet triage: parity with B2G/B2G Desktop
 == mathml-mmultiscript-base.html mathml-mmultiscript-base-ref.html
 == mathml-mmultiscript-mprescript.html mathml-mmultiscript-mprescript-ref.html
 != menclose-1a.html menclose-1-ref.html

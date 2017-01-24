@@ -104,7 +104,7 @@ struct ParamTraits<mozilla::mscom::COMPtrHolder<Interface, _IID>>
     mozilla::mscom::ProxyStream proxyStream(_IID, aParam.Get());
     int bufLen;
     const BYTE* buf = proxyStream.GetBuffer(bufLen);
-    MOZ_ASSERT(buf);
+    MOZ_ASSERT(buf || !bufLen);
     aMsg->WriteInt(bufLen);
     aMsg->WriteBytes(reinterpret_cast<const char*>(buf), bufLen);
   }
@@ -132,7 +132,7 @@ struct ParamTraits<mozilla::mscom::COMPtrHolder<Interface, _IID>>
     if (!proxyStream.GetInterface(_IID, (void**)&rawInterface)) {
       return false;
     }
-    paramType::COMPtrType ptr(rawInterface);
+    typename paramType::COMPtrType ptr(rawInterface);
     aResult->Set(mozilla::Move(ptr));
     return true;
   }

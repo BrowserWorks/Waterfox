@@ -11,7 +11,7 @@
 #include "mozilla/dom/ServiceWorkerRegistrar.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/BackgroundUtils.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsThreadUtils.h"
 
 namespace mozilla {
@@ -37,15 +37,20 @@ public:
     AssertIsOnBackgroundThread();
   }
 
-  NS_IMETHODIMP
-  Run()
+  NS_IMETHOD
+  Run() override
   {
     AssertIsInMainProcess();
     AssertIsOnBackgroundThread();
 
     RefPtr<dom::ServiceWorkerRegistrar> service =
       dom::ServiceWorkerRegistrar::Get();
-    MOZ_ASSERT(service);
+
+    // Shutdown during the process of trying to update the registrar.  Give
+    // up on this modification.
+    if (!service) {
+      return NS_OK;
+    }
 
     service->RegisterServiceWorker(mData);
 
@@ -77,15 +82,20 @@ public:
     AssertIsOnBackgroundThread();
   }
 
-  NS_IMETHODIMP
-  Run()
+  NS_IMETHOD
+  Run() override
   {
     AssertIsInMainProcess();
     AssertIsOnBackgroundThread();
 
     RefPtr<dom::ServiceWorkerRegistrar> service =
       dom::ServiceWorkerRegistrar::Get();
-    MOZ_ASSERT(service);
+
+    // Shutdown during the process of trying to update the registrar.  Give
+    // up on this modification.
+    if (!service) {
+      return NS_OK;
+    }
 
     service->UnregisterServiceWorker(mPrincipalInfo,
                                      NS_ConvertUTF16toUTF8(mScope));
@@ -125,7 +135,7 @@ public:
     MOZ_ASSERT(mBackgroundThread);
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     if (NS_IsMainThread()) {
       nsCOMPtr<nsIPrincipal> principal = PrincipalInfoToPrincipal(mPrincipalInfo);

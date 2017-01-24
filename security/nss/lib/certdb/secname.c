@@ -588,8 +588,11 @@ CERT_CompareName(const CERTName *a, const CERTName *b)
         return SECGreaterThan;
 
     for (;;) {
-        ardn = *ardns++;
-        brdn = *brdns++;
+        if (!ardns++ || !brdns++) {
+            break;
+        }
+        ardn = *ardns;
+        brdn = *brdns;
         if (!ardn) {
             break;
         }
@@ -606,7 +609,10 @@ CERT_DecodeAVAValue(const SECItem *derAVAValue)
 {
     SECItem *retItem;
     const SEC_ASN1Template *theTemplate = NULL;
-    enum { conv_none, conv_ucs4, conv_ucs2, conv_iso88591 } convert = conv_none;
+    enum { conv_none,
+           conv_ucs4,
+           conv_ucs2,
+           conv_iso88591 } convert = conv_none;
     SECItem avaValue = { siBuffer, 0 };
     PORTCheapArenaPool tmpArena;
 

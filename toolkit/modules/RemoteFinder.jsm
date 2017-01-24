@@ -32,8 +32,8 @@ RemoteFinder.prototype = {
     if (this._messageManager) {
       this._messageManager.removeMessageListener("Finder:Result", this);
       this._messageManager.removeMessageListener("Finder:MatchesResult", this);
-      this._messageManager.removeMessageListener("Finder:CurrentSelectionResult",this);
-      this._messageManager.removeMessageListener("Finder:HighlightFinished",this);
+      this._messageManager.removeMessageListener("Finder:CurrentSelectionResult", this);
+      this._messageManager.removeMessageListener("Finder:HighlightFinished", this);
     }
     else {
       aBrowser.messageManager.sendAsyncMessage("Finder:Initialize");
@@ -175,6 +175,10 @@ RemoteFinder.prototype = {
     this._browser.messageManager.sendAsyncMessage("Finder:FindbarClose");
   },
 
+  onFindbarOpen: function () {
+    this._browser.messageManager.sendAsyncMessage("Finder:FindbarOpen");
+  },
+
   onModalHighlightChange: function(aUseModalHighlight) {
     this._browser.messageManager.sendAsyncMessage("Finder:ModalHighlightChange", {
       useModalHighlight: aUseModalHighlight
@@ -196,10 +200,9 @@ RemoteFinder.prototype = {
                                                     shiftKey: aEvent.shiftKey });
   },
 
-  requestMatchesCount: function (aSearchString, aMatchLimit, aLinksOnly) {
+  requestMatchesCount: function (aSearchString, aLinksOnly) {
     this._browser.messageManager.sendAsyncMessage("Finder:MatchesCount",
                                                   { searchString: aSearchString,
-                                                    matchLimit: aMatchLimit,
                                                     linksOnly: aLinksOnly });
   }
 }
@@ -229,6 +232,7 @@ RemoteFinderListener.prototype = {
     "Finder:RemoveSelection",
     "Finder:FocusContent",
     "Finder:FindbarClose",
+    "Finder:FindbarOpen",
     "Finder:KeyPress",
     "Finder:MatchesCount",
     "Finder:ModalHighlightChange"
@@ -308,12 +312,16 @@ RemoteFinderListener.prototype = {
         this._finder.onFindbarClose();
         break;
 
+      case "Finder:FindbarOpen":
+        this._finder.onFindbarOpen();
+        break;
+
       case "Finder:KeyPress":
         this._finder.keyPress(data);
         break;
 
       case "Finder:MatchesCount":
-        this._finder.requestMatchesCount(data.searchString, data.matchLimit, data.linksOnly);
+        this._finder.requestMatchesCount(data.searchString, data.linksOnly);
         break;
 
       case "Finder:ModalHighlightChange":

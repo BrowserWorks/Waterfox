@@ -343,9 +343,13 @@ interface TestExampleInterface {
   void passByteString(ByteString arg);
   void passNullableByteString(ByteString? arg);
   void passOptionalByteString(optional ByteString arg);
+  void passOptionalByteStringWithDefaultValue(optional ByteString arg = "abc");
   void passOptionalNullableByteString(optional ByteString? arg);
+  void passOptionalNullableByteStringWithDefaultValue(optional ByteString? arg = null);
   void passVariadicByteString(ByteString... arg);
   void passUnionByteString((ByteString or long) arg);
+  void passOptionalUnionByteString(optional (ByteString or long) arg);
+  void passOptionalUnionByteStringWithDefaultValue(optional (ByteString or long) arg = "abc");
 
   // USVString types
   void passSVS(USVString arg);
@@ -475,7 +479,12 @@ interface TestExampleInterface {
   //void passUnionWithSequence((sequence<object> or long) arg);
   void passUnionWithArrayBuffer((ArrayBuffer or long) arg);
   void passUnionWithString((DOMString or object) arg);
-  //void passUnionWithEnum((TestEnum or object) arg);
+  // Using an enum in a union.  Note that we use some enum not declared in our
+  // binding file, because UnionTypes.h will need to include the binding header
+  // for this enum.  Pick an enum from an interface that won't drag in too much
+  // stuff.
+  void passUnionWithEnum((SupportedType or object) arg);
+
   // Trying to use a callback in a union won't include the test
   // headers, unfortunately, so won't compile.
   //  void passUnionWithCallback((TestCallback or long) arg);
@@ -495,6 +504,12 @@ interface TestExampleInterface {
   void passUnionWithDefaultValue11(optional (unrestricted float or DOMString) arg = "");
   void passUnionWithDefaultValue12(optional (unrestricted float or DOMString) arg = 1);
   void passUnionWithDefaultValue13(optional (unrestricted float or DOMString) arg = Infinity);
+  void passUnionWithDefaultValue14(optional (double or ByteString) arg = "");
+  void passUnionWithDefaultValue15(optional (double or ByteString) arg = 1);
+  void passUnionWithDefaultValue16(optional (double or ByteString) arg = 1.5);
+  void passUnionWithDefaultValue17(optional (double or SupportedType) arg = "text/html");
+  void passUnionWithDefaultValue18(optional (double or SupportedType) arg = 1);
+  void passUnionWithDefaultValue19(optional (double or SupportedType) arg = 1.5);
 
   void passNullableUnionWithDefaultValue1(optional (double or DOMString)? arg = "");
   void passNullableUnionWithDefaultValue2(optional (double or DOMString)? arg = 1);
@@ -508,6 +523,14 @@ interface TestExampleInterface {
   void passNullableUnionWithDefaultValue10(optional (unrestricted float or DOMString)? arg = "");
   void passNullableUnionWithDefaultValue11(optional (unrestricted float or DOMString)? arg = 1);
   void passNullableUnionWithDefaultValue12(optional (unrestricted float or DOMString)? arg = null);
+  void passNullableUnionWithDefaultValue13(optional (double or ByteString)? arg = "");
+  void passNullableUnionWithDefaultValue14(optional (double or ByteString)? arg = 1);
+  void passNullableUnionWithDefaultValue15(optional (double or ByteString)? arg = 1.5);
+  void passNullableUnionWithDefaultValue16(optional (double or ByteString)? arg = null);
+  void passNullableUnionWithDefaultValue17(optional (double or SupportedType)? arg = "text/html");
+  void passNullableUnionWithDefaultValue18(optional (double or SupportedType)? arg = 1);
+  void passNullableUnionWithDefaultValue19(optional (double or SupportedType)? arg = 1.5);
+  void passNullableUnionWithDefaultValue20(optional (double or SupportedType)? arg = null);
 
   void passSequenceOfUnions(sequence<(CanvasPattern or CanvasGradient)> arg);
   void passSequenceOfUnions2(sequence<(object or long)> arg);

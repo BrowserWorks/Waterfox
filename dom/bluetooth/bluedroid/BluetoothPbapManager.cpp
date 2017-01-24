@@ -24,6 +24,8 @@
 #include "nsIObserverService.h"
 #include "nsNetCID.h"
 
+#include "mozilla/Unused.h"
+
 USING_BLUETOOTH_NAMESPACE
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -159,7 +161,7 @@ BluetoothPbapManager::Uninit()
     return;
   }
 
-  NS_WARN_IF(NS_FAILED(
+  Unused << NS_WARN_IF(NS_FAILED(
     obs->RemoveObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID)));
 }
 

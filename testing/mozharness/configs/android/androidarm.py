@@ -43,7 +43,6 @@ config = {
         'verify-emulator',
         'install',
         'run-tests',
-        'stop-emulator',
     ],
     "emulator": {
             "name": "test-1",
@@ -325,7 +324,7 @@ config = {
         },
         "mochitest-chrome": {
             "category": "mochitest",
-            "extra_args": ["--chrome"],
+            "extra_args": ["--flavor=chrome"],
         },
         "mochitest-media-1": {
             "category": "mochitest-media",

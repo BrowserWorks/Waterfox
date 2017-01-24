@@ -384,8 +384,8 @@ function getWindowsVersionInfo() {
     let winVer = OSVERSIONINFOEXW();
     winVer.dwOSVersionInfoSize = OSVERSIONINFOEXW.size;
 
-    if(0 === GetVersionEx(winVer.address())) {
-      throw("Failure in GetVersionEx (returned 0)");
+    if (0 === GetVersionEx(winVer.address())) {
+      throw ("Failure in GetVersionEx (returned 0)");
     }
 
     return {
@@ -716,7 +716,7 @@ EnvironmentAddonBuilder.prototype = {
         experimentInfo.id = activeExperiment;
         experimentInfo.branch = experiments.getActiveExperimentBranch();
       }
-    } catch(e) {
+    } catch (e) {
       // If this is not Firefox, the import will fail.
     }
 
@@ -897,7 +897,7 @@ EnvironmentCache.prototype = {
     this._log.trace("_startWatchingPrefs - " + this._watchedPrefs);
 
     for (let [pref, options] of this._watchedPrefs) {
-      if(!("requiresRestart" in options) || !options.requiresRestart) {
+      if (!("requiresRestart" in options) || !options.requiresRestart) {
         Preferences.observe(pref, this._onPrefChanged, this);
       }
     }
@@ -917,7 +917,7 @@ EnvironmentCache.prototype = {
     this._log.trace("_stopWatchingPrefs");
 
     for (let [pref, options] of this._watchedPrefs) {
-      if(!("requiresRestart" in options) || !options.requiresRestart) {
+      if (!("requiresRestart" in options) || !options.requiresRestart) {
         Preferences.ignore(pref, this._onPrefChanged, this);
       }
     }
@@ -936,7 +936,7 @@ EnvironmentCache.prototype = {
     Services.obs.removeObserver(this, COMPOSITOR_CREATED_TOPIC);
     try {
       Services.obs.removeObserver(this, DISTRIBUTION_CUSTOMIZATION_COMPLETE_TOPIC);
-    } catch(ex) {}
+    } catch (ex) {}
     Services.obs.removeObserver(this, GFX_FEATURES_READY_TOPIC);
     Services.obs.removeObserver(this, SEARCH_ENGINE_MODIFIED_TOPIC);
     Services.obs.removeObserver(this, SEARCH_SERVICE_TOPIC);
@@ -1338,6 +1338,7 @@ EnvironmentCache.prototype = {
     let gfxData = {
       D2DEnabled: getGfxField("D2DEnabled", null),
       DWriteEnabled: getGfxField("DWriteEnabled", null),
+      ContentBackend: getGfxField("ContentBackend", null),
       // The following line is disabled due to main thread jank and will be enabled
       // again as part of bug 1154500.
       //DWriteVersion: getGfxField("DWriteVersion", null),
@@ -1436,7 +1437,7 @@ EnvironmentCache.prototype = {
       return;
     }
 
-    if(this._delayedInitFinished) {
+    if (this._delayedInitFinished) {
       this._lastEnvironmentChangeDate = now;
     }
 

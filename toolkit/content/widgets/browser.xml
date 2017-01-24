@@ -12,7 +12,7 @@
     <content clickthrough="never">
       <children/>
     </content>
-    <implementation type="application/javascript" implements="nsIObserver, nsIDOMEventListener, nsIMessageListener">
+    <implementation type="application/javascript" implements="nsIObserver, nsIDOMEventListener, nsIMessageListener, nsIBrowser">
       <property name="autoscrollEnabled">
         <getter>
           <![CDATA[
@@ -23,7 +23,7 @@
             try {
               enabled = this.mPrefs.getBoolPref("general.autoScroll");
             }
-            catch(ex) {
+            catch (ex) {
             }
 
             return enabled;
@@ -233,6 +233,20 @@
                 onget="return this.mPrefs.QueryInterface(Components.interfaces.nsIPrefService);"
                 readonly="true"/>
 
+      <!--
+        Weak reference to the related browser (see
+        nsIBrowser.getRelatedBrowser).
+      -->
+      <field name="_relatedBrowser">null</field>
+      <property name="relatedBrowser">
+        <getter><![CDATA[
+          return this._relatedBrowser && this._relatedBrowser.get();
+        ]]></getter>
+        <setter><![CDATA[
+          this._relatedBrowser = Cu.getWeakReference(val);
+        ]]></setter>
+      </property>
+
       <field name="_docShell">null</field>
 
       <property name="docShell" readonly="true">
@@ -263,6 +277,10 @@
         ]]></getter>
       </property>
 
+      <property name="autoCompletePopup"
+                onget="return document.getElementById(this.getAttribute('autocompletepopup'))"
+                readonly="true"/>
+
       <property name="docShellIsActive">
         <getter>
           <![CDATA[
@@ -278,12 +296,10 @@
         </setter>
       </property>
 
-      <method name="setDocShellIsActiveAndForeground">
-        <parameter name="isActive"/>
+      <method name="preserveLayers">
+        <parameter name="preserve"/>
         <body>
-          <![CDATA[
-            this.docShell && this.docShell.setIsActiveAndForeground(isActive);
-          ]]>
+          // Only useful for remote browsers.
         </body>
       </method>
 
@@ -582,39 +598,6 @@
         </body>
       </method>
 
-      <method name="attachFormFill">
-        <body>
-          <![CDATA[
-          if (!this.mFormFillAttached && this.hasAttribute("autocompletepopup")) {
-            // hoop up the form fill autocomplete controller
-            var controller = Components.classes["@mozilla.org/satchel/form-fill-controller;1"].
-                               getService(Components.interfaces.nsIFormFillController);
-
-            var popup = document.getElementById(this.getAttribute("autocompletepopup"));
-            if (popup) {
-              controller.attachToBrowser(this.docShell, popup.QueryInterface(Components.interfaces.nsIAutoCompletePopup));
-              this.mFormFillAttached = true;
-            }
-          }
-          ]]>
-        </body>
-      </method>
-
-      <method name="detachFormFill">
-        <body>
-          <![CDATA[
-          if (this.mFormFillAttached) {
-            // hoop up the form fill autocomplete controller
-            var controller = Components.classes["@mozilla.org/satchel/form-fill-controller;1"].
-                               getService(Components.interfaces.nsIFormFillController);
-            controller.detachFromBrowser(this.docShell);
-
-            this.mFormFillAttached = false;
-          }
-          ]]>
-        </body>
-      </method>
-
       <method name="findChildShell">
         <parameter name="aDocShell"/>
         <parameter name="aSoughtURI"/>
@@ -633,15 +616,6 @@
             }
             return null;
           ]]>
-        </body>
-      </method>
-
-      <method name="onPageShow">
-        <parameter name="aEvent"/>
-        <body>
-          <![CDATA[
-            this.attachFormFill();
-         ]]>
         </body>
       </method>
 
@@ -908,7 +882,7 @@
               if (!this.hasAttribute("disableglobalhistory") && !this.isRemoteBrowser) {
                 try {
                   this.docShell.useGlobalHistory = true;
-                } catch(ex) {
+                } catch (ex) {
                   // This can occur if the Places database is locked
                   Components.utils.reportError("Error enabling browser global history: " + ex);
                 }
@@ -924,11 +898,17 @@
           catch (e) {
           }
 
-          // Listen for first load for lazy attachment to form fill controller
-          // (But we don't want to do this for remote browsers - the test infra
-          // might fire these events when they normally wouldn't.)
+          // XXX tabbrowser.xml sets "relatedBrowser" as a direct property on
+          // some browsers before they are put into a DOM (and get a binding).
+          // This hack makes sure that we hold a weak reference to the other
+          // browser (and go through the proper getter and setter).
+          if (this.hasOwnProperty("relatedBrowser")) {
+            var relatedBrowser = this.relatedBrowser;
+            delete this.relatedBrowser;
+            this.relatedBrowser = relatedBrowser;
+          }
+
           if (!this.isRemoteBrowser) {
-            this.addEventListener("pageshow", this.onPageShow, true);
             this.addEventListener("pagehide", this.onPageHide, true);
           }
 
@@ -970,8 +950,6 @@
             }
           }
 
-          this.detachFormFill();
-
           this._fastFind = null;
           this._webBrowserFind = null;
 
@@ -981,7 +959,6 @@
           this.lastURI = null;
 
           if (!this.isRemoteBrowser) {
-            this.removeEventListener("pageshow", this.onPageShow, true);
             this.removeEventListener("pagehide", this.onPageHide, true);
           }
 
@@ -1154,7 +1131,7 @@
         <body>
         <![CDATA[
           if (this._scrolling) {
-            switch(aEvent.type) {
+            switch (aEvent.type) {
               case "mousemove": {
                 var x = aEvent.screenX - this._startX;
                 var y = aEvent.screenY - this._startY;
@@ -1278,16 +1255,9 @@
           try {
             this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner)
                 .swapFrameLoaders(aOtherBrowser);
-          } catch(ex) {
+          } catch (ex) {
             // This may not be implemented for browser elements that are not
             // attached to a BrowserDOMWindow.
-          }
-
-          // Before we swap the actual docShell property we need to detach the
-          // form fill controller from those docShells.
-          if (!this.isRemoteBrowser) {
-            this.detachFormFill();
-            aOtherBrowser.detachFormFill();
           }
 
           for (let field of fieldsToSwap) {
@@ -1295,11 +1265,7 @@
             aOtherBrowser[field] = ourFieldValues[field];
           }
 
-          // Re-attach the docShells to the form fill controller.
           if (!this.isRemoteBrowser) {
-            this.attachFormFill();
-            aOtherBrowser.attachFormFill();
-
             // Null the current nsITypeAheadFind instances so that they're
             // lazily re-created on access. We need to do this because they
             // might have attached the wrong docShell.
@@ -1320,6 +1286,11 @@
             if (aOtherBrowser._remoteFinder)
               aOtherBrowser._remoteFinder.swapBrowser(aOtherBrowser);
           }
+
+          event = new CustomEvent("EndSwapDocShells", {"detail": aOtherBrowser});
+          this.dispatchEvent(event);
+          event = new CustomEvent("EndSwapDocShells", {"detail": this});
+          aOtherBrowser.dispatchEvent(event);
         ]]>
         </body>
       </method>
@@ -1365,9 +1336,6 @@
           ]]>
         </body>
       </method>
-
-      <!-- This will go away if the binding has been removed for some reason. -->
-      <field name="_alive">true</field>
     </implementation>
 
     <handlers>

@@ -322,7 +322,8 @@ StatsZoneCallback(JSRuntime* rt, void* data, Zone* zone)
     zone->addSizeOfIncludingThis(rtStats->mallocSizeOf_,
                                  &zStats.typePool,
                                  &zStats.baselineStubsOptimized,
-                                 &zStats.uniqueIdMap);
+                                 &zStats.uniqueIdMap,
+                                 &zStats.shapeTables);
 }
 
 static void
@@ -353,6 +354,7 @@ StatsCompartmentCallback(JSContext* cx, void* data, JSCompartment* compartment)
                                         &cStats.crossCompartmentWrappersTable,
                                         &cStats.regexpCompartment,
                                         &cStats.savedStacksSet,
+                                        &cStats.varNamesSet,
                                         &cStats.nonSyntacticLexicalScopesTable,
                                         &cStats.jitCompartment,
                                         &cStats.privateData);
@@ -546,49 +548,11 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
         break;
 
       case JS::TraceKind::BaseShape: {
-        BaseShape* base = static_cast<BaseShape*>(thing);
-        CompartmentStats& cStats = base->compartment()->compartmentStats();
-
-        JS::ClassInfo info;        // This zeroes all the sizes.
+        JS::ShapeInfo info;        // This zeroes all the sizes.
         info.shapesGCHeapBase += thingSize;
         // No malloc-heap measurements.
 
-        cStats.classInfo.add(info);
-
-        // XXX: This code is currently disabled because it occasionally causes
-        // crashes (bug 1132502 and bug 1243529). The best theory as to why is
-        // as follows.
-        //
-        // - XPCNativeScriptableShared have heap-allocated js::Class instances.
-        //
-        // - Once an XPCNativeScriptableShared is destroyed, its js::Class is
-        //   freed, but we can still have a BaseShape with a clasp_ pointer
-        //   that points to the freed js::Class.
-        //
-        // - This dangling pointer isn't used in normal execution, because the
-        //   BaseShape is unreachable.
-        //
-        // - However, memory reporting inspects all GC cells, reachable or not,
-        //   so we trace the dangling pointer and crash.
-        //
-        // One solution would be to mark BaseShapes whose js::Class is
-        // heap-allocated, and skip this code just for them. However, that's a
-        // non-trivial change, and heap-allocated js::Class instances are
-        // likely to go away soon.
-        //
-        // So for now we just skip this code for all BaseShapes. The
-        // consequence is that all BaseShapes will show up in about:memory
-        // under "class(<non-notable classes>)" sub-trees, instead of the more
-        // appropriate, class-specific "class(Foo)" sub-tree. But BaseShapes
-        // typically don't take up that much memory so this isn't a big deal.
-        //
-        // XXX: once bug 1265271 is done this code should be re-enabled.
-        //
-        if (0) {
-            const Class* clasp = base->clasp();
-            const char* className = clasp->name;
-            AddClassInfo(granularity, cStats, className, info);
-        }
+        zStats->shapeInfo.add(info);
         break;
       }
 
@@ -607,23 +571,14 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
 
       case JS::TraceKind::Shape: {
         Shape* shape = static_cast<Shape*>(thing);
-        CompartmentStats& cStats = shape->compartment()->compartmentStats();
-        JS::ClassInfo info;        // This zeroes all the sizes.
+
+        JS::ShapeInfo info;        // This zeroes all the sizes.
         if (shape->inDictionary())
             info.shapesGCHeapDict += thingSize;
         else
             info.shapesGCHeapTree += thingSize;
         shape->addSizeOfExcludingThis(rtStats->mallocSizeOf_, &info);
-        cStats.classInfo.add(info);
-
-        // XXX: once bug 1265271 is done, occur, this code should be
-        // re-enabled. (See the big comment on the BaseShape case above.)
-        if (0) {
-            const BaseShape* base = shape->base();
-            const Class* clasp = base->clasp();
-            const char* className = clasp->name;
-            AddClassInfo(granularity, cStats, className, info);
-        }
+        zStats->shapeInfo.add(info);
         break;
       }
 
@@ -631,6 +586,13 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
         ObjectGroup* group = static_cast<ObjectGroup*>(thing);
         zStats->objectGroupsGCHeap += thingSize;
         zStats->objectGroupsMallocHeap += group->sizeOfExcludingThis(rtStats->mallocSizeOf_);
+        break;
+      }
+
+      case JS::TraceKind::Scope: {
+        Scope* scope = static_cast<Scope*>(thing);
+        zStats->scopesGCHeap += thingSize;
+        zStats->scopesMallocHeap += scope->sizeOfExcludingThis(rtStats->mallocSizeOf_);
         break;
       }
 
@@ -876,10 +838,10 @@ JS::CollectRuntimeStats(JSContext* cx, RuntimeStats *rtStats, ObjectPrivateVisit
 }
 
 JS_PUBLIC_API(size_t)
-JS::SystemCompartmentCount(JSRuntime* rt)
+JS::SystemCompartmentCount(JSContext* cx)
 {
     size_t n = 0;
-    for (CompartmentsIter comp(rt, WithAtoms); !comp.done(); comp.next()) {
+    for (CompartmentsIter comp(cx, WithAtoms); !comp.done(); comp.next()) {
         if (comp->isSystem())
             ++n;
     }
@@ -887,10 +849,10 @@ JS::SystemCompartmentCount(JSRuntime* rt)
 }
 
 JS_PUBLIC_API(size_t)
-JS::UserCompartmentCount(JSRuntime* rt)
+JS::UserCompartmentCount(JSContext* cx)
 {
     size_t n = 0;
-    for (CompartmentsIter comp(rt, WithAtoms); !comp.done(); comp.next()) {
+    for (CompartmentsIter comp(cx, WithAtoms); !comp.done(); comp.next()) {
         if (!comp->isSystem())
             ++n;
     }
@@ -898,9 +860,9 @@ JS::UserCompartmentCount(JSRuntime* rt)
 }
 
 JS_PUBLIC_API(size_t)
-JS::PeakSizeOfTemporary(const JSRuntime* rt)
+JS::PeakSizeOfTemporary(const JSContext* cx)
 {
-    return rt->tempLifoAlloc.peakSizeOfExcludingThis();
+    return cx->JSRuntime::tempLifoAlloc.peakSizeOfExcludingThis();
 }
 
 namespace JS {

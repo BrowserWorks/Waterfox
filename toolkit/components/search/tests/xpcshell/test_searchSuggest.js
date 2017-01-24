@@ -11,6 +11,13 @@ Cu.import("resource://gre/modules/FormHistory.jsm");
 Cu.import("resource://gre/modules/SearchSuggestionController.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 
+// We must make sure the FormHistoryStartup component is
+// initialized in order for it to respond to FormHistory
+// requests from nsFormAutoComplete.js.
+var formHistoryStartup = Cc["@mozilla.org/satchel/form-history-startup;1"].
+                         getService(Ci.nsIObserver);
+formHistoryStartup.observe(null, "profile-after-change", null);
+
 var httpServer = new HttpServer();
 var getEngine, postEngine, unresolvableEngine;
 
@@ -532,6 +539,15 @@ add_task(function* minus_one_results_requested() {
   }, /result/i);
 });
 
+add_task(function* test_userContextId() {
+  let controller = new SearchSuggestionController();
+  controller._fetchRemote = function(searchTerm, engine, privateMode, userContextId) {
+    Assert.equal(userContextId, 1);
+    return Promise.defer();
+  };
+
+  controller.fetch("test", false, getEngine, 1);
+});
 
 // Helpers
 

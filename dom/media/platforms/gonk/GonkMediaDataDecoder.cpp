@@ -141,7 +141,7 @@ GonkDecoderManager::Shutdown()
     mDecoder = nullptr;
   }
 
-  mInitPromise.RejectIfExists(DecoderFailureReason::CANCELED, __func__);
+  mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
 
   return NS_OK;
 }
@@ -175,7 +175,8 @@ GonkDecoderManager::ProcessInput(bool aEndOfStream)
     }
   } else {
     GMDD_LOG("input processed: error#%d", rv);
-    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mDecodeCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                            __func__));
   }
 }
 
@@ -189,7 +190,8 @@ GonkDecoderManager::ProcessFlush()
   mWaitOutput.Clear();
   if (mDecoder->flush() != OK) {
     GMDD_LOG("flush error");
-    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mDecodeCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                            __func__));
   }
   mIsFlushing = false;
   lock.NotifyAll();
@@ -225,7 +227,8 @@ GonkDecoderManager::ProcessToDo(bool aEndOfStream)
   mToDo.clear();
 
   if (NumQueuedSamples() > 0 && ProcessQueuedSamples() < 0) {
-    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mDecodeCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                            __func__));
     return;
   }
 
@@ -252,7 +255,8 @@ GonkDecoderManager::ProcessToDo(bool aEndOfStream)
     } else if (rv == NS_ERROR_NOT_AVAILABLE) {
       break;
     } else {
-      mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+      mDecodeCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                              __func__));
       return;
     }
   }
@@ -280,7 +284,8 @@ GonkDecoderManager::ResetEOS()
   mWaitOutput.Clear();
   if (mDecoder->flush() != OK) {
     GMDD_LOG("flush error");
-    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mDecodeCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                                            __func__));
   }
 }
 
@@ -348,36 +353,33 @@ GonkMediaDataDecoder::Init()
   return mManager->Init();
 }
 
-nsresult
+void
 GonkMediaDataDecoder::Shutdown()
 {
-  nsresult rv = mManager->Shutdown();
+  mManager->Shutdown();
 
   // Because codec allocated runnable and init promise is at reader TaskQueue,
   // so manager needs to be destroyed at reader TaskQueue to prevent racing.
   mManager = nullptr;
-  return rv;
 }
 
 // Inserts data into the decoder's pipeline.
-nsresult
+void
 GonkMediaDataDecoder::Input(MediaRawData* aSample)
 {
   mManager->Input(aSample);
-  return NS_OK;
 }
 
-nsresult
+void
 GonkMediaDataDecoder::Flush()
 {
-  return mManager->Flush();
+  mManager->Flush();
 }
 
-nsresult
+void
 GonkMediaDataDecoder::Drain()
 {
   mManager->Input(nullptr);
-  return NS_OK;
 }
 
 } // namespace mozilla

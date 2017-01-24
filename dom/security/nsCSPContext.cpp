@@ -109,9 +109,8 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
                          int16_t*            outDecision)
 {
   if (CSPCONTEXTLOGENABLED()) {
-    nsAutoCString spec;
-    aContentLocation->GetSpec(spec);
-    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, aContentLocation: %s", spec.get()));
+    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, aContentLocation: %s",
+                   aContentLocation->GetSpecOrDefault().get()));
     CSPCONTEXTLOG((">>>>                      aContentType: %d", aContentType));
   }
 
@@ -185,9 +184,10 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
   }
 
   if (CSPCONTEXTLOGENABLED()) {
-    nsAutoCString spec;
-    aContentLocation->GetSpec(spec);
-    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, decision: %s, aContentLocation: %s", *outDecision > 0 ? "load" : "deny", spec.get()));
+    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, decision: %s, "
+                   "aContentLocation: %s",
+                   *outDecision > 0 ? "load" : "deny",
+                   aContentLocation->GetSpecOrDefault().get()));
   }
   return NS_OK;
 }
@@ -280,7 +280,7 @@ nsCSPContext::~nsCSPContext()
 }
 
 NS_IMETHODIMP
-nsCSPContext::GetPolicy(uint32_t aIndex, nsAString& outStr)
+nsCSPContext::GetPolicyString(uint32_t aIndex, nsAString& outStr)
 {
   if (aIndex >= mPolicies.Length()) {
     return NS_ERROR_ILLEGAL_VALUE;
@@ -830,7 +830,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 
   // original-policy
   nsAutoString originalPolicy;
-  rv = this->GetPolicy(aViolatedPolicyIndex, originalPolicy);
+  rv = this->GetPolicyString(aViolatedPolicyIndex, originalPolicy);
   NS_ENSURE_SUCCESS(rv, rv);
   report.mCsp_report.mOriginal_policy = originalPolicy;
 
@@ -1045,7 +1045,7 @@ class CSPReportSenderRunnable final : public Runnable
       }
     }
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       MOZ_ASSERT(NS_IsMainThread());
 
@@ -1226,9 +1226,8 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
       uriClone->SetUserPass(EmptyCString());
 
       if (CSPCONTEXTLOGENABLED()) {
-        nsAutoCString spec;
-        uriClone->GetSpec(spec);
-        CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, found ancestor: %s", spec.get()));
+        CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, found ancestor: %s",
+                       uriClone->GetSpecOrDefault().get()));
       }
       ancestorsArray.AppendElement(uriClone);
     }
@@ -1246,9 +1245,8 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
 
   for (uint32_t a = 0; a < ancestorsArray.Length(); a++) {
     if (CSPCONTEXTLOGENABLED()) {
-      nsAutoCString spec;
-      ancestorsArray[a]->GetSpec(spec);
-      CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, checking ancestor: %s", spec.get()));
+      CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, checking ancestor: %s",
+                     ancestorsArray[a]->GetSpecOrDefault().get()));
     }
     // omit the ancestor URI in violation reports if cross-origin as per spec
     // (it is a violation of the same-origin policy).
@@ -1293,11 +1291,9 @@ nsCSPContext::Permits(nsIURI* aURI,
                                 true);    // send blocked URI in violation reports
 
   if (CSPCONTEXTLOGENABLED()) {
-      nsAutoCString spec;
-      aURI->GetSpec(spec);
       CSPCONTEXTLOG(("nsCSPContext::Permits, aUri: %s, aDir: %d, isAllowed: %s",
-                    spec.get(), aDir,
-                    *outPermits ? "allow" : "deny"));
+                     aURI->GetSpecOrDefault().get(), aDir,
+                     *outPermits ? "allow" : "deny"));
   }
 
   return NS_OK;
@@ -1374,7 +1370,7 @@ CSPViolationReportListener::~CSPViolationReportListener()
 {
 }
 
-NS_METHOD
+nsresult
 AppendSegmentToString(nsIInputStream* aInputStream,
                       void* aClosure,
                       const char* aRawSegment,

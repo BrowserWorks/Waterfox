@@ -93,7 +93,9 @@ protected:
                                   unsigned short aInputSourceArg,
                                   bool aToWindow,
                                   bool *aPreventDefault,
-                                  bool aIsSynthesized);
+                                  bool aIsDOMEventSynthesized,
+                                  bool aIsWidgetEventSynthesized,
+                                  int32_t aButtons);
 
   NS_IMETHOD SendPointerEventCommon(const nsAString& aType,
                                     float aX,

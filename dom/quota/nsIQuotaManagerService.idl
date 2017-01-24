@@ -28,7 +28,7 @@ interface nsIQuotaManagerService : nsISupports
    * Note:  Origin usage here represents total usage of an origin. However,
    *        group usage here represents only non-persistent usage of a group.
    */
-  nsIQuotaUsageRequest
+  [must_use] nsIQuotaUsageRequest
   getUsageForPrincipal(in nsIPrincipal aPrincipal,
                        in nsIQuotaUsageCallback aCallback,
                        [optional] in boolean aGetGroupUsage);
@@ -41,7 +41,7 @@ interface nsIQuotaManagerService : nsISupports
    * If the dom.quotaManager.testing preference is not true the call will be
    * a no-op.
    */
-  nsIQuotaRequest
+  [must_use] nsIQuotaRequest
   clear();
 
   /**
@@ -50,10 +50,17 @@ interface nsIQuotaManagerService : nsISupports
    *
    * @param aPrincipal
    *        A principal for the origin whose storages are to be cleared.
+   * @param aPersistenceType
+   *        An optional string that tells what persistence type of storages
+   *        will be cleared.
+   * @param aClearAll
+   *        An optional boolean to indicate clearing all storages under the
+   *        given origin.
    */
-  nsIQuotaRequest
+  [must_use] nsIQuotaRequest
   clearStoragesForPrincipal(in nsIPrincipal aPrincipal,
-                            [optional] in ACString aPersistenceType);
+                            [optional] in ACString aPersistenceType,
+                            [optional] in boolean aClearAll);
 
   /**
    * Resets quota and storage management. This can be used to force
@@ -64,6 +71,6 @@ interface nsIQuotaManagerService : nsISupports
    * If the dom.quotaManager.testing preference is not true the call will be
    * a no-op.
    */
-  nsIQuotaRequest
+  [must_use] nsIQuotaRequest
   reset();
 };

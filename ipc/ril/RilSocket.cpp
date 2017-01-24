@@ -12,6 +12,7 @@
 #include "nsISupportsImpl.h" // for MOZ_COUNT_CTOR, MOZ_COUNT_DTOR
 #include "nsXULAppAPI.h"
 #include "RilSocketConsumer.h"
+#include "mozilla/Unused.h"
 
 static const size_t MAX_READ_SIZE = 1 << 16;
 
@@ -219,7 +220,7 @@ void
 RilSocketIO::ConsumeBuffer()
 {
   RefPtr<ReceiveTask> task = new ReceiveTask(this, mBuffer.release());
-  NS_WARN_IF(!mDispatcher->PostTask(task));
+  Unused << NS_WARN_IF(!mDispatcher->PostTask(task));
 }
 
 void

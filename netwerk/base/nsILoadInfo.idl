@@ -310,6 +310,8 @@ interface nsILoadInfo : nsISupports
 
   /**
    * If usePrivateBrowsing is true, private browsing will be used.
+   * This value equals to originAttributes.privateBrowsingId in *content*
+   * side.
    */
   [infallible] readonly attribute boolean usePrivateBrowsing;
 
@@ -428,6 +430,11 @@ interface nsILoadInfo : nsISupports
   /**
    * Customized NeckoOriginAttributes within LoadInfo to allow overwriting of the
    * default originAttributes from the loadingPrincipal.
+   *
+   * In chrome side, originAttributes.privateBrowsingId will always be 0 even if
+   * the usePrivateBrowsing is true, because chrome docshell won't set
+   * privateBrowsingId on origin attributes (See bug 1278664). This is to make
+   * sure nsILoadInfo and nsILoadContext have the same origin attributes.
    */
   [implicit_jscontext, binaryname(ScriptableOriginAttributes)]
   attribute jsval originAttributes;
@@ -551,6 +558,32 @@ interface nsILoadInfo : nsISupports
    * A C++ friendly getter for the forcePreflight flag.
    */
   [infallible] readonly attribute boolean isPreflight;
+
+  /**
+   * When this request would be mixed-content and we do not have an
+   * entry in the HSTS cache, we send an HSTS priming request to
+   * determine if it is ok to upgrade the request to HTTPS.
+   */
+  /**
+   * True if this is a mixed-content load and HSTS priming request will be sent.
+   */
+  [noscript, infallible] readonly attribute boolean forceHSTSPriming;
+  /**
+   * Carry the decision whether this load would be blocked by mixed content so
+   * that if HSTS priming fails, the correct decision can be made.
+   */
+  [noscript, infallible] readonly attribute boolean mixedContentWouldBlock;
+
+  /**
+   * Mark this LoadInfo as needing HSTS Priming
+   *
+   * @param wouldBlock Carry the decision of Mixed Content Blocking to be
+   * applied when HSTS priming is complete.
+   */
+  [noscript, notxpcom, nostdcall]
+  void setHSTSPriming(in boolean mixeContentWouldBlock);
+  [noscript, notxpcom, nostdcall]
+  void clearHSTSPriming();
 
   /**
   * Constants reflecting the channel tainting.  These are mainly defined here

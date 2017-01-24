@@ -86,20 +86,11 @@ FFmpegDataDecoder<LIBAV_VER>::InitDecoder()
     return NS_ERROR_FAILURE;
   }
 
-  if (mCodecContext->codec_type == AVMEDIA_TYPE_AUDIO &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_FLT &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_FLTP &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_S16 &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_S16P) {
-    NS_WARNING("FFmpeg audio decoder outputs unsupported audio format.");
-    return NS_ERROR_FAILURE;
-  }
-
   FFMPEG_LOG("FFmpeg init successful.");
   return NS_OK;
 }
 
-nsresult
+void
 FFmpegDataDecoder<LIBAV_VER>::Shutdown()
 {
   if (mTaskQueue) {
@@ -109,7 +100,6 @@ FFmpegDataDecoder<LIBAV_VER>::Shutdown()
   } else {
     ProcessShutdown();
   }
-  return NS_OK;
 }
 
 void
@@ -119,29 +109,22 @@ FFmpegDataDecoder<LIBAV_VER>::ProcessDecode(MediaRawData* aSample)
   if (mIsFlushing) {
     return;
   }
-  switch (DoDecode(aSample)) {
-    case DecodeResult::DECODE_ERROR:
-      mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
-      break;
-    case DecodeResult::FATAL_ERROR:
-      mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
-      break;
-    default:
-      if (mTaskQueue->IsEmpty()) {
-        mCallback->InputExhausted();
-      }
+  MediaResult rv = DoDecode(aSample);
+  if (NS_FAILED(rv)) {
+    mCallback->Error(rv);
+  } else {
+    mCallback->InputExhausted();
   }
 }
 
-nsresult
+void
 FFmpegDataDecoder<LIBAV_VER>::Input(MediaRawData* aSample)
 {
   mTaskQueue->Dispatch(NewRunnableMethod<RefPtr<MediaRawData>>(
     this, &FFmpegDataDecoder::ProcessDecode, aSample));
-  return NS_OK;
 }
 
-nsresult
+void
 FFmpegDataDecoder<LIBAV_VER>::Flush()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
@@ -150,17 +133,15 @@ FFmpegDataDecoder<LIBAV_VER>::Flush()
     NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessFlush);
   SyncRunnable::DispatchToThread(mTaskQueue, runnable);
   mIsFlushing = false;
-  return NS_OK;
 }
 
-nsresult
+void
 FFmpegDataDecoder<LIBAV_VER>::Drain()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   nsCOMPtr<nsIRunnable> runnable =
     NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessDrain);
   mTaskQueue->Dispatch(runnable.forget());
-  return NS_OK;
 }
 
 void

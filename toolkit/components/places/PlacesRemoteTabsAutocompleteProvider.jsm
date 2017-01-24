@@ -49,7 +49,7 @@ function buildItems() {
   if (weaveXPCService.ready) {
     let engine = Weave.Service.engineManager.get("tabs");
 
-    for (let [guid, client] in Iterator(engine.getAllClients())) {
+    for (let [guid, client] of Object.entries(engine.getAllClients())) {
       clients.set(guid, client);
       for (let tab of client.tabs) {
         let url = tab.urlHistory[0];
@@ -97,7 +97,7 @@ function observe(subject, topic, data) {
       if (data == PREF_SHOW_REMOTE_ICONS) {
         try {
           showRemoteIcons = Services.prefs.getBoolPref(PREF_SHOW_REMOTE_ICONS);
-        } catch(_) {
+        } catch (_) {
           showRemoteIcons = true; // no such pref - default is to show the icons.
         }
       }

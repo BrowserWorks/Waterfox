@@ -32,11 +32,6 @@
 #endif
 #include "config.h"
 
-#if defined(__clang__)
-#   define _tzcnt_u32(v) __builtin_ctz(v)
-#   define _tzcnt_u64(v) __builtin_ctzll(v)
-#endif
-
 #if HAVE_FAST_CLZ
 #if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER>=1216)) || defined(_MSC_VER)
 #   if defined(__INTEL_COMPILER)
@@ -52,6 +47,7 @@ static av_always_inline av_const int ff_log2_x86(unsigned int v)
 #   endif
 #   define ff_log2_16bit av_log2
 
+#if defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER >= 1700))
 #   define ff_ctz(v) _tzcnt_u32(v)
 
 #   if ARCH_X86_64
@@ -63,6 +59,7 @@ static av_always_inline av_const int ff_ctzll_x86(long long v)
     return ((uint32_t)v == 0) ? _tzcnt_u32((uint32_t)(v >> 32)) + 32 : _tzcnt_u32((uint32_t)v);
 }
 #   endif
+#endif /* _MSC_VER */
 
 #endif /* __INTEL_COMPILER */
 

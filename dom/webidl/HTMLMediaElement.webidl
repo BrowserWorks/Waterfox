@@ -153,7 +153,6 @@ partial interface HTMLMediaElement {
   attribute EventHandler onmozinterruptend;
 };
 
-#ifdef MOZ_EME
 // Encrypted Media Extensions
 partial interface HTMLMediaElement {
   [Pref="media.eme.apiVisible"]
@@ -166,7 +165,6 @@ partial interface HTMLMediaElement {
   [Pref="media.eme.apiVisible"]
   attribute EventHandler onencrypted;
 };
-#endif
 
 // This is just for testing
 partial interface HTMLMediaElement {
@@ -211,4 +209,13 @@ partial interface HTMLMediaElement {
 partial interface HTMLMediaElement {
   [Throws, Pref="media.seekToNextFrame.enabled"]
   Promise<void> seekToNextFrame();
+};
+
+/*
+ * This is an API for simulating visibility changes to help debug and write
+ * tests about suspend-video-decoding.
+ */
+partial interface HTMLMediaElement {
+  [Pref="media.test.setVisible"]
+  void setVisible(boolean aVisible);
 };

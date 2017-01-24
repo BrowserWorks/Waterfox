@@ -24,6 +24,7 @@ TestPresentationControlChannel.prototype = {
   disconnect: function() {},
   launch: function() {},
   terminate: function() {},
+  reconnect: function() {},
   set listener(listener) {},
   get listener() {},
 };
@@ -39,6 +40,7 @@ var testProvider = {
   },
 };
 
+const forbiddenRequestedUrl = 'http://example.com';
 var testDevice = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationDevice]),
   id: 'id',
@@ -46,6 +48,10 @@ var testDevice = {
   type: 'type',
   establishControlChannel: function(url, presentationId) {
     return null;
+  },
+  disconnect: function() {},
+  isRequestedUrlSupported: function(requestedUrl) {
+    return forbiddenRequestedUrl !== requestedUrl;
   },
 };
 
@@ -121,6 +127,16 @@ function updateDevice() {
   manager.QueryInterface(Ci.nsIPresentationDeviceListener).updateDevice(testDevice);
 }
 
+function filterDevice() {
+  let presentationUrls = Cc['@mozilla.org/array;1'].createInstance(Ci.nsIMutableArray);
+  let url = Cc['@mozilla.org/supports-string;1'].createInstance(Ci.nsISupportsString);
+  url.data = forbiddenRequestedUrl;
+  presentationUrls.appendElement(url, false);
+  let devices = manager.getAvailableDevices(presentationUrls);
+  Assert.equal(devices.length, 0, 'expect 0 available device for example.com');
+  run_next_test();
+}
+
 function sessionRequest() {
   let testUrl = 'http://www.example.org/';
   let testPresentationId = 'test-presentation-id';
@@ -161,6 +177,25 @@ function terminateRequest() {
                              testControlChannel, testIsFromReceiver);
 }
 
+function reconnectRequest() {
+  let testUrl = 'http://www.example.org/';
+  let testPresentationId = 'test-presentation-id';
+  let testControlChannel = new TestPresentationControlChannel();
+  Services.obs.addObserver(function observer(subject, topic, data) {
+    Services.obs.removeObserver(observer, topic);
+
+    let request = subject.QueryInterface(Ci.nsIPresentationSessionRequest);
+
+    Assert.equal(request.device.id, testDevice.id, 'expected device');
+    Assert.equal(request.url, testUrl, 'expected requesting URL');
+    Assert.equal(request.presentationId, testPresentationId, 'expected presentation Id');
+
+    run_next_test();
+  }, 'presentation-reconnect-request', false);
+  manager.QueryInterface(Ci.nsIPresentationDeviceListener)
+         .onReconnectRequest(testDevice, testUrl, testPresentationId, testControlChannel);
+}
+
 function removeDevice() {
   Services.obs.addObserver(function observer(subject, topic, data) {
     Services.obs.removeObserver(observer, topic);
@@ -197,8 +232,10 @@ add_test(addProvider);
 add_test(forceDiscovery);
 add_test(addDevice);
 add_test(updateDevice);
+add_test(filterDevice);
 add_test(sessionRequest);
 add_test(terminateRequest);
+add_test(reconnectRequest);
 add_test(removeDevice);
 add_test(removeProvider);
 

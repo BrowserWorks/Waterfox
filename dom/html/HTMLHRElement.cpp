@@ -43,7 +43,7 @@ HTMLHRElement::ParseAttribute(int32_t aNamespaceID,
     { "left", NS_STYLE_TEXT_ALIGN_LEFT },
     { "right", NS_STYLE_TEXT_ALIGN_RIGHT },
     { "center", NS_STYLE_TEXT_ALIGN_CENTER },
-    { 0 }
+    { nullptr, 0 }
   };
 
   if (aNamespaceID == kNameSpaceID_None) {
@@ -206,7 +206,7 @@ HTMLHRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
       // 10000px on all corners; this triggers the clamping to make
       // circular ends.  This assumes the <hr> isn't larger than
       // that in *both* dimensions.
-      for (const nsCSSProperty* props =
+      for (const nsCSSPropertyID* props =
             nsCSSProps::SubpropertyEntryFor(eCSSProperty_border_radius);
            *props != eCSSProperty_UNKNOWN; ++props) {
         nsCSSValue* dimen = aData->ValueFor(*props);

@@ -32,6 +32,10 @@ class nsPresContext;
 class nsIContent;
 class imgRequestProxy;
 
+namespace mozilla {
+class AsyncEventDispatcher;
+} // namespace mozilla
+
 #ifdef LoadImage
 // Undefine LoadImage to prevent naming conflict with Windows.
 #undef LoadImage
@@ -218,6 +222,8 @@ protected:
   // The nsContentPolicyType we would use for this ImageLoadType
   static nsContentPolicyType PolicyTypeForLoad(ImageLoadType aImageLoadType);
 
+  void AsyncEventRunning(mozilla::AsyncEventDispatcher* aEvent);
+
 private:
   /**
    * Struct used to manage the image observers.
@@ -263,9 +269,18 @@ private:
   /**
    * Method to fire an event once we know what's going on with the image load.
    *
-   * @param aEventType "load" or "error" depending on how things went
+   * @param aEventType "loadstart", "loadend", "load", or "error" depending on
+   *                   how things went
+   * @param aIsCancelable true if event is cancelable.
    */
-  nsresult FireEvent(const nsAString& aEventType);
+  nsresult FireEvent(const nsAString& aEventType, bool aIsCancelable = false);
+
+  /**
+   * Method to cancel and null-out pending event if they exist.
+   */
+  void CancelPendingEvent();
+
+  RefPtr<mozilla::AsyncEventDispatcher> mPendingEvent;
 
 protected:
   /**
@@ -318,7 +333,7 @@ protected:
 
   /**
    * Cancels and nulls-out the "current" and "pending" requests if they exist.
-   * 
+   *
    * @param aNonvisibleAction An action to take if the image is no longer
    *                          visible as a result; see |UntrackImage|.
    */

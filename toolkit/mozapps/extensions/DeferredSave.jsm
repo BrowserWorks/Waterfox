@@ -208,7 +208,7 @@ this.DeferredSave.prototype = {
     try {
       toSave = this._dataProvider();
     }
-    catch(e) {
+    catch (e) {
         this.logger.error("Deferred save dataProvider failed", e);
       writing.then(null, error => {})
         .then(count => {
@@ -217,7 +217,7 @@ this.DeferredSave.prototype = {
       return;
     }
 
-    writing.then(null, error => {return 0;})
+    writing.then(null, error => { return 0; })
     .then(count => {
         this.logger.debug("Starting write");
       this.totalSaves++;

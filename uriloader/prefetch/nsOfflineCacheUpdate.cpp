@@ -98,11 +98,9 @@ LogToConsole(const char * message, nsOfflineCacheUpdateItem * item = nullptr)
     {
         nsAutoString messageUTF16 = NS_ConvertUTF8toUTF16(message);
         if (item && item->mURI) {
-            nsAutoCString uriSpec;
-            item->mURI->GetSpec(uriSpec);
-
             messageUTF16.AppendLiteral(", URL=");
-            messageUTF16.Append(NS_ConvertUTF8toUTF16(uriSpec));
+            messageUTF16.Append(
+                NS_ConvertUTF8toUTF16(item->mURI->GetSpecOrDefault()));
         }
         consoleService->LogStringMessage(messageUTF16.get());
     }
@@ -141,12 +139,12 @@ private:
 
     ~nsManifestCheck() {}
 
-    static NS_METHOD ReadManifest(nsIInputStream *aInputStream,
-                                  void *aClosure,
-                                  const char *aFromSegment,
-                                  uint32_t aOffset,
-                                  uint32_t aCount,
-                                  uint32_t *aBytesConsumed);
+    static nsresult ReadManifest(nsIInputStream *aInputStream,
+                                 void *aClosure,
+                                 const char *aFromSegment,
+                                 uint32_t aOffset,
+                                 uint32_t aCount,
+                                 uint32_t *aBytesConsumed);
 
     RefPtr<nsOfflineCacheUpdate> mUpdate;
     nsCOMPtr<nsIURI> mURI;
@@ -206,8 +204,7 @@ nsManifestCheck::Begin()
 // nsManifestCheck <public>
 //-----------------------------------------------------------------------------
 
-/* static */
-NS_METHOD
+/* static */ nsresult
 nsManifestCheck::ReadManifest(nsIInputStream *aInputStream,
                               void *aClosure,
                               const char *aFromSegment,
@@ -324,13 +321,15 @@ nsOfflineCacheUpdateItem::nsOfflineCacheUpdateItem(nsIURI *aURI,
                                                    nsIPrincipal* aLoadingPrincipal,
                                                    nsIApplicationCache *aApplicationCache,
                                                    nsIApplicationCache *aPreviousApplicationCache,
-                                                   uint32_t type)
+                                                   uint32_t type,
+                                                   uint32_t loadFlags)
     : mURI(aURI)
     , mReferrerURI(aReferrerURI)
     , mLoadingPrincipal(aLoadingPrincipal)
     , mApplicationCache(aApplicationCache)
     , mPreviousApplicationCache(aPreviousApplicationCache)
     , mItemType(type)
+    , mLoadFlags(loadFlags)
     , mChannel(nullptr)
     , mState(LoadStatus::UNINITIALIZED)
     , mBytesRead(0)
@@ -345,9 +344,8 @@ nsresult
 nsOfflineCacheUpdateItem::OpenChannel(nsOfflineCacheUpdate *aUpdate)
 {
     if (LOG_ENABLED()) {
-        nsAutoCString spec;
-        mURI->GetSpec(spec);
-        LOG(("%p: Opening channel for %s", this, spec.get()));
+        LOG(("%p: Opening channel for %s", this,
+             mURI->GetSpecOrDefault().get()));
     }
 
     if (mUpdate) {
@@ -370,6 +368,8 @@ nsOfflineCacheUpdateItem::OpenChannel(nsOfflineCacheUpdate *aUpdate)
         // cache from being modified.
         flags |= nsIRequest::INHIBIT_CACHING;
     }
+
+    flags |= mLoadFlags;
 
     rv = NS_NewChannel(getter_AddRefs(mChannel),
                        mURI,
@@ -466,10 +466,8 @@ nsOfflineCacheUpdateItem::OnStopRequest(nsIRequest *aRequest,
                                         nsresult aStatus)
 {
     if (LOG_ENABLED()) {
-        nsAutoCString spec;
-        mURI->GetSpec(spec);
         LOG(("%p: Done fetching offline item %s [status=%x]\n",
-            this, spec.get(), aStatus));
+             this, mURI->GetSpecOrDefault().get(), aStatus));
     }
 
     if (mBytesRead == 0 && aStatus == NS_OK) {
@@ -684,7 +682,7 @@ nsOfflineManifestItem::nsOfflineManifestItem(nsIURI *aURI,
                                              nsIApplicationCache *aPreviousApplicationCache)
     : nsOfflineCacheUpdateItem(aURI, aReferrerURI, aLoadingPrincipal,
                                aApplicationCache, aPreviousApplicationCache,
-                               nsIApplicationCache::ITEM_MANIFEST)
+                               nsIApplicationCache::ITEM_MANIFEST, 0)
     , mParserState(PARSE_INIT)
     , mNeedsUpdate(true)
     , mStrictFileOriginPolicy(false)
@@ -702,7 +700,7 @@ nsOfflineManifestItem::~nsOfflineManifestItem()
 //-----------------------------------------------------------------------------
 
 /* static */
-NS_METHOD
+nsresult
 nsOfflineManifestItem::ReadManifest(nsIInputStream *aInputStream,
                                     void *aClosure,
                                     const char *aFromSegment,
@@ -898,6 +896,12 @@ nsOfflineManifestItem::HandleManifestLine(const nsCString::const_iterator &aBegi
             break;
 
         mExplicitURIs.AppendObject(uri);
+
+        if (!NS_SecurityCompareURIs(mURI, uri,
+                                    mStrictFileOriginPolicy)) {
+          mAnonymousURIs.AppendObject(uri);
+        }
+
         break;
     }
 
@@ -1429,6 +1433,13 @@ nsOfflineCacheUpdate::HandleManifest(bool *aDoUpdate)
         NS_ENSURE_SUCCESS(rv, rv);
     }
 
+    const nsCOMArray<nsIURI> &anonURIs = mManifestItem->GetAnonymousURIs();
+    for (int32_t i = 0; i < anonURIs.Count(); i++) {
+      rv = AddURI(anonURIs[i], nsIApplicationCache::ITEM_EXPLICIT,
+                  nsIRequest::LOAD_ANONYMOUS);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+
     const nsCOMArray<nsIURI> &fallbackURIs = mManifestItem->GetFallbackURIs();
     for (int32_t i = 0; i < fallbackURIs.Count(); i++) {
         rv = AddURI(fallbackURIs[i], nsIApplicationCache::ITEM_FALLBACK);
@@ -1874,9 +1885,8 @@ nsOfflineCacheUpdate::ProcessNextURI()
     }
 
     if (LOG_ENABLED()) {
-        nsAutoCString spec;
-        runItem->mURI->GetSpec(spec);
-        LOG(("%p: Opening channel for %s", this, spec.get()));
+        LOG(("%p: Opening channel for %s", this,
+             runItem->mURI->GetSpecOrDefault().get()));
     }
 
     ++mItemsInProgress;
@@ -2263,7 +2273,7 @@ nsOfflineCacheUpdate::GetIsUpgrade(bool *aIsUpgrade)
 }
 
 nsresult
-nsOfflineCacheUpdate::AddURI(nsIURI *aURI, uint32_t aType)
+nsOfflineCacheUpdate::AddURI(nsIURI *aURI, uint32_t aType, uint32_t aLoadFlags)
 {
     NS_ENSURE_TRUE(mState >= STATE_INITIALIZED, NS_ERROR_NOT_INITIALIZED);
 
@@ -2281,7 +2291,8 @@ nsOfflineCacheUpdate::AddURI(nsIURI *aURI, uint32_t aType)
     // Don't fetch the same URI twice.
     for (uint32_t i = 0; i < mItems.Length(); i++) {
         bool equals;
-        if (NS_SUCCEEDED(mItems[i]->mURI->Equals(aURI, &equals)) && equals) {
+        if (NS_SUCCEEDED(mItems[i]->mURI->Equals(aURI, &equals)) && equals &&
+            mItems[i]->mLoadFlags == aLoadFlags) {
             // retain both types.
             mItems[i]->mItemType |= aType;
             return NS_OK;
@@ -2294,7 +2305,8 @@ nsOfflineCacheUpdate::AddURI(nsIURI *aURI, uint32_t aType)
                                      mLoadingPrincipal,
                                      mApplicationCache,
                                      mPreviousApplicationCache,
-                                     aType);
+                                     aType,
+                                     aLoadFlags);
     if (!item) return NS_ERROR_OUT_OF_MEMORY;
 
     mItems.AppendElement(item);

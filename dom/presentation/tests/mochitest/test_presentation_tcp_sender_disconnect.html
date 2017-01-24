@@ -24,11 +24,14 @@ function testSetup() {
 
     request.getAvailability().then(
       function(aAvailability) {
+        is(aAvailability.value, false, "Sender: should have no available device after setup");
         aAvailability.onchange = function() {
           aAvailability.onchange = null;
           ok(aAvailability.value, "Device should be available.");
           aResolve();
         }
+
+        gScript.sendAsyncMessage('trigger-device-add');
       },
       function(aError) {
         ok(false, "Error occurred when getting availability: " + aError);
@@ -36,8 +39,6 @@ function testSetup() {
         aReject();
       }
     );
-
-    gScript.sendAsyncMessage('trigger-device-add');
   });
 }
 
@@ -147,9 +148,9 @@ function runTests() {
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPermissions([
   {type: 'presentation-device-manage', allow: false, context: document},
-  {type: 'presentation', allow: true, context: document},
 ], function() {
   SpecialPowers.pushPrefEnv({ 'set': [["dom.presentation.enabled", true],
+                                      ["dom.presentation.controller.enabled", true],
                                       ["dom.presentation.session_transport.data_channel.enable", false]]},
                             runTests);
 });

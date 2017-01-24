@@ -18,10 +18,11 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
+#include "mozilla/HangMonitor.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/WindowsVersion.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIContentPolicy.h"
 #include "nsContentUtils.h"
 
@@ -726,10 +727,28 @@ WinUtils::GetMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
   return ::GetMessageW(aMsg, aWnd, aFirstMessage, aLastMessage);
 }
 
+#if defined(ACCESSIBILITY)
+static DWORD
+GetWaitFlags()
+{
+  DWORD result = MWMO_INPUTAVAILABLE;
+  if (IsVistaOrLater() && XRE_IsContentProcess()) {
+    result |= MWMO_ALERTABLE;
+  }
+  return result;
+}
+#endif
+
 /* static */
 void
 WinUtils::WaitForMessage(DWORD aTimeoutMs)
 {
+#if defined(ACCESSIBILITY)
+  static const DWORD waitFlags = GetWaitFlags();
+#else
+  const DWORD waitFlags = MWMO_INPUTAVAILABLE;
+#endif
+
   const DWORD waitStart = ::GetTickCount();
   DWORD elapsed = 0;
   while (true) {
@@ -740,11 +759,18 @@ WinUtils::WaitForMessage(DWORD aTimeoutMs)
       break;
     }
     DWORD result = ::MsgWaitForMultipleObjectsEx(0, NULL, aTimeoutMs - elapsed,
-                                                 MOZ_QS_ALLEVENT,
-                                                 MWMO_INPUTAVAILABLE);
-    NS_WARN_IF_FALSE(result != WAIT_FAILED, "Wait failed");
+                                                 MOZ_QS_ALLEVENT, waitFlags);
+    NS_WARNING_ASSERTION(result != WAIT_FAILED, "Wait failed");
     if (result == WAIT_TIMEOUT) {
       break;
+    }
+    if (result == WAIT_IO_COMPLETION) {
+      if (NS_IsMainThread()) {
+        // We executed an APC that would have woken up the hang monitor. Since
+        // we're now going to sleep again, we should notify the hang monitor.
+        mozilla::HangMonitor::Suspend();
+      }
+      continue;
     }
 
     // Sent messages (via SendMessage and friends) are processed differently
@@ -1062,6 +1088,14 @@ WinUtils::GetMouseInputSource()
       nsIDOMMouseEvent::MOZ_SOURCE_TOUCH : nsIDOMMouseEvent::MOZ_SOURCE_PEN;
   }
   return static_cast<uint16_t>(inputSource);
+}
+
+/* static */
+uint16_t
+WinUtils::GetMousePointerID()
+{
+  LPARAM lParamExtraInfo = ::GetMessageExtraInfo();
+  return lParamExtraInfo & TABLET_INK_ID_MASK;
 }
 
 /* static */

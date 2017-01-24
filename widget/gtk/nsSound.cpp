@@ -23,7 +23,7 @@
 #include "nsDirectoryServiceDefs.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/Services.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIStringBundle.h"
 #include "nsIXULAppInfo.h"
 #include "nsContentUtils.h"
@@ -237,12 +237,11 @@ NS_IMETHODIMP nsSound::OnStreamComplete(nsIStreamLoader *aLoader,
                 nsCOMPtr<nsIURI> uri;
                 nsCOMPtr<nsIChannel> channel = do_QueryInterface(request);
                 if (channel) {
-                      channel->GetURI(getter_AddRefs(uri));
-                      if (uri) {
-                            nsAutoCString uriSpec;
-                            uri->GetSpec(uriSpec);
-                            printf("Failed to load %s\n", uriSpec.get());
-                      }
+                    channel->GetURI(getter_AddRefs(uri));
+                    if (uri) {
+                        printf("Failed to load %s\n",
+                               uri->GetSpecOrDefault().get());
+                    }
                 }
             }
         }
@@ -311,13 +310,13 @@ NS_IMETHODIMP nsSound::OnStreamComplete(nsIStreamLoader *aLoader,
     return NS_OK;
 }
 
-NS_METHOD nsSound::Beep()
+NS_IMETHODIMP nsSound::Beep()
 {
     ::gdk_beep();
     return NS_OK;
 }
 
-NS_METHOD nsSound::Play(nsIURL *aURL)
+NS_IMETHODIMP nsSound::Play(nsIURL *aURL)
 {
     if (!mInited)
         Init();

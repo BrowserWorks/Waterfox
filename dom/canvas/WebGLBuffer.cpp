@@ -13,19 +13,19 @@
 namespace mozilla {
 
 WebGLBuffer::WebGLBuffer(WebGLContext* webgl, GLuint buf)
-    : WebGLContextBoundObject(webgl)
+    : WebGLRefCountedObject(webgl)
     , mGLName(buf)
     , mContent(Kind::Undefined)
+    , mUsage(LOCAL_GL_STATIC_DRAW)
     , mByteLength(0)
-    , mNumActiveTFOs(0)
-    , mBoundForTF(false)
+    , mTFBindCount(0)
+    , mNonTFBindCount(0)
 {
     mContext->mBuffers.insertBack(this);
 }
 
 WebGLBuffer::~WebGLBuffer()
 {
-    MOZ_ASSERT(!mNumActiveTFOs);
     DeleteOnce();
 }
 
@@ -102,18 +102,17 @@ WebGLBuffer::BufferData(GLenum target, size_t size, const void* data, GLenum usa
 {
     const char funcName[] = "bufferData";
 
+    // Careful: data.Length() could conceivably be any uint32_t, but GLsizeiptr
+    // is like intptr_t.
+    if (!CheckedInt<GLsizeiptr>(size).isValid())
+        return mContext->ErrorOutOfMemory("%s: bad size", funcName);
+
     if (!ValidateBufferUsageEnum(mContext, funcName, usage))
         return;
 
-    if (mNumActiveTFOs) {
-        mContext->ErrorInvalidOperation("%s: Buffer is bound to an active transform"
-                                        " feedback object.",
-                                        funcName);
-        return;
-    }
-
     const auto& gl = mContext->gl;
     gl->MakeCurrent();
+    const ScopedLazyBind lazyBind(gl, target, this);
     mContext->InvalidateBufferFetching();
 
 #ifdef XP_MACOSX
@@ -141,6 +140,7 @@ WebGLBuffer::BufferData(GLenum target, size_t size, const void* data, GLenum usa
         gl->fBufferData(target, size, data, usage);
     }
 
+    mUsage = usage;
     mByteLength = size;
 
     // Warning: Possibly shared memory.  See bug 1225033.
@@ -150,12 +150,34 @@ WebGLBuffer::BufferData(GLenum target, size_t size, const void* data, GLenum usa
     }
 }
 
+bool
+WebGLBuffer::ValidateRange(const char* funcName, size_t byteOffset, size_t byteLen) const
+{
+    auto availLength = mByteLength;
+    if (byteOffset > availLength) {
+        mContext->ErrorInvalidValue("%s: Offset passes the end of the buffer.", funcName);
+        return false;
+    }
+    availLength -= byteOffset;
+
+    if (byteLen > availLength) {
+        mContext->ErrorInvalidValue("%s: Offset+size passes the end of the buffer.",
+                                    funcName);
+        return false;
+    }
+
+    return true;
+}
+
 ////////////////////////////////////////
 
 bool
 WebGLBuffer::ElementArrayCacheBufferData(const void* ptr,
                                          size_t bufferSizeInBytes)
 {
+    if (mContext->IsWebGL2())
+        return true;
+
     if (mContent == Kind::ElementArray)
         return mCache->BufferData(ptr, bufferSizeInBytes);
 
@@ -166,6 +188,9 @@ void
 WebGLBuffer::ElementArrayCacheBufferSubData(size_t pos, const void* ptr,
                                             size_t updateSizeInBytes)
 {
+    if (mContext->IsWebGL2())
+        return;
+
     if (mContent == Kind::ElementArray)
         mCache->BufferSubData(pos, ptr, updateSizeInBytes);
 }
@@ -181,27 +206,26 @@ WebGLBuffer::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 bool
 WebGLBuffer::Validate(GLenum type, uint32_t maxAllowed, size_t first, size_t count) const
 {
+    if (mContext->IsWebGL2())
+        return true;
+
     return mCache->Validate(type, maxAllowed, first, count);
 }
 
 bool
 WebGLBuffer::IsElementArrayUsedWithMultipleTypes() const
 {
+    if (mContext->IsWebGL2())
+        return false;
+
     return mCache->BeenUsedWithMultipleTypes();
 }
+
+////
 
 bool
 WebGLBuffer::ValidateCanBindToTarget(const char* funcName, GLenum target)
 {
-    const bool wouldBeTF = (target == LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER);
-    if (mWebGLRefCnt && wouldBeTF != mBoundForTF) {
-        mContext->ErrorInvalidOperation("%s: Buffers cannot be simultaneously bound to "
-                                        " transform feedback and bound elsewhere.",
-                                        funcName);
-        return false;
-    }
-    mBoundForTF = wouldBeTF;
-
     /* https://www.khronos.org/registry/webgl/specs/latest/2.0/#5.1
      *
      * In the WebGL 2 API, buffers have their WebGL buffer type

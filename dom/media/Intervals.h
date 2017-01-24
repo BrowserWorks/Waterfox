@@ -45,7 +45,7 @@ public:
     : mStart(T())
     , mEnd(T())
     , mFuzz(T())
-  {}
+  { }
 
   template<typename StartArg, typename EndArg>
   Interval(StartArg&& aStart, EndArg&& aEnd)
@@ -69,7 +69,7 @@ public:
     : mStart(aOther.mStart)
     , mEnd(aOther.mEnd)
     , mFuzz(aOther.mFuzz)
-  {}
+  { }
 
   Interval(SelfType&& aOther)
     : mStart(Move(aOther.mStart))
@@ -136,8 +136,8 @@ public:
 
   bool Contains(const SelfType& aOther) const
   {
-    return (mStart - mFuzz <= aOther.mStart + aOther.mFuzz) &&
-      (aOther.mEnd - aOther.mFuzz <= mEnd + mFuzz);
+    return (mStart - mFuzz <= aOther.mStart + aOther.mFuzz)
+           && (aOther.mEnd - aOther.mFuzz <= mEnd + mFuzz);
   }
 
   bool ContainsStrict(const SelfType& aOther) const
@@ -147,14 +147,14 @@ public:
 
   bool ContainsWithStrictEnd(const SelfType& aOther) const
   {
-    return (mStart - mFuzz <= aOther.mStart + aOther.mFuzz) &&
-      aOther.mEnd <= mEnd;
+    return (mStart - mFuzz <= aOther.mStart + aOther.mFuzz)
+           && aOther.mEnd <= mEnd;
   }
 
   bool Intersects(const SelfType& aOther) const
   {
-    return (mStart - mFuzz < aOther.mEnd + aOther.mFuzz) &&
-      (aOther.mStart - aOther.mFuzz < mEnd + mFuzz);
+    return (mStart - mFuzz < aOther.mEnd + aOther.mFuzz)
+           && (aOther.mStart - aOther.mFuzz < mEnd + mFuzz);
   }
 
   bool IntersectsStrict(const SelfType& aOther) const
@@ -165,8 +165,8 @@ public:
   // Same as Intersects, but including the boundaries.
   bool Touches(const SelfType& aOther) const
   {
-    return (mStart - mFuzz <= aOther.mEnd + aOther.mFuzz) &&
-      (aOther.mStart - aOther.mFuzz <= mEnd + mFuzz);
+    return (mStart - mFuzz <= aOther.mEnd + aOther.mFuzz)
+           && (aOther.mStart - aOther.mFuzz <= mEnd + mFuzz);
   }
 
   // Returns true if aOther is strictly to the right of this and contiguous.
@@ -235,9 +235,9 @@ public:
   // of aOther
   bool TouchesOnRight(const SelfType& aOther) const
   {
-    return aOther.mStart <= mStart  &&
-      (mStart - mFuzz <= aOther.mEnd + aOther.mFuzz) &&
-      (aOther.mStart - aOther.mFuzz <= mEnd + mFuzz);
+    return aOther.mStart <= mStart
+           && (mStart - mFuzz <= aOther.mEnd + aOther.mFuzz)
+           && (aOther.mStart - aOther.mFuzz <= mEnd + mFuzz);
   }
 
   T mStart;
@@ -572,12 +572,9 @@ public:
     }
   }
 
-  bool Contains(const ElemType& aInterval) const {
+  bool Contains(const ElemType& aInterval) const
+  {
     for (const auto& interval : mIntervals) {
-      if (aInterval.LeftOf(interval)) {
-        // Will never succeed.
-        return false;
-      }
       if (interval.Contains(aInterval)) {
         return true;
       }
@@ -585,8 +582,20 @@ public:
     return false;
   }
 
-  bool Contains(const T& aX) const {
+  bool ContainsStrict(const ElemType& aInterval) const
+  {
     for (const auto& interval : mIntervals) {
+      if (interval.ContainsStrict(aInterval)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool Contains(const T& aX) const
+  {
+    for (const auto& interval : mIntervals)
+    {
       if (interval.Contains(aX)) {
         return true;
       }
@@ -594,7 +603,8 @@ public:
     return false;
   }
 
-  bool ContainsStrict(const T& aX) const {
+  bool ContainsStrict(const T& aX) const
+  {
     for (const auto& interval : mIntervals) {
       if (interval.ContainsStrict(aX)) {
         return true;
@@ -603,7 +613,8 @@ public:
     return false;
   }
 
-  bool ContainsWithStrictEnd(const T& aX) const {
+  bool ContainsWithStrictEnd(const T& aX) const
+  {
     for (const auto& interval : mIntervals) {
       if (interval.ContainsWithStrictEnd(aX)) {
         return true;
@@ -622,7 +633,8 @@ public:
     return *this;
   }
 
-  void SetFuzz(const T& aFuzz) {
+  void SetFuzz(const T& aFuzz)
+  {
     for (auto& interval : mIntervals) {
       interval.SetFuzz(aFuzz);
     }

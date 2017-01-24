@@ -49,11 +49,6 @@
   --urlbar-dropmarker-active-2x-region: rect(0px, 33px, 14px, 22px);
 }
 
-:root[devtoolstheme="dark"] #identity-box {
-  --identity-box-chrome-color: #46afe3;
-  --identity-box-verified-background-color: transparent;
-}
-
 /* Override the lwtheme-specific styling for toolbar buttons */
 :root[devtoolstheme="dark"],
 :root[devtoolstheme="dark"] toolbar:-moz-lwtheme {
@@ -64,6 +59,7 @@
   --toolbarbutton-active-boxshadow: none;
   --toolbarbutton-active-bordercolor: rgba(25,33,38,.8);
   --toolbarbutton-checkedhover-backgroundcolor: #3C5283;
+
 }
 
 :root[devtoolstheme="light"] {
@@ -124,17 +120,17 @@
   padding-inline-start: 0;
 }
 
-.tab-background-start[visuallyselected=true]::after,
-.tab-background-start[visuallyselected=true]::before,
+.tab-background-start[selected=true]::after,
+.tab-background-start[selected=true]::before,
 .tab-background-start,
 .tab-background-end,
-.tab-background-end[visuallyselected=true]::after,
-.tab-background-end[visuallyselected=true]::before {
+.tab-background-end[selected=true]::after,
+.tab-background-end[selected=true]::before {
   width: 0;
 }
 
-.tab-background-start[visuallyselected=true]::after,
-.tab-background-end[visuallyselected=true]::after {
+.tab-background-start[selected=true]::after,
+.tab-background-end[selected=true]::after {
   margin-inline-start: 0;
 }
 /* End override @tabCurveHalfWidth@ and @tabCurveWidth@ */
@@ -156,7 +152,7 @@
 }
 
 #navigator-toolbox:-moz-lwtheme::after {
-  background: var(--chrome-navigator-toolbox-separator-color);
+  border-bottom-color: var(--chrome-navigator-toolbox-separator-color);
 }
 
 #navigator-toolbox > toolbar:not(#TabsToolbar):not(#toolbar-menubar),
@@ -201,6 +197,12 @@ toolbar[brighttext] #downloads-indicator-counter {
   box-shadow: none !important;
 }
 
+%filter substitution
+%define selectorPrefix :root[devtoolstheme="dark"] 
+%define selectorSuffix :-moz-lwtheme
+%define iconVariant -white
+%include identity-block/icons.inc.css
+
 #urlbar {
   border-inline-start: none !important;
   opacity: 1 !important;
@@ -210,6 +212,14 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
   overflow: -moz-hidden-unscrollable;
   clip-path: none;
   margin-inline-start: 0;
+}
+
+:root[devtoolstheme="dark"] #urlbar-zoom-button:hover {
+  background-color: rgba(255,255,255,.2);
+}
+
+:root[devtoolstheme="dark"] #urlbar-zoom-button:hover:active {
+  background-color: rgba(255,255,255,.3);
 }
 
 /* Nav bar specific stuff */
@@ -262,14 +272,14 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
   pointer-events: auto;
 }
 
-.tabbrowser-tab:-moz-any([image], [pinned]) > .tab-stack > .tab-content[attention]:not([visuallyselected="true"]),
-.tabbrowser-tab > .tab-stack > .tab-content[pinned][titlechanged]:not([visuallyselected="true"]) {
+.tabbrowser-tab:-moz-any([image], [pinned]) > .tab-stack > .tab-content[attention]:not([selected="true"]),
+.tabbrowser-tab > .tab-stack > .tab-content[pinned][titlechanged]:not([selected="true"]) {
   background-image: var(--pinned-tab-glow);
   background-position: center;
   background-size: 100%;
 }
 
-.tabbrowser-tab[image] > .tab-stack > .tab-content[attention]:not([pinned]):not([visuallyselected="true"]) {
+.tabbrowser-tab[image] > .tab-stack > .tab-content[attention]:not([pinned]):not([selected="true"]) {
   background-position: left bottom var(--tab-toolbar-navbar-overlap);
   background-size: 34px 100%;
 }
@@ -285,28 +295,9 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
   background-color: var(--tab-selection-background-color);
 }
 
-.tab-icon-sound[visuallyselected=true][soundplaying] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-white");
-}
-
-.tab-icon-sound[visuallyselected=true][soundplaying]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-white-hover");
-}
-
-.tab-icon-sound[visuallyselected=true][soundplaying]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-white-pressed");
-}
-
-.tab-icon-sound[visuallyselected=true][muted] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-white");
-}
-
-.tab-icon-sound[visuallyselected=true][muted]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-white-hover");
-}
-
-.tab-icon-sound[visuallyselected=true][muted]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-white-pressed");
+.tab-icon-sound[soundplaying],
+.tab-icon-sound[muted] {
+  filter: url(chrome://browser/skin/filters.svg#fill) !important; /* removes drop-shadow filter */
 }
 
 /* Don't need space for the tab curves (66px - 30px) */

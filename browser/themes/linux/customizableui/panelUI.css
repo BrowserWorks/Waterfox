@@ -5,7 +5,7 @@
 %include ../../shared/customizableui/panelUI.inc.css
 
 .panel-subviews {
-  background-color: -moz-dialog;
+  background-color: var(--panel-arrowcontent-background);
 }
 
 #BMB_bookmarksPopup > menuitem[type="checkbox"] {
@@ -16,7 +16,7 @@
   -moz-appearance: none;
   background: var(--panel-arrowcontent-background);
   color: var(--panel-arrowcontent-color);
-  border: var(--panel-arrowcontent-border);
+  border: 1px solid var(--panel-arrowcontent-border-color);
   margin-top: -6px;
   padding-top: 1px;
 }
@@ -91,14 +91,6 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
   /* These need !important to override menu.css */
   margin-top: 1px !important;
   margin-bottom: 2px !important;
-}
-
-.PanelUI-subView toolbarseparator,
-.PanelUI-subView menuseparator,
-.cui-widget-panelview menuseparator,
-#PanelUI-footer-inner > toolbarseparator,
-#PanelUI-footer-fxa > toolbarseparator {
-  -moz-appearance: none !important;
 }
 
 .subviewradio > .radio-label-box {

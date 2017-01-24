@@ -25,7 +25,7 @@
 #include "nsXPCOMCIDInternal.h"
 
 #include "mozilla/LookAndFeel.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "nsICommandLine.h"
 #include "nsILocaleService.h"
@@ -426,7 +426,8 @@ nsChromeRegistryChrome::SendRegisteredChrome(
 
     nsCOMPtr<nsIResProtocolHandler> irph (do_QueryInterface(ph));
     nsResProtocolHandler* rph = static_cast<nsResProtocolHandler*>(irph.get());
-    rph->CollectSubstitutions(resources);
+    rv = rph->CollectSubstitutions(resources);
+    NS_ENSURE_SUCCESS_VOID(rv);
   }
 
   for (auto iter = mOverrideTable.Iter(); !iter.Done(); iter.Next()) {
@@ -453,7 +454,8 @@ nsChromeRegistryChrome::SendRegisteredChrome(
       DebugOnly<bool> success =
         parents[i]->SendRegisterChrome(packages, resources, overrides,
                                        mSelectedLocale, true);
-      NS_WARN_IF_FALSE(success, "couldn't reset a child's registered chrome");
+      NS_WARNING_ASSERTION(success,
+                           "couldn't reset a child's registered chrome");
     }
   }
 }

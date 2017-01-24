@@ -44,6 +44,35 @@ function* runTests(options) {
     let tabs = [];
     let tests = getTests(tabs, expectDefaults);
 
+    {
+      let tabId = 0xdeadbeef;
+      let calls = [
+        () => browser.browserAction.enable(tabId),
+        () => browser.browserAction.disable(tabId),
+        () => browser.browserAction.setTitle({tabId, title: "foo"}),
+        () => browser.browserAction.setIcon({tabId, path: "foo.png"}),
+        () => browser.browserAction.setPopup({tabId, popup: "foo.html"}),
+        () => browser.browserAction.setBadgeText({tabId, text: "foo"}),
+        () => browser.browserAction.setBadgeBackgroundColor({tabId, color: [0xff, 0, 0, 0xff]}),
+      ];
+
+      for (let call of calls) {
+        let checkError = e => {
+          browser.test.assertTrue(e.message.includes(`Invalid tab ID: ${tabId}`),
+                                  `Expected invalid tab ID error, got ${e}`);
+        };
+        try {
+          call().then(() => {
+            browser.test.fail(`Expected call to fail: ${call}`);
+          }, e => {
+            checkError(e);
+          });
+        } catch (e) {
+          checkError(e);
+        }
+      }
+    }
+
     // Runs the next test in the `tests` array, checks the results,
     // and passes control back to the outer test scope.
     function nextTest() {
@@ -87,10 +116,12 @@ function* runTests(options) {
     background: `(${background})(${options.getTests})`,
   });
 
-
-  let browserActionId = makeWidgetId(extension.id) + "-browser-action";
-
+  let browserActionId;
   function checkDetails(details) {
+    if (!browserActionId) {
+      browserActionId = `${makeWidgetId(extension.id)}-browser-action`;
+    }
+
     let button = document.getElementById(browserActionId);
 
     ok(button, "button exists");
@@ -171,29 +202,31 @@ add_task(function* testTabSwitchContext() {
     },
 
     getTests(tabs, expectDefaults) {
+      const DEFAULT_BADGE_COLOR = [0xd9, 0, 0, 255];
+
       let details = [
         {"icon": browser.runtime.getURL("default.png"),
          "popup": browser.runtime.getURL("default.html"),
          "title": "Default Title",
          "badge": "",
-         "badgeBackgroundColor": null},
+         "badgeBackgroundColor": DEFAULT_BADGE_COLOR},
         {"icon": browser.runtime.getURL("1.png"),
          "popup": browser.runtime.getURL("default.html"),
          "title": "Default Title",
          "badge": "",
-         "badgeBackgroundColor": null},
+         "badgeBackgroundColor": DEFAULT_BADGE_COLOR},
         {"icon": browser.runtime.getURL("2.png"),
          "popup": browser.runtime.getURL("2.html"),
          "title": "Title 2",
          "badge": "2",
          "badgeBackgroundColor": [0xff, 0, 0, 0xff],
-          "disabled": true},
+         "disabled": true},
         {"icon": browser.runtime.getURL("1.png"),
          "popup": browser.runtime.getURL("default-2.html"),
          "title": "Default Title 2",
          "badge": "d2",
          "badgeBackgroundColor": [0, 0xff, 0, 0xff],
-          "disabled": true},
+         "disabled": true},
         {"icon": browser.runtime.getURL("1.png"),
          "popup": browser.runtime.getURL("default-2.html"),
          "title": "Default Title 2",
@@ -237,7 +270,7 @@ add_task(function* testTabSwitchContext() {
           browser.browserAction.setPopup({tabId, popup: "2.html"});
           browser.browserAction.setTitle({tabId, title: "Title 2"});
           browser.browserAction.setBadgeText({tabId, text: "2"});
-          browser.browserAction.setBadgeBackgroundColor({tabId, color: [0xff, 0, 0, 0xff]});
+          browser.browserAction.setBadgeBackgroundColor({tabId, color: "#ff0000"});
           browser.browserAction.disable(tabId);
 
           expectDefaults(details[0]).then(() => {
@@ -332,26 +365,28 @@ add_task(function* testDefaultTitle() {
     },
 
     getTests(tabs, expectDefaults) {
+      const DEFAULT_BADGE_COLOR = [0xd9, 0, 0, 255];
+
       let details = [
         {"title": "Foo Extension",
          "popup": "",
          "badge": "",
-         "badgeBackgroundColor": null,
+         "badgeBackgroundColor": DEFAULT_BADGE_COLOR,
          "icon": browser.runtime.getURL("icon.png")},
         {"title": "Foo Title",
          "popup": "",
          "badge": "",
-         "badgeBackgroundColor": null,
+         "badgeBackgroundColor": DEFAULT_BADGE_COLOR,
          "icon": browser.runtime.getURL("icon.png")},
         {"title": "Bar Title",
          "popup": "",
          "badge": "",
-         "badgeBackgroundColor": null,
+         "badgeBackgroundColor": DEFAULT_BADGE_COLOR,
          "icon": browser.runtime.getURL("icon.png")},
         {"title": "",
          "popup": "",
          "badge": "",
-         "badgeBackgroundColor": null,
+         "badgeBackgroundColor": DEFAULT_BADGE_COLOR,
          "icon": browser.runtime.getURL("icon.png")},
       ];
 

@@ -1251,6 +1251,10 @@ NewStringDontDeflate(js::ExclusiveContext* cx, CharT* chars, size_t length);
 extern JSLinearString*
 NewDependentString(JSContext* cx, JSString* base, size_t start, size_t length);
 
+/* Take ownership of an array of Latin1Chars. */
+extern JSFlatString*
+NewLatin1StringZ(js::ExclusiveContext* cx, UniqueChars chars);
+
 /* Copy a counted string and GC-allocate a descriptor for it. */
 template <js::AllowGC allowGC, typename CharT>
 extern JSFlatString*
@@ -1283,27 +1287,18 @@ NewStringCopyZ(js::ExclusiveContext* cx, const char* s)
     return NewStringCopyN<allowGC>(cx, s, strlen(s));
 }
 
-JS_STATIC_ASSERT(sizeof(HashNumber) == 4);
+template <js::AllowGC allowGC>
+extern JSFlatString*
+NewStringCopyUTF8N(JSContext* cx, const JS::UTF8Chars utf8);
 
-static MOZ_ALWAYS_INLINE js::HashNumber
-HashId(jsid id)
+template <js::AllowGC allowGC>
+inline JSFlatString*
+NewStringCopyUTF8Z(JSContext* cx, const JS::ConstUTF8CharsZ utf8)
 {
-    if (MOZ_LIKELY(JSID_IS_ATOM(id)))
-        return JSID_TO_ATOM(id)->hash();
-    return mozilla::HashGeneric(JSID_BITS(id));
+    return NewStringCopyUTF8N<allowGC>(cx, JS::UTF8Chars(utf8.c_str(), strlen(utf8.c_str())));
 }
 
-template <>
-struct DefaultHasher<jsid>
-{
-    typedef jsid Lookup;
-    static HashNumber hash(jsid id) {
-        return HashId(id);
-    }
-    static bool match(jsid id1, jsid id2) {
-        return id1 == id2;
-    }
-};
+JS_STATIC_ASSERT(sizeof(HashNumber) == 4);
 
 } /* namespace js */
 

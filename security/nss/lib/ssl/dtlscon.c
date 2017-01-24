@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -39,8 +40,6 @@ static const ssl3CipherSuite nonDTLSSuites[] = {
     TLS_ECDH_ECDSA_WITH_RC4_128_SHA,
     TLS_RSA_WITH_RC4_128_MD5,
     TLS_RSA_WITH_RC4_128_SHA,
-    TLS_RSA_EXPORT1024_WITH_RC4_56_SHA,
-    TLS_RSA_EXPORT_WITH_RC4_40_MD5,
     0 /* End of list marker */
 };
 
@@ -803,54 +802,6 @@ dtls_SendSavedWriteData(sslSocket *ss)
     return SECSuccess;
 }
 
-/* Compress, MAC, encrypt a DTLS record. Allows specification of
- * the epoch using epoch value. If use_epoch is PR_TRUE then
- * we use the provided epoch. If use_epoch is PR_FALSE then
- * whatever the current value is in effect is used.
- *
- * Called from ssl3_SendRecord()
- */
-SECStatus
-dtls_CompressMACEncryptRecord(sslSocket *ss,
-                              ssl3CipherSpec *cwSpec,
-                              SSL3ContentType type,
-                              const SSL3Opaque *pIn,
-                              PRUint32 contentLen,
-                              sslBuffer *wrBuf)
-{
-    SECStatus rv = SECFailure;
-
-    ssl_GetSpecReadLock(ss); /********************************/
-
-    /* The reason for this switch-hitting code is that we might have
-     * a flight of records spanning an epoch boundary, e.g.,
-     *
-     * ClientKeyExchange (epoch = 0)
-     * ChangeCipherSpec (epoch = 0)
-     * Finished (epoch = 1)
-     *
-     * Thus, each record needs a different cipher spec. The information
-     * about which epoch to use is carried with the record.
-     */
-    if (!cwSpec) {
-        cwSpec = ss->ssl3.cwSpec;
-    } else {
-        PORT_Assert(type == content_handshake ||
-                    type == content_change_cipher_spec);
-    }
-
-    if (cwSpec->version < SSL_LIBRARY_VERSION_TLS_1_3) {
-        rv = ssl3_CompressMACEncryptRecord(cwSpec, ss->sec.isServer, PR_TRUE,
-                                           PR_FALSE, type, pIn, contentLen,
-                                           wrBuf);
-    } else {
-        rv = tls13_ProtectRecord(ss, cwSpec, type, pIn, contentLen, wrBuf);
-    }
-    ssl_ReleaseSpecReadLock(ss); /************************************/
-
-    return rv;
-}
-
 static SECStatus
 dtls_StartTimer(sslSocket *ss, PRUint32 time, DTLSTimerCb cb)
 {
@@ -945,7 +896,11 @@ dtls_FinishedTimerCb(sslSocket *ss)
 void
 dtls_RehandshakeCleanup(sslSocket *ss)
 {
-    PORT_Assert(ss->version < SSL_LIBRARY_VERSION_TLS_1_3);
+    /* Skip this if we are handling a second ClientHello. */
+    if (ss->ssl3.hs.helloRetry) {
+        return;
+    }
+    PORT_Assert((ss->version < SSL_LIBRARY_VERSION_TLS_1_3));
     dtls_CancelTimer(ss);
     ssl3_DestroyCipherSpec(ss->ssl3.pwSpec, PR_FALSE);
     ss->ssl3.hs.sendMessageSeq = 0;
@@ -996,8 +951,7 @@ dtls_HandleHelloVerifyRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
     int errCode = SSL_ERROR_RX_MALFORMED_HELLO_VERIFY_REQUEST;
     SECStatus rv;
-    PRInt32 temp;
-    SECItem cookie = { siBuffer, NULL, 0 };
+    SSL3ProtocolVersion temp;
     SSL3AlertDescription desc = illegal_parameter;
 
     SSL_TRC(3, ("%d: SSL3[%d]: handle hello_verify_request handshake",
@@ -1011,34 +965,40 @@ dtls_HandleHelloVerifyRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         goto alert_loser;
     }
 
-    /* The version */
-    temp = ssl3_ConsumeHandshakeNumber(ss, 2, &b, &length);
-    if (temp < 0) {
-        goto loser; /* alert has been sent */
-    }
-
-    if (temp != SSL_LIBRARY_VERSION_DTLS_1_0_WIRE &&
-        temp != SSL_LIBRARY_VERSION_DTLS_1_2_WIRE) {
-        goto alert_loser;
-    }
-
-    /* The cookie */
-    rv = ssl3_ConsumeHandshakeVariable(ss, &cookie, 1, &b, &length);
+    /* The version.
+     *
+     * RFC 4347 required that you verify that the server versions
+     * match (Section 4.2.1) in the HelloVerifyRequest and the
+     * ServerHello.
+     *
+     * RFC 6347 suggests (SHOULD) that servers always use 1.0 in
+     * HelloVerifyRequest and allows the versions not to match,
+     * especially when 1.2 is being negotiated.
+     *
+     * Therefore we do not do anything to enforce a match, just
+     * read and check that this value is sane.
+     */
+    rv = ssl_ClientReadVersion(ss, &b, &length, &temp);
     if (rv != SECSuccess) {
         goto loser; /* alert has been sent */
     }
-    if (cookie.len > DTLS_COOKIE_BYTES) {
+
+    /* Read the cookie.
+     * IMPORTANT: The value of ss->ssl3.hs.cookie is only valid while the
+     * HelloVerifyRequest message remains valid. */
+    rv = ssl3_ConsumeHandshakeVariable(ss, &ss->ssl3.hs.cookie, 1, &b, &length);
+    if (rv != SECSuccess) {
+        goto loser; /* alert has been sent */
+    }
+    if (ss->ssl3.hs.cookie.len > DTLS_COOKIE_BYTES) {
         desc = decode_error;
         goto alert_loser; /* malformed. */
     }
 
-    PORT_Memcpy(ss->ssl3.hs.cookie, cookie.data, cookie.len);
-    ss->ssl3.hs.cookieLen = cookie.len;
-
     ssl_GetXmitBufLock(ss); /*******************************/
 
     /* Now re-send the client hello */
-    rv = ssl3_SendClientHello(ss, PR_TRUE);
+    rv = ssl3_SendClientHello(ss, client_hello_retransmit);
 
     ssl_ReleaseXmitBufLock(ss); /*******************************/
 
@@ -1076,7 +1036,7 @@ dtls_InitRecvdRecords(DTLSRecvdRecords *records)
  *  Called from: ssl3_HandleRecord()
  */
 int
-dtls_RecordGetRecvd(const DTLSRecvdRecords *records, PRUint64 seq)
+dtls_RecordGetRecvd(const DTLSRecvdRecords *records, sslSequenceNumber seq)
 {
     PRUint64 offset;
 
@@ -1101,7 +1061,7 @@ dtls_RecordGetRecvd(const DTLSRecvdRecords *records, PRUint64 seq)
  * Called from ssl3_HandleRecord()
  */
 void
-dtls_RecordSetRecvd(DTLSRecvdRecords *records, PRUint64 seq)
+dtls_RecordSetRecvd(DTLSRecvdRecords *records, sslSequenceNumber seq)
 {
     PRUint64 offset;
 
@@ -1109,9 +1069,9 @@ dtls_RecordSetRecvd(DTLSRecvdRecords *records, PRUint64 seq)
         return;
 
     if (seq > records->right) {
-        PRUint64 new_left;
-        PRUint64 new_right;
-        PRUint64 right;
+        sslSequenceNumber new_left;
+        sslSequenceNumber new_right;
+        sslSequenceNumber right;
 
         /* Slide to the right; this is the tricky part
          *
@@ -1127,9 +1087,13 @@ dtls_RecordSetRecvd(DTLSRecvdRecords *records, PRUint64 seq)
         new_right = seq | 0x07;
         new_left = (new_right - DTLS_RECVD_RECORDS_WINDOW) + 1;
 
-        for (right = records->right + 8; right <= new_right; right += 8) {
-            offset = right % DTLS_RECVD_RECORDS_WINDOW;
-            records->data[offset / 8] = 0;
+        if (new_right > records->right + DTLS_RECVD_RECORDS_WINDOW) {
+            PORT_Memset(records->data, 0, sizeof(records->data));
+        } else {
+            for (right = records->right + 8; right <= new_right; right += 8) {
+                offset = right % DTLS_RECVD_RECORDS_WINDOW;
+                records->data[offset / 8] = 0;
+            }
         }
 
         records->right = new_right;
@@ -1184,22 +1148,23 @@ DTLS_GetHandshakeTimeout(PRFileDesc *socket, PRIntervalTime *timeout)
  * and sets |*seqNum| to the packet sequence number.
  */
 PRBool
-dtls_IsRelevant(sslSocket *ss, const ssl3CipherSpec *crSpec,
-                const SSL3Ciphertext *cText, PRUint64 *seqNum)
+dtls_IsRelevant(sslSocket *ss, const SSL3Ciphertext *cText,
+                PRBool *sameEpoch, PRUint64 *seqNum)
 {
-    DTLSEpoch epoch = cText->seq_num.high >> 16;
-    PRUint64 dtls_seq_num;
+    const ssl3CipherSpec *crSpec = ss->ssl3.crSpec;
+    DTLSEpoch epoch;
+    sslSequenceNumber dtls_seq_num;
 
-    if (crSpec->epoch != epoch) {
+    epoch = cText->seq_num >> 48;
+    *sameEpoch = crSpec->epoch == epoch;
+    if (!*sameEpoch) {
         SSL_DBG(("%d: SSL3[%d]: dtls_IsRelevant, received packet "
                  "from irrelevant epoch %d",
                  SSL_GETPID(), ss->fd, epoch));
         return PR_FALSE;
     }
 
-    dtls_seq_num = (((PRUint64)(cText->seq_num.high & 0xffff)) << 32) |
-                   ((PRUint64)cText->seq_num.low);
-
+    dtls_seq_num = cText->seq_num & RECORD_SEQ_MAX;
     if (dtls_RecordGetRecvd(&crSpec->recvdRecords, dtls_seq_num) != 0) {
         SSL_DBG(("%d: SSL3[%d]: dtls_IsRelevant, rejecting "
                  "potentially replayed packet",
@@ -1225,10 +1190,16 @@ dtls_IsRelevant(sslSocket *ss, const ssl3CipherSpec *crSpec,
  * dropped because it has the same epoch that the client currently expects.
  */
 SECStatus
-dtls_MaybeRetransmitHandshake(sslSocket *ss, const SSL3Ciphertext *cText)
+dtls_MaybeRetransmitHandshake(sslSocket *ss, const SSL3Ciphertext *cText,
+                              PRBool sameEpoch)
 {
     SECStatus rv = SECSuccess;
-    DTLSEpoch messageEpoch = cText->seq_num.high >> 16;
+    DTLSEpoch messageEpoch = cText->seq_num >> 48;
+
+    /* Drop messages from other epochs if we are ignoring things. */
+    if (!sameEpoch && ss->ssl3.hs.zeroRttIgnore != ssl_0rtt_ignore_none) {
+        return SECSuccess;
+    }
 
     if (!ss->sec.isServer && ss->version >= SSL_LIBRARY_VERSION_TLS_1_3 &&
         messageEpoch == 0 && cText->type == content_handshake) {

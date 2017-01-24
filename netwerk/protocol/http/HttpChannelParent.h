@@ -98,6 +98,7 @@ public:
     }
   }
 
+  void InvokeAsyncOpen(nsresult rv);
 protected:
   // used to connect redirected-to channel in parent with just created
   // ChildChannel.  Used during redirects.
@@ -113,7 +114,7 @@ protected:
                    const uint32_t&            loadFlags,
                    const RequestHeaderTuples& requestHeaders,
                    const nsCString&           requestMethod,
-                   const OptionalInputStreamParams& uploadStream,
+                   const OptionalIPCStream&   uploadStream,
                    const bool&                uploadStreamHasHeaders,
                    const uint16_t&            priority,
                    const uint32_t&            classOfService,
@@ -128,7 +129,7 @@ protected:
                    const nsCString&           appCacheClientID,
                    const bool&                allowSpdy,
                    const bool&                allowAltSvc,
-                   const OptionalFileDescriptorSet& aFds,
+                   const bool&                beConservative,
                    const OptionalLoadInfoArgs& aLoadInfoArgs,
                    const OptionalHttpResponseHead& aSynthesizedResponseHead,
                    const nsCString&           aSecurityInfoSerialization,
@@ -153,6 +154,8 @@ protected:
                                    const uint32_t& loadFlags,
                                    const OptionalURIParams& apiRedirectUri,
                                    const OptionalCorsPreflightArgs& aCorsPreflightArgs,
+                                   const bool& aForceHSTSPriming,
+                                   const bool& aMixedContentWouldBlock,
                                    const bool& aChooseAppcache) override;
   virtual bool RecvUpdateAssociatedContentSecurity(const int32_t& broken,
                                                    const int32_t& no) override;

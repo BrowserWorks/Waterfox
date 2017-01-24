@@ -15,11 +15,6 @@
 #include "nss.h"      /* for NSS_RegisterShutdown */
 #include "prinit.h"   /* for PR_CallOnceWithArg */
 
-#define MAX_BLOCK_CYPHER_SIZE 32
-
-#define TEST_FOR_FAILURE /* reminder */
-#define SET_ERROR_CODE   /* reminder */
-
 /* Returns a SECStatus: SECSuccess or SECFailure, NOT SECWouldBlock.
  *
  * Currently, the list of functions called through ss->handshake is:
@@ -99,6 +94,8 @@ ssl_FinishHandshake(sslSocket *ss)
                     ssl_preinfo_all);
         (ss->handshakeCallback)(ss->fd, ss->handshakeCallbackData);
     }
+
+    ssl_FreeEphemeralKeyPairs(ss);
 }
 
 /*
@@ -201,6 +198,9 @@ SSL_ResetHandshake(PRFileDesc *s, PRBool asServer)
 
     ssl_ReleaseSSL3HandshakeLock(ss);
     ssl_Release1stHandshakeLock(ss);
+
+    ssl3_DestroyRemoteExtensions(&ss->ssl3.hs.remoteExtensions);
+    ssl3_ResetExtensionData(&ss->xtnData);
 
     if (!ss->TCPconnected)
         ss->TCPconnected = (PR_SUCCESS == ssl_DefGetpeername(ss, &addr));
@@ -650,8 +650,6 @@ SECStatus
 ssl_CopySecurityInfo(sslSocket *ss, sslSocket *os)
 {
     ss->sec.isServer = os->sec.isServer;
-    ss->sec.keyBits = os->sec.keyBits;
-    ss->sec.secretKeyBits = os->sec.secretKeyBits;
 
     ss->sec.peerCert = CERT_DupCertificate(os->sec.peerCert);
     if (os->sec.peerCert && !ss->sec.peerCert)
@@ -930,7 +928,11 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
         if (ss->opt.enableFalseStart ||
             (ss->opt.enable0RttData && !ss->sec.isServer)) {
             ssl_GetSSL3HandshakeLock(ss);
-            falseStart = ss->ssl3.hs.canFalseStart || ss->ssl3.hs.doing0Rtt;
+            /* The client can sometimes send before the handshake is fully
+             * complete. In TLS 1.2: false start; in TLS 1.3: 0-RTT. */
+            falseStart = ss->ssl3.hs.canFalseStart ||
+                         ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
+                         ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted;
             ssl_ReleaseSSL3HandshakeLock(ss);
         }
         if (!falseStart && ss->handshake) {
@@ -960,8 +962,10 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
     if (!ss->firstHsDone) {
 #ifdef DEBUG
         ssl_GetSSL3HandshakeLock(ss);
-        PORT_Assert(ss->ssl3.hs.canFalseStart ||
-                    (ss->ssl3.hs.doing0Rtt && !ss->sec.isServer));
+        PORT_Assert(!ss->sec.isServer &&
+                    (ss->ssl3.hs.canFalseStart ||
+                     ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
+                     ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted));
         ssl_ReleaseSSL3HandshakeLock(ss);
 #endif
         SSL_TRC(3, ("%d: SSL[%d]: SecureSend: sending data due to false start",
@@ -1107,7 +1111,7 @@ SSL_InvalidateSession(PRFileDesc *fd)
         ssl_Get1stHandshakeLock(ss);
         ssl_GetSSL3HandshakeLock(ss);
 
-        if (ss->sec.ci.sid && ss->sec.uncache) {
+        if (ss->sec.ci.sid) {
             ss->sec.uncache(ss->sec.ci.sid);
             rv = SECSuccess;
         }

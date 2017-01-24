@@ -43,7 +43,12 @@ let App = createClass({
   },
 
   onChangeViewportDevice(id, device) {
-    this.props.dispatch(changeDevice(id, device));
+    window.postMessage({
+      type: "change-viewport-device",
+      device,
+    }, "*");
+    this.props.dispatch(changeDevice(id, device.name));
+    this.props.dispatch(updateTouchSimulationEnabled(device.touch));
   },
 
   onContentResize({ width, height }) {

@@ -31,12 +31,14 @@ using CSSRect from "Units.h";
 using CSSSize from "Units.h";
 using mozilla::LayoutDeviceIntRect from "Units.h";
 using mozilla::LayoutDeviceIntPoint from "Units.h";
+using mozilla::LayoutDevicePoint from "Units.h";
 using mozilla::ScreenIntPoint from "Units.h";
 using ScreenIntSize from "Units.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
 using struct mozilla::layers::ZoomConstraints from "FrameMetrics.h";
 using mozilla::layers::MaybeZoomConstraints from "FrameMetrics.h";
+using mozilla::layers::GeckoContentController::TapType from "mozilla/layers/GeckoContentController.h";
 using FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using mozilla::WindowsHandle from "ipc/IPCMessageUtils.h";
@@ -65,9 +67,11 @@ using mozilla::WritingMode from "mozilla/WritingModes.h";
 using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 using nsIWidget::TouchPointerState from "nsIWidget.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
-using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
+using class mozilla::dom::MessagePort from "mozilla/dom/MessagePort.h";
+using class mozilla::dom::ipc::StructuredCloneData from "mozilla/dom/ipc/StructuredCloneData.h";
 using mozilla::EventMessage from "mozilla/EventForwards.h";
 using nsEventStatus from "mozilla/EventForwards.h";
+using mozilla::Modifiers from "mozilla/EventForwards.h";
 using nsSizeMode from "nsIWidgetListener.h";
 using mozilla::widget::CandidateWindowPosition from "ipc/nsGUIEventIPC.h";
 using class mozilla::NativeEventData from "ipc/nsGUIEventIPC.h";
@@ -134,9 +138,11 @@ parent:
      * Tell the parent process a new accessible document has been created.
      * aParentDoc is the accessible document it was created in if any, and
      * aParentAcc is the id of the accessible in that document the new document
-     * is a child of.
+     * is a child of. aMsaaID is the MSAA id for this content process, and
+     * is only valid on Windows. Set to 0 on other platforms.
      */
-    async PDocAccessible(nullable PDocAccessible aParentDoc, uint64_t aParentAcc);
+    async PDocAccessible(nullable PDocAccessible aParentDoc, uint64_t aParentAcc,
+                         uint32_t aMsaaID);
 
     /*
      * Creates a new remoted nsIWidget connection for windowed plugins
@@ -551,6 +557,11 @@ parent:
     async RemotePaintIsReady();
 
     /**
+     * Child informs the parent that the layer tree is already available.
+     */
+    async ForcePaintNoOp(uint64_t aLayerObserverEpoch);
+
+    /**
      * Sent by the child to the parent to inform it that an update to the
      * dimensions has been requested, likely through win.moveTo or resizeTo
      */
@@ -653,6 +664,8 @@ child:
                          ScrollableLayerGuid aGuid,
                          uint64_t aInputBlockId,
                          nsEventStatus aApzResponse);
+    async HandleTap(TapType aType, LayoutDevicePoint point, Modifiers aModifiers,
+                    ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     async RealTouchMoveEvent(WidgetTouchEvent aEvent,
                              ScrollableLayerGuid aGuid,
                              uint64_t aInputBlockId,
@@ -669,14 +682,17 @@ child:
                    int32_t aModifiers,
                    bool aPreventDefault);
 
-    /**
-     * APZ notification for mouse scroll testing events.
-     */
-    async MouseScrollTestEvent(uint64_t aLayersId, ViewID aScrollId, nsString aEvent);
-
     async CompositionEvent(WidgetCompositionEvent event);
 
     async SelectionEvent(WidgetSelectionEvent event);
+
+    /**
+     * Call PasteTransferable via a controller on the content process
+     * to handle the command content event, "pasteTransferable".
+     */
+    async PasteTransferable(IPCDataTransfer aDataTransfer,
+                            bool aIsPrivateData,
+                            Principal aRequestingPrincipal);
 
     /**
      * Activate event forwarding from client to parent.
@@ -720,8 +736,16 @@ child:
 
     /**
      * Update the child side docShell active (resource use) state.
+     *
+     * @param aIsActive
+     *        Whether to activate or deactivate the docshell.
+     * @param aPreserveLayers
+     *        Whether layer trees should be preserved for inactive docshells.
+     * @param aLayerObserverEpoch
+     *        The layer observer epoch for this activation. This message should be
+     *        ignored if this epoch has already been observed (via ForcePaint).
      */
-    async SetDocShellIsActive(bool aIsActive, bool aIsHidden);
+    async SetDocShellIsActive(bool aIsActive, bool aPreserveLayers, uint64_t aLayerObserverEpoch);
 
     /**
      * Notify the child that it shouldn't paint the offscreen displayport.
@@ -819,6 +843,14 @@ child:
      * @param aPrintData the serialized settings to print with
      */
     async Print(uint64_t aOuterWindowID, PrintData aPrintData);
+
+    /**
+     * Update the child with the tab's current top-level native window handle.
+     * This is used by a11y objects who must expose their native window.
+     *
+     * @param aNewHandle The native window handle of the tab's top-level window.
+     */
+    async UpdateNativeWindowHandle(uintptr_t aNewHandle);
 
 /*
  * FIXME: write protocol!

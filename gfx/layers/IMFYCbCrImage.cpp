@@ -4,10 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "IMFYCbCrImage.h"
+#include "DeviceManagerD3D9.h"
 #include "mozilla/layers/TextureD3D11.h"
 #include "mozilla/layers/CompositableClient.h"
 #include "mozilla/layers/CompositableForwarder.h"
-#include "mozilla/gfx/DeviceManagerD3D11.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/gfx/Types.h"
 #include "mozilla/layers/TextureClient.h"
 #include "d3d9.h"
@@ -156,7 +157,7 @@ static bool UploadData(IDirect3DDevice9* aDevice,
 TextureClient*
 IMFYCbCrImage::GetD3D9TextureClient(CompositableClient* aClient)
 {
-  IDirect3DDevice9* device = gfxWindowsPlatform::GetPlatform()->GetD3D9Device();
+  RefPtr<IDirect3DDevice9> device = DeviceManagerD3D9::GetDevice();
   if (!device) {
     return nullptr;
   }
@@ -226,7 +227,7 @@ IMFYCbCrImage::GetTextureClient(CompositableClient* aClient)
   }
 
   RefPtr<ID3D11Device> device =
-    gfx::DeviceManagerD3D11::Get()->GetImageBridgeDevice();
+    gfx::DeviceManagerDx::Get()->GetContentDevice();
 
   LayersBackend backend = aClient->GetForwarder()->GetCompositorBackendType();
   if (!device || backend != LayersBackend::LAYERS_D3D11) {
@@ -237,8 +238,14 @@ IMFYCbCrImage::GetTextureClient(CompositableClient* aClient)
     return nullptr;
   }
 
-  RefPtr<ID3D11DeviceContext> ctx;
-  device->GetImmediateContext(getter_AddRefs(ctx));
+  if (!gfx::DeviceManagerDx::Get()->CanInitializeKeyedMutexTextures()) {
+    return nullptr;
+  }
+
+  if (mData.mYStride < 0 || mData.mCbCrStride < 0) {
+    // D3D11 only supports unsigned stride values.
+    return nullptr;
+  }
 
   CD3D11_TEXTURE2D_DESC newDesc(DXGI_FORMAT_R8_UNORM,
                                 mData.mYSize.width, mData.mYSize.height, 1, 1);
@@ -246,31 +253,29 @@ IMFYCbCrImage::GetTextureClient(CompositableClient* aClient)
   newDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
   RefPtr<ID3D11Texture2D> textureY;
-  HRESULT hr = device->CreateTexture2D(&newDesc, nullptr, getter_AddRefs(textureY));
+  D3D11_SUBRESOURCE_DATA yData = { mData.mYChannel, (UINT)mData.mYStride, 0 };
+  HRESULT hr = device->CreateTexture2D(&newDesc, &yData, getter_AddRefs(textureY));
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
   newDesc.Width = mData.mCbCrSize.width;
   newDesc.Height = mData.mCbCrSize.height;
 
   RefPtr<ID3D11Texture2D> textureCb;
-  hr = device->CreateTexture2D(&newDesc, nullptr, getter_AddRefs(textureCb));
+  D3D11_SUBRESOURCE_DATA cbData = { mData.mCbChannel, (UINT)mData.mCbCrStride, 0 };
+  hr = device->CreateTexture2D(&newDesc, &cbData, getter_AddRefs(textureCb));
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
   RefPtr<ID3D11Texture2D> textureCr;
-  hr = device->CreateTexture2D(&newDesc, nullptr, getter_AddRefs(textureCr));
+  D3D11_SUBRESOURCE_DATA crData = { mData.mCrChannel, (UINT)mData.mCbCrStride, 0 };
+  hr = device->CreateTexture2D(&newDesc, &crData, getter_AddRefs(textureCr));
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
+  // Even though the textures we created are meant to be protected by a keyed mutex,
+  // it appears that D3D doesn't include the initial memory upload within this
+  // synchronization. Add an empty lock/unlock pair since that appears to
+  // be sufficient to make sure we synchronize.
   {
-    AutoLockTexture lockY(textureY);
-    AutoLockTexture lockCb(textureCb);
     AutoLockTexture lockCr(textureCr);
-
-    ctx->UpdateSubresource(textureY, 0, nullptr, mData.mYChannel,
-                           mData.mYStride, mData.mYStride * mData.mYSize.height);
-    ctx->UpdateSubresource(textureCb, 0, nullptr, mData.mCbChannel,
-                           mData.mCbCrStride, mData.mCbCrStride * mData.mCbCrSize.height);
-    ctx->UpdateSubresource(textureCr, 0, nullptr, mData.mCrChannel,
-                           mData.mCbCrStride, mData.mCbCrStride * mData.mCbCrSize.height);
   }
 
   mTextureClient = TextureClient::CreateWithData(

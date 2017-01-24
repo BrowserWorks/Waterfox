@@ -16,8 +16,6 @@ import which
 from mach.mixin.logging import LoggingMixin
 from mach.mixin.process import ProcessExecutionMixin
 
-from mozfile.mozfile import rmtree
-
 from .backend.configenvironment import ConfigEnvironment
 from .controller.clobber import Clobberer
 from .mozconfig import (
@@ -287,26 +285,6 @@ class MozbuildObject(ProcessExecutionMixin):
         if not os.path.exists(self.topobjdir):
             return False
         return Clobberer(self.topsrcdir, self.topobjdir).clobber_needed()
-
-    def have_winrm(self):
-        # `winrm -h` should print 'winrm version ...' and exit 1
-        try:
-            p = subprocess.Popen(['winrm.exe', '-h'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT)
-            return p.wait() == 1 and p.stdout.read().startswith('winrm')
-        except:
-            return False
-
-    def remove_objdir(self):
-        """Remove the entire object directory."""
-
-        if sys.platform.startswith('win') and self.have_winrm():
-            subprocess.check_call(['winrm', '-rf', self.topobjdir])
-        else:
-            # We use mozfile because it is faster than shutil.rmtree().
-            # mozfile doesn't like unicode arguments (bug 818783).
-            rmtree(self.topobjdir.encode('utf-8'))
 
     def get_binary_path(self, what='app', validate_exists=True, where='default'):
         """Obtain the path to a compiled binary for this build configuration.
@@ -670,8 +648,14 @@ class MachCommandBase(MozbuildObject):
                 # that objdir, not another one. This prevents accidental usage
                 # of the wrong objdir when the current objdir is ambiguous.
                 config_topobjdir = dummy.resolve_mozconfig_topobjdir()
-                if config_topobjdir and not samepath(topobjdir,
-                                                     config_topobjdir):
+
+                try:
+                    universal_bin = dummy.substs.get('UNIVERSAL_BINARY')
+                except:
+                    universal_bin = False
+
+                if config_topobjdir and not (samepath(topobjdir, config_topobjdir) or
+                        universal_bin and topobjdir.startswith(config_topobjdir)):
                     raise ObjdirMismatchException(topobjdir, config_topobjdir)
         except BuildEnvironmentNotFoundException:
             pass

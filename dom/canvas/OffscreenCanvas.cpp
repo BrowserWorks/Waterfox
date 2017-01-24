@@ -51,7 +51,6 @@ OffscreenCanvas::OffscreenCanvas(nsIGlobalObject* aGlobal,
   , mWidth(aWidth)
   , mHeight(aHeight)
   , mCompositorBackendType(aCompositorBackend)
-  , mCanvasClient(nullptr)
   , mCanvasRenderer(aRenderer)
 {}
 
@@ -85,8 +84,6 @@ OffscreenCanvas::ClearResources()
 {
   if (mCanvasClient) {
     mCanvasClient->Clear();
-    ImageBridgeChild::DispatchReleaseCanvasClient(mCanvasClient);
-    mCanvasClient = nullptr;
 
     if (mCanvasRenderer) {
       nsCOMPtr<nsIThread> activeThread = mCanvasRenderer->GetActiveThread();
@@ -99,6 +96,8 @@ OffscreenCanvas::ClearResources()
       mCanvasRenderer->mGLContext = nullptr;
       mCanvasRenderer->ResetActiveThread();
     }
+
+    mCanvasClient = nullptr;
   }
 }
 
@@ -148,10 +147,9 @@ OffscreenCanvas::GetContext(JSContext* aCx,
       mCanvasRenderer->mGLContext = gl;
       mCanvasRenderer->SetIsAlphaPremultiplied(webGL->IsPremultAlpha() || !gl->Caps().alpha);
 
-      if (ImageBridgeChild::IsCreated()) {
+      if (RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton()) {
         TextureFlags flags = TextureFlags::ORIGIN_BOTTOM_LEFT;
-        mCanvasClient = ImageBridgeChild::GetSingleton()->
-          CreateCanvasClient(CanvasClient::CanvasClientTypeShSurf, flags).take();
+        mCanvasClient = imageBridge->CreateCanvasClient(CanvasClient::CanvasClientTypeShSurf, flags);
         mCanvasRenderer->SetCanvasClient(mCanvasClient);
 
         gl::GLScreenBuffer* screen = gl->Screen();

@@ -255,7 +255,7 @@ Event::IsChrome(JSContext* aCx) const
 }
 
 // nsIDOMEventInterface
-NS_METHOD
+NS_IMETHODIMP
 Event::GetType(nsAString& aType)
 {
   if (!mIsMainThreadEvent || !mEvent->mSpecifiedEventTypeString.IsEmpty()) {
@@ -291,7 +291,7 @@ Event::GetTarget() const
   return GetDOMEventTarget(mEvent->mTarget);
 }
 
-NS_METHOD
+NS_IMETHODIMP
 Event::GetTarget(nsIDOMEventTarget** aTarget)
 {
   NS_IF_ADDREF(*aTarget = GetTarget());
@@ -597,6 +597,8 @@ Event::InitEvent(const nsAString& aEventTypeArg,
   mEvent->mFlags.mDefaultPrevented = false;
   mEvent->mFlags.mDefaultPreventedByContent = false;
   mEvent->mFlags.mDefaultPreventedByChrome = false;
+  mEvent->mFlags.mPropagationStopped = false;
+  mEvent->mFlags.mImmediatePropagationStopped = false;
 
   // Clearing the old targets, so that the event is targeted correctly when
   // re-dispatching it.

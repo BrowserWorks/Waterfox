@@ -127,6 +127,9 @@ enum class LogReason : int {
   TextureCreation,
   InvalidCacheSurface,
   AlphaWithBasicClient,
+  UnbalancedClipStack,
+  ProcessingError,
+  NativeFontResourceNotFound,
   // End
   MustBeLessThanThis = 101,
 };
@@ -495,7 +498,9 @@ private:
       if ((mOptions & int(LogOptions::CrashAction)) && ValidReason()) {
         mMessage << " " << (int)mReason;
       }
-      mMessage << "]: ";
+      if (AutoPrefix()) {
+        mMessage << "]: ";
+      }
     }
   }
 

@@ -5,13 +5,56 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+const { getAllFilters } = require("devtools/client/webconsole/new-console-output/selectors/filters");
 const { getLogLimit } = require("devtools/client/webconsole/new-console-output/selectors/prefs");
+const {
+  MESSAGE_TYPE
+} = require("devtools/client/webconsole/new-console-output/constants");
 
 function getAllMessages(state) {
-  let messages = state.messages;
-  let messageCount = messages.count();
+  let messages = state.messages.messagesById;
   let logLimit = getLogLimit(state);
+  let filters = getAllFilters(state);
 
+  return prune(
+    search(
+      filterLevel(messages, filters),
+      filters.text
+    ),
+    logLimit
+  );
+}
+
+function getAllMessagesUiById(state) {
+  return state.messages.messagesUiById;
+}
+
+function filterLevel(messages, filters) {
+  return messages.filter((message) => {
+    return filters[message.level] === true
+      || [MESSAGE_TYPE.COMMAND, MESSAGE_TYPE.RESULT].includes(message.type);
+  });
+}
+
+function search(messages, text = "") {
+  if (text === "") {
+    return messages;
+  }
+
+  return messages.filter(function (message) {
+    // @TODO: message.parameters can be a grip, see how we can handle that
+    if (!Array.isArray(message.parameters)) {
+      return true;
+    }
+    return message
+      .parameters.join("")
+      .toLocaleLowerCase()
+      .includes(text.toLocaleLowerCase());
+  });
+}
+
+function prune(messages, logLimit) {
+  let messageCount = messages.count();
   if (messageCount > logLimit) {
     return messages.splice(0, messageCount - logLimit);
   }
@@ -20,3 +63,4 @@ function getAllMessages(state) {
 }
 
 exports.getAllMessages = getAllMessages;
+exports.getAllMessagesUiById = getAllMessagesUiById;

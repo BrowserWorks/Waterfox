@@ -2001,26 +2001,28 @@ nsStylePosition::MaxBSizeDependsOnContainer(mozilla::WritingMode aWM) const
                           : MaxHeightDependsOnContainer();
 }
 
-inline uint8_t
+inline mozilla::StyleFloat
 nsStyleDisplay::PhysicalFloats(mozilla::WritingMode aWM) const
 {
-  if (mFloat == NS_STYLE_FLOAT_INLINE_START) {
-    return aWM.IsBidiLTR() ? NS_STYLE_FLOAT_LEFT : NS_STYLE_FLOAT_RIGHT;
+  using StyleFloat = mozilla::StyleFloat;
+  if (mFloat == StyleFloat::InlineStart) {
+    return aWM.IsBidiLTR() ? StyleFloat::Left : StyleFloat::Right;
   }
-  if (mFloat == NS_STYLE_FLOAT_INLINE_END) {
-    return aWM.IsBidiLTR() ? NS_STYLE_FLOAT_RIGHT : NS_STYLE_FLOAT_LEFT;
+  if (mFloat == StyleFloat::InlineEnd) {
+    return aWM.IsBidiLTR() ? StyleFloat::Right : StyleFloat::Left;
   }
   return mFloat;
 }
 
-inline uint8_t
+inline mozilla::StyleClear
 nsStyleDisplay::PhysicalBreakType(mozilla::WritingMode aWM) const
 {
-  if (mBreakType == NS_STYLE_CLEAR_INLINE_START) {
-    return aWM.IsBidiLTR() ? NS_STYLE_CLEAR_LEFT : NS_STYLE_CLEAR_RIGHT;
+  using StyleClear = mozilla::StyleClear;
+  if (mBreakType == StyleClear::InlineStart) {
+    return aWM.IsBidiLTR() ? StyleClear::Left : StyleClear::Right;
   }
-  if (mBreakType == NS_STYLE_CLEAR_INLINE_END) {
-    return aWM.IsBidiLTR() ? NS_STYLE_CLEAR_RIGHT : NS_STYLE_CLEAR_LEFT;
+  if (mBreakType == StyleClear::InlineEnd) {
+    return aWM.IsBidiLTR() ? StyleClear::Right : StyleClear::Left;
   }
   return mBreakType;
 }

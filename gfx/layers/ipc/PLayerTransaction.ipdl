@@ -58,6 +58,8 @@ parent:
               int32_t paintSyncId)
     returns (EditReply[] reply);
 
+  async PaintTime(uint64_t id, TimeDuration paintTime);
+
   // We don't need to send a sync transaction if
   // no transaction operate require a swap.
   async UpdateNoSwap(Edit[] cset, OpDestroy[] toDestroy,
@@ -68,6 +70,8 @@ parent:
                      bool isRepeatTransaction, TimeStamp transactionStart,
                      int32_t paintSyncId);
 
+  async SetLayerObserverEpoch(uint64_t layerObserverEpoch);
+
   // Testing APIs
 
   // Enter test mode, set the sample time to sampleTime, and resample
@@ -76,7 +80,11 @@ parent:
   // Leave test mode and resume normal compositing
   sync LeaveTestMode();
 
-  sync GetOpacity(PLayer layer) returns (float opacity);
+  // Returns the value of the opacity applied to the layer by animation.
+  // |hasAnimationOpacity| is true if the layer has an opacity value
+  // specified by animation. If it's false, |opacity| value is indefinite.
+  sync GetAnimationOpacity(PLayer layer) returns (float opacity,
+                                                  bool hasAnimationOpacity);
 
   // Returns the value of the transform applied to the layer by animation after
   // factoring out translation components introduced to account for the offset

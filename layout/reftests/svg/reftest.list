@@ -32,7 +32,7 @@ include svg-integration/reftest.list
 == clip-02a.svg clip-02-ref.svg
 == clip-02b.svg clip-02-ref.svg
 == clipPath-advanced-01.svg pass.svg
-fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.[12]/.test(http.oscpu),1,5) fuzzy-if(azureQuartz,1,6) fuzzy-if(OSX,1,6) fuzzy-if(skiaContent,1,300) == clipPath-and-shape-rendering-01.svg clipPath-and-shape-rendering-01-ref.svg # bug 614840
+fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.[12]/.test(http.oscpu),1,5) fuzzy-if(azureQuartz,1,6) fuzzy-if(OSX,1,6) fuzzy-if(skiaContent,1,630) == clipPath-and-shape-rendering-01.svg clipPath-and-shape-rendering-01-ref.svg # bug 614840
 == clipPath-and-transform-01.svg pass.svg
 == clipPath-basic-01.svg pass.svg
 == clipPath-basic-02.svg pass.svg
@@ -48,7 +48,6 @@ fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)||/^Windows\x20NT\x206\.[12]/
 == conditions-03.svg pass.svg
 == conditions-04.svg pass.svg
 random-if(Mulet) == conditions-05.svg about:blank # bug 1178062
-== conditions-06.svg pass.svg
 == conditions-07.svg pass.svg
 fuzzy-if(skiaContent,1,320) == conditions-08.svg conditions-08-ref.svg
 == conditions-09.svg conditions-09-ref.svg
@@ -167,7 +166,7 @@ fails-if(Android||B2G) pref(security.fileuri.strict_origin_policy,true) == filte
 == filter-scaled-01.svg pass.svg
 fuzzy-if(skiaContent,1,500) == filter-scaled-02.html filter-scaled-02-ref.html
 == filter-translated-01.svg filter-translated-01-ref.svg
-fuzzy-if(skiaContent,1,2500) == filters-and-group-opacity-01.svg filters-and-group-opacity-01-ref.svg
+fuzzy-if(skiaContent,1,800000) == filters-and-group-opacity-01.svg filters-and-group-opacity-01-ref.svg
 == foreignObject-01.svg pass.svg
 == foreignObject-02.svg foreignObject-02-ref.svg
 == foreignObject-ancestor-style-change-01.svg foreignObject-ancestor-style-change-01-ref.svg
@@ -201,7 +200,7 @@ fuzzy-if(skiaContent,1,550) == import-svg-01.html pass.svg
 == linearGradient-basic-02.svg pass.svg
 # off-by-one fuzziness expected. OS X is broken with bad aliasing though (bug 1023640).
 fuzzy-if(cocoaWidget,15,19679) fuzzy-if(winWidget,1,8800) fuzzy-if(!cocoaWidget&&!winWidget,1,4000) fuzzy-if(skiaContent,1,5000) == linearGradient-basic-03.svg linearGradient-basic-03-ref.svg
-fuzzy-if(skiaContent,1,20000) == markers-and-group-opacity-01.svg markers-and-group-opacity-01-ref.svg
+fuzzy-if(skiaContent,1,800000) == markers-and-group-opacity-01.svg markers-and-group-opacity-01-ref.svg
 == marker-attribute-01.svg pass.svg
 == marker-effects-01.svg marker-effects-01-ref.svg
 fuzzy-if(skiaContent,1,100) == marker-viewBox-01.svg marker-viewBox-01-ref.svg
@@ -210,7 +209,7 @@ fuzzy-if(skiaContent,1,5) pref(svg.marker-improvements.enabled,true) == marker-o
 == marker-orientation-03.svg pass.svg
 == marker-orientation-04.svg pass.svg
 == mask-basic-01.svg pass.svg
-== mask-basic-02.svg mask-basic-02-ref.svg
+fuzzy-if(skiaContent,1,10000) == mask-basic-02.svg mask-basic-02-ref.svg
 == mask-basic-03.svg pass.svg
 == mask-basic-04.svg pass.svg
 == mask-extref-dataURI-01.svg pass.svg
@@ -246,6 +245,7 @@ skip-if(d2d) fuzzy-if(cocoaWidget,1,99974) fuzzy-if(skiaContent,1,200000) == opa
 == opacity-and-pattern-01.svg pass.svg
 fuzzy-if(skiaContent,1,10000) == opacity-and-transform-01.svg opacity-and-transform-01-ref.svg
 fuzzy-if(Android,8,200) random-if((B2G&&browserIsRemote)||Mulet) == outer-svg-border-and-padding-01.svg outer-svg-border-and-padding-01-ref.svg # Initial mulet triage: parity with B2G/B2G Desktop
+== outline.html outline-ref.html
 == overflow-on-outer-svg-01.svg overflow-on-outer-svg-01-ref.svg
 == overflow-on-outer-svg-02a.xhtml overflow-on-outer-svg-02-ref.xhtml
 == overflow-on-outer-svg-02b.xhtml overflow-on-outer-svg-02-ref.xhtml
@@ -433,3 +433,12 @@ pref(layout.css.mix-blend-mode.enabled,true) == blend-normal.svg blend-normal-re
 #skip-if(Android) pref(layout.css.mix-blend-mode.enabled,true) == blend-screen.svg blend-screen-ref.svg
 #skip-if(Android) pref(layout.css.mix-blend-mode.enabled,true) == blend-soft-light.svg blend-soft-light-ref.svg
 skip-if(Android) pref(layout.css.mix-blend-mode.enabled,true) == blend-difference-stacking.html blend-difference-stacking-ref.html
+
+# test case for Fragment URLs
+# https://drafts.csswg.org/css-values/#local-urls
+== use-localRef-marker-01.svg use-localRef-marker-01-ref.svg
+== use-localRef-clipPath-01.svg use-localRef-clipPath-01-ref.svg
+== use-localRef-filter-01.svg use-localRef-filter-01-ref.svg
+== use-localRef-fill-01.svg use-localRef-fill-01-ref.svg
+== use-localRef-stroke-01.svg use-localRef-stroke-01-ref.svg
+== use-localRef-mask-01.svg use-localRef-mask-01-ref.svg

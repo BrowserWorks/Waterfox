@@ -156,16 +156,18 @@
 }
 
 .identity-popup-expander:hover {
-  background-color: hsla(210,4%,10%,.07);
+  background-color: var(--arrowpanel-dimmed);
 }
 
 .identity-popup-expander:hover:active {
-  background-color: hsla(210,4%,10%,.12);
+  background-color: var(--arrowpanel-dimmed-further);
   box-shadow: 0 1px 0 hsla(210,4%,10%,.05) inset;
 }
 
 /* CONTENT */
 
+.identity-popup-permission-label,
+.identity-popup-permission-state-label,
 #identity-popup-security-content > description,
 #identity-popup-security-descriptions > description,
 #identity-popup-securityView-header > description,
@@ -230,7 +232,7 @@
 
 #identity-popup[connection^=secure] #identity-popup-securityView,
 #identity-popup[connection^=secure] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/controlcenter/conn-secure.svg);
+  background-image: url(chrome://browser/skin/controlcenter/connection.svg#connection-secure);
 }
 
 /* Use [isbroken] to make sure we don't show a lock on an http page. See Bug 1192162. */
@@ -238,12 +240,12 @@
 #identity-popup[ciphers=weak] #identity-popup-security-content,
 #identity-popup[mixedcontent~=passive-loaded][isbroken] #identity-popup-securityView,
 #identity-popup[mixedcontent~=passive-loaded][isbroken] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/controlcenter/conn-degraded.svg);
+  background-image: url(chrome://browser/skin/controlcenter/connection.svg#connection-degraded);
 }
 
 #identity-popup[connection=secure-cert-user-overridden] #identity-popup-securityView,
 #identity-popup[connection=secure-cert-user-overridden] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/identity-mixed-passive-loaded.svg);
+  background-image: url(chrome://browser/skin/connection-mixed-passive-loaded.svg#icon);
 }
 
 #identity-popup[loginforms=insecure] #identity-popup-securityView,
@@ -276,26 +278,26 @@
 
 #identity-popup-securityView-footer {
   margin-top: 1em;
-  background-color: hsla(210,4%,10%,.07);
+  background-color: var(--arrowpanel-dimmed);
 }
 
 #identity-popup-securityView-footer > button {
   -moz-appearance: none;
   margin: 0;
   border: none;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid var(--panel-separator-color);
   padding: 8px 20px;
-  color: ButtonText;
+  color: inherit;
   background-color: transparent;
 }
 
 #identity-popup-securityView-footer > button:hover,
 #identity-popup-securityView-footer > button:focus {
-  background-color: hsla(210,4%,10%,.07);
+  background-color: var(--arrowpanel-dimmed);
 }
 
 #identity-popup-securityView-footer > button:hover:active {
-  background-color: hsla(210,4%,10%,.12);
+  background-color: var(--arrowpanel-dimmed-further);
 }
 
 #identity-popup-content-verifier ~ description {
@@ -318,11 +320,11 @@ description#identity-popup-content-verifier,
 /* TRACKING PROTECTION */
 
 #tracking-protection-content {
-  background-image: url("chrome://browser/skin/controlcenter/tracking-protection.svg");
+  background-image: url("chrome://browser/skin/controlcenter/tracking-protection.svg#enabled");
 }
 
 #tracking-protection-content[state="loaded-tracking-content"]  {
-  background-image: url("chrome://browser/skin/controlcenter/tracking-protection-disabled.svg");
+  background-image: url("chrome://browser/skin/controlcenter/tracking-protection.svg#disabled");
 }
 
 #tracking-action-block,
@@ -370,13 +372,27 @@ description#identity-popup-content-verifier,
   margin-top: 5px;
 }
 
-#identity-popup-permission-list:not(:empty) + description {
-  display: none;
-}
-
 .identity-popup-permission-icon {
   width: 16px;
   height: 16px;
+}
+
+.identity-popup-permission-icon.in-use {
+  animation: 1.5s ease in-use-blink infinite;
+}
+
+@keyframes in-use-blink {
+  50% { opacity: 0; }
+}
+
+.identity-popup-permission-label,
+.identity-popup-permission-state-label {
+  /* We need to align the action buttons and permission icons with the text.
+     This is tricky because the icon height is defined in pixels, while the
+     font height can vary with platform and system settings, and at least on
+     Windows the default font metrics reserve more extra space for accents.
+     This value is a good compromise for different platforms and font sizes. */
+  margin-top: -0.1em;
 }
 
 .identity-popup-permission-label {
@@ -384,6 +400,7 @@ description#identity-popup-content-verifier,
 }
 
 .identity-popup-permission-state-label {
+  margin-inline-end: 5px;
   text-align: end;
   color: graytext;
 }

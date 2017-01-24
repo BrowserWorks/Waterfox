@@ -5,7 +5,7 @@
 
 "use strict";
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
@@ -46,12 +46,12 @@ PresentationDevicePrompt.prototype = {
     return this.bundle.GetStringFromName(aName);
   },
 
-  _loadDevices: function() {
+  _loadDevices: function(requestURLs) {
     debug("_loadDevices");
 
     let deviceManager = Cc["@mozilla.org/presentation-device/manager;1"]
                           .getService(Ci.nsIPresentationDeviceManager);
-    let devices = deviceManager.getAvailableDevices().QueryInterface(Ci.nsIArray);
+    let devices = deviceManager.getAvailableDevices(requestURLs).QueryInterface(Ci.nsIArray);
 
     // Re-load the available devices
     this._devices = [];
@@ -97,9 +97,11 @@ PresentationDevicePrompt.prototype = {
       return;
     }
 
-    if (aIndex < 0 ||             // Cancel request if no selected device,
-        !this._devices.length) {  // or there is no available devices
-      this._request.cancel();
+    if (aIndex < 0) {                    // Cancel request if no selected device,
+      this._request.cancel(Cr.NS_ERROR_DOM_NOT_ALLOWED_ERR);
+      return;
+    } else if (!this._devices.length) {  // or there is no available devices
+      this._request.cancel(Cr.NS_ERROR_DOM_NOT_FOUND_ERR);
       return;
     }
 
@@ -111,10 +113,10 @@ PresentationDevicePrompt.prototype = {
     debug("promptDeviceSelection");
 
     // Load available presentation devices into this._devices
-    this._loadDevices();
+    this._loadDevices(aRequest.requestURLs);
 
     if (!this._devices.length) { // Cancel request if no available device
-      aRequest.cancel();
+      aRequest.cancel(Cr.NS_ERROR_DOM_NOT_FOUND_ERR);
       return;
     }
 

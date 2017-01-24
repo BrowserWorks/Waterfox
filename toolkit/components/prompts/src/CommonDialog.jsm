@@ -128,8 +128,11 @@ CommonDialog.prototype = {
             this.setLabelForNode(this.ui.button0, this.args.button0Label);
 
         // display the main text
-        // Bug 317334 - crop string length as a workaround.
-        let croppedMessage = this.args.text.substr(0, 10000);
+        let croppedMessage = "";
+        if (this.args.text) {
+            // Bug 317334 - crop string length as a workaround.
+            croppedMessage = this.args.text.substr(0, 10000);
+        }
         let infoBody = this.ui.infoBody;
         infoBody.appendChild(infoBody.ownerDocument.createTextNode(croppedMessage));
 
@@ -144,7 +147,7 @@ CommonDialog.prototype = {
         // set the icon
         let icon = this.ui.infoIcon;
         if (icon)
-            this.iconClass.forEach((el,idx,arr) => icon.classList.add(el));
+            this.iconClass.forEach((el, idx, arr) => icon.classList.add(el));
 
         // set default result to cancelled
         this.args.ok = false;
@@ -241,20 +244,17 @@ CommonDialog.prototype = {
                 this.ui.infoBody.focus();
             else
                 button.focus();
-        } else {
+        } else if (this.args.promptType == "promptPassword") {
             // When the prompt is initialized, focus and select the textbox
             // contents. Afterwards, only focus the textbox.
-            if (this.args.promptType == "promptPassword") {
-                if (isInitialLoad)
-                    this.ui.password1Textbox.select();
-                else
-                    this.ui.password1Textbox.focus();
-            } else {
-                if (isInitialLoad)
-                    this.ui.loginTextbox.select();
-                else
-                    this.ui.loginTextbox.focus();
-            }
+            if (isInitialLoad)
+                this.ui.password1Textbox.select();
+            else
+                this.ui.password1Textbox.focus();
+        } else if (isInitialLoad) {
+                this.ui.loginTextbox.select();
+        } else {
+                this.ui.loginTextbox.focus();
         }
     },
 

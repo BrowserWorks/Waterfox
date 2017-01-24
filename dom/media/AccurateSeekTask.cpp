@@ -16,24 +16,15 @@ extern LazyLogModule gMediaDecoderLog;
 extern LazyLogModule gMediaSampleLog;
 
 // avoid redefined macro in unified build
-#undef LOG
+#undef FMT
 #undef DECODER_LOG
-#undef VERBOSE_LOG
+#undef SAMPLE_LOG
+#undef DECODER_WARN
 
-#define LOG(m, l, x, ...) \
-  MOZ_LOG(m, l, ("[AccurateSeekTask] Decoder=%p " x, mDecoderID, ##__VA_ARGS__))
-#define DECODER_LOG(x, ...) \
-  LOG(gMediaDecoderLog, LogLevel::Debug, x, ##__VA_ARGS__)
-#define VERBOSE_LOG(x, ...) \
-  LOG(gMediaDecoderLog, LogLevel::Verbose, x, ##__VA_ARGS__)
-#define SAMPLE_LOG(x, ...) \
-  LOG(gMediaSampleLog, LogLevel::Debug, x, ##__VA_ARGS__)
-
-// Somehow MSVC doesn't correctly delete the comma before ##__VA_ARGS__
-// when __VA_ARGS__ expands to nothing. This is a workaround for it.
-#define DECODER_WARN_HELPER(a, b) NS_WARNING b
-#define DECODER_WARN(x, ...) \
-  DECODER_WARN_HELPER(0, (nsPrintfCString("Decoder=%p " x, mDecoderID, ##__VA_ARGS__).get()))
+#define FMT(x, ...) "[AccurateSeekTask] Decoder=%p " x, mDecoderID, ##__VA_ARGS__
+#define DECODER_LOG(...) MOZ_LOG(gMediaDecoderLog, LogLevel::Debug,   (FMT(__VA_ARGS__)))
+#define SAMPLE_LOG(...)  MOZ_LOG(gMediaSampleLog,  LogLevel::Debug,   (FMT(__VA_ARGS__)))
+#define DECODER_WARN(...) NS_WARNING(nsPrintfCString(FMT(__VA_ARGS__)).get())
 
 AccurateSeekTask::AccurateSeekTask(const void* aDecoderID,
                                    AbstractThread* aThread,
@@ -70,7 +61,7 @@ AccurateSeekTask::Discard()
   AssertOwnerThread();
 
   // Disconnect MDSM.
-  RejectIfExist(__func__);
+  RejectIfExist(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
 
   // Disconnect MediaDecoderReaderWrapper.
   mSeekRequest.DisconnectIfExists();
@@ -129,7 +120,7 @@ AccurateSeekTask::DropAudioUpToSeekTarget(MediaData* aSample)
 
   CheckedInt64 sampleDuration = FramesToUsecs(audio->mFrames, mAudioRate);
   if (!sampleDuration.isValid()) {
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
   }
 
   if (audio->mTime + sampleDuration.value() <= mTarget.GetTime().ToMicroseconds()) {
@@ -163,7 +154,7 @@ AccurateSeekTask::DropAudioUpToSeekTarget(MediaData* aSample)
   CheckedInt64 framesToPrune =
     UsecsToFrames(mTarget.GetTime().ToMicroseconds() - audio->mTime, mAudioRate);
   if (!framesToPrune.isValid()) {
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
   }
   if (framesToPrune.value() > audio->mFrames) {
     // We've messed up somehow. Don't try to trim frames, the |frames|
@@ -183,7 +174,7 @@ AccurateSeekTask::DropAudioUpToSeekTarget(MediaData* aSample)
          frames * channels * sizeof(AudioDataValue));
   CheckedInt64 duration = FramesToUsecs(frames, mAudioRate);
   if (!duration.isValid()) {
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
   }
   RefPtr<AudioData> data(new AudioData(audio->mOffset,
                                        mTarget.GetTime().ToMicroseconds(),
@@ -269,7 +260,7 @@ AccurateSeekTask::OnSeekRejected(nsresult aResult)
 
   mSeekRequest.Complete();
   MOZ_ASSERT(NS_FAILED(aResult), "Cancels should also disconnect mSeekRequest");
-  RejectIfExist(__func__);
+  RejectIfExist(aResult, __func__);
 }
 
 void
@@ -301,8 +292,7 @@ AccurateSeekTask::OnAudioDecoded(MediaData* aAudioSample)
   // The MDSM::mDecodedAudioEndTime will be updated once the whole SeekTask is
   // resolved.
 
-  SAMPLE_LOG("OnAudioDecoded [%lld,%lld] disc=%d",
-    audio->mTime, audio->GetEndTime(), audio->mDiscontinuity);
+  SAMPLE_LOG("OnAudioDecoded [%lld,%lld]", audio->mTime, audio->GetEndTime());
 
   // Video-only seek doesn't reset audio decoder. There might be pending audio
   // requests when AccurateSeekTask::Seek() begins. We will just store the data
@@ -312,21 +302,19 @@ AccurateSeekTask::OnAudioDecoded(MediaData* aAudioSample)
     return;
   }
 
-  if (mFirstAudioSample) {
-    mFirstAudioSample = false;
-    MOZ_ASSERT(audio->mDiscontinuity);
-  }
-
   AdjustFastSeekIfNeeded(audio);
 
   if (mTarget.IsFast()) {
     // Non-precise seek; we can stop the seek at the first sample.
     mSeekedAudioData = audio;
     mDoneAudioSeeking = true;
-  } else if (NS_FAILED(DropAudioUpToSeekTarget(audio))) {
-    CancelCallbacks();
-    RejectIfExist(__func__);
-    return;
+  } else {
+    nsresult rv = DropAudioUpToSeekTarget(audio);
+    if (NS_FAILED(rv)) {
+      CancelCallbacks();
+      RejectIfExist(rv, __func__);
+      return;
+    }
   }
 
   if (!mDoneAudioSeeking) {
@@ -338,33 +326,26 @@ AccurateSeekTask::OnAudioDecoded(MediaData* aAudioSample)
 
 void
 AccurateSeekTask::OnNotDecoded(MediaData::Type aType,
-                               MediaDecoderReader::NotDecodedReason aReason)
+                               const MediaResult& aError)
 {
   AssertOwnerThread();
   MOZ_ASSERT(!mSeekTaskPromise.IsEmpty(), "Seek shouldn't be finished");
 
-  SAMPLE_LOG("OnNotDecoded type=%d reason=%u", aType, aReason);
+  SAMPLE_LOG("OnNotDecoded type=%d reason=%u", aType, aError.Code());
 
   // Ignore pending requests from video-only seek.
   if (aType == MediaData::AUDIO_DATA && mTarget.IsVideoOnly()) {
     return;
   }
 
-  if (aReason == MediaDecoderReader::DECODE_ERROR) {
-    // If this is a decode error, delegate to the generic error path.
-    CancelCallbacks();
-    RejectIfExist(__func__);
-    return;
-  }
-
   // If the decoder is waiting for data, we tell it to call us back when the
   // data arrives.
-  if (aReason == MediaDecoderReader::WAITING_FOR_DATA) {
+  if (aError == NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA) {
     mReader->WaitForData(aType);
     return;
   }
 
-  if (aReason == MediaDecoderReader::CANCELED) {
+  if (aError == NS_ERROR_DOM_MEDIA_CANCELED) {
     if (aType == MediaData::AUDIO_DATA) {
       RequestAudioData();
     } else {
@@ -373,7 +354,7 @@ AccurateSeekTask::OnNotDecoded(MediaData::Type aType,
     return;
   }
 
-  if (aReason == MediaDecoderReader::END_OF_STREAM) {
+  if (aError == NS_ERROR_DOM_MEDIA_END_OF_STREAM) {
     if (aType == MediaData::AUDIO_DATA) {
       mIsAudioQueueFinished = true;
       mDoneAudioSeeking = true;
@@ -387,7 +368,12 @@ AccurateSeekTask::OnNotDecoded(MediaData::Type aType,
       }
     }
     MaybeFinishSeek();
+    return;
   }
+
+  // This is a decode error, delegate to the generic error path.
+  CancelCallbacks();
+  RejectIfExist(aError, __func__);
 }
 
 void
@@ -402,13 +388,7 @@ AccurateSeekTask::OnVideoDecoded(MediaData* aVideoSample)
   // The MDSM::mDecodedVideoEndTime will be updated once the whole SeekTask is
   // resolved.
 
-  SAMPLE_LOG("OnVideoDecoded [%lld,%lld] disc=%d",
-    video->mTime, video->GetEndTime(), video->mDiscontinuity);
-
-  if (mFirstVideoSample) {
-    mFirstVideoSample = false;
-    MOZ_ASSERT(video->mDiscontinuity);
-  }
+  SAMPLE_LOG("OnVideoDecoded [%lld,%lld]", video->mTime, video->GetEndTime());
 
   AdjustFastSeekIfNeeded(video);
 
@@ -416,10 +396,13 @@ AccurateSeekTask::OnVideoDecoded(MediaData* aVideoSample)
     // Non-precise seek. We can stop the seek at the first sample.
     mSeekedVideoData = video;
     mDoneVideoSeeking = true;
-  } else if (NS_FAILED(DropVideoUpToSeekTarget(video.get()))) {
-    CancelCallbacks();
-    RejectIfExist(__func__);
-    return;
+  } else {
+    nsresult rv = DropVideoUpToSeekTarget(video.get());
+    if (NS_FAILED(rv)) {
+      CancelCallbacks();
+      RejectIfExist(rv, __func__);
+      return;
+    }
   }
 
   if (!mDoneVideoSeeking) {
@@ -440,7 +423,7 @@ AccurateSeekTask::SetCallbacks()
       OnAudioDecoded(aData.as<MediaData*>());
     } else {
       OnNotDecoded(MediaData::AUDIO_DATA,
-        aData.as<MediaDecoderReader::NotDecodedReason>());
+        aData.as<MediaResult>());
     }
   });
 
@@ -451,7 +434,7 @@ AccurateSeekTask::SetCallbacks()
       OnVideoDecoded(Get<0>(aData.as<Type>()));
     } else {
       OnNotDecoded(MediaData::VIDEO_DATA,
-        aData.as<MediaDecoderReader::NotDecodedReason>());
+        aData.as<MediaResult>());
     }
   });
 

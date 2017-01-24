@@ -302,8 +302,8 @@ MaybeInvalidTabContext::MaybeInvalidTabContext(const IPCTabContext& aParams)
   nsAutoCString originSuffix;
   nsAutoCString signedPkgOriginNoSuffix;
   nsAutoString presentationURL;
-  UIStateChangeType showAccelerators;
-  UIStateChangeType showFocusRings;
+  UIStateChangeType showAccelerators = UIStateChangeType_NoChange;
+  UIStateChangeType showFocusRings = UIStateChangeType_NoChange;
 
   switch(aParams.type()) {
     case IPCTabContext::TPopupIPCTabContext: {
@@ -369,7 +369,10 @@ MaybeInvalidTabContext::MaybeInvalidTabContext(const IPCTabContext& aParams)
       showAccelerators = ipcContext.showAccelerators();
       showFocusRings = ipcContext.showFocusRings();
       originSuffix = ipcContext.originSuffix();
-      originAttributes.PopulateFromSuffix(originSuffix);
+      if (!originAttributes.PopulateFromSuffix(originSuffix)) {
+        mInvalidReason = "Populate originAttributes from originSuffix failed.";
+        return;
+      }
       break;
     }
     case IPCTabContext::TUnsafeIPCTabContext: {

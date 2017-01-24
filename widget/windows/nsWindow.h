@@ -98,11 +98,12 @@ public:
 
   // nsIWidget interface
   using nsWindowBase::Create; // for Create signature not overridden here
-  NS_IMETHOD              Create(nsIWidget* aParent,
-                                 nsNativeWidget aNativeParent,
-                                 const LayoutDeviceIntRect& aRect,
-                                 nsWidgetInitData* aInitData = nullptr) override;
-  NS_IMETHOD              Destroy() override;
+  virtual MOZ_MUST_USE nsresult Create(nsIWidget* aParent,
+                                       nsNativeWidget aNativeParent,
+                                       const LayoutDeviceIntRect& aRect,
+                                       nsWidgetInitData* aInitData = nullptr)
+                                       override;
+  virtual void            Destroy() override;
   NS_IMETHOD              SetParent(nsIWidget *aNewParent) override;
   virtual nsIWidget*      GetParent(void) override;
   virtual float           GetDPI() override;
@@ -119,7 +120,7 @@ public:
 
   NS_IMETHOD              Show(bool bState) override;
   virtual bool            IsVisible() const override;
-  NS_IMETHOD              ConstrainPosition(bool aAllowSlop, int32_t *aX, int32_t *aY) override;
+  virtual void            ConstrainPosition(bool aAllowSlop, int32_t *aX, int32_t *aY) override;
   virtual void            SetSizeConstraints(const SizeConstraints& aConstraints) override;
   virtual const SizeConstraints GetSizeConstraints() override;
   NS_IMETHOD              Move(double aX, double aY) override;
@@ -128,15 +129,15 @@ public:
   NS_IMETHOD              BeginResizeDrag(mozilla::WidgetGUIEvent* aEvent,
                                           int32_t aHorizontal,
                                           int32_t aVertical) override;
-  NS_IMETHOD              PlaceBehind(nsTopLevelWidgetZPlacement aPlacement, nsIWidget *aWidget, bool aActivate) override;
-  NS_IMETHOD              SetSizeMode(nsSizeMode aMode) override;
+  virtual void            PlaceBehind(nsTopLevelWidgetZPlacement aPlacement, nsIWidget *aWidget, bool aActivate) override;
+  virtual void            SetSizeMode(nsSizeMode aMode) override;
   NS_IMETHOD              Enable(bool aState) override;
   virtual bool            IsEnabled() const override;
   NS_IMETHOD              SetFocus(bool aRaise) override;
-  NS_IMETHOD              GetBounds(LayoutDeviceIntRect& aRect) override;
-  NS_IMETHOD              GetScreenBounds(LayoutDeviceIntRect& aRect) override;
-  NS_IMETHOD              GetRestoredBounds(LayoutDeviceIntRect& aRect) override;
-  NS_IMETHOD              GetClientBounds(LayoutDeviceIntRect& aRect) override;
+  virtual LayoutDeviceIntRect GetBounds() override;
+  virtual LayoutDeviceIntRect GetScreenBounds() override;
+  virtual MOZ_MUST_USE nsresult GetRestoredBounds(LayoutDeviceIntRect& aRect) override;
+  virtual LayoutDeviceIntRect GetClientBounds() override;
   virtual LayoutDeviceIntPoint GetClientOffset() override;
   void                    SetBackgroundColor(const nscolor& aColor) override;
   NS_IMETHOD              SetCursor(imgIContainer* aCursor,
@@ -148,7 +149,8 @@ public:
                                            uint16_t aDuration,
                                            nsISupports* aData,
                                            nsIRunnable* aCallback) override;
-  NS_IMETHOD              MakeFullScreen(bool aFullScreen, nsIScreen* aScreen = nullptr) override;
+  virtual nsresult        MakeFullScreen(bool aFullScreen,
+                                         nsIScreen* aScreen = nullptr) override;
   NS_IMETHOD              HideWindowChrome(bool aShouldHide) override;
   NS_IMETHOD              Invalidate(bool aEraseBackground = false,
                                      bool aUpdateNCArea = false,
@@ -163,9 +165,9 @@ public:
   virtual LayoutDeviceIntSize ClientToWindowSize(const LayoutDeviceIntSize& aClientSize) override;
   NS_IMETHOD              DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                                         nsEventStatus& aStatus) override;
-  NS_IMETHOD              EnableDragDrop(bool aEnable) override;
-  NS_IMETHOD              CaptureMouse(bool aCapture) override;
-  NS_IMETHOD              CaptureRollupEvents(nsIRollupListener * aListener,
+  virtual void            EnableDragDrop(bool aEnable) override;
+  virtual void            CaptureMouse(bool aCapture) override;
+  virtual void            CaptureRollupEvents(nsIRollupListener* aListener,
                                               bool aDoCapture) override;
   NS_IMETHOD              GetAttention(int32_t aCycleCount) override;
   virtual bool            HasPendingInputEvent() override;
@@ -207,7 +209,6 @@ public:
   virtual void            UpdateOpaqueRegion(const LayoutDeviceIntRegion& aOpaqueRegion) override;
 #endif // MOZ_XUL
   virtual nsIMEUpdatePreference GetIMEUpdatePreference() override;
-  NS_IMETHOD              GetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
   NS_IMETHOD              SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
   void                    SetDrawsInTitlebar(bool aState) override;
   virtual void            UpdateWindowDraggingRegion(const LayoutDeviceIntRegion& aRegion) override;
@@ -226,7 +227,8 @@ public:
                             int16_t aButton =
                               mozilla::WidgetMouseEvent::eLeftButton,
                             uint16_t aInputSource =
-                              nsIDOMMouseEvent::MOZ_SOURCE_MOUSE);
+                              nsIDOMMouseEvent::MOZ_SOURCE_MOUSE,
+                            uint16_t aPointerId = 0);
   virtual bool            DispatchWindowEvent(mozilla::WidgetGUIEvent* aEvent,
                                               nsEventStatus& aStatus);
   void                    DispatchPendingEvents();
@@ -290,7 +292,7 @@ public:
   }
   void SetTaskbarPreview(nsITaskbarWindowPreview *preview) { mTaskbarPreview = do_GetWeakReference(preview); }
 
-  NS_IMETHOD              ReparentNativeWidget(nsIWidget* aNewParent) override;
+  virtual void            ReparentNativeWidget(nsIWidget* aNewParent) override;
 
   // Open file picker tracking
   void                    PickerOpen();
@@ -313,6 +315,7 @@ public:
                      nsIKeyEventInPluginCallback* aCallback) override;
 
   void GetCompositorWidgetInitData(mozilla::widget::CompositorWidgetInitData* aInitData) override;
+  bool IsTouchWindow() const { return mTouchWindow; }
 
 protected:
   virtual ~nsWindow();
@@ -644,6 +647,13 @@ protected:
   static void InitMouseWheelScrollData();
 
   double mSizeConstraintsScale; // scale in effect when setting constraints
+
+  // Used to remember the wParam (i.e. currently pressed modifier keys)
+  // and lParam (i.e. last mouse position) in screen coordinates from
+  // the previous mouse-exit.  Static since it is not
+  // associated with a particular widget (since we exited the widget).
+  static WPARAM sMouseExitwParam;
+  static LPARAM sMouseExitlParamScreen;
 };
 
 /**

@@ -80,39 +80,6 @@ namespace ipc {
 class StructuredCloneData;
 } // ipc namespace
 
-// This observer runs on the compositor thread, so we dispatch a runnable to the
-// main thread to actually dispatch the event.
-class LayerTreeUpdateObserver : public layers::CompositorUpdateObserver
-{
-public:
-  explicit LayerTreeUpdateObserver(TabParent* aTabParent)
-    : mTabParent(aTabParent)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-  }
-
-  virtual void ObserveUpdate(uint64_t aLayersId, bool aActive) override;
-
-  virtual void SwapTabParent(LayerTreeUpdateObserver* aOther) {
-    MOZ_ASSERT(NS_IsMainThread());
-    Swap(mTabParent, aOther->mTabParent);
-  }
-
-  void TabParentDestroyed() {
-    MOZ_ASSERT(NS_IsMainThread());
-    mTabParent = nullptr;
-  }
-
-  TabParent* GetTabParent() {
-    MOZ_ASSERT(NS_IsMainThread());
-    return mTabParent;
-  }
-
-private:
-  // NB: Should never be touched off the main thread!
-  TabParent* mTabParent;
-};
-
 class TabParent final : public PBrowserParent
                       , public nsIDOMEventListener
                       , public nsITabParent
@@ -384,14 +351,16 @@ public:
   virtual bool DeallocPDatePickerParent(PDatePickerParent* aDatePicker) override;
 
   virtual PDocAccessibleParent*
-  AllocPDocAccessibleParent(PDocAccessibleParent*, const uint64_t&) override;
+  AllocPDocAccessibleParent(PDocAccessibleParent*, const uint64_t&,
+                            const uint32_t&) override;
 
   virtual bool DeallocPDocAccessibleParent(PDocAccessibleParent*) override;
 
   virtual bool
   RecvPDocAccessibleConstructor(PDocAccessibleParent* aDoc,
                                 PDocAccessibleParent* aParentDoc,
-                                const uint64_t& aParentID) override;
+                                const uint64_t& aParentID,
+                                const uint32_t& aMsaaID) override;
 
   /**
    * Return the top level doc accessible parent for this tab.
@@ -496,6 +465,12 @@ public:
 
   bool SendRealTouchEvent(WidgetTouchEvent& event);
 
+  bool SendHandleTap(TapType aType,
+                     const LayoutDevicePoint& aPoint,
+                     Modifiers aModifiers,
+                     const ScrollableLayerGuid& aGuid,
+                     uint64_t aInputBlockId);
+
   virtual PDocumentRendererParent*
   AllocPDocumentRendererParent(const nsRect& documentRect,
                                const gfx::Matrix& transform,
@@ -539,6 +514,10 @@ public:
   bool SendCompositionEvent(mozilla::WidgetCompositionEvent& event);
 
   bool SendSelectionEvent(mozilla::WidgetSelectionEvent& event);
+
+  bool SendPasteTransferable(const IPCDataTransfer& aDataTransfer,
+                             const bool& aIsPrivateData,
+                             const IPC::Principal& aRequestingPrincipal);
 
   static TabParent* GetFrom(nsFrameLoader* aFrameLoader);
 
@@ -587,14 +566,8 @@ public:
   bool SendLoadRemoteScript(const nsString& aURL,
                             const bool& aRunInGlobalScope);
 
-  // See nsIFrameLoader requestNotifyLayerTreeReady.
-  bool RequestNotifyLayerTreeReady();
-
-  bool RequestNotifyLayerTreeCleared();
-
-  bool LayerTreeUpdate(bool aActive);
-
-  void SwapLayerTreeObservers(TabParent* aOther);
+  static void ObserveLayerUpdate(uint64_t aLayersId, uint64_t aEpoch, bool aActive);
+  void LayerTreeUpdate(uint64_t aEpoch, bool aActive);
 
   virtual bool
   RecvInvokeDragSession(nsTArray<IPCDataTransfer>&& aTransfers,
@@ -643,6 +616,8 @@ protected:
   virtual bool DeallocPRenderFrameParent(PRenderFrameParent* aFrame) override;
 
   virtual bool RecvRemotePaintIsReady() override;
+
+  virtual bool RecvForcePaintNoOp(const uint64_t& aLayerObserverEpoch) override;
 
   virtual bool RecvSetDimensions(const uint32_t& aFlags,
                                  const int32_t& aX, const int32_t& aY,
@@ -761,11 +736,6 @@ private:
   // CreateWindow response. Then TabChild loads them immediately.
   nsTArray<FrameScriptInfo> mDelayedFrameScripts;
 
-  // If the user called RequestNotifyLayerTreeReady and the RenderFrameParent
-  // wasn't ready yet, we set this flag and call RequestNotifyLayerTreeReady
-  // again once the RenderFrameParent arrives.
-  bool mNeedLayerTreeReadyNotification;
-
   // Cached cursor setting from TabChild.  When the cursor is over the tab,
   // it should take this appearance.
   nsCursor mCursor;
@@ -796,7 +766,17 @@ private:
 
   static void RemoveTabParentFromTable(uint64_t aLayersId);
 
-  RefPtr<LayerTreeUpdateObserver> mLayerUpdateObserver;
+  uint64_t mLayerTreeEpoch;
+
+  // If this flag is set, then the tab's layers will be preserved even when
+  // the tab's docshell is inactive.
+  bool mPreserveLayers;
+
+  // Normally we call ForceTabPaint when activating a tab. But we don't do this
+  // the first time we activate a tab. The tab is probably busy running the
+  // initial content scripts and we don't want to force painting then; they're
+  // probably quick and there's some cost to forcing painting.
+  bool mFirstActivate;
 
 public:
   static TabParent* GetTabParentFromLayersId(uint64_t aLayersId);

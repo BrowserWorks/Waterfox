@@ -291,7 +291,8 @@ public:
                            int64_t aParentId,
                            const nsACString& aGUID,
                            const nsACString& aParentGUID,
-                           const nsACString &aOldValue);
+                           const nsACString &aOldValue,
+                           uint16_t aSource);
 
 protected:
   virtual ~nsNavHistoryResultNode() {}
@@ -699,7 +700,7 @@ protected:
 class nsNavHistoryFolderResultNode final : public nsNavHistoryContainerResultNode,
                                            public nsINavHistoryQueryResultNode,
                                            public nsINavBookmarkObserver,
-                                           public mozilla::places::AsyncStatementCallback
+                                           public mozilla::places::WeakAsyncStatementCallback
 {
 public:
   nsNavHistoryFolderResultNode(const nsACString& aTitle,

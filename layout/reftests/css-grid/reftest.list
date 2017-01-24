@@ -39,10 +39,10 @@ skip-if(Android) == grid-placement-definite-implicit-001.html grid-placement-def
 == grid-placement-definite-implicit-002.html grid-placement-definite-implicit-002-ref.html
 skip-if(Android) fuzzy-if(winWidget,1,32) == grid-placement-auto-implicit-001.html grid-placement-auto-implicit-001-ref.html
 == grid-placement-abspos-implicit-001.html grid-placement-abspos-implicit-001-ref.html
-pref(layout.css.vertical-text.enabled,true) == rtl-grid-placement-definite-001.html rtl-grid-placement-definite-001-ref.html
-pref(layout.css.vertical-text.enabled,true) == rtl-grid-placement-auto-row-sparse-001.html rtl-grid-placement-auto-row-sparse-001-ref.html
-pref(layout.css.vertical-text.enabled,true) == vlr-grid-placement-auto-row-sparse-001.html vlr-grid-placement-auto-row-sparse-001-ref.html
-pref(layout.css.vertical-text.enabled,true) == vrl-grid-placement-auto-row-sparse-001.html vrl-grid-placement-auto-row-sparse-001-ref.html
+== rtl-grid-placement-definite-001.html rtl-grid-placement-definite-001-ref.html
+== rtl-grid-placement-auto-row-sparse-001.html rtl-grid-placement-auto-row-sparse-001-ref.html
+== vlr-grid-placement-auto-row-sparse-001.html vlr-grid-placement-auto-row-sparse-001-ref.html
+== vrl-grid-placement-auto-row-sparse-001.html vrl-grid-placement-auto-row-sparse-001-ref.html
 == grid-relpos-items-001.html grid-relpos-items-001-ref.html
 == grid-item-sizing-percent-001.html grid-item-sizing-percent-001-ref.html
 == grid-item-sizing-px-001.html grid-item-sizing-percent-001-ref.html
@@ -62,6 +62,8 @@ fuzzy-if(winWidget,1,36) == grid-auto-min-sizing-definite-001.html grid-auto-min
 == grid-track-intrinsic-sizing-003.html grid-track-intrinsic-sizing-003-ref.html
 == grid-track-intrinsic-sizing-004.html grid-track-intrinsic-sizing-004-ref.html
 == grid-track-percent-sizing-001.html grid-track-percent-sizing-001-ref.html
+== grid-track-fit-content-sizing-001.html grid-track-fit-content-sizing-001-ref.html
+== grid-track-fit-content-sizing-002.html grid-track-fit-content-sizing-002-ref.html
 == grid-max-sizing-flex-001.html grid-max-sizing-flex-001-ref.html
 == grid-max-sizing-flex-002.html grid-max-sizing-flex-002-ref.html
 == grid-max-sizing-flex-003.html grid-max-sizing-flex-003-ref.html
@@ -92,6 +94,7 @@ skip-if(Android&&isDebugBuild) == grid-column-gap-001.html grid-column-gap-001-r
 == grid-column-gap-003.html grid-column-gap-003-ref.html
 == grid-column-gap-004.html grid-column-gap-004-ref.html
 == grid-row-gap-001.html grid-row-gap-001-ref.html
+== grid-percent-grid-gap-001.html grid-percent-grid-gap-001-ref.html
 skip-if(Android&&isDebugBuild) == grid-row-gap-002.html grid-row-gap-002-ref.html # Bug 1245884 - slow
 skip-if(Android&&isDebugBuild) == grid-row-gap-003.html grid-row-gap-003-ref.html # Bug 1245884 - slow
 skip-if(Android&&isDebugBuild) == grid-row-gap-004.html grid-row-gap-004-ref.html # Bug 1245884 - slow

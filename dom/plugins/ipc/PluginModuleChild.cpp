@@ -32,7 +32,7 @@
 #include "mozilla/plugins/BrowserStreamChild.h"
 #include "mozilla/plugins/PluginStreamChild.h"
 #include "mozilla/dom/CrashReporterChild.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "nsNPAPIPlugin.h"
 
@@ -90,6 +90,9 @@ static WindowsDllInterceptor sUser32Intercept;
 typedef BOOL (WINAPI *GetWindowInfoPtr)(HWND hwnd, PWINDOWINFO pwi);
 static GetWindowInfoPtr sGetWindowInfoPtrStub = nullptr;
 static HWND sBrowserHwnd = nullptr;
+// sandbox process doesn't get current key states.  So we need get it on chrome.
+typedef SHORT (WINAPI *GetKeyStatePtr)(int);
+static GetKeyStatePtr sGetKeyStatePtrStub = nullptr;
 #endif
 
 /* static */
@@ -2066,6 +2069,73 @@ PMCGetWindowInfoHook(HWND hWnd, PWINDOWINFO pwi)
       pwi->rcWindow = pwi->rcClient;
   return result;
 }
+
+SHORT WINAPI PMCGetKeyState(int aVirtKey);
+
+// Runnable that performs GetKeyState on the main thread so that it can be
+// synchronously run on the PluginModuleParent via IPC.
+// The task alerts the given semaphore when it is finished.
+class GetKeyStateTask : public Runnable
+{
+    SHORT* mKeyState;
+    int mVirtKey;
+    HANDLE mSemaphore;
+
+public:
+    explicit GetKeyStateTask(int aVirtKey, HANDLE aSemaphore, SHORT* aKeyState) :
+        mVirtKey(aVirtKey), mSemaphore(aSemaphore), mKeyState(aKeyState)
+    {}
+
+    NS_IMETHOD Run() override
+    {
+        PLUGIN_LOG_DEBUG_METHOD;
+        AssertPluginThread();
+        *mKeyState = PMCGetKeyState(mVirtKey);
+        if (!ReleaseSemaphore(mSemaphore, 1, nullptr)) {
+            return NS_ERROR_FAILURE;
+        }
+        return NS_OK;
+    }
+};
+
+// static
+SHORT WINAPI
+PMCGetKeyState(int aVirtKey)
+{
+    if (!IsPluginThread()) {
+        // synchronously request the key state from the main thread
+
+        // Start a semaphore at 0.  We Release the semaphore (bringing its count to 1)
+        // when the synchronous call is done.
+        HANDLE semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+        if (semaphore == nullptr) {
+            MOZ_ASSERT(semaphore != nullptr);
+            return 0;
+        }
+
+        SHORT keyState;
+        RefPtr<GetKeyStateTask> task = new GetKeyStateTask(aVirtKey, semaphore, &keyState);
+        ProcessChild::message_loop()->PostTask(task.forget());
+        DWORD err = WaitForSingleObject(semaphore, INFINITE);
+        if (err != WAIT_FAILED) {
+            CloseHandle(semaphore);
+            return keyState;
+        }
+        PLUGIN_LOG_DEBUG(("Error while waiting for GetKeyState semaphore: %d",
+                          GetLastError()));
+        MOZ_ASSERT(err != WAIT_FAILED);
+        CloseHandle(semaphore);
+        return 0;
+    }
+    PluginModuleChild* chromeInstance = PluginModuleChild::GetChrome();
+    if (chromeInstance) {
+        int16_t ret = 0;
+        if (chromeInstance->CallGetKeyState(aVirtKey, &ret)) {
+          return ret;
+        }
+    }
+    return sGetKeyStatePtrStub(aVirtKey);
+}
 #endif
 
 PPluginInstanceChild*
@@ -2086,11 +2156,17 @@ PluginModuleChild::AllocPPluginInstanceChild(const nsCString& aMimeType,
     mQuirks = GetChrome()->mQuirks;
 
 #ifdef XP_WIN
+    sUser32Intercept.Init("user32.dll");
     if ((mQuirks & QUIRK_FLASH_HOOK_GETWINDOWINFO) &&
         !sGetWindowInfoPtrStub) {
-        sUser32Intercept.Init("user32.dll");
         sUser32Intercept.AddHook("GetWindowInfo", reinterpret_cast<intptr_t>(PMCGetWindowInfoHook),
                                  (void**) &sGetWindowInfoPtrStub);
+    }
+
+    if ((mQuirks & QUIRK_FLASH_HOOK_GETKEYSTATE) &&
+        !sGetKeyStatePtrStub) {
+        sUser32Intercept.AddHook("GetKeyState", reinterpret_cast<intptr_t>(PMCGetKeyState),
+                                 (void**) &sGetKeyStatePtrStub);
     }
 #endif
 

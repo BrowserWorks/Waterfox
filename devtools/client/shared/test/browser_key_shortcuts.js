@@ -1,15 +1,19 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 var isOSX = Services.appinfo.OS === "Darwin";
 
 add_task(function* () {
   let shortcuts = new KeyShortcuts({
     window
   });
+
   yield testSimple(shortcuts);
   yield testNonLetterCharacter(shortcuts);
   yield testPlusCharacter(shortcuts);
+  yield testFunctionKey(shortcuts);
   yield testMixup(shortcuts);
   yield testLooseDigits(shortcuts);
   yield testExactModifiers(shortcuts);
@@ -42,7 +46,7 @@ function once(shortcuts, key, listener) {
   });
 }
 
-function testSimple(shortcuts) {
+function* testSimple(shortcuts) {
   info("Test simple key shortcuts");
 
   let onKey = once(shortcuts, "0", (key, event) => {
@@ -56,7 +60,7 @@ function testSimple(shortcuts) {
   yield onKey;
 }
 
-function testNonLetterCharacter(shortcuts) {
+function* testNonLetterCharacter(shortcuts) {
   info("Test non-naive character key shortcuts");
 
   let onKey = once(shortcuts, "[", (key, event) => {
@@ -67,10 +71,21 @@ function testNonLetterCharacter(shortcuts) {
   yield onKey;
 }
 
+function* testFunctionKey(shortcuts) {
+  info("Test function key shortcuts");
+
+  let onKey = once(shortcuts, "F12", (key, event) => {
+    is(event.key, "F12");
+  });
+
+  EventUtils.synthesizeKey("F12", { keyCode: 123 }, window);
+  yield onKey;
+}
+
 // Plus is special. It's keycode is the one for "=". That's because it requires
 // shift to be pressed and is behind "=" key. So it should be considered as a
 // character key
-function testPlusCharacter(shortcuts) {
+function* testPlusCharacter(shortcuts) {
   info("Test 'Plus' key shortcuts");
 
   let onKey = once(shortcuts, "Plus", (key, event) => {
@@ -82,7 +97,7 @@ function testPlusCharacter(shortcuts) {
 }
 
 // Test they listeners are not mixed up between shortcuts
-function testMixup(shortcuts) {
+function* testMixup(shortcuts) {
   info("Test possible listener mixup");
 
   let hitFirst = false, hitSecond = false;
@@ -117,7 +132,7 @@ function testMixup(shortcuts) {
 
 // On azerty keyboard, digits are only available by pressing Shift/Capslock,
 // but we accept them even if we omit doing that.
-function testLooseDigits(shortcuts) {
+function* testLooseDigits(shortcuts) {
   info("Test Loose digits");
   let onKey = once(shortcuts, "0", (key, event) => {
     is(event.key, "à");
@@ -150,7 +165,7 @@ function testLooseDigits(shortcuts) {
 }
 
 // Test that shortcuts is notified only when the modifiers match exactly
-function testExactModifiers(shortcuts) {
+function* testExactModifiers(shortcuts) {
   info("Test exact modifiers match");
 
   let hit = false;
@@ -198,7 +213,7 @@ function testExactModifiers(shortcuts) {
 // even if the key didn't explicitely requested Shift modifier.
 // For example, `%` on french keyboards is only accessible via Shift.
 // Same thing for `@` on US keybords.
-function testLooseShiftModifier(shortcuts) {
+function* testLooseShiftModifier(shortcuts) {
   info("Test Loose shift modifier");
   let onKey = once(shortcuts, "%", (key, event) => {
     is(event.key, "%");
@@ -228,7 +243,7 @@ function testLooseShiftModifier(shortcuts) {
 }
 
 // But Shift modifier is strict on all letter characters (a to Z)
-function testStrictLetterShiftModifier(shortcuts) {
+function* testStrictLetterShiftModifier(shortcuts) {
   info("Test strict shift modifier on letters");
   let hitFirst = false;
   let onKey = once(shortcuts, "a", (key, event) => {
@@ -260,7 +275,7 @@ function testStrictLetterShiftModifier(shortcuts) {
   yield onKey;
 }
 
-function testAltModifier(shortcuts) {
+function* testAltModifier(shortcuts) {
   info("Test Alt modifier");
   let onKey = once(shortcuts, "Alt+F1", (key, event) => {
     is(event.keyCode, window.KeyboardEvent.DOM_VK_F1);
@@ -276,7 +291,7 @@ function testAltModifier(shortcuts) {
   yield onKey;
 }
 
-function testCommandOrControlModifier(shortcuts) {
+function* testCommandOrControlModifier(shortcuts) {
   info("Test CommandOrControl modifier");
   let onKey = once(shortcuts, "CommandOrControl+F1", (key, event) => {
     is(event.keyCode, window.KeyboardEvent.DOM_VK_F1);
@@ -317,7 +332,7 @@ function testCommandOrControlModifier(shortcuts) {
   yield onKeyAlias;
 }
 
-function testCtrlModifier(shortcuts) {
+function* testCtrlModifier(shortcuts) {
   info("Test Ctrl modifier");
   let onKey = once(shortcuts, "Ctrl+F1", (key, event) => {
     is(event.keyCode, window.KeyboardEvent.DOM_VK_F1);
@@ -341,7 +356,7 @@ function testCtrlModifier(shortcuts) {
   yield onKeyAlias;
 }
 
-function testCmdShiftShortcut(shortcuts) {
+function* testCmdShiftShortcut(shortcuts) {
   if (!isOSX) {
     // This test is OSX only (Bug 1300458).
     return;
@@ -375,7 +390,7 @@ function testCmdShiftShortcut(shortcuts) {
   yield onCmdShiftKey;
 }
 
-function testTarget() {
+function* testTarget() {
   info("Test KeyShortcuts with target argument");
 
   let target = document.createElementNS("http://www.w3.org/1999/xhtml",

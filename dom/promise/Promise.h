@@ -140,6 +140,8 @@ public:
     MaybeSomething(aArg, &Promise::MaybeResolve);
   }
 
+  void MaybeResolveWithUndefined();
+
   inline void MaybeReject(nsresult aArg) {
     MOZ_ASSERT(NS_FAILED(aArg));
     MaybeSomething(aArg, &Promise::MaybeReject);
@@ -151,8 +153,6 @@ public:
   }
 
   void MaybeReject(const RefPtr<MediaStreamError>& aArg);
-
-  void MaybeRejectWithNull();
 
   void MaybeRejectWithUndefined();
 
@@ -313,6 +313,14 @@ public:
                      JS::Handle<JSObject*> aPromiseObj);
 #endif // SPIDERMONKEY_PROMISE
 
+  enum class PromiseState {
+    Pending,
+    Resolved,
+    Rejected
+  };
+
+  PromiseState State() const;
+
 protected:
   struct PromiseCapability;
 
@@ -369,12 +377,6 @@ protected:
 #endif // SPIDERMONKEY_PROMISE
 
 private:
-  enum PromiseState {
-    Pending,
-    Resolved,
-    Rejected
-  };
-
 #ifndef SPIDERMONKEY_PROMISE
   friend class PromiseDebugging;
 

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -73,6 +71,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
                                   "resource://gre/modules/AsyncShutdown.jsm");
@@ -81,7 +80,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
-                                  "resource://gre/modules/osfile.jsm")
+                                  "resource://gre/modules/osfile.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "gTextDecoder", function () {
   return new TextDecoder();
@@ -111,7 +110,10 @@ const kSaveDelayMs = 1500;
  * For example, this number should NOT be changed when a new optional field is
  * added to a login entry.
  */
-const kDataVersion = 1;
+const kDataVersion = 2;
+
+// The permission type we store in the permission manager.
+const PERMISSION_SAVE_LOGINS = "login-saving";
 
 ////////////////////////////////////////////////////////////////////////////////
 //// LoginStore
@@ -122,8 +124,7 @@ const kDataVersion = 1;
  * @param aPath
  *        String containing the file path where data should be saved.
  */
-function LoginStore(aPath)
-{
+function LoginStore(aPath) {
   this.path = aPath;
 
   this._saver = new DeferredTask(() => this.save(), kSaveDelayMs);
@@ -158,8 +159,7 @@ LoginStore.prototype = {
    * @resolves When the operation finished successfully.
    * @rejects JavaScript exception.
    */
-  load: function ()
-  {
+  load() {
     return Task.spawn(function* () {
       try {
         let bytes = yield OS.File.read(this.path);
@@ -210,8 +210,7 @@ LoginStore.prototype = {
   /**
    * Loads persistent data from the file to memory, synchronously.
    */
-  ensureDataReady: function ()
-  {
+  ensureDataReady() {
     if (this.dataReady) {
       return;
     }
@@ -220,7 +219,7 @@ LoginStore.prototype = {
       // This reads the file and automatically detects the UTF-8 encoding.
       let inputStream = new FileInputStream(new FileUtils.File(this.path),
                                             FileUtils.MODE_RDONLY,
-                                            FileUtils.PERMS_FILE, 0)
+                                            FileUtils.PERMS_FILE, 0);
       try {
         let json = Cc["@mozilla.org/dom/json;1"].createInstance(Ci.nsIJSON);
         this.data = json.decodeFromStream(inputStream,
@@ -262,14 +261,19 @@ LoginStore.prototype = {
   /**
    * Synchronously work on the data just loaded into memory.
    */
-  _processLoadedData: function ()
-  {
+  _processLoadedData() {
     // Create any arrays that are not present in the saved file.
     if (!this.data.logins) {
       this.data.logins = [];
     }
+
+    // Stub needed for login imports before data has been migrated.
     if (!this.data.disabledHosts) {
       this.data.disabledHosts = [];
+    }
+
+    if (this.data.version === 1) {
+      this._migrateDisabledHosts();
     }
 
     // Indicate that the current version of the code has touched the file.
@@ -279,10 +283,25 @@ LoginStore.prototype = {
   },
 
   /**
+   * Migrates disabled hosts to the permission manager.
+   */
+  _migrateDisabledHosts: function () {
+    for (let host of this.data.disabledHosts) {
+      try {
+        let uri = Services.io.newURI(host, null, null);
+        Services.perms.add(uri, PERMISSION_SAVE_LOGINS, Services.perms.DENY_ACTION);
+      } catch (e) {
+        Cu.reportError(e);
+      }
+    }
+
+    delete this.data.disabledHosts;
+  },
+
+  /**
    * Called when the data changed, this triggers asynchronous serialization.
    */
-  saveSoon: function ()
-  {
+  saveSoon() {
     return this._saver.arm();
   },
 
@@ -300,8 +319,7 @@ LoginStore.prototype = {
    * @resolves When the operation finished successfully.
    * @rejects JavaScript exception.
    */
-  save: function ()
-  {
+  save() {
     return Task.spawn(function* () {
       // Create or overwrite the file.
       let bytes = gTextEncoder.encode(JSON.stringify(this.data));

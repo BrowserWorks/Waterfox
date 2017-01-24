@@ -36,7 +36,7 @@ add_task(function*() {
     for (b of browsers) BrowserTestUtils.browserLoaded(b)
   ));
   let expected = 'Expected all promised browsers to have loaded.';
-  for (var browser of browsers) {
+  for (const browser of browsers) {
     yield isDOMLoaded(browser);
   }
   //cleanup

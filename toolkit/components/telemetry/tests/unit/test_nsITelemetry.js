@@ -57,10 +57,10 @@ function compareHistograms(h1, h2) {
 }
 
 function check_histogram(histogram_type, name, min, max, bucket_count) {
-  var h = Telemetry.newHistogram(name, "never", histogram_type, min, max, bucket_count);
+  var h = Telemetry.getHistogramById(name);
   var r = h.snapshot().ranges;
   var sum = 0;
-  for(let i=0;i<r.length;i++) {
+  for (let i=0;i<r.length;i++) {
     var v = r[i];
     sum += v;
     h.add(v);
@@ -124,13 +124,12 @@ function* test_instantiate() {
 
 add_task(function* test_parameterChecks() {
   let kinds = [Telemetry.HISTOGRAM_EXPONENTIAL, Telemetry.HISTOGRAM_LINEAR]
-  for (let histogram_type of kinds) {
+  let testNames = ["TELEMETRY_TEST_EXPONENTIAL", "TELEMETRY_TEST_LINEAR"]
+  for (let i = 0; i < kinds.length; i++) {
+    let histogram_type = kinds[i];
+    let test_type = testNames[i];
     let [min, max, bucket_count] = [1, INT_MAX - 1, 10]
-    check_histogram(histogram_type, "test::"+histogram_type, min, max, bucket_count);
-
-    const nh = Telemetry.newHistogram;
-    expect_fail(() => nh("test::min", "never", histogram_type, 0, max, bucket_count));
-    expect_fail(() => nh("test::bucket_count", "never", histogram_type, min, max, 1));
+    check_histogram(histogram_type, test_type, min, max, bucket_count);
   }
 });
 
@@ -142,12 +141,12 @@ add_task(function* test_noSerialization() {
 });
 
 add_task(function* test_boolean_histogram() {
-  var h = Telemetry.newHistogram("test::boolean histogram", "never", Telemetry.HISTOGRAM_BOOLEAN);
+  var h = Telemetry.getHistogramById("TELEMETRY_TEST_BOOLEAN");
   var r = h.snapshot().ranges;
   // boolean histograms ignore numeric parameters
   do_check_eq(uneval(r), uneval([0, 1, 2]))
   var sum = 0
-  for(var i=0;i<r.length;i++) {
+  for (var i=0;i<r.length;i++) {
     var v = r[i];
     sum += v;
     h.add(v);
@@ -163,7 +162,7 @@ add_task(function* test_boolean_histogram() {
 });
 
 add_task(function* test_flag_histogram() {
-  var h = Telemetry.newHistogram("test::flag histogram", "never", Telemetry.HISTOGRAM_FLAG);
+  var h = Telemetry.getHistogramById("TELEMETRY_TEST_FLAG");
   var r = h.snapshot().ranges;
   // Flag histograms ignore numeric parameters.
   do_check_eq(uneval(r), uneval([0, 1, 2]));
@@ -188,7 +187,7 @@ add_task(function* test_flag_histogram() {
 });
 
 add_task(function* test_count_histogram() {
-  let h = Telemetry.newHistogram("test::count histogram", "never", Telemetry.HISTOGRAM_COUNT, 1, 2, 3);
+  let h = Telemetry.getHistogramById("TELEMETRY_TEST_COUNT2");
   let s = h.snapshot();
   do_check_eq(uneval(s.ranges), uneval([0, 1, 2]));
   do_check_eq(uneval(s.counts), uneval([0, 0, 0]));
@@ -289,7 +288,7 @@ add_task(function* test_getWebrtc() {
 
 // Check that telemetry doesn't record in private mode
 add_task(function* test_privateMode() {
-  var h = Telemetry.newHistogram("test::private_mode_boolean", "never", Telemetry.HISTOGRAM_BOOLEAN);
+  var h = Telemetry.getHistogramById("TELEMETRY_TEST_BOOLEAN");
   var orig = h.snapshot();
   Telemetry.canRecordExtended = false;
   h.add(1);
@@ -325,7 +324,7 @@ add_task(function* test_histogramRecording() {
                "Histograms should be equal after recording.");
 
   // Runtime created histograms should not be recorded.
-  h = Telemetry.newHistogram("test::runtime_created_boolean", "never", Telemetry.HISTOGRAM_BOOLEAN);
+  h = Telemetry.getHistogramById("TELEMETRY_TEST_BOOLEAN");
   orig = h.snapshot();
   h.add(1);
   Assert.equal(orig.sum, h.snapshot().sum,
@@ -442,10 +441,9 @@ add_task(function* test_addons() {
 });
 
 add_task(function* test_expired_histogram() {
-  var histogram_id = "FOOBAR";
   var test_expired_id = "TELEMETRY_TEST_EXPIRED";
   var clone_id = "ExpiredClone";
-  var dummy = Telemetry.newHistogram(histogram_id, "28.0a1", Telemetry.HISTOGRAM_EXPONENTIAL, 1, 2, 3);
+  var dummy = Telemetry.getHistogramById(test_expired_id);
   var dummy_clone = Telemetry.histogramFrom(clone_id, test_expired_id);
   var rh = Telemetry.registeredHistograms(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, []);
   Assert.ok(!!rh);
@@ -454,7 +452,6 @@ add_task(function* test_expired_histogram() {
   dummy_clone.add(1);
 
   do_check_eq(Telemetry.histogramSnapshots["__expired__"], undefined);
-  do_check_eq(Telemetry.histogramSnapshots[histogram_id], undefined);
   do_check_eq(Telemetry.histogramSnapshots[test_expired_id], undefined);
   do_check_eq(Telemetry.histogramSnapshots[clone_id], undefined);
   do_check_eq(rh[test_expired_id], undefined);
@@ -465,15 +462,6 @@ add_task(function* test_keyed_histogram() {
 
   let threw = false;
   try {
-    Telemetry.newKeyedHistogram("test::invalid # histogram", "never", Telemetry.HISTOGRAM_BOOLEAN);
-  } catch (e) {
-    // This should throw as we reject names with the # separator
-    threw = true;
-  }
-  Assert.ok(threw, "newKeyedHistogram should have thrown");
-
-  threw = false;
-  try {
     Telemetry.getKeyedHistogramById("test::unknown histogram", "never", Telemetry.HISTOGRAM_BOOLEAN);
   } catch (e) {
     // This should throw as it is an unknown ID
@@ -483,7 +471,7 @@ add_task(function* test_keyed_histogram() {
 });
 
 add_task(function* test_keyed_boolean_histogram() {
-  const KEYED_ID = "test::keyed::boolean";
+  const KEYED_ID = "TELEMETRY_TEST_KEYED_BOOLEAN";
   let KEYS = numberRange(0, 2).map(i => "key" + (i + 1));
   KEYS.push("漢語");
   let histogramBase = {
@@ -498,7 +486,7 @@ add_task(function* test_keyed_boolean_histogram() {
   let testKeys = [];
   let testSnapShot = {};
 
-  let h = Telemetry.newKeyedHistogram(KEYED_ID, "never", Telemetry.HISTOGRAM_BOOLEAN);
+  let h = Telemetry.getKeyedHistogramById(KEYED_ID);
   for (let i=0; i<2; ++i) {
     let key = KEYS[i];
     h.add(key, true);
@@ -531,7 +519,7 @@ add_task(function* test_keyed_boolean_histogram() {
 });
 
 add_task(function* test_keyed_count_histogram() {
-  const KEYED_ID = "test::keyed::count";
+  const KEYED_ID = "TELEMETRY_TEST_KEYED_COUNT";
   const KEYS = numberRange(0, 5).map(i => "key" + (i + 1));
   let histogramBase = {
     "min": 1,
@@ -545,7 +533,7 @@ add_task(function* test_keyed_count_histogram() {
   let testKeys = [];
   let testSnapShot = {};
 
-  let h = Telemetry.newKeyedHistogram(KEYED_ID, "never", Telemetry.HISTOGRAM_COUNT);
+  let h = Telemetry.getKeyedHistogramById(KEYED_ID);
   for (let i=0; i<4; ++i) {
     let key = KEYS[i];
     let value = i*2 + 1;
@@ -586,8 +574,8 @@ add_task(function* test_keyed_count_histogram() {
 });
 
 add_task(function* test_keyed_flag_histogram() {
-  const KEYED_ID = "test::keyed::flag";
-  let h = Telemetry.newKeyedHistogram(KEYED_ID, "never", Telemetry.HISTOGRAM_FLAG);
+  const KEYED_ID = "TELEMETRY_TEST_KEYED_FLAG";
+  let h = Telemetry.getKeyedHistogramById(KEYED_ID);
 
   const KEY = "default";
   h.add(KEY, true);
@@ -636,12 +624,6 @@ add_task(function* test_keyed_histogram_recording() {
   h.add(TEST_KEY, 1);
   Assert.equal(h.snapshot(TEST_KEY).sum, 0,
                "The keyed histograms should not record any data.");
-
-  // Runtime created histograms should not be recorded.
-  h = Telemetry.newKeyedHistogram("test::runtime_keyed_boolean", "never", Telemetry.HISTOGRAM_BOOLEAN);
-  h.add(TEST_KEY, 1);
-  Assert.equal(h.snapshot(TEST_KEY).sum, 0,
-               "The keyed histogram should not record any data.");
 
   // Check that extended histograms are recorded when required.
   Telemetry.canRecordExtended = true;

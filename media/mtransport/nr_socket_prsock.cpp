@@ -135,12 +135,6 @@ nrappkit copyright:
 #endif
 #undef strlcpy
 
-// TCPSocketChild.h doesn't include TypedArray.h
-namespace mozilla {
-namespace dom {
-class ArrayBuffer;
-}
-}
 #include "mozilla/dom/network/TCPSocketChild.h"
 
 #ifdef LOG_TEMP_INFO
@@ -364,7 +358,7 @@ void NrSocket::OnSocketReady(PRFileDesc *fd, int16_t outflags) {
     fire_callback(NR_ASYNC_WAIT_READ);
   if (outflags & PR_POLL_WRITE & poll_flags())
     fire_callback(NR_ASYNC_WAIT_WRITE);
-  if (outflags & (PR_POLL_ERR | PR_POLL_NVAL))
+  if (outflags & (PR_POLL_ERR | PR_POLL_NVAL | PR_POLL_HUP))
     // TODO: Bug 946423: how do we notify the upper layers about this?
     close();
 }
@@ -749,6 +743,58 @@ abort:
   return(_status);
 }
 
+static int ShouldDrop(size_t len) {
+  // Global rate limiting for stun requests, to mitigate the ice hammer DoS
+  // (see http://tools.ietf.org/html/draft-thomson-mmusic-ice-webrtc)
+
+  // Tolerate rate of 8k/sec, for one second.
+  static SimpleTokenBucket burst(16384*1, 16384);
+  // Tolerate rate of 7.2k/sec over twenty seconds.
+  static SimpleTokenBucket sustained(7372*20, 7372);
+
+  // Check number of tokens in each bucket.
+  if (burst.getTokens(UINT32_MAX) < len) {
+    r_log(LOG_GENERIC, LOG_ERR,
+               "Short term global rate limit for STUN requests exceeded.");
+#ifdef MOZILLA_INTERNAL_API
+    nr_socket_short_term_violation_time = TimeStamp::Now();
+#endif
+
+// Bug 1013007
+#if !EARLY_BETA_OR_EARLIER
+    return R_WOULDBLOCK;
+#else
+    MOZ_ASSERT(false,
+               "Short term global rate limit for STUN requests exceeded. Go "
+               "bug bcampen@mozilla.com if you weren't intentionally "
+               "spamming ICE candidates, or don't know what that means.");
+#endif
+  }
+
+  if (sustained.getTokens(UINT32_MAX) < len) {
+    r_log(LOG_GENERIC, LOG_ERR,
+               "Long term global rate limit for STUN requests exceeded.");
+#ifdef MOZILLA_INTERNAL_API
+    nr_socket_long_term_violation_time = TimeStamp::Now();
+#endif
+// Bug 1013007
+#if !EARLY_BETA_OR_EARLIER
+    return R_WOULDBLOCK;
+#else
+    MOZ_ASSERT(false,
+               "Long term global rate limit for STUN requests exceeded. Go "
+               "bug bcampen@mozilla.com if you weren't intentionally "
+               "spamming ICE candidates, or don't know what that means.");
+#endif
+  }
+
+  // Take len tokens from both buckets.
+  // (not threadsafe, but no problem since this is only called from STS)
+  burst.getTokens(len);
+  sustained.getTokens(len);
+  return 0;
+}
+
 // This should be called on the STS thread.
 int NrSocket::sendto(const void *msg, size_t len,
                      int flags, nr_transport_addr *to) {
@@ -763,55 +809,8 @@ int NrSocket::sendto(const void *msg, size_t len,
   if(fd_==nullptr)
     ABORT(R_EOD);
 
-  if (nr_is_stun_request_message((UCHAR*)msg, len)) {
-    // Global rate limiting for stun requests, to mitigate the ice hammer DoS
-    // (see http://tools.ietf.org/html/draft-thomson-mmusic-ice-webrtc)
-
-    // Tolerate rate of 8k/sec, for one second.
-    static SimpleTokenBucket burst(16384*1, 16384);
-    // Tolerate rate of 7.2k/sec over twenty seconds.
-    static SimpleTokenBucket sustained(7372*20, 7372);
-
-    // Check number of tokens in each bucket.
-    if (burst.getTokens(UINT32_MAX) < len) {
-      r_log(LOG_GENERIC, LOG_ERR,
-                 "Short term global rate limit for STUN requests exceeded.");
-#ifdef MOZILLA_INTERNAL_API
-      nr_socket_short_term_violation_time = TimeStamp::Now();
-#endif
-
-// Bug 1013007
-#if !EARLY_BETA_OR_EARLIER
-      ABORT(R_WOULDBLOCK);
-#else
-      MOZ_ASSERT(false,
-                 "Short term global rate limit for STUN requests exceeded. Go "
-                 "bug bcampen@mozilla.com if you weren't intentionally "
-                 "spamming ICE candidates, or don't know what that means.");
-#endif
-    }
-
-    if (sustained.getTokens(UINT32_MAX) < len) {
-      r_log(LOG_GENERIC, LOG_ERR,
-                 "Long term global rate limit for STUN requests exceeded.");
-#ifdef MOZILLA_INTERNAL_API
-      nr_socket_long_term_violation_time = TimeStamp::Now();
-#endif
-// Bug 1013007
-#if !EARLY_BETA_OR_EARLIER
-      ABORT(R_WOULDBLOCK);
-#else
-      MOZ_ASSERT(false,
-                 "Long term global rate limit for STUN requests exceeded. Go "
-                 "bug bcampen@mozilla.com if you weren't intentionally "
-                 "spamming ICE candidates, or don't know what that means.");
-#endif
-    }
-
-    // Take len tokens from both buckets.
-    // (not threadsafe, but no problem since this is only called from STS)
-    burst.getTokens(len);
-    sustained.getTokens(len);
+  if (nr_is_stun_request_message((UCHAR*)msg, len) && ShouldDrop(len)) {
+    ABORT(R_WOULDBLOCK);
   }
 
   // TODO: Convert flags?
@@ -1337,6 +1336,7 @@ int NrUdpSocketIpc::create(nr_transport_addr *addr) {
   mon.Wait();
 
   if (err_) {
+    close();
     ABORT(R_INTERNAL);
   }
 
@@ -1366,6 +1366,10 @@ int NrUdpSocketIpc::sendto(const void *msg, size_t len, int flags,
   net::NetAddr addr;
   if ((r=nr_transport_addr_to_netaddr(to, &addr))) {
     return r;
+  }
+
+  if (nr_is_stun_request_message((UCHAR*)msg, len) && ShouldDrop(len)) {
+    return R_WOULDBLOCK;
   }
 
   nsAutoPtr<DataBuffer> buf(new DataBuffer(static_cast<const uint8_t*>(msg), len));
@@ -1658,7 +1662,7 @@ public:
   explicit TcpSocketReadyRunner(NrTcpSocketIpc *sck)
     : socket_(sck) {}
 
-  NS_IMETHODIMP Run() {
+  NS_IMETHOD Run() override {
     socket_->maybe_post_socket_ready();
     return NS_OK;
   }

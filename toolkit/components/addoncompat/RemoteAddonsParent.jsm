@@ -53,7 +53,7 @@ var NotificationTracker = {
   init: function() {
     let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                .getService(Ci.nsIMessageBroadcaster);
-    ppmm.addMessageListener("Addons:GetNotifications", this);
+    ppmm.initialProcessData.remoteAddonsNotificationPaths = this._paths;
   },
 
   add: function(path) {
@@ -81,13 +81,6 @@ var NotificationTracker = {
                .getService(Ci.nsIMessageBroadcaster);
     ppmm.broadcastAsyncMessage("Addons:ChangeNotification", {path: path, count: tracked._count});
   },
-
-  receiveMessage: function(msg) {
-    if (msg.name == "Addons:GetNotifications") {
-      return this._paths;
-    }
-    return undefined;
-  }
 };
 NotificationTracker.init();
 
@@ -776,18 +769,16 @@ ComponentsUtilsInterposition.methods.Sandbox =
         array[i] = principals[i];
       }
       return SandboxParent.makeContentSandbox(addon, chromeGlobal, array, ...rest);
-    } else {
-      return Components.utils.Sandbox(principals, ...rest);
     }
+    return Components.utils.Sandbox(principals, ...rest);
   };
 
 ComponentsUtilsInterposition.methods.evalInSandbox =
   function(addon, target, code, sandbox, ...rest) {
     if (sandbox && Cu.isCrossProcessWrapper(sandbox)) {
       return SandboxParent.evalInSandbox(code, sandbox, ...rest);
-    } else {
-      return Components.utils.evalInSandbox(code, sandbox, ...rest);
     }
+    return Components.utils.evalInSandbox(code, sandbox, ...rest);
   };
 
 // This interposition handles cases where an add-on tries to import a

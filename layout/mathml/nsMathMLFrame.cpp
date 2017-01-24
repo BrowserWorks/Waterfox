@@ -163,8 +163,9 @@ nsMathMLFrame::GetPresentationDataFrom(nsIFrame*           aFrame,
     }
     frame = frame->GetParent();
   }
-  NS_WARN_IF_FALSE(frame && frame->GetContent(),
-                   "bad MathML markup - could not find the top <math> element");
+  NS_WARNING_ASSERTION(
+    frame && frame->GetContent(),
+    "bad MathML markup - could not find the top <math> element");
 }
 
 /* static */ void
@@ -364,7 +365,7 @@ void nsDisplayMathMLBar::Paint(nsDisplayListBuilder* aBuilder,
     NSRectToNonEmptySnappedRect(mRect + ToReferenceFrame(),
                                 mFrame->PresContext()->AppUnitsPerDevPixel(),
                                 *drawTarget);
-  nsCSSProperty colorProp = mFrame->StyleContext()->GetTextFillColorProp();
+  nsCSSPropertyID colorProp = mFrame->StyleContext()->GetTextFillColorProp();
   ColorPattern color(ToDeviceColor(
                                  mFrame->GetVisitedDependentColor(colorProp)));
   drawTarget->FillRect(rect, color);

@@ -28,7 +28,7 @@ using struct nsPoint from "nsPoint.h";
 using class mozilla::TimeDuration from "mozilla/TimeStamp.h";
 using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
 using mozilla::ScreenRotation from "mozilla/WidgetUtils.h";
-using nsCSSProperty from "nsCSSProperty.h";
+using nsCSSPropertyID from "nsCSSPropertyID.h";
 using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
 using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h";
 using mozilla::LayerMargin from "Units.h";
@@ -198,12 +198,13 @@ struct Animation {
   float iterations;
   float iterationStart;
   // This uses the NS_STYLE_ANIMATION_DIRECTION_* constants.
-  int32_t direction;
-  nsCSSProperty property;
+  uint8_t direction;
+  nsCSSPropertyID property;
   AnimationData data;
   float playbackRate;
   // This is used in the transformed progress calculation.
   TimingFunction easingFunction;
+  uint8_t iterationComposite;
 };
 
 // Change a layer's attributes
@@ -254,8 +255,6 @@ struct ContainerLayerAttributes {
   float presShellResolution;
   bool scaleToResolution;
   EventRegionsOverride eventRegionsOverride;
-  uint32_t hmdDeviceID;
-  int32_t inputFrameID;
 };
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
 struct CanvasLayerAttributes    { SamplingFilter samplingFilter; IntRect bounds; };
@@ -401,7 +400,6 @@ struct TimedTexture {
   IntRect picture;
   uint32_t frameID;
   uint32_t producerID;
-  int32_t inputFrameID;
 };
 
 /**

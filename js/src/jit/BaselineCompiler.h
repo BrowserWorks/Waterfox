@@ -181,10 +181,13 @@ namespace jit {
     _(JSOP_FINALLY)            \
     _(JSOP_GOSUB)              \
     _(JSOP_RETSUB)             \
-    _(JSOP_PUSHBLOCKSCOPE)     \
-    _(JSOP_POPBLOCKSCOPE)      \
-    _(JSOP_FRESHENBLOCKSCOPE)  \
-    _(JSOP_DEBUGLEAVEBLOCK)    \
+    _(JSOP_PUSHLEXICALENV)     \
+    _(JSOP_POPLEXICALENV)      \
+    _(JSOP_FRESHENLEXICALENV)  \
+    _(JSOP_RECREATELEXICALENV) \
+    _(JSOP_DEBUGLEAVELEXICALENV) \
+    _(JSOP_PUSHVARENV)         \
+    _(JSOP_POPVARENV)          \
     _(JSOP_EXCEPTION)          \
     _(JSOP_DEBUGGER)           \
     _(JSOP_ARGUMENTS)          \
@@ -210,6 +213,7 @@ namespace jit {
     _(JSOP_RETURN)             \
     _(JSOP_FUNCTIONTHIS)       \
     _(JSOP_GLOBALTHIS)         \
+    _(JSOP_CHECKISOBJ)         \
     _(JSOP_CHECKTHIS)          \
     _(JSOP_CHECKRETURN)        \
     _(JSOP_NEWTARGET)          \
@@ -217,6 +221,7 @@ namespace jit {
     _(JSOP_SPREADSUPERCALL)    \
     _(JSOP_THROWSETCONST)      \
     _(JSOP_THROWSETALIASEDCONST) \
+    _(JSOP_THROWSETCALLEE) \
     _(JSOP_INITHIDDENPROP_GETTER) \
     _(JSOP_INITHIDDENPROP_SETTER) \
     _(JSOP_INITHIDDENELEM)     \
@@ -274,7 +279,7 @@ class BaselineCompiler : public BaselineCompilerSpecific
     MOZ_MUST_USE bool emitCheckThis(ValueOperand val);
     void emitLoadReturnValue(ValueOperand val);
 
-    void emitInitializeLocals(size_t n, const Value& v);
+    void emitInitializeLocals();
     MOZ_MUST_USE bool emitPrologue();
     MOZ_MUST_USE bool emitEpilogue();
     MOZ_MUST_USE bool emitOutOfLinePostBarrierSlot();
@@ -295,11 +300,12 @@ class BaselineCompiler : public BaselineCompilerSpecific
     MOZ_MUST_USE bool emitDebugTrap();
     MOZ_MUST_USE bool emitTraceLoggerEnter();
     MOZ_MUST_USE bool emitTraceLoggerExit();
+    MOZ_MUST_USE bool emitTraceLoggerResume(Register script, AllocatableGeneralRegisterSet& regs);
 
     void emitProfilerEnterFrame();
     void emitProfilerExitFrame();
 
-    MOZ_MUST_USE bool initScopeChain();
+    MOZ_MUST_USE bool initEnvironmentChain();
 
     void storeValue(const StackValue* source, const Address& dest,
                     const ValueOperand& scratch);
@@ -337,9 +343,9 @@ class BaselineCompiler : public BaselineCompilerSpecific
 
     MOZ_MUST_USE bool addYieldOffset();
 
-    void getScopeCoordinateObject(Register reg);
-    Address getScopeCoordinateAddressFromObject(Register objReg, Register reg);
-    Address getScopeCoordinateAddress(Register reg);
+    void getEnvironmentCoordinateObject(Register reg);
+    Address getEnvironmentCoordinateAddressFromObject(Register objReg, Register reg);
+    Address getEnvironmentCoordinateAddress(Register reg);
 };
 
 extern const VMFunction NewArrayCopyOnWriteInfo;

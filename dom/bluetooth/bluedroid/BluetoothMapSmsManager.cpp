@@ -25,6 +25,8 @@
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
 
+#include "mozilla/Unused.h"
+
 #define FILTER_NO_SMS_GSM   0x01
 #define FILTER_NO_SMS_CDMA  0x02
 #define FILTER_NO_EMAIL     0x04
@@ -152,7 +154,7 @@ BluetoothMapSmsManager::Uninit()
     return;
   }
 
-  NS_WARN_IF(NS_FAILED(
+  Unused << NS_WARN_IF(NS_FAILED(
     obs->RemoveObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID)));
 }
 

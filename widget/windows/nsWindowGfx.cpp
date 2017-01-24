@@ -39,7 +39,7 @@ using mozilla::plugins::PluginInstanceParent;
 #include "prmem.h"
 #include "WinUtils.h"
 #include "nsIWidgetListener.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsDebug.h"
 #include "nsIXULRuntime.h"
 
@@ -170,11 +170,18 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
   if (mozilla::ipc::MessageChannel::IsSpinLoopActive() && mPainting)
     return false;
 
-  if (gfxWindowsPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+  DeviceResetReason resetReason = DeviceResetReason::OK;
+  if (gfxWindowsPlatform::GetPlatform()->DidRenderingDeviceReset(&resetReason)) {
+
+    gfxCriticalNote << "(nsWindow) Detected device reset: " << (int)resetReason;
+
     gfxWindowsPlatform::GetPlatform()->UpdateRenderMode();
     EnumAllWindows([] (nsWindow* aWindow) -> void {
       aWindow->OnRenderingDeviceReset();
     });
+
+    gfxCriticalNote << "(nsWindow) Finished device reset.";
+
     return false;
   }
 

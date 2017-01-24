@@ -61,4 +61,20 @@ interface AnonymousContent {
   [Throws]
   nsISupports? getCanvasContext(DOMString elementId,
                                 DOMString contextId);
+
+  [Func="nsDocument::IsElementAnimateEnabled", Throws]
+  Animation setAnimationForElement(DOMString elementId,
+                                   object? keyframes,
+                                   optional UnrestrictedDoubleOrKeyframeAnimationOptions
+                                     options);
+
+  /**
+   * Accepts a list of (possibly overlapping) DOMRects which describe a shape
+   * in CSS pixels relative to the element's border box. This shape will be
+   * excluded from the element's background color rendering. The element will
+   * not render any background images once this method has been called.
+   */
+  [Throws]
+  void setCutoutRectsForElement(DOMString elementId,
+                                sequence<DOMRect> rects);
 };

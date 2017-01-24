@@ -832,8 +832,7 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
     if (flags == JSITER_ENUMERATE) {
         // Check to see if this is the same as the most recent object which was
         // iterated over.
-        PropertyIteratorObject* last = cx->caches.nativeIterCache.last;
-        if (last) {
+        if (PropertyIteratorObject* last = cx->compartment()->lastCachedNativeIterator) {
             NativeIterator* lastni = last->getNativeIterator();
             if (!(lastni->flags & (JSITER_ACTIVE|JSITER_UNREUSABLE)) &&
                 CanCompareIterableObjectToCache(obj) &&
@@ -845,6 +844,7 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
                     !proto->staticPrototype())
                 {
                     objp.set(last);
+                    assertSameCompartment(cx, objp);
                     UpdateNativeIterator(lastni, obj);
                     RegisterEnumerator(cx, last, lastni);
                     return true;
@@ -872,21 +872,21 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
             } while (pobj);
         }
 
-        PropertyIteratorObject* iterobj = cx->caches.nativeIterCache.get(key);
-        if (iterobj) {
+        if (PropertyIteratorObject* iterobj = cx->caches.nativeIterCache.get(key)) {
             NativeIterator* ni = iterobj->getNativeIterator();
             if (!(ni->flags & (JSITER_ACTIVE|JSITER_UNREUSABLE)) &&
                 ni->guard_key == key &&
                 ni->guard_length == guards.length() &&
                 Compare(reinterpret_cast<ReceiverGuard*>(ni->guard_array),
-                        guards.begin(), ni->guard_length))
+                        guards.begin(), ni->guard_length) &&
+                iterobj->compartment() == cx->compartment())
             {
                 objp.set(iterobj);
 
                 UpdateNativeIterator(ni, obj);
                 RegisterEnumerator(cx, iterobj, ni);
                 if (guards.length() == 2)
-                    cx->caches.nativeIterCache.last = iterobj;
+                    cx->compartment()->lastCachedNativeIterator = iterobj;
                 return true;
             }
         }
@@ -895,8 +895,10 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
   miss:
     if (!GetCustomIterator(cx, obj, flags, objp))
         return false;
-    if (objp)
+    if (objp) {
+        assertSameCompartment(cx, objp);
         return true;
+    }
 
     AutoIdVector keys(cx);
     if (flags & JSITER_FOREACH) {
@@ -914,13 +916,14 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
     }
 
     PropertyIteratorObject* iterobj = &objp->as<PropertyIteratorObject>();
+    assertSameCompartment(cx, iterobj);
 
     /* Cache the iterator object if possible. */
     if (guards.length())
         cx->caches.nativeIterCache.set(key, iterobj);
 
     if (guards.length() == 2)
-        cx->caches.nativeIterCache.last = iterobj;
+        cx->compartment()->lastCachedNativeIterator = iterobj;
     return true;
 }
 
@@ -986,9 +989,10 @@ js::IteratorConstructor(JSContext* cx, unsigned argc, Value* vp)
         keyonly = ToBoolean(args[1]);
     unsigned flags = JSITER_OWNONLY | (keyonly ? 0 : (JSITER_FOREACH | JSITER_KEYVALUE));
 
-    if (!ValueToIterator(cx, flags, args[0]))
+    RootedObject iterobj(cx, ValueToIterator(cx, flags, args[0]));
+    if (!iterobj)
         return false;
-    args.rval().set(args[0]);
+    args.rval().setObject(*iterobj);
     return true;
 }
 
@@ -1164,8 +1168,8 @@ const Class ListIteratorObject::class_ = {
     JSCLASS_HAS_RESERVED_SLOTS(ListIteratorSlotCount)
 };
 
-bool
-js::ValueToIterator(JSContext* cx, unsigned flags, MutableHandleValue vp)
+JSObject*
+js::ValueToIterator(JSContext* cx, unsigned flags, HandleValue vp)
 {
     /* JSITER_KEYVALUE must always come with JSITER_FOREACH */
     MOZ_ASSERT_IF(flags & JSITER_KEYVALUE, flags & JSITER_FOREACH);
@@ -1182,20 +1186,18 @@ js::ValueToIterator(JSContext* cx, unsigned flags, MutableHandleValue vp)
          */
         RootedObject iter(cx);
         if (!NewEmptyPropertyIterator(cx, flags, &iter))
-            return false;
-        vp.setObject(*iter);
-        return true;
+            return nullptr;
+        return iter;
     } else {
         obj = ToObject(cx, vp);
         if (!obj)
-            return false;
+            return nullptr;
     }
 
     RootedObject iter(cx);
     if (!GetIterator(cx, obj, flags, &iter))
-        return false;
-    vp.setObject(*iter);
-    return true;
+        return nullptr;
+    return iter;
 }
 
 bool
@@ -1485,8 +1487,12 @@ GlobalObject::initArrayIteratorProto(JSContext* cx, Handle<GlobalObject*> global
 
     const Class* cls = &ArrayIteratorPrototypeClass;
     RootedObject proto(cx, global->createBlankPrototypeInheriting(cx, cls, iteratorProto));
-    if (!proto || !DefinePropertiesAndFunctions(cx, proto, nullptr, array_iterator_methods))
+    if (!proto ||
+        !DefinePropertiesAndFunctions(cx, proto, nullptr, array_iterator_methods) ||
+        !DefineToStringTag(cx, proto, cx->names().ArrayIterator))
+    {
         return false;
+    }
 
     global->setReservedSlot(ARRAY_ITERATOR_PROTO, ObjectValue(*proto));
     return true;
@@ -1504,8 +1510,12 @@ GlobalObject::initStringIteratorProto(JSContext* cx, Handle<GlobalObject*> globa
 
     const Class* cls = &StringIteratorPrototypeClass;
     RootedObject proto(cx, global->createBlankPrototypeInheriting(cx, cls, iteratorProto));
-    if (!proto || !DefinePropertiesAndFunctions(cx, proto, nullptr, string_iterator_methods))
+    if (!proto ||
+        !DefinePropertiesAndFunctions(cx, proto, nullptr, string_iterator_methods) ||
+        !DefineToStringTag(cx, proto, cx->names().StringIterator))
+    {
         return false;
+    }
 
     global->setReservedSlot(STRING_ITERATOR_PROTO, ObjectValue(*proto));
     return true;

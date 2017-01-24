@@ -26,11 +26,11 @@ FontInspector.prototype = {
     this.update = this.update.bind(this);
     this.onNewNode = this.onNewNode.bind(this);
     this.onThemeChanged = this.onThemeChanged.bind(this);
-    this.inspector.selection.on("new-node", this.onNewNode);
+    this.inspector.selection.on("new-node-front", this.onNewNode);
     this.inspector.sidebar.on("fontinspector-selected", this.onNewNode);
     this.showAll = this.showAll.bind(this);
-    this.showAllButton = this.chromeDoc.getElementById("font-showall");
-    this.showAllButton.addEventListener("click", this.showAll);
+    this.showAllLink = this.chromeDoc.getElementById("font-showall");
+    this.showAllLink.addEventListener("click", this.showAll);
     this.previewTextChanged = this.previewTextChanged.bind(this);
     this.previewInput =
       this.chromeDoc.getElementById("font-preview-text-input");
@@ -56,8 +56,8 @@ FontInspector.prototype = {
   destroy: function () {
     this.chromeDoc = null;
     this.inspector.sidebar.off("fontinspector-selected", this.onNewNode);
-    this.inspector.selection.off("new-node", this.onNewNode);
-    this.showAllButton.removeEventListener("click", this.showAll);
+    this.inspector.selection.off("new-node-front", this.onNewNode);
+    this.showAllLink.removeEventListener("click", this.showAll);
     this.previewInput.removeEventListener("input", this.previewTextChanged);
 
     gDevTools.off("theme-switched", this.onThemeChanged);

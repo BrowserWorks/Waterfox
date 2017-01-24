@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
+#include "X11UndefineNone.h"
 
 #include "mozilla/dom/EncodingUtils.h"
 #include "nsIUnicodeDecoder.h"
@@ -1030,7 +1031,7 @@ selection_request_filter(GdkXEvent *gdk_xevent, GdkEvent *event, gpointer data)
 {
     XEvent *xevent = static_cast<XEvent*>(gdk_xevent);
     if (xevent->xany.type == SelectionRequest) {
-        if (xevent->xselectionrequest.requestor == None)
+        if (xevent->xselectionrequest.requestor == X11None)
             return GDK_FILTER_REMOVE;
 
         GdkDisplay *display = gdk_x11_lookup_xdisplay(

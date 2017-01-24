@@ -4,7 +4,7 @@
 
 // a place for miscellaneous social tests
 
-var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+var SocialService = Cu.import("resource:///modules/SocialService.jsm", {}).SocialService;
 
 const URI_EXTENSION_BLOCKLIST_DIALOG = "chrome://mozapps/content/extensions/blocklist.xul";
 var blocklistURL = "http://example.com/browser/browser/base/content/test/social/blocklist.xml";
@@ -12,13 +12,13 @@ var blocklistURL = "http://example.com/browser/browser/base/content/test/social/
 var manifest = { // normal provider
   name: "provider ok",
   origin: "https://example.com",
-  sidebarURL: "https://example.com/browser/browser/base/content/test/social/social_sidebar.html",
+  shareURL: "https://example.com/browser/browser/base/content/test/social/social_share.html",
   iconURL: "https://example.com/browser/browser/base/content/test/general/moz.png"
 };
 var manifest_bad = { // normal provider
   name: "provider blocked",
   origin: "https://test1.example.com",
-  sidebarURL: "https://test1.example.com/browser/browser/base/content/test/social/social_sidebar.html",
+  shareURL: "https://test1.example.com/browser/browser/base/content/test/social/social_share.html",
   iconURL: "https://test1.example.com/browser/browser/base/content/test/general/moz.png"
 };
 
@@ -92,12 +92,12 @@ var tests = {
               ok(true, "added and removed provider");
               finishTest(true);
             });
-          } catch(e) {
+          } catch (e) {
             ok(false, "SocialService.disableProvider threw exception: " + e);
             finishTest(false);
           }
         });
-      } catch(e) {
+      } catch (e) {
         ok(false, "SocialService.addProvider threw exception: " + e);
         finishTest(false);
       }
@@ -118,7 +118,7 @@ var tests = {
             finishTest(false);
           });
         });
-      } catch(e) {
+      } catch (e) {
         ok(true, "SocialService.addProvider should throw blocklist exception: " + e);
         finishTest(true);
       }
@@ -143,7 +143,7 @@ var tests = {
         Social.installProvider(data, function(addonManifest) {
           finishTest(false);
         });
-      } catch(e) {
+      } catch (e) {
         finishTest(true);
       }
     });
@@ -203,7 +203,7 @@ var tests = {
         // to fire.
         setAndUpdateBlocklist(blocklistURL);
       });
-    } catch(e) {
+    } catch (e) {
       ok(false, "unable to add provider " + e);
       next();
     }

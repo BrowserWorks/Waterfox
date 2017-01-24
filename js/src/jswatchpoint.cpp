@@ -11,6 +11,7 @@
 #include "jsfriendapi.h"
 
 #include "gc/Marking.h"
+#include "vm/Shape.h"
 
 #include "jsgcinlines.h"
 
@@ -225,7 +226,7 @@ WatchpointMap::sweep()
 void
 WatchpointMap::traceAll(WeakMapTracer* trc)
 {
-    JSRuntime* rt = trc->runtime;
+    JSRuntime* rt = trc->context;
     for (CompartmentsIter comp(rt, SkipAtoms); !comp.done(); comp.next()) {
         if (WatchpointMap* wpmap = comp->watchpointMap)
             wpmap->trace(trc);

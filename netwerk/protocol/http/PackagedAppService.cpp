@@ -263,7 +263,7 @@ PackagedAppService::CacheEntryWriter::CopyHeadersFromChannel(nsIChannel *aChanne
   return httpChan->VisitResponseHeaders(headerCopier);
 }
 
-NS_METHOD
+nsresult
 PackagedAppService::CacheEntryWriter::ConsumeData(const char *aBuf,
                                                   uint32_t aCount,
                                                   uint32_t *aWriteCount)
@@ -464,7 +464,7 @@ PackagedAppService::PackagedAppDownloader::OnStartRequest(nsIRequest *aRequest,
 
   MOZ_ASSERT(mWriter);
   rv = mWriter->OnStartRequest(aRequest, aContext);
-  NS_WARN_IF(NS_FAILED(rv));
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "OnStartRequest failed");
 
   EnsureVerifier(aRequest);
 
@@ -681,7 +681,7 @@ PackagedAppService::PackagedAppDownloader::OnStopRequest(nsIRequest *aRequest,
   return NS_OK;
 }
 
-NS_METHOD
+nsresult
 PackagedAppService::PackagedAppDownloader::ConsumeData(nsIInputStream *aStream,
                                                        void *aClosure,
                                                        const char *aFromRawSegment,

@@ -7,6 +7,7 @@
 
 #include "AutoHelpersWin.h"
 #include "Logging.h"
+#include "nsString.h"
 #include "SFNTData.h"
 
 #ifdef USE_SKIA
@@ -16,6 +17,8 @@
 #ifdef USE_CAIRO_SCALED_FONT
 #include "cairo-win32.h"
 #endif
+
+#include "HelpersWinFonts.h"
 
 namespace mozilla {
 namespace gfx {
@@ -68,7 +71,8 @@ ScaledFontWin::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
           reinterpret_cast<char16_t*>(mLogFont.lfFaceName), &index, LF_FACESIZE - 1)) {
       gfxWarning() << "Failed to get index for face name.";
       gfxDevCrash(LogReason::GetFontFileDataFailed) <<
-        "Failed to get index for face name |" << mLogFont.lfFaceName << "|.";
+        "Failed to get index for face name |" <<
+        NS_ConvertUTF16toUTF8(mLogFont.lfFaceName).get() << "|.";
       return false;
     }
   }
@@ -82,6 +86,12 @@ ScaledFontWin::GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton)
 {
   aCb(reinterpret_cast<uint8_t*>(&mLogFont), sizeof(mLogFont), mSize, aBaton);
   return true;
+}
+
+AntialiasMode
+ScaledFontWin::GetDefaultAAMode()
+{
+  return GetSystemDefaultAAMode();
 }
 
 #ifdef USE_SKIA

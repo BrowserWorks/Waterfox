@@ -22,6 +22,7 @@ Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/Log.jsm", this);
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/PromiseUtils.jsm");
+Cu.import("resource://gre/modules/ServiceRequest.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/TelemetryUtils.jsm", this);
 Cu.import("resource://gre/modules/Timer.jsm", this);
@@ -121,9 +122,8 @@ function isDeletionPing(aPing) {
 function savePing(aPing) {
   if (isDeletionPing(aPing)) {
     return TelemetryStorage.saveDeletionPing(aPing);
-  } else {
-    return TelemetryStorage.savePendingPing(aPing);
   }
+  return TelemetryStorage.savePendingPing(aPing);
 }
 
 /**
@@ -675,7 +675,7 @@ var TelemetrySendImpl = {
   },
 
   observe: function(subject, topic, data) {
-    switch(topic) {
+    switch (topic) {
     case TOPIC_IDLE_DAILY:
       SendScheduler.triggerSendingPings(true);
       break;
@@ -845,9 +845,8 @@ var TelemetrySendImpl = {
         return TelemetryStorage.removeDeletionPing();
       }
       return TelemetryStorage.removePendingPing(id);
-    } else {
-      return Promise.resolve();
     }
+    return Promise.resolve();
   },
 
   _getSubmissionPath: function(ping) {
@@ -897,8 +896,7 @@ var TelemetrySendImpl = {
     const version = isNewPing ? PING_FORMAT_VERSION : 1;
     const url = this._server + this._getSubmissionPath(ping) + "?v=" + version;
 
-    let request = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
-                  .createInstance(Ci.nsIXMLHttpRequest);
+    let request = new ServiceRequest();
     request.mozBackgroundRequest = true;
     request.timeout = PING_SUBMIT_TIMEOUT_MS;
 

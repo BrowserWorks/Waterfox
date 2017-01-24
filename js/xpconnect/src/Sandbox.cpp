@@ -23,6 +23,7 @@
 #include "nsPrincipal.h"
 #include "WrapperFactory.h"
 #include "xpcprivate.h"
+#include "xpc_make_class.h"
 #include "XPCWrapper.h"
 #include "XrayWrapper.h"
 #include "Crypto.h"
@@ -482,7 +483,7 @@ sandbox_addProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v)
     // Whenever JS_EnumerateStandardClasses is called, it defines the
     // "undefined" property, even if it's already defined. We don't want to do
     // anything in that case.
-    if (id == XPCJSRuntime::Get()->GetStringID(XPCJSRuntime::IDX_UNDEFINED))
+    if (id == XPCJSContext::Get()->GetStringID(XPCJSContext::IDX_UNDEFINED))
         return true;
 
     // Avoid recursively triggering sandbox_addProperty in the
@@ -554,7 +555,8 @@ static const js::ClassExtension SandboxClassExtension = {
 
 static const js::Class SandboxClass = {
     "Sandbox",
-    XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1),
+    XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1) |
+    JSCLASS_FOREGROUND_FINALIZE,
     &SandboxClassOps,
     JS_NULL_CLASS_SPEC,
     &SandboxClassExtension,
@@ -573,7 +575,8 @@ static const js::ClassOps SandboxWriteToProtoClassOps = {
 
 static const js::Class SandboxWriteToProtoClass = {
     "Sandbox",
-    XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1),
+    XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1) |
+    JSCLASS_FOREGROUND_FINALIZE,
     &SandboxWriteToProtoClassOps,
     JS_NULL_CLASS_SPEC,
     &SandboxClassExtension,
@@ -1843,7 +1846,8 @@ xpc::EvalInSandbox(JSContext* cx, HandleObject sandboxArg, const nsAString& sour
         filenameBuf.Assign(filename);
     } else {
         // Default to the spec of the principal.
-        nsJSPrincipals::get(prin)->GetScriptLocation(filenameBuf);
+        nsresult rv = nsJSPrincipals::get(prin)->GetScriptLocation(filenameBuf);
+        NS_ENSURE_SUCCESS(rv, rv);
         lineNo = 1;
     }
 

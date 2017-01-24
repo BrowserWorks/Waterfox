@@ -37,18 +37,24 @@ const OPEN_DEVICE_MODAL_VALUE = "OPEN_DEVICE_MODAL";
 const { _loadPreferredDevices } = require("devtools/client/responsive.html/actions/devices");
 const { getOwnerWindow } = require("sdk/tabs/utils");
 const asyncStorage = require("devtools/shared/async-storage");
+const { addDevice, removeDevice } = require("devtools/client/shared/devices");
 
 SimpleTest.requestCompleteLog();
 SimpleTest.waitForExplicitFinish();
 
-DevToolsUtils.testing = true;
+// Toggling the RDM UI involves several docShell swap operations, which are somewhat slow
+// on debug builds. Usually we are just barely over the limit, so a blanket factor of 2
+// should be enough.
+requestLongerTimeout(2);
+
+flags.testing = true;
 Services.prefs.clearUserPref("devtools.responsive.html.displayedDeviceList");
 Services.prefs.setCharPref("devtools.devices.url",
   TEST_URI_ROOT + "devices.json");
 Services.prefs.setBoolPref("devtools.responsive.html.enabled", true);
 
 registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
   Services.prefs.clearUserPref("devtools.devices.url");
   Services.prefs.clearUserPref("devtools.responsive.html.enabled");
   Services.prefs.clearUserPref("devtools.responsive.html.displayedDeviceList");
@@ -122,18 +128,42 @@ function waitForFrameLoad(ui, targetURL) {
 }
 
 function waitForViewportResizeTo(ui, width, height) {
-  return new Promise(resolve => {
+  return new Promise(Task.async(function* (resolve) {
+    let isSizeMatching = (data) => data.width == width && data.height == height;
+
+    // If the viewport has already the expected size, we resolve the promise immediately.
+    let size = yield getContentSize(ui);
+    if (isSizeMatching(size)) {
+      resolve();
+      return;
+    }
+
+    // Otherwise, we'll listen to both content's resize event and browser's load end;
+    // since a racing condition can happen, where the content's listener is added after
+    // the resize, because the content's document was reloaded; therefore the test would
+    // hang forever. See bug 1302879.
+    let browser = ui.getViewportBrowser();
+
     let onResize = (_, data) => {
-      if (data.width != width || data.height != height) {
+      if (!isSizeMatching(data)) {
         return;
       }
       ui.off("content-resize", onResize);
+      browser.removeEventListener("mozbrowserloadend", onBrowserLoadEnd);
       info(`Got content-resize to ${width} x ${height}`);
       resolve();
     };
+
+    let onBrowserLoadEnd = Task.async(function* () {
+      let data = yield getContentSize(ui);
+      onResize(undefined, data);
+    });
+
     info(`Waiting for content-resize to ${width} x ${height}`);
     ui.on("content-resize", onResize);
-  });
+    browser.addEventListener("mozbrowserloadend",
+      onBrowserLoadEnd, { once: true });
+  }));
 }
 
 var setViewportSize = Task.async(function* (ui, manager, width, height) {
@@ -146,6 +176,42 @@ var setViewportSize = Task.async(function* (ui, manager, width, height) {
     yield resized;
   }
 });
+
+function getElRect(selector, win) {
+  let el = win.document.querySelector(selector);
+  return el.getBoundingClientRect();
+}
+
+/**
+ * Drag an element identified by 'selector' by [x,y] amount. Returns
+ * the rect of the dragged element as it was before drag.
+ */
+function dragElementBy(selector, x, y, win) {
+  let rect = getElRect(selector, win);
+  let startPoint = [ rect.left + rect.width / 2, rect.top + rect.height / 2 ];
+  let endPoint = [ startPoint[0] + x, startPoint[1] + y ];
+
+  EventUtils.synthesizeMouseAtPoint(...startPoint, { type: "mousedown" }, win);
+  EventUtils.synthesizeMouseAtPoint(...endPoint, { type: "mousemove" }, win);
+  EventUtils.synthesizeMouseAtPoint(...endPoint, { type: "mouseup" }, win);
+
+  return rect;
+}
+
+function* testViewportResize(ui, selector, moveBy,
+                             expectedViewportSize, expectedHandleMove) {
+  let win = ui.toolWindow;
+
+  let resized = waitForViewportResizeTo(ui, ...expectedViewportSize);
+  let startRect = dragElementBy(selector, ...moveBy, win);
+  yield resized;
+
+  let endRect = getElRect(selector, win);
+  is(endRect.left - startRect.left, expectedHandleMove[0],
+    `The x move of ${selector} is as expected`);
+  is(endRect.top - startRect.top, expectedHandleMove[1],
+    `The y move of ${selector} is as expected`);
+}
 
 function openDeviceModal(ui) {
   let { document } = ui.toolWindow;
@@ -167,6 +233,32 @@ function openDeviceModal(ui) {
 
   ok(modal.classList.contains("opened") && !modal.classList.contains("closed"),
     "The device modal is displayed.");
+}
+
+function switchDevice({ toolWindow }, value) {
+  return new Promise(resolve => {
+    let selector = ".viewport-device-selector";
+    let select = toolWindow.document.querySelector(selector);
+    isnot(select, null, `selector "${selector}" should match an existing element.`);
+
+    let option = [...select.options].find(o => o.value === String(value));
+    isnot(option, undefined, `value "${value}" should match an existing option.`);
+
+    let event = new toolWindow.UIEvent("change", {
+      view: toolWindow,
+      bubbles: true,
+      cancelable: true
+    });
+
+    select.addEventListener("change", () => {
+      is(select.value, value,
+        `Select's option with value "${value}" should be selected.`);
+      resolve();
+    }, { once: true });
+
+    select.value = value;
+    select.dispatchEvent(event);
+  });
 }
 
 function getSessionHistory(browser) {
@@ -191,6 +283,13 @@ function getSessionHistory(browser) {
     return result;
     /* eslint-enable no-undef */
   });
+}
+
+function getContentSize(ui) {
+  return spawnViewportTask(ui, {}, () => ({
+    width: content.screen.width,
+    height: content.screen.height
+  }));
 }
 
 function waitForPageShow(browser) {
@@ -223,4 +322,14 @@ function forward(browser) {
   let shown = waitForPageShow(browser);
   browser.goForward();
   return shown;
+}
+
+function addDeviceForTest(device) {
+  info(`Adding Test Device "${device.name}" to the list.`);
+  addDevice(device);
+
+  registerCleanupFunction(() => {
+    // Note that assertions in cleanup functions are not displayed unless they failed.
+    ok(removeDevice(device), `Removed Test Device "${device.name}" from the list.`);
+  });
 }

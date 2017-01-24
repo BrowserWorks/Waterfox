@@ -11,13 +11,17 @@
   padding-inline-end: 5px;
 }
 
+.notification-anchor-icon,
+#blocked-permissions-container > .blocked-permission-icon {
+  width: 16px;
+  height: 16px;
+  margin-inline-start: 2px;
+}
+
 /* This class can be used alone or in combination with the class defining the
    type of icon displayed. This rule must be defined before the others in order
    for its list-style-image to be overridden. */
 .notification-anchor-icon {
-  width: 16px;
-  height: 16px;
-  margin-inline-start: 2px;
 %ifdef MOZ_WIDGET_GTK
   list-style-image: url(moz-icon://stock/gtk-dialog-info?size=16);
 %else
@@ -41,56 +45,24 @@
   margin-inline-end: 10px;
 }
 
-#notification-popup-box > .notification-anchor-icon:not(.in-use):hover {
-  fill: #606060;
+.notification-anchor-icon:not(.plugin-blocked):-moz-lwtheme,
+#blocked-permissions-container > .blocked-permission-icon:-moz-lwtheme {
+  filter: url(chrome://browser/skin/filters.svg#fill);
+  fill: currentColor;
+}
+
+.notification-anchor-icon:not(.plugin-blocked):not(:hover) {
+  opacity: .8;
 }
 
 /* INDIVIDUAL NOTIFICATIONS */
-
-/* For the moment we apply the color filter only on the icons listed here.
-   The first two selectors are used by socialchat.xml (bug 1275558). */
-.webRTC-sharingDevices-notification-icon,
-.webRTC-sharingMicrophone-notification-icon,
-.camera-icon,
-.geo-icon,
-.indexedDB-icon,
-.install-icon,
-.login-icon,
-.microphone-icon,
-.plugin-icon,
-.pointerLock-icon,
-.popup-icon,
-.screen-icon,
-.desktop-notification-icon,
-.popup-notification-icon[popupid="geolocation"],
-.popup-notification-icon[popupid="indexedDB-permissions-prompt"],
-.popup-notification-icon[popupid="password"],
-.popup-notification-icon[popupid="pointerLock"],
-.popup-notification-icon[popupid="webRTC-shareDevices"],
-.popup-notification-icon[popupid="webRTC-shareMicrophone"],
-.popup-notification-icon[popupid="webRTC-shareScreen"],
-.popup-notification-icon[popupid="webRTC-sharingDevices"],
-.popup-notification-icon[popupid="webRTC-sharingMicrophone"],
-.popup-notification-icon[popupid="webRTC-sharingScreen"],
-.popup-notification-icon[popupid="web-notifications"] {
-  filter: url(chrome://browser/skin/filters.svg#fill);
-  fill: #999;
-}
-
-/* The first two selectors are used by socialchat.xml (bug 1275558). The
-   notifications in the chat window are only shown when they are in use. */
-.webRTC-sharingDevices-notification-icon,
-.webRTC-sharingMicrophone-notification-icon,
-.in-use {
-  fill: #fea01b;
-}
 
 .popup-notification-icon[popupid="web-notifications"],
 .desktop-notification-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#desktop-notification);
 }
 
-.desktop-notification-icon.blocked {
+.desktop-notification-icon.blocked-permission-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#desktop-notification-blocked);
 }
 
@@ -104,7 +76,7 @@
 %endif
 }
 
-.geo-icon.blocked {
+.geo-icon.blocked-permission-icon {
 %ifdef XP_MACOSX
   list-style-image: url(chrome://browser/skin/notification-icons.svg#geo-osx-blocked);
 %elif defined(MOZ_WIDGET_GTK)
@@ -129,7 +101,7 @@
   list-style-image: url(chrome://browser/skin/notification-icons.svg#indexedDB);
 }
 
-.indexedDB-icon.blocked {
+.indexedDB-icon.blocked-permission-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#indexedDB-blocked);
 }
 
@@ -141,55 +113,46 @@
   list-style-image: url(chrome://browser/skin/notification-icons.svg#login-detailed);
 }
 
-#login-fill-notification-icon {
-  /* Temporary solution until the capture and fill doorhangers are unified. */
-  transform: scaleX(-1);
-}
-
-/* The first selector is used by socialchat.xml (bug 1275558). */
-.webRTC-sharingDevices-notification-icon,
 .camera-icon,
-.popup-notification-icon[popupid="webRTC-shareDevices"],
-.popup-notification-icon[popupid="webRTC-sharingDevices"] {
+.popup-notification-icon[popupid="webRTC-shareDevices"] {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#camera);
 }
 
-.camera-icon.blocked {
+.camera-icon.in-use {
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#camera-sharing);
+}
+
+.camera-icon.blocked-permission-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#camera-blocked);
 }
 
-/* The first selector is used by socialchat.xml (bug 1275558). */
-.webRTC-sharingMicrophone-notification-icon,
 .microphone-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#microphone);
 }
 
-.microphone-icon.blocked {
+.microphone-icon.in-use {
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#microphone-sharing);
+}
+
+.microphone-icon.blocked-permission-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#microphone-blocked);
 }
 
-.popup-notification-icon[popupid="webRTC-shareMicrophone"],
-.popup-notification-icon[popupid="webRTC-sharingMicrophone"] {
+.popup-notification-icon[popupid="webRTC-shareMicrophone"] {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#microphone-detailed);
 }
 
 .popup-notification-icon[popupid="webRTC-shareScreen"],
-.popup-notification-icon[popupid="webRTC-sharingScreen"],
 .screen-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#screen);
 }
 
-.screen-icon.blocked {
+.screen-icon.in-use {
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#screen-sharing);
+}
+
+.screen-icon.blocked-permission-icon {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#screen-blocked);
-}
-
-.popup-notification-icon[popupid="pointerLock"],
-.pointerLock-icon {
-  list-style-image: url(chrome://browser/skin/notification-icons.svg#pointerLock);
-}
-
-.pointerLock-icon.blocked {
-  list-style-image: url(chrome://browser/skin/notification-icons.svg#pointerLock-blocked);
 }
 
 /* This icon has a block sign in it, so we don't need a blocked version. */
@@ -274,7 +237,6 @@
 
 .plugin-icon.plugin-blocked {
   list-style-image: url(chrome://browser/skin/notification-icons.svg#plugin-blocked);
-  fill: #d92215 !important; /* important! to override the default hover color */
 }
 
 #notification-popup-box[hidden] {

@@ -13,7 +13,7 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include <algorithm>  // for std::max
 #include <fcntl.h>
@@ -676,8 +676,8 @@ js::math_pow(JSContext* cx, unsigned argc, Value* vp)
     return math_pow_handle(cx, args.get(0), args.get(1), args.rval());
 }
 
-static uint64_t
-GenerateSeed()
+uint64_t
+js::GenerateRandomSeed()
 {
     uint64_t seed = 0;
 
@@ -692,7 +692,7 @@ GenerateSeed()
         close(fd);
     }
 #else
-# error "Platform needs to implement GenerateSeed()"
+# error "Platform needs to implement GenerateRandomSeed()"
 #endif
 
     // Also mix in PRMJ_Now() in case we couldn't read random bits from the OS.
@@ -704,8 +704,8 @@ js::GenerateXorShift128PlusSeed(mozilla::Array<uint64_t, 2>& seed)
 {
     // XorShift128PlusRNG must be initialized with a non-zero seed.
     do {
-        seed[0] = GenerateSeed();
-        seed[1] = GenerateSeed();
+        seed[0] = GenerateRandomSeed();
+        seed[1] = GenerateRandomSeed();
     } while (seed[0] == 0 && seed[1] == 0);
 }
 
@@ -719,16 +719,19 @@ JSCompartment::ensureRandomNumberGenerator()
     }
 }
 
+double
+js::math_random_impl(JSContext* cx)
+{
+    JSCompartment* comp = cx->compartment();
+    comp->ensureRandomNumberGenerator();
+    return comp->randomNumberGenerator.ref().nextDouble();
+}
+
 bool
 js::math_random(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-
-    JSCompartment* comp = cx->compartment();
-    comp->ensureRandomNumberGenerator();
-
-    double z = comp->randomNumberGenerator.ref().nextDouble();
-    args.rval().setDouble(z);
+    args.rval().setNumber(math_random_impl(cx));
     return true;
 }
 
@@ -1384,6 +1387,8 @@ js::InitMathClass(JSContext* cx, HandleObject obj)
     if (!JS_DefineFunctions(cx, Math, math_static_methods))
         return nullptr;
     if (!JS_DefineConstDoubles(cx, Math, math_constants))
+        return nullptr;
+    if (!DefineToStringTag(cx, Math, cx->names().Math))
         return nullptr;
 
     obj->as<GlobalObject>().setConstructor(JSProto_Math, ObjectValue(*Math));

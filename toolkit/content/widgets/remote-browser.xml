@@ -243,10 +243,6 @@
         ]]></getter>
       </property>
 
-      <property name="autoCompletePopup"
-                onget="return document.getElementById(this.getAttribute('autocompletepopup'))"
-                readonly="true"/>
-
       <property name="docShellIsActive">
         <getter>
           <![CDATA[
@@ -263,13 +259,13 @@
         </setter>
       </property>
 
-      <method name="setDocShellIsActiveAndForeground">
-        <parameter name="isActive"/>
+      <method name="preserveLayers">
+        <parameter name="preserve"/>
         <body><![CDATA[
-          // See the explanation for what this does in nsITabParent.ipdl
-
           let {frameLoader} = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
-          frameLoader.tabParent.setDocShellIsActiveAndForeground(isActive);
+          if (frameLoader.tabParent) {
+            frameLoader.tabParent.preserveLayers(preserve);
+          }
         ]]></body>
       </method>
 
@@ -452,9 +448,6 @@
           switch (aMessage.name) {
             case "Browser:Init":
               this._outerWindowID = data.outerWindowID;
-              this.messageManager.sendAsyncMessage("Browser:InitReceived", {
-                initPopup: this.autoCompletePopup != null,
-              });
               break;
             case "DOMTitleChanged":
               this._contentTitle = data.title;

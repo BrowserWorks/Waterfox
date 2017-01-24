@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "xpcprivate.h"
+#include "xpcpublic.h"
 #include "nsString.h"
 #include "nsIObjectOutputStream.h"
 #include "nsIObjectInputStream.h"
@@ -88,8 +88,9 @@ JSPrincipals::dump()
 {
     if (debugToken == nsJSPrincipals::DEBUG_TOKEN) {
       nsAutoCString str;
-      static_cast<nsJSPrincipals *>(this)->GetScriptLocation(str);
-      fprintf(stderr, "nsIPrincipal (%p) = %s\n", static_cast<void*>(this), str.get());
+      nsresult rv = static_cast<nsJSPrincipals *>(this)->GetScriptLocation(str);
+      fprintf(stderr, "nsIPrincipal (%p) = %s\n", static_cast<void*>(this),
+              NS_SUCCEEDED(rv) ? str.get() : "(unknown)");
     } else if (debugToken == dom::workers::kJSPrincipalsDebugToken) {
         fprintf(stderr, "Web Worker principal singleton (%p)\n", this);
     } else {
@@ -139,7 +140,9 @@ ReadSuffixAndSpec(JSStructuredCloneReader* aReader,
         return false;
     }
 
-    aAttrs.PopulateFromSuffix(suffix);
+    if (!aAttrs.PopulateFromSuffix(suffix)) {
+        return false;
+    }
 
     aSpec.SetLength(specLength);
     if (!JS_ReadBytes(aReader, aSpec.BeginWriting(), specLength)) {

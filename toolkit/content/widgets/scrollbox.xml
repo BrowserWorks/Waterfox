@@ -605,9 +605,9 @@
           if (event.detail == 1)
             return;
         }
-        else {    // horizontal scrollbox
-          if (event.detail == 0)
-            return;
+        else if (event.detail == 0) {
+          // horizontal scrollbox
+          return;
         }
 
         this.setAttribute("notoverflowing", "true");
@@ -621,7 +621,7 @@
           if (childNodes && childNodes.length)
             this.ensureElementIsVisible(childNodes[0], false);
         }
-        catch(e) {
+        catch (e) {
           this.removeAttribute("notoverflowing");
         }
       ]]></handler>
@@ -640,9 +640,9 @@
           if (event.detail == 1)
             return;
         }
-        else {    // horizontal scrollbox
-          if (event.detail == 0)
-            return;
+        else if (event.detail == 0) {
+          // horizontal scrollbox
+          return;
         }
 
         this.removeAttribute("notoverflowing");
@@ -655,7 +655,7 @@
           // as the whole overflow event should not be happening in that case.
           this._updateScrollButtonsDisabledState();
         }
-        catch(e) {
+        catch (e) {
           this.setAttribute("notoverflowing", "true");
         }
       ]]></handler>

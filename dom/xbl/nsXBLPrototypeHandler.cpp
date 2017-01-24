@@ -356,7 +356,8 @@ nsXBLPrototypeHandler::EnsureEventHandler(AutoJSAPI& jsapi, nsIAtom* aName,
   NS_ENSURE_TRUE(scopeObject, NS_ERROR_OUT_OF_MEMORY);
 
   nsAutoCString bindingURI;
-  mPrototypeBinding->DocURI()->GetSpec(bindingURI);
+  nsresult rv = mPrototypeBinding->DocURI()->GetSpec(bindingURI);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   uint32_t argCount;
   const char **argNames;
@@ -371,10 +372,10 @@ nsXBLPrototypeHandler::EnsureEventHandler(AutoJSAPI& jsapi, nsIAtom* aName,
 
   JS::Rooted<JSObject*> handlerFun(cx);
   JS::AutoObjectVector emptyVector(cx);
-  nsresult rv = nsJSUtils::CompileFunction(jsapi, emptyVector, options,
-                                           nsAtomCString(aName), argCount,
-                                           argNames, handlerText,
-                                           handlerFun.address());
+  rv = nsJSUtils::CompileFunction(jsapi, emptyVector, options,
+                                  nsAtomCString(aName), argCount,
+                                  argNames, handlerText,
+                                  handlerFun.address());
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(handlerFun, NS_ERROR_FAILURE);
 
@@ -737,6 +738,7 @@ nsXBLPrototypeHandler::ConstructPrototype(nsIContent* aKeyElement,
 
   if (aKeyElement) {
     mType |= NS_HANDLER_TYPE_XUL;
+    MOZ_ASSERT(!mPrototypeBinding);
     nsCOMPtr<nsIWeakReference> weak = do_GetWeakReference(aKeyElement);
     if (!weak) {
       return;
@@ -836,16 +838,18 @@ nsXBLPrototypeHandler::ConstructPrototype(nsIContent* aKeyElement,
     mMisc = 1;
     mDetail = key[0];
     const uint8_t GTK2Modifiers = cShift | cControl | cShiftMask | cControlMask;
-    if ((mKeyMask & GTK2Modifiers) == GTK2Modifiers &&
+    if ((mType & NS_HANDLER_TYPE_XUL) &&
+        (mKeyMask & GTK2Modifiers) == GTK2Modifiers &&
         modifiers.First() != char16_t(',') &&
         (mDetail == 'u' || mDetail == 'U'))
-      ReportKeyConflict(key.get(), modifiers.get(), aKeyElement, "GTK2Conflict");
+      ReportKeyConflict(key.get(), modifiers.get(), aKeyElement, "GTK2Conflict2");
     const uint8_t WinModifiers = cControl | cAlt | cControlMask | cAltMask;
-    if ((mKeyMask & WinModifiers) == WinModifiers &&
+    if ((mType & NS_HANDLER_TYPE_XUL) &&
+        (mKeyMask & WinModifiers) == WinModifiers &&
         modifiers.First() != char16_t(',') &&
         (('A' <= mDetail && mDetail <= 'Z') ||
          ('a' <= mDetail && mDetail <= 'z')))
-      ReportKeyConflict(key.get(), modifiers.get(), aKeyElement, "WinConflict");
+      ReportKeyConflict(key.get(), modifiers.get(), aKeyElement, "WinConflict2");
   }
   else {
     key.Assign(aKeyCode);
@@ -885,11 +889,13 @@ nsXBLPrototypeHandler::ReportKeyConflict(const char16_t* aKey, const char16_t* a
     if (docInfo) {
       doc = docInfo->GetDocument();
     }
-  } else if (aKeyElement) {
+  } else {
     doc = aKeyElement->OwnerDoc();
   }
 
-  const char16_t* params[] = { aKey, aModifiers };
+  nsAutoString id;
+  aKeyElement->GetAttr(kNameSpaceID_None, nsGkAtoms::id, id);
+  const char16_t* params[] = { aKey, aModifiers, id.get() };
   nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
                                   NS_LITERAL_CSTRING("XBL Prototype Handler"), doc,
                                   nsContentUtils::eXBL_PROPERTIES,

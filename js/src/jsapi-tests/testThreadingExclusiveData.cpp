@@ -28,12 +28,12 @@ struct CounterAndBit
 };
 
 void
-printDiagnosticMessage(uint64_t seen)
+printDiagnosticMessage(uint8_t bit, uint64_t seen)
 {
     if (!ShowDiagnostics)
         return;
 
-    fprintf(stderr, "Thread %p saw ", PR_GetCurrentThread());
+    fprintf(stderr, "Thread %d saw ", bit);
     for (auto i : mozilla::MakeRange(NumThreads)) {
         if (seen & (uint64_t(1) << i))
             fprintf(stderr, "1");
@@ -50,7 +50,7 @@ setBitAndCheck(CounterAndBit* counterAndBit)
         {
             // Set our bit. Repeatedly setting it is idempotent.
             auto guard = counterAndBit->counter.lock();
-            printDiagnosticMessage(guard);
+            printDiagnosticMessage(counterAndBit->bit, guard);
             guard |= (uint64_t(1) << counterAndBit->bit);
         }
 
@@ -58,7 +58,7 @@ setBitAndCheck(CounterAndBit* counterAndBit)
             // Check to see if we have observed all the other threads setting
             // their bit as well.
             auto guard = counterAndBit->counter.lock();
-            printDiagnosticMessage(guard);
+            printDiagnosticMessage(counterAndBit->bit, guard);
             if (guard == UINT64_MAX) {
                 js_delete(counterAndBit);
                 return;
@@ -77,7 +77,8 @@ BEGIN_TEST(testExclusiveData)
     for (auto i : mozilla::MakeRange(NumThreads)) {
         auto counterAndBit = js_new<CounterAndBit>(i, counter);
         CHECK(counterAndBit);
-        CHECK(threads.emplaceBack(setBitAndCheck, counterAndBit));
+        CHECK(threads.emplaceBack());
+        CHECK(threads.back().init(setBitAndCheck, counterAndBit));
     }
 
     for (auto& thread : threads)

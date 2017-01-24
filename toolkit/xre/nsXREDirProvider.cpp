@@ -18,6 +18,7 @@
 #include "nsIObserverService.h"
 #include "nsISimpleEnumerator.h"
 #include "nsIToolkitChromeRegistry.h"
+#include "nsIToolkitProfileService.h"
 #include "nsIXULRuntime.h"
 
 #include "nsAppDirectoryServiceDefs.h"
@@ -34,6 +35,8 @@
 #include "nsReadableUtils.h"
 
 #include "SpecialSystemDirectory.h"
+
+#include "mozilla/dom/ScriptSettings.h"
 
 #include "mozilla/Services.h"
 #include "mozilla/Omnijar.h"
@@ -62,7 +65,7 @@
 
 #if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
 #include "nsIUUIDGenerator.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #endif
 
 #if defined(XP_MACOSX)
@@ -1183,6 +1186,26 @@ nsXREDirProvider::DoStartup()
     }
     mozilla::Telemetry::Accumulate(mozilla::Telemetry::SAFE_MODE_USAGE, mode);
 
+    // Telemetry about number of profiles.
+    nsCOMPtr<nsIToolkitProfileService> profileService =
+      do_GetService("@mozilla.org/toolkit/profile-service;1");
+    if (profileService) {
+      nsCOMPtr<nsISimpleEnumerator> profiles;
+      rv = profileService->GetProfiles(getter_AddRefs(profiles));
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
+
+      uint32_t count = 0;
+      nsCOMPtr<nsISupports> profile;
+      while (NS_SUCCEEDED(profiles->GetNext(getter_AddRefs(profile)))) {
+        ++count;
+      }
+
+      mozilla::Telemetry::Accumulate(mozilla::Telemetry::NUMBER_OF_PROFILES,
+                                     count);
+    }
+
     obsSvc->NotifyObservers(nullptr, "profile-initial-state", nullptr);
 
 #if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
@@ -1219,9 +1242,8 @@ nsXREDirProvider::DoShutdown()
       // Phase 2c: Now that things are torn down, force JS GC so that things which depend on
       // resources which are about to go away in "profile-before-change" are destroyed first.
 
-      JSRuntime *rt = xpc::GetJSRuntime();
-      if (rt) {
-        JS_GC(JS_GetContext(rt));
+      if (JSContext* cx = dom::danger::GetJSContext()) {
+        JS_GC(cx);
       }
 
       // Phase 3: Notify observers of a profile change

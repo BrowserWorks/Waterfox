@@ -185,7 +185,6 @@ const unsigned int ICE_TEST_PEER_OFFERER = (1 << 0);
 const unsigned int ICE_TEST_PEER_ALLOW_LOOPBACK = (1 << 1);
 const unsigned int ICE_TEST_PEER_ENABLED_TCP = (1 << 2);
 const unsigned int ICE_TEST_PEER_ALLOW_LINK_LOCAL = (1 << 3);
-const unsigned int ICE_TEST_PEER_HIDE_NON_DEFAULT = (1 << 4);
 
 typedef std::string (*CandidateFilter)(const std::string& candidate);
 
@@ -384,12 +383,14 @@ class IceTestPeer : public sigslot::has_slots<> {
   IceTestPeer(const std::string& name, MtransportTestUtils* utils,
               bool offerer,
               bool allow_loopback = false, bool enable_tcp = true,
-              bool allow_link_local = false, bool hide_non_default = false) :
+              bool allow_link_local = false,
+              NrIceCtx::Policy ice_policy = NrIceCtx::ICE_POLICY_ALL) :
       name_(name),
       ice_ctx_(NrIceCtxHandler::Create(name, offerer, allow_loopback,
                                        enable_tcp, allow_link_local,
-                                       hide_non_default)),
+                                       ice_policy)),
       candidates_(),
+      shutting_down_(false),
       gathering_complete_(false),
       ready_ct_(0),
       ice_complete_(false),
@@ -532,11 +533,15 @@ class IceTestPeer : public sigslot::has_slots<> {
         dns_resolver_->AllocateResolver())));
   }
 
-  void Gather() {
+  void Gather(bool default_route_only = false) {
     nsresult res;
 
     test_utils_->sts_target()->Dispatch(
-        WrapRunnableRet(&res, ice_ctx_->ctx(), &NrIceCtx::StartGathering),
+        WrapRunnableRet(&res,
+                        ice_ctx_->ctx(),
+                        &NrIceCtx::StartGathering,
+                        default_route_only,
+                        false),
         NS_DISPATCH_SYNC);
 
     ASSERT_TRUE(NS_SUCCEEDED(res));
@@ -762,7 +767,7 @@ class IceTestPeer : public sigslot::has_slots<> {
             remote->GetCandidates(i);
 
         for (size_t j=0; j<candidates.size(); ++j) {
-          std::cerr << name_ << " Candidate: " + candidates[j] << std::endl;
+          std::cerr << name_ << " Adding remote candidate: " + candidates[j] << std::endl;
         }
         res = aStream->ParseAttributes(candidates);
         ASSERT_TRUE(NS_SUCCEEDED(res));
@@ -970,6 +975,7 @@ class IceTestPeer : public sigslot::has_slots<> {
 
   void Shutdown() {
     std::cerr << name_ << " Shutdown" << std::endl;
+    shutting_down_ = true;
     for (auto s = controlled_trickle_candidates_.begin();
          s != controlled_trickle_candidates_.end();
          ++s) {
@@ -1004,7 +1010,9 @@ class IceTestPeer : public sigslot::has_slots<> {
   // Handle events
   void GatheringStateChange(NrIceCtx* ctx,
                             NrIceCtx::GatheringState state) {
-    (void)ctx;
+    if (shutting_down_) {
+      return;
+    }
     if (state != NrIceCtx::ICE_CTX_GATHER_COMPLETE) {
       return;
     }
@@ -1399,6 +1407,7 @@ class IceTestPeer : public sigslot::has_slots<> {
   // Maps from stream id to list of remote trickle candidates
   std::map<size_t, std::vector<SchedulableTrickleCandidate*> >
     controlled_trickle_candidates_;
+  bool shutting_down_;
   bool gathering_complete_;
   int ready_ct_;
   bool ice_complete_;
@@ -1457,8 +1466,7 @@ class WebRtcIceGatherTest : public StunTest {
                                       flags & ICE_TEST_PEER_OFFERER,
                                       flags & ICE_TEST_PEER_ALLOW_LOOPBACK,
                                       flags & ICE_TEST_PEER_ENABLED_TCP,
-                                      flags & ICE_TEST_PEER_ALLOW_LINK_LOCAL,
-                                      flags & ICE_TEST_PEER_HIDE_NON_DEFAULT);
+                                      flags & ICE_TEST_PEER_ALLOW_LINK_LOCAL);
       peer_->AddStream(1);
     }
   }
@@ -1632,16 +1640,16 @@ class WebRtcIceConnectTest : public StunTest {
 
   void Init(bool allow_loopback,
             bool enable_tcp,
-            bool default_only = false,
-            bool setup_stun_servers = true) {
+            bool setup_stun_servers = true,
+            NrIceCtx::Policy ice_policy = NrIceCtx::ICE_POLICY_ALL) {
     if (initted_) {
       return;
     }
 
     p1_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, allow_loopback,
-                                  enable_tcp, false, default_only);
+                                  enable_tcp, false, ice_policy);
     p2_ = MakeUnique<IceTestPeer>("P2", test_utils_, false, allow_loopback,
-                                  enable_tcp, false, default_only);
+                                  enable_tcp, false, ice_policy);
     InitPeer(p1_.get(), setup_stun_servers);
     InitPeer(p2_.get(), setup_stun_servers);
 
@@ -1674,17 +1682,22 @@ class WebRtcIceConnectTest : public StunTest {
     }
   }
 
-  bool Gather(unsigned int waitTime = kDefaultTimeout) {
+  bool Gather(unsigned int waitTime = kDefaultTimeout,
+              bool default_route_only = false) {
     Init(false, false);
 
-    return GatherCallerAndCallee(p1_.get(), p2_.get(), waitTime);
+    return GatherCallerAndCallee(p1_.get(),
+                                 p2_.get(),
+                                 waitTime,
+                                 default_route_only);
   }
 
   bool GatherCallerAndCallee(IceTestPeer* caller,
                              IceTestPeer* callee,
-                             unsigned int waitTime = kDefaultTimeout) {
-    caller->Gather();
-    callee->Gather();
+                             unsigned int waitTime = kDefaultTimeout,
+                             bool default_route_only = false) {
+    caller->Gather(default_route_only);
+    callee->Gather(default_route_only);
 
     if (waitTime) {
       EXPECT_TRUE_WAIT(caller->gathering_complete(), waitTime);
@@ -2139,12 +2152,12 @@ TEST_F(WebRtcIceGatherTest, TestGatherFakeStunServerIpAddress) {
   Gather();
 }
 
-TEST_F(WebRtcIceGatherTest, TestGatherStunServerIpAddressDefaultRouteOnly) {
+TEST_F(WebRtcIceGatherTest, TestGatherStunServerIpAddressNoHost) {
   if (stun_server_address_.empty()) {
     return;
   }
 
-  peer_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, false, false, false, true);
+  peer_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, false, false, false, NrIceCtx::ICE_POLICY_NO_HOST);
   peer_->AddStream(1);
   peer_->SetStunServer(stun_server_address_, kDefaultStunServerPort);
   peer_->SetFakeResolver(stun_server_address_, stun_server_hostname_);
@@ -2441,10 +2454,9 @@ TEST_F(WebRtcIceGatherTest, TestStunServerTrickle) {
   ASSERT_TRUE(StreamHasMatchingCandidate(0, "192.0.2.1"));
 }
 
-// Test default route only with our fake STUN server and
-// apparently NATted.
-TEST_F(WebRtcIceGatherTest, TestFakeStunServerNatedDefaultRouteOnly) {
-  peer_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, false, false, false, true);
+// Test no host with our fake STUN server and apparently NATted.
+TEST_F(WebRtcIceGatherTest, TestFakeStunServerNatedNoHost) {
+  peer_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, false, false, false, NrIceCtx::ICE_POLICY_NO_HOST);
   peer_->AddStream(1);
   UseFakeStunUdpServerWithResponse("192.0.2.1", 3333);
   Gather(0);
@@ -2459,10 +2471,9 @@ TEST_F(WebRtcIceGatherTest, TestFakeStunServerNatedDefaultRouteOnly) {
   }
 }
 
-// Test default route only with our fake STUN server and
-// apparently non-NATted.
-TEST_F(WebRtcIceGatherTest, TestFakeStunServerNoNatDefaultRouteOnly) {
-  peer_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, false, false, false, true);
+// Test no host with our fake STUN server and apparently non-NATted.
+TEST_F(WebRtcIceGatherTest, TestFakeStunServerNoNatNoHost) {
+  peer_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, false, false, false, NrIceCtx::ICE_POLICY_NO_HOST);
   peer_->AddStream(1);
   UseTestStunServer();
   Gather(0);
@@ -2553,8 +2564,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectRestartIce) {
   SendReceive(p1_.get(), p2_.get());
 
   mozilla::UniquePtr<IceTestPeer> p3_;
-  p3_ = MakeUnique<IceTestPeer>("P3", test_utils_, true, false,
-                                false, false, false);
+  p3_ = MakeUnique<IceTestPeer>("P3", test_utils_, true, false, false, false);
   InitPeer(p3_.get());
   p3_->AddStream(1);
 
@@ -2586,8 +2596,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectRestartIceThenAbort) {
   SendReceive(p1_.get(), p2_.get());
 
   mozilla::UniquePtr<IceTestPeer> p3_;
-  p3_ = MakeUnique<IceTestPeer>("P3", test_utils_, true, false,
-                                false, false, false);
+  p3_ = MakeUnique<IceTestPeer>("P3", test_utils_, true, false, false, false);
   InitPeer(p3_.get());
   p3_->AddStream(1);
 
@@ -2628,8 +2637,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectSetControllingAfterIceRestart) {
   ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, p2_->GetControlling());
 
   mozilla::UniquePtr<IceTestPeer> p3_;
-  p3_ = MakeUnique<IceTestPeer>("P3", test_utils_, true, false,
-                                false, false, false);
+  p3_ = MakeUnique<IceTestPeer>("P3", test_utils_, true, false, false, false);
   InitPeer(p3_.get());
   p3_->AddStream(1);
   // Set control role for p3 accordingly (w/o role conflict)
@@ -2677,8 +2685,8 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectTcpSo) {
 }
 
 // Disabled because this breaks with hairpinning.
-TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectDefaultRouteOnly) {
-  Init(false, false, true);
+TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectNoHost) {
+  Init(false, false, false, NrIceCtx::ICE_POLICY_NO_HOST);
   AddStream(1);
   ASSERT_TRUE(Gather());
   SetExpectedTypes(NrIceCandidate::Type::ICE_SERVER_REFLEXIVE,
@@ -2687,7 +2695,7 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectDefaultRouteOnly) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestLoopbackOnlySortOf) {
-  Init(true, false, false, false);
+  Init(true, false, false);
   AddStream(1);
   SetCandidateFilter(IsLoopbackCandidate);
   ASSERT_TRUE(Gather());
@@ -2784,8 +2792,8 @@ TEST_F(WebRtcIceConnectTest, TestConnectFullCone) {
   Connect();
 }
 
-TEST_F(WebRtcIceConnectTest, TestConnectNoNatRouteOnly) {
-  Init(false, false, true, false);
+TEST_F(WebRtcIceConnectTest, TestConnectNoNatNoHost) {
+  Init(false, false, false, NrIceCtx::ICE_POLICY_NO_HOST);
   AddStream(1);
   UseTestStunServer();
   // Because we are connecting from our host candidate to the
@@ -2797,10 +2805,11 @@ TEST_F(WebRtcIceConnectTest, TestConnectNoNatRouteOnly) {
   Connect();
 }
 
-TEST_F(WebRtcIceConnectTest, TestConnectFullConeDefaultRouteOnly) {
+TEST_F(WebRtcIceConnectTest, TestConnectFullConeNoHost) {
   UseNat();
-  Init(false, false, true);
+  Init(false, false, false, NrIceCtx::ICE_POLICY_NO_HOST);
   AddStream(1);
+  UseTestStunServer();
   SetExpectedTypes(NrIceCandidate::Type::ICE_SERVER_REFLEXIVE,
                    NrIceCandidate::Type::ICE_SERVER_REFLEXIVE);
   ASSERT_TRUE(Gather());
@@ -2867,6 +2876,24 @@ TEST_F(WebRtcIceConnectTest, TestConnectSymmetricNat) {
                         NrIceCandidate::Type::ICE_RELAYED);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
+  ASSERT_TRUE(Gather());
+  Connect();
+}
+
+TEST_F(WebRtcIceConnectTest, TestConnectSymmetricNatAndNoNat) {
+  p1_ = MakeUnique<IceTestPeer>("P1", test_utils_, true, false, false);
+  p1_->UseNat();
+  p1_->SetFilteringType(TestNat::PORT_DEPENDENT);
+  p1_->SetMappingType(TestNat::PORT_DEPENDENT);
+
+  p2_ = MakeUnique<IceTestPeer>("P2", test_utils_, false, false, false);
+  initted_ = true;
+
+  AddStream(1);
+  p1_->SetExpectedTypes(NrIceCandidate::Type::ICE_PEER_REFLEXIVE,
+                        NrIceCandidate::Type::ICE_HOST);
+  p2_->SetExpectedTypes(NrIceCandidate::Type::ICE_HOST,
+                        NrIceCandidate::Type::ICE_PEER_REFLEXIVE);
   ASSERT_TRUE(Gather());
   Connect();
 }
@@ -3522,7 +3549,7 @@ TEST_F(WebRtcIceConnectTest, TestPollCandPairsAfterConnect) {
 // TODO Bug 1259842 - disabled until we find a better way to handle two
 // candidates from different RFC1918 ranges
 TEST_F(WebRtcIceConnectTest, DISABLED_TestHostCandPairingFilter) {
-  Init(false, false, false, false);
+  Init(false, false, false);
   AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsIpv4Candidate);
@@ -3556,7 +3583,7 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestSrflxCandPairingFilter) {
     return;
   }
 
-  Init(false, false, false, false);
+  Init(false, false, false);
   AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsSrflxCandidate);

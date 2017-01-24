@@ -90,7 +90,7 @@ add_task(function* () {
 
   yield Promise.all([extension.startup(), extension.awaitMessage("background-ready")]);
 
-  let {WindowManager} = Cu.import("resource://gre/modules/Extension.jsm", {});
+  let {Management: {global: {WindowManager}}} = Cu.import("resource://gre/modules/Extension.jsm", {});
 
   let winId1 = WindowManager.getId(win1);
   let winId2 = WindowManager.getId(win2);
@@ -111,6 +111,7 @@ add_task(function* () {
 
   function* triggerPopup(win, callback) {
     yield clickBrowserAction(extension, win);
+    yield awaitExtensionPanel(extension, win);
 
     yield extension.awaitMessage("popup-ready");
 

@@ -25,7 +25,7 @@
 #include "mozilla/layers/TiledContentHost.h"
 #include "mozilla/layers/PaintedLayerComposite.h"
 #include "mozilla/mozalloc.h"           // for operator delete
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsDebug.h"                    // for NS_WARNING, NS_ASSERTION
 #include "nsRegion.h"                   // for nsIntRegion
 
@@ -77,7 +77,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
   // Ignore all operations on compositables created on stale compositors. We
   // return true because the child is unable to handle errors.
   CompositableHost* compositable = CompositableHost::FromIPDLActor(aEdit.compositableParent());
-  if (compositable->GetCompositor() && compositable->GetCompositor()->IsValid()) {
+  if (compositable->GetCompositor() && !compositable->GetCompositor()->IsValid()) {
     return true;
   }
 
@@ -187,7 +187,6 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
         t->mPictureRect = timedTexture.picture();
         t->mFrameID = timedTexture.frameID();
         t->mProducerID = timedTexture.producerID();
-        t->mInputFrameID = timedTexture.inputFrameID();
         t->mTexture->DeserializeReadLock(timedTexture.sharedLock(), this);
         MOZ_ASSERT(ValidatePictureRect(t->mTexture->GetSize(), t->mPictureRect));
 

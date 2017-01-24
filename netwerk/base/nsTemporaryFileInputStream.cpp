@@ -217,7 +217,8 @@ nsTemporaryFileInputStream::Deserialize(const InputStreamParams& aParams,
   FileDescriptor fd;
   if (fileDescriptorIndex < aFileDescriptors.Length()) {
     fd = aFileDescriptors[fileDescriptorIndex];
-    NS_WARN_IF_FALSE(fd.IsValid(), "Received an invalid file descriptor!");
+    NS_WARNING_ASSERTION(fd.IsValid(),
+                         "Received an invalid file descriptor!");
   } else {
     NS_WARNING("Received a bad file descriptor index!");
   }
@@ -237,4 +238,10 @@ nsTemporaryFileInputStream::Deserialize(const InputStreamParams& aParams,
   mStartPos = mCurPos = params.startPos();
   mEndPos = params.endPos();
   return true;
+}
+
+Maybe<uint64_t>
+nsTemporaryFileInputStream::ExpectedSerializedLength()
+{
+  return Nothing();
 }

@@ -233,7 +233,11 @@ nsMediaExpression::Matches(nsPresContext *aPresContext,
                      required.GetUnit() == eCSSUnit_Centimeter,
                      "bad required value");
         float actualDPI = actual.GetFloatValue();
-        if (actual.GetUnit() == eCSSUnit_Centimeter) {
+        float overrideDPPX = aPresContext->GetOverrideDPPX();
+
+        if (overrideDPPX > 0) {
+          actualDPI = overrideDPPX * 96.0f;
+        } else if (actual.GetUnit() == eCSSUnit_Centimeter) {
           actualDPI = actualDPI * 2.54f;
         } else if (actual.GetUnit() == eCSSUnit_Pixel) {
           actualDPI = actualDPI * 96.0f;
@@ -1075,8 +1079,9 @@ CSSStyleSheetInner::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 // CSS Style Sheet
 //
 
-CSSStyleSheet::CSSStyleSheet(CORSMode aCORSMode, ReferrerPolicy aReferrerPolicy)
-  : StyleSheet(StyleBackendType::Gecko),
+CSSStyleSheet::CSSStyleSheet(css::SheetParsingMode aParsingMode,
+                             CORSMode aCORSMode, ReferrerPolicy aReferrerPolicy)
+  : StyleSheet(StyleBackendType::Gecko, aParsingMode),
     mTitle(),
     mParent(nullptr),
     mOwnerRule(nullptr),
@@ -1089,10 +1094,11 @@ CSSStyleSheet::CSSStyleSheet(CORSMode aCORSMode, ReferrerPolicy aReferrerPolicy)
                                   SRIMetadata());
 }
 
-CSSStyleSheet::CSSStyleSheet(CORSMode aCORSMode,
+CSSStyleSheet::CSSStyleSheet(css::SheetParsingMode aParsingMode,
+                             CORSMode aCORSMode,
                              ReferrerPolicy aReferrerPolicy,
                              const SRIMetadata& aIntegrity)
-  : StyleSheet(StyleBackendType::Gecko),
+  : StyleSheet(StyleBackendType::Gecko, aParsingMode),
     mTitle(),
     mParent(nullptr),
     mOwnerRule(nullptr),
@@ -1161,22 +1167,6 @@ CSSStyleSheet::~CSSStyleSheet()
   if (mInRuleProcessorCache) {
     RuleProcessorCache::RemoveSheet(this);
   }
-}
-
-mozilla::dom::CSSStyleSheetParsingMode
-CSSStyleSheet::ParsingMode()
-{
-#define CHECK(X, Y) \
-  static_assert(static_cast<int>(X) == static_cast<int>(Y),             \
-                "mozilla::dom::CSSStyleSheetParsingMode and mozilla::css::SheetParsingMode should have identical values");
-
-  CHECK(mozilla::dom::CSSStyleSheetParsingMode::Agent, css::eAgentSheetFeatures);
-  CHECK(mozilla::dom::CSSStyleSheetParsingMode::User, css::eUserSheetFeatures);
-  CHECK(mozilla::dom::CSSStyleSheetParsingMode::Author, css::eAuthorSheetFeatures);
-
-#undef CHECK
-
-  return static_cast<mozilla::dom::CSSStyleSheetParsingMode>(mParsingMode);
 }
 
 void
@@ -1498,8 +1488,8 @@ CSSStyleSheet::AppendStyleRule(css::Rule* aRule)
     nsresult rv =
 #endif
       RegisterNamespaceRule(aRule);
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
-                     "RegisterNamespaceRule returned error");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                         "RegisterNamespaceRule returned error");
   }
 }
 
@@ -1770,7 +1760,8 @@ CSSStyleSheet::GetHref(nsAString& aHref)
 {
   if (mInner->mOriginalSheetURI) {
     nsAutoCString str;
-    mInner->mOriginalSheetURI->GetSpec(str);
+    nsresult rv = mInner->mOriginalSheetURI->GetSpec(str);
+    NS_ENSURE_SUCCESS(rv, rv);
     CopyUTF8toUTF16(str, aHref);
   } else {
     SetDOMStringToNull(aHref);
@@ -2228,8 +2219,7 @@ CSSStyleSheet::ReparseSheet(const nsAString& aInput)
 
   nsCSSParser parser(loader, this);
   nsresult rv = parser.ParseSheet(aInput, mInner->mSheetURI, mInner->mBaseURI,
-                                  mInner->mPrincipal, lineNumber,
-                                  mParsingMode, &reusableSheets);
+                                  mInner->mPrincipal, lineNumber, &reusableSheets);
   DidDirty(); // we are always 'dirty' here since we always remove rules first
   NS_ENSURE_SUCCESS(rv, rv);
 

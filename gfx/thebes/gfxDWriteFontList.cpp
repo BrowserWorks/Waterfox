@@ -13,6 +13,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/Telemetry.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsDirectoryServiceDefs.h"
@@ -241,7 +242,8 @@ gfxDWriteFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
 
 void
 gfxDWriteFontFamily::ReadFaceNames(gfxPlatformFontList *aPlatformFontList,
-                                   bool aNeedFullnamePostscriptNames)
+                                   bool aNeedFullnamePostscriptNames,
+                                   FontInfoData *aFontInfoData)
 {
     // if all needed names have already been read, skip
     if (mOtherFamilyNamesInitialized &&
@@ -249,14 +251,19 @@ gfxDWriteFontFamily::ReadFaceNames(gfxPlatformFontList *aPlatformFontList,
         return;
     }
 
-    // DirectWrite version of this will try to read
-    // postscript/fullnames via DirectWrite API
-    FindStyleVariations();
+    // If we've been passed a FontInfoData, we skip the DWrite implementation
+    // here and fall back to the generic code which will use that info.
+    if (!aFontInfoData) {
+        // DirectWrite version of this will try to read
+        // postscript/fullnames via DirectWrite API
+        FindStyleVariations();
+    }
 
     // fallback to looking up via name table
     if (!mOtherFamilyNamesInitialized || !mFaceNamesInitialized) {
         gfxFontFamily::ReadFaceNames(aPlatformFontList,
-                                     aNeedFullnamePostscriptNames);
+                                     aNeedFullnamePostscriptNames,
+                                     aFontInfoData);
     }
 }
 
@@ -576,8 +583,8 @@ gfxDWriteFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
                   charmap->mHash, mCharacterMap == charmap ? " new" : ""));
     if (LOG_CMAPDATA_ENABLED()) {
         char prefix[256];
-        sprintf(prefix, "(cmapdata) name: %.220s",
-                NS_ConvertUTF16toUTF8(mName).get());
+        SprintfLiteral(prefix, "(cmapdata) name: %.220s",
+                       NS_ConvertUTF16toUTF8(mName).get());
         charmap->Dump(prefix, eGfxLog_cmapdata);
     }
 

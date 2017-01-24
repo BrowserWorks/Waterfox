@@ -14,7 +14,7 @@
 namespace mozilla {
 namespace dom {
 
-class Entry;
+class FileSystemEntry;
 class FunctionStringCallback;
 
 class DataTransferItem final : public nsISupports
@@ -35,14 +35,23 @@ public:
     KIND_OTHER,
   };
 
-  DataTransferItem(DataTransferItemList* aParent, const nsAString& aType)
-    : mIndex(0), mChromeOnly(false), mKind(KIND_OTHER), mType(aType), mParent(aParent)
-  {}
+  DataTransferItem(DataTransfer* aDataTransfer, const nsAString& aType)
+    : mIndex(0)
+    , mChromeOnly(false)
+    , mKind(KIND_OTHER)
+    , mType(aType)
+    , mDataTransfer(aDataTransfer)
+  {
+    MOZ_ASSERT(mDataTransfer, "Must be associated with a DataTransfer");
+  }
 
-  already_AddRefed<DataTransferItem> Clone(DataTransferItemList* aParent) const;
+  already_AddRefed<DataTransferItem> Clone(DataTransfer* aDataTransfer) const;
 
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+  // NOTE: This accesses the subject principal, and should not be called from C++
   void GetAsString(FunctionStringCallback* aCallback, ErrorResult& aRv);
+
   void GetKind(nsAString& aKind) const
   {
     switch (mKind) {
@@ -73,13 +82,19 @@ public:
     mKind = aKind;
   }
 
+  // NOTE: This accesses the subject principal, and should not be called from C++
   already_AddRefed<File> GetAsFile(ErrorResult& aRv);
+  already_AddRefed<File> GetAsFileWithPrincipal(nsIPrincipal* aPrincipal,
+                                                ErrorResult& aRv);
 
-  already_AddRefed<Entry> GetAsEntry(ErrorResult& aRv);
+  // NOTE: This accesses the subject principal, and should not be called from C++
+  already_AddRefed<FileSystemEntry> GetAsEntry(ErrorResult& aRv);
+  already_AddRefed<FileSystemEntry> GetAsEntryWithPrincipal(nsIPrincipal* aPrincipal,
+                                                            ErrorResult& aRv);
 
-  DataTransferItemList* GetParentObject() const
+  DataTransfer* GetParentObject() const
   {
-    return mParent;
+    return mDataTransfer;
   }
 
   nsIPrincipal* Principal() const
@@ -91,13 +106,8 @@ public:
     mPrincipal = aPrincipal;
   }
 
-  nsIVariant* Data()
-  {
-    if (!mData) {
-      FillInExternalData();
-    }
-    return mData;
-  }
+  already_AddRefed<nsIVariant> DataNoSecurityCheck();
+  already_AddRefed<nsIVariant> Data(nsIPrincipal* aPrincipal, ErrorResult& aRv);
   void SetData(nsIVariant* aData);
 
   uint32_t Index() const
@@ -119,6 +129,8 @@ public:
     mChromeOnly = aChromeOnly;
   }
 
+  static eKind KindFromData(nsIVariant* aData);
+
 private:
   ~DataTransferItem() {}
   already_AddRefed<File> CreateFileFromInputStream(nsIInputStream* aStream);
@@ -131,7 +143,7 @@ private:
   nsString mType;
   nsCOMPtr<nsIVariant> mData;
   nsCOMPtr<nsIPrincipal> mPrincipal;
-  RefPtr<DataTransferItemList> mParent;
+  RefPtr<DataTransfer> mDataTransfer;
 
   // File cache for nsIFile application/x-moz-file entries.
   RefPtr<File> mCachedFile;

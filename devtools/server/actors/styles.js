@@ -9,7 +9,7 @@ const promise = require("promise");
 const protocol = require("devtools/shared/protocol");
 const {LongStringActor} = require("devtools/server/actors/string");
 const {getDefinedGeometryProperties} = require("devtools/server/actors/highlighters/geometry-editor");
-const {parseDeclarations} = require("devtools/shared/css-parsing-utils");
+const {parseDeclarations} = require("devtools/shared/css/parsing-utils");
 const {isCssPropertyKnown} = require("devtools/server/actors/css-properties");
 const {Task} = require("devtools/shared/task");
 const events = require("sdk/event/core");
@@ -18,7 +18,6 @@ const events = require("sdk/event/core");
 const {UPDATE_PRESERVING_RULES, UPDATE_GENERAL} = require("devtools/server/actors/stylesheets");
 const {pageStyleSpec, styleRuleSpec, ELEMENT_STYLE} = require("devtools/shared/specs/styles");
 
-loader.lazyRequireGetter(this, "CSS", "CSS");
 loader.lazyGetter(this, "CssLogic", () => require("devtools/server/css-logic").CssLogic);
 loader.lazyGetter(this, "SharedCssLogic", () => require("devtools/shared/inspector/css-logic"));
 loader.lazyGetter(this, "DOMUtils", () => Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils));
@@ -761,7 +760,7 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
 
     let layout = {};
 
-    // First, we update the first part of the layout view, with
+    // First, we update the first part of the box model view, with
     // the size of the element.
 
     let clientRect = node.rawNode.getBoundingClientRect();

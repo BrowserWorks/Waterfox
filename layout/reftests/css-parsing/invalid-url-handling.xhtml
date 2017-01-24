@@ -94,6 +94,22 @@
   #foo { background: url({()); }
   #seventeen { background-color: green }
   </style>
+  <!-- Test that url() starting with a quote and without its closing ')' eaten
+  by any of the tokens that come after the initial quote doesn't eat the rest of
+  the stylesheet.  In particular, this checks whether, once we reach the end of
+  the string and discover garbage after it, we tokenize the garbage or just skip
+  to the nearest ')'. -->
+  <style type="text/css">
+  #eighteen { background-color: red; }
+  #foo { background: url('('')'); }
+  #eighteen { background-color: green; }
+  </style>
+  <!-- And the same thing with double quotes -->
+  <style type="text/css">
+  #nineteen { background-color: red; }
+  #foo { background: url("("')'); }
+  #nineteen { background-color: green; }
+  </style>
  </head>
  <body>
   <div id="one">This should have a green background</div>
@@ -113,5 +129,7 @@
   <div id="fifteen">This should have a green background</div>
   <div id="sixteen">This should have a green background</div>
   <div id="seventeen">This should have a green background</div>
+  <div id="eighteen">This should have a green background</div>
+  <div id="nineteen">This should have a green background</div>
  </body>
 </html>

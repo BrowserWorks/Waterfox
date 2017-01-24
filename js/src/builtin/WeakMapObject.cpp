@@ -230,6 +230,7 @@ WeakMap_mark(JSTracer* trc, JSObject* obj)
 static void
 WeakMap_finalize(FreeOp* fop, JSObject* obj)
 {
+    MOZ_ASSERT(fop->maybeOffMainThread());
     if (ObjectValueMap* map = obj->as<WeakMapObject>().getMap()) {
 #ifdef DEBUG
         map->~ObjectValueMap();
@@ -399,7 +400,8 @@ static const ClassOps WeakMapObjectClassOps = {
 const Class WeakMapObject::class_ = {
     "WeakMap",
     JSCLASS_HAS_PRIVATE |
-    JSCLASS_HAS_CACHED_PROTO(JSProto_WeakMap),
+    JSCLASS_HAS_CACHED_PROTO(JSProto_WeakMap) |
+    JSCLASS_BACKGROUND_FINALIZE,
     &WeakMapObjectClassOps
 };
 
@@ -432,6 +434,8 @@ InitWeakMapClass(JSContext* cx, HandleObject obj, bool defineMembers)
 
     if (defineMembers) {
         if (!DefinePropertiesAndFunctions(cx, proto, nullptr, weak_map_methods))
+            return nullptr;
+        if (!DefineToStringTag(cx, proto, cx->names().WeakMap))
             return nullptr;
     }
 

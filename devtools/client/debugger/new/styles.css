@@ -1,0 +1,1023 @@
+.tabs {
+  font-size: 1.25em;
+  margin: 100px auto;
+  margin-bottom: 0;
+  width: calc(100% - 200px);
+}
+
+.tabs .tab-group {
+  margin-top: 20px;
+}
+
+.tabs .tab-group-title {
+  font-size: 1.25em;
+  margin: 0 0 1em 10px;
+  color: var(--theme-highlight-lightorange);
+}
+
+.tabs .tab-list {
+  list-style: none;
+  padding: 0px;
+  margin: 0px;
+}
+
+.tabs .tab:first-child {
+  border-top: 1px solid var(--theme-splitter-color);
+}
+
+.tabs .tab {
+  border-bottom: 1px solid var(--theme-splitter-color);
+  padding: 10px;
+  font-family: sans-serif;
+}
+
+.tabs .tab:hover {
+  background-color: var(--theme-toolbar-background);
+  cursor: pointer;
+}
+
+.tabs .tab-title {
+  line-height: 25px;
+  color: var(--theme-content-color1);
+}
+
+.tabs .tab-url {
+  color: var(--theme-highlight-bluegrey);
+}
+
+.connect-message {
+  margin: 20px;
+  padding: 50px 100px;
+  text-align: center;
+  color: #9a9a9a;
+}
+
+.connect-message.not-connected {
+  border: 1px solid #dddddd;
+  background-color: #fbfbfb;
+  color: #9a9a9a;
+}
+/* vim:set ts=2 sw=2 sts=2 et: */
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: "SF UI Text", sans-serif;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+#mount {
+  display: flex;
+  height: 100%;
+}
+
+.debugger {
+  display: flex;
+  flex: 1;
+}
+
+.center-pane {
+  display: flex;
+  position: relative;
+  flex: 1;
+  background-color: var(--theme-tab-toolbar-background);
+}
+
+.editor-container {
+  display: flex;
+  flex: 1;
+}
+
+.subsettings:hover {
+  cursor: pointer;
+}
+
+.source-footer {
+  background: var(--theme-body-background);
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 100;
+  width: 100px;
+  opacity: 0.9;
+}
+
+.source-footer .command-bar {
+  float: right;
+}
+
+.command-bar > span {
+  cursor: pointer;
+  margin-right: 0.7em;
+  width: 1em;
+  height: 1.1em;
+  display: inline-block;
+  text-align: center;
+  transition: opacity 200ms;
+}
+
+.search-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  z-index: 200;
+  background-color: var(--theme-search-overlays-semitransparent);
+}
+
+.search-container .autocomplete {
+  flex: 1;
+}
+
+.search-container .close-button {
+  width: 16px;
+  margin-top: 25px;
+  margin-right: 20px;
+}
+.tree {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+
+  flex: 1;
+  white-space: nowrap;
+  overflow: auto;
+}
+
+.tree button {
+  display: block;
+}
+
+.tree .node {
+  padding: 2px 5px;
+  position: relative;
+}
+
+.tree .node.focused {
+  color: white;
+  background-color: var(--theme-selection-background);
+}
+
+.tree .node > div {
+  margin-left: 10px;
+}
+
+.tree .node.focused svg {
+  fill: white;
+}
+
+.tree-node button {
+  position: fixed;
+}
+.sources-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sources-header {
+  height: 30px;
+  border-bottom: 1px solid var(--theme-splitter-color);
+  padding-left: 10px;
+  line-height: 30px;
+  font-size: 1.2em;
+}
+
+.sources-list {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+ul.sources-list {
+  list-style: none;
+  margin: 20px 0;
+  padding: 0;
+  padding-left: 10px;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.sources-list ul {
+  list-style: none;
+  margin: 0.5em 0;
+  padding: 0;
+}
+
+.sources-list .source-item {
+  list-style: none;
+  white-space: nowrap;
+}
+
+.sources-list .label {
+  font-size: 1em;
+  padding-left: 10px;
+  color: var(--theme-comment);
+}
+
+.sources-list .source-item.selected {
+  background-color: var(--theme-selection-background);
+}
+
+.sources-list .source-item.selected .label {
+  color: var(--theme-selection-color);
+}
+
+.arrow,
+.folder,
+.domain,
+.file,
+.worker {
+  fill: var(--theme-splitter-color);
+}
+
+.domain,
+.file,
+.worker {
+  position: relative;
+  top: 1px;
+}
+
+.worker,
+.folder {
+  position: relative;
+  top: 2px;
+}
+
+.domain svg,
+.folder svg,
+.worker svg {
+  width: 15px;
+  margin-right: 5px;
+}
+
+.file svg {
+  width: 13px;
+  margin-right: 5px;
+}
+
+.tree {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+
+  flex: 1;
+  white-space: nowrap;
+  overflow: auto;
+}
+
+.tree button {
+  display: block;
+}
+
+.tree .node {
+  padding: 2px 5px;
+  position: relative;
+  cursor: pointer;
+}
+
+.tree .node:hover {
+  background: var(--theme-tab-toolbar-background);
+}
+
+.tree .node.focused {
+  color: white;
+  background-color: var(--theme-selection-background);
+}
+
+.tree .node > div {
+  margin-left: 10px;
+}
+
+.tree .node.focused svg {
+  fill: white;
+}
+
+.sources-list .tree-node button {
+  position: fixed;
+}
+/* vim:set ts=2 sw=2 sts=2 et: */
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/**
+ * There's a known codemirror flex issue with chrome that this addresses.
+ * BUG https://github.com/devtools-html/debugger.html/issues/63
+ */
+.editor-wrapper {
+  position: absolute;
+  height: calc(100% - 30px);
+  width: 100%;
+  top: 30px;
+  left: 0px;
+}
+
+.editor-wrapper .breakpoints {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.editor.new-breakpoint svg {
+  fill: var(--theme-selection-background);
+  width: 60px;
+  height: 12px;
+  position: absolute;
+  top: 0;
+  right: -4px;
+}
+
+.editor.new-breakpoint.breakpoint-disabled svg {
+  opacity: 0.3;
+}
+
+.editor-mount,
+.CodeMirror {
+  width: 100%;
+  height: 100%;
+  background-color: var(--theme-body-background);
+}
+
+.CodeMirror-linenumber {
+  font-size: 11px;
+}
+
+/* set the linenumber white when there is a breakpoint */
+.new-breakpoint .CodeMirror-linenumber {
+  color: white;
+}
+
+/* move the breakpoint below the linenumber */
+.new-breakpoint .CodeMirror-gutter-elt:last-child {
+  z-index: 0;
+}
+
+.debug-line .CodeMirror-line {
+  background-color: var(--breakpoint-active-color) !important;
+}
+
+/* Don't display the highlight color since the debug line
+   is already highlighted */
+.debug-line .CodeMirror-activeline-background {
+  display: none;
+}
+
+.highlight-line .CodeMirror-line {
+  animation: fade-highlight-out 1.5s normal forwards;
+}
+
+@keyframes fade-highlight-out {
+  0% { background-color: var(--theme-highlight-gray); }
+  100% { background-color: transparent; }
+}
+
+.welcomebox {
+  width: 100%;
+
+  /* Offsetting it by 30px for the sources-header area */
+  height: calc(100% - 30px);
+  position: absolute;
+  top: 30px;
+  left: 0;
+  padding: 50px 0;
+  text-align: center;
+  font-size: 1.25em;
+  color: var(--theme-comment-alt);
+  background-color: var(--theme-tab-toolbar-background);
+  font-weight: lighter;
+  text-align: center;
+  z-index: 100;
+}
+.split-box {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.split-box .uncontrolled {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.split-box .controlled {
+  display: flex;
+  overflow: auto;
+}
+
+.split-box .splitter {
+  background-color: var(--theme-splitter-color);
+  border-bottom-width: 0;
+  border-color: white;
+  border-left-width: 0;
+  border-right-width: 0;
+  border-style: solid;
+  border-top-width: 0;
+  box-sizing: content-box;
+  cursor: ew-resize;
+  flex: 0 0 1px;
+}
+
+.breakpoints-list .breakpoint {
+  font-size: 12px;
+  color: var(--theme-content-color1);
+  margin: 0.25em 0;
+  padding: 0.25em 0;
+  line-height: 1em;
+}
+
+.breakpoints-list .breakpoint.paused {
+  background-color: var(--theme-toolbar-background-alt);
+}
+
+.breakpoints-list .breakpoint.disabled .breakpoint-label {
+  color: var(--theme-content-color3);
+  transition: color 0.5s linear;
+}
+
+.breakpoints-list .breakpoint:hover {
+  cursor: pointer;
+  background-color: var(--theme-toolbar-background);
+}
+
+.breakpoints-list .breakpoint-label {
+  display: inline-block;
+}
+
+.breakpoints-list .pause-indicator {
+  flex: 0 1 content;
+  order: 3;
+}
+
+.breakpoint-snippet {
+  color: var(--theme-comment);
+  padding-left: 20px;
+}
+/* vim:set ts=2 sw=2 sts=2 et: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.theme-dark,
+.theme-light {
+  --number-color: var(--theme-highlight-green);
+  --string-color: var(--theme-highlight-orange);
+  --null-color: var(--theme-comment);
+  --object-color: var(--theme-body-color);
+  --caption-color: var(--theme-highlight-blue);
+  --location-color: var(--theme-content-color1);
+  --source-link-color: var(--theme-highlight-blue);
+  --node-color: var(--theme-highlight-bluegrey);
+  --reference-color: var(--theme-highlight-purple);
+}
+
+.theme-firebug {
+  --number-color: #000088;
+  --string-color: #FF0000;
+  --null-color: #787878;
+  --object-color: DarkGreen;
+  --caption-color: #444444;
+  --location-color: #555555;
+  --source-link-color: blue;
+  --node-color: rgb(0, 0, 136);
+  --reference-color: rgb(102, 102, 255);
+}
+
+/******************************************************************************/
+
+.objectLink:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.inline {
+  display: inline;
+  white-space: normal;
+}
+
+.objectBox-object {
+  font-weight: bold;
+  color: var(--object-color);
+  white-space: pre-wrap;
+}
+
+.objectBox-string,
+.objectBox-text,
+.objectLink-textNode,
+.objectBox-table {
+  white-space: pre-wrap;
+}
+
+.objectBox-number,
+.objectLink-styleRule,
+.objectLink-element,
+.objectLink-textNode,
+.objectBox-array > .length {
+  color: var(--number-color);
+}
+
+.objectBox-string {
+  color: var(--string-color);
+}
+
+.objectLink-function,
+.objectBox-stackTrace,
+.objectLink-profile {
+  color: var(--object-color);
+}
+
+.objectLink-Location {
+  font-style: italic;
+  color: var(--location-color);
+}
+
+.objectBox-null,
+.objectBox-undefined,
+.objectBox-hint,
+.logRowHint {
+  font-style: italic;
+  color: var(--null-color);
+}
+
+.objectLink-sourceLink {
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  padding-left: 8px;
+  font-weight: bold;
+  color: var(--source-link-color);
+}
+
+/******************************************************************************/
+
+.objectLink-event,
+.objectLink-eventLog,
+.objectLink-regexp,
+.objectLink-object,
+.objectLink-Date {
+  font-weight: bold;
+  color: var(--object-color);
+  white-space: pre-wrap;
+}
+
+/******************************************************************************/
+
+.objectLink-object .nodeName,
+.objectLink-NamedNodeMap .nodeName,
+.objectLink-NamedNodeMap .objectEqual,
+.objectLink-NamedNodeMap .arrayLeftBracket,
+.objectLink-NamedNodeMap .arrayRightBracket,
+.objectLink-Attr .attrEqual,
+.objectLink-Attr .attrTitle {
+  color: var(--node-color);
+}
+
+.objectLink-object .nodeName {
+  font-weight: normal;
+}
+
+/******************************************************************************/
+
+.objectLeftBrace,
+.objectRightBrace,
+.arrayLeftBracket,
+.arrayRightBracket {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.objectLeftBrace,
+.arrayLeftBracket {
+  margin-right: 4px;
+}
+
+.objectRightBrace,
+.arrayRightBracket {
+  margin-left: 4px;
+}
+
+/******************************************************************************/
+/* Cycle reference*/
+
+.objectLink-Reference {
+  font-weight: bold;
+  color: var(--reference-color);
+}
+
+.objectBox-array > .objectTitle {
+  font-weight: bold;
+  color: var(--object-color);
+}
+
+.caption {
+  font-weight: bold;
+  color:  var(--caption-color);
+}
+
+/******************************************************************************/
+/* Themes */
+
+.theme-dark .objectBox-null,
+.theme-dark .objectBox-undefined,
+.theme-light .objectBox-null,
+.theme-light .objectBox-undefined {
+  font-style: normal;
+}
+
+.theme-dark .objectBox-object,
+.theme-light .objectBox-object {
+  font-weight: normal;
+  white-space: pre-wrap;
+}
+
+.theme-dark .caption,
+.theme-light .caption {
+  font-weight: normal;
+}
+.input-expression {
+  width: 100%;
+  padding: 5px;
+  margin: 0px;
+  border: none;
+  cursor: hand;
+}
+
+.expression-container {
+  border: 1px;
+  padding: 2px;
+  margin: 1px;
+  width: 100%;
+}
+
+.expression-output-container .close-btn {
+  width: 6px;
+  height: 6px;
+  float: right;
+  margin-right: 6px;
+  display: block;
+  cursor: pointer;
+}
+
+.expression-input {
+  color: var(--theme-content-color1);
+  cursor: pointer;
+  max-width: 50%;
+}
+
+.expression-value {
+  overflow-x: scroll;
+  color: var(--theme-content-color2);
+  max-width: 50% !important;
+}
+.arrow svg {
+  fill: var(--theme-splitter-color);
+  margin-right: 5px;
+  margin-top: 3px;
+  transform: rotate(-90deg);
+  transition: transform 0.25s ease;
+  width: 10px;
+}
+
+.arrow.expanded svg {
+  transform: rotate(0deg);
+}
+
+.arrow.hidden {
+  visibility: hidden;
+}
+
+.object-label {
+  color: var(--theme-highlight-blue);
+}
+
+.objectBox-object,
+.objectBox-string,
+.objectBox-text,
+.objectBox-table,
+.objectLink-textNode,
+.objectLink-event,
+.objectLink-eventLog,
+.objectLink-regexp,
+.objectLink-object,
+.objectLink-Date,
+.theme-dark .objectBox-object,
+.theme-light .objectBox-object {
+  white-space: nowrap;
+}
+
+.scopes-list .tree-node {
+  overflow: hidden;
+}
+
+.frames ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.frames ul li {
+  cursor: pointer;
+  padding: 10px;
+  clear: both;
+  overflow: hidden;
+}
+
+.frames ul li:nth-of-type(2n) {
+  background-color: var(--theme-tab-toolbar-background);
+}
+
+.frames .location {
+  float: right;
+  color: var(--theme-comment);
+  font-weight: lighter;
+}
+
+.frames .title {
+  float: left;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  margin-right: 1em;
+}
+
+.frames ul li.selected,
+.frames ul li.selected .location {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-body-background);
+}
+.accordion {
+  background-color: var(--theme-body-background);
+  width: 100%;
+}
+
+.accordion ._header {
+  background-color: var(--theme-toolbar-background);
+  border-bottom: 1px solid var(--theme-splitter-color);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 5px;
+  transition: all 0.25s ease;
+  width: 100%;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.accordion ._header:hover {
+  background-color: var(--theme-selection-color);
+}
+
+.accordion ._header:hover svg {
+  fill: var(--theme-comment-alt);
+}
+
+.accordion ._content {
+  border-bottom: 1px solid var(--theme-splitter-color);;
+}
+.right-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.right-sidebar .accordion {
+  overflow-y: auto;
+}
+
+.command-bar {
+  border-bottom: 1px solid var(--theme-splitter-color);
+  height: 30px;
+  padding: 8px 5px 10px 10px;
+}
+
+.command-bar > span {
+  cursor: pointer;
+  margin-right: 0.7em;
+  width: 16px;
+  height: 17px;
+  display: inline-block;
+  text-align: center;
+  transition: opacity 200ms;
+}
+
+.command-bar > span.disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.command-bar .stepOut {
+  margin-right: 2em;
+}
+
+.command-bar .subSettings {
+  float: right;
+}
+
+.pane {
+  color: var(--theme-body-color);
+}
+
+.pane .pane-info {
+  font-style: italic;
+  text-align: center;
+  padding: 0.5em;
+}
+
+.disableBreakpoints.breakpoints-disabled path {
+  stroke: var(--theme-highlight-blue);
+}
+.source-header {
+  border-bottom: 1px solid var(--theme-splitter-color);
+  height: 30px;
+  flex: 1;
+}
+
+.source-tabs {
+  width: calc(100% - 30px);
+  overflow: hidden;
+}
+
+.source-tab {
+  background-color: var(--theme-toolbar-background-alt);
+  color: var(--theme-faded-tab-color);
+  border: 1px solid var(--theme-splitter-color);
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  padding: 2px 20px 2px 12px;
+  height: 23px;
+  line-height: 20px;
+  margin: 6px 0 0 8px;
+  display: inline-block;
+  border-bottom: none;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.source-tab:hover {
+  background: var(--theme-toolbar-background);
+  cursor: pointer;
+}
+
+.source-tab.active {
+  color: var(--theme-body-color);
+  background-color: var(--theme-body-background);
+}
+
+.source-tab path {
+  fill: var(--theme-faded-tab-color);
+}
+
+.source-tab.active path {
+  fill: var(--theme-body-color);
+}
+
+.source-tab .close-btn {
+  position: absolute;
+  right: 7px;
+  top: 1px;
+  width: 6px;
+  height: 6px;
+}
+
+.source-header .subsettings {
+  position: absolute;
+  right: 3px;
+  top: 9px;
+}
+
+.sources-dropdown {
+  position: absolute;
+  top: 35px;
+  right: 0px;
+}
+.dropdown {
+  background: white;
+  border: 1px solid var(--theme-splitter-color);
+  width: 150px;
+  max-height: 300px;
+  z-index: 1000;
+}
+
+.dropdown li {
+  padding-left: 10px;
+}
+
+.dropdown li:hover {
+  background: var(--theme-tab-toolbar-background);
+  cursor: pointer;
+}
+
+.dropdown ul {
+  list-style: none;
+  line-height: 2em;
+  font-size: 0.8em;
+  margin: 0;
+  padding: 0;
+}
+.source-footer .prettyPrint.pretty {
+  stroke: var(--theme-highlight-blue);
+}
+
+.autocomplete {
+  width: 100%;
+  padding: 20px;
+}
+
+.autocomplete ul {
+  list-style: none;
+  width: 100%;
+  max-height: calc(100% - 32px);
+  margin: 0px;
+  padding: 0px;
+  overflow: auto;
+  border-left: 2px solid var(--theme-splitter-color);
+  border-right: 2px solid var(--theme-splitter-color);
+}
+
+.autocomplete ul:not(:empty) {
+  border-bottom: 2px solid var(--theme-splitter-color);
+}
+
+.autocomplete li:nth-child(1) {
+  border-top: none;
+}
+
+.autocomplete li {
+  border-top: 2px solid var(--theme-splitter-color);
+  background-color: var(--theme-tab-toolbar-background);
+  padding: 10px;
+}
+
+.autocomplete li:hover {
+  background: var(--theme-tab-toolbar-background);
+  cursor: pointer;
+}
+
+.autocomplete li.selected {
+  background: var(--theme-selection-background);
+  color: white;
+}
+
+.autocomplete li.selected .subtitle {
+  color: white;
+}
+
+.autocomplete li .title {
+  line-height: 1.5em;
+}
+
+.autocomplete li .subtitle {
+  line-height: 1.5em;
+  color: grey;
+}
+
+.autocomplete input {
+  width: 100%;
+  border: 2px solid var(--theme-splitter-color);
+  outline: none;
+  line-height: 2.5em;
+  height: 2.5em;
+  padding-left: 25px;
+}
+
+.autocomplete svg {
+  width: 16px;
+  position: absolute;
+  top: 25px;
+  left: 27px;
+}
+
+.autocomplete.focused path,
+.autocomplete.focused ellipse {
+  stroke: var(--theme-highlight-blue);
+}
+
+.autocomplete path,
+.autocomplete ellipse {
+  stroke: var(--theme-splitter-color);
+}
+
+/*# sourceMappingURL=styles.css.map*/

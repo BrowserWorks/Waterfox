@@ -27,17 +27,17 @@ namespace jit { class MacroAssembler; }
 
 namespace wasm {
 
-class FuncExport;
+class FuncDefExport;
 class FuncImport;
 
 extern Offsets
-GenerateEntry(jit::MacroAssembler& masm, const FuncExport& fe, bool usesHeap);
+GenerateEntry(jit::MacroAssembler& masm, const FuncDefExport& func);
 
 extern ProfilingOffsets
 GenerateInterpExit(jit::MacroAssembler& masm, const FuncImport& fi, uint32_t funcImportIndex);
 
 extern ProfilingOffsets
-GenerateJitExit(jit::MacroAssembler& masm, const FuncImport& fi, bool usesHeap);
+GenerateJitExit(jit::MacroAssembler& masm, const FuncImport& fi);
 
 extern Offsets
 GenerateJumpTarget(jit::MacroAssembler& masm, JumpTarget target);

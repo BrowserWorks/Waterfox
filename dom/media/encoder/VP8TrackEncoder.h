@@ -29,17 +29,17 @@ class VP8TrackEncoder : public VideoTrackEncoder
     SKIP_FRAME, // Skip the next frame.
   };
 public:
-  VP8TrackEncoder();
+  explicit VP8TrackEncoder(TrackRate aTrackRate);
   virtual ~VP8TrackEncoder();
 
   already_AddRefed<TrackMetadataBase> GetMetadata() final override;
 
   nsresult GetEncodedTrack(EncodedFrameContainer& aData) final override;
 
+  void ReplyGetSourceSurface(already_AddRefed<gfx::SourceSurface> aSurf);
 protected:
   nsresult Init(int32_t aWidth, int32_t aHeight,
-                int32_t aDisplayWidth, int32_t aDisplayHeight,
-                TrackRate aTrackRate) final override;
+                int32_t aDisplayWidth, int32_t aDisplayHeight) final override;
 
 private:
   // Calculate the target frame's encoded duration.
@@ -60,6 +60,8 @@ private:
 
   // Prepare the input data to the mVPXImageWrapper for encoding.
   nsresult PrepareRawFrame(VideoChunk &aChunk);
+
+  already_AddRefed<gfx::SourceSurface> GetSourceSurface(already_AddRefed<layers::Image> aImg);
 
   // Output frame rate.
   uint32_t mEncodedFrameRate;
@@ -89,6 +91,7 @@ private:
   nsAutoPtr<vpx_codec_ctx_t> mVPXContext;
   // Image Descriptor.
   nsAutoPtr<vpx_image_t> mVPXImageWrapper;
+  RefPtr<gfx::SourceSurface> mSourceSurface;
 };
 
 } // namespace mozilla

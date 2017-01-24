@@ -34,6 +34,8 @@ namespace layers {
 
 using mozilla::dom::TabChild;
 
+class IAPZCTreeManager;
+class APZCTreeManagerChild;
 class ClientLayerManager;
 class CompositorBridgeParent;
 class TextureClient;
@@ -191,6 +193,8 @@ public:
                                     TextureFlags aFlags);
   void ClearTexturePool();
 
+  virtual FixedSizeSmallShmemSectionAllocator* GetTileLockAllocator() override;
+
   void HandleMemoryPressure();
 
   virtual MessageLoop* GetMessageLoop() const override { return mMessageLoop; }
@@ -207,6 +211,14 @@ public:
 
   PCompositorWidgetChild* AllocPCompositorWidgetChild(const CompositorWidgetInitData& aInitData) override;
   bool DeallocPCompositorWidgetChild(PCompositorWidgetChild* aActor) override;
+
+  RefPtr<IAPZCTreeManager> GetAPZCTreeManager(uint64_t aLayerTreeId);
+
+  PAPZCTreeManagerChild* AllocPAPZCTreeManagerChild(const uint64_t& aLayersId) override;
+  bool DeallocPAPZCTreeManagerChild(PAPZCTreeManagerChild* aActor) override;
+
+  PAPZChild* AllocPAPZChild(const uint64_t& aLayersId) override;
+  bool DeallocPAPZChild(PAPZChild* aActor) override;
 
   virtual ShmemAllocator* AsShmemAllocator() override { return this; }
 
@@ -301,6 +313,8 @@ private:
   AutoTArray<RefPtr<TextureClientPool>,2> mTexturePools;
 
   uint64_t mProcessToken;
+
+  FixedSizeSmallShmemSectionAllocator* mSectionAllocator;
 };
 
 } // namespace layers

@@ -59,6 +59,7 @@ function* close_subdialog_and_test_generic_end_state(browser, closingFn, closing
     info("waiting for dialogclosing");
     let closingEvent =
       yield ContentTaskUtils.waitForEvent(frame.contentWindow, "dialogclosing");
+    let closingButton = closingEvent.detail.button;
     let actualAcceptCount = frame.contentWindow.arguments &&
                             frame.contentWindow.arguments[0].acceptCount;
 
@@ -70,7 +71,7 @@ function* close_subdialog_and_test_generic_end_state(browser, closingFn, closing
     Assert.equal(frame.getAttribute("style"), "", "inline styles should be cleared");
     Assert.equal(frame.contentWindow.location.href.toString(), "about:blank",
       "sub-dialog should be unloaded");
-    Assert.equal(closingEvent.detail.button, expectations.closingButton,
+    Assert.equal(closingButton, expectations.closingButton,
       "closing event should indicate button was '" + expectations.closingButton + "'");
     Assert.equal(actualAcceptCount, expectations.acceptCount,
       "should be 1 if accepted, 0 if canceled, undefined if closed w/out button");
@@ -188,17 +189,12 @@ add_task(function* back_navigation_on_browser_tab_should_close_dialog() {
 });
 
 add_task(function* escape_should_close_dialog() {
-  todo(false, "BrowserTestUtils.sendChar('VK_ESCAPE') triggers " +
-              "'can't access dead object' on `navigator` in this test. " +
-              "See bug 1238065.")
-  return;
-
   yield open_subdialog_and_test_generic_start_state(tab.linkedBrowser);
 
   info("canceling the dialog");
   yield close_subdialog_and_test_generic_end_state(tab.linkedBrowser,
-    function() { return BrowserTestUtils.sendChar("VK_ESCAPE", tab.linkedBrowser); },
-    null, undefined, {runClosingFnOutsideOfContentTask: true});
+    function() { return BrowserTestUtils.synthesizeKey("VK_ESCAPE", {}, tab.linkedBrowser); },
+    "cancel", 0, {runClosingFnOutsideOfContentTask: true});
 });
 
 add_task(function* correct_width_and_height_should_be_used_for_dialog() {

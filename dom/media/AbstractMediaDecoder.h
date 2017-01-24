@@ -30,9 +30,7 @@ class MediaResource;
 class ReentrantMonitor;
 class VideoFrameContainer;
 class MediaDecoderOwner;
-#ifdef MOZ_EME
 class CDMProxy;
-#endif
 
 typedef nsDataHashtable<nsCStringHashKey, nsCString> MetadataTags;
 
@@ -61,13 +59,24 @@ public:
   virtual void NotifyDecodedFrames(const FrameStatisticsData& aStats) = 0;
 
   virtual AbstractCanonical<media::NullableTimeUnit>* CanonicalDurationOrNull() { return nullptr; };
-  virtual AbstractCanonical<Maybe<double>>* CanonicalExplicitDuration() { return nullptr; }
 
   // Return an event that will be notified when data arrives in MediaResource.
   // MediaDecoderReader will register with this event to receive notifications
   // in order to update buffer ranges.
   // Return null if this decoder doesn't support the event.
   virtual MediaEventSource<void>* DataArrivedEvent()
+  {
+    return nullptr;
+  }
+
+  // Notify the media decoder that a decryption key is required before emitting
+  // further output. This only needs to be overridden for decoders that expect
+  // encryption, such as the MediaSource decoder.
+  virtual void NotifyWaitingForKey() {}
+
+  // Return an event that will be notified when a decoder is waiting for a
+  // decryption key before it can return more output.
+  virtual MediaEventSource<void>* WaitingForKeyEvent()
   {
     return nullptr;
   }
@@ -87,7 +96,7 @@ public:
 
   // Returns the owner of this decoder or null when the decoder is shutting
   // down. The owner should only be used on the main thread.
-  virtual MediaDecoderOwner* GetOwner() = 0;
+  virtual MediaDecoderOwner* GetOwner() const = 0;
 
   // Set by Reader if the current audio track can be offloaded
   virtual void SetPlatformCanOffloadAudio(bool aCanOffloadAudio) {}

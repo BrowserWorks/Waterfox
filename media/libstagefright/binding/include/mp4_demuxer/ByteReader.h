@@ -12,7 +12,7 @@
 
 namespace mp4_demuxer {
 
-class ByteReader
+class MOZ_RAII ByteReader
 {
 public:
   ByteReader() : mPtr(nullptr), mRemaining(0) {}
@@ -48,17 +48,11 @@ public:
 
   ~ByteReader()
   {
-    NS_ASSERTION(!mRemaining, "Not all bytes have been processed");
   }
 
   size_t Offset()
   {
     return mLength - mRemaining;
-  }
-
-  // Make it explicit if we're not using the extra bytes.
-  void DiscardRemaining() {
-    mRemaining = 0;
   }
 
   size_t Remaining() const { return mRemaining; }
@@ -272,7 +266,6 @@ public:
   const uint8_t* Peek(size_t aCount)
   {
     if (aCount > mRemaining) {
-      MOZ_ASSERT(false);
       return nullptr;
     }
     return mPtr;
@@ -315,7 +308,7 @@ public:
   }
 
   template <typename T>
-  bool ReadArray(nsTArray<T>& aDest, size_t aLength)
+  MOZ_MUST_USE bool ReadArray(nsTArray<T>& aDest, size_t aLength)
   {
     auto ptr = Read(aLength * sizeof(T));
     if (!ptr) {
@@ -327,11 +320,30 @@ public:
     return true;
   }
 
+  template <typename T>
+  MOZ_MUST_USE bool ReadArray(FallibleTArray<T>& aDest, size_t aLength)
+  {
+    auto ptr = Read(aLength * sizeof(T));
+    if (!ptr) {
+      return false;
+    }
+
+    aDest.Clear();
+    if (!aDest.SetCapacity(aLength, mozilla::fallible)) {
+      return false;
+    }
+    MOZ_ALWAYS_TRUE(aDest.AppendElements(reinterpret_cast<const T*>(ptr),
+                                         aLength,
+                                         mozilla::fallible));
+    return true;
+  }
+
 private:
   const uint8_t* mPtr;
   size_t mRemaining;
   size_t mLength;
 };
-}
+
+} // namespace mp4_demuxer
 
 #endif

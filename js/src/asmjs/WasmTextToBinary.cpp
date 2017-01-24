@@ -100,7 +100,6 @@ class WasmToken
         Loop,
         Module,
         Name,
-        Nop,
         Offset,
         OpenParen,
         Param,
@@ -118,6 +117,7 @@ class WasmToken
         Text,
         Then,
         Type,
+        NullaryOpcode,
         UnaryOpcode,
         Unreachable,
         UnsignedInteger,
@@ -195,7 +195,7 @@ class WasmToken
         MOZ_ASSERT(begin != end);
         MOZ_ASSERT(kind_ == UnaryOpcode || kind_ == BinaryOpcode || kind_ == TernaryOpcode ||
                    kind_ == ComparisonOpcode || kind_ == ConversionOpcode ||
-                   kind_ == Load || kind_ == Store);
+                   kind_ == Load || kind_ == Store || kind_ == NullaryOpcode);
         u.expr_ = expr;
     }
     explicit WasmToken(const char16_t* begin)
@@ -245,7 +245,7 @@ class WasmToken
     Expr expr() const {
         MOZ_ASSERT(kind_ == UnaryOpcode || kind_ == BinaryOpcode || kind_ == TernaryOpcode ||
                    kind_ == ComparisonOpcode || kind_ == ConversionOpcode ||
-                   kind_ == Load || kind_ == Store);
+                   kind_ == Load || kind_ == Store || kind_ == NullaryOpcode);
         return u.expr_;
     }
 };
@@ -757,6 +757,8 @@ WasmTokenStream::next()
                 return WasmToken(WasmToken::CallImport, begin, cur_);
             return WasmToken(WasmToken::Call, begin, cur_);
         }
+        if (consume(u"current_memory"))
+            return WasmToken(WasmToken::NullaryOpcode, Expr::CurrentMemory, begin, cur_);
         break;
 
       case 'd':
@@ -988,6 +990,8 @@ WasmTokenStream::next()
             return WasmToken(WasmToken::GetLocal, begin, cur_);
         if (consume(u"global"))
             return WasmToken(WasmToken::Global, begin, cur_);
+        if (consume(u"grow_memory"))
+            return WasmToken(WasmToken::UnaryOpcode, Expr::GrowMemory, begin, cur_);
         break;
 
       case 'i':
@@ -1302,7 +1306,7 @@ WasmTokenStream::next()
         if (consume(u"nan"))
             return nan(begin);
         if (consume(u"nop"))
-            return WasmToken(WasmToken::Nop, begin, cur_);
+            return WasmToken(WasmToken::NullaryOpcode, Expr::Nop, begin, cur_);
         break;
 
       case 'o':
@@ -1369,12 +1373,14 @@ struct WasmParseContext
     LifoAlloc& lifo;
     UniqueChars* error;
     DtoaState* dtoaState;
+    bool newFormat;
 
-    WasmParseContext(const char16_t* text, LifoAlloc& lifo, UniqueChars* error)
+    WasmParseContext(const char16_t* text, LifoAlloc& lifo, UniqueChars* error, bool newFormat)
       : ts(text, error),
         lifo(lifo),
         error(error),
-        dtoaState(NewDtoaState())
+        dtoaState(NewDtoaState()),
+        newFormat(newFormat)
     {}
 
     bool fail(const char* message) {
@@ -1555,7 +1561,7 @@ ParseNaNLiteral(const char16_t* cur, const char16_t* end, Float* result)
             return false;
         CheckedInt<Bits> u = 0;
         do {
-            uint8_t digit;
+            uint8_t digit = 0;
             MOZ_ALWAYS_TRUE(IsHexDigit(*cur, &digit));
             u *= 16;
             u += digit;
@@ -1569,7 +1575,7 @@ ParseNaNLiteral(const char16_t* cur, const char16_t* end, Float* result)
         // NaN payloads must contain at least one set bit.
         if (value == 0)
             return false;
-        *result = SpecificNaN<Float>(0, value);
+        SpecificNaN<Float>(0, value, result);
     } else {
         // Produce the spec's default NaN.
         *result = SpecificNaN<Float>(0, (Traits::kSignificandBits + 1) >> 1);
@@ -1914,6 +1920,12 @@ ParseUnaryOperator(WasmParseContext& c, Expr expr)
     return new(c.lifo) AstUnaryOperator(expr, op);
 }
 
+static AstNullaryOperator*
+ParseNullaryOperator(WasmParseContext& c, Expr expr)
+{
+    return new(c.lifo) AstNullaryOperator(expr);
+}
+
 static AstBinaryOperator*
 ParseBinaryOperator(WasmParseContext& c, Expr expr)
 {
@@ -2183,8 +2195,6 @@ ParseExprInsideParens(WasmParseContext& c)
     WasmToken token = c.ts.get();
 
     switch (token.kind()) {
-      case WasmToken::Nop:
-        return new(c.lifo) AstNop;
       case WasmToken::Unreachable:
         return new(c.lifo) AstUnreachable;
       case WasmToken::BinaryOpcode:
@@ -2200,7 +2210,7 @@ ParseExprInsideParens(WasmParseContext& c)
       case WasmToken::Call:
         return ParseCall(c, Expr::Call);
       case WasmToken::CallImport:
-        return ParseCall(c, Expr::CallImport);
+        return ParseCall(c, c.newFormat ? Expr::Call : Expr::CallImport);
       case WasmToken::CallIndirect:
         return ParseCallIndirect(c);
       case WasmToken::ComparisonOpcode:
@@ -2231,6 +2241,8 @@ ParseExprInsideParens(WasmParseContext& c)
         return ParseTernaryOperator(c, token.expr());
       case WasmToken::UnaryOpcode:
         return ParseUnaryOperator(c, token.expr());
+      case WasmToken::NullaryOpcode:
+        return ParseNullaryOperator(c, token.expr());
       default:
         c.ts.generateError(token, c.error);
         return nullptr;
@@ -2393,17 +2405,32 @@ ParseTypeDef(WasmParseContext& c)
 }
 
 static AstDataSegment*
-ParseDataSegment(WasmParseContext& c)
+ParseDataSegment(WasmParseContext& c, bool newFormat)
 {
-    WasmToken dstOffset;
-    if (!c.ts.match(WasmToken::Index, &dstOffset, c.error))
-        return nullptr;
+    AstExpr* offset;
+    if (newFormat) {
+        WasmToken dstOffset;
+        if (c.ts.getIf(WasmToken::Index, &dstOffset))
+            offset = new(c.lifo) AstConst(Val(dstOffset.index()));
+        else
+            offset = ParseExpr(c);
+        if (!offset)
+            return nullptr;
+    } else {
+        WasmToken dstOffset;
+        if (!c.ts.match(WasmToken::Index, &dstOffset, c.error))
+            return nullptr;
+
+        offset = new(c.lifo) AstConst(Val(dstOffset.index()));
+        if (!offset)
+            return nullptr;
+    }
 
     WasmToken text;
     if (!c.ts.match(WasmToken::Text, &text, c.error))
         return nullptr;
 
-    return new(c.lifo) AstDataSegment(dstOffset.index(), text.text());
+    return new(c.lifo) AstDataSegment(offset, text.text());
 }
 
 static bool
@@ -2432,7 +2459,7 @@ ParseMemory(WasmParseContext& c, WasmToken token, AstModule* module)
     while (c.ts.getIf(WasmToken::OpenParen)) {
         if (!c.ts.match(WasmToken::Segment, c.error))
             return false;
-        AstDataSegment* segment = ParseDataSegment(c);
+        AstDataSegment* segment = ParseDataSegment(c, /* newFormat = */ false);
         if (!segment || !module->append(segment))
             return false;
         if (!c.ts.match(WasmToken::CloseParen, c.error))
@@ -2477,7 +2504,7 @@ ParseGlobalType(WasmParseContext& c, WasmToken* typeToken, uint32_t* flags)
 }
 
 static AstImport*
-ParseImport(WasmParseContext& c, bool newFormat, AstModule* module)
+ParseImport(WasmParseContext& c, AstModule* module)
 {
     AstName name = c.ts.getIfName();
 
@@ -2492,7 +2519,7 @@ ParseImport(WasmParseContext& c, bool newFormat, AstModule* module)
     AstRef sigRef;
     WasmToken openParen;
     if (c.ts.getIf(WasmToken::OpenParen, &openParen)) {
-        if (newFormat) {
+        if (c.newFormat) {
             if (c.ts.getIf(WasmToken::Memory)) {
                 AstResizable memory;
                 if (!ParseResizable(c, &memory))
@@ -2658,7 +2685,7 @@ ParseGlobal(WasmParseContext& c)
 static AstModule*
 ParseModule(const char16_t* text, bool newFormat, LifoAlloc& lifo, UniqueChars* error)
 {
-    WasmParseContext c(text, lifo, error);
+    WasmParseContext c(text, lifo, error, newFormat);
 
     if (!c.ts.match(WasmToken::OpenParen, c.error))
         return nullptr;
@@ -2696,13 +2723,13 @@ ParseModule(const char16_t* text, bool newFormat, LifoAlloc& lifo, UniqueChars* 
             break;
           }
           case WasmToken::Data: {
-            AstDataSegment* segment = ParseDataSegment(c);
+            AstDataSegment* segment = ParseDataSegment(c, newFormat);
             if (!segment || !module->append(segment))
                 return nullptr;
             break;
           }
           case WasmToken::Import: {
-            AstImport* imp = ParseImport(c, newFormat, module);
+            AstImport* imp = ParseImport(c, module);
             if (!imp || !module->append(imp))
                 return nullptr;
             break;
@@ -3117,7 +3144,7 @@ static bool
 ResolveExpr(Resolver& r, AstExpr& expr)
 {
     switch (expr.kind()) {
-      case AstExprKind::Nop:
+      case AstExprKind::NullaryOperator:
       case AstExprKind::Unreachable:
         return true;
       case AstExprKind::BinaryOperator:
@@ -3180,7 +3207,7 @@ ResolveFunc(Resolver& r, AstFunc& func)
 }
 
 static bool
-ResolveModule(LifoAlloc& lifo, AstModule* module, UniqueChars* error)
+ResolveModule(LifoAlloc& lifo, bool newFormat, AstModule* module, UniqueChars* error)
 {
     Resolver r(lifo, error);
 
@@ -3194,30 +3221,19 @@ ResolveModule(LifoAlloc& lifo, AstModule* module, UniqueChars* error)
             return r.fail("duplicate signature");
     }
 
-    size_t numFuncs = module->funcs().length();
-    for (size_t i = 0; i < numFuncs; i++) {
-        AstFunc* func = module->funcs()[i];
-        if (!r.resolveSignature(func->sig()))
-            return false;
-        if (!r.registerFuncName(func->name(), i))
-            return r.fail("duplicate function");
-    }
-
-    for (AstElemSegment* seg : module->elemSegments()) {
-        for (AstRef& ref : seg->elems()) {
-            if (!r.resolveFunction(ref))
-                return false;
-        }
-    }
-
-    size_t numImports = module->imports().length();
+    size_t lastFuncIndex = 0;
+    size_t lastFuncImportIndex = 0;
     size_t lastGlobalIndex = 0;
-    for (size_t i = 0; i < numImports; i++) {
-        AstImport* imp = module->imports()[i];
+    for (AstImport* imp : module->imports()) {
         switch (imp->kind()) {
           case DefinitionKind::Function:
-            if (!r.registerImportName(imp->name(), i))
-                return r.fail("duplicate import");
+            if (newFormat) {
+                if (!r.registerFuncName(imp->name(), lastFuncIndex++))
+                    return r.fail("duplicate import");
+            } else {
+                if (!r.registerImportName(imp->name(), lastFuncImportIndex++))
+                    return r.fail("duplicate import");
+            }
             if (!r.resolveSignature(imp->funcSig()))
                 return false;
             break;
@@ -3229,6 +3245,13 @@ ResolveModule(LifoAlloc& lifo, AstModule* module, UniqueChars* error)
           case DefinitionKind::Table:
             break;
         }
+    }
+
+    for (AstFunc* func : module->funcs()) {
+        if (!r.resolveSignature(func->sig()))
+            return false;
+        if (!r.registerFuncName(func->name(), lastFuncIndex++))
+            return r.fail("duplicate function");
     }
 
     const AstGlobalVector& globals = module->globals();
@@ -3265,9 +3288,18 @@ ResolveModule(LifoAlloc& lifo, AstModule* module, UniqueChars* error)
             return false;
     }
 
+    for (AstDataSegment* segment : module->dataSegments()) {
+        if (!ResolveExpr(r, *segment->offset()))
+            return false;
+    }
+
     for (AstElemSegment* segment : module->elemSegments()) {
         if (!ResolveExpr(r, *segment->offset()))
             return false;
+        for (AstRef& ref : segment->elems()) {
+            if (!r.resolveFunction(ref))
+                return false;
+        }
     }
 
     return true;
@@ -3443,6 +3475,12 @@ EncodeUnaryOperator(Encoder& e, AstUnaryOperator& b)
 }
 
 static bool
+EncodeNullaryOperator(Encoder& e, AstNullaryOperator& b)
+{
+    return e.writeExpr(b.expr());
+}
+
+static bool
 EncodeBinaryOperator(Encoder& e, AstBinaryOperator& b)
 {
     return EncodeExpr(e, *b.lhs()) &&
@@ -3579,8 +3617,6 @@ static bool
 EncodeExpr(Encoder& e, AstExpr& expr)
 {
     switch (expr.kind()) {
-      case AstExprKind::Nop:
-        return e.writeExpr(Expr::Nop);
       case AstExprKind::Unreachable:
         return e.writeExpr(Expr::Unreachable);
       case AstExprKind::BinaryOperator:
@@ -3621,6 +3657,8 @@ EncodeExpr(Encoder& e, AstExpr& expr)
         return EncodeTernaryOperator(e, expr.as<AstTernaryOperator>());
       case AstExprKind::UnaryOperator:
         return EncodeUnaryOperator(e, expr.as<AstUnaryOperator>());
+      case AstExprKind::NullaryOperator:
+        return EncodeNullaryOperator(e, expr.as<AstNullaryOperator>());
     }
     MOZ_CRASH("Bad expr kind");
 }
@@ -3718,6 +3756,15 @@ EncodeResizable(Encoder& e, const AstResizable& resizable)
 }
 
 static bool
+EncodeResizableTable(Encoder& e, const AstResizable& resizable)
+{
+    if (!e.writeVarU32(uint32_t(TypeConstructor::AnyFunc)))
+        return false;
+
+    return EncodeResizable(e, resizable);
+}
+
+static bool
 EncodeImport(Encoder& e, bool newFormat, AstImport& imp)
 {
     if (!newFormat) {
@@ -3755,6 +3802,9 @@ EncodeImport(Encoder& e, bool newFormat, AstImport& imp)
             return false;
         break;
       case DefinitionKind::Table:
+        if (!EncodeResizableTable(e, imp.resizable()))
+            return false;
+        break;
       case DefinitionKind::Memory:
         if (!EncodeResizable(e, imp.resizable()))
             return false;
@@ -3936,7 +3986,7 @@ EncodeTableSection(Encoder& e, bool newFormat, AstModule& module)
     const AstResizable& table = module.table();
 
     if (newFormat) {
-        if (!EncodeResizable(e, table))
+        if (!EncodeResizableTable(e, table))
             return false;
     } else {
         if (module.elemSegments().length() != 1)
@@ -4027,12 +4077,14 @@ EncodeDataSegment(Encoder& e, bool newFormat, AstDataSegment& segment)
         if (!e.writeVarU32(0))  // linear memory index
             return false;
 
-        if (!e.writeExpr(Expr::I32Const))
+        if (!EncodeExpr(e, *segment.offset()))
+            return false;
+        if (!e.writeExpr(Expr::End))
+            return false;
+    } else {
+        if (!e.writeVarU32(segment.offset()->as<AstConst>().val().i32()))
             return false;
     }
-
-    if (!e.writeVarU32(segment.offset()))
-        return false;
 
     AstName text = segment.text();
 
@@ -4155,13 +4207,13 @@ EncodeModule(AstModule& module, bool newFormat, Bytes* bytes)
     if (!EncodeStartSection(e, module))
         return false;
 
+    if (!EncodeElemSection(e, newFormat, module))
+        return false;
+
     if (!EncodeCodeSection(e, module))
         return false;
 
     if (!EncodeDataSection(e, newFormat, module))
-        return false;
-
-    if (!EncodeElemSection(e, newFormat, module))
         return false;
 
     return true;
@@ -4177,7 +4229,7 @@ wasm::TextToBinary(const char16_t* text, bool newFormat, Bytes* bytes, UniqueCha
     if (!module)
         return false;
 
-    if (!ResolveModule(lifo, module, error))
+    if (!ResolveModule(lifo, newFormat, module, error))
         return false;
 
     return EncodeModule(*module, newFormat, bytes);

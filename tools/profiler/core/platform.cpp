@@ -825,7 +825,7 @@ void mozilla_sampler_start(int aProfileEntries, double aInterval,
     if (javaInterval < 10) {
       aInterval = 10;
     }
-    java::GeckoJavaSampler::StartJavaProfiling(javaInterval, 1000);
+    java::GeckoJavaSampler::Start(javaInterval, 1000);
   }
 #endif
 
@@ -1077,6 +1077,17 @@ void mozilla_sampler_sleep_end() {
       return;
     }
     stack->setSleeping(0);
+}
+
+bool mozilla_sampler_is_sleeping() {
+  if (sInitCount == 0) {
+    return false;
+  }
+  PseudoStack *stack = tlsPseudoStack.get();
+  if (stack == nullptr) {
+    return false;
+  }
+  return stack->isSleeping();
 }
 
 double mozilla_sampler_time(const mozilla::TimeStamp& aTime)

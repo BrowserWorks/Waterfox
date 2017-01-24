@@ -49,7 +49,7 @@
 char *progName;
 
 static CERTCertificateRequest *
-GetCertRequest(const SECItem *reqDER)
+GetCertRequest(const SECItem *reqDER, void *pwarg)
 {
     CERTCertificateRequest *certReq = NULL;
     CERTSignedData signedData;
@@ -83,7 +83,7 @@ GetCertRequest(const SECItem *reqDER)
             break;
         }
         rv = CERT_VerifySignedDataWithPublicKeyInfo(&signedData,
-                                                    &certReq->subjectPublicKeyInfo, NULL /* wincx */);
+                                                    &certReq->subjectPublicKeyInfo, pwarg);
     } while (0);
 
     if (rv) {
@@ -184,7 +184,7 @@ CertReq(SECKEYPrivateKey *privk, SECKEYPublicKey *pubk, KeyType keyType,
         SECOidTag hashAlgTag, CERTName *subject, const char *phone, int ascii,
         const char *emailAddrs, const char *dnsNames,
         certutilExtnList extnList, const char *extGeneric,
-        /*out*/ SECItem *result)
+        PRBool pssCertificate, /*out*/ SECItem *result)
 {
     CERTSubjectPublicKeyInfo *spki;
     CERTCertificateRequest *cr;
@@ -195,24 +195,38 @@ CertReq(SECKEYPrivateKey *privk, SECKEYPublicKey *pubk, KeyType keyType,
     void *extHandle;
     SECItem signedReq = { siBuffer, NULL, 0 };
 
+    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+    if (!arena) {
+        SECU_PrintError(progName, "out of memory");
+        return SECFailure;
+    }
+
     /* Create info about public key */
     spki = SECKEY_CreateSubjectPublicKeyInfo(pubk);
     if (!spki) {
+        PORT_FreeArena(arena, PR_FALSE);
         SECU_PrintError(progName, "unable to create subject public key");
         return SECFailure;
+    }
+
+    /* Change cert type to RSA-PSS, if desired. */
+    if (pssCertificate) {
+        spki->algorithm.parameters.data = NULL;
+        rv = SECOID_SetAlgorithmID(arena, &spki->algorithm,
+                                   SEC_OID_PKCS1_RSA_PSS_SIGNATURE, 0);
+        if (rv != SECSuccess) {
+            PORT_FreeArena(arena, PR_FALSE);
+            SECU_PrintError(progName, "unable to set algorithm ID");
+            return SECFailure;
+        }
     }
 
     /* Generate certificate request */
     cr = CERT_CreateCertificateRequest(subject, spki, NULL);
     SECKEY_DestroySubjectPublicKeyInfo(spki);
     if (!cr) {
+        PORT_FreeArena(arena, PR_FALSE);
         SECU_PrintError(progName, "unable to make certificate request");
-        return SECFailure;
-    }
-
-    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-    if (!arena) {
-        SECU_PrintError(progName, "out of memory");
         return SECFailure;
     }
 
@@ -418,10 +432,15 @@ DumpChain(CERTCertDBHandle *handle, char *name, PRBool ascii)
     for (i = chain->len - 1; i >= 0; i--) {
         CERTCertificate *c;
         c = CERT_FindCertByDERCert(handle, &chain->certs[i]);
-        for (j = i; j < chain->len - 1; j++)
+        for (j = i; j < chain->len - 1; j++) {
             printf("  ");
-        printf("\"%s\" [%s]\n\n", c->nickname, c->subjectName);
-        CERT_DestroyCertificate(c);
+        }
+        if (c) {
+            printf("\"%s\" [%s]\n\n", c->nickname, c->subjectName);
+            CERT_DestroyCertificate(c);
+        } else {
+            printf("(null)\n\n");
+        }
     }
     CERT_DestroyCertificateList(chain);
     return SECSuccess;
@@ -1244,8 +1263,8 @@ luG(enum usage_level ul, const char *command)
 #ifndef NSS_DISABLE_ECC
     FPS "%-20s Elliptic curve name (ec only)\n",
         "   -q curve-name");
-    FPS "%-20s One of nistp256, nistp384, nistp521\n", "");
-#ifdef NSS_ECC_MORE_THAN_SUITE_B
+    FPS "%-20s One of nistp256, nistp384, nistp521, curve25519.\n", "");
+    FPS "%-20s If a custom token is present, the following curves are also supported:\n", "");
     FPS "%-20s sect163k1, nistk163, sect163r1, sect163r2,\n", "");
     FPS "%-20s nistb163, sect193r1, sect193r2, sect233k1, nistk233,\n", "");
     FPS "%-20s sect233r1, nistb233, sect239k1, sect283k1, nistk283,\n", "");
@@ -1263,7 +1282,6 @@ luG(enum usage_level ul, const char *command)
     FPS "%-20s c2tnb359w1, c2pnb368w1, c2tnb431r1, secp112r1, \n", "");
     FPS "%-20s secp112r2, secp128r1, secp128r2, sect113r1, sect113r2\n", "");
     FPS "%-20s sect131r1, sect131r2\n", "");
-#endif /* NSS_ECC_MORE_THAN_SUITE_B */
 #endif
     FPS "%-20s Key database directory (default is ~/.netscape)\n",
         "   -d keydir");
@@ -1982,7 +2000,7 @@ CreateCert(
 
     do {
         /* Create a certrequest object from the input cert request der */
-        certReq = GetCertRequest(certReqDER);
+        certReq = GetCertRequest(certReqDER, pwarg);
         if (certReq == NULL) {
             GEN_BREAK(SECFailure)
         }
@@ -2354,6 +2372,7 @@ enum certutilOpts {
     opt_DumpExtensionValue,
     opt_GenericExtensions,
     opt_NewNickname,
+    opt_Pss,
     opt_Help
 };
 
@@ -2472,6 +2491,8 @@ static const secuCommandFlag options_init[] =
         "extGeneric" },
       { /* opt_NewNickname         */ 0, PR_TRUE, 0, PR_FALSE,
         "new-n" },
+      { /* opt_Pss                 */ 0, PR_FALSE, 0, PR_FALSE,
+        "pss" },
     };
 #define NUM_OPTIONS ((sizeof options_init) / (sizeof options_init[0]))
 
@@ -3322,6 +3343,22 @@ certutil_main(int argc, char **argv, PRBool initialize)
         }
     }
 
+    if (certutil.options[opt_Pss].activated) {
+        if (!certutil.commands[cmd_CertReq].activated &&
+            !certutil.commands[cmd_CreateAndAddCert].activated) {
+            PR_fprintf(PR_STDERR,
+                       "%s -%c: --pss only works with -R or -S.\n",
+                       progName, commandToRun);
+            return 255;
+        }
+        if (keytype != rsaKey) {
+            PR_fprintf(PR_STDERR,
+                       "%s -%c: --pss only works with RSA keys.\n",
+                       progName, commandToRun);
+            return 255;
+        }
+    }
+
     /* If we need a list of extensions convert the flags into list format */
     if (certutil.commands[cmd_CertReq].activated ||
         certutil.commands[cmd_CreateAndAddCert].activated ||
@@ -3409,9 +3446,9 @@ certutil_main(int argc, char **argv, PRBool initialize)
                      certutil.options[opt_ExtendedEmailAddrs].arg,
                      certutil.options[opt_ExtendedDNSNames].arg,
                      certutil_extns,
-                     (certutil.options[opt_GenericExtensions].activated ?
-                                                                        certutil.options[opt_GenericExtensions].arg
+                     (certutil.options[opt_GenericExtensions].activated ? certutil.options[opt_GenericExtensions].arg
                                                                         : NULL),
+                     certutil.options[opt_Pss].activated,
                      &certReqDER);
         if (rv)
             goto shutdown;
@@ -3434,9 +3471,9 @@ certutil_main(int argc, char **argv, PRBool initialize)
                      NULL,
                      NULL,
                      nullextnlist,
-                     (certutil.options[opt_GenericExtensions].activated ?
-                                                                        certutil.options[opt_GenericExtensions].arg
+                     (certutil.options[opt_GenericExtensions].activated ? certutil.options[opt_GenericExtensions].arg
                                                                         : NULL),
+                     certutil.options[opt_Pss].activated,
                      &certReqDER);
         if (rv)
             goto shutdown;
@@ -3456,8 +3493,7 @@ certutil_main(int argc, char **argv, PRBool initialize)
                             certutil.commands[cmd_CreateNewCert].activated,
                         certutil.options[opt_SelfSign].activated,
                         certutil_extns,
-                        (certutil.options[opt_GenericExtensions].activated ?
-                                                                           certutil.options[opt_GenericExtensions].arg
+                        (certutil.options[opt_GenericExtensions].activated ? certutil.options[opt_GenericExtensions].arg
                                                                            : NULL),
                         certVersion,
                         &certDER);

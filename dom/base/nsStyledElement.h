@@ -23,18 +23,28 @@ class Declaration;
 } // namespace css
 } // namespace mozilla
 
+// IID for nsStyledElement interface
+#define NS_STYLED_ELEMENT_IID \
+{ 0xacbd9ea6, 0x15aa, 0x4f37, \
+ { 0x8c, 0xe0, 0x35, 0x1e, 0xd7, 0x21, 0xca, 0xe9 } }
+
 typedef mozilla::dom::Element nsStyledElementBase;
 
-class nsStyledElementNotElementCSSInlineStyle : public nsStyledElementBase
+class nsStyledElement : public nsStyledElementBase
 {
 
 protected:
 
-  inline explicit nsStyledElementNotElementCSSInlineStyle(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
+  inline explicit nsStyledElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
     : nsStyledElementBase(aNodeInfo)
   {}
 
 public:
+  // We don't want to implement AddRef/Release because that would add an extra
+  // function call for those on pretty much all elements.  But we do need QI, so
+  // we can QI to nsStyledElement.
+  NS_IMETHOD QueryInterface(REFNSIID aIID, void** aInstancePtr) override;
+
   // Element interface methods
   virtual mozilla::css::Declaration* GetInlineStyleDeclaration() override;
   virtual nsresult SetInlineStyleDeclaration(mozilla::css::Declaration* aDeclaration,
@@ -43,7 +53,11 @@ public:
 
   nsICSSDeclaration* Style();
 
+  NS_DECLARE_STATIC_IID_ACCESSOR(NS_STYLED_ELEMENT_IID)
+
 protected:
+
+  nsICSSDeclaration* GetExistingStyle();
 
   /**
    * Parse a style attr value into a CSS rulestruct (or, if there is no
@@ -70,11 +84,5 @@ protected:
   nsresult  ReparseStyleAttribute(bool aForceInDataDoc);
 };
 
-class nsStyledElement : public nsStyledElementNotElementCSSInlineStyle {
-protected:
-  inline explicit nsStyledElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
-    : nsStyledElementNotElementCSSInlineStyle(aNodeInfo)
-  {}
-};
-
+NS_DEFINE_STATIC_IID_ACCESSOR(nsStyledElement, NS_STYLED_ELEMENT_IID)
 #endif // __NS_STYLEDELEMENT_H_

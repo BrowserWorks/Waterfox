@@ -30,7 +30,7 @@
 #include "nsNetUtil.h"
 #include "nsIFileURL.h"
 #include "nsIXPConnect.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsContentUtils.h" // for nsAutoScriptBlocker
 #include "nsJSUtils.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -624,7 +624,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
 
@@ -661,7 +661,7 @@ public:
     if (obsService) {
       DebugOnly<nsresult> rv =
         obsService->NotifyObservers(uri, URI_VISIT_SAVED, nullptr);
-      NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Could not notify observers");
+      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Could not notify observers");
     }
 
     History* history = History::GetService();
@@ -699,7 +699,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
 
@@ -740,7 +740,7 @@ public:
     MOZ_ASSERT(aCallback, "Must pass a non-null callback!");
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
 
@@ -804,7 +804,7 @@ public:
     MOZ_ASSERT(aCallback, "Must pass a non-null callback!");
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (NS_IsMainThread()) {
       (void)mCallback->HandleCompletion();
@@ -904,7 +904,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread(), "This should not be called on the main thread");
 
@@ -1236,7 +1236,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread(), "This should not be called on the main thread");
 
@@ -1308,7 +1308,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread(), "This should not be called on the main thread");
 
@@ -1505,7 +1505,7 @@ public:
     }
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
 
@@ -1599,7 +1599,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread(),
                "This should not be called on the main thread");
@@ -1870,7 +1870,7 @@ History::History()
   gService = this;
 
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
-  NS_WARN_IF_FALSE(os, "Observer service was not found!");
+  NS_WARNING_ASSERTION(os, "Observer service was not found!");
   if (os) {
     (void)os->AddObserver(this, TOPIC_PLACES_SHUTDOWN, false);
   }
@@ -2240,11 +2240,13 @@ NS_IMETHODIMP
 History::CollectReports(nsIHandleReportCallback* aHandleReport,
                         nsISupports* aData, bool aAnonymize)
 {
-  return MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/history-links-hashtable", KIND_HEAP, UNITS_BYTES,
     SizeOfIncludingThis(HistoryMallocSizeOf),
     "Memory used by the hashtable that records changes to the visited state "
     "of links.");
+
+  return NS_OK;
 }
 
 size_t

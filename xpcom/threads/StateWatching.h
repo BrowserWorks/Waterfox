@@ -10,7 +10,7 @@
 #include "mozilla/AbstractThread.h"
 #include "mozilla/TaskDispatcher.h"
 #include "mozilla/UniquePtr.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "nsISupportsImpl.h"
 
@@ -271,7 +271,9 @@ private:
       MOZ_ASSERT(mOwnerThread->IsCurrentThreadIn());
       MOZ_ASSERT(mStrongRef);
       RefPtr<OwnerType> ref = mStrongRef.forget();
-      ((*ref).*mCallbackMethod)();
+      if (!mDestroyed) {
+        ((*ref).*mCallbackMethod)();
+      }
     }
 
     OwnerType* mOwner; // Never null.

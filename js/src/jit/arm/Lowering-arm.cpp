@@ -35,6 +35,12 @@ LIRGeneratorARM::useByteOpRegister(MDefinition* mir)
 }
 
 LAllocation
+LIRGeneratorARM::useByteOpRegisterAtStart(MDefinition* mir)
+{
+    return useRegisterAtStart(mir);
+}
+
+LAllocation
 LIRGeneratorARM::useByteOpRegisterOrNonDoubleConstant(MDefinition* mir)
 {
     return useRegisterOrNonDoubleConstant(mir);
@@ -196,30 +202,33 @@ void
 LIRGeneratorARM::lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins,
                                   MDefinition* mir, MDefinition* lhs, MDefinition* rhs)
 {
-    ins->setInt64Operand(0, useInt64Register(lhs));
-    ins->setInt64Operand(INT64_PIECES, useInt64OrConstant(rhs));
-    defineInt64(ins, mir);
+    ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
+    ins->setInt64Operand(INT64_PIECES,
+                         lhs != rhs ? useInt64OrConstant(rhs) : useInt64OrConstantAtStart(rhs));
+    defineInt64ReuseInput(ins, mir, 0);
 }
 
 void
 LIRGeneratorARM::lowerForMulInt64(LMulI64* ins, MMul* mir, MDefinition* lhs, MDefinition* rhs)
 {
-    bool constantNeedTemp = true;
+    bool needsTemp = true;
+
     if (rhs->isConstant()) {
         int64_t constant = rhs->toConstant()->toInt64();
         int32_t shift = mozilla::FloorLog2(constant);
         // See special cases in CodeGeneratorARM::visitMulI64
         if (constant >= -1 && constant <= 2)
-            constantNeedTemp = false;
+            needsTemp = false;
         if (int64_t(1) << shift == constant)
-            constantNeedTemp = false;
+            needsTemp = false;
     }
 
-    ins->setInt64Operand(0, useInt64Register(lhs));
+    ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
     ins->setInt64Operand(INT64_PIECES, useInt64OrConstant(rhs));
-    if (constantNeedTemp)
+    if (needsTemp)
         ins->setTemp(0, temp());
-    defineInt64(ins, mir);
+
+    defineInt64ReuseInput(ins, mir, 0);
 }
 
 void
@@ -296,9 +305,9 @@ LIRGeneratorARM::lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECE
     if (mir->isRotate() && !rhs->isConstant())
         ins->setTemp(0, temp());
 
-    ins->setInt64Operand(0, useInt64Register(lhs));
+    ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
     ins->setOperand(INT64_PIECES, useRegisterOrConstant(rhs));
-    defineInt64(ins, mir);
+    defineInt64ReuseInput(ins, mir, 0);
 }
 
 template void LIRGeneratorARM::lowerForShiftInt64(
@@ -509,12 +518,12 @@ void
 LIRGeneratorARM::visitAsmSelect(MAsmSelect* ins)
 {
     if (ins->type() == MIRType::Int64) {
-        auto* lir = new(alloc()) LAsmSelectI64(useInt64Register(ins->trueExpr()),
-                                               useInt64Register(ins->falseExpr()),
+        auto* lir = new(alloc()) LAsmSelectI64(useInt64RegisterAtStart(ins->trueExpr()),
+                                               useInt64(ins->falseExpr()),
                                                useRegister(ins->condExpr())
                                               );
 
-        defineInt64(lir, ins);
+        defineInt64ReuseInput(lir, ins, LAsmSelectI64::TrueExprIndex);
         return;
     }
 
@@ -600,33 +609,48 @@ LIRGeneratorARM::visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins)
 }
 
 void
-LIRGeneratorARM::visitWasmBoundsCheck(MWasmBoundsCheck* ins)
-{
-    MDefinition* input = ins->input();
-    MOZ_ASSERT(input->type() == MIRType::Int32);
-
-    LAllocation baseAlloc = useRegisterAtStart(input);
-    auto* lir = new(alloc()) LWasmBoundsCheck(baseAlloc);
-    add(lir, ins);
-}
-
-void
 LIRGeneratorARM::visitWasmLoad(MWasmLoad* ins)
 {
     MDefinition* base = ins->base();
     MOZ_ASSERT(base->type() == MIRType::Int32);
 
-    LAllocation baseAlloc = useRegisterAtStart(base);
+    LAllocation ptr = useRegisterAtStart(base);
+
+    if (ins->isUnaligned()) {
+        // Unaligned access expected! Revert to a byte load.
+        LDefinition ptrCopy = tempCopy(base, 0);
+
+        LDefinition noTemp = LDefinition::BogusTemp();
+        if (ins->type() == MIRType::Int64) {
+            auto* lir = new(alloc()) LWasmUnalignedLoadI64(ptr, ptrCopy, temp(), noTemp, noTemp);
+            defineInt64(lir, ins);
+            return;
+        }
+
+        LDefinition temp2 = noTemp;
+        LDefinition temp3 = noTemp;
+        if (IsFloatingPointType(ins->type())) {
+            // For putting the low value in a GPR.
+            temp2 = temp();
+            // For putting the high value in a GPR.
+            if (ins->type() == MIRType::Double)
+                temp3 = temp();
+        }
+
+        auto* lir = new(alloc()) LWasmUnalignedLoad(ptr, ptrCopy, temp(), temp2, temp3);
+        define(lir, ins);
+        return;
+    }
 
     if (ins->type() == MIRType::Int64) {
-        auto* lir = new(alloc()) LWasmLoadI64(baseAlloc);
+        auto* lir = new(alloc()) LWasmLoadI64(ptr);
         if (ins->offset() || ins->accessType() == Scalar::Int64)
             lir->setTemp(0, tempCopy(base, 0));
         defineInt64(lir, ins);
         return;
     }
 
-    auto* lir = new(alloc()) LWasmLoad(baseAlloc);
+    auto* lir = new(alloc()) LWasmLoad(ptr);
     if (ins->offset())
         lir->setTemp(0, tempCopy(base, 0));
 
@@ -639,19 +663,41 @@ LIRGeneratorARM::visitWasmStore(MWasmStore* ins)
     MDefinition* base = ins->base();
     MOZ_ASSERT(base->type() == MIRType::Int32);
 
-    LAllocation baseAlloc = useRegisterAtStart(base);
+    LAllocation ptr = useRegisterAtStart(base);
+
+    if (ins->isUnaligned()) {
+        // Unaligned access expected! Revert to a byte store.
+        LDefinition ptrCopy = tempCopy(base, 0);
+
+        MIRType valueType = ins->value()->type();
+        if (valueType == MIRType::Int64) {
+            LInt64Allocation value = useInt64RegisterAtStart(ins->value());
+            auto* lir = new(alloc()) LWasmUnalignedStoreI64(ptr, value, ptrCopy, temp());
+            add(lir, ins);
+            return;
+        }
+
+        LAllocation value = useRegisterAtStart(ins->value());
+        LDefinition valueHelper = IsFloatingPointType(valueType)
+                                  ? temp()             // to do a FPU -> GPR move.
+                                  : tempCopy(base, 1); // to clobber the value.
+
+        auto* lir = new(alloc()) LWasmUnalignedStore(ptr, value, ptrCopy, valueHelper);
+        add(lir, ins);
+        return;
+    }
 
     if (ins->value()->type() == MIRType::Int64) {
-        LInt64Allocation valueAlloc = useInt64RegisterAtStart(ins->value());
-        auto* lir = new(alloc()) LWasmStoreI64(baseAlloc, valueAlloc);
+        LInt64Allocation value = useInt64RegisterAtStart(ins->value());
+        auto* lir = new(alloc()) LWasmStoreI64(ptr, value);
         if (ins->offset() || ins->accessType() == Scalar::Int64)
             lir->setTemp(0, tempCopy(base, 0));
         add(lir, ins);
         return;
     }
 
-    LAllocation valueAlloc = useRegisterAtStart(ins->value());
-    auto* lir = new(alloc()) LWasmStore(baseAlloc, valueAlloc);
+    LAllocation value = useRegisterAtStart(ins->value());
+    auto* lir = new(alloc()) LWasmStore(ptr, value);
 
     if (ins->offset())
         lir->setTemp(0, tempCopy(base, 0));
@@ -666,9 +712,9 @@ LIRGeneratorARM::visitAsmJSLoadHeap(MAsmJSLoadHeap* ins)
 
     MDefinition* base = ins->base();
     MOZ_ASSERT(base->type() == MIRType::Int32);
-    LAllocation baseAlloc;
 
     // For the ARM it is best to keep the 'base' in a register if a bounds check is needed.
+    LAllocation baseAlloc;
     if (base->isConstant() && !ins->needsBoundsCheck()) {
         // A bounds check is only skipped for a positive index.
         MOZ_ASSERT(base->toConstant()->toInt32() >= 0);
@@ -837,7 +883,9 @@ LIRGeneratorARM::visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins)
         LAsmJSCompareExchangeCallout* lir =
             new(alloc()) LAsmJSCompareExchangeCallout(useRegisterAtStart(base),
                                                       useRegisterAtStart(ins->oldValue()),
-                                                      useRegisterAtStart(ins->newValue()));
+                                                      useRegisterAtStart(ins->newValue()),
+                                                      useFixed(ins->tls(), WasmTlsReg),
+                                                      temp(), temp());
         defineReturn(lir, ins);
         return;
     }
@@ -862,7 +910,9 @@ LIRGeneratorARM::visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins)
 
     if (byteSize(ins->accessType()) < 4 && !HasLDSTREXBHD()) {
         // Call out on ARMv6.
-        defineReturn(new(alloc()) LAsmJSAtomicExchangeCallout(base, value), ins);
+        defineReturn(new(alloc()) LAsmJSAtomicExchangeCallout(base, value,
+                                                              useFixed(ins->tls(), WasmTlsReg),
+                                                              temp(), temp()), ins);
         return;
     }
 
@@ -881,7 +931,9 @@ LIRGeneratorARM::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins)
     if (byteSize(ins->accessType()) != 4 && !HasLDSTREXBHD()) {
         LAsmJSAtomicBinopCallout* lir =
             new(alloc()) LAsmJSAtomicBinopCallout(useRegisterAtStart(base),
-                                                  useRegisterAtStart(ins->value()));
+                                                  useRegisterAtStart(ins->value()),
+                                                  useFixed(ins->tls(), WasmTlsReg),
+                                                  temp(), temp());
         defineReturn(lir, ins);
         return;
     }

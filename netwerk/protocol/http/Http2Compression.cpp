@@ -31,14 +31,16 @@ public:
 
   HpackStaticTableReporter() {}
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
                  bool aAnonymize) override
   {
-    return MOZ_COLLECT_REPORT(
+    MOZ_COLLECT_REPORT(
       "explicit/network/hpack/static-table", KIND_HEAP, UNITS_BYTES,
       gStaticHeaders->SizeOfIncludingThis(MallocSizeOf),
       "Memory usage of HPACK static table.");
+
+    return NS_OK;
   }
 
 private:
@@ -58,18 +60,17 @@ public:
     : mCompressor(aCompressor)
   {}
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
                  bool aAnonymize) override
   {
-    if (!mCompressor) {
-      return NS_OK;
+    if (mCompressor) {
+      MOZ_COLLECT_REPORT(
+        "explicit/network/hpack/dynamic-tables", KIND_HEAP, UNITS_BYTES,
+        mCompressor->SizeOfExcludingThis(MallocSizeOf),
+        "Aggregate memory usage of HPACK dynamic tables.");
     }
-
-    return MOZ_COLLECT_REPORT(
-      "explicit/network/hpack/dynamic-tables", KIND_HEAP, UNITS_BYTES,
-      mCompressor->SizeOfExcludingThis(MallocSizeOf),
-      "Aggregate memory usage of HPACK dynamic tables.");
+    return NS_OK;
   }
 
 private:
@@ -279,6 +280,7 @@ nvFIFO::operator[] (size_t index) const
 Http2BaseCompressor::Http2BaseCompressor()
   : mOutput(nullptr)
   , mMaxBuffer(kDefaultMaxBuffer)
+  , mMaxBufferSetting(kDefaultMaxBuffer)
 {
   mDynamicReporter = new HpackDynamicTableReporter(this);
   RegisterStrongMemoryReporter(mDynamicReporter);
@@ -339,6 +341,23 @@ Http2BaseCompressor::DumpState()
     LOG(("%sindex %u: %s %s", i < staticLength ? "static " : "", i,
          pair->mName.get(), pair->mValue.get()));
   }
+}
+
+void
+Http2BaseCompressor::SetMaxBufferSizeInternal(uint32_t maxBufferSize)
+{
+  MOZ_ASSERT(maxBufferSize <= mMaxBufferSetting);
+
+  uint32_t removedCount = 0;
+
+  LOG(("Http2BaseCompressor::SetMaxBufferSizeInternal %u called", maxBufferSize));
+
+  while (mHeaderTable.VariableLength() && (mHeaderTable.ByteCount() > maxBufferSize)) {
+    mHeaderTable.RemoveElement();
+    ++removedCount;
+  }
+
+  mMaxBuffer = maxBufferSize;
 }
 
 nsresult
@@ -948,14 +967,30 @@ Http2Decompressor::DoContextUpdate()
   // This starts with 001 bit pattern
   MOZ_ASSERT((mData[mOffset] & 0xE0) == 0x20);
 
-  // Getting here means we have to adjust the max table size
+  // Getting here means we have to adjust the max table size, because the
+  // compressor on the other end has signaled to us through HPACK (not H2)
+  // that it's using a size different from the currently-negotiated size.
+  // This change could either come about because we've sent a
+  // SETTINGS_HEADER_TABLE_SIZE, or because the encoder has decided that
+  // the current negotiated size doesn't fit its needs (for whatever reason)
+  // and so it needs to change it (either up to the max allowed by our SETTING,
+  // or down to some value below that)
   uint32_t newMaxSize;
   nsresult rv = DecodeInteger(5, newMaxSize);
   LOG(("Http2Decompressor::DoContextUpdate new maximum size %u", newMaxSize));
   if (NS_FAILED(rv)) {
     return rv;
   }
-  return mCompressor->SetMaxBufferSizeInternal(newMaxSize);
+
+  if (newMaxSize > mMaxBufferSetting) {
+    // This is fatal to the session - peer is trying to use a table larger
+    // than we have made available.
+    return NS_ERROR_FAILURE;
+  }
+
+  SetMaxBufferSizeInternal(newMaxSize);
+
+  return NS_OK;
 }
 
 /////////////////////////////////////////////////////////////////
@@ -1356,27 +1391,6 @@ Http2Compressor::SetMaxBufferSize(uint32_t maxBufferSize)
   } else if (maxBufferSize < mLowestBufferSizeWaiting) {
     mLowestBufferSizeWaiting = maxBufferSize;
   }
-}
-
-nsresult
-Http2Compressor::SetMaxBufferSizeInternal(uint32_t maxBufferSize)
-{
-  if (maxBufferSize > mMaxBufferSetting) {
-    return NS_ERROR_FAILURE;
-  }
-
-  uint32_t removedCount = 0;
-
-  LOG(("Http2Compressor::SetMaxBufferSizeInternal %u called", maxBufferSize));
-
-  while (mHeaderTable.VariableLength() && (mHeaderTable.ByteCount() > maxBufferSize)) {
-    mHeaderTable.RemoveElement();
-    ++removedCount;
-  }
-
-  mMaxBuffer = maxBufferSize;
-
-  return NS_OK;
 }
 
 } // namespace net

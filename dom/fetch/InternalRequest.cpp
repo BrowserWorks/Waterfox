@@ -41,6 +41,7 @@ InternalRequest::GetRequestConstructorCopy(nsIGlobalObject* aGlobal, ErrorResult
   copy->mReferrer = mReferrer;
   copy->mReferrerPolicy = mReferrerPolicy;
   copy->mEnvironmentReferrerPolicy = mEnvironmentReferrerPolicy;
+  copy->mIntegrity = mIntegrity;
 
   copy->mContentPolicyType = mContentPolicyTypeOverridden ?
                              mContentPolicyType :
@@ -91,6 +92,7 @@ InternalRequest::InternalRequest(const InternalRequest& aOther)
   , mResponseTainting(aOther.mResponseTainting)
   , mCacheMode(aOther.mCacheMode)
   , mRedirectMode(aOther.mRedirectMode)
+  , mIntegrity(aOther.mIntegrity)
   , mAuthenticationFlag(aOther.mAuthenticationFlag)
   , mForceOriginHeader(aOther.mForceOriginHeader)
   , mPreserveContentCodings(aOther.mPreserveContentCodings)
@@ -337,8 +339,7 @@ InternalRequest::MapChannelToRequestMode(nsIChannel* aChannel)
     return RequestMode::Same_origin;
   }
 
-  uint32_t securityMode;
-  MOZ_ALWAYS_SUCCEEDS(loadInfo->GetSecurityMode(&securityMode));
+  uint32_t securityMode = loadInfo->GetSecurityMode();
 
   switch(securityMode) {
     case nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_INHERITS:
@@ -377,11 +378,9 @@ InternalRequest::MapChannelToRequestCredentials(nsIChannel* aChannel)
   nsCOMPtr<nsILoadInfo> loadInfo;
   MOZ_ALWAYS_SUCCEEDS(aChannel->GetLoadInfo(getter_AddRefs(loadInfo)));
 
-  uint32_t securityMode;
-  MOZ_ALWAYS_SUCCEEDS(loadInfo->GetSecurityMode(&securityMode));
 
   // TODO: Remove following code after stylesheet and image support cookie policy
-  if (securityMode == nsILoadInfo::SEC_NORMAL) {
+  if (loadInfo->GetSecurityMode() == nsILoadInfo::SEC_NORMAL) {
     uint32_t loadFlags;
     aChannel->GetLoadFlags(&loadFlags);
 

@@ -24,20 +24,21 @@ def is_firefox_or_android(cls):
     return conditions.is_firefox(cls) or conditions.is_android(cls)
 
 def setup_marionette_argument_parser():
-    from marionette.runner.base import BaseMarionetteArguments
-    return BaseMarionetteArguments()
+    from marionette.runtests import MarionetteArguments
+    from mozlog.structured import commandline
+    parser = MarionetteArguments()
+    commandline.add_logging_group(parser)
+    return parser
 
 def run_marionette(tests, binary=None, topsrcdir=None, **kwargs):
     from mozlog.structured import commandline
 
     from marionette.runtests import (
         MarionetteTestRunner,
-        BaseMarionetteArguments,
         MarionetteHarness
     )
 
-    parser = BaseMarionetteArguments()
-    commandline.add_logging_group(parser)
+    parser = setup_marionette_argument_parser()
 
     if not tests:
         tests = [os.path.join(topsrcdir,
@@ -150,11 +151,8 @@ class MachCommands(MachCommandBase):
                 tests.append(obj['file_relpath'])
             del kwargs['test_objects']
 
-        if conditions.is_firefox(self):
-            bin_path = self.get_binary_path('app')
-            if kwargs.get('binary') is not None:
-                print "Warning: ignoring '--binary' option, using binary at " + bin_path
-            kwargs['binary'] = bin_path
+        if not kwargs.get('binary') and conditions.is_firefox(self):
+            kwargs['binary'] = self.get_binary_path('app')
         return run_marionette(tests, topsrcdir=self.topsrcdir, **kwargs)
 
     @Command('session-test', category='testing',
@@ -169,5 +167,6 @@ class MachCommands(MachCommandBase):
                 tests.append(obj['file_relpath'])
             del kwargs['test_objects']
 
-        kwargs['binary'] = self.get_binary_path('app')
+        if not kwargs.get('binary') and conditions.is_firefox(self):
+            kwargs['binary'] = self.get_binary_path('app')
         return run_session(tests, topsrcdir=self.topsrcdir, **kwargs)

@@ -19,10 +19,11 @@ namespace rx
 class MockBufferImpl : public BufferImpl
 {
   public:
+    MockBufferImpl() : BufferImpl(mMockState) {}
     ~MockBufferImpl() { destructor(); }
 
-    MOCK_METHOD3(setData, gl::Error(const void*, size_t, GLenum));
-    MOCK_METHOD3(setSubData, gl::Error(const void*, size_t, size_t));
+    MOCK_METHOD4(setData, gl::Error(GLenum, const void *, size_t, GLenum));
+    MOCK_METHOD4(setSubData, gl::Error(GLenum, const void *, size_t, size_t));
     MOCK_METHOD4(copySubData, gl::Error(BufferImpl *, GLintptr, GLintptr, GLsizeiptr));
     MOCK_METHOD2(map, gl::Error(GLenum, GLvoid **));
     MOCK_METHOD4(mapRange, gl::Error(size_t, size_t, GLbitfield, GLvoid **));
@@ -31,6 +32,9 @@ class MockBufferImpl : public BufferImpl
     MOCK_METHOD5(getIndexRange, gl::Error(GLenum, size_t, size_t, bool, gl::IndexRange *));
 
     MOCK_METHOD0(destructor, void());
+
+  protected:
+    gl::BufferState mMockState;
 };
 
 }

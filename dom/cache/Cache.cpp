@@ -19,7 +19,7 @@
 #include "mozilla/dom/cache/ReadStream.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIGlobalObject.h"
 
 namespace mozilla {
@@ -586,7 +586,7 @@ Cache::AddAll(const GlobalObject& aGlobal,
       return nullptr;
     }
 
-    promise->MaybeResolve(JS::UndefinedHandleValue);
+    promise->MaybeResolveWithUndefined();
     return promise.forget();
   }
 

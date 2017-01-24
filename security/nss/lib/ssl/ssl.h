@@ -102,11 +102,8 @@ SSL_IMPORT PRFileDesc *DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd);
 #define SSL_ENABLE_TLS 13 /* enable TLS (on by default) */
 
 #define SSL_ROLLBACK_DETECTION 14       /* for compatibility, default: on */
-#define SSL_NO_STEP_DOWN 15             /* Disable export cipher suites   */
-                                        /* if step-down keys are needed.  */
-                                        /* default: off, generate         */
-                                        /* step-down keys if needed.      */
-#define SSL_BYPASS_PKCS11 16            /* use PKCS#11 for pub key only   */
+#define SSL_NO_STEP_DOWN 15             /* (unsupported, deprecated, off) */
+#define SSL_BYPASS_PKCS11 16            /* (unsupported, deprecated, off) */
 #define SSL_NO_LOCKS 17                 /* Don't use locks for protection */
 #define SSL_ENABLE_SESSION_TICKETS 18   /* Enable TLS SessionTicket       */
                                         /* extension (off by default)     */
@@ -216,7 +213,7 @@ SSL_IMPORT PRFileDesc *DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd);
  * enabled.  A server will only negotiate TLS_DHE_* cipher suites if the
  * client includes the extension.
  *
- * See SSL_DHEGroupPrefSet() for how to control which groups are enabled.
+ * See SSL_NamedGroupConfig() for how to control which groups are enabled.
  *
  * This option cannot be enabled if NSS is not compiled with ECC support.
  */
@@ -345,46 +342,87 @@ SSL_IMPORT SECStatus SSL_CipherPolicySet(PRInt32 cipher, PRInt32 policy);
 SSL_IMPORT SECStatus SSL_CipherPolicyGet(PRInt32 cipher, PRInt32 *policy);
 
 /*
-** Control for TLS signature algorithms for TLS 1.2 only.
+** Control for TLS signature schemes for TLS 1.2 and 1.3.
 **
-** This governs what signature algorithms are sent by a client in the
-** signature_algorithms extension.  A client will not accept a signature from a
-** server unless it uses an enabled algorithm.
+** This governs what signature schemes (or algorithms) are sent by a client in
+** the signature_algorithms extension.  A client will not accept a signature
+** from a server unless it uses an enabled algorithm.
 **
 ** This also governs what the server sends in the supported_signature_algorithms
-** field of a CertificateRequest.  It also changes what the server uses to sign
-** ServerKeyExchange: a server uses the first entry from this list that is
-** compatible with the client's advertised signature_algorithms extension and
-** the selected server certificate.
+** field of a CertificateRequest.
 **
-** Omitting SHA-256 from this list might be foolish.  Support is mandatory in
-** TLS 1.2 and there might be interoperability issues.  For a server, NSS only
-** supports SHA-256 for verifying a TLS 1.2 CertificateVerify.  This list needs
-** to include SHA-256 if client authentication is requested or required, or
-** creating a CertificateRequest will fail.
+** This changes what the server uses to sign ServerKeyExchange and
+** CertificateVerify messages.  An endpoint uses the first entry from this list
+** that is compatible with both its certificate and its peer's supported
+** values.
+**
+** NSS uses the strict signature schemes from TLS 1.3 in TLS 1.2.  That means
+** that if a peer indicates support for SHA-384 and ECDSA, NSS will not
+** generate a signature if it has a P-256 key, even though that is permitted in
+** TLS 1.2.
+**
+** Omitting SHA-256 schemes from this list might be foolish.  Support is
+** mandatory in TLS 1.2 and 1.3 and there might be interoperability issues.
 */
+SSL_IMPORT SECStatus SSL_SignatureSchemePrefSet(
+    PRFileDesc *fd, const SSLSignatureScheme *schemes, unsigned int count);
+
+/* Deprecated, use SSL_SignatureSchemePrefSet() instead. */
 SSL_IMPORT SECStatus SSL_SignaturePrefSet(
     PRFileDesc *fd, const SSLSignatureAndHashAlg *algorithms,
     unsigned int count);
 
 /*
-** Get the currently configured signature algorithms.
+** Get the currently configured signature schemes.
 **
-** The algorithms are written to |algorithms| but not if there are more than
-** |maxCount| values configured.  The number of algorithms that are in use are
+** The schemes are written to |schemes| but not if there are more than
+** |maxCount| values configured.  The number of schemes that are in use are
 ** written to |count|.  This fails if |maxCount| is insufficiently large.
 */
+SSL_IMPORT SECStatus SSL_SignatureSchemePrefGet(
+    PRFileDesc *fd, SSLSignatureScheme *algorithms, unsigned int *count,
+    unsigned int maxCount);
+
+/* Deprecated, use SSL_SignatureSchemePrefGet() instead. */
 SSL_IMPORT SECStatus SSL_SignaturePrefGet(
     PRFileDesc *fd, SSLSignatureAndHashAlg *algorithms, unsigned int *count,
     unsigned int maxCount);
 
 /*
 ** Returns the maximum number of signature algorithms that are supported and
-** can be set or retrieved using SSL_SignaturePrefSet or SSL_SignaturePrefGet.
+** can be set or retrieved using SSL_SignatureSchemePrefSet or
+** SSL_SignatureSchemePrefGet.
 */
 SSL_IMPORT unsigned int SSL_SignatureMaxCount();
 
-/* SSL_DHEGroupPrefSet is used to configure the set of allowed/enabled DHE group
+/*
+** Define custom priorities for EC and FF groups used in DH key exchange and EC
+** groups for ECDSA. This only changes the order of enabled lists (and thus
+** their priorities) and enables all groups in |groups| while disabling all other
+** groups.
+*/
+SSL_IMPORT SECStatus SSL_NamedGroupConfig(PRFileDesc *fd,
+                                          const SSLNamedGroup *groups,
+                                          unsigned int num_groups);
+
+/*
+** Configure the socket to configure additional key shares.  Normally when a TLS
+** 1.3 ClientHello is sent, just one key share is included using the first
+** preference group (as set by SSL_NamedGroupConfig).  If the server decides to
+** pick a different group for key exchange, it is forced to send a
+** HelloRetryRequest, which adds an entire round trip of latency.
+**
+** This function can be used to configure libssl to generate additional key
+** shares when sending a TLS 1.3 ClientHello.  If |count| is set to a non-zero
+** value, then additional key shares are generated.  Shares are added in the
+** preference order set in SSL_NamedGroupConfig.  |count| can be set to any
+** value; NSS limits the number of shares to the number of supported groups.
+*/
+SSL_IMPORT SECStatus SSL_SendAdditionalKeyShares(PRFileDesc *fd,
+                                                 unsigned int count);
+
+/* Deprecated: use SSL_NamedGroupConfig() instead.
+** SSL_DHEGroupPrefSet is used to configure the set of allowed/enabled DHE group
 ** parameters that can be used by NSS for the given server socket.
 ** The first item in the array is used as the default group, if no other
 ** selection criteria can be used by NSS.
@@ -414,13 +452,11 @@ SSL_IMPORT SECStatus SSL_DHEGroupPrefSet(PRFileDesc *fd,
 ** on sockets. The function needs to be called again for every socket that
 ** should use the weak group.
 **
-** It is allowed to use this API in combination with the SSL_DHEGroupPrefSet API.
-** If both APIs have been called, the weakest group will be used,
-** unless it is certain that the client supports larger group parameters.
-** The weak group will be used as the default group, overriding the preference
-** for the first group potentially set with a call to SSL_DHEGroupPrefSet
-** (The first group set using SSL_DHEGroupPrefSet will still be enabled, but
-** it's no longer the default group.)
+** It is allowed to use this API in combination with the SSL_NamedGroupConfig API.
+** If both APIs have been called, the weakest group will be used, unless it is
+** certain that the client supports larger group parameters. The weak group will
+** be used as the default group for TLS <= 1.2, overriding the preference for
+** the first group potentially set with a call to SSL_NamedGroupConfig.
 */
 SSL_IMPORT SECStatus SSL_EnableWeakDHEPrimeGroup(PRFileDesc *fd, PRBool enabled);
 
@@ -1180,37 +1216,27 @@ SSL_IMPORT SECStatus SSL_ExportKeyingMaterial(PRFileDesc *fd,
                                               unsigned char *out,
                                               unsigned int outLen);
 
+/* Early exporters are used if 0-RTT is enabled.  This is TLS 1.3 only.  Note
+ * that in TLS 1.3, an empty context is equivalent to an absent context. */
+SSL_IMPORT SECStatus SSL_ExportEarlyKeyingMaterial(PRFileDesc *fd,
+                                                   const char *label,
+                                                   unsigned int labelLen,
+                                                   const unsigned char *context,
+                                                   unsigned int contextLen,
+                                                   unsigned char *out,
+                                                   unsigned int outLen);
+
 /*
 ** Return a new reference to the certificate that was most recently sent
 ** to the peer on this SSL/TLS connection, or NULL if none has been sent.
 */
 SSL_IMPORT CERTCertificate *SSL_LocalCertificate(PRFileDesc *fd);
 
-/* Test an SSL configuration to see if  SSL_BYPASS_PKCS11 can be turned on.
-** Check the key exchange algorithm for each cipher in the list to see if
-** a master secret key can be extracted after being derived with the mechanism
-** required by the protocolmask argument. If the KEA will use keys from the
-** specified cert make sure the extract operation is attempted from the slot
-** where the private key resides.
-** If MS can be extracted for all ciphers, (*pcanbypass) is set to TRUE and
-** SECSuccess is returned. In all other cases but one (*pcanbypass) is
-** set to FALSE and SECFailure is returned.
-** In that last case Derive() has been called successfully but the MS is null,
-** CanBypass sets (*pcanbypass) to FALSE and returns SECSuccess indicating the
-** arguments were all valid but the slot cannot be bypassed.
-**
-** Note: A TRUE return code from CanBypass means "Your configuration will perform
-** NO WORSE with the bypass enabled than without"; it does NOT mean that every
-** cipher suite listed will work properly with the selected protocols.
-**
-** Caveat: If export cipher suites are included in the argument list Canbypass
-** will return FALSE.
-**/
+#define SSL_CBP_SSL3 0x0001   /* (deprecated) */
+#define SSL_CBP_TLS1_0 0x0002 /* (deprecated) */
 
-/* protocol mask bits */
-#define SSL_CBP_SSL3 0x0001   /* test SSL v3 mechanisms */
-#define SSL_CBP_TLS1_0 0x0002 /* test TLS v1.0 mechanisms */
-
+/* DEPRECATED: The PKCS#11 bypass has been removed.
+**             This function will now always return false. */
 SSL_IMPORT SECStatus SSL_CanBypass(CERTCertificate *cert,
                                    SECKEYPrivateKey *privKey,
                                    PRUint32 protocolmask,

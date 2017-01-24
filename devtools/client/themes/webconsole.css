@@ -53,12 +53,14 @@ a {
   margin-inline-end: 6px;
 }
 
-.theme-firebug .message[severity="error"] {
+.theme-firebug .message[severity="error"],
+.theme-firebug .message.error {
   color: var(--error-color);
   background-color: var(--error-background-color);
 }
 
-.theme-firebug .message[severity="warn"] {
+.theme-firebug .message[severity="warn"],
+.theme-firebug .message.warn {
   background-color: var(--warning-background-color);
 }
 
@@ -110,6 +112,12 @@ a {
   max-width: 40%;
 }
 
+.stack-trace {
+  /* The markup contains extra whitespace to improve formatting of clipboard text.
+     Make sure this whitespace doesn't affect the HTML rendering */
+  white-space: normal;
+}
+
 .stack-trace .frame-link-source,
 .message-location .frame-link-source {
   /* Makes the file name truncated (and ellipsis shown) on the left side */
@@ -151,6 +159,7 @@ a {
   direction: ltr;
   overflow: auto;
   -moz-user-select: text;
+  position: relative;
 }
 
 /* The width on #output-container is set to a hardcoded px in webconsole.js
@@ -209,11 +218,13 @@ a {
   background-color: var(--theme-selection-background-semitransparent) !important;
 }
 
-.theme-light .message[severity=error] {
+.theme-light .message[severity=error],
+.theme-light .message.error {
   background-color: rgba(255, 150, 150, 0.3);
 }
 
-.theme-dark .message[severity=error] {
+.theme-dark .message[severity=error],
+.theme-dark .message.error {
   background-color: rgba(235, 83, 104, 0.17);
 }
 
@@ -232,20 +243,24 @@ a {
   border-inline-end: solid var(--theme-body-color-alt) 6px;
 }
 
-.message[category=network][severity=error] > .icon::before {
+.message[category=network][severity=error] > .icon::before,
+.message.network.error > .icon::before {
   background-position: -12px 0;
 }
 
-.message[category=network] > .message-body {
+.message[category=network] > .message-body,
+.message.network > .message-body {
   display: flex;
   flex-wrap: wrap;
 }
 
-.message[category=network] .method {
+.message[category=network] .method,
+.message.network .method {
   flex: none;
 }
 
-.message[category=network]:not(.navigation-marker) .url {
+.message[category=network]:not(.navigation-marker) .url,
+.message.network:not(.navigation-marker) .url {
   flex: 1 1 auto;
   /* Make sure the URL is very small initially, let flex change width as needed. */
   width: 100px;
@@ -255,12 +270,14 @@ a {
   text-overflow: ellipsis;
 }
 
-.message[category=network] .status {
+.message[category=network] .status,
+.message.network .status {
   flex: none;
   margin-inline-start: 6px;
 }
 
-.message[category=network].mixed-content .url {
+.message[category=network].mixed-content .url,
+.message.network.mixed-content .url {
   color: var(--theme-highlight-red);
 }
 
@@ -269,7 +286,8 @@ a {
   margin: 0 6px;
 }
 
-.message[category=network] .xhr {
+.message[category=network] .xhr,
+.message.network .xhr {
   background-color: var(--theme-body-color-alt);
   color: var(--theme-body-background);
   border-radius: 3px;
@@ -287,15 +305,18 @@ a {
   border-color: #1BA2CC;
 }
 
-.message[category=cssparser] > .indent {
+.message[category=cssparser] > .indent,
+.message.cssparser > .indent  {
   border-inline-end: solid #00b6f0 6px;
 }
 
-.message[category=cssparser][severity=error] > .icon::before {
+.message[category=cssparser][severity=error] > .icon::before,
+.message.cssparser.error > .icon::before {
   background-position: -12px -12px;
 }
 
-.message[category=cssparser][severity=warn] > .icon::before {
+.message[category=cssparser][severity=warn] > .icon::before,
+.message.cssparser.warn > .icon::before {
   background-position: -24px -12px;
 }
 
@@ -305,15 +326,18 @@ a {
   border-color: #E98A00;
 }
 
-.message[category=exception] > .indent {
+.message[category=exception] > .indent,
+.message.exception > .indent {
   border-inline-end: solid #fb9500 6px;
 }
 
-.message[category=exception][severity=error] > .icon::before {
+.message[category=exception][severity=error] > .icon::before,
+.message.exception.error > .icon::before {
   background-position: -12px -24px;
 }
 
-.message[category=exception][severity=warn] > .icon::before {
+.message[category=exception][severity=warn] > .icon::before,
+.message.exception.warn > .icon::before {
   background-position: -24px -24px;
 }
 
@@ -323,23 +347,31 @@ a {
   border-color: #929292;
 }
 
-.message[category=console] > .indent {
+.message[category=console] > .indent,
+.message.console-api > .indent {
   border-inline-end: solid #cbcbcb 6px;
 }
 
 .message[category=console][severity=error] > .icon::before,
 .message[category=output][severity=error] > .icon::before,
-.message[category=server][severity=error] > .icon::before {
+.message[category=server][severity=error] > .icon::before,
+.message.console-api.error > .icon::before,
+.message.output.error > .icon::before,
+.message.server.error > .icon::before {
   background-position: -12px -36px;
 }
 
 .message[category=console][severity=warn] > .icon::before,
-.message[category=server][severity=warn] > .icon::before {
+.message[category=server][severity=warn] > .icon::before,
+.message.console-api.warn > .icon::before,
+.message.server.warn > .icon::before {
   background-position: -24px -36px;
 }
 
 .message[category=console][severity=info] > .icon::before,
-.message[category=server][severity=info] > .icon::before {
+.message[category=server][severity=info] > .icon::before,
+.message.console-api.info > .icon::before,
+.message.server.info > .icon::before {
   background-position: -36px -36px;
 }
 
@@ -350,21 +382,26 @@ a {
   border-color: rgb(76, 143, 76);
 }
 
-.message[category=server] > .indent {
+.message[category=server] > .indent,
+.message.server > .indent {
   border-inline-end: solid #90B090 6px;
 }
 
 /* Input and output styles */
 .message[category=input] > .indent,
-.message[category=output] > .indent {
+.message[category=output] > .indent,
+.message.input > .indent,
+.message.output > .indent {
   border-inline-end: solid #808080 6px;
 }
 
-.message[category=input] > .icon::before {
+.message[category=input] > .icon::before,
+.message.input > .icon::before {
   background-position: -48px -36px;
 }
 
-.message[category=output] > .icon::before {
+.message[category=output] > .icon::before,
+.message.output > .icon::before {
   background-position: -60px -36px;
 }
 
@@ -457,7 +494,8 @@ a {
 
 /* Security styles */
 
-.message[category=security] > .indent {
+.message[category=security] > .indent,
+.message.security > .indent {
   border-inline-end: solid red 6px;
 }
 
@@ -466,11 +504,13 @@ a {
   border-color: #D12C2C;
 }
 
-.message[category=security][severity=error] > .icon::before {
+.message[category=security][severity=error] > .icon::before,
+.message.security.error > .icon::before {
   background-position: -12px -48px;
 }
 
-.message[category=security][severity=warn] > .icon::before {
+.message[category=security][severity=warn] > .icon::before,
+.message.security.warn > .icon::before {
   background-position: -24px -48px;
 }
 
@@ -516,15 +556,18 @@ a {
   line-height: 1.25em;
 }
 
-.theme-light .message[severity=error] .stacktrace {
+.theme-light .message[severity=error] .stacktrace,
+.theme-light .message.error .stacktrace {
   background-color: rgba(255, 255, 255, 0.5);
 }
 
-.theme-dark .message[severity=error] .stacktrace {
+.theme-dark .message[severity=error] .stacktrace,
+.theme-dark .message.error .stacktrace {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-.message[open] .stacktrace {
+.message[open] .stacktrace,
+.message.open .stacktrace {
   display: block;
 }
 
@@ -533,6 +576,12 @@ a {
   vertical-align: middle;
   margin: 3px 0 0 0;
   flex-shrink: 0;
+}
+
+/*Do not mirror the twisty because container force to ltr */
+.message .theme-twisty:dir(rtl),
+.message .theme-twisty:-moz-locale-dir(rtl) {
+  transform: none;
 }
 
 .cm-s-mozilla a[class] {
@@ -623,4 +672,42 @@ a.learn-more-link.webconsole-learn-more-link {
   border-bottom: 2px solid #D7D7D7;
   border-left: 1px solid #D7D7D7;
   border-right: 1px solid #D7D7D7;
+}
+
+
+/* NEW CONSOLE STYLES */
+
+#output-wrapper > div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+#output-container {
+  height: 100%;
+}
+
+.webconsole-output-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.webconsole-filterbar-wrapper {
+  flex-grow: 0;
+}
+
+.webconsole-output {
+  flex: 1;
+  overflow: auto;
+}
+
+.webconsole-filterbar-primary {
+  display: flex;
+}
+
+.webconsole-filterbar-primary .devtools-plaininput {
+  flex: 1 1 100%;
 }

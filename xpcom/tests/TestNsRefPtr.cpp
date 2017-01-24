@@ -9,7 +9,7 @@
 #include "nsAutoPtr.h"
 #include "nsISupports.h"
 #include "nsQueryObject.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #define NS_FOO_IID \
 { 0x6f7652e0,  0xee43, 0x11d1, \

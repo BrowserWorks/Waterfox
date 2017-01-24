@@ -20,7 +20,7 @@
 #include "mozilla/Services.h"
 #include "nsNativeCharsetUtils.h"
 #include "nsIConsoleService.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "GMPDecryptorParent.h"
 #include "GMPAudioDecoderParent.h"
 #include "nsComponentManagerUtils.h"
@@ -1371,15 +1371,12 @@ GeckoMediaPluginServiceParent::GetNodeId(const nsAString& aOrigin,
 
   nsresult rv;
 
-  if (aGMPName.EqualsLiteral("gmp-widevinecdm") ||
-      aOrigin.EqualsLiteral("null") ||
+  if (aOrigin.EqualsLiteral("null") ||
       aOrigin.IsEmpty() ||
       aTopLevelOrigin.EqualsLiteral("null") ||
       aTopLevelOrigin.IsEmpty()) {
-    // This is for the Google Widevine CDM, which doesn't have persistent
-    // storage and which can't handle being used by more than one origin at
-    // once in the same plugin instance, or at least one of the
-    // (origin, topLevelOrigin) is null or empty; probably a local file.
+    // (origin, topLevelOrigin) is null or empty; this is for an anonymous
+    // origin, probably a local file, for which we don't provide persistent storage.
     // Generate a random node id, and don't store it so that the GMP's storage
     // is temporary and the process for this GMP is not shared with GMP
     // instances that have the same nodeId.
@@ -1558,19 +1555,38 @@ ExtractHostName(const nsACString& aOrigin, nsACString& aOutData)
 }
 
 bool
-MatchOrigin(nsIFile* aPath, const nsACString& aSite)
+MatchOrigin(nsIFile* aPath,
+            const nsACString& aSite,
+            const mozilla::OriginAttributesPattern& aPattern)
 {
   // http://en.wikipedia.org/wiki/Domain_Name_System#Domain_name_syntax
   static const uint32_t MaxDomainLength = 253;
 
   nsresult rv;
   nsCString str;
+  nsCString originNoSuffix;
+  mozilla::PrincipalOriginAttributes originAttributes;
+
   rv = ReadFromFile(aPath, NS_LITERAL_CSTRING("origin"), str, MaxDomainLength);
-  if (NS_SUCCEEDED(rv) && ExtractHostName(str, str) && str.Equals(aSite)) {
+  if (!originAttributes.PopulateFromOrigin(str, originNoSuffix)) {
+    // Fails on parsing the originAttributes, treat this as a non-match.
+    return false;
+  }
+
+  if (NS_SUCCEEDED(rv) && ExtractHostName(originNoSuffix, str) && str.Equals(aSite) &&
+      aPattern.Matches(originAttributes)) {
     return true;
   }
+
+  mozilla::PrincipalOriginAttributes topLevelOriginAttributes;
   rv = ReadFromFile(aPath, NS_LITERAL_CSTRING("topLevelOrigin"), str, MaxDomainLength);
-  if (NS_SUCCEEDED(rv) && ExtractHostName(str, str) && str.Equals(aSite)) {
+  if (!topLevelOriginAttributes.PopulateFromOrigin(str, originNoSuffix)) {
+    // Fails on paring the originAttributes, treat this as a non-match.
+    return false;
+  }
+
+  if (NS_SUCCEEDED(rv) && ExtractHostName(originNoSuffix, str) && str.Equals(aSite) &&
+      aPattern.Matches(topLevelOriginAttributes)) {
     return true;
   }
   return false;
@@ -1706,19 +1722,25 @@ GeckoMediaPluginServiceParent::ClearNodeIdAndPlugin(nsIFile* aPluginStorageDir,
 }
 
 void
-GeckoMediaPluginServiceParent::ForgetThisSiteOnGMPThread(const nsACString& aSite)
+GeckoMediaPluginServiceParent::ForgetThisSiteOnGMPThread(const nsACString& aSite,
+                                                         const mozilla::OriginAttributesPattern& aPattern)
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
   LOGD(("%s::%s: origin=%s", __CLASS__, __FUNCTION__, aSite.Data()));
 
   struct OriginFilter : public DirectoryFilter {
-    explicit OriginFilter(const nsACString& aSite) : mSite(aSite) {}
+    explicit OriginFilter(const nsACString& aSite,
+                          const mozilla::OriginAttributesPattern& aPattern)
+    : mSite(aSite)
+    , mPattern(aPattern)
+    { }
     bool operator()(nsIFile* aPath) override {
-      return MatchOrigin(aPath, mSite);
+      return MatchOrigin(aPath, mSite, mPattern);
     }
   private:
     const nsACString& mSite;
-  } filter(aSite);
+    const mozilla::OriginAttributesPattern& mPattern;
+  } filter(aSite, aPattern);
 
   ClearNodeIdAndPlugin(filter);
 }
@@ -1788,12 +1810,29 @@ GeckoMediaPluginServiceParent::ClearRecentHistoryOnGMPThread(PRTime aSince)
 }
 
 NS_IMETHODIMP
-GeckoMediaPluginServiceParent::ForgetThisSite(const nsAString& aSite)
+GeckoMediaPluginServiceParent::ForgetThisSite(const nsAString& aSite,
+                                              const nsAString& aPattern)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  return GMPDispatch(NewRunnableMethod<nsCString>(
+
+  mozilla::OriginAttributesPattern pattern;
+
+  if (!pattern.Init(aPattern)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  return ForgetThisSiteNative(aSite, pattern);
+}
+
+nsresult
+GeckoMediaPluginServiceParent::ForgetThisSiteNative(const nsAString& aSite,
+                                                    const mozilla::OriginAttributesPattern& aPattern)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  return GMPDispatch(NewRunnableMethod<nsCString, mozilla::OriginAttributesPattern>(
       this, &GeckoMediaPluginServiceParent::ForgetThisSiteOnGMPThread,
-      NS_ConvertUTF16toUTF8(aSite)));
+      NS_ConvertUTF16toUTF8(aSite), aPattern));
 }
 
 static bool IsNodeIdValid(GMPParent* aParent) {
@@ -1987,7 +2026,7 @@ public:
   {
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     return NS_OK;
   }
@@ -2045,7 +2084,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     *mResult = mGMPServiceParent->Open(mTransport, mOtherPid,
                                        XRE_GetIOMessageLoop(), ipc::ParentSide);

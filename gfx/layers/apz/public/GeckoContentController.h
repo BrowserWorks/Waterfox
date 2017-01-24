@@ -12,7 +12,6 @@
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
 #include "mozilla/EventForwards.h"      // for Modifiers
 #include "nsISupportsImpl.h"
-#include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 
 namespace mozilla {
 
@@ -23,17 +22,16 @@ namespace layers {
 class GeckoContentController
 {
 public:
-  /**
-   * At least one class deriving from GeckoContentController needs to do
-   * synchronous cleanup on the main thread, so we use
-   * NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION.
-   */
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(GeckoContentController)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GeckoContentController)
 
   /**
    * Requests a paint of the given FrameMetrics |aFrameMetrics| from Gecko.
    * Implementations per-platform are responsible for actually handling this.
-   * This method will always be called on the Gecko main thread.
+   *
+   * This method must always be called on the repaint thread, which depends
+   * on the GeckoContentController. For ChromeProcessController it is the
+   * Gecko main thread, while for RemoteContentController it is the compositor
+   * thread where it can send IPDL messages.
    */
   virtual void RequestContentRepaint(const FrameMetrics& aFrameMetrics) = 0;
 
@@ -70,6 +68,16 @@ public:
    * This method must always be called on the controller thread.
    */
   virtual void PostDelayedTask(already_AddRefed<Runnable> aRunnable, int aDelayMs) = 0;
+
+  /**
+   * Returns true if we are currently on the thread that can send repaint requests.
+   */
+  virtual bool IsRepaintThread() = 0;
+
+  /**
+   * Runs the given task on the "repaint" thread.
+   */
+  virtual void DispatchToRepaintThread(already_AddRefed<Runnable> aTask) = 0;
 
   /**
    * APZ uses |FrameMetrics::mCompositionBounds| for hit testing. Sometimes,
@@ -138,12 +146,12 @@ public:
    */
   virtual void NotifyFlushComplete() = 0;
 
-  virtual void UpdateOverscrollVelocity(const float aX, const float aY) {}
-  virtual void UpdateOverscrollOffset(const float aX, const float aY) {}
-  virtual void SetScrollingRootContent(const bool isRootContent) {}
+  virtual void UpdateOverscrollVelocity(float aX, float aY, bool aIsRootContent) {}
+  virtual void UpdateOverscrollOffset(float aX, float aY, bool aIsRootContent) {}
+  virtual void SetScrollingRootContent(bool isRootContent) {}
 
   GeckoContentController() {}
-  virtual void ChildAdopted() {}
+
   /**
    * Needs to be called on the main thread.
    */

@@ -25,6 +25,7 @@
 #include "nsIBufferedStreams.h"
 #include "nsIChannelEventSink.h"
 #include "nsIContentSniffer.h"
+#include "nsIDocument.h"
 #include "nsIDownloader.h"
 #include "nsIFileProtocolHandler.h"
 #include "nsIFileStreams.h"
@@ -36,6 +37,7 @@
 #include "nsILoadContext.h"
 #include "nsIMIMEHeaderParam.h"
 #include "nsIMutable.h"
+#include "nsINode.h"
 #include "nsIOfflineCacheUpdate.h"
 #include "nsIPersistentProperties2.h"
 #include "nsIPrivateBrowsingChannel.h"
@@ -67,6 +69,7 @@
 #include "nsIScriptError.h"
 #include "nsISiteSecurityService.h"
 #include "nsHttpHandler.h"
+#include "nsNSSComponent.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsINetworkManager.h"
@@ -552,10 +555,7 @@ NS_LoadGroupMatchesPrincipal(nsILoadGroup *aLoadGroup,
     // If this is a null principal then the load group doesn't really matter.
     // The principal will not be allowed to perform any actions that actually
     // use the load group.  Unconditionally treat null principals as a match.
-    bool isNullPrincipal;
-    nsresult rv = aPrincipal->GetIsNullPrincipal(&isNullPrincipal);
-    NS_ENSURE_SUCCESS(rv, false);
-    if (isNullPrincipal) {
+    if (aPrincipal->GetIsNullPrincipal()) {
       return true;
     }
 
@@ -571,20 +571,13 @@ NS_LoadGroupMatchesPrincipal(nsILoadGroup *aLoadGroup,
     // Verify load context appId and browser flag match the principal
     uint32_t contextAppId;
     bool contextInIsolatedBrowser;
-    rv = loadContext->GetAppId(&contextAppId);
+    nsresult rv = loadContext->GetAppId(&contextAppId);
     NS_ENSURE_SUCCESS(rv, false);
     rv = loadContext->GetIsInIsolatedMozBrowserElement(&contextInIsolatedBrowser);
     NS_ENSURE_SUCCESS(rv, false);
 
-    uint32_t principalAppId;
-    bool principalInIsolatedBrowser;
-    rv = aPrincipal->GetAppId(&principalAppId);
-    NS_ENSURE_SUCCESS(rv, false);
-    rv = aPrincipal->GetIsInIsolatedMozBrowserElement(&principalInIsolatedBrowser);
-    NS_ENSURE_SUCCESS(rv, false);
-
-    return contextAppId == principalAppId &&
-           contextInIsolatedBrowser == principalInIsolatedBrowser;
+    return contextAppId == aPrincipal->GetAppId() &&
+           contextInIsolatedBrowser == aPrincipal->GetIsInIsolatedMozBrowserElement();
 }
 
 nsresult
@@ -1259,25 +1252,12 @@ bool
 NS_GetOriginAttributes(nsIChannel *aChannel,
                        mozilla::NeckoOriginAttributes &aAttributes)
 {
-    nsCOMPtr<nsILoadContext> loadContext;
     nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-    NS_QueryNotificationCallbacks(aChannel, loadContext);
-
-    if (!loadContext && !loadInfo) {
+    if (!loadInfo) {
         return false;
     }
 
-    // Bug 1270678 - By default, we would acquire the originAttributes from
-    // the loadContext. But in some cases, say, loading the favicon, that the
-    // loadContext is not available. We would use the loadInfo to get
-    // originAttributes instead.
-    if (loadContext) {
-        DocShellOriginAttributes doa;
-        loadContext->GetOriginAttributes(doa);
-        aAttributes.InheritFromDocShellToNecko(doa);
-    } else {
-        loadInfo->GetOriginAttributes(&aAttributes);
-    }
+    loadInfo->GetOriginAttributes(&aAttributes);
     aAttributes.SyncAttributesWithPrivateBrowsing(NS_UsePrivateBrowsing(aChannel));
     return true;
 }
@@ -1287,17 +1267,14 @@ NS_GetAppInfo(nsIChannel *aChannel,
               uint32_t *aAppID,
               bool *aIsInIsolatedMozBrowserElement)
 {
-    nsCOMPtr<nsILoadContext> loadContext;
-    NS_QueryNotificationCallbacks(aChannel, loadContext);
-    if (!loadContext) {
-        return false;
+    NeckoOriginAttributes attrs;
+
+    if (!NS_GetOriginAttributes(aChannel, attrs)) {
+      return false;
     }
 
-    nsresult rv = loadContext->GetAppId(aAppID);
-    NS_ENSURE_SUCCESS(rv, false);
-
-    rv = loadContext->GetIsInIsolatedMozBrowserElement(aIsInIsolatedMozBrowserElement);
-    NS_ENSURE_SUCCESS(rv, false);
+    *aAppID = attrs.mAppId;
+    *aIsInIsolatedMozBrowserElement = attrs.mInIsolatedMozBrowser;
 
     return true;
 }
@@ -1532,8 +1509,7 @@ NS_IsAppOffline(nsIPrincipal *principal)
     if (!principal) {
         return NS_IsOffline();
     }
-    uint32_t appId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
-    principal->GetAppId(&appId);
+    uint32_t appId = principal->GetAppId();
 
     return NS_IsAppOffline(appId);
 }
@@ -2173,12 +2149,9 @@ NS_GetFilenameFromDisposition(nsAString &aFilename,
 
 void net_EnsurePSMInit()
 {
-    nsCOMPtr<nsISocketProviderService> spserv =
-            do_GetService(NS_SOCKETPROVIDERSERVICE_CONTRACTID);
-    if (spserv) {
-        nsCOMPtr<nsISocketProvider> provider;
-        spserv->GetSocketProvider("ssl", getter_AddRefs(provider));
-    }
+    nsresult rv;
+    nsCOMPtr<nsISupports> psm = do_GetService(PSM_COMPONENT_CONTRACTID, &rv);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
 bool NS_IsAboutBlank(nsIURI *uri)
@@ -2189,9 +2162,7 @@ bool NS_IsAboutBlank(nsIURI *uri)
         return false;
     }
 
-    nsAutoCString str;
-    uri->GetSpec(str);
-    return str.EqualsLiteral("about:blank");
+    return uri->GetSpecOrDefault().EqualsLiteral("about:blank");
 }
 
 nsresult
@@ -2307,12 +2278,11 @@ NS_ShouldSecureUpgrade(nsIURI* aURI,
 
       if (aLoadInfo->GetUpgradeInsecureRequests() && !crossOriginNavigation) {
         // let's log a message to the console that we are upgrading a request
-        nsAutoCString spec, scheme;
-        aURI->GetSpec(spec);
+        nsAutoCString scheme;
         aURI->GetScheme(scheme);
         // append the additional 's' for security to the scheme :-)
         scheme.AppendASCII("s");
-        NS_ConvertUTF8toUTF16 reportSpec(spec);
+        NS_ConvertUTF8toUTF16 reportSpec(aURI->GetSpecOrDefault());
         NS_ConvertUTF8toUTF16 reportScheme(scheme);
 
         const char16_t* params[] = { reportSpec.get(), reportScheme.get() };
@@ -2339,7 +2309,7 @@ NS_ShouldSecureUpgrade(nsIURI* aURI,
     bool isStsHost = false;
     uint32_t flags = aPrivateBrowsing ? nsISocketProvider::NO_PERMANENT_STORAGE : 0;
     rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, aURI, flags,
-                          &isStsHost);
+                          nullptr, &isStsHost);
 
     // if the SSS check fails, it's likely because this load is on a
     // malformed URI or something else in the setup is wrong, so any error
@@ -2412,61 +2382,85 @@ NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel)
 
   nsCOMPtr<nsILoadContext> loadContext;
   NS_QueryNotificationCallbacks(aChannel, loadContext);
-  if (loadInfo && loadContext) {
-
-    uint32_t loadContextAppId = 0;
-    nsresult rv = loadContext->GetAppId(&loadContextAppId);
-    if (NS_FAILED(rv)) {
-      return NS_ERROR_UNEXPECTED;
-    }
-
-    bool loadContextIsInBE = false;
-    rv = loadContext->GetIsInIsolatedMozBrowserElement(&loadContextIsInBE);
-    if (NS_FAILED(rv)) {
-      return NS_ERROR_UNEXPECTED;
-    }
-
-    OriginAttributes originAttrsLoadInfo = loadInfo->GetOriginAttributes();
-    DocShellOriginAttributes originAttrsLoadContext;
-    loadContext->GetOriginAttributes(originAttrsLoadContext);
-
-    bool loadInfoUsePB = false;
-    rv = loadInfo->GetUsePrivateBrowsing(&loadInfoUsePB);
-    if (NS_FAILED(rv)) {
-      return NS_ERROR_UNEXPECTED;
-    }
-    bool loadContextUsePB = false;
-    rv = loadContext->GetUsePrivateBrowsing(&loadContextUsePB);
-    if (NS_FAILED(rv)) {
-      return NS_ERROR_UNEXPECTED;
-    }
-
-    LOG(("NS_CompareLoadInfoAndLoadContext - loadInfo: %d, %d, %d, %d; "
-         "loadContext: %d %d, %d, %d. [channel=%p]",
-         originAttrsLoadInfo.mAppId, originAttrsLoadInfo.mInIsolatedMozBrowser,
-         originAttrsLoadInfo.mUserContextId, loadInfoUsePB,
-         loadContextAppId, loadContextUsePB,
-         originAttrsLoadContext.mUserContextId, loadContextIsInBE,
-         aChannel));
-
-    MOZ_ASSERT(originAttrsLoadInfo.mAppId == loadContextAppId,
-               "AppId in the loadContext and in the loadInfo are not the "
-               "same!");
-
-    MOZ_ASSERT(originAttrsLoadInfo.mInIsolatedMozBrowser ==
-               loadContextIsInBE,
-               "The value of InIsolatedMozBrowser in the loadContext and in "
-               "the loadInfo are not the same!");
-
-    MOZ_ASSERT(originAttrsLoadInfo.mUserContextId ==
-               originAttrsLoadContext.mUserContextId,
-               "The value of mUserContextId in the loadContext and in the "
-               "loadInfo are not the same!");
-
-    MOZ_ASSERT(loadInfoUsePB == loadContextUsePB,
-               "The value of usePrivateBrowsing in the loadContext and in the loadInfo "
-               "are not the same!");
+  if (!loadInfo || !loadContext) {
+    return NS_OK;
   }
+
+  // We try to skip about:newtab and about:sync-tabs.
+  // about:newtab will use SystemPrincipal to download thumbnails through
+  // https:// and blob URLs.
+  // about:sync-tabs will fetch icons through moz-icon://.
+  bool isAboutPage = false;
+  nsINode* node = loadInfo->LoadingNode();
+  if (node) {
+    nsIDocument* doc = node->OwnerDoc();
+    if (doc) {
+      nsIURI* uri = doc->GetDocumentURI();
+      nsresult rv = uri->SchemeIs("about", &isAboutPage);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+  }
+
+  if (isAboutPage) {
+    return NS_OK;
+  }
+
+  uint32_t loadContextAppId = 0;
+  nsresult rv = loadContext->GetAppId(&loadContextAppId);
+  if (NS_FAILED(rv)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  bool loadContextIsInBE = false;
+  rv = loadContext->GetIsInIsolatedMozBrowserElement(&loadContextIsInBE);
+  if (NS_FAILED(rv)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  OriginAttributes originAttrsLoadInfo = loadInfo->GetOriginAttributes();
+  DocShellOriginAttributes originAttrsLoadContext;
+  loadContext->GetOriginAttributes(originAttrsLoadContext);
+
+  bool loadInfoUsePB = loadInfo->GetUsePrivateBrowsing();
+  bool loadContextUsePB = false;
+  rv = loadContext->GetUsePrivateBrowsing(&loadContextUsePB);
+  if (NS_FAILED(rv)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  LOG(("NS_CompareLoadInfoAndLoadContext - loadInfo: %d, %d, %d, %d, %d; "
+       "loadContext: %d %d, %d, %d, %d. [channel=%p]",
+       originAttrsLoadInfo.mAppId, originAttrsLoadInfo.mInIsolatedMozBrowser,
+       originAttrsLoadInfo.mUserContextId, originAttrsLoadInfo.mPrivateBrowsingId,
+       loadInfoUsePB,
+       loadContextAppId, loadContextIsInBE,
+       originAttrsLoadContext.mUserContextId, originAttrsLoadContext.mPrivateBrowsingId,
+       loadContextUsePB,
+       aChannel));
+
+  MOZ_ASSERT(originAttrsLoadInfo.mAppId == loadContextAppId,
+             "AppId in the loadContext and in the loadInfo are not the "
+             "same!");
+
+  MOZ_ASSERT(originAttrsLoadInfo.mInIsolatedMozBrowser ==
+             loadContextIsInBE,
+             "The value of InIsolatedMozBrowser in the loadContext and in "
+             "the loadInfo are not the same!");
+
+  MOZ_ASSERT(originAttrsLoadInfo.mUserContextId ==
+             originAttrsLoadContext.mUserContextId,
+             "The value of mUserContextId in the loadContext and in the "
+             "loadInfo are not the same!");
+
+  MOZ_ASSERT(originAttrsLoadInfo.mPrivateBrowsingId ==
+             originAttrsLoadContext.mPrivateBrowsingId,
+             "The value of mPrivateBrowsingId in the loadContext and in the "
+             "loadInfo are not the same!");
+
+  MOZ_ASSERT(loadInfoUsePB == loadContextUsePB,
+             "The value of usePrivateBrowsing in the loadContext and in the loadInfo "
+             "are not the same!");
+
   return NS_OK;
 }
 

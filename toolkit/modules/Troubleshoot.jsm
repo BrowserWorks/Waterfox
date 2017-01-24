@@ -434,7 +434,7 @@ var dataProviders = {
         canvas.height = 1;
 
 
-        let creationError = "(no info)";
+        let creationError = null;
 
         canvas.addEventListener(
             "webglcontextcreationerror",
@@ -446,9 +446,17 @@ var dataProviders = {
             false
         );
 
-        let gl = canvas.getContext(contextType);
+        let gl = null;
+        try {
+          gl = canvas.getContext(contextType);
+        }
+        catch (e) {
+          if (!creationError) {
+            creationError = e.toString();
+          }
+        }
         if (!gl)
-            return creationError;
+            return creationError || "(no info)";
 
 
         let infoExt = gl.getExtension("WEBGL_debug_renderer_info");
@@ -506,15 +514,9 @@ var dataProviders = {
 
   accessibility: function accessibility(done) {
     let data = {};
-    try {
-      data.isActive = Components.manager.QueryInterface(Ci.nsIServiceManager).
-                      isServiceInstantiatedByContractID(
-                        "@mozilla.org/accessibilityService;1",
-                        Ci.nsISupports);
-    }
-    catch (e) {
-      data.isActive = false;
-    }
+    data.isActive = Cc["@mozilla.org/xre/app-info;1"].
+                    getService(Ci.nsIXULRuntime).
+                    accessibilityEnabled;
     try {
       data.forceDisabled =
         Services.prefs.getIntPref("accessibility.force_disabled");

@@ -37,9 +37,10 @@ public:
 
   MOZ_MUST_USE
   static const char *
-  GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
-                      PContentParent* aBrowser,
-                      mozilla::DocShellOriginAttributes& aAttrs);
+  GetValidatedOriginAttributes(const SerializedLoadContext& aSerialized,
+                               PContentParent* aBrowser,
+                               nsIPrincipal* aRequestingPrincipal,
+                               mozilla::DocShellOriginAttributes& aAttrs);
 
   /*
    * Creates LoadContext for parent-side of an e10s channel.
@@ -53,14 +54,12 @@ public:
   CreateChannelLoadContext(const PBrowserOrId& aBrowser,
                            PContentParent* aContent,
                            const SerializedLoadContext& aSerialized,
+                           nsIPrincipal* aRequestingPrincipal,
                            nsCOMPtr<nsILoadContext> &aResult);
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
   virtual nsresult OfflineNotification(nsISupports *) override;
   virtual uint32_t GetAppId() override { return NECKO_UNKNOWN_APP_ID; }
-  virtual void
-  CloneManagees(ProtocolBase* aSource,
-              mozilla::ipc::ProtocolCloneContext* aCtx) override;
   virtual PCookieServiceParent* AllocPCookieServiceParent() override;
   virtual bool
   RecvPCookieServiceConstructor(PCookieServiceParent* aActor) override

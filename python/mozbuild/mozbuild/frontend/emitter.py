@@ -20,6 +20,7 @@ from mozbuild.util import (
 
 import mozpack.path as mozpath
 import mozinfo
+import pytoml
 
 from .data import (
     AndroidAssetsDirs,
@@ -60,7 +61,7 @@ from .data import (
     PreprocessedTestWebIDLFile,
     PreprocessedWebIDLFile,
     Program,
-    RustRlibLibrary,
+    RustLibrary,
     SdkFiles,
     SharedLibrary,
     SimpleProgram,
@@ -128,6 +129,8 @@ class TreeMetadataEmitter(LoggingMixin):
         self._binaries = OrderedDict()
         self._linkage = []
         self._static_linking_shared = set()
+        self._crate_verified_local = set()
+        self._crate_directories = dict()
 
         # Keep track of external paths (third party build systems), starting
         # from what we run a subconfigure in. We'll eliminate some directories
@@ -195,7 +198,7 @@ class TreeMetadataEmitter(LoggingMixin):
     def _emit_libs_derived(self, contexts):
         # First do FINAL_LIBRARY linkage.
         for lib in (l for libs in self._libs.values() for l in libs):
-            if not isinstance(lib, (StaticLibrary, RustRlibLibrary)) or not lib.link_into:
+            if not isinstance(lib, (StaticLibrary, RustLibrary)) or not lib.link_into:
                 continue
             if lib.link_into not in self._libs:
                 raise SandboxValidationError(
@@ -372,6 +375,74 @@ class TreeMetadataEmitter(LoggingMixin):
             return ExternalStaticLibrary(context, name)
         else:
             return ExternalSharedLibrary(context, name)
+
+    def _parse_cargo_file(self, toml_file):
+        """Parse toml_file and return a Python object representation of it."""
+        with open(toml_file, 'r') as f:
+            return pytoml.load(f)
+
+    def _verify_deps(self, context, crate_dir, crate_name, dependencies, description='Dependency'):
+        """Verify that a crate's dependencies all specify local paths."""
+        for dep_crate_name, values in dependencies.iteritems():
+            # A simple version number.
+            if isinstance(values, (str, unicode)):
+                raise SandboxValidationError(
+                    '%s %s of crate %s does not list a path' % (description, dep_crate_name, crate_name),
+                    context)
+
+            dep_path = values.get('path', None)
+            if not dep_path:
+                raise SandboxValidationError(
+                    '%s %s of crate %s does not list a path' % (description, dep_crate_name, crate_name),
+                    context)
+
+            # Try to catch the case where somebody listed a
+            # local path for development.
+            if os.path.isabs(dep_path):
+                raise SandboxValidationError(
+                    '%s %s of crate %s has a non-relative path' % (description, dep_crate_name, crate_name),
+                    context)
+
+            if not os.path.exists(mozpath.join(context.config.topsrcdir, crate_dir, dep_path)):
+                raise SandboxValidationError(
+                    '%s %s of crate %s refers to a non-existent path' % (description, dep_crate_name, crate_name),
+                    context)
+
+    def _rust_library(self, context, libname, static_args):
+        # We need to note any Rust library for linking purposes.
+        cargo_file = mozpath.join(context.srcdir, 'Cargo.toml')
+        if not os.path.exists(cargo_file):
+            raise SandboxValidationError(
+                'No Cargo.toml file found in %s' % cargo_file, context)
+
+        config = self._parse_cargo_file(cargo_file)
+        crate_name = config['package']['name']
+
+        if crate_name != libname:
+            raise SandboxValidationError(
+                'library %s does not match Cargo.toml-defined package %s' % (libname, crate_name),
+                context)
+
+        lib_section = config.get('lib', None)
+        if not lib_section:
+            raise SandboxValidationError(
+                'Cargo.toml for %s has no [lib] section' % libname,
+                context)
+
+        crate_type = lib_section.get('crate-type', None)
+        if not crate_type:
+            raise SandboxValidationError(
+                'Can\'t determine a crate-type for %s from Cargo.toml' % libname,
+                context)
+
+        crate_type = crate_type[0]
+        if crate_type != 'staticlib':
+            raise SandboxValidationError(
+                'crate-type %s is not permitted for %s' % (crate_type, libname),
+                context)
+
+
+        return RustLibrary(context, libname, cargo_file, crate_type, **static_args)
 
     def _handle_linkables(self, context, passthru, generated_files):
         has_linkables = False
@@ -580,9 +651,25 @@ class TreeMetadataEmitter(LoggingMixin):
                         'generate_symbols_file', lib.symbols_file,
                         [symbols_file], defines)
             if static_lib:
-                lib = StaticLibrary(context, libname, **static_args)
+                is_rust_library = context.get('IS_RUST_LIBRARY')
+                if is_rust_library:
+                    lib = self._rust_library(context, libname, static_args)
+                else:
+                    lib = StaticLibrary(context, libname, **static_args)
                 self._libs[libname].append(lib)
                 self._linkage.append((context, lib, 'USE_LIBS'))
+
+                # Multiple staticlibs for a library means multiple copies
+                # of the Rust runtime, which will result in linking errors
+                # later on.
+                if is_rust_library:
+                    staticlibs = [l for l in self._libs[libname]
+                                  if isinstance(l, RustLibrary) and l.crate_type == 'staticlib']
+                    if len(staticlibs) > 1:
+                        raise SandboxValidationError(
+                            'Cannot have multiple Rust staticlibs in %s: %s' % (libname, ', '.join(l.basename for l in staticlibs)),
+                            context)
+
                 has_linkables = True
 
             if lib_defines:
@@ -597,7 +684,6 @@ class TreeMetadataEmitter(LoggingMixin):
         if not has_linkables:
             return
 
-        rust_sources = []
         sources = defaultdict(list)
         gen_sources = defaultdict(list)
         all_flags = {}
@@ -649,7 +735,6 @@ class TreeMetadataEmitter(LoggingMixin):
             '.m': set(),
             '.mm': set(),
             '.cpp': set(['.cc', '.cxx']),
-            '.rs': set(),
             '.S': set(),
         }
 
@@ -694,40 +779,7 @@ class TreeMetadataEmitter(LoggingMixin):
                             'FILES_PER_UNIFIED_FILE' in context):
                         arglist.append(context['FILES_PER_UNIFIED_FILE'])
                     obj = cls(*arglist)
-
-                    # Rust is special.  Each Rust file that we compile
-                    # is a separate crate and gets compiled into its own
-                    # rlib file (Rust's equivalent of a .a file).  When
-                    # we go to link Rust sources into a library or
-                    # executable, we have a separate, single crate that
-                    # gets compiled as a staticlib (like a rlib, but
-                    # includes the actual Rust runtime).
-                    if canonical_suffix == '.rs':
-                        if not final_lib:
-                            raise SandboxValidationError(
-                                'Rust sources must be destined for a FINAL_LIBRARY')
-                        # If we're building a shared library, we're going to
-                        # auto-generate a module that includes all of the rlib
-                        # files.  This means we can't permit Rust files as
-                        # immediate inputs of the shared library.
-                        if libname and shared_lib:
-                            raise SandboxValidationError(
-                                'No Rust sources permitted as an immediate input of %s: %s' % (shlib, files))
-                        rust_sources.append(obj)
                     yield obj
-
-        # Rust sources get translated into rlibs, which are essentially static
-        # libraries.  We need to note all of them for linking, too.
-        if libname and static_lib:
-            for s in rust_sources:
-                for f in s.files:
-                    (base, _) = mozpath.splitext(mozpath.basename(f))
-                    crate_name = context.relsrcdir.replace('/', '_') + '_' + base
-                    rlib_filename = 'lib' + base + '.rlib'
-                    lib = RustRlibLibrary(context, libname, crate_name,
-                                          rlib_filename, final_lib)
-                    self._libs[libname].append(lib)
-                    self._linkage.append((context, lib, 'USE_LIBS'))
 
         for f, flags in all_flags.iteritems():
             if flags.flags:

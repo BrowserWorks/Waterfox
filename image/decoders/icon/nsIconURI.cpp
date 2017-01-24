@@ -9,11 +9,11 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "mozilla/Sprintf.h"
 
 #include "nsIIOService.h"
 #include "nsIURL.h"
 #include "nsNetUtil.h"
-#include "prprf.h"
 #include "plstr.h"
 #include <stdlib.h>
 
@@ -94,7 +94,7 @@ nsMozIconURI::GetSpec(nsACString& aSpec)
     aSpec += kSizeStrings[mIconSize];
   } else {
     char buf[20];
-    PR_snprintf(buf, sizeof(buf), "%d", mSize);
+    SprintfLiteral(buf, "%d", mSize);
     aSpec.Append(buf);
   }
 
@@ -329,6 +329,12 @@ nsMozIconURI::SetHostPort(const nsACString& aHostPort)
 }
 
 NS_IMETHODIMP
+nsMozIconURI::SetHostAndPort(const nsACString& aHostPort)
+{
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
 nsMozIconURI::GetHost(nsACString& aHost)
 {
   return NS_ERROR_FAILURE;
@@ -381,14 +387,18 @@ nsMozIconURI::SetRef(const nsACString& aRef)
 NS_IMETHODIMP
 nsMozIconURI::Equals(nsIURI* other, bool* result)
 {
+  *result = false;
   NS_ENSURE_ARG_POINTER(other);
   NS_PRECONDITION(result, "null pointer");
 
   nsAutoCString spec1;
   nsAutoCString spec2;
 
-  other->GetSpec(spec2);
-  GetSpec(spec1);
+  nsresult rv = GetSpec(spec1);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = other->GetSpec(spec2);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   if (!PL_strcasecmp(spec1.get(), spec2.get())) {
     *result = true;
   } else {

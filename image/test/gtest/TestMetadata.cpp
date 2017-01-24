@@ -88,7 +88,7 @@ CheckMetadata(const ImageTestCase& aTestCase,
   // Check that we got the expected metadata.
   EXPECT_TRUE(metadataProgress & FLAG_SIZE_AVAILABLE);
 
-  IntSize metadataSize = decoder->GetSize();
+  IntSize metadataSize = decoder->Size();
   EXPECT_EQ(aTestCase.mSize.width, metadataSize.width);
   EXPECT_EQ(aTestCase.mSize.height, metadataSize.height);
 
@@ -122,7 +122,7 @@ CheckMetadata(const ImageTestCase& aTestCase,
   EXPECT_EQ(fullProgress, metadataProgress | fullProgress);
 
   // The full decoder and the metadata decoder should agree on the image's size.
-  IntSize fullSize = decoder->GetSize();
+  IntSize fullSize = decoder->Size();
   EXPECT_EQ(metadataSize.width, fullSize.width);
   EXPECT_EQ(metadataSize.height, fullSize.height);
 
@@ -240,17 +240,16 @@ TEST_F(ImageDecoderMetadata, NoFrameDelayGIFFullDecode)
   EXPECT_TRUE(bool(imageProgress & FLAG_IS_ANIMATED) == true);
 
   // Ensure that we decoded both frames of the image.
-  LookupResult firstFrameLookupResult =
+  LookupResult result =
     SurfaceCache::Lookup(ImageKey(image.get()),
                          RasterSurfaceKey(imageSize,
                                           DefaultSurfaceFlags(),
-                                          /* aFrameNum = */ 0));
-  EXPECT_EQ(MatchType::EXACT, firstFrameLookupResult.Type());
-                                                             
-  LookupResult secondFrameLookupResult =
-    SurfaceCache::Lookup(ImageKey(image.get()),
-                         RasterSurfaceKey(imageSize,
-                                          DefaultSurfaceFlags(),
-                                          /* aFrameNum = */ 1));
-  EXPECT_EQ(MatchType::EXACT, secondFrameLookupResult.Type());
+                                          PlaybackType::eAnimated));
+  ASSERT_EQ(MatchType::EXACT, result.Type());
+
+  EXPECT_TRUE(NS_SUCCEEDED(result.Surface().Seek(0)));
+  EXPECT_TRUE(bool(result.Surface()));
+
+  EXPECT_TRUE(NS_SUCCEEDED(result.Surface().Seek(1)));
+  EXPECT_TRUE(bool(result.Surface()));
 }

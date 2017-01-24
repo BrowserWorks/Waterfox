@@ -29,6 +29,9 @@ using namespace mozilla;
 using namespace mozilla::ipc;
 
 using mozilla::DeprecatedAbs;
+using mozilla::Maybe;
+using mozilla::Nothing;
+using mozilla::Some;
 
 class nsMultiplexInputStream final
   : public nsIMultiplexInputStream
@@ -60,9 +63,9 @@ private:
     bool mDone;
   };
 
-  static NS_METHOD ReadSegCb(nsIInputStream* aIn, void* aClosure,
-                             const char* aFromRawSegment, uint32_t aToOffset,
-                             uint32_t aCount, uint32_t* aWriteCount);
+  static nsresult ReadSegCb(nsIInputStream* aIn, void* aClosure,
+                            const char* aFromRawSegment, uint32_t aToOffset,
+                            uint32_t aCount, uint32_t* aWriteCount);
 
   Mutex mLock; // Protects access to all data members.
   nsTArray<nsCOMPtr<nsIInputStream>> mStreams;
@@ -336,7 +339,7 @@ nsMultiplexInputStream::ReadSegments(nsWriteSegmentFun aWriter, void* aClosure,
   return state.mOffset ? NS_OK : rv;
 }
 
-NS_METHOD
+nsresult
 nsMultiplexInputStream::ReadSegCb(nsIInputStream* aIn, void* aClosure,
                                   const char* aFromRawSegment,
                                   uint32_t aToOffset, uint32_t aCount,
@@ -745,6 +748,29 @@ nsMultiplexInputStream::Deserialize(const InputStreamParams& aParams,
   mStartedReadingCurrent = params.startedReadingCurrent();
 
   return true;
+}
+
+Maybe<uint64_t>
+nsMultiplexInputStream::ExpectedSerializedLength()
+{
+  MutexAutoLock lock(mLock);
+
+  bool lengthValueExists = false;
+  uint64_t expectedLength = 0;
+  uint32_t streamCount = mStreams.Length();
+  for (uint32_t index = 0; index < streamCount; index++) {
+    nsCOMPtr<nsIIPCSerializableInputStream> stream = do_QueryInterface(mStreams[index]);
+    if (!stream) {
+      continue;
+    }
+    Maybe<uint64_t> length = stream->ExpectedSerializedLength();
+    if (length.isNothing()) {
+      continue;
+    }
+    lengthValueExists = true;
+    expectedLength += length.value();
+  }
+  return lengthValueExists ? Some(expectedLength) : Nothing();
 }
 
 NS_IMETHODIMP

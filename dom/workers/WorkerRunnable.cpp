@@ -15,6 +15,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/TaskQueue.h"
 #include "mozilla/Telemetry.h"
 
 #include "js/RootingAPI.h"
@@ -118,10 +119,7 @@ WorkerRunnable::DispatchInternal()
     return NS_SUCCEEDED(parent->Dispatch(runnable.forget()));
   }
 
-  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-  MOZ_ASSERT(mainThread);
-
-  return NS_SUCCEEDED(mainThread->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL));
+  return NS_SUCCEEDED(mWorkerPrivate->DispatchToMainThread(runnable.forget()));
 }
 
 void
@@ -485,10 +483,10 @@ nsresult
 MainThreadStopSyncLoopRunnable::Cancel()
 {
   nsresult rv = Run();
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Run() failed");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Run() failed");
 
   nsresult rv2 = WorkerSyncRunnable::Cancel();
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv2), "Cancel() failed");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv2), "Cancel() failed");
 
   return NS_FAILED(rv) ? rv : rv2;
 }
@@ -557,10 +555,7 @@ WorkerControlRunnable::DispatchInternal()
     return NS_SUCCEEDED(parent->DispatchControlRunnable(runnable.forget()));
   }
 
-  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-  MOZ_ASSERT(mainThread);
-
-  return NS_SUCCEEDED(mainThread->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL));
+  return NS_SUCCEEDED(mWorkerPrivate->DispatchToMainThread(runnable.forget()));
 }
 
 NS_IMPL_ISUPPORTS_INHERITED0(WorkerControlRunnable, WorkerRunnable)
@@ -583,10 +578,8 @@ WorkerMainThreadRunnable::Dispatch(ErrorResult& aRv)
   AutoSyncLoopHolder syncLoop(mWorkerPrivate);
 
   mSyncLoopTarget = syncLoop.EventTarget();
-  RefPtr<WorkerMainThreadRunnable> runnable(this);
 
-  DebugOnly<nsresult> rv =
-    NS_DispatchToMainThread(runnable.forget(), NS_DISPATCH_NORMAL);
+  DebugOnly<nsresult> rv = mWorkerPrivate->DispatchToMainThread(this);
   MOZ_ASSERT(NS_SUCCEEDED(rv),
              "Should only fail after xpcom-shutdown-threads and we're gone by then");
 
@@ -682,7 +675,7 @@ WorkerProxyToMainThreadRunnable::Dispatch()
     return false;
   }
 
-  if (NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(this)))) {
+  if (NS_WARN_IF(NS_FAILED(mWorkerPrivate->DispatchToMainThread(this)))) {
     ReleaseWorker();
     RunBackOnWorkerThread();
     return false;
@@ -716,12 +709,12 @@ WorkerProxyToMainThreadRunnable::PostDispatchOnMainThread()
       MOZ_ASSERT(aRunnable);
     }
 
-    // We must call RunBackOnWorkerThread() also if the runnable is cancelled.
+    // We must call RunBackOnWorkerThread() also if the runnable is canceled.
     nsresult
     Cancel() override
     {
       WorkerRun(nullptr, mWorkerPrivate);
-      return NS_OK;
+      return MainThreadWorkerControlRunnable::Cancel();
     }
 
     virtual bool
@@ -730,10 +723,14 @@ WorkerProxyToMainThreadRunnable::PostDispatchOnMainThread()
       MOZ_ASSERT(aWorkerPrivate);
       aWorkerPrivate->AssertIsOnWorkerThread();
 
-      mRunnable->RunBackOnWorkerThread();
+      if (mRunnable) {
+        mRunnable->RunBackOnWorkerThread();
 
-      // Let's release the worker thread.
-      mRunnable->ReleaseWorker();
+        // Let's release the worker thread.
+        mRunnable->ReleaseWorker();
+        mRunnable = nullptr;
+      }
+
       return true;
     }
 
@@ -744,7 +741,7 @@ WorkerProxyToMainThreadRunnable::PostDispatchOnMainThread()
 
   RefPtr<WorkerControlRunnable> runnable =
     new ReleaseRunnable(mWorkerPrivate, this);
-  NS_WARN_IF(!runnable->Dispatch());
+  Unused << NS_WARN_IF(!runnable->Dispatch());
 }
 
 bool
@@ -765,7 +762,7 @@ WorkerProxyToMainThreadRunnable::HoldWorker()
   };
 
   UniquePtr<WorkerHolder> workerHolder(new SimpleWorkerHolder());
-  if (NS_WARN_IF(!workerHolder->HoldWorker(mWorkerPrivate))) {
+  if (NS_WARN_IF(!workerHolder->HoldWorker(mWorkerPrivate, Canceling))) {
     return false;
   }
 

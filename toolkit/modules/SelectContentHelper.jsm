@@ -34,6 +34,7 @@ this.SelectContentHelper = function (aElement, aGlobal) {
   this.element = aElement;
   this.initialSelection = aElement[aElement.selectedIndex] || null;
   this.global = aGlobal;
+  this.closedWithEnter = false;
   this.init();
   this.showDropDown();
   this._updateTimer = new DeferredTask(this._update.bind(this), 0);
@@ -112,6 +113,7 @@ this.SelectContentHelper.prototype = {
     switch (message.name) {
       case "Forms:SelectDropDownItem":
         this.element.selectedIndex = message.data.value;
+        this.closedWithEnter = message.data.closedWithEnter;
         break;
 
       case "Forms:DismissedDropDown":
@@ -120,17 +122,22 @@ this.SelectContentHelper.prototype = {
           let win = this.element.ownerDocument.defaultView;
           // For ordering of events, we're using non-e10s as our guide here,
           // since the spec isn't exactly clear. In non-e10s, we fire:
-          // mousedown, mouseup, input, change, click.
-          const MOUSE_EVENTS = ["mousedown", "mouseup"];
-          for (let eventName of MOUSE_EVENTS) {
-            let mouseEvent = new win.MouseEvent(eventName, {
-              view: win,
-              bubbles: true,
-              cancelable: true,
-            });
-            selectedOption.dispatchEvent(mouseEvent);
+          // mousedown, mouseup, input, change, click if the user clicks
+          // on an element in the dropdown. If the user uses the keyboard
+          // to select an element in the dropdown, we only fire input and
+          // change events.
+          if (!this.closedWithEnter) {
+            const MOUSE_EVENTS = ["mousedown", "mouseup"];
+            for (let eventName of MOUSE_EVENTS) {
+              let mouseEvent = new win.MouseEvent(eventName, {
+                view: win,
+                bubbles: true,
+                cancelable: true,
+              });
+              selectedOption.dispatchEvent(mouseEvent);
+            }
+            DOMUtils.removeContentState(this.element, kStateActive);
           }
-          DOMUtils.removeContentState(this.element, kStateActive);
 
           let inputEvent = new win.UIEvent("input", {
             bubbles: true,
@@ -142,12 +149,14 @@ this.SelectContentHelper.prototype = {
           });
           this.element.dispatchEvent(changeEvent);
 
-          let mouseEvent = new win.MouseEvent("click", {
-            view: win,
-            bubbles: true,
-            cancelable: true,
-          });
-          selectedOption.dispatchEvent(mouseEvent);
+          if (!this.closedWithEnter) {
+            let mouseEvent = new win.MouseEvent("click", {
+              view: win,
+              bubbles: true,
+              cancelable: true,
+            });
+            selectedOption.dispatchEvent(mouseEvent);
+          }
         }
 
         this.uninit();

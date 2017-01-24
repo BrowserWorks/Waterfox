@@ -8,49 +8,12 @@
 const actionTypes = {
   MESSAGE_ADD: "MESSAGE_ADD",
   MESSAGES_CLEAR: "MESSAGES_CLEAR",
-};
-
-const categories = {
-  CATEGORY_NETWORK: "network",
-  CATEGORY_CSS: "cssparser",
-  CATEGORY_JS: "exception",
-  CATEGORY_WEBDEV: "console",
-  CATEGORY_INPUT: "input",
-  CATEGORY_OUTPUT: "output",
-  CATEGORY_SECURITY: "security",
-  CATEGORY_SERVER: "server"
-};
-
-const severities = {
-  SEVERITY_ERROR: "error",
-  SEVERITY_WARNING: "warn",
-  SEVERITY_INFO: "info",
-  SEVERITY_LOG: "log"
-};
-
-// A mapping from the console API log event levels to the Web Console
-// severities.
-const levels = {
-  LEVELS: {
-    error: severities.SEVERITY_ERROR,
-    exception: severities.SEVERITY_ERROR,
-    assert: severities.SEVERITY_ERROR,
-    warn: severities.SEVERITY_WARNING,
-    info: severities.SEVERITY_INFO,
-    log: severities.SEVERITY_LOG,
-    clear: severities.SEVERITY_LOG,
-    trace: severities.SEVERITY_LOG,
-    table: severities.SEVERITY_LOG,
-    debug: severities.SEVERITY_LOG,
-    dir: severities.SEVERITY_LOG,
-    dirxml: severities.SEVERITY_LOG,
-    group: severities.SEVERITY_LOG,
-    groupCollapsed: severities.SEVERITY_LOG,
-    groupEnd: severities.SEVERITY_LOG,
-    time: severities.SEVERITY_LOG,
-    timeEnd: severities.SEVERITY_LOG,
-    count: severities.SEVERITY_LOG
-  }
+  MESSAGE_OPEN: "MESSAGE_OPEN",
+  MESSAGE_CLOSE: "MESSAGE_CLOSE",
+  FILTER_TOGGLE: "FILTER_TOGGLE",
+  FILTER_TEXT_SET: "FILTER_TEXT_SET",
+  FILTERS_CLEAR: "FILTERS_CLEAR",
+  FILTER_BAR_TOGGLE: "FILTER_BAR_TOGGLE",
 };
 
 const chromeRDPEnums = {
@@ -81,7 +44,10 @@ const chromeRDPEnums = {
     // Undocumented in Chrome RDP, but is used for evaluation results.
     RESULT: "result",
     // Undocumented in Chrome RDP, but is used for input.
-    COMMAND: "command"
+    COMMAND: "command",
+    // Undocumented in Chrome RDP, but is used for messages that should not
+    // output anything (e.g. `console.time()` calls).
+    NULL_MESSAGE: "nullMessage",
   },
   MESSAGE_LEVEL: {
     LOG: "log",
@@ -93,5 +59,4 @@ const chromeRDPEnums = {
 };
 
 // Combine into a single constants object
-module.exports = Object.assign({}, actionTypes, categories, severities, levels,
-  chromeRDPEnums);
+module.exports = Object.assign({}, actionTypes, chromeRDPEnums);

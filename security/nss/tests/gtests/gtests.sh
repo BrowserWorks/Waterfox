@@ -42,6 +42,10 @@ gtest_start()
 {
   echo "gtests: ${GTESTS}"
   for i in ${GTESTS}; do
+    if [ ! -f ${BINDIR}/$i ]; then
+      html_unknown "Skipping $i (not built)"
+      continue
+    fi
     GTESTDIR="${HOSTDIR}/$i"
     html_head "$i"
     if [ ! -d "$GTESTDIR" ]; then
@@ -49,17 +53,22 @@ gtest_start()
     fi
     cd "$GTESTDIR"
     GTESTREPORT="$GTESTDIR/report.xml"
-    ${BINDIR}/$i -d "$GTESTDIR" --gtest_output=xml:"${GTESTREPORT}"
-    echo "test output dir: ${GTESTREPORT}"
+    PARSED_REPORT="$GTESTDIR/report.parsed"
+    echo "executing $i"
+    ${BINDIR}/$i -d "$GTESTDIR" --gtest_output=xml:"${GTESTREPORT}" \
+                                --gtest_filter="${GTESTFILTER-*}"
     html_msg $? 0 "$i run successfully"
-    sed -f ${COMMON}/parsegtestreport.sed "${GTESTREPORT}" | \
-    while read result name; do
+    echo "test output dir: ${GTESTREPORT}"
+    echo "executing sed to parse the xml report"
+    sed -f ${COMMON}/parsegtestreport.sed "${GTESTREPORT}" > "${PARSED_REPORT}"
+    echo "processing the parsed report"
+    cat "${PARSED_REPORT}" | while read result name; do
       if [ "$result" = "notrun" ]; then
         echo "$name" SKIPPED
       elif [ "$result" = "run" ]; then
-        html_passed "$name" > /dev/null
+        html_passed_ignore_core "$name"
       else
-        html_failed "$name"
+        html_failed_ignore_core "$name"
       fi
     done
   done

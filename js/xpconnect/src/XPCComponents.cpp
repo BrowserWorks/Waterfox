@@ -7,6 +7,7 @@
 /* The "Components" xpcom objects for JavaScript. */
 
 #include "xpcprivate.h"
+#include "xpc_make_class.h"
 #include "xpcIJSModuleLoader.h"
 #include "XPCJSWeakReference.h"
 #include "WrapperFactory.h"
@@ -2569,7 +2570,7 @@ nsXPCComponents_Utils::GetWeakReference(HandleValue object, JSContext* cx,
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForceGC()
 {
-    JSContext* cx = nsXPConnect::GetRuntimeInstance()->Context();
+    JSContext* cx = nsXPConnect::GetContextInstance()->Context();
     PrepareForFullGC(cx);
     GCForReason(cx, GC_NORMAL, gcreason::COMPONENT_UTILS);
     return NS_OK;
@@ -2613,7 +2614,7 @@ nsXPCComponents_Utils::ClearMaxCCTime()
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForceShrinkingGC()
 {
-    JSContext* cx = nsXPConnect::GetRuntimeInstance()->Context();
+    JSContext* cx = dom::danger::GetJSContext();
     PrepareForFullGC(cx);
     GCForReason(cx, GC_SHRINK, gcreason::COMPONENT_UTILS);
     return NS_OK;
@@ -2625,11 +2626,9 @@ class PreciseGCRunnable : public Runnable
     PreciseGCRunnable(ScheduledGCCallback* aCallback, bool aShrinking)
     : mCallback(aCallback), mShrinking(aShrinking) {}
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
-        JSRuntime* rt = nsXPConnect::GetRuntimeInstance()->Runtime();
-
-        JSContext* cx = JS_GetContext(rt);
+        JSContext* cx = dom::danger::GetJSContext();
         if (JS_IsRunning(cx))
             return NS_DispatchToMainThread(this);
 
@@ -3189,8 +3188,8 @@ NS_IMETHODIMP
 nsXPCComponents_Utils::GetWatchdogTimestamp(const nsAString& aCategory, PRTime* aOut)
 {
     WatchdogTimestampCategory category;
-    if (aCategory.EqualsLiteral("RuntimeStateChange"))
-        category = TimestampRuntimeStateChange;
+    if (aCategory.EqualsLiteral("ContextStateChange"))
+        category = TimestampContextStateChange;
     else if (aCategory.EqualsLiteral("WatchdogWakeup"))
         category = TimestampWatchdogWakeup;
     else if (aCategory.EqualsLiteral("WatchdogHibernateStart"))
@@ -3199,7 +3198,7 @@ nsXPCComponents_Utils::GetWatchdogTimestamp(const nsAString& aCategory, PRTime* 
         category = TimestampWatchdogHibernateStop;
     else
         return NS_ERROR_INVALID_ARG;
-    *aOut = XPCJSRuntime::Get()->GetWatchdogTimestamp(category);
+    *aOut = XPCJSContext::Get()->GetWatchdogTimestamp(category);
     return NS_OK;
 }
 
@@ -3460,7 +3459,7 @@ nsXPCComponents::GetManager(nsIComponentManager * *aManager)
 NS_IMETHODIMP
 nsXPCComponents::GetReturnCode(JSContext* aCx, MutableHandleValue aOut)
 {
-    nsresult res = XPCJSRuntime::Get()->GetPendingResult();
+    nsresult res = XPCJSContext::Get()->GetPendingResult();
     aOut.setNumber(static_cast<uint32_t>(res));
     return NS_OK;
 }
@@ -3471,7 +3470,7 @@ nsXPCComponents::SetReturnCode(JSContext* aCx, HandleValue aCode)
     nsresult rv;
     if (!ToUint32(aCx, aCode, (uint32_t*)&rv))
         return NS_ERROR_FAILURE;
-    XPCJSRuntime::Get()->SetPendingResult(rv);
+    XPCJSContext::Get()->SetPendingResult(rv);
     return NS_OK;
 }
 
@@ -3502,10 +3501,7 @@ public:
     // having one.
     NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIXPCSCRIPTABLE
-    // The NS_IMETHODIMP isn't really accurate here, but NS_CALLBACK requires
-    // the referent to be declared __stdcall on Windows, and this is the only
-    // macro that does that.
-    static NS_IMETHODIMP Get(nsIXPCScriptable** helper)
+    static nsresult Get(nsIXPCScriptable** helper)
     {
         *helper = &singleton;
         return NS_OK;

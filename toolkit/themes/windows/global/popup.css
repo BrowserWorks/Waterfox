@@ -4,14 +4,6 @@
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
-/* ::::: Variables ::::: */
-.panel-arrowcontent {
-  --panel-arrowcontent-padding: 10px;
-  --panel-arrowcontent-background: -moz-field;
-  --panel-arrowcontent-color: -moz-FieldText;
-  --panel-arrowcontent-border: 1px solid ThreeDShadow;
-}
-
 /* ::::: menupopup ::::: */
 
 menupopup,
@@ -60,7 +52,8 @@ panel[type="arrow"][side="right"] {
   color: var(--panel-arrowcontent-color);
   background: var(--panel-arrowcontent-background);
   background-clip: padding-box;
-  border: var(--panel-arrowcontent-border);
+  border: 1px solid var(--panel-arrowcontent-border-color);
+  box-shadow: 0 0 4px hsla(0,0%,0%,.2);
   margin: 4px;
 }
 
@@ -78,7 +71,8 @@ panel[type="arrow"][side="right"] {
 
 .panel-arrow[side="top"],
 .panel-arrow[side="bottom"] {
-  list-style-image: url("chrome://global/skin/arrow/panelarrow-vertical-themed.svg");
+  list-style-image: var(--panel-arrow-image-vertical,
+                        url("chrome://global/skin/arrow/panelarrow-vertical-themed.svg"));
   position: relative;
   margin-left: 10px;
   margin-right: 10px;
@@ -113,13 +107,14 @@ panel[type="arrow"][side="right"] {
 %ifdef XP_WIN
 @media (-moz-windows-default-theme) {
   .panel-arrowcontent {
-    --panel-arrowcontent-border: 1px solid hsla(210,4%,10%,.2);
+    --panel-arrowcontent-border-color: hsla(210,4%,10%,.2);
     box-shadow: 0 0 4px hsla(210,4%,10%,.2);
   }
 
   .panel-arrow[side="top"],
   .panel-arrow[side="bottom"] {
-    list-style-image: url("chrome://global/skin/arrow/panelarrow-vertical.svg");
+    list-style-image: var(--panel-arrow-image-vertical,
+                          url("chrome://global/skin/arrow/panelarrow-vertical.svg"));
   }
 
   .panel-arrow[side="left"],

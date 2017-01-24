@@ -35,6 +35,7 @@ function assertUint8ArraysEqual(a, b, comparingWhat) {
  */
 function listenForEventsOnSocket(socket, socketType) {
   let wantDataLength = null;
+  let wantDataAndClose = false;
   let pendingResolve = null;
   let receivedEvents = [];
   let receivedData = null;
@@ -51,7 +52,16 @@ function listenForEventsOnSocket(socket, socketType) {
   socket.onopen = handleGenericEvent;
   socket.ondrain = handleGenericEvent;
   socket.onerror = handleGenericEvent;
-  socket.onclose = handleGenericEvent;
+  socket.onclose = function(event) {
+    if (!wantDataAndClose) {
+      handleGenericEvent(event);
+    } else if (pendingResolve) {
+      dump('(' + socketType + ' event: close)\n');
+      pendingResolve(receivedData);
+      pendingResolve = null;
+      wantDataAndClose = false;
+    }
+  }
   socket.ondata = function(event) {
     dump('(' + socketType + ' event: ' + event.type + ' length: ' +
          event.data.byteLength + ')\n');
@@ -113,6 +123,19 @@ function listenForEventsOnSocket(socket, socketType) {
       return new Promise(function(resolve, reject) {
         pendingResolve = resolve;
         wantDataLength = length;
+      });
+    },
+    waitForAnyDataAndClose: function() {
+      if (pendingResolve) {
+        throw new Error('only one wait allowed at a time.');
+      }
+
+      return new Promise(function(resolve, reject) {
+        pendingResolve = resolve;
+        // we may receive no data before getting close, in which case we want to
+        // return an empty array
+        receivedData = new Uint8Array();
+        wantDataAndClose = true;
       });
     }
   };
@@ -347,6 +370,9 @@ function* test_basics() {
   serverQueue = connectedResult.queue;
 
   // -- Attempt to send non-string data.
+  // Restore the original behavior by replacing toString with
+  // Object.prototype.toString. (bug 1121938)
+  bigUint8Array.toString = Object.prototype.toString;
   is(clientSocket.send(bigUint8Array), true,
      'Client sending a large non-string should only send a small string.');
   clientSocket.close();
@@ -357,6 +383,28 @@ function* test_basics() {
   is((yield clientQueue.waitForEvent()).type, 'close',
      'The close event should fire after the drain event.');
 
+  // -- Re-establish connection (Test for Close Immediately)
+  connectedPromise = waitForConnection(listeningServer);
+  clientSocket = createSocket('127.0.0.1', serverPort,
+                               { binaryType: 'arraybuffer' });
+  clientQueue = listenForEventsOnSocket(clientSocket, 'client');
+  is((yield clientQueue.waitForEvent()).type, 'open', 'got open event');
+
+  connectedResult = yield connectedPromise;
+  // destructuring assignment is not yet ES6 compliant, must manually unpack
+  serverSocket = connectedResult.socket;
+  serverQueue = connectedResult.queue;
+
+  // -- Attempt to send two non-string data.
+  is(clientSocket.send(bigUint8Array.buffer, 0, bigUint8Array.length), false,
+     'Server sending more than 64k should result in the buffer being full.');
+  is(clientSocket.send(bigUint8Array.buffer, 0, bigUint8Array.length), false,
+     'Server sending more than 64k should result in the buffer being full.');
+  clientSocket.closeImmediately();
+
+  serverReceived = yield serverQueue.waitForAnyDataAndClose();
+
+  is(serverReceived.length < (2 * bigUint8Array.length), true, 'Received array length less than sent array length');
 
   // -- Close the listening server (and try to connect)
   // We want to verify that the server actually closes / stops listening when

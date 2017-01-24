@@ -7,7 +7,7 @@
 #include "mozilla/dom/AudioContext.h"
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "CubebUtils.h"
 
 #ifdef MOZ_WEBRTC
@@ -163,7 +163,7 @@ public:
     : mThread(aThread)
   {
   }
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
     MOZ_ASSERT(mThread);
@@ -194,7 +194,7 @@ public:
     : mDriver(aDriver)
   {
   }
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     char aLocal;
     STREAM_LOG(LogLevel::Debug, ("Starting system thread"));
@@ -486,7 +486,8 @@ AsyncCubebTask::AsyncCubebTask(AudioCallbackDriver* aDriver, AsyncCubebOperation
     mOperation(aOperation),
     mShutdownGrip(aDriver->GraphImpl())
 {
-  NS_WARN_IF_FALSE(mDriver->mAudioStream || aOperation == INIT, "No audio stream !");
+  NS_WARNING_ASSERTION(mDriver->mAudioStream || aOperation == INIT,
+                       "No audio stream!");
 }
 
 AsyncCubebTask::~AsyncCubebTask()
@@ -613,6 +614,15 @@ bool IsMacbookOrMacbookAir()
 void
 AudioCallbackDriver::Init()
 {
+  cubeb* cubebContext = CubebUtils::GetCubebContext();
+  if (!cubebContext) {
+    NS_WARNING("Could not get cubeb context.");
+    if (!mFromFallback) {
+      CubebUtils::ReportCubebStreamInitFailure(true);
+    }
+    return;
+  }
+
   cubeb_stream_params output;
   cubeb_stream_params input;
   uint32_t latency_frames;
@@ -644,7 +654,7 @@ AudioCallbackDriver::Init()
     output.format = CUBEB_SAMPLE_FLOAT32NE;
   }
 
-  if (cubeb_get_min_latency(CubebUtils::GetCubebContext(), output, &latency_frames) != CUBEB_OK) {
+  if (cubeb_get_min_latency(cubebContext, output, &latency_frames) != CUBEB_OK) {
     NS_WARNING("Could not get minimal latency from cubeb.");
     return;
   }
@@ -682,7 +692,7 @@ AudioCallbackDriver::Init()
         // XXX Only pass input input if we have an input listener.  Always
         // set up output because it's easier, and it will just get silence.
         // XXX Add support for adding/removing an input listener later.
-        cubeb_stream_init(CubebUtils::GetCubebContext(), &stream,
+        cubeb_stream_init(cubebContext, &stream,
                           "AudioCallbackDriver",
                           input_id,
                           mGraphImpl->mInputWanted ? &input : nullptr,
@@ -691,8 +701,9 @@ AudioCallbackDriver::Init()
                           DataCallback_s, StateCallback_s, this) == CUBEB_OK) {
       mAudioStream.own(stream);
       DebugOnly<int> rv = cubeb_stream_set_volume(mAudioStream, CubebUtils::GetVolumeScale());
-      NS_WARN_IF_FALSE(rv == CUBEB_OK,
-          "Could not set the audio stream volume in GraphDriver.cpp");
+      NS_WARNING_ASSERTION(
+        rv == CUBEB_OK,
+        "Could not set the audio stream volume in GraphDriver.cpp");
       CubebUtils::ReportCubebBackendUsed();
     } else {
 #ifdef MOZ_WEBRTC
@@ -1041,7 +1052,7 @@ AudioCallbackDriver::MixerCallback(AudioDataValue* aMixedBuffer,
   MOZ_ASSERT(mBuffer.Available() == 0, "Missing frames to fill audio callback's buffer.");
 
   DebugOnly<uint32_t> written = mScratchBuffer.Fill(aMixedBuffer + toWrite * aChannels, aFrames - toWrite);
-  NS_WARN_IF_FALSE(written == aFrames - toWrite, "Dropping frames.");
+  NS_WARNING_ASSERTION(written == aFrames - toWrite, "Dropping frames.");
 };
 
 void AudioCallbackDriver::PanOutputIfNeeded(bool aMicrophoneActive)

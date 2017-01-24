@@ -155,7 +155,7 @@ Bookmarks.prototype = {
 
           try {
             if (is_folder == 1) {
-              let newFolderGuid = (yield PlacesUtils.bookmarks.insert({
+              let newFolderGuid = (yield MigrationUtils.insertBookmarkWrapper({
                 parentGuid,
                 type: PlacesUtils.bookmarks.TYPE_FOLDER,
                 title
@@ -163,7 +163,7 @@ Bookmarks.prototype = {
 
               idToGuid.set(id, newFolderGuid);
             } else {
-              yield PlacesUtils.bookmarks.insert({
+              yield MigrationUtils.insertBookmarkWrapper({
                 parentGuid,
                 url,
                 title
@@ -232,7 +232,7 @@ Object.defineProperty(Qihoo360seProfileMigrator.prototype, "sourceProfiles", {
       let loginIniObj = parseINIStrings(loginIniInUtf8);
       try {
         loginIniInUtf8.remove(false);
-      } catch(ex) {}
+      } catch (ex) {}
 
       let nowLoginEmail = loginIniObj.NowLogin && loginIniObj.NowLogin.email;
 

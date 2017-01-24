@@ -695,18 +695,18 @@ var PromptUtils = {
 
     let text;
     if (isProxy) {
-      text = this.bundle.formatStringFromName("EnterLoginForProxy2", [realm, displayHost], 2);
+      text = this.bundle.formatStringFromName("EnterLoginForProxy3", [realm, displayHost], 2);
     } else if (isPassOnly) {
       text = this.bundle.formatStringFromName("EnterPasswordFor", [username, displayHost], 2);
     } else if (isCrossOrig) {
-      text = this.bundle.formatStringFromName("EnterUserPasswordForCrossOrigin", [displayHost], 1);
+      text = this.bundle.formatStringFromName("EnterUserPasswordForCrossOrigin2", [displayHost], 1);
     } else if (!realm) {
       text = this.bundle.formatStringFromName("EnterUserPasswordFor2", [displayHost], 1);
     } else {
-      text = this.bundle.formatStringFromName("EnterLoginForRealm2", [realm, displayHost], 2);
+      text = this.bundle.formatStringFromName("EnterLoginForRealm3", [realm, displayHost], 2);
     }
 
-    return text.replace(/\n{1,}/g,' ');
+    return text;
   },
 
   // JS port of http://mxr.mozilla.org/mozilla-central/source/embedding/components/windowwatcher/nsPromptUtils.h#89

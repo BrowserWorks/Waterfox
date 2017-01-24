@@ -11,12 +11,11 @@
 #include "mozilla/gfx/2D.h"
 #include "gfxMatrix.h"
 #include "gfxRect.h"
-#include "gfxSVGGlyphs.h"
 #include "gfxTextRun.h"
 #include "nsAutoPtr.h"
 #include "nsIContent.h" // for GetContent
 #include "nsStubMutationObserver.h"
-#include "nsSVGPaintServerFrame.h"
+#include "nsSVGContainerFrame.h"
 
 class gfxContext;
 class nsDisplaySVGText;
@@ -138,77 +137,6 @@ private:
   SVGTextFrame* mFrame;
 };
 
-// Slightly horrible callback for deferring application of opacity
-struct SVGTextContextPaint : public gfxTextContextPaint {
-protected:
-  typedef mozilla::gfx::DrawTarget DrawTarget;
-public:
-  already_AddRefed<gfxPattern> GetFillPattern(const DrawTarget* aDrawTarget,
-                                              float aOpacity,
-                                              const gfxMatrix& aCTM) override;
-  already_AddRefed<gfxPattern> GetStrokePattern(const DrawTarget* aDrawTarget,
-                                                float aOpacity,
-                                                const gfxMatrix& aCTM) override;
-
-  void SetFillOpacity(float aOpacity) { mFillOpacity = aOpacity; }
-  float GetFillOpacity() override { return mFillOpacity; }
-
-  void SetStrokeOpacity(float aOpacity) { mStrokeOpacity = aOpacity; }
-  float GetStrokeOpacity() override { return mStrokeOpacity; }
-
-  struct Paint {
-    Paint() : mPaintType(eStyleSVGPaintType_None) {}
-
-    void SetPaintServer(nsIFrame *aFrame, const gfxMatrix& aContextMatrix,
-                        nsSVGPaintServerFrame *aPaintServerFrame) {
-      mPaintType = eStyleSVGPaintType_Server;
-      mPaintDefinition.mPaintServerFrame = aPaintServerFrame;
-      mFrame = aFrame;
-      mContextMatrix = aContextMatrix;
-    }
-
-    void SetColor(const nscolor &aColor) {
-      mPaintType = eStyleSVGPaintType_Color;
-      mPaintDefinition.mColor = aColor;
-    }
-
-    void SetContextPaint(gfxTextContextPaint *aContextPaint,
-                         nsStyleSVGPaintType aPaintType) {
-      NS_ASSERTION(aPaintType == eStyleSVGPaintType_ContextFill ||
-                   aPaintType == eStyleSVGPaintType_ContextStroke,
-                   "Invalid context paint type");
-      mPaintType = aPaintType;
-      mPaintDefinition.mContextPaint = aContextPaint;
-    }
-
-    union {
-      nsSVGPaintServerFrame *mPaintServerFrame;
-      gfxTextContextPaint *mContextPaint;
-      nscolor mColor;
-    } mPaintDefinition;
-
-    nsIFrame *mFrame;
-    // CTM defining the user space for the pattern we will use.
-    gfxMatrix mContextMatrix;
-    nsStyleSVGPaintType mPaintType;
-
-    // Device-space-to-pattern-space
-    gfxMatrix mPatternMatrix;
-    nsRefPtrHashtable<nsFloatHashKey, gfxPattern> mPatternCache;
-
-    already_AddRefed<gfxPattern> GetPattern(const DrawTarget* aDrawTarget,
-                                            float aOpacity,
-                                            nsStyleSVGPaint nsStyleSVG::*aFillOrStroke,
-                                            const gfxMatrix& aCTM);
-  };
-
-  Paint mFillPaint;
-  Paint mStrokePaint;
-
-  float mFillOpacity;
-  float mStrokeOpacity;
-};
-
 } // namespace mozilla
 
 /**
@@ -262,7 +190,6 @@ class SVGTextFrame final : public nsSVGDisplayContainerFrame
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::Path Path;
   typedef mozilla::gfx::Point Point;
-  typedef mozilla::SVGTextContextPaint SVGTextContextPaint;
   typedef mozilla::image::DrawResult DrawResult;
 
 protected:
@@ -399,11 +326,13 @@ public:
    * nsSVGDisplayContainerFrame::ReflowSVG will call ReflowSVGNonDisplayText on
    * it.
    *
-   * The only case where we have to do this is in response to a style change on
-   * a non-display <text>. It is done in response to glyphs changes on
-   * non-display <text> (i.e., animated SVG-in-OpenType glyphs).
+   * We have to do this in two cases: in response to a style change on a
+   * non-display <text>, where aReason will be eStyleChange (the common case),
+   * and also in response to glyphs changes on non-display <text> (i.e.,
+   * animated SVG-in-OpenType glyphs), in which case aReason will be eResize,
+   * since layout doesn't need to be recomputed.
    */
-  void ScheduleReflowSVGNonDisplayText();
+  void ScheduleReflowSVGNonDisplayText(nsIPresShell::IntrinsicDirty aReason);
 
   /**
    * Updates the mFontSizeScaleFactor value by looking at the range of

@@ -17,6 +17,7 @@
 #include "MPAPI.h"
 #include "gfx2DGlue.h"
 #include "MediaStreamSource.h"
+#include "VideoFrameContainer.h"
 
 #define MAX_DROPPED_FRAMES 25
 // Try not to spend more than this much time in a single call to DecodeVideoFrame.
@@ -81,7 +82,7 @@ public:
     MOZ_ASSERT(mOmxReader.get());
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(mOmxReader->OnTaskQueue());
     NotifyDataArrived();
@@ -171,10 +172,10 @@ MediaOmxReader::Shutdown()
   return p;
 }
 
-void MediaOmxReader::ReleaseMediaResources()
+void MediaOmxReader::ReleaseResources()
 {
   mMediaResourceRequest.DisconnectIfExists();
-  mMetadataPromise.RejectIfExists(ReadMetadataFailureReason::METADATA_ERROR, __func__);
+  mMetadataPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
 
   ResetDecode();
   // Before freeing a video codec, all video buffers needed to be released
@@ -220,7 +221,7 @@ MediaOmxReader::AsyncReadMetadata()
   nsresult rv = InitOmxDecoder();
   if (NS_FAILED(rv)) {
     return MediaDecoderReader::MetadataPromise::CreateAndReject(
-             ReadMetadataFailureReason::METADATA_ERROR, __func__);
+             NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
   }
 
   bool isMP3 = mDecoder->GetResource()->GetContentType().EqualsASCII(AUDIO_MP3);
@@ -242,7 +243,7 @@ MediaOmxReader::AsyncReadMetadata()
         self->HandleResourceAllocated();
       }, [self] (bool) -> void {
         self->mMediaResourceRequest.Complete();
-        self->mMetadataPromise.Reject(ReadMetadataFailureReason::METADATA_ERROR, __func__);
+        self->mMetadataPromise.Reject(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
       }));
 
   return p;
@@ -254,7 +255,7 @@ void MediaOmxReader::HandleResourceAllocated()
 
   // After resources are available, set the metadata.
   if (!mOmxDecoder->EnsureMetadata()) {
-    mMetadataPromise.Reject(ReadMetadataFailureReason::METADATA_ERROR, __func__);
+    mMetadataPromise.Reject(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
     return;
   }
 
@@ -288,7 +289,7 @@ void MediaOmxReader::HandleResourceAllocated()
     nsIntSize displaySize(displayWidth, displayHeight);
     nsIntSize frameSize(width, height);
     if (!IsValidVideoRegion(frameSize, pictureRect, displaySize)) {
-      mMetadataPromise.Reject(ReadMetadataFailureReason::METADATA_ERROR, __func__);
+      mMetadataPromise.Reject(NS_ERROR_DOM_MEDIA_METADATA_ERR, __func__);
       return;
     }
 
@@ -408,25 +409,25 @@ bool MediaOmxReader::DecodeVideoFrame(bool &aKeyframeSkip,
       b.mPlanes[2].mOffset = frame.Cr.mOffset;
       b.mPlanes[2].mSkip = frame.Cr.mSkip;
 
-      v = VideoData::Create(mInfo.mVideo,
-                            mDecoder->GetImageContainer(),
-                            pos,
-                            frame.mTimeUs,
-                            1, // We don't know the duration.
-                            b,
-                            frame.mKeyFrame,
-                            -1,
-                            picture);
+      v = VideoData::CreateAndCopyData(mInfo.mVideo,
+                                       mDecoder->GetImageContainer(),
+                                       pos,
+                                       frame.mTimeUs,
+                                       1, // We don't know the duration.
+                                       b,
+                                       frame.mKeyFrame,
+                                       -1,
+                                       picture);
     } else {
-      v = VideoData::Create(mInfo.mVideo,
-                            mDecoder->GetImageContainer(),
-                            pos,
-                            frame.mTimeUs,
-                            1, // We don't know the duration.
-                            frame.mGraphicBuffer,
-                            frame.mKeyFrame,
-                            -1,
-                            picture);
+      v = VideoData::CreateAndCopyIntoTextureClient(
+                                       mInfo.mVideo,
+                                       pos,
+                                       frame.mTimeUs,
+                                       1, // We don't know the duration.
+                                       frame.mGraphicBuffer,
+                                       frame.mKeyFrame,
+                                       -1,
+                                       picture);
     }
 
     if (!v) {

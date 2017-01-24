@@ -296,9 +296,10 @@ private:
   friend void mozilla::TimelineConsumers::AddConsumer(nsDocShell*);
   friend void mozilla::TimelineConsumers::RemoveConsumer(nsDocShell*);
   friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
-    nsDocShell*, const char*, MarkerTracingType);
+    nsDocShell*, const char*, MarkerTracingType, MarkerStackRequest);
   friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
-    nsDocShell*, const char*, const TimeStamp&, MarkerTracingType);
+    nsDocShell*, const char*, const TimeStamp&, MarkerTracingType,
+    MarkerStackRequest);
   friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
     nsDocShell*, UniquePtr<AbstractTimelineMarker>&&);
   friend void mozilla::TimelineConsumers::PopMarkers(nsDocShell*,
@@ -502,8 +503,6 @@ protected:
                                      nsIChannel* aNewChannel,
                                      uint32_t aRedirectFlags,
                                      uint32_t aStateFlags) override;
-
-  nsresult SetIsActiveInternal(bool aIsActive, bool aIsHidden);
 
   /**
    * Helper function that determines if channel is an HTTP POST.
@@ -1017,10 +1016,6 @@ protected:
   // On chrome docshells this value will be set, but not have the corresponding
   // origin attribute set.
   uint32_t mPrivateBrowsingId;
-
-  nsString mPaymentRequestId;
-
-  nsString GetInheritedPaymentRequestId();
 
   nsString mInterceptedDocumentId;
 

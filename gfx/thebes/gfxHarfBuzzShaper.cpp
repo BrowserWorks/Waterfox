@@ -9,7 +9,7 @@
 #include "gfxHarfBuzzShaper.h"
 #include "gfxFontUtils.h"
 #include "gfxTextRun.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nsUnicodeProperties.h"
 #include "nsUnicodeScriptCodes.h"
 #include "nsUnicodeNormalizer.h"
@@ -930,10 +930,10 @@ gfxHarfBuzzShaper::GetHKerning(uint16_t aFirstGlyph,
 #if DEBUG
                 {
                     char buf[1024];
-                    snprintf_literal(buf, "unknown kern subtable in %s: "
-                                          "ver 0 format %d\n",
-                                     NS_ConvertUTF16toUTF8(mFont->GetName()).get(),
-                                     format);
+                    SprintfLiteral(buf, "unknown kern subtable in %s: "
+                                        "ver 0 format %d\n",
+                                   NS_ConvertUTF16toUTF8(mFont->GetName()).get(),
+                                   format);
                     NS_WARNING(buf);
                 }
 #endif
@@ -992,10 +992,10 @@ gfxHarfBuzzShaper::GetHKerning(uint16_t aFirstGlyph,
 #if DEBUG
                     {
                         char buf[1024];
-                        snprintf_literal(buf, "unknown kern subtable in %s: "
-                                              "ver 0 format %d\n",
-                                         NS_ConvertUTF16toUTF8(mFont->GetName()).get(),
-                                         format);
+                        SprintfLiteral(buf, "unknown kern subtable in %s: "
+                                            "ver 0 format %d\n",
+                                       NS_ConvertUTF16toUTF8(mFont->GetName()).get(),
+                                       format);
                         NS_WARNING(buf);
                     }
 #endif
@@ -1108,88 +1108,6 @@ HBUnicodeCompose(hb_unicode_funcs_t *ufuncs,
     }
 
 #endif
-
-    if ((b & 0x1fff80) == 0x0580) {
-        // special-case Hebrew presentation forms that are excluded from
-        // standard normalization, but wanted for old fonts
-        switch (b) {
-        case 0x05B4: // HIRIQ
-            if (a == 0x05D9) { // YOD
-                *ab = 0xFB1D;
-                return true;
-            }
-            break;
-        case 0x05B7: // patah
-            if (a == 0x05F2) { // YIDDISH YOD YOD
-                *ab = 0xFB1F;
-                return true;
-            }
-            if (a == 0x05D0) { // ALEF
-                *ab = 0xFB2E;
-                return true;
-            }
-            break;
-        case 0x05B8: // QAMATS
-            if (a == 0x05D0) { // ALEF
-                *ab = 0xFB2F;
-                return true;
-            }
-            break;
-        case 0x05B9: // HOLAM
-            if (a == 0x05D5) { // VAV
-                *ab = 0xFB4B;
-                return true;
-            }
-            break;
-        case 0x05BC: // DAGESH
-            if (a >= 0x05D0 && a <= 0x05EA) {
-                *ab = sDageshForms[a - 0x05D0];
-                return (*ab != 0);
-            }
-            if (a == 0xFB2A) { // SHIN WITH SHIN DOT
-                *ab = 0xFB2C;
-                return true;
-            }
-            if (a == 0xFB2B) { // SHIN WITH SIN DOT
-                *ab = 0xFB2D;
-                return true;
-            }
-            break;
-        case 0x05BF: // RAFE
-            switch (a) {
-            case 0x05D1: // BET
-                *ab = 0xFB4C;
-                return true;
-            case 0x05DB: // KAF
-                *ab = 0xFB4D;
-                return true;
-            case 0x05E4: // PE
-                *ab = 0xFB4E;
-                return true;
-            }
-            break;
-        case 0x05C1: // SHIN DOT
-            if (a == 0x05E9) { // SHIN
-                *ab = 0xFB2A;
-                return true;
-            }
-            if (a == 0xFB49) { // SHIN WITH DAGESH
-                *ab = 0xFB2C;
-                return true;
-            }
-            break;
-        case 0x05C2: // SIN DOT
-            if (a == 0x05E9) { // SHIN
-                *ab = 0xFB2B;
-                return true;
-            }
-            if (a == 0xFB49) { // SHIN WITH DAGESH
-                *ab = 0xFB2D;
-                return true;
-            }
-            break;
-        }
-    }
 
     return false;
 }
@@ -1597,7 +1515,8 @@ gfxHarfBuzzShaper::ShapeText(DrawTarget      *aDrawTarget,
     nsresult rv = SetGlyphsFromRun(aDrawTarget, aShapedText, aOffset, aLength,
                                    aText, buffer, aVertical);
 
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "failed to store glyphs into gfxShapedWord");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                         "failed to store glyphs into gfxShapedWord");
     hb_buffer_destroy(buffer);
 
     return NS_SUCCEEDED(rv);

@@ -107,11 +107,6 @@ static constexpr Register ReturnReg = v0;
 static constexpr FloatRegister ReturnSimd128Reg = InvalidFloatReg;
 static constexpr FloatRegister ScratchSimd128Reg = InvalidFloatReg;
 
-// TLS pointer argument register for WebAssembly functions. This must not alias
-// any other register used for passing function arguments or return values.
-// Preserved by WebAssembly functions.
-static constexpr Register WasmTlsReg = s5;
-
 // A bias applied to the GlobalReg to allow the use of instructions with small
 // negative immediate offsets which doubles the range of global data that can be
 // accessed with a single instruction.
@@ -121,7 +116,6 @@ static const int32_t AsmJSGlobalRegBias = 32768;
 static constexpr Register AsmJSIonExitRegCallee = t0;
 static constexpr Register AsmJSIonExitRegE0 = a0;
 static constexpr Register AsmJSIonExitRegE1 = a1;
-static constexpr Register AsmJSIonExitRegE2 = a2;
 
 // Registers used in the GenerateFFIIonExit Disable Activation block.
 // None of these may be the second scratch register (t8).
@@ -1257,6 +1251,11 @@ class AssemblerMIPSShared : public AssemblerShared
     }
 
     void flushBuffer() {
+    }
+
+    void comment(const char* msg) {
+        // This is not implemented because setPrinter() is not implemented.
+        // TODO spew("; %s", msg);
     }
 
     static uint32_t NopSize() { return 4; }

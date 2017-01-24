@@ -114,15 +114,13 @@ nsStyleDisplay::IsOriginalDisplayInlineOutside(const nsIFrame* aContextFrame) co
   return IsOriginalDisplayInlineOutsideStyle();
 }
 
-uint8_t
+mozilla::StyleDisplay
 nsStyleDisplay::GetDisplay(const nsIFrame* aContextFrame) const
 {
   NS_ASSERTION(aContextFrame->StyleDisplay() == this, "unexpected aContextFrame");
-  if (aContextFrame->IsSVGText() &&
-      mDisplay != NS_STYLE_DISPLAY_NONE) {
+  if (aContextFrame->IsSVGText() && mDisplay != mozilla::StyleDisplay::None) {
     return aContextFrame->GetType() == nsGkAtoms::blockFrame ?
-             NS_STYLE_DISPLAY_BLOCK :
-             NS_STYLE_DISPLAY_INLINE;
+             mozilla::StyleDisplay::Block : mozilla::StyleDisplay::Inline;
   }
   return mDisplay;
 }
@@ -144,30 +142,80 @@ nsStyleDisplay::HasTransform(const nsIFrame* aContextFrame) const
   return HasTransformStyle() && aContextFrame->IsFrameOfType(nsIFrame::eSupportsCSSTransforms);
 }
 
+template<class StyleContextLike>
+bool
+nsStyleDisplay::HasFixedPosContainingBlockStyleInternal(
+                  StyleContextLike* aStyleContext) const
+{
+  // NOTE: Any CSS properties that influence the output of this function
+  // should have the CSS_PROPERTY_FIXPOS_CB set on them.
+  NS_ASSERTION(aStyleContext->StyleDisplay() == this,
+               "unexpected aStyleContext");
+  return IsContainPaint() ||
+         HasPerspectiveStyle() ||
+         (mWillChangeBitField & NS_STYLE_WILL_CHANGE_FIXPOS_CB) ||
+         aStyleContext->StyleEffects()->HasFilters();
+}
+
+template<class StyleContextLike>
+bool
+nsStyleDisplay::IsFixedPosContainingBlockForAppropriateFrame(
+                  StyleContextLike* aStyleContext) const
+{
+  // NOTE: Any CSS properties that influence the output of this function
+  // should have the CSS_PROPERTY_FIXPOS_CB set on them.
+  return HasFixedPosContainingBlockStyleInternal(aStyleContext) ||
+         HasTransformStyle();
+}
+
 bool
 nsStyleDisplay::IsFixedPosContainingBlock(const nsIFrame* aContextFrame) const
 {
   // NOTE: Any CSS properties that influence the output of this function
   // should have the CSS_PROPERTY_FIXPOS_CB set on them.
-  NS_ASSERTION(aContextFrame->StyleDisplay() == this,
-               "unexpected aContextFrame");
-  return (IsContainPaint() || HasTransform(aContextFrame) ||
-          HasPerspectiveStyle() ||
-          (mWillChangeBitField & NS_STYLE_WILL_CHANGE_FIXPOS_CB) ||
-          aContextFrame->StyleEffects()->HasFilters()) &&
-      !aContextFrame->IsSVGText();
+  if (!HasFixedPosContainingBlockStyleInternal(aContextFrame->StyleContext()) &&
+      !HasTransform(aContextFrame)) {
+    return false;
+  }
+  return !aContextFrame->IsSVGText();
+}
+
+template<class StyleContextLike>
+bool
+nsStyleDisplay::HasAbsPosContainingBlockStyleInternal(
+                  StyleContextLike* aStyleContext) const
+{
+  // NOTE: Any CSS properties that influence the output of this function
+  // should have the CSS_PROPERTY_ABSPOS_CB set on them.
+  NS_ASSERTION(aStyleContext->StyleDisplay() == this,
+               "unexpected aStyleContext");
+  return IsAbsolutelyPositionedStyle() ||
+         IsRelativelyPositionedStyle() ||
+         (mWillChangeBitField & NS_STYLE_WILL_CHANGE_ABSPOS_CB);
+}
+
+template<class StyleContextLike>
+bool
+nsStyleDisplay::IsAbsPosContainingBlockForAppropriateFrame(StyleContextLike* aStyleContext) const
+{
+  // NOTE: Any CSS properties that influence the output of this function
+  // should have the CSS_PROPERTY_ABSPOS_CB set on them.
+  return HasAbsPosContainingBlockStyleInternal(aStyleContext) ||
+         IsFixedPosContainingBlockForAppropriateFrame(aStyleContext);
 }
 
 bool
 nsStyleDisplay::IsAbsPosContainingBlock(const nsIFrame* aContextFrame) const
 {
-  NS_ASSERTION(aContextFrame->StyleDisplay() == this,
-               "unexpected aContextFrame");
-  return ((IsAbsolutelyPositionedStyle() ||
-           IsRelativelyPositionedStyle() ||
-           (mWillChangeBitField & NS_STYLE_WILL_CHANGE_ABSPOS_CB)) &&
-          !aContextFrame->IsSVGText()) ||
-         IsFixedPosContainingBlock(aContextFrame);
+  // NOTE: Any CSS properties that influence the output of this function
+  // should have the CSS_PROPERTY_ABSPOS_CB set on them.
+  nsStyleContext* sc = aContextFrame->StyleContext();
+  if (!HasAbsPosContainingBlockStyleInternal(sc) &&
+      !HasFixedPosContainingBlockStyleInternal(sc) &&
+      !HasTransform(aContextFrame)) {
+    return false;
+  }
+  return !aContextFrame->IsSVGText();
 }
 
 bool

@@ -48,11 +48,39 @@ Manifest.prototype = {
     },
 
     by_type:function(type) {
+        var ret = [] ;
         if (this.data.items.hasOwnProperty(type)) {
-            return this.data.items[type];
-        } else {
-            return [];
+            ret = this.data.items[type].slice(0) ;
         }
+        // local_changes.items in manifest is an Object just as
+        // items is.  However, the properties of local_changes.items
+        // are Objects and the properties of items are Arrays.
+        // So we need to extract any relevant local changes by iterating
+        // over the Object and pulling out the referenced nodes as array items.
+        if (this.data.hasOwnProperty("local_changes")) {
+            var local = this.data.local_changes ;
+            // add in any local items
+            if (local.items.hasOwnProperty(type)) {
+                Object.keys(local.items[type]).forEach(function(ref) {
+                    ret.push(local.items[type][ref][0]) ;
+                }.bind(this));
+            }
+            // remove any items that are locally deleted but not yet committed
+            // note that the deleted and deleted_reftests properties of the local_changes
+            // object are always present, even if they are empty
+            if (ret.length && local.deleted.length) {
+                // make a hash of the deleted to speed searching
+                var dels = {} ;
+                local.deleted.forEach(function(x) { dels[x] = true; } );
+                for (var j = ret.length-1; j >= 0; j--) {
+                    if ( dels[ret[j].path] || (type === "reftest" && local.deleted_reftests[ret[j].path]) ){
+                        // we have a match
+                        ret.splice(j, 1) ;
+                    }
+                }
+            }
+        }
+        return ret ;
     }
 };
 
@@ -69,7 +97,7 @@ function ManifestIterator(manifest, path, test_types, use_regex) {
         this.regex_pattern = path;
     } else {
         // Split paths by either a comma or whitespace, and ignore empty sub-strings.
-        this.paths = path.split(/[,\s]+/).filter(function(s) { return s.length > 0 });
+        this.paths = path.split(/[,\s]+/).filter(function(s) { return s.length > 0; });
     }
 }
 
@@ -116,9 +144,10 @@ ManifestIterator.prototype = {
             type: this.test_types[this.test_types_index],
             url: manifest_item.url
         };
-        if (manifest_item.hasOwnProperty("ref_url")) {
-            test.ref_type = manifest_item.ref_type;
-            test.ref_url = manifest_item.ref_url;
+        if (manifest_item.hasOwnProperty("references")) {
+            test.ref_length = manifest_item.references.length;
+            test.ref_type = manifest_item.references[0][1];
+            test.ref_url = manifest_item.references[0][0];
         }
         return test;
     },
@@ -348,6 +377,7 @@ function ManualUI(elem, runner) {
     this.fail_button = this.elem.querySelector("button.fail");
     this.ref_buttons = this.elem.querySelector(".reftestUI");
     this.ref_type = this.ref_buttons.querySelector(".refType");
+    this.ref_warning = this.elem.querySelector(".reftestWarn");
     this.test_button = this.ref_buttons.querySelector("button.test");
     this.ref_button = this.ref_buttons.querySelector("button.ref");
 
@@ -411,6 +441,13 @@ ManualUI.prototype = {
         if (test.type == "reftest") {
             this.show_ref();
             this.ref_type.textContent = test.ref_type === "==" ? "equal" : "unequal";
+            if (test.ref_length > 1) {
+                this.ref_warning.textContent = "WARNING: only presenting first of " + test.ref_length + " references";
+                this.ref_warning.style.display = "inline";
+            }  else {
+                this.ref_warning.textContent = "";
+                this.ref_warning.style.display = "none";
+            }
         } else {
             this.hide_ref();
         }
@@ -424,22 +461,35 @@ ManualUI.prototype = {
 function TestControl(elem, runner) {
     this.elem = elem;
     this.path_input = this.elem.querySelector(".path");
+    this.path_input.addEventListener("change", function() {
+        this.set_counts();
+    }.bind(this), false);
     this.use_regex_input = this.elem.querySelector("#use_regex");
+    this.use_regex_input.addEventListener("change", function() {
+        this.set_counts();
+    }.bind(this), false);
     this.pause_button = this.elem.querySelector("button.togglePause");
     this.start_button = this.elem.querySelector("button.toggleStart");
     this.type_checkboxes = Array.prototype.slice.call(
         this.elem.querySelectorAll("input[type=checkbox].test-type"));
     this.type_checkboxes.forEach(function(elem) {
+        elem.addEventListener("change", function() {
+            this.set_counts();
+        }.bind(this),
+        false);
         elem.addEventListener("click", function() {
             this.start_button.disabled = this.get_test_types().length < 1;
         }.bind(this),
         false);
     }.bind(this));
+
     this.timeout_input = this.elem.querySelector(".timeout_multiplier");
     this.render_checkbox = this.elem.querySelector(".render");
+    this.testcount_area = this.elem.querySelector("#testcount");
     this.runner = runner;
     this.runner.done_callbacks.push(this.on_done.bind(this));
     this.set_start();
+    this.set_counts();
 }
 
 TestControl.prototype = {
@@ -491,6 +541,21 @@ TestControl.prototype = {
             this.set_pause();
         }.bind(this);
 
+    },
+
+    set_counts: function() {
+        if (this.runner.manifest_loading) {
+            setTimeout(function() {
+                this.set_counts();
+            }.bind(this), 1000);
+            return;
+        }
+        var path = this.get_path();
+        var test_types = this.get_test_types();
+        var use_regex = this.get_use_regex();
+        var iterator = new ManifestIterator(this.runner.manifest, path, test_types, use_regex);
+        var count = iterator.count();
+        this.testcount_area.textContent = count;
     },
 
     get_path: function() {
@@ -585,6 +650,7 @@ function Runner(manifest_path) {
     this.results = new Results(this);
 
     this.start_after_manifest_load = false;
+    this.manifest_loading = true;
     this.manifest.load(this.manifest_loaded.bind(this));
 }
 
@@ -600,6 +666,7 @@ Runner.prototype = {
     },
 
     manifest_loaded: function() {
+        this.manifest_loading = false;
         if (this.start_after_manifest_load) {
             this.do_start();
         }

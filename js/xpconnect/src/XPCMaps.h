@@ -30,7 +30,7 @@ class JSObject2WrappedJSMap
     using Map = js::HashMap<JS::Heap<JSObject*>,
                             nsXPCWrappedJS*,
                             js::MovableCellHasher<JS::Heap<JSObject*>>,
-                            js::SystemAllocPolicy>;
+                            InfallibleAllocPolicy>;
 
 public:
     static JSObject2WrappedJSMap* newMap(int length) {
@@ -83,7 +83,7 @@ public:
             r.front().value()->DebugDump(depth);
     }
 
-    void UpdateWeakPointersAfterGC(XPCJSRuntime* runtime);
+    void UpdateWeakPointersAfterGC(XPCJSContext* context);
 
     void ShutdownMarker();
 
@@ -314,7 +314,7 @@ public:
 
     // ClassInfo2NativeSetMap holds pointers to *some* XPCNativeSets.
     // So we don't want to count those XPCNativeSets, because they are better
-    // counted elsewhere (i.e. in XPCJSRuntime::mNativeSetMap, which holds
+    // counted elsewhere (i.e. in XPCJSContext::mNativeSetMap, which holds
     // pointers to *all* XPCNativeSets).  Hence the "Shallow".
     size_t ShallowSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf);
 
@@ -402,8 +402,8 @@ public:
 
     inline XPCNativeSet* Add(const XPCNativeSetKey* key, XPCNativeSet* set)
     {
-        NS_PRECONDITION(key,"bad param");
-        NS_PRECONDITION(set,"bad param");
+        MOZ_ASSERT(key, "bad param");
+        MOZ_ASSERT(set, "bad param");
         auto entry = static_cast<Entry*>(mTable.Add(key, mozilla::fallible));
         if (!entry)
             return nullptr;
@@ -413,17 +413,25 @@ public:
         return set;
     }
 
-    inline XPCNativeSet* Add(XPCNativeSet* set)
+    bool AddNew(const XPCNativeSetKey* key, XPCNativeSet* set)
     {
-        XPCNativeSetKey key(set, nullptr, 0);
-        return Add(&key, set);
+        XPCNativeSet* set2 = Add(key, set);
+        if (!set2) {
+            return false;
+        }
+#ifdef DEBUG
+        XPCNativeSetKey key2(set);
+        MOZ_ASSERT(key->Hash() == key2.Hash());
+        MOZ_ASSERT(set2 == set, "Should not have found an existing entry");
+#endif
+        return true;
     }
 
     inline void Remove(XPCNativeSet* set)
     {
-        NS_PRECONDITION(set,"bad param");
+        MOZ_ASSERT(set, "bad param");
 
-        XPCNativeSetKey key(set, nullptr, 0);
+        XPCNativeSetKey key(set);
         mTable.Remove(&key);
     }
 
@@ -492,39 +500,6 @@ public:
 private:
     IID2ThisTranslatorMap();    // no implementation
     explicit IID2ThisTranslatorMap(int size);
-private:
-    PLDHashTable mTable;
-};
-
-/***************************************************************************/
-
-class XPCNativeScriptableSharedMap
-{
-public:
-    struct Entry : public PLDHashEntryHdr
-    {
-        XPCNativeScriptableShared* key;
-
-        static PLDHashNumber
-        Hash(const void* key);
-
-        static bool
-        Match(const PLDHashEntryHdr* entry, const void* key);
-
-        static const struct PLDHashTableOps sOps;
-    };
-
-    static XPCNativeScriptableSharedMap* newMap(int length);
-
-    bool GetNewOrUsed(uint32_t flags, char* name, XPCNativeScriptableInfo* si);
-
-    inline uint32_t Count() { return mTable.EntryCount(); }
-
-    PLDHashTable::Iterator Iter() { return mTable.Iter(); }
-
-private:
-    XPCNativeScriptableSharedMap();    // no implementation
-    explicit XPCNativeScriptableSharedMap(int size);
 private:
     PLDHashTable mTable;
 };

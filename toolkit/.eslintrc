@@ -6,22 +6,22 @@
     // "arrow-body-style": [2, "as-needed"],
 
     // Require spacing around =>
-    // "arrow-spacing": 2,
+    "arrow-spacing": 2,
 
     // Always require spacing around a single line block
-    // "block-spacing": 1,
+    "block-spacing": 2,
 
     // No newline before open brace for a block
     // "brace-style": 2,
 
     // No space before always a space after a comma
-    // "comma-spacing": [2, {"before": false, "after": true}],
+    "comma-spacing": [2, {"before": false, "after": true}],
 
     // Commas at the end of the line not the start
     // "comma-style": 2,
 
     // Don't require spaces around computed properties
-    // "computed-property-spacing": [2, "never"],
+    "computed-property-spacing": [2, "never"],
 
     // Functions must always return something or nothing
     "consistent-return": 2,
@@ -44,7 +44,7 @@
     // "key-spacing": [2, { "beforeColon": false, "afterColon": true, "mode": "minimum" }],
 
     // Require spaces before and after keywords
-    // "keyword-spacing": 2,
+    "keyword-spacing": 2,
 
     // Unix linebreaks
     "linebreak-style": [2, "unix"],
@@ -68,10 +68,10 @@
     "no-labels": 2,
 
     // If an if block ends with a return no need for an else block
-    // "no-else-return": 2,
+    "no-else-return": 2,
 
     // No empty statements
-    // "no-empty": 2,
+    "no-empty": [2, "allowEmptyCatch": true],
 
     // No empty character classes in regex
     "no-empty-character-class": 2,
@@ -80,7 +80,7 @@
     "no-empty-pattern": 2,
 
     // No assiging to exception variable
-    // "no-ex-assign": 2,
+    "no-ex-assign": 2,
 
     // No using !! where casting to boolean is already happening
     // "no-extra-boolean-cast": 2,
@@ -98,7 +98,7 @@
     "no-irregular-whitespace": 2,
 
     // No single if block inside an else block
-    // "no-lonely-if": 2,
+    "no-lonely-if": 2,
 
     // No mixing spaces and tabs in indent
     "no-mixed-spaces-and-tabs": [2, "smart-tabs"],
@@ -167,7 +167,7 @@
     // "semi": [2, "always"],
 
     // Require space before blocks
-    // "space-before-blocks": 2,
+    "space-before-blocks": 2,
 
     // Never use spaces before function parentheses
     // "space-before-function-paren": [2, { "anonymous": "always", "named": "never" }],

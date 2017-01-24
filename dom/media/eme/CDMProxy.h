@@ -34,6 +34,8 @@ struct DecryptResult {
   RefPtr<MediaRawData> mSample;
 };
 
+typedef int64_t UnixTime;
+
 // Proxies calls CDM, and proxies calls back.
 // Note: Promises are passed in via a PromiseId, so that the ID can be
 // passed via IPC to the CDM, which can then signal when to reject or
@@ -68,6 +70,8 @@ public:
                     const nsAString& aTopLevelOrigin,
                     const nsAString& aName,
                     bool aInPrivateBrowsing) = 0;
+
+  virtual void OnSetDecryptorId(uint32_t aId) {}
 
   // Main thread only.
   // Uses the CDM to create a key session.
@@ -142,7 +146,7 @@ public:
 
   // Main thread only.
   virtual void OnExpirationChange(const nsAString& aSessionId,
-                                  int64_t aExpiryTime) = 0;
+                                  UnixTime aExpiryTime) = 0;
 
   // Main thread only.
   virtual void OnSessionClosed(const nsAString& aSessionId) = 0;
@@ -189,6 +193,8 @@ public:
 #ifdef DEBUG
   virtual bool IsOnOwnerThread() = 0;
 #endif
+
+  virtual uint32_t GetDecryptorId() { return 0; }
 
 protected:
   virtual ~CDMProxy() {}

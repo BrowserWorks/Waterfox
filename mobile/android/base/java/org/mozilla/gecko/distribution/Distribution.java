@@ -39,7 +39,6 @@ import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.annotation.WrapForJNI;
@@ -298,6 +297,14 @@ public class Distribution {
 
                 // This will bail if we aren't delayed, or we already have a distribution.
                 distribution.processDelayedReferrer(ref);
+
+                // On Android 5+ we might receive the referrer intent
+                // and never actually launch the browser, which is the usual signal
+                // for the distribution init process to complete.
+                // Attempt to init here to handle that case.
+                // Profile setup that relies on the distribution will occur
+                // when the browser is eventually launched, via `addOnDistributionReadyCallback`.
+                distribution.doInit();
             }
         });
     }
@@ -874,7 +881,7 @@ public class Distribution {
         return context.getApplicationInfo().dataDir;
     }
 
-    @WrapForJNI
+    @WrapForJNI(calledFrom = "gecko")
     public static String[] getDistributionDirectories() {
         final Context context = GeckoAppShell.getApplicationContext();
 

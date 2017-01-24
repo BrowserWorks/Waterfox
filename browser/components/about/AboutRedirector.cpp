@@ -13,7 +13,6 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsIProtocolHandler.h"
 #include "mozilla/ArrayUtils.h"
-#include "nsDOMString.h"
 #include "nsServiceManagerUtils.h"
 
 namespace mozilla {
@@ -25,7 +24,6 @@ struct RedirEntry {
   const char* id;
   const char* url;
   uint32_t flags;
-  const char* idbOriginPostfix;
 };
 
 /*
@@ -37,13 +35,11 @@ struct RedirEntry {
   URI_SAFE_FOR_UNTRUSTED_CONTENT.
 */
 static RedirEntry kRedirMap[] = {
-#ifdef MOZ_SAFE_BROWSING
   { "blocked", "chrome://browser/content/blockedSite.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
     nsIAboutModule::URI_CAN_LOAD_IN_CHILD |
     nsIAboutModule::ALLOW_SCRIPT |
     nsIAboutModule::HIDE_FROM_ABOUTABOUT },
-#endif
   { "certerror", "chrome://browser/content/aboutNetError.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
     nsIAboutModule::URI_CAN_LOAD_IN_CHILD |
@@ -222,29 +218,6 @@ AboutRedirector::GetURIFlags(nsIURI *aURI, uint32_t *result)
     }
   }
 
-  return NS_ERROR_ILLEGAL_VALUE;
-}
-
-NS_IMETHODIMP
-AboutRedirector::GetIndexedDBOriginPostfix(nsIURI *aURI, nsAString &result)
-{
-  NS_ENSURE_ARG_POINTER(aURI);
-
-  nsAutoCString name = GetAboutModuleName(aURI);
-
-  for (int i = 0; i < kRedirTotal; i++) {
-    if (name.Equals(kRedirMap[i].id)) {
-      const char* postfix = kRedirMap[i].idbOriginPostfix;
-      if (!postfix) {
-        break;
-      }
-
-      result.AssignASCII(postfix);
-      return NS_OK;
-    }
-  }
-
-  SetDOMStringToNull(result);
   return NS_ERROR_ILLEGAL_VALUE;
 }
 

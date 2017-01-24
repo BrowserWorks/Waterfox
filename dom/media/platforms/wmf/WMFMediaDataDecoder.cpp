@@ -72,7 +72,7 @@ SendTelemetry(unsigned long hr)
   NS_DispatchToMainThread(runnable);
 }
 
-nsresult
+void
 WMFMediaDataDecoder::Shutdown()
 {
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
@@ -83,7 +83,6 @@ WMFMediaDataDecoder::Shutdown()
     ProcessShutdown();
   }
   mIsShutDown = true;
-  return NS_OK;
 }
 
 void
@@ -99,7 +98,7 @@ WMFMediaDataDecoder::ProcessShutdown()
 }
 
 // Inserts data into the decoder's pipeline.
-nsresult
+void
 WMFMediaDataDecoder::Input(MediaRawData* aSample)
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
@@ -111,7 +110,6 @@ WMFMediaDataDecoder::Input(MediaRawData* aSample)
       &WMFMediaDataDecoder::ProcessDecode,
       RefPtr<MediaRawData>(aSample));
   mTaskQueue->Dispatch(runnable.forget());
-  return NS_OK;
 }
 
 void
@@ -125,7 +123,8 @@ WMFMediaDataDecoder::ProcessDecode(MediaRawData* aSample)
   HRESULT hr = mMFTManager->Input(aSample);
   if (FAILED(hr)) {
     NS_WARNING("MFTManager rejected sample");
-    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
+    mCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
+                                 RESULT_DETAIL("MFTManager::Input:%x", hr)));
     if (!mRecordedError) {
       SendTelemetry(hr);
       mRecordedError = true;
@@ -149,12 +148,11 @@ WMFMediaDataDecoder::ProcessOutput()
     mCallback->Output(output);
   }
   if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT) {
-    if (mTaskQueue->IsEmpty()) {
-      mCallback->InputExhausted();
-    }
+    mCallback->InputExhausted();
   } else if (FAILED(hr)) {
     NS_WARNING("WMFMediaDataDecoder failed to output data");
-    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
+    mCallback->Error(MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
+                                 RESULT_DETAIL("MFTManager::Output:%x", hr)));
     if (!mRecordedError) {
       SendTelemetry(hr);
       mRecordedError = true;
@@ -170,7 +168,7 @@ WMFMediaDataDecoder::ProcessFlush()
   }
 }
 
-nsresult
+void
 WMFMediaDataDecoder::Flush()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
@@ -181,7 +179,6 @@ WMFMediaDataDecoder::Flush()
     NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessFlush);
   SyncRunnable::DispatchToThread(mTaskQueue, runnable);
   mIsFlushing = false;
-  return NS_OK;
 }
 
 void
@@ -196,14 +193,13 @@ WMFMediaDataDecoder::ProcessDrain()
   mCallback->DrainComplete();
 }
 
-nsresult
+void
 WMFMediaDataDecoder::Drain()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
   mTaskQueue->Dispatch(NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessDrain));
-  return NS_OK;
 }
 
 bool
@@ -213,7 +209,7 @@ WMFMediaDataDecoder::IsHardwareAccelerated(nsACString& aFailureReason) const {
   return mMFTManager && mMFTManager->IsHardwareAccelerated(aFailureReason);
 }
 
-nsresult
+void
 WMFMediaDataDecoder::ConfigurationChanged(const TrackInfo& aConfig)
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
@@ -224,8 +220,6 @@ WMFMediaDataDecoder::ConfigurationChanged(const TrackInfo& aConfig)
     &WMFMediaDataDecoder::ProcessConfigurationChanged,
     aConfig.Clone());
   mTaskQueue->Dispatch(runnable.forget());
-  return NS_OK;
-
 }
 
 void

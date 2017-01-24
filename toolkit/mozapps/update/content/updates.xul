@@ -106,17 +106,6 @@
     </vbox>
   </wizardpage>
 
-  <wizardpage id="updatesfoundbillboard" pageid="updatesfoundbillboard"
-              object="gUpdatesFoundBillboardPage" next="downloading"
-              onpageshow="gUpdatesFoundBillboardPage.onPageShow();"
-              onextra1="gUpdatesFoundBillboardPage.onExtra1();"
-              onextra2="gUpdatesFoundBillboardPage.onExtra2();">
-    <!-- note: the localized strings used by remotecontent are prefixed by the
-               id for the remotecontent (e.g. updateMoreInfoContentNotFound,
-               updateMoreInfoContentDownloading, etc.) -->
-    <remotecontent id="updateMoreInfoContent" flex="1" remotetype="billboard"/>
-  </wizardpage>
-
   <wizardpage id="downloading" pageid="downloading"
               object="gDownloadingPage" onextra1="gDownloadingPage.onHide();"
               onpageshow="gDownloadingPage.onPageShow();">
@@ -161,14 +150,9 @@
               onpageshow="gErrorExtraPage.onPageShow();">
     <updateheader label="&error.title;"/>
     <vbox class="update-content" flex="1">
-      <label id="errorCertAttrHasUpdateLabel"
-             hidden="true">&errorCertAttrHasUpdate.label;</label>
-      <label id="errorCertCheckNoUpdateLabel"
-             hidden="true">&errorCertAttrNoUpdate2.label;</label>
-      <label id="genericBackgroundErrorLabel"
-             hidden="true">&genericBackgroundError.label;</label>
+      <label id="bgErrorLabel">&genericBackgroundError.label;</label>
       <hbox>
-        <label id="errorExtraLinkLabel" class="text-link" hidden="true"
+        <label id="errorExtraLinkLabel" class="text-link"
                value="" onclick="openUpdateURL(event);"/>
       </hbox>
     </vbox>

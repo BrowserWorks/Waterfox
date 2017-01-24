@@ -36,7 +36,10 @@ def set_tier(config, tests):
     for test in tests:
         # only override if not set for the test
         if 'tier' not in test:
-            if test['test-platform'] == 'linux64/debug':
+            if test['test-platform'] in ['linux64/debug',
+                                         'linux64-asan/opt',
+                                         'android-4.3-arm7-api-15/debug',
+                                         'android-x86/opt']:
                 test['tier'] = 1
             else:
                 test['tier'] = 2
@@ -59,10 +62,14 @@ def set_expires_after(config, tests):
 @transforms.add
 def set_download_symbols(config, tests):
     """In general, we download symbols immediately for debug builds, but only
-    on demand for everything else."""
+    on demand for everything else. ASAN builds shouldn't download
+    symbols since they don't product symbol zips see bug 1283879"""
     for test in tests:
         if test['test-platform'].split('/')[-1] == 'debug':
             test['mozharness']['download-symbols'] = True
+        elif test['build-platform'] == 'linux64-asan/opt':
+            if 'download-symbols' in test['mozharness']:
+                del test['mozharness']['download-symbols']
         else:
             test['mozharness']['download-symbols'] = 'ondemand'
         yield test
@@ -79,6 +86,10 @@ def resolve_keyed_by(config, tests):
     for test in tests:
         for field in fields:
             test[field] = get_keyed_by(item=test, field=field, item_name=test['test-name'])
+        test['mozharness']['config'] = get_keyed_by(item=test,
+                                                    field='mozharness',
+                                                    subfield='config',
+                                                    item_name=test['test-name'])
         yield test
 
 
@@ -104,3 +115,12 @@ def split_chunks(config, tests):
             chunked['treeherder-symbol'] = join_symbol(group, symbol)
 
             yield chunked
+
+
+@transforms.add
+def set_retry_exit_status(config, tests):
+    """Set the retry exit status to TBPL_RETRY, the value returned by mozharness
+       scripts to indicate a transient failure that should be retried."""
+    for test in tests:
+        test['retry-exit-status'] = 4
+        yield test

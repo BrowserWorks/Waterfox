@@ -8,16 +8,16 @@ with Files('*'):
     BUG_COMPONENT = ('Toolkit', 'Download Manager')
 
 with Files('ApplicationReputation.*'):
-    BUG_COMPONENT = ('Core', 'DOM: Security')
+    BUG_COMPONENT = ('Toolkit', 'Safe Browsing')
 
-with Files('csd.pb.*'):
-    BUG_COMPONENT = ('Core', 'DOM: Security')
+with Files('chromium/*'):
+    BUG_COMPONENT = ('Toolkit', 'Safe Browsing')
 
 with Files('generate_csd.sh'):
-    BUG_COMPONENT = ('Core', 'DOM: Security')
+    BUG_COMPONENT = ('Toolkit', 'Safe Browsing')
 
 with Files('nsIApplicationReputation.idl'):
-    BUG_COMPONENT = ('Core', 'DOM: Security')
+    BUG_COMPONENT = ('Toolkit', 'Safe Browsing')
 
 XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
 
@@ -32,19 +32,15 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'downloads'
 
 UNIFIED_SOURCES += [
-    'nsDownloadManager.cpp',
+    'ApplicationReputation.cpp',
+    'chromium/chrome/common/safe_browsing/csd.pb.cc',
+    'nsDownloadManager.cpp'
 ]
 
 # SQLFunctions.cpp cannot be built in unified mode because of Windows headers.
 SOURCES += [
     'SQLFunctions.cpp',
 ]
-
-if CONFIG['MOZ_URL_CLASSIFIER']:
-    UNIFIED_SOURCES += [
-        'ApplicationReputation.cpp',
-        'csd.pb.cc'
-    ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     # Can't build unified because we need CreateEvent which some IPC code
@@ -65,7 +61,8 @@ FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../protobuf',
-    '/ipc/chromium/src'
+    '/ipc/chromium/src',
+    'chromium'
 ]
 
 DEFINES['GOOGLE_PROTOBUF_NO_RTTI'] = True

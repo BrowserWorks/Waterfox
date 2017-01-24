@@ -118,8 +118,16 @@ void
 CacheFileChunkBuffer::SetDataSize(uint32_t aDataSize)
 {
   MOZ_RELEASE_ASSERT(
-    mDataSize <= mBufSize ||
-    (mBufSize == 0 && mChunk->mState == CacheFileChunk::READING));
+    // EnsureBufSize must be called before SetDataSize, so the new data size
+    // is guaranteed to be smaller than or equal to mBufSize.
+    aDataSize <= mBufSize ||
+    // The only exception is an optimization when we read the data from the
+    // disk. The data is read to a separate buffer and CacheFileChunk::mBuf is
+    // empty (see CacheFileChunk::Read). We need to set mBuf::mDataSize
+    // accordingly so that DataSize() methods return correct value, but we don't
+    // want to allocate the buffer since it wouldn't be used in most cases.
+    (mDataSize == 0 && mBufSize == 0 && mChunk->mState == CacheFileChunk::READING));
+
   mDataSize = aDataSize;
 }
 
@@ -255,7 +263,7 @@ protected:
   }
 
 public:
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     LOG(("NotifyUpdateListenerEvent::Run() [this=%p]", this));
 
@@ -328,8 +336,9 @@ CacheFileChunk::CacheFileChunk(CacheFile *aFile, uint32_t aIndex,
   , mIndex(aIndex)
   , mState(INITIAL)
   , mStatus(NS_OK)
-  , mIsDirty(false)
   , mActiveChunk(false)
+  , mIsDirty(false)
+  , mDiscardedChunk(false)
   , mBuffersSize(0)
   , mLimitAllocation(!aFile->mOpenAsMemoryOnly && aInitByWriter)
   , mIsPriority(aFile->mPriority)
@@ -615,6 +624,13 @@ CacheFileChunk::UpdateDataSize(uint32_t aOffset, uint32_t aLen)
 
   mValidityMap.AddPair(aOffset, aLen);
   mValidityMap.Log();
+}
+
+nsresult
+CacheFileChunk::Truncate(uint32_t aOffset)
+{
+  mBuf->SetDataSize(aOffset);
+  return NS_OK;
 }
 
 nsresult

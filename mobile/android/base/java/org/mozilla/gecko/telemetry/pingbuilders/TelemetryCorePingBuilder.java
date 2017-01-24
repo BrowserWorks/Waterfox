@@ -22,7 +22,7 @@ import org.mozilla.gecko.search.SearchEngine;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.telemetry.TelemetryPing;
 import org.mozilla.gecko.util.DateUtil;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.util.StringUtils;
 
 import java.text.DateFormat;
@@ -48,6 +48,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String OS_VALUE = "Android";
 
     private static final String ARCHITECTURE = "arch";
+    private static final String CAMPAIGN_ID = "campaignId";
     private static final String CLIENT_ID = "clientId";
     private static final String DEFAULT_SEARCH_ENGINE = "defaultSearch";
     private static final String DEVICE = "device";
@@ -152,6 +153,14 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         }
 
         payload.put(SEARCH_COUNTS, searchCounts);
+        return this;
+    }
+
+    public TelemetryCorePingBuilder setOptCampaignId(final String campaignId) {
+        if (campaignId == null) {
+            throw new IllegalStateException("Expected non-null campaign ID.");
+        }
+        payload.put(CAMPAIGN_ID, campaignId);
         return this;
     }
 

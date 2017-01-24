@@ -172,6 +172,14 @@ UNIFIED_SOURCES += [
     'WidgetUtils.cpp',
 ]
 
+if CONFIG['OS_ARCH'] == 'Linux':
+    EXPORTS.mozilla.widget += [
+        'LSBUtils.h'
+    ]
+    SOURCES += [
+        'LSBUtils.cpp'
+    ]
+
 if CONFIG['MOZ_XUL'] and CONFIG['NS_PRINTING']:
     EXPORTS += [
         'nsDeviceContextSpecProxy.h',
@@ -250,6 +258,11 @@ if toolkit == 'windows':
     IPDL_SOURCES = [
         'windows/PCompositorWidget.ipdl',
         'windows/PlatformWidgetTypes.ipdlh',
+    ]
+elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT'] and CONFIG['MOZ_X11']:
+    IPDL_SOURCES = [
+        'gtk/PCompositorWidget.ipdl',
+        'gtk/PlatformWidgetTypes.ipdlh',
     ]
 else:
     IPDL_SOURCES = [

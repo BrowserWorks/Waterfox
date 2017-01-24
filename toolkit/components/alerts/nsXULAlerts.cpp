@@ -10,7 +10,7 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/dom/Notification.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIServiceManager.h"
 #include "nsISupportsArray.h"
 #include "nsISupportsPrimitives.h"
@@ -63,10 +63,13 @@ NS_IMPL_ISUPPORTS(nsXULAlerts, nsIAlertsService, nsIAlertsDoNotDisturb, nsIAlert
 /* static */ already_AddRefed<nsXULAlerts>
 nsXULAlerts::GetInstance()
 {
+  // Gecko on Android does not fully support XUL windows.
+#ifndef MOZ_WIDGET_ANDROID
   if (!gXULAlerts) {
     gXULAlerts = new nsXULAlerts();
     ClearOnShutdown(&gXULAlerts);
   }
+#endif // MOZ_WIDGET_ANDROID
   RefPtr<nsXULAlerts> instance = gXULAlerts.get();
   return instance.forget();
 }

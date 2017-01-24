@@ -15,6 +15,7 @@
 #include "chrome/common/ipc_message_utils.h"
 #include "gfxPoint.h"
 #include "gfxRect.h"
+#include "gfxTelemetry.h"
 #include "gfxTypes.h"
 #include "ipc/IPCMessageUtils.h"
 #include "mozilla/gfx/Matrix.h"
@@ -219,6 +220,22 @@ struct ParamTraits<mozilla::layers::LayersBackend>
              mozilla::layers::LayersBackend,
              mozilla::layers::LayersBackend::LAYERS_NONE,
              mozilla::layers::LayersBackend::LAYERS_LAST>
+{};
+
+template <>
+struct ParamTraits<mozilla::gfx::BackendType>
+  : public ContiguousEnumSerializer<
+             mozilla::gfx::BackendType,
+             mozilla::gfx::BackendType::NONE,
+             mozilla::gfx::BackendType::BACKEND_LAST>
+{};
+
+template <>
+struct ParamTraits<mozilla::gfx::FeatureStatus>
+  : public ContiguousEnumSerializer<
+             mozilla::gfx::FeatureStatus,
+             mozilla::gfx::FeatureStatus::Unused,
+             mozilla::gfx::FeatureStatus::LAST>
 {};
 
 template <>

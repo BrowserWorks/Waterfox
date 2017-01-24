@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "mozilla/AllocPolicy.h"
 #include "mozilla/Move.h"
+#include "mozilla/ScopeExit.h"
 #include "mozilla/Types.h"
 #include "mozilla/TypeTraits.h"
 #include "mozilla/Vector.h"
@@ -51,16 +52,15 @@ class BufferList : private AllocPolicy
     char* End() const { return mData + mSize; }
   };
 
+  template<typename OtherAllocPolicy>
+  friend class BufferList;
+
  public:
   // For the convenience of callers, all segments are required to be a multiple
   // of 8 bytes in capacity. Also, every buffer except the last one is required
   // to be full (i.e., size == capacity). Therefore, a byte at offset N within
   // the BufferList and stored in memory at an address A will satisfy
   // (N % Align == A % Align) if Align == 2, 4, or 8.
-  //
-  // NB: FlattenBytes can create non-full segments in the middle of the
-  // list. However, it ensures that these buffers are 8-byte aligned, so the
-  // offset invariant is not violated.
   static const size_t kSegmentAlignment = 8;
 
   // Allocate a BufferList. The BufferList will free all its buffers when it is
@@ -74,6 +74,7 @@ class BufferList : private AllocPolicy
              AllocPolicy aAP = AllocPolicy())
    : AllocPolicy(aAP),
      mOwning(true),
+     mSegments(aAP),
      mSize(0),
      mStandardCapacity(aStandardCapacity)
   {
@@ -240,14 +241,6 @@ class BufferList : private AllocPolicy
   // data before aSize.
   inline bool ReadBytes(IterImpl& aIter, char* aData, size_t aSize) const;
 
-  // FlattenBytes reconfigures the BufferList so that data in the range
-  // [aIter, aIter + aSize) is stored contiguously. A pointer to this data is
-  // returned in aOutData. Returns false if not enough data is available. All
-  // other iterators are invalidated by this method.
-  //
-  // This method requires aIter and aSize to be 8-byte aligned.
-  inline bool FlattenBytes(IterImpl& aIter, const char** aOutData, size_t aSize);
-
   // Return a new BufferList that shares storage with this BufferList. The new
   // BufferList is read-only. It allows iteration over aSize bytes starting at
   // aIter. Borrow can fail, in which case *aSuccess will be false upon
@@ -256,7 +249,26 @@ class BufferList : private AllocPolicy
   // AllocPolicy is only used for the buffer vector.
   template<typename BorrowingAllocPolicy>
   BufferList<BorrowingAllocPolicy> Borrow(IterImpl& aIter, size_t aSize, bool* aSuccess,
-                                          BorrowingAllocPolicy aAP = BorrowingAllocPolicy());
+                                          BorrowingAllocPolicy aAP = BorrowingAllocPolicy()) const;
+
+  // Return a new BufferList and move storage from this BufferList to it. The
+  // new BufferList owns the buffers. Move can fail, in which case *aSuccess
+  // will be false upon return. The new BufferList can use a different
+  // AllocPolicy than the original one. The new OtherAllocPolicy is responsible
+  // for freeing buffers, so the OtherAllocPolicy must use freeing method
+  // compatible to the original one.
+  template<typename OtherAllocPolicy>
+  BufferList<OtherAllocPolicy> MoveFallible(bool* aSuccess, OtherAllocPolicy aAP = OtherAllocPolicy());
+
+  // Return a new BufferList that adopts the byte range starting at Iter so that
+  // range [aIter, aIter + aSize) is transplanted to the returned BufferList.
+  // Contents of the buffer before aIter + aSize is left undefined.
+  // Extract can fail, in which case *aSuccess will be false upon return. The
+  // moved buffers are erased from the original BufferList. In case of extract
+  // fails, the original BufferList is intact.  All other iterators except aIter
+  // are invalidated.
+  // This method requires aIter and aSize to be 8-byte aligned.
+  BufferList Extract(IterImpl& aIter, size_t aSize, bool* aSuccess);
 
 private:
   explicit BufferList(AllocPolicy aAP)
@@ -349,68 +361,10 @@ BufferList<AllocPolicy>::ReadBytes(IterImpl& aIter, char* aData, size_t aSize) c
   return true;
 }
 
-template<typename AllocPolicy>
-bool
-BufferList<AllocPolicy>::FlattenBytes(IterImpl& aIter, const char** aOutData, size_t aSize)
-{
-  MOZ_RELEASE_ASSERT(aSize);
-  MOZ_RELEASE_ASSERT(mOwning);
-
-  if (aIter.HasRoomFor(aSize)) {
-    // If the data is already contiguous, just return a pointer.
-    *aOutData = aIter.Data();
-    aIter.Advance(*this, aSize);
-    return true;
-  }
-
-  // This buffer will become the new contiguous segment.
-  char* buffer = this->template pod_malloc<char>(Size());
-  if (!buffer) {
-    return false;
-  }
-
-  size_t copied = 0;
-  size_t offset;
-  bool found = false;
-  for (size_t i = 0; i < mSegments.length(); i++) {
-    Segment& segment = mSegments[i];
-    memcpy(buffer + copied, segment.Start(), segment.mSize);
-
-    if (i == aIter.mSegment) {
-      offset = copied + (aIter.mData - segment.Start());
-
-      // Do we have aSize bytes after aIter?
-      if (Size() - offset >= aSize) {
-        found = true;
-        *aOutData = buffer + offset;
-
-        aIter.mSegment = 0;
-        aIter.mData = buffer + offset + aSize;
-        aIter.mDataEnd = buffer + Size();
-      }
-    }
-
-    this->free_(segment.mData);
-
-    copied += segment.mSize;
-  }
-
-  mSegments.clear();
-  mSegments.infallibleAppend(Segment(buffer, Size(), Size()));
-
-  if (!found) {
-    aIter.mSegment = 0;
-    aIter.mData = Start();
-    aIter.mDataEnd = Start() + Size();
-  }
-
-  return found;
-}
-
 template<typename AllocPolicy> template<typename BorrowingAllocPolicy>
 BufferList<BorrowingAllocPolicy>
 BufferList<AllocPolicy>::Borrow(IterImpl& aIter, size_t aSize, bool* aSuccess,
-                                BorrowingAllocPolicy aAP)
+                                BorrowingAllocPolicy aAP) const
 {
   BufferList<BorrowingAllocPolicy> result(aAP);
 
@@ -418,7 +372,7 @@ BufferList<AllocPolicy>::Borrow(IterImpl& aIter, size_t aSize, bool* aSuccess,
   while (size) {
     size_t toAdvance = std::min(size, aIter.RemainingInSegment());
 
-    if (!toAdvance || !result.mSegments.append(Segment(aIter.mData, toAdvance, toAdvance))) {
+    if (!toAdvance || !result.mSegments.append(typename BufferList<BorrowingAllocPolicy>::Segment(aIter.mData, toAdvance, toAdvance))) {
       *aSuccess = false;
       return result;
     }
@@ -427,6 +381,99 @@ BufferList<AllocPolicy>::Borrow(IterImpl& aIter, size_t aSize, bool* aSuccess,
   }
 
   result.mSize = aSize;
+  *aSuccess = true;
+  return result;
+}
+
+template<typename AllocPolicy> template<typename OtherAllocPolicy>
+BufferList<OtherAllocPolicy>
+BufferList<AllocPolicy>::MoveFallible(bool* aSuccess, OtherAllocPolicy aAP)
+{
+  BufferList<OtherAllocPolicy> result(0, 0, mStandardCapacity, aAP);
+
+  IterImpl iter = Iter();
+  while (!iter.Done()) {
+    size_t toAdvance = iter.RemainingInSegment();
+
+    if (!toAdvance || !result.mSegments.append(typename BufferList<OtherAllocPolicy>::Segment(iter.mData, toAdvance, toAdvance))) {
+      *aSuccess = false;
+      result.mSegments.clear();
+      return result;
+    }
+    iter.Advance(*this, toAdvance);
+  }
+
+  result.mSize = mSize;
+  mSegments.clear();
+  mSize = 0;
+  *aSuccess = true;
+  return result;
+}
+
+template<typename AllocPolicy>
+BufferList<AllocPolicy>
+BufferList<AllocPolicy>::Extract(IterImpl& aIter, size_t aSize, bool* aSuccess)
+{
+  MOZ_RELEASE_ASSERT(aSize);
+  MOZ_RELEASE_ASSERT(mOwning);
+  MOZ_ASSERT(aSize % kSegmentAlignment == 0);
+  MOZ_ASSERT(intptr_t(aIter.mData) % kSegmentAlignment == 0);
+
+  IterImpl iter = aIter;
+  size_t size = aSize;
+  size_t toCopy = std::min(size, aIter.RemainingInSegment());
+  MOZ_ASSERT(toCopy % kSegmentAlignment == 0);
+
+  BufferList result(0, toCopy, mStandardCapacity);
+  BufferList error(0, 0, mStandardCapacity);
+
+  // Copy the head
+  if (!result.WriteBytes(aIter.mData, toCopy)) {
+    *aSuccess = false;
+    return error;
+  }
+  iter.Advance(*this, toCopy);
+  size -= toCopy;
+
+  // Move segments to result
+  auto resultGuard = MakeScopeExit([&] {
+    *aSuccess = false;
+    result.mSegments.erase(result.mSegments.begin()+1, result.mSegments.end());
+  });
+
+  size_t movedSize = 0;
+  uintptr_t toRemoveStart = iter.mSegment;
+  uintptr_t toRemoveEnd = iter.mSegment;
+  while (!iter.Done() &&
+         !iter.HasRoomFor(size)) {
+    if (!result.mSegments.append(Segment(mSegments[iter.mSegment].mData,
+                                         mSegments[iter.mSegment].mSize,
+                                         mSegments[iter.mSegment].mCapacity))) {
+      return error;
+    }
+    movedSize += iter.RemainingInSegment();
+    size -= iter.RemainingInSegment();
+    toRemoveEnd++;
+    iter.Advance(*this, iter.RemainingInSegment());
+  }
+
+  if (size)  {
+    if (!iter.HasRoomFor(size) ||
+        !result.WriteBytes(iter.Data(), size)) {
+      return error;
+    }
+    iter.Advance(*this, size);
+  }
+
+  mSegments.erase(mSegments.begin() + toRemoveStart, mSegments.begin() + toRemoveEnd);
+  mSize -= movedSize;
+  aIter.mSegment = iter.mSegment - (toRemoveEnd - toRemoveStart);
+  aIter.mData = iter.mData;
+  aIter.mDataEnd = iter.mDataEnd;
+  MOZ_ASSERT(aIter.mDataEnd == mSegments[aIter.mSegment].End());
+  result.mSize = aSize;
+
+  resultGuard.release();
   *aSuccess = true;
   return result;
 }

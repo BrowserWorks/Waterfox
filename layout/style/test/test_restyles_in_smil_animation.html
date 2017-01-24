@@ -84,7 +84,7 @@ add_task(function* smil_is_in_display_none_subtree() {
 
   var displayMarkers = yield observeStyling(5);
   // FIXME: Bug 866411: SMIL animations sometimes skip restyles when the target
-  // element is associated with an nsIFrame.
+  // element is newly associated with an nsIFrame.
   ok(displayMarkers.length == 5 || displayMarkers.length == 4,
      "should restyle in most frames");
 
@@ -103,7 +103,7 @@ add_task(function* smil_is_in_display_none_subtree() {
 
   var displayAgainMarkers = yield observeStyling(5);
   // FIXME: Bug 866411: SMIL animations sometimes skip restyles when the target
-  // element is associated with an nsIFrame.
+  // element is newly associated with an nsIFrame.
   ok(displayMarkers.length == 5 || displayMarkers.length == 4,
      "should restyle again");
 

@@ -63,7 +63,7 @@
 #main-window[customize-entered] .customization-target[customizing-dragovertarget]:not(:-moz-any(#PanelUI-contents, #TabsToolbar, #toolbar-menubar))::before,
 /* nav-bar and panel outlines are always shown */
 #nav-bar[showoutline=true] > #nav-bar-customization-target.customization-target::before {
-  outline-color: rgb(102,102,102);
+  outline-color: currentColor;
 }
 
 #nav-bar[showoutline=true] > #nav-bar-customization-target.customization-target::before {
@@ -72,7 +72,7 @@
 
 #PanelUI-contents[showoutline=true] > .panel-customization-placeholder {
   transition: outline-color 250ms linear;
-  outline-color: #bbb;
+  outline-color: var(--panel-separator-color);
 }
 
 #PanelUI-contents > .panel-customization-placeholder {
@@ -87,8 +87,8 @@
 }
 
 #customization-container {
-  background-color: rgb(247,247,247);
-  color: black;
+  background-color: -moz-field;
+  color: -moz-fieldText;
   text-shadow: none;
 }
 
@@ -100,11 +100,11 @@
 #customization-header {
   font-size: 1.75em;
   line-height: 1.75em;
-  color: #666;
+  color: GrayText;
   font-weight: 200;
   margin: 25px 25px 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid ThreeDLightShadow;
 }
 
 #customization-panel-container {
@@ -114,19 +114,24 @@
 
 #main-window:-moz-any([customize-entering],[customize-entered]) #browser-bottombox,
 #customization-footer {
-  background-color: rgb(236,236,236);
+  background-color: -moz-dialog;
 }
 
 #customization-footer {
-  border-top: 1px solid rgb(221,221,221);
+  border-top: 1px solid ThreeDLightShadow;
   padding: 10px;
 }
+
+%if defined(XP_MACOSX) || defined(XP_WIN)
+%ifdef XP_WIN
+@media (-moz-windows-default-theme) {
+%endif
 
 .customizationmode-button {
   border: 1px solid rgb(192,192,192);
   border-radius: 3px;
   margin: 5px;
-  padding: 2px 12px;
+  padding: 2px 10px;
   background-color: rgb(251,251,251);
   color: rgb(71,71,71);
   box-shadow: 0 1px rgba(255, 255, 255, 0.5),
@@ -134,8 +139,28 @@
   -moz-appearance: none;
 }
 
-#customization-titlebar-visibility-button[checked],
-#customization-devedition-theme-button[checked] {
+.customizationmode-button > .box-inherit {
+  border-width: 0;
+  padding-inline-start: 0;
+  padding-inline-end: 0;
+}
+
+.customizationmode-button > .button-icon {
+  margin-inline-start: 0;
+}
+
+.customizationmode-button:not([type=menu]) > .button-text {
+  margin-inline-end: 0;
+}
+
+.customizationmode-button > .button-menu-dropmarker {
+  margin-inline-end: 0;
+  padding-inline-end: 0;
+}
+
+.customizationmode-button:hover:active:not([disabled]),
+.customizationmode-button[open],
+.customizationmode-button[checked] {
   background-color: rgb(218, 218, 218);
   border-color: rgb(168, 168, 168);
   text-shadow: 0 1px rgb(236, 236, 236);
@@ -147,6 +172,11 @@
   opacity: .5;
 }
 
+%ifdef XP_WIN
+} /* @media (-moz-windows-default-theme) */
+%endif
+%endif /* defined(XP_MACOSX) || defined(XP_WIN) */
+
 .customizationmode-button > .box-inherit > .box-inherit > .button-icon,
 .customizationmode-button > .button-box > .button-icon {
   height: 24px;
@@ -155,11 +185,6 @@
 #customization-titlebar-visibility-button {
   list-style-image: url("chrome://browser/skin/customizableui/customize-titleBar-toggle.png");
   -moz-image-region: rect(0, 24px, 24px, 0);
-}
-
-#customization-lwtheme-button,
-#customization-titlebar-visibility-button  {
-  padding: 2px 7px;
 }
 
 #customization-lwtheme-button > .box-inherit > .box-inherit > .button-text,
@@ -280,7 +305,7 @@ toolbarpaletteitem[place="panel"]:not([mousedown="true"]):-moz-focusring,
 toolbarpaletteitem[place="toolbar"]:not([mousedown="true"]):-moz-focusring {
   /* Delay adding the focusring back until after the transform transition completes. */
   transition: outline-width .01s linear var(--drag-drop-transition-duration);
-  outline: 1px dotted rgba(0,0,0,.5);
+  outline: 1px dotted;
   -moz-outline-radius: 2.5px;
 }
 
@@ -363,13 +388,13 @@ toolbarpaletteitem[place="toolbar"]:not([mousedown="true"]):-moz-focusring {
 
 .customization-lwtheme-menu-theme[active="true"],
 .customization-lwtheme-menu-theme:hover {
-  background-color: hsla(210,4%,10%,.08);
-  border-color: hsla(210,4%,10%,.11);
+  background-color: var(--arrowpanel-dimmed);
+  border-color: var(--panel-separator-color);
 }
 
 .customization-lwtheme-menu-theme[active="true"],
 .customization-lwtheme-menu-theme:hover:active {
-  background-color: hsla(210,4%,10%,.15);
+  background-color: var(--arrowpanel-dimmed-further);
 }
 
 .customization-lwtheme-menu-theme > .toolbarbutton-icon {
@@ -389,32 +414,31 @@ toolbarpaletteitem[place="toolbar"]:not([mousedown="true"]):-moz-focusring {
 #customization-lwtheme-menu-header,
 #customization-lwtheme-menu-recommended,
 #customization-lwtheme-menu-footer {
-  background-color: hsla(210,4%,10%,.05);
-  color: hsl(0,0%,50%);
+  background-color: var(--arrowpanel-dimmed);
   margin-right: -10px;
   margin-left: -10px;
 }
 
 #customization-lwtheme-menu-header {
   margin-top: -10px;
-  border-bottom: 1px solid hsla(210,4%,10%,.05);
+  border-bottom: 1px solid var(--arrowpanel-dimmed);
 }
 
 #customization-lwtheme-menu-recommended {
-  border-top: 1px solid hsla(210,4%,10%,.05);
-  border-bottom: 1px solid hsla(210,4%,10%,.05);
+  border-top: 1px solid var(--arrowpanel-dimmed);
+  border-bottom: 1px solid var(--arrowpanel-dimmed);
 }
 
 #customization-lwtheme-menu-footer {
-  background: linear-gradient(hsla(210,4%,10%,.05) 60%, transparent) border-box;
-  border-top: 1px solid hsla(210,4%,10%,.05);
+  background: linear-gradient(var(--arrowpanel-dimmed) 60%, transparent) border-box;
+  border-top: 1px solid var(--arrowpanel-dimmed);
   margin-bottom: -10px;
 }
 
 .customization-lwtheme-menu-footeritem {
   -moz-appearance: none;
   -moz-box-flex: 1;
-  color: hsl(0,0%,50%);
+  color: inherit;
   border-style: none;
   padding: 10px;
   margin-left: 0;
@@ -422,11 +446,11 @@ toolbarpaletteitem[place="toolbar"]:not([mousedown="true"]):-moz-focusring {
 }
 
 .customization-lwtheme-menu-footeritem:hover {
-  background: linear-gradient(hsla(210,4%,10%,.08) 40%, transparent) padding-box;
+  background: linear-gradient(var(--arrowpanel-dimmed) 40%, transparent) padding-box;
 }
 
 .customization-lwtheme-menu-footeritem:first-child {
-  border-inline-end: 1px solid hsla(210,4%,10%,.15);
+  border-inline-end: 1px solid var(--panel-separator-color);
 }
 
 %include customizeTip.inc.css

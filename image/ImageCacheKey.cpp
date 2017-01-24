@@ -45,22 +45,31 @@ BlobSerial(ImageURL* aURI)
   return Nothing();
 }
 
-ImageCacheKey::ImageCacheKey(nsIURI* aURI, nsIDocument* aDocument)
-  : mURI(new ImageURL(aURI))
+ImageCacheKey::ImageCacheKey(nsIURI* aURI,
+                             const PrincipalOriginAttributes& aAttrs,
+                             nsIDocument* aDocument,
+                             nsresult& aRv)
+  : mURI(new ImageURL(aURI, aRv))
+  , mOriginAttributes(aAttrs)
   , mControlledDocument(GetControlledDocumentToken(aDocument))
   , mIsChrome(URISchemeIs(mURI, "chrome"))
 {
+  NS_ENSURE_SUCCESS_VOID(aRv);
+
   MOZ_ASSERT(NS_IsMainThread());
 
   if (URISchemeIs(mURI, "blob")) {
     mBlobSerial = BlobSerial(mURI);
   }
 
-  mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument);
+  mHash = ComputeHash(mURI, mBlobSerial, mOriginAttributes, mControlledDocument);
 }
 
-ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsIDocument* aDocument)
+ImageCacheKey::ImageCacheKey(ImageURL* aURI,
+                             const PrincipalOriginAttributes& aAttrs,
+                             nsIDocument* aDocument)
   : mURI(aURI)
+  , mOriginAttributes(aAttrs)
   , mControlledDocument(GetControlledDocumentToken(aDocument))
   , mIsChrome(URISchemeIs(mURI, "chrome"))
 {
@@ -70,12 +79,13 @@ ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsIDocument* aDocument)
     mBlobSerial = BlobSerial(mURI);
   }
 
-  mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument);
+  mHash = ComputeHash(mURI, mBlobSerial, mOriginAttributes, mControlledDocument);
 }
 
 ImageCacheKey::ImageCacheKey(const ImageCacheKey& aOther)
   : mURI(aOther.mURI)
   , mBlobSerial(aOther.mBlobSerial)
+  , mOriginAttributes(aOther.mOriginAttributes)
   , mControlledDocument(aOther.mControlledDocument)
   , mHash(aOther.mHash)
   , mIsChrome(aOther.mIsChrome)
@@ -84,6 +94,7 @@ ImageCacheKey::ImageCacheKey(const ImageCacheKey& aOther)
 ImageCacheKey::ImageCacheKey(ImageCacheKey&& aOther)
   : mURI(Move(aOther.mURI))
   , mBlobSerial(Move(aOther.mBlobSerial))
+  , mOriginAttributes(aOther.mOriginAttributes)
   , mControlledDocument(aOther.mControlledDocument)
   , mHash(aOther.mHash)
   , mIsChrome(aOther.mIsChrome)
@@ -94,6 +105,10 @@ ImageCacheKey::operator==(const ImageCacheKey& aOther) const
 {
   // Don't share the image cache between a controlled document and anything else.
   if (mControlledDocument != aOther.mControlledDocument) {
+    return false;
+  }
+  // The origin attributes always have to match.
+  if (mOriginAttributes != aOther.mOriginAttributes) {
     return false;
   }
   if (mBlobSerial || aOther.mBlobSerial) {
@@ -116,27 +131,18 @@ ImageCacheKey::Spec() const
 /* static */ uint32_t
 ImageCacheKey::ComputeHash(ImageURL* aURI,
                            const Maybe<uint64_t>& aBlobSerial,
+                           const PrincipalOriginAttributes& aAttrs,
                            void* aControlledDocument)
 {
   // Since we frequently call Hash() several times in a row on the same
   // ImageCacheKey, as an optimization we compute our hash once and store it.
 
   nsPrintfCString ptr("%p", aControlledDocument);
-  if (aBlobSerial) {
-    // For blob URIs, we hash the serial number of the underlying blob, so that
-    // different blob URIs which point to the same blob share a cache entry. We
-    // also include the ref portion of the URI to support -moz-samplesize, which
-    // requires us to create different Image objects even if the source data is
-    // the same.
-    nsAutoCString ref;
-    aURI->GetRef(ref);
-    return HashGeneric(*aBlobSerial, HashString(ref + ptr));
-  }
+  nsAutoCString suffix;
+  aAttrs.CreateSuffix(suffix);
 
-  // For non-blob URIs, we hash the URI spec.
-  nsAutoCString spec;
-  aURI->GetSpec(spec);
-  return HashString(spec + ptr);
+  return AddToHash(0, aURI->ComputeHash(aBlobSerial),
+                   HashString(suffix), HashString(ptr));
 }
 
 /* static */ void*

@@ -46,6 +46,8 @@
 #include "nsTextNode.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
+#include "mozilla/dom/HTMLInputElement.h"
+#include "mozilla/dom/HTMLTextAreaElement.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/MathAlgorithms.h"
 #include "nsFrameSelection.h"
@@ -303,9 +305,13 @@ nsTextControlFrame::EnsureEditorInitialized()
     // editor.
     mEditorHasBeenInitialized = true;
 
-    // Set the selection to the beginning of the text field.
+    nsAutoString val;
+    txtCtrl->GetTextEditorValue(val, true);
+    int32_t length = val.Length();
+
+    // Set the selection to the end of the text field. (bug 1287655)
     if (weakFrame.IsAlive()) {
-      SetSelectionEndPoints(0, 0);
+      SetSelectionEndPoints(length, length);
     }
   }
   NS_ENSURE_STATE(weakFrame.IsAlive());
@@ -344,8 +350,8 @@ nsTextControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
     nsIContent* placeholderNode = txtCtrl->CreatePlaceholderNode();
     NS_ENSURE_TRUE(placeholderNode, NS_ERROR_OUT_OF_MEMORY);
 
-    // Associate ::-moz-placeholder pseudo-element with the placeholder node.
-    CSSPseudoElementType pseudoType = CSSPseudoElementType::mozPlaceholder;
+    // Associate ::placeholder pseudo-element with the placeholder node.
+    CSSPseudoElementType pseudoType = CSSPseudoElementType::placeholder;
 
     // If this is a text input inside a number input then we want to use the
     // main number input as the source of style for the placeholder frame.
@@ -415,8 +421,17 @@ void
 nsTextControlFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                              uint32_t aFilter)
 {
-  nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
-  NS_ASSERTION(txtCtrl, "Content not a text control element");
+  // This can be called off-main-thread during Servo traversal, so we take care
+  // to avoid QI-ing the DOM node.
+  nsITextControlElement* txtCtrl = nullptr;
+  nsIContent* content = GetContent();
+  if (content->IsHTMLElement(nsGkAtoms::input)) {
+    txtCtrl = static_cast<HTMLInputElement*>(content);
+  } else if (content->IsHTMLElement(nsGkAtoms::textarea)) {
+    txtCtrl = static_cast<HTMLTextAreaElement*>(content);
+  } else {
+    MOZ_CRASH("Unexpected content type for nsTextControlFrame");
+  }
 
   nsIContent* root = txtCtrl->GetRootEditorNode();
   if (root) {
@@ -426,7 +441,7 @@ nsTextControlFrame::AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
   nsIContent* placeholder = txtCtrl->GetPlaceholderNode();
   if (placeholder && !(aFilter & nsIContent::eSkipPlaceholderContent))
     aElements.AppendElement(placeholder);
-  
+
 }
 
 nscoord
@@ -754,10 +769,11 @@ nsTextControlFrame::SetSelectionInternal(nsIDOMNode *aStartNode,
   // isIncreasing checks to avoid possible errors.
 
   RefPtr<nsRange> range = new nsRange(mContent);
-  nsresult rv = range->SetStart(aStartNode, aStartOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = range->SetEnd(aEndNode, aEndOffset);
+  // Be careful to use internal nsRange methods which do not check to make sure
+  // we have access to the node.
+  nsCOMPtr<nsINode> start = do_QueryInterface(aStartNode);
+  nsCOMPtr<nsINode> end = do_QueryInterface(aEndNode);
+  nsresult rv = range->Set(start, aStartOffset, end, aEndOffset);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Get the selection, clear it and add the new range to it!
@@ -927,18 +943,18 @@ nsTextControlFrame::SetSelectionStart(int32_t aSelectionStart)
   nsresult rv = EnsureEditorInitialized();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  int32_t selStart = 0, selEnd = 0; 
+  int32_t selStart = 0, selEnd = 0;
 
   rv = GetSelectionRange(&selStart, &selEnd);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (aSelectionStart > selEnd) {
     // Collapse to the new start point.
-    selEnd = aSelectionStart; 
+    selEnd = aSelectionStart;
   }
 
   selStart = aSelectionStart;
-  
+
   return SetSelectionEndPoints(selStart, selEnd);
 }
 
@@ -948,18 +964,18 @@ nsTextControlFrame::SetSelectionEnd(int32_t aSelectionEnd)
   nsresult rv = EnsureEditorInitialized();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  int32_t selStart = 0, selEnd = 0; 
+  int32_t selStart = 0, selEnd = 0;
 
   rv = GetSelectionRange(&selStart, &selEnd);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (aSelectionEnd < selStart) {
     // Collapse to the new end point.
-    selStart = aSelectionEnd; 
+    selStart = aSelectionEnd;
   }
 
   selEnd = aSelectionEnd;
-  
+
   return SetSelectionEndPoints(selStart, selEnd);
 }
 
@@ -1046,7 +1062,7 @@ nsTextControlFrame::GetSelectionRange(int32_t* aSelectionStart,
   nsISelectionController* selCon = txtCtrl->GetSelectionController();
   NS_ENSURE_TRUE(selCon, NS_ERROR_FAILURE);
   nsCOMPtr<nsISelection> selection;
-  rv = selCon->GetSelection(nsISelectionController::SELECTION_NORMAL, getter_AddRefs(selection));  
+  rv = selCon->GetSelection(nsISelectionController::SELECTION_NORMAL, getter_AddRefs(selection));
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
 
@@ -1185,7 +1201,7 @@ nsTextControlFrame::GetText(nsString& aText)
 nsresult
 nsTextControlFrame::GetPhonetic(nsAString& aPhonetic)
 {
-  aPhonetic.Truncate(0); 
+  aPhonetic.Truncate(0);
 
   nsCOMPtr<nsIEditor> editor;
   nsresult rv = GetEditor(getter_AddRefs(editor));
@@ -1449,7 +1465,7 @@ nsTextControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 mozilla::dom::Element*
 nsTextControlFrame::GetPseudoElement(CSSPseudoElementType aType)
 {
-  if (aType == CSSPseudoElementType::mozPlaceholder) {
+  if (aType == CSSPseudoElementType::placeholder) {
     nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
     return txtCtrl->GetPlaceholderNode();
   }

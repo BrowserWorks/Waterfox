@@ -7,19 +7,12 @@ package org.mozilla.gecko;
 
 import android.content.Context;
 
-import android.support.v4.content.ContextCompat;
-
 import org.json.JSONObject;
 import org.mozilla.gecko.db.BrowserDB;
 
 public class PrivateTab extends Tab {
     public PrivateTab(Context context, int id, String url, boolean external, int parentId, String title) {
         super(context, id, url, external, parentId, title);
-
-        // Init background to private_toolbar_grey to ensure flicker-free
-        // private tab creation. Page loads will reset it to white as expected.
-        final int bgColor = ContextCompat.getColor(context, R.color.tabs_tray_grey_pressed);
-        setBackgroundColor(bgColor);
     }
 
     @Override

@@ -9,7 +9,7 @@ function debug(aMsg) {
   //dump("-*- B2GPresentationDevicePrompt: " + aMsg + "\n");
 }
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 const kB2GPRESENTATIONDEVICEPROMPT_CONTRACTID = "@mozilla.org/presentation-device/prompt;1";
 const kB2GPRESENTATIONDEVICEPROMPT_CID        = Components.ID("{4a300c26-e99b-4018-ab9b-c48cf9bc4de1}");
@@ -47,13 +47,13 @@ B2GPresentationDevicePrompt.prototype = {
           let device = self._getDeviceById(detail.deviceId);
           if (!device) {
             debug("cancel request because device is not found");
-            aRequest.cancel();
+            aRequest.cancel(Cr.NS_ERROR_DOM_NOT_FOUND_ERR);
           }
           aRequest.select(device);
           break;
         case "presentation-select-deny":
           debug("request canceled by user");
-          aRequest.cancel();
+          aRequest.cancel(Cr.NS_ERROR_DOM_NOT_ALLOWED_ERR);
           break;
       }
     });

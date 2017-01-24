@@ -81,6 +81,7 @@ pref("devtools.responsiveUI.no-reload-notification", false);
 pref("devtools.debugger.enabled", true);
 pref("devtools.debugger.chrome-debugging-host", "localhost");
 pref("devtools.debugger.chrome-debugging-port", 6080);
+pref("devtools.debugger.chrome-debugging-websocket", false);
 pref("devtools.debugger.remote-host", "localhost");
 pref("devtools.debugger.remote-timeout", 20000);
 pref("devtools.debugger.pause-on-exceptions", false);
@@ -91,6 +92,12 @@ pref("devtools.debugger.auto-pretty-print", false);
 pref("devtools.debugger.auto-black-box", true);
 pref("devtools.debugger.workers", false);
 pref("devtools.debugger.promise", false);
+
+#if defined(NIGHTLY_BUILD)
+pref("devtools.debugger.new-debugger-frontend", true);
+#else
+pref("devtools.debugger.new-debugger-frontend", false);
+#endif
 
 // The default Debugger UI settings
 pref("devtools.debugger.ui.panes-workers-and-sources-width", 200);

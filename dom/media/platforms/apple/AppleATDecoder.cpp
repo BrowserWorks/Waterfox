@@ -58,13 +58,13 @@ AppleATDecoder::Init()
 {
   if (!mFormatID) {
     NS_ERROR("Non recognised format");
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   return InitPromise::CreateAndResolve(TrackType::kAudioTrack, __func__);
 }
 
-nsresult
+void
 AppleATDecoder::Input(MediaRawData* aSample)
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
@@ -82,8 +82,6 @@ AppleATDecoder::Input(MediaRawData* aSample)
         &AppleATDecoder::SubmitSample,
         RefPtr<MediaRawData>(aSample));
   mTaskQueue->Dispatch(runnable.forget());
-
-  return NS_OK;
 }
 
 void
@@ -97,7 +95,7 @@ AppleATDecoder::ProcessFlush()
   }
 }
 
-nsresult
+void
 AppleATDecoder::Flush()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
@@ -107,20 +105,19 @@ AppleATDecoder::Flush()
     NewRunnableMethod(this, &AppleATDecoder::ProcessFlush);
   SyncRunnable::DispatchToThread(mTaskQueue, runnable);
   mIsFlushing = false;
-  return NS_OK;
 }
 
-nsresult
+void
 AppleATDecoder::Drain()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   LOG("Draining AudioToolbox AAC decoder");
   mTaskQueue->AwaitIdle();
   mCallback->DrainComplete();
-  return Flush();
+  Flush();
 }
 
-nsresult
+void
 AppleATDecoder::Shutdown()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
@@ -130,7 +127,7 @@ AppleATDecoder::Shutdown()
   OSStatus rv = AudioConverterDispose(mConverter);
   if (rv) {
     LOG("error %d disposing of AudioConverter", rv);
-    return NS_ERROR_FAILURE;
+    return;
   }
   mConverter = nullptr;
 
@@ -138,11 +135,10 @@ AppleATDecoder::Shutdown()
     rv = AudioFileStreamClose(mStream);
     if (rv) {
       LOG("error %d disposing of AudioFileStream", rv);
-      return NS_ERROR_FAILURE;
+      return;
     }
     mStream = nullptr;
   }
-  return NS_OK;
 }
 
 struct PassthroughUserData {
@@ -199,7 +195,8 @@ AppleATDecoder::SubmitSample(MediaRawData* aSample)
   if (!mConverter) {
     rv = SetupDecoder(aSample);
     if (rv != NS_OK && rv != NS_ERROR_NOT_INITIALIZED) {
-      mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+      mCallback->Error(
+        MediaResult(rv, RESULT_DETAIL("Unable to create decoder")));
       return;
     }
   }
@@ -208,18 +205,17 @@ AppleATDecoder::SubmitSample(MediaRawData* aSample)
 
   if (rv == NS_OK) {
     for (size_t i = 0; i < mQueuedSamples.Length(); i++) {
-      if (NS_FAILED(DecodeSample(mQueuedSamples[i]))) {
+      rv = DecodeSample(mQueuedSamples[i]);
+      if (NS_FAILED(rv)) {
         mQueuedSamples.Clear();
-        mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
+        mCallback->Error(MediaResult(
+          rv, RESULT_DETAIL("Unable to decode sample %lld", aSample->mTime)));
         return;
       }
     }
     mQueuedSamples.Clear();
   }
-
-  if (mTaskQueue->IsEmpty()) {
-    mCallback->InputExhausted();
-  }
+  mCallback->InputExhausted();
 }
 
 nsresult
@@ -270,7 +266,7 @@ AppleATDecoder::DecodeSample(MediaRawData* aSample)
 
     if (rv && rv != kNoMoreDataErr) {
       LOG("Error decoding audio stream: %d\n", rv);
-      return NS_ERROR_FAILURE;
+      return NS_ERROR_DOM_MEDIA_DECODE_ERR;
     }
 
     if (numFrames) {
@@ -291,7 +287,7 @@ AppleATDecoder::DecodeSample(MediaRawData* aSample)
   media::TimeUnit duration = FramesToTimeUnit(numFrames, rate);
   if (!duration.IsValid()) {
     NS_WARNING("Invalid count of accumulated audio samples");
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
   }
 
 #ifdef LOG_SAMPLE_DECODE
@@ -308,7 +304,7 @@ AppleATDecoder::DecodeSample(MediaRawData* aSample)
     AudioConfig in(*mChannelLayout.get(), rate);
     AudioConfig out(channels, rate);
     if (!in.IsValid() || !out.IsValid()) {
-      return NS_ERROR_FAILURE;
+      return NS_ERROR_DOM_MEDIA_DECODE_ERR;
     }
     mAudioConverter = MakeUnique<AudioConverter>(in, out);
   }

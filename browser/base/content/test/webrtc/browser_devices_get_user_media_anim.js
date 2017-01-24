@@ -9,7 +9,7 @@ var gTests = [
 
 {
   desc: "device sharing animation on background tabs",
-  run: function checkAudioVideo() {
+  run: function* checkAudioVideo() {
     function* getStreamAndCheckBackgroundAnim(aAudio, aVideo, aSharing) {
       // Get a stream
       let popupPromise = promisePopupNotificationShown("webRTC-shareDevices");
@@ -42,7 +42,7 @@ var gTests = [
 
       // After selecting a new tab, check the attribute is still there,
       // and the icon is now visible.
-      gBrowser.selectedTab = gBrowser.addTab();
+      yield BrowserTestUtils.switchTab(gBrowser, gBrowser.addTab());
       is(gBrowser.selectedTab.getAttribute("sharing"), "",
          "the new tab doesn't have the 'sharing' attribute");
       is(tab.getAttribute("sharing"), aSharing,
@@ -51,7 +51,7 @@ var gTests = [
             "the animated sharing icon of the tab is now visible");
 
       // Ensure the icon disappears when selecting the tab.
-      gBrowser.removeCurrentTab();
+      yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
       ok(tab.selected, "the tab with ongoing sharing is selected again");
       is(window.getComputedStyle(icon).display, "none",
          "the animated sharing icon is gone after selecting the tab again");
@@ -85,7 +85,7 @@ function test() {
     is(PopupNotifications._currentNotifications.length, 0,
        "should start the test without any prior popup notification");
 
-    Task.spawn(function () {
+    Task.spawn(function* () {
       yield SpecialPowers.pushPrefEnv({"set": [[PREF_PERMISSION_FAKE, true]]});
 
       for (let test of gTests) {
@@ -93,6 +93,7 @@ function test() {
         yield test.run();
       }
     }).then(finish, ex => {
+     Cu.reportError(ex);
      ok(false, "Unexpected Exception: " + ex);
      finish();
     });

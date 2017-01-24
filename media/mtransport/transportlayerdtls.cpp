@@ -6,28 +6,27 @@
 
 // Original author: ekr@rtfm.com
 
-#include <queue>
+#include "transportlayerdtls.h"
+
 #include <algorithm>
+#include <queue>
 #include <sstream>
 
-#include "mozilla/UniquePtr.h"
-
-#include "logging.h"
-#include "ssl.h"
-#include "sslerr.h"
-#include "sslproto.h"
+#include "dtlsidentity.h"
 #include "keyhi.h"
-
+#include "logging.h"
+#include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
+#include "nsComponentManagerUtils.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIEventTarget.h"
 #include "nsNetCID.h"
-#include "nsComponentManagerUtils.h"
 #include "nsServiceManagerUtils.h"
-
-#include "dtlsidentity.h"
+#include "ssl.h"
+#include "sslerr.h"
+#include "sslproto.h"
 #include "transportflow.h"
-#include "transportlayerdtls.h"
+
 
 namespace mozilla {
 
@@ -454,6 +453,15 @@ TransportLayerDtls::SetVerificationDigest(const std::string digest_algorithm,
   return NS_OK;
 }
 
+// These are the named groups that we will allow.
+static const SSLNamedGroup NamedGroupPreferences[] = {
+  ssl_grp_ec_curve25519,
+  ssl_grp_ec_secp256r1,
+  ssl_grp_ec_secp384r1,
+  ssl_grp_ffdhe_2048,
+  ssl_grp_ffdhe_3072
+};
+
 // TODO: make sure this is called from STS. Otherwise
 // we have thread safety issues
 bool TransportLayerDtls::Setup() {
@@ -513,6 +521,13 @@ bool TransportLayerDtls::Setup() {
     if (rv != SECSuccess) {
       MOZ_MTLOG(ML_ERROR, "Couldn't set identity");
       return false;
+    }
+
+    UniqueCERTCertList zero_certs(CERT_NewCertList());
+    rv = SSL_SetTrustAnchors(ssl_fd.get(), zero_certs.get());
+    if (rv != SECSuccess) {
+        MOZ_MTLOG(ML_ERROR, "Couldn't set trust anchors");
+        return false;
     }
 
     // Insist on a certificate from the client
@@ -585,6 +600,13 @@ bool TransportLayerDtls::Setup() {
   }
 
   if (!SetupCipherSuites(ssl_fd)) {
+    return false;
+  }
+
+  rv = SSL_NamedGroupConfig(ssl_fd, NamedGroupPreferences,
+                            mozilla::ArrayLength(NamedGroupPreferences));
+  if (rv != SECSuccess) {
+    MOZ_MTLOG(ML_ERROR, "Couldn't set named groups");
     return false;
   }
 
@@ -700,6 +722,7 @@ static const uint32_t DisabledCiphers[] = {
   TLS_ECDH_RSA_WITH_RC4_128_SHA,
 
   TLS_RSA_WITH_AES_128_GCM_SHA256,
+  TLS_RSA_WITH_AES_256_GCM_SHA384,
   TLS_RSA_WITH_AES_128_CBC_SHA,
   TLS_RSA_WITH_AES_128_CBC_SHA256,
   TLS_RSA_WITH_CAMELLIA_128_CBC_SHA,
@@ -707,27 +730,18 @@ static const uint32_t DisabledCiphers[] = {
   TLS_RSA_WITH_AES_256_CBC_SHA256,
   TLS_RSA_WITH_CAMELLIA_256_CBC_SHA,
   TLS_RSA_WITH_SEED_CBC_SHA,
-  SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA,
   TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   TLS_RSA_WITH_RC4_128_SHA,
   TLS_RSA_WITH_RC4_128_MD5,
 
   TLS_DHE_RSA_WITH_DES_CBC_SHA,
   TLS_DHE_DSS_WITH_DES_CBC_SHA,
-  SSL_RSA_FIPS_WITH_DES_CBC_SHA,
   TLS_RSA_WITH_DES_CBC_SHA,
-
-  TLS_RSA_EXPORT1024_WITH_RC4_56_SHA,
-  TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA,
-
-  TLS_RSA_EXPORT_WITH_RC4_40_MD5,
-  TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5,
 
   TLS_ECDHE_ECDSA_WITH_NULL_SHA,
   TLS_ECDHE_RSA_WITH_NULL_SHA,
   TLS_ECDH_ECDSA_WITH_NULL_SHA,
   TLS_ECDH_RSA_WITH_NULL_SHA,
-
   TLS_RSA_WITH_NULL_SHA,
   TLS_RSA_WITH_NULL_SHA256,
   TLS_RSA_WITH_NULL_MD5,
@@ -747,31 +761,31 @@ bool TransportLayerDtls::SetupCipherSuites(PRFileDesc* ssl_fd) const {
     }
   }
 
-  for (size_t i = 0; i < PR_ARRAY_SIZE(EnabledCiphers); ++i) {
-    MOZ_MTLOG(ML_DEBUG, LAYER_INFO << "Enabling: " << EnabledCiphers[i]);
-    rv = SSL_CipherPrefSet(ssl_fd, EnabledCiphers[i], PR_TRUE);
+  for (const auto& cipher : EnabledCiphers) {
+    MOZ_MTLOG(ML_DEBUG, LAYER_INFO << "Enabling: " << cipher);
+    rv = SSL_CipherPrefSet(ssl_fd, cipher, PR_TRUE);
     if (rv != SECSuccess) {
       MOZ_MTLOG(ML_ERROR, LAYER_INFO <<
-                "Unable to enable suite: " << EnabledCiphers[i]);
+                "Unable to enable suite: " << cipher);
       return false;
     }
   }
 
-  for (size_t i = 0; i < PR_ARRAY_SIZE(DisabledCiphers); ++i) {
-    MOZ_MTLOG(ML_DEBUG, LAYER_INFO << "Disabling: " << DisabledCiphers[i]);
+  for (const auto& cipher : DisabledCiphers) {
+    MOZ_MTLOG(ML_DEBUG, LAYER_INFO << "Disabling: " << cipher);
 
     PRBool enabled = false;
-    rv = SSL_CipherPrefGet(ssl_fd, DisabledCiphers[i], &enabled);
+    rv = SSL_CipherPrefGet(ssl_fd, cipher, &enabled);
     if (rv != SECSuccess) {
       MOZ_MTLOG(ML_NOTICE, LAYER_INFO <<
-                "Unable to check if suite is enabled: " << DisabledCiphers[i]);
+                "Unable to check if suite is enabled: " << cipher);
       return false;
     }
     if (enabled) {
-      rv = SSL_CipherPrefSet(ssl_fd, DisabledCiphers[i], PR_FALSE);
+      rv = SSL_CipherPrefSet(ssl_fd, cipher, PR_FALSE);
       if (rv != SECSuccess) {
         MOZ_MTLOG(ML_NOTICE, LAYER_INFO <<
-                  "Unable to disable suite: " << DisabledCiphers[i]);
+                  "Unable to disable suite: " << cipher);
         return false;
       }
     }
@@ -895,7 +909,9 @@ void TransportLayerDtls::Handshake() {
         }
         break;
       default:
-        MOZ_MTLOG(ML_ERROR, LAYER_INFO << "SSL handshake error "<< err);
+        const char *err_msg = PR_ErrorToName(err);
+        MOZ_MTLOG(ML_ERROR, LAYER_INFO << "DTLS handshake error " << err << " ("
+                  << err_msg << ")");
         TL_SET_STATE(TS_ERROR);
         break;
     }

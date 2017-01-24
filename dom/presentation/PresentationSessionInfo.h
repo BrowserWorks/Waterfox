@@ -11,8 +11,10 @@
 #include "mozilla/dom/nsIContentParent.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
+#include "mozilla/DebugOnly.h"
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
+#include "nsINetworkInfoService.h"
 #include "nsIPresentationControlChannel.h"
 #include "nsIPresentationDevice.h"
 #include "nsIPresentationListener.h"
@@ -77,11 +79,6 @@ public:
     mDevice = aDevice;
   }
 
-  void SetBuilder(nsIPresentationSessionTransportBuilder* aBuilder)
-  {
-    mBuilder = aBuilder;
-  }
-
   already_AddRefed<nsIPresentationDevice> GetDevice() const
   {
     nsCOMPtr<nsIPresentationDevice> device = mDevice;
@@ -102,6 +99,10 @@ public:
 
   nsresult Send(const nsAString& aData);
 
+  nsresult SendBinaryMsg(const nsACString& aData);
+
+  nsresult SendBlob(nsIDOMBlob* aBlob);
+
   nsresult Close(nsresult aReason,
                  uint32_t aState);
 
@@ -110,6 +111,12 @@ public:
   nsresult ReplyError(nsresult aReason);
 
   virtual bool IsAccessible(base::ProcessId aProcessId);
+
+  void SetTransportBuilderConstructor(
+    nsIPresentationTransportBuilderConstructor* aBuilderConstructor)
+  {
+    mBuilderConstructor = aBuilderConstructor;
+  }
 
 protected:
   virtual ~PresentationSessionInfo()
@@ -139,12 +146,18 @@ protected:
 
     // Notify session state change.
     if (mListener) {
-      nsresult rv = mListener->NotifyStateChange(mSessionId, mState, aReason);
-      NS_WARN_IF(NS_FAILED(rv));
+      DebugOnly<nsresult> rv =
+        mListener->NotifyStateChange(mSessionId, mState, aReason);
+      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NotifyStateChanged");
     }
   }
 
   void ContinueTermination();
+
+  void ResetBuilder()
+  {
+    mBuilder = nullptr;
+  }
 
   // Should be nsIPresentationChannelDescription::TYPE_TCP/TYPE_DATACHANNEL
   uint8_t mTransportType = 0;
@@ -166,16 +179,19 @@ protected:
   nsCOMPtr<nsIPresentationSessionTransport> mTransport;
   nsCOMPtr<nsIPresentationControlChannel> mControlChannel;
   nsCOMPtr<nsIPresentationSessionTransportBuilder> mBuilder;
+  nsCOMPtr<nsIPresentationTransportBuilderConstructor> mBuilderConstructor;
 };
 
 // Session info with controlling browsing context (sender side) behaviors.
 class PresentationControllingInfo final : public PresentationSessionInfo
                                         , public nsIServerSocketListener
+                                        , public nsIListNetworkAddressesListener
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIPRESENTATIONCONTROLCHANNELLISTENER
   NS_DECL_NSISERVERSOCKETLISTENER
+  NS_DECL_NSILISTNETWORKADDRESSESLISTENER
 
   PresentationControllingInfo(const nsAString& aUrl,
                               const nsAString& aSessionId)
@@ -185,6 +201,10 @@ public:
   {}
 
   nsresult Init(nsIPresentationControlChannel* aControlChannel) override;
+
+  nsresult Reconnect(nsIPresentationServiceCallback* aCallback);
+
+  nsresult BuildTransport();
 
 private:
   ~PresentationControllingInfo()
@@ -198,9 +218,11 @@ private:
 
   nsresult OnGetAddress(const nsACString& aAddress);
 
-  nsresult BuildTransport();
+  nsresult ContinueReconnect();
 
   nsCOMPtr<nsIServerSocket> mServerSocket;
+  nsCOMPtr<nsIPresentationServiceCallback> mReconnectCallback;
+  bool mIsReconnecting = false;
 };
 
 // Session info with presenting browsing context (receiver side) behaviors.
@@ -227,6 +249,7 @@ public:
   nsresult Init(nsIPresentationControlChannel* aControlChannel) override;
 
   nsresult NotifyResponderReady();
+  nsresult NotifyResponderFailure();
 
   NS_IMETHODIMP OnSessionTransport(nsIPresentationSessionTransport* transport) override;
 
@@ -241,6 +264,8 @@ public:
   }
 
   bool IsAccessible(base::ProcessId aProcessId) override;
+
+  nsresult DoReconnect();
 
 private:
   ~PresentationPresentingInfo()

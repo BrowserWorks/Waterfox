@@ -49,7 +49,7 @@
 #include "nsIWritablePropertyBag2.h"
 #include "nsITimedChannel.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIScriptSecurityManager.h"
 
 #include "nsISimpleEnumerator.h"
@@ -432,9 +432,7 @@ InputTestConsumer::OnStartRequest(nsIRequest *request, nsISupports* context)
                                     NS_GET_IID(nsIURI),
                                     getter_AddRefs(foo));
       if (foo) {
-          nsAutoCString spec;
-          foo->GetSpec(spec);
-          LOG(("\ttest.foo: %s\n", spec.get()));
+          LOG(("\ttest.foo: %s\n", foo->GetSpecOrDefault().get()));
       }
   }
 

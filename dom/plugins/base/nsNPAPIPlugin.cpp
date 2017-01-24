@@ -1062,7 +1062,7 @@ _getwindowobject(NPP npp)
   nsCOMPtr<nsPIDOMWindowOuter> outer = doc->GetWindow();
   NS_ENSURE_TRUE(outer, nullptr);
 
-  JS::Rooted<JSObject*> global(nsContentUtils::RootingCx(),
+  JS::Rooted<JSObject*> global(dom::RootingCx(),
                                nsGlobalWindow::Cast(outer)->GetGlobalJSObject());
   return nsJSObjWrapper::GetNewOrUsed(npp, global);
 }
@@ -2013,7 +2013,9 @@ _getvalue(NPP npp, NPNVariable variable, void *result)
     *(NPBool*)result = true;
     return NPERR_NO_ERROR;
   }
+#endif
 
+#if defined(XP_MACOSX) || defined(XP_WIN)
   case NPNVcontentsScaleFactor: {
     nsNPAPIPluginInstance *inst =
       (nsNPAPIPluginInstance *) (npp ? npp->ndata : nullptr);

@@ -12,7 +12,7 @@
 #include "keyhi.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Casting.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
 #include "nsISupportsPriority.h"
@@ -49,7 +49,7 @@ ContentSignatureVerifier::~ContentSignatureVerifier()
     return;
   }
   destructorSafeDestroyNSSReference();
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 NS_IMETHODIMP
@@ -193,8 +193,9 @@ ContentSignatureVerifier::CreateContextInternal(const nsACString& aData,
   // Check the SAN
   Input hostnameInput;
 
-  result = hostnameInput.Init(uint8_t_ptr_cast(aName.BeginReading()),
-                              aName.Length());
+  result = hostnameInput.Init(
+    BitwiseCast<const uint8_t*, const char*>(aName.BeginReading()),
+    aName.Length());
   if (result != Success) {
     return NS_ERROR_FAILURE;
   }

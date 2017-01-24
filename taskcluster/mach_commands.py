@@ -4,6 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+
 from __future__ import absolute_import, print_function, unicode_literals
 
 import json
@@ -132,12 +133,23 @@ class MachCommands(MachCommandBase):
                      dest='pushlog_id',
                      required=True,
                      default=0)
+    @CommandArgument('--pushdate',
+                     dest='pushdate',
+                     required=True,
+                     type=int,
+                     default=0)
     @CommandArgument('--owner',
                      required=True,
                      help='email address of who owns this graph')
     @CommandArgument('--level',
                      required=True,
                      help='SCM level of this repository')
+    @CommandArgument('--triggered-by',
+                     choices=['nightly', 'push'],
+                     default='push',
+                     help='Source of execution of the decision graph')
+    @CommandArgument('--target-tasks-method',
+                     help='method for selecting the target tasks to generate')
     def taskgraph_decision(self, **options):
         """Run the decision task: generate a task graph and submit to
         TaskCluster.  This is only meant to be called within decision tasks,
@@ -184,12 +196,15 @@ class MachCommands(MachCommandBase):
         mach timestamp.
         """
         # remove the old terminal handler
-        self.log_manager.replace_terminal_handler(None)
+        old = self.log_manager.replace_terminal_handler(None)
 
         # re-add it, with level and fh set appropriately
         if not quiet:
             level = logging.DEBUG if verbose else logging.INFO
-            self.log_manager.add_terminal_logging(fh=sys.stderr, level=level)
+            self.log_manager.add_terminal_logging(
+                fh=sys.stderr, level=level,
+                write_interval=old.formatter.write_interval,
+                write_times=old.formatter.write_times)
 
         # all of the taskgraph logging is unstructured logging
         self.log_manager.enable_unstructured()
@@ -228,7 +243,7 @@ class MachCommands(MachCommandBase):
 
 
 @CommandProvider
-class LoadImage(object):
+class TaskClusterImagesProvider(object):
     @Command('taskcluster-load-image', category="ci",
              description="Load a pre-built Docker image")
     @CommandArgument('--task-id',
@@ -250,6 +265,19 @@ class LoadImage(object):
                 ok = load_image_by_name(image_name)
             if not ok:
                 sys.exit(1)
+        except Exception:
+            traceback.print_exc()
+            sys.exit(1)
+
+    @Command('taskcluster-build-image', category='ci',
+             description='Build a Docker image')
+    @CommandArgument('image_name',
+                     help='Name of the image to build')
+    def build_image(self, image_name):
+        from taskgraph.docker import build_image
+
+        try:
+            build_image(image_name)
         except Exception:
             traceback.print_exc()
             sys.exit(1)

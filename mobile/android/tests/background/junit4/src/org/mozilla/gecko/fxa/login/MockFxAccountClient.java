@@ -6,6 +6,7 @@ package org.mozilla.gecko.fxa.login;
 import android.text.TextUtils;
 
 import org.mozilla.gecko.background.fxa.FxAccountClient;
+import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.AccountStatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.RecoveryEmailStatusResponse;
@@ -23,6 +24,7 @@ import org.mozilla.gecko.sync.Utils;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -178,20 +180,23 @@ public class MockFxAccountClient implements FxAccountClient {
       String deviceId = deviceToRegister.id;
       if (TextUtils.isEmpty(deviceId)) { // Create
         deviceId = UUID.randomUUID().toString();
-        FxAccountDevice device = new FxAccountDevice(deviceToRegister.name, deviceId, deviceToRegister.type, null);
-        deviceToRegister.id = deviceId;
+        FxAccountDevice device = new FxAccountDevice(deviceToRegister.name, deviceId, deviceToRegister.type, null, null, null, null);
+        requestDelegate.handleSuccess(device);
       } else { // Update
         FxAccountDevice existingDevice = user.devices.get(deviceId);
         if (existingDevice != null) {
+          String deviceName = existingDevice.name;
           if (!TextUtils.isEmpty(deviceToRegister.name)) {
-            existingDevice.name = deviceToRegister.name;
+            deviceName = deviceToRegister.name;
           } // We could also update the other fields..
+          FxAccountDevice device = new FxAccountDevice(deviceName, existingDevice.id, existingDevice.type,
+                  existingDevice.isCurrentDevice, existingDevice.pushCallback, existingDevice.pushPublicKey,existingDevice.pushAuthKey);
+          requestDelegate.handleSuccess(device);
         } else { // Device unknown
           handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.UNKNOWN_DEVICE, "device is unknown");
           return;
         }
       }
-      requestDelegate.handleSuccess(deviceToRegister);
     } catch (Exception e) {
       requestDelegate.handleError(e);
     }
@@ -212,5 +217,10 @@ public class MockFxAccountClient implements FxAccountClient {
     Collection<FxAccountDevice> devices = user.devices.values();
     FxAccountDevice[] devicesArray = devices.toArray(new FxAccountDevice[devices.size()]);
     requestDelegate.handleSuccess(devicesArray);
+  }
+
+  @Override
+  public void notifyDevices(byte[] sessionToken, List<String> deviceIds, ExtendedJSONObject payload, Long TTL, RequestDelegate<ExtendedJSONObject> requestDelegate) {
+    requestDelegate.handleSuccess(new ExtendedJSONObject());
   }
 }

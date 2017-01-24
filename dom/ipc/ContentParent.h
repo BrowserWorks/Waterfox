@@ -7,9 +7,9 @@
 #ifndef mozilla_dom_ContentParent_h
 #define mozilla_dom_ContentParent_h
 
-#include "mozilla/dom/NuwaParent.h"
 #include "mozilla/dom/PContentParent.h"
 #include "mozilla/dom/nsIContentParent.h"
+#include "mozilla/gfx/gfxVarReceiver.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/FileUtils.h"
@@ -90,6 +90,7 @@ class ContentParent final : public PContentParent
                           , public nsIObserver
                           , public nsIDOMGeoPositionCallback
                           , public nsIDOMGeoPositionErrorCallback
+                          , public gfx::gfxVarReceiver
                           , public mozilla::LinkedListElement<ContentParent>
 {
   typedef mozilla::ipc::GeckoChildProcessHost GeckoChildProcessHost;
@@ -101,17 +102,6 @@ class ContentParent final : public PContentParent
   typedef mozilla::dom::ClonedMessageData ClonedMessageData;
 
 public:
-#ifdef MOZ_NUWA_PROCESS
-  static int32_t NuwaPid()
-  {
-    return sNuwaPid;
-  }
-
-  static bool IsNuwaReady()
-  {
-    return sNuwaReady;
-  }
-#endif
 
   virtual bool IsContentParent() const override { return true; }
 
@@ -150,8 +140,6 @@ public:
    * Create a subprocess suitable for use as a preallocated app process.
    */
   static already_AddRefed<ContentParent> PreallocateAppProcess();
-
-  static already_AddRefed<ContentParent> RunNuwaProcess();
 
   /**
    * Get or create a content process for the given TabContext.  aFrameElement
@@ -367,26 +355,10 @@ public:
     return mIsForBrowser;
   }
 
-#ifdef MOZ_NUWA_PROCESS
-  bool IsNuwaProcess() const;
-#endif
-
-  // A shorthand for checking if the Nuwa process is ready.
-  bool IsReadyNuwaProcess() const
-  {
-#ifdef MOZ_NUWA_PROCESS
-    return IsNuwaProcess() && IsNuwaReady();
-#else
-    return false;
-#endif
-  }
-
   GeckoChildProcessHost* Process() const
   {
     return mSubprocess;
   }
-
-  int32_t Pid() const;
 
   ContentParent* Opener() const
   {
@@ -549,8 +521,6 @@ public:
 
   virtual bool HandleWindowsMessages(const Message& aMsg) const override;
 
-  void SetNuwaParent(NuwaParent* aNuwaParent) { mNuwaParent = aNuwaParent; }
-
   void ForkNewProcess(bool aBlocking);
 
   virtual bool RecvCreateWindow(PBrowserParent* aThisTabParent,
@@ -591,14 +561,22 @@ public:
   virtual bool
   RecvUnstoreAndBroadcastBlobURLUnregistration(const nsCString& aURI) override;
 
+  virtual bool
+  RecvGetA11yContentId(uint32_t* aContentId) override;
+
+  virtual int32_t Pid() const override;
+
+  // Use the PHangMonitor channel to ask the child to repaint a tab.
+  void ForceTabPaint(TabParent* aTabParent, uint64_t aLayerObserverEpoch);
+
 protected:
   void OnChannelConnected(int32_t pid) override;
 
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
-  void OnNuwaForkTimeout();
-
   bool ShouldContinueFromReplyTimeout() override;
+
+  void OnVarChanged(const GfxVarUpdate& aVar) override;
 
 private:
   static nsDataHashtable<nsStringHashKey, ContentParent*> *sAppContentParents;
@@ -644,15 +622,7 @@ private:
   ContentParent(mozIApplication* aApp,
                 ContentParent* aOpener,
                 bool aIsForBrowser,
-                bool aIsForPreallocated,
-                bool aIsNuwaProcess = false);
-
-#ifdef MOZ_NUWA_PROCESS
-  ContentParent(ContentParent* aTemplate,
-                const nsAString& aAppManifestURL,
-                base::ProcessHandle aPid,
-                InfallibleTArray<ProtocolFdMapping>&& aFds);
-#endif
+                bool aIsForPreallocated);
 
   // The common initialization for the constructors.
   void InitializeMembers();
@@ -739,11 +709,6 @@ private:
   AllocPGMPServiceParent(mozilla::ipc::Transport* aTransport,
                          base::ProcessId aOtherProcess) override;
 
-  PAPZParent*
-  AllocPAPZParent(const TabId& aTabId) override;
-  bool
-  DeallocPAPZParent(PAPZParent* aActor) override;
-
   PSharedBufferManagerParent*
   AllocPSharedBufferManagerParent(mozilla::ipc::Transport* aTranport,
                                    base::ProcessId aOtherProcess) override;
@@ -822,7 +787,8 @@ private:
                                const uint32_t& aFlags, bool* aIsSecureURI) override;
 
   virtual bool RecvAccumulateMixedContentHSTS(const URIParams& aURI,
-                                              const bool& aActive) override;
+                                              const bool& aActive,
+                                              const bool& aHSTSPriming) override;
 
   virtual bool DeallocPHalParent(PHalParent*) override;
 
@@ -948,6 +914,7 @@ private:
   DeallocPWebBrowserPersistDocumentParent(PWebBrowserPersistDocumentParent* aActor) override;
 
   virtual bool RecvReadPrefsArray(InfallibleTArray<PrefSetting>* aPrefs) override;
+  virtual bool RecvGetGfxVars(InfallibleTArray<GfxVarUpdate>* aVars) override;
 
   virtual bool RecvReadFontList(InfallibleTArray<FontListEntry>* retValue) override;
 
@@ -958,6 +925,7 @@ private:
 
   virtual bool RecvSetClipboard(const IPCDataTransfer& aDataTransfer,
                                 const bool& aIsPrivateData,
+                                const IPC::Principal& aRequestingPrincipal,
                                 const int32_t& aWhichClipboard) override;
 
   virtual bool RecvGetClipboard(nsTArray<nsCString>&& aTypes,
@@ -1052,18 +1020,11 @@ private:
                                              const bool& aContentOrNormalChannel,
                                              const bool& aAnyChannel) override;
 
-  virtual bool RecvGetSystemMemory(const uint64_t& getterId) override;
-
   virtual bool RecvGetLookAndFeelCache(nsTArray<LookAndFeelInt>* aLookAndFeelIntCache) override;
 
   virtual bool RecvSpeakerManagerGetSpeakerStatus(bool* aValue) override;
 
   virtual bool RecvSpeakerManagerForceSpeaker(const bool& aEnable) override;
-
-  // Callbacks from NuwaParent.
-  void OnNuwaReady();
-  void OnNewProcessCreated(uint32_t aPid,
-                           UniquePtr<nsTArray<ProtocolFdMapping>>&& aFds);
 
   virtual bool RecvCreateFakeVolume(const nsString& aFsName,
                                     const nsString& aMountPoint) override;
@@ -1143,7 +1104,7 @@ private:
 
   virtual bool RecvProfile(const nsCString& aProfile) override;
 
-  virtual bool RecvGetGraphicsDeviceInitData(DeviceInitData* aOut) override;
+  virtual bool RecvGetGraphicsDeviceInitData(ContentDeviceData* aOut) override;
 
   void StartProfiler(nsIProfilerStartParams* aParams);
 
@@ -1228,7 +1189,6 @@ private:
 
   bool mSendPermissionUpdates;
   bool mIsForBrowser;
-  bool mIsNuwaProcess;
 
   // These variables track whether we've called Close() and KillHard() on our
   // channel.
@@ -1239,9 +1199,6 @@ private:
   bool mIPCOpen;
 
   friend class CrashReporterParent;
-
-  // Allows NuwaParent to access OnNuwaReady() and OnNewProcessCreated().
-  friend class NuwaParent;
 
   RefPtr<nsConsoleService>  mConsoleService;
   nsConsoleService* GetConsoleService();
@@ -1254,16 +1211,7 @@ private:
   ScopedClose mChildXSocketFdDup;
 #endif
 
-#ifdef MOZ_NUWA_PROCESS
-  static int32_t sNuwaPid;
-  static bool sNuwaReady;
-#endif
-
   PProcessHangMonitorParent* mHangMonitorActor;
-
-  // NuwaParent and ContentParent hold strong references to each other. The
-  // cycle will be broken when either actor is destroyed.
-  RefPtr<NuwaParent> mNuwaParent;
 
 #ifdef MOZ_ENABLE_PROFILER_SPS
   RefPtr<mozilla::ProfileGatherer> mGatherer;

@@ -51,7 +51,8 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla.gfx += [
-    'DeviceManagerD3D11.h',
+    'D3D11Checks.h',
+    'DeviceManagerDx.h',
     'PrintTarget.h',
     'PrintTargetThebes.h',
 ]
@@ -236,7 +237,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     UNIFIED_SOURCES += [
         'D3D11Checks.cpp',
-        'DeviceManagerD3D11.cpp',
+        'DeviceManagerDx.cpp',
     ]
 
 # We prefer to use ICU for normalization functions, but currently it is only
@@ -279,15 +280,11 @@ CFLAGS += CONFIG['TK_CFLAGS']
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gonk'):
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
-    # This is set for "normal Android", that is, when Gecko is running on
-    # top of the android java runtime.
-    DEFINES['MOZ_USING_ANDROID_JAVA_WIDGETS'] = True
-
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3'):
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
+LOCAL_INCLUDES += ['/media/libyuv/include']
 
 DEFINES['GRAPHITE2_STATIC'] = True
 

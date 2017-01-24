@@ -25,6 +25,8 @@
 namespace mozilla {
 class ErrorResult;
 class WebGLContext;
+struct FloatOrInt;
+struct TexImageSource;
 
 namespace dom {
 class Element;
@@ -56,7 +58,6 @@ class WebGLTexture final
     : public nsWrapperCache
     , public WebGLRefCountedObject<WebGLTexture>
     , public LinkedListElement<WebGLTexture>
-    , public WebGLContextBoundObject
 {
     // Friends
     friend class WebGLContext;
@@ -226,33 +227,10 @@ public:
     void GenerateMipmap(TexTarget texTarget);
     JS::Value GetTexParameter(TexTarget texTarget, GLenum pname);
     bool IsTexture() const;
-    void TexParameter(TexTarget texTarget, GLenum pname, GLint* maybeIntParam,
-                      GLfloat* maybeFloatParam);
+    void TexParameter(TexTarget texTarget, GLenum pname, const FloatOrInt& param);
 
     ////////////////////////////////////
     // WebGLTextureUpload.cpp
-
-    void TexOrSubImage(bool isSubImage, const char* funcName, TexImageTarget target,
-                       GLint level, GLenum internalFormat, GLint xOffset, GLint yOffset,
-                       GLint zOffset, GLsizei width, GLsizei height, GLsizei depth,
-                       GLint border, GLenum unpackFormat, GLenum unpackType,
-                       const dom::ArrayBufferView* view);
-
-    void TexOrSubImage(bool isSubImage, const char* funcName, TexImageTarget target,
-                       GLint level, GLenum internalFormat, GLint xOffset, GLint yOffset,
-                       GLint zOffset, GLenum unpackFormat, GLenum unpackType,
-                       const dom::ImageData& imageData);
-
-    void TexOrSubImage(bool isSubImage, const char* funcName, TexImageTarget target,
-                       GLint level, GLenum internalFormat, GLint xOffset, GLint yOffset,
-                       GLint zOffset, GLenum unpackFormat, GLenum unpackType,
-                       const dom::Element& elem, ErrorResult* const out_error);
-
-    void TexOrSubImage(bool isSubImage, const char* funcName, TexImageTarget target,
-                       GLint level, GLenum internalFormat, GLint xOffset, GLint yOffset,
-                       GLint zOffset, GLsizei width, GLsizei height, GLsizei depth,
-                       GLint border, GLenum unpackFormat, GLenum unpackType,
-                       WebGLsizeiptr offset);
 
 protected:
     void TexOrSubImageBlob(bool isSubImage, const char* funcName, TexImageTarget target,
@@ -270,13 +248,20 @@ protected:
                                    GLint zOffset, uint32_t width, uint32_t height,
                                    uint32_t depth,
                                    WebGLTexture::ImageInfo** const out_imageInfo);
-    bool ValidateCopyTexImageForFeedback(const char* funcName, uint32_t level) const;
+    bool ValidateCopyTexImageForFeedback(const char* funcName, uint32_t level, GLint layer = 0) const;
 
     bool ValidateUnpack(const char* funcName, const webgl::TexUnpackBlob* blob,
                         bool isFunc3D, const webgl::PackingInfo& srcPI) const;
 public:
     void TexStorage(const char* funcName, TexTarget target, GLsizei levels,
                     GLenum sizedFormat, GLsizei width, GLsizei height, GLsizei depth);
+    void TexImage(const char* funcName, TexImageTarget target, GLint level,
+                  GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth,
+                  GLint border, const webgl::PackingInfo& pi, const TexImageSource& src);
+    void TexSubImage(const char* funcName, TexImageTarget target, GLint level,
+                     GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width,
+                     GLsizei height, GLsizei depth, const webgl::PackingInfo& pi,
+                     const TexImageSource& src);
 protected:
     void TexImage(const char* funcName, TexImageTarget target, GLint level,
                   GLenum internalFormat, const webgl::PackingInfo& pi,
@@ -287,12 +272,12 @@ protected:
 public:
     void CompressedTexImage(const char* funcName, TexImageTarget target, GLint level,
                             GLenum internalFormat, GLsizei width, GLsizei height,
-                            GLsizei depth, GLint border,
-                            const dom::ArrayBufferView& view);
+                            GLsizei depth, GLint border, const TexImageSource& src);
     void CompressedTexSubImage(const char* funcName, TexImageTarget target, GLint level,
                                GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width,
                                GLsizei height, GLsizei depth, GLenum sizedUnpackFormat,
-                               const dom::ArrayBufferView& view);
+                               const TexImageSource& src);
+
     void CopyTexImage2D(TexImageTarget target, GLint level, GLenum internalFormat,
                         GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
     void CopyTexSubImage(const char* funcName, TexImageTarget target, GLint level,
@@ -365,6 +350,7 @@ public:
 protected:
     bool EnsureImageDataInitialized(const char* funcName, TexImageTarget target,
                                     uint32_t level);
+    bool EnsureLevelInitialized(const char* funcName, uint32_t level);
 
     bool CheckFloatTextureFilterParams() const {
         // Without OES_texture_float_linear, only NEAREST and
@@ -391,11 +377,13 @@ public:
 
     bool AreAllLevel0ImageInfosEqual() const;
 
-    bool IsMipmapComplete(uint32_t texUnit) const;
+    bool IsMipmapComplete(const char* funcName, uint32_t texUnit,
+                          bool* const out_initFailed);
 
     bool IsCubeComplete() const;
 
-    bool IsComplete(uint32_t texUnit, const char** const out_reason) const;
+    bool IsComplete(const char* funcName, uint32_t texUnit, const char** const out_reason,
+                    bool* const out_initFailed);
 
     bool IsMipmapCubeComplete() const;
 

@@ -30,13 +30,34 @@ const MessageContainer = createClass({
   displayName: "MessageContainer",
 
   propTypes: {
-    message: PropTypes.object.isRequired
+    message: PropTypes.object.isRequired,
+    sourceMapService: PropTypes.object,
+    onViewSourceInDebugger: PropTypes.func.isRequired,
+    open: PropTypes.bool.isRequired,
+  },
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.props.message.repeat !== nextProps.message.repeat
+      || this.props.open !== nextProps.open;
   },
 
   render() {
-    const { message } = this.props;
+    const {
+      dispatch,
+      message,
+      sourceMapService,
+      onViewSourceInDebugger,
+      open
+    } = this.props;
+
     let MessageComponent = createFactory(getMessageComponent(message));
-    return MessageComponent({ message });
+    return MessageComponent({
+      dispatch,
+      message,
+      sourceMapService,
+      onViewSourceInDebugger,
+      open
+    });
   }
 });
 
@@ -57,7 +78,7 @@ function getMessageComponent(message) {
         case MESSAGE_TYPE.LOG:
           return componentMap.get("PageError");
         default:
-          componentMap.get("DefaultRenderer");
+          return componentMap.get("DefaultRenderer");
       }
   }
 

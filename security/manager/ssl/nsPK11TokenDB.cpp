@@ -6,7 +6,7 @@
 #include "nsPK11TokenDB.h"
 
 #include "mozilla/Casting.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIMutableArray.h"
 #include "nsISupports.h"
 #include "nsNSSComponent.h"
@@ -92,7 +92,7 @@ nsPK11Token::~nsPK11Token()
     return;
   }
   destructorSafeDestroyNSSReference();
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 void
@@ -500,7 +500,7 @@ nsPK11TokenDB::~nsPK11TokenDB()
     return;
   }
 
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 NS_IMETHODIMP

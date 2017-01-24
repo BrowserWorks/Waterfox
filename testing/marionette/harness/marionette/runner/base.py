@@ -33,9 +33,9 @@ import httpd
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-def update_mozinfo(path=None):
-    """walk up directories to find mozinfo.json and update the info"""
 
+def update_mozinfo(path=None):
+    """Walk up directories to find mozinfo.json and update the info."""
     path = path or here
     dirs = set()
     while path != os.path.expanduser('~'):
@@ -52,11 +52,12 @@ class MarionetteTest(TestResult):
     @property
     def test_name(self):
         if self.test_class is not None:
-            return '%s.py %s.%s' % (self.test_class.split('.')[0],
-                                    self.test_class,
-                                    self.name)
+            return '{0}.py {1}.{2}'.format(self.test_class.split('.')[0],
+                                           self.test_class,
+                                           self.name)
         else:
             return self.name
+
 
 class MarionetteTestResult(StructuredTestResult, TestResultCollection):
 
@@ -67,7 +68,7 @@ class MarionetteTestResult(StructuredTestResult, TestResultCollection):
         TestResultCollection.__init__(self, 'MarionetteTest')
         self.passed = 0
         self.testsRun = 0
-        self.result_modifiers = [] # used by mixins to modify the result
+        self.result_modifiers = []  # used by mixins to modify the result
         StructuredTestResult.__init__(self, *args, **kwargs)
 
     @property
@@ -133,11 +134,12 @@ class MarionetteTestResult(StructuredTestResult, TestResultCollection):
             test_class = None
 
         t = self.resultClass(name=name, test_class=test_class,
-                       time_start=test.start_time, result_expected=result_expected,
-                       context=context, **kwargs)
+                             time_start=test.start_time, result_expected=result_expected,
+                             context=context, **kwargs)
         # call any registered result modifiers
         for modifier in self.result_modifiers:
-            result_expected, result_actual, output, context = modifier(t, result_expected, result_actual, output, context)
+            result_expected, result_actual, output, context = modifier(
+                t, result_expected, result_actual, output, context)
         t.finish(result_actual,
                  time_end=time.time() if test.start_time else 0,
                  reason=relevant_line(output),
@@ -145,11 +147,13 @@ class MarionetteTestResult(StructuredTestResult, TestResultCollection):
         self.append(t)
 
     def addError(self, test, err):
-        self.add_test_result(test, output=self._exc_info_to_string(err, test), result_actual='ERROR')
+        self.add_test_result(test, output=self._exc_info_to_string(err, test),
+                             result_actual='ERROR')
         super(MarionetteTestResult, self).addError(test, err)
 
     def addFailure(self, test, err):
-        self.add_test_result(test, output=self._exc_info_to_string(err, test), result_actual='UNEXPECTED-FAIL')
+        self.add_test_result(test, output=self._exc_info_to_string(err, test),
+                             result_actual='UNEXPECTED-FAIL')
         super(MarionetteTestResult, self).addFailure(test, err)
 
     def addSuccess(self, test):
@@ -182,7 +186,7 @@ class MarionetteTestResult(StructuredTestResult, TestResultCollection):
         else:
             desc = str(test)
             if hasattr(test, 'jsFile'):
-                desc = "%s, %s" % (test.jsFile, desc)
+                desc = "{0}, {1}".format(test.jsFile, desc)
             return desc
 
     def printLogs(self, test):
@@ -193,7 +197,7 @@ class MarionetteTestResult(StructuredTestResult, TestResultCollection):
                 skip_log = True
                 for line in testcase.loglines:
                     str_line = ' '.join(line)
-                    if not 'TEST-END' in str_line and not 'TEST-START' in str_line:
+                    if 'TEST-END' not in str_line and 'TEST-START' not in str_line:
                         skip_log = False
                         break
                 if skip_log:
@@ -260,106 +264,111 @@ class BaseMarionetteArguments(ArgumentParser):
                                'When a directory is specified, '
                                'all test files in the directory will be run.')
         self.add_argument('--binary',
-                        help='path to gecko executable to launch before running the test')
+                          help='path to gecko executable to launch before running the test')
         self.add_argument('--address',
-                        help='host:port of running Gecko instance to connect to')
+                          help='host:port of running Gecko instance to connect to')
         self.add_argument('--emulator',
-                        action='store_true',
-                        help='If no --address is given, then the harness will launch an emulator. (See Remote options group.) '
-                             'If --address is given, then the harness assumes you are running an '
-                             'emulator already, and will launch gecko app on  that emulator.')
+                          action='store_true',
+                          help='If no --address is given, then the harness will launch an '
+                               'emulator. (See Remote options group.) '
+                               'If --address is given, then the harness assumes you are '
+                               'running an emulator already, and will launch gecko app '
+                               'on that emulator.')
         self.add_argument('--app',
-                        help='application to use. see marionette_driver.geckoinstance')
+                          help='application to use. see marionette_driver.geckoinstance')
         self.add_argument('--app-arg',
-                        dest='app_args',
-                        action='append',
-                        default=[],
-                        help='specify a command line argument to be passed onto the application')
+                          dest='app_args',
+                          action='append',
+                          default=[],
+                          help='specify a command line argument to be passed onto the application')
         self.add_argument('--profile',
-                        help='profile to use when launching the gecko process. If not passed, then a profile will be '
-                             'constructed and used',
-                        type=dir_path)
+                          help='profile to use when launching the gecko process. If not passed, '
+                               'then a profile will be constructed and used',
+                          type=dir_path)
         self.add_argument('--pref',
-                        action='append',
-                        dest='prefs_args',
-                        help=(" A preference to set. Must be a key-value pair"
-                              " separated by a ':'."))
+                          action='append',
+                          dest='prefs_args',
+                          help="A preference to set. Must be a key-value pair separated by a ':'.")
         self.add_argument('--preferences',
-                        action='append',
-                        dest='prefs_files',
-                        help=("read preferences from a JSON or INI file. For"
-                              " INI, use 'file.ini:section' to specify a"
-                              " particular section."))
+                          action='append',
+                          dest='prefs_files',
+                          help="read preferences from a JSON or INI file. For INI, use "
+                               "'file.ini:section' to specify a particular section.")
         self.add_argument('--addon',
-                        action='append',
-                        help="addon to install; repeat for multiple addons.")
+                          action='append',
+                          help="addon to install; repeat for multiple addons.")
         self.add_argument('--repeat',
-                        type=int,
-                        default=0,
-                        help='number of times to repeat the test(s)')
+                          type=int,
+                          default=0,
+                          help='number of times to repeat the test(s)')
         self.add_argument('--testvars',
-                        action='append',
-                        help='path to a json file with any test data required')
+                          action='append',
+                          help='path to a json file with any test data required')
         self.add_argument('--symbols-path',
-                        help='absolute path to directory containing breakpad symbols, or the url of a zip file containing symbols')
+                          help='absolute path to directory containing breakpad symbols, or the '
+                               'url of a zip file containing symbols')
         self.add_argument('--timeout',
-                        type=int,
-                        help='if a --timeout value is given, it will set the default page load timeout, search timeout and script timeout to the given value. If not passed in, it will use the default values of 30000ms for page load, 0ms for search timeout and 10000ms for script timeout')
+                          type=int,
+                          help='if a --timeout value is given, it will set the default page load '
+                               'timeout, search timeout and script timeout to the given value. '
+                               'If not passed in, it will use the default values of 30000ms for '
+                               'page load, 0ms for search timeout and 10000ms for script timeout')
         self.add_argument('--startup-timeout',
-                        type=int,
-                        default=60,
-                        help='the max number of seconds to wait for a Marionette connection after launching a binary')
+                          type=int,
+                          default=60,
+                          help='the max number of seconds to wait for a Marionette connection '
+                               'after launching a binary')
         self.add_argument('--shuffle',
-                        action='store_true',
-                        default=False,
-                        help='run tests in a random order')
+                          action='store_true',
+                          default=False,
+                          help='run tests in a random order')
         self.add_argument('--shuffle-seed',
-                        type=int,
-                        default=random.randint(0, sys.maxint),
-                        help='Use given seed to shuffle tests')
+                          type=int,
+                          default=random.randint(0, sys.maxint),
+                          help='Use given seed to shuffle tests')
         self.add_argument('--total-chunks',
-                        type=int,
-                        help='how many chunks to split the tests up into')
+                          type=int,
+                          help='how many chunks to split the tests up into')
         self.add_argument('--this-chunk',
-                        type=int,
-                        help='which chunk to run')
+                          type=int,
+                          help='which chunk to run')
         self.add_argument('--sources',
-                        help='path to sources.xml (Firefox OS only)')
+                          help='path to sources.xml (Firefox OS only)')
         self.add_argument('--server-root',
-                        help='url to a webserver or path to a document root from which content '
-                        'resources are served (default: {}).'.format(os.path.join(
-                            os.path.dirname(here), 'www')))
+                          help='url to a webserver or path to a document root from which content '
+                               'resources are served (default: {}).'.format(os.path.join(
+                                   os.path.dirname(here), 'www')))
         self.add_argument('--gecko-log',
-                        help="Define the path to store log file. If the path is"
-                             " a directory, the real log file will be created"
-                             " given the format gecko-(timestamp).log. If it is"
-                             " a file, if will be used directly. '-' may be passed"
-                             " to write to stdout. Default: './gecko.log'")
+                          help="Define the path to store log file. If the path is"
+                               " a directory, the real log file will be created"
+                               " given the format gecko-(timestamp).log. If it is"
+                               " a file, if will be used directly. '-' may be passed"
+                               " to write to stdout. Default: './gecko.log'")
         self.add_argument('--logger-name',
-                        default='Marionette-based Tests',
-                        help='Define the name to associate with the logger used')
+                          default='Marionette-based Tests',
+                          help='Define the name to associate with the logger used')
         self.add_argument('--jsdebugger',
-                        action='store_true',
-                        default=False,
-                        help='Enable the jsdebugger for marionette javascript.')
+                          action='store_true',
+                          default=False,
+                          help='Enable the jsdebugger for marionette javascript.')
         self.add_argument('--pydebugger',
-                        help='Enable python post-mortem debugger when a test fails.'
-                             ' Pass in the debugger you want to use, eg pdb or ipdb.')
+                          help='Enable python post-mortem debugger when a test fails.'
+                               ' Pass in the debugger you want to use, eg pdb or ipdb.')
         self.add_argument('--socket-timeout',
-                        type=float,
-                        default=self.socket_timeout_default,
-                        help='Set the global timeout for marionette socket operations.')
+                          type=float,
+                          default=self.socket_timeout_default,
+                          help='Set the global timeout for marionette socket operations.')
         self.add_argument('--disable-e10s',
-                        action='store_false',
-                        dest='e10s',
-                        default=True,
-                        help='Disable e10s when running marionette tests.')
+                          action='store_false',
+                          dest='e10s',
+                          default=True,
+                          help='Disable e10s when running marionette tests.')
         self.add_argument('--tag',
-                        action='append', dest='test_tags',
-                        default=None,
-                        help="Filter out tests that don't have the given tag. Can be "
-                             "used multiple times in which case the test must contain "
-                             "at least one of the given tags.")
+                          action='append', dest='test_tags',
+                          default=None,
+                          help="Filter out tests that don't have the given tag. Can be "
+                               "used multiple times in which case the test must contain "
+                               "at least one of the given tags.")
         self.add_argument('--workspace',
                           action='store',
                           default=None,
@@ -367,9 +376,9 @@ class BaseMarionetteArguments(ArgumentParser):
                                "(Default: .) (Default profile dest: TMP)",
                           type=dir_path)
         self.add_argument('-v', '--verbose',
-                        action='count',
-                        help='Increase verbosity to include debug messages with -v, '
-                            'and trace messages with -vv.')
+                          action='count',
+                          help='Increase verbosity to include debug messages with -v, '
+                               'and trace messages with -vv.')
         self.register_argument_container(RemoteMarionetteArguments())
 
     def register_argument_container(self, container):
@@ -388,9 +397,7 @@ class BaseMarionetteArguments(ArgumentParser):
         return (args, remainder)
 
     def _get_preferences(self, prefs_files, prefs_args):
-        """
-        return user defined profile preferences as a dict
-        """
+        """Return user defined profile preferences as a dict."""
         # object that will hold the preferences
         prefs = mozprofile.prefs.Preferences()
 
@@ -437,7 +444,7 @@ class BaseMarionetteArguments(ArgumentParser):
             if not 1 < args.total_chunks:
                 self.error('Total chunks must be greater than 1.')
             if not 1 <= args.this_chunk <= args.total_chunks:
-                self.error('Chunk to run must be between 1 and %s.' % args.total_chunks)
+                self.error('Chunk to run must be between 1 and {}.'.format(args.total_chunks))
 
         if args.jsdebugger:
             args.app_args.append('-jsdebugger')
@@ -457,6 +464,7 @@ class BaseMarionetteArguments(ArgumentParser):
                 container.verify_usage_handler(args)
 
         return args
+
 
 class RemoteMarionetteArguments(object):
     name = 'Remote (Emulator/Device)'
@@ -481,7 +489,13 @@ class RemoteMarionetteArguments(object):
                    'e.g emulator-5444'),
           'dest': 'device_serial',
           }],
+        [['--package'],
+         {'help': 'Name of Android package, e.g. org.mozilla.fennec',
+          'dest': 'package_name',
+          }],
+
     ]
+
 
 class BaseMarionetteTestRunner(object):
 
@@ -493,7 +507,8 @@ class BaseMarionetteTestRunner(object):
                  logger=None, logdir=None,
                  repeat=0, testvars=None,
                  symbols_path=None, timeout=None,
-                 shuffle=False, shuffle_seed=random.randint(0, sys.maxint), this_chunk=1, total_chunks=1, sources=None,
+                 shuffle=False, shuffle_seed=random.randint(0, sys.maxint), this_chunk=1,
+                 total_chunks=1, sources=None,
                  server_root=None, gecko_log=None, result_callbacks=None,
                  prefs=None, test_tags=None,
                  socket_timeout=BaseMarionetteArguments.socket_timeout_default,
@@ -544,7 +559,8 @@ class BaseMarionetteTestRunner(object):
             rv = {}
             marionette = test._marionette_weakref()
 
-            # In the event we're gathering debug without starting a session, skip marionette commands
+            # In the event we're gathering debug without starting a session,
+            # skip marionette commands
             if marionette.session is not None:
                 try:
                     with marionette.using_context(marionette.CONTEXT_CHROME):
@@ -579,7 +595,8 @@ class BaseMarionetteTestRunner(object):
     @property
     def filename_pattern(self):
         if self._filename_pattern is None:
-            self._filename_pattern = re.compile("^test(((_.+?)+?\.((py)|(js)))|(([A-Z].*?)+?\.js))$")
+            self._filename_pattern = re.compile(
+                "^test(((_.+?)+?\.((py)|(js)))|(([A-Z].*?)+?\.js))$")
 
         return self._filename_pattern
 
@@ -591,7 +608,7 @@ class BaseMarionetteTestRunner(object):
         self._testvars = {}
 
         def update(d, u):
-            """ Update a dictionary that may contain nested dictionaries. """
+            """Update a dictionary that may contain nested dictionaries."""
             for k, v in u.iteritems():
                 o = d.get(k, {})
                 if isinstance(v, dict) and isinstance(o, dict):
@@ -611,7 +628,7 @@ class BaseMarionetteTestRunner(object):
             for path in list(self.testvars_paths):
                 path = os.path.abspath(os.path.expanduser(path))
                 if not os.path.exists(path):
-                    raise IOError('--testvars file %s does not exist' % path)
+                    raise IOError('--testvars file {} does not exist'.format(path))
                 try:
                     with open(path) as f:
                         data.append(json.loads(f.read()))
@@ -662,18 +679,13 @@ class BaseMarionetteTestRunner(object):
 
     @bin.setter
     def bin(self, path):
-        """
-        Set binary and reset parts of runner accordingly
+        """Set binary and reset parts of runner accordingly.
 
         Intended use: to change binary between calls to run_tests
         """
         self._bin = path
         self.tests = []
-        if hasattr(self, 'marionette') and self.marionette:
-            self.marionette.cleanup()
-            if self.marionette.instance:
-                self.marionette.instance = None
-        self.marionette = None
+        self.cleanup()
 
     def reset_test_stats(self):
         self.passed = 0
@@ -712,13 +724,15 @@ class BaseMarionetteTestRunner(object):
         if self.bin:
             kwargs.update({
                 'bin': self.bin,
-        })
+            })
 
         if self.emulator:
             kwargs.update({
                 'avd_home': self.extra_kwargs.get('avd_home'),
                 'adb_path': self.extra_kwargs.get('adb_path'),
                 'emulator_binary': self.extra_kwargs.get('emulator_bin'),
+                'avd': self.extra_kwargs.get('avd'),
+                'package_name': self.extra_kwargs.get('package_name'),
             })
 
         if self.address:
@@ -733,9 +747,9 @@ class BaseMarionetteTestRunner(object):
                 })
             if not self.bin and not self.emulator:
                 try:
-                    #establish a socket connection so we can vertify the data come back
-                    connection = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                    connection.connect((host,int(port)))
+                    # Establish a socket connection so we can vertify the data come back
+                    connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    connection.connect((host, int(port)))
                     connection.close()
                 except Exception as e:
                     exc, val, tb = sys.exc_info()
@@ -751,7 +765,8 @@ class BaseMarionetteTestRunner(object):
         self.marionette.set_context(self.marionette.CONTEXT_CONTENT)
 
         result = self.marionette.execute_async_script("""
-if((navigator.mozSettings == undefined) || (navigator.mozSettings == null) || (navigator.mozApps == undefined) || (navigator.mozApps == null)) {
+if((navigator.mozSettings == undefined) || (navigator.mozSettings == null) ||
+   (navigator.mozApps == undefined) || (navigator.mozApps == null)) {
     marionetteScriptFinished(false);
     return;
 }
@@ -812,7 +827,7 @@ setReq.onerror = function() {
             self.marionette = self.driverclass(**self._build_kwargs())
             # if we're working against a desktop version, we usually don't need
             # an external ip
-            if self.appName != 'Fennec':
+            if self.appName != 'fennec':
                 need_external_ip = False
         self.logger.info('Initial Profile Destination is '
                          '"{}"'.format(self.marionette.profile_path))
@@ -825,21 +840,21 @@ setReq.onerror = function() {
                 self.logger.info("starting httpd")
                 self.start_httpd(need_external_ip)
                 self.marionette.baseurl = self.httpd.get_url()
-                self.logger.info("running httpd on %s" % self.marionette.baseurl)
+                self.logger.info("running httpd on {}".format(self.marionette.baseurl))
             else:
                 self.marionette.baseurl = self.server_root
-                self.logger.info("using remote content from %s" % self.marionette.baseurl)
+                self.logger.info("using remote content from {}".format(self.marionette.baseurl))
 
     def _add_tests(self, tests):
         for test in tests:
             self.add_test(test)
 
-        invalid_tests = [t['filepath'] for t in self.tests if not self._is_filename_valid(t['filepath'])]
+        invalid_tests = [t['filepath'] for t in self.tests
+                         if not self._is_filename_valid(t['filepath'])]
         if invalid_tests:
             raise Exception("Test file names must be of the form "
                             "'test_something.py', 'test_something.js', or 'testSomething.js'."
-                            " Invalid test names:\n  %s"
-                            % '\n  '.join(invalid_tests))
+                            " Invalid test names:\n  {}".format('\n  '.join(invalid_tests)))
 
     def _is_filename_valid(self, filename):
         filename = os.path.basename(filename)
@@ -870,7 +885,7 @@ setReq.onerror = function() {
             except Exception:
                 self.logger.warning('Could not get device info.')
 
-		#TODO Get version_info in Fennec case
+        # TODO: Get version_info in Fennec case
         version_info = None
         if self.bin:
             version_info = mozversion.get_version(binary=self.bin,
@@ -887,10 +902,10 @@ setReq.onerror = function() {
         interrupted = None
         try:
             counter = self.repeat
-            while counter >=0:
+            while counter >= 0:
                 round_num = self.repeat - counter
                 if round_num > 0:
-                    self.logger.info('\nREPEAT %d\n-------' % round_num)
+                    self.logger.info('\nREPEAT {}\n-------'.format(round_num))
                 self.run_test_sets()
                 counter -= 1
         except KeyboardInterrupt:
@@ -898,20 +913,21 @@ setReq.onerror = function() {
             # we want to display current test results.
             # so we keep the exception to raise it later.
             interrupted = sys.exc_info()
+        except:
+            # For any other exception we return immediately and have to
+            # cleanup running processes
+            self.cleanup()
+            raise
+
         try:
             self._print_summary(tests)
             self.record_crash()
             self.elapsedtime = time.time() - start_time
 
-            if self.marionette.instance:
-                self.marionette.instance.close()
-                self.marionette.instance = None
-            self.marionette.cleanup()
-
             for run_tests in self.mixin_run_tests:
                 run_tests(tests)
             if self.shuffle:
-                self.logger.info("Using seed where seed is:%d" % self.shuffle_seed)
+                self.logger.info("Using seed where seed is:{}".format(self.shuffle_seed))
 
             self.logger.info('mode: {}'.format('e10s' if self.e10s else 'non-e10s'))
             self.logger.suite_end()
@@ -920,30 +936,34 @@ setReq.onerror = function() {
             if not interrupted:
                 raise
         finally:
+            self.cleanup()
+
             # reraise previous interruption now
             if interrupted:
                 raise interrupted[0], interrupted[1], interrupted[2]
 
     def _print_summary(self, tests):
         self.logger.info('\nSUMMARY\n-------')
-        self.logger.info('passed: %d' % self.passed)
+        self.logger.info('passed: {}'.format(self.passed))
         if self.unexpected_successes == 0:
-            self.logger.info('failed: %d' % self.failed)
+            self.logger.info('failed: {}'.format(self.failed))
         else:
-            self.logger.info('failed: %d (unexpected sucesses: %d)' % (self.failed, self.unexpected_successes))
+            self.logger.info(
+                'failed: {0} (unexpected sucesses: {1})'.format(self.failed,
+                                                                self.unexpected_successes))
         if self.skipped == 0:
-            self.logger.info('todo: %d' % self.todo)
+            self.logger.info('todo: {}'.format(self.todo))
         else:
-            self.logger.info('todo: %d (skipped: %d)' % (self.todo, self.skipped))
+            self.logger.info('todo: {0} (skipped: {1})'.format(self.todo, self.skipped))
 
         if self.failed > 0:
             self.logger.info('\nFAILED TESTS\n-------')
             for failed_test in self.failures:
-                self.logger.info('%s' % failed_test[0])
+                self.logger.info('{}'.format(failed_test[0]))
 
     def start_httpd(self, need_external_ip):
         warnings.warn("start_httpd has been deprecated in favour of create_httpd",
-            DeprecationWarning)
+                      DeprecationWarning)
         self.httpd = self.create_httpd(need_external_ip)
 
     def create_httpd(self, need_external_ip):
@@ -971,7 +991,6 @@ setReq.onerror = function() {
                         self.add_test(test_file)
             return
 
-
         file_ext = os.path.splitext(os.path.split(filepath)[-1])[1]
 
         if file_ext == '.ini':
@@ -981,8 +1000,9 @@ setReq.onerror = function() {
             filters = []
             if self.test_tags:
                 filters.append(tags(self.test_tags))
-            json_path = update_mozinfo(filepath)
+            update_mozinfo(filepath)
             self.logger.info("mozinfo updated with the following: {}".format(None))
+            self.logger.info("mozinfo is: {}".format(mozinfo.info))
             manifest_tests = manifest.active_tests(exists=False,
                                                    disabled=True,
                                                    filters=filters,
@@ -990,9 +1010,9 @@ setReq.onerror = function() {
                                                    e10s=self.e10s,
                                                    **mozinfo.info)
             if len(manifest_tests) == 0:
-                self.logger.error("no tests to run using specified "
+                self.logger.error("No tests to run using specified "
                                   "combination of filters: {}".format(
-                                       manifest.fmt_filters()))
+                                      manifest.fmt_filters()))
 
             target_tests = []
             for test in manifest_tests:
@@ -1003,7 +1023,7 @@ setReq.onerror = function() {
 
             for i in target_tests:
                 if not os.path.exists(i["path"]):
-                    raise IOError("test file: %s does not exist" % i["path"])
+                    raise IOError("test file: {} does not exist".format(i["path"]))
 
                 file_ext = os.path.splitext(os.path.split(i['path'])[-1])[-1]
                 test_container = None
@@ -1011,7 +1031,8 @@ setReq.onerror = function() {
                 self.add_test(i["path"], i["expected"], test_container)
             return
 
-        self.tests.append({'filepath': filepath, 'expected': expected, 'test_container': test_container})
+        self.tests.append({'filepath': filepath, 'expected': expected,
+                          'test_container': test_container})
 
     def run_test(self, filepath, expected, test_container):
 
@@ -1049,12 +1070,14 @@ setReq.onerror = function() {
                 self.todo += len(results.skipped)
             self.passed += results.passed
             for failure in results.failures + results.errors:
-                self.failures.append((results.getInfo(failure), failure.output, 'TEST-UNEXPECTED-FAIL'))
+                self.failures.append((results.getInfo(failure), failure.output,
+                                      'TEST-UNEXPECTED-FAIL'))
             if hasattr(results, 'unexpectedSuccesses'):
                 self.failed += len(results.unexpectedSuccesses)
                 self.unexpected_successes += len(results.unexpectedSuccesses)
                 for failure in results.unexpectedSuccesses:
-                    self.failures.append((results.getInfo(failure), failure.output, 'TEST-UNEXPECTED-PASS'))
+                    self.failures.append((results.getInfo(failure), failure.output,
+                                          'TEST-UNEXPECTED-PASS'))
             if hasattr(results, 'expectedFailures'):
                 self.todo += len(results.expectedFailures)
 
@@ -1076,26 +1099,33 @@ setReq.onerror = function() {
         if len(self.tests) < 1:
             raise Exception('There are no tests to run.')
         elif self.total_chunks > len(self.tests):
-            raise ValueError('Total number of chunks must be between 1 and %d.' % len(self.tests))
+            raise ValueError('Total number of chunks must be between 1 and {}.'
+                             .format(len(self.tests)))
         if self.total_chunks > 1:
             chunks = [[] for i in range(self.total_chunks)]
             for i, test in enumerate(self.tests):
                 target_chunk = i % self.total_chunks
                 chunks[target_chunk].append(test)
 
-            self.logger.info('Running chunk %d of %d (%d tests selected from a '
-                             'total of %d)' % (self.this_chunk, self.total_chunks,
-                                               len(chunks[self.this_chunk - 1]),
-                                               len(self.tests)))
+            self.logger.info('Running chunk {0} of {1} ({2} tests selected from a '
+                             'total of {3})'.format(self.this_chunk, self.total_chunks,
+                                                    len(chunks[self.this_chunk - 1]),
+                                                    len(self.tests)))
             self.tests = chunks[self.this_chunk - 1]
 
         self.run_test_set(self.tests)
 
     def cleanup(self):
-        if self.httpd:
+        if hasattr(self, 'httpd') and self.httpd:
             self.httpd.stop()
+            self.httpd = None
 
-        if self.marionette:
+        if hasattr(self, 'marionette') and self.marionette:
+            if self.marionette.instance:
+                self.marionette.instance.close()
+                self.marionette.instance = None
+
             self.marionette.cleanup()
+            self.marionette = None
 
     __del__ = cleanup

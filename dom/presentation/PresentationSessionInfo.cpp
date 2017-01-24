@@ -15,7 +15,7 @@
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
 #include "nsIDocShell.h"
-#include "nsIFrameLoader.h"
+#include "nsFrameLoader.h"
 #include "nsIMutableArray.h"
 #include "nsINetAddr.h"
 #include "nsISocketTransport.h"
@@ -222,28 +222,35 @@ PresentationSessionInfo::Init(nsIPresentationControlChannel* aControlChannel)
 /* virtual */ void
 PresentationSessionInfo::Shutdown(nsresult aReason)
 {
-  NS_WARN_IF(NS_FAILED(aReason));
+  PRES_DEBUG("%s:id[%s], reason[%x], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), aReason, mRole);
+
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(aReason), "bad reason");
 
   // Close the control channel if any.
   if (mControlChannel) {
-    NS_WARN_IF(NS_FAILED(mControlChannel->Disconnect(aReason)));
+    Unused << NS_WARN_IF(NS_FAILED(mControlChannel->Disconnect(aReason)));
   }
 
   // Close the data transport channel if any.
   if (mTransport) {
     // |mIsTransportReady| will be unset once |NotifyTransportClosed| is called.
-    NS_WARN_IF(NS_FAILED(mTransport->Close(aReason)));
+    Unused << NS_WARN_IF(NS_FAILED(mTransport->Close(aReason)));
   }
 
   mIsResponderReady = false;
   mIsOnTerminating = false;
 
-  SetBuilder(nullptr);
+  ResetBuilder();
 }
 
 nsresult
 PresentationSessionInfo::SetListener(nsIPresentationSessionListener* aListener)
 {
+  if (mListener && aListener) {
+    Unused << NS_WARN_IF(NS_FAILED(mListener->NotifyReplaced()));
+  }
+
   mListener = aListener;
 
   if (mListener) {
@@ -275,6 +282,34 @@ PresentationSessionInfo::Send(const nsAString& aData)
   }
 
   return mTransport->Send(aData);
+}
+
+nsresult
+PresentationSessionInfo::SendBinaryMsg(const nsACString& aData)
+{
+  if (NS_WARN_IF(!IsSessionReady())) {
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+  if (NS_WARN_IF(!mTransport)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return mTransport->SendBinaryMsg(aData);
+}
+
+nsresult
+PresentationSessionInfo::SendBlob(nsIDOMBlob* aBlob)
+{
+  if (NS_WARN_IF(!IsSessionReady())) {
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+  if (NS_WARN_IF(!mTransport)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return mTransport->SendBlob(aBlob);
 }
 
 nsresult
@@ -366,11 +401,18 @@ PresentationSessionInfo::GetWindow()
     return nullptr;
   }
   uint64_t windowId = 0;
-  if (NS_WARN_IF(NS_FAILED(service->GetWindowIdBySessionId(mSessionId, &windowId)))) {
+  if (NS_WARN_IF(NS_FAILED(service->GetWindowIdBySessionId(mSessionId,
+                                                           mRole,
+                                                           &windowId)))) {
     return nullptr;
   }
 
-  return nsGlobalWindow::GetInnerWindowWithId(windowId)->AsInner();
+  auto window = nsGlobalWindow::GetInnerWindowWithId(windowId);
+  if (!window) {
+    return nullptr;
+  }
+
+  return window->AsInner();
 }
 
 /* virtual */ bool
@@ -396,6 +438,9 @@ PresentationSessionInfo::ContinueTermination()
 NS_IMETHODIMP
 PresentationSessionInfo::NotifyTransportReady()
 {
+  PRES_DEBUG("%s:id[%s], role[%d], state[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole, mState);
+
   MOZ_ASSERT(NS_IsMainThread());
 
   if (mState != nsIPresentationSessionListener::STATE_CONNECTING &&
@@ -424,13 +469,17 @@ PresentationSessionInfo::NotifyTransportReady()
 NS_IMETHODIMP
 PresentationSessionInfo::NotifyTransportClosed(nsresult aReason)
 {
+  PRES_DEBUG("%s:id[%s], reason[%x], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), aReason, mRole);
+
   MOZ_ASSERT(NS_IsMainThread());
 
   // Nullify |mTransport| here so it won't try to re-close |mTransport| in
   // potential subsequent |Shutdown| calls.
   mTransport = nullptr;
 
-  if (NS_WARN_IF(!IsSessionReady())) {
+  if (NS_WARN_IF(!IsSessionReady() &&
+                 mState == nsIPresentationSessionListener::STATE_CONNECTING)) {
     // It happens before the session is ready. Reply the callback.
     return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
   }
@@ -454,7 +503,7 @@ PresentationSessionInfo::NotifyTransportClosed(nsresult aReason)
 }
 
 NS_IMETHODIMP
-PresentationSessionInfo::NotifyData(const nsACString& aData)
+PresentationSessionInfo::NotifyData(const nsACString& aData, bool aIsBinary)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -466,14 +515,17 @@ PresentationSessionInfo::NotifyData(const nsACString& aData)
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  return mListener->NotifyMessage(mSessionId, aData);
+  return mListener->NotifyMessage(mSessionId, aData, aIsBinary);
 }
 
 // nsIPresentationSessionTransportBuilderListener
 NS_IMETHODIMP
 PresentationSessionInfo::OnSessionTransport(nsIPresentationSessionTransport* transport)
 {
-  SetBuilder(nullptr);
+  PRES_DEBUG("%s:id[%s], role[%d], state[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole, mState);
+
+  ResetBuilder();
 
   if (mState != nsIPresentationSessionListener::STATE_CONNECTING) {
     return NS_ERROR_FAILURE;
@@ -499,10 +551,13 @@ PresentationSessionInfo::OnSessionTransport(nsIPresentationSessionTransport* tra
 }
 
 NS_IMETHODIMP
-PresentationSessionInfo::OnError(nsresult reason)
+PresentationSessionInfo::OnError(nsresult aReason)
 {
-  SetBuilder(nullptr);
-  return ReplyError(reason);
+  PRES_DEBUG("%s:id[%s], reason[%x], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), aReason, mRole);
+
+  ResetBuilder();
+  return ReplyError(aReason);
 }
 
 NS_IMETHODIMP
@@ -593,9 +648,11 @@ PresentationControllingInfo::Shutdown(nsresult aReason)
 
   // Close the server socket if any.
   if (mServerSocket) {
-    NS_WARN_IF(NS_FAILED(mServerSocket->Close()));
+    Unused << NS_WARN_IF(NS_FAILED(mServerSocket->Close()));
     mServerSocket = nullptr;
   }
+
+  mIsReconnecting = false;
 }
 
 nsresult
@@ -652,22 +709,15 @@ PresentationControllingInfo::GetAddress()
     return rv;
   }
 
-#elif defined(MOZ_MULET)
-  // In simulator,we need to use the "127.0.0.1" as target address.
-  NS_DispatchToMainThread(
-    NewRunnableMethod<nsCString>(
-      this,
-      &PresentationControllingInfo::OnGetAddress,
-      "127.0.0.1"));
-
 #else
-  // TODO Get host IP via other platforms.
+  nsCOMPtr<nsINetworkInfoService> networkInfo = do_GetService(NETWORKINFOSERVICE_CONTRACT_ID);
+  MOZ_ASSERT(networkInfo);
 
-  NS_DispatchToMainThread(
-    NewRunnableMethod<nsCString>(
-      this,
-      &PresentationControllingInfo::OnGetAddress,
-      EmptyCString()));
+  nsresult rv = networkInfo->ListNetworkAddresses(this);
+
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 #endif
 
   return NS_OK;
@@ -677,6 +727,13 @@ nsresult
 PresentationControllingInfo::OnGetAddress(const nsACString& aAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
+
+  if (NS_WARN_IF(!mServerSocket)) {
+    return NS_ERROR_FAILURE;
+  }
+  if (NS_WARN_IF(!mControlChannel)) {
+    return NS_ERROR_FAILURE;
+  }
 
   // Prepare and send the offer.
   int32_t port;
@@ -749,10 +806,21 @@ PresentationControllingInfo::OnAnswer(nsIPresentationChannelDescription* aDescri
 NS_IMETHODIMP
 PresentationControllingInfo::NotifyConnected()
 {
+  PRES_DEBUG("%s:id[%s], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole);
+
   MOZ_ASSERT(NS_IsMainThread());
 
   switch (mState) {
     case nsIPresentationSessionListener::STATE_CONNECTING: {
+      if (mIsReconnecting) {
+        return ContinueReconnect();
+      }
+
+      nsresult rv = mControlChannel->Launch(GetSessionId(), GetUrl());
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
       Unused << NS_WARN_IF(NS_FAILED(BuildTransport()));
       break;
     }
@@ -767,75 +835,93 @@ PresentationControllingInfo::NotifyConnected()
   return NS_OK;
 }
 
+NS_IMETHODIMP
+PresentationControllingInfo::NotifyReconnected()
+{
+  PRES_DEBUG("%s:id[%s], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole);
+
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(mReconnectCallback);
+
+  if (NS_WARN_IF(mState != nsIPresentationSessionListener::STATE_CONNECTING)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return mReconnectCallback->NotifySuccess(GetUrl());
+}
+
 nsresult
 PresentationControllingInfo::BuildTransport()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsresult rv = mControlChannel->Launch(GetSessionId(), GetUrl());
-  if (NS_FAILED(rv)) {
-    return rv;
+  if (mState != nsIPresentationSessionListener::STATE_CONNECTING) {
+    return NS_OK;
+  }
+
+  if (NS_WARN_IF(!mBuilderConstructor)) {
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
   if (!Preferences::GetBool("dom.presentation.session_transport.data_channel.enable")) {
     // Build TCP session transport
     return GetAddress();
   }
-
-  nsPIDOMWindowInner* window = nullptr;
   /**
    * Generally transport is maintained by the chrome process. However, data
    * channel should be live with the DOM , which implies RTCDataChannel in an OOP
    * page should be establish in the content process.
    *
-   * In OOP data channel transport case, |mBuilder| is hooked when the content
-   * process is ready to build a data channel transport, trigger by:
-   * 1. PresentationIPCService::StartSession (sender)
-   * 2. PresentationIPCService::NotifyReceiverReady (receiver).
+   * |mBuilderConstructor| is responsible for creating a builder, which is for
+   * building a data channel transport.
    *
-   * In this case, |mBuilder| would be an object of |PresentationBuilderParent|
-   * and set previously. Therefore, |BuildDataChannelTransport| triggers an IPC
-   * call to make content process establish a RTCDataChannel transport.
+   * In the OOP case, |mBuilderConstructor| would create a builder which is
+   * an object of |PresentationBuilderParent|. So, |BuildDataChannelTransport|
+   * triggers an IPC call to make content process establish a RTCDataChannel
+   * transport.
    */
-  // in-process case
-  if (!mBuilder) {
-    nsCOMPtr<nsIPresentationDataChannelSessionTransportBuilder> builder =
-      do_CreateInstance("@mozilla.org/presentation/datachanneltransportbuilder;1");
-    if (NS_WARN_IF(!builder)) {
-      return NS_ERROR_NOT_AVAILABLE;
-    }
-    SetBuilder(builder);
-    // OOP window would be set from content process
-    window = GetWindow();
-  }
-  // OOP case
+
   mTransportType = nsIPresentationChannelDescription::TYPE_DATACHANNEL;
+  if (NS_WARN_IF(NS_FAILED(
+    mBuilderConstructor->CreateTransportBuilder(mTransportType,
+                                                getter_AddRefs(mBuilder))))) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   nsCOMPtr<nsIPresentationDataChannelSessionTransportBuilder>
     dataChannelBuilder(do_QueryInterface(mBuilder));
   if (NS_WARN_IF(!dataChannelBuilder)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
-  rv = dataChannelBuilder->
+
+  // OOP window would be set from content process
+  nsPIDOMWindowInner* window = GetWindow();
+
+  nsresult rv = dataChannelBuilder->
          BuildDataChannelTransport(nsIPresentationService::ROLE_CONTROLLER,
                                    window,
                                    this);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
+
   return NS_OK;
 }
 
 NS_IMETHODIMP
 PresentationControllingInfo::NotifyDisconnected(nsresult aReason)
 {
+  PRES_DEBUG("%s:id[%s], reason[%x], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), aReason, mRole);
+
   MOZ_ASSERT(NS_IsMainThread());
 
   if (mTransportType == nsIPresentationChannelDescription::TYPE_DATACHANNEL) {
     nsCOMPtr<nsIPresentationDataChannelSessionTransportBuilder>
       builder = do_QueryInterface(mBuilder);
     if (builder) {
-      NS_WARN_IF(NS_FAILED(builder->NotifyDisconnected(aReason)));
+      Unused << NS_WARN_IF(NS_FAILED(builder->NotifyDisconnected(aReason)));
     }
   }
 
@@ -845,8 +931,10 @@ PresentationControllingInfo::NotifyDisconnected(nsresult aReason)
 
   if (NS_WARN_IF(NS_FAILED(aReason) || !mIsResponderReady)) {
     // The presentation session instance may already exist.
-    // Change the state to TERMINATED since it never succeeds.
-    SetStateWithReason(nsIPresentationSessionListener::STATE_TERMINATED, aReason);
+    // Change the state to CLOSED if it is not terminated.
+    if (nsIPresentationSessionListener::STATE_TERMINATED != mState) {
+      SetStateWithReason(nsIPresentationSessionListener::STATE_CLOSED, aReason);
+    }
 
     // Reply error for an abnormal close.
     return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
@@ -868,9 +956,18 @@ PresentationControllingInfo::OnSocketAccepted(nsIServerSocket* aServerSocket,
 
   MOZ_ASSERT(NS_IsMainThread());
 
+  if (NS_WARN_IF(!mBuilderConstructor)) {
+    return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
+  }
+
   // Initialize session transport builder and use |this| as the callback.
-  nsCOMPtr<nsIPresentationTCPSessionTransportBuilder> builder =
-    do_CreateInstance(PRESENTATION_TCP_SESSION_TRANSPORT_CONTRACTID);
+  nsCOMPtr<nsIPresentationTCPSessionTransportBuilder> builder;
+  if (NS_SUCCEEDED(mBuilderConstructor->CreateTransportBuilder(
+                     nsIPresentationChannelDescription::TYPE_TCP,
+                     getter_AddRefs(mBuilder)))) {
+    builder = do_QueryInterface(mBuilder);
+  }
+
   if (NS_WARN_IF(!builder)) {
     return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
   }
@@ -883,6 +980,8 @@ NS_IMETHODIMP
 PresentationControllingInfo::OnStopListening(nsIServerSocket* aServerSocket,
                                            nsresult aStatus)
 {
+  PRES_DEBUG("controller %s:status[%x]\n",__func__, aStatus);
+
   MOZ_ASSERT(NS_IsMainThread());
 
   if (aStatus == NS_BINDING_ABORTED) { // The server socket was manually closed.
@@ -898,6 +997,120 @@ PresentationControllingInfo::OnStopListening(nsIServerSocket* aServerSocket,
 
   // It happens after the session is ready. Change the state to CLOSED.
   SetStateWithReason(nsIPresentationSessionListener::STATE_CLOSED, aStatus);
+
+  return NS_OK;
+}
+
+/**
+ * The steps to reconnect a session are summarized below:
+ * 1. Change |mState| to CONNECTING.
+ * 2. Check whether |mControlChannel| is existed or not. Usually we have to
+ *    create a new control cahnnel.
+ * 3.1 |mControlChannel| is null, which means we have to create a new one.
+ *     |EstablishControlChannel| is called to create a new control channel.
+ *     At this point, |mControlChannel| is not able to use yet. Set
+ *     |mIsReconnecting| to true and wait until |NotifyConnected|.
+ * 3.2 |mControlChannel| is not null and is avaliable.
+ *     We can just call |ContinueReconnect| to send reconnect command.
+ * 4. |NotifyReconnected| of |nsIPresentationControlChannelListener| is called
+ *    to indicate the receiver is ready for reconnecting.
+ * 5. Once both step 3 and 4 are done, the rest is to build a new data
+ *    transport channel by following the same steps as starting a
+ *    new session.
+ */
+
+nsresult
+PresentationControllingInfo::Reconnect(nsIPresentationServiceCallback* aCallback)
+{
+  if (!aCallback) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  mReconnectCallback = aCallback;
+
+  if (NS_WARN_IF(mState == nsIPresentationSessionListener::STATE_TERMINATED)) {
+    return mReconnectCallback->NotifyError(NS_ERROR_DOM_INVALID_STATE_ERR);
+  }
+
+  SetStateWithReason(nsIPresentationSessionListener::STATE_CONNECTING, NS_OK);
+
+  nsresult rv = NS_OK;
+  if (!mControlChannel) {
+    nsCOMPtr<nsIPresentationControlChannel> ctrlChannel;
+    rv = mDevice->EstablishControlChannel(getter_AddRefs(ctrlChannel));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return mReconnectCallback->NotifyError(NS_ERROR_DOM_OPERATION_ERR);
+    }
+
+    rv = Init(ctrlChannel);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return mReconnectCallback->NotifyError(NS_ERROR_DOM_OPERATION_ERR);
+    }
+
+    mIsReconnecting = true;
+  } else {
+    return ContinueReconnect();
+  }
+
+  return NS_OK;
+}
+
+nsresult
+PresentationControllingInfo::ContinueReconnect()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(mControlChannel);
+  MOZ_ASSERT(mReconnectCallback);
+
+  mIsReconnecting = false;
+  if (NS_WARN_IF(NS_FAILED(mControlChannel->Reconnect(mSessionId, GetUrl()))) &&
+      mReconnectCallback) {
+    return mReconnectCallback->NotifyError(NS_ERROR_DOM_OPERATION_ERR);
+  }
+
+  return NS_OK;
+}
+
+// nsIListNetworkAddressesListener
+NS_IMETHODIMP
+PresentationControllingInfo::OnListedNetworkAddresses(const char** aAddressArray,
+                                                      uint32_t aAddressArraySize)
+{
+  if (!aAddressArraySize) {
+    return OnListNetworkAddressesFailed();
+  }
+
+  // TODO bug 1228504 Take all IP addresses in PresentationChannelDescription
+  // into account. And at the first stage Presentation API is only exposed on
+  // Firefox OS where the first IP appears enough for most scenarios.
+
+  nsAutoCString ip;
+  ip.Assign(aAddressArray[0]);
+
+  // On Firefox desktop, the IP address is retrieved from a callback function.
+  // To make consistent code sequence, following function call is dispatched
+  // into main thread instead of calling it directly.
+  NS_DispatchToMainThread(
+    NewRunnableMethod<nsCString>(
+      this,
+      &PresentationControllingInfo::OnGetAddress,
+      ip));
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationControllingInfo::OnListNetworkAddressesFailed()
+{
+  PRES_ERROR("PresentationControllingInfo:OnListNetworkAddressesFailed");
+
+  // In 1-UA case, transport channel can still be established
+  // on loopback interface even if no network address available.
+  NS_DispatchToMainThread(
+    NewRunnableMethod<nsCString>(
+      this,
+      &PresentationControllingInfo::OnGetAddress,
+      "127.0.0.1"));
 
   return NS_OK;
 }
@@ -964,6 +1177,7 @@ PresentationPresentingInfo::Shutdown(nsresult aReason)
   mRequesterDescription = nullptr;
   mPendingCandidates.Clear();
   mPromise = nullptr;
+  mHasFlushPendingEvents = false;
 }
 
 // nsIPresentationSessionTransportBuilderListener
@@ -990,7 +1204,7 @@ PresentationPresentingInfo::OnSessionTransport(nsIPresentationSessionTransport* 
     // description for the answer, which is not actually checked at requester side.
     nsCOMPtr<nsINetAddr> selfAddr;
     rv = mTransport->GetSelfAddress(getter_AddRefs(selfAddr));
-    NS_WARN_IF(NS_FAILED(rv));
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "GetSelfAddress failed");
 
     nsCString address;
     uint16_t port = 0;
@@ -1041,16 +1255,25 @@ PresentationPresentingInfo::InitTransportAndSendAnswer()
     return rv;
   }
 
+  if (NS_WARN_IF(!mBuilderConstructor)) {
+    return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
+  }
+
+  if (NS_WARN_IF(NS_FAILED(
+    mBuilderConstructor->CreateTransportBuilder(type,
+                                                getter_AddRefs(mBuilder))))) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   if (type == nsIPresentationChannelDescription::TYPE_TCP) {
     // Establish a data transport channel |mTransport| to the sender and use
     // |this| as the callback.
     nsCOMPtr<nsIPresentationTCPSessionTransportBuilder> builder =
-      do_CreateInstance(PRESENTATION_TCP_SESSION_TRANSPORT_CONTRACTID);
+      do_QueryInterface(mBuilder);
     if (NS_WARN_IF(!builder)) {
       return NS_ERROR_NOT_AVAILABLE;
     }
 
-    SetBuilder(builder);
     mTransportType = nsIPresentationChannelDescription::TYPE_TCP;
     return builder->BuildTCPReceiverTransport(mRequesterDescription, this);
   }
@@ -1059,43 +1282,30 @@ PresentationPresentingInfo::InitTransportAndSendAnswer()
     if (!Preferences::GetBool("dom.presentation.session_transport.data_channel.enable")) {
       return NS_ERROR_NOT_IMPLEMENTED;
     }
-    nsPIDOMWindowInner* window = nullptr;
-
     /**
      * Generally transport is maintained by the chrome process. However, data
      * channel should be live with the DOM , which implies RTCDataChannel in an OOP
      * page should be establish in the content process.
      *
-     * In OOP data channel transport case, |mBuilder| is hooked when the content
-     * process is ready to build a data channel transport, trigger by:
-     * 1. PresentationIPCService::StartSession (sender)
-     * 2. PresentationIPCService::NotifyReceiverReady (receiver).
+     * |mBuilderConstructor| is responsible for creating a builder, which is for
+     * building a data channel transport.
      *
-     * In this case, |mBuilder| would be an object of |PresentationBuilderParent|
-     * and set previously. Therefore, |BuildDataChannelTransport| triggers an IPC
-     * call to make content process establish a RTCDataChannel transport.
+     * In the OOP case, |mBuilderConstructor| would create a builder which is
+     * an object of |PresentationBuilderParent|. So, |BuildDataChannelTransport|
+     * triggers an IPC call to make content process establish a RTCDataChannel
+     * transport.
      */
-    // in-process case
-    if (!mBuilder) {
-      nsCOMPtr<nsIPresentationDataChannelSessionTransportBuilder> builder =
-        do_CreateInstance("@mozilla.org/presentation/datachanneltransportbuilder;1");
 
-      if (NS_WARN_IF(!builder)) {
-        return NS_ERROR_NOT_AVAILABLE;
-      }
-
-      SetBuilder(builder);
-
-      // OOP window would be set from content process
-      window = GetWindow();
-    }
     mTransportType = nsIPresentationChannelDescription::TYPE_DATACHANNEL;
 
-    nsCOMPtr<nsIPresentationDataChannelSessionTransportBuilder>
-      dataChannelBuilder(do_QueryInterface(mBuilder));
+    nsCOMPtr<nsIPresentationDataChannelSessionTransportBuilder> dataChannelBuilder =
+      do_QueryInterface(mBuilder);
     if (NS_WARN_IF(!dataChannelBuilder)) {
       return NS_ERROR_NOT_AVAILABLE;
     }
+
+    nsPIDOMWindowInner* window = GetWindow();
+
     rv = dataChannelBuilder->
            BuildDataChannelTransport(nsIPresentationService::ROLE_RECEIVER,
                                      window,
@@ -1104,11 +1314,11 @@ PresentationPresentingInfo::InitTransportAndSendAnswer()
       return rv;
     }
 
-
-    rv = this->FlushPendingEvents(dataChannelBuilder);
+    rv = FlushPendingEvents(dataChannelBuilder);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
+
     return NS_OK;
   }
 
@@ -1121,7 +1331,7 @@ PresentationPresentingInfo::UntrackFromService()
 {
   // Remove the OOP responding info (if it has never been used).
   if (mContentParent) {
-    NS_WARN_IF(!static_cast<ContentParent*>(mContentParent.get())->SendNotifyPresentationReceiverCleanUp(mSessionId));
+    Unused << NS_WARN_IF(!static_cast<ContentParent*>(mContentParent.get())->SendNotifyPresentationReceiverCleanUp(mSessionId));
   }
 
   // Remove the session info (and the in-process responding info if there's any).
@@ -1147,6 +1357,9 @@ PresentationPresentingInfo::IsAccessible(base::ProcessId aProcessId)
 nsresult
 PresentationPresentingInfo::NotifyResponderReady()
 {
+  PRES_DEBUG("%s:id[%s], role[%d], state[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole, mState);
+
   if (mTimer) {
     mTimer->Cancel();
     mTimer = nullptr;
@@ -1164,6 +1377,33 @@ PresentationPresentingInfo::NotifyResponderReady()
   }
 
   return NS_OK;
+}
+
+nsresult
+PresentationPresentingInfo::NotifyResponderFailure()
+{
+  PRES_DEBUG("%s:id[%s], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole);
+
+  if (mTimer) {
+    mTimer->Cancel();
+    mTimer = nullptr;
+  }
+
+  return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
+}
+
+nsresult
+PresentationPresentingInfo::DoReconnect()
+{
+  PRES_DEBUG("%s:id[%s], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole);
+
+  MOZ_ASSERT(mState == nsIPresentationSessionListener::STATE_CLOSED);
+
+  SetStateWithReason(nsIPresentationSessionListener::STATE_CONNECTING, NS_OK);
+
+  return NotifyResponderReady();
 }
 
 // nsIPresentationControlChannelListener
@@ -1220,6 +1460,9 @@ PresentationPresentingInfo::OnIceCandidate(const nsAString& aCandidate)
 NS_IMETHODIMP
 PresentationPresentingInfo::NotifyConnected()
 {
+  PRES_DEBUG("%s:id[%s], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), mRole);
+
   if (nsIPresentationSessionListener::STATE_TERMINATED == mState) {
     ContinueTermination();
   }
@@ -1228,15 +1471,25 @@ PresentationPresentingInfo::NotifyConnected()
 }
 
 NS_IMETHODIMP
+PresentationPresentingInfo::NotifyReconnected()
+{
+  MOZ_ASSERT(false, "NotifyReconnected should not be called at receiver side.");
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 PresentationPresentingInfo::NotifyDisconnected(nsresult aReason)
 {
+  PRES_DEBUG("%s:id[%s], reason[%x], role[%d]\n", __func__,
+             NS_ConvertUTF16toUTF8(mSessionId).get(), aReason, mRole);
+
   MOZ_ASSERT(NS_IsMainThread());
 
   if (mTransportType == nsIPresentationChannelDescription::TYPE_DATACHANNEL) {
     nsCOMPtr<nsIPresentationDataChannelSessionTransportBuilder>
       builder = do_QueryInterface(mBuilder);
     if (builder) {
-      NS_WARN_IF(NS_FAILED(builder->NotifyDisconnected(aReason)));
+      Unused << NS_WARN_IF(NS_FAILED(builder->NotifyDisconnected(aReason)));
     }
   }
 
@@ -1299,9 +1552,8 @@ PresentationPresentingInfo::ResolvedCallback(JSContext* aCx,
     return;
   }
 
-  nsCOMPtr<nsIFrameLoader> frameLoader;
-  rv = owner->GetFrameLoader(getter_AddRefs(frameLoader));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  nsCOMPtr<nsIFrameLoader> frameLoader = owner->GetFrameLoader();
+  if (NS_WARN_IF(!frameLoader)) {
     ReplyError(NS_ERROR_DOM_OPERATION_ERR);
     return;
   }
@@ -1312,7 +1564,7 @@ PresentationPresentingInfo::ResolvedCallback(JSContext* aCx,
     // Notify the content process that a receiver page has launched, so it can
     // start monitoring the loading progress.
     mContentParent = tabParent->Manager();
-    NS_WARN_IF(!static_cast<ContentParent*>(mContentParent.get())->SendNotifyPresentationReceiverLaunched(tabParent, mSessionId));
+    Unused << NS_WARN_IF(!static_cast<ContentParent*>(mContentParent.get())->SendNotifyPresentationReceiverLaunched(tabParent, mSessionId));
   } else {
     // In-process frame
     nsCOMPtr<nsIDocShell> docShell;

@@ -26,18 +26,6 @@ def set_defaults(config, tests):
 
 
 @transforms.add
-def set_tier(config, tests):
-    for test in tests:
-        if 'tier' not in test:
-            # Bug 1282850: android debug is tier 1, but opt is tier 2
-            if test['test-platform'] == 'android-4.3-arm7-api-15/debug':
-                test['tier'] = 1
-            else:
-                test['tier'] = 2
-        yield test
-
-
-@transforms.add
 def set_treeherder_machine_platform(config, tests):
     """Set the appropriate task.extra.treeherder.machine.platform"""
     # The build names for these build platforms have partially evolved over the
@@ -46,6 +34,7 @@ def set_treeherder_machine_platform(config, tests):
     translation = {
         'android-api-15/debug': 'android-4-3-armv7-api15/debug',
         'android-api-15/opt': 'android-4-3-armv7-api15/opt',
+        'android-x86/opt': 'android-4-2-x86/opt',
     }
     for test in tests:
         build_platform = test['build-platform']

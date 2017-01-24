@@ -86,10 +86,10 @@ MacroAssembler::call(const wasm::CallSiteDesc& desc, const Register reg)
 }
 
 void
-MacroAssembler::call(const wasm::CallSiteDesc& desc, uint32_t callee)
+MacroAssembler::call(const wasm::CallSiteDesc& desc, uint32_t funcDefIndex)
 {
     CodeOffset l = callWithPatch();
-    append(desc, l, framePushed(), callee);
+    append(desc, l, framePushed(), funcDefIndex);
 }
 
 // ===============================================================
@@ -747,6 +747,16 @@ MacroAssembler::assertStackAlignment(uint32_t alignment, int32_t offset /* = 0 *
     breakpoint();
     bind(&ok);
 #endif
+}
+
+void
+MacroAssembler::storeCallBoolResult(Register reg)
+{
+    if (reg != ReturnReg)
+        mov(ReturnReg, reg);
+    // C++ compilers like to only use the bottom byte for bools, but we
+    // need to maintain the entire register.
+    and32(Imm32(0xFF), reg);
 }
 
 void

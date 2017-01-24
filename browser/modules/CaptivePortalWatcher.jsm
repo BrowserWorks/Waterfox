@@ -47,10 +47,14 @@ this.CaptivePortalWatcher = {
     Services.obs.addObserver(this, "captive-portal-login-abort", false);
     Services.obs.addObserver(this, "captive-portal-login-success", false);
     this._initialized = true;
+
     if (cps.state == cps.LOCKED_PORTAL) {
       // A captive portal has already been detected.
       this._addCaptivePortalTab();
+      return;
     }
+
+    cps.recheckCaptivePortal();
   },
 
   uninit() {
@@ -63,7 +67,7 @@ this.CaptivePortalWatcher = {
   },
 
   observe(subject, topic, data) {
-    switch(topic) {
+    switch (topic) {
       case "captive-portal-login":
         this._addCaptivePortalTab();
         break;
@@ -110,8 +114,8 @@ this.CaptivePortalWatcher = {
     }
 
     let win = RecentWindow.getMostRecentBrowserWindow();
-    if (!win.document.hasFocus()) {
-      // The document that got focused was not in a browser window.
+    if (win != Services.ww.activeWindow) {
+      // The window that got focused was not a browser window.
       return;
     }
     Services.obs.removeObserver(this, "xul-window-visible");

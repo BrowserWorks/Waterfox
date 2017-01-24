@@ -29,6 +29,7 @@
 #include "nsCOMPtr.h"
 #include "nsFocusManager.h"
 #include "nsIContent.h"
+#include "nsIContentInlines.h"
 #include "nsIDocument.h"
 #include "nsIFrame.h"
 #include "nsIWidget.h"
@@ -112,6 +113,10 @@ static const LayoutDeviceIntPoint kInvalidRefPoint = LayoutDeviceIntPoint(-1,-1)
 static uint32_t gMouseOrKeyboardEventCounter = 0;
 static nsITimer* gUserInteractionTimer = nullptr;
 static nsITimerCallback* gUserInteractionTimerCallback = nullptr;
+
+static const double kCursorLoadingTimeout = 1000; // ms
+static nsWeakFrame gLastCursorSourceFrame;
+static TimeStamp gLastCursorUpdateTime;
 
 static inline int32_t
 RoundDown(double aDouble)
@@ -518,11 +523,20 @@ EventStateManager::PreHandleEvent(nsPresContext* aPresContext,
     return NS_ERROR_NULL_POINTER;
   }
 
-  NS_WARN_IF_FALSE(!aTargetFrame ||
-                   !aTargetFrame->GetContent() ||
-                   aTargetFrame->GetContent() == aTargetContent ||
-                   aTargetFrame->GetContent()->GetFlattenedTreeParent() == aTargetContent,
-                   "aTargetFrame should be related with aTargetContent");
+  NS_WARNING_ASSERTION(
+    !aTargetFrame || !aTargetFrame->GetContent() ||
+    aTargetFrame->GetContent() == aTargetContent ||
+    aTargetFrame->GetContent()->GetFlattenedTreeParent() == aTargetContent ||
+    aTargetFrame->IsGeneratedContentFrame(),
+    "aTargetFrame should be related with aTargetContent");
+#if DEBUG
+  if (aTargetFrame && aTargetFrame->IsGeneratedContentFrame()) {
+    nsCOMPtr<nsIContent> targetContent;
+    aTargetFrame->GetContentForEvent(aEvent, getter_AddRefs(targetContent));
+    MOZ_ASSERT(aTargetContent == targetContent,
+               "Unexpected target for generated content frame!");
+  }
+#endif
 
   mCurrentTarget = aTargetFrame;
   mCurrentTargetContent = nullptr;
@@ -3008,7 +3022,7 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
           // If the mousedown happened inside a popup, don't
           // try to set focus on one of its containing elements
           const nsStyleDisplay* display = currFrame->StyleDisplay();
-          if (display->mDisplay == NS_STYLE_DISPLAY_POPUP) {
+          if (display->mDisplay == StyleDisplay::Popup) {
             newFocus = nullptr;
             break;
           }
@@ -3544,30 +3558,39 @@ EventStateManager::UpdateCursor(nsPresContext* aPresContext,
   }
   //If not locked, look for correct cursor
   else if (aTargetFrame) {
-      nsIFrame::Cursor framecursor;
-      nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent,
-                                                                aTargetFrame);
-      // Avoid setting cursor when the mouse is over a windowless pluign.
-      if (NS_FAILED(aTargetFrame->GetCursor(pt, framecursor))) {
-        if (XRE_IsContentProcess()) {
-          mLastFrameConsumedSetCursor = true;
-        }
-        return;
+    nsIFrame::Cursor framecursor;
+    nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent,
+                                                              aTargetFrame);
+    // Avoid setting cursor when the mouse is over a windowless pluign.
+    if (NS_FAILED(aTargetFrame->GetCursor(pt, framecursor))) {
+      if (XRE_IsContentProcess()) {
+        mLastFrameConsumedSetCursor = true;
       }
-      // Make sure cursors get reset after the mouse leaves a
-      // windowless plugin frame.
-      if (mLastFrameConsumedSetCursor) {
-        ClearCachedWidgetCursor(aTargetFrame);
-        mLastFrameConsumedSetCursor = false;
-      }
-      cursor = framecursor.mCursor;
-      container = framecursor.mContainer;
-      haveHotspot = framecursor.mHaveHotspot;
-      hotspotX = framecursor.mHotspotX;
-      hotspotY = framecursor.mHotspotY;
+      return;
+    }
+    // Make sure cursors get reset after the mouse leaves a
+    // windowless plugin frame.
+    if (mLastFrameConsumedSetCursor) {
+      ClearCachedWidgetCursor(aTargetFrame);
+      mLastFrameConsumedSetCursor = false;
+    }
+    // If the current cursor is from the same frame, and it is now
+    // loading some new image for the cursor, we should wait for a
+    // while rather than taking its fallback cursor directly.
+    if (framecursor.mLoading &&
+        gLastCursorSourceFrame == aTargetFrame &&
+        TimeStamp::NowLoRes() - gLastCursorUpdateTime <
+          TimeDuration::FromMilliseconds(kCursorLoadingTimeout)) {
+      return;
+    }
+    cursor = framecursor.mCursor;
+    container = framecursor.mContainer;
+    haveHotspot = framecursor.mHaveHotspot;
+    hotspotX = framecursor.mHotspotX;
+    hotspotY = framecursor.mHotspotY;
   }
 
-  if (Preferences::GetBool("ui.use_activity_cursor", false)) {
+  if (nsContentUtils::UseActivityCursor()) {
     // Check whether or not to show the busy cursor
     nsCOMPtr<nsIDocShell> docShell(aPresContext->GetDocShell());
     if (!docShell) return;
@@ -3587,6 +3610,8 @@ EventStateManager::UpdateCursor(nsPresContext* aPresContext,
   if (aTargetFrame) {
     SetCursor(cursor, container, haveHotspot, hotspotX, hotspotY,
               aTargetFrame->GetNearestWidget(), false);
+    gLastCursorSourceFrame = aTargetFrame;
+    gLastCursorUpdateTime = TimeStamp::NowLoRes();
   }
 
   if (mLockCursor || NS_STYLE_CURSOR_AUTO != cursor) {
@@ -3834,10 +3859,9 @@ CreateMouseOrPointerWidgetEvent(WidgetMouseEvent* aMouseEvent,
     newPointerEvent =
       new WidgetPointerEvent(aMouseEvent->IsTrusted(), aMessage,
                              aMouseEvent->mWidget);
-    newPointerEvent->isPrimary = sourcePointer->isPrimary;
-    newPointerEvent->pointerId = sourcePointer->pointerId;
-    newPointerEvent->width = sourcePointer->width;
-    newPointerEvent->height = sourcePointer->height;
+    newPointerEvent->mIsPrimary = sourcePointer->mIsPrimary;
+    newPointerEvent->mWidth = sourcePointer->mWidth;
+    newPointerEvent->mHeight = sourcePointer->mHeight;
     newPointerEvent->inputSource = sourcePointer->inputSource;
     newPointerEvent->relatedTarget =
       nsIPresShell::GetPointerCapturingContent(sourcePointer->pointerId)
@@ -3857,6 +3881,7 @@ CreateMouseOrPointerWidgetEvent(WidgetMouseEvent* aMouseEvent,
   aNewEvent->pressure = aMouseEvent->pressure;
   aNewEvent->mPluginEvent = aMouseEvent->mPluginEvent;
   aNewEvent->inputSource = aMouseEvent->inputSource;
+  aNewEvent->pointerId = aMouseEvent->pointerId;
 }
 
 nsIFrame*
@@ -4157,8 +4182,7 @@ GetWindowClientRectCenter(nsIWidget* aWidget)
 {
   NS_ENSURE_TRUE(aWidget, LayoutDeviceIntPoint(0, 0));
 
-  LayoutDeviceIntRect rect;
-  aWidget->GetClientBounds(rect);
+  LayoutDeviceIntRect rect = aWidget->GetClientBounds();
   LayoutDeviceIntPoint point(rect.x + rect.width / 2,
                              rect.y + rect.height / 2);
   int32_t round = aWidget->RoundsWidgetCoordinatesTo();
@@ -5101,6 +5125,7 @@ nsIContent*
 EventStateManager::GetFocusedContent()
 {
   nsIFocusManager* fm = nsFocusManager::GetFocusManager();
+  EnsureDocument(mPresContext);
   if (!fm || !mDocument)
     return nullptr;
 
@@ -5184,16 +5209,38 @@ EventStateManager::DoContentCommandEvent(WidgetContentCommandEvent* aEvent)
     if (canDoIt && !aEvent->mOnlyEnabledCheck) {
       switch (aEvent->mMessage) {
         case eContentCommandPasteTransferable: {
-          nsCOMPtr<nsICommandController> commandController = do_QueryInterface(controller);
-          NS_ENSURE_STATE(commandController);
+          nsFocusManager* fm = nsFocusManager::GetFocusManager();
+          nsIContent* focusedContent = fm ? fm->GetFocusedContent() : nullptr;
+          RefPtr<TabParent> remote = TabParent::GetFrom(focusedContent);
+          if (remote) {
+            NS_ENSURE_TRUE(remote->Manager()->IsContentParent(), NS_ERROR_FAILURE);
 
-          nsCOMPtr<nsICommandParams> params = do_CreateInstance("@mozilla.org/embedcomp/command-params;1", &rv);
-          NS_ENSURE_SUCCESS(rv, rv);
+            nsCOMPtr<nsITransferable> transferable = aEvent->mTransferable;
+            IPCDataTransfer ipcDataTransfer;
+            ContentParent* cp = remote->Manager()->AsContentParent();
+            nsContentUtils::TransferableToIPCTransferable(transferable,
+                                                          &ipcDataTransfer,
+                                                          false, nullptr,
+                                                          cp);
+            bool isPrivateData = false;
+            transferable->GetIsPrivateData(&isPrivateData);
+            nsCOMPtr<nsIPrincipal> requestingPrincipal;
+            transferable->GetRequestingPrincipal(getter_AddRefs(requestingPrincipal));
+            remote->SendPasteTransferable(ipcDataTransfer, isPrivateData,
+                                          IPC::Principal(requestingPrincipal));
+            rv = NS_OK;
+          } else {
+            nsCOMPtr<nsICommandController> commandController = do_QueryInterface(controller);
+            NS_ENSURE_STATE(commandController);
 
-          rv = params->SetISupportsValue("transferable", aEvent->mTransferable);
-          NS_ENSURE_SUCCESS(rv, rv);
+            nsCOMPtr<nsICommandParams> params = do_CreateInstance("@mozilla.org/embedcomp/command-params;1", &rv);
+            NS_ENSURE_SUCCESS(rv, rv);
 
-          rv = commandController->DoCommandWithParams(cmd, params);
+            rv = params->SetISupportsValue("transferable", aEvent->mTransferable);
+            NS_ENSURE_SUCCESS(rv, rv);
+
+            rv = commandController->DoCommandWithParams(cmd, params);
+          }
           break;
         }
 

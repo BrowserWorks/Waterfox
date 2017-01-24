@@ -27,6 +27,7 @@
 
 #if defined(__cplusplus)
 #include "mozilla/fallible.h"
+#include "mozilla/mozalloc_abort.h"
 #include "mozilla/TemplateLib.h"
 #endif
 #include "mozilla/Attributes.h"
@@ -289,10 +290,28 @@ class InfallibleAllocPolicy
 {
 public:
     template <typename T>
+    T* maybe_pod_malloc(size_t aNumElems)
+    {
+        return pod_malloc<T>(aNumElems);
+    }
+
+    template <typename T>
+    T* maybe_pod_calloc(size_t aNumElems)
+    {
+        return pod_calloc<T>(aNumElems);
+    }
+
+    template <typename T>
+    T* maybe_pod_realloc(T* aPtr, size_t aOldSize, size_t aNewSize)
+    {
+        return pod_realloc<T>(aPtr, aOldSize, aNewSize);
+    }
+
+    template <typename T>
     T* pod_malloc(size_t aNumElems)
     {
         if (aNumElems & mozilla::tl::MulOverflowMask<sizeof(T)>::value) {
-            return nullptr;
+            reportAllocOverflow();
         }
         return static_cast<T*>(moz_xmalloc(aNumElems * sizeof(T)));
     }
@@ -307,7 +326,7 @@ public:
     T* pod_realloc(T* aPtr, size_t aOldSize, size_t aNewSize)
     {
         if (aNewSize & mozilla::tl::MulOverflowMask<sizeof(T)>::value) {
-            return nullptr;
+            reportAllocOverflow();
         }
         return static_cast<T*>(moz_xrealloc(aPtr, aNewSize * sizeof(T)));
     }
@@ -319,6 +338,7 @@ public:
 
     void reportAllocOverflow() const
     {
+        mozalloc_abort("alloc overflow");
     }
 
     bool checkSimulatedOOM() const

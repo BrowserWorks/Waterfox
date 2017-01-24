@@ -7,6 +7,7 @@
 UNIFIED_SOURCES += [
     'MockMediaResource.cpp',
     'TestAudioCompactor.cpp',
+    'TestEME.cpp',
     'TestGMPCrossOrigin.cpp',
     'TestGMPRemoveAndDelete.cpp',
     'TestGMPUtils.cpp',
@@ -25,11 +26,6 @@ UNIFIED_SOURCES += [
     'TestWebMBuffered.cpp',
 ]
 
-if CONFIG['MOZ_EME']:
-    UNIFIED_SOURCES += [
-        'TestEME.cpp',
-    ]
-
 if CONFIG['MOZ_WEBM_ENCODER']:
     UNIFIED_SOURCES += [
         'TestVideoTrackEncoder.cpp',
@@ -37,7 +33,6 @@ if CONFIG['MOZ_WEBM_ENCODER']:
     ]
 
 if CONFIG['MOZ_RUST']:
-    SOURCES += ['hello.rs',]
     UNIFIED_SOURCES += ['TestRust.cpp',]
 
 
@@ -48,6 +43,7 @@ TEST_HARNESS_FILES.gtest += [
     'dash_dashinit.mp4',
     'id3v2header.mp3',
     'mediasource_test.mp4',
+    'negative_duration.mp4',
     'noise.mp3',
     'noise_vbr.mp3',
     'short-zero-in-moov.mp4',

@@ -51,7 +51,8 @@ class DataSourceSurface;
 class ScaledFont;
 class DrawEventRecorder;
 class VsyncSource;
-class DeviceInitData;
+class ContentDeviceData;
+class GPUDeviceData;
 
 inline uint32_t
 BackendTypeBit(BackendType b)
@@ -116,6 +117,8 @@ GetBackendName(mozilla::gfx::BackendType aBackend)
         return "direct2d 1.1";
       case mozilla::gfx::BackendType::NONE:
         return "none";
+      case mozilla::gfx::BackendType::BACKEND_LAST:
+        return "invalid";
   }
   MOZ_CRASH("Incomplete switch");
 }
@@ -208,9 +211,14 @@ public:
      * This function is static so that it can be accessed from
      * PluginInstanceChild (where we can't call gfxPlatform::GetPlatform()
      * because the prefs service can only be accessed from the main process).
+     *
+     * aIsPlugin is used to tell the backend that they can optimize this surface
+     * specifically because it's used for a plugin. This is mostly for Skia.
      */
     static already_AddRefed<SourceSurface>
-      GetSourceSurfaceForSurface(mozilla::gfx::DrawTarget *aTarget, gfxASurface *aSurface);
+      GetSourceSurfaceForSurface(mozilla::gfx::DrawTarget *aTarget,
+                                 gfxASurface *aSurface,
+                                 bool aIsPlugin = false);
 
     static void ClearSourceSurfaceForSurface(gfxASurface *aSurface);
 
@@ -229,7 +237,7 @@ public:
     already_AddRefed<DrawTarget>
       CreateSimilarSoftwareDrawTarget(DrawTarget* aDT, const IntSize &aSize, mozilla::gfx::SurfaceFormat aFormat);
 
-    virtual already_AddRefed<DrawTarget>
+    static already_AddRefed<DrawTarget>
       CreateDrawTargetForData(unsigned char* aData, const mozilla::gfx::IntSize& aSize, 
                               int32_t aStride, mozilla::gfx::SurfaceFormat aFormat);
 
@@ -264,10 +272,6 @@ public:
     /// non-accelerated canvas.
     virtual bool UseAcceleratedCanvas();
     virtual void InitializeSkiaCacheLimits();
-
-    /// These should be used instead of directly accessing the preference,
-    /// as different platforms may override the behaviour.
-    virtual bool UseProgressivePaint();
 
     static bool AsyncPanZoomEnabled();
 
@@ -313,10 +317,6 @@ public:
     virtual nsresult GetFontList(nsIAtom *aLangGroup,
                                  const nsACString& aGenericFamily,
                                  nsTArray<nsString>& aListOfFonts);
-
-    int GetTileWidth();
-    int GetTileHeight();
-    void SetTileSize(int aWidth, int aHeight);
 
     /**
      * Rebuilds the any cached system font lists
@@ -645,10 +645,6 @@ public:
 
     virtual void CompositorUpdated() {}
 
-    // Return information on how child processes should initialize graphics
-    // devices. Currently this is only used on Windows.
-    virtual void GetDeviceInitData(mozilla::gfx::DeviceInitData* aOut);
-
     // Plugin async drawing support.
     virtual bool SupportsPluginDirectBitmapDrawing() {
       return false;
@@ -673,7 +669,17 @@ public:
 
     const gfxSkipChars& EmptySkipChars() const { return kEmptySkipChars; }
 
-    static mozilla::gfx::DeviceInitData& GetParentDevicePrefs();
+    /**
+     * Return information on how child processes should initialize graphics
+     * devices.
+     */
+    virtual void BuildContentDeviceData(mozilla::gfx::ContentDeviceData* aOut);
+
+    /**
+     * Imports settings from the GPU process. This should only be called through
+     * GPUProcessManager, in the UI process.
+     */
+    virtual void ImportGPUDeviceData(const mozilla::gfx::GPUDeviceData& aData);
 
 protected:
     gfxPlatform();
@@ -707,10 +713,11 @@ protected:
                           uint32_t aContentBitmask, mozilla::gfx::BackendType aContentDefault);
 
     /**
-     * If in a child process, triggers a refresh of device preferences, then returns true.
-     * In a parent process, nothing happens and false is returned.
+     * Content-process only. Requests device preferences from the parent process
+     * and updates any cached settings.
      */
-    virtual bool UpdateDeviceInitData();
+    void FetchAndImportContentDeviceData();
+    virtual void ImportContentDeviceData(const mozilla::gfx::ContentDeviceData& aData);
 
     /**
      * Increase the global device counter after a device has been removed/reset.
@@ -810,9 +817,6 @@ private:
     mozilla::gfx::BackendType mContentBackend;
     // Bitmask of backend types we can use to render content
     uint32_t mContentBackendBitmask;
-
-    int mTileWidth;
-    int mTileHeight;
 
     mozilla::widget::GfxInfoCollector<gfxPlatform> mAzureCanvasBackendCollector;
     mozilla::widget::GfxInfoCollector<gfxPlatform> mApzSupportCollector;

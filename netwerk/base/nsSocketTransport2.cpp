@@ -80,7 +80,7 @@ public:
         , mParam(param)
     {}
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
         mTransport->OnSocketEvent(mType, mStatus, mParam);
         return NS_OK;
@@ -653,7 +653,7 @@ nsSocketOutputStream::WriteSegments(nsReadSegmentFun reader, void *closure,
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-NS_METHOD
+nsresult
 nsSocketOutputStream::WriteFromSegments(nsIInputStream *input,
                                         void *closure,
                                         const char *fromSegment,
@@ -1157,6 +1157,9 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
 
             if (mConnectionFlags & nsISocketTransport::MITM_OK)
                 controlFlags |= nsISocketProvider::MITM_OK;
+
+            if (mConnectionFlags & nsISocketTransport::BE_CONSERVATIVE)
+                controlFlags |= nsISocketProvider::BE_CONSERVATIVE;
 
             nsCOMPtr<nsISupports> secinfo;
             if (i == 0) {
@@ -1775,7 +1778,7 @@ class ThunkPRClose : public Runnable
 public:
   explicit ThunkPRClose(PRFileDesc *fd) : mFD(fd) {}
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     nsSocketTransport::CloseSocket(mFD,
       gSocketTransportService->IsTelemetryEnabledAndNotSleepPhase());

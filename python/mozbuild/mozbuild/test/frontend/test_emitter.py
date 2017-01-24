@@ -30,6 +30,7 @@ from mozbuild.frontend.data import (
     JARManifest,
     LocalInclude,
     Program,
+    RustLibrary,
     SdkFiles,
     SharedLibrary,
     SimpleProgram,
@@ -991,6 +992,56 @@ class TestEmitterBasic(unittest.TestCase):
         with self.assertRaisesRegexp(SandboxValidationError,
              'Only source directory paths allowed in FINAL_TARGET_PP_FILES:'):
             self.read_topsrcdir(reader)
+
+    def test_rust_library_no_cargo_toml(self):
+        '''Test that defining a RustLibrary without a Cargo.toml fails.'''
+        reader = self.reader('rust-library-no-cargo-toml')
+        with self.assertRaisesRegexp(SandboxValidationError,
+             'No Cargo.toml file found'):
+            self.read_topsrcdir(reader)
+
+    def test_rust_library_name_mismatch(self):
+        '''Test that defining a RustLibrary that doesn't match Cargo.toml fails.'''
+        reader = self.reader('rust-library-name-mismatch')
+        with self.assertRaisesRegexp(SandboxValidationError,
+             'library.*does not match Cargo.toml-defined package'):
+            self.read_topsrcdir(reader)
+
+    def test_rust_library_no_lib_section(self):
+        '''Test that a RustLibrary Cargo.toml with no [lib] section fails.'''
+        reader = self.reader('rust-library-no-lib-section')
+        with self.assertRaisesRegexp(SandboxValidationError,
+             'Cargo.toml for.* has no \\[lib\\] section'):
+            self.read_topsrcdir(reader)
+
+    def test_rust_library_invalid_crate_type(self):
+        '''Test that a RustLibrary Cargo.toml has a permitted crate-type.'''
+        reader = self.reader('rust-library-invalid-crate-type')
+        with self.assertRaisesRegexp(SandboxValidationError,
+             'crate-type.* is not permitted'):
+            self.read_topsrcdir(reader)
+
+    def test_rust_library_dash_folding(self):
+        '''Test that on-disk names of RustLibrary objects convert dashes to underscores.'''
+        reader = self.reader('rust-library-dash-folding',
+                             extra_substs=dict(RUST_TARGET='i686-pc-windows-msvc'))
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 1)
+        lib = objs[0]
+        self.assertIsInstance(lib, RustLibrary)
+        self.assertRegexpMatches(lib.lib_name, "random_crate")
+        self.assertRegexpMatches(lib.import_name, "random_crate")
+        self.assertRegexpMatches(lib.basename, "random-crate")
+
+    def test_crate_dependency_path_resolution(self):
+        '''Test recursive dependencies resolve with the correct paths.'''
+        reader = self.reader('crate-dependency-path-resolution',
+                             extra_substs=dict(RUST_TARGET='i686-pc-windows-msvc'))
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 1)
+        self.assertIsInstance(objs[0], RustLibrary)
 
     def test_android_res_dirs(self):
         """Test that ANDROID_RES_DIRS works properly."""

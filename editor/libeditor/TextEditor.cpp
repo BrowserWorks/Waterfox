@@ -858,7 +858,9 @@ TextEditor::UpdateIMEComposition(nsIDOMEvent* aDOMTextEvent)
   MOZ_ASSERT(compositionChangeEvent->mMessage == eCompositionChange,
              "The internal event should be eCompositionChange");
 
-  EnsureComposition(compositionChangeEvent);
+  if (!EnsureComposition(compositionChangeEvent)) {
+    return NS_OK;
+  }
 
   nsCOMPtr<nsIPresShell> ps = GetPresShell();
   NS_ENSURE_TRUE(ps, NS_ERROR_NOT_INITIALIZED);
@@ -1535,9 +1537,13 @@ TextEditor::StripCites()
 }
 
 NS_IMETHODIMP
-TextEditor::GetEmbeddedObjects(nsISupportsArray** aNodeList)
-{
-  *aNodeList = 0;
+TextEditor::GetEmbeddedObjects(nsIArray** aNodeList)
+ {
+  if (NS_WARN_IF(!aNodeList)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  *aNodeList = nullptr;
   return NS_OK;
 }
 

@@ -219,7 +219,9 @@ EditorBase::Init(nsIDOMDocument* aDoc,
                  uint32_t aFlags,
                  const nsAString& aValue)
 {
-  NS_PRECONDITION(aDoc, "bad arg");
+  MOZ_ASSERT(mAction == EditAction::none,
+             "Initializing during an edit action is an error");
+  MOZ_ASSERT(aDoc);
   if (!aDoc)
     return NS_ERROR_NULL_POINTER;
 
@@ -1772,7 +1774,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     // Note that we don't need to check mDispatchInputEvent here.  We need
     // to check it only when the editor requests to dispatch the input event.
@@ -1996,26 +1998,31 @@ EditorBase::StopPreservingSelection()
   mSavedSel.MakeEmpty();
 }
 
-void
+bool
 EditorBase::EnsureComposition(WidgetCompositionEvent* aCompositionEvent)
 {
   if (mComposition) {
-    return;
+    return true;
   }
   // The compositionstart event must cause creating new TextComposition
   // instance at being dispatched by IMEStateManager.
   mComposition = IMEStateManager::GetTextCompositionFor(aCompositionEvent);
   if (!mComposition) {
-    MOZ_CRASH("IMEStateManager doesn't return proper composition");
+    // However, TextComposition may be committed before the composition
+    // event comes here.
+    return false;
   }
   mComposition->StartHandlingComposition(this);
+  return true;
 }
 
 nsresult
 EditorBase::BeginIMEComposition(WidgetCompositionEvent* aCompositionEvent)
 {
   MOZ_ASSERT(!mComposition, "There is composition already");
-  EnsureComposition(aCompositionEvent);
+  if (!EnsureComposition(aCompositionEvent)) {
+    return NS_OK;
+  }
   if (mPhonetic) {
     mPhonetic->Truncate(0);
   }
@@ -3436,7 +3443,7 @@ IsElementVisible(Element* aElement)
     nsComputedDOMStyle::GetStyleContextForElementNoFlush(aElement,
                                                          nullptr, nullptr);
   if (styleContext) {
-    return styleContext->StyleDisplay()->mDisplay != NS_STYLE_DISPLAY_NONE;
+    return styleContext->StyleDisplay()->mDisplay != StyleDisplay::None;
   }
   return false;
 }

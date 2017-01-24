@@ -12,6 +12,7 @@
  */
 
 interface MediaError {
+  // Keep these constants in sync with the ones defined in HTMLMediaElement.h
   const unsigned short MEDIA_ERR_ABORTED = 1;
   const unsigned short MEDIA_ERR_NETWORK = 2;
   const unsigned short MEDIA_ERR_DECODE = 3;
@@ -19,4 +20,6 @@ interface MediaError {
 
   [Constant]
   readonly attribute unsigned short code;
+  [Pref="dom.MediaError.message.enabled"]
+  readonly attribute DOMString message;
 };

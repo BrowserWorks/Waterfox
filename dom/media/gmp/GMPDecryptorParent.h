@@ -72,6 +72,8 @@ private:
 
   // PGMPDecryptorParent
 
+  bool RecvSetDecryptorId(const uint32_t& aId) override;
+
   bool RecvSetSessionId(const uint32_t& aCreateSessionToken,
                         const nsCString& aSessionId) override;
 
@@ -101,6 +103,9 @@ private:
   bool RecvKeyStatusChanged(const nsCString& aSessionId,
                             InfallibleTArray<uint8_t>&& aKeyId,
                             const GMPMediaKeyStatus& aStatus) override;
+
+  bool RecvForgetKeyStatus(const nsCString& aSessionId,
+                           InfallibleTArray<uint8_t>&& aKeyId) override;
 
   bool RecvDecrypted(const uint32_t& aId,
                      const GMPErr& aErr,

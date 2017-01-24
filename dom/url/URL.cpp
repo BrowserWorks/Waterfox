@@ -243,7 +243,9 @@ URLMainThread::Constructor(nsISupports* aParent, const nsAString& aURL,
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, nullptr, aBase,
                           nsContentUtils::GetIOService());
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
+    // No need to warn in this case. It's common to use the URL constructor
+    // to determine if a URL is valid and an exception will be propagated.
     aRv.ThrowTypeError<MSG_INVALID_URL>(aURL);
     return nullptr;
   }
@@ -1819,7 +1821,7 @@ URL::URLSearchParamsUpdated(URLSearchParams* aSearchParams)
 
   ErrorResult rv;
   SetSearchInternal(search, rv);
-  NS_WARN_IF(rv.Failed());
+  NS_WARNING_ASSERTION(!rv.Failed(), "SetSearchInternal failed");
   rv.SuppressException();
 }
 

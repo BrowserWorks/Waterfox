@@ -28,6 +28,18 @@ MacroAssembler::moveGPRToFloat32(Register src, FloatRegister dest)
     vmovd(src, dest);
 }
 
+void
+MacroAssembler::move8SignExtend(Register src, Register dest)
+{
+    movsbl(src, dest);
+}
+
+void
+MacroAssembler::move16SignExtend(Register src, Register dest)
+{
+    movswl(src, dest);
+}
+
 // ===============================================================
 // Logical instructions
 
@@ -628,9 +640,9 @@ MacroAssembler::branchDouble(DoubleCondition cond, FloatRegister lhs, FloatRegis
     j(ConditionFromDoubleCondition(cond), label);
 }
 
-template <typename T>
+template <typename T, typename L>
 void
-MacroAssembler::branchAdd32(Condition cond, T src, Register dest, Label* label)
+MacroAssembler::branchAdd32(Condition cond, T src, Register dest, L label)
 {
     addl(src, dest);
     j(cond, label);
@@ -1175,15 +1187,15 @@ MacroAssembler::truncateFloat32ToInt64(Address src, Address dest, Register temp)
     if (dest.base == esp)
         dest.offset += 2 * sizeof(int32_t);
 
-    reserveStack(2*sizeof(int32_t));
+    reserveStack(2 * sizeof(int32_t));
 
     // Set conversion to truncation.
     fnstcw(Operand(esp, 0));
     load32(Operand(esp, 0), temp);
     andl(Imm32(~0xFF00), temp);
     orl(Imm32(0xCFF), temp);
-    store32(temp, Address(esp, 1*sizeof(int32_t)));
-    fldcw(Operand(esp, 1*sizeof(int32_t)));
+    store32(temp, Address(esp, sizeof(int32_t)));
+    fldcw(Operand(esp, sizeof(int32_t)));
 
     // Load double on fp stack, convert and load regular stack.
     fld32(Operand(src));
@@ -1192,7 +1204,7 @@ MacroAssembler::truncateFloat32ToInt64(Address src, Address dest, Register temp)
     // Reset the conversion flag.
     fldcw(Operand(esp, 0));
 
-    freeStack(2*sizeof(int32_t));
+    freeStack(2 * sizeof(int32_t));
 }
 void
 MacroAssembler::truncateDoubleToInt64(Address src, Address dest, Register temp)
@@ -1228,14 +1240,14 @@ MacroAssembler::truncateDoubleToInt64(Address src, Address dest, Register temp)
     freeStack(2*sizeof(int32_t));
 }
 
-//}}} check_macroassembler_style
 // ===============================================================
+// Clamping functions.
 
 void
-MacroAssemblerX86Shared::clampIntToUint8(Register reg)
+MacroAssembler::clampIntToUint8(Register reg)
 {
     Label inRange;
-    asMasm().branchTest32(Assembler::Zero, reg, Imm32(0xffffff00), &inRange);
+    branchTest32(Assembler::Zero, reg, Imm32(0xffffff00), &inRange);
     {
         sarl(Imm32(31), reg);
         notl(reg);
@@ -1243,6 +1255,9 @@ MacroAssemblerX86Shared::clampIntToUint8(Register reg)
     }
     bind(&inRange);
 }
+
+//}}} check_macroassembler_style
+// ===============================================================
 
 } // namespace jit
 } // namespace js

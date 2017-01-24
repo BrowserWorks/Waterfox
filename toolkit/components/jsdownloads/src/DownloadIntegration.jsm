@@ -521,12 +521,6 @@ this.DownloadIntegration = {
    *           }
    */
   shouldBlockForReputationCheck(aDownload) {
-#ifndef MOZ_URL_CLASSIFIER
-    return Promise.resolve({
-      shouldBlock: false,
-      verdict: "",
-    });
-#else
     let hash;
     let sigInfo;
     let channelRedirects;
@@ -550,7 +544,7 @@ this.DownloadIntegration = {
     let deferred = Promise.defer();
     let aReferrer = null;
     if (aDownload.source.referrer) {
-      aReferrer: NetUtil.newURI(aDownload.source.referrer);
+      aReferrer = NetUtil.newURI(aDownload.source.referrer);
     }
     gApplicationReputationService.queryReputation({
       sourceURI: NetUtil.newURI(aDownload.source.url),
@@ -567,7 +561,6 @@ this.DownloadIntegration = {
         });
       });
     return deferred.promise;
-#endif
   },
 
 #ifdef XP_WIN
@@ -686,7 +679,13 @@ this.DownloadIntegration = {
       }
     }
 
+    let aReferrer = null;
+    if (aDownload.source.referrer) {
+      aReferrer = NetUtil.newURI(aDownload.source.referrer);
+    }
+
     gDownloadPlatform.downloadDone(NetUtil.newURI(aDownload.source.url),
+                                   aReferrer,
                                    new FileUtils.File(aDownload.target.path),
                                    aDownload.contentType,
                                    aDownload.source.isPrivate);

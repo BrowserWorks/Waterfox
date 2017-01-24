@@ -8,6 +8,8 @@
 
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/SizePrintfMacros.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/Vector.h"
 
 #include <limits>
@@ -62,7 +64,6 @@ GetDeflatedUTF8StringLength(JSContext* maybecx, const CharT* chars,
     size_t nbytes;
     const CharT* end;
     unsigned c, c2;
-    char buffer[10];
 
     nbytes = nchars;
     for (end = chars + nchars; chars != end; chars++) {
@@ -94,7 +95,8 @@ GetDeflatedUTF8StringLength(JSContext* maybecx, const CharT* chars,
   bad_surrogate:
     if (maybecx) {
         js::gc::AutoSuppressGC suppress(maybecx);
-        JS_snprintf(buffer, 10, "0x%x", c);
+        char buffer[10];
+        SprintfLiteral(buffer, "0x%x", c);
         JS_ReportErrorFlagsAndNumber(maybecx, JSREPORT_ERROR, GetErrorMessage,
                                      nullptr, JSMSG_BAD_SURROGATE_CHAR, buffer);
     }
@@ -571,7 +573,8 @@ static const JSClassOps sCTypeClassOps = {
 };
 static const JSClass sCTypeClass = {
   "CType",
-  JSCLASS_HAS_RESERVED_SLOTS(CTYPE_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(CTYPE_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sCTypeClassOps
 };
 
@@ -582,7 +585,8 @@ static const JSClassOps sCDataClassOps = {
 };
 static const JSClass sCDataClass = {
   "CData",
-  JSCLASS_HAS_RESERVED_SLOTS(CDATA_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(CDATA_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sCDataClassOps
 };
 
@@ -593,7 +597,8 @@ static const JSClassOps sCClosureClassOps = {
 };
 static const JSClass sCClosureClass = {
   "CClosure",
-  JSCLASS_HAS_RESERVED_SLOTS(CCLOSURE_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(CCLOSURE_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sCClosureClassOps
 };
 
@@ -617,7 +622,9 @@ static const JSClassOps sCDataFinalizerClassOps = {
 };
 static const JSClass sCDataFinalizerClass = {
   "CDataFinalizer",
-  JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(CDATAFINALIZER_SLOTS),
+  JSCLASS_HAS_PRIVATE |
+  JSCLASS_HAS_RESERVED_SLOTS(CDATAFINALIZER_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sCDataFinalizerClassOps
 };
 
@@ -807,13 +814,15 @@ static const JSClassOps sInt64ClassOps = {
 
 static const JSClass sInt64Class = {
   "Int64",
-  JSCLASS_HAS_RESERVED_SLOTS(INT64_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(INT64_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sInt64ClassOps
 };
 
 static const JSClass sUInt64Class = {
   "UInt64",
-  JSCLASS_HAS_RESERVED_SLOTS(INT64_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(INT64_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sInt64ClassOps
 };
 
@@ -1120,7 +1129,7 @@ ConvError(JSContext* cx, const char* expectedStr, HandleValue actual,
       MOZ_ASSERT(!funObj);
 
       char indexStr[16];
-      JS_snprintf(indexStr, 16, "%u", arrIndex);
+      SprintfLiteral(indexStr, "%u", arrIndex);
 
       AutoString arrSource;
       JSAutoByteString arrBytes;
@@ -1177,7 +1186,7 @@ ConvError(JSContext* cx, const char* expectedStr, HandleValue actual,
     MOZ_ASSERT(funObj);
 
     char indexStr[16];
-    JS_snprintf(indexStr, 16, "%u", argIndex + 1);
+    SprintfLiteral(indexStr, "%u", argIndex + 1);
 
     AutoString funSource;
     JSAutoByteString funBytes;
@@ -1260,7 +1269,7 @@ ArgumentConvError(JSContext* cx, HandleValue actual, const char* funStr,
     return false;
 
   char indexStr[16];
-  JS_snprintf(indexStr, 16, "%u", argIndex + 1);
+  SprintfLiteral(indexStr, "%u", argIndex + 1);
 
   JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                        CTYPESMSG_CONV_ERROR_ARG, valStr, indexStr, funStr);
@@ -1289,9 +1298,9 @@ ArrayLengthMismatch(JSContext* cx, unsigned expectedLength, HandleObject arrObj,
     return false;
 
   char expectedLengthStr[16];
-  JS_snprintf(expectedLengthStr, 16, "%u", expectedLength);
+  SprintfLiteral(expectedLengthStr, "%u", expectedLength);
   char actualLengthStr[16];
-  JS_snprintf(actualLengthStr, 16, "%u", actualLength);
+  SprintfLiteral(actualLengthStr, "%u", actualLength);
 
   AutoString arrSource;
   JSAutoByteString arrBytes;
@@ -1319,9 +1328,9 @@ ArrayLengthOverflow(JSContext* cx, unsigned expectedLength, HandleObject arrObj,
     return false;
 
   char expectedLengthStr[16];
-  JS_snprintf(expectedLengthStr, 16, "%u", expectedLength);
+  SprintfLiteral(expectedLengthStr, "%u", expectedLength);
   char actualLengthStr[16];
-  JS_snprintf(actualLengthStr, 16, "%u", actualLength);
+  SprintfLiteral(actualLengthStr, "%u", actualLength);
 
   AutoString arrSource;
   JSAutoByteString arrBytes;
@@ -1426,9 +1435,9 @@ FieldCountMismatch(JSContext* cx,
     return false;
 
   char expectedCountStr[16];
-  JS_snprintf(expectedCountStr, 16, "%u", expectedCount);
+  SprintfLiteral(expectedCountStr, "%u", expectedCount);
   char actualCountStr[16];
-  JS_snprintf(actualCountStr, 16, "%u", actualCount);
+  SprintfLiteral(actualCountStr, "%u", actualCount);
 
   JSAutoByteString posBytes;
   const char* posStr;
@@ -1459,7 +1468,7 @@ FieldDescriptorCountError(JSContext* cx, Value val, size_t length)
     return false;
 
   char lengthStr[16];
-  JS_snprintf(lengthStr, 16, "%u", length);
+  SprintfLiteral(lengthStr, "%" PRIuSIZE, length);
 
   JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                        CTYPESMSG_FIELD_DESC_COUNT, valStr, lengthStr);
@@ -1594,9 +1603,9 @@ FunctionArgumentLengthMismatch(JSContext* cx,
     return false;
 
   char expectedCountStr[16];
-  JS_snprintf(expectedCountStr, 16, "%u", expectedCount);
+  SprintfLiteral(expectedCountStr, "%u", expectedCount);
   char actualCountStr[16];
-  JS_snprintf(actualCountStr, 16, "%u", actualCount);
+  SprintfLiteral(actualCountStr, "%u", actualCount);
 
   const char* variadicStr = isVariadic ? " or more": "";
 
@@ -1617,7 +1626,7 @@ FunctionArgumentTypeError(JSContext* cx,
     return false;
 
   char indexStr[16];
-  JS_snprintf(indexStr, 16, "%u", index + 1);
+  SprintfLiteral(indexStr, "%u", index + 1);
 
   JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                        CTYPESMSG_ARG_TYPE_ERROR, indexStr, reason, valStr);
@@ -1723,10 +1732,10 @@ static bool
 InvalidIndexRangeError(JSContext* cx, size_t index, size_t length)
 {
   char indexStr[16];
-  JS_snprintf(indexStr, 16, "%u", index);
+  SprintfLiteral(indexStr, "%" PRIuSIZE, index);
 
   char lengthStr[16];
-  JS_snprintf(lengthStr, 16, "%u", length);
+  SprintfLiteral(lengthStr,"%" PRIuSIZE, length);
 
   JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                        CTYPESMSG_INVALID_RANGE, indexStr, lengthStr);
@@ -1883,8 +1892,8 @@ SizeMismatchCastError(JSContext* cx,
 
   char sourceSizeStr[16];
   char targetSizeStr[16];
-  JS_snprintf(sourceSizeStr, 16, "%u", sourceSize);
-  JS_snprintf(targetSizeStr, 16, "%u", targetSize);
+  SprintfLiteral(sourceSizeStr, "%" PRIuSIZE, sourceSize);
+  SprintfLiteral(targetSizeStr, "%" PRIuSIZE, targetSize);
 
   JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                        CTYPESMSG_SIZE_MISMATCH_CAST,
@@ -1916,7 +1925,7 @@ VariadicArgumentTypeError(JSContext* cx, uint32_t index, HandleValue actual)
     return false;
 
   char indexStr[16];
-  JS_snprintf(indexStr, 16, "%u", index + 1);
+  SprintfLiteral(indexStr, "%u", index + 1);
 
   JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                        CTYPESMSG_VARG_TYPE_ERROR, indexStr, valStr);
@@ -6305,7 +6314,7 @@ StructType::ConstructData(JSContext* cx,
   size_t count = fields->count();
   if (count >= 2) {
     char fieldLengthStr[32];
-    JS_snprintf(fieldLengthStr, 32, "0, 1, or %u", count);
+    SprintfLiteral(fieldLengthStr, "0, 1, or %" PRIuSIZE, count);
     return ArgumentLengthError(cx, "StructType constructor", fieldLengthStr,
                                "s");
   }
@@ -7323,7 +7332,7 @@ CClosure::Create(JSContext* cx,
       return nullptr;
   }
 
-  ClosureInfo* cinfo = cx->new_<ClosureInfo>(JS_GetRuntime(cx));
+  ClosureInfo* cinfo = cx->new_<ClosureInfo>(cx);
   if (!cinfo) {
     JS_ReportOutOfMemory(cx);
     return nullptr;
@@ -7401,10 +7410,9 @@ CClosure::ClosureStub(ffi_cif* cif, void* result, void** args, void* userData)
 
   // Retrieve the essentials from our closure object.
   ArgClosure argClosure(cif, result, args, static_cast<ClosureInfo*>(userData));
-  JSRuntime* rt = argClosure.cinfo->rt;
-  RootedObject fun(rt, argClosure.cinfo->jsfnObj);
+  JSContext* cx = argClosure.cinfo->cx;
+  RootedObject fun(cx, argClosure.cinfo->jsfnObj);
 
-  JSContext* cx = JS_GetContext(rt);
   js::PrepareScriptEnvironmentAndInvoke(cx, fun, argClosure);
 }
 

@@ -4,12 +4,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsAboutCacheEntry.h"
+
+#include "mozilla/Sprintf.h"
+
 #include "nsAboutCache.h"
 #include "nsICacheStorage.h"
 #include "CacheObserver.h"
-#include "nsDOMString.h"
 #include "nsNetUtil.h"
-#include "prprf.h"
 #include "nsEscape.h"
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
@@ -31,7 +32,7 @@ HexDump(uint32_t *state, const char *buf, int32_t n, nsCString &result)
 
   const unsigned char *p;
   while (n) {
-    PR_snprintf(temp, sizeof(temp), "%08x:  ", *state);
+    SprintfLiteral(temp, "%08x:  ", *state);
     result.Append(temp);
     *state += HEXDUMP_MAX_ROWS;
 
@@ -41,7 +42,7 @@ HexDump(uint32_t *state, const char *buf, int32_t n, nsCString &result)
 
     // print hex codes:
     for (i = 0; i < row_max; ++i) {
-      PR_snprintf(temp, sizeof(temp), "%02x  ", *p++);
+      SprintfLiteral(temp, "%02x  ", *p++);
       result.Append(temp);
     }
     for (i = row_max; i < HEXDUMP_MAX_ROWS; ++i) {
@@ -113,13 +114,6 @@ nsAboutCacheEntry::GetURIFlags(nsIURI *aURI, uint32_t *result)
 {
     *result = nsIAboutModule::HIDE_FROM_ABOUTABOUT;
     return NS_OK;
-}
-
-NS_IMETHODIMP
-nsAboutCacheEntry::GetIndexedDBOriginPostfix(nsIURI *aURI, nsAString &result)
-{
-    SetDOMStringToNull(result);
-    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 //-----------------------------------------------------------------------------
@@ -214,7 +208,9 @@ nsAboutCacheEntry::Channel::OpenCacheEntry()
 
     // Invokes OnCacheEntryAvailable()
     rv = storage->AsyncOpenURI(mCacheURI, mEnhanceId,
-                               nsICacheStorage::OPEN_READONLY, this);
+                               nsICacheStorage::OPEN_READONLY |
+                               nsICacheStorage::OPEN_SECRETLY,
+                               this);
     if (NS_FAILED(rv)) return rv;
 
     return NS_OK;
@@ -559,8 +555,7 @@ nsAboutCacheEntry::Channel::OnDataAvailable(nsIRequest *request, nsISupports *ct
         &nsAboutCacheEntry::Channel::PrintCacheData, this, aCount, &n);
 }
 
-// static
-NS_METHOD
+/* static */ nsresult
 nsAboutCacheEntry::Channel::PrintCacheData(nsIInputStream *aInStream,
                                            void *aClosure,
                                            const char *aFromSegment,

@@ -27,26 +27,30 @@
   background: transparent;
   padding: 4px;
   color: inherit;
+  -moz-appearance: none;
+  margin: 0;
+  border: none;
 }
 
 #emptyDownloads {
-  padding: 10px 20px;
+  padding: 16px 25px;
+  margin: 0;
   /* The panel can be wider than this description after the blocked subview is
      shown, so center the text. */
   text-align: center;
 }
 
 .downloadsPanelFooter {
-  background-color: hsla(210,4%,10%,.07);
-  border-top: 1px solid hsla(210,4%,10%,.14);
+  background-color: var(--arrowpanel-dimmed);
+  border-top: 1px solid var(--panel-separator-color);
 }
 
-.downloadsPanelFooter > toolbarseparator {
+.downloadsPanelFooter toolbarseparator {
   margin: 0;
   border: 0;
   min-width: 0;
-  border-left: 1px solid hsla(210,4%,10%,.14);
-  -moz-appearance: none !important;
+  border-left: 1px solid var(--panel-separator-color);
+  -moz-appearance: none;
 }
 
 .downloadsPanelFooterButton {
@@ -55,17 +59,20 @@
   color: inherit;
   margin: 0;
   padding: 0;
+  min-width: 0;
   min-height: 40px;
+  border: none;
 }
 
 .downloadsPanelFooterButton:hover {
-  outline: 1px solid hsla(210,4%,10%,.07);
-  background-color: hsla(210,4%,10%,.07);
+  outline: 1px solid var(--arrowpanel-dimmed);
+  background-color: var(--arrowpanel-dimmed);
 }
 
-.downloadsPanelFooterButton:hover:active {
-  outline: 1px solid hsla(210,4%,10%,.12);
-  background-color: hsla(210,4%,10%,.12);
+.downloadsPanelFooterButton:hover:active,
+.downloadsPanelFooterButton[open="true"] {
+  outline: 1px solid var(--arrowpanel-dimmed-further);
+  background-color: var(--arrowpanel-dimmed-further);
   box-shadow: 0 1px 0 hsla(210,4%,10%,.05) inset;
 }
 
@@ -82,6 +89,60 @@
   background-color: #0568ba;
 }
 
+.downloadsPanelFooterButton > .button-box {
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+#downloadsHistory {
+  padding-inline-start: 10px;
+  padding-inline-end: 10px;
+}
+
+#downloadsPanel[hasdownloads] #downloadsFooterButtons:not(.downloadsHideDropmarker) > #downloadsHistory {
+  padding-inline-start: 68px;
+}
+
+toolbarseparator.downloadsDropmarkerSplitter {
+  margin: 7px 0;
+}
+
+#downloadsFooter:hover toolbarseparator.downloadsDropmarkerSplitter,
+#downloadsFooter[showingdropdown] toolbarseparator {
+  margin: 0;
+}
+
+.downloadsDropmarker {
+  padding: 0 21px;
+}
+
+.downloadsDropmarker > .button-box > hbox {
+  display: none;
+}
+
+.downloadsDropmarker > .button-box > .button-menu-dropmarker {
+  /* This is to override the linux !important */
+  -moz-appearance: none !important;
+  display: -moz-box;
+  padding: 0;
+  margin: 0;
+}
+
+.downloadsDropmarker > .button-box > .button-menu-dropmarker > .dropmarker-icon {
+  width: 16px;
+  height: 16px;
+  list-style-image: url("chrome://browser/skin/downloads/menubutton-dropmarker.svg");
+  filter: url("chrome://browser/skin/filters.svg#fill");
+  fill: currentColor;
+}
+
+/* Override default icon size which is too small for this dropdown */
+.downloadsDropmarker > .button-box > .button-menu-dropmarker {
+  width: 16px;
+  height: 16px;
+}
+
 #downloadsSummary {
   padding: 0 12px;
   cursor: pointer;
@@ -89,16 +150,8 @@
 }
 
 #downloadsSummary > .downloadTypeIcon {
-  list-style-image: url("chrome://browser/skin/downloads/download-summary.png");
+  list-style-image: url("chrome://browser/skin/downloads/download-summary.svg");
 }
-
-%ifdef XP_MACOSX
-@media (min-resolution: 2dppx) {
-  #downloadsSummary > .downloadTypeIcon {
-    list-style-image: url("chrome://browser/skin/downloads/download-summary@2x.png");
-  }
-}
-%endif
 
 #downloadsSummaryDescription {
   color: -moz-nativehyperlinktext;

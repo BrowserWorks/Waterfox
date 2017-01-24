@@ -8,7 +8,7 @@
 #include "cryptohi.h"
 #include "keyhi.h"
 #include "mozilla/Casting.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsCOMPtr.h"
 #include "nsNSSComponent.h"
 #include "nssb64.h"
@@ -44,7 +44,7 @@ nsDataSignatureVerifier::~nsDataSignatureVerifier()
     return;
   }
 
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 NS_IMETHODIMP
@@ -286,8 +286,10 @@ nsDataSignatureVerifier::VerifySignature(const char* aRSABuf,
   *aSigningCert = nullptr;
 
   Digest digest;
-  nsresult rv = digest.DigestBuf(SEC_OID_SHA1, uint8_t_ptr_cast(aPlaintext),
-                                 aPlaintextLen);
+  nsresult rv = digest.DigestBuf(
+    SEC_OID_SHA1,
+    BitwiseCast<const uint8_t*, const char*>(aPlaintext),
+    aPlaintextLen);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

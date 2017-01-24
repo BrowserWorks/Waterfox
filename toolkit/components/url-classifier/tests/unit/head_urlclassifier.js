@@ -58,23 +58,21 @@ function cleanUp() {
   delFile("safebrowsing/test-block-simple.sbstore");
   delFile("safebrowsing/test-track-simple.sbstore");
   delFile("safebrowsing/test-trackwhite-simple.sbstore");
-  delFile("safebrowsing/test-phish-simple.cache");
-  delFile("safebrowsing/test-malware-simple.cache");
-  delFile("safebrowsing/test-unwanted-simple.cache");
-  delFile("safebrowsing/test-block-simple.cache");
-  delFile("safebrowsing/test-track-simple.cache");
-  delFile("safebrowsing/test-trackwhite-simple.cache");
   delFile("safebrowsing/test-phish-simple.pset");
   delFile("safebrowsing/test-malware-simple.pset");
   delFile("safebrowsing/test-unwanted-simple.pset");
   delFile("safebrowsing/test-block-simple.pset");
   delFile("safebrowsing/test-track-simple.pset");
   delFile("safebrowsing/test-trackwhite-simple.pset");
+  delFile("safebrowsing/moz-phish-simple.sbstore");
+  delFile("safebrowsing/moz-phish-simple.pset");
   delFile("testLarge.pset");
   delFile("testNoDelta.pset");
 }
 
+// Update uses allTables by default
 var allTables = "test-phish-simple,test-malware-simple,test-unwanted-simple,test-track-simple,test-trackwhite-simple,test-block-simple";
+var mozTables = "moz-phish-simple";
 
 var dbservice = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(Ci.nsIUrlClassifierDBService);
 var streamUpdater = Cc["@mozilla.org/url-classifier/streamupdater;1"]
@@ -133,6 +131,10 @@ function buildUnwantedUpdate(chunks, hashSize) {
 
 function buildBlockedUpdate(chunks, hashSize) {
   return buildUpdate({"test-block-simple" : chunks}, hashSize);
+}
+
+function buildMozPhishingUpdate(chunks, hashSize) {
+  return buildUpdate({"moz-phish-simple" : chunks}, hashSize);
 }
 
 function buildBareUpdate(chunks, hashSize) {
@@ -200,7 +202,7 @@ function doStreamUpdate(updateText, success, failure, downloadFailure) {
     downloadFailure = failure;
   }
 
-  streamUpdater.downloadUpdates(allTables, "",
+  streamUpdater.downloadUpdates(allTables, "", true,
                                 dataUpdate, success, failure, downloadFailure);
 }
 
@@ -222,15 +224,16 @@ tableData : function(expectedTables, cb)
     });
 },
 
-checkUrls: function(urls, expected, cb)
+checkUrls: function(urls, expected, cb, useMoz = false)
 {
   // work with a copy of the list.
   urls = urls.slice(0);
   var doLookup = function() {
     if (urls.length > 0) {
+      var tables = useMoz ? mozTables : allTables;
       var fragment = urls.shift();
       var principal = secMan.createCodebasePrincipal(iosvc.newURI("http://" + fragment, null, null), {});
-      dbservice.lookup(principal, allTables,
+      dbservice.lookup(principal, tables,
                                 function(arg) {
                                   do_check_eq(expected, arg);
                                   doLookup();
@@ -240,6 +243,22 @@ checkUrls: function(urls, expected, cb)
     }
   };
   doLookup();
+},
+
+checkTables: function(url, expected, cb)
+{
+  var principal = secMan.createCodebasePrincipal(iosvc.newURI("http://" + url, null, null), {});
+  dbservice.lookup(principal, allTables, function(tables) {
+    // Rebuild tables in a predictable order.
+    var parts = tables.split(",");
+    while (parts[parts.length - 1] == '') {
+      parts.pop();
+    }
+    parts.sort();
+    tables = parts.join(",");
+    do_check_eq(tables, expected);
+    cb();
+  }, true);
 },
 
 urlsDontExist: function(urls, cb)
@@ -267,6 +286,11 @@ blockedUrlsExist: function(urls, cb)
   this.checkUrls(urls, 'test-block-simple', cb);
 },
 
+mozPhishingUrlsExist: function(urls, cb)
+{
+  this.checkUrls(urls, 'moz-phish-simple', cb, true);
+},
+
 subsDontExist: function(urls, cb)
 {
   // XXX: there's no interface for checking items in the subs table
@@ -277,6 +301,11 @@ subsExist: function(urls, cb)
 {
   // XXX: there's no interface for checking items in the subs table
   cb();
+},
+
+urlExistInMultipleTables: function(data, cb)
+{
+  this.checkTables(data["url"], data["tables"], cb);
 }
 
 };

@@ -22,7 +22,7 @@ NS_IMPL_NS_NEW_HTML_ELEMENT(Menu)
 namespace mozilla {
 namespace dom {
 
-enum MenuType
+enum MenuType : uint8_t
 {
   MENU_TYPE_CONTEXT = 1,
   MENU_TYPE_TOOLBAR,
@@ -33,7 +33,7 @@ static const nsAttrValue::EnumTable kMenuTypeTable[] = {
   { "context", MENU_TYPE_CONTEXT },
   { "toolbar", MENU_TYPE_TOOLBAR },
   { "list", MENU_TYPE_LIST },
-  { 0 }
+  { nullptr, 0 }
 };
 
 static const nsAttrValue::EnumTable* kMenuDefaultType =
@@ -113,7 +113,7 @@ HTMLMenuElement::CreateBuilder()
   }
 
   nsCOMPtr<nsIMenuBuilder> builder = do_CreateInstance(HTMLMENUBUILDER_CONTRACTID);
-  NS_WARN_IF_FALSE(builder, "No builder available");
+  NS_WARNING_ASSERTION(builder, "No builder available");
   return builder.forget();
 }
 
@@ -226,6 +226,8 @@ HTMLMenuElement::TraverseContent(nsIContent* aContent,
       aBuilder->AddItemFor(menuitem, CanLoadIcon(child, icon));
 
       aSeparator = ST_FALSE;
+    } else if (child->IsHTMLElement(nsGkAtoms::hr)) {
+      aBuilder->AddSeparator();
     } else if (child->IsHTMLElement(nsGkAtoms::menu) && !element->IsHidden()) {
       if (child->HasAttr(kNameSpaceID_None, nsGkAtoms::label)) {
         nsAutoString label;

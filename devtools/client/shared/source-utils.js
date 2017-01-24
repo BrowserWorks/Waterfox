@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
+const { LocalizationHelper } = require("devtools/shared/l10n");
 
-const l10n = new LocalizationHelper("chrome://devtools/locale/components.properties");
+const l10n = new LocalizationHelper("devtools/locale/components.properties");
 const UNKNOWN_SOURCE_STRING = l10n.getStr("frame.unknownSource");
 
 // Character codes used in various parsing helper functions.
@@ -299,9 +299,30 @@ function isChromeScheme(location, i = 0) {
   }
 }
 
+/**
+ * A utility method to get the file name from a sourcemapped location
+ * The sourcemap location can be in any form. This method returns a
+ * formatted file name for different cases like Windows or OSX.
+ * @param source
+ * @returns String
+ */
+function getSourceMappedFile(source) {
+  // If sourcemapped source is a OSX path, return
+  // the characters after last "/".
+  // If sourcemapped source is a Windowss path, return
+  // the characters after last "\\".
+  if (source.lastIndexOf("/") >= 0) {
+    source = source.slice(source.lastIndexOf("/") + 1);
+  } else if (source.lastIndexOf("\\") >= 0) {
+    source = source.slice(source.lastIndexOf("\\") + 1);
+  }
+  return source;
+}
+
 exports.parseURL = parseURL;
 exports.getSourceNames = getSourceNames;
 exports.isScratchpadScheme = isScratchpadScheme;
 exports.isChromeScheme = isChromeScheme;
 exports.isContentScheme = isContentScheme;
 exports.isDataScheme = isDataScheme;
+exports.getSourceMappedFile = getSourceMappedFile;

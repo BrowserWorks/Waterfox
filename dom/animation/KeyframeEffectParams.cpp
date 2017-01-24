@@ -7,6 +7,7 @@
 #include "mozilla/KeyframeEffectParams.h"
 
 #include "mozilla/AnimationUtils.h"
+#include "mozilla/ErrorResult.h"
 #include "mozilla/KeyframeUtils.h"
 #include "mozilla/RangedPtr.h"
 #include "nsReadableUtils.h"
@@ -106,7 +107,7 @@ ConsumeIdentToken(RangedPtr<const char16_t>& aIter,
 /* static */ void
 KeyframeEffectParams::ParseSpacing(const nsAString& aSpacing,
                                    SpacingMode& aSpacingMode,
-                                   nsCSSProperty& aPacedProperty,
+                                   nsCSSPropertyID& aPacedProperty,
                                    nsAString& aInvalidPacedProperty,
                                    ErrorResult& aRv)
 {
@@ -114,7 +115,7 @@ KeyframeEffectParams::ParseSpacing(const nsAString& aSpacing,
 
   // Ignore spacing if the core API is not enabled since it is not yet ready to
   // ship.
-  if (!AnimationUtils::IsCoreAPIEnabled()) {
+  if (!AnimationUtils::IsCoreAPIEnabledForCaller()) {
     aSpacingMode = SpacingMode::distribute;
     return;
   }

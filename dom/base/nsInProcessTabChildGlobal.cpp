@@ -36,7 +36,7 @@ nsInProcessTabChildGlobal::DoSendBlockingMessage(JSContext* aCx,
   queue->Flush();
 
   if (mChromeMessageManager) {
-    SameProcessCpowHolder cpows(js::GetRuntime(aCx), aCpows);
+    SameProcessCpowHolder cpows(JS::RootingContext::get(aCx), aCpows);
     RefPtr<nsFrameMessageManager> mm = mChromeMessageManager;
     nsCOMPtr<nsIFrameLoader> fl = GetFrameLoader();
     mm->ReceiveMessage(mOwner, fl, aMessage, true, &aData, &cpows, aPrincipal,
@@ -49,8 +49,10 @@ class nsAsyncMessageToParent : public nsSameProcessAsyncMessageBase,
                                public SameProcessMessageQueue::Runnable
 {
 public:
-  nsAsyncMessageToParent(JSContext* aCx, JS::Handle<JSObject*> aCpows, nsInProcessTabChildGlobal* aTabChild)
-    : nsSameProcessAsyncMessageBase(aCx, aCpows)
+  nsAsyncMessageToParent(JS::RootingContext* aRootingCx,
+                         JS::Handle<JSObject*> aCpows,
+                         nsInProcessTabChildGlobal* aTabChild)
+    : nsSameProcessAsyncMessageBase(aRootingCx, aCpows)
     , mTabChild(aTabChild)
   { }
 
@@ -71,10 +73,11 @@ nsInProcessTabChildGlobal::DoSendAsyncMessage(JSContext* aCx,
                                               nsIPrincipal* aPrincipal)
 {
   SameProcessMessageQueue* queue = SameProcessMessageQueue::Get();
+  JS::RootingContext* rcx = JS::RootingContext::get(aCx);
   RefPtr<nsAsyncMessageToParent> ev =
-    new nsAsyncMessageToParent(aCx, aCpows, this);
+    new nsAsyncMessageToParent(rcx, aCpows, this);
 
-  nsresult rv = ev->Init(aCx, aMessage, aData, aPrincipal);
+  nsresult rv = ev->Init(aMessage, aData, aPrincipal);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -126,8 +129,8 @@ nsInProcessTabChildGlobal::Init()
   nsresult rv =
 #endif
   InitTabChildGlobal();
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
-                   "Couldn't initialize nsInProcessTabChildGlobal");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                       "Couldn't initialize nsInProcessTabChildGlobal");
   mMessageManager = new nsFrameMessageManager(this,
                                               nullptr,
                                               dom::ipc::MM_CHILD);
@@ -288,14 +291,15 @@ nsInProcessTabChildGlobal::PreHandleEvent(EventChainPreVisitor& aVisitor)
 nsresult
 nsInProcessTabChildGlobal::InitTabChildGlobal()
 {
-  // If you change this, please change GetCompartmentName() in XPCJSRuntime.cpp
+  // If you change this, please change GetCompartmentName() in XPCJSContext.cpp
   // accordingly.
   nsAutoCString id;
   id.AssignLiteral("inProcessTabChildGlobal");
   nsIURI* uri = mOwner->OwnerDoc()->GetDocumentURI();
   if (uri) {
     nsAutoCString u;
-    uri->GetSpec(u);
+    nsresult rv = uri->GetSpec(u);
+    NS_ENSURE_SUCCESS(rv, rv);
     id.AppendLiteral("?ownedBy=");
     id.Append(u);
   }
@@ -311,7 +315,7 @@ public:
                       bool aRunInGlobalScope)
       : mTabChild(aTabChild), mURL(aURL), mRunInGlobalScope(aRunInGlobalScope) {}
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mTabChild->LoadFrameScript(mURL, mRunInGlobalScope);
     return NS_OK;

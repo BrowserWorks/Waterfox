@@ -11,8 +11,7 @@
 var testServices = [
   ["browser/nav-history-service;1",
     ["nsINavHistoryService"],
-    ["queryStringToQueries", "removePagesByTimeframe", "removePagesFromHost",
-     "removeVisitsByTimeframe", "getObservers"]
+    ["queryStringToQueries", "removePagesByTimeframe", "removePagesFromHost", "getObservers"]
   ],
   ["browser/nav-bookmarks-service;1",
     ["nsINavBookmarksService", "nsINavHistoryObserver", "nsIAnnotationObserver"],
@@ -76,7 +75,7 @@ function run_test()
           do_print("Must have been an expected nothrow, so no need to try again");
           tryAgain = false;
         }
-        catch(ex) {
+        catch (ex) {
           if (ex.result == Cr.NS_ERROR_ILLEGAL_VALUE) {
             do_print(`Caught an expected exception: ${ex.name}`);
             do_print("Moving on to the next test..");

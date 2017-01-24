@@ -8,7 +8,7 @@
 
 #include "mozilla/ArrayUtils.h"
 
-#include "xpcprivate.h"
+#include "xpcpublic.h"
 #include "XPCWrapper.h"
 #include "nsIAppsService.h"
 #include "nsIInputStreamChannel.h"
@@ -31,7 +31,6 @@
 #include "nsDocShell.h"
 #include "nsError.h"
 #include "nsDOMCID.h"
-#include "nsIXPConnect.h"
 #include "nsTextFormatter.h"
 #include "nsIStringBundle.h"
 #include "nsNetUtil.h"
@@ -41,7 +40,6 @@
 #include "nsIFile.h"
 #include "nsIFileURL.h"
 #include "nsIZipReader.h"
-#include "nsIXPConnect.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDocShell.h"
@@ -78,7 +76,7 @@ using namespace mozilla::dom;
 
 nsIIOService    *nsScriptSecurityManager::sIOService = nullptr;
 nsIStringBundle *nsScriptSecurityManager::sStrBundle = nullptr;
-JSRuntime       *nsScriptSecurityManager::sRuntime   = 0;
+JSContext       *nsScriptSecurityManager::sContext   = nullptr;
 bool nsScriptSecurityManager::sStrictFileOriginPolicy = true;
 
 ///////////////////////////
@@ -258,8 +256,10 @@ nsScriptSecurityManager::AppStatusForPrincipal(nsIPrincipal *aPrin)
     // mozbrowser frames.
     bool inIsolatedMozBrowser = aPrin->GetIsInIsolatedMozBrowserElement();
 
-    NS_WARN_IF_FALSE(appId != nsIScriptSecurityManager::UNKNOWN_APP_ID,
-                     "Asking for app status on a principal with an unknown app id");
+    NS_WARNING_ASSERTION(
+      appId != nsIScriptSecurityManager::UNKNOWN_APP_ID,
+      "Asking for app status on a principal with an unknown app id");
+
     // Installed apps have a valid app id (not NO_APP_ID or UNKNOWN_APP_ID)
     // and they are not inside a mozbrowser.
     if (appId == nsIScriptSecurityManager::NO_APP_ID ||
@@ -439,37 +439,20 @@ nsScriptSecurityManager::GetChannelURIPrincipal(nsIChannel* aChannel,
     nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsILoadContext> loadContext;
-    NS_QueryNotificationCallbacks(aChannel, loadContext);
-
     nsCOMPtr<nsILoadInfo> loadInfo;
     aChannel->GetLoadInfo(getter_AddRefs(loadInfo));
-    nsContentPolicyType contentPolicyType = nsIContentPolicy::TYPE_INVALID;
-    if (loadInfo) {
-      contentPolicyType = loadInfo->GetExternalContentPolicyType();
-    }
 
+    // Inherit the origin attributes from loadInfo.
+    // If this is a top-level document load, the origin attributes of the
+    // loadInfo will be set from nsDocShell::DoURILoad.
+    // For subresource loading, the origin attributes of the loadInfo is from
+    // its loadingPrincipal.
     PrincipalOriginAttributes attrs;
-    if (nsIContentPolicy::TYPE_DOCUMENT == contentPolicyType ||
-        nsIContentPolicy::TYPE_SUBDOCUMENT == contentPolicyType) {
-      // If it's document or sub-document, inherit originAttributes from
-      // the document.
-      if (loadContext) {
-        DocShellOriginAttributes docShellAttrs;
-        loadContext->GetOriginAttributes(docShellAttrs);
-        attrs.InheritFromDocShellToDoc(docShellAttrs, uri);
-      }
-    } else {
-      // Inherit origin attributes from loading principal if any.
-      nsCOMPtr<nsIPrincipal> loadingPrincipal;
-      if (loadInfo) {
-        loadInfo->GetLoadingPrincipal(getter_AddRefs(loadingPrincipal));
-      }
-      if (loadingPrincipal) {
-        attrs = BasePrincipal::Cast(loadingPrincipal)->OriginAttributesRef();
-      }
-    }
 
+    // For addons loadInfo might be null.
+    if (loadInfo) {
+      attrs.InheritFromNecko(loadInfo->GetOriginAttributes());
+    }
     rv = MaybeSetAddonIdFromURI(attrs, uri);
     NS_ENSURE_SUCCESS(rv, rv);
     nsCOMPtr<nsIPrincipal> prin = BasePrincipal::CreateCodebasePrincipal(uri, attrs);
@@ -672,37 +655,6 @@ EqualOrSubdomain(nsIURI* aProbeArg, nsIURI* aBase)
     }
 }
 
-static bool
-AllSchemesMatch(nsIURI* aURI, nsIURI* aOtherURI)
-{
-    auto stringComparator = nsCaseInsensitiveCStringComparator();
-    nsCOMPtr<nsIURI> currentURI = aURI;
-    nsCOMPtr<nsIURI> currentOtherURI = aOtherURI;
-    while (currentURI && currentOtherURI) {
-        nsAutoCString scheme, otherScheme;
-        currentURI->GetScheme(scheme);
-        currentOtherURI->GetScheme(otherScheme);
-        if (!scheme.Equals(otherScheme, stringComparator)) {
-            return false;
-        }
-        nsCOMPtr<nsINestedURI> nestedURI = do_QueryInterface(currentURI);
-        nsCOMPtr<nsINestedURI> nestedOtherURI = do_QueryInterface(currentOtherURI);
-        // If neither are nested and all schemes have matched so far
-        // (or we would have bailed already), we're the same:
-        if (!nestedURI && !nestedOtherURI) {
-            return true;
-        }
-        // If one is nested and the other not, they're not equal:
-        if (!nestedURI != !nestedOtherURI) {
-            return false;
-        }
-        // At this stage, both are still nested URIs, so let's play again:
-        nestedURI->GetInnerURI(getter_AddRefs(currentURI));
-        nestedOtherURI->GetInnerURI(getter_AddRefs(currentOtherURI));
-    }
-    return false;
-}
-
 NS_IMETHODIMP
 nsScriptSecurityManager::CheckLoadURIWithPrincipal(nsIPrincipal* aPrincipal,
                                                    nsIURI *aTargetURI,
@@ -825,53 +777,73 @@ nsScriptSecurityManager::CheckLoadURIWithPrincipal(nsIPrincipal* aPrincipal,
             return NS_OK;
         }
     }
-    else if (AllSchemesMatch(sourceURI, aTargetURI) ||
-             (sViewSourceReachableFromInner &&
-              sourceScheme.EqualsIgnoreCase(targetScheme.get()) &&
-              NS_SUCCEEDED(aTargetURI->SchemeIs("view-source", &targetIsViewSource)) &&
-              targetIsViewSource))
+    else if (sViewSourceReachableFromInner &&
+             sourceScheme.EqualsIgnoreCase(targetScheme.get()) &&
+             NS_SUCCEEDED(aTargetURI->SchemeIs("view-source", &targetIsViewSource)) &&
+             targetIsViewSource)
     {
-        // every scheme can access another URI from the same scheme,
-        // as long as they don't represent null principals...
-        // Or they don't require an special permission to do so
-        // See bug#773886
-        rv = NS_URIChainHasFlags(targetBaseURI,
-                                 nsIProtocolHandler::URI_CROSS_ORIGIN_NEEDS_WEBAPPS_PERM,
-                                 &hasFlags);
-        NS_ENSURE_SUCCESS(rv, rv);
-
-        if (hasFlags) {
-            // Let apps load the whitelisted theme resources even if they don't
-            // have the webapps-manage permission but have the themeable one.
-            // Resources from the theme origin are also allowed to load from
-            // the theme origin (eg. stylesheets using images from the theme).
-            auto themeOrigin = Preferences::GetCString("b2g.theme.origin");
-            if (themeOrigin) {
-                nsAutoCString targetOrigin;
-                nsPrincipal::GetOriginForURI(targetBaseURI, targetOrigin);
-                if (targetOrigin.Equals(themeOrigin)) {
-                    nsAutoCString pOrigin;
-                    aPrincipal->GetOrigin(pOrigin);
-                    return nsContentUtils::IsExactSitePermAllow(aPrincipal, "themeable") ||
-                           pOrigin.Equals(themeOrigin)
-                        ? NS_OK : NS_ERROR_DOM_BAD_URI;
-                }
-            }
-            // In this case, we allow opening only if the source and target URIS
-            // are on the same domain, or the opening URI has the webapps
-            // permision granted
-            if (!SecurityCompareURIs(sourceBaseURI, targetBaseURI) &&
-                !nsContentUtils::IsExactSitePermAllow(aPrincipal, WEBAPPS_PERM_NAME)) {
-                return NS_ERROR_DOM_BAD_URI;
-            }
-        }
+        // exception for foo: linking to view-source:foo for reftests...
         return NS_OK;
     }
 
-    // If the schemes don't match, the policy is specified by the protocol
-    // flags on the target URI.
-    return CheckLoadURIFlags(sourceURI, aTargetURI, sourceBaseURI,
-                             targetBaseURI, aFlags);
+    // If we get here, check all the schemes can link to each other, from the top down:
+    nsCaseInsensitiveCStringComparator stringComparator;
+    nsCOMPtr<nsIURI> currentURI = sourceURI;
+    nsCOMPtr<nsIURI> currentOtherURI = aTargetURI;
+
+    bool denySameSchemeLinks = false;
+    rv = NS_URIChainHasFlags(aTargetURI, nsIProtocolHandler::URI_SCHEME_NOT_SELF_LINKABLE,
+                             &denySameSchemeLinks);
+    if (NS_FAILED(rv)) return rv;
+
+    while (currentURI && currentOtherURI) {
+        nsAutoCString scheme, otherScheme;
+        currentURI->GetScheme(scheme);
+        currentOtherURI->GetScheme(otherScheme);
+
+        bool schemesMatch = scheme.Equals(otherScheme, stringComparator);
+        bool isSamePage;
+        // about: URIs are special snowflakes.
+        if (scheme.EqualsLiteral("about")) {
+            nsAutoCString module, otherModule;
+            isSamePage = schemesMatch &&
+                NS_SUCCEEDED(NS_GetAboutModuleName(currentURI, module)) &&
+                NS_SUCCEEDED(NS_GetAboutModuleName(currentOtherURI, otherModule)) &&
+                module.Equals(otherModule);
+        } else {
+            bool equalExceptRef = false;
+            rv = currentURI->EqualsExceptRef(currentOtherURI, &equalExceptRef);
+            isSamePage = NS_SUCCEEDED(rv) && equalExceptRef;
+        }
+
+        // If schemes are not equal, or they're equal but the target URI
+        // is different from the source URI and doesn't always allow linking
+        // from the same scheme, check if the URI flags of the current target
+        // URI allow the current source URI to link to it.
+        // The policy is specified by the protocol flags on both URIs.
+        if (!schemesMatch || (denySameSchemeLinks && !isSamePage)) {
+            return CheckLoadURIFlags(currentURI, currentOtherURI,
+                                     sourceBaseURI, targetBaseURI, aFlags);
+        }
+        // Otherwise... check if we can nest another level:
+        nsCOMPtr<nsINestedURI> nestedURI = do_QueryInterface(currentURI);
+        nsCOMPtr<nsINestedURI> nestedOtherURI = do_QueryInterface(currentOtherURI);
+
+        // If schemes match and neither URI is nested further, we're OK.
+        if (!nestedURI && !nestedOtherURI) {
+            return NS_OK;
+        }
+        // If one is nested and the other isn't, something is wrong.
+        if (!nestedURI != !nestedOtherURI) {
+            return NS_ERROR_DOM_BAD_URI;
+        }
+        // Otherwise, both should be nested and we'll go through the loop again.
+        nestedURI->GetInnerURI(getter_AddRefs(currentURI));
+        nestedOtherURI->GetInnerURI(getter_AddRefs(currentOtherURI));
+    }
+
+    // We should never get here. We should always return from inside the loop.
+    return NS_ERROR_DOM_BAD_URI;
 }
 
 /**
@@ -1404,19 +1376,18 @@ nsresult nsScriptSecurityManager::Init()
 
     //-- Register security check callback in the JS engine
     //   Currently this is used to control access to function.caller
-    sRuntime = xpc::GetJSRuntime();
+    sContext = danger::GetJSContext();
 
     static const JSSecurityCallbacks securityCallbacks = {
         ContentSecurityPolicyPermitsJSAction,
         JSPrincipalsSubsume,
     };
 
-    JSContext* cx = JS_GetContext(sRuntime);
-    MOZ_ASSERT(!JS_GetSecurityCallbacks(cx));
-    JS_SetSecurityCallbacks(cx, &securityCallbacks);
-    JS_InitDestroyPrincipalsCallback(cx, nsJSPrincipals::Destroy);
+    MOZ_ASSERT(!JS_GetSecurityCallbacks(sContext));
+    JS_SetSecurityCallbacks(sContext, &securityCallbacks);
+    JS_InitDestroyPrincipalsCallback(sContext, nsJSPrincipals::Destroy);
 
-    JS_SetTrustedPrincipals(cx, system);
+    JS_SetTrustedPrincipals(sContext, system);
 
     return NS_OK;
 }
@@ -1439,10 +1410,10 @@ nsScriptSecurityManager::~nsScriptSecurityManager(void)
 void
 nsScriptSecurityManager::Shutdown()
 {
-    if (sRuntime) {
-        JS_SetSecurityCallbacks(JS_GetContext(sRuntime), nullptr);
-        JS_SetTrustedPrincipals(JS_GetContext(sRuntime), nullptr);
-        sRuntime = nullptr;
+    if (sContext) {
+        JS_SetSecurityCallbacks(sContext, nullptr);
+        JS_SetTrustedPrincipals(sContext, nullptr);
+        sContext = nullptr;
     }
 
     NS_IF_RELEASE(sIOService);

@@ -10,188 +10,179 @@
 
 namespace mozilla {
 
-bool WebGL2Context::ValidateClearBuffer(const char* info, GLenum buffer, GLint drawbuffer, size_t elemCount)
+bool
+WebGL2Context::ValidateClearBuffer(const char* funcName, GLenum buffer, GLint drawBuffer,
+                                   size_t availElemCount, GLuint elemOffset,
+                                   GLenum funcType)
 {
-    size_t requiredElements = -1;
-    GLint maxDrawbuffer = -1;
+    if (elemOffset > availElemCount) {
+        ErrorInvalidValue("%s: Offset too big for list.", funcName);
+        return false;
+    }
+    availElemCount -= elemOffset;
+
+    ////
+
+    size_t requiredElements;
+    GLint maxDrawBuffer;
     switch (buffer) {
-      case LOCAL_GL_COLOR:
-      case LOCAL_GL_FRONT:
-      case LOCAL_GL_BACK:
-      case LOCAL_GL_LEFT:
-      case LOCAL_GL_RIGHT:
-      case LOCAL_GL_FRONT_AND_BACK:
+    case LOCAL_GL_COLOR:
           requiredElements = 4;
-          maxDrawbuffer = mGLMaxDrawBuffers - 1;
+          maxDrawBuffer = mGLMaxDrawBuffers - 1;
           break;
 
-      case LOCAL_GL_DEPTH:
-      case LOCAL_GL_STENCIL:
+    case LOCAL_GL_DEPTH:
+    case LOCAL_GL_STENCIL:
           requiredElements = 1;
-          maxDrawbuffer = 0;
+          maxDrawBuffer = 0;
           break;
 
-      default:
-          ErrorInvalidEnumInfo(info, buffer);
+    case LOCAL_GL_DEPTH_STENCIL:
+          requiredElements = 2;
+          maxDrawBuffer = 0;
+          break;
+
+    default:
+          ErrorInvalidEnumInfo(funcName, buffer);
           return false;
     }
 
-    if (drawbuffer < 0 || drawbuffer > maxDrawbuffer) {
-        ErrorInvalidValue("%s: invalid drawbuffer %d. This buffer only supports drawbuffer values between 0 and %d",
-                          info, drawbuffer, maxDrawbuffer);
+    if (drawBuffer < 0 || drawBuffer > maxDrawBuffer) {
+        ErrorInvalidValue("%s: Invalid drawbuffer %d. This buffer only supports"
+                          " `drawbuffer` values between 0 and %u.",
+                          funcName, drawBuffer, maxDrawBuffer);
         return false;
     }
 
-    if (elemCount < requiredElements) {
+    if (availElemCount < requiredElements) {
         ErrorInvalidValue("%s: Not enough elements. Require %u. Given %u.",
-                          info, requiredElements, elemCount);
+                          funcName, requiredElements, availElemCount);
         return false;
     }
+
+    ////
+
+    MakeContextCurrent();
+
+    const auto& fb = mBoundDrawFramebuffer;
+    if (fb) {
+        if (!fb->ValidateAndInitAttachments(funcName))
+            return false;
+
+        if (!fb->ValidateClearBufferType(funcName, buffer, drawBuffer, funcType))
+            return false;
+    } else if (buffer == LOCAL_GL_COLOR) {
+        if (drawBuffer != 0)
+            return true;
+
+        if (mDefaultFB_DrawBuffer0 == LOCAL_GL_NONE)
+            return true;
+
+        if (funcType != LOCAL_GL_FLOAT) {
+            ErrorInvalidOperation("%s: For default framebuffer, COLOR is always of type"
+                                  " FLOAT.",
+                                  funcName);
+            return false;
+        }
+    }
+
     return true;
 }
 
-// Common base functionality. These a good candidates to be moved into WebGLContextUnchecked.cpp
-void
-WebGL2Context::ClearBufferiv_base(GLenum buffer, GLint drawbuffer, const GLint* value)
-{
-    const char funcName[] = "clearBufferiv";
-
-    MakeContextCurrent();
-    if (mBoundDrawFramebuffer) {
-        if (!mBoundDrawFramebuffer->ValidateAndInitAttachments(funcName))
-            return;
-    }
-
-    gl->fClearBufferiv(buffer, drawbuffer, value);
-}
+////
 
 void
-WebGL2Context::ClearBufferuiv_base(GLenum buffer, GLint drawbuffer, const GLuint* value)
-{
-    const char funcName[] = "clearBufferuiv";
-
-    MakeContextCurrent();
-    if (mBoundDrawFramebuffer) {
-        if (!mBoundDrawFramebuffer->ValidateAndInitAttachments(funcName))
-            return;
-    }
-
-    gl->fClearBufferuiv(buffer, drawbuffer, value);
-}
-
-void
-WebGL2Context::ClearBufferfv_base(GLenum buffer, GLint drawbuffer, const GLfloat* value)
+WebGL2Context::ClearBufferfv(GLenum buffer, GLint drawBuffer, const Float32Arr& src,
+                             GLuint srcElemOffset)
 {
     const char funcName[] = "clearBufferfv";
+    if (IsContextLost())
+        return;
 
-    MakeContextCurrent();
-    if (mBoundDrawFramebuffer) {
-        if (!mBoundDrawFramebuffer->ValidateAndInitAttachments(funcName))
-            return;
+    if (buffer != LOCAL_GL_COLOR &&
+        buffer != LOCAL_GL_DEPTH)
+    {
+        ErrorInvalidEnum("%s: buffer must be COLOR or DEPTH.", funcName);
+        return;
     }
 
-    gl->fClearBufferfv(buffer, drawbuffer, value);
+    if (!ValidateClearBuffer(funcName, buffer, drawBuffer, src.elemCount, srcElemOffset,
+                             LOCAL_GL_FLOAT))
+    {
+        return;
+    }
+
+    ScopedDrawCallWrapper wrapper(*this);
+    const auto ptr = src.elemBytes + srcElemOffset;
+    gl->fClearBufferfv(buffer, drawBuffer, ptr);
 }
 
 void
-WebGL2Context::ClearBufferiv(GLenum buffer, GLint drawbuffer, const dom::Int32Array& value)
+WebGL2Context::ClearBufferiv(GLenum buffer, GLint drawBuffer, const Int32Arr& src,
+                             GLuint srcElemOffset)
 {
-    if (IsContextLost()) {
+    const char funcName[] = "clearBufferiv";
+    if (IsContextLost())
+        return;
+
+    if (buffer != LOCAL_GL_COLOR &&
+        buffer != LOCAL_GL_STENCIL)
+    {
+        ErrorInvalidEnum("%s: buffer must be COLOR or STENCIL.", funcName);
         return;
     }
 
-    value.ComputeLengthAndData();
-    if (!ValidateClearBuffer("clearBufferiv", buffer, drawbuffer, value.Length())) {
+    if (!ValidateClearBuffer(funcName, buffer, drawBuffer, src.elemCount, srcElemOffset,
+                             LOCAL_GL_INT))
+    {
         return;
     }
 
-    ClearBufferiv_base(buffer, drawbuffer, value.Data());
+    ScopedDrawCallWrapper wrapper(*this);
+    const auto ptr = src.elemBytes + srcElemOffset;
+    gl->fClearBufferiv(buffer, drawBuffer, ptr);
 }
 
 void
-WebGL2Context::ClearBufferiv(GLenum buffer, GLint drawbuffer, const dom::Sequence<GLint>& value)
+WebGL2Context::ClearBufferuiv(GLenum buffer, GLint drawBuffer, const Uint32Arr& src,
+                              GLuint srcElemOffset)
 {
-    if (IsContextLost()) {
+    const char funcName[] = "clearBufferuiv";
+    if (IsContextLost())
+        return;
+
+    if (buffer != LOCAL_GL_COLOR)
+        return ErrorInvalidEnum("%s: buffer must be COLOR.", funcName);
+
+    if (!ValidateClearBuffer(funcName, buffer, drawBuffer, src.elemCount, srcElemOffset,
+                             LOCAL_GL_UNSIGNED_INT))
+    {
         return;
     }
 
-    if (!ValidateClearBuffer("clearBufferiv", buffer, drawbuffer, value.Length())) {
-        return;
-    }
-
-    ClearBufferiv_base(buffer, drawbuffer, value.Elements());
+    ScopedDrawCallWrapper wrapper(*this);
+    const auto ptr = src.elemBytes + srcElemOffset;
+    gl->fClearBufferuiv(buffer, drawBuffer, ptr);
 }
 
-void
-WebGL2Context::ClearBufferuiv(GLenum buffer, GLint drawbuffer, const dom::Uint32Array& value)
-{
-    if (IsContextLost()) {
-        return;
-    }
-
-    value.ComputeLengthAndData();
-    if (!ValidateClearBuffer("clearBufferuiv", buffer, drawbuffer, value.Length())) {
-        return;
-    }
-
-    ClearBufferuiv_base(buffer, drawbuffer, value.Data());
-}
+////
 
 void
-WebGL2Context::ClearBufferuiv(GLenum buffer, GLint drawbuffer, const dom::Sequence<GLuint>& value)
+WebGL2Context::ClearBufferfi(GLenum buffer, GLint drawBuffer, GLfloat depth,
+                             GLint stencil)
 {
-    if (IsContextLost()) {
+    const char funcName[] = "clearBufferfi";
+    if (IsContextLost())
         return;
-    }
 
-    if (!ValidateClearBuffer("clearBufferuiv", buffer, drawbuffer, value.Length())) {
+    if (buffer != LOCAL_GL_DEPTH_STENCIL)
+        return ErrorInvalidEnum("%s: buffer must be DEPTH_STENCIL.", funcName);
+
+    if (!ValidateClearBuffer(funcName, buffer, drawBuffer, 2, 0, 0))
         return;
-    }
 
-    ClearBufferuiv_base(buffer, drawbuffer, value.Elements());
-}
-
-void
-WebGL2Context::ClearBufferfv(GLenum buffer, GLint drawbuffer, const dom::Float32Array& value)
-{
-    if (IsContextLost()) {
-        return;
-    }
-
-    value.ComputeLengthAndData();
-    if (!ValidateClearBuffer("clearBufferfv", buffer, drawbuffer, value.Length())) {
-        return;
-    }
-
-    ClearBufferfv_base(buffer, drawbuffer, value.Data());
-}
-
-void
-WebGL2Context::ClearBufferfv(GLenum buffer, GLint drawbuffer, const dom::Sequence<GLfloat>& value)
-{
-    if (IsContextLost()) {
-        return;
-    }
-
-    if (!ValidateClearBuffer("clearBufferfv", buffer, drawbuffer, value.Length())) {
-        return;
-    }
-
-    ClearBufferfv_base(buffer, drawbuffer, value.Elements());
-}
-
-void
-WebGL2Context::ClearBufferfi(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil)
-{
-    if (IsContextLost()) {
-        return;
-    }
-
-    if (buffer != LOCAL_GL_DEPTH_STENCIL) {
-        return ErrorInvalidEnumInfo("clearBufferfi: buffer", buffer);
-    }
-    MakeContextCurrent();
-    gl->fClearBufferfi(buffer, drawbuffer, depth, stencil);
+    ScopedDrawCallWrapper wrapper(*this);
+    gl->fClearBufferfi(buffer, drawBuffer, depth, stencil);
 }
 
 } // namespace mozilla

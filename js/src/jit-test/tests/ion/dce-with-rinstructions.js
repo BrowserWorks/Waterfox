@@ -2,6 +2,8 @@ setJitCompilerOption("baseline.warmup.trigger", 10);
 setJitCompilerOption("ion.warmup.trigger", 20);
 var i;
 
+var config = getBuildConfiguration();
+
 // Check that we are able to remove the operation inside recover test functions (denoted by "rop..."),
 // when we inline the first version of uceFault, and ensure that the bailout is correct
 // when uceFault is replaced (which cause an invalidation bailout)
@@ -156,6 +158,42 @@ function rursh_object(i) {
     if (uceFault_ursh_object(i) || uceFault_ursh_object(i))
         assertEq(x, 49  /* = 99 >>> 1 */);
     assertRecoveredOnBailout(x, false);
+    return i;
+}
+
+var uceFault_signextend8_1 = eval(uneval(uceFault).replace('uceFault', 'uceFault_signextend8_1'));
+function rsignextend8_1(i) {
+    var x = (i << 24) >> 24;
+    if (uceFault_signextend8_1(i) || uceFault_signextend8_1(i))
+        assertEq(x, 99  /* = (99 << 24) >> 24 */);
+    assertRecoveredOnBailout(x, true);
+    return i;
+}
+
+var uceFault_signextend8_2 = eval(uneval(uceFault).replace('uceFault', 'uceFault_signextend8_2'));
+function rsignextend8_2(i) {
+    var x = ((-1 * i) << 24) >> 24;
+    if (uceFault_signextend8_2(i) || uceFault_signextend8_2(i))
+        assertEq(x, -99  /* = (-99 << 24) >> 24 */);
+    assertRecoveredOnBailout(x, true);
+    return i;
+}
+
+var uceFault_signextend16_1 = eval(uneval(uceFault).replace('uceFault', 'uceFault_signextend16_1'));
+function rsignextend16_1(i) {
+    var x = (i << 16) >> 16;
+    if (uceFault_signextend16_1(i) || uceFault_signextend16_1(i))
+        assertEq(x, 99  /* = (99 << 16) >> 16 */);
+    assertRecoveredOnBailout(x, true);
+    return i;
+}
+
+var uceFault_signextend16_2 = eval(uneval(uceFault).replace('uceFault', 'uceFault_signextend16_2'));
+function rsignextend16_2(i) {
+    var x = ((-1 * i) << 16) >> 16;
+    if (uceFault_signextend16_2(i) || uceFault_signextend16_2(i))
+        assertEq(x, -99  /* = (-99 << 16) >> 16 */);
+    assertRecoveredOnBailout(x, true);
     return i;
 }
 
@@ -1250,6 +1288,29 @@ function rhypot_object_4args(i) {
     return i;
 }
 
+var uceFault_random = eval(uneval(uceFault).replace('uceFault', 'uceFault_random'));
+function rrandom(i) {
+    // setRNGState() exists only in debug builds
+
+    if(config.debug) {
+        setRNGState(2, 0);
+        var x = Math.random();
+        if (uceFault_random(i) || uceFault_random(i)) {
+            setRNGState(2, 0);
+            assertEq(x, Math.random());
+        }
+        assertRecoveredOnBailout(x, true);
+    } else {
+        var x = Math.random();
+        if (uceFault_random(i) || uceFault_random(i)) {
+            Math.random();
+        }
+        assertRecoveredOnBailout(x, true);
+    }
+
+    return i;
+}
+
 var uceFault_sin_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_sin_number'));
 function rsin_number(i) {
     var x = Math.sin(i);
@@ -1307,6 +1368,10 @@ for (i = 0; i < 100; i++) {
     rrsh_object(i);
     rursh_number(i);
     rursh_object(i);
+    rsignextend8_1(i);
+    rsignextend8_2(i);
+    rsignextend16_1(i);
+    rsignextend16_2(i);
     radd_number(i);
     radd_float(i);
     radd_object(i);
@@ -1404,6 +1469,7 @@ for (i = 0; i < 100; i++) {
     rhypot_object_2args(i);
     rhypot_object_3args(i);
     rhypot_object_4args(i);
+    rrandom(i);
     rsin_number(i);
     rsin_object(i);
     rlog_number(i);

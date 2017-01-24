@@ -30,7 +30,7 @@
 #include "mozilla/HoldDropJSObjects.h"
 #include "mozilla/scache/StartupCache.h"
 #include "mozilla/scache/StartupCacheUtils.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsContentUtils.h"
 #include "nsStringGlue.h"
 #include "nsCycleCollectionParticipant.h"
@@ -152,13 +152,13 @@ PrepareScript(nsIURI* uri,
             else
                 JS::CompileForNonSyntacticScope(cx, options, srcBuf, script);
         } else {
-            AutoObjectVector scopeChain(cx);
+            AutoObjectVector envChain(cx);
             if (!JS_IsGlobalObject(targetObj) &&
-                !scopeChain.append(targetObj)) {
+                !envChain.append(targetObj)) {
                 return NS_ERROR_OUT_OF_MEMORY;
             }
             // XXXbz do we really not care if the compile fails???
-            JS::CompileFunction(cx, scopeChain, options, nullptr, 0, nullptr,
+            JS::CompileFunction(cx, envChain, options, nullptr, 0, nullptr,
                                 srcBuf, function);
         }
     } else {
@@ -171,13 +171,13 @@ PrepareScript(nsIURI* uri,
             else
                 JS::CompileForNonSyntacticScope(cx, options, buf, len, script);
         } else {
-            AutoObjectVector scopeChain(cx);
+            AutoObjectVector envChain(cx);
             if (!JS_IsGlobalObject(targetObj) &&
-                !scopeChain.append(targetObj)) {
+                !envChain.append(targetObj)) {
                 return NS_ERROR_OUT_OF_MEMORY;
             }
             // XXXbz do we really not care if the compile fails???
-            JS::CompileFunction(cx, scopeChain, options, nullptr, 0, nullptr,
+            JS::CompileFunction(cx, envChain, options, nullptr, 0, nullptr,
                                 buf, len, function);
         }
     }
@@ -205,9 +205,9 @@ EvalScript(JSContext* cx,
         if (JS_IsGlobalObject(target_obj)) {
             ok = JS_ExecuteScript(cx, script, retval);
         } else {
-            JS::AutoObjectVector scopeChain(cx);
-            ok = scopeChain.append(target_obj) &&
-                 JS_ExecuteScript(cx, scopeChain, script, retval);
+            JS::AutoObjectVector envChain(cx);
+            ok = envChain.append(target_obj) &&
+                 JS_ExecuteScript(cx, envChain, script, retval);
         }
     }
 
@@ -367,14 +367,14 @@ AsyncScriptLoader::OnStreamComplete(nsIIncrementalStreamLoader* aLoader,
     RootedFunction function(cx);
     RootedScript script(cx);
     nsAutoCString spec;
-    uri->GetSpec(spec);
+    nsresult rv = uri->GetSpec(spec);
+    NS_ENSURE_SUCCESS(rv, rv);
 
     RootedObject target_obj(cx, mTargetObj);
 
-    nsresult rv = PrepareScript(uri, cx, target_obj, spec.get(),
-                                mCharset,
-                                reinterpret_cast<const char*>(aBuf), aLength,
-                                mReuseGlobal, &script, &function);
+    rv = PrepareScript(uri, cx, target_obj, spec.get(), mCharset,
+                       reinterpret_cast<const char*>(aBuf), aLength,
+                       mReuseGlobal, &script, &function);
     if (NS_FAILED(rv)) {
         return rv;
     }
@@ -395,7 +395,7 @@ mozJSSubScriptLoader::ReadScriptAsync(nsIURI* uri, JSObject* targetObjArg,
                                       nsIIOService* serv, bool reuseGlobal,
                                       bool cache, MutableHandleValue retval)
 {
-    RootedObject target_obj(nsContentUtils::RootingCx(), targetObjArg);
+    RootedObject target_obj(RootingCx(), targetObjArg);
 
     nsCOMPtr<nsIGlobalObject> globalObject = xpc::NativeGlobal(target_obj);
     ErrorResult result;
@@ -776,7 +776,7 @@ NotifyPrecompilationCompleteRunnable::Run(void)
     AutoSendObserverNotification notifier(mPrecompiler);
 
     if (mToken) {
-        JSContext* cx = XPCJSRuntime::Get()->Context();
+        JSContext* cx = XPCJSContext::Get()->Context();
         NS_ENSURE_TRUE(cx, NS_ERROR_FAILURE);
         JS::CancelOffThreadScript(cx, mToken);
     }

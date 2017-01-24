@@ -17,24 +17,25 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-// Lazy imports.
 XPCOMUtils.defineLazyModuleGetter(this, "Extension",
                                   "resource://gre/modules/Extension.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "ExtensionContext",
-                                  "resource://gre/modules/Extension.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
-                                  "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
+
+Cu.import("resource://gre/modules/ExtensionUtils.jsm");
+
+var {
+  BaseContext,
+  Messenger,
+} = ExtensionUtils;
 
 /**
  * Instances created from this class provide to a legacy extension
  * a simple API to exchange messages with a webextension.
  */
-var LegacyExtensionContext = class extends ExtensionContext {
+var LegacyExtensionContext = class extends BaseContext {
   /**
-   * Create a new LegacyExtensionContext given a target Extension instance and an optional
-   * url (which can be used to recognize the messages of container context).
+   * Create a new LegacyExtensionContext given a target Extension instance.
    *
    * @param {Extension} targetExtension
    *   The webextension instance associated with this context. This will be the
@@ -42,10 +43,7 @@ var LegacyExtensionContext = class extends ExtensionContext {
    *   used through the EmbeddedWebExtensionsUtils.
    */
   constructor(targetExtension) {
-    super(targetExtension, {
-      contentWindow: null,
-      type: "legacy_extension",
-    });
+    super("legacy_extension", targetExtension);
 
     // Legacy Extensions (xul overlays, bootstrap restartless and Addon SDK)
     // runs with a systemPrincipal.
@@ -61,6 +59,13 @@ var LegacyExtensionContext = class extends ExtensionContext {
       this, "cloneScope",
       {value: cloneScope, enumerable: true, configurable: true, writable: true}
     );
+
+    let sender = {id: targetExtension.uuid};
+    let filter = {extensionId: targetExtension.id};
+    // Legacy addons live in the main process. Messages from other addons are
+    // Messages from WebExtensions are sent to the main process and forwarded via
+    // the parent process manager to the legacy extension.
+    this.messenger = new Messenger(this, [Services.cpmm], sender, filter);
 
     this.api = {
       browser: {
@@ -83,13 +88,6 @@ var LegacyExtensionContext = class extends ExtensionContext {
     super.unload();
     Cu.nukeSandbox(this.cloneScope);
     this.cloneScope = null;
-  }
-
-  /**
-   * The LegacyExtensionContext is not a visible context.
-   */
-  get externallyVisible() {
-    return false;
   }
 };
 

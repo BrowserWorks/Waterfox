@@ -100,8 +100,7 @@ public:
   reverse_line_iterator rline(nsLineBox* aList) { return mLines.rbegin(aList); }
 
   friend nsBlockFrame* NS_NewBlockFrame(nsIPresShell* aPresShell,
-                                        nsStyleContext* aContext,
-                                        nsFrameState aFlags);
+                                        nsStyleContext* aContext);
 
   // nsQueryFrame
   NS_DECL_QUERYFRAME
@@ -397,11 +396,6 @@ protected:
                    bool*        aInOverflowLines,
                    FrameLines** aOverflowLines);
 
-  void SetFlags(nsFrameState aFlags) {
-    mState &= ~NS_BLOCK_FLAGS_MASK;
-    mState |= aFlags;
-  }
-
   /** move the frames contained by aLine by aDeltaBCoord
     * if aLine is a block, its child floats are added to the state manager
     */
@@ -519,6 +513,10 @@ public:
     return false;
   }
 
+  virtual bool RenumberChildFrames(int32_t* aOrdinal,
+                                   int32_t aDepth,
+                                   int32_t aIncrement,
+                                   bool aForCounting) override;
 protected:
 
   /** grab overflow lines from this block's prevInFlow, and make them
@@ -572,7 +570,7 @@ protected:
 
   /** Find any trailing BR clear from the last line of the block (or its PIFs)
    */
-  uint8_t FindTrailingClear();
+  mozilla::StyleClear FindTrailingClear();
 
   /**
    * Remove a float from our float list.
@@ -780,24 +778,6 @@ protected:
 
   //----------------------------------------
   // List handling kludge
-
-  // If this returns true, the block it's called on should get the
-  // NS_FRAME_HAS_DIRTY_CHILDREN bit set on it by the caller; either directly
-  // if it's already in reflow, or via calling FrameNeedsReflow() to schedule a
-  // reflow.
-  bool RenumberLists(nsPresContext* aPresContext);
-
-  static bool RenumberListsInBlock(nsPresContext* aPresContext,
-                                   nsBlockFrame* aBlockFrame,
-                                   int32_t* aOrdinal,
-                                   int32_t aDepth,
-                                   int32_t aIncrement);
-
-  static bool RenumberListsFor(nsPresContext* aPresContext, nsIFrame* aKid,
-                               int32_t* aOrdinal, int32_t aDepth,
-                               int32_t aIncrement);
-
-  static bool FrameStartsCounterScope(nsIFrame* aFrame);
 
   void ReflowBullet(nsIFrame* aBulletFrame,
                     BlockReflowInput& aState,

@@ -4,7 +4,6 @@
 
 "use strict";
 
-const {Ci} = require("chrome");
 const defer = require("devtools/shared/defer");
 const {Spectrum} = require("devtools/client/shared/widgets/Spectrum");
 const {CubicBezierWidget} =
@@ -12,24 +11,15 @@ const {CubicBezierWidget} =
 const {CSSFilterEditorWidget} = require("devtools/client/shared/widgets/FilterWidget");
 const {TooltipToggle} = require("devtools/client/shared/widgets/tooltip/TooltipToggle");
 const EventEmitter = require("devtools/shared/event-emitter");
-const {colorUtils} = require("devtools/shared/css-color");
+const {colorUtils} = require("devtools/shared/css/color");
 const Heritage = require("sdk/core/heritage");
-const {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
 const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
 const {KeyShortcuts} = require("devtools/client/shared/key-shortcuts");
-
-loader.lazyRequireGetter(this, "beautify", "devtools/shared/jsbeautify/beautify");
-loader.lazyRequireGetter(this, "setNamedTimeout", "devtools/client/shared/widgets/view-helpers", true);
-loader.lazyRequireGetter(this, "clearNamedTimeout", "devtools/client/shared/widgets/view-helpers", true);
-loader.lazyRequireGetter(this, "setNamedTimeout", "devtools/client/shared/widgets/view-helpers", true);
-
-XPCOMUtils.defineLazyModuleGetter(this, "VariablesView",
-  "resource://devtools/client/shared/widgets/VariablesView.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "VariablesViewController",
-  "resource://devtools/client/shared/widgets/VariablesViewController.jsm");
+const {Task} = require("devtools/shared/task");
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
-const ESCAPE_KEYCODE = Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE;
+const ESCAPE_KEYCODE = KeyCodes.DOM_VK_ESCAPE;
 const POPUP_EVENTS = ["shown", "hidden", "showing", "hiding"];
 
 /**
@@ -426,78 +416,6 @@ Tooltip.prototype = {
   },
 
   /**
-   * Fill the tooltip with a variables view, inspecting an object via its
-   * corresponding object actor, as specified in the remote debugging protocol.
-   *
-   * @param {object} objectActor
-   *        The value grip for the object actor.
-   * @param {object} viewOptions [optional]
-   *        Options for the variables view visualization.
-   * @param {object} controllerOptions [optional]
-   *        Options for the variables view controller.
-   * @param {object} relayEvents [optional]
-   *        A collection of events to listen on the variables view widget.
-   *        For example, { fetched: () => ... }
-   * @param {boolean} reuseCachedWidget [optional]
-   *        Pass false to instantiate a brand new widget for this variable.
-   *        Otherwise, if a variable was previously inspected, its widget
-   *        will be reused.
-   * @param {Toolbox} toolbox [optional]
-   *        Pass the instance of the current toolbox if you want the variables
-   *        view widget to allow highlighting and selection of DOM nodes
-   */
-  setVariableContent: function (objectActor,
-                               viewOptions = {},
-                               controllerOptions = {},
-                               relayEvents = {},
-                               extraButtons = [],
-                               toolbox = null) {
-    let vbox = this.doc.createElement("vbox");
-    vbox.className = "devtools-tooltip-variables-view-box";
-    vbox.setAttribute("flex", "1");
-
-    let innerbox = this.doc.createElement("vbox");
-    innerbox.className = "devtools-tooltip-variables-view-innerbox";
-    innerbox.setAttribute("flex", "1");
-    vbox.appendChild(innerbox);
-
-    for (let { label, className, command } of extraButtons) {
-      let button = this.doc.createElement("button");
-      button.className = className;
-      button.setAttribute("label", label);
-      button.addEventListener("command", command);
-      vbox.appendChild(button);
-    }
-
-    let widget = new VariablesView(innerbox, viewOptions);
-
-    // If a toolbox was provided, link it to the vview
-    if (toolbox) {
-      widget.toolbox = toolbox;
-    }
-
-    // Analyzing state history isn't useful with transient object inspectors.
-    widget.commitHierarchy = () => {};
-
-    for (let e in relayEvents) {
-      widget.on(e, relayEvents[e]);
-    }
-    VariablesViewController.attach(widget, controllerOptions);
-
-    // Some of the view options are allowed to change between uses.
-    widget.searchPlaceholder = viewOptions.searchPlaceholder;
-    widget.searchEnabled = viewOptions.searchEnabled;
-
-    // Use the object actor's grip to display it as a variable in the widget.
-    // The controller options are allowed to change between uses.
-    widget.controller.setSingleVariable(
-      { objectActor: objectActor }, controllerOptions);
-
-    this.content = vbox;
-    this.panel.setAttribute("clamped-dimensions", "");
-  },
-
-  /**
    * Load a document into an iframe, and set the iframe
    * to be the tooltip's content.
    *
@@ -558,6 +476,7 @@ Tooltip.prototype = {
  *        The devtools toolbox, needed to get the devtools main window.
  */
 function SwatchBasedEditorTooltip(toolbox, stylesheet) {
+  EventEmitter.decorate(this);
   // Creating a tooltip instance
   // This one will consume outside clicks as it makes more sense to let the user
   // close the tooltip by clicking out
@@ -605,8 +524,15 @@ function SwatchBasedEditorTooltip(toolbox, stylesheet) {
 }
 
 SwatchBasedEditorTooltip.prototype = {
+  /**
+   * Show the editor tooltip for the currently active swatch.
+   *
+   * @return {Promise} a promise that resolves once the editor tooltip is displayed, or
+   *         immediately if there is no currently active swatch.
+   */
   show: function () {
     if (this.activeSwatch) {
+      let onShown = this.tooltip.once("shown");
       this.tooltip.show(this.activeSwatch, "topcenter bottomleft");
 
       // When the tooltip is closed by clicking outside the panel we want to
@@ -622,7 +548,11 @@ SwatchBasedEditorTooltip.prototype = {
           this.activeSwatch = null;
         }
       });
+
+      return onShown;
     }
+
+    return Promise.resolve();
   },
 
   hide: function () {
@@ -797,9 +727,9 @@ Heritage.extend(SwatchBasedEditorTooltip.prototype, {
    * Overriding the SwatchBasedEditorTooltip.show function to set spectrum's
    * color.
    */
-  show: function () {
+  show: Task.async(function* () {
     // Call then parent class' show function
-    SwatchBasedEditorTooltip.prototype.show.call(this);
+    yield SwatchBasedEditorTooltip.prototype.show.call(this);
     // Then set spectrum's color and listen to color changes to preview them
     if (this.activeSwatch) {
       this.currentSwatchColor = this.activeSwatch.nextSibling;
@@ -815,13 +745,14 @@ Heritage.extend(SwatchBasedEditorTooltip.prototype, {
     target.actorHasMethod("inspector", "pickColorFromPage").then(value => {
       let tooltipDoc = this.tooltip.doc;
       let eyeButton = tooltipDoc.querySelector("#eyedropper-button");
-      if (value) {
+      if (value && this.inspector.selection.nodeFront.isInHTMLDocument) {
         eyeButton.addEventListener("click", this._openEyeDropper);
       } else {
         eyeButton.style.display = "none";
       }
+      this.emit("ready");
     }, e => console.error(e));
-  },
+  }),
 
   _onSpectrumColorChange: function (event, rgba, cssColor) {
     this._selectColor(cssColor);
@@ -944,9 +875,9 @@ Heritage.extend(SwatchBasedEditorTooltip.prototype, {
    * Overriding the SwatchBasedEditorTooltip.show function to set the cubic
    * bezier curve in the widget
    */
-  show: function () {
+  show: Task.async(function* () {
     // Call the parent class' show function
-    SwatchBasedEditorTooltip.prototype.show.call(this);
+    yield SwatchBasedEditorTooltip.prototype.show.call(this);
     // Then set the curve and listen to changes to preview them
     if (this.activeSwatch) {
       this.currentBezierValue = this.activeSwatch.nextSibling;
@@ -954,9 +885,10 @@ Heritage.extend(SwatchBasedEditorTooltip.prototype, {
         widget.off("updated", this._onUpdate);
         widget.cssCubicBezierValue = this.currentBezierValue.textContent;
         widget.on("updated", this._onUpdate);
+        this.emit("ready");
       });
     }
-  },
+  }),
 
   _onUpdate: function (event, bezier) {
     if (!this.activeSwatch) {
@@ -1016,9 +948,9 @@ Heritage.extend(SwatchBasedEditorTooltip.prototype, {
     return new CSSFilterEditorWidget(container, filter);
   },
 
-  show: function () {
+  show: Task.async(function* () {
     // Call the parent class' show function
-    SwatchBasedEditorTooltip.prototype.show.call(this);
+    yield SwatchBasedEditorTooltip.prototype.show.call(this);
     // Then set the filter value and listen to changes to preview them
     if (this.activeSwatch) {
       this.currentFilterValue = this.activeSwatch.nextSibling;
@@ -1026,8 +958,9 @@ Heritage.extend(SwatchBasedEditorTooltip.prototype, {
       this.widget.on("updated", this._onUpdate);
       this.widget.setCssValue(this.currentFilterValue.textContent);
       this.widget.render();
+      this.emit("ready");
     }
-  },
+  }),
 
   _onUpdate: function (event, filters) {
     if (!this.activeSwatch) {

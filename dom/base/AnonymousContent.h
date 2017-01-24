@@ -16,6 +16,7 @@ namespace mozilla {
 namespace dom {
 
 class Element;
+class UnrestrictedDoubleOrAnonymousKeyframeAnimationOptions;
 
 class AnonymousContent final
 {
@@ -26,6 +27,7 @@ public:
 
   explicit AnonymousContent(Element* aContentNode);
   Element* GetContentNode();
+  Element* GetElementById(const nsAString& aElementId);
   void SetContentNode(Element* aContentNode);
   bool WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector);
 
@@ -56,9 +58,18 @@ public:
                                                  const nsAString& aContextId,
                                                  ErrorResult& aRv);
 
+  already_AddRefed<Animation> SetAnimationForElement(JSContext* aContext,
+                                                     const nsAString& aElementId,
+                                                     JS::Handle<JSObject*> aKeyframes,
+                                                     const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
+                                                     ErrorResult& aError);
+
+  void SetCutoutRectsForElement(const nsAString& aElementId,
+                                const Sequence<OwningNonNull<DOMRect>>& aRects,
+                                ErrorResult& aError);
+
 private:
   ~AnonymousContent();
-  Element* GetElementById(const nsAString& aElementId);
   nsCOMPtr<Element> mContentNode;
 };
 

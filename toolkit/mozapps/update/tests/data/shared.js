@@ -10,9 +10,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 const PREF_APP_UPDATE_AUTO                 = "app.update.auto";
 const PREF_APP_UPDATE_BACKGROUNDERRORS     = "app.update.backgroundErrors";
 const PREF_APP_UPDATE_BACKGROUNDMAXERRORS  = "app.update.backgroundMaxErrors";
-const PREF_APP_UPDATE_CERT_CHECKATTRIBUTES = "app.update.cert.checkAttributes";
-const PREF_APP_UPDATE_CERT_ERRORS          = "app.update.cert.errors";
-const PREF_APP_UPDATE_CERT_MAXERRORS       = "app.update.cert.maxErrors";
 const PREF_APP_UPDATE_CERT_REQUIREBUILTIN  = "app.update.cert.requireBuiltIn";
 const PREF_APP_UPDATE_CHANNEL              = "app.update.channel";
 const PREF_APP_UPDATE_ENABLED              = "app.update.enabled";
@@ -29,11 +26,7 @@ const PREF_APP_UPDATE_URL                  = "app.update.url";
 const PREF_APP_UPDATE_URL_DETAILS          = "app.update.url.details";
 const PREF_APP_UPDATE_URL_OVERRIDE         = "app.update.url.override";
 
-const PREFBRANCH_APP_UPDATE_CERTS = "app.update.certs.";
 const PREFBRANCH_APP_UPDATE_NEVER = "app.update.never.";
-
-const PREF_APP_UPDATE_CERT_INVALID_ATTR_NAME = PREFBRANCH_APP_UPDATE_CERTS +
-                                               "1.invalidName";
 
 const PREFBRANCH_APP_PARTNER         = "app.partner.";
 const PREF_DISTRIBUTION_ID           = "distribution.id";
@@ -482,7 +475,7 @@ function cleanUpdatesDir(aDir) {
         } catch (e) {
           logTestInfo("cleanUpdatesDir: unable to remove directory. Path: " +
                       entry.path + ", Exception: " + e);
-          throw(e);
+          throw (e);
         }
       }
     } else {
@@ -492,7 +485,7 @@ function cleanUpdatesDir(aDir) {
       } catch (e) {
        logTestInfo("cleanUpdatesDir: unable to remove file. Path: " +
                    entry.path + ", Exception: " + e);
-        throw(e);
+        throw (e);
       }
     }
   }
@@ -532,7 +525,7 @@ function removeDirRecursive(aDir) {
         entry.remove(false);
       } catch (e) {
         logTestInfo("error removing file. Exception: " + e);
-        throw(e);
+        throw (e);
       }
     }
   }
@@ -543,7 +536,7 @@ function removeDirRecursive(aDir) {
     aDir.remove(true);
   } catch (e) {
     logTestInfo("error removing directory. Exception: " + e);
-    throw(e);
+    throw (e);
   }
 }
 

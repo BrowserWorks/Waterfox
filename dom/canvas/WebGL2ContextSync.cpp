@@ -16,105 +16,106 @@ namespace mozilla {
 already_AddRefed<WebGLSync>
 WebGL2Context::FenceSync(GLenum condition, GLbitfield flags)
 {
-   if (IsContextLost())
-       return nullptr;
+    if (IsContextLost())
+        return nullptr;
 
-   if (condition != LOCAL_GL_SYNC_GPU_COMMANDS_COMPLETE) {
-       ErrorInvalidEnum("fenceSync: condition must be SYNC_GPU_COMMANDS_COMPLETE");
-       return nullptr;
-   }
+    if (condition != LOCAL_GL_SYNC_GPU_COMMANDS_COMPLETE) {
+        ErrorInvalidEnum("fenceSync: condition must be SYNC_GPU_COMMANDS_COMPLETE");
+        return nullptr;
+    }
 
-   if (flags != 0) {
-       ErrorInvalidValue("fenceSync: flags must be 0");
-       return nullptr;
-   }
+    if (flags != 0) {
+        ErrorInvalidValue("fenceSync: flags must be 0");
+        return nullptr;
+    }
 
-   MakeContextCurrent();
-   RefPtr<WebGLSync> globj = new WebGLSync(this, condition, flags);
-   return globj.forget();
+    MakeContextCurrent();
+    RefPtr<WebGLSync> globj = new WebGLSync(this, condition, flags);
+    return globj.forget();
 }
 
 bool
-WebGL2Context::IsSync(WebGLSync* sync)
+WebGL2Context::IsSync(const WebGLSync* sync)
 {
-   if (IsContextLost())
-       return false;
+    if (!ValidateIsObject("isSync", sync))
+        return false;
 
-   return ValidateObjectAllowDeleted("isSync", sync) && !sync->IsDeleted();
+    return true;
 }
 
 void
 WebGL2Context::DeleteSync(WebGLSync* sync)
 {
-    if (IsContextLost())
-        return;
-
-    if (!ValidateObjectAllowDeletedOrNull("deleteSync", sync))
-        return;
-
-    if (!sync || sync->IsDeleted())
+    if (!ValidateDeleteObject("deleteSync", sync))
         return;
 
     sync->RequestDelete();
 }
 
 GLenum
-WebGL2Context::ClientWaitSync(WebGLSync* sync, GLbitfield flags, GLuint64 timeout)
+WebGL2Context::ClientWaitSync(const WebGLSync& sync, GLbitfield flags, GLuint64 timeout)
 {
+    const char funcName[] = "clientWaitSync";
     if (IsContextLost())
         return LOCAL_GL_WAIT_FAILED;
 
-    if (!sync || sync->IsDeleted()) {
-        ErrorInvalidValue("clientWaitSync: sync is not a sync object.");
+    if (!ValidateObject(funcName, sync))
         return LOCAL_GL_WAIT_FAILED;
-    }
 
     if (flags != 0 && flags != LOCAL_GL_SYNC_FLUSH_COMMANDS_BIT) {
-        ErrorInvalidValue("clientWaitSync: flag must be SYNC_FLUSH_COMMANDS_BIT or 0");
+        ErrorInvalidValue("%s: `flags` must be SYNC_FLUSH_COMMANDS_BIT or 0.", funcName);
+        return LOCAL_GL_WAIT_FAILED;
+    }
+
+    if (timeout > kMaxClientWaitSyncTimeoutNS) {
+        ErrorInvalidOperation("%s: `timeout` must not exceed %s nanoseconds.", funcName,
+                              "MAX_CLIENT_WAIT_TIMEOUT_WEBGL");
         return LOCAL_GL_WAIT_FAILED;
     }
 
     MakeContextCurrent();
-    return gl->fClientWaitSync(sync->mGLName, flags, timeout);
+    return gl->fClientWaitSync(sync.mGLName, flags, timeout);
 }
 
 void
-WebGL2Context::WaitSync(WebGLSync* sync, GLbitfield flags, GLuint64 timeout)
+WebGL2Context::WaitSync(const WebGLSync& sync, GLbitfield flags, GLint64 timeout)
 {
+    const char funcName[] = "waitSync";
     if (IsContextLost())
         return;
 
-    if (!sync || sync->IsDeleted()) {
-        ErrorInvalidValue("waitSync: sync is not a sync object.");
+    if (!ValidateObject(funcName, sync))
         return;
-    }
 
     if (flags != 0) {
-        ErrorInvalidValue("waitSync: flags must be 0");
+        ErrorInvalidValue("%s: `flags` must be 0.", funcName);
         return;
     }
 
-    if (timeout != LOCAL_GL_TIMEOUT_IGNORED) {
-        ErrorInvalidValue("waitSync: timeout must be TIMEOUT_IGNORED");
+    if (timeout != -1) {
+        ErrorInvalidValue("%s: `timeout` must be TIMEOUT_IGNORED.", funcName);
         return;
     }
 
     MakeContextCurrent();
-    gl->fWaitSync(sync->mGLName, flags, timeout);
+    gl->fWaitSync(sync.mGLName, flags, LOCAL_GL_TIMEOUT_IGNORED);
 }
 
 void
-WebGL2Context::GetSyncParameter(JSContext*, WebGLSync* sync, GLenum pname, JS::MutableHandleValue retval)
+WebGL2Context::GetSyncParameter(JSContext*, const WebGLSync& sync, GLenum pname,
+                                JS::MutableHandleValue retval)
 {
+    const char funcName[] = "getSyncParameter";
+    retval.setNull();
     if (IsContextLost())
         return;
 
-    if (!sync || sync->IsDeleted()) {
-        ErrorInvalidValue("getSyncParameter: sync is not a sync object.");
+    if (!ValidateObject(funcName, sync))
         return;
-    }
 
-    retval.set(JS::NullValue());
+    ////
+
+    gl->MakeCurrent();
 
     GLint result = 0;
     switch (pname) {
@@ -122,13 +123,14 @@ WebGL2Context::GetSyncParameter(JSContext*, WebGLSync* sync, GLenum pname, JS::M
     case LOCAL_GL_SYNC_STATUS:
     case LOCAL_GL_SYNC_CONDITION:
     case LOCAL_GL_SYNC_FLAGS:
-        MakeContextCurrent();
-        gl->fGetSynciv(sync->mGLName, pname, 1, nullptr, &result);
+        gl->fGetSynciv(sync.mGLName, pname, 1, nullptr, &result);
         retval.set(JS::Int32Value(result));
         return;
-    }
 
-    ErrorInvalidEnum("getSyncParameter: Invalid pname 0x%04x", pname);
+    default:
+        ErrorInvalidEnum("%s: Invalid pname 0x%04x", funcName, pname);
+        return;
+    }
 }
 
 } // namespace mozilla

@@ -1,38 +1,27 @@
 [package]
 name = "mp4parse"
-version = "0.4.0"
+version = "0.5.1"
 authors = [
   "Ralph Giles <giles@mozilla.com>",
   "Matthew Gregan <kinetik@flim.org>",
 ]
 
 description = "Parser for ISO base media file format (mp4)"
+documentation = "https://mp4parse-docs.surge.sh/mp4parse/"
 license = "MPL-2.0"
 
 repository = "https://github.com/mozilla/mp4parse-rust"
 
-# Cargo includes random files from the working directory
-# by default! Avoid bloating the package with test files.
+# Avoid complaints about trying to package test files.
 exclude = [
   "*.mp4",
 ]
 
-build = "build.rs"
-
 [dependencies]
 byteorder = "0.5.0"
-afl = { version = "0.1.1", optional = true }
-afl-plugin = { version = "0.1.1", optional = true }
-abort_on_panic = { version = "1.0.0", optional = true }
 
 [dev-dependencies]
 test-assembler = "0.1.2"
-
-[build-dependencies]
-rusty-cheddar = "0.3.2"
-
-[features]
-fuzz = ["afl", "afl-plugin", "abort_on_panic"]
 
 # Somewhat heavy-handed, but we want at least -Z force-overflow-checks=on.
 [profile.release]

@@ -3,12 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const {Ci} = require("chrome");
 const EventEmitter = require("devtools/shared/event-emitter");
 loader.lazyRequireGetter(this, "setNamedTimeout",
   "devtools/client/shared/widgets/view-helpers", true);
 loader.lazyRequireGetter(this, "clearNamedTimeout",
   "devtools/client/shared/widgets/view-helpers", true);
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
@@ -470,7 +470,7 @@ TableWidget.prototype = {
     let cell;
 
     switch (event.keyCode) {
-      case event.DOM_VK_UP:
+      case KeyCodes.DOM_VK_UP:
         event.preventDefault();
 
         colName = selectedCell.parentNode.id;
@@ -488,7 +488,7 @@ TableWidget.prototype = {
 
         this.emit(EVENTS.ROW_SELECTED, cell.getAttribute("data-id"));
         break;
-      case event.DOM_VK_DOWN:
+      case KeyCodes.DOM_VK_DOWN:
         event.preventDefault();
 
         colName = selectedCell.parentNode.id;
@@ -1350,17 +1350,17 @@ Column.prototype = {
     // Only sort the array if we are sorting based on this column
     if (this.sorted == 1) {
       items.sort((a, b) => {
-        let val1 = (a[this.id] instanceof Ci.nsIDOMNode) ?
+        let val1 = (a[this.id] instanceof Node) ?
             a[this.id].textContent : a[this.id];
-        let val2 = (b[this.id] instanceof Ci.nsIDOMNode) ?
+        let val2 = (b[this.id] instanceof Node) ?
             b[this.id].textContent : b[this.id];
         return val1 > val2;
       });
     } else if (this.sorted > 1) {
       items.sort((a, b) => {
-        let val1 = (a[this.id] instanceof Ci.nsIDOMNode) ?
+        let val1 = (a[this.id] instanceof Node) ?
             a[this.id].textContent : a[this.id];
-        let val2 = (b[this.id] instanceof Ci.nsIDOMNode) ?
+        let val2 = (b[this.id] instanceof Node) ?
             b[this.id].textContent : b[this.id];
         return val2 > val1;
       });
@@ -1428,7 +1428,7 @@ Column.prototype = {
         return;
       }
 
-      let dataid = target.getAttribute("data-id");
+      let dataid = closest.getAttribute("data-id");
       this.table.emit(EVENTS.ROW_SELECTED, dataid);
     }
   },
@@ -1504,18 +1504,18 @@ Cell.prototype = {
       return;
     }
 
-    if (this.wrapTextInElements && !(value instanceof Ci.nsIDOMNode)) {
+    if (this.wrapTextInElements && !(value instanceof Node)) {
       let span = this.label.ownerDocument.createElementNS(HTML_NS, "span");
       span.textContent = value;
       value = span;
     }
 
-    if (!(value instanceof Ci.nsIDOMNode) &&
+    if (!(value instanceof Node) &&
         value.length > MAX_VISIBLE_STRING_SIZE) {
       value = value .substr(0, MAX_VISIBLE_STRING_SIZE) + "\u2026";
     }
 
-    if (value instanceof Ci.nsIDOMNode) {
+    if (value instanceof Node) {
       this.label.removeAttribute("value");
 
       while (this.label.firstChild) {
@@ -1665,14 +1665,14 @@ EditableFieldsEngine.prototype = {
     }
 
     switch (event.keyCode) {
-      case event.DOM_VK_ESCAPE:
+      case KeyCodes.DOM_VK_ESCAPE:
         this.cancelEdit();
         event.preventDefault();
         break;
-      case event.DOM_VK_RETURN:
+      case KeyCodes.DOM_VK_RETURN:
         this.completeEdit();
         break;
-      case event.DOM_VK_TAB:
+      case KeyCodes.DOM_VK_TAB:
         if (this.onTab) {
           this.onTab(event);
         }

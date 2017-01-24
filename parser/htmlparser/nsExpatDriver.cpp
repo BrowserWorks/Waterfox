@@ -650,7 +650,7 @@ nsExpatDriver::HandleEndDoctypeDecl()
   return NS_OK;
 }
 
-static NS_METHOD
+static nsresult
 ExternalDTDStreamReaderFunc(nsIUnicharInputStream* aIn,
                             void* aClosure,
                             const char16_t* aFromSegment,
@@ -805,7 +805,8 @@ nsExpatDriver::OpenInputStreamFromExternalDTD(const char16_t* aFPIStr,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString absURL;
-  uri->GetSpec(absURL);
+  rv = uri->GetSpec(absURL);
+  NS_ENSURE_SUCCESS(rv, rv);
   CopyUTF8toUTF16(absURL, aAbsURL);
 
   channel->SetContentType(NS_LITERAL_CSTRING("application/xml"));
@@ -947,7 +948,7 @@ nsExpatDriver::HandleError()
   nsCOMPtr<nsIScriptError> serr(do_CreateInstance(NS_SCRIPTERROR_CONTRACTID));
   nsresult rv = NS_ERROR_FAILURE;
   if (serr) {
-    rv = serr->InitWithWindowID(description,
+    rv = serr->InitWithWindowID(errorText,
                                 mURISpec,
                                 mLastLine,
                                 lineNumber, colNumber,

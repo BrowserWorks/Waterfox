@@ -320,6 +320,17 @@ function promiseStorageChanged(expectedChangeTypes) {
   });
 }
 
+function promisePromptShown(expectedTopic) {
+  return new Promise((resolve, reject) => {
+    function onPromptShown({ topic, data }) {
+      is(topic, expectedTopic, "Check expected prompt topic");
+      chromeScript.removeMessageListener("promptShown", onPromptShown);
+      resolve();
+    }
+    chromeScript.addMessageListener("promptShown", onPromptShown);
+  });
+}
+
 /**
  * Run a function synchronously in the parent process and destroy it in the test cleanup function.
  * @param {Function|String} aFunctionOrURL - either a function that will be stringified and run
@@ -360,6 +371,7 @@ if (this.addMessageListener) {
   ok = is = () => {}; // eslint-disable-line no-native-reassign
 
   Cu.import("resource://gre/modules/LoginHelper.jsm");
+  Cu.import("resource://gre/modules/LoginManagerParent.jsm");
   Cu.import("resource://gre/modules/Services.jsm");
   Cu.import("resource://gre/modules/Task.jsm");
 
@@ -371,20 +383,32 @@ if (this.addMessageListener) {
   }
   Services.obs.addObserver(onStorageChanged, "passwordmgr-storage-changed", false);
 
+  function onPrompt(subject, topic, data) {
+    sendAsyncMessage("promptShown", {
+      topic,
+      data,
+    });
+  }
+  Services.obs.addObserver(onPrompt, "passwordmgr-prompt-change", false);
+  Services.obs.addObserver(onPrompt, "passwordmgr-prompt-save", false);
+
   addMessageListener("setupParent", ({selfFilling = false} = {selfFilling: false}) => {
+    // Force LoginManagerParent to init for the tests since it's normally delayed
+    // by apps such as on Android.
+    LoginManagerParent.init();
+
     commonInit(selfFilling);
     sendAsyncMessage("doneSetup");
   });
 
   addMessageListener("loadRecipes", Task.async(function* loadRecipes(recipes) {
-    var { LoginManagerParent } = Cu.import("resource://gre/modules/LoginManagerParent.jsm", {});
+
     var recipeParent = yield LoginManagerParent.recipeParentPromise;
     yield recipeParent.load(recipes);
     sendAsyncMessage("loadedRecipes", recipes);
   }));
 
   addMessageListener("resetRecipes", Task.async(function* resetRecipes() {
-    let { LoginManagerParent } = Cu.import("resource://gre/modules/LoginManagerParent.jsm", {});
     let recipeParent = yield LoginManagerParent.recipeParentPromise;
     yield recipeParent.reset();
     sendAsyncMessage("recipesReset");
@@ -400,7 +424,11 @@ if (this.addMessageListener) {
       return arg;
     });
 
-    return Services.logins[msg.methodName](...recreatedArgs);
+    let rv = Services.logins[msg.methodName](...recreatedArgs);
+    if (rv instanceof Ci.nsILoginInfo) {
+      rv = LoginHelper.loginToVanillaObject(rv);
+    }
+    return rv;
   });
 
   var globalMM = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
@@ -427,6 +455,18 @@ if (this.addMessageListener) {
 
       if (LoginManagerParent._recipeManager) {
         LoginManagerParent._recipeManager.reset();
+      }
+
+      // Cleanup PopupNotifications (if on a relevant platform)
+      let chromeWin = Services.wm.getMostRecentWindow("navigator:browser");
+      if (chromeWin && chromeWin.PopupNotifications) {
+        let notes = chromeWin.PopupNotifications._currentNotifications;
+        if (notes.length > 0) {
+          dump("Removing " + notes.length + " popup notifications.\n");
+        }
+        for (let note of notes) {
+	  note.remove();
+        }
       }
     });
   });

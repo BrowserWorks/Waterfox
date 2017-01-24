@@ -4,7 +4,10 @@
 
 #include "DownloadPlatform.h"
 #include "nsAutoPtr.h"
+#include "nsNetUtil.h"
 #include "nsString.h"
+#include "nsINestedURI.h"
+#include "nsIProtocolHandler.h"
 #include "nsIURI.h"
 #include "nsIFile.h"
 #include "nsIObserverService.h"
@@ -24,10 +27,11 @@
 
 #ifdef XP_MACOSX
 #include <CoreFoundation/CoreFoundation.h>
+#include "../../../../xpcom/io/CocoaFileUtils.h"
 #endif
 
 #ifdef MOZ_WIDGET_ANDROID
-#include "GeneratedJNIWrappers.h"
+#include "FennecJNIWrappers.h"
 #endif
 
 #ifdef MOZ_WIDGET_GTK
@@ -69,7 +73,32 @@ static void gio_set_metadata_done(GObject *source_obj, GAsyncResult *res, gpoint
 }
 #endif
 
-nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
+#ifdef XP_MACOSX
+// Caller is responsible for freeing any result (CF Create Rule)
+CFURLRef CreateCFURLFromNSIURI(nsIURI *aURI) {
+  nsAutoCString spec;
+  if (aURI) {
+    aURI->GetSpec(spec);
+  }
+
+  CFStringRef urlStr = ::CFStringCreateWithCString(kCFAllocatorDefault,
+                                                   spec.get(),
+                                                   kCFStringEncodingUTF8);
+  if (!urlStr) {
+    return NULL;
+  }
+
+  CFURLRef url = ::CFURLCreateWithString(kCFAllocatorDefault,
+                                         urlStr,
+                                         NULL);
+
+  ::CFRelease(urlStr);
+
+  return url;
+}
+#endif
+
+nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIURI* aReferrer, nsIFile* aTarget,
                                         const nsACString& aContentType, bool aIsPrivate)
 {
 #if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_ANDROID) \
@@ -84,7 +113,7 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
       bool addToRecentDocs = Preferences::GetBool(PREF_BDM_ADDTORECENTDOCS);
 #ifdef MOZ_WIDGET_ANDROID
       if (addToRecentDocs) {
-        java::DownloadsIntegration::ScanMedia(path, NS_ConvertUTF8toUTF16(aContentType));
+        java::DownloadsIntegration::ScanMedia(path, aContentType);
       }
 #else
       if (addToRecentDocs && !aIsPrivate) {
@@ -106,7 +135,8 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
       // Use GIO to store the source URI for later display in the file manager.
       GFile* gio_file = g_file_new_for_path(NS_ConvertUTF16toUTF8(path).get());
       nsCString source_uri;
-      aSource->GetSpec(source_uri);
+      nsresult rv = aSource->GetSpec(source_uri);
+      NS_ENSURE_SUCCESS(rv, rv);
       GFileInfo *file_info = g_file_info_new();
       g_file_info_set_attribute_string(file_info, "metadata::download-uri", source_uri.get());
       g_file_set_attributes_async(gio_file,
@@ -129,6 +159,36 @@ nsresult DownloadPlatform::DownloadDone(nsIURI* aSource, nsIFile* aTarget,
     ::CFNotificationCenterPostNotification(center, CFSTR("com.apple.DownloadFileFinished"),
                                            observedObject, nullptr, TRUE);
     ::CFRelease(observedObject);
+
+    // Add OS X origin and referrer file metadata
+    CFStringRef pathCFStr = NULL;
+    if (!path.IsEmpty()) {
+      pathCFStr = ::CFStringCreateWithCharacters(kCFAllocatorDefault,
+                                                 (const UniChar*)path.get(),
+                                                 path.Length());
+    }
+    if (pathCFStr) {
+      bool isFromWeb = IsURLPossiblyFromWeb(aSource);
+
+      CFURLRef sourceCFURL = CreateCFURLFromNSIURI(aSource);
+      CFURLRef referrerCFURL = CreateCFURLFromNSIURI(aReferrer);
+
+      CocoaFileUtils::AddOriginMetadataToFile(pathCFStr,
+                                              sourceCFURL,
+                                              referrerCFURL);
+      CocoaFileUtils::AddQuarantineMetadataToFile(pathCFStr,
+                                                  sourceCFURL,
+                                                  referrerCFURL,
+                                                  isFromWeb);
+
+      ::CFRelease(pathCFStr);
+      if (sourceCFURL) {
+        ::CFRelease(sourceCFURL);
+      }
+      if (referrerCFURL) {
+        ::CFRelease(referrerCFURL);
+      }
+    }
 #endif
     if (mozilla::Preferences::GetBool("device.storage.enabled", true)) {
       // Tell DeviceStorage that a new file may have been added.
@@ -172,4 +232,56 @@ nsresult DownloadPlatform::MapUrlToZone(const nsAString& aURL,
 #else
   return NS_ERROR_NOT_IMPLEMENTED;
 #endif
+}
+
+// Check if a URI is likely to be web-based, by checking its URI flags.
+// If in doubt (e.g. if anything fails during the check) claims things
+// are from the web.
+bool DownloadPlatform::IsURLPossiblyFromWeb(nsIURI* aURI)
+{
+  nsCOMPtr<nsIIOService> ios = do_GetIOService();
+  nsCOMPtr<nsIURI> uri = aURI;
+  if (!ios) {
+    return true;
+  }
+
+  while (uri) {
+    // We're not using nsIIOService::ProtocolHasFlags because it doesn't
+    // take per-URI flags into account. We're also not using
+    // NS_URIChainHasFlags because we're checking for *any* of 3 flags
+    // to be present on *all* of the nested URIs, which it can't do.
+    nsAutoCString scheme;
+    nsresult rv = uri->GetScheme(scheme);
+    if (NS_FAILED(rv)) {
+      return true;
+    }
+    nsCOMPtr<nsIProtocolHandler> ph;
+    rv = ios->GetProtocolHandler(scheme.get(), getter_AddRefs(ph));
+    if (NS_FAILED(rv)) {
+      return true;
+    }
+    uint32_t flags;
+    rv = ph->DoGetProtocolFlags(uri, &flags);
+    if (NS_FAILED(rv)) {
+      return true;
+    }
+    // If not dangerous to load, not a UI resource and not a local file,
+    // assume this is from the web:
+    if (!(flags & nsIProtocolHandler::URI_DANGEROUS_TO_LOAD) &&
+        !(flags & nsIProtocolHandler::URI_IS_UI_RESOURCE) &&
+        !(flags & nsIProtocolHandler::URI_IS_LOCAL_FILE)) {
+      return true;
+    }
+    // Otherwise, check if the URI is nested, and if so go through
+    // the loop again:
+    nsCOMPtr<nsINestedURI> nestedURI = do_QueryInterface(uri);
+    uri = nullptr;
+    if (nestedURI) {
+      rv = nestedURI->GetInnerURI(getter_AddRefs(uri));
+      if (NS_FAILED(rv)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

@@ -866,7 +866,7 @@ WidgetStack.prototype = {
 
     if (vr.bottom > pb.bottom)
       panY = pb.bottom - vr.bottom;
-    else if(vr.top < pb.top)
+    else if (vr.top < pb.top)
       panY = pb.top - vr.top;
 
     this.panBy(panX, panY, true);
@@ -1305,7 +1305,7 @@ WidgetStack.prototype = {
   },
 
   _widgetBounds: function () {
-    let r = new wsRect(0,0,0,0);
+    let r = new wsRect(0, 0, 0, 0);
 
     for (let wid in this._widgetState) {
       let state = this._widgetState[wid];

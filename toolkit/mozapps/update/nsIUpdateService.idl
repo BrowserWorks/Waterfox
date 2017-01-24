@@ -11,7 +11,6 @@ interface nsIDOMWindow;
 interface nsIRequest;
 interface nsIRequestObserver;
 interface nsISimpleEnumerator;
-interface nsIXMLHttpRequest;
 interface nsIFile;
 
 /**
@@ -114,11 +113,6 @@ interface nsIUpdate : nsISupports
   attribute AString appVersion;
 
   /**
-   * The Toolkit version of this update.
-   */
-  attribute AString platformVersion;
-
-  /**
    * The Application version prior to the application being updated.
    */
   attribute AString previousAppVersion;
@@ -138,12 +132,6 @@ interface nsIUpdate : nsISupports
    * which also links to the release notes.
    */
   attribute AString detailsURL;
-
-  /**
-   * The URL to a page that is typically localized to display in the update
-   * prompt.
-   */
-  attribute AString billboardURL;
 
   /**
    * The URL to the Update Service that supplied this update.
@@ -281,25 +269,25 @@ interface nsIUpdateCheckListener : nsISupports
   /**
    * The update check was completed.
    * @param   request
-   *          The nsIXMLHttpRequest handling the update check.
+   *          The XMLHttpRequest handling the update check.
    * @param   updates
    *          An array of nsIUpdate objects listing available updates.
    * @param   updateCount
    *          The size of the |updates| array.
    */
-  void onCheckComplete(in nsIXMLHttpRequest request,
+  void onCheckComplete(in jsval request,
                        [array, size_is(updateCount)] in nsIUpdate updates,
                        in unsigned long updateCount);
 
   /**
    * An error occurred while loading the remote update service file.
    * @param   request
-   *          The nsIXMLHttpRequest handling the update check.
+   *          The XMLHttpRequest handling the update check.
    * @param   update
    *          A nsIUpdate object that contains details about the
    *          error in its |statusText| property.
    */
-  void onError(in nsIXMLHttpRequest request,
+  void onError(in jsval request,
                in nsIUpdate update);
 };
 

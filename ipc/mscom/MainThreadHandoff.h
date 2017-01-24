@@ -8,6 +8,7 @@
 #define mozilla_mscom_MainThreadHandoff_h
 
 #include "mozilla/Assertions.h"
+#include "mozilla/Move.h"
 #include "mozilla/mscom/Interceptor.h"
 #include "mozilla/mscom/MainThreadInvoker.h"
 #include "mozilla/mscom/Utils.h"
@@ -20,13 +21,13 @@ namespace mscom {
 struct ArrayData;
 
 class MainThreadHandoff final : public IInterceptorSink
-                        , public ICallFrameWalker
+                              , public ICallFrameWalker
 {
 public:
   static HRESULT Create(IInterceptorSink** aOutput);
 
   template <typename Interface>
-  static HRESULT WrapInterface(STAUniquePtr<Interface>& aTargetInterface,
+  static HRESULT WrapInterface(STAUniquePtr<Interface> aTargetInterface,
                                Interface** aOutInterface)
   {
     MOZ_ASSERT(!IsProxy(aTargetInterface.get()));
@@ -35,7 +36,7 @@ public:
     if (FAILED(hr)) {
       return hr;
     }
-    return CreateInterceptor(aTargetInterface, handoff, aOutInterface);
+    return CreateInterceptor(Move(aTargetInterface), handoff, aOutInterface);
   }
 
   // IUnknown
@@ -61,7 +62,6 @@ private:
 
 private:
   ULONG                   mRefCnt;
-  MainThreadInvoker       mInvoker;
   RefPtr<IWeakReference>  mInterceptor;
 };
 

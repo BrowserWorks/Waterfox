@@ -5870,7 +5870,7 @@
       Push $0
 
 !ifndef NONADMIN_ELEVATE
-        ${If} ${AtLeastWinXP}
+        ${If} ${AtLeastWinVista}
           UAC::IsAdmin
           ; If the user is not an admin already
           ${If} "$0" != "1"
@@ -5901,7 +5901,7 @@
           ${EndIf}
         ${EndIf}
 !else
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWinVista}
         UAC::IsAdmin
         ; If the user is not an admin already
         ${If} "$0" != "1"
@@ -6014,7 +6014,7 @@
     !define ${_MOZFUNC_UN}UnloadUAC "!insertmacro ${_MOZFUNC_UN}UnloadUACCall"
 
     Function ${_MOZFUNC_UN}UnloadUAC
-      ${Unless} ${AtLeastWinXP}
+      ${Unless} ${AtLeastWinVista}
         Return
       ${EndUnless}
 
@@ -6159,8 +6159,10 @@
         ${LogMsg} "OS Name    : Windows 8"
       ${ElseIf} ${IsWin8.1}
         ${LogMsg} "OS Name    : Windows 8.1"
-      ${ElseIf} ${AtLeastWin8.1}
-        ${LogMsg} "OS Name    : Above Windows 8.1"
+      ${ElseIf} ${IsWin10}
+        ${LogMsg} "OS Name    : Windows 10"
+      ${ElseIf} ${AtLeastWin10}
+        ${LogMsg} "OS Name    : Above Windows 10"
       ${Else}
         ${LogMsg} "OS Name    : Unable to detect"
       ${EndIf}
@@ -6667,7 +6669,7 @@
     !define ${_MOZFUNC_UN}SetAppLSPCategories "!insertmacro ${_MOZFUNC_UN}SetAppLSPCategoriesCall"
 
     Function ${_MOZFUNC_UN}SetAppLSPCategories
-      ${Unless} ${AtLeastWinXP}
+      ${Unless} ${AtLeastWinVista}
         Return
       ${EndUnless}
 

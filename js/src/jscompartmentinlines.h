@@ -34,30 +34,32 @@ JSCompartment::unsafeUnbarrieredMaybeGlobal() const
     return *global_.unsafeGet();
 }
 
-js::AutoCompartment::AutoCompartment(ExclusiveContext* cx, JSObject* target)
+js::AutoCompartment::AutoCompartment(ExclusiveContext* cx, JSObject* target,
+                                     js::AutoLockForExclusiveAccess* maybeLock /* = nullptr */)
   : cx_(cx),
-    origin_(cx->compartment_)
+    origin_(cx->compartment_),
+    maybeLock_(maybeLock)
 {
-    cx_->enterCompartment(target->compartment());
+    cx_->enterCompartment(target->compartment(), maybeLock);
 }
 
-js::AutoCompartment::AutoCompartment(ExclusiveContext* cx, JSCompartment* target)
+js::AutoCompartment::AutoCompartment(ExclusiveContext* cx, JSCompartment* target,
+                                     js::AutoLockForExclusiveAccess* maybeLock /* = nullptr */)
   : cx_(cx),
-    origin_(cx_->compartment_)
+    origin_(cx_->compartment_),
+    maybeLock_(maybeLock)
 {
-    cx_->enterCompartment(target);
+    cx_->enterCompartment(target, maybeLock);
 }
 
 js::AutoCompartment::~AutoCompartment()
 {
-    cx_->leaveCompartment(origin_);
+    cx_->leaveCompartment(origin_, maybeLock_);
 }
 
 inline bool
-JSCompartment::wrap(JSContext* cx, JS::MutableHandleValue vp, JS::HandleObject existing)
+JSCompartment::wrap(JSContext* cx, JS::MutableHandleValue vp)
 {
-    MOZ_ASSERT_IF(existing, vp.isObject());
-
     /* Only GC things have to be wrapped or copied. */
     if (!vp.isMarkable())
         return true;
@@ -108,13 +110,13 @@ JSCompartment::wrap(JSContext* cx, JS::MutableHandleValue vp, JS::HandleObject e
 #ifdef DEBUG
         cacheResult = &p->value().get().toObject();
 #else
-        vp.set(p->value());
+        vp.set(p->value().get());
         return true;
 #endif
     }
 
     JS::RootedObject obj(cx, &vp.toObject());
-    if (!wrap(cx, &obj, existing))
+    if (!wrap(cx, &obj))
         return false;
     vp.setObject(*obj);
     MOZ_ASSERT_IF(cacheResult, obj == cacheResult);

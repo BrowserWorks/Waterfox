@@ -41,6 +41,9 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
 
+  // EventTarget
+  virtual void AsyncEventRunning(AsyncEventDispatcher* aEvent) override;
+
   // nsIContent interface
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue, bool aNotify) override;
@@ -89,9 +92,9 @@ protected:
 
   SVGAnimatedPreserveAspectRatio mPreserveAspectRatio;
 
-  enum { HREF };
-  nsSVGString mStringAttributes[1];
-  static StringInfo sStringInfo[1];
+  enum { HREF, XLINK_HREF };
+  nsSVGString mStringAttributes[2];
+  static StringInfo sStringInfo[2];
 };
 
 } // namespace dom

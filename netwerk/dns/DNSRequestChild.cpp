@@ -7,7 +7,7 @@
 #include "mozilla/net/ChildDNSService.h"
 #include "mozilla/net/DNSRequestChild.h"
 #include "mozilla/net/NeckoChild.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIDNSRecord.h"
 #include "nsHostResolver.h"
 #include "nsTArray.h"
@@ -167,7 +167,7 @@ public:
     , mReasonForCancel(aReason)
   {}
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (mDnsRequest->mIPCOpen) {
       // Send request to Parent process.

@@ -457,10 +457,10 @@ static const SurfaceMemoryReporterAttrs sSurfaceMemoryReporterAttrs[] = {
     {"gfx-surface-subsurface", nullptr},
 };
 
-PR_STATIC_ASSERT(MOZ_ARRAY_LENGTH(sSurfaceMemoryReporterAttrs) ==
-                 size_t(gfxSurfaceType::Max));
-PR_STATIC_ASSERT(uint32_t(CAIRO_SURFACE_TYPE_SKIA) ==
-                 uint32_t(gfxSurfaceType::Skia));
+static_assert(MOZ_ARRAY_LENGTH(sSurfaceMemoryReporterAttrs) ==
+                 size_t(gfxSurfaceType::Max), "sSurfaceMemoryReporterAttrs exceeds max capacity");
+static_assert(uint32_t(CAIRO_SURFACE_TYPE_SKIA) ==
+                 uint32_t(gfxSurfaceType::Skia), "CAIRO_SURFACE_TYPE_SKIA not equal to gfxSurfaceType::Skia");
 
 /* Surface size memory reporting */
 
@@ -482,11 +482,11 @@ public:
         // ordering.  So separate out the read and write operations.
         sSurfaceMemoryUsed[size_t(aType)] = sSurfaceMemoryUsed[size_t(aType)] + aBytes;
     };
-    
+
     NS_DECL_ISUPPORTS
 
-    NS_IMETHOD CollectReports(nsIMemoryReporterCallback *aCb,
-                              nsISupports *aClosure, bool aAnonymize) override
+    NS_IMETHOD CollectReports(nsIHandleReportCallback *aHandleReport,
+                              nsISupports *aData, bool aAnonymize) override
     {
         const size_t len = ArrayLength(sSurfaceMemoryReporterAttrs);
         for (size_t i = 0; i < len; i++) {
@@ -499,11 +499,9 @@ public:
                     desc = sDefaultSurfaceDescription;
                 }
 
-                nsresult rv = aCb->Callback(EmptyCString(), nsCString(path),
-                                            KIND_OTHER, UNITS_BYTES,
-                                            amount,
-                                            nsCString(desc), aClosure);
-                NS_ENSURE_SUCCESS(rv, rv);
+                aHandleReport->Callback(
+                    EmptyCString(), nsCString(path), KIND_OTHER, UNITS_BYTES,
+                    amount, nsCString(desc), aData);
             }
         }
 

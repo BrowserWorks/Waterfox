@@ -24,6 +24,12 @@ LIRGeneratorMIPSShared::useByteOpRegister(MDefinition* mir)
 }
 
 LAllocation
+LIRGeneratorMIPSShared::useByteOpRegisterAtStart(MDefinition* mir)
+{
+    return useRegisterAtStart(mir);
+}
+
+LAllocation
 LIRGeneratorMIPSShared::useByteOpRegisterOrNonDoubleConstant(MDefinition* mir)
 {
     return useRegisterOrNonDoubleConstant(mir);
@@ -285,17 +291,6 @@ LIRGeneratorMIPSShared::visitAsmJSNeg(MAsmJSNeg* ins)
         MOZ_ASSERT(ins->type() == MIRType::Double);
         define(new(alloc()) LNegD(useRegisterAtStart(ins->input())), ins);
     }
-}
-
-void
-LIRGeneratorMIPSShared::visitWasmBoundsCheck(MWasmBoundsCheck* ins)
-{
-    if (!gen->needsBoundsCheckBranch(ins))
-        return;
-
-    MDefinition* index = ins->input();
-    auto* lir = new(alloc()) LWasmBoundsCheck(useRegisterAtStart(index));
-    add(lir, ins);
 }
 
 void

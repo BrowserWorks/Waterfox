@@ -10,6 +10,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/IntegerRange.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/Sprintf.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -157,6 +158,7 @@ static const PhaseInfo phases[] = {
         { PHASE_SWEEP_OBJECT, "Sweep Object", PHASE_SWEEP, 33 },
         { PHASE_SWEEP_STRING, "Sweep String", PHASE_SWEEP, 34 },
         { PHASE_SWEEP_SCRIPT, "Sweep Script", PHASE_SWEEP, 35 },
+        { PHASE_SWEEP_SCOPE, "Sweep Scope", PHASE_SWEEP, 59 },
         { PHASE_SWEEP_SHAPE, "Sweep Shape", PHASE_SWEEP, 36 },
         { PHASE_SWEEP_JITCODE, "Sweep JIT code", PHASE_SWEEP, 37 },
         { PHASE_FINALIZE_END, "Finalize End Callback", PHASE_SWEEP, 38 },
@@ -178,13 +180,13 @@ static const PhaseInfo phases[] = {
     { PHASE_MARK_ROOTS, "Mark Roots", PHASE_MULTI_PARENTS, 48 },
         { PHASE_BUFFER_GRAY_ROOTS, "Buffer Gray Roots", PHASE_MARK_ROOTS, 49 },
         { PHASE_MARK_CCWS, "Mark Cross Compartment Wrappers", PHASE_MARK_ROOTS, 50 },
-        { PHASE_MARK_ROOTERS, "Mark Rooters", PHASE_MARK_ROOTS, 51 },
+        { PHASE_MARK_STACK, "Mark C and JS stacks", PHASE_MARK_ROOTS, 51 },
         { PHASE_MARK_RUNTIME_DATA, "Mark Runtime-wide Data", PHASE_MARK_ROOTS, 52 },
         { PHASE_MARK_EMBEDDING, "Mark Embedding", PHASE_MARK_ROOTS, 53 },
         { PHASE_MARK_COMPARTMENTS, "Mark Compartments", PHASE_MARK_ROOTS, 54 },
-    { PHASE_LIMIT, nullptr, PHASE_NO_PARENT, 58 }
+    { PHASE_LIMIT, nullptr, PHASE_NO_PARENT, 59 }
 
-    // Current number of telemetryBuckets is 58. If you insert new phases
+    // Current number of telemetryBuckets is 59. If you insert new phases
     // somewhere, start at that number and count up. Do not change any existing
     // numbers.
 };
@@ -340,12 +342,11 @@ Statistics::formatCompactSliceMessage() const
     const char* format =
         "GC Slice %u - Pause: %.3fms of %s budget (@ %.3fms); Reason: %s; Reset: %s%s; Times: ";
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
-    JS_snprintf(buffer, sizeof(buffer), format, index,
-                t(slice.duration()), budgetDescription, t(slice.start - slices[0].start),
-                ExplainReason(slice.reason),
-                slice.resetReason ? "yes - " : "no",
-                slice.resetReason ? slice.resetReason : "");
+    SprintfLiteral(buffer, format, index,
+                   t(slice.duration()), budgetDescription, t(slice.start - slices[0].start),
+                   ExplainReason(slice.reason),
+                   slice.resetReason ? "yes - " : "no",
+                   slice.resetReason ? slice.resetReason : "");
 
     FragmentVector fragments;
     if (!fragments.append(DuplicateString(buffer)) ||
@@ -373,34 +374,34 @@ Statistics::formatCompactSummaryMessage() const
 
     char buffer[1024];
     if (!nonincrementalReason_) {
-        JS_snprintf(buffer, sizeof(buffer),
-                    "Max Pause: %.3fms; MMU 20ms: %.1f%%; MMU 50ms: %.1f%%; Total: %.3fms; ",
-                    t(longest), mmu20 * 100., mmu50 * 100., t(total));
+        SprintfLiteral(buffer,
+                       "Max Pause: %.3fms; MMU 20ms: %.1f%%; MMU 50ms: %.1f%%; Total: %.3fms; ",
+                       t(longest), mmu20 * 100., mmu50 * 100., t(total));
     } else {
-        JS_snprintf(buffer, sizeof(buffer), "Non-Incremental: %.3fms (%s); ",
-                    t(total), nonincrementalReason_);
+        SprintfLiteral(buffer, "Non-Incremental: %.3fms (%s); ",
+                       t(total), nonincrementalReason_);
     }
     if (!fragments.append(DuplicateString(buffer)))
         return UniqueChars(nullptr);
 
-    JS_snprintf(buffer, sizeof(buffer),
-                "Zones: %d of %d (-%d); Compartments: %d of %d (-%d); HeapSize: %.3f MiB; "\
-                "HeapChange (abs): %+d (%d); ",
-                zoneStats.collectedZoneCount, zoneStats.zoneCount, zoneStats.sweptZoneCount,
-                zoneStats.collectedCompartmentCount, zoneStats.compartmentCount,
-                zoneStats.sweptCompartmentCount,
-                double(preBytes) / bytesPerMiB,
-                counts[STAT_NEW_CHUNK] - counts[STAT_DESTROY_CHUNK],
-                counts[STAT_NEW_CHUNK] + counts[STAT_DESTROY_CHUNK]);
+    SprintfLiteral(buffer,
+                   "Zones: %d of %d (-%d); Compartments: %d of %d (-%d); HeapSize: %.3f MiB; " \
+                   "HeapChange (abs): %+d (%d); ",
+                   zoneStats.collectedZoneCount, zoneStats.zoneCount, zoneStats.sweptZoneCount,
+                   zoneStats.collectedCompartmentCount, zoneStats.compartmentCount,
+                   zoneStats.sweptCompartmentCount,
+                   double(preBytes) / bytesPerMiB,
+                   counts[STAT_NEW_CHUNK] - counts[STAT_DESTROY_CHUNK],
+                   counts[STAT_NEW_CHUNK] + counts[STAT_DESTROY_CHUNK]);
     if (!fragments.append(DuplicateString(buffer)))
         return UniqueChars(nullptr);
 
     MOZ_ASSERT_IF(counts[STAT_ARENA_RELOCATED], gckind == GC_SHRINK);
     if (gckind == GC_SHRINK) {
-        JS_snprintf(buffer, sizeof(buffer),
-                    "Kind: %s; Relocated: %.3f MiB; ",
-                    ExplainInvocationKind(gckind),
-                    double(ArenaSize * counts[STAT_ARENA_RELOCATED]) / bytesPerMiB);
+        SprintfLiteral(buffer,
+                       "Kind: %s; Relocated: %.3f MiB; ",
+                       ExplainInvocationKind(gckind),
+                       double(ArenaSize * counts[STAT_ARENA_RELOCATED]) / bytesPerMiB);
         if (!fragments.append(DuplicateString(buffer)))
             return UniqueChars(nullptr);
     }
@@ -425,13 +426,13 @@ Statistics::formatCompactSlicePhaseTimes(const PhaseTimeTable phaseTimes) const
         int64_t ownTime = phaseTimes[dagSlot][phase];
         int64_t childTime = SumChildTimes(dagSlot, phase, phaseTimes);
         if (ownTime > MaxUnaccountedTimeUS) {
-            JS_snprintf(buffer, sizeof(buffer), "%s: %.3fms", phases[phase].name, t(ownTime));
+            SprintfLiteral(buffer, "%s: %.3fms", phases[phase].name, t(ownTime));
             if (!fragments.append(DuplicateString(buffer)))
                 return UniqueChars(nullptr);
 
             if (childTime && (ownTime - childTime) > MaxUnaccountedTimeUS) {
                 MOZ_ASSERT(level < 3);
-                JS_snprintf(buffer, sizeof(buffer), "%s: %.3fms", "Other", t(ownTime - childTime));
+                SprintfLiteral(buffer, "%s: %.3fms", "Other", t(ownTime - childTime));
                 if (!fragments.append(DuplicateString(buffer)))
                     return UniqueChars(nullptr);
             }
@@ -491,23 +492,22 @@ Statistics::formatDetailedDescription()
   Arenas Relocated: %.3f MiB\n\
 ";
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
-    JS_snprintf(buffer, sizeof(buffer), format,
-                ExplainInvocationKind(gckind),
-                ExplainReason(slices[0].reason),
-                nonincrementalReason_ ? "no - " : "yes",
-                                                  nonincrementalReason_ ? nonincrementalReason_ : "",
-                zoneStats.collectedZoneCount, zoneStats.zoneCount, zoneStats.sweptZoneCount,
-                zoneStats.collectedCompartmentCount, zoneStats.compartmentCount,
-                zoneStats.sweptCompartmentCount,
-                counts[STAT_MINOR_GC],
-                counts[STAT_STOREBUFFER_OVERFLOW],
-                mmu20 * 100., mmu50 * 100.,
-                t(sccTotal), t(sccLongest),
-                double(preBytes) / bytesPerMiB,
-                counts[STAT_NEW_CHUNK] - counts[STAT_DESTROY_CHUNK], counts[STAT_NEW_CHUNK] +
-                                                                     counts[STAT_DESTROY_CHUNK],
-                double(ArenaSize * counts[STAT_ARENA_RELOCATED]) / bytesPerMiB);
+    SprintfLiteral(buffer, format,
+                   ExplainInvocationKind(gckind),
+                   ExplainReason(slices[0].reason),
+                   nonincrementalReason_ ? "no - " : "yes",
+                   nonincrementalReason_ ? nonincrementalReason_ : "",
+                   zoneStats.collectedZoneCount, zoneStats.zoneCount, zoneStats.sweptZoneCount,
+                   zoneStats.collectedCompartmentCount, zoneStats.compartmentCount,
+                   zoneStats.sweptCompartmentCount,
+                   counts[STAT_MINOR_GC],
+                   counts[STAT_STOREBUFFER_OVERFLOW],
+                   mmu20 * 100., mmu50 * 100.,
+                   t(sccTotal), t(sccLongest),
+                   double(preBytes) / bytesPerMiB,
+                   counts[STAT_NEW_CHUNK] - counts[STAT_DESTROY_CHUNK],
+                   counts[STAT_NEW_CHUNK] + counts[STAT_DESTROY_CHUNK],
+                   double(ArenaSize * counts[STAT_ARENA_RELOCATED]) / bytesPerMiB);
     return DuplicateString(buffer);
 }
 
@@ -527,13 +527,12 @@ Statistics::formatDetailedSliceDescription(unsigned i, const SliceData& slice)
     Pause: %.3fms of %s budget (@ %.3fms)\n\
 ";
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
-    JS_snprintf(buffer, sizeof(buffer), format, i,
-                ExplainReason(slice.reason),
-                slice.resetReason ? "yes - " : "no", slice.resetReason ? slice.resetReason : "",
-                gc::StateName(slice.initialState), gc::StateName(slice.finalState),
-                uint64_t(slice.endFaults - slice.startFaults),
-                t(slice.duration()), budgetDescription, t(slice.start - slices[0].start));
+    SprintfLiteral(buffer, format, i, ExplainReason(slice.reason),
+                   slice.resetReason ? "yes - " : "no",
+                   slice.resetReason ? slice.resetReason : "",
+                   gc::StateName(slice.initialState), gc::StateName(slice.finalState),
+                   uint64_t(slice.endFaults - slice.startFaults),
+                   t(slice.duration()), budgetDescription, t(slice.start - slices[0].start));
     return DuplicateString(buffer);
 }
 
@@ -555,15 +554,15 @@ Statistics::formatDetailedPhaseTimes(const PhaseTimeTable phaseTimes)
         int64_t ownTime = phaseTimes[dagSlot][phase];
         int64_t childTime = SumChildTimes(dagSlot, phase, phaseTimes);
         if (ownTime > 0) {
-            JS_snprintf(buffer, sizeof(buffer), "      %s%s: %.3fms\n",
-                        LevelToIndent[level], phases[phase].name, t(ownTime));
+            SprintfLiteral(buffer, "      %s%s: %.3fms\n",
+                           LevelToIndent[level], phases[phase].name, t(ownTime));
             if (!fragments.append(DuplicateString(buffer)))
                 return UniqueChars(nullptr);
 
             if (childTime && (ownTime - childTime) > MaxUnaccountedChildTimeUS) {
                 MOZ_ASSERT(level < 3);
-                JS_snprintf(buffer, sizeof(buffer), "      %s%s: %.3fms\n",
-                            LevelToIndent[level + 1], "Other", t(ownTime - childTime));
+                SprintfLiteral(buffer, "      %s%s: %.3fms\n",
+                               LevelToIndent[level + 1], "Other", t(ownTime - childTime));
                 if (!fragments.append(DuplicateString(buffer)))
                     return UniqueChars(nullptr);
             }
@@ -585,8 +584,7 @@ Statistics::formatDetailedTotals()
     Max Pause: %.3fms\n\
 ";
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
-    JS_snprintf(buffer, sizeof(buffer), format, t(total), t(longest));
+    SprintfLiteral(buffer, format, t(total), t(longest));
     return DuplicateString(buffer);
 }
 
@@ -656,24 +654,23 @@ Statistics::formatJsonDescription(uint64_t timestamp)
         "\"added_chunks\":%d,"
         "\"removed_chunks\":%d,";
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
-    JS_snprintf(buffer, sizeof(buffer), format,
-                (unsigned long long)timestamp,
-                longest / 1000, longest % 1000,
-                total / 1000, total % 1000,
-                zoneStats.collectedZoneCount,
-                zoneStats.zoneCount,
-                zoneStats.compartmentCount,
-                counts[STAT_MINOR_GC],
-                counts[STAT_STOREBUFFER_OVERFLOW],
-                int(mmu20 * 100),
-                int(mmu50 * 100),
-                sccTotal / 1000, sccTotal % 1000,
-                sccLongest / 1000, sccLongest % 1000,
-                nonincrementalReason_ ? nonincrementalReason_ : "none",
-                unsigned(preBytes / 1024 / 1024),
-                counts[STAT_NEW_CHUNK],
-                counts[STAT_DESTROY_CHUNK]);
+    SprintfLiteral(buffer, format,
+                   (unsigned long long)timestamp,
+                   longest / 1000, longest % 1000,
+                   total / 1000, total % 1000,
+                   zoneStats.collectedZoneCount,
+                   zoneStats.zoneCount,
+                   zoneStats.compartmentCount,
+                   counts[STAT_MINOR_GC],
+                   counts[STAT_STOREBUFFER_OVERFLOW],
+                   int(mmu20 * 100),
+                   int(mmu50 * 100),
+                   sccTotal / 1000, sccTotal % 1000,
+                   sccLongest / 1000, sccLongest % 1000,
+                   nonincrementalReason_ ? nonincrementalReason_ : "none",
+                   unsigned(preBytes / 1024 / 1024),
+                   counts[STAT_NEW_CHUNK],
+                   counts[STAT_DESTROY_CHUNK]);
     return DuplicateString(buffer);
 }
 
@@ -698,18 +695,17 @@ Statistics::formatJsonSliceDescription(unsigned i, const SliceData& slice)
         "\"start_timestamp\":%llu,"
         "\"end_timestamp\":%llu,";
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
-    JS_snprintf(buffer, sizeof(buffer), format,
-                i,
-                duration / 1000, duration % 1000,
-                when / 1000, when % 1000,
-                ExplainReason(slice.reason),
-                gc::StateName(slice.initialState),
-                gc::StateName(slice.finalState),
-                budgetDescription,
-                pageFaults,
-                slice.start,
-                slice.end);
+    SprintfLiteral(buffer, format,
+                   i,
+                   duration / 1000, duration % 1000,
+                   when / 1000, when % 1000,
+                   ExplainReason(slice.reason),
+                   gc::StateName(slice.initialState),
+                   gc::StateName(slice.finalState),
+                   budgetDescription,
+                   pageFaults,
+                   slice.start,
+                   slice.end);
     return DuplicateString(buffer);
 }
 
@@ -740,8 +736,8 @@ Statistics::formatJsonPhaseTimes(const PhaseTimeTable phaseTimes)
 
         UniqueChars name = FilterJsonKey(phases[phase].name);
         int64_t ownTime = phaseTimes[dagSlot][phase];
-        JS_snprintf(buffer, sizeof(buffer), "\"%s\":%llu.%03llu",
-                    name.get(), ownTime / 1000, ownTime % 1000);
+        SprintfLiteral(buffer, "\"%s\":%" PRId64 ".%03" PRId64,
+                       name.get(), ownTime / 1000, ownTime % 1000);
 
         if (!fragments.append(DuplicateString(buffer)))
             return UniqueChars(nullptr);
@@ -763,7 +759,9 @@ Statistics::Statistics(JSRuntime* rt)
     suspended(0),
     sliceCallback(nullptr),
     nurseryCollectionCallback(nullptr),
-    aborted(false)
+    aborted(false),
+    enableProfiling_(false),
+    sliceCount_(0)
 {
     PodArrayZero(phaseTotals);
     PodArrayZero(counts);
@@ -771,7 +769,7 @@ Statistics::Statistics(JSRuntime* rt)
     for (auto d : MakeRange(NumTimingArrays))
         PodArrayZero(phaseTimes[d]);
 
-    char* env = getenv("MOZ_GCTIMER");
+    const char* env = getenv("MOZ_GCTIMER");
     if (env) {
         if (strcmp(env, "none") == 0) {
             fp = nullptr;
@@ -785,6 +783,19 @@ Statistics::Statistics(JSRuntime* rt)
                 MOZ_CRASH("Failed to open MOZ_GCTIMER log file.");
         }
     }
+
+    env = getenv("JS_GC_PROFILE");
+    if (env) {
+        if (0 == strcmp(env, "help")) {
+            fprintf(stderr, "JS_GC_PROFILE=N\n"
+                    "\tReport major GC's taking more than N milliseconds.\n");
+            exit(0);
+        }
+        enableProfiling_ = true;
+        profileThreshold_ = atoi(env);
+    }
+
+    PodZero(&totalTimes_);
 }
 
 Statistics::~Statistics()
@@ -937,7 +948,7 @@ Statistics::endGC()
     int64_t sccTotal, sccLongest;
     sccDurations(&sccTotal, &sccLongest);
 
-    runtime->addTelemetry(JS_TELEMETRY_GC_IS_COMPARTMENTAL, !zoneStats.isCollectingAllZones());
+    runtime->addTelemetry(JS_TELEMETRY_GC_IS_ZONE_GC, !zoneStats.isCollectingAllZones());
     runtime->addTelemetry(JS_TELEMETRY_GC_MS, t(total));
     runtime->addTelemetry(JS_TELEMETRY_GC_MAX_PAUSE_MS, t(longest));
     int64_t markTotal = SumPhase(PHASE_MARK, phaseTimes);
@@ -1051,11 +1062,16 @@ Statistics::endSlice()
                 runtime->addTelemetry(JS_TELEMETRY_GC_SLOW_PHASE, phases[longest].telemetryBucket);
             }
         }
+
+        sliceCount_++;
     }
 
     bool last = !runtime->gc.isIncrementalGCInProgress();
     if (last)
         endGC();
+
+    if (enableProfiling_ && !aborted && slices.back().duration() >= profileThreshold_)
+        printSliceProfile();
 
     // Slice callbacks should only fire for the outermost level.
     if (gcDepth == 1 && !aborted) {
@@ -1264,3 +1280,59 @@ Statistics::computeMMU(int64_t window) const
 
     return double(window - gcMax) / window;
 }
+
+/* static */ void
+Statistics::printProfileHeader()
+{
+    fprintf(stderr, " %6s", "total");
+#define PRINT_PROFILE_HEADER(name, text, phase)                               \
+    fprintf(stderr, " %6s", text);
+FOR_EACH_GC_PROFILE_TIME(PRINT_PROFILE_HEADER)
+#undef PRINT_PROFILE_HEADER
+    fprintf(stderr, "\n");
+}
+
+/* static */ void
+Statistics::printProfileTimes(const ProfileTimes& times)
+{
+    for (auto time : times)
+        fprintf(stderr, " %6" PRIi64, time / PRMJ_USEC_PER_MSEC);
+    fprintf(stderr, "\n");
+}
+
+void
+Statistics::printSliceProfile()
+{
+    const SliceData& slice = slices.back();
+
+    static int printedHeader = 0;
+    if ((printedHeader++ % 200) == 0) {
+        fprintf(stderr, "MajorGC:               Reason States      ");
+        printProfileHeader();
+    }
+
+    fprintf(stderr, "MajorGC: %20s %1d -> %1d      ",
+            ExplainReason(slice.reason), int(slice.initialState), int(slice.finalState));
+
+    ProfileTimes times;
+    times[ProfileKey::Total] = slice.duration();
+    totalTimes_[ProfileKey::Total] += times[ProfileKey::Total];
+
+#define GET_PROFILE_TIME(name, text, phase)                                   \
+    times[ProfileKey::name] = slice.phaseTimes[PHASE_DAG_NONE][phase];                     \
+    totalTimes_[ProfileKey::name] += times[ProfileKey::name];
+FOR_EACH_GC_PROFILE_TIME(GET_PROFILE_TIME)
+#undef GET_PROFILE_TIME
+
+    printProfileTimes(times);
+}
+
+void
+Statistics::printTotalProfileTimes()
+{
+    if (enableProfiling_) {
+        fprintf(stderr, "MajorGC TOTALS: %7" PRIu64 " slices:           ", sliceCount_);
+        printProfileTimes(totalTimes_);
+    }
+}
+

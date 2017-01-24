@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-this.EXPORTED_SYMBOLS = ["Finder","GetClipboardSearchString"];
+this.EXPORTED_SYMBOLS = ["Finder", "GetClipboardSearchString"];
 
 const { interfaces: Ci, classes: Cc, utils: Cu } = Components;
 
@@ -11,6 +11,9 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Geometry.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
+  "resource://gre/modules/BrowserUtils.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "TextToSubURIService",
                                          "@mozilla.org/intl/texttosuburi;1",
@@ -23,11 +26,13 @@ XPCOMUtils.defineLazyServiceGetter(this, "ClipboardHelper",
                                          "nsIClipboardHelper");
 
 const kSelectionMaxLen = 150;
+const kMatchesCountLimitPref = "accessibility.typeaheadfind.matchesCountLimit";
 
 function Finder(docShell) {
   this._fastFind = Cc["@mozilla.org/typeaheadfind;1"].createInstance(Ci.nsITypeAheadFind);
   this._fastFind.init(docShell);
 
+  this._currentFoundRange = null;
   this._docShell = docShell;
   this._listeners = [];
   this._previousLink = null;
@@ -37,6 +42,8 @@ function Finder(docShell) {
   docShell.QueryInterface(Ci.nsIInterfaceRequestor)
           .getInterface(Ci.nsIWebProgress)
           .addProgressListener(this, Ci.nsIWebProgress.NOTIFY_LOCATION);
+  BrowserUtils.getRootWindow(this._docShell).addEventListener("unload",
+    this.onLocationChange.bind(this, { isTopLevel: true }));
 }
 
 Finder.prototype = {
@@ -51,15 +58,19 @@ Finder.prototype = {
     if (this._iterator)
       this._iterator.reset();
     if (this._highlighter) {
-      this._highlighter.clear();
+      // if we clear all the references before we hide the highlights (in both
+      // highlighting modes), we simply can't use them to find the ranges we
+      // need to clear from the selection.
       this._highlighter.hide();
+      this._highlighter.clear();
     }
     this.listeners = [];
     this._docShell.QueryInterface(Ci.nsIInterfaceRequestor)
       .getInterface(Ci.nsIWebProgress)
       .removeProgressListener(this, Ci.nsIWebProgress.NOTIFY_LOCATION);
     this._listeners = [];
-    this._fastFind = this._docShell = this._previousLink = this._highlighter = null;
+    this._currentFoundRange = this._fastFind = this._docShell = this._previousLink =
+      this._highlighter = null;
   },
 
   addResultListener: function (aListener) {
@@ -79,7 +90,6 @@ Finder.prototype = {
       this._searchString = options.searchString;
       this.clipboardSearchString = options.searchString
     }
-    this._outlineLink(options.drawOutline);
 
     let foundLink = this._fastFind.foundLink;
     let linkURL = null;
@@ -97,12 +107,18 @@ Finder.prototype = {
     options.searchString = this._searchString;
 
     if (!this.iterator.continueRunning({
+      caseSensitive: this._fastFind.caseSensitive,
+      entireWord: this._fastFind.entireWord,
       linksOnly: options.linksOnly,
       word: options.searchString
     })) {
       this.iterator.stop();
     }
+
     this.highlighter.update(options);
+    this.requestMatchesCount(options.searchString, options.linksOnly);
+
+    this._outlineLink(options.drawOutline);
 
     for (let l of this._listeners) {
       try {
@@ -133,11 +149,17 @@ Finder.prototype = {
   },
 
   set caseSensitive(aSensitive) {
+    if (this._fastFind.caseSensitive === aSensitive)
+      return;
     this._fastFind.caseSensitive = aSensitive;
+    this.iterator.reset();
   },
 
   set entireWord(aEntireWord) {
+    if (this._fastFind.entireWord === aEntireWord)
+      return;
     this._fastFind.entireWord = aEntireWord;
+    this.iterator.reset();
   },
 
   get highlighter() {
@@ -146,6 +168,14 @@ Finder.prototype = {
 
     const {FinderHighlighter} = Cu.import("resource://gre/modules/FinderHighlighter.jsm", {});
     return this._highlighter = new FinderHighlighter(this);
+  },
+
+  get matchesCountLimit() {
+    if (typeof this._matchesCountLimit == "number")
+      return this._matchesCountLimit;
+
+    this._matchesCountLimit = Services.prefs.getIntPref(kMatchesCountLimitPref) || 0;
+    return this._matchesCountLimit;
   },
 
   _lastFindResult: null,
@@ -208,20 +238,7 @@ Finder.prototype = {
   },
 
   highlight: Task.async(function* (aHighlight, aWord, aLinksOnly) {
-    let found = yield this.highlighter.highlight(aHighlight, aWord, null, aLinksOnly);
-    this.highlighter.notifyFinished(aHighlight);
-    if (aHighlight) {
-      let result = found ? Ci.nsITypeAheadFind.FIND_FOUND
-                         : Ci.nsITypeAheadFind.FIND_NOTFOUND;
-      this._notify({
-        searchString: aWord,
-        result,
-        findBackwards: false,
-        findAgain: false,
-        drawOutline: false,
-        storeResult: false
-      });
-    }
+    yield this.highlighter.highlight(aHighlight, aWord, null, aLinksOnly);
   }),
 
   getInitialSelection: function() {
@@ -314,6 +331,12 @@ Finder.prototype = {
   onFindbarClose: function() {
     this.enableSelection();
     this.highlighter.highlight(false);
+    this.iterator.reset();
+    BrowserUtils.trackToolbarVisibility(this._docShell, "findbar", false);
+  },
+
+  onFindbarOpen: function() {
+    BrowserUtils.trackToolbarVisibility(this._docShell, "findbar", true);
   },
 
   onModalHighlightChange(useModalHighlight) {
@@ -324,6 +347,8 @@ Finder.prototype = {
   onHighlightAllChange(highlightAll) {
     if (this._highlighter)
       this._highlighter.onHighlightAllChange(highlightAll);
+    if (this._iterator)
+      this._iterator.reset();
   },
 
   keyPress: function (aEvent) {
@@ -366,17 +391,24 @@ Finder.prototype = {
     }
   },
 
-  _notifyMatchesCount: function(result) {
+  _notifyMatchesCount: function(result = this._currentMatchesCountResult) {
+    // The `_currentFound` property is only used for internal bookkeeping.
+    delete result._currentFound;
+    if (result.total == this.matchesCountLimit)
+      result.total = -1;
+
     for (let l of this._listeners) {
       try {
         l.onMatchesCountResult(result);
       } catch (ex) {}
     }
+
+    this._currentMatchesCountResult = null;
   },
 
-  requestMatchesCount: function(aWord, aMatchLimit, aLinksOnly) {
+  requestMatchesCount: function(aWord, aLinksOnly) {
     if (this._lastFindResult == Ci.nsITypeAheadFind.FIND_NOTFOUND ||
-        this.searchString == "" || !aWord) {
+        this.searchString == "" || !aWord || !this.matchesCountLimit) {
       this._notifyMatchesCount({
         total: 0,
         current: 0
@@ -385,39 +417,61 @@ Finder.prototype = {
     }
 
     let window = this._getWindow();
-    let result = {
+    this._currentFoundRange = this._fastFind.getFoundRange();
+
+    let params = {
+      caseSensitive: this._fastFind.caseSensitive,
+      entireWord: this._fastFind.entireWord,
+      linksOnly: aLinksOnly,
+      word: aWord
+    };
+    if (!this.iterator.continueRunning(params))
+      this.iterator.stop();
+
+    this.iterator.start(Object.assign(params, {
+      finder: this,
+      limit: this.matchesCountLimit,
+      listener: this,
+      useCache: true,
+    })).then(() => {
+      // Without a valid result, there's nothing to notify about. This happens
+      // when the iterator was started before and won the race.
+      if (!this._currentMatchesCountResult || !this._currentMatchesCountResult.total)
+        return;
+      this._notifyMatchesCount();
+    });
+  },
+
+  // FinderIterator listener implementation
+
+  onIteratorRangeFound(range) {
+    let result = this._currentMatchesCountResult;
+    if (!result)
+      return;
+
+    ++result.total;
+    if (!result._currentFound) {
+      ++result.current;
+      result._currentFound = (this._currentFoundRange &&
+        range.startContainer == this._currentFoundRange.startContainer &&
+        range.startOffset == this._currentFoundRange.startOffset &&
+        range.endContainer == this._currentFoundRange.endContainer &&
+        range.endOffset == this._currentFoundRange.endOffset);
+    }
+  },
+
+  onIteratorReset() {},
+
+  onIteratorRestart({ word, linksOnly }) {
+    this.requestMatchesCount(word, linksOnly);
+  },
+
+  onIteratorStart() {
+    this._currentMatchesCountResult = {
       total: 0,
       current: 0,
       _currentFound: false
     };
-    let foundRange = this._fastFind.getFoundRange();
-
-    this.iterator.start({
-      finder: this,
-      limit: aMatchLimit,
-      linksOnly: aLinksOnly,
-      onRange: range => {
-        ++result.total;
-        if (!result._currentFound) {
-          ++result.current;
-          result._currentFound = (foundRange &&
-            range.startContainer == foundRange.startContainer &&
-            range.startOffset == foundRange.startOffset &&
-            range.endContainer == foundRange.endContainer &&
-            range.endOffset == foundRange.endOffset);
-        }
-      },
-      useCache: true,
-      word: aWord
-    }).then(() => {
-      // The `_currentFound` property is only used for internal bookkeeping.
-      delete result._currentFound;
-
-      if (result.total == aMatchLimit)
-        result.total = -1;
-
-      this._notifyMatchesCount(result);
-    });
   },
 
   _getWindow: function () {
@@ -538,9 +592,12 @@ Finder.prototype = {
   onLocationChange: function(aWebProgress, aRequest, aLocation, aFlags) {
     if (!aWebProgress.isTopLevel)
       return;
+    // Ignore events that don't change the document.
+    if (aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT)
+      return;
 
     // Avoid leaking if we change the page.
-    this._previousLink = null;
+    this._lastFindResult = this._previousLink = this._currentFoundRange = null;
     this.highlighter.onLocationChange();
     this.iterator.reset();
   },

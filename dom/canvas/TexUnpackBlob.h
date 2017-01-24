@@ -50,7 +50,8 @@ public:
     const uint32_t mWidth;
     const uint32_t mHeight;
     const uint32_t mDepth;
-    const bool mIsSrcPremult;
+
+    const bool mSrcIsPremult;
 
     bool mNeedsExactUpload;
 
@@ -63,15 +64,23 @@ public:
 
 protected:
     bool ConvertIfNeeded(WebGLContext* webgl, const char* funcName,
-                         const uint8_t* srcBytes, uint32_t srcStride, uint8_t srcBPP,
+                         const uint32_t rowLength, const uint32_t rowCount,
                          WebGLTexelFormat srcFormat,
-                         const webgl::DriverUnpackInfo* dstDUI,
-                         const uint8_t** const out_bytes,
+                         const uint8_t* const srcBegin, const ptrdiff_t srcStride,
+                         WebGLTexelFormat dstFormat, const ptrdiff_t dstStride,
+
+                         const uint8_t** const out_begin,
                          UniqueBuffer* const out_anchoredBuffer) const;
 
 public:
     virtual bool HasData() const { return true; }
 
+    virtual bool Validate(WebGLContext* webgl, const char* funcName,
+                          const webgl::PackingInfo& pi) = 0;
+
+    // Returns false when we've generated a WebGL error.
+    // Returns true but with a non-zero *out_error if we still need to generate a WebGL
+    // error.
     virtual bool TexOrSubImage(bool isSubImage, bool needsRespec, const char* funcName,
                                WebGLTexture* tex, TexImageTarget target, GLint level,
                                const webgl::DriverUnpackInfo* dui, GLint xOffset,
@@ -84,12 +93,16 @@ class TexUnpackBytes final : public TexUnpackBlob
 public:
     const bool mIsClientData;
     const uint8_t* const mPtr;
+    const size_t mAvailBytes;
 
     TexUnpackBytes(const WebGLContext* webgl, TexImageTarget target, uint32_t width,
-                   uint32_t height, uint32_t depth, bool isClientData, const uint8_t* ptr);
+                   uint32_t height, uint32_t depth, bool isClientData, const uint8_t* ptr,
+                   size_t availBytes);
 
     virtual bool HasData() const override { return !mIsClientData || bool(mPtr); }
 
+    virtual bool Validate(WebGLContext* webgl, const char* funcName,
+                          const webgl::PackingInfo& pi) override;
     virtual bool TexOrSubImage(bool isSubImage, bool needsRespec, const char* funcName,
                                WebGLTexture* tex, TexImageTarget target, GLint level,
                                const webgl::DriverUnpackInfo* dui, GLint xOffset,
@@ -108,6 +121,8 @@ public:
 
     ~TexUnpackImage(); // Prevent needing to define layers::Image in the header.
 
+    virtual bool Validate(WebGLContext* webgl, const char* funcName,
+                          const webgl::PackingInfo& pi) override;
     virtual bool TexOrSubImage(bool isSubImage, bool needsRespec, const char* funcName,
                                WebGLTexture* tex, TexImageTarget target, GLint level,
                                const webgl::DriverUnpackInfo* dui, GLint xOffset,
@@ -124,6 +139,8 @@ public:
                      uint32_t height, uint32_t depth, gfx::DataSourceSurface* surf,
                      bool isAlphaPremult);
 
+    virtual bool Validate(WebGLContext* webgl, const char* funcName,
+                          const webgl::PackingInfo& pi) override;
     virtual bool TexOrSubImage(bool isSubImage, bool needsRespec, const char* funcName,
                                WebGLTexture* tex, TexImageTarget target, GLint level,
                                const webgl::DriverUnpackInfo* dui, GLint xOffset,

@@ -10,6 +10,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsIDocument.h"
 #include "nsIDOMHTMLCollection.h"
+#include "nsIFrame.h"
 #include "nsStyledElement.h"
 #include "HTMLCanvasElement.h"
 
@@ -137,19 +138,63 @@ AnonymousContent::GetCanvasContext(const nsAString& aElementId,
   return context.forget();
 }
 
+already_AddRefed<Animation>
+AnonymousContent::SetAnimationForElement(JSContext* aContext,
+                                         const nsAString& aElementId,
+                                         JS::Handle<JSObject*> aKeyframes,
+                                         const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
+                                         ErrorResult& aRv)
+{
+  Element* element = GetElementById(aElementId);
+
+  if (!element) {
+    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+    return nullptr;
+  }
+
+  return element->Animate(aContext, aKeyframes, aOptions, aRv);
+}
+
+void
+AnonymousContent::SetCutoutRectsForElement(const nsAString& aElementId,
+                                           const Sequence<OwningNonNull<DOMRect>>& aRects,
+                                           ErrorResult& aRv)
+{
+  Element* element = GetElementById(aElementId);
+
+  if (!element) {
+    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+    return;
+  }
+
+  nsRegion cutOutRegion;
+  for (const auto& r : aRects) {
+    CSSRect rect(r->X(), r->Y(), r->Width(), r->Height());
+    cutOutRegion.OrWith(CSSRect::ToAppUnits(rect));
+  }
+
+  element->SetProperty(nsGkAtoms::cutoutregion, new nsRegion(cutOutRegion),
+                       nsINode::DeleteProperty<nsRegion>);
+
+  nsIFrame* frame = element->GetPrimaryFrame();
+  if (frame) {
+    frame->SchedulePaint();
+  }
+}
+
 Element*
 AnonymousContent::GetElementById(const nsAString& aElementId)
 {
   // This can be made faster in the future if needed.
   nsCOMPtr<nsIAtom> elementId = NS_Atomize(aElementId);
-  for (nsIContent* kid = mContentNode->GetFirstChild(); kid;
-       kid = kid->GetNextNode(mContentNode)) {
-    if (!kid->IsElement()) {
+  for (nsIContent* node = mContentNode; node;
+       node = node->GetNextNode(mContentNode)) {
+    if (!node->IsElement()) {
       continue;
     }
-    nsIAtom* id = kid->AsElement()->GetID();
+    nsIAtom* id = node->AsElement()->GetID();
     if (id && id == elementId) {
-      return kid->AsElement();
+      return node->AsElement();
     }
   }
   return nullptr;

@@ -7,6 +7,7 @@
 /* An xpcom implementation of the JavaScript nsIID and nsCID objects. */
 
 #include "xpcprivate.h"
+#include "xpc_make_class.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
@@ -239,7 +240,7 @@ static void EnsureClassObjectsInitialized()
     }
 }
 
-NS_METHOD GetSharedScriptableHelperForJSIID(nsIXPCScriptable** helper)
+static nsresult GetSharedScriptableHelperForJSIID(nsIXPCScriptable** helper)
 {
     EnsureClassObjectsInitialized();
     nsCOMPtr<nsIXPCScriptable> temp = gSharedScriptableHelperForJSIID.get();
@@ -386,9 +387,8 @@ nsJSIID::Resolve(nsIXPConnectWrappedNative* wrapper,
     RootedId id(cx, idArg);
     XPCCallContext ccx(cx);
 
-    AutoMarkingNativeInterfacePtr iface(ccx);
-
-    iface = XPCNativeInterface::GetNewOrUsed(mInfo);
+    RefPtr<XPCNativeInterface> iface =
+        XPCNativeInterface::GetNewOrUsed(mInfo);
 
     if (!iface)
         return NS_OK;
@@ -417,9 +417,8 @@ nsJSIID::Enumerate(nsIXPConnectWrappedNative* wrapper,
     RootedObject obj(cx, objArg);
     XPCCallContext ccx(cx);
 
-    AutoMarkingNativeInterfacePtr iface(ccx);
-
-    iface = XPCNativeInterface::GetNewOrUsed(mInfo);
+    RefPtr<XPCNativeInterface> iface =
+        XPCNativeInterface::GetNewOrUsed(mInfo);
 
     if (!iface)
         return NS_OK;
@@ -712,12 +711,12 @@ nsJSCID::Construct(nsIXPConnectWrappedNative* wrapper,
                    const CallArgs& args, bool* _retval)
 {
     RootedObject obj(cx, objArg);
-    XPCJSRuntime* rt = nsXPConnect::GetRuntimeInstance();
-    if (!rt)
+    XPCJSContext* xpccx = nsXPConnect::GetContextInstance();
+    if (!xpccx)
         return NS_ERROR_FAILURE;
 
     // 'push' a call context and call on it
-    RootedId name(cx, rt->GetStringID(XPCJSRuntime::IDX_CREATE_INSTANCE));
+    RootedId name(cx, xpccx->GetStringID(XPCJSContext::IDX_CREATE_INSTANCE));
     XPCCallContext ccx(cx, obj, nullptr, name, args.length(), args.array(),
                        args.rval().address());
 

@@ -27,6 +27,7 @@ class LIRGeneratorARM : public LIRGeneratorShared
     // x86 has constraints on what registers can be formatted for 1-byte
     // stores and loads; on ARM all registers are okay.
     LAllocation useByteOpRegister(MDefinition* mir);
+    LAllocation useByteOpRegisterAtStart(MDefinition* mir);
     LAllocation useByteOpRegisterOrNonDoubleConstant(MDefinition* mir);
     LDefinition tempByteOpRegister();
 
@@ -104,7 +105,6 @@ class LIRGeneratorARM : public LIRGeneratorShared
     void visitAsmSelect(MAsmSelect* ins);
     void visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins);
     void visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins);
-    void visitWasmBoundsCheck(MWasmBoundsCheck* ins);
     void visitWasmLoad(MWasmLoad* ins);
     void visitWasmStore(MWasmStore* ins);
     void visitAsmJSLoadHeap(MAsmJSLoadHeap* ins);

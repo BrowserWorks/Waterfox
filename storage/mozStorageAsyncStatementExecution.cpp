@@ -62,7 +62,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     NS_ASSERTION(mCallback, "Trying to notify about results without a callback!");
 
@@ -99,7 +99,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (mEventStatus->shouldNotify() && mCallback) {
       // Hold a strong reference to the callback while notifying it, so that if
@@ -138,7 +138,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (mCallback) {
       (void)mCallback->HandleCompletion(mReason);
@@ -457,7 +457,7 @@ AsyncExecuteStatements::notifyComplete()
     else {
       DebugOnly<nsresult> rv =
         mConnection->rollbackTransactionInternal(mNativeConnection);
-      NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Transaction failed to rollback");
+      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Transaction failed to rollback");
     }
     mHasTransaction = false;
   }

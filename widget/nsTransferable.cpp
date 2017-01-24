@@ -117,7 +117,9 @@ DataStruct::GetFileSpec(const char* aFileName)
   // otherwise create a unique name
   if (!aFileName) {
     cacheFile->AppendNative(NS_LITERAL_CSTRING("clipboardcache"));
-    cacheFile->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0600);
+    nsresult rv = cacheFile->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0600);
+    if (NS_FAILED(rv))
+      return nullptr;
   } else {
     cacheFile->AppendNative(nsDependentCString(aFileName));
   }
@@ -633,17 +635,16 @@ nsTransferable::SetIsPrivateData(bool aIsPrivateData)
 }
 
 NS_IMETHODIMP
-nsTransferable::GetRequestingNode(nsIDOMNode** outRequestingNode)
+nsTransferable::GetRequestingPrincipal(nsIPrincipal** outRequestingPrincipal)
 {
-  nsCOMPtr<nsIDOMNode> node = do_QueryReferent(mRequestingNode);
-  node.forget(outRequestingNode);
+  NS_IF_ADDREF(*outRequestingPrincipal = mRequestingPrincipal);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsTransferable::SetRequestingNode(nsIDOMNode* aRequestingNode)
+nsTransferable::SetRequestingPrincipal(nsIPrincipal* aRequestingPrincipal)
 {
-  mRequestingNode = do_GetWeakReference(aRequestingNode);
+  mRequestingPrincipal = aRequestingPrincipal;
   return NS_OK;
 }
 

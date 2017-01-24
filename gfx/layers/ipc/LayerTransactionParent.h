@@ -32,7 +32,7 @@ class Layer;
 class LayerManagerComposite;
 class ShadowLayerParent;
 class CompositableParent;
-class ShadowLayersManager;
+class CompositorBridgeParentBase;
 
 class LayerTransactionParent final : public PLayerTransactionParent,
                                      public CompositableParentManager,
@@ -46,7 +46,7 @@ class LayerTransactionParent final : public PLayerTransactionParent,
 
 public:
   LayerTransactionParent(LayerManagerComposite* aManager,
-                         ShadowLayersManager* aLayersManager,
+                         CompositorBridgeParentBase* aBridge,
                          uint64_t aId);
 
 protected:
@@ -57,8 +57,13 @@ public:
 
   LayerManagerComposite* layer_manager() const { return mLayerManager; }
 
+  void SetLayerManager(LayerManagerComposite* aLayerManager);
+
   uint64_t GetId() const { return mId; }
   Layer* GetRoot() const { return mRoot; }
+
+  uint64_t GetChildEpoch() const { return mChildEpoch; }
+  bool ShouldParentObserveEpoch();
 
   virtual ShmemAllocator* AsShmemAllocator() override { return this; }
 
@@ -109,6 +114,9 @@ protected:
 
   virtual bool RecvShutdown() override;
 
+  virtual bool RecvPaintTime(const uint64_t& aTransactionId,
+                             const TimeDuration& aPaintTime) override;
+
   virtual bool RecvUpdate(EditArray&& cset,
                           OpDestroyArray&& aToDestroy,
                           const uint64_t& aFwdTransactionId,
@@ -136,12 +144,15 @@ protected:
                                 const mozilla::TimeStamp& aTransactionStart,
                                 const int32_t& aPaintSyncId) override;
 
+  virtual bool RecvSetLayerObserverEpoch(const uint64_t& aLayerObserverEpoch) override;
+
   virtual bool RecvClearCachedResources() override;
   virtual bool RecvForceComposite() override;
   virtual bool RecvSetTestSampleTime(const TimeStamp& aTime) override;
   virtual bool RecvLeaveTestMode() override;
-  virtual bool RecvGetOpacity(PLayerParent* aParent,
-                              float* aOpacity) override;
+  virtual bool RecvGetAnimationOpacity(PLayerParent* aParent,
+                                       float* aOpacity,
+                                       bool* aHasAnimationOpacity) override;
   virtual bool RecvGetAnimationTransform(PLayerParent* aParent,
                                          MaybeTransform* aTransform)
                                          override;
@@ -183,7 +194,7 @@ protected:
 
 private:
   RefPtr<LayerManagerComposite> mLayerManager;
-  ShadowLayersManager* mShadowLayersManager;
+  CompositorBridgeParentBase* mCompositorBridge;
   // Hold the root because it might be grafted under various
   // containers in the "real" layer tree
   RefPtr<Layer> mRoot;
@@ -192,6 +203,13 @@ private:
   //   mId != 0 => mRoot == null
   // because the "real tree" is owned by the compositor.
   uint64_t mId;
+
+  // These fields keep track of the latest epoch values in the child and the
+  // parent. mChildEpoch is the latest epoch value received from the child.
+  // mParentEpoch is the latest epoch value that we have told TabParent about
+  // (via ObserveLayerUpdate).
+  uint64_t mChildEpoch;
+  uint64_t mParentEpoch;
 
   uint64_t mPendingTransaction;
 

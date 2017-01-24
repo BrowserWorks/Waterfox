@@ -13,6 +13,7 @@
 #include "gfxPlatform.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/TimeStamp.h"
 #include "nsGkAtoms.h"
 #include "nsILanguageAtomService.h"
@@ -378,8 +379,8 @@ gfxFontconfigFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
                   charmap->mHash, mCharacterMap == charmap ? " new" : ""));
     if (LOG_CMAPDATA_ENABLED()) {
         char prefix[256];
-        sprintf(prefix, "(cmapdata) name: %.220s",
-                NS_ConvertUTF16toUTF8(mName).get());
+        SprintfLiteral(prefix, "(cmapdata) name: %.220s",
+                       NS_ConvertUTF16toUTF8(mName).get());
         charmap->Dump(prefix, eGfxLog_cmapdata);
     }
 
@@ -643,6 +644,7 @@ PrepareFontOptions(FcPattern* aPattern,
 
 cairo_scaled_font_t*
 gfxFontconfigFontEntry::CreateScaledFont(FcPattern* aRenderPattern,
+                                         gfxFloat aAdjustedSize,
                                          const gfxFontStyle *aStyle,
                                          bool aNeedsBold)
 {
@@ -680,11 +682,7 @@ gfxFontconfigFontEntry::CreateScaledFont(FcPattern* aRenderPattern,
     cairo_matrix_t sizeMatrix;
     cairo_matrix_t identityMatrix;
 
-    double adjustedSize = aStyle->size;
-    if (aStyle->sizeAdjust >= 0.0) {
-        adjustedSize = aStyle->GetAdjustedSize(GetAspect());
-    }
-    cairo_matrix_init_scale(&sizeMatrix, adjustedSize, adjustedSize);
+    cairo_matrix_init_scale(&sizeMatrix, aAdjustedSize, aAdjustedSize);
     cairo_matrix_init_identity(&identityMatrix);
 
     if (needsOblique) {
@@ -792,16 +790,30 @@ gfxFontconfigFontEntry::CreateFontInstance(const gfxFontStyle *aFontStyle,
                                            bool aNeedsBold)
 {
     nsAutoRef<FcPattern> pattern(FcPatternCreate());
+    if (!pattern) {
+        NS_WARNING("Failed to create Fontconfig pattern for font instance");
+        return nullptr;
+    }
     FcPatternAddDouble(pattern, FC_PIXEL_SIZE, aFontStyle->size);
 
     PreparePattern(pattern, aFontStyle->printerFont);
     nsAutoRef<FcPattern> renderPattern
         (FcFontRenderPrepare(nullptr, pattern, mFontPattern));
+    if (!renderPattern) {
+        NS_WARNING("Failed to prepare Fontconfig pattern for font instance");
+        return nullptr;
+    }
+
+    double adjustedSize = aFontStyle->size;
+    if (aFontStyle->sizeAdjust >= 0.0) {
+        adjustedSize = aFontStyle->GetAdjustedSize(GetAspect());
+    }
 
     cairo_scaled_font_t* scaledFont =
-        CreateScaledFont(renderPattern, aFontStyle, aNeedsBold);
+        CreateScaledFont(renderPattern, adjustedSize, aFontStyle, aNeedsBold);
     gfxFont* newFont =
-        new gfxFontconfigFont(scaledFont, renderPattern, this, aFontStyle, aNeedsBold);
+        new gfxFontconfigFont(scaledFont, renderPattern, adjustedSize,
+                              this, aFontStyle, aNeedsBold);
     cairo_scaled_font_destroy(scaledFont);
 
     return newFont;
@@ -914,11 +926,13 @@ gfxFontconfigFontFamily::AddFontPattern(FcPattern* aFontPattern)
 
 gfxFontconfigFont::gfxFontconfigFont(cairo_scaled_font_t *aScaledFont,
                                      FcPattern *aPattern,
+                                     gfxFloat aAdjustedSize,
                                      gfxFontEntry *aFontEntry,
                                      const gfxFontStyle *aFontStyle,
                                      bool aNeedsBold) :
     gfxFontconfigFontBase(aScaledFont, aPattern, aFontEntry, aFontStyle)
 {
+    mAdjustedSize = aAdjustedSize;
 }
 
 gfxFontconfigFont::~gfxFontconfigFont()

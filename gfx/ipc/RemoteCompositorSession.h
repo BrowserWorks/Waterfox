@@ -18,13 +18,18 @@ class RemoteCompositorSession final : public CompositorSession
 public:
   RemoteCompositorSession(CompositorBridgeChild* aChild,
                           CompositorWidgetDelegate* aWidgetDelegate,
+                          APZCTreeManagerChild* aAPZ,
                           const uint64_t& aRootLayerTreeId);
 
   CompositorBridgeParent* GetInProcessBridge() const override;
   void SetContentController(GeckoContentController* aController) override;
-  already_AddRefed<IAPZCTreeManager> GetAPZCTreeManager() const override;
+  GeckoContentController* GetContentController();
+  RefPtr<IAPZCTreeManager> GetAPZCTreeManager() const override;
   void Shutdown() override;
 
+private:
+  RefPtr<APZCTreeManagerChild> mAPZ;
+  RefPtr<GeckoContentController> mContentController;
 };
 
 } // namespace layers

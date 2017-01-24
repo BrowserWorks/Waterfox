@@ -136,7 +136,7 @@ public:
   {
     MOZ_RELEASE_ASSERT(aChannelEvent);
   }
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mChannelEvent->Run();
     return NS_OK;
@@ -472,7 +472,11 @@ WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
     loadInfoArgs = void_t();
 
     MOZ_ASSERT(mServerTransportProvider);
-    transportProvider = mServerTransportProvider->GetIPCChild();
+    PTransportProviderChild *ipcChild;
+    nsresult rv = mServerTransportProvider->GetIPCChild(&ipcChild);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    transportProvider = ipcChild;
   }
 
   gNeckoChild->SendPWebSocketConstructor(this, tabChild,
@@ -511,7 +515,7 @@ public:
     MOZ_RELEASE_ASSERT(!NS_IsMainThread());
     MOZ_ASSERT(aChild);
   }
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_RELEASE_ASSERT(NS_IsMainThread());
     mChild->Close(mCode, mReason);
@@ -559,7 +563,7 @@ public:
     MOZ_RELEASE_ASSERT(!NS_IsMainThread());
     MOZ_ASSERT(aChild);
   }
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_RELEASE_ASSERT(NS_IsMainThread());
     if (mBinaryMsg) {
@@ -634,7 +638,7 @@ public:
     MOZ_RELEASE_ASSERT(!NS_IsMainThread());
     MOZ_ASSERT(aChild);
   }
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
     mChild->SendBinaryStream(mStream, mLength);

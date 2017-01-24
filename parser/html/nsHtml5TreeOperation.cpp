@@ -440,9 +440,7 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
 
       // Custom element setup may be needed if there is an "is" attribute.
       if (kNameSpaceID_None == nsuri && !prefix && nsGkAtoms::is == localName) {
-        newContent->OwnerDoc()->SetupCustomElement(newContent,
-                                                   newContent->GetNameSpaceID(),
-                                                   &value);
+        nsContentUtils::SetupCustomElement(newContent, &value);
       }
     }
   }
@@ -913,7 +911,8 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
       }
 
       nsAutoCString spec;
-      uri->GetSpec(spec);
+      rv = uri->GetSpec(spec);
+      NS_ENSURE_SUCCESS(rv, rv);
 
       viewSourceUrl.Append(spec);
 
@@ -921,7 +920,7 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
       CopyUTF8toUTF16(viewSourceUrl, utf16);
 
       node->SetAttr(kNameSpaceID_None, nsGkAtoms::href, utf16, true);
-      return rv;
+      return NS_OK;
     }
     case eTreeOpAddViewSourceBase: {
       char16_t* buffer = mTwo.unicharPtr;

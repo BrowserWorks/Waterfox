@@ -22,6 +22,8 @@
 #include "nsNSSComponent.h"
 #include "mozilla/DebugOnly.h"
 #include "GMPDeviceBinding.h"
+#include "mozilla/dom/MediaKeyStatusMapBinding.h" // For MediaKeyStatus
+#include "mozilla/dom/MediaKeyMessageEventBinding.h" // For MediaKeyMessageType
 
 #if defined(XP_WIN)
 #include "mozilla/WindowsVersion.h"
@@ -361,7 +363,7 @@ public:
   explicit NotifyObserversTask(const char* aTopic)
     : mTopic(aTopic)
   {}
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     MOZ_ASSERT(NS_IsMainThread());
     nsCOMPtr<nsIObserverService> observerService =
         mozilla::services::GetObserverService();
@@ -594,9 +596,8 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
   class CreateDecryptorDone : public GetGMPDecryptorCallback
   {
   public:
-    CreateDecryptorDone(GMPStorageTest* aRunner, nsIRunnable* aContinuation)
-      : mRunner(aRunner),
-        mContinuation(aContinuation)
+    explicit CreateDecryptorDone(GMPStorageTest* aRunner)
+      : mRunner(aRunner)
     {
     }
 
@@ -608,13 +609,10 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
       if (mRunner->mDecryptor) {
         mRunner->mDecryptor->Init(mRunner, false, true);
       }
-      nsCOMPtr<nsIThread> thread(GetGMPThread());
-      thread->Dispatch(mContinuation, NS_DISPATCH_NORMAL);
     }
 
   private:
     RefPtr<GMPStorageTest> mRunner;
-    nsCOMPtr<nsIRunnable> mContinuation;
   };
 
   void CreateDecryptor(const nsCString& aNodeId,
@@ -644,7 +642,7 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
     {
     }
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       for (auto& update : mUpdates) {
         mRunner->Update(update);
@@ -677,7 +675,13 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
     tags.AppendElement(NS_LITERAL_CSTRING("fake"));
 
     UniquePtr<GetGMPDecryptorCallback> callback(
-      new CreateDecryptorDone(this, aContinuation));
+      new CreateDecryptorDone(this));
+
+    // Continue after the OnSetDecryptorId message, so that we don't
+    // get warnings in the async shutdown tests due to receiving the
+    // SetDecryptorId message after we've started shutdown.
+    mSetDecryptorIdContinuation = aContinuation;
+
     nsresult rv =
       service->GetGMPDecryptor(nullptr, &tags, mNodeId, Move(callback));
     EXPECT_TRUE(NS_SUCCEEDED(rv));
@@ -738,8 +742,13 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
   }
 
   struct NodeInfo {
-    explicit NodeInfo(const nsACString& aSite) : siteToForget(aSite) {}
+    explicit NodeInfo(const nsACString& aSite,
+                      const mozilla::OriginAttributesPattern& aPattern)
+      : siteToForget(aSite)
+      , mPattern(aPattern)
+    { }
     nsCString siteToForget;
+    mozilla::OriginAttributesPattern mPattern;
     nsTArray<nsCString> expectedRemainingNodeIds;
   };
 
@@ -750,7 +759,7 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
       nsCString salt;
       nsresult rv = ReadSalt(aFile, salt);
       ASSERT_TRUE(NS_SUCCEEDED(rv));
-      if (!MatchOrigin(aFile, mNodeInfo->siteToForget)) {
+      if (!MatchOrigin(aFile, mNodeInfo->siteToForget, mNodeInfo->mPattern)) {
         mNodeInfo->expectedRemainingNodeIds.AppendElement(salt);
       }
     }
@@ -759,8 +768,11 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
   };
 
   void TestForgetThisSite_CollectSiteInfo() {
+    mozilla::OriginAttributesPattern pattern;
+
     nsAutoPtr<NodeInfo> siteInfo(
-        new NodeInfo(NS_LITERAL_CSTRING("http://example1.com")));
+        new NodeInfo(NS_LITERAL_CSTRING("http://example1.com"),
+                     pattern));
     // Collect nodeIds that are expected to remain for later comparison.
     EnumerateGMPStorageDir(NS_LITERAL_CSTRING("id"), NodeIdCollector(siteInfo));
     // Invoke "Forget this site" on the main thread.
@@ -771,7 +783,8 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
   void TestForgetThisSite_Forget(nsAutoPtr<NodeInfo> aSiteInfo) {
     RefPtr<GeckoMediaPluginServiceParent> service =
         GeckoMediaPluginServiceParent::GetSingleton();
-    service->ForgetThisSite(NS_ConvertUTF8toUTF16(aSiteInfo->siteToForget));
+    service->ForgetThisSiteNative(NS_ConvertUTF8toUTF16(aSiteInfo->siteToForget),
+                                  aSiteInfo->mPattern);
 
     nsCOMPtr<nsIThread> thread;
     service->GetThread(getter_AddRefs(thread));
@@ -795,7 +808,7 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
       nsresult rv = ReadSalt(aFile, salt);
       ASSERT_TRUE(NS_SUCCEEDED(rv));
       // Shouldn't match the origin if we clear correctly.
-      EXPECT_FALSE(MatchOrigin(aFile, mNodeInfo->siteToForget));
+      EXPECT_FALSE(MatchOrigin(aFile, mNodeInfo->siteToForget, mNodeInfo->mPattern));
       // Check if remaining nodeIDs are as expected.
       EXPECT_TRUE(mExpectedRemainingNodeIds.RemoveElement(salt));
     }
@@ -1344,7 +1357,7 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
   }
 
   void SessionMessage(const nsCString& aSessionId,
-                      GMPSessionMessageType aMessageType,
+                      mozilla::dom::MediaKeyMessageType aMessageType,
                       const nsTArray<uint8_t>& aMessage) override
   {
     MonitorAutoLock mon(mMonitor);
@@ -1362,6 +1375,16 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
     }
   }
 
+  void SetDecryptorId(uint32_t aId) override
+  {
+    if (!mSetDecryptorIdContinuation) {
+      return;
+    }
+    nsCOMPtr<nsIThread> thread(GetGMPThread());
+    thread->Dispatch(mSetDecryptorIdContinuation, NS_DISPATCH_NORMAL);
+    mSetDecryptorIdContinuation = nullptr;
+  }
+
   void SetSessionId(uint32_t aCreateSessionToken,
                     const nsCString& aSessionId) override { }
   void ResolveLoadSessionPromise(uint32_t aPromiseId,
@@ -1371,7 +1394,7 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
                      nsresult aException,
                      const nsCString& aSessionId) override { }
   void ExpirationChange(const nsCString& aSessionId,
-                        GMPTimestamp aExpiryTime) override {}
+                        UnixTime aExpiryTime) override {}
   void SessionClosed(const nsCString& aSessionId) override {}
   void SessionError(const nsCString& aSessionId,
                     nsresult aException,
@@ -1379,9 +1402,13 @@ class GMPStorageTest : public GMPDecryptorProxyCallback
                     const nsCString& aMessage) override {}
   void KeyStatusChanged(const nsCString& aSessionId,
                         const nsTArray<uint8_t>& aKeyId,
-                        GMPMediaKeyStatus aStatus) override { }
+                        mozilla::dom::MediaKeyStatus aStatus) override { }
+
+  void ForgetKeyStatus(const nsCString& aSessionId,
+                       const nsTArray<uint8_t>& aKeyId) override { }
+
   void Decrypted(uint32_t aId,
-                 GMPErr aResult,
+                 mozilla::DecryptStatus aResult,
                  const nsTArray<uint8_t>& aDecryptedData) override { }
   void Terminated() override {
     if (mDecryptor) {
@@ -1403,6 +1430,8 @@ private:
   };
 
   nsTArray<ExpectedMessage> mExpected;
+
+  RefPtr<nsIRunnable> mSetDecryptorIdContinuation;
 
   GMPDecryptorProxy* mDecryptor;
   Monitor mMonitor;

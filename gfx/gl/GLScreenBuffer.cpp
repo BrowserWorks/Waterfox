@@ -21,7 +21,7 @@
 #ifdef XP_WIN
 #include "SharedSurfaceANGLE.h"         // for SurfaceFactory_ANGLEShareHandle
 #include "SharedSurfaceD3D11Interop.h"  // for SurfaceFactory_D3D11Interop
-#include "mozilla/gfx/DeviceManagerD3D11.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #endif
 
 #ifdef MOZ_WIDGET_GONK
@@ -108,7 +108,7 @@ GLScreenBuffer::CreateFactory(GLContext* gl,
 #ifdef XP_WIN
                 // Enable surface sharing only if ANGLE and compositing devices
                 // are both WARP or both not WARP
-                gfx::DeviceManagerD3D11* dm = gfx::DeviceManagerD3D11::Get();
+                gfx::DeviceManagerDx* dm = gfx::DeviceManagerDx::Get();
                 if (gl->IsANGLE() &&
                     (gl->IsWARP() == dm->IsWARP()) &&
                     dm->TextureSharingWorks())
@@ -946,9 +946,20 @@ ReadBuffer::Create(GLContext* gl,
 
     GLenum err = localError.GetError();
     MOZ_ASSERT_IF(err != LOCAL_GL_NO_ERROR, err == LOCAL_GL_OUT_OF_MEMORY);
-    if (err || !gl->IsFramebufferComplete(fb)) {
-        ret = nullptr;
+    if (err)
+        return nullptr;
+
+    const bool needsAcquire = !surf->IsProducerAcquired();
+    if (needsAcquire) {
+        surf->ProducerReadAcquire();
     }
+    const bool isComplete = gl->IsFramebufferComplete(fb);
+    if (needsAcquire) {
+        surf->ProducerReadRelease();
+    }
+
+    if (!isComplete)
+        return nullptr;
 
     return Move(ret);
 }

@@ -483,11 +483,10 @@ gfxUserFontEntry::LoadNextSrc()
                             mPlatformFontEntry = fe;
                             SetLoadState(STATUS_LOADED);
                             if (LOG_ENABLED()) {
-                                nsAutoCString fontURI;
-                                currSrc.mURI->GetSpec(fontURI);
                                 LOG(("userfonts (%p) [src %d] "
                                      "loaded uri from cache: (%s) for (%s)\n",
-                                     mFontSet, mSrcIndex, fontURI.get(),
+                                     mFontSet, mSrcIndex,
+                                     currSrc.mURI->GetSpecOrDefault().get(),
                                      NS_ConvertUTF16toUTF8(mFamilyName).get()));
                             }
                             return;
@@ -532,10 +531,9 @@ gfxUserFontEntry::LoadNextSrc()
 
                         if (loadOK) {
                             if (LOG_ENABLED()) {
-                                nsAutoCString fontURI;
-                                currSrc.mURI->GetSpec(fontURI);
                                 LOG(("userfonts (%p) [src %d] loading uri: (%s) for (%s)\n",
-                                     mFontSet, mSrcIndex, fontURI.get(),
+                                     mFontSet, mSrcIndex,
+                                     currSrc.mURI->GetSpecOrDefault().get(),
                                      NS_ConvertUTF16toUTF8(mFamilyName).get()));
                             }
                             return;
@@ -713,11 +711,10 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
         StoreUserFontData(fe, mFontSet->GetPrivateBrowsing(), originalFullName,
                           &metadata, metaOrigLen, compression);
         if (LOG_ENABLED()) {
-            nsAutoCString fontURI;
-            mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
             LOG(("userfonts (%p) [src %d] loaded uri: (%s) for (%s) "
                  "(%p) gen: %8.8x compress: %d%%\n",
-                 mFontSet, mSrcIndex, fontURI.get(),
+                 mFontSet, mSrcIndex,
+                 mSrcList[mSrcIndex].mURI->GetSpecOrDefault().get(),
                  NS_ConvertUTF16toUTF8(mFamilyName).get(),
                  this, uint32_t(mFontSet->mGeneration), fontCompressionRatio));
         }
@@ -726,11 +723,10 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
         gfxUserFontSet::UserFontCache::CacheFont(fe);
     } else {
         if (LOG_ENABLED()) {
-            nsAutoCString fontURI;
-            mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
             LOG(("userfonts (%p) [src %d] failed uri: (%s) for (%s)"
                  " error making platform font\n",
-                 mFontSet, mSrcIndex, fontURI.get(),
+                 mFontSet, mSrcIndex,
+                 mSrcList[mSrcIndex].mURI->GetSpecOrDefault().get(),
                  NS_ConvertUTF16toUTF8(mFamilyName).get()));
         }
     }
@@ -1310,10 +1306,9 @@ gfxUserFontSet::UserFontCache::Shutdown()
 
 MOZ_DEFINE_MALLOC_SIZE_OF(UserFontsMallocSizeOf)
 
-nsresult
-gfxUserFontSet::UserFontCache::Entry::ReportMemory(nsIMemoryReporterCallback* aCb,
-                                                   nsISupports* aClosure,
-                                                   bool aAnonymize)
+void
+gfxUserFontSet::UserFontCache::Entry::ReportMemory(
+    nsIHandleReportCallback* aHandleReport, nsISupports* aData, bool aAnonymize)
 {
     MOZ_ASSERT(mFontEntry);
     nsAutoCString path("explicit/gfx/user-fonts/font(");
@@ -1324,8 +1319,7 @@ gfxUserFontSet::UserFontCache::Entry::ReportMemory(nsIMemoryReporterCallback* aC
         NS_ConvertUTF16toUTF8 familyName(mFontEntry->mFamilyName);
         path.AppendPrintf("family=%s", familyName.get());
         if (mURI) {
-            nsCString spec;
-            mURI->GetSpec(spec);
+            nsCString spec = mURI->GetSpecOrDefault();
             spec.ReplaceChar('/', '\\');
             // Some fonts are loaded using horrendously-long data: URIs;
             // truncate those before reporting them.
@@ -1341,8 +1335,7 @@ gfxUserFontSet::UserFontCache::Entry::ReportMemory(nsIMemoryReporterCallback* aC
             nsCOMPtr<nsIURI> uri;
             mPrincipal->GetURI(getter_AddRefs(uri));
             if (uri) {
-                nsCString spec;
-                uri->GetSpec(spec);
+                nsCString spec = uri->GetSpecOrDefault();
                 if (!spec.IsEmpty()) {
                     // Include a clue as to who loaded this resource. (Note
                     // that because of font entry sharing, other pages may now
@@ -1356,12 +1349,12 @@ gfxUserFontSet::UserFontCache::Entry::ReportMemory(nsIMemoryReporterCallback* aC
     }
     path.Append(')');
 
-    return aCb->
-        Callback(EmptyCString(), path,
-                 nsIMemoryReporter::KIND_HEAP, nsIMemoryReporter::UNITS_BYTES,
-                 mFontEntry->ComputedSizeOfExcludingThis(UserFontsMallocSizeOf),
-                 NS_LITERAL_CSTRING("Memory used by @font-face resource."),
-                 aClosure);
+    aHandleReport->Callback(
+        EmptyCString(), path,
+        nsIMemoryReporter::KIND_HEAP, nsIMemoryReporter::UNITS_BYTES,
+        mFontEntry->ComputedSizeOfExcludingThis(UserFontsMallocSizeOf),
+        NS_LITERAL_CSTRING("Memory used by @font-face resource."),
+        aData);
 }
 
 NS_IMPL_ISUPPORTS(gfxUserFontSet::UserFontCache::MemoryReporter,
@@ -1369,27 +1362,23 @@ NS_IMPL_ISUPPORTS(gfxUserFontSet::UserFontCache::MemoryReporter,
 
 NS_IMETHODIMP
 gfxUserFontSet::UserFontCache::MemoryReporter::CollectReports(
-    nsIMemoryReporterCallback* aCb, nsISupports* aClosure, bool aAnonymize)
+    nsIHandleReportCallback* aHandleReport, nsISupports* aData, bool aAnonymize)
 {
     if (!sUserFonts) {
         return NS_OK;
     }
 
     for (auto it = sUserFonts->Iter(); !it.Done(); it.Next()) {
-        nsresult rv = it.Get()->ReportMemory(aCb, aClosure, aAnonymize);
-        if (NS_FAILED(rv)) {
-            return rv;
-        }
+        it.Get()->ReportMemory(aHandleReport, aData, aAnonymize);
     }
 
-    return aCb->
-        Callback(EmptyCString(),
-                 NS_LITERAL_CSTRING("explicit/gfx/user-fonts/cache-overhead"),
-                 nsIMemoryReporter::KIND_HEAP, nsIMemoryReporter::UNITS_BYTES,
-                 sUserFonts->ShallowSizeOfIncludingThis(UserFontsMallocSizeOf),
-                 NS_LITERAL_CSTRING("Memory used by the @font-face cache, "
-                                    "not counting the actual font resources."),
-                 aClosure);
+    MOZ_COLLECT_REPORT(
+        "explicit/gfx/user-fonts/cache-overhead", KIND_HEAP, UNITS_BYTES,
+        sUserFonts->ShallowSizeOfIncludingThis(UserFontsMallocSizeOf),
+        "Memory used by the @font-face cache, not counting the actual font "
+        "resources.");
+
+    return NS_OK;
 }
 
 #ifdef DEBUG_USERFONT_CACHE

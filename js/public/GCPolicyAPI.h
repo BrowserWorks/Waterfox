@@ -45,6 +45,23 @@
 #include "js/TraceKind.h"
 #include "js/TracingAPI.h"
 
+// Expand the given macro D for each public GC pointer.
+#define FOR_EACH_PUBLIC_GC_POINTER_TYPE(D) \
+    D(JS::Symbol*) \
+    D(JSAtom*) \
+    D(JSFunction*) \
+    D(JSObject*) \
+    D(JSScript*) \
+    D(JSString*)
+
+// Expand the given macro D for each public tagged GC pointer type.
+#define FOR_EACH_PUBLIC_TAGGED_GC_POINTER_TYPE(D) \
+    D(JS::Value) \
+    D(jsid)
+
+#define FOR_EACH_PUBLIC_AGGREGATE_GC_POINTER_TYPE(D) \
+    D(JSPropertyDescriptor)
+
 class JSAtom;
 class JSFunction;
 class JSObject;
@@ -102,6 +119,11 @@ struct GCPointerPolicy
         if (*vp)
             js::UnsafeTraceManuallyBarrieredEdge(trc, vp, name);
     }
+    static bool needsSweep(T* vp) {
+        if (*vp)
+            return js::gc::IsAboutToBeFinalizedUnbarriered(vp);
+        return false;
+    }
 };
 template <> struct GCPolicy<JS::Symbol*> : public GCPointerPolicy<JS::Symbol*> {};
 template <> struct GCPolicy<JSAtom*> : public GCPointerPolicy<JSAtom*> {};
@@ -127,10 +149,13 @@ struct GCPolicy<mozilla::UniquePtr<T, D>>
 {
     static mozilla::UniquePtr<T,D> initial() { return mozilla::UniquePtr<T,D>(); }
     static void trace(JSTracer* trc, mozilla::UniquePtr<T,D>* tp, const char* name) {
-        GCPolicy<T>::trace(trc, tp->get(), name);
+        if (tp->get())
+            GCPolicy<T>::trace(trc, tp->get(), name);
     }
     static bool needsSweep(mozilla::UniquePtr<T,D>* tp) {
-        return GCPolicy<T>::needsSweep(tp->get());
+        if (tp->get())
+            return GCPolicy<T>::needsSweep(tp->get());
+        return false;
     }
 };
 

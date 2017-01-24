@@ -17,22 +17,21 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(MediaError)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaError)
   NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
-  NS_INTERFACE_MAP_ENTRY(nsIDOMMediaError)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMMediaError)
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-MediaError::MediaError(HTMLMediaElement* aParent, uint16_t aCode)
+MediaError::MediaError(HTMLMediaElement* aParent, uint16_t aCode,
+                       const nsACString& aMessage)
   : mParent(aParent)
   , mCode(aCode)
+  , mMessage(aMessage)
 {
 }
 
-NS_IMETHODIMP MediaError::GetCode(uint16_t* aCode)
+void
+MediaError::GetMessage(nsAString& aResult) const
 {
-  if (aCode)
-    *aCode = Code();
-
-  return NS_OK;
+  CopyUTF8toUTF16(mMessage, aResult);
 }
 
 JSObject*

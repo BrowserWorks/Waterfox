@@ -124,6 +124,25 @@ CheckSignatureAlgorithm(TrustDomain& trustDomain,
   return Success;
 }
 
+// 4.1.2.4 Issuer
+
+Result
+CheckIssuer(Input encodedIssuer)
+{
+  // "The issuer field MUST contain a non-empty distinguished name (DN)."
+  Reader issuer(encodedIssuer);
+  Input encodedRDNs;
+  ExpectTagAndGetValue(issuer, der::SEQUENCE, encodedRDNs);
+  Reader rdns(encodedRDNs);
+  // Check that the issuer name contains at least one RDN
+  // (Note: this does not check related grammar rules, such as there being one
+  // or more AVAs in each RDN, or the values in AVAs not being empty strings)
+  if (rdns.AtEnd()) {
+    return Result::ERROR_EMPTY_ISSUER_NAME;
+  }
+  return Success;
+}
+
 // 4.1.2.5 Validity
 
 Result
@@ -177,8 +196,8 @@ CheckValidity(Time time, Time notBefore, Time notAfter)
 // 4.1.2.7 Subject Public Key Info
 
 Result
-CheckSubjectPublicKeyInfo(Reader& input, TrustDomain& trustDomain,
-                          EndEntityOrCA endEntityOrCA)
+CheckSubjectPublicKeyInfoContents(Reader& input, TrustDomain& trustDomain,
+                                  EndEntityOrCA endEntityOrCA)
 {
   // Here, we validate the syntax and do very basic semantic validation of the
   // public key of the certificate. The intention here is to filter out the
@@ -353,6 +372,20 @@ CheckSubjectPublicKeyInfo(Reader& input, TrustDomain& trustDomain,
   }
 
   return Success;
+}
+
+Result
+CheckSubjectPublicKeyInfo(Input subjectPublicKeyInfo, TrustDomain& trustDomain,
+                          EndEntityOrCA endEntityOrCA)
+{
+  Reader spkiReader(subjectPublicKeyInfo);
+  Result rv = der::Nested(spkiReader, der::SEQUENCE, [&](Reader& r) {
+    return CheckSubjectPublicKeyInfoContents(r, trustDomain, endEntityOrCA);
+  });
+  if (rv != Success) {
+    return rv;
+  }
+  return der::End(spkiReader);
 }
 
 // 4.2.1.3. Key Usage (id-ce-keyUsage)
@@ -968,14 +1001,14 @@ CheckIssuerIndependentProperties(TrustDomain& trustDomain,
   // Check the SPKI early, because it is one of the most selective properties
   // of the certificate due to SHA-1 deprecation and the deprecation of
   // certificates with keys weaker than RSA 2048.
-  Reader spki(cert.GetSubjectPublicKeyInfo());
-  rv = der::Nested(spki, der::SEQUENCE, [&](Reader& r) {
-    return CheckSubjectPublicKeyInfo(r, trustDomain, endEntityOrCA);
-  });
+  rv = CheckSubjectPublicKeyInfo(cert.GetSubjectPublicKeyInfo(), trustDomain,
+                                 endEntityOrCA);
   if (rv != Success) {
     return rv;
   }
-  rv = der::End(spki);
+
+  // 4.1.2.4. Issuer
+  rv = CheckIssuer(cert.GetIssuer());
   if (rv != Success) {
     return rv;
   }

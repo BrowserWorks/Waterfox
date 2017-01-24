@@ -199,13 +199,13 @@ enum class AstExprKind
     GetLocal,
     If,
     Load,
-    Nop,
     Return,
     SetGlobal,
     SetLocal,
     Store,
     TernaryOperator,
     UnaryOperator,
+    NullaryOperator,
     Unreachable
 };
 
@@ -226,14 +226,6 @@ class AstExpr : public AstNode
         MOZ_ASSERT(kind() == T::Kind);
         return static_cast<T&>(*this);
     }
-};
-
-struct AstNop : AstExpr
-{
-    static const AstExprKind Kind = AstExprKind::Nop;
-    AstNop()
-      : AstExpr(AstExprKind::Nop)
-    {}
 };
 
 struct AstUnreachable : AstExpr
@@ -654,14 +646,15 @@ class AstExport : public AstNode
 
 class AstDataSegment : public AstNode
 {
-    uint32_t offset_;
+    AstExpr* offset_;
     AstName text_;
 
   public:
-    AstDataSegment(uint32_t offset, AstName text)
+    AstDataSegment(AstExpr* offset, AstName text)
       : offset_(offset), text_(text)
     {}
-    uint32_t offset() const { return offset_; }
+
+    AstExpr* offset() const { return offset_; }
     AstName text() const { return text_; }
 };
 
@@ -831,6 +824,20 @@ class AstModule : public AstNode
     const AstGlobalVector& globals() const {
         return globals_;
     }
+};
+
+class AstNullaryOperator final : public AstExpr
+{
+    Expr expr_;
+
+  public:
+    static const AstExprKind Kind = AstExprKind::NullaryOperator;
+    explicit AstNullaryOperator(Expr expr)
+      : AstExpr(Kind),
+        expr_(expr)
+    {}
+
+    Expr expr() const { return expr_; }
 };
 
 class AstUnaryOperator final : public AstExpr

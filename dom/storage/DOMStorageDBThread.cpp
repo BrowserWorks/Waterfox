@@ -55,7 +55,8 @@ Scheme0Scope(DOMStorageCacheBridge* aCache)
 
   PrincipalOriginAttributes oa;
   if (!suffix.IsEmpty()) {
-    oa.PopulateFromSuffix(suffix);
+    DebugOnly<bool> success = oa.PopulateFromSuffix(suffix);
+    MOZ_ASSERT(success);
   }
 
   if (oa.mAppId != nsIScriptSecurityManager::NO_APP_ID || oa.mInIsolatedMozBrowser) {
@@ -456,7 +457,6 @@ DOMStorageDBThread::OpenDatabaseConnection()
       = do_GetService(MOZ_STORAGE_SERVICE_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<mozIStorageConnection> connection;
   rv = service->OpenUnsharedDatabase(mDatabaseFile, getter_AddRefs(mWorkerConnection));
   if (rv == NS_ERROR_FILE_CORRUPTED) {
     // delete the db and try opening again
@@ -763,7 +763,8 @@ OriginAttrsPatternMatchSQLFunction::OnFunctionCall(
   NS_ENSURE_SUCCESS(rv, rv);
 
   PrincipalOriginAttributes oa;
-  oa.PopulateFromSuffix(suffix);
+  bool success = oa.PopulateFromSuffix(suffix);
+  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
   bool result = mPattern.Matches(oa);
 
   RefPtr<nsVariant> outVar(new nsVariant());

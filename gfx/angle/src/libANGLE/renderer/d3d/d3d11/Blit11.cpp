@@ -274,6 +274,93 @@ void CopyDepthStencil(const gl::Box &sourceArea,
     }
 }
 
+void Depth32FStencil8ToDepth32F(const float *source, float *dest)
+{
+    *dest = *source;
+}
+
+void Depth24Stencil8ToDepth32F(const uint32_t *source, float *dest)
+{
+    uint32_t normDepth = source[0] & 0x00FFFFFF;
+    float floatDepth   = gl::normalizedToFloat<24>(normDepth);
+    *dest              = floatDepth;
+}
+
+void BlitD24S8ToD32F(const gl::Box &sourceArea,
+                     const gl::Box &destArea,
+                     const gl::Rectangle &clippedDestArea,
+                     const gl::Extents &sourceSize,
+                     unsigned int sourceRowPitch,
+                     unsigned int destRowPitch,
+                     ptrdiff_t readOffset,
+                     ptrdiff_t writeOffset,
+                     size_t copySize,
+                     size_t srcPixelStride,
+                     size_t destPixelStride,
+                     const uint8_t *sourceData,
+                     uint8_t *destData)
+{
+    // No stretching or subregions are supported, only full blits.
+    ASSERT(sourceArea == destArea);
+    ASSERT(sourceSize.width == sourceArea.width && sourceSize.height == sourceArea.height &&
+           sourceSize.depth == 1);
+    ASSERT(clippedDestArea.width == sourceSize.width &&
+           clippedDestArea.height == sourceSize.height);
+    ASSERT(readOffset == 0 && writeOffset == 0);
+    ASSERT(destArea.x == 0 && destArea.y == 0);
+
+    for (int row = 0; row < destArea.height; ++row)
+    {
+        for (int column = 0; column < destArea.width; ++column)
+        {
+            ptrdiff_t offset            = row * sourceRowPitch + column * srcPixelStride;
+            const uint32_t *sourcePixel = reinterpret_cast<const uint32_t *>(sourceData + offset);
+
+            float *destPixel =
+                reinterpret_cast<float *>(destData + row * destRowPitch + column * destPixelStride);
+
+            Depth24Stencil8ToDepth32F(sourcePixel, destPixel);
+        }
+    }
+}
+
+void BlitD32FS8ToD32F(const gl::Box &sourceArea,
+                      const gl::Box &destArea,
+                      const gl::Rectangle &clippedDestArea,
+                      const gl::Extents &sourceSize,
+                      unsigned int sourceRowPitch,
+                      unsigned int destRowPitch,
+                      ptrdiff_t readOffset,
+                      ptrdiff_t writeOffset,
+                      size_t copySize,
+                      size_t srcPixelStride,
+                      size_t destPixelStride,
+                      const uint8_t *sourceData,
+                      uint8_t *destData)
+{
+    // No stretching or subregions are supported, only full blits.
+    ASSERT(sourceArea == destArea);
+    ASSERT(sourceSize.width == sourceArea.width && sourceSize.height == sourceArea.height &&
+           sourceSize.depth == 1);
+    ASSERT(clippedDestArea.width == sourceSize.width &&
+           clippedDestArea.height == sourceSize.height);
+    ASSERT(readOffset == 0 && writeOffset == 0);
+    ASSERT(destArea.x == 0 && destArea.y == 0);
+
+    for (int row = 0; row < destArea.height; ++row)
+    {
+        for (int column = 0; column < destArea.width; ++column)
+        {
+            ptrdiff_t offset         = row * sourceRowPitch + column * srcPixelStride;
+            const float *sourcePixel = reinterpret_cast<const float *>(sourceData + offset);
+            float *destPixel =
+                reinterpret_cast<float *>(destData + row * destRowPitch + column * destPixelStride);
+
+            Depth32FStencil8ToDepth32F(sourcePixel, destPixel);
+        }
+    }
+}
+
 Blit11::BlitConvertFunction *GetCopyDepthStencilFunction(GLenum internalFormat)
 {
     switch (internalFormat)
@@ -935,8 +1022,7 @@ gl::Error Blit11::swizzleTexture(ID3D11ShaderResourceView *source,
     D3D11_SHADER_RESOURCE_VIEW_DESC sourceSRVDesc;
     source->GetDesc(&sourceSRVDesc);
 
-    const d3d11::DXGIFormat &dxgiFormatInfo = d3d11::GetDXGIFormatInfo(sourceSRVDesc.Format);
-    GLenum componentType                    = dxgiFormatInfo.componentType;
+    GLenum componentType = d3d11::GetComponentType(sourceSRVDesc.Format);
     if (componentType == GL_NONE)
     {
         // We're swizzling the depth component of a depth-stencil texture.
@@ -1096,8 +1182,7 @@ gl::Error Blit11::copyTexture(ID3D11ShaderResourceView *source,
     D3D11_SHADER_RESOURCE_VIEW_DESC sourceSRVDesc;
     source->GetDesc(&sourceSRVDesc);
 
-    const d3d11::DXGIFormat &dxgiFormatInfo = d3d11::GetDXGIFormatInfo(sourceSRVDesc.Format);
-    GLenum componentType                    = dxgiFormatInfo.componentType;
+    GLenum componentType = d3d11::GetComponentType(sourceSRVDesc.Format);
 
     ASSERT(componentType != GL_NONE);
     ASSERT(componentType != GL_SIGNED_NORMALIZED);
@@ -1372,32 +1457,48 @@ gl::Error Blit11::copyDepthStencilImpl(const TextureHelper11 &source,
                                        const gl::Rectangle *scissor,
                                        bool stencilOnly)
 {
-    auto srcFormat             = source.getFormat();
-    const auto &srcSizeInfo    = d3d11::GetDXGIFormatSizeInfo(srcFormat);
+    auto srcDXGIFormat         = source.getFormat();
+    const auto &srcSizeInfo    = d3d11::GetDXGIFormatSizeInfo(srcDXGIFormat);
     unsigned int srcPixelSize  = srcSizeInfo.pixelBytes;
-    unsigned int copyOffset = 0;
+    unsigned int copyOffset    = 0;
     unsigned int copySize      = srcPixelSize;
-    auto destFormat            = dest.getFormat();
-    const auto &destSizeInfo   = d3d11::GetDXGIFormatSizeInfo(destFormat);
+    auto destDXGIFormat        = dest.getFormat();
+    const auto &destSizeInfo   = d3d11::GetDXGIFormatSizeInfo(destDXGIFormat);
     unsigned int destPixelSize = destSizeInfo.pixelBytes;
 
-    ASSERT(srcFormat == destFormat);
+    ASSERT(srcDXGIFormat == destDXGIFormat || destDXGIFormat == DXGI_FORMAT_R32_TYPELESS);
 
     if (stencilOnly)
     {
-        const d3d11::DXGIFormat &srcDXGIFormat = d3d11::GetDXGIFormatInfo(srcFormat);
+        const auto &srcFormat = source.getFormatSet().format();
 
         // Stencil channel should be right after the depth channel. Some views to depth/stencil
         // resources have red channel for depth, in which case the depth channel bit width is in
         // redBits.
-        ASSERT((srcDXGIFormat.redBits != 0) != (srcDXGIFormat.depthBits != 0));
-        GLuint depthBits = srcDXGIFormat.redBits + srcDXGIFormat.depthBits;
+        ASSERT((srcFormat.redBits != 0) != (srcFormat.depthBits != 0));
+        GLuint depthBits = srcFormat.redBits + srcFormat.depthBits;
         // Known formats have either 24 or 32 bits of depth.
         ASSERT(depthBits == 24 || depthBits == 32);
         copyOffset = depthBits / 8;
 
         // Stencil is assumed to be 8-bit - currently this is true for all possible formats.
         copySize = 1;
+    }
+
+    if (srcDXGIFormat != destDXGIFormat)
+    {
+        if (srcDXGIFormat == DXGI_FORMAT_R24G8_TYPELESS)
+        {
+            ASSERT(sourceArea == destArea && sourceSize == destSize && scissor == nullptr);
+            return copyAndConvert(source, sourceSubresource, sourceArea, sourceSize, dest,
+                                  destSubresource, destArea, destSize, scissor, copyOffset,
+                                  copyOffset, copySize, srcPixelSize, destPixelSize,
+                                  BlitD24S8ToD32F);
+        }
+        ASSERT(srcDXGIFormat == DXGI_FORMAT_R32G8X24_TYPELESS);
+        return copyAndConvert(source, sourceSubresource, sourceArea, sourceSize, dest,
+                              destSubresource, destArea, destSize, scissor, copyOffset, copyOffset,
+                              copySize, srcPixelSize, destPixelSize, BlitD32FS8ToD32F);
     }
 
     return copyAndConvert(source, sourceSubresource, sourceArea, sourceSize, dest, destSubresource,
@@ -1899,6 +2000,14 @@ gl::Error Blit11::getSwizzleShader(GLenum type,
 
 gl::ErrorOrResult<TextureHelper11> Blit11::resolveDepth(RenderTarget11 *depth)
 {
+    // Multisampled depth stencil SRVs are not available in feature level 10.0
+    if (mRenderer->getRenderer11DeviceCaps().featureLevel <= D3D_FEATURE_LEVEL_10_0)
+    {
+        return gl::Error(GL_INVALID_OPERATION,
+                         "Resolving multisampled depth stencil textures is not supported in "
+                         "feature level 10.0.");
+    }
+
     const auto &extents          = depth->getExtents();
     ID3D11Device *device         = mRenderer->getDevice();
     ID3D11DeviceContext *context = mRenderer->getDeviceContext();
@@ -2027,6 +2136,14 @@ gl::Error Blit11::initResolveDepthStencil(const gl::Extents &extents)
 gl::ErrorOrResult<TextureHelper11> Blit11::resolveStencil(RenderTarget11 *depthStencil,
                                                           bool alsoDepth)
 {
+    // Multisampled depth stencil SRVs are not available in feature level 10.0
+    if (mRenderer->getRenderer11DeviceCaps().featureLevel <= D3D_FEATURE_LEVEL_10_0)
+    {
+        return gl::Error(GL_INVALID_OPERATION,
+                         "Resolving multisampled depth stencil textures is not supported in "
+                         "feature level 10.0.");
+    }
+
     const auto &extents = depthStencil->getExtents();
 
     ANGLE_TRY(initResolveDepthStencil(extents));

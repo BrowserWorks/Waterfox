@@ -6,7 +6,7 @@
 
 #include "mozilla/dom/cache/TypeUtils.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/CacheBinding.h"
 #include "mozilla/dom/InternalRequest.h"
 #include "mozilla/dom/Request.h"
@@ -159,6 +159,8 @@ TypeUtils::ToCacheRequest(CacheRequest& aOut, InternalRequest* aIn,
   aOut.requestCache() = aIn->GetCacheMode();
   aOut.requestRedirect() = aIn->GetRedirectMode();
 
+  aOut.integrity() = aIn->GetIntegrity();
+
   if (aBodyAction == IgnoreBody) {
     aOut.body() = void_t();
     return;
@@ -269,9 +271,12 @@ TypeUtils::ToResponse(const CacheResponse& aIn)
   RefPtr<InternalHeaders> internalHeaders =
     ToInternalHeaders(aIn.headers(), aIn.headersGuard());
   ErrorResult result;
-  ir->Headers()->SetGuard(aIn.headersGuard(), result);
-  MOZ_ASSERT(!result.Failed());
+
+  // Be careful to fill the headers before setting the guard in order to
+  // correctly re-create the original headers.
   ir->Headers()->Fill(*internalHeaders, result);
+  MOZ_ASSERT(!result.Failed());
+  ir->Headers()->SetGuard(aIn.headersGuard(), result);
   MOZ_ASSERT(!result.Failed());
 
   ir->InitChannelInfo(aIn.channelInfo());
@@ -325,6 +330,7 @@ TypeUtils::ToInternalRequest(const CacheRequest& aIn)
   internalRequest->SetContentPolicyType(aIn.contentPolicyType());
   internalRequest->SetCacheMode(aIn.requestCache());
   internalRequest->SetRedirectMode(aIn.requestRedirect());
+  internalRequest->SetIntegrity(aIn.integrity());
 
   RefPtr<InternalHeaders> internalHeaders =
     ToInternalHeaders(aIn.headers(), aIn.headersGuard());

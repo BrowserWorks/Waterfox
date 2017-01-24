@@ -3,6 +3,7 @@ if (!this.Atomics)
     quit();
 
 load(libdir + "asm.js");
+setJitCompilerOption('asmjs.atomics.enable', 1);
 
 var code = `
     "use asm";

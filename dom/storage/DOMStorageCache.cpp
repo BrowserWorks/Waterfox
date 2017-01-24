@@ -14,7 +14,7 @@
 #include "nsAutoPtr.h"
 #include "nsDOMString.h"
 #include "nsXULAppAPI.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
 
@@ -254,7 +254,7 @@ class DOMStorageCacheHolder : public nsITimerCallback
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   Notify(nsITimer* aTimer) override
   {
     mCache = nullptr;
@@ -700,7 +700,7 @@ private:
   int64_t* mTarget;
   int64_t mDelta;
 
-  NS_IMETHOD Run() { *mTarget = mDelta; return NS_OK; }
+  NS_IMETHOD Run() override { *mTarget = mDelta; return NS_OK; }
 };
 
 } // namespace

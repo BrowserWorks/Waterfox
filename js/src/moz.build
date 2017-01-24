@@ -162,6 +162,7 @@ UNIFIED_SOURCES += [
     'asmjs/WasmBinaryToExperimentalText.cpp',
     'asmjs/WasmBinaryToText.cpp',
     'asmjs/WasmCode.cpp',
+    'asmjs/WasmCompartment.cpp',
     'asmjs/WasmCompile.cpp',
     'asmjs/WasmFrameIterator.cpp',
     'asmjs/WasmGenerator.cpp',
@@ -196,7 +197,6 @@ UNIFIED_SOURCES += [
     'frontend/BytecodeEmitter.cpp',
     'frontend/FoldConstants.cpp',
     'frontend/NameFunctions.cpp',
-    'frontend/ParseMaps.cpp',
     'frontend/ParseNode.cpp',
     'frontend/TokenStream.cpp',
     'gc/Allocator.cpp',
@@ -327,6 +327,7 @@ UNIFIED_SOURCES += [
     'vm/DateTime.cpp',
     'vm/Debugger.cpp',
     'vm/DebuggerMemory.cpp',
+    'vm/EnvironmentObject.cpp',
     'vm/ErrorObject.cpp',
     'vm/ForOfIterator.cpp',
     'vm/GeneratorObject.cpp',
@@ -348,7 +349,7 @@ UNIFIED_SOURCES += [
     'vm/RegExpStatics.cpp',
     'vm/Runtime.cpp',
     'vm/SavedStacks.cpp',
-    'vm/ScopeObject.cpp',
+    'vm/Scope.cpp',
     'vm/SelfHosting.cpp',
     'vm/Shape.cpp',
     'vm/SharedArrayObject.cpp',
@@ -481,6 +482,9 @@ elif CONFIG['JS_CODEGEN_ARM']:
         UNIFIED_SOURCES += [
             'jit/arm/Simulator-arm.cpp'
         ]
+        # Configuration used only for testing.
+        if CONFIG['OS_ARCH'] == 'Linux':
+            CXXFLAGS += [ '-msse2', '-mfpmath=sse' ]
     elif CONFIG['OS_ARCH'] == 'Darwin':
         SOURCES += [
             'jit/arm/llvm-compiler-rt/arm/aeabi_idivmod.S',
@@ -601,21 +605,18 @@ if CONFIG['HAVE_LINUX_PERF_EVENT_H']:
     SOURCES += [
         'perf/pm_linux.cpp'
     ]
-    SOURCES['perf/pm_linux.cpp'].flags += [CONFIG['LINUX_HEADERS_INCLUDES']]
+    if CONFIG['LINUX_HEADERS_INCLUDES']:
+        SOURCES['perf/pm_linux.cpp'].flags += [CONFIG['LINUX_HEADERS_INCLUDES']]
 else:
     SOURCES += [
         'perf/pm_stub.cpp'
     ]
 
-HostSimplePrograms([
-    'host_jskwgen',
-])
-
 GENERATED_FILES += ['jsautokw.h']
 jsautokw = GENERATED_FILES['jsautokw.h']
 jsautokw.script = 'jsautokw.py'
 jsautokw.inputs += [
-    '!host_jskwgen%s' % CONFIG['HOST_BIN_SUFFIX'],
+    'vm/Keywords.h'
 ]
 
 # JavaScript must be built shared, even for static builds, as it is used by

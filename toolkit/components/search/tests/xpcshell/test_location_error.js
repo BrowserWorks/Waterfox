@@ -4,8 +4,8 @@
 function run_test() {
   installTestEngine();
 
-  // using a port > 2^32 causes an error to be reported.
-  let url = "http://localhost:111111111";
+  // We use an invalid port that parses but won't open
+  let url = "http://localhost:0";
 
   Services.prefs.setCharPref("browser.search.geoip.url", url);
   Services.search.init(() => {
@@ -20,7 +20,7 @@ function run_test() {
                      "SEARCH_SERVICE_COUNTRY_FETCH_CAUSED_SYNC_INIT"]) {
       let histogram = Services.telemetry.getHistogramById(hid);
       let snapshot = histogram.snapshot();
-      deepEqual(snapshot.counts, [1,0,0]); // boolean probe so 3 buckets, expect 1 result for |0|.
+      deepEqual(snapshot.counts, [1, 0, 0]); // boolean probe so 3 buckets, expect 1 result for |0|.
     }
 
     do_test_finished();

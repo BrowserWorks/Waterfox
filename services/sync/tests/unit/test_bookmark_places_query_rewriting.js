@@ -10,42 +10,51 @@ Cu.import("resource://services-sync/util.js");
 var engine = new BookmarksEngine(Service);
 var store = engine._store;
 
-function run_test() {
-  initTestLogging("Trace");
-  Log.repository.getLogger("Sync.Engine.Bookmarks").level = Log.Level.Trace;
-  Log.repository.getLogger("Sync.Store.Bookmarks").level = Log.Level.Trace;
-
-  let tagRecord = new BookmarkQuery("bookmarks", "abcdefabcdef");
-  let uri = "place:folder=499&type=7&queryType=1";
+function makeTagRecord(id, uri) {
+  let tagRecord = new BookmarkQuery("bookmarks", id);
   tagRecord.queryId = "MagicTags";
   tagRecord.parentName = "Bookmarks Toolbar";
   tagRecord.bmkUri = uri;
   tagRecord.title = "tagtag";
   tagRecord.folderName = "bar";
+  tagRecord.parentid = PlacesUtils.bookmarks.toolbarGuid;
+  return tagRecord;
+}
+
+function run_test() {
+  initTestLogging("Trace");
+  Log.repository.getLogger("Sync.Engine.Bookmarks").level = Log.Level.Trace;
+  Log.repository.getLogger("Sync.Store.Bookmarks").level = Log.Level.Trace;
+
+  let uri = "place:folder=499&type=7&queryType=1";
+  let tagRecord = makeTagRecord("abcdefabcdef", uri);
 
   _("Type: " + tagRecord.type);
   _("Folder name: " + tagRecord.folderName);
-  store.preprocessTagQuery(tagRecord);
+  store.applyIncoming(tagRecord);
 
-  _("Verify that the URI has been rewritten.");
-  do_check_neq(tagRecord.bmkUri, uri);
-
-  let tags = store._getNode(PlacesUtils.tagsFolderId);
-  tags.containerOpen = true;
+  let tags = PlacesUtils.getFolderContents(PlacesUtils.tagsFolderId).root;
   let tagID;
-  for (let i = 0; i < tags.childCount; ++i) {
-    let child = tags.getChild(i);
-    if (child.title == "bar")
-      tagID = child.itemId;
+  try {
+    for (let i = 0; i < tags.childCount; ++i) {
+      let child = tags.getChild(i);
+      if (child.title == "bar") {
+        tagID = child.itemId;
+      }
+    }
+  } finally {
+    tags.containerOpen = false;
   }
-  tags.containerOpen = false;
 
   _("Tag ID: " + tagID);
-  do_check_eq(tagRecord.bmkUri, uri.replace("499", tagID));
+  let insertedRecord = store.createRecord("abcdefabcdef", "bookmarks");
+  do_check_eq(insertedRecord.bmkUri, uri.replace("499", tagID));
 
   _("... but not if the type is wrong.");
   let wrongTypeURI = "place:folder=499&type=2&queryType=1";
-  tagRecord.bmkUri = wrongTypeURI;
-  store.preprocessTagQuery(tagRecord);
-  do_check_eq(tagRecord.bmkUri, wrongTypeURI);
+  let wrongTypeRecord = makeTagRecord("fedcbafedcba", wrongTypeURI);
+  store.applyIncoming(wrongTypeRecord);
+
+  insertedRecord = store.createRecord("fedcbafedcba", "bookmarks");
+  do_check_eq(insertedRecord.bmkUri, wrongTypeURI);
 }

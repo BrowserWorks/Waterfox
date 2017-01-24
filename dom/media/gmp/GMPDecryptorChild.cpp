@@ -8,7 +8,7 @@
 #include "GMPChild.h"
 #include "base/task.h"
 #include "mozilla/TimeStamp.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "runnable_utils.h"
 #include <ctime>
 
@@ -20,6 +20,8 @@
 namespace mozilla {
 namespace gmp {
 
+static uint32_t sDecryptorCount = 0;
+
 GMPDecryptorChild::GMPDecryptorChild(GMPContentChild* aPlugin,
                                      const nsTArray<uint8_t>& aPluginVoucher,
                                      const nsTArray<uint8_t>& aSandboxVoucher)
@@ -27,8 +29,10 @@ GMPDecryptorChild::GMPDecryptorChild(GMPContentChild* aPlugin,
   , mPlugin(aPlugin)
   , mPluginVoucher(aPluginVoucher)
   , mSandboxVoucher(aSandboxVoucher)
+  , mId(++sDecryptorCount)
 {
   MOZ_ASSERT(mPlugin);
+  MOZ_ASSERT(mId > 0);
 }
 
 GMPDecryptorChild::~GMPDecryptorChild()
@@ -73,6 +77,11 @@ GMPDecryptorChild::Init(GMPDecryptor* aSession)
 {
   MOZ_ASSERT(aSession);
   mSession = aSession;
+  // The ID of this decryptor is the IPDL actor ID. Note it's unique inside
+  // the child process, but not necessarily across all gecko processes. However,
+  // since GMPDecryptors are segregated by node ID/origin, we shouldn't end up
+  // with clashes in the content process.
+  SendSetDecryptorId(Id());
 }
 
 void
@@ -161,9 +170,16 @@ GMPDecryptorChild::KeyStatusChanged(const char* aSessionId,
 {
   AutoTArray<uint8_t, 16> kid;
   kid.AppendElements(aKeyId, aKeyIdLength);
-  CALL_ON_GMP_THREAD(SendKeyStatusChanged,
-                     nsCString(aSessionId, aSessionIdLength), kid,
-                     aStatus);
+  if (aStatus == kGMPUnknown) {
+    CALL_ON_GMP_THREAD(SendForgetKeyStatus,
+                       nsCString(aSessionId, aSessionIdLength),
+                       kid);
+  } else {
+    CALL_ON_GMP_THREAD(SendKeyStatusChanged,
+                       nsCString(aSessionId, aSessionIdLength),
+                       kid,
+                       aStatus);
+  }
 }
 
 void

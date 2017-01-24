@@ -42,21 +42,27 @@ MediaKeyStatusMap::GetParentObject() const
   return mParent;
 }
 
-MediaKeyStatus
-MediaKeyStatusMap::Get(const ArrayBufferViewOrArrayBuffer& aKey) const
+void
+MediaKeyStatusMap::Get(JSContext* aCx,
+                       const ArrayBufferViewOrArrayBuffer& aKey,
+                       JS::MutableHandle<JS::Value> aOutValue,
+                       ErrorResult& aOutRv) const
 {
   ArrayData keyId = GetArrayBufferViewOrArrayBufferData(aKey);
   if (!keyId.IsValid()) {
-    return MediaKeyStatus::Internal_error;
+    aOutValue.setUndefined();
+    return;
   }
-
   for (const KeyStatus& status : mStatuses) {
     if (keyId == status.mKeyId) {
-      return status.mStatus;
+      bool ok = ToJSValue(aCx, status.mStatus, aOutValue);
+      if (!ok) {
+        aOutRv.NoteJSContextException(aCx);
+      }
+      return;
     }
   }
-
-  return MediaKeyStatus::Internal_error;
+  aOutValue.setUndefined();
 }
 
 bool
@@ -102,26 +108,12 @@ MediaKeyStatusMap::Size() const
   return mStatuses.Length();
 }
 
-static MediaKeyStatus
-ToMediaKeyStatus(GMPMediaKeyStatus aStatus) {
-  switch (aStatus) {
-    case kGMPUsable: return MediaKeyStatus::Usable;
-    case kGMPExpired: return MediaKeyStatus::Expired;
-    case kGMPOutputDownscaled: return MediaKeyStatus::Output_downscaled;
-    case kGMPOutputRestricted: return MediaKeyStatus::Output_restricted;
-    case kGMPInternalError: return MediaKeyStatus::Internal_error;
-    case kGMPReleased: return MediaKeyStatus::Released;
-    case kGMPStatusPending: return MediaKeyStatus::Status_pending;
-    default: return MediaKeyStatus::Internal_error;
-  }
-}
-
 void
 MediaKeyStatusMap::Update(const nsTArray<CDMCaps::KeyStatus>& aKeys)
 {
   mStatuses.Clear();
   for (const auto& key : aKeys) {
-    mStatuses.InsertElementSorted(KeyStatus(key.mId, ToMediaKeyStatus(key.mStatus)));
+    mStatuses.InsertElementSorted(KeyStatus(key.mId, key.mStatus));
   }
 }
 

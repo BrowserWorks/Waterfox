@@ -43,6 +43,33 @@ namespace layers {
 struct TileClient;
 } // namespace layers
 } // namespace mozilla
+
+namespace mozilla {
+struct SerializedStructuredCloneBuffer;
+} // namespace mozilla
+
+namespace mozilla {
+namespace dom {
+namespace ipc {
+class StructuredCloneData;
+} // namespace ipc
+} // namespace dom
+} // namespace mozilla
+
+namespace mozilla {
+namespace dom {
+class ClonedMessageData;
+class MessagePortMessage;
+namespace indexedDB {
+struct StructuredCloneReadInfo;
+class SerializedStructuredCloneReadInfo;
+class ObjectStoreCursorResponse;
+} // namespace indexedDB
+} // namespace dom
+} // namespace mozilla
+
+class JSStructuredCloneData;
+
 //
 // nsTArray is a resizable array class, like std::vector.
 //
@@ -328,7 +355,13 @@ struct nsTArray_SafeElementAtHelper<mozilla::OwningNonNull<E>, Derived>
   }
 };
 
-extern "C" void Gecko_EnsureTArrayCapacity(void* aArray, size_t aCapacity, size_t aElemSize);
+// Servo bindings.
+extern "C" void Gecko_EnsureTArrayCapacity(void* aArray,
+                                           size_t aCapacity,
+                                           size_t aElementSize);
+extern "C" void Gecko_ClearPODTArray(void* aArray,
+                                     size_t aElementSize,
+                                     size_t aElementAlign);
 
 MOZ_NORETURN MOZ_COLD void
 InvalidArrayIndex_CRASH(size_t aIndex, size_t aLength);
@@ -346,7 +379,10 @@ class nsTArray_base
   // the same free().
   template<class Allocator, class Copier>
   friend class nsTArray_base;
-  friend void Gecko_EnsureTArrayCapacity(void* aArray, size_t aCapacity, size_t aElemSize);
+  friend void Gecko_EnsureTArrayCapacity(void* aArray, size_t aCapacity,
+                                         size_t aElemSize);
+  friend void Gecko_ClearPODTArray(void* aTArray, size_t aElementSize,
+                                   size_t aElementAlign);
 
 protected:
   typedef nsTArrayHeader Header;
@@ -676,29 +712,30 @@ struct MOZ_NEEDS_MEMMOVABLE_TYPE nsTArray_CopyChooser
 // Some classes require constructors/destructors to be called, so they are
 // specialized here.
 //
+#define DECLARE_USE_COPY_CONSTRUCTORS(T)                \
+  template<>                                            \
+  struct nsTArray_CopyChooser<T>                        \
+  {                                                     \
+    typedef nsTArray_CopyWithConstructors<T> Type;      \
+  };
+
 template<class E>
 struct nsTArray_CopyChooser<JS::Heap<E>>
 {
   typedef nsTArray_CopyWithConstructors<JS::Heap<E>> Type;
 };
 
-template<>
-struct nsTArray_CopyChooser<nsRegion>
-{
-  typedef nsTArray_CopyWithConstructors<nsRegion> Type;
-};
-
-template<>
-struct nsTArray_CopyChooser<nsIntRegion>
-{
-  typedef nsTArray_CopyWithConstructors<nsIntRegion> Type;
-};
-
-template<>
-struct nsTArray_CopyChooser<mozilla::layers::TileClient>
-{
-  typedef nsTArray_CopyWithConstructors<mozilla::layers::TileClient> Type;
-};
+DECLARE_USE_COPY_CONSTRUCTORS(nsRegion)
+DECLARE_USE_COPY_CONSTRUCTORS(nsIntRegion)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::layers::TileClient)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::SerializedStructuredCloneBuffer)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::ipc::StructuredCloneData)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::ClonedMessageData)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::indexedDB::StructuredCloneReadInfo);
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::indexedDB::ObjectStoreCursorResponse)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::indexedDB::SerializedStructuredCloneReadInfo);
+DECLARE_USE_COPY_CONSTRUCTORS(JSStructuredCloneData)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::MessagePortMessage)
 
 
 //
@@ -1602,7 +1639,8 @@ public:
   // an element, the element is removed. aPredicate will be called
   // for each element in order. It is not safe to access the array
   // inside aPredicate.
-  void RemoveElementsBy(mozilla::function<bool(const elem_type&)> aPredicate);
+  template<typename Predicate>
+  void RemoveElementsBy(Predicate aPredicate);
 
   // This helper function combines IndexOf with RemoveElementAt to "search
   // and destroy" the first element that is equal to the given element.
@@ -1909,8 +1947,9 @@ nsTArray_Impl<E, Alloc>::RemoveElementsAt(index_type aStart, size_type aCount)
 }
 
 template<typename E, class Alloc>
+template<typename Predicate>
 void
-nsTArray_Impl<E, Alloc>::RemoveElementsBy(mozilla::function<bool(const elem_type&)> aPredicate)
+nsTArray_Impl<E, Alloc>::RemoveElementsBy(Predicate aPredicate)
 {
   if (base_type::mHdr == EmptyHdr()) {
     return;
@@ -2221,6 +2260,12 @@ public:
   {
     Init();
     this->SwapElements(aOther);
+  }
+
+  MOZ_IMPLICIT AutoTArray(std::initializer_list<E> aIL)
+  {
+    Init();
+    this->AppendElements(aIL.begin(), aIL.size());
   }
 
   self_type& operator=(const self_type& aOther)

@@ -107,6 +107,7 @@ for (var run = 0; run < testCases.length; ++run) {
   }
 
   var texture = gl.createTexture();
+  var anotherTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE,
                 new Uint8Array([
@@ -122,8 +123,18 @@ for (var run = 0; run < testCases.length; ++run) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
   var colorAttachmentsNum = 1;
   if (contextVersion > 1) {
+    gl.bindTexture(gl.TEXTURE_2D, anotherTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                  new Uint8Array([
+                      0, 0, 0, 255,
+                      255, 255, 255, 255,
+                      255, 255, 255, 255,
+                      0, 0, 0, 255]));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.bindTexture(gl.TEXTURE_2D, null);
     colorAttachmentsNum = gl.getParameter(gl.MAX_COLOR_ATTACHMENTS);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + colorAttachmentsNum - 1, gl.TEXTURE_2D, texture, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + colorAttachmentsNum - 1, gl.TEXTURE_2D, anotherTexture, 0);
   }
   var renderbuffer = gl.createRenderbuffer();
   wtu.glErrorShouldBe(gl, gl.NO_ERROR);
@@ -137,17 +148,15 @@ for (var run = 0; run < testCases.length; ++run) {
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderbuffer);
   if (contextVersion > 1)
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.STENCIL_ATTACHMENT, gl.RENDERBUFFER, renderbuffer);
-  // FIXME: on some machines (in particular the WebKit commit bots) the
-  // framebuffer status is FRAMEBUFFER_UNSUPPORTED; more investigation
-  // is needed why this is the case, because the FBO allocated
-  // internally by the WebKit implementation has almost identical
-  // parameters to this one. See https://bugs.webkit.org/show_bug.cgi?id=31843.
   shouldBe('gl.checkFramebufferStatus(gl.FRAMEBUFFER)', 'gl.FRAMEBUFFER_COMPLETE');
   // The for loop tests two color attachments for WebGL 2: the first one (gl.COLOR_ATTACHMENT0)
   // and the last one (gl.COLOR_ATTACHMENT0 + gl.MAX_COLOR_ATTACHMENTS - 1).
   for (var ii = 0; ii < colorAttachmentsNum; ii += (colorAttachmentsNum > 1 ? colorAttachmentsNum - 1 : 1)) {
     shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + ' + ii + ', gl.FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE)', 'gl.TEXTURE');
-    shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + ' + ii + ', gl.FRAMEBUFFER_ATTACHMENT_OBJECT_NAME)', 'texture');
+    if (ii == 0)
+      shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + ' + ii + ', gl.FRAMEBUFFER_ATTACHMENT_OBJECT_NAME)', 'texture');
+    else
+      shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + ' + ii + ', gl.FRAMEBUFFER_ATTACHMENT_OBJECT_NAME)', 'anotherTexture');
     shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + ' + ii + ', gl.FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL)', '0');
     shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + ' + ii + ', gl.FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE)', '0');
     if (contextVersion > 1) {
@@ -306,8 +315,8 @@ var shaders = gl.getAttachedShaders(standardProgram);
 shouldBe('shaders.length', '2');
 shouldBeTrue('shaders[0] == standardVert && shaders[1] == standardFrag || shaders[1] == standardVert && shaders[0] == standardFrag');
 wtu.glErrorShouldBe(gl, gl.NO_ERROR);
-shouldBeNull('gl.getAttachedShaders(null)');
-wtu.glErrorShouldBe(gl, gl.INVALID_VALUE);
+shouldThrow('gl.getAttachedShaders(null)');
+wtu.glErrorShouldBe(gl, gl.NO_ERROR);
 shouldThrow('gl.getAttachedShaders(standardVert)');
 wtu.glErrorShouldBe(gl, gl.NO_ERROR);
 
@@ -720,6 +729,8 @@ debug("Test cases where name == 0");
 gl.deleteTexture(texture);
 shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE)', 'gl.NONE');
 gl.deleteRenderbuffer(renderbuffer);
+gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer);
+wtu.glErrorShouldBe(gl, gl.INVALID_OPERATION);
 shouldBe('gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE)', 'gl.NONE');
 gl.deleteBuffer(buffer);
 shouldBeNull('gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)');
@@ -729,8 +740,6 @@ if (contextVersion > 1) {
     debug("");
     debug("Test getInternalformatParameter")
 
-    gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer);
-    wtu.glErrorShouldBe(gl, gl.NO_ERROR);
     shouldBeNonNull('gl.getInternalformatParameter(gl.RENDERBUFFER, gl.R32I, gl.SAMPLES)');
     wtu.glErrorShouldBe(gl, gl.NO_ERROR);
 
@@ -850,14 +859,26 @@ if (contextVersion > 1) {
         "pname",
         validArrayForSamplerParameter,
         function(pname) {
-	    return gl.getSamplerParameter(sampler, pname);
+            return gl.getSamplerParameter(sampler, pname);
     });
 
     debug("");
     debug("Test getSyncParameter");
     var sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
     shouldBe('gl.getSyncParameter(sync, gl.OBJECT_TYPE)', 'gl.SYNC_FENCE');
-    shouldBe('gl.getSyncParameter(sync, gl.SYNC_STATUS)', 'gl.UNSIGNALED');
+    var sync_status = gl.getSyncParameter(sync, gl.SYNC_STATUS);
+    switch (sync_status) {
+      case gl.UNSIGNALED:
+        testPassed('gl.getSyncParameter(sync, gl.SYNC_CONDITION) is gl.UNSIGNALED');
+        break;
+      case gl.SIGNALED:
+        testPassed('gl.getSyncParameter(sync, gl.SYNC_CONDITION) is gl.SIGNALED');
+        break;
+      default:
+        testFailed('gl.getSyncParameter(sync, gl.SYNC_CONDITION) was ' + sync_status +
+                   ', expected gl.UNSIGNALED or gl.SIGNALED');
+        break;
+    }
     shouldBe('gl.getSyncParameter(sync, gl.SYNC_CONDITION)', 'gl.SYNC_GPU_COMMANDS_COMPLETE');
     shouldBe('gl.getSyncParameter(sync, gl.SYNC_FLAGS)', '0');
     var validArrayForSyncParameter = new Array(
@@ -883,16 +904,16 @@ if (contextVersion > 1) {
     // Queries' results are tested elsewhere in the conformance suite. It's complicated
     // to wait for this query's result to become available and verify it.
     var validArrayForPname = new Array(
-	gl.QUERY_RESULT,
-	gl.QUERY_RESULT_AVAILABLE
+        gl.QUERY_RESULT,
+        gl.QUERY_RESULT_AVAILABLE
     );
     testInvalidArgument(
-	"getQueryParameter",
-	"pname",
-	validArrayForPname,
-	function(pname) {
-	    return gl.getQueryParameter(query, pname);
-	}
+        "getQueryParameter",
+        "pname",
+        validArrayForPname,
+        function(pname) {
+            return gl.getQueryParameter(query, pname);
+        }
     );
 
     debug("");
@@ -982,11 +1003,11 @@ if (contextVersion > 1) {
         gl.UNIFORM_IS_ROW_MAJOR
     );
     testInvalidArgument(
-	"getActiveUniforms",
-	"pname",
-	validArrayForPname,
-	function(pname) {
-	    return gl.getActiveUniforms(program, uniformIndices, pname);
+        "getActiveUniforms",
+        "pname",
+        validArrayForPname,
+        function(pname) {
+            return gl.getActiveUniforms(program, uniformIndices, pname);
         }
     );
 
@@ -1049,20 +1070,20 @@ if (contextVersion > 1) {
         testFailed("expected value >= 0" + " actual value for UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES for uniform index[" + i + "]:" + indices[i]);
     }
     var validArrayForPname = new Array(
-	gl.UNIFORM_BLOCK_BINDING,
-	gl.UNIFORM_BLOCK_DATA_SIZE,
-	gl.UNIFORM_BLOCK_ACTIVE_UNIFORMS,
-	gl.UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
-	gl.UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER,
-	gl.UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER
+        gl.UNIFORM_BLOCK_BINDING,
+        gl.UNIFORM_BLOCK_DATA_SIZE,
+        gl.UNIFORM_BLOCK_ACTIVE_UNIFORMS,
+        gl.UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
+        gl.UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER,
+        gl.UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER
     );
     testInvalidArgument(
-	"getActiveUniformBlockParameter",
-	"pname",
-	validArrayForPname,
-	function(pname) {
-	    return gl.getActiveUniformBlockParameter(program, 0, pname);
-	}
+        "getActiveUniformBlockParameter",
+        "pname",
+        validArrayForPname,
+        function(pname) {
+            return gl.getActiveUniformBlockParameter(program, 0, pname);
+        }
     );
 }
 

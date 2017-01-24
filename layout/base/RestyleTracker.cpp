@@ -106,13 +106,11 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
 void
 RestyleTracker::DoProcessRestyles()
 {
-  nsAutoCString docURL;
+  nsAutoCString docURL("N/A");
   if (profiler_is_active()) {
     nsIURI *uri = Document()->GetDocumentURI();
     if (uri) {
-      uri->GetSpec(docURL);
-    } else {
-      docURL = "N/A";
+      docURL = uri->GetSpecOrDefault();
     }
   }
   PROFILER_LABEL_PRINTF("RestyleTracker", "ProcessRestyles",
@@ -168,7 +166,8 @@ RestyleTracker::DoProcessRestyles()
         AutoTArray<RefPtr<Element>, RESTYLE_ARRAY_STACKSIZE> laterSiblingArr;
         for (auto iter = mPendingRestyles.Iter(); !iter.Done(); iter.Next()) {
           auto element = static_cast<dom::Element*>(iter.Key());
-          MOZ_ASSERT(!element->IsStyledByServo(), "Should not have Servo-styled elements here");
+          MOZ_ASSERT(!element->IsStyledByServo(),
+                     "Should not have Servo-styled elements here");
           // Only collect the entries that actually need restyling by us (and
           // haven't, for example, already been restyled).
           // It's important to not mess with the flags on entries not in our

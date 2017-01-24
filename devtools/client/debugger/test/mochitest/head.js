@@ -31,7 +31,11 @@ const FRAME_SCRIPT_URL = getRootDirectory(gTestPath) + "code_frame-script.js";
 const CHROME_URL = "chrome://mochitests/content/browser/devtools/client/debugger/test/mochitest/";
 const CHROME_URI = Services.io.newURI(CHROME_URL, null, null);
 
+Services.prefs.setBoolPref("devtools.debugger.new-debugger-frontend", false);
+
 registerCleanupFunction(function* () {
+  Services.prefs.clearUserPref("devtools.debugger.new-debugger-frontend");
+
   info("finish() was called, cleaning up...");
   Services.prefs.setBoolPref("devtools.debugger.log", gEnableLogging);
 
@@ -442,12 +446,6 @@ function waitForClientEvents(aPanel, aEventName, aEventRepeat = 1) {
   return deferred.promise;
 }
 
-function waitForClipboardPromise(setup, expected) {
-  return new Promise((resolve, reject) => {
-    SimpleTest.waitForClipboard(expected, setup, resolve, reject);
-  });
-}
-
 function ensureThreadClientState(aPanel, aState) {
   let thread = aPanel.panelWin.gThreadClient;
   let state = thread.state;
@@ -668,9 +666,7 @@ AddonDebugger.prototype = {
   }),
 
   destroy: Task.async(function* () {
-    let deferred = promise.defer();
-    this.client.close(deferred.resolve);
-    yield deferred.promise;
+    yield this.client.close();
     yield this.debuggerPanel._toolbox.destroy();
     this.frame.remove();
     window.removeEventListener("message", this._onMessage);
@@ -1084,11 +1080,7 @@ function connect(client) {
 
 function close(client) {
   info("Waiting for client to close.\n");
-  return new Promise(function (resolve) {
-    client.close(() => {
-      resolve();
-    });
-  });
+  return client.close();
 }
 
 function listTabs(client) {

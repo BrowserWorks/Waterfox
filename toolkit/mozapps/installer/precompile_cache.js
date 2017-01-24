@@ -58,14 +58,13 @@ function get_modules_under(uri) {
                   .concat(jar_entries(jarReader, "modules/*.jsm"));
     jarReader.close();
     return entries;
-  } else if (uri instanceof Ci.nsIFileURL){
+  } else if (uri instanceof Ci.nsIFileURL) {
     let file = uri.QueryInterface(Ci.nsIFileURL);
     return dir_entries(file.file, "components", ".js")
            .concat(dir_entries(file.file, "modules", ".js"))
            .concat(dir_entries(file.file, "modules", ".jsm"));
-  } else {
-    throw "Expected a nsIJARURI or nsIFileURL";
   }
+  throw new Error("Expected a nsIJARURI or nsIFileURL");
 }
 
 function load_modules_under(spec, uri) {
@@ -74,7 +73,7 @@ function load_modules_under(spec, uri) {
     try {
       dump(spec + entry + "\n");
       Cu.import(spec + entry, null);
-    } catch(e) {}
+    } catch (e) {}
   }
 }
 

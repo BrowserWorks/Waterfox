@@ -9,7 +9,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -180,10 +179,6 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
 
     private void create(String title, String text, PromptListItem[] listItems, int choiceMode)
             throws IllegalStateException {
-        final LayerView view = GeckoAppShell.getLayerView();
-        if (view != null) {
-            view.abortPanning();
-        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
         if (!TextUtils.isEmpty(title)) {
@@ -516,9 +511,6 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         if (mTabId != Tabs.INVALID_TAB_ID) {
             Tabs.unregisterOnTabsChangedListener(this);
         }
-
-        // poke the Gecko thread in case it's waiting for new events
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createNoOpEvent());
 
         if (mCallback != null) {
             mCallback.onPromptFinished(aReturn.toString());

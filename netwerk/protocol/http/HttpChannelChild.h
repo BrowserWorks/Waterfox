@@ -38,7 +38,6 @@ namespace net {
 
 class InterceptedChannelContent;
 class InterceptStreamListener;
-class OverrideRunnable;
 
 class HttpChannelChild final : public PHttpChannelChild
                              , public HttpBaseChannel
@@ -159,6 +158,25 @@ protected:
   NS_IMETHOD GetResponseSynthesized(bool* aSynthesized) override;
 
 private:
+
+  class OverrideRunnable : public Runnable {
+  public:
+    OverrideRunnable(HttpChannelChild* aChannel,
+                     HttpChannelChild* aNewChannel,
+                     InterceptStreamListener* aListener,
+                     nsIInputStream* aInput,
+                     nsAutoPtr<nsHttpResponseHead>& aHead);
+
+    NS_IMETHOD Run() override;
+    void OverrideWithSynthesizedResponse();
+  private:
+    RefPtr<HttpChannelChild> mChannel;
+    RefPtr<HttpChannelChild> mNewChannel;
+    RefPtr<InterceptStreamListener> mListener;
+    nsCOMPtr<nsIInputStream> mInput;
+    nsAutoPtr<nsHttpResponseHead> mHead;
+  };
+
   nsresult ContinueAsyncOpen();
 
   void DoOnStartRequest(nsIRequest* aRequest, nsISupports* aContext);
@@ -252,7 +270,7 @@ private:
   // Needed to call CleanupRedirectingChannel in FinishInterceptedRedirect
   RefPtr<HttpChannelChild> mInterceptingChannel;
   // Used to call OverrideWithSynthesizedResponse in FinishInterceptedRedirect
-  RefPtr<Runnable> mOverrideRunnable;
+  RefPtr<OverrideRunnable> mOverrideRunnable;
 
   void FinishInterceptedRedirect();
   void CleanupRedirectingChannel(nsresult rv);
@@ -328,7 +346,6 @@ private:
   friend class HttpAsyncAborter<HttpChannelChild>;
   friend class InterceptStreamListener;
   friend class InterceptedChannelContent;
-  friend class OverrideRunnable;
 };
 
 // A stream listener interposed between the nsInputStreamPump used for intercepted channels

@@ -20,26 +20,43 @@ class nsIWebProgress;
 namespace mozilla {
 namespace dom {
 
+class PresentationConnection;
 class PresentationRequest;
 class Promise;
 
-class PresentationRequesterCallback final : public nsIPresentationServiceCallback
+class PresentationRequesterCallback : public nsIPresentationServiceCallback
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPRESENTATIONSERVICECALLBACK
 
   PresentationRequesterCallback(PresentationRequest* aRequest,
-                                const nsAString& aUrl,
                                 const nsAString& aSessionId,
                                 Promise* aPromise);
 
-private:
-  ~PresentationRequesterCallback();
+protected:
+  virtual ~PresentationRequesterCallback();
 
   RefPtr<PresentationRequest> mRequest;
   nsString mSessionId;
   RefPtr<Promise> mPromise;
+};
+
+class PresentationReconnectCallback final : public PresentationRequesterCallback
+{
+public:
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_NSIPRESENTATIONSERVICECALLBACK
+
+  PresentationReconnectCallback(PresentationRequest* aRequest,
+                                const nsAString& aSessionId,
+                                Promise* aPromise,
+                                PresentationConnection* aConnection);
+
+private:
+  virtual ~PresentationReconnectCallback();
+
+  RefPtr<PresentationConnection> mConnection;
 };
 
 class PresentationResponderLoadingCallback final : public nsIWebProgressListener
@@ -56,7 +73,7 @@ public:
 private:
   ~PresentationResponderLoadingCallback();
 
-  nsresult NotifyReceiverReady();
+  nsresult NotifyReceiverReady(bool aIsLoading);
 
   nsString mSessionId;
   nsCOMPtr<nsIWebProgress> mProgress;

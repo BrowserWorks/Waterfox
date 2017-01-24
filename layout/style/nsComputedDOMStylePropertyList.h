@@ -19,7 +19,7 @@
   The COMPUTED_STYLE_PROP macro is defined for each such property.
   Its arguments are:
 
-  -. 'id' the nsCSSProperty ID, without the leading "nsCSSProperty_".
+  -. 'id' the nsCSSPropertyID ID, without the leading "nsCSSProperty_".
 
   -. 'method' the nsComputedDOMStyle method name that returns the
   CSSValue representing that property's computed value, without the leading
@@ -217,6 +217,7 @@ COMPUTED_STYLE_PROP(scroll_snap_points_x,          ScrollSnapPointsX)
 COMPUTED_STYLE_PROP(scroll_snap_points_y,          ScrollSnapPointsY)
 COMPUTED_STYLE_PROP(scroll_snap_type_x,            ScrollSnapTypeX)
 COMPUTED_STYLE_PROP(scroll_snap_type_y,            ScrollSnapTypeY)
+COMPUTED_STYLE_PROP(shape_outside,                 ShapeOutside)
 //// COMPUTED_STYLE_PROP(size,                     Size)
 COMPUTED_STYLE_PROP(table_layout,                  TableLayout)
 COMPUTED_STYLE_PROP(text_align,                    TextAlign)
@@ -274,14 +275,14 @@ COMPUTED_STYLE_PROP(box_flex,                      BoxFlex)
 COMPUTED_STYLE_PROP(box_ordinal_group,             BoxOrdinalGroup)
 COMPUTED_STYLE_PROP(box_orient,                    BoxOrient)
 COMPUTED_STYLE_PROP(box_pack,                      BoxPack)
-COMPUTED_STYLE_PROP(_moz_column_count,             ColumnCount)
-COMPUTED_STYLE_PROP(_moz_column_fill,              ColumnFill)
-COMPUTED_STYLE_PROP(_moz_column_gap,               ColumnGap)
-//// COMPUTED_STYLE_PROP(_moz_column_rule,         ColumnRule)
-COMPUTED_STYLE_PROP(_moz_column_rule_color,        ColumnRuleColor)
-COMPUTED_STYLE_PROP(_moz_column_rule_style,        ColumnRuleStyle)
-COMPUTED_STYLE_PROP(_moz_column_rule_width,        ColumnRuleWidth)
-COMPUTED_STYLE_PROP(_moz_column_width,             ColumnWidth)
+COMPUTED_STYLE_PROP(column_count,                  ColumnCount)
+COMPUTED_STYLE_PROP(column_fill,                   ColumnFill)
+COMPUTED_STYLE_PROP(column_gap,                    ColumnGap)
+//// COMPUTED_STYLE_PROP(column_rule,              ColumnRule)
+COMPUTED_STYLE_PROP(column_rule_color,             ColumnRuleColor)
+COMPUTED_STYLE_PROP(column_rule_style,             ColumnRuleStyle)
+COMPUTED_STYLE_PROP(column_rule_width,             ColumnRuleWidth)
+COMPUTED_STYLE_PROP(column_width,                  ColumnWidth)
 COMPUTED_STYLE_PROP(float_edge,                    FloatEdge)
 COMPUTED_STYLE_PROP(force_broken_image_icon,       ForceBrokenImageIcon)
 COMPUTED_STYLE_PROP(image_region,                  ImageRegion)

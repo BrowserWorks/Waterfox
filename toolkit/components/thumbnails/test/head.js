@@ -131,7 +131,7 @@ function captureAndCheckColor(aRed, aGreen, aBlue, aMessage) {
   // Capture the screenshot.
   PageThumbs.captureAndStore(browser, function () {
     retrieveImageDataForURL(browser.currentURI.spec, function ([r, g, b]) {
-      is("" + [r,g,b], "" + [aRed, aGreen, aBlue], aMessage);
+      is("" + [r, g, b], "" + [aRed, aGreen, aBlue], aMessage);
       next();
     });
   });
@@ -282,7 +282,7 @@ function bgAddPageThumbObserver(url) {
   return new Promise((resolve, reject) => {
     function observe(subject, topic, data) { // jshint ignore:line
       if (data === url) {
-        switch(topic) {
+        switch (topic) {
           case "page-thumbnail:create":
             resolve();
             break;

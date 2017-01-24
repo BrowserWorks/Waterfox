@@ -244,12 +244,10 @@ class MacroAssemblerARM : public Assembler
     void ma_cmp(Register src1, Operand op, Condition c = Always);
     void ma_cmp(Register src1, Register src2, Condition c = Always);
 
-
     // Test for equality, (src1 ^ src2):
     void ma_teq(Register src1, Imm32 imm, Condition c = Always);
     void ma_teq(Register src1, Register src2, Condition c = Always);
     void ma_teq(Register src1, Operand op, Condition c = Always);
-
 
     // Test (src1 & src2):
     void ma_tst(Register src1, Imm32 imm, Condition c = Always);
@@ -301,15 +299,18 @@ class MacroAssemblerARM : public Assembler
     void ma_ldrh(EDtrAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
     void ma_ldrsh(EDtrAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
     void ma_ldrsb(EDtrAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
-    void ma_ldrd(EDtrAddr addr, Register rt, DebugOnly<Register> rt2, Index mode = Offset, Condition cc = Always);
+    void ma_ldrd(EDtrAddr addr, Register rt, DebugOnly<Register> rt2, Index mode = Offset,
+                 Condition cc = Always);
     void ma_strb(Register rt, DTRAddr addr, Index mode = Offset, Condition cc = Always);
     void ma_strh(Register rt, EDtrAddr addr, Index mode = Offset, Condition cc = Always);
-    void ma_strd(Register rt, DebugOnly<Register> rt2, EDtrAddr addr, Index mode = Offset, Condition cc = Always);
+    void ma_strd(Register rt, DebugOnly<Register> rt2, EDtrAddr addr, Index mode = Offset,
+                 Condition cc = Always);
 
     // Specialty for moving N bits of data, where n == 8,16,32,64.
     BufferOffset ma_dataTransferN(LoadStore ls, int size, bool IsSigned,
                                   Register rn, Register rm, Register rt,
-                                  Index mode = Offset, Condition cc = Always, unsigned scale = TimesOne);
+                                  Index mode = Offset, Condition cc = Always,
+                                  unsigned scale = TimesOne);
 
     BufferOffset ma_dataTransferN(LoadStore ls, int size, bool IsSigned,
                                   Register rn, Imm32 offset, Register rt,
@@ -428,6 +429,20 @@ class MacroAssemblerARM : public Assembler
         }
         MOZ_CRASH("Invalid data transfer addressing mode");
     }
+
+    // Loads `byteSize` bytes, byte by byte, by reading from ptr[offset],
+    // applying the indicated signedness (defined by isSigned).
+    // - all three registers must be different.
+    // - tmp and dest will get clobbered, ptr will remain intact.
+    // - byteSize can be up to 4 bytes and no more (GPR are 32 bits on ARM).
+    void emitUnalignedLoad(bool isSigned, unsigned byteSize, Register ptr, Register tmp,
+                           Register dest, unsigned offset = 0);
+
+    // Ditto, for a store. Note stores don't care about signedness.
+    // - the two registers must be different.
+    // - val will get clobbered, ptr will remain intact.
+    // - byteSize can be up to 4 bytes and no more (GPR are 32 bits on ARM).
+    void emitUnalignedStore(unsigned byteSize, Register ptr, Register val, unsigned offset = 0);
 
 private:
     // Implementation for transferMultipleByRuns so we can use different
@@ -966,11 +981,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void loadFloat32(const Address& addr, FloatRegister dest);
     void loadFloat32(const BaseIndex& src, FloatRegister dest);
 
-    void ma_loadHeapAsmJS(Register ptrReg, int size, bool needsBoundsCheck, bool faultOnOOB,
-                          FloatRegister output);
-    void ma_loadHeapAsmJS(Register ptrReg, int size, bool isSigned, bool needsBoundsCheck,
-                          bool faultOnOOB, Register output);
-
     void store8(Register src, const Address& address);
     void store8(Imm32 imm, const Address& address);
     void store8(Register src, const BaseIndex& address);
@@ -1006,11 +1016,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void moveDouble(FloatRegister src, FloatRegister dest, Condition cc = Always) {
         ma_vmov(src, dest, cc);
     }
-
-    void ma_storeHeapAsmJS(Register ptrReg, int size, bool needsBoundsCheck, bool faultOnOOB,
-                           FloatRegister value);
-    void ma_storeHeapAsmJS(Register ptrReg, int size, bool isSigned, bool needsBoundsCheck,
-                           bool faultOnOOB, Register value);
 
   private:
     template<typename T>
@@ -1299,15 +1304,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void atomicExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem, Register value,
                                        Register temp, AnyRegister output);
 
-    void clampIntToUint8(Register reg) {
-        // Look at (reg >> 8) if it is 0, then reg shouldn't be clamped if it is
-        // <0, then we want to clamp to 0, otherwise, we wish to clamp to 255
-        ScratchRegisterScope scratch(asMasm());
-        as_mov(scratch, asr(reg, 8), SetCC);
-        ma_mov(Imm32(0xff), reg, NotEqual);
-        ma_mov(Imm32(0), reg, Signed);
-    }
-
     inline void incrementInt32Value(const Address& addr);
 
     void cmp32(Register lhs, Imm32 rhs);
@@ -1344,9 +1340,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void simulatorStop(const char* msg);
 
     // Evaluate srcDest = minmax<isMax>{Float32,Double}(srcDest, other).
-    // Handle NaN specially if handleNaN is true.
-    void minMaxDouble(FloatRegister srcDest, FloatRegister other, bool handleNaN, bool isMax);
-    void minMaxFloat32(FloatRegister srcDest, FloatRegister other, bool handleNaN, bool isMax);
+    // Checks for NaN if canBeNaN is true.
+    void minMaxDouble(FloatRegister srcDest, FloatRegister other, bool canBeNaN, bool isMax);
+    void minMaxFloat32(FloatRegister srcDest, FloatRegister other, bool canBeNaN, bool isMax);
 
     void compareDouble(FloatRegister lhs, FloatRegister rhs);
 
@@ -1438,9 +1434,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_mov(c, lr);
         ma_str(lr, dest);
     }
-    BufferOffset ma_BoundsCheck(Register bounded) {
-        return as_cmp(bounded, Imm8(0));
-    }
 
     void moveFloat32(FloatRegister src, FloatRegister dest, Condition cc = Always) {
         as_vmov(VFPRegister(dest).singleOverlay(), VFPRegister(src).singleOverlay(), cc);
@@ -1449,8 +1442,10 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
         loadPtr(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), dest);
     }
-    void loadAsmJSHeapRegisterFromGlobalData() {
-        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset, HeapReg);
+    void loadWasmPinnedRegsFromTls() {
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg);
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalData)), GlobalReg);
+        ma_add(Imm32(AsmJSGlobalRegBias), GlobalReg);
     }
 
     // Instrumentation for entering and leaving the profiler.

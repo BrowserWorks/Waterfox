@@ -17,7 +17,7 @@
 #include "nsIFrameInlines.h"
 #include "nsPresArena.h"
 #include "nsPrintfCString.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 
 #ifdef DEBUG
 static int32_t ctorCount;
@@ -48,13 +48,9 @@ nsLineBox::nsLineBox(nsIFrame* aFrame, int32_t aCount, bool aIsBlock)
                  "wrong kind of child frame");
   }
 #endif
-
-  static_assert(NS_STYLE_CLEAR_MAX <= 15,
+  static_assert(static_cast<int>(StyleClear::Max) <= 15,
                 "FlagBits needs more bits to store the full range of "
                 "break type ('clear') values");
-#if NS_STYLE_CLEAR_NONE > 0
-  mFlags.mBreakType = NS_STYLE_CLEAR_NONE;
-#endif
   mChildCount = aCount;
   MarkDirty();
   mFlags.mBlock = aIsBlock;
@@ -147,7 +143,7 @@ nsLineBox::NoteFramesMovedFrom(nsLineBox* aFromLine)
 }
 
 void*
-nsLineBox::operator new(size_t sz, nsIPresShell* aPresShell) CPP_THROW_NEW
+nsLineBox::operator new(size_t sz, nsIPresShell* aPresShell)
 {
   return aPresShell->AllocateByObjectID(eArenaObjectID_nsLineBox, sz);
 }
@@ -195,17 +191,19 @@ ListFloats(FILE* out, const char* aPrefix, const nsFloatCacheList& aFloats)
   }
 }
 
-const char *
-BreakTypeToString(uint8_t aBreakType)
+const char*
+nsLineBox::BreakTypeToString(StyleClear aBreakType) const
 {
   switch (aBreakType) {
-  case NS_STYLE_CLEAR_NONE: return "nobr";
-  case NS_STYLE_CLEAR_LEFT: return "leftbr";
-  case NS_STYLE_CLEAR_RIGHT: return "rightbr";
-  case NS_STYLE_CLEAR_BOTH: return "leftbr+rightbr";
-  case NS_STYLE_CLEAR_LINE: return "linebr";
-  default:
-    break;
+    case StyleClear::None: return "nobr";
+    case StyleClear::Left: return "leftbr";
+    case StyleClear::Right: return "rightbr";
+    case StyleClear::InlineStart: return "inlinestartbr";
+    case StyleClear::InlineEnd: return "inlineendbr";
+    case StyleClear::Both: return "leftbr+rightbr";
+    case StyleClear::Line: return "linebr";
+    default:
+      break;
   }
   return "unknown";
 }
@@ -285,9 +283,7 @@ nsLineBox::List(FILE* out, const char* aPrefix, uint32_t aFlags) const
   }
   fprintf_stderr(out, "%s>\n", aPrefix);
 }
-#endif
 
-#ifdef DEBUG
 nsIFrame*
 nsLineBox::LastChild() const
 {

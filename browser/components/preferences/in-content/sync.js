@@ -142,8 +142,19 @@ var gSyncPane = {
 
     let url = Services.prefs.getCharPref("identity.mobilepromo.android") + "sync-preferences";
     document.getElementById("fxaMobilePromo-android").setAttribute("href", url);
+    document.getElementById("fxaMobilePromo-android-hasFxaAccount").setAttribute("href", url);
     url = Services.prefs.getCharPref("identity.mobilepromo.ios") + "sync-preferences";
     document.getElementById("fxaMobilePromo-ios").setAttribute("href", url);
+    document.getElementById("fxaMobilePromo-ios-hasFxaAccount").setAttribute("href", url);
+
+    document.getElementById("tosPP-small-ToS").setAttribute("href", gSyncUtils.tosURL);
+    document.getElementById("tosPP-normal-ToS").setAttribute("href", gSyncUtils.tosURL);
+    document.getElementById("tosPP-small-PP").setAttribute("href", gSyncUtils.privacyPolicyURL);
+    document.getElementById("tosPP-normal-PP").setAttribute("href", gSyncUtils.privacyPolicyURL);
+
+    fxAccounts.promiseAccountsManageURI(this._getEntryPoint()).then(url => {
+      document.getElementById("verifiedManage").setAttribute("href", url);
+    });
 
     this.updateWeavePrefs();
 
@@ -240,8 +251,6 @@ var gSyncPane = {
       gSyncPane.startOver(true);
       return false;
     });
-    setEventListener("tosPP-normal-ToS", "click", gSyncPane.openToS);
-    setEventListener("tosPP-normal-PP", "click", gSyncPane.openPrivacyPolicy);
     setEventListener("loginErrorUpdatePass", "click", function () {
       gSyncPane.updatePass();
       return false;
@@ -276,8 +285,6 @@ var gSyncPane = {
     setEventListener("rejectUnlinkFxaAccount", "command", function () {
       gSyncPane.unlinkFirefoxAccount(true);
     });
-    setEventListener("tosPP-small-ToS", "click", gSyncPane.openToS);
-    setEventListener("tosPP-small-PP", "click", gSyncPane.openPrivacyPolicy);
     setEventListener("fxaSyncComputerName", "keypress", function (e) {
       if (e.keyCode == KeyEvent.DOM_VK_RETURN) {
         document.getElementById("fxaSaveChangeDeviceName").click();
@@ -364,6 +371,7 @@ var gSyncPane = {
         if (isVerified) {
           return fxAccounts.getSignedInUserProfile();
         }
+        return null;
       }).then(data => {
         let fxaLoginStatus = document.getElementById("fxaLoginStatus");
         if (data && profileInfoEnabled) {
@@ -422,7 +430,7 @@ var gSyncPane = {
   startOver: function (showDialog) {
     if (showDialog) {
       let flags = Services.prompt.BUTTON_POS_0 * Services.prompt.BUTTON_TITLE_IS_STRING +
-                  Services.prompt.BUTTON_POS_1 * Services.prompt.BUTTON_TITLE_CANCEL + 
+                  Services.prompt.BUTTON_POS_1 * Services.prompt.BUTTON_TITLE_CANCEL +
                   Services.prompt.BUTTON_POS_1_DEFAULT;
       let buttonChoice =
         Services.prompt.confirmEx(window,
@@ -522,16 +530,6 @@ var gSyncPane = {
     browser.loadURI(url);
   },
 
-  openPrivacyPolicy: function(aEvent) {
-    aEvent.stopPropagation();
-    gSyncUtils.openPrivacyPolicy();
-  },
-
-  openToS: function(aEvent) {
-    aEvent.stopPropagation();
-    gSyncUtils.openToS();
-  },
-
   signUp: function() {
     this._openAboutAccounts("signup");
   },
@@ -548,13 +546,9 @@ var gSyncPane = {
   clickOrSpaceOrEnterPressed: function(event) {
     // Note: charCode is deprecated, but 'char' not yet implemented.
     // Replace charCode with char when implemented, see Bug 680830
-    if ((event.type == "click" && event.button == 0) ||    // button 0 = 'main button', typically left click.
-        (event.type == "keypress" &&
-        (event.charCode == KeyEvent.DOM_VK_SPACE || event.keyCode == KeyEvent.DOM_VK_RETURN))) {
-      return true;
-    } else {
-      return false;
-    }
+    return ((event.type == "click" && event.button == 0) ||
+            (event.type == "keypress" &&
+             (event.charCode == KeyEvent.DOM_VK_SPACE || event.keyCode == KeyEvent.DOM_VK_RETURN)));
   },
 
   openChangeProfileImage: function(event) {
@@ -565,12 +559,16 @@ var gSyncPane = {
           replaceQueryString: true
         });
       });
+      // Prevent page from scrolling on the space key.
+      event.preventDefault();
     }
   },
 
   openManageFirefoxAccount: function(event) {
     if (this.clickOrSpaceOrEnterPressed(event)) {
       this.manageFirefoxAccount();
+      // Prevent page from scrolling on the space key.
+      event.preventDefault();
     }
   },
 
@@ -651,11 +649,11 @@ var gSyncPane = {
   openAddDevice: function () {
     if (!Weave.Utils.ensureMPUnlocked())
       return;
-    
+
     let win = Services.wm.getMostRecentWindow("Sync:AddDevice");
     if (win)
       win.focus();
-    else 
+    else
       window.openDialog("chrome://browser/content/sync/addDevice.xul",
                         "syncAddDevice", "centerscreen,chrome,resizable=no");
   },
@@ -673,4 +671,3 @@ var gSyncPane = {
     textbox.value = value;
   },
 };
-

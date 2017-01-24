@@ -7,6 +7,7 @@
 
 #include "CacheIOThread.h"
 #include "CacheStorageService.h"
+#include "CacheHashUtils.h"
 #include "nsIEventTarget.h"
 #include "nsITimer.h"
 #include "nsCOMPtr.h"
@@ -68,6 +69,7 @@ public:
 
   // Returns false when this handle has been doomed based on the pinning state update.
   bool SetPinned(bool aPinned);
+  void SetInvalid() { mInvalid = true; }
 
   // Memory reporting
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
@@ -90,8 +92,9 @@ private:
   bool const           mPriority;
   bool const           mSpecialFile;
 
+  mozilla::Atomic<bool, Relaxed> mInvalid;
+
   // These bit flags are all accessed only on the IO thread
-  bool                 mInvalid : 1;
   bool                 mFileExists : 1; // This means that the file should exists,
                                         // but it can be still deleted by OS/user
                                         // and then a subsequent OpenNSPRFileDesc()
@@ -103,6 +106,13 @@ private:
   // These flags are only accessed on the IO thread.
   bool                 mDoomWhenFoundPinned : 1;
   bool                 mDoomWhenFoundNonPinned : 1;
+  // Set when after shutdown AND:
+  // - when writing: writing data (not metadata) OR the physical file handle is not currently open
+  // - when truncating: the physical file handle is not currently open
+  // When set it prevents any further writes or truncates on such handles to happen immediately
+  // after shutdown and gives a chance to write metadata of already open files quickly as possible
+  // (only that renders them actually usable by the cache.)
+  bool                 mKilled : 1;
   // For existing files this is always pre-set to UNKNOWN.  The status is udpated accordingly
   // after the matadata has been parsed.
   // For new files the flag is set according to which storage kind is opening
@@ -321,9 +331,8 @@ public:
                                  bool aPinning);
 
   static nsresult InitIndexEntry(CacheFileHandle *aHandle,
-                                 uint32_t         aAppId,
+                                 OriginAttrsHash  aOriginAttrsHash,
                                  bool             aAnonymous,
-                                 bool             aInIsolatedMozBrowser,
                                  bool             aPinning);
   static nsresult UpdateIndexEntry(CacheFileHandle *aHandle,
                                    const uint32_t  *aFrecency,
@@ -458,6 +467,7 @@ private:
   nsCOMPtr<nsIFile>                    mCacheProfilelessDirectory;
 #endif
   bool                                 mTreeCreated;
+  bool                                 mTreeCreationFailed;
   CacheFileHandles                     mHandles;
   nsTArray<CacheFileHandle *>          mHandlesByLastUsed;
   nsTArray<CacheFileHandle *>          mSpecialHandles;

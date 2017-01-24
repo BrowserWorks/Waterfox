@@ -360,9 +360,11 @@ add_task(function* test_engine_fail_ioerror() {
   });
   new SyncTestingInfrastructure(server.server);
   // create an IOError to re-throw as part of Sync.
-  let path = OS.Path.join(OS.Constants.Path.profileDir, "weave", "file-does-not-exist");
   try {
-    yield CommonUtils.readJSON(path);
+    // (Note that fakeservices.js has replaced Utils.jsonMove etc, but for
+    // this test we need the real one so we get real exceptions from the
+    // filesystem.)
+    yield Utils._real_jsonMove("file-does-not-exist", "anything", {});
   } catch (ex) {
     engine._errToThrow = ex;
   }

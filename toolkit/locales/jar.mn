@@ -61,9 +61,12 @@
   locale/@AB_CD@/global/keys.properties                 (%chrome/global/keys.properties)
   locale/@AB_CD@/global/languageNames.properties        (%chrome/global/languageNames.properties)
   locale/@AB_CD@/global/mozilla.dtd                     (%chrome/global/mozilla.dtd)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/global/narrate.properties              (%chrome/global/narrate.properties)
+#endif
   locale/@AB_CD@/global/notification.dtd                (%chrome/global/notification.dtd)
   locale/@AB_CD@/global/preferences.dtd                 (%chrome/global/preferences.dtd)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/global/printdialog.dtd                 (%chrome/global/printdialog.dtd)
   locale/@AB_CD@/global/printjoboptions.dtd             (%chrome/global/printjoboptions.dtd)
   locale/@AB_CD@/global/printPageSetup.dtd              (%chrome/global/printPageSetup.dtd)
@@ -71,6 +74,7 @@
   locale/@AB_CD@/global/printPreviewProgress.dtd        (%chrome/global/printPreviewProgress.dtd)
   locale/@AB_CD@/global/printdialog.properties          (%chrome/global/printdialog.properties)
   locale/@AB_CD@/global/printProgress.dtd               (%chrome/global/printProgress.dtd)
+#endif
   locale/@AB_CD@/global/regionNames.properties          (%chrome/global/regionNames.properties)
   locale/@AB_CD@/global/resetProfile.dtd                (%chrome/global/resetProfile.dtd)
   locale/@AB_CD@/global/resetProfile.properties         (%chrome/global/resetProfile.properties)
@@ -80,7 +84,6 @@
   locale/@AB_CD@/global/videocontrols.dtd               (%chrome/global/videocontrols.dtd)
   locale/@AB_CD@/global/viewSource.dtd                  (%chrome/global/viewSource.dtd)
   locale/@AB_CD@/global/viewSource.properties           (%chrome/global/viewSource.properties)
-  locale/@AB_CD@/global/webapps.properties              (%chrome/global/webapps.properties)
   locale/@AB_CD@/global/wizard.dtd                      (%chrome/global/wizard.dtd)
   locale/@AB_CD@/global/wizard.properties               (%chrome/global/wizard.properties)
   locale/@AB_CD@/global/crashes.dtd                     (%crashreporter/crashes.dtd)
@@ -116,8 +119,10 @@
   locale/@AB_CD@/mozapps/profile/createProfileWizard.dtd          (%chrome/mozapps/profile/createProfileWizard.dtd)
   locale/@AB_CD@/mozapps/profile/profileSelection.properties      (%chrome/mozapps/profile/profileSelection.properties)
   locale/@AB_CD@/mozapps/profile/profileSelection.dtd             (%chrome/mozapps/profile/profileSelection.dtd)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/mozapps/update/updates.dtd                       (%chrome/mozapps/update/updates.dtd)
   locale/@AB_CD@/mozapps/update/updates.properties                (%chrome/mozapps/update/updates.properties)
+#endif
   locale/@AB_CD@/mozapps/update/history.dtd                       (%chrome/mozapps/update/history.dtd)
   locale/@AB_CD@/mozapps/xpinstall/xpinstallConfirm.dtd           (%chrome/mozapps/extensions/xpinstallConfirm.dtd)
   locale/@AB_CD@/mozapps/xpinstall/xpinstallConfirm.properties    (%chrome/mozapps/extensions/xpinstallConfirm.properties)
@@ -138,13 +143,6 @@
   locale/@AB_CD@/passwordmgr/passwordManager.dtd    (%chrome/passwordmgr/passwordManager.dtd)
 % locale autoconfig @AB_CD@ %locale/@AB_CD@/autoconfig/
   locale/@AB_CD@/autoconfig/autoconfig.properties   (%chrome/autoconfig/autoconfig.properties)
-#ifdef MOZ_HELP_VIEWER
-% locale help @AB_CD@ %locale/@AB_CD@/help/
-  locale/@AB_CD@/help/help.properties                     (%chrome/mozapps/help/help.properties)
-  locale/@AB_CD@/help/help.dtd                            (%chrome/mozapps/help/help.dtd)
-  locale/@AB_CD@/help/help-toc.rdf                        (%chrome/mozapps/help/help-toc.rdf)
-  locale/@AB_CD@/help/welcome.xhtml                       (%chrome/mozapps/help/welcome.xhtml)
-#endif
 % locale places @AB_CD@ %locale/@AB_CD@/places/
   locale/@AB_CD@/places/places.properties                 (%chrome/places/places.properties)
   locale/@AB_CD@/global/search/search.properties          (%chrome/search/search.properties)

@@ -9,10 +9,11 @@
 
 namespace mozilla {
 
-ServoStyleSheet::ServoStyleSheet(CORSMode aCORSMode,
+ServoStyleSheet::ServoStyleSheet(css::SheetParsingMode aParsingMode,
+                                 CORSMode aCORSMode,
                                  net::ReferrerPolicy aReferrerPolicy,
                                  const dom::SRIMetadata& aIntegrity)
-  : StyleSheet(StyleBackendType::Servo)
+  : StyleSheet(StyleBackendType::Servo, aParsingMode)
   , StyleSheetInfo(aCORSMode, aReferrerPolicy, aIntegrity)
 {
 }
@@ -31,7 +32,7 @@ ServoStyleSheet::IsApplicable() const
 bool
 ServoStyleSheet::HasRules() const
 {
-  return Servo_StyleSheetHasRules(RawSheet());
+  return Servo_StyleSheet_HasRules(RawSheet());
 }
 
 nsIDocument*
@@ -67,13 +68,12 @@ ServoStyleSheet::AppendStyleSheet(StyleSheetHandle aSheet)
   MOZ_CRASH("stylo: not implemented");
 }
 
-void
+nsresult
 ServoStyleSheet::ParseSheet(const nsAString& aInput,
                             nsIURI* aSheetURI,
                             nsIURI* aBaseURI,
                             nsIPrincipal* aSheetPrincipal,
-                            uint32_t aLineNumber,
-                            css::SheetParsingMode aParsingMode)
+                            uint32_t aLineNumber)
 {
   DropSheet();
 
@@ -82,10 +82,18 @@ ServoStyleSheet::ParseSheet(const nsAString& aInput,
   RefPtr<ThreadSafePrincipalHolder> principal =
     new ThreadSafePrincipalHolder(aSheetPrincipal);
 
+  nsCString baseString;
+  nsresult rv = aBaseURI->GetSpec(baseString);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   NS_ConvertUTF16toUTF8 input(aInput);
-  mSheet = already_AddRefed<RawServoStyleSheet>(Servo_StylesheetFromUTF8Bytes(
-      reinterpret_cast<const uint8_t*>(input.get()), input.Length(), aParsingMode,
-      base, referrer, principal));
+  mSheet = Servo_StyleSheet_FromUTF8Bytes(
+      reinterpret_cast<const uint8_t*>(input.get()), input.Length(),
+      mParsingMode,
+      reinterpret_cast<const uint8_t*>(baseString.get()), baseString.Length(),
+      base, referrer, principal).Consume();
+
+  return NS_OK;
 }
 
 void

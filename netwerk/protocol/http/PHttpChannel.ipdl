@@ -47,6 +47,7 @@ parent:
   async Redirect2Verify(nsresult result, RequestHeaderTuples changedHeaders,
                         uint32_t loadFlags, OptionalURIParams apiRedirectTo,
                         OptionalCorsPreflightArgs corsPreflightArgs,
+                        bool forceHSTSPriming, bool mixedContentWouldBlock,
                         bool chooseAppcache);
 
   // For document loads we keep this protocol open after child's
@@ -164,10 +165,10 @@ child:
   async IssueDeprecationWarning(uint32_t warning, bool asError);
 
 both:
-  // After receiving this message, the parent calls SendDeleteSelf, and makes
-  // sure not to send any more messages after that. When receiving this message,
-  // the child will call Send__delete__() and complete the steps required to
-  // finish the redirect.
+  // After receiving this message, the parent also calls
+  // SendFinishInterceptedRedirect, and makes sure not to send any more messages
+  // after that. When receiving this message, the child will call
+  // Send__delete__() and complete the steps required to finish the redirect.
   async FinishInterceptedRedirect();
 };
 

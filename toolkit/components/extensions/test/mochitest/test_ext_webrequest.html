@@ -15,8 +15,6 @@
 
 SimpleTest.requestCompleteLog();
 
-const {AppConstants} = SpecialPowers.Cu.import("resource://gre/modules/AppConstants.jsm");
-
 const BASE = "http://mochi.test:8888/tests/toolkit/components/extensions/test/mochitest";
 
 const expected_requested = [BASE + "/file_WebRequest_page1.html",
@@ -95,7 +93,7 @@ function compareLists(list1, list2, kind) {
   is(String(list1), String(list2), `${kind} URLs correct`);
 }
 
-function backgroundScript(AppConstants) {
+function backgroundScript() {
   let checkCompleted = true;
   let savedTabId = -1;
 
@@ -153,6 +151,7 @@ function backgroundScript(AppConstants) {
   }
 
   let frameIDs = new Map();
+  let skippedRequests = new Set();
 
   let recorded = {requested: [],
                   beforeSendHeaders: [],
@@ -183,6 +182,7 @@ function backgroundScript(AppConstants) {
       },
       modified: {
         "Server": "WebRequest",
+        "Content-Type": "text/html; charset=utf-8",
       },
       deleted: [
         "Connection",
@@ -203,6 +203,7 @@ function backgroundScript(AppConstants) {
     if (headers.find(h => h.name === processedMark)) {
       // This may happen because of redirections or cache
       browser.test.log(`${phase}Headers in ${details.requestId} already processed`);
+      skippedRequests.add(details.requestId);
       return null;
     }
     headers.push({name: processedMark, value: "1"});
@@ -253,8 +254,14 @@ function backgroundScript(AppConstants) {
     }
 
     let modifiedAny = false;
+    browser.test.log(`HEADERS ${JSON.stringify(headers)}`);
     for (let header of headers.filter(h => h.name in modified)) {
       let {name, value} = header;
+      if (name.toLowerCase() === "content-type" && skippedRequests.has(details.requestId)) {
+        // Changes to Content-Type headers are not persisted in the cache.
+        continue;
+      }
+
       browser.test.assertTrue(value === modified[name], `header "${name}: ${value}" matches modified value ("${modified[name]}")`);
       modifiedAny = true;
     }
@@ -318,31 +325,6 @@ function backgroundScript(AppConstants) {
       return {cancel: true};
     }
     return {};
-  }
-
-  function onUpload(details) {
-    let url = new URL(details.url);
-    let upload = url.searchParams.get("upload");
-    if (!upload) {
-      return;
-    }
-    let requestBody = details.requestBody;
-    browser.test.log(`onUpload ${details.url} ${JSON.stringify(details.requestBody)}`);
-    browser.test.assertTrue(!!requestBody, `Intercepted upload ${details.url} #${details.requestId} ${upload} have a requestBody`);
-    if (!requestBody) {
-      return;
-    }
-    let byteLength = parseInt(upload, 10);
-    if (byteLength) {
-      browser.test.assertTrue(!!requestBody.raw, `Binary upload ${details.url} #${details.requestId} ${upload} have a raw attribute`);
-      browser.test.assertEq(byteLength, requestBody.raw && requestBody.raw.map(r => r.bytes && r.bytes.byteLength || 0).reduce((a, b) => a + b), `Binary upload size matches`);
-      return;
-    }
-    if ("raw" in requestBody) {
-      browser.test.assertEq(upload, JSON.stringify(requestBody.raw).replace(/(\bfile: ")[^"]+/, "$1<file>"), `Upload ${details.url} #${details.requestId} matches raw data`);
-    } else {
-      browser.test.assertEq(upload, JSON.stringify(requestBody.formData), `Upload ${details.url} #${details.requestId} matches form data.`);
-    }
   }
 
   function onBeforeSendHeaders(details) {
@@ -441,9 +423,6 @@ function backgroundScript(AppConstants) {
   }
 
   browser.webRequest.onBeforeRequest.addListener(onBeforeRequest, {urls: ["<all_urls>"]}, ["blocking"]);
-  if (!AppConstants.RELEASE_BUILD) {
-    browser.webRequest.onBeforeRequest.addListener(onUpload, {urls: ["http://*/*"]}, ["blocking", "requestBody"]);
-  }
   browser.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, {urls: ["<all_urls>"]}, ["blocking", "requestHeaders"]);
   browser.webRequest.onSendHeaders.addListener(onSendHeaders, {urls: ["<all_urls>"]}, ["requestHeaders"]);
   browser.webRequest.onBeforeRedirect.addListener(onBeforeRedirect, {urls: ["<all_urls>"]});
@@ -475,7 +454,7 @@ function* test_once(skipCompleted) {
         "webRequestBlocking",
       ],
     },
-    background: `const BASE = ${JSON.stringify(BASE)}; (${backgroundScript})(${JSON.stringify(AppConstants)})`,
+    background: `const BASE = ${JSON.stringify(BASE)}; (${backgroundScript.toString()})()`,
   };
 
   let extension = ExtensionTestUtils.loadExtension(extensionData);

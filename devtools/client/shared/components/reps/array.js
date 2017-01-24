@@ -37,24 +37,19 @@ define(function (require, exports, module) {
 
           delim = (i == array.length - 1 ? "" : ", ");
 
-          if (value === array) {
-            items.push(Reference({
-              key: i,
-              object: value,
-              delim: delim
-            }));
-          } else {
-            items.push(ItemRep({
-              key: i,
-              object: value,
-              delim: delim
-            }));
-          }
+          items.push(ItemRep({
+            key: i,
+            object: value,
+            // Hardcode tiny mode to avoid recursive handling.
+            mode: "tiny",
+            delim: delim
+          }));
         } catch (exc) {
           items.push(ItemRep({
+            key: i,
             object: exc,
-            delim: delim,
-            key: i
+            mode: "tiny",
+            delim: delim
           }));
         }
       }
@@ -122,13 +117,19 @@ define(function (require, exports, module) {
       let mode = this.props.mode || "short";
       let object = this.props.object;
       let items;
+      let brackets;
+      let needSpace = function (space) {
+        return space ? { left: "[ ", right: " ]"} : { left: "[", right: "]"};
+      };
 
       if (mode == "tiny") {
         let isEmpty = object.length === 0;
         items = DOM.span({className: "length"}, isEmpty ? "" : object.length);
+        brackets = needSpace(false);
       } else {
         let max = (mode == "short") ? 3 : 300;
         items = this.arrayIterator(object, max);
+        brackets = needSpace(items.length > 0);
       }
 
       let objectLink = this.props.objectLink || DOM.span;
@@ -138,15 +139,13 @@ define(function (require, exports, module) {
           className: "objectBox objectBox-array"},
           objectLink({
             className: "arrayLeftBracket",
-            role: "presentation",
             object: object
-          }, "["),
+          }, brackets.left),
           items,
           objectLink({
             className: "arrayRightBracket",
-            role: "presentation",
             object: object
-          }, "]"),
+          }, brackets.right),
           DOM.span({
             className: "arrayProperties",
             role: "group"}
@@ -167,26 +166,12 @@ define(function (require, exports, module) {
 
       let object = this.props.object;
       let delim = this.props.delim;
+      let mode = this.props.mode;
       return (
         DOM.span({},
-          Rep({object: object}),
+          Rep({object: object, mode: mode}),
           delim
         )
-      );
-    }
-  }));
-
-  /**
-   * Renders cycle references in an array.
-   */
-  let Reference = React.createFactory(React.createClass({
-    displayName: "Reference",
-
-    render: function () {
-      let tooltip = "Circular reference";
-      return (
-        DOM.span({title: tooltip},
-          "[…]")
       );
     }
   }));

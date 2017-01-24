@@ -10,6 +10,7 @@
 #include <stdint.h>                     // for int32_t, uint64_t
 #include "gfxTypes.h"
 #include "mozilla/Attributes.h"         // for override
+#include "mozilla/UniquePtr.h"
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
@@ -79,9 +80,10 @@ class CompositableForwarder : public TextureForwarder
 public:
 
   CompositableForwarder()
-    : mActiveResourceTracker(1000, "CompositableForwarder")
-    , mSerial(++sSerialCounter)
-  {}
+    : mSerial(++sSerialCounter)
+  {
+    mActiveResourceTracker = MakeUnique<ActiveResourceTracker>(1000, "CompositableForwarder");
+  }
 
   /**
    * Setup the IPDL actor for aCompositable to be part of layers
@@ -110,6 +112,8 @@ public:
                                 const OverlaySource& aOverlay,
                                 const gfx::IntRect& aPictureRect) = 0;
 #endif
+
+  virtual void Destroy(CompositableChild* aCompositable);
 
   virtual bool DestroyInTransaction(PTextureChild* aTexture, bool synchronously) = 0;
   virtual bool DestroyInTransaction(PCompositableChild* aCompositable, bool synchronously) = 0;
@@ -140,14 +144,13 @@ public:
 
   struct TimedTextureClient {
     TimedTextureClient()
-        : mTextureClient(nullptr), mFrameID(0), mProducerID(0), mInputFrameID(0) {}
+        : mTextureClient(nullptr), mFrameID(0), mProducerID(0) {}
 
     TextureClient* mTextureClient;
     TimeStamp mTimeStamp;
     nsIntRect mPictureRect;
     int32_t mFrameID;
     int32_t mProducerID;
-    int32_t mInputFrameID;
   };
   /**
    * Tell the CompositableHost on the compositor side what textures to use for
@@ -175,6 +178,12 @@ public:
     return mTextureFactoryIdentifier.mMaxTextureSize;
   }
 
+  virtual bool InForwarderThread() = 0;
+
+  void AssertInForwarderThread() {
+    MOZ_ASSERT(InForwarderThread());
+  }
+
   /**
    * Returns the type of backend that is used off the main thread.
    * We only don't allow changing the backend type at runtime so this value can
@@ -200,7 +209,7 @@ public:
     return mTextureFactoryIdentifier;
   }
 
-  ActiveResourceTracker& GetActiveResourceTracker() { return mActiveResourceTracker; }
+  ActiveResourceTracker& GetActiveResourceTracker() { return *mActiveResourceTracker.get(); }
 
 protected:
   TextureFactoryIdentifier mTextureFactoryIdentifier;
@@ -209,7 +218,7 @@ protected:
   nsTArray<RefPtr<CompositableClient>> mCompositableClientsToRemove;
   RefPtr<SyncObject> mSyncObject;
 
-  ActiveResourceTracker mActiveResourceTracker;
+  UniquePtr<ActiveResourceTracker> mActiveResourceTracker;
 
   const int32_t mSerial;
   static mozilla::Atomic<int32_t> sSerialCounter;

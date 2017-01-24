@@ -9,7 +9,6 @@
 
 #include "mozStorageService.h"
 #include "mozStorageConnection.h"
-#include "prinit.h"
 #include "nsAutoPtr.h"
 #include "nsCollationCID.h"
 #include "nsEmbedCID.h"
@@ -91,7 +90,7 @@ StorageSQLiteDistinguishedAmount()
  * @param aTotal
  *        The accumulator for the measurement.
  */
-nsresult
+static void
 ReportConn(nsIHandleReportCallback *aHandleReport,
            nsISupports *aData,
            Connection *aConn,
@@ -106,14 +105,11 @@ ReportConn(nsIHandleReportCallback *aHandleReport,
   path.AppendLiteral("-used");
 
   int32_t val = aConn->getSqliteRuntimeStatus(aOption);
-  nsresult rv = aHandleReport->Callback(EmptyCString(), path,
-                                        nsIMemoryReporter::KIND_HEAP,
-                                        nsIMemoryReporter::UNITS_BYTES,
-                                        int64_t(val), aDesc, aData);
-  NS_ENSURE_SUCCESS(rv, rv);
+  aHandleReport->Callback(EmptyCString(), path,
+                          nsIMemoryReporter::KIND_HEAP,
+                          nsIMemoryReporter::UNITS_BYTES,
+                          int64_t(val), aDesc, aData);
   *aTotal += val;
-
-  return NS_OK;
 }
 
 // Warning: To get a Connection's measurements requires holding its lock.
@@ -126,7 +122,6 @@ NS_IMETHODIMP
 Service::CollectReports(nsIHandleReportCallback *aHandleReport,
                         nsISupports *aData, bool aAnonymize)
 {
-  nsresult rv;
   size_t totalConnSize = 0;
   {
     nsTArray<RefPtr<Connection> > connections;
@@ -152,26 +147,23 @@ Service::CollectReports(nsIHandleReportCallback *aHandleReport,
       NS_NAMED_LITERAL_CSTRING(stmtDesc,
         "Memory (approximate) used by all prepared statements used by "
         "connections to this database.");
-      rv = ReportConn(aHandleReport, aData, conn, pathHead,
-                      NS_LITERAL_CSTRING("stmt"), stmtDesc,
-                      SQLITE_DBSTATUS_STMT_USED, &totalConnSize);
-      NS_ENSURE_SUCCESS(rv, rv);
+      ReportConn(aHandleReport, aData, conn, pathHead,
+                 NS_LITERAL_CSTRING("stmt"), stmtDesc,
+                 SQLITE_DBSTATUS_STMT_USED, &totalConnSize);
 
       NS_NAMED_LITERAL_CSTRING(cacheDesc,
         "Memory (approximate) used by all pager caches used by connections "
         "to this database.");
-      rv = ReportConn(aHandleReport, aData, conn, pathHead,
-                      NS_LITERAL_CSTRING("cache"), cacheDesc,
-                      SQLITE_DBSTATUS_CACHE_USED, &totalConnSize);
-      NS_ENSURE_SUCCESS(rv, rv);
+      ReportConn(aHandleReport, aData, conn, pathHead,
+                 NS_LITERAL_CSTRING("cache"), cacheDesc,
+                 SQLITE_DBSTATUS_CACHE_USED, &totalConnSize);
 
       NS_NAMED_LITERAL_CSTRING(schemaDesc,
         "Memory (approximate) used to store the schema for all databases "
         "associated with connections to this database.");
-      rv = ReportConn(aHandleReport, aData, conn, pathHead,
-                      NS_LITERAL_CSTRING("schema"), schemaDesc,
-                      SQLITE_DBSTATUS_SCHEMA_USED, &totalConnSize);
-      NS_ENSURE_SUCCESS(rv, rv);
+      ReportConn(aHandleReport, aData, conn, pathHead,
+                 NS_LITERAL_CSTRING("schema"), schemaDesc,
+                 SQLITE_DBSTATUS_SCHEMA_USED, &totalConnSize);
     }
 
 #ifdef MOZ_DMD
@@ -184,13 +176,9 @@ Service::CollectReports(nsIHandleReportCallback *aHandleReport,
 
   int64_t other = ::sqlite3_memory_used() - totalConnSize;
 
-  rv = aHandleReport->Callback(
-          EmptyCString(),
-          NS_LITERAL_CSTRING("explicit/storage/sqlite/other"),
-          KIND_HEAP, UNITS_BYTES, other,
-          NS_LITERAL_CSTRING("All unclassified sqlite memory."),
-          aData);
-  NS_ENSURE_SUCCESS(rv, rv);
+  MOZ_COLLECT_REPORT(
+    "explicit/storage/sqlite/other", KIND_HEAP, UNITS_BYTES, other,
+    "All unclassified sqlite memory.");
 
   return NS_OK;
 }
@@ -228,7 +216,7 @@ Service::getSingleton()
                           "run.");
       (void)ps->Alert(nullptr, title.get(), message.get());
     }
-    ::PR_Abort();
+    MOZ_CRASH("SQLite Version Error");
   }
 
   // The first reference to the storage service must be obtained on the
@@ -695,7 +683,7 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread());
     nsresult rv = mStorageFile ? mConnection->initialize(mStorageFile)
@@ -760,11 +748,43 @@ Service::OpenAsyncDatabase(nsIVariant *aDatabaseStore,
   NS_ENSURE_ARG(aDatabaseStore);
   NS_ENSURE_ARG(aCallback);
 
-  nsCOMPtr<nsIFile> storageFile;
-  int flags = SQLITE_OPEN_READWRITE;
+  nsresult rv;
+  bool shared = false;
+  bool readOnly = false;
+  bool ignoreLockingMode = false;
+  int32_t growthIncrement = -1;
 
+#define FAIL_IF_SET_BUT_INVALID(rv)\
+  if (NS_FAILED(rv) && rv != NS_ERROR_NOT_AVAILABLE) { \
+    return NS_ERROR_INVALID_ARG; \
+  }
+
+  // Deal with options first:
+  if (aOptions) {
+    rv = aOptions->GetPropertyAsBool(NS_LITERAL_STRING("readOnly"), &readOnly);
+    FAIL_IF_SET_BUT_INVALID(rv);
+
+    rv = aOptions->GetPropertyAsBool(NS_LITERAL_STRING("ignoreLockingMode"),
+                                     &ignoreLockingMode);
+    FAIL_IF_SET_BUT_INVALID(rv);
+    // Specifying ignoreLockingMode will force use of the readOnly flag:
+    if (ignoreLockingMode) {
+      readOnly = true;
+    }
+
+    rv = aOptions->GetPropertyAsBool(NS_LITERAL_STRING("shared"), &shared);
+    FAIL_IF_SET_BUT_INVALID(rv);
+
+    // NB: we re-set to -1 if we don't have a storage file later on.
+    rv = aOptions->GetPropertyAsInt32(NS_LITERAL_STRING("growthIncrement"),
+                                      &growthIncrement);
+    FAIL_IF_SET_BUT_INVALID(rv);
+  }
+  int flags = readOnly ? SQLITE_OPEN_READONLY : SQLITE_OPEN_READWRITE;
+
+  nsCOMPtr<nsIFile> storageFile;
   nsCOMPtr<nsISupports> dbStore;
-  nsresult rv = aDatabaseStore->GetAsISupports(getter_AddRefs(dbStore));
+  rv = aDatabaseStore->GetAsISupports(getter_AddRefs(dbStore));
   if (NS_SUCCEEDED(rv)) {
     // Generally, aDatabaseStore holds the database nsIFile.
     storageFile = do_QueryInterface(dbStore, &rv);
@@ -775,17 +795,12 @@ Service::OpenAsyncDatabase(nsIVariant *aDatabaseStore,
     rv = storageFile->Clone(getter_AddRefs(storageFile));
     MOZ_ASSERT(NS_SUCCEEDED(rv));
 
-    // Ensure that SQLITE_OPEN_CREATE is passed in for compatibility reasons.
-    flags |= SQLITE_OPEN_CREATE;
-
-    // Extract and apply the shared-cache option.
-    bool shared = false;
-    if (aOptions) {
-      rv = aOptions->GetPropertyAsBool(NS_LITERAL_STRING("shared"), &shared);
-      if (NS_FAILED(rv) && rv != NS_ERROR_NOT_AVAILABLE) {
-        return NS_ERROR_INVALID_ARG;
-      }
+    if (!readOnly) {
+      // Ensure that SQLITE_OPEN_CREATE is passed in for compatibility reasons.
+      flags |= SQLITE_OPEN_CREATE;
     }
+
+    // Apply the shared-cache option.
     flags |= shared ? SQLITE_OPEN_SHAREDCACHE : SQLITE_OPEN_PRIVATECACHE;
   } else {
     // Sometimes, however, it's a special database name.
@@ -799,17 +814,13 @@ Service::OpenAsyncDatabase(nsIVariant *aDatabaseStore,
     // connection to use a memory DB.
   }
 
-  int32_t growthIncrement = -1;
-  if (aOptions && storageFile) {
-    rv = aOptions->GetPropertyAsInt32(NS_LITERAL_STRING("growthIncrement"),
-                                      &growthIncrement);
-    if (NS_FAILED(rv) && rv != NS_ERROR_NOT_AVAILABLE) {
-      return NS_ERROR_INVALID_ARG;
-    }
+  if (!storageFile && growthIncrement >= 0) {
+    return NS_ERROR_INVALID_ARG;
   }
 
   // Create connection on this thread, but initialize it on its helper thread.
-  RefPtr<Connection> msc = new Connection(this, flags, true);
+  RefPtr<Connection> msc = new Connection(this, flags, true,
+                                          ignoreLockingMode);
   nsCOMPtr<nsIEventTarget> target = msc->getAsyncExecutionTarget();
   MOZ_ASSERT(target, "Cannot initialize a connection that has been closed already");
 

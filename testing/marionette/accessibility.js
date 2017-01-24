@@ -16,8 +16,8 @@ XPCOMUtils.defineLazyModuleGetter(
 XPCOMUtils.defineLazyModuleGetter(
     this, "clearInterval", "resource://gre/modules/Timer.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "retrieval",
-    () => Cc["@mozilla.org/accessibleRetrieval;1"].getService(Ci.nsIAccessibleRetrieval));
+XPCOMUtils.defineLazyGetter(this, "service",
+    () => Cc["@mozilla.org/accessibilityService;1"].getService(Ci.nsIAccessibilityService));
 
 this.EXPORTED_SYMBOLS = ["accessibility"];
 
@@ -41,12 +41,23 @@ this.accessibility = {};
 /**
  * Accessible states used to check element"s state from the accessiblity API
  * perspective.
+ * Note: if gecko is built with --disable-accessibility, the interfaces are not
+ * defined. This is why we use getters instead to be able to use these
+ * statically.
  */
 accessibility.State = {
-  Unavailable: Ci.nsIAccessibleStates.STATE_UNAVAILABLE,
-  Focusable: Ci.nsIAccessibleStates.STATE_FOCUSABLE,
-  Selectable: Ci.nsIAccessibleStates.STATE_SELECTABLE,
-  Selected: Ci.nsIAccessibleStates.STATE_SELECTED,
+  get Unavailable() {
+    return Ci.nsIAccessibleStates.STATE_UNAVAILABLE;
+  },
+  get Focusable() {
+    return Ci.nsIAccessibleStates.STATE_FOCUSABLE;
+  },
+  get Selectable() {
+    return Ci.nsIAccessibleStates.STATE_SELECTABLE;
+  },
+  get Selected() {
+    return Ci.nsIAccessibleStates.STATE_SELECTED;
+  }
 };
 
 /**
@@ -117,7 +128,7 @@ accessibility.Checks = class {
    */
   getAccessible(element, mustHaveAccessible = false) {
     return new Promise((resolve, reject) => {
-      let acc = retrieval.getAccessibleFor(element);
+      let acc = service.getAccessibleFor(element);
 
       // if accessible object is found, return it;
       // if it is not required, also resolve
@@ -135,7 +146,7 @@ accessibility.Checks = class {
       } else {
         let attempts = GET_ACCESSIBLE_ATTEMPTS;
         let intervalId = setInterval(() => {
-          let acc = retrieval.getAccessibleFor(element);
+          let acc = service.getAccessibleFor(element);
           if (acc || --attempts <= 0) {
             clearInterval(intervalId);
             if (acc) {
@@ -163,7 +174,7 @@ accessibility.Checks = class {
    */
   isActionableRole(accessible) {
     return accessibility.ActionableRoles.has(
-        retrieval.getStringRole(accessible.role));
+        service.getStringRole(accessible.role));
   }
 
   /**

@@ -530,19 +530,18 @@ MacroAssembler::callWithABINoProfiler(const Address& fun, MoveOp::Type result)
 // Branch functions
 
 void
-MacroAssembler::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label)
+MacroAssembler::branchPtrInNurseryChunk(Condition cond, Register ptr, Register temp, Label* label)
 {
-    ScratchRegisterScope scratch(*this);
-
     MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+
+    ScratchRegisterScope scratch(*this);
     MOZ_ASSERT(ptr != temp);
     MOZ_ASSERT(ptr != scratch);
 
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
-    movePtr(ImmWord(-ptrdiff_t(nursery.start())), scratch);
-    addPtr(ptr, scratch);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              scratch, Imm32(nursery.nurserySize()), label);
+    movePtr(ptr, scratch);
+    orPtr(Imm32(gc::ChunkMask), scratch);
+    branch32(cond, Address(scratch, gc::ChunkLocationOffsetFromLastByte),
+             Imm32(int32_t(gc::ChunkLocation::Nursery)), label);
 }
 
 void
@@ -556,7 +555,7 @@ void
 MacroAssembler::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
                                            Label* label)
 {
-    branchValueIsNurseryObjectImpl(cond, value.valueReg(), temp, label);
+    branchValueIsNurseryObjectImpl(cond, value, temp, label);
 }
 
 template <typename T>
@@ -565,21 +564,17 @@ MacroAssembler::branchValueIsNurseryObjectImpl(Condition cond, const T& value, R
                                                Label* label)
 {
     MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+    MOZ_ASSERT(temp != InvalidReg);
 
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+    Label done;
+    branchTestObject(Assembler::NotEqual, value, cond == Assembler::Equal ? &done : label);
 
-    // Avoid creating a bogus ObjectValue below.
-    if (!nursery.exists())
-        return;
+    extractObject(value, temp);
+    orPtr(Imm32(gc::ChunkMask), temp);
+    branch32(cond, Address(temp, gc::ChunkLocationOffsetFromLastByte),
+             Imm32(int32_t(gc::ChunkLocation::Nursery)), label);
 
-    // 'Value' representing the start of the nursery tagged as a JSObject
-    Value start = ObjectValue(*reinterpret_cast<JSObject*>(nursery.start()));
-
-    ScratchRegisterScope scratch(*this);
-    movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), scratch);
-    addPtr(value, scratch);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              scratch, Imm32(nursery.nurserySize()), label);
+    bind(&done);
 }
 
 void
@@ -633,4 +628,193 @@ MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, c
 template void
 MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const BaseIndex& dest,
                                   MIRType slotType);
+
+// ========================================================================
+// wasm support
+
+void
+MacroAssembler::wasmLoad(Scalar::Type type, unsigned numSimdElems, Operand srcAddr, AnyRegister out)
+{
+    switch (type) {
+      case Scalar::Int8:
+        movsbl(srcAddr, out.gpr());
+        break;
+      case Scalar::Uint8:
+        movzbl(srcAddr, out.gpr());
+        break;
+      case Scalar::Int16:
+        movswl(srcAddr, out.gpr());
+        break;
+      case Scalar::Uint16:
+        movzwl(srcAddr, out.gpr());
+        break;
+      case Scalar::Int32:
+      case Scalar::Uint32:
+        movl(srcAddr, out.gpr());
+        break;
+      case Scalar::Float32:
+        loadFloat32(srcAddr, out.fpu());
+        break;
+      case Scalar::Float64:
+        loadDouble(srcAddr, out.fpu());
+        break;
+      case Scalar::Float32x4:
+        switch (numSimdElems) {
+          // In memory-to-register mode, movss zeroes out the high lanes.
+          case 1: loadFloat32(srcAddr, out.fpu()); break;
+          // See comment above, which also applies to movsd.
+          case 2: loadDouble(srcAddr, out.fpu()); break;
+          case 4: loadUnalignedSimd128Float(srcAddr, out.fpu()); break;
+          default: MOZ_CRASH("unexpected size for partial load");
+        }
+        break;
+      case Scalar::Int32x4:
+        switch (numSimdElems) {
+          // In memory-to-register mode, movd zeroes out the high lanes.
+          case 1: vmovd(srcAddr, out.fpu()); break;
+          // See comment above, which also applies to movq.
+          case 2: vmovq(srcAddr, out.fpu()); break;
+          case 4: loadUnalignedSimd128Int(srcAddr, out.fpu()); break;
+          default: MOZ_CRASH("unexpected size for partial load");
+        }
+        break;
+      case Scalar::Int8x16:
+        MOZ_ASSERT(numSimdElems == 16, "unexpected partial load");
+        loadUnalignedSimd128Int(srcAddr, out.fpu());
+        break;
+      case Scalar::Int16x8:
+        MOZ_ASSERT(numSimdElems == 8, "unexpected partial load");
+        loadUnalignedSimd128Int(srcAddr, out.fpu());
+        break;
+      case Scalar::Int64:
+        MOZ_CRASH("int64 loads must use load64");
+      case Scalar::Uint8Clamped:
+      case Scalar::MaxTypedArrayViewType:
+        MOZ_CRASH("unexpected array type");
+    }
+}
+
+void
+MacroAssembler::wasmLoadI64(Scalar::Type type, Operand srcAddr, Register64 out)
+{
+    switch (type) {
+      case Scalar::Int8:
+        movsbq(srcAddr, out.reg);
+        break;
+      case Scalar::Uint8:
+        movzbq(srcAddr, out.reg);
+        break;
+      case Scalar::Int16:
+        movswq(srcAddr, out.reg);
+        break;
+      case Scalar::Uint16:
+        movzwq(srcAddr, out.reg);
+        break;
+      case Scalar::Int32:
+        movslq(srcAddr, out.reg);
+        break;
+      // Int32 to int64 moves zero-extend by default.
+      case Scalar::Uint32:
+        movl(srcAddr, out.reg);
+        break;
+      case Scalar::Int64:
+        movq(srcAddr, out.reg);
+        break;
+      case Scalar::Float32:
+      case Scalar::Float64:
+      case Scalar::Float32x4:
+      case Scalar::Int8x16:
+      case Scalar::Int16x8:
+      case Scalar::Int32x4:
+        MOZ_CRASH("non-int64 loads should use load()");
+      case Scalar::Uint8Clamped:
+      case Scalar::MaxTypedArrayViewType:
+        MOZ_CRASH("unexpected array type");
+    }
+}
+
+void
+MacroAssembler::wasmStore(Scalar::Type type, unsigned numSimdElems, AnyRegister value,
+                          Operand dstAddr)
+{
+    switch (type) {
+      case Scalar::Int8:
+      case Scalar::Uint8:
+        movb(value.gpr(), dstAddr);
+        break;
+      case Scalar::Int16:
+      case Scalar::Uint16:
+        movw(value.gpr(), dstAddr);
+        break;
+      case Scalar::Int32:
+      case Scalar::Uint32:
+        movl(value.gpr(), dstAddr);
+        break;
+      case Scalar::Int64:
+        movq(value.gpr(), dstAddr);
+        break;
+      case Scalar::Float32:
+        storeUncanonicalizedFloat32(value.fpu(), dstAddr);
+        break;
+      case Scalar::Float64:
+        storeUncanonicalizedDouble(value.fpu(), dstAddr);
+        break;
+      case Scalar::Float32x4:
+        switch (numSimdElems) {
+          // In memory-to-register mode, movss zeroes out the high lanes.
+          case 1: storeUncanonicalizedFloat32(value.fpu(), dstAddr); break;
+          // See comment above, which also applies to movsd.
+          case 2: storeUncanonicalizedDouble(value.fpu(), dstAddr); break;
+          case 4: storeUnalignedSimd128Float(value.fpu(), dstAddr); break;
+          default: MOZ_CRASH("unexpected size for partial load");
+        }
+        break;
+      case Scalar::Int32x4:
+        switch (numSimdElems) {
+          // In memory-to-register mode, movd zeroes out the high lanes.
+          case 1: vmovd(value.fpu(), dstAddr); break;
+          // See comment above, which also applies to movq.
+          case 2: vmovq(value.fpu(), dstAddr); break;
+          case 4: storeUnalignedSimd128Int(value.fpu(), dstAddr); break;
+          default: MOZ_CRASH("unexpected size for partial load");
+        }
+        break;
+      case Scalar::Int8x16:
+        MOZ_ASSERT(numSimdElems == 16, "unexpected partial store");
+        storeUnalignedSimd128Int(value.fpu(), dstAddr);
+        break;
+      case Scalar::Int16x8:
+        MOZ_ASSERT(numSimdElems == 8, "unexpected partial store");
+        storeUnalignedSimd128Int(value.fpu(), dstAddr);
+        break;
+      case Scalar::Uint8Clamped:
+      case Scalar::MaxTypedArrayViewType:
+        MOZ_CRASH("unexpected array type");
+    }
+}
+
+void
+MacroAssembler::wasmTruncateDoubleToUInt32(FloatRegister input, Register output, Label* oolEntry)
+{
+    vcvttsd2sq(input, output);
+
+    // Check that the result is in the uint32_t range.
+    ScratchRegisterScope scratch(*this);
+    move32(Imm32(0xffffffff), scratch);
+    cmpq(scratch, output);
+    j(Assembler::Above, oolEntry);
+}
+
+void
+MacroAssembler::wasmTruncateFloat32ToUInt32(FloatRegister input, Register output, Label* oolEntry)
+{
+    vcvttss2sq(input, output);
+
+    // Check that the result is in the uint32_t range.
+    ScratchRegisterScope scratch(*this);
+    move32(Imm32(0xffffffff), scratch);
+    cmpq(scratch, output);
+    j(Assembler::Above, oolEntry);
+}
+
 //}}} check_macroassembler_style

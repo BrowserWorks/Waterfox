@@ -37,17 +37,18 @@
 #include "nsIWidgetListener.h"
 #include "nsIGfxInfo.h"
 #include "npapi.h"
+#include "X11UndefineNone.h"
 #include "base/thread.h"
 #include "prdtoa.h"
 #include "prenv.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsContentUtils.h"
 #include "gfxPrefs.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/MouseEvents.h"
 #include "GLConsts.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/VsyncDispatcher.h"
 #include "mozilla/layers/IAPZCTreeManager.h"
@@ -61,7 +62,7 @@
 #include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/Move.h"
 #include "mozilla/Services.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nsRefPtrHashtable.h"
 #include "TouchEvents.h"
 #include "WritingModes.h"
@@ -72,6 +73,7 @@
 #endif
 #include "gfxConfig.h"
 #include "mozilla/layers/CompositorSession.h"
+#include "VRManagerChild.h"
 
 #ifdef DEBUG
 #include "nsIObserver.h"
@@ -246,6 +248,7 @@ WidgetShutdownObserver::Unregister()
 void
 nsBaseWidget::Shutdown()
 {
+  RevokeTransactionIdAllocator();
   DestroyCompositor();
   FreeShutdownObserver();
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
@@ -289,6 +292,23 @@ void nsBaseWidget::DestroyCompositor()
     mCompositorVsyncDispatcher->Shutdown();
     mCompositorVsyncDispatcher = nullptr;
   }
+}
+
+// This prevents the layer manager from starting a new transaction during
+// shutdown.
+void
+nsBaseWidget::RevokeTransactionIdAllocator()
+{
+  if (!mLayerManager) {
+    return;
+  }
+
+  ClientLayerManager* clm = mLayerManager->AsClientLayerManager();
+  if (!clm) {
+    return;
+  }
+
+  clm->SetTransactionIdAllocator(nullptr);
 }
 
 void nsBaseWidget::ReleaseContentController()
@@ -352,6 +372,7 @@ nsBaseWidget::OnRenderingDeviceReset()
     lf->IdentifyTextureHost(identifier);
   }
   ImageBridgeChild::IdentifyCompositorTextureHost(identifier);
+  gfx::VRManagerChild::IdentifyTextureHost(identifier);
 }
 
 void
@@ -379,6 +400,7 @@ nsBaseWidget::~nsBaseWidget()
   }
 
   FreeShutdownObserver();
+  RevokeTransactionIdAllocator();
   DestroyLayerManager();
 
 #ifdef NOISY_WIDGET_LEAKS
@@ -416,11 +438,6 @@ void nsBaseWidget::BaseCreate(nsIWidget* aParent,
   if (aParent) {
     aParent->AddChild(this);
   }
-}
-
-NS_IMETHODIMP nsBaseWidget::CaptureMouse(bool aCapture)
-{
-  return NS_OK;
 }
 
 //-------------------------------------------------------------------------
@@ -473,7 +490,7 @@ nsBaseWidget::CreateChild(const LayoutDeviceIntRect& aRect,
 }
 
 // Attach a view to our widget which we'll send events to.
-NS_IMETHODIMP
+void
 nsBaseWidget::AttachViewToTopLevel(bool aUseAttachedEvents)
 {
   NS_ASSERTION((mWindowType == eWindowType_toplevel ||
@@ -483,8 +500,6 @@ nsBaseWidget::AttachViewToTopLevel(bool aUseAttachedEvents)
                "Can't attach to window of that type");
 
   mUseAttachedEvents = aUseAttachedEvents;
-
-  return NS_OK;
 }
 
 nsIWidgetListener* nsBaseWidget::GetAttachedWidgetListener()
@@ -512,7 +527,7 @@ void nsBaseWidget::SetAttachedWidgetListener(nsIWidgetListener* aListener)
 // Close this nsBaseWidget
 //
 //-------------------------------------------------------------------------
-NS_METHOD nsBaseWidget::Destroy()
+void nsBaseWidget::Destroy()
 {
   // Just in case our parent is the only ref to us
   nsCOMPtr<nsIWidget> kungFuDeathGrip(this);
@@ -526,8 +541,6 @@ NS_METHOD nsBaseWidget::Destroy()
   // Allow our scroll capture container to be cleaned up, if we have one.
   mScrollCaptureContainer = nullptr;
 #endif
-
-  return NS_OK;
 }
 
 
@@ -616,15 +629,15 @@ double nsIWidget::DefaultScaleOverride()
 //-------------------------------------------------------------------------
 void nsBaseWidget::AddChild(nsIWidget* aChild)
 {
-  MOZ_RELEASE_ASSERT(!aChild->GetNextSibling() && !aChild->GetPrevSibling(),
-                     "aChild not properly removed from its old child list");
+  MOZ_ASSERT(!aChild->GetNextSibling() && !aChild->GetPrevSibling(),
+             "aChild not properly removed from its old child list");
 
   if (!mFirstChild) {
     mFirstChild = mLastChild = aChild;
   } else {
     // append to the list
-    MOZ_RELEASE_ASSERT(mLastChild);
-    MOZ_RELEASE_ASSERT(!mLastChild->GetNextSibling());
+    MOZ_ASSERT(mLastChild);
+    MOZ_ASSERT(!mLastChild->GetNextSibling());
     mLastChild->SetNextSibling(aChild);
     aChild->SetPrevSibling(mLastChild);
     mLastChild = aChild;
@@ -721,22 +734,11 @@ void nsBaseWidget::SetZIndex(int32_t aZIndex)
 
 //-------------------------------------------------------------------------
 //
-// Places widget behind the given widget (platforms must override)
-//
-//-------------------------------------------------------------------------
-NS_IMETHODIMP nsBaseWidget::PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
-                                        nsIWidget *aWidget, bool aActivate)
-{
-  return NS_OK;
-}
-
-//-------------------------------------------------------------------------
-//
 // Maximize, minimize or restore the window. The BaseWidget implementation
 // merely stores the state.
 //
 //-------------------------------------------------------------------------
-NS_IMETHODIMP
+void
 nsBaseWidget::SetSizeMode(nsSizeMode aMode)
 {
   MOZ_ASSERT(aMode == nsSizeMode_Normal ||
@@ -744,7 +746,6 @@ nsBaseWidget::SetSizeMode(nsSizeMode aMode)
              aMode == nsSizeMode_Maximized ||
              aMode == nsSizeMode_Fullscreen);
   mSizeMode = aMode;
-  return NS_OK;
 }
 
 //-------------------------------------------------------------------------
@@ -757,7 +758,7 @@ nsCursor nsBaseWidget::GetCursor()
   return mCursor;
 }
 
-NS_METHOD nsBaseWidget::SetCursor(nsCursor aCursor)
+NS_IMETHODIMP nsBaseWidget::SetCursor(nsCursor aCursor)
 {
   mCursor = aCursor;
   return NS_OK;
@@ -857,17 +858,6 @@ nsBaseWidget::SetWindowClipRegion(const nsTArray<LayoutDeviceIntRect>& aRects,
 
 //-------------------------------------------------------------------------
 //
-// Set window shadow style
-//
-//-------------------------------------------------------------------------
-
-NS_IMETHODIMP nsBaseWidget::SetWindowShadowStyle(int32_t aMode)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-//-------------------------------------------------------------------------
-//
 // Hide window borders/decorations for this widget
 //
 //-------------------------------------------------------------------------
@@ -891,7 +881,8 @@ nsBaseWidget::PerformFullscreenTransition(FullscreenTransitionStage aStage,
 // Put the window into full-screen mode
 //
 //-------------------------------------------------------------------------
-NS_IMETHODIMP nsBaseWidget::MakeFullScreen(bool aFullScreen, nsIScreen* aScreen)
+void
+nsBaseWidget::InfallibleMakeFullScreen(bool aFullScreen, nsIScreen* aScreen)
 {
   HideWindowChrome(aFullScreen);
 
@@ -899,7 +890,7 @@ NS_IMETHODIMP nsBaseWidget::MakeFullScreen(bool aFullScreen, nsIScreen* aScreen)
     if (!mOriginalBounds) {
       mOriginalBounds = new LayoutDeviceIntRect();
     }
-    GetScreenBounds(*mOriginalBounds);
+    *mOriginalBounds = GetScreenBounds();
 
     // Move to top-left corner of screen and size to the screen dimensions
     nsCOMPtr<nsIScreen> screen = aScreen;
@@ -921,7 +912,12 @@ NS_IMETHODIMP nsBaseWidget::MakeFullScreen(bool aFullScreen, nsIScreen* aScreen)
              mOriginalBounds->height, true);
     }
   }
+}
 
+nsresult
+nsBaseWidget::MakeFullScreen(bool aFullScreen, nsIScreen* aScreen)
+{
+  InfallibleMakeFullScreen(aFullScreen, aScreen);
   return NS_OK;
 }
 
@@ -974,8 +970,7 @@ nsBaseWidget::UseAPZ()
 
 void nsBaseWidget::CreateCompositor()
 {
-  LayoutDeviceIntRect rect;
-  GetBounds(rect);
+  LayoutDeviceIntRect rect = GetBounds();
   CreateCompositor(rect.width, rect.height);
 }
 
@@ -1045,12 +1040,9 @@ void
 nsBaseWidget::SetConfirmedTargetAPZC(uint64_t aInputBlockId,
                                      const nsTArray<ScrollableLayerGuid>& aTargets) const
 {
-  // Need to specifically bind this since it's overloaded.
-  void (IAPZCTreeManager::*setTargetApzcFunc)(uint64_t, const nsTArray<ScrollableLayerGuid>&)
-          = &IAPZCTreeManager::SetTargetAPZC;
   APZThreadUtils::RunOnControllerThread(NewRunnableMethod
     <uint64_t, StoreCopyPassByRRef<nsTArray<ScrollableLayerGuid>>>(mAPZC,
-                                                                   setTargetApzcFunc,
+                                                                   &IAPZCTreeManager::SetTargetAPZC,
                                                                    aInputBlockId, aTargets));
 }
 
@@ -1213,6 +1205,30 @@ private:
   ScrollableLayerGuid mGuid;
 };
 
+void
+nsBaseWidget::DispatchTouchInput(MultiTouchInput& aInput)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (mAPZC) {
+    MOZ_ASSERT(APZThreadUtils::IsControllerThread());
+    uint64_t inputBlockId = 0;
+    ScrollableLayerGuid guid;
+
+    nsEventStatus result = mAPZC->ReceiveInputEvent(aInput, &guid, &inputBlockId);
+    if (result == nsEventStatus_eConsumeNoDefault) {
+      return;
+    }
+
+    WidgetTouchEvent event = aInput.ToWidgetTouchEvent(this);
+    ProcessUntransformedAPZEvent(&event, guid, inputBlockId, result);
+  } else {
+    WidgetTouchEvent event = aInput.ToWidgetTouchEvent(this);
+
+    nsEventStatus status;
+    DispatchEvent(&event, status);
+  }
+}
+
 nsEventStatus
 nsBaseWidget::DispatchInputEvent(WidgetInputEvent* aEvent)
 {
@@ -1361,6 +1377,7 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
   lf->SetShadowManager(shadowManager);
   lf->IdentifyTextureHost(textureFactoryIdentifier);
   ImageBridgeChild::IdentifyCompositorTextureHost(textureFactoryIdentifier);
+  gfx::VRManagerChild::IdentifyTextureHost(textureFactoryIdentifier);
   WindowUsesOMTC();
 
   mLayerManager = lm.forget();
@@ -1442,12 +1459,7 @@ void nsBaseWidget::OnDestroy()
   ReleaseContentController();
 }
 
-NS_METHOD nsBaseWidget::SetWindowClass(const nsAString& xulWinType)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_METHOD nsBaseWidget::MoveClient(double aX, double aY)
+NS_IMETHODIMP nsBaseWidget::MoveClient(double aX, double aY)
 {
   LayoutDeviceIntPoint clientOffset(GetClientOffset());
 
@@ -1461,15 +1473,14 @@ NS_METHOD nsBaseWidget::MoveClient(double aX, double aY)
   }
 }
 
-NS_METHOD nsBaseWidget::ResizeClient(double aWidth,
-                                     double aHeight,
-                                     bool aRepaint)
+NS_IMETHODIMP nsBaseWidget::ResizeClient(double aWidth,
+                                         double aHeight,
+                                         bool aRepaint)
 {
   NS_ASSERTION((aWidth >=0) , "Negative width passed to ResizeClient");
   NS_ASSERTION((aHeight >=0), "Negative height passed to ResizeClient");
 
-  LayoutDeviceIntRect clientBounds;
-  GetClientBounds(clientBounds);
+  LayoutDeviceIntRect clientBounds = GetClientBounds();
 
   // GetClientBounds and mBounds are device pixels; scale back to desktop pixels
   // if that's what this widget uses for the Move/Resize APIs
@@ -1485,19 +1496,17 @@ NS_METHOD nsBaseWidget::ResizeClient(double aWidth,
   }
 }
 
-NS_METHOD nsBaseWidget::ResizeClient(double aX,
-                                     double aY,
-                                     double aWidth,
-                                     double aHeight,
-                                     bool aRepaint)
+NS_IMETHODIMP nsBaseWidget::ResizeClient(double aX,
+                                         double aY,
+                                         double aWidth,
+                                         double aHeight,
+                                         bool aRepaint)
 {
   NS_ASSERTION((aWidth >=0) , "Negative width passed to ResizeClient");
   NS_ASSERTION((aHeight >=0), "Negative height passed to ResizeClient");
 
-  LayoutDeviceIntRect clientBounds;
-  GetClientBounds(clientBounds);
-
-  LayoutDeviceIntPoint clientOffset(GetClientOffset());
+  LayoutDeviceIntRect clientBounds = GetClientBounds();
+  LayoutDeviceIntPoint clientOffset = GetClientOffset();
 
   if (BoundsUseDesktopPixels()) {
     DesktopToLayoutDeviceScale scale = GetDesktopToDeviceScale();
@@ -1526,19 +1535,20 @@ NS_METHOD nsBaseWidget::ResizeClient(double aX,
 * If the implementation of nsWindow supports borders this method MUST be overridden
 *
 **/
-NS_METHOD nsBaseWidget::GetClientBounds(LayoutDeviceIntRect &aRect)
+LayoutDeviceIntRect
+nsBaseWidget::GetClientBounds()
 {
-  return GetBounds(aRect);
+  return GetBounds();
 }
 
 /**
 * If the implementation of nsWindow supports borders this method MUST be overridden
 *
 **/
-NS_METHOD nsBaseWidget::GetBounds(LayoutDeviceIntRect &aRect)
+LayoutDeviceIntRect
+nsBaseWidget::GetBounds()
 {
-  aRect = mBounds;
-  return NS_OK;
+  return mBounds;
 }
 
 /**
@@ -1546,17 +1556,20 @@ NS_METHOD nsBaseWidget::GetBounds(LayoutDeviceIntRect &aRect)
 * this method must be overridden
 *
 **/
-NS_METHOD nsBaseWidget::GetScreenBounds(LayoutDeviceIntRect& aRect)
+LayoutDeviceIntRect
+nsBaseWidget::GetScreenBounds()
 {
-  return GetBounds(aRect);
+  return GetBounds();
 }
 
-NS_METHOD nsBaseWidget::GetRestoredBounds(LayoutDeviceIntRect& aRect)
+nsresult
+nsBaseWidget::GetRestoredBounds(LayoutDeviceIntRect& aRect)
 {
   if (SizeMode() != nsSizeMode_Normal) {
     return NS_ERROR_FAILURE;
   }
-  return GetScreenBounds(aRect);
+  aRect = GetScreenBounds();
+  return NS_OK;
 }
 
 LayoutDeviceIntPoint
@@ -1566,30 +1579,14 @@ nsBaseWidget::GetClientOffset()
 }
 
 NS_IMETHODIMP
-nsBaseWidget::GetNonClientMargins(LayoutDeviceIntMargin &margins)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
 nsBaseWidget::SetNonClientMargins(LayoutDeviceIntMargin &margins)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-NS_METHOD nsBaseWidget::EnableDragDrop(bool aEnable)
-{
-  return NS_OK;
-}
-
 uint32_t nsBaseWidget::GetMaxTouchPoints() const
 {
   return 0;
-}
-
-NS_METHOD nsBaseWidget::SetModal(bool aModal)
-{
-  return NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
@@ -1607,12 +1604,6 @@ NS_IMETHODIMP
 nsBaseWidget::SetIcon(const nsAString&)
 {
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsBaseWidget::SetWindowTitlebarColor(nscolor aColor, bool aActive)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 bool
@@ -1910,8 +1901,7 @@ nsBaseWidget::GetRootAccessible()
 
   // Accessible creation might be not safe so use IsSafeToRunScript to
   // make sure it's not created at unsafe times.
-  nsCOMPtr<nsIAccessibilityService> accService =
-    services::GetAccessibilityService();
+  nsAccessibilityService* accService = GetOrCreateAccService();
   if (accService) {
 #if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
     if (!mAccessibilityInUseFlag) {
@@ -1955,8 +1945,7 @@ nsBaseWidget::GetWidgetScreen()
     return nullptr;
   }
 
-  LayoutDeviceIntRect bounds;
-  GetScreenBounds(bounds);
+  LayoutDeviceIntRect bounds = GetScreenBounds();
   DesktopIntRect deskBounds = RoundedToInt(bounds / GetDesktopToDeviceScale());
   nsCOMPtr<nsIScreen> screen;
   screenManager->ScreenForRect(deskBounds.x, deskBounds.y,
@@ -2073,6 +2062,8 @@ nsIWidget::ClearNativeTouchSequence(nsIObserver* aObserver)
 
 MultiTouchInput
 nsBaseWidget::UpdateSynthesizedTouchState(MultiTouchInput* aState,
+                                          uint32_t aTime,
+                                          mozilla::TimeStamp aTimeStamp,
                                           uint32_t aPointerId,
                                           TouchPointerState aPointerState,
                                           LayoutDeviceIntPoint aPoint,
@@ -2089,6 +2080,8 @@ nsBaseWidget::UpdateSynthesizedTouchState(MultiTouchInput* aState,
   // touch(es). We use |inputToDispatch| for this purpose.
   MultiTouchInput inputToDispatch;
   inputToDispatch.mInputType = MULTITOUCH_INPUT;
+  inputToDispatch.mTime = aTime;
+  inputToDispatch.mTimeStamp = aTimeStamp;
 
   int32_t index = aState->IndexOfTouch((int32_t)aPointerId);
   if (aPointerState == TOUCH_CONTACT) {
@@ -3095,7 +3088,7 @@ case _value: eventName.AssignLiteral(_name) ; break
     {
       char buf[32];
 
-      snprintf_literal(buf,"UNKNOWN: %d",aGuiEvent->mMessage);
+      SprintfLiteral(buf,"UNKNOWN: %d",aGuiEvent->mMessage);
 
       CopyASCIItoUTF16(buf, eventName);
     }

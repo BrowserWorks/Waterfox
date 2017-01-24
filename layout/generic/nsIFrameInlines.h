@@ -38,7 +38,7 @@ nsIFrame::IsFlexOrGridItem() const
 bool
 nsIFrame::IsTableCaption() const
 {
-  return StyleDisplay()->mDisplay == NS_STYLE_DISPLAY_TABLE_CAPTION &&
+  return StyleDisplay()->mDisplay == mozilla::StyleDisplay::TableCaption &&
     GetParent()->StyleContext()->GetPseudo() == nsCSSAnonBoxes::tableWrapper;
 }
 
@@ -49,9 +49,15 @@ nsIFrame::IsFloating() const
 }
 
 bool
-nsIFrame::IsAbsPosContaininingBlock() const
+nsIFrame::IsAbsPosContainingBlock() const
 {
   return StyleDisplay()->IsAbsPosContainingBlock(this);
+}
+
+bool
+nsIFrame::IsFixedPosContainingBlock() const
+{
+  return StyleDisplay()->IsFixedPosContainingBlock(this);
 }
 
 bool
@@ -84,7 +90,7 @@ nsIFrame::IsInlineOutside() const
   return StyleDisplay()->IsInlineOutside(this);
 }
 
-uint8_t
+mozilla::StyleDisplay
 nsIFrame::GetDisplay() const
 {
   return StyleDisplay()->GetDisplay(this);

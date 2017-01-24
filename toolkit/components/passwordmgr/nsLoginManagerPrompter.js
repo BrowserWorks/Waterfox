@@ -7,7 +7,7 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-Cu.import("resource://gre/modules/SharedPromptUtils.jsm");
+const { PromptUtils } = Cu.import("resource://gre/modules/SharedPromptUtils.jsm", {});
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
                                   "resource://gre/modules/LoginHelper.jsm");
@@ -88,6 +88,10 @@ LoginManagerPromptFactory.prototype = {
     var prompter = prompt.prompter;
     var [hostname, httpRealm] = prompter._getAuthTarget(prompt.channel, prompt.authInfo);
     var hasLogins = (prompter._pwmgr.countLogins(hostname, null, httpRealm) > 0);
+    if (!hasLogins && LoginHelper.schemeUpgrades && hostname.startsWith("https://")) {
+      let httpHostname = hostname.replace(/^https:\/\//, "http://");
+      hasLogins = (prompter._pwmgr.countLogins(httpHostname, null, httpRealm) > 0);
+    }
     if (hasLogins && prompter._pwmgr.uiBusy) {
       this.log("_doAsyncPrompt:run bypassed, master password UI busy");
       return;
@@ -205,7 +209,7 @@ LoginManagerPrompter.prototype = {
                                           Ci.nsILoginManagerPrompter]),
 
   _factory       : null,
-  _window        : null,
+  _chromeWindow  : null,
   _browser       : null,
   _opener        : null,
 
@@ -257,16 +261,16 @@ LoginManagerPrompter.prototype = {
 
   // Whether we are in private browsing mode
   get _inPrivateBrowsing() {
-    if (this._window) {
-      return PrivateBrowsingUtils.isContentWindowPrivate(this._window);
-    } else {
-      // If we don't that we're in private browsing mode if the caller did
-      // not provide a window.  The callers which really care about this
-      // will indeed pass down a window to us, and for those who don't,
-      // we can just assume that we don't want to save the entered login
-      // information.
-      return true;
+    if (this._chromeWindow) {
+      return PrivateBrowsingUtils.isWindowPrivate(this._chromeWindow);
     }
+    // If we don't that we're in private browsing mode if the caller did
+    // not provide a window.  The callers which really care about this
+    // will indeed pass down a window to us, and for those who don't,
+    // we can just assume that we don't want to save the entered login
+    // information.
+    this.log("We have no chromeWindow so assume we're in a private context");
+    return true;
   },
 
 
@@ -291,7 +295,7 @@ LoginManagerPrompter.prototype = {
       aResult.value = aDefaultText;
     }
 
-    return this._promptService.prompt(this._window,
+    return this._promptService.prompt(this._chromeWindow,
            aDialogTitle, aText, aResult, null, {});
   },
 
@@ -353,7 +357,7 @@ LoginManagerPrompter.prototype = {
       }
     }
 
-    var ok = this._promptService.promptUsernameAndPassword(this._window,
+    var ok = this._promptService.promptUsernameAndPassword(this._chromeWindow,
                 aDialogTitle, aText, aUsername, aPassword,
                 checkBoxLabel, checkBox);
 
@@ -444,7 +448,7 @@ LoginManagerPrompter.prototype = {
       }
     }
 
-    var ok = this._promptService.promptPassword(this._window, aDialogTitle,
+    var ok = this._promptService.promptPassword(this._chromeWindow, aDialogTitle,
                                                 aText, aPassword,
                                                 checkBoxLabel, checkBox);
 
@@ -512,6 +516,7 @@ LoginManagerPrompter.prototype = {
     var epicfail = false;
     var canAutologin = false;
     var notifyObj;
+    var foundLogins;
 
     try {
       this.log("===== promptAuth called =====");
@@ -524,9 +529,18 @@ LoginManagerPrompter.prototype = {
       var [hostname, httpRealm] = this._getAuthTarget(aChannel, aAuthInfo);
 
       // Looks for existing logins to prefill the prompt with.
-      var foundLogins = this._pwmgr.findLogins({},
-                                               hostname, null, httpRealm);
-      this.log("found " + foundLogins.length + " matching logins.");
+      foundLogins = LoginHelper.searchLoginsWithObject({
+        hostname,
+        httpRealm,
+        schemeUpgrades: LoginHelper.schemeUpgrades,
+      });
+      this.log("found", foundLogins.length, "matching logins.");
+      let resolveBy = [
+        "scheme",
+        "timePasswordChanged",
+      ];
+      foundLogins = LoginHelper.dedupeLogins(foundLogins, ["username"], resolveBy, hostname);
+      this.log(foundLogins.length, "matching logins remain after deduping");
 
       // XXX Can't select from multiple accounts yet. (bug 227632)
       if (foundLogins.length > 0) {
@@ -564,9 +578,9 @@ LoginManagerPrompter.prototype = {
 
     var ok = canAutologin;
     if (!ok) {
-      if (this._window)
-        PromptUtils.fireDialogEvent(this._window, "DOMWillOpenModalDialog", this._browser);
-      ok = this._promptService.promptAuth(this._window,
+      if (this._chromeWindow)
+        PromptUtils.fireDialogEvent(this._chromeWindow, "DOMWillOpenModalDialog", this._browser);
+      ok = this._promptService.promptAuth(this._chromeWindow,
                                           aChannel, aLevel, aAuthInfo,
                                           checkboxLabel, checkbox);
     }
@@ -662,8 +676,7 @@ LoginManagerPrompter.prototype = {
 
       this._factory._asyncPrompts[hashKey] = asyncPrompt;
       this._factory._doAsyncPrompt();
-    }
-    catch (e) {
+    } catch (e) {
       Components.utils.reportError("LoginManagerPrompter: " +
           "asyncPromptAuth: " + e + "\nFalling back to promptAuth\n");
       // Fail the prompt operation to let the consumer fall back
@@ -680,20 +693,31 @@ LoginManagerPrompter.prototype = {
   /* ---------- nsILoginManagerPrompter prompts ---------- */
 
 
-
-  init : function (aWindow, aFactory) {
-    this._window = aWindow;
-    this._factory = aFactory || null;
-    this._browser = null;
+  init : function (aWindow = null, aFactory = null) {
+    if (!aWindow) {
+      // There may be no applicable window e.g. in a Sandbox or JSM.
+      this._chromeWindow = null;
+      this._browser = null;
+    } else if (aWindow instanceof Ci.nsIDOMChromeWindow) {
+      this._chromeWindow = aWindow;
+      // needs to be set explicitly using setBrowser
+      this._browser = null;
+    } else {
+      let {win, browser} = this._getChromeWindow(aWindow);
+      this._chromeWindow = win;
+      this._browser = browser;
+    }
     this._opener = null;
+    this._factory = aFactory || null;
 
     this.log("===== initialized =====");
   },
 
-  setE10sData : function (aBrowser, aOpener) {
-    if (!(this._window instanceof Ci.nsIDOMChromeWindow))
-      throw new Error("Unexpected call");
+  set browser(aBrowser) {
     this._browser = aBrowser;
+  },
+
+  set opener(aOpener) {
     this._opener = aOpener;
   },
 
@@ -901,8 +925,7 @@ LoginManagerPrompter.prototype = {
       accessKey: this._getLocalizedString(initialMsgNames.buttonAccessKey),
       callback: () => {
         histogram.add(PROMPT_ADD_OR_UPDATE);
-        if(histogramName == "PWMGR_PROMPT_REMEMBER_ACTION")
-        {
+        if (histogramName == "PWMGR_PROMPT_REMEMBER_ACTION") {
           Services.obs.notifyObservers(null, 'LoginStats:NewSavedPassword', null);
         }
         readDataFromUI();
@@ -925,7 +948,6 @@ LoginManagerPrompter.prototype = {
     let usernamePlaceholder = this._getLocalizedString("noUsernamePlaceholder");
     let togglePasswordLabel = this._getLocalizedString("togglePasswordLabel");
     let togglePasswordAccessKey = this._getLocalizedString("togglePasswordAccessKey");
-    let displayHost = this._getShortDisplayHost(login.hostname);
 
     this._getPopupNote().show(
       browser,
@@ -943,6 +965,10 @@ LoginManagerPrompter.prototype = {
           switch (topic) {
             case "showing":
               currentNotification = this;
+              chromeDoc.getElementById("password-notification-password")
+                       .removeAttribute("focused");
+              chromeDoc.getElementById("password-notification-username")
+                       .removeAttribute("focused");
               chromeDoc.getElementById("password-notification-username")
                        .addEventListener("input", onInput);
               chromeDoc.getElementById("password-notification-password")
@@ -1058,6 +1084,8 @@ LoginManagerPrompter.prototype = {
       this._showLoginNotification(aNotifyObj, "password-save",
                                   notificationText, buttons);
     }
+
+    Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save", null);
   },
 
   _removeLoginNotifications : function () {
@@ -1118,7 +1146,7 @@ LoginManagerPrompter.prototype = {
                                     "notNowButtonText");
 
     this.log("Prompting user to save/ignore login");
-    var userChoice = this._promptService.confirmEx(this._window,
+    var userChoice = this._promptService.confirmEx(this._chromeWindow,
                                         dialogTitle, dialogText,
                                         buttonFlags, rememberButtonText,
                                         notNowButtonText, neverButtonText,
@@ -1137,6 +1165,8 @@ LoginManagerPrompter.prototype = {
       // userChoice == 1 --> just ignore the login.
       this.log("Ignoring login.");
     }
+
+    Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save", null);
   },
 
 
@@ -1228,6 +1258,9 @@ LoginManagerPrompter.prototype = {
       this._showLoginNotification(aNotifyObj, "password-change",
                                   notificationText, buttons);
     }
+
+    let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
+    Services.obs.notifyObservers(aNewLogin, "passwordmgr-prompt-change", oldGUID);
   },
 
 
@@ -1250,7 +1283,7 @@ LoginManagerPrompter.prototype = {
                                 "passwordChangeTitle");
 
     // returns 0 for yes, 1 for no.
-    var ok = !this._promptService.confirmEx(this._window,
+    var ok = !this._promptService.confirmEx(this._chromeWindow,
                             dialogTitle, dialogText, buttonFlags,
                             null, null, null,
                             null, {});
@@ -1258,6 +1291,9 @@ LoginManagerPrompter.prototype = {
       this.log("Updating password for user " + aOldLogin.username);
       this._updateLogin(aOldLogin, aNewLogin);
     }
+
+    let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
+    Services.obs.notifyObservers(aNewLogin, "passwordmgr-prompt-change", oldGUID);
   },
 
 
@@ -1274,7 +1310,6 @@ LoginManagerPrompter.prototype = {
    */
   promptToChangePasswordWithUsernames : function (logins, count, aNewLogin) {
     this.log("promptToChangePasswordWithUsernames with count:", count);
-    const buttonFlags = Ci.nsIPrompt.STD_YES_NO_BUTTONS;
 
     var usernames = logins.map(l => l.username);
     var dialogText  = this._getLocalizedString("userSelectText");
@@ -1283,7 +1318,7 @@ LoginManagerPrompter.prototype = {
 
     // If user selects ok, outparam.value is set to the index
     // of the selected username.
-    var ok = this._promptService.select(this._window,
+    var ok = this._promptService.select(this._chromeWindow,
                             dialogTitle, dialogText,
                             usernames.length, usernames,
                             selectedIndex);
@@ -1328,86 +1363,40 @@ LoginManagerPrompter.prototype = {
     this._pwmgr.modifyLogin(login, propBag);
   },
 
-
   /**
-   * Given a content DOM window, returns the chrome window it's in.
+   * Given a content DOM window, returns the chrome window and browser it's in.
    */
   _getChromeWindow: function (aWindow) {
-    // In e10s, aWindow may already be a chrome window.
-    if (aWindow instanceof Ci.nsIDOMChromeWindow)
-      return aWindow;
-    var chromeWin = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-                           .getInterface(Ci.nsIWebNavigation)
-                           .QueryInterface(Ci.nsIDocShell)
-                           .chromeEventHandler.ownerDocument.defaultView;
-    return chromeWin;
+    let windows = Services.wm.getEnumerator(null);
+    while (windows.hasMoreElements()) {
+      let win = windows.getNext();
+      let browser = win.gBrowser.getBrowserForContentWindow(aWindow);
+      if (browser) {
+        return { win, browser };
+      }
+    }
+    return null;
   },
-
 
   _getNotifyWindow: function () {
+    // Some sites pop up a temporary login window, which disappears
+    // upon submission of credentials. We want to put the notification
+    // bar in the opener window if this seems to be happening.
+    if (this._opener) {
+      let chromeDoc = this._chromeWindow.document.documentElement;
 
-    try {
-      // Get topmost window, in case we're in a frame.
-      var notifyWin = this._window.top;
-      var isE10s = (notifyWin instanceof Ci.nsIDOMChromeWindow);
-      var useOpener = false;
-
-      // Some sites pop up a temporary login window, which disappears
-      // upon submission of credentials. We want to put the notification
-      // bar in the opener window if this seems to be happening.
-      if (notifyWin.opener) {
-        var chromeDoc = this._getChromeWindow(notifyWin).
-                             document.documentElement;
-
-        var hasHistory;
-        if (isE10s) {
-          if (!this._browser)
-            throw new Error("Expected a browser in e10s");
-          hasHistory = this._browser.canGoBack;
-        } else {
-          var webnav = notifyWin.
-                       QueryInterface(Ci.nsIInterfaceRequestor).
-                       getInterface(Ci.nsIWebNavigation);
-          hasHistory = webnav.sessionHistory.count > 1;
-        }
-
-        // Check to see if the current window was opened with chrome
-        // disabled, and if so use the opener window. But if the window
-        // has been used to visit other pages (ie, has a history),
-        // assume it'll stick around and *don't* use the opener.
-        if (chromeDoc.getAttribute("chromehidden") && !hasHistory) {
-          this.log("Using opener window for notification bar.");
-          notifyWin = notifyWin.opener;
-          useOpener = true;
-        }
+      // Check to see if the current window was opened with chrome
+      // disabled, and if so use the opener window. But if the window
+      // has been used to visit other pages (ie, has a history),
+      // assume it'll stick around and *don't* use the opener.
+      if (chromeDoc.getAttribute("chromehidden") && !this._browser.canGoBack) {
+        this.log("Using opener window for notification bar.");
+        return this._getChromeWindow(this._opener);
       }
-
-      let browser;
-      if (useOpener && this._opener && isE10s) {
-        // In e10s, we have to reconstruct the opener browser from
-        // the CPOW passed in the message (and then passed to us in
-        // setE10sData).
-        // NB: notifyWin is now the chrome window for the opening
-        // window.
-
-        browser = notifyWin.gBrowser.getBrowserForContentWindow(this._opener);
-      } else if (isE10s) {
-        browser = this._browser;
-      } else {
-        var chromeWin = this._getChromeWindow(notifyWin).wrappedJSObject;
-        browser = chromeWin.gBrowser
-                           .getBrowserForDocument(notifyWin.top.document);
-      }
-
-      return { notifyWin: notifyWin, browser: browser };
-
-    } catch (e) {
-      // If any errors happen, just assume no notification box.
-      this.log("Unable to get notify window: " + e.fileName + ":" + e.lineNumber + ": " + e.message);
-      return null;
     }
-  },
 
+    return { win: this._chromeWindow, browser: this._browser };
+  },
 
   /**
    * Returns the popup notification to this prompter,
@@ -1417,13 +1406,10 @@ LoginManagerPrompter.prototype = {
     let popupNote = null;
 
     try {
-      let { notifyWin } = this._getNotifyWindow();
+      let { win: notifyWin } = this._getNotifyWindow();
 
-      // Get the chrome window for the content window we're using.
       // .wrappedJSObject needed here -- see bug 422974 comment 5.
-      let chromeWin = this._getChromeWindow(notifyWin).wrappedJSObject;
-
-      popupNote = chromeWin.PopupNotifications;
+      popupNote = notifyWin.wrappedJSObject.PopupNotifications;
     } catch (e) {
       this.log("Popup notifications not available on window");
     }
@@ -1440,13 +1426,10 @@ LoginManagerPrompter.prototype = {
     let notifyBox = null;
 
     try {
-      let { notifyWin } = this._getNotifyWindow();
+      let { win: notifyWin } = this._getNotifyWindow();
 
-      // Get the chrome window for the content window we're using.
       // .wrappedJSObject needed here -- see bug 422974 comment 5.
-      let chromeWin = this._getChromeWindow(notifyWin).wrappedJSObject;
-
-      notifyBox = chromeWin.getNotificationBox(notifyWin);
+      notifyBox = notifyWin.wrappedJSObject.getNotificationBox(notifyWin);
     } catch (e) {
       this.log("Notification bars not available on window");
     }
@@ -1483,8 +1466,7 @@ LoginManagerPrompter.prototype = {
     if (formatArgs)
       return this._strBundle.formatStringFromName(
                                   key, formatArgs, formatArgs.length);
-    else
-      return this._strBundle.GetStringFromName(key);
+    return this._strBundle.GetStringFromName(key);
   },
 
 
@@ -1628,7 +1610,7 @@ LoginManagerPrompter.prototype = {
         aAuthInfo.username = username;
       } else {
         aAuthInfo.domain   =  username.substring(0, idx);
-        aAuthInfo.username =  username.substring(idx+1);
+        aAuthInfo.username =  username.substring(idx + 1);
       }
     } else {
       aAuthInfo.username = username;

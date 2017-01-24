@@ -262,10 +262,12 @@ NS_IMETHODIMP
 nsLayoutStylesheetCache::CollectReports(nsIHandleReportCallback* aHandleReport,
                                         nsISupports* aData, bool aAnonymize)
 {
-  return MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/layout/style-sheet-cache", KIND_HEAP, UNITS_BYTES,
     SizeOfIncludingThis(LayoutStylesheetCacheMallocSizeOf),
     "Memory used for some built-in style sheets.");
+
+  return NS_OK;
 }
 
 
@@ -545,7 +547,7 @@ AnnotateCrashReport(nsIURI* aURI)
   nsAutoCString scheme;
   nsDependentCSubstring filename;
   if (aURI) {
-    aURI->GetSpec(spec);
+    spec = aURI->GetSpecOrDefault();
     aURI->GetScheme(scheme);
     int32_t i = spec.RFindChar('/');
     if (i != -1) {
@@ -601,9 +603,8 @@ AnnotateCrashReport(nsIURI* aURI)
       if (!resolvedURI) {
         annotation.AppendLiteral("(ConvertChromeURL failed)\n");
       } else {
-        nsAutoCString resolvedSpec;
-        resolvedURI->GetSpec(resolvedSpec);
-        annotation.Append(NS_ConvertUTF8toUTF16(resolvedSpec));
+        annotation.Append(
+          NS_ConvertUTF8toUTF16(resolvedURI->GetSpecOrDefault()));
         annotation.Append('\n');
       }
     }
@@ -726,12 +727,9 @@ ErrorLoadingBuiltinSheet(nsIURI* aURI, const char* aMsg)
   AnnotateCrashReport(aURI);
 #endif
 
-  nsAutoCString spec;
-  if (aURI) {
-    aURI->GetSpec(spec);
-  }
-  NS_RUNTIMEABORT(nsPrintfCString("%s loading built-in stylesheet '%s'",
-                                  aMsg, spec.get()).get());
+  NS_RUNTIMEABORT(
+    nsPrintfCString("%s loading built-in stylesheet '%s'",
+                    aMsg, aURI ? aURI->GetSpecOrDefault().get() : "").get());
 }
 
 void
@@ -846,15 +844,14 @@ nsLayoutStylesheetCache::BuildPreferenceSheet(StyleSheetHandle::RefPtr* aSheet,
                                               nsPresContext* aPresContext)
 {
   if (mBackendType == StyleBackendType::Gecko) {
-    *aSheet = new CSSStyleSheet(CORS_NONE, mozilla::net::RP_Default);
+    *aSheet = new CSSStyleSheet(eAgentSheetFeatures, CORS_NONE,
+                                mozilla::net::RP_Default);
   } else {
-    *aSheet = new ServoStyleSheet(CORS_NONE, mozilla::net::RP_Default,
-                                  dom::SRIMetadata());
+    *aSheet = new ServoStyleSheet(eAgentSheetFeatures, CORS_NONE,
+                                  mozilla::net::RP_Default, dom::SRIMetadata());
   }
 
   StyleSheetHandle sheet = *aSheet;
-
-  sheet->SetParsingMode(eAgentSheetFeatures);
 
   nsCOMPtr<nsIURI> uri;
   NS_NewURI(getter_AddRefs(uri), "about:PreferenceStyleSheet", nullptr);
@@ -951,8 +948,10 @@ nsLayoutStylesheetCache::BuildPreferenceSheet(StyleSheetHandle::RefPtr* aSheet,
   if (sheet->IsGecko()) {
     sheet->AsGecko()->ReparseSheet(sheetText);
   } else {
-    sheet->AsServo()->ParseSheet(sheetText, uri, uri, nullptr, 0,
-                                 SheetParsingMode::eAuthorSheetFeatures);
+    nsresult rv = sheet->AsServo()->ParseSheet(sheetText, uri, uri, nullptr, 0);
+    // Parsing the about:PreferenceStyleSheet URI can only fail on OOM. If we
+    // are OOM before we parsed any documents we might as well abort.
+    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
   }
 
 #undef NS_GET_R_G_B

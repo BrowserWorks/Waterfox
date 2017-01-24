@@ -939,3 +939,50 @@ TEST_F(DefineTest, NegativeShiftInLineDirective)
     EXPECT_CALL(mDiagnostics, print(pp::Diagnostics::PP_INVALID_LINE_NUMBER, _, _)).Times(2);
     preprocess(input, expected);
 }
+
+// Undefining a macro in its invocation parameters produces and error
+TEST_F(DefineTest, UndefineInInvocation)
+{
+    const char *input =
+        "#define G(a, b) a b\n"
+        "G(\n"
+        "#undef G\n"
+        "1, 2)\n";
+    const char *expected = "\n\n\n1 2\n";
+
+    EXPECT_CALL(mDiagnostics, print(pp::Diagnostics::PP_MACRO_UNDEFINED_WHILE_INVOKED,
+                                    pp::SourceLocation(0, 3), _));
+
+    preprocess(input, expected);
+}
+
+// Undefining a macro before its invocation parameters produces and error
+TEST_F(DefineTest, UndefineInInvocationPreLParen)
+{
+    const char *input =
+        "#define G(a, b) a b\n"
+        "G\n"
+        "#undef G\n"
+        "(1, 2)\n";
+    const char *expected = "\n\n\n1 2\n";
+
+    EXPECT_CALL(mDiagnostics, print(pp::Diagnostics::PP_MACRO_UNDEFINED_WHILE_INVOKED,
+                                    pp::SourceLocation(0, 3), _));
+
+    preprocess(input, expected);
+}
+
+// The name of the macro "a" is inside an incomplete macro invocation of macro "m()" in its own
+// expansion. This should not result in infinite recursion.
+TEST_F(DefineTest, RecursiveMacroNameInsideIncompleteMacroInvocationInMacroExpansion)
+{
+    const char *input =
+        "#define m(a)\n"
+        "#define a m((a)\n"
+        "a)\n";
+    const char *expected =
+        "\n"
+        "\n"
+        "\n";
+    preprocess(input, expected);
+}

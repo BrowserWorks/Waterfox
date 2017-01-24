@@ -20,6 +20,7 @@
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/ProcessHangMonitorIPC.h"
+#include "mozilla/Unused.h"
 #include "mozilla/devtools/HeapSnapshotTempFileHelperChild.h"
 #include "mozilla/docshell/OfflineCacheUpdateChild.h"
 #include "mozilla/dom/ContentBridgeChild.h"
@@ -32,9 +33,10 @@
 #include "mozilla/dom/GetFilesHelper.h"
 #include "mozilla/dom/PCrashReporterChild.h"
 #include "mozilla/dom/ProcessGlobal.h"
-#include "mozilla/dom/Promise.h"
+#include "mozilla/dom/PushNotifier.h"
 #include "mozilla/dom/workers/ServiceWorkerManager.h"
 #include "mozilla/dom/nsIContentChild.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/psm/PSMContentListener.h"
 #include "mozilla/hal_sandbox/PHalChild.h"
 #include "mozilla/ipc/BackgroundChild.h"
@@ -47,6 +49,7 @@
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/layers/APZChild.h"
 #include "mozilla/layers/CompositorBridgeChild.h"
+#include "mozilla/layers/ContentProcessController.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/layers/SharedBufferManagerChild.h"
 #include "mozilla/layout/RenderFrameChild.h"
@@ -75,7 +78,7 @@
 #endif
 #endif
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "mozInlineSpellChecker.h"
 #include "nsDocShell.h"
@@ -163,16 +166,7 @@
 #endif
 
 #ifdef ACCESSIBILITY
-#include "nsIAccessibilityService.h"
-#endif
-
-#ifdef MOZ_NUWA_PROCESS
-#include "ipc/Nuwa.h"
-#endif
-#include "NuwaChild.h"
-
-#ifndef MOZ_SIMPLEPUSH
-#include "mozilla/dom/PushNotifier.h"
+#include "nsAccessibilityService.h"
 #endif
 
 #include "mozilla/dom/File.h"
@@ -516,57 +510,6 @@ NS_IMPL_ISUPPORTS(BackgroundChildPrimer, nsIIPCBackgroundChildCreateCallback)
 
 ContentChild* ContentChild::sSingleton;
 
-// Performs initialization that is not fork-safe, i.e. that must be done after
-// forking from the Nuwa process.
-void
-InitOnContentProcessCreated()
-{
-#ifdef MOZ_NUWA_PROCESS
-  // Wait until we are forked from Nuwa
-  if (IsNuwaProcess()) {
-    return;
-  }
-
-  nsCOMPtr<nsIPermissionManager> permManager = services::GetPermissionManager();
-  MOZ_ASSERT(permManager, "Unable to get permission manager");
-  nsresult rv = permManager->RefreshPermission();
-  if (NS_FAILED(rv)) {
-    MOZ_ASSERT(false, "Failed updating permission in child process");
-  }
-#endif
-
-  // This will register cross-process observer.
-  mozilla::dom::time::InitializeDateCacheCleaner();
-}
-
-#ifdef MOZ_NUWA_PROCESS
-static void
-ResetTransports(void* aUnused)
-{
-  ContentChild* child = ContentChild::GetSingleton();
-  mozilla::ipc::Transport* transport = child->GetTransport();
-  int fd = transport->GetFileDescriptor();
-  transport->ResetFileDescriptor(fd);
-
-  nsTArray<IToplevelProtocol*> actors;
-  child->GetOpenedActors(actors);
-  for (size_t i = 0; i < actors.Length(); i++) {
-    IToplevelProtocol* toplevel = actors[i];
-    transport = toplevel->GetTransport();
-    fd = transport->GetFileDescriptor();
-    transport->ResetFileDescriptor(fd);
-  }
-}
-#endif
-
-#if defined(MOZ_TASK_TRACER) && defined(MOZ_NUWA_PROCESS)
-static void
-ReinitTaskTracer(void* /*aUnused*/)
-{
-  mozilla::tasktracer::InitTaskTracer(mozilla::tasktracer::FORKED_AFTER_NUWA);
-}
-#endif
-
 ContentChild::ContentChild()
  : mID(uint64_t(-1))
  , mCanOverrideProcessName(true)
@@ -631,7 +574,7 @@ ContentChild::Init(MessageLoop* aIOLoop,
   // Once we start sending IPC messages, we need the thread manager to be
   // initialized so we can deal with the responses. Do that here before we
   // try to construct the crash reporter.
-  nsresult rv = nsThreadManager::get()->Init();
+  nsresult rv = nsThreadManager::get().Init();
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return false;
   }
@@ -643,11 +586,10 @@ ContentChild::Init(MessageLoop* aIOLoop,
 
   // If communications with the parent have broken down, take the process
   // down so it's not hanging around.
-  bool abortOnError = true;
-#ifdef MOZ_NUWA_PROCESS
-  abortOnError &= !IsNuwaProcess();
+  GetIPCChannel()->SetAbortOnError(true);
+#if defined(XP_WIN) && defined(ACCESSIBILITY)
+  GetIPCChannel()->SetChannelFlags(MessageChannel::REQUIRE_A11Y_REENTRY);
 #endif
-  GetIPCChannel()->SetAbortOnError(abortOnError);
 
 #ifdef MOZ_X11
   // Send the parent our X socket to act as a proxy reference for our X
@@ -664,17 +606,6 @@ ContentChild::Init(MessageLoop* aIOLoop,
   SendGetProcessAttributes(&mID, &mIsForApp, &mIsForBrowser);
   InitProcessAttributes();
 
-#if defined(MOZ_TASK_TRACER) && defined (MOZ_NUWA_PROCESS)
-  if (IsNuwaProcess()) {
-    NuwaAddConstructor(ReinitTaskTracer, nullptr);
-  }
-#endif
-
-#ifdef MOZ_NUWA_PROCESS
-  if (IsNuwaProcess()) {
-    NuwaAddConstructor(ResetTransports, nullptr);
-  }
-#endif
 #ifdef NS_PRINTING
   // Force the creation of the nsPrintingProxy so that it's IPC counterpart,
   // PrintingParent, is always available for printing initiated from the parent.
@@ -688,12 +619,6 @@ void
 ContentChild::InitProcessAttributes()
 {
 #ifdef MOZ_WIDGET_GONK
-#ifdef MOZ_NUWA_PROCESS
-  if (IsNuwaProcess()) {
-    SetProcessName(NS_LITERAL_STRING("(Nuwa)"), false);
-    return;
-  }
-#endif
   if (mIsForApp && !mIsForBrowser) {
     SetProcessName(NS_LITERAL_STRING("(Preallocated app)"), false);
   } else {
@@ -1042,7 +967,8 @@ ContentChild::InitXPCOM()
     global->SetInitialProcessData(data);
   }
 
-  InitOnContentProcessCreated();
+  // This will register cross-process observer.
+  mozilla::dom::time::InitializeDateCacheCleaner();
 }
 
 PMemoryReportRequestChild*
@@ -1057,12 +983,12 @@ ContentChild::AllocPMemoryReportRequestChild(const uint32_t& aGeneration,
   return actor;
 }
 
-class MemoryReportCallback final : public nsIMemoryReporterCallback
+class HandleReportCallback final : public nsIHandleReportCallback
 {
 public:
   NS_DECL_ISUPPORTS
 
-  explicit MemoryReportCallback(MemoryReportRequestChild* aActor,
+  explicit HandleReportCallback(MemoryReportRequestChild* aActor,
                                 const nsACString& aProcess)
   : mActor(aActor)
   , mProcess(aProcess)
@@ -1079,23 +1005,23 @@ public:
     return NS_OK;
   }
 private:
-  ~MemoryReportCallback() {}
+  ~HandleReportCallback() {}
 
   RefPtr<MemoryReportRequestChild> mActor;
   const nsCString mProcess;
 };
 
 NS_IMPL_ISUPPORTS(
-  MemoryReportCallback
-, nsIMemoryReporterCallback
+  HandleReportCallback
+, nsIHandleReportCallback
 )
 
-class MemoryReportFinishedCallback final : public nsIFinishReportingCallback
+class FinishReportingCallback final : public nsIFinishReportingCallback
 {
 public:
   NS_DECL_ISUPPORTS
 
-  explicit MemoryReportFinishedCallback(MemoryReportRequestChild* aActor)
+  explicit FinishReportingCallback(MemoryReportRequestChild* aActor)
   : mActor(aActor)
   {
   }
@@ -1107,13 +1033,13 @@ public:
   }
 
 private:
-  ~MemoryReportFinishedCallback() {}
+  ~FinishReportingCallback() {}
 
   RefPtr<MemoryReportRequestChild> mActor;
 };
 
 NS_IMPL_ISUPPORTS(
-  MemoryReportFinishedCallback
+  FinishReportingCallback
 , nsIFinishReportingCallback
 )
 
@@ -1127,7 +1053,7 @@ ContentChild::RecvPMemoryReportRequestConstructor(
 {
   MemoryReportRequestChild *actor =
     static_cast<MemoryReportRequestChild*>(aChild);
-  nsresult rv;
+  DebugOnly<nsresult> rv;
 
   if (aMinimizeMemoryUsage) {
     nsCOMPtr<nsIMemoryReporterManager> mgr =
@@ -1139,7 +1065,7 @@ ContentChild::RecvPMemoryReportRequestConstructor(
   }
 
   // Bug 1295622: don't kill the process just because this failed.
-  NS_WARN_IF(NS_FAILED(rv));
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "actor operation failed");
   return true;
 }
 
@@ -1155,16 +1081,17 @@ NS_IMETHODIMP MemoryReportRequestChild::Run()
 
   // Run the reporters.  The callback will turn each measurement into a
   // MemoryReport.
-  RefPtr<MemoryReportCallback> cb =
-    new MemoryReportCallback(this, process);
-  RefPtr<MemoryReportFinishedCallback> finished =
-    new MemoryReportFinishedCallback(this);
+  RefPtr<HandleReportCallback> handleReport =
+    new HandleReportCallback(this, process);
+  RefPtr<FinishReportingCallback> finishReporting =
+    new FinishReportingCallback(this);
 
   nsresult rv =
-    mgr->GetReportsForThisProcessExtended(cb, nullptr, mAnonymize,
+    mgr->GetReportsForThisProcessExtended(handleReport, nullptr, mAnonymize,
                                           FileDescriptorToFILE(mDMDFile, "wb"),
-                                          finished, nullptr);
-  NS_WARN_IF(NS_FAILED(rv));
+                                          finishReporting, nullptr);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                       "GetReportsForThisProcessExtended failed");
   return rv;
 }
 
@@ -1240,19 +1167,6 @@ ContentChild::AllocPGMPServiceChild(mozilla::ipc::Transport* aTransport,
                                     base::ProcessId aOtherProcess)
 {
   return GMPServiceChild::Create(aTransport, aOtherProcess);
-}
-
-PAPZChild*
-ContentChild::AllocPAPZChild(const TabId& aTabId)
-{
-  return APZChild::Create(aTabId);
-}
-
-bool
-ContentChild::DeallocPAPZChild(PAPZChild* aActor)
-{
-  delete aActor;
-  return true;
 }
 
 bool
@@ -1398,6 +1312,16 @@ StartMacOSContentSandbox()
     MOZ_CRASH("Failed to get NS_OS_TEMP_DIR path");
   }
 
+  nsCOMPtr<nsIFile> profileDir;
+  ContentChild::GetSingleton()->GetProfileDir(getter_AddRefs(profileDir));
+  nsCString profileDirPath;
+  if (profileDir) {
+    rv = profileDir->GetNativePath(profileDirPath);
+    if (NS_FAILED(rv) || profileDirPath.IsEmpty()) {
+      MOZ_CRASH("Failed to get profile path");
+    }
+  }
+
   MacSandboxInfo info;
   info.type = MacSandboxType_Content;
   info.level = info.level = sandboxLevel;
@@ -1405,6 +1329,13 @@ StartMacOSContentSandbox()
   info.appBinaryPath.assign(appBinaryPath.get());
   info.appDir.assign(appDir.get());
   info.appTempDir.assign(tempDirPath.get());
+
+  if (profileDir) {
+    info.hasSandboxedProfile = true;
+    info.profileDir.assign(profileDirPath.get());
+  } else {
+    info.hasSandboxedProfile = false;
+  }
 
   std::string err;
   if (!mozilla::StartMacSandbox(info, err)) {
@@ -1471,6 +1402,13 @@ ContentChild::RecvSetProcessSandbox(const MaybeFileDesc& aBroker)
 #endif /* MOZ_CONTENT_SANDBOX */
 
   return true;
+}
+
+bool
+ContentChild::RecvNotifyLayerAllocated(const dom::TabId& aTabId, const uint64_t& aLayersId)
+{
+  APZChild* apz = ContentProcessController::Create(aTabId);
+  return CompositorBridgeChild::Get()->SendPAPZConstructor(apz, aLayersId);
 }
 
 bool
@@ -1604,16 +1542,21 @@ ContentChild::GetAvailableDictionaries(InfallibleTArray<nsString>& aDictionaries
 }
 
 PFileDescriptorSetChild*
+ContentChild::SendPFileDescriptorSetConstructor(const FileDescriptor& aFD)
+{
+  return PContentChild::SendPFileDescriptorSetConstructor(aFD);
+}
+
+PFileDescriptorSetChild*
 ContentChild::AllocPFileDescriptorSetChild(const FileDescriptor& aFD)
 {
-  return new FileDescriptorSetChild(aFD);
+  return nsIContentChild::AllocPFileDescriptorSetChild(aFD);
 }
 
 bool
 ContentChild::DeallocPFileDescriptorSetChild(PFileDescriptorSetChild* aActor)
 {
-  delete static_cast<FileDescriptorSetChild*>(aActor);
-  return true;
+  return nsIContentChild::DeallocPFileDescriptorSetChild(aActor);
 }
 
 bool
@@ -1691,13 +1634,13 @@ ContentChild::RecvNotifyPresentationReceiverLaunched(PBrowserChild* aIframe,
 {
   nsCOMPtr<nsIDocShell> docShell =
     do_GetInterface(static_cast<TabChild*>(aIframe)->WebNavigation());
-  NS_WARN_IF(!docShell);
+  NS_WARNING_ASSERTION(docShell, "WebNavigation failed");
 
   nsCOMPtr<nsIPresentationService> service =
     do_GetService(PRESENTATION_SERVICE_CONTRACTID);
-  NS_WARN_IF(!service);
+  NS_WARNING_ASSERTION(service, "presentation service is missing");
 
-  NS_WARN_IF(NS_FAILED(static_cast<PresentationIPCService*>(service.get())->MonitorResponderLoading(aSessionId, docShell)));
+  Unused << NS_WARN_IF(NS_FAILED(static_cast<PresentationIPCService*>(service.get())->MonitorResponderLoading(aSessionId, docShell)));
 
   return true;
 }
@@ -1707,9 +1650,9 @@ ContentChild::RecvNotifyPresentationReceiverCleanUp(const nsString& aSessionId)
 {
   nsCOMPtr<nsIPresentationService> service =
     do_GetService(PRESENTATION_SERVICE_CONTRACTID);
-  NS_WARN_IF(!service);
+  NS_WARNING_ASSERTION(service, "presentation service is missing");
 
-  NS_WARN_IF(NS_FAILED(service->UntrackSessionInfo(aSessionId, nsIPresentationService::ROLE_RECEIVER)));
+  Unused << NS_WARN_IF(NS_FAILED(service->UntrackSessionInfo(aSessionId, nsIPresentationService::ROLE_RECEIVER)));
 
   return true;
 }
@@ -1912,16 +1855,21 @@ ContentChild::DeallocPPrintingChild(PPrintingChild* printing)
 }
 
 PSendStreamChild*
+ContentChild::SendPSendStreamConstructor(PSendStreamChild* aActor)
+{
+  return PContentChild::SendPSendStreamConstructor(aActor);
+}
+
+PSendStreamChild*
 ContentChild::AllocPSendStreamChild()
 {
-  MOZ_CRASH("PSendStreamChild actors should be manually constructed!");
+  return nsIContentChild::AllocPSendStreamChild();
 }
 
 bool
 ContentChild::DeallocPSendStreamChild(PSendStreamChild* aActor)
 {
-  delete aActor;
-  return true;
+  return nsIContentChild::DeallocPSendStreamChild(aActor);
 }
 
 PScreenManagerChild*
@@ -2301,14 +2249,6 @@ ContentChild::ActorDestroy(ActorDestroyReason why)
   }
   mIsAlive = false;
 
-#ifdef MOZ_NUWA_PROCESS
-  if (IsNuwaProcess()) {
-    // The Nuwa cannot go through the full XPCOM shutdown path or deadlock
-    // will result.
-    ProcessChild::QuickExit();
-  }
-#endif
-
   XRE_ShutdownChildProcess();
 #endif // NS_FREE_PERMANENT_DATA
 }
@@ -2355,26 +2295,17 @@ ContentChild::AddRemoteAlertObserver(const nsString& aData,
   return NS_OK;
 }
 
-
-bool
-ContentChild::RecvSystemMemoryAvailable(const uint64_t& aGetterId,
-                                        const uint32_t& aMemoryAvailable)
-{
-  RefPtr<Promise> p = dont_AddRef(reinterpret_cast<Promise*>(aGetterId));
-
-  if (!aMemoryAvailable) {
-    p->MaybeReject(NS_ERROR_NOT_AVAILABLE);
-    return true;
-  }
-
-  p->MaybeResolve((int)aMemoryAvailable);
-  return true;
-}
-
 bool
 ContentChild::RecvPreferenceUpdate(const PrefSetting& aPref)
 {
   Preferences::SetPreference(aPref);
+  return true;
+}
+
+bool
+ContentChild::RecvVarUpdate(const GfxVarUpdate& aVar)
+{
+  gfx::gfxVars::ApplyUpdate(aVar);
   return true;
 }
 
@@ -2519,7 +2450,8 @@ ContentChild::RecvAddPermission(const IPC::Permission& permission)
   // the permission manager does that internally.
   nsAutoCString originNoSuffix;
   PrincipalOriginAttributes attrs;
-  attrs.PopulateFromOrigin(permission.origin, originNoSuffix);
+  bool success = attrs.PopulateFromOrigin(permission.origin, originNoSuffix);
+  NS_ENSURE_TRUE(success, false);
 
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), originNoSuffix);
@@ -2547,9 +2479,6 @@ ContentChild::RecvAddPermission(const IPC::Permission& permission)
 bool
 ContentChild::RecvFlushMemory(const nsString& reason)
 {
-#ifdef MOZ_NUWA_PROCESS
-  MOZ_ASSERT(!IsNuwaProcess() || !IsNuwaReady());
-#endif
   nsCOMPtr<nsIObserverService> os =
     mozilla::services::GetObserverService();
   if (os) {
@@ -2564,8 +2493,18 @@ ContentChild::RecvActivateA11y()
 #ifdef ACCESSIBILITY
   // Start accessibility in content process if it's running in chrome
   // process.
-  nsCOMPtr<nsIAccessibilityService> accService =
-    services::GetAccessibilityService();
+  GetOrCreateAccService(nsAccessibilityService::eMainProcess);
+#endif
+  return true;
+}
+
+bool
+ContentChild::RecvShutdownA11y()
+{
+#ifdef ACCESSIBILITY
+  // Try to shutdown accessibility in content process if it's shutting down in
+  // chrome process.
+  MaybeShutdownAccService(nsAccessibilityService::eMainProcess);
 #endif
   return true;
 }
@@ -2593,31 +2532,6 @@ ContentChild::RecvCycleCollect()
   nsJSContext::CycleCollectNow();
   return true;
 }
-
-#ifdef MOZ_NUWA_PROCESS
-static void
-OnFinishNuwaPreparation()
-{
-  // We want to ensure that the PBackground actor gets cloned in the Nuwa
-  // process before we freeze. Also, we have to do this to avoid deadlock.
-  // Protocols that are "opened" (e.g. PBackground, PCompositorBridge) block
-  // the main thread to wait for the IPC thread during the open operation.
-  // NuwaSpawnWait() blocks the IPC thread to wait for the main thread when
-  // the Nuwa process is forked. Unless we ensure that the two cannot happen
-  // at the same time then we risk deadlock. Spinning the event loop here
-  // guarantees the ordering is safe for PBackground.
-  while (!BackgroundChild::GetForCurrentThread()) {
-    if (NS_WARN_IF(!NS_ProcessNextEvent())) {
-      return;
-    }
-  }
-
-  // This will create the actor.
-  Unused << mozilla::dom::NuwaChild::GetSingleton();
-
-  MakeNuwaProcess();
-}
-#endif
 
 static void
 PreloadSlowThings()
@@ -2663,13 +2577,6 @@ ContentChild::RecvAppInit()
     PreloadSlowThings();
   }
 
-#ifdef MOZ_NUWA_PROCESS
-  if (IsNuwaProcess()) {
-    ContentChild::GetSingleton()->RecvGarbageCollect();
-    MessageLoop::current()->PostTask(NewRunnableFunction(OnFinishNuwaPreparation));
-  }
-#endif
-
   return true;
 }
 
@@ -2677,7 +2584,10 @@ bool
 ContentChild::RecvInitServiceWorkers(const ServiceWorkerConfiguration& aConfig)
 {
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
+  if (!swm) {
+    // browser shutdown began
+    return true;
+  }
   swm->LoadRegistrations(aConfig.serviceWorkerRegistrations());
   return true;
 }
@@ -2815,14 +2725,11 @@ ContentChild::RecvNotifyProcessPriorityChanged(
 bool
 ContentChild::RecvMinimizeMemoryUsage()
 {
-#ifdef MOZ_NUWA_PROCESS
-  MOZ_ASSERT(!IsNuwaProcess() || !IsNuwaReady());
-#endif
   nsCOMPtr<nsIMemoryReporterManager> mgr =
     do_GetService("@mozilla.org/memory-reporter-manager;1");
   NS_ENSURE_TRUE(mgr, true);
 
-  mgr->MinimizeMemoryUsage(/* callback = */ nullptr);
+  Unused << mgr->MinimizeMemoryUsage(/* callback = */ nullptr);
   return true;
 }
 
@@ -3106,6 +3013,10 @@ ContentChild::RecvShutdown()
   // to wait for that event loop to finish. Otherwise we could prematurely
   // terminate an "unload" or "pagehide" event handler (which might be doing a
   // sync XHR, for example).
+#if defined(MOZ_CRASHREPORTER)
+  CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCShutdownState"),
+                                     NS_LITERAL_CSTRING("RecvShutdown"));
+#endif
   nsCOMPtr<nsIThread> thread;
   nsresult rv = NS_GetMainThread(getter_AddRefs(thread));
   if (NS_SUCCEEDED(rv) && thread) {
@@ -3153,6 +3064,10 @@ ContentChild::RecvShutdown()
   // parent closes.
   StartForceKillTimer();
 
+#if defined(MOZ_CRASHREPORTER)
+  CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCShutdownState"),
+                                     NS_LITERAL_CSTRING("SendFinishShutdown"));
+#endif
   // Ignore errors here. If this fails, the parent will kill us after a
   // timeout.
   Unused << SendFinishShutdown();
@@ -3386,10 +3301,8 @@ ContentChild::RecvPush(const nsCString& aScope,
                        const IPC::Principal& aPrincipal,
                        const nsString& aMessageId)
 {
-#ifndef MOZ_SIMPLEPUSH
   PushMessageDispatcher dispatcher(aScope, aPrincipal, aMessageId, Nothing());
   Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
-#endif
   return true;
 }
 
@@ -3399,10 +3312,8 @@ ContentChild::RecvPushWithData(const nsCString& aScope,
                                const nsString& aMessageId,
                                InfallibleTArray<uint8_t>&& aData)
 {
-#ifndef MOZ_SIMPLEPUSH
   PushMessageDispatcher dispatcher(aScope, aPrincipal, aMessageId, Some(aData));
   Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
-#endif
   return true;
 }
 
@@ -3410,10 +3321,8 @@ bool
 ContentChild::RecvPushSubscriptionChange(const nsCString& aScope,
                                          const IPC::Principal& aPrincipal)
 {
-#ifndef MOZ_SIMPLEPUSH
   PushSubscriptionChangeDispatcher dispatcher(aScope, aPrincipal);
   Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
-#endif
   return true;
 }
 
@@ -3421,10 +3330,8 @@ bool
 ContentChild::RecvPushError(const nsCString& aScope, const IPC::Principal& aPrincipal,
                             const nsString& aMessage, const uint32_t& aFlags)
 {
-#ifndef MOZ_SIMPLEPUSH
   PushErrorDispatcher dispatcher(aScope, aPrincipal, aMessage, aFlags);
   Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
-#endif
   return true;
 }
 
@@ -3432,10 +3339,8 @@ bool
 ContentChild::RecvNotifyPushSubscriptionModifiedObservers(const nsCString& aScope,
                                                           const IPC::Principal& aPrincipal)
 {
-#ifndef MOZ_SIMPLEPUSH
   PushSubscriptionModifiedDispatcher dispatcher(aScope, aPrincipal);
   Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObservers()));
-#endif
   return true;
 }
 

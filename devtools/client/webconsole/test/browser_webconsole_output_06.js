@@ -8,8 +8,8 @@
 // Test the webconsole output for various arrays.
 
 const TEST_URI = "data:text/html;charset=utf8,test for console output - 06";
-const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis",
-  Ci.nsIPrefLocalizedString).data;
+const {ELLIPSIS} = require("devtools/shared/l10n");
+
 const testStrIn = "SHOW\\nALL\\nOF\\nTHIS\\nON\\nA\\nSINGLE" +
                   "\\nLINE ONLY. ESCAPE ALL NEWLINE";
 const testStrOut = "SHOW ALL OF THIS ON A SINGLE LINE O" + ELLIPSIS;
@@ -111,7 +111,7 @@ var inputTests = [
     input: '["' + testStrIn + '", "' + testStrIn + '", "' + testStrIn + '"]',
     output: 'Array [ "' + testStrOut + '", "' + testStrOut + '", "' +
             testStrOut + '" ]',
-    inspectable: false,
+    inspectable: true,
     printOutput: "SHOW\nALL\nOF\nTHIS\nON\nA\nSINGLE\nLINE ONLY. ESCAPE " +
                  "ALL NEWLINE,SHOW\nALL\nOF\nTHIS\nON\nA\nSINGLE\nLINE ONLY. " +
                  "ESCAPE ALL NEWLINE,SHOW\nALL\nOF\nTHIS\nON\nA\nSINGLE\n" +
@@ -124,15 +124,17 @@ var inputTests = [
     input: '({0: "a", 1: "b"})',
     output: 'Object [ "a", "b" ]',
     printOutput: "[object Object]",
-    inspectable: false,
+    inspectable: true,
+    variablesViewLabel: "Object[2]",
   },
 
   // 14
   {
     input: '({0: "a", 42: "b"})',
-    output: 'Object { 0: "a", 42: "b" }',
+    output: '[ "a", <9 empty slots>, 33 more\u2026 ]',
     printOutput: "[object Object]",
-    inspectable: false,
+    inspectable: true,
+    variablesViewLabel: "Object[43]",
   },
 
   // 15
@@ -152,6 +154,114 @@ var inputTests = [
            '7: "h", 8: "i", 9: "j", 10: "k", 11: "l", m: "n"})',
     output: 'Object { 0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f", ' +
             '6: "g", 7: "h", 8: "i", 9: "j", 3 more\u2026 }',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object",
+  },
+
+  // 17
+  {
+    input: '({" ": "a"})',
+    output: 'Object {  : "a" }',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object",
+  },
+
+  // 18
+  {
+    input: '({})',
+    output: 'Object {  }',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object",
+  },
+
+  // 19
+  {
+    input: '({length: 0})',
+    output: 'Object [  ]',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object[0]",
+  },
+
+  // 20
+  {
+    input: '({length: 1})',
+    output: '[ <1 empty slot> ]',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object[1]",
+  },
+
+  // 21
+  {
+    input: '({0: "a", 1: "b", length: 1})',
+    output: 'Object { 0: "a", 1: "b", length: 1 }',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object",
+  },
+
+  // 22
+  {
+    input: '({0: "a", 1: "b", length: 2})',
+    output: 'Object [ "a", "b" ]',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object[2]",
+  },
+
+  // 23
+  {
+    input: '({0: "a", 1: "b", length: 3})',
+    output: '[ "a", "b", <1 empty slot> ]',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object[3]",
+  },
+
+  // 24
+  {
+    input: '({0: "a", 2: "b", length: 2})',
+    output: 'Object { 0: "a", 2: "b", length: 2 }',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object",
+  },
+
+  // 25
+  {
+    input: '({0: "a", 2: "b", length: 3})',
+    output: '[ "a", <1 empty slot>, "b" ]',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object[3]",
+  },
+
+  // 26
+  {
+    input: '({0: "a", b: "b", length: 1})',
+    output: 'Object { 0: "a", b: "b", length: 1 }',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object",
+  },
+
+  // 27
+  {
+    input: '({0: "a", b: "b", length: 2})',
+    output: 'Object { 0: "a", b: "b", length: 2 }',
+    printOutput: "[object Object]",
+    inspectable: true,
+    variablesViewLabel: "Object",
+  },
+
+  // 28
+  {
+    input: '({42: "a"})',
+    output: 'Object { 42: "a" }',
     printOutput: "[object Object]",
     inspectable: true,
     variablesViewLabel: "Object",

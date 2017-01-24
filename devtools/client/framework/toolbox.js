@@ -9,6 +9,7 @@ const SPLITCONSOLE_ENABLED_PREF = "devtools.toolbox.splitconsoleEnabled";
 const SPLITCONSOLE_HEIGHT_PREF = "devtools.toolbox.splitconsoleHeight";
 const OS_HISTOGRAM = "DEVTOOLS_OS_ENUMERATED_PER_USER";
 const OS_IS_64_BITS = "DEVTOOLS_OS_IS_64_BITS_PER_USER";
+const HOST_HISTOGRAM = "DEVTOOLS_TOOLBOX_HOST";
 const SCREENSIZE_HISTOGRAM = "DEVTOOLS_SCREEN_RESOLUTION_ENUMERATED_PER_USER";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const { SourceMapService } = require("./source-map-service");
@@ -27,25 +28,14 @@ var { attachThread, detachThread } = require("./attach-thread");
 var Menu = require("devtools/client/framework/menu");
 var MenuItem = require("devtools/client/framework/menu-item");
 var { DOMHelpers } = require("resource://devtools/client/shared/DOMHelpers.jsm");
+const { KeyCodes } = require("devtools/client/shared/keycodes");
 
 const { BrowserLoader } =
   Cu.import("resource://devtools/client/shared/browser-loader.js", {});
 
-loader.lazyGetter(this, "toolboxStrings", () => {
-  const properties = "chrome://devtools/locale/toolbox.properties";
-  const bundle = Services.strings.createBundle(properties);
-  return (name, ...args) => {
-    try {
-      if (!args.length) {
-        return bundle.GetStringFromName(name);
-      }
-      return bundle.formatStringFromName(name, args, args.length);
-    } catch (ex) {
-      console.log("Error reading '" + name + "'");
-      return null;
-    }
-  };
-});
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const L10N = new LocalizationHelper("devtools/locale/toolbox.properties");
+
 loader.lazyRequireGetter(this, "CommandUtils",
   "devtools/client/shared/developer-toolbar", true);
 loader.lazyRequireGetter(this, "getHighlighterUtils",
@@ -56,8 +46,8 @@ loader.lazyRequireGetter(this, "Selection",
   "devtools/client/framework/selection", true);
 loader.lazyRequireGetter(this, "InspectorFront",
   "devtools/shared/fronts/inspector", true);
-loader.lazyRequireGetter(this, "DevToolsUtils",
-  "devtools/shared/DevToolsUtils");
+loader.lazyRequireGetter(this, "flags",
+  "devtools/shared/flags");
 loader.lazyRequireGetter(this, "showDoorhanger",
   "devtools/client/shared/doorhanger", true);
 loader.lazyRequireGetter(this, "createPerformanceFront",
@@ -70,6 +60,8 @@ loader.lazyRequireGetter(this, "KeyShortcuts",
   "devtools/client/shared/key-shortcuts", true);
 loader.lazyRequireGetter(this, "ZoomKeys",
   "devtools/client/shared/zoom-keys");
+loader.lazyRequireGetter(this, "settleAll",
+  "devtools/shared/ThreadSafeDevToolsUtils", "settleAll");
 
 loader.lazyGetter(this, "registerHarOverlay", () => {
   return require("devtools/client/netmonitor/har/toolbox-overlay").register;
@@ -116,6 +108,7 @@ const ToolboxButtons = exports.ToolboxButtons = [
  */
 function Toolbox(target, selectedTool, hostType, hostOptions) {
   this._target = target;
+  this._win = null;
   this._toolPanels = new Map();
   this._telemetry = new Telemetry();
   if (Services.prefs.getBoolPref("devtools.sourcemap.locations.enabled")) {
@@ -151,6 +144,8 @@ function Toolbox(target, selectedTool, hostType, hostOptions) {
   this._onPerformanceFrontEvent = this._onPerformanceFrontEvent.bind(this);
   this._onBottomHostWillChange = this._onBottomHostWillChange.bind(this);
   this._toggleMinimizeMode = this._toggleMinimizeMode.bind(this);
+  this._onTabbarFocus = this._onTabbarFocus.bind(this);
+  this._onTabbarArrowKeypress = this._onTabbarArrowKeypress.bind(this);
 
   this._target.on("close", this.destroy);
 
@@ -279,24 +274,17 @@ Toolbox.prototype = {
   },
 
   /**
-   * Get the iframe containing the toolbox UI.
-   */
-  get frame() {
-    return this._host.frame;
-  },
-
-  /**
    * Shortcut to the window containing the toolbox UI
    */
   get win() {
-    return this.frame.contentWindow;
+    return this._win;
   },
 
   /**
    * Shortcut to the document containing the toolbox UI
    */
   get doc() {
-    return this.frame.contentDocument;
+    return this.win.document;
   },
 
   /**
@@ -365,6 +353,8 @@ Toolbox.prototype = {
   open: function () {
     return Task.spawn(function* () {
       let iframe = yield this._host.create();
+      this._win = iframe.contentWindow;
+
       let domReady = defer();
 
       // Prevent reloading the document when the toolbox is opened in a tab
@@ -381,7 +371,7 @@ Toolbox.prototype = {
         useOnlyShared: true
       }).require;
 
-      iframe.setAttribute("aria-label", toolboxStrings("toolbox.label"));
+      iframe.setAttribute("aria-label", L10N.getStr("toolbox.label"));
       let domHelper = new DOMHelpers(iframe.contentWindow);
       domHelper.onceDOMReady(() => {
         domReady.resolve();
@@ -431,7 +421,11 @@ Toolbox.prototype = {
       if (!this._hostOptions || this._hostOptions.zoom === true) {
         ZoomKeys.register(this.win);
       }
-      this._setToolbarKeyboardNavigation();
+
+      this.tabbar = this.doc.querySelector(".devtools-tabbar");
+      this.tabbar.addEventListener("focus", this._onTabbarFocus, true);
+      this.tabbar.addEventListener("click", this._onTabbarFocus, true);
+      this.tabbar.addEventListener("keypress", this._onTabbarArrowKeypress);
 
       this.webconsolePanel = this.doc.querySelector("#toolbox-panel-webconsole");
       this.webconsolePanel.height = Services.prefs.getIntPref(SPLITCONSOLE_HEIGHT_PREF);
@@ -471,7 +465,7 @@ Toolbox.prototype = {
       // If in testing environment, wait for performance connection to finish,
       // so we don't have to explicitly wait for this in tests; ideally, all tests
       // will handle this on their own, but each have their own tear down function.
-      if (DevToolsUtils.testing) {
+      if (flags.testing) {
         yield performanceFrontConnection;
       }
 
@@ -491,6 +485,17 @@ Toolbox.prototype = {
     return this.browserRequire("devtools/client/shared/vendor/react-dom");
   },
 
+  // Return HostType id for telemetry
+  _getTelemetryHostId: function () {
+    switch (this.hostType) {
+      case Toolbox.HostType.BOTTOM: return 0;
+      case Toolbox.HostType.SIDE: return 1;
+      case Toolbox.HostType.WINDOW: return 2;
+      case Toolbox.HostType.CUSTOM: return 3;
+      default: return 9;
+    }
+  },
+
   _pingTelemetry: function () {
     this._telemetry.toolOpened("toolbox");
 
@@ -498,6 +503,7 @@ Toolbox.prototype = {
     this._telemetry.logOncePerBrowserVersion(OS_IS_64_BITS,
                                              Services.appinfo.is64Bit ? 1 : 0);
     this._telemetry.logOncePerBrowserVersion(SCREENSIZE_HISTOGRAM, system.getScreenDimensions());
+    this._telemetry.log(HOST_HISTOGRAM, this._getTelemetryHostId());
   },
 
   /**
@@ -536,17 +542,16 @@ Toolbox.prototype = {
       // Prevent the opening of bookmarks window on toolbox.options.key
       event.preventDefault();
     };
-    shortcuts.on(toolboxStrings("toolbox.options.key"), selectOptions);
-    shortcuts.on(toolboxStrings("toolbox.help.key"), selectOptions);
+    shortcuts.on(L10N.getStr("toolbox.options.key"), selectOptions);
+    shortcuts.on(L10N.getStr("toolbox.help.key"), selectOptions);
   },
 
   _splitConsoleOnKeypress: function (e) {
-    if (e.keyCode === e.DOM_VK_ESCAPE) {
+    if (e.keyCode === KeyCodes.DOM_VK_ESCAPE) {
       this.toggleSplitConsole();
       // If the debugger is paused, don't let the ESC key stop any pending
       // navigation.
-      let jsdebugger = this.getPanel("jsdebugger");
-      if (jsdebugger && jsdebugger.panelWin.gThreadClient.state == "paused") {
+      if (this._threadClient.state == "paused") {
         e.preventDefault();
       }
     }
@@ -582,7 +587,7 @@ Toolbox.prototype = {
       ["forceReload", true],
       ["forceReload2", true]
     ].forEach(([id, force]) => {
-      let key = toolboxStrings("toolbox." + id + ".key");
+      let key = L10N.getStr("toolbox." + id + ".key");
       shortcuts.on(key, (name, event) => {
         this.reloadTarget(force);
 
@@ -593,21 +598,39 @@ Toolbox.prototype = {
   },
 
   _addHostListeners: function (shortcuts) {
-    shortcuts.on(toolboxStrings("toolbox.nextTool.key"),
-                 this.selectNextTool.bind(this));
-    shortcuts.on(toolboxStrings("toolbox.previousTool.key"),
-                 this.selectPreviousTool.bind(this));
-    shortcuts.on(toolboxStrings("toolbox.minimize.key"),
-                 this._toggleMinimizeMode.bind(this));
-    shortcuts.on(toolboxStrings("toolbox.toggleHost.key"),
+    shortcuts.on(L10N.getStr("toolbox.nextTool.key"),
+                 (name, event) => {
+                   this.selectNextTool();
+                   event.preventDefault();
+                 });
+    shortcuts.on(L10N.getStr("toolbox.previousTool.key"),
+                 (name, event) => {
+                   this.selectPreviousTool();
+                   event.preventDefault();
+                 });
+    shortcuts.on(L10N.getStr("toolbox.minimize.key"),
+                 (name, event) => {
+                   this._toggleMinimizeMode();
+                   event.preventDefault();
+                 });
+    shortcuts.on(L10N.getStr("toolbox.toggleHost.key"),
                  (name, event) => {
                    this.switchToPreviousHost();
                    event.preventDefault();
                  });
 
     this.doc.addEventListener("keypress", this._splitConsoleOnKeypress, false);
-
     this.doc.addEventListener("focus", this._onFocus, true);
+    this.win.addEventListener("unload", this.destroy);
+  },
+
+  _removeHostListeners: function () {
+    // The host iframe's contentDocument may already be gone.
+    if (this.doc) {
+      this.doc.removeEventListener("keypress", this._splitConsoleOnKeypress, false);
+      this.doc.removeEventListener("focus", this._onFocus, true);
+      this.win.removeEventListener("unload", this.destroy);
+    }
   },
 
   _registerOverlays: function () {
@@ -694,7 +717,7 @@ Toolbox.prototype = {
       let key = doc.createElement("key");
       key.id = "key_browserconsole";
 
-      key.setAttribute("key", toolboxStrings("browserConsoleCmd.commandkey"));
+      key.setAttribute("key", L10N.getStr("browserConsoleCmd.commandkey"));
       key.setAttribute("modifiers", "accel,shift");
       // needed. See bug 371900
       key.setAttribute("oncommand", "void(0)");
@@ -761,6 +784,9 @@ Toolbox.prototype = {
       let minimizeBtn = this.doc.createElementNS(HTML_NS, "button");
       minimizeBtn.id = "toolbox-dock-bottom-minimize";
       minimizeBtn.className = "devtools-button";
+      /* Bug 1177463 - The minimize button is currently hidden until we agree on
+         the UI for it, and until bug 1173849 is fixed too. */
+      minimizeBtn.setAttribute("hidden", "true");
 
       minimizeBtn.addEventListener("click", this._toggleMinimizeMode);
       dockBox.appendChild(minimizeBtn);
@@ -795,7 +821,7 @@ Toolbox.prototype = {
       let button = this.doc.createElementNS(HTML_NS, "button");
       button.id = "toolbox-dock-" + position;
       button.className = "toolbox-dock-button devtools-button";
-      button.setAttribute("title", toolboxStrings("toolboxDockButtons." +
+      button.setAttribute("title", L10N.getStr("toolboxDockButtons." +
                                                   position + ".tooltip"));
       button.addEventListener("click", () => {
         this.switchHost(position);
@@ -806,7 +832,7 @@ Toolbox.prototype = {
   },
 
   _getMinimizeButtonShortcutTooltip: function () {
-    let str = toolboxStrings("toolbox.minimize.key");
+    let str = L10N.getStr("toolbox.minimize.key");
     let key = KeyShortcuts.parseElectronKey(this.win, str);
     return "(" + KeyShortcuts.stringify(key) + ")";
   },
@@ -816,7 +842,7 @@ Toolbox.prototype = {
     btn.className = "minimized";
 
     btn.setAttribute("title",
-      toolboxStrings("toolboxDockButtons.bottom.maximize") + " " +
+      L10N.getStr("toolboxDockButtons.bottom.maximize") + " " +
       this._getMinimizeButtonShortcutTooltip());
   },
 
@@ -825,7 +851,7 @@ Toolbox.prototype = {
     btn.className = "maximized";
 
     btn.setAttribute("title",
-      toolboxStrings("toolboxDockButtons.bottom.minimize") + " " +
+      L10N.getStr("toolboxDockButtons.bottom.minimize") + " " +
       this._getMinimizeButtonShortcutTooltip());
   },
 
@@ -848,9 +874,8 @@ Toolbox.prototype = {
 
     // Calculate the height to which the host should be minimized so the
     // tabbar is still visible.
-    let toolbarHeight = this.doc.querySelector(".devtools-tabbar")
-                                .getBoxQuads({box: "content"})[0]
-                                .bounds.height;
+    let toolbarHeight = this.tabbar.getBoxQuads({box: "content"})[0].bounds
+                                                                    .height;
     this._host.toggleMinimizeMode(toolbarHeight);
   },
 
@@ -864,69 +889,67 @@ Toolbox.prototype = {
   },
 
   /**
-   * Sets up keyboard navigation with and within the dev tools toolbar.
+   * Get all dev tools tab bar focusable elements. These are visible elements
+   * such as buttons or elements with tabindex.
    */
-  _setToolbarKeyboardNavigation() {
-    let toolbar = this.doc.querySelector(".devtools-tabbar");
-    // Set and track aria-activedescendant to indicate which control is
-    // currently focused within the toolbar (for accessibility purposes).
-    toolbar.addEventListener("focus", event => {
-      let { target, rangeParent } = event;
-      let control, controlID = toolbar.getAttribute("aria-activedescendant");
+  get tabbarFocusableElms() {
+    return [...this.tabbar.querySelectorAll(
+      "[tabindex]:not([hidden]), button:not([hidden])")];
+  },
 
-      if (controlID) {
-        control = this.doc.getElementById(controlID);
-      }
-      if (rangeParent || !control) {
-        // If range parent is present, the focused is moved within the toolbar,
-        // simply updating aria-activedescendant. Or if aria-activedescendant is
-        // not available, set it to target.
-        toolbar.setAttribute("aria-activedescendant", target.id);
-      } else {
-        // When range parent is not present, we focused into the toolbar, move
-        // focus to current aria-activedescendant.
-        event.preventDefault();
-        control.focus();
-      }
-    }, true);
+  /**
+   * Reset tabindex attributes across all focusable elements inside the tabbar.
+   * Only have one element with tabindex=0 at a time to make sure that tabbing
+   * results in navigating away from the tabbar container.
+   * @param  {FocusEvent} event
+   */
+  _onTabbarFocus: function (event) {
+    this.tabbarFocusableElms.forEach(elm =>
+      elm.setAttribute("tabindex", event.target === elm ? "0" : "-1"));
+  },
 
-    toolbar.addEventListener("keypress", event => {
-      let { key, target } = event;
-      let win = this.win;
-      let elm, type;
-      if (key === "Tab") {
-        // Tabbing when toolbar or its contents are focused should move focus to
-        // next/previous focusable element relative to toolbar itself.
-        if (event.shiftKey) {
-          elm = toolbar;
-          type = Services.focus.MOVEFOCUS_BACKWARD;
-        } else {
-          // To move focus to next element following the toolbar, relative
-          // element needs to be the last element in its subtree.
-          let last = toolbar.lastChild;
-          while (last && last.lastChild) {
-            last = last.lastChild;
-          }
-          elm = last;
-          type = Services.focus.MOVEFOCUS_FORWARD;
-        }
-      } else if (key === "ArrowLeft") {
-        // Using left arrow key inside toolbar should move focus to previous
-        // toolbar control.
-        elm = target;
-        type = Services.focus.MOVEFOCUS_BACKWARD;
-      } else if (key === "ArrowRight") {
-        // Using right arrow key inside toolbar should move focus to next
-        // toolbar control.
-        elm = target;
-        type = Services.focus.MOVEFOCUS_FORWARD;
-      } else {
-        // Ignore all other keys.
+  /**
+   * On left/right arrow press, attempt to move the focus inside the tabbar to
+   * the previous/next focusable element.
+   * @param  {KeyboardEvent} event
+   */
+  _onTabbarArrowKeypress: function (event) {
+    let { key, target } = event;
+    let focusableElms = this.tabbarFocusableElms;
+    let curIndex = focusableElms.indexOf(target);
+
+    if (curIndex === -1) {
+      console.warn(target + " is not found among Developer Tools tab bar " +
+        "focusable elements. It needs to either be a button or have " +
+        "tabindex. If it is intended to be hidden, 'hidden' attribute must " +
+        "be used.");
+      return;
+    }
+
+    let newTarget;
+
+    if (key === "ArrowLeft") {
+      // Do nothing if already at the beginning.
+      if (curIndex === 0) {
         return;
       }
-      event.preventDefault();
-      Services.focus.moveFocus(win, elm, type, 0);
-    });
+      newTarget = focusableElms[curIndex - 1];
+    } else if (key === "ArrowRight") {
+      // Do nothing if already at the end.
+      if (curIndex === focusableElms.length - 1) {
+        return;
+      }
+      newTarget = focusableElms[curIndex + 1];
+    } else {
+      return;
+    }
+
+    focusableElms.forEach(elm =>
+      elm.setAttribute("tabindex", newTarget === elm ? "0" : "-1"));
+    newTarget.focus();
+
+    event.preventDefault();
+    event.stopPropagation();
   },
 
   /**
@@ -976,7 +999,7 @@ Toolbox.prototype = {
     this._pickerButton = this.doc.createElementNS(HTML_NS, "button");
     this._pickerButton.id = "command-button-pick";
     this._pickerButton.className = "command-button command-button-invertable devtools-button";
-    this._pickerButton.setAttribute("title", toolboxStrings("pickButton.tooltip"));
+    this._pickerButton.setAttribute("title", L10N.getStr("pickButton.tooltip"));
     this._pickerButton.setAttribute("hidden", "true");
 
     let container = this.doc.querySelector("#toolbox-picker-container");
@@ -1104,6 +1127,7 @@ Toolbox.prototype = {
     radio.className = "devtools-tab";
     radio.id = "toolbox-tab-" + id;
     radio.setAttribute("toolid", id);
+    radio.setAttribute("tabindex", "0");
     radio.setAttribute("ordinal", toolDefinition.ordinal);
     radio.setAttribute("tooltiptext", toolDefinition.tooltip);
     if (toolDefinition.invertIconForLightTheme) {
@@ -1567,10 +1591,10 @@ Toolbox.prototype = {
   _refreshHostTitle: function () {
     let title;
     if (this.target.name && this.target.name != this.target.url) {
-      title = toolboxStrings("toolbox.titleTemplate2",
-                             this.target.name, this.target.url);
+      title = L10N.getFormatStr("toolbox.titleTemplate2", this.target.name,
+                                                          this.target.url);
     } else {
-      title = toolboxStrings("toolbox.titleTemplate1", this.target.url);
+      title = L10N.getFormatStr("toolbox.titleTemplate1", this.target.url);
     }
     this._host.setTitle(title);
   },
@@ -1783,7 +1807,7 @@ Toolbox.prototype = {
 
     // Handle the case where the previous host happens to match the current
     // host. If so, switch to bottom if it's not already used, and side if not.
-    if (hostType === this._host.type) {
+    if (hostType === this.hostType) {
       if (hostType === Toolbox.HostType.BOTTOM) {
         hostType = Toolbox.HostType.SIDE;
       } else {
@@ -1802,7 +1826,7 @@ Toolbox.prototype = {
    *        The host type of the new host object
    */
   switchHost: function (hostType) {
-    if (hostType == this._host.type || !this._target.isLocalTab) {
+    if (hostType == this.hostType || !this._target.isLocalTab) {
       return null;
     }
 
@@ -1818,7 +1842,7 @@ Toolbox.prototype = {
     return newHost.create().then(iframe => {
       // change toolbox document's parent to the new host
       iframe.QueryInterface(Ci.nsIFrameLoaderOwner);
-      iframe.swapFrameLoaders(this.frame);
+      iframe.swapFrameLoaders(this._host.frame);
 
       this._host.off("window-closed", this.destroy);
       this.destroyHost();
@@ -1838,6 +1862,8 @@ Toolbox.prototype = {
       this.focusTool(this.currentToolId, true);
 
       this.emit("host-changed");
+
+      this._telemetry.log(HOST_HISTOGRAM, this._getTelemetryHostId());
     });
   },
 
@@ -1937,7 +1963,7 @@ Toolbox.prototype = {
           this.walker.on("highlighter-ready", this._highlighterReady);
           this.walker.on("highlighter-hide", this._highlighterHidden);
 
-          let autohide = !DevToolsUtils.testing;
+          let autohide = !flags.testing;
           this._highlighter = yield this._inspector.getHighlighter(autohide);
         }
       }.bind(this));
@@ -2013,12 +2039,7 @@ Toolbox.prototype = {
    * @return {promise} to be resolved when the host is destroyed.
    */
   destroyHost: function () {
-    // The host iframe's contentDocument may already be gone.
-    if (this.doc) {
-      this.doc.removeEventListener("keypress",
-        this._splitConsoleOnKeypress, false);
-      this.doc.removeEventListener("focus", this._onFocus, true);
-    }
+    this._removeHostListeners();
     return this._host.destroy();
   },
 
@@ -2059,6 +2080,9 @@ Toolbox.prototype = {
     this.closeButton.removeEventListener("click", this.destroy, true);
     this.textboxContextMenuPopup.removeEventListener("popupshowing",
       this._updateTextboxMenuItems, true);
+    this.tabbar.removeEventListener("focus", this._onTabbarFocus, true);
+    this.tabbar.removeEventListener("click", this._onTabbarFocus, true);
+    this.tabbar.removeEventListener("keypress", this._onTabbarArrowKeypress);
 
     let outstanding = [];
     for (let [id, panel] of this._toolPanels) {
@@ -2102,7 +2126,7 @@ Toolbox.prototype = {
     this._threadClient = null;
 
     // We need to grab a reference to win before this._host is destroyed.
-    let win = this.frame.ownerDocument.defaultView;
+    let win = this.win;
 
     if (this._requisition) {
       CommandUtils.destroyRequisition(this._requisition, this.target);
@@ -2113,39 +2137,41 @@ Toolbox.prototype = {
     // Finish all outstanding tasks (which means finish destroying panels and
     // then destroying the host, successfully or not) before destroying the
     // target.
-    this._destroyer = DevToolsUtils.settleAll(outstanding)
-                                   .catch(console.error)
-                                   .then(() => this.destroyHost())
-                                   .catch(console.error)
-                                   .then(() => {
-      // Targets need to be notified that the toolbox is being torn down.
-      // This is done after other destruction tasks since it may tear down
-      // fronts and the debugger transport which earlier destroy methods may
-      // require to complete.
-                                     if (!this._target) {
-                                       return null;
-                                     }
-                                     let target = this._target;
-                                     this._target = null;
-                                     this.highlighterUtils.release();
-                                     target.off("close", this.destroy);
-                                     return target.destroy();
-                                   }, console.error).then(() => {
-                                     this.emit("destroyed");
+    this._destroyer = settleAll(outstanding)
+        .catch(console.error)
+        .then(() => this.destroyHost())
+        .catch(console.error)
+        .then(() => {
+          this._win = null;
 
-      // Free _host after the call to destroyed in order to let a chance
-      // to destroyed listeners to still query toolbox attributes
-                                     this._host = null;
-                                     this._toolPanels.clear();
+          // Targets need to be notified that the toolbox is being torn down.
+          // This is done after other destruction tasks since it may tear down
+          // fronts and the debugger transport which earlier destroy methods may
+          // require to complete.
+          if (!this._target) {
+            return null;
+          }
+          let target = this._target;
+          this._target = null;
+          this.highlighterUtils.release();
+          target.off("close", this.destroy);
+          return target.destroy();
+        }, console.error).then(() => {
+          this.emit("destroyed");
 
-      // Force GC to prevent long GC pauses when running tests and to free up
-      // memory in general when the toolbox is closed.
-                                     if (DevToolsUtils.testing) {
-                                       win.QueryInterface(Ci.nsIInterfaceRequestor)
-           .getInterface(Ci.nsIDOMWindowUtils)
-           .garbageCollect();
-                                     }
-                                   }).then(null, console.error);
+          // Free _host after the call to destroyed in order to let a chance
+          // to destroyed listeners to still query toolbox attributes
+          this._host = null;
+          this._toolPanels.clear();
+
+          // Force GC to prevent long GC pauses when running tests and to free up
+          // memory in general when the toolbox is closed.
+          if (flags.testing) {
+            win.QueryInterface(Ci.nsIInterfaceRequestor)
+              .getInterface(Ci.nsIDOMWindowUtils)
+              .garbageCollect();
+          }
+        }).then(null, console.error);
 
     let leakCheckObserver = ({wrappedJSObject: barrier}) => {
       // Make the leak detector wait until this toolbox is properly destroyed.

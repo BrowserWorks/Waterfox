@@ -88,6 +88,7 @@ public:
   explicit WebSocketImpl(WebSocket* aWebSocket)
   : mWebSocket(aWebSocket)
   , mIsServerSide(false)
+  , mSecure(false)
   , mOnCloseScheduled(false)
   , mFailed(false)
   , mDisconnectingOrDisconnected(false)
@@ -270,7 +271,7 @@ public:
     aWebSocketImpl->AssertIsOnTargetThread();
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mWebSocketImpl->AssertIsOnTargetThread();
     mWebSocketImpl->DispatchConnectionCloseEvents();
@@ -989,6 +990,18 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
                                       EmptyCString(), aRv);
 }
 
+already_AddRefed<WebSocket>
+WebSocket::CreateServerWebSocket(const GlobalObject& aGlobal,
+                                 const nsAString& aUrl,
+                                 const Sequence<nsString>& aProtocols,
+                                 nsITransportProvider* aTransportProvider,
+                                 const nsAString& aNegotiatedExtensions,
+                                 ErrorResult& aRv)
+{
+  return WebSocket::ConstructorCommon(aGlobal, aUrl, aProtocols, aTransportProvider,
+                                      NS_ConvertUTF16toUTF8(aNegotiatedExtensions), aRv);
+}
+
 namespace {
 
 // This class is used to clear any exception.
@@ -1633,11 +1646,7 @@ WebSocketImpl::Init(JSContext* aCx,
       while (true) {
         bool isNullPrincipal = true;
         if (principal) {
-          nsresult rv = principal->GetIsNullPrincipal(&isNullPrincipal);
-          if (NS_WARN_IF(NS_FAILED(rv))) {
-            aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
-            return;
-          }
+          isNullPrincipal = principal->GetIsNullPrincipal();
         }
 
         if (!isNullPrincipal) {
@@ -2262,7 +2271,7 @@ WebSocketImpl::RegisterWorkerHolder()
   MOZ_ASSERT(!mWorkerHolder);
   mWorkerHolder = new WebSocketWorkerHolder(this);
 
-  if (NS_WARN_IF(!mWorkerHolder->HoldWorker(mWorkerPrivate))) {
+  if (NS_WARN_IF(!mWorkerHolder->HoldWorker(mWorkerPrivate, Canceling))) {
     mWorkerHolder = nullptr;
     return false;
   }

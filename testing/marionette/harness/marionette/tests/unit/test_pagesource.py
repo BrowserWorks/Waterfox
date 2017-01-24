@@ -10,42 +10,24 @@ class TestPageSource(MarionetteTestCase):
         test_html = self.marionette.absolute_url("testPageSource.html")
         self.marionette.navigate(test_html)
         source = self.marionette.page_source
+        from_web_api = self.marionette.execute_script("return document.documentElement.outerHTML")
         self.assertTrue("<html" in source)
         self.assertTrue("PageSource" in source)
+        self.assertEqual(source, from_web_api)
 
     def testShouldReturnTheSourceOfAPageWhenThereAreUnicodeChars(self):
         test_html = self.marionette.absolute_url("testPageSourceWithUnicodeChars.html")
         self.marionette.navigate(test_html)
         # if we don't throw on the next line we are good!
-        self.marionette.page_source
+        source = self.marionette.page_source
+        from_web_api = self.marionette.execute_script("return document.documentElement.outerHTML")
+        self.assertEqual(source, from_web_api)
 
     def testShouldReturnAXMLDocumentSource(self):
         test_xml = self.marionette.absolute_url("testPageSource.xml")
         self.marionette.navigate(test_xml)
         source = self.marionette.page_source
+        from_web_api = self.marionette.execute_script("return document.documentElement.outerHTML")
         import re
         self.assertEqual(re.sub("\s", "", source), "<xml><foo><bar>baz</bar></foo></xml>")
-
-
-class TestPageSourceChrome(MarionetteTestCase):
-    def setUp(self):
-        MarionetteTestCase.setUp(self)
-        self.marionette.set_context("chrome")
-        self.win = self.marionette.current_window_handle
-        self.marionette.execute_script("window.open('chrome://marionette/content/test.xul', 'foo', 'chrome,centerscreen');")
-        self.marionette.switch_to_window('foo')
-        self.assertNotEqual(self.win, self.marionette.current_window_handle)
-
-    def tearDown(self):
-        self.assertNotEqual(self.win, self.marionette.current_window_handle)
-        self.marionette.execute_script("window.close();")
-        self.marionette.switch_to_window(self.win)
-        MarionetteTestCase.tearDown(self)
-
-    def testShouldReturnXULDetails(self):
-        wins = self.marionette.window_handles
-        wins.remove(self.win)
-        newWin = wins.pop()
-        self.marionette.switch_to_window(newWin)
-        source  = self.marionette.page_source
-        self.assertTrue('<textbox id="textInput"' in source)
+        self.assertEqual(source, from_web_api)

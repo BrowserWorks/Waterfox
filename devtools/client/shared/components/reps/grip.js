@@ -27,13 +27,14 @@ define(function (require, exports, module) {
     propTypes: {
       object: React.PropTypes.object.isRequired,
       mode: React.PropTypes.string,
+      isInterestingProp: React.PropTypes.func
     },
 
     getTitle: function (object) {
       if (this.props.objectLink) {
         return this.props.objectLink({
           object: object
-        }, object.class);
+        }, object.class + " ");
       }
       return object.class || "Object";
     },
@@ -50,21 +51,21 @@ define(function (require, exports, module) {
 
     propIterator: function (object, max) {
       // Property filter. Show only interesting properties to the user.
-      let isInterestingProp = (type, value) => {
+      let isInterestingProp = this.props.isInterestingProp || ((type, value) => {
         return (
           type == "boolean" ||
           type == "number" ||
           (type == "string" && value.length != 0)
         );
-      };
+      });
 
       let ownProperties = object.preview ? object.preview.ownProperties : [];
       let indexes = this.getPropIndexes(ownProperties, max, isInterestingProp);
       if (indexes.length < max && indexes.length < object.ownPropertyLength) {
         // There are not enough props yet. Then add uninteresting props to display them.
         indexes = indexes.concat(
-          this.getPropIndexes(ownProperties, max - indexes.length, (t, value) => {
-            return !isInterestingProp(t, value);
+          this.getPropIndexes(ownProperties, max - indexes.length, (t, value, name) => {
+            return !isInterestingProp(t, value, name);
           })
         );
       }
@@ -110,7 +111,8 @@ define(function (require, exports, module) {
 
       indexes.forEach((i) => {
         let name = Object.keys(ownProperties)[i];
-        let value = ownProperties[name].value;
+        let prop = ownProperties[name];
+        let value = prop.value !== undefined ? prop.value : prop;
         props.push(PropRep(Object.assign({}, this.props, {
           key: name,
           mode: "tiny",
@@ -144,14 +146,14 @@ define(function (require, exports, module) {
           }
 
           let prop = ownProperties[name];
-          let value = prop.value;
+          let value = prop.value !== undefined ? prop.value : prop;
 
           // Type is specified in grip's "class" field and for primitive
           // values use typeof.
           let type = (value.class || typeof value);
           type = type.toLowerCase();
 
-          if (filter(type, value)) {
+          if (filter(type, value, name)) {
             indexes.push(i);
           }
           i++;
@@ -175,7 +177,6 @@ define(function (require, exports, module) {
             this.getTitle(object),
             objectLink({
               className: "objectLeftBrace",
-              role: "presentation",
               object: object
             }, "")
           )
@@ -187,15 +188,13 @@ define(function (require, exports, module) {
           this.getTitle(object),
           objectLink({
             className: "objectLeftBrace",
-            role: "presentation",
             object: object
-          }, " {"),
+          }, " { "),
           props,
           objectLink({
             className: "objectRightBrace",
-            role: "presentation",
             object: object
-          }, "}")
+          }, " }")
         )
       );
     },

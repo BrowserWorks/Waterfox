@@ -104,8 +104,8 @@
         <menuseparator/>
 
         <menuitem command="downloadsCmd_clearList"
-                  label="&cmd.clearList.label;"
-                  accesskey="&cmd.clearList.accesskey;"/>
+                  label="&cmd.clearList2.label;"
+                  accesskey="&cmd.clearList2.accesskey;"/>
       </menupopup>
 
       <panelmultiview id="downloadsPanel-multiView"
@@ -116,7 +116,6 @@
                    flex="1"
                    align="stretch">
           <richlistbox id="downloadsListBox"
-                       class="plain"
                        context="downloadsContextMenu"
                        onmouseover="DownloadsView.onDownloadMouseOver(event);"
                        onmouseout="DownloadsView.onDownloadMouseOut(event);"
@@ -129,31 +128,53 @@
           <spacer flex="1"/>
           <vbox id="downloadsFooter"
                 class="downloadsPanelFooter">
-            <hbox id="downloadsSummary"
-                  align="center"
-                  orient="horizontal"
-                  onkeydown="DownloadsSummary.onKeyDown(event);"
-                  onclick="DownloadsSummary.onClick(event);">
-              <image class="downloadTypeIcon" />
-              <vbox pack="center"
-                    class="downloadContainer"
-                    style="width: &downloadDetails.width;">
-                <description id="downloadsSummaryDescription"
-                             style="min-width: &downloadsSummary.minWidth2;"/>
-                <progressmeter id="downloadsSummaryProgress"
-                               class="downloadProgress"
-                               min="0"
-                               max="100"
-                               mode="normal" />
-                <description id="downloadsSummaryDetails"
-                             crop="end"/>
-              </vbox>
-            </hbox>
-            <button id="downloadsHistory"
-                    class="plain downloadsPanelFooterButton"
-                    label="&downloadsHistory.label;"
-                    accesskey="&downloadsHistory.accesskey;"
-                    oncommand="DownloadsPanel.showDownloadsHistory();"/>
+            <stack>
+              <hbox id="downloadsSummary"
+                    align="center"
+                    orient="horizontal"
+                    onkeydown="DownloadsSummary.onKeyDown(event);"
+                    onclick="DownloadsSummary.onClick(event);">
+                <image class="downloadTypeIcon" />
+                <vbox pack="center"
+                      class="downloadContainer"
+                      style="width: &downloadDetails.width;">
+                  <description id="downloadsSummaryDescription"
+                               style="min-width: &downloadsSummary.minWidth2;"/>
+                  <progressmeter id="downloadsSummaryProgress"
+                                 class="downloadProgress"
+                                 min="0"
+                                 max="100"
+                                 mode="normal" />
+                  <description id="downloadsSummaryDetails"
+                               crop="end"/>
+                </vbox>
+              </hbox>
+              <hbox id="downloadsFooterButtons">
+                <button id="downloadsHistory"
+                        class="downloadsPanelFooterButton"
+                        label="&downloadsHistory.label;"
+                        accesskey="&downloadsHistory.accesskey;"
+                        flex="1"
+                        oncommand="DownloadsPanel.showDownloadsHistory();"/>
+                <toolbarseparator id="downloadsFooterButtonsSplitter"
+                        class="downloadsDropmarkerSplitter"/>
+                <button id="downloadsFooterDropmarker"
+                        class="downloadsPanelFooterButton downloadsDropmarker"
+                        type="menu">
+                  <menupopup id="downloadSubPanel"
+                             onpopupshowing="DownloadsPanel.onFooterPopupShowing(event);"
+                             onpopuphidden="DownloadsPanel.onFooterPopupHidden(event);"
+                             position="after_end">
+                    <menuitem id="downloadsDropdownItemClearList"
+                              command="downloadsCmd_clearList"
+                              label="&cmd.clearList2.label;"/>
+                    <menuitem id="downloadsDropdownItemOpenDownloadsFolder"
+                              oncommand="DownloadsPanel.openDownloadsFolder();"
+                              label="&openDownloadsFolder.label;"/>
+                  </menupopup>
+                </button>
+              </hbox>
+            </stack>
           </vbox>
         </panelview>
 
@@ -168,12 +189,12 @@
                 class="downloadsPanelFooter"
                 align="stretch">
             <button id="downloadsPanel-blockedSubview-openButton"
-                    class="plain downloadsPanelFooterButton"
+                    class="downloadsPanelFooterButton"
                     command="downloadsCmd_unblockAndOpen"
                     flex="1"/>
             <toolbarseparator/>
             <button id="downloadsPanel-blockedSubview-deleteButton"
-                    class="plain downloadsPanelFooterButton"
+                    class="downloadsPanelFooterButton"
                     oncommand="DownloadsBlockedSubview.confirmBlock();"
                     default="true"
                     flex="1"/>

@@ -356,7 +356,7 @@
                 context.drawWindow(win, win.scrollX, win.scrollY,
                                    width, height, bgcolor);
               }
-              catch(ex) { }
+              catch (ex) { }
             }
             else if (canvas) {
               canvas.parentNode.removeChild(canvas);
@@ -395,7 +395,7 @@
                            class="messageCloseButton close-icon tabbable"
                            xbl:inherits="hidden=hideclose"
                            tooltiptext="&closeNotification.tooltip;"
-                           oncommand="document.getBindingParent(this).close();"/>
+                           oncommand="document.getBindingParent(this).dismiss();"/>
       </xul:hbox>
     </content>
     <resources>
@@ -429,6 +429,21 @@
           ]]>
         </getter>
       </property>
+
+      <!-- This method should only be called when the user has
+           manually closed the notification. If you want to
+           programmatically close the notification, you should
+           call close() instead. -->
+      <method name="dismiss">
+        <body>
+          <![CDATA[
+            if (this.eventCallback) {
+              this.eventCallback("dismissed");
+            }
+            this.close();
+          ]]>
+        </body>
+      </method>
 
       <method name="close">
         <body>
@@ -493,6 +508,9 @@
         <children includes="popupnotificationcontent"/>
         <xul:label class="text-link popup-notification-learnmore-link"
                xbl:inherits="onclick=learnmoreclick,href=learnmoreurl">&learnMore;</xul:label>
+        <xul:checkbox anonid="checkbox"
+                      xbl:inherits="hidden=checkboxhidden,checked=checkboxchecked,label=checkboxlabel,oncommand=checkboxcommand" />
+        <xul:description class="popup-notification-warning" xbl:inherits="hidden=warninghidden,xbl:text=warninglabel"/>
         <xul:spacer flex="1"/>
         <xul:hbox class="popup-notification-button-container"
                   pack="end" align="center">
@@ -500,7 +518,7 @@
           <xul:button anonid="button"
                       class="popup-notification-menubutton"
                       type="menu-button"
-                      xbl:inherits="oncommand=buttoncommand,onpopupshown=buttonpopupshown,label=buttonlabel,accesskey=buttonaccesskey">
+                      xbl:inherits="oncommand=buttoncommand,onpopupshown=buttonpopupshown,label=buttonlabel,accesskey=buttonaccesskey,disabled=mainactiondisabled">
             <xul:menupopup anonid="menupopup"
                            xbl:inherits="oncommand=menucommand">
               <children/>
@@ -516,6 +534,9 @@
       <stylesheet src="chrome://global/skin/notification.css"/>
     </resources>
     <implementation>
+      <field name="checkbox" readonly="true">
+        document.getAnonymousElementByAttribute(this, "anonid", "checkbox");
+      </field>
       <field name="closebutton" readonly="true">
         document.getAnonymousElementByAttribute(this, "anonid", "closebutton");
       </field>

@@ -11,6 +11,8 @@
 #include "prprf.h"
 
 #include "nsUrlClassifierUtils.h"
+#include "nsPrintfCString.h"
+#include "mozilla/Base64.h"
 
 // MOZ_LOG=UrlClassifierProtocolParser:5
 mozilla::LazyLogModule gUrlClassifierProtocolParserLog("UrlClassifierProtocolParser");
@@ -60,12 +62,11 @@ ParseChunkRange(nsACString::const_iterator& aBegin,
   return false;
 }
 
+///////////////////////////////////////////////////////////////
+// ProtocolParser implementation
+
 ProtocolParser::ProtocolParser()
-    : mState(PROTOCOL_STATE_CONTROL)
-  , mUpdateStatus(NS_OK)
-  , mUpdateWait(0)
-  , mResetRequested(false)
-  , mTableUpdate(nullptr)
+  : mUpdateStatus(NS_OK)
 {
 }
 
@@ -82,13 +83,56 @@ ProtocolParser::Init(nsICryptoHash* aHasher)
 }
 
 void
-ProtocolParser::SetCurrentTable(const nsACString& aTable)
+ProtocolParser::CleanupUpdates()
 {
-  mTableUpdate = GetTableUpdate(aTable);
+  for (uint32_t i = 0; i < mTableUpdates.Length(); i++) {
+    delete mTableUpdates[i];
+  }
+  mTableUpdates.Clear();
+}
+
+TableUpdate *
+ProtocolParser::GetTableUpdate(const nsACString& aTable)
+{
+  for (uint32_t i = 0; i < mTableUpdates.Length(); i++) {
+    if (aTable.Equals(mTableUpdates[i]->TableName())) {
+      return mTableUpdates[i];
+    }
+  }
+
+  // We free automatically on destruction, ownership of these
+  // updates can be transferred to DBServiceWorker, which passes
+  // them back to Classifier when doing the updates, and that
+  // will free them.
+  TableUpdate *update = CreateTableUpdate(aTable);
+  mTableUpdates.AppendElement(update);
+  return update;
+}
+
+///////////////////////////////////////////////////////////////////////
+// ProtocolParserV2
+
+ProtocolParserV2::ProtocolParserV2()
+  : mState(PROTOCOL_STATE_CONTROL)
+  , mUpdateWait(0)
+  , mResetRequested(false)
+  , mTableUpdate(nullptr)
+{
+}
+
+ProtocolParserV2::~ProtocolParserV2()
+{
+}
+
+void
+ProtocolParserV2::SetCurrentTable(const nsACString& aTable)
+{
+  auto update = GetTableUpdate(aTable);
+  mTableUpdate = TableUpdate::Cast<TableUpdateV2>(update);
 }
 
 nsresult
-ProtocolParser::AppendStream(const nsACString& aData)
+ProtocolParserV2::AppendStream(const nsACString& aData)
 {
   if (NS_FAILED(mUpdateStatus))
     return mUpdateStatus;
@@ -114,8 +158,14 @@ ProtocolParser::AppendStream(const nsACString& aData)
   return NS_OK;
 }
 
+void
+ProtocolParserV2::End()
+{
+  // Inbound data has already been processed in every AppendStream() call.
+}
+
 nsresult
-ProtocolParser::ProcessControl(bool* aDone)
+ProtocolParserV2::ProcessControl(bool* aDone)
 {
   nsresult rv;
 
@@ -155,7 +205,7 @@ ProtocolParser::ProcessControl(bool* aDone)
 }
 
 nsresult
-ProtocolParser::ProcessExpirations(const nsCString& aLine)
+ProtocolParserV2::ProcessExpirations(const nsCString& aLine)
 {
   if (!mTableUpdate) {
     NS_WARNING("Got an expiration without a table.");
@@ -191,7 +241,7 @@ ProtocolParser::ProcessExpirations(const nsCString& aLine)
 }
 
 nsresult
-ProtocolParser::ProcessChunkControl(const nsCString& aLine)
+ProtocolParserV2::ProcessChunkControl(const nsCString& aLine)
 {
   if (!mTableUpdate) {
     NS_WARNING("Got a chunk before getting a table.");
@@ -265,14 +315,14 @@ ProtocolParser::ProcessChunkControl(const nsCString& aLine)
 }
 
 nsresult
-ProtocolParser::ProcessForward(const nsCString& aLine)
+ProtocolParserV2::ProcessForward(const nsCString& aLine)
 {
   const nsCSubstring &forward = Substring(aLine, 2);
   return AddForward(forward);
 }
 
 nsresult
-ProtocolParser::AddForward(const nsACString& aUrl)
+ProtocolParserV2::AddForward(const nsACString& aUrl)
 {
   if (!mTableUpdate) {
     NS_WARNING("Forward without a table name.");
@@ -287,7 +337,7 @@ ProtocolParser::AddForward(const nsACString& aUrl)
 }
 
 nsresult
-ProtocolParser::ProcessChunk(bool* aDone)
+ProtocolParserV2::ProcessChunk(bool* aDone)
 {
   if (!mTableUpdate) {
     NS_WARNING("Processing chunk without an active table.");
@@ -324,7 +374,7 @@ ProtocolParser::ProcessChunk(bool* aDone)
  * Process a plaintext chunk (currently only used in unit tests).
  */
 nsresult
-ProtocolParser::ProcessPlaintextChunk(const nsACString& aChunk)
+ProtocolParserV2::ProcessPlaintextChunk(const nsACString& aChunk)
 {
   if (!mTableUpdate) {
     NS_WARNING("Chunk received with no table.");
@@ -393,7 +443,7 @@ ProtocolParser::ProcessPlaintextChunk(const nsACString& aChunk)
 }
 
 nsresult
-ProtocolParser::ProcessShaChunk(const nsACString& aChunk)
+ProtocolParserV2::ProcessShaChunk(const nsACString& aChunk)
 {
   uint32_t start = 0;
   while (start < aChunk.Length()) {
@@ -433,7 +483,7 @@ ProtocolParser::ProcessShaChunk(const nsACString& aChunk)
 }
 
 nsresult
-ProtocolParser::ProcessDigestChunk(const nsACString& aChunk)
+ProtocolParserV2::ProcessDigestChunk(const nsACString& aChunk)
 {
   PARSER_LOG(("Handling a %d-byte digest256 chunk", aChunk.Length()));
 
@@ -447,7 +497,7 @@ ProtocolParser::ProcessDigestChunk(const nsACString& aChunk)
 }
 
 nsresult
-ProtocolParser::ProcessDigestAdd(const nsACString& aChunk)
+ProtocolParserV2::ProcessDigestAdd(const nsACString& aChunk)
 {
   // The ABNF format for add chunks is (HASH)+, where HASH is 32 bytes.
   MOZ_ASSERT(aChunk.Length() % 32 == 0,
@@ -466,7 +516,7 @@ ProtocolParser::ProcessDigestAdd(const nsACString& aChunk)
 }
 
 nsresult
-ProtocolParser::ProcessDigestSub(const nsACString& aChunk)
+ProtocolParserV2::ProcessDigestSub(const nsACString& aChunk)
 {
   // The ABNF format for sub chunks is (ADDCHUNKNUM HASH)+, where ADDCHUNKNUM
   // is a 4 byte chunk number, and HASH is 32 bytes.
@@ -496,7 +546,7 @@ ProtocolParser::ProcessDigestSub(const nsACString& aChunk)
 }
 
 nsresult
-ProtocolParser::ProcessHostAdd(const Prefix& aDomain, uint8_t aNumEntries,
+ProtocolParserV2::ProcessHostAdd(const Prefix& aDomain, uint8_t aNumEntries,
                                const nsACString& aChunk, uint32_t* aStart)
 {
   NS_ASSERTION(mChunkState.hashSize == PREFIX_SIZE,
@@ -530,7 +580,7 @@ ProtocolParser::ProcessHostAdd(const Prefix& aDomain, uint8_t aNumEntries,
 }
 
 nsresult
-ProtocolParser::ProcessHostSub(const Prefix& aDomain, uint8_t aNumEntries,
+ProtocolParserV2::ProcessHostSub(const Prefix& aDomain, uint8_t aNumEntries,
                                const nsACString& aChunk, uint32_t *aStart)
 {
   NS_ASSERTION(mChunkState.hashSize == PREFIX_SIZE,
@@ -585,7 +635,7 @@ ProtocolParser::ProcessHostSub(const Prefix& aDomain, uint8_t aNumEntries,
 }
 
 nsresult
-ProtocolParser::ProcessHostAddComplete(uint8_t aNumEntries,
+ProtocolParserV2::ProcessHostAddComplete(uint8_t aNumEntries,
                                        const nsACString& aChunk, uint32_t* aStart)
 {
   NS_ASSERTION(mChunkState.hashSize == COMPLETE_SIZE,
@@ -617,7 +667,7 @@ ProtocolParser::ProcessHostAddComplete(uint8_t aNumEntries,
 }
 
 nsresult
-ProtocolParser::ProcessHostSubComplete(uint8_t aNumEntries,
+ProtocolParserV2::ProcessHostSubComplete(uint8_t aNumEntries,
                                        const nsACString& aChunk, uint32_t* aStart)
 {
   NS_ASSERTION(mChunkState.hashSize == COMPLETE_SIZE,
@@ -656,7 +706,7 @@ ProtocolParser::ProcessHostSubComplete(uint8_t aNumEntries,
 }
 
 bool
-ProtocolParser::NextLine(nsACString& aLine)
+ProtocolParserV2::NextLine(nsACString& aLine)
 {
   int32_t newline = mPending.FindChar('\n');
   if (newline == kNotFound) {
@@ -667,32 +717,264 @@ ProtocolParser::NextLine(nsACString& aLine)
   return true;
 }
 
-void
-ProtocolParser::CleanupUpdates()
+TableUpdate*
+ProtocolParserV2::CreateTableUpdate(const nsACString& aTableName) const
 {
-  for (uint32_t i = 0; i < mTableUpdates.Length(); i++) {
-    delete mTableUpdates[i];
-  }
-  mTableUpdates.Clear();
+  return new TableUpdateV2(aTableName);
 }
 
-TableUpdate *
-ProtocolParser::GetTableUpdate(const nsACString& aTable)
+///////////////////////////////////////////////////////////////////////
+// ProtocolParserProtobuf
+
+ProtocolParserProtobuf::ProtocolParserProtobuf()
 {
-  for (uint32_t i = 0; i < mTableUpdates.Length(); i++) {
-    if (aTable.Equals(mTableUpdates[i]->TableName())) {
-      return mTableUpdates[i];
+}
+
+ProtocolParserProtobuf::~ProtocolParserProtobuf()
+{
+}
+
+void
+ProtocolParserProtobuf::SetCurrentTable(const nsACString& aTable)
+{
+  // Should never occur.
+  MOZ_ASSERT_UNREACHABLE("SetCurrentTable shouldn't be called");
+}
+
+
+TableUpdate*
+ProtocolParserProtobuf::CreateTableUpdate(const nsACString& aTableName) const
+{
+  return new TableUpdateV4(aTableName);
+}
+
+nsresult
+ProtocolParserProtobuf::AppendStream(const nsACString& aData)
+{
+  // Protobuf data cannot be parsed progressively. Just save the incoming data.
+  mPending.Append(aData);
+  return NS_OK;
+}
+
+void
+ProtocolParserProtobuf::End()
+{
+  // mUpdateStatus will be updated to success as long as not all
+  // the responses are invalid.
+  mUpdateStatus = NS_ERROR_FAILURE;
+
+  FetchThreatListUpdatesResponse response;
+  if (!response.ParseFromArray(mPending.get(), mPending.Length())) {
+    NS_WARNING("ProtocolParserProtobuf failed parsing data.");
+    return;
+  }
+
+  for (int i = 0; i < response.list_update_responses_size(); i++) {
+    auto r = response.list_update_responses(i);
+    nsresult rv = ProcessOneResponse(r);
+    if (NS_SUCCEEDED(rv)) {
+      mUpdateStatus = rv;
+    } else {
+      NS_WARNING("Failed to process one response.");
+    }
+  }
+}
+
+// Save state of |aListName| to the following pref:
+//
+//   "browser.safebrowsing.provider.google4.state.[aListName]"
+//
+static nsresult
+SaveStateToPref(const nsACString& aListName, const nsACString& aState)
+{
+  nsresult rv;
+  nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCString prefName("browser.safebrowsing.provider.google4.state.");
+  prefName.Append(aListName);
+
+  nsCString stateBase64;
+  rv = Base64Encode(aState, stateBase64);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return prefs->SetCharPref(prefName.get(), stateBase64.get());
+}
+
+nsresult
+ProtocolParserProtobuf::ProcessOneResponse(const ListUpdateResponse& aResponse)
+{
+  // A response must have a threat type.
+  if (!aResponse.has_threat_type()) {
+    NS_WARNING("Threat type not initialized. This seems to be an invalid response.");
+    return NS_ERROR_FAILURE;
+  }
+
+  // Convert threat type to list name.
+  nsCOMPtr<nsIUrlClassifierUtils> urlUtil =
+    do_GetService(NS_URLCLASSIFIERUTILS_CONTRACTID);
+  nsCString possibleListNames;
+  nsresult rv = urlUtil->ConvertThreatTypeToListNames(aResponse.threat_type(),
+                                                      possibleListNames);
+  if (NS_FAILED(rv)) {
+    PARSER_LOG((nsPrintfCString("Threat type to list name conversion error: %d",
+                               aResponse.threat_type())).get());
+    return NS_ERROR_FAILURE;
+  }
+
+  // Match the table name we received with one of the ones we requested.
+  // We ignore the case where a threat type matches more than one list
+  // per provider and return the first one. See bug 1287059."
+  nsCString listName;
+  nsTArray<nsCString> possibleListNameArray;
+  Classifier::SplitTables(possibleListNames, possibleListNameArray);
+  for (auto possibleName : possibleListNameArray) {
+    if (mRequestedTables.Contains(possibleName)) {
+      listName = possibleName;
+      break;
     }
   }
 
-  // We free automatically on destruction, ownership of these
-  // updates can be transferred to DBServiceWorker, which passes
-  // them back to Classifier when doing the updates, and that
-  // will free them.
-  TableUpdate *update = new TableUpdate(aTable);
-  mTableUpdates.AppendElement(update);
-  return update;
+  if (listName.IsEmpty()) {
+    PARSER_LOG(("We received an update for a list we didn't ask for. Ignoring it."));
+    return NS_ERROR_FAILURE;
+  }
+
+  // Test if this is a full update.
+  bool isFullUpdate = false;
+  if (aResponse.has_response_type()) {
+    isFullUpdate =
+      aResponse.response_type() == ListUpdateResponse::FULL_UPDATE;
+  } else {
+    NS_WARNING("Response type not initialized.");
+    return NS_ERROR_FAILURE;
+  }
+
+  // Warn if there's no new state.
+  if (!aResponse.has_new_client_state()) {
+    NS_WARNING("New state not initialized.");
+    return NS_ERROR_FAILURE;
+  }
+
+  auto tu = GetTableUpdate(nsCString(listName.get()));
+  auto tuV4 = TableUpdate::Cast<TableUpdateV4>(tu);
+  NS_ENSURE_TRUE(tuV4, NS_ERROR_FAILURE);
+
+  // See Bug 1287059. We save the state to prefs until we support
+  // "saving states to HashStore".
+  nsCString state(aResponse.new_client_state().c_str(),
+                  aResponse.new_client_state().size());
+  NS_DispatchToMainThread(NS_NewRunnableFunction([listName, state] () {
+    DebugOnly<nsresult> rv = SaveStateToPref(listName, state);
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "SaveStateToPref failed");
+  }));
+
+  PARSER_LOG(("==== Update for threat type '%d' ====", aResponse.threat_type()));
+  PARSER_LOG(("* listName: %s\n", listName.get()));
+  PARSER_LOG(("* newState: %s\n", aResponse.new_client_state().c_str()));
+  PARSER_LOG(("* isFullUpdate: %s\n", (isFullUpdate ? "yes" : "no")));
+  ProcessAdditionOrRemoval(*tuV4, aResponse.additions(), true /*aIsAddition*/);
+  ProcessAdditionOrRemoval(*tuV4, aResponse.removals(), false);
+  PARSER_LOG(("\n\n"));
+
+  return NS_OK;
 }
+
+nsresult
+ProtocolParserProtobuf::ProcessAdditionOrRemoval(TableUpdateV4& aTableUpdate,
+                                                 const ThreatEntrySetList& aUpdate,
+                                                 bool aIsAddition)
+{
+  nsresult ret = NS_OK;
+
+  for (int i = 0; i < aUpdate.size(); i++) {
+    auto update = aUpdate.Get(i);
+    if (!update.has_compression_type()) {
+      NS_WARNING(nsPrintfCString("%s with no compression type.",
+                                  aIsAddition ? "Addition" : "Removal").get());
+      continue;
+    }
+
+    switch (update.compression_type()) {
+    case COMPRESSION_TYPE_UNSPECIFIED:
+      NS_WARNING("Unspecified compression type.");
+      break;
+
+    case RAW:
+      ret = (aIsAddition ? ProcessRawAddition(aTableUpdate, update)
+                         : ProcessRawRemoval(aTableUpdate, update));
+      break;
+
+    case RICE:
+      // Not implemented yet (see bug 1285848),
+      NS_WARNING("Encoded table update is not supported yet.");
+      break;
+    }
+  }
+
+  return ret;
+}
+
+nsresult
+ProtocolParserProtobuf::ProcessRawAddition(TableUpdateV4& aTableUpdate,
+                                           const ThreatEntrySet& aAddition)
+{
+  if (!aAddition.has_raw_hashes()) {
+    PARSER_LOG(("* No raw addition."));
+    return NS_OK;
+  }
+
+  auto rawHashes = aAddition.raw_hashes();
+  if (!rawHashes.has_prefix_size()) {
+    NS_WARNING("Raw hash has no prefix size");
+    return NS_OK;
+  }
+
+  auto prefixes = rawHashes.raw_hashes();
+  if (4 == rawHashes.prefix_size()) {
+    // Process fixed length prefixes separately.
+    uint32_t* fixedLengthPrefixes = (uint32_t*)prefixes.c_str();
+    size_t numOfFixedLengthPrefixes = prefixes.size() / 4;
+    PARSER_LOG(("* Raw addition (4 bytes)"));
+    PARSER_LOG(("  - # of prefixes: %d", numOfFixedLengthPrefixes));
+    PARSER_LOG(("  - Memory address: 0x%p", fixedLengthPrefixes));
+  } else {
+    // TODO: Process variable length prefixes including full hashes.
+    // See Bug 1283009.
+    PARSER_LOG((" Raw addition (%d bytes)", rawHashes.prefix_size()));
+  }
+
+  if (!rawHashes.mutable_raw_hashes()) {
+    PARSER_LOG(("Unable to get mutable raw hashes. Can't perform a string move."));
+    return NS_ERROR_FAILURE;
+  }
+
+  aTableUpdate.NewPrefixes(rawHashes.prefix_size(),
+                           *rawHashes.mutable_raw_hashes());
+
+  return NS_OK;
+}
+
+nsresult
+ProtocolParserProtobuf::ProcessRawRemoval(TableUpdateV4& aTableUpdate,
+                                          const ThreatEntrySet& aRemoval)
+{
+  if (!aRemoval.has_raw_indices()) {
+    NS_WARNING("A removal has no indices.");
+    return NS_OK;
+  }
+
+  // indices is an array of int32.
+  auto indices = aRemoval.raw_indices().indices();
+  PARSER_LOG(("* Raw removal"));
+  PARSER_LOG(("  - # of removal: %d", indices.size()));
+
+  aTableUpdate.NewRemovalIndices((const uint32_t*)indices.data(),
+                                 indices.size());
+
+  return NS_OK;
+}
+
 
 } // namespace safebrowsing
 } // namespace mozilla

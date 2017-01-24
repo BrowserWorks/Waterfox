@@ -58,7 +58,7 @@ class WidgetTouchEvent;
 // http://hg.mozilla.org/mozilla-central/file/default/layout/base/doc/AccessibleCaretEventHubStates.dot
 //
 // Please see the wiki page for more information.
-// https://wiki.mozilla.org/Copy_n_Paste
+// https://wiki.mozilla.org/AccessibleCaret
 //
 class AccessibleCaretEventHub : public nsIReflowObserver,
                                 public nsIScrollObserver,
@@ -132,8 +132,6 @@ protected:
   static void FireScrollEnd(nsITimer* aTimer, void* aAccessibleCaretEventHub);
 
   // Member variables
-  bool mInitialized = false;
-
   State* mState = NoActionState();
 
   // Will be set to nullptr in Terminate().
@@ -156,6 +154,12 @@ protected:
   // For filter multitouch event
   int32_t mActiveTouchId = kInvalidTouchId;
 
+  // Flag to indicate the class has been initialized.
+  bool mInitialized = false;
+
+  // Flag to avoid calling Reflow() callback recursively.
+  bool mIsInReflowCallback = false;
+
   // Simulate long tap if the platform does not support eMouseLongTap events.
   static bool sUseLongTapInjector;
 
@@ -176,7 +180,8 @@ public:
   virtual const char* Name() const { return ""; }
 
   virtual nsEventStatus OnPress(AccessibleCaretEventHub* aContext,
-                                const nsPoint& aPoint, int32_t aTouchId)
+                                const nsPoint& aPoint, int32_t aTouchId,
+                                EventClassID aEventClass)
   {
     return nsEventStatus_eIgnore;
   }

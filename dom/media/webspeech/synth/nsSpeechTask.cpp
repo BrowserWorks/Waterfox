@@ -602,7 +602,7 @@ nsSpeechTask::Pause()
 
   if (mCallback) {
     DebugOnly<nsresult> rv = mCallback->OnPause();
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to call onPause() callback");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Unable to call onPause() callback");
   }
 
   if (mStream) {
@@ -625,7 +625,8 @@ nsSpeechTask::Resume()
 
   if (mCallback) {
     DebugOnly<nsresult> rv = mCallback->OnResume();
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to call onResume() callback");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                         "Unable to call onResume() callback");
   }
 
   if (mStream) {
@@ -651,7 +652,8 @@ nsSpeechTask::Cancel()
 
   if (mCallback) {
     DebugOnly<nsresult> rv = mCallback->OnCancel();
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to call onCancel() callback");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                         "Unable to call onCancel() callback");
   }
 
   if (mStream) {
@@ -745,6 +747,10 @@ nsSpeechTask::WindowVolumeChanged(float aVolume, bool aMuted)
 NS_IMETHODIMP
 nsSpeechTask::WindowSuspendChanged(nsSuspendedTypes aSuspend)
 {
+  if (!mUtterance) {
+    return NS_OK;
+  }
+
   if (aSuspend == nsISuspendedTypes::NONE_SUSPENDED &&
       mUtterance->mPaused) {
     Resume();

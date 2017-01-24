@@ -35,7 +35,10 @@ public:
       mURI = aURI;
 
       nsAutoCString cSpec;
-      mURI->GetSpec(cSpec);
+      nsresult rv = mURI->GetSpec(cSpec);
+      if (NS_FAILED(rv)) {
+        cSpec.AssignLiteral("[nsIURI::GetSpec failed]");
+      }
       CopyUTF8toUTF16(cSpec, mSpec);
     }
     return mSpec;
@@ -46,7 +49,7 @@ public:
   void SetPending() { mPending = true; }
 
   // When invoked as a runnable, zap the cache.
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mURI = nullptr;
     mSpec.Truncate();
     mPending = false;

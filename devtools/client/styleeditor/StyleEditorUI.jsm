@@ -10,7 +10,7 @@ this.EXPORTED_SYMBOLS = ["StyleEditorUI"];
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const {require, loader} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const Services = require("Services");
 const {NetUtil} = require("resource://gre/modules/NetUtil.jsm");
 const {OS} = require("resource://gre/modules/osfile.jsm");
@@ -25,15 +25,15 @@ const {
 } = require("resource://devtools/client/styleeditor/StyleEditorUtil.jsm");
 const {SplitView} = require("resource://devtools/client/shared/SplitView.jsm");
 const {StyleSheetEditor} = require("resource://devtools/client/styleeditor/StyleSheetEditor.jsm");
-loader.lazyImporter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
-const {PrefObserver, PREF_ORIG_SOURCES} =
-      require("devtools/client/styleeditor/utils");
+const {PluralForm} = require("devtools/shared/plural-form");
+const {PrefObserver, PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/utils");
 const csscoverage = require("devtools/shared/fronts/csscoverage");
 const {console} = require("resource://gre/modules/Console.jsm");
 const promise = require("promise");
 const defer = require("devtools/shared/defer");
 const {ResponsiveUIManager} =
   require("resource://devtools/client/responsivedesign/responsivedesign.jsm");
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const LOAD_ERROR = "error-load";
 const STYLE_EDITOR_TEMPLATE = "stylesheet";
@@ -57,13 +57,15 @@ const PREF_NAV_WIDTH = "devtools.styleeditor.navSidebarWidth";
  *        Interface for the page we're debugging
  * @param {Document} panelDoc
  *        Document of the toolbox panel to populate UI in.
+ * @param {CssProperties} A css properties database.
  */
-function StyleEditorUI(debuggee, target, panelDoc) {
+function StyleEditorUI(debuggee, target, panelDoc, cssProperties) {
   EventEmitter.decorate(this);
 
   this._debuggee = debuggee;
   this._target = target;
   this._panelDoc = panelDoc;
+  this._cssProperties = cssProperties;
   this._window = this._panelDoc.defaultView;
   this._root = this._panelDoc.getElementById("style-editor-chrome");
 
@@ -532,7 +534,7 @@ StyleEditorUI.prototype = {
         wire(summary, ".stylesheet-name", {
           events: {
             "keypress": (event) => {
-              if (event.keyCode == event.DOM_VK_RETURN) {
+              if (event.keyCode == KeyCodes.DOM_VK_RETURN) {
                 this._view.activeSummary = summary;
               }
             }
@@ -603,7 +605,7 @@ StyleEditorUI.prototype = {
             // only initialize source editor when we switch to this view
             let inputElement =
                 details.querySelector(".stylesheet-editor-input");
-            yield showEditor.load(inputElement);
+            yield showEditor.load(inputElement, this._cssProperties);
           }
 
           showEditor.onShow();

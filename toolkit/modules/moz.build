@@ -52,7 +52,9 @@ EXTRA_JS_MODULES += [
     'LoadContextInfo.jsm',
     'Locale.jsm',
     'Log.jsm',
+    'Memory.jsm',
     'NewTabUtils.jsm',
+    'NLP.jsm',
     'ObjectUtils.jsm',
     'PageMenu.jsm',
     'PageMetadata.jsm',
@@ -77,6 +79,7 @@ EXTRA_JS_MODULES += [
     'secondscreen/SimpleServiceDiscovery.jsm',
     'SelectContentHelper.jsm',
     'SelectParentHelper.jsm',
+    'ServiceRequest.jsm',
     'Services.jsm',
     'SessionRecorder.jsm',
     'sessionstore/FormData.jsm',
@@ -101,6 +104,9 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'cocoa'):
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'gtk2', 'gtk3'):
     DEFINES['MENUBAR_CAN_AUTOHIDE'] = 1
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'gtk2', 'gtk3', 'cocoa'):
+    DEFINES['HAVE_SHELL_SERVICE'] = 1
 
 EXTRA_PP_JS_MODULES += [
     'AppConstants.jsm',

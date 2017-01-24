@@ -46,7 +46,7 @@
       <vbox id="rightBox" flex="1">
         <hbox align="baseline">
 #expand <label id="version">__MOZ_APP_VERSION_DISPLAY__</label>
-#expand <label id="releasenotes" class="text-link" href="https://www.waterfoxproject.org/blog/waterfox-50.0-release-download">&releaseNotes.link;</label>
+#expand <label id="releasenotes" class="text-link" href="https://www.waterfoxproject.org/blog/waterfox-__MOZ_APP_VERSION__-release-download">&releaseNotes.link;</label>
         </hbox>
 
         <label id="distribution" class="text-blurb"/>
@@ -76,13 +76,6 @@
                         oncommand="gAppUpdater.buttonRestartAfterDownload();"/>
                 <spacer flex="1"/>
               </hbox>
-              <hbox id="applyBillboard" align="center">
-                <button id="applyButtonBillboard" align="start"
-                        label="&update.applyButtonBillboard.label;"
-                        accesskey="&update.applyButtonBillboard.accesskey;"
-                        oncommand="gAppUpdater.buttonApplyBillboard();"/>
-                <spacer flex="1"/>
-              </hbox>
               <hbox id="checkingForUpdates" align="center">
                 <image class="update-throbber"/><label>&update.checkingForUpdates;</label>
               </hbox>
@@ -110,6 +103,9 @@
               <hbox id="unsupportedSystem" align="center">
                 <label>&update.unsupported.start;</label><label id="unsupportedLink" class="text-link">&update.unsupported.linkText;</label><label>&update.unsupported.end;</label>
               </hbox>
+              <hbox id="restarting" align="center">
+                <label>&update.restarting;</label>
+              </hbox>
             </deck>
 #endif
           </vbox>
@@ -127,14 +123,14 @@
 #endif
             </description>
             <description class="text-blurb" id="communityExperimentalDesc">
-              &community.exp.start;<label class="text-link" href="https://www.waterfoxproject.org/">&community.exp.mozillaLink;</label>&community.exp.middle;<label class="text-link" useoriginprincipal="true" href="about:credits">&community.exp.creditsLink;</label>&community.exp.end;
+              &community.exp.start;<label class="text-link" href="https://github.com/MrAlex94/">&community.exp.mozillaLink;</label>&community.exp.middle;<label class="text-link" useoriginprincipal="true" href="about:credits">&community.exp.creditsLink;</label>&community.exp.end;
             </description>
           </vbox>
           <description class="text-blurb" id="communityDesc">
-            &community.start2;<label class="text-link" href="https://github.com/MrAlex94/Waterfox">&community.mozillaLink;</label>&community.middle2;<label class="text-link" useoriginprincipal="true" href="about:credits">&community.creditsLink;</label>&community.end3;
+            &community.start2;<label class="text-link" href="https://www.waterfoxproject.org/">&community.mozillaLink;</label>&community.middle2;<label class="text-link" useoriginprincipal="true" href="about:credits">&community.creditsLink;</label>&community.end3;
           </description>
           <description class="text-blurb" id="contributeDesc">
-              &helpus.start;<label class="text-link" href="">&helpus.donateLink;</label>&helpus.middle;<label class="text-link" href="http://www.mozilla.org/contribute/">&helpus.getInvolvedLink;</label>&helpus.end;
+              &helpus.start;<label class="text-link" href="https://sendto.mozilla.org/page/contribute/Give-Now?source=mozillaorg_default_footer&#38;ref=firefox_about&#38;utm_campaign=firefox_about&#38;tm_source=firefox&#38;tm_medium=referral&#38;utm_content=20140929_FireFoxAbout">&helpus.donateLink;</label>&helpus.middle;<label class="text-link" href="http://www.mozilla.org/contribute/">&helpus.getInvolvedLink;</label>&helpus.end;
           </description>
         </vbox>
       </vbox>

@@ -12,6 +12,8 @@
 #ifndef nsAttrValue_h___
 #define nsAttrValue_h___
 
+#include <type_traits>
+
 #include "nscore.h"
 #include "nsStringGlue.h"
 #include "nsStringBuffer.h"
@@ -24,13 +26,14 @@
 #include "nsIAtom.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/EnumTypeTraits.h"
 
 // Undefine LoadImage to prevent naming conflict with Windows.
 #undef LoadImage
 
 class nsAString;
 class nsIDocument;
-class nsStyledElementNotElementCSSInlineStyle;
+class nsStyledElement;
 struct MiscContainer;
 struct ServoDeclarationBlock;
 
@@ -148,7 +151,7 @@ public:
   void SetTo(int32_t aInt, const nsAString* aSerialized);
   void SetTo(double aValue, const nsAString* aSerialized);
   void SetTo(mozilla::css::Declaration* aValue, const nsAString* aSerialized);
-  void SetTo(ServoDeclarationBlock* aDeclarationBlock,
+  void SetTo(already_AddRefed<ServoDeclarationBlock> aDeclarationBlock,
              const nsAString* aSerialized);
   void SetTo(mozilla::css::URLValue* aValue, const nsAString* aSerialized);
   void SetTo(const nsIntMargin& aValue);
@@ -261,10 +264,29 @@ public:
    * EnumTable myTable[] = {
    *   { "string1", 1 },
    *   { "string2", 2 },
-   *   { 0 }
+   *   { nullptr, 0 }
    * }
    */
   struct EnumTable {
+    // EnumTable can be initialized either with an int16_t value
+    // or a value of an enumeration type that can fit within an int16_t.
+
+    constexpr EnumTable(const char* aTag, int16_t aValue)
+      : tag(aTag)
+      , value(aValue)
+    {
+    }
+
+    template<typename T,
+             typename = typename std::enable_if<std::is_enum<T>::value>::type>
+    constexpr EnumTable(const char* aTag, T aValue)
+      : tag(aTag)
+      , value(static_cast<int16_t>(aValue))
+    {
+      static_assert(mozilla::EnumTypeFitsWithin<T, int16_t>::value,
+                    "aValue must be an enum that fits within int16_t");
+    }
+
     /** The string the value maps to */
     const char* tag;
     /** The enum value that maps to this string */
@@ -319,6 +341,18 @@ public:
    * @return whether the value could be parsed
    */
   bool ParseIntWithBounds(const nsAString& aString, int32_t aMin,
+                            int32_t aMax = INT32_MAX);
+
+  /**
+   * Parse a string value into an integer with a fallback for invalid values.
+   * Also allows clamping to a maximum value to support col/colgroup.span (this
+   * is not per spec right now).
+   *
+   * @param aString the string to parse
+   * @param aDefault the default value
+   * @param aMax the maximum value (if value is greater it will be clamped)
+   */
+  void ParseIntWithFallback(const nsAString& aString, int32_t aDefault,
                             int32_t aMax = INT32_MAX);
 
   /**
@@ -392,7 +426,7 @@ public:
    * @param aElement the element the attribute is set on.
    */
   bool ParseStyleAttribute(const nsAString& aString,
-                           nsStyledElementNotElementCSSInlineStyle* aElement);
+                           nsStyledElement* aElement);
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 

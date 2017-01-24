@@ -584,6 +584,7 @@ private:
   nsresult CreateModuleScript(nsModuleLoadRequest* aRequest);
   nsresult ProcessFetchedModuleSource(nsModuleLoadRequest* aRequest);
   void ProcessLoadedModuleTree(nsModuleLoadRequest* aRequest);
+  bool InstantiateModuleTree(nsModuleLoadRequest* aRequest);
   void StartFetchingModuleDependencies(nsModuleLoadRequest* aRequest);
 
   RefPtr<mozilla::GenericPromise>
@@ -637,6 +638,8 @@ private:
   // Module map
   nsRefPtrHashtable<nsURIHashKey, mozilla::GenericPromise::Private> mFetchingModules;
   nsRefPtrHashtable<nsURIHashKey, nsModuleScript> mFetchedModules;
+
+  nsCOMPtr<nsIConsoleReportCollector> mReporter;
 };
 
 class nsScriptLoadHandler final : public nsIIncrementalStreamLoaderObserver

@@ -23,11 +23,20 @@ namespace places {
 ////////////////////////////////////////////////////////////////////////////////
 //// Asynchronous Statement Callback Helper
 
-class AsyncStatementCallback : public mozIStorageStatementCallback
+class WeakAsyncStatementCallback : public mozIStorageStatementCallback
+{
+public:
+  NS_DECL_MOZISTORAGESTATEMENTCALLBACK
+  WeakAsyncStatementCallback() {}
+
+protected:
+  virtual ~WeakAsyncStatementCallback() {}
+};
+
+class AsyncStatementCallback : public WeakAsyncStatementCallback
 {
 public:
   NS_DECL_ISUPPORTS
-  NS_DECL_MOZISTORAGESTATEMENTCALLBACK
   AsyncStatementCallback() {}
 
 protected:
@@ -192,7 +201,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mStatementCache.FinalizeStatements();
     // Release the owner back on the calling thread.

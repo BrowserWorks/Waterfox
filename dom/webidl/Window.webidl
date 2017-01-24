@@ -465,11 +465,11 @@ interface ChromeWindow {
   [Throws, Func="nsGlobalWindow::IsPrivilegedChromeWindow"]
   void                      setCursor(DOMString cursor);
 
-  [Throws, Func="nsGlobalWindow::IsPrivilegedChromeWindow", UnsafeInPrerendering]
+  [Func="nsGlobalWindow::IsPrivilegedChromeWindow", UnsafeInPrerendering]
   void                      maximize();
-  [Throws, Func="nsGlobalWindow::IsPrivilegedChromeWindow", UnsafeInPrerendering]
+  [Func="nsGlobalWindow::IsPrivilegedChromeWindow", UnsafeInPrerendering]
   void                      minimize();
-  [Throws, Func="nsGlobalWindow::IsPrivilegedChromeWindow", UnsafeInPrerendering]
+  [Func="nsGlobalWindow::IsPrivilegedChromeWindow", UnsafeInPrerendering]
   void                      restore();
 
   /**
@@ -501,6 +501,15 @@ interface ChromeWindow {
    */
   [Throws, Func="nsGlobalWindow::IsPrivilegedChromeWindow"]
   void beginWindowMove(Event mouseDownEvent, optional Element? panel = null);
+};
+
+partial interface Window {
+  [Pref="dom.vr.enabled"]
+  attribute EventHandler onvrdisplayconnect;
+  [Pref="dom.vr.enabled"]
+  attribute EventHandler onvrdisplaydisconnect;
+  [Pref="dom.vr.enabled"]
+  attribute EventHandler onvrdisplaypresentchange;
 };
 
 Window implements ChromeWindow;

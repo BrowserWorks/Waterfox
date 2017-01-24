@@ -54,9 +54,9 @@ var ecmaGlobals =
     "Reflect",
     "RegExp",
     "Set",
-    {name: "SharedArrayBuffer", nightly: true},
+    {name: "SharedArrayBuffer", release: false},
     {name: "SIMD", nightly: true},
-    {name: "Atomics", nightly: true},
+    {name: "Atomics", release: false},
     "StopIteration",
     "String",
     "Symbol",
@@ -195,6 +195,8 @@ var interfaceNamesInGlobalScope =
     "ServiceWorkerGlobalScope",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ServiceWorkerRegistration",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "StorageManager", nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SubtleCrypto",
 // IMPORTANT: Do not change this list without review from a DOM peer!

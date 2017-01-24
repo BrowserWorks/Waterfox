@@ -116,7 +116,7 @@ _ContextualIdentityService.prototype = {
         this._lastUserContextId = data.lastUserContextId;
 
         this._dataReady = true;
-      } catch(error) {
+      } catch (error) {
         this.loadError(error);
       }
     }, (error) => {
@@ -283,6 +283,37 @@ _ContextualIdentityService.prototype = {
     tab.style.backgroundImage = "linear-gradient(to right, transparent 20%, " + color + " 30%, " + color + " 70%, transparent 80%)";
     tab.style.backgroundSize = "auto 2px";
     tab.style.backgroundRepeat = "no-repeat";
+  },
+
+  countContainerTabs() {
+    let count = 0;
+    this._forEachContainerTab(function() { ++count; });
+    return count;
+  },
+
+  closeAllContainerTabs() {
+    this._forEachContainerTab(function(tab, tabbrowser) {
+      tabbrowser.removeTab(tab);
+    });
+  },
+
+  _forEachContainerTab(callback) {
+    let windowList = Services.wm.getEnumerator("navigator:browser");
+    while (windowList.hasMoreElements()) {
+      let win = windowList.getNext();
+
+      if (win.closed || !win.gBrowser) {
+	continue;
+      }
+
+      let tabbrowser = win.gBrowser;
+      for (let i = tabbrowser.tabContainer.childNodes.length - 1; i >= 0; --i) {
+        let tab = tabbrowser.tabContainer.childNodes[i];
+	if (tab.hasAttribute("usercontextid")) {
+	  callback(tab, tabbrowser);
+	}
+      }
+    }
   },
 
   telemetry(userContextId) {

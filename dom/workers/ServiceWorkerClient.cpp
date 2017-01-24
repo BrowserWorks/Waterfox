@@ -98,7 +98,7 @@ public:
   {}
 
   NS_IMETHOD
-  Run()
+  Run() override
   {
     AssertIsOnMainThread();
     nsGlobalWindow* window = nsGlobalWindow::GetInnerWindowWithId(mWindowId);
@@ -142,14 +142,14 @@ private:
     RootedDictionary<ServiceWorkerMessageEventInit> init(aCx);
 
     nsCOMPtr<nsIPrincipal> principal = aTargetContainer->GetParentObject()->PrincipalOrNull();
-    NS_WARN_IF_FALSE(principal, "Why is the principal null here?");
+    NS_WARNING_ASSERTION(principal, "Why is the principal null here?");
 
     bool isNullPrincipal = false;
     bool isSystemPrincipal = false;
     if (principal) {
-      principal->GetIsNullPrincipal(&isNullPrincipal);
+      isNullPrincipal = principal->GetIsNullPrincipal();
       MOZ_ASSERT(!isNullPrincipal);
-      principal->GetIsSystemPrincipal(&isSystemPrincipal);
+      isSystemPrincipal = principal->GetIsSystemPrincipal();
       MOZ_ASSERT(!isSystemPrincipal);
     }
 
@@ -226,12 +226,13 @@ ServiceWorkerClient::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
   RefPtr<ServiceWorkerClientPostMessageRunnable> runnable =
     new ServiceWorkerClientPostMessageRunnable(mWindowId);
 
-  runnable->Write(aCx, aMessage, transferable, aRv);
+  runnable->Write(aCx, aMessage, transferable, JS::CloneDataPolicy().denySharedArrayBuffer(),
+                  aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
-  aRv = NS_DispatchToMainThread(runnable);
+  aRv = workerPrivate->DispatchToMainThread(runnable.forget());
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }

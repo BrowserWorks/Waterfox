@@ -10,6 +10,7 @@
 #include "AccessibleCaretManager.h"
 #include "Layers.h"
 #include "gfxPrefs.h"
+#include "mozilla/AutoRestore.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
@@ -44,12 +45,12 @@ public:
   virtual const char* Name() const override { return "NoActionState"; }
 
   virtual nsEventStatus OnPress(AccessibleCaretEventHub* aContext,
-                                const nsPoint& aPoint,
-                                int32_t aTouchId) override
+                                const nsPoint& aPoint, int32_t aTouchId,
+                                EventClassID aEventClass) override
   {
     nsEventStatus rv = nsEventStatus_eIgnore;
 
-    if (NS_SUCCEEDED(aContext->mManager->PressCaret(aPoint))) {
+    if (NS_SUCCEEDED(aContext->mManager->PressCaret(aPoint, aEventClass))) {
       aContext->SetState(aContext->PressCaretState());
       rv = nsEventStatus_eConsumeNoDefault;
     } else {
@@ -269,13 +270,14 @@ public:
   virtual const char* Name() const override { return "PostScrollState"; }
 
   virtual nsEventStatus OnPress(AccessibleCaretEventHub* aContext,
-                                const nsPoint& aPoint,
-                                int32_t aTouchId) override
+                                const nsPoint& aPoint, int32_t aTouchId,
+                                EventClassID aEventClass) override
   {
     aContext->mManager->OnScrollEnd();
     aContext->SetState(aContext->NoActionState());
 
-    return aContext->GetState()->OnPress(aContext, aPoint, aTouchId);
+    return aContext->GetState()->OnPress(aContext, aPoint, aTouchId,
+                                         aEventClass);
   }
 
   virtual void OnScrollStart(AccessibleCaretEventHub* aContext) override
@@ -322,13 +324,12 @@ public:
   virtual nsEventStatus OnLongTap(AccessibleCaretEventHub* aContext,
                                   const nsPoint& aPoint) override
   {
-    nsEventStatus rv = nsEventStatus_eIgnore;
-
-    if (NS_SUCCEEDED(aContext->mManager->SelectWordOrShortcut(aPoint))) {
-      rv = nsEventStatus_eConsumeNoDefault;
-    }
-
-    return rv;
+    // In general text selection is lower-priority than the context menu. If
+    // we consume this long-press event, then it prevents the context menu from
+    // showing up on desktop Firefox (because that happens on long-tap-up, if
+    // the long-tap was not cancelled). So we return eIgnore instead.
+    aContext->mManager->SelectWordOrShortcut(aPoint);
+    return nsEventStatus_eIgnore;
   }
 
   virtual nsEventStatus OnRelease(AccessibleCaretEventHub* aContext) override
@@ -516,7 +517,7 @@ AccessibleCaretEventHub::HandleMouseEvent(WidgetMouseEvent* aEvent)
   switch (aEvent->mMessage) {
     case eMouseDown:
       AC_LOGV("Before eMouseDown, state: %s", mState->Name());
-      rv = mState->OnPress(this, point, id);
+      rv = mState->OnPress(this, point, id, eMouseEventClass);
       AC_LOGV("After eMouseDown, state: %s, consume: %d", mState->Name(), rv);
       break;
 
@@ -564,7 +565,7 @@ AccessibleCaretEventHub::HandleTouchEvent(WidgetTouchEvent* aEvent)
   switch (aEvent->mMessage) {
     case eTouchStart:
       AC_LOGV("Before eTouchStart, state: %s", mState->Name());
-      rv = mState->OnPress(this, point, id);
+      rv = mState->OnPress(this, point, id, eTouchEventClass);
       AC_LOGV("After eTouchStart, state: %s, consume: %d", mState->Name(), rv);
       break;
 
@@ -666,6 +667,13 @@ AccessibleCaretEventHub::Reflow(DOMHighResTimeStamp aStart,
 
   MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
 
+  if (mIsInReflowCallback) {
+    return NS_OK;
+  }
+
+  AutoRestore<bool> autoRestoreIsInReflowCallback(mIsInReflowCallback);
+  mIsInReflowCallback = true;
+
   AC_LOG("%s, state: %s", __FUNCTION__, mState->Name());
   mState->OnReflow(this);
   return NS_OK;
@@ -675,12 +683,7 @@ NS_IMETHODIMP
 AccessibleCaretEventHub::ReflowInterruptible(DOMHighResTimeStamp aStart,
                                              DOMHighResTimeStamp aEnd)
 {
-  if (!mInitialized) {
-    return NS_OK;
-  }
-
-  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
-
+  // Defer the error checking to Reflow().
   return Reflow(aStart, aEnd);
 }
 

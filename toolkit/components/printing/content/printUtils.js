@@ -361,7 +361,7 @@ var PrintUtils = {
       let ppMsgName = msgName + "_PP";
       try {
         msg = this.bundle.GetStringFromName(ppMsgName);
-      } catch(e) {
+      } catch (e) {
         // We allow localizers to not have the print preview error string,
         // and just fall back to the printing error string.
       }
@@ -572,7 +572,11 @@ var PrintUtils = {
 
       // Set the original window as an active window so any mozPrintCallbacks can
       // run without delayed setTimeouts.
-      this._sourceBrowser.docShellIsActive = true;
+      if (this._listener.activateBrowser) {
+        this._listener.activateBrowser(this._sourceBrowser);
+      } else {
+        this._sourceBrowser.docShellIsActive = true;
+      }
 
       // show the toolbar after we go into print preview mode so
       // that we can initialize the toolbar with total num pages

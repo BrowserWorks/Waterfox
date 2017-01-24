@@ -23,7 +23,7 @@
 #include "mozilla/RefPtr.h"                   // for nsRefPtr
 #include "nsPrintfCString.h"            // for nsPrintfCString
 #include "mozilla/layers/PTextureParent.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include <limits>
 #include "../opengl/CompositorOGL.h"
 #include "gfxPrefs.h"
@@ -84,6 +84,11 @@ public:
   virtual void Destroy() override;
 
   uint64_t GetSerial() const { return mSerial; }
+
+  virtual bool RecvDestroySync() override {
+    DestroyIfNeeded();
+    return true;
+  }
 
   HostIPCAllocator* mSurfaceAllocator;
   RefPtr<TextureHost> mTextureHost;
@@ -513,7 +518,7 @@ BufferTextureHost::UpdatedInternal(const nsIntRegion* aRegion)
   }
   if (GetFlags() & TextureFlags::IMMEDIATE_UPLOAD) {
     DebugOnly<bool> result = MaybeUpload(!mNeedsFullUpdate ? &mMaybeUpdatedRegion : nullptr);
-    NS_WARN_IF_FALSE(result, "Failed to upload a texture");
+    NS_WARNING_ASSERTION(result, "Failed to upload a texture");
   }
 }
 

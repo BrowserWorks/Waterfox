@@ -4,6 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# PGO
+# ==============================================================
+option(env='MOZ_PGO', help='Build with profile guided optimizations')
+
+set_config('MOZ_PGO', depends('MOZ_PGO')(lambda x: bool(x)))
+add_old_configure_assignment('MOZ_PGO', depends('MOZ_PGO')(lambda x: bool(x)))
+
 # yasm detection
 # ==============================================================
 yasm = check_prog('YASM', ['yasm'], allow_missing=True)
@@ -55,8 +62,8 @@ set_config('HAVE_YASM', have_yasm)
 # Until the YASM variable is not necessary in old-configure.
 add_old_configure_assignment('YASM', have_yasm)
 
-@depends('--help')
-def extra_toolchain_flags(_):
+@dependable
+def extra_toolchain_flags():
     # This value will be overriden for android builds, where
     # extra flags are required to do basic checks.
     return []
@@ -171,6 +178,8 @@ add_old_configure_assignment('TOOLCHAIN_PREFIX', toolchain_prefix)
 
 # Compilers
 # ==============================================================
+include('compilers-util.configure')
+
 def try_preprocess(compiler, language, source):
     return try_invoke_compiler(compiler, language, source, ['-E'])
 
@@ -204,19 +213,19 @@ def get_compiler_info(compiler, language):
     check = dedent('''\
         #if defined(_MSC_VER)
         #if defined(__clang__)
-        %COMPILER clang-cl
+        %COMPILER "clang-cl"
         %VERSION _MSC_FULL_VER
         #else
-        %COMPILER msvc
+        %COMPILER "msvc"
         %VERSION _MSC_FULL_VER
         #endif
         #elif defined(__clang__)
-        %COMPILER clang
+        %COMPILER "clang"
         #  if !__cplusplus || __has_feature(cxx_alignof)
         %VERSION __clang_major__.__clang_minor__.__clang_patchlevel__
         #  endif
         #elif defined(__GNUC__)
-        %COMPILER gcc
+        %COMPILER "gcc"
         %VERSION __GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__
         #endif
 
@@ -239,7 +248,7 @@ def get_compiler_info(compiler, language):
         for n, (value, condition) in enumerate(preprocessor_checks.iteritems()):
             check += dedent('''\
                 #%(if)s %(condition)s
-                %%%(name)s %(value)s
+                %%%(name)s "%(value)s"
             ''' % {
                 'if': 'elif' if n else 'if',
                 'condition': condition,
@@ -253,9 +262,9 @@ def get_compiler_info(compiler, language):
     # by the preprocessor, except MSVC, which only supports little endian.
     check += dedent('''\
         #if _MSC_VER || __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-        %ENDIANNESS little
+        %ENDIANNESS "little"
         #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-        %ENDIANNESS big
+        %ENDIANNESS "big"
         #endif
     ''')
 
@@ -265,12 +274,14 @@ def get_compiler_info(compiler, language):
         raise FatalCheckError(
             'Unknown compiler or compiler not supported.')
 
+    # Metadata emitted by preprocessors such as GCC with LANG=ja_JP.utf-8 may
+    # have non-ASCII characters. Treat the output as bytearray.
     data = {}
     for line in result.splitlines():
-        if line.startswith('%'):
+        if line.startswith(b'%'):
             k, _, v = line.partition(' ')
             k = k.lstrip('%')
-            data[k] = v.replace(' ', '')
+            data[k] = v.replace(' ', '').lstrip('"').rstrip('"')
             log.debug('%s = %s', k, data[k])
 
     try:
@@ -336,14 +347,14 @@ def check_compiler(compiler, language, target):
     # -std=gnu++11.
     if info.language == 'C++' and info.language_version != 201103:
         if info.type in ('clang-cl', 'clang', 'gcc'):
-            append_flag('-std=gnu++14')
+            append_flag('-std=gnu++11')
 
     # We force clang-cl to emulate Visual C++ 2013 Update 3 with fallback to
     # cl.exe.
-    if info.type == 'clang-cl' and info.version != '19.00.24215':
+    if info.type == 'clang-cl' and info.version != '18.00.30723':
         # Those flags are direct clang-cl flags that don't need -Xclang, add
         # them directly.
-        flags.append('-fms-compatibility-version=19.00.24215')
+        flags.append('-fms-compatibility-version=18.00.30723')
         flags.append('-fallback')
 
     # Check compiler target
@@ -533,7 +544,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
         'C++': lambda: default_cxx_compilers(c_compiler),
     }[language]()
 
-    what='the %s %s compiler' % (host_or_target_str, language),
+    what='the %s %s compiler' % (host_or_target_str, language)
 
     option(env=var, nargs=1, help='Path to %s' % what)
 
@@ -661,6 +672,10 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                    info.target_endianness or 'unknown', host_or_target_str,
                    host_or_target.endianness))
 
+        if info.flags:
+            raise FatalCheckError(
+                'Unknown compiler or compiler not supported.')
+
         # Compiler version checks
         # ===================================================
         # Check the compiler version here instead of in `compiler_version` so
@@ -678,11 +693,11 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                 'Only clang/llvm 3.6 or newer is supported.')
 
         if info.type == 'msvc':
-            if info.version < '19.00.23918':
+            if info.version < '19.00.24213':
                 raise FatalCheckError(
                     'This version (%s) of the MSVC compiler is not '
                     'supported.\n'
-                    'You must install Visual C++ 2015 Update 2 or newer in '
+                    'You must install Visual C++ 2015 Update 3 or newer in '
                     'order to build.\n'
                     'See https://developer.mozilla.org/en/'
                     'Windows_Build_Prerequisites' % info.version)
@@ -693,6 +708,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
             flags=flags,
             type=info.type,
             version=info.version,
+            language=language,
         )
 
     @depends(valid_compiler)
@@ -731,6 +747,32 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
         add_old_configure_assignment(
             '%s_VERSION' % var, delayed_getattr(valid_compiler, 'version'))
 
+    valid_compiler = compiler_class(valid_compiler)
+
+    def compiler_error():
+        raise FatalCheckError('Failed compiling a simple %s source with %s'
+                              % (language, what))
+
+    valid_compiler.try_compile(check_msg='%s works' % what,
+                               onerror=compiler_error)
+
+
+    # Set CPP/CXXCPP for both the build system and old-configure. We don't
+    # need to check this works for preprocessing, because we already relied
+    # on $CC -E/$CXX -E doing preprocessing work to validate the compiler
+    # in the first place.
+    if host_or_target == target:
+        pp_var = {
+            'C': 'CPP',
+            'C++': 'CXXCPP',
+        }[language]
+
+        preprocessor = depends_if(valid_compiler)(
+                lambda x: list(x.wrapper) + [x.compiler, '-E'] + list(x.flags))
+
+        set_config(pp_var, preprocessor)
+        add_old_configure_assignment(pp_var, preprocessor)
+
     return valid_compiler
 
 
@@ -741,12 +783,21 @@ host_cxx_compiler = compiler('C++', host, c_compiler=host_c_compiler,
                              other_compiler=cxx_compiler,
                              other_c_compiler=c_compiler)
 
-include('compilechecks.configure')
+include('compile-checks.configure')
+
+@depends(have_64_bit,
+         try_compile(body='static_assert(sizeof(void *) == 8, "")',
+                     check_msg='for 64-bit OS'))
+def check_have_64_bit(have_64_bit, compiler_have_64_bit):
+    if have_64_bit != compiler_have_64_bit:
+        configure_error('The target compiler does not agree with configure '
+                        'about the target bitness.')
+
 
 @depends(c_compiler)
 def default_debug_flags(compiler_info):
     # Debug info is ON by default.
-    if compiler_info.type == 'msvc':
+    if compiler_info.type in ('msvc', 'clang-cl'):
         return '-Zi'
     return '-g'
 

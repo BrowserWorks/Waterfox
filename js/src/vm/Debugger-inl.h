@@ -69,12 +69,6 @@ js::Debugger::onExceptionUnwind(JSContext* cx, AbstractFramePtr frame)
 /* static */ void
 js::Debugger::onNewWasmInstance(JSContext* cx, Handle<WasmInstanceObject*> wasmInstance)
 {
-    auto& wasmInstances = cx->compartment()->wasmInstances;
-    if (!wasmInstances.initialized() && !wasmInstances.init())
-        return;
-    if (!wasmInstances.putNew(wasmInstance))
-        return;
-
     if (cx->compartment()->isDebuggee())
         slowPathOnNewWasmInstance(cx, wasmInstance);
 }
@@ -105,6 +99,20 @@ js::DebuggerObject::owner() const
 {
     JSObject* dbgobj = &getReservedSlot(OWNER_SLOT).toObject();
     return Debugger::fromJSObject(dbgobj);
+}
+
+inline js::PromiseObject*
+js::DebuggerObject::promise() const
+{
+    MOZ_ASSERT(isPromise());
+
+    JSObject* referent = this->referent();
+    if (IsCrossCompartmentWrapper(referent)) {
+        referent = CheckedUnwrap(referent);
+        MOZ_ASSERT(referent);
+    }
+
+    return &referent->as<PromiseObject>();
 }
 
 #endif /* vm_Debugger_inl_h */

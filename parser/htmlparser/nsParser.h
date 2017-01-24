@@ -248,7 +248,7 @@ class nsParser final : public nsIParser,
      *  @update  kmcclusk 5/18/98
      */
 
-    NS_IMETHODIMP CancelParsingEvents() override;
+    NS_IMETHOD CancelParsingEvents() override;
 
     /**
      * Return true.
@@ -258,12 +258,12 @@ class nsParser final : public nsIParser,
     /**
      * No-op.
      */
-    virtual void BeginEvaluatingParserInsertedScript() override;
+    virtual void PushDefinedInsertionPoint() override;
 
     /**
      * No-op.
      */
-    virtual void EndEvaluatingParserInsertedScript() override;
+    virtual void PopDefinedInsertionPoint() override;
 
     /**
      * No-op.

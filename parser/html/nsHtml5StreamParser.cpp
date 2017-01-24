@@ -122,7 +122,7 @@ class nsHtml5ExecutorFlusher : public Runnable
     explicit nsHtml5ExecutorFlusher(nsHtml5TreeOpExecutor* aExecutor)
       : mExecutor(aExecutor)
     {}
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       if (!mExecutor->isInList()) {
         mExecutor->RunFlushLoop();
@@ -139,7 +139,7 @@ class nsHtml5LoadFlusher : public Runnable
     explicit nsHtml5LoadFlusher(nsHtml5TreeOpExecutor* aExecutor)
       : mExecutor(aExecutor)
     {}
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       mExecutor->FlushSpeculativeLoads();
       return NS_OK;
@@ -286,7 +286,10 @@ nsHtml5StreamParser::SetViewSourceTitle(nsIURI* aURL)
       // UTF-8 for an ellipsis.
       mViewSourceTitle.AssignLiteral("data:\xE2\x80\xA6");
     } else {
-      temp->GetSpec(mViewSourceTitle);
+      nsresult rv = temp->GetSpec(mViewSourceTitle);
+      if (NS_FAILED(rv)) {
+        mViewSourceTitle.AssignLiteral("\xE2\x80\xA6");
+      }
     }
   }
 }
@@ -1049,7 +1052,7 @@ class nsHtml5RequestStopper : public Runnable
     explicit nsHtml5RequestStopper(nsHtml5StreamParser* aStreamParser)
       : mStreamParser(aStreamParser)
     {}
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       mozilla::MutexAutoLock autoLock(mStreamParser->mTokenizerMutex);
       mStreamParser->DoStopRequest();
@@ -1137,7 +1140,7 @@ class nsHtml5DataAvailable : public Runnable
       , mData(Move(aData))
       , mLength(aLength)
     {}
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       mozilla::MutexAutoLock autoLock(mStreamParser->mTokenizerMutex);
       mStreamParser->DoDataAvailable(mData.get(), mLength);
@@ -1192,8 +1195,7 @@ nsHtml5StreamParser::OnDataAvailable(nsIRequest* aRequest,
   }
 }
 
-/* static */
-NS_METHOD
+/* static */ nsresult
 nsHtml5StreamParser::CopySegmentsToParser(nsIInputStream *aInStream,
                                           void *aClosure,
                                           const char *aFromSegment,
@@ -1454,7 +1456,7 @@ public:
   explicit nsHtml5StreamParserContinuation(nsHtml5StreamParser* aStreamParser)
     : mStreamParser(aStreamParser)
   {}
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     mozilla::MutexAutoLock autoLock(mStreamParser->mTokenizerMutex);
     mStreamParser->Uninterrupt();
@@ -1620,7 +1622,7 @@ public:
   explicit nsHtml5TimerKungFu(nsHtml5StreamParser* aStreamParser)
     : mStreamParser(aStreamParser)
   {}
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     if (mStreamParser->mFlushTimer) {
       mStreamParser->mFlushTimer->Cancel();

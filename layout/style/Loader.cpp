@@ -38,6 +38,7 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsContentPolicyUtils.h"
 #include "nsIHttpChannel.h"
+#include "nsIHttpChannelInternal.h"
 #include "nsIClassOfService.h"
 #include "nsIScriptError.h"
 #include "nsMimeTypes.h"
@@ -55,6 +56,7 @@
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/StyleSheetHandle.h"
 #include "mozilla/StyleSheetHandleInlines.h"
+#include "mozilla/ConsoleReportCollector.h"
 
 #ifdef MOZ_XUL
 #include "nsXULPrototypeCache.h"
@@ -144,7 +146,6 @@ public:
                 nsIURI* aURI,
                 StyleSheetHandle aSheet,
                 bool aSyncLoad,
-                SheetParsingMode aParsingMode,
                 bool aUseSystemPrincipal,
                 const nsCString& aCharset,
                 nsICSSLoaderObserver* aObserver,
@@ -222,13 +223,6 @@ public:
   // created.
   bool                       mWasAlternate : 1;
 
-  // mParsingMode controls access to nonstandard style constructs that
-  // are not safe for use on the public Web but necessary in UA sheets
-  // and/or useful in user sheets.  The only values stored in this
-  // field are 0, 1, and 2; three bits are allocated to avoid issues
-  // should the enum type be signed.
-  SheetParsingMode           mParsingMode : 3;
-
   // mUseSystemPrincipal is true if the system principal should be used for
   // this sheet, no matter what the channel principal is.  Only true for sync
   // loads.
@@ -285,9 +279,7 @@ static mozilla::LazyLogModule gSriPRLog("SRI");
   PR_BEGIN_MACRO                                    \
     NS_ASSERTION(uri, "Logging null uri");          \
     if (LOG_ENABLED()) {                            \
-      nsAutoCString _logURISpec;                    \
-      uri->GetSpec(_logURISpec);                    \
-      LOG((format, _logURISpec.get()));             \
+      LOG((format, uri->GetSpecOrDefault().get())); \
     }                                               \
   PR_END_MACRO
 
@@ -328,7 +320,6 @@ SheetLoadData::SheetLoadData(Loader* aLoader,
     mIsCancelled(false),
     mMustNotify(false),
     mWasAlternate(aIsAlternate),
-    mParsingMode(eAuthorSheetFeatures),
     mUseSystemPrincipal(false),
     mSheetAlreadyComplete(false),
     mOwningElement(aOwningElement),
@@ -359,7 +350,6 @@ SheetLoadData::SheetLoadData(Loader* aLoader,
     mIsCancelled(false),
     mMustNotify(false),
     mWasAlternate(false),
-    mParsingMode(eAuthorSheetFeatures),
     mUseSystemPrincipal(false),
     mSheetAlreadyComplete(false),
     mOwningElement(nullptr),
@@ -371,7 +361,6 @@ SheetLoadData::SheetLoadData(Loader* aLoader,
   if (mParentData) {
     mSyncLoad = mParentData->mSyncLoad;
     mIsNonDocumentSheet = mParentData->mIsNonDocumentSheet;
-    mParsingMode = mParentData->mParsingMode;
     mUseSystemPrincipal = mParentData->mUseSystemPrincipal;
     ++(mParentData->mPendingChildren);
   }
@@ -384,7 +373,6 @@ SheetLoadData::SheetLoadData(Loader* aLoader,
                              nsIURI* aURI,
                              StyleSheetHandle aSheet,
                              bool aSyncLoad,
-                             SheetParsingMode aParsingMode,
                              bool aUseSystemPrincipal,
                              const nsCString& aCharset,
                              nsICSSLoaderObserver* aObserver,
@@ -402,7 +390,6 @@ SheetLoadData::SheetLoadData(Loader* aLoader,
     mIsCancelled(false),
     mMustNotify(false),
     mWasAlternate(false),
-    mParsingMode(aParsingMode),
     mUseSystemPrincipal(aUseSystemPrincipal),
     mSheetAlreadyComplete(false),
     mOwningElement(nullptr),
@@ -412,11 +399,6 @@ SheetLoadData::SheetLoadData(Loader* aLoader,
     mCharsetHint(aCharset)
 {
   NS_PRECONDITION(mLoader, "Must have a loader!");
-  NS_PRECONDITION(aParsingMode == eAuthorSheetFeatures ||
-                  aParsingMode == eUserSheetFeatures ||
-                  aParsingMode == eAgentSheetFeatures,
-                  "Unrecognized sheet parsing mode");
-
   NS_POSTCONDITION(!mUseSystemPrincipal || mSyncLoad,
                    "Shouldn't use system principal for async loads");
 }
@@ -540,6 +522,7 @@ Loader::Loader(StyleBackendType aType)
   , mCompatMode(eCompatibility_FullStandards)
   , mStyleBackendType(Some(aType))
   , mEnabled(true)
+  , mReporter(new ConsoleReportCollector())
 #ifdef DEBUG
   , mSyncCallback(false)
 #endif
@@ -551,6 +534,7 @@ Loader::Loader(nsIDocument* aDocument)
   , mDatasToNotifyOn(0)
   , mCompatMode(eCompatibility_FullStandards)
   , mEnabled(true)
+  , mReporter(new ConsoleReportCollector())
 #ifdef DEBUG
   , mSyncCallback(false)
 #endif
@@ -931,10 +915,8 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
       errorFlag = nsIScriptError::errorFlag;
     }
 
-    nsAutoCString spec;
-    channelURI->GetSpec(spec);
-
-    const nsAFlatString& specUTF16 = NS_ConvertUTF8toUTF16(spec);
+    const nsAFlatString& specUTF16 =
+      NS_ConvertUTF8toUTF16(channelURI->GetSpecOrDefault());
     const nsAFlatString& ctypeUTF16 = NS_ConvertASCIItoUTF16(contentType);
     const char16_t *strings[] = { specUTF16.get(), ctypeUTF16.get() };
 
@@ -959,9 +941,7 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
   mSheet->GetIntegrity(sriMetadata);
   if (sriMetadata.IsEmpty()) {
     nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-    bool enforceSRI = false;
-    loadInfo->GetEnforceSRI(&enforceSRI);
-    if (enforceSRI) {
+    if (loadInfo->GetEnforceSRI()) {
       LOG(("  Load was blocked by SRI"));
       MOZ_LOG(gSriPRLog, mozilla::LogLevel::Debug,
               ("css::Loader::OnStreamComplete, required SRI not found"));
@@ -979,9 +959,13 @@ SheetLoadData::OnStreamComplete(nsIUnicharStreamLoader* aLoader,
       return NS_OK;
     }
   } else {
-    nsresult rv = SRICheck::VerifyIntegrity(sriMetadata, aLoader,
-                                            mSheet->GetCORSMode(), aBuffer,
-                                            mLoader->mDocument);
+    nsAutoCString sourceUri;
+    if (mLoader->mDocument && mLoader->mDocument->GetDocumentURI()) {
+      mLoader->mDocument->GetDocumentURI()->GetAsciiSpec(sourceUri);
+    }
+    nsresult rv = SRICheck::VerifyIntegrity(sriMetadata, aLoader, aBuffer,
+                                            sourceUri, mLoader->mReporter);
+    mLoader->mReporter->FlushConsoleReports(mLoader->mDocument);
     if (NS_FAILED(rv)) {
       LOG(("  Load was blocked by SRI"));
       MOZ_LOG(gSriPRLog, mozilla::LogLevel::Debug,
@@ -1089,6 +1073,7 @@ nsresult
 Loader::CreateSheet(nsIURI* aURI,
                     nsIContent* aLinkingContent,
                     nsIPrincipal* aLoaderPrincipal,
+                    css::SheetParsingMode aParsingMode,
                     CORSMode aCORSMode,
                     ReferrerPolicy aReferrerPolicy,
                     const nsAString& aIntegrity,
@@ -1259,13 +1244,18 @@ Loader::CreateSheet(nsIURI* aURI,
       MOZ_LOG(gSriPRLog, mozilla::LogLevel::Debug,
               ("css::Loader::CreateSheet, integrity=%s",
                NS_ConvertUTF16toUTF8(aIntegrity).get()));
-      SRICheck::IntegrityMetadata(aIntegrity, mDocument, &sriMetadata);
+      nsAutoCString sourceUri;
+      if (mDocument && mDocument->GetDocumentURI()) {
+        mDocument->GetDocumentURI()->GetAsciiSpec(sourceUri);
+      }
+      SRICheck::IntegrityMetadata(aIntegrity, sourceUri, mReporter,
+                                  &sriMetadata);
     }
 
     if (GetStyleBackendType() == StyleBackendType::Gecko) {
-      *aSheet = new CSSStyleSheet(aCORSMode, aReferrerPolicy, sriMetadata);
+      *aSheet = new CSSStyleSheet(aParsingMode, aCORSMode, aReferrerPolicy, sriMetadata);
     } else {
-      *aSheet = new ServoStyleSheet(aCORSMode, aReferrerPolicy, sriMetadata);
+      *aSheet = new ServoStyleSheet(aParsingMode, aCORSMode, aReferrerPolicy, sriMetadata);
     }
     (*aSheet)->SetURIs(sheetURI, originalURI, baseURI);
   }
@@ -1697,6 +1687,11 @@ Loader::LoadSheet(SheetLoadData* aLoadData,
       httpChannel->SetReferrerWithPolicy(referrerURI,
                                          aLoadData->mSheet->GetReferrerPolicy());
 
+    nsCOMPtr<nsIHttpChannelInternal> internalChannel = do_QueryInterface(httpChannel);
+    if (internalChannel) {
+      internalChannel->SetIntegrityMetadata(sriMetadata.GetIntegrityString());
+    }
+
     // Set the initiator type
     nsCOMPtr<nsITimedChannel> timedChannel(do_QueryInterface(httpChannel));
     if (timedChannel) {
@@ -1778,14 +1773,12 @@ Loader::ParseSheet(const nsAString& aInput,
     nsCSSParser parser(this, aLoadData->mSheet->AsGecko());
     rv = parser.ParseSheet(aInput, sheetURI, baseURI,
                            aLoadData->mSheet->Principal(),
-                           aLoadData->mLineNumber,
-                           aLoadData->mParsingMode);
+                           aLoadData->mLineNumber);
   } else {
-    aLoadData->mSheet->AsServo()->ParseSheet(aInput, sheetURI, baseURI,
-                                             aLoadData->mSheet->Principal(),
-                                             aLoadData->mLineNumber,
-                                             aLoadData->mParsingMode);
-    rv = NS_OK;
+    rv =
+      aLoadData->mSheet->AsServo()->ParseSheet(aInput, sheetURI, baseURI,
+                                               aLoadData->mSheet->Principal(),
+                                               aLoadData->mLineNumber);
   }
 
   mParsingDatas.RemoveElementAt(mParsingDatas.Length() - 1);
@@ -2014,8 +2007,8 @@ Loader::LoadInlineStyle(nsIContent* aElement,
   // mode and mDocument's ReferrerPolicy.
   StyleSheetState state;
   StyleSheetHandle::RefPtr sheet;
-  nsresult rv = CreateSheet(nullptr, aElement, nullptr, CORS_NONE,
-                            mDocument->GetReferrerPolicy(),
+  nsresult rv = CreateSheet(nullptr, aElement, nullptr, eAuthorSheetFeatures,
+                            CORS_NONE, mDocument->GetReferrerPolicy(),
                             EmptyString(), // no inline integrity checks
                             false, false, aTitle, state, aIsAlternate,
                             &sheet);
@@ -2112,8 +2105,8 @@ Loader::LoadStyleLink(nsIContent* aElement,
 
   StyleSheetState state;
   StyleSheetHandle::RefPtr sheet;
-  rv = CreateSheet(aURL, aElement, principal, aCORSMode,
-                   aReferrerPolicy, aIntegrity, false,
+  rv = CreateSheet(aURL, aElement, principal, eAuthorSheetFeatures,
+                   aCORSMode, aReferrerPolicy, aIntegrity, false,
                    aHasAlternateRel, aTitle, state, aIsAlternate,
                    &sheet);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -2276,8 +2269,9 @@ Loader::LoadChildSheet(StyleSheetHandle aParentSheet,
     bool isAlternate;
     const nsSubstring& empty = EmptyString();
     // For now, use CORS_NONE for child sheets
-    rv = CreateSheet(aURL, nullptr, principal, CORS_NONE,
-                     aParentSheet->GetReferrerPolicy(),
+    rv = CreateSheet(aURL, nullptr, principal,
+                     aParentSheet->AsStyleSheet()->ParsingMode(),
+                     CORS_NONE, aParentSheet->GetReferrerPolicy(),
                      EmptyString(), // integrity is only checked on main sheet
                      parentData ? parentData->mSyncLoad : false,
                      false, empty, state, &isAlternate, &sheet);
@@ -2400,9 +2394,9 @@ Loader::InternalLoadNonDocumentSheet(nsIURI* aURL,
   bool syncLoad = (aObserver == nullptr);
   const nsSubstring& empty = EmptyString();
 
-  rv = CreateSheet(aURL, nullptr, aOriginPrincipal, aCORSMode,
-                   aReferrerPolicy, aIntegrity, syncLoad, false,
-                   empty, state, &isAlternate, &sheet);
+  rv = CreateSheet(aURL, nullptr, aOriginPrincipal, aParsingMode,
+                   aCORSMode, aReferrerPolicy, aIntegrity, syncLoad,
+                   false, empty, state, &isAlternate, &sheet);
   NS_ENSURE_SUCCESS(rv, rv);
 
   PrepareSheet(sheet, empty, empty, nullptr, nullptr, isAlternate);
@@ -2419,7 +2413,7 @@ Loader::InternalLoadNonDocumentSheet(nsIURI* aURL,
   }
 
   SheetLoadData* data =
-    new SheetLoadData(this, aURL, sheet, syncLoad, aParsingMode,
+    new SheetLoadData(this, aURL, sheet, syncLoad,
                       aUseSystemPrincipal, aCharset, aObserver,
                       aOriginPrincipal, mDocument);
 

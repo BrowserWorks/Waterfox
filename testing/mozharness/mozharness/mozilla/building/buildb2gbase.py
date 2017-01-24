@@ -104,7 +104,7 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
             'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
             'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
             'tools_repo': 'https://hg.mozilla.org/build/tools',
-            'repo_repo': "https://git.mozilla.org/external/google/gerrit/git-repo.git",
+            'repo_repo': 'https://gerrit.googlesource.com/git-repo.git',
             'repo_rev': 'stable',
             'hgurl': 'https://hg.mozilla.org/',
         }
@@ -362,7 +362,8 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
         self.info("Checking out tools")
         repos = [{
             'repo': self.config['tools_repo'],
-            'vcs': "hg",  # May not have hgtool yet
+            'vcs': "hg",
+            'branch': "default",
             'dest': dirs['abs_tools_dir'],
         }]
         rev = self.vcs_checkout(**repos[0])
@@ -372,7 +373,7 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
         b2g_manifest_intree = gecko_config.get('b2g_manifest_intree')
-        b2g_repo = gecko_config.get('b2g_repo','https://git.mozilla.org/b2g/B2G.git')
+        b2g_repo = gecko_config.get('b2g_repo','https://github.com/mozilla-b2g/B2G.git')
         b2g_branch = gecko_config.get('b2g_branch','master')
 
         if gecko_config.get('config_version') >= 2:
@@ -401,7 +402,7 @@ class B2GBuildBaseScript(BuildbotMixin, MockMixin,
                 b2g_manifest_branch = gecko_config.get('b2g_manifest_branch', 'master')
                 repos.append(
                     {'vcs': 'gittool',
-                     'repo': 'https://git.mozilla.org/b2g/b2g-manifest.git',
+                     'repo': 'https://github.com/mozilla-b2g/b2g-manifest',
                      'dest': os.path.join(dirs['work_dir'], 'b2g-manifest'),
                      'branch': b2g_manifest_branch},
                 )

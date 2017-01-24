@@ -8,11 +8,13 @@
 
 #include "mozilla/dom/PresentationReceiverBinding.h"
 #include "mozilla/dom/Promise.h"
+#include "nsContentUtils.h"
 #include "nsIPresentationService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "PresentationConnection.h"
 #include "PresentationConnectionList.h"
+#include "PresentationLog.h"
 
 namespace mozilla {
 namespace dom {
@@ -56,11 +58,17 @@ PresentationReceiver::Init()
   }
   mWindowId = mOwner->WindowID();
 
-  return true;
+  nsCOMPtr<nsIDocShell> docShell = mOwner->GetDocShell();
+  MOZ_ASSERT(docShell);
+
+  nsContentUtils::GetPresentationURL(docShell, mUrl);
+  return !mUrl.IsEmpty();
 }
 
 void PresentationReceiver::Shutdown()
 {
+  PRES_DEBUG("receiver shutdown:windowId[%d]\n", mWindowId);
+
   // Unregister listener for incoming sessions.
   nsCOMPtr<nsIPresentationService> service =
     do_GetService(PRESENTATION_SERVICE_CONTRACTID);
@@ -68,8 +76,8 @@ void PresentationReceiver::Shutdown()
     return;
   }
 
-  nsresult rv = service->UnregisterRespondingListener(mWindowId);
-  NS_WARN_IF(NS_FAILED(rv));
+  Unused <<
+    NS_WARN_IF(NS_FAILED(service->UnregisterRespondingListener(mWindowId)));
 }
 
 /* virtual */ JSObject*
@@ -83,6 +91,9 @@ NS_IMETHODIMP
 PresentationReceiver::NotifySessionConnect(uint64_t aWindowId,
                                            const nsAString& aSessionId)
 {
+  PRES_DEBUG("receiver session connect:id[%s], windowId[%x]\n",
+             NS_ConvertUTF16toUTF8(aSessionId).get(), aWindowId);
+
   if (NS_WARN_IF(!mOwner)) {
     return NS_ERROR_FAILURE;
   }
@@ -96,7 +107,7 @@ PresentationReceiver::NotifySessionConnect(uint64_t aWindowId,
   }
 
   RefPtr<PresentationConnection> connection =
-    PresentationConnection::Create(mOwner, aSessionId,
+    PresentationConnection::Create(mOwner, aSessionId, mUrl,
                                    nsIPresentationService::ROLE_RECEIVER,
                                    mConnectionList);
   if (NS_WARN_IF(!connection)) {

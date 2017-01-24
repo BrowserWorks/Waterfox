@@ -20,7 +20,7 @@
 #include "mozilla/Scoped.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/MemoryChecking.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 
 #ifdef __GNUC__
 # pragma GCC diagnostic push
@@ -434,10 +434,12 @@ ThreadStackHelper::AppendJSEntry(const volatile StackEntry* aEntry,
   // We assume querying the script is safe but we must not manupulate it.
   // Also we must not allocate any memory from heap.
   MOZ_ASSERT(aEntry->isJs());
-  MOZ_ASSERT(aEntry->script());
 
   const char* label;
-  if (IsChromeJSScript(aEntry->script())) {
+  JSScript* script = aEntry->script();
+  if (!script) {
+    label = "(profiling suppressed)";
+  } else if (IsChromeJSScript(aEntry->script())) {
     const char* filename = JS_GetScriptFilename(aEntry->script());
     const unsigned lineno = JS_PCToLineNumber(aEntry->script(), aEntry->pc());
     MOZ_ASSERT(filename);
@@ -471,7 +473,7 @@ ThreadStackHelper::AppendJSEntry(const volatile StackEntry* aEntry,
       }
     }
 
-    size_t len = snprintf_literal(buffer, "%s:%u", basename, lineno);
+    size_t len = SprintfLiteral(buffer, "%s:%u", basename, lineno);
     if (len < sizeof(buffer)) {
       if (mStackToFill->IsSameAsEntry(aPrevLabel, buffer)) {
         return aPrevLabel;

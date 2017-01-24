@@ -47,7 +47,7 @@ static const nsAttrValue::EnumTable kButtonTypeTable[] = {
   { "button", NS_FORM_BUTTON_BUTTON },
   { "reset", NS_FORM_BUTTON_RESET },
   { "submit", NS_FORM_BUTTON_SUBMIT },
-  { 0 }
+  { nullptr, 0 }
 };
 
 // Default type is 'submit'.
@@ -369,7 +369,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
                     mType == NS_FORM_BUTTON_RESET)) {
         InternalFormEvent event(true,
           (mType == NS_FORM_BUTTON_RESET) ? eFormReset : eFormSubmit);
-        event.originator     = this;
+        event.mOriginator = this;
         nsEventStatus status = nsEventStatus_eIgnore;
 
         nsCOMPtr<nsIPresShell> presShell =
@@ -381,11 +381,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         // Using presShell to dispatch the event. It makes sure that
         // event is not handled if the window is being destroyed.
         if (presShell && (event.mMessage != eFormSubmit ||
-                          mForm->HasAttr(kNameSpaceID_None, nsGkAtoms::novalidate) ||
-                          // We know the element is a submit control, if this check is moved,
-                          // make sure formnovalidate is used only if it's a submit control.
-                          HasAttr(kNameSpaceID_None, nsGkAtoms::formnovalidate) ||
-                          mForm->CheckValidFormSubmission())) {
+                          mForm->SubmissionCanProceed(this))) {
           // TODO: removing this code and have the submit event sent by the form
           // see bug 592124.
           // Hold a strong ref while dispatching

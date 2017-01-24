@@ -84,13 +84,16 @@ ALL_FLAVORS = {
         'suite': 'plain',
         'aliases': ('plain', 'mochitest'),
         'enabled_apps': ('firefox', 'b2g', 'android', 'mulet'),
+        'extra_args': {
+            'flavor': 'plain',
+        }
     },
     'chrome': {
         'suite': 'chrome',
         'aliases': ('chrome', 'mochitest-chrome'),
         'enabled_apps': ('firefox', 'mulet', 'b2g', 'android'),
         'extra_args': {
-            'chrome': True,
+            'flavor': 'chrome',
         }
     },
     'browser-chrome': {
@@ -98,7 +101,7 @@ ALL_FLAVORS = {
         'aliases': ('browser', 'browser-chrome', 'mochitest-browser-chrome', 'bc'),
         'enabled_apps': ('firefox',),
         'extra_args': {
-            'browserChrome': True,
+            'flavor': 'browser',
         }
     },
     'jetpack-package': {
@@ -106,7 +109,7 @@ ALL_FLAVORS = {
         'aliases': ('jetpack-package', 'mochitest-jetpack-package', 'jpp'),
         'enabled_apps': ('firefox',),
         'extra_args': {
-            'jetpackPackage': True,
+            'flavor': 'jetpack-package',
         }
     },
     'jetpack-addon': {
@@ -114,7 +117,7 @@ ALL_FLAVORS = {
         'aliases': ('jetpack-addon', 'mochitest-jetpack-addon', 'jpa'),
         'enabled_apps': ('firefox',),
         'extra_args': {
-            'jetpackAddon': True,
+            'flavor': 'jetpack-addon',
         }
     },
     'a11y': {
@@ -122,7 +125,7 @@ ALL_FLAVORS = {
         'aliases': ('a11y', 'mochitest-a11y', 'accessibility'),
         'enabled_apps': ('firefox',),
         'extra_args': {
-            'a11y': True,
+            'flavor': 'a11y',
         }
     },
 }
@@ -477,7 +480,7 @@ class MachCommands(MachCommandBase):
             run_mochitest = mochitest.run_b2g_test
         elif buildapp == 'android':
             from mozrunner.devices.android_device import grant_runtime_permissions
-            grant_runtime_permissions(self, kwargs['app'])
+            grant_runtime_permissions(self)
             run_mochitest = mochitest.run_android_test
         else:
             run_mochitest = mochitest.run_desktop_test
@@ -549,7 +552,7 @@ class RobocopCommands(MachCommandBase):
             return 1
 
         from mozrunner.devices.android_device import grant_runtime_permissions
-        grant_runtime_permissions(self, kwargs['app'])
+        grant_runtime_permissions(self)
 
         mochitest = self._spawn(MochitestRunner)
         return mochitest.run_robocop_test(self._mach_context, tests, 'robocop', **kwargs)

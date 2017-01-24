@@ -96,7 +96,8 @@ NS_IMETHODIMP
 nsNullPrincipalURI::GetAsciiSpec(nsACString &_spec)
 {
   nsAutoCString buffer;
-  (void)GetSpec(buffer);
+  // Ignore the return value -- nsNullPrincipalURI::GetSpec() is infallible.
+  Unused << GetSpec(buffer);
   NS_EscapeURL(buffer, esc_OnlyNonASCII | esc_AlwaysCopy, _spec);
   return NS_OK;
 }
@@ -122,6 +123,12 @@ nsNullPrincipalURI::GetHostPort(nsACString &_host)
 
 NS_IMETHODIMP
 nsNullPrincipalURI::SetHostPort(const nsACString &aHost)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsNullPrincipalURI::SetHostAndPort(const nsACString &aHost)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }

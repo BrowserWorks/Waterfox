@@ -9,10 +9,8 @@
 const EventEmitter = require("devtools/shared/event-emitter");
 const {createNode, TimeScale} = require("devtools/client/animationinspector/utils");
 
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
-
-const STRINGS_URI = "chrome://devtools/locale/animationinspector.properties";
-const L10N = new LocalizationHelper(STRINGS_URI);
+const { LocalizationHelper } = require("devtools/shared/l10n");
+const L10N = new LocalizationHelper("devtools/locale/animationinspector.properties");
 
 /**
  * UI component responsible for displaying a single animation timeline, which

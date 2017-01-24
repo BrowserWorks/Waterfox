@@ -146,6 +146,12 @@ function tunnelToInnerBrowser(outer, inner) {
       let filteredProgressListener = gBrowser._tabFilters.get(tab);
       outer.webProgress.addProgressListener(filteredProgressListener);
 
+      // Add the inner browser to tabbrowser's WeakMap from browser to tab.  This assists
+      // with tabbrowser's processing of some events such as MozLayerTreeReady which
+      // bubble up from the remote content frame and trigger tabbrowser to lookup the tab
+      // associated with the browser that triggered the event.
+      gBrowser._tabForBrowser.set(inner, tab);
+
       // All of the browser state from content was swapped onto the inner browser.  Pull
       // this state up to the outer browser.
       for (let property of SWAPPED_BROWSER_STATE) {
@@ -177,16 +183,24 @@ function tunnelToInnerBrowser(outer, inner) {
 
       // Wants to access the content's `frameLoader`, so we'll redirect it to
       // inner browser.
-      outer.setDocShellIsActiveAndForeground = value => {
-        inner.frameLoader.tabParent.setDocShellIsActiveAndForeground(value);
+      outer.preserveLayers = value => {
+        inner.frameLoader.tabParent.preserveLayers(value);
       };
+
+      // Make the PopupNotifications object available on the iframe's owner
+      // This is used for permission doorhangers
+      Object.defineProperty(inner.ownerGlobal, "PopupNotifications", {
+        get() {
+          return outer.ownerGlobal.PopupNotifications;
+        },
+        configurable: true,
+        enumerable: true,
+      });
     }),
 
     stop() {
       let tab = gBrowser.getTabForBrowser(outer);
       let filteredProgressListener = gBrowser._tabFilters.get(tab);
-      browserWindow = null;
-      gBrowser = null;
 
       // The browser's state has changed over time while the tunnel was active.  Push the
       // the current state down to the inner browser, so that it follows the content in
@@ -194,6 +208,9 @@ function tunnelToInnerBrowser(outer, inner) {
       for (let property of SWAPPED_BROWSER_STATE) {
         inner[property] = outer[property];
       }
+
+      // Remove the inner browser from the WeakMap from browser to tab.
+      gBrowser._tabForBrowser.delete(inner);
 
       // Remove the progress listener we added manually.
       outer.webProgress.removeProgressListener(filteredProgressListener);
@@ -208,7 +225,10 @@ function tunnelToInnerBrowser(outer, inner) {
       delete outer.isRemoteBrowser;
       delete outer.hasContentOpener;
       delete outer.docShellIsActive;
-      delete outer.setDocShellIsActiveAndForeground;
+      delete outer.preserveLayers;
+
+      // Delete the PopupNotifications getter added for permission doorhangers
+      delete inner.ownerGlobal.PopupNotifications;
 
       mmTunnel.destroy();
       mmTunnel = null;
@@ -217,6 +237,9 @@ function tunnelToInnerBrowser(outer, inner) {
       // things that happen to the outer browser with the content inside in the
       // inner browser.
       outer.permanentKey = { id: "zombie" };
+
+      browserWindow = null;
+      gBrowser = null;
     },
 
   };
@@ -327,6 +350,8 @@ MessageManagerTunnel.prototype = {
     "Forms:HideDropDown",
     "InPermitUnload",
     "PermitUnload",
+    // Messages sent to tabbrowser.xml
+    "contextmenu",
     // Messages sent to SelectParentHelper.jsm
     "Forms:UpdateDropDown",
     // Messages sent to browser.js
@@ -506,14 +531,18 @@ MessageManagerTunnel.prototype = {
     this.innerParentMM.sendAsyncMessage(name, ...args);
   },
 
-  receiveMessage({ name, data, objects, principal }) {
+  receiveMessage({ name, data, objects, principal, sync }) {
     if (!this._shouldTunnelInnerToOuter(name)) {
       debug(`Received unexpected message ${name}`);
-      return;
+      return undefined;
     }
 
-    debug(`${name} inner -> outer`);
+    debug(`${name} inner -> outer, sync: ${sync}`);
+    if (sync) {
+      return this.outerChildMM.sendSyncMessage(name, data, objects, principal);
+    }
     this.outerChildMM.sendAsyncMessage(name, data, objects, principal);
+    return undefined;
   },
 
   _shouldTunnelOuterToInner(name) {

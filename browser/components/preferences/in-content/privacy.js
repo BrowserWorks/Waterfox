@@ -3,6 +3,12 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
+Components.utils.import("resource://gre/modules/PluralForm.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
+                                  "resource://gre/modules/ContextualIdentityService.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
+                                  "resource://gre/modules/PluralForm.jsm");
 
 var gPrivacyPane = {
 
@@ -65,6 +71,45 @@ var gPrivacyPane = {
     link.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "containers";
 
     document.getElementById("browserContainersbox").hidden = false;
+
+    document.getElementById("browserContainersCheckbox").checked =
+      Services.prefs.getBoolPref("privacy.userContext.enabled");
+  },
+
+  _checkBrowserContainers: function(event) {
+    let checkbox = document.getElementById("browserContainersCheckbox");
+    if (checkbox.checked) {
+      Services.prefs.setBoolPref("privacy.userContext.enabled", true);
+      return;
+    }
+
+    let count = ContextualIdentityService.countContainerTabs();
+    if (count == 0) {
+      Services.prefs.setBoolPref("privacy.userContext.enabled", false);
+      return;
+    }
+
+    let bundlePreferences = document.getElementById("bundlePreferences");
+
+    let title = bundlePreferences.getString("disableContainersAlertTitle");
+    let message = PluralForm.get(count, bundlePreferences.getString("disableContainersMsg"))
+                            .replace("#S", count)
+    let okButton = PluralForm.get(count, bundlePreferences.getString("disableContainersOkButton"))
+                             .replace("#S", count)
+    let cancelButton = bundlePreferences.getString("disableContainersButton2");
+
+    let buttonFlags = (Ci.nsIPrompt.BUTTON_TITLE_IS_STRING * Ci.nsIPrompt.BUTTON_POS_0) +
+                      (Ci.nsIPrompt.BUTTON_TITLE_IS_STRING * Ci.nsIPrompt.BUTTON_POS_1);
+
+    let rv = Services.prompt.confirmEx(window, title, message, buttonFlags,
+                                       okButton, cancelButton, null, null, {});
+    if (rv == 0) {
+      ContextualIdentityService.closeAllContainerTabs();
+      Services.prefs.setBoolPref("privacy.userContext.enabled", false);
+      return;
+    }
+
+    checkbox.checked = true;
   },
 
   /**
@@ -131,6 +176,8 @@ var gPrivacyPane = {
                      gPrivacyPane.showBlockLists);
     setEventListener("changeBlockListPBM", "command",
                      gPrivacyPane.showBlockLists);
+    setEventListener("browserContainersCheckbox", "command",
+                     gPrivacyPane._checkBrowserContainers);
   },
 
   // TRACKING PROTECTION MODE
@@ -144,9 +191,13 @@ var gPrivacyPane = {
     let radiogroup = document.getElementById("trackingProtectionRadioGroup");
 
     // Global enable takes precedence over enabled in Private Browsing.
-    radiogroup.value = enabledPref.value ? "always" :
-                       pbmPref.value ? "private" :
-                       "never";
+    if (enabledPref.value) {
+      radiogroup.value = "always";
+    } else if (pbmPref.value) {
+      radiogroup.value = "private";
+    } else {
+      radiogroup.value = "never";
+    }
   },
 
   /**
@@ -388,18 +439,11 @@ var gPrivacyPane = {
       let buttonIndex = confirmRestartPrompt(autoStart.checked, 1,
                                              true, false);
       if (buttonIndex == CONFIRM_RESTART_PROMPT_RESTART_NOW) {
-        const Cc = Components.classes, Ci = Components.interfaces;
-        let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
-                           .createInstance(Ci.nsISupportsPRBool);
-        Services.obs.notifyObservers(cancelQuit, "quit-application-requested",
-                                     "restart");
-        if (!cancelQuit.data) {
-          pref.value = autoStart.hasAttribute('checked');
-          let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"]
-                             .getService(Ci.nsIAppStartup);
-          appStartup.quit(Ci.nsIAppStartup.eAttemptQuit |  Ci.nsIAppStartup.eRestart);
-          return;
-        }
+        pref.value = autoStart.hasAttribute('checked');
+        let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"]
+                           .getService(Ci.nsIAppStartup);
+        appStartup.quit(Ci.nsIAppStartup.eAttemptQuit |  Ci.nsIAppStartup.eRestart);
+        return;
       }
 
       this._shouldPromptForRestart = false;

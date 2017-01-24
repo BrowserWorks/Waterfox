@@ -116,9 +116,8 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     static MBasicBlock* NewPendingLoopHeader(MIRGraph& graph, const CompileInfo& info,
                                              MBasicBlock* pred, BytecodeSite* site,
                                              unsigned loopStateSlots);
-    static MBasicBlock* NewSplitEdge(MIRGraph& graph, const CompileInfo& info,
-                                     MBasicBlock* pred, size_t predEdgeIdx,
-                                     MBasicBlock* succ);
+    static MBasicBlock* NewSplitEdge(MIRGraph& graph, MBasicBlock* pred,
+                                     size_t predEdgeIdx, MBasicBlock* succ);
     static MBasicBlock* NewAsmJS(MIRGraph& graph, const CompileInfo& info,
                                  MBasicBlock* pred, Kind kind);
 
@@ -150,7 +149,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // Gets the instruction associated with various slot types.
     MDefinition* peek(int32_t depth);
 
-    MDefinition* scopeChain();
+    MDefinition* environmentChain();
     MDefinition* argumentsObject();
 
     // Increase the number of slots available
@@ -187,7 +186,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     void pushArg(uint32_t arg);
     void pushLocal(uint32_t local);
     void pushSlot(uint32_t slot);
-    void setScopeChain(MDefinition* ins);
+    void setEnvironmentChain(MDefinition* ins);
     void setArgumentsObject(MDefinition* ins);
 
     // Returns the top of the stack, then decrements the virtual stack pointer.
@@ -255,7 +254,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // Sets a back edge. This places phi nodes and rewrites instructions within
     // the current loop as necessary. If the backedge introduces new types for
     // phis at the loop header, returns a disabling abort.
-    MOZ_MUST_USE AbortReason setBackedge(MBasicBlock* block);
+    MOZ_MUST_USE AbortReason setBackedge(TempAllocator& alloc, MBasicBlock* block);
     MOZ_MUST_USE bool setBackedgeAsmJS(MBasicBlock* block);
 
     // Resets a LOOP_HEADER block to a NORMAL block.  This is needed when
@@ -271,10 +270,11 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     void inheritPhis(MBasicBlock* header);
 
     // Propagates backedge slots into phis operands of the loop header.
-    MOZ_MUST_USE bool inheritPhisFromBackedge(MBasicBlock* backedge, bool* hadTypeChange);
+    MOZ_MUST_USE bool inheritPhisFromBackedge(TempAllocator& alloc, MBasicBlock* backedge,
+                                              bool* hadTypeChange);
 
     // Compute the types for phis in this block according to their inputs.
-    MOZ_MUST_USE bool specializePhis();
+    MOZ_MUST_USE bool specializePhis(TempAllocator& alloc);
 
     void insertBefore(MInstruction* at, MInstruction* ins);
     void insertAfter(MInstruction* at, MInstruction* ins);

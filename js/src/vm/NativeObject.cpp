@@ -20,7 +20,7 @@
 
 #include "gc/Nursery-inl.h"
 #include "vm/ArrayObject-inl.h"
-#include "vm/ScopeObject-inl.h"
+#include "vm/EnvironmentObject-inl.h"
 #include "vm/Shape-inl.h"
 
 using namespace js;
@@ -95,9 +95,28 @@ ObjectElements::MakeElementsCopyOnWrite(ExclusiveContext* cx, NativeObject* obj)
     // Note: this method doesn't update type information to indicate that the
     // elements might be copy on write. Handling this is left to the caller.
     MOZ_ASSERT(!header->isCopyOnWrite());
+    MOZ_ASSERT(!header->isFrozen());
     header->flags |= COPY_ON_WRITE;
 
     header->ownerObject().init(obj);
+    return true;
+}
+
+/* static */ bool
+ObjectElements::FreezeElements(ExclusiveContext* cx, HandleNativeObject obj)
+{
+    if (!obj->maybeCopyElementsForWrite(cx))
+        return false;
+
+    if (obj->hasEmptyElements())
+        return true;
+
+    ObjectElements* header = obj->getElementsHeader();
+
+    // Note: this method doesn't update type information to indicate that the
+    // elements might be frozen. Handling this is left to the caller.
+    header->freeze();
+
     return true;
 }
 
@@ -294,7 +313,7 @@ NativeObject::setLastProperty(ExclusiveContext* cx, Shape* shape)
 {
     MOZ_ASSERT(!inDictionaryMode());
     MOZ_ASSERT(!shape->inDictionary());
-    MOZ_ASSERT(shape->compartment() == compartment());
+    MOZ_ASSERT(shape->zone() == zone());
     MOZ_ASSERT(shape->numFixedSlots() == numFixedSlots());
     MOZ_ASSERT(shape->getObjectClass() == getClass());
 
@@ -318,7 +337,7 @@ NativeObject::setLastPropertyShrinkFixedSlots(Shape* shape)
 {
     MOZ_ASSERT(!inDictionaryMode());
     MOZ_ASSERT(!shape->inDictionary());
-    MOZ_ASSERT(shape->compartment() == compartment());
+    MOZ_ASSERT(shape->zone() == zone());
     MOZ_ASSERT(lastProperty()->slotSpan() == shape->slotSpan());
     MOZ_ASSERT(shape->getObjectClass() == getClass());
 
@@ -338,7 +357,7 @@ NativeObject::setLastPropertyMakeNonNative(Shape* shape)
 {
     MOZ_ASSERT(!inDictionaryMode());
     MOZ_ASSERT(!shape->getObjectClass()->isNative());
-    MOZ_ASSERT(shape->compartment() == compartment());
+    MOZ_ASSERT(shape->zone() == zone());
     MOZ_ASSERT(shape->slotSpan() == 0);
     MOZ_ASSERT(shape->numFixedSlots() == 0);
 
@@ -480,8 +499,19 @@ NativeObject::sparsifyDenseElement(ExclusiveContext* cx, HandleNativeObject obj,
     removeDenseElementForSparseIndex(cx, obj, index);
 
     uint32_t slot = obj->slotSpan();
-    if (!obj->addDataProperty(cx, INT_TO_JSID(index), slot, JSPROP_ENUMERATE)) {
-        obj->setDenseElement(index, value);
+
+    RootedId id(cx, INT_TO_JSID(index));
+
+    ShapeTable::Entry* entry = nullptr;
+    if (obj->inDictionaryMode())
+        entry = &obj->lastProperty()->table().search<MaybeAdding::Adding>(id);
+
+    // NOTE: We don't use addDataProperty because we don't want the
+    // extensibility check if we're, for example, sparsifying frozen objects..
+    if (!addPropertyInternal(cx, obj, id, nullptr, nullptr, slot,
+                             obj->getElementsHeader()->elementAttributes(),
+                             0, entry, true)) {
+        obj->setDenseElementUnchecked(index, value);
         return false;
     }
 
@@ -509,7 +539,7 @@ NativeObject::sparsifyDenseElements(js::ExclusiveContext* cx, HandleNativeObject
     }
 
     if (initialized)
-        obj->setDenseInitializedLength(0);
+        obj->setDenseInitializedLengthUnchecked(0);
 
     /*
      * Reduce storage for dense elements which are now holes. Explicitly mark
@@ -762,6 +792,7 @@ NativeObject::growElements(ExclusiveContext* cx, uint32_t reqCapacity)
 {
     MOZ_ASSERT(nonProxyIsExtensible());
     MOZ_ASSERT(canHaveNonEmptyElements());
+    MOZ_ASSERT(!denseElementsAreFrozen());
     if (denseElementsAreCopyOnWrite())
         MOZ_CRASH();
 
@@ -856,6 +887,7 @@ NativeObject::shrinkElements(ExclusiveContext* cx, uint32_t reqCapacity)
 NativeObject::CopyElementsForWrite(ExclusiveContext* cx, NativeObject* obj)
 {
     MOZ_ASSERT(obj->denseElementsAreCopyOnWrite());
+    MOZ_ASSERT(!obj->denseElementsAreFrozen());
 
     // The original owner of a COW elements array should never be modified.
     MOZ_ASSERT(obj->getElementsHeader()->ownerObject() != obj);
@@ -967,7 +999,7 @@ NativeObject::addDataProperty(ExclusiveContext* cx, jsid idArg, uint32_t slot, u
 
 Shape*
 NativeObject::addDataProperty(ExclusiveContext* cx, HandlePropertyName name,
-                          uint32_t slot, unsigned attrs)
+                              uint32_t slot, unsigned attrs)
 {
     MOZ_ASSERT(!(attrs & (JSPROP_GETTER | JSPROP_SETTER)));
     RootedNativeObject self(cx, this);
@@ -1087,7 +1119,7 @@ PurgeProtoChain(ExclusiveContext* cx, JSObject* objArg, HandleId id)
 }
 
 static bool
-PurgeScopeChainHelper(ExclusiveContext* cx, HandleObject objArg, HandleId id)
+PurgeEnvironmentChainHelper(ExclusiveContext* cx, HandleObject objArg, HandleId id)
 {
     /* Re-root locally so we can re-assign. */
     RootedObject obj(cx, objArg);
@@ -1103,13 +1135,14 @@ PurgeScopeChainHelper(ExclusiveContext* cx, HandleObject objArg, HandleId id)
         return false;
 
     /*
-     * We must purge the scope chain only for Call objects as they are the only
-     * kind of cacheable non-global object that can gain properties after outer
-     * properties with the same names have been cached or traced. Call objects
-     * may gain such properties via eval introducing new vars; see bug 490364.
+     * We must purge the environment chain only for Call objects as they are
+     * the only kind of cacheable non-global object that can gain properties
+     * after outer properties with the same names have been cached or
+     * traced. Call objects may gain such properties via eval introducing new
+     * vars; see bug 490364.
      */
     if (obj->is<CallObject>()) {
-        while ((obj = obj->enclosingScope()) != nullptr) {
+        while ((obj = obj->enclosingEnvironment()) != nullptr) {
             if (!PurgeProtoChain(cx, obj, id))
                 return false;
         }
@@ -1119,16 +1152,17 @@ PurgeScopeChainHelper(ExclusiveContext* cx, HandleObject objArg, HandleId id)
 }
 
 /*
- * PurgeScopeChain does nothing if obj is not itself a prototype or parent
- * scope, else it reshapes the scope and prototype chains it links. It calls
- * PurgeScopeChainHelper, which asserts that obj is flagged as a delegate
- * (i.e., obj has ever been on a prototype or parent chain).
+ * PurgeEnvironmentChain does nothing if obj is not itself a prototype or
+ * parent environment, else it reshapes the scope and prototype chains it
+ * links. It calls PurgeEnvironmentChainHelper, which asserts that obj is
+ * flagged as a delegate (i.e., obj has ever been on a prototype or parent
+ * chain).
  */
 static inline bool
-PurgeScopeChain(ExclusiveContext* cx, HandleObject obj, HandleId id)
+PurgeEnvironmentChain(ExclusiveContext* cx, HandleObject obj, HandleId id)
 {
     if (obj->isDelegate() && obj->isNative())
-        return PurgeScopeChainHelper(cx, obj, id);
+        return PurgeEnvironmentChainHelper(cx, obj, id);
     return true;
 }
 
@@ -1138,7 +1172,7 @@ AddOrChangeProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId id,
 {
     desc.assertComplete();
 
-    if (!PurgeScopeChain(cx, obj, id))
+    if (!PurgeEnvironmentChain(cx, obj, id))
         return false;
 
     // Use dense storage for new indexed properties where possible.
@@ -1754,7 +1788,7 @@ GetExistingProperty(JSContext* cx,
         vp.set(obj->getSlot(shape->slot()));
         MOZ_ASSERT_IF(!vp.isMagic(JS_UNINITIALIZED_LEXICAL) &&
                       !obj->isSingleton() &&
-                      !obj->template is<ScopeObject>() &&
+                      !obj->template is<EnvironmentObject>() &&
                       shape->hasDefaultGetter(),
                       ObjectGroupHasProperty(cx, obj->group(), shape->propid(), vp));
     } else {
@@ -2120,7 +2154,7 @@ NativeSetExistingDataProperty(JSContext* cx, HandleNativeObject obj, HandleShape
         return result.fail(JSMSG_GETTER_ONLY);
     }
 
-    MOZ_ASSERT(!obj->is<DynamicWithObject>());  // See bug 1128681.
+    MOZ_ASSERT(!obj->is<WithEnvironmentObject>());  // See bug 1128681.
 
     uint32_t sample = cx->runtime()->propertyRemovals;
     RootedId id(cx, shape->propid());
@@ -2181,8 +2215,8 @@ js::SetPropertyByDefining(JSContext* cx, HandleId id, HandleValue v, HandleValue
     // Invalidate SpiderMonkey-specific caches or bail.
     const Class* clasp = receiver->getClass();
 
-    // Purge the property cache of now-shadowed id in receiver's scope chain.
-    if (!PurgeScopeChain(cx, receiver, id))
+    // Purge the property cache of now-shadowed id in receiver's environment chain.
+    if (!PurgeEnvironmentChain(cx, receiver, id))
         return false;
 
     // Steps 5.e.iii-iv. and 5.f.i. Define the new data property.
@@ -2248,9 +2282,6 @@ static bool
 SetNonexistentProperty(JSContext* cx, HandleId id, HandleValue v, HandleValue receiver,
                        QualifiedBool qualified, ObjectOpResult& result)
 {
-    // We should never add properties to lexical blocks.
-    MOZ_ASSERT_IF(receiver.isObject(), !receiver.toObject().is<ClonedBlockObject>());
-
     if (!qualified && receiver.isObject() && receiver.toObject().isUnqualifiedVarObj()) {
         if (!MaybeReportUndeclaredVarAssignment(cx, JSID_TO_STRING(id)))
             return false;
@@ -2306,7 +2337,9 @@ SetExistingProperty(JSContext* cx, HandleNativeObject obj, HandleId id, HandleVa
 {
     // Step 5 for dense elements.
     if (IsImplicitDenseOrTypedArrayElement(shape)) {
-        // Step 5.a is a no-op: all dense elements are writable.
+        // Step 5.a.
+        if (obj->getElementsHeader()->isFrozen())
+            return result.fail(JSMSG_READ_ONLY);
 
         // Pure optimization for the common case:
         if (receiver.isObject() && pobj == &receiver.toObject())

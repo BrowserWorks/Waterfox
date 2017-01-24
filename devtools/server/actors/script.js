@@ -17,6 +17,7 @@ const { SourceActor, getSourceURL } = require("devtools/server/actors/source");
 const { DebuggerServer } = require("devtools/server/main");
 const { ActorClassWithSpec } = require("devtools/shared/protocol");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 const { assert, dumpn, update, fetch } = DevToolsUtils;
 const promise = require("promise");
 const xpcInspector = require("xpcInspector");
@@ -509,7 +510,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       this._prettyPrintWorker = new DevToolsWorker(
         "resource://devtools/server/actors/pretty-print-worker.js",
         { name: "pretty-print",
-          verbose: dumpn.wantLogging }
+          verbose: flags.wantLogging }
       );
     }
     return this._prettyPrintWorker;
@@ -982,7 +983,8 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       return {
         error: "wrongState",
         message: "Can't resume when debuggee isn't paused. Current state is '"
-          + this._state + "'"
+          + this._state + "'",
+        state: this._state
       };
     }
 
@@ -1128,8 +1130,8 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         l.type = handler.type;
         let listener = handler.listenerObject;
         let listenerDO = this.globalDebugObject.makeDebuggeeValue(listener);
-        // If the listener is an object with a 'handleEvent' method, use that.
-        if (listenerDO.class == "Object" || listenerDO.class == "XULElement") {
+        // If the listener is not callable, assume it is an event handler object.
+        if (!listenerDO.callable) {
           // For some events we don't have permission to access the
           // 'handleEvent' property when running in content scope.
           if (!listenerDO.unwrap()) {

@@ -34,46 +34,16 @@ MatchIIDPtrKey(const PLDHashEntryHdr* entry, const void* key)
 }
 
 static PLDHashNumber
-HashNativeKey(const void* key)
+HashNativeKey(const void* data)
 {
-    auto Key = static_cast<const XPCNativeSetKey*>(key);
-
-    PLDHashNumber h = 0;
-
-    XPCNativeSet* Set = Key->GetBaseSet();
-    XPCNativeInterface* Addition = Key->GetAddition();
-    uint16_t Position = Key->GetPosition();
-
-    if (!Set) {
-        MOZ_ASSERT(Addition, "bad key");
-        // This would be an XOR like below.
-        // But "0 ^ x == x". So it does not matter.
-        h = (js::HashNumber) NS_PTR_TO_INT32(Addition) >> 2;
-    } else {
-        XPCNativeInterface** Current = Set->GetInterfaceArray();
-        uint16_t count = Set->GetInterfaceCount();
-        if (Addition) {
-            count++;
-            for (uint16_t i = 0; i < count; i++) {
-                if (i == Position)
-                    h ^= (js::HashNumber) NS_PTR_TO_INT32(Addition) >> 2;
-                else
-                    h ^= (js::HashNumber) NS_PTR_TO_INT32(*(Current++)) >> 2;
-            }
-        } else {
-            for (uint16_t i = 0; i < count; i++)
-                h ^= (js::HashNumber) NS_PTR_TO_INT32(*(Current++)) >> 2;
-        }
-    }
-
-    return h;
+    return static_cast<const XPCNativeSetKey*>(data)->Hash();
 }
 
 /***************************************************************************/
 // implement JSObject2WrappedJSMap...
 
 void
-JSObject2WrappedJSMap::UpdateWeakPointersAfterGC(XPCJSRuntime* runtime)
+JSObject2WrappedJSMap::UpdateWeakPointersAfterGC(XPCJSContext* context)
 {
     // Check all wrappers and update their JSObject pointer if it has been
     // moved. Release any wrappers whose weakly held JSObject has died.
@@ -308,24 +278,17 @@ NativeSetMap::Entry::Match(const PLDHashEntryHdr* entry, const void* key)
     if (!Addition && Set == SetInTable)
         return true;
 
-    uint16_t count = Set->GetInterfaceCount() + (Addition ? 1 : 0);
-    if (count != SetInTable->GetInterfaceCount())
+    uint16_t count = Set->GetInterfaceCount();
+    if (count + (Addition ? 1 : 0) != SetInTable->GetInterfaceCount())
         return false;
 
-    uint16_t Position = Key->GetPosition();
     XPCNativeInterface** CurrentInTable = SetInTable->GetInterfaceArray();
     XPCNativeInterface** Current = Set->GetInterfaceArray();
     for (uint16_t i = 0; i < count; i++) {
-        if (Addition && i == Position) {
-            if (Addition != *(CurrentInTable++))
-                return false;
-        } else {
-            if (*(Current++) != *(CurrentInTable++))
-                return false;
-        }
+        if (*(Current++) != *(CurrentInTable++))
+            return false;
     }
-
-    return true;
+    return !Addition || Addition == *(CurrentInTable++);
 }
 
 const struct PLDHashTableOps NativeSetMap::Entry::sOps =
@@ -395,104 +358,6 @@ IID2ThisTranslatorMap::newMap(int length)
 IID2ThisTranslatorMap::IID2ThisTranslatorMap(int length)
   : mTable(&Entry::sOps, sizeof(Entry), length)
 {
-}
-
-/***************************************************************************/
-
-PLDHashNumber
-XPCNativeScriptableSharedMap::Entry::Hash(const void* key)
-{
-    PLDHashNumber h;
-    const unsigned char* s;
-
-    XPCNativeScriptableShared* obj =
-        (XPCNativeScriptableShared*) key;
-
-    // hash together the flags and the classname string, ignore the interfaces
-    // bitmap since it's very rare that it's different when flags and classname
-    // are the same.
-
-    h = (PLDHashNumber) obj->GetFlags();
-    for (s = (const unsigned char*) obj->GetJSClass()->name; *s != '\0'; s++)
-        h = RotateLeft(h, 4) ^ *s;
-    return h;
-}
-
-bool
-XPCNativeScriptableSharedMap::Entry::Match(const PLDHashEntryHdr* entry,
-                                           const void* key)
-{
-    XPCNativeScriptableShared* obj1 =
-        ((XPCNativeScriptableSharedMap::Entry*) entry)->key;
-
-    XPCNativeScriptableShared* obj2 =
-        (XPCNativeScriptableShared*) key;
-
-    // match the flags and the classname string
-
-    if (obj1->GetFlags() != obj2->GetFlags())
-        return false;
-
-    const char* name1 = obj1->GetJSClass()->name;
-    const char* name2 = obj2->GetJSClass()->name;
-
-    if (!name1 || !name2)
-        return name1 == name2;
-
-    return 0 == strcmp(name1, name2);
-}
-
-const struct PLDHashTableOps XPCNativeScriptableSharedMap::Entry::sOps =
-{
-    Hash,
-    Match,
-    PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub
-};
-
-// static
-XPCNativeScriptableSharedMap*
-XPCNativeScriptableSharedMap::newMap(int length)
-{
-    return new XPCNativeScriptableSharedMap(length);
-}
-
-XPCNativeScriptableSharedMap::XPCNativeScriptableSharedMap(int length)
-  : mTable(&Entry::sOps, sizeof(Entry), length)
-{
-}
-
-bool
-XPCNativeScriptableSharedMap::GetNewOrUsed(uint32_t flags,
-                                           char* name,
-                                           XPCNativeScriptableInfo* si)
-{
-    NS_PRECONDITION(name,"bad param");
-    NS_PRECONDITION(si,"bad param");
-
-    XPCNativeScriptableShared key(flags, name, /* populate = */ false);
-    auto entry = static_cast<Entry*>(mTable.Add(&key, fallible));
-    if (!entry)
-        return false;
-
-    XPCNativeScriptableShared* shared = entry->key;
-
-    // XXX: this XPCNativeScriptableShared is heap-allocated, which means the
-    // js::Class it contains is also heap-allocated. This causes problems for
-    // memory reporting. See the comment above the BaseShape case in
-    // StatsCellCallback() in js/src/vm/MemoryMetrics.cpp.
-    //
-    // When the code below is removed (bug 1265271) and there are no longer any
-    // heap-allocated js::Class instances, the disabled code in
-    // StatsCellCallback() should be reinstated.
-    //
-    if (!shared) {
-        entry->key = shared =
-            new XPCNativeScriptableShared(flags, key.TransferNameOwnership(),
-                                          /* populate = */ true);
-    }
-    si->SetScriptableShared(shared);
-    return true;
 }
 
 /***************************************************************************/

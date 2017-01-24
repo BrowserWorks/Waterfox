@@ -29,8 +29,8 @@ Navigator implements NavigatorLanguage;
 Navigator implements NavigatorOnLine;
 Navigator implements NavigatorContentUtils;
 Navigator implements NavigatorStorageUtils;
-Navigator implements NavigatorFeatures;
 Navigator implements NavigatorConcurrentHardware;
+Navigator implements NavigatorStorage;
 
 [NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorID {
@@ -86,19 +86,16 @@ interface NavigatorContentUtils {
   //void unregisterContentHandler(DOMString mimeType, DOMString url);
 };
 
+[NoInterfaceObject, Exposed=(Window,Worker)]
+interface NavigatorStorage {
+  [Func="mozilla::dom::StorageManager::PrefEnabled"]
+  readonly attribute StorageManager storage;
+};
+
 [NoInterfaceObject]
 interface NavigatorStorageUtils {
   // NOT IMPLEMENTED
   //void yieldForStorageUpdates();
-};
-
-[NoInterfaceObject]
-interface NavigatorFeatures {
-  [ChromeOnly, Throws]
-  Promise<any> getFeature(DOMString name);
-
-  [ChromeOnly, Throws]
-  Promise<any> hasFeature(DOMString name);
 };
 
 partial interface Navigator {
@@ -175,23 +172,6 @@ callback interface MozIdleObserver {
   void onactive();
 };
 
-#ifdef MOZ_B2G
-dictionary MobileIdOptions {
-  boolean forceSelection = false;
-};
-
-[NoInterfaceObject]
-interface NavigatorMobileId {
-    // Ideally we would use [CheckAnyPermissions] here, but the "mobileid"
-    // permission is set to PROMPT_ACTION and [CheckAnyPermissions] only checks
-    // for ALLOW_ACTION.
-    // XXXbz what is this promise resolved with?
-    [NewObject, Func="Navigator::HasMobileIdSupport"]
-    Promise<any> getMobileIdAssertion(optional MobileIdOptions options);
-};
-Navigator implements NavigatorMobileId;
-#endif // MOZ_B2G
-
 // nsIDOMNavigator
 partial interface Navigator {
   [Throws, Constant, Cached]
@@ -255,6 +235,12 @@ partial interface Navigator {
    */
   [Throws, Pref="dom.wakelock.enabled", Func="Navigator::HasWakeLockSupport", UnsafeInPrerendering]
   MozWakeLock requestWakeLock(DOMString aTopic);
+
+  /**
+   * Make CPU instruction subset information available for UpdateUtils.
+   */
+  [ChromeOnly]
+  readonly attribute boolean cpuHasSSE2;
 };
 
 partial interface Navigator {
@@ -341,7 +327,10 @@ partial interface Navigator {
 
 partial interface Navigator {
   [Throws, Pref="dom.vr.enabled"]
-  Promise<sequence<VRDevice>> getVRDevices();
+  Promise<sequence<VRDisplay>> getVRDisplays();
+  // TODO: Use FrozenArray once available. (Bug 1236777)
+  [Frozen, Cached, Pure, Pref="dom.vr.enabled"]
+  readonly attribute sequence<VRDisplay> activeVRDisplays;
 };
 
 #ifdef MOZ_B2G_BT
@@ -431,7 +420,7 @@ partial interface Navigator {
 };
 
 partial interface Navigator {
-  [Throws, Pref="dom.presentation.enabled", Func="Navigator::HasPresentationSupport", SameObject]
+  [Throws, Pref="dom.presentation.enabled", SameObject]
   readonly attribute Presentation? presentation;
 };
 
@@ -440,30 +429,17 @@ partial interface Navigator {
   readonly attribute LegacyMozTCPSocket mozTCPSocket;
 };
 
-#ifdef MOZ_EME
 partial interface Navigator {
   [Pref="media.eme.apiVisible", NewObject]
   Promise<MediaKeySystemAccess>
   requestMediaKeySystemAccess(DOMString keySystem,
                               sequence<MediaKeySystemConfiguration> supportedConfigurations);
 };
-#endif
 
 #ifdef NIGHTLY_BUILD
 partial interface Navigator {
   [Func="Navigator::IsE10sEnabled"]
   readonly attribute boolean mozE10sEnabled;
-};
-#endif
-
-#ifdef MOZ_PAY
-partial interface Navigator {
-  [Throws, NewObject, Pref="dom.mozPay.enabled"]
-  // The 'jwts' parameter can be either a single DOMString or an array of
-  // DOMStrings. In both cases, it represents the base64url encoded and
-  // digitally signed payment information. Each payment provider should
-  // define its supported JWT format.
-  DOMRequest mozPay(any jwts);
 };
 #endif
 

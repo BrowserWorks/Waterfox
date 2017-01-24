@@ -2,7 +2,6 @@
 
 ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 ac_add_options --with-google-api-keyfile=/builds/gapi.data
-ac_add_options --with-google-oauth-api-keyfile=/builds/google-oauth-api.key
 ac_add_options --with-mozilla-api-keyfile=/builds/mozilla-desktop-geoloc-api.key
 
 . $topsrcdir/build/unix/mozconfig.linux32
@@ -11,9 +10,6 @@ ac_add_options --with-mozilla-api-keyfile=/builds/mozilla-desktop-geoloc-api.key
 export MOZILLA_OFFICIAL=1
 
 export MOZ_TELEMETRY_REPORTING=1
-
-# Treat warnings as errors (modulo ALLOW_COMPILER_WARNINGS).
-ac_add_options --enable-warnings-as-errors
 
 # Package js shell.
 export MOZ_PACKAGE_JSSHELL=1

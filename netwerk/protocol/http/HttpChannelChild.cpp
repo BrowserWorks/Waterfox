@@ -10,10 +10,11 @@
 
 #include "nsHttp.h"
 #include "nsICacheEntry.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/ipc/FileDescriptorSetChild.h"
+#include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/net/HttpChannelChild.h"
 
@@ -770,8 +771,6 @@ HttpChannelChild::DoOnProgress(nsIRequest* aRequest, int64_t progress, int64_t p
     // OnProgress
     //
     if (progress > 0) {
-      MOZ_ASSERT((progressMax == -1) || (progress <= progressMax),
-                 "unexpected progress values");
       mProgressSink->OnProgress(aRequest, nullptr, progress, progressMax);
     }
   }
@@ -1013,8 +1012,6 @@ HttpChannelChild::OnProgress(const int64_t& progress,
   if (mProgressSink && NS_SUCCEEDED(mStatus) && mIsPending)
   {
     if (progress > 0) {
-      MOZ_ASSERT((progressMax == -1) || (progress <= progressMax),
-                 "unexpected progress values");
       mProgressSink->OnProgress(this, nullptr, progress, progressMax);
     }
   }
@@ -1140,6 +1137,44 @@ HttpChannelChild::RecvDeleteSelf()
   return true;
 }
 
+HttpChannelChild::OverrideRunnable::OverrideRunnable(HttpChannelChild* aChannel,
+                                                     HttpChannelChild* aNewChannel,
+                                                     InterceptStreamListener* aListener,
+                                                     nsIInputStream* aInput,
+                                                     nsAutoPtr<nsHttpResponseHead>& aHead)
+{
+  mChannel = aChannel;
+  mNewChannel = aNewChannel;
+  mListener = aListener;
+  mInput = aInput;
+  mHead = aHead;
+}
+
+void
+HttpChannelChild::OverrideRunnable::OverrideWithSynthesizedResponse()
+{
+  if (mNewChannel) {
+    mNewChannel->OverrideWithSynthesizedResponse(mHead, mInput, mListener);
+  }
+}
+
+NS_IMETHODIMP
+HttpChannelChild::OverrideRunnable::Run()
+{
+  bool ret = mChannel->Redirect3Complete(this);
+
+  // If the method returns false, it means the IPDL connection is being
+  // asyncly torn down and reopened, and OverrideWithSynthesizedResponse
+  // will be called later from FinishInterceptedRedirect. This object will
+  // be assigned to HttpChannelChild::mOverrideRunnable in order to do so.
+  // If it is true, we can call the method right now.
+  if (ret) {
+    OverrideWithSynthesizedResponse();
+  }
+
+  return NS_OK;
+}
+
 bool
 HttpChannelChild::RecvFinishInterceptedRedirect()
 {
@@ -1157,53 +1192,8 @@ HttpChannelChild::RecvFinishInterceptedRedirect()
 void
 HttpChannelChild::DeleteSelf()
 {
-  // Hold a ref to this to keep it from being deleted by Send__delete__()
-  RefPtr<HttpChannelChild> self(this);
   Send__delete__(this);
 }
-
-class OverrideRunnable : public Runnable {
-public:
-  RefPtr<HttpChannelChild> mChannel;
-  RefPtr<HttpChannelChild> mNewChannel;
-  RefPtr<InterceptStreamListener> mListener;
-  nsCOMPtr<nsIInputStream> mInput;
-  nsAutoPtr<nsHttpResponseHead> mHead;
-
-  OverrideRunnable(HttpChannelChild* aChannel,
-                   HttpChannelChild* aNewChannel,
-                   InterceptStreamListener* aListener,
-                   nsIInputStream* aInput,
-                   nsAutoPtr<nsHttpResponseHead>& aHead)
-  : mChannel(aChannel)
-  , mNewChannel(aNewChannel)
-  , mListener(aListener)
-  , mInput(aInput)
-  , mHead(aHead)
-  {
-  }
-
-  NS_IMETHOD Run() override {
-    bool ret = mChannel->Redirect3Complete(this);
-
-    // If the method returns false, it means the IPDL connection is being
-    // asyncly torn down and reopened, and OverrideWithSynthesizedResponse
-    // will be called later from FinishInterceptedRedirect. This object will
-    // be assigned to HttpChannelChild::mOverrideRunnable in order to do so.
-    // If it is true, we can call the method right now.
-    if (ret) {
-      OverrideWithSynthesizedResponse();
-    }
-
-    return NS_OK;
-  }
-
-  void OverrideWithSynthesizedResponse() {
-    if (mNewChannel) {
-      mNewChannel->OverrideWithSynthesizedResponse(mHead, mInput, mListener);
-    }
-  }
-};
 
 void HttpChannelChild::FinishInterceptedRedirect()
 {
@@ -1223,9 +1213,7 @@ void HttpChannelChild::FinishInterceptedRedirect()
   }
 
   if (mOverrideRunnable) {
-    RefPtr<OverrideRunnable> override =
-      static_cast<OverrideRunnable*>(mOverrideRunnable.get());
-    override->OverrideWithSynthesizedResponse();
+    mOverrideRunnable->OverrideWithSynthesizedResponse();
     mOverrideRunnable = nullptr;
   }
 }
@@ -1675,6 +1663,7 @@ NS_IMETHODIMP
 HttpChannelChild::OnRedirectVerifyCallback(nsresult result)
 {
   LOG(("HttpChannelChild::OnRedirectVerifyCallback [this=%p]\n", this));
+  nsresult rv;
   OptionalURIParams redirectURI;
   nsCOMPtr<nsIHttpChannel> newHttpChannel =
       do_QueryInterface(mRedirectChannelChild);
@@ -1690,9 +1679,18 @@ HttpChannelChild::OnRedirectVerifyCallback(nsresult result)
     result = NS_ERROR_DOM_BAD_URI;
   }
 
+  bool forceHSTSPriming = false;
+  bool mixedContentWouldBlock = false;
   if (newHttpChannel) {
     // Must not be called until after redirect observers called.
     newHttpChannel->SetOriginalURI(mOriginalURI);
+
+    nsCOMPtr<nsILoadInfo> newLoadInfo;
+    rv = newHttpChannel->GetLoadInfo(getter_AddRefs(newLoadInfo));
+    if (NS_SUCCEEDED(rv) && newLoadInfo) {
+      forceHSTSPriming = newLoadInfo->GetForceHSTSPriming();
+      mixedContentWouldBlock = newLoadInfo->GetMixedContentWouldBlock();
+    }
   }
 
   if (mRedirectingForSubsequentSynthesizedResponse) {
@@ -1764,7 +1762,8 @@ HttpChannelChild::OnRedirectVerifyCallback(nsresult result)
 
   if (mIPCOpen)
     SendRedirect2Verify(result, *headerTuples, loadFlags, redirectURI,
-                        corsPreflightArgs, chooseAppcache);
+                        corsPreflightArgs, forceHSTSPriming,
+                        mixedContentWouldBlock, chooseAppcache);
 
   return NS_OK;
 }
@@ -1874,6 +1873,13 @@ HttpChannelChild::AsyncOpen(nsIStreamListener *listener, nsISupports *aContext)
              "security flags in loadInfo but asyncOpen2() not called");
 
   LOG(("HttpChannelChild::AsyncOpen [this=%p uri=%s]\n", this, mSpec.get()));
+
+  MOZ_ASSERT(mLoadInfo->GetUsePrivateBrowsing() == (mLoadInfo->GetOriginAttributes().mPrivateBrowsingId != 0),
+             "PrivateBrowsing mismatch on LoadInfo.");
+
+#ifdef DEBUG
+  CheckPrivateBrowsing();
+#endif
 
   if (mCanceled)
     return mStatus;
@@ -2007,9 +2013,12 @@ HttpChannelChild::ContinueAsyncOpen()
   openArgs.requestHeaders() = mClientSetRequestHeaders;
   mRequestHead.Method(openArgs.requestMethod());
 
-  nsTArray<mozilla::ipc::FileDescriptor> fds;
-  SerializeInputStream(mUploadStream, openArgs.uploadStream(), fds);
-
+  AutoIPCStream autoStream(openArgs.uploadStream());
+  if (mUploadStream) {
+    autoStream.Serialize(mUploadStream, ContentChild::GetSingleton());
+    autoStream.TakeOptionalValue();
+  }
+  
   if (mResponseHead) {
     openArgs.synthesizedResponseHead() = *mResponseHead;
     openArgs.suspendAfterSynthesizeResponse() =
@@ -2024,25 +2033,6 @@ HttpChannelChild::ContinueAsyncOpen()
     NS_SerializeToString(secInfoSer, openArgs.synthesizedSecurityInfoSerialization());
   }
 
-  OptionalFileDescriptorSet optionalFDs;
-
-  if (fds.IsEmpty()) {
-    optionalFDs = mozilla::void_t();
-  } else if (fds.Length() <= kMaxFileDescriptorsPerMessage) {
-    optionalFDs = nsTArray<mozilla::ipc::FileDescriptor>();
-    optionalFDs.get_ArrayOfFileDescriptor().SwapElements(fds);
-  } else {
-    MOZ_ASSERT(gNeckoChild->Manager());
-
-    PFileDescriptorSetChild* fdSet =
-      gNeckoChild->Manager()->SendPFileDescriptorSetConstructor(fds[0]);
-    for (uint32_t i = 1; i < fds.Length(); ++i) {
-      Unused << fdSet->SendAddFileDescriptor(fds[i]);
-    }
-
-    optionalFDs = fdSet;
-  }
-
   OptionalCorsPreflightArgs optionalCorsPreflightArgs;
   GetClientSetCorsPreflightParameters(optionalCorsPreflightArgs);
 
@@ -2051,8 +2041,6 @@ HttpChannelChild::ContinueAsyncOpen()
   GetTopWindowURI(getter_AddRefs(uri));
 
   SerializeURI(mTopWindowURI, openArgs.topWindowURI());
-
-  openArgs.fds() = optionalFDs;
 
   openArgs.preflightArgs() = optionalCorsPreflightArgs;
 
@@ -2070,6 +2058,7 @@ HttpChannelChild::ContinueAsyncOpen()
   openArgs.appCacheClientID() = appCacheClientId;
   openArgs.allowSpdy() = mAllowSpdy;
   openArgs.allowAltSvc() = mAllowAltSvc;
+  openArgs.beConservative() = mBeConservative;
   openArgs.initialRwin() = mInitialRwin;
 
   uint32_t cacheKey = 0;
@@ -2122,15 +2111,6 @@ HttpChannelChild::ContinueAsyncOpen()
                                                 IPC::SerializedLoadContext(this),
                                                 openArgs)) {
     return NS_ERROR_FAILURE;
-  }
-
-  if (optionalFDs.type() ==
-        OptionalFileDescriptorSet::TPFileDescriptorSetChild) {
-    FileDescriptorSetChild* fdSetActor =
-      static_cast<FileDescriptorSetChild*>(
-        optionalFDs.get_PFileDescriptorSetChild());
-
-    fdSetActor->ForgetFileDescriptors(fds);
   }
 
   return NS_OK;

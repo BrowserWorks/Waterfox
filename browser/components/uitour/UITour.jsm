@@ -528,6 +528,11 @@ this.UITour = {
         break;
       }
 
+      case "showNewTab": {
+        this.showNewTab(window, browser);
+        break;
+      }
+
       case "getConfiguration": {
         if (typeof data.configuration != "string") {
           log.warn("getConfiguration: No configuration option specified");
@@ -1745,6 +1750,10 @@ this.UITour = {
     }
   },
 
+  showNewTab: function(aWindow, aBrowser) {
+    aWindow.openLinkIn("about:newtab", "current", {targetBrowser: aBrowser});
+  },
+
   hideAnnotationsForPanel: function(aEvent, aTargetPositionCallback) {
     let win = aEvent.target.ownerGlobal;
     let annotationElements = new Map([
@@ -1813,7 +1822,7 @@ this.UITour = {
         let distribution = "default";
         try {
           distribution = Services.prefs.getDefaultBranch("distribution.").getCharPref("id");
-        } catch(e) {}
+        } catch (e) {}
         appinfo["distribution"] = distribution;
 
         let isDefaultBrowser = null;

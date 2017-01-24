@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsClipboardProxy.h"
 #include "nsISupportsPrimitives.h"
 #include "nsCOMPtr.h"
@@ -34,7 +34,10 @@ nsClipboardProxy::SetData(nsITransferable *aTransferable,
 
   bool isPrivateData = false;
   aTransferable->GetIsPrivateData(&isPrivateData);
-  child->SendSetClipboard(ipcDataTransfer, isPrivateData, aWhichClipboard);
+  nsCOMPtr<nsIPrincipal> requestingPrincipal;
+  aTransferable->GetRequestingPrincipal(getter_AddRefs(requestingPrincipal));
+  child->SendSetClipboard(ipcDataTransfer, isPrivateData,
+                          IPC::Principal(requestingPrincipal), aWhichClipboard);
 
   return NS_OK;
 }

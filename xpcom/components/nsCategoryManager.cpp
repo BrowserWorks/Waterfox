@@ -219,7 +219,7 @@ CategoryNode::operator new(size_t aSize, PLArenaPool* aArena)
   return p;
 }
 
-NS_METHOD
+nsresult
 CategoryNode::GetLeaf(const char* aEntryName,
                       char** aResult)
 {
@@ -237,7 +237,7 @@ CategoryNode::GetLeaf(const char* aEntryName,
   return rv;
 }
 
-NS_METHOD
+nsresult
 CategoryNode::AddLeaf(const char* aEntryName,
                       const char* aValue,
                       bool aReplace,
@@ -294,7 +294,7 @@ CategoryNode::DeleteLeaf(const char* aEntryName)
   mTable.RemoveEntry(aEntryName);
 }
 
-NS_METHOD
+nsresult
 CategoryNode::Enumerate(nsISimpleEnumerator** aResult)
 {
   if (NS_WARN_IF(!aResult)) {
@@ -393,6 +393,12 @@ nsCategoryManager::GetSingleton()
 /* static */ void
 nsCategoryManager::Destroy()
 {
+  // The nsMemoryReporterManager gets destroyed before the nsCategoryManager,
+  // so we don't need to unregister the nsCategoryManager as a memory reporter.
+  // In debug builds we assert that unregistering fails, as a way (imperfect
+  // but better than nothing) of testing the "destroyed before" part.
+  MOZ_ASSERT(NS_FAILED(UnregisterWeakMemoryReporter(gCategoryManager)));
+
   delete gCategoryManager;
   gCategoryManager = nullptr;
 }
@@ -418,7 +424,7 @@ nsCategoryManager::nsCategoryManager()
 void
 nsCategoryManager::InitMemoryReporter()
 {
-  RegisterStrongMemoryReporter(this);
+  RegisterWeakMemoryReporter(this);
 }
 
 nsCategoryManager::~nsCategoryManager()
@@ -447,10 +453,12 @@ NS_IMETHODIMP
 nsCategoryManager::CollectReports(nsIHandleReportCallback* aHandleReport,
                                   nsISupports* aData, bool aAnonymize)
 {
-  return MOZ_COLLECT_REPORT("explicit/xpcom/category-manager",
-                            KIND_HEAP, UNITS_BYTES,
-                            SizeOfIncludingThis(CategoryManagerMallocSizeOf),
-                            "Memory used for the XPCOM category manager.");
+  MOZ_COLLECT_REPORT(
+    "explicit/xpcom/category-manager", KIND_HEAP, UNITS_BYTES,
+    SizeOfIncludingThis(CategoryManagerMallocSizeOf),
+    "Memory used for the XPCOM category manager.");
+
+  return NS_OK;
 }
 
 size_t
@@ -463,7 +471,7 @@ nsCategoryManager::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   n += mTable.ShallowSizeOfExcludingThis(aMallocSizeOf);
   for (auto iter = mTable.ConstIter(); !iter.Done(); iter.Next()) {
     // We don't measure the key string because it's a non-owning pointer.
-    n += iter.Data().get()->SizeOfExcludingThis(aMallocSizeOf);
+    n += iter.Data()->SizeOfExcludingThis(aMallocSizeOf);
   }
 
   return n;
@@ -743,7 +751,7 @@ struct writecat_struct
   bool        success;
 };
 
-NS_METHOD
+nsresult
 nsCategoryManager::SuppressNotifications(bool aSuppress)
 {
   mSuppressNotifications = aSuppress;

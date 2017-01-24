@@ -337,6 +337,7 @@ stage-marionette: make-stage-dir
 	$(NSINSTALL) -D $(MARIONETTE_DIR)/client
 	@(cd $(topsrcdir)/testing/marionette/harness && tar --exclude marionette/tests $(TAR_CREATE_FLAGS) - *) | (cd $(MARIONETTE_DIR)/ && tar -xf -)
 	@(cd $(topsrcdir)/testing/marionette/client && tar $(TAR_CREATE_FLAGS) - *) | (cd $(MARIONETTE_DIR)/client && tar -xf -)
+	cp $(topsrcdir)/testing/marionette/mach_test_package_commands.py $(MARIONETTE_DIR)
 	$(PYTHON) $(topsrcdir)/testing/marionette/harness/marionette/tests/print-manifest-dirs.py \
           $(topsrcdir) \
           $(topsrcdir)/testing/marionette/harness/marionette/tests/unit-tests.ini \
@@ -359,6 +360,11 @@ stage-extensions: make-stage-dir
 	$(NSINSTALL) -D $(PKG_STAGE)/extensions/
 	@$(foreach ext,$(TEST_EXTENSIONS), cp -RL $(DIST)/xpi-stage/$(ext) $(PKG_STAGE)/extensions;)
 
+
+check::
+	@$(topsrcdir)/mach --log-no-times python-test
+
+
 .PHONY: \
   reftest \
   crashtest \
@@ -380,4 +386,5 @@ stage-extensions: make-stage-dir
   stage-instrumentation-tests \
   stage-luciddream \
   test-packages-manifest \
+  check \
   $(NULL)

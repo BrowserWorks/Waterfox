@@ -35,11 +35,11 @@ function* testCopyToClipboard(inspector, view) {
 
   let allMenuItems = openStyleContextMenuAndGetAllItems(view, element);
   let menuitemCopyColor = allMenuItems.find(item => item.label ===
-    _STRINGS.GetStringFromName("styleinspector.contextmenu.copyColor"));
+    STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyColor"));
 
   ok(menuitemCopyColor.visible, "Copy color is visible");
 
-  yield waitForClipboard(() => menuitemCopyColor.click(),
+  yield waitForClipboardPromise(() => menuitemCopyColor.click(),
     "#123ABC");
 
   EventUtils.synthesizeKey("VK_ESCAPE", { });
@@ -81,9 +81,9 @@ function* testColorPickerEdit(inspector, view) {
 
   info("Opening the color picker");
   let picker = view.tooltips.colorPicker;
-  let onShown = picker.tooltip.once("shown");
+  let onColorPickerReady = picker.once("ready");
   swatchElement.click();
-  yield onShown;
+  yield onColorPickerReady;
 
   let rgbaColor = [83, 183, 89, 1];
   let rgbaColorText = "rgba(83, 183, 89, 1)";

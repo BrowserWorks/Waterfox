@@ -7,7 +7,7 @@
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/CycleCollectedJSContext.h"
 
 #include "jsapi.h"
 #include "xpcpublic.h"
@@ -289,14 +289,14 @@ namespace danger {
 JSContext*
 GetJSContext()
 {
-  return CycleCollectedJSRuntime::Get()->Context();
+  return CycleCollectedJSContext::Get()->Context();
 }
 } // namespace danger
 
-JSRuntime*
-GetJSRuntime()
+JS::RootingContext*
+RootingCx()
 {
-  return CycleCollectedJSRuntime::Get()->Runtime();
+  return CycleCollectedJSContext::Get()->RootingCx();
 }
 
 AutoJSAPI::AutoJSAPI()
@@ -590,7 +590,8 @@ AutoJSAPI::ReportException()
                       nsContentUtils::IsCallerChrome(),
                       inner ? inner->WindowID() : 0);
       if (inner && jsReport.report()->errorNumber != JSMSG_OUT_OF_MEMORY) {
-        DispatchScriptErrorEvent(inner, JS_GetRuntime(cx()), xpcReport, exn);
+        JS::RootingContext* rcx = JS::RootingContext::get(cx());
+        DispatchScriptErrorEvent(inner, rcx, xpcReport, exn);
       } else {
         JS::Rooted<JSObject*> stack(cx(),
           xpc::FindExceptionStackForConsoleReport(inner, exn));
@@ -810,6 +811,24 @@ AutoSafeJSContext::AutoSafeJSContext(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_IN_IMP
              "This is quite odd.  We should have crashed in the "
              "xpc::NativeGlobal() call if xpc::UnprivilegedJunkScope() "
              "returned null, and inited correctly otherwise!");
+}
+
+AutoSlowOperation::AutoSlowOperation(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_IN_IMPL)
+  : AutoJSAPI()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+
+  Init();
+}
+
+void
+AutoSlowOperation::CheckForInterrupt()
+{
+  // JS_CheckForInterrupt expects us to be in a compartment.
+  JSAutoCompartment ac(cx(), xpc::UnprivilegedJunkScope());
+  JS_CheckForInterrupt(cx());
 }
 
 } // namespace mozilla

@@ -63,5 +63,18 @@ echo "Applying another patch on top of $version"
 patch -p1 < ./wasapi-stereo-mic.patch
 echo "Applying another patch on top of $version"
 patch -p1 < ./bug1308418-mutex-copy-ctor.patch
-patch -p3 < bug1278612.patch
+echo "Applying another patch on top of $version"
+patch -p1 < ./ceilf-to-roundf-backout.patch
+echo "Applying another patch on top of $version"
+patch -p3 < ./bug1314496_allocator.patch
+echo "Applying another patch on top of $version"
+patch -p1 < ./bug1315495_wasapi_leak.patch
+echo "Applying another patch on top of $version"
+patch -p1 < ./bug1311911_logitech_delay.patch
+echo "Applying another patch on top of $version"
+patch -p1 < ./bug1306247_crash_fix.patch
+echo "Applying another patch on top of $version"
+patch -p1 < ./unresampled-frames.patch
 
+echo "Applying another patch on top of $version"
+patch -p1 < ./bug1302231_emergency_bailout.patch

@@ -208,6 +208,8 @@ protected:
 
     virtual bool RecvProfile(const nsCString& aProfile) override { return true; }
 
+    virtual bool AnswerGetKeyState(const int32_t& aVirtKey, int16_t* aRet) override;
+
     virtual bool RecvReturnClearSiteData(const NPError& aRv,
                                          const uint64_t& aCallbackId) override;
 
@@ -303,6 +305,8 @@ public:
 
 #if defined(XP_MACOSX)
     virtual nsresult IsRemoteDrawingCoreAnimation(NPP instance, bool *aDrawing) override;
+#endif
+#if defined(XP_MACOSX) || defined(XP_WIN)
     virtual nsresult ContentsScaleFactorChanged(NPP instance, double aContentsScaleFactor) override;
 #endif
 
@@ -497,6 +501,9 @@ class PluginModuleChromeParent
 
     virtual bool
     RecvProfile(const nsCString& aProfile) override;
+
+    virtual bool
+    AnswerGetKeyState(const int32_t& aVirtKey, int16_t* aRet) override;
 
 private:
     virtual void

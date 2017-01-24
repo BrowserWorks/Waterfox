@@ -10,12 +10,13 @@
 #include "MediaDataDecoderProxy.h"
 #include "mozIGeckoMediaPluginService.h"
 #include "mozilla/CDMProxy.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsAutoPtr.h"
 #include "nsServiceManagerUtils.h"
 #include "MediaInfo.h"
 #include "nsClassHashtable.h"
 #include "GMPDecoderModule.h"
+#include "MP4Decoder.h"
 
 namespace mozilla {
 
@@ -33,7 +34,8 @@ public:
     , mCallback(aCallback)
     , mTaskQueue(aDecodeTaskQueue)
     , mProxy(aProxy)
-    , mSamplesWaitingForKey(new SamplesWaitingForKey(this, mTaskQueue, mProxy))
+    , mSamplesWaitingForKey(new SamplesWaitingForKey(this, this->mCallback,
+                                                     mTaskQueue, mProxy))
     , mIsShutdown(false)
   {
   }
@@ -43,14 +45,14 @@ public:
     return mDecoder->Init();
   }
 
-  nsresult Input(MediaRawData* aSample) override {
+  void Input(MediaRawData* aSample) override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     if (mIsShutdown) {
       NS_WARNING("EME encrypted sample arrived after shutdown");
-      return NS_OK;
+      return;
     }
     if (mSamplesWaitingForKey->WaitIfKeyNotUsable(aSample)) {
-      return NS_OK;
+      return;
     }
 
     nsAutoPtr<MediaRawDataWriter> writer(aSample->CreateWriter());
@@ -62,7 +64,7 @@ public:
       mTaskQueue, __func__, this,
       &EMEDecryptor::Decrypted,
       &EMEDecryptor::Decrypted));
-    return NS_OK;
+    return;
   }
 
   void Decrypted(const DecryptResult& aDecrypted) {
@@ -91,7 +93,9 @@ public:
       Input(aDecrypted.mSample);
     } else if (aDecrypted.mStatus != Ok) {
       if (mCallback) {
-        mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+        mCallback->Error(MediaResult(
+          NS_ERROR_DOM_MEDIA_FATAL_ERR,
+          RESULT_DETAIL("decrypted.mStatus=%u", uint32_t(aDecrypted.mStatus))));
       }
     } else {
       MOZ_ASSERT(!mIsShutdown);
@@ -102,12 +106,11 @@ public:
       // by gmp-clearkey, decoding will fail.
       UniquePtr<MediaRawDataWriter> writer(aDecrypted.mSample->CreateWriter());
       writer->mCrypto = CryptoSample();
-      nsresult rv = mDecoder->Input(aDecrypted.mSample);
-      Unused << NS_WARN_IF(NS_FAILED(rv));
+      mDecoder->Input(aDecrypted.mSample);
     }
   }
 
-  nsresult Flush() override {
+  void Flush() override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
     for (auto iter = mDecrypts.Iter(); !iter.Done(); iter.Next()) {
@@ -115,13 +118,11 @@ public:
       holder->DisconnectIfExists();
       iter.Remove();
     }
-    nsresult rv = mDecoder->Flush();
-    Unused << NS_WARN_IF(NS_FAILED(rv));
+    mDecoder->Flush();
     mSamplesWaitingForKey->Flush();
-    return rv;
   }
 
-  nsresult Drain() override {
+  void Drain() override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
     for (auto iter = mDecrypts.Iter(); !iter.Done(); iter.Next()) {
@@ -129,23 +130,19 @@ public:
       holder->DisconnectIfExists();
       iter.Remove();
     }
-    nsresult rv = mDecoder->Drain();
-    Unused << NS_WARN_IF(NS_FAILED(rv));
-    return rv;
+    mDecoder->Drain();
   }
 
-  nsresult Shutdown() override {
+  void Shutdown() override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
     mIsShutdown = true;
-    nsresult rv = mDecoder->Shutdown();
-    Unused << NS_WARN_IF(NS_FAILED(rv));
+    mDecoder->Shutdown();
     mSamplesWaitingForKey->BreakCycles();
     mSamplesWaitingForKey = nullptr;
     mDecoder = nullptr;
     mProxy = nullptr;
     mCallback = nullptr;
-    return rv;
   }
 
   const char* GetDescriptionName() const override {
@@ -170,43 +167,42 @@ public:
                            CDMProxy* aProxy,
                            TaskQueue* aTaskQueue)
    : MediaDataDecoderProxy(Move(aProxyThread), aCallback)
-   , mSamplesWaitingForKey(new SamplesWaitingForKey(this, aTaskQueue, aProxy))
+   , mSamplesWaitingForKey(new SamplesWaitingForKey(this, aCallback,
+                                                    aTaskQueue, aProxy))
    , mProxy(aProxy)
   {
   }
 
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Shutdown() override;
+  void Input(MediaRawData* aSample) override;
+  void Shutdown() override;
 
 private:
   RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
   RefPtr<CDMProxy> mProxy;
 };
 
-nsresult
+void
 EMEMediaDataDecoderProxy::Input(MediaRawData* aSample)
 {
   if (mSamplesWaitingForKey->WaitIfKeyNotUsable(aSample)) {
-    return NS_OK;
+    return;
   }
 
   nsAutoPtr<MediaRawDataWriter> writer(aSample->CreateWriter());
   mProxy->GetSessionIdsForKeyId(aSample->mCrypto.mKeyId,
                                 writer->mCrypto.mSessionIds);
 
-  return MediaDataDecoderProxy::Input(aSample);
+  MediaDataDecoderProxy::Input(aSample);
 }
 
-nsresult
+void
 EMEMediaDataDecoderProxy::Shutdown()
 {
-  nsresult rv = MediaDataDecoderProxy::Shutdown();
+  MediaDataDecoderProxy::Shutdown();
 
   mSamplesWaitingForKey->BreakCycles();
   mSamplesWaitingForKey = nullptr;
   mProxy = nullptr;
-
-  return rv;
 }
 
 EMEDecoderModule::EMEDecoderModule(CDMProxy* aProxy, PDMFactory* aPDM)
@@ -292,12 +288,10 @@ EMEDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
 PlatformDecoderModule::ConversionRequired
 EMEDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 {
-  if (aConfig.IsVideo() &&
-      (aConfig.mMimeType.EqualsLiteral("video/avc") ||
-       aConfig.mMimeType.EqualsLiteral("video/mp4"))) {
-    return kNeedAVCC;
+  if (aConfig.IsVideo() && MP4Decoder::IsH264(aConfig.mMimeType)) {
+    return ConversionRequired::kNeedAVCC;
   } else {
-    return kNeedNone;
+    return ConversionRequired::kNeedNone;
   }
 }
 

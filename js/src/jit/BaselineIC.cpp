@@ -40,8 +40,8 @@
 #include "jit/JitFrames-inl.h"
 #include "jit/MacroAssembler-inl.h"
 #include "jit/shared/Lowering-shared-inl.h"
+#include "vm/EnvironmentObject-inl.h"
 #include "vm/Interpreter-inl.h"
-#include "vm/ScopeObject-inl.h"
 #include "vm/StringObject-inl.h"
 #include "vm/UnboxedObject-inl.h"
 
@@ -170,7 +170,8 @@ DoWarmUpCounterFallbackOSR(JSContext* cx, BaselineFrame* frame, ICWarmUpCounter_
 typedef bool (*DoWarmUpCounterFallbackOSRFn)(JSContext*, BaselineFrame*,
                                              ICWarmUpCounter_Fallback*, IonOsrTempData** infoPtr);
 static const VMFunction DoWarmUpCounterFallbackOSRInfo =
-    FunctionInfo<DoWarmUpCounterFallbackOSRFn>(DoWarmUpCounterFallbackOSR);
+    FunctionInfo<DoWarmUpCounterFallbackOSRFn>(DoWarmUpCounterFallbackOSR,
+                                               "DoWarmUpCounterFallbackOSR");
 
 bool
 ICWarmUpCounter_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -291,7 +292,7 @@ DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame, ICUpdatedStub* stub, H
         MOZ_ASSERT(obj->isNative() || obj->is<UnboxedPlainObject>());
         jsbytecode* pc = stub->getChainFallback()->icEntry()->pc(script);
         if (*pc == JSOP_SETALIASEDVAR || *pc == JSOP_INITALIASEDLEXICAL)
-            id = NameToId(ScopeCoordinateName(cx->caches.scopeCoordinateNameCache, script, pc));
+            id = NameToId(EnvironmentCoordinateName(cx->caches.envCoordinateNameCache, script, pc));
         else
             id = NameToId(script->getName(pc));
         AddTypePropertyId(cx, obj, id, value);
@@ -326,7 +327,7 @@ DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame, ICUpdatedStub* stub, H
 typedef bool (*DoTypeUpdateFallbackFn)(JSContext*, BaselineFrame*, ICUpdatedStub*, HandleValue,
                                        HandleValue);
 const VMFunction DoTypeUpdateFallbackInfo =
-    FunctionInfo<DoTypeUpdateFallbackFn>(DoTypeUpdateFallback, NonTailCall);
+    FunctionInfo<DoTypeUpdateFallbackFn>(DoTypeUpdateFallback, "DoTypeUpdateFallback", NonTailCall);
 
 bool
 ICTypeUpdate_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -435,7 +436,7 @@ ICTypeUpdate_ObjectGroup::Compiler::generateStubCode(MacroAssembler& masm)
 
 typedef bool (*DoCallNativeGetterFn)(JSContext*, HandleFunction, HandleObject, MutableHandleValue);
 static const VMFunction DoCallNativeGetterInfo =
-    FunctionInfo<DoCallNativeGetterFn>(DoCallNativeGetter);
+    FunctionInfo<DoCallNativeGetterFn>(DoCallNativeGetter, "DoCallNativeGetter");
 
 //
 // ToBool_Fallback
@@ -521,7 +522,7 @@ DoToBoolFallback(JSContext* cx, BaselineFrame* frame, ICToBool_Fallback* stub, H
 
 typedef bool (*pf)(JSContext*, BaselineFrame*, ICToBool_Fallback*, HandleValue,
                    MutableHandleValue);
-static const VMFunction fun = FunctionInfo<pf>(DoToBoolFallback, TailCall);
+static const VMFunction fun = FunctionInfo<pf>(DoToBoolFallback, "DoToBoolFallback", TailCall);
 
 bool
 ICToBool_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -699,7 +700,8 @@ DoToNumberFallback(JSContext* cx, ICToNumber_Fallback* stub, HandleValue arg, Mu
 
 typedef bool (*DoToNumberFallbackFn)(JSContext*, ICToNumber_Fallback*, HandleValue, MutableHandleValue);
 static const VMFunction DoToNumberFallbackInfo =
-    FunctionInfo<DoToNumberFallbackFn>(DoToNumberFallback, TailCall, PopValues(1));
+    FunctionInfo<DoToNumberFallbackFn>(DoToNumberFallback, "DoToNumberFallback", TailCall,
+                                       PopValues(1));
 
 bool
 ICToNumber_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -835,6 +837,14 @@ IsCacheableSetPropCall(JSContext* cx, JSObject* obj, JSObject* holder, Shape* sh
         return false;
 
     JSFunction* func = &shape->setterObject()->as<JSFunction>();
+
+    if (IsWindow(obj)) {
+        if (!func->isNative())
+            return false;
+
+        if (!func->jitInfo() || func->jitInfo()->needsOuterizedThisObject())
+            return false;
+    }
 
     if (func->isNative()) {
         *isScripted = false;
@@ -1611,7 +1621,8 @@ DoGetElemFallback(JSContext* cx, BaselineFrame* frame, ICGetElem_Fallback* stub_
 typedef bool (*DoGetElemFallbackFn)(JSContext*, BaselineFrame*, ICGetElem_Fallback*,
                                     HandleValue, HandleValue, MutableHandleValue);
 static const VMFunction DoGetElemFallbackInfo =
-    FunctionInfo<DoGetElemFallbackFn>(DoGetElemFallback, TailCall, PopValues(2));
+    FunctionInfo<DoGetElemFallbackFn>(DoGetElemFallback, "DoGetElemFallback", TailCall,
+                                      PopValues(2));
 
 bool
 ICGetElem_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -1661,7 +1672,8 @@ DoAtomizeString(JSContext* cx, HandleString string, MutableHandleValue result)
 }
 
 typedef bool (*DoAtomizeStringFn)(JSContext*, HandleString, MutableHandleValue);
-static const VMFunction DoAtomizeStringInfo = FunctionInfo<DoAtomizeStringFn>(DoAtomizeString);
+static const VMFunction DoAtomizeStringInfo = FunctionInfo<DoAtomizeStringFn>(DoAtomizeString,
+                                                                              "DoAtomizeString");
 
 template <class T>
 bool
@@ -2675,7 +2687,8 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
 typedef bool (*DoSetElemFallbackFn)(JSContext*, BaselineFrame*, ICSetElem_Fallback*, Value*,
                                     HandleValue, HandleValue, HandleValue);
 static const VMFunction DoSetElemFallbackInfo =
-    FunctionInfo<DoSetElemFallbackFn>(DoSetElemFallback, TailCall, PopValues(2));
+    FunctionInfo<DoSetElemFallbackFn>(DoSetElemFallback, "DoSetElemFallback", TailCall,
+                                      PopValues(2));
 
 bool
 ICSetElem_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -2817,17 +2830,21 @@ ICSetElem_DenseOrUnboxedArray::Compiler::generateStubCode(MacroAssembler& masm)
         masm.branchTestMagic(Assembler::Equal, element, &failure);
 
         // Perform a single test to see if we either need to convert double
-        // elements or clone the copy on write elements in the object.
+        // elements, clone the copy on write elements in the object or fail
+        // due to a frozen element.
         Label noSpecialHandling;
         Address elementsFlags(scratchReg, ObjectElements::offsetOfFlags());
         masm.branchTest32(Assembler::Zero, elementsFlags,
                           Imm32(ObjectElements::CONVERT_DOUBLE_ELEMENTS |
-                                ObjectElements::COPY_ON_WRITE),
+                                ObjectElements::COPY_ON_WRITE |
+                                ObjectElements::FROZEN),
                           &noSpecialHandling);
 
-        // Fail if we need to clone copy on write elements.
+        // Fail if we need to clone copy on write elements or to throw due
+        // to a frozen element.
         masm.branchTest32(Assembler::NonZero, elementsFlags,
-                          Imm32(ObjectElements::COPY_ON_WRITE),
+                          Imm32(ObjectElements::COPY_ON_WRITE |
+                                ObjectElements::FROZEN),
                           &failure);
 
         // Failure is not possible now.  Free up registers.
@@ -3027,7 +3044,8 @@ ICSetElemDenseOrUnboxedArrayAddCompiler::generateStubCode(MacroAssembler& masm)
         // Check for copy on write elements.
         Address elementsFlags(scratchReg, ObjectElements::offsetOfFlags());
         masm.branchTest32(Assembler::NonZero, elementsFlags,
-                          Imm32(ObjectElements::COPY_ON_WRITE),
+                          Imm32(ObjectElements::COPY_ON_WRITE |
+                                ObjectElements::FROZEN),
                           &failure);
 
         // Failure is not possible now.  Free up registers.
@@ -3426,7 +3444,7 @@ DoInFallback(JSContext* cx, BaselineFrame* frame, ICIn_Fallback* stub_,
 typedef bool (*DoInFallbackFn)(JSContext*, BaselineFrame*, ICIn_Fallback*, HandleValue,
                                HandleValue, MutableHandleValue);
 static const VMFunction DoInFallbackInfo =
-    FunctionInfo<DoInFallbackFn>(DoInFallback, TailCall, PopValues(2));
+    FunctionInfo<DoInFallbackFn>(DoInFallback, "DoInFallback", TailCall, PopValues(2));
 
 bool
 ICIn_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -3676,7 +3694,8 @@ UpdateExistingSetPropCallStubs(ICSetProp_Fallback* fallbackStub,
 // Attach an optimized stub for a GETGNAME/CALLGNAME slot-read op.
 static bool
 TryAttachGlobalNameValueStub(JSContext* cx, HandleScript script, jsbytecode* pc,
-                             ICGetName_Fallback* stub, Handle<ClonedBlockObject*> globalLexical,
+                             ICGetName_Fallback* stub,
+                             Handle<LexicalEnvironmentObject*> globalLexical,
                              HandlePropertyName name, bool* attached)
 {
     MOZ_ASSERT(globalLexical->isGlobal());
@@ -3749,7 +3768,8 @@ TryAttachGlobalNameValueStub(JSContext* cx, HandleScript script, jsbytecode* pc,
 // Attach an optimized stub for a GETGNAME/CALLGNAME getter op.
 static bool
 TryAttachGlobalNameAccessorStub(JSContext* cx, HandleScript script, jsbytecode* pc,
-                                ICGetName_Fallback* stub, Handle<ClonedBlockObject*> globalLexical,
+                                ICGetName_Fallback* stub,
+                                Handle<LexicalEnvironmentObject*> globalLexical,
                                 HandlePropertyName name, bool* attached,
                                 bool* isTemporarilyUnoptimizable)
 {
@@ -3826,45 +3846,45 @@ TryAttachGlobalNameAccessorStub(JSContext* cx, HandleScript script, jsbytecode* 
 }
 
 static bool
-TryAttachScopeNameStub(JSContext* cx, HandleScript script, ICGetName_Fallback* stub,
-                       HandleObject initialScopeChain, HandlePropertyName name, bool* attached)
+TryAttachEnvNameStub(JSContext* cx, HandleScript script, ICGetName_Fallback* stub,
+                     HandleObject initialEnvChain, HandlePropertyName name, bool* attached)
 {
     MOZ_ASSERT(!*attached);
 
     Rooted<ShapeVector> shapes(cx, ShapeVector(cx));
     RootedId id(cx, NameToId(name));
-    RootedObject scopeChain(cx, initialScopeChain);
+    RootedObject envChain(cx, initialEnvChain);
 
     Shape* shape = nullptr;
-    while (scopeChain) {
-        if (!shapes.append(scopeChain->maybeShape()))
+    while (envChain) {
+        if (!shapes.append(envChain->maybeShape()))
             return false;
 
-        if (scopeChain->is<GlobalObject>()) {
-            shape = scopeChain->as<GlobalObject>().lookup(cx, id);
+        if (envChain->is<GlobalObject>()) {
+            shape = envChain->as<GlobalObject>().lookup(cx, id);
             if (shape)
                 break;
             return true;
         }
 
-        if (!scopeChain->is<ScopeObject>() || scopeChain->is<DynamicWithObject>())
+        if (!envChain->is<EnvironmentObject>() || envChain->is<WithEnvironmentObject>())
             return true;
 
-        // Check for an 'own' property on the scope. There is no need to
+        // Check for an 'own' property on the env. There is no need to
         // check the prototype as non-with scopes do not inherit properties
         // from any prototype.
-        shape = scopeChain->as<NativeObject>().lookup(cx, id);
+        shape = envChain->as<NativeObject>().lookup(cx, id);
         if (shape)
             break;
 
-        scopeChain = scopeChain->enclosingScope();
+        envChain = envChain->enclosingEnvironment();
     }
 
     // We don't handle getters here. When this changes, we need to make sure
     // IonBuilder::getPropTryCommonGetter (which requires a Baseline stub to
     // work) handles non-outerized this objects correctly.
 
-    if (!IsCacheableGetPropReadSlot(scopeChain, scopeChain, shape))
+    if (!IsCacheableGetPropReadSlot(envChain, envChain, shape))
         return true;
 
     bool isFixedSlot;
@@ -3876,44 +3896,44 @@ TryAttachScopeNameStub(JSContext* cx, HandleScript script, ICGetName_Fallback* s
 
     switch (shapes.length()) {
       case 1: {
-        ICGetName_Scope<0>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                              offset);
+        ICGetName_Env<0>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
+                                            offset);
         newStub = compiler.getStub(compiler.getStubSpace(script));
         break;
       }
       case 2: {
-        ICGetName_Scope<1>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                              offset);
+        ICGetName_Env<1>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
+                                            offset);
         newStub = compiler.getStub(compiler.getStubSpace(script));
         break;
       }
       case 3: {
-        ICGetName_Scope<2>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                              offset);
+        ICGetName_Env<2>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
+                                            offset);
         newStub = compiler.getStub(compiler.getStubSpace(script));
         break;
       }
       case 4: {
-        ICGetName_Scope<3>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                              offset);
+        ICGetName_Env<3>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
+                                            offset);
         newStub = compiler.getStub(compiler.getStubSpace(script));
         break;
       }
       case 5: {
-        ICGetName_Scope<4>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                              offset);
+        ICGetName_Env<4>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
+                                            offset);
         newStub = compiler.getStub(compiler.getStubSpace(script));
         break;
       }
       case 6: {
-        ICGetName_Scope<5>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                              offset);
+        ICGetName_Env<5>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
+                                            offset);
         newStub = compiler.getStub(compiler.getStubSpace(script));
         break;
       }
       case 7: {
-        ICGetName_Scope<6>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                              offset);
+        ICGetName_Env<6>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
+                                            offset);
         newStub = compiler.getStub(compiler.getStubSpace(script));
         break;
       }
@@ -3931,7 +3951,7 @@ TryAttachScopeNameStub(JSContext* cx, HandleScript script, ICGetName_Fallback* s
 
 static bool
 DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_,
-                  HandleObject scopeChain, MutableHandleValue res)
+                  HandleObject envChain, MutableHandleValue res)
 {
     SharedStubInfo info(cx, frame, stub_->icEntry());
 
@@ -3957,7 +3977,7 @@ DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_
 
     if (!attached && IsGlobalOp(JSOp(*pc)) && !script->hasNonSyntacticScope()) {
         if (!TryAttachGlobalNameAccessorStub(cx, script, pc, stub,
-                                             scopeChain.as<ClonedBlockObject>(),
+                                             envChain.as<LexicalEnvironmentObject>(),
                                              name, &attached, &isTemporarilyUnoptimizable))
         {
             return false;
@@ -3967,10 +3987,10 @@ DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_
     static_assert(JSOP_GETGNAME_LENGTH == JSOP_GETNAME_LENGTH,
                   "Otherwise our check for JSOP_TYPEOF isn't ok");
     if (JSOp(pc[JSOP_GETGNAME_LENGTH]) == JSOP_TYPEOF) {
-        if (!GetScopeNameForTypeOf(cx, scopeChain, name, res))
+        if (!GetEnvironmentNameForTypeOf(cx, envChain, name, res))
             return false;
     } else {
-        if (!GetScopeName(cx, scopeChain, name, res))
+        if (!GetEnvironmentName(cx, envChain, name, res))
             return false;
     }
 
@@ -3987,11 +4007,11 @@ DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_
         return true;
 
     if (IsGlobalOp(JSOp(*pc)) && !script->hasNonSyntacticScope()) {
-        Handle<ClonedBlockObject*> globalLexical = scopeChain.as<ClonedBlockObject>();
+        Handle<LexicalEnvironmentObject*> globalLexical = envChain.as<LexicalEnvironmentObject>();
         if (!TryAttachGlobalNameValueStub(cx, script, pc, stub, globalLexical, name, &attached))
             return false;
     } else {
-        if (!TryAttachScopeNameStub(cx, script, stub, scopeChain, name, &attached))
+        if (!TryAttachEnvNameStub(cx, script, stub, envChain, name, &attached))
             return false;
     }
 
@@ -4002,7 +4022,8 @@ DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_
 
 typedef bool (*DoGetNameFallbackFn)(JSContext*, BaselineFrame*, ICGetName_Fallback*,
                                     HandleObject, MutableHandleValue);
-static const VMFunction DoGetNameFallbackInfo = FunctionInfo<DoGetNameFallbackFn>(DoGetNameFallback, TailCall);
+static const VMFunction DoGetNameFallbackInfo =
+    FunctionInfo<DoGetNameFallbackFn>(DoGetNameFallback, "DoGetNameFallback", TailCall);
 
 bool
 ICGetName_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -4047,7 +4068,7 @@ ICGetName_GlobalLexical::Compiler::generateStubCode(MacroAssembler& masm)
 
 template <size_t NumHops>
 bool
-ICGetName_Scope<NumHops>::Compiler::generateStubCode(MacroAssembler& masm)
+ICGetName_Env<NumHops>::Compiler::generateStubCode(MacroAssembler& masm)
 {
     MOZ_ASSERT(engine_ == Engine::Baseline);
 
@@ -4064,11 +4085,13 @@ ICGetName_Scope<NumHops>::Compiler::generateStubCode(MacroAssembler& masm)
         Register scope = index ? walker : obj;
 
         // Shape guard.
-        masm.loadPtr(Address(ICStubReg, ICGetName_Scope::offsetOfShape(index)), scratch);
+        masm.loadPtr(Address(ICStubReg, ICGetName_Env::offsetOfShape(index)), scratch);
         masm.branchTestObjShape(Assembler::NotEqual, scope, scratch, &failure);
 
-        if (index < numHops)
-            masm.extractObject(Address(scope, ScopeObject::offsetOfEnclosingScope()), walker);
+        if (index < numHops) {
+            masm.extractObject(Address(scope, EnvironmentObject::offsetOfEnclosingEnvironment()),
+                               walker);
+        }
     }
 
     Register scope = NumHops ? walker : obj;
@@ -4078,7 +4101,7 @@ ICGetName_Scope<NumHops>::Compiler::generateStubCode(MacroAssembler& masm)
         scope = walker;
     }
 
-    masm.load32(Address(ICStubReg, ICGetName_Scope::offsetOfOffset()), scratch);
+    masm.load32(Address(ICStubReg, ICGetName_Env::offsetOfOffset()), scratch);
 
     // GETNAME needs to check for uninitialized lexicals.
     BaseIndex slot(scope, scratch, TimesOne);
@@ -4100,7 +4123,7 @@ ICGetName_Scope<NumHops>::Compiler::generateStubCode(MacroAssembler& masm)
 
 static bool
 DoBindNameFallback(JSContext* cx, BaselineFrame* frame, ICBindName_Fallback* stub,
-                   HandleObject scopeChain, MutableHandleValue res)
+                   HandleObject envChain, MutableHandleValue res)
 {
     jsbytecode* pc = stub->icEntry()->pc(frame->script());
     mozilla::DebugOnly<JSOp> op = JSOp(*pc);
@@ -4111,7 +4134,7 @@ DoBindNameFallback(JSContext* cx, BaselineFrame* frame, ICBindName_Fallback* stu
     RootedPropertyName name(cx, frame->script()->getName(pc));
 
     RootedObject scope(cx);
-    if (!LookupNameUnqualified(cx, name, scopeChain, &scope))
+    if (!LookupNameUnqualified(cx, name, envChain, &scope))
         return false;
 
     res.setObject(*scope);
@@ -4121,7 +4144,7 @@ DoBindNameFallback(JSContext* cx, BaselineFrame* frame, ICBindName_Fallback* stu
 typedef bool (*DoBindNameFallbackFn)(JSContext*, BaselineFrame*, ICBindName_Fallback*,
                                      HandleObject, MutableHandleValue);
 static const VMFunction DoBindNameFallbackInfo =
-    FunctionInfo<DoBindNameFallbackFn>(DoBindNameFallback, TailCall);
+    FunctionInfo<DoBindNameFallbackFn>(DoBindNameFallback, "DoBindNameFallback", TailCall);
 
 bool
 ICBindName_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -4182,7 +4205,8 @@ DoGetIntrinsicFallback(JSContext* cx, BaselineFrame* frame, ICGetIntrinsic_Fallb
 typedef bool (*DoGetIntrinsicFallbackFn)(JSContext*, BaselineFrame*, ICGetIntrinsic_Fallback*,
                                          MutableHandleValue);
 static const VMFunction DoGetIntrinsicFallbackInfo =
-    FunctionInfo<DoGetIntrinsicFallbackFn>(DoGetIntrinsicFallback, TailCall);
+    FunctionInfo<DoGetIntrinsicFallbackFn>(DoGetIntrinsicFallback, "DoGetIntrinsicFallback",
+                                           TailCall);
 
 bool
 ICGetIntrinsic_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -4496,7 +4520,7 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
 
     RootedPropertyName name(cx);
     if (op == JSOP_SETALIASEDVAR || op == JSOP_INITALIASEDLEXICAL)
-        name = ScopeCoordinateName(cx->caches.scopeCoordinateNameCache, script, pc);
+        name = EnvironmentCoordinateName(cx->caches.envCoordinateNameCache, script, pc);
     else
         name = script->getName(pc);
     RootedId id(cx, NameToId(name));
@@ -4544,15 +4568,15 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
         if (!SetNameOperation(cx, script, pc, obj, rhs))
             return false;
     } else if (op == JSOP_SETALIASEDVAR || op == JSOP_INITALIASEDLEXICAL) {
-        obj->as<ScopeObject>().setAliasedVar(cx, ScopeCoordinate(pc), name, rhs);
+        obj->as<EnvironmentObject>().setAliasedBinding(cx, EnvironmentCoordinate(pc), name, rhs);
     } else if (op == JSOP_INITGLEXICAL) {
         RootedValue v(cx, rhs);
-        ClonedBlockObject* lexicalScope;
+        LexicalEnvironmentObject* lexicalEnv;
         if (script->hasNonSyntacticScope())
-            lexicalScope = &NearestEnclosingExtensibleLexicalScope(frame->scopeChain());
+            lexicalEnv = &NearestEnclosingExtensibleLexicalEnvironment(frame->environmentChain());
         else
-            lexicalScope = &cx->global()->lexicalScope();
-        InitGlobalLexicalOperation(cx, lexicalScope, script, pc, v);
+            lexicalEnv = &cx->global()->lexicalEnvironment();
+        InitGlobalLexicalOperation(cx, lexicalEnv, script, pc, v);
     } else {
         MOZ_ASSERT(op == JSOP_SETPROP || op == JSOP_STRICTSETPROP);
 
@@ -4614,7 +4638,8 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
 typedef bool (*DoSetPropFallbackFn)(JSContext*, BaselineFrame*, ICSetProp_Fallback*,
                                     HandleValue, HandleValue, MutableHandleValue);
 static const VMFunction DoSetPropFallbackInfo =
-    FunctionInfo<DoSetPropFallbackFn>(DoSetPropFallback, TailCall, PopValues(2));
+    FunctionInfo<DoSetPropFallbackFn>(DoSetPropFallback, "DoSetPropFallback", TailCall,
+                                      PopValues(2));
 
 bool
 ICSetProp_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -5244,7 +5269,7 @@ DoCallNativeSetter(JSContext* cx, HandleFunction callee, HandleObject obj, Handl
 
 typedef bool (*DoCallNativeSetterFn)(JSContext*, HandleFunction, HandleObject, HandleValue);
 static const VMFunction DoCallNativeSetterInfo =
-    FunctionInfo<DoCallNativeSetterFn>(DoCallNativeSetter);
+    FunctionInfo<DoCallNativeSetterFn>(DoCallNativeSetter, "DoNativeCallSetter");
 
 bool
 ICSetProp_CallNative::Compiler::generateStubCode(MacroAssembler& masm)
@@ -5502,8 +5527,12 @@ GetTemplateObjectForNative(JSContext* cx, HandleFunction target, const CallArgs&
         }
     }
 
-    if (args.length() == 1 && args[0].isInt32() && args[0].toInt32() >= 0) {
-        uint32_t len = args[0].toInt32();
+    if (args.length() == 1) {
+        size_t len = 0;
+
+        if (args[0].isInt32() && args[0].toInt32() >= 0)
+            len = args[0].toInt32();
+
         if (!TypedArrayObject::GetTemplateObjectForNative(cx, native, len, res))
             return false;
         if (res)
@@ -5959,7 +5988,7 @@ DoCallFallback(JSContext* cx, BaselineFrame* frame, ICCall_Fallback* stub_, uint
             return false;
         res.set(callArgs.rval());
     } else if ((op == JSOP_EVAL || op == JSOP_STRICTEVAL) &&
-               frame->scopeChain()->global().valueIsEval(callee))
+               frame->environmentChain()->global().valueIsEval(callee))
     {
         if (!DirectEval(cx, callArgs.get(0), res))
             return false;
@@ -6214,6 +6243,12 @@ ICCallStubCompiler::guardFunApply(MacroAssembler& masm, AllocatableGeneralRegist
                           Address(BaselineFrameReg, BaselineFrame::reverseOffsetOfFlags()),
                           Imm32(BaselineFrame::HAS_ARGS_OBJ),
                           failure);
+
+        // Limit the length to something reasonable.
+        masm.branch32(Assembler::Above,
+                      Address(BaselineFrameReg, BaselineFrame::offsetOfNumActualArgs()),
+                      Imm32(ICCall_ScriptedApplyArray::MAX_ARGS_ARRAY_LENGTH),
+                      failure);
     } else {
         MOZ_ASSERT(applyThing == FunApply_Array);
 
@@ -6362,12 +6397,13 @@ ICCallStubCompiler::pushArrayArguments(MacroAssembler& masm, Address arrayVal,
 
 typedef bool (*DoCallFallbackFn)(JSContext*, BaselineFrame*, ICCall_Fallback*,
                                  uint32_t, Value*, MutableHandleValue);
-static const VMFunction DoCallFallbackInfo = FunctionInfo<DoCallFallbackFn>(DoCallFallback);
+static const VMFunction DoCallFallbackInfo =
+    FunctionInfo<DoCallFallbackFn>(DoCallFallback, "DoCallFallback");
 
 typedef bool (*DoSpreadCallFallbackFn)(JSContext*, BaselineFrame*, ICCall_Fallback*,
                                        Value*, MutableHandleValue);
 static const VMFunction DoSpreadCallFallbackInfo =
-    FunctionInfo<DoSpreadCallFallbackFn>(DoSpreadCallFallback);
+    FunctionInfo<DoSpreadCallFallbackFn>(DoSpreadCallFallback, "DoSpreadCallFallback");
 
 bool
 ICCall_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -6494,7 +6530,8 @@ ICCall_Fallback::Compiler::postGenerateStubCode(MacroAssembler& masm, Handle<Jit
 
 typedef bool (*CreateThisFn)(JSContext* cx, HandleObject callee, HandleObject newTarget,
                              MutableHandleValue rval);
-static const VMFunction CreateThisInfoBaseline = FunctionInfo<CreateThisFn>(CreateThis);
+static const VMFunction CreateThisInfoBaseline =
+    FunctionInfo<CreateThisFn>(CreateThis, "CreateThis");
 
 bool
 ICCallScriptedCompiler::generateStubCode(MacroAssembler& masm)
@@ -6782,7 +6819,7 @@ ICCallScriptedCompiler::generateStubCode(MacroAssembler& masm)
 }
 
 typedef bool (*CopyArrayFn)(JSContext*, HandleObject, MutableHandleValue);
-static const VMFunction CopyArrayInfo = FunctionInfo<CopyArrayFn>(CopyArray);
+static const VMFunction CopyArrayInfo = FunctionInfo<CopyArrayFn>(CopyArray, "CopyArray");
 
 bool
 ICCall_StringSplit::Compiler::generateStubCode(MacroAssembler& masm)
@@ -7569,13 +7606,18 @@ DoIteratorNewFallback(JSContext* cx, BaselineFrame* frame, ICIteratorNew_Fallbac
 
     uint8_t flags = GET_UINT8(pc);
     res.set(value);
-    return ValueToIterator(cx, flags, res);
+    RootedObject iterobj(cx, ValueToIterator(cx, flags, res));
+    if (!iterobj)
+        return false;
+    res.setObject(*iterobj);
+    return true;
 }
 
 typedef bool (*DoIteratorNewFallbackFn)(JSContext*, BaselineFrame*, ICIteratorNew_Fallback*,
                                         HandleValue, MutableHandleValue);
 static const VMFunction DoIteratorNewFallbackInfo =
-    FunctionInfo<DoIteratorNewFallbackFn>(DoIteratorNewFallback, TailCall, PopValues(1));
+    FunctionInfo<DoIteratorNewFallbackFn>(DoIteratorNewFallback, "DoIteratorNewFallback",
+                                          TailCall, PopValues(1));
 
 bool
 ICIteratorNew_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -7633,7 +7675,8 @@ DoIteratorMoreFallback(JSContext* cx, BaselineFrame* frame, ICIteratorMore_Fallb
 typedef bool (*DoIteratorMoreFallbackFn)(JSContext*, BaselineFrame*, ICIteratorMore_Fallback*,
                                          HandleObject, MutableHandleValue);
 static const VMFunction DoIteratorMoreFallbackInfo =
-    FunctionInfo<DoIteratorMoreFallbackFn>(DoIteratorMoreFallback, TailCall);
+    FunctionInfo<DoIteratorMoreFallbackFn>(DoIteratorMoreFallback, "DoIteratorMoreFallback",
+                                           TailCall);
 
 bool
 ICIteratorMore_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -7716,7 +7759,8 @@ DoIteratorCloseFallback(JSContext* cx, ICIteratorClose_Fallback* stub, HandleVal
 
 typedef bool (*DoIteratorCloseFallbackFn)(JSContext*, ICIteratorClose_Fallback*, HandleValue);
 static const VMFunction DoIteratorCloseFallbackInfo =
-    FunctionInfo<DoIteratorCloseFallbackFn>(DoIteratorCloseFallback, TailCall);
+    FunctionInfo<DoIteratorCloseFallbackFn>(DoIteratorCloseFallback, "DoIteratorCloseFallback",
+                                            TailCall);
 
 bool
 ICIteratorClose_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -7822,7 +7866,8 @@ DoInstanceOfFallback(JSContext* cx, BaselineFrame* frame, ICInstanceOf_Fallback*
 typedef bool (*DoInstanceOfFallbackFn)(JSContext*, BaselineFrame*, ICInstanceOf_Fallback*,
                                        HandleValue, HandleValue, MutableHandleValue);
 static const VMFunction DoInstanceOfFallbackInfo =
-    FunctionInfo<DoInstanceOfFallbackFn>(DoInstanceOfFallback, TailCall, PopValues(2));
+    FunctionInfo<DoInstanceOfFallbackFn>(DoInstanceOfFallback, "DoInstanceOfFallback", TailCall,
+                                         PopValues(2));
 
 bool
 ICInstanceOf_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -7950,7 +7995,7 @@ DoTypeOfFallback(JSContext* cx, BaselineFrame* frame, ICTypeOf_Fallback* stub, H
 typedef bool (*DoTypeOfFallbackFn)(JSContext*, BaselineFrame* frame, ICTypeOf_Fallback*,
                                    HandleValue, MutableHandleValue);
 static const VMFunction DoTypeOfFallbackInfo =
-    FunctionInfo<DoTypeOfFallbackFn>(DoTypeOfFallback, TailCall);
+    FunctionInfo<DoTypeOfFallbackFn>(DoTypeOfFallback, "DoTypeOfFallback", TailCall);
 
 bool
 ICTypeOf_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -8041,10 +8086,12 @@ DoRetSubFallback(JSContext* cx, BaselineFrame* frame, ICRetSub_Fallback* stub,
 
 typedef bool(*DoRetSubFallbackFn)(JSContext* cx, BaselineFrame*, ICRetSub_Fallback*,
                                   HandleValue, uint8_t**);
-static const VMFunction DoRetSubFallbackInfo = FunctionInfo<DoRetSubFallbackFn>(DoRetSubFallback);
+static const VMFunction DoRetSubFallbackInfo =
+    FunctionInfo<DoRetSubFallbackFn>(DoRetSubFallback, "DoRetSubFallback");
 
 typedef bool (*ThrowFn)(JSContext*, HandleValue);
-static const VMFunction ThrowInfoBaseline = FunctionInfo<ThrowFn>(js::Throw, TailCall);
+static const VMFunction ThrowInfoBaseline =
+    FunctionInfo<ThrowFn>(js::Throw, "ThrowInfoBaseline", TailCall);
 
 bool
 ICRetSub_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -8372,8 +8419,8 @@ ICGetName_GlobalLexical::ICGetName_GlobalLexical(JitCode* stubCode, ICStub* firs
 { }
 
 template <size_t NumHops>
-ICGetName_Scope<NumHops>::ICGetName_Scope(JitCode* stubCode, ICStub* firstMonitorStub,
-                                          Handle<ShapeVector> shapes, uint32_t offset)
+ICGetName_Env<NumHops>::ICGetName_Env(JitCode* stubCode, ICStub* firstMonitorStub,
+                                      Handle<ShapeVector> shapes, uint32_t offset)
   : ICMonitoredStub(GetStubKind(), stubCode, firstMonitorStub),
     offset_(offset)
 {
@@ -8641,7 +8688,7 @@ static bool DoRestFallback(JSContext* cx, BaselineFrame* frame, ICRest_Fallback*
 typedef bool (*DoRestFallbackFn)(JSContext*, BaselineFrame*, ICRest_Fallback*,
                                  MutableHandleValue);
 static const VMFunction DoRestFallbackInfo =
-    FunctionInfo<DoRestFallbackFn>(DoRestFallback, TailCall);
+    FunctionInfo<DoRestFallbackFn>(DoRestFallback, "DoRestFallback", TailCall);
 
 bool
 ICRest_Fallback::Compiler::generateStubCode(MacroAssembler& masm)

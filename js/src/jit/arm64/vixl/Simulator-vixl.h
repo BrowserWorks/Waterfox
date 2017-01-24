@@ -713,7 +713,7 @@ class Simulator : public DecoderVisitor {
   // Moz changes.
   void init(Decoder* decoder, FILE* stream);
   static Simulator* Current();
-  static Simulator* Create();
+  static Simulator* Create(JSContext* cx);
   static void Destroy(Simulator* sim);
   uintptr_t stackLimit() const;
   uintptr_t* addressOfStackLimit();
@@ -2668,9 +2668,6 @@ class Simulator : public DecoderVisitor {
  protected:
   // Moz: Synchronizes access between main thread and compilation threads.
   js::Mutex lock_;
-#ifdef DEBUG
-  PRThread* lockOwner_;
-#endif
   Redirection* redirection_;
   mozilla::Vector<int64_t, 0, js::SystemAllocPolicy> spStack_;
 };

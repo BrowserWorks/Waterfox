@@ -50,7 +50,7 @@ private:
 
   void OnVideoDecoded(MediaData* aVideoSample);
 
-  void OnNotDecoded(MediaData::Type, MediaDecoderReader::NotDecodedReason);
+  void OnNotDecoded(MediaData::Type, const MediaResult&);
 
   void SetCallbacks();
 
@@ -65,8 +65,6 @@ private:
   const uint32_t mAudioRate;  // Audio sample rate.
   bool mDoneAudioSeeking;
   bool mDoneVideoSeeking;
-  bool mFirstAudioSample = true;
-  bool mFirstVideoSample = true;
 
   // This temporarily stores the first frame we decode after we seek.
   // This is so that if we hit end of stream while we're decoding to reach

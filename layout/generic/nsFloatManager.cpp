@@ -6,12 +6,14 @@
 /* class that manages rules for positioning floats */
 
 #include "nsFloatManager.h"
+
+#include <algorithm>
+
+#include "mozilla/ReflowInput.h"
+#include "nsBlockFrame.h"
+#include "nsError.h"
 #include "nsIPresShell.h"
 #include "nsMemory.h"
-#include "mozilla/ReflowInput.h"
-#include "nsBlockDebugFlags.h"
-#include "nsError.h"
-#include <algorithm>
 
 using namespace mozilla;
 
@@ -159,8 +161,7 @@ nsFloatManager::GetFlowArea(WritingMode aWM, nscoord aBOffset,
   if (aBSize == nscoord_MAX) {
     // This warning (and the two below) are possible to hit on pages
     // with really large objects.
-    NS_WARN_IF_FALSE(aInfoType == BAND_FROM_POINT,
-                     "bad height");
+    NS_WARNING_ASSERTION(aInfoType == BAND_FROM_POINT, "bad height");
     blockEnd = nscoord_MAX;
   } else {
     blockEnd = blockStart + aBSize;
@@ -216,8 +217,8 @@ nsFloatManager::GetFlowArea(WritingMode aWM, nscoord aBOffset,
       }
 
       // Shrink our band's width if needed.
-      uint8_t floatStyle = fi.mFrame->StyleDisplay()->PhysicalFloats(aWM);
-      if (floatStyle == NS_STYLE_FLOAT_LEFT) {
+      StyleFloat floatStyle = fi.mFrame->StyleDisplay()->PhysicalFloats(aWM);
+      if (floatStyle == StyleFloat::Left) {
         // A left float
         nscoord lineRightEdge = fi.LineRight();
         if (lineRightEdge > lineLeft) {
@@ -275,11 +276,11 @@ nsFloatManager::AddFloat(nsIFrame* aFloatFrame, const LogicalRect& aMarginRect,
     info.mLeftBEnd = nscoord_MIN;
     info.mRightBEnd = nscoord_MIN;
   }
-  uint8_t floatStyle = aFloatFrame->StyleDisplay()->PhysicalFloats(aWM);
-  NS_ASSERTION(floatStyle == NS_STYLE_FLOAT_LEFT ||
-               floatStyle == NS_STYLE_FLOAT_RIGHT, "unexpected float");
-  nscoord& sideBEnd = floatStyle == NS_STYLE_FLOAT_LEFT ? info.mLeftBEnd
-                                                        : info.mRightBEnd;
+  StyleFloat floatStyle = aFloatFrame->StyleDisplay()->PhysicalFloats(aWM);
+  MOZ_ASSERT(floatStyle == StyleFloat::Left || floatStyle == StyleFloat::Right,
+             "Unexpected float style!");
+  nscoord& sideBEnd =
+    floatStyle == StyleFloat::Left ? info.mLeftBEnd : info.mRightBEnd;
   nscoord thisBEnd = info.BEnd();
   if (thisBEnd > sideBEnd)
     sideBEnd = thisBEnd;
@@ -311,8 +312,8 @@ nsFloatManager::CalculateRegionFor(WritingMode          aWM,
     // Preserve the right margin-edge for left floats and the left
     // margin-edge for right floats
     const nsStyleDisplay* display = aFloat->StyleDisplay();
-    uint8_t floatStyle = display->PhysicalFloats(aWM);
-    if ((NS_STYLE_FLOAT_LEFT == floatStyle) == aWM.IsBidiLTR()) {
+    StyleFloat floatStyle = display->PhysicalFloats(aWM);
+    if ((StyleFloat::Left == floatStyle) == aWM.IsBidiLTR()) {
       region.IStart(aWM) = region.IEnd(aWM);
     }
     region.ISize(aWM) = 0;
@@ -469,7 +470,7 @@ nsFloatManager::List(FILE* out) const
 
   for (uint32_t i = 0; i < mFloats.Length(); ++i) {
     const FloatInfo &fi = mFloats[i];
-    fprintf_stderr(out, "Float %u: frame=%p rect={%d,%d,%d,%d} ymost={l:%d, r:%d}\n",
+    fprintf_stderr(out, "Float %u: frame=%p rect={%d,%d,%d,%d} BEnd={l:%d, r:%d}\n",
                    i, static_cast<void*>(fi.mFrame),
                    fi.LineLeft(), fi.BStart(), fi.ISize(), fi.BSize(),
                    fi.mLeftBEnd, fi.mRightBEnd);
@@ -479,7 +480,7 @@ nsFloatManager::List(FILE* out) const
 #endif
 
 nscoord
-nsFloatManager::ClearFloats(nscoord aBCoord, uint8_t aBreakType,
+nsFloatManager::ClearFloats(nscoord aBCoord, StyleClear aBreakType,
                             uint32_t aFlags) const
 {
   if (!(aFlags & DONT_CLEAR_PUSHED_FLOATS) && ClearContinues(aBreakType)) {
@@ -493,14 +494,14 @@ nsFloatManager::ClearFloats(nscoord aBCoord, uint8_t aBreakType,
 
   const FloatInfo &tail = mFloats[mFloats.Length() - 1];
   switch (aBreakType) {
-    case NS_STYLE_CLEAR_BOTH:
+    case StyleClear::Both:
       blockEnd = std::max(blockEnd, tail.mLeftBEnd);
       blockEnd = std::max(blockEnd, tail.mRightBEnd);
       break;
-    case NS_STYLE_CLEAR_LEFT:
+    case StyleClear::Left:
       blockEnd = std::max(blockEnd, tail.mLeftBEnd);
       break;
-    case NS_STYLE_CLEAR_RIGHT:
+    case StyleClear::Right:
       blockEnd = std::max(blockEnd, tail.mRightBEnd);
       break;
     default:
@@ -514,14 +515,14 @@ nsFloatManager::ClearFloats(nscoord aBCoord, uint8_t aBreakType,
 }
 
 bool
-nsFloatManager::ClearContinues(uint8_t aBreakType) const
+nsFloatManager::ClearContinues(StyleClear aBreakType) const
 {
   return ((mPushedLeftFloatPastBreak || mSplitLeftFloatAcrossBreak) &&
-          (aBreakType == NS_STYLE_CLEAR_BOTH ||
-           aBreakType == NS_STYLE_CLEAR_LEFT)) ||
+          (aBreakType == StyleClear::Both ||
+           aBreakType == StyleClear::Left)) ||
          ((mPushedRightFloatPastBreak || mSplitRightFloatAcrossBreak) &&
-          (aBreakType == NS_STYLE_CLEAR_BOTH ||
-           aBreakType == NS_STYLE_CLEAR_RIGHT));
+          (aBreakType == StyleClear::Both ||
+           aBreakType == StyleClear::Right));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -556,19 +557,23 @@ nsFloatManager::FloatInfo::~FloatInfo()
 
 nsAutoFloatManager::~nsAutoFloatManager()
 {
-  // Restore the old float manager in the reflow state if necessary.
+  // Restore the old float manager in the reflow input if necessary.
   if (mNew) {
-#ifdef NOISY_FLOATMANAGER
-    printf("restoring old float manager %p\n", mOld);
+#ifdef DEBUG
+    if (nsBlockFrame::gNoisyFloatManager) {
+      printf("restoring old float manager %p\n", mOld);
+    }
 #endif
 
     mReflowInput.mFloatManager = mOld;
 
-#ifdef NOISY_FLOATMANAGER
-    if (mOld) {
-      static_cast<nsFrame *>(mReflowInput.frame)->ListTag(stdout);
-      printf(": space-manager %p after reflow\n", mOld);
-      mOld->List(stdout);
+#ifdef DEBUG
+    if (nsBlockFrame::gNoisyFloatManager) {
+      if (mOld) {
+        mReflowInput.mFrame->ListTag(stdout);
+        printf(": float manager %p after reflow\n", mOld);
+        mOld->List(stdout);
+      }
     }
 #endif
 
@@ -576,24 +581,23 @@ nsAutoFloatManager::~nsAutoFloatManager()
   }
 }
 
-nsresult
+void
 nsAutoFloatManager::CreateFloatManager(nsPresContext *aPresContext)
 {
   // Create a new float manager and install it in the reflow
-  // state. `Remember' the old float manager so we can restore it
+  // input. `Remember' the old float manager so we can restore it
   // later.
   mNew = new nsFloatManager(aPresContext->PresShell(),
                             mReflowInput.GetWritingMode());
-  if (! mNew)
-    return NS_ERROR_OUT_OF_MEMORY;
 
-#ifdef NOISY_FLOATMANAGER
-  printf("constructed new float manager %p (replacing %p)\n",
-         mNew, mReflowInput.mFloatManager);
+#ifdef DEBUG
+  if (nsBlockFrame::gNoisyFloatManager) {
+    printf("constructed new float manager %p (replacing %p)\n",
+           mNew, mReflowInput.mFloatManager);
+  }
 #endif
 
-  // Set the float manager in the existing reflow state
+  // Set the float manager in the existing reflow input.
   mOld = mReflowInput.mFloatManager;
   mReflowInput.mFloatManager = mNew;
-  return NS_OK;
 }

@@ -102,6 +102,19 @@ public:
 
     void OnBackingStoreRespecified() const;
 
+    bool IsEquivalentForFeedback(const WebGLFBAttachPoint& other) const {
+        if (!IsDefined() || !other.IsDefined())
+            return false;
+
+#define _(X) X == other.X
+        return ( _(mRenderbufferPtr) &&
+                 _(mTexturePtr) &&
+                 _(mTexImageTarget.get()) &&
+                 _(mTexImageLevel) &&
+                 _(mTexImageLayer) );
+#undef _
+    }
+
     ////
 
     struct Ordered {
@@ -132,7 +145,6 @@ class WebGLFramebuffer final
     : public nsWrapperCache
     , public WebGLRefCountedObject<WebGLFramebuffer>
     , public LinkedListElement<WebGLFramebuffer>
-    , public WebGLContextBoundObject
     , public SupportsWeakPtr<WebGLFramebuffer>
 {
     friend class WebGLContext;
@@ -172,11 +184,6 @@ protected:
     ////
 
     struct ResolvedData {
-        // BlitFramebuffer
-        bool hasSampleBuffers;
-        const WebGLFBAttachPoint* depthBuffer;
-        const WebGLFBAttachPoint* stencilBuffer;
-
         // IsFeedback
         std::vector<const WebGLFBAttachPoint*> texDrawBuffers; // Non-null
         std::set<WebGLFBAttachPoint::Ordered> drawSet;
@@ -226,6 +233,8 @@ public:
     void DetachTexture(const WebGLTexture* tex);
     void DetachRenderbuffer(const WebGLRenderbuffer* rb);
     bool ValidateAndInitAttachments(const char* funcName);
+    bool ValidateClearBufferType(const char* funcName, GLenum buffer, uint32_t drawBuffer,
+                                 GLenum funcType) const;
 
     bool ValidateForRead(const char* info,
                          const webgl::FormatUsageInfo** const out_format,

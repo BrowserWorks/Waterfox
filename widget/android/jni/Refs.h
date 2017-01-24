@@ -25,18 +25,6 @@ template<class Cls> class GlobalRef;
 template<class Cls> class DependentRef;
 
 
-// How exception during a JNI call should be treated.
-enum class ExceptionMode
-{
-    // Abort on unhandled excepion (default).
-    ABORT,
-    // Ignore the exception and return to caller.
-    IGNORE,
-    // Catch any exception and return a nsresult.
-    NSRESULT,
-};
-
-
 // Class to hold the native types of a method's arguments.
 // For example, if a method has signature (ILjava/lang/String;)V,
 // its arguments class would be jni::Args<int32_t, jni::String::Param>
@@ -77,7 +65,8 @@ class Ref
 protected:
     static JNIEnv* FindEnv()
     {
-        return Cls::isMultithreaded ? GetEnvForThread() : GetGeckoThreadEnv();
+        return Cls::callingThread == CallingThread::GECKO ?
+                GetGeckoThreadEnv() : GetEnvForThread();
     }
 
     Type mInstance;
@@ -231,7 +220,7 @@ public:
 };
 
 
-template<class Cls, typename Type>
+template<class Cls, typename Type = jobject>
 class ObjectBase
 {
 protected:
@@ -248,7 +237,7 @@ public:
     using GlobalRef = jni::GlobalRef<Cls>;
     using Param = const Ref&;
 
-    static const bool isMultithreaded = true;
+    static const CallingThread callingThread = CallingThread::ANY;
     static const char name[];
 
     explicit ObjectBase(const Context& ctx) : mCtx(ctx) {}
@@ -727,25 +716,31 @@ public:
 
     ElementType GetElement(size_t index) const
     {
+        using JNIElemType = typename detail::TypeAdapter<ElementType>::JNIType;
+        static_assert(sizeof(ElementType) == sizeof(JNIElemType),
+                      "Size of native type must match size of JNI type");
+
         ElementType ret;
         (Base::Env()->*detail::TypeAdapter<ElementType>::GetArray)(
-                Base::Instance(), jsize(index), 1, &ret);
+                Base::Instance(), jsize(index), 1,
+                reinterpret_cast<JNIElemType*>(&ret));
         MOZ_CATCH_JNI_EXCEPTION(Base::Env());
         return ret;
     }
 
     nsTArray<ElementType> GetElements() const
     {
-        static_assert(sizeof(ElementType) ==
-                sizeof(typename detail::TypeAdapter<ElementType>::JNIType),
-                "Size of native type must match size of JNI type");
+        using JNIElemType = typename detail::TypeAdapter<ElementType>::JNIType;
+        static_assert(sizeof(ElementType) == sizeof(JNIElemType),
+                      "Size of native type must match size of JNI type");
 
         const jsize len = size_t(Base::Env()->GetArrayLength(Base::Instance()));
 
         nsTArray<ElementType> array((size_t(len)));
         array.SetLength(size_t(len));
         (Base::Env()->*detail::TypeAdapter<ElementType>::GetArray)(
-                Base::Instance(), 0, len, array.Elements());
+                Base::Instance(), 0, len,
+                reinterpret_cast<JNIElemType*>(array.Elements()));
         return array;
     }
 

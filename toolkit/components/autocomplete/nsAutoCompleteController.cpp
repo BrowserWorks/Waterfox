@@ -13,6 +13,7 @@
 #include "nsIServiceManager.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
+#include "nsIScriptSecurityManager.h"
 #include "nsITreeBoxObject.h"
 #include "nsITreeColumns.h"
 #include "nsIObserverService.h"
@@ -85,6 +86,26 @@ nsAutoCompleteController::GetInput(nsIAutoCompleteInput **aInput)
 {
   *aInput = mInput;
   NS_IF_ADDREF(*aInput);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsAutoCompleteController::SetInitiallySelectedIndex(int32_t aSelectedIndex)
+{
+  // First forward to the popup.
+  nsCOMPtr<nsIAutoCompleteInput> input(mInput);
+  NS_ENSURE_STATE(input);
+  nsCOMPtr<nsIAutoCompletePopup> popup;
+  input->GetPopup(getter_AddRefs(popup));
+  NS_ENSURE_STATE(popup);
+  popup->SetSelectedIndex(aSelectedIndex);
+
+  // Now take care of internal stuff.
+  bool completeSelection;
+  if (NS_SUCCEEDED(input->GetCompleteSelectedIndex(&completeSelection)) &&
+      completeSelection) {
+    mCompletedSelectionIndex = aSelectedIndex;
+  }
   return NS_OK;
 }
 
@@ -1205,6 +1226,14 @@ nsAutoCompleteController::StartSearch(uint16_t aSearchType)
       searchParam.AppendLiteral(" prohibit-autofill");
     }
 
+    uint32_t userContextId;
+    rv = input->GetUserContextId(&userContextId);
+    if (NS_SUCCEEDED(rv) &&
+        userContextId != nsIScriptSecurityManager::DEFAULT_USER_CONTEXT_ID) {
+      searchParam.AppendLiteral(" user-context-id:");
+      searchParam.AppendInt(userContextId, 10);
+    }
+
     rv = search->StartSearch(mSearchString, searchParam, result, static_cast<nsIAutoCompleteObserver *>(this));
     if (NS_FAILED(rv)) {
       ++mSearchesFailed;
@@ -1387,23 +1416,15 @@ nsAutoCompleteController::EnterMatch(bool aIsPopupSelection,
     if (selectedIndex >= 0) {
       nsAutoString inputValue;
       input->GetTextValue(inputValue);
-      if (aIsPopupSelection || !completeSelection) {
+      bool defaultCompleted = mDefaultIndexCompleted &&
+                              inputValue.Equals(mPlaceholderCompletionString,
+                                                nsCaseInsensitiveStringComparator());
+      if (aIsPopupSelection || (!completeSelection && !defaultCompleted)) {
         // We need to fill-in the value if:
-        //  * completeselectedindex is false
+        //  * completeselectedindex is false and we didn't defaultComplete
         //  * A row in the popup was confirmed
-        //
-        // TODO: This is not totally correct, cause it will also confirm
-        // a result selected with a simple mouseover, that could also have
-        // happened accidentally, maybe touching a touchpad.
-        // The reason is that autocomplete.xml sets selectedIndex on mousemove
-        // making impossible, in the !completeSelection case, to distinguish if
-        // the user wanted to confirm autoFill or the popup entry.
-        // The solution may be to change autocomplete.xml to set selectedIndex
-        // only on popupClick, but that requires changing the selection behavior.
         GetResultValueAt(selectedIndex, true, value);
-      } else if (mDefaultIndexCompleted &&
-                 inputValue.Equals(mPlaceholderCompletionString,
-                                   nsCaseInsensitiveStringComparator())) {
+      } else if (defaultCompleted) {
         // We also need to fill-in the value if the default index completion was
         // confirmed, though we cannot use the selectedIndex cause the selection
         // may have been changed by the mouse in the meanwhile.
@@ -1416,9 +1437,7 @@ nsAutoCompleteController::EnterMatch(bool aIsPopupSelection,
         // differs from the user-facing value.
         nsAutoString finalValue;
         GetResultValueAt(mCompletedSelectionIndex, true, finalValue);
-        nsAutoString completedValue;
-        GetResultValueAt(mCompletedSelectionIndex, false, completedValue);
-        if (completedValue.Equals(inputValue) && !finalValue.Equals(inputValue)) {
+        if (!inputValue.Equals(finalValue)) {
           value = finalValue;
         }
         // Note that if the user opens the popup, mouses over entries without

@@ -18,7 +18,7 @@ const {LegacyExtensionContext} = Cu.import("resource://gre/modules/LegacyExtensi
  *    shutting down
  */
 add_task(function* test_legacy_extension_context() {
-  function backgroundScript() {
+  function background() {
     let bgURL = window.location.href;
 
     let extensionInfo = {
@@ -53,10 +53,10 @@ add_task(function* test_legacy_extension_context() {
   }
 
   let extensionData = {
-    background: "new " + backgroundScript,
+    background,
   };
 
-  let extension = Extension.generate("test-legacy-context-addon@mozilla.com", extensionData);
+  let extension = Extension.generate(extensionData);
 
   let waitForExtensionInfo = new Promise((resolve, reject) => {
     extension.on("test-message", function testMessageListener(kind, msg, ...args) {
@@ -85,7 +85,7 @@ add_task(function* test_legacy_extension_context() {
 
   let extensionInfo = yield waitForExtensionInfo;
 
-  equal(legacyContext.type, "legacy_extension",
+  equal(legacyContext.envType, "legacy_extension",
      "LegacyExtensionContext instance has the expected type");
 
   ok(legacyContext.api, "Got the expected API object");

@@ -1841,7 +1841,7 @@ DrawTargetCG::Init(CGContextRef cgContext, const IntSize &aSize)
 bool
 DrawTargetCG::Init(BackendType aType, const IntSize &aSize, SurfaceFormat &aFormat)
 {
-  int32_t stride = GetAlignedStride<16>(aSize.width * BytesPerPixel(aFormat));
+  int32_t stride = GetAlignedStride<16>(aSize.width, BytesPerPixel(aFormat));
   
   // Calling Init with aData == nullptr will allocate.
   return Init(aType, nullptr, aSize, stride, aFormat);
@@ -1969,41 +1969,6 @@ DrawTargetCG::MarkChanged()
     mSnapshot = nullptr;
   }
 }
-
-CGContextRef
-BorrowedCGContext::BorrowCGContextFromDrawTarget(DrawTarget *aDT)
-{
-  if ((aDT->GetBackendType() == BackendType::COREGRAPHICS ||
-       aDT->GetBackendType() == BackendType::COREGRAPHICS_ACCELERATED) &&
-      !aDT->IsTiledDrawTarget() && !aDT->IsDualDrawTarget()) {
-    DrawTargetCG* cgDT = static_cast<DrawTargetCG*>(aDT);
-    cgDT->Flush();
-    cgDT->MarkChanged();
-
-    // swap out the context
-    CGContextRef cg = cgDT->mCg;
-    if (MOZ2D_ERROR_IF(!cg)) {
-      return nullptr;
-    }
-    cgDT->mCg = nullptr;
-
-    // save the state to make it easier for callers to avoid mucking with things
-    CGContextSaveGState(cg);
-
-    return cg;
-  }
-  return nullptr;
-}
-
-void
-BorrowedCGContext::ReturnCGContextToDrawTarget(DrawTarget *aDT, CGContextRef cg)
-{
-  DrawTargetCG* cgDT = static_cast<DrawTargetCG*>(aDT);
-
-  CGContextRestoreGState(cg);
-  cgDT->mCg = cg;
-}
-
 
 } // namespace gfx
 } // namespace mozilla

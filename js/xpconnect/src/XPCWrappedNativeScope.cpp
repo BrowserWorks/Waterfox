@@ -237,7 +237,7 @@ XPCWrappedNativeScope::AttachComponentsObject(JSContext* aCx)
     if (c)
         attrs |= JSPROP_PERMANENT;
 
-    RootedId id(aCx, XPCJSRuntime::Get()->GetStringID(XPCJSRuntime::IDX_COMPONENTS));
+    RootedId id(aCx, XPCJSContext::Get()->GetStringID(XPCJSContext::IDX_COMPONENTS));
     return JS_DefinePropertyById(aCx, global, id, components, attrs);
 }
 
@@ -476,16 +476,16 @@ XPCWrappedNativeScope::~XPCWrappedNativeScope()
     if (mXrayExpandos.initialized())
         mXrayExpandos.destroy();
 
-    JSRuntime* rt = XPCJSRuntime::Get()->Runtime();
-    mContentXBLScope.finalize(rt);
+    JSContext* cx = dom::danger::GetJSContext();
+    mContentXBLScope.finalize(cx);
     for (size_t i = 0; i < mAddonScopes.Length(); i++)
-        mAddonScopes[i].finalize(rt);
-    mGlobalJSObject.finalize(rt);
+        mAddonScopes[i].finalize(cx);
+    mGlobalJSObject.finalize(cx);
 }
 
 // static
 void
-XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(JSTracer* trc, XPCJSRuntime* rt)
+XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(JSTracer* trc, XPCJSContext* cx)
 {
     // Do JS::TraceEdge for all wrapped natives with external references, as
     // well as any DOM expando objects.
@@ -514,7 +514,7 @@ SuspectDOMExpandos(JSObject* obj, nsCycleCollectionNoteRootCallback& cb)
 
 // static
 void
-XPCWrappedNativeScope::SuspectAllWrappers(XPCJSRuntime* rt,
+XPCWrappedNativeScope::SuspectAllWrappers(XPCJSContext* cx,
                                           nsCycleCollectionNoteRootCallback& cb)
 {
     for (XPCWrappedNativeScope* cur = gScopes; cur; cur = cur->mNext) {
@@ -531,7 +531,7 @@ XPCWrappedNativeScope::SuspectAllWrappers(XPCJSRuntime* rt,
 
 // static
 void
-XPCWrappedNativeScope::UpdateWeakPointersAfterGC(XPCJSRuntime* rt)
+XPCWrappedNativeScope::UpdateWeakPointersAfterGC(XPCJSContext* cx)
 {
     // If this is called from the finalization callback in JSGC_MARK_END then
     // JSGC_FINALIZE_END must always follow it calling

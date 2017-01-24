@@ -2,6 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* This file respects the LLVM coding standard described at
+ * http://llvm.org/docs/CodingStandards.html */
+
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -42,22 +45,22 @@ typedef ASTConsumer *ASTConsumerPtr;
 // Check if the given expression contains an assignment expression.
 // This can either take the form of a Binary Operator or a
 // Overloaded Operator Call.
-bool HasSideEffectAssignment(const Expr *expr) {
-  if (auto opCallExpr = dyn_cast_or_null<CXXOperatorCallExpr>(expr)) {
-    auto binOp = opCallExpr->getOperator();
-    if (binOp == OO_Equal || (binOp >= OO_PlusEqual && binOp <= OO_PipeEqual)) {
+bool hasSideEffectAssignment(const Expr *Expression) {
+  if (auto OpCallExpr = dyn_cast_or_null<CXXOperatorCallExpr>(Expression)) {
+    auto BinOp = OpCallExpr->getOperator();
+    if (BinOp == OO_Equal || (BinOp >= OO_PlusEqual && BinOp <= OO_PipeEqual)) {
       return true;
     }
-  } else if (auto binOpExpr = dyn_cast_or_null<BinaryOperator>(expr)) {
-    if (binOpExpr->isAssignmentOp()) {
+  } else if (auto BinOpExpr = dyn_cast_or_null<BinaryOperator>(Expression)) {
+    if (BinOpExpr->isAssignmentOp()) {
       return true;
     }
   }
 
   // Recurse to children.
-  for (const Stmt *SubStmt : expr->children()) {
-    auto childExpr = dyn_cast_or_null<Expr>(SubStmt);
-    if (childExpr && HasSideEffectAssignment(childExpr)) {
+  for (const Stmt *SubStmt : Expression->children()) {
+    auto ChildExpr = dyn_cast_or_null<Expr>(SubStmt);
+    if (ChildExpr && hasSideEffectAssignment(ChildExpr)) {
       return true;
     }
   }
@@ -72,7 +75,7 @@ class DiagnosticsMatcher {
 public:
   DiagnosticsMatcher();
 
-  ASTConsumerPtr makeASTConsumer() { return astMatcher.newASTConsumer(); }
+  ASTConsumerPtr makeASTConsumer() { return AstMatcher.newASTConsumer(); }
 
 private:
   class ScopeChecker : public MatchFinder::MatchCallback {
@@ -160,31 +163,31 @@ private:
     virtual void run(const MatchFinder::MatchResult &Result);
   };
 
-  ScopeChecker scopeChecker;
-  ArithmeticArgChecker arithmeticArgChecker;
-  TrivialCtorDtorChecker trivialCtorDtorChecker;
-  NaNExprChecker nanExprChecker;
-  NoAddRefReleaseOnReturnChecker noAddRefReleaseOnReturnChecker;
-  RefCountedInsideLambdaChecker refCountedInsideLambdaChecker;
-  ExplicitOperatorBoolChecker explicitOperatorBoolChecker;
-  NoDuplicateRefCntMemberChecker noDuplicateRefCntMemberChecker;
-  NeedsNoVTableTypeChecker needsNoVTableTypeChecker;
-  NonMemMovableTemplateArgChecker nonMemMovableTemplateArgChecker;
-  NonMemMovableMemberChecker nonMemMovableMemberChecker;
-  ExplicitImplicitChecker explicitImplicitChecker;
-  NoAutoTypeChecker noAutoTypeChecker;
-  NoExplicitMoveConstructorChecker noExplicitMoveConstructorChecker;
-  RefCountedCopyConstructorChecker refCountedCopyConstructorChecker;
-  AssertAssignmentChecker assertAttributionChecker;
-  KungFuDeathGripChecker kungFuDeathGripChecker;
-  MatchFinder astMatcher;
+  ScopeChecker Scope;
+  ArithmeticArgChecker ArithmeticArg;
+  TrivialCtorDtorChecker TrivialCtorDtor;
+  NaNExprChecker NaNExpr;
+  NoAddRefReleaseOnReturnChecker NoAddRefReleaseOnReturn;
+  RefCountedInsideLambdaChecker RefCountedInsideLambda;
+  ExplicitOperatorBoolChecker ExplicitOperatorBool;
+  NoDuplicateRefCntMemberChecker NoDuplicateRefCntMember;
+  NeedsNoVTableTypeChecker NeedsNoVTableType;
+  NonMemMovableTemplateArgChecker NonMemMovableTemplateArg;
+  NonMemMovableMemberChecker NonMemMovableMember;
+  ExplicitImplicitChecker ExplicitImplicit;
+  NoAutoTypeChecker NoAutoType;
+  NoExplicitMoveConstructorChecker NoExplicitMoveConstructor;
+  RefCountedCopyConstructorChecker RefCountedCopyConstructor;
+  AssertAssignmentChecker AssertAttribution;
+  KungFuDeathGripChecker KungFuDeathGrip;
+  MatchFinder AstMatcher;
 };
 
 namespace {
 
-std::string getDeclarationNamespace(const Decl *decl) {
+std::string getDeclarationNamespace(const Decl *Declaration) {
   const DeclContext *DC =
-      decl->getDeclContext()->getEnclosingNamespaceContext();
+      Declaration->getDeclContext()->getEnclosingNamespaceContext();
   const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
   if (!ND) {
     return "";
@@ -197,88 +200,93 @@ std::string getDeclarationNamespace(const Decl *decl) {
     ND = cast<NamespaceDecl>(ParentDC);
   }
 
-  const auto &name = ND->getName();
-  return name;
+  const auto &Name = ND->getName();
+  return Name;
 }
 
-bool isInIgnoredNamespaceForImplicitCtor(const Decl *decl) {
-  std::string name = getDeclarationNamespace(decl);
-  if (name == "") {
+bool isInIgnoredNamespaceForImplicitCtor(const Decl *Declaration) {
+  std::string Name = getDeclarationNamespace(Declaration);
+  if (Name == "") {
     return false;
   }
 
-  return name == "std" ||               // standard C++ lib
-         name == "__gnu_cxx" ||         // gnu C++ lib
-         name == "boost" ||             // boost
-         name == "webrtc" ||            // upstream webrtc
-         name == "rtc" ||               // upstream webrtc 'base' package
-         name.substr(0, 4) == "icu_" || // icu
-         name == "google" ||            // protobuf
-         name == "google_breakpad" ||   // breakpad
-         name == "soundtouch" ||        // libsoundtouch
-         name == "stagefright" ||       // libstagefright
-         name == "MacFileUtilities" ||  // MacFileUtilities
-         name == "dwarf2reader" ||      // dwarf2reader
-         name == "arm_ex_to_module" ||  // arm_ex_to_module
-         name == "testing";             // gtest
+  return Name == "std" ||               // standard C++ lib
+         Name == "__gnu_cxx" ||         // gnu C++ lib
+         Name == "boost" ||             // boost
+         Name == "webrtc" ||            // upstream webrtc
+         Name == "rtc" ||               // upstream webrtc 'base' package
+         Name.substr(0, 4) == "icu_" || // icu
+         Name == "google" ||            // protobuf
+         Name == "google_breakpad" ||   // breakpad
+         Name == "soundtouch" ||        // libsoundtouch
+         Name == "stagefright" ||       // libstagefright
+         Name == "MacFileUtilities" ||  // MacFileUtilities
+         Name == "dwarf2reader" ||      // dwarf2reader
+         Name == "arm_ex_to_module" ||  // arm_ex_to_module
+         Name == "testing";             // gtest
 }
 
-bool isInIgnoredNamespaceForImplicitConversion(const Decl *decl) {
-  std::string name = getDeclarationNamespace(decl);
-  if (name == "") {
+bool isInIgnoredNamespaceForImplicitConversion(const Decl *Declaration) {
+  std::string Name = getDeclarationNamespace(Declaration);
+  if (Name == "") {
     return false;
   }
 
-  return name == "std" ||             // standard C++ lib
-         name == "__gnu_cxx" ||       // gnu C++ lib
-         name == "google_breakpad" || // breakpad
-         name == "testing";           // gtest
+  return Name == "std" ||             // standard C++ lib
+         Name == "__gnu_cxx" ||       // gnu C++ lib
+         Name == "google_breakpad" || // breakpad
+         Name == "testing";           // gtest
 }
 
-bool isIgnoredPathForImplicitCtor(const Decl *decl) {
-  SourceLocation Loc = decl->getLocation();
-  const SourceManager &SM = decl->getASTContext().getSourceManager();
+bool isIgnoredPathForImplicitCtor(const Decl *Declaration) {
+  SourceLocation Loc = Declaration->getLocation();
+  const SourceManager &SM = Declaration->getASTContext().getSourceManager();
   SmallString<1024> FileName = SM.getFilename(Loc);
   llvm::sys::fs::make_absolute(FileName);
-  llvm::sys::path::reverse_iterator begin = llvm::sys::path::rbegin(FileName),
-                                    end = llvm::sys::path::rend(FileName);
-  for (; begin != end; ++begin) {
-    if (begin->compare_lower(StringRef("skia")) == 0 ||
-        begin->compare_lower(StringRef("angle")) == 0 ||
-        begin->compare_lower(StringRef("harfbuzz")) == 0 ||
-        begin->compare_lower(StringRef("hunspell")) == 0 ||
-        begin->compare_lower(StringRef("scoped_ptr.h")) == 0 ||
-        begin->compare_lower(StringRef("graphite2")) == 0) {
+  llvm::sys::path::reverse_iterator Begin = llvm::sys::path::rbegin(FileName),
+                                    End = llvm::sys::path::rend(FileName);
+  for (; Begin != End; ++Begin) {
+    if (Begin->compare_lower(StringRef("skia")) == 0 ||
+        Begin->compare_lower(StringRef("angle")) == 0 ||
+        Begin->compare_lower(StringRef("harfbuzz")) == 0 ||
+        Begin->compare_lower(StringRef("hunspell")) == 0 ||
+        Begin->compare_lower(StringRef("scoped_ptr.h")) == 0 ||
+        Begin->compare_lower(StringRef("graphite2")) == 0) {
       return true;
     }
-    if (begin->compare_lower(StringRef("chromium")) == 0) {
+    if (Begin->compare_lower(StringRef("chromium")) == 0) {
       // Ignore security/sandbox/chromium but not ipc/chromium.
-      ++begin;
-      return begin != end && begin->compare_lower(StringRef("sandbox")) == 0;
+      ++Begin;
+      return Begin != End && Begin->compare_lower(StringRef("sandbox")) == 0;
     }
   }
   return false;
 }
 
-bool isIgnoredPathForImplicitConversion(const Decl *decl) {
-  decl = decl->getCanonicalDecl();
-  SourceLocation Loc = decl->getLocation();
-  const SourceManager &SM = decl->getASTContext().getSourceManager();
+bool isIgnoredPathForImplicitConversion(const Decl *Declaration) {
+  Declaration = Declaration->getCanonicalDecl();
+  SourceLocation Loc = Declaration->getLocation();
+  const SourceManager &SM = Declaration->getASTContext().getSourceManager();
   SmallString<1024> FileName = SM.getFilename(Loc);
   llvm::sys::fs::make_absolute(FileName);
-  llvm::sys::path::reverse_iterator begin = llvm::sys::path::rbegin(FileName),
-                                    end = llvm::sys::path::rend(FileName);
-  for (; begin != end; ++begin) {
-    if (begin->compare_lower(StringRef("graphite2")) == 0) {
+  llvm::sys::path::reverse_iterator Begin = llvm::sys::path::rbegin(FileName),
+                                    End = llvm::sys::path::rend(FileName);
+  for (; Begin != End; ++Begin) {
+    if (Begin->compare_lower(StringRef("graphite2")) == 0) {
       return true;
+    }
+    if (Begin->compare_lower(StringRef("chromium")) == 0) {
+      // Ignore security/sandbox/chromium but not ipc/chromium.
+      ++Begin;
+      return Begin != End && Begin->compare_lower(StringRef("sandbox")) == 0;
     }
   }
   return false;
 }
 
-bool isInterestingDeclForImplicitConversion(const Decl *decl) {
-  return !isInIgnoredNamespaceForImplicitConversion(decl) &&
-         !isIgnoredPathForImplicitConversion(decl);
+bool isInterestingDeclForImplicitConversion(const Decl *Declaration) {
+  return !isInIgnoredNamespaceForImplicitConversion(Declaration) &&
+         !isIgnoredPathForImplicitConversion(Declaration);
 }
 
 bool isIgnoredExprForMustUse(const Expr *E) {
@@ -434,7 +442,7 @@ protected:
     if (getDeclarationNamespace(D) == "std") {
       // This doesn't check that it's really ::std::pair and not
       // ::std::something_else::pair, but should be good enough.
-      StringRef Name = D->getName();
+      StringRef Name = getNameChecked(D);
       if (Name == "pair" || Name == "atomic" || Name == "__atomic_base") {
         return false;
       }
@@ -449,15 +457,15 @@ static MemMoveAnnotation NonMemMovable = MemMoveAnnotation();
 class MozChecker : public ASTConsumer, public RecursiveASTVisitor<MozChecker> {
   DiagnosticsEngine &Diag;
   const CompilerInstance &CI;
-  DiagnosticsMatcher matcher;
+  DiagnosticsMatcher Matcher;
 
 public:
   MozChecker(const CompilerInstance &CI) : Diag(CI.getDiagnostics()), CI(CI) {}
 
-  ASTConsumerPtr getOtherConsumer() { return matcher.makeASTConsumer(); }
+  ASTConsumerPtr getOtherConsumer() { return Matcher.makeASTConsumer(); }
 
-  virtual void HandleTranslationUnit(ASTContext &ctx) {
-    TraverseDecl(ctx.getTranslationUnitDecl());
+  virtual void HandleTranslationUnit(ASTContext &Ctx) override {
+    TraverseDecl(Ctx.getTranslationUnitDecl());
   }
 
   static bool hasCustomAnnotation(const Decl *D, const char *Spelling) {
@@ -473,112 +481,112 @@ public:
     return false;
   }
 
-  void HandleUnusedExprResult(const Stmt *stmt) {
-    const Expr *E = dyn_cast_or_null<Expr>(stmt);
+  void handleUnusedExprResult(const Stmt *Statement) {
+    const Expr *E = dyn_cast_or_null<Expr>(Statement);
     if (E) {
       E = E->IgnoreImplicit(); // Ignore ExprWithCleanup etc. implicit wrappers
       QualType T = E->getType();
       if (MustUse.hasEffectiveAnnotation(T) && !isIgnoredExprForMustUse(E)) {
-        unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+        unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
             DiagnosticIDs::Error, "Unused value of must-use type %0");
 
-        Diag.Report(E->getLocStart(), errorID) << T;
+        Diag.Report(E->getLocStart(), ErrorID) << T;
         MustUse.dumpAnnotationReason(Diag, T, E->getLocStart());
       }
     }
   }
 
-  bool VisitCXXRecordDecl(CXXRecordDecl *d) {
+  bool VisitCXXRecordDecl(CXXRecordDecl *D) {
     // We need definitions, not declarations
-    if (!d->isThisDeclarationADefinition())
+    if (!D->isThisDeclarationADefinition())
       return true;
 
     // Look through all of our immediate bases to find methods that need to be
     // overridden
     typedef std::vector<CXXMethodDecl *> OverridesVector;
-    OverridesVector must_overrides;
-    for (CXXRecordDecl::base_class_iterator base = d->bases_begin(),
-                                            e = d->bases_end();
-         base != e; ++base) {
+    OverridesVector MustOverrides;
+    for (CXXRecordDecl::base_class_iterator Base = D->bases_begin(),
+                                            E = D->bases_end();
+         Base != E; ++Base) {
       // The base is either a class (CXXRecordDecl) or it's a templated class...
-      CXXRecordDecl *parent = base->getType()
-                                  .getDesugaredType(d->getASTContext())
+      CXXRecordDecl *Parent = Base->getType()
+                                  .getDesugaredType(D->getASTContext())
                                   ->getAsCXXRecordDecl();
       // The parent might not be resolved to a type yet. In this case, we can't
       // do any checking here. For complete correctness, we should visit
       // template instantiations, but this case is likely to be rare, so we will
       // ignore it until it becomes important.
-      if (!parent) {
+      if (!Parent) {
         continue;
       }
-      parent = parent->getDefinition();
-      for (CXXRecordDecl::method_iterator M = parent->method_begin();
-           M != parent->method_end(); ++M) {
+      Parent = Parent->getDefinition();
+      for (CXXRecordDecl::method_iterator M = Parent->method_begin();
+           M != Parent->method_end(); ++M) {
         if (hasCustomAnnotation(*M, "moz_must_override"))
-          must_overrides.push_back(*M);
+          MustOverrides.push_back(*M);
       }
     }
 
-    for (OverridesVector::iterator it = must_overrides.begin();
-         it != must_overrides.end(); ++it) {
-      bool overridden = false;
-      for (CXXRecordDecl::method_iterator M = d->method_begin();
-           !overridden && M != d->method_end(); ++M) {
+    for (OverridesVector::iterator It = MustOverrides.begin();
+         It != MustOverrides.end(); ++It) {
+      bool Overridden = false;
+      for (CXXRecordDecl::method_iterator M = D->method_begin();
+           !Overridden && M != D->method_end(); ++M) {
         // The way that Clang checks if a method M overrides its parent method
         // is if the method has the same name but would not overload.
-        if (M->getName() == (*it)->getName() &&
-            !CI.getSema().IsOverload(*M, (*it), false)) {
-          overridden = true;
+        if (getNameChecked(M) == getNameChecked(*It) &&
+            !CI.getSema().IsOverload(*M, (*It), false)) {
+          Overridden = true;
           break;
         }
       }
-      if (!overridden) {
-        unsigned overrideID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      if (!Overridden) {
+        unsigned OverrideID = Diag.getDiagnosticIDs()->getCustomDiagID(
             DiagnosticIDs::Error, "%0 must override %1");
-        unsigned overrideNote = Diag.getDiagnosticIDs()->getCustomDiagID(
+        unsigned OverrideNote = Diag.getDiagnosticIDs()->getCustomDiagID(
             DiagnosticIDs::Note, "function to override is here");
-        Diag.Report(d->getLocation(), overrideID) << d->getDeclName()
-                                                  << (*it)->getDeclName();
-        Diag.Report((*it)->getLocation(), overrideNote);
+        Diag.Report(D->getLocation(), OverrideID) << D->getDeclName()
+                                                  << (*It)->getDeclName();
+        Diag.Report((*It)->getLocation(), OverrideNote);
       }
     }
 
     return true;
   }
 
-  bool VisitSwitchCase(SwitchCase *stmt) {
-    HandleUnusedExprResult(stmt->getSubStmt());
+  bool VisitSwitchCase(SwitchCase *Statement) {
+    handleUnusedExprResult(Statement->getSubStmt());
     return true;
   }
-  bool VisitCompoundStmt(CompoundStmt *stmt) {
-    for (CompoundStmt::body_iterator it = stmt->body_begin(),
-                                     e = stmt->body_end();
-         it != e; ++it) {
-      HandleUnusedExprResult(*it);
+  bool VisitCompoundStmt(CompoundStmt *Statement) {
+    for (CompoundStmt::body_iterator It = Statement->body_begin(),
+                                     E = Statement->body_end();
+         It != E; ++It) {
+      handleUnusedExprResult(*It);
     }
     return true;
   }
-  bool VisitIfStmt(IfStmt *Stmt) {
-    HandleUnusedExprResult(Stmt->getThen());
-    HandleUnusedExprResult(Stmt->getElse());
+  bool VisitIfStmt(IfStmt *Statement) {
+    handleUnusedExprResult(Statement->getThen());
+    handleUnusedExprResult(Statement->getElse());
     return true;
   }
-  bool VisitWhileStmt(WhileStmt *Stmt) {
-    HandleUnusedExprResult(Stmt->getBody());
+  bool VisitWhileStmt(WhileStmt *Statement) {
+    handleUnusedExprResult(Statement->getBody());
     return true;
   }
-  bool VisitDoStmt(DoStmt *Stmt) {
-    HandleUnusedExprResult(Stmt->getBody());
+  bool VisitDoStmt(DoStmt *Statement) {
+    handleUnusedExprResult(Statement->getBody());
     return true;
   }
-  bool VisitForStmt(ForStmt *Stmt) {
-    HandleUnusedExprResult(Stmt->getBody());
-    HandleUnusedExprResult(Stmt->getInit());
-    HandleUnusedExprResult(Stmt->getInc());
+  bool VisitForStmt(ForStmt *Statement) {
+    handleUnusedExprResult(Statement->getBody());
+    handleUnusedExprResult(Statement->getInit());
+    handleUnusedExprResult(Statement->getInc());
     return true;
   }
   bool VisitBinComma(BinaryOperator *Op) {
-    HandleUnusedExprResult(Op->getLHS());
+    handleUnusedExprResult(Op->getLHS());
     return true;
   }
 };
@@ -586,27 +594,27 @@ public:
 /// A cached data of whether classes are refcounted or not.
 typedef DenseMap<const CXXRecordDecl *, std::pair<const Decl *, bool>>
     RefCountedMap;
-RefCountedMap refCountedClasses;
+RefCountedMap RefCountedClasses;
 
 bool classHasAddRefRelease(const CXXRecordDecl *D) {
-  const RefCountedMap::iterator &it = refCountedClasses.find(D);
-  if (it != refCountedClasses.end()) {
-    return it->second.second;
+  const RefCountedMap::iterator &It = RefCountedClasses.find(D);
+  if (It != RefCountedClasses.end()) {
+    return It->second.second;
   }
 
-  bool seenAddRef = false;
-  bool seenRelease = false;
-  for (CXXRecordDecl::method_iterator method = D->method_begin();
-       method != D->method_end(); ++method) {
-    const auto &name = method->getName();
-    if (name == "AddRef") {
-      seenAddRef = true;
-    } else if (name == "Release") {
-      seenRelease = true;
+  bool SeenAddRef = false;
+  bool SeenRelease = false;
+  for (CXXRecordDecl::method_iterator Method = D->method_begin();
+       Method != D->method_end(); ++Method) {
+    const auto &Name = getNameChecked(Method);
+    if (Name == "AddRef") {
+      SeenAddRef = true;
+    } else if (Name == "Release") {
+      SeenRelease = true;
     }
   }
-  refCountedClasses[D] = std::make_pair(D, seenAddRef && seenRelease);
-  return seenAddRef && seenRelease;
+  RefCountedClasses[D] = std::make_pair(D, SeenAddRef && SeenRelease);
+  return SeenAddRef && SeenRelease;
 }
 
 bool isClassRefCounted(QualType T);
@@ -622,10 +630,10 @@ bool isClassRefCounted(const CXXRecordDecl *D) {
 
   // Look through all base cases to figure out if the parent is a refcounted
   // class.
-  for (CXXRecordDecl::base_class_const_iterator base = D->bases_begin();
-       base != D->bases_end(); ++base) {
-    bool super = isClassRefCounted(base->getType());
-    if (super) {
+  for (CXXRecordDecl::base_class_const_iterator Base = D->bases_begin();
+       Base != D->bases_end(); ++Base) {
+    bool Super = isClassRefCounted(Base->getType());
+    if (Super) {
       return true;
     }
   }
@@ -634,13 +642,13 @@ bool isClassRefCounted(const CXXRecordDecl *D) {
 }
 
 bool isClassRefCounted(QualType T) {
-  while (const clang::ArrayType *arrTy = T->getAsArrayTypeUnsafe())
-    T = arrTy->getElementType();
-  CXXRecordDecl *clazz = T->getAsCXXRecordDecl();
-  return clazz ? isClassRefCounted(clazz) : false;
+  while (const clang::ArrayType *ArrTy = T->getAsArrayTypeUnsafe())
+    T = ArrTy->getElementType();
+  CXXRecordDecl *Clazz = T->getAsCXXRecordDecl();
+  return Clazz ? isClassRefCounted(Clazz) : false;
 }
 
-template <class T> bool IsInSystemHeader(const ASTContext &AC, const T &D) {
+template <class T> bool ASTIsInSystemHeader(const ASTContext &AC, const T &D) {
   auto &SourceManager = AC.getSourceManager();
   auto ExpansionLoc = SourceManager.getExpansionLoc(D.getLocStart());
   if (ExpansionLoc.isInvalid()) {
@@ -650,10 +658,10 @@ template <class T> bool IsInSystemHeader(const ASTContext &AC, const T &D) {
 }
 
 const FieldDecl *getClassRefCntMember(const CXXRecordDecl *D) {
-  for (RecordDecl::field_iterator field = D->field_begin(), e = D->field_end();
-       field != e; ++field) {
-    if (field->getName() == "mRefCnt") {
-      return *field;
+  for (RecordDecl::field_iterator Field = D->field_begin(), E = D->field_end();
+       Field != E; ++Field) {
+    if (getNameChecked(Field) == "mRefCnt") {
+      return *Field;
     }
   }
   return 0;
@@ -662,34 +670,34 @@ const FieldDecl *getClassRefCntMember(const CXXRecordDecl *D) {
 const FieldDecl *getBaseRefCntMember(QualType T);
 
 const FieldDecl *getBaseRefCntMember(const CXXRecordDecl *D) {
-  const FieldDecl *refCntMember = getClassRefCntMember(D);
-  if (refCntMember && isClassRefCounted(D)) {
-    return refCntMember;
+  const FieldDecl *RefCntMember = getClassRefCntMember(D);
+  if (RefCntMember && isClassRefCounted(D)) {
+    return RefCntMember;
   }
 
-  for (CXXRecordDecl::base_class_const_iterator base = D->bases_begin(),
-                                                e = D->bases_end();
-       base != e; ++base) {
-    refCntMember = getBaseRefCntMember(base->getType());
-    if (refCntMember) {
-      return refCntMember;
+  for (CXXRecordDecl::base_class_const_iterator Base = D->bases_begin(),
+                                                E = D->bases_end();
+       Base != E; ++Base) {
+    RefCntMember = getBaseRefCntMember(Base->getType());
+    if (RefCntMember) {
+      return RefCntMember;
     }
   }
   return 0;
 }
 
 const FieldDecl *getBaseRefCntMember(QualType T) {
-  while (const clang::ArrayType *arrTy = T->getAsArrayTypeUnsafe())
-    T = arrTy->getElementType();
-  CXXRecordDecl *clazz = T->getAsCXXRecordDecl();
-  return clazz ? getBaseRefCntMember(clazz) : 0;
+  while (const clang::ArrayType *ArrTy = T->getAsArrayTypeUnsafe())
+    T = ArrTy->getElementType();
+  CXXRecordDecl *Clazz = T->getAsCXXRecordDecl();
+  return Clazz ? getBaseRefCntMember(Clazz) : 0;
 }
 
 bool typeHasVTable(QualType T) {
-  while (const clang::ArrayType *arrTy = T->getAsArrayTypeUnsafe())
-    T = arrTy->getElementType();
-  CXXRecordDecl *offender = T->getAsCXXRecordDecl();
-  return offender && offender->hasDefinition() && offender->isDynamicClass();
+  while (const clang::ArrayType *ArrTy = T->getAsArrayTypeUnsafe())
+    T = ArrTy->getElementType();
+  CXXRecordDecl *Offender = T->getAsCXXRecordDecl();
+  return Offender && Offender->hasDefinition() && Offender->isDynamicClass();
 }
 }
 
@@ -723,29 +731,29 @@ AST_MATCHER(FunctionDecl, hasNoAddRefReleaseOnReturnAttr) {
 
 /// This matcher will match all arithmetic binary operators.
 AST_MATCHER(BinaryOperator, binaryArithmeticOperator) {
-  BinaryOperatorKind opcode = Node.getOpcode();
-  return opcode == BO_Mul || opcode == BO_Div || opcode == BO_Rem ||
-         opcode == BO_Add || opcode == BO_Sub || opcode == BO_Shl ||
-         opcode == BO_Shr || opcode == BO_And || opcode == BO_Xor ||
-         opcode == BO_Or || opcode == BO_MulAssign || opcode == BO_DivAssign ||
-         opcode == BO_RemAssign || opcode == BO_AddAssign ||
-         opcode == BO_SubAssign || opcode == BO_ShlAssign ||
-         opcode == BO_ShrAssign || opcode == BO_AndAssign ||
-         opcode == BO_XorAssign || opcode == BO_OrAssign;
+  BinaryOperatorKind OpCode = Node.getOpcode();
+  return OpCode == BO_Mul || OpCode == BO_Div || OpCode == BO_Rem ||
+         OpCode == BO_Add || OpCode == BO_Sub || OpCode == BO_Shl ||
+         OpCode == BO_Shr || OpCode == BO_And || OpCode == BO_Xor ||
+         OpCode == BO_Or || OpCode == BO_MulAssign || OpCode == BO_DivAssign ||
+         OpCode == BO_RemAssign || OpCode == BO_AddAssign ||
+         OpCode == BO_SubAssign || OpCode == BO_ShlAssign ||
+         OpCode == BO_ShrAssign || OpCode == BO_AndAssign ||
+         OpCode == BO_XorAssign || OpCode == BO_OrAssign;
 }
 
 /// This matcher will match all arithmetic unary operators.
 AST_MATCHER(UnaryOperator, unaryArithmeticOperator) {
-  UnaryOperatorKind opcode = Node.getOpcode();
-  return opcode == UO_PostInc || opcode == UO_PostDec || opcode == UO_PreInc ||
-         opcode == UO_PreDec || opcode == UO_Plus || opcode == UO_Minus ||
-         opcode == UO_Not;
+  UnaryOperatorKind OpCode = Node.getOpcode();
+  return OpCode == UO_PostInc || OpCode == UO_PostDec || OpCode == UO_PreInc ||
+         OpCode == UO_PreDec || OpCode == UO_Plus || OpCode == UO_Minus ||
+         OpCode == UO_Not;
 }
 
 /// This matcher will match == and != binary operators.
 AST_MATCHER(BinaryOperator, binaryEqualityOperator) {
-  BinaryOperatorKind opcode = Node.getOpcode();
-  return opcode == BO_EQ || opcode == BO_NE;
+  BinaryOperatorKind OpCode = Node.getOpcode();
+  return OpCode == BO_EQ || OpCode == BO_NE;
 }
 
 /// This matcher will match floating point types.
@@ -755,7 +763,7 @@ AST_MATCHER(QualType, isFloat) { return Node->isRealFloatingType(); }
 /// isExpansionInSystemHeader in newer clangs, but modified in order to work
 /// with old clangs that we use on infra.
 AST_MATCHER(BinaryOperator, isInSystemHeader) {
-  return IsInSystemHeader(Finder->getASTContext(), Node);
+  return ASTIsInSystemHeader(Finder->getASTContext(), Node);
 }
 
 /// This matcher will match locations in SkScalar.h.  This header contains a
@@ -772,7 +780,7 @@ AST_MATCHER(MemberExpr, isAddRefOrRelease) {
   ValueDecl *Member = Node.getMemberDecl();
   CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Member);
   if (Method) {
-    const auto &Name = Method->getName();
+    const auto &Name = getNameChecked(Method);
     return Name == "AddRef" || Name == "Release";
   }
   return false;
@@ -805,18 +813,18 @@ AST_MATCHER(CXXRecordDecl, needsMemMovableMembers) {
 }
 
 AST_MATCHER(CXXConstructorDecl, isInterestingImplicitCtor) {
-  const CXXConstructorDecl *decl = Node.getCanonicalDecl();
+  const CXXConstructorDecl *Declaration = Node.getCanonicalDecl();
   return
       // Skip ignored namespaces and paths
-      !isInIgnoredNamespaceForImplicitCtor(decl) &&
-      !isIgnoredPathForImplicitCtor(decl) &&
+      !isInIgnoredNamespaceForImplicitCtor(Declaration) &&
+      !isIgnoredPathForImplicitCtor(Declaration) &&
       // We only want Converting constructors
-      decl->isConvertingConstructor(false) &&
+      Declaration->isConvertingConstructor(false) &&
       // We don't want copy of move constructors, as those are allowed to be
       // implicit
-      !decl->isCopyOrMoveConstructor() &&
+      !Declaration->isCopyOrMoveConstructor() &&
       // We don't want deleted constructors.
-      !decl->isDeleted();
+      !Declaration->isDeleted();
 }
 
 // We can't call this "isImplicit" since it clashes with an existing matcher in
@@ -845,12 +853,16 @@ AST_MATCHER(CXXConstructorDecl, isCompilerProvidedCopyConstructor) {
 }
 
 AST_MATCHER(CallExpr, isAssertAssignmentTestFunc) {
-  static const std::string assertName = "MOZ_AssertAssignmentTest";
-  const FunctionDecl *method = Node.getDirectCallee();
+  static const std::string AssertName = "MOZ_AssertAssignmentTest";
+  const FunctionDecl *Method = Node.getDirectCallee();
 
-  return method
-      && method->getDeclName().isIdentifier()
-      && method->getName() == assertName;
+  return Method
+      && Method->getDeclName().isIdentifier()
+      && Method->getName() == AssertName;
+}
+
+AST_MATCHER(CXXRecordDecl, isLambdaDecl) {
+  return Node.isLambda();
 }
 
 AST_MATCHER(QualType, isRefPtr) {
@@ -883,10 +895,10 @@ void CustomTypeAnnotation::dumpAnnotationReason(DiagnosticsEngine &Diag,
       Diag.Report(Loc, ArrayID) << Pretty << T << Reason.Type;
       break;
     case RK_BaseClass: {
-      const CXXRecordDecl *Decl = T->getAsCXXRecordDecl();
-      assert(Decl && "This type should be a C++ class");
+      const CXXRecordDecl *Declaration = T->getAsCXXRecordDecl();
+      assert(Declaration && "This type should be a C++ class");
 
-      Diag.Report(Decl->getLocation(), InheritsID) << Pretty << T
+      Diag.Report(Declaration->getLocation(), InheritsID) << Pretty << T
                                                    << Reason.Type;
       break;
     }
@@ -895,10 +907,11 @@ void CustomTypeAnnotation::dumpAnnotationReason(DiagnosticsEngine &Diag,
           << Pretty << T << Reason.Field << Reason.Type;
       break;
     case RK_TemplateInherited: {
-      const CXXRecordDecl *Decl = T->getAsCXXRecordDecl();
-      assert(Decl && "This type should be a C++ class");
+      const CXXRecordDecl *Declaration = T->getAsCXXRecordDecl();
+      assert(Declaration && "This type should be a C++ class");
 
-      Diag.Report(Decl->getLocation(), TemplID) << Pretty << T << Reason.Type;
+      Diag.Report(Declaration->getLocation(), TemplID) << Pretty << T
+                                                   << Reason.Type;
       break;
     }
     default:
@@ -946,12 +959,12 @@ CustomTypeAnnotation::directAnnotationReason(QualType T) {
     }
   }
 
-  // Recurse into base classes
-  if (const CXXRecordDecl *Decl = T->getAsCXXRecordDecl()) {
-    if (Decl->hasDefinition()) {
-      Decl = Decl->getDefinition();
+  // Recurse into Base classes
+  if (const CXXRecordDecl *Declaration = T->getAsCXXRecordDecl()) {
+    if (Declaration->hasDefinition()) {
+      Declaration = Declaration->getDefinition();
 
-      for (const CXXBaseSpecifier &Base : Decl->bases()) {
+      for (const CXXBaseSpecifier &Base : Declaration->bases()) {
         if (hasEffectiveAnnotation(Base.getType())) {
           AnnotationReason Reason = {Base.getType(), RK_BaseClass, nullptr};
           Cache[Key] = Reason;
@@ -960,7 +973,7 @@ CustomTypeAnnotation::directAnnotationReason(QualType T) {
       }
 
       // Recurse into members
-      for (const FieldDecl *Field : Decl->fields()) {
+      for (const FieldDecl *Field : Declaration->fields()) {
         if (hasEffectiveAnnotation(Field->getType())) {
           AnnotationReason Reason = {Field->getType(), RK_Field, Field};
           Cache[Key] = Reason;
@@ -971,9 +984,9 @@ CustomTypeAnnotation::directAnnotationReason(QualType T) {
       // Recurse into template arguments if the annotation
       // MOZ_INHERIT_TYPE_ANNOTATIONS_FROM_TEMPLATE_ARGS is present
       if (MozChecker::hasCustomAnnotation(
-              Decl, "moz_inherit_type_annotations_from_template_args")) {
+              Declaration, "moz_inherit_type_annotations_from_template_args")) {
         const ClassTemplateSpecializationDecl *Spec =
-            dyn_cast<ClassTemplateSpecializationDecl>(Decl);
+            dyn_cast<ClassTemplateSpecializationDecl>(Declaration);
         if (Spec) {
           const TemplateArgumentList &Args = Spec->getTemplateArgs();
 
@@ -1013,27 +1026,28 @@ CustomTypeAnnotation::tmplArgAnnotationReason(ArrayRef<TemplateArgument> Args) {
   return Reason;
 }
 
-bool isPlacementNew(const CXXNewExpr *Expr) {
+bool isPlacementNew(const CXXNewExpr *Expression) {
   // Regular new expressions aren't placement new
-  if (Expr->getNumPlacementArgs() == 0)
+  if (Expression->getNumPlacementArgs() == 0)
     return false;
-  const FunctionDecl *Decl = Expr->getOperatorNew();
-  if (Decl && MozChecker::hasCustomAnnotation(Decl, "moz_heap_allocator")) {
+  const FunctionDecl *Declaration = Expression->getOperatorNew();
+  if (Declaration && MozChecker::hasCustomAnnotation(Declaration,
+                 "moz_heap_allocator")) {
     return false;
   }
   return true;
 }
 
 DiagnosticsMatcher::DiagnosticsMatcher() {
-  astMatcher.addMatcher(varDecl().bind("node"), &scopeChecker);
-  astMatcher.addMatcher(cxxNewExpr().bind("node"), &scopeChecker);
-  astMatcher.addMatcher(materializeTemporaryExpr().bind("node"), &scopeChecker);
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(varDecl().bind("node"), &Scope);
+  AstMatcher.addMatcher(cxxNewExpr().bind("node"), &Scope);
+  AstMatcher.addMatcher(materializeTemporaryExpr().bind("node"), &Scope);
+  AstMatcher.addMatcher(
       callExpr(callee(functionDecl(heapAllocator()))).bind("node"),
-      &scopeChecker);
-  astMatcher.addMatcher(parmVarDecl().bind("parm_vardecl"), &scopeChecker);
+      &Scope);
+  AstMatcher.addMatcher(parmVarDecl().bind("parm_vardecl"), &Scope);
 
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       callExpr(allOf(hasDeclaration(noArithmeticExprInArgs()),
                      anyOf(hasDescendant(
                                binaryOperator(
@@ -1050,8 +1064,8 @@ DiagnosticsMatcher::DiagnosticsMatcher() {
                                                    declRefExpr())))))
                                    .bind("node")))))
           .bind("call"),
-      &arithmeticArgChecker);
-  astMatcher.addMatcher(
+      &ArithmeticArg);
+  AstMatcher.addMatcher(
       cxxConstructExpr(
           allOf(hasDeclaration(noArithmeticExprInArgs()),
                 anyOf(hasDescendant(
@@ -1069,12 +1083,12 @@ DiagnosticsMatcher::DiagnosticsMatcher() {
                                               declRefExpr())))))
                               .bind("node")))))
           .bind("call"),
-      &arithmeticArgChecker);
+      &ArithmeticArg);
 
-  astMatcher.addMatcher(cxxRecordDecl(hasTrivialCtorDtor()).bind("node"),
-                        &trivialCtorDtorChecker);
+  AstMatcher.addMatcher(cxxRecordDecl(hasTrivialCtorDtor()).bind("node"),
+                        &TrivialCtorDtor);
 
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       binaryOperator(
           allOf(binaryEqualityOperator(),
                 hasLHS(has(
@@ -1083,94 +1097,104 @@ DiagnosticsMatcher::DiagnosticsMatcher() {
                     declRefExpr(hasType(qualType((isFloat())))).bind("rhs"))),
                 unless(anyOf(isInSystemHeader(), isInSkScalarDotH()))))
           .bind("node"),
-      &nanExprChecker);
+      &NaNExpr);
 
   // First, look for direct parents of the MemberExpr.
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       callExpr(
           callee(functionDecl(hasNoAddRefReleaseOnReturnAttr()).bind("func")),
           hasParent(memberExpr(isAddRefOrRelease(), hasParent(callExpr()))
                         .bind("member")))
           .bind("node"),
-      &noAddRefReleaseOnReturnChecker);
+      &NoAddRefReleaseOnReturn);
   // Then, look for MemberExpr that need to be casted to the right type using
   // an intermediary CastExpr before we get to the CallExpr.
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       callExpr(
           callee(functionDecl(hasNoAddRefReleaseOnReturnAttr()).bind("func")),
           hasParent(castExpr(
               hasParent(memberExpr(isAddRefOrRelease(), hasParent(callExpr()))
                             .bind("member")))))
           .bind("node"),
-      &noAddRefReleaseOnReturnChecker);
+      &NoAddRefReleaseOnReturn);
 
-  // Match declrefs with type "pointer to object of ref-counted type" inside a
-  // lambda, where the declaration they reference is not inside the lambda.
-  // This excludes arguments and local variables, leaving only captured
-  // variables.
-  astMatcher.addMatcher(lambdaExpr().bind("lambda"),
-                        &refCountedInsideLambdaChecker);
+  // We want to reject any code which captures a pointer to an object of a
+  // refcounted type, and then lets that value escape. As a primitive analysis,
+  // we reject any occurances of the lambda as a template parameter to a class
+  // (which could allow it to escape), as well as any presence of such a lambda
+  // in a return value (either from lambdas, or in c++14, auto functions).
+  //
+  // We check these lambdas' capture lists for raw pointers to refcounted types.
+  AstMatcher.addMatcher(
+      functionDecl(returns(recordType(hasDeclaration(cxxRecordDecl(
+        isLambdaDecl()).bind("decl"))))),
+      &RefCountedInsideLambda);
+  AstMatcher.addMatcher(lambdaExpr().bind("lambdaExpr"),
+      &RefCountedInsideLambda);
+  AstMatcher.addMatcher(
+      classTemplateSpecializationDecl(hasAnyTemplateArgument(refersToType(
+        recordType(hasDeclaration(cxxRecordDecl(
+          isLambdaDecl()).bind("decl")))))),
+      &RefCountedInsideLambda);
 
   // Older clang versions such as the ones used on the infra recognize these
   // conversions as 'operator _Bool', but newer clang versions recognize these
   // as 'operator bool'.
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       cxxMethodDecl(anyOf(hasName("operator bool"), hasName("operator _Bool")))
           .bind("node"),
-      &explicitOperatorBoolChecker);
+      &ExplicitOperatorBool);
 
-  astMatcher.addMatcher(
-      cxxRecordDecl(allOf(decl().bind("decl"), hasRefCntMember())),
-      &noDuplicateRefCntMemberChecker);
+  AstMatcher.addMatcher(cxxRecordDecl().bind("decl"), &NoDuplicateRefCntMember);
 
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       classTemplateSpecializationDecl(
           allOf(hasAnyTemplateArgument(refersToType(hasVTable())),
                 hasNeedsNoVTableTypeAttr()))
           .bind("node"),
-      &needsNoVTableTypeChecker);
+      &NeedsNoVTableType);
 
   // Handle non-mem-movable template specializations
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       classTemplateSpecializationDecl(
           allOf(needsMemMovableTemplateArg(),
                 hasAnyTemplateArgument(refersToType(isNonMemMovable()))))
           .bind("specialization"),
-      &nonMemMovableTemplateArgChecker);
+      &NonMemMovableTemplateArg);
 
   // Handle non-mem-movable members
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       cxxRecordDecl(needsMemMovableMembers())
           .bind("decl"),
-      &nonMemMovableMemberChecker);
+      &NonMemMovableMember);
 
-  astMatcher.addMatcher(cxxConstructorDecl(isInterestingImplicitCtor(),
+  AstMatcher.addMatcher(cxxConstructorDecl(isInterestingImplicitCtor(),
                                            ofClass(allOf(isConcreteClass(),
                                                          decl().bind("class"))),
                                            unless(isMarkedImplicit()))
                             .bind("ctor"),
-                        &explicitImplicitChecker);
+                        &ExplicitImplicit);
 
-  astMatcher.addMatcher(varDecl(hasType(autoNonAutoableType())).bind("node"),
-                        &noAutoTypeChecker);
+  AstMatcher.addMatcher(varDecl(hasType(autoNonAutoableType())).bind("node"),
+                        &NoAutoType);
 
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       cxxConstructorDecl(isExplicitMoveConstructor()).bind("node"),
-      &noExplicitMoveConstructorChecker);
+      &NoExplicitMoveConstructor);
 
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       cxxConstructExpr(
           hasDeclaration(cxxConstructorDecl(isCompilerProvidedCopyConstructor(),
                                             ofClass(hasRefCntMember()))))
           .bind("node"),
-      &refCountedCopyConstructorChecker);
+      &RefCountedCopyConstructor);
 
-  astMatcher.addMatcher(
+  AstMatcher.addMatcher(
       callExpr(isAssertAssignmentTestFunc()).bind("funcCall"),
-      &assertAttributionChecker);
+      &AssertAttribution);
 
-  astMatcher.addMatcher(varDecl(hasType(isRefPtr())).bind("decl"),
-                        &kungFuDeathGripChecker);
+  AstMatcher.addMatcher(varDecl(hasType(isRefPtr())).bind("decl"),
+                        &KungFuDeathGrip);
 }
 
 // These enum variants determine whether an allocation has occured in the code.
@@ -1200,6 +1224,9 @@ void DiagnosticsMatcher::ScopeChecker::run(
 
   if (const ParmVarDecl *D =
           Result.Nodes.getNodeAs<ParmVarDecl>("parm_vardecl")) {
+    if (D->hasUnparsedDefaultArg() || D->hasUninstantiatedDefaultArg()) {
+      return;
+    }
     if (const Expr *Default = D->getDefaultArg()) {
       if (const MaterializeTemporaryExpr *E =
               dyn_cast<MaterializeTemporaryExpr>(Default)) {
@@ -1331,34 +1358,34 @@ void DiagnosticsMatcher::ScopeChecker::run(
 void DiagnosticsMatcher::ArithmeticArgChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error,
       "cannot pass an arithmetic expression of built-in types to %0");
-  const Expr *expr = Result.Nodes.getNodeAs<Expr>("node");
-  if (const CallExpr *call = Result.Nodes.getNodeAs<CallExpr>("call")) {
-    Diag.Report(expr->getLocStart(), errorID) << call->getDirectCallee();
-  } else if (const CXXConstructExpr *ctr =
+  const Expr *Expression = Result.Nodes.getNodeAs<Expr>("node");
+  if (const CallExpr *Call = Result.Nodes.getNodeAs<CallExpr>("call")) {
+    Diag.Report(Expression->getLocStart(), ErrorID) << Call->getDirectCallee();
+  } else if (const CXXConstructExpr *Ctr =
                  Result.Nodes.getNodeAs<CXXConstructExpr>("call")) {
-    Diag.Report(expr->getLocStart(), errorID) << ctr->getConstructor();
+    Diag.Report(Expression->getLocStart(), ErrorID) << Ctr->getConstructor();
   }
 }
 
 void DiagnosticsMatcher::TrivialCtorDtorChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error,
       "class %0 must have trivial constructors and destructors");
-  const CXXRecordDecl *node = Result.Nodes.getNodeAs<CXXRecordDecl>("node");
+  const CXXRecordDecl *Node = Result.Nodes.getNodeAs<CXXRecordDecl>("node");
 
   // We need to accept non-constexpr trivial constructors as well. This occurs
   // when a struct contains pod members, which will not be initialized. As
   // constexpr values are initialized, the constructor is non-constexpr.
-  bool badCtor = !(node->hasConstexprDefaultConstructor() ||
-                   node->hasTrivialDefaultConstructor());
-  bool badDtor = !node->hasTrivialDestructor();
-  if (badCtor || badDtor)
-    Diag.Report(node->getLocStart(), errorID) << node;
+  bool BadCtor = !(Node->hasConstexprDefaultConstructor() ||
+                   Node->hasTrivialDefaultConstructor());
+  bool BadDtor = !Node->hasTrivialDestructor();
+  if (BadCtor || BadDtor)
+    Diag.Report(Node->getLocStart(), ErrorID) << Node;
 }
 
 void DiagnosticsMatcher::NaNExprChecker::run(
@@ -1370,16 +1397,19 @@ void DiagnosticsMatcher::NaNExprChecker::run(
   }
 
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, "comparing a floating point value to itself for "
                             "NaN checking can lead to incorrect results");
-  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Note, "consider using mozilla::IsNaN instead");
-  const BinaryOperator *expr = Result.Nodes.getNodeAs<BinaryOperator>("node");
-  const DeclRefExpr *lhs = Result.Nodes.getNodeAs<DeclRefExpr>("lhs");
-  const DeclRefExpr *rhs = Result.Nodes.getNodeAs<DeclRefExpr>("rhs");
-  const ImplicitCastExpr *lhsExpr = dyn_cast<ImplicitCastExpr>(expr->getLHS());
-  const ImplicitCastExpr *rhsExpr = dyn_cast<ImplicitCastExpr>(expr->getRHS());
+  const BinaryOperator *Expression = Result.Nodes.getNodeAs<BinaryOperator>(
+    "node");
+  const DeclRefExpr *LHS = Result.Nodes.getNodeAs<DeclRefExpr>("lhs");
+  const DeclRefExpr *RHS = Result.Nodes.getNodeAs<DeclRefExpr>("rhs");
+  const ImplicitCastExpr *LHSExpr = dyn_cast<ImplicitCastExpr>(
+    Expression->getLHS());
+  const ImplicitCastExpr *RHSExpr = dyn_cast<ImplicitCastExpr>(
+    Expression->getRHS());
   // The AST subtree that we are looking for will look like this:
   // -BinaryOperator ==/!=
   //  |-ImplicitCastExpr LValueToRValue
@@ -1389,47 +1419,70 @@ void DiagnosticsMatcher::NaNExprChecker::run(
   // The check below ensures that we are dealing with the correct AST subtree
   // shape, and
   // also that both of the found DeclRefExpr's point to the same declaration.
-  if (lhs->getFoundDecl() == rhs->getFoundDecl() && lhsExpr && rhsExpr &&
-      std::distance(lhsExpr->child_begin(), lhsExpr->child_end()) == 1 &&
-      std::distance(rhsExpr->child_begin(), rhsExpr->child_end()) == 1 &&
-      *lhsExpr->child_begin() == lhs && *rhsExpr->child_begin() == rhs) {
-    Diag.Report(expr->getLocStart(), errorID);
-    Diag.Report(expr->getLocStart(), noteID);
+  if (LHS->getFoundDecl() == RHS->getFoundDecl() && LHSExpr && RHSExpr &&
+      std::distance(LHSExpr->child_begin(), LHSExpr->child_end()) == 1 &&
+      std::distance(RHSExpr->child_begin(), RHSExpr->child_end()) == 1 &&
+      *LHSExpr->child_begin() == LHS && *RHSExpr->child_begin() == RHS) {
+    Diag.Report(Expression->getLocStart(), ErrorID);
+    Diag.Report(Expression->getLocStart(), NoteID);
   }
 }
 
 void DiagnosticsMatcher::NoAddRefReleaseOnReturnChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, "%1 cannot be called on the return value of %0");
-  const Stmt *node = Result.Nodes.getNodeAs<Stmt>("node");
-  const FunctionDecl *func = Result.Nodes.getNodeAs<FunctionDecl>("func");
-  const MemberExpr *member = Result.Nodes.getNodeAs<MemberExpr>("member");
-  const CXXMethodDecl *method =
-      dyn_cast<CXXMethodDecl>(member->getMemberDecl());
+  const Stmt *Node = Result.Nodes.getNodeAs<Stmt>("node");
+  const FunctionDecl *Func = Result.Nodes.getNodeAs<FunctionDecl>("func");
+  const MemberExpr *Member = Result.Nodes.getNodeAs<MemberExpr>("member");
+  const CXXMethodDecl *Method =
+      dyn_cast<CXXMethodDecl>(Member->getMemberDecl());
 
-  Diag.Report(node->getLocStart(), errorID) << func << method;
+  Diag.Report(Node->getLocStart(), ErrorID) << Func << Method;
 }
 
 void DiagnosticsMatcher::RefCountedInsideLambdaChecker::run(
     const MatchFinder::MatchResult &Result) {
+  static DenseSet<const CXXRecordDecl*> CheckedDecls;
+
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error,
       "Refcounted variable %0 of type %1 cannot be captured by a lambda");
-  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Note, "Please consider using a smart pointer");
-  const LambdaExpr *Lambda = Result.Nodes.getNodeAs<LambdaExpr>("lambda");
+
+  const CXXRecordDecl *Lambda = Result.Nodes.getNodeAs<CXXRecordDecl>("decl");
+
+  if (const LambdaExpr *OuterLambda =
+    Result.Nodes.getNodeAs<LambdaExpr>("lambdaExpr")) {
+    const CXXMethodDecl *OpCall = OuterLambda->getCallOperator();
+    QualType ReturnTy = OpCall->getReturnType();
+    if (const CXXRecordDecl *Record = ReturnTy->getAsCXXRecordDecl()) {
+      Lambda = Record;
+    }
+  }
+
+  if (!Lambda || !Lambda->isLambda()) {
+    return;
+  }
+
+  // Don't report errors on the same declarations more than once.
+  if (CheckedDecls.count(Lambda)) {
+    return;
+  }
+  CheckedDecls.insert(Lambda);
 
   for (const LambdaCapture Capture : Lambda->captures()) {
     if (Capture.capturesVariable() && Capture.getCaptureKind() != LCK_ByRef) {
       QualType Pointee = Capture.getCapturedVar()->getType()->getPointeeType();
 
       if (!Pointee.isNull() && isClassRefCounted(Pointee)) {
-        Diag.Report(Capture.getLocation(), errorID) << Capture.getCapturedVar()
+        Diag.Report(Capture.getLocation(), ErrorID) << Capture.getCapturedVar()
                                                     << Pointee;
-        Diag.Report(Capture.getLocation(), noteID);
+        Diag.Report(Capture.getLocation(), NoteID);
+        return;
       }
     }
   }
@@ -1438,51 +1491,82 @@ void DiagnosticsMatcher::RefCountedInsideLambdaChecker::run(
 void DiagnosticsMatcher::ExplicitOperatorBoolChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, "bad implicit conversion operator for %0");
-  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Note, "consider adding the explicit keyword to %0");
-  const CXXConversionDecl *method =
+  const CXXConversionDecl *Method =
       Result.Nodes.getNodeAs<CXXConversionDecl>("node");
-  const CXXRecordDecl *clazz = method->getParent();
+  const CXXRecordDecl *Clazz = Method->getParent();
 
-  if (!method->isExplicitSpecified() &&
-      !MozChecker::hasCustomAnnotation(method, "moz_implicit") &&
-      !IsInSystemHeader(method->getASTContext(), *method) &&
-      isInterestingDeclForImplicitConversion(method)) {
-    Diag.Report(method->getLocStart(), errorID) << clazz;
-    Diag.Report(method->getLocStart(), noteID) << "'operator bool'";
+  if (!Method->isExplicitSpecified() &&
+      !MozChecker::hasCustomAnnotation(Method, "moz_implicit") &&
+      !ASTIsInSystemHeader(Method->getASTContext(), *Method) &&
+      isInterestingDeclForImplicitConversion(Method)) {
+    Diag.Report(Method->getLocStart(), ErrorID) << Clazz;
+    Diag.Report(Method->getLocStart(), NoteID) << "'operator bool'";
   }
 }
 
 void DiagnosticsMatcher::NoDuplicateRefCntMemberChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned warningID = Diag.getDiagnosticIDs()->getCustomDiagID(
-      DiagnosticIDs::Error,
-      "Refcounted record %0 has multiple mRefCnt members");
-  unsigned note1ID = Diag.getDiagnosticIDs()->getCustomDiagID(
-      DiagnosticIDs::Note, "Superclass %0 also has an mRefCnt member");
-  unsigned note2ID = Diag.getDiagnosticIDs()->getCustomDiagID(
-      DiagnosticIDs::Note,
-      "Consider using the _INHERITED macros for AddRef and Release here");
+  const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("decl");
+  const FieldDecl *RefCntMember = getClassRefCntMember(D);
+  const FieldDecl *FoundRefCntBase = nullptr;
 
-  const CXXRecordDecl *decl = Result.Nodes.getNodeAs<CXXRecordDecl>("decl");
-  const FieldDecl *refCntMember = getClassRefCntMember(decl);
-  assert(refCntMember &&
-         "The matcher checked to make sure we have a refCntMember");
+  if (!D->hasDefinition())
+    return;
+  D = D->getDefinition();
+
+  // If we don't have an mRefCnt member, and we have less than 2 superclasses,
+  // we don't have to run this loop, as neither case will ever apply.
+  if (!RefCntMember && D->getNumBases() < 2) {
+    return;
+  }
 
   // Check every superclass for whether it has a base with a refcnt member, and
   // warn for those which do
-  for (CXXRecordDecl::base_class_const_iterator base = decl->bases_begin(),
-                                                e = decl->bases_end();
-       base != e; ++base) {
-    const FieldDecl *baseRefCntMember = getBaseRefCntMember(base->getType());
-    if (baseRefCntMember) {
-      Diag.Report(decl->getLocStart(), warningID) << decl;
-      Diag.Report(baseRefCntMember->getLocStart(), note1ID)
-          << baseRefCntMember->getParent();
-      Diag.Report(refCntMember->getLocStart(), note2ID);
+  for (auto &Base : D->bases()) {
+    // Determine if this base class has an mRefCnt member
+    const FieldDecl *BaseRefCntMember = getBaseRefCntMember(Base.getType());
+
+    if (BaseRefCntMember) {
+      if (RefCntMember) {
+        // We have an mRefCnt, and superclass has an mRefCnt
+        unsigned Error = Diag.getDiagnosticIDs()->getCustomDiagID(
+            DiagnosticIDs::Error,
+            "Refcounted record %0 has multiple mRefCnt members");
+        unsigned Note1 = Diag.getDiagnosticIDs()->getCustomDiagID(
+            DiagnosticIDs::Note, "Superclass %0 also has an mRefCnt member");
+        unsigned Note2 = Diag.getDiagnosticIDs()->getCustomDiagID(
+            DiagnosticIDs::Note,
+            "Consider using the _INHERITED macros for AddRef and Release here");
+
+        Diag.Report(D->getLocStart(), Error) << D;
+        Diag.Report(BaseRefCntMember->getLocStart(), Note1)
+          << BaseRefCntMember->getParent();
+        Diag.Report(RefCntMember->getLocStart(), Note2);
+      }
+
+      if (FoundRefCntBase) {
+        unsigned Error = Diag.getDiagnosticIDs()->getCustomDiagID(
+            DiagnosticIDs::Error,
+            "Refcounted record %0 has multiple superclasses with mRefCnt members");
+        unsigned Note = Diag.getDiagnosticIDs()->getCustomDiagID(
+            DiagnosticIDs::Note,
+            "Superclass %0 has an mRefCnt member");
+
+        // superclass has mRefCnt, and another superclass also has an mRefCnt
+        Diag.Report(D->getLocStart(), Error) << D;
+        Diag.Report(BaseRefCntMember->getLocStart(), Note)
+          << BaseRefCntMember->getParent();
+        Diag.Report(FoundRefCntBase->getLocStart(), Note)
+          << FoundRefCntBase->getParent();
+      }
+
+      // Record that we've found a base with a mRefCnt member
+      FoundRefCntBase = BaseRefCntMember;
     }
   }
 }
@@ -1490,54 +1574,54 @@ void DiagnosticsMatcher::NoDuplicateRefCntMemberChecker::run(
 void DiagnosticsMatcher::NeedsNoVTableTypeChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error,
       "%0 cannot be instantiated because %1 has a VTable");
-  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Note, "bad instantiation of %0 requested here");
 
-  const ClassTemplateSpecializationDecl *specialization =
+  const ClassTemplateSpecializationDecl *Specialization =
       Result.Nodes.getNodeAs<ClassTemplateSpecializationDecl>("node");
 
   // Get the offending template argument
-  QualType offender;
-  const TemplateArgumentList &args =
-      specialization->getTemplateInstantiationArgs();
-  for (unsigned i = 0; i < args.size(); ++i) {
-    offender = args[i].getAsType();
-    if (typeHasVTable(offender)) {
+  QualType Offender;
+  const TemplateArgumentList &Args =
+      Specialization->getTemplateInstantiationArgs();
+  for (unsigned i = 0; i < Args.size(); ++i) {
+    Offender = Args[i].getAsType();
+    if (typeHasVTable(Offender)) {
       break;
     }
   }
 
-  Diag.Report(specialization->getLocStart(), errorID) << specialization
-                                                      << offender;
-  Diag.Report(specialization->getPointOfInstantiation(), noteID)
-      << specialization;
+  Diag.Report(Specialization->getLocStart(), ErrorID) << Specialization
+                                                      << Offender;
+  Diag.Report(Specialization->getPointOfInstantiation(), NoteID)
+      << Specialization;
 }
 
 void DiagnosticsMatcher::NonMemMovableTemplateArgChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error,
       "Cannot instantiate %0 with non-memmovable template argument %1");
-  unsigned note1ID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned Note1ID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Note, "instantiation of %0 requested here");
 
   // Get the specialization
-  const ClassTemplateSpecializationDecl *specialization =
+  const ClassTemplateSpecializationDecl *Specialization =
       Result.Nodes.getNodeAs<ClassTemplateSpecializationDecl>("specialization");
-  SourceLocation requestLoc = specialization->getPointOfInstantiation();
+  SourceLocation RequestLoc = Specialization->getPointOfInstantiation();
 
   // Report an error for every template argument which is non-memmovable
-  const TemplateArgumentList &args =
-      specialization->getTemplateInstantiationArgs();
-  for (unsigned i = 0; i < args.size(); ++i) {
-    QualType argType = args[i].getAsType();
-    if (NonMemMovable.hasEffectiveAnnotation(argType)) {
-      Diag.Report(specialization->getLocation(), errorID) << specialization
-                                                          << argType;
+  const TemplateArgumentList &Args =
+      Specialization->getTemplateInstantiationArgs();
+  for (unsigned i = 0; i < Args.size(); ++i) {
+    QualType ArgType = Args[i].getAsType();
+    if (NonMemMovable.hasEffectiveAnnotation(ArgType)) {
+      Diag.Report(Specialization->getLocation(), ErrorID) << Specialization
+                                                          << ArgType;
       // XXX It would be really nice if we could get the instantiation stack
       // information
       // from Sema such that we could print a full template instantiation stack,
@@ -1547,8 +1631,8 @@ void DiagnosticsMatcher::NonMemMovableTemplateArgChecker::run(
       // can only report one level of template specialization (which in many
       // cases won't
       // be useful)
-      Diag.Report(requestLoc, note1ID) << specialization;
-      NonMemMovable.dumpAnnotationReason(Diag, argType, requestLoc);
+      Diag.Report(RequestLoc, Note1ID) << Specialization;
+      NonMemMovable.dumpAnnotationReason(Diag, ArgType, RequestLoc);
     }
   }
 }
@@ -1556,22 +1640,22 @@ void DiagnosticsMatcher::NonMemMovableTemplateArgChecker::run(
 void DiagnosticsMatcher::NonMemMovableMemberChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error,
       "class %0 cannot have non-memmovable member %1 of type %2");
 
   // Get the specialization
-  const CXXRecordDecl* Decl =
+  const CXXRecordDecl* Declaration =
       Result.Nodes.getNodeAs<CXXRecordDecl>("decl");
 
   // Report an error for every member which is non-memmovable
-  for (const FieldDecl *Field : Decl->fields()) {
+  for (const FieldDecl *Field : Declaration->fields()) {
     QualType Type = Field->getType();
     if (NonMemMovable.hasEffectiveAnnotation(Type)) {
-      Diag.Report(Field->getLocation(), errorID) << Decl
+      Diag.Report(Field->getLocation(), ErrorID) << Declaration
                                                  << Field
                                                  << Type;
-      NonMemMovable.dumpAnnotationReason(Diag, Type, Decl->getLocation());
+      NonMemMovable.dumpAnnotationReason(Diag, Type, Declaration->getLocation());
     }
   }
 }
@@ -1590,9 +1674,10 @@ void DiagnosticsMatcher::ExplicitImplicitChecker::run(
 
   const CXXConstructorDecl *Ctor =
       Result.Nodes.getNodeAs<CXXConstructorDecl>("ctor");
-  const CXXRecordDecl *Decl = Result.Nodes.getNodeAs<CXXRecordDecl>("class");
+  const CXXRecordDecl *Declaration =
+      Result.Nodes.getNodeAs<CXXRecordDecl>("class");
 
-  Diag.Report(Ctor->getLocation(), ErrorID) << Decl->getDeclName();
+  Diag.Report(Ctor->getLocation(), ErrorID) << Declaration->getDeclName();
   Diag.Report(Ctor->getLocation(), NoteID);
 }
 
@@ -1649,12 +1734,12 @@ void DiagnosticsMatcher::RefCountedCopyConstructorChecker::run(
 void DiagnosticsMatcher::AssertAssignmentChecker::run(
     const MatchFinder::MatchResult &Result) {
   DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned assignInsteadOfComp = Diag.getDiagnosticIDs()->getCustomDiagID(
+  unsigned AssignInsteadOfComp = Diag.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, "Forbidden assignment in assert expression");
-  const CallExpr *funcCall = Result.Nodes.getNodeAs<CallExpr>("funcCall");
+  const CallExpr *FuncCall = Result.Nodes.getNodeAs<CallExpr>("funcCall");
 
-  if (funcCall && HasSideEffectAssignment(funcCall)) {
-    Diag.Report(funcCall->getLocStart(), assignInsteadOfComp);
+  if (FuncCall && hasSideEffectAssignment(FuncCall)) {
+    Diag.Report(FuncCall->getLocStart(), AssignInsteadOfComp);
   }
 }
 
@@ -1752,25 +1837,25 @@ void DiagnosticsMatcher::KungFuDeathGripChecker::run(
 class MozCheckAction : public PluginASTAction {
 public:
   ASTConsumerPtr CreateASTConsumer(CompilerInstance &CI,
-                                   StringRef fileName) override {
+                                   StringRef FileName) override {
 #if CLANG_VERSION_FULL >= 306
-    std::unique_ptr<MozChecker> checker(llvm::make_unique<MozChecker>(CI));
-    ASTConsumerPtr other(checker->getOtherConsumer());
+    std::unique_ptr<MozChecker> Checker(llvm::make_unique<MozChecker>(CI));
+    ASTConsumerPtr Other(Checker->getOtherConsumer());
 
-    std::vector<ASTConsumerPtr> consumers;
-    consumers.push_back(std::move(checker));
-    consumers.push_back(std::move(other));
-    return llvm::make_unique<MultiplexConsumer>(std::move(consumers));
+    std::vector<ASTConsumerPtr> Consumers;
+    Consumers.push_back(std::move(Checker));
+    Consumers.push_back(std::move(Other));
+    return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
 #else
-    MozChecker *checker = new MozChecker(CI);
+    MozChecker *Checker = new MozChecker(CI);
 
-    ASTConsumer *consumers[] = {checker, checker->getOtherConsumer()};
-    return new MultiplexConsumer(consumers);
+    ASTConsumer *Consumers[] = {Checker, Checker->getOtherConsumer()};
+    return new MultiplexConsumer(Consumers);
 #endif
   }
 
   bool ParseArgs(const CompilerInstance &CI,
-                 const std::vector<std::string> &args) override {
+                 const std::vector<std::string> &Args) override {
     return true;
   }
 };

@@ -36,21 +36,12 @@ DOMImplementation::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return DOMImplementationBinding::Wrap(aCx, this, aGivenProto);
 }
 
-bool
-DOMImplementation::HasFeature(const nsAString& aFeature,
-                              const nsAString& aVersion)
-{
-  return nsContentUtils::InternalIsSupported(
-           static_cast<nsIDOMDOMImplementation*>(this),
-           aFeature, aVersion);
-}
-
 NS_IMETHODIMP
 DOMImplementation::HasFeature(const nsAString& aFeature,
                               const nsAString& aVersion,
                               bool* aReturn)
 {
-  *aReturn = HasFeature(aFeature, aVersion);
+  *aReturn = true;
   return NS_OK;
 }
 
@@ -142,7 +133,6 @@ DOMImplementation::CreateDocument(const nsAString& aNamespaceURI,
 
   if (aNamespaceURI.EqualsLiteral("http://www.w3.org/1999/xhtml")) {
     doc->SetContentType(NS_LITERAL_STRING("application/xhtml+xml"));
-    doc->UseRegistryFromDocument(mOwner);
   } else if (aNamespaceURI.EqualsLiteral("http://www.w3.org/2000/svg")) {
     doc->SetContentType(NS_LITERAL_STRING("image/svg+xml"));
   } else {
@@ -243,10 +233,6 @@ DOMImplementation::CreateHTMLDocument(const nsAString& aTitle,
                                            kNameSpaceID_XHTML);
   rv = root->AppendChildTo(body, false);
   NS_ENSURE_SUCCESS(rv, rv);
-
-  // When the createHTMLDocument method is invoked,
-  // use the registry of the associated document to the new instance.
-  doc->UseRegistryFromDocument(mOwner);
 
   doc->SetReadyStateInternal(nsIDocument::READYSTATE_COMPLETE);
 

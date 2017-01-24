@@ -88,6 +88,10 @@ enum TextureAllocationFlags {
   // Disable any cross-device synchronization. This is also for TextureClientD3D11,
   // and creates a texture without KeyedMutex.
   ALLOC_MANUAL_SYNCHRONIZATION = 1 << 6,
+
+  // The texture is going to be updated using UpdateFromSurface and needs to support
+  // that call.
+  ALLOC_UPDATE_FROM_SURFACE = 1 << 7,
 };
 
 #ifdef XP_WIN
@@ -356,6 +360,14 @@ public:
                    BackendSelector aSelector,
                    TextureFlags aTextureFlags,
                    TextureAllocationFlags flags = ALLOC_DEFAULT);
+
+  static already_AddRefed<TextureClient>
+  CreateFromSurface(TextureForwarder* aAllocator,
+                    gfx::SourceSurface* aSurface,
+                    LayersBackend aLayersBackend,
+                    BackendSelector aSelector,
+                    TextureFlags aTextureFlags,
+                    TextureAllocationFlags aAllocFlags);
 
   // Creates and allocates a TextureClient supporting the YCbCr format.
   static already_AddRefed<TextureClient>

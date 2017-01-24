@@ -19,8 +19,6 @@
 #include <math.h>
 
 static GtkWidget* gProtoLayout;
-static GtkWidget* gHScaleWidget;
-static GtkWidget* gVScaleWidget;
 static GtkWidget* gComboBoxWidget;
 static GtkWidget* gComboBoxButtonWidget;
 static GtkWidget* gComboBoxArrowWidget;
@@ -29,15 +27,6 @@ static GtkWidget* gComboBoxEntryWidget;
 static GtkWidget* gComboBoxEntryTextareaWidget;
 static GtkWidget* gComboBoxEntryButtonWidget;
 static GtkWidget* gComboBoxEntryArrowWidget;
-static GtkWidget* gTabWidget;
-static GtkWidget* gImageMenuItemWidget;
-static GtkWidget* gCheckMenuItemWidget;
-static GtkWidget* gTreeViewWidget;
-static GtkTreeViewColumn* gMiddleTreeViewColumn;
-static GtkWidget* gTreeHeaderCellWidget;
-static GtkWidget* gTreeHeaderSortArrowWidget;
-static GtkWidget* gHPanedWidget;
-static GtkWidget* gVPanedWidget;
 
 static style_prop_t style_prop_func;
 static gboolean have_arrow_scaling;
@@ -53,6 +42,9 @@ static gboolean is_initialized;
 #if !GTK_CHECK_VERSION(3,14,0)
 #define GTK_STATE_FLAG_CHECKED (1 << 11)
 #endif
+
+static gint
+moz_gtk_get_tab_thickness(GtkStyleContext *style);
 
 static GtkStateFlags
 GetStateFlagsFromGtkWidgetState(GtkWidgetState* state)
@@ -73,6 +65,13 @@ GetStateFlagsFromGtkWidgetState(GtkWidgetState* state)
     return stateFlags;
 }
 
+static GtkStateFlags
+GetStateFlagsFromGtkTabFlags(GtkTabFlags flags)
+{
+    return ((flags & MOZ_GTK_TAB_SELECTED) == 0) ?
+            GTK_STATE_FLAG_NORMAL : GTK_STATE_FLAG_ACTIVE;
+}
+
 gint
 moz_gtk_enable_style_props(style_prop_t styleGetProp)
 {
@@ -88,40 +87,6 @@ setup_widget_prototype(GtkWidget* widget)
     }
     gtk_container_add(GTK_CONTAINER(gProtoLayout), widget);
     return MOZ_GTK_SUCCESS;
-}
-
-static gint
-ensure_hpaned_widget()
-{
-    if (!gHPanedWidget) {
-        gHPanedWidget = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-        setup_widget_prototype(gHPanedWidget);
-    }
-    return MOZ_GTK_SUCCESS;
-}
-
-static gint
-ensure_vpaned_widget()
-{
-    if (!gVPanedWidget) {
-        gVPanedWidget = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-        setup_widget_prototype(gVPanedWidget);
-    }
-    return MOZ_GTK_SUCCESS;
-}
-
-static gint
-ensure_scale_widget()
-{
-  if (!gHScaleWidget) {
-    gHScaleWidget = gtk_scale_new(GTK_ORIENTATION_HORIZONTAL, NULL);
-    setup_widget_prototype(gHScaleWidget);
-  }
-  if (!gVScaleWidget) {
-    gVScaleWidget = gtk_scale_new(GTK_ORIENTATION_VERTICAL, NULL);
-    setup_widget_prototype(gVScaleWidget);
-  }
-  return MOZ_GTK_SUCCESS;
 }
 
 /* We need to have pointers to the inner widgets (button, separator, arrow)
@@ -320,94 +285,6 @@ ensure_combo_box_entry_widgets()
     return MOZ_GTK_SUCCESS;
 }
 
-static gint
-ensure_tab_widget()
-{
-    if (!gTabWidget) {
-        gTabWidget = gtk_notebook_new();
-        setup_widget_prototype(gTabWidget);
-    }
-    return MOZ_GTK_SUCCESS;
-}
-
-static gint
-ensure_image_menu_item_widget()
-{
-    if (!gImageMenuItemWidget) {
-        gImageMenuItemWidget = gtk_image_menu_item_new();
-        gtk_menu_shell_append(GTK_MENU_SHELL(GetWidget(MOZ_GTK_MENUPOPUP)),
-                              gImageMenuItemWidget);
-        gtk_widget_realize(gImageMenuItemWidget);
-    }
-    return MOZ_GTK_SUCCESS;
-}
-
-static gint
-ensure_check_menu_item_widget()
-{
-    if (!gCheckMenuItemWidget) {
-        gCheckMenuItemWidget = gtk_check_menu_item_new();
-        gtk_menu_shell_append(GTK_MENU_SHELL(GetWidget(MOZ_GTK_MENUPOPUP)),
-                              gCheckMenuItemWidget);
-        gtk_widget_realize(gCheckMenuItemWidget);
-    }
-    return MOZ_GTK_SUCCESS;
-}
-
-static gint
-ensure_tree_view_widget()
-{
-    if (!gTreeViewWidget) {
-        gTreeViewWidget = gtk_tree_view_new();
-        setup_widget_prototype(gTreeViewWidget);
-    }
-    return MOZ_GTK_SUCCESS;
-}
-
-static gint
-ensure_tree_header_cell_widget()
-{
-    if(!gTreeHeaderCellWidget) {
-        /*
-         * Some GTK engines paint the first and last cell
-         * of a TreeView header with a highlight.
-         * Since we do not know where our widget will be relative
-         * to the other buttons in the TreeView header, we must
-         * paint it as a button that is between two others,
-         * thus ensuring it is neither the first or last button
-         * in the header.
-         * GTK doesn't give us a way to do this explicitly,
-         * so we must paint with a button that is between two
-         * others.
-         */
-
-        GtkTreeViewColumn* firstTreeViewColumn;
-        GtkTreeViewColumn* lastTreeViewColumn;
-
-        ensure_tree_view_widget();
-
-        /* Create and append our three columns */
-        firstTreeViewColumn = gtk_tree_view_column_new();
-        gtk_tree_view_column_set_title(firstTreeViewColumn, "M");
-        gtk_tree_view_append_column(GTK_TREE_VIEW(gTreeViewWidget), firstTreeViewColumn);
-
-        gMiddleTreeViewColumn = gtk_tree_view_column_new();
-        gtk_tree_view_column_set_title(gMiddleTreeViewColumn, "M");
-        gtk_tree_view_append_column(GTK_TREE_VIEW(gTreeViewWidget),
-                                    gMiddleTreeViewColumn);
-
-        lastTreeViewColumn = gtk_tree_view_column_new();
-        gtk_tree_view_column_set_title(lastTreeViewColumn, "M");
-        gtk_tree_view_append_column(GTK_TREE_VIEW(gTreeViewWidget), lastTreeViewColumn);
-
-        /* Use the middle column's header for our button */
-        gTreeHeaderCellWidget = gtk_tree_view_column_get_button(gMiddleTreeViewColumn);
-        /* TODO, but it can't be NULL */
-        gTreeHeaderSortArrowWidget = gtk_button_new();
-    }
-    return MOZ_GTK_SUCCESS;
-}
-
 gint
 moz_gtk_init()
 {
@@ -423,13 +300,17 @@ moz_gtk_init()
     else
         checkbox_check_state = GTK_STATE_FLAG_ACTIVE;
 
-    if(!gtk_check_version(3, 12, 0)) {
-        ensure_tab_widget();
-        gtk_style_context_get_style(gtk_widget_get_style_context(gTabWidget),
+    if (gtk_check_version(3, 12, 0) == nullptr &&
+        gtk_check_version(3, 20, 0) != nullptr)
+    {
+        // Deprecated for Gtk >= 3.20+
+        GtkStyleContext *style = ClaimStyleContext(MOZ_GTK_TAB_TOP);
+        gtk_style_context_get_style(style,
                                     "has-tab-gap", &notebook_has_tab_gap, NULL);
+        ReleaseStyleContext(style);
     }
     else {
-        notebook_has_tab_gap = TRUE;
+        notebook_has_tab_gap = true;
     }
 
     return MOZ_GTK_SUCCESS;
@@ -472,22 +353,22 @@ moz_gtk_get_focus_outline_size(gint* focus_h_width, gint* focus_v_width)
 gint
 moz_gtk_menuitem_get_horizontal_padding(gint* horizontal_padding)
 {
-    gtk_widget_style_get(GetWidget(MOZ_GTK_MENUITEM),
-                         "horizontal-padding", horizontal_padding,
-                         nullptr);
-
+    GtkStyleContext *style = ClaimStyleContext(MOZ_GTK_MENUITEM);
+    gtk_style_context_get_style(style,
+                                "horizontal-padding", horizontal_padding,
+                                nullptr);
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
 gint
 moz_gtk_checkmenuitem_get_horizontal_padding(gint* horizontal_padding)
 {
-    ensure_check_menu_item_widget();
-
-    gtk_style_context_get_style(gtk_widget_get_style_context(gCheckMenuItemWidget),
+    GtkStyleContext *style = ClaimStyleContext(MOZ_GTK_CHECKMENUITEM_CONTAINER);
+    gtk_style_context_get_style(style,
                                 "horizontal-padding", horizontal_padding,
-                                NULL);
-
+                                nullptr);
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -543,15 +424,14 @@ moz_gtk_button_get_default_border(gint* border_top, gint* border_left,
 gint
 moz_gtk_splitter_get_metrics(gint orientation, gint* size)
 {
+    GtkStyleContext *style;
     if (orientation == GTK_ORIENTATION_HORIZONTAL) {
-        ensure_hpaned_widget();
-        gtk_style_context_get_style(gtk_widget_get_style_context(gHPanedWidget),
-                                    "handle_size", size, NULL);
+        style = ClaimStyleContext(MOZ_GTK_SPLITTER_HORIZONTAL);
     } else {
-        ensure_vpaned_widget();
-        gtk_style_context_get_style(gtk_widget_get_style_context(gVPanedWidget),
-                                    "handle_size", size, NULL);
+        style = ClaimStyleContext(MOZ_GTK_SPLITTER_VERTICAL);
     }
+    gtk_style_context_get_style(style, "handle_size", size, NULL);
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -987,18 +867,15 @@ moz_gtk_scale_paint(cairo_t *cr, GdkRectangle* rect,
   GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
   gint x, y, width, height, min_width, min_height;
   GtkStyleContext* style;
-  GtkWidget* widget;
   GtkBorder margin;
 
-  ensure_scale_widget();
-  widget = ((flags == GTK_ORIENTATION_HORIZONTAL) ? gHScaleWidget : gVScaleWidget);
-  gtk_widget_set_direction(widget, direction);
   moz_gtk_get_scale_metrics(flags, &min_width, &min_height);
 
-  style = gtk_widget_get_style_context(widget);
-  gtk_style_context_save(style);
-  gtk_style_context_add_class(style, GTK_STYLE_CLASS_TROUGH);
-  gtk_style_context_get_margin(style, state_flags, &margin); 
+  WidgetNodeType widget = (flags == GTK_ORIENTATION_HORIZONTAL) ?
+                          MOZ_GTK_SCALE_TROUGH_HORIZONTAL :
+                          MOZ_GTK_SCALE_TROUGH_VERTICAL;
+  style = ClaimStyleContext(widget, direction, state_flags);
+  gtk_style_context_get_margin(style, state_flags, &margin);
 
   // Clamp the dimension perpendicular to the direction that the slider crosses
   // to the minimum size.
@@ -1020,7 +897,8 @@ moz_gtk_scale_paint(cairo_t *cr, GdkRectangle* rect,
   if (state->focused)
     gtk_render_focus(style, cr, 
                     rect->x, rect->y, rect->width, rect->height);
-  gtk_style_context_restore(style);
+
+  ReleaseStyleContext(style);
   return MOZ_GTK_SUCCESS;
 }
 
@@ -1031,17 +909,8 @@ moz_gtk_scale_thumb_paint(cairo_t *cr, GdkRectangle* rect,
 {
   GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
   GtkStyleContext* style;
-  GtkWidget* widget;
   gint thumb_width, thumb_height, x, y;
 
-  ensure_scale_widget();
-  widget = ((flags == GTK_ORIENTATION_HORIZONTAL) ? gHScaleWidget : gVScaleWidget);
-  gtk_widget_set_direction(widget, direction);
-
-  style = gtk_widget_get_style_context(widget);
-  gtk_style_context_save(style);
-  gtk_style_context_add_class(style, GTK_STYLE_CLASS_SLIDER);
-  gtk_style_context_set_state(style, state_flags);
   /* determine the thumb size, and position the thumb in the center in the opposite axis 
   */
   if (flags == GTK_ORIENTATION_HORIZONTAL) {
@@ -1055,8 +924,13 @@ moz_gtk_scale_thumb_paint(cairo_t *cr, GdkRectangle* rect,
     y = rect->y;
   }
 
+  WidgetNodeType widget = (flags == GTK_ORIENTATION_HORIZONTAL) ?
+                          MOZ_GTK_SCALE_THUMB_HORIZONTAL :
+                          MOZ_GTK_SCALE_THUMB_VERTICAL;
+  style = ClaimStyleContext(widget, direction, state_flags);
   gtk_render_slider(style, cr, x, y, thumb_width, thumb_height, flags);
-  gtk_style_context_restore(style);
+  ReleaseStyleContext(style);
+
   return MOZ_GTK_SUCCESS;
 }
 
@@ -1078,17 +952,13 @@ static gint
 moz_gtk_hpaned_paint(cairo_t *cr, GdkRectangle* rect,
                      GtkWidgetState* state)
 {
-    GtkStyleContext* style;
-    
-    ensure_hpaned_widget();
-    style = gtk_widget_get_style_context(gHPanedWidget);
-    gtk_style_context_save(style);
-    gtk_style_context_add_class(style, GTK_STYLE_CLASS_PANE_SEPARATOR);
-    gtk_style_context_set_state(style, GetStateFlagsFromGtkWidgetState(state));
+    GtkStyleContext* style =
+        ClaimStyleContext(MOZ_GTK_SPLITTER_SEPARATOR_HORIZONTAL,
+                          GTK_TEXT_DIR_LTR,
+                          GetStateFlagsFromGtkWidgetState(state));
     gtk_render_handle(style, cr,
                       rect->x, rect->y, rect->width, rect->height);
-    gtk_style_context_restore(style);
-
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -1096,17 +966,13 @@ static gint
 moz_gtk_vpaned_paint(cairo_t *cr, GdkRectangle* rect,
                      GtkWidgetState* state)
 {
-    GtkStyleContext* style;
-
-    ensure_vpaned_widget();
-    style = gtk_widget_get_style_context(gVPanedWidget);
-    gtk_style_context_save(style);
-    gtk_style_context_add_class(style, GTK_STYLE_CLASS_PANE_SEPARATOR);
-    gtk_style_context_set_state(style, GetStateFlagsFromGtkWidgetState(state));
+    GtkStyleContext* style =
+        ClaimStyleContext(MOZ_GTK_SPLITTER_SEPARATOR_VERTICAL,
+                          GTK_TEXT_DIR_LTR,
+                          GetStateFlagsFromGtkWidgetState(state));
     gtk_render_handle(style, cr,
                       rect->x, rect->y, rect->width, rect->height);                     
-    gtk_style_context_restore(style);
-
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -1214,9 +1080,6 @@ moz_gtk_treeview_paint(cairo_t *cr, GdkRectangle* rect,
     GtkStateFlags state_flags;
     GtkBorder border;
 
-    ensure_tree_view_widget();
-    gtk_widget_set_direction(gTreeViewWidget, direction);
-
     /* only handle disabled and normal states, otherwise the whole background
      * area will be painted differently with other states */
     state_flags = state->disabled ? GTK_STATE_FLAG_INSENSITIVE : GTK_STATE_FLAG_NORMAL;
@@ -1225,19 +1088,19 @@ moz_gtk_treeview_paint(cairo_t *cr, GdkRectangle* rect,
     gtk_style_context_get_border(style, state_flags, &border);
     xthickness = border.left;
     ythickness = border.top;    
+    ReleaseStyleContext(style);
 
-    style_tree = gtk_widget_get_style_context(gTreeViewWidget);
-    gtk_style_context_save(style_tree);
-    gtk_style_context_add_class(style_tree, GTK_STYLE_CLASS_VIEW);
-    
+    style_tree = ClaimStyleContext(MOZ_GTK_TREEVIEW_VIEW, direction);
     gtk_render_background(style_tree, cr,
                           rect->x + xthickness, rect->y + ythickness,
                           rect->width - 2 * xthickness,
                           rect->height - 2 * ythickness);
+    ReleaseStyleContext(style_tree);
+
+    style = ClaimStyleContext(MOZ_GTK_SCROLLED_WINDOW, direction);
     gtk_render_frame(style, cr, 
                      rect->x, rect->y, rect->width, rect->height); 
     ReleaseStyleContext(style);
-    gtk_style_context_restore(style_tree);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -1247,7 +1110,7 @@ moz_gtk_tree_header_cell_paint(cairo_t *cr, GdkRectangle* rect,
                                gboolean isSorted, GtkTextDirection direction)
 {
     moz_gtk_button_paint(cr, rect, state, GTK_RELIEF_NORMAL,
-                         gTreeHeaderCellWidget, direction);
+                         GetWidget(MOZ_GTK_TREE_HEADER_CELL), direction);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -1260,18 +1123,13 @@ moz_gtk_tree_header_sort_arrow_paint(cairo_t *cr, GdkRectangle* rect,
     gdouble arrow_angle;
     GtkStyleContext* style;
 
-    ensure_tree_header_cell_widget();
-    gtk_widget_set_direction(gTreeHeaderSortArrowWidget, direction);
-
     /* hard code these values */
     arrow_rect.width = 11;
     arrow_rect.height = 11;
     arrow_rect.x = rect->x + (rect->width - arrow_rect.width) / 2;
     arrow_rect.y = rect->y + (rect->height - arrow_rect.height) / 2;
-    style = gtk_widget_get_style_context(gTreeHeaderSortArrowWidget);
-    gtk_style_context_save(style);
-    gtk_style_context_set_state(style, GetStateFlagsFromGtkWidgetState(state));
-
+    style = ClaimStyleContext(MOZ_GTK_TREE_HEADER_SORTARROW, direction,
+                              GetStateFlagsFromGtkWidgetState(state));
     switch (arrow_type) {
     case GTK_ARROW_LEFT:
         arrow_angle = ARROW_LEFT;
@@ -1290,7 +1148,7 @@ moz_gtk_tree_header_sort_arrow_paint(cairo_t *cr, GdkRectangle* rect,
         gtk_render_arrow(style, cr, arrow_angle,
                          arrow_rect.x, arrow_rect.y,
                          arrow_rect.width);
-    gtk_style_context_restore(style);
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -1302,37 +1160,28 @@ moz_gtk_treeview_expander_paint(cairo_t *cr, GdkRectangle* rect,
                                 GtkExpanderStyle expander_state,
                                 GtkTextDirection direction)
 {
-    GtkStyleContext *style;
-    GtkStateFlags    state_flags;
-
-    ensure_tree_view_widget();
-    gtk_widget_set_direction(gTreeViewWidget, direction);
-
-    style = gtk_widget_get_style_context(gTreeViewWidget);
-    gtk_style_context_save(style);
-    gtk_style_context_add_class(style, GTK_STYLE_CLASS_EXPANDER);
-
     /* Because the frame we get is of the entire treeview, we can't get the precise
      * event state of one expander, thus rendering hover and active feedback useless. */
-    state_flags = state->disabled ? GTK_STATE_FLAG_INSENSITIVE : GTK_STATE_FLAG_NORMAL;
+    GtkStateFlags state_flags = state->disabled ? GTK_STATE_FLAG_INSENSITIVE :
+                                                  GTK_STATE_FLAG_NORMAL;
 
     /* GTK_STATE_FLAG_ACTIVE controls expanded/colapsed state rendering
      * in gtk_render_expander()
      */
     if (expander_state == GTK_EXPANDER_EXPANDED)
-        state_flags = static_cast<GtkStateFlags>(state_flags|GTK_STATE_FLAG_ACTIVE);
+        state_flags = static_cast<GtkStateFlags>(state_flags|checkbox_check_state);
     else
-        state_flags = static_cast<GtkStateFlags>(state_flags&~(GTK_STATE_FLAG_ACTIVE));
+        state_flags = static_cast<GtkStateFlags>(state_flags&~(checkbox_check_state));
 
-    gtk_style_context_set_state(style, state_flags);
-
+    GtkStyleContext *style = ClaimStyleContext(MOZ_GTK_TREEVIEW_EXPANDER,
+                                               direction, state_flags);
     gtk_render_expander(style, cr,
                         rect->x,
                         rect->y,
                         rect->width,
                         rect->height);
 
-    gtk_style_context_restore(style);
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -1721,46 +1570,35 @@ moz_gtk_progress_chunk_paint(cairo_t *cr, GdkRectangle* rect,
     return MOZ_GTK_SUCCESS;
 }
 
-gint
-moz_gtk_get_tab_thickness(void)
+static gint
+moz_gtk_get_tab_thickness(GtkStyleContext *style)
 {
-    GtkBorder border;
-    GtkStyleContext * style;
-
-    ensure_tab_widget();
     if (!notebook_has_tab_gap)
       return 0; /* tabs do not overdraw the tabpanel border with "no gap" style */
 
-    style = gtk_widget_get_style_context(gTabWidget);
-    gtk_style_context_add_class(style, GTK_STYLE_CLASS_NOTEBOOK);
+    GtkBorder border;
     gtk_style_context_get_border(style, GTK_STATE_FLAG_NORMAL, &border);
-
     if (border.top < 2)
         return 2; /* some themes don't set ythickness correctly */
 
     return border.top;
 }
 
-static void
-moz_gtk_tab_prepare_style_context(GtkStyleContext *style,
-                                  GtkTabFlags flags)
-{  
-  gtk_style_context_set_state(style, ((flags & MOZ_GTK_TAB_SELECTED) == 0) ? 
-                                        GTK_STATE_FLAG_NORMAL : 
-                                        GTK_STATE_FLAG_ACTIVE);
-  gtk_style_context_add_region(style, GTK_STYLE_REGION_TAB, 
-                                      (flags & MOZ_GTK_TAB_FIRST) ? 
-                                        GTK_REGION_FIRST : static_cast<GtkRegionFlags>(0));
-  gtk_style_context_add_class(style, (flags & MOZ_GTK_TAB_BOTTOM) ? 
-                                        GTK_STYLE_CLASS_BOTTOM : 
-                                        GTK_STYLE_CLASS_TOP);
+gint
+moz_gtk_get_tab_thickness(WidgetNodeType aNodeType)
+{
+    GtkStyleContext *style = ClaimStyleContext(aNodeType);
+    int thickness = moz_gtk_get_tab_thickness(style);
+    ReleaseStyleContext(style);
+    return thickness;
 }
 
 /* actual small tabs */
 static gint
 moz_gtk_tab_paint(cairo_t *cr, GdkRectangle* rect,
                   GtkWidgetState* state,
-                  GtkTabFlags flags, GtkTextDirection direction)
+                  GtkTabFlags flags, GtkTextDirection direction,
+                  WidgetNodeType widget)
 {
     /* When the tab isn't selected, we just draw a notebook extension.
      * When it is selected, we overwrite the adjacent border of the tabpanel
@@ -1772,14 +1610,10 @@ moz_gtk_tab_paint(cairo_t *cr, GdkRectangle* rect,
     GdkRectangle focusRect;
     GdkRectangle backRect;
     int initial_gap = 0;
+    bool isBottomTab = (widget == MOZ_GTK_TAB_BOTTOM);
 
-    ensure_tab_widget();
-    gtk_widget_set_direction(gTabWidget, direction);
-
-    style = gtk_widget_get_style_context(gTabWidget);
-    gtk_style_context_save(style);
-    moz_gtk_tab_prepare_style_context(style, flags);
-
+    style = ClaimStyleContext(widget, direction,
+                              GetStateFlagsFromGtkTabFlags(flags));
     tabRect = *rect;
 
     if (flags & MOZ_GTK_TAB_FIRST) {
@@ -1798,8 +1632,7 @@ moz_gtk_tab_paint(cairo_t *cr, GdkRectangle* rect,
             /* Only draw the tab */
             gtk_render_extension(style, cr,
                                  tabRect.x, tabRect.y, tabRect.width, tabRect.height,
-                                (flags & MOZ_GTK_TAB_BOTTOM) ?
-                                    GTK_POS_TOP : GTK_POS_BOTTOM );
+                                 isBottomTab ? GTK_POS_TOP : GTK_POS_BOTTOM );
         } else {
             /* Draw the tab and the gap
              * We want the gap to be positioned exactly on the tabpanel top
@@ -1840,7 +1673,7 @@ moz_gtk_tab_paint(cairo_t *cr, GdkRectangle* rect,
             gint gap_loffset, gap_roffset, gap_voffset, gap_height;
 
             /* Get height needed by the gap */
-            gap_height = moz_gtk_get_tab_thickness();
+            gap_height = moz_gtk_get_tab_thickness(style);
 
             /* Extract gap_voffset from the first bits of flags */
             gap_voffset = flags & MOZ_GTK_TAB_MARGIN_MASK;
@@ -1856,7 +1689,7 @@ moz_gtk_tab_paint(cairo_t *cr, GdkRectangle* rect,
                     gap_loffset = initial_gap;
             }
 
-            if (flags & MOZ_GTK_TAB_BOTTOM) {
+            if (isBottomTab) {
                 /* Draw the tab on bottom */
                 focusRect.y += gap_voffset;
                 focusRect.height -= gap_voffset;
@@ -1920,15 +1753,9 @@ moz_gtk_tab_paint(cairo_t *cr, GdkRectangle* rect,
         gtk_render_frame(style, cr, tabRect.x, tabRect.y, tabRect.width, tabRect.height);
     }
 
-    gtk_style_context_restore(style);
-
     if (state->focused) {
       /* Paint the focus ring */
       GtkBorder padding;
-
-      gtk_style_context_save(style);
-      moz_gtk_tab_prepare_style_context(style, flags);
-
       gtk_style_context_get_padding(style, GetStateFlagsFromGtkWidgetState(state), &padding);
 
       focusRect.x += padding.left;
@@ -1938,10 +1765,8 @@ moz_gtk_tab_paint(cairo_t *cr, GdkRectangle* rect,
 
       gtk_render_focus(style, cr,
                       focusRect.x, focusRect.y, focusRect.width, focusRect.height);
-
-      gtk_style_context_restore(style);
     }
-
+    ReleaseStyleContext(style);
 
     return MOZ_GTK_SUCCESS;
 }
@@ -1951,14 +1776,7 @@ static gint
 moz_gtk_tabpanels_paint(cairo_t *cr, GdkRectangle* rect,
                         GtkTextDirection direction)
 {
-    GtkStyleContext* style;
-
-    ensure_tab_widget();
-    gtk_widget_set_direction(gTabWidget, direction);
-
-    style = gtk_widget_get_style_context(gTabWidget);
-    gtk_style_context_save(style);
-
+    GtkStyleContext* style = ClaimStyleContext(MOZ_GTK_TABPANELS, direction);
     gtk_render_background(style, cr, rect->x, rect->y, 
                           rect->width, rect->height);
     /*
@@ -1982,7 +1800,7 @@ moz_gtk_tabpanels_paint(cairo_t *cr, GdkRectangle* rect,
                          rect->width, rect->height,
                          GTK_POS_TOP, rect->width - 1, rect->width);
     cairo_restore(cr);
-    
+
     /* right side */
     cairo_save(cr);
     cairo_rectangle(cr, rect->x + rect->width / 2, rect->y,
@@ -1995,7 +1813,7 @@ moz_gtk_tabpanels_paint(cairo_t *cr, GdkRectangle* rect,
                          GTK_POS_TOP, 0, 1);
     cairo_restore(cr);
 
-    gtk_style_context_restore(style);
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -2005,17 +1823,12 @@ moz_gtk_tab_scroll_arrow_paint(cairo_t *cr, GdkRectangle* rect,
                                GtkArrowType arrow_type,
                                GtkTextDirection direction)
 {
-    GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
     GtkStyleContext* style;
     gdouble arrow_angle;
     gint arrow_size = MIN(rect->width, rect->height);
     gint x = rect->x + (rect->width - arrow_size) / 2;
     gint y = rect->y + (rect->height - arrow_size) / 2;
 
-    ensure_tab_widget();
-
-    style = gtk_widget_get_style_context(gTabWidget);
-    gtk_style_context_save(style);
     if (direction == GTK_TEXT_DIR_RTL) {
         arrow_type = (arrow_type == GTK_ARROW_LEFT) ?
                          GTK_ARROW_RIGHT : GTK_ARROW_LEFT;
@@ -2035,12 +1848,12 @@ moz_gtk_tab_scroll_arrow_paint(cairo_t *cr, GdkRectangle* rect,
         break;      
     }
     if (arrow_type != GTK_ARROW_NONE)  {        
-        gtk_style_context_add_class(style, GTK_STYLE_CLASS_NOTEBOOK); /* TODO TEST */
-        gtk_style_context_set_state(style, state_flags);
+        style = ClaimStyleContext(MOZ_GTK_TAB_SCROLLARROW, direction,
+                                  GetStateFlagsFromGtkWidgetState(state));
         gtk_render_arrow(style, cr, arrow_angle,
                          x, y, arrow_size);
+        ReleaseStyleContext(style);
     }
-    gtk_style_context_restore(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -2095,19 +1908,15 @@ moz_gtk_menu_separator_paint(cairo_t *cr, GdkRectangle* rect,
     GtkStyleContext* style;
     gboolean wide_separators;
     gint separator_height;
-    guint border_width;
     gint x, y, w;
     GtkBorder padding;
 
-    border_width =
-        gtk_container_get_border_width(GTK_CONTAINER(
-                                       GetWidget(MOZ_GTK_MENUSEPARATOR)));
     style = ClaimStyleContext(MOZ_GTK_MENUSEPARATOR, direction);
     gtk_style_context_get_padding(style, GTK_STATE_FLAG_NORMAL, &padding);
 
-    x = rect->x + border_width;
-    y = rect->y + border_width;
-    w = rect->width - border_width * 2;
+    x = rect->x;
+    y = rect->y;
+    w = rect->width;
 
     gtk_style_context_save(style);
     gtk_style_context_add_class(style, GTK_STYLE_CLASS_SEPARATOR);
@@ -2145,8 +1954,6 @@ moz_gtk_menu_item_paint(WidgetNodeType widget, cairo_t *cr, GdkRectangle* rect,
     gint x, y, w, h;
 
     if (state->inHover && !state->disabled) {   
-        guint border_width =
-            gtk_container_get_border_width(GTK_CONTAINER(GetWidget(widget)));
         GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
         GtkStyleContext* style =
             ClaimStyleContext(widget, direction, state_flags);
@@ -2162,10 +1969,10 @@ moz_gtk_menu_item_paint(WidgetNodeType widget, cairo_t *cr, GdkRectangle* rect,
             }
         }
 
-        x = rect->x + border_width;
-        y = rect->y + border_width;
-        w = rect->width - border_width * 2;
-        h = rect->height - border_width * 2;
+        x = rect->x;
+        y = rect->y;
+        w = rect->width;
+        h = rect->height;
 
         gtk_render_background(style, cr, x, y, w, h);
         gtk_render_frame(style, cr, x, y, w, h);
@@ -2204,38 +2011,29 @@ moz_gtk_check_menu_item_paint(cairo_t *cr, GdkRectangle* rect,
     GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
     GtkStyleContext* style;
     GtkBorder padding;
-    gint offset;
     gint indicator_size, horizontal_padding;
     gint x, y;
 
     moz_gtk_menu_item_paint(MOZ_GTK_MENUITEM, cr, rect, state, direction);
 
-    ensure_check_menu_item_widget();
-    gtk_widget_set_direction(gCheckMenuItemWidget, direction);
+    if (checked) {
+      state_flags = static_cast<GtkStateFlags>(state_flags|checkbox_check_state);
+    }
 
-    style = gtk_widget_get_style_context(gCheckMenuItemWidget);
-    gtk_style_context_save(style);
-
+    style = ClaimStyleContext(isradio ? MOZ_GTK_RADIOMENUITEM_CONTAINER :
+                                        MOZ_GTK_CHECKMENUITEM_CONTAINER,
+                              direction);
     gtk_style_context_get_style(style,
                                 "indicator-size", &indicator_size,
                                 "horizontal-padding", &horizontal_padding,
                                 NULL);
+    ReleaseStyleContext(style);
 
-    if (isradio) {
-      gtk_style_context_add_class(style, GTK_STYLE_CLASS_RADIO);
-    } else {
-      gtk_style_context_add_class(style, GTK_STYLE_CLASS_CHECK);
-    }
-
-    if (checked) {
-      state_flags = static_cast<GtkStateFlags>(state_flags|checkbox_check_state);
-    }
-    
-    gtk_style_context_set_state(style, state_flags);
+    style = ClaimStyleContext(isradio ? MOZ_GTK_RADIOMENUITEM :
+                                        MOZ_GTK_CHECKMENUITEM,
+                              direction, state_flags);
     gtk_style_context_get_padding(style, state_flags, &padding);
-
-    offset = gtk_container_get_border_width(GTK_CONTAINER(gCheckMenuItemWidget)) +
-                                            padding.left + 2;
+    gint offset = padding.left + 2;
 
     if (direction == GTK_TEXT_DIR_RTL) {
         x = rect->width - indicator_size - offset - horizontal_padding;
@@ -2245,12 +2043,17 @@ moz_gtk_check_menu_item_paint(cairo_t *cr, GdkRectangle* rect,
     }
     y = rect->y + (rect->height - indicator_size) / 2;
 
+    if (gtk_check_version(3, 20, 0) == nullptr) {
+        gtk_render_background(style, cr, x, y, indicator_size, indicator_size);
+        gtk_render_frame(style, cr, x, y, indicator_size, indicator_size);
+    }
+
     if (isradio) {
       gtk_render_option(style, cr, x, y, indicator_size, indicator_size);
     } else {
       gtk_render_check(style, cr, x, y, indicator_size, indicator_size);
     }
-    gtk_style_context_restore(style);
+    ReleaseStyleContext(style);
 
     return MOZ_GTK_SUCCESS;
 }
@@ -2362,18 +2165,18 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
              * assigned.
              * That is why the following code is the same as for MOZ_GTK_BUTTON.
              * */
-            ensure_tree_header_cell_widget();
-            *left = *top = *right = *bottom = gtk_container_get_border_width(GTK_CONTAINER(gTreeHeaderCellWidget));
+            *left = *top = *right = *bottom =
+                gtk_container_get_border_width(GTK_CONTAINER(
+                                               GetWidget(MOZ_GTK_TREE_HEADER_CELL)));
 
-            style = gtk_widget_get_style_context(gTreeHeaderCellWidget);
-
+            style = ClaimStyleContext(MOZ_GTK_TREE_HEADER_CELL);
             moz_gtk_add_style_border(style, left, top, right, bottom);
             moz_gtk_add_style_padding(style, left, top, right, bottom);
+            ReleaseStyleContext(style);
             return MOZ_GTK_SUCCESS;
         }
     case MOZ_GTK_TREE_HEADER_SORTARROW:
-        ensure_tree_header_cell_widget();
-        w = gTreeHeaderSortArrowWidget;
+        w = GetWidget(MOZ_GTK_TREE_HEADER_SORTARROW);
         break;
     case MOZ_GTK_DROPDOWN_ENTRY:
         ensure_combo_box_entry_widgets();
@@ -2428,8 +2231,7 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
             return MOZ_GTK_SUCCESS;
         }
     case MOZ_GTK_TABPANELS:
-        ensure_tab_widget();
-        w = gTabWidget;
+        w = GetWidget(MOZ_GTK_TABPANELS);
         break;
     case MOZ_GTK_PROGRESSBAR:
         w = GetWidget(MOZ_GTK_PROGRESSBAR);
@@ -2440,12 +2242,8 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
         w = GetWidget(MOZ_GTK_SPINBUTTON);
         break;
     case MOZ_GTK_SCALE_HORIZONTAL:
-        ensure_scale_widget();
-        w = gHScaleWidget;
-        break;
     case MOZ_GTK_SCALE_VERTICAL:
-        ensure_scale_widget();
-        w = gVScaleWidget;
+        w = GetWidget(widget);
         break;
     case MOZ_GTK_FRAME:
         w = GetWidget(MOZ_GTK_FRAME);
@@ -2471,17 +2269,15 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
     case MOZ_GTK_CHECKMENUITEM:
     case MOZ_GTK_RADIOMENUITEM:
         {
-            if (widget == MOZ_GTK_MENUBARITEM || widget == MOZ_GTK_MENUITEM) {
-                // Bug 1274143 for MOZ_GTK_MENUBARITEM
-                w = GetWidget(MOZ_GTK_MENUITEM);
-            } else {
-                ensure_check_menu_item_widget();
-                w = gCheckMenuItemWidget;
-            }
+            // Bug 1274143 for MOZ_GTK_MENUBARITEM
+            WidgetNodeType type =
+                widget == MOZ_GTK_MENUBARITEM || widget == MOZ_GTK_MENUITEM ?
+                MOZ_GTK_MENUITEM : MOZ_GTK_CHECKMENUITEM_CONTAINER;
+            style = ClaimStyleContext(type);
 
-            *left = *top = *right = *bottom = gtk_container_get_border_width(GTK_CONTAINER(w));
-            moz_gtk_add_style_padding(gtk_widget_get_style_context(w),
-                                      left, top, right, bottom);
+            moz_gtk_add_style_padding(style, left, top, right, bottom);
+
+            ReleaseStyleContext(style);
             return MOZ_GTK_SUCCESS;
         }
     case MOZ_GTK_INFO_BAR:
@@ -2540,35 +2336,48 @@ moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
 
 gint
 moz_gtk_get_tab_border(gint* left, gint* top, gint* right, gint* bottom, 
-                       GtkTextDirection direction, GtkTabFlags flags)
+                       GtkTextDirection direction, GtkTabFlags flags, 
+                       WidgetNodeType widget)
 {
-    GtkStyleContext* style;    
-    int tab_curvature;
-
-    ensure_tab_widget();
-
-    style = gtk_widget_get_style_context(gTabWidget);
-    gtk_style_context_save(style);
-    moz_gtk_tab_prepare_style_context(style, flags);
+    GtkStyleContext* style = ClaimStyleContext(widget, direction,
+                              GetStateFlagsFromGtkTabFlags(flags));
 
     *left = *top = *right = *bottom = 0;
     moz_gtk_add_style_padding(style, left, top, right, bottom);
 
-    gtk_style_context_get_style(style, "tab-curvature", &tab_curvature, NULL);
-    *left += tab_curvature;
-    *right += tab_curvature;
+    // Gtk >= 3.20 does not use those styles
+    if (gtk_check_version(3, 20, 0) != nullptr) {
+        int tab_curvature;
 
-    if (flags & MOZ_GTK_TAB_FIRST) {
-      int initial_gap;
-      gtk_style_context_get_style(style, "initial-gap", &initial_gap, NULL);
-      if (direction == GTK_TEXT_DIR_RTL)
-        *right += initial_gap;
-      else
-        *left += initial_gap;
+        gtk_style_context_get_style(style, "tab-curvature", &tab_curvature, NULL);
+        *left += tab_curvature;
+        *right += tab_curvature;
+
+        if (flags & MOZ_GTK_TAB_FIRST) {
+            int initial_gap = 0;
+            gtk_style_context_get_style(style, "initial-gap", &initial_gap, NULL);
+            if (direction == GTK_TEXT_DIR_RTL)
+                *right += initial_gap;
+            else
+                *left += initial_gap;
+        }
+    } else {
+        GtkBorder margin;
+
+        gtk_style_context_get_margin(style, GTK_STATE_FLAG_NORMAL, &margin);
+        *left += margin.left;
+        *right += margin.right;
+
+        if (flags & MOZ_GTK_TAB_FIRST) {
+            ReleaseStyleContext(style);
+            style = ClaimStyleContext(MOZ_GTK_NOTEBOOK_HEADER, direction);
+            gtk_style_context_get_margin(style, GTK_STATE_FLAG_NORMAL, &margin);
+            *left += margin.left;
+            *right += margin.right;
+        }
     }
 
-    gtk_style_context_restore(style);
-
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -2595,10 +2404,11 @@ moz_gtk_get_tab_scroll_arrow_size(gint* width, gint* height)
 {
     gint arrow_size;
 
-    ensure_tab_widget();
-    gtk_style_context_get_style(gtk_widget_get_style_context(gTabWidget),
+    GtkStyleContext *style = ClaimStyleContext(MOZ_GTK_TABPANELS);
+    gtk_style_context_get_style(style,
                                 "scroll-arrow-hlength", &arrow_size,
                                 NULL);
+    ReleaseStyleContext(style);
 
     *height = *width = arrow_size;
 
@@ -2659,11 +2469,9 @@ moz_gtk_get_expander_size(gint* size)
 gint
 moz_gtk_get_treeview_expander_size(gint* size)
 {
-    ensure_tree_view_widget();
-    gtk_style_context_get_style(gtk_widget_get_style_context(gTreeViewWidget),
-                                "expander-size", size,
-                                NULL);
-
+    GtkStyleContext* style = ClaimStyleContext(MOZ_GTK_TREEVIEW);
+    gtk_style_context_get_style(style, "expander-size", size, NULL);
+    ReleaseStyleContext(style);
     return MOZ_GTK_SUCCESS;
 }
 
@@ -2674,14 +2482,7 @@ moz_gtk_get_menu_separator_height(gint *size)
     gboolean  wide_separators;
     gint      separator_height;
     GtkBorder padding;
-    GtkStyleContext* style;
-    guint border_width;
-
-    border_width =
-        gtk_container_get_border_width(GTK_CONTAINER(
-                                       GetWidget(MOZ_GTK_MENUSEPARATOR)));
-
-    style = ClaimStyleContext(MOZ_GTK_MENUSEPARATOR);
+    GtkStyleContext* style = ClaimStyleContext(MOZ_GTK_MENUSEPARATOR);
     gtk_style_context_get_padding(style, GTK_STATE_FLAG_NORMAL, &padding);
 
     gtk_style_context_save(style);
@@ -2695,7 +2496,7 @@ moz_gtk_get_menu_separator_height(gint *size)
     gtk_style_context_restore(style);
     ReleaseStyleContext(style);
 
-    *size = padding.top + padding.bottom + border_width*2;
+    *size = padding.top + padding.bottom;
     *size += (wide_separators) ? separator_height : 1;
 
     return MOZ_GTK_SUCCESS;
@@ -2726,34 +2527,60 @@ void
 moz_gtk_get_scale_metrics(GtkOrientation orient, gint* scale_width,
                           gint* scale_height)
 {
-  gint thumb_length, thumb_height, trough_border;
-  GtkWidget* widget = orient == GTK_ORIENTATION_HORIZONTAL ?
-                      gHScaleWidget : gVScaleWidget;
-  moz_gtk_get_scalethumb_metrics(orient, &thumb_length, &thumb_height);
-  gtk_style_context_get_style(gtk_widget_get_style_context(widget),
-                              "trough-border", &trough_border, NULL);
+  WidgetNodeType widget = (orient == GTK_ORIENTATION_HORIZONTAL) ?
+                           MOZ_GTK_SCALE_HORIZONTAL :
+                           MOZ_GTK_SCALE_VERTICAL;
 
-  if (orient == GTK_ORIENTATION_HORIZONTAL) {
-      *scale_width = thumb_length + trough_border * 2;
-      *scale_height = thumb_height + trough_border * 2;
+  if (gtk_check_version(3, 20, 0) != nullptr) {
+      gint thumb_length, thumb_height, trough_border;
+      moz_gtk_get_scalethumb_metrics(orient, &thumb_length, &thumb_height);
+
+      GtkStyleContext* style = ClaimStyleContext(widget);
+      gtk_style_context_get_style(style, "trough-border", &trough_border, NULL);
+
+      if (orient == GTK_ORIENTATION_HORIZONTAL) {
+          *scale_width = thumb_length + trough_border * 2;
+          *scale_height = thumb_height + trough_border * 2;
+      } else {
+          *scale_width = thumb_height + trough_border * 2;
+          *scale_height = thumb_length + trough_border * 2;
+      }
+      ReleaseStyleContext(style);
   } else {
-      *scale_width = thumb_height + trough_border * 2;
-      *scale_height = thumb_length + trough_border * 2;
+      GtkStyleContext* style = ClaimStyleContext(widget);
+      gtk_style_context_get(style, gtk_style_context_get_state(style),
+                            "min-width", scale_width,
+                            "min-height", scale_height,
+                            nullptr);
+      ReleaseStyleContext(style);
   }
 }
 
 gint
 moz_gtk_get_scalethumb_metrics(GtkOrientation orient, gint* thumb_length, gint* thumb_height)
 {
-  GtkWidget* widget;
 
-  ensure_scale_widget();
-  widget = ((orient == GTK_ORIENTATION_HORIZONTAL) ? gHScaleWidget : gVScaleWidget);
-
-  gtk_style_context_get_style(gtk_widget_get_style_context(widget),
-                              "slider_length", thumb_length,
-                              "slider_width", thumb_height,
-                              NULL);
+  if (gtk_check_version(3, 20, 0) != nullptr) {
+      WidgetNodeType widget = (orient == GTK_ORIENTATION_HORIZONTAL) ?
+                               MOZ_GTK_SCALE_HORIZONTAL:
+                               MOZ_GTK_SCALE_VERTICAL;
+      GtkStyleContext* style = ClaimStyleContext(widget);
+      gtk_style_context_get_style(style,
+                                  "slider_length", thumb_length,
+                                  "slider_width", thumb_height,
+                                  NULL);
+      ReleaseStyleContext(style);
+  } else {
+      WidgetNodeType widget = (orient == GTK_ORIENTATION_HORIZONTAL) ?
+                               MOZ_GTK_SCALE_THUMB_HORIZONTAL:
+                               MOZ_GTK_SCALE_THUMB_VERTICAL;
+      GtkStyleContext* style = ClaimStyleContext(widget);
+      gtk_style_context_get(style, gtk_style_context_get_state(style),
+                            "min-width", thumb_length,
+                            "min-height", thumb_height,
+                             nullptr);
+      ReleaseStyleContext(style);
+  }
 
   return MOZ_GTK_SUCCESS;
 }
@@ -2787,8 +2614,7 @@ moz_gtk_images_in_menus()
     gboolean result;
     GtkSettings* settings;
 
-    ensure_image_menu_item_widget();
-    settings = gtk_widget_get_settings(gImageMenuItemWidget);
+    settings = gtk_widget_get_settings(GetWidget(MOZ_GTK_IMAGEMENUITEM));
 
     g_object_get(settings, "gtk-menu-images", &result, NULL);
     return result;
@@ -2957,9 +2783,10 @@ moz_gtk_widget_paint(WidgetNodeType widget, cairo_t *cr,
         return moz_gtk_progress_chunk_paint(cr, rect,
                                             direction, widget);
         break;
-    case MOZ_GTK_TAB:
+    case MOZ_GTK_TAB_TOP:
+    case MOZ_GTK_TAB_BOTTOM:
         return moz_gtk_tab_paint(cr, rect, state,
-                                 (GtkTabFlags) flags, direction);
+                                 (GtkTabFlags) flags, direction, widget);
         break;
     case MOZ_GTK_TABPANELS:
         return moz_gtk_tabpanels_paint(cr, rect, direction);
@@ -3043,13 +2870,7 @@ moz_gtk_shutdown()
     /* This will destroy all of our widgets */
     ResetWidgetCache();
 
-    /* TODO - replace it with appropriate widget */
-    if (gTreeHeaderSortArrowWidget)
-        gtk_widget_destroy(gTreeHeaderSortArrowWidget);
-
     gProtoLayout = NULL;
-    gHScaleWidget = NULL;
-    gVScaleWidget = NULL;
     gComboBoxWidget = NULL;
     gComboBoxButtonWidget = NULL;
     gComboBoxSeparatorWidget = NULL;
@@ -3058,15 +2879,6 @@ moz_gtk_shutdown()
     gComboBoxEntryButtonWidget = NULL;
     gComboBoxEntryArrowWidget = NULL;
     gComboBoxEntryTextareaWidget = NULL;
-    gTabWidget = NULL;
-    gImageMenuItemWidget = NULL;
-    gCheckMenuItemWidget = NULL;
-    gTreeViewWidget = NULL;
-    gMiddleTreeViewColumn = NULL;
-    gTreeHeaderCellWidget = NULL;
-    gTreeHeaderSortArrowWidget = NULL;
-    gHPanedWidget = NULL;
-    gVPanedWidget = NULL;
 
     is_initialized = FALSE;
 

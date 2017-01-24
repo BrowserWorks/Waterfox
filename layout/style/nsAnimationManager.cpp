@@ -12,7 +12,7 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/dom/DocumentTimeline.h"
-#include "mozilla/dom/KeyframeEffect.h"
+#include "mozilla/dom/KeyframeEffectReadOnly.h"
 
 #include "nsPresContext.h"
 #include "nsStyleSet.h"
@@ -336,11 +336,14 @@ UpdateOldAnimationPropertiesWithNew(
   // Update the old from the new so we can keep the original object
   // identity (and any expando properties attached to it).
   if (aOld.GetEffect()) {
-    KeyframeEffectReadOnly* oldEffect = aOld.GetEffect();
-    animationChanged =
-      oldEffect->SpecifiedTiming() != aNewTiming;
+    AnimationEffectReadOnly* oldEffect = aOld.GetEffect();
+    animationChanged = oldEffect->SpecifiedTiming() != aNewTiming;
     oldEffect->SetSpecifiedTiming(aNewTiming);
-    oldEffect->SetKeyframes(Move(aNewKeyframes), aStyleContext);
+
+    KeyframeEffectReadOnly* oldKeyframeEffect = oldEffect->AsKeyframeEffect();
+    if (oldKeyframeEffect) {
+      oldKeyframeEffect->SetKeyframes(Move(aNewKeyframes), aStyleContext);
+    }
   }
 
   // Handle changes in play state. If the animation is idle, however,
@@ -412,13 +415,7 @@ nsAnimationManager::UpdateAnimations(nsStyleContext* aStyleContext,
     return;
   }
 
-  if (collection) {
-    EffectSet* effectSet =
-      EffectSet::GetEffectSet(aElement, aStyleContext->GetPseudoType());
-    if (effectSet) {
-      effectSet->UpdateAnimationGeneration(mPresContext);
-    }
-  } else {
+  if (!collection) {
     bool createdCollection = false;
     collection =
       CSSAnimationCollection::GetOrCreateAnimationCollection(
@@ -439,12 +436,6 @@ nsAnimationManager::UpdateAnimations(nsStyleContext* aStyleContext,
   for (size_t newAnimIdx = newAnimations.Length(); newAnimIdx-- != 0; ) {
     newAnimations[newAnimIdx]->CancelFromStyle();
   }
-
-  mPresContext->EffectCompositor()->
-    MaybeUpdateAnimationRule(aElement,
-                             aStyleContext->GetPseudoType(),
-                             EffectCompositor::CascadeLevel::Animations,
-                             aStyleContext);
 
   // We don't actually dispatch the pending events now.  We'll either
   // dispatch them the next time we get a refresh driver notification
@@ -549,19 +540,19 @@ private:
   nsTArray<PropertyValuePair> GetKeyframePropertyValues(
     nsPresContext* aPresContext,
     nsCSSKeyframeRule* aKeyframeRule,
-    nsCSSPropertySet& aAnimatedProperties);
+    nsCSSPropertyIDSet& aAnimatedProperties);
   void FillInMissingKeyframeValues(
     nsPresContext* aPresContext,
-    nsCSSPropertySet aAnimatedProperties,
-    nsCSSPropertySet aPropertiesSetAtStart,
-    nsCSSPropertySet aPropertiesSetAtEnd,
+    nsCSSPropertyIDSet aAnimatedProperties,
+    nsCSSPropertyIDSet aPropertiesSetAtStart,
+    nsCSSPropertyIDSet aPropertiesSetAtEnd,
     const Maybe<ComputedTimingFunction>& aInheritedTimingFunction,
     nsTArray<Keyframe>& aKeyframes);
   void AppendProperty(nsPresContext* aPresContext,
-                      nsCSSProperty aProperty,
+                      nsCSSPropertyID aProperty,
                       nsTArray<PropertyValuePair>& aPropertyValues);
   nsCSSValue GetComputedValue(nsPresContext* aPresContext,
-                              nsCSSProperty aProperty);
+                              nsCSSPropertyID aProperty);
 
   static TimingParams TimingParamsFrom(
     const StyleAnimation& aStyleAnimation)
@@ -649,7 +640,7 @@ CSSAnimationBuilder::Build(nsPresContext* aPresContext,
     OwningElementRef(*mTarget, mStyleContext->GetPseudoType()));
 
   animation->SetTimelineNoUpdate(mTimeline);
-  animation->SetEffect(effect);
+  animation->SetEffectNoUpdate(effect);
 
   if (isStylePaused) {
     animation->PauseFromStyle();
@@ -717,7 +708,7 @@ CSSAnimationBuilder::BuildAnimationFrames(nsPresContext* aPresContext,
 
   // First, make up Keyframe objects for each rule
   nsTArray<Keyframe> keyframes;
-  nsCSSPropertySet animatedProperties;
+  nsCSSPropertyIDSet animatedProperties;
 
   for (auto ruleIdx = 0, ruleEnd = aRule->StyleRuleCount();
        ruleIdx != ruleEnd; ++ruleIdx) {
@@ -754,9 +745,9 @@ CSSAnimationBuilder::BuildAnimationFrames(nsPresContext* aPresContext,
                    });
 
   // Then walk backwards through the keyframes and drop overridden properties.
-  nsCSSPropertySet propertiesSetAtCurrentOffset;
-  nsCSSPropertySet propertiesSetAtStart;
-  nsCSSPropertySet propertiesSetAtEnd;
+  nsCSSPropertyIDSet propertiesSetAtCurrentOffset;
+  nsCSSPropertyIDSet propertiesSetAtStart;
+  nsCSSPropertyIDSet propertiesSetAtEnd;
   double currentOffset = -1.0;
   for (size_t keyframeIdx = keyframes.Length();
        keyframeIdx > 0;
@@ -791,7 +782,7 @@ CSSAnimationBuilder::BuildAnimationFrames(nsPresContext* aPresContext,
     // Otherwise, we should update the existing keyframe with only the
     // unique properties.
     //
-    // Bug 1216843: We should also match composite modes here.
+    // Bug 1293490: We should also match composite modes here.
     Keyframe* existingKeyframe = nullptr;
     // Don't bother searching for an existing keyframe if we don't
     // have anything to contribute to it.
@@ -874,16 +865,16 @@ nsTArray<PropertyValuePair>
 CSSAnimationBuilder::GetKeyframePropertyValues(
     nsPresContext* aPresContext,
     nsCSSKeyframeRule* aKeyframeRule,
-    nsCSSPropertySet& aAnimatedProperties)
+    nsCSSPropertyIDSet& aAnimatedProperties)
 {
   nsTArray<PropertyValuePair> result;
   RefPtr<nsStyleContext> styleContext =
     mResolvedStyles.Get(aPresContext, mStyleContext,
                         aKeyframeRule->Declaration());
 
-  for (nsCSSProperty prop = nsCSSProperty(0);
+  for (nsCSSPropertyID prop = nsCSSPropertyID(0);
        prop < eCSSProperty_COUNT_no_shorthands;
-       prop = nsCSSProperty(prop + 1)) {
+       prop = nsCSSPropertyID(prop + 1)) {
     if (nsCSSProps::kAnimTypeTable[prop] == eStyleAnimType_None ||
         !aKeyframeRule->Declaration()->HasNonImportantValueFor(prop)) {
       continue;
@@ -949,9 +940,9 @@ FindMatchingKeyframe(
 void
 CSSAnimationBuilder::FillInMissingKeyframeValues(
     nsPresContext* aPresContext,
-    nsCSSPropertySet aAnimatedProperties,
-    nsCSSPropertySet aPropertiesSetAtStart,
-    nsCSSPropertySet aPropertiesSetAtEnd,
+    nsCSSPropertyIDSet aAnimatedProperties,
+    nsCSSPropertyIDSet aPropertiesSetAtStart,
+    nsCSSPropertyIDSet aPropertiesSetAtEnd,
     const Maybe<ComputedTimingFunction>& aInheritedTimingFunction,
     nsTArray<Keyframe>& aKeyframes)
 {
@@ -997,9 +988,9 @@ CSSAnimationBuilder::FillInMissingKeyframeValues(
                             ? nullptr : &aKeyframes[endKeyframeIndex];
 
   // Iterate through all properties and fill-in missing values
-  for (nsCSSProperty prop = nsCSSProperty(0);
+  for (nsCSSPropertyID prop = nsCSSPropertyID(0);
        prop < eCSSProperty_COUNT_no_shorthands;
-       prop = nsCSSProperty(prop + 1)) {
+       prop = nsCSSPropertyID(prop + 1)) {
     if (!aAnimatedProperties.HasProperty(prop)) {
       continue;
     }
@@ -1016,7 +1007,7 @@ CSSAnimationBuilder::FillInMissingKeyframeValues(
 void
 CSSAnimationBuilder::AppendProperty(
     nsPresContext* aPresContext,
-    nsCSSProperty aProperty,
+    nsCSSPropertyID aProperty,
     nsTArray<PropertyValuePair>& aPropertyValues)
 {
   PropertyValuePair propertyValue;
@@ -1028,7 +1019,7 @@ CSSAnimationBuilder::AppendProperty(
 
 nsCSSValue
 CSSAnimationBuilder::GetComputedValue(nsPresContext* aPresContext,
-                                      nsCSSProperty aProperty)
+                                      nsCSSPropertyID aProperty)
 {
   nsCSSValue result;
   StyleAnimationValue computedValue;
@@ -1045,7 +1036,11 @@ CSSAnimationBuilder::GetComputedValue(nsPresContext* aPresContext,
   if (StyleAnimationValue::ExtractComputedValue(aProperty,
                                                 mStyleWithoutAnimation,
                                                 computedValue)) {
-    StyleAnimationValue::UncomputeValue(aProperty, Move(computedValue), result);
+    DebugOnly<bool> uncomputeResult =
+      StyleAnimationValue::UncomputeValue(aProperty, Move(computedValue),
+                                          result);
+    MOZ_ASSERT(uncomputeResult,
+               "Unable to get specified value from computed value");
   }
 
   // If we hit this assertion, it probably means we are fetching a value from

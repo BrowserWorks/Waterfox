@@ -18,9 +18,15 @@ Copyright (c) 2006-2007 Andrew Smith, Copyright (c) 2008-2016 Max Stepin,
 and are delimited by "#ifdef PNG_APNG_SUPPORTED / #endif" directives
 surrounding them in the modified libpng source files.
 
+This modified version of libpng code adds Intel-SSE support and is
+released under the libpng license described below. The modifications are
+Copyright (c) 2016 Google, Inc., and consist of the source files in the
+"sse2" subdirectory and added code in pngpriv.h delimited by
+#ifndef PNG_INTEL_SSE_OPT / #endif directives.
+
 This code is released under the libpng license.
 
-libpng versions 1.0.7, July 1, 2000 through 1.6.23, June 9, 2016 are
+libpng versions 1.0.7, July 1, 2000 through 1.6.25, September 1, 2016 are
 Copyright (c) 2000-2002, 2004, 2006-2016 Glenn Randers-Pehrson, are
 derived from libpng-1.0.6, and are distributed according to the same
 disclaimer and license as libpng-1.0.6 with the following individuals
@@ -137,4 +143,4 @@ any encryption software.  See the EAR, paragraphs 734.3(b)(3) and
 
 Glenn Randers-Pehrson
 glennrp at users.sourceforge.net
-June 9, 2016
+September 1, 2016

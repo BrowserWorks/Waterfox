@@ -73,7 +73,6 @@ public:
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
                             nsISupports* aData, bool aAnonymize) override
   {
-    nsresult rv;
     nsTArray<ImageMemoryCounter> chrome;
     nsTArray<ImageMemoryCounter> content;
     nsTArray<ImageMemoryCounter> uncached;
@@ -101,17 +100,14 @@ public:
 
     // Note that we only need to anonymize content image URIs.
 
-    rv = ReportCounterArray(aHandleReport, aData, chrome, "images/chrome");
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportCounterArray(aHandleReport, aData, chrome, "images/chrome");
 
-    rv = ReportCounterArray(aHandleReport, aData, content,
-                            "images/content", aAnonymize);
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportCounterArray(aHandleReport, aData, content, "images/content",
+                       aAnonymize);
 
     // Uncached images may be content or chrome, so anonymize them.
-    rv = ReportCounterArray(aHandleReport, aData, uncached,
-                            "images/uncached", aAnonymize);
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportCounterArray(aHandleReport, aData, uncached, "images/uncached",
+                       aAnonymize);
 
     return NS_OK;
   }
@@ -197,13 +193,12 @@ private:
   };
 
   // Reports all images of a single kind, e.g. all used chrome images.
-  nsresult ReportCounterArray(nsIHandleReportCallback* aHandleReport,
-                              nsISupports* aData,
-                              nsTArray<ImageMemoryCounter>& aCounterArray,
-                              const char* aPathPrefix,
-                              bool aAnonymize = false)
+  void ReportCounterArray(nsIHandleReportCallback* aHandleReport,
+                          nsISupports* aData,
+                          nsTArray<ImageMemoryCounter>& aCounterArray,
+                          const char* aPathPrefix,
+                          bool aAnonymize = false)
   {
-    nsresult rv;
     MemoryTotal summaryTotal;
     MemoryTotal nonNotableTotal;
 
@@ -227,33 +222,26 @@ private:
       summaryTotal += counter;
 
       if (counter.IsNotable()) {
-        rv = ReportImage(aHandleReport, aData, aPathPrefix, counter);
-        NS_ENSURE_SUCCESS(rv, rv);
+        ReportImage(aHandleReport, aData, aPathPrefix, counter);
       } else {
         nonNotableTotal += counter;
       }
     }
 
     // Report non-notable images in aggregate.
-    rv = ReportTotal(aHandleReport, aData, /* aExplicit = */ true,
-                     aPathPrefix, "<non-notable images>/", nonNotableTotal);
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportTotal(aHandleReport, aData, /* aExplicit = */ true,
+                aPathPrefix, "<non-notable images>/", nonNotableTotal);
 
     // Report a summary in aggregate, outside of the explicit tree.
-    rv = ReportTotal(aHandleReport, aData, /* aExplicit = */ false,
-                     aPathPrefix, "", summaryTotal);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return NS_OK;
+    ReportTotal(aHandleReport, aData, /* aExplicit = */ false,
+                aPathPrefix, "", summaryTotal);
   }
 
-  static nsresult ReportImage(nsIHandleReportCallback* aHandleReport,
-                              nsISupports* aData,
-                              const char* aPathPrefix,
-                              const ImageMemoryCounter& aCounter)
+  static void ReportImage(nsIHandleReportCallback* aHandleReport,
+                          nsISupports* aData,
+                          const char* aPathPrefix,
+                          const ImageMemoryCounter& aCounter)
   {
-    nsresult rv;
-
     nsAutoCString pathPrefix(NS_LITERAL_CSTRING("explicit/"));
     pathPrefix.Append(aPathPrefix);
     pathPrefix.Append(aCounter.Type() == imgIContainer::TYPE_RASTER
@@ -274,40 +262,29 @@ private:
 
     pathPrefix.Append(")/");
 
-    rv = ReportSurfaces(aHandleReport, aData, pathPrefix, aCounter);
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportSurfaces(aHandleReport, aData, pathPrefix, aCounter);
 
-    rv = ReportSourceValue(aHandleReport, aData, pathPrefix, aCounter.Values());
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return NS_OK;
+    ReportSourceValue(aHandleReport, aData, pathPrefix, aCounter.Values());
   }
 
-  static nsresult ReportSurfaces(nsIHandleReportCallback* aHandleReport,
-                                 nsISupports* aData,
-                                 const nsACString& aPathPrefix,
-                                 const ImageMemoryCounter& aCounter)
+  static void ReportSurfaces(nsIHandleReportCallback* aHandleReport,
+                             nsISupports* aData,
+                             const nsACString& aPathPrefix,
+                             const ImageMemoryCounter& aCounter)
   {
     for (const SurfaceMemoryCounter& counter : aCounter.Surfaces()) {
       nsAutoCString surfacePathPrefix(aPathPrefix);
       surfacePathPrefix.Append(counter.IsLocked() ? "locked/" : "unlocked/");
       surfacePathPrefix.Append("surface(");
-
-      if (counter.SubframeSize() &&
-          *counter.SubframeSize() != counter.Key().Size()) {
-        surfacePathPrefix.AppendInt(counter.SubframeSize()->width);
-        surfacePathPrefix.Append("x");
-        surfacePathPrefix.AppendInt(counter.SubframeSize()->height);
-        surfacePathPrefix.Append(" subframe of ");
-      }
-
       surfacePathPrefix.AppendInt(counter.Key().Size().width);
       surfacePathPrefix.Append("x");
       surfacePathPrefix.AppendInt(counter.Key().Size().height);
 
       if (counter.Type() == SurfaceMemoryCounterType::NORMAL) {
-        surfacePathPrefix.Append("@");
-        surfacePathPrefix.AppendFloat(counter.Key().AnimationTime());
+        PlaybackType playback = counter.Key().Playback();
+        surfacePathPrefix.Append(playback == PlaybackType::eAnimated
+                                 ? " (animation)"
+                                 : "");
 
         if (counter.Key().Flags() != DefaultSurfaceFlags()) {
           surfacePathPrefix.Append(", flags:");
@@ -324,23 +301,17 @@ private:
 
       surfacePathPrefix.Append(")/");
 
-      nsresult rv = ReportValues(aHandleReport, aData, surfacePathPrefix,
-                                 counter.Values());
-      NS_ENSURE_SUCCESS(rv, rv);
+      ReportValues(aHandleReport, aData, surfacePathPrefix, counter.Values());
     }
-
-    return NS_OK;
   }
 
-  static nsresult ReportTotal(nsIHandleReportCallback* aHandleReport,
-                              nsISupports* aData,
-                              bool aExplicit,
-                              const char* aPathPrefix,
-                              const char* aPathInfix,
-                              const MemoryTotal& aTotal)
+  static void ReportTotal(nsIHandleReportCallback* aHandleReport,
+                          nsISupports* aData,
+                          bool aExplicit,
+                          const char* aPathPrefix,
+                          const char* aPathInfix,
+                          const MemoryTotal& aTotal)
   {
-    nsresult rv;
-
     nsAutoCString pathPrefix;
     if (aExplicit) {
       pathPrefix.Append("explicit/");
@@ -350,92 +321,73 @@ private:
     nsAutoCString rasterUsedPrefix(pathPrefix);
     rasterUsedPrefix.Append("/raster/used/");
     rasterUsedPrefix.Append(aPathInfix);
-    rv = ReportValues(aHandleReport, aData, rasterUsedPrefix,
-                      aTotal.UsedRaster());
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportValues(aHandleReport, aData, rasterUsedPrefix, aTotal.UsedRaster());
 
     nsAutoCString rasterUnusedPrefix(pathPrefix);
     rasterUnusedPrefix.Append("/raster/unused/");
     rasterUnusedPrefix.Append(aPathInfix);
-    rv = ReportValues(aHandleReport, aData, rasterUnusedPrefix,
-                      aTotal.UnusedRaster());
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportValues(aHandleReport, aData, rasterUnusedPrefix,
+                 aTotal.UnusedRaster());
 
     nsAutoCString vectorUsedPrefix(pathPrefix);
     vectorUsedPrefix.Append("/vector/used/");
     vectorUsedPrefix.Append(aPathInfix);
-    rv = ReportValues(aHandleReport, aData, vectorUsedPrefix,
-                      aTotal.UsedVector());
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportValues(aHandleReport, aData, vectorUsedPrefix, aTotal.UsedVector());
 
     nsAutoCString vectorUnusedPrefix(pathPrefix);
     vectorUnusedPrefix.Append("/vector/unused/");
     vectorUnusedPrefix.Append(aPathInfix);
-    rv = ReportValues(aHandleReport, aData, vectorUnusedPrefix,
-                      aTotal.UnusedVector());
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return NS_OK;
+    ReportValues(aHandleReport, aData, vectorUnusedPrefix,
+                 aTotal.UnusedVector());
   }
 
-  static nsresult ReportValues(nsIHandleReportCallback* aHandleReport,
-                               nsISupports* aData,
-                               const nsACString& aPathPrefix,
-                               const MemoryCounter& aCounter)
+  static void ReportValues(nsIHandleReportCallback* aHandleReport,
+                           nsISupports* aData,
+                           const nsACString& aPathPrefix,
+                           const MemoryCounter& aCounter)
   {
-    nsresult rv;
+    ReportSourceValue(aHandleReport, aData, aPathPrefix, aCounter);
 
-    rv = ReportSourceValue(aHandleReport, aData, aPathPrefix, aCounter);
-    NS_ENSURE_SUCCESS(rv, rv);
+    ReportValue(aHandleReport, aData, KIND_HEAP, aPathPrefix,
+                "decoded-heap",
+                "Decoded image data which is stored on the heap.",
+                aCounter.DecodedHeap());
 
-    rv = ReportValue(aHandleReport, aData, KIND_HEAP, aPathPrefix,
-                     "decoded-heap",
-                     "Decoded image data which is stored on the heap.",
-                     aCounter.DecodedHeap());
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = ReportValue(aHandleReport, aData, KIND_NONHEAP, aPathPrefix,
-                     "decoded-nonheap",
-                     "Decoded image data which isn't stored on the heap.",
-                     aCounter.DecodedNonHeap());
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return NS_OK;
+    ReportValue(aHandleReport, aData, KIND_NONHEAP, aPathPrefix,
+                "decoded-nonheap",
+                "Decoded image data which isn't stored on the heap.",
+                aCounter.DecodedNonHeap());
   }
 
-  static nsresult ReportSourceValue(nsIHandleReportCallback* aHandleReport,
-                                    nsISupports* aData,
-                                    const nsACString& aPathPrefix,
-                                    const MemoryCounter& aCounter)
+  static void ReportSourceValue(nsIHandleReportCallback* aHandleReport,
+                                nsISupports* aData,
+                                const nsACString& aPathPrefix,
+                                const MemoryCounter& aCounter)
   {
-    nsresult rv;
-
-    rv = ReportValue(aHandleReport, aData, KIND_HEAP, aPathPrefix,
-                     "source",
-                     "Raster image source data and vector image documents.",
-                     aCounter.Source());
-
-    return rv;
+    ReportValue(aHandleReport, aData, KIND_HEAP, aPathPrefix,
+                "source",
+                "Raster image source data and vector image documents.",
+                aCounter.Source());
   }
 
-  static nsresult ReportValue(nsIHandleReportCallback* aHandleReport,
-                              nsISupports* aData,
-                              int32_t aKind,
-                              const nsACString& aPathPrefix,
-                              const char* aPathSuffix,
-                              const char* aDescription,
-                              size_t aValue)
+  static void ReportValue(nsIHandleReportCallback* aHandleReport,
+                          nsISupports* aData,
+                          int32_t aKind,
+                          const nsACString& aPathPrefix,
+                          const char* aPathSuffix,
+                          const char* aDescription,
+                          size_t aValue)
   {
     if (aValue == 0) {
-      return NS_OK;
+      return;
     }
 
     nsAutoCString desc(aDescription);
     nsAutoCString path(aPathPrefix);
     path.Append(aPathSuffix);
 
-    return aHandleReport->Callback(EmptyCString(), path, aKind, UNITS_BYTES,
-                                   aValue, desc, aData);
+    aHandleReport->Callback(EmptyCString(), path, aKind, UNITS_BYTES,
+                            aValue, desc, aData);
   }
 
   static void RecordCounterForRequest(imgRequest* aRequest,
@@ -655,6 +607,19 @@ ShouldLoadCachedImage(imgRequest* aImgRequest,
     }
   }
 
+  bool sendPriming = false;
+  bool mixedContentWouldBlock = false;
+  rv = nsMixedContentBlocker::GetHSTSPrimingFromRequestingContext(contentLocation,
+      aLoadingContext, &sendPriming, &mixedContentWouldBlock);
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+  if (sendPriming && mixedContentWouldBlock) {
+    // if either of the securty checks above would cause a priming request, we
+    // can't load this image from the cache, so go ahead and return false here
+    return false;
+  }
+
   return true;
 }
 
@@ -850,21 +815,6 @@ NewImageChannel(nsIChannel** aResult,
     childLoadGroup->SetParentLoadGroup(aLoadGroup);
   }
   (*aResult)->SetLoadGroup(loadGroup);
-
-  // This is a workaround and a real fix in bug 1264231.
-  if (callbacks) {
-    nsCOMPtr<nsILoadContext> loadContext = do_GetInterface(callbacks);
-    if (loadContext) {
-      nsCOMPtr<nsILoadInfo> loadInfo;
-      rv = (*aResult)->GetLoadInfo(getter_AddRefs(loadInfo));
-      NS_ENSURE_SUCCESS(rv, rv);
-      DocShellOriginAttributes originAttrs;
-      loadContext->GetOriginAttributes(originAttrs);
-      NeckoOriginAttributes neckoOriginAttrs;
-      neckoOriginAttrs.InheritFromDocShellToNecko(originAttrs);
-      loadInfo->SetOriginAttributes(neckoOriginAttrs);
-    }
-  }
 
   return NS_OK;
 }
@@ -1255,6 +1205,12 @@ void imgLoader::GlobalInit()
     imgMemoryReporter::ImagesContentUsedUncompressedDistinguishedAmount);
 }
 
+void imgLoader::ShutdownMemoryReporter()
+{
+  UnregisterImagesContentUsedUncompressedDistinguishedAmount();
+  UnregisterStrongMemoryReporter(sMemReporter);
+}
+
 nsresult
 imgLoader::InitCache()
 {
@@ -1319,9 +1275,11 @@ imgLoader::Observe(nsISupports* aSubject, const char* aTopic,
       ClearImageCache();
       ClearChromeImageCache();
     }
-  } else if (strcmp(aTopic, "profile-before-change") == 0 ||
-             strcmp(aTopic, "xpcom-shutdown") == 0) {
+  } else if (strcmp(aTopic, "profile-before-change") == 0) {
     mCacheTracker = nullptr;
+  } else if (strcmp(aTopic, "xpcom-shutdown") == 0) {
+    mCacheTracker = nullptr;
+    ShutdownMemoryReporter();
 
   } else {
   // (Nothing else should bring us here)
@@ -1367,7 +1325,18 @@ imgLoader::FindEntryProperties(nsIURI* uri,
   *_retval = nullptr;
 
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(aDOMDoc);
-  ImageCacheKey key(uri, doc);
+
+  PrincipalOriginAttributes attrs;
+  if (doc) {
+    nsCOMPtr<nsIPrincipal> principal = doc->NodePrincipal();
+    if (principal) {
+      attrs = BasePrincipal::Cast(principal)->OriginAttributesRef();
+    }
+  }
+
+  nsresult rv;
+  ImageCacheKey key(uri, attrs, doc, rv);
+  NS_ENSURE_SUCCESS(rv, rv);
   imgCacheTable& cache = GetCache(key);
 
   RefPtr<imgCacheEntry> entry;
@@ -1811,12 +1780,9 @@ imgLoader::ValidateEntry(imgCacheEntry* aEntry,
            ("imgLoader::ValidateEntry validating cache entry. "
             "validateRequest = %d", validateRequest));
   } else if (!key && MOZ_LOG_TEST(gImgLog, LogLevel::Debug)) {
-    nsAutoCString spec;
-    aURI->GetSpec(spec);
-
     MOZ_LOG(gImgLog, LogLevel::Debug,
            ("imgLoader::ValidateEntry BYPASSING cache validation for %s "
-            "because of NULL LoadID", spec.get()));
+            "because of NULL LoadID", aURI->GetSpecOrDefault().get()));
   }
 
   // We can't use a cached request if it comes from a different
@@ -2061,9 +2027,8 @@ imgLoader::LoadImage(nsIURI* aURI,
     return NS_ERROR_NULL_POINTER;
   }
 
-  nsAutoCString spec;
-  aURI->GetSpec(spec);
-  LOG_SCOPE_WITH_PARAM(gImgLog, "imgLoader::LoadImage", "aURI", spec.get());
+  LOG_SCOPE_WITH_PARAM(gImgLog, "imgLoader::LoadImage", "aURI",
+                       aURI->GetSpecOrDefault().get());
 
   *_retval = nullptr;
 
@@ -2125,7 +2090,12 @@ imgLoader::LoadImage(nsIURI* aURI,
   // XXX For now ignore aCacheKey. We will need it in the future
   // for correctly dealing with image load requests that are a result
   // of post data.
-  ImageCacheKey key(aURI, aLoadingDocument);
+  PrincipalOriginAttributes attrs;
+  if (aLoadingPrincipal) {
+    attrs = BasePrincipal::Cast(aLoadingPrincipal)->OriginAttributesRef();
+  }
+  ImageCacheKey key(aURI, attrs, aLoadingDocument, rv);
+  NS_ENSURE_SUCCESS(rv, rv);
   imgCacheTable& cache = GetCache(key);
 
   if (cache.Get(key, getter_AddRefs(entry)) && entry) {
@@ -2151,10 +2121,6 @@ imgLoader::LoadImage(nsIURI* aURI,
 
       entry->Touch();
 
-#ifdef DEBUG_joe
-      printf("CACHEGET: %d %s %d\n", time(nullptr), spec.get(),
-             entry->SizeOfData());
-#endif
     } else {
       // We can't use this entry. We'll try to load it off the network, and if
       // successful, overwrite the old entry in the cache with a new one.
@@ -2200,9 +2166,12 @@ imgLoader::LoadImage(nsIURI* aURI,
 
     nsCOMPtr<nsILoadGroup> channelLoadGroup;
     newChannel->GetLoadGroup(getter_AddRefs(channelLoadGroup));
-    request->Init(aURI, aURI, /* aHadInsecureRedirect = */ false,
-                  channelLoadGroup, newChannel, entry, aLoadingDocument,
-                  aLoadingPrincipal, corsmode, aReferrerPolicy);
+    rv = request->Init(aURI, aURI, /* aHadInsecureRedirect = */ false,
+                       channelLoadGroup, newChannel, entry, aLoadingDocument,
+                       aLoadingPrincipal, corsmode, aReferrerPolicy);
+    if (NS_FAILED(rv)) {
+      return NS_ERROR_FAILURE;
+    }
 
     // Add the initiator type for this image load
     nsCOMPtr<nsITimedChannel> timedChannel = do_QueryInterface(newChannel);
@@ -2329,7 +2298,18 @@ imgLoader::LoadImageWithChannel(nsIChannel* channel,
   nsCOMPtr<nsIURI> uri;
   channel->GetURI(getter_AddRefs(uri));
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(aCX);
-  ImageCacheKey key(uri, doc);
+
+  NS_ENSURE_TRUE(channel, NS_ERROR_FAILURE);
+  nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
+
+  PrincipalOriginAttributes attrs;
+  if (loadInfo) {
+    attrs.InheritFromNecko(loadInfo->GetOriginAttributes());
+  }
+
+  nsresult rv;
+  ImageCacheKey key(uri, attrs, doc, rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   nsLoadFlags requestFlags = nsIRequest::LOAD_NORMAL;
   channel->GetLoadFlags(&requestFlags);
@@ -2410,7 +2390,7 @@ imgLoader::LoadImageWithChannel(nsIChannel* channel,
   // Filter out any load flags not from nsIRequest
   requestFlags &= nsIRequest::LOAD_REQUESTMASK;
 
-  nsresult rv = NS_OK;
+  rv = NS_OK;
   if (request) {
     // we have this in our cache already.. cancel the current (document) load
 
@@ -2431,7 +2411,8 @@ imgLoader::LoadImageWithChannel(nsIChannel* channel,
     // constructed above with the *current URI* and not the *original URI*. I'm
     // pretty sure this is a bug, and it's preventing us from ever getting a
     // cache hit in LoadImageWithChannel when redirects are involved.
-    ImageCacheKey originalURIKey(originalURI, doc);
+    ImageCacheKey originalURIKey(originalURI, attrs, doc, rv);
+    NS_ENSURE_SUCCESS(rv, rv);
 
     // Default to doing a principal check because we don't know who
     // started that load and whether their principal ended up being
@@ -2449,9 +2430,10 @@ imgLoader::LoadImageWithChannel(nsIChannel* channel,
     // the necko cache should have handled that (since all necko cache hits
     // including the redirects will go through content policy).  Hence, we
     // can set aHadInsecureRedirect to false here.
-    request->Init(originalURI, uri, /* aHadInsecureRedirect = */ false,
-                  channel, channel, entry, aCX, nullptr,
-                  imgIRequest::CORS_NONE, RP_Default);
+    rv = request->Init(originalURI, uri, /* aHadInsecureRedirect = */ false,
+                       channel, channel, entry, aCX, nullptr,
+                       imgIRequest::CORS_NONE, RP_Default);
+    NS_ENSURE_SUCCESS(rv, rv);
 
     RefPtr<ProxyListener> pl =
       new ProxyListener(static_cast<nsIStreamListener*>(request.get()));
@@ -2804,11 +2786,9 @@ imgCacheValidator::OnStartRequest(nsIRequest* aRequest, nsISupports* ctxt)
   }
 
   if (MOZ_LOG_TEST(gImgLog, LogLevel::Debug)) {
-    nsAutoCString spec;
-    uri->GetSpec(spec);
     LOG_MSG_WITH_PARAM(gImgLog,
                        "imgCacheValidator::OnStartRequest creating new request",
-                       "uri", spec.get());
+                       "uri", uri->GetSpecOrDefault().get());
   }
 
   int32_t corsmode = mRequest->GetCORSMode();
@@ -2824,8 +2804,12 @@ imgCacheValidator::OnStartRequest(nsIRequest* aRequest, nsISupports* ctxt)
   // We use originalURI here to fulfil the imgIRequest contract on GetURI.
   nsCOMPtr<nsIURI> originalURI;
   channel->GetOriginalURI(getter_AddRefs(originalURI));
-  mNewRequest->Init(originalURI, uri, mHadInsecureRedirect, aRequest, channel,
-                    mNewEntry, context, loadingPrincipal, corsmode, refpol);
+  nsresult rv =
+    mNewRequest->Init(originalURI, uri, mHadInsecureRedirect, aRequest, channel,
+                      mNewEntry, context, loadingPrincipal, corsmode, refpol);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
 
   mDestListener = new ProxyListener(mNewRequest);
 

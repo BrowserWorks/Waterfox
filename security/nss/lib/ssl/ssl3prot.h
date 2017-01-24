@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* Private header file of libSSL.
  * Various and sundry protocol constants. DON'T CHANGE THESE. These
  * values are defined by the SSL 3.0 protocol specification.
@@ -17,7 +18,7 @@ typedef PRUint16 SSL3ProtocolVersion;
 /* The TLS 1.3 draft version. Used to avoid negotiating
  * between incompatible pre-standard TLS 1.3 drafts.
  * TODO(ekr@rtfm.com): Remove when TLS 1.3 is published. */
-#define TLS_1_3_DRAFT_VERSION 13
+#define TLS_1_3_DRAFT_VERSION 18
 
 typedef PRUint16 ssl3CipherSuite;
 /* The cipher suites are defined in sslproto.h */
@@ -31,6 +32,7 @@ typedef PRUint16 ssl3CipherSuite;
 #define SSL3_RANDOM_LENGTH 32
 
 #define SSL3_RECORD_HEADER_LENGTH 5
+#define TLS13_RECORD_HEADER_LENGTH_SHORT 2
 
 /* SSL3_RECORD_HEADER_LENGTH + epoch/sequence_number */
 #define DTLS_RECORD_HEADER_LENGTH 13
@@ -116,8 +118,10 @@ typedef enum {
     unrecognized_name = 112,
     bad_certificate_status_response = 113,
     bad_certificate_hash_value = 114,
-    no_application_protocol = 120
+    no_application_protocol = 120,
 
+    /* invalid alert */
+    no_alert = 256
 } SSL3AlertDescription;
 
 typedef struct {
@@ -184,19 +188,11 @@ typedef struct {
 typedef enum {
     kea_null,
     kea_rsa,
-    kea_rsa_export,
-    kea_rsa_export_1024,
     kea_dh_dss,
-    kea_dh_dss_export,
     kea_dh_rsa,
-    kea_dh_rsa_export,
     kea_dhe_dss,
-    kea_dhe_dss_export,
     kea_dhe_rsa,
-    kea_dhe_rsa_export,
     kea_dh_anon,
-    kea_dh_anon_export,
-    kea_rsa_fips,
     kea_ecdh_ecdsa,
     kea_ecdhe_ecdsa,
     kea_ecdh_rsa,
@@ -204,6 +200,7 @@ typedef enum {
     kea_ecdh_anon,
     kea_ecdhe_psk,
     kea_dhe_psk,
+    kea_tls13_any,
 } SSL3KeyExchangeAlgorithm;
 
 typedef struct {
@@ -293,14 +290,15 @@ typedef struct {
     PRUint32 received_timestamp;
     PRUint32 ticket_lifetime_hint;
     PRUint32 flags;
+    PRUint32 ticket_age_add;
+    PRUint32 max_early_data_size;
     SECItem ticket;
 } NewSessionTicket;
 
 typedef enum {
-    ticket_allow_early_data = 1,
-    ticket_allow_dhe_resumption = 2,
-    ticket_allow_psk_resumption = 4
-} TLS13SessionTicketFlags;
+    tls13_psk_ke = 0,
+    tls13_psk_dh_ke = 1
+} TLS13PskKEModes;
 
 typedef enum {
     CLIENT_AUTH_ANONYMOUS = 0,

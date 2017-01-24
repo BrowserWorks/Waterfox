@@ -9,7 +9,7 @@
 #include "js/Class.h"
 #include "js/Proxy.h"
 #include "mozilla/dom/DOMJSProxyHandler.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/HoldDropJSObjects.h"
 #include "nsCycleCollectionTraversalCallback.h"
 #include "nsCycleCollector.h"
@@ -31,7 +31,7 @@ nsWrapperCache::HoldJSObjects(void* aScriptObjectHolder,
 {
   cyclecollector::HoldJSObjectsImpl(aScriptObjectHolder, aTracer);
   if (mWrapper && !JS::ObjectIsTenured(mWrapper)) {
-    CycleCollectedJSRuntime::Get()->NurseryWrapperPreserved(mWrapper);
+    CycleCollectedJSContext::Get()->NurseryWrapperPreserved(mWrapper);
   }
 }
 
@@ -42,7 +42,7 @@ nsWrapperCache::SetWrapperJSObject(JSObject* aWrapper)
   UnsetWrapperFlags(kWrapperFlagsMask & ~WRAPPER_IS_NOT_DOM_BINDING);
 
   if (aWrapper && !JS::ObjectIsTenured(aWrapper)) {
-    CycleCollectedJSRuntime::Get()->NurseryWrapperAdded(this);
+    CycleCollectedJSContext::Get()->NurseryWrapperAdded(this);
   }
 }
 
@@ -69,7 +69,7 @@ class DebugWrapperTraversalCallback : public nsCycleCollectionTraversalCallback
 public:
   explicit DebugWrapperTraversalCallback(JSObject* aWrapper)
     : mFound(false)
-    , mWrapper(aWrapper)
+    , mWrapper(JS::GCCellPtr(aWrapper))
   {
     mFlags = WANT_ALL_TRACES;
   }
@@ -84,14 +84,11 @@ public:
   {
   }
 
-  NS_IMETHOD_(void) NoteJSObject(JSObject* aChild)
+  NS_IMETHOD_(void) NoteJSChild(const JS::GCCellPtr& aChild)
   {
     if (aChild == mWrapper) {
       mFound = true;
     }
-  }
-  NS_IMETHOD_(void) NoteJSScript(JSScript* aChild)
-  {
   }
   NS_IMETHOD_(void) NoteXPCOMChild(nsISupports* aChild)
   {
@@ -108,7 +105,7 @@ public:
   bool mFound;
 
 private:
-  JSObject* mWrapper;
+  JS::GCCellPtr mWrapper;
 };
 
 static void
@@ -117,7 +114,7 @@ DebugWrapperTraceCallback(JS::GCCellPtr aPtr, const char* aName, void* aClosure)
   DebugWrapperTraversalCallback* callback =
     static_cast<DebugWrapperTraversalCallback*>(aClosure);
   if (aPtr.is<JSObject>()) {
-    callback->NoteJSObject(&aPtr.as<JSObject>());
+    callback->NoteJSChild(aPtr);
   }
 }
 

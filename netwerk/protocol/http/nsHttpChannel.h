@@ -27,6 +27,8 @@
 #include "nsIStreamListener.h"
 #include "nsISupportsPrimitives.h"
 #include "nsICorsPreflightCallback.h"
+#include "AlternateServices.h"
+#include "nsIHstsPrimingCallback.h"
 
 class nsDNSPrefetch;
 class nsICancelable;
@@ -74,6 +76,7 @@ class nsHttpChannel final : public HttpBaseChannel
                           , public nsSupportsWeakReference
                           , public nsICorsPreflightCallback
                           , public nsIChannelWithDivertableParentListener
+                          , public nsIHstsPrimingCallback
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
@@ -89,6 +92,7 @@ public:
     NS_DECL_NSIAPPLICATIONCACHECONTAINER
     NS_DECL_NSIAPPLICATIONCACHECHANNEL
     NS_DECL_NSIASYNCVERIFYREDIRECTCALLBACK
+    NS_DECL_NSIHSTSPRIMINGCALLBACK
     NS_DECL_NSITHREADRETARGETABLEREQUEST
     NS_DECL_NSIDNSLISTENER
     NS_DECL_NSICHANNELWITHDIVERTABLEPARENTLISTENER
@@ -203,6 +207,9 @@ public: /* internal necko use only */
     nsresult OpenCacheEntry(bool usingSSL);
     nsresult ContinueConnect();
 
+    // If the load is mixed-content, build and send an HSTS priming request.
+    nsresult TryHSTSPriming();
+
     nsresult StartRedirectChannelToURI(nsIURI *, uint32_t);
 
     // This allows cache entry to be marked as foreign even after channel itself
@@ -257,6 +264,13 @@ public: /* internal necko use only */
     NS_IMETHOD GetResponseSynthesized(bool* aSynthesized) override;
     bool AwaitingCacheCallbacks();
     void SetCouldBeSynthesized();
+
+private: // used for alternate service validation
+    RefPtr<TransactionObserver> mTransactionObserver;
+public:
+    void SetConnectionInfo(nsHttpConnectionInfo *); // clones the argument
+    void SetTransactionObserver(TransactionObserver *arg) { mTransactionObserver = arg; }
+    TransactionObserver *GetTransactionObserver() { return mTransactionObserver; }
 
 protected:
     virtual ~nsHttpChannel();

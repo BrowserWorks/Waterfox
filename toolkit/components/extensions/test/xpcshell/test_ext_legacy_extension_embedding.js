@@ -39,19 +39,17 @@ add_task(function* test_embedded_webextension_utils() {
   // test dir) to be able to generate an xpi with the directory layout that we expect from
   // an hybrid legacy+webextension addon (where all the embedded webextension resources are
   // loaded from a 'webextension/' directory).
-  let fakeHybridAddonFile = Extension.generateXPI(id, {
-    files: {
-      "webextension/manifest.json": {
-        applications: {gecko: {id}},
-        name: "embedded webextension name",
-        manifest_version: 2,
-        version: "1.0",
-        background: {
-          scripts: ["bg.js"],
-        },
+  let fakeHybridAddonFile = Extension.generateZipFile({
+    "webextension/manifest.json": {
+      applications: {gecko: {id}},
+      name: "embedded webextension name",
+      manifest_version: 2,
+      version: "1.0",
+      background: {
+        scripts: ["bg.js"],
       },
-      "webextension/bg.js": `new ${backgroundScript}`,
     },
+    "webextension/bg.js": `new ${backgroundScript}`,
   });
 
   // Remove the generated xpi file and flush the its jar cache
@@ -145,7 +143,7 @@ add_task(function* test_startup_error_empty_manifest() {
   };
   const expectedError = "(NS_BASE_STREAM_CLOSED)";
 
-  let fakeHybridAddonFile = Extension.generateXPI(id, {files});
+  let fakeHybridAddonFile = Extension.generateZipFile(files);
 
   yield createManifestErrorTestCase(id, fakeHybridAddonFile, expectedError);
 });
@@ -157,7 +155,7 @@ add_task(function* test_startup_error_invalid_json_manifest() {
   };
   const expectedError = "JSON.parse:";
 
-  let fakeHybridAddonFile = Extension.generateXPI(id, {files});
+  let fakeHybridAddonFile = Extension.generateZipFile(files);
 
   yield createManifestErrorTestCase(id, fakeHybridAddonFile, expectedError);
 });
@@ -184,7 +182,7 @@ add_task(function* test_startup_error_blocking_validation_errors() {
     return false;
   }
 
-  let fakeHybridAddonFile = Extension.generateXPI(id, {files});
+  let fakeHybridAddonFile = Extension.generateZipFile(files);
 
   yield createManifestErrorTestCase(id, fakeHybridAddonFile, expectedError);
 });

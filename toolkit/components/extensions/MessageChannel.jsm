@@ -112,7 +112,119 @@ XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
                                   "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
+/**
+ * Acts as a proxy for a message manager or message manager owner, and
+ * tracks docShell swaps so that messages are always sent to the same
+ * receiver, even if it is moved to a different <browser>.
+ *
+ * Currently only proxies message sending functions, and does not handle
+ * transfering listeners in any way.
+ *
+ * @param {nsIMessageSender|Element} target
+ *        The target message manager on which to send messages, or the
+ *        <browser> element which owns it.
+ */
+class MessageManagerProxy {
+  constructor(target) {
+    if (target instanceof Ci.nsIMessageSender) {
+      Object.defineProperty(this, "messageManager", {
+        value: target,
+        configurable: true,
+        writable: true,
+      });
+    } else {
+      this.addListeners(target);
+    }
+  }
 
+  /**
+   * Disposes of the proxy object, removes event listeners, and drops
+   * all references to the underlying message manager.
+   *
+   * Must be called before the last reference to the proxy is dropped,
+   * unless the underlying message manager or <browser> is also being
+   * destroyed.
+   */
+  dispose() {
+    if (this.eventTarget) {
+      this.removeListeners(this.eventTarget);
+      this.eventTarget = null;
+    } else {
+      this.messageManager = null;
+    }
+  }
+
+  /**
+   * Returns true if the given target is the same as, or owns, the given
+   * message manager.
+   *
+   * @param {nsIMessageSender|MessageManagerProxy|Element} target
+   *        The message manager, MessageManagerProxy, or <browser>
+   *        element agaisnt which to match.
+   * @param {nsIMessageSender} messageManager
+   *        The message manager against which to match `target`.
+   *
+   * @returns {boolean}
+   *        True if `messageManager` is the same object as `target`, or
+   *        `target` is a MessageManagerProxy or <browser> element that
+   *        is tied to it.
+   */
+  static matches(target, messageManager) {
+    return target === messageManager || target.messageManager === messageManager;
+  }
+
+  /**
+   * @property {nsIMessageSender|null} messageManager
+   *        The message manager that is currently being proxied. This
+   *        may change during the life of the proxy object, so should
+   *        not be stored elsewhere.
+   */
+  get messageManager() {
+    return this.eventTarget && this.eventTarget.messageManager;
+  }
+
+  /**
+   * Sends a message on the proxied message manager.
+   *
+   * @param {array} args
+   *        Arguments to be passed verbatim to the underlying
+   *        sendAsyncMessage method.
+   * @returns {undefined}
+   */
+  sendAsyncMessage(...args) {
+    return this.messageManager.sendAsyncMessage(...args);
+  }
+
+  /**
+   * @private
+   * Adds docShell swap listeners to the message manager owner.
+   *
+   * @param {Element} target
+   *        The target element.
+   */
+  addListeners(target) {
+    target.addEventListener("SwapDocShells", this);
+    this.eventTarget = target;
+  }
+
+  /**
+   * @private
+   * Removes docShell swap listeners to the message manager owner.
+   *
+   * @param {Element} target
+   *        The target element.
+   */
+  removeListeners(target) {
+    target.removeEventListener("SwapDocShells", this);
+  }
+
+  handleEvent(event) {
+    if (event.type == "SwapDocShells") {
+      this.removeListeners(this.eventTarget);
+      this.addListeners(event.detail);
+    }
+  }
+}
 
 /**
  * Handles the mapping and dispatching of messages to their registered
@@ -145,7 +257,7 @@ class FilteringMessageManager {
     this.callback = callback;
     this.messageManager = messageManager;
 
-    this.messageManager.addMessageListener(this.messageName, this);
+    this.messageManager.addMessageListener(this.messageName, this, true);
 
     this.handlers = new Map();
   }
@@ -155,7 +267,7 @@ class FilteringMessageManager {
    * passes the result to our message callback.
    */
   receiveMessage({data, target}) {
-    let handlers = Array.from(this.getHandlers(data.messageName, data.recipient));
+    let handlers = Array.from(this.getHandlers(data.messageName, data.sender, data.recipient));
 
     data.target = target;
     this.callback(handlers, data);
@@ -167,14 +279,17 @@ class FilteringMessageManager {
    *
    * @param {string|number} messageName
    *     The message for which to return handlers.
+   * @param {object} sender
+   *     The sender data on which to filter handlers.
    * @param {object} recipient
    *     The recipient data on which to filter handlers.
    */
-  * getHandlers(messageName, recipient) {
+  * getHandlers(messageName, sender, recipient) {
     let handlers = this.handlers.get(messageName) || new Set();
     for (let handler of handlers) {
       if (MessageChannel.matchesFilter(handler.messageFilterStrict || {}, recipient) &&
-          MessageChannel.matchesFilter(handler.messageFilterPermissive || {}, recipient, false)) {
+          MessageChannel.matchesFilter(handler.messageFilterPermissive || {}, recipient, false) &&
+          (!handler.filterMessage || handler.filterMessage(sender, recipient))) {
         yield handler;
       }
     }
@@ -188,7 +303,7 @@ class FilteringMessageManager {
    * @param {object} handler
    *     An opaque handler object. The object may have a
    *     `messageFilterStrict` and/or a `messageFilterPermissive`
-   *     property on which to filter messages.
+   *     property and/or a `filterMessage` method on which to filter messages.
    *
    *     Final dispatching is handled by the message callback passed to
    *     the constructor.
@@ -338,7 +453,28 @@ this.MessageChannel = {
   RESPONSE_ALL: 2,
 
   /**
-   * Returns true if the peroperties of the `data` object match those in
+   * Fire-and-forget: The sender of this message does not expect a reply.
+   */
+  RESPONSE_NONE: 3,
+
+  /**
+   * Initializes message handlers for the given message managers if needed.
+   *
+   * @param {[nsIMessageSender]} messageManagers
+   */
+  setupMessageManagers(messageManagers) {
+    for (let mm of messageManagers) {
+      // This call initializes a FilteringMessageManager for |mm| if needed.
+      // The FilteringMessageManager must be created to make sure that senders
+      // of messages that expect a reply, such as MessageChannel:Message, do
+      // actually receive a default reply even if there are no explicit message
+      // handlers.
+      this.messageManagers.get(mm);
+    }
+  },
+
+  /**
+   * Returns true if the properties of the `data` object match those in
    * the `filter` object. Matching is done on a strict equality basis,
    * and the behavior varies depending on the value of the `strict`
    * parameter.
@@ -351,7 +487,7 @@ this.MessageChannel = {
    *    If true, all properties in the `filter` object have a
    *    corresponding property in `data` with the same value. If
    *    false, properties present in both objects must have the same
-   *    balue.
+   *    value.
    * @returns {boolean} True if the objects match.
    */
   matchesFilter(filter, data, strict = true) {
@@ -420,6 +556,10 @@ this.MessageChannel = {
    *        object if the `recipient` object passed to `sendMessage`
    *        matches this filter, as determined by `matchesFilter` with
    *        `strict=false`.
+   *
+   *      filterMessage:
+   *        An optional function that prevents the handler from handling a
+   *        message by returning `false`. See `getHandlers` for the parameters.
    */
   addListener(targets, messageName, handler) {
     for (let target of [].concat(targets)) {
@@ -468,7 +608,8 @@ this.MessageChannel = {
    *    for the message to be received.
    * @param {object} [options.sender]
    *    A structured-clone-compatible object to identify the message
-   *    sender. This object may also be used as a filter to prematurely
+   *    sender. This object may also be used to avoid delivering the
+   *    message to the sender, and as a filter to prematurely
    *    abort responses when the sender is being destroyed.
    *    @see `abortResponses`.
    * @param {integer} [options.responseType=RESPONSE_SINGLE]
@@ -481,8 +622,19 @@ this.MessageChannel = {
     let recipient = options.recipient || {};
     let responseType = options.responseType || this.RESPONSE_SINGLE;
 
-    let channelId = gChannelId++;
+    let channelId = `${gChannelId++}-${Services.appinfo.uniqueProcessID}`;
     let message = {messageName, channelId, sender, recipient, data, responseType};
+
+    if (responseType == this.RESPONSE_NONE) {
+      try {
+        target.sendAsyncMessage(MESSAGE_MESSAGE, message);
+      } catch (e) {
+        // Caller is not expecting a reply, so dump the error to the console.
+        Cu.reportError(e);
+        return Promise.reject(e);
+      }
+      return Promise.resolve();  // Not expecting any reply.
+    }
 
     let deferred = PromiseUtils.defer();
     deferred.sender = recipient;
@@ -501,7 +653,11 @@ this.MessageChannel = {
     };
     deferred.promise.then(cleanup, cleanup);
 
-    target.sendAsyncMessage(MESSAGE_MESSAGE, message);
+    try {
+      target.sendAsyncMessage(MESSAGE_MESSAGE, message);
+    } catch (e) {
+      deferred.reject(e);
+    }
     return deferred.promise;
   },
 
@@ -566,13 +722,20 @@ this.MessageChannel = {
    * @param {nsIMessageSender|nsIMessageManagerOwner} data.target
    */
   _handleMessage(handlers, data) {
-    // The target passed to `receiveMessage` is sometimes a message manager
-    // owner instead of a message manager, so make sure to convert it to a
-    // message manager first if necessary.
-    let {target} = data;
-    if (!(target instanceof Ci.nsIMessageSender)) {
-      target = target.messageManager;
+    if (data.responseType == this.RESPONSE_NONE) {
+      handlers.forEach(handler => {
+        // The sender expects no reply, so dump any errors to the console.
+        new Promise(resolve => {
+          resolve(handler.receiveMessage(data));
+        }).catch(e => {
+          Cu.reportError(e.stack ? `${e}\n${e.stack}` : e.message || e);
+        });
+      });
+      // Note: Unhandled messages are silently dropped.
+      return;
     }
+
+    let target = new MessageManagerProxy(data.target);
 
     let deferred = {
       sender: data.sender,
@@ -616,6 +779,10 @@ this.MessageChannel = {
         }
 
         target.sendAsyncMessage(MESSAGE_RESPONSE, response);
+      }).catch(e => {
+        Cu.reportError(e);
+      }).then(() => {
+        target.dispose();
       });
 
     this._addPendingResponse(deferred);
@@ -714,7 +881,7 @@ this.MessageChannel = {
    */
   abortMessageManager(target, reason) {
     for (let response of this.pendingResponses) {
-      if (response.messageManager === target) {
+      if (MessageManagerProxy.matches(response.messageManager, target)) {
         response.reject(reason);
       }
     }

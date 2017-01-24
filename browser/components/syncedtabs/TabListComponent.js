@@ -13,6 +13,8 @@ let log = Cu.import("resource://gre/modules/Log.jsm", {})
 
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUITelemetry",
   "resource:///modules/BrowserUITelemetry.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils",
+  "resource:///modules/PlacesUIUtils.jsm");
 
 this.EXPORTED_SYMBOLS = [
   "TabListComponent"
@@ -27,11 +29,13 @@ this.EXPORTED_SYMBOLS = [
  * to state changes so it can rerender.
  */
 
-function TabListComponent({window, store, View, SyncedTabs, clipboardHelper}) {
+function TabListComponent({window, store, View, SyncedTabs, clipboardHelper,
+                           getChromeWindow}) {
   this._window = window;
   this._store = store;
   this._View = View;
   this._clipboardHelper = clipboardHelper;
+  this._getChromeWindow = getChromeWindow;
   // used to trigger Sync from context menu
   this._SyncedTabs = SyncedTabs;
 }
@@ -47,6 +51,7 @@ TabListComponent.prototype = {
     this._view = new this._View(this._window, {
       onSelectRow: (...args) => this.onSelectRow(...args),
       onOpenTab: (...args) => this.onOpenTab(...args),
+      onOpenTabs: (...args) => this.onOpenTabs(...args),
       onMoveSelectionDown: (...args) => this.onMoveSelectionDown(...args),
       onMoveSelectionUp: (...args) => this.onMoveSelectionUp(...args),
       onToggleBranch: (...args) => this.onToggleBranch(...args),
@@ -111,6 +116,20 @@ TabListComponent.prototype = {
   onOpenTab(url, where, params) {
     this._window.openUILinkIn(url, where, params);
     BrowserUITelemetry.countSyncedTabEvent("open", "sidebar");
+  },
+
+  onOpenTabs(urls, where) {
+    if (!PlacesUIUtils.confirmOpenInTabs(urls.length, this._window)) {
+      return;
+    }
+    if (where == "window") {
+      this._window.openDialog(this._window.getBrowserURL(), "_blank",
+                              "chrome,dialog=no,all", urls.join("|"));
+    } else {
+      let loadInBackground = where == "tabshifted" ? true : false;
+      this._getChromeWindow(this._window).gBrowser.loadTabs(urls, loadInBackground, false);
+    }
+    BrowserUITelemetry.countSyncedTabEvent("openmultiple", "sidebar");
   },
 
   onCopyTabLocation(url) {

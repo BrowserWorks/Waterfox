@@ -132,6 +132,7 @@ class JS_PUBLIC_API(CallbackTracer) : public JSTracer
       : JSTracer(rt, JSTracer::TracerKindTag::Callback, weakTraceKind),
         contextName_(nullptr), contextIndex_(InvalidIndex), contextFunctor_(nullptr)
     {}
+    CallbackTracer(JSContext* cx, WeakMapTraceKind weakTraceKind = TraceWeakMapValues);
 
     // Override these methods to receive notification when an edge is visited
     // with the type contained in the callback. The default implementation
@@ -156,6 +157,9 @@ class JS_PUBLIC_API(CallbackTracer) : public JSTracer
     }
     virtual void onLazyScriptEdge(js::LazyScript** lazyp) {
         onChild(JS::GCCellPtr(*lazyp, JS::TraceKind::LazyScript));
+    }
+    virtual void onScopeEdge(js::Scope** scopep) {
+        onChild(JS::GCCellPtr(*scopep, JS::TraceKind::Scope));
     }
 
     // Override this method to receive notification when a node in the GC
@@ -226,6 +230,7 @@ class JS_PUBLIC_API(CallbackTracer) : public JSTracer
     void dispatchToOnEdge(js::BaseShape** basep) { onBaseShapeEdge(basep); }
     void dispatchToOnEdge(js::jit::JitCode** codep) { onJitCodeEdge(codep); }
     void dispatchToOnEdge(js::LazyScript** lazyp) { onLazyScriptEdge(lazyp); }
+    void dispatchToOnEdge(js::Scope** scopep) { onScopeEdge(scopep); }
 
   private:
     friend class AutoTracingName;
@@ -380,10 +385,18 @@ extern JS_PUBLIC_API(void)
 UnsafeTraceManuallyBarrieredEdge(JSTracer* trc, T* edgep, const char* name);
 
 namespace gc {
+
 // Return true if the given edge is not live and is about to be swept.
 template <typename T>
 extern JS_PUBLIC_API(bool)
 EdgeNeedsSweep(JS::Heap<T>* edgep);
+
+// Not part of the public API, but declared here so we can use it in GCPolicy
+// which is.
+template <typename T>
+bool
+IsAboutToBeFinalizedUnbarriered(T* thingp);
+
 } // namespace gc
 } // namespace js
 

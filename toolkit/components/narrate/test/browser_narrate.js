@@ -57,6 +57,13 @@ add_task(function* testNarrate() {
 
     NarrateTestUtils.isStartedState(content, ok);
 
+    promiseEvent = ContentTaskUtils.waitForEvent(content, "paragraphstart");
+    $(NarrateTestUtils.BACK).click();
+    speechinfo = (yield promiseEvent).detail;
+    is(speechinfo.paragraph, paragraph, "first paragraph being spoken");
+
+    NarrateTestUtils.isStartedState(content, ok);
+
     paragraph = speechinfo.paragraph;
     $(NarrateTestUtils.STOP).click();
     yield ContentTaskUtils.waitForCondition(

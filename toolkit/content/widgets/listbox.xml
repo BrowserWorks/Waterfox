@@ -822,11 +822,16 @@
       <handler event="keypress" key=" " phase="target">
         <![CDATA[
           if (this.currentItem) {
-            if (this.currentItem.getAttribute("type") != "checkbox")
+            if (this.currentItem.getAttribute("type") != "checkbox") {
               this.addItemToSelection(this.currentItem);
+              // Prevent page from scrolling on the space key.
+              event.preventDefault();
+            }
             else if (!this.currentItem.disabled) {
               this.currentItem.checked = !this.currentItem.checked;
               this.currentItem.doCommand();
+              // Prevent page from scrolling on the space key.
+              event.preventDefault();
             }
           }
         ]]>
@@ -966,9 +971,7 @@
         var control = this.control;
         if (!control || control.disabled)
           return;
-        let { AppConstants } =
-            Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
-        if ((!event.ctrlKey || (AppConstants.platform == "macosx" && event.button == 2)) &&
+        if ((!event.ctrlKey || (/Mac/.test(navigator.platform) && event.button == 2)) &&
             !event.shiftKey && !event.metaKey) {
           if (!this.selected) {
             control.selectItem(this);

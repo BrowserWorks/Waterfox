@@ -9,11 +9,13 @@
 #include "base/process.h"               // for ProcessId
 #include "base/task.h"                  // for CancelableTask, DeleteTask, etc
 #include "base/thread.h"
+#include "mozilla/Sprintf.h"            // for SprintfLiteral
 #include "mozilla/ipc/MessageChannel.h" // for MessageChannel, etc
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/ipc/Transport.h"      // for Transport
+#include "mozilla/Sprintf.h"
 #include "mozilla/UniquePtr.h"          // for UniquePtr
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIMemoryReporter.h"
 #ifdef MOZ_WIDGET_GONK
 #include "mozilla/LinuxUtils.h"
@@ -42,7 +44,7 @@ public:
   NS_DECL_ISUPPORTS
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize)
+                            nsISupports* aData, bool aAnonymize) override
   {
     if (SharedBufferManagerParent::sManagerMonitor) {
       SharedBufferManagerParent::sManagerMonitor->Lock();
@@ -52,7 +54,7 @@ public:
       base::ProcessId pid = it->first;
       SharedBufferManagerParent *mgr = it->second;
       if (!mgr) {
-        printf_stderr("GrallocReporter::CollectReports() mgr is nullptr");
+        printf_stderr("GrallocReporter::CollectReports(): mgr is nullptr");
         continue;
       }
 
@@ -62,7 +64,6 @@ public:
       MutexAutoLock lock(mgr->mLock);
       std::map<int64_t, android::sp<android::GraphicBuffer> >::iterator buf_it;
       for (buf_it = mgr->mBuffers.begin(); buf_it != mgr->mBuffers.end(); buf_it++) {
-        nsresult rv;
         android::sp<android::GraphicBuffer> gb = buf_it->second;
         int bpp = android::bytesPerPixel(gb->getPixelFormat());
         int stride = gb->getStride();
@@ -75,20 +76,15 @@ public:
         nsPrintfCString gpath("gralloc/%s (pid=%d)/buffer(width=%d, height=%d, bpp=%d, stride=%d)",
             pidName.get(), pid, gb->getWidth(), height, bpp, stride);
 
-        rv = aHandleReport->Callback(EmptyCString(), gpath, KIND_OTHER, UNITS_BYTES, amount,
-            NS_LITERAL_CSTRING(
-              "Special RAM that can be shared between processes and directly accessed by "
-              "both the CPU and GPU. Gralloc memory is usually a relatively precious "
-              "resource, with much less available than generic RAM. When it's exhausted, "
-              "graphics performance can suffer. This value can be incorrect because of race "
-              "conditions."),
-            aData);
-        if (rv != NS_OK) {
-          if (SharedBufferManagerParent::sManagerMonitor) {
-            SharedBufferManagerParent::sManagerMonitor->Unlock();
-          }
-          return rv;
-        }
+        aHandleReport->Callback(
+          EmptyCString(), gpath, KIND_OTHER, UNITS_BYTES, amount,
+          NS_LITERAL_CSTRING(
+"Special RAM that can be shared between processes and directly accessed by "
+"both the CPU and GPU. Gralloc memory is usually a relatively precious "
+"resource, with much less available than generic RAM. When it's exhausted, "
+"graphics performance can suffer. This value can be incorrect because of race "
+"conditions."),
+          aData);
       }
     }
     if (SharedBufferManagerParent::sManagerMonitor) {
@@ -181,7 +177,7 @@ PSharedBufferManagerParent* SharedBufferManagerParent::Create(Transport* aTransp
 {
   base::Thread* thread = nullptr;
   char thrname[128];
-  base::snprintf(thrname, 128, "BufMgrParent#%d", aOtherPid);
+  SprintfLiteral(thrname, "BufMgrParent#%d", aOtherPid);
   thread = new base::Thread(thrname);
 
   SharedBufferManagerParent* manager = new SharedBufferManagerParent(aOtherPid, thread);
@@ -363,24 +359,6 @@ SharedBufferManagerParent::GetGraphicBuffer(GrallocBufferRef aRef)
   return parent->GetGraphicBuffer(aRef.mKey);
 }
 #endif
-
-IToplevelProtocol*
-SharedBufferManagerParent::CloneToplevel(const InfallibleTArray<ProtocolFdMapping>& aFds,
-                                 base::ProcessHandle aPeerProcess,
-                                 mozilla::ipc::ProtocolCloneContext* aCtx)
-{
-  for (unsigned int i = 0; i < aFds.Length(); i++) {
-    if (aFds[i].protocolId() == unsigned(GetProtocolId())) {
-      UniquePtr<Transport> transport =
-        OpenDescriptor(aFds[i].fd(), Transport::MODE_SERVER);
-      PSharedBufferManagerParent* bufferManager = Create(transport.get(), base::GetProcId(aPeerProcess));
-      bufferManager->CloneManagees(this, aCtx);
-      bufferManager->IToplevelProtocol::SetTransport(Move(transport));
-      return bufferManager;
-    }
-  }
-  return nullptr;
-}
 
 } /* namespace layers */
 } /* namespace mozilla */

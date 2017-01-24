@@ -1247,7 +1247,6 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
 {
     MOZ_ASSERT(aShellData);
 
-    JSRuntime* rt;
     JSContext* cx;
     int result = 0;
     nsresult rv;
@@ -1412,23 +1411,17 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
             return 1;
         }
 
-        rt = xpc::GetJSRuntime();
-        if (!rt) {
-            printf("failed to get JSRuntime from XPConnect!\n");
-            return 1;
-        }
+        AutoJSAPI jsapi;
+        jsapi.Init();
+        cx = jsapi.cx();
 
         // Override the default XPConnect interrupt callback. We could store the
         // old one and restore it before shutting down, but there's not really a
         // reason to bother.
         sScriptedInterruptCallback = new PersistentRootedValue;
-        sScriptedInterruptCallback->init(rt, UndefinedValue());
+        sScriptedInterruptCallback->init(cx, UndefinedValue());
 
-        AutoJSAPI jsapi;
-        jsapi.Init();
-        cx = jsapi.cx();
-
-        JS_SetInterruptCallback(cx, XPCShellInterruptCallback);
+        JS_AddInterruptCallback(cx, XPCShellInterruptCallback);
 
         argc--;
         argv++;
@@ -1580,7 +1573,7 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
 
             JS_DropPrincipals(cx, gJSPrincipals);
             JS_SetAllNonReservedSlotsToUndefined(cx, glob);
-            JS_SetAllNonReservedSlotsToUndefined(cx, JS_GlobalLexicalScope(glob));
+            JS_SetAllNonReservedSlotsToUndefined(cx, JS_GlobalLexicalEnvironment(glob));
             JS_GC(cx);
         }
         JS_GC(cx);

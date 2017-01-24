@@ -530,6 +530,7 @@ STUB(gtk_get_minor_version)
 STUB(gtk_menu_button_new)
 STUB(gtk_offscreen_window_new)
 STUB(gtk_paned_new)
+STUB(gtk_radio_menu_item_new)
 STUB(gtk_render_activity)
 STUB(gtk_render_arrow)
 STUB(gtk_render_background)
@@ -561,6 +562,7 @@ STUB(gtk_style_context_get_state)
 STUB(gtk_style_context_get_style)
 STUB(gtk_style_context_has_class)
 STUB(gtk_style_context_invalidate)
+STUB(gtk_style_context_list_classes)
 STUB(gtk_style_context_new)
 STUB(gtk_style_context_remove_class)
 STUB(gtk_style_context_remove_region)
@@ -610,9 +612,6 @@ STUB(gdkx_visual_get)
 STUB(gtk_object_get_type)
 #endif
 
-#ifndef GTK3_SYMBOLS
-// Only define the following workaround when using GTK3, which we detect
-// by checking if GTK3 stubs are not provided.
 #include <X11/Xlib.h>
 // Bug 1271100
 // We need to trick system Cairo into not using the XShm extension due to
@@ -626,5 +625,4 @@ XShmQueryExtension(Display* aDisplay)
 {
   return False;
 }
-#endif
 

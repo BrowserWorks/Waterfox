@@ -3,10 +3,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import time
-import unittest
 import urllib
 
-from marionette import MarionetteTestCase
+from marionette import MarionetteTestCase, WindowManagerMixin
 from marionette_driver.errors import MarionetteException, TimeoutException
 from marionette_driver import By, Wait
 
@@ -15,12 +14,18 @@ def inline(doc):
     return "data:text/html;charset=utf-8,%s" % urllib.quote(doc)
 
 
-class TestNavigate(MarionetteTestCase):
+class TestNavigate(WindowManagerMixin, MarionetteTestCase):
     def setUp(self):
-        MarionetteTestCase.setUp(self)
+        super(TestNavigate, self).setUp()
+
         self.marionette.navigate("about:")
         self.test_doc = self.marionette.absolute_url("test.html")
         self.iframe_doc = self.marionette.absolute_url("test_iframe.html")
+
+    def tearDown(self):
+        self.close_all_windows()
+
+        super(TestNavigate, self).tearDown()
 
     def test_set_location_through_execute_script(self):
         self.marionette.execute_script("window.location.href = '%s'" % self.test_doc)
@@ -123,19 +128,11 @@ class TestNavigate(MarionetteTestCase):
         self.assertEqual("complete", state)
         self.assertTrue(self.marionette.find_element(By.ID, "mozLink"))
 
-    @unittest.skip("Bug 1302707 - No timeout exception raised.")
-    def test_should_throw_a_timeoutexception_when_loading_page(self):
-        try:
-            self.marionette.timeouts("page load", 0)
-            self.marionette.navigate(self.test_doc)
-            self.assertTrue(self.marionette.find_element(By.ID, "mozLink"))
-            self.fail("Should have thrown a MarionetteException")
-        except TimeoutException as e:
-            self.assertTrue("Error loading page, timed out" in str(e))
-        except Exception as e:
-            import traceback
-            print traceback.format_exc()
-            self.fail("Should have thrown a TimeoutException instead of %s" % type(e))
+    def test_error_when_exceeding_page_load_timeout(self):
+        with self.assertRaises(TimeoutException):
+            self.marionette.set_page_load_timeout(0)
+            self.marionette.navigate(self.marionette.absolute_url("slow"))
+            self.marionette.find_element(By.TAG_NAME, "p")
 
     def test_navigate_iframe(self):
         self.marionette.navigate(self.iframe_doc)
@@ -148,6 +145,17 @@ class TestNavigate(MarionetteTestCase):
         self.marionette.execute_script("window.visited = true", sandbox=None)
         self.marionette.navigate("%s#foo" % doc)
         self.assertTrue(self.marionette.execute_script("return window.visited", sandbox=None))
+
+    def test_about_blank_for_new_docshell(self):
+        """ Bug 1312674 - Hang when loading about:blank for a new docshell."""
+        # Open a window to get a new docshell created for the first tab
+        with self.marionette.using_context("chrome"):
+            tab = self.open_tab(lambda: self.marionette.execute_script(" window.open() "))
+            self.marionette.switch_to_window(tab)
+
+        self.marionette.navigate('about:blank')
+        self.marionette.close()
+        self.marionette.switch_to_window(self.start_window)
 
     @property
     def location_href(self):

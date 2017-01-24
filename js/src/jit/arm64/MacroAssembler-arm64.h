@@ -2243,17 +2243,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     void stackCheck(ImmWord limitAddr, Label* label) {
         MOZ_CRASH("stackCheck");
     }
-    void clampIntToUint8(Register reg) {
-        vixl::UseScratchRegisterScope temps(this);
-        const ARMRegister scratch32 = temps.AcquireW();
-        const ARMRegister reg32(reg, 32);
-        MOZ_ASSERT(!scratch32.Is(reg32));
-
-        Cmp(reg32, Operand(reg32, vixl::UXTB));
-        Csel(reg32, reg32, vixl::wzr, Assembler::GreaterThanOrEqual);
-        Mov(scratch32, Operand(0xff));
-        Csel(reg32, reg32, scratch32, Assembler::LessThanOrEqual);
-    }
 
     void incrementInt32Value(const Address& addr) {
         vixl::UseScratchRegisterScope temps(this);
@@ -2308,9 +2297,10 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
         loadPtr(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), dest);
     }
-    void loadAsmJSHeapRegisterFromGlobalData() {
-        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset, HeapReg);
-        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset + 8, HeapLenReg);
+    void loadWasmPinnedRegsFromTls() {
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg);
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalData)), GlobalReg);
+        adds32(Imm32(AsmJSGlobalRegBias), GlobalReg);
     }
 
     // Overwrites the payload bits of a dest register containing a Value.

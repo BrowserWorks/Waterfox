@@ -17,6 +17,7 @@
 #include "nsPrintfCString.h"
 #include "DisplayItemScrollClip.h"
 
+#include <iostream>
 #include <stdio.h>
 
 using namespace mozilla;
@@ -195,9 +196,15 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
     }
   }
 #ifdef MOZ_DUMP_PAINTING
-  if (aItem->GetType() == nsDisplayItem::TYPE_SVG_EFFECTS) {
+  if (aItem->GetType() == nsDisplayItem::TYPE_MASK) {
     nsCString str;
-    (static_cast<nsDisplaySVGEffects*>(aItem))->PrintEffects(str);
+    (static_cast<nsDisplayMask*>(aItem))->PrintEffects(str);
+    aStream << str.get();
+  }
+
+  if (aItem->GetType() == nsDisplayItem::TYPE_FILTER) {
+    nsCString str;
+    (static_cast<nsDisplayFilter*>(aItem))->PrintEffects(str);
     aStream << str.get();
   }
 #endif
@@ -246,6 +253,25 @@ nsFrame::PrintDisplayList(nsDisplayListBuilder* aBuilder,
                           bool aDumpHtml)
 {
   PrintDisplayListTo(aBuilder, aList, aStream, 0, aDumpHtml);
+}
+
+/**
+ * The two functions below are intended to be called from a debugger.
+ */
+void
+PrintDisplayItemToStdout(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem)
+{
+  std::stringstream stream;
+  PrintDisplayItemTo(aBuilder, aItem, stream, 0, true, false);
+  std::cout << stream.str() << std::endl;
+}
+
+void
+PrintDisplayListToStdout(nsDisplayListBuilder* aBuilder, const nsDisplayList& aList)
+{
+  std::stringstream stream;
+  PrintDisplayListTo(aBuilder, aList, stream, 0, false);
+  std::cout << stream.str() << std::endl;
 }
 
 #ifdef MOZ_DUMP_PAINTING

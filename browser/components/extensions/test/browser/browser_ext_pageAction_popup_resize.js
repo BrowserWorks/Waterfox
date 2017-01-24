@@ -91,18 +91,12 @@ add_task(function* testPageActionPopupResize() {
 
   // Windows has a particular slow resize animation for this panel.
   if (AppConstants.platform == "win") {
-    while (panelWindow.innerWidth < 750) {
-      info(`Window width: ${panelWindow.innerWidth}px\n`);
+    while (panelWindow.innerWidth < 800) {
       yield delay(50);
     }
   }
 
-  if (AppConstants.platform == "win") {
-    ok(panelWindow.innerWidth <= 800 && panelWindow.innerWidth >= 750,
-       `Panel window width (${panelWindow.innerWidth}) within tolerance`);
-  } else {
-    is(panelWindow.innerWidth, 800, "Panel window width");
-  }
+  is(panelWindow.innerWidth, 800, "Panel window width");
   ok(body.clientWidth <= 800, `Panel body width ${body.clientWidth} is less than 800`);
   is(body.scrollWidth, 1400, "Panel body scroll width");
 
@@ -152,7 +146,6 @@ add_task(function* testPageActionPopupReflow() {
   clickPageAction(extension, window);
 
   browser = yield awaitExtensionPanel(extension);
-  yield new Promise(resolve => setTimeout(resolve, 100));
 
   let win = browser.contentWindow;
   let body = win.document.body;

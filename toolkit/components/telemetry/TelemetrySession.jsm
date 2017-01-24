@@ -214,7 +214,7 @@ var processInfo = {
     return null;
   },
   getCounters_Windows: function() {
-    if (!this._initialized){
+    if (!this._initialized) {
       Cu.import("resource://gre/modules/ctypes.jsm");
       this._IO_COUNTERS = new ctypes.StructType("IO_COUNTERS", [
         {'readOps': ctypes.unsigned_long_long},
@@ -239,7 +239,7 @@ var processInfo = {
       }
     }
     let io = new this._IO_COUNTERS();
-    if(!this._GetProcessIoCounters(this._GetCurrentProcess(), io.address()))
+    if (!this._GetProcessIoCounters(this._GetCurrentProcess(), io.address()))
       return null;
     return [parseInt(io.readBytes), parseInt(io.writeBytes)];
   }
@@ -397,7 +397,7 @@ var TelemetryScheduler = {
    */
   observe: function(aSubject, aTopic, aData) {
     this._log.trace("observe - aTopic: " + aTopic);
-    switch(aTopic) {
+    switch (aTopic) {
       case "idle":
         // If the user is idle, increase the tick interval.
         this._isUserIdle = true;
@@ -964,8 +964,16 @@ var Impl = {
     return ret;
   },
 
-  getScalars: function (subsession, clearSubsession) {
-    this._log.trace("getScalars - subsession: " + subsession + ", clearSubsession: " + clearSubsession);
+  /**
+   * Get a snapshot of the scalars and clear them.
+   * @param {subsession} If true, then we collect the data for a subsession.
+   * @param {clearSubsession} If true, we  need to clear the subsession.
+   * @param {keyed} Take a snapshot of keyed or non keyed scalars.
+   * @return {Object} The scalar data as a Javascript object.
+   */
+  getScalars: function (subsession, clearSubsession, keyed) {
+    this._log.trace("getScalars - subsession: " + subsession + ", clearSubsession: " +
+                    clearSubsession + ", keyed: " + keyed);
 
     if (!subsession) {
       // We only support scalars for subsessions.
@@ -973,7 +981,8 @@ var Impl = {
       return {};
     }
 
-    let scalarsSnapshot =
+    let scalarsSnapshot = keyed ?
+      Telemetry.snapshotKeyedScalars(this.getDatasetType(), clearSubsession) :
       Telemetry.snapshotScalars(this.getDatasetType(), clearSubsession);
 
     // Don't return the test scalars.
@@ -1283,6 +1292,7 @@ var Impl = {
     payloadObj.processes = {
       parent: {
         scalars: protect(() => this.getScalars(isSubsession, clearSubsession)),
+        keyedScalars: protect(() => this.getScalars(isSubsession, clearSubsession, true)),
       }
     };
 

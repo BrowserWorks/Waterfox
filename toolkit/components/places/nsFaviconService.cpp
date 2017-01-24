@@ -31,13 +31,14 @@
 #include "nsILoadInfo.h"
 #include "nsIContentPolicy.h"
 #include "nsContentUtils.h"
+#include "nsNullPrincipal.h"
 
 // For large favicons optimization.
 #include "imgITools.h"
 #include "imgIContainer.h"
 
-// Default value for mOptimizedIconDimension
-#define OPTIMIZED_FAVICON_DIMENSION 16
+// The target dimension, in pixels, for favicons we optimize.
+#define OPTIMIZED_FAVICON_DIMENSION 32
 
 #define MAX_FAILED_FAVICONS 256
 #define FAVICON_CACHE_REDUCE_COUNT 64
@@ -79,8 +80,7 @@ NS_IMPL_ISUPPORTS_CI(
 )
 
 nsFaviconService::nsFaviconService()
-  : mOptimizedIconDimension(OPTIMIZED_FAVICON_DIMENSION)
-  , mFailedFaviconSerial(0)
+  : mFailedFaviconSerial(0)
   , mFailedFavicons(MAX_FAILED_FAVICONS / 2)
   , mUnassociatedIcons(UNASSOCIATED_FAVICONS_LENGTH)
 {
@@ -104,10 +104,6 @@ nsFaviconService::Init()
 {
   mDB = Database::GetDatabase();
   NS_ENSURE_STATE(mDB);
-
-  mOptimizedIconDimension = Preferences::GetInt(
-    "places.favicons.optimizeToDimension", OPTIMIZED_FAVICON_DIMENSION
-  );
 
   mExpireUnassociatedIconsTimer = do_CreateInstance("@mozilla.org/timer;1");
   NS_ENSURE_STATE(mExpireUnassociatedIconsTimer);
@@ -233,8 +229,7 @@ nsFaviconService::SetAndFetchFaviconForPage(nsIURI* aPageURI,
   nsCOMPtr<nsIPrincipal> loadingPrincipal = aLoadingPrincipal;
   MOZ_ASSERT(loadingPrincipal, "please provide aLoadingPrincipal for this favicon");
   if (!loadingPrincipal) {
-    // Bug 1227289 : Let's default to the systemPrincipal if no loadingPrincipal is provided
-    // so addons not providing a loadingPrincipal do not break in release builds.
+    // Let's default to the nullPrincipal if no loadingPrincipal is provided.
     const char16_t* params[] = {
       u"nsFaviconService::setAndFetchFaviconForPage()",
       u"nsFaviconService::setAndFetchFaviconForPage(..., [optional aLoadingPrincipal])"
@@ -245,7 +240,7 @@ nsFaviconService::SetAndFetchFaviconForPage(nsIURI* aPageURI,
                                     nsContentUtils::eNECKO_PROPERTIES,
                                     "APIDeprecationWarning",
                                     params, ArrayLength(params));
-    loadingPrincipal = nsContentUtils::GetSystemPrincipal();
+    loadingPrincipal = nsNullPrincipal::Create();
   }
   NS_ENSURE_TRUE(loadingPrincipal, NS_ERROR_FAILURE);
 
@@ -343,11 +338,11 @@ nsFaviconService::ReplaceFaviconData(nsIURI* aFaviconURI,
   // If the page provided a large image for the favicon (eg, a highres image
   // or a multiresolution .ico file), we don't want to store more data than
   // needed.
-  if (aDataLen > MAX_ICON_FILESIZE(mOptimizedIconDimension)) {
+  if (aDataLen > MAX_FAVICON_FILESIZE) {
     rv = OptimizeFaviconImage(aData, aDataLen, aMimeType, iconData->data, iconData->mimeType);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if (iconData->data.Length() > nsIFaviconService::MAX_FAVICON_SIZE) {
+    if (iconData->data.Length() > nsIFaviconService::MAX_FAVICON_BUFFER_SIZE) {
       // We cannot optimize this favicon size and we are over the maximum size
       // allowed, so we will not save data to the db to avoid bloating it.
       mUnassociatedIcons.RemoveEntry(aFaviconURI);
@@ -395,8 +390,7 @@ nsFaviconService::ReplaceFaviconDataFromDataURL(nsIURI* aFaviconURI,
   nsCOMPtr<nsIPrincipal> loadingPrincipal = aLoadingPrincipal;
   MOZ_ASSERT(loadingPrincipal, "please provide aLoadingPrincipal for this favicon");
   if (!loadingPrincipal) {
-    // Bug 1227289 : Let's default to the systemPrincipal if no loadingPrincipal is provided
-    // so addons not providing a loadingPrincipal do not break in release builds.
+    // Let's default to the nullPrincipal if no loadingPrincipal is provided.
     const char16_t* params[] = {
       u"nsFaviconService::ReplaceFaviconDataFromDataURL()",
       u"nsFaviconService::ReplaceFaviconDataFromDataURL(..., [optional aLoadingPrincipal])"
@@ -408,7 +402,7 @@ nsFaviconService::ReplaceFaviconDataFromDataURL(nsIURI* aFaviconURI,
                                     "APIDeprecationWarning",
                                     params, ArrayLength(params));
 
-    loadingPrincipal = nsContentUtils::GetSystemPrincipal();
+    loadingPrincipal = nsNullPrincipal::Create();
   }
   NS_ENSURE_TRUE(loadingPrincipal, NS_ERROR_FAILURE);
 
@@ -660,8 +654,8 @@ nsFaviconService::OptimizeFaviconImage(const uint8_t* aData, uint32_t aDataLen,
   // scale and recompress
   nsCOMPtr<nsIInputStream> iconStream;
   rv = imgtool->EncodeScaledImage(container, aNewMimeType,
-                                  mOptimizedIconDimension,
-                                  mOptimizedIconDimension,
+                                  OPTIMIZED_FAVICON_DIMENSION,
+                                  OPTIMIZED_FAVICON_DIMENSION,
                                   EmptyString(),
                                   getter_AddRefs(iconStream));
   NS_ENSURE_SUCCESS(rv, rv);

@@ -54,8 +54,8 @@ PropertyTree::insertChild(ExclusiveContext* cx, Shape* parent, Shape* child)
     MOZ_ASSERT(!parent->inDictionary());
     MOZ_ASSERT(!child->parent);
     MOZ_ASSERT(!child->inDictionary());
-    MOZ_ASSERT(child->compartment() == parent->compartment());
-    MOZ_ASSERT(cx->isInsideCurrentCompartment(this));
+    MOZ_ASSERT(child->zone() == parent->zone());
+    MOZ_ASSERT(cx->zone() == zone_);
 
     KidsPointer* kidp = &parent->kids;
 
@@ -226,14 +226,6 @@ Shape::fixupDictionaryShapeAfterMovingGC()
 {
     if (!listp)
         return;
-
-    // It's possible that this shape is unreachable and that listp points to the
-    // location of a dead object in the nursery, in which case we should never
-    // touch it again.
-    if (IsInsideNursery(reinterpret_cast<Cell*>(listp))) {
-        listp = nullptr;
-        return;
-    }
 
     // The listp field either points to the parent field of the next shape in
     // the list if there is one.  Otherwise if this shape is the last in the

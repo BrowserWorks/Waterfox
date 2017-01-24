@@ -25,10 +25,10 @@ public:
   ~VPXDecoder();
 
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Flush() override;
-  nsresult Drain() override;
-  nsresult Shutdown() override;
+  void Input(MediaRawData* aSample) override;
+  void Flush() override;
+  void Drain() override;
+  void Shutdown() override;
   const char* GetDescriptionName() const override
   {
     return "libvpx video decoder";
@@ -39,14 +39,16 @@ public:
     VP9 = 1 << 1
   };
 
-  // Return true if mimetype is a VPX codec of given types.
+  // Return true if aMimeType is a one of the strings used by our demuxers to
+  // identify VPX of the specified type. Does not parse general content type
+  // strings, i.e. white space matters.
   static bool IsVPX(const nsACString& aMimeType, uint8_t aCodecMask=VP8|VP9);
   static bool IsVP8(const nsACString& aMimeType);
   static bool IsVP9(const nsACString& aMimeType);
 
 private:
   void ProcessDecode(MediaRawData* aSample);
-  int DoDecode(MediaRawData* aSample);
+  MediaResult DoDecode(MediaRawData* aSample);
   void ProcessDrain();
 
   const RefPtr<ImageContainer> mImageContainer;

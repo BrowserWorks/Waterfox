@@ -13,12 +13,10 @@ Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "UserAutoCompleteResult",
                                   "resource://gre/modules/LoginManagerContent.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AutoCompleteE10S",
-                                  "resource://gre/modules/AutoCompleteE10S.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AutoCompletePopup",
+                                  "resource://gre/modules/AutoCompletePopup.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
                                   "resource://gre/modules/DeferredTask.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "LoginDoorhangers",
-                                  "resource://gre/modules/LoginDoorhangers.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
                                   "resource://gre/modules/LoginHelper.jsm");
 
@@ -48,7 +46,7 @@ var LoginManagerParent = {
     mm.addMessageListener("RemoteLogins:onFormSubmit", this);
     mm.addMessageListener("RemoteLogins:autoCompleteLogins", this);
     mm.addMessageListener("RemoteLogins:removeLogin", this);
-    mm.addMessageListener("RemoteLogins:updateLoginFormPresence", this);
+    mm.addMessageListener("RemoteLogins:insecureLoginFormPresent", this);
 
     XPCOMUtils.defineLazyGetter(this, "recipeParentPromise", () => {
       const { LoginRecipesParent } = Cu.import("resource://gre/modules/LoginRecipes.jsm", {});
@@ -84,13 +82,13 @@ var LoginManagerParent = {
                           data.usernameField,
                           data.newPasswordField,
                           data.oldPasswordField,
-                          msg.objects.openerWin,
+                          msg.objects.openerTopWindow,
                           msg.target);
         break;
       }
 
-      case "RemoteLogins:updateLoginFormPresence": {
-        this.updateLoginFormPresence(msg.target, data);
+      case "RemoteLogins:insecureLoginFormPresent": {
+        this.setHasInsecureLoginForms(msg.target, data.hasInsecureLoginForms);
         break;
       }
 
@@ -101,7 +99,7 @@ var LoginManagerParent = {
 
       case "RemoteLogins:removeLogin": {
         let login = LoginHelper.vanillaObjectToLogin(data.login);
-        AutoCompleteE10S.removeLogin(login);
+        AutoCompletePopup.removeLogin(login);
         break;
       }
     }
@@ -232,7 +230,6 @@ var LoginManagerParent = {
                                    rect, requestId, remote }, target) {
     // Note: previousResult is a regular object, not an
     // nsIAutoCompleteResult.
-    var result;
 
     let searchStringLower = searchString.toLowerCase();
     let logins;
@@ -273,8 +270,8 @@ var LoginManagerParent = {
     // for showing the autocomplete popup (via the regular
     // nsAutoCompleteController).
     if (remote) {
-      result = new UserAutoCompleteResult(searchString, matchingLogins);
-      AutoCompleteE10S.showPopupWithResults(target.ownerDocument.defaultView, rect, result);
+      let results = new UserAutoCompleteResult(searchString, matchingLogins);
+      AutoCompletePopup.showPopupWithResults({ browser: target.ownerDocument.defaultView, rect, results });
     }
 
     // Convert the array of nsILoginInfo to vanilla JS objects since nsILoginInfo
@@ -288,21 +285,14 @@ var LoginManagerParent = {
 
   onFormSubmit: function(hostname, formSubmitURL,
                          usernameField, newPasswordField,
-                         oldPasswordField, opener,
+                         oldPasswordField, openerTopWindow,
                          target) {
     function getPrompter() {
       var prompterSvc = Cc["@mozilla.org/login-manager/prompter;1"].
                         createInstance(Ci.nsILoginManagerPrompter);
-      // XXX For E10S, we don't want to use the browser's contentWindow
-      // because it's in another process, so we use our chrome window as
-      // the window parent (the content process is responsible for
-      // making sure that its window is not in private browsing mode).
-      // In the same-process case, we can simply use the content window.
-      prompterSvc.init(target.isRemoteBrowser ?
-                          target.ownerDocument.defaultView :
-                          target.contentWindow);
-      if (target.isRemoteBrowser)
-        prompterSvc.setE10sData(target, opener);
+      prompterSvc.init(target.ownerDocument.defaultView);
+      prompterSvc.browser = target;
+      prompterSvc.opener = openerTopWindow;
       return prompterSvc;
     }
 
@@ -478,83 +468,18 @@ var LoginManagerParent = {
   },
 
   /**
-   * Called to indicate whether a login form on the currently loaded page is
-   * present or not. This is one of the factors used to control the visibility
-   * of the password fill doorhanger.
+   * Called to indicate whether an insecure password field is present so
+   * insecure password UI can know when to show.
    */
-  updateLoginFormPresence(browser, { loginFormOrigin, loginFormPresent,
-                                     hasInsecureLoginForms }) {
-    const ANCHOR_DELAY_MS = 200;
-
+  setHasInsecureLoginForms(browser, hasInsecureLoginForms) {
     let state = this.stateForBrowser(browser);
 
     // Update the data to use to the latest known values. Since messages are
     // processed in order, this will always be the latest version to use.
-    state.loginFormOrigin = loginFormOrigin;
-    state.loginFormPresent = loginFormPresent;
     state.hasInsecureLoginForms = hasInsecureLoginForms;
 
     // Report the insecure login form state immediately.
     browser.dispatchEvent(new browser.ownerDocument.defaultView
                                  .CustomEvent("InsecureLoginFormsStateChange"));
-
-    // Apply the data to the currently displayed login fill icon later.
-    if (!state.anchorDeferredTask) {
-      state.anchorDeferredTask = new DeferredTask(
-        () => this.updateLoginAnchor(browser),
-        ANCHOR_DELAY_MS
-      );
-    }
-    state.anchorDeferredTask.arm();
   },
-
-  updateLoginAnchor: Task.async(function* (browser) {
-    // Once this preference is removed, this version of the fill doorhanger
-    // should be enabled for Desktop only, and not for Android or B2G.
-    if (!Services.prefs.getBoolPref("signon.ui.experimental")) {
-      return;
-    }
-
-    // Copy the state to use for this execution of the task. These will not
-    // change during this execution of the asynchronous function, but in case a
-    // change happens in the state, the function will be retriggered.
-    let { loginFormOrigin, loginFormPresent } = this.stateForBrowser(browser);
-
-    yield Services.logins.initializationPromise;
-
-    // Check if there are form logins for the site, ignoring formSubmitURL.
-    let hasLogins = loginFormOrigin &&
-                    LoginHelper.searchLoginsWithObject({
-                      httpRealm: null,
-                      hostname: loginFormOrigin,
-                      schemeUpgrades: LoginHelper.schemeUpgrades,
-                    }).length > 0;
-
-    let showLoginAnchor = loginFormPresent || hasLogins;
-
-    let fillDoorhanger = LoginDoorhangers.FillDoorhanger.find({ browser });
-    if (fillDoorhanger) {
-      if (!showLoginAnchor) {
-        fillDoorhanger.remove();
-        return;
-      }
-      // We should only update the state of the doorhanger while it is hidden.
-      yield fillDoorhanger.promiseHidden;
-      fillDoorhanger.loginFormPresent = loginFormPresent;
-      fillDoorhanger.loginFormOrigin = loginFormOrigin;
-      fillDoorhanger.filterString = hasLogins ? loginFormOrigin : "";
-      fillDoorhanger.detailLogin = null;
-      fillDoorhanger.autoDetailLogin = true;
-      return;
-    }
-    if (showLoginAnchor) {
-      fillDoorhanger = new LoginDoorhangers.FillDoorhanger({
-        browser,
-        loginFormPresent,
-        loginFormOrigin,
-        filterString: hasLogins ? loginFormOrigin : "",
-        autoDetailLogin: true,
-      });
-    }
-  }),
 };

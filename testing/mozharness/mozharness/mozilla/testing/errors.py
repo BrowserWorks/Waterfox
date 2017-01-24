@@ -32,6 +32,12 @@ TinderBoxPrintRe = {
     "mochitest-media_summary": _mochitest_summary,
     "mochitest-plain-clipboard_summary": _mochitest_summary,
     "mochitest-plain-gpu_summary": _mochitest_summary,
+    "marionette_summary": {
+        'regex': re.compile(r'''(passed|failed|todo):\ +(\d+)'''),
+        'pass_group': "passed",
+        'fail_group': "failed",
+        'known_fail_group': "todo",
+    },
     "reftest_summary": {
         'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),
         'pass_group': "Successful",
@@ -92,7 +98,7 @@ TinderBoxPrintRe = {
     "harness_error": {
         'full_regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),
         'minimum_regex': re.compile(r'''(TEST-UNEXPECTED|PROCESS-CRASH)'''),
-        'retry_regex': re.compile(r'''FAIL-SHOULD-RETRY''')
+        'retry_regex': re.compile(r'''(FAIL-SHOULD-RETRY|No space left on device|DMError|Connection to the other side was lost in a non-clean fashion|program finished with exit code 80|INFRA-ERROR|twisted.spread.pb.PBConnectionLost|_dl_open: Assertion)''')
     },
 }
 

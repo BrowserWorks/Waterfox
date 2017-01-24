@@ -64,7 +64,7 @@ const PAGECONTENT_TRANSLATED =
   "</iframe>" +
   "</div></body></html>";
 
-function openSelectPopup(selectPopup, withMouse, selector = "select", win = window)
+function openSelectPopup(selectPopup, withMouse, selector = "select",  win = window)
 {
   let popupShownPromise = BrowserTestUtils.waitForEvent(selectPopup, "popupshown");
 
@@ -77,15 +77,18 @@ function openSelectPopup(selectPopup, withMouse, selector = "select", win = wind
   return popupShownPromise;
 }
 
-function hideSelectPopup(selectPopup, withEscape, win = window)
+function hideSelectPopup(selectPopup, mode = "enter", win = window)
 {
   let popupHiddenPromise = BrowserTestUtils.waitForEvent(selectPopup, "popuphidden");
 
-  if (withEscape) {
+  if (mode == "escape") {
     EventUtils.synthesizeKey("KEY_Escape", { code: "Escape" }, win);
   }
-  else {
+  else if (mode == "enter") {
     EventUtils.synthesizeKey("KEY_Enter", { code: "Enter" }, win);
+  }
+  else if (mode == "click") {
+    EventUtils.synthesizeMouseAtCenter(selectPopup.lastChild, { }, win);
   }
 
   return popupHiddenPromise;
@@ -105,7 +108,7 @@ function getChangeEvents()
   });
 }
 
-function doSelectTests(contentType, dtd)
+function* doSelectTests(contentType, dtd)
 {
   const pageUrl = "data:" + contentType + "," + escape(dtd + "\n" + PAGECONTENT);
   let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
@@ -165,7 +168,7 @@ function doSelectTests(contentType, dtd)
 
   // Opening and closing the popup without changing the value should not fire a change event.
   yield openSelectPopup(selectPopup, true);
-  yield hideSelectPopup(selectPopup, true);
+  yield hideSelectPopup(selectPopup, "escape");
   is((yield getInputEvents()), 1, "Open and close with no change - number of input events");
   is((yield getChangeEvents()), 1, "Open and close with no change - number of change events");
   EventUtils.synthesizeKey("VK_TAB", { });
@@ -175,7 +178,7 @@ function doSelectTests(contentType, dtd)
 
   yield openSelectPopup(selectPopup, true);
   EventUtils.synthesizeKey("KEY_ArrowDown", { code: "ArrowDown" });
-  yield hideSelectPopup(selectPopup, true);
+  yield hideSelectPopup(selectPopup, "escape");
   is((yield getInputEvents()), isWindows ? 2 : 1, "Open and close with change - number of input events");
   is((yield getChangeEvents()), isWindows ? 2 : 1, "Open and close with change - number of change events");
   EventUtils.synthesizeKey("VK_TAB", { });
@@ -316,59 +319,86 @@ add_task(function* test_event_order() {
     let menulist = document.getElementById("ContentSelectDropdown");
     let selectPopup = menulist.menupopup;
 
-    yield openSelectPopup(selectPopup, true, "#one");
+    // According to https://html.spec.whatwg.org/#the-select-element,
+    // we want to fire input, change, and then click events on the
+    // <select> (in that order) when it has changed.
+    let expectedEnter = [
+      {
+        type: "input",
+        cancelable: false,
+        targetIsOption: false,
+      },
+      {
+        type: "change",
+        cancelable: false,
+        targetIsOption: false,
+      },
+    ];
 
-    let eventsPromise = ContentTask.spawn(browser, null, function*() {
-      // According to https://html.spec.whatwg.org/#the-select-element,
-      // we want to fire input, change, and then click events on the
-      // <select> (in that order) when it has changed.
-      let expected = [
-        {
-          type: "mousedown",
-          cancelable: true,
-        },
-        {
-          type: "mouseup",
-          cancelable: true,
-        },
-        {
-          type: "input",
-          cancelable: false,
-        },
-        {
-          type: "change",
-          cancelable: false,
-        },
-        {
-          type: "click",
-          cancelable: true,
-        },
-      ];
+    let expectedClick = [
+      {
+        type: "mousedown",
+        cancelable: true,
+        targetIsOption: true,
+      },
+      {
+        type: "mouseup",
+        cancelable: true,
+        targetIsOption: true,
+      },
+      {
+        type: "input",
+        cancelable: false,
+        targetIsOption: false,
+      },
+      {
+        type: "change",
+        cancelable: false,
+        targetIsOption: false,
+      },
+      {
+        type: "click",
+        cancelable: true,
+        targetIsOption: true,
+      },
+    ];
 
-      return new Promise((resolve) => {
-        function onEvent(event) {
-          select.removeEventListener(event.type, onEvent);
-          let expectation = expected.shift();
-          Assert.equal(event.type, expectation.type,
-                       "Expected the right event order");
-          Assert.ok(event.bubbles, "All of these events should bubble");
-          Assert.equal(event.cancelable, expectation.cancelable,
-                       "Cancellation property should match");
-          if (!expected.length) {
-            resolve();
+    for (let mode of ["enter", "click"]) {
+      let expected = mode == "enter" ? expectedEnter : expectedClick;
+      yield openSelectPopup(selectPopup, true, mode == "enter" ? "#one" : "#two");
+
+      let eventsPromise = ContentTask.spawn(browser, { mode, expected }, function*(args) {
+        let expected = args.expected;
+
+        return new Promise((resolve) => {
+          function onEvent(event) {
+            select.removeEventListener(event.type, onEvent);
+            Assert.ok(expected.length, "Unexpected event " + event.type);
+            let expectation = expected.shift();
+            Assert.equal(event.type, expectation.type,
+                         "Expected the right event order");
+            Assert.ok(event.bubbles, "All of these events should bubble");
+            Assert.equal(event.cancelable, expectation.cancelable,
+                         "Cancellation property should match");
+            Assert.equal(event.target.localName,
+                         expectation.targetIsOption ? "option" : "select",
+                         "Target matches");
+            if (!expected.length) {
+              resolve();
+            }
           }
-        }
 
-        let select = content.document.getElementById("one");
-        for (let expectation of expected) {
-          select.addEventListener(expectation.type, onEvent);
-        }
+          let select = content.document.getElementById(args.mode == "enter" ? "one" : "two");
+          for (let event of ["input", "change", "mousedown", "mouseup", "click"]) {
+            select.addEventListener(event, onEvent);
+          }
+        });
       });
-    });
 
-    EventUtils.synthesizeKey("KEY_ArrowDown", { code: "ArrowDown" });
-    yield hideSelectPopup(selectPopup, false);
-    yield eventsPromise;
+      EventUtils.synthesizeKey("KEY_ArrowDown", { code: "ArrowDown" });
+      yield hideSelectPopup(selectPopup, mode);
+      yield eventsPromise;
+    }
   });
 });
 
@@ -414,7 +444,7 @@ function* performLargePopupTests(win)
          "Popup scroll at correct position " + bpBottom);
     }
 
-    yield hideSelectPopup(selectPopup, false, win);
+    yield hideSelectPopup(selectPopup, "enter", win);
 
     position = positions.shift();
     if (!position) {
@@ -457,6 +487,45 @@ add_task(function* test_large_popup_in_small_window() {
   yield BrowserTestUtils.closeWindow(newwin);
 });
 
+// This test checks that a mousemove event is fired correctly at the menu and
+// not at the browser, ensuring that any mouse capture has been cleared.
+add_task(function* test_mousemove_correcttarget() {
+  const pageUrl = "data:text/html," + escape(PAGECONTENT_SMALL);
+  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
+
+  let selectPopup = document.getElementById("ContentSelectDropdown").menupopup;
+
+  let popupShownPromise = BrowserTestUtils.waitForEvent(selectPopup, "popupshown");
+  yield BrowserTestUtils.synthesizeMouseAtCenter("#one", { type: "mousedown" }, gBrowser.selectedBrowser);
+  yield popupShownPromise;
+
+  yield new Promise(resolve => {
+    window.addEventListener("mousemove", function checkForMouseMove(event) {
+      window.removeEventListener("mousemove", checkForMouseMove, true);
+      is(event.target.localName.indexOf("menu"), 0, "mouse over menu");
+      resolve();
+    }, true);
+
+    EventUtils.synthesizeMouseAtCenter(selectPopup.firstChild, { type: "mousemove" });
+  });
+
+  yield BrowserTestUtils.synthesizeMouseAtCenter("#one", { type: "mouseup" }, gBrowser.selectedBrowser);
+
+  yield hideSelectPopup(selectPopup);
+
+  // The popup should be closed when fullscreen mode is entered or exited.
+  for (let steps = 0; steps < 2; steps++) {
+    yield openSelectPopup(selectPopup, true);
+    let popupHiddenPromise = BrowserTestUtils.waitForEvent(selectPopup, "popuphidden");
+    let sizeModeChanged = BrowserTestUtils.waitForEvent(window, "sizemodechange");
+    BrowserFullScreen();
+    yield sizeModeChanged;
+    yield popupHiddenPromise;
+  }
+
+  yield BrowserTestUtils.removeTab(tab);
+});
+
 // This test checks when a <select> element has some options with altered display values.
 add_task(function* test_somehidden() {
   const pageUrl = "data:text/html," + escape(PAGECONTENT_SOMEHIDDEN);
@@ -483,7 +552,6 @@ add_task(function* test_somehidden() {
     child = child.nextSibling;
   }
 
-  yield hideSelectPopup(selectPopup, true);
+  yield hideSelectPopup(selectPopup, "escape");
   yield BrowserTestUtils.removeTab(tab);
 });
-

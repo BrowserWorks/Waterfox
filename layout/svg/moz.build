@@ -17,6 +17,10 @@ EXPORTS += [
     'SVGImageContext.h',
 ]
 
+EXPORTS.mozilla += [
+    'SVGContextPaint.h',
+]
+
 UNIFIED_SOURCES += [
     'nsCSSClipPathInstance.cpp',
     'nsCSSFilterInstance.cpp',
@@ -43,6 +47,7 @@ UNIFIED_SOURCES += [
     'nsSVGSwitchFrame.cpp',
     'nsSVGUseFrame.cpp',
     'nsSVGUtils.cpp',
+    'SVGContextPaint.cpp',
     'SVGFEContainerFrame.cpp',
     'SVGFEImageFrame.cpp',
     'SVGFELeafFrame.cpp',
@@ -53,7 +58,7 @@ UNIFIED_SOURCES += [
 
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES += ['nsSVGMaskFrameNEON.cpp']
-    SOURCES['nsSVGMaskFrameNEON.cpp'].flags += ['-mfpu=neon']
+    SOURCES['nsSVGMaskFrameNEON.cpp'].flags += CONFIG['NEON_FLAGS']
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [

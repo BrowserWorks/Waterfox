@@ -2439,8 +2439,7 @@ IMMHandler::SetIMERelatedWindowsPosOnPlugin(nsWindow* aWindow,
   nsWindow* toplevelWindow = aWindow->GetTopLevelWindow(false);
   LayoutDeviceIntRect pluginRectInScreen =
     editorRectEvent.mReply.mRect + toplevelWindow->WidgetToScreenOffset();
-  LayoutDeviceIntRect winRectInScreen;
-  aWindow->GetClientBounds(winRectInScreen);
+  LayoutDeviceIntRect winRectInScreen = aWindow->GetClientBounds();
   // composition window cannot be positioned on the edge of client area.
   winRectInScreen.width--;
   winRectInScreen.height--;
@@ -2763,8 +2762,9 @@ IMMHandler::OnKeyDownEvent(nsWindow* aWindow,
 void
 IMMHandler::SetCandidateWindow(nsWindow* aWindow, CANDIDATEFORM* aForm)
 {
-  // Hack for ATOK.  ATOK (Japanese IME) refers native caret position at
-  // deciding candidate window position.
+  // Hack for ATOK 2011 - 2016 (Japanese IME).  They refer native caret
+  // position at deciding candidate window position.  Note that we cannot
+  // check active IME since TIPs are wrapped and hidden by CUAS.
   if (aWindow->PluginHasFocus()) {
     // We cannot retrieve proper character height from plugin.  Therefore,
     // we should assume that the caret height is always 20px since if less than

@@ -75,9 +75,9 @@ function updateTabContextMenu(tab, onOpened) {
       yield onOpened();
       onFinished();
     });
-  } else {
-    onFinished();
   }
+  onFinished();
+  return Promise.resolve();
 }
 
 function openToolbarCustomizationUI(aCallback, aBrowserWin) {
@@ -692,7 +692,7 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
     throw new Error("assertMixedContentBlockingState requires a browser and a states object");
   }
 
-  let {passiveLoaded,activeLoaded,activeBlocked} = states;
+  let {passiveLoaded, activeLoaded, activeBlocked} = states;
   let {gIdentityHandler} = tabbrowser.ownerGlobal;
   let doc = tabbrowser.ownerDocument;
   let identityBox = gIdentityHandler._identityBox;
@@ -735,19 +735,19 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
 
     is_element_visible(connectionIcon);
     if (activeLoaded) {
-      is(connectionIconImage, "url(\"chrome://browser/skin/identity-mixed-active-loaded.svg\")",
+      is(connectionIconImage, "url(\"chrome://browser/skin/connection-mixed-active-loaded.svg#icon\")",
         "Using active loaded icon");
     }
     if (activeBlocked && !passiveLoaded) {
-      is(connectionIconImage, "url(\"chrome://browser/skin/identity-secure.svg\")",
+      is(connectionIconImage, "url(\"chrome://browser/skin/connection-secure.svg\")",
         "Using active blocked icon");
     }
     if (passiveLoaded && !(activeLoaded || activeBlocked)) {
-      is(connectionIconImage, "url(\"chrome://browser/skin/identity-mixed-passive-loaded.svg\")",
+      is(connectionIconImage, "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg#icon\")",
         "Using passive loaded icon");
     }
     if (passiveLoaded && activeBlocked) {
-      is(connectionIconImage, "url(\"chrome://browser/skin/identity-mixed-passive-loaded.svg\")",
+      is(connectionIconImage, "url(\"chrome://browser/skin/connection-mixed-passive-loaded.svg#icon\")",
         "Using active blocked and passive loaded icon");
     }
   }
@@ -788,9 +788,9 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
   }
 
   if (stateSecure) {
-    is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/conn-secure.svg\")",
+    is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-secure\")",
       "CC using secure icon");
-    is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/conn-secure.svg\")",
+    is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-secure\")",
       "CC using secure icon");
   }
 
@@ -801,15 +801,15 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
       is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/mcb-disabled.svg\")",
         "CC using active loaded icon");
     } else if (activeBlocked || passiveLoaded) {
-      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
-      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
     } else {
       // There is a case here with weak ciphers, but no bc tests are handling this yet.
-      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+      is(securityViewBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
-      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/conn-degraded.svg\")",
+      is(securityContentBG, "url(\"chrome://browser/skin/controlcenter/connection.svg#connection-degraded\")",
         "CC using degraded icon");
     }
   }
@@ -837,7 +837,7 @@ function is_hidden(element) {
   if (style.visibility != "visible")
     return true;
   if (style.display == "-moz-popup")
-    return ["hiding","closed"].indexOf(element.state) != -1;
+    return ["hiding", "closed"].indexOf(element.state) != -1;
 
   // Hiding a parent element will hide all its children
   if (element.parentNode != element.ownerDocument)
@@ -1023,7 +1023,11 @@ function getPropertyBagValue(bag, key) {
   try {
     let val = bag.getProperty(key);
     return val;
-  } catch(e if e.result == Cr.NS_ERROR_FAILURE) {}
+  } catch (e) {
+    if (e.result != Cr.NS_ERROR_FAILURE) {
+      throw e;
+    }
+  }
 
   return null;
 }
@@ -1165,6 +1169,7 @@ function getCertExceptionDialog(aLocation) {
       }
     }
   }
+  return undefined;
 }
 
 function setupRemoteClientsFixture(fixture) {

@@ -38,6 +38,7 @@
 #include "nsContentUtils.h"
 #include "nsILoadContext.h"
 #include "nsIFrame.h"
+#include "nsIScriptSecurityManager.h"
 
 using namespace mozilla::dom;
 
@@ -624,6 +625,13 @@ nsFormFillController::GetNoRollupOnCaretMove(bool *aNoRollupOnCaretMove)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsFormFillController::GetUserContextId(uint32_t* aUserContextId)
+{
+  *aUserContextId = nsIScriptSecurityManager::DEFAULT_USER_CONTEXT_ID;
+  return NS_OK;
+}
+
 ////////////////////////////////////////////////////////////////////////
 //// nsIAutoCompleteSearch
 
@@ -724,7 +732,7 @@ public:
     MOZ_ASSERT(mObserver, "You shouldn't call this runnable with a null observer!");
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mObserver->OnUpdateSearchResult(mSearch, mResult);
     return NS_OK;
   }
@@ -1048,8 +1056,9 @@ nsFormFillController::MouseDown(nsIDOMEvent* aEvent)
 
   bool isOpen = false;
   GetPopupOpen(&isOpen);
-  if (isOpen)
-    return NS_OK;
+  if (isOpen) {
+    return SetPopupOpen(false);
+  }
 
   nsCOMPtr<nsIAutoCompleteInput> input;
   mController->GetInput(getter_AddRefs(input));

@@ -11,6 +11,7 @@
 #include "nsIHttpChannelInternal.h"
 #include "nsIHttpHeaderVisitor.h"
 #include "nsINetworkInterceptController.h"
+#include "nsIPushErrorReporter.h"
 #include "nsISupportsImpl.h"
 #include "nsIUploadChannel2.h"
 #include "nsNetUtil.h"
@@ -26,13 +27,9 @@
 #include "mozilla/dom/InternalHeaders.h"
 #include "mozilla/dom/NotificationEvent.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
-#include "mozilla/dom/RequestBinding.h"
-#include "mozilla/unused.h"
-
-#ifndef MOZ_SIMPLEPUSH
-#include "nsIPushErrorReporter.h"
 #include "mozilla/dom/PushEventBinding.h"
-#endif
+#include "mozilla/dom/RequestBinding.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -215,7 +212,7 @@ private:
     mDone = true;
 #endif
     mCallback->SetResult(aResult);
-    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(mCallback));
+    MOZ_ALWAYS_SUCCEEDS(mWorkerPrivate->DispatchToMainThread(mCallback));
   }
 };
 
@@ -269,7 +266,7 @@ class KeepAliveHandler final
       MOZ_ASSERT(mWorkerPrivate);
       mWorkerPrivate->AssertIsOnWorkerThread();
       MOZ_ASSERT(!mWorkerHolderAdded);
-      mWorkerHolderAdded = HoldWorker(mWorkerPrivate);
+      mWorkerHolderAdded = HoldWorker(mWorkerPrivate, Terminating);
       return mWorkerHolderAdded;
     }
 
@@ -490,7 +487,7 @@ public:
     : ExtendableEventWorkerRunnable(aWorkerPrivate, aKeepAliveToken)
     , mRegistration(aRegistration)
   {
-    MOZ_ASSERT(aRegistration);
+    MOZ_DIAGNOSTIC_ASSERT(aRegistration);
   }
 
   void
@@ -498,7 +495,7 @@ public:
   {
     nsCOMPtr<nsIRunnable> runnable =
       new RegistrationUpdateRunnable(mRegistration, true /* time check */);
-    NS_DispatchToMainThread(runnable.forget());
+    aWorkerPrivate->DispatchToMainThread(runnable.forget());
 
     ExtendableEventWorkerRunnable::PostRun(aCx, aWorkerPrivate, aRunResult);
   }
@@ -538,7 +535,7 @@ public:
   Cancel() override
   {
     mCallback->SetResult(false);
-    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(mCallback));
+    MOZ_ALWAYS_SUCCEEDS(mWorkerPrivate->DispatchToMainThread(mCallback));
 
     return WorkerRunnable::Cancel();
   }
@@ -601,7 +598,7 @@ public:
     //    case the registration/update promise will be rejected
     // 2. A new service worker is registered which will terminate the current
     //    installing worker.
-    if (NS_WARN_IF(!HoldWorker(mWorkerPrivate))) {
+    if (NS_WARN_IF(!HoldWorker(mWorkerPrivate, Terminating))) {
       NS_WARNING("LifeCycleEventWatcher failed to add feature.");
       ReportResult(false);
       return false;
@@ -634,7 +631,7 @@ public:
     mDone = true;
 
     mCallback->SetResult(aResult);
-    nsresult rv = NS_DispatchToMainThread(mCallback);
+    nsresult rv = mWorkerPrivate->DispatchToMainThread(mCallback);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       NS_RUNTIMEABORT("Failed to dispatch life cycle event handler.");
     }
@@ -729,7 +726,6 @@ ServiceWorkerPrivate::SendLifeCycleEvent(const nsAString& aEventType,
   return NS_OK;
 }
 
-#ifndef MOZ_SIMPLEPUSH
 namespace {
 
 class PushErrorReporter final : public PromiseNativeHandler
@@ -766,6 +762,7 @@ public:
 
   void Report(uint16_t aReason = nsIPushErrorReporter::DELIVERY_INTERNAL_ERROR)
   {
+    WorkerPrivate* workerPrivate = mWorkerPrivate;
     mWorkerPrivate->AssertIsOnWorkerThread();
     mWorkerPrivate = nullptr;
 
@@ -777,7 +774,7 @@ public:
       NewRunnableMethod<uint16_t>(this,
         &PushErrorReporter::ReportOnMainThread, aReason);
     MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      NS_DispatchToMainThread(runnable.forget())));
+      workerPrivate->DispatchToMainThread(runnable.forget())));
   }
 
   void ReportOnMainThread(uint16_t aReason)
@@ -895,16 +892,12 @@ public:
 };
 
 } // anonymous namespace
-#endif // !MOZ_SIMPLEPUSH
 
 nsresult
 ServiceWorkerPrivate::SendPushEvent(const nsAString& aMessageId,
                                     const Maybe<nsTArray<uint8_t>>& aData,
                                     ServiceWorkerRegistrationInfo* aRegistration)
 {
-#ifdef MOZ_SIMPLEPUSH
-  return NS_ERROR_NOT_AVAILABLE;
-#else
   nsresult rv = SpawnWorkerIfNeeded(PushEvent, nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -931,15 +924,11 @@ ServiceWorkerPrivate::SendPushEvent(const nsAString& aMessageId,
   }
 
   return NS_OK;
-#endif // MOZ_SIMPLEPUSH
 }
 
 nsresult
 ServiceWorkerPrivate::SendPushSubscriptionChangeEvent()
 {
-#ifdef MOZ_SIMPLEPUSH
-  return NS_ERROR_NOT_AVAILABLE;
-#else
   nsresult rv = SpawnWorkerIfNeeded(PushSubscriptionChangeEvent, nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -951,7 +940,6 @@ ServiceWorkerPrivate::SendPushSubscriptionChangeEvent()
   }
 
   return NS_OK;
-#endif // MOZ_SIMPLEPUSH
 }
 
 namespace {
@@ -1270,6 +1258,7 @@ class FetchEventRunnable : public ExtendableFunctionalEventWorkerRunnable
   nsCOMPtr<nsIInputStream> mUploadStream;
   nsCString mReferrer;
   ReferrerPolicy mReferrerPolicy;
+  nsString mIntegrity;
 public:
   FetchEventRunnable(WorkerPrivate* aWorkerPrivate,
                      KeepAliveToken* aKeepAliveToken,
@@ -1395,6 +1384,8 @@ public:
     internalChannel->GetFetchCacheMode(&cacheMode);
     mCacheMode = static_cast<RequestCache>(cacheMode);
 
+    internalChannel->GetIntegrityMetadata(mIntegrity);
+
     mRequestCredentials = InternalRequest::MapChannelToRequestCredentials(channel);
 
     rv = httpChannel->VisitNonDefaultRequestHeaders(this);
@@ -1430,7 +1421,7 @@ public:
   Cancel() override
   {
     nsCOMPtr<nsIRunnable> runnable = new ResumeRequest(mInterceptedChannel);
-    if (NS_FAILED(NS_DispatchToMainThread(runnable))) {
+    if (NS_FAILED(mWorkerPrivate->DispatchToMainThread(runnable))) {
       NS_WARNING("Failed to resume channel on FetchEventRunnable::Cancel()!\n");
     }
     WorkerRunnable::Cancel();
@@ -1448,11 +1439,12 @@ private:
     {
     }
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       AssertIsOnMainThread();
       nsresult rv = mChannel->ResetInterception();
-      NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to resume intercepted network request");
+      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                           "Failed to resume intercepted network request");
       return rv;
     }
   };
@@ -1492,7 +1484,8 @@ private:
                                                               mRequestCredentials,
                                                               NS_ConvertUTF8toUTF16(mReferrer),
                                                               mReferrerPolicy,
-                                                              mContentPolicyType);
+                                                              mContentPolicyType,
+                                                              mIntegrity);
     internalReq->SetBody(mUploadStream);
     // For Telemetry, note that this Request object was created by a Fetch event.
     internalReq->SetCreatedByFetchEvent();
@@ -1542,7 +1535,7 @@ private:
                                              NS_ERROR_INTERCEPTION_FAILED);
       }
 
-      MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
+      MOZ_ALWAYS_SUCCEEDS(mWorkerPrivate->DispatchToMainThread(runnable.forget()));
     }
 
     RefPtr<Promise> waitUntilPromise = event->GetPromise();
@@ -1624,15 +1617,23 @@ ServiceWorkerPrivate::SendFetchEvent(nsIInterceptedChannel* aChannel,
   nsMainThreadPtrHandle<nsIInterceptedChannel> handle(
     new nsMainThreadPtrHolder<nsIInterceptedChannel>(aChannel, false));
 
-  if (NS_WARN_IF(!mInfo)) {
+  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+  if (NS_WARN_IF(!mInfo || !swm)) {
     return NS_ERROR_FAILURE;
   }
 
-  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
-
   RefPtr<ServiceWorkerRegistrationInfo> registration =
     swm->GetRegistration(mInfo->GetPrincipal(), mInfo->Scope());
+
+  // Its possible the registration is removed between starting the interception
+  // and actually dispatching the fetch event.  In these cases we simply
+  // want to restart the original network request.  Since this is a normal
+  // condition we handle the reset here instead of returning an error which
+  // would in turn trigger a console report.
+  if (!registration) {
+    aChannel->ResetInterception();
+    return NS_OK;
+  }
 
   nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo> regInfo(
     new nsMainThreadPtrHolder<ServiceWorkerRegistrationInfo>(registration, false));
@@ -1694,7 +1695,7 @@ ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   // TODO(catalinb): Bug 1192138 - Add telemetry for service worker wake-ups.
 
   // Ensure that the IndexedDatabaseManager is initialized
-  NS_WARN_IF(!IndexedDatabaseManager::GetOrCreate());
+  Unused << NS_WARN_IF(!IndexedDatabaseManager::GetOrCreate());
 
   WorkerLoadInfo info;
   nsresult rv = NS_NewURI(getter_AddRefs(info.mBaseURI), mInfo->ScriptSpec(),
@@ -1793,7 +1794,7 @@ ServiceWorkerPrivate::TerminateWorker()
       }
     }
 
-    NS_WARN_IF(!mWorkerPrivate->Terminate());
+    Unused << NS_WARN_IF(!mWorkerPrivate->Terminate());
     mWorkerPrivate = nullptr;
     mSupportsArray.Clear();
 

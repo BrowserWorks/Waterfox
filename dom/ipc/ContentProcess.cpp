@@ -49,10 +49,10 @@ SetTmpEnvironmentVariable(nsIFile* aValue)
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
-  NS_WARN_IF(!SetEnvironmentVariableW(L"TMP", fullTmpPath.get()));
+  Unused << NS_WARN_IF(!SetEnvironmentVariableW(L"TMP", fullTmpPath.get()));
   // We also set TEMP in case there is naughty third-party code that is
   // referencing the environment variable directly.
-  NS_WARN_IF(!SetEnvironmentVariableW(L"TEMP", fullTmpPath.get()));
+  Unused << NS_WARN_IF(!SetEnvironmentVariableW(L"TEMP", fullTmpPath.get()));
 }
 #endif
 
@@ -72,7 +72,7 @@ SetTmpEnvironmentVariable(nsIFile* aValue)
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
-  NS_WARN_IF(setenv("TMPDIR", fullTmpPath.get(), 1) != 0);
+  Unused << NS_WARN_IF(setenv("TMPDIR", fullTmpPath.get(), 1) != 0);
 }
 #endif
 
@@ -114,6 +114,21 @@ ContentProcess::SetAppDir(const nsACString& aPath)
   mXREEmbed.SetAppDir(aPath);
 }
 
+#if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
+void
+ContentProcess::SetProfile(const nsACString& aProfile)
+{
+  bool flag;
+  nsresult rv =
+    XRE_GetFileFromPath(aProfile.BeginReading(), getter_AddRefs(mProfileDir));
+  if (NS_FAILED(rv) ||
+      NS_FAILED(mProfileDir->Exists(&flag)) || !flag) {
+    NS_WARNING("Invalid profile directory passed to content process.");
+    mProfileDir = nullptr;
+  }
+}
+#endif
+
 bool
 ContentProcess::Init()
 {
@@ -123,6 +138,10 @@ ContentProcess::Init()
     mXREEmbed.Start();
     mContent.InitXPCOM();
     mContent.InitGraphicsDeviceData();
+
+#if (defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+    mContent.SetProfileDir(mProfileDir);
+#endif
 
 #if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
     SetUpSandboxEnvironment();

@@ -17,7 +17,7 @@ namespace webgl {
 class ShaderValidator final
 {
     const ShHandle mHandle;
-    const int mCompileOptions;
+    const ShCompileOptions mCompileOptions;
     const int mMaxVaryingVectors;
     bool mHasRun;
 
@@ -25,10 +25,11 @@ public:
     static ShaderValidator* Create(GLenum shaderType, ShShaderSpec spec,
                                    ShShaderOutput outputLanguage,
                                    const ShBuiltInResources& resources,
-                                   int compileOptions);
+                                   ShCompileOptions compileOptions);
 
 private:
-    ShaderValidator(ShHandle handle, int compileOptions, int maxVaryingVectors)
+    ShaderValidator(ShHandle handle, ShCompileOptions compileOptions,
+                    int maxVaryingVectors)
         : mHandle(handle)
         , mCompileOptions(compileOptions)
         , mMaxVaryingVectors(maxVaryingVectors)
@@ -60,8 +61,8 @@ public:
     bool FindUniformByMappedName(const std::string& mappedName,
                                  std::string* const out_userName,
                                  bool* const out_isArray) const;
-    bool FindUniformBlockByMappedName(const std::string& mappedName,
-                                      std::string* const out_userName) const;
+    bool UnmapUniformBlockName(const nsACString& baseMappedName,
+                               nsCString* const out_baseUserName) const;
 
     void EnumerateFragOutputs(std::map<nsCString, const nsCString> &out_FragOutputs) const;
 

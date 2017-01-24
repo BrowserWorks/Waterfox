@@ -84,7 +84,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitDefLexical(LDefLexical* lir);
     void visitDefFun(LDefFun* lir);
     void visitOsrEntry(LOsrEntry* lir);
-    void visitOsrScopeChain(LOsrScopeChain* lir);
+    void visitOsrEnvironmentChain(LOsrEnvironmentChain* lir);
     void visitOsrValue(LOsrValue* lir);
     void visitOsrReturnValue(LOsrReturnValue* lir);
     void visitOsrArgumentsObject(LOsrArgumentsObject* lir);
@@ -195,13 +195,14 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitNewArrayCopyOnWrite(LNewArrayCopyOnWrite* lir);
     void visitNewArrayDynamicLength(LNewArrayDynamicLength* lir);
     void visitNewTypedArray(LNewTypedArray* lir);
+    void visitNewTypedArrayDynamicLength(LNewTypedArrayDynamicLength* lir);
     void visitNewObjectVMCall(LNewObject* lir);
     void visitNewObject(LNewObject* lir);
     void visitOutOfLineNewObject(OutOfLineNewObject* ool);
     void visitNewTypedObject(LNewTypedObject* lir);
     void visitSimdBox(LSimdBox* lir);
     void visitSimdUnbox(LSimdUnbox* lir);
-    void visitNewDeclEnvObject(LNewDeclEnvObject* lir);
+    void visitNewNamedLambdaObject(LNewNamedLambdaObject* lir);
     void visitNewCallObject(LNewCallObject* lir);
     void visitNewSingletonCallObject(LNewSingletonCallObject* lir);
     void visitNewStringObject(LNewStringObject* lir);
@@ -297,8 +298,12 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitUnboxObjectOrNull(LUnboxObjectOrNull* lir);
     void visitStoreElementT(LStoreElementT* lir);
     void visitStoreElementV(LStoreElementV* lir);
+    template <typename T> void emitStoreElementHoleT(T* lir);
+    template <typename T> void emitStoreElementHoleV(T* lir);
     void visitStoreElementHoleT(LStoreElementHoleT* lir);
     void visitStoreElementHoleV(LStoreElementHoleV* lir);
+    void visitFallibleStoreElementV(LFallibleStoreElementV* lir);
+    void visitFallibleStoreElementT(LFallibleStoreElementT* lir);
     void visitStoreUnboxedPointer(LStoreUnboxedPointer* lir);
     void visitConvertUnboxedObjectToNative(LConvertUnboxedObjectToNative* lir);
     void emitArrayPopShift(LInstruction* lir, const MArrayPopShift* mir, Register obj,
@@ -320,8 +325,9 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitClampIToUint8(LClampIToUint8* lir);
     void visitClampDToUint8(LClampDToUint8* lir);
     void visitClampVToUint8(LClampVToUint8* lir);
-    void visitCallIteratorStart(LCallIteratorStart* lir);
-    void visitIteratorStart(LIteratorStart* lir);
+    void visitCallIteratorStartV(LCallIteratorStartV* lir);
+    void visitCallIteratorStartO(LCallIteratorStartO* lir);
+    void visitIteratorStartO(LIteratorStartO* lir);
     void visitIteratorMore(LIteratorMore* lir);
     void visitIsNoIterAndBranch(LIsNoIterAndBranch* lir);
     void visitIteratorEnd(LIteratorEnd* lir);
@@ -365,8 +371,6 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitAsmJSReturn(LAsmJSReturn* ret);
     void visitAsmJSReturnI64(LAsmJSReturnI64* ret);
     void visitAsmJSVoidReturn(LAsmJSVoidReturn* ret);
-    void visitAsmJSLoadFuncPtr(LAsmJSLoadFuncPtr* ins);
-    void visitAsmJSLoadFFIFunc(LAsmJSLoadFFIFunc* ins);
     void visitLexicalCheck(LLexicalCheck* ins);
     void visitThrowRuntimeLexicalError(LThrowRuntimeLexicalError* ins);
     void visitGlobalNameConflictsCheck(LGlobalNameConflictsCheck* ins);
@@ -374,6 +378,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitNewTarget(LNewTarget* ins);
     void visitArrowNewTarget(LArrowNewTarget* ins);
     void visitCheckReturn(LCheckReturn* ins);
+    void visitCheckIsObj(LCheckIsObj* ins);
     void visitCheckObjCoercible(LCheckObjCoercible* ins);
     void visitDebugCheckSelfHosted(LDebugCheckSelfHosted* ins);
 
@@ -414,12 +419,13 @@ class CodeGenerator final : public CodeGeneratorSpecific
 
     void visitInterruptCheck(LInterruptCheck* lir);
     void visitOutOfLineInterruptCheckImplicit(OutOfLineInterruptCheckImplicit* ins);
-    void visitAsmJSInterruptCheck(LAsmJSInterruptCheck* lir);
-    void visitAsmThrowUnreachable(LAsmThrowUnreachable* lir);
+    void visitWasmTrap(LWasmTrap* lir);
+    void visitWasmBoundsCheck(LWasmBoundsCheck* ins);
     void visitRecompileCheck(LRecompileCheck* ins);
     void visitRotate(LRotate* ins);
 
     void visitRandom(LRandom* ins);
+    void visitSignExtend(LSignExtend* ins);
 
 #ifdef DEBUG
     void emitDebugForceBailing(LInstruction* lir);
@@ -445,7 +451,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     MOZ_MUST_USE bool generateBranchV(const ValueOperand& value, Label* ifTrue, Label* ifFalse,
                                       FloatRegister fr);
 
-    void emitLambdaInit(Register resultReg, Register scopeChainReg,
+    void emitLambdaInit(Register resultReg, Register envChainReg,
                         const LambdaFunctionInfo& info);
 
     void emitFilterArgumentsOrEval(LInstruction* lir, Register string, Register temp1,

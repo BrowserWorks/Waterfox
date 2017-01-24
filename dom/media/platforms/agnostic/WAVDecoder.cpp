@@ -51,10 +51,9 @@ WaveDataDecoder::WaveDataDecoder(const CreateDecoderParams& aParams)
 {
 }
 
-nsresult
+void
 WaveDataDecoder::Shutdown()
 {
-  return NS_OK;
 }
 
 RefPtr<MediaDataDecoder::InitPromise>
@@ -63,20 +62,22 @@ WaveDataDecoder::Init()
   return InitPromise::CreateAndResolve(TrackInfo::kAudioTrack, __func__);
 }
 
-nsresult
+void
 WaveDataDecoder::Input(MediaRawData* aSample)
 {
-  if (!DoDecode(aSample)) {
-    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
+  MediaResult rv = DoDecode(aSample);
+  if (NS_FAILED(rv)) {
+    mCallback->Error(rv);
+  } else {
+    mCallback->InputExhausted();
   }
-  return NS_OK;
 }
 
-bool
+MediaResult
 WaveDataDecoder::DoDecode(MediaRawData* aSample)
 {
   size_t aLength = aSample->Size();
-  ByteReader aReader = ByteReader(aSample->Data(), aLength);
+  ByteReader aReader(aSample->Data(), aLength);
   int64_t aOffset = aSample->mOffset;
   uint64_t aTstampUsecs = aSample->mTime;
 
@@ -84,7 +85,7 @@ WaveDataDecoder::DoDecode(MediaRawData* aSample)
 
   AlignedAudioBuffer buffer(frames * mInfo.mChannels);
   if (!buffer) {
-    return false;
+    return MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__);
   }
   for (int i = 0; i < frames; ++i) {
     for (unsigned int j = 0; j < mInfo.mChannels; ++j) {
@@ -116,8 +117,6 @@ WaveDataDecoder::DoDecode(MediaRawData* aSample)
     }
   }
 
-  aReader.DiscardRemaining();
-
   int64_t duration = frames / mInfo.mRate;
 
   mCallback->Output(new AudioData(aOffset,
@@ -128,20 +127,18 @@ WaveDataDecoder::DoDecode(MediaRawData* aSample)
                                   mInfo.mChannels,
                                   mInfo.mRate));
 
-  return true;
+  return NS_OK;
 }
 
-nsresult
+void
 WaveDataDecoder::Drain()
 {
   mCallback->DrainComplete();
-  return NS_OK;
 }
 
-nsresult
+void
 WaveDataDecoder::Flush()
 {
-  return NS_OK;
 }
 
 /* static */

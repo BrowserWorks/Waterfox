@@ -66,11 +66,18 @@ SessionStore.prototype = {
 
   _windows: {},
   _lastSaveTime: 0,
+  _lastBackupTime: 0,
   _interval: 10000,
+  _backupInterval: 120000, // 2 minutes
   _minSaveDelay: MINIMUM_SAVE_DELAY,
   _maxTabsUndo: 5,
   _pendingWrite: 0,
   _scrollSavePending: null,
+  _writeInProgress: false,
+
+  // We only want to start doing backups if we've successfully
+  // written the session data at least once.
+  _sessionDataIsGood: false,
 
   // The index where the most recently closed tab was in the tabs array
   // when it was closed.
@@ -79,21 +86,29 @@ SessionStore.prototype = {
   // Whether or not to send notifications for changes to the closed tabs.
   _notifyClosedTabs: false,
 
+  // If we're simultaneously closing both a tab and Firefox, we don't want
+  // to bother reloading the newly selected tab if it is zombified.
+  // The Java UI will tell us which tab to watch out for.
+  _keepAsZombieTabId: -1,
+
   init: function ss_init() {
     loggingEnabled = Services.prefs.getBoolPref("browser.sessionstore.debug_logging");
 
     // Get file references
     this._sessionFile = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
     this._sessionFileBackup = this._sessionFile.clone();
+    this._sessionFilePrevious = this._sessionFile.clone();
     this._sessionFileTemp = this._sessionFile.clone();
-    this._sessionFile.append("sessionstore.js");
-    this._sessionFileBackup.append("sessionstore.bak");
-    this._sessionFileTemp.append(this._sessionFile.leafName + ".tmp");
+    this._sessionFile.append("sessionstore.js"); // The main session store save file.
+    this._sessionFileBackup.append("sessionstore.bak"); // A backup copy to guard against interrupted writes.
+    this._sessionFilePrevious.append("sessionstore.old"); // The previous session's file, used for what used to be the "Tabs from last time".
+    this._sessionFileTemp.append(this._sessionFile.leafName + ".tmp"); // Temporary file for writing changes to disk.
 
     this._loadState = STATE_STOPPED;
     this._startupRestoreFinished = false;
 
     this._interval = Services.prefs.getIntPref("browser.sessionstore.interval");
+    this._backupInterval = Services.prefs.getIntPref("browser.sessionstore.backupInterval");
     this._maxTabsUndo = Services.prefs.getIntPref("browser.sessionstore.max_tabs_undo");
 
     // Copy changes in Gecko settings to their Java counterparts,
@@ -109,8 +124,11 @@ SessionStore.prototype = {
   },
 
   _clearDisk: function ss_clearDisk() {
+    this._sessionDataIsGood = false;
+
     OS.File.remove(this._sessionFile.path);
     OS.File.remove(this._sessionFileBackup.path);
+    OS.File.remove(this._sessionFilePrevious.path);
     OS.File.remove(this._sessionFileTemp.path);
   },
 
@@ -128,6 +146,7 @@ SessionStore.prototype = {
         observerService.addObserver(this, "quit-application", true);
         observerService.addObserver(this, "Session:Restore", true);
         observerService.addObserver(this, "Session:NotifyLocationChange", true);
+        observerService.addObserver(this, "Tab:KeepZombified", true);
         observerService.addObserver(this, "application-background", true);
         observerService.addObserver(this, "application-foreground", true);
         observerService.addObserver(this, "ClosedTabs:StartNotifications", true);
@@ -185,7 +204,7 @@ SessionStore.prototype = {
         this._clearDisk();
 
         // Clear all data about closed tabs
-        for (let [ssid, win] in Iterator(this._windows))
+        for (let [ssid, win] of Object.entries(this._windows))
           win.closedTabs = [];
 
         this._lastClosedTabIndex = -1;
@@ -271,6 +290,13 @@ SessionStore.prototype = {
         }
         break;
       }
+      case "Tab:KeepZombified": {
+        if (aData >= 0) {
+          this._keepAsZombieTabId = aData;
+          log("Tab:KeepZombified " + aData);
+        }
+        break;
+      }
       case "application-background":
         // We receive this notification when Android's onPause callback is
         // executed. After onPause, the application may be terminated at any
@@ -288,6 +314,15 @@ SessionStore.prototype = {
         log("application-foreground");
         this._interval = Services.prefs.getIntPref("browser.sessionstore.interval");
         this._minSaveDelay = MINIMUM_SAVE_DELAY;
+
+        // If we skipped restoring a zombified tab before backgrounding,
+        // we might have to do it now instead.
+        let window = Services.wm.getMostRecentWindow("navigator:browser");
+        let tab = window.BrowserApp.selectedTab;
+
+        if (tab.browser.__SS_restore) {
+          this._restoreZombieTab(tab.browser, tab.id);
+        }
         break;
       case "ClosedTabs:StartNotifications":
         this._notifyClosedTabs = true;
@@ -300,7 +335,7 @@ SessionStore.prototype = {
         break;
       case "last-pb-context-exited":
         // Clear private closed tab data when we leave private browsing.
-        for (let [, window] in Iterator(this._windows)) {
+        for (let window of Object.values(this._windows)) {
           window.closedTabs = window.closedTabs.filter(tab => !tab.isPrivate);
         }
         this._lastClosedTabIndex = -1;
@@ -654,13 +689,14 @@ SessionStore.prototype = {
 
     // Restore the resurrected browser
     if (aBrowser.__SS_restore) {
-      let data = aBrowser.__SS_data;
-      this._restoreTab(data, aBrowser);
-
-      delete aBrowser.__SS_restore;
-      aBrowser.removeAttribute("pending");
-      log("onTabSelect() restored zombie tab " + tabId);
+      if (tabId != this._keepAsZombieTabId) {
+        this._restoreZombieTab(aBrowser, tabId);
+      } else {
+        log("keeping as zombie tab " + tabId);
+      }
     }
+    // The tab id passed through Tab:KeepZombified is valid for one TabSelect only.
+    this._keepAsZombieTabId = -1;
 
     log("onTabSelect() ran for tab " + tabId);
     this.saveStateDelayed();
@@ -672,6 +708,15 @@ SessionStore.prototype = {
     if (this._notifyClosedTabs) {
       this._sendClosedTabsToJava(aWindow);
     }
+  },
+
+  _restoreZombieTab: function ss_restoreZombieTab(aBrowser, aTabId) {
+    let data = aBrowser.__SS_data;
+    this._restoreTab(data, aBrowser);
+
+    delete aBrowser.__SS_restore;
+    aBrowser.removeAttribute("pending");
+    log("restoring zombie tab " + aTabId);
   },
 
   onTabInput: function ss_onTabInput(aWindow, aBrowser) {
@@ -852,6 +897,18 @@ SessionStore.prototype = {
       log("_saveState() killed queued timer");
     }
 
+    // Periodically save a "known good" copy of the session store data.
+    if (!this._writeInProgress && Date.now() - this._lastBackupTime > this._backupInterval &&
+         this._sessionDataIsGood && this._sessionFile.exists()) {
+      if (this._sessionFileBackup.exists()) {
+        this._sessionFileBackup.remove(false);
+      }
+
+      log("_saveState() backing up session data");
+      this._sessionFile.copyTo(null, this._sessionFileBackup.leafName);
+      this._lastBackupTime = Date.now();
+    }
+
     let data = this._getCurrentState();
     let normalData = { windows: [] };
     let privateData = { windows: [] };
@@ -992,6 +1049,7 @@ SessionStore.prototype = {
     let startWriteMs = Cu.now();
 
     log("_writeFile(aAsync = " + aAsync + "), _pendingWrite = " + this._pendingWrite);
+    this._writeInProgress = true;
     let pendingWrite = this._pendingWrite;
     this._write(aFile, aFileTemp, buffer, aAsync).then(() => {
       let stopWriteMs = Cu.now();
@@ -1001,6 +1059,7 @@ SessionStore.prototype = {
       // is pending, so we shouldn't reset this._pendingWrite yet.
       if (pendingWrite === this._pendingWrite) {
         this._pendingWrite = 0;
+        this._writeInProgress = false;
       }
 
       log("_writeFile() _write() returned, _pendingWrite = " + this._pendingWrite);
@@ -1009,6 +1068,7 @@ SessionStore.prototype = {
       // a single timer per histogram.
       Services.telemetry.getHistogramById("FX_SESSION_RESTORE_WRITE_FILE_MS").add(Math.round(stopWriteMs - startWriteMs));
       Services.obs.notifyObservers(null, "sessionstore-state-write-complete", "");
+      this._sessionDataIsGood = true;
     });
   },
 
@@ -1329,10 +1389,12 @@ SessionStore.prototype = {
     let window = Services.wm.getMostRecentWindow("navigator:browser");
     for (let i = 0; i < aData.tabs.length; i++) {
       let tabData = JSON.parse(aData.tabs[i]);
+      let isSelectedTab = (i == aData.tabs.length - 1);
       let params = {
-        selected: (i == aData.tabs.length - 1),
+        selected: isSelectedTab,
         isPrivate: tabData.isPrivate,
         desktopMode: tabData.desktopMode,
+        cancelEditMode: isSelectedTab
       };
 
       let tab = window.BrowserApp.addTab(tabData.entries[tabData.index - 1].url, params);

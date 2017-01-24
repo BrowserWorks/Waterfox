@@ -37,6 +37,12 @@ class js::Thread::Id::PlatformData
   bool hasThread;
 };
 
+/* static */ js::HashNumber
+js::Thread::Hasher::hash(const Lookup& l)
+{
+  return mozilla::HashBytes(&l.platformData()->ptThread, sizeof(pthread_t));
+}
+
 inline js::Thread::Id::PlatformData*
 js::Thread::Id::platformData()
 {
@@ -59,7 +65,7 @@ js::Thread::Id::Id()
 }
 
 bool
-js::Thread::Id::operator==(const Id& aOther)
+js::Thread::Id::operator==(const Id& aOther) const
 {
   const PlatformData& self = *platformData();
   const PlatformData& other = *aOther.platformData();
@@ -157,4 +163,20 @@ js::ThisThread::SetName(const char* name)
   rv = pthread_setname_np(pthread_self(), name);
 #endif
   MOZ_RELEASE_ASSERT(!rv);
+}
+
+void
+js::ThisThread::GetName(char* nameBuffer, size_t len)
+{
+  MOZ_RELEASE_ASSERT(len >= 16);
+
+  int rv = -1;
+#ifdef HAVE_PTHREAD_GETNAME_NP
+  rv = pthread_getname_np(pthread_self(), nameBuffer, len);
+#elif defined(__linux__)
+  rv = prctl(PR_GET_NAME, reinterpret_cast<unsigned long>(nameBuffer));
+#endif
+
+  if (rv)
+    nameBuffer[0] = '\0';
 }

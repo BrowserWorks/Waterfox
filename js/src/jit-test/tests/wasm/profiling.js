@@ -9,10 +9,6 @@ const Module = WebAssembly.Module;
 const Instance = WebAssembly.Instance;
 const Table = WebAssembly.Table;
 
-// Explicitly opt into the new binary format for imports and exports until it
-// is used by default everywhere.
-const textToBinary = str => wasmTextToBinary(str, 'new-format');
-
 function normalize(stack)
 {
     var wasmFrameTypes = [
@@ -58,7 +54,7 @@ function test(code, expect)
 {
     enableSPSProfiling();
 
-    var f = new Instance(new Module(textToBinary(code))).exports[""];
+    var f = evalText(code).exports[""];
     enableSingleStepProfiling();
     f();
     assertEqStacks(disableSingleStepProfiling(), expect);
@@ -112,15 +108,15 @@ testError(
 Error);
 
 (function() {
-    var e = new Instance(new Module(textToBinary(`
+    var e = evalText(`
     (module
         (func $foo (result i32) (i32.const 42))
         (export "foo" $foo)
         (func $bar (result i32) (i32.const 13))
-        (table $foo $bar)
+        (table (resizable 10))
+        (elem (i32.const 0) $foo $bar)
         (export "tbl" table)
-    )
-    `))).exports;
+    )`).exports;
     assertEq(e.foo(), 42);
     assertEq(e.tbl.get(0)(), 42);
     assertEq(e.tbl.get(1)(), 13);
@@ -151,4 +147,64 @@ Error);
     assertEq(e.tbl.get(1)(), 13);
     assertEqStacks(disableSingleStepProfiling(), ["", ">", "0,>", ">", "", ">", "1,>", ">", ""]);
     disableSPSProfiling();
+
+    var e2 = evalText(`
+    (module
+        (type $v2i (func (result i32)))
+        (import "a" "b" (table 10))
+        (elem (i32.const 2) $bar)
+        (func $bar (result i32) (i32.const 99))
+        (func $baz (param $i i32) (result i32) (call_indirect $v2i (get_local $i)))
+        (export "baz" $baz)
+    )`, {a:{b:e.tbl}}).exports;
+
+    enableSPSProfiling();
+    enableSingleStepProfiling();
+    assertEq(e2.baz(0), 42);
+    assertEqStacks(disableSingleStepProfiling(), ["", ">", "1,>", "0,1,>", "1,>", ">", ""]);
+    disableSPSProfiling();
+
+    enableSPSProfiling();
+    enableSingleStepProfiling();
+    assertEq(e2.baz(1), 13);
+    assertEqStacks(disableSingleStepProfiling(), ["", ">", "1,>", "1,1,>", "1,>", ">", ""]);
+    disableSPSProfiling();
+
+    enableSPSProfiling();
+    enableSingleStepProfiling();
+    assertEq(e2.baz(2), 99);
+    assertEqStacks(disableSingleStepProfiling(), ["", ">", "1,>", "0,1,>", "1,>", ">", ""]);
+    disableSPSProfiling();
+})();
+
+(function() {
+    var m1 = new Module(textToBinary(`(module
+        (func $foo (result i32) (i32.const 42))
+        (export "foo" $foo)
+    )`));
+    var m2 = new Module(textToBinary(`(module
+        (import $foo "a" "foo" (result i32))
+        (func $bar (result i32) (call $foo))
+        (export "bar" $bar)
+    )`));
+
+    // Instantiate while not active:
+    var e1 = new Instance(m1).exports;
+    var e2 = new Instance(m2, {a:e1}).exports;
+    enableSPSProfiling();
+    enableSingleStepProfiling();
+    assertEq(e2.bar(), 42);
+    assertEqStacks(disableSingleStepProfiling(), ["", ">", "0,>", "0,0,>", "0,>", ">", ""]);
+    disableSPSProfiling();
+    assertEq(e2.bar(), 42);
+
+    // Instantiate while active:
+    enableSPSProfiling();
+    var e3 = new Instance(m1).exports;
+    var e4 = new Instance(m2, {a:e3}).exports;
+    enableSingleStepProfiling();
+    assertEq(e4.bar(), 42);
+    assertEqStacks(disableSingleStepProfiling(), ["", ">", "0,>", "0,0,>", "0,>", ">", ""]);
+    disableSPSProfiling();
+    assertEq(e4.bar(), 42);
 })();

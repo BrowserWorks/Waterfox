@@ -12,7 +12,6 @@ import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.JSONUtils;
 import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSObject;
-import org.mozilla.gecko.util.WebActivityMapper;
 import org.mozilla.gecko.widget.ExternalIntentDuringPrivateBrowsingPromptFragment;
 
 import org.json.JSONArray;
@@ -48,7 +47,6 @@ public final class IntentHelper implements GeckoEventListener,
         "Intent:GetHandlers",
         "Intent:Open",
         "Intent:OpenForResult",
-        "WebActivity:Open"
     };
 
     private static final String[] NATIVE_EVENTS = {
@@ -416,8 +414,6 @@ public final class IntentHelper implements GeckoEventListener,
                 open(message);
             } else if (event.equals("Intent:OpenForResult")) {
                 openForResult(message);
-            } else if (event.equals("WebActivity:Open")) {
-                openWebActivity(message);
             }
         } catch (JSONException e) {
             Log.e(LOGTAG, "Exception handling message \"" + event + "\":", e);
@@ -528,17 +524,17 @@ public final class IntentHelper implements GeckoEventListener,
             callback.sendSuccess(null);
 
         }  else {
-            // We originally loaded about:neterror when we failed to match the Intent. However, many
-            // websites worked around Chrome's implementation, which does nothing in this case. For
-            // example, the site might set a timeout and load a play store url for their app if the
-            // intent link fails to load, i.e. the app is not installed. These work-arounds would often
-            // end with our users seeing about:neterror instead of the intended experience. While I
-            // feel showing about:neterror is a better solution for users (when not hacked around),
+            // We return the error page here, but it will only be shown if we think the load did
+            // not come from clicking a link. Chrome does not show error pages in that case, and
+            // many websites have catered to this behavior. For example, the site might set a timeout and load a play
+            // store url for their app if the intent link fails to load, i.e. the app is not installed.
+            // These work-arounds would often end with our users seeing about:neterror instead of the intended experience.
+            // While I feel showing about:neterror is a better solution for users (when not hacked around),
             // we should match the status quo for the good of our users.
             //
             // Don't log the URI to prevent leaking it.
-            Log.w(LOGTAG, "Unable to open URI - ignoring click");
-            callback.sendSuccess(null); // pretend we opened the page.
+            Log.w(LOGTAG, "Unable to open URI, maybe showing neterror");
+            callback.sendError(getUnknownProtocolErrorPageUri(intent.getData().toString()));
         }
     }
 
@@ -572,11 +568,6 @@ public final class IntentHelper implements GeckoEventListener,
         return UNKNOWN_PROTOCOL_URI_PREFIX + encodedUri;
     }
 
-    private void openWebActivity(JSONObject message) throws JSONException {
-        final Intent intent = WebActivityMapper.getIntentForWebActivity(message.getJSONObject("activity"));
-        ActivityHandlerHelper.startIntentForActivity(activity, intent, new ResultHandler(message));
-    }
-
     private static class ResultHandler implements ActivityResultHandler {
         private final JSONObject message;
 
@@ -587,18 +578,19 @@ public final class IntentHelper implements GeckoEventListener,
         @Override
         public void onActivityResult(int resultCode, Intent data) {
             JSONObject response = new JSONObject();
-
             try {
                 if (data != null) {
-                    response.put("extras", JSONUtils.bundleToJSON(data.getExtras()));
-                    response.put("uri", data.getData().toString());
+                    if (data.getExtras() != null) {
+                        response.put("extras", JSONUtils.bundleToJSON(data.getExtras()));
+                    }
+                    if (data.getData() != null) {
+                        response.put("uri", data.getData().toString());
+                    }
                 }
-
                 response.put("resultCode", resultCode);
             } catch (JSONException e) {
                 Log.w(LOGTAG, "Error building JSON response.", e);
             }
-
             EventDispatcher.sendResponse(message, response);
         }
     }

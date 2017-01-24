@@ -20,6 +20,7 @@
 #define wasm_table_h
 
 #include "asmjs/WasmCode.h"
+#include "gc/Policy.h"
 
 namespace js {
 namespace wasm {
@@ -30,24 +31,49 @@ namespace wasm {
 
 class Table : public ShareableBase<Table>
 {
-    TableKind kind_;
-    UniquePtr<void*> array_;
-    uint32_t length_;
-    bool initialized_;
+    using InstanceSet = GCHashSet<ReadBarrieredWasmInstanceObject,
+                                  MovableCellHasher<ReadBarrieredWasmInstanceObject>,
+                                  SystemAllocPolicy>;
+    typedef UniquePtr<uint8_t[], JS::FreePolicy> UniqueByteArray;
+
+    ReadBarrieredWasmTableObject maybeObject_;
+    JS::WeakCache<InstanceSet>   observers_;
+    UniqueByteArray              array_;
+    const TableKind              kind_;
+    uint32_t                     length_;
+    const Maybe<uint32_t>        maximum_;
+    const bool                   external_;
+
+    template <class> friend struct js::MallocProvider;
+    Table(JSContext* cx, const TableDesc& td, HandleWasmTableObject maybeObject,
+          UniqueByteArray array);
+
+    void tracePrivate(JSTracer* trc);
+    friend class js::WasmTableObject;
 
   public:
-    static RefPtr<Table> create(JSContext* cx, TableKind kind, uint32_t length);
+    static RefPtr<Table> create(JSContext* cx, const TableDesc& desc,
+                                HandleWasmTableObject maybeObject);
+    void trace(JSTracer* trc);
 
-    // These accessors may be used before initialization.
-
+    bool external() const { return external_; }
     bool isTypedFunction() const { return kind_ == TableKind::TypedFunction; }
-    void** array() const { return array_.get(); }
     uint32_t length() const { return length_; }
+    Maybe<uint32_t> maximum() const { return maximum_; }
+    uint8_t* base() const { return array_.get(); }
 
-    // A Table must be initialized before any dependent instance can execute.
+    // All updates must go through a set() function with the exception of
+    // (profiling) updates to the callee pointer that do not change which
+    // logical function is being called.
 
-    bool initialized() const { return initialized_; }
-    void init(const CodeSegment& codeSegment);
+    void** internalArray() const;
+    ExternalTableElem* externalArray() const;
+    void set(uint32_t index, void* code, Instance& instance);
+    void setNull(uint32_t index);
+
+    uint32_t grow(uint32_t delta, JSContext* cx);
+    bool movingGrowable() const;
+    bool addMovingGrowObserver(JSContext* cx, WasmInstanceObject* instance);
 
     // about:memory reporting:
 

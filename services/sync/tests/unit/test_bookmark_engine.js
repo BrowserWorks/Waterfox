@@ -2,11 +2,13 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
+Cu.import("resource://gre/modules/PlacesSyncUtils.jsm");
 Cu.import("resource://gre/modules/BookmarkJSONUtils.jsm");
-Cu.import("resource://services-common/async.js");
 Cu.import("resource://gre/modules/Log.jsm");
+Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/bookmarks.js");
+Cu.import("resource://services-sync/bookmark_utils.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
@@ -16,7 +18,164 @@ initTestLogging("Trace");
 
 Service.engineManager.register(BookmarksEngine);
 
-add_test(function bad_record_allIDs() {
+function* assertChildGuids(folderGuid, expectedChildGuids, message) {
+  let tree = yield PlacesUtils.promiseBookmarksTree(folderGuid);
+  let childGuids = tree.children.map(child => child.guid);
+  deepEqual(childGuids, expectedChildGuids, message);
+}
+
+add_task(function* test_change_during_sync() {
+  _("Ensure that we track changes made during a sync.");
+
+  let engine  = new BookmarksEngine(Service);
+  let store   = engine._store;
+  let tracker = engine._tracker;
+  let server = serverForFoo(engine);
+  new SyncTestingInfrastructure(server.server);
+
+  let collection = server.user("foo").collection("bookmarks");
+
+  let bz_id = PlacesUtils.bookmarks.insertBookmark(
+    PlacesUtils.bookmarksMenuFolderId, Utils.makeURI("https://bugzilla.mozilla.org/"),
+    PlacesUtils.bookmarks.DEFAULT_INDEX, "Bugzilla");
+  let bz_guid = yield PlacesUtils.promiseItemGuid(bz_id);
+    _(`Bugzilla GUID: ${bz_guid}`);
+
+  Svc.Obs.notify("weave:engine:start-tracking");
+
+  try {
+    let folder1_id = PlacesUtils.bookmarks.createFolder(
+      PlacesUtils.bookmarks.toolbarFolder, "Folder 1", 0);
+    let folder1_guid = store.GUIDForId(folder1_id);
+    _(`Folder GUID: ${folder1_guid}`);
+
+    let bmk1_id = PlacesUtils.bookmarks.insertBookmark(
+      folder1_id, Utils.makeURI("http://getthunderbird.com/"),
+      PlacesUtils.bookmarks.DEFAULT_INDEX, "Get Thunderbird!");
+    let bmk1_guid = store.GUIDForId(bmk1_id);
+    _(`Thunderbird GUID: ${bmk1_guid}`);
+
+    // Sync is synchronous, so, to simulate a bookmark change made during a
+    // sync, we create a server record that adds a bookmark as a side effect.
+    let bmk2_guid = "get-firefox1"; // New child of Folder 1, created remotely.
+    let bmk3_id = -1; // New child of Folder 1, created locally during sync.
+    let folder2_guid = "folder2-1111"; // New folder, created remotely.
+    let tagQuery_guid = "tag-query111"; // New tag query child of Folder 2, created remotely.
+    let bmk4_guid = "example-org1"; // New tagged child of Folder 2, created remotely.
+    {
+      // An existing record changed on the server that should not trigger
+      // another sync when applied.
+      let bzBmk = new Bookmark("bookmarks", bz_guid);
+      bzBmk.bmkUri      = "https://bugzilla.mozilla.org/";
+      bzBmk.description = "New description";
+      bzBmk.title       = "Bugzilla";
+      bzBmk.tags        = ["new", "tags"];
+      bzBmk.parentName  = "Bookmarks Toolbar";
+      bzBmk.parentid    = "toolbar";
+      collection.insert(bz_guid, encryptPayload(bzBmk.cleartext));
+
+      let remoteFolder = new BookmarkFolder("bookmarks", folder2_guid);
+      remoteFolder.title      = "Folder 2";
+      remoteFolder.children   = [bmk4_guid, tagQuery_guid];
+      remoteFolder.parentName = "Bookmarks Menu";
+      remoteFolder.parentid   = "menu";
+      collection.insert(folder2_guid, encryptPayload(remoteFolder.cleartext));
+
+      let localFxBmk = new Bookmark("bookmarks", bmk2_guid);
+      localFxBmk.bmkUri        = "http://getfirefox.com/";
+      localFxBmk.description   = "Firefox is awesome.";
+      localFxBmk.title         = "Get Firefox!";
+      localFxBmk.tags          = ["firefox", "awesome", "browser"];
+      localFxBmk.keyword       = "awesome";
+      localFxBmk.loadInSidebar = false;
+      localFxBmk.parentName    = "Folder 1";
+      localFxBmk.parentid      = folder1_guid;
+      let remoteFxBmk = collection.insert(bmk2_guid, encryptPayload(localFxBmk.cleartext));
+      remoteFxBmk.get = function get() {
+        _("Inserting bookmark into local store");
+        bmk3_id = PlacesUtils.bookmarks.insertBookmark(
+          folder1_id, Utils.makeURI("https://mozilla.org/"),
+          PlacesUtils.bookmarks.DEFAULT_INDEX, "Mozilla");
+
+        return ServerWBO.prototype.get.apply(this, arguments);
+      };
+
+      // A tag query referencing a nonexistent tag folder, which we should
+      // create locally when applying the record.
+      let localTagQuery = new BookmarkQuery("bookmarks", tagQuery_guid);
+      localTagQuery.bmkUri     = "place:type=7&folder=999";
+      localTagQuery.title      = "Taggy tags";
+      localTagQuery.folderName = "taggy";
+      localTagQuery.parentName = "Folder 2";
+      localTagQuery.parentid   = folder2_guid;
+      collection.insert(tagQuery_guid, encryptPayload(localTagQuery.cleartext));
+
+      // A bookmark that should appear in the results for the tag query.
+      let localTaggedBmk = new Bookmark("bookmarks", bmk4_guid);
+      localTaggedBmk.bmkUri     = "https://example.org";
+      localTaggedBmk.title      = "Tagged bookmark";
+      localTaggedBmk.tags       = ["taggy"];
+      localTaggedBmk.parentName = "Folder 2";
+      localTaggedBmk.parentid   = folder2_guid;
+      collection.insert(bmk4_guid, encryptPayload(localTaggedBmk.cleartext));
+    }
+
+    yield* assertChildGuids(folder1_guid, [bmk1_guid], "Folder should have 1 child before first sync");
+
+    _("Perform first sync");
+    {
+      let changes = engine.pullNewChanges();
+      deepEqual(changes.ids().sort(), [folder1_guid, bmk1_guid, "toolbar"].sort(),
+        "Should track bookmark and folder created before first sync");
+      yield sync_engine_and_validate_telem(engine, false);
+    }
+
+    let bmk2_id = store.idForGUID(bmk2_guid);
+    let bmk3_guid = store.GUIDForId(bmk3_id);
+    _(`Mozilla GUID: ${bmk3_guid}`);
+    {
+      equal(store.GUIDForId(bmk2_id), bmk2_guid,
+        "Remote bookmark should be applied during first sync");
+      ok(bmk3_id > -1,
+        "Bookmark created during first sync should exist locally");
+      ok(!collection.wbo(bmk3_guid),
+        "Bookmark created during first sync shouldn't be uploaded yet");
+
+      yield* assertChildGuids(folder1_guid, [bmk1_guid, bmk3_guid, bmk2_guid],
+        "Folder 1 should have 3 children after first sync");
+      yield* assertChildGuids(folder2_guid, [bmk4_guid, tagQuery_guid],
+        "Folder 2 should have 2 children after first sync");
+      let taggedURIs = PlacesUtils.tagging.getURIsForTag("taggy");
+      equal(taggedURIs.length, 1, "Should have 1 tagged URI");
+      equal(taggedURIs[0].spec, "https://example.org/",
+        "Synced tagged bookmark should appear in tagged URI list");
+    }
+
+    _("Perform second sync");
+    {
+      let changes = engine.pullNewChanges();
+      deepEqual(changes.ids().sort(), [bmk3_guid, folder1_guid].sort(),
+        "Should track bookmark added during last sync and its parent");
+      yield sync_engine_and_validate_telem(engine, false);
+
+      ok(collection.wbo(bmk3_guid),
+        "Bookmark created during first sync should be uploaded during second sync");
+
+      yield* assertChildGuids(folder1_guid, [bmk1_guid, bmk3_guid, bmk2_guid],
+        "Folder 1 should have same children after second sync");
+      yield* assertChildGuids(folder2_guid, [bmk4_guid, tagQuery_guid],
+        "Folder 2 should have same children after second sync");
+    }
+  } finally {
+    store.wipe();
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
+    yield new Promise(resolve => server.stop(resolve));
+    Svc.Obs.notify("weave:engine:stop-tracking");
+  }
+});
+
+add_task(function* bad_record_allIDs() {
   let server = new SyncServer();
   server.start();
   let syncTesting = new SyncTestingInfrastructure(server.server);
@@ -34,9 +193,6 @@ add_test(function bad_record_allIDs() {
   _("Record is " + badRecordID);
   _("Type: " + PlacesUtils.bookmarks.getItemType(badRecordID));
 
-  _("Fetching children.");
-  store._getChildren("toolbar", {});
-
   _("Fetching all IDs.");
   let all = store.getAllIDs();
 
@@ -46,10 +202,10 @@ add_test(function bad_record_allIDs() {
 
   _("Clean up.");
   PlacesUtils.bookmarks.removeItem(badRecordID);
-  server.stop(run_next_test);
+  yield new Promise(r => server.stop(r));
 });
 
-add_test(function test_ID_caching() {
+add_task(function* test_ID_caching() {
   let server = new SyncServer();
   server.start();
   let syncTesting = new SyncTestingInfrastructure(server.server);
@@ -61,7 +217,9 @@ add_test(function test_ID_caching() {
 
   let mobileID = store.idForGUID("mobile");
   _("Change the GUID for that item, and drop the mobile anno.");
-  store._setGUID(mobileID, "abcdefghijkl");
+  let mobileRoot = BookmarkSpecialIds.specialIdForGUID("mobile", false);
+  let mobileGUID = yield PlacesUtils.promiseItemGuid(mobileRoot);
+  yield PlacesSyncUtils.bookmarks.changeGuid(mobileGUID, "abcdefghijkl");
   PlacesUtils.annotations.removeItemAnnotation(mobileID, "mobile/bookmarksRoot");
 
   let err;
@@ -88,7 +246,7 @@ add_test(function test_ID_caching() {
   do_check_eq(newMobileID, store.idForGUID("mobile", false));
 
   do_check_eq(store.GUIDForId(mobileID), "abcdefghijkl");
-  server.stop(run_next_test);
+  yield new Promise(r => server.stop(r));
 });
 
 function serverForFoo(engine) {
@@ -310,7 +468,7 @@ function FakeRecord(constructor, r) {
 }
 
 // Bug 632287.
-add_test(function test_mismatched_types() {
+add_task(function* test_mismatched_types() {
   _("Ensure that handling a record that changes type causes deletion " +
     "then re-adding.");
 
@@ -322,6 +480,7 @@ add_test(function test_mismatched_types() {
     "description":null,
     "parentid": "toolbar"
   };
+  oldRecord.cleartext = oldRecord;
 
   let newRecord = {
     "id": "l1nZZXfB8nC7",
@@ -337,6 +496,7 @@ add_test(function test_mismatched_types() {
        "oT74WwV8_j4P", "IztsItWVSo3-"],
     "parentid": "toolbar"
   };
+  newRecord.cleartext = newRecord;
 
   let engine = new BookmarksEngine(Service);
   let store  = engine._store;
@@ -349,8 +509,8 @@ add_test(function test_mismatched_types() {
     let bms = PlacesUtils.bookmarks;
     let oldR = new FakeRecord(BookmarkFolder, oldRecord);
     let newR = new FakeRecord(Livemark, newRecord);
-    oldR._parent = PlacesUtils.bookmarks.toolbarFolder;
-    newR._parent = PlacesUtils.bookmarks.toolbarFolder;
+    oldR.parentid = PlacesUtils.bookmarks.toolbarGuid;
+    newR.parentid = PlacesUtils.bookmarks.toolbarGuid;
 
     store.applyIncoming(oldR);
     _("Applied old. It's a folder.");
@@ -373,11 +533,11 @@ add_test(function test_mismatched_types() {
     store.wipe();
     Svc.Prefs.resetBranch("");
     Service.recordManager.clearCache();
-    server.stop(run_next_test);
+    yield new Promise(r => server.stop(r));
   }
 });
 
-add_test(function test_bookmark_guidMap_fail() {
+add_task(function* test_bookmark_guidMap_fail() {
   _("Ensure that failures building the GUID map cause early death.");
 
   let engine = new BookmarksEngine(Service);
@@ -426,26 +586,10 @@ add_test(function test_bookmark_guidMap_fail() {
   do_check_eq(err, "Nooo");
 
   PlacesUtils.promiseBookmarksTree = pbt;
-  server.stop(run_next_test);
+  yield new Promise(r => server.stop(r));
 });
 
-add_test(function test_bookmark_is_taggable() {
-  let engine = new BookmarksEngine(Service);
-  let store = engine._store;
-
-  do_check_true(store.isTaggable("bookmark"));
-  do_check_true(store.isTaggable("microsummary"));
-  do_check_true(store.isTaggable("query"));
-  do_check_false(store.isTaggable("folder"));
-  do_check_false(store.isTaggable("livemark"));
-  do_check_false(store.isTaggable(null));
-  do_check_false(store.isTaggable(undefined));
-  do_check_false(store.isTaggable(""));
-
-  run_next_test();
-});
-
-add_test(function test_bookmark_tag_but_no_uri() {
+add_task(function* test_bookmark_tag_but_no_uri() {
   _("Ensure that a bookmark record with tags, but no URI, doesn't throw an exception.");
 
   let engine = new BookmarksEngine(Service);
@@ -454,12 +598,30 @@ add_test(function test_bookmark_tag_but_no_uri() {
   // We're simply checking that no exception is thrown, so
   // no actual checks in this test.
 
-  store._tagURI(null, ["foo"]);
-  store._tagURI(null, null);
-  store._tagURI(Utils.makeURI("about:fake"), null);
+  yield PlacesSyncUtils.bookmarks.insert({
+    kind: PlacesSyncUtils.bookmarks.KINDS.BOOKMARK,
+    guid: Utils.makeGUID(),
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    url: "http://example.com",
+    tags: ["foo"],
+  });
+  yield PlacesSyncUtils.bookmarks.insert({
+    kind: PlacesSyncUtils.bookmarks.KINDS.BOOKMARK,
+    guid: Utils.makeGUID(),
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    url: "http://example.org",
+    tags: null,
+  });
+  yield PlacesSyncUtils.bookmarks.insert({
+    kind: PlacesSyncUtils.bookmarks.KINDS.BOOKMARK,
+    guid: Utils.makeGUID(),
+    url: "about:fake",
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    tags: null,
+  });
 
   let record = {
-    _parent:     PlacesUtils.bookmarks.toolbarFolder,
+    parentid:    PlacesUtils.bookmarks.toolbarGuid,
     id:          Utils.makeGUID(),
     description: "",
     tags:        ["foo"],
@@ -473,11 +635,9 @@ add_test(function test_bookmark_tag_but_no_uri() {
   store.create(record);
   record.tags = ["bar"];
   store.update(record);
-
-  run_next_test();
 });
 
-add_test(function test_misreconciled_root() {
+add_task(function* test_misreconciled_root() {
   _("Ensure that we don't reconcile an arbitrary record with a root.");
 
   let engine = new BookmarksEngine(Service);
@@ -538,7 +698,7 @@ add_test(function test_misreconciled_root() {
   do_check_eq(parentGUIDBefore, parentGUIDAfter);
   do_check_eq(parentIDBefore, parentIDAfter);
 
-  server.stop(run_next_test);
+  yield new Promise(r => server.stop(r));
 });
 
 function run_test() {

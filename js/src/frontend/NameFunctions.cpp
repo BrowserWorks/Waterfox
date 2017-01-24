@@ -6,6 +6,8 @@
 
 #include "frontend/NameFunctions.h"
 
+#include "mozilla/Sprintf.h"
+
 #include "jsfun.h"
 #include "jsprf.h"
 
@@ -55,7 +57,7 @@ class NameResolver
     /* Append a number to buf. */
     bool appendNumber(double n) {
         char number[30];
-        int digits = JS_snprintf(number, sizeof(number), "%g", n);
+        int digits = SprintfLiteral(number, "%g", n);
         return buf->append(number, digits);
     }
 
@@ -396,7 +398,7 @@ class NameResolver
           case PNK_SUPERBASE:
             MOZ_ASSERT(cur->isArity(PN_UNARY));
             MOZ_ASSERT(cur->pn_kid->isKind(PNK_NAME));
-            MOZ_ASSERT(!cur->pn_kid->maybeExpr());
+            MOZ_ASSERT(!cur->pn_kid->expr());
             break;
 
           case PNK_NEWTARGET:
@@ -460,7 +462,6 @@ class NameResolver
           case PNK_DOWHILE:
           case PNK_WHILE:
           case PNK_SWITCH:
-          case PNK_LETBLOCK:
           case PNK_FOR:
           case PNK_COMPREHENSIONFOR:
           case PNK_CLASSMETHOD:
@@ -481,7 +482,7 @@ class NameResolver
             break;
 
           case PNK_WITH:
-            MOZ_ASSERT(cur->isArity(PN_BINARY_OBJ));
+            MOZ_ASSERT(cur->isArity(PN_BINARY));
             if (!resolve(cur->pn_left, prefix))
                 return false;
             if (!resolve(cur->pn_right, prefix))
@@ -501,7 +502,6 @@ class NameResolver
           case PNK_YIELD_STAR:
             MOZ_ASSERT(cur->isArity(PN_BINARY));
             MOZ_ASSERT(cur->pn_right->isKind(PNK_NAME));
-            MOZ_ASSERT(!cur->pn_right->isAssigned());
             if (!resolve(cur->pn_left, prefix))
                 return false;
             break;
@@ -512,7 +512,7 @@ class NameResolver
                 if (!resolve(cur->pn_left, prefix))
                     return false;
             }
-            MOZ_ASSERT((cur->pn_right->isKind(PNK_NAME) && !cur->pn_right->isAssigned()) ||
+            MOZ_ASSERT(cur->pn_right->isKind(PNK_NAME) ||
                        (cur->pn_right->isKind(PNK_ASSIGN) &&
                         cur->pn_right->pn_left->isKind(PNK_NAME) &&
                         cur->pn_right->pn_right->isKind(PNK_GENERATOR)));
@@ -597,9 +597,9 @@ class NameResolver
             MOZ_ASSERT_IF(cur->pn_kid1 && cur->pn_kid1->pn_left,
                           cur->pn_kid1->pn_left->isKind(PNK_NAME));
             MOZ_ASSERT_IF(cur->pn_kid1 && cur->pn_kid1->pn_left,
-                          !cur->pn_kid1->pn_left->maybeExpr());
+                          !cur->pn_kid1->pn_left->expr());
             MOZ_ASSERT_IF(cur->pn_kid1, cur->pn_kid1->pn_right->isKind(PNK_NAME));
-            MOZ_ASSERT_IF(cur->pn_kid1, !cur->pn_kid1->pn_right->maybeExpr());
+            MOZ_ASSERT_IF(cur->pn_kid1, !cur->pn_kid1->pn_right->expr());
             if (cur->pn_kid2) {
                 if (!resolve(cur->pn_kid2, prefix))
                     return false;
@@ -689,7 +689,7 @@ class NameResolver
           case PNK_GENEXP:
           case PNK_ARRAY:
           case PNK_STATEMENTLIST:
-          case PNK_ARGSBODY:
+          case PNK_PARAMSBODY:
           // Initializers for individual variables, and computed property names
           // within destructuring patterns, may contain unnamed functions.
           case PNK_VAR:
@@ -755,9 +755,9 @@ class NameResolver
                 MOZ_ASSERT(item->isKind(isImport ? PNK_IMPORT_SPEC : PNK_EXPORT_SPEC));
                 MOZ_ASSERT(item->isArity(PN_BINARY));
                 MOZ_ASSERT(item->pn_left->isKind(PNK_NAME));
-                MOZ_ASSERT(!item->pn_left->maybeExpr());
+                MOZ_ASSERT(!item->pn_left->expr());
                 MOZ_ASSERT(item->pn_right->isKind(PNK_NAME));
-                MOZ_ASSERT(!item->pn_right->maybeExpr());
+                MOZ_ASSERT(!item->pn_right->expr());
             }
 #endif
             break;
@@ -767,9 +767,9 @@ class NameResolver
             MOZ_ASSERT(cur->isArity(PN_LIST));
             for (ParseNode* catchNode = cur->pn_head; catchNode; catchNode = catchNode->pn_next) {
                 MOZ_ASSERT(catchNode->isKind(PNK_LEXICALSCOPE));
-                MOZ_ASSERT(catchNode->expr()->isKind(PNK_CATCH));
-                MOZ_ASSERT(catchNode->expr()->isArity(PN_TERNARY));
-                if (!resolve(catchNode->expr(), prefix))
+                MOZ_ASSERT(catchNode->scopeBody()->isKind(PNK_CATCH));
+                MOZ_ASSERT(catchNode->scopeBody()->isArity(PN_TERNARY));
+                if (!resolve(catchNode->scopeBody(), prefix))
                     return false;
             }
             break;
@@ -791,10 +791,15 @@ class NameResolver
                 return false;
             break;
 
-          case PNK_LEXICALSCOPE:
           case PNK_NAME:
             MOZ_ASSERT(cur->isArity(PN_NAME));
-            if (!resolve(cur->maybeExpr(), prefix))
+            if (!resolve(cur->expr(), prefix))
+                return false;
+            break;
+
+          case PNK_LEXICALSCOPE:
+            MOZ_ASSERT(cur->isArity(PN_SCOPE));
+            if (!resolve(cur->scopeBody(), prefix))
                 return false;
             break;
 
@@ -802,12 +807,6 @@ class NameResolver
           case PNK_MODULE:
             MOZ_ASSERT(cur->isArity(PN_CODE));
             if (!resolve(cur->pn_body, prefix))
-                return false;
-            break;
-
-          case PNK_ANNEXB_FUNCTION:
-            MOZ_ASSERT(cur->isArity(PN_BINARY));
-            if (!resolve(cur->pn_left, prefix))
                 return false;
             break;
 

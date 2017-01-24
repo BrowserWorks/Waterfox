@@ -162,6 +162,11 @@ struct LayerPropertiesBase : public LayerProperties
     MOZ_COUNT_DTOR(LayerPropertiesBase);
   }
 
+protected:
+  LayerPropertiesBase(const LayerPropertiesBase& a) = delete;
+  LayerPropertiesBase& operator=(const LayerPropertiesBase& a) = delete;
+
+public:
   virtual nsIntRegion ComputeDifferences(Layer* aRoot,
                                          NotifySubDocInvalidationFunc aCallback,
                                          bool* aGeometryChanged);
@@ -171,6 +176,7 @@ struct LayerPropertiesBase : public LayerProperties
   nsIntRegion ComputeChange(NotifySubDocInvalidationFunc aCallback,
                             bool& aGeometryChanged)
   {
+    // Bug 1251615: This canary is sometimes hit. We're still not sure why.
     mCanary.Check();
     bool transformChanged = !mTransform.FuzzyEqual(GetTransformForInvalidation(mLayer)) ||
                              mLayer->GetPostXScale() != mPostXScale ||
@@ -232,6 +238,12 @@ struct LayerPropertiesBase : public LayerProperties
     return result;
   }
 
+  void CheckCanary()
+  {
+    mCanary.Check();
+    mLayer->CheckCanary();
+  }
+
   virtual IntRect NewTransformedBounds()
   {
     return TransformRect(mLayer->GetLocalVisibleRegion().ToUnknownRegion().GetBounds(),
@@ -275,9 +287,16 @@ struct ContainerLayerProperties : public LayerPropertiesBase
     }
   }
 
+protected:
+  ContainerLayerProperties(const ContainerLayerProperties& a) = delete;
+  ContainerLayerProperties& operator=(const ContainerLayerProperties& a) = delete;
+
+public:
   nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
                                     bool& aGeometryChanged) override
   {
+    // Make sure we got our virtual call right
+    mSubtypeCanary.Check();
     ContainerLayer* container = mLayer->AsContainerLayer();
     nsIntRegion invalidOfLayer; // Invalid regions of this layer.
     nsIntRegion result;         // Invliad regions for children only.
@@ -307,7 +326,7 @@ struct ContainerLayerProperties : public LayerPropertiesBase
 
     nsDataHashtable<nsPtrHashKey<Layer>, uint32_t> oldIndexMap(mChildren.Length());
     for (uint32_t i = 0; i < mChildren.Length(); ++i) {
-      mChildren[i]->mLayer->CheckCanary();
+      mChildren[i]->CheckCanary();
       oldIndexMap.Put(mChildren[i]->mLayer, i);
     }
 
@@ -326,6 +345,9 @@ struct ContainerLayerProperties : public LayerPropertiesBase
             for (uint32_t j = i; j < childsOldIndex; ++j) {
               AddRegion(result, mChildren[j]->OldTransformedBounds());
               childrenChanged |= true;
+            }
+            if (childsOldIndex >= mChildren.Length()) {
+              MOZ_CRASH("Out of bounds");
             }
             // Invalidate any regions of the child that have changed:
             nsIntRegion region = mChildren[childsOldIndex]->ComputeChange(aCallback, aGeometryChanged);
@@ -413,7 +435,8 @@ struct ContainerLayerProperties : public LayerPropertiesBase
   }
 
   // The old list of children:
-  AutoTArray<UniquePtr<LayerPropertiesBase>,1> mChildren;
+  mozilla::CorruptionCanary mSubtypeCanary;
+  nsTArray<UniquePtr<LayerPropertiesBase>> mChildren;
   float mPreXScale;
   float mPreYScale;
 };
@@ -426,6 +449,11 @@ struct ColorLayerProperties : public LayerPropertiesBase
     , mBounds(aLayer->GetBounds())
   { }
 
+protected:
+  ColorLayerProperties(const ColorLayerProperties& a) = delete;
+  ColorLayerProperties& operator=(const ColorLayerProperties& a) = delete;
+
+public:
   virtual nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
                                             bool& aGeometryChanged)
   {

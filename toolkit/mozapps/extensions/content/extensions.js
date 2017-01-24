@@ -272,9 +272,8 @@ function getMainWindowWithPreferencesPane() {
   let mainWindow = getMainWindow();
   if (mainWindow && "openAdvancedPreferences" in mainWindow) {
     return mainWindow;
-  } else {
-    return null;
   }
+  return null;
 }
 
 /**
@@ -481,9 +480,8 @@ var gEventManager = {
                                                               : addonItem.mAddon.version);
         }
       }
-      else {
-        if (shouldShowVersionNumber(addonItem.mInstall))
-          tiptext += " " + addonItem.mInstall.version;
+      else if (shouldShowVersionNumber(addonItem.mInstall)) {
+        tiptext += " " + addonItem.mInstall.version;
       }
 
       addonTooltip.label = tiptext;
@@ -537,7 +535,7 @@ var gEventManager = {
         continue;
       try {
         listener[aEvent].apply(listener, aParams);
-      } catch(e) {
+      } catch (e) {
         // this shouldn't be fatal
         Cu.reportError(e);
       }
@@ -556,7 +554,7 @@ var gEventManager = {
         continue;
       try {
         listener[aEvent].apply(listener, aParams);
-      } catch(e) {
+      } catch (e) {
         // this shouldn't be fatal
         Cu.reportError(e);
       }
@@ -656,7 +654,7 @@ var gViewController = {
       if ("shutdown" in view) {
         try {
           view.shutdown();
-        } catch(e) {
+        } catch (e) {
           // this shouldn't be fatal
           Cu.reportError(e);
         }
@@ -678,18 +676,17 @@ var gViewController = {
           gHistory.back();
         else
           gViewController.replaceView(gViewDefault);
+      } else if (gHistory.canGoForward) {
+        gHistory.forward();
       } else {
-        if (gHistory.canGoForward)
-          gHistory.forward();
-        else
-          gViewController.replaceView(gViewDefault);
+        gViewController.replaceView(gViewDefault);
       }
     }
   },
 
   parseViewId: function(aViewId) {
     var matchRegex = /^addons:\/\/([^\/]+)\/(.*)$/;
-    var [,viewType, viewParam] = aViewId.match(matchRegex) || [];
+    var [, viewType, viewParam] = aViewId.match(matchRegex) || [];
     return {type: viewType, param: decodeURIComponent(viewParam)};
   },
 
@@ -749,9 +746,8 @@ var gViewController = {
   get displayedView() {
     if (this.viewPort.selectedPanel == this.headeredViews) {
       return this.headeredViewsDeck.selectedPanel;
-    } else {
-      return this.viewPort.selectedPanel;
     }
+    return this.viewPort.selectedPanel;
   },
 
   set displayedView(view) {
@@ -1636,8 +1632,7 @@ function sortElements(aElements, aSortBy, aAscending) {
       if (addonType && (addonType.flags & AddonManager.TYPE_SUPPORTS_ASK_TO_ACTIVATE) &&
           addon.userDisabled == AddonManager.STATE_ASK_TO_ACTIVATE)
         return "askToActivate";
-      else
-        return "enabled";
+      return "enabled";
     }
 
     return addon[aKey];
@@ -2436,7 +2431,7 @@ var gSearchView = {
     var maxRemoteResults = 0;
     try {
       maxRemoteResults = Services.prefs.getIntPref(PREF_MAXRESULTS);
-    } catch(e) {}
+    } catch (e) {}
 
     if (maxRemoteResults <= 0) {
       finishSearch(0);
@@ -3430,7 +3425,7 @@ var gDetailView = {
         };
         xhr.send();
       }
-    } catch(e) {
+    } catch (e) {
       Cu.reportError(e);
       if (aCallback)
         aCallback();

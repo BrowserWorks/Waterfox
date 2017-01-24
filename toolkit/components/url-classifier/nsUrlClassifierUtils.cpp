@@ -9,9 +9,9 @@
 #include "nsTArray.h"
 #include "nsReadableUtils.h"
 #include "plbase64.h"
-#include "prprf.h"
 #include "nsPrintfCString.h"
 #include "safebrowsing.pb.h"
+#include "mozilla/Sprintf.h"
 
 #define DEFAULT_PROTOCOL_VERSION "2.2"
 
@@ -100,7 +100,7 @@ typedef FetchThreatListUpdatesRequest_ListUpdateRequest_Constraints Constraints;
 
 static void
 InitListUpdateRequest(ThreatType aThreatType,
-                      const char* aState,
+                      const char* aStateBase64,
                       ListUpdateRequest* aListUpdateRequest)
 {
   aListUpdateRequest->set_threat_type(aThreatType);
@@ -114,8 +114,12 @@ InitListUpdateRequest(ThreatType aThreatType,
   aListUpdateRequest->set_allocated_constraints(contraints);
 
   // Only set non-empty state.
-  if (aState[0] != '\0') {
-    aListUpdateRequest->set_state(aState);
+  if (aStateBase64[0] != '\0') {
+    nsCString stateBinary;
+    nsresult rv = Base64Decode(nsCString(aStateBase64), stateBinary);
+    if (NS_SUCCEEDED(rv)) {
+      aListUpdateRequest->set_state(stateBinary.get());
+    }
   }
 }
 
@@ -211,20 +215,26 @@ static const struct {
   { "googpub-phish-proto", SOCIAL_ENGINEERING_PUBLIC}, // 2
   { "goog-unwanted-proto", UNWANTED_SOFTWARE},         // 3
   { "goog-phish-proto", SOCIAL_ENGINEERING},           // 5
+
+  // For testing purpose.
+  { "test-phish-proto",    SOCIAL_ENGINEERING_PUBLIC}, // 2
+  { "test-unwanted-proto", UNWANTED_SOFTWARE}, // 3
 };
 
 NS_IMETHODIMP
-nsUrlClassifierUtils::ConvertThreatTypeToListName(uint32_t aThreatType,
-                                                  nsACString& aListName)
+nsUrlClassifierUtils::ConvertThreatTypeToListNames(uint32_t aThreatType,
+                                                   nsACString& aListNames)
 {
   for (uint32_t i = 0; i < ArrayLength(THREAT_TYPE_CONV_TABLE); i++) {
     if (aThreatType == THREAT_TYPE_CONV_TABLE[i].mThreatType) {
-      aListName = THREAT_TYPE_CONV_TABLE[i].mListName;
-      return NS_OK;
+      if (!aListNames.IsEmpty()) {
+        aListNames.AppendLiteral(",");
+      }
+      aListNames += THREAT_TYPE_CONV_TABLE[i].mListName;
     }
   }
 
-  return NS_ERROR_FAILURE;
+  return aListNames.IsEmpty() ? NS_ERROR_FAILURE : NS_OK;
 }
 
 NS_IMETHODIMP
@@ -262,7 +272,7 @@ nsUrlClassifierUtils::GetProtocolVersion(const nsACString& aProvider,
 
 NS_IMETHODIMP
 nsUrlClassifierUtils::MakeUpdateRequestV4(const char** aListNames,
-                                          const char** aStates,
+                                          const char** aStatesBase64,
                                           uint32_t aCount,
                                           nsACString &aRequest)
 {
@@ -279,7 +289,7 @@ nsUrlClassifierUtils::MakeUpdateRequestV4(const char** aListNames,
       continue; // Unknown list name.
     }
     auto lur = r.mutable_list_update_requests()->Add();
-    InitListUpdateRequest(static_cast<ThreatType>(threatType), aStates[i], lur);
+    InitListUpdateRequest(static_cast<ThreatType>(threatType), aStatesBase64[i], lur);
   }
 
   // Then serialize.
@@ -484,7 +494,7 @@ nsUrlClassifierUtils::CanonicalNum(const nsACString& num,
 
   while (bytes--) {
     char buf[20];
-    PR_snprintf(buf, sizeof(buf), "%u", val & 0xff);
+    SprintfLiteral(buf, "%u", val & 0xff);
     if (_retval.IsEmpty()) {
       _retval.Assign(buf);
     } else {

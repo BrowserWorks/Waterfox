@@ -115,7 +115,7 @@ ViewSourceBrowser.prototype = {
   receiveMessage(message) {
     let data = message.data;
 
-    switch(message.name) {
+    switch (message.name) {
       case "ViewSource:PromptAndGoToLine":
         this.promptAndGoToLine();
         break;
@@ -186,13 +186,13 @@ ViewSourceBrowser.prototype = {
     }
 
     if (browser) {
+      this.browser.relatedBrowser = browser;
+
       // If we're dealing with a remote browser, then the browser
       // for view source needs to be remote as well.
       this.updateBrowserRemoteness(browser.isRemoteBrowser);
-    } else {
-      if (outerWindowID) {
-        throw new Error("Must supply the browser if passing the outerWindowID");
-      }
+    } else if (outerWindowID) {
+      throw new Error("Must supply the browser if passing the outerWindowID");
     }
 
     this.sendAsyncMessage("ViewSource:LoadSource",

@@ -13,6 +13,8 @@ debug-tests:
     - cppunit
     - crashtest
     - jsreftest
+    # Marionette only available on Fennec debug builds as a security precaution
+    - marionette
     - mochitest
     - mochitest-chrome
     - mochitest-clipboard
@@ -34,4 +36,11 @@ opt-tests:
     - mochitest-webgl
     - reftest
     - robocop
+    - xpcshell
+
+gradle-tests:
+    - robocop
+    - mochitest-chrome
+
+x86-tests:
     - xpcshell

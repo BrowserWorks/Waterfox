@@ -35,7 +35,7 @@
 #include "nsTextNode.h"
 
 #include "PLDHashTable.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nsWrapperCacheInlines.h"
 
 using namespace mozilla;
@@ -91,8 +91,8 @@ NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(nsGenericDOMDataNode)
   if (MOZ_UNLIKELY(cb.WantDebugInfo())) {
     char name[40];
-    snprintf_literal(name, "nsGenericDOMDataNode (len=%d)",
-                     tmp->mText.GetLength());
+    SprintfLiteral(name, "nsGenericDOMDataNode (len=%d)",
+                   tmp->mText.GetLength());
     cb.DescribeRefCountedNode(tmp->mRefCnt.get(), name);
   } else {
     NS_IMPL_CYCLE_COLLECTION_DESCRIBE(nsGenericDOMDataNode, tmp->mRefCnt.get())
@@ -430,7 +430,7 @@ nsGenericDOMDataNode::ToCString(nsAString& aBuf, int32_t aOffset,
         aBuf.AppendLiteral("&gt;");
       } else if ((ch < ' ') || (ch >= 127)) {
         char buf[10];
-        snprintf_literal(buf, "\\u%04x", ch);
+        SprintfLiteral(buf, "\\u%04x", ch);
         AppendASCIItoUTF16(buf, aBuf);
       } else {
         aBuf.Append(ch);
@@ -450,7 +450,7 @@ nsGenericDOMDataNode::ToCString(nsAString& aBuf, int32_t aOffset,
         aBuf.AppendLiteral("&gt;");
       } else if ((ch < ' ') || (ch >= 127)) {
         char buf[10];
-        snprintf_literal(buf, "\\u%04x", ch);
+        SprintfLiteral(buf, "\\u%04x", ch);
         AppendASCIItoUTF16(buf, aBuf);
       } else {
         aBuf.Append(ch);
@@ -559,6 +559,18 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 
   UpdateEditableState(false);
 
+  // It would be cleanest to mark nodes as dirty when (a) they're created and
+  // (b) they're unbound from a tree. However, we can't easily do (a) right now,
+  // because IsStyledByServo() is not always easy to check at node creation time,
+  // and the bits have different meaning in the non-IsStyledByServo case.
+  //
+  // So for now, we just mark nodes as dirty when they're inserted into a
+  // document or shadow tree.
+  if (IsStyledByServo() && IsInComposedDoc()) {
+    MOZ_ASSERT(!ServoData().get());
+    SetIsDirtyForServo();
+  }
+
   NS_POSTCONDITION(aDocument == GetUncomposedDoc(), "Bound to wrong document");
   NS_POSTCONDITION(aParent == GetParent(), "Bound to wrong parent");
   NS_POSTCONDITION(aBindingParent == GetBindingParent(),
@@ -590,11 +602,15 @@ nsGenericDOMDataNode::UnbindFromTree(bool aDeep, bool aNullParent)
   }
   ClearInDocument();
 
+  // Computed styled data isn't useful for detached nodes, and we'll need to
+  // recomputed it anyway if we ever insert the nodes back into a document.
+  if (IsStyledByServo()) {
+    ServoData().reset();
+  } else {
 #ifdef MOZ_STYLO
-  // Drop any servo node data, since it will generally need to be recomputed on
-  // re-insertion anyway.
-  ServoData().reset();
+    MOZ_ASSERT(!ServoData());
 #endif
+  }
 
   if (aNullParent || !mParent->IsInShadowTree()) {
     UnsetFlags(NODE_IS_IN_SHADOW_TREE);
@@ -707,12 +723,6 @@ nsGenericDOMDataNode::GetBindingParent() const
 {
   nsDataSlots *slots = GetExistingDataSlots();
   return slots ? slots->mBindingParent : nullptr;
-}
-
-ShadowRoot *
-nsGenericDOMDataNode::GetShadowRoot() const
-{
-  return nullptr;
 }
 
 ShadowRoot *
@@ -960,9 +970,9 @@ nsGenericDOMDataNode::GetWholeText(nsAString& aWholeText)
     return GetData(aWholeText);
 
   int32_t index = parent->IndexOf(this);
-  NS_WARN_IF_FALSE(index >= 0,
-                   "Trying to use .wholeText with an anonymous"
-                    "text node child of a binding parent?");
+  NS_WARNING_ASSERTION(index >= 0,
+                       "Trying to use .wholeText with an anonymous"
+                       "text node child of a binding parent?");
   NS_ENSURE_TRUE(index >= 0, NS_ERROR_DOM_NOT_SUPPORTED_ERR);
   int32_t first =
     FirstLogicallyAdjacentTextNode(parent, index);

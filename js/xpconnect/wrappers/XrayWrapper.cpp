@@ -424,25 +424,33 @@ TryResolvePropertyFromSpecs(JSContext* cx, HandleId id, HandleObject holder,
         RootedFunction getterObj(cx);
         RootedFunction setterObj(cx);
         unsigned flags = psMatch->flags;
-        if (psMatch->isSelfHosted()) {
-            getterObj = JS::GetSelfHostedFunction(cx, psMatch->getter.selfHosted.funname, id, 0);
-            if (!getterObj)
-                return false;
-            desc.setGetterObject(JS_GetFunctionObject(getterObj));
-            if (psMatch->setter.selfHosted.funname) {
-                MOZ_ASSERT(flags & JSPROP_SETTER);
-                setterObj = JS::GetSelfHostedFunction(cx, psMatch->setter.selfHosted.funname, id, 0);
-                if (!setterObj)
+        if (psMatch->isAccessor()) {
+            if (psMatch->isSelfHosted()) {
+                getterObj = JS::GetSelfHostedFunction(cx, psMatch->accessors.getter.selfHosted.funname, id, 0);
+                if (!getterObj)
                     return false;
-                desc.setSetterObject(JS_GetFunctionObject(setterObj));
+                desc.setGetterObject(JS_GetFunctionObject(getterObj));
+                if (psMatch->accessors.setter.selfHosted.funname) {
+                    MOZ_ASSERT(flags & JSPROP_SETTER);
+                    setterObj = JS::GetSelfHostedFunction(cx, psMatch->accessors.setter.selfHosted.funname, id, 0);
+                    if (!setterObj)
+                        return false;
+                    desc.setSetterObject(JS_GetFunctionObject(setterObj));
+                }
+            } else {
+                desc.setGetter(JS_CAST_NATIVE_TO(psMatch->accessors.getter.native.op,
+                                                 JSGetterOp));
+                desc.setSetter(JS_CAST_NATIVE_TO(psMatch->accessors.setter.native.op,
+                                                 JSSetterOp));
             }
+            desc.setAttributes(flags);
         } else {
-            desc.setGetter(JS_CAST_NATIVE_TO(psMatch->getter.native.op,
-                                             JSGetterOp));
-            desc.setSetter(JS_CAST_NATIVE_TO(psMatch->setter.native.op,
-                                             JSSetterOp));
+            RootedString atom(cx, JS_AtomizeString(cx, psMatch->string.value));
+            if (!atom)
+                return false;
+            desc.value().setString(atom);
+            desc.setAttributes(flags & ~JSPROP_INTERNAL_USE_BIT);
         }
-        desc.setAttributes(flags);
 
         // The generic Xray machinery only defines non-own properties on the holder.
         // This is broken, and will be fixed at some point, but for now we need to
@@ -453,7 +461,7 @@ TryResolvePropertyFromSpecs(JSContext* cx, HandleId id, HandleObject holder,
         // pass along JITInfo. It's probably ok though, since Xrays are already
         // pretty slow.
         return JS_DefinePropertyById(cx, holder, id,
-                                     UndefinedHandleValue,
+                                     desc.value(),
                                      // This particular descriptor, unlike most,
                                      // actually stores JSNatives directly,
                                      // since we just set it up.  Do NOT pass
@@ -540,11 +548,11 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
                 }
             }
         } else if (key == JSProto_Function) {
-            if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_LENGTH)) {
+            if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_LENGTH)) {
                 FillPropertyDescriptor(desc, wrapper, JSPROP_PERMANENT | JSPROP_READONLY,
                                        NumberValue(JS_GetFunctionArity(JS_GetObjectFunction(target))));
                 return true;
-            } else if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_NAME)) {
+            } else if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_NAME)) {
                 RootedString fname(cx, JS_GetFunctionId(JS_GetObjectFunction(target)));
                 FillPropertyDescriptor(desc, wrapper, JSPROP_PERMANENT | JSPROP_READONLY,
                                        fname ? StringValue(fname) : JS_GetEmptyStringValue(cx));
@@ -555,7 +563,7 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
                 if (standardConstructor != JSProto_Null) {
                     // Handle the 'prototype' property to make
                     // xrayedGlobal.StandardClass.prototype work.
-                    if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_PROTOTYPE)) {
+                    if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_PROTOTYPE)) {
                         RootedObject standardProto(cx);
                         {
                             JSAutoCompartment ac(cx, target);
@@ -598,11 +606,11 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
             // type. This limits the ability of content to do anything all that
             // confusing.
             bool isErrorIntProperty =
-                id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_LINENUMBER) ||
-                id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_COLUMNNUMBER);
+                id == GetJSIDByIndex(cx, XPCJSContext::IDX_LINENUMBER) ||
+                id == GetJSIDByIndex(cx, XPCJSContext::IDX_COLUMNNUMBER);
             bool isErrorStringProperty =
-                id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_FILENAME) ||
-                id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_MESSAGE);
+                id == GetJSIDByIndex(cx, XPCJSContext::IDX_FILENAME) ||
+                id == GetJSIDByIndex(cx, XPCJSContext::IDX_MESSAGE);
             if (isErrorIntProperty || isErrorStringProperty) {
                 RootedObject waiver(cx, wrapper);
                 if (!WrapperFactory::WaiveXrayAndWrap(cx, &waiver))
@@ -616,7 +624,7 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
                 return true;
             }
         } else if (key == JSProto_RegExp) {
-            if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_LASTINDEX))
+            if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_LASTINDEX))
                 return getOwnPropertyFromWrapperIfSafe(cx, wrapper, id, desc);
         }
 
@@ -625,7 +633,7 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
     }
 
     // Handle the 'constructor' property.
-    if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_CONSTRUCTOR)) {
+    if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_CONSTRUCTOR)) {
         RootedObject constructor(cx);
         {
             JSAutoCompartment ac(cx, target);
@@ -643,7 +651,7 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
     }
 
     // Handle the 'name' property for error prototypes.
-    if (IsErrorObjectKey(key) && id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_NAME)) {
+    if (IsErrorObjectKey(key) && id == GetJSIDByIndex(cx, XPCJSContext::IDX_NAME)) {
         RootedId className(cx);
         ProtoKeyToId(cx, key, &className);
         FillPropertyDescriptor(desc, wrapper, 0, UndefinedValue());
@@ -651,7 +659,7 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
     }
 
     // Handle the 'lastIndex' property for RegExp prototypes.
-    if (key == JSProto_RegExp && id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_LASTINDEX))
+    if (key == JSProto_RegExp && id == GetJSIDByIndex(cx, XPCJSContext::IDX_LASTINDEX))
         return getOwnPropertyFromWrapperIfSafe(cx, wrapper, id, desc);
 
     // Grab the JSClass. We require all Xrayable classes to have a ClassSpec.
@@ -851,15 +859,15 @@ JSXrayTraits::enumerateNames(JSContext* cx, HandleObject wrapper, unsigned flags
             for (int32_t i = 0; i <= int32_t(length - 1); ++i)
                 props.infallibleAppend(INT_TO_JSID(i));
         } else if (key == JSProto_Function) {
-            if (!props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_LENGTH)))
+            if (!props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_LENGTH)))
                 return false;
-            if (!props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_NAME)))
+            if (!props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_NAME)))
                 return false;
             // Handle the .prototype property and static properties on standard
             // constructors.
             JSProtoKey standardConstructor = constructorFor(holder);
             if (standardConstructor != JSProto_Null) {
-                if (!props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_PROTOTYPE)))
+                if (!props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_PROTOTYPE)))
                     return false;
 
                 if (ShouldResolveStaticProperties(standardConstructor)) {
@@ -874,16 +882,16 @@ JSXrayTraits::enumerateNames(JSContext* cx, HandleObject wrapper, unsigned flags
                 }
             }
         } else if (IsErrorObjectKey(key)) {
-            if (!props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_FILENAME)) ||
-                !props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_LINENUMBER)) ||
-                !props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_COLUMNNUMBER)) ||
-                !props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_STACK)) ||
-                !props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_MESSAGE)))
+            if (!props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_FILENAME)) ||
+                !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_LINENUMBER)) ||
+                !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_COLUMNNUMBER)) ||
+                !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_STACK)) ||
+                !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_MESSAGE)))
             {
                 return false;
             }
         } else if (key == JSProto_RegExp) {
-            if (!props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_LASTINDEX)))
+            if (!props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_LASTINDEX)))
                 return false;
         }
 
@@ -892,15 +900,15 @@ JSXrayTraits::enumerateNames(JSContext* cx, HandleObject wrapper, unsigned flags
     }
 
     // Add the 'constructor' property.
-    if (!props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_CONSTRUCTOR)))
+    if (!props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_CONSTRUCTOR)))
         return false;
 
     // For Error protoypes, add the 'name' property.
-    if (IsErrorObjectKey(key) && !props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_NAME)))
+    if (IsErrorObjectKey(key) && !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_NAME)))
         return false;
 
     // For RegExp protoypes, add the 'lastIndex' property.
-    if (key == JSProto_RegExp && !props.append(GetRTIdByIndex(cx, XPCJSRuntime::IDX_LASTINDEX)))
+    if (key == JSProto_RegExp && !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_LASTINDEX)))
         return false;
 
     // Grab the JSClass. We require all Xrayable classes to have a ClassSpec.
@@ -1062,7 +1070,8 @@ static const JSClassOps ExpandoObjectClassOps = {
 
 const JSClass ExpandoObjectClass = {
     "XrayExpandoObject",
-    JSCLASS_HAS_RESERVED_SLOTS(JSSLOT_EXPANDO_COUNT),
+    JSCLASS_HAS_RESERVED_SLOTS(JSSLOT_EXPANDO_COUNT) |
+    JSCLASS_FOREGROUND_FINALIZE,
     &ExpandoObjectClassOps
 };
 
@@ -1352,7 +1361,7 @@ XPCWrappedNativeXrayTraits::resolveNativeProperty(JSContext* cx, HandleObject wr
     }
 
     if (!(iface = ccx.GetInterface()) || !(member = ccx.GetMember())) {
-        if (id != nsXPConnect::GetRuntimeInstance()->GetStringID(XPCJSRuntime::IDX_TO_STRING))
+        if (id != nsXPConnect::GetContextInstance()->GetStringID(XPCJSContext::IDX_TO_STRING))
             return true;
 
         JSFunction* toString = JS_NewFunction(cx, XrayToString, 0, 0, "toString");
@@ -1473,7 +1482,7 @@ XrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
             MOZ_ASSERT(constructor);
             desc.value().set(ObjectValue(*constructor));
             found = true;
-        } else if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_EVAL)) {
+        } else if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_EVAL)) {
             RootedObject eval(cx);
             if (!js::GetOriginalEval(cx, target, &eval))
                 return false;
@@ -1492,7 +1501,7 @@ XrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
 
     // Handle .wrappedJSObject for subsuming callers. This should move once we
     // sort out own-ness for the holder.
-    if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_WRAPPED_JSOBJECT) &&
+    if (id == GetJSIDByIndex(cx, XPCJSContext::IDX_WRAPPED_JSOBJECT) &&
         WrapperFactory::AllowWaiver(wrapper))
     {
         if (!JS_AlreadyHasOwnPropertyById(cx, holder, id, &found))
@@ -2283,6 +2292,13 @@ XrayWrapper<Base, Traits>::construct(JSContext* cx, HandleObject wrapper, const 
 }
 
 template <typename Base, typename Traits>
+bool
+XrayWrapper<Base, Traits>::getBuiltinClass(JSContext* cx, JS::HandleObject wrapper, js::ESClass* cls) const
+{
+    return Traits::getBuiltinClass(cx, wrapper, Base::singleton, cls);
+}
+
+template <typename Base, typename Traits>
 const char*
 XrayWrapper<Base, Traits>::className(JSContext* cx, HandleObject wrapper) const
 {
@@ -2416,6 +2432,5 @@ template class PermissiveXrayDOM;
 template class SecurityXrayDOM;
 template class PermissiveXrayJS;
 template class PermissiveXrayOpaque;
-template class SCSecurityXrayXPCWN;
 
 } // namespace xpc

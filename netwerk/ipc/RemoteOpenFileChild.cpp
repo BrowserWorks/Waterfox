@@ -6,7 +6,7 @@
 
 #include "RemoteOpenFileChild.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/ipc/FileDescriptor.h"
 #include "mozilla/ipc/FileDescriptorUtils.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -54,7 +54,7 @@ public:
     }
 
 private:
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
         MOZ_ASSERT(NS_IsMainThread());
         MOZ_ASSERT(mListener);
@@ -145,7 +145,8 @@ RemoteOpenFileChild::Init(nsIURI* aRemoteOpenUri, nsIURI* aAppUri)
 
   clonedURI->SetScheme(NS_LITERAL_CSTRING("file"));
   nsAutoCString spec;
-  clonedURI->GetSpec(spec);
+  rv = clonedURI->GetSpec(spec);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   rv = NS_NewURI(getter_AddRefs(mURI), spec);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -313,7 +314,7 @@ RemoteOpenFileChild::NotifyListener(nsresult aResult)
   mListener = nullptr;     // release ref to listener
 
   RefPtr<nsJARProtocolHandler> handler(gJarHandler);
-  NS_WARN_IF_FALSE(handler, "nsJARProtocolHandler is already gone!");
+  NS_WARNING_ASSERTION(handler, "nsJARProtocolHandler is already gone!");
 
   if (handler) {
     handler->RemoteOpenFileComplete(this, aResult);
@@ -371,6 +372,9 @@ RemoteOpenFileChild::OpenNSPRFileDesc(int32_t aFlags, int32_t aMode,
 
   PROsfd osfd = dup(PR_FileDesc2NativeHandle(mNSPRFileDesc));
   *aRetval = PR_ImportFile(osfd);
+  if (!*aRetval) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   return NS_OK;
 #endif

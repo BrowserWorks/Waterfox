@@ -65,11 +65,13 @@ function runTests() {
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPermissions([
   {type: "presentation-device-manage", allow: false, context: document},
-  {type: "presentation", allow: true, context: document},
   {type: "browser", allow: true, context: document},
 ], function() {
   SpecialPowers.pushPrefEnv({ "set": [["dom.presentation.enabled", true],
+                                      ["dom.presentation.controller.enabled", true],
+                                      ["dom.presentation.receiver.enabled", true],
                                       ["dom.mozBrowserFramesEnabled", true],
+                                      ["network.disable.ipc.security", true],
                                       ["dom.presentation.session_transport.data_channel.enable", false]]},
                             runTests);
 });

@@ -24,6 +24,9 @@ CGPathRef CGFontGetGlyphPath(CGFontRef fontRef, CGAffineTransform *textTransform
 };
 #endif
 
+#ifdef USE_CAIRO_SCALED_FONT
+#include "cairo-quartz.h"
+#endif
 
 namespace mozilla {
 namespace gfx {
@@ -112,10 +115,11 @@ ScaledFontMac::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aT
 }
 
 void
-ScaledFontMac::CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint)
+ScaledFontMac::CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, const Matrix *aTransformHint)
 {
-  if (!(aBackendType == BackendType::COREGRAPHICS || aBackendType == BackendType::COREGRAPHICS_ACCELERATED)) {
-    ScaledFontBase::CopyGlyphsToBuilder(aBuffer, aBuilder, aBackendType, aTransformHint);
+  BackendType backendType = aBuilder->GetBackendType();
+  if (!(backendType == BackendType::COREGRAPHICS || backendType == BackendType::COREGRAPHICS_ACCELERATED)) {
+    ScaledFontBase::CopyGlyphsToBuilder(aBuffer, aBuilder, aTransformHint);
     return;
   }
 #ifdef MOZ_WIDGET_COCOA
@@ -283,6 +287,15 @@ ScaledFontMac::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
     return true;
 
 }
+
+#ifdef USE_CAIRO_SCALED_FONT
+cairo_font_face_t*
+ScaledFontMac::GetCairoFontFace()
+{
+  MOZ_ASSERT(mFont);
+  return cairo_quartz_font_face_create_for_cgfont(mFont);
+}
+#endif
 
 } // namespace gfx
 } // namespace mozilla

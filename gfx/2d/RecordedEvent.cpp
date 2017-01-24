@@ -1521,6 +1521,10 @@ RecordedFontData::PlayEvent(Translator *aTranslator) const
   RefPtr<NativeFontResource> fontResource =
     Factory::CreateNativeFontResource(mData, mFontDetails.size,
                                       aTranslator->GetDesiredFontType());
+  if (!fontResource) {
+    return false;
+  }
+
   aTranslator->AddNativeFontResource(mFontDetails.fontDataKey, fontResource);
   return true;
 }
@@ -1640,6 +1644,12 @@ bool
 RecordedScaledFontCreation::PlayEvent(Translator *aTranslator) const
 {
   NativeFontResource *fontResource = aTranslator->LookupNativeFontResource(mFontDataKey);
+  if (!fontResource) {
+    gfxDevCrash(LogReason::NativeFontResourceNotFound) <<
+      "NativeFontResource lookup failed for key |" << hexa(mFontDataKey) << "|.";
+    return false;
+  }
+
   RefPtr<ScaledFont> scaledFont = fontResource->CreateScaledFont(mIndex, mGlyphSize);
   aTranslator->AddScaledFont(mRefPtr, scaledFont);
   return true;

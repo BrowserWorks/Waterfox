@@ -85,6 +85,13 @@
   width: 28px;
 }
 
+#newtab-customize-button {
+  font-size: 28px;
+  padding: 0;
+  /* only display the text label when CSS backgrounds are disabled (e.g. in high contrast mode) */
+  color: transparent;
+}
+
 #newtab-customize-button:-moz-any(:hover, :active, [active]) {
   background-image: -moz-image-rect(url(chrome://browser/skin/newtab/controls.svg), 0, 64, 32, 32);
   background-color: #FFFFFF;
@@ -94,18 +101,24 @@
 
 /* CELLS */
 .newtab-cell {
+  --cell-corner-radius: 8px;
   background-color: rgba(255,255,255,.2);
-  border-radius: 8px;
+  border-radius: var(--cell-corner-radius);
+}
+
+body.compact .newtab-cell {
+  --cell-corner-radius: 2px;
 }
 
 .newtab-cell:empty {
   outline: 2px dashed #c1c1c1;
-  -moz-outline-radius: 8px;
+  outline-offset: -2px;
+  -moz-outline-radius: var(--cell-corner-radius);
 }
 
 /* SITES */
 .newtab-site {
-  border-radius: inherit;
+  border-radius: var(--cell-corner-radius);
   box-shadow: 0 1px 3px #c1c1c1;
   text-decoration: none;
   transition-property: top, left, opacity, box-shadow, background-color;
@@ -126,7 +139,7 @@
 
 /* LINKS */
 .newtab-link {
-  border-radius: 10px;
+  border-radius: var(--cell-corner-radius);
   overflow: hidden;
 }
 
@@ -142,9 +155,26 @@
   background-clip: padding-box;
   background-repeat: no-repeat;
   background-size: cover;
-  border-radius: 8px 8px 0px 0px;
   height: 180px;
   transition: opacity 100ms ease-out;
+}
+
+body.compact .newtab-thumbnail {
+  height: 100%;
+  border-radius: calc(var(--cell-corner-radius) + 1px);
+  outline: 1px solid hsla(0,0%,0%,.1);
+  -moz-outline-radius: var(--cell-corner-radius);
+  outline-offset: -1px;
+}
+
+.newtab-thumbnail.placeholder {
+  color: white;
+  font-size: 85px;
+  line-height: 200%;
+}
+
+body.compact .newtab-thumbnail.placeholder {
+  font-size: 45px;
 }
 
 .newtab-cell:not([ignorehover]) .newtab-site:hover .newtab-thumbnail.enhanced-content {
@@ -156,14 +186,46 @@
 .newtab-site[type=organic] .newtab-thumbnail,
 .newtab-site[type=sponsored] .newtab-thumbnail {
   background-position: center center;
+}
+
+body.compact .newtab-site[type=affiliate] .newtab-thumbnail {
+  background-position: center 30%;
+}
+
+.newtab-site[type=affiliate] .newtab-thumbnail,
+body:not(.compact) .newtab-site[type=enhanced] .newtab-thumbnail,
+body:not(.compact) .newtab-site[type=organic] .newtab-thumbnail,
+body:not(.compact) .newtab-site[type=sponsored] .newtab-thumbnail {
   background-size: auto;
 }
 
 /* TITLES */
-.newtab-sponsored,
+
+.newtab-title {
+  background-color: #F2F2F2;
+  font-size: 13px;
+  line-height: 30px;
+  border: 1px solid #fff;
+  border-radius: 0 0 var(--cell-corner-radius) var(--cell-corner-radius);
+}
+
+body.compact .newtab-title {
+  background-color: hsla(0,0%,100%,.85);
+  font-size: 12px;
+  line-height: 21px;
+  border: 1px solid hsla(0,0%,80%,.8);
+  border-top-color: hsla(0,0%,0%,.1);
+  background-clip: padding-box;
+}
+
 .newtab-title,
-.newtab-suggested  {
+.newtab-suggested {
   color: #5c5c5c;
+}
+
+body.compact .newtab-title,
+body.compact .newtab-suggested {
+  color: black;
 }
 
 .newtab-suggested[active] {
@@ -172,11 +234,18 @@
   color: white;
 }
 
-.newtab-site:hover .newtab-title {
+body:not(.compact) .newtab-site:hover .newtab-title {
   color: white;
   background-color: #333;
-  border: 1px solid #333;
-  border-top: 1px solid white;
+  border-color: #333;
+  border-top-color: white;
+}
+
+body.compact .newtab-site:hover .newtab-title {
+  color: white;
+  background-color: hsla(0,0%,20%,.85);
+  border-color: hsla(0,0%,0%,.8);
+  border-top-color: white;
 }
 
 .newtab-site[pinned] .newtab-title {
@@ -207,6 +276,31 @@
   border: none;
   height: 24px;
   width: 24px;
+  top: 4px;
+}
+
+.newtab-control-pin:dir(ltr),
+.newtab-control-block:dir(rtl) {
+  left: 4px;
+}
+
+.newtab-control-block:dir(ltr),
+.newtab-control-pin:dir(rtl) {
+  right: 4px;
+}
+
+body.compact .newtab-control {
+  top: -8px;
+}
+
+body.compact .newtab-control-pin:dir(ltr),
+body.compact .newtab-control-block:dir(rtl) {
+  left: -8px;
+}
+
+body.compact .newtab-control-block:dir(ltr),
+body.compact .newtab-control-pin:dir(rtl) {
+  right: -8px;
 }
 
 .newtab-control-pin,

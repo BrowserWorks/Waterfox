@@ -5,7 +5,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE_NAME = 'mozlog'
-PACKAGE_VERSION = '3.3'
+PACKAGE_VERSION = '3.4'
 
 setup(name=PACKAGE_NAME,
       version=PACKAGE_VERSION,
@@ -32,5 +32,8 @@ setup(name=PACKAGE_NAME,
       entry_points={
           "console_scripts": [
               "structlog = mozlog.scripts:main"
+          ],
+          'pytest11': [
+            'mozlog = mozlog.pytest_mozlog.plugin',
           ]}
      )

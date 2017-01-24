@@ -255,6 +255,7 @@
         "name": "sendMessage",
         "type": "function",
         "description": "Sends a single message to the content script(s) in the specified tab, with an optional callback to run when a response is sent back.  The $(ref:runtime.onMessage) event is fired in each content script running in the specified tab for the current extension.",
+        "async": "sendResponse",
         "parameters": [
           {
             "type": "integer",
@@ -833,7 +834,7 @@
                 "name": "result",
                 "optional": true,
                 "type": "array",
-                "items": {"type": "any", "minimum": 0},
+                "items": {"type": "any"},
                 "description": "The result of the script in every injected frame."
               }
             ]

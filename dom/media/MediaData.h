@@ -219,6 +219,10 @@ private:
   // Returns false if memory couldn't be allocated.
   bool EnsureCapacity(size_t aLength)
   {
+    if (!aLength) {
+      // No need to allocate a buffer yet.
+      return true;
+    }
     const CheckedInt<size_t> sizeNeeded =
       CheckedInt<size_t>(aLength) * sizeof(Type) + AlignmentPaddingSize();
 
@@ -289,7 +293,6 @@ public:
     , mDuration(aDuration)
     , mFrames(aFrames)
     , mKeyframe(false)
-    , mDiscontinuity(false)
   {}
 
   // Type of contained data.
@@ -312,10 +315,6 @@ public:
   const uint32_t mFrames;
 
   bool mKeyframe;
-
-  // True if this is the first sample after a gap or discontinuity in
-  // the stream. This is true for the first sample in a stream after a seek.
-  bool mDiscontinuity;
 
   int64_t GetEndTime() const { return mTime + mDuration; }
 
@@ -348,7 +347,6 @@ protected:
     , mDuration(0)
     , mFrames(aFrames)
     , mKeyframe(false)
-    , mDiscontinuity(false)
   {}
 
   virtual ~MediaData() {}
@@ -459,51 +457,30 @@ public:
   // Returns nsnull if an error occurs. This may indicate that memory couldn't
   // be allocated to create the VideoData object, or it may indicate some
   // problem with the input data (e.g. negative stride).
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            ImageContainer* aContainer,
-                                            Image* aImage,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            const YCbCrBuffer &aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
 
-  // Variant that always makes a copy of aBuffer
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            ImageContainer* aContainer,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            const YCbCrBuffer &aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
 
-  // Variant to create a VideoData instance given an existing aImage
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            Image* aImage,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            const YCbCrBuffer &aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
+  // Creates a new VideoData containing a deep copy of aBuffer. May use aContainer
+  // to allocate an Image to hold the copied data.
+  static already_AddRefed<VideoData> CreateAndCopyData(const VideoInfo& aInfo,
+                                                       ImageContainer* aContainer,
+                                                       int64_t aOffset,
+                                                       int64_t aTime,
+                                                       int64_t aDuration,
+                                                       const YCbCrBuffer &aBuffer,
+                                                       bool aKeyframe,
+                                                       int64_t aTimecode,
+                                                       const IntRect& aPicture);
 
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            ImageContainer* aContainer,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            layers::TextureClient* aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
+  static already_AddRefed<VideoData> CreateAndCopyIntoTextureClient(const VideoInfo& aInfo,
+                                                                    int64_t aOffset,
+                                                                    int64_t aTime,
+                                                                    int64_t aDuration,
+                                                                    layers::TextureClient* aBuffer,
+                                                                    bool aKeyframe,
+                                                                    int64_t aTimecode,
+                                                                    const IntRect& aPicture);
 
   static already_AddRefed<VideoData> CreateFromImage(const VideoInfo& aInfo,
-                                                     ImageContainer* aContainer,
                                                      int64_t aOffset,
                                                      int64_t aTime,
                                                      int64_t aDuration,

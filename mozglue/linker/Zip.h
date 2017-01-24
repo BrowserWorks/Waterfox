@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <vector>
 #include <zlib.h>
+#include <pthread.h>
 #include "Utils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/RefCounted.h"
@@ -212,6 +213,7 @@ public:
      * Constructor
      */
     Stream(): compressedBuf(nullptr), compressedSize(0), uncompressedSize(0)
+            , CRC32(0)
             , type(STORE) { }
 
     /**
@@ -220,6 +222,7 @@ public:
     const void *GetBuffer() { return compressedBuf; }
     size_t GetSize() { return compressedSize; }
     size_t GetUncompressedSize() { return uncompressedSize; }
+    size_t GetCRC32() { return CRC32; }
     Type GetType() { return type; }
 
     /**
@@ -243,6 +246,7 @@ public:
     const void *compressedBuf;
     size_t compressedSize;
     size_t uncompressedSize;
+    size_t CRC32;
     Type type;
   };
 
@@ -456,6 +460,8 @@ private:
 
   /* Pointer to the Directory entries */
   mutable const DirectoryEntry *entries;
+
+  mutable pthread_mutex_t mutex;
 };
 
 /**

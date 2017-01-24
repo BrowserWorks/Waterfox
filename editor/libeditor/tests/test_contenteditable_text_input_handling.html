@@ -5,7 +5,6 @@
           src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript"
           src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
-  <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js"></script>
   <link rel="stylesheet" type="text/css"
           href="chrome://mochikit/content/tests/SimpleTest/test.css" />
 </head>
@@ -166,7 +165,7 @@ function runTests()
       var targetDescription = " (dispatched to " + aTarget._description + ")";
       function dispatchKeyEvent(aKeyCode, aChar, aTarget)
       {
-        var keyEvent = document.createEvent("KeyEvents");
+        var keyEvent = document.createEvent("KeyboardEvent");
         keyEvent.initKeyEvent("keypress", true, true, null, false, false,
                                false, false, aKeyCode,
                                aChar ? aChar.charCodeAt(0) : 0);

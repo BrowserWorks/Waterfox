@@ -75,8 +75,13 @@ extern const Class MathClass;
 class GlobalObject;
 class NewObjectCache;
 
+enum class IntegrityLevel {
+    Sealed,
+    Frozen
+};
+
 // Forward declarations, required for later friend declarations.
-bool PreventExtensions(JSContext* cx, JS::HandleObject obj, JS::ObjectOpResult& result);
+bool PreventExtensions(JSContext* cx, JS::HandleObject obj, JS::ObjectOpResult& result, IntegrityLevel level = IntegrityLevel::Sealed);
 bool SetImmutablePrototype(js::ExclusiveContext* cx, JS::HandleObject obj, bool* succeeded);
 
 }  /* namespace js */
@@ -106,7 +111,7 @@ class JSObject : public js::gc::Cell
     friend class js::NewObjectCache;
     friend class js::Nursery;
     friend class js::gc::RelocationOverlay;
-    friend bool js::PreventExtensions(JSContext* cx, JS::HandleObject obj, JS::ObjectOpResult& result);
+    friend bool js::PreventExtensions(JSContext* cx, JS::HandleObject obj, JS::ObjectOpResult& result, js::IntegrityLevel level);
     friend bool js::SetImmutablePrototype(js::ExclusiveContext* cx, JS::HandleObject obj,
                                           bool* succeeded);
 
@@ -442,28 +447,30 @@ class JSObject : public js::gc::Cell
     bool shouldSplicePrototype(JSContext* cx);
 
     /*
-     * Scope chains.
+     * Environment chains.
      *
-     * The scope chain of an object is the link in the search path when a script
-     * does a name lookup on a scope object. For JS internal scope objects ---
-     * Call, DeclEnv, Block, and With --- the chain is stored in the first fixed
-     * slot of the object.  For other scope objects, the chain goes directly to
-     * the global.
+     * The environment chain of an object is the link in the search path when
+     * a script does a name lookup on an environment object. For JS internal
+     * environment objects --- Call, LexicalEnvironment, and WithEnvironment
+     * --- the chain is stored in the first fixed slot of the object.  For
+     * other environment objects, the chain goes directly to the global.
      *
-     * In code which is not marked hasNonSyntacticScope, scope chains can
-     * contain only syntactic scope objects (see IsSyntacticScope) with a global
-     * object at the root as the scope of the outermost non-function script. In
-     * hasNonSyntacticScope code, the scope of the outermost non-function
-     * script might not be a global object, and can have a mix of other objects
-     * above it before the global object is reached.
+     * In code which is not marked hasNonSyntacticScope, environment chains
+     * can contain only syntactic environment objects (see
+     * IsSyntacticEnvironment) with a global object at the root as the
+     * environment of the outermost non-function script. In
+     * hasNonSyntacticScope code, the environment of the outermost
+     * non-function script might not be a global object, and can have a mix of
+     * other objects above it before the global object is reached.
      */
 
     /*
-     * Get the enclosing scope of an object. When called on non-scope object,
-     * this will just be the global (the name "enclosing scope" still applies
-     * in this situation because non-scope objects can be on the scope chain).
+     * Get the enclosing environment of an object. When called on a
+     * non-EnvironmentObject, this will just be the global (the name
+     * "enclosing environment" still applies in this situation because
+     * non-EnvironmentObjects can be on the environment chain).
      */
-    inline JSObject* enclosingScope() const;
+    inline JSObject* enclosingEnvironment() const;
 
     inline js::GlobalObject& global() const;
 
@@ -746,13 +753,16 @@ IsExtensible(ExclusiveContext* cx, HandleObject obj, bool* extensible);
  * ES6 [[PreventExtensions]]. Attempt to change the [[Extensible]] bit on |obj|
  * to false.  Indicate success or failure through the |result| outparam, or
  * actual error through the return value.
+ *
+ * The `level` argument is SM-specific. `obj` should have an integrity level of
+ * at least `level`.
  */
 extern bool
-PreventExtensions(JSContext* cx, HandleObject obj, ObjectOpResult& result);
+PreventExtensions(JSContext* cx, HandleObject obj, ObjectOpResult& result, IntegrityLevel level);
 
 /* Convenience function. As above, but throw on failure. */
 extern bool
-PreventExtensions(JSContext* cx, HandleObject obj);
+PreventExtensions(JSContext* cx, HandleObject obj, IntegrityLevel level = IntegrityLevel::Sealed);
 
 /*
  * ES6 [[GetOwnProperty]]. Get a description of one of obj's own properties.
@@ -1066,9 +1076,9 @@ GetObjectClassName(JSContext* cx, HandleObject obj);
  * objects this just returns obj.
  *
  * Some JSObjects shouldn't be exposed directly to script. This includes (at
- * least) DynamicWithObjects and Window objects. However, since both of those
- * can be on scope chains, we sometimes would expose those as `this` if we
- * were not so vigilant about calling GetThisValue where appropriate.
+ * least) WithEnvironmentObjects and Window objects. However, since both of
+ * those can be on scope chains, we sometimes would expose those as `this` if
+ * we were not so vigilant about calling GetThisValue where appropriate.
  *
  * See comments at ComputeImplicitThis.
  */
@@ -1119,9 +1129,15 @@ namespace js {
 inline gc::InitialHeap
 GetInitialHeap(NewObjectKind newKind, const Class* clasp)
 {
+    if (newKind == NurseryAllocatedProxy) {
+        MOZ_ASSERT(clasp->isProxy());
+        MOZ_ASSERT(clasp->hasFinalize());
+        MOZ_ASSERT(!CanNurseryAllocateFinalizedClass(clasp));
+        return gc::DefaultHeap;
+    }
     if (newKind != GenericObject)
         return gc::TenuredHeap;
-    if (clasp->hasFinalize() && !(clasp->flags & JSCLASS_SKIP_NURSERY_FINALIZE))
+    if (clasp->hasFinalize() && !CanNurseryAllocateFinalizedClass(clasp))
         return gc::TenuredHeap;
     return gc::DefaultHeap;
 }
@@ -1336,11 +1352,6 @@ Throw(JSContext* cx, jsid id, unsigned errorNumber);
 
 extern bool
 Throw(JSContext* cx, JSObject* obj, unsigned errorNumber);
-
-enum class IntegrityLevel {
-    Sealed,
-    Frozen
-};
 
 /*
  * ES6 rev 29 (6 Dec 2014) 7.3.13. Mark obj as non-extensible, and adjust each

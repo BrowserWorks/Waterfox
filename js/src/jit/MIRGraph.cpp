@@ -39,9 +39,6 @@ MIRGenerator::MIRGenerator(CompileCompartment* compartment, const JitCompileOpti
     instrumentedProfiling_(false),
     instrumentedProfilingIsCached_(false),
     safeForMinorGC_(true),
-#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
-    usesSignalHandlersForAsmJSOOB_(false),
-#endif
     minAsmJSHeapLength_(0),
     options(options),
     gs_(alloc)
@@ -106,56 +103,6 @@ MIRGenerator::addAbortedPreliminaryGroup(ObjectGroup* group)
     AutoEnterOOMUnsafeRegion oomUnsafe;
     if (!abortedPreliminaryGroups_.append(group))
         oomUnsafe.crash("addAbortedPreliminaryGroup");
-}
-
-bool
-MIRGenerator::needsBoundsCheckBranch(const MWasmMemoryAccess* access) const
-{
-    // A heap access needs a bounds-check branch if we're not relying on signal
-    // handlers to catch errors, and if it's not proven to be within bounds.
-    // We use signal-handlers on x64, but on x86 there isn't enough address
-    // space for a guard region.  Also, on x64 the atomic loads and stores
-    // can't (yet) use the signal handlers.
-#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
-    if (usesSignalHandlersForAsmJSOOB_ && !access->isAtomicAccess())
-        return false;
-#endif
-    return access->needsBoundsCheck();
-}
-
-size_t
-MIRGenerator::foldableOffsetRange(const MWasmMemoryAccess* access) const
-{
-    // This determines whether it's ok to fold up to WasmImmediateRange
-    // offsets, instead of just WasmCheckedImmediateRange.
-
-    static_assert(WasmCheckedImmediateRange <= WasmImmediateRange,
-                  "WasmImmediateRange should be the size of an unconstrained "
-                  "address immediate");
-
-#ifdef ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB
-    static_assert(wasm::Uint32Range + WasmImmediateRange + sizeof(wasm::Val) < wasm::MappedSize,
-                  "When using signal handlers for bounds checking, a uint32 is added to the base "
-                  "address followed by an immediate in the range [0, WasmImmediateRange). An "
-                  "unaligned access (whose size is conservatively approximated by wasm::Val) may "
-                  "spill over, so ensure a space at the end.");
-
-    // Signal-handling can be dynamically disabled by OS bugs or flags.
-    // Bug 1254935: Atomic accesses can't be handled with signal handlers yet.
-    if (usesSignalHandlersForAsmJSOOB_ && !access->isAtomicAccess())
-        return WasmImmediateRange;
-#endif
-
-    // On 32-bit platforms, if we've proven the access is in bounds after
-    // 32-bit wrapping, we can fold full offsets because they're added with
-    // 32-bit arithmetic.
-    if (sizeof(intptr_t) == sizeof(int32_t) && !access->needsBoundsCheck())
-        return WasmImmediateRange;
-
-    // Otherwise, only allow the checked size. This is always less than the
-    // minimum heap length, and allows explicit bounds checks to fold in the
-    // offset without overflow.
-    return WasmCheckedImmediateRange;
 }
 
 void
@@ -328,12 +275,12 @@ MBasicBlock::NewPendingLoopHeader(MIRGraph& graph, const CompileInfo& info,
 }
 
 MBasicBlock*
-MBasicBlock::NewSplitEdge(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pred, size_t predEdgeIdx, MBasicBlock* succ)
+MBasicBlock::NewSplitEdge(MIRGraph& graph, MBasicBlock* pred, size_t predEdgeIdx, MBasicBlock* succ)
 {
     MBasicBlock* split = nullptr;
-    if (!pred->pc()) {
+    if (!succ->pc()) {
         // The predecessor does not have a PC, this is an AsmJS compilation.
-        split = MBasicBlock::NewAsmJS(graph, info, pred, SPLIT_EDGE);
+        split = MBasicBlock::NewAsmJS(graph, succ->info(), pred, SPLIT_EDGE);
         if (!split)
             return nullptr;
     } else {
@@ -341,7 +288,7 @@ MBasicBlock::NewSplitEdge(MIRGraph& graph, const CompileInfo& info, MBasicBlock*
         MResumePoint* succEntry = succ->entryResumePoint();
 
         BytecodeSite* site = new(graph.alloc()) BytecodeSite(succ->trackedTree(), succEntry->pc());
-        split = new(graph.alloc()) MBasicBlock(graph, info, site, SPLIT_EDGE);
+        split = new(graph.alloc()) MBasicBlock(graph, succ->info(), site, SPLIT_EDGE);
 
         if (!split->init())
             return nullptr;
@@ -676,9 +623,9 @@ MBasicBlock::linkOsrValues(MStart* start)
     for (uint32_t i = 0; i < stackDepth(); i++) {
         MDefinition* def = slots_[i];
         MInstruction* cloneRp = nullptr;
-        if (i == info().scopeChainSlot()) {
-            if (def->isOsrScopeChain())
-                cloneRp = def->toOsrScopeChain();
+        if (i == info().environmentChainSlot()) {
+            if (def->isOsrEnvironmentChain())
+                cloneRp = def->toOsrEnvironmentChain();
         } else if (i == info().returnValueSlot()) {
             if (def->isOsrReturnValue())
                 cloneRp = def->toOsrReturnValue();
@@ -807,9 +754,9 @@ MBasicBlock::popn(uint32_t n)
 }
 
 MDefinition*
-MBasicBlock::scopeChain()
+MBasicBlock::environmentChain()
 {
-    return getSlot(info().scopeChainSlot());
+    return getSlot(info().environmentChainSlot());
 }
 
 MDefinition*
@@ -819,9 +766,9 @@ MBasicBlock::argumentsObject()
 }
 
 void
-MBasicBlock::setScopeChain(MDefinition* scopeObj)
+MBasicBlock::setEnvironmentChain(MDefinition* scopeObj)
 {
-    setSlot(info().scopeChainSlot(), scopeObj);
+    setSlot(info().environmentChainSlot(), scopeObj);
 }
 
 void
@@ -1283,7 +1230,7 @@ MBasicBlock::assertUsesAreNotWithin(MUseIterator use, MUseIterator end)
 }
 
 AbortReason
-MBasicBlock::setBackedge(MBasicBlock* pred)
+MBasicBlock::setBackedge(TempAllocator& alloc, MBasicBlock* pred)
 {
     // Predecessors must be finished, and at the correct stack depth.
     MOZ_ASSERT(hasLastIns());
@@ -1296,7 +1243,7 @@ MBasicBlock::setBackedge(MBasicBlock* pred)
     bool hadTypeChange = false;
 
     // Add exit definitions to each corresponding phi at the entry.
-    if (!inheritPhisFromBackedge(pred, &hadTypeChange))
+    if (!inheritPhisFromBackedge(alloc, pred, &hadTypeChange))
         return AbortReason_Alloc;
 
     if (hadTypeChange) {
@@ -1552,7 +1499,7 @@ MBasicBlock::inheritPhis(MBasicBlock* header)
 }
 
 bool
-MBasicBlock::inheritPhisFromBackedge(MBasicBlock* backedge, bool* hadTypeChange)
+MBasicBlock::inheritPhisFromBackedge(TempAllocator& alloc, MBasicBlock* backedge, bool* hadTypeChange)
 {
     // We must be a pending loop header
     MOZ_ASSERT(kind_ == PENDING_LOOP_HEADER);
@@ -1593,7 +1540,7 @@ MBasicBlock::inheritPhisFromBackedge(MBasicBlock* backedge, bool* hadTypeChange)
 
         if (!entryDef->addInputSlow(exitDef))
             return false;
-        if (!entryDef->checkForTypeChange(exitDef, &typeChange))
+        if (!entryDef->checkForTypeChange(alloc, exitDef, &typeChange))
             return false;
         *hadTypeChange |= typeChange;
         setSlot(slot, entryDef);
@@ -1603,11 +1550,11 @@ MBasicBlock::inheritPhisFromBackedge(MBasicBlock* backedge, bool* hadTypeChange)
 }
 
 bool
-MBasicBlock::specializePhis()
+MBasicBlock::specializePhis(TempAllocator& alloc)
 {
     for (MPhiIterator iter = phisBegin(); iter != phisEnd(); iter++) {
         MPhi* phi = *iter;
-        if (!phi->specializeType())
+        if (!phi->specializeType(alloc))
             return false;
     }
     return true;

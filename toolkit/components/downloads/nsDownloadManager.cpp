@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/DebugOnly.h"
+#include "mozilla/Unused.h"
 
 #include "mozIStorageService.h"
 #include "nsIAlertsService.h"
@@ -61,7 +62,7 @@
 #endif
 
 #ifdef MOZ_WIDGET_ANDROID
-#include "GeneratedJNIWrappers.h"
+#include "FennecJNIWrappers.h"
 #endif
 
 #ifdef MOZ_WIDGET_GTK
@@ -1004,7 +1005,8 @@ nsDownloadManager::Init()
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = RestoreActiveDownloads();
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to restore all active downloads");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                       "Failed to restore all active downloads");
 
   nsCOMPtr<nsINavHistoryService> history =
     do_GetService(NS_NAVHISTORYSERVICE_CONTRACTID);
@@ -1593,8 +1595,10 @@ nsDownloadManager::AddDownload(DownloadType aDownloadType,
 
   // Adding to the DB
   nsAutoCString source, target;
-  aSource->GetSpec(source);
-  aTarget->GetSpec(target);
+  rv = aSource->GetSpec(source);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = aTarget->GetSpec(target);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // Track the temp file for exthandler downloads
   nsAutoString tempPath;
@@ -1615,7 +1619,7 @@ nsDownloadManager::AddDownload(DownloadType aDownloadType,
     if (locHandlerApp) {
       nsCOMPtr<nsIFile> executable;
       (void)locHandlerApp->GetExecutable(getter_AddRefs(executable));
-      (void)executable->GetPersistentDescriptor(persistentDescriptor);
+      Unused << executable->GetPersistentDescriptor(persistentDescriptor);
     }
 
     (void)aMIMEInfo->GetPreferredAction(&action);
@@ -1718,7 +1722,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mCallback->HandleResult(mStatus, mResult);
     return NS_OK;
@@ -2813,7 +2817,8 @@ nsDownload::SetState(DownloadState aState)
           // Use GIO to store the source URI for later display in the file manager.
           GFile* gio_file = g_file_new_for_path(NS_ConvertUTF16toUTF8(path).get());
           nsCString source_uri;
-          mSource->GetSpec(source_uri);
+          rv = mSource->GetSpec(source_uri);
+          NS_ENSURE_SUCCESS(rv, rv);
           GFileInfo *file_info = g_file_info_new();
           g_file_info_set_attribute_string(file_info, "metadata::download-uri", source_uri.get());
           g_file_set_attributes_async(gio_file,

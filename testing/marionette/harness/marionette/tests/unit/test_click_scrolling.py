@@ -9,6 +9,7 @@ from marionette import MarionetteTestCase, skip
 
 class TestClickScrolling(MarionetteTestCase):
 
+
     def test_clicking_on_anchor_scrolls_page(self):
         scrollScript = """
             var pageY;
@@ -64,9 +65,13 @@ class TestClickScrolling(MarionetteTestCase):
         test_html = self.marionette.absolute_url("scroll3.html")
         self.marionette.navigate(test_html)
 
-        self.marionette.find_element(By.ID, "button1").click()
+        button1 = self.marionette.find_element(By.ID, "button1")
+        button2 = self.marionette.find_element(By.ID, "button2")
+
+        button2.click()
         scroll_top = self.marionette.execute_script("return document.body.scrollTop;")
-        self.marionette.find_element(By.ID, "button2").click()
+        button1.click()
+
         self.assertEqual(scroll_top, self.marionette.execute_script("return document.body.scrollTop;"))
 
     def test_should_be_able_to_click_radio_button_scrolled_into_view(self):
@@ -82,13 +87,13 @@ class TestClickScrolling(MarionetteTestCase):
         for s in ["top", "bottom"]:
             self.marionette.navigate(test_html)
             scroll_y = self.marionette.execute_script("return window.scrollY;")
-            self.marionette.find_element(By.ID, "%s-70" % s).click()
+            self.marionette.find_element(By.ID, "{}-70".format(s)).click()
             self.assertNotEqual(scroll_y, self.marionette.execute_script("return window.scrollY;"))
 
         for s in ["left", "right"]:
             self.marionette.navigate(test_html)
             scroll_x = self.marionette.execute_script("return window.scrollX;")
-            self.marionette.find_element(By.ID, "%s-70" % s).click()
+            self.marionette.find_element(By.ID, "{}-70".format(s)).click()
             self.assertNotEqual(scroll_x, self.marionette.execute_script("return window.scrollX;"))
 
     def test_should_not_scroll_elements_if_click_point_is_in_view(self):
@@ -98,7 +103,7 @@ class TestClickScrolling(MarionetteTestCase):
             for p in ["50", "30"]:
                 self.marionette.navigate(test_html)
                 scroll = self.marionette.execute_script("return [window.scrollX, window.scrollY];")
-                self.marionette.find_element(By.ID, "%s-%s" % (s, p)).click()
+                self.marionette.find_element(By.ID, "{0}-{1}".format(s, p)).click()
                 self.assertEqual(scroll, self.marionette.execute_script("return [window.scrollX, window.scrollY];"))
 
     @skip("Bug 1003687")

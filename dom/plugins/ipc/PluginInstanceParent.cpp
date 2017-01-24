@@ -45,7 +45,7 @@
 #include "mozilla/layers/ImageBridgeChild.h"
 #if defined(XP_WIN)
 # include "mozilla/layers/D3D11ShareHandleImage.h"
-# include "mozilla/gfx/DeviceManagerD3D11.h"
+# include "mozilla/gfx/DeviceManagerDx.h"
 # include "mozilla/layers/TextureD3D11.h"
 #endif
 
@@ -401,7 +401,7 @@ PluginInstanceParent::AnswerNPN_GetValue_PreferredDXGIAdapter(DxgiAdapterDesc* a
         return false;
     }
 
-    RefPtr<ID3D11Device> device = DeviceManagerD3D11::Get()->GetContentDevice();
+    RefPtr<ID3D11Device> device = DeviceManagerDx::Get()->GetContentDevice();
     if (!device) {
         return false;
     }
@@ -677,12 +677,12 @@ PluginInstanceParent::RecvInitDXGISurface(const gfx::SurfaceFormat& format,
         return true;
     }
 
-    ImageBridgeChild* forwarder = ImageBridgeChild::GetSingleton();
+    RefPtr<ImageBridgeChild> forwarder = ImageBridgeChild::GetSingleton();
     if (!forwarder) {
         return true;
     }
 
-    RefPtr<ID3D11Device> d3d11 = DeviceManagerD3D11::Get()->GetContentDevice();
+    RefPtr<ID3D11Device> d3d11 = DeviceManagerDx::Get()->GetContentDevice();
     if (!d3d11) {
         return true;
     }
@@ -954,8 +954,9 @@ PluginInstanceParent::RecvShow(const NPRect& updatedRect,
                    updatedRect.bottom - updatedRect.top);
         surface->MarkDirty(ur);
 
+        bool isPlugin = true;
         RefPtr<gfx::SourceSurface> sourceSurface =
-            gfxPlatform::GetPlatform()->GetSourceSurfaceForSurface(nullptr, surface);
+            gfxPlatform::GetPlatform()->GetSourceSurfaceForSurface(nullptr, surface, isPlugin);
         RefPtr<SourceSurfaceImage> image = new SourceSurfaceImage(surface->GetSize(), sourceSurface);
 
         AutoTArray<ImageContainer::NonOwningImage,1> imageList;
@@ -991,7 +992,7 @@ PluginInstanceParent::AsyncSetWindow(NPWindow* aWindow)
     window.height = aWindow->height;
     window.clipRect = aWindow->clipRect;
     window.type = aWindow->type;
-#ifdef XP_MACOSX
+#if defined(XP_MACOSX) || defined(XP_WIN)
     double scaleFactor = 1.0;
     mNPNIface->getvalue(mNPP, NPNVcontentsScaleFactor, &scaleFactor);
     window.contentsScaleFactor = scaleFactor;
@@ -1105,7 +1106,8 @@ PluginInstanceParent::IsRemoteDrawingCoreAnimation(bool *aDrawing)
                  NPDrawingModelInvalidatingCoreAnimation == (NPDrawingModel)mDrawingModel);
     return NS_OK;
 }
-
+#endif
+#if defined(XP_MACOSX) || defined(XP_WIN)
 nsresult
 PluginInstanceParent::ContentsScaleFactorChanged(double aContentsScaleFactor)
 {
@@ -1364,12 +1366,13 @@ PluginInstanceParent::NPP_SetWindow(const NPWindow* aWindow)
     window.type = aWindow->type;
 #endif
 
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) || defined(XP_WIN)
     double floatScaleFactor = 1.0;
     mNPNIface->getvalue(mNPP, NPNVcontentsScaleFactor, &floatScaleFactor);
     int scaleFactor = ceil(floatScaleFactor);
     window.contentsScaleFactor = floatScaleFactor;
-
+#endif
+#if defined(XP_MACOSX)
     if (mShWidth != window.width * scaleFactor || mShHeight != window.height * scaleFactor) {
         if (mDrawingModel == NPDrawingModelCoreAnimation ||
             mDrawingModel == NPDrawingModelInvalidatingCoreAnimation) {
@@ -1564,7 +1567,7 @@ PluginInstanceParent::NPP_HandleEvent(void* event)
 #endif
     NPRemoteEvent npremoteevent;
     npremoteevent.event = *npevent;
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) || defined(XP_WIN)
     double scaleFactor = 1.0;
     mNPNIface->getvalue(mNPP, NPNVcontentsScaleFactor, &scaleFactor);
     npremoteevent.contentsScaleFactor = scaleFactor;

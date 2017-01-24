@@ -43,14 +43,14 @@ class ProfileEntry
     void * volatile spOrScript;
 
     // Line number for non-JS entries, the bytecode offset otherwise.
-    int32_t volatile lineOrPc;
+    int32_t volatile lineOrPcOffset;
 
     // General purpose storage describing this frame.
     uint32_t volatile flags_;
 
   public:
     // These traits are bit masks. Make sure they're powers of 2.
-    enum Flags {
+    enum Flags : uint32_t {
         // Indicate whether a profile entry represents a CPP frame. If not set,
         // a JS frame is assumed by default. You're not allowed to publicly
         // change the frame type. Instead, initialize the ProfileEntry as either
@@ -116,7 +116,7 @@ class ProfileEntry
     void initCppFrame(void* aSp, uint32_t aLine) volatile {
         flags_ = IS_CPP_ENTRY;
         spOrScript = aSp;
-        lineOrPc = static_cast<int32_t>(aLine);
+        lineOrPcOffset = static_cast<int32_t>(aLine);
     }
 
     void setFlag(uint32_t flag) volatile {
@@ -161,13 +161,16 @@ class ProfileEntry
         MOZ_ASSERT(!isJs());
         return spOrScript;
     }
-    JSScript* script() const volatile {
-        MOZ_ASSERT(isJs());
-        return (JSScript*)spOrScript;
-    }
+    JSScript* script() const volatile;
     uint32_t line() const volatile {
         MOZ_ASSERT(!isJs());
-        return static_cast<uint32_t>(lineOrPc);
+        return static_cast<uint32_t>(lineOrPcOffset);
+    }
+
+    // Note that the pointer returned might be invalid.
+    JSScript* rawScript() const volatile {
+        MOZ_ASSERT(isJs());
+        return (JSScript*)spOrScript;
     }
 
     // We can't know the layout of JSScript, so look in vm/SPSProfiler.cpp.
@@ -183,22 +186,22 @@ class ProfileEntry
 
     static size_t offsetOfLabel() { return offsetof(ProfileEntry, string); }
     static size_t offsetOfSpOrScript() { return offsetof(ProfileEntry, spOrScript); }
-    static size_t offsetOfLineOrPc() { return offsetof(ProfileEntry, lineOrPc); }
+    static size_t offsetOfLineOrPcOffset() { return offsetof(ProfileEntry, lineOrPcOffset); }
     static size_t offsetOfFlags() { return offsetof(ProfileEntry, flags_); }
 };
 
 JS_FRIEND_API(void)
-SetRuntimeProfilingStack(JSRuntime* rt, ProfileEntry* stack, uint32_t* size,
+SetContextProfilingStack(JSContext* cx, ProfileEntry* stack, uint32_t* size,
                          uint32_t max);
 
 JS_FRIEND_API(void)
-EnableRuntimeProfilingStack(JSRuntime* rt, bool enabled);
+EnableContextProfilingStack(JSContext* cx, bool enabled);
 
 JS_FRIEND_API(void)
-RegisterRuntimeProfilingEventMarker(JSRuntime* rt, void (*fn)(const char*));
+RegisterContextProfilingEventMarker(JSContext* cx, void (*fn)(const char*));
 
 JS_FRIEND_API(jsbytecode*)
-ProfilingGetPC(JSRuntime* rt, JSScript* script, void* ip);
+ProfilingGetPC(JSContext* cx, JSScript* script, void* ip);
 
 } // namespace js
 

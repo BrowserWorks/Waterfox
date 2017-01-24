@@ -782,9 +782,9 @@ CodeGeneratorMIPSShared::visitShiftI(LShiftI* ins)
                 masm.ma_srl(dest, lhs, Imm32(shift));
             } else {
                 // x >>> 0 can overflow.
-                masm.move32(lhs, dest);
                 if (ins->mir()->toUrsh()->fallible())
-                    bailoutCmp32(Assembler::LessThan, dest, Imm32(0), ins->snapshot());
+                    bailoutCmp32(Assembler::LessThan, lhs, Imm32(0), ins->snapshot());
+                masm.move32(lhs, dest);
             }
             break;
           default:
@@ -1649,40 +1649,15 @@ CodeGeneratorMIPSShared::visitStoreTypedArrayElementStatic(LStoreTypedArrayEleme
 }
 
 void
-CodeGeneratorMIPSShared::visitAsmJSCall(LAsmJSCall* ins)
+CodeGeneratorMIPSShared::visitWasmCall(LWasmCall* ins)
 {
-    emitAsmJSCallBase(ins);
+    emitWasmCallBase(ins);
 }
 
 void
-CodeGeneratorMIPSShared::visitAsmJSCallI64(LAsmJSCallI64* ins)
+CodeGeneratorMIPSShared::visitWasmCallI64(LWasmCallI64* ins)
 {
-    emitAsmJSCallBase(ins);
-}
-
-void
-CodeGeneratorMIPSShared::visitWasmBoundsCheck(LWasmBoundsCheck* ins)
-{
-    MWasmBoundsCheck* mir = ins->mir();
-
-    uint32_t offset = mir->offset();
-    if (offset > INT32_MAX) {
-        masm.jump(wasm::JumpTarget::OutOfBounds);
-        return;
-    }
-
-    uint32_t endOffset = mir->endOffset();
-    Register ptr = ToRegister(ins->ptr());
-
-    masm.move32(Imm32(endOffset), SecondScratchReg);
-    masm.addPtr(ptr, SecondScratchReg);
-
-    // Detect unsigned overflow.
-    masm.ma_b(SecondScratchReg, ptr, wasm::JumpTarget::OutOfBounds, Assembler::LessThan);
-
-    BufferOffset bo = masm.ma_BoundsCheck(ScratchRegister);
-    masm.ma_b(SecondScratchReg, ScratchRegister, wasm::JumpTarget::OutOfBounds, Assembler::Above);
-    masm.append(wasm::BoundsCheck(bo.getOffset()));
+    emitWasmCallBase(ins);
 }
 
 void
@@ -1693,11 +1668,7 @@ CodeGeneratorMIPSShared::visitWasmLoad(LWasmLoad* lir)
     MOZ_ASSERT(!mir->barrierBefore() && !mir->barrierAfter(), "atomics NYI");
 
     uint32_t offset = mir->offset();
-    if (offset > INT32_MAX) {
-        // This is unreachable because of bounds checks.
-        masm.breakpoint();
-        return;
-    }
+    MOZ_ASSERT(offset <= INT32_MAX);
 
     Register ptr = ToRegister(lir->ptr());
 
@@ -1745,11 +1716,7 @@ CodeGeneratorMIPSShared::visitWasmStore(LWasmStore* lir)
     MOZ_ASSERT(!mir->barrierBefore() && !mir->barrierAfter(), "atomics NYI");
 
     uint32_t offset = mir->offset();
-    if (offset > INT32_MAX) {
-        // This is unreachable because of bounds checks.
-        masm.breakpoint();
-        return;
-    }
+    MOZ_ASSERT(offset <= INT32_MAX);
 
     Register ptr = ToRegister(lir->ptr());
 

@@ -29,7 +29,7 @@
 #include "nsCOMPtr.h"
 #include "nsNetCID.h"
 #include "prprf.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nsAsyncRedirectVerifyHelper.h"
 #include "nsSocketTransportService2.h"
 #include "nsAlgorithm.h"
@@ -44,7 +44,6 @@
 #include "nsIStreamConverterService.h"
 #include "nsITimer.h"
 #include "nsCRT.h"
-#include "SpdyZlibReporter.h"
 #include "nsIMemoryReporter.h"
 #include "nsIParentalControlsService.h"
 #include "nsPIDOMWindow.h"
@@ -60,7 +59,8 @@
 #include "mozilla/net/NeckoParent.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
+#include "mozilla/BasePrincipal.h"
 
 #if defined(XP_UNIX)
 #include <sys/utsname.h>
@@ -210,7 +210,6 @@ nsHttpHandler::nsHttpHandler()
     , mAllowExperiments(true)
     , mDebugObservations(false)
     , mEnableSpdy(false)
-    , mSpdyV31(true)
     , mHttp2Enabled(true)
     , mUseH2Deps(true)
     , mEnforceHttp2TlsProfile(true)
@@ -242,8 +241,6 @@ nsHttpHandler::nsHttpHandler()
     , mKeepEmptyResponseHeadersAsEmtpyString(false)
 {
     LOG(("Creating nsHttpHandler [this=%p].\n", this));
-
-    RegisterStrongMemoryReporter(new SpdyZlibReporter());
 
     MOZ_ASSERT(!gHttpHandler, "HTTP handler already created!");
     gHttpHandler = this;
@@ -600,7 +597,7 @@ nsHttpHandler::Get32BitsOfPseudoRandom()
     // rand() provides different amounts of PRNG on different platforms.
     // 15 or 31 bits are common amounts.
 
-    PR_STATIC_ASSERT(RAND_MAX >= 0xfff);
+    static_assert(RAND_MAX >= 0xfff, "RAND_MAX should be >= 12 bits");
 
 #if RAND_MAX < 0xffffU
     return ((uint16_t) rand() << 20) |
@@ -1314,12 +1311,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetBoolPref(HTTP_PREF("spdy.enabled"), &cVar);
         if (NS_SUCCEEDED(rv))
             mEnableSpdy = cVar;
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("spdy.enabled.v3-1"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("spdy.enabled.v3-1"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mSpdyV31 = cVar;
     }
 
     if (PREF_CHANGED(HTTP_PREF("spdy.enabled.http2"))) {
@@ -2218,15 +2209,12 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     MOZ_ASSERT(NS_IsMainThread());
     nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
     if (mDebugObservations && obsService) {
-        // this is basically used for test coverage of an otherwise 'hintable' feature
-        nsAutoCString spec;
-        aURI->GetSpec(spec);
-        spec.Append(anonymous ? NS_LITERAL_CSTRING("[A]") : NS_LITERAL_CSTRING("[.]"));
-        obsService->NotifyObservers(nullptr,
-                                    "speculative-connect-request",
-                                    NS_ConvertUTF8toUTF16(spec).get());
+        // this is basically used for test coverage of an otherwise 'hintable'
+        // feature
+        obsService->NotifyObservers(nullptr, "speculative-connect-request",
+                                    nullptr);
         if (!IsNeckoChild() && gNeckoParent) {
-            Unused << gNeckoParent->SendSpeculativeConnectRequest(spec);
+            Unused << gNeckoParent->SendSpeculativeConnectRequest();
         }
     }
 
@@ -2241,7 +2229,8 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
         flags |= nsISocketProvider::NO_PERMANENT_STORAGE;
     nsCOMPtr<nsIURI> clone;
     if (NS_SUCCEEDED(sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS,
-                                      aURI, flags, &isStsHost)) && isStsHost) {
+                                      aURI, flags, nullptr, &isStsHost)) &&
+                                      isStsHost) {
         if (NS_SUCCEEDED(NS_GetSecureUpgradedURI(aURI,
                                                  getter_AddRefs(clone)))) {
             aURI = clone.get();
@@ -2286,8 +2275,16 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     nsAutoCString username;
     aURI->GetUsername(username);
 
+    NeckoOriginAttributes neckoOriginAttributes;
+    if (loadContext) {
+      DocShellOriginAttributes docshellOriginAttributes;
+      loadContext->GetOriginAttributes(docshellOriginAttributes);
+      neckoOriginAttributes.InheritFromDocShellToNecko(docshellOriginAttributes);
+    }
+
     nsHttpConnectionInfo *ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, usingSSL);
+        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
+                                 neckoOriginAttributes, usingSSL);
     ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);

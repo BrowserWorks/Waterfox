@@ -39,7 +39,6 @@ const APP_VERSION = "1";
 const APP_ID = "xpcshell@tests.mozilla.org";
 const APP_NAME = "XPCShell";
 
-const IGNORE_HISTOGRAM = "test::ignore_me";
 const IGNORE_HISTOGRAM_TO_CLONE = "MEMORY_HEAP_ALLOCATED";
 const IGNORE_CLONED_HISTOGRAM = "test::ignore_me_also";
 const ADDON_NAME = "Telemetry test addon";
@@ -92,10 +91,9 @@ function sendPing() {
   if (PingServer.started) {
     TelemetrySend.setServer("http://localhost:" + PingServer.port);
     return TelemetrySession.testPing();
-  } else {
-    TelemetrySend.setServer("http://doesnotexist");
-    return TelemetrySession.testPing();
   }
+  TelemetrySend.setServer("http://doesnotexist");
+  return TelemetrySession.testPing();
 }
 
 function fakeGenerateUUID(sessionFunc, subsessionFunc) {
@@ -110,7 +108,7 @@ function fakeIdleNotification(topic) {
 }
 
 function setupTestData() {
-  Telemetry.newHistogram(IGNORE_HISTOGRAM, "never", Telemetry.HISTOGRAM_BOOLEAN);
+
   Telemetry.histogramFrom(IGNORE_CLONED_HISTOGRAM, IGNORE_HISTOGRAM_TO_CLONE);
   Services.startup.interrupted = true;
   Telemetry.registerAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM,
@@ -246,23 +244,49 @@ function checkScalars(processes) {
   // Check that the scalars section is available in the ping payload.
   const parentProcess = processes.parent;
   Assert.ok("scalars" in parentProcess, "The scalars section must be available in the parent process.");
+  Assert.ok("keyedScalars" in parentProcess, "The keyedScalars section must be available in the parent process.");
   Assert.equal(typeof parentProcess.scalars, "object", "The scalars entry must be an object.");
+  Assert.equal(typeof parentProcess.keyedScalars, "object", "The keyedScalars entry must be an object.");
+
+  let checkScalar = function(scalar) {
+    // Check if the value is of a supported type.
+    const valueType = typeof(scalar);
+    switch (valueType) {
+      case "string":
+        Assert.ok(scalar.length <= 50,
+                  "String values can't have more than 50 characters");
+      break;
+      case "number":
+        Assert.ok(scalar >= 0,
+                  "We only support unsigned integer values in scalars.");
+      break;
+      case "boolean":
+        Assert.ok(true,
+                  "Boolean scalar found.");
+      break;
+      default:
+        Assert.ok(false,
+                  name + " contains an unsupported value type (" + valueType + ")");
+    }
+  }
 
   // Check that we have valid scalar entries.
   const scalars = parentProcess.scalars;
   for (let name in scalars) {
     Assert.equal(typeof name, "string", "Scalar names must be strings.");
-    // Check if the value is of a supported type.
-    const valueType = typeof(scalars[name]);
-    if (valueType === "string") {
-      Assert.ok(scalars[name].length <= 50,
-                "String values can't have more than 50 characters");
-    } else if (valueType === "number") {
-      Assert.ok(scalars[name] >= 0,
-                "We only support unsigned integer values in scalars.");
-    } else {
-      Assert.ok(false,
-                name + " contains an unsupported value type (" + valueType + ")");
+    checkScalar(scalar[name]);
+  }
+
+  // Check that we have valid keyed scalar entries.
+  const keyedScalars = parentProcess.keyedScalars;
+  for (let name in keyedScalars) {
+    Assert.equal(typeof name, "string", "Scalar names must be strings.");
+    Assert.ok(Object.keys(keyedScalars[name]).length,
+              "The reported keyed scalars must contain at least 1 key.");
+    for (let key in keyedScalars[name]) {
+      Assert.equal(typeof key, "string", "Keyed scalar keys must be strings.");
+      Assert.ok(key.length <= 70, "Keyed scalar keys can't have more than 70 characters.");
+      checkScalar(scalar[name][key]);
     }
   }
 }
@@ -316,7 +340,7 @@ function checkPayload(payload, reason, successfulPings, savedPings) {
       Assert.ok(histogramName in payload.histograms, histogramName + " must be available.");
     }
   }
-  Assert.ok(!(IGNORE_HISTOGRAM in payload.histograms));
+
   Assert.ok(!(IGNORE_CLONED_HISTOGRAM in payload.histograms));
 
   // Flag histograms should automagically spring to life.
@@ -435,14 +459,12 @@ function write_fake_failedprofilelocks_file() {
   writeStringToFile(file, contents);
 }
 
-function run_test() {
-  do_test_pending();
-
+add_task(function* test_setup() {
   // Addon manager needs a profile directory
   do_get_profile();
   loadAddonManager(APP_ID, APP_NAME, APP_VERSION, PLATFORM_VERSION);
   // Make sure we don't generate unexpected pings due to pref changes.
-  setEmptyPrefWatchlist();
+  yield setEmptyPrefWatchlist();
 
   Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);
   Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, true);
@@ -475,8 +497,9 @@ function run_test() {
     });
   });
 
-  Telemetry.asyncFetchTelemetryData(wrapWithExceptionHandler(run_next_test));
-}
+  yield new Promise(resolve =>
+    Telemetry.asyncFetchTelemetryData(wrapWithExceptionHandler(resolve)));
+});
 
 add_task(function* asyncSetup() {
   yield TelemetryController.testSetup();
@@ -486,12 +509,11 @@ add_task(function* asyncSetup() {
 
 // Ensures that expired histograms are not part of the payload.
 add_task(function* test_expiredHistogram() {
-  let histogram_id = "FOOBAR";
-  let dummy = Telemetry.newHistogram(histogram_id, "30", Telemetry.HISTOGRAM_EXPONENTIAL, 1, 2, 3);
+
+  let dummy = Telemetry.getHistogramById("TELEMETRY_TEST_EXPIRED");
 
   dummy.add(1);
 
-  do_check_eq(TelemetrySession.getPayload()["histograms"][histogram_id], undefined);
   do_check_eq(TelemetrySession.getPayload()["histograms"]["TELEMETRY_TEST_EXPIRED"], undefined);
 });
 
@@ -1862,7 +1884,6 @@ add_task(function* test_userIdleAndSchedlerTick() {
   yield TelemetryController.testShutdown();
 });
 
-add_task(function* stopServer(){
+add_task(function* stopServer() {
   yield PingServer.stop();
-  do_test_finished();
 });

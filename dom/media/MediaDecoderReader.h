@@ -13,6 +13,7 @@
 #include "AbstractMediaDecoder.h"
 #include "MediaInfo.h"
 #include "MediaData.h"
+#include "MediaResult.h"
 #include "MediaMetadataManager.h"
 #include "MediaQueue.h"
 #include "MediaTimer.h"
@@ -50,11 +51,6 @@ private:
   virtual ~MetadataHolder() {}
 };
 
-enum class ReadMetadataFailureReason : int8_t
-{
-  METADATA_ERROR
-};
-
 // Encapsulates the decoding and reading of media data. Reading can either
 // synchronous and done on the calling "decode" thread, or asynchronous and
 // performed on a background thread, with the result being returned by
@@ -68,19 +64,12 @@ class MediaDecoderReader {
   static const bool IsExclusive = true;
 
 public:
-  enum NotDecodedReason {
-    END_OF_STREAM,
-    DECODE_ERROR,
-    WAITING_FOR_DATA,
-    CANCELED
-  };
-
   using TrackSet = EnumSet<TrackInfo::TrackType>;
 
   using MetadataPromise =
-    MozPromise<RefPtr<MetadataHolder>, ReadMetadataFailureReason, IsExclusive>;
+    MozPromise<RefPtr<MetadataHolder>, MediaResult, IsExclusive>;
   using MediaDataPromise =
-    MozPromise<RefPtr<MediaData>, NotDecodedReason, IsExclusive>;
+    MozPromise<RefPtr<MediaData>, MediaResult, IsExclusive>;
   using SeekPromise = MozPromise<media::TimeUnit, nsresult, IsExclusive>;
 
   // Note that, conceptually, WaitForData makes sense in a non-exclusive sense.
@@ -102,9 +91,10 @@ public:
   // on failure.
   nsresult Init();
 
-  // Release media resources they should be released in dormant state
-  // The reader can be made usable again by calling ReadMetadata().
-  virtual void ReleaseMediaResources() {}
+  // Called by MDSM in dormant state to release resources allocated by this
+  // reader. The reader can resume decoding by calling Seek() to a specific
+  // position.
+  virtual void ReleaseResources() {}
 
   // Destroys the decoding state. The reader cannot be made usable again.
   // This is different from ReleaseMediaResources() as it is irreversable,
@@ -196,9 +186,7 @@ public:
   // when to call SetIdle().
   virtual void SetIdle() {}
 
-#ifdef MOZ_EME
   virtual void SetCDMProxy(CDMProxy* aProxy) {}
-#endif
 
   // Tell the reader that the data decoded are not for direct playback, so it
   // can accept more files, in particular those which have more channels than
@@ -316,6 +304,11 @@ public:
   AbstractCanonical<bool>* CanonicalIsSuspended() {
     return &mIsSuspended;
   }
+
+  // Switch the video decoder to BlankDecoderModule. It might takes effective
+  // since a few samples later depends on how much demuxed samples are already
+  // queued in the original video decoder.
+  virtual void SetVideoBlankDecode(bool aIsBlankDecode) {}
 
 protected:
   virtual ~MediaDecoderReader();
@@ -460,10 +453,6 @@ private:
   MozPromiseHolder<MediaDataPromise> mBaseAudioPromise;
   MozPromiseHolder<MediaDataPromise> mBaseVideoPromise;
 
-  // Flags whether a the next audio/video sample comes after a "gap" or
-  // "discontinuity" in the stream. For example after a seek.
-  bool mAudioDiscontinuity;
-  bool mVideoDiscontinuity;
   Canonical<bool> mIsSuspended;
 
   MediaEventListener mDataArrivedListener;

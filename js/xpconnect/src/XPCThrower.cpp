@@ -50,17 +50,16 @@ Throw(JSContext* cx, nsresult rv)
 bool
 XPCThrower::CheckForPendingException(nsresult result, JSContext* cx)
 {
-    nsCOMPtr<nsIException> e = XPCJSRuntime::Get()->GetPendingException();
+    nsCOMPtr<nsIException> e = XPCJSContext::Get()->GetPendingException();
     if (!e)
         return false;
-    XPCJSRuntime::Get()->SetPendingException(nullptr);
+    XPCJSContext::Get()->SetPendingException(nullptr);
 
     nsresult e_result;
     if (NS_FAILED(e->GetResult(&e_result)) || e_result != result)
         return false;
 
-    if (!ThrowExceptionObject(cx, e))
-        JS_ReportOutOfMemory(cx);
+    ThrowExceptionObject(cx, e);
     return true;
 }
 

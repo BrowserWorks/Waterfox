@@ -13,12 +13,6 @@ else
 fi
 ac_add_options --with-google-api-keyfile=${_gapi_keyfile}
 
-if [ -f /c/builds/google-oauth-api.key ]; then
-  _google_oauth_api_keyfile=/c/builds/google-oauth-api.key
-else
-  _google_oauth_api_keyfile=/e/builds/google-oauth-api.key
-fi
-ac_add_options --with-google-oauth-api-keyfile=${_google_oauth_api_keyfile}
 ac_add_options --with-mozilla-api-keyfile=/c/builds/mozilla-desktop-geoloc-api.key
 
 # Needed to enable breakpad in application.ini
@@ -27,9 +21,6 @@ export MOZILLA_OFFICIAL=1
 export MOZ_TELEMETRY_REPORTING=1
 
 . $topsrcdir/build/win32/mozconfig.vs-latest
-
-# Treat warnings as errors (modulo ALLOW_COMPILER_WARNINGS).
-ac_add_options --enable-warnings-as-errors
 
 # Enable Adobe Primetime CDM on 32-bit Windows in Mozilla builds.
 # Enabled here on the assumption that downstream vendors will not be using

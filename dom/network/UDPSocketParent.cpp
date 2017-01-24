@@ -10,7 +10,7 @@
 #include "nsIUDPSocket.h"
 #include "nsINetAddr.h"
 #include "mozilla/AppProcessChecker.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/net/DNS.h"
 #include "mozilla/net/NeckoCommon.h"
@@ -79,11 +79,8 @@ UDPSocketParent::OfflineNotification(nsISupports *aSubject)
 uint32_t
 UDPSocketParent::GetAppId()
 {
-  uint32_t appId;
-  if (!mPrincipal || NS_FAILED(mPrincipal->GetAppId(&appId))) {
-    return nsIScriptSecurityManager::UNKNOWN_APP_ID;
-  }
-  return appId;
+  return mPrincipal ? mPrincipal->GetAppId()
+                    : nsIScriptSecurityManager::UNKNOWN_APP_ID;
 }
 
 bool
@@ -296,13 +293,14 @@ bool
 UDPSocketParent::RecvConnect(const UDPAddressInfo& aAddressInfo)
 {
   nsCOMPtr<nsIEventTarget> thread(NS_GetCurrentThread());
-  NS_WARN_IF(NS_FAILED(GetSTSThread()->Dispatch(WrapRunnable(
-                                                  this,
-                                                  &UDPSocketParent::DoConnect,
-                                                  mSocket,
-                                                  thread,
-                                                  aAddressInfo),
-                                                NS_DISPATCH_NORMAL)));
+  Unused <<
+    NS_WARN_IF(NS_FAILED(GetSTSThread()->Dispatch(WrapRunnable(
+                                                    this,
+                                                    &UDPSocketParent::DoConnect,
+                                                    mSocket,
+                                                    thread,
+                                                    aAddressInfo),
+                                                  NS_DISPATCH_NORMAL)));
   return true;
 }
 
@@ -317,11 +315,12 @@ void
 UDPSocketParent::SendConnectResponse(nsIEventTarget *aThread,
                                      const UDPAddressInfo& aAddressInfo)
 {
-  NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
-                                           this,
-                                           &UDPSocketParent::DoSendConnectResponse,
-                                           aAddressInfo),
-                                         NS_DISPATCH_NORMAL)));
+  Unused <<
+    NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
+                                             this,
+                                             &UDPSocketParent::DoSendConnectResponse,
+                                             aAddressInfo),
+                                           NS_DISPATCH_NORMAL)));
 }
 
 // Runs on STS thread
@@ -626,11 +625,12 @@ UDPSocketParent::SendInternalError(nsIEventTarget *aThread,
                                    uint32_t aLineNo)
 {
   UDPSOCKET_LOG(("SendInternalError: %u", aLineNo));
-  NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
-                                           this,
-                                           &UDPSocketParent::FireInternalError,
-                                           aLineNo),
-                                         NS_DISPATCH_NORMAL)));
+  Unused <<
+    NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
+                                             this,
+                                             &UDPSocketParent::FireInternalError,
+                                             aLineNo),
+                                           NS_DISPATCH_NORMAL)));
 }
 
 } // namespace dom

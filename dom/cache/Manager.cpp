@@ -10,7 +10,7 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/cache/Context.h"
 #include "mozilla/dom/cache/DBAction.h"
 #include "mozilla/dom/cache/DBSchema.h"
@@ -1215,6 +1215,7 @@ public:
                                         &cacheFound, &mCacheId);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
     if (cacheFound) {
+      MOZ_DIAGNOSTIC_ASSERT(mCacheId != INVALID_CACHE_ID);
       return rv;
     }
 
@@ -1227,12 +1228,14 @@ public:
     rv = trans.Commit();
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
+    MOZ_DIAGNOSTIC_ASSERT(mCacheId != INVALID_CACHE_ID);
     return rv;
   }
 
   virtual void
   Complete(Listener* aListener, ErrorResult&& aRv) override
   {
+    MOZ_DIAGNOSTIC_ASSERT(aRv.Failed() || mCacheId != INVALID_CACHE_ID);
     aListener->OnOpComplete(Move(aRv), StorageOpenResult(), mCacheId);
   }
 

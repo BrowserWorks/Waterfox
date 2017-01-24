@@ -46,14 +46,14 @@ public:
   virtual ~nsTransformingTextRunFactory() {}
 
   // Default 8-bit path just transforms to Unicode and takes that path
-  mozilla::UniquePtr<nsTransformedTextRun>
+  already_AddRefed<nsTransformedTextRun>
   MakeTextRun(const uint8_t* aString, uint32_t aLength,
               const gfxFontGroup::Parameters* aParams,
               gfxFontGroup* aFontGroup, uint32_t aFlags,
               nsTArray<RefPtr<nsTransformedCharStyle>>&& aStyles,
               bool aOwnsFactory);
 
-  mozilla::UniquePtr<nsTransformedTextRun>
+  already_AddRefed<nsTransformedTextRun>
   MakeTextRun(const char16_t* aString, uint32_t aLength,
               const gfxFontGroup::Parameters* aParams,
               gfxFontGroup* aFontGroup, uint32_t aFlags,
@@ -103,7 +103,8 @@ public:
                               const nsIAtom* aLanguage,
                               nsTArray<bool>& aCharsToMergeArray,
                               nsTArray<bool>& aDeletedCharsArray,
-                              nsTransformedTextRun* aTextRun = nullptr,
+                              const nsTransformedTextRun* aTextRun = nullptr,
+                              uint32_t aOffsetInTextRun = 0,
                               nsTArray<uint8_t>* aCanBreakBeforeArray = nullptr,
                               nsTArray<RefPtr<nsTransformedCharStyle>>* aStyleArray = nullptr);
 
@@ -119,7 +120,7 @@ protected:
 class nsTransformedTextRun final : public gfxTextRun {
 public:
 
-  static mozilla::UniquePtr<nsTransformedTextRun>
+  static already_AddRefed<nsTransformedTextRun>
   Create(const gfxTextRunFactory::Parameters* aParams,
          nsTransformingTextRunFactory* aFactory,
          gfxFontGroup* aFontGroup,

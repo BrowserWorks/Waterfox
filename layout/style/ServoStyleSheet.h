@@ -24,7 +24,8 @@ class ServoStyleSheet : public StyleSheet
                       , public StyleSheetInfo
 {
 public:
-  ServoStyleSheet(CORSMode aCORSMode,
+  ServoStyleSheet(css::SheetParsingMode aParsingMode,
+                  CORSMode aCORSMode,
                   net::ReferrerPolicy aReferrerPolicy,
                   const dom::SRIMetadata& aIntegrity);
 
@@ -39,12 +40,11 @@ public:
   StyleSheetHandle GetParentSheet() const;
   void AppendStyleSheet(StyleSheetHandle aSheet);
 
-  void ParseSheet(const nsAString& aInput,
-                  nsIURI* aSheetURI,
-                  nsIURI* aBaseURI,
-                  nsIPrincipal* aSheetPrincipal,
-                  uint32_t aLineNumber,
-                  css::SheetParsingMode aParsingMode);
+  MOZ_MUST_USE nsresult ParseSheet(const nsAString& aInput,
+                                   nsIURI* aSheetURI,
+                                   nsIURI* aBaseURI,
+                                   nsIPrincipal* aSheetPrincipal,
+                                   uint32_t aLineNumber);
 
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 

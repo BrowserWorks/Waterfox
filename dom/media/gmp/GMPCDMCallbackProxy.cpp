@@ -34,7 +34,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mProxy->OnSetSessionId(mToken, mSid);
     return NS_OK;
   }
@@ -43,6 +43,19 @@ public:
   uint32_t mToken;
   nsString mSid;
 };
+
+void
+GMPCDMCallbackProxy::SetDecryptorId(uint32_t aId)
+{
+  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+
+  RefPtr<CDMProxy> proxy = mProxy;
+  NS_DispatchToMainThread(
+    NS_NewRunnableFunction([proxy, aId] ()
+    {
+      proxy->OnSetDecryptorId(aId);
+    })
+  );}
 
 void
 GMPCDMCallbackProxy::SetSessionId(uint32_t aToken,
@@ -67,7 +80,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mProxy->OnResolveLoadSessionPromise(mPid, mSuccess);
     return NS_OK;
   }
@@ -111,7 +124,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mProxy->OnRejectPromise(mPid, mException, mMsg);
     return NS_OK;
   }
@@ -138,22 +151,11 @@ GMPCDMCallbackProxy::RejectPromise(uint32_t aPromiseId,
   NS_DispatchToMainThread(task);
 }
 
-static dom::MediaKeyMessageType
-ToMediaKeyMessageType(GMPSessionMessageType aMessageType) {
-  switch (aMessageType) {
-    case kGMPLicenseRequest: return dom::MediaKeyMessageType::License_request;
-    case kGMPLicenseRenewal: return dom::MediaKeyMessageType::License_renewal;
-    case kGMPLicenseRelease: return dom::MediaKeyMessageType::License_release;
-    case kGMPIndividualizationRequest: return dom::MediaKeyMessageType::Individualization_request;
-    default: return dom::MediaKeyMessageType::License_request;
-  };
-};
-
 class SessionMessageTask : public Runnable {
 public:
   SessionMessageTask(CDMProxy* aProxy,
                      const nsCString& aSessionId,
-                     GMPSessionMessageType aMessageType,
+                     dom::MediaKeyMessageType aMessageType,
                      const nsTArray<uint8_t>& aMessage)
     : mProxy(aProxy)
     , mSid(NS_ConvertUTF8toUTF16(aSessionId))
@@ -162,21 +164,20 @@ public:
     mMsg.AppendElements(aMessage);
   }
 
-  NS_IMETHOD Run() {
-    mProxy->OnSessionMessage(mSid, ToMediaKeyMessageType(mMsgType), mMsg);
+  NS_IMETHOD Run() override {
+    mProxy->OnSessionMessage(mSid, mMsgType, mMsg);
     return NS_OK;
   }
 
   RefPtr<CDMProxy> mProxy;
-  dom::PromiseId mPid;
   nsString mSid;
-  GMPSessionMessageType mMsgType;
+  dom::MediaKeyMessageType mMsgType;
   nsTArray<uint8_t> mMsg;
 };
 
 void
 GMPCDMCallbackProxy::SessionMessage(const nsCString& aSessionId,
-                                    GMPSessionMessageType aMessageType,
+                                    dom::MediaKeyMessageType aMessageType,
                                     const nsTArray<uint8_t>& aMessage)
 {
   MOZ_ASSERT(mProxy->IsOnOwnerThread());
@@ -199,7 +200,7 @@ public:
     , mTimestamp(aExpiryTime)
   {}
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mProxy->OnExpirationChange(mSid, mTimestamp);
     return NS_OK;
   }
@@ -261,7 +262,7 @@ public:
     , mMsg(NS_ConvertUTF8toUTF16(aMessage))
   {}
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     mProxy->OnSessionError(mSid, mException, mSystemCode, mMsg);
     return NS_OK;
   }
@@ -294,10 +295,31 @@ GMPCDMCallbackProxy::SessionError(const nsCString& aSessionId,
 void
 GMPCDMCallbackProxy::KeyStatusChanged(const nsCString& aSessionId,
                                       const nsTArray<uint8_t>& aKeyId,
-                                      GMPMediaKeyStatus aStatus)
+                                      dom::MediaKeyStatus aStatus)
 {
   MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
+  KeyStatusChangedInternal(aSessionId,
+                           aKeyId,
+                           dom::Optional<dom::MediaKeyStatus>(aStatus));
+}
+
+void
+GMPCDMCallbackProxy::ForgetKeyStatus(const nsCString& aSessionId,
+                                     const nsTArray<uint8_t>& aKeyId)
+{
+  MOZ_ASSERT(mProxy->IsOnOwnerThread());
+
+  KeyStatusChangedInternal(aSessionId,
+                           aKeyId,
+                           dom::Optional<dom::MediaKeyStatus>());
+}
+
+void
+GMPCDMCallbackProxy::KeyStatusChangedInternal(const nsCString& aSessionId,
+                                              const nsTArray<uint8_t>& aKeyId,
+                                              const dom::Optional<dom::MediaKeyStatus>& aStatus)
+{
   bool keyStatusesChange = false;
   {
     CDMCaps::AutoLock caps(mProxy->Capabilites());
@@ -314,25 +336,14 @@ GMPCDMCallbackProxy::KeyStatusChanged(const nsCString& aSessionId,
   }
 }
 
-DecryptStatus
-ToDecryptStatus(GMPErr aError)
-{
-  switch (aError) {
-    case GMPNoErr: return Ok;
-    case GMPNoKeyErr: return NoKeyErr;
-    case GMPAbortedErr: return AbortedErr;
-    default: return GenericErr;
-  }
-}
-
 void
 GMPCDMCallbackProxy::Decrypted(uint32_t aId,
-                               GMPErr aResult,
+                               DecryptStatus aResult,
                                const nsTArray<uint8_t>& aDecryptedData)
 {
   MOZ_ASSERT(mProxy->IsOnOwnerThread());
 
-  mProxy->OnDecrypted(aId, ToDecryptStatus(aResult), aDecryptedData);
+  mProxy->OnDecrypted(aId, aResult, aDecryptedData);
 }
 
 void

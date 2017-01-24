@@ -420,8 +420,7 @@ class MediaEngineWebRTCMicrophoneSource : public MediaEngineAudioSource,
 {
   typedef MediaEngineAudioSource Super;
 public:
-  MediaEngineWebRTCMicrophoneSource(nsIThread* aThread,
-                                    webrtc::VoiceEngine* aVoiceEnginePtr,
+  MediaEngineWebRTCMicrophoneSource(webrtc::VoiceEngine* aVoiceEnginePtr,
                                     mozilla::AudioInput* aAudioInput,
                                     int aIndex,
                                     const char* name,
@@ -544,10 +543,9 @@ private:
   nsTArray<RefPtr<SourceMediaStream>> mSources;
   nsTArray<PrincipalHandle> mPrincipalHandles; // Maps to mSources.
 
-  nsCOMPtr<nsIThread> mThread;
   int mCapIndex;
   int mChannel;
-  TrackID mTrackID;
+  MOZ_INIT_OUTSIDE_CTOR TrackID mTrackID;
   bool mStarted;
 
   nsString mDeviceName;
@@ -573,6 +571,8 @@ class MediaEngineWebRTC : public MediaEngine
   typedef MediaEngine Super;
 public:
   explicit MediaEngineWebRTC(MediaEnginePrefs& aPrefs);
+
+  virtual void SetFakeDeviceChangeEvents() override;
 
   // Clients should ensure to clean-up sources video/audio sources
   // before invoking Shutdown on this class.

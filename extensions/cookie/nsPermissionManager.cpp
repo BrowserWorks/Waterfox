@@ -10,7 +10,7 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/Services.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsPermissionManager.h"
 #include "nsPermission.h"
 #include "nsCRT.h"
@@ -203,7 +203,7 @@ public:
   NS_DECL_ISUPPORTS
 
   // nsIObserver implementation.
-  NS_IMETHODIMP
+  NS_IMETHOD
   Observe(nsISupports* aSubject, const char* aTopic, const char16_t* aData) override
   {
     MOZ_ASSERT(!nsCRT::strcmp(aTopic, "clear-origin-data"));
@@ -540,7 +540,7 @@ UpgradeHostToOriginAndInsert(const nsACString& aHost, const nsAFlatCString& aTyp
       foundHistory = true;
       rv = aHelper->Insert(origin, aType, aPermission,
                            aExpireType, aExpireTime, aModificationTime);
-      NS_WARN_IF(NS_WARN_IF(NS_FAILED(rv)));
+      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Insert failed");
       insertedOrigins.PutEntry(origin);
     }
 
@@ -1537,10 +1537,7 @@ nsPermissionManager::AddFromPrincipal(nsIPrincipal* aPrincipal,
 
   // Null principals can't meaningfully have persisted permissions attached to
   // them, so we don't allow adding permissions for them.
-  bool isNullPrincipal;
-  nsresult rv = aPrincipal->GetIsNullPrincipal(&isNullPrincipal);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (isNullPrincipal) {
+  if (aPrincipal->GetIsNullPrincipal()) {
     return NS_OK;
   }
 
@@ -1671,6 +1668,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
         id = aID;
       }
 
+#ifdef MOZ_B2G
       // When we do the initial addition of the permissions we don't want to
       // inherit session specific permissions from other tabs or apps
       // so we ignore them and set the permission to PROMPT_ACTION if it was
@@ -1680,6 +1678,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
         aPermission = nsIPermissionManager::PROMPT_ACTION;
         aExpireType = nsIPermissionManager::EXPIRE_NEVER;
       }
+#endif // MOZ_B2G
 
       entry->GetPermissions().AppendElement(PermissionEntry(id, typeIndex, aPermission,
                                                             aExpireType, aExpireTime,
@@ -2432,10 +2431,7 @@ nsPermissionManager::RemoveExpiredPermissionsForApp(uint32_t aAppId)
     nsCOMPtr<nsIPrincipal> principal;
     GetPrincipalFromOrigin(entry->GetKey()->mOrigin, getter_AddRefs(principal));
 
-    uint32_t appId;
-    principal->GetAppId(&appId);
-
-    if (appId != aAppId) {
+    if (principal->GetAppId() != aAppId) {
       continue;
     }
 

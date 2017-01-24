@@ -33,7 +33,7 @@
 #include "nsISocketTransportService.h"
 #include <algorithm>
 #include "mozilla/ChaosMode.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIURI.h"
 
 #include "mozilla/Telemetry.h"
@@ -204,7 +204,7 @@ public:
         , mIParam(iparam)
         , mVParam(vparam) {}
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
         (mMgr->*mHandler)(mIParam, mVParam);
         return NS_OK;
@@ -419,10 +419,7 @@ nsHttpConnectionMgr::SpeculativeConnect(nsHttpConnectionInfo *ci,
     nsCOMPtr<nsISpeculativeConnectionOverrider> overrider =
         do_GetInterface(callbacks);
 
-    bool allow1918 = false;
-    if (overrider) {
-        overrider->GetAllow1918(&allow1918);
-    }
+    bool allow1918 = overrider ? overrider->GetAllow1918() : false;
 
     // Hosts that are Local IP Literals should not be speculatively
     // connected - Bug 853423.
@@ -440,16 +437,17 @@ nsHttpConnectionMgr::SpeculativeConnect(nsHttpConnectionInfo *ci,
     NS_NewInterfaceRequestorAggregation(callbacks, nullptr, getter_AddRefs(wrappedCallbacks));
 
     caps |= ci->GetAnonymous() ? NS_HTTP_LOAD_ANONYMOUS : 0;
+    caps |= NS_HTTP_ERROR_SOFTLY;
     args->mTrans =
         nullTransaction ? nullTransaction : new NullHttpTransaction(ci, wrappedCallbacks, caps);
 
     if (overrider) {
         args->mOverridesOK = true;
-        overrider->GetParallelSpeculativeConnectLimit(
-            &args->mParallelSpeculativeConnectLimit);
-        overrider->GetIgnoreIdle(&args->mIgnoreIdle);
-        overrider->GetIsFromPredictor(&args->mIsFromPredictor);
-        overrider->GetAllow1918(&args->mAllow1918);
+        args->mParallelSpeculativeConnectLimit =
+            overrider->GetParallelSpeculativeConnectLimit();
+        args->mIgnoreIdle = overrider->GetIgnoreIdle();
+        args->mIsFromPredictor = overrider->GetIsFromPredictor();
+        args->mAllow1918 = overrider->GetAllow1918();
     }
 
     return PostEvent(&nsHttpConnectionMgr::OnMsgSpeculativeConnect, 0, args);
@@ -1024,7 +1022,8 @@ nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri)
     // report the event for all the permutations of anonymous and
     // private versions of this host
     RefPtr<nsHttpConnectionInfo> ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, usingSSL);
+        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
+                                 NeckoOriginAttributes(), usingSSL);
     ci->SetAnonymous(false);
     ci->SetPrivate(false);
     PipelineFeedbackInfo(ci, RedCorruptedContent, nullptr, 0);
@@ -3008,19 +3007,9 @@ nsHalfOpenSocket::SetupStreams(nsISocketTransport **transport,
     nsresult rv;
     const char *socketTypes[1];
     uint32_t typeCount = 0;
-    bool bypassTLSAuth = false;
     const nsHttpConnectionInfo *ci = mEnt->mConnInfo;
     if (ci->FirstHopSSL()) {
         socketTypes[typeCount++] = "ssl";
-
-        if (ci->GetInsecureScheme()) { // http:// over tls
-            const nsCString &routedHost = ci->GetRoutedHost();
-            if (routedHost.Equals(ci->GetOrigin())) {
-                LOG(("nsHttpConnection::SetupSSL %p TLS-Relaxed "
-                     "with Same Host Auth Bypass", this));
-                bypassTLSAuth = true;
-            }
-        }
     } else {
         socketTypes[typeCount] = gHttpHandler->DefaultSocketType();
         if (socketTypes[typeCount]) {
@@ -3073,8 +3062,9 @@ nsHalfOpenSocket::SetupStreams(nsISocketTransport **transport,
     if (ci->GetPrivate())
         tmpFlags |= nsISocketTransport::NO_PERMANENT_STORAGE;
 
-    if (bypassTLSAuth) {
-        tmpFlags |= nsISocketTransport::MITM_OK;
+    if ((mCaps & NS_HTTP_BE_CONSERVATIVE) || ci->GetBeConservative()) {
+        LOG(("Setting Socket to BE_CONSERVATIVE"));
+        tmpFlags |= nsISocketTransport::BE_CONSERVATIVE;
     }
 
     // For backup connections, we disable IPv6. That's because some users have

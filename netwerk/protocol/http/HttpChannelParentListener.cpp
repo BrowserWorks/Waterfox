@@ -9,10 +9,13 @@
 
 #include "HttpChannelParentListener.h"
 #include "mozilla/net/HttpChannelParent.h"
-#include "mozilla/unused.h"
-#include "nsIRedirectChannelRegistrar.h"
+#include "mozilla/Unused.h"
+#include "nsIAuthPrompt.h"
+#include "nsIAuthPrompt2.h"
 #include "nsIHttpEventSink.h"
 #include "nsIHttpHeaderVisitor.h"
+#include "nsIRedirectChannelRegistrar.h"
+#include "nsIPromptFactory.h"
 #include "nsQueryObject.h"
 
 using mozilla::Unused;
@@ -71,8 +74,8 @@ HttpChannelParentListener::OnStartRequest(nsIRequest *aRequest, nsISupports *aCo
 
 NS_IMETHODIMP
 HttpChannelParentListener::OnStopRequest(nsIRequest *aRequest,
-                                          nsISupports *aContext,
-                                          nsresult aStatusCode)
+                                         nsISupports *aContext,
+                                         nsresult aStatusCode)
 {
   MOZ_RELEASE_ASSERT(!mSuspendedForDiversion,
     "Cannot call OnStopRequest if suspended for diversion!");
@@ -94,10 +97,10 @@ HttpChannelParentListener::OnStopRequest(nsIRequest *aRequest,
 
 NS_IMETHODIMP
 HttpChannelParentListener::OnDataAvailable(nsIRequest *aRequest,
-                                            nsISupports *aContext,
-                                            nsIInputStream *aInputStream,
-                                            uint64_t aOffset,
-                                            uint32_t aCount)
+                                           nsISupports *aContext,
+                                           nsIInputStream *aInputStream,
+                                           uint64_t aOffset,
+                                           uint32_t aCount)
 {
   MOZ_RELEASE_ASSERT(!mSuspendedForDiversion,
     "Cannot call OnDataAvailable if suspended for diversion!");
@@ -130,6 +133,17 @@ HttpChannelParentListener::GetInterface(const nsIID& aIID, void **result)
                                       getter_AddRefs(ir))))
   {
     return ir->GetInterface(aIID, result);
+  }
+
+  if (aIID.Equals(NS_GET_IID(nsIAuthPrompt)) ||
+      aIID.Equals(NS_GET_IID(nsIAuthPrompt2))) {
+    nsresult rv;
+    nsCOMPtr<nsIPromptFactory> wwatch =
+      do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    return wwatch->GetPrompt(nullptr, aIID,
+                             reinterpret_cast<void**>(result));
   }
 
   return NS_NOINTERFACE;
@@ -286,7 +300,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     // The URL passed as an argument here doesn't matter, since the child will
     // receive a redirection notification as a result of this synthesized response.

@@ -35,6 +35,7 @@
 #include "jit/VMFunctions.h"
 #include "vm/ProxyObject.h"
 #include "vm/Shape.h"
+#include "vm/TypedArrayObject.h"
 #include "vm/UnboxedObject.h"
 
 using mozilla::FloatingPoint;
@@ -392,6 +393,9 @@ class MacroAssembler : public MacroAssemblerSpecific
     // Flushes the assembly buffer, on platforms that need it.
     void flush() PER_SHARED_ARCH;
 
+    // Add a comment that is visible in the pretty printed assembly code.
+    void comment(const char* msg) PER_SHARED_ARCH;
+
     // ===============================================================
     // Frame manipulation functions.
 
@@ -483,7 +487,7 @@ class MacroAssembler : public MacroAssemblerSpecific
     void call(JitCode* c) PER_SHARED_ARCH;
 
     inline void call(const wasm::CallSiteDesc& desc, const Register reg);
-    inline void call(const wasm::CallSiteDesc& desc, uint32_t callee);
+    inline void call(const wasm::CallSiteDesc& desc, uint32_t funcDefIndex);
 
     CodeOffset callWithPatch() PER_SHARED_ARCH;
     void patchCall(uint32_t callerOffset, uint32_t calleeOffset) PER_SHARED_ARCH;
@@ -695,6 +699,9 @@ class MacroAssembler : public MacroAssemblerSpecific
 
     inline void moveFloat32ToGPR(FloatRegister src, Register dest) PER_SHARED_ARCH;
     inline void moveGPRToFloat32(Register src, FloatRegister dest) PER_SHARED_ARCH;
+
+    inline void move8SignExtend(Register src, Register dest) PER_SHARED_ARCH;
+    inline void move16SignExtend(Register src, Register dest) PER_SHARED_ARCH;
 
     // ===============================================================
     // Logical instructions
@@ -990,9 +997,9 @@ class MacroAssembler : public MacroAssemblerSpecific
     template <typename T>
     inline CodeOffsetJump branchPtrWithPatch(Condition cond, Address lhs, T rhs, RepatchLabel* label) PER_SHARED_ARCH;
 
-    void branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label)
+    void branchPtrInNurseryChunk(Condition cond, Register ptr, Register temp, Label* label)
         DEFINED_ON(arm, arm64, mips_shared, x86, x64);
-    void branchPtrInNurseryRange(Condition cond, const Address& address, Register temp, Label* label)
+    void branchPtrInNurseryChunk(Condition cond, const Address& address, Register temp, Label* label)
         DEFINED_ON(x86);
     void branchValueIsNurseryObject(Condition cond, const Address& address, Register temp, Label* label) PER_ARCH;
     void branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp, Label* label) PER_ARCH;
@@ -1033,8 +1040,8 @@ class MacroAssembler : public MacroAssemblerSpecific
     inline void branchFloat32NotInInt64Range(Address src, Register temp, Label* fail);
     inline void branchFloat32NotInUInt64Range(Address src, Register temp, Label* fail);
 
-    template <typename T>
-    inline void branchAdd32(Condition cond, T src, Register dest, Label* label) PER_SHARED_ARCH;
+    template <typename T, typename L>
+    inline void branchAdd32(Condition cond, T src, Register dest, L label) PER_SHARED_ARCH;
     template <typename T>
     inline void branchSub32(Condition cond, T src, Register dest, Label* label) PER_SHARED_ARCH;
 
@@ -1204,8 +1211,7 @@ class MacroAssembler : public MacroAssemblerSpecific
     inline void branchPtrImpl(Condition cond, const T& lhs, const S& rhs, Label* label)
         DEFINED_ON(x86_shared);
 
-    template <typename T>
-    void branchPtrInNurseryRangeImpl(Condition cond, const T& ptr, Register temp, Label* label)
+    void branchPtrInNurseryChunkImpl(Condition cond, Register ptr, Label* label)
         DEFINED_ON(x86);
     template <typename T>
     void branchValueIsNurseryObjectImpl(Condition cond, const T& value, Register temp, Label* label)
@@ -1307,6 +1313,59 @@ class MacroAssembler : public MacroAssemblerSpecific
                                        FloatRegister floatTemp)
         DEFINED_ON(x86, x64);
 
+  public:
+    // ========================================================================
+    // wasm support
+
+    // Emit a bounds check against the (dynamically-patched) wasm bounds check
+    // limit, jumping to 'label' if 'cond' holds.
+    template <class L>
+    inline void wasmBoundsCheck(Condition cond, Register index, L label) PER_ARCH;
+
+    // Called after compilation completes to patch the given limit into the
+    // given instruction's immediate.
+    static inline void wasmPatchBoundsCheck(uint8_t* patchAt, uint32_t limit) PER_ARCH;
+
+    // On x86, each instruction adds its own wasm::MemoryAccess's to the
+    // wasm::MemoryAccessVector (there can be multiple when i64 is involved).
+    // On x64, only some asm.js accesses need a wasm::MemoryAccess so the caller
+    // is responsible for doing this instead.
+    void wasmLoad(Scalar::Type type, unsigned numSimdElems, Operand srcAddr, AnyRegister out) DEFINED_ON(x86, x64);
+    void wasmLoadI64(Scalar::Type type, Operand srcAddr, Register64 out) DEFINED_ON(x86, x64);
+    void wasmStore(Scalar::Type type, unsigned numSimdElems, AnyRegister value, Operand dstAddr) DEFINED_ON(x86, x64);
+    void wasmStoreI64(Register64 value, Operand dstAddr) DEFINED_ON(x86);
+
+    // wasm specific methods, used in both the wasm baseline compiler and ion.
+    void wasmTruncateDoubleToUInt32(FloatRegister input, Register output, Label* oolEntry) DEFINED_ON(x86, x64);
+    void wasmTruncateDoubleToInt32(FloatRegister input, Register output, Label* oolEntry) DEFINED_ON(x86_shared);
+    void outOfLineWasmTruncateDoubleToInt32(FloatRegister input, bool isUnsigned, Label* rejoin) DEFINED_ON(x86_shared);
+
+    void wasmTruncateFloat32ToUInt32(FloatRegister input, Register output, Label* oolEntry) DEFINED_ON(x86, x64);
+    void wasmTruncateFloat32ToInt32(FloatRegister input, Register output, Label* oolEntry) DEFINED_ON(x86_shared);
+    void outOfLineWasmTruncateFloat32ToInt32(FloatRegister input, bool isUnsigned, Label* rejoin) DEFINED_ON(x86_shared);
+
+    void outOfLineWasmTruncateDoubleToInt64(FloatRegister input, bool isUnsigned, Label* rejoin) DEFINED_ON(x86_shared);
+    void outOfLineWasmTruncateFloat32ToInt64(FloatRegister input, bool isUnsigned, Label* rejoin) DEFINED_ON(x86_shared);
+
+    // This function takes care of loading the callee's TLS and pinned regs but
+    // it is the caller's responsibility to save/restore TLS or pinned regs.
+    void wasmCallImport(const wasm::CallSiteDesc& desc, const wasm::CalleeDesc& callee);
+
+    // WasmTableCallIndexReg must contain the index of the indirect call.
+    void wasmCallIndirect(const wasm::CallSiteDesc& desc, const wasm::CalleeDesc& callee);
+
+    // This function takes care of loading the pointer to the current instance
+    // as the implicit first argument. It preserves TLS and pinned registers.
+    // (TLS & pinned regs are non-volatile registers in the system ABI).
+    void wasmCallBuiltinInstanceMethod(const ABIArg& instanceArg,
+                                       wasm::SymbolicAddress builtin);
+
+  public:
+    // ========================================================================
+    // Clamping functions.
+
+    inline void clampIntToUint8(Register reg) PER_SHARED_ARCH;
+
     //}}} check_macroassembler_style
   public:
 
@@ -1357,8 +1416,13 @@ class MacroAssembler : public MacroAssemblerSpecific
     void loadJitActivation(Register dest) {
         loadPtr(AbsoluteAddress(GetJitContext()->runtime->addressOfActivation()), dest);
     }
-    void loadWasmActivation(Register dest) {
-        loadWasmGlobalPtr(wasm::ActivationGlobalDataOffset, dest);
+    void loadWasmActivationFromTls(Register dest) {
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, cx)), dest);
+        loadPtr(Address(dest, JSContext::offsetOfWasmActivation()), dest);
+    }
+    void loadWasmActivationFromSymbolicAddress(Register dest) {
+        movePtr(wasm::SymbolicAddress::Context, dest);
+        loadPtr(Address(dest, JSContext::offsetOfWasmActivation()), dest);
     }
 
     template<typename T>
@@ -1410,10 +1474,12 @@ class MacroAssembler : public MacroAssemblerSpecific
             storeTypedOrValue(src.reg(), dest);
     }
 
-    void storeCallResult(Register reg) {
+    void storeCallWordResult(Register reg) {
         if (reg != ReturnReg)
             mov(ReturnReg, reg);
     }
+
+    inline void storeCallBoolResult(Register reg);
 
     void storeCallFloatResult(FloatRegister reg) {
         if (reg != ReturnDoubleReg)
@@ -1622,7 +1688,7 @@ class MacroAssembler : public MacroAssemblerSpecific
                      bool initContents = true, bool convertDoubleElements = false);
     void initTypedArraySlots(Register obj, Register temp, Register lengthReg,
                              LiveRegisterSet liveRegs, Label* fail,
-                             TypedArrayObject* templateObj);
+                             TypedArrayObject* templateObj, TypedArrayLength lengthKind);
 
     void initUnboxedObjectContents(Register object, UnboxedPlainObject* templateObject);
 

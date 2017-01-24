@@ -522,6 +522,8 @@
   ERROR(NS_ERROR_DOM_UNKNOWN_ERR,                  FAILURE(30)),
   ERROR(NS_ERROR_DOM_DATA_ERR,                     FAILURE(31)),
   ERROR(NS_ERROR_DOM_OPERATION_ERR,                FAILURE(32)),
+  /* https://heycam.github.io/webidl/#notallowederror */
+  ERROR(NS_ERROR_DOM_NOT_ALLOWED_ERR,              FAILURE(33)),
   /* DOM error codes defined by us */
   ERROR(NS_ERROR_DOM_SECMAN_ERR,                   FAILURE(1001)),
   ERROR(NS_ERROR_DOM_WRONG_TYPE_ERR,               FAILURE(1002)),
@@ -952,7 +954,6 @@
   /* ======================================================================= */
 #define MODULE NS_ERROR_MODULE_DOM_ANIM
   ERROR(NS_ERROR_DOM_ANIM_MISSING_PROPS_ERR,              FAILURE(1)),
-  ERROR(NS_ERROR_DOM_ANIM_NO_EFFECT_ERR,                  FAILURE(2)),
 #undef MODULE
 
   /* ======================================================================= */
@@ -965,6 +966,28 @@
   ERROR(NS_ERROR_DOM_PUSH_SERVICE_UNREACHABLE,      FAILURE(4)),
   ERROR(NS_ERROR_DOM_PUSH_INVALID_KEY_ERR,          FAILURE(5)),
   ERROR(NS_ERROR_DOM_PUSH_MISMATCHED_KEY_ERR,       FAILURE(6)),
+#undef MODULE
+
+  /* ======================================================================= */
+  /* 41: NS_ERROR_MODULE_DOM_MEDIA */
+  /* ======================================================================= */
+#define MODULE NS_ERROR_MODULE_DOM_MEDIA
+  /* HTMLMediaElement API errors from https://html.spec.whatwg.org/multipage/embedded-content.html#media-elements */
+  ERROR(NS_ERROR_DOM_MEDIA_ABORT_ERR,           FAILURE(1)),
+  ERROR(NS_ERROR_DOM_MEDIA_NOT_ALLOWED_ERR,     FAILURE(2)),
+  ERROR(NS_ERROR_DOM_MEDIA_NOT_SUPPORTED_ERR,   FAILURE(3)),
+
+  /* HTMLMediaElement internal decoding error */
+  ERROR(NS_ERROR_DOM_MEDIA_DECODE_ERR,          FAILURE(4)),
+  ERROR(NS_ERROR_DOM_MEDIA_FATAL_ERR,           FAILURE(5)),
+  ERROR(NS_ERROR_DOM_MEDIA_METADATA_ERR,        FAILURE(6)),
+  ERROR(NS_ERROR_DOM_MEDIA_OVERFLOW_ERR,        FAILURE(7)),
+  ERROR(NS_ERROR_DOM_MEDIA_END_OF_STREAM,       FAILURE(8)),
+  ERROR(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA,    FAILURE(9)),
+  ERROR(NS_ERROR_DOM_MEDIA_CANCELED,            FAILURE(10)),
+  ERROR(NS_ERROR_DOM_MEDIA_MEDIASINK_ERR,       FAILURE(11)),
+  ERROR(NS_ERROR_DOM_MEDIA_DEMUXER_ERR,         FAILURE(12)),
+  ERROR(NS_ERROR_DOM_MEDIA_CDM_ERR,             FAILURE(13)),
 #undef MODULE
 
   /* ======================================================================= */

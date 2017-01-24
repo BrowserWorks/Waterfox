@@ -869,9 +869,8 @@ function TabActor(connection) {
   });
 
   // Flag eventually overloaded by sub classes in order to watch new docshells
-  // Used on b2g to catch activity frames and in chrome to list all frames
-  this.listenForNewDocShells =
-    Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT;
+  // Used by the ChromeActor to list all frames in the Browser Toolbox
+  this.listenForNewDocShells = false;
 
   this.traits = {
     reconfigure: true,
@@ -922,8 +921,6 @@ TabActor.prototype = {
     return this._contextPool;
   },
 
-  _pendingNavigation: null,
-
   // A constant prefix that will be used to form the actor ID by the server.
   actorPrefix: "tab",
 
@@ -938,9 +935,13 @@ TabActor.prototype = {
    * Getter for the nsIMessageManager associated to the tab.
    */
   get messageManager() {
-    return this.docShell
-      .QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIContentFrameMessageManager);
+    try {
+      return this.docShell
+        .QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIContentFrameMessageManager);
+    } catch (e) {
+      return null;
+    }
   },
 
   /**
@@ -968,6 +969,15 @@ TabActor.prototype = {
       return this.docShell
         .QueryInterface(Ci.nsIInterfaceRequestor)
         .getInterface(Ci.nsIDOMWindow);
+    }
+    return null;
+  },
+
+  get outerWindowID() {
+    if (this.window) {
+      return this.window.QueryInterface(Ci.nsIInterfaceRequestor)
+                        .getInterface(Ci.nsIDOMWindowUtils)
+                        .outerWindowID;
     }
     return null;
   },
@@ -1104,10 +1114,7 @@ TabActor.prototype = {
     if (this.docShell && !this.docShell.isBeingDestroyed()) {
       response.title = this.title;
       response.url = this.url;
-      let windowUtils = this.window
-        .QueryInterface(Ci.nsIInterfaceRequestor)
-        .getInterface(Ci.nsIDOMWindowUtils);
-      response.outerWindowID = windowUtils.outerWindowID;
+      response.outerWindowID = this.outerWindowID;
     }
 
     // Always use the same ActorPool, so existing actor instances
@@ -1401,10 +1408,11 @@ TabActor.prototype = {
       return;
     }
 
-    this.conn.send({ from: this.actorID,
-                     type: "frameUpdate",
-                     frames: windows
-                   });
+    this.conn.send({
+      from: this.actorID,
+      type: "frameUpdate",
+      frames: windows
+    });
   },
 
   _updateChildDocShells() {
@@ -1417,13 +1425,14 @@ TabActor.prototype = {
                         .QueryInterface(Ci.nsIInterfaceRequestor)
                         .getInterface(Ci.nsIDOMWindowUtils)
                         .outerWindowID;
-    this.conn.send({ from: this.actorID,
-                     type: "frameUpdate",
-                     frames: [{
-                       id: id,
-                       destroy: true
-                     }]
-                   });
+    this.conn.send({
+      from: this.actorID,
+      type: "frameUpdate",
+      frames: [{
+        id,
+        destroy: true
+      }]
+    });
 
     // Stop watching this docshell (the unwatch() method will check if we
     // started watching it before).
@@ -1462,10 +1471,11 @@ TabActor.prototype = {
   },
 
   _notifyDocShellDestroyAll() {
-    this.conn.send({ from: this.actorID,
-                     type: "frameUpdate",
-                     destroyAll: true
-                   });
+    this.conn.send({
+      from: this.actorID,
+      type: "frameUpdate",
+      destroyAll: true
+    });
   },
 
   /**
@@ -1665,12 +1675,6 @@ TabActor.prototype = {
       );
     }
 
-    if ((typeof options.customUserAgent !== "undefined") &&
-         options.customUserAgent !== this._getCustomUserAgent()) {
-      this._setCustomUserAgent(options.customUserAgent);
-      reload = true;
-    }
-
     // Reload if:
     //  - there's an explicit `performReload` flag and it's true
     //  - there's no `performReload` flag, but it makes sense to do so
@@ -1689,7 +1693,6 @@ TabActor.prototype = {
     this._restoreJavascript();
     this._setCacheDisabled(false);
     this._setServiceWorkersTestingEnabled(false);
-    this._restoreUserAgent();
   },
 
   /**
@@ -1773,38 +1776,6 @@ TabActor.prototype = {
     return windowUtils.serviceWorkersTestingEnabled;
   },
 
-  _previousCustomUserAgent: null,
-
-  /**
-   * Return custom user agent.
-   */
-  _getCustomUserAgent() {
-    if (!this.docShell) {
-      // The tab is already closed.
-      return null;
-    }
-    return this.docShell.customUserAgent;
-  },
-
-  /**
-   * Sets custom user agent for the current tab
-   */
-  _setCustomUserAgent(userAgent) {
-    if (this._previousCustomUserAgent === null) {
-      this._previousCustomUserAgent = this.docShell.customUserAgent;
-    }
-    this.docShell.customUserAgent = userAgent;
-  },
-
-  /**
-   * Restore the user agent, before the actor modified it
-   */
-  _restoreUserAgent() {
-    if (this._previousCustomUserAgent !== null) {
-      this.docShell.customUserAgent = this._previousCustomUserAgent;
-    }
-  },
-
   /**
    * Prepare to enter a nested event loop by disabling debuggee events.
    */
@@ -1833,10 +1804,6 @@ TabActor.prototype = {
                           .getInterface(Ci.nsIDOMWindowUtils);
     windowUtils.resumeTimeouts();
     windowUtils.suppressEventHandling(false);
-    if (this._pendingNavigation) {
-      this._pendingNavigation.resume();
-      this._pendingNavigation = null;
-    }
   },
 
   _changeTopLevelDocument(window) {
@@ -1872,13 +1839,11 @@ TabActor.prototype = {
       configurable: true
     });
     events.emit(this, "changed-toplevel-document");
-    let id = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                   .getInterface(Ci.nsIDOMWindowUtils)
-                   .outerWindowID;
-    this.conn.send({ from: this.actorID,
-                     type: "frameUpdate",
-                     selected: id
-                   });
+    this.conn.send({
+      from: this.actorID,
+      type: "frameUpdate",
+      selected: this.outerWindowID
+    });
   },
 
   /**
@@ -1976,12 +1941,10 @@ TabActor.prototype = {
     // TODO bug 997119: move that code to ThreadActor by listening to
     // will-navigate
     let threadActor = this.threadActor;
-    if (request && threadActor.state == "paused") {
-      request.suspend();
+    if (threadActor.state == "paused") {
       this.conn.send(
         threadActor.unsafeSynchronize(Promise.resolve(threadActor.onResume())));
       threadActor.dbg.enabled = false;
-      this._pendingNavigation = request;
     }
     threadActor.disableAllBreakpoints();
 

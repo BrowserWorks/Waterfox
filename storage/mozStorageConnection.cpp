@@ -18,7 +18,7 @@
 #include "mozilla/CondVar.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorNames.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/quota/QuotaObject.h"
 
 #include "mozIStorageAggregateFunction.h"
@@ -58,8 +58,10 @@ mozilla::LazyLogModule gStorageLog("mozStorage");
 #define CHECK_MAINTHREAD_ABUSE() \
   do { \
     nsCOMPtr<nsIThread> mainThread = do_GetMainThread(); \
-    NS_WARN_IF_FALSE(threadOpenedOn == mainThread || !NS_IsMainThread(), \
-               "Using Storage synchronous API on main-thread, but the connection was opened on another thread."); \
+    NS_WARNING_ASSERTION( \
+      threadOpenedOn == mainThread || !NS_IsMainThread(), \
+      "Using Storage synchronous API on main-thread, but the connection was " \
+      "opened on another thread."); \
   } while(0)
 #else
 #define CHECK_MAINTHREAD_ABUSE() do { /* Nothing */ } while(0)
@@ -358,7 +360,7 @@ public:
   {
   }
 
-  NS_METHOD Run()
+  NS_IMETHOD Run() override
   {
 #ifdef DEBUG
     // This code is executed on the background thread
@@ -423,7 +425,7 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     MOZ_ASSERT (NS_GetCurrentThread() == mClone->getAsyncExecutionTarget());
 
     nsresult rv = mConnection->initializeClone(mClone, mReadOnly);
@@ -470,7 +472,8 @@ private:
 
 Connection::Connection(Service *aService,
                        int aFlags,
-                       bool aAsyncOnly)
+                       bool aAsyncOnly,
+                       bool aIgnoreLockingMode)
 : sharedAsyncExecutionMutex("Connection::sharedAsyncExecutionMutex")
 , sharedDBMutex("Connection::sharedDBMutex")
 , threadOpenedOn(do_GetCurrentThread())
@@ -483,9 +486,12 @@ Connection::Connection(Service *aService,
 , mTransactionInProgress(false)
 , mProgressHandler(nullptr)
 , mFlags(aFlags)
+, mIgnoreLockingMode(aIgnoreLockingMode)
 , mStorageService(aService)
 , mAsyncOnly(aAsyncOnly)
 {
+  MOZ_ASSERT(!mIgnoreLockingMode || mFlags & SQLITE_OPEN_READONLY,
+             "Can't ignore locking for a non-readonly connection!");
   mStorageService->registerConnection(this);
 }
 
@@ -575,6 +581,7 @@ nsresult
 Connection::initialize()
 {
   NS_ASSERTION (!mDBConn, "Initialize called on already opened database!");
+  MOZ_ASSERT(!mIgnoreLockingMode, "Can't ignore locking on an in-memory db.");
   PROFILER_LABEL("mozStorageConnection", "initialize",
     js::ProfileEntry::Category::STORAGE);
 
@@ -608,8 +615,15 @@ Connection::initialize(nsIFile *aDatabaseFile)
   nsresult rv = aDatabaseFile->GetPath(path);
   NS_ENSURE_SUCCESS(rv, rv);
 
+#ifdef XP_WIN
+  static const char* sIgnoreLockingVFS = "win32-none";
+#else
+  static const char* sIgnoreLockingVFS = "unix-none";
+#endif
+  const char* vfs = mIgnoreLockingMode ? sIgnoreLockingVFS : nullptr;
+
   int srv = ::sqlite3_open_v2(NS_ConvertUTF16toUTF8(path).get(), &mDBConn,
-                              mFlags, nullptr);
+                              mFlags, vfs);
   if (srv != SQLITE_OK) {
     mDBConn = nullptr;
     return convertResultCode(srv);

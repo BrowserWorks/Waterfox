@@ -508,18 +508,6 @@ XRE_API(void,
 XRE_API(void,
         XRE_StopLateWriteChecks, (void))
 
-#ifdef MOZ_B2G_LOADER
-XRE_API(int,
-        XRE_ProcLoaderServiceRun, (pid_t, int, int argc, const char* argv[],
-                                   mozilla::Vector<int>& aReservedFds));
-XRE_API(void,
-        XRE_ProcLoaderClientInit, (pid_t, int,
-                                   mozilla::Vector<int>& aReservedFds));
-XRE_API(void,
-        XRE_ProcLoaderPreload, (const char* aProgramDir,
-                                const nsXREAppData* aAppData));
-#endif // MOZ_B2G_LOADER
-
 XRE_API(void,
         XRE_EnableSameExecutableForContentProc, ())
 
@@ -531,5 +519,17 @@ XRE_API(int,
 XRE_API(void,
         XRE_GlibInit, ())
 #endif
+
+
+#ifdef LIBFUZZER
+#include "LibFuzzerRegistry.h"
+
+XRE_API(void,
+        XRE_LibFuzzerSetMain, (int, char**, LibFuzzerMain))
+
+XRE_API(void,
+        XRE_LibFuzzerGetFuncs, (const char*, LibFuzzerInitFunc*,
+                                LibFuzzerTestingFunc*))
+#endif // LIBFUZZER
 
 #endif // _nsXULAppAPI_h__

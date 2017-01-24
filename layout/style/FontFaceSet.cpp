@@ -18,7 +18,7 @@
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/SizePrintfMacros.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/Telemetry.h"
 #include "nsAutoPtr.h"
 #include "nsContentPolicyUtils.h"
@@ -97,6 +97,7 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 FontFaceSet::FontFaceSet(nsPIDOMWindowInner* aWindow, nsIDocument* aDocument)
   : DOMEventTargetHelper(aWindow)
   , mDocument(aDocument)
+  , mResolveLazilyCreatedReadyPromise(false)
   , mStatus(FontFaceSetLoadStatus::Loaded)
   , mNonRuleFacesDirty(false)
   , mHasLoadingFontFaces(false)
@@ -111,12 +112,7 @@ FontFaceSet::FontFaceSet(nsPIDOMWindowInner* aWindow, nsIDocument* aDocument)
   // be able to get to anyway) as it causes the window.FontFaceSet constructor
   // to be created.
   if (global && PrefEnabled()) {
-    ErrorResult rv;
-    mReady = Promise::Create(global, rv);
-  }
-
-  if (mReady) {
-    mReady->MaybeResolve(this);
+    mResolveLazilyCreatedReadyPromise = true;
   }
 
   if (!mDocument->DidFireDOMContentLoaded()) {
@@ -386,8 +382,16 @@ Promise*
 FontFaceSet::GetReady(ErrorResult& aRv)
 {
   if (!mReady) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return nullptr;
+    nsCOMPtr<nsIGlobalObject> global = GetParentObject();
+    mReady = Promise::Create(global, aRv);
+    if (!mReady) {
+      aRv.Throw(NS_ERROR_FAILURE);
+      return nullptr;
+    }
+    if (mResolveLazilyCreatedReadyPromise) {
+      mReady->MaybeResolve(this);
+      mResolveLazilyCreatedReadyPromise = false;
+    }
   }
 
   FlushUserFontSet();
@@ -607,13 +611,12 @@ FontFaceSet::StartLoad(gfxUserFontEntry* aUserFontEntry,
     new nsFontFaceLoader(aUserFontEntry, aFontFaceSrc->mURI, this, channel);
 
   if (LOG_ENABLED()) {
-    nsAutoCString fontURI, referrerURI;
-    aFontFaceSrc->mURI->GetSpec(fontURI);
-    if (aFontFaceSrc->mReferrer)
-      aFontFaceSrc->mReferrer->GetSpec(referrerURI);
     LOG(("userfonts (%p) download start - font uri: (%s) "
          "referrer uri: (%s)\n",
-         fontLoader.get(), fontURI.get(), referrerURI.get()));
+         fontLoader.get(), aFontFaceSrc->mURI->GetSpecOrDefault().get(),
+         aFontFaceSrc->mReferrer
+         ? aFontFaceSrc->mReferrer->GetSpecOrDefault().get()
+         : ""));
   }
 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel));
@@ -1214,7 +1217,7 @@ FontFaceSet::LogMessage(gfxUserFontEntry* aUserFontEntry,
   if (weightKeywordString.Length() > 0) {
     weightKeyword = weightKeywordString.get();
   } else {
-    snprintf_literal(weightKeywordBuf, "%u", aUserFontEntry->Weight());
+    SprintfLiteral(weightKeywordBuf, "%u", aUserFontEntry->Weight());
     weightKeyword = weightKeywordBuf;
   }
 
@@ -1264,9 +1267,7 @@ FontFaceSet::LogMessage(gfxUserFontEntry* aUserFontEntry,
     CSSStyleSheet* sheet = rule->GetStyleSheet();
     // if the style sheet is removed while the font is loading can be null
     if (sheet) {
-      nsAutoCString spec;
-      rv = sheet->GetSheetURI()->GetSpec(spec);
-      NS_ENSURE_SUCCESS(rv, rv);
+      nsCString spec = sheet->GetSheetURI()->GetSpecOrDefault();
       CopyUTF8toUTF16(spec, href);
     } else {
       NS_WARNING("null parent stylesheet for @font-face rule");
@@ -1508,14 +1509,14 @@ FontFaceSet::CheckLoadingStarted()
                             false))->RunDOMEventWhenSafe();
 
   if (PrefEnabled()) {
-    RefPtr<Promise> ready;
-    if (GetParentObject()) {
-      ErrorResult rv;
-      ready = Promise::Create(GetParentObject(), rv);
+    if (mReady) {
+      if (GetParentObject()) {
+        ErrorResult rv;
+        mReady = Promise::Create(GetParentObject(), rv);
+      }
     }
-
-    if (ready) {
-      mReady.swap(ready);
+    if (!mReady) {
+      mResolveLazilyCreatedReadyPromise = false;
     }
   }
 }
@@ -1602,6 +1603,8 @@ FontFaceSet::CheckLoadingFinished()
   mStatus = FontFaceSetLoadStatus::Loaded;
   if (mReady) {
     mReady->MaybeResolve(this);
+  } else {
+    mResolveLazilyCreatedReadyPromise = true;
   }
 
   // Now dispatch the loadingdone/loadingerror events.

@@ -86,8 +86,6 @@ WorkerThread::~WorkerThread()
 already_AddRefed<WorkerThread>
 WorkerThread::Create(const WorkerThreadFriendKey& /* aKey */)
 {
-  MOZ_ASSERT(nsThreadManager::get());
-
   RefPtr<WorkerThread> thread = new WorkerThread();
   if (NS_FAILED(thread->Init())) {
     NS_WARNING("Failed to create new thread!");
@@ -333,7 +331,7 @@ WorkerThread::Observer::OnProcessNextEvent(nsIThreadInternal* /* aThread */,
   // PrimaryWorkerRunnable::Run() and don't want to process the event in
   // mWorkerPrivate yet.
   if (aMayWait) {
-    MOZ_ASSERT(CycleCollectedJSRuntime::Get()->RecursionDepth() == 2);
+    MOZ_ASSERT(CycleCollectedJSContext::Get()->RecursionDepth() == 2);
     MOZ_ASSERT(!BackgroundChild::GetForCurrentThread());
     return NS_OK;
   }

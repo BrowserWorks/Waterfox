@@ -19,8 +19,8 @@ var {getInplaceEditorForSpan: inplaceEditor} =
 
 const ROOT_TEST_DIR = getRootDirectory(gTestPath);
 const FRAME_SCRIPT_URL = ROOT_TEST_DIR + "doc_frame_script.js";
-const _STRINGS = Services.strings.createBundle(
-  "chrome://devtools-shared/locale/styleinspector.properties");
+
+const STYLE_INSPECTOR_L10N = new LocalizationHelper("chrome://devtools-shared/locale/styleinspector.properties");
 
 registerCleanupFunction(() => {
   Services.prefs.clearUserPref("devtools.defaultColorUnit");
@@ -177,13 +177,15 @@ var focusEditableField = Task.async(function* (ruleView, editable, xOffset = 1,
  * setting the value of the corresponding css property in the rule-view.
  * Use this function to close the tooltip and make sure the test waits for the
  * ruleview-changed event.
- * @param {Tooltip} tooltip
+ * @param {SwatchBasedEditorTooltip} editorTooltip
  * @param {CSSRuleView} view
  */
-function* hideTooltipAndWaitForRuleViewChanged(tooltip, view) {
+function* hideTooltipAndWaitForRuleViewChanged(editorTooltip, view) {
   let onModified = view.once("ruleview-changed");
-  tooltip.hide();
+  let onHidden = editorTooltip.tooltip.once("hidden");
+  editorTooltip.hide();
   yield onModified;
+  yield onHidden;
 }
 
 /**
@@ -391,9 +393,9 @@ var openColorPickerAndSelectColor = Task.async(function* (view, ruleIndex,
   let cPicker = view.tooltips.colorPicker;
 
   info("Opening the colorpicker by clicking the color swatch");
-  let onShown = cPicker.tooltip.once("shown");
+  let onColorPickerReady = cPicker.once("ready");
   swatch.click();
-  yield onShown;
+  yield onColorPickerReady;
 
   yield simulateColorPickerChange(view, cPicker, newRgba, expectedChange);
 
@@ -429,9 +431,9 @@ var openCubicBezierAndChangeCoords = Task.async(function* (view, ruleIndex,
   let bezierTooltip = view.tooltips.cubicBezier;
 
   info("Opening the cubicBezier by clicking the swatch");
-  let onShown = bezierTooltip.tooltip.once("shown");
+  let onBezierWidgetReady = bezierTooltip.once("ready");
   swatch.click();
-  yield onShown;
+  yield onBezierWidgetReady;
 
   let widget = yield bezierTooltip.widget;
 
@@ -530,6 +532,7 @@ var addProperty = Task.async(function* (view, ruleIndex, name, value,
   // triggers a ruleview-changed event (see bug 1209295).
   let onPreview = view.once("ruleview-changed");
   editor.input.value = value;
+  view.throttle.flush();
   yield onPreview;
 
   let onValueAdded = view.once("ruleview-changed");
@@ -568,6 +571,7 @@ var setProperty = Task.async(function* (view, textProp, value,
   } else {
     EventUtils.sendString(value, view.styleWindow);
   }
+  view.throttle.flush();
   yield onPreview;
 
   let onValueDone = view.once("ruleview-changed");
@@ -789,4 +793,24 @@ function openStyleContextMenuAndGetAllItems(view, target) {
   }));
 
   return allItems;
+}
+
+/**
+ * Wait for a markupmutation event on the inspector that is for a style modification.
+ * @param {InspectorPanel} inspector
+ * @return {Promise}
+ */
+function waitForStyleModification(inspector) {
+  return new Promise(function (resolve) {
+    function checkForStyleModification(name, mutations) {
+      for (let mutation of mutations) {
+        if (mutation.type === "attributes" && mutation.attributeName === "style") {
+          inspector.off("markupmutation", checkForStyleModification);
+          resolve();
+          return;
+        }
+      }
+    }
+    inspector.on("markupmutation", checkForStyleModification);
+  });
 }

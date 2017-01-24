@@ -25,9 +25,6 @@
 
 #include <stdint.h>
 #include <limits.h>
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
 
 #include "mathematics.h"
 #include "libavutil/intmath.h"

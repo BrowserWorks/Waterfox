@@ -22,23 +22,32 @@ https://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-06
 #ifndef mozilla_net_AlternateServices_h
 #define mozilla_net_AlternateServices_h
 
+#include "mozilla/DataStorage.h"
 #include "nsRefPtrHashtable.h"
 #include "nsString.h"
 #include "nsIInterfaceRequestor.h"
+#include "nsIStreamListener.h"
 #include "nsISpeculativeConnect.h"
+#include "mozilla/BasePrincipal.h"
+
+class nsILoadInfo;
 
 namespace mozilla { namespace net {
 
 class nsProxyInfo;
 class nsHttpConnectionInfo;
+class nsHttpTransaction;
+class nsHttpChannel;
+class WellKnownChecker;
 
 class AltSvcMapping
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AltSvcMapping)
-  friend class AltSvcCache;
 
 private: // ctor from ProcessHeader
-  AltSvcMapping(const nsACString &originScheme,
+  AltSvcMapping(DataStorage *storage,
+                int32_t storageEpoch,
+                const nsACString &originScheme,
                 const nsACString &originHost,
                 int32_t originPort,
                 const nsACString &username,
@@ -47,55 +56,68 @@ private: // ctor from ProcessHeader
                 const nsACString &alternateHost,
                 int32_t alternatePort,
                 const nsACString &npnToken);
-
 public:
+  AltSvcMapping(DataStorage *storage, int32_t storageEpoch, const nsCString &serialized);
+
   static void ProcessHeader(const nsCString &buf, const nsCString &originScheme,
                             const nsCString &originHost, int32_t originPort,
                             const nsACString &username, bool privateBrowsing,
                             nsIInterfaceRequestor *callbacks, nsProxyInfo *proxyInfo,
-                            uint32_t caps);
+                            uint32_t caps, const NeckoOriginAttributes &originAttributes);
 
   const nsCString &AlternateHost() const { return mAlternateHost; }
   const nsCString &OriginHost() const { return mOriginHost; }
+  uint32_t OriginPort() const { return mOriginPort; }
   const nsCString &HashKey() const { return mHashKey; }
   uint32_t AlternatePort() const { return mAlternatePort; }
   bool Validated() { return mValidated; }
-  void SetValidated(bool val) { mValidated = val; }
-  bool IsRunning() { return mRunning; }
-  void SetRunning(bool val) { mRunning = val; }
   int32_t GetExpiresAt() { return mExpiresAt; }
-  void SetExpiresAt(int32_t val) { mExpiresAt = val; }
-  void SetExpired();
   bool RouteEquals(AltSvcMapping *map);
   bool HTTPS() { return mHttps; }
 
-  void GetConnectionInfo(nsHttpConnectionInfo **outCI, nsProxyInfo *pi);
-  int32_t TTL();
+  void GetConnectionInfo(nsHttpConnectionInfo **outCI, nsProxyInfo *pi,
+                         const NeckoOriginAttributes &originAttributes);
 
-private:
-  virtual ~AltSvcMapping() {};
+  int32_t TTL();
+  int32_t StorageEpoch() { return mStorageEpoch; }
+  bool    Private() { return mPrivate; }
+
+  void SetValidated(bool val);
+  void SetMixedScheme(bool val);
+  void SetExpiresAt(int32_t val);
+  void SetExpired();
+  void Sync();
+
   static void MakeHashKey(nsCString &outKey,
                           const nsACString &originScheme,
                           const nsACString &originHost,
                           int32_t originPort,
                           bool privateBrowsing);
 
+private:
+  virtual ~AltSvcMapping() {};
+  void     SyncString(nsCString val);
+  RefPtr<DataStorage> mStorage;
+  int32_t             mStorageEpoch;
+  void Serialize (nsCString &out);
+
   nsCString mHashKey;
 
+  // If you change any of these members, update Serialize()
   nsCString mAlternateHost;
-  int32_t mAlternatePort;
+  MOZ_INIT_OUTSIDE_CTOR int32_t mAlternatePort;
 
   nsCString mOriginHost;
-  int32_t mOriginPort;
+  MOZ_INIT_OUTSIDE_CTOR int32_t mOriginPort;
 
   nsCString mUsername;
-  bool mPrivate;
+  MOZ_INIT_OUTSIDE_CTOR bool mPrivate;
 
-  uint32_t mExpiresAt;
+  MOZ_INIT_OUTSIDE_CTOR uint32_t mExpiresAt; // alt-svc mappping
 
-  bool mValidated;
-  bool mRunning;
-  bool mHttps; // origin is https://
+  MOZ_INIT_OUTSIDE_CTOR bool mValidated;
+  MOZ_INIT_OUTSIDE_CTOR bool mHttps; // origin is https://
+  MOZ_INIT_OUTSIDE_CTOR bool mMixedScheme; // .wk allows http and https on same con
 
   nsCString mNPNToken;
 };
@@ -104,32 +126,63 @@ class AltSvcOverride : public nsIInterfaceRequestor
                      , public nsISpeculativeConnectionOverrider
 {
 public:
-    NS_DECL_THREADSAFE_ISUPPORTS
-    NS_DECL_NSISPECULATIVECONNECTIONOVERRIDER
-    NS_DECL_NSIINTERFACEREQUESTOR
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSISPECULATIVECONNECTIONOVERRIDER
+  NS_DECL_NSIINTERFACEREQUESTOR
 
-    explicit AltSvcOverride(nsIInterfaceRequestor *aRequestor)
-      : mCallbacks(aRequestor) {}
+  explicit AltSvcOverride(nsIInterfaceRequestor *aRequestor)
+    : mCallbacks(aRequestor) {}
 
 private:
-    virtual ~AltSvcOverride() {}
-    nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
+  virtual ~AltSvcOverride() {}
+  nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
+};
+
+class TransactionObserver : public nsIStreamListener
+{
+public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSISTREAMLISTENER
+  NS_DECL_NSIREQUESTOBSERVER
+
+  TransactionObserver(nsHttpChannel *channel, WellKnownChecker *checker);
+  void Complete(nsHttpTransaction *, nsresult);
+private:
+  friend class WellKnownChecker;
+  virtual ~TransactionObserver() {}
+
+  nsCOMPtr<nsISupports> mChannelRef;
+  nsHttpChannel        *mChannel;
+  WellKnownChecker     *mChecker;
+  nsCString             mWKResponse;
+
+  bool mRanOnce;
+  bool mAuthOK; // confirmed no TLS failure
+  bool mVersionOK; // connection h2
+  bool mStatusOK; // HTTP Status 200
 };
 
 class AltSvcCache
 {
 public:
+  AltSvcCache() : mStorageEpoch(0) {}
+  virtual ~AltSvcCache () {};
   void UpdateAltServiceMapping(AltSvcMapping *map, nsProxyInfo *pi,
-                               nsIInterfaceRequestor *, uint32_t caps); // main thread
-  AltSvcMapping *GetAltServiceMapping(const nsACString &scheme,
-                                      const nsACString &host,
-                                      int32_t port, bool pb);
+                               nsIInterfaceRequestor *, uint32_t caps,
+                               const NeckoOriginAttributes &originAttributes); // main thread
+  already_AddRefed<AltSvcMapping> GetAltServiceMapping(const nsACString &scheme,
+                                                       const nsACString &host,
+                                                       int32_t port, bool pb);
   void ClearAltServiceMappings();
   void ClearHostMapping(const nsACString &host, int32_t port);
   void ClearHostMapping(nsHttpConnectionInfo *ci);
+  DataStorage *GetStoragePtr() { return mStorage.get(); }
+  int32_t      StorageEpoch()  { return mStorageEpoch; }
 
 private:
-  nsRefPtrHashtable<nsCStringHashKey, AltSvcMapping> mHash;
+  already_AddRefed<AltSvcMapping> LookupMapping(const nsCString &key, bool privateBrowsing);
+  RefPtr<DataStorage>             mStorage;
+  int32_t                         mStorageEpoch;
 };
 
 } // namespace net

@@ -478,6 +478,9 @@ SetOrExtendBoxedOrUnboxedDenseElements(ExclusiveContext* cx, JSObject* obj,
     if (Type == JSVAL_TYPE_MAGIC) {
         NativeObject* nobj = &obj->as<NativeObject>();
 
+        if (nobj->denseElementsAreFrozen())
+            return DenseElementResult::Incomplete;
+
         if (obj->is<ArrayObject>() &&
             !obj->as<ArrayObject>().lengthIsWritable() &&
             start + count >= obj->as<ArrayObject>().length())
@@ -561,6 +564,9 @@ MoveBoxedOrUnboxedDenseElements(JSContext* cx, JSObject* obj, uint32_t dstStart,
     MOZ_ASSERT(HasBoxedOrUnboxedDenseElements<Type>(obj));
 
     if (Type == JSVAL_TYPE_MAGIC) {
+        if (obj->as<NativeObject>().denseElementsAreFrozen())
+            return DenseElementResult::Incomplete;
+
         if (!obj->as<NativeObject>().maybeCopyElementsForWrite(cx))
             return DenseElementResult::Failure;
         obj->as<NativeObject>().moveDenseElements(dstStart, srcStart, length);
@@ -568,10 +574,12 @@ MoveBoxedOrUnboxedDenseElements(JSContext* cx, JSObject* obj, uint32_t dstStart,
         uint8_t* data = obj->as<UnboxedArrayObject>().elements();
         size_t elementSize = UnboxedTypeSize(Type);
 
-        if (UnboxedTypeNeedsPreBarrier(Type)) {
+        if (UnboxedTypeNeedsPreBarrier(Type) &&
+            JS::shadow::Zone::asShadowZone(obj->zone())->needsIncrementalBarrier())
+        {
             // Trigger pre barriers on any elements we are overwriting. See
-            // moveDenseElements::moveDenseElements. No post barrier is needed
-            // as only whole cell post barriers are used with unboxed objects.
+            // NativeObject::moveDenseElements. No post barrier is needed as
+            // only whole cell post barriers are used with unboxed objects.
             for (size_t i = 0; i < length; i++)
                 obj->as<UnboxedArrayObject>().triggerPreBarrier<Type>(dstStart + i);
         }

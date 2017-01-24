@@ -28,6 +28,7 @@
 #include "mozilla/net/ReferrerPolicy.h"
 
 class nsICSSLoaderObserver;
+class nsIConsoleReportCollector;
 class nsIContent;
 class nsIDocument;
 class nsMediaList;
@@ -456,6 +457,7 @@ private:
   nsresult CreateSheet(nsIURI* aURI,
                        nsIContent* aLinkingContent,
                        nsIPrincipal* aLoaderPrincipal,
+                       css::SheetParsingMode aParsingMode,
                        CORSMode aCORSMode,
                        ReferrerPolicy aReferrerPolicy,
                        const nsAString& aIntegrity,
@@ -582,6 +584,8 @@ private:
   mozilla::Maybe<StyleBackendType> mStyleBackendType;
 
   bool              mEnabled; // is enabled to load new styles
+
+  nsCOMPtr<nsIConsoleReportCollector> mReporter;
 
 #ifdef DEBUG
   bool              mSyncCallback;

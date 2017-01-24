@@ -735,7 +735,8 @@ protected:
       nsresult rv =
 #endif
       mFile->Remove(false);
-      NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to remove temporary DOMFile.");
+      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                           "Failed to remove temporary DOMFile.");
     }
   }
 
@@ -794,6 +795,44 @@ public:
 
 private:
   ~EmptyBlobImpl() {}
+};
+
+class BlobImplStream final : public BlobImplBase
+{
+public:
+  NS_DECL_ISUPPORTS_INHERITED
+
+  BlobImplStream(nsIInputStream* aInputStream,
+                 const nsAString& aContentType,
+                 uint64_t aLength);
+
+  BlobImplStream(nsIInputStream* aInputStream,
+                 const nsAString& aName,
+                 const nsAString& aContentType,
+                 int64_t aLastModifiedDate,
+                 uint64_t aLength);
+
+  virtual void GetInternalStream(nsIInputStream** aStream,
+                                 ErrorResult& aRv) override;
+
+  virtual already_AddRefed<BlobImpl>
+  CreateSlice(uint64_t aStart, uint64_t aLength,
+              const nsAString& aContentType, ErrorResult& aRv) override;
+
+  virtual bool IsMemoryFile() const override
+  {
+    return true;
+  }
+
+private:
+  BlobImplStream(BlobImplStream* aOther,
+                 const nsAString& aContentType,
+                 uint64_t aStart,
+                 uint64_t aLength);
+
+  ~BlobImplStream();
+
+  nsCOMPtr<nsIInputStream> mInputStream;
 };
 
 } // namespace dom

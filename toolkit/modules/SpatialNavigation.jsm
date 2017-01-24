@@ -98,11 +98,10 @@ function _onInputKeyPress (event, callback) {
       event.stopPropagation();
       event.preventDefault();
       return;
-    } else {
-      // Leave the action key press to get reported to the DOM as a return
-      // keypress.
-      return;
     }
+    // Leave the action key press to get reported to the DOM as a return
+    // keypress.
+    return;
   }
 
   // If it is not using the modifiers it should, return.
@@ -519,7 +518,7 @@ var PrefObserver = {
       case "enabled":
         try {
           this.enabled = this._branch.getBoolPref("enabled");
-        } catch(e) {
+        } catch (e) {
           this.enabled = false;
         }
         break;
@@ -527,7 +526,7 @@ var PrefObserver = {
       case "xulContentEnabled":
         try {
           this.xulContentEnabled = this._branch.getBoolPref("xulContentEnabled");
-        } catch(e) {
+        } catch (e) {
           this.xulContentEnabled = false;
         }
         break;
@@ -561,42 +560,42 @@ var PrefObserver = {
               }
             }
           }
-        } catch(e) { }
+        } catch (e) { }
         break;
       }
 
       case "keyCode.up":
         try {
           this.keyCodeUp = this._branch.getIntPref("keyCode.up");
-        } catch(e) {
+        } catch (e) {
           this.keyCodeUp = Ci.nsIDOMKeyEvent.DOM_VK_UP;
         }
         break;
       case "keyCode.down":
         try {
           this.keyCodeDown = this._branch.getIntPref("keyCode.down");
-        } catch(e) {
+        } catch (e) {
           this.keyCodeDown = Ci.nsIDOMKeyEvent.DOM_VK_DOWN;
         }
         break;
       case "keyCode.left":
         try {
           this.keyCodeLeft = this._branch.getIntPref("keyCode.left");
-        } catch(e) {
+        } catch (e) {
           this.keyCodeLeft = Ci.nsIDOMKeyEvent.DOM_VK_LEFT;
         }
         break;
       case "keyCode.right":
         try {
           this.keyCodeRight = this._branch.getIntPref("keyCode.right");
-        } catch(e) {
+        } catch (e) {
           this.keyCodeRight = Ci.nsIDOMKeyEvent.DOM_VK_RIGHT;
         }
         break;
       case "keyCode.return":
         try {
           this.keyCodeReturn = this._branch.getIntPref("keyCode.return");
-        } catch(e) {
+        } catch (e) {
           this.keyCodeReturn = Ci.nsIDOMKeyEvent.DOM_VK_RETURN;
         }
         break;

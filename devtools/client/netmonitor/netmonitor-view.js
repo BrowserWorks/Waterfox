@@ -25,20 +25,22 @@ const {ToolSidebar} = require("devtools/client/framework/sidebar");
 const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
 const {setImageTooltip, getImageDimensions} =
   require("devtools/client/shared/widgets/tooltip/ImageTooltipHelper");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const {LocalizationHelper} = require("devtools/client/shared/l10n");
+const { testing: isTesting } = require("devtools/shared/flags");
+const {LocalizationHelper} = require("devtools/shared/l10n");
 const {PrefsHelper} = require("devtools/client/shared/prefs");
 const {ViewHelpers, Heritage, WidgetMethods, setNamedTimeout} =
   require("devtools/client/shared/widgets/view-helpers");
 const {gDevTools} = require("devtools/client/framework/devtools");
+const {Curl, CurlUtils} = require("devtools/client/shared/curl");
 
 /**
  * Localization convenience methods.
  */
-const NET_STRINGS_URI = "chrome://devtools/locale/netmonitor.properties";
-const WEBCONSOLE_STRINGS_URI = "chrome://devtools/locale/webconsole.properties";
+const NET_STRINGS_URI = "devtools/locale/netmonitor.properties";
+const WEBCONSOLE_STRINGS_URI = "devtools/locale/webconsole.properties";
 var L10N = new LocalizationHelper(NET_STRINGS_URI);
 const WEBCONSOLE_L10N = new LocalizationHelper(WEBCONSOLE_STRINGS_URI);
+const {PluralForm} = require("devtools/shared/plural-form");
 
 // ms
 const WDA_DEFAULT_VERIFY_INTERVAL = 50;
@@ -48,7 +50,7 @@ const WDA_DEFAULT_VERIFY_INTERVAL = 50;
 // be at least equal to the general mochitest timeout of 45 seconds so that this
 // never gets hit during testing.
 // ms
-const WDA_DEFAULT_GIVE_UP_TIMEOUT = DevToolsUtils.testing ? 45000 : 2000;
+const WDA_DEFAULT_GIVE_UP_TIMEOUT = isTesting ? 45000 : 2000;
 
 /**
  * Shortcuts for accessing various network monitor preferences.
@@ -337,12 +339,12 @@ var NetMonitorView = {
         // • The response content size and request total time are necessary for
         // populating the statistics view.
         // • The response mime type is used for categorization.
-        yield whenDataAvailable(requestsView.attachments, [
+        yield whenDataAvailable(requestsView, [
           "responseHeaders", "status", "contentSize", "mimeType", "totalTime"
         ]);
       } catch (ex) {
         // Timed out while waiting for data. Continue with what we have.
-        DevToolsUtils.reportException("showNetworkStatisticsView", ex);
+        console.error(ex);
       }
 
       statisticsView.createPrimedCacheChart(requestsView.items);
@@ -2061,7 +2063,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    */
   _createWaterfallView: function (item, timings, fromCache) {
     let { target } = item;
-    let sections = ["dns", "connect", "send", "wait", "receive"];
+    let sections = ["blocked", "dns", "connect", "send", "wait", "receive"];
     // Skipping "blocked" because it doesn't work yet.
 
     let timingsNode = $(".requests-menu-timings", target);
@@ -4072,18 +4074,19 @@ function formDataURI(mimeType, encoding, text) {
  * Makes sure certain properties are available on all objects in a data store.
  *
  * @param array dataStore
- *        A list of objects for which to check the availability of properties.
+ *        The request view object from which to fetch the item list.
  * @param array mandatoryFields
  *        A list of strings representing properties of objects in dataStore.
  * @return object
  *         A promise resolved when all objects in dataStore contain the
  *         properties defined in mandatoryFields.
  */
-function whenDataAvailable(dataStore, mandatoryFields) {
+function whenDataAvailable(requestsView, mandatoryFields) {
   let deferred = promise.defer();
 
   let interval = setInterval(() => {
-    if (dataStore.every(item => {
+    const { attachments } = requestsView;
+    if (attachments.length > 0 && attachments.every(item => {
       return mandatoryFields.every(field => field in item);
     })) {
       clearInterval(interval);

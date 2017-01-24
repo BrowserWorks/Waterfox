@@ -25,6 +25,8 @@ static bool sStyleContextNeedsRestore;
 static GtkStyleContext* sCurrentStyleContext;
 #endif
 static GtkStyleContext*
+GetWidgetRootStyle(WidgetNodeType aNodeType);
+static GtkStyleContext*
 GetCssNodeStyleInternal(WidgetNodeType aNodeType);
 
 static GtkWidget*
@@ -89,14 +91,6 @@ CreateMenuPopupWidget()
   GtkWidget* widget = gtk_menu_new();
   gtk_menu_attach_to_widget(GTK_MENU(widget), GetWidget(MOZ_GTK_WINDOW),
                             nullptr);
-  return widget;
-}
-
-static GtkWidget*
-CreateMenuItemWidget(WidgetNodeType aShellType)
-{
-  GtkWidget* widget = gtk_menu_item_new();
-  gtk_menu_shell_append(GTK_MENU_SHELL(GetWidget(aShellType)), widget);
   return widget;
 }
 
@@ -237,6 +231,104 @@ CreateMenuSeparatorWidget()
   return widget;
 }
 
+static GtkWidget*
+CreateTreeViewWidget()
+{
+  GtkWidget* widget = gtk_tree_view_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateTreeHeaderCellWidget()
+{
+  /*
+   * Some GTK engines paint the first and last cell
+   * of a TreeView header with a highlight.
+   * Since we do not know where our widget will be relative
+   * to the other buttons in the TreeView header, we must
+   * paint it as a button that is between two others,
+   * thus ensuring it is neither the first or last button
+   * in the header.
+   * GTK doesn't give us a way to do this explicitly,
+   * so we must paint with a button that is between two
+   * others.
+   */
+  GtkTreeViewColumn* firstTreeViewColumn;
+  GtkTreeViewColumn* middleTreeViewColumn;
+  GtkTreeViewColumn* lastTreeViewColumn;
+
+  GtkWidget *treeView = GetWidget(MOZ_GTK_TREEVIEW);
+
+  /* Create and append our three columns */
+  firstTreeViewColumn = gtk_tree_view_column_new();
+  gtk_tree_view_column_set_title(firstTreeViewColumn, "M");
+  gtk_tree_view_append_column(GTK_TREE_VIEW(treeView),
+                              firstTreeViewColumn);
+
+  middleTreeViewColumn = gtk_tree_view_column_new();
+  gtk_tree_view_column_set_title(middleTreeViewColumn, "M");
+  gtk_tree_view_append_column(GTK_TREE_VIEW(treeView),
+                              middleTreeViewColumn);
+
+  lastTreeViewColumn = gtk_tree_view_column_new();
+  gtk_tree_view_column_set_title(lastTreeViewColumn, "M");
+  gtk_tree_view_append_column(GTK_TREE_VIEW(treeView),
+                              lastTreeViewColumn);
+
+  /* Use the middle column's header for our button */
+  return gtk_tree_view_column_get_button(middleTreeViewColumn);
+}
+
+static GtkWidget*
+CreateTreeHeaderSortArrowWidget()
+{
+  /* TODO, but it can't be NULL */
+  GtkWidget* widget = gtk_button_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateHPanedWidget()
+{
+  GtkWidget* widget = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateVPanedWidget()
+{
+  GtkWidget* widget = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateImageMenuItemWidget()
+{
+  GtkWidget* widget = gtk_image_menu_item_new();
+  gtk_menu_shell_append(GTK_MENU_SHELL(GetWidget(MOZ_GTK_MENUPOPUP)), widget);
+  gtk_widget_realize(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateScaleWidget(GtkOrientation aOrientation)
+{
+  GtkWidget* widget = gtk_scale_new(aOrientation, nullptr);
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateNotebookWidget()
+{
+  GtkWidget* widget = gtk_notebook_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
 
 static GtkWidget*
 CreateWidget(WidgetNodeType aWidgetType)
@@ -262,10 +354,6 @@ CreateWidget(WidgetNodeType aWidgetType)
       return CreateMenuBarWidget();
     case MOZ_GTK_MENUPOPUP:
       return CreateMenuPopupWidget();
-    case MOZ_GTK_MENUBARITEM:
-      return CreateMenuItemWidget(MOZ_GTK_MENUBAR);
-    case MOZ_GTK_MENUITEM:
-      return CreateMenuItemWidget(MOZ_GTK_MENUPOPUP);
     case MOZ_GTK_MENUSEPARATOR:
       return CreateMenuSeparatorWidget();
     case MOZ_GTK_EXPANDER:
@@ -294,6 +382,24 @@ CreateWidget(WidgetNodeType aWidgetType)
       return CreateScrolledWindowWidget();
     case MOZ_GTK_TEXT_VIEW:
       return CreateTextViewWidget();
+    case MOZ_GTK_TREEVIEW:
+      return CreateTreeViewWidget();
+    case MOZ_GTK_TREE_HEADER_CELL:
+      return CreateTreeHeaderCellWidget();
+    case MOZ_GTK_TREE_HEADER_SORTARROW:
+      return CreateTreeHeaderSortArrowWidget();
+    case MOZ_GTK_SPLITTER_HORIZONTAL:
+      return CreateHPanedWidget();
+    case MOZ_GTK_SPLITTER_VERTICAL:
+      return CreateVPanedWidget();
+    case MOZ_GTK_IMAGEMENUITEM:
+      return CreateImageMenuItemWidget();
+    case MOZ_GTK_SCALE_HORIZONTAL:
+      return CreateScaleWidget(GTK_ORIENTATION_HORIZONTAL);
+    case MOZ_GTK_SCALE_VERTICAL:
+      return CreateScaleWidget(GTK_ORIENTATION_VERTICAL);
+    case MOZ_GTK_NOTEBOOK:
+      return CreateNotebookWidget();
     default:
       /* Not implemented */
       return nullptr;
@@ -314,25 +420,51 @@ GetWidget(WidgetNodeType aWidgetType)
 GtkStyleContext*
 CreateStyleForWidget(GtkWidget* aWidget, GtkStyleContext* aParentStyle)
 {
-  GtkWidgetPath* path = aParentStyle ?
-    gtk_widget_path_copy(gtk_style_context_get_path(aParentStyle)) :
-    gtk_widget_path_new();
+  static auto sGtkWidgetClassGetCSSName =
+    reinterpret_cast<const char* (*)(GtkWidgetClass*)>
+    (dlsym(RTLD_DEFAULT, "gtk_widget_class_get_css_name"));
 
-  // Work around https://bugzilla.gnome.org/show_bug.cgi?id=767312
-  // which exists in GTK+ 3.20.
-  gtk_widget_get_style_context(aWidget);
+  GtkWidgetClass *widgetClass = GTK_WIDGET_GET_CLASS(aWidget);
+  const gchar* name = sGtkWidgetClassGetCSSName ?
+    sGtkWidgetClassGetCSSName(widgetClass) : nullptr;
 
-  gtk_widget_path_append_for_widget(path, aWidget);
+  GtkStyleContext *context =
+    CreateCSSNode(name, aParentStyle, G_TYPE_FROM_CLASS(widgetClass));
+
+  // Classes are stored on the style context instead of the path so that any
+  // future gtk_style_context_save() will inherit classes on the head CSS
+  // node, in the same way as happens when called on a style context owned by
+  // a widget.
+  //
+  // Classes can be stored on a GtkCssNodeDeclaration and/or the path.
+  // gtk_style_context_save() reuses the GtkCssNodeDeclaration, and appends a
+  // new object to the path, without copying the classes from the old path
+  // head.  The new head picks up classes from the GtkCssNodeDeclaration, but
+  // not the path.  GtkWidgets store their classes on the
+  // GtkCssNodeDeclaration, so make sure to add classes there.
+  //
+  // Picking up classes from the style context also means that
+  // https://bugzilla.gnome.org/show_bug.cgi?id=767312, which can stop
+  // gtk_widget_path_append_for_widget() from finding classes in GTK 3.20,
+  // is not a problem.
+  GtkStyleContext* widgetStyle = gtk_widget_get_style_context(aWidget);
+  GList* classes = gtk_style_context_list_classes(widgetStyle);
+  for (GList* link = classes; link; link = link->next) {
+    gtk_style_context_add_class(context, static_cast<gchar*>(link->data));
+  }
+  g_list_free(classes);
+
   // Release any floating reference on aWidget.
   g_object_ref_sink(aWidget);
   g_object_unref(aWidget);
 
-  GtkStyleContext *context = gtk_style_context_new();
-  gtk_style_context_set_path(context, path);
-  gtk_style_context_set_parent(context, aParentStyle);
-  gtk_widget_path_unref(path);
-
   return context;
+}
+
+static GtkStyleContext*
+CreateStyleForWidget(GtkWidget* aWidget, WidgetNodeType aParentType)
+{
+  return CreateStyleForWidget(aWidget, GetWidgetRootStyle(aParentType));
 }
 
 GtkStyleContext*
@@ -348,7 +480,9 @@ CreateCSSNode(const char* aName, GtkStyleContext* aParentStyle, GType aType)
 
   gtk_widget_path_append_type(path, aType);
 
-  (*sGtkWidgetPathIterSetObjectName)(path, -1, aName);
+  if (sGtkWidgetPathIterSetObjectName) {
+    (*sGtkWidgetPathIterSetObjectName)(path, -1, aName);
+  }
 
   GtkStyleContext *context = gtk_style_context_new();
   gtk_style_context_set_path(context, path);
@@ -356,6 +490,40 @@ CreateCSSNode(const char* aName, GtkStyleContext* aParentStyle, GType aType)
   gtk_widget_path_unref(path);
 
   return context;
+}
+
+// Return a style context matching that of the root CSS node of a widget.
+// This is used by all GTK versions.
+static GtkStyleContext*
+GetWidgetRootStyle(WidgetNodeType aNodeType)
+{
+  GtkStyleContext* style = sStyleStorage[aNodeType];
+  if (style)
+    return style;
+
+  switch (aNodeType) {
+    case MOZ_GTK_MENUBARITEM:
+      style = CreateStyleForWidget(gtk_menu_item_new(), MOZ_GTK_MENUBAR);
+      break;
+    case MOZ_GTK_MENUITEM:
+      style = CreateStyleForWidget(gtk_menu_item_new(), MOZ_GTK_MENUPOPUP);
+      break;
+    case MOZ_GTK_CHECKMENUITEM_CONTAINER:
+      style = CreateStyleForWidget(gtk_check_menu_item_new(), MOZ_GTK_MENUPOPUP);
+      break;
+    case MOZ_GTK_RADIOMENUITEM_CONTAINER:
+      style = CreateStyleForWidget(gtk_radio_menu_item_new(nullptr),
+                                   MOZ_GTK_MENUPOPUP);
+      break;
+    default:
+      GtkWidget* widget = GetWidget(aNodeType);
+      MOZ_ASSERT(widget);
+      return gtk_widget_get_style_context(widget);
+  }
+
+  MOZ_ASSERT(style);
+  sStyleStorage[aNodeType] = style;
+  return style;
 }
 
 static GtkStyleContext*
@@ -367,7 +535,7 @@ CreateChildCSSNode(const char* aName, WidgetNodeType aParentNodeType)
 static GtkStyleContext*
 GetWidgetStyleWithClass(WidgetNodeType aWidgetType, const gchar* aStyleClass)
 {
-  GtkStyleContext* style = gtk_widget_get_style_context(GetWidget(aWidgetType));
+  GtkStyleContext* style = GetWidgetRootStyle(aWidgetType);
   gtk_style_context_save(style);
   MOZ_ASSERT(!sStyleContextNeedsRestore);
   sStyleContextNeedsRestore = true;
@@ -416,6 +584,14 @@ GetCssNodeStyleInternal(WidgetNodeType aNodeType)
       style = CreateChildCSSNode(GTK_STYLE_CLASS_CHECK,
                                  MOZ_GTK_CHECKBUTTON_CONTAINER);
       break;
+    case MOZ_GTK_RADIOMENUITEM:
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_RADIO,
+                                 MOZ_GTK_RADIOMENUITEM_CONTAINER);
+      break;
+    case MOZ_GTK_CHECKMENUITEM:
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_CHECK,
+                                 MOZ_GTK_CHECKMENUITEM_CONTAINER);
+      break;
     case MOZ_GTK_PROGRESS_TROUGH:
       /* Progress bar background (trough) */
       style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
@@ -451,11 +627,77 @@ GetCssNodeStyleInternal(WidgetNodeType aNodeType)
       return GetWidgetStyleWithClass(MOZ_GTK_TEXT_VIEW,
                                      GTK_STYLE_CLASS_VIEW);
     case MOZ_GTK_FRAME_BORDER:
-      return CreateChildCSSNode("border", MOZ_GTK_FRAME);
-    default:
-      // TODO - create style from style path
-      GtkWidget* widget = GetWidget(aNodeType);
+      style = CreateChildCSSNode("border", MOZ_GTK_FRAME);
+      break;
+    case MOZ_GTK_TREEVIEW_VIEW:
+      // TODO - create from CSS node
+      return GetWidgetStyleWithClass(MOZ_GTK_TREEVIEW,
+                                     GTK_STYLE_CLASS_VIEW);
+    case MOZ_GTK_TREEVIEW_EXPANDER:
+      // TODO - create from CSS node
+      return GetWidgetStyleWithClass(MOZ_GTK_TREEVIEW,
+                                     GTK_STYLE_CLASS_EXPANDER);
+    case MOZ_GTK_SPLITTER_SEPARATOR_HORIZONTAL:
+      style = CreateChildCSSNode("separator",
+                                 MOZ_GTK_SPLITTER_HORIZONTAL);
+      break;
+    case MOZ_GTK_SPLITTER_SEPARATOR_VERTICAL:
+      style = CreateChildCSSNode("separator",
+                                 MOZ_GTK_SPLITTER_VERTICAL);
+      break;
+    case MOZ_GTK_SCALE_CONTENTS_HORIZONTAL:
+      style = CreateChildCSSNode("contents",
+                                 MOZ_GTK_SCALE_HORIZONTAL);
+      break;
+    case MOZ_GTK_SCALE_CONTENTS_VERTICAL:
+      style = CreateChildCSSNode("contents",
+                                 MOZ_GTK_SCALE_VERTICAL);
+      break; 
+    case MOZ_GTK_SCALE_TROUGH_HORIZONTAL:
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
+                                 MOZ_GTK_SCALE_CONTENTS_HORIZONTAL);
+      break; 
+    case MOZ_GTK_SCALE_TROUGH_VERTICAL:
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
+                                 MOZ_GTK_SCALE_CONTENTS_VERTICAL);
+      break;
+    case MOZ_GTK_SCALE_THUMB_HORIZONTAL:
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_SLIDER,
+                                 MOZ_GTK_SCALE_TROUGH_HORIZONTAL);
+      break;
+    case MOZ_GTK_SCALE_THUMB_VERTICAL:
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_SLIDER,
+                                 MOZ_GTK_SCALE_TROUGH_VERTICAL);
+      break;
+    case MOZ_GTK_TAB_TOP:
+    {
+      // TODO - create from CSS node
+      style = GetWidgetStyleWithClass(MOZ_GTK_NOTEBOOK,
+                                      GTK_STYLE_CLASS_TOP);
+      gtk_style_context_add_region(style, GTK_STYLE_REGION_TAB,
+                                   static_cast<GtkRegionFlags>(0));
+      return style;
+    }
+    case MOZ_GTK_TAB_BOTTOM:
+    {
+      // TODO - create from CSS node
+      style = GetWidgetStyleWithClass(MOZ_GTK_NOTEBOOK,
+                                      GTK_STYLE_CLASS_BOTTOM);
+      gtk_style_context_add_region(style, GTK_STYLE_REGION_TAB,
+                                   static_cast<GtkRegionFlags>(0));
+      return style;
+    }
+    case MOZ_GTK_NOTEBOOK:
+    case MOZ_GTK_NOTEBOOK_HEADER:
+    case MOZ_GTK_TABPANELS:
+    case MOZ_GTK_TAB_SCROLLARROW:
+    { 
+      // TODO - create from CSS node
+      GtkWidget* widget = GetWidget(MOZ_GTK_NOTEBOOK);
       return gtk_widget_get_style_context(widget);
+    }
+    default:
+      return GetWidgetRootStyle(aNodeType);
   }
 
   MOZ_ASSERT(style, "missing style context for node type");
@@ -485,6 +727,12 @@ GetWidgetStyleInternal(WidgetNodeType aNodeType)
                                      GTK_STYLE_CLASS_RADIO);
     case MOZ_GTK_CHECKBUTTON:
       return GetWidgetStyleWithClass(MOZ_GTK_CHECKBUTTON_CONTAINER,
+                                     GTK_STYLE_CLASS_CHECK);
+    case MOZ_GTK_RADIOMENUITEM:
+      return GetWidgetStyleWithClass(MOZ_GTK_RADIOMENUITEM_CONTAINER,
+                                     GTK_STYLE_CLASS_RADIO);
+    case MOZ_GTK_CHECKMENUITEM:
+      return GetWidgetStyleWithClass(MOZ_GTK_CHECKMENUITEM_CONTAINER,
                                      GTK_STYLE_CLASS_CHECK);
     case MOZ_GTK_PROGRESS_TROUGH:
       return GetWidgetStyleWithClass(MOZ_GTK_PROGRESSBAR,
@@ -519,11 +767,57 @@ GetWidgetStyleInternal(WidgetNodeType aNodeType)
       return GetWidgetStyleWithClass(MOZ_GTK_TEXT_VIEW,
                                      GTK_STYLE_CLASS_VIEW);
     case MOZ_GTK_FRAME_BORDER:
-      return GetWidgetStyleInternal(MOZ_GTK_FRAME);
-    default:
-      GtkWidget* widget = GetWidget(aNodeType);
-      MOZ_ASSERT(widget);
+      return GetWidgetRootStyle(MOZ_GTK_FRAME);
+    case MOZ_GTK_TREEVIEW_VIEW:
+      return GetWidgetStyleWithClass(MOZ_GTK_TREEVIEW,
+                                     GTK_STYLE_CLASS_VIEW);
+    case MOZ_GTK_TREEVIEW_EXPANDER:
+      return GetWidgetStyleWithClass(MOZ_GTK_TREEVIEW,
+                                     GTK_STYLE_CLASS_EXPANDER);
+    case MOZ_GTK_SPLITTER_SEPARATOR_HORIZONTAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SPLITTER_HORIZONTAL,
+                                     GTK_STYLE_CLASS_PANE_SEPARATOR);
+    case MOZ_GTK_SPLITTER_SEPARATOR_VERTICAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SPLITTER_VERTICAL,
+                                     GTK_STYLE_CLASS_PANE_SEPARATOR);
+    case MOZ_GTK_SCALE_TROUGH_HORIZONTAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCALE_HORIZONTAL,
+                                     GTK_STYLE_CLASS_TROUGH);
+    case MOZ_GTK_SCALE_TROUGH_VERTICAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCALE_VERTICAL,
+                                     GTK_STYLE_CLASS_TROUGH);
+    case MOZ_GTK_SCALE_THUMB_HORIZONTAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCALE_HORIZONTAL,
+                                     GTK_STYLE_CLASS_SLIDER);
+    case MOZ_GTK_SCALE_THUMB_VERTICAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCALE_VERTICAL,
+                                     GTK_STYLE_CLASS_SLIDER);
+    case MOZ_GTK_TAB_TOP:
+    {
+      GtkStyleContext* style = GetWidgetStyleWithClass(MOZ_GTK_NOTEBOOK,
+                                                       GTK_STYLE_CLASS_TOP);
+      gtk_style_context_add_region(style, GTK_STYLE_REGION_TAB,
+                                   static_cast<GtkRegionFlags>(0));
+      return style;
+    }
+    case MOZ_GTK_TAB_BOTTOM:
+    {
+      GtkStyleContext* style = GetWidgetStyleWithClass(MOZ_GTK_NOTEBOOK,
+                                                       GTK_STYLE_CLASS_BOTTOM);
+      gtk_style_context_add_region(style, GTK_STYLE_REGION_TAB,
+                                   static_cast<GtkRegionFlags>(0));
+      return style;
+    }
+    case MOZ_GTK_NOTEBOOK:
+    case MOZ_GTK_NOTEBOOK_HEADER:
+    case MOZ_GTK_TABPANELS:
+    case MOZ_GTK_TAB_SCROLLARROW:
+    { 
+      GtkWidget* widget = GetWidget(MOZ_GTK_NOTEBOOK);
       return gtk_widget_get_style_context(widget);
+    }
+    default:
+      return GetWidgetRootStyle(aNodeType);
   }
 }
 

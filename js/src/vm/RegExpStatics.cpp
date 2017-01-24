@@ -22,6 +22,7 @@ using namespace js;
 static void
 resc_finalize(FreeOp* fop, JSObject* obj)
 {
+    MOZ_ASSERT(fop->onMainThread());
     RegExpStatics* res = static_cast<RegExpStatics*>(obj->as<RegExpStaticsObject>().getPrivate());
     fop->delete_(res);
 }
@@ -51,7 +52,8 @@ static const ClassOps RegExpStaticsObjectClassOps = {
 
 const Class RegExpStaticsObject::class_ = {
     "RegExpStatics",
-    JSCLASS_HAS_PRIVATE,
+    JSCLASS_HAS_PRIVATE |
+    JSCLASS_FOREGROUND_FINALIZE,
     &RegExpStaticsObjectClassOps
 };
 

@@ -13,6 +13,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode",
   "resource://gre/modules/ReaderMode.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
+  "resource://gre/modules/BrowserUtils.jsm");
 
 var global = this;
 
@@ -439,7 +441,7 @@ var Printing = {
   receiveMessage(message) {
     let objects = message.objects;
     let data = message.data;
-    switch(message.name) {
+    switch (message.name) {
       case "Printing:Preview:Enter": {
         this.enterPrintPreview(Services.wm.getOuterWindowWithId(data.windowID), data.simplifiedMode);
         break;
@@ -489,7 +491,7 @@ var Printing = {
                                        printSettings.kInitSaveAll);
 
       return printSettings;
-    } catch(e) {
+    } catch (e) {
       Components.utils.reportError(e);
     }
 
@@ -619,7 +621,7 @@ var Printing = {
         printSettings.docURL = contentWindow.document.baseURI;
 
       docShell.printPreview.printPreview(printSettings, contentWindow, this);
-    } catch(error) {
+    } catch (error) {
       // This might fail if we, for example, attempt to print a XUL document.
       // In that case, we inform the parent to bail out of print preview.
       Components.utils.reportError(error);
@@ -663,7 +665,7 @@ var Printing = {
       } else {
         this.logKeyedTelemetry("PRINT_COUNT", "WITHOUT_PREVIEW");
       }
-    } catch(e) {
+    } catch (e) {
       // Pressing cancel is expressed as an NS_ERROR_ABORT return value,
       // causing an exception to be thrown which we catch here.
       if (e.result != Cr.NS_ERROR_ABORT) {
@@ -783,7 +785,6 @@ var FindBar = {
    * the current content state.
    */
   _canAndShouldFastFind() {
-    let {BrowserUtils} = Cu.import("resource://gre/modules/BrowserUtils.jsm", {});
     let should = false;
     let can = BrowserUtils.canFastFind(content);
     if (can) {
@@ -1363,7 +1364,7 @@ var ViewSelectionSource = {
       try {
         this._entityConverter = Cc["@mozilla.org/intl/entityconverter;1"]
                                   .createInstance(Ci.nsIEntityConverter);
-      } catch(e) { }
+      } catch (e) { }
     }
 
     const entityVersion = Ci.nsIEntityConverter.entityW3C;
@@ -1393,3 +1394,129 @@ addEventListener("MozApplicationManifest", function(e) {
   sendAsyncMessage("MozApplicationManifest", info);
 }, false);
 
+let AutoCompletePopup = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAutoCompletePopup]),
+
+  _connected: false,
+  init: function() {
+    // We need to wait for a content viewer to be available
+    // before we can attach our AutoCompletePopup handler,
+    // since nsFormFillController assumes one will exist
+    // when we call attachToBrowser.
+    let onDCL = () => {
+      removeEventListener("DOMContentLoaded", onDCL);
+      // Hook up the form fill autocomplete controller.
+      let controller = Cc["@mozilla.org/satchel/form-fill-controller;1"]
+                         .getService(Ci.nsIFormFillController);
+      controller.attachToBrowser(docShell,
+                                 this.QueryInterface(Ci.nsIAutoCompletePopup));
+      this._connected = true;
+    };
+    addEventListener("DOMContentLoaded", onDCL);
+
+    this._input = null;
+    this._popupOpen = false;
+
+    addMessageListener("FormAutoComplete:HandleEnter", message => {
+      this.selectedIndex = message.data.selectedIndex;
+
+      let controller = Components.classes["@mozilla.org/autocomplete/controller;1"].
+                  getService(Components.interfaces.nsIAutoCompleteController);
+      controller.handleEnter(message.data.isPopupSelection);
+    });
+
+    addEventListener("unload", function() {
+      AutoCompletePopup.destroy();
+    });
+  },
+
+  destroy: function() {
+    if (this._connected) {
+      let controller = Cc["@mozilla.org/satchel/form-fill-controller;1"]
+                         .getService(Ci.nsIFormFillController);
+
+      controller.detachFromBrowser(docShell);
+      this._connected = false;
+    }
+  },
+
+  get input () { return this._input; },
+  get overrideValue () { return null; },
+  set selectedIndex (index) {
+    sendAsyncMessage("FormAutoComplete:SetSelectedIndex", { index });
+  },
+  get selectedIndex () {
+    // selectedIndex getter must be synchronous because we need the
+    // correct value when the controller is in controller::HandleEnter.
+    // We can't easily just let the parent inform us the new value every
+    // time it changes because not every action that can change the
+    // selectedIndex is trivial to catch (e.g. moving the mouse over the
+    // list).
+    return sendSyncMessage("FormAutoComplete:GetSelectedIndex", {});
+  },
+  get popupOpen () {
+    return this._popupOpen;
+  },
+
+  openAutocompletePopup: function (input, element) {
+    if (this._popupOpen || !input) {
+      return;
+    }
+
+    let rect = BrowserUtils.getElementBoundingScreenRect(element);
+    let window = element.ownerDocument.defaultView;
+    let dir = window.getComputedStyle(element).direction;
+    let results = this.getResultsFromController(input);
+
+    sendAsyncMessage("FormAutoComplete:MaybeOpenPopup",
+                     { results, rect, dir });
+    this._input = input;
+    this._popupOpen = true;
+  },
+
+  closePopup: function () {
+    this._popupOpen = false;
+    sendAsyncMessage("FormAutoComplete:ClosePopup", {});
+  },
+
+  invalidate: function () {
+    if (this._popupOpen) {
+      let results = this.getResultsFromController(this._input);
+      sendAsyncMessage("FormAutoComplete:Invalidate", { results });
+    }
+  },
+
+  selectBy: function(reverse, page) {
+    this._index = sendSyncMessage("FormAutoComplete:SelectBy", {
+      reverse: reverse,
+      page: page
+    });
+  },
+
+  getResultsFromController(inputField) {
+    let results = [];
+
+    if (!inputField) {
+      return results;
+    }
+
+    let controller = inputField.controller;
+    if (!(controller instanceof Ci.nsIAutoCompleteController)) {
+      return results;
+    }
+
+    for (let i = 0; i < controller.matchCount; ++i) {
+      let result = {};
+      result.value = controller.getValueAt(i);
+      result.label = controller.getLabelAt(i);
+      result.comment = controller.getCommentAt(i);
+      result.style = controller.getStyleAt(i);
+      result.image = controller.getImageAt(i);
+      results.push(result);
+    }
+
+    return results;
+  }
+}
+
+AutoCompletePopup.init();

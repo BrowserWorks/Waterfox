@@ -26,6 +26,7 @@ const {loader, require} = scopedCuImport("resource://devtools/shared/Loader.jsm"
 const {gDevTools} = require("devtools/client/framework/devtools");
 const {TargetFactory} = require("devtools/client/framework/target");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 let promise = require("promise");
 let defer = require("devtools/shared/defer");
 const Services = require("Services");
@@ -89,9 +90,9 @@ function getFrameScript() {
   return mm;
 }
 
-DevToolsUtils.testing = true;
+flags.testing = true;
 registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
   Services.prefs.clearUserPref("devtools.dump.emit");
   Services.prefs.clearUserPref("devtools.toolbox.host");
   Services.prefs.clearUserPref("devtools.toolbox.previousHost");
@@ -511,3 +512,50 @@ var closeToolbox = Task.async(function* () {
   let target = TargetFactory.forTab(gBrowser.selectedTab);
   yield gDevTools.closeToolbox(target);
 });
+
+/**
+ * Load the Telemetry utils, then stub Telemetry.prototype.log and
+ * Telemetry.prototype.logKeyed in order to record everything that's logged in
+ * it.
+ * Store all recordings in Telemetry.telemetryInfo.
+ * @return {Telemetry}
+ */
+function loadTelemetryAndRecordLogs() {
+  info("Mock the Telemetry log function to record logged information");
+
+  let Telemetry = require("devtools/client/shared/telemetry");
+  Telemetry.prototype.telemetryInfo = {};
+  Telemetry.prototype._oldlog = Telemetry.prototype.log;
+  Telemetry.prototype.log = function (histogramId, value) {
+    if (!this.telemetryInfo) {
+      // Telemetry instance still in use after stopRecordingTelemetryLogs
+      return;
+    }
+    if (histogramId) {
+      if (!this.telemetryInfo[histogramId]) {
+        this.telemetryInfo[histogramId] = [];
+      }
+      this.telemetryInfo[histogramId].push(value);
+    }
+  };
+  Telemetry.prototype._oldlogKeyed = Telemetry.prototype.logKeyed;
+  Telemetry.prototype.logKeyed = function (histogramId, key, value) {
+    this.log(`${histogramId}|${key}`, value);
+  };
+
+  return Telemetry;
+}
+
+/**
+ * Stop recording the Telemetry logs and put back the utils as it was before.
+ * @param {Telemetry} Required Telemetry
+ *        Telemetry object that needs to be stopped.
+ */
+function stopRecordingTelemetryLogs(Telemetry) {
+  info("Stopping Telemetry");
+  Telemetry.prototype.log = Telemetry.prototype._oldlog;
+  Telemetry.prototype.logKeyed = Telemetry.prototype._oldlogKeyed;
+  delete Telemetry.prototype._oldlog;
+  delete Telemetry.prototype._oldlogKeyed;
+  delete Telemetry.prototype.telemetryInfo;
+}

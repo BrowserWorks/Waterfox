@@ -229,47 +229,13 @@ class RemoteReftest(RefTest):
         prefs = {}
         prefs["app.update.url.android"] = ""
         prefs["browser.firstrun.show.localepicker"] = False
-        prefs["font.size.inflation.emPerLine"] = 0
-        prefs["font.size.inflation.minTwips"] = 0
         prefs["reftest.remote"] = True
         prefs["datareporting.policy.dataSubmissionPolicyBypassAcceptance"] = True
 
-        # Point the url-classifier to the local testing server for fast failures
-        prefs["browser.safebrowsing.provider.google.gethashURL"] = "http://127.0.0.1:8888/safebrowsing-dummy/gethash"
-        prefs["browser.safebrowsing.provider.google.updateURL"] = "http://127.0.0.1:8888/safebrowsing-dummy/update"
-        prefs["browser.safebrowsing.provider.mozilla.gethashURL"] = "http://127.0.0.1:8888/safebrowsing-dummy/gethash"
-        prefs["browser.safebrowsing.provider.mozilla.updateURL"] = "http://127.0.0.1:8888/safebrowsing-dummy/update"
-        # Point update checks to the local testing server for fast failures
-        prefs["extensions.update.url"] = "http://127.0.0.1:8888/extensions-dummy/updateURL"
-        prefs["extensions.update.background.url"] = "http://127.0.0.1:8888/extensions-dummy/updateBackgroundURL"
-        prefs["extensions.blocklist.url"] = "http://127.0.0.1:8888/extensions-dummy/blocklistURL"
-        prefs["extensions.hotfix.url"] = "http://127.0.0.1:8888/extensions-dummy/hotfixURL"
-        # Turn off extension updates so they don't bother tests
-        prefs["extensions.update.enabled"] = False
-        # Make sure opening about:addons won't hit the network
-        prefs["extensions.webservice.discoverURL"] = "http://127.0.0.1:8888/extensions-dummy/discoveryURL"
-        # Make sure AddonRepository won't hit the network
-        prefs["extensions.getAddons.maxResults"] = 0
-        prefs["extensions.getAddons.get.url"] = "http://127.0.0.1:8888/extensions-dummy/repositoryGetURL"
-        prefs["extensions.getAddons.getWithPerformance.url"] = "http://127.0.0.1:8888/extensions-dummy/repositoryGetWithPerformanceURL"
-        prefs["extensions.getAddons.search.browseURL"] = "http://127.0.0.1:8888/extensions-dummy/repositoryBrowseURL"
-        prefs["extensions.getAddons.search.url"] = "http://127.0.0.1:8888/extensions-dummy/repositorySearchURL"
-        # Make sure the GMPInstallManager won't hit the network
-        prefs["media.gmp-manager.url.override"] = "http://127.0.0.1:8888/dummy-gmp-manager.xml";
         prefs["layout.css.devPixelsPerPx"] = "1.0"
         # Because Fennec is a little wacky (see bug 1156817) we need to load the
         # reftest pages at 1.0 zoom, rather than zooming to fit the CSS viewport.
         prefs["apz.allow_zooming"] = False
-
-        # Disable skia-gl: see bug 907351
-        prefs["gfx.canvas.azure.accelerated"] = False
-
-        prefs["media.autoplay.enabled"] = True
-
-        # Debug reftests have problems with large tile size on pandaboards
-        if mozinfo.info['debug'] and self._devicemanager.shellCheckOutput(['getprop', 'ro.product.name']) == 'pandaboard':
-            prefs["layers.tiles.adjust"] = False
-            prefs["layers.single-tile.enabled"] = False
 
         # Set the extra prefs.
         profile.set_preferences(prefs)
@@ -354,29 +320,36 @@ class RemoteReftest(RefTest):
             except:
                 print "Warning: cleaning up pidfile '%s' was unsuccessful from the test harness" % self.pidFile
 
-def runTests(options, parser):
-    if (options.dm_trans == 'sut' and options.deviceIP == None):
+
+def run_test_harness(parser, options):
+    if options.dm_trans == 'sut' and options.deviceIP == None:
         print "Error: If --dm_trans = sut, you must provide a device IP to connect to via the --deviceIP option"
         return 1
 
+    dm_args = {
+        'deviceRoot': options.remoteTestRoot,
+        'host': options.deviceIP,
+        'port': options.devicePort,
+    }
+
+    dm_cls = mozdevice.DroidSUT
+    if options.dm_trans == 'adb':
+        dm_args['adbPath'] = options.adb_path
+        if not dm_args['host']:
+            dm_args['deviceSerial'] = options.deviceSerial
+        dm_cls = mozdevice.DroidADB
+
     try:
-        if (options.dm_trans == "adb"):
-            if (options.deviceIP):
-                dm = mozdevice.DroidADB(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
-            elif (options.deviceSerial):
-                dm = mozdevice.DroidADB(None, None, deviceSerial=options.deviceSerial, deviceRoot=options.remoteTestRoot)
-            else:
-                dm = mozdevice.DroidADB(None, None, deviceRoot=options.remoteTestRoot)
-        else:
-            dm = mozdevice.DroidSUT(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
+        dm = dm_cls(**dm_args)
     except mozdevice.DMError:
+        traceback.print_exc()
         print "Automation Error: exception while initializing devicemanager.  Most likely the device is not in a testable state."
         return 1
 
     automation = RemoteAutomation(None)
     automation.setDeviceManager(dm)
 
-    if (options.remoteProductName != None):
+    if options.remoteProductName:
         automation.setProduct(options.remoteProductName)
 
     # Set up the defaults and ensure options are set
@@ -432,20 +405,8 @@ def runTests(options, parser):
 
     return retVal
 
-def run(**kwargs):
-    # Mach gives us kwargs; this is a way to turn them back into an
-    # options object
-    parser = reftestcommandline.RemoteArgumentsParser()
-    parser.set_defaults(**kwargs)
-    options = parser.parse_args(kwargs["tests"])
-    retVal = runTests(options, parser)
-    return retVal
-
-def main():
-    parser = reftestcommandline.RemoteArgumentsParser()
-    options = parser.parse_args()
-    retVal = runTests(options, parser)
-    return retVal
 
 if __name__ == "__main__":
-    sys.exit(main())
+    parser = reftestcommandline.RemoteArgumentsParser()
+    options = parser.parse_args()
+    sys.exit(run_test_harness(parser, options))

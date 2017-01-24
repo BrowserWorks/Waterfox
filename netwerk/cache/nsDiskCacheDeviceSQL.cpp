@@ -4,11 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <inttypes.h>
+
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Attributes.h"
-
-#include "mozilla/IntegerPrintfMacros.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 
 #include "nsCache.h"
 #include "nsDiskCache.h"
@@ -183,7 +183,7 @@ GetCacheDataFile(nsIFile *cacheDir, const char *key,
   file->AppendNative(nsPrintfCString("%X", dir2));
 
   char leaf[64];
-  PR_snprintf(leaf, sizeof(leaf), "%014llX-%X", hash, generation);
+  SprintfLiteral(leaf, "%014" PRIX64 "-%X", hash, generation);
   return file->AppendNative(nsDependentCString(leaf));
 }
 
@@ -258,7 +258,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (mDevice->IsActiveCache(mGroup, mClientID))
     {
@@ -404,10 +404,10 @@ nsOfflineCacheBinding::Create(nsIFile *cacheDir,
   // XXX we might want to create these directories up-front
 
   file->AppendNative(nsPrintfCString("%X", dir1));
-  file->Create(nsIFile::DIRECTORY_TYPE, 00700);
+  Unused << file->Create(nsIFile::DIRECTORY_TYPE, 00700);
 
   file->AppendNative(nsPrintfCString("%X", dir2));
-  file->Create(nsIFile::DIRECTORY_TYPE, 00700);
+  Unused << file->Create(nsIFile::DIRECTORY_TYPE, 00700);
 
   nsresult rv;
   char leaf[64];
@@ -418,7 +418,7 @@ nsOfflineCacheBinding::Create(nsIFile *cacheDir,
 
     for (generation = 0; ; ++generation)
     {
-      snprintf_literal(leaf, "%014" PRIX64 "-%X", hash, generation);
+      SprintfLiteral(leaf, "%014" PRIX64 "-%X", hash, generation);
 
       rv = file->SetNativeLeafName(nsDependentCString(leaf));
       if (NS_FAILED(rv))
@@ -432,7 +432,7 @@ nsOfflineCacheBinding::Create(nsIFile *cacheDir,
   }
   else
   {
-    snprintf_literal(leaf, "%014" PRIX64 "-%X", hash, generation);
+    SprintfLiteral(leaf, "%014" PRIX64 "-%X", hash, generation);
     rv = file->AppendNative(nsDependentCString(leaf));
     if (NS_FAILED(rv))
       return nullptr;
@@ -875,7 +875,7 @@ public:
     mDB = aDB;
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mDB->Close();
     return NS_OK;

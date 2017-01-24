@@ -1,16 +1,16 @@
 "use strict";
 
-extensions.registerSchemaAPI("extension", (extension, context) => {
+extensions.registerSchemaAPI("extension", "addon_parent", context => {
+  let {extension} = context;
   return {
     extension: {
-      getURL: function(url) {
-        return extension.baseURI.resolve(url);
-      },
-
       getViews: function(fetchProperties) {
         let result = Cu.cloneInto([], context.cloneScope);
 
         for (let view of extension.views) {
+          if (!view.active) {
+            continue;
+          }
           if (!context.principal.subsumes(view.principal)) {
             continue;
           }
@@ -32,11 +32,8 @@ extensions.registerSchemaAPI("extension", (extension, context) => {
       },
 
       get lastError() {
+        // TODO(robwu): See comment about lastError in ext-runtime.js
         return context.lastError;
-      },
-
-      get inIncognitoContext() {
-        return context.incognito;
       },
 
       isAllowedIncognitoAccess() {

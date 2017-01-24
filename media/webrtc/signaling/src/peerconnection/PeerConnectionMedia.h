@@ -442,10 +442,10 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
     explicit ProtocolProxyQueryHandler(PeerConnectionMedia *pcm) :
       pcm_(pcm) {}
 
-    NS_IMETHODIMP OnProxyAvailable(nsICancelable *request,
-                                   nsIChannel *aChannel,
-                                   nsIProxyInfo *proxyinfo,
-                                   nsresult result) override;
+    NS_IMETHOD OnProxyAvailable(nsICancelable *request,
+                                nsIChannel *aChannel,
+                                nsIProxyInfo *proxyinfo,
+                                nsresult result) override;
     NS_DECL_ISUPPORTS
 
    private:
@@ -474,7 +474,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void GatherIfReady();
   void FlushIceCtxOperationQueueIfReady();
   void PerformOrEnqueueIceCtxOperation(nsIRunnable* runnable);
-  void EnsureIceGathering_s();
+  void EnsureIceGathering_s(bool aDefaultRouteOnly, bool aProxyOnly);
   void StartIceChecks_s(bool aIsControlling,
                         bool aIsIceLite,
                         const std::vector<std::string>& aIceOptionsList);
@@ -483,6 +483,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void FinalizeIceRestart_s();
   void RollbackIceRestart_s();
   bool GetPrefDefaultAddressOnly() const;
+  bool GetPrefProxyOnly() const;
 
   void ConnectSignals(NrIceCtx *aCtx, NrIceCtx *aOldCtx=nullptr);
 

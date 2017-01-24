@@ -79,9 +79,9 @@ var ecmaGlobals =
     "Reflect",
     "RegExp",
     "Set",
-    {name: "SharedArrayBuffer", nightly: true},
+    {name: "SharedArrayBuffer", release: false},
     {name: "SIMD", nightly: true},
-    {name: "Atomics", nightly: true},
+    {name: "Atomics", release: false},
     "StopIteration",
     "String",
     "Symbol",
@@ -487,6 +487,16 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FileReader",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileSystem",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileSystemDirectoryEntry",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileSystemDirectoryReader",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileSystemEntry",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileSystemFileEntry",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "FMRadio", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FocusEvent",
@@ -518,8 +528,6 @@ var interfaceNamesInGlobalScope =
     "History",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "HDMIInputPort", b2g: true, permission: ["inputport"]},
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "HMDVRDevice", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLAllCollection",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -945,21 +953,25 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PopupBoxObject", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PositionSensorVRDevice", release: false},
-// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PresentationDeviceInfoManager",
      disabled: true,
      permission: ["presentation-device-manage"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "Presentation", disabled: true, permission: ["presentation"]},
+    {name: "Presentation", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationAvailability", disabled: true, permission: ["presentation"]},
+    {name: "PresentationAvailability", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationRequest", disabled: true, permission: ["presentation"]},
+    {name: "PresentationConnection", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationSession", disabled: true, permission: ["presentation"]},
+    {name: "PresentationConnectionAvailableEvent", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationSessionConnectEvent", disabled: true, permission: ["presentation"]},
+    {name: "PresentationConnectionClosedEvent", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PresentationConnectionList", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PresentationReceiver", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PresentationRequest", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ProcessingInstruction",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1057,6 +1069,8 @@ var interfaceNamesInGlobalScope =
     "Storage",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "StorageEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "StorageManager", nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "StyleSheet",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1392,15 +1406,17 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "VideoStreamTrack",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRDevice", release: false},
+    {name: "VRDisplay", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRPositionState", release: false},
+    {name: "VRDisplayCapabilities", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "VREyeParameters", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "VRFieldOfView", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRFieldOfViewReadOnly", release: false},
+    {name: "VRPose", release: false},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "VRStageParameters", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "VTTCue",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1418,29 +1434,29 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLProgram",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    //"WebGLQuery",
+    "WebGLQuery",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLRenderbuffer",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLRenderingContext",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    //"WebGL2RenderingContext",
+    "WebGL2RenderingContext",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    //"WebGLSampler",
+    "WebGLSampler",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLShader",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLShaderPrecisionFormat",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    //"WebGLSync",
+    "WebGLSync",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLTexture",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    //"WebGLTransformFeedback",
+    "WebGLTransformFeedback",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLUniformLocation",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    //"WebGLVertexArrayObject",
+    "WebGLVertexArrayObject",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebKitCSSMatrix",
 // IMPORTANT: Do not change this list without review from a DOM peer!

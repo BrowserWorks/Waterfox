@@ -12,6 +12,7 @@ const {
   DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
+const FrameView = createFactory(require("devtools/client/shared/components/frame"));
 const MessageRepeat = createFactory(require("devtools/client/webconsole/new-console-output/components/message-repeat").MessageRepeat);
 const MessageIcon = createFactory(require("devtools/client/webconsole/new-console-output/components/message-icon").MessageIcon);
 
@@ -22,27 +23,43 @@ PageError.propTypes = {
 };
 
 function PageError(props) {
-  const { message } = props;
-  const repeat = MessageRepeat({repeat: message.repeat});
-  const icon = MessageIcon({severity: message.severity});
+  const { message, sourceMapService, onViewSourceInDebugger } = props;
+  const { source, level, frame } = message;
 
-  // @TODO Use of "is" is a temporary hack to get the category and severity
-  // attributes to be applied. There are targeted in webconsole's CSS rules,
-  // so if we remove this hack, we have to modify the CSS rules accordingly.
+  const repeat = MessageRepeat({repeat: message.repeat});
+  const icon = MessageIcon({level});
+  const shouldRenderFrame = frame && frame.source !== "debugger eval code";
+  const location = dom.span({ className: "message-location devtools-monospace" },
+    shouldRenderFrame ? FrameView({
+      frame,
+      onClick: onViewSourceInDebugger,
+      showEmptyPathAsHost: true,
+      sourceMapService
+    }) : null
+  );
+
+  const classes = ["message"];
+
+  if (source) {
+    classes.push(source);
+  }
+
+  if (level) {
+    classes.push(level);
+  }
+
   return dom.div({
-    class: "message",
-    is: "fdt-message",
-    category: message.category,
-    severity: message.severity
+    className: classes.join(" ")
   },
     icon,
-    dom.span(
-      {className: "message-body-wrapper message-body devtools-monospace"},
-      dom.span({},
-        message.messageText
+    dom.span({ className: "message-body-wrapper" },
+      dom.span({ className: "message-flex-body" },
+        dom.span({ className: "message-body devtools-monospace" },
+          message.messageText
+        ),
+        repeat
       )
-    ),
-    repeat
+    )
   );
 }
 

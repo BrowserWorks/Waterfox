@@ -35,9 +35,6 @@
 #include "nsStreamUtils.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
-#ifdef MOZ_NUWA_PROCESS
-#include "ipc/Nuwa.h"
-#endif
 #include "mozilla/Logging.h"
 
 #include "mozilla/Preferences.h"
@@ -50,11 +47,6 @@
 #include "mozilla/ipc/URIUtils.h"
 #include "SerializedLoadContext.h"
 #include "mozilla/net/NeckoChild.h"
-
-#if defined(ANDROID) && !defined(MOZ_WIDGET_GONK)
-#include "nsIPropertyBag2.h"
-static const int32_t ANDROID_23_VERSION = 10;
-#endif
 
 using namespace mozilla;
 
@@ -545,23 +537,6 @@ Predictor::GetInterface(const nsIID &iid, void **result)
   return QueryInterface(iid, result);
 }
 
-#ifdef MOZ_NUWA_PROCESS
-namespace {
-class NuwaMarkPredictorThreadRunner : public Runnable
-{
-  NS_IMETHODIMP Run() override
-  {
-    MOZ_ASSERT(!NS_IsMainThread());
-
-    if (IsNuwaProcess()) {
-      NuwaMarkCurrentThread(nullptr, nullptr);
-    }
-    return NS_OK;
-  }
-};
-} // namespace
-#endif
-
 // Predictor::nsICacheEntryMetaDataVisitor
 
 #define SEEN_META_DATA "predictor::seen"
@@ -610,22 +585,6 @@ Predictor::Init()
 
   nsresult rv = NS_OK;
 
-#if defined(ANDROID) && !defined(MOZ_WIDGET_GONK)
-  // This is an ugly hack to disable the predictor on android < 2.3, as it
-  // doesn't play nicely with those android versions, at least on our infra.
-  // Causes timeouts in reftests. See bug 881804 comment 86.
-  nsCOMPtr<nsIPropertyBag2> infoService =
-    do_GetService("@mozilla.org/system-info;1");
-  if (infoService) {
-    int32_t androidVersion = -1;
-    rv = infoService->GetPropertyAsInt32(NS_LITERAL_STRING("version"),
-                                         &androidVersion);
-    if (NS_SUCCEEDED(rv) && (androidVersion < ANDROID_23_VERSION)) {
-      return NS_ERROR_NOT_AVAILABLE;
-    }
-  }
-#endif
-
   rv = InstallObserver();
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -640,7 +599,7 @@ Predictor::Init()
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<LoadContextInfo> lci =
-    new LoadContextInfo(false, false, NeckoOriginAttributes());
+    new LoadContextInfo(false, NeckoOriginAttributes());
 
   rv = cacheStorageService->DiskCacheStorage(lci, false,
                                              getter_AddRefs(mCacheDiskStorage));
@@ -769,11 +728,6 @@ Predictor::MaybeCleanupOldDBFiles()
   nsCOMPtr<nsIThread> ioThread;
   rv = NS_NewNamedThread("NetPredictClean", getter_AddRefs(ioThread));
   RETURN_IF_FAILED(rv);
-
-#ifdef MOZ_NUWA_PROCESS
-  nsCOMPtr<nsIRunnable> nuwaRunner = new NuwaMarkPredictorThreadRunner();
-  ioThread->Dispatch(nuwaRunner, NS_DISPATCH_NORMAL);
-#endif
 
   RefPtr<PredictorOldCleanupRunner> runner =
     new PredictorOldCleanupRunner(ioThread, dbFile);
@@ -1678,7 +1632,7 @@ Predictor::LearnInternal(PredictorLearnReason reason, nsICacheEntry *entry,
 
           nsCOMPtr<nsIURI> uri;
           uint32_t hitCount, lastHit, flags;
-          if (!ParseMetaDataEntry(key, value, getter_AddRefs(uri), hitCount, lastHit, flags)) {
+          if (!ParseMetaDataEntry(nullptr, value, nullptr, hitCount, lastHit, flags)) {
             // This failed, get rid of it so we don't waste space
             entry->SetMetaDataElement(key, nullptr);
             continue;
@@ -1718,10 +1672,8 @@ Predictor::SpaceCleaner::OnMetaDataElement(const char *key, const char *value)
     return NS_OK;
   }
 
-  nsCOMPtr<nsIURI> parsedURI;
   uint32_t hitCount, lastHit, flags;
-  bool ok = mPredictor->ParseMetaDataEntry(key, value,
-                                           getter_AddRefs(parsedURI),
+  bool ok = mPredictor->ParseMetaDataEntry(nullptr, value, nullptr,
                                            hitCount, lastHit, flags);
 
   if (!ok) {
@@ -1732,11 +1684,9 @@ Predictor::SpaceCleaner::OnMetaDataElement(const char *key, const char *value)
     return NS_OK;
   }
 
-  nsCString uri;
-  nsresult rv = parsedURI->GetAsciiSpec(uri);
+  nsCString uri(key + (sizeof(META_DATA_PREFIX) - 1));
   uint32_t uriLength = uri.Length();
-  if (NS_SUCCEEDED(rv) &&
-      uriLength > mPredictor->mMaxURILength) {
+  if (uriLength > mPredictor->mMaxURILength) {
     // Default to getting rid of URIs that are too long and were put in before
     // we had our limit on URI length, in order to free up some space.
     nsCString nsKey;
@@ -2457,6 +2407,22 @@ Predictor::UpdateCacheabilityInternal(nsIURI *sourceURI, nsIURI *targetURI,
                                       const nsCString &method)
 {
   PREDICTOR_LOG(("Predictor::UpdateCacheability httpStatus=%u", httpStatus));
+
+  if (!mInitialized) {
+    PREDICTOR_LOG(("    not initialized"));
+    return;
+  }
+
+  if (!mEnabled) {
+    PREDICTOR_LOG(("    not enabled"));
+    return;
+  }
+
+  if (!mEnablePrefetch) {
+    PREDICTOR_LOG(("    prefetch not enabled"));
+    return;
+  }
+
   uint32_t openFlags = nsICacheStorage::OPEN_READONLY |
                        nsICacheStorage::OPEN_SECRETLY |
                        nsICacheStorage::CHECK_MULTITHREADED;

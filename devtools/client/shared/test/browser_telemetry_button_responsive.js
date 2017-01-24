@@ -63,7 +63,7 @@ var delayedClicks = Task.async(function* (node, clicks) {
 function checkResults(histIdFocus, Telemetry) {
   let result = Telemetry.prototype.telemetryInfo;
 
-  for (let [histId, value] of Iterator(result)) {
+  for (let [histId, value] of Object.entries(result)) {
     if (histId.startsWith("DEVTOOLS_INSPECTOR_") ||
         !histId.includes(histIdFocus)) {
       // Inspector stats are tested in
@@ -72,10 +72,7 @@ function checkResults(histIdFocus, Telemetry) {
       continue;
     }
 
-    if (histId.endsWith("OPENED_PER_USER_FLAG")) {
-      ok(value.length === 1 && value[0] === true,
-         "Per user value " + histId + " has a single value of true");
-    } else if (histId.endsWith("OPENED_COUNT")) {
+    if (histId.endsWith("OPENED_COUNT")) {
       ok(value.length > 1, histId + " has more than one entry");
 
       let okay = value.every(function (element) {

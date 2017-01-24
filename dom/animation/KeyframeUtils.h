@@ -9,9 +9,12 @@
 
 #include "nsTArrayForwardDeclare.h" // For nsTArray
 #include "js/RootingAPI.h" // For JS::Handle
+#include "mozilla/KeyframeEffectParams.h" // SpacingMode
 
 struct JSContext;
 class JSObject;
+class nsIDocument;
+class nsStyleContext;
 
 namespace mozilla {
 struct AnimationProperty;
@@ -98,7 +101,7 @@ public:
    */
   static void ApplySpacing(nsTArray<Keyframe>& aKeyframes,
                            SpacingMode aSpacingMode,
-                           nsCSSProperty aProperty,
+                           nsCSSPropertyID aProperty,
                            nsTArray<ComputedKeyframeValues>& aComputedValues);
 
   /**
@@ -137,7 +140,7 @@ public:
    * @param aProperty The property to check.
    * @return true if |aProperty| is animatable.
    */
-  static bool IsAnimatableProperty(nsCSSProperty aProperty);
+  static bool IsAnimatableProperty(nsCSSPropertyID aProperty);
 };
 
 } // namespace mozilla

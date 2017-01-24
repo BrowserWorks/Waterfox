@@ -24,6 +24,8 @@
 #include <algorithm>
 #include "mozilla/dom/EncodingUtils.h"
 #include "nsContentUtils.h"
+#include "prprf.h"
+#include "nsReadableUtils.h"
 
 using mozilla::dom::EncodingUtils;
 using namespace mozilla::ipc;
@@ -386,6 +388,131 @@ nsStandardURL::InvalidateCache(bool invalidateCachedFile)
     mSpecEncoding = eEncoding_Unknown;
 }
 
+// |base| should be 8, 10 or 16. Not check the precondition for performance.
+/* static */ inline bool
+nsStandardURL::IsValidOfBase(unsigned char c, const uint32_t base) {
+    MOZ_ASSERT(base == 8 || base == 10 || base == 16, "invalid base");
+    if ('0' <= c && c <= '7') {
+        return true;
+    } else if (c == '8' || c== '9') {
+        return base != 8;
+    } else if (('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')) {
+        return base == 16;
+    }
+    return false;
+}
+
+/* static */ inline nsresult
+nsStandardURL::ParseIPv4Number(nsCString &input, uint32_t &number)
+{
+    if (input.Length() == 0) {
+        return NS_ERROR_FAILURE;
+    }
+    uint32_t base;
+    uint32_t prefixLength = 0;
+
+    if (input[0] == '0') {
+        if (input.Length() == 1) {
+            base = 10;
+        } else if (input[1] == 'x' || input[1] == 'X') {
+            base = 16;
+            prefixLength = 2;
+        } else {
+            base = 8;
+            prefixLength = 1;
+        }
+    } else {
+        base = 10;
+    }
+    if (prefixLength == input.Length()) {
+        return NS_ERROR_FAILURE;
+    }
+    // ignore leading zeros to calculate the valid length of number
+    while (prefixLength < input.Length() && input[prefixLength] == '0') {
+        prefixLength++;
+    }
+    // all zero case
+    if (prefixLength == input.Length()) {
+        number = 0;
+        return NS_OK;
+    }
+    // overflow case
+    if (input.Length() - prefixLength > 16) {
+        return NS_ERROR_FAILURE;
+    }
+    for (uint32_t i = prefixLength; i < input.Length(); ++i) {
+        if (!IsValidOfBase(input[i], base)) {
+          return NS_ERROR_FAILURE;
+        }
+    }
+    const char* fmt = "";
+    switch (base) {
+        case 8:
+            fmt = "%llo";
+            break;
+        case 10:
+            fmt = "%lli";
+            break;
+        case 16:
+            fmt = "%llx";
+            break;
+        default:
+            return NS_ERROR_FAILURE;
+    }
+    uint64_t number64;
+    if (PR_sscanf(input.get(), fmt, &number64) == 1 &&
+        number64 <= 0xffffffffu) {
+      number = number64;
+      return NS_OK;
+    }
+    return NS_ERROR_FAILURE;
+}
+
+// IPv4 parser spec: https://url.spec.whatwg.org/#concept-ipv4-parser
+/* static */ nsresult
+nsStandardURL::NormalizeIPv4(const nsCSubstring &host, nsCString &result)
+{
+    if (host.Length() == 0 ||
+        host[0] < '0' || '9' < host[0] || // bail-out fast
+        FindInReadable(NS_LITERAL_CSTRING(".."), host)) {
+        return NS_ERROR_FAILURE;
+    }
+
+    nsTArray<nsCString> parts;
+    if (!ParseString(host, '.', parts) ||
+        parts.Length() == 0 ||
+        parts.Length() > 4) {
+        return NS_ERROR_FAILURE;
+    }
+    uint32_t n = 0;
+    nsTArray<int32_t> numbers;
+    for (uint32_t i = 0; i < parts.Length(); ++i) {
+        if (NS_FAILED(ParseIPv4Number(parts[i], n))) {
+            return NS_ERROR_FAILURE;
+        }
+        numbers.AppendElement(n);
+    }
+    uint32_t ipv4 = numbers.LastElement();
+    static const uint32_t upperBounds[] = {0xffffffffu, 0xffffffu,
+                                           0xffffu,     0xffu};
+    if (ipv4 > upperBounds[numbers.Length() - 1]) {
+        return NS_ERROR_FAILURE;
+    }
+    for (uint32_t i = 0; i < numbers.Length() - 1; ++i) {
+        if (numbers[i] > 255) {
+          return NS_ERROR_FAILURE;
+        }
+        ipv4 += numbers[i] << (8 * (3 - i));
+    }
+
+    uint8_t ipSegments[4];
+    NetworkEndian::writeUint32(ipSegments, ipv4);
+    result = nsPrintfCString("%d.%d.%d.%d", ipSegments[0], ipSegments[1],
+                                            ipSegments[2], ipSegments[3]);
+
+    return NS_OK;
+}
+
 nsresult
 nsStandardURL::NormalizeIDN(const nsCSubstring &host, nsCString &result)
 {
@@ -597,6 +724,11 @@ nsStandardURL::BuildNormalizedSpec(const char *spec)
         nsresult rv = NormalizeIDN(tempHost, encHost);
         if (NS_FAILED(rv)) {
             return rv;
+        }
+        nsAutoCString ipString;
+        rv = NormalizeIPv4(encHost, ipString);
+        if (NS_SUCCEEDED(rv)) {
+          encHost = ipString;
         }
 
         // NormalizeIDN always copies, if the call was successful.
@@ -1158,6 +1290,8 @@ nsStandardURL::GetHost(nsACString &result)
 NS_IMETHODIMP
 nsStandardURL::GetPort(int32_t *result)
 {
+    // should never be more than 16 bit
+    MOZ_ASSERT(mPort <= std::numeric_limits<uint16_t>::max());
     *result = mPort;
     return NS_OK;
 }
@@ -1640,6 +1774,8 @@ nsStandardURL::FindHostLimit(nsACString::const_iterator& aStart,
   }
 }
 
+// If aValue only has a host part and no port number, the port
+// will not be reset!!!
 NS_IMETHODIMP
 nsStandardURL::SetHostPort(const nsACString &aValue)
 {
@@ -1708,6 +1844,18 @@ nsStandardURL::SetHostPort(const nsACString &aValue)
     }
 
     return NS_OK;
+}
+
+// This function is different than SetHostPort in that the port number will be
+// reset as well if aValue parameter does not contain a port port number.
+NS_IMETHODIMP
+nsStandardURL::SetHostAndPort(const nsACString &aValue)
+{
+  // Reset the port and than call SetHostPort. SetHostPort does not reset
+  // the port number.
+  nsresult rv = SetPort(-1);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return SetHostPort(aValue);
 }
 
 NS_IMETHODIMP
@@ -1816,8 +1964,9 @@ nsStandardURL::SetPort(int32_t port)
     if ((port == mPort) || (mPort == -1 && port == mDefaultPort))
         return NS_OK;
 
-    // ports must be >= 0
-    if (port < -1) // -1 == use default
+    // ports must be >= 0 and 16 bit
+    // -1 == use default
+    if (port < -1 || port > std::numeric_limits<uint16_t>::max())
         return NS_ERROR_MALFORMED_URI;
 
     if (mURLType == URLTYPE_NO_AUTHORITY) {
@@ -2966,7 +3115,8 @@ nsStandardURL::Init(uint32_t urlType,
 {
     ENSURE_MUTABLE();
 
-    if (spec.Length() > (uint32_t) net_GetURLMaxLength()) {
+    if (spec.Length() > (uint32_t) net_GetURLMaxLength() ||
+        defaultPort > std::numeric_limits<uint16_t>::max()) {
         return NS_ERROR_MALFORMED_URI;
     }
 
@@ -3016,6 +3166,11 @@ nsStandardURL::SetDefaultPort(int32_t aNewDefaultPort)
     ENSURE_MUTABLE();
 
     InvalidateCache();
+
+    // should never be more than 16 bit
+    if (aNewDefaultPort >= std::numeric_limits<uint16_t>::max()) {
+        return NS_ERROR_MALFORMED_URI;
+    }
 
     // If we're already using the new default-port as a custom port, then clear
     // it off of our mSpec & set mPort to -1, to indicate that we'll be using

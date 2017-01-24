@@ -95,6 +95,8 @@ def main(argv):
     op.add_option('-w', '--write-failures', dest='write_failures',
                   metavar='FILE',
                   help='Write a list of failed tests to [FILE]')
+    op.add_option('-C', '--check-output', action='store_true', dest='check_output',
+                  help='Run tests to check output for different jit-flags')
     op.add_option('-r', '--read-tests', dest='read_tests', metavar='FILE',
                   help='Run test files listed in [FILE]')
     op.add_option('-R', '--retest', dest='retest', metavar='FILE',
@@ -193,15 +195,14 @@ def main(argv):
     test_list = []
     read_all = True
 
-    # Forbid running several variants of the same asmjs test, when debugging.
-    # But also, no point in adding in noasmjs and wasm-baseline variants if the
+    # No point in adding in noasmjs and wasm-baseline variants if the
     # jitflags forbid asmjs in the first place. (This is to avoid getting a
     # wasm-baseline run when requesting --jitflags=interp, but the test
     # contains test-also-noasmjs.)
     test_flags = get_jitflags(options.jitflags)
     options.can_test_also_noasmjs = True
     options.can_test_also_wasm_baseline = True
-    if options.debugger or all(['--no-asmjs' in flags for flags in test_flags]):
+    if all(['--no-asmjs' in flags for flags in test_flags]):
         options.can_test_also_noasmjs = False
         options.can_test_also_wasm_baseline = False
 
@@ -305,6 +306,7 @@ def main(argv):
             jobs = list(job_list)
 
             def display_job(job):
+                flags = ""
                 if len(job.jitflags) != 0:
                     flags = "({})".format(' '.join(job.jitflags))
                 return '{} {}'.format(job.path, flags)

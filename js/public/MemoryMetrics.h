@@ -172,14 +172,7 @@ struct ClassInfo
     macro(Objects, NonHeap,    objectsNonHeapElementsAsmJS) \
     macro(Objects, NonHeap,    objectsNonHeapElementsShared) \
     macro(Objects, NonHeap,    objectsNonHeapCodeAsmJS) \
-    macro(Objects, MallocHeap, objectsMallocHeapMisc) \
-    \
-    macro(Other,   GCHeapUsed, shapesGCHeapTree) \
-    macro(Other,   GCHeapUsed, shapesGCHeapDict) \
-    macro(Other,   GCHeapUsed, shapesGCHeapBase) \
-    macro(Other,   MallocHeap, shapesMallocHeapTreeTables) \
-    macro(Other,   MallocHeap, shapesMallocHeapDictTables) \
-    macro(Other,   MallocHeap, shapesMallocHeapTreeKids)
+    macro(Objects, MallocHeap, objectsMallocHeapMisc)
 
     ClassInfo()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -203,6 +196,55 @@ struct ClassInfo
     bool isNotable() const {
         static const size_t NotabilityThreshold = 16 * 1024;
         return sizeOfAllThings() >= NotabilityThreshold;
+    }
+
+    size_t sizeOfLiveGCThings() const {
+        size_t n = 0;
+        FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING)
+        return n;
+    }
+
+    void addToTabSizes(TabSizes* sizes) const {
+        FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
+    }
+
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    }
+
+    FOR_EACH_SIZE(DECL_SIZE)
+    int dummy;  // present just to absorb the trailing comma from FOR_EACH_SIZE(ZERO_SIZE)
+
+#undef FOR_EACH_SIZE
+};
+
+struct ShapeInfo
+{
+#define FOR_EACH_SIZE(macro) \
+    macro(Other,   GCHeapUsed, shapesGCHeapTree) \
+    macro(Other,   GCHeapUsed, shapesGCHeapDict) \
+    macro(Other,   GCHeapUsed, shapesGCHeapBase) \
+    macro(Other,   MallocHeap, shapesMallocHeapTreeTables) \
+    macro(Other,   MallocHeap, shapesMallocHeapDictTables) \
+    macro(Other,   MallocHeap, shapesMallocHeapTreeKids)
+
+    ShapeInfo()
+      : FOR_EACH_SIZE(ZERO_SIZE)
+        dummy()
+    {}
+
+    void add(const ShapeInfo& other) {
+        FOR_EACH_SIZE(ADD_OTHER_SIZE)
+    }
+
+    void subtract(const ShapeInfo& other) {
+        FOR_EACH_SIZE(SUB_OTHER_SIZE)
+    }
+
+    size_t sizeOfAllThings() const {
+        size_t n = 0;
+        FOR_EACH_SIZE(ADD_SIZE_TO_N)
+        return n;
     }
 
     size_t sizeOfLiveGCThings() const {
@@ -283,7 +325,6 @@ struct GCSizes
 #define FOR_EACH_SIZE(macro) \
     macro(_, MallocHeap, marker) \
     macro(_, NonHeap,    nurseryCommitted) \
-    macro(_, NonHeap,    nurseryDecommitted) \
     macro(_, MallocHeap, nurseryMallocedBuffers) \
     macro(_, MallocHeap, storeBufferVals) \
     macro(_, MallocHeap, storeBufferCells) \
@@ -535,6 +576,7 @@ struct UnusedGCThingSizes
     macro(Other, GCHeapUnused, string) \
     macro(Other, GCHeapUnused, symbol) \
     macro(Other, GCHeapUnused, jitcode) \
+    macro(Other, GCHeapUnused, scope)
 
     UnusedGCThingSizes()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -557,6 +599,7 @@ struct UnusedGCThingSizes
           case JS::TraceKind::JitCode:      jitcode += n;     break;
           case JS::TraceKind::LazyScript:   lazyScript += n;  break;
           case JS::TraceKind::ObjectGroup:  objectGroup += n; break;
+          case JS::TraceKind::Scope:        scope += n;       break;
           default:
             MOZ_CRASH("Bad trace kind for UnusedGCThingSizes");
         }
@@ -596,14 +639,18 @@ struct ZoneStats
     macro(Other,   GCHeapUsed,  jitCodesGCHeap) \
     macro(Other,   GCHeapUsed,  objectGroupsGCHeap) \
     macro(Other,   MallocHeap,  objectGroupsMallocHeap) \
+    macro(Other,   GCHeapUsed,  scopesGCHeap) \
+    macro(Other,   MallocHeap,  scopesMallocHeap) \
     macro(Other,   MallocHeap,  typePool) \
     macro(Other,   MallocHeap,  baselineStubsOptimized) \
-    macro(Other,   MallocHeap,  uniqueIdMap)
+    macro(Other,   MallocHeap,  uniqueIdMap) \
+    macro(Other,   MallocHeap,  shapeTables)
 
     ZoneStats()
       : FOR_EACH_SIZE(ZERO_SIZE)
         unusedGCThings(),
         stringInfo(),
+        shapeInfo(),
         extra(),
         allStrings(nullptr),
         notableStrings(),
@@ -614,6 +661,7 @@ struct ZoneStats
       : FOR_EACH_SIZE(COPY_OTHER_SIZE)
         unusedGCThings(mozilla::Move(other.unusedGCThings)),
         stringInfo(mozilla::Move(other.stringInfo)),
+        shapeInfo(mozilla::Move(other.shapeInfo)),
         extra(other.extra),
         allStrings(other.allStrings),
         notableStrings(mozilla::Move(other.notableStrings)),
@@ -637,6 +685,7 @@ struct ZoneStats
         FOR_EACH_SIZE(ADD_OTHER_SIZE)
         unusedGCThings.addSizes(other.unusedGCThings);
         stringInfo.add(other.stringInfo);
+        shapeInfo.add(other.shapeInfo);
     }
 
     size_t sizeOfLiveGCThings() const {
@@ -644,6 +693,7 @@ struct ZoneStats
         size_t n = 0;
         FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING)
         n += stringInfo.sizeOfLiveGCThings();
+        n += shapeInfo.sizeOfLiveGCThings();
         return n;
     }
 
@@ -652,6 +702,7 @@ struct ZoneStats
         FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
         unusedGCThings.addToTabSizes(sizes);
         stringInfo.addToTabSizes(sizes);
+        shapeInfo.addToTabSizes(sizes);
     }
 
     void addToServoSizes(JS::ServoSizes *sizes) const {
@@ -659,6 +710,7 @@ struct ZoneStats
         FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
         unusedGCThings.addToServoSizes(sizes);
         stringInfo.addToServoSizes(sizes);
+        shapeInfo.addToServoSizes(sizes);
     }
 
     // These string measurements are initially for all strings.  At the end,
@@ -668,6 +720,7 @@ struct ZoneStats
     FOR_EACH_SIZE(DECL_SIZE)
     UnusedGCThingSizes unusedGCThings;
     StringInfo stringInfo;
+    ShapeInfo shapeInfo;
     void* extra;    // This field can be used by embedders.
 
     typedef js::HashMap<JSString*, StringInfo,
@@ -710,6 +763,7 @@ struct CompartmentStats
     macro(Other,   MallocHeap, crossCompartmentWrappersTable) \
     macro(Other,   MallocHeap, regexpCompartment) \
     macro(Other,   MallocHeap, savedStacksSet) \
+    macro(Other,   MallocHeap, varNamesSet) \
     macro(Other,   MallocHeap, nonSyntacticLexicalScopesTable) \
     macro(Other,   MallocHeap, jitCompartment) \
     macro(Other,   MallocHeap, privateData)
@@ -886,13 +940,13 @@ extern JS_PUBLIC_API(bool)
 CollectRuntimeStats(JSContext* cx, RuntimeStats* rtStats, ObjectPrivateVisitor* opv, bool anonymize);
 
 extern JS_PUBLIC_API(size_t)
-SystemCompartmentCount(JSRuntime* rt);
+SystemCompartmentCount(JSContext* cx);
 
 extern JS_PUBLIC_API(size_t)
-UserCompartmentCount(JSRuntime* rt);
+UserCompartmentCount(JSContext* cx);
 
 extern JS_PUBLIC_API(size_t)
-PeakSizeOfTemporary(const JSRuntime* rt);
+PeakSizeOfTemporary(const JSContext* cx);
 
 extern JS_PUBLIC_API(bool)
 AddSizeOfTab(JSContext* cx, JS::HandleObject obj, mozilla::MallocSizeOf mallocSizeOf,

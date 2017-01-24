@@ -59,17 +59,15 @@ function check_autoplay_audio_pause_state(expectedPauseState) {
     } else {
       ok(true, "Audio is resumed correctly.");
     }
+  } else if (expectedPauseState) {
+    autoPlay.onpause = function () {
+      autoPlay.onpause = null;
+      ok(true, "Audio is paused correctly, checking from onpause.");
+    }
   } else {
-    if (expectedPauseState) {
-      autoPlay.onpause = function () {
-        autoPlay.onpause = null;
-        ok(true, "Audio is paused correctly, checking from onpause.");
-      }
-    } else {
-      autoPlay.onplay = function () {
-        autoPlay.onplay = null;
-        ok(true, "Audio is resumed correctly, checking from onplay.");
-      }
+    autoPlay.onplay = function () {
+      autoPlay.onplay = null;
+      ok(true, "Audio is resumed correctly, checking from onplay.");
     }
   }
 }
@@ -145,14 +143,7 @@ function play_nonautoplay_audio_should_be_blocked(suspendedType) {
   }
 
   nonAutoPlay.play();
-  return new Promise(resolve => {
-    nonAutoPlay.onplay = function () {
-      nonAutoPlay.onplay = null;
-      is(nonAutoPlay.computedSuspended, suspendedType,
-         "The suspeded state of non-autoplay audio is correct.");
-      resolve();
-    }
-  });
+  ok(nonAutoPlay.paused, "The blocked audio can't be playback.");
 }
 
 function* suspended_pause(url, browser) {

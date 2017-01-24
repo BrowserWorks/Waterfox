@@ -130,25 +130,25 @@ GonkVideoDecoderManager::Init()
 
   if (uint32_t(mConfig.mImage.width * mConfig.mImage.height) > maxWidth * maxHeight) {
     GVDM_LOG("Video resolution exceeds hw codec capability");
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   // Validate the container-reported frame and pictureRect sizes. This ensures
   // that our video frame creation code doesn't overflow.
   if (!IsValidVideoRegion(mConfig.mImage, mConfig.ImageRect(), mConfig.mDisplay)) {
     GVDM_LOG("It is not a valid region");
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   mReaderTaskQueue = AbstractThread::GetCurrent()->AsTaskQueue();
   MOZ_ASSERT(mReaderTaskQueue);
 
   if (mDecodeLooper.get() != nullptr) {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   if (!InitLoopers(MediaData::VIDEO_DATA)) {
-    return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
+    return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   RefPtr<InitPromise> p = mInitPromise.Ensure(__func__);
@@ -400,7 +400,8 @@ GonkVideoDecoderManager::CreateVideoDataFromGraphicBuffer(MediaBuffer* aSource,
   if (mNeedsCopyBuffer) {
     // Copy buffer contents for bug 1199809.
     if (!mCopyAllocator) {
-      mCopyAllocator = new TextureClientRecycleAllocator(ImageBridgeChild::GetSingleton());
+      RefPtr<layers::ImageBridgeChild> bridge = layers::ImageBridgeChild::GetSingleton();
+      mCopyAllocator = new TextureClientRecycleAllocator(bridge);
     }
     if (!mCopyAllocator) {
       GVDM_LOG("Create buffer allocator failed!");
@@ -425,16 +426,16 @@ GonkVideoDecoderManager::CreateVideoDataFromGraphicBuffer(MediaBuffer* aSource,
     static_cast<GrallocTextureData*>(textureClient->GetInternalData())->SetMediaBuffer(aSource);
   }
 
-  RefPtr<VideoData> data = VideoData::Create(mConfig,
-                                             mImageContainer,
-                                             0, // Filled later by caller.
-                                             0, // Filled later by caller.
-                                             1, // No way to pass sample duration from muxer to
-                                                // OMX codec, so we hardcode the duration here.
-                                             textureClient,
-                                             false, // Filled later by caller.
-                                             -1,
-                                             aPicture);
+  RefPtr<VideoData> data =
+    VideoData::CreateAndCopyIntoTextureClient(mConfig,
+                                              0, // Filled later by caller.
+                                              0, // Filled later by caller.
+                                              1, // No way to pass sample duration from muxer to
+                                                 // OMX codec, so we hardcode the duration here.
+                                              textureClient,
+                                              false, // Filled later by caller.
+                                              -1,
+                                              aPicture);
   return data.forget();
 }
 
@@ -494,15 +495,16 @@ GonkVideoDecoderManager::CreateVideoDataFromDataBuffer(MediaBuffer* aSource, gfx
   b.mPlanes[2].mOffset = 0;
   b.mPlanes[2].mSkip = 0;
 
-  RefPtr<VideoData> data = VideoData::Create(mConfig,
-                                             mImageContainer,
-                                             0, // Filled later by caller.
-                                             0, // Filled later by caller.
-                                             1, // We don't know the duration.
-                                             b,
-                                             0, // Filled later by caller.
-                                             -1,
-                                             aPicture);
+  RefPtr<VideoData> data =
+    VideoData::CreateAndCopyData(mConfig,
+                                 mImageContainer,
+                                 0, // Filled later by caller.
+                                 0, // Filled later by caller.
+                                 1, // We don't know the duration.
+                                 b,
+                                 0, // Filled later by caller.
+                                 -1,
+                                 aPicture);
 
   return data.forget();
 }
@@ -671,7 +673,7 @@ GonkVideoDecoderManager::codecReserved()
 
   if (rv != OK) {
     GVDM_LOG("Failed to configure codec!!!!");
-    mInitPromise.Reject(DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.Reject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
     return;
   }
 
@@ -682,7 +684,7 @@ void
 GonkVideoDecoderManager::codecCanceled()
 {
   GVDM_LOG("codecCanceled");
-  mInitPromise.RejectIfExists(DecoderFailureReason::CANCELED, __func__);
+  mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
 }
 
 // Called on GonkDecoderManager::mTaskLooper thread.

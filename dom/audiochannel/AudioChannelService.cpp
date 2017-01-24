@@ -10,7 +10,7 @@
 
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
@@ -83,6 +83,13 @@ public:
                                        ? u"active"
                                        : u"inactive");
 
+    // TODO : remove b2g related event in bug1299390.
+    observerService->NotifyObservers(wrapper,
+                                     "media-playback",
+                                     mActive
+                                       ? u"active"
+                                       : u"inactive");
+
     MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
            ("NotifyChannelActiveRunnable, type = %d, active = %d\n",
             mAudioChannel, mActive));
@@ -112,7 +119,7 @@ public:
     , mReason(aReason)
   {}
 
- NS_IMETHOD Run()
+ NS_IMETHOD Run() override
  {
     nsCOMPtr<nsIObserverService> observerService =
       services::GetObserverService();
@@ -153,6 +160,22 @@ private:
   AudioChannelService::AudibleChangedReasons mReason;
 };
 
+bool
+IsEnableAudioCompetingForAllAgents()
+{
+  // In general, the audio competing should only be for audible media and it
+  // helps user can focus on one media at the same time. However, we hope to
+  // treat all media as the same in the mobile device. First reason is we have
+  // media control on fennec and we just want to control one media at once time.
+  // Second reason is to reduce the bandwidth, avoiding to play any non-audible
+  // media in background which user doesn't notice about.
+#ifdef MOZ_WIDGET_ANDROID
+  return true;
+#else
+  return false;
+#endif
+}
+
 } // anonymous namespace
 
 StaticRefPtr<AudioChannelService> gAudioChannelService;
@@ -167,7 +190,7 @@ static const nsAttrValue::EnumTable kMozAudioChannelAttributeTable[] = {
   { "ringer",             (int16_t)AudioChannel::Ringer },
   { "publicnotification", (int16_t)AudioChannel::Publicnotification },
   { "system",             (int16_t)AudioChannel::System },
-  { nullptr }
+  { nullptr,              0 }
 };
 
 /* static */ void
@@ -1048,6 +1071,11 @@ AudioChannelService::AudioChannelWindow::RequestAudioFocus(AudioChannelAgent* aA
 {
   MOZ_ASSERT(aAgent);
 
+  // Don't need to check audio focus for window-less agent.
+  if (!aAgent->Window()) {
+    return;
+  }
+
   // We already have the audio focus. No operation is needed.
   if (mOwningAudioFocus) {
     return;
@@ -1056,7 +1084,11 @@ AudioChannelService::AudioChannelWindow::RequestAudioFocus(AudioChannelAgent* aA
   // Only foreground window can request audio focus, but it would still own the
   // audio focus even it goes to background. Audio focus would be abandoned
   // only when other foreground window starts audio competing.
-  mOwningAudioFocus = !(aAgent->Window()->IsBackground());
+  // One exception is if the pref "media.block-autoplay-until-in-foreground"
+  // is on and the background page is the non-visited before. Because the media
+  // in that page would be blocked until the page is going to foreground.
+  mOwningAudioFocus = (!(aAgent->Window()->IsBackground()) ||
+                       aAgent->Window()->GetMediaSuspend() == nsISuspendedTypes::SUSPENDED_BLOCK) ;
 
   MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
          ("AudioChannelWindow, RequestAudioFocus, this = %p, "
@@ -1113,7 +1145,9 @@ AudioChannelService::AudioChannelWindow::IsAgentInvolvingInAudioCompeting(AudioC
 bool
 AudioChannelService::AudioChannelWindow::IsAudioCompetingInSameTab() const
 {
-  return (mOwningAudioFocus && mAudibleAgents.Length() > 1);
+  bool hasMultipleActiveAgents = IsEnableAudioCompetingForAllAgents() ?
+    mAgents.Length() > 1 : mAudibleAgents.Length() > 1;
+  return mOwningAudioFocus && hasMultipleActiveAgents;
 }
 
 void
@@ -1124,14 +1158,15 @@ AudioChannelService::AudioChannelWindow::AudioFocusChanged(AudioChannelAgent* aN
   // from other window.
   MOZ_ASSERT(aNewPlayingAgent);
 
-  if (mAudibleAgents.IsEmpty()) {
+  if (IsInactiveWindow()) {
     // These would happen in two situations,
     // (1) Audio in page A was ended, and another page B want to play audio.
     //     Page A should abandon its focus.
     // (2) Audio was paused by remote-control, page should still own the focus.
     mOwningAudioFocus = IsContainingPlayingAgent(aNewPlayingAgent);
   } else {
-    nsTObserverArray<AudioChannelAgent*>::ForwardIterator iter(mAudibleAgents);
+    nsTObserverArray<AudioChannelAgent*>::ForwardIterator
+      iter(IsEnableAudioCompetingForAllAgents() ? mAgents : mAudibleAgents);
     while (iter.HasMore()) {
       AudioChannelAgent* agent = iter.GetNext();
       MOZ_ASSERT(agent);
@@ -1177,7 +1212,8 @@ AudioChannelService::AudioChannelWindow::GetCompetingBehavior(AudioChannelAgent*
                                                               bool aIncomingChannelActive) const
 {
   MOZ_ASSERT(aAgent);
-  MOZ_ASSERT(mAudibleAgents.Contains(aAgent));
+  MOZ_ASSERT(IsEnableAudioCompetingForAllAgents() ?
+    mAgents.Contains(aAgent) : mAudibleAgents.Contains(aAgent));
 
   uint32_t competingBehavior = nsISuspendedTypes::NONE_SUSPENDED;
   int32_t presentChannelType = aAgent->AudioChannelType();
@@ -1217,6 +1253,8 @@ AudioChannelService::AudioChannelWindow::AppendAgent(AudioChannelAgent* aAgent,
     AudioAudibleChanged(aAgent,
                         AudibleState::eAudible,
                         AudibleChangedReasons::eDataAudibleChanged);
+  } else if (IsEnableAudioCompetingForAllAgents() && !aAudible) {
+    NotifyAudioCompetingChanged(aAgent, true);
   }
 }
 
@@ -1338,6 +1376,13 @@ AudioChannelService::AudioChannelWindow::IsLastAudibleAgent() const
   return mAudibleAgents.IsEmpty();
 }
 
+bool
+AudioChannelService::AudioChannelWindow::IsInactiveWindow() const
+{
+  return IsEnableAudioCompetingForAllAgents() ?
+    mAudibleAgents.IsEmpty() && mAgents.IsEmpty() : mAudibleAgents.IsEmpty();
+}
+
 void
 AudioChannelService::AudioChannelWindow::NotifyAudioAudibleChanged(nsPIDOMWindowOuter* aWindow,
                                                                    AudibleState aAudible,
@@ -1345,8 +1390,8 @@ AudioChannelService::AudioChannelWindow::NotifyAudioAudibleChanged(nsPIDOMWindow
 {
   RefPtr<AudioPlaybackRunnable> runnable =
     new AudioPlaybackRunnable(aWindow, aAudible, aReason);
-  nsresult rv = NS_DispatchToCurrentThread(runnable);
-  NS_WARN_IF(NS_FAILED(rv));
+  DebugOnly<nsresult> rv = NS_DispatchToCurrentThread(runnable);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NS_DispatchToCurrentThread failed");
 }
 
 void
@@ -1356,6 +1401,6 @@ AudioChannelService::AudioChannelWindow::NotifyChannelActive(uint64_t aWindowID,
 {
   RefPtr<NotifyChannelActiveRunnable> runnable =
     new NotifyChannelActiveRunnable(aWindowID, aChannel, aActive);
-  nsresult rv = NS_DispatchToCurrentThread(runnable);
-  NS_WARN_IF(NS_FAILED(rv));
+  DebugOnly<nsresult> rv = NS_DispatchToCurrentThread(runnable);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NS_DispatchToCurrentThread failed");
 }

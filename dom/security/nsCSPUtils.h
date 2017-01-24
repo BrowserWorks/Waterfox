@@ -193,6 +193,8 @@ CSPDirective CSP_ContentTypeToDirective(nsContentPolicyType aType);
 
 class nsCSPSrcVisitor;
 
+void CSP_PercentDecodeStr(const nsAString& aEncStr, nsAString& outDecStr);
+
 /* =============== nsCSPSrc ================== */
 
 class nsCSPBaseSrc {
@@ -564,7 +566,10 @@ class nsCSPPolicy {
       { return mReportOnly; }
 
     inline void setReferrerPolicy(const nsAString* aValue)
-      { mReferrerPolicy = *aValue; }
+      {
+        mReferrerPolicy = *aValue;
+        ToLowerCase(mReferrerPolicy);
+      }
 
     inline void getReferrerPolicy(nsAString& outPolicy) const
       { outPolicy.Assign(mReferrerPolicy); }

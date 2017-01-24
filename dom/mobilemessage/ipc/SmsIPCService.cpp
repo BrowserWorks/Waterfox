@@ -14,7 +14,7 @@
 #include "mozilla/Preferences.h"
 #include "nsString.h"
 #include "mozilla/dom/ipc/BlobChild.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::dom::mobilemessage;
@@ -38,8 +38,8 @@ GetSmsChild()
   if (!gSmsChild) {
     gSmsChild = ContentChild::GetSingleton()->SendPSmsConstructor();
 
-    NS_WARN_IF_FALSE(gSmsChild,
-                     "Calling methods on SmsIPCService during shutdown!");
+    NS_WARNING_ASSERTION(gSmsChild,
+                         "Calling methods on SmsIPCService during shutdown!");
   }
 
   return gSmsChild;

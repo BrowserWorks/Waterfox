@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PAPZ;
 include protocol PBackground;
 include protocol PBlob;
 include protocol PBluetooth;
@@ -95,7 +94,8 @@ using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 using mozilla::dom::ContentParentId from "mozilla/dom/ipc/IdType.h";
 using mozilla::LayoutDeviceIntPoint from "Units.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
-using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
+using class mozilla::dom::MessagePort from "mozilla/dom/MessagePort.h";
+using class mozilla::dom::ipc::StructuredCloneData from "mozilla/dom/ipc/StructuredCloneData.h";
 using mozilla::DataStorageType from "ipc/DataStorageIPCUtils.h";
 using mozilla::DocShellOriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
@@ -324,12 +324,6 @@ union FileDescOrError {
     nsresult;
 };
 
-union OptionalContentId
-{
-  ContentParentId;
-  void_t;
-};
-
 struct DomainPolicyClone
 {
     bool        active;
@@ -389,7 +383,6 @@ prio(normal upto urgent) sync protocol PContent
     parent opens PGMPService;
     child opens PBackground;
 
-    manages PAPZ;
     manages PBlob;
     manages PBluetooth;
     manages PBrowser;
@@ -483,6 +476,11 @@ child:
     async PMemoryReportRequest(uint32_t generation, bool anonymize,
                                bool minimizeMemoryUsage, MaybeFileDesc DMDFile);
 
+    /**
+     * Sent to notify that aTabId has been allocated aLayersId
+     */
+    async NotifyLayerAllocated(TabId aTabId, uint64_t aLayersId);
+
     async SpeakerManagerNotify();
 
     /**
@@ -503,8 +501,6 @@ child:
 
     async PTestShell();
 
-    async PAPZ(TabId tabId);
-
     async RegisterChrome(ChromePackage[] packages, SubstitutionMapping[] substitutions,
                          OverrideMapping[] overrides, nsCString locale, bool reset);
     async RegisterChromeItem(ChromeRegistryItem item);
@@ -516,9 +512,8 @@ child:
 
     async NotifyVisited(URIParams uri);
 
-    async SystemMemoryAvailable(uint64_t getterId, uint32_t memoryAvailable);
-
     async PreferenceUpdate(PrefSetting pref);
+    async VarUpdate(GfxVarUpdate var);
 
     async DataStoragePut(nsString aFilename, DataStorageItem aItem);
     async DataStorageRemove(nsString aFilename, nsCString aKey, DataStorageType aType);
@@ -546,6 +541,11 @@ child:
      * Start accessibility engine in content process.
      */
     async ActivateA11y();
+
+    /**
+     * Shutdown accessibility engine in content process (if not in use).
+     */
+    async ShutdownA11y();
 
     async AppInfo(nsCString version, nsCString buildID, nsCString name, nsCString UAName,
                   nsCString ID, nsCString vendor);
@@ -821,12 +821,10 @@ parent:
                          uint8_t[] keyHandle)
         returns (uint8_t[] signature);
 
-    async GetSystemMemory(uint64_t getterId);
-
     sync IsSecureURI(uint32_t type, URIParams uri, uint32_t flags)
         returns (bool isSecureURI);
 
-    async AccumulateMixedContentHSTS(URIParams uri, bool active);
+    async AccumulateMixedContentHSTS(URIParams uri, bool active, bool hasHSTSPriming);
 
     sync GetLookAndFeelCache()
         returns (LookAndFeelInt[] lookAndFeelIntCache);
@@ -885,6 +883,7 @@ parent:
 
     // PrefService message
     sync ReadPrefsArray() returns (PrefSetting[] prefs) verify;
+    sync GetGfxVars() returns (GfxVarUpdate[] vars);
 
     sync ReadFontList() returns (FontListEntry[] retValue);
 
@@ -936,6 +935,7 @@ parent:
     // Places the items within dataTransfer on the clipboard.
     async SetClipboard(IPCDataTransfer aDataTransfer,
                        bool aIsPrivateData,
+                       Principal aRequestingPrincipal,
                        int32_t aWhichClipboard);
 
     // Given a list of supported types, returns the clipboard data for the
@@ -1138,7 +1138,7 @@ parent:
      * Request graphics initialization information from the parent.
      */
     sync GetGraphicsDeviceInitData()
-        returns (DeviceInitData aData);
+        returns (ContentDeviceData aData);
 
     sync CreateWindow(nullable PBrowser aThisTab,
                       PBrowser aNewTab,
@@ -1215,6 +1215,8 @@ parent:
                                                 Principal principal);
 
      async UnstoreAndBroadcastBlobURLUnregistration(nsCString url);
+
+     sync GetA11yContentId() returns (uint32_t aContentId);
 
 both:
      async AsyncMessage(nsString aMessage, CpowEntry[] aCpows,

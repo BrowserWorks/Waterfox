@@ -43,7 +43,7 @@ function run_test() {
 
 // Verify that an update to an add-on with a new ID fails
 add_task(function* test_update_new_id() {
-  yield promiseInstallAllFiles([do_get_addon("test_updateid1")]);
+  yield promiseInstallFile(do_get_addon("test_updateid1"));
 
   let addon = yield promiseAddonByID("addon1@tests.mozilla.org");
   do_check_neq(addon, null);
@@ -65,7 +65,7 @@ add_task(function* test_update_new_id() {
 
 // Verify that an update to a multi-package xpi fails
 add_task(function* test_update_new_id() {
-  yield promiseInstallAllFiles([do_get_addon("test_update_multi1")]);
+  yield promiseInstallFile(do_get_addon("test_update_multi1"));
 
   let addon = yield promiseAddonByID("updatemulti@tests.mozilla.org");
   do_check_neq(addon, null);

@@ -29,11 +29,12 @@ public:
     // nsIWidget
     //
 
-    NS_IMETHOD Create(nsIWidget* aParent,
-                      nsNativeWidget aNativeParent,
-                      const LayoutDeviceIntRect& aRect,
-                      nsWidgetInitData* aInitData = nullptr) override;
-    NS_IMETHOD Destroy() override;
+    virtual MOZ_MUST_USE nsresult Create(nsIWidget* aParent,
+                                         nsNativeWidget aNativeParent,
+                                         const LayoutDeviceIntRect& aRect,
+                                         nsWidgetInitData* aInitData = nullptr)
+                                         override;
+    virtual void Destroy() override;
     NS_IMETHOD Show(bool aState) override;
     NS_IMETHOD              Enable(bool aState) override {
         return NS_OK;
@@ -41,7 +42,6 @@ public:
     virtual bool            IsEnabled() const override {
         return true;
     }
-    NS_IMETHOD              SetModal(bool aState) override;
     virtual bool            IsVisible() const override {
         return mVisible;
     }
@@ -51,16 +51,12 @@ public:
     virtual void SetBackgroundColor(const nscolor &aColor) override;
     virtual void* GetNativeData(uint32_t aDataType) override;
 
-    NS_IMETHOD              ConstrainPosition(bool aAllowSlop,
-                                              int32_t *aX, int32_t *aY) override;
     NS_IMETHOD              Move(double aX, double aY) override;
-    NS_IMETHOD              PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
-                                        nsIWidget *aWidget, bool aActivate) override;
-    NS_IMETHOD              SetSizeMode(nsSizeMode aMode) override;
+    virtual void            SetSizeMode(nsSizeMode aMode) override;
     void                    EnteredFullScreen(bool aFullScreen);
     NS_IMETHOD              Resize(double aWidth, double aHeight, bool aRepaint) override;
     NS_IMETHOD              Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
-    NS_IMETHOD              GetScreenBounds(LayoutDeviceIntRect& aRect) override;
+    virtual LayoutDeviceIntRect GetScreenBounds() override;
     void                    ReportMoveEvent();
     void                    ReportSizeEvent();
     void                    ReportSizeModeEvent(nsSizeMode aMode);
@@ -84,10 +80,6 @@ public:
     virtual nsresult ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override;
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus) override;
-    NS_IMETHOD CaptureRollupEvents(nsIRollupListener * aListener,
-                                   bool aDoCapture) override {
-        return NS_ERROR_NOT_IMPLEMENTED;
-    }
 
     void WillPaintWindow();
     bool PaintWindow(LayoutDeviceIntRegion aRegion);
@@ -106,8 +98,6 @@ public:
                         DoCommandCallback aCallback,
                         void* aCallbackData) override;
     */
-
-    NS_IMETHOD         ReparentNativeWidget(nsIWidget* aNewParent) override;
 
 protected:
     virtual ~nsWindow();

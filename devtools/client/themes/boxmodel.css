@@ -1,0 +1,258 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/ */
+
+#boxmodel-wrapper {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-color: var(--theme-splitter-color);
+}
+
+#boxmodel-container {
+  /* The view will grow bigger as the window gets resized, until 400px */
+  max-width: 400px;
+  margin: 0px auto;
+  padding: 0;
+}
+
+/* Header */
+
+#boxmodel-header,
+#boxmodel-info {
+  display: flex;
+  align-items: center;
+  padding: 4px 17px;
+}
+
+#layout-geometry-editor {
+  visibility: hidden;
+}
+
+#layout-geometry-editor::before {
+  background: url(images/geometry-editor.svg) no-repeat center center / 16px 16px;
+}
+
+/* Main: contains the box-model regions */
+
+#boxmodel-main {
+  position: relative;
+  box-sizing: border-box;
+  /* The regions are semi-transparent, so the white background is partly
+     visible */
+  background-color: white;
+  color: var(--theme-selection-color);
+  /* Make sure there is some space between the window's edges and the regions */
+  margin: 0 14px 4px 14px;
+  width: calc(100% - 2 * 14px);
+}
+
+.boxmodel-margin,
+.boxmodel-size {
+  color: var(--theme-highlight-blue);
+}
+
+/* Regions are 3 nested elements with wide borders and outlines */
+
+#boxmodel-content {
+  height: 18px;
+}
+
+#boxmodel-margins,
+#boxmodel-borders,
+#boxmodel-padding {
+  border-color: hsla(210,100%,85%,0.2);
+  border-width: 18px;
+  border-style: solid;
+  outline: dotted 1px hsl(210,100%,85%);
+}
+
+#boxmodel-margins {
+  /* This opacity applies to all of the regions, since they are nested */
+  opacity: .8;
+}
+
+/* Regions colors */
+
+#boxmodel-margins {
+  border-color: #edff64;
+}
+
+#boxmodel-borders {
+  border-color: #444444;
+}
+
+#boxmodel-padding {
+  border-color: #6a5acd;
+}
+
+#boxmodel-content {
+  background-color: #87ceeb;
+}
+
+.theme-firebug #boxmodel-main,
+.theme-firebug #boxmodel-borders,
+.theme-firebug #boxmodel-content {
+  border-style: solid;
+}
+
+.theme-firebug #boxmodel-main,
+.theme-firebug #boxmodel-header {
+  font-family: var(--proportional-font-family);
+}
+
+.theme-firebug #boxmodel-main {
+  color: var(--theme-body-color);
+  font-size: var(--theme-toolbar-font-size);
+}
+
+.theme-firebug #boxmodel-header {
+  font-size: var(--theme-toolbar-font-size);
+}
+
+/* Editable region sizes are contained in absolutely positioned <p> */
+
+#boxmodel-main > p {
+  position: absolute;
+  pointer-events: none;
+  margin: 0;
+  text-align: center;
+}
+
+#boxmodel-main > p > span,
+#boxmodel-main > p > input {
+  vertical-align: middle;
+  pointer-events: auto;
+}
+
+/* Coordinates for the region sizes */
+
+.boxmodel-top,
+.boxmodel-bottom {
+  width: calc(100% - 2px);
+  text-align: center;
+}
+
+.boxmodel-padding.boxmodel-top {
+  top: 37px;
+}
+
+.boxmodel-padding.boxmodel-bottom {
+  bottom: 38px;
+}
+
+.boxmodel-border.boxmodel-top {
+  top: 19px;
+}
+
+.boxmodel-border.boxmodel-bottom {
+  bottom: 20px;
+}
+
+.boxmodel-margin.boxmodel-top {
+  top: 1px;
+}
+
+.boxmodel-margin.boxmodel-bottom {
+  bottom: 2px;
+}
+
+.boxmodel-size,
+.boxmodel-margin.boxmodel-left,
+.boxmodel-margin.boxmodel-right,
+.boxmodel-border.boxmodel-left,
+.boxmodel-border.boxmodel-right,
+.boxmodel-padding.boxmodel-left,
+.boxmodel-padding.boxmodel-right {
+  top: 22px;
+  line-height: 80px;
+}
+
+.boxmodel-size {
+  width: calc(100% - 2px);
+}
+
+.boxmodel-margin.boxmodel-right,
+.boxmodel-margin.boxmodel-left,
+.boxmodel-border.boxmodel-left,
+.boxmodel-border.boxmodel-right,
+.boxmodel-padding.boxmodel-right,
+.boxmodel-padding.boxmodel-left {
+  width: 21px;
+}
+
+.boxmodel-padding.boxmodel-left {
+  left: 35px;
+}
+
+.boxmodel-padding.boxmodel-right {
+  right: 35px;
+}
+
+.boxmodel-border.boxmodel-left {
+  left: 16px;
+}
+
+.boxmodel-border.boxmodel-right {
+  right: 17px;
+}
+
+.boxmodel-margin.boxmodel-right {
+  right: 0;
+}
+
+.boxmodel-margin.boxmodel-left {
+  left: 0;
+}
+
+.boxmodel-rotate.boxmodel-left:not(.boxmodel-editing) {
+  transform: rotate(-90deg);
+}
+
+.boxmodel-rotate.boxmodel-right:not(.boxmodel-editing) {
+  transform: rotate(90deg);
+}
+
+/* Legend: displayed inside regions */
+
+.boxmodel-legend {
+  position: absolute;
+  margin: 2px 6px;
+  z-index: 1;
+}
+
+.boxmodel-legend[data-box="margin"] {
+  color: var(--theme-highlight-blue);
+}
+
+/* Editable fields */
+
+.boxmodel-editable {
+  border: 1px dashed transparent;
+  -moz-user-select: text;
+}
+
+.boxmodel-editable:hover {
+  border-bottom-color: hsl(0, 0%, 50%);
+}
+
+.styleinspector-propertyeditor {
+  border: 1px solid #ccc;
+  padding: 0;
+}
+
+/* Make sure the content size doesn't appear as editable like the other sizes */
+
+.boxmodel-size > span {
+  cursor: default;
+}
+
+/* Box Model Info: contains the position and size of the element */
+
+#boxmodel-element-size {
+  flex: 1;
+}
+
+#boxmodel-position-group {
+  display: flex;
+  align-items: center;
+}

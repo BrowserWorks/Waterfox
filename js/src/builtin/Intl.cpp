@@ -133,30 +133,30 @@ uenum_close(UEnumeration* en)
 struct UCollator;
 
 enum UColAttribute {
-     UCOL_ALTERNATE_HANDLING,
-     UCOL_CASE_FIRST,
-     UCOL_CASE_LEVEL,
-     UCOL_NORMALIZATION_MODE,
-     UCOL_STRENGTH,
-     UCOL_NUMERIC_COLLATION,
+    UCOL_ALTERNATE_HANDLING,
+    UCOL_CASE_FIRST,
+    UCOL_CASE_LEVEL,
+    UCOL_NORMALIZATION_MODE,
+    UCOL_STRENGTH,
+    UCOL_NUMERIC_COLLATION,
 };
 
 enum UColAttributeValue {
-  UCOL_DEFAULT = -1,
-  UCOL_PRIMARY = 0,
-  UCOL_SECONDARY = 1,
-  UCOL_TERTIARY = 2,
-  UCOL_OFF = 16,
-  UCOL_ON = 17,
-  UCOL_SHIFTED = 20,
-  UCOL_LOWER_FIRST = 24,
-  UCOL_UPPER_FIRST = 25,
+    UCOL_DEFAULT = -1,
+    UCOL_PRIMARY = 0,
+    UCOL_SECONDARY = 1,
+    UCOL_TERTIARY = 2,
+    UCOL_OFF = 16,
+    UCOL_ON = 17,
+    UCOL_SHIFTED = 20,
+    UCOL_LOWER_FIRST = 24,
+    UCOL_UPPER_FIRST = 25,
 };
 
 enum UCollationResult {
-  UCOL_EQUAL = 0,
-  UCOL_GREATER = 1,
-  UCOL_LESS = -1
+    UCOL_EQUAL = 0,
+    UCOL_GREATER = 1,
+    UCOL_LESS = -1
 };
 
 static int32_t
@@ -221,18 +221,18 @@ enum UNumberFormatRoundingMode {
 };
 
 enum UNumberFormatAttribute {
-  UNUM_GROUPING_USED,
-  UNUM_MIN_INTEGER_DIGITS,
-  UNUM_MAX_FRACTION_DIGITS,
-  UNUM_MIN_FRACTION_DIGITS,
-  UNUM_ROUNDING_MODE,
-  UNUM_SIGNIFICANT_DIGITS_USED,
-  UNUM_MIN_SIGNIFICANT_DIGITS,
-  UNUM_MAX_SIGNIFICANT_DIGITS,
+    UNUM_GROUPING_USED,
+    UNUM_MIN_INTEGER_DIGITS,
+    UNUM_MAX_FRACTION_DIGITS,
+    UNUM_MIN_FRACTION_DIGITS,
+    UNUM_ROUNDING_MODE,
+    UNUM_SIGNIFICANT_DIGITS_USED,
+    UNUM_MIN_SIGNIFICANT_DIGITS,
+    UNUM_MAX_SIGNIFICANT_DIGITS,
 };
 
 enum UNumberFormatTextAttribute {
-  UNUM_CURRENCY_CODE,
+    UNUM_CURRENCY_CODE,
 };
 
 static int32_t
@@ -313,9 +313,31 @@ NumberingSystem::getName()
 typedef void* UCalendar;
 
 enum UCalendarType {
-  UCAL_TRADITIONAL,
-  UCAL_DEFAULT = UCAL_TRADITIONAL,
-  UCAL_GREGORIAN
+    UCAL_TRADITIONAL,
+    UCAL_DEFAULT = UCAL_TRADITIONAL,
+    UCAL_GREGORIAN
+};
+
+enum UCalendarAttribute {
+    UCAL_FIRST_DAY_OF_WEEK,
+    UCAL_MINIMAL_DAYS_IN_FIRST_WEEK
+};
+
+enum UCalendarDaysOfWeek {
+    UCAL_SUNDAY,
+    UCAL_MONDAY,
+    UCAL_TUESDAY,
+    UCAL_WEDNESDAY,
+    UCAL_THURSDAY,
+    UCAL_FRIDAY,
+    UCAL_SATURDAY
+};
+
+enum UCalendarWeekdayType {
+    UCAL_WEEKDAY,
+    UCAL_WEEKEND,
+    UCAL_WEEKEND_ONSET,
+    UCAL_WEEKEND_CEASE
 };
 
 static UCalendar*
@@ -344,6 +366,19 @@ ucal_close(UCalendar* cal)
     MOZ_CRASH("ucal_close: Intl API disabled");
 }
 
+static UCalendarWeekdayType
+ucal_getDayOfWeekType(const UCalendar *cal, UCalendarDaysOfWeek dayOfWeek, UErrorCode* status)
+{
+    MOZ_CRASH("ucal_getDayOfWeekType: Intl API disabled");
+}
+
+static int32_t
+ucal_getAttribute(const UCalendar*    cal,
+                  UCalendarAttribute  attr)
+{
+    MOZ_CRASH("ucal_getAttribute: Intl API disabled");
+}
+
 typedef void* UDateTimePatternGenerator;
 
 static UDateTimePatternGenerator*
@@ -370,43 +405,43 @@ typedef void* UCalendar;
 typedef void* UDateFormat;
 
 enum UDateFormatField {
-  UDAT_ERA_FIELD = 0,
-  UDAT_YEAR_FIELD = 1,
-  UDAT_MONTH_FIELD = 2,
-  UDAT_DATE_FIELD = 3,
-  UDAT_HOUR_OF_DAY1_FIELD = 4,
-  UDAT_HOUR_OF_DAY0_FIELD = 5,
-  UDAT_MINUTE_FIELD = 6,
-  UDAT_SECOND_FIELD = 7,
-  UDAT_FRACTIONAL_SECOND_FIELD = 8,
-  UDAT_DAY_OF_WEEK_FIELD = 9,
-  UDAT_DAY_OF_YEAR_FIELD = 10,
-  UDAT_DAY_OF_WEEK_IN_MONTH_FIELD = 11,
-  UDAT_WEEK_OF_YEAR_FIELD = 12,
-  UDAT_WEEK_OF_MONTH_FIELD = 13,
-  UDAT_AM_PM_FIELD = 14,
-  UDAT_HOUR1_FIELD = 15,
-  UDAT_HOUR0_FIELD = 16,
-  UDAT_TIMEZONE_FIELD = 17,
-  UDAT_YEAR_WOY_FIELD = 18,
-  UDAT_DOW_LOCAL_FIELD = 19,
-  UDAT_EXTENDED_YEAR_FIELD = 20,
-  UDAT_JULIAN_DAY_FIELD = 21,
-  UDAT_MILLISECONDS_IN_DAY_FIELD = 22,
-  UDAT_TIMEZONE_RFC_FIELD = 23,
-  UDAT_TIMEZONE_GENERIC_FIELD = 24,
-  UDAT_STANDALONE_DAY_FIELD = 25,
-  UDAT_STANDALONE_MONTH_FIELD = 26,
-  UDAT_QUARTER_FIELD = 27,
-  UDAT_STANDALONE_QUARTER_FIELD = 28,
-  UDAT_TIMEZONE_SPECIAL_FIELD = 29,
-  UDAT_YEAR_NAME_FIELD = 30,
-  UDAT_TIMEZONE_LOCALIZED_GMT_OFFSET_FIELD = 31,
-  UDAT_TIMEZONE_ISO_FIELD = 32,
-  UDAT_TIMEZONE_ISO_LOCAL_FIELD = 33,
-  UDAT_RELATED_YEAR_FIELD = 34,
-  UDAT_TIME_SEPARATOR_FIELD = 35,
-  UDAT_FIELD_COUNT = 36 
+    UDAT_ERA_FIELD = 0,
+    UDAT_YEAR_FIELD = 1,
+    UDAT_MONTH_FIELD = 2,
+    UDAT_DATE_FIELD = 3,
+    UDAT_HOUR_OF_DAY1_FIELD = 4,
+    UDAT_HOUR_OF_DAY0_FIELD = 5,
+    UDAT_MINUTE_FIELD = 6,
+    UDAT_SECOND_FIELD = 7,
+    UDAT_FRACTIONAL_SECOND_FIELD = 8,
+    UDAT_DAY_OF_WEEK_FIELD = 9,
+    UDAT_DAY_OF_YEAR_FIELD = 10,
+    UDAT_DAY_OF_WEEK_IN_MONTH_FIELD = 11,
+    UDAT_WEEK_OF_YEAR_FIELD = 12,
+    UDAT_WEEK_OF_MONTH_FIELD = 13,
+    UDAT_AM_PM_FIELD = 14,
+    UDAT_HOUR1_FIELD = 15,
+    UDAT_HOUR0_FIELD = 16,
+    UDAT_TIMEZONE_FIELD = 17,
+    UDAT_YEAR_WOY_FIELD = 18,
+    UDAT_DOW_LOCAL_FIELD = 19,
+    UDAT_EXTENDED_YEAR_FIELD = 20,
+    UDAT_JULIAN_DAY_FIELD = 21,
+    UDAT_MILLISECONDS_IN_DAY_FIELD = 22,
+    UDAT_TIMEZONE_RFC_FIELD = 23,
+    UDAT_TIMEZONE_GENERIC_FIELD = 24,
+    UDAT_STANDALONE_DAY_FIELD = 25,
+    UDAT_STANDALONE_MONTH_FIELD = 26,
+    UDAT_QUARTER_FIELD = 27,
+    UDAT_STANDALONE_QUARTER_FIELD = 28,
+    UDAT_TIMEZONE_SPECIAL_FIELD = 29,
+    UDAT_YEAR_NAME_FIELD = 30,
+    UDAT_TIMEZONE_LOCALIZED_GMT_OFFSET_FIELD = 31,
+    UDAT_TIMEZONE_ISO_FIELD = 32,
+    UDAT_TIMEZONE_ISO_LOCAL_FIELD = 33,
+    UDAT_RELATED_YEAR_FIELD = 34,
+    UDAT_TIME_SEPARATOR_FIELD = 35,
+    UDAT_FIELD_COUNT = 36
 };
 
 enum UDateFormatStyle {
@@ -542,13 +577,13 @@ intl_availableLocales(JSContext* cx, CountAvailable countAvailable,
     RootedValue t(cx, BooleanValue(true));
     for (uint32_t i = 0; i < count; i++) {
         const char* locale = getAvailable(i);
-        ScopedJSFreePtr<char> lang(JS_strdup(cx, locale));
+        auto lang = DuplicateString(cx, locale);
         if (!lang)
             return false;
         char* p;
-        while ((p = strchr(lang, '_')))
+        while ((p = strchr(lang.get(), '_')))
             *p = '-';
-        RootedAtom a(cx, Atomize(cx, lang, strlen(lang)));
+        RootedAtom a(cx, Atomize(cx, lang.get(), strlen(lang.get())));
         if (!a)
             return false;
         if (!DefineProperty(cx, locales, a->asPropertyName(), t, nullptr, nullptr,
@@ -608,26 +643,21 @@ icuLocale(const char* locale)
     return locale;
 }
 
-// Simple RAII for ICU objects. MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE
-// unfortunately doesn't work because of namespace incompatibilities
-// (TypeSpecificDelete cannot be in icu and mozilla at the same time)
-// and because ICU declares both UNumberFormat and UDateTimePatternGenerator
-// as void*.
-template <typename T>
+// Simple RAII for ICU objects.  Unfortunately, ICU's C++ API is uniformly
+// unstable, so we can't use its smart pointers for this.
+template <typename T, void (Delete)(T*)>
 class ScopedICUObject
 {
     T* ptr_;
-    void (* deleter_)(T*);
 
   public:
-    ScopedICUObject(T* ptr, void (*deleter)(T*))
-      : ptr_(ptr),
-        deleter_(deleter)
+    explicit ScopedICUObject(T* ptr)
+      : ptr_(ptr)
     {}
 
     ~ScopedICUObject() {
         if (ptr_)
-            deleter_(ptr_);
+            Delete(ptr_);
     }
 
     // In cases where an object should be deleted on abnormal exits,
@@ -663,7 +693,8 @@ static const ClassOps CollatorClassOps = {
 
 static const Class CollatorClass = {
     js_Object_str,
-    JSCLASS_HAS_RESERVED_SLOTS(COLLATOR_SLOTS_COUNT),
+    JSCLASS_HAS_RESERVED_SLOTS(COLLATOR_SLOTS_COUNT) |
+    JSCLASS_FOREGROUND_FINALIZE,
     &CollatorClassOps
 };
 
@@ -767,6 +798,8 @@ js::intl_Collator(JSContext* cx, unsigned argc, Value* vp)
 static void
 collator_finalize(FreeOp* fop, JSObject* obj)
 {
+    MOZ_ASSERT(fop->onMainThread());
+
     // This is-undefined check shouldn't be necessary, but for internal
     // brokenness in object allocation code.  For the moment, hack around it by
     // explicitly guarding against the possibility of the reserved slot not
@@ -779,15 +812,17 @@ collator_finalize(FreeOp* fop, JSObject* obj)
 }
 
 static JSObject*
-InitCollatorClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> global)
+CreateCollatorPrototype(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> global)
 {
     RootedFunction ctor(cx, global->createConstructor(cx, &Collator, cx->names().Collator, 0));
     if (!ctor)
         return nullptr;
 
-    RootedObject proto(cx, global->as<GlobalObject>().getOrCreateCollatorPrototype(cx));
+    RootedNativeObject proto(cx, global->createBlankPrototype(cx, &CollatorClass));
     if (!proto)
         return nullptr;
+    proto->setReservedSlot(UCOLLATOR_SLOT, PrivateValue(nullptr));
+
     if (!LinkConstructorAndPrototype(cx, ctor, proto))
         return nullptr;
 
@@ -827,18 +862,7 @@ InitCollatorClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> global
     if (!DefineProperty(cx, Intl, cx->names().Collator, ctorValue, nullptr, nullptr, 0))
         return nullptr;
 
-    return ctor;
-}
-
-bool
-GlobalObject::initCollatorProto(JSContext* cx, Handle<GlobalObject*> global)
-{
-    RootedNativeObject proto(cx, global->createBlankPrototype(cx, &CollatorClass));
-    if (!proto)
-        return false;
-    proto->setReservedSlot(UCOLLATOR_SLOT, PrivateValue(nullptr));
-    global->setReservedSlot(COLLATOR_PROTO, ObjectValue(*proto));
-    return true;
+    return proto;
 }
 
 bool
@@ -870,7 +894,7 @@ js::intl_availableCollations(JSContext* cx, unsigned argc, Value* vp)
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
         return false;
     }
-    ScopedICUObject<UEnumeration> toClose(values, uenum_close);
+    ScopedICUObject<UEnumeration, uenum_close> toClose(values);
 
     uint32_t count = uenum_count(values, &status);
     if (U_FAILURE(status)) {
@@ -1161,7 +1185,8 @@ static const ClassOps NumberFormatClassOps = {
 
 static const Class NumberFormatClass = {
     js_Object_str,
-    JSCLASS_HAS_RESERVED_SLOTS(NUMBER_FORMAT_SLOTS_COUNT),
+    JSCLASS_HAS_RESERVED_SLOTS(NUMBER_FORMAT_SLOTS_COUNT) |
+    JSCLASS_FOREGROUND_FINALIZE,
     &NumberFormatClassOps
 };
 
@@ -1266,6 +1291,8 @@ js::intl_NumberFormat(JSContext* cx, unsigned argc, Value* vp)
 static void
 numberFormat_finalize(FreeOp* fop, JSObject* obj)
 {
+    MOZ_ASSERT(fop->onMainThread());
+
     // This is-undefined check shouldn't be necessary, but for internal
     // brokenness in object allocation code.  For the moment, hack around it by
     // explicitly guarding against the possibility of the reserved slot not
@@ -1278,16 +1305,18 @@ numberFormat_finalize(FreeOp* fop, JSObject* obj)
 }
 
 static JSObject*
-InitNumberFormatClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> global)
+CreateNumberFormatPrototype(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> global)
 {
     RootedFunction ctor(cx);
     ctor = global->createConstructor(cx, &NumberFormat, cx->names().NumberFormat, 0);
     if (!ctor)
         return nullptr;
 
-    RootedObject proto(cx, global->as<GlobalObject>().getOrCreateNumberFormatPrototype(cx));
+    RootedNativeObject proto(cx, global->createBlankPrototype(cx, &NumberFormatClass));
     if (!proto)
         return nullptr;
+    proto->setReservedSlot(UNUMBER_FORMAT_SLOT, PrivateValue(nullptr));
+
     if (!LinkConstructorAndPrototype(cx, ctor, proto))
         return nullptr;
 
@@ -1333,18 +1362,7 @@ InitNumberFormatClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> gl
     if (!DefineProperty(cx, Intl, cx->names().NumberFormat, ctorValue, nullptr, nullptr, 0))
         return nullptr;
 
-    return ctor;
-}
-
-bool
-GlobalObject::initNumberFormatProto(JSContext* cx, Handle<GlobalObject*> global)
-{
-    RootedNativeObject proto(cx, global->createBlankPrototype(cx, &NumberFormatClass));
-    if (!proto)
-        return false;
-    proto->setReservedSlot(UNUMBER_FORMAT_SLOT, PrivateValue(nullptr));
-    global->setReservedSlot(NUMBER_FORMAT_PROTO, ObjectValue(*proto));
-    return true;
+    return proto;
 }
 
 bool
@@ -1512,7 +1530,7 @@ NewUNumberFormat(JSContext* cx, HandleObject numberFormat)
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
         return nullptr;
     }
-    ScopedICUObject<UNumberFormat> toClose(nf, unum_close);
+    ScopedICUObject<UNumberFormat, unum_close> toClose(nf);
 
     if (uCurrency) {
         unum_setTextAttribute(nf, UNUM_CURRENCY_CODE, uCurrency, 3, &status);
@@ -1634,7 +1652,8 @@ static const ClassOps DateTimeFormatClassOps = {
 
 static const Class DateTimeFormatClass = {
     js_Object_str,
-    JSCLASS_HAS_RESERVED_SLOTS(DATE_TIME_FORMAT_SLOTS_COUNT),
+    JSCLASS_HAS_RESERVED_SLOTS(DATE_TIME_FORMAT_SLOTS_COUNT) |
+    JSCLASS_FOREGROUND_FINALIZE,
     &DateTimeFormatClassOps
 };
 
@@ -1655,6 +1674,7 @@ static const JSFunctionSpec dateTimeFormat_static_methods[] = {
 
 static const JSFunctionSpec dateTimeFormat_methods[] = {
     JS_SELF_HOSTED_FN("resolvedOptions", "Intl_DateTimeFormat_resolvedOptions", 0, 0),
+    JS_SELF_HOSTED_FN("formatToParts", "Intl_DateTimeFormat_formatToParts", 0, 0),
 #if JS_HAS_TOSOURCE
     JS_FN(js_toSource_str, dateTimeFormat_toSource, 0, 0),
 #endif
@@ -1739,6 +1759,8 @@ js::intl_DateTimeFormat(JSContext* cx, unsigned argc, Value* vp)
 static void
 dateTimeFormat_finalize(FreeOp* fop, JSObject* obj)
 {
+    MOZ_ASSERT(fop->onMainThread());
+
     // This is-undefined check shouldn't be necessary, but for internal
     // brokenness in object allocation code.  For the moment, hack around it by
     // explicitly guarding against the possibility of the reserved slot not
@@ -1751,16 +1773,18 @@ dateTimeFormat_finalize(FreeOp* fop, JSObject* obj)
 }
 
 static JSObject*
-InitDateTimeFormatClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> global)
+CreateDateTimeFormatPrototype(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> global)
 {
     RootedFunction ctor(cx);
     ctor = global->createConstructor(cx, &DateTimeFormat, cx->names().DateTimeFormat, 0);
     if (!ctor)
         return nullptr;
 
-    RootedObject proto(cx, global->as<GlobalObject>().getOrCreateDateTimeFormatPrototype(cx));
+    RootedNativeObject proto(cx, global->createBlankPrototype(cx, &DateTimeFormatClass));
     if (!proto)
         return nullptr;
+    proto->setReservedSlot(UDATE_FORMAT_SLOT, PrivateValue(nullptr));
+
     if (!LinkConstructorAndPrototype(cx, ctor, proto))
         return nullptr;
 
@@ -1788,23 +1812,6 @@ InitDateTimeFormatClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> 
         return nullptr;
     }
 
-    // If the still-experimental DateTimeFormat.prototype.formatToParts method
-    // is enabled, also add it.
-    if (cx->compartment()->creationOptions().experimentalDateTimeFormatFormatToPartsEnabled()) {
-        RootedValue ftp(cx);
-        HandlePropertyName name = cx->names().formatToParts;
-        if (!GlobalObject::getSelfHostedFunction(cx, cx->global(),
-                    cx->names().DateTimeFormatFormatToParts,
-                    name,
-                    0, &ftp))
-        {
-            return nullptr;
-        }
-
-        if (!DefineProperty(cx, proto, cx->names().formatToParts, ftp, nullptr, nullptr, 0))
-            return nullptr;
-    }
-
     RootedValue options(cx);
     if (!CreateDefaultOptions(cx, &options))
         return nullptr;
@@ -1821,18 +1828,7 @@ InitDateTimeFormatClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> 
     if (!DefineProperty(cx, Intl, cx->names().DateTimeFormat, ctorValue, nullptr, nullptr, 0))
         return nullptr;
 
-    return ctor;
-}
-
-bool
-GlobalObject::initDateTimeFormatProto(JSContext* cx, Handle<GlobalObject*> global)
-{
-    RootedNativeObject proto(cx, global->createBlankPrototype(cx, &DateTimeFormatClass));
-    if (!proto)
-        return false;
-    proto->setReservedSlot(UDATE_FORMAT_SLOT, PrivateValue(nullptr));
-    global->setReservedSlot(DATE_TIME_FORMAT_PROTO, ObjectValue(*proto));
-    return true;
+    return proto;
 }
 
 bool
@@ -1880,16 +1876,24 @@ js::intl_availableCalendars(JSContext* cx, unsigned argc, Value* vp)
 
     // We need the default calendar for the locale as the first result.
     UErrorCode status = U_ZERO_ERROR;
-    UCalendar* cal = ucal_open(nullptr, 0, locale.ptr(), UCAL_DEFAULT, &status);
-    const char* calendar = ucal_getType(cal, &status);
-    if (U_FAILURE(status)) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
-        return false;
+    RootedString jscalendar(cx);
+    {
+        UCalendar* cal = ucal_open(nullptr, 0, locale.ptr(), UCAL_DEFAULT, &status);
+
+        // This correctly handles nullptr |cal| when opening failed.
+        ScopedICUObject<UCalendar, ucal_close> closeCalendar(cal);
+
+        const char* calendar = ucal_getType(cal, &status);
+        if (U_FAILURE(status)) {
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
+            return false;
+        }
+
+        jscalendar = JS_NewStringCopyZ(cx, bcp47CalendarName(calendar));
+        if (!jscalendar)
+            return false;
     }
-    ucal_close(cal);
-    RootedString jscalendar(cx, JS_NewStringCopyZ(cx, bcp47CalendarName(calendar)));
-    if (!jscalendar)
-        return false;
+
     RootedValue element(cx, StringValue(jscalendar));
     if (!DefineElement(cx, calendars, index++, element))
         return false;
@@ -1900,7 +1904,7 @@ js::intl_availableCalendars(JSContext* cx, unsigned argc, Value* vp)
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
         return false;
     }
-    ScopedICUObject<UEnumeration> toClose(values, uenum_close);
+    ScopedICUObject<UEnumeration, uenum_close> toClose(values);
 
     uint32_t count = uenum_count(values, &status);
     if (U_FAILURE(status)) {
@@ -1909,7 +1913,7 @@ js::intl_availableCalendars(JSContext* cx, unsigned argc, Value* vp)
     }
 
     for (; count > 0; count--) {
-        calendar = uenum_next(values, nullptr, &status);
+        const char* calendar = uenum_next(values, nullptr, &status);
         if (U_FAILURE(status)) {
             JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
             return false;
@@ -1956,7 +1960,7 @@ js::intl_patternForSkeleton(JSContext* cx, unsigned argc, Value* vp)
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
         return false;
     }
-    ScopedICUObject<UDateTimePatternGenerator> toClose(gen, udatpg_close);
+    ScopedICUObject<UDateTimePatternGenerator, udatpg_close> toClose(gen);
 
     int32_t size = udatpg_getBestPattern(gen, Char16ToUChar(skeletonChars.start().get()),
                                          skeletonLen, nullptr, 0, &status);
@@ -2359,6 +2363,96 @@ js::intl_FormatDateTime(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
+bool
+js::intl_GetCalendarInfo(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    MOZ_ASSERT(args.length() == 1);
+
+    JSAutoByteString locale(cx, args[0].toString());
+    if (!locale)
+        return false;
+
+    UErrorCode status = U_ZERO_ERROR;
+    const UChar* uTimeZone = nullptr;
+    int32_t uTimeZoneLength = 0;
+    UCalendar* cal = ucal_open(uTimeZone, uTimeZoneLength, locale.ptr(), UCAL_DEFAULT, &status);
+    if (U_FAILURE(status)) {
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
+        return false;
+    }
+    ScopedICUObject<UCalendar, ucal_close> toClose(cal);
+
+    RootedObject info(cx, NewBuiltinClassInstance<PlainObject>(cx));
+    if (!info)
+        return false;
+
+    RootedValue v(cx);
+    int32_t firstDayOfWeek = ucal_getAttribute(cal, UCAL_FIRST_DAY_OF_WEEK);
+    v.setInt32(firstDayOfWeek);
+
+    if (!DefineProperty(cx, info, cx->names().firstDayOfWeek, v))
+        return false;
+
+    int32_t minDays = ucal_getAttribute(cal, UCAL_MINIMAL_DAYS_IN_FIRST_WEEK);
+    v.setInt32(minDays);
+    if (!DefineProperty(cx, info, cx->names().minDays, v))
+        return false;
+
+    UCalendarWeekdayType prevDayType = ucal_getDayOfWeekType(cal, UCAL_SATURDAY, &status);
+    if (U_FAILURE(status)) {
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
+        return false;
+    }
+
+    RootedValue weekendStart(cx), weekendEnd(cx);
+
+    for (int i = UCAL_SUNDAY; i <= UCAL_SATURDAY; i++) {
+        UCalendarDaysOfWeek dayOfWeek = static_cast<UCalendarDaysOfWeek>(i);
+        UCalendarWeekdayType type = ucal_getDayOfWeekType(cal, dayOfWeek, &status);
+        if (U_FAILURE(status)) {
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
+            return false;
+        }
+
+        if (prevDayType != type) {
+            switch (type) {
+              case UCAL_WEEKDAY:
+                // If the first Weekday after Weekend is Sunday (1),
+                // then the last Weekend day is Saturday (7).
+                // Otherwise we'll just take the previous days number.
+                weekendEnd.setInt32(i == 1 ? 7 : i - 1);
+                break;
+              case UCAL_WEEKEND:
+                weekendStart.setInt32(i);
+                break;
+              case UCAL_WEEKEND_ONSET:
+              case UCAL_WEEKEND_CEASE:
+                // At the time this code was added, ICU apparently never behaves this way,
+                // so just throw, so that users will report a bug and we can decide what to
+                // do.
+                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INTERNAL_INTL_ERROR);
+                return false;
+              default:
+                break;
+            }
+        }
+
+        prevDayType = type;
+    }
+
+    MOZ_ASSERT(weekendStart.isInt32());
+    MOZ_ASSERT(weekendEnd.isInt32());
+
+    if (!DefineProperty(cx, info, cx->names().weekendStart, weekendStart))
+        return false;
+
+    if (!DefineProperty(cx, info, cx->names().weekendEnd, weekendEnd))
+        return false;
+
+    args.rval().setObject(*info);
+    return true;
+}
 
 /******************** Intl ********************/
 
@@ -2389,51 +2483,71 @@ static const JSFunctionSpec intl_static_methods[] = {
  * Initializes the Intl Object and its standard built-in properties.
  * Spec: ECMAScript Internationalization API Specification, 8.0, 8.1
  */
-JSObject*
-js::InitIntlClass(JSContext* cx, HandleObject obj)
-{
-    MOZ_ASSERT(obj->is<GlobalObject>());
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
-
-    // The constructors above need to be able to determine whether they've been
-    // called with this being "the standard built-in Intl object". The global
-    // object reserves slots to track standard built-in objects, but doesn't
-    // normally keep references to non-constructors. This makes sure there is one.
-    RootedObject Intl(cx, global->getOrCreateIntlObject(cx));
-    if (!Intl)
-        return nullptr;
-
-    RootedValue IntlValue(cx, ObjectValue(*Intl));
-    if (!DefineProperty(cx, global, cx->names().Intl, IntlValue, nullptr, nullptr,
-                        JSPROP_RESOLVING))
-    {
-        return nullptr;
-    }
-
-    if (!JS_DefineFunctions(cx, Intl, intl_static_methods))
-        return nullptr;
-
-    if (!InitCollatorClass(cx, Intl, global))
-        return nullptr;
-    if (!InitNumberFormatClass(cx, Intl, global))
-        return nullptr;
-    if (!InitDateTimeFormatClass(cx, Intl, global))
-        return nullptr;
-
-    global->setConstructor(JSProto_Intl, ObjectValue(*Intl));
-
-    return Intl;
-}
-
 bool
 GlobalObject::initIntlObject(JSContext* cx, Handle<GlobalObject*> global)
 {
-    RootedObject Intl(cx);
     RootedObject proto(cx, global->getOrCreateObjectPrototype(cx));
-    Intl = NewObjectWithGivenProto(cx, &IntlClass, proto, SingletonObject);
-    if (!Intl)
+    if (!proto)
         return false;
 
-    global->setConstructor(JSProto_Intl, ObjectValue(*Intl));
+    // The |Intl| object is just a plain object with some "static" function
+    // properties and some constructor properties.
+    RootedObject intl(cx, NewObjectWithGivenProto(cx, &IntlClass, proto, SingletonObject));
+    if (!intl)
+        return false;
+
+    // Add the static functions.
+    if (!JS_DefineFunctions(cx, intl, intl_static_methods))
+        return false;
+
+    // Add the constructor properties, computing and returning the relevant
+    // prototype objects needed below.
+    RootedObject collatorProto(cx, CreateCollatorPrototype(cx, intl, global));
+    if (!collatorProto)
+        return false;
+    RootedObject dateTimeFormatProto(cx, CreateDateTimeFormatPrototype(cx, intl, global));
+    if (!dateTimeFormatProto)
+        return false;
+    RootedObject numberFormatProto(cx, CreateNumberFormatPrototype(cx, intl, global));
+    if (!numberFormatProto)
+        return false;
+
+    // The |Intl| object is fully set up now, so define the global property.
+    RootedValue intlValue(cx, ObjectValue(*intl));
+    if (!DefineProperty(cx, global, cx->names().Intl, intlValue, nullptr, nullptr,
+                        JSPROP_RESOLVING))
+    {
+        return false;
+    }
+
+    // Now that the |Intl| object is successfully added, we can OOM-safely fill
+    // in all relevant reserved global slots.
+
+    // Cache the various prototypes, for use in creating instances of these
+    // objects with the proper [[Prototype]] as "the original value of
+    // |Intl.Collator.prototype|" and similar.  For builtin classes like
+    // |String.prototype| we have |JSProto_*| that enables
+    // |getPrototype(JSProto_*)|, but that has global-object-property-related
+    // baggage we don't need or want, so we use one-off reserved slots.
+    global->setReservedSlot(COLLATOR_PROTO, ObjectValue(*collatorProto));
+    global->setReservedSlot(DATE_TIME_FORMAT_PROTO, ObjectValue(*dateTimeFormatProto));
+    global->setReservedSlot(NUMBER_FORMAT_PROTO, ObjectValue(*numberFormatProto));
+
+    // Also cache |Intl| to implement spec language that conditions behavior
+    // based on values being equal to "the standard built-in |Intl| object".
+    // Use |setConstructor| to correspond with |JSProto_Intl|.
+    //
+    // XXX We should possibly do a one-off reserved slot like above.
+    global->setConstructor(JSProto_Intl, ObjectValue(*intl));
     return true;
+}
+
+JSObject*
+js::InitIntlClass(JSContext* cx, HandleObject obj)
+{
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
+    if (!GlobalObject::initIntlObject(cx, global))
+        return nullptr;
+
+    return &global->getConstructor(JSProto_Intl).toObject();
 }

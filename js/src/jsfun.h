@@ -17,10 +17,6 @@
 
 namespace js {
 
-namespace frontend {
-class FunctionBox;
-}
-
 class FunctionExtended;
 
 typedef JSNative           Native;
@@ -66,8 +62,6 @@ class JSFunction : public js::NativeObject
         INTERPRETED_LAZY = 0x0200,  /* function is interpreted but doesn't have a script yet */
         RESOLVED_LENGTH  = 0x0400,  /* f.length has been resolved (see fun_resolve). */
         RESOLVED_NAME    = 0x0800,  /* f.name has been resolved (see fun_resolve). */
-        BEING_PARSED     = 0x1000,  /* function is currently being parsed; has
-                                       a funbox in place of an environment */
 
         FUNCTION_KIND_SHIFT = 13,
         FUNCTION_KIND_MASK  = 0x7 << FUNCTION_KIND_SHIFT,
@@ -106,18 +100,6 @@ class JSFunction : public js::NativeObject
     static_assert(((FunctionKindLimit - 1) << FUNCTION_KIND_SHIFT) <= FUNCTION_KIND_MASK,
                   "FunctionKind doesn't fit into flags_");
 
-    // Implemented in Parser.cpp. Used so the static scope chain may be walked
-    // in Parser without a JSScript.
-    class MOZ_STACK_CLASS AutoParseUsingFunctionBox
-    {
-        js::RootedFunction fun_;
-        js::RootedObject oldEnv_;
-
-      public:
-        AutoParseUsingFunctionBox(js::ExclusiveContext* cx, js::frontend::FunctionBox* funbox);
-        ~AutoParseUsingFunctionBox();
-    };
-
   private:
     uint16_t        nargs_;       /* number of formal arguments
                                      (including defaults and the rest parameter unlike f.length) */
@@ -127,8 +109,8 @@ class JSFunction : public js::NativeObject
             friend class JSFunction;
             js::Native          native;       /* native method pointer or null */
             const JSJitInfo*    jitinfo;     /* Information about this function to be
-                                                 used by the JIT;
-                                                 use the accessor! */
+                                                used by the JIT;
+                                                use the accessor! */
         } n;
         struct Scripted {
             union {
@@ -136,33 +118,40 @@ class JSFunction : public js::NativeObject
                                       use the accessor! */
                 js::LazyScript* lazy_; /* lazily compiled script, or nullptr */
             } s;
-            union {
-                JSObject*   env_;    /* environment for new activations;
-                                        use the accessor! */
-                js::frontend::FunctionBox* funbox_; /* the function box when parsing */
-            };
+            JSObject*   env_;    /* environment for new activations */
         } i;
         void*           nativeOrScript;
     } u;
     js::GCPtrAtom atom_;      /* name for diagnostics and decompiling */
 
   public:
-
     /* Call objects must be created for each invocation of this function. */
     bool needsCallObject() const {
         MOZ_ASSERT(!isInterpretedLazy());
-        MOZ_ASSERT(!isBeingParsed());
 
         if (isNative())
             return false;
 
-        // Note: this should be kept in sync with FunctionBox::needsCallObject().
-        return nonLazyScript()->hasAnyAliasedBindings() ||
-               nonLazyScript()->funHasExtensibleScope() ||
-               nonLazyScript()->funNeedsDeclEnvObject() ||
-               nonLazyScript()->needsHomeObject()       ||
-               nonLazyScript()->isDerivedClassConstructor() ||
-               isGenerator();
+        // Note: this should be kept in sync with
+        // FunctionBox::needsCallObjectRegardlessOfBindings().
+        MOZ_ASSERT_IF(nonLazyScript()->funHasExtensibleScope() ||
+                      nonLazyScript()->needsHomeObject()       ||
+                      nonLazyScript()->isDerivedClassConstructor() ||
+                      isGenerator(),
+                      nonLazyScript()->bodyScope()->hasEnvironment());
+
+        return nonLazyScript()->bodyScope()->hasEnvironment();
+    }
+
+    bool needsExtraBodyVarEnvironment() const;
+    bool needsNamedLambdaEnvironment() const;
+
+    bool needsFunctionEnvironmentObjects() const {
+        return needsCallObject() || needsNamedLambdaEnvironment();
+    }
+
+    bool needsSomeEnvironmentObject() const {
+        return needsFunctionEnvironmentObjects() || needsExtraBodyVarEnvironment();
     }
 
     size_t nargs() const {
@@ -194,7 +183,6 @@ class JSFunction : public js::NativeObject
     bool hasRest()                  const { return flags() & HAS_REST; }
     bool isInterpretedLazy()        const { return flags() & INTERPRETED_LAZY; }
     bool hasScript()                const { return flags() & INTERPRETED; }
-    bool isBeingParsed()            const { return flags() & BEING_PARSED; }
 
     bool infallibleIsDefaultClassConstructor(JSContext* cx) const;
 
@@ -352,36 +340,22 @@ class JSFunction : public js::NativeObject
      * activations (stack frames) of the function.
      */
     JSObject* environment() const {
-        MOZ_ASSERT(isInterpreted() && !isBeingParsed());
+        MOZ_ASSERT(isInterpreted());
         return u.i.env_;
     }
 
     void setEnvironment(JSObject* obj) {
-        MOZ_ASSERT(isInterpreted() && !isBeingParsed());
+        MOZ_ASSERT(isInterpreted());
         *reinterpret_cast<js::GCPtrObject*>(&u.i.env_) = obj;
     }
 
     void initEnvironment(JSObject* obj) {
-        MOZ_ASSERT(isInterpreted() && !isBeingParsed());
+        MOZ_ASSERT(isInterpreted());
         reinterpret_cast<js::GCPtrObject*>(&u.i.env_)->init(obj);
     }
 
     void unsetEnvironment() {
         setEnvironment(nullptr);
-    }
-
-  private:
-    void setFunctionBox(js::frontend::FunctionBox* funbox) {
-        MOZ_ASSERT(isInterpreted());
-        MOZ_ASSERT_IF(!isBeingParsed(), !environment());
-        flags_ |= BEING_PARSED;
-        u.i.funbox_ = funbox;
-    }
-
-    void unsetFunctionBox() {
-        MOZ_ASSERT(isBeingParsed());
-        flags_ &= ~BEING_PARSED;
-        u.i.funbox_ = nullptr;
     }
 
   public:
@@ -409,8 +383,9 @@ class JSFunction : public js::NativeObject
     //   use, but has extra checks, requires a cx and may trigger a GC.
     //
     // - For inlined functions which may have a LazyScript but whose JSScript
-    //   is known to exist, existingScriptForInlinedFunction() will get the
-    //   script and delazify the function if necessary.
+    //   is known to exist, existingScript() will get the script and delazify
+    //   the function if necessary. If the function should not be delazified,
+    //   use existingScriptNonDelazifying().
     //
     // - For functions known to have a JSScript, nonLazyScript() will get it.
 
@@ -426,7 +401,7 @@ class JSFunction : public js::NativeObject
         return nonLazyScript();
     }
 
-    JSScript* existingScriptForInlinedFunction() {
+    JSScript* existingScriptNonDelazifying() const {
         MOZ_ASSERT(isInterpreted());
         if (isInterpretedLazy()) {
             // Get the script from the canonical function. Ion used the
@@ -437,11 +412,17 @@ class JSFunction : public js::NativeObject
             js::LazyScript* lazy = lazyScript();
             JSFunction* fun = lazy->functionNonDelazifying();
             MOZ_ASSERT(fun);
-            JSScript* script = fun->nonLazyScript();
+            return fun->nonLazyScript();
+        }
+        return nonLazyScript();
+    }
 
+    JSScript* existingScript() {
+        MOZ_ASSERT(isInterpreted());
+        if (isInterpretedLazy()) {
             if (shadowZone()->needsIncrementalBarrier())
-                js::LazyScript::writeBarrierPre(lazy);
-
+                js::LazyScript::writeBarrierPre(lazyScript());
+            JSScript* script = existingScriptNonDelazifying();
             flags_ &= ~INTERPRETED_LAZY;
             flags_ |= INTERPRETED;
             initScript(script);
@@ -474,11 +455,6 @@ class JSFunction : public js::NativeObject
         return u.i.s.lazy_;
     }
 
-    js::frontend::FunctionBox* functionBox() const {
-        MOZ_ASSERT(isBeingParsed());
-        return u.i.funbox_;
-    }
-
     js::GeneratorKind generatorKind() const {
         if (!isInterpreted())
             return js::NotGenerator;
@@ -505,11 +481,13 @@ class JSFunction : public js::NativeObject
     }
 
     void setUnlazifiedScript(JSScript* script) {
-        // Note: createScriptForLazilyInterpretedFunction triggers a barrier on
-        // lazy script before it is overwritten here.
         MOZ_ASSERT(isInterpretedLazy());
-        if (lazyScriptOrNull() && !lazyScript()->maybeScript())
-            lazyScript()->initScript(script);
+        if (lazyScriptOrNull()) {
+            // Trigger a pre barrier on the lazy script being overwritten.
+            js::LazyScript::writeBarrierPre(lazyScriptOrNull());
+            if (!lazyScript()->maybeScript())
+                lazyScript()->initScript(script);
+        }
         flags_ &= ~INTERPRETED_LAZY;
         flags_ |= INTERPRETED;
         initScript(script);
@@ -641,7 +619,7 @@ NewNativeConstructor(ExclusiveContext* cx, JSNative native, unsigned nargs, Hand
                      NewObjectKind newKind = GenericObject,
                      JSFunction::Flags flags = JSFunction::NATIVE_CTOR);
 
-// Allocate a new scripted function.  If enclosingDynamicScope is null, the
+// Allocate a new scripted function.  If enclosingEnv is null, the
 // global will be used.  In all cases the parent of the resulting object will be
 // the global.
 extern JSFunction*
@@ -649,12 +627,12 @@ NewScriptedFunction(ExclusiveContext* cx, unsigned nargs, JSFunction::Flags flag
                     HandleAtom atom, HandleObject proto = nullptr,
                     gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
                     NewObjectKind newKind = GenericObject,
-                    HandleObject enclosingDynamicScope = nullptr);
+                    HandleObject enclosingEnv = nullptr);
 
 // By default, if proto is nullptr, Function.prototype is used instead.i
 // If protoHandling is NewFunctionExactProto, and proto is nullptr, the created
 // function will use nullptr as its [[Prototype]] instead. If
-// enclosingDynamicScope is null, the function will have a null environment()
+// enclosingEnv is null, the function will have a null environment()
 // (yes, null, not the global).  In all cases, the global will be used as the
 // parent.
 
@@ -664,7 +642,7 @@ enum NewFunctionProtoHandling {
 };
 extern JSFunction*
 NewFunctionWithProto(ExclusiveContext* cx, JSNative native, unsigned nargs,
-                     JSFunction::Flags flags, HandleObject enclosingDynamicScope, HandleAtom atom,
+                     JSFunction::Flags flags, HandleObject enclosingEnv, HandleAtom atom,
                      HandleObject proto, gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
                      NewObjectKind newKind = GenericObject,
                      NewFunctionProtoHandling protoHandling = NewFunctionClassProto);
@@ -691,9 +669,6 @@ FunctionHasDefaultHasInstance(JSFunction* fun, const WellKnownSymbols& symbols);
 extern bool
 fun_symbolHasInstance(JSContext* cx, unsigned argc, Value* vp);
 
-extern bool
-OrdinaryHasInstance(JSContext* cx, HandleObject objArg, MutableHandleValue v, bool* bp);
-
 /*
  * Function extended with reserved slots for use by various kinds of functions.
  * Most functions do not have these extensions, but enough do that efficient
@@ -719,7 +694,7 @@ class FunctionExtended : public JSFunction
      * wasm/asm.js exported functions store the function index of the exported
      * function in the original module.
      */
-    static const unsigned WASM_FUNC_INDEX_SLOT = 1;
+    static const unsigned WASM_FUNC_DEF_INDEX_SLOT = 1;
 
     /*
      * asm.js module functions store their WasmModuleObject in the first slot.
@@ -754,7 +729,7 @@ CloneFunctionReuseScript(JSContext* cx, HandleFunction fun, HandleObject parent,
 // Functions whose scripts are cloned are always given singleton types.
 extern JSFunction*
 CloneFunctionAndScript(JSContext* cx, HandleFunction fun, HandleObject parent,
-                       HandleObject newStaticScope,
+                       HandleScope newScope,
                        gc::AllocKind kind = gc::AllocKind::FUNCTION,
                        HandleObject proto = nullptr);
 
@@ -815,7 +790,7 @@ JSString* FunctionToString(JSContext* cx, HandleFunction fun, bool lambdaParen);
 
 template<XDRMode mode>
 bool
-XDRInterpretedFunction(XDRState<mode>* xdr, HandleObject enclosingScope,
+XDRInterpretedFunction(XDRState<mode>* xdr, HandleScope enclosingScope,
                        HandleScript enclosingScript, MutableHandleFunction objp);
 
 /*

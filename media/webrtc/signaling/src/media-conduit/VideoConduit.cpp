@@ -95,6 +95,8 @@ WebrtcVideoConduit::WebrtcVideoConduit():
   mStartBitrate(0),
   mMaxBitrate(0),
   mMinBitrateEstimate(0),
+  mRtpStreamIdEnabled(false),
+  mRtpStreamIdExtId(0),
   mCodecMode(webrtc::kRealtimeVideo)
 {}
 
@@ -661,6 +663,9 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
     return condError;
   }
 
+  if (mRtpStreamIdEnabled) {
+    video_codec.ridId = mRtpStreamIdExtId;
+  }
   if (mExternalSendCodec &&
       codecConfig->mType == mExternalSendCodec->mType) {
     CSFLogError(logTag, "%s Configuring External H264 Send Codec", __FUNCTION__);
@@ -756,7 +761,16 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
   }
   mVideoCodecStat->Register(true);
 
-  if (codecConfig->RtcpFbFECIsSet())
+  // See Bug 1297058, enabling FEC when NACK is set on H.264 is problematic
+  bool use_fec = codecConfig->RtcpFbFECIsSet();
+  if ((mExternalSendCodec && codecConfig->mType == mExternalSendCodec->mType)
+      || codecConfig->mType == webrtc::kVideoCodecH264) {
+    if(codecConfig->RtcpFbNackIsSet("")) {
+      use_fec = false;
+    }
+  }
+
+  if (use_fec)
   {
     uint8_t payload_type_red = INVALID_RTP_PAYLOAD;
     uint8_t payload_type_ulpfec = INVALID_RTP_PAYLOAD;
@@ -995,6 +1009,24 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
                   "payload type: red %u ulpfec %u",
                   __FUNCTION__, payload_type_red, payload_type_ulpfec);
         return kMediaConduitFECStatusError;
+    }
+
+    // We also need to call SetReceiveCodec for RED and ULPFEC codecs
+    for(int idx=0; idx < mPtrViECodec->NumberOfCodecs(); idx++) {
+      webrtc::VideoCodec video_codec;
+      if(mPtrViECodec->GetCodec(idx, video_codec) == 0) {
+        payloadName = video_codec.plName;
+        if(video_codec.codecType == webrtc::VideoCodecType::kVideoCodecRED ||
+           video_codec.codecType == webrtc::VideoCodecType::kVideoCodecULPFEC) {
+          if(mPtrViECodec->SetReceiveCodec(mChannel,video_codec) == -1) {
+            CSFLogError(logTag, "%s Invalid Receive Codec %d ", __FUNCTION__,
+                        mPtrViEBase->LastError());
+          } else {
+            CSFLogDebug(logTag, "%s Successfully Set the codec %s", __FUNCTION__,
+                        video_codec.plName);
+          }
+        }
+      }
     }
 
     if (use_nack_basic) {
@@ -1347,6 +1379,10 @@ WebrtcVideoConduit::ReconfigureSendCodec(unsigned short width,
               "%s: Requesting resolution change to %ux%u (from %ux%u)",
               __FUNCTION__, width, height, vie_codec.width, vie_codec.height);
 
+  if (mRtpStreamIdEnabled) {
+    vie_codec.ridId = mRtpStreamIdExtId;
+  }
+
   vie_codec.width = width;
   vie_codec.height = height;
   vie_codec.maxFramerate = mSendingFramerate;
@@ -1496,6 +1532,13 @@ WebrtcVideoConduit::SetExternalRecvCodec(VideoCodecConfig* config,
     return kMediaConduitNoError;
   }
   return kMediaConduitInvalidReceiveCodec;
+}
+
+MediaConduitErrorCode
+WebrtcVideoConduit::EnableRTPStreamIdExtension(bool enabled, uint8_t id) {
+  mRtpStreamIdEnabled = enabled;
+  mRtpStreamIdExtId = id;
+  return kMediaConduitNoError;
 }
 
 MediaConduitErrorCode

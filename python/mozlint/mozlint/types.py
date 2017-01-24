@@ -5,7 +5,11 @@
 from __future__ import unicode_literals
 
 import re
+import sys
 from abc import ABCMeta, abstractmethod
+
+from mozlog import get_default_logger, commandline, structuredlog
+from mozlog.reader import LogHandler
 
 from . import result
 from .pathutils import filterpaths
@@ -25,17 +29,11 @@ class BaseType(object):
                          the definition, but passed in by a consumer.
         :returns: A list of :class:`~result.ResultContainer` objects.
         """
-        exclude = lintargs.get('exclude', [])
-        exclude.extend(linter.get('exclude', []))
-
-        if lintargs.get('use_filters', True):
-            paths, exclude = filterpaths(paths, linter.get('include'), exclude)
-
+        paths = filterpaths(paths, linter, **lintargs)
         if not paths:
             print("{}: no files to lint in specified paths".format(linter['name']))
             return
 
-        lintargs['exclude'] = exclude
         if self.batch:
             return self._lint(paths, linter, **lintargs)
 
@@ -107,9 +105,38 @@ class ExternalType(BaseType):
         return payload(files, **lintargs)
 
 
+class LintHandler(LogHandler):
+    def __init__(self, linter):
+        self.linter = linter
+        self.results = []
+
+    def lint(self, data):
+        self.results.append(result.from_linter(self.linter, **data))
+
+
+class StructuredLogType(BaseType):
+    batch = True
+
+    def _lint(self, files, linter, **lintargs):
+        payload = linter["payload"]
+        handler = LintHandler(linter)
+        logger = linter.get("logger")
+        if logger is None:
+            logger = get_default_logger()
+        if logger is None:
+            logger = structuredlog.StructuredLogger(linter["name"])
+            commandline.setup_logging(logger, {}, {"mach": sys.stdout})
+        logger.add_handler(handler)
+        try:
+            payload(files, logger, **lintargs)
+        except KeyboardInterrupt:
+            pass
+        return handler.results
+
 supported_types = {
     'string': StringType(),
     'regex': RegexType(),
     'external': ExternalType(),
+    'structured_log': StructuredLogType()
 }
 """Mapping of type string to an associated instance."""

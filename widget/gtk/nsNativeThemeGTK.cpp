@@ -193,205 +193,199 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
                                        gint* aWidgetFlags)
 {
   if (aState) {
-    if (!aFrame) {
-      // reset the entire struct to zero
-      memset(aState, 0, sizeof(GtkWidgetState));
-    } else {
+    // For XUL checkboxes and radio buttons, the state of the parent
+    // determines our state.
+    nsIFrame *stateFrame = aFrame;
+    if (aFrame && ((aWidgetFlags && (aWidgetType == NS_THEME_CHECKBOX ||
+                                     aWidgetType == NS_THEME_RADIO)) ||
+                   aWidgetType == NS_THEME_CHECKBOX_LABEL ||
+                   aWidgetType == NS_THEME_RADIO_LABEL)) {
 
-      // For XUL checkboxes and radio buttons, the state of the parent
-      // determines our state.
-      nsIFrame *stateFrame = aFrame;
-      if (aFrame && ((aWidgetFlags && (aWidgetType == NS_THEME_CHECKBOX ||
-                                       aWidgetType == NS_THEME_RADIO)) ||
-                     aWidgetType == NS_THEME_CHECKBOX_LABEL ||
-                     aWidgetType == NS_THEME_RADIO_LABEL)) {
-
-        nsIAtom* atom = nullptr;
-        if (IsFrameContentNodeInNamespace(aFrame, kNameSpaceID_XUL)) {
-          if (aWidgetType == NS_THEME_CHECKBOX_LABEL ||
-              aWidgetType == NS_THEME_RADIO_LABEL) {
-            // Adjust stateFrame so GetContentState finds the correct state.
-            stateFrame = aFrame = aFrame->GetParent()->GetParent();
-          } else {
-            // GetContentState knows to look one frame up for radio/checkbox
-            // widgets, so don't adjust stateFrame here.
-            aFrame = aFrame->GetParent();
-          }
-          if (aWidgetFlags) {
-            if (!atom) {
-              atom = (aWidgetType == NS_THEME_CHECKBOX ||
-                      aWidgetType == NS_THEME_CHECKBOX_LABEL) ? nsGkAtoms::checked
-                                                              : nsGkAtoms::selected;
-            }
-            *aWidgetFlags = CheckBooleanAttr(aFrame, atom);
-          }
-        } else {
-          if (aWidgetFlags) {
-            nsCOMPtr<nsIDOMHTMLInputElement> inputElt(do_QueryInterface(aFrame->GetContent()));
-            *aWidgetFlags = 0;
-            if (inputElt) {
-              bool isHTMLChecked;
-              inputElt->GetChecked(&isHTMLChecked);
-              if (isHTMLChecked)
-                *aWidgetFlags |= MOZ_GTK_WIDGET_CHECKED;
-            }
-
-            if (GetIndeterminate(aFrame))
-              *aWidgetFlags |= MOZ_GTK_WIDGET_INCONSISTENT;
-          }
-        }
-      } else if (aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
-                 aWidgetType == NS_THEME_TREEHEADERSORTARROW ||
-                 aWidgetType == NS_THEME_BUTTON_ARROW_PREVIOUS ||
-                 aWidgetType == NS_THEME_BUTTON_ARROW_NEXT ||
-                 aWidgetType == NS_THEME_BUTTON_ARROW_UP ||
-                 aWidgetType == NS_THEME_BUTTON_ARROW_DOWN) {
-        // The state of an arrow comes from its parent.
-        stateFrame = aFrame = aFrame->GetParent();
-      }
-
-      EventStates eventState = GetContentState(stateFrame, aWidgetType);
-
-      aState->disabled = IsDisabled(aFrame, eventState) || IsReadOnly(aFrame);
-      aState->active  = eventState.HasState(NS_EVENT_STATE_ACTIVE);
-      aState->focused = eventState.HasState(NS_EVENT_STATE_FOCUS);
-      aState->inHover = eventState.HasState(NS_EVENT_STATE_HOVER);
-      aState->isDefault = IsDefaultButton(aFrame);
-      aState->canDefault = FALSE; // XXX fix me
-      aState->depressed = FALSE;
-
-      if (aWidgetType == NS_THEME_FOCUS_OUTLINE) {
-        aState->disabled = FALSE;
-        aState->active  = FALSE;
-        aState->inHover = FALSE;
-        aState->isDefault = FALSE;
-        aState->canDefault = FALSE;
-
-        aState->focused = TRUE;
-        aState->depressed = TRUE; // see moz_gtk_entry_paint()
-      } else if (aWidgetType == NS_THEME_BUTTON ||
-                 aWidgetType == NS_THEME_TOOLBARBUTTON ||
-                 aWidgetType == NS_THEME_DUALBUTTON ||
-                 aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
-                 aWidgetType == NS_THEME_MENULIST ||
-                 aWidgetType == NS_THEME_MENULIST_BUTTON) {
-        aState->active &= aState->inHover;
-      }
-
+      nsIAtom* atom = nullptr;
       if (IsFrameContentNodeInNamespace(aFrame, kNameSpaceID_XUL)) {
-        // For these widget types, some element (either a child or parent)
-        // actually has element focus, so we check the focused attribute
-        // to see whether to draw in the focused state.
-        if (aWidgetType == NS_THEME_NUMBER_INPUT ||
-            aWidgetType == NS_THEME_TEXTFIELD ||
-            aWidgetType == NS_THEME_TEXTFIELD_MULTILINE ||
-            aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
-            aWidgetType == NS_THEME_SPINNER_TEXTFIELD ||
-            aWidgetType == NS_THEME_RADIO_CONTAINER ||
+        if (aWidgetType == NS_THEME_CHECKBOX_LABEL ||
             aWidgetType == NS_THEME_RADIO_LABEL) {
-          aState->focused = IsFocused(aFrame);
-        } else if (aWidgetType == NS_THEME_RADIO ||
-                   aWidgetType == NS_THEME_CHECKBOX) {
-          // In XUL, checkboxes and radios shouldn't have focus rings, their labels do
-          aState->focused = FALSE;
+          // Adjust stateFrame so GetContentState finds the correct state.
+          stateFrame = aFrame = aFrame->GetParent()->GetParent();
+        } else {
+          // GetContentState knows to look one frame up for radio/checkbox
+          // widgets, so don't adjust stateFrame here.
+          aFrame = aFrame->GetParent();
         }
-
-        if (aWidgetType == NS_THEME_SCROLLBARTHUMB_VERTICAL ||
-            aWidgetType == NS_THEME_SCROLLBARTHUMB_HORIZONTAL) {
-          // for scrollbars we need to go up two to go from the thumb to
-          // the slider to the actual scrollbar object
-          nsIFrame *tmpFrame = aFrame->GetParent()->GetParent();
-
-          aState->curpos = CheckIntAttr(tmpFrame, nsGkAtoms::curpos, 0);
-          aState->maxpos = CheckIntAttr(tmpFrame, nsGkAtoms::maxpos, 100);
-
-          if (CheckBooleanAttr(aFrame, nsGkAtoms::active)) {
-            aState->active = TRUE;
-            // Set hover state to emulate Gtk style of active scrollbar thumb 
-            aState->inHover = TRUE;
+        if (aWidgetFlags) {
+          if (!atom) {
+            atom = (aWidgetType == NS_THEME_CHECKBOX ||
+                    aWidgetType == NS_THEME_CHECKBOX_LABEL) ? nsGkAtoms::checked
+                                                            : nsGkAtoms::selected;
           }
+          *aWidgetFlags = CheckBooleanAttr(aFrame, atom);
         }
-
-        if (aWidgetType == NS_THEME_SCROLLBARBUTTON_UP ||
-            aWidgetType == NS_THEME_SCROLLBARBUTTON_DOWN ||
-            aWidgetType == NS_THEME_SCROLLBARBUTTON_LEFT ||
-            aWidgetType == NS_THEME_SCROLLBARBUTTON_RIGHT) {
-          // set the state to disabled when the scrollbar is scrolled to
-          // the beginning or the end, depending on the button type.
-          int32_t curpos = CheckIntAttr(aFrame, nsGkAtoms::curpos, 0);
-          int32_t maxpos = CheckIntAttr(aFrame, nsGkAtoms::maxpos, 100);
-          if (ShouldScrollbarButtonBeDisabled(curpos, maxpos, aWidgetType)) {
-            aState->disabled = true;
+      } else {
+        if (aWidgetFlags) {
+          nsCOMPtr<nsIDOMHTMLInputElement> inputElt(do_QueryInterface(aFrame->GetContent()));
+          *aWidgetFlags = 0;
+          if (inputElt) {
+            bool isHTMLChecked;
+            inputElt->GetChecked(&isHTMLChecked);
+            if (isHTMLChecked)
+              *aWidgetFlags |= MOZ_GTK_WIDGET_CHECKED;
           }
 
-          // In order to simulate native GTK scrollbar click behavior,
-          // we set the active attribute on the element to true if it's
-          // pressed with any mouse button.
-          // This allows us to show that it's active without setting :active
-          else if (CheckBooleanAttr(aFrame, nsGkAtoms::active))
-            aState->active = true;
+          if (GetIndeterminate(aFrame))
+            *aWidgetFlags |= MOZ_GTK_WIDGET_INCONSISTENT;
+        }
+      }
+    } else if (aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
+               aWidgetType == NS_THEME_TREEHEADERSORTARROW ||
+               aWidgetType == NS_THEME_BUTTON_ARROW_PREVIOUS ||
+               aWidgetType == NS_THEME_BUTTON_ARROW_NEXT ||
+               aWidgetType == NS_THEME_BUTTON_ARROW_UP ||
+               aWidgetType == NS_THEME_BUTTON_ARROW_DOWN) {
+      // The state of an arrow comes from its parent.
+      stateFrame = aFrame = aFrame->GetParent();
+    }
 
-          if (aWidgetFlags) {
-            *aWidgetFlags = GetScrollbarButtonType(aFrame);
-            if (aWidgetType - NS_THEME_SCROLLBARBUTTON_UP < 2)
-              *aWidgetFlags |= MOZ_GTK_STEPPER_VERTICAL;
-          }
+    EventStates eventState = GetContentState(stateFrame, aWidgetType);
+
+    aState->disabled = IsDisabled(aFrame, eventState) || IsReadOnly(aFrame);
+    aState->active  = eventState.HasState(NS_EVENT_STATE_ACTIVE);
+    aState->focused = eventState.HasState(NS_EVENT_STATE_FOCUS);
+    aState->inHover = eventState.HasState(NS_EVENT_STATE_HOVER);
+    aState->isDefault = IsDefaultButton(aFrame);
+    aState->canDefault = FALSE; // XXX fix me
+    aState->depressed = FALSE;
+
+    if (aWidgetType == NS_THEME_FOCUS_OUTLINE) {
+      aState->disabled = FALSE;
+      aState->active  = FALSE;
+      aState->inHover = FALSE;
+      aState->isDefault = FALSE;
+      aState->canDefault = FALSE;
+
+      aState->focused = TRUE;
+      aState->depressed = TRUE; // see moz_gtk_entry_paint()
+    } else if (aWidgetType == NS_THEME_BUTTON ||
+               aWidgetType == NS_THEME_TOOLBARBUTTON ||
+               aWidgetType == NS_THEME_DUALBUTTON ||
+               aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
+               aWidgetType == NS_THEME_MENULIST ||
+               aWidgetType == NS_THEME_MENULIST_BUTTON) {
+      aState->active &= aState->inHover;
+    }
+
+    if (IsFrameContentNodeInNamespace(aFrame, kNameSpaceID_XUL)) {
+      // For these widget types, some element (either a child or parent)
+      // actually has element focus, so we check the focused attribute
+      // to see whether to draw in the focused state.
+      if (aWidgetType == NS_THEME_NUMBER_INPUT ||
+          aWidgetType == NS_THEME_TEXTFIELD ||
+          aWidgetType == NS_THEME_TEXTFIELD_MULTILINE ||
+          aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
+          aWidgetType == NS_THEME_SPINNER_TEXTFIELD ||
+          aWidgetType == NS_THEME_RADIO_CONTAINER ||
+          aWidgetType == NS_THEME_RADIO_LABEL) {
+        aState->focused = IsFocused(aFrame);
+      } else if (aWidgetType == NS_THEME_RADIO ||
+                 aWidgetType == NS_THEME_CHECKBOX) {
+        // In XUL, checkboxes and radios shouldn't have focus rings, their labels do
+        aState->focused = FALSE;
+      }
+
+      if (aWidgetType == NS_THEME_SCROLLBARTHUMB_VERTICAL ||
+          aWidgetType == NS_THEME_SCROLLBARTHUMB_HORIZONTAL) {
+        // for scrollbars we need to go up two to go from the thumb to
+        // the slider to the actual scrollbar object
+        nsIFrame *tmpFrame = aFrame->GetParent()->GetParent();
+
+        aState->curpos = CheckIntAttr(tmpFrame, nsGkAtoms::curpos, 0);
+        aState->maxpos = CheckIntAttr(tmpFrame, nsGkAtoms::maxpos, 100);
+
+        if (CheckBooleanAttr(aFrame, nsGkAtoms::active)) {
+          aState->active = TRUE;
+          // Set hover state to emulate Gtk style of active scrollbar thumb
+          aState->inHover = TRUE;
+        }
+      }
+
+      if (aWidgetType == NS_THEME_SCROLLBARBUTTON_UP ||
+          aWidgetType == NS_THEME_SCROLLBARBUTTON_DOWN ||
+          aWidgetType == NS_THEME_SCROLLBARBUTTON_LEFT ||
+          aWidgetType == NS_THEME_SCROLLBARBUTTON_RIGHT) {
+        // set the state to disabled when the scrollbar is scrolled to
+        // the beginning or the end, depending on the button type.
+        int32_t curpos = CheckIntAttr(aFrame, nsGkAtoms::curpos, 0);
+        int32_t maxpos = CheckIntAttr(aFrame, nsGkAtoms::maxpos, 100);
+        if (ShouldScrollbarButtonBeDisabled(curpos, maxpos, aWidgetType)) {
+          aState->disabled = true;
         }
 
-        // menu item state is determined by the attribute "_moz-menuactive",
-        // and not by the mouse hovering (accessibility).  as a special case,
-        // menus which are children of a menu bar are only marked as prelight
-        // if they are open, not on normal hover.
+        // In order to simulate native GTK scrollbar click behavior,
+        // we set the active attribute on the element to true if it's
+        // pressed with any mouse button.
+        // This allows us to show that it's active without setting :active
+        else if (CheckBooleanAttr(aFrame, nsGkAtoms::active))
+          aState->active = true;
 
-        if (aWidgetType == NS_THEME_MENUITEM ||
-            aWidgetType == NS_THEME_CHECKMENUITEM ||
-            aWidgetType == NS_THEME_RADIOMENUITEM ||
-            aWidgetType == NS_THEME_MENUSEPARATOR ||
-            aWidgetType == NS_THEME_MENUARROW) {
-          bool isTopLevel = false;
-          nsMenuFrame *menuFrame = do_QueryFrame(aFrame);
-          if (menuFrame) {
-            isTopLevel = menuFrame->IsOnMenuBar();
-          }
+        if (aWidgetFlags) {
+          *aWidgetFlags = GetScrollbarButtonType(aFrame);
+          if (aWidgetType - NS_THEME_SCROLLBARBUTTON_UP < 2)
+            *aWidgetFlags |= MOZ_GTK_STEPPER_VERTICAL;
+        }
+      }
 
-          if (isTopLevel) {
-            aState->inHover = menuFrame->IsOpen();
-          } else {
-            aState->inHover = CheckBooleanAttr(aFrame, nsGkAtoms::menuactive);
-          }
+      // menu item state is determined by the attribute "_moz-menuactive",
+      // and not by the mouse hovering (accessibility).  as a special case,
+      // menus which are children of a menu bar are only marked as prelight
+      // if they are open, not on normal hover.
 
-          aState->active = FALSE;
-        
-          if (aWidgetType == NS_THEME_CHECKMENUITEM ||
-              aWidgetType == NS_THEME_RADIOMENUITEM) {
-            *aWidgetFlags = 0;
-            if (aFrame && aFrame->GetContent()) {
-              *aWidgetFlags = aFrame->GetContent()->
-                AttrValueIs(kNameSpaceID_None, nsGkAtoms::checked,
-                            nsGkAtoms::_true, eIgnoreCase);
-            }
-          }
+      if (aWidgetType == NS_THEME_MENUITEM ||
+          aWidgetType == NS_THEME_CHECKMENUITEM ||
+          aWidgetType == NS_THEME_RADIOMENUITEM ||
+          aWidgetType == NS_THEME_MENUSEPARATOR ||
+          aWidgetType == NS_THEME_MENUARROW) {
+        bool isTopLevel = false;
+        nsMenuFrame *menuFrame = do_QueryFrame(aFrame);
+        if (menuFrame) {
+          isTopLevel = menuFrame->IsOnMenuBar();
         }
 
-        // A button with drop down menu open or an activated toggle button
-        // should always appear depressed.
-        if (aWidgetType == NS_THEME_BUTTON ||
-            aWidgetType == NS_THEME_TOOLBARBUTTON ||
-            aWidgetType == NS_THEME_DUALBUTTON ||
-            aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
-            aWidgetType == NS_THEME_MENULIST ||
-            aWidgetType == NS_THEME_MENULIST_BUTTON) {
-          bool menuOpen = IsOpenButton(aFrame);
-          aState->depressed = IsCheckedButton(aFrame) || menuOpen;
-          // we must not highlight buttons with open drop down menus on hover.
-          aState->inHover = aState->inHover && !menuOpen;
+        if (isTopLevel) {
+          aState->inHover = menuFrame->IsOpen();
+        } else {
+          aState->inHover = CheckBooleanAttr(aFrame, nsGkAtoms::menuactive);
         }
 
-        // When the input field of the drop down button has focus, some themes
-        // should draw focus for the drop down button as well.
-        if (aWidgetType == NS_THEME_MENULIST_BUTTON && aWidgetFlags) {
-          *aWidgetFlags = CheckBooleanAttr(aFrame, nsGkAtoms::parentfocused);
+        aState->active = FALSE;
+
+        if (aWidgetType == NS_THEME_CHECKMENUITEM ||
+            aWidgetType == NS_THEME_RADIOMENUITEM) {
+          *aWidgetFlags = 0;
+          if (aFrame && aFrame->GetContent()) {
+            *aWidgetFlags = aFrame->GetContent()->
+              AttrValueIs(kNameSpaceID_None, nsGkAtoms::checked,
+                          nsGkAtoms::_true, eIgnoreCase);
+          }
         }
+      }
+
+      // A button with drop down menu open or an activated toggle button
+      // should always appear depressed.
+      if (aWidgetType == NS_THEME_BUTTON ||
+          aWidgetType == NS_THEME_TOOLBARBUTTON ||
+          aWidgetType == NS_THEME_DUALBUTTON ||
+          aWidgetType == NS_THEME_TOOLBARBUTTON_DROPDOWN ||
+          aWidgetType == NS_THEME_MENULIST ||
+          aWidgetType == NS_THEME_MENULIST_BUTTON) {
+        bool menuOpen = IsOpenButton(aFrame);
+        aState->depressed = IsCheckedButton(aFrame) || menuOpen;
+        // we must not highlight buttons with open drop down menus on hover.
+        aState->inHover = aState->inHover && !menuOpen;
+      }
+
+      // When the input field of the drop down button has focus, some themes
+      // should draw focus for the drop down button as well.
+      if (aWidgetType == NS_THEME_MENULIST_BUTTON && aWidgetFlags) {
+        *aWidgetFlags = CheckBooleanAttr(aFrame, nsGkAtoms::parentfocused);
       }
     }
   }
@@ -644,17 +638,17 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
     break;
   case NS_THEME_TAB:
     {
+      if (IsBottomTab(aFrame)) {
+        aGtkWidgetType = MOZ_GTK_TAB_BOTTOM;
+      } else {
+        aGtkWidgetType = MOZ_GTK_TAB_TOP;
+      }
+
       if (aWidgetFlags) {
         /* First bits will be used to store max(0,-bmargin) where bmargin
          * is the bottom margin of the tab in pixels  (resp. top margin,
          * for bottom tabs). */
-        if (IsBottomTab(aFrame)) {
-            *aWidgetFlags = MOZ_GTK_TAB_BOTTOM;
-        } else {
-            *aWidgetFlags = 0;
-        }
-
-        *aWidgetFlags |= GetTabMarginPixels(aFrame);
+        *aWidgetFlags = GetTabMarginPixels(aFrame);
 
         if (IsSelectedTab(aFrame))
           *aWidgetFlags |= MOZ_GTK_TAB_SELECTED;
@@ -662,8 +656,6 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
         if (IsFirstTab(aFrame))
           *aWidgetFlags |= MOZ_GTK_TAB_FIRST;
       }
-
-      aGtkWidgetType = MOZ_GTK_TAB;
     }
     break;
   case NS_THEME_SPLITTER:
@@ -862,11 +854,18 @@ DrawThemeWithCairo(gfxContext* aContext, DrawTarget* aDrawTarget,
   cairo_matrix_t mat;
   GfxMatrixToCairoMatrix(transform, mat);
 
+  nsIntSize clipSize((aDrawSize.width + aScaleFactor - 1) / aScaleFactor,
+                     (aDrawSize.height + aScaleFactor - 1) / aScaleFactor);
+
 #ifndef MOZ_TREE_CAIRO
   // Directly use the Cairo draw target to render the widget if using system Cairo everywhere.
   BorrowedCairoContext borrowCairo(aDrawTarget);
   if (borrowCairo.mCairo) {
     cairo_set_matrix(borrowCairo.mCairo, &mat);
+
+    cairo_new_path(borrowCairo.mCairo);
+    cairo_rectangle(borrowCairo.mCairo, 0, 0, clipSize.width, clipSize.height);
+    cairo_clip(borrowCairo.mCairo);
 
     moz_gtk_widget_paint(aGTKWidgetType, borrowCairo.mCairo, &aGDKRect, &aState, aFlags, aDirection);
 
@@ -908,6 +907,10 @@ DrawThemeWithCairo(gfxContext* aContext, DrawTarget* aDrawTarget,
 
           cairo_set_matrix(cr, &mat);
 
+          cairo_new_path(cr);
+          cairo_rectangle(cr, 0, 0, clipSize.width, clipSize.height);
+          cairo_clip(cr);
+
           moz_gtk_widget_paint(aGTKWidgetType, cr, &aGDKRect, &aState, aFlags, aDirection);
 
           cairo_destroy(cr);
@@ -941,6 +944,10 @@ DrawThemeWithCairo(gfxContext* aContext, DrawTarget* aDrawTarget,
         aContext->ExportClip(*clipper);
 
         cairo_set_matrix(cr, &mat);
+
+        cairo_new_path(cr);
+        cairo_rectangle(cr, 0, 0, clipSize.width, clipSize.height);
+        cairo_clip(cr);
 
         moz_gtk_widget_paint(aGTKWidgetType, cr, &aGDKRect, &aState, aFlags, aDirection);
 
@@ -1062,7 +1069,8 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
       if (!IsSelectedTab(aFrame))
         return false;
 
-      gint gap_height = moz_gtk_get_tab_thickness();
+      gint gap_height = moz_gtk_get_tab_thickness(IsBottomTab(aFrame) ?
+                            MOZ_GTK_TAB_BOTTOM : MOZ_GTK_TAB_TOP);
       if (!gap_height)
         return false;
 
@@ -1289,7 +1297,7 @@ nsNativeThemeGTK::GetWidgetBorder(nsDeviceContext* aContext, nsIFrame* aFrame,
 
       moz_gtk_get_tab_border(&aResult->left, &aResult->top,
                              &aResult->right, &aResult->bottom, direction,
-                             (GtkTabFlags)flags);
+                             (GtkTabFlags)flags, gtkWidgetType);
     }
     break;
   case NS_THEME_MENUITEM:

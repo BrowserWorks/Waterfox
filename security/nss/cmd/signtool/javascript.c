@@ -82,12 +82,9 @@ javascript_fn(char *relpath, char *basedir, char *reldir, char *filename, void *
 
     /* only process inline scripts from .htm, .html, and .shtml*/
 
-    if (!(PL_strcaserstr(filename, ".htm") == filename + strlen(filename) -
-                                                  4) &&
-        !(PL_strcaserstr(filename, ".html") == filename + strlen(filename) -
-                                                   5) &&
-        !(PL_strcaserstr(filename, ".shtml") == filename + strlen(filename) -
-                                                    6)) {
+    if (!(PL_strcaserstr(filename, ".htm") == filename + strlen(filename) - 4) &&
+        !(PL_strcaserstr(filename, ".html") == filename + strlen(filename) - 5) &&
+        !(PL_strcaserstr(filename, ".shtml") == filename + strlen(filename) - 6)) {
         return 0;
     }
 
@@ -382,8 +379,7 @@ ProcessTag(FileBuffer *fb, char **errStr)
                 }
             /* fall through */
             case GET_ATT_STATE:
-                if (isspace(curchar) || curchar == '=' || curchar ==
-                                                              '>') {
+                if (isspace(curchar) || curchar == '=' || curchar == '>') {
                     /* end of the current attribute */
                     curPos = FB_GetPointer(fb) - 2;
                     if (curPos >= startID) {
@@ -1653,6 +1649,15 @@ loser:
         PR_Free(firstArchiveDir);
         firstArchiveDir = NULL;
     }
+    if (entityListTail) {
+        PR_Free(entityListTail);
+    }
+    if (curitem) {
+        PR_Free(curitem);
+    }
+    if (basedir) {
+        PR_Free(basedir);
+    }
     return retval;
 }
 
@@ -1701,9 +1706,13 @@ make_dirs(char *path, int file_perms)
     }
 
     Path = PL_strdup(path);
+    if (!Path) {
+        return 0;
+    }
+
     start = strpbrk(Path, "/\\");
     if (!start) {
-        return 0;
+        goto loser;
     }
     start++; /* start right after first slash */
 

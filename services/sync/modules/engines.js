@@ -7,7 +7,8 @@ this.EXPORTED_SYMBOLS = [
   "Engine",
   "SyncEngine",
   "Tracker",
-  "Store"
+  "Store",
+  "Changeset"
 ];
 
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
@@ -20,6 +21,9 @@ Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/util.js");
+
+XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
+  "resource://gre/modules/FxAccounts.jsm");
 
 /*
  * Trackers are associated with a single engine and deal with
@@ -128,26 +132,30 @@ Tracker.prototype = {
       this._ignored.splice(index, 1);
   },
 
+  _saveChangedID(id, when) {
+    this._log.trace(`Adding changed ID: ${id}, ${JSON.stringify(when)}`);
+    this.changedIDs[id] = when;
+    this.saveChangedIDs(this.onSavedChangedIDs);
+  },
+
   addChangedID: function (id, when) {
     if (!id) {
       this._log.warn("Attempted to add undefined ID to tracker");
       return false;
     }
 
-    if (this.ignoreAll || (id in this._ignored)) {
+    if (this.ignoreAll || this._ignored.includes(id)) {
       return false;
     }
 
     // Default to the current time in seconds if no time is provided.
     if (when == null) {
-      when = Math.floor(Date.now() / 1000);
+      when = this._now();
     }
 
     // Add/update the entry if we have a newer time.
     if ((this.changedIDs[id] || -Infinity) < when) {
-      this._log.trace("Adding changed ID: " + id + ", " + when);
-      this.changedIDs[id] = when;
-      this.saveChangedIDs(this.onSavedChangedIDs);
+      this._saveChangedID(id, when);
     }
 
     return true;
@@ -158,8 +166,9 @@ Tracker.prototype = {
       this._log.warn("Attempted to remove undefined ID to tracker");
       return false;
     }
-    if (this.ignoreAll || (id in this._ignored))
+    if (this.ignoreAll || this._ignored.includes(id)) {
       return false;
+    }
     if (this.changedIDs[id] != null) {
       this._log.trace("Removing changed ID " + id);
       delete this.changedIDs[id];
@@ -172,6 +181,10 @@ Tracker.prototype = {
     this._log.trace("Clearing changed ID list");
     this.changedIDs = {};
     this.saveChangedIDs();
+  },
+
+  _now() {
+    return Date.now() / 1000;
   },
 
   _isTracking: false,
@@ -487,7 +500,7 @@ EngineManager.prototype = {
 
   getAll: function () {
     let engines = [];
-    for (let [name, engine] in Iterator(this._engines)) {
+    for (let [, engine] of Object.entries(this._engines)) {
       engines.push(engine);
     }
     return engines;
@@ -629,6 +642,12 @@ Engine.prototype = {
   // Local 'constant'.
   // Signal to the engine that processing further records is pointless.
   eEngineAbortApplyIncoming: "error.engine.abort.applyincoming",
+
+  // Should we keep syncing if we find a record that cannot be uploaded (ever)?
+  // If this is false, we'll throw, otherwise, we'll ignore the record and
+  // continue. This currently can only happen due to the record being larger
+  // than the record upload limit.
+  allowSkippedRecord: false,
 
   get prefName() {
     return this.name;
@@ -853,9 +872,8 @@ SyncEngine.prototype = {
   },
 
   /*
-   * Returns a mapping of IDs -> changed timestamp. Engine implementations
-   * can override this method to bypass the tracker for certain or all
-   * changed items.
+   * Returns a changeset for this sync. Engine implementations can override this
+   * method to bypass the tracker for certain or all changed items.
    */
   getChangedIDs: function () {
     return this._tracker.changedIDs;
@@ -923,20 +941,16 @@ SyncEngine.prototype = {
     // this._modified to the tracker.
     this.lastSyncLocal = Date.now();
     if (this.lastSync) {
-      this._modified = this.getChangedIDs();
+      this._modified = this.pullNewChanges();
     } else {
-      // Mark all items to be uploaded, but treat them as changed from long ago
       this._log.debug("First sync, uploading all items");
-      this._modified = {};
-      for (let id in this._store.getAllIDs()) {
-        this._modified[id] = 0;
-      }
+      this._modified = this.pullAllChanges();
     }
     // Clear the tracker now. If the sync fails we'll add the ones we failed
     // to upload back.
     this._tracker.clearChangedIDs();
 
-    this._log.info(Object.keys(this._modified).length +
+    this._log.info(this._modified.count() +
                    " outgoing items pre-reconciliation");
 
     // Keep track of what to delete at the end of sync
@@ -1091,6 +1105,9 @@ SyncEngine.prototype = {
           }
         }
       } catch (ex) {
+        if (Async.isShutdownException(ex)) {
+          throw ex;
+        }
         self._log.warn("Error decrypting record", ex);
         self._noteApplyFailure();
         failed.push(item.id);
@@ -1262,6 +1279,18 @@ SyncEngine.prototype = {
       this._delete.ids.push(id);
   },
 
+  _switchItemToDupe(localDupeGUID, incomingItem) {
+    // The local, duplicate ID is always deleted on the server.
+    this._deleteId(localDupeGUID);
+
+    // We unconditionally change the item's ID in case the engine knows of
+    // an item but doesn't expose it through itemExists. If the API
+    // contract were stronger, this could be changed.
+    this._log.debug("Switching local ID to incoming: " + localDupeGUID + " -> " +
+                    incomingItem.id);
+    this._store.changeItemID(localDupeGUID, incomingItem.id);
+  },
+
   /**
    * Reconcile incoming record with local state.
    *
@@ -1281,12 +1310,12 @@ SyncEngine.prototype = {
     // because some state may change during the course of this function and we
     // need to operate on the original values.
     let existsLocally   = this._store.itemExists(item.id);
-    let locallyModified = item.id in this._modified;
+    let locallyModified = this._modified.has(item.id);
 
     // TODO Handle clock drift better. Tracked in bug 721181.
     let remoteAge = AsyncResource.serverTime - item.modified;
     let localAge  = locallyModified ?
-      (Date.now() / 1000 - this._modified[item.id]) : null;
+      (Date.now() / 1000 - this._modified.getModifiedTimestamp(item.id)) : null;
     let remoteIsNewer = remoteAge < localAge;
 
     this._log.trace("Reconciling " + item.id + ". exists=" +
@@ -1335,39 +1364,31 @@ SyncEngine.prototype = {
     // refresh the metadata collected above. See bug 710448 for the history
     // of this logic.
     if (!existsLocally) {
-      let dupeID = this._findDupe(item);
-      if (dupeID) {
-        this._log.trace("Local item " + dupeID + " is a duplicate for " +
+      let localDupeGUID = this._findDupe(item);
+      if (localDupeGUID) {
+        this._log.trace("Local item " + localDupeGUID + " is a duplicate for " +
                         "incoming item " + item.id);
-
-        // The local, duplicate ID is always deleted on the server.
-        this._deleteId(dupeID);
 
         // The current API contract does not mandate that the ID returned by
         // _findDupe() actually exists. Therefore, we have to perform this
         // check.
-        existsLocally = this._store.itemExists(dupeID);
-
-        // We unconditionally change the item's ID in case the engine knows of
-        // an item but doesn't expose it through itemExists. If the API
-        // contract were stronger, this could be changed.
-        this._log.debug("Switching local ID to incoming: " + dupeID + " -> " +
-                        item.id);
-        this._store.changeItemID(dupeID, item.id);
+        existsLocally = this._store.itemExists(localDupeGUID);
 
         // If the local item was modified, we carry its metadata forward so
         // appropriate reconciling can be performed.
-        if (dupeID in this._modified) {
+        if (this._modified.has(localDupeGUID)) {
           locallyModified = true;
-          localAge = Date.now() / 1000 - this._modified[dupeID];
+          localAge = this._tracker._now() - this._modified.getModifiedTimestamp(localDupeGUID);
           remoteIsNewer = remoteAge < localAge;
 
-          this._modified[item.id] = this._modified[dupeID];
-          delete this._modified[dupeID];
+          this._modified.swap(localDupeGUID, item.id);
         } else {
           locallyModified = false;
           localAge = null;
         }
+
+        // Tell the engine to do whatever it needs to switch the items.
+        this._switchItemToDupe(localDupeGUID, item);
 
         this._log.debug("Local item after duplication: age=" + localAge +
                         "; modified=" + locallyModified + "; exists=" +
@@ -1397,7 +1418,7 @@ SyncEngine.prototype = {
       if (remoteIsNewer) {
         this._log.trace("Applying incoming because local item was deleted " +
                         "before the incoming item was changed.");
-        delete this._modified[item.id];
+        this._modified.delete(item.id);
         return true;
       }
 
@@ -1423,7 +1444,7 @@ SyncEngine.prototype = {
       this._log.trace("Ignoring incoming item because the local item is " +
                       "identical.");
 
-      delete this._modified[item.id];
+      this._modified.delete(item.id);
       return false;
     }
 
@@ -1448,7 +1469,7 @@ SyncEngine.prototype = {
   _uploadOutgoing: function () {
     this._log.trace("Uploading local changes to server.");
 
-    let modifiedIDs = Object.keys(this._modified);
+    let modifiedIDs = this._modified.ids();
     if (modifiedIDs.length) {
       this._log.trace("Preparing " + modifiedIDs.length +
                       " outgoing records");
@@ -1457,33 +1478,52 @@ SyncEngine.prototype = {
 
       // collection we'll upload
       let up = new Collection(this.engineURL, null, this.service);
-      let handleResponse = resp => {
+
+      let failed = [];
+      let successful = [];
+      let handleResponse = (resp, batchOngoing = false) => {
+        // Note: We don't want to update this.lastSync, or this._modified until
+        // the batch is complete, however we want to remember success/failure
+        // indicators for when that happens.
         if (!resp.success) {
           this._log.debug("Uploading records failed: " + resp);
-          resp.failureCode = ENGINE_UPLOAD_FAIL;
+          resp.failureCode = resp.status == 412 ? ENGINE_BATCH_INTERRUPTED : ENGINE_UPLOAD_FAIL;
           throw resp;
         }
 
         // Update server timestamp from the upload.
-        let modified = resp.headers["x-weave-timestamp"];
-        if (modified > this.lastSync)
-          this.lastSync = modified;
+        failed = failed.concat(Object.keys(resp.obj.failed));
+        successful = successful.concat(resp.obj.success);
 
-        let failed_ids = Object.keys(resp.obj.failed);
-        counts.failed += failed_ids.length;
-        if (failed_ids.length)
+        if (batchOngoing) {
+          // Nothing to do yet
+          return;
+        }
+        // Advance lastSync since we've finished the batch.
+        let modified = resp.headers["x-weave-timestamp"];
+        if (modified > this.lastSync) {
+          this.lastSync = modified;
+        }
+        if (failed.length && this._log.level <= Log.Level.Debug) {
           this._log.debug("Records that will be uploaded again because "
                           + "the server couldn't store them: "
-                          + failed_ids.join(", "));
-
-        // Clear successfully uploaded objects.
-        for (let key in resp.obj.success) {
-          let id = resp.obj.success[key];
-          delete this._modified[id];
+                          + failed.join(", "));
         }
-      }
 
-      let postQueue = up.newPostQueue(this._log, handleResponse);
+        counts.failed += failed.length;
+
+        for (let id of successful) {
+          this._modified.delete(id);
+        }
+
+        this._onRecordsWritten(successful, failed);
+
+        // clear for next batch
+        failed.length = 0;
+        successful.length = 0;
+      };
+
+      let postQueue = up.newPostQueue(this._log, this.lastSync, handleResponse);
 
       for (let id of modifiedIDs) {
         let out;
@@ -1502,13 +1542,24 @@ SyncEngine.prototype = {
           this._log.warn("Error creating record", ex);
         }
         if (ok) {
-          postQueue.enqueue(out);
+          let { enqueued, error } = postQueue.enqueue(out);
+          if (!enqueued) {
+            ++counts.failed;
+            if (!this.allowSkippedRecord) {
+              throw error;
+            }
+          }
         }
         this._store._sleep(0);
       }
-      postQueue.flush();
+      postQueue.flush(true);
       Observers.notify("weave:engine:sync:uploaded", counts, this.name);
     }
+  },
+
+  _onRecordsWritten(succeeded, failed) {
+    // Implement this method to take specific actions against successfully
+    // uploaded records and failed records.
   },
 
   // Any cleanup necessary.
@@ -1523,7 +1574,7 @@ SyncEngine.prototype = {
       coll.delete();
     });
 
-    for (let [key, val] in Iterator(this._delete)) {
+    for (let [key, val] of Object.entries(this._delete)) {
       // Remove the key for future uses
       delete this._delete[key];
 
@@ -1546,10 +1597,8 @@ SyncEngine.prototype = {
     }
 
     // Mark failed WBOs as changed again so they are reuploaded next time.
-    for (let [id, when] in Iterator(this._modified)) {
-      this._tracker.addChangedID(id, when);
-    }
-    this._modified = {};
+    this.trackRemainingChanges();
+    this._modified.clear();
   },
 
   _sync: function () {
@@ -1635,5 +1684,108 @@ SyncEngine.prototype = {
     return (this.service.handleHMACEvent() && mayRetry) ?
            SyncEngine.kRecoveryStrategy.retry :
            SyncEngine.kRecoveryStrategy.error;
-  }
+  },
+
+  /**
+   * Returns a changeset containing all items in the store. The default
+   * implementation returns a changeset with timestamps from long ago, to
+   * ensure we always use the remote version if one exists.
+   *
+   * This function is only called for the first sync. Subsequent syncs call
+   * `pullNewChanges`.
+   *
+   * @return A `Changeset` object.
+   */
+  pullAllChanges() {
+    let changeset = new Changeset();
+    for (let id in this._store.getAllIDs()) {
+      changeset.set(id, 0);
+    }
+    return changeset;
+  },
+
+  /*
+   * Returns a changeset containing entries for all currently tracked items.
+   * The default implementation returns a changeset with timestamps indicating
+   * when the item was added to the tracker.
+   *
+   * @return A `Changeset` object.
+   */
+  pullNewChanges() {
+    return new Changeset(this.getChangedIDs());
+  },
+
+  /**
+   * Adds all remaining changeset entries back to the tracker, typically for
+   * items that failed to upload. This method is called at the end of each sync.
+   *
+   */
+  trackRemainingChanges() {
+    for (let [id, change] of this._modified.entries()) {
+      this._tracker.addChangedID(id, change);
+    }
+  },
 };
+
+/**
+ * A changeset is created for each sync in `Engine::get{Changed, All}IDs`,
+ * and stores opaque change data for tracked IDs. The default implementation
+ * only records timestamps, though engines can extend this to store additional
+ * data for each entry.
+ */
+class Changeset {
+  // Creates a changeset with an initial set of tracked entries.
+  constructor(changes = {}) {
+    this.changes = changes;
+  }
+
+  // Returns the last modified time, in seconds, for an entry in the changeset.
+  // `id` is guaranteed to be in the set.
+  getModifiedTimestamp(id) {
+    return this.changes[id];
+  }
+
+  // Adds a change for a tracked ID to the changeset.
+  set(id, change) {
+    this.changes[id] = change;
+  }
+
+  // Indicates whether an entry is in the changeset.
+  has(id) {
+    return id in this.changes;
+  }
+
+  // Deletes an entry from the changeset. Used to clean up entries for
+  // reconciled and successfully uploaded records.
+  delete(id) {
+    delete this.changes[id];
+  }
+
+  // Swaps two entries in the changeset. Used when reconciling duplicates that
+  // have local changes.
+  swap(oldID, newID) {
+    this.changes[newID] = this.changes[oldID];
+    delete this.changes[oldID];
+  }
+
+  // Returns an array of all tracked IDs in this changeset.
+  ids() {
+    return Object.keys(this.changes);
+  }
+
+  // Returns an array of `[id, change]` tuples. Used to repopulate the tracker
+  // with entries for failed uploads at the end of a sync.
+  entries() {
+    return Object.entries(this.changes);
+  }
+
+  // Returns the number of entries in this changeset.
+  count() {
+    return this.ids().length;
+  }
+
+  // Clears the changeset.
+  clear() {
+    this.changes = {};
+  }
+}

@@ -46,6 +46,7 @@
 #if defined(MOZ_X11)
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include "X11UndefineNone.h"
 #endif
 #endif
 
@@ -415,8 +416,10 @@ typedef enum {
   NPNVCSSZoomFactor = 23,
 
   NPNVpluginDrawingModel = 1000 /* Get the current drawing model (NPDrawingModel) */
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) || defined(XP_WIN)
   , NPNVcontentsScaleFactor = 1001
+#endif
+#if defined(XP_MACOSX)
 #ifndef NP_NO_QUICKDRAW
   , NPNVsupportsQuickDrawBool = 2000
 #endif

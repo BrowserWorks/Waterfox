@@ -129,6 +129,9 @@ public:
 
   virtual void DetachAllSnapshots() override { MarkChanged(); }
 
+  virtual void GetGlyphRasterizationMetrics(ScaledFont *aScaledFont, const uint16_t* aGlyphIndices,
+                                            uint32_t aNumGlyphs, GlyphMetrics* aGlyphMetrics) override;
+
   bool Init(const IntSize &aSize, SurfaceFormat aFormat);
   bool Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat);
   uint32_t GetByteSize() const;
@@ -181,7 +184,7 @@ private:
   void AddDependencyOnSource(SourceSurfaceD2D1* aSource);
 
   // Must be called with all clips popped and an identity matrix set.
-  already_AddRefed<ID2D1Image> GetImageForLayerContent();
+  already_AddRefed<ID2D1Image> GetImageForLayerContent(bool aShouldPreserveContent = true);
 
   ID2D1Image* CurrentTarget()
   {

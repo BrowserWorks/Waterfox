@@ -24,6 +24,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "AddonRepository_SQLiteMigrator",
                                   "resource://gre/modules/addons/AddonRepository_SQLiteMigrator.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ServiceRequest",
+                                   "resource://gre/modules/ServiceRequest.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
 
@@ -99,10 +101,6 @@ const INTEGER_KEY_MAP = {
   daily_users:      "dailyUsers"
 };
 
-// Wrap the XHR factory so that tests can override with a mock
-var XHRequest = Components.Constructor("@mozilla.org/xmlextras/xmlhttprequest;1",
-                                       "nsIXMLHttpRequest");
-
 function convertHTMLToPlainText(html) {
   if (!html)
     return html;
@@ -139,7 +137,7 @@ function getAddonsToCache(aIds, aCallback) {
       try {
         if (!Services.prefs.getBoolPref(preference))
           continue;
-      } catch(e) {
+      } catch (e) {
         // If the preference doesn't exist caching is enabled by default
       }
 
@@ -483,7 +481,7 @@ this.AddonRepository = {
     let enabled = false;
     try {
       enabled = Services.prefs.getBoolPref(preference);
-    } catch(e) {
+    } catch (e) {
       logger.warn("cacheEnabled: Couldn't get pref: " + preference);
     }
 
@@ -1447,7 +1445,7 @@ this.AddonRepository = {
 
     logger.debug("Requesting " + aURI);
 
-    this._request = new XHRequest();
+    this._request = new ServiceRequest();
     this._request.mozBackgroundRequest = true;
     this._request.open("GET", aURI, true);
     this._request.overrideMimeType("text/xml");
@@ -1512,7 +1510,7 @@ this.AddonRepository = {
     let url = null;
     try {
       url = Services.prefs.getCharPref(aPreference);
-    } catch(e) {
+    } catch (e) {
       logger.warn("_formatURLPref: Couldn't get pref: " + aPreference);
       return null;
     }
@@ -1668,9 +1666,8 @@ var AddonDatabase = {
 
     if (aSkipFlush) {
       return Promise.resolve();
-    } else {
-      return this.Writer.flush();
     }
+    return this.Writer.flush();
   },
 
   /**
@@ -1741,7 +1738,7 @@ var AddonDatabase = {
    * @return: Promise{Map}
    *          Resolves when the add-ons are retrieved from the database
    */
-  retrieveStoredData: function(){
+  retrieveStoredData: function() {
     return this.openConnection().then(db => db.addons);
   },
 

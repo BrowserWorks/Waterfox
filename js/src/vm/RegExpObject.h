@@ -208,6 +208,7 @@ class RegExpShared
 
     void trace(JSTracer* trc);
     bool needsSweep(JSRuntime* rt);
+    void discardJitCode();
 
     bool marked() const { return marked_; }
     void clearMarked() { marked_ = false; }
@@ -485,6 +486,9 @@ class RegExpObject : public NativeObject
 
     void initIgnoringLastIndex(HandleAtom source, RegExpFlag flags);
 
+    // NOTE: This method is *only* safe to call on RegExps that haven't been
+    //       exposed to script, because it requires that the "lastIndex"
+    //       property be writable.
     void initAndZeroLastIndex(HandleAtom source, RegExpFlag flags, ExclusiveContext* cx);
 
   private:

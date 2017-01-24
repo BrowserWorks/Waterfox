@@ -57,11 +57,11 @@ class ObjectElements;
 class NativeObject;
 class Nursery;
 class HeapSlot;
-class ObjectGroup;
 
 void SetGCZeal(JSRuntime*, uint8_t, uint32_t);
 
 namespace gc {
+class AutoMaybeStartBackgroundAllocation;
 struct Cell;
 class MinorCollectionTracer;
 class RelocationOverlay;
@@ -113,6 +113,20 @@ class TenuringTracer : public JSTracer
     void traceSlots(JS::Value* vp, JS::Value* end);
 };
 
+/*
+ * Classes with JSCLASS_SKIP_NURSERY_FINALIZE or Wrapper classes with
+ * CROSS_COMPARTMENT flags will not have their finalizer called if they are
+ * nursery allocated and not promoted to the tenured heap. The finalizers for
+ * these classes must do nothing except free data which was allocated via
+ * Nursery::allocateBuffer.
+ */
+inline bool
+CanNurseryAllocateFinalizedClass(const js::Class* const clasp)
+{
+    MOZ_ASSERT(clasp->hasFinalize());
+    return clasp->flags & JSCLASS_SKIP_NURSERY_FINALIZE;
+}
+
 class Nursery
 {
   public:
@@ -122,15 +136,17 @@ class Nursery
     explicit Nursery(JSRuntime* rt);
     ~Nursery();
 
-    MOZ_MUST_USE bool init(uint32_t maxNurseryBytes);
+    MOZ_MUST_USE bool init(uint32_t maxNurseryBytes, AutoLockGC& lock);
 
-    bool exists() const { return numNurseryChunks_ != 0; }
-    size_t numChunks() const { return numNurseryChunks_; }
-    size_t nurserySize() const { return numNurseryChunks_ << ChunkShift; }
+    unsigned maxChunks() const { return maxNurseryChunks_; }
+    unsigned numChunks() const { return chunks_.length(); }
+
+    bool exists() const { return maxChunks() != 0; }
+    size_t nurserySize() const { return maxChunks() << ChunkShift; }
 
     void enable();
     void disable();
-    bool isEnabled() const { return numActiveChunks_ != 0; }
+    bool isEnabled() const { return numChunks() != 0; }
 
     /* Return true if no allocations have been made since the last collection. */
     bool isEmpty() const;
@@ -141,7 +157,11 @@ class Nursery
      */
     MOZ_ALWAYS_INLINE bool isInside(gc::Cell* cellp) const = delete;
     MOZ_ALWAYS_INLINE bool isInside(const void* p) const {
-        return uintptr_t(p) >= heapStart_ && uintptr_t(p) < heapEnd_;
+        for (auto chunk : chunks_) {
+            if (uintptr_t(p) - chunk->start() < gc::ChunkSize)
+                return true;
+        }
+        return false;
     }
     template<typename T>
     bool isInside(const SharedMem<T>& p) const {
@@ -155,28 +175,26 @@ class Nursery
     JSObject* allocateObject(JSContext* cx, size_t size, size_t numDynamic, const js::Class* clasp);
 
     /* Allocate a buffer for a given zone, using the nursery if possible. */
-    void* allocateBuffer(JS::Zone* zone, uint32_t nbytes);
+    void* allocateBuffer(JS::Zone* zone, size_t nbytes);
 
     /*
      * Allocate a buffer for a given object, using the nursery if possible and
      * obj is in the nursery.
      */
-    void* allocateBuffer(JSObject* obj, uint32_t nbytes);
+    void* allocateBuffer(JSObject* obj, size_t nbytes);
 
     /* Resize an existing object buffer. */
     void* reallocateBuffer(JSObject* obj, void* oldBuffer,
-                           uint32_t oldBytes, uint32_t newBytes);
+                           size_t oldBytes, size_t newBytes);
 
     /* Free an object buffer. */
     void freeBuffer(void* buffer);
 
-    typedef Vector<ObjectGroup*, 0, SystemAllocPolicy> ObjectGroupList;
+    /* The maximum number of bytes allowed to reside in nursery buffers. */
+    static const size_t MaxNurseryBufferSize = 1024;
 
-    /*
-     * Do a minor collection, optionally specifying a list to store groups which
-     * should be pretenured afterwards.
-     */
-    void collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList* pretenureGroups);
+    /* Do a minor collection. */
+    void collect(JSRuntime* rt, JS::gcreason::Reason reason);
 
     /*
      * Check if the thing at |*ref| in the Nursery has been forwarded. If so,
@@ -211,11 +229,10 @@ class Nursery
     using SweepThunk = void (*)(void *data);
     void queueSweepAction(SweepThunk thunk, void* data);
 
+    MOZ_MUST_USE bool queueDictionaryModeObjectToSweep(NativeObject* obj);
+
     size_t sizeOfHeapCommitted() const {
-        return numActiveChunks_ * gc::ChunkSize;
-    }
-    size_t sizeOfHeapDecommitted() const {
-        return (numNurseryChunks_ - numActiveChunks_) * gc::ChunkSize;
+        return numChunks() * gc::ChunkSize;
     }
     size_t sizeOfMallocedBuffers(mozilla::MallocSizeOf mallocSizeOf) const {
         size_t total = 0;
@@ -225,17 +242,14 @@ class Nursery
         return total;
     }
 
-    MOZ_ALWAYS_INLINE uintptr_t start() const {
-        return heapStart_;
-    }
-
-    MOZ_ALWAYS_INLINE uintptr_t heapEnd() const {
-        return heapEnd_;
-    }
+    // The number of bytes from the start position to the end of the nursery.
+    size_t spaceToEnd() const;
 
     // Free space remaining, not counting chunk trailers.
-    MOZ_ALWAYS_INLINE size_t approxFreeSpace() const {
-        return heapEnd_ - position_;
+    MOZ_ALWAYS_INLINE size_t freeSpace() const {
+        MOZ_ASSERT(currentEnd_ - position_ <= NurseryChunkUsableSize);
+        return (currentEnd_ - position_) +
+               (numChunks() - currentChunk_ - 1) * NurseryChunkUsableSize;
     }
 
 #ifdef JS_GC_ZEAL
@@ -247,6 +261,22 @@ class Nursery
     void printTotalProfileTimes();
 
   private:
+    /* The amount of space in the mapped nursery available to allocations. */
+    static const size_t NurseryChunkUsableSize = gc::ChunkSize - sizeof(gc::ChunkTrailer);
+
+    struct NurseryChunk {
+        char data[NurseryChunkUsableSize];
+        gc::ChunkTrailer trailer;
+        static NurseryChunk* fromChunk(gc::Chunk* chunk);
+        void init(JSRuntime* rt);
+        void poisonAndInit(JSRuntime* rt, uint8_t poison);
+        uintptr_t start() const { return uintptr_t(&data); }
+        uintptr_t end() const { return uintptr_t(&trailer); }
+        gc::Chunk* toChunk(JSRuntime* rt);
+    };
+    static_assert(sizeof(NurseryChunk) == gc::ChunkSize,
+                  "Nursery chunk size must match gc::Chunk size.");
+
     /*
      * The start and end pointers are stored under the runtime so that we can
      * inline the isInsideNursery check into embedder code. Use the start()
@@ -254,34 +284,34 @@ class Nursery
      */
     JSRuntime* runtime_;
 
+    /* Vector of allocated chunks to allocate from. */
+    Vector<NurseryChunk*, 0, SystemAllocPolicy> chunks_;
+
     /* Pointer to the first unallocated byte in the nursery. */
     uintptr_t position_;
 
     /* Pointer to the logical start of the Nursery. */
-    uintptr_t currentStart_;
+    unsigned currentStartChunk_;
+    uintptr_t currentStartPosition_;
 
     /* Pointer to the last byte of space in the current chunk. */
     uintptr_t currentEnd_;
 
-    /* Pointer to first and last address of the total nursery allocation. */
-    uintptr_t heapStart_;
-    uintptr_t heapEnd_;
-
     /* The index of the chunk that is currently being allocated from. */
-    int currentChunk_;
+    unsigned currentChunk_;
 
-    /* The index after the last chunk that we will allocate from. */
-    int numActiveChunks_;
-
-    /* Number of chunks allocated for the nursery. */
-    int numNurseryChunks_;
+    /* Maximum number of chunks to allocate for the nursery. */
+    unsigned maxNurseryChunks_;
 
     /* Promotion rate for the previous minor collection. */
     double previousPromotionRate_;
 
-    /* Report minor collections taking more than this many us, if enabled. */
+    /* Report minor collections taking at least this many us, if enabled. */
     int64_t profileThreshold_;
     bool enableProfiling_;
+
+    /* Report ObjectGroups with at lest this many instances tenured. */
+    int64_t reportTenurings_;
 
     /* Profiling data. */
 
@@ -340,57 +370,32 @@ class Nursery
 
     struct SweepAction;
     SweepAction* sweepActions_;
-    SweepAction* reservedSweepAction_;
+
+    using NativeObjectVector = Vector<NativeObject*, 0, SystemAllocPolicy>;
+    NativeObjectVector dictionaryModeObjects_;
 
 #ifdef JS_GC_ZEAL
-    struct Canary
-    {
-        uintptr_t magicValue;
-        Canary* next;
-    };
-
+    struct Canary;
     Canary* lastCanary_;
 #endif
 
-    /* The maximum number of bytes allowed to reside in nursery buffers. */
-    static const size_t MaxNurseryBufferSize = 1024;
+    NurseryChunk* allocChunk();
 
-    /* The amount of space in the mapped nursery available to allocations. */
-    static const size_t NurseryChunkUsableSize = gc::ChunkSize - sizeof(gc::ChunkTrailer);
-
-    struct NurseryChunkLayout {
-        char data[NurseryChunkUsableSize];
-        gc::ChunkTrailer trailer;
-        uintptr_t start() const { return uintptr_t(&data); }
-        uintptr_t end() const { return uintptr_t(&trailer); }
-    };
-    static_assert(sizeof(NurseryChunkLayout) == gc::ChunkSize,
-                  "Nursery chunk size must match gc::Chunk size.");
-    NurseryChunkLayout& chunk(int index) const {
-        MOZ_ASSERT(index < numNurseryChunks_);
-        MOZ_ASSERT(start());
-        return reinterpret_cast<NurseryChunkLayout*>(start())[index];
+    NurseryChunk& chunk(unsigned index) const {
+        return *chunks_[index];
     }
 
-    MOZ_ALWAYS_INLINE void initChunk(int chunkno) {
-        gc::StoreBuffer* sb = JS::shadow::Runtime::asShadowRuntime(runtime())->gcStoreBufferPtr();
-        new (&chunk(chunkno).trailer) gc::ChunkTrailer(runtime(), sb);
-    }
+    void setCurrentChunk(unsigned chunkno);
+    void setStartPosition();
 
-    MOZ_ALWAYS_INLINE void setCurrentChunk(int chunkno) {
-        MOZ_ASSERT(chunkno < numNurseryChunks_);
-        MOZ_ASSERT(chunkno < numActiveChunks_);
-        currentChunk_ = chunkno;
-        position_ = chunk(chunkno).start();
-        currentEnd_ = chunk(chunkno).end();
-        initChunk(chunkno);
-    }
-
-    void updateNumActiveChunks(int newCount);
+    void updateNumChunks(unsigned newCount);
+    void updateNumChunksLocked(unsigned newCount,
+                               gc::AutoMaybeStartBackgroundAllocation& maybeBgAlloc,
+                               AutoLockGC& lock);
 
     MOZ_ALWAYS_INLINE uintptr_t allocationEnd() const {
-        MOZ_ASSERT(numActiveChunks_ > 0);
-        return chunk(numActiveChunks_ - 1).end();
+        MOZ_ASSERT(numChunks() > 0);
+        return chunks_.back()->end();
     }
 
     MOZ_ALWAYS_INLINE uintptr_t currentEnd() const {
@@ -413,6 +418,9 @@ class Nursery
 
     /* Common internal allocator function. */
     void* allocate(size_t size);
+
+    double doCollection(JSRuntime* rt, JS::gcreason::Reason reason,
+                        gc::TenureCountCache& tenureCounts);
 
     /*
      * Move the object at |src| in the Nursery to an already-allocated cell
@@ -437,8 +445,10 @@ class Nursery
     void sweep();
 
     void runSweepActions();
+    void sweepDictionaryModeObjects();
 
     /* Change the allocable space provided by the nursery. */
+    void maybeResizeNursery(JS::gcreason::Reason reason, double promotionRate);
     void growAllocableSpace();
     void shrinkAllocableSpace();
 

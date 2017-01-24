@@ -46,7 +46,7 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/MouseEvents.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "gfx2DGlue.h"
 
 #ifdef XP_WIN
@@ -405,7 +405,7 @@ public:
     NS_RELEASE_THIS();
   }
 
-  NS_IMETHODIMP Run() override
+  NS_IMETHOD Run() override
   {
     if (mFrame.IsAlive()) {
       static_cast<nsComboboxControlFrame*>(mFrame.GetFrame())->
@@ -520,7 +520,7 @@ class nsAsyncRollup : public Runnable
 {
 public:
   explicit nsAsyncRollup(nsComboboxControlFrame* aFrame) : mFrame(aFrame) {}
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     if (mFrame.IsAlive()) {
       static_cast<nsComboboxControlFrame*>(mFrame.GetFrame())
@@ -535,7 +535,7 @@ class nsAsyncResize : public Runnable
 {
 public:
   explicit nsAsyncResize(nsComboboxControlFrame* aFrame) : mFrame(aFrame) {}
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     if (mFrame.IsAlive()) {
       nsComboboxControlFrame* combo =

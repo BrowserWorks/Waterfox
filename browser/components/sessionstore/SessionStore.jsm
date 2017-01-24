@@ -812,12 +812,10 @@ var SessionStoreInternal = {
 
         // Restore the tab icon.
         if ("image" in tabData) {
-          // Using null as the loadingPrincipal because serializing
-          // the principal would be overkill. Within SetIcon we
-          // default to the systemPrincipal if aLoadingPrincipal is
-          // null which will allow the favicon to load.
-          win.gBrowser.setIcon(tab, tabData.image, null);
-          TabStateCache.update(browser, {image: null});
+          // Use the serialized contentPrincipal with the new icon load.
+          let loadingPrincipal = Utils.deserializePrincipal(tabData.iconLoadingPrincipal);
+          win.gBrowser.setIcon(tab, tabData.image, loadingPrincipal);
+          TabStateCache.update(browser, { image: null, iconLoadingPrincipal: null });
         }
 
         let event = win.document.createEvent("Events");
@@ -1804,6 +1802,7 @@ var SessionStoreInternal = {
       state: tabState,
       title: tabTitle,
       image: tabbrowser.getIcon(aTab),
+      iconLoadingPrincipal: Utils.serializePrincipal(aTab.linkedBrowser.contentPrincipal),
       pos: aTab._tPos,
       closedAt: Date.now()
     };
@@ -2117,7 +2116,7 @@ var SessionStoreInternal = {
     this.restoreTab(aTab, tabState);
   },
 
-  duplicateTab: function ssi_duplicateTab(aWindow, aTab, aDelta = 0) {
+  duplicateTab: function ssi_duplicateTab(aWindow, aTab, aDelta = 0, aRestoreImmediately = true) {
     if (!aTab.ownerGlobal.__SSi) {
       throw Components.Exception("Default view is not tracked", Cr.NS_ERROR_INVALID_ARG);
     }
@@ -2166,7 +2165,7 @@ var SessionStoreInternal = {
 
       // Restore the state into the new tab.
       this.restoreTab(newTab, tabState, {
-        restoreImmediately: true /* Load this tab right away. */
+        restoreImmediately: aRestoreImmediately
       });
     });
 
@@ -3102,6 +3101,8 @@ var SessionStoreInternal = {
 
     this._setWindowStateReady(aWindow);
 
+    this._sendWindowRestoredNotification(aWindow);
+
     Services.obs.notifyObservers(aWindow, NOTIFY_SINGLE_WINDOW_RESTORED, "");
 
     this._sendRestoreCompletedNotifications();
@@ -3348,6 +3349,7 @@ var SessionStoreInternal = {
       // When that's done it will be removed from the cache and we always
       // collect it in TabState._collectBaseTabData().
       image: tabData.image || "",
+      iconLoadingPrincipal: tabData.iconLoadingPrincipal || null,
       userTypedValue: tabData.userTypedValue || "",
       userTypedClear: tabData.userTypedClear || 0
     });
@@ -4137,6 +4139,17 @@ var SessionStoreInternal = {
   },
 
   /**
+   * Dispatch the SSWindowRestored event for the given window.
+   * @param aWindow
+   *        The window which has been restored
+   */
+  _sendWindowRestoredNotification(aWindow) {
+    let event = aWindow.document.createEvent("Events");
+    event.initEvent("SSWindowRestored", true, false);
+    aWindow.dispatchEvent(event);
+  },
+
+  /**
    * Dispatch the SSTabRestored event for the given tab.
    * @param aTab
    *        The tab which has been restored
@@ -4233,7 +4246,6 @@ var SessionStoreInternal = {
     NS_ASSERT(aTab.linkedBrowser.__SS_restoreState,
               "given tab is not restoring");
 
-    let window = aTab.ownerGlobal;
     let browser = aTab.linkedBrowser;
 
     // Keep the tab's previous state for later in this method

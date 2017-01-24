@@ -74,13 +74,6 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
-  MOZ_SAFE_BROWSING:
-#ifdef MOZ_SAFE_BROWSING
-  true,
-#else
-  false,
-#endif
-
   MOZ_SANDBOX:
 #ifdef MOZ_SANDBOX
   true,
@@ -132,6 +125,13 @@ this.AppConstants = Object.freeze({
 
   MOZ_WEBRTC:
 #ifdef MOZ_WEBRTC
+  true,
+#else
+  false,
+#endif
+
+  MOZ_WIDGET_GTK:
+#ifdef MOZ_WIDGET_GTK
   true,
 #else
   false,
@@ -310,12 +310,6 @@ this.AppConstants = Object.freeze({
   MOZ_B2G_VERSION: @MOZ_B2G_VERSION@,
   MOZ_B2G_OS_NAME: @MOZ_B2G_OS_NAME@,
 
-  MOZ_ANDROID_APZ:
-#ifdef MOZ_ANDROID_APZ
-    true,
-#else
-    false,
-#endif
   DEBUG_JS_MODULES: "@DEBUG_JS_MODULES@",
 
   // URL to the hg revision this was built from (e.g.
@@ -326,15 +320,15 @@ this.AppConstants = Object.freeze({
 #endif
   SOURCE_REVISION_URL: "@MOZ_SOURCE_URL@",
 
-  MOZ_NUWA_PROCESS:
-#ifdef MOZ_NUWA_PROCESS
+  HAVE_USR_LIB64_DIR:
+#ifdef HAVE_USR_LIB64_DIR
     true,
 #else
     false,
 #endif
 
-  HAVE_USR_LIB64_DIR:
-#ifdef HAVE_USR_LIB64_DIR
+  HAVE_SHELL_SERVICE:
+#ifdef HAVE_SHELL_SERVICE
     true,
 #else
     false,

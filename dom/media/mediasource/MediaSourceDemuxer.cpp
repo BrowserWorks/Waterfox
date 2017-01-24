@@ -29,9 +29,8 @@ MediaSourceDemuxer::MediaSourceDemuxer()
 }
 
 // Due to inaccuracies in determining buffer end
-// frames (Bug 1065207). This value is based on the end of frame
-// default value used in Blink, kDefaultBufferDurationInMs.
-const TimeUnit MediaSourceDemuxer::EOS_FUZZ = media::TimeUnit::FromMicroseconds(125000);
+// frames (Bug 1065207). This value is based on videos seen in the wild.
+const TimeUnit MediaSourceDemuxer::EOS_FUZZ = media::TimeUnit::FromMicroseconds(500000);
 
 RefPtr<MediaSourceDemuxer::InitPromise>
 MediaSourceDemuxer::Init()
@@ -248,7 +247,7 @@ MediaSourceDemuxer::GetManager(TrackType aTrack)
 
 MediaSourceDemuxer::~MediaSourceDemuxer()
 {
-  mInitPromise.RejectIfExists(DemuxerFailureReason::SHUTDOWN, __func__);
+  mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
 }
 
 void
@@ -259,11 +258,12 @@ MediaSourceDemuxer::GetMozDebugReaderData(nsAString& aString)
   result += nsPrintfCString("Dumping data for demuxer %p:\n", this);
   if (mAudioTrack) {
     result += nsPrintfCString("\tDumping Audio Track Buffer(%s): - mLastAudioTime: %f\n"
-                              "\t\tNumSamples:%u Size:%u NextGetSampleIndex:%u NextInsertionIndex:%d\n",
+                              "\t\tNumSamples:%u Size:%u Evictable:%u NextGetSampleIndex:%u NextInsertionIndex:%d\n",
                               mAudioTrack->mAudioTracks.mInfo->mMimeType.get(),
                               mAudioTrack->mAudioTracks.mNextSampleTime.ToSeconds(),
                               mAudioTrack->mAudioTracks.mBuffers[0].Length(),
                               mAudioTrack->mAudioTracks.mSizeBuffer,
+                              mAudioTrack->Evictable(TrackInfo::kAudioTrack),
                               mAudioTrack->mAudioTracks.mNextGetSampleIndex.valueOr(-1),
                               mAudioTrack->mAudioTracks.mNextInsertionIndex.valueOr(-1));
 
@@ -272,11 +272,12 @@ MediaSourceDemuxer::GetMozDebugReaderData(nsAString& aString)
   }
   if (mVideoTrack) {
     result += nsPrintfCString("\tDumping Video Track Buffer(%s) - mLastVideoTime: %f\n"
-                              "\t\tNumSamples:%u Size:%u NextGetSampleIndex:%u NextInsertionIndex:%d\n",
+                              "\t\tNumSamples:%u Size:%u Evictable:%u NextGetSampleIndex:%u NextInsertionIndex:%d\n",
                               mVideoTrack->mVideoTracks.mInfo->mMimeType.get(),
                               mVideoTrack->mVideoTracks.mNextSampleTime.ToSeconds(),
                               mVideoTrack->mVideoTracks.mBuffers[0].Length(),
                               mVideoTrack->mVideoTracks.mSizeBuffer,
+                              mVideoTrack->Evictable(TrackInfo::kVideoTrack),
                               mVideoTrack->mVideoTracks.mNextGetSampleIndex.valueOr(-1),
                               mVideoTrack->mVideoTracks.mNextInsertionIndex.valueOr(-1));
 
@@ -381,17 +382,25 @@ RefPtr<MediaSourceTrackDemuxer::SeekPromise>
 MediaSourceTrackDemuxer::DoSeek(media::TimeUnit aTime)
 {
   TimeIntervals buffered = mManager->Buffered(mType);
-  buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ);
+  // Fuzz factor represents a +/- threshold. So when seeking it allows the gap
+  // to be twice as big as the fuzz value. We only want to allow EOS_FUZZ gap.
+  buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ / 2);
   TimeUnit seekTime = std::max(aTime - mPreRoll, TimeUnit::FromMicroseconds(0));
 
-  if (!buffered.Contains(seekTime)) {
-    if (!buffered.Contains(aTime)) {
+  if (mManager->IsEnded() && seekTime >= buffered.GetEnd()) {
+    // We're attempting to seek past the end time. Cap seekTime so that we seek
+    // to the last sample instead.
+    seekTime =
+      std::max(mManager->HighestStartTime(mType) - mPreRoll,
+               TimeUnit::FromMicroseconds(0));
+  }
+  if (!buffered.ContainsWithStrictEnd(seekTime)) {
+    if (!buffered.ContainsWithStrictEnd(aTime)) {
       // We don't have the data to seek to.
-      return SeekPromise::CreateAndReject(
-        mManager->IsEnded() ? DemuxerFailureReason::END_OF_STREAM :
-                              DemuxerFailureReason::WAITING_FOR_DATA, __func__);
+      return SeekPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA,
+                                          __func__);
     }
-    // Theorically we should reject the promise with WAITING_FOR_DATA,
+    // Theoretically we should reject the promise with WAITING_FOR_DATA,
     // however, to avoid unwanted regressions we assume that if at this time
     // we don't have the wanted data it won't come later.
     // Instead of using the pre-rolled time, use the earliest time available in
@@ -401,12 +410,12 @@ MediaSourceTrackDemuxer::DoSeek(media::TimeUnit aTime)
     seekTime = buffered[index].mStart;
   }
   seekTime = mManager->Seek(mType, seekTime, MediaSourceDemuxer::EOS_FUZZ);
-  bool error;
+  MediaResult result = NS_OK;
   RefPtr<MediaRawData> sample =
     mManager->GetSample(mType,
                         media::TimeUnit(),
-                        error);
-  MOZ_ASSERT(!error && sample);
+                        result);
+  MOZ_ASSERT(NS_SUCCEEDED(result) && sample);
   mNextSample = Some(sample);
   mReset = false;
   {
@@ -424,29 +433,34 @@ MediaSourceTrackDemuxer::DoGetSamples(int32_t aNumSamples)
     // If a seek (or reset) was recently performed, we ensure that the data
     // we are about to retrieve is still available.
     TimeIntervals buffered = mManager->Buffered(mType);
-    buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ);
+    buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ / 2);
 
-    if (!buffered.Contains(TimeUnit::FromMicroseconds(0))) {
-      return SamplesPromise::CreateAndReject(
-        mManager->IsEnded() ? DemuxerFailureReason::END_OF_STREAM :
-                              DemuxerFailureReason::WAITING_FOR_DATA, __func__);
+    if (!buffered.Length() && mManager->IsEnded()) {
+      return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_END_OF_STREAM,
+                                             __func__);
+    }
+    if (!buffered.ContainsWithStrictEnd(TimeUnit::FromMicroseconds(0))) {
+      return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA,
+                                             __func__);
     }
     mReset = false;
   }
-  bool error = false;
   RefPtr<MediaRawData> sample;
   if (mNextSample) {
     sample = mNextSample.ref();
     mNextSample.reset();
   } else {
-    sample = mManager->GetSample(mType, MediaSourceDemuxer::EOS_FUZZ, error);
+    MediaResult result = NS_OK;
+    sample = mManager->GetSample(mType, MediaSourceDemuxer::EOS_FUZZ, result);
     if (!sample) {
-      if (error) {
-        return SamplesPromise::CreateAndReject(DemuxerFailureReason::DEMUXER_ERROR, __func__);
+      if (result == NS_ERROR_DOM_MEDIA_END_OF_STREAM ||
+          result == NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA) {
+        return SamplesPromise::CreateAndReject(
+          (result == NS_ERROR_DOM_MEDIA_END_OF_STREAM && mManager->IsEnded())
+          ? NS_ERROR_DOM_MEDIA_END_OF_STREAM
+          : NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA, __func__);
       }
-      return SamplesPromise::CreateAndReject(
-        mManager->IsEnded() ? DemuxerFailureReason::END_OF_STREAM :
-                              DemuxerFailureReason::WAITING_FOR_DATA, __func__);
+      return SamplesPromise::CreateAndReject(result, __func__);
     }
   }
   RefPtr<SamplesHolder> samples = new SamplesHolder;
@@ -465,8 +479,8 @@ MediaSourceTrackDemuxer::DoSkipToNextRandomAccessPoint(media::TimeUnit aTimeThre
   uint32_t parsed = 0;
   // Ensure that the data we are about to skip to is still available.
   TimeIntervals buffered = mManager->Buffered(mType);
-  buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ);
-  if (buffered.Contains(aTimeThreadshold)) {
+  buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ / 2);
+  if (buffered.ContainsWithStrictEnd(aTimeThreadshold)) {
     bool found;
     parsed = mManager->SkipToNextRandomAccessPoint(mType,
                                                    aTimeThreadshold,
@@ -477,8 +491,8 @@ MediaSourceTrackDemuxer::DoSkipToNextRandomAccessPoint(media::TimeUnit aTimeThre
     }
   }
   SkipFailureHolder holder(
-    mManager->IsEnded() ? DemuxerFailureReason::END_OF_STREAM :
-                          DemuxerFailureReason::WAITING_FOR_DATA, parsed);
+    mManager->IsEnded() ? NS_ERROR_DOM_MEDIA_END_OF_STREAM :
+                          NS_ERROR_DOM_MEDIA_WAITING_FOR_DATA, parsed);
   return SkipAccessPointPromise::CreateAndReject(holder, __func__);
 }
 

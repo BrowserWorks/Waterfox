@@ -146,7 +146,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     SensorData sensorData;
     sensorData.sensor() = static_cast<SensorType>(mType);
@@ -378,7 +378,7 @@ nsDeviceSensors::FireDOMLightEvent(mozilla::dom::EventTarget* aTarget,
   DeviceLightEventInit init;
   init.mBubbles = true;
   init.mCancelable = false;
-  init.mValue = aValue;
+  init.mValue = round(aValue);
   RefPtr<DeviceLightEvent> event =
     DeviceLightEvent::Constructor(aTarget, NS_LITERAL_STRING("devicelight"), init);
 

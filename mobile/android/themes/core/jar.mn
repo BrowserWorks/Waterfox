@@ -21,13 +21,8 @@ chrome.jar:
   skin/aboutReaderContent.css               (aboutReaderContent.css)
   skin/aboutReaderControls.css              (aboutReaderControls.css)
   skin/aboutSupport.css                     (aboutSupport.css)
-  skin/browser.css                          (browser.css)
   skin/content.css                          (content.css)
-#ifdef MOZ_ANDROID_APZ
   skin/scrollbar.css                        (scrollbar-apz.css)
-#else
-  skin/scrollbar.css                        (scrollbar-nonapz.css)
-#endif
   skin/config.css                           (config.css)
   skin/defines.css                          (defines.css)
   skin/touchcontrols.css                    (touchcontrols.css)

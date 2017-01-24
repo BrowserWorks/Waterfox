@@ -96,7 +96,7 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, Mac
             frameDepth_ += ComputeByteAlignment(sizeof(AsmJSFrame) + frameDepth_,
                                                 AsmJSStackAlignment);
         } else if (gen->performsCall()) {
-            // An MAsmJSCall does not align the stack pointer at calls sites but
+            // An MWasmCall does not align the stack pointer at calls sites but
             // instead relies on the a priori stack adjustment. This must be the
             // last adjustment of frameDepth_.
             frameDepth_ += ComputeByteAlignment(sizeof(AsmJSFrame) + frameDepth_,
@@ -1353,11 +1353,6 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
     }
 #endif
 
-#ifdef JS_TRACE_LOGGING
-    emitTracelogStartEvent(TraceLogger_VM);
-    emitTracelogStartEvent(fun.name(), TraceLogger_VMSpecific);
-#endif
-
     // Stack is:
     //    ... frame ...
     //    [args]
@@ -1404,11 +1399,6 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
     masm.implicitPop(fun.explicitStackSlots() * sizeof(void*) + framePop);
     // Stack is:
     //    ... frame ...
-
-#ifdef JS_TRACE_LOGGING
-    emitTracelogStopEvent(TraceLogger_VM);
-    emitTracelogStopEvent(fun.name(), TraceLogger_VMSpecific);
-#endif
 }
 
 class OutOfLineTruncateSlow : public OutOfLineCodeBase<CodeGeneratorShared>
@@ -1489,9 +1479,9 @@ CodeGeneratorShared::omitOverRecursedCheck() const
 }
 
 void
-CodeGeneratorShared::emitAsmJSCallBase(LAsmJSCallBase* ins)
+CodeGeneratorShared::emitWasmCallBase(LWasmCallBase* ins)
 {
-    MAsmJSCall* mir = ins->mir();
+    MWasmCall* mir = ins->mir();
 
     if (mir->spIncrement())
         masm.freeStack(mir->spIncrement());
@@ -1508,32 +1498,36 @@ CodeGeneratorShared::emitAsmJSCallBase(LAsmJSCallBase* ins)
     masm.bind(&ok);
 #endif
 
-    MAsmJSCall::Callee callee = mir->callee();
+    // Save the caller's TLS register in a reserved stack slot (below the
+    // call's stack arguments) for retrieval after the call.
+    if (mir->saveTls())
+        masm.storePtr(WasmTlsReg, Address(masm.getStackPointer(), mir->tlsStackOffset()));
+
+    const wasm::CallSiteDesc& desc = mir->desc();
+    const wasm::CalleeDesc& callee = mir->callee();
     switch (callee.which()) {
-      case MAsmJSCall::Callee::Internal: {
-        masm.call(mir->desc(), callee.internal());
+      case wasm::CalleeDesc::Definition:
+        masm.call(desc, callee.funcDefIndex());
         break;
-      }
-      case MAsmJSCall::Callee::Dynamic: {
-        wasm::SigIdDesc sigId = callee.dynamicSigId();
-        switch (sigId.kind()) {
-          case wasm::SigIdDesc::Kind::Global:
-            masm.loadWasmGlobalPtr(sigId.globalDataOffset(), WasmTableCallSigReg);
-            break;
-          case wasm::SigIdDesc::Kind::Immediate:
-            masm.move32(Imm32(sigId.immediate()), WasmTableCallSigReg);
-            break;
-          case wasm::SigIdDesc::Kind::None:
-            break;
-        }
-        MOZ_ASSERT(WasmTableCallPtrReg == ToRegister(ins->getOperand(mir->dynamicCalleeOperandIndex())));
-        masm.call(mir->desc(), WasmTableCallPtrReg);
+      case wasm::CalleeDesc::Import:
+        masm.wasmCallImport(desc, callee);
         break;
-      }
-      case MAsmJSCall::Callee::Builtin: {
+      case wasm::CalleeDesc::WasmTable:
+      case wasm::CalleeDesc::AsmJSTable:
+        masm.wasmCallIndirect(desc, callee);
+        break;
+      case wasm::CalleeDesc::Builtin:
         masm.call(callee.builtin());
         break;
-      }
+      case wasm::CalleeDesc::BuiltinInstanceMethod:
+        masm.wasmCallBuiltinInstanceMethod(mir->instanceArg(), callee.builtin());
+        break;
+    }
+
+    // After return, restore the caller's TLS and pinned registers.
+    if (mir->saveTls()) {
+        masm.loadPtr(Address(masm.getStackPointer(), mir->tlsStackOffset()), WasmTlsReg);
+        masm.loadWasmPinnedRegsFromTls();
     }
 
     if (mir->spIncrement())

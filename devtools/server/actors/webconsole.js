@@ -23,6 +23,7 @@ loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "ServerLoggingListener", "devtools/shared/webconsole/server-logger", true);
 loader.lazyRequireGetter(this, "JSPropertyProvider", "devtools/shared/webconsole/js-property-provider", true);
 loader.lazyRequireGetter(this, "Parser", "resource://devtools/shared/Parser.jsm", true);
+loader.lazyRequireGetter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm", true);
 
 for (let name of ["WebConsoleUtils", "ConsoleServiceListener",
     "ConsoleAPIListener", "addWebConsoleCommands",
@@ -33,9 +34,9 @@ for (let name of ["WebConsoleUtils", "ConsoleServiceListener",
         prop = "Utils";
       }
       if (isWorker) {
-        return require("devtools/shared/webconsole/worker-utils")[prop];
+        return require("devtools/server/actors/utils/webconsole-worker-utils")[prop];
       } else {
-        return require("devtools/shared/webconsole/utils")[prop];
+        return require("devtools/server/actors/utils/webconsole-utils")[prop];
       }
     }.bind(null, name),
     configurable: true,
@@ -87,8 +88,6 @@ function WebConsoleActor(aConnection, aParentActor)
     selectedObjectActor: true, // 44+
   };
 }
-
-WebConsoleActor.l10n = new WebConsoleUtils.L10n("chrome://global/locale/console.properties");
 
 WebConsoleActor.prototype =
 {
@@ -617,8 +616,8 @@ WebConsoleActor.prototype =
               // Start a network monitor in the parent process to listen to
               // most requests than happen in parent
               this.networkMonitor =
-                new NetworkMonitorChild(appId, messageManager,
-                                        this.parentActor.actorID, this);
+                new NetworkMonitorChild(appId, this.parentActor.outerWindowID,
+                                        messageManager, this.conn, this);
               this.networkMonitor.init();
               // Spawn also one in the child to listen to service workers
               this.networkMonitorChild = new NetworkMonitor({ window }, this);
@@ -1057,11 +1056,18 @@ WebConsoleActor.prototype =
     for (let key in aRequest.preferences) {
       this._prefs[key] = aRequest.preferences[key];
 
-      if (key == "NetworkMonitor.saveRequestAndResponseBodies" &&
-          this.networkMonitor) {
-        this.networkMonitor.saveRequestAndResponseBodies = this._prefs[key];
-        if (this.networkMonitorChild) {
-          this.networkMonitorChild.saveRequestAndResponseBodies = this._prefs[key];
+      if (this.networkMonitor) {
+        if (key == "NetworkMonitor.saveRequestAndResponseBodies") {
+          this.networkMonitor.saveRequestAndResponseBodies = this._prefs[key];
+          if (this.networkMonitorChild) {
+            this.networkMonitorChild.saveRequestAndResponseBodies =
+              this._prefs[key];
+          }
+        } else if (key == "NetworkMonitor.throttleData") {
+          this.networkMonitor.throttleData = this._prefs[key];
+          if (this.networkMonitorChild) {
+            this.networkMonitorChild.throttleData = this._prefs[key];
+          }
         }
       }
     }
@@ -1513,15 +1519,13 @@ WebConsoleActor.prototype =
    *
    * @param object aEvent
    *        The initial network request event information.
-   * @param nsIHttpChannel aChannel
-   *        The network request nsIHttpChannel object.
    * @return object
    *         A new NetworkEventActor is returned. This is used for tracking the
    *         network request and response.
    */
-  onNetworkEvent: function WCA_onNetworkEvent(aEvent, aChannel)
+  onNetworkEvent: function WCA_onNetworkEvent(aEvent)
   {
-    let actor = this.getNetworkEventActor(aChannel);
+    let actor = this.getNetworkEventActor(aEvent.channelId);
     actor.init(aEvent);
 
     let packet = {
@@ -1536,24 +1540,23 @@ WebConsoleActor.prototype =
   },
 
   /**
-   * Get the NetworkEventActor for a nsIChannel, if it exists,
+   * Get the NetworkEventActor for a nsIHttpChannel, if it exists,
    * otherwise create a new one.
    *
-   * @param nsIHttpChannel aChannel
-   *        The channel for the network event.
+   * @param string channelId
+   *        The id of the channel for the network event.
    * @return object
    *         The NetworkEventActor for the given channel.
    */
-  getNetworkEventActor: function WCA_getNetworkEventActor(aChannel) {
-    let actor = this._netEvents.get(aChannel);
+  getNetworkEventActor: function WCA_getNetworkEventActor(channelId) {
+    let actor = this._netEvents.get(channelId);
     if (actor) {
       // delete from map as we should only need to do this check once
-      this._netEvents.delete(aChannel);
-      actor.channel = null;
+      this._netEvents.delete(channelId);
       return actor;
     }
 
-    actor = new NetworkEventActor(aChannel, this);
+    actor = new NetworkEventActor(this);
     this._actorPool.addActor(actor);
     return actor;
   },
@@ -1561,26 +1564,50 @@ WebConsoleActor.prototype =
   /**
    * Send a new HTTP request from the target's window.
    *
-   * @param object aMessage
+   * @param object message
    *        Object with 'request' - the HTTP request details.
    */
-  onSendHTTPRequest: function WCA_onSendHTTPRequest(aMessage)
-  {
-    let details = aMessage.request;
+  onSendHTTPRequest(message) {
+    let { url, method, headers, body } = message.request;
 
-    // send request from target's window
-    let request = new this.window.XMLHttpRequest();
-    request.open(details.method, details.url, true);
+    // Set the loadingNode and loadGroup to the target document - otherwise the
+    // request won't show up in the opened netmonitor.
+    let doc = this.window.document;
 
-    for (let {name, value} of details.headers) {
-      request.setRequestHeader(name, value);
+    let channel = NetUtil.newChannel({
+      uri: NetUtil.newURI(url),
+      loadingNode: doc,
+      securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+      contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER
+    });
+
+    channel.QueryInterface(Ci.nsIHttpChannel);
+
+    channel.loadGroup = doc.documentLoadGroup;
+    channel.loadFlags |= Ci.nsIRequest.LOAD_BYPASS_CACHE |
+                         Ci.nsIRequest.INHIBIT_CACHING |
+                         Ci.nsIRequest.LOAD_ANONYMOUS;
+
+    channel.requestMethod = method;
+
+    for (let {name, value} of headers) {
+      channel.setRequestHeader(name, value, false);
     }
-    request.send(details.body);
 
-    let actor = this.getNetworkEventActor(request.channel);
+    if (body) {
+      channel.QueryInterface(Ci.nsIUploadChannel2);
+      let bodyStream = Cc["@mozilla.org/io/string-input-stream;1"]
+        .createInstance(Ci.nsIStringInputStream);
+      bodyStream.setData(body, body.length);
+      channel.explicitSetUploadStream(bodyStream, null, -1, method, false);
+    }
+
+    NetUtil.asyncFetch(channel, () => {});
+
+    let actor = this.getNetworkEventActor(channel.channelId);
 
     // map channel to actor so we can associate future events with it
-    this._netEvents.set(request.channel, actor);
+    this._netEvents.set(channel.channelId, actor);
 
     return {
       from: this.actorID,
@@ -1804,16 +1831,12 @@ exports.WebConsoleActor = WebConsoleActor;
  * Creates an actor for a network event.
  *
  * @constructor
- * @param object aChannel
- *        The nsIChannel associated with this event.
- * @param object aWebConsoleActor
+ * @param object webConsoleActor
  *        The parent WebConsoleActor instance for this object.
  */
-function NetworkEventActor(aChannel, aWebConsoleActor)
-{
-  this.parent = aWebConsoleActor;
+function NetworkEventActor(webConsoleActor) {
+  this.parent = webConsoleActor;
   this.conn = this.parent.conn;
-  this.channel = aChannel;
 
   this._request = {
     method: null,

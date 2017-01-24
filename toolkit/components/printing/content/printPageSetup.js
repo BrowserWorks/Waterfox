@@ -54,11 +54,11 @@ function initDialog()
 
   gDialog.enabled         = false;
 
-  gDialog.strings                          = new Array;
-  gDialog.strings[ "marginUnits.inches" ]  = document.getElementById("marginUnits.inches").childNodes[0].nodeValue;
-  gDialog.strings[ "marginUnits.metric" ]  = document.getElementById("marginUnits.metric").childNodes[0].nodeValue;
-  gDialog.strings[ "customPrompt.title" ]  = document.getElementById("customPrompt.title").childNodes[0].nodeValue;
-  gDialog.strings[ "customPrompt.prompt" ] = document.getElementById("customPrompt.prompt").childNodes[0].nodeValue;
+  gDialog.strings                        = new Array;
+  gDialog.strings["marginUnits.inches"]  = document.getElementById("marginUnits.inches").childNodes[0].nodeValue;
+  gDialog.strings["marginUnits.metric"]  = document.getElementById("marginUnits.metric").childNodes[0].nodeValue;
+  gDialog.strings["customPrompt.title"]  = document.getElementById("customPrompt.title").childNodes[0].nodeValue;
+  gDialog.strings["customPrompt.prompt"] = document.getElementById("customPrompt.prompt").childNodes[0].nodeValue;
 
 }
 
@@ -69,7 +69,7 @@ function isListOfPrinterFeaturesAvailable()
 
   try {
     has_printerfeatures = gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".has_special_printerfeatures");
-  } catch(ex) {
+  } catch (ex) {
   }
 
   return has_printerfeatures;
@@ -159,10 +159,10 @@ function customize( node )
 {
   // If selection is now "Custom..." then prompt user for custom setting.
   if ( node.value == 6 ) {
-    var prompter = Components.classes[ "@mozilla.org/embedcomp/prompt-service;1" ]
+    var prompter = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
                      .getService( Components.interfaces.nsIPromptService );
-    var title      = gDialog.strings[ "customPrompt.title" ];
-    var promptText = gDialog.strings[ "customPrompt.prompt" ];
+    var title      = gDialog.strings["customPrompt.title"];
+    var promptText = gDialog.strings["customPrompt.prompt"];
     var result = { value: node.custom };
     var ok = prompter.prompt(window, title, promptText, result, null, { value: false } );
     if ( ok ) {
@@ -185,11 +185,11 @@ function setHeaderFooter( node, value )
 }
 
 var gHFValues = new Array;
-gHFValues[ "&T" ] = 1;
-gHFValues[ "&U" ] = 2;
-gHFValues[ "&D" ] = 3;
-gHFValues[ "&P" ] = 4;
-gHFValues[ "&PT" ] = 5;
+gHFValues["&T"] = 1;
+gHFValues["&U"] = 2;
+gHFValues["&D"] = 3;
+gHFValues["&P"] = 4;
+gHFValues["&PT"] = 5;
 
 function hfValueToId(val)
 {
@@ -198,9 +198,8 @@ function hfValueToId(val)
   }
   if ( val.length ) {
       return 6; // Custom...
-  } else {
-      return 0; // --blank--
   }
+  return 0; // --blank--
 }
 
 function hfIdToValue(node)
@@ -267,7 +266,7 @@ function loadDialog()
         gPrintService = gPrintService.QueryInterface(Components.interfaces.nsIPrintSettingsService);
       }
     }
-  } catch(ex) {
+  } catch (ex) {
     dump("loadDialog: ex="+ex+"\n");
   }
 
@@ -340,7 +339,7 @@ function loadDialog()
     if (gPrefs.getBoolPref("print.tmp.printerfeatures." + gPrintSettings.printerName + ".can_change_orientation"))
       gDialog.orientation.removeAttribute("disabled");
     else
-      gDialog.orientation.setAttribute("disabled","true");
+      gDialog.orientation.setAttribute("disabled", "true");
   }
 
   // Give initial focus to the orientation radio group.
@@ -375,18 +374,16 @@ function convertUnitsMarginToInches(aVal, aIsMetric)
 {
   if (aIsMetric) {
     return aVal / 25.4;
-  } else {
-    return aVal;
   }
+  return aVal;
 }
 
 function convertMarginInchesToUnits(aVal, aIsMetric)
 {
   if (aIsMetric) {
     return aVal * 25.4;
-  } else {
-    return aVal;
   }
+  return aVal;
 }
 
 //---------------------------------------------------

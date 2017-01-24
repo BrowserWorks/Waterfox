@@ -277,16 +277,17 @@ protected:
   };
 
   struct BlockOwner {
-    BlockOwner() : mStream(nullptr), mClass(READAHEAD_BLOCK) {}
+    constexpr BlockOwner() {}
 
     // The stream that owns this block, or null if the block is free.
-    MediaCacheStream* mStream;
+    MediaCacheStream* mStream = nullptr;
     // The block index in the stream. Valid only if mStream is non-null.
-    uint32_t            mStreamBlock;
+    // Initialized to an insane value to highlight misuse.
+    uint32_t          mStreamBlock = UINT32_MAX;
     // Time at which this block was last used. Valid only if
     // mClass is METADATA_BLOCK or PLAYED_BLOCK.
-    TimeStamp           mLastUseTime;
-    BlockClass          mClass;
+    TimeStamp         mLastUseTime;
+    BlockClass        mClass = READAHEAD_BLOCK;
   };
 
   struct Block {
@@ -1379,7 +1380,7 @@ MediaCache::Update()
 class UpdateEvent : public Runnable
 {
 public:
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     if (gMediaCache) {
       gMediaCache->Update();
@@ -1725,8 +1726,8 @@ MediaCacheStream::NotifyDataStarted(int64_t aOffset)
   NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
 
   ReentrantMonitorAutoEnter mon(gMediaCache->GetReentrantMonitor());
-  NS_WARN_IF_FALSE(aOffset == mChannelOffset,
-                   "Server is giving us unexpected offset");
+  NS_WARNING_ASSERTION(aOffset == mChannelOffset,
+                       "Server is giving us unexpected offset");
   MOZ_ASSERT(aOffset >= 0);
   mChannelOffset = aOffset;
   if (mStreamLength >= 0) {

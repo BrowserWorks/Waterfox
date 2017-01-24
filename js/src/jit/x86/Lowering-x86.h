@@ -30,6 +30,7 @@ class LIRGeneratorX86 : public LIRGeneratorX86Shared
     // will assert on us.) Ideally, we'd just ask the register allocator to
     // give us one of {al,bl,cl,dl}. For now, just useFixed(al).
     LAllocation useByteOpRegister(MDefinition* mir);
+    LAllocation useByteOpRegisterAtStart(MDefinition* mir);
     LAllocation useByteOpRegisterOrNonDoubleConstant(MDefinition* mir);
     LDefinition tempByteOpRegister();
 
@@ -48,9 +49,6 @@ class LIRGeneratorX86 : public LIRGeneratorX86Shared
     void lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins,
                           MDefinition* mir, MDefinition* lhs, MDefinition* rhs);
     void lowerForMulInt64(LMulI64* ins, MMul* mir, MDefinition* lhs, MDefinition* rhs);
-    template<size_t Temps>
-    void lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, Temps>* ins,
-                            MDefinition* mir, MDefinition* lhs, MDefinition* rhs);
 
     void lowerDivI64(MDiv* div);
     void lowerModI64(MMod* mod);
@@ -58,7 +56,6 @@ class LIRGeneratorX86 : public LIRGeneratorX86Shared
     void lowerUModI64(MMod* mod);
 
   public:
-    void visitWasmLoad(MWasmLoad* ins);
     void visitBox(MBox* box);
     void visitUnbox(MUnbox* unbox);
     void visitReturn(MReturn* ret);
@@ -72,7 +69,7 @@ class LIRGeneratorX86 : public LIRGeneratorX86Shared
     void visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins);
     void visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins);
     void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins);
-    void visitAsmSelect(MAsmSelect* ins);
+    void visitWasmLoad(MWasmLoad* ins);
     void visitWasmStore(MWasmStore* ins);
     void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins);
     void visitSubstr(MSubstr* ins);

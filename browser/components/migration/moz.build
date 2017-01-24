@@ -8,6 +8,8 @@ XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
 
 MARIONETTE_UNIT_MANIFESTS += ['tests/marionette/manifest.ini']
 
+BROWSER_CHROME_MANIFESTS += [ 'tests/browser/browser.ini']
+
 JAR_MANIFESTS += ['jar.mn']
 
 XPIDL_SOURCES += [
@@ -39,13 +41,11 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         '360seProfileMigrator.js',
         'EdgeProfileMigrator.js',
         'IEProfileMigrator.js',
-        'SafariProfileMigrator.js',
     ]
     EXTRA_JS_MODULES += [
         'ESEDBReader.jsm',
         'MSMigrationUtils.jsm',
     ]
-    DEFINES['HAS_SAFARI_MIGRATOR'] = True
     DEFINES['HAS_360SE_MIGRATOR'] = True
     DEFINES['HAS_IE_MIGRATOR'] = True
     DEFINES['HAS_EDGE_MIGRATOR'] = True

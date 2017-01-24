@@ -85,8 +85,8 @@
 
   <string name="url_bar_default_text">&url_bar_default_text2;</string>
 
-  <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/ -->
-  <string name="help_link">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/</string>
+  <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/mobile-help -->
+  <string name="help_link">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/mobile-help</string>
   <string name="help_menu">&help_menu;</string>
 
   <string name="quit">&quit;</string>
@@ -562,10 +562,6 @@
   <string name="set_image_path_fail">&set_image_path_fail;</string>
   <string name="set_image_chooser_title">&set_image_chooser_title;</string>
 
-  <!-- Contacts API -->
-  <string name="contacts_account_chooser_dialog_title2">Share contacts from…</string>
-
-
   <!-- Guest mode -->
   <string name="new_guest_session">&new_guest_session;</string>
   <string name="exit_guest_session">&exit_guest_session;</string>
@@ -634,4 +630,7 @@
   <string name="helper_triple_readerview_open_message">&helper_triple_readerview_open_message;</string>
   <string name="helper_triple_readerview_open_button">&helper_triple_readerview_open_button;</string>
 
+  <string name="activity_stream_topsites">&activity_stream_topsites;</string>
+  <string name="activity_stream_highlights">&activity_stream_highlights;</string>
+  <string name="activity_stream_more">&activity_stream_more;</string>
 </resources>

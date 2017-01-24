@@ -33,9 +33,11 @@ typedef enum mp4parse_track_type {
 typedef enum mp4parse_codec {
 	MP4PARSE_CODEC_UNKNOWN,
 	MP4PARSE_CODEC_AAC,
+	MP4PARSE_CODEC_FLAC,
 	MP4PARSE_CODEC_OPUS,
 	MP4PARSE_CODEC_AVC,
 	MP4PARSE_CODEC_VP9,
+	MP4PARSE_CODEC_MP3,
 } mp4parse_codec;
 
 typedef struct mp4parse_track_info {
@@ -65,6 +67,10 @@ typedef struct mp4parse_track_video_info {
 	uint16_t image_height;
 } mp4parse_track_video_info;
 
+typedef struct mp4parse_fragment_info {
+	uint64_t fragment_duration;
+} mp4parse_fragment_info;
+
 typedef struct mp4parse_parser mp4parse_parser;
 
 typedef struct mp4parse_io {
@@ -92,6 +98,10 @@ mp4parse_error mp4parse_get_track_audio_info(mp4parse_parser* parser, uint32_t t
 
 /// Fill the supplied `mp4parse_track_video_info` with metadata for `track`.
 mp4parse_error mp4parse_get_track_video_info(mp4parse_parser* parser, uint32_t track_index, mp4parse_track_video_info* info);
+
+mp4parse_error mp4parse_get_fragment_info(mp4parse_parser* parser, mp4parse_fragment_info* info);
+
+mp4parse_error mp4parse_is_fragmented(mp4parse_parser* parser, uint32_t track_id, uint8_t* fragmented);
 
 
 

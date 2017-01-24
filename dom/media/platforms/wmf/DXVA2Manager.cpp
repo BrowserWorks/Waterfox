@@ -10,7 +10,7 @@
 #include "ImageContainer.h"
 #include "gfxWindowsPlatform.h"
 #include "D3D9SurfaceImage.h"
-#include "mozilla/gfx/DeviceManagerD3D11.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/layers/D3D11ShareHandleImage.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/Telemetry.h"
@@ -98,7 +98,6 @@ public:
   // into an image which is returned by aOutImage.
   HRESULT CopyToImage(IMFSample* aVideoSample,
                       const nsIntRect& aRegion,
-                      ImageContainer* aContainer,
                       Image** aOutImage) override;
 
   bool SupportsConfig(IMFMediaType* aType, float aFramerate) override;
@@ -280,6 +279,11 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
   NS_ENSURE_TRUE(d3d9lib, E_FAIL);
   decltype(Direct3DCreate9Ex)* d3d9Create =
     (decltype(Direct3DCreate9Ex)*) GetProcAddress(d3d9lib, "Direct3DCreate9Ex");
+  if (!d3d9Create) {
+    NS_WARNING("Couldn't find Direct3DCreate9Ex symbol in d3d9.dll");
+    aFailureReason.AssignLiteral("Couldn't find Direct3DCreate9Ex symbol in d3d9.dll");
+    return E_FAIL;
+  }
   RefPtr<IDirect3D9Ex> d3d9Ex;
   HRESULT hr = d3d9Create(D3D_SDK_VERSION, getter_AddRefs(d3d9Ex));
   if (!d3d9Ex) {
@@ -305,7 +309,7 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
   D3DPRESENT_PARAMETERS params = {0};
   params.BackBufferWidth = 1;
   params.BackBufferHeight = 1;
-  params.BackBufferFormat = D3DFMT_UNKNOWN;
+  params.BackBufferFormat = D3DFMT_A8R8G8B8;
   params.BackBufferCount = 1;
   params.SwapEffect = D3DSWAPEFFECT_DISCARD;
   params.hDeviceWindow = nullptr;
@@ -424,7 +428,7 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
   mDeviceManager = deviceManager;
   mSyncSurface = syncSurf;
 
-  mTextureClientAllocator = new D3D9RecycleAllocator(layers::ImageBridgeChild::GetSingleton(),
+  mTextureClientAllocator = new D3D9RecycleAllocator(layers::ImageBridgeChild::GetSingleton().get(),
                                                      mDevice);
   mTextureClientAllocator->SetMaxPoolSize(5);
 
@@ -439,7 +443,6 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
 HRESULT
 D3D9DXVA2Manager::CopyToImage(IMFSample* aSample,
                               const nsIntRect& aRegion,
-                              ImageContainer* aImageContainer,
                               Image** aOutImage)
 {
   RefPtr<IMFMediaBuffer> buffer;
@@ -519,7 +522,6 @@ public:
   // into an image which is returned by aOutImage.
   HRESULT CopyToImage(IMFSample* aVideoSample,
                       const nsIntRect& aRegion,
-                      ImageContainer* aContainer,
                       Image** aOutImage) override;
 
   HRESULT ConfigureForSize(uint32_t aWidth, uint32_t aHeight) override;
@@ -633,7 +635,7 @@ D3D11DXVA2Manager::Init(nsACString& aFailureReason)
     return E_FAIL;
   }
 
-  mDevice = gfx::DeviceManagerD3D11::Get()->CreateDecoderDevice();
+  mDevice = gfx::DeviceManagerDx::Get()->CreateDecoderDevice();
   if (!mDevice) {
     aFailureReason.AssignLiteral("Failed to create D3D11 device for decoder");
     return E_FAIL;
@@ -750,7 +752,7 @@ D3D11DXVA2Manager::Init(nsACString& aFailureReason)
   hr = mDevice->CreateTexture2D(&desc, NULL, getter_AddRefs(mSyncSurface));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  mTextureClientAllocator = new D3D11RecycleAllocator(layers::ImageBridgeChild::GetSingleton(),
+  mTextureClientAllocator = new D3D11RecycleAllocator(layers::ImageBridgeChild::GetSingleton().get(),
                                                       mDevice);
   mTextureClientAllocator->SetMaxPoolSize(5);
 
@@ -782,11 +784,9 @@ D3D11DXVA2Manager::CreateOutputSample(RefPtr<IMFSample>& aSample, ID3D11Texture2
 HRESULT
 D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
                                const nsIntRect& aRegion,
-                               ImageContainer* aContainer,
                                Image** aOutImage)
 {
   NS_ENSURE_TRUE(aVideoSample, E_POINTER);
-  NS_ENSURE_TRUE(aContainer, E_POINTER);
   NS_ENSURE_TRUE(aOutImage, E_POINTER);
 
   // Our video frame is stored in a non-sharable ID3D11Texture2D. We need

@@ -34,6 +34,7 @@ class nsIPrincipal;
 namespace mozilla {
 class MediaPipelineFilter;
 class PeerIdentity;
+class AudioProxyThread;
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
 class VideoFrameConverter;
 #endif
@@ -290,7 +291,7 @@ public:
     mConduit(aConduit) {}
 
   /* we exist solely to proxy release of the conduit */
-  NS_IMETHOD Run() { return NS_OK; }
+  NS_IMETHOD Run() override { return NS_OK; }
 private:
   RefPtr<MediaSessionConduit> mConduit;
 };
@@ -343,16 +344,19 @@ public:
   // Separate classes to allow ref counting
   class PipelineListener;
   class VideoFrameFeeder;
+  class PipelineVideoSink;
 
  protected:
   ~MediaPipelineTransmit();
 
  private:
   RefPtr<PipelineListener> listener_;
+  RefPtr<AudioProxyThread> audio_processing_;
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
   RefPtr<VideoFrameFeeder> feeder_;
   RefPtr<VideoFrameConverter> converter_;
 #endif
+  RefPtr<PipelineVideoSink> video_sink_;
   dom::MediaStreamTrack* domtrack_;
 };
 

@@ -15,6 +15,7 @@
 #include "webrtc/system_wrappers/interface/trace.h"
 
 using namespace webrtc;
+using namespace videocapturemodule;
 
 #pragma mark **** hidden class interface
 
@@ -38,11 +39,24 @@ using namespace webrtc;
     return self;
 }
 
+- (void)registerOwner:(VideoCaptureMacAVFoundationInfo*)owner {
+    [_lock lock];
+    _owner = owner;
+    [_lock unlock];
+}
+
 /// ***** Objective-C. Similar to C++ destructor
 /// ***** Returns nothing
 - (void)dealloc {
 
     [_captureDevicesInfo release];
+
+    // Remove Observers
+    NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+    for (id observer in _observers)
+        [notificationCenter removeObserver:observer];
+    [_observers release];
+    [_lock release];
 
     [super dealloc];
 }
@@ -148,7 +162,14 @@ using namespace webrtc;
 
     *width = videoDimensions.width;
     *height = videoDimensions.height;
-    *maxFPS = maxFrameRateRange.maxFrameRate;
+
+    // This is to fix setCaptureHeight() which fails for some webcams supporting non-integer framerates.
+    // In setCaptureHeight(), we match the best framerate range by searching a range whose max framerate
+    // is most close to (but smaller than or equal to) the target. Since maxFPS of capability is integer,
+    // we fill in the capability maxFPS with the floor value (e.g., 29) of the real supported fps
+    // (e.g., 29.97). If the target is set to 29, we failed to match the best format with max framerate
+    // 29.97 since it is over the target. Therefore, we need to return a ceiling value as the maxFPS here.
+    *maxFPS = static_cast<int32_t>(ceil(maxFrameRateRange.maxFrameRate));
     *rawType = [VideoCaptureMacAVFoundationUtility fourCCToRawVideoType:CMFormatDescriptionGetMediaSubType(format.formatDescription)];
 
     return [NSNumber numberWithInt:0];
@@ -222,6 +243,33 @@ using namespace webrtc;
 
     _captureDeviceCountInfo = 0;
     [self getCaptureDevices];
+
+    _lock = [[NSLock alloc] init];
+
+    //register device connected / disconnected event
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+
+    id deviceWasConnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasConnectedNotification
+        object:nil
+        queue:[NSOperationQueue mainQueue]
+        usingBlock:^(NSNotification *note) {
+            [_lock lock];
+            if(_owner)
+                _owner->DeviceChange();
+            [_lock unlock];
+        }];
+
+    id deviceWasDisconnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasDisconnectedNotification
+        object:nil
+        queue:[NSOperationQueue mainQueue]
+        usingBlock:^(NSNotification *note) {
+            [_lock lock];
+            if(_owner)
+                _owner->DeviceChange();
+            [_lock unlock];
+        }];
+
+    _observers = [[NSArray alloc] initWithObjects:deviceWasConnectedObserver, deviceWasDisconnectedObserver, nil];
 
     return [NSNumber numberWithInt:0];
 }

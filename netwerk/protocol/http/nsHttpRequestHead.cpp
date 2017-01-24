@@ -119,7 +119,7 @@ nsHttpRequestHead::Path(nsACString &aPath)
 void
 nsHttpRequestHead::SetHTTPS(bool val)
 {
-    ReentrantMonitorAutoEnter monk(mReentrantMonitor);
+    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     mHTTPS = val;
 }
 

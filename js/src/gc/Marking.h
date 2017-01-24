@@ -141,7 +141,9 @@ namespace gc {
 
 struct WeakKeyTableHashPolicy {
     typedef JS::GCCellPtr Lookup;
-    static HashNumber hash(const Lookup& v) { return mozilla::HashGeneric(v.asCell()); }
+    static HashNumber hash(const Lookup& v, const mozilla::HashCodeScrambler&) {
+        return mozilla::HashGeneric(v.asCell());
+    }
     static bool match(const JS::GCCellPtr& k, const Lookup& l) { return k == l; }
     static bool isEmpty(const JS::GCCellPtr& v) { return !v; }
     static void makeEmpty(JS::GCCellPtr* vp) { *vp = nullptr; }
@@ -280,6 +282,7 @@ class GCMarker : public JSTracer
     void eagerlyMarkChildren(JSString* str);
     void eagerlyMarkChildren(LazyScript *thing);
     void eagerlyMarkChildren(Shape* shape);
+    void eagerlyMarkChildren(Scope* scope);
     void lazilyMarkChildren(ObjectGroup* group);
 
     // We may not have concrete types yet, so this has to be outside the header.

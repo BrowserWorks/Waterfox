@@ -8,7 +8,8 @@
 
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/CompositableForwarder.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
+#include "gfxPlatform.h"
 
 namespace mozilla {
 namespace layers {
@@ -114,27 +115,19 @@ public:
 
   virtual bool RecvDestroy() override
   {
-    if (!mDestroyed) {
-      Destroy();
-      mDestroyed = true;
-    }
+    DestroyIfNeeded();
     Unused << Protocol::Send__delete__(this);
-    return true;
-  }
-
-  virtual bool RecvDestroySync() override
-  {
-    if (!mDestroyed) {
-      Destroy();
-      mDestroyed = true;
-    }
     return true;
   }
 
   typedef ipc::IProtocolManager<ipc::IProtocol>::ActorDestroyReason Why;
 
-  virtual void ActorDestroy(Why) override
-  {
+  virtual void ActorDestroy(Why) override {
+    DestroyIfNeeded();
+  }
+
+protected:
+  void DestroyIfNeeded() {
     if (!mDestroyed) {
       Destroy();
       mDestroyed = true;

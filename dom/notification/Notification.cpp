@@ -12,7 +12,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "mozilla/dom/AppNotificationServiceOptionsBinding.h"
 #include "mozilla/dom/BindingUtils.h"
@@ -38,6 +38,7 @@
 #include "nsINotificationStorage.h"
 #include "nsIPermissionManager.h"
 #include "nsIPermission.h"
+#include "nsIPushService.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIServiceWorkerManager.h"
 #include "nsISimpleEnumerator.h"
@@ -57,10 +58,6 @@
 
 #ifdef MOZ_B2G
 #include "nsIDOMDesktopNotification.h"
-#endif
-
-#ifndef MOZ_SIMPLEPUSH
-#include "nsIPushService.h"
 #endif
 
 namespace mozilla {
@@ -322,7 +319,7 @@ public:
   { }
 
   NS_IMETHOD
-  Run()
+  Run() override
   {
     AssertIsOnMainThread();
     if (!mWindow->IsCurrentInnerWindow()) {
@@ -1073,7 +1070,7 @@ Notification::ConstructFromFields(
 {
   MOZ_ASSERT(aGlobal);
 
-  RootedDictionary<NotificationOptions> options(nsContentUtils::RootingCx());
+  RootedDictionary<NotificationOptions> options(RootingCx());
   options.mDir = Notification::StringToDirection(nsString(aDir));
   options.mLang = aLang;
   options.mBody = aBody;
@@ -1446,9 +1443,6 @@ NotificationObserver::Observe(nsISupports* aSubject, const char* aTopic,
 nsresult
 NotificationObserver::AdjustPushQuota(const char* aTopic)
 {
-#ifdef MOZ_SIMPLEPUSH
-  return NS_ERROR_NOT_IMPLEMENTED;
-#else
   nsCOMPtr<nsIPushQuotaManager> pushQuotaManager =
     do_GetService("@mozilla.org/push/Service;1");
   if (!pushQuotaManager) {
@@ -1465,7 +1459,6 @@ NotificationObserver::AdjustPushQuota(const char* aTopic)
     return pushQuotaManager->NotificationForOriginShown(origin.get());
   }
   return pushQuotaManager->NotificationForOriginClosed(origin.get());
-#endif
 }
 
 NS_IMETHODIMP
@@ -2564,7 +2557,7 @@ Notification::RegisterWorkerHolder()
   mWorkerPrivate->AssertIsOnWorkerThread();
   MOZ_ASSERT(!mWorkerHolder);
   mWorkerHolder = MakeUnique<NotificationWorkerHolder>(this);
-  if (NS_WARN_IF(!mWorkerHolder->HoldWorker(mWorkerPrivate))) {
+  if (NS_WARN_IF(!mWorkerHolder->HoldWorker(mWorkerPrivate, Canceling))) {
     return false;
   }
 
@@ -2611,6 +2604,12 @@ public:
     }
 
     RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (!swm) {
+      // browser shutdown began
+      mRv = NS_ERROR_FAILURE;
+      return true;
+    }
+
     RefPtr<ServiceWorkerRegistrationInfo> registration =
       swm->GetRegistration(principal, mScope);
 
@@ -2710,7 +2709,7 @@ Notification::ShowPersistentNotification(JSContext* aCx,
   // "Otherwise, resolve promise with undefined."
   // The Notification may still not be shown due to other errors, but the spec
   // is not concerned with those.
-  p->MaybeResolve(JS::UndefinedHandleValue);
+  p->MaybeResolveWithUndefined();
 
   RefPtr<Notification> notification =
     CreateAndShow(aCx, aGlobal, aTitle, aOptions, aScope, aRv);

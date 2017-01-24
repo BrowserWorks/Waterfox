@@ -179,8 +179,9 @@ public:
     (void)mOutputStream->Close();
 
     // But, we'll warn about it not being successful if it wasn't.
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(aStatusCode),
-                     "Got an error when trying to load our default favicon!");
+    NS_WARNING_ASSERTION(
+      NS_SUCCEEDED(aStatusCode),
+      "Got an error when trying to load our default favicon!");
 
     return NS_OK;
   }
@@ -336,7 +337,8 @@ nsAnnoProtocolHandler::NewFaviconChannel(nsIURI *aURI, nsIURI *aAnnotationURI,
   nsCOMPtr<nsIOutputStream> outputStream;
   nsresult rv = NS_NewPipe(getter_AddRefs(inputStream),
                            getter_AddRefs(outputStream),
-                           0, nsIFaviconService::MAX_FAVICON_SIZE, true, true);
+                           0, nsIFaviconService::MAX_FAVICON_BUFFER_SIZE,
+                           true, true);
   NS_ENSURE_SUCCESS(rv, GetDefaultIcon(aLoadInfo, _channel));
 
   // Create our channel.  We'll call SetContentType with the right type when

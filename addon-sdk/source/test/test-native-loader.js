@@ -9,7 +9,6 @@ var {
 var { readURI } = require('sdk/net/url');
 var { all } = require('sdk/core/promise');
 var { before, after } = require('sdk/test/utils');
-var prefs = require('preferences/service');
 var testOptions = require('@test/options');
 
 var root = module.uri.substr(0, module.uri.lastIndexOf('/'))
@@ -51,10 +50,6 @@ let variants = [
     },
   },
 ];
-
-if (prefs.get("extensions.sdk.loader.useFallback.50", false))
-  // This actually fails with the old loader code.
-  variants.pop();
 
 let fixtures = [
   'native-addon-test',

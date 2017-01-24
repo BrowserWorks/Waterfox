@@ -88,11 +88,7 @@
                 onget="return this.view; /*.QueryInterface(Components.interfaces.nsIXULTreeBuilder)*/"
                 readonly="true"/>
       <field name="pageUpOrDownMovesSelection">
-        {
-          let { AppConstants } =
-              Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
-          AppConstants.platform != "macosx";
-        }
+        !/Mac/.test(navigator.platform)
       </field>
       <property name="keepCurrentInView"
                 onget="return (this.getAttribute('keepcurrentinview') == 'true');"
@@ -387,9 +383,13 @@
             }
             setTimeout(selectText, 0);
 
+            // Clear the text because we don't want the text appearing underneath the input.
+            this.view.setCellText(row, column, "");
+            // Save the original text so we can restore it after stoping editing.
+            input.setAttribute("data-original-text", input.value);
+
             this._editingRow = row;
             this._editingColumn = column;
-
             this.setAttribute("editing", "true");
             return true;
           ]]>
@@ -406,16 +406,15 @@
             var input = this.inputField;
             var editingRow = this._editingRow;
             var editingColumn = this._editingColumn;
+            var value = accept ? input.value : input.getAttribute("data-original-text");
             this._editingRow = -1;
             this._editingColumn = null;
-            if (accept) {
-              var value = input.value;
-              this.view.setCellText(editingRow, editingColumn, value);
-            }
+            this.view.setCellText(editingRow, editingColumn, value);
 
             input.hidden = true;
             input.value = "";
             this.removeAttribute("editing");
+            input.removeAttribute("data-original-text");
           ]]>
         </body>
       </method>
@@ -543,11 +542,9 @@
               }
               i = i > edge ? edge : i;
 
-            } else {
-              if (c <= i) {
-                 i = c <= p ? 0 : c - p;
-                 this.treeBoxObject.ensureRowIsVisible(i);
-              }
+            } else if (c <= i) {
+               i = c <= p ? 0 : c - p;
+               this.treeBoxObject.ensureRowIsVisible(i);
             }
             this.view.selection.timedSelect(i, this._selectDelay);
           ]]>
@@ -671,9 +668,7 @@
             return true;
           }
 
-          let { AppConstants } =
-              Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
-          if (AppConstants.platform == "macosx") {
+          if (/Mac/.test(navigator.platform)) {
             // See if we can edit the cell.
             var row = this.currentIndex;
             if (this._cellSelType) {
@@ -793,17 +788,15 @@
              event.preventDefault();
              return;
            }
-           else {
-             var parentIndex = this.view.getParentIndex(this.currentIndex);
-             if (parentIndex >= 0) {
-               if (cellSelType && !this.view.isSelectable(parentIndex, currentColumn)) {
-                 return;
-               }
-               this.view.selection.select(parentIndex);
-               this.treeBoxObject.ensureRowIsVisible(parentIndex);
-               event.preventDefault();
+           var parentIndex = this.view.getParentIndex(this.currentIndex);
+           if (parentIndex >= 0) {
+             if (cellSelType && !this.view.isSelectable(parentIndex, currentColumn)) {
                return;
              }
+             this.view.selection.select(parentIndex);
+             this.treeBoxObject.ensureRowIsVisible(parentIndex);
+             event.preventDefault();
+             return;
            }
          }
 
@@ -841,25 +834,23 @@
               event.preventDefault();
               return;
             }
-            else {
-              var c = row + 1;
-              var view = this.view;
-              if (c < view.rowCount &&
-                  view.getParentIndex(c) == row) {
-                // If already opened, select the first child.
-                // The getParentIndex test above ensures that the children
-                // are already populated and ready.
-                if (cellSelType && !this.view.isSelectable(c , currentColumn)) {
-                  let col = this._getNextColumn(c, false);
-                  if (col) {
-                    this.view.selection.currentColumn = col;
-                  }
+            var c = row + 1;
+            var view = this.view;
+            if (c < view.rowCount &&
+                view.getParentIndex(c) == row) {
+              // If already opened, select the first child.
+              // The getParentIndex test above ensures that the children
+              // are already populated and ready.
+              if (cellSelType && !this.view.isSelectable(c, currentColumn)) {
+                let col = this._getNextColumn(c, false);
+                if (col) {
+                  this.view.selection.currentColumn = col;
                 }
-                this.view.selection.timedSelect(c, this._selectDelay);
-                this.treeBoxObject.ensureRowIsVisible(c);
-                event.preventDefault();
-                return;
               }
+              this.view.selection.timedSelect(c, this._selectDelay);
+              this.treeBoxObject.ensureRowIsVisible(c);
+              event.preventDefault();
+              return;
             }
           }
 
@@ -1272,11 +1263,10 @@
             if (Math.abs(aEvent.clientX - col.mStartDragX) < 5 &&
                 Math.abs(aEvent.clientY - col.mStartDragY) < 5) {
               return;
-            } else {
-              col.mDragGesturing = false;
-              col.setAttribute("dragging", "true");
-              window.addEventListener("click", col._onDragMouseClick, true);
             }
+            col.mDragGesturing = false;
+            col.setAttribute("dragging", "true");
+            window.addEventListener("click", col._onDragMouseClick, true);
           }
 
           var pos = {};
@@ -1420,11 +1410,9 @@
           if (event.target != event.originalTarget)
             return;
 
-          let { AppConstants } =
-              Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
           // On Windows multiple clicking on tree columns only cycles one time
           // every 2 clicks.
-          if (AppConstants.platform == "win" && event.detail % 2 == 0)
+          if (/Win/.test(navigator.platform) && event.detail % 2 == 0)
             return;
 
           var tree = this.parentNode.parentNode;

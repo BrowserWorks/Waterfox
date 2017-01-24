@@ -487,11 +487,7 @@ CheckUserContextCompatibility(nsIDocShell* aDocShell)
     return true;
   }
 
-  uint32_t principalUserContextId;
-  nsresult rv = subjectPrincipal->GetUserContextId(&principalUserContextId);
-  NS_ENSURE_SUCCESS(rv, false);
-
-  return principalUserContextId == userContextId;
+  return subjectPrincipal->GetUserContextId() == userContextId;
 }
 
 NS_IMETHODIMP
@@ -1118,8 +1114,9 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
     auto* docShell = static_cast<nsDocShell*>(newDocShell.get());
 
     // If this is not a chrome docShell, we apply originAttributes from the
-    // subjectPrincipal.
+    // subjectPrincipal unless if it's an expanded or system principal.
     if (subjectPrincipal &&
+        !nsContentUtils::IsSystemOrExpandedPrincipal(subjectPrincipal) &&
         docShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
       DocShellOriginAttributes attrs;
       attrs.InheritFromDocToChildDocShell(BasePrincipal::Cast(subjectPrincipal)->OriginAttributesRef());
@@ -1247,7 +1244,6 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
       nsCOMPtr<nsPIDOMWindowInner> pInnerWin = parentWindow->GetCurrentInnerWindow();
 
       parentStorageManager->GetStorage(pInnerWin, subjectPrincipal,
-                                       isPrivateBrowsingWindow,
                                        getter_AddRefs(storage));
       if (storage) {
         newStorageManager->CloneStorage(storage);
@@ -1289,15 +1285,18 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
       return NS_OK;
     }
 
-    if (!newWindowShouldBeModal && parentIsModal) {
-      nsCOMPtr<nsIBaseWindow> parentWindow(do_GetInterface(newTreeOwner));
-      if (parentWindow) {
-        nsCOMPtr<nsIWidget> parentWidget;
-        parentWindow->GetMainWidget(getter_AddRefs(parentWidget));
-        if (parentWidget) {
-          parentWidget->SetFakeModal(true);
-        }
+    bool isAppModal = false;
+    nsCOMPtr<nsIBaseWindow> parentWindow(do_GetInterface(newTreeOwner));
+    nsCOMPtr<nsIWidget> parentWidget;
+    if (parentWindow) {
+      parentWindow->GetMainWidget(getter_AddRefs(parentWidget));
+      if (parentWidget) {
+        isAppModal = parentWidget->IsRunningAppModal();
       }
+    }
+    if (parentWidget &&
+        ((!newWindowShouldBeModal && parentIsModal) || isAppModal)) {
+      parentWidget->SetFakeModal(true);
     } else {
       // Reset popup state while opening a modal dialog, and firing
       // events about the dialog, to prevent the current state from

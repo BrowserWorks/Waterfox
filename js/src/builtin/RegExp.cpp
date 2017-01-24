@@ -24,8 +24,8 @@
 using namespace js;
 using namespace js::unicode;
 
-using mozilla::CheckedInt;
 using mozilla::ArrayLength;
+using mozilla::CheckedInt;
 using mozilla::Maybe;
 
 /*
@@ -187,8 +187,18 @@ enum RegExpSharedUse {
 
 /*
  * ES 2016 draft Mar 25, 2016 21.2.3.2.2.
- * Because this function only ever returns |obj| in the spec, provided by the
- * user, we omit it and just return the usual success/failure.
+ *
+ * Steps 14-15 set |obj|'s "lastIndex" property to zero.  Some of
+ * RegExpInitialize's callers have a fresh RegExp not yet exposed to script:
+ * in these cases zeroing "lastIndex" is infallible.  But others have a RegExp
+ * whose "lastIndex" property might have been made non-writable: here, zeroing
+ * "lastIndex" can fail.  We efficiently solve this problem by completely
+ * removing "lastIndex" zeroing from the provided function.
+ *
+ * CALLERS MUST HANDLE "lastIndex" ZEROING THEMSELVES!
+ *
+ * Because this function only ever returns a user-provided |obj| in the spec,
+ * we omit it and just return the usual success/failure.
  */
 static bool
 RegExpInitializeIgnoringLastIndex(JSContext* cx, Handle<RegExpObject*> obj,
@@ -347,6 +357,10 @@ regexp_compile_impl(JSContext* cx, const CallArgs& args)
             return false;
     }
 
+    // The final niggling bit of step 5.
+    //
+    // |regexp| is user-exposed, but if its "lastIndex" property hasn't been
+    // made non-writable, we can still use a fast path to zero it.
     if (regexp->lookupPure(cx->names().lastIndex)->writable()) {
         regexp->zeroLastIndex(cx);
     } else {
@@ -1516,84 +1530,64 @@ js::RegExpPrototypeOptimizable(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
     MOZ_ASSERT(args.length() == 1);
 
-    uint8_t result = false;
-    if (!RegExpPrototypeOptimizableRaw(cx, &args[0].toObject(), &result))
-        return false;
-
-    args.rval().setBoolean(result);
+    args.rval().setBoolean(RegExpPrototypeOptimizableRaw(cx, &args[0].toObject()));
     return true;
 }
 
 bool
-js::RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto, uint8_t* result)
+js::RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto)
 {
     JS::AutoCheckCannotGC nogc;
-    if (!proto->isNative()) {
-        *result = false;
-        return true;
-    }
+    AutoAssertNoPendingException aanpe(cx);
+    if (!proto->isNative())
+        return false;
 
     NativeObject* nproto = static_cast<NativeObject*>(proto);
 
     Shape* shape = cx->compartment()->regExps.getOptimizableRegExpPrototypeShape();
-    if (shape == nproto->lastProperty()) {
-        *result = true;
+    if (shape == nproto->lastProperty())
         return true;
-    }
 
     JSNative globalGetter;
     if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().global), &globalGetter))
         return false;
 
-    if (globalGetter != regexp_global) {
-        *result = false;
-        return true;
-    }
+    if (globalGetter != regexp_global)
+        return false;
 
     JSNative stickyGetter;
     if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().sticky), &stickyGetter))
         return false;
 
-    if (stickyGetter != regexp_sticky) {
-        *result = false;
-        return true;
-    }
+    if (stickyGetter != regexp_sticky)
+        return false;
 
     JSNative unicodeGetter;
     if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().unicode), &unicodeGetter))
         return false;
 
-    if (unicodeGetter != regexp_unicode) {
-        *result = false;
-        return true;
-    }
+    if (unicodeGetter != regexp_unicode)
+        return false;
 
     // Check if @@match, @@search, and exec are own data properties,
     // those values should be tested in selfhosted JS.
     bool has = false;
     if (!HasOwnDataPropertyPure(cx, proto, SYMBOL_TO_JSID(cx->wellKnownSymbols().match), &has))
         return false;
-    if (!has) {
-        *result = false;
-        return true;
-    }
+    if (!has)
+        return false;
 
     if (!HasOwnDataPropertyPure(cx, proto, SYMBOL_TO_JSID(cx->wellKnownSymbols().search), &has))
         return false;
-    if (!has) {
-        *result = false;
-        return true;
-    }
+    if (!has)
+        return false;
 
     if (!HasOwnDataPropertyPure(cx, proto, NameToId(cx->names().exec), &has))
         return false;
-    if (!has) {
-        *result = false;
-        return true;
-    }
+    if (!has)
+        return false;
 
     cx->compartment()->regExps.setOptimizableRegExpPrototypeShape(nproto->lastProperty());
-    *result = true;
     return true;
 }
 
@@ -1604,44 +1598,32 @@ js::RegExpInstanceOptimizable(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
     MOZ_ASSERT(args.length() == 2);
 
-    uint8_t result = false;
-    if (!RegExpInstanceOptimizableRaw(cx, &args[0].toObject(), &args[1].toObject(), &result))
-        return false;
-
-    args.rval().setBoolean(result);
+    args.rval().setBoolean(RegExpInstanceOptimizableRaw(cx, &args[0].toObject(),
+                                                        &args[1].toObject()));
     return true;
 }
 
 bool
-js::RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* obj, JSObject* proto, uint8_t* result)
+js::RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* obj, JSObject* proto)
 {
     JS::AutoCheckCannotGC nogc;
 
     RegExpObject* rx = &obj->as<RegExpObject>();
 
     Shape* shape = cx->compartment()->regExps.getOptimizableRegExpInstanceShape();
-    if (shape == rx->lastProperty()) {
-        *result = true;
+    if (shape == rx->lastProperty())
         return true;
-    }
 
-    if (!rx->hasStaticPrototype()) {
-        *result = false;
-        return true;
-    }
+    if (!rx->hasStaticPrototype())
+        return false;
 
-    if (rx->staticPrototype() != proto) {
-        *result = false;
-        return true;
-    }
+    if (rx->staticPrototype() != proto)
+        return false;
 
-    if (!RegExpObject::isInitialShape(rx)) {
-        *result = false;
-        return true;
-    }
+    if (!RegExpObject::isInitialShape(rx))
+        return false;
 
     cx->compartment()->regExps.setOptimizableRegExpInstanceShape(rx->lastProperty());
-    *result = true;
     return true;
 }
 
@@ -1677,16 +1659,16 @@ js::intrinsic_GetElemBaseForLambda(JSContext* cx, unsigned argc, Value* vp)
 
     /*
      * JSOP_GETALIASEDVAR tells us exactly where to find the base object 'b'.
-     * Rule out the (unlikely) possibility of a function with a call object
-     * since it would make our scope walk off by 1.
+     * Rule out the (unlikely) possibility of a function with environment
+     * objects since it would make our environment walk off.
      */
-    if (JSOp(*pc) != JSOP_GETALIASEDVAR || fun->needsCallObject())
+    if (JSOp(*pc) != JSOP_GETALIASEDVAR || fun->needsSomeEnvironmentObject())
         return true;
-    ScopeCoordinate sc(pc);
-    ScopeObject* scope = &fun->environment()->as<ScopeObject>();
-    for (unsigned i = 0; i < sc.hops(); ++i)
-        scope = &scope->enclosingScope().as<ScopeObject>();
-    Value b = scope->aliasedVar(sc);
+    EnvironmentCoordinate ec(pc);
+    EnvironmentObject* env = &fun->environment()->as<EnvironmentObject>();
+    for (unsigned i = 0; i < ec.hops(); ++i)
+        env = &env->enclosingEnvironment().as<EnvironmentObject>();
+    Value b = env->aliasedBinding(ec);
     pc += JSOP_GETALIASEDVAR_LENGTH;
 
     /* Look for 'a' to be the lambda's first argument. */

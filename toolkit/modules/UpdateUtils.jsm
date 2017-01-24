@@ -140,7 +140,7 @@ XPCOMUtils.defineLazyGetter(UpdateUtils, "Locale", function() {
     try {
       let inputStream = channel.open2();
       locale = NetUtil.readInputStreamToString(inputStream, inputStream.available());
-    } catch(e) {}
+    } catch (e) {}
     if (locale)
       return locale.trim();
   }
@@ -184,6 +184,14 @@ XPCOMUtils.defineLazyGetter(this, "gSystemCapabilities", function aus_gSC() {
     }
 
     lib.close();
+    return instructionSet;
+  }
+
+  if (AppConstants == "linux") {
+    let instructionSet = "unknown";
+    if (navigator.cpuHasSSE2) {
+      instructionSet = "SSE2";
+    }
     return instructionSet;
   }
 
@@ -352,7 +360,7 @@ XPCOMUtils.defineLazyGetter(UpdateUtils, "OSVersion", function() {
             let winVer = OSVERSIONINFOEXW();
             winVer.dwOSVersionInfoSize = OSVERSIONINFOEXW.size;
 
-            if(0 !== GetVersionEx(winVer.address())) {
+            if (0 !== GetVersionEx(winVer.address())) {
               osVersion += "." + winVer.wServicePackMajor +
                            "." + winVer.wServicePackMinor;
             } else {

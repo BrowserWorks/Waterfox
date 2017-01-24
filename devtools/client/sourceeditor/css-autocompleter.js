@@ -4,8 +4,9 @@
 
 "use strict";
 
-const { Cc, Ci } = require("chrome");
-const {cssTokenizer, cssTokenizerWithLineColumn} = require("devtools/shared/css-parsing-utils");
+/* eslint-disable complexity */
+const {cssTokenizer, cssTokenizerWithLineColumn} = require("devtools/shared/css/parsing-utils");
+const {getClientCssProperties} = require("devtools/shared/fronts/css-properties");
 
 /**
  * Here is what this file (+ css-parsing-utils.js) do.
@@ -52,6 +53,7 @@ const {cssTokenizer, cssTokenizerWithLineColumn} = require("devtools/shared/css-
 
 // Autocompletion types.
 
+/* eslint-disable no-inline-comments */
 const CSS_STATES = {
   "null": "null",
   property: "property",    // foo { bar|: … }
@@ -71,8 +73,7 @@ const SELECTOR_STATES = {
   attribute: "attribute",  // foo[b|
   value: "value",          // foo[bar=b|
 };
-
-const { properties, propertyNames } = getCSSKeywords();
+/* eslint-enable no-inline-comments */
 
 /**
  * Constructor for the autocompletion object.
@@ -81,10 +82,15 @@ const { properties, propertyNames } = getCSSKeywords();
  *        - walker {Object} The object used for query selecting from the current
  *                 target's DOM.
  *        - maxEntries {Number} Maximum selectors suggestions to display.
+ *        - cssProperties {Object} The database of CSS properties.
  */
 function CSSCompleter(options = {}) {
   this.walker = options.walker;
   this.maxEntries = options.maxEntries || 15;
+  // If no css properties database is passed in, default to the client list.
+  this.cssProperties = options.cssProperties || getClientCssProperties();
+
+  this.propertyNames = this.cssProperties.getNames().sort();
 
   // Array containing the [line, ch, scopeStack] for the locations where the
   // CSS state is "null"
@@ -838,18 +844,18 @@ CSSCompleter.prototype = {
       return Promise.resolve(finalList);
     }
 
-    let length = propertyNames.length;
+    let length = this.propertyNames.length;
     let i = 0, count = 0;
     for (; i < length && count < this.maxEntries; i++) {
-      if (propertyNames[i].startsWith(startProp)) {
+      if (this.propertyNames[i].startsWith(startProp)) {
         count++;
-        let propName = propertyNames[i];
+        let propName = this.propertyNames[i];
         finalList.push({
           preLabel: startProp,
           label: propName,
           text: propName + ": "
         });
-      } else if (propertyNames[i] > startProp) {
+      } else if (this.propertyNames[i] > startProp) {
         // We have crossed all possible matches alphabetically.
         break;
       }
@@ -866,7 +872,7 @@ CSSCompleter.prototype = {
    */
   completeValues: function (propName, startValue) {
     let finalList = [];
-    let list = ["!important;", ...(properties[propName] || [])];
+    let list = ["!important;", ...this.cssProperties.getValues(propName)];
     // If there is no character being completed, we are showing an initial list
     // of possible values. Skipping '!important' in this case.
     if (!startValue) {
@@ -979,11 +985,11 @@ CSSCompleter.prototype = {
    */
   getInfoAt: function (source, caret) {
     // Limits the input source till the {line, ch} caret position
-    function limit(source, {line, ch}) {
+    function limit(sourceArg, {line, ch}) {
       line++;
-      let list = source.split("\n");
+      let list = sourceArg.split("\n");
       if (list.length < line) {
-        return source;
+        return sourceArg;
       }
       if (line == 1) {
         return list[0].slice(0, ch);
@@ -1036,11 +1042,11 @@ CSSCompleter.prototype = {
             continue;
           }
 
-          let state = this.resolveState(limitedSource, {
+          let forwState = this.resolveState(limitedSource, {
             line: line,
             ch: token.endOffset + ech
           });
-          if (check(state)) {
+          if (check(forwState)) {
             if (prevToken && prevToken.tokenType == "whitespace") {
               token = prevToken;
             }
@@ -1097,11 +1103,11 @@ CSSCompleter.prototype = {
             continue;
           }
 
-          let state = this.resolveState(limitedSource, {
+          let backState = this.resolveState(limitedSource, {
             line: line,
             ch: token.startOffset
           });
-          if (check(state)) {
+          if (check(backState)) {
             if (tokens[i + 1] && tokens[i + 1].tokenType == "whitespace") {
               token = tokens[i + 1];
             }
@@ -1126,16 +1132,16 @@ CSSCompleter.prototype = {
       // either when the state changes or the selector becomes empty and a
       // single selector can span multiple lines.
       // Backward loop to determine the beginning location of the selector.
-      let start = traverseBackwards(state => {
-        return (state != CSS_STATES.selector ||
+      let start = traverseBackwards(backState => {
+        return (backState != CSS_STATES.selector ||
                (this.selector == "" && this.selectorBeforeNot == null));
       });
 
       line = caret.line;
       limitedSource = limit(source, caret);
       // Forward loop to determine the ending location of the selector.
-      let end = traverseForward(state => {
-        return (state != CSS_STATES.selector ||
+      let end = traverseForward(forwState => {
+        return (forwState != CSS_STATES.selector ||
                (this.selector == "" && this.selectorBeforeNot == null));
       });
 
@@ -1180,11 +1186,11 @@ CSSCompleter.prototype = {
     } else if (state == CSS_STATES.value) {
       // CSS value can be multiline too, so we go forward and backwards to
       // determine the bounds of the value at caret
-      let start = traverseBackwards(state => state != CSS_STATES.value, true);
+      let start = traverseBackwards(backState => backState != CSS_STATES.value, true);
 
       line = caret.line;
       limitedSource = limit(source, caret);
-      let end = traverseForward(state => state != CSS_STATES.value);
+      let end = traverseForward(forwState => forwState != CSS_STATES.value);
 
       let value = source.split("\n").slice(start.line, end.line + 1);
       value[value.length - 1] = value[value.length - 1].substring(0, end.ch);
@@ -1204,30 +1210,5 @@ CSSCompleter.prototype = {
     return null;
   }
 };
-
-/**
- * Returns a list of all property names and a map of property name vs possible
- * CSS values provided by the Gecko engine.
- *
- * @return {Object} An object with following properties:
- *         - propertyNames {Array} Array of string containing all the possible
- *                         CSS property names.
- *         - properties {Object|Map} A map where key is the property name and
- *                      value is an array of string containing all the possible
- *                      CSS values the property can have.
- */
-function getCSSKeywords() {
-  let domUtils = Cc["@mozilla.org/inspector/dom-utils;1"]
-                   .getService(Ci.inIDOMUtils);
-  let props = {};
-  let propNames = domUtils.getCSSPropertyNames(domUtils.INCLUDE_ALIASES);
-  propNames.forEach(prop => {
-    props[prop] = domUtils.getCSSValuesForProperty(prop).sort();
-  });
-  return {
-    properties: props,
-    propertyNames: propNames.sort()
-  };
-}
 
 module.exports = CSSCompleter;

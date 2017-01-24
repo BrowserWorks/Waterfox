@@ -6,16 +6,21 @@
 include "mozilla/GfxMessageUtils.h";
 include "ipc/nsGUIEventIPC.h";
 
+include protocol PCompositorBridge;
+
 using CSSRect from "Units.h";
 using LayoutDeviceIntPoint from "Units.h";
+using mozilla::LayoutDevicePoint from "Units.h";
 using ScreenPoint from "Units.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
 using mozilla::layers::MaybeZoomConstraints from "FrameMetrics.h";
 using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 using mozilla::layers::AsyncDragMetrics from "mozilla/layers/AsyncDragMetrics.h";
+using mozilla::layers::GeckoContentController::TapType from "mozilla/layers/GeckoContentController.h";
 
 using nsEventStatus from "mozilla/EventForwards.h";
 using EventMessage from "mozilla/EventForwards.h";
+using mozilla::Modifiers from "mozilla/EventForwards.h";
 using class mozilla::WidgetInputEvent from "mozilla/BasicEvents.h";
 using class mozilla::WidgetMouseEventBase from "mozilla/MouseEvents.h";
 using mozilla::WidgetMouseEvent::Reason from "mozilla/MouseEvents.h";
@@ -32,9 +37,48 @@ using class mozilla::ScrollWheelInput from "InputData.h";
 namespace mozilla {
 namespace layers {
 
+/**
+ * PAPZCTreeManager is a protocol for remoting an IAPZCTreeManager. PAPZCTreeManager
+ * lives on the PCompositorBridge protocol which either connects to the compositor
+ * thread in the main process, or to the compositor thread in the gpu processs.
+ *
+ * PAPZCTreeManagerParent lives in the compositor thread, while PAPZCTreeManagerChild
+ * lives in the main thread of the main or the content process. APZCTreeManagerParent
+ * and APZCTreeManagerChild implement this protocol.
+ */
 sync protocol PAPZCTreeManager
 {
+manager PCompositorBridge;
+
 parent:
+
+  // These messages correspond to the methods
+  // on the IAPZCTreeManager interface
+
+  async ZoomToRect(ScrollableLayerGuid aGuid, CSSRect aRect, uint32_t Flags);
+
+  async ContentReceivedInputBlock(uint64_t aInputBlockId, bool PreventDefault);
+
+  async SetTargetAPZC(uint64_t aInputBlockId, ScrollableLayerGuid[] Targets);
+
+  async UpdateZoomConstraints(ScrollableLayerGuid aGuid, MaybeZoomConstraints aConstraints);
+
+  async CancelAnimation(ScrollableLayerGuid aGuid);
+
+  async AdjustScrollForSurfaceShift(ScreenPoint aShift);
+
+  async SetDPI(float aDpiValue);
+
+  async SetAllowedTouchBehavior(uint64_t aInputBlockId, TouchBehaviorFlags[] aValues);
+
+  async StartScrollbarDrag(ScrollableLayerGuid aGuid, AsyncDragMetrics aDragMetrics);
+
+  async SetLongTapEnabled(bool aTapGestureEnabled);
+
+  async ProcessTouchVelocity(uint32_t aTimestampMs, float aSpeedY);
+
+  // The following messages are used to
+  // implement the ReceiveInputEvent methods
 
   sync ReceiveMultiTouchInputEvent(MultiTouchInput aEvent)
     returns (nsEventStatus       aOutStatus,
@@ -72,28 +116,6 @@ parent:
              ScrollableLayerGuid aOutTargetGuid,
              uint64_t            aOutInputBlockId);
 
-  async ZoomToRect(ScrollableLayerGuid aGuid, CSSRect aRect, uint32_t Flags);
-
-  async ContentReceivedInputBlock(uint64_t aInputBlockId, bool PreventDefault);
-
-  async SetTargetAPZC(uint64_t aInputBlockId, ScrollableLayerGuid[] Targets);
-
-  async UpdateZoomConstraints(ScrollableLayerGuid aGuid, MaybeZoomConstraints aConstraints);
-
-  async CancelAnimation(ScrollableLayerGuid aGuid);
-
-  async AdjustScrollForSurfaceShift(ScreenPoint aShift);
-
-  async SetDPI(float aDpiValue);
-
-  async SetAllowedTouchBehavior(uint64_t aInputBlockId, TouchBehaviorFlags[] aValues);
-
-  async StartScrollbarDrag(ScrollableLayerGuid aGuid, AsyncDragMetrics aDragMetrics);
-
-  async SetLongTapEnabled(bool aTapGestureEnabled);
-
-  async ProcessTouchVelocity(uint32_t aTimestampMs, float aSpeedY);
-
   async UpdateWheelTransaction(LayoutDeviceIntPoint aRefPoint, EventMessage aEventMessage);
 
   sync TransformEventRefPoint(LayoutDeviceIntPoint aRefPoint)
@@ -101,6 +123,11 @@ parent:
              ScrollableLayerGuid    aOutTargetGuid);
 
   async __delete__();
+
+child:
+
+  async HandleTap(TapType aType, LayoutDevicePoint point, Modifiers aModifiers,
+                  ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
 };
 
 } // namespace gfx

@@ -2,9 +2,19 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+requestLongerTimeout(2);
+
+function add_tasks(task) {
+  add_task(task.bind(null, {embedded: false}));
+
+  add_task(task.bind(null, {embedded: true}));
+}
+
 function* loadExtension(options) {
   let extension = ExtensionTestUtils.loadExtension({
-    useAddonManager: true,
+    useAddonManager: "temporary",
+
+    embedded: options.embedded,
 
     manifest: Object.assign({
       "permissions": ["tabs"],
@@ -37,11 +47,14 @@ function* loadExtension(options) {
   return extension;
 }
 
-add_task(function* test_inline_options() {
+add_tasks(function* test_inline_options(extraOptions) {
+  info(`Test options opened inline (${JSON.stringify(extraOptions)})`);
+
   let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com/");
 
-  let extension = yield loadExtension({
+  let extension = yield loadExtension(Object.assign({}, extraOptions, {
     manifest: {
+      applications: {gecko: {id: "inline_options@tests.mozilla.org"}},
       "options_ui": {
         "page": "options.html",
       },
@@ -122,7 +135,7 @@ add_task(function* test_inline_options() {
         browser.test.notifyFail("options-ui");
       });
     },
-  });
+  }));
 
   yield extension.awaitFinish("options-ui");
   yield extension.unload();
@@ -130,11 +143,14 @@ add_task(function* test_inline_options() {
   yield BrowserTestUtils.removeTab(tab);
 });
 
-add_task(function* test_tab_options() {
+add_tasks(function* test_tab_options(extraOptions) {
+  info(`Test options opened in a tab (${JSON.stringify(extraOptions)})`);
+
   let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com/");
 
-  let extension = yield loadExtension({
+  let extension = yield loadExtension(Object.assign({}, extraOptions, {
     manifest: {
+      applications: {gecko: {id: "tab_options@tests.mozilla.org"}},
       "options_ui": {
         "page": "options.html",
         "open_in_tab": true,
@@ -219,7 +235,7 @@ add_task(function* test_tab_options() {
         browser.test.notifyFail("options-ui-tab");
       });
     },
-  });
+  }));
 
   yield extension.awaitFinish("options-ui-tab");
   yield extension.unload();
@@ -227,9 +243,13 @@ add_task(function* test_tab_options() {
   yield BrowserTestUtils.removeTab(tab);
 });
 
-add_task(function* test_options_no_manifest() {
-  let extension = yield loadExtension({
-    manifest: {},
+add_tasks(function* test_options_no_manifest(extraOptions) {
+  info(`Test with no manifest key (${JSON.stringify(extraOptions)})`);
+
+  let extension = yield loadExtension(Object.assign({}, extraOptions, {
+    manifest: {
+      applications: {gecko: {id: "no_options@tests.mozilla.org"}},
+    },
 
     background: function() {
       browser.test.log("Try to open options page when not specified in the manifest.");
@@ -252,7 +272,7 @@ add_task(function* test_options_no_manifest() {
         browser.test.notifyFail("options-no-manifest");
       });
     },
-  });
+  }));
 
   yield extension.awaitFinish("options-no-manifest");
   yield extension.unload();

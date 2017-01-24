@@ -21,10 +21,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gScriptSecurityManager",
                                    "@mozilla.org/scriptsecuritymanager;1",
                                    "nsIScriptSecurityManager");
 XPCOMUtils.defineLazyGetter(this, "WebConsoleUtils", () => {
-  return this.devtools.require("devtools/shared/webconsole/utils").Utils;
-});
-XPCOMUtils.defineLazyGetter(this, "l10n", () => {
-  return new this.WebConsoleUtils.L10n(STRINGS_URI);
+  return this.devtools.require("devtools/server/actors/utils/webconsole-utils").Utils;
 });
 
 this.InsecurePasswordUtils = {
@@ -34,7 +31,8 @@ this.InsecurePasswordUtils = {
     let category = "Insecure Password Field";
     // All web console messages are warnings for now.
     let flag = Ci.nsIScriptError.warningFlag;
-    let message = l10n.getStr(messageTag);
+    let bundle = Services.strings.createBundle(STRINGS_URI);
+    let message = bundle.GetStringFromName(messageTag);
     let consoleMsg = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError);
     consoleMsg.initWithWindowID(message, domDoc.location.href, 0, 0, 0, flag, category, windowId);
 
@@ -103,7 +101,6 @@ this.InsecurePasswordUtils = {
       let uri = Services.io.newURI(aForm.rootElement.action || aForm.rootElement.baseURI,
                                    null, null);
       let principal = gScriptSecurityManager.getCodebasePrincipal(uri);
-      let host = uri.host;
 
       if (uri.schemeIs("http")) {
         isFormSubmitHTTP = true;
@@ -129,14 +126,12 @@ this.InsecurePasswordUtils = {
       } else {
         passwordSafety = 2;
       }
+    } else if (isFormSubmitSecure) {
+      passwordSafety = 3;
+    } else if (isFormSubmitHTTP) {
+      passwordSafety = 4;
     } else {
-      if (isFormSubmitSecure) {
-        passwordSafety = 3;
-      } else if (isFormSubmitHTTP) {
-        passwordSafety = 4;
-      } else {
-        passwordSafety = 5;
-      }
+      passwordSafety = 5;
     }
 
     Services.telemetry.getHistogramById("PWMGR_LOGIN_PAGE_SAFETY").add(passwordSafety);

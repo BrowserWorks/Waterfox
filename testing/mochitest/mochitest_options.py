@@ -86,8 +86,8 @@ class ArgumentContainer():
 class MochitestArguments(ArgumentContainer):
     """General mochitest arguments."""
 
+    FLAVORS = ('a11y', 'browser', 'chrome', 'jetpack-addon', 'jetpack-package', 'plain')
     LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "FATAL")
-    LEVEL_STRING = ", ".join(LOG_LEVELS)
 
     args = [
         [["test_paths"],
@@ -96,6 +96,12 @@ class MochitestArguments(ArgumentContainer):
           "default": [],
           "help": "Test to run. Can be a single test file or a directory of tests "
                   "(to run recursively). If omitted, the entire suite is run.",
+          }],
+        [["-f", "--flavor"],
+         {"default": "plain",
+          "choices": FLAVORS,
+          "help": "Mochitest flavor to run, one of {}. Defaults to 'plain'.".format(FLAVORS),
+          "suppress": build_obj is not None,
           }],
         [["--keep-open"],
          {"nargs": "?",
@@ -182,13 +188,8 @@ class MochitestArguments(ArgumentContainer):
          {"dest": "consoleLevel",
           "choices": LOG_LEVELS,
           "default": "INFO",
-          "help": "One of %s to determine the level of console logging." % LEVEL_STRING,
-          "suppress": True,
-          }],
-        [["--chrome"],
-         {"action": "store_true",
-          "default": False,
-          "help": "Run chrome mochitests.",
+          "help": "One of {} to determine the level of console logging.".format(
+                  ', '.join(LOG_LEVELS)),
           "suppress": True,
           }],
         [["--bisect-chunk"],
@@ -207,37 +208,10 @@ class MochitestArguments(ArgumentContainer):
           "default": "",
           "help": "Stop running the test sequence at this test.",
           }],
-        [["--browser-chrome"],
-         {"action": "store_true",
-          "dest": "browserChrome",
-          "default": False,
-          "help": "run browser chrome Mochitests",
-          "suppress": True,
-          }],
         [["--subsuite"],
          {"default": None,
           "help": "Subsuite of tests to run. Unlike tags, subsuites also remove tests from "
                   "the default set. Only one can be specified at once.",
-          }],
-        [["--jetpack-package"],
-         {"action": "store_true",
-          "dest": "jetpackPackage",
-          "help": "Run jetpack package tests.",
-          "default": False,
-          "suppress": True,
-          }],
-        [["--jetpack-addon"],
-         {"action": "store_true",
-          "dest": "jetpackAddon",
-          "help": "Run jetpack addon tests.",
-          "default": False,
-          "suppress": True,
-          }],
-        [["--a11y"],
-         {"action": "store_true",
-          "help": "Run accessibility Mochitests.",
-          "default": False,
-          "suppress": True,
           }],
         [["--setenv"],
          {"action": "append",
@@ -803,11 +777,6 @@ class MochitestArguments(ArgumentContainer):
             "geckomediaplugin": 20000,
         }
 
-        # Bug 1293324 - OSX 10.10 sometimes leaks a little more
-        # graphics layers stuff in the content process.
-        if mozinfo.isMac:
-            options.leakThresholds["tab"] = 12000
-
         # XXX We can't normalize test_paths in the non build_obj case here,
         # because testRoot depends on the flavor, which is determined by the
         # mach command and therefore not finalized yet. Conversely, test paths
@@ -1020,6 +989,12 @@ class AndroidArguments(ArgumentContainer):
           "help": "The transport to use for communication with the device [default: adb].",
           "suppress": True,
           }],
+        [["--adbpath"],
+         {"dest": "adbPath",
+          "default": None,
+          "help": "Path to adb binary.",
+          "suppress": True,
+          }],
         [["--devicePort"],
          {"dest": "devicePort",
           "type": int,
@@ -1091,29 +1066,22 @@ class AndroidArguments(ArgumentContainer):
         if build_obj:
             options.log_mach = '-'
 
+        device_args = {'deviceRoot': options.remoteTestRoot}
         if options.dm_trans == "adb":
+            device_args['adbPath'] = options.adbPath
             if options.deviceIP:
-                options.dm = DroidADB(
-                    options.deviceIP,
-                    options.devicePort,
-                    deviceRoot=options.remoteTestRoot)
+                device_args['host'] = options.deviceIP
+                device_args['port'] = options.devicePort
             elif options.deviceSerial:
-                options.dm = DroidADB(
-                    None,
-                    None,
-                    deviceSerial=options.deviceSerial,
-                    deviceRoot=options.remoteTestRoot)
-            else:
-                options.dm = DroidADB(deviceRoot=options.remoteTestRoot)
+                device_args['deviceSerial'] = options.deviceSerial
+            options.dm = DroidADB(**device_args)
         elif options.dm_trans == 'sut':
             if options.deviceIP is None:
                 parser.error(
                     "If --dm_trans = sut, you must provide a device IP")
-
-            options.dm = DroidSUT(
-                options.deviceIP,
-                options.devicePort,
-                deviceRoot=options.remoteTestRoot)
+            device_args['host'] = options.deviceIP
+            device_args['port'] = options.devicePort
+            options.dm = DroidSUT(**device_args)
 
         if not options.remoteTestRoot:
             options.remoteTestRoot = options.dm.deviceRoot

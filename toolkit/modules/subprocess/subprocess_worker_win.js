@@ -336,7 +336,7 @@ class Process extends BaseProcess {
    */
   kill() {
     this.killed = true;
-    libc.TerminateProcess(this.handle, TERMINATE_EXIT_CODE);
+    libc.TerminateJobObject(this.jobHandle, TERMINATE_EXIT_CODE);
   }
 
   /**
@@ -359,11 +359,10 @@ class Process extends BaseProcess {
         let handles = win32.createPipe(secAttr, win32.FILE_FLAG_OVERLAPPED);
         our_pipes.push(new InputPipe(this, handles[0]));
         return handles[1];
-      } else {
-        let handles = win32.createPipe(secAttr, 0, win32.FILE_FLAG_OVERLAPPED);
-        our_pipes.push(new OutputPipe(this, handles[1]));
-        return handles[0];
       }
+      let handles = win32.createPipe(secAttr, 0, win32.FILE_FLAG_OVERLAPPED);
+      our_pipes.push(new OutputPipe(this, handles[1]));
+      return handles[0];
     };
 
     their_pipes[0] = pipe(false);
@@ -441,14 +440,24 @@ class Process extends BaseProcess {
   spawn(options) {
     let {command, arguments: args} = options;
 
-    args = args.map(arg => this.quoteString(arg));
+    if (/\\cmd\.exe$/i.test(command) && args.length == 3 && /^(\/S)?\/C$/i.test(args[1])) {
+      // cmd.exe is insane and requires special treatment.
+      args = [this.quoteString(args[0]), "/S/C", `"${args[2]}"`];
+    } else {
+      args = args.map(arg => this.quoteString(arg));
+    }
 
     let envp = this.stringList(options.environment);
 
     let handles = this.initPipes(options);
 
     let processFlags = win32.CREATE_NO_WINDOW
+                     | win32.CREATE_SUSPENDED
                      | win32.CREATE_UNICODE_ENVIRONMENT;
+
+    if (io.breakAwayFromJob) {
+      processFlags |= win32.CREATE_BREAKAWAY_FROM_JOB;
+    }
 
     let startupInfoEx = new win32.STARTUPINFOEXW();
     let startupInfo = startupInfoEx.StartupInfo;
@@ -475,6 +484,7 @@ class Process extends BaseProcess {
 
     let procInfo = new win32.PROCESS_INFORMATION();
 
+    let errorMessage = "Failed to create process";
     let ok = libc.CreateProcessW(
       command, args.join(" "),
       null, /* Security attributes */
@@ -492,17 +502,35 @@ class Process extends BaseProcess {
       libc.DeleteProcThreadAttributeList(threadAttrs);
     }
 
+    if (ok) {
+      this.jobHandle = win32.Handle(libc.CreateJobObjectW(null, null));
+
+      let info = win32.JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
+      info.BasicLimitInformation.LimitFlags = win32.JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+
+      ok = libc.SetInformationJobObject(this.jobHandle, win32.JobObjectExtendedLimitInformation,
+                                        ctypes.cast(info.address(), ctypes.voidptr_t),
+                                        info.constructor.size);
+      errorMessage = `Failed to set job limits: 0x${(ctypes.winLastError || 0).toString(16)}`;
+    }
+
+    if (ok) {
+      ok = libc.AssignProcessToJobObject(this.jobHandle, procInfo.hProcess);
+      errorMessage = `Failed to attach process to job object: 0x${(ctypes.winLastError || 0).toString(16)}`;
+    }
+
     if (!ok) {
       for (let pipe of this.pipes) {
         pipe.close();
       }
-      throw new Error("Failed to create process");
+      throw new Error(errorMessage);
     }
-
-    libc.CloseHandle(procInfo.hThread);
 
     this.handle = win32.Handle(procInfo.hProcess);
     this.pid = procInfo.dwProcessId;
+
+    libc.ResumeThread(procInfo.hThread);
+    libc.CloseHandle(procInfo.hThread);
   }
 
   /**
@@ -542,6 +570,10 @@ class Process extends BaseProcess {
       this.handle.dispose();
       this.handle = null;
 
+      libc.TerminateJobObject(this.jobHandle, TERMINATE_EXIT_CODE);
+      this.jobHandle.dispose();
+      this.jobHandle = null;
+
       for (let pipe of this.pipes) {
         pipe.maybeClose();
       }
@@ -571,6 +603,8 @@ io = {
     this.signal = new Signal(signalEvent);
     this.updatePollEvents();
 
+    this.breakAwayFromJob = details.breakAwayFromJob;
+
     setTimeout(this.loop.bind(this), 0);
   },
 
@@ -581,6 +615,7 @@ io = {
       this.signal.cleanup();
       this.signal = null;
 
+      self.postMessage({msg: "close"});
       self.close();
     }
   },

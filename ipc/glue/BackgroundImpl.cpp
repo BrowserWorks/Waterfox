@@ -20,7 +20,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/File.h"
@@ -274,11 +274,6 @@ private:
   }
 
   // These methods are only called by IPDL.
-  virtual IToplevelProtocol*
-  CloneToplevel(const InfallibleTArray<ProtocolFdMapping>& aFds,
-                ProcessHandle aPeerProcess,
-                ProtocolCloneContext* aCtx) override;
-
   virtual void
   ActorDestroy(ActorDestroyReason aWhy) override;
 };
@@ -1291,41 +1286,6 @@ ParentImpl::MainThreadActorDestroy()
   Release();
 }
 
-IToplevelProtocol*
-ParentImpl::CloneToplevel(const InfallibleTArray<ProtocolFdMapping>& aFds,
-                          ProcessHandle aPeerProcess,
-                          ProtocolCloneContext* aCtx)
-{
-  AssertIsInMainProcess();
-  AssertIsOnMainThread();
-  MOZ_ASSERT(aCtx->GetContentParent());
-
-  const ProtocolId protocolId = GetProtocolId();
-
-  for (unsigned int i = 0; i < aFds.Length(); i++) {
-    if (static_cast<ProtocolId>(aFds[i].protocolId()) != protocolId) {
-      continue;
-    }
-
-    UniquePtr<Transport> transport = OpenDescriptor(aFds[i].fd(), Transport::MODE_SERVER);
-    if (!transport) {
-      NS_WARNING("Failed to open transport!");
-      break;
-    }
-
-    PBackgroundParent* clonedActor =
-      Alloc(aCtx->GetContentParent(), transport.get(), base::GetProcId(aPeerProcess));
-    MOZ_ASSERT(clonedActor);
-
-    clonedActor->CloneManagees(this, aCtx);
-    clonedActor->SetTransport(Move(transport));
-
-    return clonedActor;
-  }
-
-  return nullptr;
-}
-
 void
 ParentImpl::ActorDestroy(ActorDestroyReason aWhy)
 {
@@ -1761,8 +1721,10 @@ ChildImpl::SynchronouslyCreateForCurrentThread()
 void
 ChildImpl::CloseForCurrentThread()
 {
-  MOZ_ASSERT(sThreadLocalIndex != kBadThreadLocalIndex,
-             "BackgroundChild::Startup() was never called!");
+  if (sThreadLocalIndex == kBadThreadLocalIndex) {
+    return;
+  }
+
   auto threadLocalInfo =
     static_cast<ThreadLocalInfo*>(PR_GetThreadPrivate(sThreadLocalIndex));
 
@@ -2070,6 +2032,13 @@ ChildImpl::OpenProtocolOnMainThread(nsIEventTarget* aEventTarget)
 
   ContentChild* content = ContentChild::GetSingleton();
   MOZ_ASSERT(content);
+
+  if (content->IsShuttingDown()) {
+    // The transport for ContentChild is shut down and can't be used to open
+    // PBackground.
+    DispatchFailureCallback(aEventTarget);
+    return false;
+  }
 
   if (!PBackground::Open(content)) {
     MOZ_CRASH("Failed to create top level actor!");

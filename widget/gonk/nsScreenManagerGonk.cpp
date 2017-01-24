@@ -64,7 +64,7 @@ public:
         : mIsOn(on)
     {}
 
-    NS_IMETHOD Run() {
+    NS_IMETHOD Run() override {
         // Notify observers that the screen state has just changed.
         nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
         if (observerService) {
@@ -664,7 +664,8 @@ nsScreenGonk::EnableMirroring()
     nsWidgetInitData initData;
     initData.mScreenId = mId;
     RefPtr<nsWindow> window = new nsWindow();
-    window->Create(nullptr, nullptr, mNaturalBounds, &initData);
+    nsresult rv = window->Create(nullptr, nullptr, mNaturalBounds, &initData);
+    NS_ENSURE_SUCCESS(rv, false);
     MOZ_ASSERT(static_cast<nsWindow*>(window)->GetScreen() == this);
 
     // Update mMirroringWidget on compositor thread
@@ -981,7 +982,7 @@ public:
     {
     }
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
         nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
         if (os) {

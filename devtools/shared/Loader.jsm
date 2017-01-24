@@ -11,6 +11,7 @@
 var { utils: Cu } = Components;
 var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 var { Loader, descriptor, resolveURI } = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
+var { requireRawId } = Cu.import("resource://devtools/shared/loader-plugin-raw.jsm", {});
 
 this.EXPORTED_SYMBOLS = ["DevToolsLoader", "devtools", "BuiltinProvider",
                          "require", "loader"];
@@ -31,6 +32,13 @@ BuiltinProvider.prototype = {
     const paths = {
       // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
       "": "resource://gre/modules/commonjs/",
+      // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+      // Modules here are intended to have one implementation for
+      // chrome, and a separate implementation for content.  Here we
+      // map the directory to the chrome subdirectory, but the content
+      // loader will map to the content subdirectory.  See the
+      // README.md in devtools/shared/platform.
+      "devtools/shared/platform": "resource://devtools/shared/platform/chrome",
       // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
       "devtools": "resource://devtools",
       // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
@@ -59,6 +67,12 @@ BuiltinProvider.prototype = {
       invisibleToDebugger: this.invisibleToDebugger,
       sharedGlobal: true,
       sharedGlobalBlocklist,
+      requireHook: (id, require) => {
+        if (id.startsWith("raw!")) {
+          return requireRawId(id, require);
+        }
+        return require(id);
+      },
     });
   },
 
@@ -118,6 +132,14 @@ DevToolsLoader.prototype = {
       this._loadProvider();
     }
     return this.require.apply(this, arguments);
+  },
+
+  /**
+   * Return true if |id| refers to something requiring help from a
+   * loader plugin.
+   */
+  isLoaderPluginId: function (id) {
+    return id.startsWith("raw!");
   },
 
   /**

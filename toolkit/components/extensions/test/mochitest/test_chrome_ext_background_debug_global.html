@@ -29,16 +29,18 @@ const {
  * debugging is actually working correctly end-to-end.
  */
 
-function backgroundScript() {
+function background() {
   window.testThing = "test!";
   browser.test.notifyPass("background script ran");
 }
 
+const ID = "debug@tests.mozilla.org";
 let extensionData = {
-  useAddonManager: true,
-  background: "(" + backgroundScript.toString() + ")()",
-  manifest: {},
-  files: {},
+  useAddonManager: "temporary",
+  background,
+  manifest: {
+    applications: {gecko: {id: ID}},
+  },
 };
 
 add_task(function* () {
@@ -50,7 +52,7 @@ add_task(function* () {
   yield new Promise(function(resolve) {
     window.BrowserToolboxProcess.emit("connectionchange", "opened", {
       setAddonOptions(id, options) {
-        if (id === extension.id) {
+        if (id === ID) {
           let context = Cu.waiveXrays(options.global);
           ok(context.chrome, "global context has a chrome object");
           ok(context.browser, "global context has a browser object");
@@ -62,7 +64,7 @@ add_task(function* () {
   });
 
   let addon = yield new Promise((resolve, reject) => {
-    AddonManager.getAddonByID(extension.id, addon => addon ? resolve(addon) : reject());
+    AddonManager.getAddonByID(ID, addon => addon ? resolve(addon) : reject());
   });
 
   ok(addon, `Got the addon wrapper for ${addon.id}`);

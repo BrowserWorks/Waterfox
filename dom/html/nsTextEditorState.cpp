@@ -91,7 +91,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     if (!mTextEditorState) {
       return NS_OK;
     }
@@ -103,11 +103,13 @@ public:
       // SetSelectionRange leads to Selection::AddRange which flushes Layout -
       // need to block script to avoid nested PrepareEditor calls (bug 642800).
       nsAutoScriptBlocker scriptBlocker;
-       nsTextEditorState::SelectionProperties& properties =
-         mTextEditorState->GetSelectionProperties();
-       mFrame->SetSelectionRange(properties.mStart,
-                                 properties.mEnd,
-                                 properties.mDirection);
+      nsTextEditorState::SelectionProperties& properties =
+        mTextEditorState->GetSelectionProperties();
+      if (properties.IsDirty()) {
+        mFrame->SetSelectionRange(properties.GetStart(),
+                                  properties.GetEnd(),
+                                  properties.GetDirection());
+      }
       if (!mTextEditorState->mSelectionRestoreEagerInit) {
         mTextEditorState->HideSelectionIfBlurred();
       }
@@ -976,7 +978,8 @@ nsTextInputListener::EditAction()
   }
 
   if (!mSettingValue) {
-    mTxtCtrlElement->OnValueChanged(true);
+    mTxtCtrlElement->OnValueChanged(/* aNotify = */ true,
+                                    /* aWasInteractiveUserChange = */ true);
   }
 
   return NS_OK;
@@ -1112,7 +1115,7 @@ public:
     aState.mValueTransferInProgress = true;
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     NS_ENSURE_TRUE(mState, NS_ERROR_NULL_POINTER);
 
     // Transfer the saved value to the editor if we have one
@@ -1154,9 +1157,11 @@ nsTextEditorState::BindToFrame(nsTextControlFrame* aFrame)
 
   mBoundFrame = aFrame;
 
-  nsIContent *rootNode = GetRootNode();
+  nsresult rv = CreateRootNode();
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  nsresult rv = InitializeRootNode();
+  nsIContent *rootNode = GetRootNode();
+  rv = InitializeRootNode();
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsIPresShell *shell = mBoundFrame->PresContext()->GetPresShell();
@@ -1533,6 +1538,19 @@ nsTextEditorState::GetSelectionProperties()
   return mSelectionProperties;
 }
 
+void
+nsTextEditorState::SetSelectionProperties(nsTextEditorState::SelectionProperties& aProps)
+{
+  if (mBoundFrame) {
+    mBoundFrame->SetSelectionRange(aProps.GetStart(),
+                                   aProps.GetEnd(),
+                                   aProps.GetDirection());
+  } else {
+    mSelectionProperties = aProps;
+  }
+}
+
+
 HTMLInputElement*
 nsTextEditorState::GetParentNumberControl(nsFrame* aFrame) const
 {
@@ -1609,6 +1627,9 @@ nsTextEditorState::UnbindFromFrame(nsTextControlFrame* aFrame)
   // side effect for unbinding from a text control frame, we need to call
   // GetSelectionRange before calling DestroyEditor, and only if
   // mEditorInitialized indicates that we actually have an editor available.
+  int32_t start = 0, end = 0;
+  nsITextControlFrame::SelectionDirection direction =
+    nsITextControlFrame::eForward;
   if (mEditorInitialized) {
     HTMLInputElement* number = GetParentNumberControl(aFrame);
     if (number) {
@@ -1616,13 +1637,16 @@ nsTextEditorState::UnbindFromFrame(nsTextControlFrame* aFrame)
       // parent control, because this text editor state will be destroyed
       // together with the native anonymous text control.
       SelectionProperties props;
-      mBoundFrame->GetSelectionRange(&props.mStart, &props.mEnd,
-                                     &props.mDirection);
+      mBoundFrame->GetSelectionRange(&start, &end, &direction);
+      props.SetStart(start);
+      props.SetEnd(end);
+      props.SetDirection(direction);
       number->SetSelectionProperties(props);
     } else {
-      mBoundFrame->GetSelectionRange(&mSelectionProperties.mStart,
-                                     &mSelectionProperties.mEnd,
-                                     &mSelectionProperties.mDirection);
+      mBoundFrame->GetSelectionRange(&start, &end, &direction);
+      mSelectionProperties.SetStart(start);
+      mSelectionProperties.SetEnd(end);
+      mSelectionProperties.SetDirection(direction);
       mSelectionCached = true;
     }
   }
@@ -1731,8 +1755,8 @@ nsTextEditorState::UnbindFromFrame(nsTextControlFrame* aFrame)
 nsresult
 nsTextEditorState::CreateRootNode()
 {
-  NS_ENSURE_TRUE(!mRootNode, NS_ERROR_UNEXPECTED);
-  NS_ENSURE_ARG_POINTER(mBoundFrame);
+  MOZ_ASSERT(!mRootNode);
+  MOZ_ASSERT(mBoundFrame);
 
   nsIPresShell *shell = mBoundFrame->PresContext()->GetPresShell();
   NS_ENSURE_TRUE(shell, NS_ERROR_FAILURE);
@@ -2174,7 +2198,8 @@ nsTextEditorState::SetValue(const nsAString& aValue, uint32_t aFlags)
   // can assume that it's safe to notify.
   ValueWasChanged(!!mRootNode);
 
-  mTextCtrlElement->OnValueChanged(!!mRootNode);
+  mTextCtrlElement->OnValueChanged(/* aNotify = */ !!mRootNode,
+                                   /* aWasInteractiveUserChange = */ false);
 
   return true;
 }

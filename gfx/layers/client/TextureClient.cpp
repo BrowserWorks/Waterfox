@@ -34,7 +34,8 @@
 #include "mozilla/layers/ShadowLayers.h"
 
 #ifdef XP_WIN
-#include "mozilla/gfx/DeviceManagerD3D11.h"
+#include "DeviceManagerD3D9.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/layers/TextureD3D9.h"
 #include "mozilla/layers/TextureD3D11.h"
 #include "mozilla/layers/TextureDIB.h"
@@ -882,7 +883,7 @@ TextureClient::InitIPDLActor(CompositableForwarder* aForwarder)
       // It's Ok for a texture to move from a ShadowLayerForwarder to another, but
       // not form a CompositorBridgeChild to another (they use different channels).
       if (currentTexFwd && currentTexFwd != aForwarder->AsTextureForwarder()) {
-        gfxCriticalError() << "Attempt to move a texture to a different channel.";
+        gfxCriticalError() << "Attempt to move a texture to a different channel CF.";
         return false;
       }
       if (currentFwd && currentFwd->GetCompositorBackendType() != aForwarder->GetCompositorBackendType()) {
@@ -904,7 +905,13 @@ TextureClient::InitIPDLActor(CompositableForwarder* aForwarder)
                                                                 aForwarder->GetCompositorBackendType(),
                                                                 GetFlags(),
                                                                 mSerial));
-  MOZ_ASSERT(mActor);
+  if (!mActor) {
+    gfxCriticalError() << static_cast<int32_t>(desc.type()) << ", "
+                       << static_cast<int32_t>(aForwarder->GetCompositorBackendType()) << ", "
+                       << static_cast<uint32_t>(GetFlags())
+                       << ", " << mSerial;
+    MOZ_CRASH("GFX: Invalid actor");
+  }
   mActor->mCompositableForwarder = aForwarder;
   mActor->mTextureForwarder = aForwarder->AsTextureForwarder();
   mActor->mTextureClient = this;
@@ -933,7 +940,7 @@ TextureClient::InitIPDLActor(TextureForwarder* aForwarder, LayersBackend aBacken
     }
 
     if (currentTexFwd && currentTexFwd != aForwarder) {
-      gfxCriticalError() << "Attempt to move a texture to a different channel.";
+      gfxCriticalError() << "Attempt to move a texture to a different channel TF.";
       return false;
     }
     mActor->mTextureForwarder = aForwarder;
@@ -1043,9 +1050,10 @@ TextureClient::CreateForDrawing(TextureForwarder* aAllocator,
       (moz2DBackend == gfx::BackendType::DIRECT2D ||
        moz2DBackend == gfx::BackendType::DIRECT2D1_1 ||
        (!!(aAllocFlags & ALLOC_FOR_OUT_OF_BAND_CONTENT) &&
-        DeviceManagerD3D11::Get()->GetContentDevice())) &&
+        DeviceManagerDx::Get()->GetContentDevice())) &&
       aSize.width <= maxTextureSize &&
-      aSize.height <= maxTextureSize)
+      aSize.height <= maxTextureSize &&
+      !(aAllocFlags & ALLOC_UPDATE_FROM_SURFACE))
   {
     data = DXGITextureData::Create(aSize, aFormat, aAllocFlags);
   }
@@ -1055,7 +1063,7 @@ TextureClient::CreateForDrawing(TextureForwarder* aAllocator,
       aSize.width <= maxTextureSize &&
       aSize.height <= maxTextureSize &&
       NS_IsMainThread() &&
-      gfxWindowsPlatform::GetPlatform()->GetD3D9Device()) {
+      DeviceManagerD3D9::GetDevice()) {
     data = D3D9TextureData::Create(aSize, aFormat, aAllocFlags);
   }
 
@@ -1113,6 +1121,69 @@ TextureClient::CreateForDrawing(TextureForwarder* aAllocator,
   return TextureClient::CreateForRawBufferAccess(aAllocator, aFormat, aSize,
                                                  moz2DBackend, aLayersBackend,
                                                  aTextureFlags, aAllocFlags);
+}
+
+// static
+already_AddRefed<TextureClient>
+TextureClient::CreateFromSurface(TextureForwarder* aAllocator,
+                                 gfx::SourceSurface* aSurface,
+                                 LayersBackend aLayersBackend,
+                                 BackendSelector aSelector,
+                                 TextureFlags aTextureFlags,
+                                 TextureAllocationFlags aAllocFlags)
+{
+  aAllocator = aAllocator->AsTextureForwarder();
+
+  // also test the validity of aAllocator
+  MOZ_ASSERT(aAllocator && aAllocator->IPCOpen());
+  if (!aAllocator || !aAllocator->IPCOpen()) {
+    return nullptr;
+  }
+
+  gfx::IntSize size = aSurface->GetSize();
+
+  if (!gfx::Factory::AllowedSurfaceSize(size)) {
+    return nullptr;
+  }
+
+  TextureData* data = nullptr;
+#if defined(XP_WIN)
+  gfx::BackendType moz2DBackend = BackendTypeForBackendSelector(aLayersBackend, aSelector);
+
+  int32_t maxTextureSize = aAllocator->GetMaxTextureSize();
+
+  if (aLayersBackend == LayersBackend::LAYERS_D3D11 &&
+    (moz2DBackend == gfx::BackendType::DIRECT2D ||
+      moz2DBackend == gfx::BackendType::DIRECT2D1_1 ||
+      (!!(aAllocFlags & ALLOC_FOR_OUT_OF_BAND_CONTENT) &&
+       DeviceManagerDx::Get()->GetContentDevice())) &&
+    size.width <= maxTextureSize &&
+    size.height <= maxTextureSize)
+  {
+    data = D3D11TextureData::Create(aSurface, aAllocFlags);
+  }
+#endif
+
+  if (data) {
+    return MakeAndAddRef<TextureClient>(data, aTextureFlags, aAllocator);
+  }
+
+  // Fall back to using UpdateFromSurface
+
+  TextureAllocationFlags allocFlags = TextureAllocationFlags(aAllocFlags | ALLOC_UPDATE_FROM_SURFACE);
+  RefPtr<TextureClient> client = CreateForDrawing(aAllocator, aSurface->GetFormat(), size,
+                                                   aLayersBackend, aSelector, aTextureFlags, allocFlags);
+  if (!client) {
+    return nullptr;
+  }
+
+  TextureClientAutoLock autoLock(client, OpenMode::OPEN_WRITE_ONLY);
+  if (!autoLock.Succeeded()) {
+    return nullptr;
+  }
+
+  client->UpdateFromSurface(aSurface);
+  return client.forget();
 }
 
 // static
@@ -1178,9 +1249,8 @@ TextureClient::CreateForYCbCr(ClientIPCAllocator* aAllocator,
                               StereoMode aStereoMode,
                               TextureFlags aTextureFlags)
 {
-  // The only reason we allow aAllocator to be null is for gtests
-  MOZ_ASSERT(!aAllocator || aAllocator->IPCOpen());
-  if (aAllocator && !aAllocator->IPCOpen()) {
+  MOZ_ASSERT(aAllocator && aAllocator->IPCOpen());
+  if (!aAllocator || !aAllocator->IPCOpen()) {
     return nullptr;
   }
 

@@ -41,7 +41,7 @@ public:
     , mValue(aValue)
   { }
 
-  NS_METHOD Run() {
+  NS_IMETHOD Run() override {
     nsCOMPtr<nsIObserverService> observerService =
       mozilla::services::GetObserverService();
     if (!observerService) {
@@ -129,7 +129,8 @@ static const JSClassOps sWitnessClassOps = {
 
 static const JSClass sWitnessClass = {
   "FinalizationWitness",
-  JSCLASS_HAS_RESERVED_SLOTS(WITNESS_INSTANCES_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(WITNESS_INSTANCES_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sWitnessClassOps
 };
 

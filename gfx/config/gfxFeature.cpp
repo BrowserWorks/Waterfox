@@ -3,9 +3,11 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-#include "mozilla/Preferences.h"
-#include "prprf.h"
+
 #include "gfxFeature.h"
+
+#include "mozilla/Preferences.h"
+#include "mozilla/Sprintf.h"
 #include "nsString.h"
 
 namespace mozilla {
@@ -20,7 +22,9 @@ FeatureState::IsEnabled() const
 FeatureStatus
 FeatureState::GetValue() const
 {
-  AssertInitialized();
+  if (!IsInitialized()) {
+    return FeatureStatus::Unused;
+  }
 
   if (mRuntime.mStatus != FeatureStatus::Unused) {
     return mRuntime.mStatus;
@@ -156,7 +160,6 @@ FeatureState::MaybeSetFailed(FeatureStatus aStatus, const char* aMessage,
 bool
 FeatureState::DisabledByDefault() const
 {
-  AssertInitialized();
   return mDefault.mStatus != FeatureStatus::Available;
 }
 
@@ -252,7 +255,33 @@ FeatureState::SetFailureId(const nsACString& aFailureId)
   }
 }
 
-const nsACString&
+const char*
+FeatureState::GetFailureMessage() const
+{
+  AssertInitialized();
+  MOZ_ASSERT(!IsEnabled());
+
+  if (mRuntime.mStatus != FeatureStatus::Unused &&
+      IsFeatureStatusFailure(mRuntime.mStatus))
+  {
+    return mRuntime.mMessage;
+  }
+  if (mEnvironment.mStatus != FeatureStatus::Unused &&
+      IsFeatureStatusFailure(mEnvironment.mStatus))
+  {
+    return mEnvironment.mMessage;
+  }
+  if (mUser.mStatus != FeatureStatus::Unused &&
+      IsFeatureStatusFailure(mUser.mStatus))
+  {
+    return mUser.mMessage;
+  }
+
+  MOZ_ASSERT(IsFeatureStatusFailure(mDefault.mStatus));
+  return mDefault.mMessage;
+}
+
+const nsCString&
 FeatureState::GetFailureId() const
 {
   MOZ_ASSERT(!IsEnabled());
@@ -260,11 +289,23 @@ FeatureState::GetFailureId() const
 }
 
 void
+FeatureState::Reset()
+{
+  mDefault.Set(FeatureStatus::Unused);
+  mUser.Set(FeatureStatus::Unused);
+  mEnvironment.Set(FeatureStatus::Unused);
+  mRuntime.Set(FeatureStatus::Unused);
+  mFailureId = nsCString();
+}
+
+void
 FeatureState::Instance::Set(FeatureStatus aStatus, const char* aMessage /* = nullptr */)
 {
   mStatus = aStatus;
   if (aMessage) {
-    PR_snprintf(mMessage, sizeof(mMessage), "%s", aMessage);
+    SprintfLiteral(mMessage, "%s", aMessage);
+  } else {
+    mMessage[0] = '\0';
   }
 }
 

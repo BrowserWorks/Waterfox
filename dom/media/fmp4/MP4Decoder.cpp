@@ -9,10 +9,9 @@
 #include "MP4Demuxer.h"
 #include "mozilla/Preferences.h"
 #include "nsCharSeparatedTokenizer.h"
-#ifdef MOZ_EME
 #include "mozilla/CDMProxy.h"
-#endif
 #include "mozilla/Logging.h"
+#include "mozilla/SharedThreadPool.h"
 #include "nsMimeTypes.h"
 #include "nsContentTypeParser.h"
 #include "VideoUtils.h"
@@ -92,8 +91,7 @@ MP4Decoder::CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
   // the web, as opposed to what we use internally (i.e. what our demuxers
   // etc output).
   const bool isMP4Audio = aMIMETypeExcludingCodecs.EqualsASCII("audio/mp4") ||
-                          aMIMETypeExcludingCodecs.EqualsASCII("audio/x-m4a") ||
-                          aMIMETypeExcludingCodecs.EqualsASCII("audio/opus");
+                          aMIMETypeExcludingCodecs.EqualsASCII("audio/x-m4a");
   const bool isMP4Video =
   // On B2G, treat 3GPP as MP4 when Gonk PDM is available.
 #ifdef MOZ_GONK_MEDIACODEC
@@ -108,7 +106,7 @@ MP4Decoder::CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
 
   nsTArray<nsCString> codecMimes;
   if (aCodecs.IsEmpty()) {
-    // No codecs specified. Assume AAC/H.264
+    // No codecs specified. Assume H.264
     if (isMP4Audio) {
       codecMimes.AppendElement(NS_LITERAL_CSTRING("audio/mp4a-latm"));
     } else {
@@ -129,6 +127,14 @@ MP4Decoder::CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
       }
       if (codec.EqualsLiteral("mp3")) {
         codecMimes.AppendElement(NS_LITERAL_CSTRING("audio/mpeg"));
+        continue;
+      }
+      if (codec.EqualsLiteral("opus")) {
+        codecMimes.AppendElement(NS_LITERAL_CSTRING("audio/opus"));
+        continue;
+      }
+      if (codec.EqualsLiteral("flac")) {
+        codecMimes.AppendElement(NS_LITERAL_CSTRING("audio/flac"));
         continue;
       }
       // Note: Only accept H.264 in a video content type, not in an audio
@@ -169,6 +175,14 @@ MP4Decoder::CanHandleMediaType(const nsAString& aContentType,
   return CanHandleMediaType(NS_ConvertUTF16toUTF8(mimeType),
                             codecs,
                             aDiagnostics);
+}
+
+/* static */
+bool
+MP4Decoder::IsH264(const nsACString& aMimeType)
+{
+  return aMimeType.EqualsLiteral("video/mp4") ||
+         aMimeType.EqualsLiteral("video/avc");
 }
 
 /* static */
@@ -271,7 +285,7 @@ MP4Decoder::IsVideoAccelerated(layers::LayersBackend aBackend, nsIGlobalObject* 
              taskQueue->AwaitShutdownAndIdle();
              promise->MaybeResolve(result);
            },
-           [promise, decoder, taskQueue] (MediaDataDecoder::DecoderFailureReason aResult) {
+           [promise, decoder, taskQueue] (MediaResult aError) {
              decoder->Shutdown();
              taskQueue->BeginShutdown();
              taskQueue->AwaitShutdownAndIdle();

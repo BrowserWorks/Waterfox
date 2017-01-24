@@ -8,11 +8,12 @@ const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
 const Editor = require("devtools/client/sourceeditor/editor");
 const promise = require("promise");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
+const {getClientCssProperties} = require("devtools/shared/fronts/css-properties");
 
-DevToolsUtils.testing = true;
+flags.testing = true;
 SimpleTest.registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
 });
 
 /**
@@ -59,8 +60,10 @@ function setup(cb, additionalOpts = {}) {
     value: "Hello.",
     lineNumbers: true,
     foldGutter: true,
-    gutters: ["CodeMirror-linenumbers", "breakpoints", "CodeMirror-foldgutter"]
+    gutters: ["CodeMirror-linenumbers", "breakpoints", "CodeMirror-foldgutter"],
+    cssProperties: getClientCssProperties()
   };
+
   for (let o in additionalOpts) {
     opts[o] = additionalOpts[o];
   }

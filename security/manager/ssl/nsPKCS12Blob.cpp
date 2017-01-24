@@ -62,7 +62,7 @@ nsPKCS12Blob::~nsPKCS12Blob()
     return;
   }
 
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 // nsPKCS12Blob::SetToken
@@ -242,21 +242,20 @@ finish:
 static bool
 isExtractable(SECKEYPrivateKey *privKey)
 {
-  SECItem value;
-  bool    isExtractable = false;
-  SECStatus rv;
-
-  rv=PK11_ReadRawAttribute(PK11_TypePrivKey, privKey, CKA_EXTRACTABLE, &value);
+  ScopedAutoSECItem value;
+  SECStatus rv = PK11_ReadRawAttribute(PK11_TypePrivKey, privKey,
+                                       CKA_EXTRACTABLE, &value);
   if (rv != SECSuccess) {
     return false;
   }
+
+  bool isExtractable = false;
   if ((value.len == 1) && value.data) {
     isExtractable = !!(*(CK_BBOOL*)value.data);
   }
-  SECITEM_FreeItem(&value, false);
   return isExtractable;
 }
-  
+
 // nsPKCS12Blob::ExportToFile
 //
 // Having already loaded the certs, form them into a blob (loading the keys
@@ -650,12 +649,11 @@ nsPKCS12Blob::nickname_collision(SECItem *oldNick, PRBool *cancel, void *wincx)
     if (count > 1) {
       nickname.AppendPrintf(" #%d", count);
     }
-    CERTCertificate *cert = CERT_FindCertByNickname(CERT_GetDefaultCertDB(),
-                                           const_cast<char*>(nickname.get()));
+    UniqueCERTCertificate cert(CERT_FindCertByNickname(CERT_GetDefaultCertDB(),
+                                                       nickname.get()));
     if (!cert) {
       break;
     }
-    CERT_DestroyCertificate(cert);
     count++;
   }
   SECItem *newNick = new SECItem;

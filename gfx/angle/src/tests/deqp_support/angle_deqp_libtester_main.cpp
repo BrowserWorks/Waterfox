@@ -81,20 +81,25 @@ deBool deIsDir(const char *filename)
 #error TODO(jmadill): support other platforms
 #endif
 
-bool FindDataDir(std::string *dataDir)
+bool FindDataDir(std::string *dataDirOut)
 {
     for (auto searchDir : g_dEQPDataSearchDirs)
     {
         if (deIsDir((std::string(searchDir) + "/gles2").c_str()))
         {
-            *dataDir = searchDir;
+            *dataDirOut = searchDir;
             return true;
         }
 
-        std::string directory = angle::GetExecutableDirectory() + "/" + searchDir;
-        if (deIsDir((directory + "/gles2").c_str()))
+        std::stringstream dirStream;
+        dirStream << angle::GetExecutableDirectory() << "/" << searchDir;
+        std::string dataDir = dirStream.str();
+        dirStream << "/gles2";
+        std::string searchPath = dirStream.str();
+
+        if (deIsDir(searchPath.c_str()))
         {
-            *dataDir = directory;
+            *dataDirOut = dataDir;
             return true;
         }
     }
@@ -112,7 +117,9 @@ std::string GetLogFileName(std::string deqpDataDir)
 #endif
 }
 
-bool InitPlatform(int argc, const char *argv[])
+}  // anonymous namespace
+
+ANGLE_LIBTESTER_EXPORT bool deqp_libtester_init_platform(int argc, const char *argv[])
 {
     try
     {
@@ -151,12 +158,10 @@ bool InitPlatform(int argc, const char *argv[])
     return true;
 }
 
-} // anonymous namespace
-
 // Exported to the tester app.
 ANGLE_LIBTESTER_EXPORT int deqp_libtester_main(int argc, const char *argv[])
 {
-    if (!InitPlatform(argc, argv))
+    if (!deqp_libtester_init_platform(argc, argv))
     {
         tcu::die("Could not initialize the dEQP platform");
     }
@@ -185,18 +190,25 @@ ANGLE_LIBTESTER_EXPORT int deqp_libtester_main(int argc, const char *argv[])
 ANGLE_LIBTESTER_EXPORT void deqp_libtester_shutdown_platform()
 {
     delete g_executor;
+    g_executor = nullptr;
     delete g_root;
+    g_root = nullptr;
     delete g_testCtx;
+    g_testCtx = nullptr;
     delete g_log;
+    g_log = nullptr;
     delete g_archive;
+    g_archive = nullptr;
     delete g_cmdLine;
+    g_cmdLine = nullptr;
     delete g_platform;
+    g_platform = nullptr;
 }
 
 ANGLE_LIBTESTER_EXPORT bool deqp_libtester_run(const char *caseName)
 {
     const char *emptyString = "";
-    if (g_platform == nullptr && !InitPlatform(1, &emptyString))
+    if (g_platform == nullptr && !deqp_libtester_init_platform(1, &emptyString))
     {
         tcu::die("Failed to initialize platform.");
     }

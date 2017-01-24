@@ -30,7 +30,7 @@ define(function (require, exports, module) {
       if (this.props.objectLink) {
         return this.props.objectLink({
           object: object
-        }, object.class);
+        }, object.class + " ");
       }
       return "Object";
     },
@@ -96,7 +96,8 @@ define(function (require, exports, module) {
         return props;
       }
 
-      let mode = this.props.mode;
+      // Hardcode tiny mode to avoid recursive handling.
+      let mode = "tiny";
 
       try {
         for (let name in object) {
@@ -148,15 +149,13 @@ define(function (require, exports, module) {
           this.getTitle(object),
           objectLink({
             className: "objectLeftBrace",
-            role: "presentation",
             object: object
-          }, "{"),
+          }, " { "),
           props,
           objectLink({
             className: "objectRightBrace",
-            role: "presentation",
             object: object
-          }, "}")
+          }, " }")
         )
       );
     },

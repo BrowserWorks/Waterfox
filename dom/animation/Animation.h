@@ -10,15 +10,15 @@
 #include "nsWrapperCache.h"
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/EffectCompositor.h" // For EffectCompositor::CascadeLevel
 #include "mozilla/LinkedList.h"
 #include "mozilla/TimeStamp.h" // for TimeStamp, TimeDuration
 #include "mozilla/dom/AnimationBinding.h" // for AnimationPlayState
-#include "mozilla/dom/AnimationTimeline.h" // for AnimationTimeline
-#include "mozilla/DOMEventTargetHelper.h" // for DOMEventTargetHelper
-#include "mozilla/dom/KeyframeEffect.h" // for KeyframeEffectReadOnly
-#include "mozilla/dom/Promise.h" // for Promise
-#include "nsCSSProperty.h" // for nsCSSProperty
+#include "mozilla/dom/AnimationEffectReadOnly.h"
+#include "mozilla/dom/AnimationTimeline.h"
+#include "mozilla/dom/Promise.h"
+#include "nsCSSPropertyID.h"
 #include "nsIGlobalObject.h"
 
 // X11 has a #define for CurrentTime.
@@ -33,7 +33,7 @@
 #endif
 
 struct JSContext;
-class nsCSSPropertySet;
+class nsCSSPropertyIDSet;
 class nsIDocument;
 class nsPresContext;
 
@@ -92,13 +92,13 @@ public:
   // Animation interface methods
   static already_AddRefed<Animation>
   Constructor(const GlobalObject& aGlobal,
-              KeyframeEffectReadOnly* aEffect,
+              AnimationEffectReadOnly* aEffect,
               const Optional<AnimationTimeline*>& aTimeline,
               ErrorResult& aRv);
   void GetId(nsAString& aResult) const { aResult = mId; }
   void SetId(const nsAString& aId);
-  KeyframeEffectReadOnly* GetEffect() const { return mEffect; }
-  void SetEffect(KeyframeEffectReadOnly* aEffect);
+  AnimationEffectReadOnly* GetEffect() const { return mEffect; }
+  void SetEffect(AnimationEffectReadOnly* aEffect);
   AnimationTimeline* GetTimeline() const { return mTimeline; }
   void SetTimeline(AnimationTimeline* aTimeline);
   Nullable<TimeDuration> GetStartTime() const { return mStartTime; }
@@ -146,6 +146,7 @@ public:
 
   virtual void CancelFromStyle() { CancelNoUpdate(); }
   void SetTimelineNoUpdate(AnimationTimeline* aTimeline);
+  void SetEffectNoUpdate(AnimationEffectReadOnly* aEffect);
 
   virtual void Tick();
   bool NeedsTicks() const
@@ -313,7 +314,7 @@ public:
    * properties that are changed are added to |aSetProperties|.
    */
   void ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
-                    nsCSSPropertySet& aSetProperties);
+                    nsCSSPropertyIDSet& aSetProperties);
 
   void NotifyEffectTimingUpdated();
 
@@ -370,14 +371,19 @@ protected:
    */
   void CancelPendingTasks();
 
+  /**
+   * Performs the same steps as CancelPendingTasks and also rejects and
+   * recreates the ready promise if the animation was pending.
+   */
+  void ResetPendingTasks();
+
   bool IsPossiblyOrphanedPendingAnimation() const;
   StickyTimeDuration EffectEnd() const;
 
   nsIDocument* GetRenderedDocument() const;
-  nsPresContext* GetPresContext() const;
 
   RefPtr<AnimationTimeline> mTimeline;
-  RefPtr<KeyframeEffectReadOnly> mEffect;
+  RefPtr<AnimationEffectReadOnly> mEffect;
   // The beginning of the delay period.
   Nullable<TimeDuration> mStartTime; // Timeline timescale
   Nullable<TimeDuration> mHoldTime;  // Animation timescale

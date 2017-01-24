@@ -53,7 +53,7 @@ class nsHtml5ExecutorReflusher : public Runnable
     explicit nsHtml5ExecutorReflusher(nsHtml5TreeOpExecutor* aExecutor)
       : mExecutor(aExecutor)
     {}
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       mExecutor->RunFlushLoop();
       return NS_OK;
@@ -899,7 +899,8 @@ bool
 nsHtml5TreeOpExecutor::ShouldPreloadURI(nsIURI *aURI)
 {
   nsAutoCString spec;
-  aURI->GetSpec(spec);
+  nsresult rv = aURI->GetSpec(spec);
+  NS_ENSURE_SUCCESS(rv, false);
   if (mPreloadedURLs.Contains(spec)) {
     return false;
   }
@@ -1008,7 +1009,7 @@ nsHtml5TreeOpExecutor::SetSpeculationBase(const nsAString& aURL)
   const nsCString& charset = mDocument->GetDocumentCharacterSet();
   DebugOnly<nsresult> rv = NS_NewURI(getter_AddRefs(mSpeculationBaseURI), aURL,
                                      charset.get(), mDocument->GetDocumentURI());
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to create a URI");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Failed to create a URI");
 }
 
 void

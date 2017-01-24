@@ -60,8 +60,8 @@ body {
     flex: 1 1 auto;
 }
 
-#filter-input:-moz-placeholder {
-    color: rgba(255,255,255,0.5);
+#filter-input::placeholder {
+    color: #777777;
 }
 
 .toolbar input {

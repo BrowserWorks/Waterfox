@@ -161,11 +161,16 @@ public:
   }
 
   bool IsPACURI(nsIURI *uri) {
-    if (mPACURISpec.IsEmpty() && mPACURIRedirectSpec.IsEmpty())
+    if (mPACURISpec.IsEmpty() && mPACURIRedirectSpec.IsEmpty()) {
       return false;
+    }
 
     nsAutoCString tmp;
-    uri->GetSpec(tmp);
+    nsresult rv = uri->GetSpec(tmp);
+    if (NS_FAILED(rv)) {
+      return false;
+    }
+
     return IsPACURI(tmp);
   }
 
@@ -242,6 +247,7 @@ private:
   uint32_t                     mLoadFailureCount;
 
   bool                         mInProgress;
+  bool                         mIncludePath;
 };
 
 extern LazyLogModule gProxyLog;

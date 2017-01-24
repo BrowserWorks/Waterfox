@@ -14,10 +14,12 @@ var {TouchEventSimulator} = require("devtools/shared/touch/simulator");
 var {Task} = require("devtools/shared/task");
 var promise = require("promise");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
+var flags = require("devtools/shared/flags");
 var Services = require("Services");
 var EventEmitter = require("devtools/shared/event-emitter");
 var {ViewHelpers} = require("devtools/client/shared/widgets/view-helpers");
-var { LocalizationHelper } = require("devtools/client/shared/l10n");
+var { LocalizationHelper } = require("devtools/shared/l10n");
+var { EmulationFront } = require("devtools/shared/fronts/emulation");
 
 loader.lazyImporter(this, "SystemAppProxy",
                     "resource://gre/modules/SystemAppProxy.jsm");
@@ -39,7 +41,7 @@ const ROUND_RATIO = 10;
 
 const INPUT_PARSER = /(\d+)[^\d]+(\d+)/;
 
-const SHARED_L10N = new LocalizationHelper("chrome://devtools/locale/shared.properties");
+const SHARED_L10N = new LocalizationHelper("devtools/locale/shared.properties");
 
 function debug(msg) {
   // dump(`RDM UI: ${msg}\n`);
@@ -225,7 +227,7 @@ ResponsiveUI.prototype = {
     this.mm.sendAsyncMessage("ResponsiveMode:Start", {
       requiresFloatingScrollbars,
       // Tests expect events on resize to yield on various size changes
-      notifyOnResize: DevToolsUtils.testing,
+      notifyOnResize: flags.testing,
     });
     yield started;
 
@@ -273,11 +275,8 @@ ResponsiveUI.prototype = {
     this.client = new DebuggerClient(DebuggerServer.connectPipe());
     yield this.client.connect();
     let {tab} = yield this.client.getTab();
-    let [response, tabClient] = yield this.client.attachTab(tab.actor);
-    this.tabClient = tabClient;
-    if (!tabClient) {
-      console.error(new Error("Responsive Mode: failed to attach tab"));
-    }
+    yield this.client.attachTab(tab.actor);
+    this.emulationFront = EmulationFront(this.client, tab);
   }),
 
   loadPresets: function () {
@@ -347,7 +346,7 @@ ResponsiveUI.prototype = {
 
     // Wait for resize message before stopping in the child when testing,
     // but only if we should expect to still get a message.
-    if (DevToolsUtils.testing && this.tab.linkedBrowser.messageManager) {
+    if (flags.testing && this.tab.linkedBrowser.messageManager) {
       yield this.waitForMessage("ResponsiveMode:OnContentResize");
     }
 
@@ -389,10 +388,8 @@ ResponsiveUI.prototype = {
       this.touchEventSimulator.stop();
     }
 
-    yield new Promise((resolve, reject) => {
-      this.client.close(resolve);
-      this.client = this.tabClient = null;
-    });
+    yield this.client.close();
+    this.client = this.emulationFront = null;
 
     this._telemetry.toolClosed("responsive");
 
@@ -973,18 +970,19 @@ ResponsiveUI.prototype = {
    */
   changeUA: Task.async(function* () {
     let value = this.userAgentInput.value;
+    let changed;
     if (value) {
+      changed = yield this.emulationFront.setUserAgentOverride(value);
       this.userAgentInput.setAttribute("attention", "true");
     } else {
+      changed = yield this.emulationFront.clearUserAgentOverride();
       this.userAgentInput.removeAttribute("attention");
     }
-
-    // Changing the UA triggers an automatic reload.  Ensure we wait for this to
-    // complete before emitting the changed event, so that tests wait for the
-    // reload.
-    let reloaded = this.waitForReload();
-    yield this.tabClient.reconfigure({customUserAgent: value});
-    yield reloaded;
+    if (changed) {
+      let reloaded = this.waitForReload();
+      this.tab.linkedBrowser.reload();
+      yield reloaded;
+    }
     ResponsiveUIManager.emit("userAgentChanged", { tab: this.tab });
   }),
 

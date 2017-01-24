@@ -413,8 +413,8 @@ MediaEngineGonkVideoSource::AllocImpl() {
     // to explicitly remove this--destroying the CameraControl object
     // in DeallocImpl() will do that for us.
     mCameraControl->AddListener(this);
-    mTextureClientAllocator =
-      new layers::TextureClientRecycleAllocator(layers::ImageBridgeChild::GetSingleton());
+    RefPtr<layers::ImageBridgeChild> bridge = layers::ImageBridgeChild::GetSingleton();
+    mTextureClientAllocator = new layers::TextureClientRecycleAllocator(bridge);
     mTextureClientAllocator->SetMaxPoolSize(WEBRTC_GONK_VIDEO_SOURCE_POOL_BUFFERS);
   }
   mCallbackMonitor.Notify();
@@ -582,7 +582,7 @@ MediaEngineGonkVideoSource::OnUserError(UserContext aContext, nsresult aError)
       mCallbacks.SwapElements(aCallbacks);
     }
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       uint32_t callbackNumbers = mCallbacks.Length();
       for (uint8_t i = 0; i < callbackNumbers; i++) {
@@ -629,7 +629,7 @@ MediaEngineGonkVideoSource::OnTakePictureComplete(const uint8_t* aData, uint32_t
       mMimeType = aMimeType;
     }
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       RefPtr<dom::Blob> blob =
         dom::Blob::CreateMemoryBlob(nullptr, mPhotoData, mPhotoDataLength, mMimeType);

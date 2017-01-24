@@ -3,6 +3,7 @@ category webextension-scripts alarms chrome://extensions/content/ext-alarms.js
 category webextension-scripts backgroundPage chrome://extensions/content/ext-backgroundPage.js
 category webextension-scripts cookies chrome://extensions/content/ext-cookies.js
 category webextension-scripts downloads chrome://extensions/content/ext-downloads.js
+category webextension-scripts management chrome://extensions/content/ext-management.js
 category webextension-scripts notifications chrome://extensions/content/ext-notifications.js
 category webextension-scripts i18n chrome://extensions/content/ext-i18n.js
 category webextension-scripts idle chrome://extensions/content/ext-idle.js
@@ -13,6 +14,16 @@ category webextension-scripts extension chrome://extensions/content/ext-extensio
 category webextension-scripts storage chrome://extensions/content/ext-storage.js
 category webextension-scripts test chrome://extensions/content/ext-test.js
 
+# scripts specific for content process.
+category webextension-scripts-content extension chrome://extensions/content/ext-c-extension.js
+category webextension-scripts-content i18n chrome://extensions/content/ext-i18n.js
+category webextension-scripts-content runtime chrome://extensions/content/ext-c-runtime.js
+
+# scripts that must run in the same process as addon code.
+category webextension-scripts-addon extension chrome://extensions/content/ext-c-extension.js
+category webextension-scripts-addon i18n chrome://extensions/content/ext-i18n.js
+category webextension-scripts-addon runtime chrome://extensions/content/ext-c-runtime.js
+
 # schemas
 category webextension-schemas alarms chrome://extensions/content/schemas/alarms.json
 category webextension-schemas cookies chrome://extensions/content/schemas/cookies.json
@@ -22,6 +33,7 @@ category webextension-schemas extension chrome://extensions/content/schemas/exte
 category webextension-schemas extension_types chrome://extensions/content/schemas/extension_types.json
 category webextension-schemas i18n chrome://extensions/content/schemas/i18n.json
 category webextension-schemas idle chrome://extensions/content/schemas/idle.json
+category webextension-schemas management chrome://extensions/content/schemas/management.json
 category webextension-schemas native_host_manifest chrome://extensions/content/schemas/native_host_manifest.json
 category webextension-schemas notifications chrome://extensions/content/schemas/notifications.json
 category webextension-schemas runtime chrome://extensions/content/schemas/runtime.json

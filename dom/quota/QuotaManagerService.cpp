@@ -11,7 +11,7 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Hal.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/BackgroundUtils.h"
@@ -503,7 +503,6 @@ QuotaManagerService::GetUsageForPrincipal(nsIPrincipal* aPrincipal,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aPrincipal);
   MOZ_ASSERT(aCallback);
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   RefPtr<UsageRequest> request = new UsageRequest(aPrincipal, aCallback);
 
@@ -561,11 +560,21 @@ QuotaManagerService::Clear(nsIQuotaRequest** _retval)
 NS_IMETHODIMP
 QuotaManagerService::ClearStoragesForPrincipal(nsIPrincipal* aPrincipal,
                                                const nsACString& aPersistenceType,
+                                               bool aClearAll,
                                                nsIQuotaRequest** _retval)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aPrincipal);
   MOZ_ASSERT(nsContentUtils::IsCallerChrome());
+
+  nsCString suffix;
+  BasePrincipal::Cast(aPrincipal)->OriginAttributesRef().CreateSuffix(suffix);
+
+  if (NS_WARN_IF(aClearAll && !suffix.IsEmpty())) {
+    // The originAttributes should be default originAttributes when the
+    // aClearAll flag is set.
+    return NS_ERROR_INVALID_ARG;
+  }
 
   RefPtr<Request> request = new Request(aPrincipal);
 
@@ -595,6 +604,8 @@ QuotaManagerService::ClearStoragesForPrincipal(nsIPrincipal* aPrincipal,
     params.persistenceType() = persistenceType.Value();
     params.persistenceTypeIsExplicit() = true;
   }
+
+  params.clearAll() = aClearAll;
 
   nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, params));
 

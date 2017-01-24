@@ -78,18 +78,6 @@ function setup() {
     gScript.sendAsyncMessage('trigger-on-session-request', receiverUrl);
   });
 
-  gScript.addMessageListener('offer-sent', function offerSentHandler() {
-    debug('Got message: offer-sent');
-    gScript.removeMessageListener('offer-sent', offerSentHandler);
-    gScript.sendAsyncMessage('trigger-on-offer');
-  });
-
-  gScript.addMessageListener('answer-sent', function answerSentHandler() {
-    debug('Got message: answer-sent');
-    gScript.removeMessageListener('answer-sent', answerSentHandler);
-    gScript.sendAsyncMessage('trigger-on-answer');
-  });
-
   return Promise.resolve();
 }
 
@@ -98,18 +86,19 @@ function testCreateRequest() {
     info('Sender: --- testCreateRequest ---');
     request = new PresentationRequest(receiverUrl);
     request.getAvailability().then((aAvailability) => {
+      is(aAvailability.value, false, "Sender: should have no available device after setup");
       aAvailability.onchange = function() {
         aAvailability.onchange = null;
         ok(aAvailability.value, 'Sender: Device should be available.');
         aResolve();
       }
+
+      gScript.sendAsyncMessage('trigger-device-add');
     }).catch((aError) => {
       ok(false, 'Sender: Error occurred when getting availability: ' + aError);
       teardown();
       aReject();
     });
-
-    gScript.sendAsyncMessage('trigger-device-add');
   });
 }
 
@@ -229,12 +218,14 @@ function runTests() {
 
 SpecialPowers.pushPermissions([
   {type: 'presentation-device-manage', allow: false, context: document},
-  {type: 'presentation', allow: true, context: document},
   {type: 'browser', allow: true, context: document},
 ], () => {
   SpecialPowers.pushPrefEnv({ 'set': [['dom.presentation.enabled', true],
+                                      ["dom.presentation.controller.enabled", true],
+                                      ["dom.presentation.receiver.enabled", true],
                                       ['dom.presentation.test.enabled', true],
                                       ['dom.mozBrowserFramesEnabled', true],
+                                      ["network.disable.ipc.security", true],
                                       ['dom.ipc.tabs.disabled', false],
                                       ['dom.presentation.test.stage', 0]]},
                             runTests);

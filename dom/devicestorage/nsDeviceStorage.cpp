@@ -497,7 +497,7 @@ public:
 
   ~IOEventComplete() {}
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
     nsString data;
@@ -2486,7 +2486,7 @@ public:
     return Resolve(true);
   }
 
-  NS_IMETHODIMP GetTypes(nsIArray** aTypes) override
+  NS_IMETHOD GetTypes(nsIArray** aTypes) override
   {
     nsString storageType;
     mRequest->GetStorageType(storageType);
@@ -3117,8 +3117,6 @@ nsDOMDeviceStorage::AddOrAppendNamed(Blob* aBlob, const nsAString& aPath,
   if (!aBlob) {
     return nullptr;
   }
-
-  nsCOMPtr<nsIRunnable> r;
 
   if (IsFullPath(aPath)) {
     nsString storagePath;
@@ -3977,7 +3975,7 @@ DeviceStorageRequestManager::Resolve(uint32_t aId, uint64_t aValue,
     return NS_OK;
   }
 
-  JS::RootedValue value(GetJSRuntime(), JS_NumberValue((double)aValue));
+  JS::RootedValue value(RootingCx(), JS_NumberValue((double)aValue));
   return ResolveInternal(i, value);
 }
 

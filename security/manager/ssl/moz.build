@@ -32,6 +32,7 @@ XPIDL_SOURCES += [
     'nsIPKCS11ModuleDB.idl',
     'nsIPKCS11Slot.idl',
     'nsIProtectedAuthThread.idl',
+    'nsISecretDecoderRing.idl',
     'nsISecurityUITelemetry.idl',
     'nsISiteSecurityService.idl',
     'nsISSLStatus.idl',
@@ -53,6 +54,10 @@ if CONFIG['MOZ_XUL']:
     ]
 
 XPIDL_MODULE = 'pipnss'
+
+EXTRA_JS_MODULES.psm += [
+    'DER.jsm',
+]
 
 EXPORTS += [
     'CryptoTask.h',
@@ -121,9 +126,7 @@ UNIFIED_SOURCES += [
     'nsPKCS11Slot.cpp',
     'nsPKCS12Blob.cpp',
     'nsProtectedAuthThread.cpp',
-    'nsPSMBackgroundThread.cpp',
     'nsRandomGenerator.cpp',
-    'nsSDR.cpp',
     'nsSecureBrowserUIImpl.cpp',
     'nsSecurityHeaderParser.cpp',
     'NSSErrorsService.cpp',
@@ -135,6 +138,7 @@ UNIFIED_SOURCES += [
     'PSMRunnable.cpp',
     'PublicKeyPinningService.cpp',
     'RootCertificateTelemetryUtils.cpp',
+    'SecretDecoderRing.cpp',
     'SharedSSLState.cpp',
     'SSLServerCertVerification.cpp',
     'TransportSecurityInfo.cpp',

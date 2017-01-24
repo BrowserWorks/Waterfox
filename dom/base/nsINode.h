@@ -56,7 +56,7 @@ class nsDOMMutationObserver;
 // We declare the bare minimum infrastructure here to allow us to have a
 // UniquePtr<ServoNodeData> on nsINode.
 struct ServoNodeData;
-extern "C" void Servo_DropNodeData(ServoNodeData*);
+extern "C" void Servo_NodeData_Drop(ServoNodeData*);
 namespace mozilla {
 template<>
 class DefaultDelete<ServoNodeData>
@@ -64,7 +64,7 @@ class DefaultDelete<ServoNodeData>
 public:
   void operator()(ServoNodeData* aPtr) const
   {
-    Servo_DropNodeData(aPtr);
+    Servo_NodeData_Drop(aPtr);
   }
 };
 } // namespace mozilla
@@ -84,6 +84,7 @@ inline bool IsSpaceCharacter(char aChar) {
   return aChar == ' ' || aChar == '\t' || aChar == '\n' || aChar == '\r' ||
          aChar == '\f';
 }
+class AccessibleNode;
 struct BoxQuadOptions;
 struct ConvertCoordinateOptions;
 class DOMPoint;
@@ -929,6 +930,16 @@ public:
   }
 
   /**
+   * Returns the node that is the parent of this node in the flattened
+   * tree. This differs from the normal parent if the node is filtered
+   * into an insertion point, or if the node is a direct child of a
+   * shadow root.
+   *
+   * @return the flattened tree parent
+   */
+  inline nsINode* GetFlattenedTreeParentNode() const;
+
+  /**
    * Get the parent nsINode for this node if it is an Element.
    * @return the parent node
    */
@@ -989,31 +1000,46 @@ public:
   bool IsStyledByServo() const { return false; }
 #endif
 
-  inline bool IsDirtyForServo() const
+  bool IsDirtyForServo() const
   {
     MOZ_ASSERT(IsStyledByServo());
     return HasFlag(NODE_IS_DIRTY_FOR_SERVO);
   }
 
-  inline bool HasDirtyDescendantsForServo() const
+  bool HasDirtyDescendantsForServo() const
   {
     MOZ_ASSERT(IsStyledByServo());
     return HasFlag(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO);
   }
 
-  inline void SetIsDirtyForServo() {
+  void SetIsDirtyForServo() {
     MOZ_ASSERT(IsStyledByServo());
     SetFlags(NODE_IS_DIRTY_FOR_SERVO);
   }
 
-  inline void SetHasDirtyDescendantsForServo() {
+  void SetHasDirtyDescendantsForServo() {
     MOZ_ASSERT(IsStyledByServo());
     SetFlags(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO);
   }
 
-  inline void SetIsDirtyAndHasDirtyDescendantsForServo() {
+  void SetIsDirtyAndHasDirtyDescendantsForServo() {
     MOZ_ASSERT(IsStyledByServo());
     SetFlags(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO | NODE_IS_DIRTY_FOR_SERVO);
+  }
+
+  void UnsetIsDirtyForServo() {
+    MOZ_ASSERT(IsStyledByServo());
+    UnsetFlags(NODE_IS_DIRTY_FOR_SERVO);
+  }
+
+  void UnsetHasDirtyDescendantsForServo() {
+    MOZ_ASSERT(IsStyledByServo());
+    UnsetFlags(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO);
+  }
+
+  void UnsetIsDirtyAndHasDirtyDescendantsForServo() {
+    MOZ_ASSERT(IsStyledByServo());
+    UnsetFlags(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO | NODE_IS_DIRTY_FOR_SERVO);
   }
 
   inline void UnsetRestyleFlagsIfGecko();
@@ -1740,17 +1766,7 @@ public:
   }
 protected:
   void SetParentIsContent(bool aValue) { SetBoolFlag(ParentIsContent, aValue); }
-  /**
-   * This is a special case of SetIsInDocument used to special-case it for the
-   * document constructor (which can't do the IsStyledByServo() check).
-   */
-  void SetIsDocument() { SetBoolFlag(IsInDocument); }
-  void SetIsInDocument() {
-    if (IsStyledByServo()) {
-      SetIsDirtyAndHasDirtyDescendantsForServo();
-    }
-    SetBoolFlag(IsInDocument);
-  }
+  void SetIsInDocument() { SetBoolFlag(IsInDocument); }
   void SetNodeIsContent() { SetBoolFlag(NodeIsContent); }
   void ClearInDocument() { ClearBoolFlag(IsInDocument); }
   void SetIsElement() { SetBoolFlag(NodeIsElement); }
@@ -1796,6 +1812,8 @@ public:
 
   void GetBoundMutationObservers(nsTArray<RefPtr<nsDOMMutationObserver> >& aResult);
 
+  already_AddRefed<mozilla::dom::AccessibleNode> GetAccessibleNode();
+
   /**
    * Returns the length of this node, as specified at
    * <http://dvcs.w3.org/hg/domcore/raw-file/tip/Overview.html#concept-node-length>
@@ -1813,7 +1831,7 @@ public:
   // The returned value may differ if the document is loaded via XHR, and
   // when accessed from chrome privileged script and
   // from content privileged script for compatibility.
-  void GetBaseURIFromJS(nsAString& aBaseURI) const;
+  void GetBaseURIFromJS(nsAString& aBaseURI, mozilla::ErrorResult& aRv) const;
   bool HasChildNodes() const
   {
     return HasChildren();

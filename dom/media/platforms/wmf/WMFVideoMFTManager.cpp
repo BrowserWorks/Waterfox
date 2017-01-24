@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <winsdkver.h>
+#include <psapi.h>
 #include "WMFVideoMFTManager.h"
 #include "MediaDecoderReader.h"
 #include "MediaPrefs.h"
@@ -30,6 +31,8 @@
 #include "nsPrintfCString.h"
 #include "MediaTelemetryConstants.h"
 #include "GMPUtils.h" // For SplitAt. TODO: Move SplitAt to a central place.
+#include "MP4Decoder.h"
+#include "VPXDecoder.h"
 
 #define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
@@ -96,12 +99,11 @@ WMFVideoMFTManager::WMFVideoMFTManager(
   MOZ_COUNT_CTOR(WMFVideoMFTManager);
 
   // Need additional checks/params to check vp8/vp9
-  if (aConfig.mMimeType.EqualsLiteral("video/mp4") ||
-      aConfig.mMimeType.EqualsLiteral("video/avc")) {
+  if (MP4Decoder::IsH264(aConfig.mMimeType)) {
     mStreamType = H264;
-  } else if (aConfig.mMimeType.EqualsLiteral("video/webm; codecs=vp8")) {
+  } else if (VPXDecoder::IsVP8(aConfig.mMimeType)) {
     mStreamType = VP8;
-  } else if (aConfig.mMimeType.EqualsLiteral("video/webm; codecs=vp9")) {
+  } else if (VPXDecoder::IsVP9(aConfig.mMimeType)) {
     mStreamType = VP9;
   } else {
     mStreamType = Unknown;
@@ -195,6 +197,17 @@ FindDXVABlacklistedDLL(StaticAutoPtr<D3DDLLBlacklistingCache>& aDLLBlacklistingC
   // Adopt new pref now, so we don't work on it again.
   aDLLBlacklistingCache->mBlacklistPref = blacklist;
 
+  HANDLE hProcess = GetCurrentProcess();
+  mozilla::UniquePtr<HMODULE[]> hMods;
+  unsigned int modulesNum = 0;
+  if (hProcess != NULL) {
+    DWORD modulesSize;
+    EnumProcessModules(hProcess, nullptr, 0, &modulesSize);
+    modulesNum = modulesSize / sizeof(HMODULE);
+    hMods = mozilla::MakeUnique<HMODULE[]>(modulesNum);
+    EnumProcessModules(hProcess, hMods.get(), modulesNum * sizeof(HMODULE), &modulesSize);
+  }
+
   // media.wmf.disable-d3d*-for-dlls format: (whitespace is trimmed)
   // "dll1.dll: 1.2.3.4[, more versions...][; more dlls...]"
   nsTArray<nsCString> dlls;
@@ -210,67 +223,91 @@ FindDXVABlacklistedDLL(StaticAutoPtr<D3DDLLBlacklistingCache>& aDLLBlacklistingC
 
     nameAndVersions[0].CompressWhitespace();
     NS_ConvertUTF8toUTF16 name(nameAndVersions[0]);
-    WCHAR systemPath[MAX_PATH + 1];
-    if (!ConstructSystem32Path(name.get(), systemPath, MAX_PATH + 1)) {
-      // Cannot build path -> Assume it's not the blacklisted DLL.
-      continue;
-    }
 
-    DWORD zero;
-    DWORD infoSize = GetFileVersionInfoSizeW(systemPath, &zero);
-    if (infoSize == 0) {
-      // Can't get file info -> Assume we don't have the blacklisted DLL.
-      continue;
-    }
-    // vInfo is a pointer into infoData, that's why we keep it outside of the loop.
-    auto infoData = MakeUnique<unsigned char[]>(infoSize);
-    VS_FIXEDFILEINFO *vInfo;
-    UINT vInfoLen;
-    if (!GetFileVersionInfoW(systemPath, 0, infoSize, infoData.get())
-        || !VerQueryValueW(infoData.get(), L"\\", (LPVOID*)&vInfo, &vInfoLen)
-        || !vInfo) {
-      // Can't find version -> Assume it's not blacklisted.
-      continue;
-    }
+    for (unsigned int i = 0; i <= modulesNum; i++) {
+      WCHAR dllPath[MAX_PATH + 1];
 
-    nsTArray<nsCString> versions;
-    SplitAt(",", nameAndVersions[1], versions);
-    for (const auto& version : versions) {
-      nsTArray<nsCString> numberStrings;
-      SplitAt(".", version, numberStrings);
-      if (numberStrings.Length() != 4) {
-        NS_WARNING(nsPrintfCString("Skipping incorrect '%s' a.b.c.d version format",
-                                   aDLLBlacklistPrefName).get());
+      if (i < modulesNum) {
+        if (!GetModuleFileNameEx(hProcess, hMods[i], dllPath, sizeof(dllPath) / sizeof(WCHAR))) {
+          continue;
+        }
+
+        nsCOMPtr<nsIFile> file;
+        if (NS_WARN_IF(NS_FAILED(NS_NewLocalFile(nsDependentString(dllPath), false, getter_AddRefs(file))))) {
+          continue;
+        }
+
+        nsAutoString leafName;
+        if (NS_WARN_IF(NS_FAILED(file->GetLeafName(leafName)))) {
+          continue;
+        }
+
+        if (_wcsicmp(leafName.get(), name.get())) {
+          continue;
+        }
+      } else {
+        if (!ConstructSystem32Path(name.get(), dllPath, MAX_PATH + 1)) {
+          // Cannot build path -> Assume it's not the blacklisted DLL.
+          continue;
+        }
+      }
+
+      DWORD zero;
+      DWORD infoSize = GetFileVersionInfoSizeW(dllPath, &zero);
+      if (infoSize == 0) {
+        // Can't get file info -> Assume we don't have the blacklisted DLL.
         continue;
       }
-      DWORD numbers[4];
-      nsresult errorCode = NS_OK;
-      for (int i = 0; i < 4; ++i) {
-        numberStrings[i].CompressWhitespace();
-        numbers[i] = DWORD(numberStrings[i].ToInteger(&errorCode));
+      // vInfo is a pointer into infoData, that's why we keep it outside of the loop.
+      auto infoData = MakeUnique<unsigned char[]>(infoSize);
+      VS_FIXEDFILEINFO *vInfo;
+      UINT vInfoLen;
+      if (!GetFileVersionInfoW(dllPath, 0, infoSize, infoData.get())
+          || !VerQueryValueW(infoData.get(), L"\\", (LPVOID*)&vInfo, &vInfoLen)
+          || !vInfo) {
+        // Can't find version -> Assume it's not blacklisted.
+        continue;
+      }
+
+      nsTArray<nsCString> versions;
+      SplitAt(",", nameAndVersions[1], versions);
+      for (const auto& version : versions) {
+        nsTArray<nsCString> numberStrings;
+        SplitAt(".", version, numberStrings);
+        if (numberStrings.Length() != 4) {
+          NS_WARNING(nsPrintfCString("Skipping incorrect '%s' a.b.c.d version format",
+                                     aDLLBlacklistPrefName).get());
+          continue;
+        }
+        DWORD numbers[4];
+        nsresult errorCode = NS_OK;
+        for (int i = 0; i < 4; ++i) {
+          numberStrings[i].CompressWhitespace();
+          numbers[i] = DWORD(numberStrings[i].ToInteger(&errorCode));
+          if (NS_FAILED(errorCode)) {
+            break;
+          }
+          if (numbers[i] > UINT16_MAX) {
+            errorCode = NS_ERROR_FAILURE;
+            break;
+          }
+        }
+
         if (NS_FAILED(errorCode)) {
-          break;
+          NS_WARNING(nsPrintfCString("Skipping incorrect '%s' a.b.c.d version format",
+                                     aDLLBlacklistPrefName).get());
+          continue;
         }
-        if (numbers[i] > UINT16_MAX) {
-          errorCode = NS_ERROR_FAILURE;
-          break;
+
+        if (vInfo->dwFileVersionMS == ((numbers[0] << 16) | numbers[1])
+            && vInfo->dwFileVersionLS == ((numbers[2] << 16) | numbers[3])) {
+          // Blacklisted! Record bad DLL.
+          aDLLBlacklistingCache->mBlacklistedDLL.SetLength(0);
+          aDLLBlacklistingCache->mBlacklistedDLL.AppendPrintf(
+            "%s (%lu.%lu.%lu.%lu)",
+            nameAndVersions[0].get(), numbers[0], numbers[1], numbers[2], numbers[3]);
+          return aDLLBlacklistingCache->mBlacklistedDLL;
         }
-      }
-
-      if (NS_FAILED(errorCode)) {
-        NS_WARNING(nsPrintfCString("Skipping incorrect '%s' a.b.c.d version format",
-                                   aDLLBlacklistPrefName).get());
-        continue;
-      }
-
-      if (vInfo->dwFileVersionMS == ((numbers[0] << 16) | numbers[1])
-          && vInfo->dwFileVersionLS == ((numbers[2] << 16) | numbers[3])) {
-        // Blacklisted! Record bad DLL.
-        aDLLBlacklistingCache->mBlacklistedDLL.SetLength(0);
-        aDLLBlacklistingCache->mBlacklistedDLL.AppendPrintf(
-          "%s (%lu.%lu.%lu.%lu)",
-          nameAndVersions[0].get(), numbers[0], numbers[1], numbers[2], numbers[3]);
-        return aDLLBlacklistingCache->mBlacklistedDLL;
       }
     }
   }
@@ -299,7 +336,7 @@ public:
     , mFailureReason(aFailureReason)
   {}
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     NS_ASSERTION(NS_IsMainThread(), "Must be on main thread.");
     nsACString* failureReason = &mFailureReason;
     nsCString secondFailureReason;
@@ -451,7 +488,7 @@ WMFVideoMFTManager::InitInternal(bool aForceD3D9)
       if (SUCCEEDED(hr)) {
         mUseHwAccel = true;
       } else {
-        mDXVA2Manager = nullptr;
+        DeleteOnMainThread(mDXVA2Manager);
         mDXVAFailureReason = nsPrintfCString("MFT_MESSAGE_SET_D3D_MANAGER failed with code %X", hr);
       }
     }
@@ -524,6 +561,8 @@ WMFVideoMFTManager::Input(MediaRawData* aSample)
   NS_ENSURE_TRUE(SUCCEEDED(hr) && mLastInput != nullptr, hr);
 
   mLastDuration = aSample->mDuration;
+  mLastTime = aSample->mTime;
+  mSamplesCount++;
 
   // Forward sample data to the decoder.
   return mDecoder->Input(mLastInput);
@@ -739,15 +778,16 @@ WMFVideoMFTManager::CreateBasicVideoFrame(IMFSample* aSample,
 
   if (mLayersBackend != LayersBackend::LAYERS_D3D9 &&
       mLayersBackend != LayersBackend::LAYERS_D3D11) {
-    RefPtr<VideoData> v = VideoData::Create(mVideoInfo,
-                                            mImageContainer,
-                                            aStreamOffset,
-                                            pts.ToMicroseconds(),
-                                            duration.ToMicroseconds(),
-                                            b,
-                                            false,
-                                            -1,
-                                            pictureRegion);
+    RefPtr<VideoData> v =
+      VideoData::CreateAndCopyData(mVideoInfo,
+                                   mImageContainer,
+                                   aStreamOffset,
+                                   pts.ToMicroseconds(),
+                                   duration.ToMicroseconds(),
+                                   b,
+                                   false,
+                                   -1,
+                                   pictureRegion);
     if (twoDBuffer) {
       twoDBuffer->Unlock2D();
     } else {
@@ -768,7 +808,6 @@ WMFVideoMFTManager::CreateBasicVideoFrame(IMFSample* aSample,
 
   RefPtr<VideoData> v =
     VideoData::CreateFromImage(mVideoInfo,
-                               mImageContainer,
                                aStreamOffset,
                                pts.ToMicroseconds(),
                                duration.ToMicroseconds(),
@@ -799,7 +838,6 @@ WMFVideoMFTManager::CreateD3DVideoFrame(IMFSample* aSample,
   RefPtr<Image> image;
   hr = mDXVA2Manager->CopyToImage(aSample,
                                   pictureRegion,
-                                  mImageContainer,
                                   getter_AddRefs(image));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
   NS_ENSURE_TRUE(image, E_FAIL);
@@ -809,7 +847,6 @@ WMFVideoMFTManager::CreateD3DVideoFrame(IMFSample* aSample,
   media::TimeUnit duration = GetSampleDuration(aSample);
   NS_ENSURE_TRUE(duration.IsValid(), E_FAIL);
   RefPtr<VideoData> v = VideoData::CreateFromImage(mVideoInfo,
-                                                   mImageContainer,
                                                    aStreamOffset,
                                                    pts.ToMicroseconds(),
                                                    duration.ToMicroseconds(),
@@ -833,6 +870,15 @@ WMFVideoMFTManager::Output(int64_t aStreamOffset,
   HRESULT hr;
   aOutData = nullptr;
   int typeChangeCount = 0;
+  bool wasDraining = mDraining;
+  int64_t sampleCount = mSamplesCount;
+  if (wasDraining) {
+    mSamplesCount = 0;
+    mDraining = false;
+  }
+
+  media::TimeUnit pts;
+  media::TimeUnit duration;
 
   // Loop until we decode a sample, or an unexpected error that we can't
   // handle occurs.
@@ -874,12 +920,21 @@ WMFVideoMFTManager::Output(int64_t aStreamOffset,
         }
         continue;
       }
+      pts = GetSampleTime(sample);
+      duration = GetSampleDuration(sample);
+      if (!pts.IsValid() || !duration.IsValid()) {
+        return E_FAIL;
+      }
+      if (wasDraining && sampleCount == 1 && pts == media::TimeUnit()) {
+        // WMF is unable to calculate a duration if only a single sample
+        // was parsed. Additionally, the pts always comes out at 0 under those
+        // circumstances.
+        // Seeing that we've only fed the decoder a single frame, the pts
+        // and duration are known, it's of the last sample.
+        pts = media::TimeUnit::FromMicroseconds(mLastTime);
+        duration = media::TimeUnit::FromMicroseconds(mLastDuration);
+      }
       if (mSeekTargetThreshold.isSome()) {
-        media::TimeUnit pts = GetSampleTime(sample);
-		media::TimeUnit duration = GetSampleDuration(sample);
-        if (!pts.IsValid() || !duration.IsValid()) {
-          return E_FAIL;
-        }
         if ((pts + duration) < mSeekTargetThreshold.ref()) {
           LOG("Dropping video frame which pts is smaller than seek target.");
           // It is necessary to clear the pointer to release the previous output
@@ -908,6 +963,9 @@ WMFVideoMFTManager::Output(int64_t aStreamOffset,
   NS_ENSURE_TRUE(frame, E_FAIL);
 
   aOutData = frame;
+  // Set the potentially corrected pts and duration.
+  aOutData->mTime = pts.ToMicroseconds();
+  aOutData->mDuration = duration.ToMicroseconds();
 
   if (mNullOutputCount) {
     mGotValidOutputAfterNullOutput = true;

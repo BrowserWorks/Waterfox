@@ -81,6 +81,7 @@ public:
    *   the caller. The caller may decide to override the actual SVG bbox.
    */
   nsSVGFilterInstance(const nsStyleFilter& aFilter,
+                      nsIFrame* aTargetFrame,
                       nsIContent* aTargetContent,
                       const UserSpaceMetrics& aMetrics,
                       const gfxRect& aTargetBBox,
@@ -97,9 +98,17 @@ public:
    * FilterPrimitiveDescription for each one. Appends the new
    * FilterPrimitiveDescription(s) to the aPrimitiveDescrs list. Also, appends
    * new images from feImage filter primitive elements to the aInputImages list.
+   * aInputIsTainted describes whether the input to this filter is tainted, i.e.
+   * whether it contains security-sensitive content. This is needed to propagate
+   * taintedness to the FilterPrimitive that take tainted inputs. Something being
+   * tainted means that it contains security sensitive content.
+   * The input to this filter is the previous filter's output, i.e. the last
+   * element in aPrimitiveDescrs, or the SourceGraphic input if this is the first
+   * filter in the filter chain.
    */
   nsresult BuildPrimitives(nsTArray<FilterPrimitiveDescription>& aPrimitiveDescrs,
-                           nsTArray<RefPtr<SourceSurface>>& aInputImages);
+                           nsTArray<RefPtr<SourceSurface>>& aInputImages,
+                           bool aInputIsTainted);
 
   /**
    * Returns the user specified "filter region", in the filtered element's user
@@ -140,7 +149,7 @@ private:
   /**
    * Finds the filter frame associated with this SVG filter.
    */
-  nsSVGFilterFrame* GetFilterFrame();
+  nsSVGFilterFrame* GetFilterFrame(nsIFrame* aTargetFrame);
 
   /**
    * Computes the filter primitive subregion for the given primitive.

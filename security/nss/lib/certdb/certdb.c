@@ -1295,12 +1295,16 @@ CERT_AddOKDomainName(CERTCertificate *cert, const char *hn)
         PORT_SetError(SEC_ERROR_INVALID_ARGS);
         return SECFailure;
     }
-    domainOK = (CERTOKDomainName *)PORT_ArenaZAlloc(
-        cert->arena, (sizeof *domainOK) + newNameLen);
-    if (!domainOK)
+    domainOK = (CERTOKDomainName *)PORT_ArenaZAlloc(cert->arena, sizeof(*domainOK));
+    if (!domainOK) {
         return SECFailure; /* error code is already set. */
+    }
+    domainOK->name = (char *)PORT_ArenaZAlloc(cert->arena, newNameLen + 1);
+    if (!domainOK->name) {
+        return SECFailure; /* error code is already set. */
+    }
 
-    PORT_Strcpy(domainOK->name, hn);
+    PORT_Strncpy(domainOK->name, hn, newNameLen + 1);
     sec_lower_string(domainOK->name);
 
     /* put at head of list. */
@@ -1402,7 +1406,6 @@ cert_VerifySubjectAltName(const CERTCertificate *cert, const char *hn)
         goto fail;
     }
     isIPaddr = (PR_SUCCESS == PR_StringToNetAddr(hn, &netAddr));
-    rv = SECFailure;
     arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
     if (!arena)
         goto fail;
@@ -2068,7 +2071,7 @@ CERT_IsCACert(CERTCertificate *cert, unsigned int *rettype)
      */
     CERTBasicConstraints constraints;
     if ((CERT_FindBasicConstraintExten(cert, &constraints) == SECSuccess &&
-        constraints.isCA) ||
+         constraints.isCA) ||
         (cert->isRoot && cert_Version(cert) < SEC_CERTIFICATE_VERSION_3))
         cType |= (NS_CERT_TYPE_SSL_CA | NS_CERT_TYPE_EMAIL_CA);
 
@@ -2077,7 +2080,9 @@ CERT_IsCACert(CERTCertificate *cert, unsigned int *rettype)
      */
     cType = cert_ComputeTrustOverrides(cert, cType);
     ret = (cType & (NS_CERT_TYPE_SSL_CA | NS_CERT_TYPE_EMAIL_CA |
-                    NS_CERT_TYPE_OBJECT_SIGNING_CA)) ? PR_TRUE : PR_FALSE;
+                    NS_CERT_TYPE_OBJECT_SIGNING_CA))
+              ? PR_TRUE
+              : PR_FALSE;
 
     if (rettype) {
         *rettype = cType;

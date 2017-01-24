@@ -8,6 +8,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 this.EXPORTED_SYMBOLS = [ "ProductAddonChecker" ];
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/CertUtils.jsm");
@@ -16,6 +17,9 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 /*globals OS*/
+
+XPCOMUtils.defineLazyModuleGetter(this, "ServiceRequest",
+                                  "resource://gre/modules/ServiceRequest.jsm");
 
 var logger = Log.repository.getLogger("addons.productaddons");
 
@@ -92,6 +96,11 @@ function downloadXML(url, allowNonBuiltIn = false, allowedCerts = null) {
     request.channel.loadFlags |= Ci.nsIRequest.LOAD_BYPASS_CACHE;
     // Prevent the request from writing to the cache.
     request.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
+    // Use conservative TLS settings. See bug 1325501.
+    // TODO move to ServiceRequest.
+    if (request.channel instanceof Ci.nsIHttpChannelInternal) {
+      request.channel.QueryInterface(Ci.nsIHttpChannelInternal).beConservative = true;
+    }
     request.timeout = TIMEOUT_DELAY_MS;
 
     request.overrideMimeType("text/xml");
@@ -221,10 +230,15 @@ function downloadFile(url) {
     xhr.responseType = "arraybuffer";
     try {
       xhr.open("GET", url);
+      // Use conservative TLS settings. See bug 1325501.
+      // TODO move to ServiceRequest.
+      if (xhr.channel instanceof Ci.nsIHttpChannelInternal) {
+        xhr.channel.QueryInterface(Ci.nsIHttpChannelInternal).beConservative = true;
+      }
+      xhr.send(null);
     } catch (ex) {
       reject(ex);
     }
-    xhr.send(null);
   });
 }
 

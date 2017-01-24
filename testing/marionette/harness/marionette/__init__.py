@@ -10,7 +10,9 @@ from .marionette_test import (
     MarionetteJSTestCase,
     MarionetteTestCase,
     skip,
+    skip_if_chrome,
     skip_if_desktop,
+    skip_if_mobile,
     SkipTest,
     skip_unless_protocol,
 )
@@ -31,4 +33,5 @@ from .runner import (
     TestManifest,
     TestResult,
     TestResultCollection,
+    WindowManagerMixin,
 )

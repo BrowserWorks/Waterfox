@@ -42,11 +42,6 @@
 #include <pthread.h>
 #include <wchar.h>
 
-#ifdef MOZ_GAMEPAD
-#include "mozilla/dom/GamepadPlatformService.h"
-#include "mozilla/dom/Gamepad.h"
-#endif
-
 #include "GeckoProfiler.h"
 #ifdef MOZ_ANDROID_HISTORY
 #include "nsNetUtil.h"
@@ -58,11 +53,20 @@
 #include "mozilla/Logging.h"
 #endif
 
+#ifdef MOZ_CRASHREPORTER
+#include "nsICrashReporter.h"
+#include "nsExceptionHandler.h"
+#endif
+
+#include "AndroidAlerts.h"
 #include "ANRReporter.h"
+#include "GeckoBatteryManager.h"
 #include "GeckoNetworkManager.h"
 #include "GeckoScreenOrientation.h"
 #include "PrefsHelper.h"
-#include "ThumbnailHelper.h"
+#include "fennec/MemoryMonitor.h"
+#include "fennec/Telemetry.h"
+#include "fennec/ThumbnailHelper.h"
 
 #ifdef DEBUG_ANDROID_EVENTS
 #define EVLOG(args...)  ALOG(args)
@@ -71,7 +75,6 @@
 #endif
 
 using namespace mozilla;
-typedef mozilla::dom::GamepadPlatformService GamepadPlatformService;
 
 nsIGeolocationUpdate *gLocationCallback = nullptr;
 
@@ -100,25 +103,12 @@ StaticRefPtr<WakeLockListener> sWakeLockListener;
 
 class GeckoThreadSupport final
     : public java::GeckoThread::Natives<GeckoThreadSupport>
-    , public UsesGeckoThreadProxy
 {
     // When this number goes above 0, the app is paused. When less than or
     // equal to zero, the app is resumed.
     static int32_t sPauseCount;
 
 public:
-    template<typename Functor>
-    static void OnNativeCall(Functor&& aCall)
-    {
-        if (aCall.IsTarget(&SpeculativeConnect) ||
-            aCall.IsTarget(&WaitOnGecko)) {
-
-            aCall();
-            return;
-        }
-        return UsesGeckoThreadProxy::OnNativeCall(aCall);
-    }
-
     static void SpeculativeConnect(jni::String::Param aUriStr)
     {
         if (!NS_IsMainThread()) {
@@ -211,6 +201,8 @@ public:
 
     static void CreateServices(jni::String::Param aCategory, jni::String::Param aData)
     {
+        MOZ_ASSERT(NS_IsMainThread());
+
         nsCString category(aCategory->ToCString());
 
         NS_CreateServicesFromCategory(
@@ -219,6 +211,15 @@ public:
                 category.get(),
                 aData ? aData->ToString().get() : nullptr);
     }
+
+    static int64_t RunUiThreadCallback()
+    {
+        if (!AndroidBridge::Bridge()) {
+            return -1;
+        }
+
+        return AndroidBridge::Bridge()->RunDelayedUiThreadTasks();
+    }
 };
 
 int32_t GeckoThreadSupport::sPauseCount;
@@ -226,17 +227,20 @@ int32_t GeckoThreadSupport::sPauseCount;
 
 class GeckoAppShellSupport final
     : public java::GeckoAppShell::Natives<GeckoAppShellSupport>
-    , public UsesGeckoThreadProxy
 {
 public:
-    template<typename Functor>
-    static void OnNativeCall(Functor&& aCall)
+    static void ReportJavaCrash(const jni::Class::LocalRef& aCls,
+                                jni::Throwable::Param aException,
+                                jni::String::Param aStack)
     {
-        if (aCall.IsTarget(&SyncNotifyObservers)) {
-            aCall();
+        if (!jni::ReportException(aCls.Env(), aException.Get(), aStack.Get())) {
+            // Only crash below if crash reporter is initialized and annotation
+            // succeeded. Otherwise try other means of reporting the crash in
+            // Java.
             return;
         }
-        return UsesGeckoThreadProxy::OnNativeCall(aCall);
+
+        MOZ_CRASH("Uncaught Java exception");
     }
 
     static void SyncNotifyObservers(jni::String::Param aTopic,
@@ -333,6 +337,22 @@ public:
         }
 #endif
     }
+
+    static void NotifyAlertListener(jni::String::Param aName,
+                                    jni::String::Param aTopic)
+    {
+        if (!aName || !aTopic) {
+            return;
+        }
+
+        AndroidAlerts::NotifyListener(
+                aName->ToString(), aTopic->ToCString().get());
+    }
+
+    static void OnFullScreenPluginHidden(jni::Object::Param aView)
+    {
+        nsPluginInstanceOwner::ExitFullScreen(aView.Get());
+    }
 };
 
 nsAppShell::nsAppShell()
@@ -355,9 +375,12 @@ nsAppShell::nsAppShell()
         GeckoAppShellSupport::Init();
         GeckoThreadSupport::Init();
         mozilla::ANRReporter::Init();
+        mozilla::GeckoBatteryManager::Init();
         mozilla::GeckoNetworkManager::Init();
         mozilla::GeckoScreenOrientation::Init();
+        mozilla::MemoryMonitor::Init();
         mozilla::PrefsHelper::Init();
+        mozilla::widget::Telemetry::Init();
         mozilla::ThumbnailHelper::Init();
         nsWindow::InitNatives();
 
@@ -625,295 +648,6 @@ nsAppShell::ResolveURI(const nsCString& aUriStr)
         return uri.forget();
     }
     return nullptr;
-}
-
-class nsAppShell::LegacyGeckoEvent : public Event
-{
-    mozilla::UniquePtr<AndroidGeckoEvent> ae;
-
-public:
-    LegacyGeckoEvent(AndroidGeckoEvent* e) : ae(e) {}
-
-    void Run() override;
-    void PostTo(mozilla::LinkedList<Event>& queue) override;
-
-    Event::Type ActivityType() const override
-    {
-        return ae->IsInputEvent() ? mozilla::HangMonitor::kUIActivity
-                                  : mozilla::HangMonitor::kGeneralActivity;
-    }
-};
-
-void
-nsAppShell::PostEvent(AndroidGeckoEvent* event)
-{
-    mozilla::MutexAutoLock lock(*sAppShellLock);
-    if (!sAppShell) {
-        return;
-    }
-    sAppShell->mEventQueue.Post(mozilla::MakeUnique<LegacyGeckoEvent>(event));
-}
-
-void
-nsAppShell::LegacyGeckoEvent::Run()
-{
-    const mozilla::UniquePtr<AndroidGeckoEvent>& curEvent = ae;
-
-    EVLOG("nsAppShell: event %p %d", (void*)curEvent.get(), curEvent->Type());
-
-    switch (curEvent->Type()) {
-    case AndroidGeckoEvent::NATIVE_POKE:
-        nsAppShell::Get()->NativeEventCallback();
-        break;
-
-    case AndroidGeckoEvent::ZOOMEDVIEW: {
-        if (!nsAppShell::Get()->mBrowserApp)
-            break;
-        int32_t tabId = curEvent->MetaState();
-        const nsTArray<nsIntPoint>& points = curEvent->Points();
-        float scaleFactor = (float) curEvent->X();
-        RefPtr<RefCountedJavaObject> javaBuffer = curEvent->ByteBuffer();
-        const auto& mBuffer = jni::ByteBuffer::Ref::From(javaBuffer->GetObject());
-
-        nsCOMPtr<mozIDOMWindowProxy> domWindow;
-        nsCOMPtr<nsIBrowserTab> tab;
-        nsAppShell::Get()->mBrowserApp->GetBrowserTab(tabId, getter_AddRefs(tab));
-        if (!tab) {
-            NS_ERROR("Can't find tab!");
-            break;
-        }
-        tab->GetWindow(getter_AddRefs(domWindow));
-        if (!domWindow) {
-            NS_ERROR("Can't find dom window!");
-            break;
-        }
-        NS_ASSERTION(points.Length() == 2, "ZoomedView event does not have enough coordinates");
-        nsIntRect r(points[0].x, points[0].y, points[1].x, points[1].y);
-        AndroidBridge::Bridge()->CaptureZoomedView(domWindow, r, mBuffer, scaleFactor);
-        break;
-    }
-
-    case AndroidGeckoEvent::VIEWPORT: {
-        if (curEvent->Characters().Length() == 0)
-            break;
-
-        nsCOMPtr<nsIObserverService> obsServ =
-            mozilla::services::GetObserverService();
-
-        const NS_ConvertUTF16toUTF8 topic(curEvent->Characters());
-
-        obsServ->NotifyObservers(nullptr, topic.get(), curEvent->CharactersExtra().get());
-        break;
-    }
-
-    case AndroidGeckoEvent::TELEMETRY_UI_SESSION_STOP: {
-        if (!nsAppShell::Get()->mBrowserApp)
-            break;
-        if (curEvent->Characters().Length() == 0)
-            break;
-
-        nsCOMPtr<nsIUITelemetryObserver> obs;
-        nsAppShell::Get()->mBrowserApp->GetUITelemetryObserver(getter_AddRefs(obs));
-        if (!obs)
-            break;
-
-        obs->StopSession(
-                curEvent->Characters().get(),
-                curEvent->CharactersExtra().get(),
-                curEvent->Time()
-                );
-        break;
-    }
-
-    case AndroidGeckoEvent::TELEMETRY_UI_SESSION_START: {
-        if (!nsAppShell::Get()->mBrowserApp)
-            break;
-        if (curEvent->Characters().Length() == 0)
-            break;
-
-        nsCOMPtr<nsIUITelemetryObserver> obs;
-        nsAppShell::Get()->mBrowserApp->GetUITelemetryObserver(getter_AddRefs(obs));
-        if (!obs)
-            break;
-
-        obs->StartSession(
-                curEvent->Characters().get(),
-                curEvent->Time()
-                );
-        break;
-    }
-
-    case AndroidGeckoEvent::TELEMETRY_UI_EVENT: {
-        if (!nsAppShell::Get()->mBrowserApp)
-            break;
-        if (curEvent->Data().Length() == 0)
-            break;
-
-        nsCOMPtr<nsIUITelemetryObserver> obs;
-        nsAppShell::Get()->mBrowserApp->GetUITelemetryObserver(getter_AddRefs(obs));
-        if (!obs)
-            break;
-
-        obs->AddEvent(
-                curEvent->Data().get(),
-                curEvent->Characters().get(),
-                curEvent->Time(),
-                curEvent->CharactersExtra().get()
-                );
-        break;
-    }
-
-    case AndroidGeckoEvent::CALL_OBSERVER:
-    {
-        nsCOMPtr<nsIObserver> observer;
-        nsAppShell::Get()->mObserversHash.Get(curEvent->Characters(), getter_AddRefs(observer));
-
-        if (observer) {
-            observer->Observe(nullptr, NS_ConvertUTF16toUTF8(curEvent->CharactersExtra()).get(),
-                              curEvent->Data().get());
-        } else {
-            ALOG("Call_Observer event: Observer was not found!");
-        }
-
-        break;
-    }
-
-    case AndroidGeckoEvent::REMOVE_OBSERVER:
-        nsAppShell::Get()->mObserversHash.Remove(curEvent->Characters());
-        break;
-
-    case AndroidGeckoEvent::ADD_OBSERVER:
-        nsAppShell::Get()->AddObserver(curEvent->Characters(), curEvent->Observer());
-        break;
-
-    case AndroidGeckoEvent::LOW_MEMORY:
-        // TODO hook in memory-reduction stuff for different levels here
-        if (curEvent->MetaState() >= AndroidGeckoEvent::MEMORY_PRESSURE_MEDIUM) {
-            nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
-            if (os) {
-                os->NotifyObservers(nullptr, "memory-pressure", u"low-memory");
-            }
-        }
-        break;
-
-    case AndroidGeckoEvent::TELEMETRY_HISTOGRAM_ADD:
-        // If the extras field is not empty then this is a keyed histogram.
-        if (!curEvent->CharactersExtra().IsVoid()) {
-            Telemetry::Accumulate(NS_ConvertUTF16toUTF8(curEvent->Characters()).get(),
-                                  NS_ConvertUTF16toUTF8(curEvent->CharactersExtra()),
-                                  curEvent->Count());
-        } else {
-            Telemetry::Accumulate(NS_ConvertUTF16toUTF8(curEvent->Characters()).get(),
-                                  curEvent->Count());
-        }
-        break;
-
-    case AndroidGeckoEvent::GAMEPAD_ADDREMOVE: {
-#ifdef MOZ_GAMEPAD
-            RefPtr<GamepadPlatformService> service;
-            service = GamepadPlatformService::GetParentService();
-            if (!service) {
-              break;
-            }
-            if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_ADDED) {
-              int svc_id = service->AddGamepad("android",
-                                               dom::GamepadMappingType::Standard,
-                                               dom::kStandardGamepadButtons,
-                                               dom::kStandardGamepadAxes);
-              java::GeckoAppShell::GamepadAdded(curEvent->ID(), svc_id);
-            } else if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_REMOVED) {
-              service->RemoveGamepad(curEvent->ID());
-            }
-#endif
-        break;
-    }
-
-    case AndroidGeckoEvent::GAMEPAD_DATA: {
-#ifdef MOZ_GAMEPAD
-            int id = curEvent->ID();
-            RefPtr<GamepadPlatformService> service;
-            service = GamepadPlatformService::GetParentService();
-            if (!service) {
-              break;
-            }
-            if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_BUTTON) {
-              service->NewButtonEvent(id, curEvent->GamepadButton(),
-                                      curEvent->GamepadButtonPressed(),
-                                      curEvent->GamepadButtonValue());
-            } else if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_AXES) {
-                int valid = curEvent->Flags();
-                const nsTArray<float>& values = curEvent->GamepadValues();
-                for (unsigned i = 0; i < values.Length(); i++) {
-                    if (valid & (1<<i)) {
-                      service->NewAxisMoveEvent(id, i, values[i]);
-                    }
-                }
-            }
-#endif
-        break;
-    }
-    case AndroidGeckoEvent::NOOP:
-        break;
-
-    default:
-        nsWindow::OnGlobalAndroidEvent(curEvent.get());
-        break;
-    }
-
-    EVLOG("nsAppShell: -- done event %p %d", (void*)curEvent.get(), curEvent->Type());
-}
-
-void
-nsAppShell::LegacyGeckoEvent::PostTo(mozilla::LinkedList<Event>& queue)
-{
-    {
-        EVLOG("nsAppShell::PostEvent %p %d", ae, ae->Type());
-        switch (ae->Type()) {
-        case AndroidGeckoEvent::VIEWPORT:
-            // Coalesce a previous viewport event with this one, while
-            // allowing coalescing to happen across native callback events.
-            for (Event* event = queue.getLast(); event;
-                    event = event->getPrevious())
-            {
-                if (event->HasSameTypeAs(this) &&
-                        static_cast<LegacyGeckoEvent*>(event)->ae->Type()
-                            == AndroidGeckoEvent::VIEWPORT) {
-                    // Found a previous viewport event; remove it.
-                    delete event;
-                    break;
-                }
-                NativeCallbackEvent callbackEvent(nullptr);
-                if (event->HasSameTypeAs(&callbackEvent)) {
-                    // Allow coalescing viewport events across callback events.
-                    continue;
-                }
-                // End of search for viewport events to coalesce.
-                break;
-            }
-            queue.insertBack(this);
-            break;
-
-        case AndroidGeckoEvent::MOTION_EVENT:
-        case AndroidGeckoEvent::APZ_INPUT_EVENT:
-            if (sAppShell->mAllowCoalescingTouches) {
-                Event* const event = queue.getLast();
-                if (event && event->HasSameTypeAs(this) && ae->CanCoalesceWith(
-                        static_cast<LegacyGeckoEvent*>(event)->ae.get())) {
-
-                    // consecutive motion-move events; drop the last one before adding the new one
-                    EVLOG("nsAppShell: Dropping old move event at %p in favour of new move event %p", event, ae);
-                    // Delete the event and remove from list.
-                    delete event;
-                }
-            }
-            queue.insertBack(this);
-            break;
-
-        default:
-            queue.insertBack(this);
-            break;
-        }
-    }
 }
 
 nsresult

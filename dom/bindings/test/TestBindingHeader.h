@@ -497,8 +497,12 @@ public:
   void PassByteString(const nsCString&);
   void PassNullableByteString(const nsCString&);
   void PassOptionalByteString(const Optional<nsCString>&);
+  void PassOptionalByteStringWithDefaultValue(const nsCString&);
   void PassOptionalNullableByteString(const Optional<nsCString>&);
+  void PassOptionalNullableByteStringWithDefaultValue(const nsCString&);
   void PassVariadicByteString(const Sequence<nsCString>&);
+  void PassOptionalUnionByteString(const Optional<ByteStringOrLong>&);
+  void PassOptionalUnionByteStringWithDefaultValue(const ByteStringOrLong&);
 
   // USVString types
   void PassUSVS(const nsAString&);
@@ -669,7 +673,7 @@ public:
   //void PassUnionWithInterfacesAndNullable(const TestInterfaceOrNullOrTestExternalInterface& arg);
   void PassUnionWithArrayBuffer(const ArrayBufferOrLong&);
   void PassUnionWithString(JSContext*, const StringOrObject&);
-  //void PassUnionWithEnum(JSContext*, const TestEnumOrObject&);
+  void PassUnionWithEnum(JSContext*, const SupportedTypeOrObject&);
   //void PassUnionWithCallback(JSContext*, const TestCallbackOrLong&);
   void PassUnionWithObject(JSContext*, const ObjectOrLong&);
 
@@ -686,7 +690,12 @@ public:
   void PassUnionWithDefaultValue11(const UnrestrictedFloatOrString& arg);
   void PassUnionWithDefaultValue12(const UnrestrictedFloatOrString& arg);
   void PassUnionWithDefaultValue13(const UnrestrictedFloatOrString& arg);
-  void PassUnionWithDefaultValue14(const UnrestrictedFloatOrString& arg);
+  void PassUnionWithDefaultValue14(const DoubleOrByteString& arg);
+  void PassUnionWithDefaultValue15(const DoubleOrByteString& arg);
+  void PassUnionWithDefaultValue16(const DoubleOrByteString& arg);
+  void PassUnionWithDefaultValue17(const DoubleOrSupportedType& arg);
+  void PassUnionWithDefaultValue18(const DoubleOrSupportedType& arg);
+  void PassUnionWithDefaultValue19(const DoubleOrSupportedType& arg);
 
   void PassNullableUnionWithDefaultValue1(const Nullable<DoubleOrString>& arg);
   void PassNullableUnionWithDefaultValue2(const Nullable<DoubleOrString>& arg);
@@ -700,6 +709,14 @@ public:
   void PassNullableUnionWithDefaultValue10(const Nullable<UnrestrictedFloatOrString>& arg);
   void PassNullableUnionWithDefaultValue11(const Nullable<UnrestrictedFloatOrString>& arg);
   void PassNullableUnionWithDefaultValue12(const Nullable<UnrestrictedFloatOrString>& arg);
+  void PassNullableUnionWithDefaultValue13(const Nullable<DoubleOrByteString>& arg);
+  void PassNullableUnionWithDefaultValue14(const Nullable<DoubleOrByteString>& arg);
+  void PassNullableUnionWithDefaultValue15(const Nullable<DoubleOrByteString>& arg);
+  void PassNullableUnionWithDefaultValue16(const Nullable<DoubleOrByteString>& arg);
+  void PassNullableUnionWithDefaultValue17(const Nullable<DoubleOrSupportedType>& arg);
+  void PassNullableUnionWithDefaultValue18(const Nullable<DoubleOrSupportedType>& arg);
+  void PassNullableUnionWithDefaultValue19(const Nullable<DoubleOrSupportedType>& arg);
+  void PassNullableUnionWithDefaultValue20(const Nullable<DoubleOrSupportedType>& arg);
 
   void PassSequenceOfUnions(const Sequence<OwningCanvasPatternOrCanvasGradient>&);
   void PassSequenceOfUnions2(JSContext*, const Sequence<OwningObjectOrLong>&);
@@ -1089,7 +1106,9 @@ private:
   void PassByteString(nsCString&) = delete;
   void PassNullableByteString(nsCString&) = delete;
   void PassOptionalByteString(Optional<nsCString>&) = delete;
+  void PassOptionalByteStringWithDefaultValue(nsCString&) = delete;
   void PassOptionalNullableByteString(Optional<nsCString>&) = delete;
+  void PassOptionalNullableByteStringWithDefaultValue(nsCString&) = delete;
   void PassVariadicByteString(Sequence<nsCString>&) = delete;
 
   // Make sure dictionary arguments are always const

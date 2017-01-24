@@ -14,8 +14,9 @@
 #include "gfxPrefs.h"                   // for gfxPrefs
 #include "mozilla/StyleAnimationValue.h" // for StyleAnimationValue, etc
 #include "mozilla/WidgetUtils.h"        // for ComputeTransformForRotation
-#include "mozilla/dom/KeyframeEffect.h" // for KeyframeEffectReadOnly
+#include "mozilla/dom/KeyframeEffectReadOnly.h"
 #include "mozilla/dom/AnimationEffectReadOnlyBinding.h" // for dom::FillMode
+#include "mozilla/dom/KeyframeEffectBinding.h" // for dom::IterationComposite
 #include "mozilla/gfx/BaseRect.h"       // for BaseRect
 #include "mozilla/gfx/Point.h"          // for RoundedToInt, PointTyped
 #include "mozilla/gfx/Rect.h"           // for RoundedToInt, RectTyped
@@ -495,8 +496,8 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aTransformedSubtreeRoo
         // subtree root space, and then the inverse of the new cumulative transform
         // to bring it back to layer space.
         LayerPoint transformedAnchor = ViewAs<LayerPixel>(
-            newCumulativeTransform.Inverse() *
-            (oldCumulativeTransform * offsetAnchor.ToUnknownPoint()));
+            newCumulativeTransform.Inverse().TransformPoint(
+              (oldCumulativeTransform.TransformPoint(offsetAnchor.ToUnknownPoint()))));
 
         // We want to translate the layer by the difference between |transformedAnchor|
         // and |anchor|. To achieve this, we will add a translation to the layer's
@@ -553,16 +554,48 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aTransformedSubtreeRoo
 }
 
 static void
-SampleValue(float aPortion, Animation& aAnimation, StyleAnimationValue& aStart,
-            StyleAnimationValue& aEnd, Animatable* aValue, Layer* aLayer)
+SampleValue(float aPortion, Animation& aAnimation,
+            const StyleAnimationValue& aStart, const StyleAnimationValue& aEnd,
+            const StyleAnimationValue& aLastValue, uint64_t aCurrentIteration,
+            Animatable* aValue, Layer* aLayer)
 {
-  StyleAnimationValue interpolatedValue;
   NS_ASSERTION(aStart.GetUnit() == aEnd.GetUnit() ||
                aStart.GetUnit() == StyleAnimationValue::eUnit_None ||
                aEnd.GetUnit() == StyleAnimationValue::eUnit_None,
                "Must have same unit");
-  StyleAnimationValue::Interpolate(aAnimation.property(), aStart, aEnd,
-                                aPortion, interpolatedValue);
+
+  StyleAnimationValue startValue = aStart;
+  StyleAnimationValue endValue = aEnd;
+  // Iteration composition for accumulate
+  if (static_cast<dom::IterationCompositeOperation>
+        (aAnimation.iterationComposite()) ==
+          dom::IterationCompositeOperation::Accumulate &&
+      aCurrentIteration > 0) {
+    // FIXME: Bug 1293492: Add a utility function to calculate both of
+    // below StyleAnimationValues.
+    DebugOnly<bool> accumulateResult =
+      StyleAnimationValue::Accumulate(aAnimation.property(),
+                                      startValue,
+                                      aLastValue,
+                                      aCurrentIteration);
+    MOZ_ASSERT(accumulateResult, "could not accumulate value");
+    accumulateResult =
+      StyleAnimationValue::Accumulate(aAnimation.property(),
+                                      endValue,
+                                      aLastValue,
+                                      aCurrentIteration);
+    MOZ_ASSERT(accumulateResult, "could not accumulate value");
+  }
+
+  StyleAnimationValue interpolatedValue;
+  // This should never fail because we only pass transform and opacity values
+  // to the compositor and they should never fail to interpolate.
+  DebugOnly<bool> uncomputeResult =
+    StyleAnimationValue::Interpolate(aAnimation.property(),
+                                     startValue, endValue,
+                                     aPortion, interpolatedValue);
+  MOZ_ASSERT(uncomputeResult, "could not uncompute value");
+
   if (aAnimation.property() == eCSSProperty_opacity) {
     *aValue = interpolatedValue.GetFloatValue();
     return;
@@ -651,8 +684,9 @@ SampleAnimations(Layer* aLayer, TimeStamp aPoint)
               animation.easingFunction());
 
           ComputedTiming computedTiming =
-            dom::KeyframeEffectReadOnly::GetComputedTimingAt(
-              Nullable<TimeDuration>(elapsedDuration), timing);
+            dom::AnimationEffectReadOnly::GetComputedTimingAt(
+              Nullable<TimeDuration>(elapsedDuration), timing,
+              animation.playbackRate());
 
           MOZ_ASSERT(!computedTiming.mProgress.IsNull(),
                      "iteration progress should not be null");
@@ -677,13 +711,18 @@ SampleAnimations(Layer* aLayer, TimeStamp aPoint)
 
           // interpolate the property
           Animatable interpolatedValue;
-          SampleValue(portion, animation, animData.mStartValues[segmentIndex],
-                      animData.mEndValues[segmentIndex], &interpolatedValue, layer);
+          SampleValue(portion, animation,
+                      animData.mStartValues[segmentIndex],
+                      animData.mEndValues[segmentIndex],
+                      animData.mEndValues.LastElement(),
+                      computedTiming.mCurrentIteration,
+                      &interpolatedValue, layer);
           LayerComposite* layerComposite = layer->AsLayerComposite();
           switch (animation.property()) {
           case eCSSProperty_opacity:
           {
             layerComposite->SetShadowOpacity(interpolatedValue.get_float());
+            layerComposite->SetShadowOpacitySetByAnimation(true);
             break;
           }
           case eCSSProperty_transform:
@@ -793,7 +832,7 @@ ExpandRootClipRect(Layer* aLayer, const ScreenMargin& aFixedLayerMargins)
   }
 }
 
-#ifdef MOZ_ANDROID_APZ
+#ifdef MOZ_WIDGET_ANDROID
 static void
 MoveScrollbarForLayerMargin(Layer* aRoot, FrameMetrics::ViewID aRootScrollId,
                             const ScreenMargin& aFixedLayerMargins)
@@ -930,7 +969,7 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
           const ScrollMetadata& scrollMetadata = layer->GetScrollMetadata(i);
           const FrameMetrics& metrics = scrollMetadata.GetMetrics();
 
-#if defined(MOZ_ANDROID_APZ)
+#if defined(MOZ_WIDGET_ANDROID)
           // If we find a metrics which is the root content doc, use that. If not, use
           // the root layer. Since this function recurses on children first we should
           // only end up using the root layer if the entire tree was devoid of a
@@ -1506,7 +1545,7 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
     // in Gecko and partially in Java.
     bool foundRoot = false;
     if (ApplyAsyncContentTransformToTree(root, &foundRoot)) {
-#if defined(MOZ_ANDROID_APZ)
+#if defined(MOZ_WIDGET_ANDROID)
       MOZ_ASSERT(foundRoot);
       if (foundRoot && mFixedLayerMargins != ScreenMargin()) {
         MoveScrollbarForLayerMargin(root, mRootScrollableId, mFixedLayerMargins);

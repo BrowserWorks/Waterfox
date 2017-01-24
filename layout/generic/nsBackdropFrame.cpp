@@ -8,6 +8,8 @@
 
 #include "nsBackdropFrame.h"
 
+#include "nsDisplayList.h"
+
 using namespace mozilla;
 
 NS_IMPL_FRAMEARENA_HELPERS(nsBackdropFrame)
@@ -45,18 +47,8 @@ nsBackdropFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   // none or contents so that we can respond to style change on it. To
   // support those values, we skip painting ourselves in those cases.
   auto display = StyleDisplay()->mDisplay;
-  if (display == NS_STYLE_DISPLAY_NONE ||
-      display == NS_STYLE_DISPLAY_CONTENTS) {
-    return;
-  }
-
-  // The WebVR specific render path in nsContainerLayerComposite
-  // results in an alternating frame strobing effect when an nsBackdropFrame is
-  // rendered.
-  // Currently, VR content is composed of a fullscreen canvas element that
-  // is expected to cover the entire viewport so a backdrop should not
-  // be necessary.
-  if (GetStateBits() & NS_FRAME_HAS_VR_CONTENT) {
+  if (display == mozilla::StyleDisplay::None ||
+      display == mozilla::StyleDisplay::Contents) {
     return;
   }
 

@@ -359,6 +359,7 @@ Sync11Service.prototype = {
     }
 
     Svc.Obs.add("weave:service:setup-complete", this);
+    Svc.Obs.add("sync:collection_changed", this); // Pulled from FxAccountsCommon
     Svc.Prefs.observe("engine.", this);
 
     this.scheduler = new SyncScheduler(this);
@@ -485,6 +486,13 @@ Sync11Service.prototype = {
 
   observe: function observe(subject, topic, data) {
     switch (topic) {
+      // Ideally this observer should be in the SyncScheduler, but it would require
+      // some work to know about the sync specific engines. We should move this there once it does.
+      case "sync:collection_changed":
+        if (data.includes("clients")) {
+          this.sync([]); // [] = clients collection only
+        }
+        break;
       case "weave:service:setup-complete":
         let status = this._checkSetup();
         if (status != STATUS_DISABLED && status != CLIENT_NOT_CONFIGURED)
@@ -1056,10 +1064,45 @@ Sync11Service.prototype = {
     }
   },
 
+  // Note: returns false if we failed for a reason other than the server not yet
+  // supporting the api.
+  _fetchServerConfiguration() {
+    // This is similar to _fetchInfo, but with different error handling.
+
+    let infoURL = this.userBaseURL + "info/configuration";
+    this._log.debug("Fetching server configuration", infoURL);
+    let configResponse;
+    try {
+      configResponse = this.resource(infoURL).get();
+    } catch (ex) {
+      // This is probably a network or similar error.
+      this._log.warn("Failed to fetch info/configuration", ex);
+      this.errorHandler.checkServerError(ex);
+      return false;
+    }
+
+    if (configResponse.status == 404) {
+      // This server doesn't support the URL yet - that's OK.
+      this._log.debug("info/configuration returned 404 - using default upload semantics");
+    } else if (configResponse.status != 200) {
+      this._log.warn(`info/configuration returned ${configResponse.status} - using default configuration`);
+      this.errorHandler.checkServerError(configResponse);
+      return false;
+    } else {
+      this.serverConfiguration = configResponse.obj;
+    }
+    this._log.trace("info/configuration for this server", this.serverConfiguration);
+    return true;
+  },
+
   // Stuff we need to do after login, before we can really do
   // anything (e.g. key setup).
   _remoteSetup: function _remoteSetup(infoResponse) {
     let reset = false;
+
+    if (!this._fetchServerConfiguration()) {
+      return false;
+    }
 
     this._log.debug("Fetching global metadata record");
     let meta = this.recordManager.get(this.metaURL);
@@ -1508,6 +1551,7 @@ Sync11Service.prototype = {
    */
   wipeServer: function wipeServer(collections) {
     let response;
+    let histogram = Services.telemetry.getHistogramById("WEAVE_WIPE_SERVER_SUCCEEDED");
     if (!collections) {
       // Strip the trailing slash.
       let res = this.resource(this.storageURL.slice(0, -1));
@@ -1516,13 +1560,16 @@ Sync11Service.prototype = {
         response = res.delete();
       } catch (ex) {
         this._log.debug("Failed to wipe server", ex);
+        histogram.add(false);
         throw ex;
       }
       if (response.status != 200 && response.status != 404) {
         this._log.debug("Aborting wipeServer. Server responded with " +
                         response.status + " response for " + this.storageURL);
+        histogram.add(false);
         throw response;
       }
+      histogram.add(true);
       return response.headers["x-weave-timestamp"];
     }
 
@@ -1533,12 +1580,14 @@ Sync11Service.prototype = {
         response = this.resource(url).delete();
       } catch (ex) {
         this._log.debug("Failed to wipe '" + name + "' collection", ex);
+        histogram.add(false);
         throw ex;
       }
 
       if (response.status != 200 && response.status != 404) {
         this._log.debug("Aborting wipeServer. Server responded with " +
                         response.status + " response for " + url);
+        histogram.add(false);
         throw response;
       }
 
@@ -1546,7 +1595,7 @@ Sync11Service.prototype = {
         timestamp = response.headers["x-weave-timestamp"];
       }
     }
-
+    histogram.add(true);
     return timestamp;
   },
 

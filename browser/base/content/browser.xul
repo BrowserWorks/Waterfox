@@ -152,14 +152,7 @@
            noautofocus="true"
            hidden="true"
            flip="none"
-           level="parent">
-#ifdef NIGHTLY_BUILD
-      <hbox id="urlbar-search-footer" flex="1" align="stretch" pack="end">
-        <button id="urlbar-search-settings" label="&changeSearchSettings.button;"
-                oncommand="BrowserUITelemetry.countSearchSettingsEvent('urlbar'); openPreferences('paneSearch')"/>
-      </hbox>
-#endif
-    </panel>
+           level="parent"/>
 
     <!-- for select dropdowns. The menupopup is what shows the list of options,
          and the popuponly menulist makes things like the menuactive attributes
@@ -167,7 +160,7 @@
          popuponly menulist to be its immediate parent. -->
     <menulist popuponly="true" id="ContentSelectDropdown" hidden="true">
       <menupopup rolluponmousewheel="true"
-                 activateontab="true"
+                 activateontab="true" position="after_start"
 #ifdef XP_WIN
                  consumeoutsideclicks="false" ignorekeys="handled"
 #endif
@@ -184,6 +177,7 @@
            orient="vertical"
            ignorekeys="true"
            hidden="true"
+           tabspecific="true"
            onpopupshown="StarUI.panelShown(event);"
            aria-labelledby="editBookmarkPanelTitle">
       <row id="editBookmarkPanelHeader" align="center" hidden="true">
@@ -277,23 +271,6 @@
       </hbox>
       <hbox id="share-container" flex="1"/>
     </panel>
-
-    <panel id="social-notification-panel"
-           class="social-panel"
-           type="arrow"
-           hidden="true"
-           noautofocus="true"/>
-    <panel id="social-flyout-panel"
-           class="social-panel"
-           onpopupshown="SocialFlyout.onShown()"
-           onpopuphidden="SocialFlyout.onHidden()"
-           side="right"
-           type="arrow"
-           hidden="true"
-           flip="slide"
-           rolluponmousewheel="true"
-           noautofocus="true"
-           position="topcenter topright"/>
 
     <menupopup id="toolbar-context-menu"
                onpopupshowing="onViewToolbarsPopupShowing(event, document.getElementById('viewToolbarsMenuSeparator'));">
@@ -710,66 +687,54 @@
                 <image id="identity-icon"
                        consumeanchor="identity-box"
                        onclick="PageProxyClickHandler(event);"/>
-                <box id="blocked-permissions-container" align="center" tooltiptext="">
-                  <image data-permission-id="geo" class="notification-anchor-icon geo-icon blocked" role="button"
-                         aria-label="&urlbar.geolocationNotificationAnchor.label;"/>
-                  <image data-permission-id="desktop-notification" class="notification-anchor-icon desktop-notification-icon blocked" role="button"
-                         aria-label="&urlbar.webNotsNotificationAnchor3.label;"/>
-                  <image data-permission-id="camera" class="notification-anchor-icon camera-icon blocked" role="button"
-                         aria-label="&urlbar.webRTCShareDevicesNotificationAnchor.label;"/>
-                  <image data-permission-id="indexedDB" class="notification-anchor-icon indexedDB-icon blocked" role="button"
-                         aria-label="&urlbar.indexedDBNotificationAnchor.label;"/>
-                  <image data-permission-id="microphone" class="notification-anchor-icon microphone-icon blocked" role="button"
-                         aria-label="&urlbar.webRTCShareMicrophoneNotificationAnchor.label;"/>
-                  <image data-permission-id="screen" class="notification-anchor-icon screen-icon blocked" role="button"
-                         aria-label="&urlbar.webRTCShareScreenNotificationAnchor.label;"/>
-                  <image data-permission-id="pointerLock" class="notification-anchor-icon pointerLock-icon blocked" role="button"
-                         aria-label="&urlbar.pointerLockNotificationAnchor.label;"/>
+                <image id="sharing-icon" mousethrough="always"/>
+                <box id="blocked-permissions-container" align="center">
+                  <image data-permission-id="geo" class="blocked-permission-icon geo-icon" role="button"
+                         tooltiptext="&urlbar.geolocationBlocked.tooltip;"/>
+                  <image data-permission-id="desktop-notification" class="blocked-permission-icon desktop-notification-icon" role="button"
+                         tooltiptext="&urlbar.webNotificationsBlocked.tooltip;"/>
+                  <image data-permission-id="camera" class="blocked-permission-icon camera-icon" role="button"
+                         tooltiptext="&urlbar.cameraBlocked.tooltip;"/>
+                  <image data-permission-id="indexedDB" class="blocked-permission-icon indexedDB-icon" role="button"
+                         tooltiptext="&urlbar.indexedDBBlocked.tooltip;"/>
+                  <image data-permission-id="microphone" class="blocked-permission-icon microphone-icon" role="button"
+                         tooltiptext="&urlbar.microphoneBlocked.tooltip;"/>
+                  <image data-permission-id="screen" class="blocked-permission-icon screen-icon" role="button"
+                         tooltiptext="&urlbar.screenBlocked.tooltip;"/>
                 </box>
                 <box id="notification-popup-box"
                      hidden="true"
-                     tooltiptext=""
                      onmouseover="document.getElementById('identity-icon').classList.add('no-hover');"
                      onmouseout="document.getElementById('identity-icon').classList.remove('no-hover');"
                      align="center">
                   <image id="default-notification-icon" class="notification-anchor-icon" role="button"
-                         aria-label="&urlbar.defaultNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.defaultNotificationAnchor.tooltip;"/>
                   <image id="geo-notification-icon" class="notification-anchor-icon geo-icon" role="button"
-                         aria-label="&urlbar.geolocationNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.geolocationNotificationAnchor.tooltip;"/>
                   <image id="addons-notification-icon" class="notification-anchor-icon install-icon" role="button"
-                         aria-label="&urlbar.addonsNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.addonsNotificationAnchor.tooltip;"/>
                   <image id="indexedDB-notification-icon" class="notification-anchor-icon indexedDB-icon" role="button"
-                         aria-label="&urlbar.indexedDBNotificationAnchor.label;"/>
-                  <image id="login-fill-notification-icon" class="notification-anchor-icon login-icon" role="button"
-                         aria-label="&urlbar.loginFillNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.indexedDBNotificationAnchor.tooltip;"/>
                   <image id="password-notification-icon" class="notification-anchor-icon login-icon" role="button"
-                         aria-label="&urlbar.passwordNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.passwordNotificationAnchor.tooltip;"/>
                   <image id="plugins-notification-icon" class="notification-anchor-icon plugin-icon" role="button"
-                         aria-label="&urlbar.pluginsNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.pluginsNotificationAnchor.tooltip;"/>
                   <image id="web-notifications-notification-icon" class="notification-anchor-icon desktop-notification-icon" role="button"
-                         aria-label="&urlbar.webNotsNotificationAnchor3.label;"/>
+                         tooltiptext="&urlbar.webNotificationAnchor.tooltip;"/>
                   <image id="webRTC-shareDevices-notification-icon" class="notification-anchor-icon camera-icon" role="button"
-                         aria-label="&urlbar.webRTCShareDevicesNotificationAnchor.label;"/>
-                  <image id="webRTC-sharingDevices-notification-icon" class="notification-anchor-icon camera-icon in-use" role="button"
-                         aria-label="&urlbar.webRTCSharingDevicesNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.webRTCShareDevicesNotificationAnchor.tooltip;"/>
                   <image id="webRTC-shareMicrophone-notification-icon" class="notification-anchor-icon microphone-icon" role="button"
-                         aria-label="&urlbar.webRTCShareMicrophoneNotificationAnchor.label;"/>
-                  <image id="webRTC-sharingMicrophone-notification-icon" class="notification-anchor-icon microphone-icon in-use" role="button"
-                         aria-label="&urlbar.webRTCSharingMicrophoneNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.webRTCShareMicrophoneNotificationAnchor.tooltip;"/>
                   <image id="webRTC-shareScreen-notification-icon" class="notification-anchor-icon screen-icon" role="button"
-                         aria-label="&urlbar.webRTCShareScreenNotificationAnchor.label;"/>
-                  <image id="webRTC-sharingScreen-notification-icon" class="notification-anchor-icon screen-icon in-use" role="button"
-                         aria-label="&urlbar.webRTCSharingScreenNotificationAnchor.label;"/>
-                  <image id="pointerLock-notification-icon" class="notification-anchor-icon pointerLock-icon" role="button"
-                         aria-label="&urlbar.pointerLockNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.webRTCShareScreenNotificationAnchor.tooltip;"/>
                   <image id="servicesInstall-notification-icon" class="notification-anchor-icon service-icon" role="button"
-                         aria-label="&urlbar.servicesNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.servicesNotificationAnchor.tooltip;"/>
                   <image id="translate-notification-icon" class="notification-anchor-icon translation-icon" role="button"
-                         aria-label="&urlbar.translateNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.translateNotificationAnchor.tooltip;"/>
                   <image id="translated-notification-icon" class="notification-anchor-icon translation-icon in-use" role="button"
-                         aria-label="&urlbar.translatedNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.translatedNotificationAnchor.tooltip;"/>
                   <image id="eme-notification-icon" class="notification-anchor-icon drm-icon" role="button"
-                         aria-label="&urlbar.emeNotificationAnchor.label;"/>
+                         tooltiptext="&urlbar.emeNotificationAnchor.tooltip;"/>
                 </box>
                 <image id="tracking-protection-icon"/>
                 <image id="connection-icon"/>
@@ -791,6 +756,10 @@
                        class="urlbar-icon"
                        hidden="true"
                        onclick="ReaderParent.buttonClick(event);"/>
+                <toolbarbutton id="urlbar-zoom-button"
+                       onclick="FullZoom.reset();"
+                       tooltiptext="&urlbar.zoomReset.tooltip;"
+                       hidden="true"/>
               </hbox>
               <hbox id="userContext-icons" hidden="true">
                 <label id="userContext-label"/>
@@ -1072,7 +1041,7 @@
           <image id="sidebar-throbber"/>
           <toolbarbutton class="close-icon tabbable" tooltiptext="&sidebarCloseButton.tooltip;" oncommand="SidebarUI.hide();"/>
         </sidebarheader>
-        <browser id="sidebar" flex="1" autoscroll="false" disablehistory="true"
+        <browser id="sidebar" flex="1" autoscroll="false" disablehistory="true" disablefullscreen="true"
                   style="min-width: 14em; width: 18em; max-width: 36em;" tooltip="aHTMLTooltip"/>
       </vbox>
 
@@ -1085,56 +1054,6 @@
                     contentcontextmenu="contentAreaContextMenu"
                     autocompletepopup="PopupAutoComplete"
                     selectmenulist="ContentSelectDropdown"/>
-        <chatbar id="pinnedchats" layer="true" mousethrough="always" hidden="true"/>
-      </vbox>
-      <splitter id="social-sidebar-splitter"
-                class="chromeclass-extrachrome sidebar-splitter"
-                observes="socialSidebarBroadcaster"/>
-      <vbox id="social-sidebar-box"
-            class="chromeclass-extrachrome"
-            observes="socialSidebarBroadcaster"
-            persist="width">
-
-        <sidebarheader id="social-sidebar-header" class="sidebar-header" align="center">
-          <image id="social-sidebar-favico"/>
-          <label id="social-sidebar-title" class="sidebar-title" persist="value" flex="1" crop="end" control="sidebar"/>
-          <toolbarbutton id="social-sidebar-button"
-                         class="toolbarbutton-1"
-                         type="menu">
-            <menupopup id="social-statusarea-popup" position="after_end">
-              <menuitem class="social-toggle-sidebar-menuitem"
-                        type="checkbox"
-                        autocheck="false"
-                        command="Social:ToggleSidebar"
-                        label="&social.toggleSidebar.label;"
-                        accesskey="&social.toggleSidebar.accesskey;"/>
-              <menuitem class="social-toggle-notifications-menuitem"
-                        type="checkbox"
-                        autocheck="false"
-                        command="Social:ToggleNotifications"
-                        label="&social.toggleNotifications.label;"
-                        accesskey="&social.toggleNotifications.accesskey;"/>
-              <menuseparator/>
-              <menuseparator class="social-provider-menu" hidden="true"/>
-              <menuitem class="social-addons-menuitem" command="Social:Addons"
-                        label="&social.addons.label;"/>
-              <menuitem label="&social.learnMore.label;"
-                        accesskey="&social.learnMore.accesskey;"
-                        oncommand="SocialUI.showLearnMore();"/>
-            </menupopup>
-          </toolbarbutton>
-        </sidebarheader>
-
-        <browser id="social-sidebar-browser"
-                 type="content"
-                 context="contentAreaContextMenu"
-                 message="true"
-                 messagemanagergroup="social"
-                 disableglobalhistory="true"
-                 tooltip="aHTMLTooltip"
-                 popupnotificationanchor="social-sidebar-favico"
-                 flex="1"
-                 style="min-width: 14em; width: 18em; max-width: 36em;"/>
       </vbox>
       <vbox id="browser-border-end" hidden="true" layer="true"/>
     </hbox>

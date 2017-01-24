@@ -8,13 +8,23 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Task",
+                                  "resource://gre/modules/Task.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
+                                  "resource://gre/modules/Timer.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "styleSheetService",
                                    "@mozilla.org/content/style-sheet-service;1",
                                    "nsIStyleSheetService");
 
+XPCOMUtils.defineLazyGetter(this, "colorUtils", () => {
+  return require("devtools/shared/css/color").colorUtils;
+});
+
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
+
+const POPUP_LOAD_TIMEOUT_MS = 200;
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -81,24 +91,24 @@ XPCOMUtils.defineLazyGetter(this, "standaloneStylesheets", () => {
   return stylesheets;
 });
 
+/* eslint-disable mozilla/balanced-listeners */
+extensions.on("page-shutdown", (type, context) => {
+  if (context.type == "popup" && context.active) {
+    context.contentWindow.close();
+  }
+});
+/* eslint-enable mozilla/balanced-listeners */
+
 class BasePopup {
-  constructor(extension, viewNode, popupURL, browserStyle) {
-    let popupURI = Services.io.newURI(popupURL, null, extension.baseURI);
-
-    Services.scriptSecurityManager.checkLoadURIWithPrincipal(
-      extension.principal, popupURI,
-      Services.scriptSecurityManager.DISALLOW_SCRIPT);
-
+  constructor(extension, viewNode, popupURL, browserStyle, fixedWidth = false) {
     this.extension = extension;
-    this.popupURI = popupURI;
+    this.popupURL = popupURL;
     this.viewNode = viewNode;
     this.browserStyle = browserStyle;
     this.window = viewNode.ownerGlobal;
-
-    this.panel = this.viewNode;
-    while (this.panel.localName != "panel") {
-      this.panel = this.panel.parentNode;
-    }
+    this.destroyed = false;
+    this.fixedWidth = fixedWidth;
+    this.ignoreResizes = true;
 
     this.contentReady = new Promise(resolve => {
       this._resolveContentReady = resolve;
@@ -106,24 +116,44 @@ class BasePopup {
 
     this.viewNode.addEventListener(this.DESTROY_EVENT, this);
 
+    let doc = viewNode.ownerDocument;
+    let arrowContent = doc.getAnonymousElementByAttribute(this.panel, "class", "panel-arrowcontent");
+    this.borderColor = doc.defaultView.getComputedStyle(arrowContent).borderTopColor;
+
     this.browser = null;
-    this.browserReady = this.createBrowser(viewNode, popupURI);
+    this.browserLoaded = new Promise((resolve, reject) => {
+      this.browserLoadedDeferred = {resolve, reject};
+    });
+    this.browserReady = this.createBrowser(viewNode, popupURL);
   }
 
   destroy() {
-    this.browserReady.then(() => {
-      this.browser.removeEventListener("DOMWindowCreated", this, true);
-      this.browser.removeEventListener("load", this, true);
-      this.browser.removeEventListener("DOMTitleChanged", this, true);
-      this.browser.removeEventListener("DOMWindowClose", this, true);
-      this.browser.removeEventListener("MozScrolledAreaChanged", this, true);
+    this.destroyed = true;
+    this.browserLoadedDeferred.reject(new Error("Popup destroyed"));
+    return this.browserReady.then(() => {
+      this.destroyBrowser(this.browser);
+      this.browser.remove();
+
       this.viewNode.removeEventListener(this.DESTROY_EVENT, this);
       this.viewNode.style.maxHeight = "";
-      this.browser.remove();
+
+      if (this.panel) {
+        this.panel.style.removeProperty("--panel-arrowcontent-background");
+        this.panel.style.removeProperty("--panel-arrow-image-vertical");
+      }
 
       this.browser = null;
       this.viewNode = null;
     });
+  }
+
+  destroyBrowser(browser) {
+    browser.removeEventListener("DOMWindowCreated", this, true);
+    browser.removeEventListener("load", this, true);
+    browser.removeEventListener("DOMContentLoaded", this, true);
+    browser.removeEventListener("DOMTitleChanged", this, true);
+    browser.removeEventListener("DOMWindowClose", this, true);
+    browser.removeEventListener("MozScrolledAreaChanged", this, true);
   }
 
   // Returns the name of the event fired on `viewNode` when the popup is being
@@ -132,8 +162,12 @@ class BasePopup {
     throw new Error("Not implemented");
   }
 
-  get fixedWidth() {
-    return false;
+  get panel() {
+    let panel = this.viewNode;
+    while (panel && panel.localName != "panel") {
+      panel = panel.parentNode;
+    }
+    return panel;
   }
 
   handleEvent(event) {
@@ -172,6 +206,11 @@ class BasePopup {
         this.viewNode.setAttribute("aria-label", this.browser.contentTitle);
         break;
 
+      case "DOMContentLoaded":
+        this.browserLoadedDeferred.resolve();
+        this.resizeBrowser(true);
+        break;
+
       case "load":
         // We use a capturing listener, so we get this event earlier than any
         // load listeners in the content page. Resizing after a timeout ensures
@@ -179,7 +218,7 @@ class BasePopup {
         // (unless someone spins the event loop, anyway), and hopefully after
         // the content has made any modifications.
         Promise.resolve().then(() => {
-          this.resizeBrowser();
+          this.resizeBrowser(true);
         });
 
         // Mutation observer to make sure the panel shrinks when the content does.
@@ -198,7 +237,7 @@ class BasePopup {
     }
   }
 
-  createBrowser(viewNode, popupURI) {
+  createBrowser(viewNode, popupURL = null) {
     let document = viewNode.ownerDocument;
     this.browser = document.createElementNS(XUL_NS, "browser");
     this.browser.setAttribute("type", "content");
@@ -219,6 +258,20 @@ class BasePopup {
 
     viewNode.appendChild(this.browser);
 
+    let initBrowser = browser => {
+      browser.addEventListener("DOMWindowCreated", this, true);
+      browser.addEventListener("load", this, true);
+      browser.addEventListener("DOMContentLoaded", this, true);
+      browser.addEventListener("DOMTitleChanged", this, true);
+      browser.addEventListener("DOMWindowClose", this, true);
+      browser.addEventListener("MozScrolledAreaChanged", this, true);
+    };
+
+    if (!popupURL) {
+      initBrowser(this.browser);
+      return this.browser;
+    }
+
     return new Promise(resolve => {
       // The first load event is for about:blank.
       // We can't finish setting up the browser until the binding has fully
@@ -229,23 +282,29 @@ class BasePopup {
       };
       this.browser.addEventListener("load", loadListener, true);
     }).then(() => {
+      initBrowser(this.browser);
+
       let {contentWindow} = this.browser;
 
       contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                    .getInterface(Ci.nsIDOMWindowUtils)
                    .allowScriptsToClose();
 
-      this.browser.setAttribute("src", popupURI.spec);
-
-      this.browser.addEventListener("DOMWindowCreated", this, true);
-      this.browser.addEventListener("load", this, true);
-      this.browser.addEventListener("DOMTitleChanged", this, true);
-      this.browser.addEventListener("DOMWindowClose", this, true);
-      this.browser.addEventListener("MozScrolledAreaChanged", this, true);
+      this.browser.setAttribute("src", popupURL);
     });
   }
+
   // Resizes the browser to match the preferred size of the content (debounced).
-  resizeBrowser() {
+  resizeBrowser(ignoreThrottling = false) {
+    if (this.ignoreResizes) {
+      return;
+    }
+
+    if (ignoreThrottling && this.resizeTimeout) {
+      this.window.clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = null;
+    }
+
     if (this.resizeTimeout == null) {
       this.resizeTimeout = this.window.setTimeout(() => {
         try {
@@ -254,14 +313,26 @@ class BasePopup {
           this.resizeTimeout = null;
         }
       }, RESIZE_TIMEOUT);
-      this._resizeBrowser(false);
+
+      this._resizeBrowser();
     }
   }
 
-  _resizeBrowser(clearTimeout = true) {
-    if (!this.browser) {
+  _resizeBrowser() {
+    let doc = this.browser && this.browser.contentDocument;
+    if (!doc || !doc.documentElement) {
       return;
     }
+
+    let root = doc.documentElement;
+    let body = doc.body;
+    if (!body || doc.compatMode == "BackCompat") {
+      // In quirks mode, the root element is used as the scroll frame, and the
+      // body lies about its scroll geometry, and returns the values for the
+      // root instead.
+      body = root;
+    }
+
 
     if (this.fixedWidth) {
       // If we're in a fixed-width area (namely a slide-in subview of the main
@@ -269,20 +340,6 @@ class BasePopup {
       // preferred height of the content document's root scrollable element at the
       // current width, rather than the complete preferred dimensions of the
       // content window.
-
-      let doc = this.browser.contentDocument;
-      if (!doc || !doc.documentElement) {
-        return;
-      }
-
-      let root = doc.documentElement;
-      let body = doc.body;
-      if (!body || doc.compatMode == "BackCompat") {
-        // In quirks mode, the root element is used as the scroll frame, and the
-        // body lies about its scroll geometry, and returns the values for the
-        // root instead.
-        body = root;
-      }
 
       // Compensate for any offsets (margin, padding, ...) between the scroll
       // area of the body and the outer height of the document.
@@ -307,6 +364,31 @@ class BasePopup {
       height = Math.max(height, this.viewHeight);
       this.viewNode.style.maxHeight = `${height}px`;
     } else {
+      // Copy the background color of the document's body to the panel if it's
+      // fully opaque.
+      let panelBackground = "";
+      let panelArrow = "";
+
+      let background = doc.defaultView.getComputedStyle(body).backgroundColor;
+      if (background != "transparent") {
+        let bgColor = colorUtils.colorToRGBA(background);
+        if (bgColor.a == 1) {
+          panelBackground = background;
+          let borderColor = this.borderColor || background;
+
+          panelArrow = `url("data:image/svg+xml,${encodeURIComponent(`<?xml version="1.0" encoding="UTF-8"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="10">
+              <path d="M 0,10 L 10,0 20,10 z" fill="${borderColor}"/>
+              <path d="M 1,10 L 10,1 19,10 z" fill="${background}"/>
+            </svg>
+          `)}")`;
+        }
+      }
+
+      this.panel.style.setProperty("--panel-arrowcontent-background", panelBackground);
+      this.panel.style.setProperty("--panel-arrow-image-vertical", panelArrow);
+
+
       // Adjust the size of the browser based on its content's preferred size.
       let {contentViewer} = this.browser.docShell;
       let ratio = this.window.devicePixelRatio;
@@ -334,12 +416,15 @@ global.PanelPopup = class PanelPopup extends BasePopup {
     let panel = document.createElement("panel");
     panel.setAttribute("id", makeWidgetId(extension.id) + "-panel");
     panel.setAttribute("class", "browser-extension-panel");
+    panel.setAttribute("tabspecific", "true");
     panel.setAttribute("type", "arrow");
     panel.setAttribute("role", "group");
 
     document.getElementById("mainPopupSet").appendChild(panel);
 
     super(extension, panel, popupURL, browserStyle);
+
+    this.ignoreResizes = false;
 
     this.contentReady.then(() => {
       panel.openPopup(imageNode, "bottomcenter topright", 0, 0, false, false);
@@ -366,38 +451,115 @@ global.PanelPopup = class PanelPopup extends BasePopup {
 };
 
 global.ViewPopup = class ViewPopup extends BasePopup {
-  constructor(...args) {
-    super(...args);
+  constructor(extension, window, popupURL, browserStyle, fixedWidth) {
+    let document = window.document;
 
-    // Store the initial height of the view, so that we never resize menu panel
-    // sub-views smaller than the initial height of the menu.
-    this.viewHeight = this.viewNode.boxObject.height;
+    // Create a temporary panel to hold the browser while it pre-loads its
+    // content. This panel will never be shown, but the browser's docShell will
+    // be swapped with the browser in the real panel when it's ready.
+    let panel = document.createElement("panel");
+    panel.setAttribute("type", "arrow");
+    document.getElementById("mainPopupSet").appendChild(panel);
 
-    // Calculate the extra height available on the screen above and below the
-    // menu panel. Use that to calculate the how much the sub-view may grow.
-    let popupRect = this.panel.getBoundingClientRect();
+    super(extension, panel, popupURL, browserStyle, fixedWidth);
 
-    let win = this.window;
-    let popupBottom = win.mozInnerScreenY + popupRect.bottom;
-    let popupTop = win.mozInnerScreenY + popupRect.top;
+    this.attached = false;
+    this.tempPanel = panel;
 
-    let screenBottom = win.screen.availTop + win.screen.availHeight;
-    this.extraHeight = {
-      bottom: Math.max(0, screenBottom - popupBottom),
-      top:  Math.max(0, popupTop - win.screen.availTop),
-    };
+    this.browser.classList.add("webextension-preload-browser");
+  }
+
+  /**
+   * Attaches the pre-loaded browser to the given view node, and reserves a
+   * promise which resolves when the browser is ready.
+   *
+   * @param {Element} viewNode
+   *        The node to attach the browser to.
+   * @returns {Promise<boolean>}
+   *        Resolves when the browser is ready. Resolves to `false` if the
+   *        browser was destroyed before it was fully loaded, and the popup
+   *        should be closed, or `true` otherwise.
+   */
+  attach(viewNode) {
+    return Task.spawn(function* () {
+      this.viewNode = viewNode;
+      this.viewNode.addEventListener(this.DESTROY_EVENT, this);
+
+      // Wait until the browser element is fully initialized, and give it at least
+      // a short grace period to finish loading its initial content, if necessary.
+      //
+      // In practice, the browser that was created by the mousdown handler should
+      // nearly always be ready by this point.
+      yield Promise.all([
+        this.browserReady,
+        Promise.race([
+          // This promise may be rejected if the popup calls window.close()
+          // before it has fully loaded.
+          this.browserLoaded.catch(() => {}),
+          new Promise(resolve => setTimeout(resolve, POPUP_LOAD_TIMEOUT_MS)),
+        ]),
+      ]);
+
+      if (this.destroyed) {
+        return false;
+      }
+
+      this.attached = true;
+
+      // Store the initial height of the view, so that we never resize menu panel
+      // sub-views smaller than the initial height of the menu.
+      this.viewHeight = this.viewNode.boxObject.height;
+
+      // Calculate the extra height available on the screen above and below the
+      // menu panel. Use that to calculate the how much the sub-view may grow.
+      let popupRect = this.panel.getBoundingClientRect();
+
+      let win = this.window;
+      let popupBottom = win.mozInnerScreenY + popupRect.bottom;
+      let popupTop = win.mozInnerScreenY + popupRect.top;
+
+      let screenBottom = win.screen.availTop + win.screen.availHeight;
+      this.extraHeight = {
+        bottom: Math.max(0, screenBottom - popupBottom),
+        top:  Math.max(0, popupTop - win.screen.availTop),
+      };
+
+      // Create a new browser in the real popup.
+      let browser = this.browser;
+      this.createBrowser(this.viewNode);
+
+      this.browser.swapDocShells(browser);
+      this.destroyBrowser(browser);
+
+      this.ignoreResizes = false;
+      this.resizeBrowser(true);
+
+      this.tempPanel.remove();
+      this.tempPanel = null;
+
+      return true;
+    }.bind(this));
+  }
+
+  destroy() {
+    return super.destroy().then(() => {
+      if (this.tempPanel) {
+        this.tempPanel.remove();
+        this.tempPanel = null;
+      }
+    });
   }
 
   get DESTROY_EVENT() {
     return "ViewHiding";
   }
 
-  get fixedWidth() {
-    return !this.viewNode.classList.contains("cui-widget-panelview");
-  }
-
   closePopup() {
-    CustomizableUI.hidePanelForNode(this.viewNode);
+    if (this.attached) {
+      CustomizableUI.hidePanelForNode(this.viewNode);
+    } else {
+      this.destroy();
+    }
   }
 };
 
@@ -488,6 +650,10 @@ ExtensionTabManager.prototype = {
     }
   },
 
+  revokeActiveTabPermission(tab = TabManager.activeTab) {
+    this.hasTabPermissionFor.delete(tab);
+  },
+
   // Returns true if the extension has the "activeTab" permission for this tab.
   // This is somewhat more permissive than the generic "tabs" permission, as
   // checked by |hasTabPermission|, in that it also allows programmatic script
@@ -535,8 +701,9 @@ ExtensionTabManager.prototype = {
 
     if (this.hasTabPermission(tab)) {
       result.url = browser.currentURI.spec;
-      if (browser.contentTitle) {
-        result.title = browser.contentTitle;
+      let title = browser.contentTitle || tab.label;
+      if (title) {
+        result.title = title;
       }
       let icon = window.gBrowser.getIcon(tab);
       if (icon) {
@@ -548,7 +715,9 @@ ExtensionTabManager.prototype = {
   },
 
   getTabs(window) {
-    return Array.from(window.gBrowser.tabs, tab => this.convert(tab));
+    return Array.from(window.gBrowser.tabs)
+                .filter(tab => !tab.closing)
+                .map(tab => this.convert(tab));
   },
 };
 
@@ -629,7 +798,22 @@ global.TabManager = {
     return -1;
   },
 
-  getTab(tabId) {
+  /**
+   * Returns the XUL <tab> element associated with the given tab ID. If no tab
+   * with the given ID exists, and no default value is provided, an error is
+   * raised, belonging to the scope of the given context.
+   *
+   * @param {integer} tabId
+   *        The ID of the tab to retrieve.
+   * @param {ExtensionContext} context
+   *        The context of the caller.
+   *        This value may be omitted if `default_` is not `undefined`.
+   * @param {*} default_
+   *        The value to return if no tab exists with the given ID.
+   * @returns {Element<tab>}
+   *        A XUL <tab> element.
+   */
+  getTab(tabId, context, default_ = undefined) {
     // FIXME: Speed this up without leaking memory somehow.
     for (let window of WindowListManager.browserWindows()) {
       if (!window.gBrowser) {
@@ -641,7 +825,10 @@ global.TabManager = {
         }
       }
     }
-    return null;
+    if (default_ !== undefined) {
+      return default_;
+    }
+    throw new context.cloneScope.Error(`Invalid tab ID: ${tabId}`);
   },
 
   get activeTab() {

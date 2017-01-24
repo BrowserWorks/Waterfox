@@ -673,6 +673,7 @@ SSL_HandshakeCallback
 SSL_HandshakeNegotiatedExtension
 SSL_ImplementedCiphers @DATA@
 SSL_ImportFD
+SSL_NamedGroupConfig
 SSL_NumImplementedCiphers @DATA@
 SSL_OptionSet
 SSL_OptionSetDefault
@@ -687,6 +688,7 @@ SSL_SetPKCS11PinArg
 SSL_SetSockPeerID
 SSL_SetSRTPCiphers
 SSL_SetStapledOCSPResponses
+SSL_SetTrustAnchors
 SSL_SetURL
 SSL_ShutdownServerSessionIDCache
 SSL_SNISocketConfigHook

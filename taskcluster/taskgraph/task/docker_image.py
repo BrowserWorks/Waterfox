@@ -38,8 +38,7 @@ class DockerImageTask(base.Task):
 
     @classmethod
     def load_tasks(cls, kind, path, config, params, loaded_tasks):
-        # TODO: make this match the pushdate (get it from a parameter rather than vcs)
-        pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+        pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime(params['pushdate']))
 
         parameters = {
             'pushlog_id': params.get('pushlog_id', 0),
@@ -71,11 +70,14 @@ class DockerImageTask(base.Task):
             image_parameters['image_name'] = image_name
 
             image_artifact_path = \
-                "public/decision_task/image_contexts/{}/context.tar.gz".format(image_name)
+                "public/docker_image_contexts/{}/context.tar.gz".format(image_name)
             if os.environ.get('TASK_ID'):
+                # We put image context tar balls in a different artifacts folder
+                # on the Gecko decision task in order to have longer expiration
+                # dates for smaller artifacts.
                 destination = os.path.join(
                     os.environ['HOME'],
-                    "artifacts/decision_task/image_contexts/{}/context.tar.gz".format(image_name))
+                    "docker_image_contexts/{}/context.tar.gz".format(image_name))
                 image_parameters['context_url'] = ARTIFACT_URL.format(
                     os.environ['TASK_ID'], image_artifact_path)
 
@@ -116,7 +118,7 @@ class DockerImageTask(base.Task):
     def get_dependencies(self, taskgraph):
         return []
 
-    def optimize(self):
+    def optimize(self, params):
         for index_path in self.index_paths:
             try:
                 url = INDEX_URL.format(index_path)

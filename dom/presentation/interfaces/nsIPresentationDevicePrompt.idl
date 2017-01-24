@@ -4,6 +4,8 @@
 
 #include "nsISupports.idl"
 
+interface nsIArray;
+interface nsIDOMEventTarget;
 interface nsIPresentationDevice;
 
 %{C++
@@ -19,8 +21,11 @@ interface nsIPresentationDeviceRequest : nsISupports
   // The origin which initiate the request.
   readonly attribute DOMString origin;
 
-  // The URL to be opened after selection.
-  readonly attribute DOMString requestURL;
+  // The array of candidate URLs.
+  readonly attribute nsIArray requestURLs;
+
+  // The XUL browser element that the request was originated in.
+  readonly attribute nsIDOMEventTarget chromeEventHandler;
 
   /*
    * Callback after selecting a device
@@ -29,9 +34,10 @@ interface nsIPresentationDeviceRequest : nsISupports
   void select(in nsIPresentationDevice device);
 
   /*
-    Callback after selection failed or canceled by user.
+   * Callback after selection failed or canceled by user.
+   * @param reason The error cause for canceling this request.
    */
-  void cancel();
+  void cancel(in nsresult reason);
 };
 
 /*
