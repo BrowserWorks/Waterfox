@@ -233,6 +233,7 @@
   <caption><label>Locale Select</label></caption>
   <menulist id="localeSelect">
     <menupopup>
+      <menuitem value="" label=""/>
       <menuitem value="ach" label="Acholi - Acholi"/>
       <menuitem value="af" label="Afrikaans - Afrikaans"/>
       <menuitem value="an" label="Aragonese - Aragonés"/>
@@ -252,7 +253,7 @@
       <menuitem value="de" label="German - Deutsch"/>
       <menuitem value="el" label="Greek - Ελληνικά"/>
       <menuitem value="en-GB" label="English (British) - English (British)"/>
-      <menuitem value="en-US" label="English (US) - English (US)"/>
+      <menuitem value="en-US" label="English (American) - English (American)"/>
       <menuitem value="en-ZA" label="English (South African) - English (South African)"/>
       <menuitem value="eo" label="Esperanto - Esperanto"/>
       <menuitem value="es-AR" label="Spanish (Argentina) - Español (de Argentina)"/>
