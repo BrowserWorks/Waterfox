@@ -31,7 +31,6 @@ FINAL_TARGET_FILES.features += [
     'langpack-dsb@firefox.mozilla.org.xpi',
     'langpack-el@firefox.mozilla.org.xpi',
     'langpack-en-GB@firefox.mozilla.org.xpi',
-    'langpack-en-US@firefox.mozilla.org.xpi',
     'langpack-en-ZA@firefox.mozilla.org.xpi',
     'langpack-eo@firefox.mozilla.org.xpi',
     'langpack-es-AR@firefox.mozilla.org.xpi',

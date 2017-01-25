@@ -25,7 +25,7 @@ ac_add_options --with-ccache=ccache
 fi
 
 mk_add_options AUTOCLOBBER=1
-mk_add_options MOZ_MAKE_FLAGS=-j4
+mk_add_options MOZ_MAKE_FLAGS=-j6
 mk_add_options MOZ_OBJDIR=objdir
 
 ac_add_options --disable-crashreporter
