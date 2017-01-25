@@ -128,6 +128,7 @@ var gMainPane = {
 
   updateLocale: function ()
   {
+    document.getElementById("localeSelect").selectedIndex = -1;
     let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
     let selectedLocale = document.getElementById("localeSelect").value;
     Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
