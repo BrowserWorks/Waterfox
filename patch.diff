@@ -1,0 +1,13 @@
+diff --git a/gfx/2d/DrawTargetD2D1.cpp b/gfx/2d/DrawTargetD2D1.cpp
+index 749c846..578b9d3 100755
+--- a/gfx/2d/DrawTargetD2D1.cpp
++++ b/gfx/2d/DrawTargetD2D1.cpp
+@@ -1370,7 +1370,7 @@ DrawTargetD2D1::GetDeviceSpaceClipRect(D2D1_RECT_F& aClipRect, bool& aIsPixelAli
+   if (!CurrentLayer().mPushedClips.size()) {
+     return false;
+   }
+-
++  aIsPixelAligned = true;
+   aClipRect = D2D1::RectF(0, 0, mSize.width, mSize.height);
+   for (auto iter = CurrentLayer().mPushedClips.begin();iter != CurrentLayer().mPushedClips.end(); iter++) {
+     if (iter->mPath) {
