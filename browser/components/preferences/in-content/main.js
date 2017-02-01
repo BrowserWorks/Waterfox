@@ -28,7 +28,7 @@ var gMainPane = {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gMainPane));
     }
-    this.updateLocale();
+    this.getDefaultLocal();
     if (AppConstants.HAVE_SHELL_SERVICE) {
       this.updateSetDefaultBrowser();
       if (AppConstants.platform == "win") {
@@ -125,7 +125,13 @@ var gMainPane = {
               .getService(Components.interfaces.nsIObserverService)
               .notifyObservers(window, "main-pane-loaded", null);
   },
-
+  
+  // Sets language selector to current locale value
+  getDefaultLocal: function(){
+	  let selectedLocale = document.getElementById("localeSelect");
+	  document.getElementById("localeSelect").value = Services.prefs.getCharPref('general.useragent.locale');
+  },
+  
   updateLocale: function ()
   {
     let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
