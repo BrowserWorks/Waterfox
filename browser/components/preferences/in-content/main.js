@@ -84,7 +84,7 @@ var gMainPane = {
     setEventListener("chooseFolder", "command",
                      gMainPane.chooseFolder);
 
-    setEventListener("localeSelect", "command", function () {
+    setEventListener("localeSelect", "popuphiding", function () {
       gMainPane.updateLocale();
     });
 
