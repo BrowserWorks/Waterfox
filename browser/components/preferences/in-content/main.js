@@ -87,7 +87,10 @@ var gMainPane = {
     setEventListener("localeSelect", "popuphiding", function () {
       gMainPane.updateLocale();
     });
-
+    setEventListener("localeSelect", "keypress", function (e) {
+      gMainPane._updateLocale(e);
+    });
+	
     if (AppConstants.E10S_TESTING_ONLY) {
       setEventListener("e10sAutoStart", "command",
                        gMainPane.enableE10SChange);
@@ -143,7 +146,13 @@ var gMainPane = {
       alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
     }
   },
-
+  _updateLocale: function (e)
+  {
+    if (e.which == 13 || e.keyCode == 13){
+		  this.updateLocale();
+    }
+  },
+    
   enableE10SChange: function ()
   {
     if (AppConstants.E10S_TESTING_ONLY) {
