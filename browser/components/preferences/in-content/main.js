@@ -129,7 +129,9 @@ var gMainPane = {
   // Sets language selector to current locale value
   getDefaultLocal: function(){
 	  let selectedLocale = document.getElementById("localeSelect");
-	  document.getElementById("localeSelect").value = Services.prefs.getCharPref('general.useragent.locale');
+	  if (selectedLocale){
+	  	selectedLocale.value = Services.prefs.getCharPref('general.useragent.locale');
+	  }
   },
   
   updateLocale: function ()
