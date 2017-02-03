@@ -28,7 +28,7 @@ var gMainPane = {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gMainPane));
     }
-    this.updateLocale();
+    this.getDefaultLocal();
     if (AppConstants.HAVE_SHELL_SERVICE) {
       this.updateSetDefaultBrowser();
       if (AppConstants.platform == "win") {
@@ -84,10 +84,13 @@ var gMainPane = {
     setEventListener("chooseFolder", "command",
                      gMainPane.chooseFolder);
 
-    setEventListener("localeSelect", "command", function () {
+    setEventListener("localeSelect", "popuphiding", function () {
       gMainPane.updateLocale();
     });
-
+    setEventListener("localeSelect", "keypress", function (e) {
+      gMainPane._updateLocale(e);
+    });
+	
     if (AppConstants.E10S_TESTING_ONLY) {
       setEventListener("e10sAutoStart", "command",
                        gMainPane.enableE10SChange);
@@ -125,7 +128,15 @@ var gMainPane = {
               .getService(Components.interfaces.nsIObserverService)
               .notifyObservers(window, "main-pane-loaded", null);
   },
-
+  
+  // Sets language selector to current locale value
+  getDefaultLocal: function(){
+	  let selectedLocale = document.getElementById("localeSelect");
+	  if (selectedLocale){
+	  	selectedLocale.value = Services.prefs.getCharPref('general.useragent.locale');
+	  }
+  },
+  
   updateLocale: function ()
   {
     let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
@@ -135,7 +146,13 @@ var gMainPane = {
       alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
     }
   },
-
+  _updateLocale: function (e)
+  {
+    if (e.which == 13 || e.keyCode == 13){
+		  this.updateLocale();
+    }
+  },
+    
   enableE10SChange: function ()
   {
     if (AppConstants.E10S_TESTING_ONLY) {
