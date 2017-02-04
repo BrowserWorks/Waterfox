@@ -84,7 +84,7 @@ var gMainPane = {
     setEventListener("chooseFolder", "command",
                      gMainPane.chooseFolder);
 
-    setEventListener("localeSelect", "popuphiding", function () {
+    setEventListener("localeSelect", "popuphidden", function () {
       gMainPane.updateLocale();
     });
     setEventListener("localeSelect", "keypress", function (e) {
@@ -141,6 +141,9 @@ var gMainPane = {
   {
     let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
     let selectedLocale = document.getElementById("localeSelect").value;
+	  
+    if (selectedLocale === Services.prefs.getCharPref('general.useragent.locale')) return;
+	
     if (selectedLocale != "") {
       Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
       alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
