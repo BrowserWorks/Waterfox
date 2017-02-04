@@ -84,7 +84,7 @@ var gMainPane = {
     setEventListener("chooseFolder", "command",
                      gMainPane.chooseFolder);
 
-    setEventListener("localeSelect", "popuphiding", function () {
+    setEventListener("localeSelect", "popuphidden", function () {
       gMainPane.updateLocale();
     });
     setEventListener("localeSelect", "keypress", function (e) {
