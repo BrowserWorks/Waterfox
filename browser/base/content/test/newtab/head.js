@@ -2,24 +2,18 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 const PREF_NEWTAB_ENABLED = "browser.newtabpage.enabled";
-const PREF_NEWTAB_DIRECTORYSOURCE = "browser.newtabpage.directory.source";
 
 Services.prefs.setBoolPref(PREF_NEWTAB_ENABLED, true);
 
 var tmp = {};
 Cu.import("resource://gre/modules/NewTabUtils.jsm", tmp);
-Cu.import("resource:///modules/DirectoryLinksProvider.jsm", tmp);
 Cu.import("resource://testing-common/PlacesTestUtils.jsm", tmp);
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://browser/content/sanitize.js", tmp);
-var {NewTabUtils, Sanitizer, DirectoryLinksProvider, PlacesTestUtils} = tmp;
+var {NewTabUtils, Sanitizer, PlacesTestUtils} = tmp;
 
 var gWindow = window;
-
-// Default to dummy/empty directory links
-var gDirectorySource = 'data:application/json,{"test":1}';
-var gOrigDirectorySource;
 
 // The tests assume all 3 rows and all 3 columns of sites are shown, but the
 // window may be too small to actually show everything.  Resize it if necessary.
@@ -85,30 +79,13 @@ registerCleanupFunction(function () {
   }
 
   Services.prefs.clearUserPref(PREF_NEWTAB_ENABLED);
-  Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gOrigDirectorySource);
 
-  return watchLinksChangeOnce();
+  return;
 });
 
 function pushPrefs(...aPrefs) {
   return new Promise(resolve =>
                      SpecialPowers.pushPrefEnv({"set": aPrefs}, resolve));
-}
-
-/**
- * Resolves promise when directory links are downloaded and written to disk
- */
-function watchLinksChangeOnce() {
-  return new Promise(resolve => {
-    let observer = {
-      onManyLinksChanged: () => {
-        DirectoryLinksProvider.removeObserver(observer);
-        resolve();
-      }
-    };
-    observer.onDownloadFail = observer.onManyLinksChanged;
-    DirectoryLinksProvider.addObserver(observer);
-  });
 }
 
 add_task(function* setup() {
@@ -132,13 +109,9 @@ add_task(function* setup() {
   });
 
   let promiseReady = Task.spawn(function*() {
-    yield watchLinksChangeOnce();
     yield whenPagesUpdated();
   });
-
-  // Save the original directory source (which is set globally for tests)
-  gOrigDirectorySource = Services.prefs.getCharPref(PREF_NEWTAB_DIRECTORYSOURCE);
-  Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gDirectorySource);
+   
   yield promiseReady;
 });
 
