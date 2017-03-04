@@ -9,10 +9,8 @@ var gCustomize = {
     "blank",
     "button",
     "classic",
-    "enhanced",
     "panel",
-    "overlay",
-    "learn"
+    "overlay"
   ],
 
   _nodes: {},
@@ -25,8 +23,6 @@ var gCustomize = {
     this._nodes.button.addEventListener("click", e => this.showPanel(e));
     this._nodes.blank.addEventListener("click", this);
     this._nodes.classic.addEventListener("click", this);
-    this._nodes.enhanced.addEventListener("click", this);
-    this._nodes.learn.addEventListener("click", this);
 
     this.updateSelected();
   },
@@ -84,17 +80,10 @@ var gCustomize = {
     }
     switch (event.currentTarget.id) {
       case "newtab-customize-blank":
-        sendAsyncMessage("NewTab:Customize", {enabled: false, enhanced: false});
+        sendAsyncMessage("NewTab:Customize", {enabled: false});
         break;
       case "newtab-customize-classic":
-        if (this._nodes.enhanced.getAttribute("selected")){
-          sendAsyncMessage("NewTab:Customize", {enabled: true, enhanced: true});
-        } else {
-          sendAsyncMessage("NewTab:Customize", {enabled: true, enhanced: false});
-        }
-        break;
-      case "newtab-customize-enhanced":
-        sendAsyncMessage("NewTab:Customize", {enabled: true, enhanced: !gAllPages.enhanced});
+        sendAsyncMessage("NewTab:Customize", {enabled: true});
         break;
       case "newtab-customize-learn":
         this.showLearn();
@@ -114,9 +103,9 @@ var gCustomize = {
   },
 
   updateSelected: function() {
-    let {enabled, enhanced} = gAllPages;
-    let selected = enabled ? enhanced ? "enhanced" : "classic" : "blank";
-    ["enhanced", "classic", "blank"].forEach(id => {
+    let {enabled} = gAllPages;
+    let selected = enabled ? "classic" : "blank";
+    ["classic", "blank"].forEach(id => {
       let node = this._nodes[id];
       if (id == selected) {
         node.setAttribute("selected", true);
@@ -125,9 +114,5 @@ var gCustomize = {
         node.removeAttribute("selected");
       }
     });
-    if (selected == "enhanced") {
-      // If enhanced is selected, so is classic (since enhanced is a subitem of classic)
-      this._nodes.classic.setAttribute("selected", true);
-    }
   },
 };
