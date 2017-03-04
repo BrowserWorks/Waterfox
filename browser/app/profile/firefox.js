@@ -1075,7 +1075,6 @@ pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
 pref("services.sync.prefs.sync.browser.link.open_newwindow", true);
 pref("services.sync.prefs.sync.browser.newtabpage.enabled", true);
-pref("services.sync.prefs.sync.browser.newtabpage.enhanced", true);
 pref("services.sync.prefs.sync.browser.newtabpage.pinned", true);
 pref("services.sync.prefs.sync.browser.offline-apps.notify", true);
 pref("services.sync.prefs.sync.browser.safebrowsing.phishing.enabled", true);
@@ -1173,9 +1172,6 @@ pref("browser.newtabpage.introShown", false);
 // Toggles the content of 'about:newtab'. Shows the grid when enabled.
 pref("browser.newtabpage.enabled", true);
 
-// Toggles the enhanced content of 'about:newtab'. Shows sponsored tiles.
-sticky_pref("browser.newtabpage.enhanced", true);
-
 // enables Activity Stream inspired layout
 pref("browser.newtabpage.compact", false);
 
@@ -1187,12 +1183,6 @@ pref("browser.newtabpage.rows", 3);
 
 // number of columns of newtab grid
 pref("browser.newtabpage.columns", 5);
-
-// directory tiles download URL
-pref("browser.newtabpage.directory.source", "");
-
-// endpoint to send newtab click and view pings
-pref("browser.newtabpage.directory.ping", "");
 
 // activates the remote-hosted newtab page
 pref("browser.newtabpage.remote", false);
