@@ -46,14 +46,12 @@ const EXPECTED_REFLOWS = [
 ];
 
 const PREF_PRELOAD = "browser.newtab.preload";
-const PREF_NEWTAB_DIRECTORYSOURCE = "browser.newtabpage.directory.source";
 
 /*
  * This test ensures that there are no unexpected
  * uninterruptible reflows when opening new tabs.
  */
 add_task(function*() {
-  let DirectoryLinksProvider = Cu.import("resource:///modules/DirectoryLinksProvider.jsm", {}).DirectoryLinksProvider;
   let NewTabUtils = Cu.import("resource://gre/modules/NewTabUtils.jsm", {}).NewTabUtils;
   let Promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 
@@ -62,7 +60,6 @@ add_task(function*() {
     let deferred = Promise.defer();
     let observer = {
       onManyLinksChanged: () => {
-        DirectoryLinksProvider.removeObserver(observer);
         NewTabUtils.links.populateCache(() => {
           NewTabUtils.allPages.update();
           deferred.resolve();
@@ -70,20 +67,15 @@ add_task(function*() {
       }
     };
     observer.onDownloadFail = observer.onManyLinksChanged;
-    DirectoryLinksProvider.addObserver(observer);
     return deferred.promise;
   }
 
-  let gOrigDirectorySource = Services.prefs.getCharPref(PREF_NEWTAB_DIRECTORYSOURCE);
   registerCleanupFunction(() => {
     Services.prefs.clearUserPref(PREF_PRELOAD);
-    Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gOrigDirectorySource);
     return watchLinksChangeOnce();
   });
 
   Services.prefs.setBoolPref(PREF_PRELOAD, false);
-  // set directory source to dummy/empty links
-  Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, 'data:application/json,{"test":1}');
 
   // run tests when directory source change completes
   yield watchLinksChangeOnce();
