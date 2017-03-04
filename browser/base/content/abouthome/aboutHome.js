@@ -10,13 +10,11 @@ const DATABASE_VERSION = 1;
 var searchText;
 
 // This global tracks if the page has been set up before, to prevent double inits
-var gInitialized = false;
 var gObserver = new MutationObserver(function (mutations) {
   for (let mutation of mutations) {
     // The addition of the restore session button changes our width:
     if (mutation.attributeName == "session") {
       fitToWidth();
-      gInitialized = true;
     }
   }
 });
