@@ -4,8 +4,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 #endif
 
-const THUMBNAIL_PLACEHOLDER_ENABLED =
-  Services.prefs.getBoolPref("browser.newtabpage.thumbnailPlaceholder");
 
 /**
  * This class represents a site that is contained in a cell and can be pinned,
@@ -125,45 +123,6 @@ Site.prototype = {
     }
   },
 
-  _newTabString: function(str, substrArr) {
-    let regExp = /%[0-9]\$S/g;
-    let matches;
-    while ((matches = regExp.exec(str))) {
-      let match = matches[0];
-      let index = match.charAt(1); // Get the digit in the regExp.
-      str = str.replace(match, substrArr[index - 1]);
-    }
-    return str;
-  },
-
-  _getSuggestedTileExplanation: function() {
-    let targetedName = `<strong> ${this.link.targetedName} </strong>`;
-    let targetedSite = `<strong> ${this.link.targetedSite} </strong>`;
-    if (this.link.explanation) {
-      return this._newTabString(this.link.explanation, [targetedName, targetedSite]);
-    }
-    return newTabString("suggested.button", [targetedName]);
-  },
-
-  /**
-   * Checks for and modifies link at campaign end time
-   */
-  _checkLinkEndTime: function Site_checkLinkEndTime() {
-    if (this.link.endTime && this.link.endTime < Date.now()) {
-       let oldUrl = this.url;
-       // chop off the path part from url
-       this.link.url = Services.io.newURI(this.url, null, null).resolve("/");
-       // clear supplied images - this triggers thumbnail download for new url
-       delete this.link.imageURI;
-       delete this.link.enhancedImageURI;
-       // remove endTime to avoid further time checks
-       delete this.link.endTime;
-       // clear enhanced-content image that may still exist in preloaded page
-       this._querySelector(".enhanced-content").style.backgroundImage = "";
-       gPinnedLinks.replace(oldUrl, this.link);
-    }
-  },
-
   /**
    * Renders the site's data (fills the HTML fragment).
    */
@@ -171,10 +130,8 @@ Site.prototype = {
     // first check for end time, as it may modify the link
     this._checkLinkEndTime();
     // setup display variables
-    let enhanced = gAllPages.enhanced && DirectoryLinksProvider.getEnhancedLink(this.link);
     let url = this.url;
-    let title = enhanced && enhanced.title ? enhanced.title :
-                this.link.type == "history" ? this.link.baseDomain :
+    let title = this.link.type == "history" ? this.link.baseDomain :
                 this.title;
     let tooltip = (this.title == url ? this.title : this.title + "\n" + url);
 
@@ -187,22 +144,6 @@ Site.prototype = {
     titleNode.textContent = title;
     if (this.link.titleBgColor) {
       titleNode.style.backgroundColor = this.link.titleBgColor;
-    }
-
-    // remove "suggested" attribute to avoid showing "suggested" tag
-    // after site was pinned or dropped
-    this.node.removeAttribute("suggested");
-
-    if (this.link.targetedSite) {
-      if (this.node.getAttribute("type") != "sponsored") {
-        this._querySelector(".newtab-sponsored").textContent =
-          newTabString("suggested.tag");
-      }
-
-      this.node.setAttribute("suggested", true);
-      let explanation = this._getSuggestedTileExplanation();
-      this._querySelector(".newtab-suggested").innerHTML =
-        `<div class='newtab-suggested-bounds'> ${explanation} </div>`;
     }
 
     if (this.isPinned())
@@ -243,48 +184,13 @@ Site.prototype = {
    * Refreshes the thumbnail for the site.
    */
   refreshThumbnail: function Site_refreshThumbnail() {
-    // Only enhance tiles if that feature is turned on
-    let link = gAllPages.enhanced && DirectoryLinksProvider.getEnhancedLink(this.link) ||
-               this.link;
-
+    let link = this.link;
     let thumbnail = this._querySelector(".newtab-thumbnail.thumbnail");
     if (link.bgColor) {
       thumbnail.style.backgroundColor = link.bgColor;
     }
     let uri = link.imageURI || PageThumbs.getThumbnailURL(this.url);
     thumbnail.style.backgroundImage = 'url("' + uri + '")';
-
-    if (THUMBNAIL_PLACEHOLDER_ENABLED &&
-        link.type == "history" &&
-        link.baseDomain) {
-      let placeholder = this._querySelector(".newtab-thumbnail.placeholder");
-      let hue = 0;
-      for (let c of link.baseDomain) {
-        hue += c.charCodeAt(0);
-      }
-      hue %= 256;
-      placeholder.style.backgroundColor = "hsl(" + hue + ",50%,60%)";
-      placeholder.textContent = link.baseDomain.substr(0,1);
-    }
-
-    if (link.enhancedImageURI) {
-      let enhanced = this._querySelector(".enhanced-content");
-      enhanced.style.backgroundImage = 'url("' + link.enhancedImageURI + '")';
-
-      if (this.link.type != link.type) {
-        this.node.setAttribute("type", "enhanced");
-        this.enhancedId = link.directoryId;
-      }
-    }
-  },
-
-  _ignoreHoverEvents: function(element) {
-    element.addEventListener("mouseover", () => {
-      this.cell.node.setAttribute("ignorehover", "true");
-    });
-    element.addEventListener("mouseout", () => {
-      this.cell.node.removeAttribute("ignorehover");
-    });
   },
 
   /**
@@ -295,13 +201,6 @@ Site.prototype = {
     this._node.addEventListener("dragstart", this, false);
     this._node.addEventListener("dragend", this, false);
     this._node.addEventListener("mouseover", this, false);
-
-    // Specially treat the sponsored icon & suggested explanation
-    // text to prevent regular hover effects
-    let sponsored = this._querySelector(".newtab-sponsored");
-    let suggested = this._querySelector(".newtab-suggested");
-    this._ignoreHoverEvents(sponsored);
-    this._ignoreHoverEvents(suggested);
   },
 
   /**
@@ -318,46 +217,6 @@ Site.prototype = {
   },
 
   /**
-   * Record interaction with site using telemetry.
-   */
-  _recordSiteClicked: function Site_recordSiteClicked(aIndex) {
-    if (Services.prefs.prefHasUserValue("browser.newtabpage.rows") ||
-        Services.prefs.prefHasUserValue("browser.newtabpage.columns") ||
-        aIndex > 8) {
-      // We only want to get indices for the default configuration, everything
-      // else goes in the same bucket.
-      aIndex = 9;
-    }
-    Services.telemetry.getHistogramById("NEWTAB_PAGE_SITE_CLICKED")
-                      .add(aIndex);
-  },
-
-  _toggleLegalText: function(buttonClass, explanationTextClass) {
-    let button = this._querySelector(buttonClass);
-    if (button.hasAttribute("active")) {
-      let explain = this._querySelector(explanationTextClass);
-      explain.parentNode.removeChild(explain);
-
-      button.removeAttribute("active");
-    }
-    else {
-      let explain = document.createElementNS(HTML_NAMESPACE, "div");
-      explain.className = explanationTextClass.slice(1); // Slice off the first character, '.'
-      this.node.appendChild(explain);
-
-      let link = '<a href="' + TILES_EXPLAIN_LINK + '">' +
-                 newTabString("learn.link") + "</a>";
-      let type = (this.node.getAttribute("suggested") && this.node.getAttribute("type") == "affiliate") ?
-                  "suggested" : this.node.getAttribute("type");
-      let icon = '<input type="button" class="newtab-control newtab-' +
-                 (type == "enhanced" ? "customize" : "control-block") + '"/>';
-      explain.innerHTML = newTabString(type + (type == "sponsored" ? ".explain2" : ".explain"), [icon, link]);
-
-      button.setAttribute("active", "true");
-    }
-  },
-
-  /**
    * Handles site click events.
    */
   onClick: function Site_onClick(aEvent) {
@@ -371,34 +230,15 @@ Site.prototype = {
         target.parentElement.classList.contains("newtab-link")) {
       // Record for primary and middle clicks
       if (button == 0 || button == 1) {
-        this._recordSiteClicked(tileIndex);
         action = "click";
       }
-    }
-    // Handle sponsored explanation link click
-    else if (target.parentElement.classList.contains("sponsored-explain")) {
-      action = "sponsored_link";
-    }
-    else if (target.parentElement.classList.contains("suggested-explain")) {
-      action = "suggested_link";
     }
     // Only handle primary clicks for the remaining targets
     else if (button == 0) {
       aEvent.preventDefault();
       if (target.classList.contains("newtab-control-block")) {
-        // Notify DirectoryLinksProvider of suggested tile block, this may
-        // affect if and how suggested tiles are recommended and needs to
-        // be reported before pages are updated inside block() call
-        if (this.link.targetedSite) {
-          DirectoryLinksProvider.handleSuggestedTileBlock();
-        }
         this.block();
         action = "block";
-      }
-      else if (target.classList.contains("sponsored-explain") ||
-               target.classList.contains("newtab-sponsored")) {
-        this._toggleLegalText(".newtab-sponsored", ".sponsored-explain");
-        action = "sponsored";
       }
       else if (pinned && target.classList.contains("newtab-control-pin")) {
         this.unpin();
@@ -411,11 +251,6 @@ Site.prototype = {
         }
         action = "pin";
       }
-    }
-
-    // Report all link click actions
-    if (action) {
-      DirectoryLinksProvider.reportSitesAction(gGrid.sites, action, tileIndex);
     }
   },
 
