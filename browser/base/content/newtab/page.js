@@ -282,8 +282,6 @@ var gPage = {
         }
       }
     }
-
-    DirectoryLinksProvider.reportSitesAction(sites, "view", lastIndex);
   },
 
   maybeShowAutoMigrationUndoNotification() {
