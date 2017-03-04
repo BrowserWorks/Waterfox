@@ -776,83 +776,6 @@ BrowserGlue.prototype = {
     }
   },
 
-  _trackSlowStartup: function () {
-    if (Services.startup.interrupted ||
-        Services.prefs.getBoolPref("browser.slowStartup.notificationDisabled"))
-      return;
-
-    let currentTime = Date.now() - Services.startup.getStartupInfo().process;
-    let averageTime = 0;
-    let samples = 0;
-    try {
-      averageTime = Services.prefs.getIntPref("browser.slowStartup.averageTime");
-      samples = Services.prefs.getIntPref("browser.slowStartup.samples");
-    } catch (e) { }
-
-    let totalTime = (averageTime * samples) + currentTime;
-    samples++;
-    averageTime = totalTime / samples;
-
-    if (samples >= Services.prefs.getIntPref("browser.slowStartup.maxSamples")) {
-      if (averageTime > Services.prefs.getIntPref("browser.slowStartup.timeThreshold"))
-        this._calculateProfileAgeInDays().then(this._showSlowStartupNotification, null);
-      averageTime = 0;
-      samples = 0;
-    }
-
-    Services.prefs.setIntPref("browser.slowStartup.averageTime", averageTime);
-    Services.prefs.setIntPref("browser.slowStartup.samples", samples);
-  },
-
-  _calculateProfileAgeInDays: Task.async(function* () {
-    let ProfileAge = Cu.import("resource://gre/modules/ProfileAge.jsm", {}).ProfileAge;
-    let profileAge = new ProfileAge(null, null);
-
-    let creationDate = yield profileAge.created;
-    let resetDate = yield profileAge.reset;
-
-    // if the profile was reset, consider the
-    // reset date for its age.
-    let profileDate = resetDate || creationDate;
-
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    return (Date.now() - profileDate) / ONE_DAY;
-  }),
-
-  _showSlowStartupNotification: function (profileAge) {
-    if (profileAge < 90) // 3 months
-      return;
-
-    let win = RecentWindow.getMostRecentBrowserWindow();
-    if (!win)
-      return;
-
-    let productName = gBrandBundle.GetStringFromName("brandFullName");
-    let message = win.gNavigatorBundle.getFormattedString("slowStartup.message", [productName]);
-
-    let buttons = [
-      {
-        label:     win.gNavigatorBundle.getString("slowStartup.helpButton.label"),
-        accessKey: win.gNavigatorBundle.getString("slowStartup.helpButton.accesskey"),
-        callback: function () {
-          win.openUILinkIn("https://support.mozilla.org/kb/reset-firefox-easily-fix-most-problems", "tab");
-        }
-      },
-      {
-        label:     win.gNavigatorBundle.getString("slowStartup.disableNotificationButton.label"),
-        accessKey: win.gNavigatorBundle.getString("slowStartup.disableNotificationButton.accesskey"),
-        callback: function () {
-          Services.prefs.setBoolPref("browser.slowStartup.notificationDisabled", true);
-        }
-      }
-    ];
-
-    let nb = win.document.getElementById("global-notificationbox");
-    nb.appendNotification(message, "slow-startup",
-                          "chrome://browser/skin/slowStartup-16.png",
-                          nb.PRIORITY_INFO_LOW, buttons);
-  },
-
   /**
    * Show a notification bar offering a reset.
    *
@@ -980,8 +903,6 @@ BrowserGlue.prototype = {
         });
       }
     });
-
-    this._trackSlowStartup();
 
     // Offer to reset a user's profile if it hasn't been used for 60 days.
     const OFFER_PROFILE_RESET_INTERVAL_MS = 60 * 24 * 60 * 60 * 1000;
