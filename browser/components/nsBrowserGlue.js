@@ -33,7 +33,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "AlertsService", "@mozilla.org/alerts-s
   ["ContentClick", "resource:///modules/ContentClick.jsm"],
   ["ContentPrefServiceParent", "resource://gre/modules/ContentPrefServiceParent.jsm"],
   ["ContentSearch", "resource:///modules/ContentSearch.jsm"],
-  ["DirectoryLinksProvider", "resource:///modules/DirectoryLinksProvider.jsm"],
   ["Feeds", "resource:///modules/Feeds.jsm"],
   ["FileUtils", "resource://gre/modules/FileUtils.jsm"],
   ["FormValidationHandler", "resource:///modules/FormValidationHandler.jsm"],
@@ -675,9 +674,7 @@ BrowserGlue.prototype = {
     AboutHome.init();
     UserAgentOverrides.init();
 
-    DirectoryLinksProvider.init();
     NewTabUtils.init();
-    NewTabUtils.links.addProvider(DirectoryLinksProvider);
     AboutNewTab.init();
 
     NewTabMessages.init();
