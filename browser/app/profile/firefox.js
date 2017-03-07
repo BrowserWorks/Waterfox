@@ -1402,12 +1402,12 @@ pref("browser.translation.engine", "bing");
 
 // Telemetry settings.
 // Determines if Telemetry pings can be archived locally.
-pref("toolkit.telemetry.archive.enabled", false);
+sticky_pref("toolkit.telemetry.archive.enabled", false);
 
 // Telemetry experiments settings.
-pref("experiments.enabled", false);
+sticky_pref("experiments.enabled", false);
 pref("experiments.manifest.fetchIntervalSeconds", 86400);
-pref("experiments.manifest.uri", "");
+sticky_pref("experiments.manifest.uri", "");
 // Whether experiments are supported by the current application profile.
 pref("experiments.supported", false);
 
