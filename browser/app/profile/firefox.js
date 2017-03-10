@@ -236,10 +236,6 @@ pref("browser.startup.homepage",            "chrome://branding/locale/browsercon
 // Whether we should skip the homepage when opening the first-run page
 pref("browser.startup.firstrunSkipsHomepage", false);
 
-pref("browser.slowStartup.notificationDisabled", false);
-pref("browser.slowStartup.timeThreshold", 40000);
-pref("browser.slowStartup.maxSamples", 5);
-
 pref("browser.enable_automatic_image_resizing", true);
 pref("browser.casting.enabled", false);
 pref("browser.chrome.site_icons", true);
