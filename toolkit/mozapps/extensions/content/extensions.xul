@@ -87,6 +87,7 @@
     <command id="cmd_back"/>
     <command id="cmd_forward"/>
     <command id="cmd_enableCheckCompatibility"/>
+    <command id="cmd_pluginCheck"/>
     <command id="cmd_enableUpdateSecurity"/>
     <command id="cmd_toggleAutoUpdateDefault"/>
     <command id="cmd_resetAddonAutoUpdate"/>
@@ -382,6 +383,15 @@
                           label="&warning.updatesecurity.enable.label;"
                           tooltiptext="&warning.updatesecurity.enable.tooltip;"
                           command="cmd_enableUpdateSecurity"/>
+                  <spacer flex="5000"/> <!-- Necessary to allow the message to wrap -->
+                </hbox>
+              </hbox>
+              <hbox class="view-header global-info-container plugin-info-container">
+                <hbox class="global-info" flex="1" align="center">
+                  <button class="button-link global-info-plugincheck"
+                          label="Check to see if your plugins are up to date"
+                          tooltiptext="Check to see if your plugins are up to date"
+                          command="cmd_pluginCheck"/>
                   <spacer flex="5000"/> <!-- Necessary to allow the message to wrap -->
                 </hbox>
               </hbox>

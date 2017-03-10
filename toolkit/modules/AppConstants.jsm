@@ -61,18 +61,10 @@ this.AppConstants = Object.freeze({
 #endif
 
   MOZ_SERVICES_HEALTHREPORT:
-#ifdef MOZ_SERVICES_HEALTHREPORT
-  true,
-#else
   false,
-#endif
 
   MOZ_DATA_REPORTING:
-#ifdef MOZ_DATA_REPORTING
-  true,
-#else
   false,
-#endif
 
   MOZ_SANDBOX:
 #ifdef MOZ_SANDBOX
@@ -89,18 +81,10 @@ this.AppConstants = Object.freeze({
 #endif
 
   MOZ_TELEMETRY_REPORTING:
-#ifdef MOZ_TELEMETRY_REPORTING
-  true,
-#else
   false,
-#endif
 
   MOZ_TELEMETRY_ON_BY_DEFAULT:
-#ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
-  true,
-#else
   false,
-#endif
 
   MOZ_SERVICES_CLOUDSYNC:
 #ifdef MOZ_SERVICES_CLOUDSYNC

@@ -236,11 +236,6 @@ pref("browser.startup.homepage",            "chrome://branding/locale/browsercon
 // Whether we should skip the homepage when opening the first-run page
 pref("browser.startup.firstrunSkipsHomepage", false);
 
-// This url, if changed, MUST continue to point to an https url. Pulling arbitrary content to inject into
-// this page over http opens us up to a man-in-the-middle attack that we'd rather not face. If you are a downstream
-// repackager of this code using an alternate snippet url, please keep your users safe
-pref("browser.aboutHomeSnippets.updateUrl", "");
-
 pref("browser.enable_automatic_image_resizing", true);
 pref("browser.casting.enabled", false);
 pref("browser.chrome.site_icons", true);
@@ -656,6 +651,8 @@ pref("findbar.modalHighlight", true);
 // Tracks when accessibility is loaded into the previous session.
 pref("accessibility.loadedInLastSession", false);
 
+pref("plugins.update.url", "https://www.mozilla.org/%LOCALE%/plugincheck/");
+
 pref("plugins.click_to_play", true);
 pref("plugins.testmode", false);
 
@@ -791,8 +788,6 @@ pref("browser.rights.3.shown", false);
 // Don't show the about:rights notification in debug builds.
 pref("browser.rights.override", true);
 #endif
-
-pref("browser.selfsupport.url", "https://self-repair.mozilla.org/%LOCALE%/repair");
 
 pref("browser.sessionstore.resume_from_crash", true);
 pref("browser.sessionstore.resume_session_once", false);
@@ -1398,12 +1393,12 @@ pref("browser.translation.engine", "bing");
 
 // Telemetry settings.
 // Determines if Telemetry pings can be archived locally.
-pref("toolkit.telemetry.archive.enabled", false);
+sticky_pref("toolkit.telemetry.archive.enabled", false);
 
 // Telemetry experiments settings.
-pref("experiments.enabled", false);
+sticky_pref("experiments.enabled", false);
 pref("experiments.manifest.fetchIntervalSeconds", 86400);
-pref("experiments.manifest.uri", "");
+sticky_pref("experiments.manifest.uri", "");
 // Whether experiments are supported by the current application profile.
 pref("experiments.supported", false);
 

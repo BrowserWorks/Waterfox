@@ -4623,7 +4623,6 @@ XRE_main(int argc, char* argv[], const nsXREAppData* aAppData, uint32_t aFlags)
   XREMain main;
 
   int result = main.XRE_main(argc, argv, aAppData);
-  mozilla::RecordShutdownEndTimeStamp();
   return result;
 }
 
