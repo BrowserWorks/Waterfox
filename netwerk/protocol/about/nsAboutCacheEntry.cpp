@@ -112,7 +112,8 @@ nsAboutCacheEntry::NewChannel(nsIURI* uri,
 NS_IMETHODIMP
 nsAboutCacheEntry::GetURIFlags(nsIURI *aURI, uint32_t *result)
 {
-    *result = nsIAboutModule::HIDE_FROM_ABOUTABOUT;
+    *result = nsIAboutModule::HIDE_FROM_ABOUTABOUT |
+              nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT;
     return NS_OK;
 }
 
@@ -386,7 +387,7 @@ nsAboutCacheEntry::Channel::WriteCacheEntryDescription(nsICacheEntry *entry)
         buffer.AppendLiteral("\">");
         buffer.Append(escapedStr);
         buffer.AppendLiteral("</a>");
-        uri = 0;
+        uri = nullptr;
     } else {
         buffer.Append(escapedStr);
     }

@@ -24,7 +24,7 @@ const JSErrorFormatString*
 my_GetErrorMessage(void* userRef, const unsigned errorNumber);
 
 void
-WarningReporter(JSContext* cx, const char* message, JSErrorReport* report);
+WarningReporter(JSContext* cx, JSErrorReport* report);
 
 class MOZ_STACK_CLASS AutoReportException
 {
@@ -40,7 +40,7 @@ bool
 GenerateInterfaceHelp(JSContext* cx, JS::HandleObject obj, const char* name);
 
 JSString*
-FileAsString(JSContext* cx, const char* pathname);
+FileAsString(JSContext* cx, JS::HandleString pathnameStr);
 
 class AutoCloseFile
 {

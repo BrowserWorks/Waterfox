@@ -287,6 +287,14 @@ WebGLFBAttachPoint::IsComplete(WebGLContext* webgl, nsCString* const out_info) c
         return false;
     }
 
+    if (webgl->IsWebGL2() && Texture() &&
+        Texture()->IsCubeMap() && !Texture()->IsCubeComplete())
+    {
+        AttachmentName(out_info);
+        out_info->AppendLiteral(" is not cube complete");
+        return false;
+    }
+
     const auto format = formatUsage->format;
 
     bool hasRequiredBits;
@@ -542,7 +550,7 @@ WebGLFBAttachPoint::GetParameter(const char* funcName, WebGLContext* webgl, JSCo
 
         if (format->componentType == webgl::ComponentType::Special) {
             // Special format is used for DS mixed format(e.g. D24S8 and D32FS8).
-            MOZ_ASSERT(format->unsizedFormat == webgl::UnsizedFormat::DS);
+            MOZ_ASSERT(format->unsizedFormat == webgl::UnsizedFormat::DEPTH_STENCIL);
             MOZ_ASSERT(attachment == LOCAL_GL_DEPTH_ATTACHMENT ||
                        attachment == LOCAL_GL_STENCIL_ATTACHMENT);
 

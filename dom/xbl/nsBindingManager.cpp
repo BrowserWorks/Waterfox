@@ -125,7 +125,7 @@ nsBindingManager::~nsBindingManager(void)
 }
 
 nsXBLBinding*
-nsBindingManager::GetBindingWithContent(nsIContent* aContent)
+nsBindingManager::GetBindingWithContent(const nsIContent* aContent)
 {
   nsXBLBinding* binding = aContent ? aContent->GetXBLBinding() : nullptr;
   return binding ? binding->GetBindingWithContent() : nullptr;
@@ -770,7 +770,7 @@ nsBindingManager::MediumFeaturesChanged(nsPresContext* aPresContext,
 }
 
 void
-nsBindingManager::AppendAllSheets(nsTArray<StyleSheetHandle>& aArray)
+nsBindingManager::AppendAllSheets(nsTArray<StyleSheet*>& aArray)
 {
   if (!mBoundContentSet) {
     return;

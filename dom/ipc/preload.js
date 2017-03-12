@@ -92,17 +92,6 @@ var DoPreloadPostfork = function(aCallback) {
   } catch (e) {
   }
 
-  if (Services.prefs.getIntPref("dom.w3c_touch_events.enabled") != 0) {
-    try {
-      if (Services.prefs.getBoolPref("layers.async-pan-zoom.enabled") === false) {
-        Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementPanningAPZDisabled.js", global);
-      }
-    } catch (e) {
-    }
-
-    Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementPanning.js", global);
-  }
-
   Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementCopyPaste.js", global);
   Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementChildPreload.js", global);
 
@@ -116,14 +105,6 @@ var DoPreloadPostfork = function(aCallback) {
     // the chrome process in its init() function.
     Cu.import("resource://gre/modules/AppsServiceChild.jsm");
 
-    // Load UserCustomizations.jsm after fork since it sends an async message to
-    // the chrome process in its init() function.
-    try {
-      if (Services.prefs.getBoolPref("dom.apps.customization.enabled")) {
-        Cu.import("resource://gre/modules/UserCustomizations.jsm");
-      }
-    } catch(e) {}
-
     // Load nsIAppsService after fork since its implementation loads
     // AppsServiceChild.jsm
     Cc["@mozilla.org/AppsService;1"].getService(Ci["nsIAppsService"]);
@@ -135,9 +116,6 @@ var DoPreloadPostfork = function(aCallback) {
     // Load nsIPermissionManager after fork since it sends a message to the
     // chrome process to read permissions.
     Cc["@mozilla.org/permissionmanager;1"].getService(Ci["nsIPermissionManager"]);
-
-    // Create this instance after fork since it loads AppsServiceChild.jsm
-    Cc["@mozilla.org/webapps;1"].createInstance(Ci["nsISupports"]);
 
     // Load nsIProtocolProxyService after fork since it asynchronously accesses
     // the "Proxy Resolution" thread after it's frozen.

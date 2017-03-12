@@ -33,7 +33,7 @@
 #include "mozilla/HangMonitor.h"
 #include "GeckoProfiler.h"
 #include "pratom.h"
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
+#if !defined(RELEASE_OR_BETA) || defined(DEBUG)
 #include "nsSandboxViolationSink.h"
 #endif
 
@@ -110,7 +110,14 @@ static bool gAppShellMethodsSwizzled = false;
   [super sendEvent:anEvent];
 }
 
+#if defined(MAC_OS_X_VERSION_10_12) && \
+    MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12 && \
+    __LP64__
+// 10.12 changed `mask` to NSEventMask (unsigned long long) for x86_64 builds.
+- (NSEvent*)nextEventMatchingMask:(NSEventMask)mask
+#else
 - (NSEvent*)nextEventMatchingMask:(NSUInteger)mask
+#endif
                         untilDate:(NSDate*)expiration
                            inMode:(NSString*)mode
                           dequeue:(BOOL)flag
@@ -127,7 +134,6 @@ static bool gAppShellMethodsSwizzled = false;
 }
 
 @end
-
 
 // AppShellDelegate
 //
@@ -322,7 +328,7 @@ nsAppShell::Init()
     CGSSetDebugOptions(0x80000007);
   }
 
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
+#if !defined(RELEASE_OR_BETA) || defined(DEBUG)
   if (Preferences::GetBool("security.sandbox.mac.track.violations", false)) {
     nsSandboxViolationSink::Start();
   }
@@ -681,7 +687,7 @@ nsAppShell::Exit(void)
 
   mTerminated = true;
 
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
+#if !defined(RELEASE_OR_BETA) || defined(DEBUG)
   nsSandboxViolationSink::Stop();
 #endif
 

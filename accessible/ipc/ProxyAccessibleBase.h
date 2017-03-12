@@ -78,7 +78,8 @@ public:
 
   void Shutdown();
 
-  void SetChildDoc(DocAccessibleParent*);
+  void SetChildDoc(DocAccessibleParent* aChildDoc);
+  void ClearChildDoc(DocAccessibleParent* aChildDoc);
 
   /**
    * Remove The given child.
@@ -131,6 +132,27 @@ public:
    */
   bool IsDoc() const { return mIsDoc; }
   DocAccessibleParent* AsDoc() const { return IsDoc() ? mDoc : nullptr; }
+
+  // XXX checking mRole alone may not result in same behavior as Accessibles
+  // due to ARIA roles. See bug 1210477.
+  inline bool IsTable() const
+  {
+    return mRole == roles::TABLE || mRole == roles::MATHML_TABLE;
+  }
+  inline bool IsTableRow() const
+  {
+    return (mRole == roles::ROW ||
+        mRole == roles::MATHML_TABLE_ROW ||
+        mRole == roles::MATHML_LABELED_ROW);
+  }
+  inline bool IsTableCell() const
+  {
+    return (mRole == roles::CELL ||
+        mRole == roles::COLUMNHEADER ||
+        mRole == roles::ROWHEADER ||
+        mRole == roles::GRID_CELL ||
+        mRole == roles::MATHML_CELL);
+  }
 
 protected:
   ProxyAccessibleBase(uint64_t aID, Derived* aParent,

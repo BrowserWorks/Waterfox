@@ -13,9 +13,11 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/dom/BlobSet.h"
+#include "mozilla/dom/DOMString.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FetchUtil.h"
 #include "mozilla/dom/FormData.h"
+#include "mozilla/dom/MutableBlobStorage.h"
 #include "mozilla/dom/XMLDocument.h"
 #include "mozilla/dom/URLSearchParams.h"
 #include "mozilla/EventDispatcher.h"
@@ -71,6 +73,7 @@
 #include "nsIUnicodeDecoder.h"
 #include "mozilla/dom/XMLHttpRequestBinding.h"
 #include "mozilla/Attributes.h"
+#include "MultipartBlobImpl.h"
 #include "nsIPermissionManager.h"
 #include "nsMimeTypes.h"
 #include "nsIHttpChannelInternal.h"
@@ -134,7 +137,7 @@ public:
 
   NS_IMETHOD Run() override
   {
-    mWindow->ResumeTimeouts(false);
+    mWindow->Resume();
     return NS_OK;
   }
 
@@ -178,7 +181,7 @@ XMLHttpRequestMainThread::XMLHttpRequestMainThread()
     mProgressTimerIsActive(false),
     mIsHtml(false),
     mWarnAboutSyncHtml(false),
-    mLoadTotal(0),
+    mLoadTotal(-1),
     mIsSystem(false),
     mIsAnon(false),
     mFirstStartRequestSeen(false),
@@ -292,6 +295,7 @@ XMLHttpRequestMainThread::ResetResponse()
   TruncateResponseText();
   mResponseBlob = nullptr;
   mDOMBlob = nullptr;
+  mBlobStorage = nullptr;
   mBlobSet = nullptr;
   mResultArrayBuffer = nullptr;
   mArrayBufferBuilder.reset();
@@ -474,7 +478,7 @@ XMLHttpRequestMainThread::GetResponseXML(ErrorResult& aRv)
 {
   if (mResponseType != XMLHttpRequestResponseType::_empty &&
       mResponseType != XMLHttpRequestResponseType::Document) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_XHR_HAS_WRONG_RESPONSETYPE_FOR_RESPONSEXML);
     return nullptr;
   }
   if (mWarnAboutSyncHtml) {
@@ -567,12 +571,18 @@ NS_IMETHODIMP
 XMLHttpRequestMainThread::GetResponseText(nsAString& aResponseText)
 {
   ErrorResult rv;
-  GetResponseText(aResponseText, rv);
-  return rv.StealNSResult();
+  DOMString str;
+  GetResponseText(str, rv);
+  if (NS_WARN_IF(rv.Failed())) {
+    return rv.StealNSResult();
+  }
+
+  str.ToString(aResponseText);
+  return NS_OK;
 }
 
 void
-XMLHttpRequestMainThread::GetResponseText(nsAString& aResponseText,
+XMLHttpRequestMainThread::GetResponseText(DOMString& aResponseText,
                                           ErrorResult& aRv)
 {
   XMLHttpRequestStringSnapshot snapshot;
@@ -596,7 +606,7 @@ XMLHttpRequestMainThread::GetResponseText(XMLHttpRequestStringSnapshot& aSnapsho
   if (mResponseType != XMLHttpRequestResponseType::_empty &&
       mResponseType != XMLHttpRequestResponseType::Text &&
       mResponseType != XMLHttpRequestResponseType::Moz_chunked_text) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_XHR_HAS_WRONG_RESPONSETYPE_FOR_RESPONSETEXT);
     return;
   }
 
@@ -669,7 +679,7 @@ XMLHttpRequestMainThread::CreatePartialBlob(ErrorResult& aRv)
     // Use progress info to determine whether load is complete, but use
     // mDataAvailable to ensure a slice is created based on the uncompressed
     // data count.
-    if (mLoadTotal == mLoadTransferred) {
+    if (mState == State::done) {
       mResponseBlob = mDOMBlob;
     } else {
       mResponseBlob = mDOMBlob->CreateSlice(0, mDataAvailable,
@@ -684,11 +694,20 @@ XMLHttpRequestMainThread::CreatePartialBlob(ErrorResult& aRv)
   }
 
   nsAutoCString contentType;
-  if (mLoadTotal == mLoadTransferred) {
+  if (mState == State::done) {
     mChannel->GetContentType(contentType);
   }
 
-  mResponseBlob = mBlobSet->GetBlobInternal(GetOwner(), contentType, aRv);
+  nsTArray<RefPtr<BlobImpl>> subImpls(mBlobSet->GetBlobImpls());
+  RefPtr<BlobImpl> blobImpl =
+    MultipartBlobImpl::Create(Move(subImpls),
+                              NS_ConvertASCIItoUTF16(contentType),
+                              aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+
+  mResponseBlob = Blob::Create(GetOwner(), blobImpl);
 }
 
 NS_IMETHODIMP XMLHttpRequestMainThread::GetResponseType(nsAString& aResponseType)
@@ -719,25 +738,32 @@ void
 XMLHttpRequestMainThread::SetResponseType(XMLHttpRequestResponseType aResponseType,
                                           ErrorResult& aRv)
 {
-  // If the state is LOADING or DONE raise an INVALID_STATE_ERR exception
-  // and terminate these steps.
   if (mState == State::loading || mState == State::done) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_LOADING_OR_DONE);
     return;
   }
 
   // sync request is not allowed setting responseType in window context
   if (HasOrHasHadOwner() && mState != State::unsent && mFlagSynchronous) {
     LogMessage("ResponseTypeSyncXHRWarning", GetOwner());
-    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_XHR_TIMEOUT_AND_RESPONSETYPE_UNSUPPORTED_FOR_SYNC);
     return;
   }
 
   if (mFlagSynchronous &&
       (aResponseType == XMLHttpRequestResponseType::Moz_chunked_text ||
        aResponseType == XMLHttpRequestResponseType::Moz_chunked_arraybuffer)) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_XHR_CHUNKED_RESPONSETYPES_UNSUPPORTED_FOR_SYNC);
     return;
+  }
+
+  // We want to get rid of this moz-only types. Bug 1335365.
+  if (aResponseType == XMLHttpRequestResponseType::Moz_blob) {
+    Telemetry::Accumulate(Telemetry::MOZ_BLOB_IN_XHR, 1);
+  } else if (aResponseType == XMLHttpRequestResponseType::Moz_chunked_text) {
+    Telemetry::Accumulate(Telemetry::MOZ_CHUNKED_TEXT_IN_XHR, 1);
+  } else if (aResponseType == XMLHttpRequestResponseType::Moz_chunked_arraybuffer) {
+    Telemetry::Accumulate(Telemetry::MOZ_CHUNKED_ARRAYBUFFER_IN_XHR, 1);
   }
 
   // Set the responseType attribute's value to the given value.
@@ -762,8 +788,8 @@ XMLHttpRequestMainThread::GetResponse(JSContext* aCx,
   case XMLHttpRequestResponseType::Text:
   case XMLHttpRequestResponseType::Moz_chunked_text:
   {
-    nsAutoString str;
-    aRv = GetResponseText(str);
+    DOMString str;
+    GetResponseText(str, aRv);
     if (aRv.Failed()) {
       return;
     }
@@ -791,7 +817,6 @@ XMLHttpRequestMainThread::GetResponse(JSContext* aCx,
         return;
       }
     }
-    JS::ExposeObjectToActiveJS(mResultArrayBuffer);
     aResponse.setObject(*mResultArrayBuffer);
     return;
   }
@@ -846,7 +871,6 @@ XMLHttpRequestMainThread::GetResponse(JSContext* aCx,
         mResultJSON.setNull();
       }
     }
-    JS::ExposeValueToActiveJS(mResultJSON);
     aResponse.set(mResultJSON);
     return;
   }
@@ -1010,6 +1034,7 @@ XMLHttpRequestMainThread::GetStatusText(nsACString& aStatusText,
 void
 XMLHttpRequestMainThread::CloseRequest()
 {
+  mWaitingForOnStopRequest = false;
   if (mChannel) {
     mChannel->Cancel(NS_BINDING_ABORTED);
   }
@@ -1039,11 +1064,9 @@ XMLHttpRequestMainThread::CloseRequestWithError(const ProgressEventType aType)
     if (!mFlagSyncLooping) {
       if (mUpload && !mUploadComplete) {
         mUploadComplete = true;
-        DispatchProgressEvent(mUpload, ProgressEventType::progress, 0, 0);
-        DispatchProgressEvent(mUpload, aType, 0, 0);
+        DispatchProgressEvent(mUpload, aType, 0, -1);
       }
-      DispatchProgressEvent(this, ProgressEventType::progress, 0, 0);
-      DispatchProgressEvent(this, aType, 0, 0);
+      DispatchProgressEvent(this, aType, 0, -1);
     }
   }
 
@@ -1317,7 +1340,7 @@ XMLHttpRequestMainThread::DispatchProgressEvent(DOMEventTargetHelper* aTarget,
       return;
     }
     aLoaded = 0;
-    aTotal = 0;
+    aTotal = -1;
   }
 
   if (aType == ProgressEventType::progress) {
@@ -1327,7 +1350,7 @@ XMLHttpRequestMainThread::DispatchProgressEvent(DOMEventTargetHelper* aTarget,
   ProgressEventInit init;
   init.mBubbles = false;
   init.mCancelable = false;
-  init.mLengthComputable = aTotal != 0; // XHR spec step 6.1
+  init.mLengthComputable = aTotal != -1; // XHR spec step 6.1
   init.mLoaded = aLoaded;
   init.mTotal = (aTotal == -1) ? 0 : aTotal;
 
@@ -1442,7 +1465,7 @@ XMLHttpRequestMainThread::Open(const nsACString& aMethod,
     // non-window context...
     nsresult rv = CheckInnerWindowCorrectness();
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      return NS_ERROR_DOM_INVALID_STATE_ERR;
+      return NS_ERROR_DOM_INVALID_STATE_XHR_HAS_INVALID_CONTEXT;
     }
   }
   NS_ENSURE_TRUE(mPrincipal, NS_ERROR_NOT_INITIALIZED);
@@ -1465,12 +1488,12 @@ XMLHttpRequestMainThread::Open(const nsACString& aMethod,
   rv = NS_NewURI(getter_AddRefs(parsedURL), aUrl, nullptr, baseURI);
   if (NS_FAILED(rv)) {
     if (rv ==  NS_ERROR_MALFORMED_URI) {
-      return NS_ERROR_DOM_SYNTAX_ERR;
+      return NS_ERROR_DOM_MALFORMED_URI;
     }
     return rv;
   }
   if (NS_WARN_IF(NS_FAILED(CheckInnerWindowCorrectness()))) {
-    return NS_ERROR_DOM_INVALID_STATE_ERR;
+    return NS_ERROR_DOM_INVALID_STATE_XHR_HAS_INVALID_CONTEXT;
   }
 
   // Step 7
@@ -1501,7 +1524,7 @@ XMLHttpRequestMainThread::Open(const nsACString& aMethod,
     if (mResponseType != XMLHttpRequestResponseType::_empty) {
       LogMessage("ResponseTypeSyncXHRWarning", GetOwner());
     }
-    return NS_ERROR_DOM_INVALID_ACCESS_ERR;
+    return NS_ERROR_DOM_INVALID_ACCESS_XHR_TIMEOUT_AND_RESPONSETYPE_UNSUPPORTED_FOR_SYNC;
   }
 
   // Step 10
@@ -1582,8 +1605,12 @@ XMLHttpRequestMainThread::StreamReaderFunc(nsIInputStream* in,
 
   nsresult rv = NS_OK;
 
-  if (xmlHttpRequest->mResponseType == XMLHttpRequestResponseType::Blob ||
-      xmlHttpRequest->mResponseType == XMLHttpRequestResponseType::Moz_blob) {
+  if (xmlHttpRequest->mResponseType == XMLHttpRequestResponseType::Blob) {
+    if (!xmlHttpRequest->mDOMBlob) {
+      xmlHttpRequest->MaybeCreateBlobStorage();
+      rv = xmlHttpRequest->mBlobStorage->Append(fromRawSegment, count);
+    }
+  } else if (xmlHttpRequest->mResponseType == XMLHttpRequestResponseType::Moz_blob) {
     if (!xmlHttpRequest->mDOMBlob) {
       if (!xmlHttpRequest->mBlobSet) {
         xmlHttpRequest->mBlobSet = new BlobSet();
@@ -1591,9 +1618,7 @@ XMLHttpRequestMainThread::StreamReaderFunc(nsIInputStream* in,
       rv = xmlHttpRequest->mBlobSet->AppendVoidPtr(fromRawSegment, count);
     }
     // Clear the cache so that the blob size is updated.
-    if (xmlHttpRequest->mResponseType == XMLHttpRequestResponseType::Moz_blob) {
-      xmlHttpRequest->mResponseBlob = nullptr;
-    }
+    xmlHttpRequest->mResponseBlob = nullptr;
   } else if ((xmlHttpRequest->mResponseType == XMLHttpRequestResponseType::Arraybuffer &&
               !xmlHttpRequest->mIsMappedArrayBuffer) ||
              xmlHttpRequest->mResponseType == XMLHttpRequestResponseType::Moz_chunked_arraybuffer) {
@@ -1669,6 +1694,7 @@ bool XMLHttpRequestMainThread::CreateDOMBlob(nsIRequest *request)
   mDOMBlob = File::CreateFromFile(GetOwner(), file, EmptyString(),
                                   NS_ConvertASCIItoUTF16(contentType));
 
+  mBlobStorage = nullptr;
   mBlobSet = nullptr;
   NS_ASSERTION(mResponseBody.IsEmpty(), "mResponseBody should be empty");
   return true;
@@ -1715,7 +1741,15 @@ XMLHttpRequestMainThread::OnDataAvailable(nsIRequest *request,
 
   mDataAvailable += totalRead;
 
-  ChangeState(State::loading);
+  // Fire the first progress event/loading state change
+  if (mState != State::loading) {
+    ChangeState(State::loading);
+    if (!mFlagSynchronous) {
+      DispatchProgressEvent(this, ProgressEventType::progress,
+                            mLoadTransferred, mLoadTotal);
+    }
+    mProgressSinceLastProgressEvent = false;
+  }
 
   if (!mFlagSynchronous && !mProgressTimerIsActive) {
     StartProgressEventTimer();
@@ -1808,11 +1842,7 @@ XMLHttpRequestMainThread::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
           nsAutoCString file;
           nsAutoCString scheme;
           uri->GetScheme(scheme);
-          if (scheme.LowerCaseEqualsLiteral("app")) {
-            uri->GetPath(file);
-            // The actual file inside zip package has no leading slash.
-            file.Trim("/", true, false, false);
-          } else if (scheme.LowerCaseEqualsLiteral("jar")) {
+          if (scheme.LowerCaseEqualsLiteral("jar")) {
             nsCOMPtr<nsIJARURI> jarURI = do_QueryInterface(uri);
             if (jarURI) {
               jarURI->GetJAREntry(file);
@@ -1909,7 +1939,7 @@ XMLHttpRequestMainThread::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
       // If we're no longer current, just kill the load, though it really should
       // have been killed already.
       if (NS_WARN_IF(NS_FAILED(CheckInnerWindowCorrectness()))) {
-        return NS_ERROR_DOM_INVALID_STATE_ERR;
+        return NS_ERROR_DOM_INVALID_STATE_XHR_HAS_INVALID_CONTEXT;
       }
     }
 
@@ -1998,6 +2028,15 @@ XMLHttpRequestMainThread::OnStopRequest(nsIRequest *request, nsISupports *ctxt, 
     mRequestObserver->OnStopRequest(request, ctxt, status);
   }
 
+  // suppress parsing failure messages to console for status 204/304 (see bug 884693).
+  if (mResponseXML) {
+    uint32_t responseStatus;
+    if (NS_SUCCEEDED(GetStatus(&responseStatus)) &&
+        (responseStatus == 204 || responseStatus == 304)) {
+      mResponseXML->SetSuppressParserErrorConsoleMessages(true);
+    }
+  }
+
   // make sure to notify the listener if we were aborted
   // XXX in fact, why don't we do the cleanup below in this case??
   // State::unsent is for abort calls.  See OnStartRequest above.
@@ -2015,11 +2054,9 @@ XMLHttpRequestMainThread::OnStopRequest(nsIRequest *request, nsISupports *ctxt, 
   mXMLParserStreamListener = nullptr;
   mContext = nullptr;
 
+  bool waitingForBlobCreation = false;
+
   if (NS_SUCCEEDED(status) &&
-      (mResponseType == XMLHttpRequestResponseType::_empty ||
-       mResponseType == XMLHttpRequestResponseType::Text)) {
-    mLoadTotal = mResponseBody.Length();
-  } else if (NS_SUCCEEDED(status) &&
       (mResponseType == XMLHttpRequestResponseType::Blob ||
        mResponseType == XMLHttpRequestResponseType::Moz_blob)) {
     ErrorResult rv;
@@ -2030,27 +2067,37 @@ XMLHttpRequestMainThread::OnStopRequest(nsIRequest *request, nsISupports *ctxt, 
       mResponseBlob = mDOMBlob;
       mDOMBlob = nullptr;
     } else {
-      // mBlobSet can be null if the channel is non-file non-cacheable
-      // and if the response length is zero.
-      if (!mBlobSet) {
-        mBlobSet = new BlobSet();
-      }
       // Smaller files may be written in cache map instead of separate files.
       // Also, no-store response cannot be written in persistent cache.
       nsAutoCString contentType;
       mChannel->GetContentType(contentType);
 
-      mResponseBlob = mBlobSet->GetBlobInternal(GetOwner(), contentType, rv);
-      mBlobSet = nullptr;
+      if (mResponseType == XMLHttpRequestResponseType::Blob) {
+        // mBlobStorage can be null if the channel is non-file non-cacheable
+        // and if the response length is zero.
+        MaybeCreateBlobStorage();
+        mBlobStorage->GetBlobWhenReady(GetOwner(), contentType, this);
+        waitingForBlobCreation = true;
+      } else {
+        // mBlobSet can be null if the channel is non-file non-cacheable
+        // and if the response length is zero.
+        if (!mBlobSet) {
+          mBlobSet = new BlobSet();
+        }
 
-      if (NS_WARN_IF(rv.Failed())) {
-        return rv.StealNSResult();
+        nsTArray<RefPtr<BlobImpl>> subImpls(mBlobSet->GetBlobImpls());
+        RefPtr<BlobImpl> blobImpl =
+          MultipartBlobImpl::Create(Move(subImpls),
+                                    NS_ConvertASCIItoUTF16(contentType),
+                                    rv);
+        mBlobSet = nullptr;
+
+        if (NS_WARN_IF(rv.Failed())) {
+          return rv.StealNSResult();
+        }
+
+        mResponseBlob = Blob::Create(GetOwner(), blobImpl);
       }
-    }
-
-    mLoadTotal = mResponseBlob->GetSize(rv);
-    if (NS_WARN_IF(rv.Failed())) {
-      status = rv.StealNSResult();
     }
 
     NS_ASSERTION(mResponseBody.IsEmpty(), "mResponseBody should be empty");
@@ -2061,8 +2108,7 @@ XMLHttpRequestMainThread::OnStopRequest(nsIRequest *request, nsISupports *ctxt, 
               mResponseType == XMLHttpRequestResponseType::Moz_chunked_arraybuffer)) {
     // set the capacity down to the actual length, to realloc back
     // down to the actual size
-    mLoadTotal = mArrayBufferBuilder.length();
-    if (!mArrayBufferBuilder.setCapacity(mLoadTotal)) {
+    if (!mArrayBufferBuilder.setCapacity(mArrayBufferBuilder.length())) {
       // this should never happen!
       status = NS_ERROR_UNEXPECTED;
     }
@@ -2099,7 +2145,12 @@ XMLHttpRequestMainThread::OnStopRequest(nsIRequest *request, nsISupports *ctxt, 
 
   if (!mResponseXML) {
     mFlagParseBody = false;
-    ChangeStateToDone();
+
+    //We postpone the 'done' until the creation of the Blob is completed.
+    if (!waitingForBlobCreation) {
+      ChangeStateToDone();
+    }
+
     return NS_OK;
   }
 
@@ -2161,8 +2212,6 @@ XMLHttpRequestMainThread::ChangeStateToDone()
     mTimeoutTimer->Cancel();
   }
 
-  mLoadTotal = mLoadTransferred;
-
   // Per spec, fire the last download progress event, if any,
   // before readystatechange=4/done. (Note that 0-sized responses
   // will have not sent a progress event yet, so one must be sent here).
@@ -2176,11 +2225,10 @@ XMLHttpRequestMainThread::ChangeStateToDone()
   // Per spec, fire readystatechange=4/done before final error events.
   ChangeState(State::done, true);
 
-  // Per spec, if we failed in the upload phase, fire a final progress, error,
-  // and loadend event for the upload after readystatechange=4/done.
+  // Per spec, if we failed in the upload phase, fire a final error
+  // and loadend events for the upload after readystatechange=4/done.
   if (!mFlagSynchronous && mUpload && !mUploadComplete) {
-    DispatchProgressEvent(mUpload, ProgressEventType::progress, 0, 0);
-    DispatchProgressEvent(mUpload, ProgressEventType::error, 0, 0);
+    DispatchProgressEvent(mUpload, ProgressEventType::error, 0, -1);
   }
 
   // Per spec, fire download's load/error and loadend events after
@@ -2189,7 +2237,7 @@ XMLHttpRequestMainThread::ChangeStateToDone()
                         mErrorLoad ? ProgressEventType::error :
                                      ProgressEventType::load,
                         mErrorLoad ? 0 : mLoadTransferred,
-                        mErrorLoad ? 0 : mLoadTotal);
+                        mErrorLoad ? -1 : mLoadTotal);
 
   if (mErrorLoad) {
     // By nulling out channel here we make it so that Send() can test
@@ -2440,6 +2488,35 @@ XMLHttpRequestMainThread::CreateChannel()
       timedChannel->SetInitiatorType(NS_LITERAL_STRING("xmlhttprequest"));
     }
   }
+
+  // Using the provided principal as the triggeringPrincipal is fine, since we
+  // want to be able to access any of the origins that the principal has access
+  // to during the security checks, but we don't want a document to inherit an
+  // expanded principal, so in that case we need to select the principal in the
+  // expanded principal's whitelist that can load our URL as principalToInherit.
+  nsCOMPtr<nsIPrincipal> resultingDocumentPrincipal(mPrincipal);
+  nsCOMPtr<nsIExpandedPrincipal> ep = do_QueryInterface(mPrincipal);
+  if (ep) {
+    nsTArray<nsCOMPtr<nsIPrincipal>>* whitelist = nullptr;
+    ep->GetWhiteList(&whitelist);
+    if (!whitelist) {
+      return NS_ERROR_FAILURE;
+    }
+    MOZ_ASSERT(!(secFlags & nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_INHERITS));
+    bool dataInherits = (secFlags &
+      (nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS |
+       nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS)) != 0;
+    for (const auto& principal : *whitelist) {
+      if (NS_SUCCEEDED(principal->CheckMayLoad(mRequestURL, false, dataInherits))) {
+        resultingDocumentPrincipal = principal;
+        break;
+      }
+    }
+  }
+
+  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
+  rv = loadInfo->SetPrincipalToInherit(resultingDocumentPrincipal);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
@@ -2728,14 +2805,19 @@ XMLHttpRequestMainThread::SendInternal(const RequestBodyBase* aBody)
 {
   NS_ENSURE_TRUE(mPrincipal, NS_ERROR_NOT_INITIALIZED);
 
-  // Steps 1 and 2
-  if (mState != State::opened || mFlagSend) {
-    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  // Step 1
+  if (mState != State::opened) {
+    return NS_ERROR_DOM_INVALID_STATE_XHR_MUST_BE_OPENED;
+  }
+
+  // Step 2
+  if (mFlagSend) {
+    return NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_SENDING;
   }
 
   nsresult rv = CheckInnerWindowCorrectness();
   if (NS_FAILED(rv)) {
-    return NS_ERROR_DOM_INVALID_STATE_ERR;
+    return NS_ERROR_DOM_INVALID_STATE_XHR_HAS_INVALID_CONTEXT;
   }
 
   // If open() failed to create the channel, then throw a network error
@@ -2756,7 +2838,7 @@ XMLHttpRequestMainThread::SendInternal(const RequestBodyBase* aBody)
   // By default we don't have any upload, so mark upload complete.
   mUploadComplete = true;
   mErrorLoad = false;
-  mLoadTotal = 0;
+  mLoadTotal = -1;
   nsCOMPtr<nsIInputStream> uploadStream;
   nsAutoCString uploadContentType;
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(mChannel));
@@ -2822,8 +2904,7 @@ XMLHttpRequestMainThread::SendInternal(const RequestBodyBase* aBody)
     rv = mChannel->GetURI(getter_AddRefs(uri));
     if (NS_SUCCEEDED(rv)) {
       uri->GetScheme(scheme);
-      if (scheme.LowerCaseEqualsLiteral("app") ||
-          scheme.LowerCaseEqualsLiteral("jar")) {
+      if (scheme.LowerCaseEqualsLiteral("jar")) {
         mIsMappedArrayBuffer = true;
       }
     }
@@ -2854,7 +2935,7 @@ XMLHttpRequestMainThread::SendInternal(const RequestBodyBase* aBody)
           if (suspendedDoc) {
             suspendedDoc->SuppressEventHandling(nsIDocument::eEvents);
           }
-          topWindow->SuspendTimeouts(1, false);
+          topInner->Suspend();
           resumeTimeoutRunnable = new nsResumeTimeoutsEvent(topInner);
         }
       }
@@ -2906,7 +2987,7 @@ XMLHttpRequestMainThread::SendInternal(const RequestBodyBase* aBody)
       StartProgressEventTimer();
     }
     // Dispatch loadstart events
-    DispatchProgressEvent(this, ProgressEventType::loadstart, 0, 0);
+    DispatchProgressEvent(this, ProgressEventType::loadstart, 0, -1);
     if (mUpload && !mUploadComplete) {
       DispatchProgressEvent(mUpload, ProgressEventType::loadstart,
                             0, mUploadTotal);
@@ -2936,9 +3017,14 @@ NS_IMETHODIMP
 XMLHttpRequestMainThread::SetRequestHeader(const nsACString& aName,
                                            const nsACString& aValue)
 {
-  // Steps 1 and 2
-  if (mState != State::opened || mFlagSend) {
-    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  // Step 1
+  if (mState != State::opened) {
+    return NS_ERROR_DOM_INVALID_STATE_XHR_MUST_BE_OPENED;
+  }
+
+  // Step 2
+  if (mFlagSend) {
+    return NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_SENDING;
   }
 
   // Step 3
@@ -2948,7 +3034,7 @@ XMLHttpRequestMainThread::SetRequestHeader(const nsACString& aName,
 
   // Step 4
   if (!NS_IsValidHTTPToken(aName) || !NS_IsReasonableHTTPHeaderValue(value)) {
-    return NS_ERROR_DOM_SYNTAX_ERR;
+    return NS_ERROR_DOM_INVALID_HEADER_NAME;
   }
 
   // Step 5
@@ -2998,7 +3084,7 @@ XMLHttpRequestMainThread::SetTimeout(uint32_t aTimeout, ErrorResult& aRv)
     /* Timeout is not supported for synchronous requests with an owning window,
        per XHR2 spec. */
     LogMessage("TimeoutSyncXHRWarning", GetOwner());
-    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_XHR_TIMEOUT_AND_RESPONSETYPE_UNSUPPORTED_FOR_SYNC);
     return;
   }
 
@@ -3070,7 +3156,7 @@ void XMLHttpRequestMainThread::OverrideMimeType(const nsAString& aMimeType, Erro
 {
   if (mState == State::loading || mState == State::done) {
     ResetResponse();
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_LOADING_OR_DONE);
     return;
   }
 
@@ -3107,7 +3193,7 @@ XMLHttpRequestMainThread::SetMozBackgroundRequest(bool aMozBackgroundRequest)
 
   if (mState != State::unsent) {
     // Can't change this while we're in the middle of something.
-     return NS_ERROR_IN_PROGRESS;
+    return NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_SENDING;
   }
 
   mFlagBackgroundRequest = aMozBackgroundRequest;
@@ -3150,9 +3236,10 @@ XMLHttpRequestMainThread::SetWithCredentials(bool aWithCredentials, ErrorResult&
   // Return error if we're already processing a request.  Note that we can't use
   // ReadyState() here, because it can't differentiate between "opened" and
   // "sent", so we use mState directly.
+
   if ((mState != State::unsent && mState != State::opened) ||
       mFlagSend || mIsAnon) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_SENDING);
     return;
   }
 
@@ -3234,7 +3321,10 @@ XMLHttpRequestMainThread::OnRedirectVerifyCallback(nsresult result)
   mRedirectCallback->OnRedirectVerifyCallback(result);
   mRedirectCallback = nullptr;
 
-  return result;
+  // It's important that we return success here. If we return the result code
+  // that we were passed, JavaScript callers who cancel the redirect will wind
+  // up throwing an exception in the process.
+  return NS_OK;
 }
 
 /////////////////////////////////////////////////////
@@ -3260,7 +3350,7 @@ XMLHttpRequestMainThread::OnProgress(nsIRequest *aRequest, nsISupports *aContext
       StartProgressEventTimer();
     }
   } else {
-    mLoadTotal = lengthComputable ? aProgressMax : 0;
+    mLoadTotal = aProgressMax;
     mLoadTransferred = aProgress;
     // OnDataAvailable() handles mProgressSinceLastProgressEvent
     // for the download phase.
@@ -3461,6 +3551,11 @@ XMLHttpRequestMainThread::Notify(nsITimer* aTimer)
 void
 XMLHttpRequestMainThread::HandleProgressTimerCallback()
 {
+  // Don't fire the progress event if mLoadTotal is 0, see XHR spec step 6.1
+  if (!mLoadTotal && mLoadTransferred) {
+    return;
+  }
+
   mProgressTimerIsActive = false;
 
   if (!mProgressSinceLastProgressEvent || mErrorLoad) {
@@ -3473,6 +3568,7 @@ XMLHttpRequestMainThread::HandleProgressTimerCallback()
                             mUploadTransferred, mUploadTotal);
     }
   } else {
+    FireReadystatechangeEvent();
     DispatchProgressEvent(this, ProgressEventType::progress,
                           mLoadTransferred, mLoadTotal);
   }
@@ -3616,6 +3712,40 @@ nsHeaderVisitor::VisitHeader(const nsACString &header, const nsACString &value)
     mHeaders.AppendLiteral("\r\n");
   }
   return NS_OK;
+}
+
+void
+XMLHttpRequestMainThread::MaybeCreateBlobStorage()
+{
+  MOZ_ASSERT(mResponseType == XMLHttpRequestResponseType::Blob);
+
+  if (mBlobStorage) {
+    return;
+  }
+
+  MutableBlobStorage::MutableBlobStorageType storageType =
+    BasePrincipal::Cast(mPrincipal)->PrivateBrowsingId() == 0
+      ? MutableBlobStorage::eCouldBeInTemporaryFile
+      : MutableBlobStorage::eOnlyInMemory;
+
+  mBlobStorage = new MutableBlobStorage(storageType);
+}
+
+void
+XMLHttpRequestMainThread::BlobStoreCompleted(MutableBlobStorage* aBlobStorage,
+                                             Blob* aBlob, nsresult aRv)
+{
+  // Ok, the state is changed...
+  if (mBlobStorage != aBlobStorage || NS_FAILED(aRv)) {
+    return;
+  }
+
+  MOZ_ASSERT(mState != State::done);
+
+  mResponseBlob = aBlob;
+  mBlobStorage = nullptr;
+
+  ChangeStateToDone();
 }
 
 // nsXMLHttpRequestXPCOMifier implementation

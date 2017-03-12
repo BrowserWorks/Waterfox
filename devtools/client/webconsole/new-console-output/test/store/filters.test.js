@@ -5,32 +5,27 @@
 
 const expect = require("expect");
 
-const actions = require("devtools/client/webconsole/new-console-output/actions/filters");
-const { messageAdd } = require("devtools/client/webconsole/new-console-output/actions/messages");
+const actions = require("devtools/client/webconsole/new-console-output/actions/index");
+const { messageAdd } = require("devtools/client/webconsole/new-console-output/actions/index");
 const { ConsoleCommand } = require("devtools/client/webconsole/new-console-output/types");
 const { getAllMessages } = require("devtools/client/webconsole/new-console-output/selectors/messages");
 const { getAllFilters } = require("devtools/client/webconsole/new-console-output/selectors/filters");
 const { setupStore } = require("devtools/client/webconsole/new-console-output/test/helpers");
 const { MESSAGE_LEVEL } = require("devtools/client/webconsole/new-console-output/constants");
+const { stubPackets } = require("devtools/client/webconsole/new-console-output/test/fixtures/stubs/index");
+const { stubPreparedMessages } = require("devtools/client/webconsole/new-console-output/test/fixtures/stubs/index");
 
 describe("Filtering", () => {
-  const numMessages = 7;
-  const store = setupStore([
-    // Console API
-    "console.log('foobar', 'test')",
-    "console.warn('danger, will robinson!')",
-    "console.log(undefined)",
-    "console.count('bar')",
-    // Evaluation Result
-    "new Date(0)",
-    // PageError
-    "ReferenceError: asdf is not defined"
-  ]);
-  // Console Command
-  store.dispatch(messageAdd(new ConsoleCommand({ messageText: `console.warn("x")` })));
+  let store;
+  let numMessages;
+  // Number of messages in prepareBaseStore which are not filtered out, i.e. Evaluation
+  // Results, console commands and console.groups .
+  const numUnfilterableMessages = 3;
 
   beforeEach(() => {
+    store = prepareBaseStore();
     store.dispatch(actions.filtersClear());
+    numMessages = getAllMessages(store.getState()).size;
   });
 
   describe("Level filter", () => {
@@ -38,7 +33,7 @@ describe("Filtering", () => {
       store.dispatch(actions.filterToggle(MESSAGE_LEVEL.LOG));
 
       let messages = getAllMessages(store.getState());
-      expect(messages.size).toEqual(numMessages - 2);
+      expect(messages.size).toEqual(numMessages - 3);
     });
 
     it("filters debug messages", () => {
@@ -64,6 +59,30 @@ describe("Filtering", () => {
       let messages = getAllMessages(store.getState());
       expect(messages.size).toEqual(numMessages - 1);
     });
+
+    it("filters xhr messages", () => {
+      let message = stubPreparedMessages.get("XHR GET request");
+      store.dispatch(messageAdd(message));
+
+      let messages = getAllMessages(store.getState());
+      expect(messages.size).toEqual(numMessages);
+
+      store.dispatch(actions.filterToggle("netxhr"));
+      messages = getAllMessages(store.getState());
+      expect(messages.size).toEqual(numMessages + 1);
+    });
+
+    it("filters network messages", () => {
+      let message = stubPreparedMessages.get("GET request");
+      store.dispatch(messageAdd(message));
+
+      let messages = getAllMessages(store.getState());
+      expect(messages.size).toEqual(numMessages);
+
+      store.dispatch(actions.filterToggle("net"));
+      messages = getAllMessages(store.getState());
+      expect(messages.size).toEqual(numMessages + 1);
+    });
   });
 
   describe("Text filter", () => {
@@ -71,9 +90,63 @@ describe("Filtering", () => {
       store.dispatch(actions.filterTextSet("danger"));
 
       let messages = getAllMessages(store.getState());
-      // @TODO figure out what this should filter
-      // This does not filter out PageErrors, Evaluation Results or console commands
-      expect(messages.size).toEqual(5);
+      expect(messages.size - numUnfilterableMessages).toEqual(1);
+    });
+
+    it("matches unicode values", () => {
+      store.dispatch(actions.filterTextSet("鼬"));
+
+      let messages = getAllMessages(store.getState());
+      expect(messages.size - numUnfilterableMessages).toEqual(1);
+    });
+
+    it("matches locations", () => {
+      // Add a message with a different filename.
+      let locationMsg =
+        Object.assign({}, stubPackets.get("console.log('foobar', 'test')"));
+      locationMsg.message =
+        Object.assign({}, locationMsg.message, { filename: "search-location-test.js" });
+      store.dispatch(messageAdd(locationMsg));
+
+      store.dispatch(actions.filterTextSet("search-location-test.js"));
+
+      let messages = getAllMessages(store.getState());
+      expect(messages.size - numUnfilterableMessages).toEqual(1);
+    });
+
+    it("matches stacktrace functionName", () => {
+      let traceMessage = stubPackets.get("console.trace()");
+      store.dispatch(messageAdd(traceMessage));
+
+      store.dispatch(actions.filterTextSet("testStacktraceFiltering"));
+
+      let messages = getAllMessages(store.getState());
+      expect(messages.size - numUnfilterableMessages).toEqual(1);
+    });
+
+    it("matches stacktrace location", () => {
+      let traceMessage = stubPackets.get("console.trace()");
+      traceMessage.message =
+        Object.assign({}, traceMessage.message, {
+          filename: "search-location-test.js",
+          lineNumber: 85,
+          columnNumber: 13
+        });
+
+      store.dispatch(messageAdd(traceMessage));
+
+      store.dispatch(actions.filterTextSet("search-location-test.js:85:13"));
+
+      let messages = getAllMessages(store.getState());
+      expect(messages.size - numUnfilterableMessages).toEqual(1);
+    });
+
+    it("restores all messages once text is cleared", () => {
+      store.dispatch(actions.filterTextSet("danger"));
+      store.dispatch(actions.filterTextSet(""));
+
+      let messages = getAllMessages(store.getState());
+      expect(messages.size).toEqual(numMessages);
     });
   });
 
@@ -89,13 +162,17 @@ describe("Clear filters", () => {
 
     // Setup test case
     store.dispatch(actions.filterToggle(MESSAGE_LEVEL.ERROR));
+    store.dispatch(actions.filterToggle("netxhr"));
     store.dispatch(actions.filterTextSet("foobar"));
+
     let filters = getAllFilters(store.getState());
     expect(filters.toJS()).toEqual({
       "debug": true,
       "error": false,
       "info": true,
       "log": true,
+      "net": false,
+      "netxhr": true,
       "warn": true,
       "text": "foobar"
     });
@@ -108,8 +185,31 @@ describe("Clear filters", () => {
       "error": true,
       "info": true,
       "log": true,
+      "net": false,
+      "netxhr": false,
       "warn": true,
       "text": ""
     });
   });
 });
+
+function prepareBaseStore() {
+  const store = setupStore([
+    // Console API
+    "console.log('foobar', 'test')",
+    "console.warn('danger, will robinson!')",
+    "console.log(undefined)",
+    "console.count('bar')",
+    "console.log('鼬')",
+    // Evaluation Result - never filtered
+    "new Date(0)",
+    // PageError
+    "ReferenceError: asdf is not defined",
+    "console.group('bar')"
+  ]);
+
+  // Console Command - never filtered
+  store.dispatch(messageAdd(new ConsoleCommand({ messageText: `console.warn("x")` })));
+
+  return store;
+}

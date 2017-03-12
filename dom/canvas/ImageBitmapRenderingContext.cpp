@@ -51,16 +51,6 @@ ImageBitmapRenderingContext::ClipToIntrinsicSize()
 void
 ImageBitmapRenderingContext::TransferImageBitmap(ImageBitmap& aImageBitmap)
 {
-  JSContext* cx = nsContentUtils::GetCurrentJSContext();
-  if (cx) {
-    JSObject* obj = JS::CurrentGlobalOrNull(cx);
-    DeprecationWarning(cx, obj,
-                       nsIDocument::eImageBitmapRenderingContext_TransferImageBitmap,
-                       NS_LITERAL_STRING("ImageBitmapRenderingContext.transferImageBitmap "
-                                         "is deprecated and will be removed soon. "
-                                         "Use ImageBitmapRenderingContext."
-                                         "transferFromImageBitmap instead."));
-  }
   TransferFromImageBitmap(aImageBitmap);
 }
 

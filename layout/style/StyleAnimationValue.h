@@ -16,10 +16,12 @@
 #include "nsColor.h"
 #include "nsCSSProps.h"
 #include "nsCSSValue.h"
+#include "nsStyleCoord.h"
 
 class nsIFrame;
 class nsStyleContext;
 class gfx3DMatrix;
+struct RawServoDeclarationBlock;
 
 namespace mozilla {
 
@@ -60,6 +62,18 @@ public:
   }
 
   /**
+   * Calculates a measure of 'distance' between two colors.
+   *
+   * @param aStartColor The start of the interval for which the distance
+   *                    should be calculated.
+   * @param aEndColor   The end of the interval for which the distance
+   *                    should be calculated.
+   * @return the result of the calculation.
+   */
+  static double ComputeColorDistance(const css::RGBAColorData& aStartColor,
+                                     const css::RGBAColorData& aEndColor);
+
+  /**
    * Calculates a measure of 'distance' between two values.
    *
    * This measure of Distance is guaranteed to be proportional to
@@ -74,6 +88,8 @@ public:
    *                    should be calculated.
    * @param aEndValue   The end of the interval for which the distance
    *                    should be calculated.
+   * @param aStyleContext The style context to use for processing the
+   *                      translate part of transforms.
    * @param aDistance   The result of the calculation.
    * @return true on success, false on failure.
    */
@@ -81,6 +97,7 @@ public:
   ComputeDistance(nsCSSPropertyID aProperty,
                   const StyleAnimationValue& aStartValue,
                   const StyleAnimationValue& aEndValue,
+                  nsStyleContext* aStyleContext,
                   double& aDistance);
 
   /**
@@ -224,6 +241,17 @@ public:
                 nsTArray<PropertyStyleAnimationValuePair>& aResult);
 
   /**
+   * A variant of ComputeValues that takes a RawServoDeclarationBlock
+   * as the specified value.
+   */
+  static MOZ_MUST_USE bool
+  ComputeValues(nsCSSPropertyID aProperty,
+                mozilla::CSSEnabledState aEnabledState,
+                nsStyleContext* aStyleContext,
+                const RawServoDeclarationBlock& aDeclarations,
+                nsTArray<PropertyStyleAnimationValuePair>& aValues);
+
+  /**
    * Creates a specified value for the given computed value.
    *
    * The first two overloads fill in an nsCSSValue object; the third
@@ -308,6 +336,7 @@ public:
     eUnit_Color, // nsCSSValue* (never null), always with an nscolor or
                  // an nsCSSValueFloatColor
     eUnit_CurrentColor,
+    eUnit_ComplexColor, // ComplexColorValue* (never null)
     eUnit_Calc, // nsCSSValue* (never null), always with a single
                 // calc() expression that's either length or length+percent
     eUnit_ObjectPosition, // nsCSSValue* (never null), always with a
@@ -342,6 +371,7 @@ private:
     nsCSSValueSharedList* mCSSValueSharedList;
     nsCSSValuePairList* mCSSValuePairList;
     nsStringBuffer* mString;
+    css::ComplexColorValue* mComplexColor;
   } mValue;
 
 public:
@@ -419,6 +449,14 @@ public:
   /// @return the scale for this value, calculated with reference to @aForFrame.
   gfxSize GetScaleValue(const nsIFrame* aForFrame) const;
 
+  const css::ComplexColorData& GetComplexColorData() const {
+    MOZ_ASSERT(mUnit == eUnit_ComplexColor, "unit mismatch");
+    return *mValue.mComplexColor;
+  }
+  StyleComplexColor GetStyleComplexColorValue() const {
+    return GetComplexColorData().ToComplexColor();
+  }
+
   UniquePtr<nsCSSValueList> TakeCSSValueListValue() {
     nsCSSValueList* list = GetCSSValueListValue();
     mValue.mCSSValueList = nullptr;
@@ -475,6 +513,8 @@ public:
   void SetFloatValue(float aFloat);
   void SetColorValue(nscolor aColor);
   void SetCurrentColorValue();
+  void SetComplexColorValue(const StyleComplexColor& aColor);
+  void SetComplexColorValue(already_AddRefed<css::ComplexColorValue> aValue);
   void SetUnparsedStringValue(const nsString& aString);
   void SetCSSValueArrayValue(nsCSSValue::Array* aValue, Unit aUnit);
 
@@ -490,6 +530,17 @@ public:
   void SetTransformValue(nsCSSValueSharedList* aList);
 
   StyleAnimationValue& operator=(const StyleAnimationValue& aOther);
+  StyleAnimationValue& operator=(StyleAnimationValue&& aOther)
+  {
+    MOZ_ASSERT(this != &aOther, "Do not move itself");
+    if (this != &aOther) {
+      FreeValue();
+      mUnit = aOther.mUnit;
+      mValue = aOther.mValue;
+      aOther.mUnit = eUnit_Null;
+    }
+    return *this;
+  }
 
   bool operator==(const StyleAnimationValue& aOther) const;
   bool operator!=(const StyleAnimationValue& aOther) const
@@ -546,7 +597,6 @@ struct PropertyStyleAnimationValuePair
   nsCSSPropertyID mProperty;
   StyleAnimationValue mValue;
 };
-
 } // namespace mozilla
 
 #endif

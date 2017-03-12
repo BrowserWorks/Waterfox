@@ -471,15 +471,16 @@ HTMLObjectElement::GetContentDocument(nsIDOMDocument **aContentDocument)
 {
   NS_ENSURE_ARG_POINTER(aContentDocument);
 
-  nsCOMPtr<nsIDOMDocument> domDoc = do_QueryInterface(GetContentDocument());
+  nsCOMPtr<nsIDOMDocument> domDoc =
+    do_QueryInterface(GetContentDocument(*nsContentUtils::SubjectPrincipal()));
   domDoc.forget(aContentDocument);
   return NS_OK;
 }
 
 nsPIDOMWindowOuter*
-HTMLObjectElement::GetContentWindow()
+HTMLObjectElement::GetContentWindow(nsIPrincipal& aSubjectPrincipal)
 {
-  nsIDocument* doc = GetContentDocument();
+  nsIDocument* doc = GetContentDocument(aSubjectPrincipal);
   if (doc) {
     return doc->GetWindow();
   }

@@ -7,13 +7,20 @@
 #ifndef _NSSSLSTATUS_H
 #define _NSSSLSTATUS_H
 
+#include "CertVerifier.h" // For CertificateTransparencyInfo
 #include "nsISSLStatus.h"
 #include "nsCOMPtr.h"
 #include "nsXPIDLString.h"
 #include "nsIX509Cert.h"
 #include "nsISerializable.h"
 #include "nsIClassInfo.h"
-#include "nsNSSCertificate.h" // For EVStatus
+
+class nsNSSCertificate;
+
+enum class EVStatus {
+  NotEV = 0,
+  EV = 1,
+};
 
 class nsSSLStatus final
   : public nsISSLStatus
@@ -30,16 +37,19 @@ public:
 
   nsSSLStatus();
 
-  void SetServerCert(nsNSSCertificate* aServerCert,
-                     nsNSSCertificate::EVStatus aEVStatus);
+  void SetServerCert(nsNSSCertificate* aServerCert, EVStatus aEVStatus);
 
   bool HasServerCert() {
     return mServerCert != nullptr;
   }
 
+  void SetCertificateTransparencyInfo(
+    const mozilla::psm::CertificateTransparencyInfo& info);
+
   /* public for initilization in this file */
   uint16_t mCipherSuite;
   uint16_t mProtocolVersion;
+  uint16_t mCertificateTransparencyStatus;
 
   bool mIsDomainMismatch;
   bool mIsNotValidAtThisTime;

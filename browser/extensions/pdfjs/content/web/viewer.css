@@ -102,7 +102,8 @@
 }
 
 .annotationLayer .textWidgetAnnotation input,
-.annotationLayer .textWidgetAnnotation textarea {
+.annotationLayer .textWidgetAnnotation textarea,
+.annotationLayer .choiceWidgetAnnotation select {
   background-color: rgba(0, 54, 255, 0.13);
   border: 1px solid transparent;
   box-sizing: border-box;
@@ -120,21 +121,40 @@
 }
 
 .annotationLayer .textWidgetAnnotation input[disabled],
-.annotationLayer .textWidgetAnnotation textarea[disabled] {
+.annotationLayer .textWidgetAnnotation textarea[disabled],
+.annotationLayer .choiceWidgetAnnotation select[disabled] {
   background: none;
   border: 1px solid transparent;
   cursor: not-allowed;
 }
 
 .annotationLayer .textWidgetAnnotation input:hover,
-.annotationLayer .textWidgetAnnotation textarea:hover {
+.annotationLayer .textWidgetAnnotation textarea:hover,
+.annotationLayer .choiceWidgetAnnotation select:hover {
   border: 1px solid #000;
 }
 
 .annotationLayer .textWidgetAnnotation input:focus,
-.annotationLayer .textWidgetAnnotation textarea:focus {
+.annotationLayer .textWidgetAnnotation textarea:focus,
+.annotationLayer .choiceWidgetAnnotation select:focus {
   background: none;
   border: 1px solid transparent;
+}
+
+.annotationLayer .textWidgetAnnotation input.comb {
+  font-family: monospace;
+  padding-left: 2px;
+  padding-right: 0;
+}
+
+.annotationLayer .textWidgetAnnotation input.comb:focus {
+  /*
+   * Letter spacing is placed on the right side of each character. Hence, the
+   * letter spacing of the last character may be placed outside the visible
+   * area, causing horizontal scrolling. We avoid this by extending the width
+   * when the element has focus and revert this when it loses focus.
+   */
+  width: 115%;
 }
 
 .annotationLayer .popupWrapper {
@@ -304,32 +324,6 @@ select {
 .pdfPresentationMode.pdfPresentationModeControls > *,
 .pdfPresentationMode.pdfPresentationModeControls .textLayer > div {
   cursor: default;
-}
-
-/* outer/inner center provides horizontal center */
-.outerCenter {
-  pointer-events: none;
-  position: relative;
-}
-html[dir='ltr'] .outerCenter {
-  float: right;
-  right: 50%;
-}
-html[dir='rtl'] .outerCenter {
-  float: left;
-  left: 50%;
-}
-.innerCenter {
-  pointer-events: auto;
-  position: relative;
-}
-html[dir='ltr'] .innerCenter {
-  float: right;
-  right: -50%;
-}
-html[dir='rtl'] .innerCenter {
-  float: left;
-  left: -50%;
 }
 
 #outerContainer {
@@ -645,24 +639,19 @@ html[dir='ltr'] .doorHangerRight:before {
   background-color: rgb(255, 102, 102);
 }
 
-html[dir='ltr'] #toolbarViewerLeft {
-  margin-left: -1px;
-}
-html[dir='rtl'] #toolbarViewerRight {
-  margin-right: -1px;
+#toolbarViewerMiddle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 html[dir='ltr'] #toolbarViewerLeft,
 html[dir='rtl'] #toolbarViewerRight {
-  position: absolute;
-  top: 0;
-  left: 0;
+  float: left;
 }
 html[dir='ltr'] #toolbarViewerRight,
 html[dir='rtl'] #toolbarViewerLeft {
-  position: absolute;
-  top: 0;
-  right: 0;
+  float: right;
 }
 html[dir='ltr'] #toolbarViewerLeft > *,
 html[dir='ltr'] #toolbarViewerMiddle > *,
@@ -1905,11 +1894,11 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     display: none;
   }
 
-  /* Rules for browsers that support mozPrintCallback */
-  body[data-mozPrintCallback] #outerContainer {
+  /* Rules for browsers that support PDF.js printing */
+  body[data-pdfjsprinting] #outerContainer {
     display: none;
   }
-  body[data-mozPrintCallback] #printContainer {
+  body[data-pdfjsprinting] #printContainer {
     display: block;
   }
   #printContainer {
@@ -1926,7 +1915,8 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     page-break-after: always;
     page-break-inside: avoid;
   }
-  #printContainer canvas {
+  #printContainer canvas,
+  #printContainer img {
     display: block;
   }
 }
@@ -1937,38 +1927,47 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   display: none;
 }
 
-@media all and (max-width: 960px) {
-  html[dir='ltr'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='ltr'] #outerContainer.sidebarOpen .outerCenter {
-    float: left;
-    left: 205px;
-  }
-  html[dir='rtl'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='rtl'] #outerContainer.sidebarOpen .outerCenter {
-    float: right;
-    right: 205px;
+@media all and (max-width: 1040px) {
+  #outerContainer.sidebarMoving #toolbarViewerMiddle,
+  #outerContainer.sidebarOpen #toolbarViewerMiddle {
+    display: table;
+    margin: auto;
+    left: auto;
+    position: inherit;
+    transform: none;
   }
 }
 
-@media all and (max-width: 900px) {
+@media all and (max-width: 980px) {
+  .sidebarMoving .hiddenLargeView,
   .sidebarOpen .hiddenLargeView {
     display: none;
   }
+  .sidebarMoving .visibleLargeView,
   .sidebarOpen .visibleLargeView {
     display: inherit;
   }
 }
 
-@media all and (max-width: 860px) {
+@media all and (max-width: 900px) {
+  #toolbarViewerMiddle {
+    display: table;
+    margin: auto;
+    left: auto;
+    position: inherit;
+    transform: none;
+  }
+  .sidebarMoving .hiddenMediumView,
   .sidebarOpen .hiddenMediumView {
     display: none;
   }
+  .sidebarMoving .visibleMediumView,
   .sidebarOpen .visibleMediumView {
     display: inherit;
   }
 }
 
-@media all and (max-width: 770px) {
+@media all and (max-width: 840px) {
   #sidebarContainer {
     top: 32px;
     z-index: 100;
@@ -1988,15 +1987,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     right: 0px;
   }
 
-  html[dir='ltr'] .outerCenter {
-    float: left;
-    left: 205px;
-  }
-  html[dir='rtl'] .outerCenter {
-    float: right;
-    right: 205px;
-  }
-
   #outerContainer .hiddenLargeView,
   #outerContainer .hiddenMediumView {
     display: inherit;
@@ -2007,7 +1997,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   }
 }
 
-@media all and (max-width: 700px) {
+@media all and (max-width: 770px) {
   #outerContainer .hiddenLargeView {
     display: none;
   }
@@ -2016,7 +2006,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   }
 }
 
-@media all and (max-width: 660px) {
+@media all and (max-width: 700px) {
   #outerContainer .hiddenMediumView {
     display: none;
   }
@@ -2025,30 +2015,20 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   }
 }
 
-@media all and (max-width: 600px) {
+@media all and (max-width: 640px) {
   .hiddenSmallView {
     display: none;
   }
   .visibleSmallView {
     display: inherit;
   }
-  html[dir='ltr'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='ltr'] #outerContainer.sidebarOpen .outerCenter,
-  html[dir='ltr'] .outerCenter {
-    left: 156px;
-  }
-  html[dir='rtl'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='rtl'] #outerContainer.sidebarOpen .outerCenter,
-  html[dir='rtl'] .outerCenter {
-    right: 156px;
-  }
   .toolbarButtonSpacer {
     width: 0;
   }
 }
 
-@media all and (max-width: 510px) {
-  #scaleSelectContainer, #pageNumberLabel {
+@media all and (max-width: 535px) {
+  #scaleSelectContainer {
     display: none;
   }
 }

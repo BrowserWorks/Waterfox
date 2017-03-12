@@ -15,7 +15,7 @@ add_task(function* checkReturnToPreviousPage() {
   info("Loading a TLS page that isn't supported, ensure we have a fix button and clicking it then loads the page");
   let browser;
   let pageLoaded;
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
+  yield BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
     gBrowser.selectedTab = gBrowser.addTab(LOW_TLS_VERSION);
     browser = gBrowser.selectedBrowser;
     pageLoaded = BrowserTestUtils.waitForErrorPage(browser);
@@ -31,7 +31,10 @@ add_task(function* checkReturnToPreviousPage() {
 
   let pageshowPromise = promiseWaitForEvent(browser, "pageshow");
   yield ContentTask.spawn(browser, null, function* () {
-    content.document.getElementById("prefResetButton").click();
+    let doc = content.document;
+    let prefResetButton = doc.getElementById("prefResetButton");
+    Assert.equal(prefResetButton.getAttribute("autofocus"), "true", "prefResetButton has autofocus");
+    prefResetButton.click();
   });
   yield pageshowPromise;
 
@@ -39,4 +42,3 @@ add_task(function* checkReturnToPreviousPage() {
 
   yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
-

@@ -60,6 +60,8 @@ WheelEvent::InitWheelEvent(const nsAString& aType,
                            double aDeltaZ,
                            uint32_t aDeltaMode)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   MouseEvent::InitMouseEvent(aType, aCanBubble, aCancelable, aView, aDetail,
                              aScreenX, aScreenY, aClientX, aClientY, aButton,
                              aRelatedTarget, aModifiersList);
@@ -125,6 +127,7 @@ WheelEvent::Constructor(const GlobalObject& aGlobal,
                     aParam.mDeltaY, aParam.mDeltaZ, aParam.mDeltaMode);
   e->InitializeExtraMouseEventDictionaryMembers(aParam);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 

@@ -11,6 +11,7 @@
 #include "mozilla/StartupTimeline.h"
 #include "nsTArray.h"
 #include "nsStringGlue.h"
+#include "nsXULAppAPI.h"
 
 #include "mozilla/TelemetryHistogramEnums.h"
 #include "mozilla/TelemetryScalarEnums.h"
@@ -32,6 +33,9 @@ namespace HangMonitor {
   class HangAnnotations;
 } // namespace HangMonitor
 namespace Telemetry {
+
+struct Accumulation;
+struct KeyedAccumulation;
 
 enum TimerResolution {
   Millisecond,
@@ -126,11 +130,18 @@ void AccumulateCategorical(ID id, const nsCString& label);
 void AccumulateTimeDelta(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now());
 
 /**
- * This clears the data for a histogram in TelemetryHistogramEnums.h.
+ * Accumulate child process data into histograms for the given process type.
  *
- * @param id - histogram id
+ * @param aAccumulations - accumulation actions to perform
  */
-void ClearHistogram(ID id);
+void AccumulateChild(GeckoProcessType aProcessType, const nsTArray<Accumulation>& aAccumulations);
+
+/**
+ * Accumulate child process data into keyed histograms for the given process type.
+ *
+ * @param aAccumulations - accumulation actions to perform
+ */
+void AccumulateChildKeyed(GeckoProcessType aProcessType, const nsTArray<KeyedAccumulation>& aAccumulations);
 
 /**
  * Enable/disable recording for this histogram at runtime.
@@ -264,12 +275,10 @@ void RecordSlowSQLStatement(const nsACString &statement,
  * @param iceCandidateBitmask - the bitmask representing local and remote ICE
  *                              candidate types present for the connection
  * @param success - did the peer connection connected
- * @param loop - was this a Firefox Hello AKA Loop call
  */
 void
 RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
-                          const bool success,
-                          const bool loop);
+                          const bool success);
 /**
  * Initialize I/O Reporting
  * Initially this only records I/O for files in the binary directory.

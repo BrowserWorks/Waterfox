@@ -226,6 +226,21 @@ class FullParseHandler
         return new_<UnaryNode>(kind, op, pos, kid);
     }
 
+    ParseNode* newUpdate(ParseNodeKind kind, uint32_t begin, ParseNode* kid) {
+        TokenPos pos(begin, kid->pn_pos.end);
+        return new_<UnaryNode>(kind, JSOP_NOP, pos, kid);
+    }
+
+    ParseNode* newSpread(uint32_t begin, ParseNode* kid) {
+        TokenPos pos(begin, kid->pn_pos.end);
+        return new_<UnaryNode>(PNK_SPREAD, JSOP_NOP, pos, kid);
+    }
+
+    ParseNode* newArrayPush(uint32_t begin, ParseNode* kid) {
+        TokenPos pos(begin, kid->pn_pos.end);
+        return new_<UnaryNode>(PNK_ARRAYPUSH, JSOP_ARRAYPUSH, pos, kid);
+    }
+
     ParseNode* newBinary(ParseNodeKind kind, JSOp op = JSOP_NOP) {
         return new_<BinaryNode>(kind, op, pos(), (ParseNode*) nullptr, (ParseNode*) nullptr);
     }
@@ -415,6 +430,11 @@ class FullParseHandler
     ParseNode* newYieldStarExpression(uint32_t begin, ParseNode* value, ParseNode* gen) {
         TokenPos pos(begin, value->pn_pos.end);
         return new_<BinaryNode>(PNK_YIELD_STAR, JSOP_NOP, pos, value, gen);
+    }
+
+    ParseNode* newAwaitExpression(uint32_t begin, ParseNode* value, ParseNode* gen) {
+        TokenPos pos(begin, value ? value->pn_pos.end : begin + 1);
+        return new_<BinaryNode>(PNK_AWAIT, JSOP_YIELD, pos, value, gen);
     }
 
     // Statements
@@ -707,6 +727,15 @@ class FullParseHandler
         return false;
     }
 
+    bool isUnparenthesizedUnaryExpression(ParseNode* node) {
+        if (!node->isInParens()) {
+            ParseNodeKind kind = node->getKind();
+            return kind == PNK_VOID || kind == PNK_NOT || kind == PNK_BITNOT || kind == PNK_POS ||
+                   kind == PNK_NEG || IsTypeofKind(kind) || IsDeleteKind(kind);
+        }
+        return false;
+    }
+
     bool isReturnStatement(ParseNode* node) {
         return node->isKind(PNK_RETURN);
     }
@@ -843,6 +872,13 @@ class FullParseHandler
         if (node->pn_atom == cx->names().arguments)
             return js_arguments_str;
         return nullptr;
+    }
+
+    bool nameIsUnparenthesizedAsync(ParseNode* node, ExclusiveContext* cx) {
+        MOZ_ASSERT(isNameAnyParentheses(node),
+                   "must only call this function on known names");
+
+        return node->pn_atom == cx->names().async;
     }
 
     bool isCall(ParseNode* pn) {

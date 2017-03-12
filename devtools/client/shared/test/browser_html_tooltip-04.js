@@ -26,7 +26,7 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
     </vbox>
   </window>`;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 const TOOLTIP_HEIGHT = 30;
@@ -40,7 +40,7 @@ add_task(function* () {
   let [,, doc] = yield createHost("bottom", TEST_URI);
 
   info("Create HTML tooltip");
-  let tooltip = new HTMLTooltip({doc}, {useXulWrapper: false});
+  let tooltip = new HTMLTooltip(doc, {useXulWrapper: false});
   let div = doc.createElementNS(HTML_NS, "div");
   div.style.height = "100%";
   tooltip.setContent(div, {width: TOOLTIP_WIDTH, height: TOOLTIP_HEIGHT});

@@ -8,7 +8,7 @@
 add_task(function* () {
   const dbg = yield initDebugger("doc-scripts.html");
   const { selectors: { getSourceText }, getState } = dbg;
-  const sourceUrl = EXAMPLE_URL + "code-long.js";
+  const sourceUrl = EXAMPLE_URL + "long.js";
 
   // The source itself doesn't even exist yet, and using
   // `selectSourceURL` will set a pending request to load this source
@@ -34,7 +34,6 @@ add_task(function* () {
 
   // Test jumping to a line in a source that exists but hasn't been
   // loaded yet.
-  yield waitForSources(dbg, "simple1.js");
   selectSource(dbg, "simple1.js", 6);
 
   // Make sure the source is in the loading state, wait for it to be

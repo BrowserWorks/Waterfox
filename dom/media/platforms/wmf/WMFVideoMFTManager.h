@@ -21,8 +21,8 @@ class DXVA2Manager;
 class WMFVideoMFTManager : public MFTManager {
 public:
   WMFVideoMFTManager(const VideoInfo& aConfig,
-                     mozilla::layers::LayersBackend aLayersBackend,
-                     mozilla::layers::ImageContainer* aImageContainer,
+                     layers::KnowsCompositor* aKnowsCompositor,
+                     layers::ImageContainer* aImageContainer,
                      bool aDXVAEnabled);
   ~WMFVideoMFTManager();
 
@@ -39,8 +39,6 @@ public:
   TrackInfo::TrackType GetType() override {
     return TrackInfo::kVideoTrack;
   }
-
-  void ConfigurationChanged(const TrackInfo& aConfig) override;
 
   const char* GetDescriptionName() const override
   {
@@ -90,6 +88,7 @@ private:
   nsIntSize mImageSize;
 
   RefPtr<layers::ImageContainer> mImageContainer;
+  RefPtr<layers::KnowsCompositor> mKnowsCompositor;
   nsAutoPtr<DXVA2Manager> mDXVA2Manager;
 
   RefPtr<IMFSample> mLastInput;
@@ -99,7 +98,6 @@ private:
   int64_t mSamplesCount = 0;
 
   bool mDXVAEnabled;
-  const layers::LayersBackend mLayersBackend;
   bool mUseHwAccel;
 
   nsCString mDXVAFailureReason;

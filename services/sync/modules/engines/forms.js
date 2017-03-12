@@ -111,7 +111,6 @@ FormEngine.prototype = {
   _trackerObj: FormTracker,
   _recordObj: FormRec,
   applyIncomingBatchSize: FORMS_STORE_BATCH_SIZE,
-  allowSkippedRecord: true,
 
   syncPriority: 6,
 
@@ -233,7 +232,9 @@ FormTracker.prototype = {
 
   observe: function (subject, topic, data) {
     Tracker.prototype.observe.call(this, subject, topic, data);
-
+    if (this.ignoreAll) {
+      return;
+    }
     switch (topic) {
       case "satchel-storage-changed":
         if (data == "formhistory-add" || data == "formhistory-remove") {

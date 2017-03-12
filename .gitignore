@@ -10,9 +10,8 @@ ID
 .DS_Store*
 *.pdb
 *.egg-info
-*.diff
-*.rej
 *.orig
+*.rej
 
 # Vim swap files.
 .*.sw[a-z]
@@ -21,6 +20,7 @@ ID
 **/.dir-locals.el
 
 # User files that may appear at the root
+/patch.diff
 /configure
 /old-configure
 /config.cache
@@ -34,6 +34,9 @@ security/manager/.nss.checkout
 
 # Build directories
 /obj*/
+
+# VCS directories
+/.hg/
 
 # Build directories for js shell
 _DBG.OBJ/

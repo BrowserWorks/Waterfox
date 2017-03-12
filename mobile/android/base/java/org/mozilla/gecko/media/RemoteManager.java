@@ -5,6 +5,7 @@
 package org.mozilla.gecko.media;
 
 import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.Telemetry;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -37,7 +38,7 @@ public final class RemoteManager implements IBinder.DeathRecipient {
     }
 
     private List<CodecProxy> mProxies = new LinkedList<CodecProxy>();
-    private volatile ICodecManager mRemote;
+    private volatile IMediaManager mRemote;
     private volatile CountDownLatch mConnectionLatch;
     private final ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -48,7 +49,7 @@ public final class RemoteManager implements IBinder.DeathRecipient {
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-            mRemote = ICodecManager.Stub.asInterface(service);
+            mRemote = IMediaManager.Stub.asInterface(service);
             if (mConnectionLatch != null) {
                 mConnectionLatch.countDown();
             }
@@ -83,7 +84,7 @@ public final class RemoteManager implements IBinder.DeathRecipient {
         if (DEBUG) Log.d(LOGTAG, "init remote manager " + this);
         Context appCtxt = GeckoAppShell.getApplicationContext();
         if (DEBUG) Log.d(LOGTAG, "ctxt=" + appCtxt);
-        appCtxt.bindService(new Intent(appCtxt, CodecManager.class),
+        appCtxt.bindService(new Intent(appCtxt, MediaManager.class),
                 mConnection, Context.BIND_AUTO_CREATE);
         if (!waitConnection()) {
             appCtxt.unbindService(mConnection);
@@ -139,9 +140,31 @@ public final class RemoteManager implements IBinder.DeathRecipient {
         }
     }
 
+    private static final String MEDIA_DECODING_PROCESS_CRASH = "MEDIA_DECODING_PROCESS_CRASH";
+    private void reportDecodingProcessCrash() {
+        Telemetry.addToHistogram(MEDIA_DECODING_PROCESS_CRASH, 1);
+    }
+
+    public synchronized IMediaDrmBridge createRemoteMediaDrmBridge(String keySystem,
+                                                                   String stubId) {
+        if (mRemote == null) {
+            if (DEBUG) Log.d(LOGTAG, "createRemoteMediaDrmBridge failed due to not initialize");
+            return null;
+        }
+        try {
+            IMediaDrmBridge remoteBridge =
+                mRemote.createRemoteMediaDrmBridge(keySystem, stubId);
+            return remoteBridge;
+        } catch (RemoteException e) {
+            Log.e(LOGTAG, "Got exception during createRemoteMediaDrmBridge().", e);
+            return null;
+        }
+    }
+
     @Override
     public void binderDied() {
         Log.e(LOGTAG, "remote codec is dead");
+        reportDecodingProcessCrash();
         handleRemoteDeath();
     }
 

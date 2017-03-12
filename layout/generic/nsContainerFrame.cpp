@@ -921,22 +921,22 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
 /* virtual */
 LogicalSize
 nsContainerFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
-                                  WritingMode aWM,
-                                  const LogicalSize& aCBSize,
-                                  nscoord aAvailableISize,
-                                  const LogicalSize& aMargin,
-                                  const LogicalSize& aBorder,
-                                  const LogicalSize& aPadding,
-                                  bool aShrinkWrap)
+                                  WritingMode         aWM,
+                                  const LogicalSize&  aCBSize,
+                                  nscoord             aAvailableISize,
+                                  const LogicalSize&  aMargin,
+                                  const LogicalSize&  aBorder,
+                                  const LogicalSize&  aPadding,
+                                  ComputeSizeFlags    aFlags)
 {
   LogicalSize result(aWM, 0xdeadbeef, NS_UNCONSTRAINEDSIZE);
   nscoord availBased = aAvailableISize - aMargin.ISize(aWM) -
                        aBorder.ISize(aWM) - aPadding.ISize(aWM);
   // replaced elements always shrink-wrap
-  if (aShrinkWrap || IsFrameOfType(eReplaced)) {
+  if ((aFlags & ComputeSizeFlags::eShrinkWrap) || IsFrameOfType(eReplaced)) {
     // don't bother setting it if the result won't be used
     if (StylePosition()->ISize(aWM).GetUnit() == eStyleUnit_Auto) {
-      result.ISize(aWM) = ShrinkWidthToFit(aRenderingContext, availBased);
+      result.ISize(aWM) = ShrinkWidthToFit(aRenderingContext, availBased, aFlags);
     }
   } else {
     result.ISize(aWM) = availBased;
@@ -1783,15 +1783,15 @@ nsContainerFrame::PullNextInFlowChild(ContinuationTraversingState& aState)
 bool
 nsContainerFrame::ResolvedOrientationIsVertical()
 {
-  uint8_t orient = StyleDisplay()->mOrient;
+  StyleOrient orient = StyleDisplay()->mOrient;
   switch (orient) {
-    case NS_STYLE_ORIENT_HORIZONTAL:
+    case StyleOrient::Horizontal:
       return false;
-    case NS_STYLE_ORIENT_VERTICAL:
+    case StyleOrient::Vertical:
       return true;
-    case NS_STYLE_ORIENT_INLINE:
+    case StyleOrient::Inline:
       return GetWritingMode().IsVertical();
-    case NS_STYLE_ORIENT_BLOCK:
+    case StyleOrient::Block:
       return !GetWritingMode().IsVertical();
   }
   NS_NOTREACHED("unexpected -moz-orient value");
@@ -1979,6 +1979,20 @@ nsContainerFrame::RenumberChildFrames(int32_t* aOrdinal,
   }
 
   return renumbered;
+}
+
+uint16_t
+nsContainerFrame::CSSAlignmentForAbsPosChild(const ReflowInput& aChildRI,
+                                             LogicalAxis aLogicalAxis) const
+{
+  MOZ_ASSERT(aChildRI.mFrame->IsAbsolutelyPositioned(),
+             "This method should only be called for abspos children");
+  NS_ERROR("Child classes that use css box alignment for abspos children "
+           "should provide their own implementation of this method!");
+
+  // In the unexpected/unlikely event that this implementation gets invoked,
+  // just use "start" alignment.
+  return NS_STYLE_ALIGN_START;
 }
 
 nsresult

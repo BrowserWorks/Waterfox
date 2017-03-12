@@ -377,27 +377,32 @@ class ScriptMixin(PlatformMixin):
                 parsed_url = urlparse.urlparse(url)
 
         request = urllib2.Request(url)
-        # Exceptions to be retried:
-        # Bug 1300663 - HTTPError: HTTP Error 404: Not Found
-        # Bug 1300413 - HTTPError: HTTP Error 500: Internal Server Error
-        # Bug 1300943 - HTTPError: HTTP Error 503: Service Unavailable
-        # Bug 1300953 - URLError: <urlopen error [Errno -2] Name or service not known>
-        # Bug 1301594 - URLError: <urlopen error [Errno 10054] An existing connection was ...
-        # Bug 1301597 - URLError: <urlopen error [Errno 8] _ssl.c:504: EOF occurred in ...
-        # Bug 1301855 - URLError: <urlopen error [Errno 60] Operation timed out>
-        # Bug 1302237 - URLError: <urlopen error [Errno 104] Connection reset by peer>
-        # Bug 1301807 - BadStatusLine: ''
-        response = urllib2.urlopen(request)
+        # When calling fetch_url_into_memory() you should retry when we raise one of these exceptions:
+        # * Bug 1300663 - HTTPError: HTTP Error 404: Not Found
+        # * Bug 1300413 - HTTPError: HTTP Error 500: Internal Server Error
+        # * Bug 1300943 - HTTPError: HTTP Error 503: Service Unavailable
+        # * Bug 1300953 - URLError: <urlopen error [Errno -2] Name or service not known>
+        # * Bug 1301594 - URLError: <urlopen error [Errno 10054] An existing connection was ...
+        # * Bug 1301597 - URLError: <urlopen error [Errno 8] _ssl.c:504: EOF occurred in ...
+        # * Bug 1301855 - URLError: <urlopen error [Errno 60] Operation timed out>
+        # * Bug 1302237 - URLError: <urlopen error [Errno 104] Connection reset by peer>
+        # * Bug 1301807 - BadStatusLine: ''
+        #
+        # Bug 1309912 - Adding timeout in hopes to solve blocking on response.read() (bug 1300413)
+        response = urllib2.urlopen(request, timeout=30)
 
         if parsed_url.scheme in ('http', 'https'):
             expected_file_size = int(response.headers.get('Content-Length'))
 
-        self.info('Expected file size: {}'.format(expected_file_size))
-        self.debug('Url: {}'.format(url))
-        self.debug('Content-Encoding {}'.format(response.headers.get('Content-Encoding')))
+        self.info('Http code: {}'.format(response.getcode()))
+        for k in sorted(response.headers.keys()):
+            if k.lower().startswith('x-amz-') or k in ('Content-Encoding', 'Content-Type', 'via'):
+                self.info('{}: {}'.format(k, response.headers.get(k)))
 
         file_contents = response.read()
         obtained_file_size = len(file_contents)
+        self.info('Expected file size: {}'.format(expected_file_size))
+        self.info('Obtained file size: {}'.format(obtained_file_size))
 
         if obtained_file_size != expected_file_size:
             raise FetchedIncorrectFilesize(
@@ -485,8 +490,7 @@ class ScriptMixin(PlatformMixin):
             raise
 
     def _retry_download(self, url, error_level, file_name=None, retry_config=None):
-        """ Helper method to retry download methods
-        Split out so we can alter the retry logic in mozharness.mozilla.testing.gaia_test.
+        """ Helper method to retry download methods.
 
         This method calls `self.retry` on `self._download_file` using the passed
         parameters if a file_name is specified. If no file is specified, we will
@@ -551,7 +555,7 @@ class ScriptMixin(PlatformMixin):
                                       Defaults to False.
 
         Raises:
-            zipfile.BadZipFile: on contents of zipfile being invalid
+            zipfile.BadZipfile: on contents of zipfile being invalid
         """
         with zipfile.ZipFile(compressed_file) as bundle:
             entries = self._filter_entries(bundle.namelist(), extract_dirs)
@@ -629,6 +633,9 @@ class ScriptMixin(PlatformMixin):
                 'application/zip': {
                     'function': self.unzip,
                 },
+                'application/x-zip-compressed': {
+                    'function': self.unzip,
+                },
             }
 
             filename = url.split('/')[-1]
@@ -678,7 +685,12 @@ class ScriptMixin(PlatformMixin):
         # 2) We're guaranteed to have download the file with error_level=FATAL
         #    Let's unpack the file
         function, kwargs = _determine_extraction_method_and_kwargs(url)
-        function(**kwargs)
+        try:
+            function(**kwargs)
+        except zipfile.BadZipfile:
+            # Bug 1306189 - Sometimes a good download turns out to be a
+            # corrupted zipfile. Let's create a signature that is easy to match
+            self.fatal('Check bug 1306189 for details on downloading a truncated zip file.')
 
 
     def load_json_url(self, url, error_level=None, *args, **kwargs):
@@ -1365,7 +1377,8 @@ class ScriptMixin(PlatformMixin):
                 returncode = int(p.proc.returncode)
             else:
                 p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
-                                     cwd=cwd, stderr=subprocess.STDOUT, env=env)
+                                     cwd=cwd, stderr=subprocess.STDOUT, env=env,
+                                     bufsize=0)
                 loop = True
                 while loop:
                     if p.poll() is not None:
@@ -1649,6 +1662,11 @@ class ScriptMixin(PlatformMixin):
             self.log('No extraction method found for: %s' % filename,
                      level=error_level, exit_code=fatal_exit_code)
 
+    def is_taskcluster(self):
+        """Returns boolean indicating if we're running in TaskCluster."""
+        # This may need expanding in the future to work on
+        return 'TASKCLUSTER_WORKER_TYPE' in os.environ
+
 
 def PreScriptRun(func):
     """Decorator for methods that will be called before script execution.
@@ -1781,6 +1799,21 @@ class BaseScript(ScriptMixin, LogMixin, object):
         self.env = None
         self.new_log_obj(default_log_level=default_log_level)
         self.script_obj = self
+
+        # Indicate we're a source checkout if VCS directory is present at the
+        # appropriate place. This code will break if this file is ever moved
+        # to another directory.
+        self.topsrcdir = None
+
+        srcreldir = 'testing/mozharness/mozharness/base'
+        here = os.path.normpath(os.path.dirname(__file__))
+        if here.replace('\\', '/').endswith(srcreldir):
+            topsrcdir = os.path.normpath(os.path.join(here, '..', '..',
+                                                      '..', '..'))
+            hg_dir = os.path.join(topsrcdir, '.hg')
+            git_dir = os.path.join(topsrcdir, '.git')
+            if os.path.isdir(hg_dir) or os.path.isdir(git_dir):
+                self.topsrcdir = topsrcdir
 
         # Set self.config to read-only.
         #
@@ -2214,9 +2247,9 @@ class BaseScript(ScriptMixin, LogMixin, object):
             self.log("%s doesn't exist after copy!" % dest, level=error_level)
             return None
 
-    def file_sha512sum(self, file_path):
+    def get_hash_for_file(self, file_path, hash_type="sha512"):
         bs = 65536
-        hasher = hashlib.sha512()
+        hasher = hashlib.new(hash_type)
         with open(file_path, 'rb') as fh:
             buf = fh.read(bs)
             while len(buf) > 0:

@@ -72,8 +72,8 @@ nsPluginByteRangeStreamListener::nsPluginByteRangeStreamListener(nsIWeakReferenc
 
 nsPluginByteRangeStreamListener::~nsPluginByteRangeStreamListener()
 {
-  mStreamConverter = 0;
-  mWeakPtrPluginStreamListenerPeer = 0;
+  mStreamConverter = nullptr;
+  mWeakPtrPluginStreamListenerPeer = nullptr;
 }
 
 /**
@@ -123,7 +123,7 @@ nsPluginByteRangeStreamListener::OnStartRequest(nsIRequest *request, nsISupports
         return rv;
     }
   }
-  mStreamConverter = 0;
+  mStreamConverter = nullptr;
 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(request));
   if (!httpChannel) {
@@ -1291,19 +1291,28 @@ nsPluginStreamListenerPeer::GetInterfaceGlobal(const nsIID& aIID, void** result)
   }
 
   RefPtr<nsPluginInstanceOwner> owner = mPluginInstance->GetOwner();
-  if (owner) {
-    nsCOMPtr<nsIDocument> doc;
-    nsresult rv = owner->GetDocument(getter_AddRefs(doc));
-    if (NS_SUCCEEDED(rv) && doc) {
-      if  (nsPIDOMWindowOuter *window = doc->GetWindow()) {
-        nsCOMPtr<nsIWebNavigation> webNav = do_GetInterface(window);
-        nsCOMPtr<nsIInterfaceRequestor> ir = do_QueryInterface(webNav);
-        return ir->GetInterface(aIID, result);
-      }
-    }
+  if (!owner) {
+    return NS_ERROR_FAILURE;
   }
 
-  return NS_ERROR_FAILURE;
+  nsCOMPtr<nsIDocument> doc;
+  nsresult rv = owner->GetDocument(getter_AddRefs(doc));
+  if (NS_FAILED(rv) || !doc) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsPIDOMWindowOuter *window = doc->GetWindow();
+  if (!window) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsIWebNavigation> webNav = do_GetInterface(window);
+  nsCOMPtr<nsIInterfaceRequestor> ir = do_QueryInterface(webNav);
+  if (!ir) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return ir->GetInterface(aIID, result);
 }
 
 NS_IMETHODIMP

@@ -2,15 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import By, Wait
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestMixedScriptContentBlocking(FirefoxTestCase):
+class TestMixedScriptContentBlocking(PuppeteerMixin, MarionetteTestCase):
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestMixedScriptContentBlocking, self).setUp()
 
         self.url = 'https://mozqa.com/data/firefox/security/mixed_content_blocked/index.html'
 
@@ -28,7 +28,7 @@ class TestMixedScriptContentBlocking(FirefoxTestCase):
         try:
             self.identity_popup.close(force=True)
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestMixedScriptContentBlocking, self).tearDown()
 
     def _expect_protection_status(self, enabled):
         if enabled:
@@ -45,8 +45,8 @@ class TestMixedScriptContentBlocking(FirefoxTestCase):
             )
 
         # First call to Wait() needs a longer timeout due to the reload of the web page.
-        Wait(self.marionette, timeout=self.browser.timeout_page_load).until(
-            lambda _: self.locationbar.identity_box.get_attribute('className') == identity,
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
+            lambda _: self.locationbar.identity_box.get_property('className') == identity,
             message='Expected identity "{}" not found'.format(identity)
         )
 

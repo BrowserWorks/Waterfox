@@ -197,7 +197,7 @@ public:
                        const bool aIgnoreSessionPermissions = false);
 
   /**
-   * Initialize the "clear-origin-data" observing.
+   * Initialize the "clear-origin-attributes-data" observing.
    * Will create a nsPermissionManager instance if needed.
    * That way, we can prevent have nsPermissionManager created at startup just
    * to be able to clear data when an application is uninstalled.
@@ -254,8 +254,6 @@ private:
                        int64_t aExpireTime,
                        int64_t aModificationTime);
 
-  nsresult RemoveExpiredPermissionsForApp(uint32_t aAppId);
-
   /**
    * This method removes all permissions modified after the specified time.
    */
@@ -281,13 +279,6 @@ private:
 
   // An array to store the strings identifying the different types.
   nsTArray<nsCString>          mTypeArray;
-
-  // A list of struct for counting applications
-  struct ApplicationCounter {
-    uint32_t mAppId;
-    uint32_t mCounter;
-  };
-  nsTArray<ApplicationCounter> mAppIdRefcounts;
 
   // Initially, |false|. Set to |true| once shutdown has started, to avoid
   // reopening the database.

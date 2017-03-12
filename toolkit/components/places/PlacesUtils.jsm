@@ -256,9 +256,14 @@ const BOOKMARK_VALIDATORS = Object.freeze({
 });
 
 // Sync bookmark records can contain additional properties.
-const SYNC_BOOKMARK_VALIDATORS = Object.freeze(Object.assign({
-  // Sync uses kinds instead of types, which distinguish between livemarks
-  // and smart bookmarks.
+const SYNC_BOOKMARK_VALIDATORS = Object.freeze({
+  // Sync uses Places GUIDs for all records except roots.
+  syncId: simpleValidateFunc(v => typeof v == "string" && (
+                                  (PlacesSyncUtils.bookmarks.ROOTS.includes(v) ||
+                                   PlacesUtils.isValidGuid(v)))),
+  parentSyncId: v => SYNC_BOOKMARK_VALIDATORS.syncId(v),
+  // Sync uses kinds instead of types, which distinguish between livemarks,
+  // queries, and smart bookmarks.
   kind: simpleValidateFunc(v => typeof v == "string" &&
                                 Object.values(PlacesSyncUtils.bookmarks.KINDS).includes(v)),
   query: simpleValidateFunc(v => v === null || (typeof v == "string" && v)),
@@ -282,9 +287,11 @@ const SYNC_BOOKMARK_VALIDATORS = Object.freeze(Object.assign({
   keyword: simpleValidateFunc(v => v === null || typeof v == "string"),
   description: simpleValidateFunc(v => v === null || typeof v == "string"),
   loadInSidebar: simpleValidateFunc(v => v === true || v === false),
-  feed: BOOKMARK_VALIDATORS.url,
+  feed: v => v === null ? v : BOOKMARK_VALIDATORS.url(v),
   site: v => v === null ? v : BOOKMARK_VALIDATORS.url(v),
-}, BOOKMARK_VALIDATORS));
+  title: BOOKMARK_VALIDATORS.title,
+  url: BOOKMARK_VALIDATORS.url,
+});
 
 this.PlacesUtils = {
   // Place entries that are containers, e.g. bookmark folders or queries.
@@ -308,6 +315,7 @@ this.PlacesUtils = {
   POST_DATA_ANNO: "bookmarkProperties/POSTData",
   READ_ONLY_ANNO: "placesInternal/READ_ONLY",
   CHARSET_ANNO: "URIProperties/characterSet",
+  MOBILE_ROOT_ANNO: "mobile/bookmarksRoot",
 
   TOPIC_SHUTDOWN: "places-shutdown",
   TOPIC_INIT_COMPLETE: "places-init-complete",
@@ -573,8 +581,7 @@ this.PlacesUtils = {
     this._shutdownFunctions.push(aFunc);
   },
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsIObserver
+  // nsIObserver
   observe: function PU_observe(aSubject, aTopic, aData)
   {
     switch (aTopic) {
@@ -607,8 +614,7 @@ this.PlacesUtils = {
   onPageAnnotationRemoved: function() {},
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsITransactionListener
+  // nsITransactionListener
 
   didDo: function PU_didDo(aManager, aTransaction, aDoResult)
   {
@@ -1115,6 +1121,11 @@ this.PlacesUtils = {
     return this.unfiledBookmarksFolderId = this.bookmarks.unfiledBookmarksFolder;
   },
 
+  get mobileFolderId() {
+    delete this.mobileFolderId;
+    return this.mobileFolderId = this.bookmarks.mobileFolder;
+  },
+
   /**
    * Checks if aItemId is a root.
    *
@@ -1127,7 +1138,8 @@ this.PlacesUtils = {
            aItemId == PlacesUtils.toolbarFolderId ||
            aItemId == PlacesUtils.unfiledBookmarksFolderId ||
            aItemId == PlacesUtils.tagsFolderId ||
-           aItemId == PlacesUtils.placesRootId;
+           aItemId == PlacesUtils.placesRootId ||
+           aItemId == PlacesUtils.mobileFolderId;
   },
 
   /**
@@ -1166,7 +1178,7 @@ this.PlacesUtils = {
 
       // Fetch keywords for this href.
       let cache = yield gKeywordsCachePromise;
-      for (let [ keyword, entry ] of cache) {
+      for (let [ , entry ] of cache) {
         // Set the POST data on keywords not having it.
         if (entry.url.href == bm.url.href && !entry.postData) {
           entry.postData = aPostData;
@@ -1820,6 +1832,8 @@ this.PlacesUtils = {
             item.root = "unfiledBookmarksFolder";
           else if (itemId == PlacesUtils.toolbarFolderId)
             item.root = "toolbarFolder";
+          else if (itemId == PlacesUtils.mobileFolderId)
+            item.root = "mobileFolder";
           break;
         case Ci.nsINavBookmarksService.TYPE_SEPARATOR:
           item.type = PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR;
@@ -2540,8 +2554,7 @@ var GuidHelper = {
   }
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// Transactions handlers.
+// Transactions handlers.
 
 /**
  * Updates commands in the undo group of the active window commands.

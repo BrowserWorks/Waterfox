@@ -11,7 +11,7 @@ const {SideMenuWidget} = require("resource://devtools/client/shared/widgets/Side
 const promise = require("promise");
 const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
-const {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
+const Tooltip = require("devtools/client/shared/widgets/tooltip/Tooltip");
 const Editor = require("devtools/client/sourceeditor/editor");
 const {LocalizationHelper} = require("devtools/shared/l10n");
 const {Heritage, WidgetMethods, setNamedTimeout} =
@@ -38,7 +38,7 @@ const EVENTS = {
 };
 XPCOMUtils.defineConstant(this, "EVENTS", EVENTS);
 
-const STRINGS_URI = "devtools/locale/shadereditor.properties";
+const STRINGS_URI = "devtools/client/locales/shadereditor.properties";
 const HIGHLIGHT_TINT = [1, 0, 0.25, 1]; // rgba
 const TYPING_MAX_DELAY = 500; // ms
 const SHADERS_AUTOGROW_ITEMS = 4;

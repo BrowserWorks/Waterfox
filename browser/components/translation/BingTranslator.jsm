@@ -286,7 +286,7 @@ BingRequest.prototype = {
    * Initiates the request
    */
   fireRequest: function() {
-    return Task.spawn(function *(){
+    return Task.spawn(function *() {
       // Prepare authentication.
       let token = yield BingTokenManager.getToken();
       let auth = "Bearer " + token;
@@ -419,7 +419,7 @@ var BingTokenManager = {
     };
 
     this._pendingRequest = deferred.promise;
-    let request = httpRequest(url, options);
+    httpRequest(url, options);
 
     return deferred.promise;
   }

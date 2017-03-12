@@ -28,7 +28,7 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
     </vbox>
   </window>`;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 let useXulWrapper;
@@ -144,7 +144,7 @@ function blurNode(doc, selector) {
  *         tooltip content will be ready.
  */
 function* createTooltip(doc, autofocus) {
-  let tooltip = new HTMLTooltip({doc}, {autofocus, useXulWrapper});
+  let tooltip = new HTMLTooltip(doc, {autofocus, useXulWrapper});
   let div = doc.createElementNS(HTML_NS, "div");
   div.classList.add("tooltip-content");
   div.style.height = "50px";

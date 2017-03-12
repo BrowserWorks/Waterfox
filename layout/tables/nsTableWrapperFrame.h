@@ -68,18 +68,37 @@ public:
 
   virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const override;
 
+  bool GetNaturalBaselineBOffset(mozilla::WritingMode aWM,
+                                 BaselineSharingGroup aBaselineGroup,
+                                 nscoord*             aBaseline) const override
+  {
+    auto innerTable = InnerTableFrame();
+    nscoord offset;
+    if (innerTable->GetNaturalBaselineBOffset(aWM, aBaselineGroup, &offset)) {
+      auto bStart = innerTable->BStart(aWM, mRect.Size());
+      if (aBaselineGroup == BaselineSharingGroup::eFirst) {
+        *aBaseline = offset + bStart;
+      } else {
+        auto bEnd = bStart + innerTable->BSize(aWM);
+        *aBaseline = BSize(aWM) - (bEnd - offset);
+      }
+      return true;
+    }
+    return false;
+  }
+
   virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
   virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
 
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                  mozilla::WritingMode aWritingMode,
+  ComputeAutoSize(nsRenderingContext*         aRenderingContext,
+                  mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
-                  nscoord aAvailableISize,
+                  nscoord                     aAvailableISize,
                   const mozilla::LogicalSize& aMargin,
                   const mozilla::LogicalSize& aBorder,
                   const mozilla::LogicalSize& aPadding,
-                  bool aShrinkWrap) override;
+                  ComputeSizeFlags            aFlags) override;
 
   /** process a reflow command for the table.
     * This involves reflowing the caption and the inner table.
@@ -179,8 +198,12 @@ public:
     return map->GetEffectiveRowSpan(aRowIdx, aColIdx);
   }
 
-protected:
+  /**
+   * The CB size to use for the inner table frame if we're a grid item.
+   */
+  NS_DECLARE_FRAME_PROPERTY_DELETABLE(GridItemCBSizeProperty, mozilla::LogicalSize);
 
+protected:
 
   explicit nsTableWrapperFrame(nsStyleContext* aContext);
   virtual ~nsTableWrapperFrame();
@@ -261,6 +284,19 @@ protected:
   {
     return static_cast<nsTableFrame*>(mFrames.FirstChild());
   }
+
+  /**
+   * Helper for ComputeAutoSize.
+   * Compute the margin-box inline size of aChildFrame given the inputs.
+   * If aMarginResult is non-null, fill it with the part of the
+   * margin-isize that was contributed by the margin.
+   */
+  nscoord ChildShrinkWrapISize(nsRenderingContext*  aRenderingContext,
+                               nsIFrame*            aChildFrame,
+                               mozilla::WritingMode aWM,
+                               mozilla::LogicalSize aCBSize,
+                               nscoord              aAvailableISize,
+                               nscoord*             aMarginResult = nullptr) const;
 
 private:
   nsFrameList   mCaptionFrames;

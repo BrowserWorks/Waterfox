@@ -31,7 +31,7 @@ loader.lazyImporter(this, "CustomizableUI", "resource:///modules/CustomizableUI.
 loader.lazyImporter(this, "AppConstants", "resource://gre/modules/AppConstants.jsm");
 
 const {LocalizationHelper} = require("devtools/shared/l10n");
-const L10N = new LocalizationHelper("devtools/locale/toolbox.properties");
+const L10N = new LocalizationHelper("devtools/client/locales/toolbox.properties");
 
 const TABS_OPEN_PEAK_HISTOGRAM = "DEVTOOLS_TABS_OPEN_PEAK_LINEAR";
 const TABS_OPEN_AVG_HISTOGRAM = "DEVTOOLS_TABS_OPEN_AVERAGE_LINEAR";
@@ -72,7 +72,7 @@ var gDevToolsBrowser = exports.gDevToolsBrowser = {
     // - should close a docked toolbox
     // - should focus a windowed toolbox
     let isDocked = toolbox && toolbox.hostType != Toolbox.HostType.WINDOW;
-    isDocked ? toolbox.destroy() : gDevTools.showToolbox(target);
+    isDocked ? gDevTools.closeToolbox(target) : gDevTools.showToolbox(target);
   },
 
   /**
@@ -183,7 +183,7 @@ var gDevToolsBrowser = exports.gDevToolsBrowser = {
       if (toolDefinition.preventClosingOnKey || toolbox.hostType == Toolbox.HostType.WINDOW) {
         toolbox.raise();
       } else {
-        toolbox.destroy();
+        gDevTools.closeToolbox(target);
       }
       gDevTools.emit("select-tool-command", toolId);
     } else {
@@ -634,7 +634,7 @@ var gDevToolsBrowser = exports.gDevToolsBrowser = {
 
     // Destroy toolboxes for closed window
     for (let [target, toolbox] of gDevTools._toolboxes) {
-      if (toolbox.win == win) {
+      if (toolbox.win.top == win) {
         toolbox.destroy();
       }
     }

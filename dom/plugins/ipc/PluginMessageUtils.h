@@ -10,8 +10,9 @@
 #include "ipc/IPCMessageUtils.h"
 #include "base/message_loop.h"
 
-#include "mozilla/ipc/MessageChannel.h"
 #include "mozilla/ipc/CrossProcessMutex.h"
+#include "mozilla/ipc/MessageChannel.h"
+#include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/UniquePtr.h"
 #include "gfxipc/ShadowLayerUtils.h"
 
@@ -98,6 +99,17 @@ struct NPRemoteWindow
 #endif
 };
 
+// This struct is like NPAudioDeviceChangeDetails, only it uses a
+// std::wstring instead of a const wchar_t* for the defaultDevice.
+// This gives us the necessary memory-ownership semantics without
+// requiring C++ objects in npapi.h.
+struct NPAudioDeviceChangeDetailsIPC
+{
+  int32_t flow;
+  int32_t role;
+  std::wstring defaultDevice;
+};
+
 #ifdef XP_WIN
 typedef HWND NativeWindowHandle;
 #elif defined(MOZ_X11)
@@ -152,6 +164,10 @@ NPPVariableToString(NPPVariable aVar)
         VARSTR(NPPVpluginEventModel);
 #endif
 
+#ifdef XP_WIN
+        VARSTR(NPPVpluginRequiresAudioDeviceChanges);
+#endif
+
     default: return "???";
     }
 }
@@ -181,6 +197,10 @@ NPNVariableToString(NPNVariable aVar)
 
         VARSTR(NPNVprivateModeBool);
         VARSTR(NPNVdocumentOrigin);
+
+#ifdef XP_WIN
+        VARSTR(NPNVaudioDeviceChangeDetails);
+#endif
 
     default: return "???";
     }
@@ -234,9 +254,7 @@ inline nsCString
 NullableString(const char* aString)
 {
     if (!aString) {
-        nsCString str;
-        str.SetIsVoid(true);
-        return str;
+        return NullCString();
     }
     return nsCString(aString);
 }
@@ -671,6 +689,40 @@ struct ParamTraits<NPCoordinateSpace>
       }
     }
     return false;
+  }
+};
+
+template <>
+struct ParamTraits<mozilla::plugins::NPAudioDeviceChangeDetailsIPC>
+{
+  typedef mozilla::plugins::NPAudioDeviceChangeDetailsIPC paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    WriteParam(aMsg, aParam.flow);
+    WriteParam(aMsg, aParam.role);
+    WriteParam(aMsg, aParam.defaultDevice);
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
+  {
+    int32_t flow, role;
+    std::wstring defaultDevice;
+    if (ReadParam(aMsg, aIter, &flow) &&
+        ReadParam(aMsg, aIter, &role) &&
+        ReadParam(aMsg, aIter, &defaultDevice)) {
+      aResult->flow = flow;
+      aResult->role = role;
+      aResult->defaultDevice = defaultDevice;
+      return true;
+    }
+    return false;
+  }
+
+  static void Log(const paramType& aParam, std::wstring* aLog)
+  {
+    aLog->append(StringPrintf(L"[%d, %d, %S]", aParam.flow, aParam.role,
+                              aParam.defaultDevice.c_str()));
   }
 };
 

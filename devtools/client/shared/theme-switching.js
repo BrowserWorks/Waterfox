@@ -5,7 +5,11 @@
 /* eslint-env browser */
 "use strict";
 (function () {
-  const SCROLLBARS_URL = "chrome://devtools/skin/floating-scrollbars-dark-theme.css";
+  const { utils: Cu } = Components;
+  const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+  const Services = require("Services");
+  const { gDevTools } = require("devtools/client/framework/devtools");
+  const { watchCSS } = require("devtools/client/shared/css-reload");
   let documentElement = document.documentElement;
 
   let os;
@@ -27,6 +31,7 @@
   }
 
   let devtoolsStyleSheets = new WeakMap();
+  let gOldTheme = "";
 
   function forceStyle() {
     let computedStyle = window.getComputedStyle(documentElement);
@@ -83,10 +88,12 @@
    * Apply all the sheets from `newTheme` and remove all of the sheets
    * from `oldTheme`
    */
-  function switchTheme(newTheme, oldTheme) {
-    if (newTheme === oldTheme) {
+  function switchTheme(newTheme) {
+    if (newTheme === gOldTheme) {
       return;
     }
+    let oldTheme = gOldTheme;
+    gOldTheme = newTheme;
 
     let oldThemeDef = gDevTools.getThemeDefinition(oldTheme);
     let newThemeDef = gDevTools.getThemeDefinition(newTheme);
@@ -110,19 +117,22 @@
       loadEvents.push(loadPromise);
     }
 
-    // Floating scroll-bars like in OSX
-    let hiddenDOMWindow = Cc["@mozilla.org/appshell/appShellService;1"]
-                 .getService(Ci.nsIAppShellService)
-                 .hiddenDOMWindow;
+    try {
+      const StylesheetUtils = require("sdk/stylesheet/utils");
+      const SCROLLBARS_URL = "chrome://devtools/skin/floating-scrollbars-dark-theme.css";
 
-    // TODO: extensions might want to customize scrollbar styles too.
-    if (!hiddenDOMWindow.matchMedia("(-moz-overlay-scrollbars)").matches) {
-      if (newTheme == "dark") {
-        StylesheetUtils.loadSheet(window, SCROLLBARS_URL, "agent");
-      } else if (oldTheme == "dark") {
-        StylesheetUtils.removeSheet(window, SCROLLBARS_URL, "agent");
+      // TODO: extensions might want to customize scrollbar styles too.
+      if (!Services.appShell.hiddenDOMWindow
+        .matchMedia("(-moz-overlay-scrollbars)").matches) {
+        if (newTheme == "dark") {
+          StylesheetUtils.loadSheet(window, SCROLLBARS_URL, "agent");
+        } else if (oldTheme == "dark") {
+          StylesheetUtils.removeSheet(window, SCROLLBARS_URL, "agent");
+        }
+        forceStyle();
       }
-      forceStyle();
+    } catch (e) {
+      console.warn("customize scrollbar styles is only supported in firefox");
     }
 
     Promise.all(loadEvents).then(() => {
@@ -156,28 +166,19 @@
     }, console.error.bind(console));
   }
 
-  function handlePrefChange(event, data) {
-    if (data.pref == "devtools.theme") {
-      switchTheme(data.newValue, data.oldValue);
-    }
+  function handlePrefChange() {
+    switchTheme(Services.prefs.getCharPref("devtools.theme"));
   }
-
-  const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
-  const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-  const Services = require("Services");
-  const { gDevTools } = require("devtools/client/framework/devtools");
-  const StylesheetUtils = require("sdk/stylesheet/utils");
-  const { watchCSS } = require("devtools/client/shared/css-reload");
 
   if (documentElement.hasAttribute("force-theme")) {
     switchTheme(documentElement.getAttribute("force-theme"));
   } else {
     switchTheme(Services.prefs.getCharPref("devtools.theme"));
 
-    gDevTools.on("pref-changed", handlePrefChange);
+    Services.prefs.addObserver("devtools.theme", handlePrefChange, false);
     window.addEventListener("unload", function () {
-      gDevTools.off("pref-changed", handlePrefChange);
-    });
+      Services.prefs.removeObserver("devtools.theme", handlePrefChange);
+    }, { once: true });
   }
 
   watchCSS(window);

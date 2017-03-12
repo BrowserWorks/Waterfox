@@ -153,22 +153,36 @@ ResolvePath(JSContext* cx, HandleString filenameStr, PathResolutionMode resolveM
 }
 
 JSObject*
-FileAsTypedArray(JSContext* cx, const char* pathname)
+FileAsTypedArray(JSContext* cx, JS::HandleString pathnameStr)
 {
-    FILE* file = fopen(pathname, "rb");
+    JSAutoByteString pathname(cx, pathnameStr);
+    if (!pathname)
+        return nullptr;
+
+    FILE* file = fopen(pathname.ptr(), "rb");
     if (!file) {
-        JS_ReportError(cx, "can't open %s: %s", pathname, strerror(errno));
+        /*
+         * Use Latin1 variant here because the encoding of the return value of
+         * strerror function can be non-UTF-8.
+         */
+        JS_ReportErrorLatin1(cx, "can't open %s: %s", pathname.ptr(), strerror(errno));
         return nullptr;
     }
     AutoCloseFile autoClose(file);
 
     RootedObject obj(cx);
     if (fseek(file, 0, SEEK_END) != 0) {
-        JS_ReportError(cx, "can't seek end of %s", pathname);
+        pathname.clear();
+        if (!pathname.encodeUtf8(cx, pathnameStr))
+            return nullptr;
+        JS_ReportErrorUTF8(cx, "can't seek end of %s", pathname.ptr());
     } else {
         size_t len = ftell(file);
         if (fseek(file, 0, SEEK_SET) != 0) {
-            JS_ReportError(cx, "can't seek start of %s", pathname);
+            pathname.clear();
+            if (!pathname.encodeUtf8(cx, pathnameStr))
+                return nullptr;
+            JS_ReportErrorUTF8(cx, "can't seek start of %s", pathname.ptr());
         } else {
             obj = JS_NewUint8Array(cx, len);
             if (!obj)
@@ -184,14 +198,27 @@ FileAsTypedArray(JSContext* cx, const char* pathname)
                 // temporary buffer, read into that, and use a
                 // race-safe primitive to copy memory into the
                 // buffer.)
-                JS_ReportError(cx, "can't read %s: shared memory buffer", pathname);
+                pathname.clear();
+                if (!pathname.encodeUtf8(cx, pathnameStr))
+                    return nullptr;
+                JS_ReportErrorUTF8(cx, "can't read %s: shared memory buffer", pathname.ptr());
                 return nullptr;
             }
             char* buf = static_cast<char*>(ta.viewDataUnshared());
             size_t cc = fread(buf, 1, len, file);
             if (cc != len) {
-                JS_ReportError(cx, "can't read %s: %s", pathname,
-                               (ptrdiff_t(cc) < 0) ? strerror(errno) : "short read");
+                if (ptrdiff_t(cc) < 0) {
+                    /*
+                     * Use Latin1 variant here because the encoding of the return
+                     * value of strerror function can be non-UTF-8.
+                     */
+                    JS_ReportErrorLatin1(cx, "can't read %s: %s", pathname.ptr(), strerror(errno));
+                } else {
+                    pathname.clear();
+                    if (!pathname.encodeUtf8(cx, pathnameStr))
+                        return nullptr;
+                    JS_ReportErrorUTF8(cx, "can't read %s: short read", pathname.ptr());
+                }
                 obj = nullptr;
             }
         }
@@ -205,24 +232,21 @@ ReadFile(JSContext* cx, unsigned argc, Value* vp, bool scriptRelative)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     if (args.length() < 1 || args.length() > 2) {
-        JS_ReportErrorNumber(cx, js::shell::my_GetErrorMessage, nullptr,
-                             args.length() < 1 ? JSSMSG_NOT_ENOUGH_ARGS : JSSMSG_TOO_MANY_ARGS,
-                             "snarf");
+        JS_ReportErrorNumberASCII(cx, js::shell::my_GetErrorMessage, nullptr,
+                                  args.length() < 1 ? JSSMSG_NOT_ENOUGH_ARGS : JSSMSG_TOO_MANY_ARGS,
+                                  "snarf");
         return false;
     }
 
     if (!args[0].isString() || (args.length() == 2 && !args[1].isString())) {
-        JS_ReportErrorNumber(cx, js::shell::my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS, "snarf");
+        JS_ReportErrorNumberASCII(cx, js::shell::my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS,
+                                  "snarf");
         return false;
     }
 
     RootedString givenPath(cx, args[0].toString());
     RootedString str(cx, js::shell::ResolvePath(cx, givenPath, scriptRelative ? ScriptRelative : RootRelative));
     if (!str)
-        return false;
-
-    JSAutoByteString filename(cx, str);
-    if (!filename)
         return false;
 
     if (args.length() > 1) {
@@ -234,14 +258,14 @@ ReadFile(JSContext* cx, unsigned argc, Value* vp, bool scriptRelative)
             return false;
         if (match) {
             JSObject* obj;
-            if (!(obj = FileAsTypedArray(cx, filename.ptr())))
+            if (!(obj = FileAsTypedArray(cx, str)))
                 return false;
             args.rval().setObject(*obj);
             return true;
         }
     }
 
-    if (!(str = FileAsString(cx, filename.ptr())))
+    if (!(str = FileAsString(cx, str)))
         return false;
     args.rval().setString(str);
     return true;
@@ -269,8 +293,8 @@ osfile_writeTypedArrayToFile(JSContext* cx, unsigned argc, Value* vp)
         !args[1].isObject() ||
         !args[1].toObject().is<TypedArrayObject>())
     {
-        JS_ReportErrorNumber(cx, my_GetErrorMessage, nullptr,
-                             JSSMSG_INVALID_ARGS, "writeTypedArrayToFile");
+        JS_ReportErrorNumberASCII(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS,
+                                  "writeTypedArrayToFile");
         return false;
     }
 
@@ -285,7 +309,11 @@ osfile_writeTypedArrayToFile(JSContext* cx, unsigned argc, Value* vp)
 
     FILE* file = fopen(filename.ptr(), "wb");
     if (!file) {
-        JS_ReportError(cx, "can't open %s: %s", filename.ptr(), strerror(errno));
+        /*
+         * Use Latin1 variant here because the encoding of the return value of
+         * strerror function can be non-UTF-8.
+         */
+        JS_ReportErrorLatin1(cx, "can't open %s: %s", filename.ptr(), strerror(errno));
         return false;
     }
     AutoCloseFile autoClose(file);
@@ -296,14 +324,20 @@ osfile_writeTypedArrayToFile(JSContext* cx, unsigned argc, Value* vp)
         // Must opt in to use shared memory.  For now, don't.
         //
         // See further comments in FileAsTypedArray, above.
-        JS_ReportError(cx, "can't write %s: shared memory buffer", filename.ptr());
+        filename.clear();
+        if (!filename.encodeUtf8(cx, str))
+            return false;
+        JS_ReportErrorUTF8(cx, "can't write %s: shared memory buffer", filename.ptr());
         return false;
     }
     void* buf = obj->viewDataUnshared();
     if (fwrite(buf, obj->bytesPerElement(), obj->length(), file) != obj->length() ||
         !autoClose.release())
     {
-        JS_ReportError(cx, "can't write %s", filename.ptr());
+        filename.clear();
+        if (!filename.encodeUtf8(cx, str))
+            return false;
+        JS_ReportErrorUTF8(cx, "can't write %s", filename.ptr());
         return false;
     }
 
@@ -428,7 +462,11 @@ redirect(JSContext* cx, HandleString relFilename, RCFile** globalFile)
         return nullptr;
     RCFile* file = RCFile::create(cx, filenameABS.ptr(), "wb");
     if (!file) {
-        JS_ReportError(cx, "cannot redirect to %s: %s", filenameABS.ptr(), strerror(errno));
+        /*
+         * Use Latin1 variant here because the encoding of the return value of
+         * strerror function can be non-UTF-8.
+         */
+        JS_ReportErrorLatin1(cx, "cannot redirect to %s: %s", filenameABS.ptr(), strerror(errno));
         return nullptr;
     }
 
@@ -452,8 +490,8 @@ static bool
 Redirect(JSContext* cx, const CallArgs& args, RCFile** outFile)
 {
     if (args.length() > 1) {
-        JS_ReportErrorNumber(cx, js::shell::my_GetErrorMessage, nullptr,
-                             JSSMSG_INVALID_ARGS, "redirect");
+        JS_ReportErrorNumberASCII(cx, js::shell::my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS,
+                                  "redirect");
         return false;
     }
 
@@ -522,8 +560,8 @@ osfile_close(JSContext* cx, unsigned argc, Value* vp) {
     }
 
     if (!fileObj) {
-        JS_ReportErrorNumber(cx, js::shell::my_GetErrorMessage, nullptr,
-                             JSSMSG_INVALID_ARGS, "close");
+        JS_ReportErrorNumberASCII(cx, js::shell::my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS,
+                                  "close");
         return false;
     }
 
@@ -575,7 +613,8 @@ ospath_isAbsolute(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     if (args.length() != 1 || !args[0].isString()) {
-        JS_ReportErrorNumber(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS, "isAbsolute");
+        JS_ReportErrorNumberASCII(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS,
+                                  "isAbsolute");
         return false;
     }
 
@@ -593,7 +632,7 @@ ospath_join(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     if (args.length() < 1) {
-        JS_ReportErrorNumber(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS, "join");
+        JS_ReportErrorNumberASCII(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS, "join");
         return false;
     }
 
@@ -604,7 +643,7 @@ ospath_join(JSContext* cx, unsigned argc, Value* vp)
 
     for (unsigned i = 0; i < args.length(); i++) {
         if (!args[i].isString()) {
-            JS_ReportError(cx, "join expects string arguments only");
+            JS_ReportErrorASCII(cx, "join expects string arguments only");
             return false;
         }
 
@@ -648,7 +687,7 @@ os_getenv(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() < 1) {
-        JS_ReportError(cx, "os.getenv requires 1 argument");
+        JS_ReportErrorASCII(cx, "os.getenv requires 1 argument");
         return false;
     }
     RootedString key(cx, ToString(cx, args[0]));
@@ -674,7 +713,7 @@ os_getpid(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() != 0) {
-        JS_ReportError(cx, "os.getpid takes no arguments");
+        JS_ReportErrorASCII(cx, "os.getpid takes no arguments");
         return false;
     }
     args.rval().setInt32(getpid());
@@ -725,7 +764,11 @@ ReportSysError(JSContext* cx, const char* prefix)
     }
 
     snprintf(final, nbytes, "%s: %s", prefix, errstr);
-    JS_ReportError(cx, final);
+    /*
+     * Use Latin1 variant here because the encoding of the return value of
+     * strerror_s and strerror_r function can be non-UTF-8.
+     */
+    JS_ReportErrorLatin1(cx, "%s", final);
     js_free(final);
 }
 
@@ -735,7 +778,7 @@ os_system(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     if (args.length() == 0) {
-        JS_ReportError(cx, "os.system requires 1 argument");
+        JS_ReportErrorASCII(cx, "os.system requires 1 argument");
         return false;
     }
 
@@ -764,7 +807,7 @@ os_spawn(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     if (args.length() == 0) {
-        JS_ReportError(cx, "os.spawn requires 1 argument");
+        JS_ReportErrorASCII(cx, "os.spawn requires 1 argument");
         return false;
     }
 
@@ -802,7 +845,7 @@ os_kill(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
     int32_t pid;
     if (args.length() < 1) {
-        JS_ReportError(cx, "os.kill requires 1 argument");
+        JS_ReportErrorASCII(cx, "os.kill requires 1 argument");
         return false;
     }
     if (!JS::ToInt32(cx, args[0], &pid))
@@ -810,7 +853,7 @@ os_kill(JSContext* cx, unsigned argc, Value* vp)
 
     // It is too easy to kill yourself accidentally with os.kill("goose").
     if (pid == 0 && !args[0].isInt32()) {
-        JS_ReportError(cx, "os.kill requires numeric pid");
+        JS_ReportErrorASCII(cx, "os.kill requires numeric pid");
         return false;
     }
 

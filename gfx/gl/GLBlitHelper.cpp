@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "gfxUtils.h"
 #include "GLBlitHelper.h"
 #include "GLContext.h"
 #include "GLScreenBuffer.h"
@@ -13,11 +14,6 @@
 #include "HeapCopyOfStackArray.h"
 #include "mozilla/gfx/Matrix.h"
 #include "mozilla/UniquePtr.h"
-
-#ifdef MOZ_WIDGET_GONK
-#include "GrallocImages.h"
-#include "GLLibraryEGL.h"
-#endif
 
 #ifdef MOZ_WIDGET_ANDROID
 #include "AndroidSurfaceTexture.h"
@@ -59,6 +55,7 @@ GLBlitHelper::GLBlitHelper(GLContext* gl)
     , mSrcTexEGL(0)
     , mYTexScaleLoc(-1)
     , mCbCrTexScaleLoc(-1)
+    , mYuvColorMatrixLoc(-1)
     , mTexWidth(0)
     , mTexHeight(0)
     , mCurYScale(1.0f)
@@ -150,7 +147,7 @@ GLBlitHelper::InitTexQuadProgram(BlitType target)
                                          vTexCoord * uTexCoordMult);  \n\
         }                                                             \n\
     ";
-#ifdef ANDROID /* MOZ_WIDGET_ANDROID || MOZ_WIDGET_GONK */
+#ifdef ANDROID /* MOZ_WIDGET_ANDROID */
     const char kTexExternalBlit_FragShaderSource[] = "\
         #version 100                                                    \n\
         #extension GL_OES_EGL_image_external : require                  \n\
@@ -171,14 +168,24 @@ GLBlitHelper::InitTexQuadProgram(BlitType target)
     ";
 #endif
     /* From Rec601:
-    [R] [1.1643835616438356, 0.0, 1.5960267857142858] [ Y - 16]
-    [G] = [1.1643835616438358, -0.3917622900949137, -0.8129676472377708] x [Cb - 128]
-    [B] [1.1643835616438356, 2.017232142857143, 8.862867620416422e-17] [Cr - 128]
+    [R]   [1.1643835616438356,  0.0,                 1.5960267857142858]      [ Y -  16]
+    [G] = [1.1643835616438358, -0.3917622900949137, -0.8129676472377708]    x [Cb - 128]
+    [B]   [1.1643835616438356,  2.017232142857143,   8.862867620416422e-17]   [Cr - 128]
 
     For [0,1] instead of [0,255], and to 5 places:
-    [R] [1.16438, 0.00000, 1.59603] [ Y - 0.06275]
+    [R]   [1.16438,  0.00000,  1.59603]   [ Y - 0.06275]
     [G] = [1.16438, -0.39176, -0.81297] x [Cb - 0.50196]
-    [B] [1.16438, 2.01723, 0.00000] [Cr - 0.50196]
+    [B]   [1.16438,  2.01723,  0.00000]   [Cr - 0.50196]
+
+    From Rec709:
+    [R]   [1.1643835616438356,  4.2781193979771426e-17, 1.7927410714285714]     [ Y -  16]
+    [G] = [1.1643835616438358, -0.21324861427372963,   -0.532909328559444]    x [Cb - 128]
+    [B]   [1.1643835616438356,  2.1124017857142854,     0.0]                    [Cr - 128]
+
+    For [0,1] instead of [0,255], and to 5 places:
+    [R]   [1.16438,  0.00000,  1.79274]   [ Y - 0.06275]
+    [G] = [1.16438, -0.21325, -0.53291] x [Cb - 0.50196]
+    [B]   [1.16438,  2.11240,  0.00000]   [Cr - 0.50196]
     */
     const char kTexYUVPlanarBlit_FragShaderSource[] = "\
         #version 100                                                        \n\
@@ -191,17 +198,17 @@ GLBlitHelper::InitTexQuadProgram(BlitType target)
         uniform sampler2D uCrTexture;                                       \n\
         uniform vec2 uYTexScale;                                            \n\
         uniform vec2 uCbCrTexScale;                                         \n\
+        uniform mat3 uYuvColorMatrix;                                       \n\
         void main()                                                         \n\
         {                                                                   \n\
             float y = texture2D(uYTexture, vTexCoord * uYTexScale).r;       \n\
             float cb = texture2D(uCbTexture, vTexCoord * uCbCrTexScale).r;  \n\
             float cr = texture2D(uCrTexture, vTexCoord * uCbCrTexScale).r;  \n\
-            y = (y - 0.06275) * 1.16438;                                    \n\
+            y = y - 0.06275;                                                \n\
             cb = cb - 0.50196;                                              \n\
             cr = cr - 0.50196;                                              \n\
-            gl_FragColor.r = y + cr * 1.59603;                              \n\
-            gl_FragColor.g = y - 0.81297 * cr - 0.39176 * cb;               \n\
-            gl_FragColor.b = y + cb * 2.01723;                              \n\
+            vec3 yuv = vec3(y, cb, cr);                                     \n\
+            gl_FragColor.rgb = uYuvColorMatrix * yuv;                       \n\
             gl_FragColor.a = 1.0;                                           \n\
         }                                                                   \n\
     ";
@@ -409,13 +416,15 @@ GLBlitHelper::InitTexQuadProgram(BlitType target)
                 GLint texCb = mGL->fGetUniformLocation(program, "uCbTexture");
                 GLint texCr = mGL->fGetUniformLocation(program, "uCrTexture");
                 mYTexScaleLoc = mGL->fGetUniformLocation(program, "uYTexScale");
-                mCbCrTexScaleLoc= mGL->fGetUniformLocation(program, "uCbCrTexScale");
+                mCbCrTexScaleLoc = mGL->fGetUniformLocation(program, "uCbCrTexScale");
+                mYuvColorMatrixLoc = mGL->fGetUniformLocation(program, "uYuvColorMatrix");
 
                 DebugOnly<bool> hasUniformLocations = texY != -1 &&
                                                       texCb != -1 &&
                                                       texCr != -1 &&
                                                       mYTexScaleLoc != -1 &&
-                                                      mCbCrTexScaleLoc != -1;
+                                                      mCbCrTexScaleLoc != -1 &&
+                                                      mYuvColorMatrixLoc != -1;
                 MOZ_ASSERT(hasUniformLocations, "uniforms not found");
 
                 mGL->fUniform1i(texY, Channel_Y);
@@ -670,38 +679,6 @@ GLBlitHelper::BindAndUploadEGLImage(EGLImage image, GLuint target)
     mGL->fEGLImageTargetTexture2D(target, image);
 }
 
-#ifdef MOZ_WIDGET_GONK
-
-bool
-GLBlitHelper::BlitGrallocImage(layers::GrallocImage* grallocImage)
-{
-    ScopedBindTextureUnit boundTU(mGL, LOCAL_GL_TEXTURE0);
-    mGL->fClear(LOCAL_GL_COLOR_BUFFER_BIT);
-
-    EGLint attrs[] = {
-        LOCAL_EGL_IMAGE_PRESERVED, LOCAL_EGL_TRUE,
-        LOCAL_EGL_NONE, LOCAL_EGL_NONE
-    };
-    EGLImage image = sEGLLibrary.fCreateImage(sEGLLibrary.Display(),
-                                              EGL_NO_CONTEXT,
-                                              LOCAL_EGL_NATIVE_BUFFER_ANDROID,
-                                              grallocImage->GetNativeBuffer(), attrs);
-    if (image == EGL_NO_IMAGE)
-        return false;
-
-    int oldBinding = 0;
-    mGL->fGetIntegerv(LOCAL_GL_TEXTURE_BINDING_EXTERNAL_OES, &oldBinding);
-
-    BindAndUploadEGLImage(image, LOCAL_GL_TEXTURE_EXTERNAL_OES);
-
-    mGL->fDrawArrays(LOCAL_GL_TRIANGLE_STRIP, 0, 4);
-
-    sEGLLibrary.fDestroyImage(sEGLLibrary.Display(), image);
-    mGL->fBindTexture(LOCAL_GL_TEXTURE_EXTERNAL_OES, oldBinding);
-    return true;
-}
-#endif
-
 #ifdef MOZ_WIDGET_ANDROID
 
 #define ATTACH_WAIT_MS 50
@@ -790,6 +767,9 @@ GLBlitHelper::BlitPlanarYCbCrImage(layers::PlanarYCbCrImage* yuvImage)
         mGL->fUniform2f(mCbCrTexScaleLoc, (float)yuvData->mCbCrSize.width/yuvData->mCbCrStride, 1.0f);
     }
 
+    float* yuvToRgb = gfxUtils::Get3x3YuvColorMatrix(yuvData->mYUVColorSpace);
+    mGL->fUniformMatrix3fv(mYuvColorMatrixLoc, 1, 0, yuvToRgb);
+
     mGL->fDrawArrays(LOCAL_GL_TRIANGLE_STRIP, 0, 4);
     for (int i = 0; i < 3; i++) {
         mGL->fActiveTexture(LOCAL_GL_TEXTURE0 + i);
@@ -853,22 +833,14 @@ GLBlitHelper::BlitImageToFramebuffer(layers::Image* srcImage,
     switch (srcImage->GetFormat()) {
     case ImageFormat::PLANAR_YCBCR:
         type = ConvertPlanarYCbCr;
-        srcOrigin = OriginPos::TopLeft;
+        srcOrigin = OriginPos::BottomLeft;
         break;
-
-#ifdef MOZ_WIDGET_GONK
-    case ImageFormat::GRALLOC_PLANAR_YCBCR:
-        type = ConvertGralloc;
-        srcOrigin = OriginPos::TopLeft;
-        break;
-#endif
 
 #ifdef MOZ_WIDGET_ANDROID
     case ImageFormat::SURFACE_TEXTURE:
         type = ConvertSurfaceTexture;
         srcOrigin = srcImage->AsSurfaceTextureImage()->GetOriginPos();
         break;
-
     case ImageFormat::EGLIMAGE:
         type = ConvertEGLImage;
         srcOrigin = srcImage->AsEGLImageImage()->GetOriginPos();
@@ -898,11 +870,6 @@ GLBlitHelper::BlitImageToFramebuffer(layers::Image* srcImage,
     mGL->fViewport(0, 0, destSize.width, destSize.height);
 
     switch (type) {
-#ifdef MOZ_WIDGET_GONK
-    case ConvertGralloc:
-        return BlitGrallocImage(static_cast<layers::GrallocImage*>(srcImage));
-#endif
-
     case ConvertPlanarYCbCr: {
             const auto saved = mGL->GetIntAs<GLint>(LOCAL_GL_UNPACK_ALIGNMENT);
             mGL->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, 1);

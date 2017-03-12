@@ -32,7 +32,6 @@ var Change = {
   onLoad: function Change_onLoad() {
     /* Load labels */
     let introText = document.getElementById("introText");
-    let introText2 = document.getElementById("introText2");
     let warningText = document.getElementById("warningText");
 
     // load some other elements & info from the window
@@ -142,10 +141,8 @@ var Change = {
       case "UpdatePassphrase":
       case "ResetPassphrase":
         return this.doChangePassphrase();
-        break;
       case "ChangePassword":
         return this.doChangePassword();
-        break;
     }
     return undefined;
   },

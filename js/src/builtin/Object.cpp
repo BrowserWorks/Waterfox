@@ -132,7 +132,7 @@ template <typename CharT>
 static bool
 ArgsAndBodySubstring(mozilla::Range<const CharT> chars, size_t* outOffset, size_t* outLen)
 {
-    const CharT* const start = chars.start().get();
+    const CharT* const start = chars.begin().get();
     const CharT* const end = chars.end().get();
     const CharT* s = start;
 
@@ -437,22 +437,23 @@ obj_setPrototypeOf(JSContext* cx, unsigned argc, Value* vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     if (args.length() < 2) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
-                             "Object.setPrototypeOf", "1", "");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  "Object.setPrototypeOf", "1", "");
         return false;
     }
 
     /* Step 1-2. */
     if (args[0].isNullOrUndefined()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_CONVERT_TO,
-                             args[0].isNull() ? "null" : "undefined", "object");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_CONVERT_TO,
+                                  args[0].isNull() ? "null" : "undefined", "object");
         return false;
     }
 
     /* Step 3. */
     if (!args[1].isObjectOrNull()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_EXPECTED_TYPE,
-                             "Object.setPrototypeOf", "an object or null", InformalValueTypeName(args[1]));
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_NOT_EXPECTED_TYPE,
+                                  "Object.setPrototypeOf", "an object or null",
+                                  InformalValueTypeName(args[1]));
         return false;
     }
 
@@ -476,7 +477,7 @@ obj_setPrototypeOf(JSContext* cx, unsigned argc, Value* vp)
 #if JS_HAS_OBJ_WATCHPOINT
 
 bool
-js::WatchHandler(JSContext* cx, JSObject* obj_, jsid id_, JS::Value old,
+js::WatchHandler(JSContext* cx, JSObject* obj_, jsid id_, const JS::Value& old,
                  JS::Value* nvp, void* closure)
 {
     RootedObject obj(cx, obj_);
@@ -669,6 +670,58 @@ js::ObjectCreateWithTemplate(JSContext* cx, HandlePlainObject templateObj)
     return ObjectCreateImpl(cx, proto, GenericObject, group);
 }
 
+// ES 2017 draft 19.1.2.3.1
+static bool
+ObjectDefineProperties(JSContext* cx, HandleObject obj, HandleValue properties)
+{
+    // Step 1. implicit
+    // Step 2.
+    RootedObject props(cx, ToObject(cx, properties));
+    if (!props)
+        return false;
+
+    // Step 3.
+    AutoIdVector keys(cx);
+    if (!GetPropertyKeys(cx, props, JSITER_OWNONLY | JSITER_SYMBOLS | JSITER_HIDDEN, &keys))
+        return false;
+
+    RootedId nextKey(cx);
+    Rooted<PropertyDescriptor> desc(cx);
+    RootedValue descObj(cx);
+
+    // Step 4.
+    Rooted<PropertyDescriptorVector> descriptors(cx, PropertyDescriptorVector(cx));
+    AutoIdVector descriptorKeys(cx);
+
+    // Step 5.
+    for (size_t i = 0, len = keys.length(); i < len; i++) {
+        nextKey = keys[i];
+
+        // Step 5.a.
+        if (!GetOwnPropertyDescriptor(cx, props, nextKey, &desc))
+            return false;
+
+        // Step 5.b.
+        if (desc.object() && desc.enumerable()) {
+            if (!GetProperty(cx, props, props, nextKey, &descObj) ||
+                !ToPropertyDescriptor(cx, descObj, true, &desc) ||
+                !descriptors.append(desc) ||
+                !descriptorKeys.append(nextKey))
+            {
+                return false;
+            }
+        }
+    }
+
+    // Step 6.
+    for (size_t i = 0, len = descriptors.length(); i < len; i++) {
+        if (!DefineProperty(cx, obj, descriptorKeys[i], descriptors[i]))
+            return false;
+    }
+
+    return true;
+}
+
 // ES6 draft rev34 (2015/02/20) 19.1.2.2 Object.create(O [, Properties])
 bool
 js::obj_create(JSContext* cx, unsigned argc, Value* vp)
@@ -677,8 +730,8 @@ js::obj_create(JSContext* cx, unsigned argc, Value* vp)
 
     // Step 1.
     if (args.length() == 0) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
-                             "Object.create", "0", "s");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  "Object.create", "0", "s");
         return false;
     }
 
@@ -687,8 +740,9 @@ js::obj_create(JSContext* cx, unsigned argc, Value* vp)
         UniqueChars bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, v, nullptr);
         if (!bytes)
             return false;
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
-                             bytes.get(), "not an object or null");
+
+        JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
+                                   bytes.get(), "not an object or null");
         return false;
     }
 
@@ -700,9 +754,7 @@ js::obj_create(JSContext* cx, unsigned argc, Value* vp)
 
     // Step 3.
     if (args.hasDefined(1)) {
-        RootedValue val(cx, args[1]);
-        RootedObject props(cx, ToObject(cx, val));
-        if (!props || !DefineProperties(cx, obj, props))
+        if (!ObjectDefineProperties(cx, obj, args[1]))
             return false;
     }
 
@@ -768,7 +820,6 @@ EnumerableOwnProperties(JSContext* cx, const JS::CallArgs& args, EnumerableOwnPr
         nobj = &obj->as<NativeObject>();
     RootedShape shape(cx);
     Rooted<PropertyDescriptor> desc(cx);
-
     // Step 4.
     size_t out = 0;
     for (size_t i = 0; i < len; i++) {
@@ -981,17 +1032,13 @@ obj_defineProperties(JSContext* cx, unsigned argc, Value* vp)
 
     /* Step 2. */
     if (args.length() < 2) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
-                             "Object.defineProperties", "0", "s");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  "Object.defineProperties", "0", "s");
         return false;
     }
-    RootedValue val(cx, args[1]);
-    RootedObject props(cx, ToObject(cx, val));
-    if (!props)
-        return false;
 
     /* Steps 3-6. */
-    return DefineProperties(cx, obj, props);
+    return ObjectDefineProperties(cx, obj, args[1]);
 }
 
 // ES6 20141014 draft 19.1.2.15 Object.preventExtensions(O)

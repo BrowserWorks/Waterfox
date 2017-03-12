@@ -1,11 +1,11 @@
 /*
- * Test for LoginManagerContent._getPasswordFields using FormLikeFactory.
+ * Test for LoginManagerContent._getPasswordFields using LoginFormFactory.
  */
 
 "use strict";
 
 const LMCBackstagePass = Cu.import("resource://gre/modules/LoginManagerContent.jsm");
-const { LoginManagerContent, FormLikeFactory } = LMCBackstagePass;
+const { LoginManagerContent, LoginFormFactory } = LMCBackstagePass;
 const TESTCASES = [
   {
     description: "Empty document",
@@ -77,8 +77,18 @@ const TESTCASES = [
     skipEmptyFields: true,
   },
   {
+    description: "skipEmptyFields should also skip white-space only fields",
+    document: `<input id="pw-space" type=password value=" ">
+               <input id="pw-tab" type=password value="	">
+               <input id="pw-newline" type=password form="form1" value="
+">
+      <form id="form1"></form>`,
+    returnedFieldIDsByFormLike: [[], []],
+    skipEmptyFields: true,
+  },
+  {
     description: "2 password fields outside of a <form> with 1 linked via @form + skipEmpty with 1 empty",
-    document: `<input id="pw1" type=password value="pass1"><input id="pw2" type=password form="form1">
+    document: `<input id="pw1" type=password value=" pass1 "><input id="pw2" type=password form="form1">
       <form id="form1"></form>`,
     returnedFieldIDsByFormLike: [["pw1"], []],
     skipEmptyFields: true,
@@ -97,7 +107,7 @@ for (let tc of TESTCASES) {
 
       let mapRootElementToFormLike = new Map();
       for (let input of document.querySelectorAll("input")) {
-        let formLike = FormLikeFactory.createFromField(input);
+        let formLike = LoginFormFactory.createFromField(input);
         let existingFormLike = mapRootElementToFormLike.get(formLike.rootElement);
         if (!existingFormLike) {
           mapRootElementToFormLike.set(formLike.rootElement, formLike);
@@ -119,7 +129,7 @@ for (let tc of TESTCASES) {
                                                               testcase.skipEmptyFields);
 
         if (formLikeFromInput.rootElement instanceof Ci.nsIDOMHTMLFormElement) {
-          let formLikeFromForm = FormLikeFactory.createFromForm(formLikeFromInput.rootElement);
+          let formLikeFromForm = LoginFormFactory.createFromForm(formLikeFromInput.rootElement);
           do_print("Checking that the FormLike created for the <form> matches" +
                    " the one from a password field");
           formLikeEqual(formLikeFromInput, formLikeFromForm);

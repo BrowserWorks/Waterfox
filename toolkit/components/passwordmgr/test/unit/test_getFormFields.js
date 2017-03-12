@@ -4,12 +4,12 @@
 
 "use strict";
 
-//Services.prefs.setBoolPref("signon.debug", true);
+// Services.prefs.setBoolPref("signon.debug", true);
 
 Cu.importGlobalProperties(["URL"]);
 
 const LMCBackstagePass = Cu.import("resource://gre/modules/LoginManagerContent.jsm");
-const { LoginManagerContent, FormLikeFactory } = LMCBackstagePass;
+const { LoginManagerContent, LoginFormFactory } = LMCBackstagePass;
 const TESTCASES = [
   {
     description: "1 password field outside of a <form>",
@@ -123,7 +123,7 @@ for (let tc of TESTCASES) {
       let input = document.querySelector("input");
       MockDocument.mockOwnerDocumentProperty(input, document, "http://localhost:8080/test/");
 
-      let formLike = FormLikeFactory.createFromField(input);
+      let formLike = LoginFormFactory.createFromField(input);
 
       let actual = LoginManagerContent._getFormFields(formLike,
                                                       testcase.skipEmptyFields,

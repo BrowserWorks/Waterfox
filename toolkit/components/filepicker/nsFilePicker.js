@@ -243,17 +243,17 @@ nsFilePicker.prototype = {
   },
 
   show: function() {
-    var o = new Object();
+    var o = {};
     o.title = this.mTitle;
     o.mode = this.mMode;
     o.displayDirectory = this.mDisplayDirectory;
     o.defaultString = this.mDefaultString;
     o.filterIndex = this.mFilterIndex;
-    o.filters = new Object();
+    o.filters = {};
     o.filters.titles = this.mFilterTitles;
     o.filters.types = this.mFilters;
     o.allowURLs = this.mAllowURLs;
-    o.retvals = new Object();
+    o.retvals = {};
 
     var parent;
     if (this.mParentWindow) {
@@ -270,17 +270,6 @@ nsFilePicker.prototype = {
       }
     }
 
-    var parentWin = null;
-    try {
-      parentWin = parent.QueryInterface(nsIInterfaceRequestor)
-                        .getInterface(nsIWebNavigation)
-                        .QueryInterface(nsIDocShellTreeItem)
-                        .treeOwner
-                        .QueryInterface(nsIInterfaceRequestor)
-                        .getInterface(nsIBaseWindow);
-    } catch (ex) {
-      dump("file picker couldn't get base window\n"+ex+"\n");
-    }
     try {
       parent.openDialog("chrome://global/content/filepicker.xul",
                         "",
@@ -328,4 +317,3 @@ function srGetStrBundle(path)
   }
   return strBundle;
 }
-

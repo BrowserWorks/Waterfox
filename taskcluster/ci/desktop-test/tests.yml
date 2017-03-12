@@ -10,19 +10,23 @@ cppunit:
     suite: cppunittest
     treeherder-symbol: tc(Cpp)
     e10s: false
+    run-on-projects:
+        by-test-platform:
+            windows.*: ['mozilla-central', 'try']
+            default: ['all']
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
-                # Coming soon:
-                # win.*:
-                #    - mozharness/configs/unittests/win_unittest.py
-                #    - mozharness/configs/remove_executables.py
-                # ...
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --cppunittest-suite=cppunittest
 
@@ -30,15 +34,26 @@ crashtest:
     description: "Crashtest run"
     suite: reftest/crashtest
     treeherder-symbol: tc-R(C)
+    docker-image: {"in-tree": "desktop1604-test"}
+    e10s:
+        by-test-platform:
+            # Bug 1304435
+            win.*: false
+            default: both
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         chunked: true
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --reftest-suite=crashtest
 
@@ -49,12 +64,19 @@ external-media-tests:
     e10s: false
     tier: 2
     max-run-time: 5400
+    run-on-projects:
+        by-test-platform:
+            windows.*: ['mozilla-central', 'try']
+            default: ['all']
     mozharness:
-        script: mozharness/scripts/firefox_media_tests_buildbot.py
-        no-read-buildbot-config: true
+        script: firefox_media_tests_taskcluster.py
         config:
-            - mozharness/configs/mediatests/buildbot_posix_config.py
-            - mozharness/configs/remove_executables.py
+            by-test-platform:
+                win.*:
+                    - mediatests/taskcluster_windows_config.py
+                default:
+                    - mediatests/taskcluster_posix_config.py
+                    - remove_executables.py
 
 firefox-ui-functional-local:
     description: "Firefox-ui-tests functional run"
@@ -64,12 +86,13 @@ firefox-ui-functional-local:
     tier: 1
     docker-image: {"in-tree": "desktop1604-test"}
     mozharness:
-        script: mozharness/scripts/firefox_ui_tests/functional.py
+        script: firefox_ui_tests/functional.py
         config:
-            - mozharness/configs/firefox_ui_tests/taskcluster.py
-            - mozharness/configs/remove_executables.py
+            - firefox_ui_tests/taskcluster.py
+            - remove_executables.py
         extra-options:
-            - "--tag local"
+            - "--tag"
+            - "local"
 
 firefox-ui-functional-remote:
     description: "Firefox-ui-tests functional run"
@@ -79,12 +102,13 @@ firefox-ui-functional-remote:
     tier: 2
     docker-image: {"in-tree": "desktop1604-test"}
     mozharness:
-        script: mozharness/scripts/firefox_ui_tests/functional.py
+        script: firefox_ui_tests/functional.py
         config:
-            - mozharness/configs/firefox_ui_tests/taskcluster.py
-            - mozharness/configs/remove_executables.py
+            - firefox_ui_tests/taskcluster.py
+            - remove_executables.py
         extra-options:
-            - "--tag remote"
+            - "--tag"
+            - "remote"
 
 gtest:
     description: "GTests run"
@@ -93,30 +117,43 @@ gtest:
     e10s: false
     instance-size: xlarge
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --gtest-suite=gtest
 
-jittests:
+jittest:
     description: "JIT Test run"
     suite: jittest/jittest-chunked
     treeherder-symbol: tc(Jit)
     e10s: false
-    chunks: 6
+    chunks:
+        by-test-platform:
+            win.*: 1
+            default: 6
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --jittest-suite=jittest-chunked
 
@@ -124,15 +161,23 @@ jsreftest:
     description: "JS Reftest run"
     suite: reftest/jsreftest
     treeherder-symbol: tc-R(J)
-    chunks: 2
+    chunks:
+        by-test-platform:
+            win.*: 1
+            default: 2
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --reftest-suite=jsreftest
 
@@ -141,31 +186,58 @@ marionette:
     suite: marionette
     treeherder-symbol: tc(Mn)
     max-run-time: 5400
+    docker-image: {"in-tree": "desktop1604-test"}
     mozharness:
-        script: mozharness/scripts/marionette.py
+        script: marionette.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/marionette/prod_config.py
-            - mozharness/configs/remove_executables.py
+            by-test-platform:
+                win.*:
+                    - marionette/windows_taskcluster_config.py
+                default:
+                    - marionette/prod_config.py
+                    - remove_executables.py
 
 mochitest:
     description: "Mochitest plain run"
     suite: mochitest/plain-chunked
     treeherder-symbol: tc-M()
     loopback-video: true
-    chunks: 10
+    run-on-projects:
+        by-test-platform:
+            linux64-ccov/opt: []
+            default: ['all']
+    chunks:
+        by-test-platform:
+            macosx.*: 5
+            win.*: 5
+            default: 10
+    e10s:
+        by-test-platform:
+            linux64-ccov/opt: false
+            default: both
     max-run-time: 5400
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         chunked: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
-            - --mochitest-suite=plain-chunked
+            by-test-platform:
+                linux64-ccov/opt:
+                    - --mochitest-suite=plain-chunked
+                    - --code-coverage
+                default:
+                    - --mochitest-suite=plain-chunked
     # Bug 1281241: migrating to m3.large instances
     instance-size: legacy
     allow-software-gl-layers: false
@@ -177,39 +249,78 @@ mochitest-a11y:
     loopback-video: true
     e10s: false
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         chunked: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --mochitest-suite=a11y
 
 mochitest-browser-chrome:
     description: "Mochitest browser-chrome run"
-    suite: mochitest/browser-chrome-chunked
+    suite:
+        by-test-platform:
+            linux64-jsdcov/opt: mochitest/browser-chrome-coverage
+            default: mochitest/browser-chrome-chunked
     treeherder-symbol: tc-M(bc)
     loopback-video: true
-    chunks: 7
+    run-on-projects:
+        by-test-platform:
+            linux64-jsdcov/opt: []
+            linux64-ccov/opt: []
+            default: ['all']
+    chunks:
+        by-test-platform:
+            linux64-jsdcov/opt: 35
+            default: 7
+    e10s:
+        by-test-platform:
+            linux64-jsdcov/opt: false
+            linux64-ccov/opt: false
+            default: both
     max-run-time:
         by-test-platform:
+            linux64-jsdcov/opt: 7200
+            linux64-ccov/opt: 7200
             linux64/debug: 5400
             default: 3600
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
-            - --mochitest-suite=browser-chrome-chunked
+            by-test-platform:
+                linux64-jsdcov/opt:
+                    - --mochitest-suite=browser-chrome-coverage
+                linux64-ccov/opt:
+                    - --mochitest-suite=browser-chrome-chunked
+                    - --code-coverage
+                default:
+                    - --mochitest-suite=browser-chrome-chunked
     # Bug 1281241: migrating to m3.large instances
-    instance-size: legacy
+    instance-size:
+        by-test-platform:
+            linux64-jsdcov/opt: xlarge
+            linux64-ccov/opt: xlarge
+            default: legacy
     allow-software-gl-layers: false
 
 mochitest-chrome:
@@ -217,16 +328,24 @@ mochitest-chrome:
     suite: mochitest/chrome
     treeherder-symbol: tc-M(c)
     loopback-video: true
-    chunks: 3
+    chunks:
+      by-test-platform:
+        macosx.*: 1
+        default: 3
     e10s: false
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --mochitest-suite=chrome
 
@@ -237,39 +356,70 @@ mochitest-clipboard:
     loopback-video: true
     instance-size: xlarge
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         chunked: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --mochitest-suite=plain-clipboard,chrome-clipboard,browser-chrome-clipboard,jetpack-package-clipboard
 
 mochitest-devtools-chrome:
     description: "Mochitest devtools-chrome run"
-    suite: mochitest/mochitest-devtools-chrome-chunked
+    suite:
+        by-test-platform:
+            linux64-jsdcov/opt: mochitest/mochitest-devtools-chrome-coverage
+            default: mochitest/mochitest-devtools-chrome-chunked
     treeherder-symbol: tc-M(dt)
     loopback-video: true
     max-run-time: 5400
-    chunks: 10
+    chunks:
+        by-test-platform:
+            win.*: 8
+            default: 10
+    run-on-projects:
+        by-test-platform:
+            linux64-ccov/opt: []
+            linux64-jsdcov/opt: []
+            windows.*: ['mozilla-central', 'try']
+            default: ['all']
     e10s:
         by-test-platform:
             # Bug 1242986: linux64/debug mochitest-devtools-chrome e10s is not greened up yet
             linux64/debug: false
+            linux64-ccov/opt: false
+            linux64-jsdcov/opt: false
             default: both
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
-            - --mochitest-suite=mochitest-devtools-chrome-chunked
+            by-test-platform:
+                linux64-ccov/opt:
+                    - --mochitest-suite=mochitest-devtools-chrome-chunked
+                    - --code-coverage
+                linux64-jsdcov:
+                    - --mochitest-suite=mochitest-devtools-chrome-coverage
+                default:
+                    - --mochitest-suite=mochitest-devtools-chrome-chunked
     instance-size:
         by-test-platform:
             # Bug 1281241: migrating to m3.large instances
@@ -283,15 +433,24 @@ mochitest-gpu:
     suite: mochitest/plain-gpu,chrome-gpu,browser-chrome-gpu
     treeherder-symbol: tc-M(gpu)
     loopback-video: true
+    e10s:
+        by-test-platform:
+            win.*: both
+            default: true
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         chunked: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --mochitest-suite=plain-gpu,chrome-gpu,browser-chrome-gpu
 
@@ -302,15 +461,24 @@ mochitest-jetpack:
     loopback-video: true
     e10s: false
     max-run-time: 5400
+    run-on-projects:
+        by-test-platform:
+            windows.*: ['mozilla-central', 'try']
+            default: ['all']
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         chunked: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --mochitest-suite=jetpack-package
             - --mochitest-suite=jetpack-addon
@@ -324,16 +492,43 @@ mochitest-media:
     instance-size: large
     docker-image: {"in-tree": "desktop1604-test"}
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         chunked: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --mochitest-suite=mochitest-media
+
+mochitest-other:
+    description: "Mochitest other"
+    suite: mochitest/other
+    treeherder-symbol: tc-M(oth)
+    e10s: false
+    max-run-time: 5400
+    mozharness:
+        script: mozharness/scripts/desktop_unittest.py
+        no-read-buildbot-config: true
+        include-blob-upload-branch: true
+        chunked: true
+        config:
+          by-test-platform:
+            macosx.*:
+              - remove_executables.py
+              - unittests/mac_unittest.py
+            default:
+              - unittests/linux_unittest.py
+              - remove_executables.py
+        extra-options:
+            - --mochitest-suite=chrome,a11y
 
 mochitest-webgl:
     description: "Mochitest webgl run"
@@ -342,14 +537,19 @@ mochitest-webgl:
     chunks: 3
     loopback-video: true
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         chunked: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --mochitest-suite=mochitest-gl
     # Bug 1296733: llvmpipe with mesa 9.2.1 lacks thread safety
@@ -359,15 +559,24 @@ reftest:
     description: "Reftest run"
     suite: reftest/reftest
     treeherder-symbol: tc-R(R)
-    chunks: 8
+    docker-image: {"in-tree": "desktop1604-test"}
+    chunks:
+      by-test-platform:
+        macosx.*: 1
+        default: 8
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --reftest-suite=reftest
 
@@ -375,15 +584,24 @@ reftest-no-accel:
     description: "Reftest not accelerated run"
     suite: reftest/reftest-no-accel
     treeherder-symbol: tc-R(Ru)
-    chunks: 8
+    docker-image: {"in-tree": "desktop1604-test"}
+    chunks:
+      by-test-platform:
+        macosx.*: 1
+        default: 8
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
             - --reftest-suite=reftest-no-accel
 
@@ -391,17 +609,28 @@ web-platform-tests:
     description: "Web platform test run"
     suite: web-platform-tests
     treeherder-symbol: tc-W()
-    chunks: 12
+    chunks:
+      by-test-platform:
+        macosx.*: 5
+        default: 12
     max-run-time: 7200
     instance-size: xlarge
     docker-image: {"in-tree": "desktop1604-test"}
     checkout: true
+    run-on-projects:
+        by-test-platform:
+            windows.*: ['mozilla-central', 'try']
+            default: ['all']
     mozharness:
-        script: mozharness/scripts/web_platform_tests.py
+        script: web_platform_tests.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/web_platform_tests/prod_config.py
-            - mozharness/configs/remove_executables.py
+            by-test-platform:
+                win.*:
+                    - web_platform_tests/prod_config_windows_taskcluster.py
+                default:
+                    - web_platform_tests/prod_config.py
+                    - remove_executables.py
         extra-options:
             - --test-type=testharness
 
@@ -413,35 +642,80 @@ web-platform-tests-reftests:
     instance-size: xlarge
     docker-image: {"in-tree": "desktop1604-test"}
     checkout: true
+    run-on-projects:
+        by-test-platform:
+            windows.*: ['mozilla-central', 'try']
+            default: ['all']
     mozharness:
-        script: mozharness/scripts/web_platform_tests.py
+        script: web_platform_tests.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/web_platform_tests/prod_config.py
-            - mozharness/configs/remove_executables.py
+            by-test-platform:
+                win.*:
+                    - web_platform_tests/prod_config_windows_taskcluster.py
+                default:
+                    - web_platform_tests/prod_config.py
+                    - remove_executables.py
         extra-options:
             - --test-type=reftest
+
+web-platform-tests-wdspec:
+    description: "Web platform webdriver-spec run"
+    suite: web-platform-tests-wdspec
+    treeherder-symbol: tc-W(Wd)
+    max-run-time: 5400
+    instance-size: xlarge
+    docker-image: {"in-tree": "desktop1604-test"}
+    checkout: true
+    mozharness:
+        script: web_platform_tests.py
+        no-read-buildbot-config: true
+        config:
+            by-test-platform:
+                win.*:
+                    - web_platform_tests/prod_config_windows_taskcluster.py
+                default:
+                    - web_platform_tests/prod_config.py
+                    - remove_executables.py
+        extra-options:
+            - --test-type=wdspec
 
 xpcshell:
     description: "xpcshell test run"
     suite: xpcshell
     treeherder-symbol: tc-X()
+    run-on-projects:
+        by-test-platform:
+            linux64-ccov/opt: []
+            default: ['all']
     chunks:
         by-test-platform:
+            # win.*: 1
+            macosx.*: 1
             linux64/debug: 10
             default: 8
     max-run-time: 5400
     e10s: false
     mozharness:
-        script: mozharness/scripts/desktop_unittest.py
+        script: desktop_unittest.py
         no-read-buildbot-config: true
         config:
             by-test-platform:
+                win.*:
+                    - unittests/win_taskcluster_unittest.py
+                macosx.*:
+                    - remove_executables.py
+                    - unittests/mac_unittest.py
                 default:
-                    - mozharness/configs/unittests/linux_unittest.py
-                    - mozharness/configs/remove_executables.py
+                    - unittests/linux_unittest.py
+                    - remove_executables.py
         extra-options:
-            - --xpcshell-suite=xpcshell
+            by-test-platform:
+                linux64-ccov/opt:
+                    - --xpcshell-suite=xpcshell
+                    - --code-coverage
+                default:
+                    - --xpcshell-suite=xpcshell
     # Bug 1281241: migrating to m3.large instances
     instance-size: legacy
     allow-software-gl-layers: false

@@ -1594,7 +1594,8 @@ nsHttpConnection::Version()
 //-----------------------------------------------------------------------------
 
 void
-nsHttpConnection::CloseTransaction(nsAHttpTransaction *trans, nsresult reason)
+nsHttpConnection::CloseTransaction(nsAHttpTransaction *trans, nsresult reason,
+                                   bool aIsShutdown)
 {
     LOG(("nsHttpConnection::CloseTransaction[this=%p trans=%p reason=%x]\n",
         this, trans, reason));
@@ -1630,7 +1631,7 @@ nsHttpConnection::CloseTransaction(nsAHttpTransaction *trans, nsresult reason)
     }
 
     if (NS_FAILED(reason) && (reason != NS_BINDING_RETARGETED)) {
-        Close(reason);
+        Close(reason, aIsShutdown);
     }
 
     // flag the connection as reused here for convenience sake.  certainly
@@ -1714,6 +1715,9 @@ nsHttpConnection::OnSocketWritable()
                 NS_SUCCEEDED(mSocketOutCondition)) {
                 mSocketOutCondition = NS_BASE_STREAM_WOULD_BLOCK;
             }
+        } else if (!mTransaction) {
+            rv = NS_ERROR_FAILURE;
+            LOG(("  No Transaction In OnSocketWritable\n"));
         } else {
 
             // for non spdy sessions let the connection manager know

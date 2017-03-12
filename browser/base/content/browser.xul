@@ -143,7 +143,13 @@
     <tooltip id="remoteBrowserTooltip"/>
 
     <!-- for search and content formfill/pw manager -->
-    <panel type="autocomplete" id="PopupAutoComplete" noautofocus="true" hidden="true"/>
+
+    <panel type="autocomplete-richlistbox"
+           id="PopupAutoComplete"
+           noautofocus="true"
+           hidden="true"
+           overflowpadding="4"
+           norolluponanchor="true" />
 
     <!-- for search with one-off buttons -->
     <panel type="autocomplete" id="PopupSearchAutoComplete" noautofocus="true" hidden="true"/>
@@ -154,7 +160,18 @@
            noautofocus="true"
            hidden="true"
            flip="none"
-           level="parent"/>
+           level="parent"
+           overflowpadding="30" />
+
+    <panel id="DateTimePickerPanel"
+           type="arrow"
+           hidden="true"
+           orient="vertical"
+           noautofocus="true"
+           consumeoutsideclicks="false"
+           level="parent">
+      <iframe id="dateTimePopupFrame"/>
+    </panel>
 
     <!-- for select dropdowns. The menupopup is what shows the list of options,
          and the popuponly menulist makes things like the menuactive attributes
@@ -164,7 +181,7 @@
       <menupopup rolluponmousewheel="true"
                  activateontab="true" position="after_start"
 #ifdef XP_WIN
-                 consumeoutsideclicks="false" ignorekeys="handled"
+                 consumeoutsideclicks="false" ignorekeys="shortcuts"
 #endif
         />
     </menulist>
@@ -261,12 +278,12 @@
            onpopuphidden="SocialShare.onHidden()"
            hidden="true">
       <hbox class="social-share-toolbar">
-        <toolbarbutton id="manage-share-providers" class="toolbarbutton share-provider-button"
+        <toolbarbutton id="manage-share-providers" class="share-provider-button"
                        tooltiptext="&social.addons.label;"
                        oncommand="BrowserOpenAddonsMgr('addons://list/service');
                                   this.parentNode.parentNode.hidePopup();"/>
         <arrowscrollbox id="social-share-provider-buttons" orient="horizontal" flex="1" pack="end">
-          <toolbarbutton id="add-share-provider" class="toolbarbutton share-provider-button" type="radio"
+          <toolbarbutton id="add-share-provider" class="share-provider-button" type="radio"
                          group="share-providers" tooltiptext="&findShareServices.label;"
                          oncommand="SocialShare.showDirectory()"/>
         </arrowscrollbox>
@@ -673,13 +690,9 @@
                      newlines="stripsurroundingwhitespace"
                      ontextentered="this.handleCommand(param);"
                      ontextreverted="return this.handleRevert();"
-                     pageproxystate="invalid"
-                     onfocus="document.getElementById('identity-box').style.MozUserFocus= 'normal'"
-                     onblur="setTimeout(() => { document.getElementById('identity-box').style.MozUserFocus = ''; }, 0);">
+                     pageproxystate="invalid">
               <!-- Use onclick instead of normal popup= syntax since the popup
-                   code fires onmousedown, and hence eats our favicon drag events.
-                   We only add the identity-box button to the tab order when the location bar
-                   has focus, otherwise pressing F6 focuses it instead of the location bar -->
+                   code fires onmousedown, and hence eats our favicon drag events. -->
               <box id="identity-box" role="button"
                    align="center"
                    aria-label="&urlbar.viewSiteInfo.label;"
@@ -746,14 +759,15 @@
                 </hbox>
               </box>
               <box id="urlbar-display-box" align="center">
-                <label class="urlbar-display urlbar-display-switchtab" value="&urlbar.switchToTab.label;"/>
+                <label id="switchtab" class="urlbar-display urlbar-display-switchtab" value="&urlbar.switchToTab.label;"/>
+                <label id="extension" class="urlbar-display urlbar-display-extension" value="&urlbar.extension.label;"/>
               </box>
               <hbox id="urlbar-icons">
                 <image id="page-report-button"
                        class="urlbar-icon"
                        hidden="true"
                        tooltiptext="&pageReportIcon.tooltip;"
-                       onclick="gPopupBlockerObserver.onReportButtonClick(event);"/>
+                       onmousedown="gPopupBlockerObserver.onReportButtonMousedown(event);"/>
                 <image id="reader-mode-button"
                        class="urlbar-icon"
                        hidden="true"
@@ -1055,7 +1069,8 @@
                     tabcontainer="tabbrowser-tabs"
                     contentcontextmenu="contentAreaContextMenu"
                     autocompletepopup="PopupAutoComplete"
-                    selectmenulist="ContentSelectDropdown"/>
+                    selectmenulist="ContentSelectDropdown"
+                    datetimepicker="DateTimePickerPanel"/>
       </vbox>
       <vbox id="browser-border-end" hidden="true" layer="true"/>
     </hbox>

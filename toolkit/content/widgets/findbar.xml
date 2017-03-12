@@ -139,7 +139,7 @@
       ]]></handler>
 
       <handler event="dragover"><![CDATA[
-        if (event.dataTransfer.types.contains("text/plain"))
+        if (event.dataTransfer.types.includes("text/plain"))
           event.preventDefault();
       ]]></handler>
 
@@ -374,8 +374,6 @@
           prefsvc.getIntPref("accessibility.typeaheadfind.timeout");
         this._flashFindBar =
           prefsvc.getIntPref("accessibility.typeaheadfind.flashBar");
-        this._matchesCountLimit =
-          prefsvc.getIntPref("accessibility.typeaheadfind.matchesCountLimit");
         this._useModalHighlight = prefsvc.getBoolPref("findbar.modalHighlight");
 
         prefsvc.addObserver("accessibility.typeaheadfind",
@@ -522,15 +520,14 @@
           if (aHighlight === this._highlightAll) {
             return;
           }
-          this._highlightAll = aHighlight;
 
           this.browser.finder.onHighlightAllChange(aHighlight);
+
+          this._setHighlightAll(aHighlight, aFromPrefObserver);
 
           if (!this._dispatchFindEvent("highlightallchange")) {
             return;
           }
-
-          this._setHighlightAll(aHighlight, aFromPrefObserver);
 
           let word = this._findField.value;
           // Bug 429723. Don't attempt to highlight ""
@@ -1309,9 +1306,9 @@
           if (aResult.total !== 0) {
             if (aResult.total == -1) {
               this._foundMatches.value = this.pluralForm.get(
-                this._matchesCountLimit,
+                aResult.limit,
                 this.strBundle.GetStringFromName("FoundMatchesCountLimit")
-              ).replace("#1", this._matchesCountLimit);
+              ).replace("#1", aResult.limit);
             } else {
               this._foundMatches.value = this.pluralForm.get(
                 aResult.total,

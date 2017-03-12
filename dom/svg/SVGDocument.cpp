@@ -19,9 +19,8 @@
 #include "nsIDOMSVGElement.h"
 #include "mozilla/dom/Element.h"
 #include "nsSVGElement.h"
-#include "mozilla/dom/SVGDocumentBinding.h"
-#include "mozilla/StyleSheetHandle.h"
-#include "mozilla/StyleSheetHandleInlines.h"
+#include "mozilla/StyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 
 using namespace mozilla::css;
 using namespace mozilla::dom;
@@ -34,39 +33,6 @@ namespace dom {
 
 //----------------------------------------------------------------------
 // nsISupports methods:
-
-void
-SVGDocument::GetDomain(nsAString& aDomain, ErrorResult& aRv)
-{
-  SetDOMStringToNull(aDomain);
-
-  if (mDocumentURI) {
-    nsAutoCString domain;
-    nsresult rv = mDocumentURI->GetHost(domain);
-    if (NS_FAILED(rv)) {
-      aRv.Throw(rv);
-      return;
-    }
-    if (domain.IsEmpty()) {
-      return;
-    }
-    CopyUTF8toUTF16(domain, aDomain);
-  }
-}
-
-nsSVGElement*
-SVGDocument::GetRootElement(ErrorResult& aRv)
-{
-  Element* root = nsDocument::GetRootElement();
-  if (!root) {
-    return nullptr;
-  }
-  if (!root->IsSVGElement()) {
-    aRv.Throw(NS_NOINTERFACE);
-    return nullptr;
-  }
-  return static_cast<nsSVGElement*>(root);
-}
 
 nsresult
 SVGDocument::InsertChildAt(nsIContent* aKid, uint32_t aIndex, bool aNotify)
@@ -157,7 +123,7 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
             nsCOMPtr<nsIURI> uri;
             NS_NewURI(getter_AddRefs(uri), spec);
             if (uri) {
-              StyleSheetHandle::RefPtr sheet;
+              RefPtr<StyleSheet> sheet;
               cssLoader->LoadSheetSync(uri,
                                        mozilla::css::eAgentSheetFeatures,
                                        true, &sheet);
@@ -173,7 +139,7 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
 
   auto cache = nsLayoutStylesheetCache::For(GetStyleBackendType());
 
-  StyleSheetHandle sheet = cache->NumberControlSheet();
+  StyleSheet* sheet = cache->NumberControlSheet();
   if (sheet) {
     // number-control.css can be behind a pref
     EnsureOnDemandBuiltInUASheet(sheet);
@@ -190,12 +156,6 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
   EnsureOnDemandBuiltInUASheet(cache->UASheet());
 
   EndUpdate(UPDATE_STYLE);
-}
-
-JSObject*
-SVGDocument::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
-{
-  return SVGDocumentBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

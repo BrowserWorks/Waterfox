@@ -10,6 +10,9 @@
 #include "jsobj.h"
 
 #include "builtin/SelfHostingDefines.h"
+#include "vm/GlobalObject.h"
+#include "vm/NativeObject.h"
+#include "vm/PIC.h"
 #include "vm/Runtime.h"
 
 namespace js {
@@ -76,6 +79,11 @@ typedef OrderedHashSet<HashableValue,
                        HashableValue::Hasher,
                        RuntimeAllocPolicy> ValueSet;
 
+template <typename ObjectT>
+class OrderedHashTableRef;
+
+struct UnbarrieredHashPolicy;
+
 class MapObject : public NativeObject {
   public:
     enum IteratorKind { Keys, Values, Entries };
@@ -89,6 +97,8 @@ class MapObject : public NativeObject {
 
     static JSObject* initClass(JSContext* cx, JSObject* obj);
     static const Class class_;
+
+    enum { NurseryKeysSlot, SlotCount };
 
     static MOZ_MUST_USE bool getKeysAndValuesInterleaved(JSContext* cx, HandleObject obj,
                                             JS::MutableHandle<GCVector<JS::Value>> entries);
@@ -111,6 +121,9 @@ class MapObject : public NativeObject {
     static MOZ_MUST_USE bool clear(JSContext *cx, HandleObject obj);
     static MOZ_MUST_USE bool iterator(JSContext *cx, IteratorKind kind, HandleObject obj,
                                       MutableHandleValue iter);
+
+    using UnbarrieredTable = OrderedHashMap<Value, Value, UnbarrieredHashPolicy, RuntimeAllocPolicy>;
+    friend class OrderedHashTableRef<MapObject>;
 
   private:
     static const ClassOps classOps_;
@@ -167,8 +180,8 @@ class MapIteratorObject : public NativeObject
                                      MapObject::IteratorKind kind);
     static void finalize(FreeOp* fop, JSObject* obj);
 
-    static MOZ_MUST_USE bool next(JSContext* cx, Handle<MapIteratorObject*> mapIterator,
-                                  HandleArrayObject resultPairObj);
+    static MOZ_MUST_USE bool next(Handle<MapIteratorObject*> mapIterator,
+                                  HandleArrayObject resultPairObj, JSContext* cx);
 
     static JSObject* createResultPair(JSContext* cx);
 
@@ -178,9 +191,20 @@ class MapIteratorObject : public NativeObject
 
 class SetObject : public NativeObject {
   public:
-    enum IteratorKind { Values, Entries };
+    enum IteratorKind { Keys, Values, Entries };
+
+    static_assert(Keys == ITEM_KIND_KEY,
+                  "IteratorKind Keys must match self-hosting define for item kind key.");
+    static_assert(Values == ITEM_KIND_VALUE,
+                  "IteratorKind Values must match self-hosting define for item kind value.");
+    static_assert(Entries == ITEM_KIND_KEY_AND_VALUE,
+                  "IteratorKind Entries must match self-hosting define for item kind "
+                  "key-and-value.");
+
     static JSObject* initClass(JSContext* cx, JSObject* obj);
     static const Class class_;
+
+    enum { NurseryKeysSlot, SlotCount };
 
     static MOZ_MUST_USE bool keys(JSContext *cx, HandleObject obj,
                                   JS::MutableHandle<GCVector<JS::Value>> keys);
@@ -198,6 +222,9 @@ class SetObject : public NativeObject {
                                       MutableHandleValue iter);
     static MOZ_MUST_USE bool delete_(JSContext *cx, HandleObject obj, HandleValue key, bool *rval);
 
+    using UnbarrieredTable = OrderedHashSet<Value, UnbarrieredHashPolicy, RuntimeAllocPolicy>;
+    friend class OrderedHashTableRef<SetObject>;
+
   private:
     static const ClassOps classOps_;
 
@@ -214,6 +241,8 @@ class SetObject : public NativeObject {
 
     static bool is(HandleValue v);
     static bool is(HandleObject o);
+
+    static bool isBuiltinAdd(HandleValue add, JSContext* cx);
 
     static MOZ_MUST_USE bool iterator_impl(JSContext* cx, const CallArgs& args, IteratorKind kind);
 
@@ -236,22 +265,70 @@ class SetIteratorObject : public NativeObject
   public:
     static const Class class_;
 
-    enum { TargetSlot, KindSlot, RangeSlot, SlotCount };
+    enum { TargetSlot, RangeSlot, KindSlot, SlotCount };
+
+    static_assert(TargetSlot == ITERATOR_SLOT_TARGET,
+                  "TargetSlot must match self-hosting define for iterated object slot.");
+    static_assert(RangeSlot == ITERATOR_SLOT_RANGE,
+                  "RangeSlot must match self-hosting define for range or index slot.");
+    static_assert(KindSlot == ITERATOR_SLOT_ITEM_KIND,
+                  "KindSlot must match self-hosting define for item kind slot.");
+
     static const JSFunctionSpec methods[];
     static SetIteratorObject* create(JSContext* cx, HandleObject setobj, ValueSet* data,
                                      SetObject::IteratorKind kind);
-    static bool next(JSContext* cx, unsigned argc, Value* vp);
     static void finalize(FreeOp* fop, JSObject* obj);
 
+    static MOZ_MUST_USE bool next(Handle<SetIteratorObject*> setIterator,
+                                  HandleArrayObject resultObj, JSContext* cx);
+
+    static JSObject* createResult(JSContext* cx);
+
   private:
-    static inline bool is(HandleValue v);
-    inline ValueSet::Range* range();
     inline SetObject::IteratorKind kind() const;
-    static MOZ_MUST_USE bool next_impl(JSContext* cx, const CallArgs& args);
 };
 
-extern bool
-InitSelfHostingCollectionIteratorFunctions(JSContext* cx, js::HandleObject obj);
+using SetInitGetPrototypeOp = NativeObject* (*)(JSContext*, Handle<GlobalObject*>);
+using SetInitIsBuiltinOp = bool (*)(HandleValue, JSContext*);
+
+template <SetInitGetPrototypeOp getPrototypeOp, SetInitIsBuiltinOp isBuiltinOp>
+static MOZ_MUST_USE bool
+IsOptimizableInitForSet(JSContext* cx, HandleObject setObject, HandleValue iterable, bool* optimized)
+{
+    MOZ_ASSERT(!*optimized);
+
+    if (!iterable.isObject())
+        return true;
+
+    RootedObject array(cx, &iterable.toObject());
+    if (!IsPackedArray(array))
+        return true;
+
+    // Get the canonical prototype object.
+    RootedNativeObject setProto(cx, getPrototypeOp(cx, cx->global()));
+    if (!setProto)
+        return false;
+
+    // Ensures setObject's prototype is the canonical prototype.
+    if (setObject->staticPrototype() != setProto)
+        return true;
+
+    // Look up the 'add' value on the prototype object.
+    Shape* addShape = setProto->lookup(cx, cx->names().add);
+    if (!addShape || !addShape->hasSlot())
+        return true;
+
+    // Get the referred value, ensure it holds the canonical add function.
+    RootedValue add(cx, setProto->getSlot(addShape->slot()));
+    if (!isBuiltinOp(add, cx))
+        return true;
+
+    ForOfPIC::Chain* stubChain = ForOfPIC::getOrCreate(cx);
+    if (!stubChain)
+        return false;
+
+    return stubChain->tryOptimizeArray(cx, array.as<ArrayObject>(), optimized);
+}
 
 extern JSObject*
 InitMapClass(JSContext* cx, HandleObject obj);

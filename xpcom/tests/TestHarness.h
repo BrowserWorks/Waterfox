@@ -73,20 +73,6 @@ void passed(const char* msg, ...)
 
 //-----------------------------------------------------------------------------
 
-class ScopedLogging
-{
-public:
-    ScopedLogging()
-    {
-        NS_LogInit();
-    }
-
-    ~ScopedLogging()
-    {
-        NS_LogTerm();
-    }
-};
-
 class ScopedXPCOM : public nsIDirectoryServiceProvider2
 {
   public:
@@ -114,14 +100,12 @@ class ScopedXPCOM : public nsIDirectoryServiceProvider2
       if (mProfD) {
         nsCOMPtr<nsIObserverService> os =
           do_GetService(NS_OBSERVERSERVICE_CONTRACTID);
-        MOZ_ASSERT(os);
-        if (os) {
-          MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-change-net-teardown", nullptr));
-          MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-change-teardown", nullptr));
-          MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-before-change", nullptr));
-          MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-before-change-qm", nullptr));
-          MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-before-change-telemetry", nullptr));
-        }
+        MOZ_RELEASE_ASSERT(os);
+        MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-change-net-teardown", nullptr));
+        MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-change-teardown", nullptr));
+        MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-before-change", nullptr));
+        MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-before-change-qm", nullptr));
+        MOZ_ALWAYS_SUCCEEDS(os->NotifyObservers(nullptr, "profile-before-change-telemetry", nullptr));
 
         if (NS_FAILED(mProfD->Remove(true))) {
           NS_WARNING("Problem removing profile directory");

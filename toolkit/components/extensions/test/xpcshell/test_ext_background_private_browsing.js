@@ -6,15 +6,13 @@ Cu.import("resource://gre/modules/Preferences.jsm");
 
 function* testBackgroundPage(expected) {
   let extension = ExtensionTestUtils.loadExtension({
-    background() {
-      browser.runtime.getBackgroundPage().then(bgPage => {
-        browser.test.assertEq(window, browser.extension.getBackgroundPage(),
-                              "Caller should be able to access itself as a background page");
-        browser.test.assertEq(window, bgPage,
-                              "Caller should be able to access itself as a background page");
+    async background() {
+      browser.test.assertEq(window, browser.extension.getBackgroundPage(),
+                            "Caller should be able to access itself as a background page");
+      browser.test.assertEq(window, await browser.runtime.getBackgroundPage(),
+                            "Caller should be able to access itself as a background page");
 
-        browser.test.sendMessage("incognito", browser.extension.inIncognitoContext);
-      });
+      browser.test.sendMessage("incognito", browser.extension.inIncognitoContext);
     },
   });
 

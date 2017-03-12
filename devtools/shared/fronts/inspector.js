@@ -5,6 +5,7 @@
 
 require("devtools/shared/fronts/styles");
 require("devtools/shared/fronts/highlighters");
+require("devtools/shared/fronts/layout");
 const { SimpleStringFront } = require("devtools/shared/fronts/string");
 const {
   Front,
@@ -751,6 +752,11 @@ const WalkerFront = FrontClassWithSpec(walkerSpec, {
         let targetFront;
 
         if (change.type === "newRoot") {
+          // We may receive a new root without receiving any documentUnload
+          // beforehand. Like when opening tools in middle of a document load.
+          if (this.rootNode) {
+            this._createRootNodePromise();
+          }
           this.rootNode = types.getType("domnode").read(change.target, this);
           this._rootNodeDeferred.resolve(this.rootNode);
           targetID = this.rootNode.actorID;

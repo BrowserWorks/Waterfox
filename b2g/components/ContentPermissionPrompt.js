@@ -24,7 +24,6 @@ const ALLOW_MULTIPLE_REQUESTS = ["audio-capture", "video-capture"];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Webapps.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
 Cu.import("resource://gre/modules/PermissionsInstaller.jsm");
 Cu.import("resource://gre/modules/PermissionsTable.jsm");
@@ -33,11 +32,6 @@ var permissionManager = Cc["@mozilla.org/permissionmanager;1"].getService(Ci.nsI
 var secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(Ci.nsIScriptSecurityManager);
 
 var permissionSpecificChecker = {};
-
-XPCOMUtils.defineLazyServiceGetter(this,
-                                   "TelephonyService",
-                                   "@mozilla.org/telephony/telephonyservice;1",
-                                   "nsITelephonyService");
 
 XPCOMUtils.defineLazyModuleGetter(this, "SystemAppProxy",
                                   "resource://gre/modules/SystemAppProxy.jsm");
@@ -454,22 +448,6 @@ ContentPermissionPrompt.prototype = {
   // Do not allow GetUserMedia while in call.
   permissionSpecificChecker["audio-capture"] = function(request) {
     let forbid = false;
-
-    try {
-      // nsITelephonyService.enumerateCalls is synchronous.
-      TelephonyService.enumerateCalls({
-        QueryInterface: XPCOMUtils.generateQI([Ci.nsITelephonyListener]),
-        enumerateCallStateComplete: function() {},
-        enumerateCallState: function(callInfo) {
-          if (callInfo.callState == Ci.nsITelephonyService.CALL_STATE_CONNECTED) {
-            forbid = true;
-          }
-        },
-      });
-    } catch (e) {
-      // No restriction if Telephony service doesn't exist.
-      return false;
-    }
 
     if (forbid) {
       request.cancel();

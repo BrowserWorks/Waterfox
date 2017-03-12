@@ -48,13 +48,16 @@ public:
                          const ScrollableLayerGuid& aGuid,
                          uint64_t aInputBlockId) override;
 
+  virtual void NotifyPinchGesture(PinchGestureInput::PinchGestureType aType,
+                                  const ScrollableLayerGuid& aGuid,
+                                  LayoutDeviceCoord aSpanChange,
+                                  Modifiers aModifiers) override;
+
   virtual void PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs) override;
 
   virtual bool IsRepaintThread() override;
 
   virtual void DispatchToRepaintThread(already_AddRefed<Runnable> aTask) override;
-
-  virtual bool GetTouchSensitiveRegion(CSSRect* aOutRegion) override;
 
   virtual void NotifyAPZStateChange(const ScrollableLayerGuid& aGuid,
                                     APZStateChange aChange,
@@ -71,8 +74,6 @@ public:
 
   virtual void NotifyFlushComplete() override;
 
-  virtual bool RecvUpdateHitRegion(const nsRegion& aRegion) override;
-
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual void Destroy() override;
@@ -81,9 +82,11 @@ private:
   MessageLoop* mCompositorThread;
   bool mCanSend;
 
-  // Mutex protecting members below accessed from multiple threads.
-  mozilla::Mutex mMutex;
-  nsRegion mTouchSensitiveRegion;
+  void HandleTapOnMainThread(TapType aType,
+                             LayoutDevicePoint aPoint,
+                             Modifiers aModifiers,
+                             ScrollableLayerGuid aGuid,
+                             uint64_t aInputBlockId);
 };
 
 } // namespace layers

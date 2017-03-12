@@ -142,6 +142,9 @@ function delayedStartupFinished(aWindow) {
 function someTabLoaded(aWindow) {
   return new Promise(function(resolve) {
     aWindow.gBrowser.addEventListener("load", function onLoad(aEvent) {
+      if (aWindow.location.href === "about:blank") {
+        return;
+      }
       let tab = aWindow.gBrowser._getTabForContentWindow(
           aEvent.target.defaultView.top);
       if (tab) {
@@ -203,9 +206,10 @@ function referrerTestCaseLoaded(aTestNumber, aParams) {
             "?scheme=" + escape(test.toScheme) +
             "&policy=" + escape(test.policy || "") +
             "&rel=" + escape(test.rel || "");
-  var browser = gTestWindow.gBrowser;
-  browser.selectedTab = browser.addTab(url, aParams);
-  return BrowserTestUtils.browserLoaded(browser.selectedBrowser);
+  let browser = gTestWindow.gBrowser;
+  return BrowserTestUtils.openNewForegroundTab(browser, () => {
+    browser.selectedTab = browser.addTab(url, aParams);
+  });
 }
 
 /**

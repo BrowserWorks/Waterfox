@@ -56,13 +56,13 @@
 #include "jsfriendapi.h"
 #include "jsnum.h"
 
-#include "asmjs/WasmInstance.h"
 #include "jit/AtomicOperations.h"
 #include "jit/InlinableNatives.h"
 #include "js/Class.h"
 #include "vm/GlobalObject.h"
 #include "vm/Time.h"
 #include "vm/TypedArrayObject.h"
+#include "wasm/WasmInstance.h"
 
 #include "jsobjinlines.h"
 
@@ -76,7 +76,7 @@ const Class AtomicsObject::class_ = {
 static bool
 ReportBadArrayType(JSContext* cx)
 {
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_BAD_ARRAY);
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_BAD_ARRAY);
     return false;
 }
 
@@ -86,14 +86,14 @@ ReportOutOfRange(JSContext* cx)
     // Use JSMSG_BAD_INDEX here even if it is generic, since that is
     // the message used by ToIntegerIndex for its initial range
     // checking.
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
     return false;
 }
 
 static bool
 ReportCannotWait(JSContext* cx)
 {
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_WAIT_NOT_ALLOWED);
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_WAIT_NOT_ALLOWED);
     return false;
 }
 
@@ -339,18 +339,20 @@ ExchangeOrStore(JSContext* cx, unsigned argc, Value* vp)
     uint32_t offset;
     if (!GetTypedArrayIndex(cx, idxv, view, &offset))
         return false;
-    int32_t numberValue;
-    if (!ToInt32(cx, valv, &numberValue))
+    double integerValue;
+    if (!ToInteger(cx, valv, &integerValue))
         return false;
 
     bool badType = false;
-    int32_t result = ExchangeOrStore<op>(view->type(), numberValue, view->viewDataShared(), offset,
-                                         &badType);
+    int32_t result = ExchangeOrStore<op>(view->type(), JS::ToInt32(integerValue),
+                                         view->viewDataShared(), offset, &badType);
 
     if (badType)
         return ReportBadArrayType(cx);
 
-    if (view->type() == Scalar::Uint32)
+    if (op == DoStore)
+        r.setNumber(integerValue);
+    else if (view->type() == Scalar::Uint32)
         r.setNumber((double)(uint32_t)result);
     else
         r.setInt32(result);
@@ -742,17 +744,6 @@ class AutoLockFutexAPI
     js::UniqueLock<js::Mutex>& unique() { return *unique_; }
 };
 
-class AutoUnlockFutexAPI
-{
-  public:
-    AutoUnlockFutexAPI() {
-        FutexRuntime::unlock();
-    }
-    ~AutoUnlockFutexAPI() {
-        FutexRuntime::lock();
-    }
-};
-
 } // namespace js
 
 bool
@@ -897,7 +888,7 @@ js::atomics_wake(JSContext* cx, unsigned argc, Value* vp)
 js::FutexRuntime::initialize()
 {
     MOZ_ASSERT(!lock_);
-    lock_ = js_new<js::Mutex>();
+    lock_ = js_new<js::Mutex>(mutexid::FutexRuntime);
     return lock_ != nullptr;
 }
 
@@ -977,7 +968,8 @@ js::FutexRuntime::wait(JSContext* cx, js::UniqueLock<js::Mutex>& locked,
     // See explanation below.
 
     if (state_ == WaitingInterrupted) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_WAIT_NOT_ALLOWED);
+        UnlockGuard<Mutex> unlock(locked);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_WAIT_NOT_ALLOWED);
         return false;
     }
 
@@ -1060,7 +1052,7 @@ js::FutexRuntime::wait(JSContext* cx, js::UniqueLock<js::Mutex>& locked,
 
             state_ = WaitingInterrupted;
             {
-                AutoUnlockFutexAPI unlock;
+                UnlockGuard<Mutex> unlock(locked);
                 retval = cx->runtime()->handleInterrupt(cx);
             }
             if (!retval)

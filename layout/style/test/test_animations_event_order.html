@@ -466,11 +466,12 @@ divs.forEach(div => div.style.marginLeft = '100px');
 getComputedStyle(divs[0]).marginLeft;
 
 advance_clock(0);
-advance_clock(10000);
+advance_clock(10 * 1000);
 
 checkEventOrder([ divs[1], 'transitionend' ],
                 [ divs[0], 'transitionend' ],
-                'Sorting of transitionend events by time (including delay)');
+                'Sorting of transitionend events by time' +
+                '(including delay)');
 
 divs.forEach(div => div.remove());
 divs = [];
@@ -493,7 +494,7 @@ advance_clock(10000);
 
 checkEventOrder([ 'margin-left', 'transitionend' ],
                 [ 'opacity', 'transitionend' ],
-                'Sorting of transitionend events by transition-property');
+                'Sorting of transitionend events by transition-property')
 
 div.remove();
 div = undefined;
@@ -550,6 +551,32 @@ checkEventOrder([ 'opacity', 'transitionend' ],
 div.remove();
 div = undefined;
 
+// 4i. Test sorting transitions by document position (negative delay)
+
+divs = [ document.createElement('div'),
+         document.createElement('div') ];
+divs.forEach((div, i) => {
+  gDisplay.appendChild(div);
+  div.style.marginLeft = '0px';
+  div.setAttribute('id', 'div' + i);
+});
+
+divs[0].style.transition = 'margin-left 10s 5s';
+divs[1].style.transition = 'margin-left 10s';
+
+getComputedStyle(divs[0]).marginLeft;
+divs.forEach(div => div.style.marginLeft = '100px');
+getComputedStyle(divs[0]).marginLeft;
+
+advance_clock(0);
+advance_clock(15 * 1000);
+
+checkEventOrder([ divs[1], 'transitionend' ],
+                [ divs[0], 'transitionend' ],
+                'Simultaneous transitionend on siblings');
+
+divs.forEach(div => div.remove());
+divs = [];
 
 SpecialPowers.DOMWindowUtils.restoreNormalRefresh();
 

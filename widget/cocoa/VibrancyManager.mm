@@ -147,6 +147,8 @@ AppearanceForVibrancyType(VibrancyType aType)
     case VibrancyType::HIGHLIGHTED_MENUITEM:
     case VibrancyType::SHEET:
     case VibrancyType::SOURCE_LIST:
+    case VibrancyType::SOURCE_LIST_SELECTION:
+    case VibrancyType::ACTIVE_SOURCE_LIST_SELECTION:
       return [NSAppearanceClass performSelector:@selector(appearanceNamed:)
                                      withObject:@"NSAppearanceNameVibrantLight"];
     case VibrancyType::DARK:
@@ -202,9 +204,11 @@ HasVibrantForeground(VibrancyType aType)
   }
 }
 
+#if !defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
 enum {
-  NSVisualEffectMaterialMenuItem = 4
+  NSVisualEffectMaterialSelection = 4
 };
+#endif
 
 @interface NSView(NSVisualEffectViewMethods)
 - (void)setState:(NSUInteger)state;
@@ -234,9 +238,12 @@ VibrancyManager::CreateEffectView(VibrancyType aType)
                                                      : NSVisualEffectMaterialTitlebar];
   } else if (aType == VibrancyType::SOURCE_LIST && canUseElCapitanMaterials) {
     [effectView setMaterial:NSVisualEffectMaterialSidebar];
-  } else if (aType == VibrancyType::HIGHLIGHTED_MENUITEM) {
-    [effectView setMaterial:NSVisualEffectMaterialMenuItem];
-    if ([effectView respondsToSelector:@selector(setEmphasized:)]) {
+  } else if (aType == VibrancyType::HIGHLIGHTED_MENUITEM ||
+             aType == VibrancyType::SOURCE_LIST_SELECTION ||
+             aType == VibrancyType::ACTIVE_SOURCE_LIST_SELECTION) {
+    [effectView setMaterial:NSVisualEffectMaterialSelection];
+    if ([effectView respondsToSelector:@selector(setEmphasized:)] &&
+        aType != VibrancyType::SOURCE_LIST_SELECTION) {
       [effectView setEmphasized:YES];
     }
   }

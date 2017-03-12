@@ -4,16 +4,16 @@
 
 import time
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import By, Wait
 from marionette_driver.errors import MarionetteException
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestSecurityNotification(FirefoxTestCase):
+class TestSecurityNotification(PuppeteerMixin, MarionetteTestCase):
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestSecurityNotification, self).setUp()
 
         self.urls = [
             # Invalid cert page
@@ -50,7 +50,7 @@ class TestSecurityNotification(FirefoxTestCase):
             self.marionette.navigate(self.urls[1])
 
         Wait(self.marionette).until(lambda _: (
-            self.identity_box.get_attribute('className') == 'verifiedIdentity')
+            self.identity_box.get_property('className') == 'verifiedIdentity')
         )
 
     def test_insecure_website(self):
@@ -58,5 +58,5 @@ class TestSecurityNotification(FirefoxTestCase):
             self.marionette.navigate(self.urls[2])
 
         Wait(self.marionette).until(lambda _: (
-            self.identity_box.get_attribute('className') == 'unknownIdentity')
+            self.identity_box.get_property('className') == 'unknownIdentity')
         )

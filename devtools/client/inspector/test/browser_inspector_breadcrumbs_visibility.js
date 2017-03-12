@@ -32,6 +32,10 @@ const NODES = [
 ];
 
 add_task(function* () {
+  // This test needs specific initial size of the sidebar.
+  yield pushPref("devtools.toolsidebar-width.inspector", 350);
+  yield pushPref("devtools.toolsidebar-height.inspector", 150);
+
   let { inspector, toolbox } = yield openInspectorForURL(TEST_URI);
 
   // No way to wait for scrolling to end (Bug 1172171)
@@ -39,7 +43,7 @@ add_task(function* () {
   inspector.breadcrumbs.arrowScrollBox.scrollBehavior = "instant";
 
   yield toolbox.switchHost(Toolbox.HostType.WINDOW);
-  let hostWindow = toolbox._host._window;
+  let hostWindow = toolbox.win.parent;
   let originalWidth = hostWindow.outerWidth;
   let originalHeight = hostWindow.outerHeight;
   hostWindow.resizeTo(640, 300);

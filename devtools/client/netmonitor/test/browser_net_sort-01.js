@@ -8,10 +8,12 @@
  */
 
 add_task(function* () {
+  let { L10N } = require("devtools/client/netmonitor/l10n");
+
   let { tab, monitor } = yield initNetMonitor(STATUS_CODES_URL);
   info("Starting test... ");
 
-  let { $all, L10N, NetMonitorView } = monitor.panelWin;
+  let { $all, NetMonitorView } = monitor.panelWin;
   let { RequestsMenu } = NetMonitorView;
 
   RequestsMenu.lazyUpdate = false;
@@ -201,7 +203,7 @@ add_task(function* () {
         type: "plain",
         fullMimeType: "text/plain; charset=utf-8",
         transferred: L10N.getFormatStrWithNumbers("networkMenu.sizeB", 22),
-        size: L10N.getFormatStrWithNumbers("networkMenu.sizeB", 0),
+        size: L10N.getFormatStrWithNumbers("networkMenu.sizeB", 22),
         time: true
       });
     verifyRequestItemTarget(RequestsMenu.getItemAtIndex(d),

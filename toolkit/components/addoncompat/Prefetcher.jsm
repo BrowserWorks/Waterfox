@@ -101,7 +101,7 @@ function objAddr(obj)
 */
 }
 
-function log(/*...args*/)
+function log(/* ...args*/)
 {
 /*
   for (let arg of args) {
@@ -112,7 +112,7 @@ function log(/*...args*/)
 */
 }
 
-function logPrefetch(/*kind, value1, component, value2*/)
+function logPrefetch(/* kind, value1, component, value2*/)
 {
 /*
   log("prefetching", kind, objAddr(value1) + "." + component, "=", objAddr(value2));
@@ -163,7 +163,7 @@ PropertyOp.prototype.addObject = function(database, obj)
 
 PropertyOp.prototype.makeCacheEntry = function(item, cache)
 {
-  let [index, obj, has, propValue] = item;
+  let [, obj, , propValue] = item;
 
   let desc = { configurable: false, enumerable: true, writable: false, value: propValue };
 
@@ -201,7 +201,7 @@ MethodOp.prototype.addObject = function(database, obj)
 
 MethodOp.prototype.makeCacheEntry = function(item, cache)
 {
-  let [index, obj, result] = item;
+  let [, obj, result] = item;
 
   if (!cache.has(obj)) {
     cache.set(obj, new Map());
@@ -256,7 +256,7 @@ CollectionOp.prototype.addObject = function(database, obj)
 
 CollectionOp.prototype.makeCacheEntry = function(item, cache)
 {
-  let [index, obj, ...elements] = item;
+  let [, obj, ...elements] = item;
 
   if (!cache.has(obj)) {
     cache.set(obj, new Map());

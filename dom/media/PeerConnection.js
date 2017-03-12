@@ -26,6 +26,7 @@ const PC_STATIC_CONTRACT = "@mozilla.org/dom/peerconnectionstatic;1";
 const PC_SENDER_CONTRACT = "@mozilla.org/dom/rtpsender;1";
 const PC_RECEIVER_CONTRACT = "@mozilla.org/dom/rtpreceiver;1";
 const PC_COREQUEST_CONTRACT = "@mozilla.org/dom/createofferrequest;1";
+const PC_DTMF_SENDER_CONTRACT = "@mozilla.org/dom/rtcdtmfsender;1";
 
 const PC_CID = Components.ID("{bdc2e533-b308-4708-ac8e-a8bfade6d851}");
 const PC_OBS_CID = Components.ID("{d1748d4c-7f6a-4dc5-add6-d55b7678537e}");
@@ -37,6 +38,7 @@ const PC_STATIC_CID = Components.ID("{0fb47c47-a205-4583-a9fc-cbadf8c95880}");
 const PC_SENDER_CID = Components.ID("{4fff5d46-d827-4cd4-a970-8fd53977440e}");
 const PC_RECEIVER_CID = Components.ID("{d974b814-8fde-411c-8c45-b86791b81030}");
 const PC_COREQUEST_CID = Components.ID("{74b2122d-65a8-4824-aa9e-3d664cb75dc2}");
+const PC_DTMF_SENDER_CID = Components.ID("{3610C242-654E-11E6-8EC0-6D1BE389A607}");
 
 // Global list of PeerConnection objects, so they can be cleaned up when
 // a page is torn down. (Maps inner window ID to an array of PC objects).
@@ -187,19 +189,6 @@ GlobalPCList.prototype = {
         this._networkdown = true;
       } else if (data == "online") {
         this._networkdown = false;
-      }
-    } else if (topic == "network:app-offline-status-changed") {
-      // App changed offline status. The subject contains the appId for which
-      // we need to check the status
-      let appId = subject.QueryInterface(Ci.nsIAppOfflineInfo).appId;
-      let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
-      for (let winId in this._list) {
-        if (appId != this._list[winId]._appId) {
-          continue;
-        }
-        if (ios.isAppOffline(appId)) {
-          cleanupWinId(this._list, winId);
-        }
       }
     } else if (topic == "gmp-plugin-crash") {
       if (subject instanceof Ci.nsIWritablePropertyBag2) {
@@ -382,20 +371,10 @@ RTCPeerConnection.prototype = {
       this._mustValidateRTCConfiguration(rtcConfig,
         "RTCPeerConnection constructor passed invalid RTCConfiguration");
     }
-    // Save the appId
     var principal = Cu.getWebIDLCallerPrincipal();
-    this._appId = principal.appId;
     this._isChrome = Services.scriptSecurityManager.isSystemPrincipal(principal);
 
-    // Get the offline status for this appId
-    let appOffline = false;
-    if (this._appId != Ci.nsIScriptSecurityManager.NO_APP_ID &&
-        this._appId != Ci.nsIScriptSecurityManager.UNKNOWN_APP_ID) {
-      let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
-      appOffline = ios.isAppOffline(this._appId);
-    }
-
-    if (_globalPCList._networkdown || appOffline) {
+    if (_globalPCList._networkdown) {
       throw new this._win.DOMException(
           "Can't create RTCPeerConnections when the network is down",
           "InvalidStateError");
@@ -422,8 +401,6 @@ RTCPeerConnection.prototype = {
     this._observer = new this._win.PeerConnectionObserver(this.__DOM_IMPL__);
 
     var location = "" + this._win.location;
-    this._isLoop = location.startsWith("about:loop") ||
-                   location.startsWith("https://hello.firefox.com/");
 
     // Warn just once per PeerConnection about deprecated getStats usage.
     this._warnDeprecatedStatsAccessNullable = { warn: () =>
@@ -582,11 +559,11 @@ RTCPeerConnection.prototype = {
       server.urls.forEach(urlStr => {
         let url = nicerNewURI(urlStr);
         if (url.scheme in { turn:1, turns:1 }) {
-          if (!server.username) {
+          if (server.username == undefined) {
             throw new this._win.DOMException(msg + " - missing username: " + urlStr,
                                              "InvalidAccessError");
           }
-          if (!server.credential) {
+          if (server.credential == undefined) {
             throw new this._win.DOMException(msg + " - missing credential: " + urlStr,
                                              "InvalidAccessError");
           }
@@ -1066,6 +1043,14 @@ RTCPeerConnection.prototype = {
     }
   },
 
+  _insertDTMF: function(sender, tones, duration, interToneGap) {
+    return this._impl.insertDTMF(sender.__DOM_IMPL__, tones, duration, interToneGap);
+  },
+
+  _getDTMFToneBuffer: function(sender) {
+    return this._impl.getDTMFToneBuffer(sender.__DOM_IMPL__);
+  },
+
   _replaceTrack: function(sender, withTrack) {
     // TODO: Do a (sender._stream.getTracks().indexOf(track) < 0) check
     //       on both track args someday.
@@ -1419,8 +1404,7 @@ PeerConnectionObserver.prototype = {
         checking_histogram.add(false);
       }
     } else if (pc.iceConnectionState === 'checking') {
-      var success_histogram = Services.telemetry.getHistogramById(pc._isLoop ?
-        "LOOP_ICE_SUCCESS_RATE" : "WEBRTC_ICE_SUCCESS_RATE");
+      var success_histogram = Services.telemetry.getHistogramById("WEBRTC_ICE_SUCCESS_RATE");
       if (iceConnectionState === 'completed' ||
           iceConnectionState === 'connected') {
         success_histogram.add(true);
@@ -1558,6 +1542,13 @@ PeerConnectionObserver.prototype = {
   notifyDataChannel: function(channel) {
     this.dispatchEvent(new this._dompc._win.RTCDataChannelEvent("datachannel",
                                                                 { channel: channel }));
+  },
+
+  onDTMFToneChange: function(trackId, tone) {
+    var pc = this._dompc;
+    var sender = pc._senders.find(sender => sender.track.id == trackId)
+    sender.dtmf.dispatchEvent(new pc._win.RTCDTMFToneChangeEvent("tonechange",
+                                                                 { tone: tone }));
   }
 };
 
@@ -1581,10 +1572,54 @@ RTCPeerConnectionStatic.prototype = {
   },
 };
 
+function RTCDTMFSender(sender) {
+  this._sender = sender;
+}
+RTCDTMFSender.prototype = {
+  classDescription: "RTCDTMFSender",
+  classID: PC_DTMF_SENDER_CID,
+  contractID: PC_DTMF_SENDER_CONTRACT,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports]),
+
+  get toneBuffer() {
+    return this._sender._pc._getDTMFToneBuffer(this._sender);
+  },
+
+  get ontonechange() {
+    return this.__DOM_IMPL__.getEventHandler("ontonechange");
+  },
+
+  set ontonechange(handler) {
+    this.__DOM_IMPL__.setEventHandler("ontonechange", handler);
+  },
+
+  insertDTMF: function(tones, duration, interToneGap) {
+    this._sender._pc._checkClosed();
+
+    if (this._sender._pc._senders.indexOf(this._sender.__DOM_IMPL__) == -1) {
+      throw new this._sender._pc._win.DOMException("RTCRtpSender is stopped",
+                                                   "InvalidStateError");
+    }
+
+    duration = Math.max(40, Math.min(duration, 6000));
+    if (interToneGap < 30) interToneGap = 30;
+
+    tones = tones.toUpperCase();
+
+    if (tones.match(/[^0-9A-D#*,]/)) {
+      throw new this._sender._pc._win.DOMException("Invalid DTMF characters",
+                                                   "InvalidCharacterError");
+    }
+
+    this._sender._pc._insertDTMF(this._sender, tones, duration, interToneGap);
+  },
+};
+
 function RTCRtpSender(pc, track, stream) {
   this._pc = pc;
   this.track = track;
   this._stream = stream;
+  this.dtmf = pc._win.RTCDTMFSender._create(pc._win, new RTCDTMFSender(this));
 }
 RTCRtpSender.prototype = {
   classDescription: "RTCRtpSender",
@@ -1632,6 +1667,7 @@ CreateOfferRequest.prototype = {
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(
   [GlobalPCList,
+   RTCDTMFSender,
    RTCIceCandidate,
    RTCSessionDescription,
    RTCPeerConnection,

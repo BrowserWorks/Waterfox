@@ -45,7 +45,7 @@
 #endif
 
 #if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
-  #include "AndroidBridge.h"
+  #include "FennecJNIWrappers.h"
 #endif
 
 #ifndef SPS_STANDALONE
@@ -192,7 +192,6 @@ GeckoSampler::GeckoSampler(double aInterval, int aEntrySize,
   mUseStackWalk = hasFeature(aFeatures, aFeatureCount, "stackwalk");
 
   mProfileJS = hasFeature(aFeatures, aFeatureCount, "js");
-  mProfileJava = hasFeature(aFeatures, aFeatureCount, "java");
   mProfileGPU = hasFeature(aFeatures, aFeatureCount, "gpu");
   mProfilePower = hasFeature(aFeatures, aFeatureCount, "power");
   // Users sometimes ask to filter by a list of threads but forget to request
@@ -212,6 +211,13 @@ GeckoSampler::GeckoSampler(double aInterval, int aEntrySize,
     mIntelPowerGadget = new IntelPowerGadget();
     mProfilePower = mIntelPowerGadget->Init();
   }
+#endif
+
+#if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+  mProfileJava = mozilla::jni::IsFennec() &&
+      hasFeature(aFeatures, aFeatureCount, "java");
+#else
+  mProfileJava = false;
 #endif
 
   // Deep copy aThreadNameFilters
@@ -469,10 +475,10 @@ void BuildJavaThreadJSObject(SpliceableJSONWriter& aWriter)
       bool firstRun = true;
       // for each frame
       for (int frameId = 0; true; frameId++) {
-        nsCString result;
-        bool hasFrame = AndroidBridge::Bridge()->GetFrameNameJavaProfiling(0, sampleId, frameId, result);
+        jni::String::LocalRef frameName =
+            java::GeckoJavaSampler::GetFrameName(0, sampleId, frameId);
         // when we run out of frames, we stop looping
-        if (!hasFrame) {
+        if (!frameName) {
           // if we found at least one frame, we have objects to close
           if (!firstRun) {
               aWriter.EndArray();
@@ -494,7 +500,8 @@ void BuildJavaThreadJSObject(SpliceableJSONWriter& aWriter)
         }
         // add a frame to the sample
         aWriter.StartObjectElement();
-          aWriter.StringProperty("location", result.BeginReading());
+          aWriter.StringProperty("location",
+                                 frameName->ToCString().BeginReading());
         aWriter.EndObject();
       }
       // if we found no frames for this sample, we are done
@@ -775,7 +782,7 @@ void mergeStacksIntoProfile(ThreadProfile& aProfile, TickSample* aSample, Native
                                         startBufferGen);
       for (; jsCount < maxFrames && !jsIter.done(); ++jsIter) {
         // See note below regarding 'J' entries.
-        if (aSample->isSamplingCurrentThread || jsIter.isAsmJS()) {
+        if (aSample->isSamplingCurrentThread || jsIter.isWasm()) {
           uint32_t extracted = jsIter.extractStack(jsFrames, jsCount, maxFrames);
           jsCount += extracted;
           if (jsCount == maxFrames)
@@ -879,7 +886,7 @@ void mergeStacksIntoProfile(ThreadProfile& aProfile, TickSample* aSample, Native
       MOZ_ASSERT(jsIndex >= 0);
       const JS::ProfilingFrameIterator::Frame& jsFrame = jsFrames[jsIndex];
 
-      // Stringifying non-asm.js JIT frames is delayed until streaming
+      // Stringifying non-wasm JIT frames is delayed until streaming
       // time. To re-lookup the entry in the JitcodeGlobalTable, we need to
       // store the JIT code address ('J') in the circular buffer.
       //
@@ -893,7 +900,7 @@ void mergeStacksIntoProfile(ThreadProfile& aProfile, TickSample* aSample, Native
       // the buffer, nsRefreshDriver would now be holding on to a backtrace
       // with stale JIT code return addresses.
       if (aSample->isSamplingCurrentThread ||
-          jsFrame.kind == JS::ProfilingFrameIterator::Frame_AsmJS) {
+          jsFrame.kind == JS::ProfilingFrameIterator::Frame_Wasm) {
         addDynamicTag(aProfile, 'c', jsFrame.label.get());
       } else {
         MOZ_ASSERT(jsFrame.kind == JS::ProfilingFrameIterator::Frame_Ion ||
@@ -1271,7 +1278,7 @@ SyncProfile* GeckoSampler::GetBacktrace()
   TickSample sample;
   sample.threadProfile = profile;
 
-#if defined(HAVE_NATIVE_UNWIND)
+#if defined(HAVE_NATIVE_UNWIND) || defined(USE_LUL_STACKWALK)
 #if defined(XP_WIN) || defined(LINUX)
   tickcontext_t context;
   sample.PopulateContext(&context);

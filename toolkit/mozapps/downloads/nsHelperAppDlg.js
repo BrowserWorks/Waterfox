@@ -163,11 +163,15 @@ nsUnknownContentTypeDialog.prototype = {
   // activate the OK button.  So we wait a bit before doing opening it.
   reallyShow: function() {
     try {
-      var ir = this.mContext.QueryInterface(Components.interfaces.nsIInterfaceRequestor);
-      var dwi = ir.getInterface(Components.interfaces.nsIDOMWindow);
-      var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+      let ir = this.mContext.QueryInterface(Components.interfaces.nsIInterfaceRequestor);
+      let docShell = ir.getInterface(Components.interfaces.nsIDocShell);
+      let rootWin = docShell.QueryInterface(Ci.nsIDocShellTreeItem)
+                                 .rootTreeItem
+                                 .QueryInterface(Ci.nsIInterfaceRequestor)
+                                 .getInterface(Ci.nsIDOMWindow);
+      let ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
                          .getService(Components.interfaces.nsIWindowWatcher);
-      this.mDialog = ww.openWindow(dwi,
+      this.mDialog = ww.openWindow(rootWin,
                                    "chrome://mozapps/content/downloads/unknownContentType.xul",
                                    null,
                                    "chrome,centerscreen,titlebar,dialog=yes,dependent",
@@ -867,9 +871,9 @@ nsUnknownContentTypeDialog.prototype = {
   // See if the user changed things, and if so, update the
   // mimeTypes.rdf entry for this mime type.
   updateHelperAppPref: function() {
-    var ha = new this.mDialog.HelperApps();
-    ha.updateTypeInfo(this.mLauncher.MIMEInfo);
-    ha.destroy();
+    var handlerInfo = this.mLauncher.MIMEInfo;
+    var hs = Cc["@mozilla.org/uriloader/handler-service;1"].getService(Ci.nsIHandlerService);
+    hs.store(handlerInfo);
   },
 
   // onOK:

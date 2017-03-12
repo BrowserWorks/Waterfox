@@ -4,10 +4,9 @@
 
 using struct gfxPoint from "gfxPoint.h";
 using nsIntRegion from "nsRegion.h";
-using struct mozilla::layers::MagicGrallocBufferHandle from "gfxipc/ShadowLayerUtils.h";
-using struct mozilla::layers::GrallocBufferRef from "gfxipc/ShadowLayerUtils.h";
 using struct mozilla::layers::SurfaceDescriptorX11 from "gfxipc/ShadowLayerUtils.h";
 using mozilla::StereoMode from "ImageTypes.h";
+using mozilla::YUVColorSpace from "ImageTypes.h";
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
 using mozilla::WindowsHandle from "ipc/IPCMessageUtils.h";
 using mozilla::gfx::SurfaceFormat from "mozilla/gfx/Types.h";
@@ -28,12 +27,6 @@ union OverlayHandle {
 struct OverlaySource {
   OverlayHandle handle;
   IntSize size;
-};
-
-union MaybeMagicGrallocBufferHandle {
-  MagicGrallocBufferHandle;
-  GrallocBufferRef;
-  null_t;
 };
 
 struct SurfaceDescriptorD3D9 {
@@ -93,9 +86,8 @@ struct SurfaceDescriptorSharedGLTexture {
   bool hasAlpha;
 };
 
-struct SurfaceDescriptorGralloc {
-  MaybeMagicGrallocBufferHandle buffer;
-  bool isOpaque;
+struct SurfaceDescriptorGPUVideo {
+  uint64_t handle;
 };
 
 struct RGBDescriptor {
@@ -111,6 +103,7 @@ struct YCbCrDescriptor {
   uint32_t cbOffset;
   uint32_t crOffset;
   StereoMode stereoMode;
+  YUVColorSpace yUVColorSpace;
   bool hasIntermediateBuffer;
 };
 
@@ -140,8 +133,8 @@ union SurfaceDescriptor {
   SurfaceTextureDescriptor;
   EGLImageDescriptor;
   SurfaceDescriptorMacIOSurface;
-  SurfaceDescriptorGralloc;
   SurfaceDescriptorSharedGLTexture;
+  SurfaceDescriptorGPUVideo;
   null_t;
 };
 

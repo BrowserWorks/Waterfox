@@ -9,6 +9,7 @@
 #include "gfxMatrix.h"
 #include "gfxRect.h"
 #include "nsRegionFwd.h"
+#include "mozilla/gfx/Rect.h"
 
 class gfxContext;
 class gfxDrawable;
@@ -37,6 +38,7 @@ struct nsSize;
 class nsSVGIntegrationUtils final
 {
   typedef mozilla::gfx::DrawTarget DrawTarget;
+  typedef mozilla::gfx::IntRect IntRect;
   typedef mozilla::image::DrawResult DrawResult;
 
 public:
@@ -138,6 +140,8 @@ public:
     mozilla::layers::LayerManager* layerManager;
     bool handleOpacity; // If true, PaintMaskAndClipPath/ PaintFilter should
                         // apply css opacity.
+    IntRect maskRect;
+
     explicit PaintFramesParams(gfxContext& aCtx, nsIFrame* aFrame,
                                const nsRect& aDirtyRect,
                                const nsRect& aBorderArea,
@@ -155,6 +159,19 @@ public:
    */
   static DrawResult
   PaintMaskAndClipPath(const PaintFramesParams& aParams);
+
+  /**
+   * Paint mask of non-SVG frame onto a given context, aParams.ctx.
+   * aParams.ctx must contain an A8 surface.
+   */
+  static DrawResult
+  PaintMask(const PaintFramesParams& aParams);
+
+  /**
+   * Return true if all the mask resource of aFrame are ready.
+   */
+  static bool
+  IsMaskResourceReady(nsIFrame* aFrame);
 
   /**
    * Paint non-SVG frame with filter and opacity effect.
@@ -202,6 +219,13 @@ public:
                           const DrawTarget* aDrawTarget,
                           const gfxMatrix& aContextMatrix,
                           uint32_t aFlags);
+
+  /**
+   * For non-SVG frames, this gives the offset to the frame's "user space".
+   * For SVG frames, this returns a zero offset.
+   */
+  static nsPoint
+  GetOffsetToBoundingBox(nsIFrame* aFrame);
 };
 
 #endif /*NSSVGINTEGRATIONUTILS_H_*/

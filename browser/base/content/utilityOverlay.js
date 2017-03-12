@@ -222,6 +222,22 @@ function openLinkIn(url, where, params) {
   var aAllowPopups          = !!params.allowPopups;
   var aUserContextId        = params.userContextId;
   var aIndicateErrorPageLoad = params.indicateErrorPageLoad;
+  var aPrincipal            = params.originPrincipal;
+  var aForceAboutBlankViewerInCurrent =
+      params.forceAboutBlankViewerInCurrent;
+
+  // Establish a window in which we're running this code.
+  var w = getTopWin();
+
+  if ((where == "tab" || where == "tabshifted") &&
+      w && !w.toolbar.visible) {
+    w = getTopWin(true);
+    aRelatedToCurrent = false;
+  }
+
+  // Can only do this after we're sure of what |w| will be the rest of this function.
+  // Note that if |w| is null we might have no current browser (we'll open a new window).
+  var aCurrentBrowser = params.currentBrowser || (w && w.gBrowser.selectedBrowser);
 
   if (where == "save") {
     // TODO(1073187): propagate referrerPolicy.
@@ -241,17 +257,10 @@ function openLinkIn(url, where, params) {
     return;
   }
 
-  var w = getTopWin();
-  if ((where == "tab" || where == "tabshifted") &&
-      w && !w.toolbar.visible) {
-    w = getTopWin(true);
-    aRelatedToCurrent = false;
-  }
-
   if (!w || where == "window") {
     // This propagates to window.arguments.
-    var sa = Cc["@mozilla.org/supports-array;1"].
-             createInstance(Ci.nsISupportsArray);
+    var sa = Cc["@mozilla.org/array;1"].
+             createInstance(Ci.nsIMutableArray);
 
     var wuri = Cc["@mozilla.org/supports-string;1"].
                createInstance(Ci.nsISupportsString);
@@ -283,13 +292,14 @@ function openLinkIn(url, where, params) {
                                  createInstance(Ci.nsISupportsPRUint32);
     userContextIdSupports.data = aUserContextId;
 
-    sa.AppendElement(wuri);
-    sa.AppendElement(charset);
-    sa.AppendElement(referrerURISupports);
-    sa.AppendElement(aPostData);
-    sa.AppendElement(allowThirdPartyFixupSupports);
-    sa.AppendElement(referrerPolicySupports);
-    sa.AppendElement(userContextIdSupports);
+    sa.appendElement(wuri, /* weak =*/ false);
+    sa.appendElement(charset, /* weak =*/ false);
+    sa.appendElement(referrerURISupports, /* weak =*/ false);
+    sa.appendElement(aPostData, /* weak =*/ false);
+    sa.appendElement(allowThirdPartyFixupSupports, /* weak =*/ false);
+    sa.appendElement(referrerPolicySupports, /* weak =*/ false);
+    sa.appendElement(userContextIdSupports, /* weak =*/ false);
+    sa.appendElement(aPrincipal, /* weak =*/ false);
 
     let features = "chrome,dialog=no,all";
     if (aIsPrivate) {
@@ -314,12 +324,17 @@ function openLinkIn(url, where, params) {
     } catch (e) {}
   }
 
-  if (where == "current" && w.gBrowser.selectedTab.pinned &&
+  // We avoid using |w| here because in the 'popup window' case,
+  // if we pass a currentBrowser param |w.gBrowser| might not be the
+  // tabbrowser that contains |aCurrentBrowser|. We really only care
+  // about the tab linked to |aCurrentBrowser|.
+  let tab = aCurrentBrowser.getTabBrowser().getTabForBrowser(aCurrentBrowser);
+  if (where == "current" && tab.pinned &&
       !aAllowPinnedTabHostChange) {
     try {
       // nsIURI.host can throw for non-nsStandardURL nsIURIs.
       if (!uriObj || (!uriObj.schemeIs("javascript") &&
-                      w.gBrowser.currentURI.host != uriObj.host)) {
+                      aCurrentBrowser.currentURI.host != uriObj.host)) {
         where = "tab";
         loadInBackground = false;
       }
@@ -333,6 +348,7 @@ function openLinkIn(url, where, params) {
   // result in a new frontmost window (e.g. "javascript:window.open('');").
   w.focus();
 
+  let browserUsedForLoad = null;
   switch (where) {
   case "current":
     let flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
@@ -357,19 +373,24 @@ function openLinkIn(url, where, params) {
       flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ERROR_LOAD_CHANGES_RV;
     }
 
-    w.gBrowser.loadURIWithFlags(url, {
+    if (aForceAboutBlankViewerInCurrent) {
+      aCurrentBrowser.createAboutBlankContentViewer(aPrincipal);
+    }
+
+    aCurrentBrowser.loadURIWithFlags(url, {
       flags: flags,
       referrerURI: aNoReferrer ? null : aReferrerURI,
       referrerPolicy: aReferrerPolicy,
       postData: aPostData,
       userContextId: aUserContextId
     });
+    browserUsedForLoad = aCurrentBrowser;
     break;
   case "tabshifted":
     loadInBackground = !loadInBackground;
     // fall through
   case "tab":
-    w.gBrowser.loadOneTab(url, {
+    let tabUsedForLoad = w.gBrowser.loadOneTab(url, {
       referrerURI: aReferrerURI,
       referrerPolicy: aReferrerPolicy,
       charset: aCharset,
@@ -380,12 +401,18 @@ function openLinkIn(url, where, params) {
       skipAnimation: aSkipTabAnimation,
       allowMixedContent: aAllowMixedContent,
       noReferrer: aNoReferrer,
-      userContextId: aUserContextId
+      userContextId: aUserContextId,
+      originPrincipal: aPrincipal,
     });
+    browserUsedForLoad = tabUsedForLoad.linkedBrowser;
     break;
   }
 
-  w.gBrowser.selectedBrowser.focus();
+  // Focus the content, but only if the browser used for the load is selected.
+  if (browserUsedForLoad &&
+      browserUsedForLoad == browserUsedForLoad.getTabBrowser().selectedBrowser) {
+    browserUsedForLoad.focus();
+  }
 
   if (!loadInBackground && w.isBlankPageURL(url)) {
     w.focusAndSelectUrlBar();
@@ -418,9 +445,8 @@ function checkForMiddleClick(node, event) {
 }
 
 // Populate a menu with user-context menu items. This method should be called
-// by onpopupshowing passing the event as first argument. addCommandAttribute
-// param is used to set the 'command' attribute in the new menuitem elements.
-function createUserContextMenu(event, addCommandAttribute = true, excludeUserContextId = 0) {
+// by onpopupshowing passing the event as first argument.
+function createUserContextMenu(event, isContextMenu = false, excludeUserContextId = 0) {
   while (event.target.hasChildNodes()) {
     event.target.removeChild(event.target.firstChild);
   }
@@ -435,9 +461,9 @@ function createUserContextMenu(event, addCommandAttribute = true, excludeUserCon
     menuitem.setAttribute("label", bundle.getString("userContextNone.label"));
     menuitem.setAttribute("accesskey", bundle.getString("userContextNone.accesskey"));
 
-    // We don't set an oncommand/command attribute attribute because if we have
+    // We don't set an oncommand/command attribute because if we have
     // to exclude a userContextId we are generating the contextMenu and
-    // addCommandAttribute will be false.
+    // isContextMenu will be true.
 
     docfrag.appendChild(menuitem);
 
@@ -459,15 +485,28 @@ function createUserContextMenu(event, addCommandAttribute = true, excludeUserCon
     }
 
     menuitem.classList.add("menuitem-iconic");
+    menuitem.setAttribute("data-identity-color", identity.color);
 
-    if (addCommandAttribute) {
+    if (!isContextMenu) {
       menuitem.setAttribute("command", "Browser:NewUserContextTab");
     }
 
-    menuitem.setAttribute("image", identity.icon);
+    menuitem.setAttribute("data-identity-icon", identity.icon);
 
     docfrag.appendChild(menuitem);
   });
+
+  if (!isContextMenu) {
+    docfrag.appendChild(document.createElement("menuseparator"));
+
+    let menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("label",
+                          bundle.getString("userContext.aboutPage.label"));
+    menuitem.setAttribute("accesskey",
+                          bundle.getString("userContext.aboutPage.accesskey"));
+    menuitem.setAttribute("command", "Browser:OpenAboutContainers");
+    docfrag.appendChild(menuitem);
+  }
 
   event.target.appendChild(docfrag);
   return true;
@@ -664,12 +703,12 @@ function openPreferences(paneID, extraArgs)
   if (!win) {
     const Cc = Components.classes;
     const Ci = Components.interfaces;
-    let windowArguments = Cc["@mozilla.org/supports-array;1"]
-                            .createInstance(Ci.nsISupportsArray);
+    let windowArguments = Cc["@mozilla.org/array;1"]
+                            .createInstance(Ci.nsIMutableArray);
     let supportsStringPrefURL = Cc["@mozilla.org/supports-string;1"]
                                   .createInstance(Ci.nsISupportsString);
     supportsStringPrefURL.data = preferencesURL;
-    windowArguments.AppendElement(supportsStringPrefURL);
+    windowArguments.appendElement(supportsStringPrefURL, /* weak =*/ false);
 
     win = Services.ww.openWindow(null, Services.prefs.getCharPref("browser.chromeURL"),
                                  "_blank", "chrome,dialog=no,all", windowArguments);

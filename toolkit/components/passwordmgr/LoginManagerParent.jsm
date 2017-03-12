@@ -227,7 +227,8 @@ var LoginManagerParent = {
 
   doAutocompleteSearch: function({ formOrigin, actionOrigin,
                                    searchString, previousResult,
-                                   rect, requestId, remote }, target) {
+                                   rect, requestId, isSecure, isPasswordField,
+                                   remote }, target) {
     // Note: previousResult is a regular object, not an
     // nsIAutoCompleteResult.
 
@@ -260,7 +261,11 @@ var LoginManagerParent = {
       let match = fullMatch.username;
 
       // Remove results that are too short, or have different prefix.
-      // Also don't offer empty usernames as possible results.
+      // Also don't offer empty usernames as possible results except
+      // for password field.
+      if (isPasswordField) {
+        return true;
+      }
       return match && match.toLowerCase().startsWith(searchStringLower);
     });
 
@@ -270,7 +275,7 @@ var LoginManagerParent = {
     // for showing the autocomplete popup (via the regular
     // nsAutoCompleteController).
     if (remote) {
-      let results = new UserAutoCompleteResult(searchString, matchingLogins);
+      let results = new UserAutoCompleteResult(searchString, matchingLogins, {isSecure});
       AutoCompletePopup.showPopupWithResults({ browser: target.ownerDocument.defaultView, rect, results });
     }
 

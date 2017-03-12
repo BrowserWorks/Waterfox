@@ -20,6 +20,7 @@ import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.SiteIdentity;
 import org.mozilla.gecko.SiteIdentity.SecurityMode;
@@ -96,8 +97,10 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
         mResources = mContext.getResources();
 
         mContentButtonClickListener = new ContentNotificationButtonListener();
-        EventDispatcher.getInstance().registerGeckoThreadListener(this, "Doorhanger:Logins");
-        EventDispatcher.getInstance().registerGeckoThreadListener(this, "Permissions:CheckResult");
+
+        GeckoApp.getEventDispatcher().registerGeckoThreadListener(this,
+                                                                  "Doorhanger:Logins",
+                                                                  "Permissions:CheckResult");
     }
 
     @Override
@@ -225,11 +228,9 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
                         } else {
                             password = login.getString("password");
                         }
-                        if (AppConstants.Versions.feature11Plus) {
-                            manager.setPrimaryClip(ClipData.newPlainText("password", password));
-                        } else {
-                            manager.setText(password);
-                        }
+
+                        manager.setPrimaryClip(ClipData.newPlainText("password", password));
+
                         SnackbarBuilder.builder(activity)
                                 .message(R.string.doorhanger_login_select_toast_copy)
                                 .duration(Snackbar.LENGTH_SHORT)
@@ -546,8 +547,9 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
     }
 
     void destroy() {
-        EventDispatcher.getInstance().unregisterGeckoThreadListener(this, "Doorhanger:Logins");
-        EventDispatcher.getInstance().unregisterGeckoThreadListener(this, "Permissions:CheckResult");
+        GeckoApp.getEventDispatcher().unregisterGeckoThreadListener(this,
+                                                                    "Doorhanger:Logins",
+                                                                    "Permissions:CheckResult");
     }
 
     @Override

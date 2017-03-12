@@ -409,6 +409,28 @@ MacroAssembler::ctz32(Register src, Register dest, bool knownNotZero)
     ma_ctz(dest, src);
 }
 
+void
+MacroAssembler::popcnt32(Register input,  Register output, Register tmp)
+{
+    // Equivalent to GCC output of mozilla::CountPopulation32()
+    ma_move(output, input);
+    ma_sra(tmp, input, Imm32(1));
+    ma_and(tmp, Imm32(0x55555555));
+    ma_subu(output, tmp);
+    ma_sra(tmp, output, Imm32(2));
+    ma_and(output, Imm32(0x33333333));
+    ma_and(tmp, Imm32(0x33333333));
+    ma_addu(output, tmp);
+    ma_srl(tmp, output, Imm32(4));
+    ma_addu(output, tmp);
+    ma_and(output, Imm32(0xF0F0F0F));
+    ma_sll(tmp, output, Imm32(8));
+    ma_addu(output, tmp);
+    ma_sll(tmp, output, Imm32(16));
+    ma_addu(output, tmp);
+    ma_sra(output, output, Imm32(24));
+}
+
 // ===============================================================
 // Branch functions
 
@@ -468,8 +490,9 @@ MacroAssembler::branch32(Condition cond, wasm::SymbolicAddress addr, Imm32 imm, 
     ma_b(SecondScratchReg, imm, label, cond);
 }
 
+template <class L>
 void
-MacroAssembler::branchPtr(Condition cond, Register lhs, Register rhs, Label* label)
+MacroAssembler::branchPtr(Condition cond, Register lhs, Register rhs, L label)
 {
     ma_b(lhs, rhs, label, cond);
 }
@@ -498,8 +521,9 @@ MacroAssembler::branchPtr(Condition cond, Register lhs, ImmWord rhs, Label* labe
     ma_b(lhs, rhs, label, cond);
 }
 
+template <class L>
 void
-MacroAssembler::branchPtr(Condition cond, const Address& lhs, Register rhs, Label* label)
+MacroAssembler::branchPtr(Condition cond, const Address& lhs, Register rhs, L label)
 {
     loadPtr(lhs, SecondScratchReg);
     branchPtr(cond, SecondScratchReg, rhs, label);
@@ -630,6 +654,9 @@ MacroAssembler::branchAdd32(Condition cond, T src, Register dest, L overflow)
     switch (cond) {
       case Overflow:
         ma_addTestOverflow(dest, dest, src, overflow);
+        break;
+      case CarrySet:
+        ma_addTestCarry(dest, dest, src, overflow);
         break;
       default:
         MOZ_CRASH("NYI");
@@ -963,6 +990,19 @@ void
 MacroAssembler::storeFloat32x3(FloatRegister src, const BaseIndex& dest)
 {
     MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::memoryBarrier(MemoryBarrierBits barrier)
+{
+    if (barrier == MembarLoadLoad)
+        as_sync(19);
+    else if (barrier == MembarStoreStore)
+        as_sync(4);
+    else if (barrier & MembarSynchronizing)
+        as_sync();
+    else if (barrier)
+        as_sync(16);
 }
 
 // ===============================================================

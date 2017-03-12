@@ -15,6 +15,7 @@ option(env='AUTOCONF', nargs=1, help='Path to autoconf 2.13')
 
 @depends(mozconfig, 'AUTOCONF')
 @checking('for autoconf')
+@imports(_from='os.path', _import='exists')
 @imports('re')
 def autoconf(mozconfig, autoconf):
     mozconfig_autoconf = None
@@ -50,7 +51,7 @@ def autoconf(mozconfig, autoconf):
     if not autoconf:
         die('Could not find autoconf 2.13')
 
-    if not os.path.exists(autoconf):
+    if not exists(autoconf):
         die('Could not find autoconf 2.13 at %s', autoconf)
 
     return autoconf
@@ -67,6 +68,7 @@ set_config('AUTOCONF', autoconf)
 @imports('subprocess')
 # Import getmtime without overwriting the sandbox os.path.
 @imports(_from='os.path', _import='getmtime')
+@imports(_from='os.path', _import='exists')
 @imports(_from='mozbuild.shellutil', _import='quote')
 def prepare_configure(old_configure, mozconfig, autoconf, build_env, shell,
                       old_configure_assignments, build_project):
@@ -82,7 +84,7 @@ def prepare_configure(old_configure, mozconfig, autoconf, build_env, shell,
                                          os.path.basename(old_configure))
 
     refresh = True
-    if os.path.exists(old_configure):
+    if exists(old_configure):
         mtime = getmtime(old_configure)
         aclocal = os.path.join(build_env.topsrcdir, 'build', 'autoconf',
                                '*.m4')
@@ -118,10 +120,6 @@ def prepare_configure(old_configure, mozconfig, autoconf, build_env, shell,
             log.debug('| %s', command)
 
         if mozconfig['path']:
-            for key, value in mozconfig['env']['added'].items():
-                inject("export %s=%s" % (key, quote(value)))
-            for key, (old, value) in mozconfig['env']['modified'].items():
-                inject("export %s=%s" % (key, quote(value)))
             for key, value in mozconfig['vars']['added'].items():
                 inject("%s=%s" % (key, quote(value)))
             for key, (old, value) in mozconfig['vars']['modified'].items():
@@ -234,7 +232,6 @@ def old_configure_options(*options):
     '--enable-tasktracer',
     '--enable-thread-sanitizer',
     '--enable-trace-logging',
-    '--enable-tree-freetype',
     '--enable-ui-locale',
     '--enable-universalchardet',
     '--enable-updater',
@@ -412,10 +409,10 @@ def post_old_configure(raw_config):
 # them. We only do so for options that haven't been declared so far,
 # which should be a proxy for the options that old-configure handles
 # and that we don't know anything about.
-@dependable
+@depends('--help')
 @imports('__sandbox__')
 @imports(_from='mozbuild.configure.options', _import='Option')
-def remaining_mozconfig_options():
+def remaining_mozconfig_options(_):
     helper = __sandbox__._helper
     for arg in helper:
         if helper._origins[arg] != 'mozconfig':

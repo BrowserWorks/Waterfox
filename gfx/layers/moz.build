@@ -25,7 +25,7 @@ EXPORTS += [
     'D3D9SurfaceImage.h',
     'FrameMetrics.h',
     'GLImages.h',
-    'GrallocImages.h',
+    'GPUVideoImage.h',
     'ImageContainer.h',
     'ImageLayers.h',
     'ImageTypes.h',
@@ -97,8 +97,10 @@ EXPORTS.mozilla.dom += [
 ]
 
 EXPORTS.mozilla.layers += [
+    'apz/public/CompositorController.h',
     'apz/public/GeckoContentController.h',
     'apz/public/IAPZCTreeManager.h',
+    'apz/public/MetricsSharingController.h',
     # exporting things from apz/src is temporary until we extract a
     # proper interface for the code there
     'apz/src/APZCTreeManager.h',
@@ -131,6 +133,7 @@ EXPORTS.mozilla.layers += [
     'client/CompositableChild.h',
     'client/CompositableClient.h',
     'client/ContentClient.h',
+    'client/GPUVideoTextureClient.h',
     'client/ImageClient.h',
     'client/SingleTiledContentClient.h',
     'client/TextureClient.h',
@@ -144,6 +147,7 @@ EXPORTS.mozilla.layers += [
     'composite/ContainerLayerComposite.h',
     'composite/ContentHost.h',
     'composite/FrameUniformityData.h',
+    'composite/GPUVideoTextureHost.h',
     'composite/ImageHost.h',
     'composite/ImageLayerComposite.h',
     'composite/LayerManagerComposite.h',
@@ -159,13 +163,12 @@ EXPORTS.mozilla.layers += [
     'ipc/APZChild.h',
     'ipc/APZCTreeManagerChild.h',
     'ipc/APZCTreeManagerParent.h',
-    'ipc/AsyncTransactionTracker.h',
     'ipc/CompositableForwarder.h',
     'ipc/CompositableTransactionParent.h',
     'ipc/CompositorBridgeChild.h',
     'ipc/CompositorBridgeParent.h',
     'ipc/CompositorThread.h',
-    'ipc/FenceUtils.h',
+    'ipc/CrossProcessCompositorBridgeParent.h',
     'ipc/GonkNativeHandle.h',
     'ipc/GonkNativeHandleUtils.h',
     'ipc/ImageBridgeChild.h',
@@ -173,6 +176,7 @@ EXPORTS.mozilla.layers += [
     'ipc/ImageContainerChild.h',
     'ipc/ImageContainerParent.h',
     'ipc/ISurfaceAllocator.h',
+    'ipc/KnowsCompositor.h',
     'ipc/LayerAnimationUtils.h',
     'ipc/LayerTransactionChild.h',
     'ipc/LayerTransactionParent.h',
@@ -180,17 +184,16 @@ EXPORTS.mozilla.layers += [
     'ipc/RemoteContentController.h',
     'ipc/ShadowLayerChild.h',
     'ipc/ShadowLayers.h',
-    'ipc/SharedBufferManagerChild.h',
-    'ipc/SharedBufferManagerParent.h',
     'ipc/SharedPlanarYCbCrImage.h',
     'ipc/SharedRGBImage.h',
+    'ipc/SynchronousTask.h',
     'ipc/TextureForwarder.h',
+    'ipc/VideoBridgeChild.h',
+    'ipc/VideoBridgeParent.h',
     'LayerMetricsWrapper.h',
     'LayersTypes.h',
     'opengl/CompositingRenderTargetOGL.h',
     'opengl/CompositorOGL.h',
-    'opengl/GrallocTextureClient.h',
-    'opengl/GrallocTextureHost.h',
     'opengl/MacIOSurfaceTextureClientOGL.h',
     'opengl/MacIOSurfaceTextureHostOGL.h',
     'opengl/TextureClientOGL.h',
@@ -233,34 +236,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'ipc/ShadowLayerUtilsMac.cpp',
         'MacIOSurfaceHelpers.cpp',
         'MacIOSurfaceImage.cpp',
-    ]
-
-# NB: Gralloc is available on other platforms that use the android GL
-# libraries, but only Gonk is able to use it reliably because Gecko
-# has full system permissions there.
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    EXPORTS.mozilla.layers += [
-        'basic/GrallocTextureHostBasic.h',
-        'ipc/ShadowLayerUtilsGralloc.h',
-    ]
-    UNIFIED_SOURCES += [
-        'basic/GrallocTextureHostBasic.cpp',
-        'GrallocImages.cpp',
-        'opengl/EGLImageHelpers.cpp',
-        'opengl/GrallocTextureClient.cpp',
-        'opengl/GrallocTextureHost.cpp',
-    ]
-    LOCAL_INCLUDES += ['/widget/gonk']
-    if CONFIG['ANDROID_VERSION'] >= '21':
-        LOCAL_INCLUDES += [
-             '%' + '%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
-                 'system/core/libsync/include'
-             ]
-        ]
-    SOURCES += [
-        'ipc/GonkNativeHandle.cpp',
-        'ipc/GonkNativeHandleUtils.cpp',
-        'ipc/ShadowLayerUtilsGralloc.cpp',
     ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
@@ -322,6 +297,7 @@ UNIFIED_SOURCES += [
     'client/CompositableChild.cpp',
     'client/CompositableClient.cpp',
     'client/ContentClient.cpp',
+    'client/GPUVideoTextureClient.cpp',
     'client/ImageClient.cpp',
     'client/SingleTiledContentClient.cpp',
     'client/TextureClient.cpp',
@@ -337,10 +313,10 @@ UNIFIED_SOURCES += [
     'composite/ContentHost.cpp',
     'composite/FPSCounter.cpp',
     'composite/FrameUniformityData.cpp',
+    'composite/GPUVideoTextureHost.cpp',
     'composite/ImageHost.cpp',
     'composite/ImageLayerComposite.cpp',
     'composite/LayerManagerComposite.cpp',
-    'composite/PaintCounter.cpp',
     'composite/PaintedLayerComposite.cpp',
     'composite/TextRenderer.cpp',
     'composite/TextureHost.cpp',
@@ -355,14 +331,13 @@ UNIFIED_SOURCES += [
     'ipc/APZChild.cpp',
     'ipc/APZCTreeManagerChild.cpp',
     'ipc/APZCTreeManagerParent.cpp',
-    'ipc/AsyncTransactionTracker.cpp',
     'ipc/CompositableForwarder.cpp',
     'ipc/CompositableTransactionParent.cpp',
     'ipc/CompositorBench.cpp',
     'ipc/CompositorBridgeChild.cpp',
     'ipc/CompositorBridgeParent.cpp',
     'ipc/CompositorThread.cpp',
-    'ipc/FenceUtils.cpp',
+    'ipc/CrossProcessCompositorBridgeParent.cpp',
     'ipc/ImageBridgeChild.cpp',
     'ipc/ImageBridgeParent.cpp',
     'ipc/ImageContainerChild.cpp',
@@ -376,10 +351,10 @@ UNIFIED_SOURCES += [
     'ipc/ShadowLayerChild.cpp',
     'ipc/ShadowLayerParent.cpp',
     'ipc/ShadowLayers.cpp',
-    'ipc/SharedBufferManagerChild.cpp',
-    'ipc/SharedBufferManagerParent.cpp',
     'ipc/SharedPlanarYCbCrImage.cpp',
     'ipc/SharedRGBImage.cpp',
+    'ipc/VideoBridgeChild.cpp',
+    'ipc/VideoBridgeParent.cpp',
     'LayerScope.cpp',
     'LayersLogging.cpp',
     'LayerSorter.cpp',
@@ -435,8 +410,8 @@ IPDL_SOURCES = [
     'ipc/PImageContainer.ipdl',
     'ipc/PLayer.ipdl',
     'ipc/PLayerTransaction.ipdl',
-    'ipc/PSharedBufferManager.ipdl',
     'ipc/PTexture.ipdl',
+    'ipc/PVideoBridge.ipdl',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -456,22 +431,6 @@ if CONFIG['MOZ_DEBUG']:
 if CONFIG['MOZ_ENABLE_D3D10_LAYER']:
     DEFINES['MOZ_ENABLE_D3D10_LAYER'] = True
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    if CONFIG['ANDROID_VERSION'] >= '17':
-        includes = [
-            'frameworks/av/include/media/stagefright',
-            'frameworks/native/include/media/openmax',
-        ]
-    else:
-        includes = [
-            'frameworks/base/include/media/stagefright',
-            'frameworks/base/include/media/stagefright/openmax',
-        ]
-
-    LOCAL_INCLUDES += [
-        '%' + '%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in includes
-    ]
-
 if CONFIG['ENABLE_TESTS']:
     DIRS += ['apz/test/gtest']
 
@@ -485,3 +444,8 @@ LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']
+
+if CONFIG['MOZ_ENABLE_SKIA']:
+  UNIFIED_SOURCES += [
+    'composite/PaintCounter.cpp',
+  ]

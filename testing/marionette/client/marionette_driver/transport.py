@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import datetime
 import json
 import socket
 import time
@@ -126,13 +125,23 @@ class TcpTransport(object):
         """
         self.addr = addr
         self.port = port
-        self.socket_timeout = socket_timeout
+        self._socket_timeout = socket_timeout
 
         self.protocol = 1
         self.application_type = None
         self.last_id = 0
         self.expected_response = None
         self.sock = None
+
+    @property
+    def socket_timeout(self):
+        return self._socket_timeout
+
+    @socket_timeout.setter
+    def socket_timeout(self, value):
+        if self.sock:
+            self.sock.settimeout(value)
+        self._socket_timeout = value
 
     def _unmarshal(self, packet):
         msg = None
@@ -277,33 +286,15 @@ class TcpTransport(object):
     def close(self):
         """Close the socket."""
         if self.sock:
-            self.sock.shutdown(socket.SHUT_RDWR)
+            try:
+                self.sock.shutdown(socket.SHUT_RDWR)
+            except IOError as exc:
+                # Errno 57 is "socket not connected", which we don't care about here.
+                if exc.errno != 57:
+                    raise
+
             self.sock.close()
             self.sock = None
 
     def __del__(self):
         self.close()
-
-
-def wait_for_port(host, port, timeout=60):
-    """Wait for the specified host/port to become available."""
-    starttime = datetime.datetime.now()
-    poll_interval = 0.1
-    while datetime.datetime.now() - starttime < datetime.timedelta(seconds=timeout):
-        sock = None
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(0.5)
-            sock.connect((host, port))
-            data = sock.recv(16)
-            sock.shutdown(socket.SHUT_RDWR)
-            sock.close()
-            if ":" in data:
-                return True
-        except socket.error:
-            pass
-        finally:
-            if sock is not None:
-                sock.close()
-        time.sleep(poll_interval)
-    return False

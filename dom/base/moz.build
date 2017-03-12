@@ -102,6 +102,7 @@ EXPORTS += [
     'nsIScriptObjectPrincipal.h',
     'nsIScriptTimeoutHandler.h',
     'nsIStyleSheetLinkingElement.h',
+    'nsITimeoutHandler.h',
     'nsJSEnvironment.h',
     'nsJSUtils.h',
     'nsLineBreaker.h',
@@ -157,14 +158,16 @@ EXPORTS.mozilla.dom += [
     'ChromeNodeList.h',
     'ChromeUtils.h',
     'Comment.h',
-    'CustomElementsRegistry.h',
+    'CustomElementRegistry.h',
     'DirectionalityUtils.h',
+    'DocGroup.h',
     'DocumentFragment.h',
     'DocumentType.h',
     'DOMCursor.h',
     'DOMError.h',
     'DOMException.h',
     'DOMImplementation.h',
+    'DOMIntersectionObserver.h',
     'DOMMatrix.h',
     'DOMParser.h',
     'DOMPoint.h',
@@ -182,15 +185,24 @@ EXPORTS.mozilla.dom += [
     'FormData.h',
     'FragmentOrElement.h',
     'FromParser.h',
+    'GroupedSHistory.h',
+    'IdleDeadline.h',
+    'IdleRequest.h',
     'ImageEncoder.h',
+    'ImageTracker.h',
     'ImportManager.h',
     'Link.h',
     'Location.h',
+    'MultipartBlobImpl.h',
+    'MutableBlobStorage.h',
+    'MutableBlobStreamListener.h',
     'NameSpaceConstants.h',
     'Navigator.h',
     'NodeInfo.h',
     'NodeInfoInlines.h',
     'NodeIterator.h',
+    'PartialSHistory.h',
+    'Pose.h',
     'ProcessGlobal.h',
     'ResponsiveImageSelector.h',
     'SameProcessMessageQueue.h',
@@ -201,7 +213,9 @@ EXPORTS.mozilla.dom += [
     'StructuredCloneTags.h',
     'StyleSheetList.h',
     'SubtleCrypto.h',
+    'TabGroup.h',
     'Text.h',
+    'Timeout.h',
     'TreeWalker.h',
     'WebKitCSSMatrix.h',
     'WebSocket.h',
@@ -220,8 +234,9 @@ UNIFIED_SOURCES += [
     'ChromeUtils.cpp',
     'Comment.cpp',
     'Crypto.cpp',
-    'CustomElementsRegistry.cpp',
+    'CustomElementRegistry.cpp',
     'DirectionalityUtils.cpp',
+    'DocGroup.cpp',
     'DocumentFragment.cpp',
     'DocumentType.cpp',
     'DOMCursor.cpp',
@@ -242,11 +257,17 @@ UNIFIED_SOURCES += [
     'FileReader.cpp',
     'FormData.cpp',
     'FragmentOrElement.cpp',
+    'GroupedSHistory.cpp',
+    'IdleDeadline.cpp',
+    'IdleRequest.cpp',
     'ImageEncoder.cpp',
+    'ImageTracker.cpp',
     'ImportManager.cpp',
     'Link.cpp',
     'Location.cpp',
     'MultipartBlobImpl.cpp',
+    'MutableBlobStorage.cpp',
+    'MutableBlobStreamListener.cpp',
     'Navigator.cpp',
     'NodeInfo.cpp',
     'NodeIterator.cpp',
@@ -325,6 +346,8 @@ UNIFIED_SOURCES += [
     'nsXHTMLContentSerializer.cpp',
     'nsXMLContentSerializer.cpp',
     'nsXMLNameSpaceMap.cpp',
+    'PartialSHistory.cpp',
+    'Pose.cpp',
     'PostMessageEvent.cpp',
     'ProcessGlobal.cpp',
     'ResponsiveImageSelector.cpp',
@@ -335,9 +358,11 @@ UNIFIED_SOURCES += [
     'StructuredCloneHolder.cpp',
     'StyleSheetList.cpp',
     'SubtleCrypto.cpp',
+    'TabGroup.cpp',
     'Text.cpp',
     'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
+    'Timeout.cpp',
     'TreeWalker.cpp',
     'WebKitCSSMatrix.cpp',
     'WebSocket.cpp',
@@ -352,6 +377,8 @@ if CONFIG['MOZ_WEBRTC']:
 
 # these files couldn't be in UNIFIED_SOURCES for now for reasons given below:
 SOURCES += [
+    # Several conflicts with other bindings.
+    'DOMIntersectionObserver.cpp',
     # Because of OS X headers.
     'nsContentUtils.cpp',
     # this file doesn't like windows.h
@@ -397,8 +424,6 @@ EXTRA_JS_MODULES += [
 
 LOCAL_INCLUDES += [
     '../battery',
-    '../bluetooth/common',
-    '../bluetooth/common/webapi',
     '../events',
     '../media',
     '../network',
@@ -435,7 +460,6 @@ LOCAL_INCLUDES += [
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     LOCAL_INCLUDES += [
-        '../fmradio',
         '../system/gonk',
     ]
 
@@ -447,10 +471,6 @@ if CONFIG['MOZ_WEBRTC']:
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
-
-for var in ('MOZ_B2G_RIL', 'MOZ_B2G_FM'):
-    if CONFIG[var]:
-        DEFINES[var] = True
 
 if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
     DEFINES['HAVE_SIDEBAR'] = True

@@ -4,15 +4,16 @@
 
 import time
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import By, Wait
 from marionette_driver.errors import MarionetteException
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
+class TestUntrustedConnectionErrorPage(PuppeteerMixin, MarionetteTestCase):
 
-class TestUntrustedConnectionErrorPage(FirefoxTestCase):
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestUntrustedConnectionErrorPage, self).setUp()
 
         self.url = 'https://ssl-selfsigned.mozqa.com'
 
@@ -30,5 +31,5 @@ class TestUntrustedConnectionErrorPage(FirefoxTestCase):
         button = self.marionette.find_element(By.ID, "returnButton")
         button.click()
 
-        Wait(self.marionette, timeout=self.browser.timeout_page_load).until(
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
             lambda mn: target_url == self.marionette.get_url())

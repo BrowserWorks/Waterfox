@@ -402,11 +402,6 @@ var DebuggerServer = {
       constructor: "AddonsActor",
       type: { global: true }
     });
-    this.registerModule("devtools/server/actors/webapps", {
-      prefix: "webapps",
-      constructor: "WebappsActor",
-      type: { global: true }
-    });
     this.registerModule("devtools/server/actors/device", {
       prefix: "device",
       constructor: "DeviceActor",
@@ -512,7 +507,7 @@ var DebuggerServer = {
       constructor: "EventLoopLagActor",
       type: { tab: true }
     });
-    this.registerModule("devtools/server/actors/layout", {
+    this.registerModule("devtools/server/actors/reflow", {
       prefix: "reflow",
       constructor: "ReflowActor",
       type: { tab: true }

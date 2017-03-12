@@ -9,6 +9,7 @@
 
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/IntegerRange.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/PodOperations.h"
 
 #include "jsalloc.h"
@@ -17,6 +18,8 @@
 
 #include "js/GCAPI.h"
 #include "js/Vector.h"
+
+using mozilla::Maybe;
 
 namespace js {
 
@@ -85,6 +88,7 @@ enum Phase : uint8_t {
     PHASE_MARK_RUNTIME_DATA,
     PHASE_MARK_EMBEDDING,
     PHASE_MARK_COMPARTMENTS,
+    PHASE_PURGE_SHAPE_TABLES,
 
     PHASE_LIMIT,
     PHASE_NONE = PHASE_LIMIT,
@@ -141,12 +145,16 @@ struct ZoneGCStats
     _(WaitBgThread,  "waitBG",   PHASE_WAIT_BACKGROUND_THREAD)                \
     _(DiscardCode,   "discard",  PHASE_MARK_DISCARD_CODE)                     \
     _(RelazifyFunc,  "relazify", PHASE_RELAZIFY_FUNCTIONS)                    \
+    _(PurgeTables,   "purgeTables", PHASE_PURGE_SHAPE_TABLES)                 \
     _(Purge,         "purge",    PHASE_PURGE)                                 \
     _(Mark,          "mark",     PHASE_MARK)                                  \
     _(Sweep,         "sweep",    PHASE_SWEEP)                                 \
     _(Compact,       "compact",  PHASE_COMPACT)                               \
     _(EndCallback,   "endCB",    PHASE_GC_END)                                \
     _(Barriers,      "barriers", PHASE_BARRIER)
+
+const char* ExplainAbortReason(gc::AbortReason reason);
+const char* ExplainInvocationKind(JSGCInvocationKind gckind);
 
 /*
  * Struct for collecting timing statistics on a "phase tree". The tree is
@@ -219,14 +227,24 @@ struct Statistics
     void sweptZone() { ++zoneStats.sweptZoneCount; }
     void sweptCompartment() { ++zoneStats.sweptCompartmentCount; }
 
-    void reset(const char* reason) {
+    void reset(gc::AbortReason reason) {
+        MOZ_ASSERT(reason != gc::AbortReason::None);
         if (!aborted)
             slices.back().resetReason = reason;
     }
 
-    void nonincremental(const char* reason) { nonincrementalReason_ = reason; }
+    void nonincremental(gc::AbortReason reason) {
+        MOZ_ASSERT(reason != gc::AbortReason::None);
+        nonincrementalReason_ = reason;
+    }
 
-    const char* nonincrementalReason() const { return nonincrementalReason_; }
+    bool nonincremental() const {
+        return nonincrementalReason_ != gc::AbortReason::None;
+    }
+
+    const char* nonincrementalReason() const {
+        return ExplainAbortReason(nonincrementalReason_);
+    }
 
     void count(Stat s) {
         MOZ_ASSERT(s < STAT_LIMIT);
@@ -268,7 +286,7 @@ struct Statistics
           : budget(budget), reason(reason),
             initialState(initialState),
             finalState(gc::State::NotActive),
-            resetReason(nullptr),
+            resetReason(gc::AbortReason::None),
             start(start), startTimestamp(startTimestamp),
             startFaults(startFaults)
         {
@@ -279,13 +297,14 @@ struct Statistics
         SliceBudget budget;
         JS::gcreason::Reason reason;
         gc::State initialState, finalState;
-        const char* resetReason;
+        gc::AbortReason resetReason;
         int64_t start, end;
         double startTimestamp, endTimestamp;
         size_t startFaults, endFaults;
         PhaseTimeTable phaseTimes;
 
         int64_t duration() const { return end - start; }
+        bool wasReset() const { return resetReason != gc::AbortReason::None; }
     };
 
     typedef Vector<SliceData, 8, SystemAllocPolicy> SliceDataVector;
@@ -315,7 +334,7 @@ struct Statistics
 
     JSGCInvocationKind gckind;
 
-    const char* nonincrementalReason_;
+    gc::AbortReason nonincrementalReason_;
 
     SliceDataVector slices;
 
@@ -479,8 +498,6 @@ struct MOZ_RAII AutoSCC
     unsigned scc;
     int64_t start;
 };
-
-const char* ExplainInvocationKind(JSGCInvocationKind gckind);
 
 } /* namespace gcstats */
 } /* namespace js */

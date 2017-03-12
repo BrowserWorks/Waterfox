@@ -111,7 +111,7 @@ DistributionCustomizer.prototype = {
     for (let key of keys) {
       let m = re.exec(key);
       if (m) {
-        let [foo, itemIndex, iprop, ilocale] = m;
+        let [, itemIndex, iprop, ilocale] = m;
         itemIndex = parseInt(itemIndex);
 
         if (ilocale)
@@ -463,7 +463,7 @@ DistributionCustomizer.prototype = {
       try {
         var showMenubar = Services.prefs.getBoolPref("browser.showMenubar");
         if (showMenubar) {
-          xulStore.setValue(BROWSER_DOCURL, "toolbar-menubar", "collapsed", "false");
+          xulStore.setValue(BROWSER_DOCURL, "toolbar-menubar", "autohide", "false");
         }
       } catch (e) {}
     }

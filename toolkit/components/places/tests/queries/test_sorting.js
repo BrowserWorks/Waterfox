@@ -6,8 +6,6 @@
 
 var tests = [];
 
-////////////////////////////////////////////////////////////////////////////////
-
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_NONE,
 
@@ -68,8 +66,6 @@ tests.push({
     // no reverse sorting for SORT BY NONE
   }
 });
-
-////////////////////////////////////////////////////////////////////////////////
 
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_TITLE_ASCENDING,
@@ -144,8 +140,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
-
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_ASCENDING,
 
@@ -160,7 +154,7 @@ tests.push({
         parentGuid: PlacesUtils.bookmarks.toolbarGuid,
         index: 0,
         uri: "http://example.com/c1",
-        lastVisit: timeInMicroseconds - 2,
+        lastVisit: timeInMicroseconds - 2000,
         title: "x1",
         isInQuery: true },
 
@@ -170,7 +164,7 @@ tests.push({
         parentGuid: PlacesUtils.bookmarks.toolbarGuid,
         index: 1,
         uri: "http://example.com/a",
-        lastVisit: timeInMicroseconds - 1,
+        lastVisit: timeInMicroseconds - 1000,
         title: "z",
         isInQuery: true },
 
@@ -180,7 +174,7 @@ tests.push({
         parentGuid: PlacesUtils.bookmarks.toolbarGuid,
         index: 2,
         uri: "http://example.com/b",
-        lastVisit: timeInMicroseconds - 3,
+        lastVisit: timeInMicroseconds - 3000,
         title: "y",
         isInQuery: true },
 
@@ -191,7 +185,7 @@ tests.push({
         parentGuid: PlacesUtils.bookmarks.toolbarGuid,
         index: 3,
         uri: "http://example.com/c2",
-        lastVisit: timeInMicroseconds - 2,
+        lastVisit: timeInMicroseconds - 2000,
         title: "x2",
         isInQuery: true },
 
@@ -202,7 +196,7 @@ tests.push({
         parentGuid: PlacesUtils.bookmarks.toolbarGuid,
         index: 4,
         uri: "http://example.com/c2",
-        lastVisit: timeInMicroseconds - 2,
+        lastVisit: timeInMicroseconds - 2000,
         title: "x2",
         isInQuery: true },
     ];
@@ -243,8 +237,6 @@ tests.push({
     this.check();
   }
 });
-
-////////////////////////////////////////////////////////////////////////////////
 
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_URI_ASCENDING,
@@ -350,8 +342,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
-
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_VISITCOUNT_ASCENDING,
 
@@ -451,8 +441,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
-
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_KEYWORD_ASCENDING,
 
@@ -550,8 +538,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
-
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_DATEADDED_ASCENDING,
 
@@ -639,8 +625,6 @@ tests.push({
     this.check();
   }
 });
-
-////////////////////////////////////////////////////////////////////////////////
 
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_LASTMODIFIED_ASCENDING,
@@ -737,8 +721,6 @@ tests.push({
     this.check();
   }
 });
-
-////////////////////////////////////////////////////////////////////////////////
 
 tests.push({
   _sortingMode: Ci.nsINavHistoryQueryOptions.SORT_BY_TAGS_ASCENDING,
@@ -838,7 +820,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
 // SORT_BY_ANNOTATION_* (int32)
 
 tests.push({
@@ -934,7 +915,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
 // SORT_BY_ANNOTATION_* (int64)
 
 tests.push({
@@ -1016,7 +996,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
 // SORT_BY_ANNOTATION_* (string)
 
 tests.push({
@@ -1098,7 +1077,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
 // SORT_BY_ANNOTATION_* (double)
 
 tests.push({
@@ -1180,7 +1158,6 @@ tests.push({
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
 // SORT_BY_FRECENCY_*
 
 tests.push({
@@ -1189,47 +1166,53 @@ tests.push({
   *setup() {
     do_print("Sorting test 13: SORT BY FRECENCY ");
 
-    var timeInMicroseconds = Date.now() * 1000;
+    let timeInMicroseconds = PlacesUtils.toPRTime(Date.now() - 10000);
+
+    function newTimeInMicroseconds() {
+      timeInMicroseconds = timeInMicroseconds + 1000;
+      return timeInMicroseconds;
+    }
+
     this._unsortedData = [
       { isVisit: true,
         isDetails: true,
         uri: "http://moz.com/",
-        lastVisit: timeInMicroseconds++,
+        lastVisit: newTimeInMicroseconds(),
         title: "I",
         isInQuery: true },
 
       { isVisit: true,
         isDetails: true,
         uri: "http://moz.com/",
-        lastVisit: timeInMicroseconds++,
+        lastVisit: newTimeInMicroseconds(),
         title: "I",
         isInQuery: true },
 
       { isVisit: true,
         isDetails: true,
         uri: "http://moz.com/",
-        lastVisit: timeInMicroseconds++,
+        lastVisit: newTimeInMicroseconds(),
         title: "I",
         isInQuery: true },
 
       { isVisit: true,
         isDetails: true,
         uri: "http://is.com/",
-        lastVisit: timeInMicroseconds++,
+        lastVisit: newTimeInMicroseconds(),
         title: "love",
         isInQuery: true },
 
       { isVisit: true,
         isDetails: true,
         uri: "http://best.com/",
-        lastVisit: timeInMicroseconds++,
+        lastVisit: newTimeInMicroseconds(),
         title: "moz",
         isInQuery: true },
 
       { isVisit: true,
         isDetails: true,
         uri: "http://best.com/",
-        lastVisit: timeInMicroseconds++,
+        lastVisit: newTimeInMicroseconds(),
         title: "moz",
         isInQuery: true },
     ];
@@ -1261,8 +1244,6 @@ tests.push({
     this.check();
   }
 });
-
-////////////////////////////////////////////////////////////////////////////////
 
 function run_test()
 {

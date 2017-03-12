@@ -664,10 +664,20 @@ Animation::GetCurrentOrPendingStartTime() const
   }
 
   // Calculate the equivalent start time from the pending ready time.
-  // This is the same as the calculation performed in ResumeAt and will
-  // need to incorporate the playbackRate when implemented (bug 1127380).
-  result.SetValue(mPendingReadyTime.Value() - mHoldTime.Value());
+  result = StartTimeFromReadyTime(mPendingReadyTime.Value());
+
   return result;
+}
+
+TimeDuration
+Animation::StartTimeFromReadyTime(const TimeDuration& aReadyTime) const
+{
+  MOZ_ASSERT(!mHoldTime.IsNull(), "Hold time should be set in order to"
+                                  " convert a ready time to a start time");
+  if (mPlaybackRate == 0) {
+    return aReadyTime;
+  }
+  return aReadyTime - mHoldTime.Value().MultDouble(1 / mPlaybackRate);
 }
 
 TimeStamp
@@ -707,6 +717,15 @@ Animation::AnimationTimeToTimeStamp(const StickyTimeDuration& aTime) const
   result = mTimeline->ToTimeStamp(timelineTime);
   return result;
 }
+
+TimeStamp
+Animation::ElapsedTimeToTimeStamp(
+  const StickyTimeDuration& aElapsedTime) const
+{
+  return AnimationTimeToTimeStamp(aElapsedTime +
+                                  mEffect->SpecifiedTiming().mDelay);
+}
+
 
 // https://w3c.github.io/web-animations/#silently-set-the-current-time
 void
@@ -836,7 +855,7 @@ Animation::HasLowerCompositeOrderThan(const Animation& aOther) const
 
 void
 Animation::ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
-                        nsCSSPropertyIDSet& aSetProperties)
+                        const nsCSSPropertyIDSet& aPropertiesToSkip)
 {
   if (!mEffect) {
     return;
@@ -901,7 +920,7 @@ Animation::ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
 
     KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
     if (keyframeEffect) {
-      keyframeEffect->ComposeStyle(aStyleRule, aSetProperties);
+      keyframeEffect->ComposeStyle(aStyleRule, aPropertiesToSkip);
     }
   }
 
@@ -1066,12 +1085,9 @@ Animation::ResumeAt(const TimeDuration& aReadyTime)
   // If we aborted a pending pause operation we will already have a start time
   // we should use. In all other cases, we resolve it from the ready time.
   if (mStartTime.IsNull()) {
+    mStartTime = StartTimeFromReadyTime(aReadyTime);
     if (mPlaybackRate != 0) {
-      mStartTime.SetValue(aReadyTime -
-                          (mHoldTime.Value().MultDouble(1 / mPlaybackRate)));
       mHoldTime.SetNull();
-    } else {
-      mStartTime.SetValue(aReadyTime);
     }
   }
   mPendingState = PendingState::NotPending;

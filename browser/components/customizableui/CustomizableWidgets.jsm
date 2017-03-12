@@ -466,6 +466,9 @@ const CustomizableWidgets = [
       // Create the element for the remote client.
       let clientItem = doc.createElementNS(kNSXUL, "label");
       clientItem.setAttribute("itemtype", "client");
+      let window = doc.defaultView;
+      clientItem.setAttribute("tooltiptext",
+        window.gSyncUI.formatLastSyncDate(new Date(client.lastModified)));
       clientItem.textContent = client.name;
 
       attachFragment.appendChild(clientItem);
@@ -481,7 +484,6 @@ const CustomizableWidgets = [
       }
     },
     _createTabElement(doc, tabInfo) {
-      let win = doc.defaultView;
       let item = doc.createElementNS(kNSXUL, "toolbarbutton");
       let tooltipText = (tabInfo.title ? tabInfo.title + "\n" : "") + tabInfo.url;
       item.setAttribute("itemtype", "tab");
@@ -546,7 +548,6 @@ const CustomizableWidgets = [
       // sidebar menu. We skip menu elements, because the menu panel has no way
       // of dealing with those right now.
       let doc = aEvent.target.ownerDocument;
-      let win = doc.defaultView;
       let menu = doc.getElementById("viewSidebarMenu");
 
       // First clear any existing menuitems then populate. Add it to the
@@ -662,7 +663,7 @@ const CustomizableWidgets = [
         if (aDocument.documentElement.hasAttribute("customizing")) {
           updateDisplay = false;
         }
-        //XXXgijs in some tests we get called very early, and there's no docShell on the
+        // XXXgijs in some tests we get called very early, and there's no docShell on the
         // tabbrowser. This breaks the zoom toolkit code (see bug 897410). Don't let that happen:
         let zoomFactor = 100;
         try {
@@ -1105,8 +1106,10 @@ const CustomizableWidgets = [
 
       let onItemCommand = function (aEvent) {
         let item = aEvent.target;
-        let userContextId = parseInt(item.getAttribute("usercontextid"));
-        win.openUILinkIn(win.BROWSER_NEW_TAB_URL, "tab", {userContextId});
+        if (item.hasAttribute("usercontextid")) {
+          let userContextId = parseInt(item.getAttribute("usercontextid"));
+          win.openUILinkIn(win.BROWSER_NEW_TAB_URL, "tab", {userContextId});
+        }
       };
       items.addEventListener("command", onItemCommand);
 
@@ -1131,19 +1134,28 @@ const CustomizableWidgets = [
       }
 
       let fragment = doc.createDocumentFragment();
+      let bundle = doc.getElementById("bundle_browser");
 
       ContextualIdentityService.getIdentities().forEach(identity => {
-        let bundle = doc.getElementById("bundle_browser");
         let label = ContextualIdentityService.getUserContextLabel(identity.userContextId);
 
         let item = doc.createElementNS(kNSXUL, "toolbarbutton");
         item.setAttribute("label", label);
         item.setAttribute("usercontextid", identity.userContextId);
         item.setAttribute("class", "subviewbutton");
-        item.setAttribute("image", identity.icon);
+        item.setAttribute("data-identity-color", identity.color);
+        item.setAttribute("data-identity-icon", identity.icon);
 
         fragment.appendChild(item);
       });
+
+      fragment.appendChild(doc.createElementNS(kNSXUL, "menuseparator"));
+
+      let item = doc.createElementNS(kNSXUL, "toolbarbutton");
+      item.setAttribute("label", bundle.getString("userContext.aboutPage.label"));
+      item.setAttribute("command", "Browser:OpenAboutContainers");
+      item.setAttribute("class", "subviewbutton");
+      fragment.appendChild(item);
 
       items.appendChild(fragment);
     },
@@ -1256,8 +1268,9 @@ if (AppConstants.E10S_TESTING_ONLY) {
       id: "e10s-button",
       defaultArea: CustomizableUI.AREA_PANEL,
       onBuild: function(aDocument) {
-          node.setAttribute("label", CustomizableUI.getLocalizedProperty(this, "label"));
-          node.setAttribute("tooltiptext", CustomizableUI.getLocalizedProperty(this, "tooltiptext"));
+        let node = aDocument.createElementNS(kNSXUL, "toolbarbutton");
+        node.setAttribute("label", CustomizableUI.getLocalizedProperty(this, "label"));
+        node.setAttribute("tooltiptext", CustomizableUI.getLocalizedProperty(this, "tooltiptext"));
       },
       onCommand: function(aEvent) {
         let win = aEvent.view;

@@ -26,6 +26,7 @@
 #include "BiquadFilterNode.h"
 #include "ChannelMergerNode.h"
 #include "ChannelSplitterNode.h"
+#include "ConstantSourceNode.h"
 #include "ConvolverNode.h"
 #include "DelayNode.h"
 #include "DynamicsCompressorNode.h"
@@ -59,9 +60,15 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(AudioContext)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(AudioContext)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mDestination)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mListener)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mPromiseGripArray)
   if (!tmp->mIsStarted) {
     NS_IMPL_CYCLE_COLLECTION_UNLINK(mActiveNodes)
   }
+  // mDecodeJobs owns the WebAudioDecodeJob objects whose lifetime is managed explicitly.
+  // mAllNodes is an array of weak pointers, ignore it here.
+  // mPannerNodes is an array of weak pointers, ignore it here.
+  // mBasicWaveFormCache cannot participate in cycles, ignore it here.
+
   // Remove weak reference on the global window as the context is not usable
   // without mDestination.
   tmp->DisconnectFromWindow();
@@ -71,11 +78,16 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(AudioContext,
                                                   DOMEventTargetHelper)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDestination)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mListener)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPromiseGripArray)
   if (!tmp->mIsStarted) {
     MOZ_ASSERT(tmp->mIsOffline,
                "Online AudioContexts should always be started");
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mActiveNodes)
   }
+  // mDecodeJobs owns the WebAudioDecodeJob objects whose lifetime is managed explicitly.
+  // mAllNodes is an array of weak pointers, ignore it here.
+  // mPannerNodes is an array of weak pointers, ignore it here.
+  // mBasicWaveFormCache cannot participate in cycles, ignore it here.
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_ADDREF_INHERITED(AudioContext, DOMEventTargetHelper)
@@ -247,6 +259,18 @@ AudioContext::CreateBufferSource(ErrorResult& aRv)
   RefPtr<AudioBufferSourceNode> bufferNode =
     new AudioBufferSourceNode(this);
   return bufferNode.forget();
+}
+
+already_AddRefed<ConstantSourceNode>
+AudioContext::CreateConstantSource(ErrorResult& aRv)
+{
+  if (CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<ConstantSourceNode> constantSourceNode =
+    new ConstantSourceNode(this);
+  return constantSourceNode.forget();
 }
 
 already_AddRefed<AudioBuffer>
@@ -733,6 +757,12 @@ AudioContext::Shutdown()
     RefPtr<Promise> ignored = Close(dummy);
   }
 
+  for (auto p : mPromiseGripArray) {
+    p->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+  }
+
+  mPromiseGripArray.Clear();
+
   // Release references to active nodes.
   // Active AudioNodes don't unregister in destructors, at which point the
   // Node is already unregistered.
@@ -839,6 +869,15 @@ AudioContext::OnStateChanged(void* aPromise, AudioContextState aNewState)
     return;
   }
 
+  // This can happen if this is called in reaction to a
+  // MediaStreamGraph shutdown, and a AudioContext was being
+  // suspended at the same time, for example if a page was being
+  // closed.
+  if (mAudioContextState == AudioContextState::Closed &&
+      aNewState == AudioContextState::Suspended) {
+    return;
+  }
+
 #ifndef WIN32 // Bug 1170547
 #ifndef XP_MACOSX
 #ifdef DEBUG
@@ -869,9 +908,15 @@ AudioContext::OnStateChanged(void* aPromise, AudioContextState aNewState)
 
   if (aPromise) {
     Promise* promise = reinterpret_cast<Promise*>(aPromise);
-    promise->MaybeResolveWithUndefined();
-    DebugOnly<bool> rv = mPromiseGripArray.RemoveElement(promise);
-    MOZ_ASSERT(rv, "Promise wasn't in the grip array?");
+    // It is possible for the promise to have been removed from
+    // mPromiseGripArray if the cycle collector has severed our connections. DO
+    // NOT dereference the promise pointer in that case since it may point to
+    // already freed memory.
+    if (mPromiseGripArray.Contains(promise)) {
+      promise->MaybeResolveWithUndefined();
+      DebugOnly<bool> rv = mPromiseGripArray.RemoveElement(promise);
+      MOZ_ASSERT(rv, "Promise wasn't in the grip array?");
+    }
   }
 
   if (mAudioContextState != aNewState) {

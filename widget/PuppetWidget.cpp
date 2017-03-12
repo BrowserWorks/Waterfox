@@ -79,6 +79,7 @@ PuppetWidget::PuppetWidget(TabChild* aTabChild)
   : mTabChild(aTabChild)
   , mMemoryPressureObserver(nullptr)
   , mDPI(-1)
+  , mRounding(-1)
   , mDefaultScale(-1)
   , mCursorHotspotX(0)
   , mCursorHotspotY(0)
@@ -544,6 +545,16 @@ PuppetWidget::ExecuteNativeKeyBinding(NativeKeyBindingsType aType,
 #ifdef MOZ_WIDGET_GONK
   return false;
 #else // #ifdef MOZ_WIDGET_GONK
+  AutoCacheNativeKeyCommands autoCache(this);
+  if (!aEvent.mWidget && !mNativeKeyCommandsValid) {
+    MOZ_ASSERT(!aEvent.mFlags.mIsSynthesizedForTests);
+    // Abort if untrusted to avoid leaking system settings
+    if (NS_WARN_IF(!aEvent.IsTrusted())) {
+      return false;
+    }
+    mTabChild->RequestNativeKeyBindings(&autoCache, &aEvent);
+  }
+
   MOZ_ASSERT(mNativeKeyCommandsValid);
 
   const nsTArray<mozilla::CommandInt>* commands = nullptr;
@@ -582,7 +593,17 @@ PuppetWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
     mLayerManager = new ClientLayerManager(this);
   }
   ShadowLayerForwarder* lf = mLayerManager->AsShadowForwarder();
-  if (!lf->HasShadowManager() && aShadowManager) {
+  if (lf && !lf->HasShadowManager() && aShadowManager) {
+    lf->SetShadowManager(aShadowManager);
+  }
+  return mLayerManager;
+}
+
+LayerManager*
+PuppetWidget::RecreateLayerManager(PLayerTransactionChild* aShadowManager)
+{
+  mLayerManager = new ClientLayerManager(this);
+  if (ShadowLayerForwarder* lf = mLayerManager->AsShadowForwarder()) {
     lf->SetShadowManager(aShadowManager);
   }
   return mLayerManager;
@@ -1071,7 +1092,7 @@ PuppetWidget::Paint()
       if (mTabChild) {
         mTabChild->NotifyPainted();
       }
-    } else {
+    } else if (mozilla::layers::LayersBackend::LAYERS_BASIC == mLayerManager->GetBackendType()) {
       RefPtr<gfxContext> ctx = gfxContext::CreateOrNull(mDrawTarget);
       if (!ctx) {
         gfxDevCrash(LogReason::InvalidContext) << "PuppetWidget context problem " << gfx::hexa(mDrawTarget);
@@ -1193,6 +1214,20 @@ PuppetWidget::GetDefaultScaleInternal()
   }
 
   return mDefaultScale;
+}
+
+int32_t
+PuppetWidget::RoundsWidgetCoordinatesTo()
+{
+  if (mRounding < 0) {
+    if (mTabChild) {
+      mTabChild->GetWidgetRounding(&mRounding);
+    } else {
+      mRounding = 1;
+    }
+  }
+
+  return mRounding;
 }
 
 void*

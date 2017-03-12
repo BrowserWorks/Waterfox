@@ -565,7 +565,7 @@ BaseCaps(const WebGLContextOptions& options, WebGLContext* webgl)
         if (!forwarder)
             break;
 
-        baseCaps.surfaceAllocator = static_cast<layers::ISurfaceAllocator*>(forwarder);
+        baseCaps.surfaceAllocator = forwarder->GetTextureForwarder();
     } while (false);
 #endif
 
@@ -1079,6 +1079,7 @@ WebGLContext::SetDimensions(int32_t signedWidth, int32_t signedHeight)
     MakeContextCurrent();
 
     gl->fViewport(0, 0, mWidth, mHeight);
+    mViewportX = mViewportY = 0;
     mViewportWidth = mWidth;
     mViewportHeight = mHeight;
 

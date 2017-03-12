@@ -15,7 +15,6 @@
 #include "mozilla/dom/MessageEventBinding.h"
 #include "mozilla/dom/MessagePortBinding.h"
 #include "mozilla/dom/MessagePortChild.h"
-#include "mozilla/dom/MessagePortList.h"
 #include "mozilla/dom/PMessagePort.h"
 #include "mozilla/dom/StructuredCloneTags.h"
 #include "mozilla/dom/WorkerPrivate.h"
@@ -64,7 +63,14 @@ public:
   NS_IMETHOD
   Run() override
   {
-    MOZ_ASSERT(mPort);
+    NS_ASSERT_OWNINGTHREAD(Runnable);
+
+    // The port can be cycle collected while this runnable is pending in
+    // the event queue.
+    if (!mPort) {
+      return NS_OK;
+    }
+
     MOZ_ASSERT(mPort->mPostMessageRunnable == this);
 
     nsresult rv = DispatchMessage();
@@ -82,6 +88,8 @@ public:
   nsresult
   Cancel() override
   {
+    NS_ASSERT_OWNINGTHREAD(Runnable);
+
     mPort = nullptr;
     mData = nullptr;
     return NS_OK;
@@ -91,6 +99,8 @@ private:
   nsresult
   DispatchMessage() const
   {
+    NS_ASSERT_OWNINGTHREAD(Runnable);
+
     nsCOMPtr<nsIGlobalObject> globalObject = mPort->GetParentObject();
 
     AutoJSAPI jsapi;
@@ -135,19 +145,19 @@ private:
     RefPtr<MessageEvent> event =
       new MessageEvent(eventTarget, nullptr, nullptr);
 
+    Sequence<OwningNonNull<MessagePort>> ports;
+    if (!mData->TakeTransferredPortsAsSequence(ports)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+
+    Nullable<WindowProxyOrMessagePort> source;
+    source.SetValue().SetAsMessagePort() = mPort;
+
     event->InitMessageEvent(nullptr, NS_LITERAL_STRING("message"),
                             false /* non-bubbling */,
                             false /* cancelable */, value, EmptyString(),
-                            EmptyString(), nullptr, nullptr);
+                            EmptyString(), source, ports);
     event->SetTrusted(true);
-    event->SetSource(mPort);
-
-    nsTArray<RefPtr<MessagePort>> ports = mData->TakeTransferredPorts();
-
-    RefPtr<MessagePortList> portList =
-      new MessagePortList(static_cast<dom::Event*>(event.get()),
-                          ports);
-    event->SetPorts(portList);
 
     bool dummy;
     mPort->DispatchEvent(static_cast<dom::Event*>(event.get()), &dummy);

@@ -11,6 +11,7 @@
 #include "mozilla/ArenaRefPtr.h"
 #include "mozilla/ArenaRefPtrInlines.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/StyleComplexColor.h"
 #include "nsCOMPtr.h"
 #include "nscore.h"
 #include "nsCSSProps.h"
@@ -22,6 +23,7 @@
 #include "nsColor.h"
 #include "nsIContent.h"
 #include "nsStyleStruct.h"
+#include "mozilla/WritingModes.h"
 
 namespace mozilla {
 namespace dom {
@@ -104,8 +106,8 @@ public:
   // nsDOMCSSDeclaration abstract methods which should never be called
   // on a nsComputedDOMStyle object, but must be defined to avoid
   // compile errors.
-  virtual mozilla::css::Declaration* GetCSSDeclaration(Operation) override;
-  virtual nsresult SetCSSDeclaration(mozilla::css::Declaration*) override;
+  virtual mozilla::DeclarationBlock* GetCSSDeclaration(Operation) override;
+  virtual nsresult SetCSSDeclaration(mozilla::DeclarationBlock*) override;
   virtual nsIDocument* DocToUpdate() override;
   virtual void GetCSSParsingEnvironment(CSSParsingEnvironment& aCSSParseEnv) override;
 
@@ -149,8 +151,7 @@ private:
 #undef STYLE_STRUCT
 
   already_AddRefed<CSSValue> GetEllipseRadii(const nsStyleCorners& aRadius,
-                                             uint8_t aFullCorner,
-                                             bool aIsBorder); // else outline
+                                             uint8_t aFullCorner);
 
   already_AddRefed<CSSValue> GetOffsetWidthFor(mozilla::css::Side aSide);
 
@@ -215,6 +216,8 @@ private:
   already_AddRefed<CSSValue> GetScrollSnapPoints(const nsStyleCoord& aCoord);
   void AppendTimingFunction(nsDOMCSSValueList *aValueList,
                             const nsTimingFunction& aTimingFunction);
+
+  bool ShouldHonorMinSizeAutoInAxis(mozilla::PhysicalAxis aAxis);
 
   /* Properties queryable as CSSValues.
    * To avoid a name conflict with nsIDOM*CSS2Properties, these are all
@@ -389,7 +392,6 @@ private:
   already_AddRefed<CSSValue> DoGetContent();
   already_AddRefed<CSSValue> DoGetCounterIncrement();
   already_AddRefed<CSSValue> DoGetCounterReset();
-  already_AddRefed<CSSValue> DoGetMarkerOffset();
 
   /* Quotes Properties */
   already_AddRefed<CSSValue> DoGetQuotes();
@@ -583,14 +585,16 @@ private:
 
   /* Helper functions */
   void SetToRGBAColor(nsROCSSPrimitiveValue* aValue, nscolor aColor);
+  void SetValueFromComplexColor(nsROCSSPrimitiveValue* aValue,
+                                const mozilla::StyleComplexColor& aColor);
   void SetValueToStyleImage(const nsStyleImage& aStyleImage,
                             nsROCSSPrimitiveValue* aValue);
   void SetValueToPositionCoord(const mozilla::Position::Coord& aCoord,
                                nsROCSSPrimitiveValue* aValue);
   void SetValueToPosition(const mozilla::Position& aPosition,
                           nsDOMCSSValueList* aValueList);
-  void SetValueToFragmentOrURL(const mozilla::FragmentOrURL* aFragmentOrURL,
-                               nsROCSSPrimitiveValue* aValue);
+  void SetValueToURLValue(const mozilla::css::URLValueData* aURL,
+                          nsROCSSPrimitiveValue* aValue);
 
   /**
    * A method to get a percentage base for a percentage value.  Returns true

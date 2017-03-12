@@ -309,8 +309,7 @@ class CycleDetector
     bool foundCycle(JSContext* cx) {
         auto addPtr = stack.lookupForAdd(obj_);
         if (addPtr) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
-                                 js_object_str);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE);
             return false;
         }
         if (!stack.add(addPtr, obj_)) {
@@ -594,7 +593,7 @@ Str(JSContext* cx, const Value& v, StringifyContext* scx)
 
 /* ES6 24.3.2. */
 bool
-js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, Value space_,
+js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, const Value& space_,
               StringBuffer& sb, StringifyBehavior stringifyBehavior)
 {
     RootedObject replacer(cx, replacer_);

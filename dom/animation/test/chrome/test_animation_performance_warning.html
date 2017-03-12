@@ -29,6 +29,8 @@
 // This is used for obtaining localized strings.
 var gStringBundle;
 
+W3CTest.runner.requestLongerTimeout(2);
+
 SpecialPowers.pushPrefEnv({ "set": [
                             ["general.useragent.locale", "en-US"],
                             // Need to set devPixelsPerPx explicitly to gain
@@ -942,7 +944,7 @@ function start() {
     return scriptAnimation.ready.then(function() {
       assert_animation_property_state_equals(
         cssAnimation.effect.getProperties(),
-        [ { property: 'opacity', runningOnCompositor: false } ]);
+        [ { property: 'opacity', runningOnCompositor: true } ]);
       assert_animation_property_state_equals(
         scriptAnimation.effect.getProperties(),
         [ { property: 'opacity', runningOnCompositor: true } ]);

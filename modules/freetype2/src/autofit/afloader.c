@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Auto-fitter glyph loading routines (body).                           */
 /*                                                                         */
-/*  Copyright 2003-2009, 2011-2014 by                                      */
+/*  Copyright 2003-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -23,42 +23,35 @@
 #include "afmodule.h"
 #include "afpic.h"
 
+#include FT_INTERNAL_CALC_H
+
 
   /* Initialize glyph loader. */
 
-  FT_LOCAL_DEF( FT_Error )
-  af_loader_init( AF_Module  module )
+  FT_LOCAL_DEF( void )
+  af_loader_init( AF_Loader      loader,
+                  AF_GlyphHints  hints )
   {
-    AF_Loader  loader = module->loader;
-    FT_Memory  memory = module->root.library->memory;
-
-
     FT_ZERO( loader );
 
-    af_glyph_hints_init( &loader->hints, memory );
-#ifdef FT_DEBUG_AUTOFIT
-    _af_debug_hints = &loader->hints;
-#endif
-    return FT_GlyphLoader_New( memory, &loader->gloader );
+    loader->hints = hints;
   }
 
 
   /* Reset glyph loader and compute globals if necessary. */
 
   FT_LOCAL_DEF( FT_Error )
-  af_loader_reset( AF_Module  module,
+  af_loader_reset( AF_Loader  loader,
+                   AF_Module  module,
                    FT_Face    face )
   {
-    FT_Error   error  = FT_Err_Ok;
-    AF_Loader  loader = module->loader;
+    FT_Error  error = FT_Err_Ok;
 
 
     loader->face    = face;
     loader->globals = (AF_FaceGlobals)face->autohint.data;
 
-    FT_GlyphLoader_Rewind( loader->gloader );
-
-    if ( loader->globals == NULL )
+    if ( !loader->globals )
     {
       error = af_face_globals_new( face, &loader->globals, module );
       if ( !error )
@@ -77,49 +70,273 @@
   /* Finalize glyph loader. */
 
   FT_LOCAL_DEF( void )
-  af_loader_done( AF_Module  module )
+  af_loader_done( AF_Loader  loader )
   {
-    AF_Loader  loader = module->loader;
-
-
-    af_glyph_hints_done( &loader->hints );
-
     loader->face    = NULL;
     loader->globals = NULL;
-
-#ifdef FT_DEBUG_AUTOFIT
-    _af_debug_hints = NULL;
-#endif
-    FT_GlyphLoader_Done( loader->gloader );
-    loader->gloader = NULL;
+    loader->hints   = NULL;
   }
 
 
-  /* Load a single glyph component.  This routine calls itself */
-  /* recursively, if necessary, and does the main work of      */
-  /* `af_loader_load_glyph.'                                   */
+#define af_intToFixed( i ) \
+          ( (FT_Fixed)( (FT_UInt32)(i) << 16 ) )
+#define af_fixedToInt( x ) \
+          ( (FT_Short)( ( (FT_UInt32)(x) + 0x8000U ) >> 16 ) )
+#define af_floatToFixed( f ) \
+          ( (FT_Fixed)( (f) * 65536.0 + 0.5 ) )
+
 
   static FT_Error
-  af_loader_load_g( AF_Loader  loader,
-                    AF_Scaler  scaler,
-                    FT_UInt    glyph_index,
-                    FT_Int32   load_flags,
-                    FT_UInt    depth )
+  af_loader_embolden_glyph_in_slot( AF_Loader        loader,
+                                    FT_Face          face,
+                                    AF_StyleMetrics  style_metrics )
   {
-    FT_Error          error;
-    FT_Face           face     = loader->face;
-    FT_GlyphLoader    gloader  = loader->gloader;
-    AF_StyleMetrics   metrics  = loader->metrics;
-    AF_GlyphHints     hints    = &loader->hints;
+    FT_Error  error = FT_Err_Ok;
+
+    FT_GlyphSlot           slot    = face->glyph;
+    AF_FaceGlobals         globals = loader->globals;
+    AF_WritingSystemClass  writing_system_class;
+
+    FT_Pos  stdVW = 0;
+    FT_Pos  stdHW = 0;
+
+    FT_Bool  size_changed = face->size->metrics.x_ppem
+                              != globals->stem_darkening_for_ppem;
+
+    FT_Fixed  em_size  = af_intToFixed( face->units_per_EM );
+    FT_Fixed  em_ratio = FT_DivFix( af_intToFixed( 1000 ), em_size );
+
+    FT_Matrix  scale_down_matrix = { 0x10000L, 0, 0, 0x10000L };
+
+
+    /* Skip stem darkening for broken fonts. */
+    if ( !face->units_per_EM )
+    {
+      error = FT_Err_Corrupted_Font_Header;
+      goto Exit;
+    }
+
+    /*
+     *  We depend on the writing system (script analyzers) to supply
+     *  standard widths for the script of the glyph we are looking at.  If
+     *  it can't deliver, stem darkening is disabled.
+     */
+    writing_system_class =
+      AF_WRITING_SYSTEM_CLASSES_GET[style_metrics->style_class->writing_system];
+
+    if ( writing_system_class->style_metrics_getstdw )
+      writing_system_class->style_metrics_getstdw( style_metrics,
+                                                   &stdHW,
+                                                   &stdVW );
+    else
+    {
+      error = FT_Err_Unimplemented_Feature;
+      goto Exit;
+    }
+
+    if ( size_changed                                               ||
+         ( stdVW > 0 && stdVW != globals->standard_vertical_width ) )
+    {
+      FT_Fixed  darken_by_font_units_x, darken_x;
+
+
+      darken_by_font_units_x =
+        af_intToFixed( af_loader_compute_darkening( loader,
+                                                    face,
+                                                    stdVW ) );
+      darken_x = FT_DivFix( FT_MulFix( darken_by_font_units_x,
+                                       face->size->metrics.x_scale ),
+                            em_ratio );
+
+      globals->standard_vertical_width = stdVW;
+      globals->stem_darkening_for_ppem = face->size->metrics.x_ppem;
+      globals->darken_x                = af_fixedToInt( darken_x );
+    }
+
+    if ( size_changed                                                 ||
+         ( stdHW > 0 && stdHW != globals->standard_horizontal_width ) )
+    {
+      FT_Fixed  darken_by_font_units_y, darken_y;
+
+
+      darken_by_font_units_y =
+        af_intToFixed( af_loader_compute_darkening( loader,
+                                                    face,
+                                                    stdHW ) );
+      darken_y = FT_DivFix( FT_MulFix( darken_by_font_units_y,
+                                       face->size->metrics.y_scale ),
+                            em_ratio );
+
+      globals->standard_horizontal_width = stdHW;
+      globals->stem_darkening_for_ppem   = face->size->metrics.x_ppem;
+      globals->darken_y                  = af_fixedToInt( darken_y );
+
+      /*
+       *  Scale outlines down on the Y-axis to keep them inside their blue
+       *  zones.  The stronger the emboldening, the stronger the downscaling
+       *  (plus heuristical padding to prevent outlines still falling out
+       *  their zones due to rounding).
+       *
+       *  Reason: `FT_Outline_Embolden' works by shifting the rightmost
+       *  points of stems farther to the right, and topmost points farther
+       *  up.  This positions points on the Y-axis outside their
+       *  pre-computed blue zones and leads to distortion when applying the
+       *  hints in the code further below.  Code outside this emboldening
+       *  block doesn't know we are presenting it with modified outlines the
+       *  analyzer didn't see!
+       *
+       *  An unfortunate side effect of downscaling is that the emboldening
+       *  effect is slightly decreased.  The loss becomes more pronounced
+       *  versus the CFF driver at smaller sizes, e.g., at 9ppem and below.
+       */
+      globals->scale_down_factor =
+        FT_DivFix( em_size - ( darken_by_font_units_y + af_intToFixed( 8 ) ),
+                   em_size );
+    }
+
+    FT_Outline_EmboldenXY( &slot->outline,
+                           globals->darken_x,
+                           globals->darken_y );
+
+    scale_down_matrix.yy = globals->scale_down_factor;
+    FT_Outline_Transform( &slot->outline, &scale_down_matrix );
+
+  Exit:
+    return error;
+  }
+
+
+  /* Load the glyph at index into the current slot of a face and hint it. */
+
+  FT_LOCAL_DEF( FT_Error )
+  af_loader_load_glyph( AF_Loader  loader,
+                        AF_Module  module,
+                        FT_Face    face,
+                        FT_UInt    glyph_index,
+                        FT_Int32   load_flags )
+  {
+    FT_Error  error;
+
+    FT_Size           size     = face->size;
     FT_GlyphSlot      slot     = face->glyph;
     FT_Slot_Internal  internal = slot->internal;
-    FT_Int32          flags;
+    FT_GlyphLoader    gloader  = internal->loader;
+
+    AF_GlyphHints          hints          = loader->hints;
+    AF_ScalerRec           scaler;
+    AF_StyleMetrics        style_metrics;
+    FT_UInt                style_options  = AF_STYLE_NONE_DFLT;
+    AF_StyleClass          style_class;
+    AF_WritingSystemClass  writing_system_class;
+
+#ifdef FT_CONFIG_OPTION_PIC
+    AF_FaceGlobals  globals = loader->globals;
+#endif
 
 
-    flags = load_flags | FT_LOAD_LINEAR_DESIGN;
-    error = FT_Load_Glyph( face, glyph_index, flags );
+    if ( !size )
+      return FT_THROW( Invalid_Size_Handle );
+
+    FT_ZERO( &scaler );
+
+    /*
+     *  TODO: This code currently doesn't support fractional advance widths,
+     *  i.e.  placing hinted glyphs at anything other than integer
+     *  x-positions.  This is only relevant for the warper code, which
+     *  scales and shifts glyphs to optimize blackness of stems (hinting on
+     *  the x-axis by nature places things on pixel integers, hinting on the
+     *  y-axis only, i.e.  LIGHT mode, doesn't touch the x-axis).  The delta
+     *  values of the scaler would need to be adjusted.
+     */
+    scaler.face    = face;
+    scaler.x_scale = size->metrics.x_scale;
+    scaler.x_delta = 0;
+    scaler.y_scale = size->metrics.y_scale;
+    scaler.y_delta = 0;
+
+    scaler.render_mode = FT_LOAD_TARGET_MODE( load_flags );
+    scaler.flags       = 0;
+
+    error = af_loader_reset( loader, module, face );
     if ( error )
       goto Exit;
+
+#ifdef FT_OPTION_AUTOFIT2
+    /* XXX: undocumented hook to activate the latin2 writing system. */
+    if ( load_flags & ( 1UL << 20 ) )
+      style_options = AF_STYLE_LTN2_DFLT;
+#endif
+
+    /*
+     *  Glyphs (really code points) are assigned to scripts.  Script
+     *  analysis is done lazily: For each glyph that passes through here,
+     *  the corresponding script analyzer is called, but returns immediately
+     *  if it has been run already.
+     */
+    error = af_face_globals_get_metrics( loader->globals, glyph_index,
+                                         style_options, &style_metrics );
+    if ( error )
+      goto Exit;
+
+    style_class          = style_metrics->style_class;
+    writing_system_class =
+      AF_WRITING_SYSTEM_CLASSES_GET[style_class->writing_system];
+
+    loader->metrics = style_metrics;
+
+    if ( writing_system_class->style_metrics_scale )
+      writing_system_class->style_metrics_scale( style_metrics, &scaler );
+    else
+      style_metrics->scaler = scaler;
+
+    if ( writing_system_class->style_hints_init )
+    {
+      error = writing_system_class->style_hints_init( hints,
+                                                      style_metrics );
+      if ( error )
+        goto Exit;
+    }
+
+    /*
+     *  Do the main work of `af_loader_load_glyph'.  Note that we never have
+     *  to deal with composite glyphs as those get loaded into
+     *  FT_GLYPH_FORMAT_OUTLINE by the recursed `FT_Load_Glyph' function.
+     *  In the rare cases where FT_LOAD_NO_RECURSE is set, it implies
+     *  FT_LOAD_NO_SCALE and as such the auto-hinter is never called.
+     */
+    load_flags |=  FT_LOAD_NO_SCALE         |
+                   FT_LOAD_IGNORE_TRANSFORM |
+                   FT_LOAD_LINEAR_DESIGN;
+    load_flags &= ~FT_LOAD_RENDER;
+
+    error = FT_Load_Glyph( face, glyph_index, load_flags );
+    if ( error )
+      goto Exit;
+
+    /*
+     *  Apply stem darkening (emboldening) here before hints are applied to
+     *  the outline.  Glyphs are scaled down proportionally to the
+     *  emboldening so that curve points don't fall outside their
+     *  precomputed blue zones.
+     *
+     *  Any emboldening done by the font driver (e.g., the CFF driver)
+     *  doesn't reach here because the autohinter loads the unprocessed
+     *  glyphs in font units for analysis (functions `af_*_metrics_init_*')
+     *  and then above to prepare it for the rasterizers by itself,
+     *  independently of the font driver.  So emboldening must be done here,
+     *  within the autohinter.
+     *
+     *  All glyphs to be autohinted pass through here one by one.  The
+     *  standard widths can therefore change from one glyph to the next,
+     *  depending on what script a glyph is assigned to (each script has its
+     *  own set of standard widths and other metrics).  The darkening amount
+     *  must therefore be recomputed for each size and
+     *  `standard_{vertical,horizontal}_width' change.
+     *
+     *  Ignore errors and carry on without emboldening.
+     */
+    if ( !module->no_stem_darkening )
+      af_loader_embolden_glyph_in_slot( loader, face, style_metrics );
 
     loader->transformed = internal->glyph_transformed;
     if ( loader->transformed )
@@ -144,31 +361,8 @@
                               loader->trans_delta.x,
                               loader->trans_delta.y );
 
-      /* copy the outline points in the loader's current                */
-      /* extra points which are used to keep original glyph coordinates */
-      error = FT_GLYPHLOADER_CHECK_POINTS( gloader,
-                                           slot->outline.n_points + 4,
-                                           slot->outline.n_contours );
-      if ( error )
-        goto Exit;
-
-      FT_ARRAY_COPY( gloader->current.outline.points,
-                     slot->outline.points,
-                     slot->outline.n_points );
-
-      FT_ARRAY_COPY( gloader->current.outline.contours,
-                     slot->outline.contours,
-                     slot->outline.n_contours );
-
-      FT_ARRAY_COPY( gloader->current.outline.tags,
-                     slot->outline.tags,
-                     slot->outline.n_points );
-
-      gloader->current.outline.n_points   = slot->outline.n_points;
-      gloader->current.outline.n_contours = slot->outline.n_contours;
-
-      /* compute original horizontal phantom points (and ignore */
-      /* vertical ones)                                         */
+      /* compute original horizontal phantom points */
+      /* (and ignore vertical ones)                 */
       loader->pp1.x = hints->x_delta;
       loader->pp1.y = hints->y_delta;
       loader->pp2.x = FT_MulFix( slot->metrics.horiAdvance,
@@ -179,29 +373,28 @@
       if ( slot->outline.n_points == 0 )
         goto Hint_Metrics;
 
-      /* now load the slot image into the auto-outline and run the */
-      /* automatic hinting process                                 */
+      /* now load the slot image into the auto-outline */
+      /* and run the automatic hinting process         */
       {
 #ifdef FT_CONFIG_OPTION_PIC
-        AF_FaceGlobals         globals = loader->globals;
+        AF_FaceGlobals  globals = loader->globals;
 #endif
-        AF_StyleClass          style_class = metrics->style_class;
-        AF_WritingSystemClass  writing_system_class =
-          AF_WRITING_SYSTEM_CLASSES_GET[style_class->writing_system];
 
 
         if ( writing_system_class->style_hints_apply )
-          writing_system_class->style_hints_apply( hints,
-                                                   &gloader->current.outline,
-                                                   metrics );
+          writing_system_class->style_hints_apply( glyph_index,
+                                                   hints,
+                                                   &gloader->base.outline,
+                                                   style_metrics );
       }
 
       /* we now need to adjust the metrics according to the change in */
       /* width/positioning that occurred during the hinting process   */
-      if ( scaler->render_mode != FT_RENDER_MODE_LIGHT )
+      if ( scaler.render_mode != FT_RENDER_MODE_LIGHT )
       {
-        FT_Pos        old_rsb, old_lsb, new_lsb;
-        FT_Pos        pp1x_uh, pp2x_uh;
+        FT_Pos  old_rsb, old_lsb, new_lsb;
+        FT_Pos  pp1x_uh, pp2x_uh;
+
         AF_AxisHints  axis  = &hints->axis[AF_DIMENSION_HORZ];
         AF_Edge       edge1 = axis->edges;         /* leftmost edge  */
         AF_Edge       edge2 = edge1 +
@@ -211,11 +404,9 @@
         if ( axis->num_edges > 1 && AF_HINTS_DO_ADVANCE( hints ) )
         {
           old_rsb = loader->pp2.x - edge2->opos;
-          old_lsb = edge1->opos;
+          /* loader->pp1.x is always zero at this point of time */
+          old_lsb = edge1->opos /* - loader->pp1.x */;
           new_lsb = edge1->pos;
-
-          /* remember unhinted values to later account */
-          /* for rounding errors                       */
 
           pp1x_uh = new_lsb    - old_lsb;
           pp2x_uh = edge2->pos + old_rsb;
@@ -267,128 +458,6 @@
         slot->rsb_delta = loader->pp2.x - pp2x;
       }
 
-      /* good, we simply add the glyph to our loader's base */
-      FT_GlyphLoader_Add( gloader );
-      break;
-
-    case FT_GLYPH_FORMAT_COMPOSITE:
-      {
-        FT_UInt      nn, num_subglyphs = slot->num_subglyphs;
-        FT_UInt      num_base_subgs, start_point;
-        FT_SubGlyph  subglyph;
-
-
-        start_point = gloader->base.outline.n_points;
-
-        /* first of all, copy the subglyph descriptors in the glyph loader */
-        error = FT_GlyphLoader_CheckSubGlyphs( gloader, num_subglyphs );
-        if ( error )
-          goto Exit;
-
-        FT_ARRAY_COPY( gloader->current.subglyphs,
-                       slot->subglyphs,
-                       num_subglyphs );
-
-        gloader->current.num_subglyphs = num_subglyphs;
-        num_base_subgs                 = gloader->base.num_subglyphs;
-
-        /* now read each subglyph independently */
-        for ( nn = 0; nn < num_subglyphs; nn++ )
-        {
-          FT_Vector  pp1, pp2;
-          FT_Pos     x, y;
-          FT_UInt    num_points, num_new_points, num_base_points;
-
-
-          /* gloader.current.subglyphs can change during glyph loading due */
-          /* to re-allocation -- we must recompute the current subglyph on */
-          /* each iteration                                                */
-          subglyph = gloader->base.subglyphs + num_base_subgs + nn;
-
-          pp1 = loader->pp1;
-          pp2 = loader->pp2;
-
-          num_base_points = gloader->base.outline.n_points;
-
-          error = af_loader_load_g( loader, scaler, subglyph->index,
-                                    load_flags, depth + 1 );
-          if ( error )
-            goto Exit;
-
-          /* recompute subglyph pointer */
-          subglyph = gloader->base.subglyphs + num_base_subgs + nn;
-
-          if ( !( subglyph->flags & FT_SUBGLYPH_FLAG_USE_MY_METRICS ) )
-          {
-            loader->pp1 = pp1;
-            loader->pp2 = pp2;
-          }
-
-          num_points     = gloader->base.outline.n_points;
-          num_new_points = num_points - num_base_points;
-
-          /* now perform the transformation required for this subglyph */
-
-          if ( subglyph->flags & ( FT_SUBGLYPH_FLAG_SCALE    |
-                                   FT_SUBGLYPH_FLAG_XY_SCALE |
-                                   FT_SUBGLYPH_FLAG_2X2      ) )
-          {
-            FT_Vector*  cur   = gloader->base.outline.points +
-                                num_base_points;
-            FT_Vector*  limit = cur + num_new_points;
-
-
-            for ( ; cur < limit; cur++ )
-              FT_Vector_Transform( cur, &subglyph->transform );
-          }
-
-          /* apply offset */
-
-          if ( !( subglyph->flags & FT_SUBGLYPH_FLAG_ARGS_ARE_XY_VALUES ) )
-          {
-            FT_Int      k = subglyph->arg1;
-            FT_UInt     l = subglyph->arg2;
-            FT_Vector*  p1;
-            FT_Vector*  p2;
-
-
-            if ( start_point + k >= num_base_points         ||
-                               l >= (FT_UInt)num_new_points )
-            {
-              error = FT_THROW( Invalid_Composite );
-              goto Exit;
-            }
-
-            l += num_base_points;
-
-            /* for now, only use the current point coordinates; */
-            /* we eventually may consider another approach      */
-            p1 = gloader->base.outline.points + start_point + k;
-            p2 = gloader->base.outline.points + start_point + l;
-
-            x = p1->x - p2->x;
-            y = p1->y - p2->y;
-          }
-          else
-          {
-            x = FT_MulFix( subglyph->arg1, hints->x_scale ) + hints->x_delta;
-            y = FT_MulFix( subglyph->arg2, hints->y_scale ) + hints->y_delta;
-
-            x = FT_PIX_ROUND( x );
-            y = FT_PIX_ROUND( y );
-          }
-
-          {
-            FT_Outline  dummy = gloader->base.outline;
-
-
-            dummy.points  += num_base_points;
-            dummy.n_points = (short)num_new_points;
-
-            FT_Outline_Translate( &dummy, x, y );
-          }
-        }
-      }
       break;
 
     default:
@@ -397,7 +466,6 @@
     }
 
   Hint_Metrics:
-    if ( depth == 0 )
     {
       FT_BBox    bbox;
       FT_Vector  vvector;
@@ -405,8 +473,8 @@
 
       vvector.x = slot->metrics.vertBearingX - slot->metrics.horiBearingX;
       vvector.y = slot->metrics.vertBearingY - slot->metrics.horiBearingY;
-      vvector.x = FT_MulFix( vvector.x, metrics->scaler.x_scale );
-      vvector.y = FT_MulFix( vvector.y, metrics->scaler.y_scale );
+      vvector.x = FT_MulFix( vvector.x, style_metrics->scaler.x_scale );
+      vvector.y = FT_MulFix( vvector.y, style_metrics->scaler.y_scale );
 
       /* transform the hinted outline if needed */
       if ( loader->transformed )
@@ -414,12 +482,12 @@
         FT_Outline_Transform( &gloader->base.outline, &loader->trans_matrix );
         FT_Vector_Transform( &vvector, &loader->trans_matrix );
       }
-#if 1
+
       /* we must translate our final outline by -pp1.x and compute */
       /* the new metrics                                           */
       if ( loader->pp1.x )
         FT_Outline_Translate( &gloader->base.outline, -loader->pp1.x, 0 );
-#endif
+
       FT_Outline_Get_CBox( &gloader->base.outline, &bbox );
 
       bbox.xMin = FT_PIX_FLOOR( bbox.xMin );
@@ -438,20 +506,14 @@
       /* for mono-width fonts (like Andale, Courier, etc.) we need */
       /* to keep the original rounded advance width; ditto for     */
       /* digits if all have the same advance width                 */
-#if 0
-      if ( !FT_IS_FIXED_WIDTH( slot->face ) )
-        slot->metrics.horiAdvance = loader->pp2.x - loader->pp1.x;
-      else
-        slot->metrics.horiAdvance = FT_MulFix( slot->metrics.horiAdvance,
-                                               x_scale );
-#else
-      if ( scaler->render_mode != FT_RENDER_MODE_LIGHT                      &&
+      if ( scaler.render_mode != FT_RENDER_MODE_LIGHT                       &&
            ( FT_IS_FIXED_WIDTH( slot->face )                              ||
              ( af_face_globals_is_digit( loader->globals, glyph_index ) &&
-               metrics->digits_have_same_width                          ) ) )
+               style_metrics->digits_have_same_width                    ) ) )
       {
-        slot->metrics.horiAdvance = FT_MulFix( slot->metrics.horiAdvance,
-                                               metrics->scaler.x_scale );
+        slot->metrics.horiAdvance =
+          FT_MulFix( slot->metrics.horiAdvance,
+                     style_metrics->scaler.x_scale );
 
         /* Set delta values to 0.  Otherwise code that uses them is */
         /* going to ruin the fixed advance width.                   */
@@ -464,26 +526,12 @@
         if ( slot->metrics.horiAdvance )
           slot->metrics.horiAdvance = loader->pp2.x - loader->pp1.x;
       }
-#endif
 
       slot->metrics.vertAdvance = FT_MulFix( slot->metrics.vertAdvance,
-                                             metrics->scaler.y_scale );
+                                             style_metrics->scaler.y_scale );
 
       slot->metrics.horiAdvance = FT_PIX_ROUND( slot->metrics.horiAdvance );
       slot->metrics.vertAdvance = FT_PIX_ROUND( slot->metrics.vertAdvance );
-
-      /* now copy outline into glyph slot */
-      FT_GlyphLoader_Rewind( internal->loader );
-      error = FT_GlyphLoader_CopyPoints( internal->loader, gloader );
-      if ( error )
-        goto Exit;
-
-      /* reassign all outline fields except flags to protect them */
-      slot->outline.n_contours = internal->loader->base.outline.n_contours;
-      slot->outline.n_points   = internal->loader->base.outline.n_points;
-      slot->outline.points     = internal->loader->base.outline.points;
-      slot->outline.tags       = internal->loader->base.outline.tags;
-      slot->outline.contours   = internal->loader->base.outline.contours;
 
       slot->format  = FT_GLYPH_FORMAT_OUTLINE;
     }
@@ -493,82 +541,133 @@
   }
 
 
-  /* Load a glyph. */
-
-  FT_LOCAL_DEF( FT_Error )
-  af_loader_load_glyph( AF_Module  module,
-                        FT_Face    face,
-                        FT_UInt    gindex,
-                        FT_Int32   load_flags )
+  /*
+   * Compute amount of font units the face should be emboldened by, in
+   * analogy to the CFF driver's `cf2_computeDarkening' function.  See there
+   * for details of the algorithm.
+   *
+   * XXX: Currently a crude adaption of the original algorithm.  Do better?
+   */
+  FT_LOCAL_DEF( FT_Int32 )
+  af_loader_compute_darkening( AF_Loader  loader,
+                               FT_Face    face,
+                               FT_Pos     standard_width )
   {
-    FT_Error      error;
-    FT_Size       size   = face->size;
-    AF_Loader     loader = module->loader;
-    AF_ScalerRec  scaler;
+    AF_Module  module = loader->globals->module;
+
+    FT_UShort  units_per_EM;
+    FT_Fixed   ppem, em_ratio;
+    FT_Fixed   stem_width, stem_width_per_1000, scaled_stem, darken_amount;
+    FT_Int     log_base_2;
+    FT_Int     x1, y1, x2, y2, x3, y3, x4, y4;
 
 
-    if ( !size )
-      return FT_THROW( Invalid_Size_Handle );
+    ppem         = FT_MAX( af_intToFixed( 4 ),
+                           af_intToFixed( face->size->metrics.x_ppem ) );
+    units_per_EM = face->units_per_EM;
 
-    FT_ZERO( &scaler );
-
-    scaler.face    = face;
-    scaler.x_scale = size->metrics.x_scale;
-    scaler.x_delta = 0;  /* XXX: TODO: add support for sub-pixel hinting */
-    scaler.y_scale = size->metrics.y_scale;
-    scaler.y_delta = 0;  /* XXX: TODO: add support for sub-pixel hinting */
-
-    scaler.render_mode = FT_LOAD_TARGET_MODE( load_flags );
-    scaler.flags       = 0;  /* XXX: fix this */
-
-    error = af_loader_reset( module, face );
-    if ( !error )
+    em_ratio = FT_DivFix( af_intToFixed( 1000 ),
+                          af_intToFixed ( units_per_EM ) );
+    if ( em_ratio < af_floatToFixed( .01 ) )
     {
-      AF_StyleMetrics  metrics;
-      FT_UInt          options = AF_STYLE_NONE_DFLT;
+      /* If something goes wrong, don't embolden. */
+      return 0;
+    }
+
+    x1 = module->darken_params[0];
+    y1 = module->darken_params[1];
+    x2 = module->darken_params[2];
+    y2 = module->darken_params[3];
+    x3 = module->darken_params[4];
+    y3 = module->darken_params[5];
+    x4 = module->darken_params[6];
+    y4 = module->darken_params[7];
+
+    if ( standard_width <= 0 )
+    {
+      stem_width          = af_intToFixed( 75 ); /* taken from cf2font.c */
+      stem_width_per_1000 = stem_width;
+    }
+    else
+    {
+      stem_width          = af_intToFixed( standard_width );
+      stem_width_per_1000 = FT_MulFix( stem_width, em_ratio );
+    }
+
+    log_base_2 = FT_MSB( (FT_UInt32)stem_width_per_1000 ) +
+                 FT_MSB( (FT_UInt32)ppem );
+
+    if ( log_base_2 >= 46 )
+    {
+      /* possible overflow */
+      scaled_stem = af_intToFixed( x4 );
+    }
+    else
+      scaled_stem = FT_MulFix( stem_width_per_1000, ppem );
+
+    /* now apply the darkening parameters */
+    if ( scaled_stem < af_intToFixed( x1 ) )
+      darken_amount = FT_DivFix( af_intToFixed( y1 ), ppem );
+
+    else if ( scaled_stem < af_intToFixed( x2 ) )
+    {
+      FT_Int  xdelta = x2 - x1;
+      FT_Int  ydelta = y2 - y1;
+      FT_Int  x      = stem_width_per_1000 -
+                       FT_DivFix( af_intToFixed( x1 ), ppem );
 
 
-#ifdef FT_OPTION_AUTOFIT2
-      /* XXX: undocumented hook to activate the latin2 writing system */
-      if ( load_flags & ( 1UL << 20 ) )
-        options = AF_STYLE_LTN2_DFLT;
-#endif
+      if ( !xdelta )
+        goto Try_x3;
 
-      error = af_face_globals_get_metrics( loader->globals, gindex,
-                                           options, &metrics );
-      if ( !error )
+      darken_amount = FT_MulDiv( x, ydelta, xdelta ) +
+                      FT_DivFix( af_intToFixed( y1 ), ppem );
+    }
+
+    else if ( scaled_stem < af_intToFixed( x3 ) )
+    {
+    Try_x3:
       {
-#ifdef FT_CONFIG_OPTION_PIC
-        AF_FaceGlobals         globals = loader->globals;
-#endif
-        AF_StyleClass          style_class = metrics->style_class;
-        AF_WritingSystemClass  writing_system_class =
-          AF_WRITING_SYSTEM_CLASSES_GET[style_class->writing_system];
+        FT_Int  xdelta = x3 - x2;
+        FT_Int  ydelta = y3 - y2;
+        FT_Int  x      = stem_width_per_1000 -
+                         FT_DivFix( af_intToFixed( x2 ), ppem );
 
 
-        loader->metrics = metrics;
+        if ( !xdelta )
+          goto Try_x4;
 
-        if ( writing_system_class->style_metrics_scale )
-          writing_system_class->style_metrics_scale( metrics, &scaler );
-        else
-          metrics->scaler = scaler;
-
-        load_flags |=  FT_LOAD_NO_SCALE | FT_LOAD_IGNORE_TRANSFORM;
-        load_flags &= ~FT_LOAD_RENDER;
-
-        if ( writing_system_class->style_hints_init )
-        {
-          error = writing_system_class->style_hints_init( &loader->hints,
-                                                          metrics );
-          if ( error )
-            goto Exit;
-        }
-
-        error = af_loader_load_g( loader, &scaler, gindex, load_flags, 0 );
+        darken_amount = FT_MulDiv( x, ydelta, xdelta ) +
+                        FT_DivFix( af_intToFixed( y2 ), ppem );
       }
     }
-  Exit:
-    return error;
+
+    else if ( scaled_stem < af_intToFixed( x4 ) )
+    {
+    Try_x4:
+      {
+        FT_Int  xdelta = x4 - x3;
+        FT_Int  ydelta = y4 - y3;
+        FT_Int  x      = stem_width_per_1000 -
+                         FT_DivFix( af_intToFixed( x3 ), ppem );
+
+
+        if ( !xdelta )
+          goto Use_y4;
+
+        darken_amount = FT_MulDiv( x, ydelta, xdelta ) +
+                        FT_DivFix( af_intToFixed( y3 ), ppem );
+      }
+    }
+
+    else
+    {
+    Use_y4:
+      darken_amount = FT_DivFix( af_intToFixed( y4 ), ppem );
+    }
+
+    /* Convert darken_amount from per 1000 em to true character space. */
+    return af_fixedToInt( FT_DivFix( darken_amount, em_ratio ) );
   }
 
 

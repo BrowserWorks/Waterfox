@@ -52,6 +52,7 @@ class OutOfLineRegExpTester;
 class OutOfLineRegExpPrototypeOptimizable;
 class OutOfLineRegExpInstanceOptimizable;
 class OutOfLineLambdaArrow;
+class OutOfLineNaNToZero;
 
 class CodeGenerator final : public CodeGeneratorSpecific
 {
@@ -66,7 +67,8 @@ class CodeGenerator final : public CodeGeneratorSpecific
 
   public:
     MOZ_MUST_USE bool generate();
-    MOZ_MUST_USE bool generateWasm(wasm::SigIdDesc sigId, wasm::FuncOffsets *offsets);
+    MOZ_MUST_USE bool generateWasm(wasm::SigIdDesc sigId, wasm::TrapOffset trapOffset,
+                                   wasm::FuncOffsets *offsets);
     MOZ_MUST_USE bool link(JSContext* cx, CompilerConstraintList* constraints);
     MOZ_MUST_USE bool linkSharedStubs(JSContext* cx);
 
@@ -222,7 +224,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitComputeThis(LComputeThis* lir);
     void visitArrayLength(LArrayLength* lir);
     void visitSetArrayLength(LSetArrayLength* lir);
-    void visitGetNextMapEntryForIterator(LGetNextMapEntryForIterator* lir);
+    void visitGetNextEntryForIterator(LGetNextEntryForIterator* lir);
     void visitTypedArrayLength(LTypedArrayLength* lir);
     void visitTypedArrayElements(LTypedArrayElements* lir);
     void visitSetDisjointTypedElements(LSetDisjointTypedElements* lir);
@@ -278,6 +280,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitConcat(LConcat* lir);
     void visitCharCodeAt(LCharCodeAt* lir);
     void visitFromCharCode(LFromCharCode* lir);
+    void visitFromCodePoint(LFromCodePoint* lir);
     void visitSinCos(LSinCos *lir);
     void visitStringSplit(LStringSplit* lir);
     void visitFunctionEnvironment(LFunctionEnvironment* lir);
@@ -288,6 +291,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitThrow(LThrow* lir);
     void visitTypeOfV(LTypeOfV* lir);
     void visitOutOfLineTypeOfV(OutOfLineTypeOfV* ool);
+    void visitToAsync(LToAsync* lir);
     void visitToIdV(LToIdV* lir);
     template<typename T> void emitLoadElementT(LLoadElementT* lir, const T& source);
     void visitLoadElementT(LLoadElementT* lir);
@@ -311,7 +315,7 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitArrayPopShiftV(LArrayPopShiftV* lir);
     void visitArrayPopShiftT(LArrayPopShiftT* lir);
     void emitArrayPush(LInstruction* lir, const MArrayPush* mir, Register obj,
-                       ConstantOrRegister value, Register elementsTemp, Register length);
+                       const ConstantOrRegister& value, Register elementsTemp, Register length);
     void visitArrayPushV(LArrayPushV* lir);
     void visitArrayPushT(LArrayPushT* lir);
     void visitArraySlice(LArraySlice* lir);
@@ -366,11 +370,11 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitIsObject(LIsObject* lir);
     void visitIsObjectAndBranch(LIsObjectAndBranch* lir);
     void visitHasClass(LHasClass* lir);
-    void visitAsmJSParameter(LAsmJSParameter* lir);
-    void visitAsmJSParameterI64(LAsmJSParameterI64* lir);
-    void visitAsmJSReturn(LAsmJSReturn* ret);
-    void visitAsmJSReturnI64(LAsmJSReturnI64* ret);
-    void visitAsmJSVoidReturn(LAsmJSVoidReturn* ret);
+    void visitWasmParameter(LWasmParameter* lir);
+    void visitWasmParameterI64(LWasmParameterI64* lir);
+    void visitWasmReturn(LWasmReturn* ret);
+    void visitWasmReturnI64(LWasmReturnI64* ret);
+    void visitWasmReturnVoid(LWasmReturnVoid* ret);
     void visitLexicalCheck(LLexicalCheck* ins);
     void visitThrowRuntimeLexicalError(LThrowRuntimeLexicalError* ins);
     void visitGlobalNameConflictsCheck(LGlobalNameConflictsCheck* ins);
@@ -381,6 +385,8 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitCheckIsObj(LCheckIsObj* ins);
     void visitCheckObjCoercible(LCheckObjCoercible* ins);
     void visitDebugCheckSelfHosted(LDebugCheckSelfHosted* ins);
+    void visitNaNToZero(LNaNToZero* ins);
+    void visitOutOfLineNaNToZero(OutOfLineNaNToZero* ool);
 
     void visitCheckOverRecursed(LCheckOverRecursed* lir);
     void visitCheckOverRecursedFailure(CheckOverRecursedFailure* ool);
@@ -439,12 +445,13 @@ class CodeGenerator final : public CodeGeneratorSpecific
 
   private:
     void addGetPropertyCache(LInstruction* ins, LiveRegisterSet liveRegs, Register objReg,
-                             ConstantOrRegister id, TypedOrValueRegister output,
+                             const ConstantOrRegister& id, TypedOrValueRegister output,
                              bool monitoredResult, bool allowDoubleResult,
                              jsbytecode* profilerLeavePc);
     void addSetPropertyCache(LInstruction* ins, LiveRegisterSet liveRegs, Register objReg,
                              Register temp, Register tempUnbox, FloatRegister tempDouble,
-                             FloatRegister tempF32, ConstantOrRegister id, ConstantOrRegister value,
+                             FloatRegister tempF32, const ConstantOrRegister& id,
+                             const ConstantOrRegister& value,
                              bool strict, bool needsTypeBarrier, bool guardHoles,
                              jsbytecode* profilerLeavePc);
 
@@ -456,6 +463,12 @@ class CodeGenerator final : public CodeGeneratorSpecific
 
     void emitFilterArgumentsOrEval(LInstruction* lir, Register string, Register temp1,
                                    Register temp2);
+
+    template <class IteratorObject, class OrderedHashTable>
+    void emitGetNextEntryForIterator(LGetNextEntryForIterator* lir);
+
+    template <class OrderedHashTable>
+    void emitLoadIteratorValues(Register result, Register temp, Register front);
 
     IonScriptCounts* maybeCreateScriptCounts();
 

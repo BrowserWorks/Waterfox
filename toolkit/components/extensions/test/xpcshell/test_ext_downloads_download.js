@@ -7,12 +7,12 @@
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Downloads.jsm");
 
-const server = createHttpServer();
-server.registerDirectory("/data/", do_get_file("data"));
+const gServer = createHttpServer();
+gServer.registerDirectory("/data/", do_get_file("data"));
 
 const WINDOWS = AppConstants.platform == "win";
 
-const BASE = `http://localhost:${server.identity.primaryPort}/data`;
+const BASE = `http://localhost:${gServer.identity.primaryPort}/data`;
 const FILE_NAME = "file_download.txt";
 const FILE_URL = BASE + "/" + FILE_NAME;
 const FILE_NAME_UNIQUE = "file_download(1).txt";
@@ -45,7 +45,7 @@ function setup() {
 
 function backgroundScript() {
   let blobUrl;
-  browser.test.onMessage.addListener((msg, ...args) => {
+  browser.test.onMessage.addListener(async (msg, ...args) => {
     if (msg == "download.request") {
       let options = args[0];
 
@@ -55,15 +55,12 @@ function backgroundScript() {
         blobUrl = options.url = window.URL.createObjectURL(blob);
       }
 
-      // download() throws on bad arguments, we can remove the extra
-      // promise when bug 1250223 is fixed.
-      return Promise.resolve().then(() => browser.downloads.download(options))
-                    .then(id => {
-                      browser.test.sendMessage("download.done", {status: "success", id});
-                    })
-                    .catch(error => {
-                      browser.test.sendMessage("download.done", {status: "error", errmsg: error.message});
-                    });
+      try {
+        let id = await browser.downloads.download(options);
+        browser.test.sendMessage("download.done", {status: "success", id});
+      } catch (error) {
+        browser.test.sendMessage("download.done", {status: "error", errmsg: error.message});
+      }
     } else if (msg == "killTheBlob") {
       window.URL.revokeObjectURL(blobUrl);
       blobUrl = null;
@@ -77,13 +74,12 @@ function backgroundScript() {
 // the browser knows about and waits for all active downloads to complete.
 // But we only start one at a time and only do a handful in total, so
 // this lets us test download() without depending on anything else.
-function waitForDownloads() {
-  return Downloads.getList(Downloads.ALL)
-                  .then(list => list.getAll())
-                  .then(downloads => {
-                    let inprogress = downloads.filter(dl => !dl.stopped);
-                    return Promise.all(inprogress.map(dl => dl.whenSucceeded()));
-                  });
+async function waitForDownloads() {
+  let list = await Downloads.getList(Downloads.ALL);
+  let downloads = await list.getAll();
+
+  let inprogress = downloads.filter(dl => !dl.stopped);
+  return Promise.all(inprogress.map(dl => dl.whenSucceeded()));
 }
 
 // Create a file in the downloads directory.
@@ -115,17 +111,18 @@ add_task(function* test_downloads() {
     return extension.awaitMessage("download.done");
   }
 
-  function testDownload(options, localFile, expectedSize, description) {
-    return download(options).then(msg => {
-      equal(msg.status, "success", `downloads.download() works with ${description}`);
-      return waitForDownloads();
-    }).then(() => {
-      let localPath = downloadDir.clone();
-      let parts = Array.isArray(localFile) ? localFile : [localFile];
-      parts.map(p => localPath.append(p));
-      equal(localPath.fileSize, expectedSize, "Downloaded file has expected size");
-      localPath.remove(false);
-    });
+  async function testDownload(options, localFile, expectedSize, description) {
+    let msg = await download(options);
+    equal(msg.status, "success", `downloads.download() works with ${description}`);
+
+    await waitForDownloads();
+
+    let localPath = downloadDir.clone();
+    let parts = Array.isArray(localFile) ? localFile : [localFile];
+
+    parts.map(p => localPath.append(p));
+    equal(localPath.fileSize, expectedSize, "Downloaded file has expected size");
+    localPath.remove(false);
   }
 
   yield extension.startup();
@@ -253,5 +250,105 @@ add_task(function* test_downloads() {
   }, "download", BLOB_STRING.length, "blob url with no filename");
   extension.sendMessage("killTheBlob");
 
+  yield extension.unload();
+});
+
+add_task(function* test_download_post() {
+  const server = createHttpServer();
+  const url = `http://localhost:${server.identity.primaryPort}/post-log`;
+
+  let received;
+  server.registerPathHandler("/post-log", request => {
+    received = request;
+  });
+
+  // Confirm received vs. expected values.
+  function confirm(method, headers = {}, body) {
+    equal(received.method, method, "method is correct");
+
+    for (let name in headers) {
+      ok(received.hasHeader(name), `header ${name} received`);
+      equal(received.getHeader(name), headers[name], `header ${name} is correct`);
+    }
+
+    if (body) {
+      const str = NetUtil.readInputStreamToString(received.bodyInputStream,
+        received.bodyInputStream.available());
+      equal(str, body, "body is correct");
+    }
+  }
+
+  function background() {
+    browser.test.onMessage.addListener(async options => {
+      try {
+        await browser.downloads.download(options);
+      } catch (err) {
+        browser.test.sendMessage("done", {err: err.message});
+      }
+    });
+    browser.downloads.onChanged.addListener(({state}) => {
+      if (state && state.current === "complete") {
+        browser.test.sendMessage("done", {ok: true});
+      }
+    });
+  }
+
+  const manifest = {permissions: ["downloads"]};
+  const extension = ExtensionTestUtils.loadExtension({background, manifest});
+  yield extension.startup();
+
+  function download(options) {
+    options.url = url;
+    options.conflictAction = "overwrite";
+
+    extension.sendMessage(options);
+    return extension.awaitMessage("done");
+  }
+
+  // Test method option.
+  let result = yield download({});
+  ok(result.ok, "download works without the method option, defaults to GET");
+  confirm("GET");
+
+  result = yield download({method: "PUT"});
+  ok(!result.ok, "download rejected with PUT method");
+  ok(/method: Invalid enumeration/.test(result.err), "descriptive error message");
+
+  result = yield download({method: "POST"});
+  ok(result.ok, "download works with POST method");
+  confirm("POST");
+
+  // Test body option values.
+  result = yield download({body: []});
+  ok(!result.ok, "download rejected because of non-string body");
+  ok(/body: Expected string/.test(result.err), "descriptive error message");
+
+  result = yield download({method: "POST", body: "of work"});
+  ok(result.ok, "download works with POST method and body");
+  confirm("POST", {"Content-Length": 7}, "of work");
+
+  // Test custom headers.
+  result = yield download({headers: [{name: "X-Custom"}]});
+  ok(!result.ok, "download rejected because of missing header value");
+  ok(/"value" is required/.test(result.err), "descriptive error message");
+
+  result = yield download({headers: [{name: "X-Custom", value: "13"}]});
+  ok(result.ok, "download works with a custom header");
+  confirm("GET", {"X-Custom": "13"});
+
+  // Test forbidden headers.
+  result = yield download({headers: [{name: "DNT", value: "1"}]});
+  ok(!result.ok, "download rejected because of forbidden header name DNT");
+  ok(/Forbidden request header/.test(result.err), "descriptive error message");
+
+  result = yield download({headers: [{name: "Proxy-Connection", value: "keep"}]});
+  ok(!result.ok, "download rejected because of forbidden header name prefix Proxy-");
+  ok(/Forbidden request header/.test(result.err), "descriptive error message");
+
+  result = yield download({headers: [{name: "Sec-ret", value: "13"}]});
+  ok(!result.ok, "download rejected because of forbidden header name prefix Sec-");
+  ok(/Forbidden request header/.test(result.err), "descriptive error message");
+
+  remove("post-log");
   yield extension.unload();
 });

@@ -184,7 +184,7 @@ MacroAssembler::add64(Imm64 imm, Register64 dest)
 void
 MacroAssembler::addConstantDouble(double d, FloatRegister dest)
 {
-    Double* dbl = getDouble(d);
+    Double* dbl = getDouble(wasm::RawF64(d));
     if (!dbl)
         return;
     masm.vaddsd_mr(nullptr, dest.encoding(), dest.encoding());
@@ -524,7 +524,7 @@ MacroAssembler::rotateLeft64(Imm32 count, Register64 src, Register64 dest, Regis
     MOZ_ASSERT(src == dest, "defineReuseInput");
 
     int32_t amount = count.value & 0x3f;
-    if (amount % 0x1f != 0) {
+    if ((amount & 0x1f) != 0) {
         movl(dest.high, temp);
         shldl(Imm32(amount & 0x1f), dest.low, dest.high);
         shldl(Imm32(amount & 0x1f), temp, dest.low);
@@ -608,6 +608,17 @@ MacroAssembler::popcnt64(Register64 src, Register64 dest, Register tmp)
     }
     addl(dest.high, dest.low);
     xorl(dest.high, dest.high);
+}
+
+// ===============================================================
+// Condition functions
+
+template <typename T1, typename T2>
+void
+MacroAssembler::cmpPtrSet(Condition cond, T1 lhs, T2 rhs, Register dest)
+{
+    cmpPtr(lhs, rhs);
+    emitSet(cond, dest);
 }
 
 // ===============================================================

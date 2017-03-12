@@ -160,11 +160,7 @@ public class LayerView extends FrameLayout {
         mPaintState = PAINT_START;
         mFullScreenState = FullScreenState.NONE;
 
-        if (Versions.feature14Plus) {
-            mOverscroll = new OverscrollEdgeEffect(this);
-        } else {
-            mOverscroll = null;
-        }
+        mOverscroll = new OverscrollEdgeEffect(this);
     }
 
     public LayerView(Context context) {
@@ -352,10 +348,6 @@ public class LayerView extends FrameLayout {
 
     public ImmutableViewportMetrics getViewportMetrics() {
         return mLayerClient.getViewportMetrics();
-    }
-
-    public PointF convertViewPointToLayerPoint(PointF viewPoint) {
-        return mLayerClient.convertViewPointToLayerPoint(viewPoint);
     }
 
     public Matrix getMatrixForLayerRectToViewRect() {
@@ -674,10 +666,6 @@ public class LayerView extends FrameLayout {
 
     public boolean isFullScreen() {
         return mFullScreenState != FullScreenState.NONE;
-    }
-
-    public FullScreenState getFullScreenState() {
-        return mFullScreenState;
     }
 
     public void setMaxTranslation(float aMaxTranslation) {

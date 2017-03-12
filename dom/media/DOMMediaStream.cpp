@@ -52,6 +52,17 @@ static LazyLogModule gMediaStreamLog("MediaStream");
 
 const TrackID TRACK_VIDEO_PRIMARY = 1;
 
+static bool
+ContainsLiveTracks(nsTArray<RefPtr<DOMMediaStream::TrackPort>>& aTracks)
+{
+  for (auto& port : aTracks) {
+    if (port->GetTrack()->ReadyState() == MediaStreamTrackState::Live) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 DOMMediaStream::TrackPort::TrackPort(MediaInputPort* aInputPort,
                                      MediaStreamTrack* aTrack,
@@ -60,9 +71,7 @@ DOMMediaStream::TrackPort::TrackPort(MediaInputPort* aInputPort,
   , mTrack(aTrack)
   , mOwnership(aOwnership)
 {
-  // XXX Bug 1124630. nsDOMCameraControl requires adding a track without and
-  // input port.
-  // MOZ_ASSERT(mInputPort);
+  MOZ_ASSERT(mInputPort);
   MOZ_ASSERT(mTrack);
 
   MOZ_COUNT_CTOR(TrackPort);
@@ -167,7 +176,7 @@ public:
       nsPIDOMWindowInner* window = mStream->GetParentObject();
       nsIDocument* doc = window ? window->GetExtantDoc() : nullptr;
       nsIPrincipal* principal = doc ? doc->NodePrincipal() : nullptr;
-      source = new BasicUnstoppableTrackSource(principal);
+      source = new BasicTrackSource(principal);
     }
 
     RefPtr<MediaStreamTrack> newTrack =
@@ -192,7 +201,7 @@ public:
       LOG(LogLevel::Debug, ("DOMMediaStream %p MediaStreamTrack %p ended at the source. Marking it ended.",
                             mStream, track.get()));
       NS_DispatchToMainThread(NewRunnableMethod(
-        track, &MediaStreamTrack::NotifyEnded));
+        track, &MediaStreamTrack::OverrideEnded));
     }
   }
 
@@ -239,40 +248,6 @@ public:
     mStream = nullptr;
   }
 
-  void DoNotifyTrackEnded(MediaStream* aInputStream,
-                          TrackID aInputTrackID)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    if (!mStream) {
-      return;
-    }
-
-    LOG(LogLevel::Debug, ("DOMMediaStream %p Track %u of stream %p ended",
-                          mStream, aInputTrackID, aInputStream));
-
-    RefPtr<MediaStreamTrack> track =
-      mStream->FindPlaybackDOMTrack(aInputStream, aInputTrackID);
-    if (!track) {
-      LOG(LogLevel::Debug, ("DOMMediaStream %p Not a playback track.", mStream));
-      return;
-    }
-
-    LOG(LogLevel::Debug, ("DOMMediaStream %p Playback track; notifying stream listeners.",
-                           mStream));
-    mStream->NotifyTrackRemoved(track);
-
-    RefPtr<TrackPort> endedPort = mStream->FindPlaybackTrackPort(*track);
-    NS_ASSERTION(endedPort, "Playback track should have a TrackPort");
-    if (endedPort && IsTrackIDExplicit(endedPort->GetSourceTrackId())) {
-      // If a track connected to a locked-track input port ends, we destroy the
-      // port to allow our playback stream to finish.
-      // XXX (bug 1208316) This should not be necessary when MediaStreams don't
-      // finish but instead become inactive.
-      endedPort->DestroyInputPort();
-    }
-  }
-
   void DoNotifyFinishedTrackCreation()
   {
     MOZ_ASSERT(NS_IsMainThread());
@@ -288,21 +263,19 @@ public:
         NewRunnableMethod(mStream, &DOMMediaStream::NotifyTracksCreated));
   }
 
-  // The methods below are called on the MediaStreamGraph thread.
-
-  void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
-                                StreamTime aTrackOffset, TrackEventCommand aTrackEvents,
-                                const MediaSegment& aQueuedMedia,
-                                MediaStream* aInputStream,
-                                TrackID aInputTrackID) override
+  void DoNotifyFinished()
   {
-    if (aTrackEvents & TrackEventCommand::TRACK_EVENT_ENDED) {
-      nsCOMPtr<nsIRunnable> runnable =
-        NewRunnableMethod<RefPtr<MediaStream>, TrackID>(
-          this, &PlaybackStreamListener::DoNotifyTrackEnded, aInputStream, aInputTrackID);
-      aGraph->DispatchToMainThreadAfterStreamStateUpdate(runnable.forget());
+    MOZ_ASSERT(NS_IsMainThread());
+
+    if (!mStream) {
+      return;
     }
+
+    NS_DispatchToMainThread(NewRunnableMethod(
+      mStream, &DOMMediaStream::NotifyFinished));
   }
+
+  // The methods below are called on the MediaStreamGraph thread.
 
   void NotifyFinishedTrackCreation(MediaStreamGraph* aGraph) override
   {
@@ -311,10 +284,62 @@ public:
     aGraph->DispatchToMainThreadAfterStreamStateUpdate(runnable.forget());
   }
 
+
+  void NotifyEvent(MediaStreamGraph* aGraph,
+                   MediaStreamGraphEvent event) override
+  {
+    if (event == MediaStreamGraphEvent::EVENT_FINISHED) {
+      aGraph->DispatchToMainThreadAfterStreamStateUpdate(
+        NewRunnableMethod(this, &PlaybackStreamListener::DoNotifyFinished));
+    }
+  }
+
 private:
   // These fields may only be accessed on the main thread
   DOMMediaStream* mStream;
 };
+
+class DOMMediaStream::PlaybackTrackListener : public MediaStreamTrackConsumer
+{
+public:
+  explicit PlaybackTrackListener(DOMMediaStream* aStream) :
+    mStream(aStream) {}
+
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(PlaybackTrackListener,
+                                           MediaStreamTrackConsumer)
+
+  void NotifyEnded(MediaStreamTrack* aTrack) override
+  {
+    if (!mStream) {
+      MOZ_ASSERT(false);
+      return;
+    }
+
+    if (!aTrack) {
+      MOZ_ASSERT(false);
+      return;
+    }
+
+    MOZ_ASSERT(mStream->HasTrack(*aTrack));
+    mStream->NotifyTrackRemoved(aTrack);
+  }
+
+protected:
+  virtual ~PlaybackTrackListener() {}
+
+  RefPtr<DOMMediaStream> mStream;
+};
+
+NS_IMPL_ADDREF_INHERITED(DOMMediaStream::PlaybackTrackListener,
+                         MediaStreamTrackConsumer)
+NS_IMPL_RELEASE_INHERITED(DOMMediaStream::PlaybackTrackListener,
+                          MediaStreamTrackConsumer)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(DOMMediaStream::PlaybackTrackListener)
+NS_INTERFACE_MAP_END_INHERITING(MediaStreamTrackConsumer)
+NS_IMPL_CYCLE_COLLECTION_INHERITED(DOMMediaStream::PlaybackTrackListener,
+                                   MediaStreamTrackConsumer,
+                                   mStream)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(DOMMediaStream)
 
@@ -326,6 +351,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(DOMMediaStream,
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mTracks)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mConsumersToKeepAlive)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mTrackSourceGetter)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mPlaybackTrackListener)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPrincipal)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mVideoPrincipal)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
@@ -337,6 +363,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(DOMMediaStream,
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTracks)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConsumersToKeepAlive)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTrackSourceGetter)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPlaybackTrackListener)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPrincipal)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVideoPrincipal)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
@@ -369,7 +396,9 @@ DOMMediaStream::DOMMediaStream(nsPIDOMWindowInner* aWindow,
   : mLogicalStreamStartTime(0), mWindow(aWindow),
     mInputStream(nullptr), mOwnedStream(nullptr), mPlaybackStream(nullptr),
     mTracksPendingRemoval(0), mTrackSourceGetter(aTrackSourceGetter),
-    mTracksCreated(false), mNotifiedOfMediaStreamGraphShutdown(false)
+    mPlaybackTrackListener(MakeAndAddRef<PlaybackTrackListener>(this)),
+    mTracksCreated(false), mNotifiedOfMediaStreamGraphShutdown(false),
+    mActive(false), mSetInactiveOnFinish(false)
 {
   nsresult rv;
   nsCOMPtr<nsIUUIDGenerator> uuidgen =
@@ -407,8 +436,12 @@ DOMMediaStream::Destroy()
   for (const RefPtr<TrackPort>& info : mTracks) {
     // We must remove ourselves from each track's principal change observer list
     // before we die. CC may have cleared info->mTrack so guard against it.
-    if (info->GetTrack()) {
-      info->GetTrack()->RemovePrincipalChangeObserver(this);
+    MediaStreamTrack* track = info->GetTrack();
+    if (track) {
+      track->RemovePrincipalChangeObserver(this);
+      if (!track->Ended()) {
+        track->RemoveConsumer(mPlaybackTrackListener);
+      }
     }
   }
   if (mPlaybackPort) {
@@ -613,6 +646,9 @@ DOMMediaStream::RemoveTrack(MediaStreamTrack& aTrack)
     return;
   }
 
+  DebugOnly<bool> removed = mTracks.RemoveElement(toRemove);
+  NS_ASSERTION(removed, "If there's a track port we should be able to remove it");
+
   // If the track comes from a TRACK_ANY input port (i.e., mOwnedPort), we need
   // to block it in the port. Doing this for a locked track is still OK as it
   // will first block the track, then destroy the port. Both cause the track to
@@ -621,12 +657,8 @@ DOMMediaStream::RemoveTrack(MediaStreamTrack& aTrack)
   // cases blocking the underlying track should be avoided.
   if (!aTrack.Ended()) {
     BlockPlaybackTrack(toRemove);
+    NotifyTrackRemoved(&aTrack);
   }
-
-  DebugOnly<bool> removed = mTracks.RemoveElement(toRemove);
-  MOZ_ASSERT(removed);
-
-  NotifyTrackRemoved(&aTrack);
 
   LOG(LogLevel::Debug, ("DOMMediaStream %p Removed track %p", this, &aTrack));
 }
@@ -733,6 +765,12 @@ DOMMediaStream::CloneInternal(TrackForwardingOption aForwarding)
   return newStream.forget();
 }
 
+bool
+DOMMediaStream::Active() const
+{
+  return mActive;
+}
+
 MediaStreamTrack*
 DOMMediaStream::GetTrackById(const nsAString& aId) const
 {
@@ -790,9 +828,15 @@ DOMMediaStream::RemoveDirectListener(DirectMediaStreamListener* aListener)
 }
 
 bool
-DOMMediaStream::IsFinished()
+DOMMediaStream::IsFinished() const
 {
   return !mPlaybackStream || mPlaybackStream->IsFinished();
+}
+
+void
+DOMMediaStream::SetInactiveOnFinish()
+{
+  mSetInactiveOnFinish = true;
 }
 
 void
@@ -816,8 +860,8 @@ DOMMediaStream::InitAudioCaptureStream(nsIPrincipal* aPrincipal, MediaStreamGrap
 {
   const TrackID AUDIO_TRACK = 1;
 
-  RefPtr<BasicUnstoppableTrackSource> audioCaptureSource =
-    new BasicUnstoppableTrackSource(aPrincipal, MediaSourceEnum::AudioCapture);
+  RefPtr<BasicTrackSource> audioCaptureSource =
+    new BasicTrackSource(aPrincipal, MediaSourceEnum::AudioCapture);
 
   AudioCaptureStream* audioCaptureStream =
     static_cast<AudioCaptureStream*>(aGraph->CreateAudioCaptureStream(AUDIO_TRACK));
@@ -1183,6 +1227,45 @@ DOMMediaStream::NotifyTracksCreated()
 }
 
 void
+DOMMediaStream::NotifyFinished()
+{
+  if (!mSetInactiveOnFinish) {
+    return;
+  }
+
+  if (!mActive) {
+    // This can happen if the stream never became active.
+    return;
+  }
+
+  MOZ_ASSERT(!ContainsLiveTracks(mTracks));
+  mActive = false;
+  NotifyInactive();
+}
+
+void
+DOMMediaStream::NotifyActive()
+{
+  LOG(LogLevel::Info, ("DOMMediaStream %p NotifyActive(). ", this));
+
+  MOZ_ASSERT(mActive);
+  for (int32_t i = mTrackListeners.Length() - 1; i >= 0; --i) {
+    mTrackListeners[i]->NotifyActive();
+  }
+}
+
+void
+DOMMediaStream::NotifyInactive()
+{
+  LOG(LogLevel::Info, ("DOMMediaStream %p NotifyInactive(). ", this));
+
+  MOZ_ASSERT(!mActive);
+  for (int32_t i = mTrackListeners.Length() - 1; i >= 0; --i) {
+    mTrackListeners[i]->NotifyInactive();
+  }
+}
+
+void
 DOMMediaStream::CheckTracksAvailable()
 {
   if (!mTracksCreated) {
@@ -1242,9 +1325,20 @@ DOMMediaStream::NotifyTrackAdded(const RefPtr<MediaStreamTrack>& aTrack)
   }
 
   aTrack->AddPrincipalChangeObserver(this);
+  aTrack->AddConsumer(mPlaybackTrackListener);
 
   for (int32_t i = mTrackListeners.Length() - 1; i >= 0; --i) {
     mTrackListeners[i]->NotifyTrackAdded(aTrack);
+  }
+
+  if (mActive) {
+    return;
+  }
+
+  // Check if we became active.
+  if (ContainsLiveTracks(mTracks)) {
+    mActive = true;
+    NotifyActive();
   }
 }
 
@@ -1253,15 +1347,34 @@ DOMMediaStream::NotifyTrackRemoved(const RefPtr<MediaStreamTrack>& aTrack)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  aTrack->RemoveConsumer(mPlaybackTrackListener);
   aTrack->RemovePrincipalChangeObserver(this);
 
   for (int32_t i = mTrackListeners.Length() - 1; i >= 0; --i) {
     mTrackListeners[i]->NotifyTrackRemoved(aTrack);
+
   }
 
   // Don't call RecomputePrincipal here as the track may still exist in the
   // playback stream in the MediaStreamGraph. It will instead be called when the
   // track has been confirmed removed by the graph. See BlockPlaybackTrack().
+
+  if (!mActive) {
+    NS_ASSERTION(false, "Shouldn't remove a live track if already inactive");
+    return;
+  }
+
+  if (mSetInactiveOnFinish) {
+    // For compatibility with mozCaptureStream we in some cases do not go
+    // inactive until the playback stream finishes.
+    return;
+  }
+
+  // Check if we became inactive.
+  if (!ContainsLiveTracks(mTracks)) {
+    mActive = false;
+    NotifyInactive();
+  }
 }
 
 nsresult
@@ -1278,14 +1391,6 @@ DOMMediaStream::DispatchTrackEvent(const nsAString& aName,
     MediaStreamTrackEvent::Constructor(this, aName, init);
 
   return DispatchTrustedEvent(event);
-}
-
-void
-DOMMediaStream::CreateAndAddPlaybackStreamListener(MediaStream* aStream)
-{
-  MOZ_ASSERT(GetCameraStream(), "I'm a hack. Only DOMCameraControl may use me.");
-  mPlaybackListener = new PlaybackStreamListener(this);
-  aStream->AddListener(mPlaybackListener);
 }
 
 void

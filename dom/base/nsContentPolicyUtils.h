@@ -131,6 +131,7 @@ NS_CP_ContentTypeName(uint32_t contentType)
     CASE_RETURN( TYPE_INTERNAL_SCRIPT_PRELOAD     );
     CASE_RETURN( TYPE_INTERNAL_IMAGE              );
     CASE_RETURN( TYPE_INTERNAL_IMAGE_PRELOAD      );
+    CASE_RETURN( TYPE_INTERNAL_IMAGE_FAVICON      );
     CASE_RETURN( TYPE_INTERNAL_STYLESHEET         );
     CASE_RETURN( TYPE_INTERNAL_STYLESHEET_PRELOAD );
    default:
@@ -180,7 +181,7 @@ NS_CP_ContentTypeName(uint32_t contentType)
           nsresult rv = secMan->IsSystemPrincipal(originPrincipal,            \
                                                   &isSystem);                 \
           NS_ENSURE_SUCCESS(rv, rv);                                          \
-          if (isSystem) {                                                     \
+          if (isSystem && contentType != nsIContentPolicy::TYPE_DOCUMENT) {   \
               *decision = nsIContentPolicy::ACCEPT;                           \
               nsCOMPtr<nsINode> n = do_QueryInterface(context);               \
               if (!n) {                                                       \

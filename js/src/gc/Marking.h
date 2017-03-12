@@ -184,7 +184,7 @@ class GCMarker : public JSTracer
 
     // Calls traverse on target after making additional assertions.
     template <typename S, typename T> void traverseEdge(S source, T* target);
-    template <typename S, typename T> void traverseEdge(S source, T target);
+    template <typename S, typename T> void traverseEdge(S source, const T& target);
 
     // Notes a weak graph edge for later sweeping.
     template <typename T> void noteWeakEdge(T* edge);
@@ -372,13 +372,19 @@ PushArena(GCMarker* gcmarker, Arena* arena);
 
 /*** Liveness ***/
 
+// Report whether a thing has been marked.  Things which are in zones that are
+// not currently being collected or are owned by another runtime are always
+// reported as being marked.
 template <typename T>
 bool
-IsMarkedUnbarriered(T* thingp);
+IsMarkedUnbarriered(JSRuntime* rt, T* thingp);
 
+// Report whether a thing has been marked.  Things which are in zones that are
+// not currently being collected or are owned by another runtime are always
+// reported as being marked.
 template <typename T>
 bool
-IsMarked(WriteBarrieredBase<T>* thingp);
+IsMarked(JSRuntime* rt, WriteBarrieredBase<T>* thingp);
 
 template <typename T>
 bool

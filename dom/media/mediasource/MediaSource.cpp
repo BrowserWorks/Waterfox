@@ -10,6 +10,7 @@
 #include "DecoderTraits.h"
 #include "Benchmark.h"
 #include "DecoderDoctorDiagnostics.h"
+#include "MediaContentType.h"
 #include "MediaResult.h"
 #include "MediaSourceUtils.h"
 #include "SourceBuffer.h"
@@ -20,7 +21,6 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/mozalloc.h"
-#include "nsContentTypeParser.h"
 #include "nsDebug.h"
 #include "nsError.h"
 #include "nsIRunnable.h"
@@ -30,8 +30,12 @@
 #include "nsThreadUtils.h"
 #include "mozilla/Logging.h"
 #include "nsServiceManagerUtils.h"
-#include "gfxPlatform.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/Sprintf.h"
+
+#ifdef MOZ_WIDGET_ANDROID
+#include "AndroidBridge.h"
+#endif
 
 struct JSContext;
 class JSObject;
@@ -56,14 +60,6 @@ static const unsigned int MAX_SOURCE_BUFFERS = 16;
 
 namespace mozilla {
 
-static const char* const gMediaSourceTypes[6] = {
-  "video/mp4",
-  "audio/mp4",
-  "video/webm",
-  "audio/webm",
-  nullptr
-};
-
 // Returns true if we should enable MSE webm regardless of preferences.
 // 1. If MP4/H264 isn't supported:
 //   * Windows XP
@@ -78,8 +74,13 @@ IsWebMForced(DecoderDoctorDiagnostics* aDiagnostics)
   bool mp4supported =
     DecoderTraits::IsMP4TypeAndEnabled(NS_LITERAL_CSTRING("video/mp4"),
                                        aDiagnostics);
-  bool hwsupported = gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding();
+  bool hwsupported = gfx::gfxVars::CanUseHardwareVideoDecoding();
+#ifdef MOZ_WIDGET_ANDROID
+  return !mp4supported || !hwsupported || VP9Benchmark::IsVP9DecodeFast() ||
+         java::HardwareCodecCapabilityUtils::HasHWVP9();
+#else
   return !mp4supported || !hwsupported || VP9Benchmark::IsVP9DecodeFast();
+#endif
 }
 
 namespace dom {
@@ -91,46 +92,39 @@ MediaSource::IsTypeSupported(const nsAString& aType, DecoderDoctorDiagnostics* a
   if (aType.IsEmpty()) {
     return NS_ERROR_DOM_TYPE_ERR;
   }
-  nsContentTypeParser parser(aType);
-  nsAutoString mimeType;
-  nsresult rv = parser.GetType(mimeType);
-  if (NS_FAILED(rv)) {
+
+  MediaContentType contentType{aType};
+  if (!contentType.IsValid()) {
+    return NS_ERROR_DOM_TYPE_ERR;
+  }
+
+  if (DecoderTraits::CanHandleContentType(contentType, aDiagnostics)
+      == CANPLAY_NO) {
     return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
   }
-  NS_ConvertUTF16toUTF8 mimeTypeUTF8(mimeType);
 
-  nsAutoString codecs;
-  bool hasCodecs = NS_SUCCEEDED(parser.GetParameter("codecs", codecs));
-
-  for (uint32_t i = 0; gMediaSourceTypes[i]; ++i) {
-    if (mimeType.EqualsASCII(gMediaSourceTypes[i])) {
-      if (DecoderTraits::IsMP4TypeAndEnabled(mimeTypeUTF8, aDiagnostics)) {
-        if (!Preferences::GetBool("media.mediasource.mp4.enabled", false)) {
-          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-        }
-        if (hasCodecs &&
-            DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
-                                               codecs,
-                                               aDiagnostics) == CANPLAY_NO) {
-          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-        }
-        return NS_OK;
-      } else if (DecoderTraits::IsWebMTypeAndEnabled(mimeTypeUTF8)) {
-        if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
-              (Preferences::GetBool("media.mediasource.webm.audio.enabled", true) &&
-               DecoderTraits::IsWebMAudioType(mimeTypeUTF8)) ||
-              IsWebMForced(aDiagnostics))) {
-          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-        }
-        if (hasCodecs &&
-            DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
-                                               codecs,
-                                               aDiagnostics) == CANPLAY_NO) {
-          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-        }
-        return NS_OK;
-      }
+  // Now we know that this media type could be played.
+  // MediaSource imposes extra restrictions, and some prefs.
+  const nsACString& mimeType = contentType.GetMIMEType();
+  if (mimeType.EqualsASCII("video/mp4") || mimeType.EqualsASCII("audio/mp4")) {
+    if (!Preferences::GetBool("media.mediasource.mp4.enabled", false)) {
+      return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
     }
+    return NS_OK;
+  }
+  if (mimeType.EqualsASCII("video/webm")) {
+    if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
+          IsWebMForced(aDiagnostics))) {
+      return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+    }
+    return NS_OK;
+  }
+  if (mimeType.EqualsASCII("audio/webm")) {
+    if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
+          Preferences::GetBool("media.mediasource.webm.audio.enabled", true))) {
+      return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+    }
+    return NS_OK;
   }
 
   return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
@@ -243,14 +237,13 @@ MediaSource::AddSourceBuffer(const nsAString& aType, ErrorResult& aRv)
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return nullptr;
   }
-  nsContentTypeParser parser(aType);
-  nsAutoString mimeType;
-  rv = parser.GetType(mimeType);
-  if (NS_FAILED(rv)) {
+  MediaContentType contentType{aType};
+  if (!contentType.IsValid()) {
     aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
     return nullptr;
   }
-  RefPtr<SourceBuffer> sourceBuffer = new SourceBuffer(this, NS_ConvertUTF16toUTF8(mimeType));
+  const nsACString& mimeType = contentType.GetMIMEType();
+  RefPtr<SourceBuffer> sourceBuffer = new SourceBuffer(this, mimeType);
   if (!sourceBuffer) {
     aRv.Throw(NS_ERROR_FAILURE); // XXX need a better error here
     return nullptr;

@@ -28,6 +28,7 @@ from mozbuild.frontend.data import (
     HostSources,
     IPDLFile,
     JARManifest,
+    LinkageMultipleRustLibrariesError,
     LocalInclude,
     Program,
     RustLibrary,
@@ -456,6 +457,7 @@ class TestEmitterBasic(unittest.TestCase):
         paths = sorted([v[0] for v in o.installs.values()])
         self.assertEqual(paths, expected)
 
+    @unittest.skip('Bug 1304316 - Items in the second set but not the first')
     def test_test_manifest_shared_support_files(self):
         """Support files starting with '!' are given separate treatment, so their
         installation can be resolved when running tests.
@@ -832,8 +834,9 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('sources')
         objs = self.read_topsrcdir(reader)
 
-        # The last object is a Linkable, ignore it
-        objs = objs[:-1]
+        # The last object is a Linkable.
+        linkable = objs.pop()
+        self.assertTrue(linkable.cxx_link)
         self.assertEqual(len(objs), 6)
         for o in objs:
             self.assertIsInstance(o, Sources)
@@ -855,13 +858,37 @@ class TestEmitterBasic(unittest.TestCase):
                 sources.files,
                 [mozpath.join(reader.config.topsrcdir, f) for f in files])
 
+    def test_sources_just_c(self):
+        """Test that a linkable with no C++ sources doesn't have cxx_link set."""
+        reader = self.reader('sources-just-c')
+        objs = self.read_topsrcdir(reader)
+
+        # The last object is a Linkable.
+        linkable = objs.pop()
+        self.assertFalse(linkable.cxx_link)
+
+    def test_linkables_cxx_link(self):
+        """Test that linkables transitively set cxx_link properly."""
+        reader = self.reader('test-linkables-cxx-link')
+        got_results = 0
+        for obj in self.read_topsrcdir(reader):
+            if isinstance(obj, SharedLibrary):
+                if obj.basename == 'cxx_shared':
+                    self.assertTrue(obj.cxx_link)
+                    got_results += 1
+                elif obj.basename == 'just_c_shared':
+                    self.assertFalse(obj.cxx_link)
+                    got_results += 1
+        self.assertEqual(got_results, 2)
+
     def test_generated_sources(self):
         """Test that GENERATED_SOURCES works properly."""
         reader = self.reader('generated-sources')
         objs = self.read_topsrcdir(reader)
 
-        # The last object is a Linkable, ignore it
-        objs = objs[:-1]
+        # The last object is a Linkable.
+        linkable = objs.pop()
+        self.assertTrue(linkable.cxx_link)
         self.assertEqual(len(objs), 6)
 
         generated_sources = [o for o in objs if isinstance(o, GeneratedSources)]
@@ -889,8 +916,9 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('host-sources')
         objs = self.read_topsrcdir(reader)
 
-        # The last object is a Linkable, ignore it
-        objs = objs[:-1]
+        # The last object is a Linkable
+        linkable = objs.pop()
+        self.assertTrue(linkable.cxx_link)
         self.assertEqual(len(objs), 3)
         for o in objs:
             self.assertIsInstance(o, HostSources)
@@ -1014,11 +1042,25 @@ class TestEmitterBasic(unittest.TestCase):
              'Cargo.toml for.* has no \\[lib\\] section'):
             self.read_topsrcdir(reader)
 
+    def test_rust_library_no_profile_section(self):
+        '''Test that a RustLibrary Cargo.toml with no [profile] section fails.'''
+        reader = self.reader('rust-library-no-profile-section')
+        with self.assertRaisesRegexp(SandboxValidationError,
+             'Cargo.toml for.* has no \\[profile\\.dev\\] section'):
+            self.read_topsrcdir(reader)
+
     def test_rust_library_invalid_crate_type(self):
         '''Test that a RustLibrary Cargo.toml has a permitted crate-type.'''
         reader = self.reader('rust-library-invalid-crate-type')
         with self.assertRaisesRegexp(SandboxValidationError,
              'crate-type.* is not permitted'):
+            self.read_topsrcdir(reader)
+
+    def test_rust_library_non_abort_panic(self):
+        '''Test that a RustLibrary Cargo.toml has `panic = "abort" set'''
+        reader = self.reader('rust-library-non-abort-panic')
+        with self.assertRaisesRegexp(SandboxValidationError,
+             'does not specify `panic = "abort"`'):
             self.read_topsrcdir(reader)
 
     def test_rust_library_dash_folding(self):
@@ -1033,6 +1075,14 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertRegexpMatches(lib.lib_name, "random_crate")
         self.assertRegexpMatches(lib.import_name, "random_crate")
         self.assertRegexpMatches(lib.basename, "random-crate")
+
+    def test_multiple_rust_libraries(self):
+        '''Test that linking multiple Rust libraries throws an error'''
+        reader = self.reader('multiple-rust-libraries',
+                             extra_substs=dict(RUST_TARGET='i686-pc-windows-msvc'))
+        with self.assertRaisesRegexp(LinkageMultipleRustLibrariesError,
+             'Cannot link multiple Rust libraries'):
+            self.read_topsrcdir(reader)
 
     def test_crate_dependency_path_resolution(self):
         '''Test recursive dependencies resolve with the correct paths.'''
@@ -1087,6 +1137,36 @@ class TestEmitterBasic(unittest.TestCase):
             for f in files:
                 self.assertEqual(str(f), '!libfoo.so')
                 self.assertEqual(path, 'foo/bar')
+
+    def test_symbols_file(self):
+        """Test that SYMBOLS_FILE works"""
+        reader = self.reader('test-symbols-file')
+        genfile, shlib = self.read_topsrcdir(reader)
+        self.assertIsInstance(genfile, GeneratedFile)
+        self.assertIsInstance(shlib, SharedLibrary)
+        # This looks weird but MockConfig sets DLL_{PREFIX,SUFFIX} and
+        # the reader method in this class sets OS_TARGET=WINNT.
+        self.assertEqual(shlib.symbols_file, 'libfoo.so.def')
+
+    def test_symbols_file_objdir(self):
+        """Test that a SYMBOLS_FILE in the objdir works"""
+        reader = self.reader('test-symbols-file-objdir')
+        genfile, shlib = self.read_topsrcdir(reader)
+        self.assertIsInstance(genfile, GeneratedFile)
+        self.assertEqual(genfile.script,
+                         mozpath.join(reader.config.topsrcdir, 'foo.py'))
+        self.assertIsInstance(shlib, SharedLibrary)
+        self.assertEqual(shlib.symbols_file, 'foo.symbols')
+
+    def test_symbols_file_objdir_missing_generated(self):
+        """Test that a SYMBOLS_FILE in the objdir that's missing
+        from GENERATED_FILES is an error.
+        """
+        reader = self.reader('test-symbols-file-objdir-missing-generated')
+        with self.assertRaisesRegexp(SandboxValidationError,
+             'Objdir file specified in SYMBOLS_FILE not in GENERATED_FILES:'):
+            self.read_topsrcdir(reader)
+
 
 if __name__ == '__main__':
     main()

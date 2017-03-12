@@ -3,30 +3,29 @@
 // adding spurious edges to the GC graph.
 
 load(libdir + 'wasm.js');
-load(libdir + 'asserts.js');
 
 const Module = WebAssembly.Module;
 const Instance = WebAssembly.Instance;
 const Table = WebAssembly.Table;
+const RuntimeError = WebAssembly.RuntimeError;
 
 var caller = `(type $v2i (func (result i32))) (func $call (param $i i32) (result i32) (call_indirect $v2i (get_local $i))) (export "call" $call)`
-var callee = i => `(func $f${i} (type $v2i) (result i32) (i32.const ${i}))`;
+var callee = i => `(func $f${i} (type $v2i) (i32.const ${i}))`;
 
 // A table should not hold exported functions alive and exported functions
 // should not hold their originating table alive. Live exported functions should
 // hold instances alive and instances hold imported tables alive. Nothing
 // should hold the export object alive.
 resetFinalizeCount();
-var i = evalText(`(module (table (resizable 2)) (export "tbl" table) (elem (i32.const 0) $f0) ${callee(0)} ${caller})`);
+var i = wasmEvalText(`(module (table 2 anyfunc) (export "tbl" table) (elem (i32.const 0) $f0) ${callee(0)} ${caller})`);
 var e = i.exports;
 var t = e.tbl;
 var f = t.get(0);
 assertEq(f(), e.call(0));
-assertErrorMessage(() => e.call(1), Error, /indirect call to null/);
-assertErrorMessage(() => e.call(2), Error, /out-of-range/);
+assertErrorMessage(() => e.call(1), RuntimeError, /indirect call to null/);
+assertErrorMessage(() => e.call(2), RuntimeError, /index out of bounds/);
 assertEq(finalizeCount(), 0);
 i.edge = makeFinalizeObserver();
-e.edge = makeFinalizeObserver();
 t.edge = makeFinalizeObserver();
 f.edge = makeFinalizeObserver();
 gc();
@@ -41,26 +40,25 @@ assertEq(finalizeCount(), 1);
 i.exports = null;
 e = null;
 gc();
-assertEq(finalizeCount(), 2);
+assertEq(finalizeCount(), 1);
 t = null;
 gc();
-assertEq(finalizeCount(), 2);
+assertEq(finalizeCount(), 1);
 i = null;
 gc();
-assertEq(finalizeCount(), 2);
+assertEq(finalizeCount(), 1);
 assertEq(f(), 0);
 f = null;
 gc();
-assertEq(finalizeCount(), 5);
+assertEq(finalizeCount(), 4);
 
 // A table should hold the instance of any of its elements alive.
 resetFinalizeCount();
-var i = evalText(`(module (table (resizable 1)) (export "tbl" table) (elem (i32.const 0) $f0) ${callee(0)} ${caller})`);
+var i = wasmEvalText(`(module (table 1 anyfunc) (export "tbl" table) (elem (i32.const 0) $f0) ${callee(0)} ${caller})`);
 var e = i.exports;
 var t = e.tbl;
 var f = t.get(0);
 i.edge = makeFinalizeObserver();
-e.edge = makeFinalizeObserver();
 t.edge = makeFinalizeObserver();
 f.edge = makeFinalizeObserver();
 gc();
@@ -68,41 +66,40 @@ assertEq(finalizeCount(), 0);
 i.exports = null;
 e = null;
 gc();
-assertEq(finalizeCount(), 1);
+assertEq(finalizeCount(), 0);
 f = null;
 gc();
-assertEq(finalizeCount(), 2);
+assertEq(finalizeCount(), 1);
 i = null;
 gc();
-assertEq(finalizeCount(), 2);
+assertEq(finalizeCount(), 1);
 t = null;
 gc();
-assertEq(finalizeCount(), 4);
+assertEq(finalizeCount(), 3);
 
 // Null elements shouldn't keep anything alive.
 resetFinalizeCount();
-var i = evalText(`(module (table (resizable 2)) (export "tbl" table) ${caller})`);
+var i = wasmEvalText(`(module (table 2 anyfunc) (export "tbl" table) ${caller})`);
 var e = i.exports;
 var t = e.tbl;
 i.edge = makeFinalizeObserver();
-e.edge = makeFinalizeObserver();
 t.edge = makeFinalizeObserver();
 gc();
 assertEq(finalizeCount(), 0);
 i.exports = null;
 e = null;
 gc();
-assertEq(finalizeCount(), 1);
+assertEq(finalizeCount(), 0);
 i = null;
 gc();
-assertEq(finalizeCount(), 2);
+assertEq(finalizeCount(), 1);
 t = null;
 gc();
-assertEq(finalizeCount(), 3);
+assertEq(finalizeCount(), 2);
 
 // Before initialization, a table is not bound to any instance.
 resetFinalizeCount();
-var i = evalText(`(module (func $f0 (result i32) (i32.const 0)) (export "f0" $f0))`);
+var i = wasmEvalText(`(module (func $f0 (result i32) (i32.const 0)) (export "f0" $f0))`);
 var t = new Table({initial:4, element:"anyfunc"});
 i.edge = makeFinalizeObserver();
 t.edge = makeFinalizeObserver();
@@ -118,7 +115,7 @@ assertEq(finalizeCount(), 2);
 // When a Table is created (uninitialized) and then first assigned, it keeps the
 // first element's Instance alive (as above).
 resetFinalizeCount();
-var i = evalText(`(module (func $f (result i32) (i32.const 42)) (export "f" $f))`);
+var i = wasmEvalText(`(module (func $f (result i32) (i32.const 42)) (export "f" $f))`);
 var f = i.exports.f;
 var t = new Table({initial:1, element:"anyfunc"});
 i.edge = makeFinalizeObserver();
@@ -151,8 +148,8 @@ assertEq(finalizeCount(), 4);
 // Once all of an instance's elements in a Table have been clobbered, the
 // Instance should not be reachable.
 resetFinalizeCount();
-var i1 = evalText(`(module (func $f1 (result i32) (i32.const 13)) (export "f1" $f1))`);
-var i2 = evalText(`(module (func $f2 (result i32) (i32.const 42)) (export "f2" $f2))`);
+var i1 = wasmEvalText(`(module (func $f1 (result i32) (i32.const 13)) (export "f1" $f1))`);
+var i2 = wasmEvalText(`(module (func $f2 (result i32) (i32.const 42)) (export "f2" $f2))`);
 var f1 = i1.exports.f1;
 var f2 = i2.exports.f2;
 var t = new Table({initial:2, element:"anyfunc"});
@@ -193,7 +190,7 @@ function runTest() {
     assertEq(finalizeCount(), 0);
     return 100;
 }
-var i = evalText(
+var i = wasmEvalText(
     `(module
         (import $imp "a" "b" (result i32))
         (func $f (param i32) (result i32) (call $imp))
@@ -203,8 +200,8 @@ var i = evalText(
 );
 i.edge = makeFinalizeObserver();
 tbl.set(0, i.exports.f);
-var m = new Module(textToBinary(`(module
-    (import "a" "b" (table ${N}))
+var m = new Module(wasmTextToBinary(`(module
+    (import "a" "b" (table ${N} anyfunc))
     (type $i2i (func (param i32) (result i32)))
     (func $f (param $i i32) (result i32)
         (set_local $i (i32.sub (get_local $i) (i32.const 1)))

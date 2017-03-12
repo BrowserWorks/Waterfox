@@ -9,12 +9,15 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os
 import json
 import logging
+
+import time
 import yaml
 
 from .generator import TaskGraphGenerator
 from .create import create_tasks
 from .parameters import Parameters
 from .target_tasks import get_method
+from .taskgraph import TaskGraph
 
 from taskgraph.util.templates import Templates
 from taskgraph.util.time import (
@@ -40,6 +43,11 @@ PER_PROJECT_PARAMETERS = {
 
     'ash': {
         'target_tasks_method': 'ash_tasks',
+        'optimize_target_tasks': True,
+    },
+
+    'cedar': {
+        'target_tasks_method': 'cedar_tasks',
         'optimize_target_tasks': True,
     },
 
@@ -80,7 +88,11 @@ def taskgraph_decision(options):
     write_artifact('action.yml', get_action_yml(parameters))
 
     # write out the full graph for reference
-    write_artifact('full-task-graph.json', tgg.full_task_graph.to_json())
+    full_task_json = tgg.full_task_graph.to_json()
+    write_artifact('full-task-graph.json', full_task_json)
+
+    # this is just a test to check whether the from_json() function is working
+    _, _ = TaskGraph.from_json(full_task_json)
 
     # write out the target task set to allow reproducing this as input
     write_artifact('target-tasks.json', tgg.target_task_set.tasks.keys())
@@ -91,7 +103,7 @@ def taskgraph_decision(options):
     write_artifact('label-to-taskid.json', tgg.label_to_taskid)
 
     # actually create the graph
-    create_tasks(tgg.optimized_task_graph, tgg.label_to_taskid)
+    create_tasks(tgg.optimized_task_graph, tgg.label_to_taskid, parameters)
 
 
 def get_decision_parameters(options):
@@ -119,6 +131,12 @@ def get_decision_parameters(options):
     # case, fake it
     if '@' not in parameters['owner']:
         parameters['owner'] += '@noreply.mozilla.org'
+
+    # use the pushdate as build_date if given, else use current time
+    parameters['build_date'] = parameters['pushdate'] or int(time.time())
+    # moz_build_date is the build identifier based on build_date
+    parameters['moz_build_date'] = time.strftime("%Y%m%d%H%M%S",
+                                                 time.gmtime(parameters['build_date']))
 
     project = parameters['project']
     try:

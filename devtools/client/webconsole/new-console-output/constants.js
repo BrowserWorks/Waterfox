@@ -6,14 +6,33 @@
 "use strict";
 
 const actionTypes = {
+  BATCH_ACTIONS: "BATCH_ACTIONS",
   MESSAGE_ADD: "MESSAGE_ADD",
   MESSAGES_CLEAR: "MESSAGES_CLEAR",
   MESSAGE_OPEN: "MESSAGE_OPEN",
   MESSAGE_CLOSE: "MESSAGE_CLOSE",
+  MESSAGE_TABLE_RECEIVE: "MESSAGE_TABLE_RECEIVE",
   FILTER_TOGGLE: "FILTER_TOGGLE",
   FILTER_TEXT_SET: "FILTER_TEXT_SET",
   FILTERS_CLEAR: "FILTERS_CLEAR",
   FILTER_BAR_TOGGLE: "FILTER_BAR_TOGGLE",
+};
+
+const prefs = {
+  PREFS: {
+    FILTER: {
+      ERROR: "devtools.webconsole.filter.error",
+      WARN: "devtools.webconsole.filter.warn",
+      INFO: "devtools.webconsole.filter.info",
+      LOG: "devtools.webconsole.filter.log",
+      DEBUG: "devtools.webconsole.filter.debug",
+      NET: "devtools.webconsole.filter.net",
+      NETXHR: "devtools.webconsole.filter.netxhr",
+    },
+    UI: {
+      FILTER_BAR: "devtools.webconsole.ui.filterbar"
+    }
+  }
 };
 
 const chromeRDPEnums = {
@@ -59,4 +78,4 @@ const chromeRDPEnums = {
 };
 
 // Combine into a single constants object
-module.exports = Object.assign({}, actionTypes, chromeRDPEnums);
+module.exports = Object.assign({}, actionTypes, prefs, chromeRDPEnums);

@@ -53,6 +53,7 @@
 const {Cc, Ci, Cu} = require("chrome");
 const Services = require("Services");
 const protocol = require("devtools/shared/protocol");
+const {LayoutActor} = require("devtools/server/actors/layout");
 const {LongStringActor} = require("devtools/server/actors/string");
 const promise = require("promise");
 const {Task} = require("devtools/shared/task");
@@ -73,7 +74,7 @@ const {
   isShadowAnonymous,
   getFrameElement
 } = require("devtools/shared/layout/utils");
-const {getLayoutChangesObserver, releaseLayoutChangesObserver} = require("devtools/server/actors/layout");
+const {getLayoutChangesObserver, releaseLayoutChangesObserver} = require("devtools/server/actors/reflow");
 const nodeFilterConstants = require("devtools/shared/dom-node-filter-constants");
 
 const {EventParsers} = require("devtools/server/event-parsers");
@@ -190,6 +191,11 @@ exports.setInspectingNode = function (val) {
  *         Properly cased version of the node tag name
  */
 const getNodeDisplayName = function (rawNode) {
+  if (rawNode.nodeName && !rawNode.localName) {
+    // The localName & prefix APIs have been moved from the Node interface to the Element
+    // interface. Use Node.nodeName as a fallback.
+    return rawNode.nodeName;
+  }
   return (rawNode.prefix ? rawNode.prefix + ":" : "") + rawNode.localName;
 };
 exports.getNodeDisplayName = getNodeDisplayName;
@@ -613,6 +619,9 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
    * Get a unique selector string for this node.
    */
   getUniqueSelector: function () {
+    if (Cu.isDeadWrapper(this.rawNode)) {
+      return "";
+    }
     return CssLogic.findCssSelector(this.rawNode);
   },
 
@@ -907,6 +916,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
 
       this.onMutations = null;
 
+      this.layoutActor = null;
       this.tabActor = null;
 
       events.emit(this, "destroyed");
@@ -1744,6 +1754,14 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
       return;
     }
 
+    // There can be only one node locked per pseudo, so dismiss all existing
+    // ones
+    for (let locked of this._activePseudoClassLocks) {
+      if (DOMUtils.hasPseudoClassLock(locked.rawNode, pseudo)) {
+        this._removePseudoClassLock(locked, pseudo);
+      }
+    }
+
     this._addPseudoClassLock(node, pseudo);
 
     if (!options.parents) {
@@ -1827,6 +1845,15 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     }
 
     this._removePseudoClassLock(node, pseudo);
+
+    // Remove pseudo class for children as we don't want to allow
+    // turning it on for some childs without setting it on some parents
+    for (let locked of this._activePseudoClassLocks) {
+      if (node.rawNode.contains(locked.rawNode) &&
+          DOMUtils.hasPseudoClassLock(locked.rawNode, pseudo)) {
+        this._removePseudoClassLock(locked, pseudo);
+      }
+    }
 
     if (!options.parents) {
       return;
@@ -2349,7 +2376,13 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
   },
 
   onFrameLoad: function ({ window, isTopLevel }) {
-    if (!this.rootDoc && isTopLevel) {
+    if (isTopLevel) {
+      // If we initialize the inspector while the document is loading,
+      // we may already have a root document set in the constructor.
+      if (this.rootDoc && !Cu.isDeadWrapper(this.rootDoc) &&
+          this.rootDoc.defaultView) {
+        this.onFrameUnload({ window: this.rootDoc.defaultView });
+      }
       this.rootDoc = window.document;
       this.rootNode = this.document();
       this.queueMutation({
@@ -2565,6 +2598,20 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     }
 
     return this.attachElement(obj);
+  },
+
+  /**
+   * Returns an instance of the LayoutActor that is used to retrieve CSS layout-related
+   * information.
+   *
+   * @return {LayoutActor}
+   */
+  getLayoutInspector: function () {
+    if (!this.layoutActor) {
+      this.layoutActor = new LayoutActor(this.conn, this.tabActor, this);
+    }
+
+    return this.layoutActor;
   },
 });
 
@@ -2958,10 +3005,11 @@ function standardTreeWalkerFilter(node) {
     return nodeFilterConstants.FILTER_ACCEPT;
   }
 
-  // Ignore empty whitespace text nodes.
-  if (node.nodeType == Ci.nsIDOMNode.TEXT_NODE &&
-      !/[^\s]/.exec(node.nodeValue)) {
-    return nodeFilterConstants.FILTER_SKIP;
+  // Ignore empty whitespace text nodes that do not impact the layout.
+  if (isWhitespaceTextNode(node)) {
+    return nodeHasSize(node)
+           ? nodeFilterConstants.FILTER_ACCEPT
+           : nodeFilterConstants.FILTER_SKIP;
   }
 
   // Ignore all native and XBL anonymous content inside a non-XUL document
@@ -2982,12 +3030,36 @@ function standardTreeWalkerFilter(node) {
  * it also includes all anonymous content (like internal form controls).
  */
 function allAnonymousContentTreeWalkerFilter(node) {
-  // Ignore empty whitespace text nodes.
-  if (node.nodeType == Ci.nsIDOMNode.TEXT_NODE &&
-      !/[^\s]/.exec(node.nodeValue)) {
-    return nodeFilterConstants.FILTER_SKIP;
+  // Ignore empty whitespace text nodes that do not impact the layout.
+  if (isWhitespaceTextNode(node)) {
+    return nodeHasSize(node)
+           ? nodeFilterConstants.FILTER_ACCEPT
+           : nodeFilterConstants.FILTER_SKIP;
   }
   return nodeFilterConstants.FILTER_ACCEPT;
+}
+
+/**
+ * Is the given node a text node composed of whitespace only?
+ * @param {DOMNode} node
+ * @return {Boolean}
+ */
+function isWhitespaceTextNode(node) {
+  return node.nodeType == Ci.nsIDOMNode.TEXT_NODE && !/[^\s]/.exec(node.nodeValue);
+}
+
+/**
+ * Does the given node have non-0 width and height?
+ * @param {DOMNode} node
+ * @return {Boolean}
+ */
+function nodeHasSize(node) {
+  if (!node.getBoxQuads) {
+    return false;
+  }
+
+  let quads = node.getBoxQuads();
+  return quads.length && quads.some(quad => quad.bounds.width && quad.bounds.height);
 }
 
 /**

@@ -8,10 +8,10 @@
 <script type="application/javascript" src="chrome://browser/content/places/browserPlacesViews.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser.js"/>
 <script type="application/javascript" src="chrome://browser/content/customizableui/panelUI.js"/>
-<script type="application/javascript" src="chrome://global/content/inlineSpellCheckUI.js"/>
 <script type="application/javascript" src="chrome://global/content/viewSourceUtils.js"/>
 
 <script type="application/javascript" src="chrome://browser/content/browser-addons.js"/>
+<script type="application/javascript" src="chrome://browser/content/browser-captivePortal.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-ctrlTab.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-customization.js"/>
 <script type="application/javascript" src="chrome://browser/content/browser-devedition.js"/>

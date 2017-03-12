@@ -205,8 +205,17 @@ var PrintUtils = {
       // collapse the browser here -- it will be shown in
       // enterPrintPreview; this forces a reflow which fixes display
       // issues in bug 267422.
+      // We use the print preview browser as the source browser to avoid
+      // re-initializing print preview with a document that might now have changed.
       this._sourceBrowser = this._listener.getPrintPreviewBrowser();
       this._sourceBrowser.collapsed = true;
+
+      // If the user transits too quickly within preview and we have a pending
+      // progress dialog, we will close it before opening a new one.
+      if (this._webProgressPP && this._webProgressPP.value) {
+        this._webProgressPP.value.onStateChange(null, null,
+          Components.interfaces.nsIWebProgressListener.STATE_STOP, 0);
+      }
     }
 
     this._webProgressPP = {};
@@ -293,9 +302,7 @@ var PrintUtils = {
     return document.getElementById("print-preview-toolbar") != null;
   },
 
-  ////////////////////////////////////////////////////
-  // "private" methods and members. Don't use them. //
-  ///////////////////////////////////////////////////
+  // "private" methods and members. Don't use them.
 
   _listener: null,
   _closeHandlerPP: null,
@@ -405,7 +412,6 @@ var PrintUtils = {
                                          data.maxSelfProgress,
                                          data.curTotalProgress,
                                          data.maxTotalProgress);
-        break;
       }
 
       case "Printing:Preview:StateChange": {
@@ -423,7 +429,6 @@ var PrintUtils = {
         return listener.onStateChange(null, null,
                                       data.stateFlags,
                                       data.status);
-        break;
       }
     }
     return undefined;
@@ -531,15 +536,15 @@ var PrintUtils = {
         // the original page. After we have parsed it, content will tell parent
         // that the document is ready for print previewing.
         spMM.sendAsyncMessage("Printing:Preview:ParseDocument", {
-          URL: this._listener.getSourceBrowser().currentURI.spec,
-          windowID: this._listener.getSourceBrowser().outerWindowID,
+          URL: this._originalURL,
+          windowID: this._sourceBrowser.outerWindowID,
         });
 
         // Here we log telemetry data for when the user enters simplify mode.
         this.logTelemetry("PRINT_PREVIEW_SIMPLIFY_PAGE_OPENED_COUNT");
       }
     } else {
-      sendEnterPreviewMessage(this._listener.getSourceBrowser(), false);
+      sendEnterPreviewMessage(this._sourceBrowser, false);
     }
 
     if (this._webProgressPP.value) {

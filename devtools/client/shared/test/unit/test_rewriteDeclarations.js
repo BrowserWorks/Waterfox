@@ -454,6 +454,25 @@ const TEST_DATA = [
                   index: 0, enabled: false},
     expected: "/*! content: '*\\/'; */"
   },
+
+  {
+    desc: "delete disabled property",
+    input: "\n  a:b;\n  /* color:#f0c; */\n  e:f;",
+    instruction: {type: "remove", name: "color", index: 1},
+    expected: "\n  a:b;\n  e:f;",
+  },
+  {
+    desc: "delete heuristic-disabled property",
+    input: "\n  a:b;\n  /*! c:d; */\n  e:f;",
+    instruction: {type: "remove", name: "c", index: 1},
+    expected: "\n  a:b;\n  e:f;",
+  },
+  {
+    desc: "delete disabled property leaving other disabled property",
+    input: "\n  a:b;\n  /* color:#f0c; background-color: seagreen; */\n  e:f;",
+    instruction: {type: "remove", name: "color", index: 1},
+    expected: "\n  a:b;\n   /* background-color: seagreen; */\n  e:f;",
+  },
 ];
 
 function rewriteDeclarations(inputString, instruction, defaultIndentation) {
@@ -494,9 +513,7 @@ function rewriteDeclarations(inputString, instruction, defaultIndentation) {
 }
 
 function run_test() {
-  let i = 0;
   for (let test of TEST_DATA) {
-    ++i;
     let {changed, text} = rewriteDeclarations(test.input, test.instruction,
                                               "\t");
     equal(text, test.expected, "output for " + test.desc);

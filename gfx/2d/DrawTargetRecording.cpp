@@ -374,10 +374,7 @@ void RecordingFontUserDataDestroyFunc(void *aUserData)
   RecordingFontUserData *userData =
     static_cast<RecordingFontUserData*>(aUserData);
 
-  // TODO support font in b2g recordings
-#ifndef MOZ_WIDGET_GONK
   userData->recorder->RecordEvent(RecordedScaledFontDestruction(userData->refPtr));
-#endif
 
   delete userData;
 }
@@ -392,8 +389,6 @@ DrawTargetRecording::FillGlyphs(ScaledFont *aFont,
   EnsurePatternDependenciesStored(aPattern);
 
   if (!aFont->GetUserData(reinterpret_cast<UserDataKey*>(mRecorder.get()))) {
-  // TODO support font in b2g recordings
-#ifndef MOZ_WIDGET_GONK
     RecordedFontData fontData(aFont);
     RecordedFontDetails fontDetails;
     if (fontData.GetFontDetails(fontDetails)) {
@@ -414,7 +409,6 @@ DrawTargetRecording::FillGlyphs(ScaledFont *aFont,
         gfxWarning() << "DrawTargetRecording::FillGlyphs failed to serialise ScaledFont";
       }
     }
-#endif
     RecordingFontUserData *userData = new RecordingFontUserData;
     userData->refPtr = aFont;
     userData->recorder = mRecorder;
@@ -422,10 +416,7 @@ DrawTargetRecording::FillGlyphs(ScaledFont *aFont,
                        &RecordingFontUserDataDestroyFunc);
   }
 
-  // TODO support font in b2g recordings
-#ifndef MOZ_WIDGET_GONK
   mRecorder->RecordEvent(RecordedFillGlyphs(this, aFont, aPattern, aOptions, aBuffer.mGlyphs, aBuffer.mNumGlyphs));
-#endif
   mFinalDT->FillGlyphs(aFont, aBuffer, aPattern, aOptions, aRenderingOptions);
 }
 

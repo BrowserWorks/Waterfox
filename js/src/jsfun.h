@@ -301,6 +301,17 @@ class JSFunction : public js::NativeObject
         flags_ |= RESOLVED_NAME;
     }
 
+    void setAsyncKind(js::FunctionAsyncKind asyncKind) {
+        if (isInterpretedLazy())
+            lazyScript()->setAsyncKind(asyncKind);
+        else
+            nonLazyScript()->setAsyncKind(asyncKind);
+    }
+
+    bool getUnresolvedLength(JSContext* cx, js::MutableHandleValue v);
+
+    JSAtom* getUnresolvedName(JSContext* cx);
+
     JSAtom* name() const { return hasGuessedAtom() ? nullptr : atom_.get(); }
 
     // Because display names (see Debugger.Object.displayName) are already stored
@@ -472,6 +483,18 @@ class JSFunction : public js::NativeObject
 
     bool isStarGenerator() const { return generatorKind() == js::StarGenerator; }
 
+    js::FunctionAsyncKind asyncKind() const {
+        return isInterpretedLazy() ? lazyScript()->asyncKind() : nonLazyScript()->asyncKind();
+    }
+
+    bool isAsync() const {
+        if (isInterpretedLazy())
+            return lazyScript()->asyncKind() == js::AsyncFunction;
+        if (hasScript())
+            return nonLazyScript()->asyncKind() == js::AsyncFunction;
+        return false;
+    }
+
     void setScript(JSScript* script_) {
         mutableScript() = script_;
     }
@@ -606,17 +629,22 @@ Function(JSContext* cx, unsigned argc, Value* vp);
 extern bool
 Generator(JSContext* cx, unsigned argc, Value* vp);
 
-// Allocate a new function backed by a JSNative.
+extern bool
+AsyncFunctionConstructor(JSContext* cx, unsigned argc, Value* vp);
+
+// Allocate a new function backed by a JSNative.  Note that by default this
+// creates a singleton object.
 extern JSFunction*
 NewNativeFunction(ExclusiveContext* cx, JSNative native, unsigned nargs, HandleAtom atom,
                   gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
-                  NewObjectKind newKind = GenericObject);
+                  NewObjectKind newKind = SingletonObject);
 
-// Allocate a new constructor backed by a JSNative.
+// Allocate a new constructor backed by a JSNative.  Note that by default this
+// creates a singleton object.
 extern JSFunction*
 NewNativeConstructor(ExclusiveContext* cx, JSNative native, unsigned nargs, HandleAtom atom,
                      gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
-                     NewObjectKind newKind = GenericObject,
+                     NewObjectKind newKind = SingletonObject,
                      JSFunction::Flags flags = JSFunction::NATIVE_CTOR);
 
 // Allocate a new scripted function.  If enclosingEnv is null, the
@@ -694,7 +722,7 @@ class FunctionExtended : public JSFunction
      * wasm/asm.js exported functions store the function index of the exported
      * function in the original module.
      */
-    static const unsigned WASM_FUNC_DEF_INDEX_SLOT = 1;
+    static const unsigned WASM_FUNC_INDEX_SLOT = 1;
 
     /*
      * asm.js module functions store their WasmModuleObject in the first slot.
@@ -774,6 +802,8 @@ inline void
 JSFunction::setExtendedSlot(size_t which, const js::Value& val)
 {
     MOZ_ASSERT(which < mozilla::ArrayLength(toExtended()->extendedSlots));
+    MOZ_ASSERT_IF(js::IsMarkedBlack(this) && val.isMarkable(),
+                  !JS::GCThingIsMarkedGray(JS::GCCellPtr(val)));
     toExtended()->extendedSlots[which] = val;
 }
 
@@ -824,7 +854,7 @@ namespace JS {
 namespace detail {
 
 JS_PUBLIC_API(void)
-CheckIsValidConstructible(Value calleev);
+CheckIsValidConstructible(const Value& calleev);
 
 } // namespace detail
 } // namespace JS

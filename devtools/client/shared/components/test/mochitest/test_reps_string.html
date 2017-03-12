@@ -1,4 +1,6 @@
-
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE HTML>
 <html>
 <!--
@@ -27,7 +29,8 @@ window.onload = Task.async(function* () {
     yield testMultiline();
     yield testMultilineOpen();
     yield testMultilineLimit();
-    yield testOmitQuotes();
+    yield testUseQuotes();
+    yield testNonPritableCharacters();
   } catch(e) {
     ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
   } finally {
@@ -36,12 +39,12 @@ window.onload = Task.async(function* () {
 
   function testMultiline() {
     const renderedComponent = renderComponent(StringRep.rep, { object: getGripStub("testMultiline") });
-    is(renderedComponent.textContent, "\"aaaaaaaaaaaaaaaaaaaaa\\nbbb…bbbbbb\\ncccccccccccccccc\\n\"", "String rep has expected text content for multiline string");
+    is(renderedComponent.textContent, "\"aaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbb\ncccccccccccccccc\n\"", "String rep has expected text content for multiline string");
   }
 
   function testMultilineLimit() {
     const renderedComponent = renderComponent(StringRep.rep, { object: getGripStub("testMultiline"), cropLimit: 20 });
-    is(renderedComponent.textContent, "\"aaaaaaaaaa…cccccccc\\n\"", "String rep has expected text content for multiline string with specified number of characters");
+    is(renderedComponent.textContent, "\"aaaaaaaaaa…cccccccc\n\"", "String rep has expected text content for multiline string with specified number of characters");
   }
 
   function testMultilineOpen() {
@@ -49,18 +52,24 @@ window.onload = Task.async(function* () {
     is(renderedComponent.textContent, "\"aaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbb\ncccccccccccccccc\n\"", "String rep has expected text content for multiline string when open");
   }
 
-  function testOmitQuotes(){
-     const renderedComponent = renderComponent(StringRep.rep, { object: getGripStub("testOmitQuotes"), omitQuotes: true });
-     is(renderedComponent.textContent, "abc","String rep has expected to omit quotes");
+  function testUseQuotes(){
+     const renderedComponent = renderComponent(StringRep.rep, { object: getGripStub("testUseQuotes"), useQuotes: false });
+     is(renderedComponent.textContent, "abc", "String rep was expected to omit quotes");
+  }
+
+  function testNonPritableCharacters(){
+     const renderedComponent = renderComponent(StringRep.rep, { object: getGripStub("testNonPritableCharacters"), useQuotes: false });
+     is(renderedComponent.textContent, "a\ufffdb", "String rep was expected to omit non printable characters");
   }
 
   function getGripStub(name) {
     switch (name) {
       case "testMultiline":
-      	 return "aaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbb\ncccccccccccccccc\n";
-	 break;
-      case "testOmitQuotes":
-	 return "abc";
+        return "aaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbb\ncccccccccccccccc\n";
+      case "testUseQuotes":
+        return "abc";
+      case "testNonPritableCharacters":
+        return "a\x01b";
     }
   }
 });

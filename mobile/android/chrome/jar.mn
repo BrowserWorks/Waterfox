@@ -29,11 +29,12 @@ chrome.jar:
   content/browser.js                   (content/browser.js)
   content/geckoview.xul                (content/geckoview.xul)
   content/geckoview.js                 (content/geckoview.js)
+  content/PresentationView.xul         (content/PresentationView.xul)
+  content/PresentationView.js          (content/PresentationView.js)
   content/bindings/checkbox.xml        (content/bindings/checkbox.xml)
   content/bindings/settings.xml        (content/bindings/settings.xml)
   content/netError.xhtml               (content/netError.xhtml)
   content/SelectHelper.js              (content/SelectHelper.js)
-  content/SelectionHandler.js          (content/SelectionHandler.js)
   content/ActionBarHandler.js          (content/ActionBarHandler.js)
   content/EmbedRT.js                   (content/EmbedRT.js)
   content/InputWidgetHelper.js         (content/InputWidgetHelper.js)
@@ -49,7 +50,6 @@ chrome.jar:
   content/FeedHandler.js               (content/FeedHandler.js)
   content/Feedback.js                  (content/Feedback.js)
   content/Linkify.js                   (content/Linkify.js)
-  content/ZoomHelper.js                (content/ZoomHelper.js)
   content/CastingApps.js               (content/CastingApps.js)
   content/RemoteDebugger.js            (content/RemoteDebugger.js)
 #ifdef MOZ_SERVICES_HEALTHREPORT
@@ -60,7 +60,7 @@ chrome.jar:
   content/aboutAccounts.js             (content/aboutAccounts.js)
   content/aboutLogins.xhtml            (content/aboutLogins.xhtml)
   content/aboutLogins.js               (content/aboutLogins.js)
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
   content/WebcompatReporter.js         (content/WebcompatReporter.js)
 #endif
 

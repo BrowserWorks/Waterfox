@@ -447,6 +447,11 @@ class Process extends BaseProcess {
       args = args.map(arg => this.quoteString(arg));
     }
 
+    if (/\.bat$/i.test(command)) {
+      command = io.comspec;
+      args = ["cmd.exe", "/s/c", `"${args.join(" ")}"`];
+    }
+
     let envp = this.stringList(options.environment);
 
     let handles = this.initPipes(options);
@@ -516,7 +521,10 @@ class Process extends BaseProcess {
 
     if (ok) {
       ok = libc.AssignProcessToJobObject(this.jobHandle, procInfo.hProcess);
-      errorMessage = `Failed to attach process to job object: 0x${(ctypes.winLastError || 0).toString(16)}`;
+      if (!ok) {
+        errorMessage = `Failed to attach process to job object: 0x${(ctypes.winLastError || 0).toString(16)}`;
+        libc.TerminateProcess(procInfo.hProcess, TERMINATE_EXIT_CODE);
+      }
     }
 
     if (!ok) {
@@ -598,6 +606,8 @@ io = {
   running: true,
 
   init(details) {
+    this.comspec = details.comspec;
+
     let signalEvent = ctypes.cast(ctypes.uintptr_t(details.signalEvent),
                                   win32.HANDLE);
     this.signal = new Signal(signalEvent);

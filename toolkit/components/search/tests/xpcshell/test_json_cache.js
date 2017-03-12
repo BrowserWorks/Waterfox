@@ -55,21 +55,16 @@ function run_test() {
 
   // The list of visibleDefaultEngines needs to match or the cache will be ignored.
   let chan = NetUtil.newChannel({
-    uri: "resource://search-plugins/list.txt",
+    uri: "resource://search-plugins/list.json",
     loadUsingSystemPrincipal: true
   });
-  let visibleDefaultEngines = [];
   let sis = Cc["@mozilla.org/scriptableinputstream;1"].
               createInstance(Ci.nsIScriptableInputStream);
   sis.init(chan.open2());
   let list = sis.read(sis.available());
-  let names = list.split("\n").filter(n => !!n);
-  for (let name of names) {
-    if (name.endsWith(":hidden"))
-      continue;
-    visibleDefaultEngines.push(name);
-  }
-  cacheTemplate.visibleDefaultEngines = visibleDefaultEngines;
+  let searchSettings = JSON.parse(list);
+
+  cacheTemplate.visibleDefaultEngines = searchSettings["default"]["visibleDefaultEngines"];
 
   run_next_test();
 }
@@ -87,7 +82,7 @@ add_test(function prepare_test_data() {
 add_test(function test_cached_engine_properties() {
   do_print("init search service");
 
-  let search = Services.search.init(function initComplete(aResult) {
+  Services.search.init(function initComplete(aResult) {
     do_print("init'd search service");
     do_check_true(Components.isSuccessCode(aResult));
 

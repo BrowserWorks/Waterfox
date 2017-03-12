@@ -13,19 +13,14 @@ add_task(function* () {
       "permissions": ["tabs"],
     },
 
-    background: function() {
-      browser.tabs.query({
-        lastFocusedWindow: true,
-      }, function(tabs) {
-        let tab = tabs[0];
-        browser.tabs.move(tab.id, {index: 0});
-        browser.tabs.query(
-          {lastFocusedWindow: true},
-          tabs => {
-            browser.test.assertEq(tabs[0].url, tab.url, "should be first tab");
-            browser.test.notifyPass("tabs.move.single");
-          });
-      });
+    background: async function() {
+      let [tab] = await browser.tabs.query({lastFocusedWindow: true});
+
+      browser.tabs.move(tab.id, {index: 0});
+      let tabs = await browser.tabs.query({lastFocusedWindow: true});
+
+      browser.test.assertEq(tabs[0].url, tab.url, "should be first tab");
+      browser.test.notifyPass("tabs.move.single");
     },
   });
 
@@ -38,21 +33,20 @@ add_task(function* () {
       "permissions": ["tabs"],
     },
 
-    background: function() {
-      browser.tabs.query(
-        {lastFocusedWindow: true},
-        tabs => {
-          tabs.sort(function(a, b) { return a.url > b.url; });
-          browser.tabs.move(tabs.map(tab => tab.id), {index: 0});
-          browser.tabs.query(
-            {lastFocusedWindow: true},
-            tabs => {
-              browser.test.assertEq(tabs[0].url, "about:blank", "should be first tab");
-              browser.test.assertEq(tabs[1].url, "about:config", "should be second tab");
-              browser.test.assertEq(tabs[2].url, "about:robots", "should be third tab");
-              browser.test.notifyPass("tabs.move.multiple");
-            });
-        });
+    background: async function() {
+      let tabs = await browser.tabs.query({lastFocusedWindow: true});
+
+      tabs.sort(function(a, b) { return a.url > b.url; });
+
+      browser.tabs.move(tabs.map(tab => tab.id), {index: 0});
+
+      tabs = await browser.tabs.query({lastFocusedWindow: true});
+
+      browser.test.assertEq(tabs[0].url, "about:blank", "should be first tab");
+      browser.test.assertEq(tabs[1].url, "about:config", "should be second tab");
+      browser.test.assertEq(tabs[2].url, "about:robots", "should be third tab");
+
+      browser.test.notifyPass("tabs.move.multiple");
     },
   });
 
@@ -65,20 +59,18 @@ add_task(function* () {
       "permissions": ["tabs"],
     },
 
-    background: function() {
-      browser.tabs.query(
-        {lastFocusedWindow: true},
-        tabs => {
-          let tab = tabs[0];
-          // Assuming that tab.id of 12345 does not exist.
-          browser.tabs.move([12345, tab.id], {index: 0});
-          browser.tabs.query(
-            {lastFocusedWindow: true},
-            tabs => {
-              browser.test.assertEq(tabs[0].url, tab.url, "should be first tab");
-              browser.test.notifyPass("tabs.move.invalid");
-            });
-        });
+    async background() {
+      let [, tab] = await browser.tabs.query({lastFocusedWindow: true});
+
+      // Assuming that tab.id of 12345 does not exist.
+      await browser.test.assertRejects(
+        browser.tabs.move([tab.id, 12345], {index: 0}),
+        /Invalid tab/,
+        "Should receive invalid tab error");
+
+      let tabs = await browser.tabs.query({lastFocusedWindow: true});
+      browser.test.assertEq(tabs[1].url, tab.url, "should be second tab");
+      browser.test.notifyPass("tabs.move.invalid");
     },
   });
 
@@ -91,19 +83,14 @@ add_task(function* () {
       "permissions": ["tabs"],
     },
 
-    background: function() {
-      browser.tabs.query(
-        {lastFocusedWindow: true},
-        tabs => {
-          let tab = tabs[0];
-          browser.tabs.move(tab.id, {index: -1});
-          browser.tabs.query(
-            {lastFocusedWindow: true},
-            tabs => {
-              browser.test.assertEq(tabs[2].url, tab.url, "should be last tab");
-              browser.test.notifyPass("tabs.move.last");
-            });
-        });
+    background: async function() {
+      let [tab] = await browser.tabs.query({lastFocusedWindow: true});
+      browser.tabs.move(tab.id, {index: -1});
+
+      let tabs = await browser.tabs.query({lastFocusedWindow: true});
+
+      browser.test.assertEq(tabs[2].url, tab.url, "should be last tab");
+      browser.test.notifyPass("tabs.move.last");
     },
   });
 

@@ -4,6 +4,23 @@
 
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
+const WindowWatcher = {
+  openWindow: function(aParent, aUrl, aName, aFeatures, aArgs) {
+    gCheckFunc();
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
+};
+
+const WindowMediator = {
+  getMostRecentWindow: function(aWindowType) {
+    do_execute_soon(check_status);
+    return { getInterface: XPCOMUtils.generateQI([Ci.nsIDOMWindow]) };
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediator])
+};
+
 function run_test() {
   setupTestCommon();
   // Calling do_get_profile prevents an error from being logged
@@ -16,7 +33,7 @@ function run_test() {
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SILENT, false);
 
   start_httpserver();
-  setUpdateURLOverride(gURLData + gHTTPHandlerPath);
+  setUpdateURL(gURLData + gHTTPHandlerPath);
   standardInit();
 
   let windowWatcherCID =
@@ -56,20 +73,3 @@ function check_status() {
 function check_showUpdateAvailable() {
   do_throw("showUpdateAvailable should not have called openWindow!");
 }
-
-const WindowWatcher = {
-  openWindow: function(aParent, aUrl, aName, aFeatures, aArgs) {
-    gCheckFunc();
-  },
-
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
-};
-
-const WindowMediator = {
-  getMostRecentWindow: function(aWindowType) {
-    do_execute_soon(check_status);
-    return { getInterface: XPCOMUtils.generateQI([Ci.nsIDOMWindow]) };
-  },
-
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediator])
-};

@@ -11,18 +11,18 @@ const {
 
 // Components under test.
 const { MessageContainer } = require("devtools/client/webconsole/new-console-output/components/message-container");
-const { ConsoleApiCall } = require("devtools/client/webconsole/new-console-output/components/message-types/console-api-call");
-const { EvaluationResult } = require("devtools/client/webconsole/new-console-output/components/message-types/evaluation-result");
-const { PageError } = require("devtools/client/webconsole/new-console-output/components/message-types/page-error");
+const ConsoleApiCall = require("devtools/client/webconsole/new-console-output/components/message-types/console-api-call");
+const EvaluationResult = require("devtools/client/webconsole/new-console-output/components/message-types/evaluation-result");
+const PageError = require("devtools/client/webconsole/new-console-output/components/message-types/page-error");
 
 // Test fakes.
 const { stubPreparedMessages } = require("devtools/client/webconsole/new-console-output/test/fixtures/stubs/index");
-const onViewSourceInDebugger = () => {};
+const serviceContainer = require("devtools/client/webconsole/new-console-output/test/fixtures/serviceContainer");
 
 describe("MessageContainer component:", () => {
   it("pipes data to children as expected", () => {
     const message = stubPreparedMessages.get("console.log('foobar', 'test')");
-    const rendered = renderComponent(MessageContainer, {message, onViewSourceInDebugger});
+    const rendered = renderComponent(MessageContainer, {message, serviceContainer});
 
     expect(rendered.textContent.includes("foobar")).toBe(true);
   });
@@ -46,7 +46,7 @@ describe("MessageContainer component:", () => {
       const { component, message } = info;
       const rendered = shallowRenderComponent(MessageContainer, {
         message,
-        onViewSourceInDebugger,
+        serviceContainer,
       });
       expect(rendered.type).toBe(component);
     });

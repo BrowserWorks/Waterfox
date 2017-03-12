@@ -39,6 +39,7 @@ typedef uint16_t nsMediaNetworkState;
 typedef uint16_t nsMediaReadyState;
 typedef uint32_t SuspendTypes;
 typedef uint32_t AudibleChangedReasons;
+typedef uint8_t AudibleState;
 
 namespace mozilla {
 class DecoderDoctorDiagnostics;
@@ -48,6 +49,7 @@ class MediaResource;
 class MediaDecoder;
 class VideoFrameContainer;
 namespace dom {
+class AudioChannelAgent;
 class MediaKeys;
 class TextTrack;
 class TimeRanges;
@@ -354,6 +356,13 @@ public:
    */
   void NotifyMediaStreamTracksAvailable(DOMMediaStream* aStream);
 
+  /**
+   * Called when a captured MediaStreamTrack is stopped so we can clean up its
+   * MediaInputPort.
+   */
+  void NotifyOutputTrackStopped(DOMMediaStream* aOwningStream,
+                                TrackID aDestinationTrackID);
+
   virtual bool IsNodeOfType(uint32_t aFlags) const override;
 
   /**
@@ -413,10 +422,7 @@ public:
 
   // WebIDL
 
-  MediaError* GetError() const
-  {
-    return mError;
-  }
+  MediaError* GetError() const;
 
   // XPCOM GetSrc() is OK
   void SetSrc(const nsAString& aSrc, ErrorResult& aRv)
@@ -630,7 +636,10 @@ public:
                                          ErrorResult& aRv);
 
   mozilla::dom::EventHandlerNonNull* GetOnencrypted();
-  void SetOnencrypted(mozilla::dom::EventHandlerNonNull* listener);
+  void SetOnencrypted(mozilla::dom::EventHandlerNonNull* aCallback);
+
+  mozilla::dom::EventHandlerNonNull* GetOnwaitingforkey();
+  void SetOnwaitingforkey(mozilla::dom::EventHandlerNonNull* aCallback);
 
   void DispatchEncrypted(const nsTArray<uint8_t>& aInitData,
                          const nsAString& aInitDataType) override;
@@ -750,6 +759,7 @@ protected:
   virtual ~HTMLMediaElement();
 
   class ChannelLoader;
+  class ErrorSink;
   class MediaLoadListener;
   class MediaStreamTracksAvailableCallback;
   class MediaStreamTrackListener;
@@ -758,8 +768,12 @@ protected:
   class ShutdownObserver;
 
   MediaDecoderOwner::NextFrameStatus NextFrameStatus();
+
   void SetDecoder(MediaDecoder* aDecoder) {
     MOZ_ASSERT(aDecoder); // Use ShutdownDecoder() to clear.
+    if (mDecoder) {
+      ShutdownDecoder();
+    }
     mDecoder = aDecoder;
   }
 
@@ -1201,7 +1215,7 @@ protected:
   bool IsPlayingThroughTheAudioChannel() const;
 
   // Update the audio channel playing state
-  void UpdateAudioChannelPlayingState();
+  void UpdateAudioChannelPlayingState(bool aForcePlaying = false);
 
   // Adds to the element's list of pending text tracks each text track
   // in the element's list of text tracks whose text track mode is not disabled
@@ -1218,8 +1232,10 @@ protected:
   // Notifies the audio channel agent when the element starts or stops playing.
   void NotifyAudioChannelAgent(bool aPlaying);
 
-  // Creates the audio channel agent if needed.  Returns true if the audio
-  // channel agent is ready to be used.
+  // True if we create the audio channel agent successfully or we already have
+  // one. The agent is used to communicate with the AudioChannelService. eg.
+  // notify we are playing/audible and receive muted/unmuted/suspend/resume
+  // commands from AudioChannelService.
   bool MaybeCreateAudioChannelAgent();
 
   // Determine if the element should be paused because of suspend conditions.
@@ -1258,17 +1274,31 @@ protected:
   bool IsSuspendedByAudioChannel() const;
   void SetAudioChannelSuspended(SuspendTypes aSuspend);
 
+  // A method to check whether the media element is allowed to start playback.
   bool IsAllowedToPlay();
+  bool IsAllowedToPlayByAudioChannel();
 
-  bool IsAudible() const;
-  bool HaveFailedWithSourceNotSupportedError() const;
+  // If the network state is empty and then we would trigger DoLoad().
+  void MaybeDoLoad();
 
-  void OpenUnsupportedMediaWithExtenalAppIfNeeded();
+  // True if the tab which media element belongs to has been to foreground at
+  // least once or activated by manually clicking the unblocking tab icon.
+  bool IsTabActivated() const;
+
+  AudibleState IsAudible() const;
+
+  // It's used for fennec only, send the notification when the user resumes the
+  // media which was paused by media control.
+  void MaybeNotifyMediaResumed(SuspendTypes aSuspend);
 
   class nsAsyncEventRunner;
   using nsGenericHTMLElement::DispatchEvent;
   // For nsAsyncEventRunner.
   nsresult DispatchEvent(const nsAString& aName);
+
+  // Open unsupported types media with the external app when the media element
+  // triggers play() after loaded fail. eg. preload the data before start play.
+  void OpenUnsupportedMediaWithExternalAppIfNeeded() const;
 
   // The current decoder. Load() has been called on this decoder.
   // At most one of mDecoder and mSrcStream can be non-null.
@@ -1330,9 +1360,6 @@ protected:
   RefPtr<MediaSource> mMediaSource;
 
   RefPtr<ChannelLoader> mChannelLoader;
-
-  // Error attribute
-  RefPtr<MediaError> mError;
 
   // The current media load ID. This is incremented every time we start a
   // new load. Async events note the ID when they're first sent, and only fire
@@ -1586,10 +1613,16 @@ protected:
   // True if the media has encryption information.
   bool mIsEncrypted;
 
-  // True when the CDM cannot decrypt the current block, and the
-  // waitingforkey event has been fired. Back to false when keys have become
-  // available and we can advance the current playback position.
-  bool mWaitingForKey;
+  enum WaitingForKeyState {
+    NOT_WAITING_FOR_KEY = 0,
+    WAITING_FOR_KEY = 1,
+    WAITING_FOR_KEY_DISPATCHED = 2
+  };
+
+  // True when the CDM cannot decrypt the current block due to lacking a key.
+  // Note: the "waitingforkey" event is not dispatched until all decoded data
+  // has been rendered.
+  WaitingForKeyState mWaitingForKey;
 
   // Listens for waitingForKey events from the owned decoder.
   MediaEventListener mWaitingForKeyListener;
@@ -1614,8 +1647,9 @@ protected:
   // playback.
   bool mDisableVideo;
 
-  // An agent used to join audio channel service.
-  nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
+  // An agent used to join audio channel service and its life cycle would equal
+  // to media element.
+  RefPtr<AudioChannelAgent> mAudioChannelAgent;
 
   RefPtr<TextTrackManager> mTextTrackManager;
 
@@ -1629,17 +1663,10 @@ protected:
   // MediaStream.
   nsCOMPtr<nsIPrincipal> mSrcStreamVideoPrincipal;
 
-  enum ElementInTreeState {
-    // The MediaElement is not in the DOM tree now.
-    ELEMENT_NOT_INTREE,
-    // The MediaElement is in the DOM tree now.
-    ELEMENT_INTREE,
-    // The MediaElement is not in the DOM tree now but had been binded to the
-    // tree before.
-    ELEMENT_NOT_INTREE_HAD_INTREE
-  };
-
-  ElementInTreeState mElementInTreeState;
+  // True if UnbindFromTree() is called on the element.
+  // Note this flag is false when the element is in a phase after creation and
+  // before attaching to the DOM tree.
+  bool mUnboundFromTree = false;
 
 public:
   // Helper class to measure times for MSE telemetry stats
@@ -1715,10 +1742,12 @@ private:
   // True if the audio track is not silent.
   bool mIsAudioTrackAudible;
 
-  // True if media element is audible for users.
-  bool mAudible;
+  // Indicate whether media element is audible for users.
+  AudibleState mAudible;
 
   Visibility mVisibilityState;
+
+  UniquePtr<ErrorSink> mErrorSink;
 };
 
 } // namespace dom

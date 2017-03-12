@@ -29,7 +29,7 @@ if test -z "$SCCACHE_DISABLE" -a -z "$no_sccache" -a -z "$MOZ_PGO_IS_SET" -a -z 
             ;;
         esac
         ;;
-    mozilla-inbound|fx-team)
+    autoland|mozilla-inbound)
         case "${master}" in
         *use1.mozilla.com*)
             bucket=mozilla-releng-s3-cache-us-east-1-prod
@@ -60,7 +60,7 @@ elif test -z "$CCACHE_DIR" -a -z "$SCCACHE_DISABLE" -a -z "$no_sccache" -a -z "$
             *hg.mozilla.org/try*)
                 bucket=taskcluster-level-1-sccache-${region}
                 ;;
-            *hg.mozilla.org/integration/mozilla-inbound*|*hg.mozilla.org/integration/fx-team*)
+            *hg.mozilla.org/integration/autoland*|*hg.mozilla.org/integration/mozilla-inbound*)
                 bucket=taskcluster-level-3-sccache-${region}
                 ;;
             esac
@@ -82,8 +82,11 @@ elif test -z "$CCACHE_DIR" -a -z "$SCCACHE_DISABLE" -a -z "$no_sccache" -a -z "$
             esac
         fi
     fi
+fi
 
-
+# if platform hasn't been determined from buildprops, and we're on windows,
+# it must be set to prevent adding ac_add_options --with-ccache below
+if test -z "$platform"; then
     # set platform based on the SYSTEMROOT env var
     case "${SYSTEMROOT}" in
     *Windows)

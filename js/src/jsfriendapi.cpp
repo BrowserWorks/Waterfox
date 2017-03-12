@@ -590,14 +590,14 @@ js::TraceWeakMaps(WeakMapTracer* trc)
 extern JS_FRIEND_API(bool)
 js::AreGCGrayBitsValid(JSContext* cx)
 {
-    return cx->gc.areGrayBitsValid();
+    return cx->areGCGrayBitsValid();
 }
 
 JS_FRIEND_API(bool)
 js::ZoneGlobalsAreAllGray(JS::Zone* zone)
 {
     for (CompartmentsInZoneIter comp(zone); !comp.done(); comp.next()) {
-        JSObject* obj = comp->maybeGlobal();
+        JSObject* obj = comp->unsafeUnbarrieredMaybeGlobal();
         if (!obj || !JS::ObjectIsMarkedGray(obj))
             return false;
     }
@@ -763,11 +763,16 @@ FormatValue(JSContext* cx, const Value& vArg, JSAutoByteString& bytes)
 
 // Wrapper for JS_sprintf_append() that reports allocation failure to the
 // context.
-template <typename... Args>
 static char*
-sprintf_append(JSContext* cx, char* buf, Args&&... args)
+MOZ_FORMAT_PRINTF(3, 4)
+sprintf_append(JSContext* cx, char* buf, const char* fmt, ...)
 {
-    char* result = JS_sprintf_append(buf, mozilla::Forward<Args>(args)...);
+    va_list ap;
+
+    va_start(ap, fmt);
+    char* result = JS_vsprintf_append(buf, fmt, ap);
+    va_end(ap);
+
     if (!result) {
         ReportOutOfMemory(cx);
         return nullptr;
@@ -797,7 +802,8 @@ FormatFrame(JSContext* cx, const FrameIter& iter, char* buf, int num,
     RootedValue thisVal(cx);
     if (iter.hasUsableAbstractFramePtr() &&
         iter.isFunctionFrame() &&
-        fun && !fun->isArrow() && !fun->isDerivedClassConstructor())
+        fun && !fun->isArrow() && !fun->isDerivedClassConstructor() &&
+        !(fun->isBoundFunction() && iter.isConstructing()))
     {
         if (!GetFunctionThis(cx, iter.abstractFramePtr(), &thisVal))
             return nullptr;
@@ -1336,18 +1342,18 @@ js::ReportIsNotFunction(JSContext* cx, HandleValue v)
 }
 
 JS_FRIEND_API(void)
-js::ReportErrorWithId(JSContext* cx, const char* msg, HandleId id)
+js::ReportASCIIErrorWithId(JSContext* cx, const char* msg, HandleId id)
 {
     RootedValue idv(cx);
     if (!JS_IdToValue(cx, id, &idv))
         return;
-    JSString* idstr = JS::ToString(cx, idv);
+    RootedString idstr(cx, JS::ToString(cx, idv));
     if (!idstr)
         return;
-    JSAutoByteString bytes(cx, idstr);
-    if (!bytes)
+    JSAutoByteString bytes;
+    if (!bytes.encodeUtf8(cx, idstr))
         return;
-    JS_ReportError(cx, msg, bytes.ptr());
+    JS_ReportErrorUTF8(cx, msg, bytes.ptr());
 }
 
 #ifdef DEBUG

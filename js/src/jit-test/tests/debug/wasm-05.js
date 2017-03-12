@@ -3,8 +3,8 @@
 
 load(libdir + "asserts.js");
 
-if (!wasmIsSupported())
-     quit();
+// Disabled in aurora (see also bug 1326452).
+quit();
 
 // Checking if experimental format generates internal source map to binary file
 // by querying debugger scripts getLineOffsets.
@@ -15,7 +15,7 @@ function getAllOffsets(wast) {
   dbg.addDebuggee(sandbox);
   sandbox.eval(`
     var wasm = wasmTextToBinary('${wast}');
-    var m = Wasm.instantiateModule(wasm);
+    var m = new WebAssembly.Instance(new WebAssembly.Module(wasm));
   `);
   var wasmScript = dbg.findScripts().filter(s => s.format == 'wasm')[0];
   var lines = wasmScript.source.text.split('\n');
@@ -24,7 +24,7 @@ function getAllOffsets(wast) {
 
 var result1 = getAllOffsets('(module \
   (func (nop)) \
-  (func (f32.sqrt (f32.add (f32.const 1.0) (f32.const 2.0)))) \
+  (func (drop (f32.sqrt (f32.add (f32.const 1.0) (f32.const 2.0))))) \
 )');
 
 var nopLine = result1.filter(i => i.str.indexOf('nop') >= 0);
@@ -33,16 +33,6 @@ assertEq(nopLine.length, 1);
 assertEq(nopLine[0].offsets.length, 1);
 assertEq(nopLine[0].offsets[0] > 0, true);
 
-var sqrtLine = result1.filter(i => i.str.indexOf('sqrt') >= 0);
-assertEq(sqrtLine.length, 1);
-// The sqrtLine shall have 4 offsets but they were produced from AST postorder decoding:
-//   f32.sqrt(1.0 + 2.0) ~~> 74,73,63,68
-assertEq(sqrtLine[0].offsets.length, 4);
-assertEq(sqrtLine[0].offsets[2] > 0, true);
-assertEq(sqrtLine[0].offsets[2] < sqrtLine[0].offsets[3], true);
-assertEq(sqrtLine[0].offsets[1] > sqrtLine[0].offsets[2], true);
-assertEq(sqrtLine[0].offsets[0] > sqrtLine[0].offsets[1], true);
-
-var noOffsetLines = result1.filter(i => i.str.indexOf('nop') < 0 && i.str.indexOf('sqrt') < 0);
-// Other lines will not have offsets.
-assertEq(noOffsetLines.every(i => i.offsets.length == 0), true);
+var singleOffsetLines = result1.filter(i => i.offsets.length === 1);
+// There shall be total 6 lines with single offset.
+assertEq(singleOffsetLines.length === 6, true);

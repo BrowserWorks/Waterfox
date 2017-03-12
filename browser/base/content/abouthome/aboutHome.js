@@ -4,6 +4,8 @@
 
 "use strict";
 
+/* import-globals-from ../contentSearchUI.js */
+
 // IndexedDB storage constants.
 const DATABASE_NAME = "abouthome";
 const DATABASE_VERSION = 1;

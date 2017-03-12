@@ -15,7 +15,7 @@ const FRAME_SCRIPT_URL = CHROME_URL_ROOT + "doc_frame_script.js";
 const COMMON_FRAME_SCRIPT_URL = "chrome://devtools/content/shared/frame-script-utils.js";
 const TAB_NAME = "animationinspector";
 const ANIMATION_L10N =
-  new LocalizationHelper("devtools/locale/animationinspector.properties");
+  new LocalizationHelper("devtools/client/locales/animationinspector.properties");
 
 // Auto clean-up when a test ends
 registerCleanupFunction(function* () {
@@ -189,12 +189,12 @@ function waitForContentMessage(name) {
 
   let mm = gBrowser.selectedBrowser.messageManager;
 
-  let def = promise.defer();
-  mm.addMessageListener(name, function onMessage(msg) {
-    mm.removeMessageListener(name, onMessage);
-    def.resolve(msg.data);
+  return new Promise(resolve => {
+    mm.addMessageListener(name, function onMessage(msg) {
+      mm.removeMessageListener(name, onMessage);
+      resolve(msg.data);
+    });
   });
-  return def.promise;
 }
 
 /**

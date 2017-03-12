@@ -28,10 +28,8 @@ function BackgroundPage(options, extension) {
   this.extension = extension;
   this.page = options.page || null;
   this.isGenerated = !!options.scripts;
-  this.contentWindow = null;
   this.windowlessBrowser = null;
   this.webNav = null;
-  this.context = null;
 }
 
 BackgroundPage.prototype = {
@@ -84,24 +82,24 @@ BackgroundPage.prototype = {
     let browser = chromeDoc.createElement("browser");
     browser.setAttribute("type", "content");
     browser.setAttribute("disableglobalhistory", "true");
-    browser.setAttribute("webextension-view-type", "background");
-    browser.setAttribute("src", url);
     chromeDoc.documentElement.appendChild(browser);
 
-    this.webNav = browser.docShell.QueryInterface(Ci.nsIWebNavigation);
-
-    let window = this.webNav.document.defaultView;
-    this.contentWindow = window;
-
+    extensions.emit("extension-browser-inserted", browser);
+    browser.messageManager.sendAsyncMessage("Extension:InitExtensionView", {
+      viewType: "background",
+      url,
+    });
 
     yield new Promise(resolve => {
-      browser.addEventListener("load", function onLoad(event) {
-        if (event.target === browser.contentDocument) {
-          browser.removeEventListener("load", onLoad, true);
-          resolve();
-        }
-      }, true);
+      browser.messageManager.addMessageListener("Extension:ExtensionViewLoaded", function onLoad() {
+        browser.messageManager.removeMessageListener("Extension:ExtensionViewLoaded", onLoad);
+        resolve();
+      });
     });
+
+    // TODO(robwu): This is not webext-oop compatible.
+    this.webNav = browser.docShell.QueryInterface(Ci.nsIWebNavigation);
+    let window = this.webNav.document.defaultView;
 
 
     // Set the add-on's main debugger global, for use in the debugger
@@ -111,11 +109,7 @@ BackgroundPage.prototype = {
                   .then(addon => addon.setDebugGlobal(window));
     }
 
-    // TODO(robwu): This implementation of onStartup is wrong, see
-    // https://bugzil.la/1247435#c1
-    if (this.extension.onStartup) {
-      this.extension.onStartup();
-    }
+    this.extension.emit("startup");
   }),
 
   shutdown() {
@@ -151,29 +145,3 @@ extensions.on("shutdown", (type, extension) => {
   }
 });
 /* eslint-enable mozilla/balanced-listeners */
-
-extensions.registerSchemaAPI("extension", "addon_parent", context => {
-  let {extension} = context;
-
-  function getBackgroundPage() {
-    let win = backgroundPagesMap.get(extension).contentWindow;
-    if (win && context.principal.subsumes(Cu.getObjectPrincipal(win))) {
-      return win;
-    }
-    return null;
-  }
-
-  return {
-    extension: {
-      getBackgroundPage: function() {
-        return getBackgroundPage();
-      },
-    },
-
-    runtime: {
-      getBackgroundPage() {
-        return context.cloneScope.Promise.resolve(getBackgroundPage());
-      },
-    },
-  };
-});

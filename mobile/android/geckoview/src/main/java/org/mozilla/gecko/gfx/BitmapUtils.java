@@ -7,14 +7,8 @@ package org.mozilla.gecko.gfx;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
-
-import org.mozilla.gecko.R;
-import org.mozilla.gecko.util.GeckoJarReader;
-import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.util.UIAsyncTask;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -22,122 +16,16 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
 public final class BitmapUtils {
-    /* Default colors. */
-    private static final float[] DEFAULT_LAUNCHER_ICON_HSV = { 32.0f, 1.0f, 1.0f };
-
     private static final String LOGTAG = "GeckoBitmapUtils";
 
     private BitmapUtils() {}
-
-    public interface BitmapLoader {
-        public void onBitmapFound(Drawable d);
-    }
-
-    public static void runOnBitmapFoundOnUiThread(final BitmapLoader loader, final Drawable d) {
-        if (ThreadUtils.isOnUiThread()) {
-            loader.onBitmapFound(d);
-            return;
-        }
-
-        ThreadUtils.postToUiThread(new Runnable() {
-            @Override
-            public void run() {
-                loader.onBitmapFound(d);
-            }
-        });
-    }
-
-    /**
-     * Attempts to find a drawable associated with a given string, using its URI scheme to determine
-     * how to load the drawable. The BitmapLoader's `onBitmapFound` method is always called, and
-     * will be called with `null` if no drawable is found.
-     *
-     * The BitmapLoader `onBitmapFound` method always runs on the UI thread.
-     */
-    public static void getDrawable(final Context context, final String data, final BitmapLoader loader) {
-        if (TextUtils.isEmpty(data)) {
-            runOnBitmapFoundOnUiThread(loader, null);
-            return;
-        }
-
-        if (data.startsWith("data")) {
-            final BitmapDrawable d = new BitmapDrawable(context.getResources(), getBitmapFromDataURI(data));
-            runOnBitmapFoundOnUiThread(loader, d);
-            return;
-        }
-
-        if (data.startsWith("jar:") || data.startsWith("file://")) {
-            (new UIAsyncTask.WithoutParams<Drawable>(ThreadUtils.getBackgroundHandler()) {
-                @Override
-                public Drawable doInBackground() {
-                    try {
-                        if (data.startsWith("jar:jar")) {
-                            return GeckoJarReader.getBitmapDrawable(
-                                    context, context.getResources(), data);
-                        }
-
-                        // Don't attempt to validate the JAR signature when loading an add-on icon
-                        if (data.startsWith("jar:file")) {
-                            return GeckoJarReader.getBitmapDrawable(
-                                    context, context.getResources(), Uri.decode(data));
-                        }
-
-                        final URL url = new URL(data);
-                        final InputStream is = (InputStream) url.getContent();
-                        try {
-                            return Drawable.createFromStream(is, "src");
-                        } finally {
-                            is.close();
-                        }
-                    } catch (Exception e) {
-                        Log.w(LOGTAG, "Unable to set icon", e);
-                    }
-                    return null;
-                }
-
-                @Override
-                public void onPostExecute(Drawable drawable) {
-                    loader.onBitmapFound(drawable);
-                }
-            }).execute();
-            return;
-        }
-
-        if (data.startsWith("-moz-icon://")) {
-            final Uri imageUri = Uri.parse(data);
-            final String ssp = imageUri.getSchemeSpecificPart();
-            final String resource = ssp.substring(ssp.lastIndexOf('/') + 1);
-
-            try {
-                final Drawable d = context.getPackageManager().getApplicationIcon(resource);
-                runOnBitmapFoundOnUiThread(loader, d);
-            } catch (Exception ex) { }
-
-            return;
-        }
-
-        if (data.startsWith("drawable://")) {
-            final Uri imageUri = Uri.parse(data);
-            final int id = getResource(imageUri, R.drawable.ic_status_logo);
-            final Drawable d = context.getResources().getDrawable(id);
-
-            runOnBitmapFoundOnUiThread(loader, d);
-            return;
-        }
-
-        runOnBitmapFoundOnUiThread(loader, null);
-    }
 
     public static Bitmap decodeByteArray(byte[] bytes) {
         return decodeByteArray(bytes, null);
@@ -371,96 +259,32 @@ public final class BitmapUtils {
         return bitmap;
     }
 
-    public static int getResource(Uri resourceUrl, int defaultIcon) {
-        int icon = defaultIcon;
-
+    public static int getResource(final Context context, final Uri resourceUrl) {
         final String scheme = resourceUrl.getScheme();
-        if ("drawable".equals(scheme)) {
-            String resource = resourceUrl.getSchemeSpecificPart();
-            resource = resource.substring(resource.lastIndexOf('/') + 1);
-
-            try {
-                return Integer.parseInt(resource);
-            } catch (NumberFormatException ex) {
-                // This isn't a resource id, try looking for a string
-            }
-
-            try {
-                final Class<R.drawable> drawableClass = R.drawable.class;
-                final Field f = drawableClass.getField(resource);
-                icon = f.getInt(null);
-            } catch (final NoSuchFieldException e1) {
-
-                // just means the resource doesn't exist for fennec. Check in Android resources
-                try {
-                    final Class<android.R.drawable> drawableClass = android.R.drawable.class;
-                    final Field f = drawableClass.getField(resource);
-                    icon = f.getInt(null);
-                } catch (final NoSuchFieldException e2) {
-                    // This drawable doesn't seem to exist...
-                } catch (Exception e3) {
-                    Log.i(LOGTAG, "Exception getting drawable", e3);
-                }
-
-            } catch (Exception e4) {
-              Log.i(LOGTAG, "Exception getting drawable", e4);
-            }
-
-            resourceUrl = null;
-        }
-        return icon;
-    }
-
-    public static Bitmap getLauncherIcon(Context context, Bitmap aSource, int size) {
-        final int kOffset = 6;
-        final int kRadius = 5;
-        int insetSize = aSource != null ? size * 2 / 3 : size;
-
-        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-
-
-        // draw a base color
-        Paint paint = new Paint();
-        if (aSource == null) {
-            // If we aren't drawing a favicon, just use an orange color.
-            paint.setColor(Color.HSVToColor(DEFAULT_LAUNCHER_ICON_HSV));
-            canvas.drawRoundRect(new RectF(kOffset, kOffset, size - kOffset, size - kOffset), kRadius, kRadius, paint);
-        } else if (aSource.getWidth() >= insetSize || aSource.getHeight() >= insetSize) {
-            // Otherwise, if the icon is large enough, just draw it.
-            Rect iconBounds = new Rect(0, 0, size, size);
-            canvas.drawBitmap(aSource, null, iconBounds, null);
-            return bitmap;
-        } else {
-            // otherwise use the dominant color from the icon + a layer of transparent white to lighten it somewhat
-            int color = BitmapUtils.getDominantColor(aSource);
-            paint.setColor(color);
-            canvas.drawRoundRect(new RectF(kOffset, kOffset, size - kOffset, size - kOffset), kRadius, kRadius, paint);
-            paint.setColor(Color.argb(100, 255, 255, 255));
-            canvas.drawRoundRect(new RectF(kOffset, kOffset, size - kOffset, size - kOffset), kRadius, kRadius, paint);
+        if (!"drawable".equals(scheme)) {
+            // Return a "not found" default icon that's easy to spot.
+            return android.R.drawable.sym_def_app_icon;
         }
 
-        // draw the overlay
-        Bitmap overlay = BitmapUtils.decodeResource(context, R.drawable.home_bg);
-        canvas.drawBitmap(overlay, null, new Rect(0, 0, size, size), null);
+        String resource = resourceUrl.getSchemeSpecificPart();
+        if (resource.startsWith("//")) {
+            resource = resource.substring(2);
+        }
 
-        // draw the favicon
-        if (aSource == null)
-            aSource = BitmapUtils.decodeResource(context, R.drawable.home_star);
+        final Resources res = context.getResources();
+        int id = res.getIdentifier(resource, "drawable", context.getPackageName());
+        if (id != 0) {
+            return id;
+        }
 
-        // by default, we scale the icon to this size
-        int sWidth = insetSize / 2;
-        int sHeight = sWidth;
+        // For backwards compatibility, we also search in system resources.
+        id = res.getIdentifier(resource, "drawable", "android");
+        if (id != 0) {
+            return id;
+        }
 
-        int halfSize = size / 2;
-        canvas.drawBitmap(aSource,
-                null,
-                new Rect(halfSize - sWidth,
-                        halfSize - sHeight,
-                        halfSize + sWidth,
-                        halfSize + sHeight),
-                null);
-
-        return bitmap;
+        Log.w(LOGTAG, "Cannot find drawable/" + resource);
+        // Return a "not found" default icon that's easy to spot.
+        return android.R.drawable.sym_def_app_icon;
     }
 }

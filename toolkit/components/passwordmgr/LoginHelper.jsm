@@ -16,16 +16,14 @@ this.EXPORTED_SYMBOLS = [
   "LoginHelper",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-////////////////////////////////////////////////////////////////////////////////
-//// LoginHelper
+// LoginHelper
 
 /**
  * Contains functions shared by different Login Manager components.
@@ -37,6 +35,8 @@ this.LoginHelper = {
   debug: Services.prefs.getBoolPref("signon.debug"),
   formlessCaptureEnabled: Services.prefs.getBoolPref("signon.formlessCapture.enabled"),
   schemeUpgrades: Services.prefs.getBoolPref("signon.schemeUpgrades"),
+  insecureAutofill: Services.prefs.getBoolPref("signon.autofillForms.http"),
+  showInsecureFieldWarning: Services.prefs.getBoolPref("security.insecure_field_warning.contextual.enabled"),
 
   createLogger(aLogPrefix) {
     let getMaxLogLevel = () => {
@@ -56,7 +56,12 @@ this.LoginHelper = {
       this.debug = Services.prefs.getBoolPref("signon.debug");
       this.formlessCaptureEnabled = Services.prefs.getBoolPref("signon.formlessCapture.enabled");
       this.schemeUpgrades = Services.prefs.getBoolPref("signon.schemeUpgrades");
+      this.insecureAutofill = Services.prefs.getBoolPref("signon.autofillForms.http");
       logger.maxLogLevel = getMaxLogLevel();
+    }, false);
+
+    Services.prefs.addObserver("security.insecure_field_warning.", () => {
+      this.showInsecureFieldWarning = Services.prefs.getBoolPref("security.insecure_field_warning.contextual.enabled");
     }, false);
 
     return logger;

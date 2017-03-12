@@ -91,6 +91,8 @@ public:
   void Kill() { mKill = true; }
   nsresult   ThrowMemoryCachedData();
 
+  nsresult GetAltDataSize(int64_t *aSize);
+
   // metadata forwarders
   nsresult GetElement(const char *aKey, char **_retval);
   nsresult SetElement(const char *aKey, const char *aValue);
@@ -103,6 +105,7 @@ public:
   nsresult GetLastModified(uint32_t *_retval);
   nsresult GetLastFetched(uint32_t *_retval);
   nsresult GetFetchCount(uint32_t *_retval);
+  nsresult GetDiskStorageSizeInKB(uint32_t *aDiskStorageSize);
   // Called by upper layers to indicated the entry has been fetched,
   // i.e. delivered to the consumer.
   nsresult OnFetched();

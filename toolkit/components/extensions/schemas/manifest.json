@@ -58,10 +58,11 @@
             "preprocess": "localize"
           },
 
-          "creator": {
+          "author": {
             "type": "string",
             "optional": true,
-            "preprocess": "localize"
+            "preprocess": "localize",
+            "onError": "warn"
           },
 
           "version": {
@@ -180,7 +181,25 @@
             "type": "array",
             "items": { "type": "string" },
             "optional": true
+          },
+
+          "developer": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "optional": true,
+                "preprocess": "localize"
+              },
+              "url": {
+                "type": "string",
+                "optional": true,
+                "preprocess": "localize"
+              }
+            }
           }
+
         },
 
         "additionalProperties": { "$ref": "UnrecognizedProperty" }
@@ -254,7 +273,7 @@
           },
           {
             "type": "string",
-            "pattern": "^(https?|file|ftp|app|\\*)://(\\*|\\*\\.[^*/]+|[^*/]+)/.*$"
+            "pattern": "^(https?|file|ftp|\\*)://(\\*|\\*\\.[^*/]+|[^*/]+)/.*$"
           },
           {
             "type": "string",
@@ -330,18 +349,18 @@
           {
             "type": "object",
             "patternProperties": {
-              "^[1-9]\\d*$": {
-                "type": "object",
-                "isInstanceOf": "ImageData"
-              }
+              "^[1-9]\\d*$": { "$ref": "ImageData" }
             },
             "additionalProperties": false
           },
-          {
-            "type": "object",
-            "isInstanceOf": "ImageData"
-          }
+          { "$ref": "ImageData" }
         ]
+      },
+      {
+        "id": "ImageData",
+        "type": "object",
+        "isInstanceOf": "ImageData",
+        "postprocess": "convertImageDataToURL"
       },
       {
         "id": "UnrecognizedProperty",

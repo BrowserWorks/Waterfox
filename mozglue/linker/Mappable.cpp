@@ -22,6 +22,7 @@
 #include <errno.h>
 #include "ElfLoader.h"
 #include "SeekableZStream.h"
+#include "XZStream.h"
 #include "Logging.h"
 
 using mozilla::MakeUnique;
@@ -148,6 +149,10 @@ MappableExtractFile::Create(const char *name, Zip *zip, Zip::Stream *stream)
         "not extracting");
     return nullptr;
   }
+
+  // Ensure that the cache dir is private.
+  chmod(cachePath, 0770);
+
   UniquePtr<char[]> path =
     MakeUnique<char[]>(strlen(cachePath) + strlen(name) + 2);
   sprintf(path.get(), "%s/%s", cachePath, name);
@@ -197,6 +202,32 @@ MappableExtractFile::Create(const char *name, Zip *zip, Zip::Stream *stream)
     if (zStream.total_out != stream->GetUncompressedSize()) {
       ERROR("File not fully uncompressed! %ld / %d", zStream.total_out,
           static_cast<unsigned int>(stream->GetUncompressedSize()));
+      return nullptr;
+    }
+  } else if (XZStream::IsXZ(stream->GetBuffer(), stream->GetSize())) {
+    XZStream xzStream(stream->GetBuffer(), stream->GetSize());
+
+    if (!xzStream.Init()) {
+      ERROR("Couldn't initialize XZ decoder");
+      return nullptr;
+    }
+    DEBUG_LOG("XZStream created, compressed=%u, uncompressed=%u",
+              xzStream.Size(), xzStream.UncompressedSize());
+
+    if (ftruncate(fd, xzStream.UncompressedSize()) == -1) {
+      ERROR("Couldn't ftruncate %s to decompress library", file.get());
+      return nullptr;
+    }
+    MappedPtr buffer(MemoryRange::mmap(nullptr, xzStream.UncompressedSize(),
+                                       PROT_WRITE, MAP_SHARED, fd, 0));
+    if (buffer == MAP_FAILED) {
+      ERROR("Couldn't map %s to decompress library", file.get());
+      return nullptr;
+    }
+    const size_t written = xzStream.Decode(buffer, buffer.GetLength());
+    DEBUG_LOG("XZStream decoded %u", written);
+    if (written != buffer.GetLength()) {
+      ERROR("Error decoding XZ file %s", file.get());
       return nullptr;
     }
   } else if (stream->GetType() == Zip::Stream::STORE) {

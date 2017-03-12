@@ -35,18 +35,8 @@ partial interface WorkerGlobalScope {
   readonly attribute WorkerNavigator navigator;
 };
 
-// https://slightlyoff.github.io/ServiceWorker/spec/service_worker/index.html#self-caches
-partial interface WorkerGlobalScope {
-[Throws, Func="mozilla::dom::cache::CacheStorage::PrefEnabled", SameObject]
-readonly attribute CacheStorage caches;
-};
-
-WorkerGlobalScope implements WindowTimers;
-WorkerGlobalScope implements WindowBase64;
-WorkerGlobalScope implements GlobalFetch;
 WorkerGlobalScope implements GlobalCrypto;
-WorkerGlobalScope implements IDBEnvironment;
-WorkerGlobalScope implements ImageBitmapFactories;
+WorkerGlobalScope implements WindowOrWorkerGlobalScope;
 
 // Not implemented yet: bug 1072107.
 // WorkerGlobalScope implements FontFaceSource;

@@ -1160,6 +1160,8 @@ class RecursiveMakeBackend(CommonBackend):
             backend_file.write('SDK_LIBRARY := %s\n' % libdef.import_name)
         if libdef.symbols_file:
             backend_file.write('SYMBOLS_FILE := %s\n' % libdef.symbols_file)
+        if not libdef.cxx_link:
+            backend_file.write('LIB_IS_C_ONLY := 1\n')
 
     def _process_static_library(self, libdef, backend_file):
         backend_file.write_once('LIBRARY_NAME := %s\n' % libdef.basename)
@@ -1236,25 +1238,8 @@ class RecursiveMakeBackend(CommonBackend):
         # We have to link any Rust libraries after all intermediate static
         # libraries have been listed to ensure that the Rust libraries are
         # searched after the C/C++ objects that might reference Rust symbols.
-        # Building Rust crates normally takes care of Rust->Rust linkage, but
-        # we have to be careful: a savvy user might have specified that there
-        # is a staticlib (that contains the Rust runtime) and several other
-        # rlibs (which are plain archive files) to be linked into a given
-        # library.  We need to ensure that the staticlib comes after the
-        # rlibs to ensure symbols are found correctly.
-        if isinstance(obj, SharedLibrary) and any(isinstance(o, RustLibrary)
-                                                  for o in obj.linked_libraries):
-            libs = [l for l in obj.linked_libraries if isinstance(l, RustLibrary)]
-            def name_cmp(l1, l2):
-                if l1.crate_type == 'staticlib':
-                    return 1
-                if l2.crate_type == 'staticlib':
-                    return -1
-                return cmp(l1.basename, l2.basename)
-            libs.sort(cmp=name_cmp)
-            for l in libs:
-                relpath = pretty_relpath(l)
-                backend_file.write('STATIC_LIBS += %s/%s\n' % (relpath, l.import_name))
+        if isinstance(obj, SharedLibrary):
+            self._process_rust_libraries(obj, backend_file, pretty_relpath)
 
         for lib in obj.linked_system_libs:
             if obj.KIND == 'target':
@@ -1264,6 +1249,23 @@ class RecursiveMakeBackend(CommonBackend):
 
         # Process library-based defines
         self._process_defines(obj.lib_defines, backend_file)
+
+    def _process_rust_libraries(self, obj, backend_file, pretty_relpath):
+        assert isinstance(obj, SharedLibrary)
+
+        # If this library does not depend on any Rust libraries, then we are done.
+        direct_linked = [l for l in obj.linked_libraries if isinstance(l, RustLibrary)]
+        if not direct_linked:
+            return
+
+        # We should have already checked this in Linkable.link_library.
+        assert len(direct_linked) == 1
+
+        # TODO: see bug 1310063 for checking dependencies are set up correctly.
+
+        direct_linked = direct_linked[0]
+        backend_file.write('RUST_STATIC_LIB_FOR_SHARED_LIB := %s/%s\n' %
+                           (pretty_relpath(direct_linked), direct_linked.import_name))
 
     def _process_final_target_files(self, obj, files, backend_file):
         target = obj.install_target

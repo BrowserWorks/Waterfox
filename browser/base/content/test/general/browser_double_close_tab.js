@@ -39,12 +39,12 @@ function waitForDialogDestroyed(node, callback) {
 add_task(function*() {
   testTab = gBrowser.selectedTab = gBrowser.addTab();
   yield promiseTabLoadEvent(testTab, TEST_PAGE);
-  //XXXgijs the reason this has nesting and callbacks rather than promises is
+  // XXXgijs the reason this has nesting and callbacks rather than promises is
   // that DOM promises resolve on the next tick. So they're scheduled
   // in an event queue. So when we spin a new event queue for a modal dialog...
   // everything gets messed up and the promise's .then callbacks never get
   // called, despite resolve() being called just fine.
-  let dialogNode = yield new Promise(resolveOuter => {
+  yield new Promise(resolveOuter => {
     waitForDialog(dialogNode => {
       waitForDialogDestroyed(dialogNode, () => {
         let doCompletion = () => setTimeout(resolveOuter, 0);
@@ -78,5 +78,3 @@ registerCleanupFunction(function() {
     gBrowser.removeTab(testTab);
   }
 });
-
-

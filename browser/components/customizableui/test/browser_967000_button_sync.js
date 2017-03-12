@@ -119,9 +119,6 @@ function* asyncCleanup() {
 // When Sync is not setup.
 add_task(() => openPrefsFromMenuPanel("PanelUI-remotetabs-setupsync", "synced-tabs"));
 add_task(asyncCleanup);
-// Test that uitour is in progress, the entrypoint is `uitour` and not `menupanel`
-add_task(() => openPrefsFromMenuPanel("PanelUI-remotetabs-setupsync", "uitour"));
-add_task(asyncCleanup);
 
 // When Sync is configured in a "needs reauthentication" state.
 add_task(function* () {
@@ -197,10 +194,8 @@ add_task(function* () {
 
 // Test the "Sync Now" button
 add_task(function* () {
-  let nSyncs = 0;
   mockedInternal.getTabClients = () => [];
   mockedInternal.syncTabs = () => {
-    nSyncs++;
     return Promise.resolve();
   }
 

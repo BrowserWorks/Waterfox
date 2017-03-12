@@ -75,6 +75,7 @@
     _(String)                       \
     _(StringCharCodeAt)             \
     _(StringFromCharCode)           \
+    _(StringFromCodePoint)          \
     _(StringCharAt)                 \
                                     \
     _(IntrinsicStringReplaceString) \
@@ -118,10 +119,13 @@
                                     \
     _(IntrinsicIsArrayIterator)     \
     _(IntrinsicIsMapIterator)       \
+    _(IntrinsicIsSetIterator)       \
     _(IntrinsicIsStringIterator)    \
     _(IntrinsicIsListIterator)      \
                                     \
     _(IntrinsicGetNextMapEntryForIterator) \
+                                    \
+    _(IntrinsicGetNextSetEntryForIterator) \
                                     \
     _(IntrinsicArrayBufferByteLength) \
     _(IntrinsicPossiblyWrappedArrayBufferByteLength) \

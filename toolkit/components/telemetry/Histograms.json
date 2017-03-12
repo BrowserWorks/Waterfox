@@ -124,19 +124,46 @@
     "description": "The operating system audio back-end used when successfully opening an audio stream, or whether the failure occurred on the first try or not <https://dxr.mozilla.org/mozilla-central/search?q=AUDIOSTREAM_BACKEND_ID_STR>",
     "releaseChannelCollection": "opt-out"
   },
+  "AUSHELPER_CPU_ERROR_CODE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
+    "bug_numbers": [1296630],
+    "expires_in_version": "60",
+    "kind": "enumerated",
+    "n_values": 16,
+    "releaseChannelCollection": "opt-out",
+    "description": "The error code from the aushelper system add-on when querying the registry for CPU information for bug 1296630 (see browser/extensions/aushelper/bootstrap.js)."
+  },
+  "AUSHELPER_CPU_RESULT_CODE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
+    "bug_numbers": [1296630],
+    "expires_in_version": "60",
+    "kind": "enumerated",
+    "n_values": 5,
+    "releaseChannelCollection": "opt-out",
+    "description": "Whether the system is affected by bug 1296630 (1=No, 2=Yes, 3=Error, and 4=Unknown)."
+  },
+  "AUSHELPER_WEBSENSE_ERROR_CODE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
+    "bug_numbers": [1305847],
+    "expires_in_version": "60",
+    "kind": "enumerated",
+    "n_values": 8,
+    "releaseChannelCollection": "opt-out",
+    "description": "The error code from the aushelper system add-on when gathering information on Websense (see browser/extensions/aushelper/bootstrap.js)."
+  },
+  "AUSHELPER_WEBSENSE_REG_EXISTS": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
+    "bug_numbers": [1305847],
+    "expires_in_version": "60",
+    "kind": "boolean",
+    "releaseChannelCollection": "opt-out",
+    "description": "Whether the system has a Websense InstallVersion registry value (see browser/extensions/aushelper/bootstrap.js)."
+  },
   "BACKGROUNDFILESAVER_THREAD_COUNT": {
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 21,
     "description": "Maximum number of concurrent threads reached during a given download session"
-  },
-  "BATTERY_STATUS_COUNT": {
-    "alert_emails": ["cpeterson@mozilla.com"],
-    "bug_numbers": [1259335],
-    "expires_in_version": "52",
-    "kind": "enumerated",
-    "n_values": 10,
-    "description": "Number of pages that use the Battery Status API: 0=navigator.battery, 1=navigator.getBattery()"
   },
   "BLOCKLIST_SYNC_FILE_LOAD": {
     "alert_emails": ["rvitillo@mozilla.com"],
@@ -811,6 +838,14 @@
     "kind": "boolean",
     "description": "Was an incremental GC canceled?"
   },
+  "GC_RESET_REASON": {
+    "alert_emails": ["dev-telemetry-gc-alerts@mozilla.org"],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "description": "Reason for cancelling an ongoing GC (see js::gc::AbortReason)",
+    "bug_numbers": [1308116]
+  },
   "GC_INCREMENTAL_DISABLED": {
     "alert_emails": ["dev-telemetry-gc-alerts@mozilla.org"],
     "expires_in_version": "never",
@@ -822,6 +857,14 @@
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Was the GC non-incremental?"
+  },
+  "GC_NON_INCREMENTAL_REASON": {
+    "alert_emails": ["dev-telemetry-gc-alerts@mozilla.org"],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "description": "Reason for performing a non-incremental GC (see js::gc::AbortReason)",
+    "bug_numbers": [1308116]
   },
   "GC_SCC_SWEEP_TOTAL_MS": {
     "alert_emails": ["dev-telemetry-gc-alerts@mozilla.org"],
@@ -935,6 +978,16 @@
     "kind": "boolean",
     "bug_numbers": [1255198],
     "description": "This metric is recorded every time a navigator.geolocation.watchPosition() request gets allowed/fulfilled. A false value is recorded if the owner is not visible according to document.isVisible."
+  },
+  "GPU_PROCESS_LAUNCH_TIME_MS" : {
+    "alert_emails": ["george@mozilla.com", "danderson@mozilla.com"],
+    "expires_in_version": "never",
+    "bug_numbers": [1297790],
+    "kind": "exponential",
+    "high": 1000,
+    "n_buckets": 50,
+    "releaseChannelCollection": "opt-out",
+    "description": "GPU process launch time in milliseconds"
   },
   "JS_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT": {
     "alert_emails": ["jdemooij@mozilla.com"],
@@ -1313,6 +1366,13 @@
     "high": 500,
     "n_buckets": 50,
     "description": "Decode count"
+  },
+  "IMAGE_DECODE_OPAQUE_BGRA": {
+    "alert_emails": ["aosmond@mozilla.com"],
+    "expires_in_version": "53",
+    "kind": "boolean",
+    "description": "Opaque images are BGRA",
+    "bug_numbers": [1311779]
   },
   "IMAGE_DECODE_SPEED_JPEG": {
     "expires_in_version": "never",
@@ -1706,6 +1766,294 @@
     "n_values": 12,
     "description": "Whether the URL gets redirected?  (0=200, 1=301, 2=302, 3=304, 4=307, 5=308, 6=400, 7=401, 8=403, 9=404, 10=500, 11=other)"
   },
+  "HTTP_NET_VS_CACHE_ONSTART_ISIMG": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for images. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_NOTIMG": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for non-images. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_ISIMG": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for images. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_NOTIMG": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for non-images. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_QSMALL_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a normal priority and small queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_QMED_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a normal priority and medium queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_QBIG_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a normal priority and large queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_QSMALL_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a high priority and small queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_QMED_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a high priority and medium queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_QBIG_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a high priority and large queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_QSMALL_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a normal priority and small queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_QMED_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a normal priority and medium queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_QBIG_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a normal priority and large queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_QSMALL_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a high priority and small queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_QMED_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a high priority and medium queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_QBIG_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a high priority and large queue. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_SMALL_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for cache files with a small size (<32K) and normal priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_MED_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for cache files with a medium size (<256K) and normal priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_LARGE_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for cache files with a large size (>256K) and normal priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_SMALL_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for cache files with a small size (<32K) and high priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_MED_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for cache files with a medium size (<256K) and high priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_LARGE_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) for cache files with a large size (>256K) and high priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_SMALL_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a small size (<32K) and normal priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_MED_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a medium size (<256K) and normal priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_LARGE_NORMALPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a large size (>256K) and normal priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_SMALL_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a small size (<32K) and high priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_MED_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a medium size (<256K) and high priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_LARGE_HIGHPRI": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a large size (>256K) and high priority. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_REVALIDATED": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) revalidated cache entries. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTART_NOTREVALIDATED": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStartRequest) difference (ms) not revalidated cache entries. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_REVALIDATED": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) revalidated cache entries. Offset by 500 ms."
+  },
+  "HTTP_NET_VS_CACHE_ONSTOP_NOTREVALIDATED": {
+    "expires_in_version": "never",
+      "alert_emails": ["necko@mozilla.com"],
+      "bug_numbers": [1313095],
+      "kind": "linear",
+      "high": 1000,
+      "n_buckets": 100,
+      "description": "Network vs cache time load (OnStopRequest) difference (ms) not revalidated cache entries. Offset by 500 ms."
+  },
   "HTTP_AUTH_DIALOG_STATS": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -1722,26 +2070,26 @@
     "description": "Recorded once for each HTTP 401 response. The value records the type of authentication and the TLS-enabled status. (0=basic/clear, 1=basic/tls, 2=digest/clear, 3=digest/tls, 4=ntlm/clear, 5=ntlm/tls, 6=negotiate/clear, 7=negotiate/tls)"
   },
   "TLS_EARLY_DATA_NEGOTIATED": {
-    "expires_in_version": "never",
+    "expires_in_version": "58",
     "kind": "enumerated",
     "n_values": 3,
-    "description": "TLS early data was available: 0 - not available, 1 - avaialable but not used, 2 - available and used.",
+    "description": "Sending TLS early data was possible: 0 - not possible, 1 - possible but not used, 2 - possible and used.",
     "alert_emails": ["necko@mozilla.com"],
     "bug_numbers": [1296288]
   },
   "TLS_EARLY_DATA_ACCEPTED": {
-    "expires_in_version": "never",
+    "expires_in_version": "58",
     "kind": "boolean",
-    "description": "TLS early data was used and it was accepted or rejected by the remote host.",
+    "description": "TLS early data was used and it was accepted (true) or rejected (false) by the remote host.",
     "alert_emails": ["necko@mozilla.com"],
     "bug_numbers": [1296288]
   },
   "TLS_EARLY_DATA_BYTES_WRITTEN": {
-    "expires_in_version": "never",
+    "expires_in_version": "58",
     "kind": "exponential",
     "high": 60000,
     "n_buckets": 100,
-    "description": "Amount of bytes sent using TLS early data.",
+    "description": "Amount of bytes sent using TLS early data at the start of a TLS connection for a given channel.",
     "alert_emails": ["necko@mozilla.com"],
     "bug_numbers": [1296288]
   },
@@ -1752,6 +2100,15 @@
     "kind": "enumerated",
     "n_values": 16,
     "description": "SSL Version (1=tls1, 2=tls1.1, 3=tls1.2, 4=tls1.3)"
+  },
+  "SSL_HANDSHAKE_RESULT": {
+    "alert_emails": ["seceng-telemetry@mozilla.com"],
+    "bug_numbers": [1331280],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 672,
+    "releaseChannelCollection": "opt-out",      
+    "description": "SSL handshake result, 0=success, 1-255=NSS error offset, 256-511=SEC error offset + 256, 512-639=NSPR error offset + 512, 640-670=PKIX error, 671=unknown err"
   },
   "SSL_TIME_UNTIL_READY": {
     "alert_emails": ["seceng-telemetry@mozilla.com"],
@@ -2014,6 +2371,105 @@
     "n_values": 32,
     "description": "H2: goaway reason from peer from rfc 7540. 31 is none received."
   },
+  "HPACK_ELEMENTS_EVICTED_DECOMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 256,
+    "n_buckets": 50,
+    "description": "HPACK: Number of items removed from dynamic table to make room for 1 new item",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_BYTES_EVICTED_DECOMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 8192,
+    "n_buckets": 50,
+    "description": "HPACK: Number of bytes removed from dynamic table to make room for 1 new item",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_BYTES_EVICTED_RATIO_DECOMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 256,
+    "n_buckets": 50,
+    "description": "HPACK: Ratio of bytes evicted to bytes added (* 100)",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_PEAK_COUNT_DECOMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 1024,
+    "n_buckets": 50,
+    "description": "HPACK: peak number of items in the dynamic table",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_PEAK_SIZE_DECOMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 16384,
+    "n_buckets": 100,
+    "description": "HPACK: peak size in bytes of the table",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_ELEMENTS_EVICTED_COMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 256,
+    "n_buckets": 50,
+    "description": "HPACK: Number of items removed from dynamic table to make room for 1 new item",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_BYTES_EVICTED_COMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 8192,
+    "n_buckets": 50,
+    "description": "HPACK: Number of bytes removed from dynamic table to make room for 1 new item",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_BYTES_EVICTED_RATIO_COMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 256,
+    "n_buckets": 50,
+    "description": "HPACK: Ratio of bytes evicted to bytes added (* 100)",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_PEAK_COUNT_COMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 1024,
+    "n_buckets": 50,
+    "description": "HPACK: peak number of items in the dynamic table",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HPACK_PEAK_SIZE_COMPRESSOR": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 16384,
+    "n_buckets": 100,
+    "description": "HPACK: peak size in bytes of the table",
+    "alert_emails": ["necko@mozilla.com", "hurley@mozilla.com"],
+    "bug_numbers": [1296280]
+  },
+  "HTTP_CHANNEL_DISPOSITION" : {
+    "alert_emails": ["necko@mozilla.com"],
+    "bug_numbers": [1341128],
+    "expires_in_version": "60",
+    "kind": "enumerated",
+    "n_values": 16,
+    "releaseChannelCollection": "opt-out",
+    "description": "Channel Disposition: 0=Cancel, 1=Disk, 2=NetOK, 3=NetEarlyFail, 4=NetlateFail, +8 for HTTPS"
+  },
   "HTTP_CONNECTION_ENTRY_CACHE_HIT_1" : {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -2081,50 +2537,74 @@
     "kind": "boolean",
     "description": "Rate of page load from offline cache"
   },
-  "HTTP_CACHE_IO_QUEUE_OPEN_PRIORITY": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_OPEN_PRIORITY": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
   },
-  "HTTP_CACHE_IO_QUEUE_READ_PRIORITY": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_READ_PRIORITY": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
   },
-  "HTTP_CACHE_IO_QUEUE_OPEN": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_MANAGEMENT": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
   },
-  "HTTP_CACHE_IO_QUEUE_READ": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_OPEN": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
   },
-  "HTTP_CACHE_IO_QUEUE_MANAGEMENT": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_READ": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
   },
-  "HTTP_CACHE_IO_QUEUE_WRITE": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_WRITE": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
   },
-  "HTTP_CACHE_IO_QUEUE_INDEX": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_WRITE_PRIORITY": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
   },
-  "HTTP_CACHE_IO_QUEUE_EVICT": {
-    "expires_in_version": "54",
+  "HTTP_CACHE_IO_QUEUE_2_INDEX": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
+    "kind": "enumerated",
+    "n_values": 10,
+    "description": "HTTP Cache IO queue length"
+  },
+  "HTTP_CACHE_IO_QUEUE_2_EVICT": {
+    "alert_emails": ["hbambas@mozilla.com"],
+    "bug_numbers": [1294183],
+    "expires_in_version": "55",
     "kind": "enumerated",
     "n_values": 10,
     "description": "HTTP Cache IO queue length"
@@ -3683,6 +4163,31 @@
     "n_buckets": 15,
     "description": "Time spent constructing PrefixSet from DB (ms)"
   },
+  "URLCLASSIFIER_VLPS_FILELOAD_TIME": {
+    "alert_emails": ["safebrowsing-telemetry@mozilla.org"],
+    "expires_in_version": "58",
+    "kind": "exponential",
+    "high": 1000,
+    "n_buckets": 10,
+    "bug_numbers": [1283007],
+    "description": "Time spent loading Variable-Length PrefixSet from file (ms)"
+  },
+  "URLCLASSIFIER_VLPS_FALLOCATE_TIME": {
+    "alert_emails": ["safebrowsing-telemetry@mozilla.org"],
+    "expires_in_version": "58",
+    "kind": "exponential",
+    "high": 1000,
+    "n_buckets": 10,
+    "bug_numbers": [1283007],
+    "description": "Time spent fallocating Variable-Length PrefixSet (ms)"
+  },
+  "URLCLASSIFIER_VLPS_LOAD_CORRUPT": {
+    "alert_emails": ["safebrowsing-telemetry@mozilla.org"],
+    "expires_in_version": "58",
+    "kind": "boolean",
+    "bug_numbers": [1305581],
+    "description": "Whether or not a variable-length prefix set loaded from disk is corrupted (true = file corrupted)."
+  },
   "URLCLASSIFIER_LC_PREFIXES": {
     "alert_emails": ["safebrowsing-telemetry@mozilla.org"],
     "expires_in_version": "never",
@@ -3721,6 +4226,22 @@
     "kind": "boolean",
     "bug_numbers": [1172688],
     "description": "This metric is recorded every time a gethash lookup is performed, `true` is recorded if the lookup times out."
+  },
+  "URLCLASSIFIER_UPDATE_ERROR_TYPE": {
+    "alert_emails": ["safebrowsing-telemetry@mozilla.org"],
+    "expires_in_version": "58",
+    "kind": "enumerated",
+    "n_values": 10,
+    "bug_numbers": [1305801],
+    "description": "An error was encountered while parsing a partial update returned by a Safe Browsing V4 server (0 = addition of an already existing prefix, 1 = parser got into an infinite loop, 2 = removal index out of bounds, 3 = checksum mismatch, 4 = missing checksum)"
+  },
+  "URLCLASSIFIER_PREFIX_MATCH": {
+    "alert_emails": ["safebrowsing-telemetry@mozilla.org"],
+    "expires_in_version": "58",
+    "kind": "enumerated",
+    "n_values": 4,
+    "bug_numbers": [1298257],
+    "description": "Classifier prefix matching result (0 = no match, 1 = match only V2, 2 = match only V4, 3 = match both V2 and V4)"
   },
   "CSP_DOCUMENTS_COUNT": {
     "alert_emails": ["seceng@mozilla.com"],
@@ -3906,6 +4427,14 @@
     "description": "Number of bookmarks stored in the browser DB",
     "alert_emails": ["mobile-frontend@mozilla.com"],
     "bug_numbers": [1244704]
+  },
+  "FENNEC_ORBOT_INSTALLED": {
+    "expires_in_version": "60",
+    "kind": "flag",
+    "cpp_guard": "ANDROID",
+    "description": "Whether or not users have Orbot installed",
+    "alert_emails": ["seceng@mozilla.org"],
+    "bug_numbers": [1314784]
   },
   "FENNEC_READING_LIST_COUNT": {
     "expires_in_version": "50",
@@ -4196,20 +4725,6 @@
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that cannot stage updates (timer initiated)"
-  },
-  "UPDATE_HAS_PREF_URL_OVERRIDE_EXTERNAL": {
-    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "never",
-    "kind": "count",
-    "releaseChannelCollection": "opt-out",
-    "description": "Update: count of systems that have an app.update.url.override preference (externally initiated)"
-  },
-  "UPDATE_HAS_PREF_URL_OVERRIDE_NOTIFY": {
-    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "never",
-    "kind": "count",
-    "releaseChannelCollection": "opt-out",
-    "description": "Update: count of systems that have an app.update.url.override preference (timer initiated)"
   },
   "UPDATE_PREF_UPDATE_CANCELATIONS_EXTERNAL": {
     "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
@@ -4686,6 +5201,39 @@
     "keyed": true,
     "description": "How long it took to import logins (passwords) from another browser, keyed by the name of the browser."
   },
+  "FX_MIGRATION_BOOKMARKS_JANK_MS": {
+    "bug_numbers": [1338522],
+    "alert_emails": ["dao@mozilla.com"],
+    "expires_in_version": "58",
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 60000,
+    "releaseChannelCollection": "opt-out",
+    "keyed": true,
+    "description": "Accumulated timer delay (variance between when the timer was expected to fire and when it actually fired) in milliseconds as an indicator for decreased main-thread responsiveness while importing bookmarks from another browser, keyed by the name of the browser (see gAvailableMigratorKeys in MigrationUtils.jsm). The import is happening on a background thread and should ideally not affect the UI noticeably."
+  },
+  "FX_MIGRATION_HISTORY_JANK_MS": {
+    "bug_numbers": [1338522],
+    "alert_emails": ["dao@mozilla.com"],
+    "expires_in_version": "58",
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 60000,
+    "releaseChannelCollection": "opt-out",
+    "keyed": true,
+    "description": "Accumulated timer delay (variance between when the timer was expected to fire and when it actually fired) in milliseconds as an indicator for decreased main-thread responsiveness while importing history from another browser, keyed by the name of the browser (see gAvailableMigratorKeys in MigrationUtils.jsm). The import is happening on a background thread and should ideally not affect the UI noticeably."
+  },
+  "FX_MIGRATION_LOGINS_JANK_MS": {
+    "bug_numbers": [1338522],
+    "alert_emails": ["dao@mozilla.com"],
+    "expires_in_version": "58",
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 60000,
+    "releaseChannelCollection": "opt-out",
+    "keyed": true,
+    "description": "Accumulated timer delay (variance between when the timer was expected to fire and when it actually fired) in milliseconds as an indicator for decreased main-thread responsiveness while importing logins / passwords from another browser, keyed by the name of the browser (see gAvailableMigratorKeys in MigrationUtils.jsm). The import is happening on a background thread and should ideally not affect the UI noticeably."
+  },
   "FX_MIGRATION_BOOKMARKS_QUANTITY": {
     "bug_numbers": [1279501],
     "alert_emails": ["gijs@mozilla.com"],
@@ -4773,6 +5321,83 @@
     "n_values": 5,
     "releaseChannelCollection": "opt-out",
     "description": "Indicates we showed a 'would you like to undo this automatic migration?' notification bar. The bucket indicates which nth day we're on (1st/2nd/3rd, by default - 0 would be indicative the pref didn't get set which shouldn't happen). After 3 days on which the notification gets shown, it will get disabled and never shown again."
+  },
+  "FX_STARTUP_MIGRATION_UNDO_BOOKMARKS_ERRORCOUNT": {
+    "bug_numbers": [1333233],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "58",
+    "keyed": true,
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Indicates how many errors we find when trying to 'undo' bookmarks import. Keys are internal ids of browsers we import from, e.g. 'chrome' or 'ie', etc."
+  },
+  "FX_STARTUP_MIGRATION_UNDO_LOGINS_ERRORCOUNT": {
+    "bug_numbers": [1333233],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "58",
+    "keyed": true,
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Indicates how many errors we find when trying to 'undo' login (password) import. Keys are internal ids of browsers we import from, e.g. 'chrome' or 'ie', etc."
+  },
+  "FX_STARTUP_MIGRATION_UNDO_VISITS_ERRORCOUNT": {
+    "bug_numbers": [1333233],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "58",
+    "keyed": true,
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Indicates how many errors we find when trying to 'undo' history import. Keys are internal ids of browsers we import from, e.g. 'chrome' or 'ie', etc."
+  },
+  "FX_STARTUP_MIGRATION_UNDO_BOOKMARKS_MS": {
+    "bug_numbers": [1333233],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "58",
+    "keyed": true,
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 60000,
+    "releaseChannelCollection": "opt-out",
+    "description": "Indicates how long it took to undo the startup import of bookmarks, in ms. Keys are internal ids of browsers we import from, e.g. 'chrome' or 'ie', etc."
+  },
+  "FX_STARTUP_MIGRATION_UNDO_LOGINS_MS": {
+    "bug_numbers": [1333233],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "58",
+    "keyed": true,
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 60000,
+    "releaseChannelCollection": "opt-out",
+    "description": "Indicates how long it took to undo the startup import of logins, in ms. Keys are internal ids of browsers we import from, e.g. 'chrome' or 'ie', etc."
+  },
+  "FX_STARTUP_MIGRATION_UNDO_VISITS_MS": {
+    "bug_numbers": [1333233],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "58",
+    "keyed": true,
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 60000,
+    "releaseChannelCollection": "opt-out",
+    "description": "Indicates how long it took to undo the startup import of visits (history), in ms. Keys are internal ids of browsers we import from, e.g. 'chrome' or 'ie', etc."
+  },
+  "FX_STARTUP_MIGRATION_UNDO_TOTAL_MS": {
+    "bug_numbers": [1333233],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "58",
+    "keyed": true,
+    "kind": "exponential",
+    "n_buckets": 20,
+    "high": 60000,
+    "releaseChannelCollection": "opt-out",
+    "description": "Indicates how long it took to undo the entirety of the startup undo, in ms. Keys are internal ids of browsers we import from, e.g. 'chrome' or 'ie', etc."
   },
   "FX_STARTUP_MIGRATION_DATA_RECENCY": {
     "bug_numbers": [1276694],
@@ -5450,19 +6075,23 @@
     "n_buckets": 10,
     "description": "Time taken to compress telemetry object (ms)"
   },
-  "TELEMETRY_PING": {
+  "TELEMETRY_SEND_SUCCESS" : {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "bug_numbers": [1318284],
     "expires_in_version": "never",
     "kind": "exponential",
-    "high": 3000,
-    "n_buckets": 10,
-    "description": "Time taken to submit telemetry info (ms)"
+    "high": 120000,
+    "n_buckets": 20,
+    "description": "Time needed (in ms) for a successful send of a Telemetry ping to the servers and getting a reply back."
   },
-  "TELEMETRY_SEND" : {
+  "TELEMETRY_SEND_FAILURE" : {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "bug_numbers": [1318284],
     "expires_in_version": "never",
     "kind": "exponential",
-    "high": 3000,
-    "n_buckets": 10,
-    "description": "Time to send the compressed string to the Telemetry servers and get a reply back (ms)"
+    "high": 120000,
+    "n_buckets": 20,
+    "description": "Time needed (in ms) for a failed send of a Telemetry ping to the servers and getting a reply back."
   },
   "TELEMETRY_STRINGIFY" : {
     "expires_in_version": "never",
@@ -5482,6 +6111,13 @@
     "kind": "count",
     "keyed": true,
     "description": "Count of individual invalid ping types that were submitted to Telemetry."
+  },
+  "TELEMETRY_INVALID_PAYLOAD_SUBMITTED": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "bug_numbers": [1292226],
+    "kind": "count",
+    "description": "Count of individual invalid payloads that were submitted to Telemetry."
   },
   "TELEMETRY_PING_EVICTED_FOR_SERVER_ERRORS": {
     "alert_emails": ["telemetry-client-dev@mozilla.com"],
@@ -6317,7 +6953,14 @@
     "kind": "boolean",
     "description": "Reports whether a decoder for an HTTP Live Streaming media type was created when requested.",
     "bug_numbers": [1262659]
-
+  },
+  "MEDIA_DECODING_PROCESS_CRASH": {
+    "alert_emails": ["bwu@mozilla.com", "jolin@mozilla.com", "jacheng@mozilla.com"],
+    "expires_in_version": "57",
+    "kind": "count",
+    "bug_numbers": [1297556, 1257777],
+    "description": "Records a value each time Fennec remote decoding process crashes unexpected while decoding media content.",
+    "releaseChannelCollection": "opt-out"
   },
   "VIDEO_MFT_OUTPUT_NULL_SAMPLES": {
     "alert_emails": ["cpearce@mozilla.com"],
@@ -7686,6 +8329,17 @@
     "n_values": 16,
     "description": "How often do we get back an HSTS priming result which upgrades the connection to HTTPS? 0=cached (no upgrade), 1=cached (do upgrade), 2=cached (blocked), 3=already upgraded, 4=priming succeeded, 5=priming succeeded (block due to pref), 6=priming succeeded (no upgrade due to pref), 7=priming failed (block), 8=priming failed (accept)"
   },
+  "HSTS_PRIMING_REQUEST_DURATION": {
+    "alert_emails": ["seceng-telemetry@mozilla.org"],
+    "bug_numbers": [1311893],
+    "expires_in_version": "58",
+    "kind": "exponential",
+    "low": 100,
+    "high": 30000,
+    "n_buckets": 100,
+    "keyed": true,
+    "description": "The amount of time required for HSTS priming requests (ms), keyed by success or failure of the priming request. (success, failure)"
+  },
   "MIXED_CONTENT_OBJECT_SUBREQUEST": {
     "alert_emails": ["seceng@mozilla.org"],
     "bug_numbers": [1244116],
@@ -7701,6 +8355,15 @@
     "n_values": 10,
     "releaseChannelCollection": "opt-out",
     "description": "How often are secure cookies set from non-secure origins, and vice-versa? 0=nonsecure/http, 1=nonsecure/https, 2=secure/http, 3=secure/https"
+  },
+  "COOKIE_LEAVE_SECURE_ALONE": {
+    "alert_emails": ["seceng-telemetry@mozilla.com"],
+    "bug_numbers": [976073],
+    "expires_in_version": "57",
+    "kind": "enumerated",
+    "n_values": 10,
+    "releaseChannelCollection": "opt-out",
+    "description": "Measuring the effects of draft-ietf-httpbis-cookie-alone blocking. 0=blocked http setting secure cookie; 1=blocked http downgrading secure cookie; 2=blocked evicting secure cookie; 3=evicting newer insecure cookie; 4=evicting the oldest insecure cookie; 5=evicting the preferred cookie; 6=evicting the secure blocked"
   },
   "NTLM_MODULE_USED_2": {
     "expires_in_version": "never",
@@ -8058,6 +8721,33 @@
     "high": 1024,
     "n_buckets": 10,
     "description": "How many permanent certificate overrides a user has stored."
+  },
+  "SSL_SCTS_ORIGIN": {
+    "alert_emails": ["seceng-telemetry@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "bug_numbers": [1293231],
+    "releaseChannelCollection": "opt-out",
+    "description": "Origin of Signed Certificate Timestamps received (1=Embedded, 2=TLS handshake extension, 3=Stapled OCSP response)"
+  },
+  "SSL_SCTS_PER_CONNECTION": {
+    "alert_emails": ["seceng-telemetry@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "bug_numbers": [1293231],
+    "releaseChannelCollection": "opt-out",
+    "description": "Histogram of Signed Certificate Timestamps per SSL connection, from all sources (embedded / OCSP Stapling / TLS handshake). Bucket 0 counts the cases when no SCTs were received, or none were extracted due to parsing errors."
+  },
+  "SSL_SCTS_VERIFICATION_STATUS": {
+    "alert_emails": ["seceng-telemetry@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "bug_numbers": [1293231],
+    "releaseChannelCollection": "opt-out",
+    "description": "Verification status of Signed Certificate Timestamps received (0=Decoding error, 1=SCT verified, 2=SCT from unknown log, 3=Invalid SCT signature, 4=SCT timestamp is in the future)"
   },
   "SSL_SERVER_AUTH_EKU": {
     "alert_emails": ["seceng-telemetry@mozilla.com"],
@@ -8656,11 +9346,19 @@
   },
   "VIDEO_AS_CONTENT_SOURCE" : {
     "alert_emails": ["ajones@mozilla.com", "kaku@mozilla.com"],
-    "expires_in_version": "56",
+    "expires_in_version": "58",
     "description": "Usage of a {visible / invisible} video element as the source of {drawImage(), createPattern(), createImageBitmap() and captureStream()} APIs. (0 = ALL_VISIBLE, 1 = ALL_INVISIBLE, 2 = drawImage_VISIBLE, 3 = drawImage_INVISIBLE, 4 = createPattern_VISIBLE, 5 = createPattern_INVISIBLE, 6 = createImageBitmap_VISIBLE, 7 = createImageBitmap_INVISIBLE, 8 = captureStream_VISIBLE, 9 = captureStream_INVISIBLE)",
     "kind": "enumerated",
     "n_values": 12,
     "bug_numbers": [1299718]
+  },
+  "VIDEO_AS_CONTENT_SOURCE_IN_TREE_OR_NOT" : {
+    "alert_emails": ["ajones@mozilla.com", "kaku@mozilla.com"],
+    "expires_in_version": "58",
+    "description": "Usage of an invisible {in tree / not in tree} video element as the source of {drawImage(), createPattern(), createImageBitmap() and captureStream()} APIs. (0 = ALL_IN_TREE, 1 = ALL_NOT_IN_TREE, 2 = drawImage_IN_TREE, 3 = drawImage_NOT_IN_TREE, 4 = createPattern_IN_TREE, 5 = createPattern_NOT_IN_TREE, 6 = createImageBitmap_IN_TREE, 7 = createImageBitmap_NOT_IN_TREE, 8 = captureStream_IN_TREE, 9 = captureStream_NOT_IN_TREE)",
+    "kind": "enumerated",
+    "n_values": 12,
+    "bug_numbers": [1337301]
   },
   "VIDEO_UNLOAD_STATE": {
     "alert_emails": ["ajones@mozilla.com"],
@@ -9435,258 +10133,6 @@
     "kind": "boolean",
     "description": "Was there an error while performing the v7 permissions DB migration?"
   },
-  "LOOP_ICE_FINAL_CONNECTION_STATE": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 7,
-    "description": "The ICE connection state when the PC was closed"
-  },
-  "LOOP_ICE_ON_TIME_TRICKLE_ARRIVAL_TIME": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 20,
-    "description": "The length of time (in milliseconds) that a trickle candidate took to arrive after the start of ICE, given that it arrived when ICE was not in a failure state (ie; a candidate that we could do something with, hence 'on time')"
-  },
-  "LOOP_ICE_LATE_TRICKLE_ARRIVAL_TIME": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 20,
-    "description": "The length of time (in milliseconds) that a trickle candidate took to arrive after the start of ICE, given that it arrived after ICE failed."
-  },
-  "LOOP_ICE_SUCCESS_TIME": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 20,
-    "description": "The length of time (in milliseconds) it took for ICE to complete, given that ICE succeeded."
-  },
-  "LOOP_ICE_FAILURE_TIME": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 20,
-    "description": "The length of time (in milliseconds) it took for ICE to complete, given that it failed."
-  },
-  "LOOP_ICE_SUCCESS_RATE": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "The number of failed ICE Connections (0) vs. number of successful ICE connections (1)."
-  },
-  "LOOP_VIDEO_QUALITY_INBOUND_BANDWIDTH_KBITS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 1000000,
-    "n_buckets": 1000,
-    "description": "Locally measured data rate of inbound video (kbit/s). Computed every second of a call."
-  },
-  "LOOP_AUDIO_QUALITY_INBOUND_BANDWIDTH_KBITS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 1000000,
-    "n_buckets": 1000,
-    "description": "Locally measured data rate on inbound audio (kbit/s). Computed every second of a call."
-  },
-  "LOOP_VIDEO_QUALITY_OUTBOUND_BANDWIDTH_KBITS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 1000000,
-    "n_buckets": 1000,
-    "description": "Data rate deduced from RTCP from remote recipient of outbound video (kbit/s). Computed every second of a call (for easy comparison)."
-  },
-  "LOOP_AUDIO_QUALITY_OUTBOUND_BANDWIDTH_KBITS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 1000000,
-    "n_buckets": 1000,
-    "description": "Data rate deduced from RTCP from remote recipient of outbound audio (kbit/s). Computed every second of a call (for easy comparison)."
-  },
-  "LOOP_VIDEO_ERROR_RECOVERY_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 500,
-    "description": "Time to recover from a video error in ms"
-  },
-  "LOOP_VIDEO_RECOVERY_BEFORE_ERROR_PER_MIN": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 1000,
-    "n_buckets": 200,
-    "description": "Number of losses recovered before error per min"
-  },
-  "LOOP_VIDEO_RECOVERY_AFTER_ERROR_PER_MIN": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 1000,
-    "n_buckets": 200,
-    "description": "Number of losses recovered after error per min"
-  },
-  "LOOP_VIDEO_DECODE_ERROR_TIME_PERMILLE": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 1000,
-    "n_buckets": 100,
-    "description": "Percentage*10 (permille) of call decoding with errors or frozen due to errors"
-  },
-  "LOOP_VIDEO_QUALITY_OUTBOUND_RTT": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 1000,
-    "description": "Roundtrip time of outbound video (ms). Sampled every second of a call."
-  },
-  "LOOP_AUDIO_QUALITY_OUTBOUND_RTT": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 1000,
-    "description": "Roundtrip time of outbound audio (ms). Sampled every second of a call."
-  },
-  "LOOP_VIDEO_ENCODER_BITRATE_AVG_PER_CALL_KBPS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 100,
-    "description": "Video encoder's average bitrate (in kbits/s) over an entire call"
-  },
-  "LOOP_VIDEO_ENCODER_BITRATE_STD_DEV_PER_CALL_KBPS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 5000,
-    "n_buckets": 100,
-    "description": "Standard deviation from video encoder's average bitrate (in kbits/s) over an entire call"
-  },
-  "LOOP_VIDEO_ENCODER_FRAMERATE_AVG_PER_CALL": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 200,
-    "n_buckets": 50,
-    "description": "Video encoder's average framerate (in fps) over an entire call"
-  },
-  "LOOP_VIDEO_ENCODER_FRAMERATE_10X_STD_DEV_PER_CALL": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 200,
-    "n_buckets": 50,
-    "description": "Standard deviation from video encoder's average framerate (in 1/10 fps) over an entire call"
-  },
-  "LOOP_VIDEO_ENCODER_DROPPED_FRAMES_PER_CALL_FPM": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 50000,
-    "n_buckets": 100,
-    "description": "Video encoder's number of frames dropped (in frames/min) over an entire call"
-  },
-  "LOOP_VIDEO_DECODER_BITRATE_AVG_PER_CALL_KBPS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 100,
-    "description": "Video decoder's average bitrate (in kbits/s) over an entire call"
-  },
-  "LOOP_VIDEO_DECODER_BITRATE_STD_DEV_PER_CALL_KBPS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 5000,
-    "n_buckets": 100,
-    "description": "Standard deviation from video decoder's average bitrate (in kbits/s) over an entire call"
-  },
-  "LOOP_VIDEO_DECODER_FRAMERATE_AVG_PER_CALL": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 200,
-    "n_buckets": 50,
-    "description": "Video decoder's average framerate (in fps) over an entire call"
-  },
-  "LOOP_VIDEO_DECODER_FRAMERATE_10X_STD_DEV_PER_CALL": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 200,
-    "n_buckets": 50,
-    "description": "Standard deviation from video decoder's average framerate (in 1/10 fps) over an entire call"
-  },
-  "LOOP_VIDEO_DECODER_DISCARDED_PACKETS_PER_CALL_PPM": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 50000,
-    "n_buckets": 100,
-    "description": "Video decoder's number of discarded packets (in packets/min) over an entire call"
-  },
-  "LOOP_CALL_DURATION": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 1000,
-    "description": "The length of time (in seconds) that a call lasted."
-  },
-  "LOOP_ICE_ADD_CANDIDATE_ERRORS_GIVEN_SUCCESS": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 30,
-    "n_buckets": 29,
-    "description": "The number of times AddIceCandidate failed on a given PeerConnection, given that ICE succeeded."
-  },
-  "LOOP_ICE_ADD_CANDIDATE_ERRORS_GIVEN_FAILURE": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 30,
-    "n_buckets": 29,
-    "description": "The number of times AddIceCandidate failed on a given PeerConnection, given that ICE failed."
-  },
-  "LOOP_GET_USER_MEDIA_TYPE": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 8,
-    "description": "Type for media in getUserMedia calls (0=Camera, 1=Screen, 2=Application, 3=Window, 4=Browser, 5=Microphone, 6=AudioCapture, 7=Other)"
-  },
-  "LOOP_RENEGOTIATIONS": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "Number of Renegotiations during each call"
-  },
-  "LOOP_MAX_VIDEO_SEND_TRACK": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 10,
-    "n_buckets": 9,
-    "description": "Number of Video tracks sent simultaneously"
-  },
-  "LOOP_MAX_VIDEO_RECEIVE_TRACK": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 20,
-    "n_buckets": 19,
-    "description": "Number of Video tracks received simultaneously"
-  },
-  "LOOP_MAX_AUDIO_SEND_TRACK": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 20,
-    "n_buckets": 19,
-    "description": "Number of Audio tracks sent simultaneously"
-  },
-  "LOOP_MAX_AUDIO_RECEIVE_TRACK": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 30,
-    "n_buckets": 29,
-    "description": "Number of Audio tracks received simultaneously"
-  },
-  "LOOP_DATACHANNEL_NEGOTIATED": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Was DataChannels negotiated"
-  },
-  "LOOP_CALL_TYPE": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 8,
-    "description": "Type of call: (Bitmask) Audio = 1, Video = 2, DataChannels = 4"
-  },
   "PERF_MONITORING_TEST_CPU_RESCHEDULING_PROPORTION_MOVED": {
     "alert_emails": ["dteller@mozilla.com"],
     "expires_in_version": "48",
@@ -10437,6 +10883,70 @@
     "n_values": 4,
     "description": "Counts the number of asm.js vs WebAssembly modules instanciations, at the time modules are getting instanciated."
   },
+  "DOCUMENT_WITH_EXPANDED_PRINCIPAL": {
+    "alert_emails": ["dev-platform@lists.mozilla.org"],
+    "bug_numbers": [1301123],
+    "expires_in_version": "58",
+    "kind": "count",
+    "description": "Number of documents encountered using an expanded principal."
+  },
+  "CONTENT_PAINT_TIME": {
+    "alert_emails": ["danderson@mozilla.com"],
+    "bug_numbers": [1309442],
+    "expires_in_version": "56",
+    "kind": "exponential",
+    "high": 1000,
+    "n_buckets": 50,
+    "description": "Time spent in the paint pipeline for content."
+  },
+  "CONTENT_LARGE_PAINT_PHASE_WEIGHT": {
+    "alert_emails": ["danderson@mozilla.com"],
+    "bug_numbers": [1309442],
+    "expires_in_version": "56",
+    "keyed": true,
+    "kind": "linear",
+    "high": 100,
+    "n_buckets": 10,
+    "description": "Percentage of time taken by phases in expensive content paints."
+  },
+  "NARRATE_CONTENT_BY_LANGUAGE_2": {
+    "alert_emails": ["eisaacson@mozilla.com"],
+    "bug_numbers": [1308030, 1324868],
+    "releaseChannelCollection": "opt-out",
+    "expires_in_version": "56",
+    "kind": "enumerated",
+    "keyed": true,
+    "n_values": 4,
+    "description": "Number of Narrate initialization attempts and successes broken up by content's language (ISO 639-1 code) (0 = initialization attempt, 1 = successfully initialized)"
+  },
+  "NARRATE_CONTENT_SPEAKTIME_MS": {
+    "alert_emails": ["eisaacson@mozilla.com"],
+    "bug_numbers": [1308030],
+    "releaseChannelCollection": "opt-out",
+    "expires_in_version": "56",
+    "kind": "linear",
+    "high": 300000,
+    "n_buckets": 30,
+    "description": "Time in MS that content is narrated in 10 second increments up to 5 minutes"
+  },
+  "HANDLE_UNLOAD_MS": {
+    "alert_emails": ["kchen@mozilla.com"],
+    "expires_in_version": "55",
+    "kind": "exponential",
+    "high": 10000,
+    "n_buckets": 50,
+    "bug_numbers": [1301346],
+    "description": "The time spent handling unload event in milliseconds. It measures all documents and subframes separately. If there are multiple handlers for the unload event in a document, this will record a single value across all handlers in the document."
+  },
+  "HANDLE_BEFOREUNLOAD_MS": {
+    "alert_emails": ["kchen@mozilla.com"],
+    "expires_in_version": "55",
+    "kind": "exponential",
+    "high": 10000,
+    "n_buckets": 50,
+    "bug_numbers": [1301346],
+    "description": "The time spent handling beforeunload event in milliseconds. It measures all documents and subframes separately. If there are multiple handlers for the unload event in a document, this will record a single value across all handlers in the document."
+  },
   "TABCHILD_PAINT_TIME": {
     "alert_emails": ["mconley@mozilla.com"],
     "bug_numbers": [1313686],
@@ -10446,5 +10956,38 @@
     "n_buckets": 50,
     "description": "Time spent painting the contents of a remote browser (ms).",
     "releaseChannelCollection": "opt-out"
+  },
+  "TIME_TO_NON_BLANK_PAINT_MS": {
+    "alert_emails": ["hkirschner@mozilla.com"],
+    "expires_in_version": "55",
+    "kind": "exponential",
+    "high": 100000,
+    "n_buckets": 100,
+    "bug_numbers": [1307242],
+    "description": "The time between navigation start and the first non-blank paint of a foreground root content document, in milliseconds. This only records documents that were in an active docshell throughout the whole time between navigation start and non-blank paint. The non-blank paint timestamp is taken during display list building and does not include rasterization or compositing of that paint."
+  },
+  "MOZ_BLOB_IN_XHR": {
+    "alert_emails": ["amarchesini@mozilla.com"],
+    "expires_in_version": "58",
+    "kind": "boolean",
+    "bug_numbers": [1335365],
+    "releaseChannelCollection": "opt-out",
+    "description": "XMLHttpRequest.responseType set to moz-blob"
+  },
+  "MOZ_CHUNKED_TEXT_IN_XHR": {
+    "alert_emails": ["amarchesini@mozilla.com"],
+    "expires_in_version": "58",
+    "kind": "boolean",
+    "bug_numbers": [1335365],
+    "releaseChannelCollection": "opt-out",
+    "description": "XMLHttpRequest.responseType set to moz-chunked-text"
+  },
+  "MOZ_CHUNKED_ARRAYBUFFER_IN_XHR": {
+    "alert_emails": ["amarchesini@mozilla.com"],
+    "expires_in_version": "58",
+    "kind": "boolean",
+    "bug_numbers": [1335365],
+    "releaseChannelCollection": "opt-out",
+    "description": "XMLHttpRequest.responseType set to moz-chunked-arraybuffer"
   }
 }

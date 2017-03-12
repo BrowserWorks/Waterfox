@@ -185,6 +185,10 @@ nsHTMLContentSerializer::AppendElementStart(Element* aElement,
   bool forceFormat = false;
   nsresult rv = NS_OK;
   if (!CheckElementStart(content, forceFormat, aStr, rv)) {
+    // When we go to AppendElementEnd for this element, we're going to
+    // MaybeLeaveFromPreContent().  So make sure to MaybeEnterInPreContent()
+    // now, so our PreLevel() doesn't get confused.
+    MaybeEnterInPreContent(content);
     return rv;
   }
 
@@ -351,6 +355,9 @@ nsHTMLContentSerializer::AppendElementEnd(Element* aElement,
         IsContainer(parserService->HTMLCaseSensitiveAtomTagToId(name),
                     isContainer);
       if (!isContainer) {
+        // Keep this in sync with the cleanup at the end of this method.
+        MOZ_ASSERT(name != nsGkAtoms::body);
+        MaybeLeaveFromPreContent(content);
         return NS_OK;
       }
     }
@@ -382,6 +389,7 @@ nsHTMLContentSerializer::AppendElementEnd(Element* aElement,
   NS_ENSURE_TRUE(AppendToString(nsDependentAtomString(name), aStr), NS_ERROR_OUT_OF_MEMORY);
   NS_ENSURE_TRUE(AppendToString(kGreaterThan, aStr), NS_ERROR_OUT_OF_MEMORY);
 
+  // Keep this cleanup in sync with the IsContainer() early return above.
   MaybeLeaveFromPreContent(content);
 
   if ((mDoFormat || forceFormat)&& !mDoRaw  && !PreLevel()
@@ -531,7 +539,7 @@ nsHTMLContentSerializer::AppendAndTranslateEntities(const nsAString& aStr,
     for (aStr.BeginReading(iter);
          iter != done_reading;
          iter.advance(int32_t(advanceLength))) {
-      uint32_t fragmentLength = iter.size_forward();
+      uint32_t fragmentLength = done_reading - iter;
       uint32_t lengthReplaced = 0; // the number of UTF-16 codepoints
                                     //  replaced by a particular entity
       const char16_t* c = iter.get();

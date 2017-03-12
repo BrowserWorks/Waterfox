@@ -93,7 +93,13 @@ using namespace mozilla::a11y;
 ////////////////////////////////////////////////////////////////////////////////
 // Accessible: nsISupports and cycle collection
 
-NS_IMPL_CYCLE_COLLECTION(Accessible, mContent)
+NS_IMPL_CYCLE_COLLECTION_CLASS(Accessible)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Accessible)
+  tmp->Shutdown();
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Accessible)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mContent, mDoc)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Accessible)
   if (aIID.Equals(NS_GET_IID(Accessible)))
@@ -109,7 +115,8 @@ Accessible::Accessible(nsIContent* aContent, DocAccessible* aDoc) :
   mContent(aContent), mDoc(aDoc),
   mParent(nullptr), mIndexInParent(-1),
   mRoleMapEntryIndex(aria::NO_ROLE_MAP_ENTRY_INDEX),
-  mStateFlags(0), mContextFlags(0), mType(0), mGenericTypes(0)
+  mStateFlags(0), mContextFlags(0), mType(0), mGenericTypes(0),
+  mReorderEventTarget(false), mShowEventTarget(false), mHideEventTarget(false)
 {
   mBits.groupInfo = nullptr;
   mInt.mIndexOfEmbeddedChild = -1;
@@ -1747,11 +1754,23 @@ Accessible::RelationByType(RelationType aType)
           }
         }
       }
-      return  Relation();
+      return Relation();
     }
 
     case RelationType::CONTAINING_APPLICATION:
       return Relation(ApplicationAcc());
+
+    case RelationType::DETAILS:
+      return Relation(new IDRefsIterator(mDoc, mContent, nsGkAtoms::aria_details));
+
+    case RelationType::DETAILS_FOR:
+      return Relation(new RelatedAccIterator(mDoc, mContent, nsGkAtoms::aria_details));
+
+    case RelationType::ERRORMSG:
+      return Relation(new IDRefsIterator(mDoc, mContent, nsGkAtoms::aria_errormessage));
+
+    case RelationType::ERRORMSG_FOR:
+      return Relation(new RelatedAccIterator(mDoc, mContent, nsGkAtoms::aria_errormessage));
 
     default:
       return Relation();
@@ -2122,8 +2141,14 @@ Accessible::RemoveChild(Accessible* aChild)
              "Illicit children change");
 
   int32_t index = static_cast<uint32_t>(aChild->mIndexInParent);
-  MOZ_ASSERT(mChildren.SafeElementAt(index) == aChild,
-             "A wrong child index");
+  if (mChildren.SafeElementAt(index) != aChild) {
+    MOZ_ASSERT_UNREACHABLE("A wrong child index");
+    index = mChildren.IndexOf(aChild);
+    if (index == -1) {
+      MOZ_ASSERT_UNREACHABLE("No child was found");
+      return false;
+    }
+  }
 
   aChild->UnbindFromParent();
   mChildren.RemoveElementAt(index);
@@ -2145,9 +2170,9 @@ Accessible::MoveChild(uint32_t aNewIndex, Accessible* aChild)
              "No move, same index");
   MOZ_ASSERT(aNewIndex <= mChildren.Length(), "Wrong new index was given");
 
-  EventTree* eventTree = mDoc->Controller()->QueueMutation(this);
-  if (eventTree) {
-    eventTree->Hidden(aChild, false);
+  RefPtr<AccHideEvent> hideEvent = new AccHideEvent(aChild, false);
+  if (mDoc->Controller()->QueueMutationEvent(hideEvent)) {
+    aChild->SetHideEventTarget(true);
   }
 
   mEmbeddedObjCollector = nullptr;
@@ -2179,10 +2204,10 @@ Accessible::MoveChild(uint32_t aNewIndex, Accessible* aChild)
     mChildren[idx]->mInt.mIndexOfEmbeddedChild = -1;
   }
 
-  if (eventTree) {
-    eventTree->Shown(aChild);
-    mDoc->Controller()->QueueNameChange(aChild);
-  }
+  RefPtr<AccShowEvent> showEvent = new AccShowEvent(aChild);
+  DebugOnly<bool> added = mDoc->Controller()->QueueMutationEvent(showEvent);
+  MOZ_ASSERT(added);
+  aChild->SetShowEventTarget(true);
 }
 
 Accessible*

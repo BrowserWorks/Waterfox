@@ -157,7 +157,7 @@ ClearKeySessionManager::PersistentSessionDataLoaded(GMPErr aStatus,
   CK_LOGD("ClearKeySessionManager::PersistentSessionDataLoaded");
   if (GMP_FAILED(aStatus) ||
       Contains(mSessions, aSessionId) ||
-      (aKeyDataSize % (2 * CLEARKEY_KEY_LEN)) != 0) {
+      (aKeyDataSize % (2 * CENC_KEY_LEN)) != 0) {
     mCallback->ResolveLoadSessionPromise(aPromiseId, false);
     return;
   }
@@ -167,25 +167,34 @@ ClearKeySessionManager::PersistentSessionDataLoaded(GMPErr aStatus,
                                                  kGMPPersistentSession);
   mSessions[aSessionId] = session;
 
-  uint32_t numKeys = aKeyDataSize / (2 * CLEARKEY_KEY_LEN);
+  uint32_t numKeys = aKeyDataSize / (2 * CENC_KEY_LEN);
+
+  vector<GMPMediaKeyInfo> key_infos;
+  vector<KeyIdPair> keyPairs;
   for (uint32_t i = 0; i < numKeys; i ++) {
-    const uint8_t* base = aKeyData + 2 * CLEARKEY_KEY_LEN * i;
+    const uint8_t* base = aKeyData + 2 * CENC_KEY_LEN * i;
 
-    KeyId keyId(base, base + CLEARKEY_KEY_LEN);
-    assert(keyId.size() == CLEARKEY_KEY_LEN);
+    KeyIdPair keyPair;
 
-    Key key(base + CLEARKEY_KEY_LEN, base + 2 * CLEARKEY_KEY_LEN);
-    assert(key.size() == CLEARKEY_KEY_LEN);
+    keyPair.mKeyId = KeyId(base, base + CENC_KEY_LEN);
+    assert(keyPair.mKeyId.size() == CENC_KEY_LEN);
 
-    session->AddKeyId(keyId);
+    keyPair.mKey = Key(base + CENC_KEY_LEN, base + 2 * CENC_KEY_LEN);
+    assert(keyPair.mKey.size() == CENC_KEY_LEN);
 
-    mDecryptionManager->ExpectKeyId(keyId);
-    mDecryptionManager->InitKey(keyId, key);
-    mKeyIds.insert(key);
-    mCallback->KeyStatusChanged(&aSessionId[0], aSessionId.size(),
-                                &keyId[0], keyId.size(),
-                                kGMPUsable);
+    session->AddKeyId(keyPair.mKeyId);
+
+    mDecryptionManager->ExpectKeyId(keyPair.mKeyId);
+    mDecryptionManager->InitKey(keyPair.mKeyId, keyPair.mKey);
+    mKeyIds.insert(keyPair.mKey);
+
+    keyPairs.push_back(keyPair);
+    key_infos.push_back(GMPMediaKeyInfo(&keyPairs[i].mKeyId[0],
+                                        keyPairs[i].mKeyId.size(),
+                                        kGMPUsable));
   }
+  mCallback->BatchedKeyStatusChanged(&aSessionId[0], aSessionId.size(),
+                                     key_infos.data(), key_infos.size());
 
   mCallback->ResolveLoadSessionPromise(aPromiseId, true);
 }
@@ -208,21 +217,32 @@ ClearKeySessionManager::UpdateSession(uint32_t aPromiseId,
   }
   ClearKeySession* session = itr->second;
 
+  // Verify the size of session response.
+  if (aResponseSize >= kMaxSessionResponseLength) {
+    CK_LOGW("Session response size is not within a reasonable size.");
+    mCallback->RejectPromise(aPromiseId, kGMPTypeError, nullptr, 0);
+    return;
+  }
+
   // Parse the response for any (key ID, key) pairs.
   vector<KeyIdPair> keyPairs;
   if (!ClearKeyUtils::ParseJWK(aResponse, aResponseSize, keyPairs, session->Type())) {
     CK_LOGW("ClearKey CDM failed to parse JSON Web Key.");
-    mCallback->RejectPromise(aPromiseId, kGMPInvalidAccessError, nullptr, 0);
+    mCallback->RejectPromise(aPromiseId, kGMPTypeError, nullptr, 0);
     return;
   }
 
-  for (auto it = keyPairs.begin(); it != keyPairs.end(); it++) {
-    mDecryptionManager->InitKey(it->mKeyId, it->mKey);
-    mKeyIds.insert(it->mKeyId);
-    mCallback->KeyStatusChanged(aSessionId, aSessionIdLength,
-                                &it->mKeyId[0], it->mKeyId.size(),
-                                kGMPUsable);
+  vector<GMPMediaKeyInfo> key_infos;
+  for (size_t i = 0; i < keyPairs.size(); i++) {
+    KeyIdPair& keyPair = keyPairs[i];
+    mDecryptionManager->InitKey(keyPair.mKeyId, keyPair.mKey);
+    mKeyIds.insert(keyPair.mKeyId);
+    key_infos.push_back(GMPMediaKeyInfo(&keyPair.mKeyId[0],
+                                        keyPair.mKeyId.size(),
+                                        kGMPUsable));
   }
+  mCallback->BatchedKeyStatusChanged(aSessionId, aSessionIdLength,
+                                     key_infos.data(), key_infos.size());
 
   if (session->Type() != kGMPPersistentSession) {
     mCallback->ResolvePromise(aPromiseId);
@@ -254,10 +274,10 @@ ClearKeySessionManager::Serialize(const ClearKeySession* aSession,
     if (!mDecryptionManager->HasKeyForKeyId(keyId)) {
       continue;
     }
-    assert(keyId.size() == CLEARKEY_KEY_LEN);
+    assert(keyId.size() == CENC_KEY_LEN);
     aOutKeyData.insert(aOutKeyData.end(), keyId.begin(), keyId.end());
     const Key& key = mDecryptionManager->GetDecryptionKey(keyId);
-    assert(key.size() == CLEARKEY_KEY_LEN);
+    assert(key.size() == CENC_KEY_LEN);
     aOutKeyData.insert(aOutKeyData.end(), key.begin(), key.end());
   }
 }
@@ -281,8 +301,8 @@ ClearKeySessionManager::CloseSession(uint32_t aPromiseId,
   assert(session);
 
   ClearInMemorySessionData(session);
-  mCallback->ResolvePromise(aPromiseId);
   mCallback->SessionClosed(aSessionId, aSessionIdLength);
+  mCallback->ResolvePromise(aPromiseId);
 }
 
 void

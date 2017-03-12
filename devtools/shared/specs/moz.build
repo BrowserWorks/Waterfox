@@ -34,6 +34,7 @@ DevToolsModules(
     'preference.js',
     'profiler.js',
     'promises.js',
+    'reflow.js',
     'script.js',
     'settings.js',
     'source.js',

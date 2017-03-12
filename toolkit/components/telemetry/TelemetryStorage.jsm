@@ -50,7 +50,7 @@ XPCOMUtils.defineLazyGetter(this, "gDeletionPingFilePath", function() {
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
                                   "resource://services-common/utils.js");
 // Maxmimum time, in milliseconds, archive pings should be retained.
-const MAX_ARCHIVED_PINGS_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;  // 180 days
+const MAX_ARCHIVED_PINGS_RETENTION_MS = 60 * 24 * 60 * 60 * 1000;  // 60 days
 
 // Maximum space the archive can take on disk (in Bytes).
 const ARCHIVE_QUOTA_BYTES = 120 * 1024 * 1024; // 120 MB
@@ -672,7 +672,7 @@ var TelemetryStorageImpl = {
     const filePath = getArchivedPingPath(ping.id, creationDate, ping.type) + "lz4";
     yield OS.File.makeDir(OS.Path.dirname(filePath), { ignoreExisting: true,
                                                        from: OS.Constants.Path.profileDir });
-    yield this.savePingToFile(ping, filePath, /*overwrite*/ true, /*compressed*/ true);
+    yield this.savePingToFile(ping, filePath, /* overwrite*/ true, /* compressed*/ true);
 
     this._archivedPings.set(ping.id, {
       timestampCreated: creationDate.getTime(),
@@ -717,7 +717,7 @@ var TelemetryStorageImpl = {
       // Try to load a compressed version of the archived ping first.
       this._log.trace("loadArchivedPing - loading ping from: " + pathCompressed);
       yield* checkSize(pathCompressed);
-      return yield this.loadPingFile(pathCompressed, /*compressed*/ true);
+      return yield this.loadPingFile(pathCompressed, /* compressed*/ true);
     } catch (ex) {
       if (!ex.becauseNoSuchFile) {
         throw ex;
@@ -725,7 +725,7 @@ var TelemetryStorageImpl = {
       // If that fails, look for the uncompressed version.
       this._log.trace("loadArchivedPing - compressed ping not found, loading: " + path);
       yield* checkSize(path);
-      return yield this.loadPingFile(path, /*compressed*/ false);
+      return yield this.loadPingFile(path, /* compressed*/ false);
     }
   }),
 
@@ -1783,7 +1783,7 @@ var TelemetryStorageImpl = {
   }),
 };
 
-///// Utility functions
+// Utility functions
 
 function pingFilePath(ping) {
   // Support legacy ping formats, who don't have an "id" field, but a "slug" field.

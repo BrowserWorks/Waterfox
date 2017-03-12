@@ -177,13 +177,6 @@ BrowserElementParent::DispatchOpenWindowEvent(Element* aOpenerFrameElement,
     return BrowserElementParent::OPEN_WINDOW_IGNORED;
   }
 
-  // Do not dispatch a mozbrowseropenwindow event of a widget to its embedder
-  nsCOMPtr<nsIMozBrowserFrame> browserFrame =
-    do_QueryInterface(aOpenerFrameElement);
-  if (browserFrame && browserFrame->GetReallyIsWidget()) {
-    return BrowserElementParent::OPEN_WINDOW_CANCELLED;
-  }
-
   nsEventStatus status = nsEventStatus_eIgnore;
   bool dispatchSucceeded =
     DispatchCustomDOMEvent(aOpenerFrameElement,
@@ -263,6 +256,7 @@ BrowserElementParent::OpenWindowInProcess(nsPIDOMWindowOuter* aOpenerWindow,
                                           nsIURI* aURI,
                                           const nsAString& aName,
                                           const nsACString& aFeatures,
+                                          bool aForceNoOpener,
                                           mozIDOMWindowProxy** aReturnWindow)
 {
   *aReturnWindow = nullptr;
@@ -288,6 +282,12 @@ BrowserElementParent::OpenWindowInProcess(nsPIDOMWindowOuter* aOpenerWindow,
   nsAutoCString spec;
   if (aURI) {
     aURI->GetSpec(spec);
+  }
+
+  if (!aForceNoOpener) {
+    ErrorResult res;
+    popupFrameElement->PresetOpenerWindow(aOpenerWindow, res);
+    MOZ_ASSERT(!res.Failed());
   }
 
   OpenWindowResult opened =

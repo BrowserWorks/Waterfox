@@ -98,7 +98,7 @@ this.evaluate = {};
  * @throws ScriptTimeoutError
  *   If the script was interrupted due to script timeout.
  */
-evaluate.sandbox = function(sb, script, args = [], opts = {}) {
+evaluate.sandbox = function (sb, script, args = [], opts = {}) {
   let scriptTimeoutID, timeoutHandler, unloadHandler;
 
   let promise = new Promise((resolve, reject) => {
@@ -113,7 +113,7 @@ evaluate.sandbox = function(sb, script, args = [], opts = {}) {
       if (opts.async) {
         sb[CALLBACK] = sb[COMPLETE];
       }
-      sb[ARGUMENTS] = Cu.cloneInto(args, sb, {wrapReflectors: true});
+      sb[ARGUMENTS] = sandbox.cloneInto(args, sb);
 
       // callback function made private
       // so that introspection is possible
@@ -138,20 +138,18 @@ evaluate.sandbox = function(sb, script, args = [], opts = {}) {
     // see bug 1128760 for more details
     if (opts.debug) {
       sb.window.onerror = (msg, url, line) => {
-        let err = new JavaScriptError(`${msg} at: ${url} line: ${line}`);
+        let err = new JavaScriptError(`${msg} at ${url}:${line}`);
         reject(err);
       };
     }
 
     // timeout and unload handlers
-    scriptTimeoutID = setTimeout(
-        timeoutHandler, opts.timeout || DEFAULT_TIMEOUT);
-    sb.window.addEventListener("unload", unloadHandler);
+    scriptTimeoutID = setTimeout(timeoutHandler, opts.timeout || DEFAULT_TIMEOUT);
+    sb.window.onunload = sandbox.cloneInto(unloadHandler, sb);
 
     let res;
     try {
-      res = Cu.evalInSandbox(
-          src, sb, "1.8", opts.filename || "dummy file", 0);
+      res = Cu.evalInSandbox(src, sb, "1.8", opts.filename || "dummy file", 0);
     } catch (e) {
       let err = new JavaScriptError(
           e,
@@ -177,6 +175,18 @@ evaluate.sandbox = function(sb, script, args = [], opts = {}) {
 this.sandbox = {};
 
 /**
+ * Provides a safe way to take an object defined in a privileged scope and
+ * create a structured clone of it in a less-privileged scope.  It returns
+ * a reference to the clone.
+ *
+ * Unlike for |Components.utils.cloneInto|, |obj| may contain functions
+ * and DOM elemnets.
+ */
+sandbox.cloneInto = function (obj, sb) {
+  return Cu.cloneInto(obj, sb, {cloneFunctions: true, wrapReflectors: true});
+};
+
+/**
  * Augment given sandbox by an adapter that has an {@code exports}
  * map property, or a normal map, of function names and function
  * references.
@@ -190,7 +200,7 @@ this.sandbox = {};
  * @return {Sandbox}
  *     The augmented sandbox.
  */
-sandbox.augment = function(sb, adapter) {
+sandbox.augment = function (sb, adapter) {
   function* entries(obj) {
      for (let key of Object.keys(obj)) {
        yield [key, obj[key]];
@@ -217,7 +227,7 @@ sandbox.augment = function(sb, adapter) {
  * @return {Sandbox}
  *     The created sandbox.
  */
-sandbox.create = function(window, principal = null, opts = {}) {
+sandbox.create = function (window, principal = null, opts = {}) {
   let p = principal || window;
   opts = Object.assign({
     sameZoneAs: window,
@@ -238,7 +248,7 @@ sandbox.create = function(window, principal = null, opts = {}) {
  * @return {Sandbox}
  *     The created sandbox.
  */
-sandbox.createMutable = function(window) {
+sandbox.createMutable = function (window) {
   let opts = {
     wantComponents: false,
     wantXrays: false,
@@ -246,13 +256,13 @@ sandbox.createMutable = function(window) {
   return sandbox.create(window, null, opts);
 };
 
-sandbox.createSystemPrincipal = function(window) {
+sandbox.createSystemPrincipal = function (window) {
   let principal = Cc["@mozilla.org/systemprincipal;1"]
       .createInstance(Ci.nsIPrincipal);
   return sandbox.create(window, principal);
 };
 
-sandbox.createSimpleTest = function(window, harness) {
+sandbox.createSimpleTest = function (window, harness) {
   let sb = sandbox.create(window);
   sb = sandbox.augment(sb, harness);
   sb[FINISH] = () => sb[COMPLETE](harness.generate_results());

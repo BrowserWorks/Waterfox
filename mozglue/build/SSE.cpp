@@ -7,6 +7,14 @@
 
 #include "SSE.h"
 
+#ifdef HAVE_CPUID_H
+// cpuid.h is available on gcc 4.3 and higher on i386 and x86_64
+#include <cpuid.h>
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64))
+// MSVC 2005 or newer on x86-32 or x86-64
+#include <intrin.h>
+#endif
+
 namespace {
 
 // SSE.h has parallel #ifs which declare MOZILLA_SSE_HAVE_CPUID_DETECTION.
@@ -15,9 +23,6 @@ namespace {
 // include both SSE.h and <windows.h>.
 
 #ifdef HAVE_CPUID_H
-
-// cpuid.h is available on gcc 4.3 and higher on i386 and x86_64
-#include <cpuid.h>
 
 enum CPUIDRegister { eax = 0, ebx = 1, ecx = 2, edx = 3 };
 
@@ -37,16 +42,15 @@ has_cpuid_bits(unsigned int level, CPUIDRegister reg, unsigned int bits)
   return (regs[reg] & bits) == bits;
 }
 
+#if !defined(MOZILLA_PRESUME_AVX)
 static uint64_t xgetbv(uint32_t xcr) {
     uint32_t eax, edx;
     __asm__ ( ".byte 0x0f, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c"(xcr));
     return (uint64_t)(edx) << 32 | eax;
 }
+#endif
 
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64))
-
-// MSVC 2005 or newer on x86-32 or x86-64
-#include <intrin.h>
 
 enum CPUIDRegister { eax = 0, ebx = 1, ecx = 2, edx = 3 };
 
@@ -64,7 +68,9 @@ has_cpuid_bits(unsigned int level, CPUIDRegister reg, unsigned int bits)
   return (unsigned(regs[reg]) & bits) == bits;
 }
 
+#if !defined(MOZILLA_PRESUME_AVX)
 static uint64_t xgetbv(uint32_t xcr) { return _xgetbv(xcr); }
+#endif
 
 #elif (defined(__GNUC__) || defined(__SUNPRO_CC)) && (defined(__i386) || defined(__x86_64__))
 
@@ -165,8 +171,12 @@ namespace sse_private {
   bool sse4_2_enabled = has_cpuid_bits(1u, ecx, (1u<<20));
 #endif
 
+#if !defined(MOZILLA_PRESUME_AVX) || !defined(MOZILLA_PRESUME_AVX2)
   static bool has_avx()
   {
+#if defined(MOZILLA_PRESUME_AVX)
+      return true;
+#else
       const unsigned AVX = 1u << 28;
       const unsigned OSXSAVE = 1u << 27;
       const unsigned XSAVE = 1u << 26;
@@ -178,7 +188,9 @@ namespace sse_private {
       return has_cpuid_bits(1u, ecx, AVX | OSXSAVE | XSAVE) &&
           // ensure the OS supports XSAVE of YMM registers
           (xgetbv(0) & AVX_STATE) == AVX_STATE;
+#endif // MOZILLA_PRESUME_AVX
   }
+#endif // !MOZILLA_PRESUME_AVX || !MOZILLA_PRESUME_AVX2
 
 #if !defined(MOZILLA_PRESUME_AVX)
   bool avx_enabled = has_avx();

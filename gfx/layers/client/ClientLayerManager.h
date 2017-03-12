@@ -61,8 +61,8 @@ public:
   virtual int32_t GetMaxTextureSize() const override;
 
   virtual void SetDefaultTargetConfiguration(BufferMode aDoubleBuffering, ScreenRotation aRotation);
-  virtual void BeginTransactionWithTarget(gfxContext* aTarget) override;
-  virtual void BeginTransaction() override;
+  virtual bool BeginTransactionWithTarget(gfxContext* aTarget) override;
+  virtual bool BeginTransaction() override;
   virtual bool EndEmptyTransaction(EndTransactionFlags aFlags = END_DEFAULT) override;
   virtual void EndTransaction(DrawPaintedLayerCallback aCallback,
                               void* aCallbackData,
@@ -92,7 +92,7 @@ public:
   void UpdateTextureFactoryIdentifier(const TextureFactoryIdentifier& aNewIdentifier);
   TextureFactoryIdentifier GetTextureFactoryIdentifier()
   {
-    return mForwarder->GetTextureFactoryIdentifier();
+    return AsShadowForwarder()->GetTextureFactoryIdentifier();
   }
 
   virtual void FlushRendering() override;
@@ -402,8 +402,9 @@ CreateShadowFor(ClientLayer* aLayer,
                 CreatedMethod aMethod)
 {
   PLayerChild* shadow = aMgr->AsShadowForwarder()->ConstructShadowFor(aLayer);
-  // XXX error handling
-  MOZ_ASSERT(shadow, "failed to create shadow");
+  if (!shadow) {
+    return;
+  }
 
   aLayer->SetShadow(shadow);
   (aMgr->AsShadowForwarder()->*aMethod)(aLayer);

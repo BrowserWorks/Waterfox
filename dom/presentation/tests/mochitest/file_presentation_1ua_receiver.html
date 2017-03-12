@@ -63,6 +63,7 @@ function testConnectionAvailable() {
     info('Receiver: --- testConnectionAvailable ---');
     ok(navigator.presentation, "Receiver: navigator.presentation should be available.");
     ok(navigator.presentation.receiver, "Receiver: navigator.presentation.receiver should be available.");
+    is(navigator.presentation.defaultRequest, null, "Receiver: navigator.presentation.defaultRequest should be null.");
 
     navigator.presentation.receiver.connectionList
     .then((aList) => {
@@ -155,7 +156,12 @@ function testConnectionClosed() {
 function testReconnectConnection() {
   return new Promise(function(aResolve, aReject) {
     info('Receiver: --- testReconnectConnection ---');
-    command('forward-command', JSON.stringify({ name: 'ready-to-reconnect' }));
+    window.addEventListener('hashchange', function hashchangeHandler(evt) {
+      var message = JSON.parse(decodeURIComponent(window.location.hash.substring(1)));
+      if (message.type === 'prepare-for-reconnect') {
+        command('forward-command', JSON.stringify({ name: 'ready-to-reconnect' }));
+      }
+    });
     connection.onconnect = function() {
       connection.onconnect = null;
       ok(true, "The connection is reconnected.")

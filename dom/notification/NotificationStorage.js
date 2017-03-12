@@ -23,10 +23,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "cpmm",
                                    "@mozilla.org/childprocessmessagemanager;1",
                                    "nsIMessageSender");
 
-XPCOMUtils.defineLazyServiceGetter(this, "appsService",
-                                   "@mozilla.org/AppsService;1",
-                                   "nsIAppsService");
-
 const kMessageNotificationGetAllOk = "Notification:GetAll:Return:OK";
 const kMessageNotificationGetAllKo = "Notification:GetAll:Return:KO";
 const kMessageNotificationSaveKo   = "Notification:Save:Return:KO";
@@ -76,13 +72,6 @@ NotificationStorage.prototype = {
     }
   },
 
-  canPut: function(aOrigin) {
-    if (DEBUG) debug("Querying appService for: " + aOrigin);
-    let rv = !!appsService.getAppByManifestURL(aOrigin);
-    if (DEBUG) debug("appService returned: " + rv);
-    return rv;
-  },
-
   put: function(origin, id, title, dir, lang, body, tag, icon, alertName,
                 data, behavior, serviceWorkerRegistrationScope) {
     if (DEBUG) { debug("PUT: " + origin + " " + id + ": " + title); }
@@ -118,7 +107,7 @@ NotificationStorage.prototype = {
       this._byTag[origin][tag] = notification;
     };
 
-    if (serviceWorkerRegistrationScope || this.canPut(origin)) {
+    if (serviceWorkerRegistrationScope) {
       cpmm.sendAsyncMessage("Notification:Save", {
         origin: origin,
         notification: notification

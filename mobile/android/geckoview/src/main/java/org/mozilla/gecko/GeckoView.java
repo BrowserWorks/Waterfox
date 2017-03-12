@@ -1,4 +1,5 @@
 /* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
+ * vim: ts=4 sw=4 expandtab:
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -47,7 +48,9 @@ public class GeckoView extends LayerView
 
     private InputConnectionListener mInputConnectionListener;
 
-    private boolean onAttachedToWindowCalled;
+    protected boolean onAttachedToWindowCalled;
+    protected String chromeURI = getGeckoInterface().getDefaultChromeURI();
+    protected int screenId = 0; // default to the primary screen
 
     @Override
     public void handleMessage(final String event, final JSONObject message) {
@@ -109,12 +112,12 @@ public class GeckoView extends LayerView
     }
 
     @WrapForJNI(dispatchTo = "proxy")
-    private static final class Window extends JNIObject {
+    protected static final class Window extends JNIObject {
         @WrapForJNI(skip = true)
         /* package */ Window() {}
 
         static native void open(Window instance, GeckoView view, Object compositor,
-                                String chromeURI, int width, int height);
+                                String chromeURI, int screenId);
 
         @Override protected native void disposeNative();
         native void close();
@@ -166,7 +169,7 @@ public class GeckoView extends LayerView
             };
     }
 
-    private Window window;
+    protected Window window;
     private boolean stateSaved;
 
     public GeckoView(Context context) {
@@ -224,22 +227,19 @@ public class GeckoView extends LayerView
         super.onRestoreInstanceState(stateBinder.superState);
     }
 
-    private void openWindow() {
-        final DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
-
-        final String chromeURI = getGeckoInterface().getDefaultChromeURI();
+    protected void openWindow() {
 
         if (GeckoThread.isStateAtLeast(GeckoThread.State.PROFILE_READY)) {
             Window.open(window, this, getCompositor(),
-                        chromeURI, metrics.widthPixels, metrics.heightPixels);
+                        chromeURI, screenId);
         } else {
             GeckoThread.queueNativeCallUntil(GeckoThread.State.PROFILE_READY, Window.class,
                     "open", window, GeckoView.class, this, Object.class, getCompositor(),
-                    String.class, chromeURI, metrics.widthPixels, metrics.heightPixels);
+                    String.class, chromeURI, screenId);
         }
     }
 
-    private void reattachWindow() {
+    protected void reattachWindow() {
         if (GeckoThread.isStateAtLeast(GeckoThread.State.PROFILE_READY)) {
             window.reattach(this, getCompositor());
         } else {
@@ -299,11 +299,10 @@ public class GeckoView extends LayerView
             throw new IllegalStateException("Not attached to window");
         }
 
-        if (GeckoThread.isStateAtLeast(GeckoThread.State.PROFILE_READY)) {
+        if (GeckoThread.isRunning()) {
             window.loadUri(uri, flags);
         }  else {
-            GeckoThread.queueNativeCallUntil(GeckoThread.State.PROFILE_READY,
-                    window, "loadUri", String.class, uri, flags);
+            GeckoThread.queueNativeCall(window, "loadUri", String.class, uri, flags);
         }
     }
 

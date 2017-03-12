@@ -60,7 +60,7 @@ function MixedTest1C() {
   MixedTest2();
 }
 
-//Mixed Display Test - Doorhanger should not appear
+// Mixed Display Test - Doorhanger should not appear
 function MixedTest2() {
   gTestBrowser.addEventListener("load", MixedTest2A, true);
   var url = gHttpTestRoot2 + "file_bug822367_2.html";
@@ -125,7 +125,6 @@ function MixedTest4C() {
 
   assertMixedContentBlockingState(gTestBrowser, {activeLoaded: false, activeBlocked: true, passiveLoaded: false});
 
-  let {gIdentityHandler} = gTestBrowser.ownerGlobal;
   waitForCondition(() => content.document.getElementById('p1').innerHTML == "", MixedTest4D, "Mixed script loaded in test 4 after location change!");
 }
 function MixedTest4D() {

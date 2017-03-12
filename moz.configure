@@ -18,7 +18,7 @@ include('build/moz.configure/init.configure')
 # To be removed in Bug 1003313
 @depends(milestone)
 def e10s_testing_only(milestone):
-    if not milestone.is_release:
+    if not milestone.is_release_or_beta:
         return True
 
 set_config('E10S_TESTING_ONLY', e10s_testing_only)
@@ -34,6 +34,16 @@ def artifact_builds(value):
         return True
 
 set_config('MOZ_ARTIFACT_BUILDS', artifact_builds)
+
+imply_option('--enable-artifact-build-symbols',
+             depends(artifact_builds)(lambda v: False if v is None else None),
+             reason='--disable-artifact-builds')
+
+option('--enable-artifact-build-symbols',
+       help='Download symbols when artifact builds are enabled.')
+
+set_config('MOZ_ARTIFACT_BUILD_SYMBOLS',
+           depends_if('--enable-artifact-build-symbols')(lambda _: True))
 
 @depends('--enable-artifact-builds')
 def imply_disable_compile_environment(value):
@@ -93,48 +103,25 @@ js_option('--enable-debug',
 add_old_configure_assignment('MOZ_DEBUG',
                              depends('--enable-debug')(lambda v: bool(v)))
 
-include_when('build/moz.configure/toolchain.configure',
-             when='--enable-compile-environment')
-include_when('build/moz.configure/memory.configure',
-             when='--enable-compile-environment')
-include_when('build/moz.configure/headers.configure',
-             when='--enable-compile-environment')
-include_when('build/moz.configure/warnings.configure',
-             when='--enable-compile-environment')
+include('build/moz.configure/pkg.configure')
+# Make this assignment here rather than in pkg.configure to avoid
+# requiring this file in unit tests.
+add_old_configure_assignment('PKG_CONFIG', pkg_config)
 
+include('build/moz.configure/toolchain.configure',
+        when='--enable-compile-environment')
+include('build/moz.configure/memory.configure',
+        when='--enable-compile-environment')
+include('build/moz.configure/headers.configure',
+        when='--enable-compile-environment')
+include('build/moz.configure/warnings.configure',
+        when='--enable-compile-environment')
 
-@depends(building_js, '--help')
-def ctypes_default(building_js, _):
-    return not building_js
+include(include_project_configure)
 
-js_option('--enable-ctypes', help='Enable js-ctypes',
-          default=ctypes_default)
-
-build_ctypes = depends_if('--enable-ctypes')(lambda _: True)
-
-set_config('BUILD_CTYPES', build_ctypes)
-set_define('BUILD_CTYPES', build_ctypes)
-add_old_configure_assignment('BUILD_CTYPES', build_ctypes)
-
-@depends(build_ctypes, building_js)
-def js_has_ctypes(ctypes, js):
-    if ctypes and js:
-        return True
-
-set_config('JS_HAS_CTYPES', js_has_ctypes)
-set_define('JS_HAS_CTYPES', js_has_ctypes)
-add_old_configure_assignment('JS_HAS_CTYPES', js_has_ctypes)
-
-@depends('--enable-ctypes', '--enable-compile-environment', '--help')
-def ctypes_and_compile_environment(ctypes, compile_environment, _):
-    return ctypes and compile_environment
-
-include_when('build/moz.configure/ffi.configure',
-             when=ctypes_and_compile_environment)
-
-@dependable
+@depends('--help')
 @imports(_from='mozbuild.backend', _import='backends')
-def build_backends_choices():
+def build_backends_choices(_):
     return tuple(backends)
 
 
@@ -288,7 +275,7 @@ def check_for_hunspell(value, compile_env):
 system_hunspell = pkg_check_modules('MOZ_HUNSPELL', 'hunspell',
                                     when=check_for_hunspell)
 
-set_config('MOZ_SYSTEM_HUNSPELL', system_hunspell)
+set_config('MOZ_SYSTEM_HUNSPELL', depends_if(system_hunspell)(lambda _: True))
 
 
 @depends(target)
@@ -329,7 +316,9 @@ def nsis_version(nsis):
         raise FatalCheckError('Unknown version of makensis')
     ver = Version(m.group(0))
 
-    if ver < nsis_min_version:
+    # Versions comparisons don't quite work well with beta versions, so ensure
+    # it works for the non-beta version.
+    if ver < nsis_min_version and (ver >= '3.0a' or ver < '3'):
         raise FatalCheckError('To build the installer you must have NSIS'
                               ' version %s or greater in your path'
                               % nsis_min_version)

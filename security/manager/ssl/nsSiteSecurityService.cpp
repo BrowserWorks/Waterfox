@@ -249,15 +249,22 @@ nsSiteSecurityService::Init()
     "test.currentTimeOffsetSeconds");
   mSiteStateStorage =
     mozilla::DataStorage::Get(NS_LITERAL_STRING("SiteSecurityServiceState.txt"));
+  mPreloadStateStorage =
+    mozilla::DataStorage::Get(NS_LITERAL_STRING("SecurityPreloadState.txt"));
   bool storageWillPersist = false;
+  bool preloadStorageWillPersist = false;
   nsresult rv = mSiteStateStorage->Init(storageWillPersist);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+  rv = mPreloadStateStorage->Init(preloadStorageWillPersist);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
   // This is not fatal. There are some cases where there won't be a
   // profile directory (e.g. running xpcshell). There isn't the
   // expectation that site information will be presisted in those cases.
-  if (!storageWillPersist) {
+  if (!storageWillPersist || !preloadStorageWillPersist) {
     NS_WARNING("site security information will not be persisted");
   }
 
@@ -731,13 +738,15 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
   // anyway).
   CertVerifier::Flags flags = CertVerifier::FLAG_LOCAL_ONLY |
                               CertVerifier::FLAG_TLS_IGNORE_STATUS_REQUEST;
-  if (certVerifier->VerifySSLServerCert(nssCert, nullptr, // stapled ocsp
+  if (certVerifier->VerifySSLServerCert(nssCert,
+                                        nullptr, // stapledOCSPResponse
+                                        nullptr, // sctsFromTLSExtension
                                         now, nullptr, // pinarg
                                         host.get(), // hostname
                                         certList,
                                         false, // don't store intermediates
                                         flags)
-      != SECSuccess) {
+        != mozilla::pkix::Success) {
     return NS_ERROR_FAILURE;
   }
 
@@ -814,7 +823,7 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
   SSSLOG(("SSS: about to set pins for  %s, expires=%ld now=%ld maxAge=%lu\n",
            host.get(), expireTime, PR_Now() / PR_USEC_PER_MSEC, maxAge));
 
-  rv = SetHPKPState(host.get(), dynamicEntry, aFlags);
+  rv = SetHPKPState(host.get(), dynamicEntry, aFlags, false);
   if (NS_FAILED(rv)) {
     SSSLOG(("SSS: failed to set pins for %s\n", host.get()));
     if (aFailureResult) {
@@ -1137,6 +1146,22 @@ nsSiteSecurityService::ClearAll()
 }
 
 NS_IMETHODIMP
+nsSiteSecurityService::ClearPreloads()
+{
+  // Child processes are not allowed direct access to this.
+  if (!XRE_IsParentProcess()) {
+    MOZ_CRASH("Child process: no direct access to nsISiteSecurityService::ClearPreloads");
+  }
+
+  return mPreloadStateStorage->Clear();
+}
+
+bool entryStateNotOK(SiteHPKPState& state, mozilla::pkix::Time& aEvalTime) {
+  return state.mState != SecurityPropertySet || state.IsExpired(aEvalTime) ||
+         state.mSHA256keys.Length() < 1;
+}
+
+NS_IMETHODIMP
 nsSiteSecurityService::GetKeyPinsForHostname(const char* aHostname,
                                              mozilla::pkix::Time& aEvalTime,
                                              /*out*/ nsTArray<nsCString>& pinArray,
@@ -1150,7 +1175,7 @@ nsSiteSecurityService::GetKeyPinsForHostname(const char* aHostname,
   NS_ENSURE_ARG(afound);
   NS_ENSURE_ARG(aHostname);
 
-  SSSLOG(("Top of GetKeyPinsForHostname"));
+  SSSLOG(("Top of GetKeyPinsForHostname for %s", aHostname));
   *afound = false;
   *aIncludeSubdomains = false;
   pinArray.Clear();
@@ -1162,20 +1187,25 @@ nsSiteSecurityService::GetKeyPinsForHostname(const char* aHostname,
   SSSLOG(("storagekey '%s'\n", storageKey.get()));
   mozilla::DataStorageType storageType = mozilla::DataStorage_Persistent;
   nsCString value = mSiteStateStorage->Get(storageKey, storageType);
+
   // decode now
   SiteHPKPState foundEntry(value);
-  if (foundEntry.mState != SecurityPropertySet ||
-      foundEntry.IsExpired(aEvalTime) ||
-      foundEntry.mSHA256keys.Length() < 1 ) {
+  if (entryStateNotOK(foundEntry, aEvalTime)) {
     // not in permanent storage, try now private
     value = mSiteStateStorage->Get(storageKey, mozilla::DataStorage_Private);
     SiteHPKPState privateEntry(value);
-    if (privateEntry.mState != SecurityPropertySet ||
-        privateEntry.IsExpired(aEvalTime) ||
-        privateEntry.mSHA256keys.Length() < 1 ) {
-      return NS_OK;
+    if (entryStateNotOK(privateEntry, aEvalTime)) {
+      // not in private storage, try dynamic preload
+      value = mPreloadStateStorage->Get(storageKey,
+                                        mozilla::DataStorage_Persistent);
+      SiteHPKPState preloadEntry(value);
+      if (entryStateNotOK(preloadEntry, aEvalTime)) {
+        return NS_OK;
+      }
+      foundEntry = preloadEntry;
+    } else {
+      foundEntry = privateEntry;
     }
-    foundEntry = privateEntry;
   }
   pinArray = foundEntry.mSHA256keys;
   *aIncludeSubdomains = foundEntry.mIncludeSubdomains;
@@ -1185,8 +1215,9 @@ nsSiteSecurityService::GetKeyPinsForHostname(const char* aHostname,
 
 NS_IMETHODIMP
 nsSiteSecurityService::SetKeyPins(const char* aHost, bool aIncludeSubdomains,
-                                  uint32_t aMaxAge, uint32_t aPinCount,
+                                  int64_t aExpires, uint32_t aPinCount,
                                   const char** aSha256Pins,
+                                  bool aIsPreload,
                                   /*out*/ bool* aResult)
 {
    // Child processes are not allowed direct access to this.
@@ -1200,7 +1231,6 @@ nsSiteSecurityService::SetKeyPins(const char* aHost, bool aIncludeSubdomains,
 
   SSSLOG(("Top of SetPins"));
 
-  int64_t expireTime = ExpireTimeFromMaxAge(aMaxAge);
   nsTArray<nsCString> sha256keys;
   for (unsigned int i = 0; i < aPinCount; i++) {
     nsAutoCString pin(aSha256Pins[i]);
@@ -1210,16 +1240,16 @@ nsSiteSecurityService::SetKeyPins(const char* aHost, bool aIncludeSubdomains,
     }
     sha256keys.AppendElement(pin);
   }
-  SiteHPKPState dynamicEntry(expireTime, SecurityPropertySet,
+  SiteHPKPState dynamicEntry(aExpires, SecurityPropertySet,
                              aIncludeSubdomains, sha256keys);
   // we always store data in permanent storage (ie no flags)
   nsAutoCString host(PublicKeyPinningService::CanonicalizeHostname(aHost));
-  return SetHPKPState(host.get(), dynamicEntry, 0);
+  return SetHPKPState(host.get(), dynamicEntry, 0, aIsPreload);
 }
 
 nsresult
 nsSiteSecurityService::SetHPKPState(const char* aHost, SiteHPKPState& entry,
-                                    uint32_t aFlags)
+                                    uint32_t aFlags, bool aIsPreload)
 {
   SSSLOG(("Top of SetPKPState"));
   nsAutoCString host(aHost);
@@ -1231,7 +1261,13 @@ nsSiteSecurityService::SetHPKPState(const char* aHost, SiteHPKPState& entry,
                                          : mozilla::DataStorage_Persistent;
   nsAutoCString stateString;
   entry.ToString(stateString);
-  nsresult rv = mSiteStateStorage->Put(storageKey, stateString, storageType);
+
+  nsresult rv;
+  if (aIsPreload) {
+    rv = mPreloadStateStorage->Put(storageKey, stateString, storageType);
+  } else {
+    rv = mSiteStateStorage->Put(storageKey, stateString, storageType);
+  }
   NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }

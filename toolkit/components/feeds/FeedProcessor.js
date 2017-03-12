@@ -48,7 +48,7 @@ var gIoService = null;
 const XMLNS = "http://www.w3.org/XML/1998/namespace";
 const RSS090NS = "http://my.netscape.com/rdf/simple/0.9/";
 
-/***** Some general utils *****/
+/** *** Some general utils *****/
 function strToURI(link, base) {
   base = base || null;
   if (!gIoService)
@@ -970,8 +970,6 @@ ExtensionHandler.prototype = {
   },
   startElement: function EH_startElement(uri, localName, qName, attrs) {
     ++this._depth;
-    var prefix = gNamespaces[uri] ? gNamespaces[uri] + ":" : "";
-    var key =  prefix + localName;
 
     if (this._depth == 1) {
       this._uri = uri;
@@ -1038,7 +1036,7 @@ function WrapperElementInfo(fieldName) {
   this.fieldName = fieldName;
 }
 
-/***** The Processor *****/
+/** *** The Processor *****/
 function FeedProcessor() {
   this._reader = Cc[SAX_CONTRACTID].createInstance(Ci.nsISAXXMLReader);
   this._buf =  "";
@@ -1076,7 +1074,7 @@ function FeedProcessor() {
 
   this._trans = {
     "START": {
-      //If we hit a root RSS element, treat as RSS2.
+      // If we hit a root RSS element, treat as RSS2.
       "rss": new FeedElementInfo("RSS2", "rss2"),
 
       // If we hit an RDF element, if could be RSS1, but we can't
@@ -1090,7 +1088,7 @@ function FeedProcessor() {
       "atom03:feed": new FeedElementInfo("Atom03", "atom03"),
     },
 
-    /********* RSS2 **********/
+    /** ******* RSS2 **********/
     "IN_RSS2": {
       "channel": new WrapperElementInfo("channel")
     },
@@ -1145,7 +1143,7 @@ function FeedProcessor() {
       "media:thumbnail": new ElementInfo("mediathumbnail", null, null, true)
     },
 
-    /********* RSS1 **********/
+    /** ******* RSS1 **********/
     "IN_RDF": {
       // If we hit a rss1:channel, we can verify that we have RSS1
       "rss1:channel": new FeedElementInfo("rdf_channel", "rss1"),
@@ -1166,7 +1164,7 @@ function FeedProcessor() {
                                          rssAuthor, true),
     },
 
-    /********* ATOM 1.0 **********/
+    /** ******* ATOM 1.0 **********/
     "IN_ATOM": {
       "atom:author": new ElementInfo("authors", Cc[PERSON_CONTRACTID],
                                      null, true),
@@ -1188,7 +1186,7 @@ function FeedProcessor() {
       "atom:link": new ElementInfo("links", null, null, true),
     },
 
-    /********* ATOM 0.3 **********/
+    /** ******* ATOM 0.3 **********/
     "IN_ATOM03": {
       "atom03:author": new ElementInfo("authors", Cc[PERSON_CONTRACTID],
                                        null, true),
@@ -1316,7 +1314,7 @@ FeedProcessor.prototype = {
   // through.
   fatalError: function FP_reportError() {
     this._result.bozo = true;
-    //XXX need to QI to FeedProgressListener
+    // XXX need to QI to FeedProgressListener
     if (!this._haveSentResult)
       this._sendResult();
   },
@@ -1324,7 +1322,7 @@ FeedProcessor.prototype = {
   // nsISAXContentHandler
 
   startDocument: function FP_startDocument() {
-    //LOG("----------");
+    // LOG("----------");
   },
 
   endDocument: function FP_endDocument() {
@@ -1364,7 +1362,7 @@ FeedProcessor.prototype = {
     ++this._depth;
     var elementInfo;
 
-    //LOG("<" + localName + ">");
+    // LOG("<" + localName + ">");
 
     // Check for xml:base
     var base = attributes.getValueFromName(XMLNS, "base");
@@ -1455,7 +1453,7 @@ FeedProcessor.prototype = {
   // to distinguish endElement events from startElement events.
   endElement:  function FP_endElement(uri, localName, qName) {
     var elementInfo = this._handlerStack[this._depth];
-    //LOG("</" + localName + ">");
+    // LOG("</" + localName + ">");
     if (elementInfo && !elementInfo.isWrapper)
       this._closeComplexElement(elementInfo);
 
@@ -1498,7 +1496,7 @@ FeedProcessor.prototype = {
   // attributes and child elements.
   _processComplexElement:
   function FP__processComplexElement(elementInfo, attributes) {
-    var obj, key, prefix;
+    var obj;
 
     // If the container is an entry/item, it'll need to have its
     // more esoteric properties put in the 'fields' property bag.

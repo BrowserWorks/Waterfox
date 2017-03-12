@@ -259,6 +259,7 @@ TEST(Layers, TextureYCbCrSerialization) {
   clientData.mYStride = ySurface->Stride();
   clientData.mCbCrStride = cbSurface->Stride();
   clientData.mStereoMode = StereoMode::MONO;
+  clientData.mYUVColorSpace = YUVColorSpace::BT601;
   clientData.mYSkip = 0;
   clientData.mCbSkip = 0;
   clientData.mCrSkip = 0;
@@ -287,7 +288,8 @@ TEST(Layers, TextureYCbCrSerialization) {
   }
 
   RefPtr<TextureClient> client = TextureClient::CreateForYCbCr(imageBridge, clientData.mYSize, clientData.mCbCrSize,
-                                                               StereoMode::MONO, TextureFlags::DEALLOCATE_CLIENT);
+                                                               StereoMode::MONO, YUVColorSpace::BT601,
+                                                               TextureFlags::DEALLOCATE_CLIENT);
 
   TestTextureClientYCbCr(client, clientData);
 

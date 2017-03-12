@@ -35,11 +35,11 @@ function promiseImage(alert, timeout = 0, userData = null) {
       resolve(value);
     }
     alert.loadImage(timeout, SpecialPowers.wrapCallbackObject({
-      onImageReady(userData, request) {
-        done([true, request, userData]);
+      onImageReady(aUserData, aRequest) {
+        done([true, aRequest, aUserData]);
       },
-      onImageMissing(userData) {
-        done([false, userData]);
+      onImageMissing(aUserData) {
+        done([false, aUserData]);
       },
     }), SpecialPowers.wrap(userData));
   });
@@ -51,7 +51,7 @@ add_task(function* testContext() {
   inUserData.data = 123;
 
   var alert = makeAlert(null, imageServerURL + "?f=image.png");
-  var [ready, request, userData] = yield promiseImage(alert, 0, inUserData);
+  var [ready, , userData] = yield promiseImage(alert, 0, inUserData);
   ok(ready, "Should load requested image");
   is(userData.QueryInterface(Ci.nsISupportsPRInt64).data, 123,
      "Should pass user data for loaded image");
@@ -85,10 +85,10 @@ add_task(function* testCancel() {
   var alert = makeAlert(null, imageServerURL + "?f=image.gif&t=180");
   yield new Promise((resolve, reject) => {
     var request = alert.loadImage(0, SpecialPowers.wrapCallbackObject({
-      onImageReady(userData, request) {
+      onImageReady() {
         reject(new Error("Should not load cancelled request"));
       },
-      onImageMissing(userData) {
+      onImageMissing() {
         resolve();
       },
     }), null);

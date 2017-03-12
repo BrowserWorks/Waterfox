@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType internal cache interface (body).                        */
 /*                                                                         */
-/*  Copyright 2000-2007, 2009-2011, 2013 by                                */
+/*  Copyright 2000-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -85,19 +85,19 @@
 
 
   /* get a top bucket for specified hash from cache,
-   * body for FTC_NODE__TOP_FOR_HASH( cache, hash )
+   * body for FTC_NODE_TOP_FOR_HASH( cache, hash )
    */
   FT_LOCAL_DEF( FTC_Node* )
-  ftc_get_top_node_for_hash( FTC_Cache   cache,
-                             FT_PtrDist  hash )
+  ftc_get_top_node_for_hash( FTC_Cache  cache,
+                             FT_Offset  hash )
   {
     FTC_Node*  pnode;
-    FT_UInt    idx;
+    FT_Offset  idx;
 
 
-    idx = (FT_UInt)( hash & cache->mask );
+    idx = hash & cache->mask;
     if ( idx < cache->p )
-      idx = (FT_UInt)( hash & ( 2 * cache->mask + 1 ) );
+      idx = hash & ( 2 * cache->mask + 1 );
     pnode = cache->buckets + idx;
     return pnode;
   }
@@ -147,7 +147,7 @@
         for (;;)
         {
           node = *pnode;
-          if ( node == NULL )
+          if ( !node )
             break;
 
           if ( node->hash & ( mask + 1 ) )
@@ -224,7 +224,7 @@
   ftc_node_hash_unlink( FTC_Node   node0,
                         FTC_Cache  cache )
   {
-    FTC_Node  *pnode = FTC_NODE__TOP_FOR_HASH( cache, node0->hash );
+    FTC_Node  *pnode = FTC_NODE_TOP_FOR_HASH( cache, node0->hash );
 
 
     for (;;)
@@ -232,7 +232,7 @@
       FTC_Node  node = *pnode;
 
 
-      if ( node == NULL )
+      if ( !node )
       {
         FT_TRACE0(( "ftc_node_hash_unlink: unknown node\n" ));
         return;
@@ -257,7 +257,7 @@
   ftc_node_hash_link( FTC_Node   node,
                       FTC_Cache  cache )
   {
-    FTC_Node  *pnode = FTC_NODE__TOP_FOR_HASH( cache, node->hash );
+    FTC_Node  *pnode = FTC_NODE_TOP_FOR_HASH( cache, node->hash );
 
 
     node->link = *pnode;
@@ -288,7 +288,7 @@
     cache = manager->caches[node->cache_index];
 
 #ifdef FT_DEBUG_ERROR
-    if ( cache == NULL )
+    if ( !cache )
     {
       FT_TRACE0(( "ftc_node_destroy: invalid node handle\n" ));
       return;
@@ -414,7 +414,7 @@
 
   static void
   ftc_cache_add( FTC_Cache  cache,
-                 FT_PtrDist hash,
+                 FT_Offset  hash,
                  FTC_Node   node )
   {
     node->hash        = hash;
@@ -442,7 +442,7 @@
 
   FT_LOCAL_DEF( FT_Error )
   FTC_Cache_NewNode( FTC_Cache   cache,
-                     FT_PtrDist  hash,
+                     FT_Offset   hash,
                      FT_Pointer  query,
                      FTC_Node   *anode )
   {
@@ -481,7 +481,7 @@
 
   FT_LOCAL_DEF( FT_Error )
   FTC_Cache_Lookup( FTC_Cache   cache,
-                    FT_PtrDist  hash,
+                    FT_Offset   hash,
                     FT_Pointer  query,
                     FTC_Node   *anode )
   {
@@ -494,18 +494,18 @@
     FTC_Node_CompareFunc  compare = cache->clazz.node_compare;
 
 
-    if ( cache == NULL || anode == NULL )
+    if ( !cache || !anode )
       return FT_THROW( Invalid_Argument );
 
     /* Go to the `top' node of the list sharing same masked hash */
-    bucket = pnode = FTC_NODE__TOP_FOR_HASH( cache, hash );
+    bucket = pnode = FTC_NODE_TOP_FOR_HASH( cache, hash );
 
     /* Lookup a node with exactly same hash and queried properties.  */
     /* NOTE: _nodcomp() may change the linked list to reduce memory. */
     for (;;)
     {
       node = *pnode;
-      if ( node == NULL )
+      if ( !node )
         goto NewNode;
 
       if ( node->hash == hash                           &&
@@ -518,12 +518,12 @@
     if ( list_changed )
     {
       /* Update bucket by modified linked list */
-      bucket = pnode = FTC_NODE__TOP_FOR_HASH( cache, hash );
+      bucket = pnode = FTC_NODE_TOP_FOR_HASH( cache, hash );
 
       /* Update pnode by modified linked list */
       while ( *pnode != node )
       {
-        if ( *pnode == NULL )
+        if ( !*pnode )
         {
           FT_ERROR(( "FTC_Cache_Lookup: oops!!!  node missing\n" ));
           goto NewNode;
@@ -576,13 +576,13 @@
       FTC_Node*  pnode  = bucket;
 
 
-      for ( ;; )
+      for (;;)
       {
         FTC_Node  node = *pnode;
         FT_Bool   list_changed = FALSE;
 
 
-        if ( node == NULL )
+        if ( !node )
           break;
 
         if ( cache->clazz.node_remove_faceid( node, face_id,

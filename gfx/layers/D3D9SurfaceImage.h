@@ -19,7 +19,7 @@ class TextureClient;
 class D3D9RecycleAllocator : public TextureClientRecycleAllocator
 {
 public:
-  explicit D3D9RecycleAllocator(CompositableForwarder* aAllocator,
+  explicit D3D9RecycleAllocator(KnowsCompositor* aAllocator,
                                 IDirect3DDevice9* aDevice)
     : TextureClientRecycleAllocator(aAllocator)
     , mDevice(aDevice)
@@ -60,9 +60,11 @@ public:
 
   virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
+  virtual TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;
 
   already_AddRefed<IDirect3DSurface9> GetD3D9Surface();
+
+  HANDLE GetShareHandle() const;
 
   virtual bool IsValid() override { return mValid; }
 
@@ -72,6 +74,9 @@ private:
 
   gfx::IntSize mSize;
   RefPtr<TextureClient> mTextureClient;
+  RefPtr<IDirect3DTexture9> mTexture;
+  HANDLE mShareHandle;
+  D3DSURFACE_DESC mDesc;
   bool mValid;
 };
 

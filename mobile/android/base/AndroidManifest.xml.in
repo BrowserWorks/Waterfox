@@ -42,6 +42,8 @@
 #ifdef MOZ_NATIVE_DEVICES
         <!-- This resources comes from Google Play Services. Required for casting support. -->
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+        <service android:name="org.mozilla.gecko.RemotePresentationService" android:exported="false"/>
+
 #endif
 
         <!-- This activity handles all incoming Intents and dispatches them to other activities. -->
@@ -249,6 +251,8 @@
             <!-- Notification API V2 -->
             <intent-filter>
                 <action android:name="@ANDROID_PACKAGE_NAME@.helperBroadcastAction" />
+                <action android:name="@ANDROID_PACKAGE_NAME@.NOTIFICATION_CLICK" />
+                <action android:name="@ANDROID_PACKAGE_NAME@.NOTIFICATION_CLOSE" />
                 <data android:scheme="moz-notification" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
@@ -391,6 +395,14 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name="org.mozilla.gecko.PackageReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"></action>
+            </intent-filter>
+        </receiver>
+
         <service
           android:name="org.mozilla.gecko.telemetry.TelemetryUploadService"
           android:exported="false"/>
@@ -424,7 +436,7 @@
 #endif
 
         <service
-            android:name="org.mozilla.gecko.media.CodecManager"
+            android:name="org.mozilla.gecko.media.MediaManager"
             android:enabled="true"
             android:exported="false"
             android:process=":media"

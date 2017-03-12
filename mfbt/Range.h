@@ -8,6 +8,7 @@
 #define mozilla_Range_h
 
 #include "mozilla/RangedPtr.h"
+#include "mozilla/TypeTraits.h"
 
 #include <stddef.h>
 
@@ -35,7 +36,15 @@ public:
     MOZ_ASSERT(aStart <= aEnd);
   }
 
-  RangedPtr<T> start() const { return mStart; }
+  template<typename U,
+           class = typename EnableIf<IsConvertible<U (*)[], T (*)[]>::value,
+                                     int>::Type>
+  MOZ_IMPLICIT Range(const Range<U>& aOther)
+    : mStart(aOther.mStart),
+      mEnd(aOther.mEnd)
+  {}
+
+  RangedPtr<T> begin() const { return mStart; }
   RangedPtr<T> end() const { return mEnd; }
   size_t length() const { return mEnd - mStart; }
 

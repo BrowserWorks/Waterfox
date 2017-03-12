@@ -10,7 +10,6 @@
  * and create derivative works of this document.
  */
 
-interface nsIInputStreamCallback;
 interface nsISupports;
 interface Variant;
 
@@ -27,7 +26,7 @@ interface HTMLCanvasElement : HTMLElement {
   DOMString toDataURL(optional DOMString type = "",
                       optional any encoderOptions);
   [Throws]
-  void toBlob(FileCallback _callback,
+  void toBlob(BlobCallback _callback,
               optional DOMString type = "",
               optional any encoderOptions);
 };
@@ -65,4 +64,4 @@ interface MozCanvasPrintState
 
 callback PrintCallback = void(MozCanvasPrintState ctx);
 
-callback FileCallback = void(Blob file);
+callback BlobCallback = void(Blob blob);

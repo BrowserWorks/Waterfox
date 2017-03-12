@@ -90,6 +90,7 @@ pref("network.cookie.cookieBehavior", 0);
 
 // spdy
 pref("network.http.spdy.push-allowance", 32768);
+pref("network.http.spdy.default-hpack-buffer", 4096); // 4k
 
 // See bug 545869 for details on why these are set the way they are
 pref("network.buffer.cache.count", 24);
@@ -199,7 +200,6 @@ pref("privacy.item.syncAccount", true);
 
 // base url for the wifi geolocation network provider
 pref("geo.provider.use_mls", false);
-pref("geo.cell.scan", true);
 pref("geo.wifi.uri", "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%");
 
 // base url for the stumbler
@@ -389,9 +389,6 @@ pref("dom.ipc.browser_frames.oop_by_default", false);
 pref("dom.meta-viewport.enabled", true);
 #endif
 
-// SMS/MMS
-pref("dom.sms.enabled", true);
-
 //The waiting time in network manager.
 pref("network.gonk.ms-release-mms-connection", 30000);
 
@@ -407,11 +404,6 @@ pref("dom.phonenumber.substringmatching.PE", 7);
 #ifdef MOZ_WIDGET_GONK
 pref("dom.mozNetworkStats.enabled", true);
 pref("dom.webapps.firstRunWithSIM", true);
-#endif
-
-// ResourceStats
-#ifdef MOZ_WIDGET_GONK
-pref("dom.resource_stats.enabled", true);
 #endif
 
 #ifdef MOZ_B2G_RIL
@@ -541,7 +533,6 @@ pref("dom.webapps.useCurrentProfile", true);
 // Enable system message
 pref("dom.sysmsg.enabled", true);
 pref("media.plugins.enabled", false);
-pref("media.omx.enabled", true);
 pref("media.rtsp.enabled", true);
 pref("media.rtsp.video.enabled", true);
 
@@ -790,9 +781,6 @@ pref("memory.dump_reports_on_oom", false);
 pref("layout.framevisibility.numscrollportwidths", 1);
 pref("layout.framevisibility.numscrollportheights", 1);
 
-// Enable native identity (persona/browserid)
-pref("dom.identity.enabled", true);
-
 // Wait up to this much milliseconds when orientation changed
 pref("layers.orientation.sync.timeout", 1000);
 
@@ -878,18 +866,6 @@ pref("gfx.screen-mirroring.enabled", true);
 // The url of the page used to display network error details.
 pref("b2g.neterror.url", "net_error.html");
 
-// The origin used for the shared themes uri space.
-pref("b2g.theme.origin", "app://theme.gaiamobile.org");
-pref("dom.mozApps.themable", true);
-pref("dom.mozApps.selected_theme", "default_theme.gaiamobile.org");
-
-// Enable PAC generator for B2G.
-pref("network.proxy.pac_generator", true);
-
-// List of app origins to apply browsing traffic proxy setting, separated by
-// comma.  Specify '*' in the list to apply to all apps.
-pref("network.proxy.browsing.app_origins", "app://system.gaiamobile.org");
-
 // Enable Web Speech synthesis API
 pref("media.webspeech.synth.enabled", true);
 
@@ -945,7 +921,6 @@ pref("browser.autofocus", false);
 pref("dom.wakelock.enabled", true);
 
 // Enable webapps add-ons
-pref("dom.apps.customization.enabled", true);
 pref("dom.apps.reviewer_paths", "/reviewers/,/extension/reviewers/");
 
 // New implementation to unify touch-caret and selection-carets.
@@ -958,15 +933,10 @@ pref("layout.accessiblecaret.bar.enabled", true);
 // Hide the caret in cursor mode after 3 seconds.
 pref("layout.accessiblecaret.timeout_ms", 3000);
 
-// APZ on real devices supports long tap events.
-#ifdef MOZ_WIDGET_GONK
-pref("layout.accessiblecaret.use_long_tap_injector", false);
-#endif
-
 // Hide carets and text selection dialog during scrolling.
 pref("layout.accessiblecaret.always_show_when_scrolling", false);
 
-// Enable sync and mozId with Firefox Accounts.
+// Enable sync with Firefox Accounts.
 pref("services.sync.fxaccounts.enabled", true);
 pref("identity.fxaccounts.enabled", true);
 
@@ -1015,7 +985,7 @@ pref("dom.activities.developer_mode_only", "import-app");
 pref("dom.serviceWorkers.enabled", false);
 pref("dom.push.enabled", false);
 
-#if defined(RELEASE_BUILD)
+#if defined(RELEASE_OR_BETA)
 // Bug 1278848: Enable service worker notifications on release B2G once
 // they're ready.
 pref("dom.webnotifications.serviceworker.enabled", false);
@@ -1028,13 +998,6 @@ pref("layers.compositor-lru-size", 10);
 
 // In B2G by deafult any AudioChannelAgent is muted when created.
 pref("dom.audiochannel.mutedByDefault", true);
-
-// The app origin of bluetooth app, which is responsible for listening pairing
-// requests.
-pref("dom.bluetooth.app-origin", "app://bluetooth.gaiamobile.org");
-
-// Enable W3C WebBluetooth API and disable B2G only GATT client API.
-pref("dom.bluetooth.webbluetooth.enabled", false);
 
 // Default device name for Presentation API
 pref("dom.presentation.device.name", "Firefox OS");

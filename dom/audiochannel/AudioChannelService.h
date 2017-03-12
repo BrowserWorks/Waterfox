@@ -68,9 +68,15 @@ public:
   NS_DECL_NSIOBSERVER
   NS_DECL_NSIAUDIOCHANNELSERVICE
 
-  enum AudibleState : bool {
-    eAudible = true,
-    eNotAudible = false
+  /**
+   * eNotAudible : agent is not audible
+   * eMaybeAudible : agent is not audible now, but it might be audible later
+   * eAudible : agent is audible now
+   */
+  enum AudibleState : uint8_t {
+    eNotAudible = 0,
+    eMaybeAudible = 1,
+    eAudible = 2
   };
 
   enum AudioCaptureState : bool {
@@ -298,6 +304,7 @@ private:
 
     void NotifyChannelActive(uint64_t aWindowID, AudioChannel aChannel,
                              bool aActive);
+    void MaybeNotifyMediaBlocked(AudioChannelAgent* aAgent);
 
     void RequestAudioFocus(AudioChannelAgent* aAgent);
     void NotifyAudioCompetingChanged(AudioChannelAgent* aAgent, bool aActive);

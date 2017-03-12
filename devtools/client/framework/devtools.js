@@ -10,6 +10,7 @@ const defer = require("devtools/shared/defer");
 
 // Load gDevToolsBrowser toolbox lazily as they need gDevTools to be fully initialized
 loader.lazyRequireGetter(this, "Toolbox", "devtools/client/framework/toolbox", true);
+loader.lazyRequireGetter(this, "ToolboxHostManager", "devtools/client/framework/toolbox-host-manager", true);
 loader.lazyRequireGetter(this, "gDevToolsBrowser", "devtools/client/framework/devtools-browser", true);
 
 const {defaultTools: DefaultTools, defaultThemes: DefaultThemes} =
@@ -18,6 +19,7 @@ const EventEmitter = require("devtools/shared/event-emitter");
 const {JsonView} = require("devtools/client/jsonview/main");
 const AboutDevTools = require("devtools/client/framework/about-devtools-toolbox");
 const {when: unload} = require("sdk/system/unload");
+const {Task} = require("devtools/shared/task");
 
 const FORBIDDEN_IDS = new Set(["toolbox", ""]);
 const MAX_ORDINAL = 99;
@@ -30,6 +32,8 @@ this.DevTools = function DevTools() {
   this._tools = new Map();     // Map<toolId, tool>
   this._themes = new Map();    // Map<themeId, theme>
   this._toolboxes = new Map(); // Map<target, toolbox>
+  // List of toolboxes that are still in process of creation
+  this._creatingToolboxes = new Map(); // Map<target, toolbox Promise>
 
   // destroy() is an observer's handler so we need to preserve context.
   this.destroy = this.destroy.bind(this);
@@ -397,54 +401,58 @@ DevTools.prototype = {
    * @return {Toolbox} toolbox
    *        The toolbox that was opened
    */
-  showToolbox: function (target, toolId, hostType, hostOptions) {
-    let deferred = defer();
-
+  showToolbox: Task.async(function* (target, toolId, hostType, hostOptions) {
     let toolbox = this._toolboxes.get(target);
     if (toolbox) {
 
-      let hostPromise = (hostType != null && toolbox.hostType != hostType) ?
-          toolbox.switchHost(hostType) :
-          promise.resolve(null);
-
-      if (toolId != null && toolbox.currentToolId != toolId) {
-        hostPromise = hostPromise.then(function () {
-          return toolbox.selectTool(toolId);
-        });
+      if (hostType != null && toolbox.hostType != hostType) {
+        yield toolbox.switchHost(hostType);
       }
 
-      return hostPromise.then(function () {
-        toolbox.raise();
-        return toolbox;
-      });
+      if (toolId != null && toolbox.currentToolId != toolId) {
+        yield toolbox.selectTool(toolId);
+      }
+
+      toolbox.raise();
+    } else {
+      // As toolbox object creation is async, we have to be careful about races
+      // Check for possible already in process of loading toolboxes before
+      // actually trying to create a new one.
+      let promise = this._creatingToolboxes.get(target);
+      if (promise) {
+        return yield promise;
+      }
+      let toolboxPromise = this.createToolbox(target, toolId, hostType, hostOptions);
+      this._creatingToolboxes.set(target, toolboxPromise);
+      toolbox = yield toolboxPromise;
+      this._creatingToolboxes.delete(target);
     }
-    else {
-      // No toolbox for target, create one
-      toolbox = new Toolbox(target, toolId, hostType, hostOptions);
+    return toolbox;
+  }),
 
-      this.emit("toolbox-created", toolbox);
+  createToolbox: Task.async(function* (target, toolId, hostType, hostOptions) {
+    let manager = new ToolboxHostManager(target, hostType, hostOptions);
 
-      this._toolboxes.set(target, toolbox);
+    let toolbox = yield manager.create(toolId);
 
-      toolbox.once("destroy", () => {
-        this.emit("toolbox-destroy", target);
-      });
+    this._toolboxes.set(target, toolbox);
 
-      toolbox.once("destroyed", () => {
-        this._toolboxes.delete(target);
-        this.emit("toolbox-destroyed", target);
-      });
+    this.emit("toolbox-created", toolbox);
 
-      // If toolId was passed in, it will already be selected before the
-      // open promise resolves.
-      toolbox.open().then(() => {
-        deferred.resolve(toolbox);
-        this.emit("toolbox-ready", toolbox);
-      });
-    }
+    toolbox.once("destroy", () => {
+      this.emit("toolbox-destroy", target);
+    });
 
-    return deferred.promise;
-  },
+    toolbox.once("destroyed", () => {
+      this._toolboxes.delete(target);
+      this.emit("toolbox-destroyed", target);
+    });
+
+    yield toolbox.open();
+    this.emit("toolbox-ready", toolbox);
+
+    return toolbox;
+  }),
 
   /**
    * Return the toolbox for a given target.
@@ -467,13 +475,17 @@ DevTools.prototype = {
    *         associated to the target. true, if the toolbox was successfully
    *         closed.
    */
-  closeToolbox: function DT_closeToolbox(target) {
-    let toolbox = this._toolboxes.get(target);
-    if (toolbox == null) {
-      return promise.resolve(false);
+  closeToolbox: Task.async(function* (target) {
+    let toolbox = yield this._creatingToolboxes.get(target);
+    if (!toolbox) {
+      toolbox = this._toolboxes.get(target);
     }
-    return toolbox.destroy().then(() => true);
-  },
+    if (!toolbox) {
+      return false;
+    }
+    yield toolbox.destroy();
+    return true;
+  }),
 
   /**
    * Called to tear down a tools provider.

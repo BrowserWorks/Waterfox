@@ -726,6 +726,20 @@ nsViewSourceChannel::SetChannelId(const nsACString& aChannelId)
 }
 
 NS_IMETHODIMP
+nsViewSourceChannel::GetTopLevelContentWindowId(uint64_t *aWindowId)
+{
+  return !mHttpChannel ? NS_ERROR_NULL_POINTER :
+      mHttpChannel->GetTopLevelContentWindowId(aWindowId);
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::SetTopLevelContentWindowId(uint64_t aWindowId)
+{
+  return !mHttpChannel ? NS_ERROR_NULL_POINTER :
+      mHttpChannel->SetTopLevelContentWindowId(aWindowId);
+}
+
+NS_IMETHODIMP
 nsViewSourceChannel::GetRequestMethod(nsACString & aRequestMethod)
 {
     return !mHttpChannel ? NS_ERROR_NULL_POINTER :
@@ -990,9 +1004,15 @@ nsViewSourceChannel::SetIsMainDocumentChannel(bool aValue)
         mHttpChannel->SetIsMainDocumentChannel(aValue);
 }
 
-// Have to manually forward SetCorsPreflightParameters since it's [notxpcom]
+// Have to manually forward since these are [notxpcom]
 void
 nsViewSourceChannel::SetCorsPreflightParameters(const nsTArray<nsCString>& aUnsafeHeaders)
 {
   mHttpChannelInternal->SetCorsPreflightParameters(aUnsafeHeaders);
+}
+
+mozilla::net::nsHttpChannel *
+nsViewSourceChannel::QueryHttpChannelImpl()
+{
+  return mHttpChannelInternal->QueryHttpChannelImpl();
 }

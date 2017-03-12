@@ -12,7 +12,7 @@ const TEST_URL = "data:text/html;charset=utf-8," +
 var {Toolbox} = require("devtools/client/framework/toolbox");
 
 const {LocalizationHelper} = require("devtools/shared/l10n");
-const L10N = new LocalizationHelper("devtools/locale/toolbox.properties");
+const L10N = new LocalizationHelper("devtools/client/locales/toolbox.properties");
 
 var target, toolbox, description, reloadsSent, toolIDs;
 
@@ -84,6 +84,7 @@ function testReload(shortcut, docked, toolID, callback) {
 
   description = docked + " devtools with tool " + toolID + ", shortcut #" + shortcut;
   info("Testing reload in " + description);
+  toolbox.win.focus();
   synthesizeKeyShortcut(L10N.getStr(shortcut), toolbox.win);
   reloadsSent++;
 }

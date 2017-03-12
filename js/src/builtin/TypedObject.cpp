@@ -31,7 +31,9 @@
 using mozilla::AssertedCast;
 using mozilla::CheckedInt32;
 using mozilla::DebugOnly;
+using mozilla::IsPowerOfTwo;
 using mozilla::PodCopy;
+using mozilla::PointerRangeSize;
 
 using namespace js;
 
@@ -50,8 +52,8 @@ static const JSFunctionSpec TypedObjectMethods[] = {
 static void
 ReportCannotConvertTo(JSContext* cx, HandleValue fromValue, const char* toType)
 {
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_CONVERT_TO,
-                         InformalValueTypeName(fromValue), toType);
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_CONVERT_TO,
+                              InformalValueTypeName(fromValue), toType);
 }
 
 template<class T>
@@ -67,7 +69,8 @@ ToObjectIf(HandleValue value)
     return &value.toObject().as<T>();
 }
 
-static inline CheckedInt32 roundUpToAlignment(CheckedInt32 address, int32_t align)
+static inline CheckedInt32
+RoundUpToAlignment(CheckedInt32 address, uint32_t align)
 {
     MOZ_ASSERT(IsPowerOfTwo(align));
 
@@ -179,8 +182,7 @@ GetPrototype(JSContext* cx, HandleObject obj)
         return nullptr;
     }
     if (!prototypeVal.isObject()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_INVALID_PROTOTYPE);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INVALID_PROTOTYPE);
         return nullptr;
     }
     return &prototypeVal.toObject();
@@ -233,16 +235,16 @@ const JSFunctionSpec js::ScalarTypeDescr::typeObjectMethods[] = {
     JS_FS_END
 };
 
-int32_t
+uint32_t
 ScalarTypeDescr::size(Type t)
 {
-    return Scalar::byteSize(t);
+    return AssertedCast<uint32_t>(Scalar::byteSize(t));
 }
 
-int32_t
+uint32_t
 ScalarTypeDescr::alignment(Type t)
 {
-    return Scalar::byteSize(t);
+    return AssertedCast<uint32_t>(Scalar::byteSize(t));
 }
 
 /*static*/ const char*
@@ -269,8 +271,8 @@ ScalarTypeDescr::call(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() < 1) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
-                             args.callee().getClass()->name, "0", "s");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  args.callee().getClass()->name, "0", "s");
         return false;
     }
 
@@ -340,20 +342,20 @@ const JSFunctionSpec js::ReferenceTypeDescr::typeObjectMethods[] = {
     JS_FS_END
 };
 
-static const int32_t ReferenceSizes[] = {
+static const uint32_t ReferenceSizes[] = {
 #define REFERENCE_SIZE(_kind, _type, _name)                        \
     sizeof(_type),
     JS_FOR_EACH_REFERENCE_TYPE_REPR(REFERENCE_SIZE) 0
 #undef REFERENCE_SIZE
 };
 
-int32_t
+uint32_t
 ReferenceTypeDescr::size(Type t)
 {
     return ReferenceSizes[t];
 }
 
-int32_t
+uint32_t
 ReferenceTypeDescr::alignment(Type t)
 {
     return ReferenceSizes[t];
@@ -380,9 +382,8 @@ js::ReferenceTypeDescr::call(JSContext* cx, unsigned argc, Value* vp)
     Rooted<ReferenceTypeDescr*> descr(cx, &args.callee().as<ReferenceTypeDescr>());
 
     if (args.length() < 1) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_MORE_ARGS_NEEDED,
-                             descr->typeName(), "0", "s");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  descr->typeName(), "0", "s");
         return false;
     }
 
@@ -426,7 +427,7 @@ SimdTypeDescr::type() const {
     return SimdType(t);
 }
 
-int32_t
+uint32_t
 SimdTypeDescr::size(SimdType t)
 {
     MOZ_ASSERT(unsigned(t) < unsigned(SimdType::Count));
@@ -450,7 +451,7 @@ SimdTypeDescr::size(SimdType t)
     MOZ_CRASH("unexpected SIMD type");
 }
 
-int32_t
+uint32_t
 SimdTypeDescr::alignment(SimdType t)
 {
     MOZ_ASSERT(unsigned(t) < unsigned(SimdType::Count));
@@ -556,7 +557,7 @@ js::CreateUserSizeAndAlignmentProperties(JSContext* cx, HandleTypeDescr descr)
     // If data is transparent, also store the public slots.
     if (descr->transparent()) {
         // byteLength
-        RootedValue typeByteLength(cx, Int32Value(descr->size()));
+        RootedValue typeByteLength(cx, Int32Value(AssertedCast<int32_t>(descr->size())));
         if (!DefineProperty(cx, descr, cx->names().byteLength, typeByteLength,
                             nullptr, nullptr, JSPROP_READONLY | JSPROP_PERMANENT))
         {
@@ -671,8 +672,8 @@ ArrayMetaTypeDescr::construct(JSContext* cx, unsigned argc, Value* vp)
 
     // Expect two arguments. The first is a type object, the second is a length.
     if (args.length() < 2) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
-                             "ArrayType", "1", "");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  "ArrayType", "1", "");
         return false;
     }
 
@@ -693,8 +694,7 @@ ArrayMetaTypeDescr::construct(JSContext* cx, unsigned argc, Value* vp)
     // Compute the byte size.
     CheckedInt32 size = CheckedInt32(elementType->size()) * length;
     if (!size.isValid()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_TYPEDOBJECT_TOO_BIG);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_TOO_BIG);
         return false;
     }
 
@@ -801,7 +801,7 @@ StructMetaTypeDescr::create(JSContext* cx,
     RootedObject userFieldOffsets(cx); // User-exposed {f:offset} object
     RootedObject userFieldTypes(cx);   // User-exposed {f:descr} object.
     CheckedInt32 sizeSoFar(0);         // Size of struct thus far.
-    int32_t alignment = 1;             // Alignment of struct.
+    uint32_t alignment = 1;            // Alignment of struct.
     bool opaque = false;               // Opacity of struct.
 
     userFieldOffsets = NewBuiltinClassInstance<PlainObject>(cx, TenuredObject);
@@ -865,10 +865,9 @@ StructMetaTypeDescr::create(JSContext* cx,
 
         // Offset of this field is the current total size adjusted for
         // the field's alignment.
-        CheckedInt32 offset = roundUpToAlignment(sizeSoFar, fieldType->alignment());
+        CheckedInt32 offset = RoundUpToAlignment(sizeSoFar, fieldType->alignment());
         if (!offset.isValid()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                                 JSMSG_TYPEDOBJECT_TOO_BIG);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_TOO_BIG);
             return nullptr;
         }
         MOZ_ASSERT(offset.value() >= 0);
@@ -886,8 +885,7 @@ StructMetaTypeDescr::create(JSContext* cx,
         // Add space for this field to the total struct size.
         sizeSoFar = offset + fieldType->size();
         if (!sizeSoFar.isValid()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                                 JSMSG_TYPEDOBJECT_TOO_BIG);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_TOO_BIG);
             return nullptr;
         }
 
@@ -908,10 +906,9 @@ StructMetaTypeDescr::create(JSContext* cx,
         return nullptr;
 
     // Adjust the total size to be a multiple of the final alignment.
-    CheckedInt32 totalSize = roundUpToAlignment(sizeSoFar, alignment);
+    CheckedInt32 totalSize = RoundUpToAlignment(sizeSoFar, alignment);
     if (!totalSize.isValid()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_TYPEDOBJECT_TOO_BIG);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_TOO_BIG);
         return nullptr;
     }
 
@@ -927,7 +924,7 @@ StructMetaTypeDescr::create(JSContext* cx,
 
     descr->initReservedSlot(JS_DESCR_SLOT_KIND, Int32Value(type::Struct));
     descr->initReservedSlot(JS_DESCR_SLOT_STRING_REPR, StringValue(stringRepr));
-    descr->initReservedSlot(JS_DESCR_SLOT_ALIGNMENT, Int32Value(alignment));
+    descr->initReservedSlot(JS_DESCR_SLOT_ALIGNMENT, Int32Value(AssertedCast<int32_t>(alignment)));
     descr->initReservedSlot(JS_DESCR_SLOT_SIZE, Int32Value(totalSize.value()));
     descr->initReservedSlot(JS_DESCR_SLOT_OPAQUE, BooleanValue(opaque));
 
@@ -1024,8 +1021,7 @@ StructMetaTypeDescr::construct(JSContext* cx, unsigned int argc, Value* vp)
         return true;
     }
 
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                         JSMSG_TYPEDOBJECT_STRUCTTYPE_BAD_ARGS);
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_STRUCTTYPE_BAD_ARGS);
     return false;
 }
 
@@ -1144,7 +1140,7 @@ DefineSimpleTypeDescr(JSContext* cx,
     descr->initReservedSlot(JS_DESCR_SLOT_KIND, Int32Value(T::Kind));
     descr->initReservedSlot(JS_DESCR_SLOT_STRING_REPR, StringValue(className));
     descr->initReservedSlot(JS_DESCR_SLOT_ALIGNMENT, Int32Value(T::alignment(type)));
-    descr->initReservedSlot(JS_DESCR_SLOT_SIZE, Int32Value(T::size(type)));
+    descr->initReservedSlot(JS_DESCR_SLOT_SIZE, Int32Value(AssertedCast<int32_t>(T::size(type))));
     descr->initReservedSlot(JS_DESCR_SLOT_OPAQUE, BooleanValue(T::Opaque));
     descr->initReservedSlot(JS_DESCR_SLOT_TYPE, Int32Value(type));
 
@@ -1332,15 +1328,15 @@ js::InitTypedObjectModuleObject(JSContext* cx, HandleObject obj)
  * Typed objects
  */
 
-int32_t
+uint32_t
 TypedObject::offset() const
 {
     if (is<InlineTypedObject>())
         return 0;
-    return typedMem() - typedMemBase();
+    return PointerRangeSize(typedMemBase(), typedMem());
 }
 
-int32_t
+uint32_t
 TypedObject::length() const
 {
     return typeDescr().as<ArrayTypeDescr>().length();
@@ -1410,7 +1406,7 @@ TypedObject::GetBuffer(JSContext* cx, unsigned argc, Value* vp)
 TypedObject::GetByteOffset(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    args.rval().setInt32(args[0].toObject().as<TypedObject>().offset());
+    args.rval().setInt32(AssertedCast<int32_t>(args[0].toObject().as<TypedObject>().offset()));
     return true;
 }
 
@@ -1477,11 +1473,11 @@ OutlineTypedObject::createUnattachedWithClass(JSContext* cx,
 }
 
 void
-OutlineTypedObject::attach(JSContext* cx, ArrayBufferObject& buffer, int32_t offset)
+OutlineTypedObject::attach(JSContext* cx, ArrayBufferObject& buffer, uint32_t offset)
 {
     MOZ_ASSERT(!isAttached());
-    MOZ_ASSERT(offset >= 0);
-    MOZ_ASSERT((size_t) (offset + size()) <= buffer.byteLength());
+    MOZ_ASSERT(offset <= buffer.byteLength());
+    MOZ_ASSERT(size() <= buffer.byteLength() - offset);
 
     // If the owner's data is from an inline typed object, associate this with
     // the inline typed object instead, to simplify tracing.
@@ -1503,7 +1499,7 @@ OutlineTypedObject::attach(JSContext* cx, ArrayBufferObject& buffer, int32_t off
 }
 
 void
-OutlineTypedObject::attach(JSContext* cx, TypedObject& typedObj, int32_t offset)
+OutlineTypedObject::attach(JSContext* cx, TypedObject& typedObj, uint32_t offset)
 {
     MOZ_ASSERT(!isAttached());
     MOZ_ASSERT(typedObj.isAttached());
@@ -1511,6 +1507,7 @@ OutlineTypedObject::attach(JSContext* cx, TypedObject& typedObj, int32_t offset)
     JSObject* owner = &typedObj;
     if (typedObj.is<OutlineTypedObject>()) {
         owner = &typedObj.as<OutlineTypedObject>().owner();
+        MOZ_ASSERT(typedObj.offset() <= UINT32_MAX - offset);
         offset += typedObj.offset();
     }
 
@@ -1518,13 +1515,14 @@ OutlineTypedObject::attach(JSContext* cx, TypedObject& typedObj, int32_t offset)
         attach(cx, owner->as<ArrayBufferObject>(), offset);
     } else {
         MOZ_ASSERT(owner->is<InlineTypedObject>());
-        setOwnerAndData(owner, owner->as<InlineTypedObject>().inlineTypedMem() + offset);
+        JS::AutoCheckCannotGC nogc(cx);
+        setOwnerAndData(owner, owner->as<InlineTypedObject>().inlineTypedMem(nogc) + offset);
     }
 }
 
 // Returns a suitable JS_TYPEDOBJ_SLOT_LENGTH value for an instance of
 // the type `type`.
-static int32_t
+static uint32_t
 TypedObjLengthFromType(TypeDescr& descr)
 {
     switch (descr.kind()) {
@@ -1542,7 +1540,7 @@ TypedObjLengthFromType(TypeDescr& descr)
 
 /*static*/ OutlineTypedObject*
 OutlineTypedObject::createDerived(JSContext* cx, HandleTypeDescr type,
-                                  HandleTypedObject typedObj, int32_t offset)
+                                  HandleTypedObject typedObj, uint32_t offset)
 {
     MOZ_ASSERT(offset <= typedObj->size());
     MOZ_ASSERT(offset + type->size() <= typedObj->size());
@@ -1565,13 +1563,14 @@ OutlineTypedObject::createDerived(JSContext* cx, HandleTypeDescr type,
 TypedObject::createZeroed(JSContext* cx, HandleTypeDescr descr, int32_t length, gc::InitialHeap heap)
 {
     // If possible, create an object with inline data.
-    if ((size_t) descr->size() <= InlineTypedObject::MaximumSize) {
+    if (descr->size() <= InlineTypedObject::MaximumSize) {
         AutoSetNewObjectMetadata metadata(cx);
 
         InlineTypedObject* obj = InlineTypedObject::create(cx, descr, heap);
         if (!obj)
             return nullptr;
-        descr->initInstances(cx->runtime(), obj->inlineTypedMem(), 1);
+        JS::AutoCheckCannotGC nogc(cx);
+        descr->initInstances(cx->runtime(), obj->inlineTypedMem(nogc), 1);
         return obj;
     }
 
@@ -1597,14 +1596,12 @@ ReportTypedObjTypeError(JSContext* cx,
                         HandleTypedObject obj)
 {
     // Serialize type string of obj
-    char* typeReprStr = JS_EncodeString(cx, &obj->typeDescr().stringRepr());
+    RootedAtom typeReprAtom(cx, &obj->typeDescr().stringRepr());
+    UniqueChars typeReprStr(JS_EncodeStringToUTF8(cx, typeReprAtom));
     if (!typeReprStr)
         return false;
 
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                         errorNumber, typeReprStr);
-
-    JS_free(cx, (void*) typeReprStr);
+    JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr, errorNumber, typeReprStr.get());
     return false;
 }
 
@@ -1706,14 +1703,11 @@ ReportPropertyError(JSContext* cx,
     if (!str)
         return false;
 
-    char* propName = JS_EncodeString(cx, str);
+    UniqueChars propName(JS_EncodeStringToUTF8(cx, str));
     if (!propName)
         return false;
 
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                         errorNumber, propName);
-
-    JS_free(cx, propName);
+    JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr, errorNumber, propName.get());
     return false;
 }
 
@@ -1791,9 +1785,8 @@ TypedObject::obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiv
       case type::Array:
         if (JSID_IS_ATOM(id, cx->names().length)) {
             if (!typedObj->isAttached()) {
-                JS_ReportErrorNumber(
-                    cx, GetErrorMessage,
-                    nullptr, JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                          JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
                 return false;
             }
 
@@ -1887,8 +1880,8 @@ TypedObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, Handl
       case type::Array: {
         if (JSID_IS_ATOM(id, cx->names().length)) {
             if (receiver.isObject() && obj == &receiver.toObject()) {
-                JS_ReportErrorNumber(cx, GetErrorMessage,
-                                     nullptr, JSMSG_CANT_REDEFINE_ARRAY_LENGTH);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                          JSMSG_CANT_REDEFINE_ARRAY_LENGTH);
                 return false;
             }
             return result.failReadOnly();
@@ -1900,8 +1893,8 @@ TypedObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, Handl
                 return SetPropertyByDefining(cx, id, v, receiver, result);
 
             if (index >= uint32_t(typedObj->length())) {
-                JS_ReportErrorNumber(cx, GetErrorMessage,
-                                     nullptr, JSMSG_TYPEDOBJECT_BINARYARRAY_BAD_INDEX);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                          JSMSG_TYPEDOBJECT_BINARYARRAY_BAD_INDEX);
                 return false;
             }
 
@@ -1943,7 +1936,7 @@ TypedObject::obj_getOwnPropertyDescriptor(JSContext* cx, HandleObject obj, Handl
 {
     Rooted<TypedObject*> typedObj(cx, &obj->as<TypedObject>());
     if (!typedObj->isAttached()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED);
         return false;
     }
 
@@ -2054,7 +2047,7 @@ TypedObject::obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& proper
         if (!properties.reserve(typedObj->length()))
             return false;
 
-        for (int32_t index = 0; index < typedObj->length(); index++) {
+        for (uint32_t index = 0; index < typedObj->length(); index++) {
             id = INT_TO_JSID(index);
             properties.infallibleAppend(id);
         }
@@ -2152,7 +2145,7 @@ InlineTypedObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* dst, JSObje
         uint8_t* oldData = reinterpret_cast<uint8_t*>(src) + offsetOfDataStart();
         uint8_t* newData = dst->as<InlineTypedObject>().inlineTypedMem();
         trc->runtime()->gc.nursery.maybeSetForwardingPointer(trc, oldData, newData,
-                                                             size_t(descr.size()) >= sizeof(uintptr_t));
+                                                             descr.size() >= sizeof(uintptr_t));
     }
 }
 
@@ -2280,18 +2273,8 @@ LengthForType(TypeDescr& descr)
 }
 
 static bool
-CheckOffset(int32_t offset,
-            int32_t size,
-            int32_t alignment,
-            int32_t bufferLength)
+CheckOffset(uint32_t offset, uint32_t size, uint32_t alignment, uint32_t bufferLength)
 {
-    MOZ_ASSERT(size >= 0);
-    MOZ_ASSERT(alignment >= 0);
-
-    // No negative offsets.
-    if (offset < 0)
-        return false;
-
     // Offset (plus size) must be fully contained within the buffer.
     if (offset > bufferLength)
         return false;
@@ -2306,6 +2289,9 @@ CheckOffset(int32_t offset,
 
     return true;
 }
+
+template<typename T, typename U, typename V, typename W>
+inline bool CheckOffset(T, U, V, W) = delete;
 
 /*static*/ bool
 TypedObject::construct(JSContext* cx, unsigned int argc, Value* vp)
@@ -2338,16 +2324,14 @@ TypedObject::construct(JSContext* cx, unsigned int argc, Value* vp)
         buffer = &args[0].toObject().as<ArrayBufferObject>();
 
         if (callee->opaque() || buffer->isDetached()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage,
-                                 nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
             return false;
         }
 
-        int32_t offset;
+        uint32_t offset;
         if (args.length() >= 2 && !args[1].isUndefined()) {
-            if (!args[1].isInt32()) {
-                JS_ReportErrorNumber(cx, GetErrorMessage,
-                                     nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
+            if (!args[1].isInt32() || args[1].toInt32() < 0) {
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
                 return false;
             }
 
@@ -2357,16 +2341,14 @@ TypedObject::construct(JSContext* cx, unsigned int argc, Value* vp)
         }
 
         if (args.length() >= 3 && !args[2].isUndefined()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage,
-                                 nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
             return false;
         }
 
         if (!CheckOffset(offset, callee->size(), callee->alignment(),
                          buffer->byteLength()))
         {
-            JS_ReportErrorNumber(cx, GetErrorMessage,
-                                 nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
             return false;
         }
 
@@ -2396,8 +2378,7 @@ TypedObject::construct(JSContext* cx, unsigned int argc, Value* vp)
     }
 
     // Something bogus.
-    JS_ReportErrorNumber(cx, GetErrorMessage,
-                         nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPEDOBJECT_BAD_ARGS);
     return false;
 }
 
@@ -2433,7 +2414,7 @@ js::NewDerivedTypedObject(JSContext* cx, unsigned argc, Value* vp)
 
     Rooted<TypeDescr*> descr(cx, &args[0].toObject().as<TypeDescr>());
     Rooted<TypedObject*> typedObj(cx, &args[1].toObject().as<TypedObject>());
-    int32_t offset = args[2].toInt32();
+    uint32_t offset = AssertedCast<uint32_t>(args[2].toInt32());
 
     Rooted<TypedObject*> obj(cx);
     obj = OutlineTypedObject::createDerived(cx, descr, typedObj, offset);
@@ -2454,7 +2435,7 @@ js::AttachTypedObject(JSContext* cx, unsigned argc, Value* vp)
     OutlineTypedObject& handle = args[0].toObject().as<OutlineTypedObject>();
     TypedObject& target = args[1].toObject().as<TypedObject>();
     MOZ_ASSERT(!handle.isAttached());
-    size_t offset = args[2].toInt32();
+    uint32_t offset = AssertedCast<uint32_t>(args[2].toInt32());
 
     handle.attach(cx, target, offset);
 
@@ -2473,7 +2454,7 @@ js::SetTypedObjectOffset(JSContext*, unsigned argc, Value* vp)
     int32_t offset = args[1].toInt32();
 
     MOZ_ASSERT(typedObj.isAttached());
-    typedObj.setData(typedObj.typedMemBase() + offset);
+    typedObj.resetOffset(offset);
     args.rval().setUndefined();
     return true;
 }
@@ -2597,7 +2578,7 @@ js::GetSimdTypeDescr(JSContext* cx, unsigned argc, Value* vp)
 
 #define JS_STORE_SCALAR_CLASS_IMPL(_constant, T, _name)                         \
 bool                                                                            \
-js::StoreScalar##T::Func(JSContext*, unsigned argc, Value* vp)         \
+js::StoreScalar##T::Func(JSContext* cx, unsigned argc, Value* vp)               \
 {                                                                               \
     CallArgs args = CallArgsFromVp(argc, vp);                                   \
     MOZ_ASSERT(args.length() == 3);                                             \
@@ -2611,7 +2592,8 @@ js::StoreScalar##T::Func(JSContext*, unsigned argc, Value* vp)         \
     /* Should be guaranteed by the typed objects API: */                        \
     MOZ_ASSERT(offset % MOZ_ALIGNOF(T) == 0);                                   \
                                                                                 \
-    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset));                \
+    JS::AutoCheckCannotGC nogc(cx);                                             \
+    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset, nogc));          \
     double d = args[2].toNumber();                                              \
     *target = ConvertScalar<T>(d);                                              \
     args.rval().setUndefined();                                                 \
@@ -2638,7 +2620,8 @@ js::StoreReference##_name::Func(JSContext* cx, unsigned argc, Value* vp)        
     /* Should be guaranteed by the typed objects API: */                        \
     MOZ_ASSERT(offset % MOZ_ALIGNOF(T) == 0);                                   \
                                                                                 \
-    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset));                \
+    JS::AutoCheckCannotGC nogc(cx);                                             \
+    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset, nogc));          \
     if (!store(cx, target, args[3], &typedObj, id))                             \
         return false;                                                           \
     args.rval().setUndefined();                                                 \
@@ -2647,7 +2630,7 @@ js::StoreReference##_name::Func(JSContext* cx, unsigned argc, Value* vp)        
 
 #define JS_LOAD_SCALAR_CLASS_IMPL(_constant, T, _name)                                  \
 bool                                                                                    \
-js::LoadScalar##T::Func(JSContext*, unsigned argc, Value* vp)                           \
+js::LoadScalar##T::Func(JSContext* cx, unsigned argc, Value* vp)                        \
 {                                                                                       \
     CallArgs args = CallArgsFromVp(argc, vp);                                           \
     MOZ_ASSERT(args.length() == 2);                                                     \
@@ -2660,14 +2643,15 @@ js::LoadScalar##T::Func(JSContext*, unsigned argc, Value* vp)                   
     /* Should be guaranteed by the typed objects API: */                                \
     MOZ_ASSERT(offset % MOZ_ALIGNOF(T) == 0);                                           \
                                                                                         \
-    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset));                        \
+    JS::AutoCheckCannotGC nogc(cx);                                                     \
+    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset, nogc));                  \
     args.rval().setNumber((double) *target);                                            \
     return true;                                                                        \
 }
 
 #define JS_LOAD_REFERENCE_CLASS_IMPL(_constant, T, _name)                       \
 bool                                                                            \
-js::LoadReference##_name::Func(JSContext*, unsigned argc, Value* vp)            \
+js::LoadReference##_name::Func(JSContext* cx, unsigned argc, Value* vp)         \
 {                                                                               \
     CallArgs args = CallArgsFromVp(argc, vp);                                   \
     MOZ_ASSERT(args.length() == 2);                                             \
@@ -2680,7 +2664,8 @@ js::LoadReference##_name::Func(JSContext*, unsigned argc, Value* vp)            
     /* Should be guaranteed by the typed objects API: */                        \
     MOZ_ASSERT(offset % MOZ_ALIGNOF(T) == 0);                                   \
                                                                                 \
-    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset));                \
+    JS::AutoCheckCannotGC nogc(cx);                                             \
+    T* target = reinterpret_cast<T*>(typedObj.typedMem(offset, nogc));          \
     load(target, args.rval());                                                  \
     return true;                                                                \
 }
@@ -2792,7 +2777,7 @@ visitReferences(TypeDescr& descr,
       {
         ArrayTypeDescr& arrayDescr = descr.as<ArrayTypeDescr>();
         TypeDescr& elementDescr = arrayDescr.elementType();
-        for (int32_t i = 0; i < arrayDescr.length(); i++) {
+        for (uint32_t i = 0; i < arrayDescr.length(); i++) {
             visitReferences(elementDescr, mem, visitor);
             mem += elementDescr.size();
         }
@@ -2989,7 +2974,7 @@ CreateTraceList(JSContext* cx, HandleTypeDescr descr)
     // for larger objects, both to limit the size of the trace lists and
     // because tracing outline typed objects is considerably more complicated
     // than inline ones.
-    if ((size_t) descr->size() > InlineTypedObject::MaximumSize || descr->transparent())
+    if (descr->size() > InlineTypedObject::MaximumSize || descr->transparent())
         return true;
 
     TraceListVisitor visitor;

@@ -20,8 +20,8 @@
 #include "nsIBaseWindow.h"
 #include "nsIDocument.h"
 #include "nsContentUtils.h"
-#include "mozilla/StyleSheetHandle.h"
-#include "mozilla/StyleSheetHandleInlines.h"
+#include "mozilla/StyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 
 using namespace mozilla;
 
@@ -317,8 +317,15 @@ static nsresult
 GetDisplayMode(nsPresContext* aPresContext, const nsMediaFeature*,
                nsCSSValue& aResult)
 {
-  nsCOMPtr<nsISupports> container = aPresContext->GetRootPresContext()->
-    Document()->GetContainer();
+  nsCOMPtr<nsISupports> container;
+  if (aPresContext) {
+    // Calling GetRootPresContext() can be slow, so make sure to call it
+    // just once.
+    nsRootPresContext* root = aPresContext->GetRootPresContext();
+    if (root && root->Document()) {
+      container = root->Document()->GetContainer();
+    }
+  }
   nsCOMPtr<nsIBaseWindow> baseWindow = do_QueryInterface(container);
   if (!baseWindow) {
     aResult.SetIntValue(NS_STYLE_DISPLAY_MODE_BROWSER, eCSSUnit_Enumerated);
@@ -674,22 +681,6 @@ nsMediaFeatures::features[] = {
     nsMediaFeature::eBoolInteger,
     nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::scrollbar_thumb_proportional },
-    GetSystemMetric
-  },
-  {
-    &nsGkAtoms::_moz_images_in_menus,
-    nsMediaFeature::eMinMaxNotAllowed,
-    nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eNoRequirements,
-    { &nsGkAtoms::images_in_menus },
-    GetSystemMetric
-  },
-  {
-    &nsGkAtoms::_moz_images_in_buttons,
-    nsMediaFeature::eMinMaxNotAllowed,
-    nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eNoRequirements,
-    { &nsGkAtoms::images_in_buttons },
     GetSystemMetric
   },
   {

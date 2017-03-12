@@ -7,7 +7,7 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-const DBG_STRINGS_URI = "devtools/locale/debugger.properties";
+const DBG_STRINGS_URI = "devtools/client/locales/debugger.properties";
 const NEW_SOURCE_IGNORED_URLS = ["debugger eval code", "XStringBundle"];
 const NEW_SOURCE_DISPLAY_DELAY = 200; // ms
 const FETCH_SOURCE_RESPONSE_DELAY = 200; // ms
@@ -144,7 +144,7 @@ var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var promise = require("devtools/shared/deprecated-sync-thenables");
 var Editor = require("devtools/client/sourceeditor/editor");
 var DebuggerEditor = require("devtools/client/sourceeditor/debugger");
-var {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
+var Tooltip = require("devtools/client/shared/widgets/tooltip/Tooltip");
 var FastListWidget = require("devtools/client/shared/widgets/FastListWidget");
 var {LocalizationHelper, ELLIPSIS} = require("devtools/shared/l10n");
 var {PrefsHelper} = require("devtools/client/shared/prefs");
@@ -1211,7 +1211,6 @@ var Prefs = new PrefsHelper("devtools", {
   workersEnabled: ["Bool", "debugger.workers"],
   editorTabSize: ["Int", "editor.tabsize"],
   autoBlackBox: ["Bool", "debugger.auto-black-box"],
-  promiseDebuggerEnabled: ["Bool", "debugger.promise"]
 });
 
 /**

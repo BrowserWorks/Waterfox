@@ -33,10 +33,6 @@
 #include "nsISupportsImpl.h"            // for Image::Release, etc
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
 
-#ifdef MOZ_WIDGET_GONK
-#include "GrallocImages.h"
-#endif
-
 namespace mozilla {
 namespace layers {
 
@@ -70,21 +66,6 @@ ImageClient::CreateImageClient(CompositableType aCompositableHostType,
 void
 ImageClient::RemoveTexture(TextureClient* aTexture)
 {
-  RemoveTextureWithWaiter(aTexture);
-}
-
-void
-ImageClient::RemoveTextureWithWaiter(TextureClient* aTexture,
-                                     AsyncTransactionWaiter* aAsyncTransactionWaiter)
-{
-  if (aAsyncTransactionWaiter &&
-      GetForwarder()->UsesImageBridge()) {
-    RefPtr<AsyncTransactionTracker> request =
-      new RemoveTextureFromCompositableTracker(aAsyncTransactionWaiter);
-    GetForwarder()->RemoveTextureFromCompositableAsync(request, this, aTexture);
-    return;
-  }
-  MOZ_ASSERT(!aAsyncTransactionWaiter);
   GetForwarder()->RemoveTextureFromCompositable(this, aTexture);
 }
 
@@ -101,14 +82,91 @@ TextureInfo ImageClientSingle::GetTextureInfo() const
 }
 
 void
-ImageClientSingle::FlushAllImages(AsyncTransactionWaiter* aAsyncTransactionWaiter)
+ImageClientSingle::FlushAllImages()
 {
-  MOZ_ASSERT(GetForwarder()->UsesImageBridge());
+  MOZ_ASSERT(GetForwarder()->GetTextureForwarder()->UsesImageBridge());
 
   for (auto& b : mBuffers) {
-    RemoveTextureWithWaiter(b.mTextureClient, aAsyncTransactionWaiter);
+    RemoveTexture(b.mTextureClient);
   }
   mBuffers.Clear();
+}
+
+/* static */ already_AddRefed<TextureClient>
+ImageClient::CreateTextureClientForImage(Image* aImage, KnowsCompositor* aForwarder)
+{
+  RefPtr<TextureClient> texture;
+  if (aImage->GetFormat() == ImageFormat::PLANAR_YCBCR) {
+    PlanarYCbCrImage* ycbcr = static_cast<PlanarYCbCrImage*>(aImage);
+    const PlanarYCbCrData* data = ycbcr->GetData();
+    if (!data) {
+      return nullptr;
+    }
+    texture = TextureClient::CreateForYCbCr(aForwarder,
+                                            data->mYSize, data->mCbCrSize, data->mStereoMode,
+                                            data->mYUVColorSpace,
+                                            TextureFlags::DEFAULT);
+    if (!texture) {
+      return nullptr;
+    }
+
+    TextureClientAutoLock autoLock(texture, OpenMode::OPEN_WRITE_ONLY);
+    if (!autoLock.Succeeded()) {
+      return nullptr;
+    }
+
+    bool status = UpdateYCbCrTextureClient(texture, *data);
+    MOZ_ASSERT(status);
+    if (!status) {
+      return nullptr;
+    }
+  } else if (aImage->GetFormat() == ImageFormat::SURFACE_TEXTURE ||
+             aImage->GetFormat() == ImageFormat::EGLIMAGE) {
+    gfx::IntSize size = aImage->GetSize();
+
+    if (aImage->GetFormat() == ImageFormat::EGLIMAGE) {
+      EGLImageImage* typedImage = aImage->AsEGLImageImage();
+      texture = EGLImageTextureData::CreateTextureClient(
+        typedImage, size, aForwarder->GetTextureForwarder(), TextureFlags::DEFAULT);
+#ifdef MOZ_WIDGET_ANDROID
+    } else if (aImage->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
+      SurfaceTextureImage* typedImage = aImage->AsSurfaceTextureImage();
+      texture = AndroidSurfaceTextureData::CreateTextureClient(
+        typedImage->GetSurfaceTexture(), size, typedImage->GetOriginPos(),
+        aForwarder->GetTextureForwarder(), TextureFlags::DEFAULT);
+#endif
+    } else {
+      MOZ_ASSERT(false, "Bad ImageFormat.");
+    }
+  } else {
+    RefPtr<gfx::SourceSurface> surface = aImage->GetAsSourceSurface();
+    MOZ_ASSERT(surface);
+    texture = TextureClient::CreateForDrawing(aForwarder, surface->GetFormat(), aImage->GetSize(),
+                                              BackendSelector::Content, TextureFlags::DEFAULT);
+    if (!texture) {
+      return nullptr;
+    }
+
+    MOZ_ASSERT(texture->CanExposeDrawTarget());
+
+    if (!texture->Lock(OpenMode::OPEN_WRITE_ONLY)) {
+      return nullptr;
+    }
+
+    {
+      // We must not keep a reference to the DrawTarget after it has been unlocked.
+      DrawTarget* dt = texture->BorrowDrawTarget();
+      if (!dt) {
+        gfxWarning() << "ImageClientSingle::UpdateImage failed in BorrowDrawTarget";
+        return nullptr;
+      }
+      MOZ_ASSERT(surface.get());
+      dt->CopySurface(surface, IntRect(IntPoint(), surface->GetSize()), IntPoint());
+    }
+
+    texture->Unlock();
+  }
+  return texture.forget();
 }
 
 bool
@@ -145,36 +203,13 @@ ImageClientSingle::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlag
   for (auto& img : images) {
     Image* image = img.mImage;
 
-#ifdef MOZ_WIDGET_GONK
-    if (image->GetFormat() == ImageFormat::OVERLAY_IMAGE) {
-      OverlayImage* overlayImage = static_cast<OverlayImage*>(image);
-      OverlaySource source;
-      if (overlayImage->GetSidebandStream().IsValid()) {
-        // Duplicate GonkNativeHandle::NhObj for ipc,
-        // since ParamTraits<GonkNativeHandle>::Write() absorbs native_handle_t.
-        RefPtr<GonkNativeHandle::NhObj> nhObj = overlayImage->GetSidebandStream().GetDupNhObj();
-        GonkNativeHandle handle(nhObj);
-        if (!handle.IsValid()) {
-          gfxWarning() << "ImageClientSingle::UpdateImage failed in GetDupNhObj";
-          return false;
-        }
-        source.handle() = OverlayHandle(handle);
-      } else {
-        source.handle() = OverlayHandle(overlayImage->GetOverlayId());
-      }
-      source.size() = overlayImage->GetSize();
-      GetForwarder()->UseOverlaySource(this, source, image->GetPictureRect());
-      continue;
-    }
-#endif
-
-    RefPtr<TextureClient> texture = image->GetTextureClient(this);
+    RefPtr<TextureClient> texture = image->GetTextureClient(GetForwarder());
     const bool hasTextureClient = !!texture;
 
     for (int32_t i = mBuffers.Length() - 1; i >= 0; --i) {
       if (mBuffers[i].mImageSerial == image->GetSerial()) {
         if (hasTextureClient) {
-          MOZ_ASSERT(image->GetTextureClient(this) == mBuffers[i].mTextureClient);
+          MOZ_ASSERT(image->GetTextureClient(GetForwarder()) == mBuffers[i].mTextureClient);
         } else {
           texture = mBuffers[i].mTextureClient;
         }
@@ -188,77 +223,7 @@ ImageClientSingle::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlag
       // Slow path, we should not be hitting it very often and if we do it means
       // we are using an Image class that is not backed by textureClient and we
       // should fix it.
-      if (image->GetFormat() == ImageFormat::PLANAR_YCBCR) {
-        PlanarYCbCrImage* ycbcr = static_cast<PlanarYCbCrImage*>(image);
-        const PlanarYCbCrData* data = ycbcr->GetData();
-        if (!data) {
-          return false;
-        }
-        texture = TextureClient::CreateForYCbCr(GetForwarder(),
-          data->mYSize, data->mCbCrSize, data->mStereoMode,
-          TextureFlags::DEFAULT | mTextureFlags
-        );
-        if (!texture) {
-          return false;
-        }
-
-        TextureClientAutoLock autoLock(texture, OpenMode::OPEN_WRITE_ONLY);
-        if (!autoLock.Succeeded()) {
-          return false;
-        }
-
-        bool status = UpdateYCbCrTextureClient(texture, *data);
-        MOZ_ASSERT(status);
-        if (!status) {
-          return false;
-        }
-      } else if (image->GetFormat() == ImageFormat::SURFACE_TEXTURE ||
-                 image->GetFormat() == ImageFormat::EGLIMAGE) {
-        gfx::IntSize size = image->GetSize();
-
-        if (image->GetFormat() == ImageFormat::EGLIMAGE) {
-          EGLImageImage* typedImage = image->AsEGLImageImage();
-          texture = EGLImageTextureData::CreateTextureClient(
-            typedImage, size, GetForwarder(), mTextureFlags);
-#ifdef MOZ_WIDGET_ANDROID
-        } else if (image->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
-          SurfaceTextureImage* typedImage = image->AsSurfaceTextureImage();
-          texture = AndroidSurfaceTextureData::CreateTextureClient(
-            typedImage->GetSurfaceTexture(), size, typedImage->GetOriginPos(),
-            GetForwarder(), mTextureFlags
-          );
-#endif
-        } else {
-          MOZ_ASSERT(false, "Bad ImageFormat.");
-        }
-      } else {
-        RefPtr<gfx::SourceSurface> surface = image->GetAsSourceSurface();
-        MOZ_ASSERT(surface);
-        texture = CreateTextureClientForDrawing(surface->GetFormat(), image->GetSize(),
-                                                BackendSelector::Content, mTextureFlags);
-        if (!texture) {
-          return false;
-        }
-
-        MOZ_ASSERT(texture->CanExposeDrawTarget());
-
-        if (!texture->Lock(OpenMode::OPEN_WRITE_ONLY)) {
-          return false;
-        }
-
-        {
-          // We must not keep a reference to the DrawTarget after it has been unlocked.
-          DrawTarget* dt = texture->BorrowDrawTarget();
-          if (!dt) {
-            gfxWarning() << "ImageClientSingle::UpdateImage failed in BorrowDrawTarget";
-            return false;
-          }
-          MOZ_ASSERT(surface.get());
-          dt->CopySurface(surface, IntRect(IntPoint(), surface->GetSize()), IntPoint());
-        }
-
-        texture->Unlock();
-      }
+      texture = CreateTextureClientForImage(image, GetForwarder());
     }
     if (!texture || !AddTextureClient(texture)) {
       return false;

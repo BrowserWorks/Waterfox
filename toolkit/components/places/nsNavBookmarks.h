@@ -216,6 +216,10 @@ public:
   static const int32_t kGetChildrenIndex_Type;
   static const int32_t kGetChildrenIndex_PlaceID;
 
+  static mozilla::Atomic<int64_t> sLastInsertedItemId;
+  static void StoreLastInsertedId(const nsACString& aTable,
+                                  const int64_t aLastInsertedId);
+
 private:
   static nsNavBookmarks* gBookmarksService;
 
@@ -276,11 +280,12 @@ private:
   int64_t mTagsRoot;
   int64_t mUnfiledRoot;
   int64_t mToolbarRoot;
+  int64_t mMobileRoot;
 
   inline bool IsRoot(int64_t aFolderId) {
     return aFolderId == mRoot || aFolderId == mMenuRoot ||
            aFolderId == mTagsRoot || aFolderId == mUnfiledRoot ||
-           aFolderId == mToolbarRoot;
+           aFolderId == mToolbarRoot || aFolderId == mMobileRoot;
   }
 
   nsresult IsBookmarkedInDatabase(int64_t aBookmarkID, bool* aIsBookmarked);

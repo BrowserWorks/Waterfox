@@ -212,7 +212,9 @@ MFStartup()
   }
 
   HRESULT hr = LoadDLLs();
-  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+  if (FAILED(hr)) {
+    return hr;
+  }
 
   const int MF_VISTA_VERSION = (0x0001 << 16 | MF_API_VERSION);
   const int MF_WIN7_VERSION = (0x0002 << 16 | MF_API_VERSION);

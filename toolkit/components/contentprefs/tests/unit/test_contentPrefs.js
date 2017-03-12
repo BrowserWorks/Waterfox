@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 function run_test() {
-  //**************************************************************************//
   // Database Creation, Schema Migration, and Backup
 
   // Note: in these tests we use createInstance instead of getService
@@ -112,7 +111,6 @@ function run_test() {
   statement.executeStep();
   do_check_eq(0, statement.getInt32(0));
 
-  //**************************************************************************//
   // Nonexistent Pref
 
   do_check_eq(cps.getPref(uri, "test.nonexistent.getPref"), undefined);
@@ -121,7 +119,6 @@ function run_test() {
   do_check_eq(cps.removePref(uri, "test.nonexistent.removePref"), undefined);
 
 
-  //**************************************************************************//
   // Existing Pref
 
   cps.setPref(uri, "test.existing", 5);
@@ -141,7 +138,6 @@ function run_test() {
   do_check_false(cps.hasPref(uri, "test.existing"));
 
 
-  //**************************************************************************//
   // Round-Trip Data Integrity
 
   // Make sure pref values remain the same from setPref to getPref.
@@ -184,7 +180,6 @@ function run_test() {
   do_check_false(cps.hasPref(uri, "test.data-integrity.null"));
 
 
-  //**************************************************************************//
   // getPrefs
 
   cps.setPref(uri, "test.getPrefs.a", 1);
@@ -200,38 +195,37 @@ function run_test() {
   do_check_eq(prefs.get("test.getPrefs.c"), 3);
 
 
-  //**************************************************************************//
   // Site-Specificity
 
-  // These are all different sites, and setting a pref for one of them
-  // shouldn't set it for the others.
-  var uri1 = ContentPrefTest.getURI("http://www.domain1.com/");
-  var uri2 = ContentPrefTest.getURI("http://foo.domain1.com/");
-  var uri3 = ContentPrefTest.getURI("http://domain1.com/");
-  var uri4 = ContentPrefTest.getURI("http://www.domain2.com/");
+  {
+    // These are all different sites, and setting a pref for one of them
+    // shouldn't set it for the others.
+    let uri1 = ContentPrefTest.getURI("http://www.domain1.com/");
+    let uri2 = ContentPrefTest.getURI("http://foo.domain1.com/");
+    let uri3 = ContentPrefTest.getURI("http://domain1.com/");
+    let uri4 = ContentPrefTest.getURI("http://www.domain2.com/");
 
-  cps.setPref(uri1, "test.site-specificity.uri1", 5);
-  do_check_false(cps.hasPref(uri2, "test.site-specificity.uri1"));
-  do_check_false(cps.hasPref(uri3, "test.site-specificity.uri1"));
-  do_check_false(cps.hasPref(uri4, "test.site-specificity.uri1"));
+    cps.setPref(uri1, "test.site-specificity.uri1", 5);
+    do_check_false(cps.hasPref(uri2, "test.site-specificity.uri1"));
+    do_check_false(cps.hasPref(uri3, "test.site-specificity.uri1"));
+    do_check_false(cps.hasPref(uri4, "test.site-specificity.uri1"));
 
-  cps.setPref(uri2, "test.site-specificity.uri2", 5);
-  do_check_false(cps.hasPref(uri1, "test.site-specificity.uri2"));
-  do_check_false(cps.hasPref(uri3, "test.site-specificity.uri2"));
-  do_check_false(cps.hasPref(uri4, "test.site-specificity.uri2"));
+    cps.setPref(uri2, "test.site-specificity.uri2", 5);
+    do_check_false(cps.hasPref(uri1, "test.site-specificity.uri2"));
+    do_check_false(cps.hasPref(uri3, "test.site-specificity.uri2"));
+    do_check_false(cps.hasPref(uri4, "test.site-specificity.uri2"));
 
-  cps.setPref(uri3, "test.site-specificity.uri3", 5);
-  do_check_false(cps.hasPref(uri1, "test.site-specificity.uri3"));
-  do_check_false(cps.hasPref(uri2, "test.site-specificity.uri3"));
-  do_check_false(cps.hasPref(uri4, "test.site-specificity.uri3"));
+    cps.setPref(uri3, "test.site-specificity.uri3", 5);
+    do_check_false(cps.hasPref(uri1, "test.site-specificity.uri3"));
+    do_check_false(cps.hasPref(uri2, "test.site-specificity.uri3"));
+    do_check_false(cps.hasPref(uri4, "test.site-specificity.uri3"));
 
-  cps.setPref(uri4, "test.site-specificity.uri4", 5);
-  do_check_false(cps.hasPref(uri1, "test.site-specificity.uri4"));
-  do_check_false(cps.hasPref(uri2, "test.site-specificity.uri4"));
-  do_check_false(cps.hasPref(uri3, "test.site-specificity.uri4"));
+    cps.setPref(uri4, "test.site-specificity.uri4", 5);
+    do_check_false(cps.hasPref(uri1, "test.site-specificity.uri4"));
+    do_check_false(cps.hasPref(uri2, "test.site-specificity.uri4"));
+    do_check_false(cps.hasPref(uri3, "test.site-specificity.uri4"));
+  }
 
-
-  //**************************************************************************//
   // Observers
 
   var specificObserver = {
@@ -314,8 +308,8 @@ function run_test() {
   do_check_eq(specificObserver.numTimesRemovedCalled, 1);
   do_check_eq(genericObserver.numTimesRemovedCalled, 2);
 
-  // // Make sure information about private context is properly
-  // // retrieved by the observer.
+  // Make sure information about private context is properly
+  // retrieved by the observer.
   cps.setPref(uri, "test.observer.private", "test value", {usePrivateBrowsing: true});
   cps.setPref(uri, "test.observer.normal", "test value", {usePrivateBrowsing: false});
   cps.removePref(uri, "test.observer.private");
@@ -333,7 +327,6 @@ function run_test() {
   do_check_eq(genericObserver.numTimesRemovedCalled, 3);
 
 
-  //**************************************************************************//
   // Get/Remove Prefs By Name
 
   {
@@ -421,7 +414,6 @@ function run_test() {
   }
 
 
-  //**************************************************************************//
   // Clear Private Data Pref Removal
 
   {

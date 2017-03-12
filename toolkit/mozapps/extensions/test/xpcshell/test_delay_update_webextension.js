@@ -7,11 +7,13 @@
 // The test extension uses an insecure update url.
 Services.prefs.setBoolPref(PREF_EM_CHECK_UPDATE_SECURITY, false);
 
-/*globals browser*/
+/* globals browser*/
 
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 const tempdir = gTmpD.clone();
+const stageDir = profileDir.clone();
+stageDir.append("staged");
 
 const IGNORE_ID = "test_delay_update_ignore_webext@tests.mozilla.org";
 const COMPLETE_ID = "test_delay_update_complete_webext@tests.mozilla.org";
@@ -177,6 +179,10 @@ add_task(function* delay_updates_complete() {
   do_check_true(addon_allowed.isActive);
   do_check_eq(addon_allowed.type, "extension");
 
+  if (stageDir.exists()) {
+    do_throw("Staging directory should not exist for formerly-postponed extension");
+  }
+
   yield extension.markUnloaded();
   yield addon_allowed.uninstall();
   yield promiseShutdownManager();
@@ -208,6 +214,7 @@ add_task(function* delay_updates_defer() {
             browser.test.fail(`wrong message: ${msg}`);
           }
         });
+        browser.test.sendMessage("truly ready");
       });
       browser.test.sendMessage("ready");
     },
@@ -243,6 +250,7 @@ add_task(function* delay_updates_defer() {
   do_check_eq(addon_postponed.type, "extension");
 
   // add-on will not allow upgrade until message is received
+  yield extension.awaitMessage("truly ready");
   extension.sendMessage("allow");
   yield extension.awaitFinish("allowed");
 

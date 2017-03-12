@@ -85,7 +85,7 @@ class nsContentSink : public nsICSSLoaderObserver,
   NS_DECL_NSITIMERCALLBACK
 
   // nsICSSLoaderObserver
-  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheetHandle aSheet,
+  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheet* aSheet,
                               bool aWasAlternate,
                               nsresult aStatus) override;
 
@@ -264,11 +264,6 @@ protected:
   void StopDeflecting() {
     mDeflectedCount = sPerfDeflectCount;
   }
-
-private:
-  // People shouldn't be allocating this class directly.  All subclasses should
-  // be allocated using a zeroing operator new.
-  void* operator new(size_t sz) CPP_THROW_NEW;  // Not to be implemented
 
 protected:
 

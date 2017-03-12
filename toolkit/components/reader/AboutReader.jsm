@@ -118,7 +118,7 @@ var AboutReader = function(mm, win, articlePromise) {
   }
 
   this._loadArticle();
-}
+};
 
 AboutReader.prototype = {
   _BLOCK_IMAGES_SELECTOR: ".content p > img:only-child, " +
@@ -696,7 +696,7 @@ AboutReader.prototype = {
       } else {
         img.removeAttribute("moz-reader-center");
       }
-    }
+    };
 
     let imgs = this._doc.querySelectorAll(this._BLOCK_IMAGES_SELECTOR);
     for (let i = imgs.length; --i >= 0;) {
@@ -707,7 +707,7 @@ AboutReader.prototype = {
       } else {
         img.onload = function() {
           setImageMargins(img);
-        }
+        };
       }
     }
   },
@@ -716,7 +716,7 @@ AboutReader.prototype = {
     if (!article.dir)
       return;
 
-    //Set "dir" attribute on content
+    // Set "dir" attribute on content
     this._contentElement.setAttribute("dir", article.dir);
     this._headerElement.setAttribute("dir", article.dir);
   },
@@ -795,6 +795,8 @@ AboutReader.prototype = {
 
     this._requestFavicon();
     this._doc.body.classList.add("loaded");
+
+    this._goToReference(articleUri.ref);
 
     Services.obs.notifyObservers(this._win, "AboutReader:Ready", "");
 
@@ -981,6 +983,15 @@ AboutReader.prototype = {
     // Trigger BackPressListener cleanup in Android.
     if (openDropdowns.length) {
       this._mm.sendAsyncMessage("Reader:DropdownClosed", this.viewId);
+    }
+  },
+
+  /*
+   * Scroll reader view to a reference
+   */
+  _goToReference(ref) {
+    if (ref) {
+      this._win.location.hash = ref;
     }
   }
 };

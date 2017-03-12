@@ -35,10 +35,11 @@ public:
     KIND_OTHER,
   };
 
-  DataTransferItem(DataTransfer* aDataTransfer, const nsAString& aType)
+  DataTransferItem(DataTransfer* aDataTransfer, const nsAString& aType,
+                   eKind aKind = KIND_OTHER)
     : mIndex(0)
     , mChromeOnly(false)
-    , mKind(KIND_OTHER)
+    , mKind(aKind)
     , mType(aType)
     , mDataTransfer(aDataTransfer)
   {
@@ -49,8 +50,9 @@ public:
 
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  // NOTE: This accesses the subject principal, and should not be called from C++
-  void GetAsString(FunctionStringCallback* aCallback, ErrorResult& aRv);
+  void GetAsString(FunctionStringCallback* aCallback,
+                   nsIPrincipal& aSubjectPrincipal,
+                   ErrorResult& aRv);
 
   void GetKind(nsAString& aKind) const
   {
@@ -71,26 +73,17 @@ public:
   {
     aType = mType;
   }
-  void SetType(const nsAString& aType);
 
   eKind Kind() const
   {
     return mKind;
   }
-  void SetKind(eKind aKind)
-  {
-    mKind = aKind;
-  }
 
-  // NOTE: This accesses the subject principal, and should not be called from C++
-  already_AddRefed<File> GetAsFile(ErrorResult& aRv);
-  already_AddRefed<File> GetAsFileWithPrincipal(nsIPrincipal* aPrincipal,
-                                                ErrorResult& aRv);
+  already_AddRefed<File>
+  GetAsFile(nsIPrincipal& aSubjectPrincipal, ErrorResult& aRv);
 
-  // NOTE: This accesses the subject principal, and should not be called from C++
-  already_AddRefed<FileSystemEntry> GetAsEntry(ErrorResult& aRv);
-  already_AddRefed<FileSystemEntry> GetAsEntryWithPrincipal(nsIPrincipal* aPrincipal,
-                                                            ErrorResult& aRv);
+  already_AddRefed<FileSystemEntry>
+  GetAsEntry(nsIPrincipal& aSubjectPrincipal, ErrorResult& aRv);
 
   DataTransfer* GetParentObject() const
   {
@@ -108,6 +101,9 @@ public:
 
   already_AddRefed<nsIVariant> DataNoSecurityCheck();
   already_AddRefed<nsIVariant> Data(nsIPrincipal* aPrincipal, ErrorResult& aRv);
+
+  // Note: This can modify the mKind.  Callers of this method must let the
+  // relevant DataTransfer know, because its types list can change as a result.
   void SetData(nsIVariant* aData);
 
   uint32_t Index() const
@@ -140,7 +136,7 @@ private:
 
   bool mChromeOnly;
   eKind mKind;
-  nsString mType;
+  const nsString mType;
   nsCOMPtr<nsIVariant> mData;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   RefPtr<DataTransfer> mDataTransfer;

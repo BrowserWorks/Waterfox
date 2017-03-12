@@ -13,7 +13,6 @@
 #include "mozilla/net/PHttpChannelParent.h"
 #include "mozilla/net/NeckoCommon.h"
 #include "mozilla/net/NeckoParent.h"
-#include "OfflineObserver.h"
 #include "nsIObserver.h"
 #include "nsIParentRedirectingChannel.h"
 #include "nsIProgressEventSink.h"
@@ -52,7 +51,6 @@ class HttpChannelParent final : public nsIInterfaceRequestor
                               , public ADivertableParentChannel
                               , public nsIAuthPromptProvider
                               , public nsIDeprecationWarner
-                              , public DisconnectableParent
                               , public HttpChannelSecurityWarningReporter
 {
   virtual ~HttpChannelParent();
@@ -98,6 +96,8 @@ public:
     }
   }
 
+  nsresult OpenAlternativeOutputStream(const nsACString & type, nsIOutputStream * *_retval);
+
   void InvokeAsyncOpen(nsresult rv);
 protected:
   // used to connect redirected-to channel in parent with just created
@@ -141,7 +141,9 @@ protected:
                    const bool&                aSuspendAfterSynthesizeResponse,
                    const bool&                aAllowStaleCacheContent,
                    const nsCString&           aContentTypeHint,
-                   const nsCString&           aChannelId);
+                   const nsCString&           aChannelId,
+                   const uint64_t&            aContentWindowId,
+                   const nsCString&           aPreferredAlternativeType);
 
   virtual bool RecvSetPriority(const uint16_t& priority) override;
   virtual bool RecvSetClassOfService(const uint32_t& cos) override;
@@ -178,9 +180,6 @@ protected:
 
   friend class HttpChannelParentListener;
   RefPtr<mozilla::dom::TabParent> mTabParent;
-
-  void OfflineDisconnect() override;
-  uint32_t GetAppId() override;
 
   nsresult ReportSecurityMessage(const nsAString& aMessageTag,
                                  const nsAString& aMessageCategory) override;
@@ -226,8 +225,6 @@ private:
   bool mSentRedirect1Begin          : 1;
   bool mSentRedirect1BeginFailed    : 1;
   bool mReceivedRedirect2Verify     : 1;
-
-  RefPtr<OfflineObserver> mObserver;
 
   PBOverrideStatus mPBOverride;
 

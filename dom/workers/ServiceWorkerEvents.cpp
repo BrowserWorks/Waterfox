@@ -34,7 +34,6 @@
 #include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/FetchEventBinding.h"
 #include "mozilla/dom/MessagePort.h"
-#include "mozilla/dom/MessagePortList.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
 #include "mozilla/dom/PushEventBinding.h"
 #include "mozilla/dom/PushMessageDataBinding.h"
@@ -149,6 +148,7 @@ FetchEvent::Constructor(const GlobalObject& aGlobal,
   bool trusted = e->Init(owner);
   e->InitEvent(aType, aOptions.mBubbles, aOptions.mCancelable);
   e->SetTrusted(trusted);
+  e->SetComposed(aOptions.mComposed);
   e->mRequest = aOptions.mRequest;
   e->mClientId = aOptions.mClientId;
   e->mIsReload = aOptions.mIsReload;
@@ -237,23 +237,19 @@ public:
 
     return rv;
   }
-
   bool CSPPermitsResponse(nsILoadInfo* aLoadInfo)
   {
     AssertIsOnMainThread();
     MOZ_ASSERT(aLoadInfo);
-
     nsresult rv;
     nsCOMPtr<nsIURI> uri;
-    nsAutoCString url;
-    mInternalResponse->GetUnfilteredURL(url);
+    nsCString url = mInternalResponse->GetUnfilteredURL();
     if (url.IsEmpty()) {
       // Synthetic response. The buck stops at the worker script.
       url = mScriptSpec;
     }
     rv = NS_NewURI(getter_AddRefs(uri), url, nullptr, nullptr);
     NS_ENSURE_SUCCESS(rv, false);
-
     int16_t decision = nsIContentPolicy::ACCEPT;
     rv = NS_CheckContentLoadPolicy(aLoadInfo->InternalContentPolicyType(), uri,
                                    aLoadInfo->LoadingPrincipal(),
@@ -426,7 +422,7 @@ ExtractErrorValues(JSContext* aCx, JS::Handle<JS::Value> aValue,
       // this report anywhere.
       RefPtr<xpc::ErrorReport> report = new xpc::ErrorReport();
       report->Init(err,
-                   "<unknown>", // fallback message
+                   "<unknown>", // toString result
                    false,       // chrome
                    0);          // window ID
 
@@ -635,18 +631,16 @@ RespondWithHandler::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValu
   if (NS_WARN_IF(!ir)) {
     return;
   }
-
   // When an opaque response is encountered, we need the original channel's principal
   // to reflect the final URL. Non-opaque responses are either same-origin or CORS-enabled
   // cross-origin responses, which are treated as same-origin by consumers.
   nsCString responseURL;
   if (response->Type() == ResponseType::Opaque) {
-    ir->GetUnfilteredURL(responseURL);
+    responseURL = ir->GetUnfilteredURL();
     if (NS_WARN_IF(responseURL.IsEmpty())) {
       return;
     }
   }
-
   nsAutoPtr<RespondWithClosure> closure(new RespondWithClosure(mInterceptedChannel,
                                                                mRegistration, ir,
                                                                worker->GetChannelInfo(),
@@ -1145,6 +1139,7 @@ PushEvent::Constructor(mozilla::dom::EventTarget* aOwner,
   bool trusted = e->Init(aOwner);
   e->InitEvent(aType, aOptions.mBubbles, aOptions.mCancelable);
   e->SetTrusted(trusted);
+  e->SetComposed(aOptions.mComposed);
   if(aOptions.mData.WasPassed()){
     nsTArray<uint8_t> bytes;
     nsresult rv = ExtractBytesFromData(aOptions.mData.Value(), bytes);
@@ -1189,7 +1184,6 @@ ExtendableMessageEvent::GetData(JSContext* aCx,
                                 JS::MutableHandle<JS::Value> aData,
                                 ErrorResult& aRv)
 {
-  JS::ExposeValueToActiveJS(mData);
   aData.set(mData);
   if (!JS_WrapValue(aCx, aData)) {
     aRv.Throw(NS_ERROR_FAILURE);
@@ -1236,53 +1230,24 @@ ExtendableMessageEvent::Constructor(mozilla::dom::EventTarget* aEventTarget,
   event->mOrigin = aOptions.mOrigin;
   event->mLastEventId = aOptions.mLastEventId;
 
-  if (aOptions.mSource.WasPassed() && !aOptions.mSource.Value().IsNull()) {
-    if (aOptions.mSource.Value().Value().IsClient()) {
-      event->mClient = aOptions.mSource.Value().Value().GetAsClient();
-    } else if (aOptions.mSource.Value().Value().IsServiceWorker()){
-      event->mServiceWorker = aOptions.mSource.Value().Value().GetAsServiceWorker();
-    } else if (aOptions.mSource.Value().Value().IsMessagePort()){
-      event->mMessagePort = aOptions.mSource.Value().Value().GetAsMessagePort();
+  if (!aOptions.mSource.IsNull()) {
+    if (aOptions.mSource.Value().IsClient()) {
+      event->mClient = aOptions.mSource.Value().GetAsClient();
+    } else if (aOptions.mSource.Value().IsServiceWorker()){
+      event->mServiceWorker = aOptions.mSource.Value().GetAsServiceWorker();
+    } else if (aOptions.mSource.Value().IsMessagePort()){
+      event->mMessagePort = aOptions.mSource.Value().GetAsMessagePort();
     }
-    MOZ_ASSERT(event->mClient || event->mServiceWorker || event->mMessagePort);
   }
 
-  if (aOptions.mPorts.WasPassed() && !aOptions.mPorts.Value().IsNull()) {
-    nsTArray<RefPtr<MessagePort>> ports;
-    const Sequence<OwningNonNull<MessagePort>>& portsParam =
-      aOptions.mPorts.Value().Value();
-    for (uint32_t i = 0, len = portsParam.Length(); i < len; ++i) {
-      ports.AppendElement(portsParam[i].get());
-    }
-    event->mPorts = new MessagePortList(static_cast<EventBase*>(event), ports);
-  }
-
+  event->mPorts.AppendElements(aOptions.mPorts);
   return event.forget();
 }
 
-MessagePortList*
-ExtendableMessageEvent::GetPorts() const
-{
-  return mPorts;
-}
-
 void
-ExtendableMessageEvent::SetPorts(MessagePortList* aPorts)
+ExtendableMessageEvent::GetPorts(nsTArray<RefPtr<MessagePort>>& aPorts)
 {
-  MOZ_ASSERT(!mPorts && aPorts);
-  mPorts = aPorts;
-}
-
-void
-ExtendableMessageEvent::SetSource(ServiceWorkerClient* aClient)
-{
-  mClient = aClient;
-}
-
-void
-ExtendableMessageEvent::SetSource(ServiceWorker* aServiceWorker)
-{
-  mServiceWorker = aServiceWorker;
+  aPorts = mPorts;
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(ExtendableMessageEvent)

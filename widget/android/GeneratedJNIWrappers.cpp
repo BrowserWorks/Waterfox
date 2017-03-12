@@ -10,18 +10,6 @@
 namespace mozilla {
 namespace java {
 
-const char ANRReporter::name[] =
-        "org/mozilla/gecko/ANRReporter";
-
-constexpr char ANRReporter::GetNativeStack_t::name[];
-constexpr char ANRReporter::GetNativeStack_t::signature[];
-
-constexpr char ANRReporter::ReleaseNativeStack_t::name[];
-constexpr char ANRReporter::ReleaseNativeStack_t::signature[];
-
-constexpr char ANRReporter::RequestNativeStack_t::name[];
-constexpr char ANRReporter::RequestNativeStack_t::signature[];
-
 const char AlarmReceiver::name[] =
         "org/mozilla/gecko/AlarmReceiver";
 
@@ -123,36 +111,12 @@ auto GeckoAppShell::CreateInputStream(mozilla::jni::Object::Param a0) -> mozilla
     return mozilla::jni::Method<CreateInputStream_t>::Call(GeckoAppShell::Context(), nullptr, a0);
 }
 
-constexpr char GeckoAppShell::CreateMessageCursor_t::name[];
-constexpr char GeckoAppShell::CreateMessageCursor_t::signature[];
-
-auto GeckoAppShell::CreateMessageCursor(int64_t a0, int64_t a1, mozilla::jni::ObjectArray::Param a2, int32_t a3, mozilla::jni::String::Param a4, bool a5, bool a6, bool a7, int64_t a8, bool a9, int32_t a10) -> void
-{
-    return mozilla::jni::Method<CreateMessageCursor_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-}
-
 constexpr char GeckoAppShell::CreateShortcut_t::name[];
 constexpr char GeckoAppShell::CreateShortcut_t::signature[];
 
 auto GeckoAppShell::CreateShortcut(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1) -> void
 {
     return mozilla::jni::Method<CreateShortcut_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
-}
-
-constexpr char GeckoAppShell::CreateThreadCursor_t::name[];
-constexpr char GeckoAppShell::CreateThreadCursor_t::signature[];
-
-auto GeckoAppShell::CreateThreadCursor(int32_t a0) -> void
-{
-    return mozilla::jni::Method<CreateThreadCursor_t>::Call(GeckoAppShell::Context(), nullptr, a0);
-}
-
-constexpr char GeckoAppShell::DeleteMessage_t::name[];
-constexpr char GeckoAppShell::DeleteMessage_t::signature[];
-
-auto GeckoAppShell::DeleteMessage(int32_t a0, int32_t a1) -> void
-{
-    return mozilla::jni::Method<DeleteMessage_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
 }
 
 constexpr char GeckoAppShell::DisableAlarm_t::name[];
@@ -371,14 +335,6 @@ auto GeckoAppShell::GetMaxTouchPoints() -> int32_t
     return mozilla::jni::Method<GetMaxTouchPoints_t>::Call(GeckoAppShell::Context(), nullptr);
 }
 
-constexpr char GeckoAppShell::GetMessage_t::name[];
-constexpr char GeckoAppShell::GetMessage_t::signature[];
-
-auto GeckoAppShell::GetMessage(int32_t a0, int32_t a1) -> void
-{
-    return mozilla::jni::Method<GetMessage_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
-}
-
 constexpr char GeckoAppShell::GetMimeTypeFromExtensions_t::name[];
 constexpr char GeckoAppShell::GetMimeTypeFromExtensions_t::signature[];
 
@@ -393,22 +349,6 @@ constexpr char GeckoAppShell::GetNetworkLinkType_t::signature[];
 auto GeckoAppShell::GetNetworkLinkType() -> int32_t
 {
     return mozilla::jni::Method<GetNetworkLinkType_t>::Call(GeckoAppShell::Context(), nullptr);
-}
-
-constexpr char GeckoAppShell::GetNextMessage_t::name[];
-constexpr char GeckoAppShell::GetNextMessage_t::signature[];
-
-auto GeckoAppShell::GetNextMessage(int32_t a0) -> void
-{
-    return mozilla::jni::Method<GetNextMessage_t>::Call(GeckoAppShell::Context(), nullptr, a0);
-}
-
-constexpr char GeckoAppShell::GetNextThread_t::name[];
-constexpr char GeckoAppShell::GetNextThread_t::signature[];
-
-auto GeckoAppShell::GetNextThread(int32_t a0) -> void
-{
-    return mozilla::jni::Method<GetNextThread_t>::Call(GeckoAppShell::Context(), nullptr, a0);
 }
 
 constexpr char GeckoAppShell::GetProxyForURI_t::name[];
@@ -547,14 +487,6 @@ auto GeckoAppShell::LockScreenOrientation(int32_t a0) -> void
     return mozilla::jni::Method<LockScreenOrientation_t>::Call(GeckoAppShell::Context(), nullptr, a0);
 }
 
-constexpr char GeckoAppShell::MarkMessageRead_t::name[];
-constexpr char GeckoAppShell::MarkMessageRead_t::signature[];
-
-auto GeckoAppShell::MarkMessageRead(int32_t a0, bool a1, bool a2, int32_t a3) -> void
-{
-    return mozilla::jni::Method<MarkMessageRead_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3);
-}
-
 constexpr char GeckoAppShell::MarkURIVisited_t::name[];
 constexpr char GeckoAppShell::MarkURIVisited_t::signature[];
 
@@ -605,6 +537,14 @@ auto GeckoAppShell::OpenUriExternal(mozilla::jni::String::Param a0, mozilla::jni
     return mozilla::jni::Method<OpenUriExternal_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
 }
 
+constexpr char GeckoAppShell::OpenWindowForNotification_t::name[];
+constexpr char GeckoAppShell::OpenWindowForNotification_t::signature[];
+
+auto GeckoAppShell::OpenWindowForNotification() -> void
+{
+    return mozilla::jni::Method<OpenWindowForNotification_t>::Call(GeckoAppShell::Context(), nullptr);
+}
+
 constexpr char GeckoAppShell::PerformHapticFeedback_t::name[];
 constexpr char GeckoAppShell::PerformHapticFeedback_t::signature[];
 
@@ -630,14 +570,6 @@ constexpr char GeckoAppShell::ScheduleRestart_t::signature[];
 auto GeckoAppShell::ScheduleRestart() -> void
 {
     return mozilla::jni::Method<ScheduleRestart_t>::Call(GeckoAppShell::Context(), nullptr);
-}
-
-constexpr char GeckoAppShell::SendMessage_t::name[];
-constexpr char GeckoAppShell::SendMessage_t::signature[];
-
-auto GeckoAppShell::SendMessage(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1, int32_t a2) -> void
-{
-    return mozilla::jni::Method<SendMessage_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2);
 }
 
 constexpr char GeckoAppShell::SetAlarm_t::name[];
@@ -680,12 +612,12 @@ auto GeckoAppShell::SetURITitle(mozilla::jni::String::Param a0, mozilla::jni::St
     return mozilla::jni::Method<SetURITitle_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
 }
 
-constexpr char GeckoAppShell::ShowAlertNotification_t::name[];
-constexpr char GeckoAppShell::ShowAlertNotification_t::signature[];
+constexpr char GeckoAppShell::ShowNotification_t::name[];
+constexpr char GeckoAppShell::ShowNotification_t::signature[];
 
-auto GeckoAppShell::ShowAlertNotification(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1, mozilla::jni::String::Param a2, mozilla::jni::String::Param a3, mozilla::jni::String::Param a4, mozilla::jni::String::Param a5, mozilla::jni::String::Param a6) -> void
+auto GeckoAppShell::ShowNotification(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1, mozilla::jni::String::Param a2, mozilla::jni::String::Param a3, mozilla::jni::String::Param a4, mozilla::jni::String::Param a5, mozilla::jni::String::Param a6) -> void
 {
-    return mozilla::jni::Method<ShowAlertNotification_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6);
+    return mozilla::jni::Method<ShowNotification_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6);
 }
 
 constexpr char GeckoAppShell::SyncNotifyObservers_t::name[];
@@ -773,9 +705,6 @@ auto GeckoEditable::OnDefaultKeyEvent(mozilla::jni::Object::Param a0) const -> v
     return mozilla::jni::Method<OnDefaultKeyEvent_t>::Call(GeckoEditable::mCtx, nullptr, a0);
 }
 
-constexpr char GeckoEditable::OnImeAcknowledgeFocus_t::name[];
-constexpr char GeckoEditable::OnImeAcknowledgeFocus_t::signature[];
-
 constexpr char GeckoEditable::OnImeAddCompositionRange_t::name[];
 constexpr char GeckoEditable::OnImeAddCompositionRange_t::signature[];
 
@@ -829,68 +758,6 @@ auto GeckoEditable::UpdateCompositionRects(mozilla::jni::ObjectArray::Param a0) 
 const char GeckoEditableListener::name[] =
         "org/mozilla/gecko/GeckoEditableListener";
 
-const char GeckoJavaSampler::name[] =
-        "org/mozilla/gecko/GeckoJavaSampler";
-
-constexpr char GeckoJavaSampler::GetFrameName_t::name[];
-constexpr char GeckoJavaSampler::GetFrameName_t::signature[];
-
-auto GeckoJavaSampler::GetFrameName(int32_t a0, int32_t a1, int32_t a2) -> mozilla::jni::String::LocalRef
-{
-    return mozilla::jni::Method<GetFrameName_t>::Call(GeckoJavaSampler::Context(), nullptr, a0, a1, a2);
-}
-
-constexpr char GeckoJavaSampler::GetProfilerTime_t::name[];
-constexpr char GeckoJavaSampler::GetProfilerTime_t::signature[];
-
-constexpr char GeckoJavaSampler::GetSampleTime_t::name[];
-constexpr char GeckoJavaSampler::GetSampleTime_t::signature[];
-
-auto GeckoJavaSampler::GetSampleTime(int32_t a0, int32_t a1) -> double
-{
-    return mozilla::jni::Method<GetSampleTime_t>::Call(GeckoJavaSampler::Context(), nullptr, a0, a1);
-}
-
-constexpr char GeckoJavaSampler::GetThreadName_t::name[];
-constexpr char GeckoJavaSampler::GetThreadName_t::signature[];
-
-auto GeckoJavaSampler::GetThreadName(int32_t a0) -> mozilla::jni::String::LocalRef
-{
-    return mozilla::jni::Method<GetThreadName_t>::Call(GeckoJavaSampler::Context(), nullptr, a0);
-}
-
-constexpr char GeckoJavaSampler::Pause_t::name[];
-constexpr char GeckoJavaSampler::Pause_t::signature[];
-
-auto GeckoJavaSampler::Pause() -> void
-{
-    return mozilla::jni::Method<Pause_t>::Call(GeckoJavaSampler::Context(), nullptr);
-}
-
-constexpr char GeckoJavaSampler::Start_t::name[];
-constexpr char GeckoJavaSampler::Start_t::signature[];
-
-auto GeckoJavaSampler::Start(int32_t a0, int32_t a1) -> void
-{
-    return mozilla::jni::Method<Start_t>::Call(GeckoJavaSampler::Context(), nullptr, a0, a1);
-}
-
-constexpr char GeckoJavaSampler::Stop_t::name[];
-constexpr char GeckoJavaSampler::Stop_t::signature[];
-
-auto GeckoJavaSampler::Stop() -> void
-{
-    return mozilla::jni::Method<Stop_t>::Call(GeckoJavaSampler::Context(), nullptr);
-}
-
-constexpr char GeckoJavaSampler::Unpause_t::name[];
-constexpr char GeckoJavaSampler::Unpause_t::signature[];
-
-auto GeckoJavaSampler::Unpause() -> void
-{
-    return mozilla::jni::Method<Unpause_t>::Call(GeckoJavaSampler::Context(), nullptr);
-}
-
 const char GeckoNetworkManager::name[] =
         "org/mozilla/gecko/GeckoNetworkManager";
 
@@ -905,51 +772,6 @@ const char GeckoScreenOrientation::name[] =
 
 constexpr char GeckoScreenOrientation::OnOrientationChange_t::name[];
 constexpr char GeckoScreenOrientation::OnOrientationChange_t::signature[];
-
-const char GeckoSmsManager::name[] =
-        "org/mozilla/gecko/GeckoSmsManager";
-
-constexpr char GeckoSmsManager::NotifyCursorDone_t::name[];
-constexpr char GeckoSmsManager::NotifyCursorDone_t::signature[];
-
-constexpr char GeckoSmsManager::NotifyCursorError_t::name[];
-constexpr char GeckoSmsManager::NotifyCursorError_t::signature[];
-
-constexpr char GeckoSmsManager::NotifyGetSms_t::name[];
-constexpr char GeckoSmsManager::NotifyGetSms_t::signature[];
-
-constexpr char GeckoSmsManager::NotifyGetSmsFailed_t::name[];
-constexpr char GeckoSmsManager::NotifyGetSmsFailed_t::signature[];
-
-constexpr char GeckoSmsManager::NotifyMessageCursorResult_t::name[];
-constexpr char GeckoSmsManager::NotifyMessageCursorResult_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsDeleteFailed_t::name[];
-constexpr char GeckoSmsManager::NotifySmsDeleteFailed_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsDeleted_t::name[];
-constexpr char GeckoSmsManager::NotifySmsDeleted_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsDelivery_t::name[];
-constexpr char GeckoSmsManager::NotifySmsDelivery_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsMarkAsReadFailed_t::name[];
-constexpr char GeckoSmsManager::NotifySmsMarkAsReadFailed_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsMarkedAsRead_t::name[];
-constexpr char GeckoSmsManager::NotifySmsMarkedAsRead_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsReceived_t::name[];
-constexpr char GeckoSmsManager::NotifySmsReceived_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsSendFailed_t::name[];
-constexpr char GeckoSmsManager::NotifySmsSendFailed_t::signature[];
-
-constexpr char GeckoSmsManager::NotifySmsSent_t::name[];
-constexpr char GeckoSmsManager::NotifySmsSent_t::signature[];
-
-constexpr char GeckoSmsManager::NotifyThreadCursorResult_t::name[];
-constexpr char GeckoSmsManager::NotifyThreadCursorResult_t::signature[];
 
 const char GeckoThread::name[] =
         "org/mozilla/gecko/GeckoThread";
@@ -1166,33 +988,6 @@ auto SurfaceTextureListener::New() -> SurfaceTextureListener::LocalRef
 constexpr char SurfaceTextureListener::OnFrameAvailable_t::name[];
 constexpr char SurfaceTextureListener::OnFrameAvailable_t::signature[];
 
-const char DisplayPortMetrics::name[] =
-        "org/mozilla/gecko/gfx/DisplayPortMetrics";
-
-constexpr char DisplayPortMetrics::New_t::name[];
-constexpr char DisplayPortMetrics::New_t::signature[];
-
-auto DisplayPortMetrics::New(float a0, float a1, float a2, float a3, float a4) -> DisplayPortMetrics::LocalRef
-{
-    return mozilla::jni::Constructor<New_t>::Call(DisplayPortMetrics::Context(), nullptr, a0, a1, a2, a3, a4);
-}
-
-constexpr char DisplayPortMetrics::MPosition_t::name[];
-constexpr char DisplayPortMetrics::MPosition_t::signature[];
-
-auto DisplayPortMetrics::MPosition() const -> mozilla::jni::Object::LocalRef
-{
-    return mozilla::jni::Field<MPosition_t>::Get(DisplayPortMetrics::mCtx, nullptr);
-}
-
-constexpr char DisplayPortMetrics::Resolution_t::name[];
-constexpr char DisplayPortMetrics::Resolution_t::signature[];
-
-auto DisplayPortMetrics::Resolution() const -> float
-{
-    return mozilla::jni::Field<Resolution_t>::Get(DisplayPortMetrics::mCtx, nullptr);
-}
-
 const char GeckoLayerClient::name[] =
         "org/mozilla/gecko/gfx/GeckoLayerClient";
 
@@ -1236,28 +1031,12 @@ auto GeckoLayerClient::SetFirstPaintViewport(float a0, float a1, float a2, float
     return mozilla::jni::Method<SetFirstPaintViewport_t>::Call(GeckoLayerClient::mCtx, nullptr, a0, a1, a2, a3, a4, a5, a6);
 }
 
-constexpr char GeckoLayerClient::SetPageRect_t::name[];
-constexpr char GeckoLayerClient::SetPageRect_t::signature[];
-
-auto GeckoLayerClient::SetPageRect(float a0, float a1, float a2, float a3) const -> void
-{
-    return mozilla::jni::Method<SetPageRect_t>::Call(GeckoLayerClient::mCtx, nullptr, a0, a1, a2, a3);
-}
-
 constexpr char GeckoLayerClient::SyncFrameMetrics_t::name[];
 constexpr char GeckoLayerClient::SyncFrameMetrics_t::signature[];
 
 auto GeckoLayerClient::SyncFrameMetrics(float a0, float a1, float a2, float a3, float a4, float a5, float a6, int32_t a7, int32_t a8, int32_t a9, int32_t a10, float a11, bool a12, int32_t a13) const -> mozilla::jni::Object::LocalRef
 {
     return mozilla::jni::Method<SyncFrameMetrics_t>::Call(GeckoLayerClient::mCtx, nullptr, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
-}
-
-constexpr char GeckoLayerClient::SyncViewportInfo_t::name[];
-constexpr char GeckoLayerClient::SyncViewportInfo_t::signature[];
-
-auto GeckoLayerClient::SyncViewportInfo(int32_t a0, int32_t a1, int32_t a2, int32_t a3, float a4, bool a5, int32_t a6) const -> mozilla::jni::Object::LocalRef
-{
-    return mozilla::jni::Method<SyncViewportInfo_t>::Call(GeckoLayerClient::mCtx, nullptr, a0, a1, a2, a3, a4, a5, a6);
 }
 
 constexpr char GeckoLayerClient::SynthesizeNativeMouseEvent_t::name[];
@@ -1965,6 +1744,14 @@ auto Clipboard::SetText(mozilla::jni::String::Param a0) -> void
 
 const char HardwareCodecCapabilityUtils::name[] =
         "org/mozilla/gecko/util/HardwareCodecCapabilityUtils";
+
+constexpr char HardwareCodecCapabilityUtils::HasHWVP9_t::name[];
+constexpr char HardwareCodecCapabilityUtils::HasHWVP9_t::signature[];
+
+auto HardwareCodecCapabilityUtils::HasHWVP9() -> bool
+{
+    return mozilla::jni::Method<HasHWVP9_t>::Call(HardwareCodecCapabilityUtils::Context(), nullptr);
+}
 
 constexpr char HardwareCodecCapabilityUtils::FindDecoderCodecInfoForMimeType_t::name[];
 constexpr char HardwareCodecCapabilityUtils::FindDecoderCodecInfoForMimeType_t::signature[];

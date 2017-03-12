@@ -18,6 +18,8 @@ interface nsITabParent;
 interface nsILoadContext;
 interface nsIPrintSettings;
 interface nsIWebProgressListener;
+interface nsIGroupedSHistory;
+interface nsIPartialSHistory;
 
 [scriptable, builtinclass, uuid(1645af04-1bc7-4363-8f2c-eb9679220ab1)]
 interface nsIFrameLoader : nsISupports
@@ -53,15 +55,6 @@ interface nsIFrameLoader : nsISupports
   void loadURI(in nsIURI aURI);
 
   /**
-   * Loads the specified URI in this frame but using a different process.
-   * Behaves identically to loadURI, except that this method only works
-   * with remote frame. For a signed package, we need to specifiy the
-   * package identifier.
-   * Throws an exception with non-remote frames.
-   */
-  void switchProcessAndLoadURI(in nsIURI aURI, in ACString aPackageId);
-
-  /**
    * Puts the frameloader in prerendering mode.
    */
   void setIsPrerendered();
@@ -70,6 +63,17 @@ interface nsIFrameLoader : nsISupports
    * Make the prerendered frameloader being active (and clear isPrerendered flag).
    */
   void makePrerenderedLoaderActive();
+
+  /**
+   * Append partial session history from another frame loader.
+   */
+  void appendPartialSessionHistoryAndSwap(in nsIFrameLoader aOther);
+
+  /**
+   * If grouped session history is applied, use this function to navigate to
+   * an entry of session history object of another frameloader.
+   */
+  void requestGroupedHistoryNavigation(in unsigned long aGlobalIndex);
 
   /**
    * Destroy the frame loader and everything inside it. This will
@@ -137,6 +141,11 @@ interface nsIFrameLoader : nsISupports
    * to the window.
    */
   void requestNotifyAfterRemotePaint();
+
+  /**
+   * Close the window through the ownerElement.
+   */
+  void requestFrameLoaderClose();
 
   /**
    * Print the current document.
@@ -214,12 +223,6 @@ interface nsIFrameLoader : nsISupports
   readonly attribute boolean ownerIsMozBrowserOrAppFrame;
 
   /**
-   * Find out whether the owner content really is a widget. If this attribute
-   * returns true, |ownerIsMozBrowserOrAppFrame| must return true.
-   */
-  readonly attribute boolean ownerIsWidget;
-
-  /**
    * The last known width of the frame. Reading this property will not trigger
    * a reflow, and therefore may not reflect the current state of things. It
    * should only be used in asynchronous APIs where values are not guaranteed
@@ -234,6 +237,17 @@ interface nsIFrameLoader : nsISupports
    * to be up-to-date when received.
    */
   readonly attribute unsigned long lazyHeight;
+
+  /**
+   * The partial session history.
+   */
+  readonly attribute nsIPartialSHistory partialSessionHistory;
+
+  /**
+   * The grouped session history composed of multiple session history objects
+   * across root docshells.
+   */
+  readonly attribute nsIGroupedSHistory groupedSessionHistory;
 };
 
 %{C++
@@ -261,4 +275,14 @@ interface nsIFrameLoaderOwner : nsISupports
    * Puts the FrameLoaderOwner in prerendering mode.
    */
   void setIsPrerendered();
+
+  /**
+   * This method is used internally by SwapFrameLoaders to set the frame loader
+   * on the target nsFrameLoader.
+   *
+   * Avoid using this method outside of that context, and instead prefer using
+   * SwapFrameLoaders.
+   */
+  [noscript, notxpcom] void
+  internalSetFrameLoader(in nsIFrameLoader aNewFrameLoader);
 };

@@ -30,6 +30,10 @@ public:
 
   nsresult Init(nsICryptoHash* aHasher);
 
+#ifdef MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES
+  nsCString GetRawTableUpdates() const { return mPending; }
+#endif
+
   virtual void SetCurrentTable(const nsACString& aTable) = 0;
 
   void SetRequestedTables(const nsTArray<nsCString>& aRequestTables)
@@ -39,6 +43,8 @@ public:
 
   nsresult Begin();
   virtual nsresult AppendStream(const nsACString& aData) = 0;
+
+  uint32_t UpdateWaitSec() { return mUpdateWaitSec; }
 
   // Notify that the inbound data is ready for parsing if progressive
   // parsing is not supported, for example in V4.
@@ -52,10 +58,9 @@ public:
 
   // These are only meaningful to V2. Since they were originally public,
   // moving them to ProtocolParserV2 requires a dymamic cast in the call
-  // sites. As a result, we will leave them until we remove support 
+  // sites. As a result, we will leave them until we remove support
   // for V2 entirely..
   virtual const nsTArray<ForwardedUpdate> &Forwards() const { return mForwards; }
-  virtual int32_t UpdateWait() { return 0; }
   virtual bool ResetRequested() { return false; }
 
 protected:
@@ -72,6 +77,9 @@ protected:
 
   // The table names that were requested from the client.
   nsTArray<nsCString> mRequestedTables;
+
+  // How long we should wait until the next update.
+  uint32_t mUpdateWaitSec;
 
 private:
   void CleanupUpdates();
@@ -91,7 +99,6 @@ public:
 
   // Update information.
   virtual const nsTArray<ForwardedUpdate> &Forwards() const override { return mForwards; }
-  virtual int32_t UpdateWait() override { return mUpdateWait; }
   virtual bool ResetRequested() override { return mResetRequested; }
 
 private:
@@ -147,7 +154,6 @@ private:
   };
   ChunkState mChunkState;
 
-  uint32_t mUpdateWait;
   bool mResetRequested;
 
   // Updates to apply to the current table being parsed.
@@ -184,6 +190,12 @@ private:
 
   nsresult ProcessRawRemoval(TableUpdateV4& aTableUpdate,
                              const ThreatEntrySet& aRemoval);
+
+  nsresult ProcessEncodedAddition(TableUpdateV4& aTableUpdate,
+                                  const ThreatEntrySet& aAddition);
+
+  nsresult ProcessEncodedRemoval(TableUpdateV4& aTableUpdate,
+                                 const ThreatEntrySet& aRemoval);
 };
 
 } // namespace safebrowsing

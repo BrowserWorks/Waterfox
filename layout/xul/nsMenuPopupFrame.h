@@ -48,6 +48,8 @@ enum nsPopupState {
   // state from when a popup is requested to be shown to after the
   // popupshowing event has been fired.
   ePopupShowing,
+  // state while a popup is waiting to be laid out and positioned
+  ePopupPositioning,
   // state while a popup is open but the widget is not yet visible
   ePopupOpening,
   // state while a popup is visible and waiting for the popupshown event
@@ -251,8 +253,10 @@ public:
   // (or the frame for mAnchorContent if aAnchorFrame is null), anchored at a
   // rectangle, or at a specific point if a screen position is set. The popup
   // will be adjusted so that it is on screen. If aIsMove is true, then the
-  // popup is being moved, and should not be flipped.
-  nsresult SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove, bool aSizedToPopup);
+  // popup is being moved, and should not be flipped. If aNotify is true, then
+  // a popuppositioned event is sent.
+  nsresult SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove,
+                            bool aSizedToPopup, bool aNotify);
 
   bool HasGeneratedChildren() { return mGeneratedChildren; }
   void SetGeneratedChildren() { mGeneratedChildren = true; }
@@ -328,6 +332,9 @@ public:
   nsMenuFrame* FindMenuWithShortcut(nsIDOMKeyEvent* aKeyEvent, bool& doAction);
 
   void ClearIncrementalString() { mIncrementalString.Truncate(); }
+  static bool IsWithinIncrementalTime(DOMTimeStamp time) {
+    return !sTimeoutOfIncrementalSearch || time - sLastKeyTime <= sTimeoutOfIncrementalSearch;
+  }
 
   virtual nsIAtom* GetType() const override { return nsGkAtoms::menuPopupFrame; }
 
@@ -425,6 +432,11 @@ public:
     return false;
   }
 
+  void ShowWithPositionedEvent() {
+    mPopupState = ePopupPositioning;
+    mShouldAutoPosition = true;
+  }
+
   // nsIReflowCallback
   virtual bool ReflowFinished() override;
   virtual void ReflowCallbackCanceled() override;
@@ -470,7 +482,7 @@ protected:
                        nscoord aAnchorBegin, nscoord aAnchorEnd,
                        nscoord aMarginBegin, nscoord aMarginEnd,
                        nscoord aOffsetForContextMenu, FlipStyle aFlip,
-                       bool* aFlipSide);
+                       bool aIsOnEnd, bool* aFlipSide);
 
   // check if the popup can fit into the available space by "sliding" (i.e.,
   // by having the anchor arrow slide along one axis and only resizing if that
@@ -523,6 +535,9 @@ protected:
   nsMenuFrame* mCurrentMenu; // The current menu that is active.
 
   RefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
+
+  // The popup's screen rectangle in app units.
+  nsIntRect mUsedScreenRect;
 
   // A popup's preferred size may be different than its actual size stored in
   // mRect in the case where the popup was resized because it was too large
@@ -603,6 +618,8 @@ protected:
   nsRect mOverrideConstraintRect;
 
   static int8_t sDefaultLevelIsTop;
+
+  static DOMTimeStamp sLastKeyTime;
 
   // If 0, never timed out.  Otherwise, the value is in milliseconds.
   static uint32_t sTimeoutOfIncrementalSearch;

@@ -8,11 +8,13 @@
  */
 
 add_task(function* () {
+  let Actions = require("devtools/client/netmonitor/actions/index");
+
   let { tab, monitor } = yield initNetMonitor(CONTENT_TYPE_WITHOUT_CACHE_URL);
   info("Starting test... ");
 
-  let { $, $all, EVENTS, ACTIVITY_TYPE, NetMonitorView, NetMonitorController } =
-    monitor.panelWin;
+  let { $, $all, EVENTS, ACTIVITY_TYPE, NetMonitorView, NetMonitorController,
+        gStore } = monitor.panelWin;
   let { RequestsMenu } = NetMonitorView;
 
   let wait = waitForEvents();
@@ -26,7 +28,7 @@ add_task(function* () {
   info("Checking the image thumbnail when all items are sorted.");
   checkImageThumbnail();
 
-  RequestsMenu.filterOn("images");
+  gStore.dispatch(Actions.toggleFilterType("images"));
   info("Checking the image thumbnail when only images are shown.");
   checkImageThumbnail();
 
@@ -42,7 +44,7 @@ add_task(function* () {
 
   function waitForEvents() {
     return promise.all([
-      waitForNetworkEvents(monitor, 7),
+      waitForNetworkEvents(monitor, CONTENT_TYPE_WITHOUT_CACHE_REQUESTS),
       monitor.panelWin.once(EVENTS.RESPONSE_IMAGE_THUMBNAIL_DISPLAYED)
     ]);
   }

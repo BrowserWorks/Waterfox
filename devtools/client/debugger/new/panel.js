@@ -3,55 +3,58 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+const { Task } = require("devtools/shared/task");
+var {LocalizationHelper} = require("devtools/shared/l10n");
+
+const DBG_STRINGS_URI = "devtools/client/locales/debugger.properties";
+var L10N = new LocalizationHelper(DBG_STRINGS_URI);
+
 function DebuggerPanel(iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
+  this.panelWin.L10N = L10N;
   this.toolbox = toolbox;
 }
 
 DebuggerPanel.prototype = {
-  open: function() {
-    let targetPromise;
+  open: Task.async(function* () {
     if (!this.toolbox.target.isRemote) {
-      targetPromise = this.toolbox.target.makeRemote();
-    } else {
-      targetPromise = Promise.resolve(this.toolbox.target);
+      yield this.toolbox.target.makeRemote();
     }
 
-    return targetPromise.then(() => {
-      this.panelWin.Debugger.bootstrap({
-        threadClient: this.toolbox.threadClient,
-        tabTarget: this.toolbox.target
-      });
-      this.isReady = true;
-      return this;
+    yield this.panelWin.Debugger.bootstrap({
+      threadClient: this.toolbox.threadClient,
+      tabTarget: this.toolbox.target
     });
-  },
 
-  _store: function() {
+    this.isReady = true;
+    return this;
+  }),
+
+  _store: function () {
     return this.panelWin.Debugger.store;
   },
 
-  _getState: function() {
+  _getState: function () {
     return this._store().getState();
   },
 
-  _actions: function() {
+  _actions: function () {
     return this.panelWin.Debugger.actions;
   },
 
-  _selectors: function() {
+  _selectors: function () {
     return this.panelWin.Debugger.selectors;
   },
 
-  getFrames: function() {
+  getFrames: function () {
     let frames = this._selectors().getFrames(this._getState());
 
-    // frames is an empty array when the debugger is not paused
-    if (!frames.toJS) {
+    // Frames is null when the debugger is not paused.
+    if (!frames) {
       return {
         frames: [],
         selected: -1
-      }
+      };
     }
 
     frames = frames.toJS();
@@ -65,7 +68,7 @@ DebuggerPanel.prototype = {
     return { frames, selected };
   },
 
-  destroy: function() {
+  destroy: function () {
     this.panelWin.Debugger.destroy();
     this.emit("destroyed");
   }

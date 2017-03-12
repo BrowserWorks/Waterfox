@@ -1,4 +1,3 @@
-// |jit-test| test-also-noasmjs
 load(libdir + "asm.js");
 load(libdir + "asserts.js");
 
@@ -34,7 +33,7 @@ for (var i = 0; i < 15; i++) {
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var callFFI = asmCompile('global', 'ffis', USE_ASM + "var ffi=ffis.ffi; function f() { return ffi()|0 } return f");
-    assertEq(isAsmJSModuleLoadedFromCache(callFFI), false);
+    assertEq(isAsmJSModuleLoadedFromCache(callFFI), true);
     stack = null;
     f();
     matchStack(stack, ['dumpStack', 'f']);

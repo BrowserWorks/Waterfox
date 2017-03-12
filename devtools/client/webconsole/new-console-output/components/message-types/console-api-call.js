@@ -12,104 +12,121 @@ const {
   DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const FrameView = createFactory(require("devtools/client/shared/components/frame"));
-const StackTrace = createFactory(require("devtools/client/shared/components/stack-trace"));
-const GripMessageBody = createFactory(require("devtools/client/webconsole/new-console-output/components/grip-message-body").GripMessageBody);
-const MessageRepeat = createFactory(require("devtools/client/webconsole/new-console-output/components/message-repeat").MessageRepeat);
-const MessageIcon = createFactory(require("devtools/client/webconsole/new-console-output/components/message-icon").MessageIcon);
-const CollapseButton = createFactory(require("devtools/client/webconsole/new-console-output/components/collapse-button").CollapseButton);
-const {l10n} = require("devtools/client/webconsole/new-console-output/utils/messages");
-const actions = require("devtools/client/webconsole/new-console-output/actions/messages");
+const GripMessageBody = createFactory(require("devtools/client/webconsole/new-console-output/components/grip-message-body"));
+const ConsoleTable = createFactory(require("devtools/client/webconsole/new-console-output/components/console-table"));
+const {isGroupType, l10n} = require("devtools/client/webconsole/new-console-output/utils/messages");
+
+const Message = createFactory(require("devtools/client/webconsole/new-console-output/components/message"));
 
 ConsoleApiCall.displayName = "ConsoleApiCall";
 
 ConsoleApiCall.propTypes = {
   message: PropTypes.object.isRequired,
-  sourceMapService: PropTypes.object,
-  onViewSourceInDebugger: PropTypes.func.isRequired,
-  open: PropTypes.bool.isRequired,
+  open: PropTypes.bool,
+  serviceContainer: PropTypes.object.isRequired,
+  indent: PropTypes.number.isRequired,
+};
+
+ConsoleApiCall.defaultProps = {
+  open: false,
+  indent: 0,
 };
 
 function ConsoleApiCall(props) {
-  const { dispatch, message, sourceMapService, onViewSourceInDebugger, open } = props;
-  const {source, level, stacktrace, type, frame } = message;
+  const {
+    dispatch,
+    message,
+    open,
+    tableData,
+    serviceContainer,
+    indent,
+  } = props;
+  const {
+    id: messageId,
+    source,
+    type,
+    level,
+    repeat,
+    stacktrace,
+    frame,
+    parameters,
+    messageText,
+    userProvidedStyles,
+  } = message;
 
   let messageBody;
   if (type === "trace") {
     messageBody = dom.span({className: "cm-variable"}, "console.trace()");
-  } else if (message.parameters) {
-    messageBody = message.parameters.map((grip, key) => GripMessageBody({grip, key}));
+  } else if (type === "assert") {
+    let reps = formatReps(parameters);
+    messageBody = dom.span({ className: "cm-variable" }, "Assertion failed: ", reps);
+  } else if (type === "table") {
+    // TODO: Chrome does not output anything, see if we want to keep this
+    messageBody = dom.span({className: "cm-variable"}, "console.table()");
+  } else if (parameters) {
+    messageBody = formatReps(parameters, userProvidedStyles, serviceContainer);
   } else {
-    messageBody = message.messageText;
+    messageBody = messageText;
   }
 
-  const icon = MessageIcon({level});
-  const repeat = MessageRepeat({repeat: message.repeat});
-  const shouldRenderFrame = frame && frame.source !== "debugger eval code";
-  const location = dom.span({ className: "message-location devtools-monospace" },
-    shouldRenderFrame ? FrameView({
-      frame,
-      onClick: onViewSourceInDebugger,
-      showEmptyPathAsHost: true,
-      sourceMapService
-    }) : null
-  );
-
-  let collapse = "";
-  let attachment = "";
-  if (stacktrace) {
-    attachment = dom.div({className: "stacktrace devtools-monospace"},
-      StackTrace({
-        stacktrace: stacktrace,
-        onViewSourceInDebugger: onViewSourceInDebugger
-      })
-    );
-
-    collapse = CollapseButton({
-      open: open,
-      title: l10n.getStr("messageToggleDetails"),
-      onClick: function () {
-        if (open) {
-          dispatch(actions.messageClose(message.id));
-        } else {
-          dispatch(actions.messageOpen(message.id));
-        }
-      },
+  let attachment = null;
+  if (type === "table") {
+    attachment = ConsoleTable({
+      dispatch,
+      id: message.id,
+      serviceContainer,
+      parameters: message.parameters,
+      tableData
     });
   }
 
-  const classes = ["message", "cm-s-mozilla"];
-
-  if (source) {
-    classes.push(source);
+  let collapseTitle = null;
+  if (isGroupType(type)) {
+    collapseTitle = l10n.getStr("groupToggle");
   }
 
-  if (level) {
-    classes.push(level);
-  }
+  const collapsible = isGroupType(type)
+    || (type === "error" && Array.isArray(stacktrace));
+  const topLevelClasses = ["cm-s-mozilla"];
 
-  if (open === true) {
-    classes.push("open");
-  }
+  return Message({
+    messageId,
+    open,
+    collapsible,
+    collapseTitle,
+    source,
+    type,
+    level,
+    topLevelClasses,
+    messageBody,
+    repeat,
+    frame,
+    stacktrace,
+    attachment,
+    serviceContainer,
+    dispatch,
+    indent,
+  });
+}
 
-  return dom.div({
-    className: classes.join(" ")
-  },
-    // @TODO add timestamp
-    // @TODO add indent if necessary
-    icon,
-    collapse,
-    dom.span({className: "message-body-wrapper"},
-      dom.span({className: "message-flex-body"},
-        dom.span({className: "message-body devtools-monospace"},
-          messageBody
-        ),
-        repeat,
-        location
-      ),
-      attachment
-    )
+function formatReps(parameters, userProvidedStyles, serviceContainer) {
+  return (
+    parameters
+      // Get all the grips.
+      .map((grip, key) => GripMessageBody({
+        grip,
+        key,
+        userProvidedStyle: userProvidedStyles ? userProvidedStyles[key] : null,
+        serviceContainer
+      }))
+      // Interleave spaces.
+      .reduce((arr, v, i) => {
+        return i + 1 < parameters.length
+          ? arr.concat(v, dom.span({}, " "))
+          : arr.concat(v);
+      }, [])
   );
 }
 
-module.exports.ConsoleApiCall = ConsoleApiCall;
+module.exports = ConsoleApiCall;
+

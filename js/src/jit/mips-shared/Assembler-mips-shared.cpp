@@ -1343,6 +1343,12 @@ AssemblerMIPSShared::as_cvtsd(FloatRegister fd, FloatRegister fs)
 }
 
 BufferOffset
+AssemblerMIPSShared::as_cvtsl(FloatRegister fd, FloatRegister fs)
+{
+    return writeInst(InstReg(op_cop1, rs_l, zero, fs, fd, ff_cvt_s_fmt).encode());
+}
+
+BufferOffset
 AssemblerMIPSShared::as_cvtsw(FloatRegister fd, FloatRegister fs)
 {
     return writeInst(InstReg(op_cop1, rs_w, zero, fs, fd, ff_cvt_s_fmt).encode());
@@ -1562,7 +1568,7 @@ AssemblerMIPSShared::bind(Label* label, BufferOffset boff)
 }
 
 void
-AssemblerMIPSShared::bindLater(Label* label, wasm::JumpTarget target)
+AssemblerMIPSShared::bindLater(Label* label, wasm::TrapDesc target)
 {
     if (label->used()) {
         int32_t next;
@@ -1571,7 +1577,7 @@ AssemblerMIPSShared::bindLater(Label* label, wasm::JumpTarget target)
         do {
             Instruction* inst = editSrc(b);
 
-            append(target, b.getOffset());
+            append(wasm::TrapSite(target, b.getOffset()));
             next = inst[1].encode();
             inst[1].makeNop();
 

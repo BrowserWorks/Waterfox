@@ -9,58 +9,61 @@
 // React & Redux
 const {
   createFactory,
-  DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const FrameView = createFactory(require("devtools/client/shared/components/frame"));
-const MessageRepeat = createFactory(require("devtools/client/webconsole/new-console-output/components/message-repeat").MessageRepeat);
-const MessageIcon = createFactory(require("devtools/client/webconsole/new-console-output/components/message-icon").MessageIcon);
+const Message = createFactory(require("devtools/client/webconsole/new-console-output/components/message"));
 
 PageError.displayName = "PageError";
 
 PageError.propTypes = {
   message: PropTypes.object.isRequired,
+  open: PropTypes.bool,
+  indent: PropTypes.number.isRequired,
+};
+
+PageError.defaultProps = {
+  open: false,
+  indent: 0,
 };
 
 function PageError(props) {
-  const { message, sourceMapService, onViewSourceInDebugger } = props;
-  const { source, level, frame } = message;
+  const {
+    dispatch,
+    message,
+    open,
+    serviceContainer,
+    indent,
+  } = props;
+  const {
+    id: messageId,
+    source,
+    type,
+    level,
+    messageText: messageBody,
+    repeat,
+    stacktrace,
+    frame,
+    exceptionDocURL,
+  } = message;
 
-  const repeat = MessageRepeat({repeat: message.repeat});
-  const icon = MessageIcon({level});
-  const shouldRenderFrame = frame && frame.source !== "debugger eval code";
-  const location = dom.span({ className: "message-location devtools-monospace" },
-    shouldRenderFrame ? FrameView({
-      frame,
-      onClick: onViewSourceInDebugger,
-      showEmptyPathAsHost: true,
-      sourceMapService
-    }) : null
-  );
-
-  const classes = ["message"];
-
-  if (source) {
-    classes.push(source);
-  }
-
-  if (level) {
-    classes.push(level);
-  }
-
-  return dom.div({
-    className: classes.join(" ")
-  },
-    icon,
-    dom.span({ className: "message-body-wrapper" },
-      dom.span({ className: "message-flex-body" },
-        dom.span({ className: "message-body devtools-monospace" },
-          message.messageText
-        ),
-        repeat
-      )
-    )
-  );
+  const childProps = {
+    dispatch,
+    messageId,
+    open,
+    collapsible: Array.isArray(stacktrace),
+    source,
+    type,
+    level,
+    topLevelClasses: [],
+    indent,
+    messageBody,
+    repeat,
+    frame,
+    stacktrace,
+    serviceContainer,
+    exceptionDocURL,
+  };
+  return Message(childProps);
 }
 
-module.exports.PageError = PageError;
+module.exports = PageError;

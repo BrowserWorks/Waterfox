@@ -8,19 +8,19 @@
 
 # BrandFullNameInternal is used for some registry and file system values
 # instead of BrandFullName and typically should not be modified.
-!define BrandFullNameInternal "Mozilla Firefox"
-!define CompanyName           "Mozilla Corporation"
-!define URLInfoAbout          "https://www.mozilla.org"
-!define URLUpdateInfo         "https://www.mozilla.org/firefox/${AppVersion}/releasenotes"
-!define HelpLink              "https://support.mozilla.org"
+!define BrandFullNameInternal "Waterfox"
+!define CompanyName           "Waterfox Ltd"
+!define URLInfoAbout          "https://www.waterfoxproject.org"
+!define URLUpdateInfo         "https://www.waterfoxproject.org"
+!define HelpLink              "https://www.waterfoxproject.org"
 
 ; The OFFICIAL define is a workaround to support different urls for Release and
 ; Beta since they share the same branding when building with other branches that
 ; set the update channel to beta.
 !define OFFICIAL
-!define URLStubDownload "http://download.mozilla.org/?os=win&lang=${AB_CD}&product=firefox-latest"
-!define URLManualDownload "https://www.mozilla.org/${AB_CD}/firefox/installer-help/?channel=release&installer_lang=${AB_CD}"
-!define URLSystemRequirements "https://www.mozilla.org/firefox/system-requirements/"
+!define URLStubDownload "https://www.waterfoxproject.org/downloads"
+!define URLManualDownload "https://www.waterfoxproject.org/downloads"
+!define URLSystemRequirements "https://www.waterfoxproject.org/downloads"
 !define Channel "release"
 
 # The installer's certificate name and issuer expected by the stub installer

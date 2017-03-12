@@ -1,9 +1,10 @@
 load(libdir + 'wasm.js');
-load(libdir + 'asserts.js');
 
 const WasmPage = 64 * 1024;
 
-const emptyModule = textToBinary('(module)');
+const emptyModuleBinary = wasmTextToBinary('(module)');
+const exportingModuleBinary = wasmTextToBinary('(module (func (export "f") (result i32) (i32.const 42)))');
+const importingModuleBinary = wasmTextToBinary('(module (func (import "" "f")))');
 
 // 'WebAssembly' data property on global object
 const wasmDesc = Object.getOwnPropertyDescriptor(this, 'WebAssembly');
@@ -15,6 +16,42 @@ assertEq(wasmDesc.configurable, true);
 // 'WebAssembly' object
 assertEq(WebAssembly, wasmDesc.value);
 assertEq(String(WebAssembly), "[object WebAssembly]");
+
+// 'WebAssembly.(Compile|Runtime)Error' data property
+const compileErrorDesc = Object.getOwnPropertyDescriptor(WebAssembly, 'CompileError');
+const runtimeErrorDesc = Object.getOwnPropertyDescriptor(WebAssembly, 'RuntimeError');
+assertEq(typeof compileErrorDesc.value, "function");
+assertEq(typeof runtimeErrorDesc.value, "function");
+assertEq(compileErrorDesc.writable, true);
+assertEq(runtimeErrorDesc.writable, true);
+assertEq(compileErrorDesc.enumerable, false);
+assertEq(runtimeErrorDesc.enumerable, false);
+assertEq(compileErrorDesc.configurable, true);
+assertEq(runtimeErrorDesc.configurable, true);
+
+// 'WebAssembly.(Compile|Runtime)Error' constructor function
+const CompileError = WebAssembly.CompileError;
+const RuntimeError = WebAssembly.RuntimeError;
+assertEq(CompileError, compileErrorDesc.value);
+assertEq(RuntimeError, runtimeErrorDesc.value);
+assertEq(CompileError.length, 1);
+assertEq(RuntimeError.length, 1);
+assertEq(CompileError.name, "CompileError");
+assertEq(RuntimeError.name, "RuntimeError");
+
+// 'WebAssembly.(Compile|Runtime)Error' instance objects
+const compileError = new CompileError;
+const runtimeError = new RuntimeError;
+assertEq(compileError instanceof CompileError, true);
+assertEq(runtimeError instanceof RuntimeError, true);
+assertEq(compileError instanceof Error, true);
+assertEq(runtimeError instanceof Error, true);
+assertEq(compileError instanceof TypeError, false);
+assertEq(runtimeError instanceof TypeError, false);
+assertEq(compileError.message, "");
+assertEq(runtimeError.message, "");
+assertEq(new CompileError("hi").message, "hi");
+assertEq(new RuntimeError("hi").message, "hi");
 
 // 'WebAssembly.Module' data property
 const moduleDesc = Object.getOwnPropertyDescriptor(WebAssembly, 'Module');
@@ -33,10 +70,10 @@ assertErrorMessage(() => new Module(), TypeError, /requires more than 0 argument
 assertErrorMessage(() => new Module(undefined), TypeError, "first argument must be an ArrayBuffer or typed array object");
 assertErrorMessage(() => new Module(1), TypeError, "first argument must be an ArrayBuffer or typed array object");
 assertErrorMessage(() => new Module({}), TypeError, "first argument must be an ArrayBuffer or typed array object");
-assertErrorMessage(() => new Module(new Uint8Array()), /* TODO: WebAssembly.CompileError */ TypeError, /compile error/);
-assertErrorMessage(() => new Module(new ArrayBuffer()), /* TODO: WebAssembly.CompileError */ TypeError, /compile error/);
-assertEq(new Module(emptyModule) instanceof Module, true);
-assertEq(new Module(emptyModule.buffer) instanceof Module, true);
+assertErrorMessage(() => new Module(new Uint8Array()), CompileError, /failed to match magic number/);
+assertErrorMessage(() => new Module(new ArrayBuffer()), CompileError, /failed to match magic number/);
+assertEq(new Module(emptyModuleBinary) instanceof Module, true);
+assertEq(new Module(emptyModuleBinary.buffer) instanceof Module, true);
 
 // 'WebAssembly.Module.prototype' data property
 const moduleProtoDesc = Object.getOwnPropertyDescriptor(Module, 'prototype');
@@ -52,10 +89,72 @@ assertEq(String(moduleProto), "[object Object]");
 assertEq(Object.getPrototypeOf(moduleProto), Object.prototype);
 
 // 'WebAssembly.Module' instance objects
-const m1 = new Module(emptyModule);
-assertEq(typeof m1, "object");
-assertEq(String(m1), "[object WebAssembly.Module]");
-assertEq(Object.getPrototypeOf(m1), moduleProto);
+const emptyModule = new Module(emptyModuleBinary);
+const importingModule = new Module(importingModuleBinary);
+const exportingModule = new Module(exportingModuleBinary);
+assertEq(typeof emptyModule, "object");
+assertEq(String(emptyModule), "[object WebAssembly.Module]");
+assertEq(Object.getPrototypeOf(emptyModule), moduleProto);
+
+// 'WebAssembly.Module.imports' data property
+const moduleImportsDesc = Object.getOwnPropertyDescriptor(Module, 'imports');
+assertEq(typeof moduleImportsDesc.value, "function");
+assertEq(moduleImportsDesc.writable, true);
+assertEq(moduleImportsDesc.enumerable, false);
+assertEq(moduleImportsDesc.configurable, true);
+
+// 'WebAssembly.Module.imports' method
+const moduleImports = moduleImportsDesc.value;
+assertEq(moduleImports.length, 1);
+assertErrorMessage(() => moduleImports(), TypeError, /requires more than 0 arguments/);
+assertErrorMessage(() => moduleImports(undefined), TypeError, /first argument must be a WebAssembly.Module/);
+assertErrorMessage(() => moduleImports({}), TypeError, /first argument must be a WebAssembly.Module/);
+var arr = moduleImports(new Module(wasmTextToBinary('(module)')));
+assertEq(arr instanceof Array, true);
+assertEq(arr.length, 0);
+var arr = moduleImports(new Module(wasmTextToBinary('(module (func (import "a" "b")) (memory (import "c" "d") 1) (table (import "e" "f") 1 anyfunc) (global (import "g" "⚡") i32))')));
+assertEq(arr instanceof Array, true);
+assertEq(arr.length, 4);
+assertEq(arr[0].kind, "function");
+assertEq(arr[0].module, "a");
+assertEq(arr[0].name, "b");
+assertEq(arr[1].kind, "memory");
+assertEq(arr[1].module, "c");
+assertEq(arr[1].name, "d");
+assertEq(arr[2].kind, "table");
+assertEq(arr[2].module, "e");
+assertEq(arr[2].name, "f");
+assertEq(arr[3].kind, "global");
+assertEq(arr[3].module, "g");
+assertEq(arr[3].name, "⚡");
+
+// 'WebAssembly.Module.exports' data property
+const moduleExportsDesc = Object.getOwnPropertyDescriptor(Module, 'exports');
+assertEq(typeof moduleExportsDesc.value, "function");
+assertEq(moduleExportsDesc.writable, true);
+assertEq(moduleExportsDesc.enumerable, false);
+assertEq(moduleExportsDesc.configurable, true);
+
+// 'WebAssembly.Module.exports' method
+const moduleExports = moduleExportsDesc.value;
+assertEq(moduleExports.length, 1);
+assertErrorMessage(() => moduleExports(), TypeError, /requires more than 0 arguments/);
+assertErrorMessage(() => moduleExports(undefined), TypeError, /first argument must be a WebAssembly.Module/);
+assertErrorMessage(() => moduleExports({}), TypeError, /first argument must be a WebAssembly.Module/);
+var arr = moduleExports(emptyModule);
+assertEq(arr instanceof Array, true);
+assertEq(arr.length, 0);
+var arr = moduleExports(new Module(wasmTextToBinary('(module (func (export "a")) (memory (export "b") 1) (table (export "c") 1 anyfunc) (global (export "⚡") i32 (i32.const 0)))')));
+assertEq(arr instanceof Array, true);
+assertEq(arr.length, 4);
+assertEq(arr[0].kind, "function");
+assertEq(arr[0].name, "a");
+assertEq(arr[1].kind, "memory");
+assertEq(arr[1].name, "b");
+assertEq(arr[2].kind, "table");
+assertEq(arr[2].name, "c");
+assertEq(arr[3].kind, "global");
+assertEq(arr[3].name, "⚡");
 
 // 'WebAssembly.Instance' data property
 const instanceDesc = Object.getOwnPropertyDescriptor(WebAssembly, 'Instance');
@@ -72,9 +171,9 @@ assertEq(Instance.name, "Instance");
 assertErrorMessage(() => Instance(), TypeError, /constructor without new is forbidden/);
 assertErrorMessage(() => new Instance(1), TypeError, "first argument must be a WebAssembly.Module");
 assertErrorMessage(() => new Instance({}), TypeError, "first argument must be a WebAssembly.Module");
-assertErrorMessage(() => new Instance(m1, null), TypeError, "second argument, if present, must be an object");
-assertEq(new Instance(m1) instanceof Instance, true);
-assertEq(new Instance(m1, {}) instanceof Instance, true);
+assertErrorMessage(() => new Instance(emptyModule, null), TypeError, "second argument must be an object");
+assertEq(new Instance(emptyModule) instanceof Instance, true);
+assertEq(new Instance(emptyModule, {}) instanceof Instance, true);
 
 // 'WebAssembly.Instance.prototype' data property
 const instanceProtoDesc = Object.getOwnPropertyDescriptor(Instance, 'prototype');
@@ -90,17 +189,38 @@ assertEq(String(instanceProto), "[object Object]");
 assertEq(Object.getPrototypeOf(instanceProto), Object.prototype);
 
 // 'WebAssembly.Instance' instance objects
-const i1 = new Instance(m1);
-assertEq(typeof i1, "object");
-assertEq(String(i1), "[object WebAssembly.Instance]");
-assertEq(Object.getPrototypeOf(i1), instanceProto);
+const exportingInstance = new Instance(exportingModule);
+assertEq(typeof exportingInstance, "object");
+assertEq(String(exportingInstance), "[object WebAssembly.Instance]");
+assertEq(Object.getPrototypeOf(exportingInstance), instanceProto);
 
 // 'WebAssembly.Instance' 'exports' data property
-const exportsDesc = Object.getOwnPropertyDescriptor(i1, 'exports');
-assertEq(typeof exportsDesc.value, "object");
-assertEq(exportsDesc.writable, true);
-assertEq(exportsDesc.enumerable, true);
-assertEq(exportsDesc.configurable, true);
+const instanceExportsDesc = Object.getOwnPropertyDescriptor(exportingInstance, 'exports');
+assertEq(typeof instanceExportsDesc.value, "object");
+assertEq(instanceExportsDesc.writable, true);
+assertEq(instanceExportsDesc.enumerable, true);
+assertEq(instanceExportsDesc.configurable, true);
+
+// 'WebAssembly.Instance' 'exports' object
+const exportsObj = exportingInstance.exports;
+assertEq(typeof exportsObj, "object");
+assertEq(Object.isExtensible(exportsObj), false);
+assertEq(Object.getPrototypeOf(exportsObj), null);
+assertEq(Object.keys(exportsObj).join(), "f");
+exportsObj.g = 1;
+assertEq(Object.keys(exportsObj).join(), "f");
+assertErrorMessage(() => Object.setPrototypeOf(exportsObj, {}), TypeError, /can't set prototype of this object/);
+assertEq(Object.getPrototypeOf(exportsObj), null);
+assertErrorMessage(() => Object.defineProperty(exportsObj, 'g', {}), TypeError, /Object is not extensible/);
+assertEq(Object.keys(exportsObj).join(), "f");
+
+// Exported WebAssembly functions
+const f = exportsObj.f;
+assertEq(f instanceof Function, true);
+assertEq(f.length, 0);
+assertEq('name' in f, true);
+assertEq(Function.prototype.call.call(f), 42);
+assertErrorMessage(() => new f(), TypeError, /is not a constructor/);
 
 // 'WebAssembly.Memory' data property
 const memoryDesc = Object.getOwnPropertyDescriptor(WebAssembly, 'Memory');
@@ -324,25 +444,72 @@ const compile = WebAssembly.compile;
 assertEq(compile, compileDesc.value);
 assertEq(compile.length, 1);
 assertEq(compile.name, "compile");
-function assertCompileError(args, msg) {
+function assertCompileError(args, err, msg) {
     var error = null;
     compile(...args).catch(e => error = e);
     drainJobQueue();
-    assertEq(error instanceof TypeError, true);
+    assertEq(error instanceof err, true);
     assertEq(Boolean(error.stack.match("jsapi.js")), true);
     assertEq(Boolean(error.message.match(msg)), true);
 }
-assertCompileError([], /requires more than 0 arguments/);
-assertCompileError([undefined], /first argument must be an ArrayBuffer or typed array object/);
-assertCompileError([1], /first argument must be an ArrayBuffer or typed array object/);
-assertCompileError([{}], /first argument must be an ArrayBuffer or typed array object/);
-assertCompileError([new Uint8Array()], /compile error/);
-assertCompileError([new ArrayBuffer()], /compile error/);
+assertCompileError([], TypeError, /requires more than 0 arguments/);
+assertCompileError([undefined], TypeError, /first argument must be an ArrayBuffer or typed array object/);
+assertCompileError([1], TypeError, /first argument must be an ArrayBuffer or typed array object/);
+assertCompileError([{}], TypeError, /first argument must be an ArrayBuffer or typed array object/);
+assertCompileError([new Uint8Array()], CompileError, /failed to match magic number/);
+assertCompileError([new ArrayBuffer()], CompileError, /failed to match magic number/);
 function assertCompileSuccess(bytes) {
     var module = null;
     compile(bytes).then(m => module = m);
     drainJobQueue();
     assertEq(module instanceof Module, true);
 }
-assertCompileSuccess(emptyModule);
-assertCompileSuccess(emptyModule.buffer);
+assertCompileSuccess(emptyModuleBinary);
+assertCompileSuccess(emptyModuleBinary.buffer);
+
+// 'WebAssembly.instantiate' data property
+const instantiateDesc = Object.getOwnPropertyDescriptor(WebAssembly, 'instantiate');
+assertEq(typeof instantiateDesc.value, "function");
+assertEq(instantiateDesc.writable, true);
+assertEq(instantiateDesc.enumerable, false);
+assertEq(instantiateDesc.configurable, true);
+
+// 'WebAssembly.instantiate' function
+const instantiate = WebAssembly.instantiate;
+assertEq(instantiate, instantiateDesc.value);
+assertEq(instantiate.length, 2);
+assertEq(instantiate.name, "instantiate");
+function assertInstantiateError(args, err, msg) {
+    var error = null;
+    instantiate(...args).catch(e => error = e);
+    drainJobQueue();
+    assertEq(error instanceof err, true);
+    assertEq(Boolean(error.stack.match("jsapi.js")), true);
+    assertEq(Boolean(error.message.match(msg)), true);
+}
+assertInstantiateError([], TypeError, /requires more than 0 arguments/);
+assertInstantiateError([undefined], TypeError, /first argument must be a WebAssembly.Module, ArrayBuffer or typed array object/);
+assertInstantiateError([1], TypeError, /first argument must be a WebAssembly.Module, ArrayBuffer or typed array object/);
+assertInstantiateError([{}], TypeError, /first argument must be a WebAssembly.Module, ArrayBuffer or typed array object/);
+assertInstantiateError([new Uint8Array()], CompileError, /failed to match magic number/);
+assertInstantiateError([new ArrayBuffer()], CompileError, /failed to match magic number/);
+assertInstantiateError([importingModule], TypeError, /second argument must be an object/);
+assertInstantiateError([importingModule, null], TypeError, /second argument must be an object/);
+assertInstantiateError([importingModuleBinary, null], TypeError, /second argument must be an object/);
+function assertInstantiateSuccess(module, imports) {
+    var result = null;
+    instantiate(module, imports).then(r => result = r);
+    drainJobQueue();
+    if (module instanceof Module) {
+        assertEq(result instanceof Instance, true);
+    } else {
+        assertEq(result.module instanceof Module, true);
+        assertEq(result.instance instanceof Instance, true);
+    }
+}
+assertInstantiateSuccess(emptyModule);
+assertInstantiateSuccess(emptyModuleBinary);
+assertInstantiateSuccess(emptyModuleBinary.buffer);
+assertInstantiateSuccess(importingModule, {"":{f:()=>{}}});
+assertInstantiateSuccess(importingModuleBinary, {"":{f:()=>{}}});
+assertInstantiateSuccess(importingModuleBinary.buffer, {"":{f:()=>{}}});

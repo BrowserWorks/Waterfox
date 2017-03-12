@@ -97,6 +97,12 @@ uint8_t gLayerManagerUserData;
  * The user data is a MaskLayerUserData.
  */
 uint8_t gMaskLayerUserData;
+/**
+ * The address of gCSSMaskLayerUserData is used as the user
+ * data key for mask layers of css masking managed by FrameLayerBuilder.
+ * The user data is a CSSMaskLayerUserData.
+ */
+uint8_t gCSSMaskLayerUserData;
 
 // a global cache of image containers used for mask layers
 static MaskLayerImageCache* gMaskLayerImageCache = nullptr;
@@ -1252,7 +1258,9 @@ protected:
    * index in the layer, if any.
    */
   struct MaskLayerKey;
-  already_AddRefed<ImageLayer> CreateOrRecycleMaskImageLayerFor(const MaskLayerKey& aKey);
+  already_AddRefed<ImageLayer>
+  CreateOrRecycleMaskImageLayerFor(const MaskLayerKey& aKey,
+                                   mozilla::function<void(Layer* aLayer)> aSetUserData);
   /**
    * Grabs all PaintedLayers and ColorLayers from the ContainerLayer and makes them
    * available for recycling.
@@ -1344,6 +1352,12 @@ protected:
    */
   Maybe<size_t> SetupMaskLayerForScrolledClip(Layer* aLayer,
                                               const DisplayItemClip& aClip);
+
+  /*
+   * Create/find a mask layer with suitable size for aMaskItem to paint
+   * css-positioned-masking onto.
+   */
+  void SetupMaskLayerForCSSMask(Layer* aLayer, nsDisplayMask* aMaskItem);
 
   already_AddRefed<Layer> CreateMaskLayer(
     Layer *aLayer, const DisplayItemClip& aClip,
@@ -1504,6 +1518,26 @@ struct MaskLayerUserData : public LayerUserData
     , mScaleY(-1.0f)
     , mAppUnitsPerDevPixel(-1)
   { }
+  MaskLayerUserData(const DisplayItemClip& aClip,
+                    uint32_t aRoundedRectClipCount,
+                    int32_t aAppUnitsPerDevPixel,
+                    const ContainerLayerParameters& aParams)
+    : mScaleX(aParams.mXScale)
+    , mScaleY(aParams.mYScale)
+    , mOffset(aParams.mOffset)
+    , mAppUnitsPerDevPixel(aAppUnitsPerDevPixel)
+  {
+    aClip.AppendRoundedRects(&mRoundedClipRects, aRoundedRectClipCount);
+  }
+
+  void operator=(MaskLayerUserData&& aOther)
+  {
+    mScaleX = aOther.mScaleX;
+    mScaleY = aOther.mScaleY;
+    mOffset = aOther.mOffset;
+    mAppUnitsPerDevPixel = aOther.mAppUnitsPerDevPixel;
+    mRoundedClipRects.SwapElements(aOther.mRoundedClipRects);
+  }
 
   bool
   operator== (const MaskLayerUserData& aOther) const
@@ -1527,6 +1561,105 @@ struct MaskLayerUserData : public LayerUserData
   int32_t mAppUnitsPerDevPixel;
 };
 
+/*
+ * User data for layers which will be used as masks for css positioned mask.
+ */
+struct CSSMaskLayerUserData : public LayerUserData
+{
+  CSSMaskLayerUserData()
+    : mImageLayers(nsStyleImageLayers::LayerType::Mask)
+  { }
+
+  CSSMaskLayerUserData(nsIFrame* aFrame, const nsIntRect& aBounds)
+    : mImageLayers(aFrame->StyleSVGReset()->mMask),
+      mContentRect(aFrame->GetContentRectRelativeToSelf()),
+      mPaddingRect(aFrame->GetPaddingRectRelativeToSelf()),
+      mBorderRect(aFrame->GetRectRelativeToSelf()),
+      mMarginRect(aFrame->GetMarginRectRelativeToSelf()),
+      mBounds(aBounds)
+  {
+    Hash(aFrame);
+  }
+
+  CSSMaskLayerUserData& operator=(const CSSMaskLayerUserData& aOther)
+  {
+    mImageLayers = aOther.mImageLayers;
+
+    mContentRect = aOther.mContentRect;
+    mPaddingRect = aOther.mPaddingRect;
+    mBorderRect = aOther.mBorderRect;
+    mMarginRect = aOther.mMarginRect;
+
+    mBounds = aOther.mBounds;
+
+    mHash = aOther.mHash;
+
+    return *this;
+  }
+
+  bool
+  operator==(const CSSMaskLayerUserData& aOther) const
+  {
+    if (mHash != aOther.mHash) {
+      return false;
+    }
+
+    if (mImageLayers.mLayers != aOther.mImageLayers.mLayers) {
+      return false;
+    }
+
+    if (!mContentRect.IsEqualEdges(aOther.mContentRect) ||
+        !mPaddingRect.IsEqualEdges(aOther.mPaddingRect) ||
+        !mBorderRect.IsEqualEdges(aOther.mBorderRect) ||
+        !mMarginRect.IsEqualEdges(aOther.mMarginRect)) {
+      return false;
+    }
+
+    if (!mBounds.IsEqualEdges(aOther.mBounds)) {
+      return false;
+    }
+
+    return true;
+  }
+
+private:
+  void Hash(nsIFrame* aFrame)
+  {
+    uint32_t hash = 0;
+
+    const nsStyleImageLayers& imageLayers = aFrame->StyleSVGReset()->mMask;
+    for (uint32_t i = 0; i < imageLayers.mLayers.Length(); i++) {
+      const nsStyleImageLayers::Layer& newLayer = imageLayers.mLayers[i];
+      hash = AddToHash(hash, HashBytes(&newLayer, sizeof(newLayer)));
+    }
+
+    hash = AddToHash(hash, HashBytes(&mContentRect, sizeof(mContentRect)));
+    hash = AddToHash(hash, HashBytes(&mPaddingRect, sizeof(mPaddingRect)));
+    hash = AddToHash(hash, HashBytes(&mBorderRect, sizeof(mBorderRect)));
+    hash = AddToHash(hash, HashBytes(&mMarginRect, sizeof(mMarginRect)));
+
+    hash = AddToHash(hash, HashBytes(&mBounds, sizeof(mBounds)));
+
+    mHash = hash;
+  }
+
+  nsStyleImageLayers mImageLayers;
+
+  nsRect mContentRect;
+  nsRect mPaddingRect;
+  nsRect mBorderRect;
+  nsRect mMarginRect;
+
+  nsIntRect mBounds;
+
+  uint32_t mHash;
+};
+
+/*
+ * A helper object to create a draw target for painting mask and create a
+ * image container to hold the drawing result. The caller can then bind this
+ * image container with a image mask layer via ImageLayer::SetContainer.
+ */
 class MaskImageData
 {
 public:
@@ -1535,6 +1668,8 @@ public:
     , mSize(aSize)
     , mLayerManager(aLayerManager)
   {
+    MOZ_ASSERT(!mSize.IsEmpty());
+    MOZ_ASSERT(mLayerManager);
   }
 
   ~MaskImageData()
@@ -1549,7 +1684,6 @@ public:
 
   gfx::DrawTarget* CreateDrawTarget()
   {
-    MOZ_ASSERT(mLayerManager);
     if (mDrawTarget) {
       return mDrawTarget;
     }
@@ -1585,12 +1719,29 @@ public:
     return mDrawTarget;
   }
 
+  already_AddRefed<ImageContainer> CreateImageAndImageContainer()
+  {
+    RefPtr<ImageContainer> container = mLayerManager->CreateImageContainer();
+    RefPtr<Image> image = CreateImage();
+
+    if (!image) {
+      return nullptr;
+    }
+    container->SetCurrentImageInTransaction(image);
+
+    return container.forget();
+  }
+
+private:
   already_AddRefed<Image> CreateImage()
   {
     if (mLayerManager->GetBackendType() == LayersBackend::LAYERS_BASIC &&
         mDrawTarget) {
       RefPtr<SourceSurface> surface = mDrawTarget->Snapshot();
       RefPtr<SourceSurfaceImage> image = new SourceSurfaceImage(mSize, surface);
+      // Disallow BIGIMAGE (splitting into multiple textures) for mask
+      // layer images
+      image->SetTextureFlags(TextureFlags::DISALLOW_BIGIMAGE);
       return image.forget();
     }
 
@@ -1601,10 +1752,10 @@ public:
           new TextureWrapperImage(mTextureClient, gfx::IntRect(gfx::IntPoint(0, 0), mSize));
       return image.forget();
     }
+
     return nullptr;
   }
 
-private:
   bool mTextureClientLocked;
   gfx::IntSize mSize;
   LayerManager* mLayerManager;
@@ -2104,7 +2255,8 @@ ContainerState::CreateOrRecycleImageLayer(PaintedLayer *aPainted)
 }
 
 already_AddRefed<ImageLayer>
-ContainerState::CreateOrRecycleMaskImageLayerFor(const MaskLayerKey& aKey)
+ContainerState::CreateOrRecycleMaskImageLayerFor(const MaskLayerKey& aKey,
+                                                 mozilla::function<void(Layer* aLayer)> aSetUserData)
 {
   RefPtr<ImageLayer> result = mRecycledMaskImageLayers.Get(aKey);
   if (result) {
@@ -2116,8 +2268,7 @@ ContainerState::CreateOrRecycleMaskImageLayerFor(const MaskLayerKey& aKey)
     result = mManager->CreateImageLayer();
     if (!result)
       return nullptr;
-    result->SetUserData(&gMaskLayerUserData, new MaskLayerUserData());
-    result->SetDisallowBigImage(true);
+    aSetUserData(result);
   }
 
   return result.forget();
@@ -3743,6 +3894,76 @@ ContainerState::SetupMaskLayerForScrolledClip(Layer* aLayer,
   return Nothing();
 }
 
+void
+ContainerState::SetupMaskLayerForCSSMask(Layer* aLayer,
+                                         nsDisplayMask* aMaskItem)
+{
+  MOZ_ASSERT(mManager->IsCompositingCheap());
+
+  RefPtr<ImageLayer> maskLayer =
+    CreateOrRecycleMaskImageLayerFor(MaskLayerKey(aLayer, Nothing()),
+      [](Layer* aMaskLayer)
+      {
+        aMaskLayer->SetUserData(&gCSSMaskLayerUserData,
+                                new CSSMaskLayerUserData());
+      }
+    );
+
+  CSSMaskLayerUserData* oldUserData =
+    static_cast<CSSMaskLayerUserData*>(maskLayer->GetUserData(&gCSSMaskLayerUserData));
+
+  bool snap;
+  nsRect bounds = aMaskItem->GetBounds(mBuilder, &snap);
+  nsIntRect itemRect = ScaleToOutsidePixels(bounds, snap);
+  CSSMaskLayerUserData newUserData(aMaskItem->Frame(), itemRect);
+  if (*oldUserData == newUserData) {
+    aLayer->SetMaskLayer(maskLayer);
+    return;
+  }
+
+  int32_t maxSize = mManager->GetMaxTextureSize();
+  IntSize surfaceSize(std::min(itemRect.width, maxSize),
+                      std::min(itemRect.height, maxSize));
+
+  if (surfaceSize.IsEmpty()) {
+    // Return early if we know that the size of this mask surface is empty.
+    return;
+  }
+
+  MaskImageData imageData(surfaceSize, mManager);
+  RefPtr<DrawTarget> dt = imageData.CreateDrawTarget();
+  if (!dt || !dt->IsValid()) {
+    NS_WARNING("Could not create DrawTarget for mask layer.");
+    return;
+  }
+
+  RefPtr<gfxContext> maskCtx = gfxContext::CreateOrNull(dt);
+  maskCtx->SetMatrix(gfxMatrix::Translation(-itemRect.TopLeft()));
+  maskCtx->Multiply(gfxMatrix::Scaling(mParameters.mXScale, mParameters.mYScale));
+
+  if (!aMaskItem->PaintMask(mBuilder, maskCtx)) {
+    // Mostly because of mask resource is not ready.
+    return;
+  }
+
+  // Setup mask layer offset.
+  Matrix4x4 matrix;
+  matrix.PreTranslate(itemRect.x, itemRect.y, 0);
+  matrix.PreTranslate(mParameters.mOffset.x, mParameters.mOffset.y, 0);
+
+  maskLayer->SetBaseTransform(matrix);
+
+  RefPtr<ImageContainer> imgContainer =
+    imageData.CreateImageAndImageContainer();
+  if (!imgContainer) {
+    return;
+  }
+  maskLayer->SetContainer(imgContainer);
+
+  *oldUserData = newUserData;
+  aLayer->SetMaskLayer(maskLayer);
+}
+
 /*
  * Iterate through the non-clip items in aList and its descendants.
  * For each item we compute the effective clip rect. Each item is assigned
@@ -4146,6 +4367,9 @@ ContainerState::ProcessDisplayItems(nsDisplayList* aList)
             SetupMaskLayer(ownLayer, layerClip);
           }
         }
+      } else if (item->GetType() == nsDisplayItem::TYPE_MASK) {
+        nsDisplayMask* maskItem = static_cast<nsDisplayMask*>(item);
+        SetupMaskLayerForCSSMask(ownLayer, maskItem);
       }
 
       ContainerLayer* oldContainer = ownLayer->GetParent();
@@ -6024,18 +6248,27 @@ ContainerState::CreateMaskLayer(Layer *aLayer,
                                const Maybe<size_t>& aForAncestorMaskLayer,
                                uint32_t aRoundedRectClipCount)
 {
+  // aLayer will never be the container layer created by an nsDisplayMask
+  // because nsDisplayMask propagates the DisplayItemClip to its contents
+  // and is not clipped itself.
+  // This assertion will fail if that ever stops being the case.
+  MOZ_ASSERT(!aLayer->GetUserData(&gCSSMaskLayerUserData),
+             "A layer contains round clips should not have css-mask on it.");
+
   // check if we can re-use the mask layer
   MaskLayerKey recycleKey(aLayer, aForAncestorMaskLayer);
-  RefPtr<ImageLayer> maskLayer = CreateOrRecycleMaskImageLayerFor(recycleKey);
+  RefPtr<ImageLayer> maskLayer =
+    CreateOrRecycleMaskImageLayerFor(recycleKey,
+      [](Layer* aMaskLayer)
+      {
+        aMaskLayer->SetUserData(&gMaskLayerUserData,
+                                new MaskLayerUserData());
+      }
+    );
   MaskLayerUserData* userData = GetMaskLayerUserData(maskLayer);
 
-  MaskLayerUserData newData;
-  aClip.AppendRoundedRects(&newData.mRoundedClipRects, aRoundedRectClipCount);
-  newData.mScaleX = mParameters.mXScale;
-  newData.mScaleY = mParameters.mYScale;
-  newData.mOffset = mParameters.mOffset;
-  newData.mAppUnitsPerDevPixel = mContainerFrame->PresContext()->AppUnitsPerDevPixel();
-
+  int32_t A2D = mContainerFrame->PresContext()->AppUnitsPerDevPixel();
+  MaskLayerUserData newData(aClip, aRoundedRectClipCount, A2D, mParameters);
   if (*userData == newData) {
     return maskLayer.forget();
   }
@@ -6063,6 +6296,11 @@ ContainerState::CreateMaskLayer(Layer *aLayer,
   gfx::Matrix maskTransform =
     Matrix::Scaling(surfaceSize.width / boundingRect.Width(),
                     surfaceSize.height / boundingRect.Height());
+  if (surfaceSize.IsEmpty()) {
+    // Return early if we know that the size of this mask surface is empty.
+    return nullptr;
+  }
+
   gfx::Point p = boundingRect.TopLeft();
   maskTransform.PreTranslate(-p.x, -p.y);
   // imageTransform is only used when the clip is painted to the mask
@@ -6112,14 +6350,13 @@ ContainerState::CreateMaskLayer(Layer *aLayer,
                                              aRoundedRectClipCount);
 
     // build the image and container
-    container = aLayer->Manager()->CreateImageContainer();
+    MOZ_ASSERT(aLayer->Manager() == mManager);
+    container = imageData.CreateImageAndImageContainer();
     NS_ASSERTION(container, "Could not create image container for mask layer.");
 
-    RefPtr<Image> image = imageData.CreateImage();
-    if (!image) {
+    if (!container) {
       return nullptr;
     }
-    container->SetCurrentImageInTransaction(image);
 
     GetMaskLayerImageCache()->PutImage(newKey.forget(), container);
   }
@@ -6132,11 +6369,7 @@ ContainerState::CreateMaskLayer(Layer *aLayer,
   maskLayer->SetBaseTransform(matrix);
 
   // save the details of the clip in user data
-  userData->mScaleX = newData.mScaleX;
-  userData->mScaleY = newData.mScaleY;
-  userData->mOffset = newData.mOffset;
-  userData->mAppUnitsPerDevPixel = newData.mAppUnitsPerDevPixel;
-  userData->mRoundedClipRects.SwapElements(newData.mRoundedClipRects);
+  *userData = Move(newData);
   userData->mImageKey.Reset(lookupKey);
 
   return maskLayer.forget();

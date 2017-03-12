@@ -1,4 +1,3 @@
-// |jit-test| test-also-noasmjs
 // Test a big fat asm.js module. First load/compile/cache bullet.js in a
 // separate process and then load it again in this process, which should be a
 // cache hit.
@@ -17,4 +16,4 @@ setIonCheckGraphCoherency(false);
 load(libdir + 'bullet.js');
 var results = runBullet();
 assertEq(results.asmJSValidated, true);
-assertEq(results.loadedFromCache, false);
+assertEq(results.loadedFromCache, true);

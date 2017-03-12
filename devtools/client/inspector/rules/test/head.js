@@ -20,7 +20,8 @@ var {getInplaceEditorForSpan: inplaceEditor} =
 const ROOT_TEST_DIR = getRootDirectory(gTestPath);
 const FRAME_SCRIPT_URL = ROOT_TEST_DIR + "doc_frame_script.js";
 
-const STYLE_INSPECTOR_L10N = new LocalizationHelper("chrome://devtools-shared/locale/styleinspector.properties");
+const STYLE_INSPECTOR_L10N
+      = new LocalizationHelper("devtools/shared/locales/styleinspector.properties");
 
 registerCleanupFunction(() => {
   Services.prefs.clearUserPref("devtools.defaultColorUnit");
@@ -476,7 +477,7 @@ function getRuleViewLinkByIndex(view, index) {
  */
 function getRuleViewLinkTextByIndex(view, index) {
   let link = getRuleViewLinkByIndex(view, index);
-  return link.querySelector(".ruleview-rule-source-label").value;
+  return link.querySelector(".ruleview-rule-source-label").textContent;
 }
 
 /**
@@ -634,7 +635,9 @@ var togglePropStatus = Task.async(function* (view, textProp) {
  */
 var focusNewRuleViewProperty = Task.async(function* (ruleEditor) {
   info("Clicking on a close ruleEditor brace to start editing a new property");
-  ruleEditor.closeBrace.scrollIntoView();
+
+  // Use bottom alignment to avoid scrolling out of the parent element area.
+  ruleEditor.closeBrace.scrollIntoView(false);
   let editor = yield focusEditableField(ruleEditor.ruleView,
     ruleEditor.closeBrace);
 
@@ -813,4 +816,25 @@ function waitForStyleModification(inspector) {
     }
     inspector.on("markupmutation", checkForStyleModification);
   });
+}
+
+/**
+ * Click on the selector icon
+ * @param {DOMNode} icon
+ * @param {CSSRuleView} view
+ */
+function* clickSelectorIcon(icon, view) {
+  let onToggled = view.once("ruleview-selectorhighlighter-toggled");
+  EventUtils.synthesizeMouseAtCenter(icon, {}, view.styleWindow);
+  yield onToggled;
+}
+
+/**
+ * Make sure window is properly focused before sending a key event.
+ * @param {Window} win
+ * @param {Event} key
+ */
+function focusAndSendKey(win, key) {
+  win.document.documentElement.focus();
+  EventUtils.sendKey(key, win);
 }

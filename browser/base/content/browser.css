@@ -119,6 +119,16 @@ tabbrowser {
   visibility: hidden; /* temporary space to keep a tab's close button under the cursor */
 }
 
+.tabs-newtab-button > .toolbarbutton-menu-dropmarker,
+#new-tab-button > .toolbarbutton-menu-dropmarker {
+  display: none;
+}
+
+/* override drop marker image padding */
+.tabs-newtab-button > .toolbarbutton-icon {
+  margin-inline-end: 0;
+}
+
 .tabbrowser-tab {
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-tab");
 }
@@ -177,6 +187,7 @@ tabbrowser {
   transition: transform 200ms ease-out;
 }
 
+.new-tab-popup,
 #alltabs-popup {
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-alltabs-popup");
 }
@@ -448,7 +459,8 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 }
 
 /* Always show URLs LTR. */
-.ac-url-text:-moz-locale-dir(rtl) {
+.ac-url-text:-moz-locale-dir(rtl),
+.ac-title-text[lookslikeurl]:-moz-locale-dir(rtl) {
   direction: ltr !important;
 }
 
@@ -471,12 +483,42 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   list-style-image: none;
 }
 
-#urlbar:not([actiontype="switchtab"]) > #urlbar-display-box {
+#urlbar:not([actiontype="switchtab"]):not([actiontype="extension"]) > #urlbar-display-box {
   display: none;
 }
 
-#PopupAutoComplete {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#browser-autocomplete-result-popup");
+#urlbar:not([actiontype="switchtab"]) > #urlbar-display-box > #switchtab {
+  display: none;
+}
+
+#urlbar:not([actiontype="extension"]) > #urlbar-display-box > #extension {
+  display: none;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem > .ac-type-icon,
+#PopupAutoComplete > richlistbox > richlistitem > .ac-site-icon,
+#PopupAutoComplete > richlistbox > richlistitem > .ac-tags,
+#PopupAutoComplete > richlistbox > richlistitem > .ac-separator,
+#PopupAutoComplete > richlistbox > richlistitem > .ac-url {
+  display: none;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] {
+  -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#autocomplete-richlistitem-insecure-field");
+  height: auto;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] > .ac-site-icon {
+  display: initial;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] > .ac-title > .ac-text-overflow-container > .ac-title-text {
+  text-overflow: initial;
+  white-space: initial;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] > .ac-title > label {
+  margin-inline-start: 0;
 }
 
 #PopupSearchAutoComplete {
@@ -515,6 +557,10 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   transition: none;
 }
 
+#DateTimePickerPanel {
+  -moz-binding: url("chrome://global/content/bindings/datetimepopup.xml#datetime-popup");
+}
+
 #urlbar[pageproxystate="invalid"] > #urlbar-icons > .urlbar-icon,
 #urlbar[pageproxystate="invalid"][focused="true"] > #urlbar-go-button ~ toolbarbutton,
 #urlbar[pageproxystate="valid"] > #urlbar-go-button,
@@ -526,8 +572,13 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   visibility: collapse;
 }
 
+#identity-box {
+  -moz-user-focus: normal;
+}
+
 #urlbar[pageproxystate="invalid"] > #identity-box {
   pointer-events: none;
+  -moz-user-focus: ignore;
 }
 
 #urlbar[pageproxystate="invalid"] > #identity-box > #notification-popup-box {
@@ -761,7 +812,7 @@ html|*#fullscreen-exit-button {
   max-width: 280px;
 }
 
-.form-validation-anchor {
+.popup-anchor {
   /* should occupy space but not be visible */
   opacity: 0;
   visibility: hidden;

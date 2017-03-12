@@ -192,7 +192,8 @@
   "WHEN NEW.open_count = 0 " \
   "BEGIN " \
     "DELETE FROM moz_openpages_temp " \
-    "WHERE url = NEW.url;" \
+    "WHERE url = NEW.url " \
+      "AND userContextId = NEW.userContextId;" \
   "END" \
 )
 
@@ -210,6 +211,7 @@
   "CREATE TEMP TRIGGER moz_bookmarks_foreign_count_afterinsert_trigger " \
   "AFTER INSERT ON moz_bookmarks FOR EACH ROW " \
   "BEGIN " \
+    "SELECT store_last_inserted_id('moz_bookmarks', NEW.id); " \
     "UPDATE moz_places " \
     "SET foreign_count = foreign_count + 1 " \
     "WHERE id = NEW.fk;" \

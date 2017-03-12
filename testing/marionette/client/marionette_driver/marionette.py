@@ -3,31 +3,31 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import base64
-import ConfigParser
+import datetime
 import json
 import os
 import socket
 import sys
+import time
 import traceback
 import warnings
 
 from contextlib import contextmanager
 
-from decorators import do_process_check
-from keys import Keys
-
-import geckoinstance
 import errors
 import transport
+
+from .decorators import do_process_check
+from .geckoinstance import GeckoInstance
+from .keys import Keys
+from .timeout import Timeouts
 
 WEBELEMENT_KEY = "ELEMENT"
 W3C_WEBELEMENT_KEY = "element-6066-11e4-a52e-4f735466cecf"
 
 
 class HTMLElement(object):
-    """
-    Represents a DOM Element.
-    """
+    """Represents a DOM Element."""
 
     def __init__(self, marionette, id):
         self.marionette = marionette
@@ -69,8 +69,14 @@ class HTMLElement(object):
         """Returns the requested property, or None if the property is
         not set.
         """
-        body = {"id": self.id, "name": name}
-        return self.marionette._send_message("getElementProperty", body, key="value")
+        try:
+            body = {"id": self.id, "name": name}
+            return self.marionette._send_message("getElementProperty", body, key="value")
+        except errors.UnknownCommandException:
+            # Keep backward compatibility for code which uses get_attribute() to
+            # also retrieve element properties.
+            # Remove when Firefox 55 is stable.
+            return self.get_attribute(name)
 
     def click(self):
         self.marionette._send_message("clickElement", {"id": self.id})
@@ -536,74 +542,70 @@ class Alert(object):
 class Marionette(object):
     """Represents a Marionette connection to a browser or device."""
 
-    CONTEXT_CHROME = 'chrome'  # non-browser content: windows, dialogs, etc.
-    CONTEXT_CONTENT = 'content'  # browser content: iframes, divs, etc.
-    DEFAULT_SOCKET_TIMEOUT = 60
+    CONTEXT_CHROME = "chrome"  # non-browser content: windows, dialogs, etc.
+    CONTEXT_CONTENT = "content"  # browser content: iframes, divs, etc.
     DEFAULT_STARTUP_TIMEOUT = 120
     DEFAULT_SHUTDOWN_TIMEOUT = 65  # Firefox will kill hanging threads after 60s
 
-    def __init__(self, host='localhost', port=2828, app=None, bin=None,
-                 baseurl=None, timeout=None, socket_timeout=DEFAULT_SOCKET_TIMEOUT,
+    # Bug 1336953 - Until we can remove the socket timeout parameter it has to be
+    # set a default value which is larger than the longest timeout as defined by the
+    # WebDriver spec. In that case its 300s for page load. Also add another minute
+    # so that slow builds have enough time to send the timeout error to the client.
+    DEFAULT_SOCKET_TIMEOUT = 360
+
+    def __init__(self, host="localhost", port=2828, app=None, bin=None,
+                 baseurl=None, socket_timeout=DEFAULT_SOCKET_TIMEOUT,
                  startup_timeout=None, **instance_args):
-        """
-        :param host: address for Marionette connection
-        :param port: integer port for Marionette connection
-        :param baseurl: where to look for files served from Marionette's www directory
-        :param startup_timeout: seconds to wait for a connection with binary
-        :param timeout: time to wait for page load, scripts, search
-        :param socket_timeout: timeout for Marionette socket operations
-        :param bin: path to app binary; if any truthy value is given this will
-            attempt to start a gecko instance with the specified `app`
-        :param app: type of instance_class to use for managing app instance.
-            See marionette_driver.geckoinstance
-        :param instance_args: args to pass to instance_class
+        """Construct a holder for the Marionette connection.
+
+        Remember to call ``start_session`` in order to initiate the
+        connection and start a Marionette session.
+
+        :param host: Host where the Marionette server listens.
+            Defaults to localhost.
+        :param port: Port where the Marionette server listens.
+            Defaults to port 2828.
+        :param baseurl: Where to look for files served from Marionette's
+            www directory.
+        :param socket_timeout: Timeout for Marionette socket operations.
+        :param startup_timeout: Seconds to wait for a connection with
+            binary.
+        :param bin: Path to browser binary.  If any truthy value is given
+            this will attempt to start a Gecko instance with the specified
+            `app`.
+        :param app: Type of ``instance_class`` to use for managing app
+            instance. See ``marionette_driver.geckoinstance``.
+        :param instance_args: Arguments to pass to ``instance_class``.
+
         """
         self.host = host
         self.port = self.local_port = int(port)
         self.bin = bin
+        self.client = None
         self.instance = None
         self.session = None
         self.session_id = None
+        self.process_id = None
+        self.profile = None
         self.window = None
         self.chrome_window = None
         self.baseurl = baseurl
         self._test_name = None
-        self.timeout = timeout
         self.socket_timeout = socket_timeout
+        self.crashed = 0
 
         startup_timeout = startup_timeout or self.DEFAULT_STARTUP_TIMEOUT
         if self.bin:
-            self.instance = self._create_instance(app, instance_args)
-            self.instance.start()
-            self.raise_for_port(self.wait_for_port(timeout=startup_timeout))
+            if not Marionette.is_port_available(self.port, host=self.host):
+                ex_msg = "{0}:{1} is unavailable.".format(self.host, self.port)
+                raise errors.MarionetteException(message=ex_msg)
 
-    def _create_instance(self, app, instance_args):
-        if not Marionette.is_port_available(self.port, host=self.host):
-            ex_msg = "{0}:{1} is unavailable.".format(self.host, self.port)
-            raise errors.MarionetteException(message=ex_msg)
-        if app:
-            # select instance class for the given app
-            try:
-                instance_class = geckoinstance.apps[app]
-            except KeyError:
-                msg = 'Application "{0}" unknown (should be one of {1})'
-                raise NotImplementedError(
-                    msg.format(app, geckoinstance.apps.keys()))
-        else:
-            try:
-                if not isinstance(self.bin, basestring):
-                    raise TypeError("bin must be a string if app is not specified")
-                config = ConfigParser.RawConfigParser()
-                config.read(os.path.join(os.path.dirname(self.bin),
-                                         'application.ini'))
-                app = config.get('App', 'Name')
-                instance_class = geckoinstance.apps[app.lower()]
-            except (ConfigParser.NoOptionError,
-                    ConfigParser.NoSectionError,
-                    KeyError):
-                instance_class = geckoinstance.GeckoInstance
-        return instance_class(host=self.host, port=self.port, bin=self.bin,
-                              **instance_args)
+            self.instance = GeckoInstance.create(
+                app, host=self.host, port=self.port, bin=self.bin, **instance_args)
+            self.instance.start()
+            self.raise_for_port(timeout=startup_timeout)
+
+        self.timeout = Timeouts(self)
 
     @property
     def profile_path(self):
@@ -619,7 +621,6 @@ class Marionette(object):
                 # hit an exception/died or the connection died. We can
                 # do no further server-side cleanup in this case.
                 pass
-            self.session = None
         if self.instance:
             self.instance.close()
 
@@ -640,13 +641,54 @@ class Marionette(object):
             s.close()
 
     def wait_for_port(self, timeout=None):
-        timeout = timeout or self.DEFAULT_STARTUP_TIMEOUT
-        return transport.wait_for_port(self.host, self.port, timeout=timeout)
+        """Wait until Marionette server has been created the communication socket.
+
+        :param timeout: Timeout in seconds for the server to be ready.
+
+        """
+        if timeout is None:
+            timeout = self.DEFAULT_STARTUP_TIMEOUT
+
+        runner = None
+        if self.instance is not None:
+            runner = self.instance.runner
+
+        poll_interval = 0.1
+        starttime = datetime.datetime.now()
+
+        while datetime.datetime.now() - starttime < datetime.timedelta(seconds=timeout):
+            # If the instance we want to connect to is not running return immediately
+            if runner is not None and not runner.is_running():
+                return False
+
+            sock = None
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(0.5)
+                sock.connect((self.host, self.port))
+                data = sock.recv(16)
+                if ":" in data:
+                    return True
+            except socket.error:
+                pass
+            finally:
+                if sock is not None:
+                    sock.close()
+
+            time.sleep(poll_interval)
+
+        return False
 
     @do_process_check
-    def raise_for_port(self, port_obtained):
-        if not port_obtained:
-            raise socket.timeout("Timed out waiting for port {}!".format(self.port))
+    def raise_for_port(self, timeout=None):
+        """Raise socket.timeout if no connection can be established.
+
+        :param timeout: Timeout in seconds for the server to be ready.
+
+        """
+        if not self.wait_for_port(timeout):
+            raise socket.timeout("Timed out waiting for connection on {0}:{1}!".format(
+                self.host, self.port))
 
     @do_process_check
     def _send_message(self, name, params=None, key=None):
@@ -678,11 +720,8 @@ class Marionette(object):
             else:
                 msg = self.client.request(name, params)
 
-        except socket.timeout:
-            self.session = None
-            self.window = None
-            self.client.close()
-
+        except IOError:
+            self.delete_session(send_request=False)
             raise
 
         res, err = msg.result, msg.error
@@ -722,57 +761,63 @@ class Marionette(object):
 
         raise errors.lookup(error)(message, stacktrace=stacktrace)
 
-    def reset_timeouts(self):
-        """Resets timeouts to their defaults to the `self.timeout`
-        attribute. If unset, only the page load timeout is reset to
-        30 seconds.
-
-        """
-
-        timeout_types = {"search": self.set_search_timeout,
-                         "script": self.set_script_timeout,
-                         "page load": self.set_page_load_timeout}
-
-        if self.timeout is not None:
-            for typ, ms in self.timeout:
-                timeout_types[typ](ms)
-        else:
-            self.set_page_load_timeout(30000)
-
     def check_for_crash(self):
-        returncode = None
-        name = None
-        crashed = False
+        """Check if the process crashed.
+
+        :returns: True, if a crash happened since the method has been called the last time.
+        """
+        crash_count = 0
+
         if self.instance:
-            if self.instance.runner.check_for_crashes(
-                    test_name=self.test_name or os.path.basename(__file__)):
-                crashed = True
-        if returncode is not None:
-            print ('PROCESS-CRASH | {0} | abnormal termination with exit code {1}'
-                   .format(name, returncode))
-        return crashed
+            name = self.test_name or 'marionette.py'
+            crash_count = self.instance.runner.check_for_crashes(test_name=name)
+            self.crashed = self.crashed + crash_count
 
-    def force_shutdown(self):
-        """Force a shutdown of the running instance.
+        return crash_count > 0
 
-        If we've launched the binary we are connected to, wait for it to shut down.
-        In the case when it doesn't happen, force its shut down.
+    def _handle_socket_failure(self):
+        """Handle socket failures for the currently connected application.
+
+        If the application crashed then clean-up internal states, or in case of a content
+        crash also kill the process. If there are other reasons for a socket failure,
+        wait for the process to shutdown itself, or force kill it.
+
+        Please note that the method expects an exception to be handled on the current stack
+        frame, and is only called via the `@do_process_check` decorator.
 
         """
-        if self.instance:
-            exc, val, tb = sys.exc_info()
+        exc, val, tb = sys.exc_info()
 
-            # Give the application some time to shutdown
+        # If the application hasn't been launched by Marionette no further action can be done.
+        # In such cases we simply re-throw the exception.
+        if not self.instance:
+            raise exc, val, tb
+
+        else:
+            # Somehow the socket disconnected. Give the application some time to shutdown
+            # itself before killing the process.
             returncode = self.instance.runner.wait(timeout=self.DEFAULT_SHUTDOWN_TIMEOUT)
-            if returncode is None:
-                self.cleanup()
-                message = ('Process killed because the connection to Marionette server is lost.'
-                           ' Check gecko.log for errors')
-            else:
-                message = 'Process has been closed (Exit code: {returncode})'
 
-            if exc:
-                message += ' (Reason: {reason})'
+            if returncode is None:
+                message = ('Process killed because the connection to Marionette server is '
+                           'lost. Check gecko.log for errors')
+                # This will force-close the application without sending any other message.
+                self.cleanup()
+            else:
+                # If Firefox quit itself check if there was a crash
+                crash_count = self.check_for_crash()
+
+                if crash_count > 0:
+                    if returncode == 0:
+                        message = 'Content process crashed'
+                    else:
+                        message = 'Process crashed (Exit code: {returncode})'
+                else:
+                    message = 'Process has been unexpectedly closed (Exit code: {returncode})'
+
+                self.delete_session(send_request=False, reset_session_id=True)
+
+            message += ' (Reason: {reason})'
 
             raise IOError, message.format(returncode=returncode, reason=val), tb
 
@@ -919,30 +964,61 @@ class Marionette(object):
             for perm in original_perms:
                 self.push_permission(perm, original_perms[perm])
 
-    def get_pref(self, pref):
-        """Gets the preference value.
+    def clear_pref(self, pref):
+        """Clear the user-defined value from the specified preference.
 
         :param pref: Name of the preference.
-
-        Usage example::
-
-            marionette.get_pref("browser.tabs.warnOnClose")
         """
-        with self.using_context(self.CONTEXT_CONTENT):
-            pref_value = self.execute_script("""
-                Components.utils.import("resource://gre/modules/Preferences.jsm");
-                return Preferences.get(arguments[0], null);
-                """, script_args=(pref,), sandbox="system")
-            return pref_value
-
-    def clear_pref(self, pref):
         with self.using_context(self.CONTEXT_CHROME):
             self.execute_script("""
                Components.utils.import("resource://gre/modules/Preferences.jsm");
                Preferences.reset(arguments[0]);
                """, script_args=(pref,))
 
-    def set_pref(self, pref, value):
+    def get_pref(self, pref, default_branch=False, value_type="nsISupportsString"):
+        """Get the value of the specified preference.
+
+        :param pref: Name of the preference.
+        :param default_branch: Optional, if `True` the preference value will be read
+                               from the default branch. Otherwise the user-defined
+                               value if set is returned. Defaults to `False`.
+        :param value_type: Optional, XPCOM interface of the pref's complex value.
+                           Defaults to `nsISupportsString`. Other possible values are:
+                           `nsILocalFile`, and `nsIPrefLocalizedString`.
+
+        Usage example::
+            marionette.get_pref("browser.tabs.warnOnClose")
+
+        """
+        with self.using_context(self.CONTEXT_CHROME):
+            pref_value = self.execute_script("""
+                Components.utils.import("resource://gre/modules/Preferences.jsm");
+
+                let pref = arguments[0];
+                let defaultBranch = arguments[1];
+                let valueType = arguments[2];
+
+                prefs = new Preferences({defaultBranch: defaultBranch});
+                return prefs.get(pref, null, Components.interfaces[valueType]);
+                """, script_args=(pref, default_branch, value_type))
+            return pref_value
+
+    def set_pref(self, pref, value, default_branch=False):
+        """Set the value of the specified preference.
+
+        :param pref: Name of the preference.
+        :param value: The value to set the preference to. If the value is None,
+                      reset the preference to its default value. If no default
+                      value exists, the preference will cease to exist.
+        :param default_branch: Optional, if `True` the preference value will
+                       be written to the default branch, and will remain until
+                       the application gets restarted. Otherwise a user-defined
+                       value is set. Defaults to `False`.
+
+        Usage example::
+            marionette.set_pref("browser.tabs.warnOnClose", True)
+
+        """
         with self.using_context(self.CONTEXT_CHROME):
             if value is None:
                 self.clear_pref(pref)
@@ -950,18 +1026,24 @@ class Marionette(object):
 
             self.execute_script("""
                 Components.utils.import("resource://gre/modules/Preferences.jsm");
-                Preferences.set(arguments[0], arguments[1]);
-                """, script_args=(pref, value,))
 
-    def set_prefs(self, prefs):
-        """Sets preferences.
+                let pref = arguments[0];
+                let value = arguments[1];
+                let defaultBranch = arguments[2];
 
-        If the value of the preference to be set is None, reset the preference
-        to its default value. If no default value exists, the preference will
-        cease to exist.
+                prefs = new Preferences({defaultBranch: defaultBranch});
+                prefs.set(pref, value);
+                """, script_args=(pref, value, default_branch))
 
-        :param prefs: A dict containing one or more preferences and
-            their values to be set.
+    def set_prefs(self, prefs, default_branch=False):
+        """Set the value of a list of preferences.
+
+        :param prefs: A dict containing one or more preferences and their values
+                      to be set. See `set_pref` for further details.
+        :param default_branch: Optional, if `True` the preference value will
+                       be written to the default branch, and will remain until
+                       the application gets restarted. Otherwise a user-defined
+                       value is set. Defaults to `False`.
 
         Usage example::
 
@@ -969,15 +1051,18 @@ class Marionette(object):
 
         """
         for pref, value in prefs.items():
-            self.set_pref(pref, value)
+            self.set_pref(pref, value, default_branch=default_branch)
 
     @contextmanager
-    def using_prefs(self, prefs):
-        """Sets preferences for code being executed in a `with` block,
-        and restores them on exit.
+    def using_prefs(self, prefs, default_branch=False):
+        """Set preferences for code executed in a `with` block, and restores them on exit.
 
         :param prefs: A dict containing one or more preferences and their values
-        to be set.
+                      to be set. See `set_prefs` for further details.
+        :param default_branch: Optional, if `True` the preference value will
+                       be written to the default branch, and will remain until
+                       the application gets restarted. Otherwise a user-defined
+                       value is set. Defaults to `False`.
 
         Usage example::
 
@@ -986,12 +1071,12 @@ class Marionette(object):
 
         """
         original_prefs = {p: self.get_pref(p) for p in prefs}
-        self.set_prefs(prefs)
+        self.set_prefs(prefs, default_branch=default_branch)
 
         try:
             yield
         finally:
-            self.set_prefs(original_prefs)
+            self.set_prefs(original_prefs, default_branch=default_branch)
 
     @do_process_check
     def enforce_gecko_prefs(self, prefs):
@@ -1005,36 +1090,39 @@ class Marionette(object):
             raise errors.MarionetteException("enforce_gecko_prefs() can only be called "
                                              "on Gecko instances launched by Marionette")
         pref_exists = True
-        self.set_context(self.CONTEXT_CHROME)
-        for pref, value in prefs.iteritems():
-            if type(value) is not str:
-                value = json.dumps(value)
-            pref_exists = self.execute_script("""
-            let prefInterface = Components.classes["@mozilla.org/preferences-service;1"]
-                                          .getService(Components.interfaces.nsIPrefBranch);
-            let pref = '{0}';
-            let value = '{1}';
-            let type = prefInterface.getPrefType(pref);
-            switch(type) {{
-                case prefInterface.PREF_STRING:
-                    return value == prefInterface.getCharPref(pref).toString();
-                case prefInterface.PREF_BOOL:
-                    return value == prefInterface.getBoolPref(pref).toString();
-                case prefInterface.PREF_INT:
-                    return value == prefInterface.getIntPref(pref).toString();
-                case prefInterface.PREF_INVALID:
-                    return false;
-            }}
-            """.format(pref, value))
-            if not pref_exists:
-                break
-        self.set_context(self.CONTEXT_CONTENT)
+        with self.using_context(self.CONTEXT_CHROME):
+            for pref, value in prefs.iteritems():
+                if type(value) is not str:
+                    value = json.dumps(value)
+                pref_exists = self.execute_script("""
+                let prefInterface = Components.classes["@mozilla.org/preferences-service;1"]
+                                              .getService(Components.interfaces.nsIPrefBranch);
+                let pref = '{0}';
+                let value = '{1}';
+                let type = prefInterface.getPrefType(pref);
+                switch(type) {{
+                    case prefInterface.PREF_STRING:
+                        return value == prefInterface.getCharPref(pref).toString();
+                    case prefInterface.PREF_BOOL:
+                        return value == prefInterface.getBoolPref(pref).toString();
+                    case prefInterface.PREF_INT:
+                        return value == prefInterface.getIntPref(pref).toString();
+                    case prefInterface.PREF_INVALID:
+                        return false;
+                }}
+                """.format(pref, value))
+                if not pref_exists:
+                    break
+
         if not pref_exists:
+            context = self._send_message("getContext", key="value")
             self.delete_session()
             self.instance.restart(prefs)
-            self.raise_for_port(self.wait_for_port())
+            self.raise_for_port()
             self.start_session()
-            self.reset_timeouts()
+
+            # Restore the context as used before the restart
+            self.set_context(context)
 
     def _request_in_app_shutdown(self, shutdown_flags=None):
         """Terminate the currently running instance from inside the application.
@@ -1043,15 +1131,27 @@ class Marionette(object):
                                of the application. Possible values here correspond
                                to constants in nsIAppStartup: http://mzl.la/1X0JZsC.
         """
-        flags = set(["eForceQuit"])
+        flags = set([])
         if shutdown_flags:
             flags.add(shutdown_flags)
+
+        # Trigger a 'quit-application-requested' observer notification so that
+        # components can safely shutdown before quitting the application.
+        with self.using_context("chrome"):
+            canceled = self.execute_script("""
+                Components.utils.import("resource://gre/modules/Services.jsm");
+                let cancelQuit = Components.classes["@mozilla.org/supports-PRBool;1"].
+                                 createInstance(Components.interfaces.nsISupportsPRBool);
+                Services.obs.notifyObservers(cancelQuit, "quit-application-requested", null);
+                return cancelQuit.data;
+                """)
+            if canceled:
+                raise errors.MarionetteException("Something canceled the quit application request")
+
         self._send_message("quitApplication", {"flags": list(flags)})
 
-        self.delete_session(in_app=True)
-
     @do_process_check
-    def quit(self, in_app=False):
+    def quit(self, in_app=False, callback=None):
         """Terminate the currently running instance.
 
         This command will delete the active marionette session. It also allows
@@ -1061,24 +1161,31 @@ class Marionette(object):
         :param in_app: If True, marionette will cause a quit from within the
                        browser. Otherwise the browser will be quit immediately
                        by killing the process.
+        :param callback: If provided and `in_app` is True, the callback will
+                         be used to trigger the shutdown.
         """
         if not self.instance:
             raise errors.MarionetteException("quit() can only be called "
                                              "on Gecko instances launched by Marionette")
 
-        self.reset_timeouts()
-
         if in_app:
-            self._request_in_app_shutdown()
+            if callable(callback):
+                self._send_message("acceptConnections", {"value": False})
+                callback()
+            else:
+                self._request_in_app_shutdown()
+
+            # Ensure to explicitely mark the session as deleted
+            self.delete_session(send_request=False, reset_session_id=True)
 
             # Give the application some time to shutdown
             self.instance.runner.wait(timeout=self.DEFAULT_SHUTDOWN_TIMEOUT)
         else:
-            self.delete_session()
+            self.delete_session(reset_session_id=True)
             self.instance.close()
 
     @do_process_check
-    def restart(self, clean=False, in_app=False):
+    def restart(self, clean=False, in_app=False, callback=None):
         """
         This will terminate the currently running instance, and spawn a new instance
         with the same profile and then reuse the session id when creating a session again.
@@ -1089,20 +1196,31 @@ class Marionette(object):
         :param in_app: If True, marionette will cause a restart from within the
                        browser. Otherwise the browser will be restarted immediately
                        by killing the process.
+        :param callback: If provided and `in_app` is True, the callback will be
+                         used to trigger the restart.
         """
         if not self.instance:
             raise errors.MarionetteException("restart() can only be called "
                                              "on Gecko instances launched by Marionette")
+
+        context = self._send_message("getContext", key="value")
         session_id = self.session_id
 
         if in_app:
             if clean:
                 raise ValueError("An in_app restart cannot be triggered with the clean flag set")
 
-            self._request_in_app_shutdown("eRestart")
+            if callable(callback):
+                self._send_message("acceptConnections", {"value": False})
+                callback()
+            else:
+                self._request_in_app_shutdown("eRestart")
+
+            # Ensure to explicitely mark the session as deleted
+            self.delete_session(send_request=False, reset_session_id=True)
 
             try:
-                self.raise_for_port(self.wait_for_port())
+                self.raise_for_port()
             except socket.timeout:
                 if self.instance.runner.returncode is not None:
                     exc, val, tb = sys.exc_info()
@@ -1112,16 +1230,18 @@ class Marionette(object):
         else:
             self.delete_session()
             self.instance.restart(clean=clean)
-            self.raise_for_port(self.wait_for_port())
+            self.raise_for_port()
 
         self.start_session(session_id=session_id)
-        self.reset_timeouts()
 
-        if in_app and self.session.get("processId"):
+        # Restore the context as used before the restart
+        self.set_context(context)
+
+        if in_app and self.process_id:
             # In some cases Firefox restarts itself by spawning into a new process group.
             # As long as mozprocess cannot track that behavior (bug 1284864) we assist by
             # informing about the new process id.
-            self.instance.runner.process_handler.check_for_detached(self.session["processId"])
+            self.instance.runner.process_handler.check_for_detached(self.process_id)
 
     def absolute_url(self, relative_url):
         '''
@@ -1132,18 +1252,21 @@ class Marionette(object):
         return "{0}{1}".format(self.baseurl, relative_url)
 
     @do_process_check
-    def start_session(self, desired_capabilities=None, session_id=None, timeout=60):
+    def start_session(self, capabilities=None, session_id=None, timeout=60):
         """Create a new Marionette session.
 
         This method must be called before performing any other action.
 
-        :param desired_capabilities: An optional dict of desired
-            capabilities.  This is currently ignored.
+        :param capabilities: An optional dict of desired or required capabilities.
         :param timeout: Timeout in seconds for the server to be ready.
         :param session_id: unique identifier for the session. If no session id is
             passed in then one will be generated by the marionette server.
 
-        :returns: A dict of the capabilities offered."""
+        :returns: A dict of the capabilities offered.
+
+        """
+        self.crashed = 0
+
         if self.instance:
             returncode = self.instance.runner.returncode
             if returncode is not None:
@@ -1160,11 +1283,14 @@ class Marionette(object):
         self.wait_for_port(timeout=timeout)
         self.protocol, _ = self.client.connect()
 
-        body = {"capabilities": desired_capabilities, "sessionId": session_id}
+        body = {"capabilities": capabilities, "sessionId": session_id}
         resp = self._send_message("newSession", body)
 
         self.session_id = resp["sessionId"]
         self.session = resp["value"] if self.protocol == 1 else resp["capabilities"]
+        # fallback to processId can be removed in Firefox 55
+        self.process_id = self.session.get("moz:processID", self.session.get("processId"))
+        self.profile = self.session.get("moz:profile")
 
         return self.session
 
@@ -1177,19 +1303,29 @@ class Marionette(object):
         self._send_message("setTestName", {"value": test_name})
         self._test_name = test_name
 
-    def delete_session(self, in_app=False):
+    def delete_session(self, send_request=True, reset_session_id=False):
         """Close the current session and disconnect from the server.
 
-        :param in_app: False, if the session should be closed from the client.
-                       Otherwise a request to quit or restart the instance from
-                       within the application itself is used.
+        :param send_request: Optional, if `True` a request to close the session on
+            the server side will be send. Use `False` in case of eg. in_app restart()
+            or quit(), which trigger a deletion themselves. Defaults to `True`.
+        :param reset_session_id: Optional, if `True` the current session id will
+            be reset, which will require an explicit call to `start_session()` before
+            the test can continue. Defaults to `False`.
         """
-        if not in_app:
-            self._send_message("deleteSession")
-        self.session_id = None
-        self.session = None
-        self.window = None
-        self.client.close()
+        try:
+            if send_request:
+                self._send_message("deleteSession")
+        finally:
+            if reset_session_id:
+                self.session_id = None
+            self.session = None
+            self.process_id = None
+            self.profile = None
+            self.window = None
+
+            if self.client is not None:
+                self.client.close()
 
     @property
     def session_capabilities(self):
@@ -1210,15 +1346,14 @@ class Marionette(object):
             script can run without causing an ScriptTimeoutException to
             be raised
 
+        .. note:: `set_script_timeout` is deprecated, please use
+            `timeout.script` setter.
+
         """
-        try:
-            self._send_message("timeouts", {"script": timeout})
-        except errors.MarionetteException as e:
-            # remove when 52.0a is stable
-            if "Not a Number" in e.message:
-                self._send_message("timeouts", {"type": "script", "ms": timeout})
-            else:
-                raise e
+        warnings.warn(
+            "set_script_timeout is deprecated, please use timeout.script setter",
+            DeprecationWarning)
+        self.timeout.script = timeout / 1000
 
     def set_search_timeout(self, timeout):
         """Sets a timeout for the find methods.
@@ -1233,15 +1368,14 @@ class Marionette(object):
 
         :param timeout: Timeout in milliseconds.
 
+        .. note:: `set_search_timeout` is deprecated, please use
+            `timeout.implicit` setter.
+
         """
-        try:
-            self._send_message("timeouts", {"implicit": timeout})
-        except errors.MarionetteException as e:
-            # remove when 52.0a is stable
-            if "Not a Number" in e.message:
-                self._send_message("timeouts", {"type": "implicit", "ms": timeout})
-            else:
-                raise e
+        warnings.warn(
+            "set_search_timeout is deprecated, please use timeout.implicit setter",
+            DeprecationWarning)
+        self.timeout.implicit = timeout / 1000
 
     def set_page_load_timeout(self, timeout):
         """Sets a timeout for loading pages.
@@ -1252,15 +1386,14 @@ class Marionette(object):
 
         :param timeout: Timeout in milliseconds.
 
+        .. note:: `set_page_load_timeout` is deprecated, please use
+            `timeout.page_load` setter.
+
         """
-        try:
-            self._send_message("timeouts", {"page load": timeout})
-        except errors.MarionetteException as e:
-            # remove when 52.0a is stable
-            if "Not a Number" in e.message:
-                self._send_message("timeouts", {"type": "page load", "ms": timeout})
-            else:
-                raise e
+        warnings.warn(
+            "set_page_load_timeout is deprecated, please use timeout.page_load setter",
+            DeprecationWarning)
+        self.timeout.page_load = timeout / 1000
 
     @property
     def current_window_handle(self):
@@ -1326,7 +1459,7 @@ class Marionette(object):
         Each window handle is assigned by the server, and the list of
         strings returned does not have a guaranteed ordering.
 
-        :returns: unordered list of unique window handles as strings
+        :returns: Unordered list of unique window handles as strings
         """
         return self._send_message(
             "getWindowHandles", key="value" if self.protocol == 1 else None)
@@ -1338,7 +1471,7 @@ class Marionette(object):
         Each window handle is assigned by the server, and the list of
         strings returned does not have a guaranteed ordering.
 
-        :returns: unordered list of unique window handles as strings
+        :returns: Unordered list of unique chrome window handles as strings
         """
         return self._send_message(
             "getChromeWindowHandles", key="value" if self.protocol == 1 else None)
@@ -1352,17 +1485,17 @@ class Marionette(object):
         """Close the current window, ending the session if it's the last
         window currently open.
 
-        On B2G this method is a noop and will return immediately.
+        :returns: Unordered list of remaining unique window handles as strings
         """
-        self._send_message("close")
+        return self._send_message("close")
 
     def close_chrome_window(self):
         """Close the currently selected chrome window, ending the session
         if it's the last window open.
 
-        On B2G this method is a noop and will return immediately.
+        :returns: Unordered list of remaining unique chrome window handles as strings
         """
-        self._send_message("closeChromeWindow")
+        return self._send_message("closeChromeWindow")
 
     def set_context(self, context):
         """Sets the context that Marionette commands are running in.
@@ -1412,13 +1545,17 @@ class Marionette(object):
         """
         return Alert(self)
 
-    def switch_to_window(self, window_id):
+    def switch_to_window(self, window_id, focus=True):
         """Switch to the specified window; subsequent commands will be
         directed at the new window.
 
         :param window_id: The id or name of the window to switch to.
+
+        :param focus: A boolean value which determins whether to focus
+            the window that we just switched to.
         """
-        self._send_message("switchToWindow", {"name": window_id})
+        body = {"focus": focus, "name": window_id}
+        self._send_message("switchToWindow", body)
         self.window = window_id
 
     def get_active_frame(self):
@@ -1686,7 +1823,7 @@ class Marionette(object):
 
         ::
 
-            marionette.set_script_timeout(10000) # set timeout period of 10 seconds
+            marionette.timeout.script = 10
             result = self.marionette.execute_async_script('''
               // this script waits 5 seconds, and then returns the number 1
               setTimeout(function() {
@@ -1716,7 +1853,7 @@ class Marionette(object):
         An HTMLElement instance may be used to call other methods on the
         element, such as click().  If no element is immediately found, the
         attempt to locate an element will be repeated for up to the amount of
-        time set by set_search_timeout(). If multiple elements match the given
+        time set by ``timeout.implicit``. If multiple elements match the given
         criteria, only the first is returned. If no element matches, a
         NoSuchElementException will be raised.
 
@@ -1743,7 +1880,7 @@ class Marionette(object):
         An HTMLElement instance may be used to call other methods on the
         element, such as click().  If no element is immediately found,
         the attempt to locate an element will be repeated for up to the
-        amount of time set by set_search_timeout().
+        amount of time set by ``timeout.implicit``.
 
         :param method: The method to use to locate the elements; one
             of: "id", "name", "class name", "tag name", "css selector",
@@ -1900,7 +2037,7 @@ class Marionette(object):
         return self._send_message("getCookies", key="value" if self.protocol == 1 else None)
 
     def screenshot(self, element=None, highlights=None, format="base64",
-                   full=True):
+                   full=True, scroll=True):
         """Takes a screenshot of a web element or the current frame.
 
         The screen capture is returned as a lossless PNG image encoded
@@ -1923,6 +2060,10 @@ class Marionette(object):
         :param full: If True (the default), the capture area will be the
             complete frame. Else only the viewport is captured. Only applies
             when `element` is None.
+
+        :param scroll: When `element` is provided, scroll to it before
+            taking the screenshot (default).  Otherwise, avoid scrolling
+            `element` into view.
         """
 
         if element:
@@ -1934,7 +2075,8 @@ class Marionette(object):
         body = {"id": element,
                 "highlights": lights,
                 "full": full,
-                "hash": False}
+                "hash": False,
+                "scroll": scroll}
         if format == "hash":
             body["hash"] = True
         data = self._send_message("takeScreenshot", body, key="value")

@@ -443,20 +443,20 @@ public:
   // to the caller.
   static nsOpenTypeTable* Create(gfxFont* aFont)
   {
-    if (!aFont->GetFontEntry()->TryGetMathTable()) {
+    if (!aFont->TryGetMathTable()) {
       return nullptr;
     }
-    return new nsOpenTypeTable(aFont->GetFontEntry());
+    return new nsOpenTypeTable(aFont);
   }
 
 private:
-  RefPtr<gfxFontEntry> mFontEntry;
+  RefPtr<gfxFont> mFont;
   FontFamilyName mFontFamilyName;
   uint32_t mGlyphID;
 
-  explicit nsOpenTypeTable(gfxFontEntry* aFontEntry)
-    : mFontEntry(aFontEntry),
-      mFontFamilyName(aFontEntry->FamilyName(), eUnquotedName) {
+  explicit nsOpenTypeTable(gfxFont* aFont)
+    : mFont(aFont),
+    mFontFamilyName(aFont->GetFontEntry()->FamilyName(), eUnquotedName) {
     MOZ_COUNT_CTOR(nsOpenTypeTable);
   }
 
@@ -499,7 +499,7 @@ nsOpenTypeTable::ElementAt(DrawTarget*   aDrawTarget,
   UpdateCache(aDrawTarget, aAppUnitsPerDevPixel, aFontGroup, aChar);
 
   uint32_t parts[4];
-  if (!mFontEntry->GetMathVariantsParts(mGlyphID, aVertical, parts)) {
+  if (!mFont->MathTable()->VariantsParts(mGlyphID, aVertical, parts)) {
     return kNullGlyph;
   }
 
@@ -525,7 +525,7 @@ nsOpenTypeTable::BigOf(DrawTarget*   aDrawTarget,
   UpdateCache(aDrawTarget, aAppUnitsPerDevPixel, aFontGroup, aChar);
 
   uint32_t glyphID =
-    mFontEntry->GetMathVariantsSize(mGlyphID, aVertical, aSize);
+    mFont->MathTable()->VariantsSize(mGlyphID, aVertical, aSize);
   if (!glyphID) {
     return kNullGlyph;
   }
@@ -547,7 +547,7 @@ nsOpenTypeTable::HasPartsOf(DrawTarget*   aDrawTarget,
   UpdateCache(aDrawTarget, aAppUnitsPerDevPixel, aFontGroup, aChar);
 
   uint32_t parts[4];
-  if (!mFontEntry->GetMathVariantsParts(mGlyphID, aVertical, parts)) {
+  if (!mFont->MathTable()->VariantsParts(mGlyphID, aVertical, parts)) {
     return false;
   }
 
@@ -1133,9 +1133,8 @@ StretchEnumContext::TryVariants(nsGlyphTable* aGlyphTable,
       // to select the right size variant. Note that the value is sometimes too
       // small so we use kLargeOpFactor/kIntegralFactor as a minimum value.
       if (mathFont) {
-        displayOperatorMinHeight =
-          mathFont->GetMathConstant(gfxFontEntry::DisplayOperatorMinHeight,
-                                    oneDevPixel);
+        displayOperatorMinHeight = mathFont->MathTable()->
+          Constant(gfxMathTable::DisplayOperatorMinHeight, oneDevPixel);
         RefPtr<gfxTextRun> textRun =
           aGlyphTable->MakeTextRun(mDrawTarget, oneDevPixel, *aFontGroup, ch);
         nsBoundingMetrics bm = MeasureTextRun(mDrawTarget, textRun.get());
@@ -1179,12 +1178,11 @@ StretchEnumContext::TryVariants(nsGlyphTable* aGlyphTable,
         // Note that STIX-Word does not provide italic corrections but its
         // advance widths do not match right bearings.
         // (http://sourceforge.net/p/stixfonts/tracking/50/)
-        gfxFloat italicCorrection;
-        if (mathFont->GetFontEntry()->
-            GetMathItalicsCorrection(ch.glyphID, &italicCorrection)) {
+        gfxFloat italicCorrection =
+          mathFont->MathTable()->ItalicsCorrection(ch.glyphID);
+        if (italicCorrection) {
           bm.width -=
-            NSToCoordRound(italicCorrection *
-                           mathFont->GetAdjustedSize() * oneDevPixel);
+            NSToCoordRound(italicCorrection * oneDevPixel);
           if (bm.width < 0) {
             bm.width = 0;
           }
@@ -1860,71 +1858,6 @@ void nsDisplayMathMLSelectionRect::Paint(nsDisplayListBuilder* aBuilder,
   drawTarget->FillRect(rect, ColorPattern(ToDeviceColor(bgColor)));
 }
 
-class nsDisplayMathMLCharBackground : public nsDisplayItem {
-public:
-  nsDisplayMathMLCharBackground(nsDisplayListBuilder* aBuilder,
-                                nsIFrame* aFrame, const nsRect& aRect,
-                                nsStyleContext* aStyleContext)
-    : nsDisplayItem(aBuilder, aFrame), mStyleContext(aStyleContext),
-      mRect(aRect) {
-    MOZ_COUNT_CTOR(nsDisplayMathMLCharBackground);
-  }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayMathMLCharBackground() {
-    MOZ_COUNT_DTOR(nsDisplayMathMLCharBackground);
-  }
-#endif
-
-  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
-  virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                         const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion *aInvalidRegion) override;
-  virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
-  NS_DISPLAY_DECL_NAME("MathMLCharBackground", TYPE_MATHML_CHAR_BACKGROUND)
-private:
-  nsStyleContext* mStyleContext;
-  nsRect          mRect;
-};
-
-nsDisplayItemGeometry*
-nsDisplayMathMLCharBackground::AllocateGeometry(nsDisplayListBuilder* aBuilder)
-{
-  return new nsDisplayItemGenericImageGeometry(this, aBuilder);
-}
-
-void
-nsDisplayMathMLCharBackground::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                                         const nsDisplayItemGeometry* aGeometry,
-                                                         nsRegion *aInvalidRegion)
-{
-  auto geometry =
-    static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
-
-  if (aBuilder->ShouldSyncDecodeImages() &&
-      geometry->ShouldInvalidateToSyncDecodeImages()) {
-    bool snap;
-    aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
-  }
-
-  nsDisplayItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
-}
-
-void nsDisplayMathMLCharBackground::Paint(nsDisplayListBuilder* aBuilder,
-                                          nsRenderingContext* aCtx)
-{
-  const nsStyleBorder* border = mStyleContext->StyleBorder();
-  nsRect rect(mRect + ToReferenceFrame());
-  nsCSSRendering::PaintBGParams params =
-    nsCSSRendering::PaintBGParams::ForAllLayers(*mFrame->PresContext(), *aCtx,
-                                                mVisibleRect, rect, mFrame,
-                                                aBuilder->GetBackgroundPaintFlags());
-  DrawResult result =
-    nsCSSRendering::PaintBackgroundWithSC(params, mStyleContext, *border);
-
-  nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
-}
-
 class nsDisplayMathMLCharForeground : public nsDisplayItem {
 public:
   nsDisplayMathMLCharForeground(nsDisplayListBuilder* aBuilder,
@@ -2058,9 +1991,9 @@ nsMathMLChar::Display(nsDisplayListBuilder*   aBuilder,
     const nsStyleBackground* backg = styleContext->StyleBackground();
     if (styleContext != parentContext &&
         NS_GET_A(backg->mBackgroundColor) > 0) {
-      aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
-        nsDisplayMathMLCharBackground(aBuilder, aForFrame, mRect,
-                                      styleContext));
+      nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
+        aBuilder, aForFrame, mRect, aLists.BorderBackground(),
+        /* aAllowWillPaintBorderOptimization */ true, styleContext);
     }
     //else
     //  our container frame will take care of painting its background
@@ -2124,8 +2057,8 @@ nsMathMLChar::PaintForeground(nsPresContext* aPresContext,
   RefPtr<gfxContext> thebesContext = aRenderingContext.ThebesContext();
 
   // Set color ...
-  nsCSSPropertyID colorProp = styleContext->GetTextFillColorProp();
-  nscolor fgColor = styleContext->GetVisitedDependentColor(colorProp);
+  nscolor fgColor = styleContext->
+    GetVisitedDependentColor(eCSSProperty__webkit_text_fill_color);
   if (aIsSelected) {
     // get color to use for selection from the look&feel object
     fgColor = LookAndFeel::GetColor(LookAndFeel::eColorID_TextSelectForeground,

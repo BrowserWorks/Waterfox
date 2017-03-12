@@ -113,6 +113,11 @@ var populateTree = Task.async(function* populate(parentGuid, ...items) {
   return guids;
 });
 
+var syncIdToId = Task.async(function* syncIdToId(syncId) {
+  let guid = yield PlacesSyncUtils.bookmarks.syncIdToGuid(syncId);
+  return PlacesUtils.promiseItemId(guid);
+});
+
 add_task(function* test_order() {
   do_print("Insert some bookmarks");
   let guids = yield populateTree(PlacesUtils.bookmarks.menuGuid, {
@@ -136,8 +141,8 @@ add_task(function* test_order() {
     let order = [guids.siblingFolder, guids.siblingSep, guids.childBmk,
       guids.siblingBmk];
     yield PlacesSyncUtils.bookmarks.order(PlacesUtils.bookmarks.menuGuid, order);
-    let childGuids = yield PlacesSyncUtils.bookmarks.fetchChildGuids(PlacesUtils.bookmarks.menuGuid);
-    deepEqual(childGuids, order, "New bookmarks should be reordered according to array");
+    let childSyncIds = yield PlacesSyncUtils.bookmarks.fetchChildSyncIds(PlacesUtils.bookmarks.menuGuid);
+    deepEqual(childSyncIds, order, "New bookmarks should be reordered according to array");
   }
 
   do_print("Reorder with unspecified children");
@@ -145,9 +150,9 @@ add_task(function* test_order() {
     yield PlacesSyncUtils.bookmarks.order(PlacesUtils.bookmarks.menuGuid, [
       guids.siblingSep, guids.siblingBmk,
     ]);
-    let childGuids = yield PlacesSyncUtils.bookmarks.fetchChildGuids(
+    let childSyncIds = yield PlacesSyncUtils.bookmarks.fetchChildSyncIds(
       PlacesUtils.bookmarks.menuGuid);
-    deepEqual(childGuids, [guids.siblingSep, guids.siblingBmk,
+    deepEqual(childSyncIds, [guids.siblingSep, guids.siblingBmk,
       guids.siblingFolder, guids.childBmk],
       "Unordered children should be moved to end");
   }
@@ -157,9 +162,9 @@ add_task(function* test_order() {
     yield PlacesSyncUtils.bookmarks.order(PlacesUtils.bookmarks.menuGuid, [
       guids.childBmk, makeGuid(), guids.siblingBmk, guids.siblingSep,
       makeGuid(), guids.siblingFolder, makeGuid()]);
-    let childGuids = yield PlacesSyncUtils.bookmarks.fetchChildGuids(
+    let childSyncIds = yield PlacesSyncUtils.bookmarks.fetchChildSyncIds(
       PlacesUtils.bookmarks.menuGuid);
-    deepEqual(childGuids, [guids.childBmk, guids.siblingBmk, guids.siblingSep,
+    deepEqual(childSyncIds, [guids.childBmk, guids.siblingBmk, guids.siblingSep,
       guids.siblingFolder], "Nonexistent children should be ignored");
   }
 
@@ -197,11 +202,11 @@ add_task(function* test_changeGuid() {
 });
 
 add_task(function* test_order_roots() {
-  let oldOrder = yield PlacesSyncUtils.bookmarks.fetchChildGuids(
+  let oldOrder = yield PlacesSyncUtils.bookmarks.fetchChildSyncIds(
     PlacesUtils.bookmarks.rootGuid);
   yield PlacesSyncUtils.bookmarks.order(PlacesUtils.bookmarks.rootGuid,
     shuffle(oldOrder));
-  let newOrder = yield PlacesSyncUtils.bookmarks.fetchChildGuids(
+  let newOrder = yield PlacesSyncUtils.bookmarks.fetchChildSyncIds(
     PlacesUtils.bookmarks.rootGuid);
   deepEqual(oldOrder, newOrder, "Should ignore attempts to reorder roots");
 
@@ -213,14 +218,14 @@ add_task(function* test_update_tags() {
   let item = yield PlacesSyncUtils.bookmarks.insert({
     kind: "bookmark",
     url: "https://mozilla.org",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    syncId: makeGuid(),
+    parentSyncId: "menu",
   });
 
   do_print("Add tags");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       tags: ["foo", "bar"],
     });
     deepEqual(updatedItem.tags, ["foo", "bar"], "Should return new tags");
@@ -231,7 +236,7 @@ add_task(function* test_update_tags() {
   do_print("Add new tag, remove existing tag");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       tags: ["foo", "baz"],
     });
     deepEqual(updatedItem.tags, ["foo", "baz"], "Should return updated tags");
@@ -243,7 +248,7 @@ add_task(function* test_update_tags() {
   do_print("Tags with whitespace");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       tags: [" leading", "trailing ", " baz ", " "],
     });
     deepEqual(updatedItem.tags, ["leading", "trailing", "baz"],
@@ -255,7 +260,7 @@ add_task(function* test_update_tags() {
   do_print("Remove all tags");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       tags: null,
     });
     deepEqual(updatedItem.tags, [], "Should return empty tag array");
@@ -270,15 +275,15 @@ add_task(function* test_update_keyword() {
   do_print("Insert item without keyword");
   let item = yield PlacesSyncUtils.bookmarks.insert({
     kind: "bookmark",
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    parentSyncId: "menu",
     url: "https://mozilla.org",
-    guid: makeGuid(),
+    syncId: makeGuid(),
   });
 
   do_print("Add item keyword");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       keyword: "moz",
     });
     equal(updatedItem.keyword, "moz", "Should return new keyword");
@@ -294,7 +299,7 @@ add_task(function* test_update_keyword() {
   do_print("Change item keyword");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       keyword: "m",
     });
     equal(updatedItem.keyword, "m", "Should return updated keyword");
@@ -307,7 +312,7 @@ add_task(function* test_update_keyword() {
   do_print("Remove existing keyword");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       keyword: null,
     });
     ok(!updatedItem.keyword,
@@ -321,7 +326,7 @@ add_task(function* test_update_keyword() {
   do_print("Remove keyword for item without keyword");
   {
     yield PlacesSyncUtils.bookmarks.update({
-      guid: item.guid,
+      syncId: item.syncId,
       keyword: null,
     });
     let entry = yield PlacesUtils.keywords.fetch({
@@ -338,24 +343,21 @@ add_task(function* test_update_annos() {
   let guids = yield populateTree(PlacesUtils.bookmarks.menuGuid, {
     kind: "folder",
     title: "folder",
-    description: "Folder description",
   }, {
     kind: "bookmark",
     title: "bmk",
     url: "https://example.com",
-    description: "Bookmark description",
-    loadInSidebar: true,
   });
 
   do_print("Add folder description");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: guids.folder,
+      syncId: guids.folder,
       description: "Folder description",
     });
     equal(updatedItem.description, "Folder description",
       "Should return new description");
-    let id = yield PlacesUtils.promiseItemId(updatedItem.guid);
+    let id = yield syncIdToId(updatedItem.syncId);
     equal(PlacesUtils.annotations.getItemAnnotation(id, DESCRIPTION_ANNO),
       "Folder description", "Should set description anno");
   }
@@ -363,11 +365,11 @@ add_task(function* test_update_annos() {
   do_print("Clear folder description");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: guids.folder,
+      syncId: guids.folder,
       description: null,
     });
     ok(!updatedItem.description, "Should not return cleared description");
-    let id = yield PlacesUtils.promiseItemId(updatedItem.guid);
+    let id = yield syncIdToId(updatedItem.syncId);
     ok(!PlacesUtils.annotations.itemHasAnnotation(id, DESCRIPTION_ANNO),
       "Should remove description anno");
   }
@@ -375,11 +377,11 @@ add_task(function* test_update_annos() {
   do_print("Add bookmark sidebar anno");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: guids.bmk,
+      syncId: guids.bmk,
       loadInSidebar: true,
     });
     ok(updatedItem.loadInSidebar, "Should return sidebar anno");
-    let id = yield PlacesUtils.promiseItemId(updatedItem.guid);
+    let id = yield syncIdToId(updatedItem.syncId);
     ok(PlacesUtils.annotations.itemHasAnnotation(id, LOAD_IN_SIDEBAR_ANNO),
       "Should set sidebar anno for existing bookmark");
   }
@@ -387,11 +389,11 @@ add_task(function* test_update_annos() {
   do_print("Clear bookmark sidebar anno");
   {
     let updatedItem = yield PlacesSyncUtils.bookmarks.update({
-      guid: guids.bmk,
+      syncId: guids.bmk,
       loadInSidebar: false,
     });
     ok(!updatedItem.loadInSidebar, "Should not return cleared sidebar anno");
-    let id = yield PlacesUtils.promiseItemId(updatedItem.guid);
+    let id = yield syncIdToId(updatedItem.syncId);
     ok(!PlacesUtils.annotations.itemHasAnnotation(id, LOAD_IN_SIDEBAR_ANNO),
       "Should clear sidebar anno for existing bookmark");
   }
@@ -404,19 +406,19 @@ add_task(function* test_update_move_root() {
   {
     // This should be a no-op.
     let sameRoot = yield PlacesSyncUtils.bookmarks.update({
-      guid: PlacesUtils.bookmarks.menuGuid,
-      parentGuid: PlacesUtils.bookmarks.rootGuid,
+      syncId: "menu",
+      parentSyncId: "places",
     });
-    equal(sameRoot.guid, PlacesUtils.bookmarks.menuGuid,
+    equal(sameRoot.syncId, "menu",
       "Menu root GUID should not change");
-    equal(sameRoot.parentGuid, PlacesUtils.bookmarks.rootGuid,
+    equal(sameRoot.parentSyncId, "places",
       "Parent Places root GUID should not change");
   }
 
   do_print("Try reparenting root");
   yield rejects(PlacesSyncUtils.bookmarks.update({
-    guid: PlacesUtils.bookmarks.menuGuid,
-    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    syncId: "menu",
+    parentSyncId: "toolbar",
   }));
 
   yield PlacesUtils.bookmarks.eraseEverything();
@@ -427,11 +429,12 @@ add_task(function* test_insert() {
   {
     let item = yield PlacesSyncUtils.bookmarks.insert({
       kind: "bookmark",
-      guid: makeGuid(),
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      syncId: makeGuid(),
+      parentSyncId: "menu",
       url: "https://example.org",
     });
-    equal(item.type, PlacesUtils.bookmarks.TYPE_BOOKMARK,
+    let { type } = yield PlacesUtils.bookmarks.fetch({ guid: item.syncId });
+    equal(type, PlacesUtils.bookmarks.TYPE_BOOKMARK,
       "Bookmark should have correct type");
   }
 
@@ -439,12 +442,13 @@ add_task(function* test_insert() {
   {
     let item = yield PlacesSyncUtils.bookmarks.insert({
       kind: "query",
-      guid: makeGuid(),
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      syncId: makeGuid(),
+      parentSyncId: "menu",
       url: "place:terms=term&folder=TOOLBAR&queryType=1",
       folder: "Saved search",
     });
-    equal(item.type, PlacesUtils.bookmarks.TYPE_BOOKMARK,
+    let { type } = yield PlacesUtils.bookmarks.fetch({ guid: item.syncId });
+    equal(type, PlacesUtils.bookmarks.TYPE_BOOKMARK,
       "Queries should be stored as bookmarks");
   }
 
@@ -452,11 +456,12 @@ add_task(function* test_insert() {
   {
     let item = yield PlacesSyncUtils.bookmarks.insert({
       kind: "folder",
-      guid: makeGuid(),
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      syncId: makeGuid(),
+      parentSyncId: "menu",
       title: "New folder",
     });
-    equal(item.type, PlacesUtils.bookmarks.TYPE_FOLDER,
+    let { type } = yield PlacesUtils.bookmarks.fetch({ guid: item.syncId });
+    equal(type, PlacesUtils.bookmarks.TYPE_FOLDER,
       "Folder should have correct type");
   }
 
@@ -464,10 +469,11 @@ add_task(function* test_insert() {
   {
     let item = yield PlacesSyncUtils.bookmarks.insert({
       kind: "separator",
-      guid: makeGuid(),
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      syncId: makeGuid(),
+      parentSyncId: "menu",
     });
-    equal(item.type, PlacesUtils.bookmarks.TYPE_SEPARATOR,
+    let { type } = yield PlacesUtils.bookmarks.fetch({ guid: item.syncId });
+    equal(type, PlacesUtils.bookmarks.TYPE_SEPARATOR,
       "Separator should have correct type");
   }
 
@@ -475,46 +481,45 @@ add_task(function* test_insert() {
 });
 
 add_task(function* test_insert_livemark() {
-  let { server, site, stopServer } = makeLivemarkServer();
+  let { site, stopServer } = makeLivemarkServer();
 
   try {
     do_print("Insert livemark with feed URL");
     {
       let livemark = yield PlacesSyncUtils.bookmarks.insert({
         kind: "livemark",
-        guid: makeGuid(),
+        syncId: makeGuid(),
         feed: site + "/feed/1",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
+        parentSyncId: "menu",
       });
       let bmk = yield PlacesUtils.bookmarks.fetch({
-        guid: livemark.guid,
+        guid: yield PlacesSyncUtils.bookmarks.syncIdToGuid(livemark.syncId),
       })
       equal(bmk.type, PlacesUtils.bookmarks.TYPE_FOLDER,
         "Livemarks should be stored as folders");
     }
 
-    let livemarkGuid;
+    let livemarkSyncId;
     do_print("Insert livemark with site and feed URLs");
     {
       let livemark = yield PlacesSyncUtils.bookmarks.insert({
         kind: "livemark",
-        guid: makeGuid(),
+        syncId: makeGuid(),
         site,
         feed: site + "/feed/1",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
+        parentSyncId: "menu",
       });
-      livemarkGuid = livemark.guid;
-
+      livemarkSyncId = livemark.syncId;
     }
 
     do_print("Try inserting livemark into livemark");
     {
       let livemark = yield PlacesSyncUtils.bookmarks.insert({
         kind: "livemark",
-        guid: makeGuid(),
+        syncId: makeGuid(),
         site,
         feed: site + "/feed/1",
-        parentGuid: livemarkGuid,
+        parentSyncId: livemarkSyncId,
       });
       ok(!livemark, "Should not insert livemark as child of livemark");
     }
@@ -526,7 +531,7 @@ add_task(function* test_insert_livemark() {
 });
 
 add_task(function* test_update_livemark() {
-  let { server, site, stopServer } = makeLivemarkServer();
+  let { site, stopServer } = makeLivemarkServer();
   let feedURI = uri(site + "/feed/1");
 
   try {
@@ -541,7 +546,7 @@ add_task(function* test_update_livemark() {
       });
 
       yield PlacesSyncUtils.bookmarks.update({
-        guid: livemark.guid,
+        syncId: livemark.guid,
         feed: feedURI,
       });
       // `nsLivemarkService` returns references to `Livemark` instances, so we
@@ -551,7 +556,7 @@ add_task(function* test_update_livemark() {
       }), livemark, "Livemark with same feed URL should not be replaced");
 
       yield PlacesSyncUtils.bookmarks.update({
-        guid: livemark.guid,
+        syncId: livemark.guid,
         site,
       });
       equal(yield PlacesUtils.livemarks.getLivemark({
@@ -559,7 +564,7 @@ add_task(function* test_update_livemark() {
       }), livemark, "Livemark with same site URL should not be replaced");
 
       yield PlacesSyncUtils.bookmarks.update({
-        guid: livemark.guid,
+        syncId: livemark.guid,
         feed: feedURI,
         site,
       });
@@ -579,19 +584,19 @@ add_task(function* test_update_livemark() {
       // Since we're reinserting, we need to pass all properties required
       // for a new livemark. `update` won't merge the old and new ones.
       yield rejects(PlacesSyncUtils.bookmarks.update({
-        guid: livemark.guid,
+        syncId: livemark.guid,
         feed: site + "/feed/2",
       }), "Reinserting livemark with changed feed URL requires full record");
 
       let newLivemark = yield PlacesSyncUtils.bookmarks.update({
         kind: "livemark",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
-        guid: livemark.guid,
+        parentSyncId: "menu",
+        syncId: livemark.guid,
         feed: site + "/feed/2",
       });
-      equal(newLivemark.guid, livemark.guid,
+      equal(newLivemark.syncId, livemark.guid,
         "GUIDs should match for reinserted livemark with changed feed URL");
-      equal(newLivemark.feedURI.spec, site + "/feed/2",
+      equal(newLivemark.feed.href, site + "/feed/2",
         "Reinserted livemark should have changed feed URI");
     }
 
@@ -605,24 +610,24 @@ add_task(function* test_update_livemark() {
       ok(!livemark.siteURI, "Livemark should not have site URI");
 
       yield rejects(PlacesSyncUtils.bookmarks.update({
-        guid: livemark.guid,
+        syncId: livemark.guid,
         site,
       }), "Reinserting livemark with new site URL requires full record");
 
       let newLivemark = yield PlacesSyncUtils.bookmarks.update({
         kind: "livemark",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
-        guid: livemark.guid,
+        parentSyncId: "menu",
+        syncId: livemark.guid,
         feed: feedURI,
         site,
       });
       notEqual(newLivemark, livemark,
         "Livemark with new site URL should replace old livemark");
-      equal(newLivemark.guid, livemark.guid,
+      equal(newLivemark.syncId, livemark.guid,
         "GUIDs should match for reinserted livemark with new site URL");
-      equal(newLivemark.siteURI.spec, site + "/",
+      equal(newLivemark.site.href, site + "/",
         "Reinserted livemark should have new site URI");
-      ok(newLivemark.feedURI.equals(feedURI),
+      equal(newLivemark.feed.href, feedURI.spec,
         "Reinserted livemark with new site URL should have same feed URI");
     }
 
@@ -636,22 +641,22 @@ add_task(function* test_update_livemark() {
       });
 
       yield rejects(PlacesSyncUtils.bookmarks.update({
-        guid: livemark.guid,
+        syncId: livemark.guid,
         site: null,
       }), "Reinserting livemark witout site URL requires full record");
 
       let newLivemark = yield PlacesSyncUtils.bookmarks.update({
         kind: "livemark",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
-        guid: livemark.guid,
+        parentSyncId: "menu",
+        syncId: livemark.guid,
         feed: feedURI,
         site: null,
       });
       notEqual(newLivemark, livemark,
         "Livemark without site URL should replace old livemark");
-      equal(newLivemark.guid, livemark.guid,
+      equal(newLivemark.syncId, livemark.guid,
         "GUIDs should match for reinserted livemark without site URL");
-      ok(!newLivemark.siteURI, "Reinserted livemark should not have site URI");
+      ok(!newLivemark.site, "Reinserted livemark should not have site URI");
     }
 
     do_print("Change livemark site URL");
@@ -664,22 +669,22 @@ add_task(function* test_update_livemark() {
       });
 
       yield rejects(PlacesSyncUtils.bookmarks.update({
-        guid: livemark.guid,
+        syncId: livemark.guid,
         site: site + "/new",
       }), "Reinserting livemark with changed site URL requires full record");
 
       let newLivemark = yield PlacesSyncUtils.bookmarks.update({
         kind: "livemark",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
-        guid: livemark.guid,
+        parentSyncId: "menu",
+        syncId: livemark.guid,
         feed:feedURI,
         site: site + "/new",
       });
       notEqual(newLivemark, livemark,
         "Livemark with changed site URL should replace old livemark");
-      equal(newLivemark.guid, livemark.guid,
+      equal(newLivemark.syncId, livemark.guid,
         "GUIDs should match for reinserted livemark with changed site URL");
-      equal(newLivemark.siteURI.spec, site + "/new",
+      equal(newLivemark.site.href, site + "/new",
         "Reinserted livemark should have changed site URI");
     }
 
@@ -695,11 +700,11 @@ add_task(function* test_update_livemark() {
       });
       let livemark = yield PlacesSyncUtils.bookmarks.update({
         kind: "livemark",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
-        guid: folder.guid,
+        parentSyncId: "menu",
+        syncId: folder.guid,
         feed: feedURI,
       });
-      equal(livemark.guid, folder.guid,
+      equal(livemark.guid, folder.syncId,
         "Livemark should have same GUID as replaced folder");
     }
   } finally {
@@ -710,23 +715,23 @@ add_task(function* test_update_livemark() {
 });
 
 add_task(function* test_insert_tags() {
-  let newItems = yield Promise.all([{
+  yield Promise.all([{
     kind: "bookmark",
     url: "https://example.com",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    syncId: makeGuid(),
+    parentSyncId: "menu",
     tags: ["foo", "bar"],
   }, {
     kind: "bookmark",
     url: "https://example.org",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    syncId: makeGuid(),
+    parentSyncId: "toolbar",
     tags: ["foo", "baz"],
   }, {
     kind: "query",
     url: "place:queryType=1&sort=12&maxResults=10",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    syncId: makeGuid(),
+    parentSyncId: "toolbar",
     folder: "bar",
     tags: ["baz", "qux"],
     title: "bar",
@@ -749,8 +754,8 @@ add_task(function* test_insert_tags_whitespace() {
   let taggedBlanks = yield PlacesSyncUtils.bookmarks.insert({
     kind: "bookmark",
     url: "https://example.org",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    syncId: makeGuid(),
+    parentSyncId: "menu",
     tags: [" untrimmed ", " ", "taggy"],
   });
   deepEqual(taggedBlanks.tags, ["untrimmed", "taggy"],
@@ -762,8 +767,8 @@ add_task(function* test_insert_tags_whitespace() {
   let taggedDupes = yield PlacesSyncUtils.bookmarks.insert({
     kind: "bookmark",
     url: "https://example.net",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    syncId: makeGuid(),
+    parentSyncId: "toolbar",
     tags: [" taggy", "taggy ", " taggy ", "taggy"],
   });
   deepEqual(taggedDupes.tags, ["taggy", "taggy", "taggy", "taggy"],
@@ -780,12 +785,12 @@ add_task(function* test_insert_tags_whitespace() {
 add_task(function* test_insert_keyword() {
   do_print("Insert item with new keyword");
   {
-    let bookmark = yield PlacesSyncUtils.bookmarks.insert({
+    yield PlacesSyncUtils.bookmarks.insert({
       kind: "bookmark",
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      parentSyncId: "menu",
       url: "https://example.com",
       keyword: "moz",
-      guid: makeGuid(),
+      syncId: makeGuid(),
     });
     let entry = yield PlacesUtils.keywords.fetch("moz");
     equal(entry.url.href, "https://example.com/",
@@ -794,12 +799,12 @@ add_task(function* test_insert_keyword() {
 
   do_print("Insert item with existing keyword");
   {
-    let bookmark = yield PlacesSyncUtils.bookmarks.insert({
+    yield PlacesSyncUtils.bookmarks.insert({
       kind: "bookmark",
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      parentSyncId: "menu",
       url: "https://mozilla.org",
       keyword: "moz",
-      guid: makeGuid(),
+      syncId: makeGuid(),
     });
     let entry = yield PlacesUtils.keywords.fetch("moz");
     equal(entry.url.href, "https://mozilla.org/",
@@ -814,14 +819,14 @@ add_task(function* test_insert_annos() {
   let descBmk = yield PlacesSyncUtils.bookmarks.insert({
     kind: "bookmark",
     url: "https://example.com",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    syncId: makeGuid(),
+    parentSyncId: "menu",
     description: "Bookmark description",
   });
   {
     equal(descBmk.description, "Bookmark description",
       "Should return new bookmark description");
-    let id = yield PlacesUtils.promiseItemId(descBmk.guid);
+    let id = yield syncIdToId(descBmk.syncId);
     equal(PlacesUtils.annotations.getItemAnnotation(id, DESCRIPTION_ANNO),
       "Bookmark description", "Should set new bookmark description");
   }
@@ -829,14 +834,14 @@ add_task(function* test_insert_annos() {
   do_print("Folder with description");
   let descFolder = yield PlacesSyncUtils.bookmarks.insert({
     kind: "folder",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    syncId: makeGuid(),
+    parentSyncId: "menu",
     description: "Folder description",
   });
   {
     equal(descFolder.description, "Folder description",
       "Should return new folder description");
-    let id = yield PlacesUtils.promiseItemId(descFolder.guid);
+    let id = yield syncIdToId(descFolder.syncId);
     equal(PlacesUtils.annotations.getItemAnnotation(id, DESCRIPTION_ANNO),
       "Folder description", "Should set new folder description");
   }
@@ -845,13 +850,13 @@ add_task(function* test_insert_annos() {
   let sidebarBmk = yield PlacesSyncUtils.bookmarks.insert({
     kind: "bookmark",
     url: "https://example.com",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    syncId: makeGuid(),
+    parentSyncId: "menu",
     loadInSidebar: true,
   });
   {
     ok(sidebarBmk.loadInSidebar, "Should return sidebar anno for new bookmark");
-    let id = yield PlacesUtils.promiseItemId(sidebarBmk.guid);
+    let id = yield syncIdToId(sidebarBmk.syncId);
     ok(PlacesUtils.annotations.itemHasAnnotation(id, LOAD_IN_SIDEBAR_ANNO),
       "Should set sidebar anno for new bookmark");
   }
@@ -860,14 +865,14 @@ add_task(function* test_insert_annos() {
   let noSidebarBmk = yield PlacesSyncUtils.bookmarks.insert({
     kind: "bookmark",
     url: "https://example.org",
-    guid: makeGuid(),
-    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    syncId: makeGuid(),
+    parentSyncId: "toolbar",
     loadInSidebar: false,
   });
   {
     ok(!noSidebarBmk.loadInSidebar,
       "Should not return sidebar anno for new bookmark");
-    let id = yield PlacesUtils.promiseItemId(noSidebarBmk.guid);
+    let id = yield syncIdToId(noSidebarBmk.syncId);
     ok(!PlacesUtils.annotations.itemHasAnnotation(id, LOAD_IN_SIDEBAR_ANNO),
       "Should not set sidebar anno for new bookmark");
   }
@@ -883,8 +888,8 @@ add_task(function* test_insert_tag_query() {
     deepEqual(PlacesUtils.tagging.allTags, [], "New tag should not exist yet");
     let query = yield PlacesSyncUtils.bookmarks.insert({
       kind: "query",
-      guid: makeGuid(),
-      parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+      syncId: makeGuid(),
+      parentSyncId: "toolbar",
       url: "place:type=7&folder=90",
       folder: "taggy",
       title: "Tagged stuff",
@@ -905,8 +910,8 @@ add_task(function* test_insert_tag_query() {
       url,
       folder: "taggy",
       title: "Sorted and tagged",
-      guid: makeGuid(),
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      syncId: makeGuid(),
+      parentSyncId: "menu",
     });
     notEqual(query.url.href, url, "Tag query URL for existing tag should differ");
     let params = new URLSearchParams(query.url.pathname);
@@ -918,7 +923,7 @@ add_task(function* test_insert_tag_query() {
 
   do_print("Use the public tagging API to ensure we added the tag correctly");
   {
-    let bookmark = yield PlacesUtils.bookmarks.insert({
+    yield PlacesUtils.bookmarks.insert({
       parentGuid: PlacesUtils.bookmarks.menuGuid,
       type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
       url: "https://mozilla.org",
@@ -949,13 +954,13 @@ add_task(function* test_insert_orphans() {
   {
     let child = yield PlacesSyncUtils.bookmarks.insert({
       kind: "bookmark",
-      parentGuid,
-      guid: childGuid,
+      parentSyncId: parentGuid,
+      syncId: childGuid,
       url: "https://mozilla.org",
     });
-    equal(child.guid, childGuid,
+    equal(child.syncId, childGuid,
       "Should insert orphan with requested GUID");
-    equal(child.parentGuid, PlacesUtils.bookmarks.unfiledGuid,
+    equal(child.parentSyncId, "unfiled",
       "Should reparent orphan to unfiled");
 
     childId = yield PlacesUtils.promiseItemId(childGuid);
@@ -965,10 +970,10 @@ add_task(function* test_insert_orphans() {
 
   do_print("Insert the grandparent");
   {
-    let grandParent = yield PlacesSyncUtils.bookmarks.insert({
+    yield PlacesSyncUtils.bookmarks.insert({
       kind: "folder",
-      parentGuid: PlacesUtils.bookmarks.menuGuid,
-      guid: grandParentGuid,
+      parentSyncId: "menu",
+      syncId: grandParentGuid,
     });
     equal(PlacesUtils.annotations.getItemAnnotation(childId, SYNC_PARENT_ANNO),
       parentGuid, "Child should still have orphan anno");
@@ -980,11 +985,11 @@ add_task(function* test_insert_orphans() {
   {
     let parent = yield PlacesSyncUtils.bookmarks.insert({
       kind: "folder",
-      parentGuid: grandParentGuid,
-      guid: parentGuid,
+      parentSyncId: grandParentGuid,
+      syncId: parentGuid,
     });
-    equal(parent.guid, parentGuid, "Should insert parent with requested GUID");
-    equal(parent.parentGuid, grandParentGuid,
+    equal(parent.syncId, parentGuid, "Should insert parent with requested GUID");
+    equal(parent.parentSyncId, grandParentGuid,
       "Parent should be child of grandparent");
     ok(!PlacesUtils.annotations.itemHasAnnotation(childId, SYNC_PARENT_ANNO),
       "Orphan anno should be removed after reparenting");
@@ -992,6 +997,153 @@ add_task(function* test_insert_orphans() {
     let child = yield PlacesUtils.bookmarks.fetch({ guid: childGuid });
     equal(child.parentGuid, parentGuid,
       "Should reparent child after inserting missing parent");
+  }
+
+  yield PlacesUtils.bookmarks.eraseEverything();
+});
+
+add_task(function* test_fetch() {
+  let folder = yield PlacesSyncUtils.bookmarks.insert({
+    syncId: makeGuid(),
+    parentSyncId: "menu",
+    kind: "folder",
+    description: "Folder description",
+  });
+  let bmk = yield PlacesSyncUtils.bookmarks.insert({
+    syncId: makeGuid(),
+    parentSyncId: "menu",
+    kind: "bookmark",
+    url: "https://example.com",
+    description: "Bookmark description",
+    loadInSidebar: true,
+    tags: ["taggy"],
+  });
+  let folderBmk = yield PlacesSyncUtils.bookmarks.insert({
+    syncId: makeGuid(),
+    parentSyncId: folder.syncId,
+    kind: "bookmark",
+    url: "https://example.org",
+    keyword: "kw",
+  });
+  let folderSep = yield PlacesSyncUtils.bookmarks.insert({
+    syncId: makeGuid(),
+    parentSyncId: folder.syncId,
+    kind: "separator",
+  });
+  let tagQuery = yield PlacesSyncUtils.bookmarks.insert({
+    kind: "query",
+    syncId: makeGuid(),
+    parentSyncId: "toolbar",
+    url: "place:type=7&folder=90",
+    folder: "taggy",
+    title: "Tagged stuff",
+  });
+  let [, tagFolderId] = /\bfolder=(\d+)\b/.exec(tagQuery.url.pathname);
+  let smartBmk = yield PlacesSyncUtils.bookmarks.insert({
+    kind: "query",
+    syncId: makeGuid(),
+    parentSyncId: "toolbar",
+    url: "place:folder=TOOLBAR",
+    query: "BookmarksToolbar",
+    title: "Bookmarks toolbar query",
+  });
+
+  do_print("Fetch empty folder with description");
+  {
+    let item = yield PlacesSyncUtils.bookmarks.fetch(folder.syncId);
+    deepEqual(item, {
+      syncId: folder.syncId,
+      kind: "folder",
+      parentSyncId: "menu",
+      description: "Folder description",
+      childSyncIds: [folderBmk.syncId, folderSep.syncId],
+      parentTitle: "Bookmarks Menu",
+      title: "",
+    }, "Should include description, children, title, and parent title in folder");
+  }
+
+  do_print("Fetch bookmark with description, sidebar anno, and tags");
+  {
+    let item = yield PlacesSyncUtils.bookmarks.fetch(bmk.syncId);
+    deepEqual(Object.keys(item).sort(), ["syncId", "kind", "parentSyncId",
+      "url", "tags", "description", "loadInSidebar", "parentTitle", "title"].sort(),
+      "Should include bookmark-specific properties");
+    equal(item.syncId, bmk.syncId, "Sync ID should match");
+    equal(item.url.href, "https://example.com/", "Should return URL");
+    equal(item.parentSyncId, "menu", "Should return parent sync ID");
+    deepEqual(item.tags, ["taggy"], "Should return tags");
+    equal(item.description, "Bookmark description", "Should return bookmark description");
+    strictEqual(item.loadInSidebar, true, "Should return sidebar anno");
+    equal(item.parentTitle, "Bookmarks Menu", "Should return parent title");
+    strictEqual(item.title, "", "Should return empty title");
+  }
+
+  do_print("Fetch bookmark with keyword; without parent title or annos");
+  {
+    let item = yield PlacesSyncUtils.bookmarks.fetch(folderBmk.syncId);
+    deepEqual(Object.keys(item).sort(), ["syncId", "kind", "parentSyncId",
+      "url", "keyword", "tags", "loadInSidebar", "parentTitle", "title"].sort(),
+      "Should omit blank bookmark-specific properties");
+    strictEqual(item.loadInSidebar, false, "Should not load bookmark in sidebar");
+    deepEqual(item.tags, [], "Tags should be empty");
+    equal(item.keyword, "kw", "Should return keyword");
+    strictEqual(item.parentTitle, "", "Should include parent title even if empty");
+    strictEqual(item.title, "", "Should include bookmark title even if empty");
+  }
+
+  do_print("Fetch separator");
+  {
+    let item = yield PlacesSyncUtils.bookmarks.fetch(folderSep.syncId);
+    strictEqual(item.index, 1, "Should return separator position");
+  }
+
+  do_print("Fetch tag query");
+  {
+    let item = yield PlacesSyncUtils.bookmarks.fetch(tagQuery.syncId);
+    deepEqual(Object.keys(item).sort(), ["syncId", "kind", "parentSyncId",
+      "url", "title", "folder", "parentTitle"].sort(),
+      "Should include query-specific properties");
+    equal(item.url.href, `place:type=7&folder=${tagFolderId}`, "Should not rewrite outgoing tag queries");
+    equal(item.folder, "taggy", "Should return tag name for tag queries");
+  }
+
+  do_print("Fetch smart bookmark");
+  {
+    let item = yield PlacesSyncUtils.bookmarks.fetch(smartBmk.syncId);
+    deepEqual(Object.keys(item).sort(), ["syncId", "kind", "parentSyncId",
+      "url", "title", "query", "parentTitle"].sort(),
+      "Should include smart bookmark-specific properties");
+    equal(item.query, "BookmarksToolbar", "Should return query name for smart bookmarks");
+  }
+
+  yield PlacesUtils.bookmarks.eraseEverything();
+});
+
+add_task(function* test_fetch_livemark() {
+  let { site, stopServer } = makeLivemarkServer();
+
+  try {
+    do_print("Create livemark");
+    let livemark = yield PlacesUtils.livemarks.addLivemark({
+      parentGuid: PlacesUtils.bookmarks.menuGuid,
+      feedURI: uri(site + "/feed/1"),
+      siteURI: uri(site),
+      index: PlacesUtils.bookmarks.DEFAULT_INDEX,
+    });
+    PlacesUtils.annotations.setItemAnnotation(livemark.id, DESCRIPTION_ANNO,
+      "Livemark description", 0, PlacesUtils.annotations.EXPIRE_NEVER);
+
+    do_print("Fetch livemark");
+    let item = yield PlacesSyncUtils.bookmarks.fetch(livemark.guid);
+    deepEqual(Object.keys(item).sort(), ["syncId", "kind", "parentSyncId",
+      "description", "feed", "site", "parentTitle", "title"].sort(),
+      "Should include livemark-specific properties");
+    equal(item.description, "Livemark description", "Should return description");
+    equal(item.feed.href, site + "/feed/1", "Should return feed URL");
+    equal(item.site.href, site + "/", "Should return site URL");
+    strictEqual(item.title, "", "Should include livemark title even if empty");
+  } finally {
+    yield stopServer();
   }
 
   yield PlacesUtils.bookmarks.eraseEverything();

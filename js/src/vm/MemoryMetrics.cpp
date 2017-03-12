@@ -14,9 +14,6 @@
 #include "jsobj.h"
 #include "jsscript.h"
 
-#include "asmjs/WasmInstance.h"
-#include "asmjs/WasmJS.h"
-#include "asmjs/WasmModule.h"
 #include "gc/Heap.h"
 #include "jit/BaselineJIT.h"
 #include "jit/Ion.h"
@@ -26,6 +23,9 @@
 #include "vm/String.h"
 #include "vm/Symbol.h"
 #include "vm/WrapperObject.h"
+#include "wasm/WasmInstance.h"
+#include "wasm/WasmJS.h"
+#include "wasm/WasmModule.h"
 
 using mozilla::DebugOnly;
 using mozilla::MallocSizeOf;
@@ -471,7 +471,7 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
             module.addSizeOfMisc(rtStats->mallocSizeOf_,
                                  &closure->wasmSeenMetadata,
                                  &closure->wasmSeenBytes,
-                                 &info.objectsNonHeapCodeAsmJS,
+                                 &info.objectsNonHeapCodeWasm,
                                  &info.objectsMallocHeapMisc);
         } else if (obj->is<WasmInstanceObject>()) {
             wasm::Instance& instance = obj->as<WasmInstanceObject>().instance();
@@ -481,7 +481,7 @@ StatsCellCallback(JSRuntime* rt, void* data, void* thing, JS::TraceKind traceKin
                                    &closure->wasmSeenMetadata,
                                    &closure->wasmSeenBytes,
                                    &closure->wasmSeenTables,
-                                   &info.objectsNonHeapCodeAsmJS,
+                                   &info.objectsNonHeapCodeWasm,
                                    &info.objectsMallocHeapMisc);
         }
 

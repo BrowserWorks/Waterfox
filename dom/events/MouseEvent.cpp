@@ -67,6 +67,8 @@ MouseEvent::InitMouseEvent(const nsAString& aType,
                            uint16_t aButton,
                            EventTarget* aRelatedTarget)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   UIEvent::InitUIEvent(aType, aCanBubble, aCancelable, aView, aDetail);
 
   switch(mEvent->mClass) {
@@ -138,6 +140,8 @@ MouseEvent::InitMouseEvent(const nsAString& aType,
                            EventTarget* aRelatedTarget,
                            const nsAString& aModifiersList)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   Modifiers modifiers = ComputeModifierState(aModifiersList);
 
   InitMouseEvent(aType, aCanBubble, aCancelable, aView, aDetail,
@@ -187,7 +191,7 @@ MouseEvent::Constructor(const GlobalObject& aGlobal,
                     aParam.mMetaKey, aParam.mButton, aParam.mRelatedTarget);
   e->InitializeExtraMouseEventDictionaryMembers(aParam);
   e->SetTrusted(trusted);
-
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 
@@ -210,6 +214,8 @@ MouseEvent::InitNSMouseEvent(const nsAString& aType,
                              float aPressure,
                              uint16_t aInputSource)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   MouseEvent::InitMouseEvent(aType, aCanBubble, aCancelable,
                              aView, aDetail, aScreenX, aScreenY,
                              aClientX, aClientY,

@@ -57,15 +57,18 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
         Register temp_;
         FloatRegister input_;
         LInstruction* ins_;
+        wasm::TrapOffset trapOffset_;
 
       public:
-        OutOfLineSimdFloatToIntCheck(Register temp, FloatRegister input, LInstruction *ins)
-          : temp_(temp), input_(input), ins_(ins)
+        OutOfLineSimdFloatToIntCheck(Register temp, FloatRegister input, LInstruction *ins,
+                                     wasm::TrapOffset trapOffset)
+          : temp_(temp), input_(input), ins_(ins), trapOffset_(trapOffset)
         {}
 
         Register temp() const { return temp_; }
         FloatRegister input() const { return input_; }
         LInstruction* ins() const { return ins_; }
+        wasm::TrapOffset trapOffset() const { return trapOffset_; }
 
         void accept(CodeGeneratorX86Shared* codegen) {
             codegen->visitOutOfLineSimdFloatToIntCheck(this);
@@ -239,10 +242,10 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
     virtual void visitEffectiveAddress(LEffectiveAddress* ins);
     virtual void visitUDivOrMod(LUDivOrMod* ins);
     virtual void visitUDivOrModConstant(LUDivOrModConstant *ins);
-    virtual void visitAsmJSPassStackArg(LAsmJSPassStackArg* ins);
-    virtual void visitAsmJSPassStackArgI64(LAsmJSPassStackArgI64* ins);
-    virtual void visitAsmSelect(LAsmSelect* ins);
-    virtual void visitAsmReinterpret(LAsmReinterpret* lir);
+    virtual void visitWasmStackArg(LWasmStackArg* ins);
+    virtual void visitWasmStackArgI64(LWasmStackArgI64* ins);
+    virtual void visitWasmSelect(LWasmSelect* ins);
+    virtual void visitWasmReinterpret(LWasmReinterpret* lir);
     virtual void visitMemoryBarrier(LMemoryBarrier* ins);
     virtual void visitWasmAddOffset(LWasmAddOffset* lir);
     virtual void visitWasmTruncateToInt32(LWasmTruncateToInt32* lir);

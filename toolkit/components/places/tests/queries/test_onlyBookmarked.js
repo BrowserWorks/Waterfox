@@ -74,19 +74,16 @@ add_task(function* test_onlyBookmarked()
   compareArrayToResult(testData, root);
   do_print("end first test");
 
-  /* ******************
-  Test live-update
-  ********************/
-
+  // Test live-update
   var liveUpdateTestData = [
-    //Add a bookmark that should show up
+    // Add a bookmark that should show up
     { isBookmark: true,
       uri: "http://bookmarked2.com/",
       parentGuid: PlacesUtils.bookmarks.toolbarGuid,
       index: PlacesUtils.bookmarks.DEFAULT_INDEX,
       isInQuery: true },
 
-    //Add a bookmark that should not show up
+    // Add a bookmark that should not show up
     { isBookmark: true,
       uri: "http://bookmarked-elsewhere2.com/",
       parentGuid: PlacesUtils.bookmarks.menuGuid,

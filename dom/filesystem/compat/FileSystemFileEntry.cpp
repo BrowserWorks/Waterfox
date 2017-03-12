@@ -7,6 +7,7 @@
 #include "FileSystemFileEntry.h"
 #include "CallbackRunnables.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/dom/MultipartBlobImpl.h"
 #include "mozilla/dom/FileSystemFileEntryBinding.h"
 
 namespace mozilla {
@@ -14,11 +15,13 @@ namespace dom {
 
 namespace {
 
-class BlobCallbackRunnable final : public Runnable
+class FileCallbackRunnable final : public Runnable
 {
 public:
-  BlobCallbackRunnable(BlobCallback* aCallback, File* aFile)
+  FileCallbackRunnable(FileCallback* aCallback, ErrorCallback* aErrorCallback,
+                       File* aFile)
     : mCallback(aCallback)
+    , mErrorCallback(aErrorCallback)
     , mFile(aFile)
   {
     MOZ_ASSERT(aCallback);
@@ -28,12 +31,40 @@ public:
   NS_IMETHOD
   Run() override
   {
-    mCallback->HandleEvent(mFile);
+    // Here we clone the File object.
+
+    nsAutoString name;
+    mFile->GetName(name);
+
+    nsAutoString type;
+    mFile->GetType(type);
+
+    nsTArray<RefPtr<BlobImpl>> blobImpls;
+    blobImpls.AppendElement(mFile->Impl());
+
+    ErrorResult rv;
+    RefPtr<BlobImpl> blobImpl =
+      MultipartBlobImpl::Create(Move(blobImpls), name, type, rv);
+    if (NS_WARN_IF(rv.Failed())) {
+      if (mErrorCallback) {
+        RefPtr<DOMException> exception =
+          DOMException::Create(rv.StealNSResult());
+        mErrorCallback->HandleEvent(*exception);
+      }
+
+      return NS_OK;
+    }
+
+    RefPtr<File> file = File::Create(mFile->GetParentObject(), blobImpl);
+    MOZ_ASSERT(file);
+
+    mCallback->HandleEvent(*file);
     return NS_OK;
   }
 
 private:
-  RefPtr<BlobCallback> mCallback;
+  RefPtr<FileCallback> mCallback;
+  RefPtr<ErrorCallback> mErrorCallback;
   RefPtr<File> mFile;
 };
 
@@ -49,8 +80,9 @@ NS_INTERFACE_MAP_END_INHERITING(FileSystemEntry)
 
 FileSystemFileEntry::FileSystemFileEntry(nsIGlobalObject* aGlobal,
                                          File* aFile,
+                                         FileSystemDirectoryEntry* aParentEntry,
                                          FileSystem* aFileSystem)
-  : FileSystemEntry(aGlobal, aFileSystem)
+  : FileSystemEntry(aGlobal, aParentEntry, aFileSystem)
   , mFile(aFile)
 {
   MOZ_ASSERT(aGlobal);
@@ -76,7 +108,7 @@ FileSystemFileEntry::GetName(nsAString& aName, ErrorResult& aRv) const
 void
 FileSystemFileEntry::GetFullPath(nsAString& aPath, ErrorResult& aRv) const
 {
-  mFile->GetPath(aPath);
+  mFile->Impl()->GetDOMPath(aPath);
   if (aPath.IsEmpty()) {
     // We're under the root directory. webkitRelativePath
     // (implemented as GetPath) is for cases when file is selected because its
@@ -90,19 +122,14 @@ FileSystemFileEntry::GetFullPath(nsAString& aPath, ErrorResult& aRv) const
 }
 
 void
-FileSystemFileEntry::CreateWriter(VoidCallback& aSuccessCallback,
-                                  const Optional<OwningNonNull<ErrorCallback>>& aErrorCallback) const
-{
-  ErrorCallbackHelper::Call(GetParentObject(), aErrorCallback,
-                            NS_ERROR_DOM_SECURITY_ERR);
-}
-
-void
-FileSystemFileEntry::GetFile(BlobCallback& aSuccessCallback,
+FileSystemFileEntry::GetFile(FileCallback& aSuccessCallback,
                              const Optional<OwningNonNull<ErrorCallback>>& aErrorCallback) const
 {
-  RefPtr<BlobCallbackRunnable> runnable =
-    new BlobCallbackRunnable(&aSuccessCallback, mFile);
+  RefPtr<FileCallbackRunnable> runnable =
+    new FileCallbackRunnable(&aSuccessCallback,
+                             aErrorCallback.WasPassed()
+                               ? &aErrorCallback.Value() : nullptr,
+                             mFile);
   DebugOnly<nsresult> rv = NS_DispatchToMainThread(runnable);
   NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "NS_DispatchToMainThread failed");
 }

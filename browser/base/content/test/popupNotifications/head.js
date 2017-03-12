@@ -102,8 +102,8 @@ function* runNextTest() {
     });
     onPopupEvent("popuphidden", function () {
       info("[" + nextTest.id + "] popup hidden");
-      nextTest.onHidden(this);
-      goNext();
+      Task.spawn(() => nextTest.onHidden(this))
+          .then(() => goNext(), ex => Assert.ok(false, "onHidden failed: " + ex));
     }, () => shownState);
     info("[" + nextTest.id + "] added listeners; panel is open: " + PopupNotifications.isPanelOpen);
   }
@@ -256,6 +256,14 @@ function onPopupEvent(eventName, callback, condition) {
   }
   gActiveListeners.set(listener, eventName);
   PopupNotifications.panel.addEventListener(eventName, listener, false);
+}
+
+function waitForNotificationPanel() {
+  return new Promise(resolve => {
+    onPopupEvent("popupshown", function() {
+      resolve(this);
+    });
+  });
 }
 
 function triggerMainCommand(popup) {

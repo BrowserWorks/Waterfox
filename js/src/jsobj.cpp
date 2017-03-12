@@ -83,11 +83,12 @@ js::ReportNotObject(JSContext* cx, const Value& v)
     RootedValue value(cx, v);
     UniqueChars bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, value, nullptr);
     if (bytes)
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT, bytes.get());
+        JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT,
+                                   bytes.get());
 }
 
-const char*
-js::InformalValueTypeName(const Value& v)
+JS_PUBLIC_API(const char*)
+JS::InformalValueTypeName(const Value& v)
 {
     if (v.isObject())
         return v.toObject().getClass()->name;
@@ -191,8 +192,8 @@ js::GetFirstArgumentAsObject(JSContext* cx, const CallArgs& args, const char* me
                              MutableHandleObject objp)
 {
     if (args.length() == 0) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
-                             method, "0", "s");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  method, "0", "s");
         return false;
     }
 
@@ -201,8 +202,8 @@ js::GetFirstArgumentAsObject(JSContext* cx, const CallArgs& args, const char* me
         UniqueChars bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, v, nullptr);
         if (!bytes)
             return false;
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
-                             bytes.get(), "not an object");
+        JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
+                                   bytes.get(), "not an object");
         return false;
     }
 
@@ -236,7 +237,7 @@ js::Throw(JSContext* cx, jsid id, unsigned errorNumber)
     JSAutoByteString bytes(cx, idstr);
     if (!bytes)
         return false;
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, errorNumber, bytes.ptr());
+    JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr, errorNumber, bytes.ptr());
     return false;
 }
 
@@ -250,7 +251,7 @@ js::Throw(JSContext* cx, JSObject* obj, unsigned errorNumber)
                               nullptr, nullptr);
     } else {
         MOZ_ASSERT(js_ErrorFormatString[errorNumber].argCount == 0);
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, errorNumber);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, errorNumber);
     }
     return false;
 }
@@ -262,8 +263,8 @@ bool
 CheckCallable(JSContext* cx, JSObject* obj, const char* fieldName)
 {
     if (obj && !obj->isCallable()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_GET_SET_FIELD,
-                             fieldName);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_GET_SET_FIELD,
+                                  fieldName);
         return false;
     }
     return true;
@@ -340,8 +341,8 @@ js::ToPropertyDescriptor(JSContext* cx, HandleValue descval, bool checkAccessors
                 return false;
             desc.setGetterObject(&v.toObject());
         } else if (!v.isUndefined()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_GET_SET_FIELD,
-                                 js_getter_str);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_GET_SET_FIELD,
+                                      js_getter_str);
             return false;
         }
         attrs |= JSPROP_GETTER | JSPROP_SHARED;
@@ -358,8 +359,8 @@ js::ToPropertyDescriptor(JSContext* cx, HandleValue descval, bool checkAccessors
                 return false;
             desc.setSetterObject(&v.toObject());
         } else if (!v.isUndefined()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_GET_SET_FIELD,
-                                 js_setter_str);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_GET_SET_FIELD,
+                                      js_setter_str);
             return false;
         }
         attrs |= JSPROP_SETTER | JSPROP_SHARED;
@@ -368,7 +369,7 @@ js::ToPropertyDescriptor(JSContext* cx, HandleValue descval, bool checkAccessors
     // step 10
     if (hasGetOrSet) {
         if (!(attrs & JSPROP_IGNORE_READONLY) || !(attrs & JSPROP_IGNORE_VALUE)) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INVALID_DESCRIPTOR);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INVALID_DESCRIPTOR);
             return false;
         }
 
@@ -440,23 +441,6 @@ js::ReadPropertyDescriptors(JSContext* cx, HandleObject props, bool checkAccesso
     }
     return true;
 }
-
-bool
-js::DefineProperties(JSContext* cx, HandleObject obj, HandleObject props)
-{
-    AutoIdVector ids(cx);
-    Rooted<PropertyDescriptorVector> descs(cx, PropertyDescriptorVector(cx));
-    if (!ReadPropertyDescriptors(cx, props, true, &ids, &descs))
-        return false;
-
-    for (size_t i = 0, len = ids.length(); i < len; i++) {
-        if (!DefineProperty(cx, obj, ids[i], descs[i]))
-            return false;
-    }
-
-    return true;
-}
-
 
 /*** Seal and freeze *****************************************************************************/
 
@@ -1128,8 +1112,7 @@ JSObject*
 js::CloneObject(JSContext* cx, HandleObject obj, Handle<js::TaggedProto> proto)
 {
     if (!obj->isNative() && !obj->is<ProxyObject>()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_CANT_CLONE_OBJECT);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_CLONE_OBJECT);
         return nullptr;
     }
 
@@ -1140,8 +1123,7 @@ js::CloneObject(JSContext* cx, HandleObject obj, Handle<js::TaggedProto> proto)
             return nullptr;
 
         if (clone->is<JSFunction>() && (obj->compartment() != clone->compartment())) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                                 JSMSG_CANT_CLONE_OBJECT);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_CLONE_OBJECT);
             return nullptr;
         }
 
@@ -1838,7 +1820,11 @@ JSObject::fixupAfterMovingGC()
     if (is<NativeObject>()) {
         NativeObject& obj = as<NativeObject>();
         if (obj.denseElementsAreCopyOnWrite()) {
-            NativeObject* owner = MaybeForwarded(obj.getElementsHeader()->ownerObject().get());
+            NativeObject* owner = obj.getElementsHeader()->ownerObject();
+            // Get the new owner pointer but don't call MaybeForwarded as we
+            // don't need to access the object's shape.
+            if (IsForwarded(owner))
+                owner = Forwarded(owner);
             if (owner != &obj && owner->hasFixedElements())
                 obj.elements_ = owner->getElementsHeader()->elements();
             MOZ_ASSERT(!IsForwarded(obj.getElementsHeader()->ownerObject().get()));
@@ -1986,6 +1972,47 @@ js::IsStandardPrototype(JSObject* obj, JSProtoKey key)
     GlobalObject& global = obj->global();
     Value v = global.getPrototype(key);
     return v.isObject() && obj == &v.toObject();
+}
+
+
+/**
+ * Returns the original Object.prototype from the embedding-provided incumbent
+ * global.
+ *
+ * Really, we want the incumbent global itself so we can pass it to other
+ * embedding hooks which need it. Specifically, the enqueue promise hook
+ * takes an incumbent global so it can set that on the PromiseCallbackJob
+ * it creates.
+ *
+ * The reason for not just returning the global itself is that we'd need to
+ * wrap it into the current compartment, and later unwrap it. Unwrapping
+ * globals is tricky, though: we might accidentally unwrap through an inner
+ * to its outer window and end up with the wrong global. Plain objects don't
+ * have this problem, so we use the global's Object.prototype. The code using
+ * it - e.g. EnqueuePromiseReactionJob - can then unwrap the object and get
+ * its global without fear of unwrapping too far.
+ */
+bool
+js::GetObjectFromIncumbentGlobal(JSContext* cx, MutableHandleObject obj)
+{
+    RootedObject globalObj(cx, cx->runtime()->getIncumbentGlobal(cx));
+    if (!globalObj) {
+        obj.set(nullptr);
+        return true;
+    }
+
+    {
+        AutoCompartment ac(cx, globalObj);
+        obj.set(globalObj->as<GlobalObject>().getOrCreateObjectPrototype(cx));
+        if (!obj)
+            return false;
+    }
+
+    // The object might be from a different compartment, so wrap it.
+    if (obj && !cx->compartment()->wrap(cx, obj))
+        return false;
+
+    return true;
 }
 
 JSProtoKey
@@ -2363,7 +2390,7 @@ js::GetPropertyPure(ExclusiveContext* cx, JSObject* obj, jsid id, Value* vp)
 }
 
 static inline bool
-NativeGetGetterPureInline(NativeObject* pobj, Shape* shape, JSFunction** fp)
+NativeGetGetterPureInline(Shape* shape, JSFunction** fp)
 {
     if (shape->hasGetterObject()) {
         if (shape->getterObject()->is<JSFunction>()) {
@@ -2391,8 +2418,23 @@ js::GetGetterPure(ExclusiveContext* cx, JSObject* obj, jsid id, JSFunction** fp)
         return true;
     }
 
-    return pobj->isNative() &&
-           NativeGetGetterPureInline(&pobj->as<NativeObject>(), shape, fp);
+    return pobj->isNative() && NativeGetGetterPureInline(shape, fp);
+}
+
+bool
+js::GetOwnGetterPure(ExclusiveContext* cx, JSObject* obj, jsid id, JSFunction** fp)
+{
+    JS::AutoCheckCannotGC nogc;
+    Shape* shape;
+    if (!LookupOwnPropertyPure(cx, obj, id, &shape))
+        return false;
+
+    if (!shape) {
+        *fp = nullptr;
+        return true;
+    }
+
+    return NativeGetGetterPureInline(shape, fp);
 }
 
 bool
@@ -2499,8 +2541,8 @@ js::SetPrototype(JSContext* cx, HandleObject obj, HandleObject proto, JS::Object
      * have a mutable [[Prototype]].
      */
     if (obj->is<ArrayBufferObject>()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_PROTO_OF,
-                             "incompatible ArrayBuffer");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_PROTO_OF,
+                                  "incompatible ArrayBuffer");
         return false;
     }
 
@@ -2508,8 +2550,8 @@ js::SetPrototype(JSContext* cx, HandleObject obj, HandleObject proto, JS::Object
      * Disallow mutating the [[Prototype]] on Typed Objects, per the spec.
      */
     if (obj->is<TypedObject>()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_PROTO_OF,
-                             "incompatible TypedObject");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_PROTO_OF,
+                                  "incompatible TypedObject");
         return false;
     }
 
@@ -2818,8 +2860,8 @@ js::WatchProperty(JSContext* cx, HandleObject obj, HandleId id, HandleObject cal
         return op(cx, obj, id, callable);
 
     if (!obj->isNative() || obj->is<TypedArrayObject>()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_WATCH,
-                             obj->getClass()->name);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_WATCH,
+                                  obj->getClass()->name);
         return false;
     }
 
@@ -3150,8 +3192,8 @@ js::ToObjectSlow(JSContext* cx, JS::HandleValue val, bool reportScanStack)
         if (reportScanStack) {
             ReportIsNullOrUndefined(cx, JSDVG_SEARCH_STACK, val, nullptr);
         } else {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_CONVERT_TO,
-                                 val.isNull() ? "null" : "undefined", "object");
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_CONVERT_TO,
+                                      val.isNull() ? "null" : "undefined", "object");
         }
         return nullptr;
     }
@@ -3259,12 +3301,12 @@ GetObjectSlotNameFunctor::operator()(JS::CallbackTracer* trc, char* buf, size_t 
 bool
 js::ReportGetterOnlyAssignment(JSContext* cx, bool strict)
 {
-    return JS_ReportErrorFlagsAndNumber(cx,
-                                        strict
-                                        ? JSREPORT_ERROR
-                                        : JSREPORT_WARNING | JSREPORT_STRICT,
-                                        GetErrorMessage, nullptr,
-                                        JSMSG_GETTER_ONLY);
+    return JS_ReportErrorFlagsAndNumberASCII(cx,
+                                             strict
+                                             ? JSREPORT_ERROR
+                                             : JSREPORT_WARNING | JSREPORT_STRICT,
+                                             GetErrorMessage, nullptr,
+                                             JSMSG_GETTER_ONLY);
 }
 
 
@@ -3621,11 +3663,11 @@ js::DumpBacktrace(JSContext* cx, FILE* fp)
             i.isWasm() ? 'W' :
             '?';
 
-        sprinter.printf("#%d %14p %c   %s:%d",
+        sprinter.printf("#%" PRIuSIZE " %14p %c   %s:%d",
                         depth, i.rawFramePtr(), frameType, filename, line);
 
         if (i.hasScript()) {
-            sprinter.printf(" (%p @ %d)\n",
+            sprinter.printf(" (%p @ %" PRIuSIZE ")\n",
                             i.script(), i.script()->pcToOffset(i.pc()));
         } else {
             sprinter.printf(" (%p)\n", i.pc());
@@ -3719,7 +3761,6 @@ JSObject::allocKindForTenure(const js::Nursery& nursery) const
         return kind;
     return GetBackgroundAllocKind(kind);
 }
-
 
 void
 JSObject::addSizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::ClassInfo* info)
@@ -3915,6 +3956,16 @@ js::SpeciesConstructor(JSContext* cx, HandleObject obj, HandleValue defaultCtor,
 
     pctor.set(args.rval());
     return true;
+}
+
+bool
+js::SpeciesConstructor(JSContext* cx, HandleObject obj, JSProtoKey ctorKey,
+                       MutableHandleValue pctor)
+{
+    if (!GlobalObject::ensureConstructor(cx, cx->global(), ctorKey))
+        return false;
+    RootedValue defaultCtor(cx, cx->global()->getConstructor(ctorKey));
+    return SpeciesConstructor(cx, obj, defaultCtor, pctor);
 }
 
 bool

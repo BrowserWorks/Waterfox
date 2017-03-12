@@ -21,6 +21,7 @@
 #include "mozilla/Move.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
+#include "nsArray.h"
 #include "nsArrayUtils.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsClientAuthRemember.h"
@@ -378,6 +379,10 @@ nsNSSSocketInfo::DriveHandshake()
 NS_IMETHODIMP
 nsNSSSocketInfo::IsAcceptableForHost(const nsACString& hostname, bool* _retval)
 {
+  NS_ENSURE_ARG(_retval);
+
+  *_retval = false;
+
   // If this is the same hostname then the certicate status does not
   // need to be considered. They are joinable.
   if (hostname.Equals(GetHostName())) {
@@ -443,11 +448,17 @@ nsNSSSocketInfo::IsAcceptableForHost(const nsACString& hostname, bool* _retval)
   nsAutoCString hostnameFlat(PromiseFlatCString(hostname));
   CertVerifier::Flags flags = CertVerifier::FLAG_LOCAL_ONLY;
   UniqueCERTCertList unusedBuiltChain;
-  SECStatus rv = certVerifier->VerifySSLServerCert(nssCert, nullptr,
-                                                   mozilla::pkix::Now(),
-                                                   nullptr, hostnameFlat.get(),
-                                                   unusedBuiltChain, false, flags);
-  if (rv != SECSuccess) {
+  mozilla::pkix::Result result =
+    certVerifier->VerifySSLServerCert(nssCert,
+                                      nullptr, // stapledOCSPResponse
+                                      nullptr, // sctsFromTLSExtension
+                                      mozilla::pkix::Now(),
+                                      nullptr, // pinarg
+                                      hostnameFlat.get(),
+                                      unusedBuiltChain,
+                                      false, // save intermediates
+                                      flags);
+  if (result != mozilla::pkix::Success) {
     return NS_OK;
   }
 
@@ -1195,6 +1206,46 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
   return true;
 }
 
+// Ensure that we haven't added too many errors to fit.
+static_assert((SSL_ERROR_END_OF_LIST - SSL_ERROR_BASE) <= 256,
+              "too many SSL errors");
+static_assert((SEC_ERROR_END_OF_LIST - SEC_ERROR_BASE) <= 256,
+              "too many SEC errors");
+static_assert((PR_MAX_ERROR - PR_NSPR_ERROR_BASE) <= 128,
+              "too many NSPR errors");
+static_assert((mozilla::pkix::ERROR_BASE - mozilla::pkix::END_OF_LIST) < 31,
+              "too many moz::pkix errors");
+
+static void
+reportHandshakeResult(int32_t bytesTransferred, bool wasReading, PRErrorCode err)
+{
+  uint32_t bucket;
+
+  // A negative bytesTransferred or a 0 read are errors.
+  if (bytesTransferred > 0) {
+    bucket = 0;
+  } else if ((bytesTransferred == 0) && !wasReading) {
+    // PR_Write() is defined to never return 0, but let's make sure.
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSPR/Reference/PR_Write.
+    MOZ_ASSERT(false);
+    bucket = 671;
+  } else if (IS_SSL_ERROR(err)) {
+    bucket = err - SSL_ERROR_BASE;
+    MOZ_ASSERT(bucket > 0);   // SSL_ERROR_EXPORT_ONLY_SERVER isn't used.
+  } else if (IS_SEC_ERROR(err)) {
+    bucket = (err - SEC_ERROR_BASE) + 256;
+  } else if ((err >= PR_NSPR_ERROR_BASE) && (err < PR_MAX_ERROR)) {
+    bucket = (err - PR_NSPR_ERROR_BASE) + 512;
+  } else if ((err >= mozilla::pkix::ERROR_BASE) &&
+             (err < mozilla::pkix::ERROR_LIMIT)) {
+    bucket = (err - mozilla::pkix::ERROR_BASE) + 640;
+  } else {
+    bucket = 671;
+  }
+
+  Telemetry::Accumulate(Telemetry::SSL_HANDSHAKE_RESULT, bucket);
+}
+
 int32_t
 checkHandshake(int32_t bytesTransfered, bool wasReading,
                PRFileDesc* ssl_layer_fd, nsNSSSocketInfo* socketInfo)
@@ -1272,6 +1323,10 @@ checkHandshake(int32_t bytesTransfered, bool wasReading,
   // set the HandshakePending attribute to false so that we don't try the logic
   // above again in a subsequent transfer.
   if (handleHandshakeResultNow) {
+    // Report the result once for each handshake. Note that this does not
+    // get handshakes which are cancelled before any reads or writes
+    // happen.
+    reportHandshakeResult(bytesTransfered, wasReading, originalError);
     socketInfo->SetHandshakeNotPending();
   }
 
@@ -1849,6 +1904,7 @@ nsSSLIOLayerNewSocket(int32_t family,
                       const char* host,
                       int32_t port,
                       nsIProxyInfo *proxy,
+                      const NeckoOriginAttributes& originAttributes,
                       PRFileDesc** fd,
                       nsISupports** info,
                       bool forSTARTTLS,
@@ -1859,7 +1915,8 @@ nsSSLIOLayerNewSocket(int32_t family,
   if (!sock) return NS_ERROR_OUT_OF_MEMORY;
 
   nsresult rv = nsSSLIOLayerAddToSocket(family, host, port, proxy,
-                                        sock, info, forSTARTTLS, flags);
+                                        originAttributes, sock, info,
+                                        forSTARTTLS, flags);
   if (NS_FAILED(rv)) {
     PR_Close(sock);
     return rv;
@@ -2238,8 +2295,9 @@ ClientAuthDataRunnable::RunOnTargetThread()
     nsCString rememberedDBKey;
     if (cars) {
       bool found;
-      rv = cars->HasRememberedDecision(hostname, mServerCert,
-        rememberedDBKey, &found);
+      rv = cars->HasRememberedDecision(hostname,
+                                       mSocketInfo->GetOriginAttributes(),
+                                       mServerCert, rememberedDBKey, &found);
       if (NS_SUCCEEDED(rv) && found) {
         hasRemembered = true;
       }
@@ -2353,8 +2411,8 @@ ClientAuthDataRunnable::RunOnTargetThread()
       }
 
       if (cars && wantRemember) {
-        cars->RememberDecision(hostname, mServerCert,
-                               certChosen ? cert.get() : nullptr);
+        cars->RememberDecision(hostname, mSocketInfo->GetOriginAttributes(),
+                               mServerCert, certChosen ? cert.get() : nullptr);
       }
     }
 
@@ -2426,10 +2484,6 @@ nsSSLIOLayerImportFD(PRFileDesc* fd,
     goto loser;
   }
 
-  // This is an optimization to make sure the identity info dataset is parsed
-  // and loaded on a separate thread and can be overlapped with network latency.
-  EnsureServerVerificationInitialized();
-
   return sslSock;
 loser:
   if (sslSock) {
@@ -2437,6 +2491,20 @@ loser:
   }
   return nullptr;
 }
+
+static const SSLSignatureScheme sEnabledSignatureSchemes[] = {
+  ssl_sig_ecdsa_secp256r1_sha256,
+  ssl_sig_ecdsa_secp384r1_sha384,
+  ssl_sig_ecdsa_secp521r1_sha512,
+  ssl_sig_rsa_pss_sha256,
+  ssl_sig_rsa_pss_sha384,
+  ssl_sig_rsa_pss_sha512,
+  ssl_sig_rsa_pkcs1_sha256,
+  ssl_sig_rsa_pkcs1_sha384,
+  ssl_sig_rsa_pkcs1_sha512,
+  ssl_sig_ecdsa_sha1,
+  ssl_sig_rsa_pkcs1_sha1,
+};
 
 static nsresult
 nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
@@ -2500,8 +2568,34 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
     }
   }
 
+  // Include a modest set of named groups.
+  const SSLNamedGroup namedGroups[] = {
+    ssl_grp_ec_curve25519, ssl_grp_ec_secp256r1, ssl_grp_ec_secp384r1,
+    ssl_grp_ec_secp521r1, ssl_grp_ffdhe_2048, ssl_grp_ffdhe_3072
+  };
+  if (SECSuccess != SSL_NamedGroupConfig(fd, namedGroups,
+                                         mozilla::ArrayLength(namedGroups))) {
+    return NS_ERROR_FAILURE;
+  }
+  // This ensures that we send key shares for X25519 and P-256 in TLS 1.3, so
+  // that servers are less likely to use HelloRetryRequest.
+  if (SECSuccess != SSL_SendAdditionalKeyShares(fd, 1)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  if (SECSuccess != SSL_SignatureSchemePrefSet(fd, sEnabledSignatureSchemes,
+                      mozilla::ArrayLength(sEnabledSignatureSchemes))) {
+    return NS_ERROR_FAILURE;
+  }
+
   bool enabled = infoObject->SharedState().IsOCSPStaplingEnabled();
   if (SECSuccess != SSL_OptionSet(fd, SSL_ENABLE_OCSP_STAPLING, enabled)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  bool sctsEnabled = infoObject->SharedState().IsSignedCertTimestampsEnabled();
+  if (SECSuccess != SSL_OptionSet(fd, SSL_ENABLE_SIGNED_CERT_TIMESTAMPS,
+      sctsEnabled)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -2528,6 +2622,9 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
   peerId.Append(host);
   peerId.Append(':');
   peerId.AppendInt(port);
+  nsAutoCString suffix;
+  infoObject->GetOriginAttributes().CreateSuffix(suffix);
+  peerId.Append(suffix);
   if (SECSuccess != SSL_SetSockPeerID(fd, peerId.get())) {
     return NS_ERROR_FAILURE;
   }
@@ -2540,6 +2637,7 @@ nsSSLIOLayerAddToSocket(int32_t family,
                         const char* host,
                         int32_t port,
                         nsIProxyInfo* proxy,
+                        const NeckoOriginAttributes& originAttributes,
                         PRFileDesc* fd,
                         nsISupports** info,
                         bool forSTARTTLS,
@@ -2560,6 +2658,7 @@ nsSSLIOLayerAddToSocket(int32_t family,
   infoObject->SetForSTARTTLS(forSTARTTLS);
   infoObject->SetHostName(host);
   infoObject->SetPort(port);
+  infoObject->SetOriginAttributes(originAttributes);
 
   bool haveProxy = false;
   if (proxy) {

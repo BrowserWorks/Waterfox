@@ -3,6 +3,7 @@
 /* global OS, HostManifestManager, NativeApp */
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
+Cu.import("resource://gre/modules/ExtensionCommon.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Schemas.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -82,6 +83,22 @@ let context = {
   callOnClose: () => {},
   forgetOnClose: () => {},
 };
+
+class MockContext extends ExtensionCommon.BaseContext {
+  constructor(extensionId) {
+    let fakeExtension = {id: extensionId};
+    super("testEnv", fakeExtension);
+    this.sandbox = Cu.Sandbox(global);
+  }
+
+  get cloneScope() {
+    return global;
+  }
+
+  get principal() {
+    return Cu.getObjectPrincipal(this.sandbox);
+  }
+}
 
 let templateManifest = {
   name: "test",
@@ -239,7 +256,7 @@ while True:
     yield OS.File.writeAtomic(scriptPath, SCRIPT);
 
     let batPath = OS.Path.join(userDir.path, "wontdie.bat");
-    let batBody = `@ECHO OFF\n${PYTHON} -u ${scriptPath} %*\n`;
+    let batBody = `@ECHO OFF\n${PYTHON} -u "${scriptPath}" %*\n`;
     yield OS.File.writeAtomic(batPath, batBody);
     yield OS.File.setPermissions(batPath, {unixMode: 0o755});
 
@@ -255,8 +272,8 @@ while True:
     yield writeManifest(manifestPath, manifest);
   }
 
-  let extension = {id: ID};
-  let app = new NativeApp(extension, context, "wontdie");
+  let mockContext = new MockContext(ID);
+  let app = new NativeApp(mockContext, "wontdie");
 
   // send a message and wait for the reply to make sure the app is running
   let MSG = "test";
@@ -269,7 +286,8 @@ while True:
     app.on("message", listener);
   });
 
-  app.send(MSG);
+  let buffer = NativeApp.encodeMessage(mockContext, MSG);
+  app.send(buffer);
   yield recvPromise;
 
   app._cleanup();

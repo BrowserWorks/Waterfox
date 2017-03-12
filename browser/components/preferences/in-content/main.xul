@@ -253,7 +253,7 @@
       <menuitem value="de" label="German - Deutsch"/>
       <menuitem value="el" label="Greek - Ελληνικά"/>
       <menuitem value="en-GB" label="English (British) - English (British)"/>
-      <menuitem value="en-US" label="English (American) - English (American)"/>
+      <menuitem value="en-US" label="English (US) - English (US)"/>
       <menuitem value="en-ZA" label="English (South African) - English (South African)"/>
       <menuitem value="eo" label="Esperanto - Esperanto"/>
       <menuitem value="es-AR" label="Spanish (Argentina) - Español (de Argentina)"/>

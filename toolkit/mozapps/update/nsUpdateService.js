@@ -27,12 +27,10 @@ const PREF_APP_UPDATE_BACKGROUNDMAXERRORS  = "app.update.backgroundMaxErrors";
 const PREF_APP_UPDATE_CANCELATIONS         = "app.update.cancelations";
 const PREF_APP_UPDATE_CANCELATIONS_OSX     = "app.update.cancelations.osx";
 const PREF_APP_UPDATE_CANCELATIONS_OSX_MAX = "app.update.cancelations.osx.max";
-const PREF_APP_UPDATE_CERT_REQUIREBUILTIN  = "app.update.cert.requireBuiltIn";
 const PREF_APP_UPDATE_ELEVATE_NEVER        = "app.update.elevate.never";
 const PREF_APP_UPDATE_ELEVATE_VERSION      = "app.update.elevate.version";
 const PREF_APP_UPDATE_ENABLED              = "app.update.enabled";
 const PREF_APP_UPDATE_IDLETIME             = "app.update.idletime";
-const PREF_APP_UPDATE_INTERVAL             = "app.update.interval";
 const PREF_APP_UPDATE_LOG                  = "app.update.log";
 const PREF_APP_UPDATE_NOTIFIEDUNSUPPORTED  = "app.update.notifiedUnsupported";
 const PREF_APP_UPDATE_POSTUPDATE           = "app.update.postupdate";
@@ -46,7 +44,6 @@ const PREF_APP_UPDATE_SOCKET_RETRYTIMEOUT  = "app.update.socket.retryTimeout";
 const PREF_APP_UPDATE_STAGING_ENABLED      = "app.update.staging.enabled";
 const PREF_APP_UPDATE_URL                  = "app.update.url";
 const PREF_APP_UPDATE_URL_DETAILS          = "app.update.url.details";
-const PREF_APP_UPDATE_URL_OVERRIDE         = "app.update.url.override";
 
 const PREFBRANCH_APP_UPDATE_NEVER = "app.update.never.";
 
@@ -56,14 +53,11 @@ const URI_UPDATE_NS             = "http://www.mozilla.org/2005/app-update";
 const URI_UPDATE_PROMPT_DIALOG  = "chrome://mozapps/content/update/updates.xul";
 const URI_UPDATES_PROPERTIES    = "chrome://mozapps/locale/update/updates.properties";
 
-const KEY_GRED            = "GreD";
 const KEY_UPDROOT         = "UpdRootD";
 const KEY_EXECUTABLE      = "XREExeF";
 // Gonk only
 const KEY_UPDATE_ARCHIVE_DIR = "UpdArchD";
 
-const DIR_UPDATED         = "updated";
-const DIR_UPDATED_APP     = "Updated.app";
 const DIR_UPDATES         = "updates";
 
 const FILE_ACTIVE_UPDATE_XML = "active-update.xml";
@@ -202,7 +196,6 @@ const APPID_TO_TOPIC = {
   "{33cb9019-c295-46dd-be21-8c4936574bee}": "xul-window-visible",
 };
 
-var gLocale = null;
 var gUpdateMutexHandle = null;
 
 // Gonk only
@@ -494,7 +487,7 @@ function getCanApplyUpdates() {
         }
       }
     } catch (e) {
-       LOG("getCanApplyUpdates - unable to apply updates. Exception: " + e);
+      LOG("getCanApplyUpdates - unable to apply updates. Exception: " + e);
       // No write privileges to install directory
       return false;
     }
@@ -510,8 +503,7 @@ function getCanApplyUpdates() {
  *
  * @return true if updates can be staged for this session.
  */
-XPCOMUtils.defineLazyGetter(this, "gCanStageUpdatesSession",
-                            function aus_gCanStageUpdatesSession() {
+XPCOMUtils.defineLazyGetter(this, "gCanStageUpdatesSession", function aus_gCSUS() {
   if (getElevationRequired()) {
     LOG("gCanStageUpdatesSession - unable to stage updates because elevation " +
         "is required.");
@@ -542,8 +534,8 @@ XPCOMUtils.defineLazyGetter(this, "gCanStageUpdatesSession",
       updateTestFile.remove(false);
     }
   } catch (e) {
-     LOG("gCanStageUpdatesSession - unable to stage updates. Exception: " +
-         e);
+    LOG("gCanStageUpdatesSession - unable to stage updates. Exception: " +
+        e);
     // No write privileges
     return false;
   }
@@ -558,7 +550,7 @@ XPCOMUtils.defineLazyGetter(this, "gCanStageUpdatesSession",
  * @return true if updates can be staged.
  */
 function getCanStageUpdates() {
-  // If background updates are disabled, then just bail out!
+  // If staging updates are disabled, then just bail out!
   if (!getPref("getBoolPref", PREF_APP_UPDATE_STAGING_ENABLED, false)) {
     LOG("getCanStageUpdates - staging updates is disabled by preference " +
         PREF_APP_UPDATE_STAGING_ENABLED);
@@ -674,18 +666,6 @@ function binaryToHex(input) {
  */
 function getUpdateDirCreate(pathArray) {
   return FileUtils.getDir(KEY_UPDROOT, pathArray, true);
-}
-
-/**
- * Gets the specified directory at the specified hierarchy under the
- * update root directory and without creating it if it doesn't exist.
- * @param   pathArray
- *          An array of path components to locate beneath the directory
- *          specified by |key|
- * @return  nsIFile object for the location specified.
- */
-function getUpdateDirNoCreate(pathArray) {
-  return FileUtils.getDir(KEY_UPDROOT, pathArray, false);
 }
 
 /**
@@ -955,19 +935,19 @@ function shouldUseService() {
   // http://msdn.microsoft.com/en-us/library/ms724833%28v=vs.85%29.aspx
   const SZCSDVERSIONLENGTH = 128;
   const OSVERSIONINFOEXW = new ctypes.StructType('OSVERSIONINFOEXW',
-  [
-    {dwOSVersionInfoSize: DWORD},
-    {dwMajorVersion: DWORD},
-    {dwMinorVersion: DWORD},
-    {dwBuildNumber: DWORD},
-    {dwPlatformId: DWORD},
-    {szCSDVersion: ctypes.ArrayType(WCHAR, SZCSDVERSIONLENGTH)},
-    {wServicePackMajor: WORD},
-    {wServicePackMinor: WORD},
-    {wSuiteMask: WORD},
-    {wProductType: BYTE},
-    {wReserved: BYTE}
-  ]);
+    [
+      {dwOSVersionInfoSize: DWORD},
+      {dwMajorVersion: DWORD},
+      {dwMinorVersion: DWORD},
+      {dwBuildNumber: DWORD},
+      {dwPlatformId: DWORD},
+      {szCSDVersion: ctypes.ArrayType(WCHAR, SZCSDVERSIONLENGTH)},
+      {wServicePackMajor: WORD},
+      {wServicePackMinor: WORD},
+      {wSuiteMask: WORD},
+      {wProductType: BYTE},
+      {wReserved: BYTE}
+    ]);
 
   let kernel32 = false;
   try {
@@ -1051,9 +1031,9 @@ function cleanUpUpdatesDir(aRemovePatchFiles = true) {
   }
 
   // Preserve the last update log file for debugging purposes.
-  let file = updateDir.clone();
-  file.append(FILE_UPDATE_LOG);
-  if (file.exists()) {
+  let updateLogFile = updateDir.clone();
+  updateLogFile.append(FILE_UPDATE_LOG);
+  if (updateLogFile.exists()) {
     let dir = updateDir.parent;
     let logFile = dir.clone();
     logFile.append(FILE_LAST_UPDATE_LOG);
@@ -1067,19 +1047,19 @@ function cleanUpUpdatesDir(aRemovePatchFiles = true) {
     }
 
     try {
-      file.moveTo(dir, FILE_LAST_UPDATE_LOG);
+      updateLogFile.moveTo(dir, FILE_LAST_UPDATE_LOG);
     } catch (e) {
-      LOG("cleanUpUpdatesDir - failed to rename file " + file.path +
+      LOG("cleanUpUpdatesDir - failed to rename file " + updateLogFile.path +
           " to " + FILE_LAST_UPDATE_LOG);
     }
   }
 
   if (aRemovePatchFiles) {
-    let e = updateDir.directoryEntries;
-    while (e.hasMoreElements()) {
-      let f = e.getNext().QueryInterface(Ci.nsIFile);
+    let dirEntries = updateDir.directoryEntries;
+    while (dirEntries.hasMoreElements()) {
+      let file = dirEntries.getNext().QueryInterface(Ci.nsIFile);
       if (AppConstants.platform == "gonk") {
-        if (f.leafName == FILE_UPDATE_LINK) {
+        if (file.leafName == FILE_UPDATE_LINK) {
           let linkedFile = getFileFromUpdateLink(updateDir);
           if (linkedFile && linkedFile.exists()) {
             linkedFile.remove(false);
@@ -1092,9 +1072,9 @@ function cleanUpUpdatesDir(aRemovePatchFiles = true) {
       // which is itself a directory and the MozUpdater directory on platforms
       // other than Windows.
       try {
-        f.remove(true);
+        file.remove(true);
       } catch (e) {
-        LOG("cleanUpUpdatesDir - failed to remove file " + f.path);
+        LOG("cleanUpUpdatesDir - failed to remove file " + file.path);
       }
     }
   }
@@ -1225,7 +1205,9 @@ function handleUpdateFailure(update, errorCode) {
       let maxCancels = getPref("getIntPref",
                                PREF_APP_UPDATE_CANCELATIONS_OSX_MAX,
                                DEFAULT_CANCELATIONS_OSX_MAX);
-      if (osxCancelations >= DEFAULT_CANCELATIONS_OSX_MAX) {
+      // Prevent the preference from setting a value greater than 5.
+      maxCancels = Math.min(maxCancels, 5);
+      if (osxCancelations >= maxCancels) {
         cleanupActiveUpdate();
       } else {
         writeStatusFile(getUpdatesDir(),
@@ -1257,7 +1239,8 @@ function handleUpdateFailure(update, errorCode) {
     var maxFail = getPref("getIntPref",
                           PREF_APP_UPDATE_SERVICE_MAXERRORS,
                           DEFAULT_SERVICE_MAX_ERRORS);
-
+    // Prevent the preference from setting a value greater than 10.
+    maxFail = Math.min(maxFail, 10);
     // As a safety, when the service reaches maximum failures, it will
     // disable itself and fallback to using the normal update mechanism
     // without the service.
@@ -1621,7 +1604,7 @@ function Update(update) {
     this.displayVersion = this.appVersion;
   }
 
-  // Don't allow the background interval to be greater than 10 minutes.
+  // Don't allow the background download interval to be greater than 10 minutes.
   this.backgroundInterval = Math.min(this.backgroundInterval, 600);
 
   // The Update Name is either the string provided by the <update> element, or
@@ -2181,8 +2164,8 @@ UpdateService.prototype = {
     let errCount = getPref("getIntPref", PREF_APP_UPDATE_BACKGROUNDERRORS, 0);
     errCount++;
     Services.prefs.setIntPref(PREF_APP_UPDATE_BACKGROUNDERRORS, errCount);
-    let maxErrors = getPref("getIntPref", PREF_APP_UPDATE_BACKGROUNDMAXERRORS,
-                            10);
+    // Don't allow the preference to set a value greater than 20 for max errors.
+    let maxErrors = Math.min(getPref("getIntPref", PREF_APP_UPDATE_BACKGROUNDMAXERRORS, 10), 20);
 
     if (errCount >= maxErrors) {
       let prompter = Cc["@mozilla.org/updates/update-prompt;1"].
@@ -2324,14 +2307,6 @@ UpdateService.prototype = {
       }
     }
 
-    let prefType = Services.prefs.getPrefType(PREF_APP_UPDATE_URL_OVERRIDE);
-    let overridePrefHasValue = prefType != Ci.nsIPrefBranch.PREF_INVALID;
-    // Histogram IDs:
-    // UPDATE_HAS_PREF_URL_OVERRIDE_EXTERNAL
-    // UPDATE_HAS_PREF_URL_OVERRIDE_NOTIFY
-    AUSTLMY.pingGeneric("UPDATE_HAS_PREF_URL_OVERRIDE_" + this._pingSuffix,
-                        overridePrefHasValue, false);
-
     // If a download is in progress or the patch has been staged do nothing.
     if (this.isDownloading) {
       AUSTLMY.pingCheckCode(this._pingSuffix, AUSTLMY.CHK_IS_DOWNLOADING);
@@ -2362,18 +2337,8 @@ UpdateService.prototype = {
     } else if (!UpdateUtils.ABI) {
       AUSTLMY.pingCheckCode(this._pingSuffix, AUSTLMY.CHK_NO_OS_ABI);
     } else if (!validUpdateURL) {
-      if (overridePrefHasValue) {
-        if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_URL_OVERRIDE)) {
-          AUSTLMY.pingCheckCode(this._pingSuffix,
-                                AUSTLMY.CHK_INVALID_USER_OVERRIDE_URL);
-        } else {
-          AUSTLMY.pingCheckCode(this._pingSuffix,
-                                AUSTLMY.CHK_INVALID_DEFAULT_OVERRIDE_URL);
-        }
-      } else {
-        AUSTLMY.pingCheckCode(this._pingSuffix,
-                              AUSTLMY.CHK_INVALID_DEFAULT_URL);
-      }
+      AUSTLMY.pingCheckCode(this._pingSuffix,
+                            AUSTLMY.CHK_INVALID_DEFAULT_URL);
     } else if (!getPref("getBoolPref", PREF_APP_UPDATE_ENABLED, true)) {
       AUSTLMY.pingCheckCode(this._pingSuffix, AUSTLMY.CHK_PREF_DISABLED);
     } else if (!hasUpdateMutex()) {
@@ -2476,8 +2441,7 @@ UpdateService.prototype = {
           }
         } else {
           let numCancels = getPref("getIntPref",
-                                   PREF_APP_UPDATE_CANCELATIONS_OSX,
-                                   0);
+                                   PREF_APP_UPDATE_CANCELATIONS_OSX, 0);
           let rejectedVersion = getPref("getCharPref",
                                         PREF_APP_UPDATE_ELEVATE_NEVER, "");
           let maxCancels = getPref("getIntPref",
@@ -3123,7 +3087,6 @@ UpdateManager.prototype = {
     if (!update) {
       return;
     }
-    var updateSucceeded = true;
     var status = readStatusFile(getUpdatesDir());
     pingStateAndStatusCodes(update, false, status);
     var parts = status.split(":");
@@ -3143,7 +3106,6 @@ UpdateManager.prototype = {
     cleanUpUpdatesDir(false);
 
     if (update.state == STATE_FAILED && parts[1]) {
-      updateSucceeded = false;
       if (!handleUpdateFailure(update, parts[1])) {
         handleFallbackToCompleteUpdate(update, true);
       }
@@ -3241,12 +3203,12 @@ Checker.prototype = {
   /**
    * The XMLHttpRequest object that performs the connection.
    */
-  _request  : null,
+  _request: null,
 
   /**
    * The nsIUpdateCheckListener callback
    */
-  _callback : null,
+  _callback: null,
 
   /**
    * The URL of the update service XML file to connect to that contains details
@@ -3255,16 +3217,11 @@ Checker.prototype = {
   getUpdateURL: function UC_getUpdateURL(force) {
     this._forced = force;
 
-    // Use the override URL if specified.
-    let url = getPref("getCharPref", PREF_APP_UPDATE_URL_OVERRIDE, null);
-
-    // Otherwise, construct the update URL from component parts.
-    if (!url) {
-      try {
-        url = Services.prefs.getDefaultBranch(null).
-              getCharPref(PREF_APP_UPDATE_URL);
-      } catch (e) {
-      }
+    let url;
+    try {
+      url = Services.prefs.getDefaultBranch(null).
+            getCharPref(PREF_APP_UPDATE_URL);
+    } catch (e) {
     }
 
     if (!url || url == "") {
@@ -3298,9 +3255,7 @@ Checker.prototype = {
 
     this._request = new XMLHttpRequest();
     this._request.open("GET", url, true);
-    var allowNonBuiltIn = !getPref("getBoolPref",
-                                   PREF_APP_UPDATE_CERT_REQUIREBUILTIN, true);
-    this._request.channel.notificationCallbacks = new gCertUtils.BadCertHandler(allowNonBuiltIn);
+    this._request.channel.notificationCallbacks = new gCertUtils.BadCertHandler(false);
     // Prevent the request from reading from the cache.
     this._request.channel.loadFlags |= Ci.nsIRequest.LOAD_BYPASS_CACHE;
     // Prevent the request from writing to the cache.
@@ -4033,7 +3988,7 @@ Downloader.prototype = {
    * @param   status
    *          Status code containing the reason for the cessation.
    */
-  onStopRequest: function  Downloader_onStopRequest(request, context, status) {
+  onStopRequest: function Downloader_onStopRequest(request, context, status) {
     if (request instanceof Ci.nsIIncrementalDownload)
       LOG("Downloader:onStopRequest - original URI spec: " + request.URI.spec +
           ", final URI spec: " + request.finalURI.spec + ", status: " + status);
@@ -4047,8 +4002,12 @@ Downloader.prototype = {
     var deleteActiveUpdate = false;
     var retryTimeout = getPref("getIntPref", PREF_APP_UPDATE_SOCKET_RETRYTIMEOUT,
                                DEFAULT_SOCKET_RETRYTIMEOUT);
+    // Prevent the preference from setting a value greater than 10000.
+    retryTimeout = Math.min(retryTimeout, 10000);
     var maxFail = getPref("getIntPref", PREF_APP_UPDATE_SOCKET_MAXERRORS,
                           DEFAULT_SOCKET_MAX_ERRORS);
+    // Prevent the preference from setting a value greater than 20.
+    maxFail = Math.min(maxFail, 20);
     LOG("Downloader:onStopRequest - status: " + status + ", " +
         "current fail: " + this.updateService._consecutiveSocketErrors + ", " +
         "max fail: " + maxFail + ", " + "retryTimeout: " + retryTimeout);
@@ -4470,8 +4429,8 @@ UpdatePrompt.prototype = {
     if (page == "updatesavailable") {
       var idleService = Cc["@mozilla.org/widget/idleservice;1"].
                         getService(Ci.nsIIdleService);
-
-      const IDLE_TIME = getPref("getIntPref", PREF_APP_UPDATE_IDLETIME, 60);
+      // Don't allow the preference to set a value greater than 600 seconds for the idle time.
+      const IDLE_TIME = Math.min(getPref("getIntPref", PREF_APP_UPDATE_IDLETIME, 60), 600);
       if (idleService.idleTime / 1000 >= IDLE_TIME) {
         this._showUI(parent, uri, features, name, page, update);
         return;
@@ -4515,7 +4474,8 @@ UpdatePrompt.prototype = {
     var idleService = Cc["@mozilla.org/widget/idleservice;1"].
                       getService(Ci.nsIIdleService);
 
-    const IDLE_TIME = getPref("getIntPref", PREF_APP_UPDATE_IDLETIME, 60);
+    // Don't allow the preference to set a value greater than 600 seconds for the idle time.
+    const IDLE_TIME = Math.min(getPref("getIntPref", PREF_APP_UPDATE_IDLETIME, 60), 600);
     if (idleService.idleTime / 1000 >= IDLE_TIME) {
       this._showUI(parent, uri, features, name, page, update);
     } else {
@@ -4558,9 +4518,9 @@ UpdatePrompt.prototype = {
   _showUI: function UP__showUI(parent, uri, features, name, page, update) {
     var ary = null;
     if (update) {
-      ary = Cc["@mozilla.org/supports-array;1"].
-            createInstance(Ci.nsISupportsArray);
-      ary.AppendElement(update);
+      ary = Cc["@mozilla.org/array;1"].
+            createInstance(Ci.nsIMutableArray);
+      ary.appendElement(update, /* weak =*/ false);
     }
 
     var win = this._getUpdateWindow();

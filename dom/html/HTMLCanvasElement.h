@@ -41,9 +41,9 @@ class VRLayerChild;
 } // namespace gfx
 
 namespace dom {
+class BlobCallback;
 class CanvasCaptureMediaStream;
 class File;
-class FileCallback;
 class HTMLCanvasPrintState;
 class OffscreenCanvas;
 class PrintCallback;
@@ -182,7 +182,7 @@ public:
   }
 
   void ToBlob(JSContext* aCx,
-              FileCallback& aCallback,
+              BlobCallback& aCallback,
               const nsAString& aType,
               JS::Handle<JS::Value> aParams,
               ErrorResult& aRv);
@@ -275,6 +275,12 @@ public:
    * that has requested a frame capture.
    */
   bool IsFrameCaptureRequested() const;
+
+  /*
+   * Processes destroyed FrameCaptureListeners and removes them if necessary.
+   * Should there be none left, the FrameRefreshObserver will be unregistered.
+   */
+  void ProcessDestroyedFrameListeners();
 
   /*
    * Called by the RefreshDriver hook when a frame has been captured.

@@ -194,10 +194,39 @@ Module gModules[] = {
 ////////////////////////////////////////////////////////////////////////////////
 //// Local Functions
 
-void tracefunc (void *aClosure, const char *aStmt)
+int tracefunc (unsigned aReason, void *aClosure, void *aP, void *aX)
 {
-  MOZ_LOG(gStorageLog, LogLevel::Debug, ("sqlite3_trace on %p for '%s'", aClosure,
-                                     aStmt));
+  switch (aReason) {
+    case SQLITE_TRACE_STMT: {
+      // aP is a pointer to the prepared statement.
+      sqlite3_stmt* stmt = static_cast<sqlite3_stmt*>(aP);
+      // aX is a pointer to a string containing the unexpanded SQL or a comment,
+      // starting with "--"" in case of a trigger.
+      char* expanded = static_cast<char*>(aX);
+      // Simulate what sqlite_trace was doing.
+      if (!::strncmp(expanded, "--", 2)) {
+        MOZ_LOG(gStorageLog, LogLevel::Debug,
+          ("TRACE_STMT on %p: '%s'", aClosure, expanded));
+      } else {
+        char* sql = ::sqlite3_expanded_sql(stmt);
+        MOZ_LOG(gStorageLog, LogLevel::Debug,
+          ("TRACE_STMT on %p: '%s'", aClosure, sql));
+        ::sqlite3_free(sql);
+      }
+      break;
+    }
+    case SQLITE_TRACE_PROFILE: {
+      // aX is pointer to a 64bit integer containing nanoseconds it took to
+      // execute the last command.
+      sqlite_int64 time = *(static_cast<sqlite_int64*>(aX)) / 1000000;
+      if (time > 0) {
+        MOZ_LOG(gStorageLog, LogLevel::Debug,
+          ("TRACE_TIME on %p: %dms", aClosure, time));
+      }
+      break;
+    }
+  }
+  return 0;
 }
 
 void
@@ -426,7 +455,7 @@ public:
   }
 
   NS_IMETHOD Run() override {
-    MOZ_ASSERT (NS_GetCurrentThread() == mClone->getAsyncExecutionTarget());
+    MOZ_ASSERT (NS_GetCurrentThread() == mConnection->getAsyncExecutionTarget());
 
     nsresult rv = mConnection->initializeClone(mClone, mReadOnly);
     if (NS_FAILED(rv)) {
@@ -701,7 +730,9 @@ Connection::initializeInternal()
   // SQLite tracing can slow down queries (especially long queries)
   // significantly. Don't trace unless the user is actively monitoring SQLite.
   if (MOZ_LOG_TEST(gStorageLog, LogLevel::Debug)) {
-    ::sqlite3_trace(mDBConn, tracefunc, this);
+    ::sqlite3_trace_v2(mDBConn,
+                       SQLITE_TRACE_STMT | SQLITE_TRACE_PROFILE,
+                       tracefunc, this);
 
     MOZ_LOG(gStorageLog, LogLevel::Debug, ("Opening connection to '%s' (%p)",
                                         mTelemetryFilename.get(), this));
@@ -730,6 +761,10 @@ Connection::initializeInternal()
     mDBConn = nullptr;
     return convertResultCode(srv);
   }
+
+#if defined(MOZ_MEMORY_TEMP_STORE_PRAGMA)
+  (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING("PRAGMA temp_store = 2;"));
+#endif
 
   // Register our built-in SQL functions.
   srv = registerFunctions(mDBConn);
@@ -1332,7 +1367,10 @@ Connection::AsyncClone(bool aReadOnly,
 
   RefPtr<AsyncInitializeClone> initEvent =
     new AsyncInitializeClone(this, clone, aReadOnly, aCallback);
-  nsCOMPtr<nsIEventTarget> target = clone->getAsyncExecutionTarget();
+  // Dispatch to our async thread, since the originating connection must remain
+  // valid and open for the whole cloning process.  This also ensures we are
+  // properly serialized with a `close` operation, rather than race with it.
+  nsCOMPtr<nsIEventTarget> target = getAsyncExecutionTarget();
   if (!target) {
     return NS_ERROR_UNEXPECTED;
   }

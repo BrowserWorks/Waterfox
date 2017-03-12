@@ -6,10 +6,11 @@
 #if !defined(MediaData_h)
 #define MediaData_h
 
+#include "AudioSampleFormat.h"
+#include "ImageTypes.h"
 #include "nsSize.h"
 #include "mozilla/gfx/Rect.h"
 #include "nsRect.h"
-#include "AudioSampleFormat.h"
 #include "nsIMemoryReporter.h"
 #include "SharedBuffer.h"
 #include "mozilla/RefPtr.h"
@@ -447,6 +448,7 @@ public:
     };
 
     Plane mPlanes[3];
+    YUVColorSpace mYUVColorSpace = YUVColorSpace::BT601;
   };
 
   // Constructs a VideoData object. If aImage is nullptr, creates a new Image
@@ -636,6 +638,10 @@ public:
   // Used by the Vorbis decoder and Ogg demuxer.
   // Indicates that this is the last packet of the stream.
   bool mEOS = false;
+
+  // Indicate to the audio decoder that mDiscardPadding frames should be
+  // trimmed.
+  uint32_t mDiscardPadding = 0;
 
   RefPtr<SharedTrackInfo> mTrackInfo;
 

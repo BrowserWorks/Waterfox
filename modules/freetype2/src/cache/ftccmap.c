@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType CharMap cache (body)                                        */
 /*                                                                         */
-/*  Copyright 2000-2014 by                                                 */
+/*  Copyright 2000-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -50,7 +50,7 @@
 
   /* compute a query/node hash */
 #define FTC_CMAP_HASH( faceid, index, charcode )         \
-          ( _FTC_FACE_ID_HASH( faceid ) + 211 * (index) + \
+          ( FTC_FACE_ID_HASH( faceid ) + 211 * (index) + \
             ( (charcode) / FTC_CMAP_INDICES_MAX )      )
 
   /* the charmap query */
@@ -63,8 +63,6 @@
   } FTC_CMapQueryRec, *FTC_CMapQuery;
 
 #define FTC_CMAP_QUERY( x )  ((FTC_CMapQuery)(x))
-#define FTC_CMAP_QUERY_HASH( x )                                         \
-          FTC_CMAP_HASH( (x)->face_id, (x)->cmap_index, (x)->char_code )
 
   /* the cmap cache node */
   typedef struct  FTC_CMapNodeRec_
@@ -78,8 +76,6 @@
   } FTC_CMapNodeRec, *FTC_CMapNode;
 
 #define FTC_CMAP_NODE( x ) ( (FTC_CMapNode)( x ) )
-#define FTC_CMAP_NODE_HASH( x )                                      \
-          FTC_CMAP_HASH( (x)->face_id, (x)->cmap_index, (x)->first )
 
   /* if (indices[n] == FTC_CMAP_UNKNOWN), we assume that the corresponding */
   /* glyph indices haven't been queried through FT_Get_Glyph_Index() yet   */
@@ -205,15 +201,15 @@
   static
   const FTC_CacheClassRec  ftc_cmap_cache_class =
   {
-    ftc_cmap_node_new,
-    ftc_cmap_node_weight,
-    ftc_cmap_node_compare,
-    ftc_cmap_node_remove_faceid,
-    ftc_cmap_node_free,
+    ftc_cmap_node_new,           /* FTC_Node_NewFunc      node_new           */
+    ftc_cmap_node_weight,        /* FTC_Node_WeightFunc   node_weight        */
+    ftc_cmap_node_compare,       /* FTC_Node_CompareFunc  node_compare       */
+    ftc_cmap_node_remove_faceid, /* FTC_Node_CompareFunc  node_remove_faceid */
+    ftc_cmap_node_free,          /* FTC_Node_FreeFunc     node_free          */
 
     sizeof ( FTC_CacheRec ),
-    ftc_cache_init,
-    ftc_cache_done,
+    ftc_cache_init,              /* FTC_Cache_InitFunc    cache_init         */
+    ftc_cache_done,              /* FTC_Cache_DoneFunc    cache_done         */
   };
 
 
@@ -242,7 +238,7 @@
     FTC_Node          node;
     FT_Error          error;
     FT_UInt           gindex = 0;
-    FT_PtrDist        hash;
+    FT_Offset         hash;
     FT_Int            no_cmap_change = 0;
 
 
@@ -263,14 +259,11 @@
       return 0;
     }
 
-    if ( !face_id )
-      return 0;
-
     query.face_id    = face_id;
     query.cmap_index = (FT_UInt)cmap_index;
     query.char_code  = char_code;
 
-    hash = FTC_CMAP_HASH( face_id, cmap_index, char_code );
+    hash = FTC_CMAP_HASH( face_id, (FT_UInt)cmap_index, char_code );
 
 #if 1
     FTC_CACHE_LOOKUP_CMP( cache, ftc_cmap_node_compare, hash, &query,

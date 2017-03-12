@@ -27,6 +27,9 @@ FoldTests(MIRGraph& graph);
 MOZ_MUST_USE bool
 SplitCriticalEdges(MIRGraph& graph);
 
+bool
+IsUint32Type(const MDefinition* def);
+
 enum Observability {
     ConservativeObservability,
     AggressiveObservability
@@ -106,8 +109,21 @@ struct SimpleLinearSum
     {}
 };
 
+// Math done in a Linear sum can either be in a modulo space, in which case
+// overflow are wrapped around, or they can be computed in the integer-space in
+// which case we have to check that no overflow can happen when summing
+// constants.
+//
+// When the caller ignores which space it is, the definition would be used to
+// deduce it.
+enum class MathSpace {
+    Modulo,
+    Infinite,
+    Unknown
+};
+
 SimpleLinearSum
-ExtractLinearSum(MDefinition* ins);
+ExtractLinearSum(MDefinition* ins, MathSpace space = MathSpace::Unknown);
 
 MOZ_MUST_USE bool
 ExtractLinearInequality(MTest* test, BranchDirection direction,
@@ -153,7 +169,7 @@ class LinearSum
 
     // Unlike the above function, on failure this leaves the sum unchanged and
     // it can still be used.
-    MOZ_MUST_USE bool divide(int32_t scale);
+    MOZ_MUST_USE bool divide(uint32_t scale);
 
     int32_t constant() const { return constant_; }
     size_t numTerms() const { return terms_.length(); }
@@ -192,6 +208,9 @@ DeadIfUnused(const MDefinition* def);
 
 bool
 IsDiscardable(const MDefinition* def);
+
+void
+DumpMIRExpressions(MIRGraph& graph);
 
 } // namespace jit
 } // namespace js

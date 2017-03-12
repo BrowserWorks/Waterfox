@@ -130,8 +130,8 @@ add_task(function* test_i18n() {
         },
       },
 
-      "content.js": "new " + function(runTests) {
-        runTests((...args) => {
+      "content.js": "new " + function(runTestsFn) {
+        runTestsFn((...args) => {
           browser.runtime.sendMessage(["assertEq", ...args]);
         });
 
@@ -139,7 +139,7 @@ add_task(function* test_i18n() {
       } + `(${runTests})`,
     },
 
-    background: "new " + function(runTests) {
+    background: "new " + function(runTestsFn) {
       browser.runtime.onMessage.addListener(([msg, ...args]) => {
         if (msg == "assertEq") {
           browser.test.assertEq(...args);
@@ -148,7 +148,7 @@ add_task(function* test_i18n() {
         }
       });
 
-      runTests(browser.test.assertEq.bind(browser.test));
+      runTestsFn(browser.test.assertEq.bind(browser.test));
     } + `(${runTests})`,
   });
 
@@ -183,17 +183,14 @@ add_task(function* test_get_accept_languages() {
       browser.test.sendMessage("ready");
     });
 
-    browser.test.onMessage.addListener(([msg, expected]) => {
-      Promise.all([
-        new Promise(
-          resolve => browser.tabs.sendMessage(tabId, "get-results", resolve)),
-        browser.i18n.getAcceptLanguages(),
-      ]).then(([contentResults, backgroundResults]) => {
-        checkResults("contentScript", contentResults, expected);
-        checkResults("background", backgroundResults, expected);
+    browser.test.onMessage.addListener(async ([msg, expected]) => {
+      let contentResults = await browser.tabs.sendMessage(tabId, "get-results");
+      let backgroundResults = await browser.i18n.getAcceptLanguages();
 
-        browser.test.sendMessage("done");
-      });
+      checkResults("contentScript", contentResults, expected);
+      checkResults("background", backgroundResults, expected);
+
+      browser.test.sendMessage("done");
     });
   }
 
@@ -248,7 +245,7 @@ add_task(function* test_get_ui_language() {
     };
   }
 
-  function background(getResults) {
+  function background(getResultsFn) {
     function checkResults(source, results, expected) {
       browser.test.assertEq(
         expected,
@@ -267,7 +264,7 @@ add_task(function* test_get_ui_language() {
     browser.test.onMessage.addListener(([msg, expected]) => {
       browser.tabs.sendMessage(tabId, "get-results", result => {
         checkResults("contentScript", result, expected);
-        checkResults("background", getResults(), expected);
+        checkResults("background", getResultsFn(), expected);
 
         browser.test.sendMessage("done");
       });
@@ -279,9 +276,9 @@ add_task(function* test_get_ui_language() {
     });
   }
 
-  function content(getResults) {
+  function content(getResultsFn) {
     browser.runtime.onMessage.addListener((msg, sender, respond) => {
-      respond(getResults());
+      respond(getResultsFn());
     });
   }
 
@@ -357,17 +354,14 @@ add_task(function* test_detect_language() {
       browser.test.sendMessage("ready");
     });
 
-    browser.test.onMessage.addListener(([msg, expected]) => {
-      Promise.all([
-        browser.i18n.detectLanguage(msg),
-        new Promise(
-          resolve => browser.tabs.sendMessage(tabId, msg, resolve)),
-      ]).then(([backgroundResults, contentResults]) => {
-        checkResult("background", backgroundResults, expected);
-        checkResult("contentScript", contentResults, expected);
+    browser.test.onMessage.addListener(async ([msg, expected]) => {
+      let backgroundResults = await browser.i18n.detectLanguage(msg);
+      let contentResults = await browser.tabs.sendMessage(tabId, msg);
 
-        browser.test.sendMessage("done");
-      });
+      checkResult("background", backgroundResults, expected);
+      checkResult("contentScript", contentResults, expected);
+
+      browser.test.sendMessage("done");
     });
   }
 

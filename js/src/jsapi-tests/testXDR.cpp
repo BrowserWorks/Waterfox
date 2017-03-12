@@ -25,14 +25,16 @@ FreezeThaw(JSContext* cx, JS::HandleScript script)
     JS::SetBuildIdOp(cx, GetBuildId);
 
     // freeze
-    uint32_t nbytes;
-    void* memory = JS_EncodeScript(cx, script, &nbytes);
-    if (!memory)
+    JS::TranscodeBuffer buffer;
+    JS::TranscodeResult rs = JS::EncodeScript(cx, buffer, script);
+    if (rs != JS::TranscodeResult_Ok)
         return nullptr;
 
     // thaw
-    JSScript* script2 = JS_DecodeScript(cx, memory, nbytes);
-    js_free(memory);
+    JS::RootedScript script2(cx);
+    rs = JS::DecodeScript(cx, buffer, &script2);
+    if (rs != JS::TranscodeResult_Ok)
+        return nullptr;
     return script2;
 }
 

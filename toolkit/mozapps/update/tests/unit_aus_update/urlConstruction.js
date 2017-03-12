@@ -53,7 +53,7 @@ function run_test_pt1() {
             "%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/" +
             "updates.xml";
   debugDump("testing url construction - url: " + url);
-  setUpdateURLOverride(url);
+  setUpdateURL(url);
   try {
     gUpdateChecker.checkForUpdates(updateCheckListener, true);
   } catch (e) {
@@ -68,7 +68,7 @@ function check_test_pt1() {
             gAppInfo.appBuildID + "/" + gAppInfo.OS + "_" + getABI() + "/" +
             INSTALL_LOCALE + "/test_channel/" + gAppInfo.platformVersion + "/" +
             getOSVersion() + "/" + getSystemCapabilities() +
-            "/test_distro/test_distro_version/updates.xml?force=1"
+            "/test_distro/test_distro_version/updates.xml?force=1";
   // Log the urls since Assert.equal won't print the entire urls to the log.
   if (gRequestURL != url) {
     logTestInfo("expected url: " + url);
@@ -87,7 +87,7 @@ function run_test_pt2() {
   gCheckFunc = check_test_pt2;
   let url = URL_PREFIX + "%CHANNEL%/updates.xml?custom=%CUSTOM%";
   debugDump("testing url constructed with %CHANNEL% - " + url);
-  setUpdateURLOverride(url);
+  setUpdateURL(url);
   gDefaultPrefBranch.setCharPref(PREFBRANCH_APP_PARTNER + "test_partner1",
                                  "test_partner1");
   gDefaultPrefBranch.setCharPref(PREFBRANCH_APP_PARTNER + "test_partner2",
@@ -161,7 +161,7 @@ function getOSVersion() {
     }
     osVersion = encodeURIComponent(osVersion);
   }
-  return osVersion
+  return osVersion;
 }
 
 function getServicePack() {
@@ -179,7 +179,7 @@ function getServicePack() {
   // http://msdn.microsoft.com/en-us/library/ms724833%28v=vs.85%29.aspx
   const SZCSDVERSIONLENGTH = 128;
   const OSVERSIONINFOEXW = new ctypes.StructType('OSVERSIONINFOEXW',
-      [
+    [
       {dwOSVersionInfoSize: DWORD},
       {dwMajorVersion: DWORD},
       {dwMinorVersion: DWORD},
@@ -191,7 +191,7 @@ function getServicePack() {
       {wSuiteMask: WORD},
       {wProductType: BYTE},
       {wReserved: BYTE}
-      ]);
+    ]);
 
   let kernel32 = ctypes.open("kernel32");
   try {
@@ -224,7 +224,7 @@ function getProcArchitecture() {
   // This structure is described at:
   // http://msdn.microsoft.com/en-us/library/ms724958%28v=vs.85%29.aspx
   const SYSTEM_INFO = new ctypes.StructType('SYSTEM_INFO',
-      [
+    [
       {wProcessorArchitecture: WORD},
       {wReserved: WORD},
       {dwPageSize: DWORD},
@@ -236,7 +236,7 @@ function getProcArchitecture() {
       {dwAllocationGranularity: DWORD},
       {wProcessorLevel: WORD},
       {wProcessorRevision: WORD}
-      ]);
+    ]);
 
   let kernel32 = ctypes.open("kernel32");
   try {
@@ -293,13 +293,13 @@ function getSystemCapabilities() {
         instructionSet = "MMX";
       }
     } catch (e) {
-        Cu.reportError("Error getting processor instruction set. " +
-                       "Exception: " + e);
+      Cu.reportError("Error getting processor instruction set. " +
+                     "Exception: " + e);
     }
 
     lib.close();
     return instructionSet;
   }
 
-  return "NA"
+  return "NA";
 }

@@ -72,6 +72,7 @@ XPCOMUtils.defineLazyGetter(this, "DATAREPORTING_PATH", function() {
 });
 
 var gClientID = null;
+var gMonotonicNow = 0;
 
 function generateUUID() {
   let str = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID().toString();
@@ -109,7 +110,6 @@ function fakeIdleNotification(topic) {
 
 function setupTestData() {
 
-  Telemetry.histogramFrom(IGNORE_CLONED_HISTOGRAM, IGNORE_HISTOGRAM_TO_CLONE);
   Services.startup.interrupted = true;
   Telemetry.registerAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM,
                                    Telemetry.HISTOGRAM_LINEAR,
@@ -291,6 +291,53 @@ function checkScalars(processes) {
   }
 }
 
+function checkEvents(processes) {
+  // Check that the events section is available in the ping payload.
+  const parent = processes.parent;
+  Assert.ok("events" in parent, "The events section must be available in the parent process.");
+
+  // Check that the events section has the right format.
+  Assert.ok(Array.isArray(parent.events), "The events entry must be an array.");
+  for (let [ts, category, method, object, value, extra] of parent.events) {
+    Assert.equal(typeof(ts), "number", "Timestamp field should be a number.");
+    Assert.greaterOrEqual(ts, 0, "Timestamp should be >= 0.");
+
+    Assert.equal(typeof(category), "string", "Category should have the right type.");
+    Assert.lessOrEqual(category.length, 100, "Category should have the right string length.");
+
+    Assert.equal(typeof(method), "string", "Method should have the right type.");
+    Assert.lessOrEqual(method.length, 40, "Method should have the right string length.");
+
+    Assert.equal(typeof(object), "string", "Object should have the right type.");
+    Assert.lessOrEqual(object.length, 40, "Object should have the right string length.");
+
+    Assert.ok(value === null || typeof(value) === "string",
+              "Value should be null or a string.");
+    if (value) {
+      Assert.lessOrEqual(value.length, 100, "Value should have the right string length.");
+    }
+
+    Assert.ok(extra === null || typeof(extra) === "object",
+              "Extra should be null or an object.");
+    if (extra) {
+      let keys = Object.keys(extra);
+      let keyTypes = keys.map(k => typeof(k));
+      Assert.lessOrEqual(keys.length, 20, "Should not have too many extra keys.");
+      Assert.ok(keyTypes.every(t => t === "string"),
+                "All extra keys should be strings.");
+      Assert.ok(keys.every(k => k.length <= 20),
+                "All extra keys should have the right string length.");
+
+      let values = Object.values(extra);
+      let valueTypes = values.map(v => typeof(v));
+      Assert.ok(valueTypes.every(t => t === "string"),
+                "All extra values should be strings.");
+      Assert.ok(values.every(v => v.length <= 100),
+                "All extra values should have the right string length.");
+    }
+  }
+}
+
 function checkPayload(payload, reason, successfulPings, savedPings) {
   Assert.ok("info" in payload, "Payload must contain an info section.");
   checkPayloadInfo(payload.info);
@@ -320,7 +367,7 @@ function checkPayload(payload, reason, successfulPings, savedPings) {
     Assert.ok(payload.simpleMeasurements.startupSessionRestoreWriteBytes > 0);
   }
 
-  const TELEMETRY_PING = "TELEMETRY_PING";
+  const TELEMETRY_SEND_SUCCESS = "TELEMETRY_SEND_SUCCESS";
   const TELEMETRY_SUCCESS = "TELEMETRY_SUCCESS";
   const TELEMETRY_TEST_FLAG = "TELEMETRY_TEST_FLAG";
   const TELEMETRY_TEST_COUNT = "TELEMETRY_TEST_COUNT";
@@ -328,18 +375,10 @@ function checkPayload(payload, reason, successfulPings, savedPings) {
   const TELEMETRY_TEST_KEYED_COUNT = "TELEMETRY_TEST_KEYED_COUNT";
 
   if (successfulPings > 0) {
-    Assert.ok(TELEMETRY_PING in payload.histograms);
+    Assert.ok(TELEMETRY_SEND_SUCCESS in payload.histograms);
   }
   Assert.ok(TELEMETRY_TEST_FLAG in payload.histograms);
   Assert.ok(TELEMETRY_TEST_COUNT in payload.histograms);
-
-  let rh = Telemetry.registeredHistograms(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, []);
-  for (let name of rh) {
-    if (/SQLITE/.test(name) && name in payload.histograms) {
-      let histogramName = ("STARTUP_" + name);
-      Assert.ok(histogramName in payload.histograms, histogramName + " must be available.");
-    }
-  }
 
   Assert.ok(!(IGNORE_CLONED_HISTOGRAM in payload.histograms));
 
@@ -400,8 +439,7 @@ function checkPayload(payload, reason, successfulPings, savedPings) {
                 ("otherThreads" in payload.slowSQL));
 
   Assert.ok(("IceCandidatesStats" in payload.webrtc) &&
-                ("webrtc" in payload.webrtc.IceCandidatesStats) &&
-                ("loop" in payload.webrtc.IceCandidatesStats));
+                ("webrtc" in payload.webrtc.IceCandidatesStats));
 
   // Check keyed histogram payload.
 
@@ -431,6 +469,7 @@ function checkPayload(payload, reason, successfulPings, savedPings) {
   Assert.ok("processes" in payload, "The payload must have a processes section.");
   Assert.ok("parent" in payload.processes, "There must be at least a parent process.");
   checkScalars(payload.processes);
+  checkEvents(payload.processes);
 }
 
 function writeStringToFile(file, contents) {
@@ -538,7 +577,7 @@ add_task(function* test_simplePing() {
   let now = new Date(2020, 1, 1, 12, 0, 0);
   let expectedDate = new Date(2020, 1, 1, 0, 0, 0);
   fakeNow(now);
-  const monotonicStart = fakeMonotonicNow(5000);
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 5000);
 
   const expectedSessionUUID = "bd314d15-95bf-4356-b682-b6c4a8942202";
   const expectedSubsessionUUID = "3e2e5f6c-74ba-4e4d-a93f-a48af238a8c7";
@@ -549,7 +588,7 @@ add_task(function* test_simplePing() {
   // now fake the session duration.
   const SESSION_DURATION_IN_MINUTES = 15;
   fakeNow(new Date(2020, 1, 1, 12, SESSION_DURATION_IN_MINUTES, 0));
-  fakeMonotonicNow(monotonicStart + SESSION_DURATION_IN_MINUTES * 60 * 1000);
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + SESSION_DURATION_IN_MINUTES * 60 * 1000);
 
   yield sendPing();
   let ping = yield PingServer.promiseNextPing();
@@ -665,6 +704,58 @@ add_task(function* test_checkSubsessionScalars() {
                UINT_SCALAR + " must contain the expected value.");
   Assert.equal(subsession.processes.parent.scalars[STRING_SCALAR], expectedString,
                STRING_SCALAR + " must contain the expected value.");
+});
+
+add_task(function* test_checkSubsessionEvents() {
+  if (gIsAndroid) {
+    // We don't support subsessions yet on Android.
+    return;
+  }
+
+  // Clear the events.
+  Telemetry.clearEvents();
+  yield TelemetryController.testReset();
+
+  // Record some events.
+  let expected = [
+    ["telemetry.test", "test1", "object1", "a", null],
+    ["telemetry.test", "test1", "object1", null, {key1: "value"}],
+  ];
+  for (let event of expected) {
+    Telemetry.recordEvent(...event);
+  }
+
+  // Strip off trailing null values to match the serialized events.
+  for (let e of expected) {
+    while ((e.length >= 3) && (e[e.length - 1] === null)) {
+      e.pop();
+    }
+  }
+
+  // Check that events are not available in classic pings but are in subsession
+  // pings. Also clear the subsession.
+  let classic = TelemetrySession.getPayload();
+  let subsession = TelemetrySession.getPayload("environment-change", true);
+
+  Assert.ok("events" in classic.processes.parent, "Should have an events field in classic payload.");
+  Assert.ok("events" in subsession.processes.parent, "Should have an events field in subsession payload.");
+
+  // They should be empty in the classic payload.
+  Assert.deepEqual(classic.processes.parent.events, [], "Events in classic payload should be empty.");
+
+  // In the subsession payload, they should contain the recorded test events.
+  let events = subsession.processes.parent.events.filter(e => e[1] === "telemetry.test");
+  Assert.equal(events.length, expected.length, "Should have the right amount of events in the payload.");
+  for (let i = 0; i < expected.length; ++i) {
+    Assert.deepEqual(events[i].slice(1), expected[i],
+                     "Should have the right event data in the ping.");
+  }
+
+  // As we cleared the subsession above, the events entry should now be empty.
+  subsession = TelemetrySession.getPayload("environment-change", false);
+  Assert.ok("events" in subsession.processes.parent, "Should have an events field in subsession payload.");
+  events = subsession.processes.parent.events.filter(e => e[1] === "telemetry.test");
+  Assert.equal(events.length, 0, "Should have no test events in the subsession payload now.");
 });
 
 add_task(function* test_checkSubsessionHistograms() {
@@ -1113,14 +1204,11 @@ add_task(function* test_environmentChange() {
     return;
   }
 
-  let now = new Date(2040, 1, 1, 12, 0, 0);
-  let timerCallback = null;
-  let timerDelay = null;
-
   yield TelemetryStorage.testClearPendingPings();
   PingServer.clearRequests();
 
-  fakeNow(now);
+  let now = fakeNow(2040, 1, 1, 12, 0, 0);
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
 
   const PREF_TEST = "toolkit.telemetry.test.pref1";
   Preferences.reset(PREF_TEST);
@@ -1147,9 +1235,9 @@ add_task(function* test_environmentChange() {
   keyed.add("b", 1);
 
   // Trigger and collect environment-change ping.
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
   let startDay = truncateDateToDays(now);
-  now = futureDate(now, 10 * MILLISECONDS_PER_MINUTE);
-  fakeNow(now);
+  now = fakeNow(futureDate(now, 10 * MILLISECONDS_PER_MINUTE));
 
   Preferences.set(PREF_TEST, 1);
   let ping = yield PingServer.promiseNextPing();
@@ -1166,8 +1254,8 @@ add_task(function* test_environmentChange() {
 
   // Trigger and collect another ping. The histograms should be reset.
   startDay = truncateDateToDays(now);
-  now = futureDate(now, 10 * MILLISECONDS_PER_MINUTE);
-  fakeNow(now);
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
+  now = fakeNow(futureDate(now, 10 * MILLISECONDS_PER_MINUTE));
 
   Preferences.set(PREF_TEST, 2);
   ping = yield PingServer.promiseNextPing();
@@ -1254,6 +1342,7 @@ add_task(function* test_savedSessionData() {
 
   // Watch a test preference, trigger and environment change and wait for it to propagate.
   // _watchPreferences triggers a subsession notification
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
   fakeNow(new Date(2050, 1, 1, 12, 0, 0));
   TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
   let changePromise = new Promise(resolve =>
@@ -1476,7 +1565,7 @@ add_task(function* test_abortedSession_Shutdown() {
             "Telemetry must create the aborted session directory when starting.");
 
   // Fake now again so that the scheduled aborted-session save takes place.
-  now = fakeNow(futureDate(now, ABORTED_SESSION_UPDATE_INTERVAL_MS));
+  fakeNow(futureDate(now, ABORTED_SESSION_UPDATE_INTERVAL_MS));
   // The first aborted session checkpoint must take place right after the initialisation.
   Assert.ok(!!schedulerTickCallback);
   // Execute one scheduler tick.
@@ -1619,16 +1708,16 @@ add_task(function* test_schedulerEnvironmentReschedules() {
   yield TelemetryController.testReset();
 
   // Set a fake current date and start Telemetry.
-  let nowDate = new Date(2060, 10, 18, 0, 0, 0);
-  fakeNow(nowDate);
+  let nowDate = fakeNow(2060, 10, 18, 0, 0, 0);
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
   let schedulerTickCallback = null;
   fakeSchedulerTimer(callback => schedulerTickCallback = callback, () => {});
   yield TelemetryController.testReset();
   TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
 
   // Set the current time at midnight.
-  let future = futureDate(nowDate, MS_IN_ONE_DAY);
-  fakeNow(future);
+  fakeNow(futureDate(nowDate, MS_IN_ONE_DAY));
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
 
   // Trigger the environment change.
   Preferences.set(PREF_TEST, 1);
@@ -1881,7 +1970,58 @@ add_task(function* test_userIdleAndSchedlerTick() {
   checkPingFormat(receivedPing, PING_TYPE_MAIN, true, true);
   Assert.equal(receivedPing.payload.info.reason, REASON_DAILY);
 
+  PingServer.resetPingHandler();
   yield TelemetryController.testShutdown();
+});
+
+add_task(function* test_changeThrottling() {
+  if (gIsAndroid) {
+    // We don't support subsessions yet on Android.
+    return;
+  }
+
+  let getSubsessionCount = () => {
+    return TelemetrySession.getPayload().info.subsessionCounter;
+  };
+
+  const PREF_TEST = "toolkit.telemetry.test.pref1";
+  const PREFS_TO_WATCH = new Map([
+    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_STATE}],
+  ]);
+  Preferences.reset(PREF_TEST);
+
+  let now = fakeNow(2050, 1, 2, 0, 0, 0);
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
+  yield TelemetryController.testReset();
+  Assert.equal(getSubsessionCount(), 1);
+
+  // Set the Environment preferences to watch.
+  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
+
+  // The first pref change should not trigger a notification.
+  Preferences.set(PREF_TEST, 1);
+  Assert.equal(getSubsessionCount(), 1);
+
+  // We should get a change notification after the 5min throttling interval.
+  fakeNow(futureDate(now, 5 * MILLISECONDS_PER_MINUTE + 1));
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 5 * MILLISECONDS_PER_MINUTE + 1);
+  Preferences.set(PREF_TEST, 2);
+  Assert.equal(getSubsessionCount(), 2);
+
+  // After that, changes should be throttled again.
+  now = fakeNow(futureDate(now, 1 * MILLISECONDS_PER_MINUTE));
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 1 * MILLISECONDS_PER_MINUTE);
+  Preferences.set(PREF_TEST, 3);
+  Assert.equal(getSubsessionCount(), 2);
+
+  // ... for 5min.
+  now = fakeNow(futureDate(now, 4 * MILLISECONDS_PER_MINUTE + 1));
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 4 * MILLISECONDS_PER_MINUTE + 1);
+  Preferences.set(PREF_TEST, 4);
+  Assert.equal(getSubsessionCount(), 3);
+
+  // Unregister the listener.
+  TelemetryEnvironment.unregisterChangeListener("testWatchPrefs_throttling");
 });
 
 add_task(function* stopServer() {

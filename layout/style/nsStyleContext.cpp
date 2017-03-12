@@ -7,6 +7,7 @@
 
 #include "CSSVariableImageTable.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/Maybe.h"
 
 #include "nsCSSAnonBoxes.h"
 #include "nsCSSPseudoElements.h"
@@ -34,6 +35,10 @@
 #include "mozilla/ReflowInput.h"
 #include "nsLayoutUtils.h"
 #include "nsCoord.h"
+
+// Ensure the binding function declarations in nsStyleContext.h matches
+// those in ServoBindings.h.
+#include "mozilla/ServoBindings.h"
 
 using namespace mozilla;
 
@@ -251,8 +256,10 @@ nsStyleContext::AssertStructsNotUsedElsewhere(
          (mCachedInheritedData.mStyleStructs[eStyleStruct_##name_] == data)) { \
       printf_stderr("style struct %p found on style context %p\n", data, this);\
       nsString url;                                                            \
-      PresContext()->Document()->GetURL(url);                                  \
-      printf_stderr("  in %s\n", NS_ConvertUTF16toUTF8(url).get());            \
+      nsresult rv = PresContext()->Document()->GetURL(url);                    \
+      if (NS_SUCCEEDED(rv)) {                                                  \
+        printf_stderr("  in %s\n", NS_ConvertUTF16toUTF8(url).get());          \
+      }                                                                        \
       MOZ_ASSERT(false, "destroying " #name_ " style struct still present "    \
                         "in style context tree");                              \
     }
@@ -276,8 +283,10 @@ nsStyleContext::AssertStructsNotUsedElsewhere(
           printf_stderr("style struct %p found on style context %p\n", data,   \
                         this);                                                 \
           nsString url;                                                        \
-          PresContext()->Document()->GetURL(url);                              \
-          printf_stderr("  in %s\n", NS_ConvertUTF16toUTF8(url).get());        \
+          nsresult rv = PresContext()->Document()->GetURL(url);                \
+          if (NS_SUCCEEDED(rv)) {                                              \
+            printf_stderr("  in %s\n", NS_ConvertUTF16toUTF8(url).get());      \
+          }                                                                    \
           MOZ_ASSERT(false, "destroying " #name_ " style struct still present "\
                             "in style context tree");                          \
         }
@@ -463,8 +472,24 @@ const void* nsStyleContext::StyleData(nsStyleStructID aSID)
       mCachedInheritedData.mStyleStructs[aSID] = const_cast<void*>(newData);
     }
   } else {
-    // The Servo-backed StyleContextSource owns the struct.
     newData = StyleStructFromServoComputedValues(aSID);
+
+    // perform any remaining main thread work on the struct
+    switch (aSID) {
+#define STYLE_STRUCT(name_, checkdata_cb_)                                    \
+      case eStyleStruct_##name_: {                                            \
+        auto data = static_cast<const nsStyle##name_*>(newData);              \
+        const_cast<nsStyle##name_*>(data)->FinishStyle(PresContext());        \
+        break;                                                                \
+      }
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+      default:
+        MOZ_ASSERT_UNREACHABLE("unexpected nsStyleStructID value");
+        break;
+    }
+
+    // The Servo-backed StyleContextSource owns the struct.
     AddStyleBit(nsCachedStyleData::GetBitForSID(aSID));
 
     // XXXbholley: Unconditionally caching reset structs here defeats the memory
@@ -1170,14 +1195,8 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
       const nsStyleBorder *thisVisBorder = thisVis->StyleBorder();
       const nsStyleBorder *otherVisBorder = otherVis->StyleBorder();
       NS_FOR_CSS_SIDES(side) {
-        bool thisFG, otherFG;
-        // Dummy initialisations to keep Valgrind/Memcheck happy.
-        // See bug 1122375 comment 4.
-        nscolor thisColor = NS_RGBA(0, 0, 0, 0);
-        nscolor otherColor = NS_RGBA(0, 0, 0, 0);
-        thisVisBorder->GetBorderColor(side, thisColor, thisFG);
-        otherVisBorder->GetBorderColor(side, otherColor, otherFG);
-        if (thisFG != otherFG || (!thisFG && thisColor != otherColor)) {
+        if (thisVisBorder->mBorderColor[side] !=
+            otherVisBorder->mBorderColor[side]) {
           change = true;
           break;
         }
@@ -1188,16 +1207,7 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
     if (!change && PeekStyleOutline()) {
       const nsStyleOutline *thisVisOutline = thisVis->StyleOutline();
       const nsStyleOutline *otherVisOutline = otherVis->StyleOutline();
-      bool haveColor;
-      // Dummy initialisations to keep Valgrind/Memcheck happy.
-      // See bug 1289098 comment 1.
-      nscolor thisColor = NS_RGBA(0, 0, 0, 0);
-      nscolor otherColor = NS_RGBA(0, 0, 0, 0);
-      if (thisVisOutline->GetOutlineInitialColor() !=
-            otherVisOutline->GetOutlineInitialColor() ||
-          (haveColor = thisVisOutline->GetOutlineColor(thisColor)) !=
-            otherVisOutline->GetOutlineColor(otherColor) ||
-          (haveColor && thisColor != otherColor)) {
+      if (thisVisOutline->mOutlineColor != otherVisOutline->mOutlineColor) {
         change = true;
       }
     }
@@ -1206,9 +1216,7 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
     if (!change && PeekStyleColumn()) {
       const nsStyleColumn *thisVisColumn = thisVis->StyleColumn();
       const nsStyleColumn *otherVisColumn = otherVis->StyleColumn();
-      if (thisVisColumn->mColumnRuleColor != otherVisColumn->mColumnRuleColor ||
-          thisVisColumn->mColumnRuleColorIsForeground !=
-            otherVisColumn->mColumnRuleColorIsForeground) {
+      if (thisVisColumn->mColumnRuleColor != otherVisColumn->mColumnRuleColor) {
         change = true;
       }
     }
@@ -1217,14 +1225,8 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
     if (!change && PeekStyleText()) {
       const nsStyleText* thisVisText = thisVis->StyleText();
       const nsStyleText* otherVisText = otherVis->StyleText();
-      if (thisVisText->mTextEmphasisColorForeground !=
-          otherVisText->mTextEmphasisColorForeground ||
-          thisVisText->mTextEmphasisColor != otherVisText->mTextEmphasisColor ||
-          thisVisText->mWebkitTextFillColorForeground !=
-          otherVisText->mWebkitTextFillColorForeground ||
+      if (thisVisText->mTextEmphasisColor != otherVisText->mTextEmphasisColor ||
           thisVisText->mWebkitTextFillColor != otherVisText->mWebkitTextFillColor ||
-          thisVisText->mWebkitTextStrokeColorForeground !=
-          otherVisText->mWebkitTextStrokeColorForeground ||
           thisVisText->mWebkitTextStrokeColor != otherVisText->mWebkitTextStrokeColor) {
         change = true;
       }
@@ -1234,17 +1236,8 @@ nsStyleContext::CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
     if (!change && PeekStyleTextReset()) {
       const nsStyleTextReset *thisVisTextReset = thisVis->StyleTextReset();
       const nsStyleTextReset *otherVisTextReset = otherVis->StyleTextReset();
-      // Dummy initialisations to keep Valgrind/Memcheck happy.
-      // See bug 1122375 comment 4.
-      nscolor thisVisDecColor = NS_RGBA(0, 0, 0, 0);
-      nscolor otherVisDecColor = NS_RGBA(0, 0, 0, 0);
-      bool thisVisDecColorIsFG, otherVisDecColorIsFG;
-      thisVisTextReset->GetDecorationColor(thisVisDecColor,
-                                           thisVisDecColorIsFG);
-      otherVisTextReset->GetDecorationColor(otherVisDecColor,
-                                            otherVisDecColorIsFG);
-      if (thisVisDecColorIsFG != otherVisDecColorIsFG ||
-          (!thisVisDecColorIsFG && thisVisDecColor != otherVisDecColor)) {
+      if (thisVisTextReset->mTextDecorationColor !=
+          otherVisTextReset->mTextDecorationColor) {
         change = true;
       }
     }
@@ -1308,7 +1301,7 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aNewContext,
 class MOZ_STACK_CLASS FakeStyleContext
 {
 public:
-  explicit FakeStyleContext(ServoComputedValues* aComputedValues)
+  explicit FakeStyleContext(const ServoComputedValues* aComputedValues)
     : mComputedValues(aComputedValues) {}
 
   mozilla::NonOwningStyleContextSource StyleSource() const {
@@ -1329,11 +1322,11 @@ public:
   #undef STYLE_STRUCT
 
 private:
-  ServoComputedValues* MOZ_NON_OWNING_REF mComputedValues;
+  const ServoComputedValues* MOZ_NON_OWNING_REF mComputedValues;
 };
 
 nsChangeHint
-nsStyleContext::CalcStyleDifference(ServoComputedValues* aNewComputedValues,
+nsStyleContext::CalcStyleDifference(const ServoComputedValues* aNewComputedValues,
                                     nsChangeHint aParentHintsNotHandledForDescendants,
                                     uint32_t* aEqualStructs,
                                     uint32_t* aSamePointerStructs)
@@ -1477,29 +1470,30 @@ ExtractAnimationValue(nsCSSPropertyID aProperty,
              "aProperty must be extractable by StyleAnimationValue");
 }
 
-static nscolor
+static Maybe<nscolor>
 ExtractColor(nsCSSPropertyID aProperty,
              nsStyleContext *aStyleContext)
 {
   StyleAnimationValue val;
   ExtractAnimationValue(aProperty, aStyleContext, val);
-  return val.GetUnit() == StyleAnimationValue::eUnit_CurrentColor
-    ? aStyleContext->StyleColor()->mColor
-    : val.GetCSSValueValue()->GetColorValue();
+  switch (val.GetUnit()) {
+    case StyleAnimationValue::eUnit_Color:
+      return Some(val.GetCSSValueValue()->GetColorValue());
+    case StyleAnimationValue::eUnit_CurrentColor:
+      return Some(aStyleContext->StyleColor()->mColor);
+    case StyleAnimationValue::eUnit_ComplexColor:
+      return Some(aStyleContext->StyleColor()->
+                  CalcComplexColor(val.GetStyleComplexColorValue()));
+    default:
+      return Nothing();
+  }
 }
 
 static nscolor
 ExtractColorLenient(nsCSSPropertyID aProperty,
                     nsStyleContext *aStyleContext)
 {
-  StyleAnimationValue val;
-  ExtractAnimationValue(aProperty, aStyleContext, val);
-  if (val.GetUnit() == StyleAnimationValue::eUnit_Color) {
-    return val.GetCSSValueValue()->GetColorValue();
-  } else if (val.GetUnit() == StyleAnimationValue::eUnit_CurrentColor) {
-    return aStyleContext->StyleColor()->mColor;
-  }
-  return NS_RGBA(0, 0, 0, 0);
+  return ExtractColor(aProperty, aStyleContext).valueOr(NS_RGBA(0, 0, 0, 0));
 }
 
 struct ColorIndexSet {
@@ -1532,7 +1526,7 @@ nsStyleContext::GetVisitedDependentColor(nsCSSPropertyID aProperty)
 
   nscolor colors[2];
   colors[0] = isPaintProperty ? ExtractColorLenient(aProperty, this)
-                              : ExtractColor(aProperty, this);
+                              : ExtractColor(aProperty, this).value();
 
   nsStyleContext *visitedStyle = this->GetStyleIfVisited();
   if (!visitedStyle) {
@@ -1540,7 +1534,7 @@ nsStyleContext::GetVisitedDependentColor(nsCSSPropertyID aProperty)
   }
 
   colors[1] = isPaintProperty ? ExtractColorLenient(aProperty, visitedStyle)
-                              : ExtractColor(aProperty, visitedStyle);
+                              : ExtractColor(aProperty, visitedStyle).value();
 
   return nsStyleContext::CombineVisitedColors(colors,
                                               this->RelevantLinkVisited());

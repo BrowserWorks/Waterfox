@@ -49,6 +49,8 @@ FocusEvent::InitFocusEvent(const nsAString& aType,
                            int32_t aDetail,
                            EventTarget* aRelatedTarget)
 {
+  MOZ_ASSERT(!mEvent->mFlags.mIsBeingDispatched);
+
   UIEvent::InitUIEvent(aType, aCanBubble, aCancelable, aView, aDetail);
   mEvent->AsFocusEvent()->mRelatedTarget = aRelatedTarget;
 }
@@ -65,6 +67,7 @@ FocusEvent::Constructor(const GlobalObject& aGlobal,
   e->InitFocusEvent(aType, aParam.mBubbles, aParam.mCancelable, aParam.mView,
                     aParam.mDetail, aParam.mRelatedTarget);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 

@@ -5,10 +5,13 @@
 
 'use strict';
 
+/* import-globals-from ../../../content/contentAreaUtils.js */
+
 // Firefox's macBrowserOverlay.xul includes scripts that define Cc, Ci, and Cr
 // so we have to use different names.
 const {classes: CoC, interfaces: CoI, results: CoR, utils: CoU} = Components;
 
+/* globals DownloadUtils, Services, AUSTLMY */
 CoU.import("resource://gre/modules/DownloadUtils.jsm", this);
 CoU.import("resource://gre/modules/Services.jsm", this);
 CoU.import("resource://gre/modules/UpdateTelemetry.jsm", this);
@@ -1279,9 +1282,8 @@ var gFinishedPage = {
     }
 
     if (getPref("getBoolPref", PREF_APP_UPDATE_TEST_LOOP, false)) {
-      setTimeout(function () {
-                   gUpdates.wiz.getButton("finish").click();
-                 }, UPDATE_TEST_LOOP_INTERVAL);
+      setTimeout(function () { gUpdates.wiz.getButton("finish").click(); },
+                 UPDATE_TEST_LOOP_INTERVAL);
     }
   },
 

@@ -134,7 +134,8 @@ class nsRootPresContext;
 // An interface for presentation contexts. Presentation contexts are
 // objects that provide an outer context for a presentation shell.
 
-class nsPresContext : public nsIObserver {
+class nsPresContext : public nsIObserver,
+                      public mozilla::SupportsWeakPtr<nsPresContext> {
 public:
   typedef mozilla::FramePropertyTable FramePropertyTable;
   typedef mozilla::LangGroupFontPrefs LangGroupFontPrefs;
@@ -145,6 +146,7 @@ public:
   NS_DECL_NSIOBSERVER
   NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
   NS_DECL_CYCLE_COLLECTION_CLASS(nsPresContext)
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsPresContext)
 
   enum nsPresContextType {
     eContext_Galley,       // unpaginated screen presentation
@@ -920,7 +922,7 @@ public:
 
   bool             SuppressingResizeReflow() const { return mSuppressResizeReflow; }
 
-  gfxUserFontSet* GetUserFontSet();
+  gfxUserFontSet* GetUserFontSet(bool aFlushUserFontSet = true);
 
   // Should be called whenever the set of fonts available in the user
   // font set changes (e.g., because a new font loads, or because the
@@ -957,6 +959,7 @@ public:
   void ClearMozAfterPaintEvents() {
     mInvalidateRequestsSinceLastPaint.mRequests.Clear();
     mUndeliveredInvalidateRequestsBeforeLastPaint.mRequests.Clear();
+    mAllInvalidated = false;
   }
 
   /**
@@ -1052,6 +1055,12 @@ public:
   }
 
   bool IsRootContentDocument() const;
+
+  bool HadNonBlankPaint() const {
+    return mHadNonBlankPaint;
+  }
+
+  void NotifyNonBlankPaint();
 
   bool IsGlyph() const {
     return mIsGlyph;
@@ -1197,8 +1206,6 @@ protected:
 
   // Can't be inline because we can't include nsStyleSet.h.
   bool HasCachedStyleData();
-
-  bool IsChromeSlow() const;
 
   // Creates a one-shot timer with the given aCallback & aDelay.
   // Returns a refcounted pointer to the timer (or nullptr on failure).
@@ -1350,6 +1357,9 @@ protected:
   unsigned              mPendingMediaFeatureValuesChanged : 1;
   unsigned              mPrefChangePendingNeedsReflow : 1;
   unsigned              mIsEmulatingMedia : 1;
+  // True if the requests in mInvalidateRequestsSinceLastPaint cover the
+  // entire viewport
+  unsigned              mAllInvalidated : 1;
 
   // Are we currently drawing an SVG glyph?
   unsigned              mIsGlyph : 1;
@@ -1394,6 +1404,9 @@ protected:
 
   // Is there a pref update to process once we have a container?
   unsigned              mNeedsPrefUpdate : 1;
+
+  // Has NotifyNonBlankPaint been called on this PresContext?
+  unsigned              mHadNonBlankPaint : 1;
 
 #ifdef RESTYLE_LOGGING
   // Should we output debug information about restyling for this document?

@@ -34,7 +34,6 @@ AreaPositionManager.prototype = {
   _wideCache: null,
 
   update: function(aContainer) {
-    let window = aContainer.ownerGlobal;
     this._nodePositionStore = new WeakMap();
     this._wideCache = new Set();
     let last = null;
@@ -356,7 +355,7 @@ AreaPositionManager.prototype = {
   _firstInRow: function(aNode) {
     // XXXmconley: I'm not entirely sure why we need to take the floor of these
     // values - it looks like, periodically, we're getting fractional pixels back
-    //from lazyStoreGet. I've filed bug 994247 to investigate.
+    // from lazyStoreGet. I've filed bug 994247 to investigate.
     let bound = Math.floor(this._lazyStoreGet(aNode).top);
     let rv = aNode;
     let prev;
@@ -419,4 +418,3 @@ var DragPositionManager = {
 };
 
 Object.freeze(DragPositionManager);
-

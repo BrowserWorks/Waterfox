@@ -42,7 +42,8 @@ function generateGoodOCSPResponse() {
   return responses[0];
 }
 
-function add_ocsp_test(aHost, aExpectedResult, aResponses, aMessage) {
+function add_ocsp_test(aHost, aExpectedResult, aResponses, aMessage,
+                       aOriginAttributes) {
   add_connection_test(aHost, aExpectedResult,
       function() {
         clearSessionCache();
@@ -55,7 +56,7 @@ function add_ocsp_test(aHost, aExpectedResult, aResponses, aMessage) {
         equal(gFetchCount, aResponses.length,
               "should have made " + aResponses.length +
               " OCSP request" + (aResponses.length == 1 ? "" : "s"));
-      });
+      }, null, aOriginAttributes);
 }
 
 function run_test() {
@@ -212,6 +213,82 @@ function add_tests() {
 
   add_test(function() {
     Services.prefs.setBoolPref("security.OCSP.require", false);
+    run_next_test();
+  });
+
+  //---------------------------------------------------------------------------
+
+  // Reset state
+  add_test(function() { clearOCSPCache(); run_next_test(); });
+
+  // This test makes sure that OCSP cache are isolated by firstPartyDomain.
+
+  let gObservedCnt = 0;
+  let protocolProxyService = Cc["@mozilla.org/network/protocol-proxy-service;1"]
+                               .getService(Ci.nsIProtocolProxyService);
+
+  // Observe all channels and make sure the firstPartyDomain in their loadInfo's
+  // origin attributes are aFirstPartyDomain.
+  function startObservingChannels(aFirstPartyDomain) {
+    // We use a dummy proxy filter to catch all channels, even those that do not
+    // generate an "http-on-modify-request" notification.
+    let proxyFilter = {
+      applyFilter: function (aProxyService, aChannel, aProxy) {
+        // We have the channel; provide it to the callback.
+        if (aChannel.originalURI.spec == "http://localhost:8888/") {
+          gObservedCnt++;
+          equal(aChannel.loadInfo.originAttributes.firstPartyDomain,
+                aFirstPartyDomain, "firstPartyDomain should match");
+        }
+        // Pass on aProxy unmodified.
+        return aProxy;
+      }
+    };
+    protocolProxyService.registerChannelFilter(proxyFilter, 0);
+    // Return the stop() function:
+    return () => protocolProxyService.unregisterChannelFilter(proxyFilter);
+  }
+
+  let stopObservingChannels;
+  add_test(function() {
+    stopObservingChannels = startObservingChannels("foo.com");
+    run_next_test();
+  });
+
+  // A good OCSP response will be cached.
+  add_ocsp_test("ocsp-stapling-none.example.com", PRErrorCodeSuccess,
+                [respondWithGoodOCSP],
+                "No stapled response (firstPartyDomain = foo.com) -> a fetch " +
+                "should have been attempted", { firstPartyDomain: "foo.com" });
+
+  // The cache will prevent a fetch from happening.
+  add_ocsp_test("ocsp-stapling-none.example.com", PRErrorCodeSuccess, [],
+                "Noted OCSP server failure (firstPartyDomain = foo.com) -> a " +
+                "fetch should not have been attempted",
+                { firstPartyDomain: "foo.com" });
+
+  add_test(function() {
+    stopObservingChannels();
+    equal(gObservedCnt, 1, "should have observed only 1 OCSP requests");
+    gObservedCnt = 0;
+    run_next_test();
+  });
+
+  add_test(function() {
+    stopObservingChannels = startObservingChannels("bar.com");
+    run_next_test();
+  });
+
+  // But using a different firstPartyDomain should result in a fetch.
+  add_ocsp_test("ocsp-stapling-none.example.com", PRErrorCodeSuccess,
+                [respondWithGoodOCSP],
+                "No stapled response (firstPartyDomain = bar.com) -> a fetch " +
+                "should have been attempted", { firstPartyDomain: "bar.com" });
+
+  add_test(function() {
+    stopObservingChannels();
+    equal(gObservedCnt, 1, "should have observed only 1 OCSP requests");
+    gObservedCnt = 0;
     run_next_test();
   });
 

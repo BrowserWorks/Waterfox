@@ -6,7 +6,7 @@
 const TEST_PAGE = "http://example.org/browser/browser/base/content/test/general/zoom_test.html";
 const TEST_VIDEO = "http://example.org/browser/browser/base/content/test/general/video.ogg";
 
-var gTab1, gTab2, gLevel1, gLevel2;
+var gTab1, gTab2, gLevel1;
 
 function test() {
   waitForExplicitFinish();
@@ -24,6 +24,12 @@ function test() {
 function zoomTab1() {
   Task.spawn(function* () {
     is(gBrowser.selectedTab, gTab1, "Tab 1 is selected");
+
+    // Reset zoom level if we run this test > 1 time in same browser session.
+    var level1 = ZoomManager.getZoomForBrowser(gBrowser.getBrowserForTab(gTab1));
+    if (level1 > 1)
+      FullZoom.reduce();
+
     FullZoomHelper.zoomTest(gTab1, 1, "Initial zoom of tab 1 should be 1");
     FullZoomHelper.zoomTest(gTab2, 1, "Initial zoom of tab 2 should be 1");
 
@@ -44,9 +50,9 @@ function zoomTab2() {
     is(gBrowser.selectedTab, gTab2, "Tab 2 is selected");
 
     FullZoom.reduce();
-    let gLevel2 = ZoomManager.getZoomForBrowser(gBrowser.getBrowserForTab(gTab2));
+    let level2 = ZoomManager.getZoomForBrowser(gBrowser.getBrowserForTab(gTab2));
 
-    ok(gLevel2 < 1, "New zoom for tab 2 should be less than 1");
+    ok(level2 < 1, "New zoom for tab 2 should be less than 1");
     FullZoomHelper.zoomTest(gTab1, gLevel1, "Zooming tab 2 should not affect tab 1");
 
     yield FullZoomHelper.selectTabAndWaitForLocationChange(gTab1);

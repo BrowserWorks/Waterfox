@@ -1095,8 +1095,8 @@
           return this._includeUpdate.checked && !!this.mManualUpdate;
         ]]></getter>
         <setter><![CDATA[
-          //XXXunf Eventually, we'll want to persist this for individual
-          //       updates - see bug 594619.
+          // XXXunf Eventually, we'll want to persist this for individual
+          //        updates - see bug 594619.
           this._includeUpdate.checked = !!val;
         ]]></setter>
       </property>
@@ -1165,14 +1165,11 @@
       <method name="_updateDates">
         <body><![CDATA[
           function formatDate(aDate) {
-            return Cc["@mozilla.org/intl/scriptabledateformat;1"]
-                     .getService(Ci.nsIScriptableDateFormat)
-                     .FormatDate("",
-                                 Ci.nsIScriptableDateFormat.dateFormatLong,
-                                 aDate.getFullYear(),
-                                 aDate.getMonth() + 1,
-                                 aDate.getDate()
-                                 );
+            const locale = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
+                           .getService(Components.interfaces.nsIXULChromeRegistry)
+                           .getSelectedLocale("global", true);
+            const dtOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            return aDate.toLocaleDateString(locale, dtOptions);
           }
 
           if (this.mAddon.updateDate)
@@ -1338,30 +1335,31 @@
             this._stateMenulist.classList.add('no-auto-hide');
           } else {
             this._stateMenulist.hidden = true;
+
+            let enableTooltip = gViewController.commands["cmd_enableItem"]
+                                               .getTooltip(this.mAddon);
+            this._enableBtn.setAttribute("tooltiptext", enableTooltip);
             if (this.hasPermission("enable")) {
               this._enableBtn.hidden = false;
-              let tooltip = gViewController.commands["cmd_enableItem"]
-                                           .getTooltip(this.mAddon);
-              this._enableBtn.setAttribute("tooltiptext", tooltip);
             } else {
               this._enableBtn.hidden = true;
             }
 
+            let disableTooltip = gViewController.commands["cmd_disableItem"]
+                                                .getTooltip(this.mAddon);
+            this._disableBtn.setAttribute("tooltiptext", disableTooltip);
             if (this.hasPermission("disable")) {
               this._disableBtn.hidden = false;
-              let tooltip = gViewController.commands["cmd_disableItem"]
-                                           .getTooltip(this.mAddon);
-              this._disableBtn.setAttribute("tooltiptext", tooltip);
             } else {
               this._disableBtn.hidden = true;
             }
           }
 
+          let uninstallTooltip = gViewController.commands["cmd_uninstallItem"]
+                                                .getTooltip(this.mAddon);
+          this._removeBtn.setAttribute("tooltiptext", uninstallTooltip);
           if (this.hasPermission("uninstall")) {
             this._removeBtn.hidden = false;
-            let tooltip = gViewController.commands["cmd_uninstallItem"]
-                                         .getTooltip(this.mAddon);
-            this._removeBtn.setAttribute("tooltiptext", tooltip);
           } else {
             this._removeBtn.hidden = true;
           }

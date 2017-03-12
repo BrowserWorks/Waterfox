@@ -1,4 +1,3 @@
-// |jit-test| test-also-wasm-baseline
 load(libdir + "wasm.js");
 
 // sanity check
@@ -11,7 +10,7 @@ var o = wasmEvalText('(module (func))\n;; end');
 var o = wasmEvalText('(module (func))\n;; end');
 var o = wasmEvalText(';;start\n(module (func))');
 var o = wasmEvalText('(module (func ;; middle\n))');
-var o = wasmEvalText('(module (func) ;; middle\n (export "a" 0))');
+var o = wasmEvalText('(module (func) ;; middle\n (export "a" 0))').exports;
 assertEq(Object.getOwnPropertyNames(o)[0], "a");
 
 // multi-line comments
@@ -21,7 +20,7 @@ var o = wasmEvalText('(module (func))\n(;;)');
 var o = wasmEvalText('(;start;)(module (func))');
 var o = wasmEvalText('(;start;)\n(module (func))');
 var o = wasmEvalText('(module (func (; middle\n multi\n;)))');
-var o = wasmEvalText('(module (func)(;middle;)(export "a" 0))');
+var o = wasmEvalText('(module (func)(;middle;)(export "a" 0))').exports;
 assertEq(Object.getOwnPropertyNames(o)[0], "a");
 
 // nested comments

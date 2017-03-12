@@ -160,10 +160,6 @@ public:
 
   virtual bool RecvAppendAppNotes(const nsCString& aData) override;
 
-  virtual mozilla::ipc::IProtocol*
-  CloneProtocol(Channel* aChannel,
-                mozilla::ipc::ProtocolCloneContext *aCtx) override;
-
 #ifdef MOZ_CRASHREPORTER
   void
   NotifyCrashService();
@@ -178,7 +174,7 @@ public:
   NativeThreadId mMainThread;
   time_t mStartTime;
   // stores the child process type
-  uint32_t mProcessType;
+  GeckoProcessType mProcessType;
   bool mInitialized;
 };
 

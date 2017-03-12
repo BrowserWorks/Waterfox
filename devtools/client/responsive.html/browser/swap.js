@@ -4,6 +4,7 @@
 
 "use strict";
 
+const { Ci } = require("chrome");
 const promise = require("promise");
 const { Task } = require("devtools/shared/task");
 const { tunnelToInnerBrowser } = require("./tunnel");
@@ -52,15 +53,29 @@ function swapToInnerBrowser({ tab, containerURL, getInnerBrowser }) {
   return {
 
     start: Task.async(function* () {
+      tab.isResponsiveDesignMode = true;
+
       // Freeze navigation temporarily to avoid "blinking" in the location bar.
       freezeNavigationState(tab);
 
       // 1. Create a temporary, hidden tab to load the tool UI.
-      let containerTab = gBrowser.addTab(containerURL, {
+      let containerTab = gBrowser.addTab("about:blank", {
         skipAnimation: true,
+        forceNotRemote: true,
       });
       gBrowser.hideTab(containerTab);
       let containerBrowser = containerTab.linkedBrowser;
+      // Prevent the `containerURL` from ending up in the tab's history.
+      containerBrowser.loadURIWithFlags(containerURL, {
+        flags: Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY,
+      });
+
+      // Copy tab listener state flags to container tab.  Each tab gets its own tab
+      // listener and state flags which cache document loading progress.  The state flags
+      // are checked when switching tabs to update the browser UI.  The later step of
+      // `swapBrowsersAndCloseOther` will fold the state back into the main tab.
+      let stateFlags = gBrowser._tabListeners.get(tab).mStateFlags;
+      gBrowser._tabListeners.get(containerTab).mStateFlags = stateFlags;
 
       // 2. Mark the tool tab browser's docshell as active so the viewport frame
       //    is created eagerly and will be ready to swap.
@@ -105,6 +120,17 @@ function swapToInnerBrowser({ tab, containerURL, getInnerBrowser }) {
       tunnel = tunnelToInnerBrowser(tab.linkedBrowser, innerBrowser);
       yield tunnel.start();
 
+      // Swapping browsers disconnects the find bar UI from the browser.
+      // If the find bar has been initialized, reconnect it.
+      if (gBrowser.isFindBarInitialized(tab)) {
+        let findBar = gBrowser.getFindBar(tab);
+        findBar.browser = tab.linkedBrowser;
+        if (!findBar.hidden) {
+          // Force the find bar to activate again, restoring the search string.
+          findBar.onFindCommand();
+        }
+      }
+
       // Force the browser UI to match the new state of the tab and browser.
       thawNavigationState(tab);
       gBrowser.setTabTitle(tab);
@@ -134,6 +160,11 @@ function swapToInnerBrowser({ tab, containerURL, getInnerBrowser }) {
       gBrowser._swapBrowserDocShells(contentTab, innerBrowser);
       innerBrowser = null;
 
+      // Copy tab listener state flags to content tab.  See similar comment in `start`
+      // above for more details.
+      let stateFlags = gBrowser._tabListeners.get(tab).mStateFlags;
+      gBrowser._tabListeners.get(contentTab).mStateFlags = stateFlags;
+
       // 5. Force the original browser tab to be remote since web content is
       //    loaded in the child process, and we're about to swap the content
       //    into this tab.
@@ -144,12 +175,26 @@ function swapToInnerBrowser({ tab, containerURL, getInnerBrowser }) {
       //    `swapBrowsersAndCloseOther`.
       dispatchDevToolsBrowserSwap(contentBrowser, tab.linkedBrowser);
       gBrowser.swapBrowsersAndCloseOther(tab, contentTab);
+
+      // Swapping browsers disconnects the find bar UI from the browser.
+      // If the find bar has been initialized, reconnect it.
+      if (gBrowser.isFindBarInitialized(tab)) {
+        let findBar = gBrowser.getFindBar(tab);
+        findBar.browser = tab.linkedBrowser;
+        if (!findBar.hidden) {
+          // Force the find bar to activate again, restoring the search string.
+          findBar.onFindCommand();
+        }
+      }
+
       gBrowser = null;
 
       // The focus manager seems to get a little dizzy after all this swapping.  If a
       // content element had been focused inside the viewport before stopping, it will
       // have lost focus.  Activate the frame to restore expected focus.
       tab.linkedBrowser.frameLoader.activateRemoteFrame();
+
+      delete tab.isResponsiveDesignMode;
     },
 
   };

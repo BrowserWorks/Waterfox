@@ -42,6 +42,7 @@ NS_IMPL_CYCLE_COLLECTION(ServiceWorkerPrivate, mSupportsArray)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ServiceWorkerPrivate)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIObserver)
 NS_INTERFACE_MAP_END
 
 // Tracks the "dom.disable_open_click_delay" preference.  Modified on main
@@ -397,6 +398,7 @@ public:
     : mRegistration(aRegistration)
     , mNeedTimeCheck(aNeedTimeCheck)
   {
+    MOZ_DIAGNOSTIC_ASSERT(mRegistration);
   }
 
   NS_IMETHOD
@@ -493,9 +495,12 @@ public:
   void
   PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate, bool aRunResult)
   {
-    nsCOMPtr<nsIRunnable> runnable =
-      new RegistrationUpdateRunnable(mRegistration, true /* time check */);
-    aWorkerPrivate->DispatchToMainThread(runnable.forget());
+    // Sub-class PreRun() or WorkerRun() methods could clear our mRegistration.
+    if (mRegistration) {
+      nsCOMPtr<nsIRunnable> runnable =
+        new RegistrationUpdateRunnable(mRegistration, true /* time check */);
+      aWorkerPrivate->DispatchToMainThread(runnable.forget());
+    }
 
     ExtendableEventWorkerRunnable::PostRun(aCx, aWorkerPrivate, aRunResult);
   }
@@ -1243,10 +1248,10 @@ class FetchEventRunnable : public ExtendableFunctionalEventWorkerRunnable
                          , public nsIHttpHeaderVisitor {
   nsMainThreadPtrHandle<nsIInterceptedChannel> mInterceptedChannel;
   const nsCString mScriptSpec;
-  nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo> mRegistration;
   nsTArray<nsCString> mHeaderNames;
   nsTArray<nsCString> mHeaderValues;
   nsCString mSpec;
+  nsCString mFragment;
   nsCString mMethod;
   nsString mClientId;
   bool mIsReload;
@@ -1273,7 +1278,6 @@ public:
         aWorkerPrivate, aKeepAliveToken, aRegistration)
     , mInterceptedChannel(aChannel)
     , mScriptSpec(aScriptSpec)
-    , mRegistration(aRegistration)
     , mClientId(aDocumentId)
     , mIsReload(aIsReload)
     , mCacheMode(RequestCache::Default)
@@ -1318,18 +1322,17 @@ public:
     nsCOMPtr<nsIURI> uriNoFragment;
     rv = uri->CloneIgnoringRef(getter_AddRefs(uriNoFragment));
     NS_ENSURE_SUCCESS(rv, rv);
-
     rv = uriNoFragment->GetSpec(mSpec);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = uri->GetRef(mFragment);
     NS_ENSURE_SUCCESS(rv, rv);
 
     uint32_t loadFlags;
     rv = channel->GetLoadFlags(&loadFlags);
     NS_ENSURE_SUCCESS(rv, rv);
-
     nsCOMPtr<nsILoadInfo> loadInfo;
     rv = channel->GetLoadInfo(getter_AddRefs(loadInfo));
     NS_ENSURE_SUCCESS(rv, rv);
-
     mContentPolicyType = loadInfo->InternalContentPolicyType();
 
     nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(channel);
@@ -1474,8 +1477,8 @@ private:
       result.SuppressException();
       return false;
     }
-
     RefPtr<InternalRequest> internalReq = new InternalRequest(mSpec,
+                                                              mFragment,
                                                               mMethod,
                                                               internalHeaders.forget(),
                                                               mCacheMode,
@@ -1722,7 +1725,7 @@ ServiceWorkerPrivate::SpawnWorkerIfNeeded(WakeUpReason aWhy,
   nsContentUtils::StorageAccess access =
     nsContentUtils::StorageAllowedForPrincipal(info.mPrincipal);
   info.mStorageAllowed = access > nsContentUtils::StorageAccess::ePrivateBrowsing;
-  info.mPrivateBrowsing = false;
+  info.mOriginAttributes = mInfo->GetOriginAttributes();
 
   nsCOMPtr<nsIContentSecurityPolicy> csp;
   rv = info.mPrincipal->GetCsp(getter_AddRefs(csp));
@@ -1907,54 +1910,80 @@ ServiceWorkerPrivate::IsIdle() const
   return mTokenCount == 0 || (mTokenCount == 1 && mIdleKeepAliveToken);
 }
 
-/* static */ void
-ServiceWorkerPrivate::NoteIdleWorkerCallback(nsITimer* aTimer, void* aPrivate)
+namespace {
+
+class ServiceWorkerPrivateTimerCallback final : public nsITimerCallback
+{
+public:
+  typedef void (ServiceWorkerPrivate::*Method)(nsITimer*);
+
+  ServiceWorkerPrivateTimerCallback(ServiceWorkerPrivate* aServiceWorkerPrivate,
+                                    Method aMethod)
+    : mServiceWorkerPrivate(aServiceWorkerPrivate)
+    , mMethod(aMethod)
+  {
+  }
+
+  NS_IMETHOD
+  Notify(nsITimer* aTimer) override
+  {
+    (mServiceWorkerPrivate->*mMethod)(aTimer);
+    mServiceWorkerPrivate = nullptr;
+    return NS_OK;
+  }
+
+private:
+  ~ServiceWorkerPrivateTimerCallback() = default;
+
+  RefPtr<ServiceWorkerPrivate> mServiceWorkerPrivate;
+  Method mMethod;
+
+  NS_DECL_THREADSAFE_ISUPPORTS
+};
+
+NS_IMPL_ISUPPORTS(ServiceWorkerPrivateTimerCallback, nsITimerCallback);
+
+} // anonymous namespace
+
+void
+ServiceWorkerPrivate::NoteIdleWorkerCallback(nsITimer* aTimer)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(aPrivate);
 
-  RefPtr<ServiceWorkerPrivate> swp = static_cast<ServiceWorkerPrivate*>(aPrivate);
-
-  MOZ_ASSERT(aTimer == swp->mIdleWorkerTimer, "Invalid timer!");
+  MOZ_ASSERT(aTimer == mIdleWorkerTimer, "Invalid timer!");
 
   // Release ServiceWorkerPrivate's token, since the grace period has ended.
-  swp->mIdleKeepAliveToken = nullptr;
+  mIdleKeepAliveToken = nullptr;
 
-  if (swp->mWorkerPrivate) {
+  if (mWorkerPrivate) {
     // If we still have a workerPrivate at this point it means there are pending
     // waitUntil promises. Wait a bit more until we forcibly terminate the
     // worker.
     uint32_t timeout = Preferences::GetInt("dom.serviceWorkers.idle_extended_timeout");
+    nsCOMPtr<nsITimerCallback> cb = new ServiceWorkerPrivateTimerCallback(
+      this, &ServiceWorkerPrivate::TerminateWorkerCallback);
     DebugOnly<nsresult> rv =
-      swp->mIdleWorkerTimer->InitWithFuncCallback(ServiceWorkerPrivate::TerminateWorkerCallback,
-                                                  aPrivate,
-                                                  timeout,
-                                                  nsITimer::TYPE_ONE_SHOT);
+      mIdleWorkerTimer->InitWithCallback(cb, timeout, nsITimer::TYPE_ONE_SHOT);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
 }
 
-/* static */ void
-ServiceWorkerPrivate::TerminateWorkerCallback(nsITimer* aTimer, void *aPrivate)
+void
+ServiceWorkerPrivate::TerminateWorkerCallback(nsITimer* aTimer)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(aPrivate);
 
-  RefPtr<ServiceWorkerPrivate> serviceWorkerPrivate =
-    static_cast<ServiceWorkerPrivate*>(aPrivate);
-
-  MOZ_ASSERT(aTimer == serviceWorkerPrivate->mIdleWorkerTimer,
-      "Invalid timer!");
+  MOZ_ASSERT(aTimer == this->mIdleWorkerTimer, "Invalid timer!");
 
   // mInfo must be non-null at this point because NoteDeadServiceWorkerInfo
   // which zeroes it calls TerminateWorker which cancels our timer which will
   // ensure we don't get invoked even if the nsTimerEvent is in the event queue.
   ServiceWorkerManager::LocalizeAndReportToAllClients(
-    serviceWorkerPrivate->mInfo->Scope(),
+    mInfo->Scope(),
     "ServiceWorkerGraceTimeoutTermination",
-    nsTArray<nsString> { NS_ConvertUTF8toUTF16(serviceWorkerPrivate->mInfo->Scope()) });
+    nsTArray<nsString> { NS_ConvertUTF8toUTF16(mInfo->Scope()) });
 
-  serviceWorkerPrivate->TerminateWorker();
+  TerminateWorker();
 }
 
 void
@@ -1979,10 +2008,10 @@ void
 ServiceWorkerPrivate::ResetIdleTimeout()
 {
   uint32_t timeout = Preferences::GetInt("dom.serviceWorkers.idle_timeout");
+  nsCOMPtr<nsITimerCallback> cb = new ServiceWorkerPrivateTimerCallback(
+    this, &ServiceWorkerPrivate::NoteIdleWorkerCallback);
   DebugOnly<nsresult> rv =
-    mIdleWorkerTimer->InitWithFuncCallback(ServiceWorkerPrivate::NoteIdleWorkerCallback,
-                                           this, timeout,
-                                           nsITimer::TYPE_ONE_SHOT);
+    mIdleWorkerTimer->InitWithCallback(cb, timeout, nsITimer::TYPE_ONE_SHOT);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
@@ -2002,7 +2031,11 @@ ServiceWorkerPrivate::ReleaseToken()
   --mTokenCount;
   if (!mTokenCount) {
     TerminateWorker();
-  } else if (IsIdle()) {
+  }
+
+  // mInfo can be nullptr here if NoteDeadServiceWorkerInfo() is called while
+  // the KeepAliveToken is being proxy released as a runnable.
+  else if (mInfo && IsIdle()) {
     RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
     if (swm) {
       swm->WorkerIsIdle(mInfo);
@@ -2018,6 +2051,38 @@ ServiceWorkerPrivate::CreateEventKeepAliveToken()
   MOZ_ASSERT(mIdleKeepAliveToken);
   RefPtr<KeepAliveToken> ref = new KeepAliveToken(this);
   return ref.forget();
+}
+
+void
+ServiceWorkerPrivate::AddPendingWindow(Runnable* aPendingWindow)
+{
+  AssertIsOnMainThread();
+  pendingWindows.AppendElement(aPendingWindow);
+}
+
+nsresult
+ServiceWorkerPrivate::Observe(nsISupports* aSubject, const char* aTopic, const char16_t* aData)
+{
+  AssertIsOnMainThread();
+
+  nsCString topic(aTopic);
+  if (!topic.Equals(NS_LITERAL_CSTRING("BrowserChrome:Ready"))) {
+    MOZ_ASSERT(false, "Unexpected topic.");
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsIObserverService> os = services::GetObserverService();
+  NS_ENSURE_STATE(os);
+  os->RemoveObserver(static_cast<nsIObserver*>(this), "BrowserChrome:Ready");
+
+  size_t len = pendingWindows.Length();
+  for (int i = len-1; i >= 0; i--) {
+    RefPtr<Runnable> runnable = pendingWindows[i];
+    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
+    pendingWindows.RemoveElementAt(i);
+  }
+
+  return NS_OK;
 }
 
 END_WORKERS_NAMESPACE

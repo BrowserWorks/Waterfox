@@ -70,7 +70,6 @@ nsJSON::Encode(JS::Handle<JS::Value> aValue, JSContext* cx, uint8_t aArgc,
     return rv;
 
   if (aArgc == 0) {
-    aJSON.Truncate();
     aJSON.SetIsVoid(true);
     return NS_OK;
   }
@@ -83,7 +82,6 @@ nsJSON::Encode(JS::Handle<JS::Value> aValue, JSContext* cx, uint8_t aArgc,
     rv = NS_OK;
     // if we didn't consume anything, it's not JSON, so return null
     if (!writer.DidWrite()) {
-      aJSON.Truncate();
       aJSON.SetIsVoid(true);
     } else {
       writer.FlushBuffer();
@@ -533,7 +531,7 @@ nsJSONListener::OnStopRequest(nsIRequest *aRequest, nsISupports *aContext,
 
   JS::ConstTwoByteChars chars(reinterpret_cast<const char16_t*>(mBufferedChars.Elements()),
                               mBufferedChars.Length());
-  bool ok = JS_ParseJSONWithReviver(mCx, chars.start().get(),
+  bool ok = JS_ParseJSONWithReviver(mCx, chars.begin().get(),
                                       uint32_t(mBufferedChars.Length()),
                                       reviver, &value);
 

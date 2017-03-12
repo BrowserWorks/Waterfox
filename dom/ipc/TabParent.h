@@ -33,6 +33,7 @@
 #include "nsWeakReference.h"
 #include "Units.h"
 #include "nsIWidget.h"
+#include "nsIPartialSHistory.h"
 
 class nsFrameLoader;
 class nsIFrameLoader;
@@ -151,10 +152,6 @@ public:
 
   void Destroy();
 
-  void Detach();
-
-  void Attach(nsFrameLoader* aFrameLoader);
-
   void RemoveWindowListeners();
 
   void AddWindowListeners();
@@ -169,6 +166,8 @@ public:
                                const int32_t& aHeight,
                                const int32_t& aShellItemWidth,
                                const int32_t& aShellItemHeight) override;
+
+  virtual bool RecvDropLinks(nsTArray<nsString>&& aLinks) override;
 
   virtual bool RecvEvent(const RemoteDOMEvent& aEvent) override;
 
@@ -319,6 +318,8 @@ public:
 
   virtual bool RecvGetDefaultScale(double* aValue) override;
 
+  virtual bool RecvGetWidgetRounding(int32_t* aValue) override;
+
   virtual bool RecvGetMaxTouchPoints(uint32_t* aTouchPoints) override;
 
   virtual bool RecvGetWidgetNativeData(WindowsHandle* aValue) override;
@@ -352,7 +353,7 @@ public:
 
   virtual PDocAccessibleParent*
   AllocPDocAccessibleParent(PDocAccessibleParent*, const uint64_t&,
-                            const uint32_t&) override;
+                            const uint32_t&, const IAccessibleHolder&) override;
 
   virtual bool DeallocPDocAccessibleParent(PDocAccessibleParent*) override;
 
@@ -360,7 +361,8 @@ public:
   RecvPDocAccessibleConstructor(PDocAccessibleParent* aDoc,
                                 PDocAccessibleParent* aParentDoc,
                                 const uint64_t& aParentID,
-                                const uint32_t& aMsaaID) override;
+                                const uint32_t& aMsaaID,
+                                const IAccessibleHolder& aDocCOMProxy) override;
 
   /**
    * Return the top level doc accessible parent for this tab.
@@ -566,21 +568,19 @@ public:
   bool SendLoadRemoteScript(const nsString& aURL,
                             const bool& aRunInGlobalScope);
 
-  static void ObserveLayerUpdate(uint64_t aLayersId, uint64_t aEpoch, bool aActive);
   void LayerTreeUpdate(uint64_t aEpoch, bool aActive);
 
   virtual bool
   RecvInvokeDragSession(nsTArray<IPCDataTransfer>&& aTransfers,
                         const uint32_t& aAction,
                         const OptionalShmem& aVisualDnDData,
-                        const uint32_t& aWidth, const uint32_t& aHeight,
                         const uint32_t& aStride, const uint8_t& aFormat,
-                        const int32_t& aDragAreaX, const int32_t& aDragAreaY) override;
+                        const LayoutDeviceIntRect& aDragRect) override;
 
   void AddInitialDnDDataTo(DataTransfer* aDataTransfer);
 
-  void TakeDragVisualization(RefPtr<mozilla::gfx::SourceSurface>& aSurface,
-                             int32_t& aDragAreaX, int32_t& aDragAreaY);
+  bool TakeDragVisualization(RefPtr<mozilla::gfx::SourceSurface>& aSurface,
+                             LayoutDeviceIntRect* aDragRect);
 
   layout::RenderFrameParent* GetRenderFrame();
 
@@ -591,6 +591,8 @@ public:
   bool SetRenderFrame(PRenderFrameParent* aRFParent);
   bool GetRenderFrameInfo(TextureFactoryIdentifier* aTextureFactoryIdentifier,
                           uint64_t* aLayersId);
+
+  bool RecvEnsureLayersConnected() override;
 
 protected:
   bool ReceiveMessage(const nsString& aMessage,
@@ -628,12 +630,17 @@ protected:
   virtual bool RecvAudioChannelActivityNotification(const uint32_t& aAudioChannel,
                                                     const bool& aActive) override;
 
+  virtual bool RecvNotifySessionHistoryChange(const uint32_t& aCount) override;
+
+  virtual bool RecvRequestCrossBrowserNavigation(const uint32_t& aGlobalIndex) override;
+
   ContentCacheInParent mContentCache;
 
   nsIntRect mRect;
   ScreenIntSize mDimensions;
   ScreenOrientationInternal mOrientation;
   float mDPI;
+  int32_t mRounding;
   CSSToLayoutDeviceScale mDefaultScale;
   bool mUpdatedDimensions;
   nsSizeMode mSizeMode;
@@ -671,22 +678,14 @@ private:
   bool mMarkedDestroying;
   // When true, the TabParent is invalid and we should not send IPC messages anymore.
   bool mIsDestroyed;
-  // When true, the TabParent is detached from the frame loader.
-  bool mIsDetached;
-  // Whether we have already sent a FileDescriptor for the app package.
-  bool mAppPackageFileDescriptorSent;
-
-  // Whether we need to send the offline status to the TabChild
-  // This is true, until the first call of LoadURL
-  bool mSendOfflineStatus;
 
   uint32_t mChromeFlags;
 
   nsTArray<nsTArray<IPCDataTransferItem>> mInitialDataTransferItems;
 
   RefPtr<gfx::DataSourceSurface> mDnDVisualization;
-  int32_t mDragAreaX;
-  int32_t mDragAreaY;
+  bool mDragValid;
+  LayoutDeviceIntRect mDragRect;
 
   // When true, the TabParent is initialized without child side's request.
   // When false, the TabParent is initialized by window.open() from child side.
@@ -771,12 +770,6 @@ private:
   // If this flag is set, then the tab's layers will be preserved even when
   // the tab's docshell is inactive.
   bool mPreserveLayers;
-
-  // Normally we call ForceTabPaint when activating a tab. But we don't do this
-  // the first time we activate a tab. The tab is probably busy running the
-  // initial content scripts and we don't want to force painting then; they're
-  // probably quick and there's some cost to forcing painting.
-  bool mFirstActivate;
 
 public:
   static TabParent* GetTabParentFromLayersId(uint64_t aLayersId);

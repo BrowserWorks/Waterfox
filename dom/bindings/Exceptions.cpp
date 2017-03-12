@@ -193,7 +193,6 @@ CreateException(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
   case NS_ERROR_MODULE_DOM_XPATH:
   case NS_ERROR_MODULE_DOM_INDEXEDDB:
   case NS_ERROR_MODULE_DOM_FILEHANDLE:
-  case NS_ERROR_MODULE_DOM_BLUETOOTH:
   case NS_ERROR_MODULE_DOM_ANIM:
   case NS_ERROR_MODULE_DOM_PUSH:
   case NS_ERROR_MODULE_DOM_MEDIA:
@@ -345,7 +344,7 @@ NS_IMETHODIMP JSStackFrame::GetLanguageName(nsACString& aLanguageName)
 // @argument [out] aValue the value we got from the stack.
 template<typename ReturnType, typename GetterOutParamType>
 static void
-GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
+GetValueIfNotCached(JSContext* aCx, const JS::Heap<JSObject*>& aStack,
                     JS::SavedFrameResult (*aPropGetter)(JSContext*,
                                                         JS::Handle<JSObject*>,
                                                         GetterOutParamType,
@@ -365,7 +364,6 @@ GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
   }
 
   *aUseCachedValue = false;
-  JS::ExposeObjectToActiveJS(stack);
 
   aPropGetter(aCx, stack, aValue, JS::SavedFrameSelfHosted::Exclude);
 }
@@ -628,7 +626,6 @@ NS_IMETHODIMP JSStackFrame::GetFormattedStack(JSContext* aCx, nsAString& aStack)
     return NS_OK;
   }
 
-  JS::ExposeObjectToActiveJS(mStack);
   JS::Rooted<JSObject*> stack(aCx, mStack);
 
   JS::Rooted<JSString*> formattedStack(aCx);
@@ -657,9 +654,6 @@ NS_IMETHODIMP JSStackFrame::GetFormattedStack(JSContext* aCx, nsAString& aStack)
 
 NS_IMETHODIMP JSStackFrame::GetNativeSavedFrame(JS::MutableHandle<JS::Value> aSavedFrame)
 {
-  if (mStack) {
-    JS::ExposeObjectToActiveJS(mStack);
-  }
   aSavedFrame.setObjectOrNull(mStack);
   return NS_OK;
 }

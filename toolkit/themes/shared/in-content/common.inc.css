@@ -74,11 +74,16 @@ xul|caption {
   margin: 0;
 }
 
+html|h2,
 xul|caption > xul|checkbox,
 xul|caption > xul|label {
   font-size: 1.3rem;
   font-weight: bold;
   line-height: 22px;
+}
+
+xul|caption > xul|checkbox,
+xul|caption > xul|label {
   margin: 0 !important;
 }
 
@@ -566,6 +571,11 @@ xul|*.checkbox-label-box {
 
 xul|richlistitem > xul|*.checkbox-check {
   margin: 3px 6px;
+}
+
+html|*.toggle-container-with-text {
+  display: flex;
+  align-items: center;
 }
 
 xul|radio {

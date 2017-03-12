@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ServoRestyleManager.h"
+#include "mozilla/ServoBindings.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/dom/ChildIterator.h"
 #include "nsContentUtils.h"
@@ -32,6 +33,13 @@ ServoRestyleManager::PostRestyleEvent(Element* aElement,
 
   if (aRestyleHint == 0 && !aMinChangeHint && !HasPendingRestyles()) {
     return; // Nothing to do.
+  }
+
+  // XXX This is a temporary hack to make style attribute change works.
+  //     In the future, we should be able to use this hint directly.
+  if (aRestyleHint & eRestyle_StyleAttribute) {
+    aRestyleHint &= ~eRestyle_StyleAttribute;
+    aRestyleHint |= eRestyle_Self | eRestyle_Subtree;
   }
 
   // Note that unlike in Servo, we don't mark elements as dirty until we process
@@ -65,59 +73,106 @@ ServoRestyleManager::PostRebuildAllStyleDataEvent(nsChangeHint aExtraHint,
   NS_WARNING("stylo: ServoRestyleManager::PostRebuildAllStyleDataEvent not implemented");
 }
 
+static void
+MarkSelfAndDescendantsAsNotDirtyForServo(nsIContent* aContent)
+{
+  aContent->UnsetIsDirtyForServo();
+
+  if (aContent->HasDirtyDescendantsForServo()) {
+    aContent->UnsetHasDirtyDescendantsForServo();
+
+    StyleChildrenIterator it(aContent);
+    for (nsIContent* n = it.GetNextChild(); n; n = it.GetNextChild()) {
+      MarkSelfAndDescendantsAsNotDirtyForServo(n);
+    }
+  }
+}
+
 void
 ServoRestyleManager::RecreateStyleContexts(nsIContent* aContent,
                                            nsStyleContext* aParentContext,
                                            ServoStyleSet* aStyleSet,
                                            nsStyleChangeList& aChangeListToProcess)
 {
+  MOZ_ASSERT(aContent->IsElement() || aContent->IsNodeOfType(nsINode::eTEXT));
+
   nsIFrame* primaryFrame = aContent->GetPrimaryFrame();
   if (!primaryFrame && !aContent->IsDirtyForServo()) {
     // This happens when, for example, a display: none child of a
     // HAS_DIRTY_DESCENDANTS content is reached as part of the traversal.
+    MarkSelfAndDescendantsAsNotDirtyForServo(aContent);
     return;
   }
 
-  if (aContent->IsDirtyForServo()) {
+  // Work on text before.
+  if (!aContent->IsElement()) {
+    if (primaryFrame) {
+      RefPtr<nsStyleContext> oldStyleContext = primaryFrame->StyleContext();
+      RefPtr<nsStyleContext> newContext =
+        aStyleSet->ResolveStyleForText(aContent, aParentContext);
+
+      for (nsIFrame* f = primaryFrame; f;
+           f = GetNextContinuationWithSameStyle(f, oldStyleContext)) {
+        f->SetStyleContext(newContext);
+      }
+    }
+
+    aContent->UnsetIsDirtyForServo();
+    return;
+  }
+
+  Element* element = aContent->AsElement();
+  if (element->IsDirtyForServo()) {
     RefPtr<ServoComputedValues> computedValues =
       Servo_ComputedValues_Get(aContent).Consume();
     MOZ_ASSERT(computedValues);
 
     nsChangeHint changeHint = nsChangeHint(0);
-    // NB: Change hint processing only applies to elements, at least until we
-    // support display: contents.
-    if (aContent->IsElement()) {
-      Element* element = aContent->AsElement();
 
-      // Add an explicit change hint if appropriate.
-      ServoElementSnapshot* snapshot;
-      if (mModifiedElements.Get(element, &snapshot)) {
-        changeHint |= snapshot->ExplicitChangeHint();
-      }
+    // Add an explicit change hint if appropriate.
+    ServoElementSnapshot* snapshot;
+    if (mModifiedElements.Get(element, &snapshot)) {
+      changeHint |= snapshot->ExplicitChangeHint();
+    }
 
-      // Add the stored change hint if there's a frame. If there isn't a frame,
-      // generate a ReconstructFrame change hint if the new display value
-      // (which we can get from the ComputedValues stored on the node) is not
-      // none.
-      if (primaryFrame) {
-        changeHint |= primaryFrame->StyleContext()->ConsumeStoredChangeHint();
-      } else {
-        const nsStyleDisplay* currentDisplay =
-          Servo_GetStyleDisplay(computedValues);
-        if (currentDisplay->mDisplay != StyleDisplay::None) {
-          changeHint |= nsChangeHint_ReconstructFrame;
-        }
+    // Add the stored change hint if there's a frame. If there isn't a frame,
+    // generate a ReconstructFrame change hint if the new display value
+    // (which we can get from the ComputedValues stored on the node) is not
+    // none.
+    if (primaryFrame) {
+      changeHint |= primaryFrame->StyleContext()->ConsumeStoredChangeHint();
+    } else {
+      const nsStyleDisplay* currentDisplay =
+        Servo_GetStyleDisplay(computedValues);
+      if (currentDisplay->mDisplay != StyleDisplay::None) {
+        changeHint |= nsChangeHint_ReconstructFrame;
       }
+    }
 
-      // Add the new change hint to the list of elements to process if
-      // we need to do any work.
-      if (changeHint) {
-        aChangeListToProcess.AppendChange(primaryFrame, element, changeHint);
-      }
+    // Add the new change hint to the list of elements to process if
+    // we need to do any work.
+    if (changeHint) {
+      aChangeListToProcess.AppendChange(primaryFrame, element, changeHint);
     }
 
     // The frame reconstruction step (if needed) will ask for the descendants'
     // style correctly. If not needed, we're done too.
+    //
+    // Note that we must leave the old style on an existing frame that is
+    // about to be reframed, since some frame constructor code wants to
+    // inspect the old style to work out what to do.
+    if (changeHint & nsChangeHint_ReconstructFrame) {
+      // Since we might still have some dirty bits set on descendants,
+      // inconsistent with the clearing of HasDirtyDescendants we will do as
+      // we return from these recursive RecreateStyleContexts calls, we
+      // explicitly clear them here.  Otherwise we will trigger assertions
+      // when we soon process the frame reconstruction.
+      MarkSelfAndDescendantsAsNotDirtyForServo(element);
+      return;
+    }
+
+    // If there is no frame, and we didn't generate a ReconstructFrame change
+    // hint, then we don't need to do any more work.
     if (!primaryFrame) {
       aContent->UnsetIsDirtyForServo();
       return;
@@ -130,8 +185,6 @@ ServoRestyleManager::RecreateStyleContexts(nsIContent* aContent,
     RefPtr<nsStyleContext> oldStyleContext = primaryFrame->StyleContext();
     MOZ_ASSERT(oldStyleContext);
 
-    // TODO: Figure out what pseudos does this content have, and do the proper
-    // thing with them.
     RefPtr<nsStyleContext> newContext =
       aStyleSet->GetContext(computedValues.forget(), aParentContext, nullptr,
                             CSSPseudoElementType::NotPseudo);
@@ -145,45 +198,40 @@ ServoRestyleManager::RecreateStyleContexts(nsIContent* aContent,
     }
 
     // Update pseudo-elements state if appropriate.
-    if (aContent->IsElement()) {
-      Element* aElement = aContent->AsElement();
-      const static CSSPseudoElementType pseudosToRestyle[] = {
-        CSSPseudoElementType::before,
-        CSSPseudoElementType::after,
-      };
+    const static CSSPseudoElementType pseudosToRestyle[] = {
+      CSSPseudoElementType::before,
+      CSSPseudoElementType::after,
+    };
 
-      for (CSSPseudoElementType pseudoType : pseudosToRestyle) {
-        nsIAtom* pseudoTag = nsCSSPseudoElements::GetPseudoAtom(pseudoType);
+    for (CSSPseudoElementType pseudoType : pseudosToRestyle) {
+      nsIAtom* pseudoTag = nsCSSPseudoElements::GetPseudoAtom(pseudoType);
 
-        if (nsIFrame* pseudoFrame =
-              FrameForPseudoElement(aElement, pseudoTag)) {
-          // TODO: we could maybe make this more performant via calling into
-          // Servo just once to know which pseudo-elements we've got to restyle?
-          RefPtr<nsStyleContext> pseudoContext =
-            aStyleSet->ProbePseudoElementStyle(aElement, pseudoType,
-                                               newContext);
+      if (nsIFrame* pseudoFrame = FrameForPseudoElement(element, pseudoTag)) {
+        // TODO: we could maybe make this more performant via calling into
+        // Servo just once to know which pseudo-elements we've got to restyle?
+        RefPtr<nsStyleContext> pseudoContext =
+          aStyleSet->ProbePseudoElementStyle(element, pseudoType, newContext);
 
-          // If pseudoContext is null here, it means the frame is going away, so
-          // our change hint computation should have already indicated we need
-          // to reframe.
-          MOZ_ASSERT_IF(!pseudoContext,
-                        changeHint & nsChangeHint_ReconstructFrame);
-          if (pseudoContext) {
-            pseudoFrame->SetStyleContext(pseudoContext);
+        // If pseudoContext is null here, it means the frame is going away, so
+        // our change hint computation should have already indicated we need
+        // to reframe.
+        MOZ_ASSERT_IF(!pseudoContext,
+                      changeHint & nsChangeHint_ReconstructFrame);
+        if (pseudoContext) {
+          pseudoFrame->SetStyleContext(pseudoContext);
 
-            // We only care restyling text nodes, since other type of nodes
-            // (images), are still not supported. If that eventually changes, we
-            // may have to write more code here... Or not, I don't think too
-            // many inherited properties can affect those other frames.
-            StyleChildrenIterator it(pseudoFrame->GetContent());
-            for (nsIContent* n = it.GetNextChild(); n; n = it.GetNextChild()) {
-              if (n->IsNodeOfType(nsINode::eTEXT)) {
-                RefPtr<nsStyleContext> childContext =
-                  aStyleSet->ResolveStyleForText(n, pseudoContext);
-                MOZ_ASSERT(n->GetPrimaryFrame(),
-                           "How? This node is created at FC time!");
-                n->GetPrimaryFrame()->SetStyleContext(childContext);
-              }
+          // We only care restyling text nodes, since other type of nodes
+          // (images), are still not supported. If that eventually changes, we
+          // may have to write more code here... Or not, I don't think too
+          // many inherited properties can affect those other frames.
+          StyleChildrenIterator it(pseudoFrame->GetContent());
+          for (nsIContent* n = it.GetNextChild(); n; n = it.GetNextChild()) {
+            if (n->IsNodeOfType(nsINode::eTEXT)) {
+              RefPtr<nsStyleContext> childContext =
+                aStyleSet->ResolveStyleForText(n, pseudoContext);
+              MOZ_ASSERT(n->GetPrimaryFrame(),
+                         "How? This node is created at FC time!");
+              n->GetPrimaryFrame()->SetStyleContext(childContext);
             }
           }
         }
@@ -199,8 +247,10 @@ ServoRestyleManager::RecreateStyleContexts(nsIContent* aContent,
                "correct style for the children, so no need to be here.");
     StyleChildrenIterator it(aContent);
     for (nsIContent* n = it.GetNextChild(); n; n = it.GetNextChild()) {
-      RecreateStyleContexts(n, primaryFrame->StyleContext(),
-                            aStyleSet, aChangeListToProcess);
+      if (n->IsElement() || n->IsNodeOfType(nsINode::eTEXT)) {
+        RecreateStyleContexts(n, primaryFrame->StyleContext(),
+                              aStyleSet, aChangeListToProcess);
+      }
     }
     aContent->UnsetHasDirtyDescendantsForServo();
   }
@@ -223,7 +273,7 @@ MarkChildrenAsDirtyForServo(nsIContent* aContent)
 }
 
 /* static */ nsIFrame*
-ServoRestyleManager::FrameForPseudoElement(nsIContent* aContent,
+ServoRestyleManager::FrameForPseudoElement(const nsIContent* aContent,
                                            nsIAtom* aPseudoTagOrNull)
 {
   MOZ_ASSERT_IF(aPseudoTagOrNull, aContent->IsElement());
@@ -312,21 +362,40 @@ ServoRestyleManager::ProcessPendingRestyles()
   nsIDocument* doc = PresContext()->Document();
   Element* root = doc->GetRootElement();
   if (root) {
-    for (auto iter = mModifiedElements.Iter(); !iter.Done(); iter.Next()) {
-      ServoElementSnapshot* snapshot = iter.UserData();
-      Element* element = iter.Key();
+    // ProcessPendingRestyles can generate new restyles (e.g. from the
+    // frame constructor if it decides that a ReconstructFrame change must
+    // apply to the parent of the element that generated that hint).  So
+    // we loop while mModifiedElements still has some restyles in it, clearing
+    // it after each RecreateStyleContexts call below.
+    while (!mModifiedElements.IsEmpty()) {
+      for (auto iter = mModifiedElements.Iter(); !iter.Done(); iter.Next()) {
+        ServoElementSnapshot* snapshot = iter.UserData();
+        Element* element = iter.Key();
 
-      // TODO: avoid the ComputeRestyleHint call if we already have the highest
-      // explicit restyle hint?
-      nsRestyleHint hint = styleSet->ComputeRestyleHint(element, snapshot);
-      hint |= snapshot->ExplicitRestyleHint();
+        // The element is no longer in the document, so don't bother computing
+        // a final restyle hint for it.
+        //
+        // XXXheycam RestyleTracker checks that the element's GetComposedDoc()
+        // matches the document we're restyling.  Do we need to do that too?
+        if (!element->IsInComposedDoc()) {
+          continue;
+        }
 
-      if (hint) {
-        NoteRestyleHint(element, hint);
+        // TODO: avoid the ComputeRestyleHint call if we already have the highest
+        // explicit restyle hint?
+        nsRestyleHint hint = styleSet->ComputeRestyleHint(element, snapshot);
+        hint |= snapshot->ExplicitRestyleHint();
+
+        if (hint) {
+          NoteRestyleHint(element, hint);
+        }
       }
-    }
 
-    if (root->IsDirtyForServo() || root->HasDirtyDescendantsForServo()) {
+      if (!root->IsDirtyForServo() && !root->HasDirtyDescendantsForServo()) {
+        mModifiedElements.Clear();
+        break;
+      }
+
       mInStyleRefresh = true;
       styleSet->StyleDocument(/* aLeaveDirtyBits = */ true);
 
@@ -342,6 +411,8 @@ ServoRestyleManager::ProcessPendingRestyles()
 
       nsStyleChangeList changeList;
       RecreateStyleContexts(root, nullptr, styleSet, changeList);
+
+      mModifiedElements.Clear();
       ProcessRestyledFrames(changeList);
 
       mInStyleRefresh = false;
@@ -350,8 +421,6 @@ ServoRestyleManager::ProcessPendingRestyles()
 
   MOZ_ASSERT(!doc->IsDirtyForServo());
   doc->UnsetHasDirtyDescendantsForServo();
-
-  mModifiedElements.Clear();
 
   IncrementRestyleGeneration();
 }
@@ -386,7 +455,7 @@ ServoRestyleManager::ContentInserted(nsINode* aContainer, nsIContent* aChild)
     return;
   }
 
-  if (!aContainer->ServoData().get()) {
+  if (!aContainer->HasServoData()) {
     // This can happen with display:none. Bug 1297249 tracks more investigation
     // and assertions here.
     return;
@@ -417,7 +486,7 @@ void
 ServoRestyleManager::ContentAppended(nsIContent* aContainer,
                                      nsIContent* aFirstNewContent)
 {
-  if (!aContainer->ServoData().get()) {
+  if (!aContainer->HasServoData()) {
     // This can happen with display:none. Bug 1297249 tracks more investigation
     // and assertions here.
     return;
@@ -494,6 +563,17 @@ ServoRestyleManager::AttributeWillChange(Element* aElement,
 {
   ServoElementSnapshot* snapshot = SnapshotForElement(aElement);
   snapshot->AddAttrs(aElement);
+}
+
+void
+ServoRestyleManager::AttributeChanged(Element* aElement, int32_t aNameSpaceID,
+                                      nsIAtom* aAttribute, int32_t aModType,
+                                      const nsAttrValue* aOldValue)
+{
+  MOZ_ASSERT(SnapshotForElement(aElement)->HasAttrs());
+  if (aAttribute == nsGkAtoms::style) {
+    PostRestyleEvent(aElement, eRestyle_StyleAttribute, nsChangeHint(0));
+  }
 }
 
 nsresult

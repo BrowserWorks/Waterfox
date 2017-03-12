@@ -7,18 +7,7 @@
 #define OggCodecState_h_
 
 #include <ogg/ogg.h>
-#include <theora/theoradec.h>
-#ifdef MOZ_TREMOR
-#include <tremor/ivorbiscodec.h>
-#else
-#include <vorbis/codec.h>
-#endif
-#include <opus/opus.h>
-#include "opus/opus_multistream.h"
 // For MOZ_SAMPLE_TYPE_*
-#include "mozilla/dom/HTMLMediaElement.h"
-#include "MediaDecoderStateMachine.h"
-#include "MediaDecoderReader.h"
 #include <nsAutoPtr.h>
 #include <nsAutoRef.h>
 #include <nsDeque.h>
@@ -27,7 +16,12 @@
 #include "VideoUtils.h"
 #include "FlacFrameParser.h"
 
-#include <stdint.h>
+#include <theora/theoradec.h>
+#ifdef MOZ_TREMOR
+#include <tremor/ivorbiscodec.h>
+#else
+#include <vorbis/codec.h>
+#endif
 
 // Uncomment the following to validate that we're predicting the number
 // of Vorbis samples in each packet correctly.
@@ -36,9 +30,11 @@
 #include <map>
 #endif
 
-#include "OpusParser.h"
+struct OpusMSDecoder;
 
 namespace mozilla {
+
+class OpusParser;
 
 // Deallocates a packet, used in OggPacketQueue below.
 class OggPacketDeallocator : public nsDequeFunctor
@@ -94,11 +90,11 @@ public:
   };
 
   virtual ~OggCodecState();
-  
+
   // Factory for creating nsCodecStates. Use instead of constructor.
   // aPage should be a beginning-of-stream page.
   static OggCodecState* Create(ogg_page* aPage);
-  
+
   virtual CodecType GetType() { return TYPE_UNKNOWN; }
 
   // Reads a header packet. Returns false if an error was encountered
@@ -199,7 +195,7 @@ public:
   // if there are no more packets buffered in the packet queue. More packets
   // can be buffered by inserting one or more pages into the stream by calling
   // PageIn(). The packet will have a valid granulepos.
-  virtual RefPtr<MediaRawData> PacketOutAsMediaRawData();
+  virtual already_AddRefed<MediaRawData> PacketOutAsMediaRawData();
 
   // Extracts all packets from the page, and inserts them into the packet
   // queue. They can be extracted by calling PacketOut(). Packets from an
@@ -209,7 +205,7 @@ public:
   // captured.
   virtual nsresult PageIn(ogg_page* aPage);
 
-  // Number of packets read.  
+  // Number of packets read.
   uint64_t mPacketCount;
 
   // Serial number of the bitstream.
@@ -224,7 +220,7 @@ public:
 
   // Is the bitstream active; whether we're decoding and playing this bitstream.
   bool mActive;
-  
+
   // True when all headers packets have been read.
   bool mDoneReadingHeaders;
 
@@ -360,7 +356,7 @@ public:
   int64_t MaxKeyframeOffset();
 
   // Returns the end time that a granulepos represents.
-  static int64_t Time(th_info* aInfo, int64_t aGranulePos); 
+  static int64_t Time(th_info* aInfo, int64_t aGranulePos);
 
   th_info mInfo;
   th_comment mComment;
@@ -395,7 +391,7 @@ public:
   nsresult Reset(bool aStart);
   bool IsHeader(ogg_packet* aPacket) override;
   nsresult PageIn(ogg_page* aPage) override;
-
+  already_AddRefed<MediaRawData> PacketOutAsMediaRawData() override;
   // Returns the end time that a granulepos represents.
   static int64_t Time(int aPreSkip, int64_t aGranulepos);
 
@@ -566,7 +562,7 @@ private:
   {
   public:
 
-    nsKeyFrameIndex(int64_t aStartTime, int64_t aEndTime) 
+    nsKeyFrameIndex(int64_t aStartTime, int64_t aEndTime)
       : mStartTime(aStartTime)
       , mEndTime(aEndTime)
     {

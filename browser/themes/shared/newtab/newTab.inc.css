@@ -99,6 +99,19 @@
   border-radius: 2px;
 }
 
+/* GRID */
+#topsites-heading {
+  color: #7A7A7A;
+  font-size: 1em;
+  font-weight: normal;
+  /* Position the heading such that it doesn't affect how many cells we
+     can fit into the grid. */
+  position: absolute;
+  /* The top margin moves the heading away from the grid.
+     The horizontal margin aligns the heading with the cells. */
+  margin: -1em 10px 0;
+}
+
 /* CELLS */
 .newtab-cell {
   --cell-corner-radius: 8px;

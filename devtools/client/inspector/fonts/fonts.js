@@ -7,12 +7,12 @@
 "use strict";
 
 const {gDevTools} = require("devtools/client/framework/devtools");
-const Services = require("Services");
 
 const DEFAULT_PREVIEW_TEXT = "Abc";
 const PREVIEW_UPDATE_DELAY = 150;
 
 const {Task} = require("devtools/shared/task");
+const {getColor} = require("devtools/client/shared/theme");
 
 function FontInspector(inspector, window) {
   this.inspector = inspector;
@@ -32,9 +32,10 @@ FontInspector.prototype = {
     this.showAllLink = this.chromeDoc.getElementById("font-showall");
     this.showAllLink.addEventListener("click", this.showAll);
     this.previewTextChanged = this.previewTextChanged.bind(this);
-    this.previewInput =
-      this.chromeDoc.getElementById("font-preview-text-input");
+    this.previewInput = this.chromeDoc.getElementById("font-preview-text-input");
     this.previewInput.addEventListener("input", this.previewTextChanged);
+    this.previewInput.addEventListener("contextmenu",
+      this.inspector.onTextBoxContextMenu);
 
     // Listen for theme changes as the color of the previews depend on the theme
     gDevTools.on("theme-switched", this.onThemeChanged);
@@ -59,6 +60,8 @@ FontInspector.prototype = {
     this.inspector.selection.off("new-node-front", this.onNewNode);
     this.showAllLink.removeEventListener("click", this.showAll);
     this.previewInput.removeEventListener("input", this.previewTextChanged);
+    this.previewInput.removeEventListener("contextmenu",
+      this.inspector.onTextBoxContextMenu);
 
     gDevTools.off("theme-switched", this.onThemeChanged);
 
@@ -158,14 +161,10 @@ FontInspector.prototype = {
 
     this._lastUpdateShowedAllFonts = showAllFonts;
 
-    // Assume light theme colors as the default (see also bug 1118179).
-    let fillStyle = (Services.prefs.getCharPref("devtools.theme") == "dark") ?
-        "white" : "black";
-
     let options = {
       includePreviews: true,
       previewText: this.getPreviewText(),
-      previewFillStyle: fillStyle
+      previewFillStyle: getColor("body-color")
     };
 
     let fonts = [];

@@ -21,6 +21,7 @@ import os
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
+import mozharness.base.script as script
 from mozharness.mozilla.building.buildbase import BUILD_BASE_CONFIG_OPTIONS, \
     BuildingConfig, BuildOptionParser, BuildScript
 from mozharness.base.config import parse_config_file
@@ -75,8 +76,6 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
                 ],
                 'stage_product': 'firefox',
                 'platform_supports_post_upload_to_latest': True,
-                'latest_mar_dir': '/pub/mozilla.org/firefox/nightly/latest-%(branch)s',
-                'influx_credentials_file': 'oauth.txt',
                 'build_resources_path': '%(abs_src_dir)s/obj-firefox/.mozbuild/build_resources.json',
                 'nightly_promotion_branches': ['mozilla-central', 'mozilla-aurora'],
 
@@ -124,9 +123,12 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
             else:
                 self.fatal("'stage_platform' not determined and is required in your config")
 
-            if self.try_message_has_flag('artifact'):
-                self.info('Artifact build requested in try syntax.')
-                self._update_build_variant(rw_config)
+        if self.try_message_has_flag('artifact'):
+            self.info('Artifact build requested in try syntax.')
+            variant = 'artifact'
+            if c.get('build_variant') in ['debug', 'cross-debug']:
+                variant = 'debug-artifact'
+            self._update_build_variant(rw_config, variant)
 
     # helpers
     def _update_build_variant(self, rw_config, variant='artifact'):
@@ -152,10 +154,21 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
         self.info("Updating self.config with the following from {}:".format(variant_cfg_path))
         self.info(pprint.pformat(variant_cfg_dict))
         c.update(variant_cfg_dict)
+        c['forced_artifact_build'] = True
         # Bug 1231320 adds MOZHARNESS_ACTIONS in TaskCluster tasks to override default_actions
         # We don't want that when forcing an artifact build.
-        self.info("Clearing actions from volatile_config to use default_actions.")
-        rw_config.volatile_config['actions'] = None
+        if rw_config.volatile_config['actions']:
+            self.info("Updating volatile_config to include default_actions "
+                      "from {}.".format(variant_cfg_path))
+            # add default actions in correct order
+            combined_actions = []
+            for a in rw_config.all_actions:
+                if a in c['default_actions'] or a in rw_config.volatile_config['actions']:
+                    combined_actions.append(a)
+            rw_config.volatile_config['actions'] = combined_actions
+            self.info("Actions in volatile_config are now: {}".format(
+                rw_config.volatile_config['actions'])
+            )
         # replace rw_config as well to set actions as in BaseScript
         rw_config.set_config(c, overwrite=True)
         rw_config.update_actions()
@@ -206,6 +219,13 @@ class FxDesktopBuild(BuildScript, TryToolsMixin, object):
     def set_extra_try_arguments(self, action, success=None):
         """ Override unneeded method from TryToolsMixin """
         pass
+
+    @script.PreScriptRun
+    def suppress_windows_modal_dialogs(self, *args, **kwargs):
+        if self._is_windows():
+            # Suppress Windows modal dialogs to avoid hangs
+            import ctypes
+            ctypes.windll.kernel32.SetErrorMode(0x8001)
 
 if __name__ == '__main__':
     fx_desktop_build = FxDesktopBuild()

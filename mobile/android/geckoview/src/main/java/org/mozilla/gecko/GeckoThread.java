@@ -467,6 +467,8 @@ public class GeckoThread extends Thread {
 
     @Override
     public void run() {
+        Log.i(LOGTAG, "preparing to run Gecko");
+
         Looper.prepare();
         GeckoThread.msgQueue = Looper.myQueue();
         ThreadUtils.sGeckoThread = this;
@@ -518,6 +520,7 @@ public class GeckoThread extends Thread {
         try {
             final JSONObject msg = new JSONObject();
             msg.put("type", "Gecko:Exited");
+            GeckoAppShell.getGeckoInterface().getAppEventDispatcher().dispatchEvent(msg, null);
             EventDispatcher.getInstance().dispatchEvent(msg, null);
         } catch (final JSONException e) {
             Log.e(LOGTAG, "unable to dispatch event", e);

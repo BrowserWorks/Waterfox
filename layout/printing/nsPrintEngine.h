@@ -6,13 +6,14 @@
 #define nsPrintEngine_h___
 
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 
 #include "nsCOMPtr.h"
 
 #include "nsPrintObject.h"
 #include "nsPrintData.h"
 #include "nsFrameList.h"
-#include "mozilla/Attributes.h"
+#include "nsIFrame.h"
 #include "nsIWebProgress.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
 #include "nsIWebProgressListener.h"
@@ -248,6 +249,8 @@ protected:
 
   static void SetPrintAsIs(nsPrintObject* aPO, bool aAsIs = true);
 
+  void DisconnectPagePrintTimer();
+
   // Static member variables
   bool mIsCreatingPrintPreview;
   bool mIsDoingPrinting;
@@ -258,13 +261,13 @@ protected:
   nsWeakPtr               mContainer;
   float                   mScreenDPI;
   
-  nsPrintData*            mPrt;
+  mozilla::UniquePtr<nsPrintData> mPrt;
   nsPagePrintTimer*       mPagePrintTimer;
-  nsIPageSequenceFrame*   mPageSeqFrame;
+  nsWeakFrame             mPageSeqFrame;
 
   // Print Preview
-  nsPrintData*            mPrtPreview;
-  nsPrintData*            mOldPrtPreview;
+  mozilla::UniquePtr<nsPrintData> mPrtPreview;
+  mozilla::UniquePtr<nsPrintData> mOldPrtPreview;
 
   nsCOMPtr<nsIDocument>   mDocument;
 

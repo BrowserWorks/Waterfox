@@ -229,7 +229,7 @@ class IonBuilder
     MOZ_MUST_USE bool inspectOpcode(JSOp op);
     uint32_t readIndex(jsbytecode* pc);
     JSAtom* readAtom(jsbytecode* pc);
-    bool abort(const char* message, ...);
+    bool abort(const char* message, ...) MOZ_FORMAT_PRINTF(2, 3);
     void trackActionableAbort(const char* message);
     void spew(const char* message);
 
@@ -336,10 +336,10 @@ class IonBuilder
 
     void insertRecompileCheck();
 
-    void initParameters();
+    MOZ_MUST_USE bool initParameters();
     void initLocals();
     void rewriteParameter(uint32_t slotIdx, MDefinition* param, int32_t argIndex);
-    void rewriteParameters();
+    MOZ_MUST_USE bool rewriteParameters();
     MOZ_MUST_USE bool initEnvironmentChain(MDefinition* callee = nullptr);
     MOZ_MUST_USE bool initArgumentsObject();
     void pushConstant(const Value& v);
@@ -555,7 +555,7 @@ class IonBuilder
                              LinearSum* ownerOffset);
     void loadTypedObjectElements(MDefinition* typedObj,
                                  const LinearSum& byteOffset,
-                                 int32_t scale,
+                                 uint32_t scale,
                                  MDefinition** ownerElements,
                                  MDefinition** ownerScaledOffset,
                                  int32_t* ownerByteAdjustment);
@@ -571,7 +571,7 @@ class IonBuilder
                                                   const LinearSum& byteOffset,
                                                   ScalarTypeDescr::Type type,
                                                   MDefinition* value);
-    MOZ_MUST_USE bool checkTypedObjectIndexInBounds(int32_t elemSize,
+    MOZ_MUST_USE bool checkTypedObjectIndexInBounds(uint32_t elemSize,
                                                     MDefinition* obj,
                                                     MDefinition* index,
                                                     TypedObjectPrediction objTypeDescrs,
@@ -615,7 +615,7 @@ class IonBuilder
                                                         TypedObjectPrediction objTypeReprs,
                                                         MDefinition* value,
                                                         TypedObjectPrediction elemTypeReprs,
-                                                        int32_t elemSize);
+                                                        uint32_t elemSize);
     MOZ_MUST_USE bool initializeArrayElement(MDefinition* obj, size_t index, MDefinition* value,
                                              JSValueType unboxedType,
                                              bool addResumePointAndIncrementInitializedLength);
@@ -636,7 +636,7 @@ class IonBuilder
                                                         MDefinition* index,
                                                         TypedObjectPrediction objTypeReprs,
                                                         TypedObjectPrediction elemTypeReprs,
-                                                        int32_t elemSize);
+                                                        uint32_t elemSize);
     MOZ_MUST_USE bool getElemTryReferenceElemOfTypedObject(bool* emitted,
                                                            MDefinition* obj,
                                                            MDefinition* index,
@@ -647,7 +647,7 @@ class IonBuilder
                                                          MDefinition* index,
                                                          TypedObjectPrediction objTypeReprs,
                                                          TypedObjectPrediction elemTypeReprs,
-                                                         int32_t elemSize);
+                                                         uint32_t elemSize);
     TemporaryTypeSet* computeHeapType(const TemporaryTypeSet* objTypes, const jsid id);
 
     enum BoundsChecking { DoBoundsCheck, SkipBoundsCheck };
@@ -769,6 +769,7 @@ class IonBuilder
     MOZ_MUST_USE bool jsop_functionthis();
     MOZ_MUST_USE bool jsop_globalthis();
     MOZ_MUST_USE bool jsop_typeof();
+    MOZ_MUST_USE bool jsop_toasync();
     MOZ_MUST_USE bool jsop_toid();
     MOZ_MUST_USE bool jsop_iter(uint8_t flags);
     MOZ_MUST_USE bool jsop_itermore();
@@ -850,6 +851,7 @@ class IonBuilder
     InliningStatus inlineStrCharCodeAt(CallInfo& callInfo);
     InliningStatus inlineConstantCharCodeAt(CallInfo& callInfo);
     InliningStatus inlineStrFromCharCode(CallInfo& callInfo);
+    InliningStatus inlineStrFromCodePoint(CallInfo& callInfo);
     InliningStatus inlineStrCharAt(CallInfo& callInfo);
 
     // String intrinsics.
@@ -883,8 +885,9 @@ class IonBuilder
     InliningStatus inlineUnsafeGetReservedSlot(CallInfo& callInfo,
                                                MIRType knownValueType);
 
-    // Map intrinsics.
-    InliningStatus inlineGetNextMapEntryForIterator(CallInfo& callInfo);
+    // Map and Set intrinsics.
+    InliningStatus inlineGetNextEntryForIterator(CallInfo& callInfo,
+                                                 MGetNextEntryForIterator::Mode mode);
 
     // ArrayBuffer intrinsics.
     InliningStatus inlineArrayBufferByteLength(CallInfo& callInfo);
@@ -980,7 +983,7 @@ class IonBuilder
     InliningStatus inlineNativeCall(CallInfo& callInfo, JSFunction* target);
     InliningStatus inlineNativeGetter(CallInfo& callInfo, JSFunction* target);
     InliningStatus inlineNonFunctionCall(CallInfo& callInfo, JSObject* target);
-    MOZ_MUST_USE bool inlineScriptedCall(CallInfo& callInfo, JSFunction* target);
+    InliningStatus inlineScriptedCall(CallInfo& callInfo, JSFunction* target);
     InliningStatus inlineSingleCall(CallInfo& callInfo, JSObject* target);
 
     // Call functions

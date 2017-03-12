@@ -17,6 +17,7 @@
 
 namespace mozilla {
 namespace dom {
+class GamepadManager;
 class Navigator;
 class VRDisplay;
 class VREventObserver;
@@ -31,9 +32,14 @@ class VRDisplayClient;
 
 class VRManagerChild : public PVRManagerChild
                      , public layers::TextureForwarder
-                     , public layers::ShmemAllocator
+                     , public layers::KnowsCompositor
 {
 public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VRManagerChild, override);
+
+  TextureForwarder* GetTextureForwarder() override { return this; }
+  LayersIPCActor* GetLayersIPCActor() override { return this; }
+
   static VRManagerChild* Get();
 
   // Indicate that an observer wants to receive VR events.
@@ -48,6 +54,7 @@ public:
   static void InitSameProcess();
   static void InitWithGPUProcess(Endpoint<PVRManagerChild>&& aEndpoint);
   static bool InitForContent(Endpoint<PVRManagerChild>&& aEndpoint);
+  static bool ReinitForContent(Endpoint<PVRManagerChild>&& aEndpoint);
   static void ShutDown();
 
   static bool IsCreated();
@@ -76,6 +83,8 @@ public:
   void FireDOMVRDisplayConnectEvent();
   void FireDOMVRDisplayDisconnectEvent();
   void FireDOMVRDisplayPresentChangeEvent();
+
+  virtual void HandleFatalError(const char* aName, const char* aMsg) const override;
 
 protected:
   explicit VRManagerChild();
@@ -106,11 +115,9 @@ protected:
 
   virtual bool RecvNotifyVSync() override;
   virtual bool RecvNotifyVRVSync(const uint32_t& aDisplayID) override;
-
+  virtual bool RecvGamepadUpdate(const GamepadChangeEvent& aGamepadEvent) override;
 
   // ShmemAllocator
-
-  virtual ShmemAllocator* AsShmemAllocator() override { return this; }
 
   virtual bool AllocShmem(size_t aSize,
                           ipc::SharedMemory::SharedMemoryType aType,
@@ -120,7 +127,7 @@ protected:
                                 ipc::SharedMemory::SharedMemoryType aType,
                                 ipc::Shmem* aShmem) override;
 
-  virtual void DeallocShmem(ipc::Shmem& aShmem) override;
+  virtual bool DeallocShmem(ipc::Shmem& aShmem) override;
 
   virtual bool IsSameProcess() const override
   {
@@ -134,8 +141,6 @@ private:
   void FireDOMVRDisplayConnectEventInternal();
   void FireDOMVRDisplayDisconnectEventInternal();
   void FireDOMVRDisplayPresentChangeEventInternal();
-
-  void DeliverFence(uint64_t aTextureId, FenceHandle& aReleaseFenceHandle);
   /**
   * Notify id of Texture When host side end its use. Transaction id is used to
   * make sure if there is no newer usage.

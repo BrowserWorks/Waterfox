@@ -234,7 +234,7 @@ SimpleTest.setExpected();
 /**
  * Something like assert.
 **/
-SimpleTest.ok = function (condition, name, diag) {
+SimpleTest.ok = function (condition, name, diag, stack = null) {
 
     var test = {'result': !!condition, 'name': name, 'diag': diag};
     if (SimpleTest.expected == 'fail') {
@@ -249,8 +249,9 @@ SimpleTest.ok = function (condition, name, diag) {
       var failureInfo = {status:"FAIL", expected:"PASS", message:"TEST-UNEXPECTED-FAIL"};
     }
 
-    var stack = null;
-    if (!condition) {
+    if (condition) {
+        stack = null;
+    } else if (!stack) {
       stack = (new Error).stack.replace(/^(.*@)http:\/\/mochi.test:8888\/tests\//gm, '    $1').split('\n');
       stack.splice(0, 1);
       stack = stack.join('\n');
@@ -307,7 +308,7 @@ SimpleTest.todo = function(condition, name, diag) {
  * Returns the absolute URL to a test data file from where tests
  * are served. i.e. the file doesn't necessarely exists where tests
  * are executed.
- * (For b2g and android, mochitest are executed on the device, while
+ * (For android, mochitest are executed on the device, while
  * all mochitest html (and others) files are served from the test runner
  * slave)
  */
@@ -1625,7 +1626,7 @@ function getAndroidSdk() {
             gAndroidSdk = -1;
         } else {
             // See nsSystemInfo.cpp, the getProperty('version') returns different value
-            // on each platforms, so we need to distinguish the android and B2G platform.
+            // on each platforms, so we need to distinguish the android platform.
             var versionString = nav.userAgent.indexOf("Android") != -1 ?
                                 'version' : 'sdk_version';
             gAndroidSdk = SpecialPowers.Cc['@mozilla.org/system-info;1']

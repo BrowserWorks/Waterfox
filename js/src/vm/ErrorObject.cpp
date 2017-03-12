@@ -7,10 +7,14 @@
 
 #include "vm/ErrorObject-inl.h"
 
+#include "mozilla/Range.h"
+
 #include "jsexn.h"
 
 #include "js/CallArgs.h"
+#include "js/CharacterEncoding.h"
 #include "vm/GlobalObject.h"
+#include "vm/String.h"
 
 #include "jsobjinlines.h"
 
@@ -145,10 +149,11 @@ js::ErrorObject::getOrCreateErrorReport(JSContext* cx)
         message = cx->runtime()->emptyString;
     if (!message->ensureFlat(cx))
         return nullptr;
-    AutoStableStringChars chars(cx);
-    if (!chars.initTwoByte(cx, message))
+
+    UniquePtr<char[], JS::FreePolicy> utf8 = StringToNewUTF8CharsZ(cx, *message);
+    if (!utf8)
         return nullptr;
-    report.ucmessage = chars.twoByteRange().start().get();
+    report.initOwnedMessage(utf8.release());
 
     // Cache and return.
     JSErrorReport* copy = CopyErrorReport(cx, &report);
@@ -158,15 +163,15 @@ js::ErrorObject::getOrCreateErrorReport(JSContext* cx)
     return copy;
 }
 
-/* static */ bool
-js::ErrorObject::checkAndUnwrapThis(JSContext* cx, CallArgs& args, const char* fnName,
-                                    MutableHandle<ErrorObject*> error)
+static bool
+ErrorObject_checkAndUnwrapThis(JSContext* cx, CallArgs& args, const char* fnName,
+                               MutableHandle<ErrorObject*> error)
 {
     const Value& thisValue = args.thisv();
 
     if (!thisValue.isObject()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT,
-                             InformalValueTypeName(thisValue));
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT,
+                                  InformalValueTypeName(thisValue));
         return false;
     }
 
@@ -176,7 +181,7 @@ js::ErrorObject::checkAndUnwrapThis(JSContext* cx, CallArgs& args, const char* f
 
     RootedObject target(cx, CheckedUnwrap(&thisValue.toObject()));
     if (!target) {
-        JS_ReportError(cx, "Permission denied to access object");
+        JS_ReportErrorASCII(cx, "Permission denied to access object");
         return false;
     }
 
@@ -188,14 +193,14 @@ js::ErrorObject::checkAndUnwrapThis(JSContext* cx, CallArgs& args, const char* f
         if (!proto) {
             // We walked the whole prototype chain and did not find an Error
             // object.
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
-                                 js_Error_str, fnName, thisValue.toObject().getClass()->name);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
+                                      js_Error_str, fnName, thisValue.toObject().getClass()->name);
             return false;
         }
 
         target = CheckedUnwrap(proto);
         if (!target) {
-            JS_ReportError(cx, "Permission denied to access object");
+            JS_ReportErrorASCII(cx, "Permission denied to access object");
             return false;
         }
     }
@@ -209,13 +214,33 @@ js::ErrorObject::getStack(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     Rooted<ErrorObject*> error(cx);
-    if (!checkAndUnwrapThis(cx, args, "(get stack)", &error))
+    if (!ErrorObject_checkAndUnwrapThis(cx, args, "(get stack)", &error))
         return false;
 
     RootedObject savedFrameObj(cx, error->stack());
     RootedString stackString(cx);
     if (!BuildStackString(cx, savedFrameObj, &stackString))
         return false;
+
+    if (cx->stackFormat() == js::StackFormat::V8) {
+        // When emulating V8 stack frames, we also need to prepend the
+        // stringified Error to the stack string.
+        HandlePropertyName name = cx->names().ErrorToStringWithTrailingNewline;
+        RootedValue val(cx);
+        if (!GlobalObject::getSelfHostedFunction(cx, cx->global(), name, name, 0, &val))
+            return false;
+
+        RootedValue rval(cx);
+        if (!js::Call(cx, val, args.thisv(), &rval))
+            return false;
+
+        if (!rval.isString())
+            return false;
+
+        RootedString stringified(cx, rval.toString());
+        stackString = ConcatStrings<CanGC>(cx, stringified, stackString);
+    }
+
     args.rval().setString(stackString);
     return true;
 }

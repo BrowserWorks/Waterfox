@@ -264,7 +264,7 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
     gfxMatrix m = mMatrixForChildren;
     if (kid->GetContent()->IsSVGElement()) {
       m = static_cast<nsSVGElement*>(kid->GetContent())->
-            PrependLocalTransformsTo(m);
+            PrependLocalTransformsTo(m, eUserSpaceToParent);
     }
     DrawResult result = nsSVGUtils::PaintFrameWithEffects(kid, *tmpCtx, m);
     if (result != DrawResult::SUCCESS) {
@@ -283,17 +283,11 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
   }
 
   // Create alpha channel mask for output
-  RefPtr<DrawTarget> destMaskDT =
-    Factory::CreateDrawTarget(BackendType::CAIRO, maskSurfaceSize,
-                              SurfaceFormat::A8);
-  if (!destMaskDT) {
+  RefPtr<DataSourceSurface> destMaskSurface =
+    Factory::CreateDataSourceSurface(maskSurfaceSize, SurfaceFormat::A8);
+  if (!destMaskSurface) {
     return nullptr;
   }
-  RefPtr<SourceSurface> destMaskSnapshot = destMaskDT->Snapshot();
-  if (!destMaskSnapshot) {
-    return nullptr;
-  }
-  RefPtr<DataSourceSurface> destMaskSurface = destMaskSnapshot->GetDataSurface();
   DataSourceSurface::MappedSurface destMap;
   if (!destMaskSurface->Map(DataSourceSurface::MapType::WRITE, &destMap)) {
     return nullptr;

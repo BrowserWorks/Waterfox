@@ -2,12 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from firefox_ui_harness.testcases import FirefoxTestCase
-
+from firefox_puppeteer import PuppeteerMixin
 from firefox_puppeteer.errors import NoCertificateError
+from marionette_harness import MarionetteTestCase
 
 
-class TestSecurity(FirefoxTestCase):
+class TestSecurity(PuppeteerMixin, MarionetteTestCase):
 
     def test_get_address_from_certificate(self):
         url = 'https://ssl-ev.mozqa.com'
@@ -20,7 +20,7 @@ class TestSecurity(FirefoxTestCase):
         self.assertEqual(cert['organization'], 'Mozilla Corporation')
         self.assertEqual(cert['issuerOrganization'], 'DigiCert Inc')
 
-        address = self.security.get_address_from_certificate(cert)
+        address = self.puppeteer.security.get_address_from_certificate(cert)
         self.assertIsNotNone(address)
         self.assertIsNotNone(address['city'])
         self.assertIsNotNone(address['country'])

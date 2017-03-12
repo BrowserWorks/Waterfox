@@ -102,14 +102,14 @@ function backgroundScript() {
   // set to false to allow other events and options.inorder can be set to
   // false to allow the events to arrive in any order.
   function waitForEvents(expected, options = {}) {
-    function compare(received, expected) {
-      if (typeof expected == "object" && expected != null) {
-        if (typeof received != "object") {
+    function compare(a, b) {
+      if (typeof b == "object" && b != null) {
+        if (typeof a != "object") {
           return false;
         }
-        return Object.keys(expected).every(fld => compare(received[fld], expected[fld]));
+        return Object.keys(b).every(fld => compare(a[fld], b[fld]));
       }
-      return (received == expected);
+      return (a == b);
     }
 
     const exact = ("exact" in options) ? options.exact : true;
@@ -166,31 +166,30 @@ function backgroundScript() {
     });
   }
 
-  browser.test.onMessage.addListener(function(msg, ...args) {
+  browser.test.onMessage.addListener(async (msg, ...args) => {
     let match = msg.match(/(\w+).request$/);
     if (!match) {
       return;
     }
+
     let what = match[1];
     if (what == "waitForEvents") {
-      waitForEvents(...args).then(() => {
+      try {
+        await waitForEvents(...args);
         browser.test.sendMessage("waitForEvents.done", {status: "success"});
-      }).catch(error => {
+      } catch (error) {
         browser.test.sendMessage("waitForEvents.done", {status: "error", errmsg: error.message});
-      });
+      }
     } else if (what == "clearEvents") {
       events = new Set();
       browser.test.sendMessage("clearEvents.done", {status: "success"});
     } else {
-      // extension functions throw on bad arguments, we can remove the extra
-      // promise when bug 1250223 is fixed.
-      Promise.resolve().then(() => {
-        return browser.downloads[what](...args);
-      }).then(result => {
+      try {
+        let result = await browser.downloads[what](...args);
         browser.test.sendMessage(`${what}.done`, {status: "success", result});
-      }).catch(error => {
+      } catch (error) {
         browser.test.sendMessage(`${what}.done`, {status: "error", errmsg: error.message});
-      });
+      }
     }
   });
 
@@ -200,13 +199,13 @@ function backgroundScript() {
 let downloadDir;
 let extension;
 
-function clearDownloads(callback) {
-  return Downloads.getList(Downloads.ALL).then(list => {
-    return list.getAll().then(downloads => {
-      return Promise.all(downloads.map(download => list.remove(download)))
-                    .then(() => downloads);
-    });
-  });
+async function clearDownloads(callback) {
+  let list = await Downloads.getList(Downloads.ALL);
+  let downloads = await list.getAll();
+
+  await Promise.all(downloads.map(download => list.remove(download)));
+
+  return downloads;
 }
 
 function runInExtension(what, ...args) {
@@ -218,19 +217,20 @@ function runInExtension(what, ...args) {
 // download of the given url in which the total bytes are exactly equal
 // to the given value.  Unless you know exactly how data will arrive from
 // the server (eg see interruptible.sjs), it probably isn't very useful.
-function waitForProgress(url, bytes) {
-  return Downloads.getList(Downloads.ALL)
-                  .then(list => new Promise(resolve => {
-                    const view = {
-                      onDownloadChanged(download) {
-                        if (download.source.url == url && download.currentBytes == bytes) {
-                          list.removeView(view);
-                          resolve();
-                        }
-                      },
-                    };
-                    list.addView(view);
-                  }));
+async function waitForProgress(url, bytes) {
+  let list = await Downloads.getList(Downloads.ALL);
+
+  return new Promise(resolve => {
+    const view = {
+      onDownloadChanged(download) {
+        if (download.source.url == url && download.currentBytes == bytes) {
+          list.removeView(view);
+          resolve();
+        }
+      },
+    };
+    list.addView(view);
+  });
 }
 
 add_task(function* setup() {

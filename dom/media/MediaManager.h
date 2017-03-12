@@ -43,10 +43,6 @@
 #include "base/thread.h"
 #include "base/task.h"
 
-#ifdef MOZ_WIDGET_GONK
-#include "DOMCameraManager.h"
-#endif
-
 namespace mozilla {
 namespace dom {
 struct MediaStreamConstraints;
@@ -98,6 +94,7 @@ protected:
   nsString mName;
   nsString mID;
   nsString mRawID;
+  bool mScary;
   dom::MediaSourceEnum mMediaSource;
   RefPtr<MediaEngineSource> mSource;
   RefPtr<MediaEngineSource::AllocationHandle> mAllocationHandle;
@@ -269,7 +266,6 @@ private:
   typedef media::Pledge<const char*, dom::MediaStreamError*> PledgeChar;
   typedef media::Pledge<bool, dom::MediaStreamError*> PledgeVoid;
 
-  static bool IsLoop(nsIURI* aDocURI);
   static nsresult GenerateUUID(nsAString& aResult);
   static nsresult AnonymizeId(nsAString& aId, const nsACString& aOriginKey);
 public: // TODO: make private once we upgrade to GCC 4.8+ on linux.
@@ -335,12 +331,9 @@ private:
   media::CoatCheck<PledgeSourceSet> mOutstandingPledges;
   media::CoatCheck<PledgeChar> mOutstandingCharPledges;
   media::CoatCheck<PledgeVoid> mOutstandingVoidPledges;
-#if defined(MOZ_B2G_CAMERA) && defined(MOZ_WIDGET_GONK)
-  RefPtr<nsDOMCameraManager> mCameraManager;
-#endif
 public:
   media::CoatCheck<media::Pledge<nsCString>> mGetOriginKeyPledges;
-  UniquePtr<media::Parent<media::NonE10s>> mNonE10sParent;
+  RefPtr<media::Parent<media::NonE10s>> mNonE10sParent;
 };
 
 } // namespace mozilla

@@ -8,6 +8,7 @@ var gFxAccounts = {
 
   _initialized: false,
   _inCustomizationMode: false,
+  _cachedProfile: null,
 
   get weave() {
     delete this.weave;
@@ -124,9 +125,9 @@ var gFxAccounts = {
       case "fxa-migration:state-changed":
         this.onMigrationStateChanged(data, subject);
         break;
-      case this.FxAccountsCommon.ONPROFILE_IMAGE_CHANGE_NOTIFICATION:
-        this.updateUI();
-        break;
+      case this.FxAccountsCommon.ON_PROFILE_CHANGE_NOTIFICATION:
+        this._cachedProfile = null;
+        // Fallthrough intended
       default:
         this.updateUI();
         break;
@@ -301,6 +302,9 @@ var gFxAccounts = {
       if (!userData || !userData.verified || !profileInfoEnabled) {
         return null; // don't even try to grab the profile.
       }
+      if (this._cachedProfile) {
+        return this._cachedProfile;
+      }
       return fxAccounts.getSignedInUserProfile().catch(err => {
         // Not fetching the profile is sad but the FxA logs will already have noise.
         return null;
@@ -310,6 +314,7 @@ var gFxAccounts = {
         return;
       }
       updateWithProfile(profile);
+      this._cachedProfile = profile; // Try to avoid fetching the profile on every UI update
     }).catch(error => {
       // This is most likely in tests, were we quickly log users in and out.
       // The most likely scenario is a user logged out, so reflect that.
@@ -346,13 +351,6 @@ var gFxAccounts = {
   },
 
   openAccountsPage: function (action, urlParams={}) {
-    // An entrypoint param is used for server-side metrics.  If the current tab
-    // is UITour, assume that it initiated the call to this method and override
-    // the entrypoint accordingly.
-    if (UITour.tourBrowsersByWindow.get(window) &&
-        UITour.tourBrowsersByWindow.get(window).has(gBrowser.selectedBrowser)) {
-      urlParams.entrypoint = "uitour";
-    }
     let params = new URLSearchParams();
     if (action) {
       params.set("action", action);

@@ -15,8 +15,9 @@ const Cr = Components.results;
 
 const {nsIHttpActivityObserver, nsISocketTransport} = Ci;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
                                   "resource://gre/modules/AppConstants.jsm");
@@ -111,6 +112,127 @@ function mergeStatus(data, channel, event) {
     // any actual HTTP traffic. Otherwise, let's report.
     if (event !== "onRedirect" || e.result !== Cr.NS_ERROR_NOT_AVAILABLE) {
       Cu.reportError(`webRequest Error: ${e} trying to merge status in ${event}@${channel.name}`);
+    }
+  }
+}
+
+function isThenable(value) {
+  return value && typeof value === "object" && typeof value.then === "function";
+}
+
+class HeaderChanger {
+  constructor(channel) {
+    this.channel = channel;
+
+    this.originalHeaders = new Map();
+    this.visitHeaders((name, value) => {
+      this.originalHeaders.set(name.toLowerCase(), value);
+    });
+  }
+
+  toArray() {
+    return Array.from(this.originalHeaders,
+                      ([name, value]) => ({name, value}));
+  }
+
+  validateHeaders(headers) {
+    // We should probably use schema validation for this.
+
+    if (!Array.isArray(headers)) {
+      return false;
+    }
+
+    return headers.every(header => {
+      if (typeof header !== "object" || header === null) {
+        return false;
+      }
+
+      if (typeof header.name !== "string") {
+        return false;
+      }
+
+      return (typeof header.value === "string" ||
+              Array.isArray(header.binaryValue));
+    });
+  }
+
+  applyChanges(headers) {
+    if (!this.validateHeaders(headers)) {
+      /* globals uneval */
+      Cu.reportError(`Invalid header array: ${uneval(headers)}`);
+      return;
+    }
+
+    let newHeaders = new Set(headers.map(
+      ({name}) => name.toLowerCase()));
+
+    // Remove missing headers.
+    for (let name of this.originalHeaders.keys()) {
+      if (!newHeaders.has(name)) {
+        this.setHeader(name, "");
+      }
+    }
+
+    // Set new or changed headers.
+    for (let {name, value, binaryValue} of headers) {
+      if (binaryValue) {
+        value = String.fromCharCode(...binaryValue);
+      }
+      if (value !== this.originalHeaders.get(name.toLowerCase())) {
+        this.setHeader(name, value);
+      }
+    }
+  }
+}
+
+class RequestHeaderChanger extends HeaderChanger {
+  setHeader(name, value) {
+    try {
+      this.channel.setRequestHeader(name, value, false);
+    } catch (e) {
+      Cu.reportError(new Error(`Error setting request header ${name}: ${e}`));
+    }
+  }
+
+  visitHeaders(visitor) {
+    if (this.channel instanceof Ci.nsIHttpChannel) {
+      this.channel.visitRequestHeaders(visitor);
+    }
+  }
+}
+
+class ResponseHeaderChanger extends HeaderChanger {
+  setHeader(name, value) {
+    try {
+      if (name.toLowerCase() === "content-type" && value) {
+        // The Content-Type header value can't be modified, so we
+        // set the channel's content type directly, instead, and
+        // record that we made the change for the sake of
+        // subsequent observers.
+        this.channel.contentType = value;
+
+        getData(this.channel).contentType = value;
+      } else {
+        this.channel.setResponseHeader(name, value, false);
+      }
+    } catch (e) {
+      Cu.reportError(new Error(`Error setting response header ${name}: ${e}`));
+    }
+  }
+
+  visitHeaders(visitor) {
+    if (this.channel instanceof Ci.nsIHttpChannel) {
+      try {
+        this.channel.visitResponseHeaders((name, value) => {
+          if (name.toLowerCase() === "content-type") {
+            value = getData(this.channel).contentType || value;
+          }
+
+          visitor(name, value);
+        });
+      } catch (e) {
+        // Throws if response headers aren't available yet.
+      }
     }
   }
 }
@@ -213,18 +335,20 @@ function StartStopListener(manager, loadContext) {
 
 StartStopListener.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIRequestObserver,
-                                         Ci.nsIStreamListener,
-                                         Ci.nsISupports]),
+                                         Ci.nsIStreamListener]),
 
   onStartRequest: function(request, context) {
     this.manager.onStartRequest(request, this.loadContext);
-    return this.orig.onStartRequest(request, context);
+    this.orig.onStartRequest(request, context);
   },
 
   onStopRequest(request, context, statusCode) {
-    let result = this.orig.onStopRequest(request, context, statusCode);
+    try {
+      this.orig.onStopRequest(request, context, statusCode);
+    } catch (e) {
+      Cu.reportError(e);
+    }
     this.manager.onStopRequest(request, this.loadContext);
-    return result;
   },
 
   onDataAvailable(...args) {
@@ -371,70 +495,19 @@ HttpObserverManager = {
     }
   },
 
-  getHeaders(channel, method, event) {
-    let headers = [];
-    let visitor = {
-      visitHeader(name, value) {
-        try {
-          value = channel.getProperty(`webrequest-header-${name.toLowerCase()}`);
-        } catch (e) {
-          // This will throw if the property does not exist.
-        }
-        headers.push({name, value});
-      },
-
-      QueryInterface: XPCOMUtils.generateQI([Ci.nsIHttpHeaderVisitor,
-                                             Ci.nsISupports]),
-    };
-
-    try {
-      channel.QueryInterface(Ci.nsIPropertyBag);
-      channel[method](visitor);
-    } catch (e) {
-      Cu.reportError(`webRequest Error: ${e} trying to perform ${method} in ${event}@${channel.name}`);
-    }
-    return headers;
-  },
-
-  replaceHeaders(headers, originalNames, setHeader) {
-    let failures = new Set();
-    // Start by clearing everything.
-    for (let name of originalNames) {
-      try {
-        setHeader(name, "");
-      } catch (e) {
-        // Let's collect physiological failures in order
-        // to know what is worth reporting.
-        failures.add(name);
-      }
-    }
-    try {
-      for (let {name, value, binaryValue} of headers) {
-        try {
-          if (Array.isArray(binaryValue)) {
-            value = String.fromCharCode.apply(String, binaryValue);
-          }
-          setHeader(name, value);
-        } catch (e) {
-          if (!failures.has(name)) {
-            Cu.reportError(e);
-          }
-        }
-      }
-    } catch (e) {
-      Cu.reportError(e);
-    }
-  },
-
   observe(subject, topic, data) {
     let channel = subject.QueryInterface(Ci.nsIHttpChannel);
     switch (topic) {
       case "http-on-modify-request":
-        this.modify(channel, topic, data);
+        let loadContext = this.getLoadContext(channel);
+
+        this.runChannelListener(channel, loadContext, "opening");
         break;
-      case "http-on-examine-response":
       case "http-on-examine-cached-response":
       case "http-on-examine-merged-response":
+        getData(channel).fromCache = true;
+        // falls through
+      case "http-on-examine-response":
         this.examine(channel, topic, data);
         break;
     }
@@ -497,178 +570,257 @@ HttpObserverManager = {
     return errorData;
   },
 
-  runChannelListener(channel, loadContext, kind, extraData = null) {
-    if (this.activityInitialized) {
-      let channelData = getData(channel);
-      if (kind === "onError") {
-        if (channelData.errorNotified) {
-          return false;
-        }
-        channelData.errorNotified = true;
-      } else if (this.errorCheck(channel, loadContext, channelData)) {
-        return false;
+  /**
+   * Resumes the channel if it is currently suspended due to this
+   * listener.
+   *
+   * @param {nsIChannel} channel
+   *        The channel to possibly suspend.
+   */
+  maybeResume(channel) {
+    let data = getData(channel);
+    if (data.suspended) {
+      channel.resume();
+      data.suspended = false;
+    }
+  },
+
+  /**
+   * Suspends the channel if it is not currently suspended due to this
+   * listener. Returns true if the channel was suspended as a result of
+   * this call.
+   *
+   * @param {nsIChannel} channel
+   *        The channel to possibly suspend.
+   * @returns {boolean}
+   *        True if this call resulted in the channel being suspended.
+   */
+  maybeSuspend(channel) {
+    let data = getData(channel);
+    if (!data.suspended) {
+      channel.suspend();
+      data.suspended = true;
+      return true;
+    }
+  },
+
+  getRequestData(channel, loadContext, policyType, extraData) {
+    let {loadInfo} = channel;
+
+    let data = {
+      requestId: RequestId.get(channel),
+      url: channel.URI.spec,
+      method: channel.requestMethod,
+      browser: loadContext && loadContext.topFrameElement,
+      type: WebRequestCommon.typeForPolicyType(policyType),
+      fromCache: getData(channel).fromCache,
+      windowId: 0,
+      parentWindowId: 0,
+    };
+
+    if (loadInfo) {
+      let originPrincipal = loadInfo.triggeringPrincipal;
+      if (originPrincipal.URI) {
+        data.originUrl = originPrincipal.URI.spec;
+      }
+
+      // If there is no loadingPrincipal, check that the request is not going to
+      // inherit a system principal.  triggeringPrincipal is the context that
+      // initiated the load, but is not necessarily the principal that the
+      // request results in, only rely on that if no other principal is available.
+      let {isSystemPrincipal} = Services.scriptSecurityManager;
+      let isTopLevel = !loadInfo.loadingPrincipal && !!data.browser;
+      data.isSystemPrincipal = !isTopLevel &&
+                               isSystemPrincipal(loadInfo.loadingPrincipal ||
+                                                 loadInfo.principalToInherit ||
+                                                 loadInfo.triggeringPrincipal);
+
+      if (loadInfo.frameOuterWindowID) {
+        Object.assign(data, {
+          windowId: loadInfo.frameOuterWindowID,
+          parentWindowId: loadInfo.outerWindowID,
+        });
+      } else {
+        Object.assign(data, {
+          windowId: loadInfo.outerWindowID,
+          parentWindowId: loadInfo.parentOuterWindowID,
+        });
       }
     }
-    let listeners = this.listeners[kind];
-    let browser = loadContext ? loadContext.topFrameElement : null;
-    let loadInfo = channel.loadInfo;
-    let policyType = loadInfo ?
-                     loadInfo.externalContentPolicyType :
-                     Ci.nsIContentPolicy.TYPE_OTHER;
 
-    let requestHeaderNames;
-    let responseHeaderNames;
-
-    let requestBody;
-
-    let includeStatus = (
-                          kind === "headersReceived" ||
-                          kind === "onRedirect" ||
-                          kind === "onStart" ||
-                          kind === "onStop"
-                        ) && channel instanceof Ci.nsIHttpChannel;
-
-    let commonData = null;
-    let uri = channel.URI;
-    for (let [callback, opts] of listeners.entries()) {
-      if (!this.shouldRunListener(policyType, uri, opts.filter)) {
-        continue;
+    if (channel instanceof Ci.nsIHttpChannelInternal) {
+      try {
+        data.ip = channel.remoteAddress;
+      } catch (e) {
+        // The remoteAddress getter throws if the address is unavailable,
+        // but ip is an optional property so just ignore the exception.
       }
+    }
 
-      if (!commonData) {
-        commonData = {
-          requestId: RequestId.get(channel),
-          url: uri.spec,
-          method: channel.requestMethod,
-          browser: browser,
-          type: WebRequestCommon.typeForPolicyType(policyType),
-        };
+    return Object.assign(data, extraData);
+  },
 
-        if (loadInfo) {
-          let originPrincipal = loadInfo.triggeringPrincipal || loadInfo.loadingPrincipal;
-          if (originPrincipal && originPrincipal.URI) {
-            commonData.originUrl = originPrincipal.URI.spec;
+  runChannelListener(channel, loadContext = null, kind, extraData = null) {
+    let handlerResults = [];
+    let requestHeaders;
+    let responseHeaders;
+
+    try {
+      if (this.activityInitialized) {
+        let channelData = getData(channel);
+        if (kind === "onError") {
+          if (channelData.errorNotified) {
+            return;
           }
-          Object.assign(commonData, {
-            windowId: loadInfo.frameOuterWindowID ?
-                        loadInfo.frameOuterWindowID : loadInfo.outerWindowID,
-            parentWindowId: loadInfo.frameOuterWindowID ?
-                              loadInfo.outerWindowID : loadInfo.parentOuterWindowID,
-          });
-        } else {
-          Object.assign(commonData, {
-            windowId: 0,
-            parentWindowId: 0,
-          });
+          channelData.errorNotified = true;
+        } else if (this.errorCheck(channel, loadContext, channelData)) {
+          return;
+        }
+      }
+
+      let {loadInfo} = channel;
+      let policyType = (loadInfo ? loadInfo.externalContentPolicyType
+                                 : Ci.nsIContentPolicy.TYPE_OTHER);
+
+      let includeStatus = (["headersReceived", "onRedirect", "onStart", "onStop"].includes(kind) &&
+                           channel instanceof Ci.nsIHttpChannel);
+
+      let commonData = null;
+      let uri = channel.URI;
+      let requestBody;
+      for (let [callback, opts] of this.listeners[kind].entries()) {
+        if (!this.shouldRunListener(policyType, uri, opts.filter)) {
+          continue;
         }
 
-        if (channel instanceof Ci.nsIHttpChannelInternal) {
-          try {
-            commonData.ip = channel.remoteAddress;
-          } catch (e) {
-            // The remoteAddress getter throws if the address is unavailable,
-            // but ip is an optional property so just ignore the exception.
-          }
+        if (!commonData) {
+          commonData = this.getRequestData(channel, loadContext, policyType, extraData);
         }
-        if (extraData) {
-          Object.assign(commonData, extraData);
+        let data = Object.assign({}, commonData);
+
+        if (opts.requestHeaders) {
+          requestHeaders = requestHeaders || new RequestHeaderChanger(channel);
+          data.requestHeaders = requestHeaders.toArray();
         }
-      }
-      let data = Object.assign({}, commonData);
-      if (opts.requestHeaders) {
-        data.requestHeaders = this.getHeaders(channel, "visitRequestHeaders", kind);
-        requestHeaderNames = data.requestHeaders.map(h => h.name);
-      }
-      if (opts.responseHeaders) {
-        data.responseHeaders = this.getHeaders(channel, "visitResponseHeaders", kind);
-        responseHeaderNames = data.responseHeaders.map(h => h.name);
-      }
-      if (opts.requestBody) {
-        if (requestBody === undefined) {
-          requestBody = WebRequestUpload.createRequestBody(channel);
+
+        if (opts.responseHeaders) {
+          responseHeaders = responseHeaders || new ResponseHeaderChanger(channel);
+          data.responseHeaders = responseHeaders.toArray();
         }
-        if (requestBody) {
+
+        if (opts.requestBody) {
+          requestBody = requestBody || WebRequestUpload.createRequestBody(channel);
           data.requestBody = requestBody;
         }
-      }
-      if (includeStatus) {
-        mergeStatus(data, channel, kind);
-      }
 
-      let result = null;
-      try {
-        result = callback(data);
-      } catch (e) {
-        Cu.reportError(e);
-      }
+        if (includeStatus) {
+          mergeStatus(data, channel, kind);
+        }
 
-      if (!result || !opts.blocking
-          || AddonManagerPermissions.isHostPermitted(uri.host)
-          || (loadInfo && loadInfo.loadingPrincipal
-              && loadInfo.loadingPrincipal.URI
-              && AddonManagerPermissions.isHostPermitted(loadInfo.loadingPrincipal.URI.host))) {
-        continue;
-      }
+        try {
+          let result = callback(data);
 
-      if (result.cancel) {
-        channel.cancel(Cr.NS_ERROR_ABORT);
-        this.errorCheck(channel, loadContext);
-        return false;
-      }
-      if (result.redirectUrl) {
-        channel.redirectTo(BrowserUtils.makeURI(result.redirectUrl));
-        return false;
-      }
-      if (opts.requestHeaders && result.requestHeaders) {
-        this.replaceHeaders(
-          result.requestHeaders, requestHeaderNames,
-          (name, value) => channel.setRequestHeader(name, value, false)
-        );
-      }
-      if (opts.responseHeaders && result.responseHeaders) {
-        this.replaceHeaders(
-          result.responseHeaders, responseHeaderNames,
-          (name, value) => {
-            if (name.toLowerCase() === "content-type" && value) {
-              // The Content-Type header value can't be modified, so we
-              // set the channel's content type directly, instead, and
-              // record that we made the change for the sake of
-              // subsequent observers.
-              channel.contentType = value;
-
-              channel.QueryInterface(Ci.nsIWritablePropertyBag);
-              channel.setProperty("webrequest-header-content-type", value);
-            } else {
-              channel.setResponseHeader(name, value, false);
-            }
+          if (result && typeof result === "object" && opts.blocking
+              && !AddonManagerPermissions.isHostPermitted(uri.host)
+              && (!loadInfo || !loadInfo.loadingPrincipal
+                  || !loadInfo.loadingPrincipal.URI
+                  || !AddonManagerPermissions.isHostPermitted(loadInfo.loadingPrincipal.URI.host))) {
+            handlerResults.push({opts, result});
           }
-        );
+        } catch (e) {
+          Cu.reportError(e);
+        }
       }
+    } catch (e) {
+      Cu.reportError(e);
     }
 
-    return true;
+    return this.applyChanges(kind, channel, loadContext, handlerResults,
+                             requestHeaders, responseHeaders);
   },
 
-  modify(channel, topic, data) {
-    let loadContext = this.getLoadContext(channel);
+  applyChanges: Task.async(function* (kind, channel, loadContext, handlerResults, requestHeaders, responseHeaders) {
+    let asyncHandlers = handlerResults.filter(({result}) => isThenable(result));
+    let isAsync = asyncHandlers.length > 0;
+    let shouldResume = false;
 
-    if (this.runChannelListener(channel, loadContext, "opening") &&
-        this.runChannelListener(channel, loadContext, "modify")) {
-      this.runChannelListener(channel, loadContext, "afterModify");
+    try {
+      if (isAsync) {
+        shouldResume = this.maybeSuspend(channel);
+
+        for (let value of asyncHandlers) {
+          try {
+            value.result = yield value.result;
+          } catch (e) {
+            Cu.reportError(e);
+            value.result = {};
+          }
+        }
+      }
+
+      for (let {opts, result} of handlerResults) {
+        if (!result || typeof result !== "object") {
+          continue;
+        }
+
+        if (result.cancel) {
+          this.maybeResume(channel);
+          channel.cancel(Cr.NS_ERROR_ABORT);
+
+          this.errorCheck(channel, loadContext);
+          return;
+        }
+
+        if (result.redirectUrl) {
+          try {
+            this.maybeResume(channel);
+
+            channel.redirectTo(BrowserUtils.makeURI(result.redirectUrl));
+            return;
+          } catch (e) {
+            Cu.reportError(e);
+          }
+        }
+
+        if (opts.requestHeaders && result.requestHeaders && requestHeaders) {
+          requestHeaders.applyChanges(result.requestHeaders);
+        }
+
+        if (opts.responseHeaders && result.responseHeaders && responseHeaders) {
+          responseHeaders.applyChanges(result.responseHeaders);
+        }
+      }
+
+      if (kind === "opening") {
+        yield this.runChannelListener(channel, loadContext, "modify");
+      } else if (kind === "modify") {
+        yield this.runChannelListener(channel, loadContext, "afterModify");
+      }
+    } catch (e) {
+      Cu.reportError(e);
     }
-  },
+
+    // Only resume the channel if it was suspended by this call.
+    if (shouldResume) {
+      this.maybeResume(channel);
+    }
+  }),
 
   examine(channel, topic, data) {
     let loadContext = this.getLoadContext(channel);
 
     if (this.needTracing) {
-      if (channel instanceof Ci.nsITraceableChannel) {
+      // Check whether we've already added a listener to this channel,
+      // so we don't wind up chaining multiple listeners.
+      let channelData = getData(channel);
+      if (!channelData.hasListener && channel instanceof Ci.nsITraceableChannel) {
         let responseStatus = channel.responseStatus;
         // skip redirections, https://bugzilla.mozilla.org/show_bug.cgi?id=728901#c8
         if (responseStatus < 300 || responseStatus >= 400) {
           let listener = new StartStopListener(this, loadContext);
           let orig = channel.setNewListener(listener);
           listener.orig = orig;
+          channelData.hasListener = true;
         }
       }
     }
@@ -694,7 +846,7 @@ var onBeforeRequest = {
   get allowedOptions() {
     delete this.allowedOptions;
     this.allowedOptions = ["blocking"];
-    if (!AppConstants.RELEASE_BUILD) {
+    if (!AppConstants.RELEASE_OR_BETA) {
       this.allowedOptions.push("requestBody");
     }
     return this.allowedOptions;

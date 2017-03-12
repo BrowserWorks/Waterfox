@@ -2,7 +2,6 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-///////////////////
 //
 // Whitelisting this test.
 // As part of bug 1077403, the leaking uncaught rejection should be fixed.
@@ -129,7 +128,7 @@ var gTests = [
   {
     const signinUrl = "https://redirproxy.example.com/test";
     setPref("identity.fxaccounts.remote.signin.uri", signinUrl);
-    let [tab, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signin");
+    let [tab, ] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signin");
     yield checkVisibilities(tab, {
       stage: true, // parent of 'manage' and 'intro'
       manage: false,
@@ -152,7 +151,7 @@ var gTests = [
 
     const signinUrl = "https://unknowndomain.cow";
     setPref("identity.fxaccounts.remote.signin.uri", signinUrl);
-    let [tab, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signin");
+    let [tab, ] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signin");
     yield checkVisibilities(tab, {
       stage: true, // parent of 'manage' and 'intro'
       manage: false,
@@ -211,18 +210,9 @@ var gTests = [
   {
     const expected_url = "https://example.com/?is_force_auth";
     setPref("identity.fxaccounts.remote.force_auth.uri", expected_url);
-    let userData = {
-      email: "foo@example.com",
-      uid: "1234@lcip.org",
-      assertion: "foobar",
-      sessionToken: "dead",
-      kA: "beef",
-      kB: "cafe",
-      verified: true
-    };
 
     yield setSignedInUser();
-    let [tab, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=reauth");
+    let [, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=reauth");
     // The current user will be appended to the url
     let expected = expected_url + "&email=foo%40example.com";
     is(url, expected, "action=reauth got the expected URL");
@@ -318,7 +308,7 @@ var gTests = [
 
     let response = yield readyPromise;
     // We are expecting the iframe to be on the "signup" URL
-    let expected = fxAccounts.getAccountsSignUpURI();
+    let expected = yield fxAccounts.promiseAccountsSignUpURI();
     is(response.data.url, expected);
 
     // and expect no signed in user.
@@ -351,7 +341,7 @@ var gTests = [
   run: function* () {
     // When this loads with no user logged-in, we expect the "normal" URL
     setPref("identity.fxaccounts.remote.signup.uri", "https://example.com/");
-    let [tab, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?entrypoint=abouthome");
+    let [, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?entrypoint=abouthome");
     is(url, "https://example.com/?entrypoint=abouthome", "entrypoint=abouthome got the expected URL");
   },
 },
@@ -362,7 +352,7 @@ var gTests = [
     // When this loads with no user logged-in, we expect the "normal" URL
     const expected_url = "https://example.com/?is_sign_in";
     setPref("identity.fxaccounts.remote.signin.uri", expected_url);
-    let [tab, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signin&entrypoint=abouthome");
+    let [, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signin&entrypoint=abouthome");
     is(url, expected_url + "&entrypoint=abouthome", "entrypoint=abouthome got the expected URL");
   },
 },
@@ -373,7 +363,7 @@ var gTests = [
     // When this loads with no user logged-in, we expect the "normal" URL
     const sign_up_url = "https://example.com/?is_sign_up";
     setPref("identity.fxaccounts.remote.signup.uri", sign_up_url);
-    let [tab, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?entrypoint=abouthome&action=signup");
+    let [, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?entrypoint=abouthome&action=signup");
     is(url, sign_up_url + "&entrypoint=abouthome", "entrypoint=abouthome got the expected URL");
   },
 },
@@ -387,7 +377,7 @@ var gTests = [
     let signupURL = "https://example.com/";
     setPref("identity.fxaccounts.remote.signup.uri", signupURL);
     let queryStr = "email=foo%40example.com&foo=bar&baz=quux";
-    let [tab, url] =
+    let [, url] =
       yield promiseNewTabWithIframeLoadEvent("about:accounts?" + queryStr +
                                              "&action=action");
     is(url, signupURL + "?" + queryStr, "URL params are copied to signup URL");
@@ -403,7 +393,7 @@ var gTests = [
     let signupURL = "https://example.com/?param";
     setPref("identity.fxaccounts.remote.signup.uri", signupURL);
     let queryStr = "email=foo%40example.com&foo=bar&baz=quux";
-    let [tab, url] =
+    let [, url] =
       yield promiseNewTabWithIframeLoadEvent("about:accounts?" + queryStr +
                                              "&action=action");
     is(url, signupURL + "&" + queryStr, "URL params are copied to signup URL");
@@ -416,12 +406,12 @@ function test()
   waitForExplicitFinish();
 
   Task.spawn(function* () {
-    for (let test of gTests) {
-      info(test.desc);
+    for (let testCase of gTests) {
+      info(testCase.desc);
       try {
-        yield test.run();
+        yield testCase.run();
       } finally {
-        yield test.teardown();
+        yield testCase.teardown();
       }
     }
 

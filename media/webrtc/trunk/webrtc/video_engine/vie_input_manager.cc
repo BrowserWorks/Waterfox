@@ -70,14 +70,16 @@ int ViEInputManager::GetDeviceName(uint32_t device_number,
                                    char* device_nameUTF8,
                                    uint32_t device_name_length,
                                    char* device_unique_idUTF8,
-                                   uint32_t device_unique_idUTF8Length) {
+                                   uint32_t device_unique_idUTF8Length,
+                                   pid_t* pid) {
   CriticalSectionScoped cs(device_info_cs_.get());
   GetDeviceInfo();
   assert(capture_device_info_);
   return capture_device_info_->GetDeviceName(device_number, device_nameUTF8,
                                              device_name_length,
                                              device_unique_idUTF8,
-                                             device_unique_idUTF8Length);
+                                             device_unique_idUTF8Length,
+                                             NULL, 0, pid);
 }
 
 int ViEInputManager::NumberOfCaptureCapabilities(
@@ -381,6 +383,7 @@ int32_t ViEInputManager::RegisterObserver(ViEInputObserver* observer) {
     observer_ = observer;
   }
 
+  CriticalSectionScoped cs(device_info_cs_.get());
   if (!GetDeviceInfo())
     return -1;
 
@@ -391,11 +394,15 @@ int32_t ViEInputManager::RegisterObserver(ViEInputObserver* observer) {
 }
 
 int32_t ViEInputManager::DeRegisterObserver() {
-  if (capture_device_info_ != NULL)
-    capture_device_info_->DeRegisterVideoInputFeedBack();
+  {
+    CriticalSectionScoped cs(observer_cs_.get());
+    observer_ = NULL;
+  }
 
-  CriticalSectionScoped cs(observer_cs_.get());
-  observer_ = NULL;
+  CriticalSectionScoped cs(device_info_cs_.get());
+  if (capture_device_info_ != NULL) {
+    capture_device_info_->DeRegisterVideoInputFeedBack();
+  }
   return 0;
 }
 

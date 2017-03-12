@@ -55,12 +55,10 @@ MOZ_APP_STATIC_INI=1
 MOZ_WEBGL_CONFORMANT=1
 MOZ_JSDOWNLOADS=1
 MOZ_RUST_MP4PARSE=1
+MOZ_RUST_URLPARSE=1
 
 # Enable checking that add-ons are signed by the trusted root
-MOZ_ADDON_SIGNING=0
-MOZ_REQUIRE_SIGNING=0
-MOZ_ADOBE_EME=0
-MOZ_WIDEVINE_EME=0
+MOZ_ADDON_SIGNING=1
 
 # Include the DevTools client, not just the server (which is the default)
 MOZ_DEVTOOLS=all

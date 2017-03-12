@@ -5,7 +5,9 @@
 "use strict";
 
 exports.devices = require("./reducers/devices");
+exports.displayPixelRatio = require("./reducers/display-pixel-ratio");
 exports.location = require("./reducers/location");
+exports.networkThrottling = require("./reducers/network-throttling");
 exports.screenshot = require("./reducers/screenshot");
 exports.touchSimulation = require("./reducers/touch-simulation");
 exports.viewports = require("./reducers/viewports");

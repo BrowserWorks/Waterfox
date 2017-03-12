@@ -52,6 +52,7 @@ class IAPZCTreeManager;
 } // namespace layers
 namespace widget {
 class RectTextureImage;
+class WidgetRenderingContext;
 } // namespace widget
 } // namespace mozilla
 
@@ -356,7 +357,7 @@ public:
   NS_IMETHOD              DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                                         nsEventStatus& aStatus) override;
 
-  virtual bool            ComputeShouldAccelerate() override;
+  virtual bool            WidgetTypeSupportsAcceleration() override;
   virtual bool            ShouldUseOffMainThreadCompositing() override;
 
   NS_IMETHOD        SetCursor(nsCursor aCursor) override;
@@ -441,9 +442,9 @@ public:
   virtual void CreateCompositor() override;
   virtual void PrepareWindowEffects() override;
   virtual void CleanupWindowEffects() override;
-  virtual bool PreRender(LayerManagerComposite* aManager) override;
-  virtual void PostRender(LayerManagerComposite* aManager) override;
-  virtual void DrawWindowOverlay(LayerManagerComposite* aManager,
+  virtual bool PreRender(mozilla::widget::WidgetRenderingContext* aContext) override;
+  virtual void PostRender(mozilla::widget::WidgetRenderingContext* aContext) override;
+  virtual void DrawWindowOverlay(mozilla::widget::WidgetRenderingContext* aManager,
                                  LayoutDeviceIntRect aRect) override;
 
   virtual void UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries) override;

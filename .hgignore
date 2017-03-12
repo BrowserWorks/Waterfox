@@ -8,6 +8,8 @@
 (^|/)\.DS_Store$
 \.pdb
 \.egg-info
+\.rej
+\.orig
 
 # Vim swap files.
 ^\.sw.$
@@ -17,8 +19,6 @@
 \.dir-locals\.el
 
 # User files that may appear at the root
-^\.mozconfig
-^mozconfig*
 ^configure$
 ^old-configure$
 ^config\.cache$
@@ -31,6 +31,9 @@
 
 # Build directories
 ^obj
+
+# VCS directories
+^.git
 
 # Build directories for js shell
 _DBG\.OBJ/

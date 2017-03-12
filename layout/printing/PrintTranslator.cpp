@@ -20,7 +20,7 @@ namespace layout {
 PrintTranslator::PrintTranslator(nsDeviceContext* aDeviceContext)
   : mDeviceContext(aDeviceContext)
 {
-  RefPtr<gfxContext> context = mDeviceContext->CreateRenderingContext();
+  RefPtr<gfxContext> context = mDeviceContext->CreateReferenceRenderingContext();
   mBaseDT = context->GetDrawTarget();
 }
 
@@ -93,9 +93,6 @@ PrintTranslator::GetDesiredFontType()
       return FontType::CAIRO;
     case BackendType::SKIA:
       return FontType::SKIA;
-    case BackendType::COREGRAPHICS:
-    case BackendType::COREGRAPHICS_ACCELERATED:
-      return FontType::COREGRAPHICS;
     default:
       return FontType::CAIRO;
   }

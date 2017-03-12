@@ -42,7 +42,7 @@ var tests = [
     initData: '{"type":"persistent-license", "kids":["LwVHf8JLtPrv2GUXFW2v_A", "0DdtU9od-Bh5L3xbv0Xf_A"]}',
     expectedRequest: '{"kids":["LwVHf8JLtPrv2GUXFW2v_A","0DdtU9od-Bh5L3xbv0Xf_A"],"type":"persistent-license"}',
     sessionType: 'persistent-license',
-    expectPass: true,
+    expectPass: false,
   },
   {
     name: "Invalid keyId",
@@ -57,21 +57,6 @@ var tests = [
     initData: '{"kids":[""]}',
     sessionType: 'temporary',
     expectPass: false,
-  },
-  {
-    name: "SessionType in license doesn't match MediaKeySession's sessionType",
-    initDataType: 'keyids',
-    initData: '{"kids":["LwVHf8JLtPrv2GUXFW2v_A"]}',
-    sessionType: 'persistent-license',
-    expectPass: false,
-  },
-  {
-    name: "One valid and one invalid kid",
-    initDataType: 'keyids',
-    initData: '{"kids":["LwVHf8JLtPrv2GUXFW2v_A", "invalid"]}',
-    expectedRequest: '{"kids":["LwVHf8JLtPrv2GUXFW2v_A"],"type":"temporary"}',
-    sessionType: 'temporary',
-    expectPass: true,
   },
   {
     name: "Invalid initData",
@@ -92,8 +77,9 @@ var tests = [
     name: "'webm' initDataType with non 16 byte keyid",
     initDataType: 'webm',
     initData: 'YAYeAX5Hfod',
+    expectedRequest: '{\"kids\":[\"YAYeAX5Hfoc\"],\"type\":\"temporary\"}',
     sessionType: 'temporary',
-    expectPass: false,
+    expectPass: true,
   },
 ];
 

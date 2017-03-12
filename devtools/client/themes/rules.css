@@ -30,6 +30,9 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
+  /* Override the min-width from .inspector-tabpanel, as the rule panel can support small
+     widths */
+  min-width: 100px;
 }
 
 /* Rule View Toolbar */
@@ -138,21 +141,34 @@
 .ruleview-rule-source {
   text-align: end;
   float: right;
+  max-width: 100%;
+
+  /* Force RTL direction to crop the source link at the beginning. */
+  direction: rtl;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
   -moz-user-select: none;
   margin-bottom: 2px;
 }
 
-.ruleview-rule-source > label {
-  cursor: pointer;
+.ruleview-rule-source-label {
+  white-space: nowrap;
   margin: 0;
+  cursor: pointer;
+
+  /* Create an LTR embed to avoid special characters being shifted to the start due to the
+     parent node direction: rtl; */
+  direction: ltr;
+  unicode-bidi: embed
 }
 
 .ruleview-rule-source[unselectable],
-.ruleview-rule-source[unselectable] > label {
+.ruleview-rule-source[unselectable] > .ruleview-rule-source-label {
   cursor: default;
 }
 
-.theme-firebug .ruleview-rule-source label {
+.theme-firebug .ruleview-rule-source-label {
   font-family: var(--proportional-font-family);
   font-weight: bold;
   color: #0000FF;
@@ -293,7 +309,7 @@
 }
 
 .ruleview-overridden-rule-filter {
-  background-image: url(images/filter.svg#filterinput);
+  background-image: url(chrome://devtools/skin/images/filter.svg#filterinput);
   background-size: 11px 11px;
   margin-inline-start: 5px;
   display: inline-block;
@@ -351,6 +367,7 @@
   margin-inline-start: 35px;
 }
 
+.ruleview-grid,
 .ruleview-swatch {
   cursor: pointer;
   border-radius: 50%;
@@ -362,6 +379,12 @@
   margin-inline-end: 5px;
   display: inline-block;
   position: relative;
+}
+
+.ruleview-grid {
+  background: url("chrome://devtools/skin/images/grid.svg");
+  background-size: 1em;
+  border-radius: 0;
 }
 
 .ruleview-colorswatch::before {
@@ -488,6 +511,7 @@
   filter: url(images/filters.svg#checked-icon-state);
 }
 
+.ruleview-grid.active,
 .ruleview-selectorhighlighter:active,
 .ruleview-selectorhighlighter.highlighted {
   filter: url(images/filters.svg#checked-icon-state) brightness(0.9);

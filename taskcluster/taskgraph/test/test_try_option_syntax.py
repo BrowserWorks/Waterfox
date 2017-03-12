@@ -33,7 +33,7 @@ def talos_task(n, tp):
 
 tasks = {k: v for k, v in [
     unittest_task('mochitest-browser-chrome', 'linux'),
-    unittest_task('mochitest-browser-chrome-e10s', 'linux64'),
+    unittest_task('mochitest-e10s-browser-chrome', 'linux64'),
     unittest_task('mochitest-chrome', 'linux'),
     unittest_task('mochitest-webgl', 'linux'),
     unittest_task('crashtest-e10s', 'linux'),
@@ -254,6 +254,21 @@ class TestTryOptionSyntax(unittest.TestCase):
         "--interactive sets interactive"
         tos = TryOptionSyntax('try: --interactive', empty_graph)
         self.assertEqual(tos.interactive, True)
+
+    def test_all_email(self):
+        "--all-emails sets notifications"
+        tos = TryOptionSyntax('try: --all-emails', empty_graph)
+        self.assertEqual(tos.notifications, 'all')
+
+    def test_fail_email(self):
+        "--failure-emails sets notifications"
+        tos = TryOptionSyntax('try: --failure-emails', empty_graph)
+        self.assertEqual(tos.notifications, 'failure')
+
+    def test_no_email(self):
+        "no email settings don't set notifications"
+        tos = TryOptionSyntax('try:', empty_graph)
+        self.assertEqual(tos.notifications, None)
 
 if __name__ == '__main__':
     main()

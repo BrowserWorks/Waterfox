@@ -31,6 +31,7 @@ const int CBvLayerQuad = 10;
 // we don't use opacity with solid color shaders
 const int CBfLayerOpacity = 0;
 const int CBvColor = 0;
+const int CBmYuvColorMatrix = 1;
 
 enum DeviceManagerState {
   // The device and swap chain are OK.
@@ -161,6 +162,8 @@ public:
   IDirect3DDevice9 *device() { return mDevice; }
 
   bool IsD3D9Ex() { return mDeviceEx; }
+
+  bool HasComponentAlpha() { return mHasComponentAlpha; }
 
   bool HasDynamicTextures() { return mHasDynamicTextures; }
 
@@ -325,6 +328,9 @@ private:
    * rotation, but some older hardware doesn't support it.
    */
   D3DTEXTUREADDRESS mTextureAddressingMode;
+
+  /* If this device supports component alpha */
+  bool mHasComponentAlpha;
 
   /* If this device supports dynamic textures */
   bool mHasDynamicTextures;

@@ -5,10 +5,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIServiceManager.h"
+#include "nsNamedPipeIOLayer.h"
 #include "nsSOCKSSocketProvider.h"
 #include "nsSOCKSIOLayer.h"
 #include "nsCOMPtr.h"
 #include "nsError.h"
+
+using mozilla::NeckoOriginAttributes;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -45,15 +48,26 @@ nsSOCKSSocketProvider::NewSocket(int32_t family,
                                  const char *host, 
                                  int32_t port,
                                  nsIProxyInfo *proxy,
+                                 const NeckoOriginAttributes &originAttributes,
                                  uint32_t flags,
                                  PRFileDesc **result,
                                  nsISupports **socksInfo)
 {
     PRFileDesc *sock;
-    
-    sock = PR_OpenTCPSocket(family);
-    if (!sock)
-        return NS_ERROR_OUT_OF_MEMORY;
+
+#if defined(XP_WIN)
+    nsAutoCString proxyHost;
+    proxy->GetHost(proxyHost);
+    if (IsNamedPipePath(proxyHost)) {
+        sock = CreateNamedPipeLayer();
+    } else
+#endif
+    {
+        sock = PR_OpenTCPSocket(family);
+        if (!sock) {
+            return NS_ERROR_OUT_OF_MEMORY;
+        }
+    }
 
     nsresult rv = nsSOCKSIOLayerAddToSocket(family,
                                             host, 
@@ -76,6 +90,7 @@ nsSOCKSSocketProvider::AddToSocket(int32_t family,
                                    const char *host,
                                    int32_t port,
                                    nsIProxyInfo *proxy,
+                                   const NeckoOriginAttributes &originAttributes,
                                    uint32_t flags,
                                    PRFileDesc *sock,
                                    nsISupports **socksInfo)

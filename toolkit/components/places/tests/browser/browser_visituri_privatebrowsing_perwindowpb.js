@@ -6,7 +6,6 @@ function test() {
   // initialization
   waitForExplicitFinish();
   let windowsToClose = [];
-  let testURI = "https://www.mozilla.org/en-US/";
   let initialURL =
     "http://example.com/tests/toolkit/components/places/tests/browser/begin.html";
   let finalURL =
@@ -64,8 +63,8 @@ function test() {
   testOnWindow({private: true}, function(aWin) {
     doTest(true, aWin, initialURL, function() {
       // then test when not on private mode
-      testOnWindow({}, function(aWin) {
-        doTest(false, aWin, finalURL, function () {
+      testOnWindow({}, function(aWin2) {
+        doTest(false, aWin2, finalURL, function () {
           PlacesTestUtils.clearHistory().then(finish);
         });
       });

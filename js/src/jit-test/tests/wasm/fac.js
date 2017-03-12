@@ -1,4 +1,3 @@
-// |jit-test| test-also-wasm-baseline
 load(libdir + "wasm.js");
 
 // This is fac-opt from fac.wast in the official testsuite, changed to use
@@ -19,4 +18,4 @@ assertEq(wasmEvalText(`(module
   )
 
   (export "" 0)
-)`)(10), 3628800);
+)`).exports[""](10), 3628800);

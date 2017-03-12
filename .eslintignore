@@ -65,11 +65,11 @@ browser/base/content/test/general/file_csp_block_all_mixedcontent.html
 browser/base/content/test/urlbar/file_blank_but_not_blank.html
 browser/base/content/newtab/**
 browser/components/downloads/**
-browser/components/feeds/**
 browser/components/privatebrowsing/**
 browser/components/sessionstore/**
 browser/components/tabview/**
-browser/components/translation/**
+# generated files in cld2
+browser/components/translation/cld2/cld-worker.js
 browser/extensions/pdfjs/**
 # generated or library files in pocket
 browser/extensions/pocket/content/panels/js/tmpl.js
@@ -80,9 +80,9 @@ browser/locales/**
 devtools/client/canvasdebugger/**
 devtools/client/commandline/**
 devtools/client/debugger/**
-devtools/client/eyedropper/**
 devtools/client/framework/**
 !devtools/client/framework/selection.js
+!devtools/client/framework/toolbox.js
 devtools/client/jsonview/lib/**
 devtools/client/memory/**
 devtools/client/netmonitor/test/**
@@ -94,11 +94,6 @@ devtools/client/scratchpad/**
 devtools/client/shadereditor/**
 devtools/client/shared/*.jsm
 devtools/client/shared/webgl-utils.js
-devtools/client/shared/developer-toolbar.js
-devtools/client/shared/components/test/**
-devtools/client/shared/redux/middleware/test/**
-devtools/client/shared/test/**
-!devtools/client/shared/test/test-actor-registry.js
 devtools/client/shared/widgets/*.jsm
 devtools/client/sourceeditor/test/*.js
 devtools/client/webaudioeditor/**
@@ -115,14 +110,15 @@ devtools/server/*.jsm
 !devtools/server/main.js
 !devtools/server/websocket-server.js
 devtools/server/actors/**
+!devtools/server/actors/csscoverage.js
 !devtools/server/actors/inspector.js
 !devtools/server/actors/highlighters/css-grid.js
 !devtools/server/actors/highlighters/eye-dropper.js
+!devtools/server/actors/layout.js
+!devtools/server/actors/string.js
+!devtools/server/actors/styles.js
 !devtools/server/actors/webbrowser.js
 !devtools/server/actors/webextension.js
-!devtools/server/actors/styles.js
-!devtools/server/actors/string.js
-!devtools/server/actors/csscoverage.js
 devtools/server/performance/**
 devtools/server/tests/**
 devtools/shared/*.js
@@ -133,8 +129,6 @@ devtools/shared/*.js
 !devtools/shared/indentation.js
 !devtools/shared/loader-plugin-raw.jsm
 !devtools/shared/task.js
-devtools/shared/*.jsm
-!devtools/shared/Loader.jsm
 devtools/shared/apps/**
 devtools/shared/client/**
 devtools/shared/discovery/**
@@ -242,7 +236,6 @@ toolkit/components/reader/JSDOMParser.js
 # Uses preprocessing
 toolkit/content/widgets/wizard.xml
 toolkit/components/jsdownloads/src/DownloadIntegration.jsm
-toolkit/components/search/nsSearchService.js
 toolkit/components/url-classifier/**
 toolkit/components/urlformatter/nsURLFormatter.js
 toolkit/identity/FirefoxAccounts.jsm

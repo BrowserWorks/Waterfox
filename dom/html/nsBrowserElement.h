@@ -34,7 +34,7 @@ class ErrorResult;
 class nsBrowserElement
 {
 public:
-  nsBrowserElement() : mOwnerIsWidget(false) {}
+  nsBrowserElement() {}
   virtual ~nsBrowserElement() {}
 
   void SetVisible(bool aVisible, ErrorResult& aRv);
@@ -114,9 +114,6 @@ public:
 
   already_AddRefed<dom::DOMRequest> GetWebManifest(ErrorResult& aRv);
 
-  void SetNFCFocus(bool isFocus,
-                   ErrorResult& aRv);
-
   // Helper
   static void GenerateAllowedAudioChannels(
                  nsPIDOMWindowInner* aWindow,
@@ -136,8 +133,6 @@ protected:
 
 private:
   bool IsBrowserElementOrThrow(ErrorResult& aRv);
-  bool IsNotWidgetOrThrow(ErrorResult& aRv);
-  bool mOwnerIsWidget;
 };
 
 } // namespace mozilla

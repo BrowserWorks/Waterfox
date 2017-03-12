@@ -27,7 +27,7 @@
 #include "nsCSSRules.h"
 #include "mozilla/css/NameSpaceRule.h"
 #include "nsTArray.h"
-#include "mozilla/CSSStyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 #include "mozilla/css/Declaration.h"
 #include "nsStyleConsts.h"
 #include "nsNetUtil.h"
@@ -231,6 +231,12 @@ public:
                         uint32_t aLineNumber, // for error reporting
                         nsCSSValue& aValue,
                         bool aSuppressErrors /* false */);
+
+  bool ParseMarginString(const nsSubstring& aBuffer,
+                         nsIURI* aURL, // for error reporting
+                         uint32_t aLineNumber, // for error reporting
+                         nsCSSValue& aValue,
+                         bool aSuppressErrors /* false */);
 
   nsresult ParseSelectorString(const nsSubstring& aSelectorString,
                                nsIURI* aURL, // for error reporting
@@ -1022,6 +1028,9 @@ protected:
   bool ParseAlignJustifySelf(nsCSSPropertyID aPropID);
   // parsing 'align/justify-content' from the css-align spec
   bool ParseAlignJustifyContent(nsCSSPropertyID aPropID);
+  bool ParsePlaceContent();
+  bool ParsePlaceItems();
+  bool ParsePlaceSelf();
 
   // for 'clip' and '-moz-image-region'
   bool ParseRect(nsCSSPropertyID aPropID);
@@ -1158,26 +1167,63 @@ protected:
   void AppendValue(nsCSSPropertyID aPropID, const nsCSSValue& aValue);
   bool ParseBoxProperties(const nsCSSPropertyID aPropIDs[]);
   bool ParseGroupedBoxProperty(int32_t aVariantMask,
-                               nsCSSValue& aValue);
+                               nsCSSValue& aValue,
+                               uint32_t aRestrictions);
   bool ParseBoxCornerRadius(const nsCSSPropertyID aPropID);
   bool ParseBoxCornerRadiiInternals(nsCSSValue array[]);
   bool ParseBoxCornerRadii(const nsCSSPropertyID aPropIDs[]);
 
   int32_t ParseChoice(nsCSSValue aValues[],
                       const nsCSSPropertyID aPropIDs[], int32_t aNumIDs);
+
   CSSParseResult ParseColor(nsCSSValue& aValue);
-  bool ParseNumberColorComponent(uint8_t& aComponent, char aStop);
-  bool ParsePercentageColorComponent(float& aComponent, char aStop);
-  // ParseHSLColor parses everything starting with the opening '('
-  // up through and including the aStop char.
+
+  template<typename ComponentType>
+  bool ParseRGBColor(ComponentType& aR,
+                     ComponentType& aG,
+                     ComponentType& aB,
+                     ComponentType& aA);
   bool ParseHSLColor(float& aHue, float& aSaturation, float& aLightness,
-                     char aStop);
-  // ParseColorOpacity will enforce that the color ends with a ')'
-  // after the opacity
-  bool ParseColorOpacity(uint8_t& aOpacity);
-  bool ParseColorOpacity(float& aOpacity);
+                     float& aOpacity);
+
+  // The ParseColorOpacityAndCloseParen methods below attempt to parse an
+  // optional [ separator <alpha-value> ] expression, followed by a
+  // close-parenthesis, at the end of a css color function (e.g. "rgba()" or
+  // "hsla()"). If these functions simply encounter a close-parenthesis (without
+  // any [separator <alpha-value>]), they will still succeed (i.e. return true),
+  // with outparam 'aOpacity' set to a default opacity value (fully-opaque).
+  //
+  // The range of opacity component is [0, 255], and the default opacity value
+  // is 255 (fully-opaque) for this function.
+  bool ParseColorOpacityAndCloseParen(uint8_t& aOpacity,
+                                      char aSeparator);
+  // Similar to the previous one, but the range of opacity component is
+  // [0.0f, 1.0f] and the default opacity value is 1.0f (fully-opaque).
+  bool ParseColorOpacityAndCloseParen(float& aOpacity,
+                                      char aSeparator);
+
+  // Parse a <number> color component. The range of color component is [0, 255].
+  // If |aSeparator| is provided, this function will also attempt to parse that
+  // character after parsing the color component.
+  bool ParseColorComponent(uint8_t& aComponent, Maybe<char> aSeparator);
+  // Similar to the previous one, but parse a <percentage> color component.
+  // The range of color component is [0.0f, 1.0f].
+  bool ParseColorComponent(float& aComponent, Maybe<char> aSeparator);
+
+  // Parse a <hue> component.
+  //   <hue> = <number> | <angle>
+  // The unit of outparam 'aAngle' is degree. Assume the unit to be degree if an
+  // unitless <number> is parsed.
+  bool ParseHue(float& aAngle);
+
   bool ParseEnum(nsCSSValue& aValue,
                  const KTableEntry aKeywordTable[]);
+
+  // A special ParseEnum for the CSS Box Alignment properties that have
+  // 'baseline' values.  In addition to the keywords in aKeywordTable, it also
+  // parses 'first baseline' and 'last baseline' as a single value.
+  // (aKeywordTable must contain 'baseline')
+  bool ParseAlignEnum(nsCSSValue& aValue, const KTableEntry aKeywordTable[]);
 
   // Variant parsing methods
   CSSParseResult ParseVariant(nsCSSValue& aValue,
@@ -2071,8 +2117,8 @@ CSSParserImpl::ParseVariable(const nsAString& aVariableName,
     OUTPUT_ERROR();
   } else {
     CLEAR_ERROR();
-    aDeclaration->AddVariableDeclaration(aVariableName, variableType,
-                                         variableValue, aIsImportant, true);
+    aDeclaration->AddVariable(aVariableName, variableType,
+                              variableValue, aIsImportant, true);
     *aChanged = true;
   }
 
@@ -2240,6 +2286,32 @@ CSSParserImpl::ParseColorString(const nsSubstring& aBuffer,
 
   ReleaseScanner();
   return colorParsed;
+}
+
+bool
+CSSParserImpl::ParseMarginString(const nsSubstring& aBuffer,
+                                 nsIURI* aURI, // for error reporting
+                                 uint32_t aLineNumber, // for error reporting
+                                 nsCSSValue& aValue,
+                                 bool aSuppressErrors /* false */)
+{
+  nsCSSScanner scanner(aBuffer, aLineNumber);
+  css::ErrorReporter reporter(scanner, mSheet, mChildLoader, aURI);
+  InitScanner(scanner, reporter, aURI, aURI, nullptr);
+
+  nsAutoSuppressErrors suppressErrors(this, aSuppressErrors);
+
+  // Parse a margin, and check that there's nothing else after it.
+  bool marginParsed = ParseGroupedBoxProperty(VARIANT_LP, aValue, 0) && !GetToken(true);
+
+  if (aSuppressErrors) {
+    CLEAR_ERROR();
+  } else {
+    OUTPUT_ERROR();
+  }
+
+  ReleaseScanner();
+  return marginParsed;
 }
 
 bool
@@ -6034,7 +6106,8 @@ CSSParserImpl::ParsePseudoSelector(int32_t&       aDataMask,
 
   if (aSelector.IsPseudoElement()) {
     CSSPseudoElementType type = aSelector.PseudoType();
-    if (!nsCSSPseudoElements::PseudoElementSupportsUserActionState(type)) {
+    if (type >= CSSPseudoElementType::Count ||
+        !nsCSSPseudoElements::PseudoElementSupportsUserActionState(type)) {
       // We only allow user action pseudo-classes on certain pseudo-elements.
       REPORT_UNEXPECTED_TOKEN(PEPseudoSelNoUserActionPC);
       UngetToken();
@@ -6682,86 +6755,60 @@ CSSParserImpl::ParseColor(nsCSSValue& aValue)
         }
       }
       break;
-    case eCSSToken_Function:
-      if (mToken.mIdent.LowerCaseEqualsLiteral("rgb")) {
-        // rgb ( component , component , component )
+    case eCSSToken_Function: {
+      bool isRGB;
+      bool isHSL;
+      if ((isRGB = mToken.mIdent.LowerCaseEqualsLiteral("rgb")) ||
+          mToken.mIdent.LowerCaseEqualsLiteral("rgba")) {
+        // rgb() = rgb( <percentage>{3} [ / <alpha-value> ]? ) |
+        //         rgb( <number>{3} [ / <alpha-value> ]? ) |
+        //         rgb( <percentage>#{3} , <alpha-value>? ) |
+        //         rgb( <number>#{3} , <alpha-value>? )
+        // <alpha-value> = <number> | <percentage>
+        // rgba is an alias of rgb.
+
         if (GetToken(true)) {
           UngetToken();
         }
-        if (mToken.mType == eCSSToken_Number) {
-          uint8_t r, g, b;
-          if (ParseNumberColorComponent(r, ',') &&
-              ParseNumberColorComponent(g, ',') &&
-              ParseNumberColorComponent(b, ')')) {
-            aValue.SetIntegerColorValue(NS_RGB(r, g, b), eCSSUnit_RGBColor);
-            return CSSParseResult::Ok;
-          }
-        } else {
-          float r, g, b;
-          if (ParsePercentageColorComponent(r, ',') &&
-              ParsePercentageColorComponent(g, ',') &&
-              ParsePercentageColorComponent(b, ')')) {
-            aValue.SetFloatColorValue(r, g, b, 1.0f,
-                                      eCSSUnit_PercentageRGBColor);
-            return CSSParseResult::Ok;
-          }
-        }
-        SkipUntil(')');
-        return CSSParseResult::Error;
-      }
-      else if (mToken.mIdent.LowerCaseEqualsLiteral("rgba")) {
-        // rgba ( component , component , component , opacity )
-        if (GetToken(true)) {
-          UngetToken();
-        }
-        if (mToken.mType == eCSSToken_Number) {
+        if (mToken.mType == eCSSToken_Number) { // <number>
           uint8_t r, g, b, a;
-          if (ParseNumberColorComponent(r, ',') &&
-              ParseNumberColorComponent(g, ',') &&
-              ParseNumberColorComponent(b, ',') &&
-              ParseColorOpacity(a)) {
+
+          if (ParseRGBColor(r, g, b, a)) {
             aValue.SetIntegerColorValue(NS_RGBA(r, g, b, a),
-                                        eCSSUnit_RGBAColor);
+                isRGB ? eCSSUnit_RGBColor : eCSSUnit_RGBAColor);
             return CSSParseResult::Ok;
           }
-        } else {
+        } else {  // <percentage>
           float r, g, b, a;
-          if (ParsePercentageColorComponent(r, ',') &&
-              ParsePercentageColorComponent(g, ',') &&
-              ParsePercentageColorComponent(b, ',') &&
-              ParseColorOpacity(a)) {
-            aValue.SetFloatColorValue(r, g, b, a, eCSSUnit_PercentageRGBAColor);
+
+          if (ParseRGBColor(r, g, b, a)) {
+            aValue.SetFloatColorValue(r, g, b, a,
+                isRGB ? eCSSUnit_PercentageRGBColor : eCSSUnit_PercentageRGBAColor);
             return CSSParseResult::Ok;
           }
         }
         SkipUntil(')');
         return CSSParseResult::Error;
       }
-      else if (mToken.mIdent.LowerCaseEqualsLiteral("hsl")) {
-        // hsl ( hue , saturation , lightness )
-        // "hue" is a number, "saturation" and "lightness" are percentages.
-        float h, s, l;
-        if (ParseHSLColor(h, s, l, ')')) {
-          aValue.SetFloatColorValue(h, s, l, 1.0f, eCSSUnit_HSLColor);
-          return CSSParseResult::Ok;
-        }
-        SkipUntil(')');
-        return CSSParseResult::Error;
-      }
-      else if (mToken.mIdent.LowerCaseEqualsLiteral("hsla")) {
-        // hsla ( hue , saturation , lightness , opacity )
-        // "hue" is a number, "saturation" and "lightness" are percentages,
-        // "opacity" is a number.
+      else if ((isHSL = mToken.mIdent.LowerCaseEqualsLiteral("hsl")) ||
+               mToken.mIdent.LowerCaseEqualsLiteral("hsla")) {
+        // hsl() = hsl( <hue> <percentage> <percentage> [ / <alpha-value> ]? ) ||
+        //         hsl( <hue>, <percentage>, <percentage>, <alpha-value>? )
+        // <hue> = <number> | <angle>
+        // hsla is an alias of hsl.
+
         float h, s, l, a;
-        if (ParseHSLColor(h, s, l, ',') &&
-            ParseColorOpacity(a)) {
-          aValue.SetFloatColorValue(h, s, l, a, eCSSUnit_HSLAColor);
+
+        if (ParseHSLColor(h, s, l, a)) {
+          aValue.SetFloatColorValue(h, s, l, a,
+              isHSL ? eCSSUnit_HSLColor : eCSSUnit_HSLAColor);
           return CSSParseResult::Ok;
         }
         SkipUntil(')');
         return CSSParseResult::Error;
       }
       break;
+    }
     default:
       break;
   }
@@ -6823,141 +6870,141 @@ CSSParserImpl::ParseColor(nsCSSValue& aValue)
 }
 
 bool
-CSSParserImpl::ParseNumberColorComponent(uint8_t& aComponent, char aStop)
+CSSParserImpl::ParseColorComponent(uint8_t& aComponent, Maybe<char> aSeparator)
 {
   if (!GetToken(true)) {
     REPORT_UNEXPECTED_EOF(PEColorComponentEOF);
     return false;
   }
 
-  if (mToken.mType != eCSSToken_Number || !mToken.mIntegerValid) {
-    REPORT_UNEXPECTED_TOKEN(PEExpectedInt);
-    UngetToken();
-    return false;
-  }
-
-  float value = mToken.mNumber;
-  if (value < 0.0f) value = 0.0f;
-  if (value > 255.0f) value = 255.0f;
-
-  if (ExpectSymbol(aStop, true)) {
-    aComponent = NSToIntRound(value);
-    return true;
-  }
-  REPORT_UNEXPECTED_TOKEN_CHAR(PEColorComponentBadTerm, aStop);
-  return false;
-}
-
-bool
-CSSParserImpl::ParsePercentageColorComponent(float& aComponent, char aStop)
-{
-  if (!GetToken(true)) {
-    REPORT_UNEXPECTED_EOF(PEColorComponentEOF);
-    return false;
-  }
-
-  if (mToken.mType != eCSSToken_Percentage) {
-    REPORT_UNEXPECTED_TOKEN(PEExpectedPercent);
-    UngetToken();
-    return false;
-  }
-
-  float value = mToken.mNumber;
-  if (value < 0.0f) value = 0.0f;
-  if (value > 1.0f) value = 1.0f;
-
-  if (ExpectSymbol(aStop, true)) {
-    aComponent = value;
-    return true;
-  }
-  REPORT_UNEXPECTED_TOKEN_CHAR(PEColorComponentBadTerm, aStop);
-  return false;
-}
-
-
-bool
-CSSParserImpl::ParseHSLColor(float& aHue, float& aSaturation, float& aLightness,
-                             char aStop)
-{
-  float h, s, l;
-
-  // Get the hue
-  if (!GetToken(true)) {
-    REPORT_UNEXPECTED_EOF(PEColorHueEOF);
-    return false;
-  }
   if (mToken.mType != eCSSToken_Number) {
     REPORT_UNEXPECTED_TOKEN(PEExpectedNumber);
     UngetToken();
     return false;
   }
-  h = mToken.mNumber;
-  h /= 360.0f;
-  // hue values are wraparound
-  h = h - floor(h);
 
-  if (!ExpectSymbol(',', true)) {
-    REPORT_UNEXPECTED_TOKEN(PEExpectedComma);
+  float value = mToken.mNumber;
+
+  if (aSeparator && !ExpectSymbol(*aSeparator, true)) {
+    REPORT_UNEXPECTED_TOKEN_CHAR(PEColorComponentBadTerm, *aSeparator);
     return false;
   }
 
-  // Get the saturation
+  if (value < 0.0f) value = 0.0f;
+  if (value > 255.0f) value = 255.0f;
+
+  aComponent = NSToIntRound(value);
+  return true;
+}
+
+bool
+CSSParserImpl::ParseColorComponent(float& aComponent, Maybe<char> aSeparator)
+{
   if (!GetToken(true)) {
-    REPORT_UNEXPECTED_EOF(PEColorSaturationEOF);
+    REPORT_UNEXPECTED_EOF(PEColorComponentEOF);
     return false;
   }
+
   if (mToken.mType != eCSSToken_Percentage) {
     REPORT_UNEXPECTED_TOKEN(PEExpectedPercent);
     UngetToken();
     return false;
   }
-  s = mToken.mNumber;
-  if (s < 0.0f) s = 0.0f;
-  if (s > 1.0f) s = 1.0f;
 
-  if (!ExpectSymbol(',', true)) {
-    REPORT_UNEXPECTED_TOKEN(PEExpectedComma);
+  float value = mToken.mNumber;
+
+  if (aSeparator && !ExpectSymbol(*aSeparator, true)) {
+    REPORT_UNEXPECTED_TOKEN_CHAR(PEColorComponentBadTerm, *aSeparator);
     return false;
   }
 
-  // Get the lightness
+  if (value < 0.0f) value = 0.0f;
+  if (value > 1.0f) value = 1.0f;
+
+  aComponent = value;
+  return true;
+}
+
+bool
+CSSParserImpl::ParseHue(float& aAngle)
+{
   if (!GetToken(true)) {
-    REPORT_UNEXPECTED_EOF(PEColorLightnessEOF);
+    REPORT_UNEXPECTED_EOF(PEColorHueEOF);
     return false;
   }
-  if (mToken.mType != eCSSToken_Percentage) {
-    REPORT_UNEXPECTED_TOKEN(PEExpectedPercent);
-    UngetToken();
-    return false;
-  }
-  l = mToken.mNumber;
-  if (l < 0.0f) l = 0.0f;
-  if (l > 1.0f) l = 1.0f;
 
-  if (ExpectSymbol(aStop, true)) {
-    aHue = h;
-    aSaturation = s;
-    aLightness = l;
+  // <number>
+  if (mToken.mType == eCSSToken_Number) {
+    aAngle = mToken.mNumber;
+    return true;
+  }
+  UngetToken();
+
+  // <angle>
+  nsCSSValue angleValue;
+  // The '0' value is handled by <number> parsing, so use VARIANT_ANGLE flag
+  // instead of VARIANT_ANGLE_OR_ZERO.
+  if (ParseSingleTokenVariant(angleValue, VARIANT_ANGLE, nullptr)) {
+    aAngle = angleValue.GetAngleValueInDegrees();
     return true;
   }
 
-  REPORT_UNEXPECTED_TOKEN_CHAR(PEColorComponentBadTerm, aStop);
+  REPORT_UNEXPECTED_TOKEN(PEExpectedNumberOrAngle);
+  return false;
+}
+
+bool
+CSSParserImpl::ParseHSLColor(float& aHue, float& aSaturation, float& aLightness,
+                             float& aOpacity)
+{
+  // comma-less expression:
+  // hsl() = hsl( <hue> <saturation> <lightness> [ / <alpha-value> ]? )
+  // the expression with comma:
+  // hsl() = hsl( <hue>, <saturation>, <lightness>, <alpha-value>? )
+
+  const char commaSeparator = ',';
+
+  // Parse hue.
+  // <hue> = <number> | <angle>
+  float degreeAngle;
+  if (!ParseHue(degreeAngle)) {
+    return false;
+  }
+  aHue = degreeAngle / 360.0f;
+  // hue values are wraparound
+  aHue = aHue - floor(aHue);
+  // Look for a comma separator after "hue" component to determine if the
+  // expression is comma-less or not.
+  bool hasComma = ExpectSymbol(commaSeparator, true);
+
+  // Parse saturation, lightness and opacity.
+  // The saturation and lightness are <percentage>, so reuse the float version
+  // of ParseColorComponent function for them. No need to check the separator
+  // after 'lightness'. It will be checked in opacity value parsing.
+  const char separatorBeforeAlpha = hasComma ? commaSeparator : '/';
+  if (ParseColorComponent(aSaturation, hasComma ? Some(commaSeparator) : Nothing()) &&
+      ParseColorComponent(aLightness, Nothing()) &&
+      ParseColorOpacityAndCloseParen(aOpacity, separatorBeforeAlpha)) {
+    return true;
+  }
+
   return false;
 }
 
 
 bool
-CSSParserImpl::ParseColorOpacity(uint8_t& aOpacity)
+CSSParserImpl::ParseColorOpacityAndCloseParen(uint8_t& aOpacity,
+                                              char aSeparator)
 {
   float floatOpacity;
-  if (!ParseColorOpacity(floatOpacity)) {
+  if (!ParseColorOpacityAndCloseParen(floatOpacity, aSeparator)) {
     return false;
   }
 
   uint8_t value = nsStyleUtil::FloatToColorComponent(floatOpacity);
   // Need to compare to something slightly larger
   // than 0.5 due to floating point inaccuracies.
-  NS_ASSERTION(fabs(255.0f*mToken.mNumber - value) <= 0.51f,
+  NS_ASSERTION(fabs(255.0f * floatOpacity - value) <= 0.51f,
                "FloatToColorComponent did something weird");
 
   aOpacity = value;
@@ -6965,15 +7012,29 @@ CSSParserImpl::ParseColorOpacity(uint8_t& aOpacity)
 }
 
 bool
-CSSParserImpl::ParseColorOpacity(float& aOpacity)
+CSSParserImpl::ParseColorOpacityAndCloseParen(float& aOpacity,
+                                              char aSeparator)
 {
+  if (ExpectSymbol(')', true)) {
+    // The optional [separator <alpha-value>] was omitted, so set the opacity
+    // to a fully-opaque value '1.0f' and return success.
+    aOpacity = 1.0f;
+    return true;
+  }
+
+  if (!ExpectSymbol(aSeparator, true)) {
+    REPORT_UNEXPECTED_TOKEN_CHAR(PEColorComponentBadTerm, aSeparator);
+    return false;
+  }
+
   if (!GetToken(true)) {
     REPORT_UNEXPECTED_EOF(PEColorOpacityEOF);
     return false;
   }
 
-  if (mToken.mType != eCSSToken_Number) {
-    REPORT_UNEXPECTED_TOKEN(PEExpectedNumber);
+  // eCSSToken_Number or eCSSToken_Percentage.
+  if (mToken.mType != eCSSToken_Number && mToken.mType != eCSSToken_Percentage) {
+    REPORT_UNEXPECTED_TOKEN(PEExpectedNumberOrPercent);
     UngetToken();
     return false;
   }
@@ -6991,6 +7052,41 @@ CSSParserImpl::ParseColorOpacity(float& aOpacity)
 
   aOpacity = mToken.mNumber;
   return true;
+}
+
+template<typename ComponentType>
+bool
+CSSParserImpl::ParseRGBColor(ComponentType& aR,
+                             ComponentType& aG,
+                             ComponentType& aB,
+                             ComponentType& aA)
+{
+  // comma-less expression:
+  // rgb() = rgb( component{3} [ / <alpha-value> ]? )
+  // the expression with comma:
+  // rgb() = rgb( component#{3} , <alpha-value>? )
+
+  const char commaSeparator = ',';
+
+  // Parse R.
+  if (!ParseColorComponent(aR, Nothing())) {
+    return false;
+  }
+  // Look for a comma separator after "r" component to determine if the
+  // expression is comma-less or not.
+  bool hasComma = ExpectSymbol(commaSeparator, true);
+
+  // Parse G, B and A.
+  // No need to check the separator after 'B'. It will be checked in 'A' value
+  // parsing.
+  const char separatorBeforeAlpha = hasComma ? commaSeparator : '/';
+  if (ParseColorComponent(aG, hasComma ? Some(commaSeparator) : Nothing()) &&
+      ParseColorComponent(aB, Nothing()) &&
+      ParseColorOpacityAndCloseParen(aA, separatorBeforeAlpha)) {
+    return true;
+  }
+
+  return false;
 }
 
 #ifdef MOZ_XUL
@@ -7406,8 +7502,8 @@ CSSParserImpl::ParseDeclaration(css::Declaration* aDeclaration,
                          CSS_CUSTOM_NAME_PREFIX_LENGTH).EqualsLiteral("--"));
     // remove '--'
     nsDependentString varName(propertyName, CSS_CUSTOM_NAME_PREFIX_LENGTH);
-    aDeclaration->AddVariableDeclaration(varName, variableType, variableValue,
-                                         status == ePriority_Important, false);
+    aDeclaration->AddVariable(varName, variableType, variableValue,
+                              status == ePriority_Important, false);
   } else {
     *aChanged |= mData.TransferFromBlock(mTempData, propID, EnabledState(),
                                          status == ePriority_Important,
@@ -7486,6 +7582,44 @@ CSSParserImpl::ParseEnum(nsCSSValue& aValue,
   return false;
 }
 
+bool
+CSSParserImpl::ParseAlignEnum(nsCSSValue& aValue,
+                              const KTableEntry aKeywordTable[])
+{
+  MOZ_ASSERT(nsCSSProps::ValueToKeywordEnum(NS_STYLE_ALIGN_BASELINE,
+                                            aKeywordTable) !=
+               eCSSKeyword_UNKNOWN,
+             "Please use ParseEnum instead");
+  nsSubstring* ident = NextIdent();
+  if (!ident) {
+    return false;
+  }
+  nsCSSKeyword baselinePrefix = eCSSKeyword_first;
+  nsCSSKeyword keyword = nsCSSKeywords::LookupKeyword(*ident);
+  if (keyword == eCSSKeyword_first || keyword == eCSSKeyword_last) {
+    baselinePrefix = keyword;
+    ident = NextIdent();
+    if (!ident) {
+      return false;
+    }
+    keyword = nsCSSKeywords::LookupKeyword(*ident);
+  }
+  if (eCSSKeyword_UNKNOWN < keyword) {
+    int32_t value;
+    if (nsCSSProps::FindKeyword(keyword, aKeywordTable, value)) {
+      if (baselinePrefix == eCSSKeyword_last &&
+          keyword == eCSSKeyword_baseline) {
+        value = NS_STYLE_ALIGN_LAST_BASELINE;
+      }
+      aValue.SetIntValue(value, eCSSUnit_Enumerated);
+      return true;
+    }
+  }
+
+  // Put the unknown identifier back and return
+  UngetToken();
+  return false;
+}
 
 struct UnitInfo {
   char name[6];  // needs to be long enough for the longest unit, with
@@ -8760,8 +8894,18 @@ CSSParserImpl::ParseGridTrackSize(nsCSSValue& aValue,
       !aValue.IsLengthPercentCalcUnit()) {
     result = CSSParseResult::Error;
   }
-  if (result == CSSParseResult::Ok ||
-      result == CSSParseResult::Error) {
+  if (result == CSSParseResult::Error) {
+    return result;
+  }
+  if (result == CSSParseResult::Ok) {
+    if (aValue.GetUnit() == eCSSUnit_FlexFraction) {
+      // Single value <flex> is represented internally as minmax(auto, <flex>).
+      nsCSSValue minmax;
+      nsCSSValue::Array* func = minmax.InitFunction(eCSSKeyword_minmax, 2);
+      func->Item(1).SetAutoValue();
+      func->Item(2) = aValue;
+      aValue = minmax;
+    }
     return result;
   }
 
@@ -8797,7 +8941,7 @@ CSSParserImpl::ParseGridTrackSize(nsCSSValue& aValue,
         !func->Item(2).IsLengthPercentCalcUnit()) {
       return CSSParseResult::Error;
     }
-    // Reject 'fr' min-sizing.
+    // Reject <flex> min-sizing.
     if (func->Item(1).GetUnit() == eCSSUnit_FlexFraction) {
       return CSSParseResult::Error;
     }
@@ -9962,7 +10106,7 @@ CSSParserImpl::ParseJustifyItems()
       value.SetIntValue(value.GetIntValue() | legacy.GetIntValue(),
                         eCSSUnit_Enumerated);
     } else {
-      if (!ParseEnum(value, nsCSSProps::kAlignAutoNormalStretchBaseline)) {
+      if (!ParseAlignEnum(value, nsCSSProps::kAlignAutoNormalStretchBaseline)) {
         if (!ParseAlignJustifyPosition(value, nsCSSProps::kAlignSelfPosition) ||
             value.GetUnit() == eCSSUnit_Null) {
           return false;
@@ -9991,7 +10135,7 @@ CSSParserImpl::ParseAlignItems()
 {
   nsCSSValue value;
   if (!ParseSingleTokenVariant(value, VARIANT_INHERIT, nullptr)) {
-    if (!ParseEnum(value, nsCSSProps::kAlignNormalStretchBaseline)) {
+    if (!ParseAlignEnum(value, nsCSSProps::kAlignNormalStretchBaseline)) {
       if (!ParseAlignJustifyPosition(value, nsCSSProps::kAlignSelfPosition) ||
           value.GetUnit() == eCSSUnit_Null) {
         return false;
@@ -10009,7 +10153,7 @@ CSSParserImpl::ParseAlignJustifySelf(nsCSSPropertyID aPropID)
 {
   nsCSSValue value;
   if (!ParseSingleTokenVariant(value, VARIANT_INHERIT, nullptr)) {
-    if (!ParseEnum(value, nsCSSProps::kAlignAutoNormalStretchBaseline)) {
+    if (!ParseAlignEnum(value, nsCSSProps::kAlignAutoNormalStretchBaseline)) {
       if (!ParseAlignJustifyPosition(value, nsCSSProps::kAlignSelfPosition) ||
           value.GetUnit() == eCSSUnit_Null) {
         return false;
@@ -10028,7 +10172,7 @@ CSSParserImpl::ParseAlignJustifyContent(nsCSSPropertyID aPropID)
 {
   nsCSSValue value;
   if (!ParseSingleTokenVariant(value, VARIANT_INHERIT, nullptr)) {
-    if (!ParseEnum(value, nsCSSProps::kAlignNormalBaseline)) {
+    if (!ParseAlignEnum(value, nsCSSProps::kAlignNormalBaseline)) {
       nsCSSValue fallbackValue;
       if (!ParseEnum(value, nsCSSProps::kAlignContentDistribution)) {
         if (!ParseAlignJustifyPosition(fallbackValue,
@@ -10058,6 +10202,87 @@ CSSParserImpl::ParseAlignJustifyContent(nsCSSPropertyID aPropID)
     }
   }
   AppendValue(aPropID, value);
+  return true;
+}
+
+// place-content: [ normal | <baseline-position> | <content-distribution> |
+//                  <content-position> ]{1,2}
+bool
+CSSParserImpl::ParsePlaceContent()
+{
+  nsCSSValue first;
+  if (ParseSingleTokenVariant(first, VARIANT_INHERIT, nullptr)) {
+    AppendValue(eCSSProperty_align_content, first);
+    AppendValue(eCSSProperty_justify_content, first);
+    return true;
+  }
+  if (!ParseAlignEnum(first, nsCSSProps::kAlignNormalBaseline) &&
+      !ParseEnum(first, nsCSSProps::kAlignContentDistribution) &&
+      !ParseEnum(first, nsCSSProps::kAlignContentPosition)) {
+    return false;
+  }
+  AppendValue(eCSSProperty_align_content, first);
+  nsCSSValue second;
+  if (!ParseAlignEnum(second, nsCSSProps::kAlignNormalBaseline) &&
+      !ParseEnum(second, nsCSSProps::kAlignContentDistribution) &&
+      !ParseEnum(second, nsCSSProps::kAlignContentPosition)) {
+    AppendValue(eCSSProperty_justify_content, first);
+  } else {
+    AppendValue(eCSSProperty_justify_content, second);
+  }
+  return true;
+}
+
+// place-items:  <x> [ auto | <x> ]?
+// <x> = [ normal | stretch | <baseline-position> | <self-position> ]
+bool
+CSSParserImpl::ParsePlaceItems()
+{
+  nsCSSValue first;
+  if (ParseSingleTokenVariant(first, VARIANT_INHERIT, nullptr)) {
+    AppendValue(eCSSProperty_align_items, first);
+    AppendValue(eCSSProperty_justify_items, first);
+    return true;
+  }
+  if (!ParseAlignEnum(first, nsCSSProps::kAlignNormalStretchBaseline) &&
+      !ParseEnum(first, nsCSSProps::kAlignSelfPosition)) {
+    return false;
+  }
+  AppendValue(eCSSProperty_align_items, first);
+  nsCSSValue second;
+  // Note: 'auto' is valid for justify-items, but not align-items.
+  if (!ParseAlignEnum(second, nsCSSProps::kAlignAutoNormalStretchBaseline) &&
+      !ParseEnum(second, nsCSSProps::kAlignSelfPosition)) {
+    AppendValue(eCSSProperty_justify_items, first);
+  } else {
+    AppendValue(eCSSProperty_justify_items, second);
+  }
+  return true;
+}
+
+// place-self: [ auto | normal | stretch | <baseline-position> |
+//               <self-position> ]{1,2}
+bool
+CSSParserImpl::ParsePlaceSelf()
+{
+  nsCSSValue first;
+  if (ParseSingleTokenVariant(first, VARIANT_INHERIT, nullptr)) {
+    AppendValue(eCSSProperty_align_self, first);
+    AppendValue(eCSSProperty_justify_self, first);
+    return true;
+  }
+  if (!ParseAlignEnum(first, nsCSSProps::kAlignAutoNormalStretchBaseline) &&
+      !ParseEnum(first, nsCSSProps::kAlignSelfPosition)) {
+    return false;
+  }
+  AppendValue(eCSSProperty_align_self, first);
+  nsCSSValue second;
+  if (!ParseAlignEnum(second, nsCSSProps::kAlignAutoNormalStretchBaseline) &&
+      !ParseEnum(second, nsCSSProps::kAlignSelfPosition)) {
+    AppendValue(eCSSProperty_justify_self, first);
+  } else {
+    AppendValue(eCSSProperty_justify_self, second);
+  }
   return true;
 }
 
@@ -11131,10 +11356,11 @@ CSSParserImpl::ParseBoxProperties(const nsCSSPropertyID aPropIDs[])
 }
 
 // Similar to ParseBoxProperties, except there is only one property
-// with the result as its value, not four. Requires values be nonnegative.
+// with the result as its value, not four.
 bool
 CSSParserImpl::ParseGroupedBoxProperty(int32_t aVariantMask,
-                                       /** outparam */ nsCSSValue& aValue)
+                                       /** outparam */ nsCSSValue& aValue,
+                                       uint32_t aRestrictions)
 {
   nsCSSRect& result = aValue.SetRectValue();
 
@@ -11143,7 +11369,7 @@ CSSParserImpl::ParseGroupedBoxProperty(int32_t aVariantMask,
     CSSParseResult parseResult =
       ParseVariantWithRestrictions(result.*(nsCSSRect::sides[index]),
                                    aVariantMask, nullptr,
-                                   CSS_PROPERTY_VALUE_NONNEGATIVE);
+                                   aRestrictions);
     if (parseResult == CSSParseResult::NotFound) {
       break;
     }
@@ -11576,6 +11802,12 @@ bool
 CSSParserImpl::ParsePropertyByFunction(nsCSSPropertyID aPropID)
 {
   switch (aPropID) {  // handle shorthand or multiple properties
+  case eCSSProperty_place_content:
+    return ParsePlaceContent();
+  case eCSSProperty_place_items:
+    return ParsePlaceItems();
+  case eCSSProperty_place_self:
+    return ParsePlaceSelf();
   case eCSSProperty_background:
     return ParseImageLayers(nsStyleImageLayers::kBackgroundLayerTable);
   case eCSSProperty_background_repeat:
@@ -12193,20 +12425,12 @@ CSSParserImpl::ParseImageLayersItem(
   if (eCSSProperty_mask == aTable[nsStyleImageLayers::shorthand]) {
     aState.mOrigin->mValue.SetIntValue(NS_STYLE_IMAGELAYER_ORIGIN_BORDER,
                                        eCSSUnit_Enumerated);
-    aState.mRepeat->mXValue.SetIntValue(NS_STYLE_IMAGELAYER_REPEAT_NO_REPEAT,
-                                        eCSSUnit_Enumerated);
-
-    positionXArr->Item(1).SetPercentValue(0.5f);
-    positionYArr->Item(1).SetPercentValue(0.5f);
   } else {
     aState.mOrigin->mValue.SetIntValue(NS_STYLE_IMAGELAYER_ORIGIN_PADDING,
                                        eCSSUnit_Enumerated);
-    aState.mRepeat->mXValue.SetIntValue(NS_STYLE_IMAGELAYER_REPEAT_REPEAT,
-                                        eCSSUnit_Enumerated);
-
-    positionXArr->Item(1).SetPercentValue(0.0f);
-    positionYArr->Item(1).SetPercentValue(0.0f);
   }
+  positionXArr->Item(1).SetPercentValue(0.0f);
+  positionYArr->Item(1).SetPercentValue(0.0f);
 
   aState.mSize->mXValue.SetAutoValue();
   aState.mSize->mYValue.SetAutoValue();
@@ -13157,7 +13381,8 @@ CSSParserImpl::ParseBorderImageSlice(bool aAcceptsInherit,
 
   // Parse the box dimensions.
   nsCSSValue imageSliceBoxValue;
-  if (!ParseGroupedBoxProperty(VARIANT_PN, imageSliceBoxValue)) {
+  if (!ParseGroupedBoxProperty(VARIANT_PN, imageSliceBoxValue,
+                               CSS_PROPERTY_VALUE_NONNEGATIVE)) {
     if (!hasFill && aConsumedTokens) {
       *aConsumedTokens = false;
     }
@@ -13201,7 +13426,7 @@ CSSParserImpl::ParseBorderImageWidth(bool aAcceptsInherit)
   }
 
   // Parse the box dimensions.
-  if (!ParseGroupedBoxProperty(VARIANT_ALPN, value)) {
+  if (!ParseGroupedBoxProperty(VARIANT_ALPN, value, CSS_PROPERTY_VALUE_NONNEGATIVE)) {
     return false;
   }
 
@@ -13224,7 +13449,7 @@ CSSParserImpl::ParseBorderImageOutset(bool aAcceptsInherit)
   }
 
   // Parse the box dimensions.
-  if (!ParseGroupedBoxProperty(VARIANT_LN, value)) {
+  if (!ParseGroupedBoxProperty(VARIANT_LN, value, CSS_PROPERTY_VALUE_NONNEGATIVE)) {
     return false;
   }
 
@@ -13406,7 +13631,7 @@ CSSParserImpl::ParseBorderSide(const nsCSSPropertyID aPropIDs[],
     values[1].SetIntValue(NS_STYLE_BORDER_STYLE_NONE, eCSSUnit_Enumerated);
   }
   if ((found & 4) == 0) { // text color will be used
-    values[2].SetIntValue(NS_STYLE_COLOR_MOZ_USE_TEXT_COLOR, eCSSUnit_Enumerated);
+    values[2].SetIntValue(NS_COLOR_CURRENTCOLOR, eCSSUnit_EnumColor);
   }
 
   if (aSetAllSides) {
@@ -13479,8 +13704,8 @@ CSSParserImpl::ParseBorderColors(nsCSSPropertyID aProperty)
                                nullptr)) {
     nsCSSValueList *cur = value.SetListValue();
     for (;;) {
-      if (ParseVariant(cur->mValue, VARIANT_COLOR | VARIANT_KEYWORD,
-                       nsCSSProps::kBorderColorKTable) != CSSParseResult::Ok) {
+      if (ParseVariant(cur->mValue, VARIANT_COLOR, nullptr) !=
+          CSSParseResult::Ok) {
         return false;
       }
       if (CheckEndProperty()) {
@@ -15201,7 +15426,7 @@ CSSParserImpl::ParseOutline()
 
   // Provide default values
   if ((found & 1) == 0) { // Provide default outline-color
-    values[0].SetIntValue(NS_STYLE_COLOR_MOZ_USE_TEXT_COLOR, eCSSUnit_Enumerated);
+    values[0].SetIntValue(NS_COLOR_CURRENTCOLOR, eCSSUnit_EnumColor);
   }
   if ((found & 2) == 0) { // Provide default outline-style
     values[1].SetIntValue(NS_STYLE_BORDER_STYLE_NONE, eCSSUnit_Enumerated);
@@ -15311,8 +15536,7 @@ CSSParserImpl::ParseTextDecoration()
                           eCSSUnit_Enumerated);
   }
   if ((found & 4) == 0) { // Provide default text-decoration-color
-    values[2].SetIntValue(NS_STYLE_COLOR_MOZ_USE_TEXT_COLOR,
-                          eCSSUnit_Enumerated);
+    values[2].SetIntValue(NS_COLOR_CURRENTCOLOR, eCSSUnit_EnumColor);
   }
 
   for (int32_t index = 0; index < numProps; index++) {
@@ -17940,6 +18164,17 @@ nsCSSParser::ParseColorString(const nsSubstring& aBuffer,
 {
   return static_cast<CSSParserImpl*>(mImpl)->
     ParseColorString(aBuffer, aURI, aLineNumber, aValue, aSuppressErrors);
+}
+
+bool
+nsCSSParser::ParseMarginString(const nsSubstring& aBuffer,
+                               nsIURI*            aURI,
+                               uint32_t           aLineNumber,
+                               nsCSSValue&        aValue,
+                               bool               aSuppressErrors /* false */)
+{
+  return static_cast<CSSParserImpl*>(mImpl)->
+    ParseMarginString(aBuffer, aURI, aLineNumber, aValue, aSuppressErrors);
 }
 
 nsresult

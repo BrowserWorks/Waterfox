@@ -7,11 +7,17 @@
 const { extend } = require("sdk/core/heritage");
 const { AutoRefreshHighlighter } = require("./auto-refresh");
 const {
-  CanvasFrameAnonymousContentHelper, moveInfobar,
-  getBindingElementAndPseudo, hasPseudoClassLock, getComputedStyle,
-  createSVGNode, createNode, isNodeValid } = require("./utils/markup");
+  CanvasFrameAnonymousContentHelper,
+  createNode,
+  createSVGNode,
+  getBindingElementAndPseudo,
+  hasPseudoClassLock,
+  isNodeValid,
+  moveInfobar,
+} = require("./utils/markup");
 const { setIgnoreLayoutChanges } = require("devtools/shared/layout/utils");
 const inspector = require("devtools/server/actors/inspector");
+const nodeConstants = require("devtools/shared/dom-node-constants");
 
 // Note that the order of items in this array is important because it is used
 // for drawing the BoxModelHighlighter's path elements correctly.
@@ -95,7 +101,9 @@ function BoxModelHighlighter(highlighterEnv) {
    */
   this.regionFill = {};
 
-  this._currentNode = null;
+  this.onWillNavigate = this.onWillNavigate.bind(this);
+
+  this.highlighterEnv.on("will-navigate", this.onWillNavigate);
 }
 
 BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
@@ -103,20 +111,11 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
 
   ID_CLASS_PREFIX: "box-model-",
 
-  get currentNode() {
-    return this._currentNode;
-  },
-
-  set currentNode(node) {
-    this._currentNode = node;
-    this._computedStyle = null;
-  },
-
   _buildMarkup: function () {
     let doc = this.win.document;
 
     let highlighterContainer = doc.createElement("div");
-    highlighterContainer.className = "highlighter-container";
+    highlighterContainer.className = "highlighter-container box-model";
 
     // Build the root wrapper, used to adapt to the page zoom.
     let rootWrapper = createNode(this.win, {
@@ -257,15 +256,23 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
    * Destroy the nodes. Remove listeners.
    */
   destroy: function () {
-    AutoRefreshHighlighter.prototype.destroy.call(this);
-
+    this.highlighterEnv.off("will-navigate", this.onWillNavigate);
     this.markup.destroy();
-
-    this._currentNode = null;
+    AutoRefreshHighlighter.prototype.destroy.call(this);
   },
 
   getElement: function (id) {
     return this.markup.getElement(this.ID_CLASS_PREFIX + id);
+  },
+
+  /**
+   * Override the AutoRefreshHighlighter's _isNodeValid method to also return true for
+   * text nodes since these can also be highlighted.
+   * @param {DOMNode} node
+   * @return {Boolean}
+   */
+  _isNodeValid: function (node) {
+    return node && (isNodeValid(node) || isNodeValid(node, nodeConstants.TEXT_NODE));
   },
 
   /**
@@ -311,7 +318,11 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     setIgnoreLayoutChanges(true);
 
     if (this._updateBoxModel()) {
-      if (!this.options.hideInfoBar) {
+      // Show the infobar only if configured to do so and the node is an element or a text
+      // node.
+      if (!this.options.hideInfoBar && (
+          this.currentNode.nodeType === this.currentNode.ELEMENT_NODE ||
+          this.currentNode.nodeType === this.currentNode.TEXT_NODE)) {
         this._showInfobar();
       } else {
         this._hideInfobar();
@@ -323,7 +334,7 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
       this._hide();
     }
 
-    setIgnoreLayoutChanges(false, this.currentNode.ownerDocument.documentElement);
+    setIgnoreLayoutChanges(false, this.highlighterEnv.window.document.documentElement);
 
     return shown;
   },
@@ -338,7 +349,7 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     this._hideBoxModel();
     this._hideInfobar();
 
-    setIgnoreLayoutChanges(false, this.currentNode.ownerDocument.documentElement);
+    setIgnoreLayoutChanges(false, this.highlighterEnv.window.document.documentElement);
   },
 
   /**
@@ -519,20 +530,15 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     return path;
   },
 
+  /**
+   * Can the current node be highlighted? Does it have quads.
+   * @return {Boolean}
+   */
   _nodeNeedsHighlighting: function () {
-    let hasNoQuads = !this.currentQuads.margin.length &&
-                     !this.currentQuads.border.length &&
-                     !this.currentQuads.padding.length &&
-                     !this.currentQuads.content.length;
-    if (!isNodeValid(this.currentNode) || hasNoQuads) {
-      return false;
-    }
-
-    if (!this._computedStyle) {
-      this._computedStyle = getComputedStyle(this.currentNode);
-    }
-
-    return this._computedStyle.getPropertyValue("display") !== "none";
+    return this.currentQuads.margin.length ||
+           this.currentQuads.border.length ||
+           this.currentQuads.padding.length ||
+           this.currentQuads.content.length;
   },
 
   _getOuterBounds: function () {
@@ -658,9 +664,7 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
                     ? "." + [...node.classList].join(".")
                     : "";
 
-    let pseudos = PSEUDO_CLASSES.filter(pseudo => {
-      return hasPseudoClassLock(node, pseudo);
-    }, this).join("");
+    let pseudos = this._getPseudoClasses(node).join("");
     if (pseudo) {
       // Display :after as ::after
       pseudos += ":" + pseudo;
@@ -680,6 +684,15 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     this._moveInfobar();
   },
 
+  _getPseudoClasses: function (node) {
+    if (node.nodeType !== nodeConstants.ELEMENT_NODE) {
+      // hasPseudoClassLock can only be used on Elements.
+      return [];
+    }
+
+    return PSEUDO_CLASSES.filter(pseudo => hasPseudoClassLock(node, pseudo));
+  },
+
   /**
    * Move the Infobar to the right place in the highlighter.
    */
@@ -688,6 +701,12 @@ BoxModelHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     let container = this.getElement("infobar-container");
 
     moveInfobar(container, bounds, this.win);
+  },
+
+  onWillNavigate: function ({ isTopLevel }) {
+    if (isTopLevel) {
+      this.hide();
+    }
   }
 });
 exports.BoxModelHighlighter = BoxModelHighlighter;

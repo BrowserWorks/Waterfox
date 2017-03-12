@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const CURRENT_SCHEMA_VERSION = 34;
+const CURRENT_SCHEMA_VERSION = 35;
 const FIRST_UPGRADABLE_SCHEMA_VERSION = 11;
 
 const NS_APP_USER_PROFILE_50_DIR = "ProfD";
@@ -370,9 +370,9 @@ function check_no_bookmarks() {
 function promiseTopicObserved(aTopic)
 {
   return new Promise(resolve => {
-    Services.obs.addObserver(function observe(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(observe, aTopic);
-      resolve([aSubject, aData]);
+    Services.obs.addObserver(function observe(aObsSubject, aObsTopic, aObsData) {
+      Services.obs.removeObserver(observe, aObsTopic);
+      resolve([aObsSubject, aObsData]);
     }, aTopic, false);
   });
 }
@@ -509,7 +509,6 @@ function check_JSON_backup(aIsAutomaticBackup) {
     let bookmarksBackupDir = gProfD.clone();
     bookmarksBackupDir.append("bookmarkbackups");
     let files = bookmarksBackupDir.directoryEntries;
-    let backup_date = PlacesBackups.toISODateString(new Date());
     while (files.hasMoreElements()) {
       let entry = files.getNext().QueryInterface(Ci.nsIFile);
       if (PlacesBackups.filenamesRegex.test(entry.leafName)) {
@@ -821,7 +820,7 @@ NavHistoryResultObserver.prototype = {
 function promiseIsURIVisited(aURI) {
   let deferred = Promise.defer();
 
-  PlacesUtils.asyncHistory.isURIVisited(aURI, function(aURI, aIsVisited) {
+  PlacesUtils.asyncHistory.isURIVisited(aURI, function(unused, aIsVisited) {
     deferred.resolve(aIsVisited);
   });
 

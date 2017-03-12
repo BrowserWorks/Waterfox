@@ -106,8 +106,6 @@ namespace quota {
 
 using namespace mozilla::ipc;
 
-const bool QuotaManager::kRunningXPCShellTests = !!PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR");
-
 // We want profiles to be platform-independent so we always need to replace
 // the same characters on every platform. Windows has the most extensive set
 // of illegal characters so we use its FILE_ILLEGAL_CHARACTERS and
@@ -1022,14 +1020,14 @@ class GetUsageOp final
 public:
   explicit GetUsageOp(const UsageRequestParams& aParams);
 
-  bool
+  MOZ_IS_CLASS_INIT bool
   Init(Quota* aQuota);
 
 private:
   ~GetUsageOp()
   { }
 
-  virtual nsresult
+  MOZ_IS_CLASS_INIT virtual nsresult
   DoInitOnMainThread() override;
 
   nsresult
@@ -3365,11 +3363,13 @@ QuotaManager::GetQuotaObject(PersistenceType aPersistenceType,
   }
 
   // Re-escape our parameters above to make sure we get the right quota group.
-  nsAutoCString tempStorage1;
-  const nsCSubstring& group = NS_EscapeURL(aGroup, esc_Query, tempStorage1);
+  nsAutoCString group;
+  rv = NS_EscapeURL(aGroup, esc_Query, group, fallible);
+  NS_ENSURE_SUCCESS(rv, nullptr);
 
-  nsAutoCString tempStorage2;
-  const nsCSubstring& origin = NS_EscapeURL(aOrigin, esc_Query, tempStorage2);
+  nsAutoCString origin;
+  rv = NS_EscapeURL(aOrigin, esc_Query, origin, fallible);
+  NS_ENSURE_SUCCESS(rv, nullptr);
 
   RefPtr<QuotaObject> result;
   {

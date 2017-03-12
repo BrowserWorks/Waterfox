@@ -90,6 +90,7 @@ class GLBlitHelper final
     GLuint mSrcTexEGL;
     GLint mYTexScaleLoc;
     GLint mCbCrTexScaleLoc;
+    GLint mYuvColorMatrixLoc;
     int mTexWidth;
     int mTexHeight;
 
@@ -106,9 +107,6 @@ class GLBlitHelper final
     void BindAndUploadYUVTexture(Channel which, uint32_t width, uint32_t height, void* data, bool allocation);
     void BindAndUploadEGLImage(EGLImage image, GLuint target);
 
-#ifdef MOZ_WIDGET_GONK
-    bool BlitGrallocImage(layers::GrallocImage* grallocImage);
-#endif
     bool BlitPlanarYCbCrImage(layers::PlanarYCbCrImage* yuvImage);
 #ifdef MOZ_WIDGET_ANDROID
     // Blit onto the current FB.

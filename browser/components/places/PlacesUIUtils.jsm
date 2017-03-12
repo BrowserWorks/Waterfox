@@ -535,7 +535,6 @@ this.PlacesUIUtils = {
 
         // Otherwise move the item.
         return new PlacesMoveItemTransaction(data.id, container, index);
-        break;
       case PlacesUtils.TYPE_X_MOZ_PLACE:
         if (copy || data.id == -1) { // Id is -1 if the place is not bookmarked.
           return this._getURIItemCopyTransaction(data, container, index);
@@ -543,7 +542,6 @@ this.PlacesUIUtils = {
 
         // Otherwise move the item.
         return new PlacesMoveItemTransaction(data.id, container, index);
-        break;
       case PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR:
         if (copy) {
           // There is no data in a separator, so copying it just amounts to
@@ -553,7 +551,6 @@ this.PlacesUIUtils = {
 
         // Otherwise move the item.
         return new PlacesMoveItemTransaction(data.id, container, index);
-        break;
       default:
         if (type == PlacesUtils.TYPE_X_MOZ_URL ||
             type == PlacesUtils.TYPE_UNICODE ||
@@ -958,9 +955,9 @@ this.PlacesUIUtils = {
     if (where == "window") {
       // There is no browser window open, thus open a new one.
       var uriList = PlacesUtils.toISupportsString(urls.join("|"));
-      var args = Cc["@mozilla.org/supports-array;1"].
-                  createInstance(Ci.nsISupportsArray);
-      args.AppendElement(uriList);
+      var args = Cc["@mozilla.org/array;1"].
+                  createInstance(Ci.nsIMutableArray);
+      args.appendElement(uriList, /* weak =*/ false);
       browserWindow = Services.ww.openWindow(aWindow,
                                              "chrome://browser/content/browser.xul",
                                              null, "chrome,dialog=no,all", args);
@@ -980,7 +977,7 @@ this.PlacesUIUtils = {
 
     PlacesUtils.livemarks.getLivemark({id: aNode.itemId})
       .then(aLivemark => {
-        urlsToOpen = [];
+        let urlsToOpen = [];
 
         let nodes = aLivemark.getNodesForContainer(aNode);
         for (let node of nodes) {
@@ -1723,8 +1720,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
       return new PlacesSetItemAnnotationTransaction(aItemId, annoObj);
     },
 
-    ////////////////////////////////////////////////////////////////////////////
-    //// nsITransactionManager forwarders.
+    // nsITransactionManager forwarders.
 
     beginBatch: () =>
       PlacesUtils.transactionManager.beginBatch(null),

@@ -53,8 +53,9 @@
 #include "mozilla/layers/AsyncCompositionManager.h"  // for ViewTransform
 #include "mozilla/layers/AxisPhysicsModel.h" // for AxisPhysicsModel
 #include "mozilla/layers/AxisPhysicsMSDModel.h" // for AxisPhysicsMSDModel
-#include "mozilla/layers/CompositorBridgeParent.h" // for CompositorBridgeParent
+#include "mozilla/layers/CompositorController.h" // for CompositorController
 #include "mozilla/layers/LayerTransactionParent.h" // for LayerTransactionParent
+#include "mozilla/layers/MetricsSharingController.h" // for MetricsSharingController
 #include "mozilla/layers/ScrollInputMethods.h" // for ScrollInputMethod
 #include "mozilla/mozalloc.h"           // for operator new, etc
 #include "mozilla/Unused.h"             // for unused
@@ -698,7 +699,6 @@ AsyncPanZoomController::AsyncPanZoomController(uint64_t aLayersId,
      mRefPtrMonitor("RefPtrMonitor"),
      // mTreeManager must be initialized before GetFrameTime() is called
      mTreeManager(aTreeManager),
-     mSharingFrameMetricsAcrossProcesses(false),
      mFrameMetrics(mScrollMetadata.GetMetrics()),
      mMonitor("AsyncPanZoomController"),
      mLastContentPaintMetrics(mLastContentPaintMetadata.GetMetrics()),
@@ -728,21 +728,6 @@ AsyncPanZoomController::AsyncPanZoomController(uint64_t aLayersId,
 AsyncPanZoomController::~AsyncPanZoomController()
 {
   MOZ_ASSERT(IsDestroyed());
-}
-
-PCompositorBridgeParent*
-AsyncPanZoomController::GetSharedFrameMetricsCompositor()
-{
-  APZThreadUtils::AssertOnCompositorThread();
-
-  if (mSharingFrameMetricsAcrossProcesses) {
-    // |state| may be null here if the CrossProcessCompositorBridgeParent has already been destroyed.
-    if (const CompositorBridgeParent::LayerTreeState* state = CompositorBridgeParent::GetIndirectShadowTree(mLayersId)) {
-      return state->CrossProcessPCompositorBridge();
-    }
-    return nullptr;
-  }
-  return mCompositorBridgeParent.get();
 }
 
 PlatformSpecificStateBase*
@@ -788,10 +773,9 @@ AsyncPanZoomController::Destroy()
   mParent = nullptr;
   mTreeManager = nullptr;
 
-  PCompositorBridgeParent* compositor = GetSharedFrameMetricsCompositor();
   // Only send the release message if the SharedFrameMetrics has been created.
-  if (compositor && mSharedFrameMetricsBuffer) {
-    Unused << compositor->SendReleaseSharedCompositorFrameMetrics(mFrameMetrics.GetScrollId(), mAPZCId);
+  if (mMetricsSharingController && mSharedFrameMetricsBuffer) {
+    Unused << mMetricsSharingController->StopSharingMetrics(mFrameMetrics.GetScrollId(), mAPZCId);
   }
 
   { // scope the lock
@@ -849,8 +833,8 @@ AsyncPanZoomController::ArePointerEventsConsumable(TouchBlockState* aBlock, uint
   return true;
 }
 
-template <typename T>
-static float GetAxisStart(AsyncDragMetrics::DragDirection aDir, T aValue) {
+template <typename Units>
+static CoordTyped<Units> GetAxisStart(AsyncDragMetrics::DragDirection aDir, const PointTyped<Units>& aValue) {
   if (aDir == AsyncDragMetrics::HORIZONTAL) {
     return aValue.x;
   } else {
@@ -858,8 +842,26 @@ static float GetAxisStart(AsyncDragMetrics::DragDirection aDir, T aValue) {
   }
 }
 
-template <typename T>
-static float GetAxisEnd(AsyncDragMetrics::DragDirection aDir, T aValue) {
+template <typename Units>
+static CoordTyped<Units> GetAxisStart(AsyncDragMetrics::DragDirection aDir, const RectTyped<Units>& aValue) {
+  if (aDir == AsyncDragMetrics::HORIZONTAL) {
+    return aValue.x;
+  } else {
+    return aValue.y;
+  }
+}
+
+template <typename Units>
+static IntCoordTyped<Units> GetAxisStart(AsyncDragMetrics::DragDirection aDir, const IntRectTyped<Units>& aValue) {
+  if (aDir == AsyncDragMetrics::HORIZONTAL) {
+    return aValue.x;
+  } else {
+    return aValue.y;
+  }
+}
+
+template <typename Units>
+static IntCoordTyped<Units> GetAxisEnd(AsyncDragMetrics::DragDirection aDir, const IntRectTyped<Units>& aValue) {
   if (aDir == AsyncDragMetrics::HORIZONTAL) {
     return aValue.x + aValue.width;
   } else {
@@ -867,8 +869,8 @@ static float GetAxisEnd(AsyncDragMetrics::DragDirection aDir, T aValue) {
   }
 }
 
-template <typename T>
-static float GetAxisSize(AsyncDragMetrics::DragDirection aDir, T aValue) {
+template <typename Units>
+static CoordTyped<Units> GetAxisSize(AsyncDragMetrics::DragDirection aDir, const RectTyped<Units>& aValue) {
   if (aDir == AsyncDragMetrics::HORIZONTAL) {
     return aValue.width;
   } else {
@@ -876,8 +878,8 @@ static float GetAxisSize(AsyncDragMetrics::DragDirection aDir, T aValue) {
   }
 }
 
-template <typename T>
-static float GetAxisScale(AsyncDragMetrics::DragDirection aDir, T aValue) {
+template <typename FromUnits, typename ToUnits>
+static float GetAxisScale(AsyncDragMetrics::DragDirection aDir, const ScaleFactors2D<FromUnits, ToUnits>& aValue) {
   if (aDir == AsyncDragMetrics::HORIZONTAL) {
     return aValue.xScale;
   } else {
@@ -912,24 +914,24 @@ nsEventStatus AsyncPanZoomController::HandleDragEvent(const MouseInput& aEvent,
   CSSPoint scrollbarPoint = scrollFramePoint * mFrameMetrics.GetPresShellResolution();
   CSSRect cssCompositionBound = mFrameMetrics.CalculateCompositedRectInCssPixels();
 
-  float mousePosition = GetAxisStart(aDragMetrics.mDirection, scrollbarPoint) -
-                        aDragMetrics.mScrollbarDragOffset -
+  CSSCoord mousePosition = GetAxisStart(aDragMetrics.mDirection, scrollbarPoint) -
+                        CSSCoord(aDragMetrics.mScrollbarDragOffset) -
                         GetAxisStart(aDragMetrics.mDirection, cssCompositionBound) -
-                        GetAxisStart(aDragMetrics.mDirection, aDragMetrics.mScrollTrack);
+                        CSSCoord(GetAxisStart(aDragMetrics.mDirection, aDragMetrics.mScrollTrack));
 
-  float scrollMax = GetAxisEnd(aDragMetrics.mDirection, aDragMetrics.mScrollTrack);
+  CSSCoord scrollMax = CSSCoord(GetAxisEnd(aDragMetrics.mDirection, aDragMetrics.mScrollTrack));
   scrollMax -= node->GetScrollSize() /
                GetAxisScale(aDragMetrics.mDirection, mFrameMetrics.GetZoom()) *
                mFrameMetrics.GetPresShellResolution();
 
   float scrollPercent = mousePosition / scrollMax;
 
-  float minScrollPosition =
+  CSSCoord minScrollPosition =
     GetAxisStart(aDragMetrics.mDirection, mFrameMetrics.GetScrollableRect().TopLeft());
-  float maxScrollPosition =
+  CSSCoord maxScrollPosition =
     GetAxisSize(aDragMetrics.mDirection, mFrameMetrics.GetScrollableRect()) -
-    GetAxisSize(aDragMetrics.mDirection, mFrameMetrics.GetCompositionBounds());
-  float scrollPosition = scrollPercent * maxScrollPosition;
+    GetAxisSize(aDragMetrics.mDirection, cssCompositionBound);
+  CSSCoord scrollPosition = scrollPercent * maxScrollPosition;
 
   scrollPosition = std::max(scrollPosition, minScrollPosition);
   scrollPosition = std::min(scrollPosition, maxScrollPosition);
@@ -1064,6 +1066,7 @@ nsEventStatus AsyncPanZoomController::HandleGestureEvent(const InputData& aEvent
       case TapGestureInput::TAPGESTURE_UP: rv = OnSingleTapUp(tapGestureInput); break;
       case TapGestureInput::TAPGESTURE_CONFIRMED: rv = OnSingleTapConfirmed(tapGestureInput); break;
       case TapGestureInput::TAPGESTURE_DOUBLE: rv = OnDoubleTap(tapGestureInput); break;
+      case TapGestureInput::TAPGESTURE_SECOND: rv = OnSecondTap(tapGestureInput); break;
       case TapGestureInput::TAPGESTURE_CANCEL: rv = OnCancelTap(tapGestureInput); break;
       default: NS_WARNING("Unhandled tap gesture"); break;
     }
@@ -1259,7 +1262,7 @@ nsEventStatus AsyncPanZoomController::OnTouchEnd(const MultiTouchInput& aEvent) 
     SetState(NOTHING);
 
     APZC_LOG("%p starting a fling animation if %f >= %f\n", this,
-        flingVelocity.Length(), gfxPrefs::APZFlingMinVelocityThreshold());
+        flingVelocity.Length().value, gfxPrefs::APZFlingMinVelocityThreshold());
 
     if (flingVelocity.Length() < gfxPrefs::APZFlingMinVelocityThreshold()) {
       return nsEventStatus_eConsumeNoDefault;
@@ -1312,6 +1315,14 @@ nsEventStatus AsyncPanZoomController::OnScaleBegin(const PinchGestureInput& aEve
     return nsEventStatus_eIgnore;
   }
 
+  // For platforms that don't support APZ zooming, dispatch a message to the
+  // content controller, it may want to do something else with this gesture.
+  if (!gfxPrefs::APZAllowZooming()) {
+    if (RefPtr<GeckoContentController> controller = GetGeckoContentController()) {
+      controller->NotifyPinchGesture(aEvent.mType, GetGuid(), 0, aEvent.modifiers);
+    }
+  }
+
   SetState(PINCHING);
   mX.SetVelocity(0);
   mY.SetVelocity(0);
@@ -1329,6 +1340,15 @@ nsEventStatus AsyncPanZoomController::OnScale(const PinchGestureInput& aEvent) {
 
   if (mState != PINCHING) {
     return nsEventStatus_eConsumeNoDefault;
+  }
+
+  if (!gfxPrefs::APZAllowZooming()) {
+    if (RefPtr<GeckoContentController> controller = GetGeckoContentController()) {
+      controller->NotifyPinchGesture(aEvent.mType, GetGuid(),
+          ViewAs<LayoutDevicePixel>(aEvent.mCurrentSpan - aEvent.mPreviousSpan,
+            PixelCastJustification::LayoutDeviceIsParentLayerForRCDRSF),
+          aEvent.modifiers);
+    }
   }
 
   // Only the root APZC is zoomable, and the root APZC is not allowed to have
@@ -1399,8 +1419,6 @@ nsEventStatus AsyncPanZoomController::OnScale(const PinchGestureInput& aEvent) {
         ScrollBy(neededDisplacement);
       }
 
-      ScheduleComposite();
-
       // We don't want to redraw on every scale, so throttle it.
       if (!mPinchPaintTimerSet) {
         const int delay = gfxPrefs::APZScaleRepaintDelay();
@@ -1418,6 +1436,10 @@ nsEventStatus AsyncPanZoomController::OnScale(const PinchGestureInput& aEvent) {
       UpdateSharedCompositorFrameMetrics();
     }
 
+    // We did a ScrollBy call above even if we didn't do a scale, so we
+    // should composite for that.
+    ScheduleComposite();
+
     mLastZoomFocus = focusPoint;
   }
 
@@ -1433,6 +1455,12 @@ nsEventStatus AsyncPanZoomController::OnScaleEnd(const PinchGestureInput& aEvent
     return nsEventStatus_eIgnore;
   }
 
+  if (!gfxPrefs::APZAllowZooming()) {
+    if (RefPtr<GeckoContentController> controller = GetGeckoContentController()) {
+      controller->NotifyPinchGesture(aEvent.mType, GetGuid(), 0, aEvent.modifiers);
+    }
+  }
+
   SetState(NOTHING);
 
   {
@@ -1443,10 +1471,10 @@ nsEventStatus AsyncPanZoomController::OnScaleEnd(const PinchGestureInput& aEvent
   }
 
   // Non-negative focus point would indicate that one finger is still down
-  if (aEvent.mFocusPoint.x != -1 && aEvent.mFocusPoint.y != -1) {
+  if (aEvent.mLocalFocusPoint.x != -1 && aEvent.mLocalFocusPoint.y != -1) {
     mPanDirRestricted = false;
-    mX.StartTouch(aEvent.mFocusPoint.x, aEvent.mTime);
-    mY.StartTouch(aEvent.mFocusPoint.y, aEvent.mTime);
+    mX.StartTouch(aEvent.mLocalFocusPoint.x, aEvent.mTime);
+    mY.StartTouch(aEvent.mLocalFocusPoint.y, aEvent.mTime);
     SetState(TOUCHING);
   } else {
     // Otherwise, handle the fingers being lifted.
@@ -2099,6 +2127,12 @@ nsEventStatus AsyncPanZoomController::OnDoubleTap(const TapGestureInput& aEvent)
   return nsEventStatus_eIgnore;
 }
 
+nsEventStatus AsyncPanZoomController::OnSecondTap(const TapGestureInput& aEvent)
+{
+  APZC_LOG("%p got a second-tap in state %d\n", this, mState);
+  return GenerateSingleTap(TapType::eSecondTap, aEvent.mPoint, aEvent.modifiers);
+}
+
 nsEventStatus AsyncPanZoomController::OnCancelTap(const TapGestureInput& aEvent) {
   APZC_LOG("%p got a cancel-tap in state %d\n", this, mState);
   // XXX: Implement this.
@@ -2622,12 +2656,14 @@ void AsyncPanZoomController::ClearOverscroll() {
   mY.ClearOverscroll();
 }
 
-void AsyncPanZoomController::SetCompositorBridgeParent(CompositorBridgeParent* aCompositorBridgeParent) {
-  mCompositorBridgeParent = aCompositorBridgeParent;
+void AsyncPanZoomController::SetCompositorController(CompositorController* aCompositorController)
+{
+  mCompositorController = aCompositorController;
 }
 
-void AsyncPanZoomController::ShareFrameMetricsAcrossProcesses() {
-  mSharingFrameMetricsAcrossProcesses = true;
+void AsyncPanZoomController::SetMetricsSharingController(MetricsSharingController* aMetricsSharingController)
+{
+  mMetricsSharingController = aMetricsSharingController;
 }
 
 void AsyncPanZoomController::AdjustScrollForSurfaceShift(const ScreenPoint& aShift)
@@ -2794,8 +2830,8 @@ const ScreenMargin AsyncPanZoomController::CalculatePendingDisplayPort(
 }
 
 void AsyncPanZoomController::ScheduleComposite() {
-  if (mCompositorBridgeParent) {
-    mCompositorBridgeParent->ScheduleRenderOnCompositorThread();
+  if (mCompositorController) {
+    mCompositorController->ScheduleRenderOnCompositorThread();
   }
 }
 
@@ -3209,7 +3245,14 @@ AsyncPanZoomController::ReportCheckerboard(const TimeStamp& aSampleTime)
   if (magnitude) {
     mPotentialCheckerboardTracker.CheckerboardSeen();
   }
-  if (mCheckerboardEvent && mCheckerboardEvent->RecordFrameInfo(magnitude)) {
+  UpdateCheckerboardEvent(lock, magnitude);
+}
+
+void
+AsyncPanZoomController::UpdateCheckerboardEvent(const MutexAutoLock& aProofOfLock,
+                                                uint32_t aMagnitude)
+{
+  if (mCheckerboardEvent && mCheckerboardEvent->RecordFrameInfo(aMagnitude)) {
     // This checkerboard event is done. Report some metrics to telemetry.
     mozilla::Telemetry::Accumulate(mozilla::Telemetry::CHECKERBOARD_SEVERITY,
       mCheckerboardEvent->GetSeverity());
@@ -3220,19 +3263,25 @@ AsyncPanZoomController::ReportCheckerboard(const TimeStamp& aSampleTime)
 
     mPotentialCheckerboardTracker.CheckerboardDone();
 
-    if (recordTrace) {
+    if (gfxPrefs::APZRecordCheckerboarding()) {
       // if the pref is enabled, also send it to the storage class. it may be
       // chosen for public display on about:checkerboard, the hall of fame for
       // checkerboard events.
       uint32_t severity = mCheckerboardEvent->GetSeverity();
       std::string log = mCheckerboardEvent->GetLog();
-      NS_DispatchToMainThread(NS_NewRunnableFunction([severity, log]() {
-          RefPtr<CheckerboardEventStorage> storage = CheckerboardEventStorage::GetInstance();
-          storage->ReportCheckerboard(severity, log);
-      }));
+      CheckerboardEventStorage::Report(severity, log);
     }
     mCheckerboardEvent = nullptr;
   }
+}
+
+void
+AsyncPanZoomController::FlushActiveCheckerboardReport()
+{
+  MutexAutoLock lock(mCheckerboardEventLock);
+  // Pretend like we got a frame with 0 pixels checkerboarded. This will
+  // terminate the checkerboard event and flush it out
+  UpdateCheckerboardEvent(lock, 0);
 }
 
 bool AsyncPanZoomController::IsCurrentlyCheckerboarding() const {
@@ -3728,16 +3777,16 @@ void AsyncPanZoomController::DispatchStateChangeNotification(PanZoomState aOldSt
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
       // Let the compositor know about scroll state changes so it can manage
       // windowed plugins.
-      if (gfxPrefs::HidePluginsForScroll() && mCompositorBridgeParent) {
-        mCompositorBridgeParent->ScheduleHideAllPluginWindows();
+      if (gfxPrefs::HidePluginsForScroll() && mCompositorController) {
+        mCompositorController->ScheduleHideAllPluginWindows();
       }
 #endif
     } else if (IsTransformingState(aOldState) && !IsTransformingState(aNewState)) {
       controller->NotifyAPZStateChange(
           GetGuid(), APZStateChange::eTransformEnd);
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-      if (gfxPrefs::HidePluginsForScroll() && mCompositorBridgeParent) {
-        mCompositorBridgeParent->ScheduleShowAllPluginWindows();
+      if (gfxPrefs::HidePluginsForScroll() && mCompositorController) {
+        mCompositorController->ScheduleShowAllPluginWindows();
       }
 #endif
     }
@@ -3830,14 +3879,14 @@ void AsyncPanZoomController::UpdateSharedCompositorFrameMetrics()
   }
 }
 
-void AsyncPanZoomController::ShareCompositorFrameMetrics() {
-
-  PCompositorBridgeParent* compositor = GetSharedFrameMetricsCompositor();
+void AsyncPanZoomController::ShareCompositorFrameMetrics()
+{
+  APZThreadUtils::AssertOnCompositorThread();
 
   // Only create the shared memory buffer if it hasn't already been created,
   // we are using progressive tile painting, and we have a
-  // compositor to pass the shared memory back to the content process/thread.
-  if (!mSharedFrameMetricsBuffer && compositor && gfxPrefs::ProgressivePaint()) {
+  // controller to pass the shared memory back to the content process/thread.
+  if (!mSharedFrameMetricsBuffer && mMetricsSharingController && gfxPrefs::ProgressivePaint()) {
 
     // Create shared memory and initialize it with the current FrameMetrics value
     mSharedFrameMetricsBuffer = new ipc::SharedMemoryBasic;
@@ -3854,7 +3903,7 @@ void AsyncPanZoomController::ShareCompositorFrameMetrics() {
       }
 
       // Get the process id of the content process
-      base::ProcessId otherPid = compositor->OtherPid();
+      base::ProcessId otherPid = mMetricsSharingController->RemotePid();
       ipc::SharedMemoryBasic::Handle mem = ipc::SharedMemoryBasic::NULLHandle();
 
       // Get the shared memory handle to share with the content process
@@ -3867,7 +3916,7 @@ void AsyncPanZoomController::ShareCompositorFrameMetrics() {
       // Send the shared memory handle and cross process handle to the content
       // process by an asynchronous ipc call. Include the APZC unique ID
       // so the content process know which APZC sent this shared FrameMetrics.
-      if (!compositor->SendSharedCompositorFrameMetrics(mem, handle, mLayersId, mAPZCId)) {
+      if (!mMetricsSharingController->StartSharingMetrics(mem, handle, mLayersId, mAPZCId)) {
         APZC_LOG("%p failed to share FrameMetrics with content process.", this);
       }
     }

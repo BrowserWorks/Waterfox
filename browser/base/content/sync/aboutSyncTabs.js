@@ -173,7 +173,7 @@ var RemoteTabViewer = {
       this._refetchTabs(forceSync);
       this._generateWeaveTabList();
     } else {
-      //XXXzpao We should say something about not being logged in & not having data
+      // XXXzpao We should say something about not being logged in & not having data
       //        or tell the appropriate condition. (bug 583344)
     }
 
@@ -211,7 +211,7 @@ var RemoteTabViewer = {
     let seenURLs = new Set();
     let localURLs = engine.getOpenURLs();
 
-    for (let [guid, client] of Object.entries(engine.getAllClients())) {
+    for (let [, client] of Object.entries(engine.getAllClients())) {
       // Create the client node, but don't add it in-case we don't show any tabs
       let appendClient = true;
 

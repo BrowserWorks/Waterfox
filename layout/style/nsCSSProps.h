@@ -13,6 +13,7 @@
 
 #include <limits>
 #include <type_traits>
+#include "nsIAtom.h"
 #include "nsString.h"
 #include "nsCSSPropertyID.h"
 #include "nsStyleStructFwd.h"
@@ -315,6 +316,9 @@ enum nsStyleAnimType {
   // nscolor values
   eStyleAnimType_Color,
 
+  // StyleComplexColor values
+  eStyleAnimType_ComplexColor,
+
   // nsStyleSVGPaint values
   eStyleAnimType_PaintServer,
 
@@ -328,6 +332,10 @@ enum nsStyleAnimType {
   eStyleAnimType_None
 };
 
+// Empty class derived from nsIAtom so that function signatures can
+// require an atom from the atom list.
+class nsICSSProperty : public nsIAtom {};
+
 class nsCSSProps {
 public:
   typedef mozilla::CSSEnabledState EnabledState;
@@ -337,7 +345,7 @@ public:
     // KTableEntry objects can be initialized either with an int16_t value
     // or a value of an enumeration type that can fit within an int16_t.
 
-    KTableEntry(nsCSSKeyword aKeyword, int16_t aValue)
+    constexpr KTableEntry(nsCSSKeyword aKeyword, int16_t aValue)
       : mKeyword(aKeyword)
       , mValue(aValue)
     {
@@ -345,7 +353,7 @@ public:
 
     template<typename T,
              typename = typename std::enable_if<std::is_enum<T>::value>::type>
-    KTableEntry(nsCSSKeyword aKeyword, T aValue)
+    constexpr KTableEntry(nsCSSKeyword aKeyword, T aValue)
       : mKeyword(aKeyword)
       , mValue(static_cast<int16_t>(aValue))
     {
@@ -666,6 +674,25 @@ public:
   }
 
 public:
+  static void AddRefAtoms();
+  static nsICSSProperty* AtomForProperty(nsCSSPropertyID aProperty)
+  {
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT);
+    return gPropertyAtomTable[aProperty];
+  }
+
+#define CSS_PROP(name_, id_, ...) static nsICSSProperty* id_;
+#define CSS_PROP_SHORTHAND(name_, id_, ...) CSS_PROP(name_, id_, ...)
+#define CSS_PROP_LIST_INCLUDE_LOGICAL
+#include "nsCSSPropList.h"
+#undef CSS_PROP_LIST_INCLUDE_LOGICAL
+#undef CSS_PROP_SHORTHAND
+#undef CSS_PROP
+
+private:
+  static nsICSSProperty* gPropertyAtomTable[eCSSProperty_COUNT];
+
+public:
 
 // Storing the enabledstate_ value in an nsCSSPropertyID variable is a small hack
 // to avoid needing a separate variable declaration for its real type
@@ -701,7 +728,6 @@ public:
   static KTableEntry kBackgroundClipKTable[];
   static const KTableEntry kBlendModeKTable[];
   static const KTableEntry kBorderCollapseKTable[];
-  static const KTableEntry kBorderColorKTable[];
   static const KTableEntry kBorderImageRepeatKTable[];
   static const KTableEntry kBorderImageSliceKTable[];
   static const KTableEntry kBorderStyleKTable[];
@@ -755,9 +781,9 @@ public:
   static const KTableEntry kAlignSelfPosition[];     // <self-position>
   static const KTableEntry kAlignLegacy[];           // 'legacy'
   static const KTableEntry kAlignLegacyPosition[];   // 'left/right/center'
-  static const KTableEntry kAlignAutoNormalStretchBaseline[]; // 'auto/normal/stretch/baseline/last-baseline'
-  static const KTableEntry kAlignNormalStretchBaseline[]; // 'normal/stretch/baseline/last-baseline'
-  static const KTableEntry kAlignNormalBaseline[]; // 'normal/baseline/last-baseline'
+  static const KTableEntry kAlignAutoNormalStretchBaseline[]; // 'auto/normal/stretch/baseline'
+  static const KTableEntry kAlignNormalStretchBaseline[]; // 'normal/stretch/baseline'
+  static const KTableEntry kAlignNormalBaseline[]; // 'normal/baseline'
   static const KTableEntry kAlignContentDistribution[]; // <content-distribution>
   static const KTableEntry kAlignContentPosition[]; // <content-position>
   // -- tables for auto-completion of the {align,justify}-{content,items,self} properties --
@@ -807,7 +833,6 @@ public:
   static const KTableEntry kObjectFitKTable[];
   static const KTableEntry kOrientKTable[];
   static const KTableEntry kOutlineStyleKTable[];
-  static const KTableEntry kOutlineColorKTable[];
   static const KTableEntry kOverflowKTable[];
   static const KTableEntry kOverflowSubKTable[];
   static const KTableEntry kOverflowClipBoxKTable[];

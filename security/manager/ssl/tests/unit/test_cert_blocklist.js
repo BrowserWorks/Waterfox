@@ -29,11 +29,11 @@ updateAppInfo({
 
 // we need to ensure we setup revocation data before certDB, or we'll start with
 // no revocation.txt in the profile
-var profile = do_get_profile();
+var gProfile = do_get_profile();
 
 // Write out an empty blocklist.xml file to the profile to ensure nothing
 // is blocklisted by default
-var blockFile = profile.clone();
+var blockFile = gProfile.clone();
 blockFile.append("blocklist.xml");
 var stream = Cc["@mozilla.org/network/file-output-stream;1"]
                .createInstance(Ci.nsIFileOutputStream);
@@ -50,11 +50,11 @@ stream.close();
 const PREF_BLOCKLIST_UPDATE_ENABLED = "services.blocklist.update_enabled";
 const PREF_ONECRL_VIA_AMO = "security.onecrl.via.amo";
 
-var revocations = profile.clone();
-revocations.append("revocations.txt");
-if (!revocations.exists()) {
+var gRevocations = gProfile.clone();
+gRevocations.append("revocations.txt");
+if (!gRevocations.exists()) {
   let existing = do_get_file("test_onecrl/sample_revocations.txt", false);
-  existing.copyTo(profile, "revocations.txt");
+  existing.copyTo(gProfile, "revocations.txt");
 }
 
 var certDB = Cc["@mozilla.org/security/x509certdb;1"]
@@ -137,6 +137,17 @@ converter.charset = "UTF-8";
 function verify_cert(file, expectedError) {
   let ee = constructCertFromFile(file);
   checkCertErrorGeneric(certDB, ee, expectedError, certificateUsageSSLServer);
+}
+
+// The certificate blocklist currently only applies to TLS server certificates.
+function verify_non_tls_usage_succeeds(file) {
+  let ee = constructCertFromFile(file);
+  checkCertErrorGeneric(certDB, ee, PRErrorCodeSuccess,
+                        certificateUsageSSLClient);
+  checkCertErrorGeneric(certDB, ee, PRErrorCodeSuccess,
+                        certificateUsageEmailSigner);
+  checkCertErrorGeneric(certDB, ee, PRErrorCodeSuccess,
+                        certificateUsageEmailRecipient);
 }
 
 function load_cert(cert, trust) {
@@ -301,14 +312,17 @@ function run_test() {
     // Check the blocklisted intermediate now causes a failure
     let file = "test_onecrl/test-int-ee.pem";
     verify_cert(file, SEC_ERROR_REVOKED_CERTIFICATE);
+    verify_non_tls_usage_succeeds(file);
 
     // Check the ee with the blocklisted root also causes a failure
     file = "bad_certs/other-issuer-ee.pem";
     verify_cert(file, SEC_ERROR_REVOKED_CERTIFICATE);
+    verify_non_tls_usage_succeeds(file);
 
     // Check the ee blocked by subject / pubKey causes a failure
     file = "test_onecrl/same-issuer-ee.pem";
     verify_cert(file, SEC_ERROR_REVOKED_CERTIFICATE);
+    verify_non_tls_usage_succeeds(file);
 
     // Check a non-blocklisted chain still validates OK
     file = "bad_certs/default-ee.pem";
@@ -319,12 +333,12 @@ function run_test() {
     verify_cert(file, SEC_ERROR_UNKNOWN_ISSUER);
 
     // check that save with no further update is a no-op
-    let lastModified = revocations.lastModifiedTime;
+    let lastModified = gRevocations.lastModifiedTime;
     // add an already existing entry
     certList.revokeCertByIssuerAndSerial("YW5vdGhlciBpbWFnaW5hcnkgaXNzdWVy",
                                          "c2VyaWFsMi4=");
     certList.saveEntries();
-    let newModified = revocations.lastModifiedTime;
+    let newModified = gRevocations.lastModifiedTime;
     equal(lastModified, newModified,
           "saveEntries with no modifications should not update the backing file");
 

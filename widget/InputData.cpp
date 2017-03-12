@@ -567,21 +567,9 @@ PinchGestureInput::PinchGestureInput()
 
 PinchGestureInput::PinchGestureInput(PinchGestureType aType, uint32_t aTime,
                                      TimeStamp aTimeStamp,
-                                     const ScreenPoint& aFocusPoint,
-                                     float aCurrentSpan, float aPreviousSpan,
-                                     Modifiers aModifiers)
-  : InputData(PINCHGESTURE_INPUT, aTime, aTimeStamp, aModifiers)
-  , mType(aType)
-  , mFocusPoint(aFocusPoint)
-  , mCurrentSpan(aCurrentSpan)
-  , mPreviousSpan(aPreviousSpan)
-{
-}
-
-PinchGestureInput::PinchGestureInput(PinchGestureType aType, uint32_t aTime,
-                                     TimeStamp aTimeStamp,
                                      const ParentLayerPoint& aLocalFocusPoint,
-                                     float aCurrentSpan, float aPreviousSpan,
+                                     ParentLayerCoord aCurrentSpan,
+                                     ParentLayerCoord aPreviousSpan,
                                      Modifiers aModifiers)
   : InputData(PINCHGESTURE_INPUT, aTime, aTimeStamp, aModifiers)
   , mType(aType)

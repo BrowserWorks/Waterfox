@@ -63,15 +63,6 @@ void log_print(const LogModule* aModule,
   va_end(ap);
 }
 
-int log_pid()
-{
-#ifdef XP_WIN
-  return _getpid();
-#else
-  return getpid();
-#endif
-}
-
 } // detail
 
 LogLevel
@@ -136,7 +127,35 @@ public:
   LogFile* mNextToRelease;
 };
 
+const char*
+ExpandPIDMarker(const char* aFilename, char (&buffer)[2048])
+{
+  MOZ_ASSERT(aFilename);
+  static const char kPIDToken[] = "%PID";
+  const char* pidTokenPtr = strstr(aFilename, kPIDToken);
+  if (pidTokenPtr &&
+    SprintfLiteral(buffer, "%.*s%s%d%s",
+                   static_cast<int>(pidTokenPtr - aFilename), aFilename,
+                   XRE_IsParentProcess() ? "-main." : "-child.",
+                   base::GetCurrentProcId(),
+                   pidTokenPtr + strlen(kPIDToken)) > 0)
+  {
+    return buffer;
+  }
+
+  return aFilename;
+}
+
 } // detail
+
+namespace {
+  // Helper method that initializes an empty va_list to be empty.
+  void empty_va(va_list *va, ...)
+  {
+    va_start(*va, va);
+    va_end(*va);
+  }
+}
 
 class LogModuleManager
 {
@@ -148,7 +167,9 @@ public:
     , mOutFile(nullptr)
     , mToReleaseFile(nullptr)
     , mOutFileNum(0)
+    , mOutFilePath(strdup(""))
     , mMainThread(PR_GetCurrentThread())
+    , mSetFromEnv(false)
     , mAddTimestamp(false)
     , mIsSync(false)
     , mRotate(0)
@@ -217,18 +238,8 @@ public:
     }
 
     if (logFile && logFile[0]) {
-      static const char kPIDToken[] = "%PID";
-      const char* pidTokenPtr = strstr(logFile, kPIDToken);
       char buf[2048];
-      if (pidTokenPtr &&
-          SprintfLiteral(buf, "%.*s%d%s",
-                         static_cast<int>(pidTokenPtr - logFile), logFile,
-                         detail::log_pid(),
-                         pidTokenPtr + strlen(kPIDToken)) > 0)
-      {
-        logFile = buf;
-      }
-
+      logFile = detail::ExpandPIDMarker(logFile, buf);
       mOutFilePath.reset(strdup(logFile));
 
       if (mRotate > 0) {
@@ -243,7 +254,64 @@ public:
       }
 
       mOutFile = OpenFile(shouldAppend, mOutFileNum);
+      mSetFromEnv = true;
     }
+  }
+
+  void SetLogFile(const char* aFilename)
+  {
+    // For now we don't allow you to change the file at runtime.
+    if (mSetFromEnv) {
+      NS_WARNING("LogModuleManager::SetLogFile - Log file was set from the "
+                 "MOZ_LOG_FILE environment variable.");
+      return;
+    }
+
+    const char * filename = aFilename ? aFilename : "";
+    char buf[2048];
+    filename = detail::ExpandPIDMarker(filename, buf);
+
+    // Can't use rotate at runtime yet.
+    MOZ_ASSERT(mRotate == 0, "We don't allow rotate for runtime logfile changes");
+    mOutFilePath.reset(strdup(filename));
+
+    // Exchange mOutFile and set it to be released once all the writes are done.
+    detail::LogFile* newFile = OpenFile(false, 0);
+    detail::LogFile* oldFile = mOutFile.exchange(newFile);
+
+    // Since we don't allow changing the logfile if MOZ_LOG_FILE is already set,
+    // and we don't allow log rotation when setting it at runtime, mToReleaseFile
+    // will be null, so we're not leaking.
+    DebugOnly<detail::LogFile*> prevFile = mToReleaseFile.exchange(oldFile);
+    MOZ_ASSERT(!prevFile, "Should be null because rotation is not allowed");
+
+    // If we just need to release a file, we must force print, in order to
+    // trigger the closing and release of mToReleaseFile.
+    if (oldFile) {
+      va_list va;
+      empty_va(&va);
+      Print("Logger", LogLevel::Info, "Flushing old log files\n", va);
+    }
+  }
+
+  uint32_t GetLogFile(char *aBuffer, size_t aLength)
+  {
+    uint32_t len = strlen(mOutFilePath.get());
+    if (len + 1 > aLength) {
+      return 0;
+    }
+    snprintf(aBuffer, aLength, "%s", mOutFilePath.get());
+    return len;
+  }
+
+  void SetIsSync(bool aIsSync)
+  {
+    mIsSync = aIsSync;
+  }
+
+  void SetAddTimestamp(bool aAddTimestamp)
+  {
+    mAddTimestamp = aAddTimestamp;
   }
 
   detail::LogFile* OpenFile(bool aShouldAppend, uint32_t aFileNum)
@@ -428,8 +496,9 @@ private:
   UniqueFreePtr<char[]> mOutFilePath;
 
   PRThread *mMainThread;
-  bool mAddTimestamp;
-  bool mIsSync;
+  bool mSetFromEnv;
+  Atomic<bool, Relaxed> mAddTimestamp;
+  Atomic<bool, Relaxed> mIsSync;
   int32_t mRotate;
 };
 
@@ -442,6 +511,32 @@ LogModule::Get(const char* aName)
   // that the LogModuleManager implementation can be kept internal.
   MOZ_ASSERT(sLogModuleManager != nullptr);
   return sLogModuleManager->CreateOrGetModule(aName);
+}
+
+void
+LogModule::SetLogFile(const char* aFilename)
+{
+  MOZ_ASSERT(sLogModuleManager);
+  sLogModuleManager->SetLogFile(aFilename);
+}
+
+uint32_t
+LogModule::GetLogFile(char *aBuffer, size_t aLength)
+{
+  MOZ_ASSERT(sLogModuleManager);
+  return sLogModuleManager->GetLogFile(aBuffer, aLength);
+}
+
+void
+LogModule::SetAddTimestamp(bool aAddTimestamp)
+{
+  sLogModuleManager->SetAddTimestamp(aAddTimestamp);
+}
+
+void
+LogModule::SetIsSync(bool aIsSync)
+{
+  sLogModuleManager->SetIsSync(aIsSync);
 }
 
 void

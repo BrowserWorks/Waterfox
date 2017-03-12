@@ -10,16 +10,15 @@ way, and certainly anything using mozharness should use this approach.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import time
 from voluptuous import Schema, Required, Optional, Any
 
 from taskgraph.transforms.job import run_job_using
 from taskgraph.transforms.job.common import (
     docker_worker_add_workspace_cache,
-    docker_worker_add_tc_vcs_cache,
     docker_worker_add_gecko_vcs_env_vars,
     docker_worker_setup_secrets,
-    docker_worker_add_public_artifacts
+    docker_worker_add_public_artifacts,
+    docker_worker_support_vcs_checkout,
 )
 
 COALESCE_KEY = 'builds.{project}.{name}'
@@ -71,6 +70,9 @@ mozharness_run_schema = Schema({
     # If false, indicate that builds should skip producing artifacts.  Not
     # supported on Windows.
     Required('keep-artifacts', default=True): bool,
+
+    # If specified, use the in-tree job script specified.
+    Optional('job-script'): basestring,
 })
 
 
@@ -88,9 +90,8 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
     worker['taskcluster-proxy'] = run.get('taskcluster-proxy')
 
     docker_worker_add_public_artifacts(config, job, taskdesc)
-    docker_worker_add_tc_vcs_cache(config, job, taskdesc)
     docker_worker_add_workspace_cache(config, job, taskdesc)
-    docker_worker_add_gecko_vcs_env_vars(config, job, taskdesc)
+    docker_worker_support_vcs_checkout(config, job, taskdesc)
 
     env = worker.setdefault('env', {})
     env.update({
@@ -98,7 +99,7 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
         'MOZHARNESS_SCRIPT': run['script'],
         'MH_BRANCH': config.params['project'],
         'MH_BUILD_POOL': 'taskcluster',
-        'MOZ_BUILD_DATE': time.strftime("%Y%m%d%H%M%S", time.gmtime(config.params['pushdate'])),
+        'MOZ_BUILD_DATE': config.params['moz_build_date'],
         'MOZ_SCM_LEVEL': config.params['level'],
     })
 
@@ -110,6 +111,9 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
 
     if 'custom-build-variant-cfg' in run:
         env['MH_CUSTOM_BUILD_VARIANT_CFG'] = run['custom-build-variant-cfg']
+
+    if 'job-script' in run:
+        env['JOB_SCRIPT'] = run['job-script']
 
     # if we're not keeping artifacts, set some env variables to empty values
     # that will cause the build process to skip copying the results to the
@@ -146,7 +150,21 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
 
     docker_worker_setup_secrets(config, job, taskdesc)
 
-    worker['command'] = ["/bin/bash", "bin/build.sh"]
+    command = [
+        '/home/worker/bin/run-task',
+        # Various caches/volumes are default owned by root:root.
+        '--chown-recursive', '/home/worker/workspace',
+        '--chown-recursive', '/home/worker/tooltool-cache',
+        '--vcs-checkout', '/home/worker/workspace/build/src',
+        '--tools-checkout', '/home/worker/workspace/build/tools',
+        '--',
+    ]
+    command.append("/home/worker/workspace/build/src/{}".format(
+        run.get('job-script',
+                "taskcluster/scripts/builder/build-linux.sh"
+                )))
+
+    worker['command'] = command
 
 
 # We use the generic worker to run tasks on Windows
@@ -156,7 +174,7 @@ def mozharness_on_windows(config, job, taskdesc):
 
     # fail if invalid run options are included
     invalid = []
-    for prop in ['actions', 'options', 'custom-build-variant-cfg',
+    for prop in ['actions', 'custom-build-variant-cfg',
                  'tooltool-downloads', 'secrets', 'taskcluster-proxy',
                  'need-xvfb']:
         if prop in run and run[prop]:
@@ -178,7 +196,7 @@ def mozharness_on_windows(config, job, taskdesc):
 
     env = worker['env']
     env.update({
-        'MOZ_BUILD_DATE': time.strftime("%Y%m%d%H%M%S", time.gmtime(config.params['pushdate'])),
+        'MOZ_BUILD_DATE': config.params['moz_build_date'],
         'MOZ_SCM_LEVEL': config.params['level'],
         'TOOLTOOL_REPO': 'https://github.com/mozilla/build-tooltool',
         'TOOLTOOL_REV': 'master',
@@ -190,9 +208,19 @@ def mozharness_on_windows(config, job, taskdesc):
         mh_command.append('--config ' + cfg.replace('/', '\\'))
     mh_command.append('--branch ' + config.params['project'])
     mh_command.append(r'--skip-buildbot-actions --work-dir %cd:Z:=z:%\build')
+    for option in run.get('options', []):
+        mh_command.append('--' + option)
+
+    hg_command = ['"c:\\Program Files\\Mercurial\\hg.exe"']
+    hg_command.append('robustcheckout')
+    hg_command.extend(['--sharebase', 'y:\\hg-shared'])
+    hg_command.append('--purge')
+    hg_command.extend(['--upstream', 'https://hg.mozilla.org/mozilla-unified'])
+    hg_command.extend(['--revision', env['GECKO_HEAD_REV']])
+    hg_command.append(env['GECKO_HEAD_REPOSITORY'])
+    hg_command.append('.\\build\\src')
+
     worker['command'] = [
-        r'mkdir .\build\src',
-        r'hg share c:\builds\hg-shared\mozilla-central .\build\src',
-        r'hg pull -u -R .\build\src --rev %GECKO_HEAD_REV% %GECKO_HEAD_REPOSITORY%',
-        ' '.join(mh_command),
+        ' '.join(hg_command),
+        ' '.join(mh_command)
     ]

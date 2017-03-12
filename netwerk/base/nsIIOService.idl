@@ -50,8 +50,8 @@ interface nsIIOService : nsISupports
      * @see nsIProtocolHandler::newURI
      */
     nsIURI newURI(in AUTF8String aSpec,
-                  in string aOriginCharset,
-                  in nsIURI aBaseURI);
+                  [optional] in string aOriginCharset,
+                  [optional] in nsIURI aBaseURI);
 
     /**
      * This method constructs a new URI from a nsIFile.
@@ -71,53 +71,12 @@ interface nsIIOService : nsISupports
      * @param aURI
      *        nsIURI from which to make a channel
      * @param aLoadingNode
-     *        The loadingDocument of the channel.
-     *        The element or document where the result of this request will be
-     *        used. This is the document/element that will get access to the
-     *        result of this request. For example for an image load, it's the
-     *        document in which the image will be loaded. And for a CSS
-     *        stylesheet it's the document whose rendering will be affected by
-     *        the stylesheet.
-     *        If possible, pass in the element which is performing the load. But
-     *        if the load is coming from a JS API (such as XMLHttpRequest) or if
-     *        the load might be coalesced across multiple elements (such as
-     *        for <img>) then pass in the Document node instead.
-     *        For loads that are not related to any document, such as loads coming
-     *        from addons or internal browser features, use null here.
      * @param aLoadingPrincipal
-     *        The loadingPrincipal of the channel.
-     *        The principal of the document where the result of this request will
-     *        be used.
-     *        This defaults to the principal of aLoadingNode, so when aLoadingNode
-     *        is passed this can be left as null. However for loads where
-     *        aLoadingNode is null this argument must be passed.
-     *        For example for loads from a WebWorker, pass the principal
-     *        of that worker. For loads from an addon or from internal browser
-     *        features, pass the system principal.
-     *        This principal should almost always be the system principal if
-     *        aLoadingNode is null. The only exception to this is for loads
-     *        from WebWorkers since they don't have any nodes to be passed as
-     *        aLoadingNode.
-     *        Please note, aLoadingPrincipal is *not* the principal of the
-     *        resource being loaded. But rather the principal of the context
-     *        where the resource will be used.
      * @param aTriggeringPrincipal
-     *        The triggeringPrincipal of the load.
-     *        The triggeringPrincipal is the principal of the resource that caused
-     *        this particular URL to be loaded.
-     *        Most likely the triggeringPrincipal and the loadingPrincipal are
-     *        identical, in which case the triggeringPrincipal can be left out.
-     *        In some cases the loadingPrincipal and the triggeringPrincipal are
-     *        different however, e.g. a stylesheet may import a subresource. In
-     *        that case the principal of the stylesheet which contains the
-     *        import command is the triggeringPrincipal, and the principal of
-     *        the document whose rendering is affected is the loadingPrincipal.
      * @param aSecurityFlags
-     *        The securityFlags of the channel.
-     *        Any of the securityflags defined in nsILoadInfo.idl
      * @param aContentPolicyType
-     *        The contentPolicyType of the channel.
-     *        Any of the content types defined in nsIContentPolicy.idl
+     *        These will be used as values for the nsILoadInfo object on the
+     *        created channel. For details, see nsILoadInfo in nsILoadInfo.idl
      * @return reference to the new nsIChannel object
      *
      * Please note, if you provide both a loadingNode and a loadingPrincipal,
@@ -191,30 +150,6 @@ interface nsIIOService : nsISupports
     readonly attribute boolean connectivity;
 
     /**
-     * Set whether network appears to be offline for network connections from
-     * a given appID.
-     *
-     * Calling this function may fire the "network:app-offline-status-changed"
-     * notification, which is also sent to child processes containing this appId.
-     * 'state' must one of nsIAppOfflineInfo::{ONLINE|OFFLINE|WIFI_ONLY}.
-     */
-    void setAppOffline(in uint32_t appId, in long state);
-
-    /**
-     * Returns true if given appId is currently not allowed to make network
-     * connections. It will return true if the app is in the wifi-only state
-     * and we are currently on a 3G connection.
-     * The returned value does not depend on the offline state of the browser.
-     */
-    boolean isAppOffline(in uint32_t appId);
-
-    /**
-     * Returns the state of the app with the given appId.
-     * returns nsIAppOfflineInfo::{ONLINE,OFFLINE,WIFI_ONLY}
-     */
-    long getAppOfflineState(in uint32_t appId);
-
-    /**
      * Checks if a port number is banned. This involves consulting a list of
      * unsafe ports, corresponding to network services that may be easily
      * exploitable. If the given port is considered unsafe, then the protocol
@@ -243,18 +178,6 @@ interface nsIIOService : nsISupports
     ACString extractScheme(in AUTF8String urlString);
 };
 
-[scriptable, uuid(4ac296a0-ca1b-44f4-8787-117a88cb70fb)]
-interface nsIAppOfflineInfo : nsISupports
-{
-    readonly attribute unsigned long appId;
-
-    const long ONLINE = 1;
-    const long OFFLINE = 2;
-    const long WIFI_ONLY = 3;
-
-    readonly attribute long mode;
-};
-
 %{C++
 /**
  * We send notifications through nsIObserverService with topic
@@ -275,11 +198,6 @@ interface nsIAppOfflineInfo : nsISupports
 #define NS_IOSERVICE_OFFLINE              "offline"
 #define NS_IOSERVICE_ONLINE               "online"
 
-/**
- * When network:app-offline-status-changed is fired,
- * the 'Subject' argument is a nsIOfflineAppInfo.
- */
-#define NS_IOSERVICE_APP_OFFLINE_STATUS_TOPIC "network:app-offline-status-changed"
 %}
 
 [builtinclass, uuid(6633c0bf-d97a-428f-8ece-cb6a655fb95a)]

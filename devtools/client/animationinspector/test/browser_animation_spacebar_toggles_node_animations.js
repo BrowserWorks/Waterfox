@@ -14,6 +14,8 @@
 requestLongerTimeout(2);
 
 add_task(function* () {
+  requestLongerTimeout(2);
+
   yield addTab(URL_ROOT + "doc_simple_animation.html");
   let {panel, window} = yield openAnimationInspector();
   let {playTimelineButtonEl} = panel;

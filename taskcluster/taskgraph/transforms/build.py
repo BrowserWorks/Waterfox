@@ -21,4 +21,11 @@ def set_defaults(config, jobs):
         job['treeherder'].setdefault('tier', 1)
         if job['worker']['implementation'] in ('docker-worker', 'docker-engine'):
             job['worker'].setdefault('docker-image', {'in-tree': 'desktop-build'})
+            job['worker']['chain-of-trust'] = True
+            job.setdefault('extra', {})
+            job['extra'].setdefault('chainOfTrust', {})
+            job['extra']['chainOfTrust'].setdefault('inputs', {})
+            job['extra']['chainOfTrust']['inputs']['docker-image'] = {
+                "task-reference": "<docker-image>"
+            }
         yield job

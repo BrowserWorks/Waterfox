@@ -70,11 +70,11 @@ var corpus = [
       title: ">This is my title<",
       // og:description
       description: "A test corpus file for open graph tags we care about",
-      //medium: this.getPageMedium(),
-      //source: this.getSourceURL(),
+      // medium: this.getPageMedium(),
+      // source: this.getSourceURL(),
       // og:url
       url: "https://www.mozilla.org/",
-      //shortUrl: this.getShortURL(),
+      // shortUrl: this.getShortURL(),
       // og:image
       previews:["https://www.mozilla.org/favicon.png"],
       // og:site_name
@@ -118,7 +118,6 @@ var corpus = [
 ];
 
 function hasoptions(testOptions, options) {
-  let msg;
   for (let option in testOptions) {
     let data = testOptions[option];
     info("data: "+JSON.stringify(data));
@@ -182,8 +181,6 @@ var tests = {
     });
   },
   testSharePage: function(next) {
-    let provider = Social._getProviderFromOrigin(manifest.origin);
-
     let testTab;
     let testIndex = 0;
     let testData = corpus[testIndex++];

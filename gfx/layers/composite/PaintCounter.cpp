@@ -12,9 +12,7 @@
 #include "mozilla/TimeStamp.h"          // for TimeStamp, TimeDuration
 #include "mozilla/Sprintf.h"
 
-#include "SkColor.h"
 #include "mozilla/gfx/HelpersSkia.h"
-#include "skia/include/core/SkBitmapDevice.h"
 #include "PaintCounter.h"
 
 namespace mozilla {
@@ -31,12 +29,10 @@ PaintCounter::PaintCounter()
   mSurface = Factory::CreateDataSourceSurface(mRect.Size(), mFormat);
   mStride = mSurface->Stride();
 
-  SkBitmap bitmap;
-  bitmap.setInfo(MakeSkiaImageInfo(mRect.Size(), mFormat), mStride);
-  bitmap.setPixels(mSurface->GetData());
-  bitmap.eraseColor(SK_ColorWHITE);
-
-  mCanvas.adopt(new SkCanvas(bitmap));
+  mCanvas.reset(
+    SkCanvas::NewRasterDirect(MakeSkiaImageInfo(mRect.Size(), mFormat),
+                              mSurface->GetData(), mStride));
+  mCanvas->clear(SK_ColorWHITE);
 }
 
 PaintCounter::~PaintCounter()
@@ -48,11 +44,10 @@ PaintCounter::~PaintCounter()
 
 void
 PaintCounter::Draw(Compositor* aCompositor, TimeDuration aPaintTime, TimeDuration aCompositeTime) {
-  const int buffer_size = 48;
-  char buffer[buffer_size];
-  snprintf(buffer, buffer_size, "P: %.2f  C: %.2f",
-           aPaintTime.ToMilliseconds(),
-           aCompositeTime.ToMilliseconds());
+  char buffer[48];
+  SprintfLiteral(buffer, "P: %.2f  C: %.2f",
+                 aPaintTime.ToMilliseconds(),
+                 aCompositeTime.ToMilliseconds());
 
   SkPaint paint;
   paint.setTextSize(32);

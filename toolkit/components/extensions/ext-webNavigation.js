@@ -15,7 +15,6 @@ Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   SingletonEventManager,
   ignoreEvent,
-  runSafe,
 } = ExtensionUtils;
 
 const defaultTransitionTypes = {
@@ -109,11 +108,6 @@ function WebNavigationEventManager(context, eventName) {
         return;
       }
 
-      let tabId = TabManager.getBrowserId(data.browser);
-      if (tabId == -1) {
-        return;
-      }
-
       let data2 = {
         url: data.url,
         timeStamp: Date.now(),
@@ -126,15 +120,14 @@ function WebNavigationEventManager(context, eventName) {
       }
 
       // Fills in tabId typically.
-      let result = {};
-      extensions.emit("fill-browser-data", data.browser, data2, result);
-      if (result.cancel) {
+      extensions.emit("fill-browser-data", data.browser, data2);
+      if (data2.tabId < 0) {
         return;
       }
 
       fillTransitionProperties(eventName, data, data2);
 
-      runSafe(context, callback, data2);
+      context.runSafe(callback, data2);
     };
 
     WebNavigation[eventName].addListener(listener, filters);
@@ -161,6 +154,7 @@ function convertGetFrameResult(tabId, data) {
 extensions.registerSchemaAPI("webNavigation", "addon_parent", context => {
   return {
     webNavigation: {
+      onTabReplaced: ignoreEvent(context, "webNavigation.onTabReplaced"),
       onBeforeNavigate: new WebNavigationEventManager(context, "onBeforeNavigate").api(),
       onCommitted: new WebNavigationEventManager(context, "onCommitted").api(),
       onDOMContentLoaded: new WebNavigationEventManager(context, "onDOMContentLoaded").api(),

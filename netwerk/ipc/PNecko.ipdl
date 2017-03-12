@@ -16,7 +16,6 @@ include protocol PWebSocketEventListener;
 include protocol PTCPSocket;
 include protocol PTCPServerSocket;
 include protocol PUDPSocket;
-include protocol PRemoteOpenFile;
 include protocol PDNSRequest;
 include protocol PChannelDiverter;
 include protocol PBlob; //FIXME: bug #792908
@@ -31,6 +30,7 @@ include URIParams;
 include InputStreamParams;
 include NeckoChannelParams;
 include PBrowserOrId;
+include protocol PAltDataOutputStream;
 
 using class IPC::SerializedLoadContext from "SerializedLoadContext.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
@@ -40,7 +40,7 @@ namespace mozilla {
 namespace net {
 
 //-------------------------------------------------------------------
-prio(normal upto urgent) sync protocol PNecko
+nested(upto inside_cpow) sync protocol PNecko
 {
   manager PContent;
   manages PHttpChannel;
@@ -53,17 +53,17 @@ prio(normal upto urgent) sync protocol PNecko
   manages PTCPServerSocket;
   manages PUDPSocket;
   manages PDNSRequest;
-  manages PRemoteOpenFile;
   manages PDataChannel;
   manages PRtspController;
   manages PRtspChannel;
   manages PChannelDiverter;
   manages PTransportProvider;
+  manages PAltDataOutputStream;
 
 parent:
   async __delete__();
 
-  prio(urgent) async PCookieService();
+  nested(inside_cpow) async PCookieService();
   async PHttpChannel(PBrowserOrId browser,
                      SerializedLoadContext loadContext,
                      HttpChannelCreationArgs args);
@@ -88,11 +88,7 @@ parent:
                   uint32_t reason, SerializedLoadContext loadContext);
   async PredReset();
 
-  async PRemoteOpenFile(SerializedLoadContext loadContext,
-                        URIParams fileuri,
-                        OptionalURIParams appuri);
-
-  async SpeculativeConnect(URIParams uri, bool anonymous);
+  async SpeculativeConnect(URIParams uri, Principal principal, bool anonymous);
   async HTMLDNSPrefetch(nsString hostname, uint16_t flags);
   async CancelHTMLDNSPrefetch(nsString hostname, uint16_t flags, nsresult reason);
 
@@ -117,6 +113,8 @@ parent:
 
   async RemoveRequestContext(nsCString rcid);
 
+  async PAltDataOutputStream(nsCString type, PHttpChannel channel);
+
 child:
   /*
    * Bring up the http auth prompt for a nested remote mozbrowser.
@@ -125,8 +123,6 @@ child:
    */
   async AsyncAuthPromptForNestedFrame(TabId nestedFrameId, nsCString uri,
                                       nsString realm, uint64_t callbackId);
-  // Notifies child that a given app is now offline (or online)
-  async AppOfflineStatus(uint32_t appId, bool offline);
 
   /* Predictor Methods */
   async PredOnPredictPrefetch(URIParams uri, uint32_t httpStatus);

@@ -872,10 +872,14 @@ const KEYBOARD_LAYOUT_HEBREW =
   { name: "Hebrew",             Mac: 9,    Win: 0x0000040D };
 const KEYBOARD_LAYOUT_JAPANESE =
   { name: "Japanese",           Mac: null, Win: 0x00000411 };
+const KEYBOARD_LAYOUT_KHMER =
+  { name: "Khmer",              Mac: null, Win: 0x00000453 }; // available on Win7 or later.
 const KEYBOARD_LAYOUT_LITHUANIAN =
   { name: "Lithuanian",         Mac: 10,   Win: 0x00010427 };
 const KEYBOARD_LAYOUT_NORWEGIAN =
   { name: "Norwegian",          Mac: 11,   Win: 0x00000414 };
+const KEYBOARD_LAYOUT_RUSSIAN_MNEMONIC =
+  { name: "Russian - Mnemonic", Mac: null, Win: 0x00020419 }; // available on Win8 or later.
 const KEYBOARD_LAYOUT_SPANISH =
   { name: "Spanish",            Mac: 12,   Win: 0x0000040A };
 const KEYBOARD_LAYOUT_SWEDISH =
@@ -1811,7 +1815,10 @@ function synthesizeDragStart(element, expectedDragData, aWindow, x, y)
   var result = "trapDrag was not called";
   var trapDrag = function(event) {
     try {
-      var dataTransfer = event.dataTransfer;
+      // We must wrap only in plain mochitests, not chrome
+      var c = Object.getOwnPropertyDescriptor(window, 'Components');
+      var dataTransfer = c.value && !c.writable
+        ? event.dataTransfer : SpecialPowers.wrap(event.dataTransfer);
       result = null;
       if (!dataTransfer)
         throw "no dataTransfer";

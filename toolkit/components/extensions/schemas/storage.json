@@ -5,8 +5,8 @@
 [
   {
     "namespace": "storage",
-    "restrictions": ["content"],
-    "defaultRestrictions": ["content"],
+    "allowedContexts": ["content"],
+    "defaultContexts": ["content"],
     "description": "Use the <code>browser.storage</code> API to store, retrieve, and track changes to user data.",
     "permissions": ["storage"],
     "types": [
@@ -179,7 +179,6 @@
     ],
     "properties": {
       "sync": {
-        "unsupported": true,
         "$ref": "StorageArea",
         "description": "Items in the <code>sync</code> storage area are synced by the browser.",
         "properties": {

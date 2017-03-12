@@ -12,7 +12,7 @@ function run_test() {
   debugDump("testing remote update xml attributes");
 
   start_httpserver();
-  setUpdateURLOverride(gURLData + gHTTPHandlerPath);
+  setUpdateURL(gURLData + gHTTPHandlerPath);
   setUpdateChannel("test_channel");
 
   // This test expects that the app.update.download.backgroundInterval
@@ -131,7 +131,7 @@ function check_test_pt02() {
                "the update errorCode attribute" + MSG_SHOULD_EQUAL);
   Assert.equal(bestUpdate.patchCount, 2,
                "the update patchCount attribute" + MSG_SHOULD_EQUAL);
-  //XXX TODO - test nsIUpdate:serialize
+  // XXX TODO - test nsIUpdate:serialize
 
   Assert.equal(bestUpdate.getProperty("custom1_attr"), "custom1 value",
                "the update custom1_attr property" + MSG_SHOULD_EQUAL);
@@ -153,13 +153,13 @@ function check_test_pt02() {
   // is confusing if it returns null which is an invalid value since the test
   // failure output will show a failure for null == null. To lessen the
   // confusion first check that the typeof for patch.state is string.
-  Assert.equal(typeof(patch.state), "string",
+  Assert.equal(typeof patch.state, "string",
                "the update patch state typeof value should equal |string|");
   Assert.equal(patch.state, STATE_NONE,
                "the update patch state attribute" + MSG_SHOULD_EQUAL);
   Assert.ok(!patch.selected,
             "the update patch selected attribute" + MSG_SHOULD_EQUAL);
-  //XXX TODO - test nsIUpdatePatch:serialize
+  // XXX TODO - test nsIUpdatePatch:serialize
 
   patch = bestUpdate.getPatchAt(1);
   Assert.equal(patch.type, "partial",
@@ -176,7 +176,7 @@ function check_test_pt02() {
                "the update patch state attribute" + MSG_SHOULD_EQUAL);
   Assert.ok(!patch.selected,
             "the update patch selected attribute" + MSG_SHOULD_EQUAL);
-  //XXX TODO - test nsIUpdatePatch:serialize
+  // XXX TODO - test nsIUpdatePatch:serialize
 
   run_test_pt03();
 }

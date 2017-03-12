@@ -101,10 +101,11 @@ public:
 
   void UpdateRenderBounds(const gfx::IntRect& aRect);
 
-  virtual void BeginTransaction() override;
-  virtual void BeginTransactionWithTarget(gfxContext* aTarget) override
+  virtual bool BeginTransaction() override;
+  virtual bool BeginTransactionWithTarget(gfxContext* aTarget) override
   {
     MOZ_CRASH("GFX: Use BeginTransactionWithDrawTarget");
+    return false;
   }
   void BeginTransactionWithDrawTarget(gfx::DrawTarget* aTarget,
                                       const gfx::IntRect& aRect);
@@ -326,14 +327,9 @@ private:
    * Render the current layer tree to the active target.
    */
   void Render(const nsIntRegion& aInvalidRegion, const nsIntRegion& aOpaqueRegion);
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_WIDGET_ANDROID)
   void RenderToPresentationSurface();
 #endif
-
-  /**
-   * Render paint and composite times above the frame.
-   */
-  void DrawPaintTimes(Compositor* aCompositor);
 
   /**
    * We need to know our invalid region before we're ready to render.
@@ -391,9 +387,16 @@ private:
   bool mLastFrameMissedHWC;
 
   bool mWindowOverlayChanged;
-  RefPtr<PaintCounter> mPaintCounter;
   TimeDuration mLastPaintTime;
   TimeStamp mRenderStartTime;
+
+#ifdef USE_SKIA
+  /**
+   * Render paint and composite times above the frame.
+   */
+  void DrawPaintTimes(Compositor* aCompositor);
+  RefPtr<PaintCounter> mPaintCounter;
+#endif
 };
 
 /**

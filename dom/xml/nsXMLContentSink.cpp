@@ -20,7 +20,7 @@
 #include "DocumentType.h"
 #include "nsHTMLParts.h"
 #include "nsCRT.h"
-#include "mozilla/CSSStyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 #include "mozilla/css/Loader.h"
 #include "nsGkAtoms.h"
 #include "nsContentUtils.h"
@@ -96,8 +96,15 @@ NS_NewXMLContentSink(nsIXMLContentSink** aResult,
 }
 
 nsXMLContentSink::nsXMLContentSink()
-  : mPrettyPrintXML(true)
+  : mTextLength(0)
+  , mNotifyLevel(0)
+  , mPrettyPrintXML(true)
+  , mPrettyPrintHasSpecialRoot(0)
+  , mPrettyPrintHasFactoredElements(0)
+  , mPrettyPrinting(0)
+  , mPreventScriptExecution(0)
 {
+  PodArrayZero(mText);
 }
 
 nsXMLContentSink::~nsXMLContentSink()
@@ -411,7 +418,7 @@ nsXMLContentSink::OnTransformDone(nsresult aResult,
 }
 
 NS_IMETHODIMP
-nsXMLContentSink::StyleSheetLoaded(StyleSheetHandle aSheet,
+nsXMLContentSink::StyleSheetLoaded(StyleSheet* aSheet,
                                    bool aWasAlternate,
                                    nsresult aStatus)
 {

@@ -14,9 +14,6 @@
 #include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/StructuredCloneHolder.h"
-#ifdef MOZ_NFC
-#include "mozilla/dom/MozNDEFRecord.h"
-#endif
 #include "nsGlobalWindow.h"
 #include "nsJSUtils.h"
 #include "nsIDOMFileList.h"
@@ -41,7 +38,6 @@ enum StackScopedCloneTags {
     SCTAG_REFLECTOR,
     SCTAG_BLOB,
     SCTAG_FUNCTION,
-    SCTAG_DOM_NFC_NDEF
 };
 
 // The HTML5 structured cloning algorithm includes a few DOM objects, notably
@@ -145,26 +141,6 @@ public:
             return val.toObjectOrNull();
         }
 
-        if (aTag == SCTAG_DOM_NFC_NDEF) {
-#ifdef MOZ_NFC
-          nsIGlobalObject* global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(aCx));
-          if (!global) {
-            return nullptr;
-          }
-
-          // Prevent the return value from being trashed by a GC during ~nsRefPtr.
-          JS::Rooted<JSObject*> result(aCx);
-          {
-            RefPtr<MozNDEFRecord> ndefRecord = new MozNDEFRecord(global);
-            result = ndefRecord->ReadStructuredClone(aCx, aReader) ?
-                     ndefRecord->WrapObject(aCx, nullptr) : nullptr;
-          }
-          return result;
-#else
-          return nullptr;
-#endif
-        }
-
         MOZ_ASSERT_UNREACHABLE("Encountered garbage in the clone stream!");
         return nullptr;
     }
@@ -208,22 +184,12 @@ public:
                     return false;
                 return JS_WriteUint32Pair(aWriter, SCTAG_FUNCTION, mFunctions.length() - 1);
             } else {
-                JS_ReportError(aCx, "Permission denied to pass a Function via structured clone");
+                JS_ReportErrorASCII(aCx, "Permission denied to pass a Function via structured clone");
                 return false;
             }
         }
 
-#ifdef MOZ_NFC
-        {
-          MozNDEFRecord* ndefRecord;
-          if (NS_SUCCEEDED(UNWRAP_OBJECT(MozNDEFRecord, aObj, ndefRecord))) {
-            return JS_WriteUint32Pair(aWriter, SCTAG_DOM_NFC_NDEF, 0) &&
-                   ndefRecord->WriteStructuredClone(aCx, aWriter);
-          }
-        }
-#endif
-
-        JS_ReportError(aCx, "Encountered unsupported value type writing stack-scoped structured clone");
+        JS_ReportErrorASCII(aCx, "Encountered unsupported value type writing stack-scoped structured clone");
         return false;
     }
 
@@ -308,7 +274,7 @@ CheckSameOriginArg(JSContext* cx, FunctionForwarderOptions& options, HandleValue
         return true;
 
     // Badness.
-    JS_ReportError(cx, "Permission denied to pass object to exported function");
+    JS_ReportErrorASCII(cx, "Permission denied to pass object to exported function");
     return false;
 }
 
@@ -396,7 +362,7 @@ ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope, HandleV
 {
     bool hasOptions = !voptions.isUndefined();
     if (!vscope.isObject() || !vfunction.isObject() || (hasOptions && !voptions.isObject())) {
-        JS_ReportError(cx, "Invalid argument");
+        JS_ReportErrorASCII(cx, "Invalid argument");
         return false;
     }
 
@@ -413,12 +379,12 @@ ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope, HandleV
     targetScope = js::CheckedUnwrap(targetScope);
     funObj = js::CheckedUnwrap(funObj);
     if (!targetScope || !funObj) {
-        JS_ReportError(cx, "Permission denied to export function into scope");
+        JS_ReportErrorASCII(cx, "Permission denied to export function into scope");
         return false;
     }
 
     if (js::IsScriptedProxy(targetScope)) {
-        JS_ReportError(cx, "Defining property on proxy object is not allowed");
+        JS_ReportErrorASCII(cx, "Defining property on proxy object is not allowed");
         return false;
     }
 
@@ -430,7 +396,7 @@ ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope, HandleV
         // Unwrapping to see if we have a callable.
         funObj = UncheckedUnwrap(funObj);
         if (!JS::IsCallable(funObj)) {
-            JS_ReportError(cx, "First argument must be a function");
+            JS_ReportErrorASCII(cx, "First argument must be a function");
             return false;
         }
 
@@ -459,7 +425,7 @@ ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope, HandleV
         FunctionForwarderOptions forwarderOptions;
         forwarderOptions.allowCrossOriginArguments = options.allowCrossOriginArguments;
         if (!NewFunctionForwarder(cx, id, funObj, forwarderOptions, rval)) {
-            JS_ReportError(cx, "Exporting function failed");
+            JS_ReportErrorASCII(cx, "Exporting function failed");
             return false;
         }
 
@@ -487,20 +453,20 @@ CreateObjectIn(JSContext* cx, HandleValue vobj, CreateObjectInOptions& options,
                MutableHandleValue rval)
 {
     if (!vobj.isObject()) {
-        JS_ReportError(cx, "Expected an object as the target scope");
+        JS_ReportErrorASCII(cx, "Expected an object as the target scope");
         return false;
     }
 
     RootedObject scope(cx, js::CheckedUnwrap(&vobj.toObject()));
     if (!scope) {
-        JS_ReportError(cx, "Permission denied to create object in the target scope");
+        JS_ReportErrorASCII(cx, "Permission denied to create object in the target scope");
         return false;
     }
 
     bool define = !JSID_IS_VOID(options.defineAs);
 
     if (define && js::IsScriptedProxy(scope)) {
-        JS_ReportError(cx, "Defining property on proxy object is not allowed");
+        JS_ReportErrorASCII(cx, "Defining property on proxy object is not allowed");
         return false;
     }
 

@@ -340,6 +340,20 @@ IsFlexOrGridContainer(const nsIFrame* aFrame)
          t == nsGkAtoms::gridContainerFrame;
 }
 
+// Returns true IFF the given nsIFrame is a nsFlexContainerFrame and
+// represents a -webkit-{inline-}box container. The frame's GetType() result is
+// passed as a separate argument, since in most cases, the caller will have
+// looked it up already, and we'd rather not make redundant calls to the
+// virtual GetType() method.
+static inline bool
+IsFlexContainerForLegacyBox(const nsIFrame* aFrame,
+                            const nsIAtom* aFrameType)
+{
+  MOZ_ASSERT(aFrame->GetType() == aFrameType, "wrong aFrameType was passed");
+  return aFrameType == nsGkAtoms::flexContainerFrame &&
+    aFrame->HasAnyStateBits(NS_STATE_FLEX_IS_LEGACY_WEBKIT_BOX);
+}
+
 #if DEBUG
 static void
 AssertAnonymousFlexOrGridItemParent(const nsIFrame* aChild,
@@ -1874,10 +1888,10 @@ nsCSSFrameConstructor::CreateGeneratedContentItem(nsFrameConstructorState& aStat
     if (rsc) {
       nsStyleContext* oldStyleContext = rsc->Get(container, aPseudoElement);
       if (oldStyleContext) {
-        RestyleManager::TryStartingTransition(aState.mPresContext,
-                                              container,
-                                              oldStyleContext,
-                                              &pseudoStyleContext);
+        RestyleManager::TryInitiatingTransition(aState.mPresContext,
+                                                container,
+                                                oldStyleContext,
+                                                &pseudoStyleContext);
       } else {
         aState.mPresContext->TransitionManager()->
           PruneCompletedTransitions(container, aPseudoElement,
@@ -3552,16 +3566,7 @@ nsCSSFrameConstructor::FindHTMLData(Element* aElement,
     return nullptr;
   }
 
-  if (aTag == nsGkAtoms::details || aTag == nsGkAtoms::summary) {
-    if (!HTMLDetailsElement::IsDetailsEnabled()) {
-      return nullptr;
-    }
-  }
-
-  if (aTag == nsGkAtoms::summary &&
-      (!aParentFrame || aParentFrame->GetType() != nsGkAtoms::detailsFrame)) {
-    // <summary> is special only if it is a direct child of <details>. If it
-    // isn't, construct it as a normal block frame instead of a summary frame.
+  if (aTag == nsGkAtoms::details && !HTMLDetailsElement::IsDetailsEnabled()) {
     return nullptr;
   }
 
@@ -3587,7 +3592,8 @@ nsCSSFrameConstructor::FindHTMLData(Element* aElement,
     SIMPLE_TAG_CREATE(frameset, NS_NewHTMLFramesetFrame),
     SIMPLE_TAG_CREATE(iframe, NS_NewSubDocumentFrame),
     { &nsGkAtoms::button,
-      FCDATA_WITH_WRAPPING_BLOCK(FCDATA_ALLOW_BLOCK_STYLES,
+      FCDATA_WITH_WRAPPING_BLOCK(FCDATA_ALLOW_BLOCK_STYLES |
+                                 FCDATA_ALLOW_GRID_FLEX_COLUMNSET,
                                  NS_NewHTMLButtonControlFrame,
                                  nsCSSAnonBoxes::buttonContent) },
     SIMPLE_TAG_CHAIN(canvas, nsCSSFrameConstructor::FindCanvasData),
@@ -3654,12 +3660,18 @@ nsCSSFrameConstructor::FindInputData(Element* aElement,
     SIMPLE_INT_CREATE(NS_FORM_INPUT_NUMBER, NS_NewNumberControlFrame),
     // TODO: this is temporary until a frame is written: bug 888320.
     SIMPLE_INT_CREATE(NS_FORM_INPUT_DATE, NS_NewTextControlFrame),
-    // TODO: this is temporary until a frame is written: bug 888320
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+    // On Android/B2G, date/time input appears as a normal text box.
     SIMPLE_INT_CREATE(NS_FORM_INPUT_TIME, NS_NewTextControlFrame),
+#else
+    SIMPLE_INT_CREATE(NS_FORM_INPUT_TIME, NS_NewDateTimeControlFrame),
+#endif
     // TODO: this is temporary until a frame is written: bug 888320
     SIMPLE_INT_CREATE(NS_FORM_INPUT_MONTH, NS_NewTextControlFrame),
     // TODO: this is temporary until a frame is written: bug 888320
     SIMPLE_INT_CREATE(NS_FORM_INPUT_WEEK, NS_NewTextControlFrame),
+    // TODO: this is temporary until a frame is written: bug 888320
+    SIMPLE_INT_CREATE(NS_FORM_INPUT_DATETIME_LOCAL, NS_NewTextControlFrame),
     { NS_FORM_INPUT_SUBMIT,
       FCDATA_WITH_WRAPPING_BLOCK(0, NS_NewGfxButtonControlFrame,
                                  nsCSSAnonBoxes::buttonContent) },
@@ -3879,34 +3891,74 @@ nsCSSFrameConstructor::ConstructFrameFromItemInternal(FrameConstructionItem& aIt
     nsIFrame* maybeAbsoluteContainingBlock = newFrame;
     nsIFrame* possiblyLeafFrame = newFrame;
     if (bits & FCDATA_CREATE_BLOCK_WRAPPER_FOR_ALL_KIDS) {
-      RefPtr<nsStyleContext> blockContext;
-      blockContext =
+      RefPtr<nsStyleContext> outerSC =
         mPresShell->StyleSet()->ResolveAnonymousBoxStyle(*data->mAnonBoxPseudo,
                                                          styleContext);
-      nsIFrame* blockFrame =
-        NS_NewBlockFormattingContext(mPresShell, blockContext);
-
 #ifdef DEBUG
       nsContainerFrame* containerFrame = do_QueryFrame(newFrame);
       MOZ_ASSERT(containerFrame);
 #endif
       nsContainerFrame* container = static_cast<nsContainerFrame*>(newFrame);
-      InitAndRestoreFrame(aState, content, container, blockFrame);
-
-      SetInitialSingleChild(container, blockFrame);
-
-      // Now figure out whether newFrame or blockFrame should be the
-      // absolute container.  It should be the latter if it's
-      // positioned, otherwise the former.
-      const nsStyleDisplay* blockDisplay = blockContext->StyleDisplay();
-      if (blockDisplay->IsAbsPosContainingBlock(blockFrame)) {
-        maybeAbsoluteContainingBlockDisplay = blockDisplay;
-        maybeAbsoluteContainingBlock = blockFrame;
-        maybeAbsoluteContainingBlockStyleFrame = blockFrame;
+      nsContainerFrame* outerFrame;
+      nsContainerFrame* innerFrame;
+      if (bits & FCDATA_ALLOW_GRID_FLEX_COLUMNSET) {
+        switch (display->mDisplay) {
+          case StyleDisplay::Flex:
+          case StyleDisplay::InlineFlex:
+            outerFrame = NS_NewFlexContainerFrame(mPresShell, outerSC);
+            InitAndRestoreFrame(aState, content, container, outerFrame);
+            innerFrame = outerFrame;
+            break;
+          case StyleDisplay::Grid:
+          case StyleDisplay::InlineGrid:
+            outerFrame = NS_NewGridContainerFrame(mPresShell, outerSC);
+            InitAndRestoreFrame(aState, content, container, outerFrame);
+            innerFrame = outerFrame;
+            break;
+          default: {
+            nsContainerFrame* columnSetFrame = nullptr;
+            RefPtr<nsStyleContext> innerSC = outerSC;
+            const nsStyleColumn* columns = outerSC->StyleColumn();
+            if (columns->mColumnCount != NS_STYLE_COLUMN_COUNT_AUTO ||
+                columns->mColumnWidth.GetUnit() != eStyleUnit_Auto) {
+              columnSetFrame =
+                NS_NewColumnSetFrame(mPresShell, outerSC, nsFrameState(0));
+              InitAndRestoreFrame(aState, content, container, columnSetFrame);
+              innerSC = mPresShell->StyleSet()->ResolveAnonymousBoxStyle(
+                nsCSSAnonBoxes::columnContent, outerSC);
+            }
+            innerFrame = NS_NewBlockFormattingContext(mPresShell, innerSC);
+            if (columnSetFrame) {
+              InitAndRestoreFrame(aState, content, columnSetFrame, innerFrame);
+              SetInitialSingleChild(columnSetFrame, innerFrame);
+              outerFrame = columnSetFrame;
+            } else {
+              InitAndRestoreFrame(aState, content, container, innerFrame);
+              outerFrame = innerFrame;
+            }
+            break;
+          }
+        }
+      } else {
+        innerFrame = NS_NewBlockFormattingContext(mPresShell, outerSC);
+        InitAndRestoreFrame(aState, content, container, innerFrame);
+        outerFrame = innerFrame;
       }
 
-      // Our kids should go into the blockFrame
-      newFrame = blockFrame;
+      SetInitialSingleChild(container, outerFrame);
+
+      // Now figure out whether newFrame or outerFrame should be the
+      // absolute container.
+      auto outerDisplay = outerSC->StyleDisplay();
+      if (outerDisplay->IsAbsPosContainingBlock(outerFrame)) {
+        maybeAbsoluteContainingBlockDisplay = outerDisplay;
+        maybeAbsoluteContainingBlock = outerFrame;
+        maybeAbsoluteContainingBlockStyleFrame = outerFrame;
+        innerFrame->AddStateBits(NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN);
+      }
+
+      // Our kids should go into the innerFrame.
+      newFrame = innerFrame;
     }
 
     aState.AddChild(frameToAddToList, aFrameItems, content, styleContext,
@@ -5012,8 +5064,8 @@ nsCSSFrameConstructor::ResolveStyleContext(nsStyleContext* aParentStyleContext,
         rsc->Get(aContent, CSSPseudoElementType::NotPseudo);
       nsPresContext* presContext = mPresShell->GetPresContext();
       if (oldStyleContext) {
-        RestyleManager::TryStartingTransition(presContext, aContent,
-                                              oldStyleContext, &result);
+        RestyleManager::TryInitiatingTransition(presContext, aContent,
+                                                oldStyleContext, &result);
       } else if (aContent->IsElement()) {
         presContext->TransitionManager()->
           PruneCompletedTransitions(aContent->AsElement(),
@@ -5897,10 +5949,23 @@ nsCSSFrameConstructor::AddFrameConstructionItemsInternal(nsFrameConstructorState
     return;
   }
 
-  FrameConstructionItem* item =
-    aItems.AppendItem(data, aContent, aTag, aNameSpaceID,
-                      pendingBinding, styleContext.forget(),
-                      aSuppressWhiteSpaceOptimizations, aAnonChildren);
+  FrameConstructionItem* item = nullptr;
+  if (details && details->IsDetailsEnabled() && details->Open()) {
+    auto* summary = HTMLSummaryElement::FromContentOrNull(aContent);
+    if (summary && summary->IsMainSummary()) {
+      // If details is open, the main summary needs to be rendered as if it is
+      // the first child, so add the item to the front of the item list.
+      item = aItems.PrependItem(data, aContent, aTag, aNameSpaceID,
+                                pendingBinding, styleContext.forget(),
+                                aSuppressWhiteSpaceOptimizations, aAnonChildren);
+    }
+  }
+
+  if (!item) {
+    item = aItems.AppendItem(data, aContent, aTag, aNameSpaceID,
+                             pendingBinding, styleContext.forget(),
+                             aSuppressWhiteSpaceOptimizations, aAnonChildren);
+  }
   item->mIsText = isText;
   item->mIsGeneratedContent = isGeneratedContent;
   item->mIsAnonymousContentCreatorContent =
@@ -9819,19 +9884,21 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
   FrameConstructionItemList& aItems,
   nsIFrame* aParentFrame)
 {
-  if (aItems.IsEmpty() ||
-      !::IsFlexOrGridContainer(aParentFrame)) {
+  if (aItems.IsEmpty()) {
+    return;
+  }
+  const nsIAtom* parentType = aParentFrame->GetType();
+  if (parentType != nsGkAtoms::flexContainerFrame &&
+      parentType != nsGkAtoms::gridContainerFrame) {
     return;
   }
 
-  nsIAtom* containerType = aParentFrame->GetType();
-  const bool isWebkitBox = nsFlexContainerFrame::IsLegacyBox(aParentFrame);
-
+  const bool isWebkitBox = IsFlexContainerForLegacyBox(aParentFrame,
+                                                       parentType);
   FCItemIterator iter(aItems);
   do {
     // Advance iter past children that don't want to be wrapped
-    if (iter.SkipItemsThatDontNeedAnonFlexOrGridItem(aState, containerType,
-                                                     isWebkitBox)) {
+    if (iter.SkipItemsThatDontNeedAnonFlexOrGridItem(aState, isWebkitBox)) {
       // Hit the end of the items without finding any remaining children that
       // need to be wrapped. We're finished!
       return;
@@ -9854,9 +9921,7 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
       bool hitEnd = afterWhitespaceIter.SkipWhitespace(aState);
       bool nextChildNeedsAnonItem =
         !hitEnd &&
-        afterWhitespaceIter.item().NeedsAnonFlexOrGridItem(aState,
-                                                           containerType,
-                                                           isWebkitBox);
+        afterWhitespaceIter.item().NeedsAnonFlexOrGridItem(aState, isWebkitBox);
 
       if (!nextChildNeedsAnonItem) {
         // There's nothing after the whitespace that we need to wrap, so we
@@ -9870,8 +9935,7 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
         // we jump back to the beginning of the loop to skip over that child
         // (and anything else non-wrappable after it)
         MOZ_ASSERT(!iter.IsDone() &&
-                   !iter.item().NeedsAnonFlexOrGridItem(aState, containerType,
-                                                        isWebkitBox),
+                   !iter.item().NeedsAnonFlexOrGridItem(aState, isWebkitBox),
                    "hitEnd and/or nextChildNeedsAnonItem lied");
         continue;
       }
@@ -9881,15 +9945,14 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
     // anonymous flex/grid item. Now we see how many children after it also want
     // to be wrapped in an anonymous flex/grid item.
     FCItemIterator endIter(iter); // iterator to find the end of the group
-    endIter.SkipItemsThatNeedAnonFlexOrGridItem(aState, containerType,
-                                                isWebkitBox);
+    endIter.SkipItemsThatNeedAnonFlexOrGridItem(aState, isWebkitBox);
 
     NS_ASSERTION(iter != endIter,
                  "Should've had at least one wrappable child to seek past");
 
     // Now, we create the anonymous flex or grid item to contain the children
     // between |iter| and |endIter|.
-    nsIAtom* pseudoType = containerType == nsGkAtoms::flexContainerFrame ?
+    nsIAtom* pseudoType = (aParentFrame->GetType() == nsGkAtoms::flexContainerFrame) ?
       nsCSSAnonBoxes::anonymousFlexItem : nsCSSAnonBoxes::anonymousGridItem;
     nsStyleContext* parentStyle = aParentFrame->StyleContext();
     nsIContent* parentContent = aParentFrame->GetContent();
@@ -10485,17 +10548,38 @@ void nsCSSFrameConstructor::CreateNeededPseudoSiblings(
 }
 
 #ifdef DEBUG
+/**
+ * Returns true iff aFrame should be wrapped in an anonymous flex/grid item,
+ * rather than being a direct child of aContainerFrame.
+ *
+ * NOTE: aContainerFrame must be a flex or grid container - this function is
+ * purely for sanity-checking the children of these container types.
+ * NOTE: See also NeedsAnonFlexOrGridItem(), for the non-debug version of this
+ * logic (which operates a bit earlier, on FCData instead of frames).
+ */
 static bool
-FrameWantsToBeInAnonymousItem(const nsIAtom* aParentType, const nsIFrame* aFrame)
+FrameWantsToBeInAnonymousItem(const nsIFrame* aContainerFrame,
+                              const nsIFrame* aFrame)
 {
-  // Note: This needs to match the logic in
-  // nsCSSFrameConstructor::FrameConstructionItem::NeedsAnonFlexOrGridItem()
-  if (aParentType == nsGkAtoms::gridContainerFrame) {
-    return aFrame->IsFrameOfType(nsIFrame::eLineParticipant);
+  nsIAtom* containerType = aContainerFrame->GetType();
+  MOZ_ASSERT(containerType == nsGkAtoms::flexContainerFrame ||
+             containerType == nsGkAtoms::gridContainerFrame);
+
+  // Any line-participant frames (e.g. text) definitely want to be wrapped in
+  // an anonymous flex/grid item.
+  if (aFrame->IsFrameOfType(nsIFrame::eLineParticipant)) {
+    return true;
   }
-  MOZ_ASSERT(aParentType == nsGkAtoms::flexContainerFrame);
-  return aFrame->IsFrameOfType(nsIFrame::eLineParticipant) ||
-         aFrame->GetType() == nsGkAtoms::placeholderFrame;
+
+  // If the container is a -webkit-box/-webkit-inline-box, then placeholders
+  // also need to be wrapped, for compatibility.
+  if (containerType == nsGkAtoms::flexContainerFrame &&
+      aContainerFrame->HasAnyStateBits(NS_STATE_FLEX_IS_LEGACY_WEBKIT_BOX) &&
+      aFrame->GetType() == nsGkAtoms::placeholderFrame) {
+    return true;
+  }
+
+  return false;
 }
 #endif
 
@@ -10512,7 +10596,7 @@ VerifyGridFlexContainerChildren(nsIFrame* aParentFrame,
 
   bool prevChildWasAnonItem = false;
   for (const nsIFrame* child : aChildren) {
-    MOZ_ASSERT(!FrameWantsToBeInAnonymousItem(parentType, child),
+    MOZ_ASSERT(!FrameWantsToBeInAnonymousItem(aParentFrame, child),
                "frame wants to be inside an anonymous item, but it isn't");
     if (IsAnonymousFlexOrGridItem(child)) {
       AssertAnonymousFlexOrGridItemParent(child, aParentFrame);
@@ -10591,13 +10675,14 @@ nsCSSFrameConstructor::AddFCItemsForAnonymousContent(
       // This happens when a native anonymous node is used to implement a
       // pseudo-element. Allowing Servo to traverse these nodes would be wasted
       // work, so assert that we didn't do that.
-      MOZ_ASSERT_IF(content->IsStyledByServo(), !content->ServoData());
+      MOZ_ASSERT_IF(content->IsStyledByServo(), !content->HasServoData());
       styleContext = aAnonymousItems[i].mStyleContext.forget();
     } else {
       // If we don't have an explicit style context, that means we need the
       // ordinary computed values. Make sure we eagerly cascaded them when the
       // anonymous nodes were created.
-      MOZ_ASSERT_IF(content->IsStyledByServo(), !!content->ServoData());
+      MOZ_ASSERT_IF(content->IsStyledByServo() && content->IsElement(),
+                    content->HasServoData());
       styleContext = ResolveStyleContext(aFrame, content, &aState);
     }
 
@@ -12125,16 +12210,16 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
   // Situation #2 is a flex or grid container frame into which we're inserting
   // new inline non-replaced children, adjacent to an existing anonymous
   // flex or grid item.
-  if (::IsFlexOrGridContainer(aFrame)) {
+  nsIAtom* frameType = aFrame->GetType();
+  if (frameType == nsGkAtoms::flexContainerFrame ||
+      frameType == nsGkAtoms::gridContainerFrame) {
     FCItemIterator iter(aItems);
 
     // Check if we're adding to-be-wrapped content right *after* an existing
     // anonymous flex or grid item (which would need to absorb this content).
-    nsIAtom* containerType = aFrame->GetType();
-    const bool isWebkitBox = nsFlexContainerFrame::IsLegacyBox(aFrame);
+    const bool isWebkitBox = IsFlexContainerForLegacyBox(aFrame, frameType);
     if (aPrevSibling && IsAnonymousFlexOrGridItem(aPrevSibling) &&
-        iter.item().NeedsAnonFlexOrGridItem(aState, containerType,
-                                            isWebkitBox)) {
+        iter.item().NeedsAnonFlexOrGridItem(aState, isWebkitBox)) {
       RecreateFramesForContent(aFrame->GetContent(), true,
                                REMOVE_FOR_RECONSTRUCTION, nullptr);
       return true;
@@ -12146,8 +12231,7 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
       // Jump to the last entry in the list
       iter.SetToEnd();
       iter.Prev();
-      if (iter.item().NeedsAnonFlexOrGridItem(aState, containerType,
-                                              isWebkitBox)) {
+      if (iter.item().NeedsAnonFlexOrGridItem(aState, isWebkitBox)) {
         RecreateFramesForContent(aFrame->GetContent(), true,
                                  REMOVE_FOR_RECONSTRUCTION, nullptr);
         return true;
@@ -12173,9 +12257,9 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
     // Skip over things that _do_ need an anonymous flex item, because
     // they're perfectly happy to go here -- they won't cause a reframe.
     nsIFrame* containerFrame = aFrame->GetParent();
-    const bool isWebkitBox = nsFlexContainerFrame::IsLegacyBox(containerFrame);
+    const bool isWebkitBox =
+      IsFlexContainerForLegacyBox(containerFrame, containerFrame->GetType());
     if (!iter.SkipItemsThatNeedAnonFlexOrGridItem(aState,
-                                                  containerFrame->GetType(),
                                                   isWebkitBox)) {
       // We hit something that _doesn't_ need an anonymous flex item!
       // Rebuild the flex container to bust it out.
@@ -12198,7 +12282,6 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
   //    their sibling changes.
   // 2) The first effective child of a ruby frame must always be a ruby
   //    base container. It should be created or destroyed accordingly.
-  nsIAtom* frameType = aFrame->GetType();
   if (IsRubyPseudo(aFrame) ||
       frameType == nsGkAtoms::rubyFrame ||
       RubyUtils::IsRubyContainerBox(frameType)) {
@@ -12634,7 +12717,6 @@ Iterator::SkipItemsNotWantingParentType(ParentType aParentType)
 bool
 nsCSSFrameConstructor::FrameConstructionItem::
   NeedsAnonFlexOrGridItem(const nsFrameConstructorState& aState,
-                          nsIAtom* aContainerType,
                           bool aIsWebkitBox)
 {
   if (mFCData->mBits & FCDATA_IS_LINE_PARTICIPANT) {
@@ -12642,21 +12724,20 @@ nsCSSFrameConstructor::FrameConstructionItem::
     return true;
   }
 
-  // Bug 874718: Flex containers still wrap placeholders; Grid containers don't.
-  if (aContainerType == nsGkAtoms::flexContainerFrame &&
-      !(mFCData->mBits & FCDATA_DISALLOW_OUT_OF_FLOW) &&
-      aState.GetGeometricParent(mStyleContext->StyleDisplay(), nullptr)) {
-    // We're abspos or fixedpos, which means we'll spawn a placeholder which
-    // we'll need to wrap in an anonymous flex item.  So, we just treat
-    // _this_ frame as if _it_ needs to be wrapped in an anonymous flex item,
-    // and then when we spawn the placeholder, it'll end up in the right spot.
-    return true;
-  }
-
-  if (aIsWebkitBox &&
-      mStyleContext->StyleDisplay()->IsInlineOutsideStyle()) {
-    // In a -webkit-box, all inline-level content gets wrapped in an anon item.
-    return true;
+  if (aIsWebkitBox) {
+    if (mStyleContext->StyleDisplay()->IsInlineOutsideStyle()) {
+      // In a -webkit-box, all inline-level content gets wrapped in anon item.
+      return true;
+    }
+    if (!(mFCData->mBits & FCDATA_DISALLOW_OUT_OF_FLOW) &&
+        aState.GetGeometricParent(mStyleContext->StyleDisplay(), nullptr)) {
+      // We're abspos or fixedpos, which means we'll spawn a placeholder which
+      // (because our container is a -webkit-box) we'll need to wrap in an
+      // anonymous flex item.  So, we just treat _this_ frame as if _it_ needs
+      // to be wrapped in an anonymous flex item, and then when we spawn the
+      // placeholder, it'll end up in the right spot.
+      return true;
+    }
   }
 
   return false;
@@ -12666,12 +12747,10 @@ inline bool
 nsCSSFrameConstructor::FrameConstructionItemList::
 Iterator::SkipItemsThatNeedAnonFlexOrGridItem(
   const nsFrameConstructorState& aState,
-  nsIAtom* aContainerType,
   bool aIsWebkitBox)
 {
   NS_PRECONDITION(!IsDone(), "Shouldn't be done yet");
-  while (item().NeedsAnonFlexOrGridItem(aState, aContainerType,
-                                        aIsWebkitBox)) {
+  while (item().NeedsAnonFlexOrGridItem(aState, aIsWebkitBox)) {
     Next();
     if (IsDone()) {
       return true;
@@ -12684,12 +12763,10 @@ inline bool
 nsCSSFrameConstructor::FrameConstructionItemList::
 Iterator::SkipItemsThatDontNeedAnonFlexOrGridItem(
   const nsFrameConstructorState& aState,
-  nsIAtom* aContainerType,
   bool aIsWebkitBox)
 {
   NS_PRECONDITION(!IsDone(), "Shouldn't be done yet");
-  while (!(item().NeedsAnonFlexOrGridItem(aState, aContainerType,
-                                          aIsWebkitBox))) {
+  while (!(item().NeedsAnonFlexOrGridItem(aState, aIsWebkitBox))) {
     Next();
     if (IsDone()) {
       return true;
@@ -12735,10 +12812,10 @@ Iterator::AppendItemToList(FrameConstructionItemList& aTargetList)
   NS_ASSERTION(&aTargetList != &mList, "Unexpected call");
   NS_PRECONDITION(!IsDone(), "should not be done");
 
-  FrameConstructionItem* item = ToItem(mCurrent);
+  FrameConstructionItem* item = mCurrent;
   Next();
-  PR_REMOVE_LINK(item);
-  PR_APPEND_LINK(item, &aTargetList.mItems);
+  item->remove();
+  aTargetList.mItems.insertBack(item);
 
   mList.AdjustCountsForItem(item, -1);
   aTargetList.AdjustCountsForItem(item, 1);
@@ -12750,7 +12827,7 @@ Iterator::AppendItemsToList(const Iterator& aEnd,
                             FrameConstructionItemList& aTargetList)
 {
   NS_ASSERTION(&aTargetList != &mList, "Unexpected call");
-  NS_PRECONDITION(mEnd == aEnd.mEnd, "end iterator for some other list?");
+  NS_PRECONDITION(&mList == &aEnd.mList, "End iterator for some other list?");
 
   // We can't just move our guts to the other list if it already has
   // some information or if we're not moving our entire list.
@@ -12762,10 +12839,8 @@ Iterator::AppendItemsToList(const Iterator& aEnd,
     return;
   }
 
-  // move over the list of items
-  PR_INSERT_AFTER(&aTargetList.mItems, &mList.mItems);
-  // Need to init when we remove to makd ~FrameConstructionItemList work right.
-  PR_REMOVE_AND_INIT_LINK(&mList.mItems);
+  // Move our entire list of items into the empty target list.
+  aTargetList.mItems = Move(mList.mItems);
 
   // Copy over the various counters
   aTargetList.mInlineCount = mList.mInlineCount;
@@ -12783,7 +12858,7 @@ Iterator::AppendItemsToList(const Iterator& aEnd,
   new (&mList) FrameConstructionItemList();
 
   // Point ourselves to aEnd, as advertised
-  mCurrent = mEnd = &mList.mItems;
+  SetToEnd();
   NS_POSTCONDITION(*this == aEnd, "How did that happen?");
 }
 
@@ -12791,25 +12866,29 @@ void
 nsCSSFrameConstructor::FrameConstructionItemList::
 Iterator::InsertItem(FrameConstructionItem* aItem)
 {
-  // Just insert the item before us.  There's no magic here.
-  PR_INSERT_BEFORE(aItem, mCurrent);
+  if (IsDone()) {
+    mList.mItems.insertBack(aItem);
+  } else {
+    // Just insert the item before us.  There's no magic here.
+    mCurrent->setPrevious(aItem);
+  }
   mList.AdjustCountsForItem(aItem, 1);
 
-  NS_POSTCONDITION(PR_NEXT_LINK(aItem) == mCurrent, "How did that happen?");
+  NS_POSTCONDITION(aItem->getNext() == mCurrent, "How did that happen?");
 }
 
 void
 nsCSSFrameConstructor::FrameConstructionItemList::
 Iterator::DeleteItemsTo(const Iterator& aEnd)
 {
-  NS_PRECONDITION(mEnd == aEnd.mEnd, "end iterator for some other list?");
+  NS_PRECONDITION(&mList == &aEnd.mList, "End iterator for some other list?");
   NS_PRECONDITION(*this != aEnd, "Shouldn't be at aEnd yet");
 
   do {
     NS_ASSERTION(!IsDone(), "Ran off end of list?");
-    FrameConstructionItem* item = ToItem(mCurrent);
+    FrameConstructionItem* item = mCurrent;
     Next();
-    PR_REMOVE_LINK(item);
+    item->remove();
     mList.AdjustCountsForItem(item, -1);
     delete item;
   } while (*this != aEnd);

@@ -80,6 +80,7 @@ class ObjOperandId : public OperandId
 
 #define CACHE_IR_OPS(_)                   \
     _(GuardIsObject)                      \
+    _(GuardType)                          \
     _(GuardShape)                         \
     _(GuardGroup)                         \
     _(GuardProto)                         \
@@ -90,7 +91,6 @@ class ObjOperandId : public OperandId
     _(GuardAndLoadUnboxedExpando)         \
     _(LoadObject)                         \
     _(LoadProto)                          \
-    _(LoadUnboxedExpando)                 \
     _(LoadFixedSlotResult)                \
     _(LoadDynamicSlotResult)              \
     _(LoadUnboxedPropertyResult)          \
@@ -247,6 +247,11 @@ class MOZ_RAII CacheIRWriter
         writeOpWithOperandId(CacheOp::GuardIsObject, val);
         return ObjOperandId(val.id());
     }
+    void guardType(ValOperandId val, JSValueType type) {
+        writeOpWithOperandId(CacheOp::GuardType, val);
+        static_assert(sizeof(type) == sizeof(uint8_t), "JSValueType should fit in a byte");
+        buffer_.writeByte(uint32_t(type));
+    }
     void guardShape(ObjOperandId obj, Shape* shape) {
         writeOpWithOperandId(CacheOp::GuardShape, obj);
         addStubWord(uintptr_t(shape), StubField::GCType::Shape);
@@ -290,12 +295,6 @@ class MOZ_RAII CacheIRWriter
     ObjOperandId loadProto(ObjOperandId obj) {
         ObjOperandId res(nextOperandId_++);
         writeOpWithOperandId(CacheOp::LoadProto, obj);
-        writeOperandId(res);
-        return res;
-    }
-    ObjOperandId loadUnboxedExpando(ObjOperandId obj) {
-        ObjOperandId res(nextOperandId_++);
-        writeOpWithOperandId(CacheOp::LoadUnboxedExpando, obj);
         writeOperandId(res);
         return res;
     }
@@ -421,6 +420,8 @@ class MOZ_RAII GetPropIRGenerator
                                             ObjOperandId objId);
     MOZ_MUST_USE bool tryAttachModuleNamespace(CacheIRWriter& writer, HandleObject obj,
                                                ObjOperandId objId);
+
+    MOZ_MUST_USE bool tryAttachPrimitive(CacheIRWriter& writer, ValOperandId valId);
 
     GetPropIRGenerator(const GetPropIRGenerator&) = delete;
     GetPropIRGenerator& operator=(const GetPropIRGenerator&) = delete;

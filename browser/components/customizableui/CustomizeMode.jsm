@@ -42,7 +42,6 @@ let gDebug;
 XPCOMUtils.defineLazyGetter(this, "log", () => {
   let scope = {};
   Cu.import("resource://gre/modules/Console.jsm", scope);
-  let ConsoleAPI = scope.ConsoleAPI;
   try {
     gDebug = Services.prefs.getBoolPref(kPrefCustomizationDebug);
   } catch (ex) {}
@@ -149,14 +148,12 @@ CustomizeMode.prototype = {
     }
   },
 
-  swatchForTheme: function(aDocument) {
-   let lwthemeButton = aDocument.getElementById("customization-lwtheme-button");
-   let lwthemeIcon = aDocument.getAnonymousElementByAttribute(lwthemeButton,
-          "class", "button-icon");
-   let imageURL = LightweightThemeManager.currentTheme === null ?
-          "chrome://browser/skin/theme-switcher-icon.png" :
-          LightweightThemeManager.currentTheme.iconURL;
-    lwthemeIcon.style.backgroundImage = "url(" + imageURL + ")";
+  _updateLWThemeButtonIcon: function() {
+    let lwthemeButton = this.document.getElementById("customization-lwtheme-button");
+    let lwthemeIcon = this.document.getAnonymousElementByAttribute(lwthemeButton,
+                        "class", "button-icon");
+    lwthemeIcon.style.backgroundImage = LightweightThemeManager.currentTheme ?
+      "url(" + LightweightThemeManager.currentTheme.iconURL + ")" : "";
   },
 
   setTab: function(aTab) {
@@ -248,7 +245,6 @@ CustomizeMode.prototype = {
 
       let toolbarVisibilityBtn = document.getElementById(kToolbarVisibilityBtn);
       let togglableToolbars = window.getTogglableToolbars();
-      let bookmarksToolbar = document.getElementById("PersonalToolbar");
       if (togglableToolbars.length == 0) {
         toolbarVisibilityBtn.setAttribute("hidden", "true");
       } else {
@@ -358,7 +354,7 @@ CustomizeMode.prototype = {
       }, 0);
       this._updateEmptyPaletteNotice();
 
-      this.swatchForTheme(document);
+      this._updateLWThemeButtonIcon();
       this.maybeShowTip(panelHolder);
 
       this._handler.isEnteringCustomizeMode = false;
@@ -429,7 +425,6 @@ CustomizeMode.prototype = {
 
     let window = this.window;
     let document = this.document;
-    let documentElement = document.documentElement;
 
     // Hide the palette before starting the transition for increased perf.
     this.visiblePalette.hidden = true;
@@ -806,7 +801,7 @@ CustomizeMode.prototype = {
     }
   },
 
-  //XXXunf Maybe this should use -moz-element instead of wrapping the node?
+  // XXXunf Maybe this should use -moz-element instead of wrapping the node?
   //       Would ensure no weird interactions/event handling from original node,
   //       and makes it possible to put this in a lazy-loaded iframe/real tab
   //       while still getting rid of the need for overlays.
@@ -839,12 +834,12 @@ CustomizeMode.prototype = {
             yield this.deferredUnwrapToolbarItem(paletteChild);
           this._stowedPalette.appendChild(unwrappedPaletteItem);
         } else if (provider == CustomizableUI.PROVIDER_API) {
-          //XXXunf Currently this doesn't destroy the (now unused) node. It would
+          // XXXunf Currently this doesn't destroy the (now unused) node. It would
           //       be good to do so, but we need to keep strong refs to it in
           //       CustomizableUI (can't iterate of WeakMaps), and there's the
           //       question of what behavior wrappers should have if consumers
           //       keep hold of them.
-          //widget.destroyInstance(widgetNode);
+          // widget.destroyInstance(widgetNode);
         } else if (provider == CustomizableUI.PROVIDER_SPECIAL) {
           this.visiblePalette.removeChild(paletteChild);
         }
@@ -1027,7 +1022,7 @@ CustomizeMode.prototype = {
       let commandID = aWrapper.getAttribute("itemcommand");
       toolbarItem.setAttribute("command", commandID);
 
-      //XXX Bug 309953 - toolbarbuttons aren't in sync with their commands after customizing
+      // XXX Bug 309953 - toolbarbuttons aren't in sync with their commands after customizing
       let command = this.document.getElementById(commandID);
       if (command && command.hasAttribute("disabled")) {
         toolbarItem.setAttribute("disabled", command.getAttribute("disabled"));
@@ -1177,7 +1172,7 @@ CustomizeMode.prototype = {
 
       CustomizableUI.reset();
 
-      this.swatchForTheme(this.document);
+      this._updateLWThemeButtonIcon();
 
       yield this._wrapToolbarItems();
       this.populatePalette();
@@ -1205,7 +1200,7 @@ CustomizeMode.prototype = {
 
       CustomizableUI.undoReset();
 
-      this.swatchForTheme(this.document);
+      this._updateLWThemeButtonIcon();
 
       yield this._wrapToolbarItems();
       this.populatePalette();
@@ -1347,7 +1342,7 @@ CustomizeMode.prototype = {
     const DEFAULT_THEME_ID = "{972ce4c6-7e08-4474-a285-3208198ce6fd}";
     const RECENT_LWT_COUNT = 5;
 
-    this.resetLWThemesMenu(aEvent.target);
+    this._clearLWThemesMenu(aEvent.target);
 
     function previewTheme(aEvent) {
       LightweightThemeManager.previewTheme(aEvent.target.theme.id != DEFAULT_THEME_ID ?
@@ -1357,6 +1352,12 @@ CustomizeMode.prototype = {
     function resetPreview() {
       LightweightThemeManager.resetPreview();
     }
+
+    let onThemeSelected = panel => {
+      this._updateLWThemeButtonIcon();
+      this._onUIChange();
+      panel.hidePopup();
+    };
 
     AddonManager.getAddonByID(DEFAULT_THEME_ID, function(aDefaultTheme) {
       let doc = this.window.document;
@@ -1402,19 +1403,17 @@ CustomizeMode.prototype = {
 
       let footer = doc.getElementById("customization-lwtheme-menu-footer");
       let panel = footer.parentNode;
-      let themesInMyThemesSection = 0;
       let recommendedLabel = doc.getElementById("customization-lwtheme-menu-recommended");
       for (let theme of themes) {
-        let tbb = buildToolbarButton(theme);
-        tbb.addEventListener("command", function() {
-          if ("userDisabled" in this.theme)
-            this.theme.userDisabled = false;
+        let button = buildToolbarButton(theme);
+        button.addEventListener("command", () => {
+          if ("userDisabled" in button.theme)
+            button.theme.userDisabled = false;
           else
-            LightweightThemeManager.currentTheme = this.theme;
-          this.parentNode.hidePopup();
+            LightweightThemeManager.currentTheme = button.theme;
+          onThemeSelected(panel);
         });
-        panel.insertBefore(tbb, recommendedLabel);
-        themesInMyThemesSection++;
+        panel.insertBefore(button, recommendedLabel);
       }
 
       let lwthemePrefs = Services.prefs.getBranch("lightweightThemes.");
@@ -1425,40 +1424,36 @@ CustomizeMode.prototype = {
       for (let theme of recommendedThemes) {
         theme.name = sb.GetStringFromName("lightweightThemes." + theme.id + ".name");
         theme.description = sb.GetStringFromName("lightweightThemes." + theme.id + ".description");
-        let tbb = buildToolbarButton(theme);
-        tbb.addEventListener("command", function() {
-          LightweightThemeManager.setLocalTheme(this.theme);
-          recommendedThemes = recommendedThemes.filter((aTheme) => { return aTheme.id != this.theme.id; });
+        let button = buildToolbarButton(theme);
+        button.addEventListener("command", () => {
+          LightweightThemeManager.setLocalTheme(button.theme);
+          recommendedThemes = recommendedThemes.filter((aTheme) => { return aTheme.id != button.theme.id; });
           let string = Cc["@mozilla.org/supports-string;1"]
                          .createInstance(Ci.nsISupportsString);
           string.data = JSON.stringify(recommendedThemes);
           lwthemePrefs.setComplexValue("recommendedThemes",
                                        Ci.nsISupportsString, string);
-          this.parentNode.hidePopup();
+          onThemeSelected(panel);
         });
-        panel.insertBefore(tbb, footer);
+        panel.insertBefore(button, footer);
       }
       let hideRecommendedLabel = (footer.previousSibling == recommendedLabel);
       recommendedLabel.hidden = hideRecommendedLabel;
     }.bind(this));
   },
 
-  resetLWThemesMenu: function(target) {
-    let doc = target.ownerDocument;
-    let footer = doc.getElementById("customization-lwtheme-menu-footer");
-    let recommendedLabel = doc.getElementById("customization-lwtheme-menu-recommended");
-    this.swatchForTheme(doc);
+  _clearLWThemesMenu: function(panel) {
+    let footer = this.document.getElementById("customization-lwtheme-menu-footer");
+    let recommendedLabel = this.document.getElementById("customization-lwtheme-menu-recommended");
     for (let element of [footer, recommendedLabel]) {
       while (element.previousSibling &&
              element.previousSibling.localName == "toolbarbutton") {
         element.previousSibling.remove();
       }
     }
-    target.removeAttribute("height");
 
-    if (LightweightThemeManager.currentTheme) {
-      this._onUIChange();
-    }
+    // Workaround for bug 1059934
+    panel.removeAttribute("height");
   },
 
   _onUIChange: function() {
@@ -2261,7 +2256,7 @@ CustomizeMode.prototype = {
       while (placeholders-- > currentPlaceholderCount) {
         let placeholder = doc.createElement("toolbarpaletteitem");
         placeholder.classList.add(kPlaceholderClass);
-        //XXXjaws The toolbarbutton child here is only necessary to get
+        // XXXjaws The toolbarbutton child here is only necessary to get
         //  the styling right here.
         let placeholderChild = doc.createElement("toolbarbutton");
         placeholderChild.classList.add(kPlaceholderClass + "-child");

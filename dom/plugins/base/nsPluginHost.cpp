@@ -296,6 +296,12 @@ nsPluginHost::nsPluginHost()
   // this manually.
   if (XRE_IsParentProcess()) {
     IncrementChromeEpoch();
+  } else {
+    // When NPAPI requests the proxy setting by calling |FindProxyForURL|,
+    // the service is requested and initialized asynchronously, but
+    // |FindProxyForURL| is synchronous, so we should initialize this earlier.
+    nsCOMPtr<nsIProtocolProxyService> proxyService =
+      do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID);
   }
 
   // check to see if pref is set at startup to let plugins take over in
@@ -2042,8 +2048,9 @@ struct CompareFilesByTime
 bool
 nsPluginHost::ShouldAddPlugin(nsPluginTag* aPluginTag)
 {
-// allow all plugins to run
+#if defined(XP_WIN) && (defined(__x86_64__) || defined(_M_X64))
   return true;
+#endif // defined(XP_WIN) && (defined(__x86_64__) || defined(_M_X64))
 }
 
 void
@@ -2335,7 +2342,7 @@ WatchRegKey(uint32_t aRoot, nsCOMPtr<nsIWindowsRegKey>& aKey)
   nsresult rv = aKey->Open(aRoot,
                            NS_LITERAL_STRING("Software\\MozillaPlugins"),
                            nsIWindowsRegKey::ACCESS_READ | nsIWindowsRegKey::ACCESS_NOTIFY);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
     aKey = nullptr;
     return;
   }

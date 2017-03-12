@@ -58,11 +58,13 @@ class APZEventState;
 class CompositorSession;
 class ImageContainer;
 struct ScrollableLayerGuid;
+class RemoteCompositorSession;
 } // namespace layers
 
 namespace widget {
 class CompositorWidgetDelegate;
 class InProcessCompositorWidget;
+class WidgetRenderingContext;
 } // namespace widget
 
 class CompositorVsyncDispatcher;
@@ -111,6 +113,7 @@ class nsBaseWidget : public nsIWidget, public nsSupportsWeakReference
   friend class nsAutoRollup;
   friend class DispatchWheelEventOnMainThread;
   friend class mozilla::widget::InProcessCompositorWidget;
+  friend class mozilla::layers::RemoteCompositorSession;
 
 protected:
   typedef base::Thread Thread;
@@ -183,6 +186,7 @@ public:
                                            uint16_t aDuration,
                                            nsISupports* aData,
                                            nsIRunnable* aCallback) override;
+  virtual already_AddRefed<nsIScreen> GetWidgetScreen() override;
   virtual nsresult        MakeFullScreen(bool aFullScreen,
                                          nsIScreen* aScreen = nullptr) override;
   void                    InfallibleMakeFullScreen(bool aFullScreen,
@@ -191,6 +195,14 @@ public:
   virtual LayerManager*   GetLayerManager(PLayerTransactionChild* aShadowManager = nullptr,
                                           LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                                           LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT) override;
+
+  // A remote compositor session tied to this window has been lost and IPC
+  // messages will no longer work. The widget must clean up any lingering
+  // resources and possibly schedule another paint.
+  //
+  // A reference to the session object is held until this function has
+  // returned.
+  void NotifyRemoteCompositorSessionLost(mozilla::layers::CompositorSession* aSession);
 
   mozilla::CompositorVsyncDispatcher* GetCompositorVsyncDispatcher();
   void            CreateCompositorVsyncDispatcher();
@@ -264,7 +276,8 @@ public:
                             const mozilla::WidgetKeyboardEvent& aEvent,
                             DoCommandCallback aCallback,
                             void* aCallbackData) override { return false; }
-  virtual bool            ComputeShouldAccelerate();
+  bool                    ComputeShouldAccelerate();
+  virtual bool            WidgetTypeSupportsAcceleration() { return true; }
   virtual nsIMEUpdatePreference GetIMEUpdatePreference() override { return nsIMEUpdatePreference(); }
   NS_IMETHOD              OnDefaultButtonLoaded(const LayoutDeviceIntRect& aButtonRect) override { return NS_ERROR_NOT_IMPLEMENTED; }
   virtual already_AddRefed<nsIWidget>
@@ -330,9 +343,6 @@ public:
     return aClientSize;
   }
 
-  // return the screen the widget is in.
-  already_AddRefed<nsIScreen> GetWidgetScreen();
-
   // return true if this is a popup widget with a native titlebar
   bool IsPopupWithTitleBar() const
   {
@@ -384,15 +394,15 @@ protected:
   // These are methods for CompositorWidgetWrapper, and should only be
   // accessed from that class. Derived widgets can choose which methods to
   // implement, or none if supporting out-of-process compositing.
-  virtual bool PreRender(mozilla::layers::LayerManagerComposite* aManager) {
+  virtual bool PreRender(mozilla::widget::WidgetRenderingContext* aContext) {
     return true;
   }
-  virtual void PostRender(mozilla::layers::LayerManagerComposite* aManager)
+  virtual void PostRender(mozilla::widget::WidgetRenderingContext* aContext)
   {}
-  virtual void DrawWindowUnderlay(mozilla::layers::LayerManagerComposite* aManager,
+  virtual void DrawWindowUnderlay(mozilla::widget::WidgetRenderingContext* aContext,
                                   LayoutDeviceIntRect aRect)
   {}
-  virtual void DrawWindowOverlay(mozilla::layers::LayerManagerComposite* aManager,
+  virtual void DrawWindowOverlay(mozilla::widget::WidgetRenderingContext* aContext,
                                  LayoutDeviceIntRect aRect)
   {}
   virtual already_AddRefed<DrawTarget> StartRemoteDrawing();

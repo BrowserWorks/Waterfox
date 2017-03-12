@@ -524,7 +524,7 @@ XPCWrappedNativeScope::SuspectAllWrappers(XPCJSContext* cx,
 
         if (cur->mDOMExpandoSet) {
             for (DOMExpandoSet::Range r = cur->mDOMExpandoSet->all(); !r.empty(); r.popFront())
-                SuspectDOMExpandos(r.front(), cb);
+                SuspectDOMExpandos(r.front().unbarrieredGet(), cb);
         }
     }
 }
@@ -575,42 +575,6 @@ XPCWrappedNativeScope::UpdateWeakPointersAfterGC(XPCJSContext* cx)
         cur = next;
     }
 }
-
-// static
-void
-XPCWrappedNativeScope::MarkAllWrappedNativesAndProtos()
-{
-    for (XPCWrappedNativeScope* cur = gScopes; cur; cur = cur->mNext) {
-        for (auto i = cur->mWrappedNativeMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<Native2WrappedNativeMap::Entry*>(i.Get());
-            entry->value->Mark();
-        }
-        // We need to explicitly mark all the protos too because some protos may be
-        // alive in the hashtable but not currently in use by any wrapper
-        for (auto i = cur->mWrappedNativeProtoMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<ClassInfo2WrappedNativeProtoMap::Entry*>(i.Get());
-            entry->value->Mark();
-        }
-    }
-}
-
-#ifdef DEBUG
-// static
-void
-XPCWrappedNativeScope::ASSERT_NoInterfaceSetsAreMarked()
-{
-    for (XPCWrappedNativeScope* cur = gScopes; cur; cur = cur->mNext) {
-        for (auto i = cur->mWrappedNativeMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<Native2WrappedNativeMap::Entry*>(i.Get());
-            entry->value->ASSERT_SetsNotMarked();
-        }
-        for (auto i = cur->mWrappedNativeProtoMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<ClassInfo2WrappedNativeProtoMap::Entry*>(i.Get());
-            entry->value->ASSERT_SetNotMarked();
-        }
-    }
-}
-#endif
 
 // static
 void
@@ -812,12 +776,12 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
     RootedValue whitelistVal(cx);
     nsresult rv = interposition->GetWhitelist(&whitelistVal);
     if (NS_FAILED(rv)) {
-        JS_ReportError(cx, "Could not get the whitelist from the interposition.");
+        JS_ReportErrorASCII(cx, "Could not get the whitelist from the interposition.");
         return false;
     }
 
     if (!whitelistVal.isObject()) {
-        JS_ReportError(cx, "Whitelist must be an array.");
+        JS_ReportErrorASCII(cx, "Whitelist must be an array.");
         return false;
     }
 
@@ -828,7 +792,7 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
     RootedObject whitelistObj(cx, &whitelistVal.toObject());
     whitelistObj = js::UncheckedUnwrap(whitelistObj);
     if (!AccessCheck::isChrome(whitelistObj)) {
-        JS_ReportError(cx, "Whitelist must be from system scope.");
+        JS_ReportErrorASCII(cx, "Whitelist must be from system scope.");
         return false;
     }
 
@@ -840,7 +804,7 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
             return false;
 
         if (!isArray) {
-            JS_ReportError(cx, "Whitelist must be an array.");
+            JS_ReportErrorASCII(cx, "Whitelist must be an array.");
             return false;
         }
 
@@ -854,14 +818,14 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
                 return false;
 
             if (!idval.isString()) {
-                JS_ReportError(cx, "Whitelist must contain strings only.");
+                JS_ReportErrorASCII(cx, "Whitelist must contain strings only.");
                 return false;
             }
 
             RootedString str(cx, idval.toString());
             str = JS_AtomizeAndPinJSString(cx, str);
             if (!str) {
-                JS_ReportError(cx, "String internization failed.");
+                JS_ReportErrorASCII(cx, "String internization failed.");
                 return false;
             }
 

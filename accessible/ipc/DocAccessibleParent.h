@@ -76,12 +76,11 @@ public:
 
   void Unbind()
   {
-    mParent = nullptr;
     if (DocAccessibleParent* parent = ParentDoc()) {
-      parent->mChildDocs.RemoveElement(this);
+      parent->RemoveChildDoc(this);
     }
 
-    mParentDoc = nullptr;
+    mParent = nullptr;
   }
 
   virtual bool RecvShutdown() override;
@@ -112,7 +111,7 @@ public:
    */
   void RemoveChildDoc(DocAccessibleParent* aChildDoc)
   {
-    aChildDoc->Parent()->SetChildDoc(nullptr);
+    aChildDoc->Parent()->ClearChildDoc(aChildDoc);
     mChildDocs.RemoveElement(aChildDoc);
     aChildDoc->mParentDoc = nullptr;
     MOZ_ASSERT(aChildDoc->mChildDocs.Length() == 0);
@@ -144,8 +143,10 @@ public:
     { return mChildDocs[aIdx]; }
 
 #if defined(XP_WIN)
-  virtual bool RecvCOMProxy(const IAccessibleHolder& aCOMProxy,
-                            IAccessibleHolder* aParentCOMProxy) override;
+  void SetCOMProxy(const RefPtr<IAccessible>& aCOMProxy);
+
+  virtual bool RecvGetWindowedPluginIAccessible(
+      const WindowsHandle& aHwnd, IAccessibleHolder* aPluginCOMProxy) override;
 #endif
 
 private:

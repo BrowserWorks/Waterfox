@@ -1491,29 +1491,6 @@ NS_NewNotificationCallbacksAggregation(nsIInterfaceRequestor  *callbacks,
     return NS_NewNotificationCallbacksAggregation(callbacks, loadGroup, nullptr, result);
 }
 
-bool
-NS_IsAppOffline(uint32_t appId)
-{
-    bool appOffline = false;
-    nsCOMPtr<nsIIOService> io(
-        do_GetService("@mozilla.org/network/io-service;1"));
-    if (io) {
-        io->IsAppOffline(appId, &appOffline);
-    }
-    return appOffline;
-}
-
-bool
-NS_IsAppOffline(nsIPrincipal *principal)
-{
-    if (!principal) {
-        return NS_IsOffline();
-    }
-    uint32_t appId = principal->GetAppId();
-
-    return NS_IsAppOffline(appId);
-}
-
 nsresult
 NS_DoImplGetInnermostURI(nsINestedURI *nestedURI, nsIURI **result)
 {
@@ -2405,6 +2382,18 @@ NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel)
     return NS_OK;
   }
 
+  // We skip the favicon loading here. The favicon loading might be
+  // triggered by the XUL image. For that case, the loadContext will have
+  // default originAttributes since the XUL image uses SystemPrincipal, but
+  // the loadInfo will use originAttributes from the content. Thus, the
+  // originAttributes between loadInfo and loadContext will be different.
+  // That's why we have to skip the comparison for the favicon loading.
+  if (nsContentUtils::IsSystemPrincipal(loadInfo->LoadingPrincipal()) &&
+      loadInfo->InternalContentPolicyType() ==
+        nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON) {
+    return NS_OK;
+  }
+
   uint32_t loadContextAppId = 0;
   nsresult rv = loadContext->GetAppId(&loadContextAppId);
   if (NS_FAILED(rv)) {
@@ -2421,21 +2410,12 @@ NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel)
   DocShellOriginAttributes originAttrsLoadContext;
   loadContext->GetOriginAttributes(originAttrsLoadContext);
 
-  bool loadInfoUsePB = loadInfo->GetUsePrivateBrowsing();
-  bool loadContextUsePB = false;
-  rv = loadContext->GetUsePrivateBrowsing(&loadContextUsePB);
-  if (NS_FAILED(rv)) {
-    return NS_ERROR_UNEXPECTED;
-  }
-
-  LOG(("NS_CompareLoadInfoAndLoadContext - loadInfo: %d, %d, %d, %d, %d; "
-       "loadContext: %d %d, %d, %d, %d. [channel=%p]",
+  LOG(("NS_CompareLoadInfoAndLoadContext - loadInfo: %d, %d, %d, %d; "
+       "loadContext: %d %d, %d, %d. [channel=%p]",
        originAttrsLoadInfo.mAppId, originAttrsLoadInfo.mInIsolatedMozBrowser,
        originAttrsLoadInfo.mUserContextId, originAttrsLoadInfo.mPrivateBrowsingId,
-       loadInfoUsePB,
        loadContextAppId, loadContextIsInBE,
        originAttrsLoadContext.mUserContextId, originAttrsLoadContext.mPrivateBrowsingId,
-       loadContextUsePB,
        aChannel));
 
   MOZ_ASSERT(originAttrsLoadInfo.mAppId == loadContextAppId,
@@ -2456,10 +2436,6 @@ NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel)
              originAttrsLoadContext.mPrivateBrowsingId,
              "The value of mPrivateBrowsingId in the loadContext and in the "
              "loadInfo are not the same!");
-
-  MOZ_ASSERT(loadInfoUsePB == loadContextUsePB,
-             "The value of usePrivateBrowsing in the loadContext and in the loadInfo "
-             "are not the same!");
 
   return NS_OK;
 }

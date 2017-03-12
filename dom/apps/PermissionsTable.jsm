@@ -121,11 +121,6 @@ this.PermissionsTable =  { geolocation: {
                              privileged: ALLOW_ACTION,
                              certified: ALLOW_ACTION
                            },
-                           telephony: {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
                            browser: {
                              app: DENY_ACTION,
                              privileged: ALLOW_ACTION,
@@ -137,16 +132,6 @@ this.PermissionsTable =  { geolocation: {
                              certified: ALLOW_ACTION
                            },
                            "browser:embedded-system-app": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           bluetooth: {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           mobileconnection: {
                              app: DENY_ACTION,
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
@@ -185,16 +170,6 @@ this.PermissionsTable =  { geolocation: {
                            permissions: {
                              app: DENY_ACTION,
                              privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           phonenumberservice: {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           fmradio: {
-                             app: DENY_ACTION,
-                             privileged: ALLOW_ACTION,
                              certified: ALLOW_ACTION
                            },
                            attention: {
@@ -238,11 +213,6 @@ this.PermissionsTable =  { geolocation: {
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
-                           "resourcestats-manage": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
                            "wifi-manage": {
                              app: DENY_ACTION,
                              privileged: DENY_ACTION,
@@ -251,11 +221,6 @@ this.PermissionsTable =  { geolocation: {
                            "systemXHR": {
                              app: DENY_ACTION,
                              privileged: ALLOW_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           "voicemail": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
                            "idle": {
@@ -273,17 +238,7 @@ this.PermissionsTable =  { geolocation: {
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
-                           "embed-widgets": {
-                             app: DENY_ACTION,
-                             privileged: ALLOW_ACTION,
-                             certified: ALLOW_ACTION
-                           },
                            "background-sensors": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           cellbroadcast: {
                              app: DENY_ACTION,
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
@@ -355,11 +310,6 @@ this.PermissionsTable =  { geolocation: {
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
-                           "wappush": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
                            "audio-capture": {
                              app: PROMPT_ACTION,
                              privileged: PROMPT_ACTION,
@@ -373,26 +323,6 @@ this.PermissionsTable =  { geolocation: {
                            "audio-capture:3gpp2": {
                              app: DENY_ACTION,
                              privileged: ALLOW_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           "nfc": {
-                             app: DENY_ACTION,
-                             privileged: ALLOW_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           "nfc-share": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           "nfc-manager": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           "nfc-hci-events": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
                            "speaker-control": {

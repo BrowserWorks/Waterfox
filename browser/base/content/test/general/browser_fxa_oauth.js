@@ -2,7 +2,6 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-///////////////////
 //
 // Whitelisting this test.
 // As part of bug 1077403, the leaking uncaught rejection should be fixed.
@@ -314,9 +313,9 @@ function test() {
     let newWhitelist = origWhitelist + " http://example.com";
     Services.prefs.setCharPref(webchannelWhitelistPref, newWhitelist);
     try {
-      for (let test of gTests) {
-        info("Running: " + test.desc);
-        yield test.run();
+      for (let testCase of gTests) {
+        info("Running: " + testCase.desc);
+        yield testCase.run();
       }
     } finally {
       Services.prefs.clearUserPref(webchannelWhitelistPref);

@@ -2413,13 +2413,12 @@ XMLHttpRequestWorker::GetResponse(JSContext* /* unused */,
     }
   }
 
-  JS::ExposeValueToActiveJS(mStateData.mResponse);
   aRv = mStateData.mResponseResult;
   aResponse.set(mStateData.mResponse);
 }
 
 void
-XMLHttpRequestWorker::GetResponseText(nsAString& aResponseText, ErrorResult& aRv)
+XMLHttpRequestWorker::GetResponseText(DOMString& aResponseText, ErrorResult& aRv)
 {
   aRv = mStateData.mResponseTextResult;
   if (aRv.Failed()) {

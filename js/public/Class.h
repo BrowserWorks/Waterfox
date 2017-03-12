@@ -40,9 +40,7 @@ extern JS_FRIEND_DATA(const js::Class* const) FunctionClassPtr;
 
 namespace JS {
 
-template <typename T>
-class AutoVectorRooter;
-typedef AutoVectorRooter<jsid> AutoIdVector;
+class AutoIdVector;
 
 /**
  * The answer to a successful query as to whether an object is an Array per
@@ -366,7 +364,7 @@ typedef void
 
 /** Finalizes external strings created by JS_NewExternalString. */
 struct JSStringFinalizer {
-    void (*finalize)(const JSStringFinalizer* fin, char16_t* chars);
+    void (*finalize)(JS::Zone* zone, const JSStringFinalizer* fin, char16_t* chars);
 };
 
 /**
@@ -556,11 +554,11 @@ struct ClassSpec
     FinishClassInitOp finishInit_;
     uintptr_t flags;
 
-    static const size_t ParentKeyWidth = JSCLASS_CACHED_PROTO_WIDTH;
+    static const size_t ProtoKeyWidth = JSCLASS_CACHED_PROTO_WIDTH;
 
-    static const uintptr_t ParentKeyMask = (1 << ParentKeyWidth) - 1;
-    static const uintptr_t DontDefineConstructor = 1 << ParentKeyWidth;
-    static const uintptr_t IsDelegated = 1 << (ParentKeyWidth + 1);
+    static const uintptr_t ProtoKeyMask = (1 << ProtoKeyWidth) - 1;
+    static const uintptr_t DontDefineConstructor = 1 << ProtoKeyWidth;
+    static const uintptr_t IsDelegated = 1 << (ProtoKeyWidth + 1);
 
     bool defined() const { return !!createConstructor_; }
 
@@ -568,14 +566,16 @@ struct ClassSpec
         return (flags & IsDelegated);
     }
 
-    bool dependent() const {
+    // The ProtoKey this class inherits from.
+    JSProtoKey inheritanceProtoKey() const {
         MOZ_ASSERT(defined());
-        return (flags & ParentKeyMask);
-    }
-
-    JSProtoKey parentKey() const {
         static_assert(JSProto_Null == 0, "zeroed key must be null");
-        return JSProtoKey(flags & ParentKeyMask);
+
+        // Default: Inherit from Object.
+        if (!(flags & ProtoKeyMask))
+            return JSProto_Object;
+
+        return JSProtoKey(flags & ProtoKeyMask);
     }
 
     bool shouldDefineConstructor() const {
@@ -787,7 +787,7 @@ struct JSClass {
 // application.
 #define JSCLASS_GLOBAL_APPLICATION_SLOTS 5
 #define JSCLASS_GLOBAL_SLOT_COUNT                                             \
-    (JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 2 + 37)
+    (JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 2 + 39)
 #define JSCLASS_GLOBAL_FLAGS_WITH_SLOTS(n)                                    \
     (JSCLASS_IS_GLOBAL | JSCLASS_HAS_RESERVED_SLOTS(JSCLASS_GLOBAL_SLOT_COUNT + (n)))
 #define JSCLASS_GLOBAL_FLAGS                                                  \
@@ -867,8 +867,8 @@ struct Class
     static size_t offsetOfFlags() { return offsetof(Class, flags); }
 
     bool specDefined()         const { return spec ? spec->defined()   : false; }
-    bool specDependent()       const { return spec ? spec->dependent() : false; }
-    JSProtoKey specParentKey() const { return spec ? spec->parentKey() : JSProto_Null; }
+    JSProtoKey specInheritanceProtoKey()
+                               const { return spec ? spec->inheritanceProtoKey() : JSProto_Null; }
     bool specShouldDefineConstructor()
                                const { return spec ? spec->shouldDefineConstructor() : true; }
     ClassObjectCreationOp specCreateConstructorHook()

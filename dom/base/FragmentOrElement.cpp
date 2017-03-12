@@ -18,6 +18,7 @@
 #include "mozilla/dom/FragmentOrElement.h"
 
 #include "mozilla/AsyncEventDispatcher.h"
+#include "mozilla/DeclarationBlockInlines.h"
 #include "mozilla/EffectSet.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
@@ -102,7 +103,6 @@
 #include "nsRuleProcessorData.h"
 #include "nsTextNode.h"
 #include "mozilla/dom/NodeListBinding.h"
-#include "mozilla/dom/UndoManager.h"
 
 #ifdef MOZ_XUL
 #include "nsIXULDocument.h"
@@ -531,7 +531,6 @@ nsNodeSupportsWeakRefTearoff::GetWeakReference(nsIWeakReference** aInstancePtr)
 FragmentOrElement::nsDOMSlots::nsDOMSlots()
   : nsINode::nsSlots(),
     mDataset(nullptr),
-    mUndoManager(nullptr),
     mBindingParent(nullptr)
 {
 }
@@ -554,9 +553,6 @@ FragmentOrElement::nsDOMSlots::Traverse(nsCycleCollectionTraversalCallback &cb, 
 
   NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mSlots->mAttributeMap");
   cb.NoteXPCOMChild(mAttributeMap.get());
-
-  NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mSlots->mUndoManager");
-  cb.NoteXPCOMChild(mUndoManager.get());
 
   if (aIsXUL) {
     NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mSlots->mControllers");
@@ -606,7 +602,6 @@ FragmentOrElement::nsDOMSlots::Unlink(bool aIsXUL)
   mShadowRoot = nullptr;
   mContainingShadow = nullptr;
   mChildrenList = nullptr;
-  mUndoManager = nullptr;
   mCustomElementData = nullptr;
   mClassList = nullptr;
 }
@@ -806,50 +801,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
 
   ShadowRoot* thisShadowRoot = ShadowRoot::FromNode(this);
   if (thisShadowRoot) {
-    // The following events must always be stopped at the root node of the node tree:
-    //   abort
-    //   error
-    //   select
-    //   change
-    //   load
-    //   reset
-    //   resize
-    //   scroll
-    //   selectstart
-    bool stopEvent = false;
-    switch (aVisitor.mEvent->mMessage) {
-      case eImageAbort:
-      case eLoadError:
-      case eFormSelect:
-      case eFormChange:
-      case eLoad:
-      case eFormReset:
-      case eResize:
-      case eScroll:
-      case eSelectStart:
-        stopEvent = true;
-        break;
-      case eUnidentifiedEvent:
-        if (aVisitor.mDOMEvent) {
-          nsAutoString eventType;
-          aVisitor.mDOMEvent->GetType(eventType);
-          if (eventType.EqualsLiteral("abort") ||
-              eventType.EqualsLiteral("error") ||
-              eventType.EqualsLiteral("select") ||
-              eventType.EqualsLiteral("change") ||
-              eventType.EqualsLiteral("load") ||
-              eventType.EqualsLiteral("reset") ||
-              eventType.EqualsLiteral("resize") ||
-              eventType.EqualsLiteral("scroll")) {
-            stopEvent = true;
-          }
-        }
-        break;
-      default:
-        break;
-    }
-
-    if (stopEvent) {
+    if (!aVisitor.mEvent->mFlags.mComposed) {
       // If we do stop propagation, we still want to propagate
       // the event to chrome (nsPIDOMWindow::GetParentTarget()).
       // The load event is special in that we don't ever propagate it
@@ -907,7 +859,11 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
     }
   }
 
-  if (parent) {
+  if (!aVisitor.mEvent->mFlags.mComposedInNativeAnonymousContent &&
+      IsRootOfNativeAnonymousSubtree() && OwnerDoc() &&
+      OwnerDoc()->GetWindow()) {
+    aVisitor.mParentTarget = OwnerDoc()->GetWindow()->GetParentTarget();
+  } else if (parent) {
     aVisitor.mParentTarget = parent;
   } else {
     aVisitor.mParentTarget = GetComposedDoc();

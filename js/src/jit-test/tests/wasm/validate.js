@@ -1,12 +1,25 @@
-load(libdir + 'wasm.js');
-load(libdir + 'asserts.js');
+load(libdir + "wasm.js");
 
-// Note to sheriffs: when merging inbound to aurora, if you get a merging issue
-// here, you can safely remove this code and replace it by the inbound code.
+const { validate } = WebAssembly;
 
-// Enable warning as errors.
-options("werror");
-assertErrorMessage(() => WebAssembly.validate(wasmTextToBinary(`(module (func) (func) (export "a" 2))`, 'new-format')),
-                  TypeError,
-                  /exported function index out of bounds/);
-options("werror");
+assertErrorMessage(() => validate(), Error, /requires more than 0 arguments/);
+
+const argError = /first argument must be an ArrayBuffer or typed array object/;
+assertErrorMessage(() => validate(null), Error, argError);
+assertErrorMessage(() => validate(true), Error, argError);
+assertErrorMessage(() => validate(42), Error, argError);
+assertErrorMessage(() => validate(NaN), Error, argError);
+assertErrorMessage(() => validate('yo'), Error, argError);
+assertErrorMessage(() => validate([]), Error, argError);
+assertErrorMessage(() => validate({}), Error, argError);
+assertErrorMessage(() => validate(Symbol.iterator), Error, argError);
+assertErrorMessage(() => validate({ valueOf: () => new ArrayBuffer(65536) }), Error, argError);
+
+assertEq(validate(wasmTextToBinary(`(module)`)), true);
+
+assertEq(validate(wasmTextToBinary(`(module (export "run" 0))`)), false);
+assertEq(validate(wasmTextToBinary(`(module (func) (export "run" 0))`)), true);
+
+// Feature-testing proof-of-concept.
+assertEq(validate(wasmTextToBinary(`(module (memory 1) (func (result i32) (current_memory)))`)), true);
+assertEq(validate(wasmTextToBinary(`(module (memory 1) (func (result i32) (grow_memory (i32.const 42))))`)), true);

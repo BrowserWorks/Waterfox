@@ -9,8 +9,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var {
   EventManager,
+  ExtensionError,
   IconDetails,
-  runSafe,
 } = ExtensionUtils;
 
 // Map[Extension -> Map[ID -> MenuItem]]
@@ -174,6 +174,7 @@ var gMenuBuilder = {
       if (event.target !== event.currentTarget) {
         return;
       }
+      const wasChecked = item.checked;
       if (item.type == "checkbox") {
         item.checked = !item.checked;
       } else if (item.type == "radio") {
@@ -190,11 +191,8 @@ var gMenuBuilder = {
       item.tabManager.addActiveTabPermission();
 
       let tab = item.tabManager.convert(contextData.tab);
-      let info = item.getClickInfo(contextData, event);
+      let info = item.getClickInfo(contextData, wasChecked);
       item.extension.emit("webext-contextmenu-menuitem-click", info, tab);
-      if (item.onclick) {
-        runSafe(item.extContext, item.onclick, info, tab);
-      }
     });
 
     return element;
@@ -225,8 +223,6 @@ function contextMenuObserver(subject, topic, data) {
 function getContexts(contextData) {
   let contexts = new Set(["all"]);
 
-  contexts.add("page");
-
   if (contextData.inFrame) {
     contexts.add("frame");
   }
@@ -255,12 +251,15 @@ function getContexts(contextData) {
     contexts.add("audio");
   }
 
+  if (contexts.size == 1) {
+    contexts.add("page");
+  }
+
   return contexts;
 }
 
-function MenuItem(extension, extContext, createProperties, isRoot = false) {
+function MenuItem(extension, createProperties, isRoot = false) {
   this.extension = extension;
-  this.extContext = extContext;
   this.children = [];
   this.parent = null;
   this.tabManager = TabManager.for(extension);
@@ -330,7 +329,7 @@ MenuItem.prototype = {
     }
     for (let item = menuMap.get(parentId); item; item = item.parent) {
       if (item === this) {
-        throw new Error("MenuItem cannot be an ancestor (or self) of its new parent.");
+        throw new ExtensionError("MenuItem cannot be an ancestor (or self) of its new parent.");
       }
     }
   },
@@ -374,7 +373,7 @@ MenuItem.prototype = {
   get root() {
     let extension = this.extension;
     if (!gRootItems.has(extension)) {
-      let root = new MenuItem(extension, this.context,
+      let root = new MenuItem(extension,
                               {title: extension.name},
                               /* isRoot = */ true);
       gRootItems.set(extension, root);
@@ -399,7 +398,7 @@ MenuItem.prototype = {
     }
   },
 
-  getClickInfo(contextData, event) {
+  getClickInfo(contextData, wasChecked) {
     let mediaType;
     if (contextData.onVideo) {
       mediaType = "video";
@@ -413,10 +412,11 @@ MenuItem.prototype = {
 
     let info = {
       menuItemId: this.id,
+      editable: contextData.onEditableArea,
     };
 
     function setIfDefined(argName, value) {
-      if (value) {
+      if (value !== undefined) {
         info[argName] = value;
       }
     }
@@ -428,7 +428,11 @@ MenuItem.prototype = {
     setIfDefined("pageUrl", contextData.pageUrl);
     setIfDefined("frameUrl", contextData.frameUrl);
     setIfDefined("selectionText", contextData.selectionText);
-    setIfDefined("editable", contextData.onEditableArea);
+
+    if ((this.type === "checkbox") || (this.type === "radio")) {
+      info.checked = this.checked;
+      info.wasChecked = wasChecked;
+    }
 
     return info;
   },
@@ -489,13 +493,12 @@ extensions.registerSchemaAPI("contextMenus", "addon_parent", context => {
   let {extension} = context;
   return {
     contextMenus: {
-      create: function(createProperties, callback) {
-        let menuItem = new MenuItem(extension, context, createProperties);
+      createInternal: function(createProperties) {
+        // Note that the id is required by the schema. If the addon did not set
+        // it, the implementation of contextMenus.create in the child should
+        // have added it.
+        let menuItem = new MenuItem(extension, createProperties);
         gContextMenuMap.get(extension).set(menuItem.id, menuItem);
-        if (callback) {
-          runSafe(context, callback);
-        }
-        return menuItem.id;
       },
 
       update: function(id, updateProperties) {
@@ -503,7 +506,6 @@ extensions.registerSchemaAPI("contextMenus", "addon_parent", context => {
         if (menuItem) {
           menuItem.setProps(updateProperties);
         }
-        return Promise.resolve();
       },
 
       remove: function(id) {
@@ -511,7 +513,6 @@ extensions.registerSchemaAPI("contextMenus", "addon_parent", context => {
         if (menuItem) {
           menuItem.remove();
         }
-        return Promise.resolve();
       },
 
       removeAll: function() {
@@ -519,7 +520,6 @@ extensions.registerSchemaAPI("contextMenus", "addon_parent", context => {
         if (root) {
           root.remove();
         }
-        return Promise.resolve();
       },
 
       onClicked: new EventManager(context, "contextMenus.onClicked", fire => {

@@ -18,7 +18,7 @@
 #include "nsXBLBinding.h"
 #include "nsTArray.h"
 #include "nsThreadUtils.h"
-#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheet.h"
 
 struct ElementDependentRuleProcessorData;
 class nsIXPConnectWrappedJS;
@@ -46,7 +46,7 @@ public:
 
   explicit nsBindingManager(nsIDocument* aDocument);
 
-  nsXBLBinding* GetBindingWithContent(nsIContent* aContent);
+  nsXBLBinding* GetBindingWithContent(const nsIContent* aContent);
 
   void AddBoundContent(nsIContent* aContent);
   void RemoveBoundContent(nsIContent* aContent);
@@ -138,7 +138,7 @@ public:
   nsresult MediumFeaturesChanged(nsPresContext* aPresContext,
                                  bool* aRulesChanged);
 
-  void AppendAllSheets(nsTArray<mozilla::StyleSheetHandle>& aArray);
+  void AppendAllSheets(nsTArray<mozilla::StyleSheet*>& aArray);
 
   void Traverse(nsIContent *aContent,
                             nsCycleCollectionTraversalCallback &cb);

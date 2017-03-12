@@ -146,7 +146,7 @@
 
       <section id="keyed-scalars-section" class="data-section">
         <input type="checkbox" class="statebox"/>
-        <h1 class="section-name">Keyed Scalars</h1>
+        <h1 class="section-name">&aboutTelemetry.keyedScalarsSection;</h1>
         <span class="toggle-caption">&aboutTelemetry.toggle;</span>
         <span class="empty-caption">&aboutTelemetry.emptySection;</span>
         <div id="keyed-scalars" class="data">
@@ -161,6 +161,9 @@
         <span class="filter-ui">
           &aboutTelemetry.filterText; <input type="text" class="filter" id="histograms-filter" target_id="histograms"/>
         </span>
+        <div class="processes-ui">
+          <select id="histograms-processes" class="process-picker"></select>
+        </div>
         <div id="histograms" class="data">
         </div>
       </section>
@@ -170,7 +173,19 @@
         <h1 class="section-name">&aboutTelemetry.keyedHistogramsSection;</h1>
         <span class="toggle-caption">&aboutTelemetry.toggle;</span>
         <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+        <div class="processes-ui">
+          <select id="keyed-histograms-processes" class="process-picker"></select>
+        </div>
         <div id="keyed-histograms" class="data">
+        </div>
+      </section>
+
+      <section id="events-section" class="data-section">
+        <input type="checkbox" class="statebox"/>
+        <h1 class="section-name">Events</h1>
+        <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+        <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+        <div id="events" class="data">
         </div>
       </section>
 

@@ -108,6 +108,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // its slots and stack depth are initialized from |pred|.
     static MBasicBlock* New(MIRGraph& graph, BytecodeAnalysis* analysis, const CompileInfo& info,
                             MBasicBlock* pred, BytecodeSite* site, Kind kind);
+    static MBasicBlock* New(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pred, Kind kind);
     static MBasicBlock* NewPopN(MIRGraph& graph, const CompileInfo& info,
                                 MBasicBlock* pred, BytecodeSite* site, Kind kind, uint32_t popn);
     static MBasicBlock* NewWithResumePoint(MIRGraph& graph, const CompileInfo& info,
@@ -118,8 +119,6 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
                                              unsigned loopStateSlots);
     static MBasicBlock* NewSplitEdge(MIRGraph& graph, MBasicBlock* pred,
                                      size_t predEdgeIdx, MBasicBlock* succ);
-    static MBasicBlock* NewAsmJS(MIRGraph& graph, const CompileInfo& info,
-                                 MBasicBlock* pred, Kind kind);
 
     bool dominates(const MBasicBlock* other) const {
         return other->domIndex() - domIndex() < numDominated();
@@ -255,7 +254,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // the current loop as necessary. If the backedge introduces new types for
     // phis at the loop header, returns a disabling abort.
     MOZ_MUST_USE AbortReason setBackedge(TempAllocator& alloc, MBasicBlock* block);
-    MOZ_MUST_USE bool setBackedgeAsmJS(MBasicBlock* block);
+    MOZ_MUST_USE bool setBackedgeWasm(MBasicBlock* block);
 
     // Resets a LOOP_HEADER block to a NORMAL block.  This is needed when
     // optimizations remove the backedge.
@@ -657,6 +656,36 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     InlineScriptTree* trackedTree() const {
         return trackedSite_ ? trackedSite_->tree() : nullptr;
     }
+
+    // This class is used for reverting the graph within IonBuilder.
+    class BackupPoint {
+        friend MBasicBlock;
+
+        MBasicBlock* current_;
+        MBasicBlock* lastBlock_;
+        MInstruction* lastIns_;
+        uint32_t stackPosition_;
+        FixedList<MDefinition*> slots_;
+#ifdef DEBUG
+        // The following fields should remain identical during IonBuilder
+        // construction, these are used for assertions.
+        MPhi* lastPhi_;
+        uintptr_t predecessorsCheckSum_;
+        HashNumber instructionsCheckSum_;
+        uint32_t id_;
+        MResumePoint* callerResumePoint_;
+        MResumePoint* entryResumePoint_;
+
+        size_t computePredecessorsCheckSum(MBasicBlock* block);
+        HashNumber computeInstructionsCheckSum(MBasicBlock* block);
+#endif
+      public:
+        explicit BackupPoint(MBasicBlock* current);
+        MOZ_MUST_USE bool init(TempAllocator& alloc);
+        MBasicBlock* restore();
+    };
+
+    friend BackupPoint;
 
   private:
     MIRGraph& graph_;

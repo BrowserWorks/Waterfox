@@ -93,7 +93,7 @@ var gPlacements = new Map();
  */
 var gFuturePlacements = new Map();
 
-//XXXunf Temporary. Need a nice way to abstract functions to build widgets
+// XXXunf Temporary. Need a nice way to abstract functions to build widgets
 //       of these types.
 var gSupportedWidgetTypes = new Set(["button", "view", "custom"]);
 
@@ -334,7 +334,7 @@ var CustomizableUIInternal = {
     // because the per-widget pref facility is independent of versioning.
     if (!gSavedState) {
       // Flip all the prefs so we don't try to re-introduce later:
-      for (let [id, widget] of gPalette) {
+      for (let [, widget] of gPalette) {
         if (widget.defaultArea && widget._introducedInVersion === "pref") {
           let prefId = "browser.toolbarbuttons.introduced." + widget.id;
           Services.prefs.setBoolPref(prefId, true);
@@ -497,7 +497,7 @@ var CustomizableUIInternal = {
           props.get(key) != aProperties[key]) {
         throw new Error("An area cannot change the property for '" + key + "'");
       }
-      //XXXgijs for special items, we need to make sure they have an appropriate ID
+      // XXXgijs for special items, we need to make sure they have an appropriate ID
       // so we aren't perpetually in a non-default state:
       if (key == "defaultPlacements" && Array.isArray(aProperties[key])) {
         props.set(key, aProperties[key].map(x => this.isSpecialWidget(x) ? this.ensureSpecialWidgetId(x) : x ));
@@ -610,7 +610,6 @@ var CustomizableUIInternal = {
     if (gBuildAreas.has(area) && gBuildAreas.get(area).has(aToolbar)) {
       return;
     }
-    let document = aToolbar.ownerDocument;
     let areaProperties = gAreas.get(area);
 
     // If this area is not registered, try to do it automatically:
@@ -1079,7 +1078,7 @@ var CustomizableUIInternal = {
       this.notifyListeners("onWidgetInstanceRemoved", widget.id, document);
     }
 
-    for (let [area, areaMap] of gPendingBuildAreas) {
+    for (let [, areaMap] of gPendingBuildAreas) {
       let toDelete = [];
       for (let [areaNode, ] of areaMap) {
         if (areaNode.ownerDocument == document) {
@@ -1087,7 +1086,7 @@ var CustomizableUIInternal = {
         }
       }
       for (let areaNode of toDelete) {
-        areaMap.delete(toDelete);
+        areaMap.delete(areaNode);
       }
     }
 
@@ -1493,7 +1492,7 @@ var CustomizableUIInternal = {
           log.error(e);
         }
       } else {
-        //XXXunf Need to think this through more, and formalize.
+        // XXXunf Need to think this through more, and formalize.
         Services.obs.notifyObservers(aNode,
                                      "customizedui-widget-command",
                                      aWidget.id);
@@ -1522,7 +1521,7 @@ var CustomizableUIInternal = {
         Cu.reportError(e);
       }
     } else {
-      //XXXunf Need to think this through more, and formalize.
+      // XXXunf Need to think this through more, and formalize.
       Services.obs.notifyObservers(aNode, "customizedui-widget-click", aWidget.id);
     }
   },
@@ -2145,7 +2144,7 @@ var CustomizableUIInternal = {
 
   createWidget: function(aProperties) {
     let widget = this.normalizeWidget(aProperties, CustomizableUI.SOURCE_EXTERNAL);
-    //XXXunf This should probably throw.
+    // XXXunf This should probably throw.
     if (!widget) {
       log.error("unable to normalize widget");
       return undefined;
@@ -2184,7 +2183,7 @@ var CustomizableUIInternal = {
     // Look through previously saved state to see if we're restoring a widget.
     let seenAreas = new Set();
     let widgetMightNeedAutoAdding = true;
-    for (let [area, placements] of gPlacements) {
+    for (let [area, ] of gPlacements) {
       seenAreas.add(area);
       let areaIsRegistered = gAreas.has(area);
       let index = gPlacements.get(area).indexOf(widget.id);
@@ -2302,7 +2301,7 @@ var CustomizableUIInternal = {
     return gAreas.get(aArea).has("legacy");
   },
 
-  //XXXunf Log some warnings here, when the data provided isn't up to scratch.
+  // XXXunf Log some warnings here, when the data provided isn't up to scratch.
   normalizeWidget: function(aData, aSource) {
     let widget = {
       implementation: aData,
@@ -3894,7 +3893,7 @@ function WidgetSingleWrapper(aWidget, aNode) {
  * XUL method (overlays, or programmatically injecting toolbaritems, or other
  * such things).
  */
-//XXXunf Going to need to hook this up to some events to keep it all live.
+// XXXunf Going to need to hook this up to some events to keep it all live.
 function XULWidgetGroupWrapper(aWidgetId) {
   this.isGroup = true;
   this.id = aWidgetId;

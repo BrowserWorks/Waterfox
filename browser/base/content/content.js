@@ -24,7 +24,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContentLinkHandler",
   "resource:///modules/ContentLinkHandler.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
   "resource://gre/modules/LoginManagerContent.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "FormLikeFactory",
+XPCOMUtils.defineLazyModuleGetter(this, "LoginFormFactory",
   "resource://gre/modules/LoginManagerContent.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "InsecurePasswordUtils",
   "resource://gre/modules/InsecurePasswordUtils.jsm");
@@ -65,13 +65,13 @@ addMessageListener("RemoteLogins:fillForm", function(message) {
 });
 addEventListener("DOMFormHasPassword", function(event) {
   LoginManagerContent.onDOMFormHasPassword(event, content);
-  let formLike = FormLikeFactory.createFromForm(event.target);
-  InsecurePasswordUtils.checkForInsecurePasswords(formLike);
+  let formLike = LoginFormFactory.createFromForm(event.target);
+  InsecurePasswordUtils.reportInsecurePasswords(formLike);
 });
 addEventListener("DOMInputPasswordAdded", function(event) {
   LoginManagerContent.onDOMInputPasswordAdded(event, content);
-  let formLike = FormLikeFactory.createFromField(event.target);
-  InsecurePasswordUtils.checkForInsecurePasswords(formLike);
+  let formLike = LoginFormFactory.createFromField(event.target);
+  InsecurePasswordUtils.reportInsecurePasswords(formLike);
 });
 addEventListener("pageshow", function(event) {
   LoginManagerContent.onPageShow(event, content);
@@ -162,6 +162,9 @@ var handleContentContextMenu = function (event) {
 
   let selectionInfo = BrowserUtils.getSelectionDetails(content);
 
+  let loadContext = docShell.QueryInterface(Ci.nsILoadContext);
+  let userContextId = loadContext.originAttributes.userContextId;
+
   if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
     let editFlags = SpellCheckHelper.isEditable(event.target, content);
     let spellInfo;
@@ -185,7 +188,7 @@ var handleContentContextMenu = function (event) {
                      principal, docLocation, charSet, baseURI, referrer,
                      referrerPolicy, contentType, contentDisposition,
                      frameOuterWindowID, selectionInfo, disableSetDesktopBg,
-                     loginFillInfo, parentAllowsMixedContent },
+                     loginFillInfo, parentAllowsMixedContent, userContextId },
                    { event, popupNode: event.target });
   }
   else {
@@ -209,6 +212,7 @@ var handleContentContextMenu = function (event) {
       disableSetDesktopBackground: disableSetDesktopBg,
       loginFillInfo,
       parentAllowsMixedContent,
+      userContextId,
     };
   }
 }
@@ -260,7 +264,9 @@ function getSerializedSecurityInfo(docShell) {
 var AboutNetAndCertErrorListener = {
   init: function(chromeGlobal) {
     addMessageListener("CertErrorDetails", this);
+    addMessageListener("Browser:CaptivePortalFreed", this);
     chromeGlobal.addEventListener('AboutNetErrorLoad', this, false, true);
+    chromeGlobal.addEventListener('AboutNetErrorOpenCaptivePortal', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorOverride', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorResetPreferences', this, false, true);
@@ -282,6 +288,9 @@ var AboutNetAndCertErrorListener = {
     switch (msg.name) {
       case "CertErrorDetails":
         this.onCertErrorDetails(msg);
+        break;
+      case "Browser:CaptivePortalFreed":
+        this.onCaptivePortalFreed(msg);
         break;
     }
   },
@@ -335,6 +344,10 @@ var AboutNetAndCertErrorListener = {
     }
   },
 
+  onCaptivePortalFreed(msg) {
+    content.dispatchEvent(new content.CustomEvent("AboutNetErrorCaptivePortalFreed"));
+  },
+
   handleEvent: function(aEvent) {
     if (!this.isAboutNetError && !this.isAboutCertError) {
       return;
@@ -343,6 +356,9 @@ var AboutNetAndCertErrorListener = {
     switch (aEvent.type) {
     case "AboutNetErrorLoad":
       this.onPageLoad(aEvent);
+      break;
+    case "AboutNetErrorOpenCaptivePortal":
+      this.openCaptivePortalPage(aEvent);
       break;
     case "AboutNetErrorSetAutomatic":
       this.onSetAutomatic(aEvent);
@@ -384,6 +400,10 @@ var AboutNetAndCertErrorListener = {
 
     sendAsyncMessage("Browser:SSLErrorReportTelemetry",
                      {reportStatus: TLS_ERROR_REPORT_TELEMETRY_UI_SHOWN});
+  },
+
+  openCaptivePortalPage: function(evt) {
+    sendAsyncMessage("Browser:OpenCaptivePortalPage");
   },
 
 
@@ -503,6 +523,7 @@ var ClickEventHandler = {
           json.allowMixedContent = true;
         } catch (e) {}
       }
+      json.originPrincipal = ownerDoc.nodePrincipal;
 
       sendAsyncMessage("Content:Click", json);
       return;
@@ -1298,7 +1319,7 @@ var PageInfoListener = {
     return result;
   },
 
-  //******** Other Misc Stuff
+  // Other Misc Stuff
   // Modified from the Links Panel v2.3, http://segment7.net/mozilla/links/links.html
   // parse a node to extract the contents of the node
   getValueText: function(node)

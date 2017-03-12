@@ -18,7 +18,7 @@ with Files('../public/**'):
 with Files('*'):
     BUG_COMPONENT = component_engine
 
-with Files('asmjs/**'):
+with Files('wasm/**'):
     BUG_COMPONENT = component_jit
 with Files('builtin/**'):
     BUG_COMPONENT = component_stl
@@ -68,6 +68,8 @@ CONFIGURE_DEFINE_FILES += [
 ]
 
 if not CONFIG['JS_STANDALONE']:
+    LIBRARY_DEFINES['MOZ_HAS_MOZGLUE'] = True
+
     CONFIGURE_SUBST_FILES += [
         '../../config/autoconf-js.mk',
         '../../config/emptyvars-js.mk',
@@ -154,27 +156,6 @@ EXPORTS.js += [
 ]
 
 UNIFIED_SOURCES += [
-    'asmjs/AsmJS.cpp',
-    'asmjs/WasmBaselineCompile.cpp',
-    'asmjs/WasmBinary.cpp',
-    'asmjs/WasmBinaryIterator.cpp',
-    'asmjs/WasmBinaryToAST.cpp',
-    'asmjs/WasmBinaryToExperimentalText.cpp',
-    'asmjs/WasmBinaryToText.cpp',
-    'asmjs/WasmCode.cpp',
-    'asmjs/WasmCompartment.cpp',
-    'asmjs/WasmCompile.cpp',
-    'asmjs/WasmFrameIterator.cpp',
-    'asmjs/WasmGenerator.cpp',
-    'asmjs/WasmInstance.cpp',
-    'asmjs/WasmIonCompile.cpp',
-    'asmjs/WasmJS.cpp',
-    'asmjs/WasmModule.cpp',
-    'asmjs/WasmSignalHandlers.cpp',
-    'asmjs/WasmStubs.cpp',
-    'asmjs/WasmTable.cpp',
-    'asmjs/WasmTextToBinary.cpp',
-    'asmjs/WasmTypes.cpp',
     'builtin/AtomicsObject.cpp',
     'builtin/Eval.cpp',
     'builtin/Intl.cpp',
@@ -193,6 +174,7 @@ UNIFIED_SOURCES += [
     'builtin/WeakSetObject.cpp',
     'devtools/sharkctl.cpp',
     'ds/LifoAlloc.cpp',
+    'ds/MemoryProtectionExceptionHandler.cpp',
     'frontend/BytecodeCompiler.cpp',
     'frontend/BytecodeEmitter.cpp',
     'frontend/FoldConstants.cpp',
@@ -245,6 +227,7 @@ UNIFIED_SOURCES += [
     'jit/EffectiveAddressAnalysis.cpp',
     'jit/ExecutableAllocator.cpp',
     'jit/FlowAliasAnalysis.cpp',
+    'jit/FoldLinearArithConstants.cpp',
     'jit/InstructionReordering.cpp',
     'jit/Ion.cpp',
     'jit/IonAnalysis.cpp',
@@ -268,6 +251,7 @@ UNIFIED_SOURCES += [
     'jit/MoveResolver.cpp',
     'jit/OptimizationTracking.cpp',
     'jit/PerfSpewer.cpp',
+    'jit/ProcessExecutableMemory.cpp',
     'jit/RangeAnalysis.cpp',
     'jit/Recover.cpp',
     'jit/RegisterAllocator.cpp',
@@ -317,8 +301,10 @@ UNIFIED_SOURCES += [
     'proxy/ScriptedProxyHandler.cpp',
     'proxy/SecurityWrapper.cpp',
     'proxy/Wrapper.cpp',
+    'threading/Mutex.cpp',
     'vm/ArgumentsObject.cpp',
     'vm/ArrayBufferObject.cpp',
+    'vm/AsyncFunction.cpp',
     'vm/Caches.cpp',
     'vm/CallNonGenericMethod.cpp',
     'vm/CharacterEncoding.cpp',
@@ -372,7 +358,29 @@ UNIFIED_SOURCES += [
     'vm/Unicode.cpp',
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
-    'vm/Xdr.cpp'
+    'vm/Xdr.cpp',
+    'wasm/AsmJS.cpp',
+    'wasm/WasmBaselineCompile.cpp',
+    'wasm/WasmBinaryFormat.cpp',
+    'wasm/WasmBinaryIterator.cpp',
+    'wasm/WasmBinaryToAST.cpp',
+    'wasm/WasmBinaryToExperimentalText.cpp',
+    'wasm/WasmBinaryToText.cpp',
+    'wasm/WasmCode.cpp',
+    'wasm/WasmCompartment.cpp',
+    'wasm/WasmCompile.cpp',
+    'wasm/WasmFrameIterator.cpp',
+    'wasm/WasmGenerator.cpp',
+    'wasm/WasmInstance.cpp',
+    'wasm/WasmIonCompile.cpp',
+    'wasm/WasmJS.cpp',
+    'wasm/WasmModule.cpp',
+    'wasm/WasmSignalHandlers.cpp',
+    'wasm/WasmStubs.cpp',
+    'wasm/WasmTable.cpp',
+    'wasm/WasmTextToBinary.cpp',
+    'wasm/WasmTextUtils.cpp',
+    'wasm/WasmTypes.cpp'
 ]
 
 # jsarray.cpp and jsatom.cpp cannot be built in unified mode because
@@ -483,7 +491,7 @@ elif CONFIG['JS_CODEGEN_ARM']:
             'jit/arm/Simulator-arm.cpp'
         ]
         # Configuration used only for testing.
-        if CONFIG['OS_ARCH'] == 'Linux':
+        if CONFIG['OS_ARCH'] == 'Linux' or CONFIG['OS_ARCH'] == 'Darwin':
             CXXFLAGS += [ '-msse2', '-mfpmath=sse' ]
     elif CONFIG['OS_ARCH'] == 'Darwin':
         SOURCES += [
@@ -571,18 +579,16 @@ elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [
-        'jit/ExecutableAllocatorWin.cpp',
         'threading/windows/ConditionVariable.cpp',
-        'threading/windows/Mutex.cpp',
+        'threading/windows/MutexImpl.cpp',
         'threading/windows/Thread.cpp',
     ]
     # _CRT_RAND_S must be #defined before #including stdlib.h to get rand_s()
     DEFINES['_CRT_RAND_S'] = True
 else:
     SOURCES += [
-        'jit/ExecutableAllocatorPosix.cpp',
         'threading/posix/ConditionVariable.cpp',
-        'threading/posix/Mutex.cpp',
+        'threading/posix/MutexImpl.cpp',
         'threading/posix/Thread.cpp',
     ]
 
@@ -594,6 +600,7 @@ if CONFIG['JS_HAS_CTYPES']:
     if not CONFIG['MOZ_SYSTEM_FFI']:
         LOCAL_INCLUDES += [
             '!ctypes/libffi/include',
+            'ctypes/libffi/src/%s' % CONFIG['FFI_TARGET_DIR'],
         ]
 
 if CONFIG['MOZ_VTUNE']:
@@ -637,11 +644,6 @@ else:
 FORCE_STATIC_LIB = True
 STATIC_LIBRARY_NAME = 'js_static'
 
-if CONFIG['JS_HAS_CTYPES']:
-    USE_LIBS += [
-        'ffi',
-    ]
-
 if CONFIG['ENABLE_INTL_API']:
     if not CONFIG['MOZ_ICU_DATA_ARCHIVE']:
         USE_LIBS += [
@@ -656,7 +658,6 @@ if CONFIG['ENABLE_INTL_API']:
         ]
 
 USE_LIBS += [
-    'fdlibm',
     'nspr',
     'zlib',
 ]
@@ -739,8 +740,8 @@ NO_EXPAND_LIBS = True
 DIST_INSTALL = True
 
 # Prepare self-hosted JS code for embedding
-GENERATED_FILES += ['selfhosted.out.h']
-selfhosted = GENERATED_FILES['selfhosted.out.h']
+GENERATED_FILES += [('selfhosted.out.h', 'selfhosted.js')]
+selfhosted = GENERATED_FILES[('selfhosted.out.h', 'selfhosted.js')]
 selfhosted.script = 'builtin/embedjs.py:generate_selfhosted'
 selfhosted.inputs = [
     'js.msg',
@@ -769,6 +770,7 @@ selfhosted.inputs = [
     'builtin/Sorting.js',
     'builtin/TypedArray.js',
     'builtin/TypedObject.js',
+    'builtin/WeakMap.js',
     'builtin/WeakSet.js'
 ]
 
@@ -783,7 +785,7 @@ if CONFIG['JS_HAS_CTYPES']:
         DEFINES['FFI_BUILDING'] = True
 
 if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wno-shadow']
+    CXXFLAGS += ['-Wno-shadow', '-Werror=format']
 
 # Suppress warnings in third-party code.
 if CONFIG['CLANG_CXX']:

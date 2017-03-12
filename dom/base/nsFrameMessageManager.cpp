@@ -35,7 +35,6 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/MessagePort.h"
-#include "mozilla/dom/MessagePortList.h"
 #include "mozilla/dom/nsIContentParent.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/ProcessGlobal.h"
@@ -1193,10 +1192,8 @@ nsFrameMessageManager::ReceiveMessage(nsISupports* aTarget,
         ports = aCloneData->TakeTransferredPorts();
       }
 
-      JS::Rooted<JSObject*> transferredList(cx);
-      RefPtr<MessagePortList> portList = new MessagePortList(aTargetFrameLoader, ports);
-      transferredList = portList->WrapObject(cx, nullptr);
-      if (NS_WARN_IF(!transferredList)) {
+      JS::Rooted<JS::Value> transferredList(cx);
+      if (NS_WARN_IF(!ToJSValue(cx, ports, &transferredList))) {
         return NS_ERROR_UNEXPECTED;
       }
 
@@ -1908,10 +1905,7 @@ void
 nsMessageManagerScriptExecutor::MarkScopesForCC()
 {
   for (uint32_t i = 0; i < mAnonymousGlobalScopes.Length(); ++i) {
-    JSObject* obj = mAnonymousGlobalScopes[i];
-    if (obj) {
-      JS::ExposeObjectToActiveJS(obj);
-    }
+    mAnonymousGlobalScopes[i].exposeToActiveJS();
   }
 }
 

@@ -130,9 +130,11 @@ do {                                     \
 
 /* nsCOMPtr.h allows these macros to be defined by clients
  * These logging functions require dynamic_cast<void*>, so they don't
- * do anything useful if we don't have dynamic_cast<void*>. */
+ * do anything useful if we don't have dynamic_cast<void*>.
+ * Note: The explicit comparison to nullptr is needed to avoid warnings
+ *       when _p is a nullptr itself. */
 #define NSCAP_LOG_ASSIGNMENT(_c, _p)                                \
-  if (_p)                                                           \
+  if (_p != nullptr)                                                \
     NS_LogCOMPtrAddRef((_c),static_cast<nsISupports*>(_p))
 
 #define NSCAP_LOG_RELEASE(_c, _p)                                   \
@@ -170,6 +172,9 @@ public:
     : mRefCntAndFlags(aValue << NS_NUMBER_OF_FLAGS_IN_REFCNT)
   {
   }
+
+  nsCycleCollectingAutoRefCnt(const nsCycleCollectingAutoRefCnt&) = delete;
+  void operator=(const nsCycleCollectingAutoRefCnt&) = delete;
 
   MOZ_ALWAYS_INLINE uintptr_t incr(nsISupports* aOwner)
   {
@@ -265,6 +270,9 @@ public:
   nsAutoRefCnt() : mValue(0) {}
   explicit nsAutoRefCnt(nsrefcnt aValue) : mValue(aValue) {}
 
+  nsAutoRefCnt(const nsAutoRefCnt&) = delete;
+  void operator=(const nsAutoRefCnt&) = delete;
+
   // only support prefix increment/decrement
   nsrefcnt operator++() { return ++mValue; }
   nsrefcnt operator--() { return --mValue; }
@@ -286,6 +294,9 @@ class ThreadSafeAutoRefCnt
 public:
   ThreadSafeAutoRefCnt() : mValue(0) {}
   explicit ThreadSafeAutoRefCnt(nsrefcnt aValue) : mValue(aValue) {}
+
+  ThreadSafeAutoRefCnt(const ThreadSafeAutoRefCnt&) = delete;
+  void operator=(const ThreadSafeAutoRefCnt&) = delete;
 
   // only support prefix increment/decrement
   MOZ_ALWAYS_INLINE nsrefcnt operator++() { return ++mValue; }

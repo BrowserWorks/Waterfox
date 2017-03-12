@@ -168,15 +168,15 @@ struct ClassInfo
     macro(Objects, MallocHeap, objectsMallocHeapSlots) \
     macro(Objects, MallocHeap, objectsMallocHeapElementsNormal) \
     macro(Objects, MallocHeap, objectsMallocHeapElementsAsmJS) \
+    macro(Objects, MallocHeap, objectsMallocHeapMisc) \
     macro(Objects, NonHeap,    objectsNonHeapElementsNormal) \
-    macro(Objects, NonHeap,    objectsNonHeapElementsAsmJS) \
     macro(Objects, NonHeap,    objectsNonHeapElementsShared) \
-    macro(Objects, NonHeap,    objectsNonHeapCodeAsmJS) \
-    macro(Objects, MallocHeap, objectsMallocHeapMisc)
+    macro(Objects, NonHeap,    objectsNonHeapElementsWasm) \
+    macro(Objects, NonHeap,    objectsNonHeapCodeWasm)
 
     ClassInfo()
       : FOR_EACH_SIZE(ZERO_SIZE)
-        dummy()
+        wasmGuardPages(0)
     {}
 
     void add(const ClassInfo& other) {
@@ -213,7 +213,7 @@ struct ClassInfo
     }
 
     FOR_EACH_SIZE(DECL_SIZE)
-    int dummy;  // present just to absorb the trailing comma from FOR_EACH_SIZE(ZERO_SIZE)
+    size_t wasmGuardPages;
 
 #undef FOR_EACH_SIZE
 };
@@ -512,6 +512,7 @@ struct RuntimeSizes
     macro(_, MallocHeap, interpreterStack) \
     macro(_, MallocHeap, mathCache) \
     macro(_, MallocHeap, sharedImmutableStringsCache) \
+    macro(_, MallocHeap, sharedIntlData) \
     macro(_, MallocHeap, uncompressedSourceCache) \
     macro(_, MallocHeap, scriptData)
 

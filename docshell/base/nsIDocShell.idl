@@ -132,7 +132,25 @@ interface nsIDocShell : nsIDocShellTreeItem
    *                               ignored.
    * @param aReferrer            - Referring URI
    * @param aReferrerPolicy      - Referrer policy
-   * @param aTriggeringPrincipal - Principal that initiated that load
+   * @param aTriggeringPrincipal - A non-null principal that initiated that load.
+   *                               Please note that this is the principal that is
+   *                               used for security checks. If the argument aURI
+   *                               is provided by the web, then please do not pass
+   *                               a SystemPrincipal as the triggeringPrincipal.
+   * @param aPrincipalToInherit  - Principal to be inherited for that load. If this
+   *                               argument is null then principalToInherit is
+   *                               computed as follows:
+   *                               a) If INTERNAL_LOAD_FLAGS_INHERIT_PRINCIPAL, and
+   *                                  aLoadType is not LOAD_NORMAL_EXTERNAL, and the
+   *                                  URI would normally inherit a principal, then
+   *                                  principalToInherit is set to the current
+   *                                  document's principal, or parent document if
+   *                                  there is not a current document.
+   *                               b) If principalToInherit is still null (e.g. if
+   *                                  some of the conditions of (a) were not satisfied),
+   *                                  then no inheritance of any sort will happen: the
+   *                                  load will just get a principal based on the URI
+   *                                  being loaded.
    * @param aFlags               - Any of the load flags defined within above.
    * @param aStopActiveDoc       - Flag indicating whether loading the current
    *                               document should be stopped.
@@ -160,8 +178,9 @@ interface nsIDocShell : nsIDocShellTreeItem
                               in nsIURI aReferrer,
                               in unsigned long aReferrerPolicy,
                               in nsIPrincipal aTriggeringPrincipal,
+                              in nsIPrincipal aPrincipalToInherit,
                               in uint32_t aFlags,
-                              in wstring aWindowTarget,
+                              in AString aWindowTarget,
                               in string aTypeHint,
                               in AString aFileName,
                               in nsIInputStream aPostDataStream,
@@ -833,6 +852,11 @@ interface nsIDocShell : nsIDocShellTreeItem
   [infallible] readonly attribute boolean isInMozBrowserOrApp;
 
   /**
+   * Returns true if this docshell is the top level content docshell.
+   */
+  [infallible] readonly attribute boolean isTopLevelContentDocShell;
+
+  /**
    * Returns the id of the app associated with this docshell.  If this docshell
    * is an <iframe mozbrowser> inside an <iframe mozapp>, we return the app's
    * appId.
@@ -1128,4 +1152,35 @@ interface nsIDocShell : nsIDocShellTreeItem
    * Don't override the platform/pref default behaviour for touch events.
    */
   const unsigned long TOUCHEVENTS_OVERRIDE_NONE = 2;
+
+  /**
+   * A DocShell is locked to the current process if it would be
+   * content-observable for a process switch to occur before performing a
+   * navigation load. It is important to ensure that a DocShell is not process
+   * locked before perfoming process changing loads.
+   */
+  [infallible] readonly attribute unsigned long processLockReason;
+  /**
+   * The DocShell is not locked to the current process, and a navigation may
+   * proceed in a new process.
+   */
+  const unsigned long PROCESS_LOCK_NONE = 0;
+  /**
+   * The DocShell is locked to the current process because it is not a
+   * toplevel browsing context.
+   */
+  const unsigned long PROCESS_LOCK_IFRAME = 1;
+  /**
+   * The DocShell is locked to the current process because there exist other
+   * related browsing contexts which may be holding a reference.
+   */
+  const unsigned long PROCESS_LOCK_RELATED_CONTEXTS = 2;
+  /**
+   * The DocShell is locked to the current process because the current
+   * process is not a content process.
+   *
+   * NOTE: Some loads may not consider this a hard process lock, and may wish to
+   * ignore this reason.
+   */
+  const unsigned long PROCESS_LOCK_NON_CONTENT = 3;
 };

@@ -21,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.mozilla.gecko.EventDispatcher;
+import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.PrefsHelper;
@@ -308,7 +309,7 @@ public class BrowserSearch extends HomeFragment
     public void onDestroyView() {
         super.onDestroyView();
 
-        EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
+        GeckoApp.getEventDispatcher().unregisterGeckoThreadListener(this,
             "SearchEngines:Data");
 
         mSearchEngineBar.setAdapter(null);
@@ -408,7 +409,7 @@ public class BrowserSearch extends HomeFragment
         });
 
         registerForContextMenu(mList);
-        EventDispatcher.getInstance().registerGeckoThreadListener(this,
+        GeckoApp.getEventDispatcher().registerGeckoThreadListener(this,
             "SearchEngines:Data");
 
         mSearchEngineBar.setOnSearchBarClickListener(this);
@@ -686,8 +687,13 @@ public class BrowserSearch extends HomeFragment
     private void setSuggestions(ArrayList<String> suggestions) {
         ThreadUtils.assertOnUiThread();
 
-        mSearchEngines.get(0).setSuggestions(suggestions);
-        mAdapter.notifyDataSetChanged();
+        // mSearchEngines may be null if the setSuggestions calls after onDestroy (bug 1310621).
+        // So drop the suggestions if search engines are not available
+        if (mSearchEngines != null && !mSearchEngines.isEmpty()) {
+            mSearchEngines.get(0).setSuggestions(suggestions);
+            mAdapter.notifyDataSetChanged();
+        }
+
     }
 
     private void setSavedSuggestions(ArrayList<String> savedSuggestions) {

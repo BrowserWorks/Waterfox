@@ -26,6 +26,10 @@
           "type": "string",
           "pattern": "^[0-9a-f]{32}$"
         },
+        "devices": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/device" }
+        },
         "deviceID": {
           "type": "string",
           "pattern": "^[0-9a-f]{64}$"
@@ -50,6 +54,16 @@
           "minItems": 1,
           "items": { "$ref": "#/definitions/engine" }
         }
+      }
+    },
+    "device": {
+      "required": ["os", "id", "version"],
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "os": { "type": "string" },
+        "version": { "type": "string" }
       }
     },
     "engine": {
@@ -82,9 +96,23 @@
           "items": { "$ref": "#/definitions/outgoingBatch" }
         },
         "validation": {
-          "type": "array",
-          "minItems": 1,
-          "$ref": "#/definitions/validationProblem"
+          "type": "object",
+          "additionalProperties": false,
+          "anyOf": [
+            { "required": ["checked"] },
+            { "required": ["failureReason"] }
+          ],
+          "properties": {
+            "checked": { "type": "integer", "minimum": 0 },
+            "failureReason": { "$ref": "#/definitions/error" },
+            "took": { "type": "integer" },
+            "version": { "type": "integer" },
+            "problems": {
+              "type": "array",
+              "minItems": 1,
+              "$ref": "#/definitions/validationProblem"
+            }
+          }
         }
       }
     },
@@ -107,7 +135,8 @@
         { "$ref": "#/definitions/shutdownError" },
         { "$ref": "#/definitions/authError" },
         { "$ref": "#/definitions/otherError" },
-        { "$ref": "#/definitions/unexpectedError" }
+        { "$ref": "#/definitions/unexpectedError" },
+        { "$ref": "#/definitions/sqlError" }
       ]
     },
     "httpError": {
@@ -149,6 +178,13 @@
       "properties": {
         "name": { "enum": ["unexpectederror"] },
         "error": { "type": "string" }
+      }
+    },
+    "sqlError": {
+      "required": ["name"],
+      "properties": {
+        "name": { "enum": ["sqlerror"] },
+        "code": { "type": "integer" }
       }
     },
     "validationProblem": {

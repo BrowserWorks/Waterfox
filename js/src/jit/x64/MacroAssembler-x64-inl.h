@@ -90,6 +90,12 @@ MacroAssembler::orPtr(Imm32 imm, Register dest)
 }
 
 void
+MacroAssembler::and64(Register64 src, Register64 dest)
+{
+    andq(src.reg, dest.reg);
+}
+
+void
 MacroAssembler::or64(Register64 src, Register64 dest)
 {
     orq(src.reg, dest.reg);
@@ -447,6 +453,17 @@ MacroAssembler::rotateRight64(Imm32 count, Register64 src, Register64 dest, Regi
 {
     MOZ_ASSERT(temp == InvalidReg);
     rotateRight64(count, src, dest);
+}
+
+// ===============================================================
+// Condition functions
+
+template <typename T1, typename T2>
+void
+MacroAssembler::cmpPtrSet(Condition cond, T1 lhs, T2 rhs, Register dest)
+{
+    cmpPtr(lhs, rhs);
+    emitSet(cond, dest);
 }
 
 // ===============================================================

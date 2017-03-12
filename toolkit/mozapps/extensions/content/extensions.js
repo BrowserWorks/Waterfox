@@ -5,7 +5,7 @@
 "use strict";
 
 /* import-globals-from ../../../content/contentAreaUtils.js */
-/*globals XMLStylesheetProcessingInstruction*/
+/* globals XMLStylesheetProcessingInstruction*/
 
 var Cc = Components.classes;
 var Ci = Components.interfaces;
@@ -82,6 +82,79 @@ XPCOMUtils.defineLazyGetter(gStrings, "appVersion", function() {
 
 document.addEventListener("load", initialize, true);
 window.addEventListener("unload", shutdown, false);
+
+class MessageDispatcher {
+  constructor(target) {
+    this.listeners = new Map();
+    this.target = target;
+  }
+
+  addMessageListener(name, handler) {
+    if (!this.listeners.has(name)) {
+      this.listeners.set(name, new Set());
+    }
+
+    this.listeners.get(name).add(handler);
+  }
+
+  removeMessageListener(name, handler) {
+    if (this.listeners.has(name)) {
+      this.listeners.get(name).delete(handler);
+    }
+  }
+
+  sendAsyncMessage(name, data) {
+    for (let handler of this.listeners.get(name) || new Set()) {
+      Promise.resolve().then(() => {
+        handler.receiveMessage({
+          name,
+          data,
+          target: this.target,
+        });
+      });
+    }
+  }
+}
+
+/**
+ * A mock FrameMessageManager global to allow frame scripts to run in
+ * non-top-level, non-remote <browser>s as if they were top-level or
+ * remote.
+ *
+ * @param {Element} browser
+ *        A XUL <browser> element.
+ */
+class FakeFrameMessageManager {
+  constructor(browser) {
+    let dispatcher = new MessageDispatcher(browser);
+    let frameDispatcher = new MessageDispatcher(null);
+
+    this.sendAsyncMessage = frameDispatcher.sendAsyncMessage.bind(frameDispatcher);
+    this.addMessageListener = dispatcher.addMessageListener.bind(dispatcher);
+    this.removeMessageListener = dispatcher.removeMessageListener.bind(dispatcher);
+
+    this.frame = {
+      get content() {
+        return browser.contentWindow;
+      },
+
+      get docShell() {
+        return browser.docShell;
+      },
+
+      addEventListener: browser.addEventListener.bind(browser),
+      removeEventListener: browser.removeEventListener.bind(browser),
+
+      sendAsyncMessage: dispatcher.sendAsyncMessage.bind(dispatcher),
+      addMessageListener: frameDispatcher.addMessageListener.bind(frameDispatcher),
+      removeMessageListener: frameDispatcher.removeMessageListener.bind(frameDispatcher),
+    }
+  }
+
+  loadFrameScript(url) {
+    Services.scriptloader.loadSubScript(url, Object.create(this.frame));
+  }
+}
 
 var gPendingInitializations = 1;
 Object.defineProperty(this, "gIsInitializing", {
@@ -886,7 +959,7 @@ var gViewController = {
         openURL(Services.urlFormatter.formatURLPref("plugins.update.url"));
       }
    },
-    
+
     cmd_toggleAutoUpdateDefault: {
       isEnabled: function() {
         return true;
@@ -1485,14 +1558,11 @@ function openOptionsInTab(optionsURL) {
 }
 
 function formatDate(aDate) {
-  return Cc["@mozilla.org/intl/scriptabledateformat;1"]
-           .getService(Ci.nsIScriptableDateFormat)
-           .FormatDate("",
-                       Ci.nsIScriptableDateFormat.dateFormatLong,
-                       aDate.getFullYear(),
-                       aDate.getMonth() + 1,
-                       aDate.getDate()
-                       );
+  const locale = Cc["@mozilla.org/chrome/chrome-registry;1"]
+                 .getService(Ci.nsIXULChromeRegistry)
+                 .getSelectedLocale("global", true);
+  const dtOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+  return aDate.toLocaleDateString(locale, dtOptions);
 }
 
 
@@ -2682,6 +2752,13 @@ var gListView = {
     } catch (e) {
       document.getElementById("signing-dev-info").hidden = true;
     }
+
+    if (Preferences.get("plugin.load_flash_only", true)) {
+      document.getElementById("plugindeprecation-learnmore-link")
+        .setAttribute("href", Services.urlFormatter.formatURLPref("app.support.baseURL") + "npapi");
+    } else {
+      document.getElementById("plugindeprecation-notice").hidden = true;
+    }
   },
 
   show: function(aType, aRequest) {
@@ -3462,72 +3539,30 @@ var gDetailView = {
     browser.setAttribute("disableglobalhistory", "true");
     browser.setAttribute("class", "inline-options-browser");
 
-    // Resize at most 10 times per second.
-    const TIMEOUT = 100;
-    let timeout;
-
-    function resizeBrowser() {
-      if (timeout == null) {
-        _resizeBrowser();
-        timeout = setTimeout(_resizeBrowser, TIMEOUT);
-      }
-    }
-
-    function _resizeBrowser() {
-      timeout = null;
-
-      let doc = browser.contentDocument;
-      if (!doc) {
-        return;
-      }
-
-      let body = doc.body || doc.documentElement;
-
-      let docHeight = doc.documentElement.getBoundingClientRect().height;
-
-      let height = Math.ceil(body.scrollHeight +
-                             // Compensate for any offsets between the scroll
-                             // area of the body and the outer height of the
-                             // document.
-                             docHeight - body.clientHeight);
-
-      // Note: This will trigger another MozScrolledAreaChanged event
-      // if it's different from the previous height.
-      browser.style.height = `${height}px`;
-    }
-
     return new Promise((resolve, reject) => {
+      let messageListener = {
+        receiveMessage({name, data}) {
+          if (name === "Extension:BrowserResized")
+            browser.style.height = `${data.height}px`;
+          else if (name === "Extension:BrowserContentLoaded")
+            resolve(browser);
+        },
+      };
+
       let onload = () => {
         browser.removeEventListener("load", onload, true);
 
-        browser.addEventListener("error", reject);
-        browser.addEventListener("load", event => {
-          // We only get load events targetted at one of these elements.
-          // If we're running in a tab, it's the <browser>. If we're
-          // running in a dialog, it's the content document.
-          if (event.target != browser && event.target != browser.contentDocument)
-            return;
-
-          resolve(browser);
-
-          browser.contentWindow.addEventListener("MozScrolledAreaChanged", event => {
-            resizeBrowser();
-          }, true);
-
-          new browser.contentWindow.MutationObserver(resizeBrowser).observe(
-            browser.contentDocument.documentElement, {
-              attributes: true,
-              characterData: true,
-              childList: true,
-              subtree: true,
-            });
-
-          resizeBrowser();
-        }, true);
+        let mm = new FakeFrameMessageManager(browser);
+        mm.loadFrameScript("chrome://extensions/content/ext-browser-content.js",
+                           false);
+        mm.addMessageListener("Extension:BrowserContentLoaded", messageListener);
+        mm.addMessageListener("Extension:BrowserResized", messageListener);
+        mm.sendAsyncMessage("Extension:InitBrowser", {fixedWidth: true});
 
         browser.setAttribute("src", this._addon.optionsURL);
       };
       browser.addEventListener("load", onload, true);
+      browser.addEventListener("error", reject);
 
       parentNode.appendChild(browser);
     });
@@ -3829,9 +3864,9 @@ var gUpdatesView = {
 var gDragDrop = {
   onDragOver: function(aEvent) {
     var types = aEvent.dataTransfer.types;
-    if (types.contains("text/uri-list") ||
-        types.contains("text/x-moz-url") ||
-        types.contains("application/x-moz-file"))
+    if (types.includes("text/uri-list") ||
+        types.includes("text/x-moz-url") ||
+        types.includes("application/x-moz-file"))
       aEvent.preventDefault();
   },
 

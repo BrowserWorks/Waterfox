@@ -42,7 +42,7 @@
 #define RUSAGE_THREAD 1
 #endif
 
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
 /* Official builds have the debuggable flag set to false, which disables
  * the backtrace dumper from bionic. However, as it is useful for native
  * crashes happening before the crash reporter is registered, re-enable
@@ -323,6 +323,31 @@ loadNSSLibs(const char *apkName)
 #endif
 
   return setup_nss_functions(nss_handle, nspr_handle, plc_handle);
+}
+
+extern "C" NS_EXPORT void MOZ_JNICALL
+Java_org_mozilla_gecko_mozglue_GeckoLoader_extractGeckoLibsNative(
+    JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName)
+{
+  MOZ_ALWAYS_TRUE(!jenv->GetJavaVM(&sJavaVM));
+
+  const char* apkName = jenv->GetStringUTFChars(jApkName, nullptr);
+  if (apkName == nullptr) {
+    return;
+  }
+
+  // Extract and cache native lib to allow for efficient startup from cache.
+  void* handle = dlopenAPKLibrary(apkName, "libxul.so");
+  if (handle) {
+    __android_log_print(ANDROID_LOG_INFO, "GeckoLibLoad",
+                        "Extracted and cached libxul.so.");
+    // We have extracted and cached the lib, we can close it now.
+    __wrap_dlclose(handle);
+  } else {
+    JNI_Throw(jenv, "java/lang/Exception", "Error extracting gecko libraries");
+  }
+
+  jenv->ReleaseStringUTFChars(jApkName, apkName);
 }
 
 extern "C" NS_EXPORT void MOZ_JNICALL

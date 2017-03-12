@@ -49,6 +49,7 @@
 #include "mozilla/dom/URLBinding.h"
 #include "mozilla/dom/URLSearchParamsBinding.h"
 #include "mozilla/dom/XMLHttpRequest.h"
+#include "mozilla/DeferredFinalize.h"
 
 using namespace mozilla;
 using namespace JS;
@@ -270,13 +271,13 @@ static bool
 SandboxFetch(JSContext* cx, JS::HandleObject scope, const CallArgs& args)
 {
     if (args.length() < 1) {
-        JS_ReportError(cx, "fetch requires at least 1 argument");
+        JS_ReportErrorASCII(cx, "fetch requires at least 1 argument");
         return false;
     }
 
     RequestOrUSVString request;
     if (!SetFetchRequestFromValue(cx, request, args[0])) {
-        JS_ReportError(cx, "fetch requires a string or Request in argument 1");
+        JS_ReportErrorASCII(cx, "fetch requires a string or Request in argument 1");
         return false;
     }
     RootedDictionary<dom::RequestInit> options(cx);
@@ -327,7 +328,7 @@ SandboxIsProxy(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() < 1) {
-        JS_ReportError(cx, "Function requires at least 1 argument");
+        JS_ReportErrorASCII(cx, "Function requires at least 1 argument");
         return false;
     }
     if (!args[0].isObject()) {
@@ -354,7 +355,7 @@ SandboxExportFunction(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() < 2) {
-        JS_ReportError(cx, "Function requires at least 2 arguments");
+        JS_ReportErrorASCII(cx, "Function requires at least 2 arguments");
         return false;
     }
 
@@ -367,7 +368,7 @@ SandboxCreateObjectIn(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() < 1) {
-        JS_ReportError(cx, "Function requires at least 1 argument");
+        JS_ReportErrorASCII(cx, "Function requires at least 1 argument");
         return false;
     }
 
@@ -375,7 +376,7 @@ SandboxCreateObjectIn(JSContext* cx, unsigned argc, Value* vp)
     bool calledWithOptions = args.length() > 1;
     if (calledWithOptions) {
         if (!args[1].isObject()) {
-            JS_ReportError(cx, "Expected the 2nd argument (options) to be an object");
+            JS_ReportErrorASCII(cx, "Expected the 2nd argument (options) to be an object");
             return false;
         }
         optionsObj = &args[1].toObject();
@@ -393,7 +394,7 @@ SandboxCloneInto(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() < 2) {
-        JS_ReportError(cx, "Function requires at least 2 arguments");
+        JS_ReportErrorASCII(cx, "Function requires at least 2 arguments");
         return false;
     }
 
@@ -412,8 +413,8 @@ sandbox_finalize(js::FreeOp* fop, JSObject* obj)
     }
 
     static_cast<SandboxPrivate*>(sop)->ForgetGlobalObject();
-    NS_RELEASE(sop);
     DestroyProtoAndIfaceCache(obj);
+    DeferredFinalize(sop);
 }
 
 static void
@@ -888,11 +889,13 @@ xpc::GlobalProperties::Parse(JSContext* cx, JS::HandleObject obj)
         ok = JS_GetElement(cx, obj, i, &nameValue);
         NS_ENSURE_TRUE(ok, false);
         if (!nameValue.isString()) {
-            JS_ReportError(cx, "Property names must be strings");
+            JS_ReportErrorASCII(cx, "Property names must be strings");
             return false;
         }
-        JSAutoByteString name(cx, nameValue.toString());
-        NS_ENSURE_TRUE(name, false);
+        RootedString nameStr(cx, nameValue.toString());
+        JSAutoByteString name;
+        if (!name.encodeUtf8(cx, nameStr))
+            return false;
         if (!strcmp(name.ptr(), "CSS")) {
             CSS = true;
         } else if (!strcmp(name.ptr(), "indexedDB")) {
@@ -930,7 +933,7 @@ xpc::GlobalProperties::Parse(JSContext* cx, JS::HandleObject obj)
         } else if (!strcmp(name.ptr(), "FileReader")) {
             fileReader = true;
         } else {
-            JS_ReportError(cx, "Unknown property name: %s", name.ptr());
+            JS_ReportErrorUTF8(cx, "Unknown property name: %s", name.ptr());
             return false;
         }
     }
@@ -1157,7 +1160,7 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
             if (!useSandboxProxy) {
                 JSObject* unwrappedProto = js::CheckedUnwrap(options.proto, false);
                 if (!unwrappedProto) {
-                    JS_ReportError(cx, "Sandbox must subsume sandboxPrototype");
+                    JS_ReportErrorASCII(cx, "Sandbox must subsume sandboxPrototype");
                     return NS_ERROR_INVALID_ARG;
                 }
                 const js::Class* unwrappedClass = js::GetObjectClass(unwrappedProto);
@@ -1261,7 +1264,7 @@ ParsePrincipal(JSContext* cx, HandleString codebase, const PrincipalOriginAttrib
     NS_ENSURE_TRUE(codebaseStr.init(cx, codebase), false);
     nsresult rv = NS_NewURI(getter_AddRefs(uri), codebaseStr);
     if (NS_FAILED(rv)) {
-        JS_ReportError(cx, "Creating URI from string failed");
+        JS_ReportErrorASCII(cx, "Creating URI from string failed");
         return false;
     }
 
@@ -1273,7 +1276,7 @@ ParsePrincipal(JSContext* cx, HandleString codebase, const PrincipalOriginAttrib
     prin.forget(principal);
 
     if (!*principal) {
-        JS_ReportError(cx, "Creating Principal from URI failed");
+        JS_ReportErrorASCII(cx, "Creating Principal from URI failed");
         return false;
     }
     return true;
@@ -1321,7 +1324,7 @@ GetExpandedPrincipal(JSContext* cx, HandleObject arrayObj,
         // We need a whitelist of principals or uri strings to create an
         // expanded principal, if we got an empty array or something else
         // report error.
-        JS_ReportError(cx, "Expected an array of URI strings");
+        JS_ReportErrorASCII(cx, "Expected an array of URI strings");
         return false;
     }
 
@@ -1341,7 +1344,7 @@ GetExpandedPrincipal(JSContext* cx, HandleObject arrayObj,
         JS::RootedValue val(cx, JS::ObjectValue(*options.originAttributes));
         if (!attrs->Init(cx, val)) {
             // The originAttributes option, if specified, must be valid!
-            JS_ReportError(cx, "Expected a valid OriginAttributes object");
+            JS_ReportErrorASCII(cx, "Expected a valid OriginAttributes object");
             return false;
         }
     }
@@ -1399,7 +1402,7 @@ GetExpandedPrincipal(JSContext* cx, HandleObject arrayObj,
             rv = nsXPConnect::SecurityManager()->IsSystemPrincipal(principal, &isSystem);
             NS_ENSURE_SUCCESS(rv, false);
             if (isSystem) {
-                JS_ReportError(cx, "System principal is not allowed in an expanded principal");
+                JS_ReportErrorASCII(cx, "System principal is not allowed in an expanded principal");
                 return false;
             }
             allowedDomains[i] = principal;
@@ -1481,7 +1484,7 @@ OptionsBase::ParseBoolean(const char* name, bool* prop)
         return true;
 
     if (!value.isBoolean()) {
-        JS_ReportError(mCx, "Expected a boolean value for property %s", name);
+        JS_ReportErrorASCII(mCx, "Expected a boolean value for property %s", name);
         return false;
     }
 
@@ -1504,7 +1507,7 @@ OptionsBase::ParseObject(const char* name, MutableHandleObject prop)
         return true;
 
     if (!value.isObject()) {
-        JS_ReportError(mCx, "Expected an object value for property %s", name);
+        JS_ReportErrorASCII(mCx, "Expected an object value for property %s", name);
         return false;
     }
     prop.set(&value.toObject());
@@ -1526,7 +1529,7 @@ OptionsBase::ParseJSString(const char* name, MutableHandleString prop)
         return true;
 
     if (!value.isString()) {
-        JS_ReportError(mCx, "Expected a string value for property %s", name);
+        JS_ReportErrorASCII(mCx, "Expected a string value for property %s", name);
         return false;
     }
     prop.set(value.toString());
@@ -1548,7 +1551,7 @@ OptionsBase::ParseString(const char* name, nsCString& prop)
         return true;
 
     if (!value.isString()) {
-        JS_ReportError(mCx, "Expected a string value for property %s", name);
+        JS_ReportErrorASCII(mCx, "Expected a string value for property %s", name);
         return false;
     }
 
@@ -1574,7 +1577,7 @@ OptionsBase::ParseString(const char* name, nsString& prop)
         return true;
 
     if (!value.isString()) {
-        JS_ReportError(mCx, "Expected a string value for property %s", name);
+        JS_ReportErrorASCII(mCx, "Expected a string value for property %s", name);
         return false;
     }
 
@@ -1619,7 +1622,7 @@ OptionsBase::ParseUInt32(const char* name, uint32_t* prop)
         return true;
 
     if(!JS::ToUint32(mCx, value, prop)) {
-        JS_ReportError(mCx, "Expected a uint32_t value for property %s", name);
+        JS_ReportErrorASCII(mCx, "Expected a uint32_t value for property %s", name);
         return false;
     }
 
@@ -1640,7 +1643,7 @@ SandboxOptions::ParseGlobalProperties()
         return true;
 
     if (!value.isObject()) {
-        JS_ReportError(mCx, "Expected an array value for wantGlobalProperties");
+        JS_ReportErrorASCII(mCx, "Expected an array value for wantGlobalProperties");
         return false;
     }
 
@@ -1649,7 +1652,7 @@ SandboxOptions::ParseGlobalProperties()
     if (!JS_IsArrayObject(mCx, ctors, &isArray))
         return false;
     if (!isArray) {
-        JS_ReportError(mCx, "Expected an array value for wantGlobalProperties");
+        JS_ReportErrorASCII(mCx, "Expected an array value for wantGlobalProperties");
         return false;
     }
 
@@ -1662,6 +1665,7 @@ SandboxOptions::ParseGlobalProperties()
 bool
 SandboxOptions::Parse()
 {
+    /* All option names must be ASCII-only. */
     bool ok = ParseObject("sandboxPrototype", &proto) &&
               ParseBoolean("wantXrays", &wantXrays) &&
               ParseBoolean("allowWaivers", &allowWaivers) &&
@@ -1684,7 +1688,7 @@ SandboxOptions::Parse()
         return false;
 
     if (freshZone && sameZoneAs) {
-        JS_ReportError(mCx, "Cannot use both sameZoneAs and freshZone");
+        JS_ReportErrorASCII(mCx, "Cannot use both sameZoneAs and freshZone");
         return false;
     }
 
@@ -1759,7 +1763,7 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative* wrappe
             JS::RootedValue val(cx, JS::ObjectValue(*options.originAttributes));
             if (!attrs.Init(cx, val)) {
                 // The originAttributes option, if specified, must be valid!
-                JS_ReportError(cx, "Expected a valid OriginAttributes object");
+                JS_ReportErrorASCII(cx, "Expected a valid OriginAttributes object");
                 return ThrowAndFail(NS_ERROR_INVALID_ARG, cx, _retval);
             }
         }

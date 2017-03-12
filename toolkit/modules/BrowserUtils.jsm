@@ -41,7 +41,7 @@ this.BrowserUtils = {
     if (cancelQuit.data) { // The quit request has been canceled.
       return false;
     }
-    //if already in safe mode restart in safe mode
+    // if already in safe mode restart in safe mode
     if (Services.appinfo.inSafeMode) {
       appStartup.restartInSafeMode(Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart);
       return undefined;
@@ -85,6 +85,42 @@ this.BrowserUtils = {
 
       throw "Load of " + aURL + principalStr + " denied.";
     }
+  },
+
+  /**
+   * Return or create a principal with the codebase of one, and the originAttributes
+   * of an existing principal (e.g. on a docshell, where the originAttributes ought
+   * not to change, that is, we should keep the userContextId, privateBrowsingId,
+   * etc. the same when changing the principal).
+   *
+   * @param principal
+   *        The principal whose codebase/null/system-ness we want.
+   * @param existingPrincipal
+   *        The principal whose originAttributes we want, usually the current
+   *        principal of a docshell.
+   * @return an nsIPrincipal that matches the codebase/null/system-ness of the first
+   *         param, and the originAttributes of the second.
+   */
+  principalWithMatchingOA(principal, existingPrincipal) {
+    // Don't care about system principals:
+    if (principal.isSystemPrincipal) {
+      return principal;
+    }
+
+    // If the originAttributes already match, just return the principal as-is.
+    if (existingPrincipal.originSuffix == principal.originSuffix) {
+      return principal;
+    }
+
+    let secMan = Services.scriptSecurityManager;
+    if (principal.isCodebasePrincipal) {
+      return secMan.createCodebasePrincipal(principal.URI, existingPrincipal.originAttributes);
+    }
+
+    if (principal.isNullPrincipal) {
+      return secMan.createNullPrincipal(existingPrincipal.originAttributes);
+    }
+    throw new Error("Can't change the originAttributes of an expanded principal!");
   },
 
   /**

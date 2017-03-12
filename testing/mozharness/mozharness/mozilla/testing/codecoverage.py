@@ -14,7 +14,7 @@ from mozharness.base.script import (
 
 code_coverage_config_options = [
     [["--code-coverage"],
-     {"action": "store",
+     {"action": "store_true",
       "dest": "code_coverage",
       "default": False,
       "help": "Whether test run should package and upload code coverage data."
@@ -36,7 +36,7 @@ class CodeCoverageMixin(object):
                 return True
 
             # XXX workaround because bug 1110465 is hard
-            return self.buildbot_config['properties']['stage_platform'] in ('linux64-cc',)
+            return self.buildbot_config['properties']['stage_platform'] in ('linux64-ccov',)
         except (AttributeError, KeyError, TypeError):
             return False
 

@@ -5,12 +5,14 @@
 
 import re
 
-from marionette.marionette_test import (
-    MarionetteTestCase, SkipTest, parameterized
-)
 from marionette_driver.by import By
 from marionette_driver.marionette import Actions
 from marionette_driver.selection import SelectionManager
+from marionette_harness.marionette_test import (
+    MarionetteTestCase,
+    SkipTest,
+    parameterized
+)
 
 
 def skip_if_not_rotatable(target):
@@ -50,7 +52,6 @@ class AccessibleCaretSelectionModeTestCase(MarionetteTestCase):
         self.carets_tested_pref = 'layout.accessiblecaret.enabled'
         self.prefs = {
             'layout.word_select.eat_space_to_next_word': False,
-            'layout.accessiblecaret.use_long_tap_injector': False,
             self.carets_tested_pref: True,
         }
         self.marionette.set_prefs(self.prefs)

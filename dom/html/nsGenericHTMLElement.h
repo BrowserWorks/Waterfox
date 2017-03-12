@@ -275,10 +275,6 @@ protected:
   virtual ~nsGenericHTMLElement() {}
 
 public:
-  virtual already_AddRefed<mozilla::dom::UndoManager> GetUndoManager() override;
-  virtual bool UndoScope() override;
-  virtual void SetUndoScope(bool aUndoScope, mozilla::ErrorResult& aError) override;
-
   /**
    * Get width and height, using given image request if attributes are unset.
    * Pass a reference to the image request, since the method may change the
@@ -976,7 +972,8 @@ protected:
       UnsetHTMLAttr(aName, aError);
     }
   }
-  void SetHTMLIntAttr(nsIAtom* aName, int32_t aValue, mozilla::ErrorResult& aError)
+  template<typename T>
+  void SetHTMLIntAttr(nsIAtom* aName, T aValue, mozilla::ErrorResult& aError)
   {
     nsAutoString value;
     value.AppendInt(aValue);
@@ -1067,20 +1064,6 @@ protected:
   }
 
   /**
-   * This method works like GetURIAttr, except that it supports multiple
-   * URIs separated by whitespace (one or more U+0020 SPACE characters).
-   *
-   * Gets the absolute URI values of an attribute, by resolving any relative
-   * URIs in the attribute against the baseuri of the element. If a substring
-   * isn't a relative URI, the substring is returned as is. Only works for
-   * attributes in null namespace.
-   *
-   * @param aAttr    name of attribute.
-   * @param aResult  result value [out]
-   */
-  nsresult GetURIListAttr(nsIAtom* aAttr, nsAString& aResult);
-
-  /**
    * Locates the nsIEditor associated with this node.  In general this is
    * equivalent to GetEditorInternal(), but for designmode or contenteditable,
    * this may need to get an editor that's not actually on this element's
@@ -1150,8 +1133,6 @@ protected:
    * made editable through contentEditable or designMode.
    */
   bool IsEditableRoot() const;
-
-  nsresult SetUndoScopeInternal(bool aUndoScope);
 
 private:
   void ChangeEditableState(int32_t aChange);

@@ -16,18 +16,26 @@ namespace layers {
 class RemoteCompositorSession final : public CompositorSession
 {
 public:
-  RemoteCompositorSession(CompositorBridgeChild* aChild,
+  RemoteCompositorSession(nsBaseWidget* aWidget,
+                          CompositorBridgeChild* aChild,
                           CompositorWidgetDelegate* aWidgetDelegate,
                           APZCTreeManagerChild* aAPZ,
                           const uint64_t& aRootLayerTreeId);
+  ~RemoteCompositorSession() override;
 
   CompositorBridgeParent* GetInProcessBridge() const override;
   void SetContentController(GeckoContentController* aController) override;
   GeckoContentController* GetContentController();
+  nsIWidget* GetWidget();
   RefPtr<IAPZCTreeManager> GetAPZCTreeManager() const override;
+  bool Reset(const nsTArray<LayersBackend>& aBackendHints, TextureFactoryIdentifier* aOutIdentifier) override;
   void Shutdown() override;
 
+  void NotifyDeviceReset();
+  void NotifySessionLost();
+
 private:
+  nsBaseWidget* mWidget;
   RefPtr<APZCTreeManagerChild> mAPZ;
   RefPtr<GeckoContentController> mContentController;
 };

@@ -16,12 +16,12 @@ cppunit:
     e10s: false
     loopback-video: true
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=cppunittest
 
@@ -37,12 +37,12 @@ crashtest:
     loopback-video: true
     e10s: false
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=crashtest
 
@@ -59,12 +59,12 @@ jsreftest:
     max-run-time: 7200
     e10s: false
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=jsreftest
 
@@ -76,15 +76,15 @@ marionette:
     instance-size: xlarge
     loopback-video: true
     e10s: false
-    tier: 3
+    tier: 2
     max-run-time: 3600
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=marionette
 
@@ -95,7 +95,7 @@ mochitest:
     instance-size: xlarge
     chunks:
         by-test-platform:
-            android-4.3-arm7-api-15/debug: 26
+            android-4.3-arm7-api-15/debug: 32
             default: 20
     loopback-video: true
     e10s: false
@@ -104,12 +104,12 @@ mochitest:
             android-4.3-arm7-api-15/debug: 10800
             default: 5400
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=mochitest
 
@@ -126,12 +126,12 @@ mochitest-chrome:
     e10s: false
     max-run-time: 5400
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=mochitest-chrome
 
@@ -143,12 +143,12 @@ mochitest-clipboard:
     loopback-video: true
     e10s: false
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=mochitest-plain-clipboard
 
@@ -159,12 +159,12 @@ mochitest-gpu:
     loopback-video: true
     e10s: false
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=mochitest-plain-gpu
 
@@ -178,12 +178,12 @@ mochitest-media:
     e10s: false
     max-run-time: 5400
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=mochitest-media
 
@@ -197,12 +197,12 @@ mochitest-webgl:
     max-run-time: 7200
     instance-size: xlarge
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=mochitest-gl
 
@@ -219,12 +219,12 @@ reftest:
     loopback-video: true
     e10s: false
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=reftest
 
@@ -241,12 +241,12 @@ robocop:
     loopback-video: true
     e10s: false
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         config:
-            - mozharness/configs/android/androidarm_4_3.py
-            - mozharness/configs/remove_executables.py
-            - mozharness/configs/android/androidarm_4_3-tc.py
+            - android/androidarm_4_3.py
+            - remove_executables.py
+            - android/androidarm_4_3-tc.py
         extra-options:
             - --test-suite=robocop
 
@@ -263,15 +263,15 @@ xpcshell:
     loopback-video: true
     e10s: false
     mozharness:
-        script: mozharness/scripts/android_emulator_unittest.py
+        script: android_emulator_unittest.py
         no-read-buildbot-config: true
         extra-options:
             - --test-suite=xpcshell
         config:
             by-test-platform:
                 default:
-                    - mozharness/configs/android/androidarm_4_3.py
-                    - mozharness/configs/remove_executables.py
-                    - mozharness/configs/android/androidarm_4_3-tc.py
+                    - android/androidarm_4_3.py
+                    - remove_executables.py
+                    - android/androidarm_4_3-tc.py
                 android-4.2-x86/opt:
-                    - mozharness/configs/android/androidx86-tc.py
+                    - android/androidx86-tc.py

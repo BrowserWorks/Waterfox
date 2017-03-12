@@ -29,6 +29,10 @@ protected:
     AllocPHttpChannelChild(const PBrowserOrId&, const SerializedLoadContext&,
                            const HttpChannelCreationArgs& aOpenArgs) override;
   virtual bool DeallocPHttpChannelChild(PHttpChannelChild*) override;
+
+  virtual PAltDataOutputStreamChild* AllocPAltDataOutputStreamChild(const nsCString& type, PHttpChannelChild* channel) override;
+  virtual bool DeallocPAltDataOutputStreamChild(PAltDataOutputStreamChild* aActor) override;
+
   virtual PCookieServiceChild* AllocPCookieServiceChild() override;
   virtual bool DeallocPCookieServiceChild(PCookieServiceChild*) override;
   virtual PWyciwygChannelChild* AllocPWyciwygChannelChild() override;
@@ -58,11 +62,6 @@ protected:
                                                   const uint32_t& aFlags,
                                                   const nsCString& aNetworkInterface) override;
   virtual bool DeallocPDNSRequestChild(PDNSRequestChild*) override;
-  virtual PRemoteOpenFileChild*
-    AllocPRemoteOpenFileChild(const SerializedLoadContext& aSerialized,
-                              const URIParams&,
-                              const OptionalURIParams&) override;
-  virtual bool DeallocPRemoteOpenFileChild(PRemoteOpenFileChild*) override;
   virtual PDataChannelChild* AllocPDataChannelChild(const uint32_t& channelId) override;
   virtual bool DeallocPDataChannelChild(PDataChannelChild* child) override;
   virtual PRtspControllerChild* AllocPRtspControllerChild() override;
@@ -83,7 +82,6 @@ protected:
                                                  const nsCString& aUri,
                                                  const nsString& aRealm,
                                                  const uint64_t& aCallbackId) override;
-  virtual bool RecvAppOfflineStatus(const uint32_t& aId, const bool& aOffline) override;
   virtual PWebSocketEventListenerChild*
     AllocPWebSocketEventListenerChild(const uint64_t& aInnerWindowID) override;
   virtual bool DeallocPWebSocketEventListenerChild(PWebSocketEventListenerChild*) override;

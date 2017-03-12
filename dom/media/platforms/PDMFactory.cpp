@@ -44,6 +44,7 @@
 #include "DecoderDoctorDiagnostics.h"
 
 #include "MP4Decoder.h"
+#include "mozilla/dom/RemoteVideoDecoder.h"
 
 #ifdef XP_WIN
 #include "mozilla/WindowsVersion.h"
@@ -72,7 +73,6 @@ public:
 #ifdef MOZ_FFMPEG
     FFmpegRuntimeLinker::Init();
 #endif
-    GMPDecoderModule::Init();
   }
 };
 
@@ -82,12 +82,28 @@ StaticMutex PDMFactory::sMonitor;
 class SupportChecker
 {
 public:
-  enum class Result : uint8_t
+  enum class Reason : uint8_t
   {
     kSupported,
     kVideoFormatNotSupported,
     kAudioFormatNotSupported,
     kUnknown,
+  };
+
+  struct CheckResult
+  {
+    explicit CheckResult(Reason aReason,
+                         MediaResult aResult = MediaResult(NS_OK))
+      : mReason(aReason),
+        mMediaResult(mozilla::Move(aResult))
+    {}
+    CheckResult(const CheckResult& aOther) = default;
+    CheckResult(CheckResult&& aOther) = default;
+    CheckResult& operator=(const CheckResult& aOther) = default;
+    CheckResult& operator=(CheckResult&& aOther) = default;
+
+    Reason mReason;
+    MediaResult mMediaResult;
   };
 
   template<class Func>
@@ -111,31 +127,38 @@ public:
           // do not support YUV444 format.
           // For consistency, all decoders should be checked.
           if (mp4_demuxer::H264::DecodeSPSFromExtraData(extraData, spsdata) &&
-              spsdata.chroma_format_idc == PDMFactory::kYUV444) {
-            return SupportChecker::Result::kVideoFormatNotSupported;
+              (spsdata.profile_idc == 244 /* Hi444PP */ ||
+               spsdata.chroma_format_idc == PDMFactory::kYUV444)) {
+            return CheckResult(
+              SupportChecker::Reason::kVideoFormatNotSupported,
+              MediaResult(
+                NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                RESULT_DETAIL("Decoder may not have the capability to handle"
+                              " the requested video format"
+                              " with YUV444 chroma subsampling.")));
           }
         }
-        return SupportChecker::Result::kSupported;
+        return CheckResult(SupportChecker::Reason::kSupported);
       });
     }
   }
 
-  SupportChecker::Result
+  SupportChecker::CheckResult
   Check()
   {
     for (auto& checker : mCheckerList) {
       auto result = checker();
-        if (result != SupportChecker::Result::kSupported) {
+        if (result.mReason != SupportChecker::Reason::kSupported) {
           return result;
       }
     }
-    return SupportChecker::Result::kSupported;
+    return CheckResult(SupportChecker::Reason::kSupported);
   }
 
   void Clear() { mCheckerList.Clear(); }
 
 private:
-  nsTArray<mozilla::function<SupportChecker::Result()>> mCheckerList;
+  nsTArray<mozilla::function<CheckResult()>> mCheckerList;
 }; // SupportChecker
 
 PDMFactory::PDMFactory()
@@ -228,19 +251,28 @@ PDMFactory::CreateDecoderWithPDM(PlatformDecoderModule* aPDM,
 {
   MOZ_ASSERT(aPDM);
   RefPtr<MediaDataDecoder> m;
+  MediaResult* result = aParams.mError;
 
   SupportChecker supportChecker;
   const TrackInfo& config = aParams.mConfig;
   supportChecker.AddMediaFormatChecker(config);
 
-  auto reason = supportChecker.Check();
-  if (reason != SupportChecker::Result::kSupported) {
+  auto checkResult = supportChecker.Check();
+  if (checkResult.mReason != SupportChecker::Reason::kSupported) {
     DecoderDoctorDiagnostics* diagnostics = aParams.mDiagnostics;
-    if (diagnostics) {
-      if (reason == SupportChecker::Result::kVideoFormatNotSupported) {
-        diagnostics->SetVideoFormatNotSupport();
-      } else if (reason == SupportChecker::Result::kAudioFormatNotSupported) {
-        diagnostics->SetAudioFormatNotSupport();
+    if (checkResult.mReason == SupportChecker::Reason::kVideoFormatNotSupported) {
+      if (diagnostics) {
+        diagnostics->SetVideoNotSupported();
+      }
+      if (result) {
+        *result = checkResult.mMediaResult;
+      }
+    } else if (checkResult.mReason == SupportChecker::Reason::kAudioFormatNotSupported) {
+      if (diagnostics) {
+        diagnostics->SetAudioNotSupported();
+      }
+      if (result) {
+        *result = checkResult.mMediaResult;
       }
     }
     return nullptr;
@@ -252,6 +284,8 @@ PDMFactory::CreateDecoderWithPDM(PlatformDecoderModule* aPDM,
   }
 
   if (!config.IsVideo()) {
+    *result = MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                          RESULT_DETAIL("Decoder configuration error, expected audio or video."));
     return nullptr;
   }
 
@@ -292,10 +326,21 @@ bool
 PDMFactory::SupportsMimeType(const nsACString& aMimeType,
                              DecoderDoctorDiagnostics* aDiagnostics) const
 {
-  if (mEMEPDM) {
-    return mEMEPDM->SupportsMimeType(aMimeType, aDiagnostics);
+  UniquePtr<TrackInfo> trackInfo = CreateTrackInfoWithMIMEType(aMimeType);
+  if (!trackInfo) {
+    return false;
   }
-  RefPtr<PlatformDecoderModule> current = GetDecoder(aMimeType, aDiagnostics);
+  return Supports(*trackInfo, aDiagnostics);
+}
+
+bool
+PDMFactory::Supports(const TrackInfo& aTrackInfo,
+                     DecoderDoctorDiagnostics* aDiagnostics) const
+{
+  if (mEMEPDM) {
+    return mEMEPDM->Supports(aTrackInfo, aDiagnostics);
+  }
+  RefPtr<PlatformDecoderModule> current = GetDecoder(aTrackInfo, aDiagnostics);
   return !!current;
 }
 
@@ -330,6 +375,8 @@ PDMFactory::CreatePDMs()
     // Additionally, we don't want to start the RemoteDecoderModule if we
     // expect it's not going to work (i.e. on Windows older than Vista).
     m = new WMFDecoderModule();
+    RefPtr<PlatformDecoderModule> remote = new dom::RemoteDecoderModule(m);
+    StartupPDM(remote);
     mWMFFailedToLoad = !StartupPDM(m);
   } else {
     mWMFFailedToLoad = MediaPrefs::DecoderDoctorWMFDisabledIsFailure();
@@ -395,7 +442,7 @@ PDMFactory::StartupPDM(PlatformDecoderModule* aPDM)
 }
 
 already_AddRefed<PlatformDecoderModule>
-PDMFactory::GetDecoder(const nsACString& aMimeType,
+PDMFactory::GetDecoder(const TrackInfo& aTrackInfo,
                        DecoderDoctorDiagnostics* aDiagnostics) const
 {
   if (aDiagnostics) {
@@ -414,7 +461,7 @@ PDMFactory::GetDecoder(const nsACString& aMimeType,
 
   RefPtr<PlatformDecoderModule> pdm;
   for (auto& current : mCurrentPDMs) {
-    if (current->SupportsMimeType(aMimeType, aDiagnostics)) {
+    if (current->Supports(aTrackInfo, aDiagnostics)) {
       pdm = current;
       break;
     }

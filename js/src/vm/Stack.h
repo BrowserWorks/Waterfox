@@ -16,7 +16,6 @@
 #include "jsscript.h"
 #include "jsutil.h"
 
-#include "asmjs/WasmFrameIterator.h"
 #include "gc/Rooting.h"
 #include "jit/JitFrameIterator.h"
 #ifdef CHECK_OSIPOINT_REGISTERS
@@ -25,6 +24,7 @@
 #include "js/RootingAPI.h"
 #include "vm/ArgumentsObject.h"
 #include "vm/SavedFrame.h"
+#include "wasm/WasmFrameIterator.h"
 
 struct JSCompartment;
 
@@ -297,7 +297,7 @@ class InterpreterFrame
         DEBUGGEE               =       0x40,  /* Execution is being observed by Debugger */
 
         /* Used in tracking calls and profiling (see vm/SPSProfiler.cpp) */
-        HAS_PUSHED_SPS_FRAME   =       0x80,  /* SPS was notified of enty */
+        HAS_PUSHED_SPS_FRAME   =       0x80,  /* SPS was notified of entry */
 
         /*
          * If set, we entered one of the JITs and ScriptFrameIter should skip
@@ -929,8 +929,8 @@ class AnyConstructArgs : public JS::CallArgs
 {
     // Only js::Construct (or internal methods that call the qualified CallArgs
     // versions) should do these things!
-    void setCallee(Value v) = delete;
-    void setThis(Value v) = delete;
+    void setCallee(const Value& v) = delete;
+    void setThis(const Value& v) = delete;
     MutableHandleValue newTarget() const = delete;
     MutableHandleValue rval() const = delete;
 };
@@ -950,7 +950,7 @@ class GenericArgsBase
   public:
     bool init(JSContext* cx, unsigned argc) {
         if (argc > ARGS_LENGTH_MAX) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_TOO_MANY_ARGUMENTS);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TOO_MANY_ARGUMENTS);
             return false;
         }
 
@@ -1677,11 +1677,11 @@ class WasmActivation : public Activation
         return true;
     }
 
-    // Returns a pointer to the base of the innermost stack frame of asm.js code
+    // Returns a pointer to the base of the innermost stack frame of wasm code
     // in this activation.
     uint8_t* fp() const { return fp_; }
 
-    // Returns the reason why asm.js code called out of asm.js code.
+    // Returns the reason why wasm code called out of wasm code.
     wasm::ExitReason exitReason() const { return exitReason_; }
 
     // Read by JIT code:
@@ -1710,7 +1710,7 @@ class WasmActivation : public Activation
 // Additionally, there are derived FrameIter types that automatically skip
 // certain frames:
 //  - ScriptFrameIter only shows frames that have an associated JSScript
-//    (currently everything other than asm.js stack frames). When !hasScript(),
+//    (currently everything other than wasm stack frames). When !hasScript(),
 //    clients must stick to the portion of the
 //    interface marked below.
 //  - NonBuiltinScriptFrameIter additionally filters out builtin (self-hosted)

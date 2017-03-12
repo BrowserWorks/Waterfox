@@ -13,7 +13,7 @@ Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 
 XPCOMUtils.defineLazyModuleGetter(this, "Utils",
-  "resource:///modules/sessionstore/Utils.jsm");
+  "resource://gre/modules/sessionstore/Utils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivacyLevel",
   "resource:///modules/sessionstore/PrivacyLevel.jsm");
 
@@ -115,6 +115,7 @@ var SessionCookiesInternal = {
    * Restores a given list of session cookies.
    */
   restore(cookies) {
+
     for (let cookie of cookies) {
       let expiry = "expiry" in cookie ? cookie.expiry : MAX_EXPIRY;
       let cookieObj = {
@@ -122,7 +123,7 @@ var SessionCookiesInternal = {
         path: cookie.path || "",
         name: cookie.name || ""
       };
-      if (!Services.cookies.cookieExists(cookieObj)) {
+      if (!Services.cookies.cookieExists(cookieObj, cookie.originAttributes || {})) {
         Services.cookies.add(cookie.host, cookie.path || "", cookie.name || "",
                              cookie.value, !!cookie.secure, !!cookie.httponly,
                              /* isSession = */ true, expiry, cookie.originAttributes || {});

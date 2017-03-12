@@ -434,16 +434,10 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 #ifndef SPIDERMONKEY_PROMISE
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(Promise)
   if (tmp->IsBlack()) {
-    JS::ExposeValueToActiveJS(tmp->mResult);
-    if (tmp->mAllocationStack) {
-      JS::ExposeObjectToActiveJS(tmp->mAllocationStack);
-    }
-    if (tmp->mRejectionStack) {
-      JS::ExposeObjectToActiveJS(tmp->mRejectionStack);
-    }
-    if (tmp->mFullfillmentStack) {
-      JS::ExposeObjectToActiveJS(tmp->mFullfillmentStack);
-    }
+    tmp->mResult.exposeToActiveJS();
+    tmp->mAllocationStack.exposeToActiveJS();
+    tmp->mRejectionStack.exposeToActiveJS();
+    tmp->mFullfillmentStack.exposeToActiveJS();
     return true;
   }
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
@@ -516,7 +510,6 @@ Promise::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto,
 #ifdef DEBUG
   binding_detail::AssertReflectorHasGivenProto(aCx, mPromiseObj, aGivenProto);
 #endif // DEBUG
-  JS::ExposeObjectToActiveJS(mPromiseObj);
   aWrapper.set(mPromiseObj);
   return true;
 }
@@ -1029,7 +1022,8 @@ Promise::ReportRejectedPromise(JSContext* aCx, JS::HandleObject aPromise)
   bool isChrome = isMainThread ? nsContentUtils::IsSystemPrincipal(nsContentUtils::ObjectPrincipal(aPromise))
                                : GetCurrentThreadWorkerPrivate()->IsChromeWorker();
   nsGlobalWindow* win = isMainThread ? xpc::WindowGlobalOrNull(aPromise) : nullptr;
-  xpcReport->Init(report.report(), report.message(), isChrome, win ? win->AsInner()->WindowID() : 0);
+  xpcReport->Init(report.report(), report.toStringResult().c_str(), isChrome,
+                  win ? win->AsInner()->WindowID() : 0);
 
   // Now post an event to do the real reporting async
   NS_DispatchToMainThread(new AsyncErrorReporter(xpcReport));
@@ -2621,7 +2615,6 @@ Promise::MaybeReportRejected()
   JS::Rooted<JSObject*> obj(cx, GetWrapper());
   MOZ_ASSERT(obj); // We preserve our wrapper, so should always have one here.
   JS::Rooted<JS::Value> val(cx, mResult);
-  JS::ExposeValueToActiveJS(val);
 
   JSAutoCompartment ac(cx, obj);
   if (!JS_WrapValue(cx, &val)) {
@@ -2652,7 +2645,8 @@ Promise::MaybeReportRejected()
   if (exp) {
     xpcReport->Init(cx, exp, isChrome, windowID);
   } else {
-    xpcReport->Init(report.report(), report.message(), isChrome, windowID);
+    xpcReport->Init(report.report(), report.toStringResult(),
+                    isChrome, windowID);
   }
 
   // Now post an event to do the real reporting async
@@ -3122,16 +3116,6 @@ PromiseWorkerProxy::WorkerPromise() const
 #endif
   MOZ_ASSERT(mWorkerPromise);
   return mWorkerPromise;
-}
-
-void
-PromiseWorkerProxy::StoreISupports(nsISupports* aSupports)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsMainThreadPtrHandle<nsISupports> supports(
-    new nsMainThreadPtrHolder<nsISupports>(aSupports));
-  mSupportsArray.AppendElement(supports);
 }
 
 void

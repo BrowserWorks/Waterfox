@@ -64,6 +64,7 @@ if CONFIG['MOZ_PLACES']:
         'ClusterLib.js',
         'ColorAnalyzer_worker.js',
         'ColorConversion.js',
+        'ExtensionSearchHandler.jsm',
         'History.jsm',
         'PlacesBackups.jsm',
         'PlacesDBUtils.jsm',
@@ -84,12 +85,6 @@ if CONFIG['MOZ_PLACES']:
         'toolkitplaces.manifest',
         'UnifiedComplete.js',
     ]
-
-    if CONFIG['MOZ_SUITE']:
-        EXTRA_COMPONENTS += [
-            'nsPlacesAutoComplete.js',
-            'nsPlacesAutoComplete.manifest',
-        ]
 
     FINAL_LIBRARY = 'xul'
 

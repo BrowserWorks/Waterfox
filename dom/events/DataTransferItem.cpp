@@ -74,12 +74,6 @@ DataTransferItem::Clone(DataTransfer* aDataTransfer) const
 }
 
 void
-DataTransferItem::SetType(const nsAString& aType)
-{
-  mType = aType;
-}
-
-void
 DataTransferItem::SetData(nsIVariant* aData)
 {
   // Invalidate our file cache, we will regenerate it with the new data
@@ -230,30 +224,28 @@ DataTransferItem::FillInExternalData()
 
   SetData(variant);
 
-#ifdef DEBUG
   if (oldKind != Kind()) {
     NS_WARNING("Clipboard data provided by the OS does not match predicted kind");
+    mDataTransfer->TypesListMayHaveChanged();
   }
-#endif
 }
 
 already_AddRefed<File>
-DataTransferItem::GetAsFile(ErrorResult& aRv)
+DataTransferItem::GetAsFile(nsIPrincipal& aSubjectPrincipal,
+                            ErrorResult& aRv)
 {
-  return GetAsFileWithPrincipal(nsContentUtils::SubjectPrincipal(), aRv);
-}
-
-already_AddRefed<File>
-DataTransferItem::GetAsFileWithPrincipal(nsIPrincipal* aPrincipal, ErrorResult& aRv)
-{
-  if (mKind != KIND_FILE) {
+  // This is done even if we have an mCachedFile, as it performs the necessary
+  // permissions checks to ensure that we are allowed to access this type.
+  nsCOMPtr<nsIVariant> data = Data(&aSubjectPrincipal, aRv);
+  if (NS_WARN_IF(!data || aRv.Failed())) {
     return nullptr;
   }
 
-  // This is done even if we have an mCachedFile, as it performs the necessary
-  // permissions checks to ensure that we are allowed to access this type.
-  nsCOMPtr<nsIVariant> data = Data(aPrincipal, aRv);
-  if (NS_WARN_IF(!data || aRv.Failed())) {
+  // We have to check our kind after getting the data, because if we have
+  // external data and the OS lied to us (which unfortunately does happen
+  // sometimes), then we might not have the same type of data as we did coming
+  // into this function.
+  if (NS_WARN_IF(mKind != KIND_FILE)) {
     return nullptr;
   }
 
@@ -278,6 +270,7 @@ DataTransferItem::GetAsFileWithPrincipal(nsIPrincipal* aPrincipal, ErrorResult& 
       mCachedFile = File::CreateFromFile(mDataTransfer, ifile);
     } else {
       MOZ_ASSERT(false, "One of the above code paths should be taken");
+      return nullptr;
     }
   }
 
@@ -286,16 +279,10 @@ DataTransferItem::GetAsFileWithPrincipal(nsIPrincipal* aPrincipal, ErrorResult& 
 }
 
 already_AddRefed<FileSystemEntry>
-DataTransferItem::GetAsEntry(ErrorResult& aRv)
+DataTransferItem::GetAsEntry(nsIPrincipal& aSubjectPrincipal,
+                             ErrorResult& aRv)
 {
-  return GetAsEntryWithPrincipal(nsContentUtils::SubjectPrincipal(), aRv);
-}
-
-already_AddRefed<FileSystemEntry>
-DataTransferItem::GetAsEntryWithPrincipal(nsIPrincipal* aPrincipal,
-                                          ErrorResult& aRv)
-{
-  RefPtr<File> file = GetAsFileWithPrincipal(aPrincipal, aRv);
+  RefPtr<File> file = GetAsFile(aSubjectPrincipal, aRv);
   if (NS_WARN_IF(aRv.Failed()) || !file) {
     return nullptr;
   }
@@ -332,16 +319,18 @@ DataTransferItem::GetAsEntryWithPrincipal(nsIPrincipal* aPrincipal,
     }
 
     nsCOMPtr<nsIFile> directoryFile;
-    nsresult rv = NS_NewNativeLocalFile(NS_ConvertUTF16toUTF8(fullpath),
-                                        true, getter_AddRefs(directoryFile));
+    // fullPath is already in unicode, we don't have to use
+    // NS_NewNativeLocalFile.
+    nsresult rv = NS_NewLocalFile(fullpath, true,
+                                  getter_AddRefs(directoryFile));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return nullptr;
     }
 
     RefPtr<Directory> directory = Directory::Create(global, directoryFile);
-    entry = new FileSystemDirectoryEntry(global, directory, fs);
+    entry = new FileSystemDirectoryEntry(global, directory, nullptr, fs);
   } else {
-    entry = new FileSystemFileEntry(global, file, fs);
+    entry = new FileSystemFileEntry(global, file, nullptr, fs);
   }
 
   Sequence<RefPtr<FileSystemEntry>> entries;
@@ -393,17 +382,26 @@ DataTransferItem::CreateFileFromInputStream(nsIInputStream* aStream)
 
 void
 DataTransferItem::GetAsString(FunctionStringCallback* aCallback,
+                              nsIPrincipal& aSubjectPrincipal,
                               ErrorResult& aRv)
 {
-  if (!aCallback || mKind != KIND_STRING) {
+  if (!aCallback) {
     return;
   }
 
   // Theoretically this should be done inside of the runnable, as it might be an
   // expensive operation on some systems, however we wouldn't get access to the
   // NS_ERROR_DOM_SECURITY_ERROR messages which may be raised by this method.
-  nsCOMPtr<nsIVariant> data = Data(nsContentUtils::SubjectPrincipal(), aRv);
+  nsCOMPtr<nsIVariant> data = Data(&aSubjectPrincipal, aRv);
   if (NS_WARN_IF(!data || aRv.Failed())) {
+    return;
+  }
+
+  // We have to check our kind after getting the data, because if we have
+  // external data and the OS lied to us (which unfortunately does happen
+  // sometimes), then we might not have the same type of data as we did coming
+  // into this function.
+  if (NS_WARN_IF(mKind != KIND_STRING)) {
     return;
   }
 

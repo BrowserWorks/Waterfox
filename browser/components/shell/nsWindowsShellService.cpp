@@ -12,6 +12,7 @@
 #include "nsIDOMElement.h"
 #include "nsIDOMHTMLImageElement.h"
 #include "nsIImageLoadingContent.h"
+#include "nsIOutputStream.h"
 #include "nsIPrefService.h"
 #include "nsIPrefLocalizedString.h"
 #include "nsIServiceManager.h"
@@ -465,7 +466,7 @@ nsWindowsShellService::IsDefaultBrowser(bool aStartupCheck,
         return NS_OK;
       }
 
-      res = ::RegOpenKeyExW(HKEY_CLASSES_ROOT, PromiseFlatString(keyName).get(),
+      res = ::RegOpenKeyExW(HKEY_CLASSES_ROOT, keyName.get(),
                             0, KEY_SET_VALUE, &theKey);
       if (REG_FAILED(res)) {
         // If updating the open command fails try to update it using the helper
@@ -474,10 +475,9 @@ nsWindowsShellService::IsDefaultBrowser(bool aStartupCheck,
         return NS_OK;
       }
 
-      const nsString &flatValue = PromiseFlatString(valueData);
       res = ::RegSetValueExW(theKey, L"", 0, REG_SZ,
-                             (const BYTE *) flatValue.get(),
-                             (flatValue.Length() + 1) * sizeof(char16_t));
+                             (const BYTE *) valueData.get(),
+                             (valueData.Length() + 1) * sizeof(char16_t));
       // Close the key that was created.
       ::RegCloseKey(theKey);
       if (REG_FAILED(res)) {
@@ -529,9 +529,8 @@ nsWindowsShellService::IsDefaultBrowser(bool aStartupCheck,
       if (REG_FAILED(res) || char16_t('\0') != *currValue) {
         // Key wasn't set or was set to something other than our registry entry.
         // Delete the key along with all of its childrean and then recreate it.
-        const nsString &flatName = PromiseFlatString(keyName);
-        ::SHDeleteKeyW(HKEY_CURRENT_USER, flatName.get());
-        res = ::RegCreateKeyExW(HKEY_CURRENT_USER, flatName.get(), 0, nullptr,
+        ::SHDeleteKeyW(HKEY_CURRENT_USER, keyName.get());
+        res = ::RegCreateKeyExW(HKEY_CURRENT_USER, keyName.get(), 0, nullptr,
                                 REG_OPTION_NON_VOLATILE, KEY_SET_VALUE,
                                 nullptr, &theKey, nullptr);
         if (REG_FAILED(res)) {
@@ -583,10 +582,9 @@ nsWindowsShellService::IsDefaultBrowser(bool aStartupCheck,
 
     NS_ConvertUTF8toUTF16 valueData(VAL_OPEN);
     valueData.Replace(offset, 9, appLongPath);
-    const nsString &flatValue = PromiseFlatString(valueData);
     res = ::RegSetValueExW(theKey, L"", 0, REG_SZ,
-                           (const BYTE *) flatValue.get(),
-                           (flatValue.Length() + 1) * sizeof(char16_t));
+                           (const BYTE *) valueData.get(),
+                           (valueData.Length() + 1) * sizeof(char16_t));
     // Close the key that was created.
     ::RegCloseKey(theKey);
     // If updating the FTP protocol handlers shell open command fails try to
@@ -648,8 +646,8 @@ nsWindowsShellService::LaunchControlPanelDefaultsSelectionUI()
 nsresult
 nsWindowsShellService::LaunchControlPanelDefaultPrograms()
 {
-  // Default Programs is a Vista+ feature
-  if (!IsVistaOrLater()) {
+  // This Default Programs feature is Win7+ only.
+  if (!IsWin7OrLater()) {
     return NS_ERROR_FAILURE;
   }
 
@@ -666,7 +664,8 @@ nsWindowsShellService::LaunchControlPanelDefaultPrograms()
     return NS_ERROR_FAILURE;
   }
 
-  WCHAR params[] = L"control.exe /name Microsoft.DefaultPrograms /page pageDefaultProgram";
+  WCHAR params[] = L"control.exe /name Microsoft.DefaultPrograms /page "
+    "pageDefaultProgram\\pageAdvancedSettings?pszAppName=" APP_REG_NAME;
   STARTUPINFOW si = {sizeof(si), 0};
   si.dwFlags = STARTF_USESHOWWINDOW;
   si.wShowWindow = SW_SHOWDEFAULT;
@@ -730,8 +729,10 @@ SettingsAppBelievesConnected()
 nsresult
 nsWindowsShellService::LaunchModernSettingsDialogDefaultApps()
 {
-  if (!IsWindowsLogonConnected() && SettingsAppBelievesConnected()) {
-    // Use the classic Control Panel to work around a bug of Windows 10.
+  if (!IsWindowsBuildOrLater(14965) &&
+      !IsWindowsLogonConnected() && SettingsAppBelievesConnected()) {
+    // Use the classic Control Panel to work around a bug of older
+    // builds of Windows 10.
     return LaunchControlPanelDefaultPrograms();
   }
 

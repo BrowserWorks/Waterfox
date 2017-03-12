@@ -254,8 +254,6 @@ private:
 // Content is still loading such that there is nothing to show the
 // user (eg an image which hasn't started coming in yet).
 #define NS_EVENT_STATE_LOADING       NS_DEFINE_EVENT_STATE_MACRO(23)
-// Content is of a type that gecko can't handle.
-#define NS_EVENT_STATE_TYPE_UNSUPPORTED NS_DEFINE_EVENT_STATE_MACRO(24)
 #define NS_EVENT_STATE_INCREMENT_SCRIPT_LEVEL NS_DEFINE_EVENT_STATE_MACRO(25)
 // Handler for the content has been blocked.
 #define NS_EVENT_STATE_HANDLER_BLOCKED NS_DEFINE_EVENT_STATE_MACRO(26)
@@ -288,8 +286,6 @@ private:
 #define NS_EVENT_STATE_VULNERABLE_UPDATABLE NS_DEFINE_EVENT_STATE_MACRO(39)
 // Handler for click to play plugin (vulnerable w/no update)
 #define NS_EVENT_STATE_VULNERABLE_NO_UPDATE NS_DEFINE_EVENT_STATE_MACRO(40)
-// Platform does not support plugin content (some mobile platforms)
-#define NS_EVENT_STATE_TYPE_UNSUPPORTED_PLATFORM NS_DEFINE_EVENT_STATE_MACRO(41)
 // Element is ltr (for :dir pseudo-class)
 #define NS_EVENT_STATE_LTR NS_DEFINE_EVENT_STATE_MACRO(42)
 // Element is rtl (for :dir pseudo-class)
@@ -302,6 +298,8 @@ private:
 #define NS_EVENT_STATE_STYLEEDITOR_TRANSITIONING NS_DEFINE_EVENT_STATE_MACRO(47)
 // Content shows its placeholder
 #define NS_EVENT_STATE_PLACEHOLDERSHOWN NS_DEFINE_EVENT_STATE_MACRO(48)
+// Element has focus-within.
+#define NS_EVENT_STATE_FOCUS_WITHIN NS_DEFINE_EVENT_STATE_MACRO(49)
 
 // Event state that is used for values that need to be parsed but do nothing.
 #define NS_EVENT_STATE_IGNORE NS_DEFINE_EVENT_STATE_MACRO(63)
@@ -312,10 +310,11 @@ private:
 
 #define DIRECTION_STATES (NS_EVENT_STATE_LTR | NS_EVENT_STATE_RTL)
 
-#define ESM_MANAGED_STATES (NS_EVENT_STATE_ACTIVE | NS_EVENT_STATE_FOCUS |     \
+#define ESM_MANAGED_STATES (NS_EVENT_STATE_ACTIVE | NS_EVENT_STATE_FOCUS |  \
                             NS_EVENT_STATE_HOVER | NS_EVENT_STATE_DRAGOVER |   \
                             NS_EVENT_STATE_URLTARGET | NS_EVENT_STATE_FOCUSRING | \
-                            NS_EVENT_STATE_FULL_SCREEN | NS_EVENT_STATE_UNRESOLVED)
+                            NS_EVENT_STATE_FULL_SCREEN | NS_EVENT_STATE_UNRESOLVED | \
+                            NS_EVENT_STATE_FOCUS_WITHIN)
 
 #define INTRINSIC_STATES (~ESM_MANAGED_STATES)
 

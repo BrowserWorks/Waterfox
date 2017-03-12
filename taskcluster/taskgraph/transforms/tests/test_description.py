@@ -32,7 +32,10 @@ test_description_schema = Schema({
     'description': basestring,
 
     # test suite name, or <suite>/<flavor>
-    'suite': basestring,
+    Required('suite'): Any(
+        basestring,
+        {'by-test-platform': {basestring: basestring}},
+    ),
 
     # the name by which this test suite is addressed in try syntax; defaults to
     # the test-name
@@ -50,6 +53,14 @@ test_description_schema = Schema({
     # attributes to appear in the resulting task (later transforms will add the
     # common attributes)
     Optional('attributes'): {basestring: object},
+
+    # The `run_on_projects` attribute, defaulting to "all".  This dictates the
+    # projects on which this task should be included in the target task set.
+    # See the attributes documentation for details.
+    Optional('run-on-projects', default=['all']): Any(
+        [basestring],
+        {'by-test-platform': {basestring: [basestring]}},
+    ),
 
     # the sheriffing tier for this task (default: set based on test platform)
     Optional('tier'): int,
@@ -95,8 +106,9 @@ test_description_schema = Schema({
     # test platform.
     Optional('worker-implementation'): Any(
         'docker-worker',
-        # coming soon:
+        'macosx-engine',
         'generic-worker',
+        # coming soon:
         'docker-engine',
         'buildbot-bridge',
     ),
@@ -141,7 +153,10 @@ test_description_schema = Schema({
 
         # additional command-line options for mozharness, beyond those
         # automatically added
-        Required('extra-options', default=[]): [basestring],
+        Required('extra-options', default=[]): Any(
+            [basestring],
+            {'by-test-platform': {basestring: [basestring]}},
+        ),
 
         # the artifact name (including path) to test on the build task; this is
         # generally set in a per-kind transformation
@@ -153,6 +168,9 @@ test_description_schema = Schema({
         # This mozharness script also runs in Buildbot and tries to read a
         # buildbot config file, so tell it not to do so in TaskCluster
         Required('no-read-buildbot-config', default=False): bool,
+
+        # Add --blob-upload-branch=<project> mozharness parameter
+        Optional('include-blob-upload-branch'): bool,
 
         # The setting for --download-symbols (if omitted, the option will not
         # be passed to mozharness)
@@ -184,6 +202,14 @@ test_description_schema = Schema({
 
     # The current chunk; this is filled in by `all_kinds.py`
     Optional('this-chunk'): int,
+
+    # os user groups for test task workers; required scopes, will be
+    # added automatically
+    Optional('os-groups', default=[]): Any(
+        [basestring],
+        # todo: create a dedicated elevated worker group and name here
+        {'by-test-platform': {basestring: [basestring]}},
+    ),
 
     # -- values supplied by the task-generation infrastructure
 

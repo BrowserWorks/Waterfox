@@ -29,6 +29,10 @@
 #include "webrtc/system_wrappers/interface/ref_count.h"
 #include "webrtc/system_wrappers/interface/trace.h"
 
+#ifdef WEBRTC_LINUX
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
+#endif
 
 namespace webrtc
 {
@@ -47,9 +51,134 @@ VideoCaptureImpl::CreateDeviceInfo(const int32_t id)
     return deviceInfo;
 }
 
+#ifdef WEBRTC_LINUX
+void DeviceInfoLinux::HandleEvent(inotify_event* event)
+{
+    switch (event->mask) {
+        case IN_CREATE:
+            DeviceChange();
+            break;
+        case IN_DELETE:
+            DeviceChange();
+            break;
+        default:
+            char* cur_event_filename = NULL;
+            int cur_event_wd = event->wd;
+            if (event->len) {
+                cur_event_filename = event->name;
+            }
+
+            WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, _id,
+                "UNKNOWN EVENT OCCURRED for file \"%s\" on WD #%i\n",
+                cur_event_filename, cur_event_wd);
+            break;
+    }
+}
+
+int DeviceInfoLinux::EventCheck()
+{
+    struct timeval timeout;
+    fd_set rfds;
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000;
+
+    FD_ZERO(&rfds);
+    FD_SET(_fd, &rfds);
+
+    return select(_fd+1, &rfds, NULL, NULL, &timeout);
+}
+
+int DeviceInfoLinux::HandleEvents()
+{
+    char buffer[BUF_LEN];
+
+    ssize_t r = read(_fd, buffer, BUF_LEN);
+
+    if (r <= 0) {
+        return r;
+    }
+
+    ssize_t buffer_i = 0;
+    inotify_event* pevent;
+    size_t eventSize;
+    int count = 0;
+
+    while (buffer_i < r)
+    {
+        pevent = (inotify_event *) (&buffer[buffer_i]);
+        eventSize = sizeof(inotify_event) + pevent->len;
+        char event[sizeof(inotify_event) + FILENAME_MAX + 1] // null-terminated
+            __attribute__ ((aligned(__alignof__(struct inotify_event))));
+
+        memcpy(event, pevent, eventSize);
+
+        HandleEvent((inotify_event*)(event));
+
+        buffer_i += eventSize;
+        count++;
+    }
+
+    return count;
+}
+
+int DeviceInfoLinux::ProcessInotifyEvents()
+{
+    while (0 == _isShutdown.Value()) {
+        if (EventCheck() > 0) {
+            if (HandleEvents() < 0) {
+                break;
+            }
+        }
+    }
+    return 0;
+}
+
+bool DeviceInfoLinux::InotifyEventThread(void* obj)
+{
+    return static_cast<DeviceInfoLinux*> (obj)->InotifyProcess();
+}
+
+bool DeviceInfoLinux::InotifyProcess()
+{
+    _fd = inotify_init();
+    if (_fd >= 0) {
+        _wd_v4l = inotify_add_watch(_fd, "/dev/v4l/by-path/", IN_CREATE | IN_DELETE);
+        _wd_snd = inotify_add_watch(_fd, "/dev/snd/by-path/", IN_CREATE | IN_DELETE);
+        ProcessInotifyEvents();
+
+        if (_wd_v4l >= 0) {
+          inotify_rm_watch(_fd, _wd_v4l);
+        }
+
+        if (_wd_snd >= 0) {
+          inotify_rm_watch(_fd, _wd_snd);
+        }
+
+        close(_fd);
+        return true;
+    } else {
+        return false;
+    }
+}
+#endif
+
 DeviceInfoLinux::DeviceInfoLinux(const int32_t id)
     : DeviceInfoImpl(id)
+#ifdef WEBRTC_LINUX
+    , _isShutdown(0)
+#endif
 {
+#ifdef WEBRTC_LINUX
+    _inotifyEventThread = ThreadWrapper::CreateThread(
+        InotifyEventThread, this, "InotifyEventThread");
+
+    if (_inotifyEventThread)
+    {
+        _inotifyEventThread->Start();
+        _inotifyEventThread->SetPriority(kHighPriority);
+    }
+#endif
 }
 
 int32_t DeviceInfoLinux::Init()
@@ -59,6 +188,14 @@ int32_t DeviceInfoLinux::Init()
 
 DeviceInfoLinux::~DeviceInfoLinux()
 {
+#ifdef WEBRTC_LINUX
+    ++_isShutdown;
+
+    if (_inotifyEventThread) {
+        _inotifyEventThread->Stop();
+        _inotifyEventThread.reset();
+    }
+#endif
 }
 
 uint32_t DeviceInfoLinux::NumberOfDevices()
@@ -90,7 +227,8 @@ int32_t DeviceInfoLinux::GetDeviceName(
                                          char* deviceUniqueIdUTF8,
                                          uint32_t deviceUniqueIdUTF8Length,
                                          char* /*productUniqueIdUTF8*/,
-                                         uint32_t /*productUniqueIdUTF8Length*/)
+                                         uint32_t /*productUniqueIdUTF8Length*/,
+                                         pid_t* pid)
 {
     WEBRTC_TRACE(webrtc::kTraceApiCall, webrtc::kTraceVideoCapture, _id, "%s", __FUNCTION__);
 
@@ -267,77 +405,52 @@ bool DeviceInfoLinux::IsDeviceNameMatches(const char* name,
 
 int32_t DeviceInfoLinux::FillCapabilities(int fd)
 {
+    struct v4l2_fmtdesc fmt;
+    struct v4l2_frmsizeenum frmsize;
+    struct v4l2_frmivalenum frmival;
 
-    // set image format
-    struct v4l2_format video_fmt;
-    memset(&video_fmt, 0, sizeof(struct v4l2_format));
+    fmt.index = 0;
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    while (ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
+        frmsize.pixel_format = fmt.pixelformat;
+        frmsize.index = 0;
+        while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
+            if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
+                frmival.index = 0;
+                frmival.pixel_format = fmt.pixelformat;
+                frmival.width = frmsize.discrete.width;
+                frmival.height = frmsize.discrete.height;
+                if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
+                    if (fmt.pixelformat == V4L2_PIX_FMT_YUYV ||
+                        fmt.pixelformat == V4L2_PIX_FMT_YUV420 ||
+                        fmt.pixelformat == V4L2_PIX_FMT_MJPEG) {
 
-    video_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    video_fmt.fmt.pix.sizeimage = 0;
+                        VideoCaptureCapability cap;
+                        cap.width = frmsize.discrete.width;
+                        cap.height = frmsize.discrete.height;
+                        cap.expectedCaptureDelay = 120;
 
-    int totalFmts = 3;
-    unsigned int videoFormats[] = {
-        V4L2_PIX_FMT_MJPEG,
-        V4L2_PIX_FMT_YUV420,
-        V4L2_PIX_FMT_YUYV };
+                        if (fmt.pixelformat == V4L2_PIX_FMT_YUYV)
+                        {
+                            cap.rawType = kVideoYUY2;
+                        }
+                        else if (fmt.pixelformat == V4L2_PIX_FMT_YUV420)
+                        {
+                            cap.rawType = kVideoI420;
+                        }
+                        else if (fmt.pixelformat == V4L2_PIX_FMT_MJPEG)
+                        {
+                            cap.rawType = kVideoMJPEG;
+                        }
 
-    int sizes = 13;
-    unsigned int size[][2] = { { 128, 96 }, { 160, 120 }, { 176, 144 },
-                               { 320, 240 }, { 352, 288 }, { 640, 480 },
-                               { 704, 576 }, { 800, 600 }, { 960, 720 },
-                               { 1280, 720 }, { 1024, 768 }, { 1440, 1080 },
-                               { 1920, 1080 } };
-
-    int index = 0;
-    for (int fmts = 0; fmts < totalFmts; fmts++)
-    {
-        for (int i = 0; i < sizes; i++)
-        {
-            video_fmt.fmt.pix.pixelformat = videoFormats[fmts];
-            video_fmt.fmt.pix.width = size[i][0];
-            video_fmt.fmt.pix.height = size[i][1];
-
-            if (ioctl(fd, VIDIOC_TRY_FMT, &video_fmt) >= 0)
-            {
-                if ((video_fmt.fmt.pix.width == size[i][0])
-                    && (video_fmt.fmt.pix.height == size[i][1]))
-                {
-                    VideoCaptureCapability cap;
-                    cap.width = video_fmt.fmt.pix.width;
-                    cap.height = video_fmt.fmt.pix.height;
-                    cap.expectedCaptureDelay = 120;
-                    if (videoFormats[fmts] == V4L2_PIX_FMT_YUYV)
-                    {
-                        cap.rawType = kVideoYUY2;
+                        cap.maxFPS = frmival.discrete.denominator / frmival.discrete.numerator;
+                        _captureCapabilities.push_back(cap);
                     }
-                    else if (videoFormats[fmts] == V4L2_PIX_FMT_YUV420)
-                    {
-                        cap.rawType = kVideoI420;
-                    }
-                    else if (videoFormats[fmts] == V4L2_PIX_FMT_MJPEG)
-                    {
-                        cap.rawType = kVideoMJPEG;
-                    }
-
-                    // get fps of current camera mode
-                    // V4l2 does not have a stable method of knowing so we just guess.
-                    if(cap.width >= 800 && cap.rawType != kVideoMJPEG)
-                    {
-                        cap.maxFPS = 15;
-                    }
-                    else
-                    {
-                        cap.maxFPS = 30;
-                    }
-
-                    _captureCapabilities.push_back(cap);
-                    index++;
-                    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, _id,
-                               "Camera capability, width:%d height:%d type:%d fps:%d",
-                               cap.width, cap.height, cap.rawType, cap.maxFPS);
                 }
             }
+            frmsize.index++;
         }
+        fmt.index++;
     }
 
     WEBRTC_TRACE(webrtc::kTraceInfo,

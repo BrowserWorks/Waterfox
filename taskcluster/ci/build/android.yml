@@ -4,12 +4,11 @@ android-api-15/debug:
         product: mobile
         job-name:
             buildbot: android-api-15-debug
-            gecko-v1: android-api-15.debug
             gecko-v2: android-api-15-debug
     treeherder:
         platform: android-4-0-armv7-api15/debug
         symbol: tc(B)
-    worker-type: aws-provisioner-v1/android-api-15
+    worker-type: aws-provisioner-v1/gecko-{level}-b-android
     worker:
         implementation: docker-worker
         max-run-time: 7200
@@ -33,7 +32,7 @@ android-x86/opt:
         platform: android-4-2-x86/opt
         symbol: tc(B)
         tier: 1
-    worker-type: aws-provisioner-v1/android-api-15
+    worker-type: aws-provisioner-v1/gecko-{level}-b-android
     worker:
         implementation: docker-worker
         max-run-time: 7200
@@ -57,7 +56,7 @@ android-api-15/opt:
         platform: android-4-0-armv7-api15/opt
         symbol: tc(B)
         tier: 2
-    worker-type: aws-provisioner-v1/android-api-15
+    worker-type: aws-provisioner-v1/gecko-{level}-b-android
     worker:
         implementation: docker-worker
         max-run-time: 7200
@@ -72,6 +71,34 @@ android-api-15/opt:
         custom-build-variant-cfg: api-15
         tooltool-downloads: internal
 
+android-api-15-nightly/opt:
+    description: "Android 4.0 API15+ Nightly"
+    attributes:
+        nightly: true
+    index:
+        product: mobile
+        job-name: android-api-15-nightly-opt
+    treeherder:
+        platform: android-4-0-armv7-api15/opt
+        symbol: tc(N)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-android
+    worker:
+        implementation: docker-worker
+        max-run-time: 7200
+    run:
+        using: mozharness
+        actions: [get-secrets build multi-l10n update]
+        config:
+            - builds/releng_base_android_64_builds.py
+            - disable_signing.py
+            - platform_supports_post_upload_to_latest.py
+            - taskcluster_nightly.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        custom-build-variant-cfg: api-15
+        tooltool-downloads: internal
+    run-on-projects: []
+
 android-api-15-gradle/opt:
     description: "Android 4.0 API15+ (Gradle) Opt"
     index:
@@ -81,13 +108,23 @@ android-api-15-gradle/opt:
         platform: android-4-0-armv7-api15/opt
         symbol: tc(Bg)
         tier: 2
-    worker-type: aws-provisioner-v1/android-api-15
+    worker-type: aws-provisioner-v1/gecko-{level}-b-android
     worker:
         implementation: docker-worker
         max-run-time: 7200
         env:
             # Bug 1292762 - Set GRADLE_USER_HOME to avoid sdk-manager-plugin intermittent
             GRADLE_USER_HOME: /home/worker/workspace/build/src/dotgradle
+        artifacts:
+          - name: public/android/maven
+            path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/geckoview/maven/
+            type: directory
+          - name: public/android/geckoview_example.apk
+            path: /home/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/geckoview_example/outputs/apk/geckoview_example-withGeckoBinaries.apk
+            type: file
+          - name: public/build
+            path: /home/worker/artifacts/
+            type: directory
     run:
         using: mozharness
         actions: [get-secrets build multi-l10n update]
@@ -98,5 +135,3 @@ android-api-15-gradle/opt:
         script: "mozharness/scripts/fx_desktop_build.py"
         custom-build-variant-cfg: api-15-gradle
         tooltool-downloads: internal
-
-

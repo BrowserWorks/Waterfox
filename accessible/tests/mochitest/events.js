@@ -536,7 +536,16 @@ function eventQueue(aEventType)
       }
 
       // Check if handled event matches any expected async events.
+      var haveUnmatchedAsync = false;
       for (idx = 0; idx < eventSeq.length; idx++) {
+        if (eventSeq[idx] instanceof orderChecker && haveUnmatchedAsync) {
+            break;
+        }
+
+        if (!eventSeq[idx].wasCaught) {
+          haveUnmatchedAsync = true;
+        }
+
         if (!eventSeq[idx].unexpected && eventSeq[idx].async) {
           if (eventQueue.compareEvents(eventSeq[idx], aEvent)) {
             this.processMatchedChecker(aEvent, eventSeq[idx], scnIdx, idx);
@@ -551,6 +560,16 @@ function eventQueue(aEventType)
       var invoker = this.getInvoker();
       if ("check" in invoker)
         invoker.check(aEvent);
+    }
+
+    for (idx = 0; idx < eventSeq.length; idx++) {
+      if (!eventSeq[idx].wasCaught) {
+        if (eventSeq[idx] instanceof orderChecker) {
+          eventSeq[idx].wasCaught++;
+        } else {
+          break;
+        }
+      }
     }
 
     // If we don't have more events to wait then schedule next invoker.
@@ -596,6 +615,7 @@ function eventQueue(aEventType)
            (aEventSeq[aEventSeq.idx].unexpected ||
             aEventSeq[aEventSeq.idx].todo ||
             aEventSeq[aEventSeq.idx].async ||
+            aEventSeq[aEventSeq.idx] instanceof orderChecker ||
             aEventSeq[aEventSeq.idx].wasCaught > 0)) {
       aEventSeq.idx++;
     }
@@ -612,7 +632,7 @@ function eventQueue(aEventType)
       // sync expcected events yet.
       for (var idx = 0; idx < aEventSeq.length; idx++) {
         if (!aEventSeq[idx].unexpected && !aEventSeq[idx].todo &&
-            !aEventSeq[idx].wasCaught)
+            !aEventSeq[idx].wasCaught && !(aEventSeq[idx] instanceof orderChecker))
           return true;
       }
 
@@ -1680,6 +1700,17 @@ function invokerChecker(aEventType, aTargetOrFunc, aTargetFuncArg, aIsAsync)
 }
 
 /**
+ * event checker that forces preceeding async events to happen before this
+ * checker.
+ */
+function orderChecker()
+{
+  // XXX it doesn't actually work to inherit from invokerChecker, but maybe we
+  // should fix that?
+  //  this.__proto__ = new invokerChecker(null, null, null, false);
+}
+
+/**
  * Generic invoker checker for todo events.
  */
 function todo_invokerChecker(aEventType, aTargetOrFunc, aTargetFuncArg)
@@ -1732,13 +1763,27 @@ function nofocusChecker(aID)
  * Text inserted/removed events checker.
  * @param aFromUser  [in, optional] kNotFromUserInput or kFromUserInput
  */
-function textChangeChecker(aID, aStart, aEnd, aTextOrFunc, aIsInserted, aFromUser)
+function textChangeChecker(aID, aStart, aEnd, aTextOrFunc, aIsInserted, aFromUser, aAsync)
 {
   this.target = getNode(aID);
   this.type = aIsInserted ? EVENT_TEXT_INSERTED : EVENT_TEXT_REMOVED;
   this.startOffset = aStart;
   this.endOffset = aEnd;
   this.textOrFunc = aTextOrFunc;
+  this.async = aAsync;
+
+  this.match = function stextChangeChecker_match(aEvent)
+  {
+    if (!(aEvent instanceof nsIAccessibleTextChangeEvent) ||
+        aEvent.accessible !== getAccessible(this.target)) {
+      return false;
+    }
+
+    let tcEvent = aEvent.QueryInterface(nsIAccessibleTextChangeEvent);
+    let modifiedText = (typeof this.textOrFunc === "function") ?
+      this.textOrFunc() : this.textOrFunc;
+    return modifiedText === tcEvent.modifiedText;
+  };
 
   this.check = function textChangeChecker_check(aEvent)
   {

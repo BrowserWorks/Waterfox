@@ -306,6 +306,10 @@ var PingPicker = {
             .addEventListener("click", () => this._movePingIndex(1), false);
     document.getElementById("choose-payload")
             .addEventListener("change", () => displayPingData(gPingData), false);
+    document.getElementById("histograms-processes")
+            .addEventListener("change", () => displayPingData(gPingData), false);
+    document.getElementById("keyed-histograms-processes")
+            .addEventListener("change", () => displayPingData(gPingData), false);
   },
 
   onPingSourceChanged: function() {
@@ -1499,6 +1503,72 @@ var KeyValueTable = {
   }
 };
 
+var GenericTable = {
+  /**
+   * Returns a n-column table.
+   * @param rows An array of arrays, each containing data to render
+   *             for one row.
+   * @param headings The column header strings.
+   */
+  render: function(rows, headings) {
+    let table = document.createElement("table");
+    this.renderHeader(table, headings);
+    this.renderBody(table, rows);
+    return table;
+  },
+
+  /**
+   * Create the table header.
+   * Tabs & newlines added to cells to make it easier to copy-paste.
+   *
+   * @param table Table element
+   * @param headings Array of column header strings.
+   */
+  renderHeader: function(table, headings) {
+    let headerRow = document.createElement("tr");
+    table.appendChild(headerRow);
+
+    for (let i = 0; i < headings.length; ++i) {
+      let suffix = (i == (headings.length - 1)) ? "\n" : "\t";
+      let column = document.createElement("th");
+      column.appendChild(document.createTextNode(headings[i] + suffix));
+      headerRow.appendChild(column);
+    }
+  },
+
+  /**
+   * Create the table body
+   * Tabs & newlines added to cells to make it easier to copy-paste.
+   *
+   * @param table Table element
+   * @param rows An array of arrays, each containing data to render
+   *             for one row.
+   */
+  renderBody: function(table, rows) {
+    for (let row of rows) {
+      row = row.map(value => {
+        // use .valueOf() to unbox Number, String, etc. objects
+        if (value &&
+           (typeof value == "object") &&
+           (typeof value.valueOf() == "object")) {
+          return RenderObject(value);
+        }
+        return value;
+      });
+
+      let newRow = document.createElement("tr");
+      table.appendChild(newRow);
+
+      for (let i = 0; i < row.length; ++i) {
+        let suffix = (i == (row.length - 1)) ? "\n" : "\t";
+        let field = document.createElement("td");
+        field.appendChild(document.createTextNode(row[i] + suffix));
+        newRow.appendChild(field);
+      }
+    }
+  }
+};
+
 var KeyedHistogram = {
   render: function(parent, id, keyedHistogram) {
     let outerDiv = document.createElement("div");
@@ -1607,6 +1677,40 @@ var KeyedScalars = {
       const table = KeyValueTable.render(keyedScalars[scalar], headingName, headingValue);
       scalarsSection.appendChild(table);
     }
+  }
+};
+
+var Events = {
+  /**
+   * Render the event data - if present - from the payload in a simple table.
+   * @param aPayload A payload object to render the data from.
+   */
+  render: function(aPayload) {
+    let eventsSection = document.getElementById("events");
+    removeAllChildNodes(eventsSection);
+
+    if (!aPayload.processes || !aPayload.processes.parent) {
+      return;
+    }
+
+    const events = aPayload.processes.parent.events;
+    const hasData = events && Object.keys(events).length > 0;
+    setHasData("events-section", hasData);
+    if (!hasData) {
+      return;
+    }
+
+    const headings = [
+      "timestamp",
+      "category",
+      "method",
+      "object",
+      "value",
+      "extra",
+    ];
+
+    const table = GenericTable.render(events, headings);
+    eventsSection.appendChild(table);
   }
 };
 
@@ -1816,6 +1920,33 @@ function sortStartupMilestones(aSimpleMeasurements) {
   return result;
 }
 
+function renderProcessList(ping, selectEl) {
+  removeAllChildNodes(selectEl);
+  let option = document.createElement("option");
+  option.appendChild(document.createTextNode("parent"));
+  option.setAttribute("value", "");
+  option.selected = true;
+  selectEl.appendChild(option);
+
+  if (!("processes" in ping.payload)) {
+    selectEl.disabled = true;
+    return;
+  }
+  selectEl.disabled = false;
+
+  for (let process of Object.keys(ping.payload.processes)) {
+    // TODO: parent hgrams are on root payload, not in payload.processes.parent
+    // When/If that gets moved, you'll need to remove this:
+    if (process === "parent") {
+      continue;
+    }
+    option = document.createElement("option");
+    option.appendChild(document.createTextNode(process));
+    option.setAttribute("value", process);
+    selectEl.appendChild(option);
+  }
+}
+
 function renderPayloadList(ping) {
   // Rebuild the payload select with options:
   //   Parent Payload (selected)
@@ -1884,9 +2015,11 @@ function displayPingData(ping, updatePayloadList = false) {
   const keysHeader = bundle.GetStringFromName("keysHeader");
   const valuesHeader = bundle.GetStringFromName("valuesHeader");
 
-  // Update the payload list
+  // Update the payload list and process lists
   if (updatePayloadList) {
     renderPayloadList(ping);
+    renderProcessList(ping, document.getElementById("histograms-processes"));
+    renderProcessList(ping, document.getElementById("keyed-histograms-processes"));
   }
 
   // Show general data.
@@ -1964,8 +2097,18 @@ function displayPingData(ping, updatePayloadList = false) {
   removeAllChildNodes(hgramDiv);
 
   let histograms = payload.histograms;
+
+  let hgramsSelect = document.getElementById("histograms-processes");
+  let hgramsOption = hgramsSelect.selectedOptions.item(0);
+  let hgramsProcess = hgramsOption.getAttribute("value");
+  if (hgramsProcess &&
+      "processes" in ping.payload &&
+      hgramsProcess in ping.payload.processes) {
+    histograms = ping.payload.processes[hgramsProcess].histograms;
+  }
+
   hasData = Object.keys(histograms).length > 0;
-  setHasData("histograms-section", hasData);
+  setHasData("histograms-section", hasData || hgramsSelect.options.length);
 
   if (hasData) {
     for (let [name, hgram] of Object.entries(histograms)) {
@@ -1985,8 +2128,18 @@ function displayPingData(ping, updatePayloadList = false) {
   let keyedDiv = document.getElementById("keyed-histograms");
   removeAllChildNodes(keyedDiv);
 
-  setHasData("keyed-histograms-section", false);
   let keyedHistograms = payload.keyedHistograms;
+
+  let keyedHgramsSelect = document.getElementById("keyed-histograms-processes");
+  let keyedHgramsOption = keyedHgramsSelect.selectedOptions.item(0);
+  let keyedHgramsProcess = keyedHgramsOption.getAttribute("value");
+  if (keyedHgramsProcess &&
+      "processes" in ping.payload &&
+      keyedHgramsProcess in ping.payload.processes) {
+    keyedHistograms = ping.payload.processes[keyedHgramsProcess].keyedHistograms;
+  }
+
+  setHasData("keyed-histograms-section", keyedHgramsSelect.options.length);
   if (keyedHistograms) {
     let hasData = false;
     for (let [id, keyed] of Object.entries(keyedHistograms)) {
@@ -1995,8 +2148,11 @@ function displayPingData(ping, updatePayloadList = false) {
         KeyedHistogram.render(keyedDiv, id, keyed, {unpacked: true});
       }
     }
-    setHasData("keyed-histograms-section", hasData);
+    setHasData("keyed-histograms-section", hasData || keyedHgramsSelect.options.length);
   }
+
+  // Show event data.
+  Events.render(payload);
 
   // Show addon histogram data
   let addonDiv = document.getElementById("addon-histograms");

@@ -23,6 +23,12 @@
 #include <time.h>
 #include "TimeUnits.h"
 
+// GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
+// GetTickCount() and conflicts with MediaDecoder::GetCurrentTime implementation.
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
+
 struct JSContext;
 class JSObject;
 
@@ -305,9 +311,6 @@ SourceBuffer::SourceBuffer(MediaSource* aMediaSource, const nsACString& aType)
 
   mTrackBuffersManager =
     new TrackBuffersManager(aMediaSource->GetDecoder(), aType);
-
-  // Now that we know what type we're dealing with, enable dormant as needed.
-  aMediaSource->GetDecoder()->NotifyDormantSupported(Preferences::GetBool("media.decoder.heuristic.dormant.enabled", false));
 
   MSE_DEBUG("Create mTrackBuffersManager=%p",
             mTrackBuffersManager.get());

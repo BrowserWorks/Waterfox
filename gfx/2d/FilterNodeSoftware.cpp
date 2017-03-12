@@ -3316,7 +3316,7 @@ FilterNodeLightingSoftware<LightType, LightingType>::SetAttribute(uint32_t aInde
   }
   switch (aIndex) {
     case ATT_LIGHTING_SURFACE_SCALE:
-      mSurfaceScale = aValue;
+      mSurfaceScale = std::fpclassify(aValue) == FP_SUBNORMAL ? 0.0 : aValue;
       break;
     default:
       MOZ_CRASH("GFX: FilterNodeLightingSoftware::SetAttribute float");
@@ -3482,6 +3482,9 @@ FilterNodeLightingSoftware<LightType, LightingType>::DoRender(const IntRect& aRe
                                                               CoordType aKernelUnitLengthX,
                                                               CoordType aKernelUnitLengthY)
 {
+  MOZ_ASSERT(aKernelUnitLengthX > 0, "aKernelUnitLengthX can be a negative or zero value");
+  MOZ_ASSERT(aKernelUnitLengthY > 0, "aKernelUnitLengthY can be a negative or zero value");
+
   IntRect srcRect = aRect;
   IntSize size = aRect.Size();
   srcRect.Inflate(ceil(float(aKernelUnitLengthX)),

@@ -277,7 +277,6 @@ CaptivePortalDetector.prototype = {
         || this._runningRequest.interfaceName !== aInterfaceName) {
       debug('invalid finishPreparation for ' + aInterfaceName);
       throw Components.Exception('only first request is allowed to invoke |finishPreparation|');
-      return;
     }
 
     this._startDetection();
@@ -354,7 +353,7 @@ CaptivePortalDetector.prototype = {
       debug('retry-Detection: ' + this._runningRequest.retryCount + '/' + this._maxRetryCount);
       this._startDetection();
     } else {
-      this.executeCallback(true);
+      this.executeCallback(false);
     }
   },
 

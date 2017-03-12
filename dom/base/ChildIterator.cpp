@@ -60,7 +60,7 @@ GetMatchedNodesForPoint(nsIContent* aContent)
 
   // Web components case
   MOZ_ASSERT(aContent->IsHTMLElement(nsGkAtoms::content));
-  return MatchedNodes(static_cast<HTMLContentElement*>(aContent));
+  return MatchedNodes(HTMLContentElement::FromContent(aContent));
 }
 
 nsIContent*
@@ -115,7 +115,7 @@ ExplicitChildIterator::GetNextChild()
     if (ShadowRoot::IsShadowInsertionPoint(mChild)) {
       // Look for the next child in the projected ShadowRoot for the <shadow>
       // element.
-      HTMLShadowElement* shadowElem = static_cast<HTMLShadowElement*>(mChild);
+      HTMLShadowElement* shadowElem = HTMLShadowElement::FromContent(mChild);
       ShadowRoot* projectedShadow = shadowElem->GetOlderShadowRoot();
       if (projectedShadow) {
         mShadowIterator = new ExplicitChildIterator(projectedShadow);
@@ -270,7 +270,7 @@ ExplicitChildIterator::GetPreviousChild()
     if (ShadowRoot::IsShadowInsertionPoint(mChild)) {
       // If the current child being iterated is a shadow insertion point then
       // the iterator needs to go into the projected ShadowRoot.
-      HTMLShadowElement* shadowElem = static_cast<HTMLShadowElement*>(mChild);
+      HTMLShadowElement* shadowElem = HTMLShadowElement::FromContent(mChild);
       ShadowRoot* projectedShadow = shadowElem->GetOlderShadowRoot();
       if (projectedShadow) {
         // Create a ExplicitChildIterator that begins iterating from the end.
@@ -562,7 +562,7 @@ IsNativeAnonymousImplementationOfPseudoElement(nsIContent* aContent)
 }
 
 /* static */ bool
-StyleChildrenIterator::IsNeeded(Element* aElement)
+StyleChildrenIterator::IsNeeded(const Element* aElement)
 {
   // If the node is in an anonymous subtree, we conservatively return true to
   // handle insertion points.

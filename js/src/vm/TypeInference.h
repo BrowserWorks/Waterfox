@@ -267,6 +267,8 @@ class TypeSet
         void ensureTrackedProperty(JSContext* cx, jsid id);
 
         ObjectGroup* maybeGroup();
+
+        JSCompartment* maybeCompartment();
     } JS_HAZ_GC_POINTER;
 
     // Information about a single concrete type. We pack this into one word,
@@ -351,6 +353,8 @@ class TypeSet
         inline ObjectGroup* groupNoBarrier() const;
 
         inline void trace(JSTracer* trc);
+
+        JSCompartment* maybeCompartment();
 
         bool operator == (Type o) const { return data == o.data; }
         bool operator != (Type o) const { return data != o.data; }
@@ -502,6 +506,8 @@ class TypeSet
     TemporaryTypeSet* cloneObjectsOnly(LifoAlloc* alloc);
     TemporaryTypeSet* cloneWithoutObjects(LifoAlloc* alloc);
 
+    JSCompartment* maybeCompartment();
+
     // Trigger a read barrier on all the contents of a type set.
     static void readBarrier(const TypeSet* types);
 
@@ -523,7 +529,7 @@ class TypeSet
     // out of Ion, such as for argument and local types.
     static inline Type GetMaybeUntrackedValueType(const Value& val);
 
-    static bool IsTypeMarked(Type* v);
+    static bool IsTypeMarked(JSRuntime* rt, Type* v);
     static bool IsTypeAllocatedDuringIncremental(Type v);
     static bool IsTypeAboutToBeFinalized(Type* v);
 } JS_HAZ_GC_POINTER;
@@ -566,6 +572,9 @@ public:
      * zone's new allocator. Type constraints only hold weak references.
      */
     virtual bool sweep(TypeZone& zone, TypeConstraint** res) = 0;
+
+    /* The associated compartment, if any. */
+    virtual JSCompartment* maybeCompartment() = 0;
 };
 
 // If there is an OOM while sweeping types, the type information is deoptimized
@@ -1290,7 +1299,7 @@ const char * InferSpewColor(TypeConstraint* constraint);
 const char * InferSpewColor(TypeSet* types);
 
 #define InferSpew(channel, ...) if (InferSpewActive(channel)) { InferSpewImpl(__VA_ARGS__); } else {}
-void InferSpewImpl(const char* fmt, ...);
+void InferSpewImpl(const char* fmt, ...) MOZ_FORMAT_PRINTF(1, 2);
 
 /* Check that the type property for id in group contains value. */
 bool ObjectGroupHasProperty(JSContext* cx, ObjectGroup* group, jsid id, const Value& value);

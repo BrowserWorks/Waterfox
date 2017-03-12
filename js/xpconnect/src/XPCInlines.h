@@ -175,7 +175,7 @@ XPCCallContext::GetRetVal() const
 }
 
 inline void
-XPCCallContext::SetRetVal(JS::Value val)
+XPCCallContext::SetRetVal(const JS::Value& val)
 {
     CHECK_STATE(HAVE_ARGS);
     if (mRetVal)
@@ -446,34 +446,18 @@ XPCNativeSet::MatchesSetUpToInterface(const XPCNativeSet* other,
     return false;
 }
 
-inline void XPCNativeSet::Mark()
-{
-    mMarked = 1;
-}
-
-#ifdef DEBUG
-inline void XPCNativeSet::ASSERT_NotMarked()
-{
-    MOZ_ASSERT(!IsMarked(), "bad");
-}
-#endif
-
 /***************************************************************************/
 
 inline
 JSObject* XPCWrappedNativeTearOff::GetJSObjectPreserveColor() const
 {
-    return mJSObject.getPtr();
+    return mJSObject.unbarrieredGetPtr();
 }
 
 inline
 JSObject* XPCWrappedNativeTearOff::GetJSObject()
 {
-    JSObject* obj = GetJSObjectPreserveColor();
-    if (obj) {
-      JS::ExposeObjectToActiveJS(obj);
-    }
-    return obj;
+    return mJSObject;
 }
 
 inline
@@ -487,7 +471,7 @@ inline
 void XPCWrappedNativeTearOff::JSObjectMoved(JSObject* obj, const JSObject* old)
 {
     MOZ_ASSERT(!IsMarked());
-    MOZ_ASSERT(mJSObject == old);
+    MOZ_ASSERT(mJSObject.unbarrieredGetPtr() == old);
     mJSObject = obj;
 }
 

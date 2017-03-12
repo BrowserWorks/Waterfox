@@ -7,9 +7,6 @@
 const Cu = Components.utils;
 
 Cu.import("resource://services-sync/record.js");
-Cu.import("resource://services-sync/util.js");
-Cu.import("resource://services-sync/bookmark_utils.js");
-Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-sync/main.js");
 
 this.EXPORTED_SYMBOLS = ["CollectionValidator", "CollectionProblemData"];
@@ -65,7 +62,7 @@ class CollectionValidator {
   }
 
   getServerItems(engine) {
-    let collection = engine._itemSource();
+    let collection = engine.itemSource();
     let collectionKey = engine.service.collectionKeys.keyForCollection(engine.name);
     collection.full = true;
     let items = [];
@@ -73,7 +70,10 @@ class CollectionValidator {
       item.decrypt(collectionKey);
       items.push(item.cleartext);
     };
-    collection.get();
+    let resp = collection.getBatched();
+    if (!resp.success) {
+      throw resp;
+    }
     return items;
   }
 
@@ -199,3 +199,6 @@ class CollectionValidator {
     };
   }
 }
+
+// Default to 0, some engines may override.
+CollectionValidator.prototype.version = 0;

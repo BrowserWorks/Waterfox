@@ -9,8 +9,7 @@
 
 "use strict";
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadStore",
                                   "resource://gre/modules/DownloadStore.jsm");
@@ -38,8 +37,7 @@ function promiseNewListAndStore(aStorePath)
   });
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 /**
  * Saves downloads to a file, then reloads them.
@@ -66,6 +64,15 @@ add_task(function* test_save_reload()
   });
   listForSave.add(pdfDownload);
 
+  // If we used a callback to adjust the channel, the download should
+  // not be serialized because we can't recreate it across sessions.
+  let adjustedDownload = yield Downloads.createDownload({
+    source: { url: httpUrl("empty.txt"),
+              adjustChannel: () => Promise.resolve() },
+    target: getTempFile(TEST_TARGET_FILE_NAME),
+  });
+  listForSave.add(adjustedDownload);
+
   let legacyDownload = yield promiseStartLegacyDownload();
   yield legacyDownload.cancel();
   listForSave.add(legacyDownload);
@@ -73,7 +80,8 @@ add_task(function* test_save_reload()
   yield storeForSave.save();
   yield storeForLoad.load();
 
-  // Remove the PDF download because it should not appear in this list.
+  // Remove the PDF and adjusted downloads because they should not appear here.
+  listForSave.remove(adjustedDownload);
   listForSave.remove(pdfDownload);
 
   let itemsForSave = yield listForSave.getAll();
@@ -103,7 +111,7 @@ add_task(function* test_save_reload()
  */
 add_task(function* test_save_empty()
 {
-  let [list, store] = yield promiseNewListAndStore();
+  let [, store] = yield promiseNewListAndStore();
 
   let createdFile = yield OS.File.open(store.path, { create: true });
   yield createdFile.close();

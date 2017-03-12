@@ -1245,7 +1245,7 @@ bool
 BacktrackingAllocator::processBundle(MIRGenerator* mir, LiveBundle* bundle)
 {
     if (JitSpewEnabled(JitSpew_RegAlloc)) {
-        JitSpew(JitSpew_RegAlloc, "Allocating %s [priority %lu] [weight %lu]",
+        JitSpew(JitSpew_RegAlloc, "Allocating %s [priority %" PRIuSIZE "] [weight %" PRIuSIZE "]",
                 bundle->toString().get(), computePriority(bundle), computeSpillWeight(bundle));
     }
 
@@ -1300,7 +1300,7 @@ BacktrackingAllocator::processBundle(MIRGenerator* mir, LiveBundle* bundle)
 
             // If that didn't work, but we have one or more non-fixed bundles
             // known to be conflicting, maybe we can evict them and try again.
-            if (attempt < MAX_ATTEMPTS &&
+            if ((attempt < MAX_ATTEMPTS || minimalBundle(bundle)) &&
                 !fixed &&
                 !conflicting.empty() &&
                 maximumSpillWeight(conflicting) < computeSpillWeight(bundle))
@@ -1383,6 +1383,29 @@ BacktrackingAllocator::computeRequirement(LiveBundle* bundle,
     return true;
 }
 
+// Return whether |conflicting| has any fixed uses of registers which overlap
+// with |bundle|.
+bool
+BacktrackingAllocator::hasFixedUseOverlap(LiveBundle* bundle, const LiveBundleVector& conflicting)
+{
+    for (size_t i = 0; i < conflicting.length(); i++) {
+        LiveBundle* existing = conflicting[i];
+        for (LiveRange::BundleLinkIterator iter = existing->rangesBegin(); iter; iter++) {
+            LiveRange* range = LiveRange::get(*iter);
+            if (range->hasDefinition()) {
+                LDefinition* def = vregs[range->vreg()].def();
+                if (def->policy() == LDefinition::FIXED && bundle->rangeFor(range->from()))
+                    return true;
+            }
+            for (UsePositionIterator iter(range->usesBegin()); iter; iter++) {
+                if (iter->usePolicy() == LUse::FIXED && bundle->rangeFor(iter->pos))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool
 BacktrackingAllocator::tryAllocateRegister(PhysicalRegister& r, LiveBundle* bundle,
                                            bool* success, bool* pfixed, LiveBundleVector& conflicting)
@@ -1437,20 +1460,25 @@ BacktrackingAllocator::tryAllocateRegister(PhysicalRegister& r, LiveBundle* bund
         if (JitSpewEnabled(JitSpew_RegAlloc)) {
             if (aliasedConflicting.length() == 1) {
                 LiveBundle* existing = aliasedConflicting[0];
-                JitSpew(JitSpew_RegAlloc, "  %s collides with %s [weight %lu]",
+                JitSpew(JitSpew_RegAlloc, "  %s collides with %s [weight %" PRIuSIZE "]",
                         r.reg.name(), existing->toString().get(), computeSpillWeight(existing));
             } else {
                 JitSpew(JitSpew_RegAlloc, "  %s collides with the following", r.reg.name());
                 for (size_t i = 0; i < aliasedConflicting.length(); i++) {
                     LiveBundle* existing = aliasedConflicting[i];
-                    JitSpew(JitSpew_RegAlloc, "      %s [weight %lu]",
+                    JitSpew(JitSpew_RegAlloc, "      %s [weight %" PRIuSIZE "]",
                             existing->toString().get(), computeSpillWeight(existing));
                 }
             }
         }
 #endif
 
-        if (conflicting.empty()) {
+        if (hasFixedUseOverlap(bundle, aliasedConflicting)) {
+            // Ignore conflicting bundles whose eviction will not allow the
+            // bundle to be allocated.
+            JitSpew(JitSpew_RegAlloc,
+                    "  Ignoring conflict due to fixed use/def overlap with bundle");
+        } else if (conflicting.empty()) {
             if (!conflicting.appendAll(aliasedConflicting))
                 return false;
         } else {
@@ -1482,7 +1510,7 @@ bool
 BacktrackingAllocator::evictBundle(LiveBundle* bundle)
 {
     if (JitSpewEnabled(JitSpew_RegAlloc)) {
-        JitSpew(JitSpew_RegAlloc, "  Evicting %s [priority %lu] [weight %lu]",
+        JitSpew(JitSpew_RegAlloc, "  Evicting %s [priority %" PRIuSIZE "] [weight %" PRIuSIZE "]",
                 bundle->toString().get(), computePriority(bundle), computeSpillWeight(bundle));
     }
 
@@ -2296,7 +2324,8 @@ LiveBundle::toString() const
 {
     AutoEnterOOMUnsafeRegion oomUnsafe;
 
-    char *buf = JS_smprintf("");
+    // Suppress -Wformat warning.
+    char *buf = JS_smprintf("%s", "");
 
     for (LiveRange::BundleLinkIterator iter = rangesBegin(); buf && iter; iter++) {
         buf = JS_sprintf_append(buf, "%s %s",
@@ -2592,11 +2621,11 @@ BacktrackingAllocator::trySplitAcrossHotcode(LiveBundle* bundle, bool* success)
 
     JitSpew(JitSpew_RegAlloc, "  split across hot range %s", hotRange->toString().get());
 
-    // Tweak the splitting method when compiling asm.js code to look at actual
+    // Tweak the splitting method when compiling wasm code to look at actual
     // uses within the hot/cold code. This heuristic is in place as the below
     // mechanism regresses several asm.js tests. Hopefully this will be fixed
     // soon and this special case removed. See bug 948838.
-    if (compilingAsmJS()) {
+    if (compilingWasm()) {
         SplitPositionVector splitPositions;
         if (!splitPositions.append(hotRange->from()) || !splitPositions.append(hotRange->to()))
             return false;
@@ -2775,6 +2804,13 @@ BacktrackingAllocator::trySplitBeforeFirstRegisterUse(LiveBundle* bundle, LiveBu
     for (LiveRange::BundleLinkIterator iter = bundle->rangesBegin(); iter; iter++) {
         LiveRange* range = LiveRange::get(*iter);
 
+        if (!conflict || range->from() > conflictEnd) {
+            if (range->hasDefinition() && isRegisterDefinition(range)) {
+                firstRegisterFrom = range->from();
+                break;
+            }
+        }
+
         for (UsePositionIterator iter(range->usesBegin()); iter; iter++) {
             LNode* ins = insData[iter->pos];
 
@@ -2785,6 +2821,8 @@ BacktrackingAllocator::trySplitBeforeFirstRegisterUse(LiveBundle* bundle, LiveBu
                 }
             }
         }
+        if (firstRegisterFrom.bits())
+            break;
     }
 
     if (!firstRegisterFrom.bits()) {

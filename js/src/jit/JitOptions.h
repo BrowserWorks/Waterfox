@@ -47,6 +47,7 @@ struct DefaultJitOptions
 #endif
     bool checkRangeAnalysis;
     bool runExtraChecks;
+    bool disableInlineBacktracking;
     bool disableAma;
     bool disableEaa;
     bool disableEagerSimdUnbox;
@@ -71,6 +72,7 @@ struct DefaultJitOptions
     bool osr;
     bool asmJSAtomicsEnable;
     bool wasmTestMode;
+    bool wasmAlwaysCheckBounds;
     bool wasmFoldOffsets;
     bool ionInterruptWithoutSignals;
     uint32_t baselineWarmUpThreshold;

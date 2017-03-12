@@ -103,9 +103,6 @@ class BackgroundHangManager;
  *      process_nonsync_event();
  *    }
  *  }
- *
- * Prohibit() and Allow() make the background hang monitor work safely
- * before Startup().
  */
 class BackgroundHangMonitor
 {
@@ -119,6 +116,16 @@ private:
 
 public:
   static const uint32_t kNoTimeout = 0;
+  enum ThreadType {
+    // For a new BackgroundHangMonitor for thread T, only create a new
+    // monitoring thread for T if one doesn't already exist. If one does,
+    // share that pre-existing monitoring thread.
+    THREAD_SHARED,
+    // For a new BackgroundHangMonitor for thread T, create a new
+    // monitoring thread for T even if there are other, pre-existing
+    // monitoring threads for T.
+    THREAD_PRIVATE
+  };
 
   /**
    * ThreadHangStatsIterator is used to iterate through the ThreadHangStats
@@ -183,10 +190,14 @@ public:
    *  activity before registering a hang
    * @param aMaxTimeoutMs Amount of time in milliseconds without
    *  activity before registering a permanent hang
+   * @param aThreadType
+   *  The ThreadType type of monitoring thread that should be created
+   *  for this monitor. See the documentation for ThreadType.
    */
   BackgroundHangMonitor(const char* aName,
                         uint32_t aTimeoutMs,
-                        uint32_t aMaxTimeoutMs);
+                        uint32_t aMaxTimeoutMs,
+                        ThreadType aThreadType = THREAD_SHARED);
 
   /**
    * Monitor hangs using an existing monitor
@@ -213,27 +224,6 @@ public:
    * NotifyActivity when subsequently exiting the wait state.
    */
   void NotifyWait();
-
-  /**
-   * Prohibit the hang monitor from activating.
-   *
-   * Startup() should not be called between Prohibit() and Allow().
-   * This function makes the background hang monitor stop monitoring
-   * threads.
-   *
-   * Prohibit() and Allow() can be called before XPCOM is ready.  If
-   * we don't stop monitoring threads it could case errors.
-   */
-  static void Prohibit();
-
-  /**
-   * Allow the hang monitor to run.
-   *
-   * Allow() and Prohibit() should be called in pair.
-   *
-   * \see Prohibit()
-   */
-  static void Allow();
 
   /**
    * Register an annotator with BHR for the current thread.

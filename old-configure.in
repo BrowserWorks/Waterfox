@@ -59,7 +59,6 @@ GLIB_VERSION=2.22
 GLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26
 GIO_VERSION=2.22
 CAIRO_VERSION=1.10
-PANGO_VERSION=1.22.0
 GTK2_VERSION=2.18.0
 GTK3_VERSION=3.4.0
 GDK_VERSION_MAX_ALLOWED=GDK_VERSION_3_4
@@ -69,8 +68,7 @@ GNOMEUI_VERSION=2.2.0
 GCONF_VERSION=1.2.1
 STARTUP_NOTIFICATION_VERSION=0.8
 DBUS_VERSION=0.60
-SQLITE_VERSION=3.14.1
-FONTCONFIG_VERSION=2.7.0
+SQLITE_VERSION=3.17.0
 
 dnl Set various checks
 dnl ========================================================
@@ -106,31 +104,15 @@ if test -n "$gonkdir"; then
 
     case "$android_version" in
     15)
-        CPPFLAGS="-I$gonkdir/frameworks/base/opengl/include -I$gonkdir/frameworks/base/native/include -I$gonkdir/frameworks/base/include -I$gonkdir/frameworks/base/services/camera -I$gonkdir/frameworks/base/include/media/ -I$gonkdir/frameworks/base/include/media/stagefright -I$gonkdir/frameworks/base/include/media/stagefright/openmax -I$gonkdir/frameworks/base/media/libstagefright/rtsp -I$gonkdir/frameworks/base/media/libstagefright/include -I$gonkdir/external/dbus -I$gonkdir/external/bluetooth/bluez/lib -I$gonkdir/dalvik/libnativehelper/include/nativehelper $CPPFLAGS"
-        MOZ_NFC=1
-        MOZ_B2G_CAMERA=1
-        MOZ_OMX_DECODER=1
-        AC_SUBST(MOZ_OMX_DECODER)
+        CPPFLAGS="-I$gonkdir/frameworks/base/opengl/include -I$gonkdir/frameworks/base/native/include -I$gonkdir/frameworks/base/include -I$gonkdir/frameworks/base/services/camera -I$gonkdir/frameworks/base/include/media/ -I$gonkdir/frameworks/base/include/media/stagefright -I$gonkdir/frameworks/base/include/media/stagefright/openmax -I$gonkdir/frameworks/base/media/libstagefright/rtsp -I$gonkdir/frameworks/base/media/libstagefright/include -I$gonkdir/external/dbus -I$gonkdir/dalvik/libnativehelper/include/nativehelper $CPPFLAGS"
         MOZ_SECUREELEMENT=1
         ;;
     17|18)
         CPPFLAGS="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include $CPPFLAGS"
-        MOZ_NFC=1
-        MOZ_B2G_CAMERA=1
-        MOZ_OMX_DECODER=1
-        AC_SUBST(MOZ_OMX_DECODER)
-        MOZ_OMX_ENCODER=1
-        AC_SUBST(MOZ_OMX_ENCODER)
-        AC_DEFINE(MOZ_OMX_ENCODER)
         MOZ_SECUREELEMENT=1
         ;;
     19)
         CPPFLAGS="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include $CPPFLAGS"
-        MOZ_B2G_CAMERA=1
-        MOZ_NFC=1
-        MOZ_OMX_DECODER=1
-        MOZ_OMX_ENCODER=1
-        AC_DEFINE(MOZ_OMX_ENCODER)
         MOZ_AUDIO_OFFLOAD=1
         MOZ_SECUREELEMENT=1
         AC_SUBST(MOZ_AUDIO_OFFLOAD)
@@ -139,28 +121,13 @@ if test -n "$gonkdir"; then
     21|22)
         CPPFLAGS="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include $CPPFLAGS"
         MOZ_AUDIO_OFFLOAD=1
-        MOZ_OMX_DECODER=1
-        MOZ_OMX_ENCODER=1
-        AC_DEFINE(MOZ_OMX_ENCODER)
         AC_SUBST(MOZ_AUDIO_OFFLOAD)
         AC_DEFINE(MOZ_AUDIO_OFFLOAD)
-        MOZ_B2G_CAMERA=1
-        MOZ_NFC=1
         ;;
     *)
         AC_MSG_ERROR([Unsupported platform version: $android_version])
         ;;
     esac
-
-    dnl Enable Bluetooth backends depending on available drivers
-    if test -d "$gonkdir/system/bluetoothd"; then
-        MOZ_B2G_BT=1
-        MOZ_B2G_BT_DAEMON=1
-    fi
-    if test -d "$gonkdir/external/bluetooth/bluez"; then
-        MOZ_B2G_BT=1
-        MOZ_B2G_BT_BLUEZ=1
-    fi
 
     CPPFLAGS="-I$gonkdir/system -I$gonkdir/system/core/include -I$gonkdir/hardware/libhardware/include -I$gonkdir/external/valgrind/fxos-include $CPPFLAGS"
     LDFLAGS="-L$gonkdir/out/target/product/$GONK_PRODUCT/obj/lib -Wl,-rpath-link=$gonkdir/out/target/product/$GONK_PRODUCT/obj/lib $LDFLAGS"
@@ -970,7 +937,6 @@ case "$target" in
     AC_DEFINE(NO_PW_GECOS)
     if test -n "$gonkdir"; then
         _PLATFORM_HAVE_RIL=1
-        MOZ_B2G_FM=1
         MOZ_SYNTH_PICO=1
     else
         if test "$COMPILE_ENVIRONMENT"; then
@@ -1060,7 +1026,7 @@ case "$target" in
         if test "$CPU_ARCH" = "x86"; then
             WIN32_SUBSYSTEM_VERSION=5.01
         else
-            WIN32_SUBSYSTEM_VERSION=5.02
+            WIN32_SUBSYSTEM_VERSION=6.01
         fi
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -1070,6 +1036,10 @@ case "$target" in
         _DEFINES_CXXFLAGS='-FI $(topobjdir)/mozilla-config.h -DMOZILLA_CLIENT'
         CFLAGS="$CFLAGS -W3 -Gy -Zc:inline"
         CXXFLAGS="$CXXFLAGS -W3 -Gy -Zc:inline"
+        if test -z "$CLANG_CL"; then
+            CFLAGS="$CFLAGS -utf-8"
+            CXXFLAGS="$CXXFLAGS -utf-8"
+        fi
         if test "$CPU_ARCH" = "x86"; then
             dnl VS2012+ defaults to -arch:SSE2. We want to target nothing
             dnl more recent, so set that explicitly here unless another
@@ -1085,15 +1055,23 @@ case "$target" in
             dnl MSVC allows the use of intrinsics without any flags
             dnl and doesn't have a separate arch for SSSE3
             SSSE3_FLAGS="-arch:SSE2"
-            dnl clang-cl, however, requires the appropriate flags.
-            if test -n "$CLANG_CL"; then
-                SSSE3_FLAGS="-mssse3"
-            fi
+        fi
+        dnl clang-cl requires appropriate flags to enable SSSE3 support
+        dnl on all architectures.
+        if test -n "$CLANG_CL"; then
+            SSSE3_FLAGS="-mssse3"
         fi
         dnl VS2013+ requires -FS when parallel building by make -jN.
         dnl If nothing, compiler sometimes causes C1041 error.
         CFLAGS="$CFLAGS -FS"
         CXXFLAGS="$CXXFLAGS -FS"
+        dnl VS2013+ supports -Gw for better linker optimizations.
+        dnl http://blogs.msdn.com/b/vcblog/archive/2013/09/11/introducing-gw-compiler-switch.aspx
+        dnl Disabled on ASan because it causes false-positive ODR violations.
+        if test -z "$MOZ_ASAN"; then
+            CFLAGS="$CFLAGS -Gw"
+            CXXFLAGS="$CXXFLAGS -Gw"
+        fi
         # khuey says we can safely ignore MSVC warning C4251
         # MSVC warning C4244 (implicit type conversion may lose data) warns
         # and requires workarounds for perfectly valid code.  Also, GCC/clang
@@ -1108,12 +1086,10 @@ case "$target" in
         # because this also forces narrowing to a single byte, which can be a
         # perf hit.  But this matters so little in practice (and often we want
         # that behavior) that it's better to turn it off.
-        # MSVC warning C4819 warns some UTF-8 characters (e.g. copyright sign)
-        # on non-Western system locales even if it is in a comment.
         # MSVC warning wd4595 warns non-member operator new or delete functions
         # may not be declared inline, as of VS2015 Update 2.
-        CFLAGS="$CFLAGS -wd4244 -wd4267 -wd4819"
-        CXXFLAGS="$CXXFLAGS -wd4251 -wd4244 -wd4267 -wd4345 -wd4351 -wd4800 -wd4819 -wd4595"
+        CFLAGS="$CFLAGS -wd4244 -wd4267"
+        CXXFLAGS="$CXXFLAGS -wd4251 -wd4244 -wd4267 -wd4345 -wd4351 -wd4800 -wd4595"
         if test -n "$CLANG_CL"; then
             # XXX We should combine some of these with our generic GCC-style
             # warning checks.
@@ -1222,7 +1198,6 @@ case "$target" in
         dnl allow AVX2 code from VS2012
         HAVE_X86_AVX2=1
     fi
-    AC_DEFINE(STDC_HEADERS)
     AC_DEFINE(WIN32_LEAN_AND_MEAN)
     dnl See http://support.microsoft.com/kb/143208 to use STL
     AC_DEFINE(NOMINMAX)
@@ -1311,6 +1286,7 @@ AC_SUBST(MOZ_LINKER)
 if test -n "$MOZ_LINKER"; then
   AC_DEFINE(MOZ_LINKER)
   MOZ_LINKER_EXTRACT=1
+  AC_CHECK_PROGS(XZ, xz)
 fi
 
 dnl Only one oddball right now (QNX), but this gives us flexibility
@@ -1339,6 +1315,7 @@ if test -z "$COMPILE_ENVIRONMENT"; then
     SKIP_COMPILER_CHECKS=1
     SKIP_LIBRARY_CHECKS=1
     PKG_SKIP_STRIP=1
+    MOZ_DEBUGGING_OPTS
 else
     MOZ_COMPILER_OPTS
 fi # COMPILE_ENVIRONMENT
@@ -1346,7 +1323,6 @@ fi # COMPILE_ENVIRONMENT
 if test -z "$SKIP_COMPILER_CHECKS"; then
 dnl Checks for typedefs, structures, and compiler characteristics.
 dnl ========================================================
-AC_HEADER_STDC
 AC_C_CONST
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
@@ -1361,23 +1337,6 @@ MOZ_CXX11
 
 AC_LANG_C
 
-dnl Check for .hidden assembler directive and visibility attribute.
-dnl Borrowed from glibc configure.in
-dnl ===============================================================
-if test "$GNU_CC" -a "$OS_TARGET" != WINNT; then
-  AC_DEFINE(HAVE_VISIBILITY_HIDDEN_ATTRIBUTE)
-  AC_DEFINE(HAVE_VISIBILITY_ATTRIBUTE)
-  case "$OS_TARGET" in
-  Darwin)
-    VISIBILITY_FLAGS='-fvisibility=hidden -fvisibility-inlines-hidden'
-    ;;
-  *)
-    VISIBILITY_FLAGS="-I${DIST}/system_wrappers -include ${_topsrcdir}/config/gcc_hidden.h"
-    WRAP_SYSTEM_INCLUDES=1
-    ;;
-  esac
-fi         # GNU_CC
-
 case "${OS_TARGET}" in
 Darwin)
   ;;
@@ -1386,9 +1345,6 @@ Darwin)
   WRAP_STL_INCLUDES=1
   ;;
 esac
-
-AC_SUBST(WRAP_SYSTEM_INCLUDES)
-AC_SUBST_LIST(VISIBILITY_FLAGS)
 
 dnl Checks for header files.
 dnl ========================================================
@@ -1669,27 +1625,35 @@ AC_FUNC_MEMCMP
 AC_CHECK_FUNCS(stat64 lstat64 truncate64 statvfs64 statvfs statfs64 statfs getpagesize gmtime_r localtime_r arc4random arc4random_buf mallinfo gettid lchown setpriority strerror syscall)
 
 dnl check for clock_gettime(), the CLOCK_MONOTONIC clock
-AC_CACHE_CHECK(for clock_gettime(CLOCK_MONOTONIC),
-               ac_cv_clock_monotonic,
-               [for libs in "" -lrt; do
-                    _SAVE_LIBS="$LIBS"
-                    LIBS="$LIBS $libs"
-                    AC_TRY_LINK([#include <time.h>],
-                                 [ struct timespec ts;
-                                   clock_gettime(CLOCK_MONOTONIC, &ts); ],
-                                 ac_cv_clock_monotonic=$libs
-                                 LIBS="$_SAVE_LIBS"
-                                 break,
-                                 ac_cv_clock_monotonic=no)
-                    LIBS="$_SAVE_LIBS"
-                done])
-if test "$ac_cv_clock_monotonic" != "no"; then
-    HAVE_CLOCK_MONOTONIC=1
-    REALTIME_LIBS=$ac_cv_clock_monotonic
-    AC_DEFINE(HAVE_CLOCK_MONOTONIC)
-    AC_SUBST(HAVE_CLOCK_MONOTONIC)
-    AC_SUBST_LIST(REALTIME_LIBS)
-fi
+dnl avoid this on Darwin, since depending on your system config, we may think
+dnl it exists but it really doesn't
+case "$OS_TARGET" in
+Darwin)
+  ;;
+*)
+  AC_CACHE_CHECK(for clock_gettime(CLOCK_MONOTONIC),
+                 ac_cv_clock_monotonic,
+                 [for libs in "" -lrt; do
+                      _SAVE_LIBS="$LIBS"
+                      LIBS="$LIBS $libs"
+                      AC_TRY_LINK([#include <time.h>],
+                                   [ struct timespec ts;
+                                     clock_gettime(CLOCK_MONOTONIC, &ts); ],
+                                   ac_cv_clock_monotonic=$libs
+                                   LIBS="$_SAVE_LIBS"
+                                   break,
+                                   ac_cv_clock_monotonic=no)
+                      LIBS="$_SAVE_LIBS"
+                  done])
+  if test "$ac_cv_clock_monotonic" != "no"; then
+      HAVE_CLOCK_MONOTONIC=1
+      REALTIME_LIBS=$ac_cv_clock_monotonic
+      AC_DEFINE(HAVE_CLOCK_MONOTONIC)
+      AC_SUBST(HAVE_CLOCK_MONOTONIC)
+      AC_SUBST_LIST(REALTIME_LIBS)
+  fi
+  ;;
+esac
 
 AC_CACHE_CHECK(for pthread_cond_timedwait_monotonic_np,
                ac_cv_pthread_cond_timedwait_monotonic_np,
@@ -2159,7 +2123,7 @@ MOZ_ARG_WITH_BOOL(system-nss,
     _USE_SYSTEM_NSS=1 )
 
 if test -n "$_USE_SYSTEM_NSS"; then
-    AM_PATH_NSS(3.28.1, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
+    AM_PATH_NSS(3.28.3, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
 fi
 
 if test -n "$MOZ_SYSTEM_NSS"; then
@@ -2370,7 +2334,6 @@ esac
 case "${target}" in
     *-android*|*-linuxandroid*)
         MOZ_THEME_FASTSTRIPE=1
-        MOZ_TREE_FREETYPE=1
         MOZ_RAW=1
         ;;
 
@@ -2477,6 +2440,9 @@ if test -n "$MOZ_RUST"; then
     if test -n "$MOZ_RUST_MP4PARSE"; then
         AC_DEFINE(MOZ_RUST_MP4PARSE)
     fi
+    if test -n "$MOZ_RUST_URLPARSE"; then
+        AC_DEFINE(MOZ_RUST_URLPARSE)
+    fi
 fi
 
 AC_SUBST(MOZ_PHOENIX)
@@ -2493,7 +2459,7 @@ dnl ========================================================
 if test -z "$gonkdir" ; then
     case "$MOZ_BUILD_APP" in
     mobile/android)
-        MOZ_ANDROID_SDK(23, 23.0.3)
+        MOZ_ANDROID_SDK(23, 23.0.3 23.0.1)
         ;;
     esac
 fi
@@ -2684,16 +2650,6 @@ MOZ_ANDROID_GOOGLE_PLAY_SERVICES
 MOZ_ANDROID_GOOGLE_CLOUD_MESSAGING
 MOZ_ANDROID_INSTALL_TRACKING
 
-
-dnl ========================================================
-dnl = Pango
-dnl ========================================================
-if test "$MOZ_ENABLE_GTK"
-then
-    PKG_CHECK_MODULES(_PANGOCHK, pango >= $PANGO_VERSION)
-
-    PKG_CHECK_MODULES(MOZ_PANGO, pango >= $PANGO_VERSION pangoft2 >= $PANGO_VERSION pangocairo >= $PANGO_VERSION)
-fi
 
 dnl ========================================================
 dnl = GIO and GConf support module
@@ -3255,13 +3211,8 @@ dnl ==================================
 dnl = Check alsa availability on Linux
 dnl ==================================
 
-dnl If using Linux, ensure that the alsa library is available
-if test "$OS_TARGET" = "Linux"; then
-    MOZ_ALSA=1
-fi
-
 MOZ_ARG_ENABLE_BOOL(alsa,
-[  --enable-alsa          Enable Alsa support (default on Linux)],
+[  --enable-alsa          Enable Alsa support],
    MOZ_ALSA=1,
    MOZ_ALSA=)
 
@@ -3292,6 +3243,7 @@ MOZ_ARG_DISABLE_BOOL(pulseaudio,
    MOZ_PULSEAUDIO=1)
 
 if test -n "$MOZ_PULSEAUDIO"; then
+    AC_DEFINE(MOZ_PULSEAUDIO)
     if test -z "$gonkdir"; then
         PKG_CHECK_MODULES(MOZ_PULSEAUDIO, libpulse, ,
              [echo "$MOZ_PULSEAUDIO_PKG_ERRORS"
@@ -3536,27 +3488,8 @@ fi # COMPILE_ENVIRONMENT
 dnl ========================================================
 dnl Gamepad support
 dnl ========================================================
-MOZ_GAMEPAD=
+MOZ_GAMEPAD=1
 MOZ_GAMEPAD_BACKEND=stub
-
-# Gamepad DOM is built on supported platforms by default.
-case "$OS_TARGET" in
-     WINNT|Linux)
-       MOZ_GAMEPAD=1
-       ;;
-     Darwin)
-       if test -z "$MOZ_IOS"; then
-         MOZ_GAMEPAD=1
-       fi
-       ;;
-     Android)
-       if test "$MOZ_WIDGET_TOOLKIT" != "gonk"; then
-         MOZ_GAMEPAD=1
-       fi
-       ;;
-     *)
-       ;;
-esac
 
 MOZ_ARG_DISABLE_BOOL(gamepad,
 [  --disable-gamepad   Disable gamepad support],
@@ -3879,27 +3812,10 @@ if test -n "$MOZ_USE_NATIVE_POPUP_WINDOWS"; then
   AC_DEFINE(MOZ_USE_NATIVE_POPUP_WINDOWS)
 fi
 
-dnl ========================================================
-dnl Build Freetype in the tree
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(tree-freetype,
-[  --enable-tree-freetype  Enable Tree FreeType],
-    MOZ_TREE_FREETYPE=1,
-    MOZ_TREE_FREETYPE= )
 if test -n "$MOZ_TREE_FREETYPE"; then
-   if test -n "$_WIN32_MSVC"; then
-      AC_ERROR("building with in-tree freetype is not supported on MSVC")
-   fi
-   AC_DEFINE(MOZ_TREE_FREETYPE)
-   AC_SUBST(MOZ_TREE_FREETYPE)
    MOZ_ENABLE_CAIRO_FT=1
    FT_FONT_FEATURE="#define CAIRO_HAS_FT_FONT 1"
-   FT2_CFLAGS="-I$_topsrcdir/modules/freetype2/include"
    CAIRO_FT_CFLAGS="-I$_topsrcdir/modules/freetype2/include"
-   CAIRO_FT_OSLIBS=''
-   AC_DEFINE(HAVE_FT_BITMAP_SIZE_Y_PPEM)
-   AC_DEFINE(HAVE_FT_GLYPHSLOT_EMBOLDEN)
-   AC_DEFINE(HAVE_FT_LOAD_SFNT_TABLE)
    AC_SUBST_LIST(CAIRO_FT_CFLAGS)
 fi
 
@@ -4011,14 +3927,6 @@ fi
 AC_SUBST(MOZ_NO_SMART_CARDS)
 
 dnl ========================================================
-dnl = Disable EV certificate verification
-dnl ========================================================
-if test -n "$MOZ_NO_EV_CERTS"; then
-    AC_DEFINE(MOZ_NO_EV_CERTS)
-fi
-AC_SUBST(MOZ_NO_EV_CERTS)
-
-dnl ========================================================
 dnl = Sandboxing support
 dnl ========================================================
 if test -n "$MOZ_TSAN" -o -n "$MOZ_ASAN"; then
@@ -4047,7 +3955,7 @@ case "$OS_TARGET:$NIGHTLY_BUILD" in
 WINNT:*)
     MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
     ;;
-Darwin:1)
+Darwin:*)
     MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
     ;;
 Linux:1)
@@ -4410,33 +4318,6 @@ AC_SUBST(MOZ_OPTIMIZE_FLAGS)
 AC_SUBST(MOZ_OPTIMIZE_LDFLAGS)
 AC_SUBST_LIST(MOZ_ALLOW_HEAP_EXECUTE_FLAGS)
 AC_SUBST(MOZ_PGO_OPTIMIZE_FLAGS)
-
-dnl ========================================================
-dnl = Enable NS_StackWalk.
-dnl ========================================================
-
-# On Windows, NS_StackWalk will only work correctly if we have frame pointers
-# available. That will only be true for non-optimized builds, debug builds or
-# builds with --enable-profiling in the .mozconfig (which is turned on in
-# Nightly by default.)
-case "$OS_TARGET" in
-WINNT)
-    if test -z "$MOZ_OPTIMIZE" -o -n "$MOZ_PROFILING" -o -n "$MOZ_DEBUG"; then
-        MOZ_STACKWALKING=1
-    else
-        MOZ_STACKWALKING=
-    fi
-    ;;
-*)
-    MOZ_STACKWALKING=1
-    ;;
-esac
-
-if test -n "$MOZ_STACKWALKING"; then
-    AC_DEFINE(MOZ_STACKWALKING)
-fi
-
-AC_SUBST(MOZ_STACKWALKING)
 
 dnl ========================================================
 dnl = Disable treating compiler warnings as errors
@@ -4808,57 +4689,6 @@ if test x"$MOZ_WIDGET_TOOLKIT" != x"gonk"; then
 fi
 
 dnl ========================================================
-dnl = Enable Radio Interface for B2G (Gonk usually)
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(b2g-ril,
-[  --enable-b2g-ril      Set compile flags necessary for testing B2G Radio Interface Layer via network sockets ],
-    MOZ_B2G_RIL=1,
-    MOZ_B2G_RIL=,
-    MOZ_B2G_RIL=$_PLATFORM_HAVE_RIL )
-if test -n "$MOZ_B2G_RIL"; then
-    if test -n "$_PLATFORM_HAVE_RIL"; then
-        AC_DEFINE(MOZ_B2G_RIL)
-    else
-        AC_MSG_ERROR([b2g-ril cannot be enabled because target platform doesn't support it.])
-    fi
-fi
-AC_SUBST(MOZ_B2G_RIL)
-
-dnl ========================================================
-dnl = Enable Radio FM for B2G (Gonk usually)
-dnl ========================================================
-if test -n "$MOZ_B2G_FM"; then
-    AC_DEFINE(MOZ_B2G_FM)
-fi
-AC_SUBST(MOZ_B2G_FM)
-
-dnl ========================================================
-dnl = Enable Bluetooth Interface for B2G (Gonk usually)
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(b2g-bt,
-[  --enable-b2g-bt      Set compile flags necessary for compiling Bluetooth API for B2G ],
-    MOZ_B2G_BT=1,
-    MOZ_B2G_BT= )
-if test -n "$MOZ_B2G_BT"; then
-    AC_DEFINE(MOZ_B2G_BT)
-fi
-AC_SUBST(MOZ_B2G_BT)
-AC_SUBST(MOZ_B2G_BT_BLUEZ)
-AC_SUBST(MOZ_B2G_BT_DAEMON)
-
-dnl ========================================================
-dnl = Enable NFC Interface for B2G (Gonk usually)
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(nfc,
-[  --enable-nfc         Set compile flags necessary for compiling NFC API ],
-    MOZ_NFC=1,
-    MOZ_NFC= )
-if test -n "$MOZ_NFC"; then
-   AC_DEFINE(MOZ_NFC)
-fi
-AC_SUBST(MOZ_NFC)
-
-dnl ========================================================
 dnl = Enable Pico Speech Synthesis (Gonk usually)
 dnl ========================================================
 MOZ_ARG_ENABLE_BOOL(synth-pico,
@@ -4877,18 +4707,6 @@ if test -n "$MOZ_TIME_MANAGER"; then
     AC_DEFINE(MOZ_TIME_MANAGER)
 fi
 AC_SUBST(MOZ_TIME_MANAGER)
-
-dnl ========================================================
-dnl = Enable Camera Interface for B2G (Gonk usually)
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(b2g-camera,
-[  --enable-b2g-camera      Set compile flags necessary for compiling camera API for B2G ],
-    MOZ_B2G_CAMERA=1,
-    MOZ_B2G_CAMERA= )
-if test -n "$MOZ_B2G_CAMERA"; then
-   AC_DEFINE(MOZ_B2G_CAMERA)
-fi
-AC_SUBST(MOZ_B2G_CAMERA)
 
 dnl ========================================================
 dnl = Enable Support for AudioChannelManager API
@@ -5164,11 +4982,9 @@ AC_SUBST_LIST(GLIB_GMODULE_LIBS)
 if test "$USE_FC_FREETYPE"; then
     if test "$COMPILE_ENVIRONMENT"; then
         dnl ========================================================
-        dnl = Check for freetype2 and its functionality
+        dnl = Check for freetype2 functionality
         dnl ========================================================
-        PKG_CHECK_MODULES(FT2, freetype2 >= 6.1.0, _HAVE_FREETYPE2=1, _HAVE_FREETYPE2=)
-
-        if test "$_HAVE_FREETYPE2"; then
+        if test "$_HAVE_FREETYPE2" -a -z "$MOZ_TREE_FREETYPE"; then
             _SAVE_LIBS="$LIBS"
             _SAVE_CFLAGS="$CFLAGS"
             LIBS="$LIBS $FT2_LIBS"
@@ -5203,20 +5019,7 @@ if test "$USE_FC_FREETYPE"; then
         MOZ_CHECK_HEADERS([fontconfig/fcfreetype.h], ,
             [AC_MSG_ERROR(Can't find header fontconfig/fcfreetype.h.)], [#include <fontconfig/fontconfig.h>])
         CPPFLAGS="$_SAVE_CPPFLAGS"
-    else
-        AC_DEFINE(HAVE_FONTCONFIG_FCFREETYPE_H)
     fi
-
-    PKG_CHECK_MODULES(_FONTCONFIG, fontconfig >= $FONTCONFIG_VERSION,
-    [
-        if test "$MOZ_PANGO"; then
-            MOZ_PANGO_CFLAGS="$MOZ_PANGO_CFLAGS $_FONTCONFIG_CFLAGS"
-            MOZ_PANGO_LIBS="$MOZ_PANGO_LIBS $_FONTCONFIG_LIBS"
-        else
-            FT2_CFLAGS="$FT2_CFLAGS $_FONTCONFIG_CFLAGS"
-            FT2_LIBS="$FT2_LIBS $_FONTCONFIG_LIBS"
-        fi
-    ])
 fi
 
 dnl ========================================================
@@ -5328,8 +5131,6 @@ if test "$MOZ_TREE_CAIRO"; then
     AC_SUBST(PNG_FUNCTIONS_FEATURE)
     AC_SUBST(QT_SURFACE_FEATURE)
     AC_SUBST(TEE_SURFACE_FEATURE)
-
-    MOZ_CAIRO_OSLIBS='${CAIRO_FT_OSLIBS}'
 
     if test "$MOZ_X11"; then
         MOZ_CAIRO_OSLIBS="$MOZ_CAIRO_OSLIBS $XLDFLAGS -lXrender"
@@ -5484,7 +5285,6 @@ AC_SUBST(MOZ_SPELLCHECK)
 AC_SUBST(MOZ_ANDROID_ANR_REPORTER)
 AC_SUBST(MOZ_CRASHREPORTER)
 AC_SUBST(MOZ_CRASHREPORTER_INJECTOR)
-AC_SUBST(MOZ_CRASHREPORTER_UPLOAD_FULL_SYMBOLS)
 AC_SUBST(MOZ_MAINTENANCE_SERVICE)
 AC_SUBST(MOZ_STUB_INSTALLER)
 AC_SUBST(MOZ_VERIFY_MAR_SIGNATURE)
@@ -5708,24 +5508,6 @@ AC_SUBST(MOZ_SOURCE_REPO)
 AC_SUBST(MOZ_SOURCE_CHANGESET)
 AC_SUBST(MOZ_INCLUDE_SOURCE_INFO)
 
-dnl if test "$MOZ_TELEMETRY_REPORTING"; then
-dnl AC_DEFINE(MOZ_TELEMETRY_REPORTING)
-
-dnl     # Enable Telemetry by default for nightly and aurora channels
-dnl     if test -z "$RELEASE_BUILD"; then
-dnl       AC_DEFINE(MOZ_TELEMETRY_ON_BY_DEFAULT)
-dnl     fi
-dnl fi
-
-dnl If we have any service that uploads data (and requires data submission
-dnl policy alert), set MOZ_DATA_REPORTING.
-dnl We need SUBST for build system and DEFINE for xul preprocessor.
-dnl if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-dnl   MOZ_DATA_REPORTING=1
-dnl   AC_DEFINE(MOZ_DATA_REPORTING)
-dnl   AC_SUBST(MOZ_DATA_REPORTING)
-dnl fi
-
 dnl win32 options
 AC_SUBST(WIN32_REDIST_DIR)
 AC_SUBST(WIN_UCRT_REDIST_DIR)
@@ -5881,9 +5663,6 @@ AC_SUBST(MOZ_FOLD_LIBS)
 AC_SUBST(MOZ_FOLD_LIBS_FLAGS)
 AC_SUBST(SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE)
 
-AC_SUBST(MOZ_ENABLE_SZIP)
-AC_SUBST(MOZ_SZIP_FLAGS)
-
 AC_SUBST(DMG_TOOL)
 
 dnl Host JavaScript runtime, if any, to use during cross compiles.
@@ -6010,7 +5789,7 @@ dnl ========================================================
 # Refer to bug 1281101 for more details.
 
 # Enable mask-as-shorthand property by default for nightly and aurora channels
-if test -z "$RELEASE_BUILD"; then
+if test -z "$RELEASE_OR_BETA"; then
   dnl mask as shorthand property enabled
   MOZ_ENABLE_MASK_AS_SHORTHAND=1
   AC_DEFINE(MOZ_ENABLE_MASK_AS_SHORTHAND)
@@ -6028,7 +5807,6 @@ AC_SUBST(NSS_DISABLE_LIBPKIX)
 MOZ_CREATE_CONFIG_STATUS()
 
 if test "$COMPILE_ENVIRONMENT"; then
-  MOZ_SUBCONFIGURE_FFI()
   MOZ_SUBCONFIGURE_JEMALLOC()
 fi
 

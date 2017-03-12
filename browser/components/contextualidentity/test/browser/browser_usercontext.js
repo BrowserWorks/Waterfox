@@ -29,7 +29,8 @@ add_task(function* setup() {
   // make sure userContext is enabled.
   yield new Promise(resolve => {
     SpecialPowers.pushPrefEnv({"set": [
-      ["privacy.userContext.enabled", true]
+      ["privacy.userContext.enabled", true],
+      ["dom.ipc.processCount", 1]
     ]}, resolve);
   });
 });
@@ -70,7 +71,7 @@ add_task(function* test() {
     yield BrowserTestUtils.browserLoaded(browser);
 
     // get the title
-    let title = browser.contentDocument.title.trim().split("|");
+    let title = browser.contentTitle.trim().split("|");
 
     // check each item in the title and validate it meets expectatations
     for (let part of title) {

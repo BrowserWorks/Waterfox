@@ -209,6 +209,8 @@ function spinEventLoop() {
 }
 
 add_task(function* setup() {
+  yield SpecialPowers.pushPrefEnv({"set": [["security.insecure_field_warning.contextual.enabled", false],
+                                           ["signon.autofillForms.http", true]]});
   listenForUnexpectedPopupShown();
 });
 
@@ -219,6 +221,29 @@ add_task(function* test_form1_initial_empty() {
   checkACForm("", "");
   let popupState = yield getPopupState();
   is(popupState.open, false, "Check popup is initially closed");
+});
+
+add_task(function* test_form1_menuitems() {
+  yield SimpleTest.promiseFocus(window);
+  // Trigger autocomplete popup
+  restoreForm();
+  let shownPromise = promiseACShown();
+  doKey("down"); // open
+  let results = yield shownPromise;
+
+  let popupState = yield getPopupState();
+  is(popupState.selectedIndex, -1, "Check no entries are selected upon opening");
+
+  let expectedMenuItems = ["tempuser1",
+                           "testuser2",
+                           "testuser3",
+                           "zzzuser4"];
+  checkArrayValues(results, expectedMenuItems, "Check all menuitems are displayed correctly.");
+
+  checkACForm("", ""); // value shouldn't update just by selecting
+  doKey("return"); // not "enter"!
+  yield spinEventLoop(); // let focus happen
+  checkACForm("", "");
 });
 
 add_task(function* test_form1_first_entry() {
@@ -434,6 +459,7 @@ add_task(function* test_form1_delete() {
   numLogins = LoginManager.countLogins("http://mochi.test:8888", "http://autocomplete:8888", null);
   is(numLogins, 5, "Correct number of logins before deleting one");
 
+  let countChangedPromise = notifyMenuChanged(3);
   var deletionPromise = promiseStorageChanged(["removeLogin"]);
   // On OS X, shift-backspace and shift-delete work, just delete does not.
   // On Win/Linux, shift-backspace does not work, delete and shift-delete do.
@@ -443,7 +469,7 @@ add_task(function* test_form1_delete() {
   checkACForm("", "");
   numLogins = LoginManager.countLogins("http://mochi.test:8888", "http://autocomplete:8888", null);
   is(numLogins, 4, "Correct number of logins after deleting one");
-  notifyMenuChanged(4);
+  yield countChangedPromise;
   doKey("return");
   yield promiseFormsProcessed();
   checkACForm("testuser2", "testpass2");
@@ -535,7 +561,6 @@ add_task(function* test_form1_check_only_entry_remaining() {
   // Delete the only remaining entry, "testuser2"
   doKey("down");
   doKey("delete", shiftModifier);
-  //doKey("return");
   checkACForm("", "");
   numLogins = LoginManager.countLogins("http://mochi.test:8888", "http://autocomplete:8888", null);
   is(numLogins, 1, "Correct number of logins after deleting one");
@@ -797,6 +822,33 @@ add_task(function* test_form12_formless() {
   doKey("down");
   checkACForm("", ""); // value shouldn't update
   let processedPromise = promiseFormsProcessed();
+  doKey("return"); // not "enter"!
+  yield processedPromise;
+  checkACForm("testuser", "testpass");
+});
+
+add_task(function* test_form12_open_on_trusted_focus() {
+  uname = $_(12, "uname");
+  pword = $_(12, "pword");
+  uname.value = "";
+  pword.value = "";
+
+  // Move focus to the password field so we can test the first click on the
+  // username field.
+  pword.focus();
+  checkACForm("", "");
+  const firePrivEventPromise = new Promise((resolve) => {
+    uname.addEventListener("click", (e) => {
+      ok(e.isTrusted, "Ensure event is trusted");
+      resolve();
+    });
+  });
+  const shownPromise = promiseACShown();
+  synthesizeMouseAtCenter(uname, {});
+  yield firePrivEventPromise;
+  yield shownPromise;
+  doKey("down");
+  const processedPromise = promiseFormsProcessed();
   doKey("return"); // not "enter"!
   yield processedPromise;
   checkACForm("testuser", "testpass");

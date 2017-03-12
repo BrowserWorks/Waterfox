@@ -11,12 +11,13 @@
 
 #include <limits.h>
 
-#include "asmjs/WasmTypes.h"
+#include "jit/AtomicOp.h"
 #include "jit/JitAllocPolicy.h"
 #include "jit/Label.h"
 #include "jit/Registers.h"
 #include "jit/RegisterSets.h"
 #include "vm/HelperThreads.h"
+#include "wasm/WasmTypes.h"
 
 #if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64) || \
     defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
@@ -148,9 +149,9 @@ struct Imm64
 
 #ifdef DEBUG
 static inline bool
-IsCompilingAsmJS()
+IsCompilingWasm()
 {
-    // asm.js compilation pushes a JitContext with a null JSCompartment.
+    // wasm compilation pushes a JitContext with a null JSCompartment.
     return GetJitContext()->compartment == nullptr;
 }
 #endif
@@ -164,42 +165,42 @@ struct ImmPtr
     {
         // To make code serialization-safe, wasm compilation should only
         // compile pointer immediates using a SymbolicAddress.
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
     template <class R>
     explicit ImmPtr(R (*pf)())
       : value(JS_FUNC_TO_DATA_PTR(void*, pf))
     {
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
     template <class R, class A1>
     explicit ImmPtr(R (*pf)(A1))
       : value(JS_FUNC_TO_DATA_PTR(void*, pf))
     {
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
     template <class R, class A1, class A2>
     explicit ImmPtr(R (*pf)(A1, A2))
       : value(JS_FUNC_TO_DATA_PTR(void*, pf))
     {
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
     template <class R, class A1, class A2, class A3>
     explicit ImmPtr(R (*pf)(A1, A2, A3))
       : value(JS_FUNC_TO_DATA_PTR(void*, pf))
     {
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
     template <class R, class A1, class A2, class A3, class A4>
     explicit ImmPtr(R (*pf)(A1, A2, A3, A4))
       : value(JS_FUNC_TO_DATA_PTR(void*, pf))
     {
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
 };
@@ -234,8 +235,8 @@ class ImmGCPtr
         MOZ_ASSERT_IF(ptr && !ptr->isTenured(),
                       !CurrentThreadIsIonCompilingSafeForMinorGC());
 
-        // asm.js shouldn't be creating GC things
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        // wasm shouldn't be creating GC things
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
   private:
@@ -251,7 +252,7 @@ struct AbsoluteAddress
     explicit AbsoluteAddress(const void* addr)
       : addr(const_cast<void*>(addr))
     {
-        MOZ_ASSERT(!IsCompilingAsmJS());
+        MOZ_ASSERT(!IsCompilingWasm());
     }
 
     AbsoluteAddress offset(ptrdiff_t delta) {
@@ -506,7 +507,7 @@ class CodeOffsetJump
         return jumpTableIndex_;
     }
 #else
-    CodeOffsetJump(size_t offset) : offset_(offset) {}
+    explicit CodeOffsetJump(size_t offset) : offset_(offset) {}
 #endif
 
     CodeOffsetJump() {
@@ -660,15 +661,20 @@ class CodeLocationLabel
     }
 };
 
-// As an invariant across architectures, within asm.js code:
-//   $sp % AsmJSStackAlignment = (sizeof(AsmJSFrame) + masm.framePushed) % AsmJSStackAlignment
-// Thus, AsmJSFrame represents the bytes pushed after the call (which occurred
-// with a AsmJSStackAlignment-aligned StackPointer) that are not included in
+} // namespace jit
+
+namespace wasm {
+
+// As an invariant across architectures, within wasm code:
+//   $sp % WasmStackAlignment = (sizeof(wasm::Frame) + masm.framePushed) % WasmStackAlignment
+// Thus, wasm::Frame represents the bytes pushed after the call (which occurred
+// with a WasmStackAlignment-aligned StackPointer) that are not included in
 // masm.framePushed.
-struct AsmJSFrame
+
+struct Frame
 {
     // The caller's saved frame pointer. In non-profiling mode, internal
-    // asm.js-to-asm.js calls don't update fp and thus don't save the caller's
+    // wasm-to-wasm calls don't update fp and thus don't save the caller's
     // frame pointer; the space is reserved, however, so that profiling mode can
     // reuse the same function body without recompiling.
     uint8_t* callerFP;
@@ -677,27 +683,82 @@ struct AsmJSFrame
     // address is pushed by the first instruction of the prologue).
     void* returnAddress;
 };
-static_assert(sizeof(AsmJSFrame) == 2 * sizeof(void*), "?!");
-static const uint32_t AsmJSFrameBytesAfterReturnAddress = sizeof(void*);
+
+static_assert(sizeof(Frame) == 2 * sizeof(void*), "?!");
+static const uint32_t FrameBytesAfterReturnAddress = sizeof(void*);
 
 // Represents an instruction to be patched and the intended pointee. These
 // links are accumulated in the MacroAssembler, but patching is done outside
 // the MacroAssembler (in Module::staticallyLink).
-struct AsmJSAbsoluteAddress
+
+struct SymbolicAccess
 {
-    AsmJSAbsoluteAddress(CodeOffset patchAt, wasm::SymbolicAddress target)
+    SymbolicAccess(jit::CodeOffset patchAt, SymbolicAddress target)
       : patchAt(patchAt), target(target) {}
 
-    CodeOffset patchAt;
-    wasm::SymbolicAddress target;
+    jit::CodeOffset patchAt;
+    SymbolicAddress target;
 };
 
-} // namespace jit
+typedef Vector<SymbolicAccess, 0, SystemAllocPolicy> SymbolicAccessVector;
 
-namespace wasm {
+// Describes a single wasm or asm.js memory access for the purpose of generating
+// code and metadata.
+
+class MemoryAccessDesc
+{
+    uint32_t offset_;
+    uint32_t align_;
+    Scalar::Type type_;
+    unsigned numSimdElems_;
+    jit::MemoryBarrierBits barrierBefore_;
+    jit::MemoryBarrierBits barrierAfter_;
+    mozilla::Maybe<wasm::TrapOffset> trapOffset_;
+
+  public:
+    explicit MemoryAccessDesc(Scalar::Type type, uint32_t align, uint32_t offset,
+                              mozilla::Maybe<TrapOffset> trapOffset,
+                              unsigned numSimdElems = 0,
+                              jit::MemoryBarrierBits barrierBefore = jit::MembarNobits,
+                              jit::MemoryBarrierBits barrierAfter = jit::MembarNobits)
+      : offset_(offset),
+        align_(align),
+        type_(type),
+        numSimdElems_(numSimdElems),
+        barrierBefore_(barrierBefore),
+        barrierAfter_(barrierAfter),
+        trapOffset_(trapOffset)
+    {
+        MOZ_ASSERT(Scalar::isSimdType(type) == (numSimdElems > 0));
+        MOZ_ASSERT(numSimdElems <= jit::ScalarTypeToLength(type));
+        MOZ_ASSERT(mozilla::IsPowerOfTwo(align));
+        MOZ_ASSERT_IF(isSimd(), hasTrap());
+        MOZ_ASSERT_IF(isAtomic(), hasTrap());
+    }
+
+    uint32_t offset() const { return offset_; }
+    uint32_t align() const { return align_; }
+    Scalar::Type type() const { return type_; }
+    unsigned byteSize() const {
+        return Scalar::isSimdType(type())
+               ? Scalar::scalarByteSize(type()) * numSimdElems()
+               : Scalar::byteSize(type());
+    }
+    unsigned numSimdElems() const { MOZ_ASSERT(isSimd()); return numSimdElems_; }
+    jit::MemoryBarrierBits barrierBefore() const { return barrierBefore_; }
+    jit::MemoryBarrierBits barrierAfter() const { return barrierAfter_; }
+    bool hasTrap() const { return !!trapOffset_; }
+    TrapOffset trapOffset() const { return *trapOffset_; }
+    bool isAtomic() const { return (barrierBefore_ | barrierAfter_) != jit::MembarNobits; }
+    bool isSimd() const { return Scalar::isSimdType(type_); }
+    bool isUnaligned() const { return align() && align() < byteSize(); }
+    bool isPlainAsmJS() const { return !hasTrap(); }
+
+    void clearOffset() { offset_ = 0; }
+};
 
 // Summarizes a global access for a mutable (in asm.js) or immutable value (in
-// asm.js or the MVP) that needs to get patched later.
+// asm.js or the wasm MVP) that needs to get patched later.
 
 struct GlobalAccess
 {
@@ -711,6 +772,57 @@ struct GlobalAccess
 
 typedef Vector<GlobalAccess, 0, SystemAllocPolicy> GlobalAccessVector;
 
+// The TrapDesc struct describes a wasm trap that is about to be emitted. This
+// includes the logical wasm bytecode offset to report, the kind of instruction
+// causing the trap, and the stack depth right before control is transferred to
+// the trap out-of-line path.
+
+struct TrapDesc : TrapOffset
+{
+    enum Kind { Jump, MemoryAccess };
+    Kind kind;
+    Trap trap;
+    uint32_t framePushed;
+
+    TrapDesc(TrapOffset offset, Trap trap, uint32_t framePushed, Kind kind = Jump)
+      : TrapOffset(offset), kind(kind), trap(trap), framePushed(framePushed)
+    {}
+};
+
+// A TrapSite captures all relevant information at the point of emitting the
+// in-line trapping instruction for the purpose of generating the out-of-line
+// trap code (at the end of the function).
+
+struct TrapSite : TrapDesc
+{
+    uint32_t codeOffset;
+
+    TrapSite(TrapDesc trap, uint32_t codeOffset)
+      : TrapDesc(trap), codeOffset(codeOffset)
+    {}
+};
+
+typedef Vector<TrapSite, 0, SystemAllocPolicy> TrapSiteVector;
+
+// A TrapFarJump records the offset of a jump that needs to be patched to a trap
+// exit at the end of the module when trap exits are emitted.
+
+struct TrapFarJump
+{
+    Trap trap;
+    jit::CodeOffset jump;
+
+    TrapFarJump(Trap trap, jit::CodeOffset jump)
+      : trap(trap), jump(jump)
+    {}
+
+    void offsetBy(size_t delta) {
+        jump.offsetBy(delta);
+    }
+};
+
+typedef Vector<TrapFarJump, 0, SystemAllocPolicy> TrapFarJumpVector;
+
 } // namespace wasm
 
 namespace jit {
@@ -718,12 +830,14 @@ namespace jit {
 // The base class of all Assemblers for all archs.
 class AssemblerShared
 {
-    wasm::CallSiteAndTargetVector callsites_;
-    wasm::JumpSiteArray jumpsites_;
+    wasm::CallSiteAndTargetVector callSites_;
+    wasm::TrapSiteVector trapSites_;
+    wasm::TrapFarJumpVector trapFarJumps_;
     wasm::MemoryAccessVector memoryAccesses_;
+    wasm::MemoryPatchVector memoryPatches_;
     wasm::BoundsCheckVector boundsChecks_;
     wasm::GlobalAccessVector globalAccesses_;
-    Vector<AsmJSAbsoluteAddress, 0, SystemAllocPolicy> asmJSAbsoluteAddresses_;
+    wasm::SymbolicAccessVector symbolicAccesses_;
 
   protected:
     Vector<CodeLabel, 0, SystemAllocPolicy> codeLabels_;
@@ -753,24 +867,52 @@ class AssemblerShared
         return embedsNurseryPointers_;
     }
 
+    template <typename... Args>
     void append(const wasm::CallSiteDesc& desc, CodeOffset retAddr, size_t framePushed,
-                uint32_t funcDefIndex = wasm::CallSiteAndTarget::NOT_DEFINITION)
+                Args&&... args)
     {
-        // framePushed does not include sizeof(AsmJSFrame), so add it in here (see
-        // CallSite::stackDepth).
-        wasm::CallSite callsite(desc, retAddr.offset(), framePushed + sizeof(AsmJSFrame));
-        enoughMemory_ &= callsites_.append(wasm::CallSiteAndTarget(callsite, funcDefIndex));
+        // framePushed does not include sizeof(wasm:Frame), so add it in explicitly when
+        // setting the CallSite::stackDepth.
+        wasm::CallSite cs(desc, retAddr.offset(), framePushed + sizeof(wasm::Frame));
+        enoughMemory_ &= callSites_.emplaceBack(cs, mozilla::Forward<Args>(args)...);
     }
-    wasm::CallSiteAndTargetVector& callSites() { return callsites_; }
+    wasm::CallSiteAndTargetVector& callSites() { return callSites_; }
 
-    void append(wasm::JumpTarget target, uint32_t offset) {
-        enoughMemory_ &= jumpsites_[target].append(offset);
+    void append(wasm::TrapSite trapSite) {
+        enoughMemory_ &= trapSites_.append(trapSite);
     }
-    const wasm::JumpSiteArray& jumpSites() { return jumpsites_; }
-    void clearJumpSites() { for (auto& v : jumpsites_) v.clear(); }
+    const wasm::TrapSiteVector& trapSites() const { return trapSites_; }
+    void clearTrapSites() { trapSites_.clear(); }
+
+    void append(wasm::TrapFarJump jmp) {
+        enoughMemory_ &= trapFarJumps_.append(jmp);
+    }
+    const wasm::TrapFarJumpVector& trapFarJumps() const { return trapFarJumps_; }
 
     void append(wasm::MemoryAccess access) { enoughMemory_ &= memoryAccesses_.append(access); }
     wasm::MemoryAccessVector&& extractMemoryAccesses() { return Move(memoryAccesses_); }
+
+    void append(const wasm::MemoryAccessDesc& access, size_t codeOffset, size_t framePushed) {
+        if (access.hasTrap()) {
+            // If a memory access is trapping (wasm, SIMD.js, Atomics), create a
+            // TrapSite now which will generate a trap out-of-line path at the end
+            // of the function which will *then* append a MemoryAccess.
+            wasm::TrapDesc trap(access.trapOffset(), wasm::Trap::OutOfBounds, framePushed,
+                                wasm::TrapSite::MemoryAccess);
+            append(wasm::TrapSite(trap, codeOffset));
+        } else {
+            // Otherwise, this is a plain asm.js access. On WASM_HUGE_MEMORY
+            // platforms, asm.js uses signal handlers to remove bounds checks
+            // and thus requires a MemoryAccess.
+            MOZ_ASSERT(access.isPlainAsmJS());
+#ifdef WASM_HUGE_MEMORY
+            append(wasm::MemoryAccess(codeOffset));
+#endif
+        }
+    }
+
+    void append(wasm::MemoryPatch patch) { enoughMemory_ &= memoryPatches_.append(patch); }
+    wasm::MemoryPatchVector&& extractMemoryPatches() { return Move(memoryPatches_); }
 
     void append(wasm::BoundsCheck check) { enoughMemory_ &= boundsChecks_.append(check); }
     wasm::BoundsCheckVector&& extractBoundsChecks() { return Move(boundsChecks_); }
@@ -778,9 +920,9 @@ class AssemblerShared
     void append(wasm::GlobalAccess access) { enoughMemory_ &= globalAccesses_.append(access); }
     const wasm::GlobalAccessVector& globalAccesses() const { return globalAccesses_; }
 
-    void append(AsmJSAbsoluteAddress link) { enoughMemory_ &= asmJSAbsoluteAddresses_.append(link); }
-    size_t numAsmJSAbsoluteAddresses() const { return asmJSAbsoluteAddresses_.length(); }
-    AsmJSAbsoluteAddress asmJSAbsoluteAddress(size_t i) const { return asmJSAbsoluteAddresses_[i]; }
+    void append(wasm::SymbolicAccess access) { enoughMemory_ &= symbolicAccesses_.append(access); }
+    size_t numSymbolicAccesses() const { return symbolicAccesses_.length(); }
+    wasm::SymbolicAccess symbolicAccess(size_t i) const { return symbolicAccesses_[i]; }
 
     static bool canUseInSingleByteInstruction(Register reg) { return true; }
 
@@ -797,23 +939,27 @@ class AssemblerShared
     // Merge this assembler with the other one, invalidating it, by shifting all
     // offsets by a delta.
     bool asmMergeWith(size_t delta, const AssemblerShared& other) {
-        size_t i = callsites_.length();
-        enoughMemory_ &= callsites_.appendAll(other.callsites_);
-        for (; i < callsites_.length(); i++)
-            callsites_[i].offsetReturnAddressBy(delta);
+        size_t i = callSites_.length();
+        enoughMemory_ &= callSites_.appendAll(other.callSites_);
+        for (; i < callSites_.length(); i++)
+            callSites_[i].offsetReturnAddressBy(delta);
 
-        for (wasm::JumpTarget target : mozilla::MakeEnumeratedRange(wasm::JumpTarget::Limit)) {
-            wasm::Uint32Vector& offsets = jumpsites_[target];
-            i = offsets.length();
-            enoughMemory_ &= offsets.appendAll(other.jumpsites_[target]);
-            for (; i < offsets.length(); i++)
-                offsets[i] += delta;
-        }
+        MOZ_ASSERT(other.trapSites_.empty(), "should have been cleared by wasmEmitTrapOutOfLineCode");
+
+        i = trapFarJumps_.length();
+        enoughMemory_ &= trapFarJumps_.appendAll(other.trapFarJumps_);
+        for (; i < trapFarJumps_.length(); i++)
+            trapFarJumps_[i].offsetBy(delta);
 
         i = memoryAccesses_.length();
         enoughMemory_ &= memoryAccesses_.appendAll(other.memoryAccesses_);
         for (; i < memoryAccesses_.length(); i++)
             memoryAccesses_[i].offsetBy(delta);
+
+        i = memoryPatches_.length();
+        enoughMemory_ &= memoryPatches_.appendAll(other.memoryPatches_);
+        for (; i < memoryPatches_.length(); i++)
+            memoryPatches_[i].offsetBy(delta);
 
         i = boundsChecks_.length();
         enoughMemory_ &= boundsChecks_.appendAll(other.boundsChecks_);
@@ -825,10 +971,10 @@ class AssemblerShared
         for (; i < globalAccesses_.length(); i++)
             globalAccesses_[i].patchAt.offsetBy(delta);
 
-        i = asmJSAbsoluteAddresses_.length();
-        enoughMemory_ &= asmJSAbsoluteAddresses_.appendAll(other.asmJSAbsoluteAddresses_);
-        for (; i < asmJSAbsoluteAddresses_.length(); i++)
-            asmJSAbsoluteAddresses_[i].patchAt.offsetBy(delta);
+        i = symbolicAccesses_.length();
+        enoughMemory_ &= symbolicAccesses_.appendAll(other.symbolicAccesses_);
+        for (; i < symbolicAccesses_.length(); i++)
+            symbolicAccesses_[i].patchAt.offsetBy(delta);
 
         i = codeLabels_.length();
         enoughMemory_ &= codeLabels_.appendAll(other.codeLabels_);

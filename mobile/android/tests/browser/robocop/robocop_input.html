@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Robocop Input</title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robocop Input</title>
   </head>
   <body>
     <p>Input: <input id="input" type="text"></p>
@@ -18,7 +19,12 @@
       let contentEditable = document.getElementById("content-editable");
 
       let designMode = document.getElementById("design-mode");
-      designMode.contentDocument.designMode = "on";
+      try {
+        designMode.contentDocument.designMode = "on";
+      } catch (e) {
+        // Setting designMode above sometimes fails, so try again later.
+        setTimeout(function() { designMode.contentDocument.designMode = "on" }, 0);
+      }
 
       // Spatial navigation interferes with design-mode key event tests.
       SpecialPowers.setBoolPref("snav.enabled", false);
@@ -124,6 +130,17 @@
           // Ending the composition then setting the selection triggers the bug.
           inputIme.forceCompositionEnd();
           setSelection(3); // Offsets that testInputConnection.java expects.
+        },
+
+        test_bug1123514: function() {
+          document.activeElement.addEventListener('input', function test_bug1123514_listener() {
+            this.removeEventListener('input', test_bug1123514_listener);
+
+            // Only works on input and textarea.
+            if (this.value === 'b') {
+              this.value = 'abc';
+            }
+          });
         },
 
         focus_resetting_input: function(val) {

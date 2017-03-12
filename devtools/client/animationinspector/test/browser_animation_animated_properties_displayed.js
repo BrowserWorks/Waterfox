@@ -5,15 +5,20 @@
 "use strict";
 
 const LAYOUT_ERRORS_L10N =
-  new LocalizationHelper("global/locale/layout_errors.properties");
+  new LocalizationHelper("toolkit/locales/layout_errors.properties");
 
 // Test that when an animation is selected, its list of animated properties is
 // displayed below it.
 
 const EXPECTED_PROPERTIES = [
+  "background-attachment",
+  "background-clip",
   "background-color",
+  "background-image",
+  "background-origin",
   "background-position-x",
   "background-position-y",
+  "background-repeat",
   "background-size",
   "border-bottom-left-radius",
   "border-bottom-right-radius",

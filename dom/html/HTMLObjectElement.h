@@ -159,7 +159,10 @@ public:
     SetHTMLAttr(nsGkAtoms::height, aValue, aRv);
   }
   using nsObjectLoadingContent::GetContentDocument;
-  nsPIDOMWindowOuter* GetContentWindow();
+
+  nsPIDOMWindowOuter*
+  GetContentWindow(nsIPrincipal& aSubjectPrincipal);
+
   using nsIConstraintValidation::CheckValidity;
   using nsIConstraintValidation::ReportValidity;
   using nsIConstraintValidation::GetValidationMessage;
@@ -237,9 +240,11 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::border, aValue, aRv);
   }
-  nsIDocument* GetSVGDocument()
+
+  nsIDocument*
+  GetSVGDocument(nsIPrincipal& aSubjectPrincipal)
   {
-    return GetContentDocument();
+    return GetContentDocument(aSubjectPrincipal);
   }
 
 private:
