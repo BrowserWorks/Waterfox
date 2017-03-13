@@ -203,6 +203,8 @@ pref("general.autoScroll", false);
 pref("general.autoScroll", true);
 #endif
 
+pref("plugin.load_flash_only", false);
+
 // At startup, check if we're the default browser and prompt user if not.
 pref("browser.shell.checkDefaultBrowser", true);
 pref("browser.shell.shortcutFavicons",true);
@@ -644,7 +646,7 @@ pref("plugin.defaultXpi.state", 2);
 // Flash is enabled by default, and Java is click-to-activate by default on
 // all channels.
 pref("plugin.state.flash", 2);
-pref("plugin.state.java", 1);
+pref("plugin.state.java", 2);
 
 #ifdef XP_MACOSX
 pref("browser.preferences.animateFadeIn", true);
@@ -1492,8 +1494,6 @@ pref("browser.migrate.chrome.history.maxAgeInDays", 0);
 
 // Enable browser frames for use on desktop.  Only exposed to chrome callers.
 pref("dom.mozBrowserFramesEnabled", true);
-
-pref("extensions.pocket.enabled", true);
 
 pref("signon.schemeUpgrades", true);
 

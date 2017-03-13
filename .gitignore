@@ -10,8 +10,6 @@ ID
 .DS_Store*
 *.pdb
 *.egg-info
-*.orig
-*.rej
 
 # Vim swap files.
 .*.sw[a-z]
@@ -34,9 +32,6 @@ security/manager/.nss.checkout
 
 # Build directories
 /obj*/
-
-# VCS directories
-/.hg/
 
 # Build directories for js shell
 _DBG.OBJ/
