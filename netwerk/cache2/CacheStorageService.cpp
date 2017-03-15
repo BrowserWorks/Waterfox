@@ -2010,6 +2010,14 @@ CacheStorageService::GetCacheEntryInfo(CacheEntry* aEntry,
                          aEntry->IsPinned());
 }
 
+// static
+uint32_t CacheStorageService::CacheQueueSize(bool highPriority)
+{
+  RefPtr<CacheIOThread> thread = CacheFileIOManager::IOThread();
+  MOZ_ASSERT(thread);
+  return thread->QueueSize(highPriority);
+}
+
 // Telementry collection
 
 namespace {
@@ -2249,6 +2257,33 @@ CacheStorageService::ResumeCacheIOThread()
   suspender.swap(mActiveIOSuspender);
   suspender->Notify();
   return NS_OK;
+}
+
+NS_IMETHODIMP
+CacheStorageService::Flush(nsIObserver* aObserver)
+{
+  RefPtr<CacheIOThread> thread = CacheFileIOManager::IOThread();
+  if (!thread) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  nsCOMPtr<nsIObserverService> observerService =
+    mozilla::services::GetObserverService();
+  if (!observerService) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // Adding as weak, the consumer is responsible to keep the reference
+  // until notified.
+  observerService->AddObserver(aObserver, "cacheservice:purge-memory-pools", false);
+
+  // This runnable will do the purging and when done, notifies the above observer.
+  // We dispatch it to the CLOSE level, so all data writes scheduled up to this time
+  // will be done before this purging happens.
+  RefPtr<CacheStorageService::PurgeFromMemoryRunnable> r =
+    new CacheStorageService::PurgeFromMemoryRunnable(this, CacheEntry::PURGE_WHOLE);
+
+  return thread->Dispatch(r, CacheIOThread::WRITE);
 }
 
 } // namespace net

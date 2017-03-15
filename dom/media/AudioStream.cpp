@@ -351,7 +351,7 @@ AudioStream::Init(uint32_t aNumChannels, uint32_t aRate,
   if (!cubebContext) {
     NS_WARNING("Can't get cubeb context!");
     CubebUtils::ReportCubebStreamInitFailure(true);
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_DOM_MEDIA_CUBEB_INITIALIZATION_ERR;
   }
 
   return OpenCubeb(cubebContext, params, startTime, CubebUtils::GetFirstStream());
@@ -365,7 +365,8 @@ AudioStream::OpenCubeb(cubeb* aContext, cubeb_stream_params& aParams,
 
   cubeb_stream* stream = nullptr;
   /* Convert from milliseconds to frames. */
-  uint32_t latency_frames = CubebUtils::GetCubebLatency() * aParams.rate / 1000;
+  uint32_t latency_frames =
+    CubebUtils::GetCubebPlaybackLatencyInMilliseconds() * aParams.rate / 1000;
   if (cubeb_stream_init(aContext, &stream, "AudioStream",
                         nullptr, nullptr, nullptr, &aParams,
                         latency_frames,
@@ -402,9 +403,12 @@ AudioStream::Start()
 {
   MonitorAutoLock mon(mMonitor);
   MOZ_ASSERT(mState == INITIALIZED);
+  mState = STARTED;
   auto r = InvokeCubeb(cubeb_stream_start);
-  mState = r == CUBEB_OK ? STARTED : ERRORED;
-  LOG("started, state %s", mState == STARTED ? "STARTED" : "ERRORED");
+  if (r != CUBEB_OK) {
+    mState = ERRORED;
+  }
+  LOG("started, state %s", mState == STARTED ? "STARTED" : mState == DRAINED ? "DRAINED" : "ERRORED");
 }
 
 void
@@ -596,12 +600,16 @@ AudioStream::DataCallback(void* aBuffer, long aFrames)
   auto writer = AudioBufferWriter(
     reinterpret_cast<AudioDataValue*>(aBuffer), mOutChannels, aFrames);
 
-  // FIXME: cubeb_pulse sometimes calls us before cubeb_stream_start() is called.
-  // We don't want to consume audio data until Start() is called by the client.
-  if (mState == INITIALIZED) {
-    NS_WARNING("data callback fires before cubeb_stream_start() is called");
-    mAudioClock.UpdateFrameHistory(0, aFrames);
-    return writer.WriteZeros(aFrames);
+  if (!strcmp(cubeb_get_backend_id(CubebUtils::GetCubebContext()), "winmm")) {
+    // Don't consume audio data until Start() is called.
+    // Expected only with cubeb winmm backend.
+    if (mState == INITIALIZED) {
+      NS_WARNING("data callback fires before cubeb_stream_start() is called");
+      mAudioClock.UpdateFrameHistory(0, aFrames);
+      return writer.WriteZeros(aFrames);
+    }
+  } else {
+    MOZ_ASSERT(mState != INITIALIZED);
   }
 
   // NOTE: wasapi (others?) can call us back *after* stop()/Shutdown() (mState == SHUTDOWN)

@@ -2,15 +2,13 @@
  * This file tests the async history API exposed by mozIAsyncHistory.
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 const TEST_DOMAIN = "http://mozilla.org/";
 const URI_VISIT_SAVED = "uri-visit-saved";
 const RECENT_EVENT_THRESHOLD = 15 * 60 * 1000000;
 
-////////////////////////////////////////////////////////////////////////////////
-//// Helpers
+// Helpers
 /**
  * Object that represents a mozIVisitInfo object.
  *
@@ -136,8 +134,7 @@ function do_check_title_for_uri(aURI,
   stmt.finalize();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Test Functions
+// Test Functions
 
 add_task(function* test_interface_exists() {
   let history = Cc["@mozilla.org/browser/history;1"].getService(Ci.nsISupports);
@@ -242,7 +239,6 @@ add_task(function* test_no_visits_throws() {
   const TEST_URI =
     NetUtil.newURI(TEST_DOMAIN + "test_no_id_or_guid_no_visits_throws");
   const TEST_GUID = "_RANDOMGUID_";
-  const TEST_PLACEID = 2;
 
   let log_test_conditions = function(aPlace) {
     let str = "Testing place with " +
@@ -620,21 +616,12 @@ add_task(function* test_handleCompletion_called_when_complete() {
 
   const EXPECTED_COUNT_SUCCESS = 2;
   const EXPECTED_COUNT_FAILURE = 1;
-  let callbackCountSuccess = 0;
-  let callbackCountFailure = 0;
 
-  let placesResult = yield promiseUpdatePlaces(places);
-  for (let place of placesResult.results) {
-    let checker = PlacesUtils.history.canAddURI(place.uri) ?
-      do_check_true : do_check_false;
-    callbackCountSuccess++;
-  }
-  for (let error of placesResult.errors) {
-    callbackCountFailure++;
-  }
+  let {results, errors} = yield promiseUpdatePlaces(places);
 
-  do_check_eq(callbackCountSuccess, EXPECTED_COUNT_SUCCESS);
-  do_check_eq(callbackCountFailure, EXPECTED_COUNT_FAILURE);
+  do_check_eq(results.length, EXPECTED_COUNT_SUCCESS);
+  do_check_eq(errors.length, EXPECTED_COUNT_FAILURE);
+
   yield PlacesTestUtils.promiseAsyncUpdates();
 });
 
@@ -669,7 +656,6 @@ add_task(function* test_add_visit() {
     do_check_eq(visits.length, 1);
     let visit = visits[0];
     do_check_eq(visit.visitDate, VISIT_TIME);
-    let transitions =
     do_check_true(Object.values(PlacesUtils.history.TRANSITIONS).includes(visit.transitionType));
     do_check_true(visit.referrerURI === null);
 

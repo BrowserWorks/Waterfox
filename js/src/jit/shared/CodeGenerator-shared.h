@@ -485,6 +485,11 @@ class CodeGeneratorShared : public LElementVisitor
     void jumpToBlock(MBasicBlock* mir, Assembler::Condition cond);
 #endif
 
+    template <class T>
+    wasm::TrapDesc trap(T* mir, wasm::Trap trap) {
+        return wasm::TrapDesc(mir->trapOffset(), trap, masm.framePushed());
+    }
+
   private:
     void generateInvalidateEpilogue();
 
@@ -649,12 +654,14 @@ template <typename HeadType, typename... TailTypes>
 class ArgSeq<HeadType, TailTypes...> : public ArgSeq<TailTypes...>
 {
   private:
-    HeadType head_;
+    using RawHeadType = typename mozilla::RemoveReference<HeadType>::Type;
+    RawHeadType head_;
 
   public:
-    explicit ArgSeq(HeadType&& head, TailTypes&&... tail)
-      : ArgSeq<TailTypes...>(mozilla::Move(tail)...),
-        head_(mozilla::Move(head))
+    template <typename ProvidedHead, typename... ProvidedTail>
+    explicit ArgSeq(ProvidedHead&& head, ProvidedTail&&... tail)
+      : ArgSeq<TailTypes...>(mozilla::Forward<ProvidedTail>(tail)...),
+        head_(mozilla::Forward<ProvidedHead>(head))
     { }
 
     // Arguments are pushed in reverse order, from last argument to first
@@ -667,9 +674,9 @@ class ArgSeq<HeadType, TailTypes...> : public ArgSeq<TailTypes...>
 
 template <typename... ArgTypes>
 inline ArgSeq<ArgTypes...>
-ArgList(ArgTypes... args)
+ArgList(ArgTypes&&... args)
 {
-    return ArgSeq<ArgTypes...>(mozilla::Move(args)...);
+    return ArgSeq<ArgTypes...>(mozilla::Forward<ArgTypes>(args)...);
 }
 
 // Store wrappers, to generate the right move of data after the VM call.
@@ -811,16 +818,17 @@ class OutOfLineWasmTruncateCheck : public OutOfLineCodeBase<CodeGeneratorShared>
     MIRType toType_;
     FloatRegister input_;
     bool isUnsigned_;
+    wasm::TrapOffset trapOffset_;
 
   public:
     OutOfLineWasmTruncateCheck(MWasmTruncateToInt32* mir, FloatRegister input)
       : fromType_(mir->input()->type()), toType_(MIRType::Int32), input_(input),
-        isUnsigned_(mir->isUnsigned())
+        isUnsigned_(mir->isUnsigned()), trapOffset_(mir->trapOffset())
     { }
 
     OutOfLineWasmTruncateCheck(MWasmTruncateToInt64* mir, FloatRegister input)
       : fromType_(mir->input()->type()), toType_(MIRType::Int64), input_(input),
-        isUnsigned_(mir->isUnsigned())
+        isUnsigned_(mir->isUnsigned()), trapOffset_(mir->trapOffset())
     { }
 
     void accept(CodeGeneratorShared* codegen) {
@@ -831,6 +839,7 @@ class OutOfLineWasmTruncateCheck : public OutOfLineCodeBase<CodeGeneratorShared>
     MIRType toType() const { return toType_; }
     MIRType fromType() const { return fromType_; }
     bool isUnsigned() const { return isUnsigned_; }
+    wasm::TrapOffset trapOffset() const { return trapOffset_; }
 };
 
 } // namespace jit

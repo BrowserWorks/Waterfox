@@ -8,6 +8,7 @@
 #define nsINode_h___
 
 #include "mozilla/Likely.h"
+#include "mozilla/ServoTypes.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"               // for member, local
 #include "nsGkAtoms.h"              // for nsGkAtoms::baseURIProperty
@@ -52,22 +53,6 @@ class nsIURI;
 class nsNodeSupportsWeakRefTearoff;
 class nsNodeWeakReference;
 class nsDOMMutationObserver;
-
-// We declare the bare minimum infrastructure here to allow us to have a
-// UniquePtr<ServoNodeData> on nsINode.
-struct ServoNodeData;
-extern "C" void Servo_NodeData_Drop(ServoNodeData*);
-namespace mozilla {
-template<>
-class DefaultDelete<ServoNodeData>
-{
-public:
-  void operator()(ServoNodeData* aPtr) const
-  {
-    Servo_NodeData_Drop(aPtr);
-  }
-};
-} // namespace mozilla
 
 namespace mozilla {
 class EventListenerManager;
@@ -776,9 +761,8 @@ public:
    *                       (though a null return value does not imply the
    *                       property was not set, i.e. it can be set to null).
    */
-  virtual void* GetProperty(uint16_t aCategory,
-                            nsIAtom *aPropertyName,
-                            nsresult *aStatus = nullptr) const;
+  void* GetProperty(uint16_t aCategory, nsIAtom *aPropertyName,
+                    nsresult *aStatus = nullptr) const;
 
   /**
    * Set a property to be associated with this node. This will overwrite an
@@ -797,8 +781,7 @@ public:
    *                                       was already set
    * @throws NS_ERROR_OUT_OF_MEMORY if that occurs
    */
-  nsresult SetProperty(nsIAtom *aPropertyName,
-                       void *aValue,
+  nsresult SetProperty(nsIAtom *aPropertyName, void *aValue,
                        NSPropertyDtorFunc aDtor = nullptr,
                        bool aTransfer = false)
   {
@@ -824,12 +807,11 @@ public:
    *                                       was already set
    * @throws NS_ERROR_OUT_OF_MEMORY if that occurs
    */
-  virtual nsresult SetProperty(uint16_t aCategory,
-                               nsIAtom *aPropertyName,
-                               void *aValue,
-                               NSPropertyDtorFunc aDtor = nullptr,
-                               bool aTransfer = false,
-                               void **aOldValue = nullptr);
+  nsresult SetProperty(uint16_t aCategory,
+                       nsIAtom *aPropertyName, void *aValue,
+                       NSPropertyDtorFunc aDtor = nullptr,
+                       bool aTransfer = false,
+                       void **aOldValue = nullptr);
 
   /**
    * A generic destructor for property values allocated with new.
@@ -858,7 +840,7 @@ public:
    * @param aCategory      category of property to destroy.
    * @param aPropertyName  name of property to destroy.
    */
-  virtual void DeleteProperty(uint16_t aCategory, nsIAtom *aPropertyName);
+  void DeleteProperty(uint16_t aCategory, nsIAtom *aPropertyName);
 
   /**
    * Unset a property associated with this node. The value will not be
@@ -893,9 +875,8 @@ public:
    *                       (though a null return value does not imply the
    *                       property was not set, i.e. it can be set to null).
    */
-  virtual void* UnsetProperty(uint16_t aCategory,
-                              nsIAtom *aPropertyName,
-                              nsresult *aStatus = nullptr);
+  void* UnsetProperty(uint16_t aCategory, nsIAtom *aPropertyName,
+                      nsresult *aStatus = nullptr);
 
   bool HasProperties() const
   {
@@ -1343,6 +1324,14 @@ public:
    * in HTMLInputElement with number type as increasing / decreasing its value.
    */
   virtual bool IsNodeApzAwareInternal() const;
+
+  // HTML elements named <shadow> may or may not be HTMLShadowElement.  This is
+  // a way to ask an element whether it's an HTMLShadowElement.
+  virtual bool IsHTMLShadowElement() const { return false; }
+
+  // Elements named <content> may or may not be HTMLContentElement.  This is a
+  // way to ask an element whether it's an HTMLContentElement.
+  virtual bool IsHTMLContentElement() const { return false; }
 
 protected:
   nsIURI* GetExplicitBaseURI() const {
@@ -1826,7 +1815,7 @@ public:
     aNodeName.SetStringBuffer(nsStringBuffer::FromString(nodeName),
                               nodeName.Length());
   }
-  void GetBaseURI(nsAString& aBaseURI) const;
+  MOZ_MUST_USE nsresult GetBaseURI(nsAString& aBaseURI) const;
   // Return the base URI for the document.
   // The returned value may differ if the document is loaded via XHR, and
   // when accessed from chrome privileged script and
@@ -2090,13 +2079,15 @@ public:
 #undef TOUCH_EVENT
 #undef EVENT
 
-  mozilla::UniquePtr<ServoNodeData>& ServoData() {
+  bool HasServoData() {
 #ifdef MOZ_STYLO
-    return mServoNodeData;
+    return !!mServoData.Get();
 #else
     MOZ_CRASH("Accessing servo node data in non-stylo build");
 #endif
   }
+
+  void ClearServoData();
 
 protected:
   static bool Traverse(nsINode *tmp, nsCycleCollectionTraversalCallback &cb);
@@ -2137,8 +2128,8 @@ protected:
   nsSlots* mSlots;
 
 #ifdef MOZ_STYLO
-  // Layout data managed by Servo.
-  mozilla::UniquePtr<ServoNodeData> mServoNodeData;
+  // Per-node data managed by Servo.
+  mozilla::ServoCell<ServoNodeData*> mServoData;
 #endif
 };
 
@@ -2289,8 +2280,7 @@ ToCanonicalSupports(nsINode* aPointer)
   } \
   NS_IMETHOD GetDOMBaseURI(nsAString& aBaseURI) __VA_ARGS__ override \
   { \
-    nsINode::GetBaseURI(aBaseURI); \
-    return NS_OK; \
+    return nsINode::GetBaseURI(aBaseURI); \
   } \
   NS_IMETHOD CompareDocumentPosition(nsIDOMNode* aOther, uint16_t* aResult) __VA_ARGS__ override \
   { \

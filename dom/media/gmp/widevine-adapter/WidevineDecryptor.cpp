@@ -341,7 +341,12 @@ ToGMPDOMException(cdm::Error aError)
   switch (aError) {
     case kNotSupportedError: return kGMPNotSupportedError;
     case kInvalidStateError: return kGMPInvalidStateError;
-    case kInvalidAccessError: return kGMPInvalidAccessError;
+    case kInvalidAccessError:
+      // Note: Chrome converts kInvalidAccessError to TypeError, since the
+      // Chromium CDM API doesn't have a type error enum value. The EME spec
+      // requires TypeError in some places, so we do the same conversion.
+      // See bug 1313202.
+      return kGMPTypeError;
     case kQuotaExceededError: return kGMPQuotaExceededError;
     case kUnknownError: return kGMPInvalidModificationError; // Note: Unique placeholder.
     case kClientError: return kGMPAbortError; // Note: Unique placeholder.
@@ -429,13 +434,15 @@ WidevineDecryptor::OnSessionKeysChange(const char* aSessionId,
     return;
   }
   Log("Decryptor::OnSessionKeysChange()");
+
+  nsTArray<GMPMediaKeyInfo> key_infos;
   for (uint32_t i = 0; i < aKeysInfoCount; i++) {
-    mCallback->KeyStatusChanged(aSessionId,
-                                aSessionIdSize,
-                                aKeysInfo[i].key_id,
-                                aKeysInfo[i].key_id_size,
-                                ToGMPKeyStatus(aKeysInfo[i].status));
+    key_infos.AppendElement(GMPMediaKeyInfo(aKeysInfo[i].key_id,
+                                            aKeysInfo[i].key_id_size,
+                                            ToGMPKeyStatus(aKeysInfo[i].status)));
   }
+  mCallback->BatchedKeyStatusChanged(aSessionId, aSessionIdSize,
+                                     key_infos.Elements(), key_infos.Length());
 }
 
 static GMPTimestamp

@@ -27,6 +27,7 @@
 #include "GeckoProfiler.h"
 #include "jsfriendapi.h"
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/Telemetry.h"
@@ -245,29 +246,24 @@ GetWorkerPref(const nsACString& aPref,
   return result;
 }
 
-// This function creates a key for a SharedWorker composed by "name|scriptSpec".
-// If the name contains a '|', this will be replaced by '||'.
+// This fn creates a key for a SharedWorker that contains the name, script
+// spec, and the serialized origin attributes:
+// "name|scriptSpec^key1=val1&key2=val2&key3=val3"
 void
-GenerateSharedWorkerKey(const nsACString& aScriptSpec, const nsACString& aName,
-                        bool aPrivateBrowsing, nsCString& aKey)
+GenerateSharedWorkerKey(const nsACString& aScriptSpec,
+                        const nsACString& aName,
+                        const PrincipalOriginAttributes& aAttrs,
+                        nsCString& aKey)
 {
+  nsAutoCString suffix;
+  aAttrs.CreateSuffix(suffix);
+
   aKey.Truncate();
-  aKey.SetCapacity(aScriptSpec.Length() + aName.Length() + 3);
-  aKey.Append(aPrivateBrowsing ? "1|" : "0|");
-
-  nsACString::const_iterator start, end;
-  aName.BeginReading(start);
-  aName.EndReading(end);
-  for (; start != end; ++start) {
-    if (*start == '|') {
-      aKey.AppendASCII("||");
-    } else {
-      aKey.Append(*start);
-    }
-  }
-
+  aKey.SetCapacity(aName.Length() + aScriptSpec.Length() + suffix.Length() + 2);
+  aKey.Append(aName);
   aKey.Append('|');
   aKey.Append(aScriptSpec);
+  aKey.Append(suffix);
 }
 
 void
@@ -1480,13 +1476,25 @@ IsCurrentThreadRunningChromeWorker()
 JSContext*
 GetCurrentThreadJSContext()
 {
-  return GetCurrentThreadWorkerPrivate()->GetJSContext();
+  WorkerPrivate* wp = GetCurrentThreadWorkerPrivate();
+  if (!wp) {
+    return nullptr;
+  }
+  return wp->GetJSContext();
 }
 
 JSObject*
 GetCurrentThreadWorkerGlobal()
 {
-  return GetCurrentThreadWorkerPrivate()->GlobalScope()->GetGlobalJSObject();
+  WorkerPrivate* wp = GetCurrentThreadWorkerPrivate();
+  if (!wp) {
+    return nullptr;
+  }
+  WorkerGlobalScope* scope = wp->GlobalScope();
+  if (!scope) {
+    return nullptr;
+  }
+  return scope->GetGlobalJSObject();
 }
 
 END_WORKERS_NAMESPACE
@@ -1641,7 +1649,7 @@ RuntimeService::RegisterWorker(WorkerPrivate* aWorkerPrivate)
       const nsCString& sharedWorkerName = aWorkerPrivate->WorkerName();
       nsAutoCString key;
       GenerateSharedWorkerKey(sharedWorkerScriptSpec, sharedWorkerName,
-                              aWorkerPrivate->IsInPrivateBrowsing(), key);
+                              aWorkerPrivate->GetOriginAttributes(), key);
       MOZ_ASSERT(!domainInfo->mSharedWorkerInfos.Get(key));
 
       SharedWorkerInfo* sharedWorkerInfo =
@@ -1718,7 +1726,7 @@ RuntimeService::RemoveSharedWorker(WorkerDomainInfo* aDomainInfo,
 #ifdef DEBUG
       nsAutoCString key;
       GenerateSharedWorkerKey(data->mScriptSpec, data->mName,
-                              aWorkerPrivate->IsInPrivateBrowsing(), key);
+                              aWorkerPrivate->GetOriginAttributes(), key);
       MOZ_ASSERT(iter.Key() == key);
 #endif
       iter.Remove();
@@ -2370,7 +2378,7 @@ RuntimeService::SuspendWorkersForWindow(nsPIDOMWindowInner* aWindow)
   GetWorkersForWindow(aWindow, workers);
 
   for (uint32_t index = 0; index < workers.Length(); index++) {
-    workers[index]->Suspend();
+    workers[index]->ParentWindowPaused();
   }
 }
 
@@ -2384,7 +2392,7 @@ RuntimeService::ResumeWorkersForWindow(nsPIDOMWindowInner* aWindow)
   GetWorkersForWindow(aWindow, workers);
 
   for (uint32_t index = 0; index < workers.Length(); index++) {
-    workers[index]->Resume();
+    workers[index]->ParentWindowResumed();
   }
 }
 
@@ -2434,9 +2442,10 @@ RuntimeService::CreateSharedWorkerFromLoadInfo(JSContext* aCx,
     nsresult rv = aLoadInfo->mResolvedScriptURI->GetSpec(scriptSpec);
     NS_ENSURE_SUCCESS(rv, rv);
 
+    MOZ_ASSERT(aLoadInfo->mPrincipal);
     nsAutoCString key;
     GenerateSharedWorkerKey(scriptSpec, aName,
-                            aLoadInfo->mPrivateBrowsing, key);
+        BasePrincipal::Cast(aLoadInfo->mPrincipal)->OriginAttributesRef(), key);
 
     if (mDomainMap.Get(aLoadInfo->mDomain, &domainInfo) &&
         domainInfo->mSharedWorkerInfos.Get(key, &sharedWorkerInfo)) {
@@ -2450,6 +2459,11 @@ RuntimeService::CreateSharedWorkerFromLoadInfo(JSContext* aCx,
   // will reset the loadInfo's window.
   nsCOMPtr<nsPIDOMWindowInner> window = aLoadInfo->mWindow;
 
+  // shouldAttachToWorkerPrivate tracks whether our SharedWorker should actually
+  // get attached to the WorkerPrivate we're using.  It will become false if the
+  // WorkerPrivate already exists and its secure context state doesn't match
+  // what we want for the new SharedWorker.
+  bool shouldAttachToWorkerPrivate = true;
   bool created = false;
   ErrorResult rv;
   if (!workerPrivate) {
@@ -2460,10 +2474,20 @@ RuntimeService::CreateSharedWorkerFromLoadInfo(JSContext* aCx,
 
     created = true;
   } else {
+    // Check whether the secure context state matches.  The current compartment
+    // of aCx is the compartment of the SharedWorker constructor that was
+    // invoked, which is the compartment of the document that will be hooked up
+    // to the worker, so that's what we want to check.
+    shouldAttachToWorkerPrivate =
+      workerPrivate->IsSecureContext() ==
+        JS_GetIsSecureContext(js::GetContextCompartment(aCx));
+
     // If we're attaching to an existing SharedWorker private, then we
     // must update the overriden load group to account for our document's
     // load group.
-    workerPrivate->UpdateOverridenLoadGroup(aLoadInfo->mLoadGroup);
+    if (shouldAttachToWorkerPrivate) {
+      workerPrivate->UpdateOverridenLoadGroup(aLoadInfo->mLoadGroup);
+    }
   }
 
   // We don't actually care about this MessageChannel, but we use it to 'steal'
@@ -2476,6 +2500,16 @@ RuntimeService::CreateSharedWorkerFromLoadInfo(JSContext* aCx,
 
   RefPtr<SharedWorker> sharedWorker = new SharedWorker(window, workerPrivate,
                                                        channel->Port1());
+
+  if (!shouldAttachToWorkerPrivate) {
+    // We're done here.  Just queue up our error event and return our
+    // dead-on-arrival SharedWorker.
+    RefPtr<AsyncEventDispatcher> errorEvent =
+      new AsyncEventDispatcher(sharedWorker, NS_LITERAL_STRING("error"), false);
+    errorEvent->PostDOMEvent();
+    sharedWorker.forget(aSharedWorker);
+    return NS_OK;
+  }
 
   if (!workerPrivate->RegisterSharedWorker(sharedWorker, channel->Port2())) {
     NS_WARNING("Worker is unreachable, this shouldn't happen!");
@@ -2699,12 +2733,6 @@ RuntimeService::Observe(nsISupports* aSubject, const char* aTopic,
   }
   if (!strcmp(aTopic, NS_IOSERVICE_OFFLINE_STATUS_TOPIC)) {
     SendOfflineStatusChangeEventToAllWorkers(NS_IsOffline());
-    return NS_OK;
-  }
-  if (!strcmp(aTopic, NS_IOSERVICE_APP_OFFLINE_STATUS_TOPIC)) {
-    BROADCAST_ALL_WORKERS(OfflineStatusChangeEvent,
-                          NS_IsOffline() ||
-                          NS_IsAppOffline(workers[index]->GetPrincipal()));
     return NS_OK;
   }
 

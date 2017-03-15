@@ -84,14 +84,12 @@ public:
 
   void TakeFocusForClickFromTap();
 
+  void EnsureLayersConnected();
+
 protected:
   void ActorDestroy(ActorDestroyReason why) override;
 
   virtual bool RecvNotifyCompositorTransaction() override;
-
-  virtual bool RecvUpdateHitRegion(const nsRegion& aRegion) override;
-
-  virtual bool RecvTakeFocusForClickFromTap() override;
 
 private:
   void TriggerRepaint();
@@ -123,8 +121,6 @@ private:
   // mFrameLoaderDestroyed==false.
   bool mFrameLoaderDestroyed;
 
-  nsRegion mTouchRegion;
-
   bool mAsyncPanZoomEnabled;
   bool mInitted;
 };
@@ -153,9 +149,6 @@ public:
   virtual already_AddRefed<Layer>
   BuildLayer(nsDisplayListBuilder* aBuilder, LayerManager* aManager,
              const ContainerLayerParameters& aContainerParameters) override;
-
-  void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
-               HitTestState* aState, nsTArray<nsIFrame*> *aOutFrames) override;
 
   NS_DISPLAY_DECL_NAME("Remote", TYPE_REMOTE)
 

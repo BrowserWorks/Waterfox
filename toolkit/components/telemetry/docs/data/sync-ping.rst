@@ -36,6 +36,14 @@ Structure:
             error: <string>, // Only present for "othererror" and "unexpectederror".
             from: <string>, // Optional, and only present for "autherror".
           },
+
+          // Optional, excluded if we couldn't get a valid uid or local device id
+          devices: [{
+            os: <string>, // OS string as reported by Services.appinfo.OS,
+            version: <string>, // Firefox version, as reported by Services.appinfo.version
+            id: <string>, // Hashed FxA device id for device
+          }],
+
           // Internal sync status information. Omitted if it would be empty.
           status: {
             sync: <string>, // The value of the Status.sync property, unless it indicates success.
@@ -70,14 +78,23 @@ Structure:
               failureReason: { ... }, // Same as above.
 
               // Optional, excluded if it would be empty or if the engine cannot
-              // or did not run validation on itself. Entries with a count of 0
-              // are excluded.
-              validation: [
-                {
-                  name: <string>, // The problem identified.
-                  count: <integer>, // Number of times it occurred.
-                }
-              ]
+              // or did not run validation on itself.
+              validation: {
+                // Optional validator version, default of 0.
+                version: <integer>,
+                checked: <integer>,
+                took: <non-monotonic integer duration in milliseconds>,
+                // Entries with a count of 0 are excluded, the array is excluded if no problems are found.
+                problems: [
+                  {
+                    name: <string>, // The problem identified.
+                    count: <integer>, // Number of times it occurred.
+                  }
+                ],
+                // Format is same as above, this is only included if we tried and failed
+                // to run validation, and if it's present, all other fields in this object are optional.
+                failureReason: { ... },
+              }
             }
           ]
         }]
@@ -145,12 +162,21 @@ Stores error information, if any is present. Always contains the "name" property
 
    - ``error``: The message provided by the error.
 
+- ``sqlerror``: Indicates that we recieved a ``mozIStorageError`` from a database query.
+
+    - ``code``: Value of the ``error.result`` property, one of the constants listed `here <https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/MozIStorageError#Constants>`_.
+
 syncs.engine.name
 ~~~~~~~~~~~~~~~~~
 
 Third-party engines are not reported, so only the following values are allowed: ``addons``, ``bookmarks``, ``clients``, ``forms``, ``history``, ``passwords``, ``prefs``, and ``tabs``.
 
-syncs.engine.validation
-~~~~~~~~~~~~~~~~~~~~~~~
+syncs.engine.validation.problems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For engines that can run validation on themselves, an array of objects describing validation errors that have occurred. Items that would have a count of 0 are excluded. Each engine will have its own set of items that it might put in the ``name`` field, but there are a finite number. See ``BookmarkProblemData.getSummary`` in `services/sync/modules/bookmark\_validator.js <https://dxr.mozilla.org/mozilla-central/source/services/sync/modules/bookmark_validator.js>`_ for an example.
+
+syncs.devices
+~~~~~~~~~~~~~
+
+The list of remote devices associated with this account, as reported by the clients collection. The ID of each device is hashed using the same algorithm as the local id.

@@ -314,18 +314,8 @@ public:
                  JS::Handle<JSObject*> aModuleRecord);
 
   nsScriptLoader* Loader() const { return mLoader; }
-  JSObject* ModuleRecord() const
-  {
-    if (mModuleRecord) {
-      JS::ExposeObjectToActiveJS(mModuleRecord);
-    }
-    return mModuleRecord;
-  }
-  JS::Value Exception() const
-  {
-    JS::ExposeValueToActiveJS(mException);
-    return mException;
-  }
+  JSObject* ModuleRecord() const { return mModuleRecord; }
+  JS::Value Exception() const { return mException; }
   nsIURI* BaseURL() const { return mBaseURL; }
 
   void SetInstantiationResult(JS::Handle<JS::Value> aMaybeException);
@@ -804,11 +794,13 @@ nsScriptLoader::CreateModuleScript(nsModuleLoadRequest* aRequest)
       JS::Rooted<JSObject*> global(cx, globalObject->GetGlobalJSObject());
 
       JS::CompileOptions options(cx);
-      FillCompileOptionsForRequest(aes, aRequest, global, &options);
+      rv = FillCompileOptionsForRequest(aes, aRequest, global, &options);
 
-      nsAutoString inlineData;
-      SourceBufferHolder srcBuf = GetScriptSource(aRequest, inlineData);
-      rv = nsJSUtils::CompileModule(cx, srcBuf, global, options, &module);
+      if (NS_SUCCEEDED(rv)) {
+        nsAutoString inlineData;
+        SourceBufferHolder srcBuf = GetScriptSource(aRequest, inlineData);
+        rv = nsJSUtils::CompileModule(cx, srcBuf, global, options, &module);
+      }
     }
     MOZ_ASSERT(NS_SUCCEEDED(rv) == (module != nullptr));
     if (module) {
@@ -1390,6 +1382,7 @@ CSPAllowsInlineScript(nsIScriptElement *aElement, nsIDocument *aDocument)
   nsCOMPtr<nsIContent> scriptContent = do_QueryInterface(aElement);
   nsAutoString nonce;
   scriptContent->GetAttr(kNameSpaceID_None, nsGkAtoms::nonce, nonce);
+  bool parserCreated = aElement->GetParserCreated() != mozilla::dom::NOT_FROM_PARSER;
 
   // query the scripttext
   nsAutoString scriptText;
@@ -1397,7 +1390,7 @@ CSPAllowsInlineScript(nsIScriptElement *aElement, nsIDocument *aDocument)
 
   bool allowInlineScript = false;
   rv = csp->GetAllowsInline(nsIContentPolicy::TYPE_SCRIPT,
-                            nonce, scriptText,
+                            nonce, parserCreated, scriptText,
                             aElement->GetScriptLineNumber(),
                             &allowInlineScript);
   return allowInlineScript;
@@ -1844,7 +1837,11 @@ nsScriptLoader::AttemptAsyncScriptCompile(nsScriptLoadRequest* aRequest)
   JSContext* cx = jsapi.cx();
   JS::Rooted<JSObject*> global(cx, globalObject->GetGlobalJSObject());
   JS::CompileOptions options(cx);
-  FillCompileOptionsForRequest(jsapi, aRequest, global, &options);
+
+  nsresult rv = FillCompileOptionsForRequest(jsapi, aRequest, global, &options);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   if (!JS::CanCompileOffThread(cx, options, aRequest->mScriptTextLength)) {
     return NS_ERROR_FAILURE;
@@ -2063,15 +2060,20 @@ nsScriptLoader::GetScriptGlobalObject()
   return globalObject.forget();
 }
 
-void
-nsScriptLoader::FillCompileOptionsForRequest(const AutoJSAPI &jsapi,
-                                             nsScriptLoadRequest *aRequest,
-                                             JS::Handle<JSObject *> aScopeChain,
-                                             JS::CompileOptions *aOptions)
+nsresult
+nsScriptLoader::FillCompileOptionsForRequest(const AutoJSAPI&jsapi,
+                                             nsScriptLoadRequest* aRequest,
+                                             JS::Handle<JSObject*> aScopeChain,
+                                             JS::CompileOptions* aOptions)
 {
   // It's very important to use aRequest->mURI, not the final URI of the channel
   // aRequest ended up getting script data from, as the script filename.
-  nsContentUtils::GetWrapperSafeScriptFilename(mDocument, aRequest->mURI, aRequest->mURL);
+  nsresult rv;
+  nsContentUtils::GetWrapperSafeScriptFilename(mDocument, aRequest->mURI,
+                                               aRequest->mURL, &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   bool isScriptElement = !aRequest->IsModuleRequest() ||
                          aRequest->AsModuleRequest()->IsTopLevel();
@@ -2101,6 +2103,8 @@ nsScriptLoader::FillCompileOptionsForRequest(const AutoJSAPI &jsapi,
     MOZ_ASSERT(elementVal.isObject());
     aOptions->setElement(&elementVal.toObject());
   }
+
+  return NS_OK;
 }
 
 nsresult
@@ -2181,12 +2185,14 @@ nsScriptLoader::EvaluateScript(nsScriptLoadRequest* aRequest)
       }
     } else {
       JS::CompileOptions options(aes.cx());
-      FillCompileOptionsForRequest(aes, aRequest, global, &options);
+      rv = FillCompileOptionsForRequest(aes, aRequest, global, &options);
 
-      nsAutoString inlineData;
-      SourceBufferHolder srcBuf = GetScriptSource(aRequest, inlineData);
-      rv = nsJSUtils::EvaluateString(aes.cx(), srcBuf, global, options,
-                                     aRequest->OffThreadTokenPtr());
+      if (NS_SUCCEEDED(rv)) {
+        nsAutoString inlineData;
+        SourceBufferHolder srcBuf = GetScriptSource(aRequest, inlineData);
+        rv = nsJSUtils::EvaluateString(aes.cx(), srcBuf, global, options,
+                                       aRequest->OffThreadTokenPtr());
+      }
     }
   }
 
@@ -2345,39 +2351,6 @@ nsScriptLoader::ReadyToExecuteParserBlockingScripts()
   return true;
 }
 
-// This function was copied from nsParser.cpp. It was simplified a bit.
-static bool
-DetectByteOrderMark(const unsigned char* aBytes, int32_t aLen, nsCString& oCharset)
-{
-  if (aLen < 2)
-    return false;
-
-  switch(aBytes[0]) {
-  case 0xEF:
-    if (aLen >= 3 && 0xBB == aBytes[1] && 0xBF == aBytes[2]) {
-      // EF BB BF
-      // Win2K UTF-8 BOM
-      oCharset.AssignLiteral("UTF-8");
-    }
-    break;
-  case 0xFE:
-    if (0xFF == aBytes[1]) {
-      // FE FF
-      // UTF-16, big-endian
-      oCharset.AssignLiteral("UTF-16BE");
-    }
-    break;
-  case 0xFF:
-    if (0xFE == aBytes[1]) {
-      // FF FE
-      // UTF-16, little-endian
-      oCharset.AssignLiteral("UTF-16LE");
-    }
-    break;
-  }
-  return !oCharset.IsEmpty();
-}
-
 /* static */ nsresult
 nsScriptLoader::ConvertToUTF16(nsIChannel* aChannel, const uint8_t* aData,
                                uint32_t aLength, const nsAString& aHintCharset,
@@ -2400,10 +2373,9 @@ nsScriptLoader::ConvertToUTF16(nsIChannel* aChannel, const uint8_t* aData,
 
   nsCOMPtr<nsIUnicodeDecoder> unicodeDecoder;
 
-  if (DetectByteOrderMark(aData, aLength, charset)) {
-    // charset is now "UTF-8" or "UTF-16". The UTF-16 decoder will re-sniff
-    // the BOM for endianness. Both the UTF-16 and the UTF-8 decoder will
-    // take care of swallowing the BOM.
+  if (nsContentUtils::CheckForBOM(aData, aLength, charset)) {
+    // charset is now one of "UTF-16BE", "UTF-16BE" or "UTF-8".  Those decoder
+    // will take care of swallowing the BOM.
     unicodeDecoder = EncodingUtils::DecoderForEncoding(charset);
   }
 
@@ -2962,7 +2934,7 @@ nsScriptLoadHandler::EnsureDecoder(nsIIncrementalStreamLoader *aLoader,
   }
 
   // Do BOM detection.
-  if (DetectByteOrderMark(aData, aDataLength, charset)) {
+  if (nsContentUtils::CheckForBOM(aData, aDataLength, charset)) {
     mDecoder = EncodingUtils::DecoderForEncoding(charset);
     return true;
   }

@@ -16,7 +16,7 @@ add_task(function* () {
 
   RequestsMenu.lazyUpdate = false;
 
-  let wait = waitForNetworkEvents(monitor, 7);
+  let wait = waitForNetworkEvents(monitor, CONTENT_TYPE_WITHOUT_CACHE_REQUESTS);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
     content.wrappedJSObject.performRequests();
   });
@@ -26,7 +26,7 @@ add_task(function* () {
   RequestsMenu.selectedItem = requestItem;
 
   yield waitForClipboardPromise(function setup() {
-    RequestsMenu.copyImageAsDataUri();
+    RequestsMenu.contextMenu.copyImageAsDataUri();
   }, TEST_IMAGE_DATA_URI);
 
   ok(true, "Clipboard contains the currently selected image as data uri.");

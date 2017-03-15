@@ -76,9 +76,11 @@ class DOMMediaStream;
 namespace dom {
 class RTCCertificate;
 struct RTCConfiguration;
+class RTCDTMFSender;
 struct RTCIceServer;
 struct RTCOfferOptions;
 struct RTCRtpParameters;
+class RTCRtpSender;
 #ifdef USE_FAKE_MEDIA_STREAMS
 typedef Fake_MediaStreamTrack MediaStreamTrack;
 #else
@@ -210,7 +212,6 @@ class RTCStatsQuery {
     std::string error;
     // A timestamp to help with telemetry.
     mozilla::TimeStamp iceStartTime;
-    bool isHello;
     // Just for convenience, maybe integrate into the report later
     bool failed;
 
@@ -436,6 +437,19 @@ public:
   nsresult
   AddTrack(mozilla::dom::MediaStreamTrack& aTrack, DOMMediaStream& aStream);
 
+  NS_IMETHODIMP_TO_ERRORRESULT(InsertDTMF, ErrorResult &rv,
+                               dom::RTCRtpSender& sender,
+                               const nsAString& tones,
+                               uint32_t duration, uint32_t interToneGap) {
+    rv = InsertDTMF(sender, tones, duration, interToneGap);
+  }
+
+  NS_IMETHODIMP_TO_ERRORRESULT(GetDTMFToneBuffer, ErrorResult &rv,
+                               dom::RTCRtpSender& sender,
+                               nsAString& outToneBuffer) {
+    rv = GetDTMFToneBuffer(sender, outToneBuffer);
+  }
+
   NS_IMETHODIMP_TO_ERRORRESULT(ReplaceTrack, ErrorResult &rv,
                                mozilla::dom::MediaStreamTrack& aThisTrack,
                                mozilla::dom::MediaStreamTrack& aWithTrack)
@@ -508,8 +522,6 @@ public:
     return NS_OK;
   }
 #endif
-
-  bool IsLoop() const { return mIsLoop; }
 
   // this method checks to see if we've made a promise to protect media.
   bool PrivacyRequested() const { return mPrivacyRequested; }
@@ -727,7 +739,7 @@ private:
 
   // When ICE completes, we record a bunch of statistics that outlive the
   // PeerConnection. This is just telemetry right now, but this can also
-  // include things like dumping the RLogRingbuffer somewhere, saving away
+  // include things like dumping the RLogConnector somewhere, saving away
   // an RTCStatsReport somewhere so it can be inspected after the call is over,
   // or other things.
   void RecordLongtermICEStatistics();
@@ -788,7 +800,6 @@ private:
 
   // A name for this PC that we are willing to expose to content.
   std::string mName;
-  bool mIsLoop; // For telemetry; doesn't have to be 100% right
 
   // The target to run stuff on
   nsCOMPtr<nsIEventTarget> mSTSThread;
@@ -836,6 +847,22 @@ private:
   // storage for Telemetry data
   uint16_t mMaxReceiving[SdpMediaSection::kMediaTypes];
   uint16_t mMaxSending[SdpMediaSection::kMediaTypes];
+
+  // DTMF
+  struct DTMFState {
+    PeerConnectionImpl* mPeerConnectionImpl;
+    nsCOMPtr<nsITimer> mSendTimer;
+    nsString mTrackId;
+    nsString mTones;
+    size_t mLevel;
+    uint32_t mDuration;
+    uint32_t mInterToneGap;
+  };
+
+  static void
+  DTMFSendTimerCallback_m(nsITimer* timer, void*);
+
+  nsTArray<DTMFState> mDTMFStates;
 
 public:
   //these are temporary until the DataChannel Listen/Connect API is removed

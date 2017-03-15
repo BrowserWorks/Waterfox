@@ -43,13 +43,15 @@ const TOPICS = [
   "weave:engine:sync:error",
   "weave:engine:sync:applied",
   "weave:engine:sync:uploaded",
+  "weave:engine:validate:finish",
+  "weave:engine:validate:error",
 ];
 
 const PING_FORMAT_VERSION = 1;
 
 // The set of engines we record telemetry for - any other engines are ignored.
 const ENGINES = new Set(["addons", "bookmarks", "clients", "forms", "history",
-                         "passwords", "prefs", "tabs"]);
+                         "passwords", "prefs", "tabs", "extension-storage"]);
 
 // A regex we can use to replace the profile dir in error messages. We use a
 // regexp so we can simply replace all case-insensitive occurences.
@@ -81,6 +83,10 @@ function transformError(error, engineName) {
 
   if (error instanceof AuthenticationError) {
     return { name: "autherror", from: error.source };
+  }
+
+  if (error instanceof Ci.mozIStorageError) {
+    return { name: "sqlerror", code: error.result };
   }
 
   let httpCode = error.status ||
@@ -166,6 +172,37 @@ class EngineRecord {
     }
   }
 
+  recordValidation(validationResult) {
+    if (this.validation) {
+      log.error(`Multiple validations occurred for engine ${this.name}!`);
+      return;
+    }
+    let { problems, version, duration, recordCount } = validationResult;
+    let validation = {
+      version: version || 0,
+      checked: recordCount || 0,
+    };
+    if (duration > 0) {
+      validation.took = Math.round(duration);
+    }
+    let summarized = problems.getSummary(true).filter(({count}) => count > 0);
+    if (summarized.length) {
+      validation.problems = summarized;
+    }
+    this.validation = validation;
+  }
+
+  recordValidationError(e) {
+    if (this.validation) {
+      log.error(`Multiple validations occurred for engine ${this.name}!`);
+      return;
+    }
+
+    this.validation = {
+      failureReason: transformError(e)
+    };
+  }
+
   recordUploaded(counts) {
     if (counts.sent || counts.failed) {
       if (!this.outgoing) {
@@ -205,6 +242,7 @@ class TelemetryRecord {
       failureReason: this.failureReason,
       status: this.status,
       deviceID: this.deviceID,
+      devices: this.devices,
     };
     let engines = [];
     for (let engine of this.engines) {
@@ -227,6 +265,10 @@ class TelemetryRecord {
       this.failureReason = transformError(error);
     }
 
+    // We don't bother including the "devices" field if we can't come up with a
+    // UID or device ID for *this* device -- If that's the case, any data we'd
+    // put there would be likely to be full of garbage anyway.
+    let includeDeviceInfo = false;
     try {
       this.uid = Weave.Service.identity.hashedUID();
       let deviceID = Weave.Service.identity.deviceID();
@@ -235,10 +277,22 @@ class TelemetryRecord {
         // unique identifier that can't be mapped back to the user's FxA
         // identity without knowing the metrics HMAC key.
         this.deviceID = Utils.sha256(deviceID + this.uid);
+        includeDeviceInfo = true;
       }
     } catch (e) {
       this.uid = "0".repeat(32);
       this.deviceID = undefined;
+    }
+
+    if (includeDeviceInfo) {
+      let remoteDevices = Weave.Service.clientsEngine.remoteClients;
+      this.devices = remoteDevices.map(device => {
+        return {
+          os: device.os,
+          version: device.version,
+          id: Utils.sha256(device.id + this.uid)
+        };
+      });
     }
 
     // Check for engine statuses. -- We do this now, and not in engine.finished
@@ -301,6 +355,36 @@ class TelemetryRecord {
       return;
     }
     this.currentEngine.recordApplied(counts);
+  }
+
+  onEngineValidated(engineName, validationData) {
+    if (this._shouldIgnoreEngine(engineName, false)) {
+      return;
+    }
+    let engine = this.engines.find(e => e.name === engineName);
+    if (!engine && this.currentEngine && engineName === this.currentEngine.name) {
+      engine = this.currentEngine;
+    }
+    if (engine) {
+      engine.recordValidation(validationData);
+    } else {
+      log.warn(`Validation event triggered for engine ${engineName}, which hasn't been synced!`);
+    }
+  }
+
+  onEngineValidateError(engineName, error) {
+    if (this._shouldIgnoreEngine(engineName, false)) {
+      return;
+    }
+    let engine = this.engines.find(e => e.name === engineName);
+    if (!engine && this.currentEngine && engineName === this.currentEngine.name) {
+      engine = this.currentEngine;
+    }
+    if (engine) {
+      engine.recordValidationError(error);
+    } else {
+      log.warn(`Validation failure event triggered for engine ${engineName}, which hasn't been synced!`);
+    }
   }
 
   onEngineUploaded(engineName, counts) {
@@ -469,6 +553,18 @@ class SyncTelemetryImpl {
       case "weave:engine:sync:uploaded":
         if (this._checkCurrent(topic)) {
           this.current.onEngineUploaded(data, subject);
+        }
+        break;
+
+      case "weave:engine:validate:finish":
+        if (this._checkCurrent(topic)) {
+          this.current.onEngineValidated(data, subject);
+        }
+        break;
+
+      case "weave:engine:validate:error":
+        if (this._checkCurrent(topic)) {
+          this.current.onEngineValidateError(data, subject || "Unknown");
         }
         break;
 

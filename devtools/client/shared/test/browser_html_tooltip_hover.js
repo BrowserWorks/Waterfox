@@ -11,7 +11,7 @@
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
   <?xml-stylesheet href="chrome://global/skin/global.css"?>
-  <?xml-stylesheet href="chrome://devtools/skin/variables.css"?>
+  <?xml-stylesheet href="resource://devtools/client/themes/variables.css"?>
   <?xml-stylesheet href="chrome://devtools/skin/tooltips.css"?>
   <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
    class="theme-light" title="Tooltip hover test">
@@ -23,16 +23,18 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
     </vbox>
   </window>`;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 add_task(function* () {
   let [,, doc] = yield createHost("bottom", TEST_URI);
+  // Wait for full page load before synthesizing events on the page.
+  yield waitUntil(() => doc.readyState === "complete");
 
   let width = 100, height = 50;
   let tooltipContent = doc.createElementNS(HTML_NS, "div");
   tooltipContent.textContent = "tooltip";
-  let tooltip = new HTMLTooltip({doc}, {useXulWrapper: false});
+  let tooltip = new HTMLTooltip(doc, {useXulWrapper: false});
   tooltip.setContent(tooltipContent, {width, height});
 
   let container = doc.getElementById("container");

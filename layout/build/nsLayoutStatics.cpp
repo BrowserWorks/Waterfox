@@ -49,7 +49,10 @@
 #include "nsCSSRuleProcessor.h"
 #include "nsCORSListenerProxy.h"
 #include "nsHTMLDNSPrefetch.h"
+#include "nsHtml5Atoms.h"
 #include "nsHtml5Module.h"
+#include "nsHTMLTags.h"
+#include "nsIRDFContentSink.h"	// for RDF atom initialization
 #include "mozilla/dom/FallbackEncoding.h"
 #include "nsFocusManager.h"
 #include "nsListControlFrame.h"
@@ -116,12 +119,11 @@ using namespace mozilla::system;
 #include "nsPermissionManager.h"
 #include "nsCookieService.h"
 #include "nsApplicationCacheService.h"
-#include "mozilla/dom/CustomElementsRegistry.h"
+#include "mozilla/dom/CustomElementRegistry.h"
 #include "mozilla/dom/time/DateCacheCleaner.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/dom/HTMLVideoElement.h"
-#include "CameraPreferences.h"
 #include "TouchManager.h"
 #include "MediaDecoder.h"
 #include "MediaPrefs.h"
@@ -129,10 +131,6 @@ using namespace mozilla::system;
 #include "mozilla/ServoBindings.h"
 #include "mozilla/StaticPresData.h"
 #include "mozilla/dom/WebIDLGlobalNameHash.h"
-
-#ifdef MOZ_B2G_BT
-#include "mozilla/dom/BluetoothUUID.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -160,9 +158,16 @@ nsLayoutStatics::Initialize()
   nsCSSPseudoClasses::AddRefAtoms();
   nsCSSPseudoElements::AddRefAtoms();
   nsCSSKeywords::AddRefTable();
+  nsCSSProps::AddRefAtoms();
   nsCSSProps::AddRefTable();
   nsColorNames::AddRefTable();
   nsGkAtoms::AddRefAtoms();
+  nsHtml5Atoms::AddRefAtoms();
+  nsTextServicesDocument::RegisterAtoms();
+  nsHTMLTags::RegisterAtoms();
+  nsRDFAtoms::RegisterAtoms();
+
+  NS_SealStaticAtomTable();
 
   StartupJSEnvironment();
   rv = nsRegion::InitStatic();
@@ -214,8 +219,6 @@ nsLayoutStatics::Initialize()
 #endif
 
   nsMathMLOperators::AddRefTable();
-
-  nsTextServicesDocument::RegisterAtoms();
 
 #ifdef DEBUG
   nsFrame::DisplayReflowStartup();
@@ -271,8 +274,6 @@ nsLayoutStatics::Initialize()
 
   nsCORSListenerProxy::Startup();
 
-  NS_SealStaticAtomTable();
-
   nsWindowMemoryReporter::Init();
 
   SVGElementFactory::Init();
@@ -293,8 +294,6 @@ nsLayoutStatics::Initialize()
   CacheObserver::Init();
 
   CounterStyleManager::InitializeBuiltinCounterStyles();
-
-  CameraPreferences::Initialize();
 
   IMEStateManager::Init();
 
@@ -390,6 +389,7 @@ nsLayoutStatics::Shutdown()
   nsAutoCopyListener::Shutdown();
   FrameLayerBuilder::Shutdown();
 
+
 #ifdef MOZ_ANDROID_OMX
   AndroidMediaPluginHost::Shutdown();
 #endif
@@ -433,15 +433,9 @@ nsLayoutStatics::Shutdown()
 
   DisplayItemClip::Shutdown();
 
-  CustomElementsRegistry::XPCOMShutdown();
+  CustomElementRegistry::XPCOMShutdown();
 
   CacheObserver::Shutdown();
 
-  CameraPreferences::Shutdown();
-
   PromiseDebugging::Shutdown();
-
-#ifdef MOZ_B2G_BT
-  BluetoothUUID::HandleShutdown();
-#endif
 }

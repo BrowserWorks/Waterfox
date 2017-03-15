@@ -17,9 +17,11 @@ class nsDisplayBackgroundImage;
 class nsCharClipDisplayItem;
 class nsDisplayItem;
 class nsDisplayListBuilder;
-class nsDisplaySVGEffects;
 class nsDisplayTableItem;
 class nsDisplayThemedBackground;
+class nsDisplaySVGEffects;
+class nsDisplayMask;
+class nsDisplayFilter;
 
 namespace mozilla {
 namespace gfx {
@@ -39,16 +41,16 @@ class nsDisplayItemGeometry
 public:
   nsDisplayItemGeometry(nsDisplayItem* aItem, nsDisplayListBuilder* aBuilder);
   virtual ~nsDisplayItemGeometry();
-  
+
   /**
    * Compute the area required to be invalidated if this
    * display item is removed.
    */
   const nsRect& ComputeInvalidationRegion() { return mBounds; }
-  
+
   /**
    * Shifts all retained areas of the nsDisplayItemGeometry by the given offset.
-   * 
+   *
    * This is used to compensate for scrolling, since the destination buffer
    * can scroll without requiring a full repaint.
    *
@@ -84,9 +86,9 @@ public:
 bool ShouldSyncDecodeImages(nsDisplayListBuilder* aBuilder);
 
 /**
- * nsImageGeometryMixin is a mixin for geometry items that draw images. Geometry
- * items that include this mixin can track drawing results and use that
- * information to inform invalidation decisions.
+ * nsImageGeometryMixin is a mixin for geometry items that draw images.
+ * Geometry items that include this mixin can track drawing results and use
+ * that information to inform invalidation decisions.
  *
  * This mixin uses CRTP; its template parameter should be the type of the class
  * that is inheriting from it. See nsDisplayItemGenericImageGeometry for an
@@ -218,7 +220,7 @@ class nsDisplayBoxShadowInnerGeometry : public nsDisplayItemGeometry
 {
 public:
   nsDisplayBoxShadowInnerGeometry(nsDisplayItem* aItem, nsDisplayListBuilder* aBuilder);
-  
+
   virtual void MoveBy(const nsPoint& aOffset) override;
 
   nsRect mPaddingRect;
@@ -265,11 +267,11 @@ public:
   mozilla::gfx::Color mColor;
 };
 
-class nsDisplaySVGEffectsGeometry : public nsDisplayItemGeometry
-  , public nsImageGeometryMixin<nsDisplaySVGEffectsGeometry>
+class nsDisplaySVGEffectGeometry : public nsDisplayItemGeometry
 {
 public:
-  nsDisplaySVGEffectsGeometry(nsDisplaySVGEffects* aItem, nsDisplayListBuilder* aBuilder);
+  nsDisplaySVGEffectGeometry(nsDisplaySVGEffects* aItem,
+                             nsDisplayListBuilder* aBuilder);
 
   virtual void MoveBy(const nsPoint& aOffset) override;
 
@@ -278,10 +280,28 @@ public:
   nsPoint mFrameOffsetToReferenceFrame;
 };
 
+class nsDisplayMaskGeometry : public nsDisplaySVGEffectGeometry
+  , public nsImageGeometryMixin<nsDisplayMaskGeometry>
+{
+public:
+  nsDisplayMaskGeometry(nsDisplayMask* aItem, nsDisplayListBuilder* aBuilder);
+
+  nsTArray<nsRect> mDestRects;
+};
+
+class nsDisplayFilterGeometry : public nsDisplaySVGEffectGeometry
+  , public nsImageGeometryMixin<nsDisplayFilterGeometry>
+{
+public:
+  nsDisplayFilterGeometry(nsDisplayFilter* aItem,
+                          nsDisplayListBuilder* aBuilder);
+};
+
 class nsCharClipGeometry : public nsDisplayItemGenericGeometry
 {
 public:
-  nsCharClipGeometry(nsCharClipDisplayItem* aItem, nsDisplayListBuilder* aBuilder);
+  nsCharClipGeometry(nsCharClipDisplayItem* aItem,
+                     nsDisplayListBuilder* aBuilder);
 
   nscoord mVisIStartEdge;
   nscoord mVisIEndEdge;

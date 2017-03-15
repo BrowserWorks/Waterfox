@@ -25,6 +25,13 @@
 #include "Entries.h"
 #include "LookupCache.h"
 
+// GCC < 6.1 workaround, see bug 1329593
+#if defined(XP_WIN) && defined(__MINGW32__)
+#define GCC_MANGLING_WORKAROUND __stdcall
+#else
+#define GCC_MANGLING_WORKAROUND
+#endif
+
 // The hash length for a domain key.
 #define DOMAIN_LENGTH 4
 
@@ -169,10 +176,10 @@ public:
                          LookupResultArray* results);
 
   // Open the DB connection
-  nsresult OpenDb();
+  nsresult GCC_MANGLING_WORKAROUND OpenDb();
 
   // Provide a way to forcibly close the db connection.
-  nsresult CloseDb();
+  nsresult GCC_MANGLING_WORKAROUND CloseDb();
 
   nsresult CacheCompletions(CacheResultArray * aEntries);
   nsresult CacheMisses(PrefixArray * aEntries);
@@ -217,7 +224,7 @@ private:
   // storing a series of updates.
   nsTArray<mozilla::safebrowsing::TableUpdate*> mTableUpdates;
 
-  int32_t mUpdateWait;
+  uint32_t mUpdateWaitSec;
 
   // Entries that cannot be completed. We expect them to die at
   // the next update
@@ -249,6 +256,11 @@ private:
 
   // list of pending lookups
   nsTArray<PendingLookup> mPendingLookups;
+
+#ifdef MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES
+  // The raw update response for debugging.
+  nsCString mRawTableUpdates;
+#endif
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsUrlClassifierDBService, NS_URLCLASSIFIERDBSERVICE_CID)

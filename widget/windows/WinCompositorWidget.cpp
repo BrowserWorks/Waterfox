@@ -44,7 +44,7 @@ WinCompositorWidget::OnDestroyWindow()
 }
 
 bool
-WinCompositorWidget::PreRender(layers::LayerManagerComposite* aManager)
+WinCompositorWidget::PreRender(WidgetRenderingContext* aContext)
 {
   // This can block waiting for WM_SETTEXT to finish
   // Using PreRender is unnecessarily pessimistic because
@@ -55,7 +55,7 @@ WinCompositorWidget::PreRender(layers::LayerManagerComposite* aManager)
 }
 
 void
-WinCompositorWidget::PostRender(layers::LayerManagerComposite* aManager)
+WinCompositorWidget::PostRender(WidgetRenderingContext* aContext)
 {
   mPresentLock.Leave();
 }
@@ -278,8 +278,11 @@ WinCompositorWidget::ClearTransparentWindow()
 
   IntSize size = mTransparentSurface->GetSize();
   if (!size.IsEmpty()) {
-    RefPtr<DrawTarget> drawTarget = gfxPlatform::GetPlatform()->
-      CreateDrawTargetForSurface(mTransparentSurface, size);
+    RefPtr<DrawTarget> drawTarget =
+      gfxPlatform::CreateDrawTargetForSurface(mTransparentSurface, size);
+    if (!drawTarget) {
+      return;
+    }
     drawTarget->ClearRect(Rect(0, 0, size.width, size.height));
     RedrawTransparentWindow();
   }

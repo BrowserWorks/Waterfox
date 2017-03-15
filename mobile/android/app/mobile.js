@@ -110,6 +110,7 @@ pref("network.http.max-persistent-connections-per-proxy", 20);
 
 // spdy
 pref("network.http.spdy.push-allowance", 32768);
+pref("network.http.spdy.default-hpack-buffer", 4096); // 4k
 
 // See bug 545869 for details on why these are set the way they are
 pref("network.buffer.cache.count", 24);
@@ -171,6 +172,7 @@ pref("browser.helperApps.deleteTempFileOnExit", false);
 
 /* password manager */
 pref("signon.rememberSignons", true);
+pref("signon.autofillForms.http", true);
 pref("signon.expireMasterPassword", false);
 pref("signon.debug", false);
 
@@ -299,7 +301,7 @@ pref("browser.search.noCurrentEngine", true);
 
 // Control media casting & mirroring features
 pref("browser.casting.enabled", true);
-#ifdef RELEASE_BUILD
+#ifdef RELEASE_OR_BETA
 // Chromecast mirroring is broken (bug 1131084)
 pref("browser.mirroring.enabled", false);
 #else
@@ -623,6 +625,8 @@ pref("media.android-remote-codec.enabled", false);
 // Enable MSE
 pref("media.mediasource.enabled", true);
 
+pref("media.mediadrm-widevinecdm.visible", true);
+
 // optimize images memory usage
 pref("image.downscale-during-decode.enabled", true);
 
@@ -847,9 +851,6 @@ pref("layout.accessiblecaret.margin-left", "-11.5");
 // Android needs to show the caret when long tapping on an empty content.
 pref("layout.accessiblecaret.caret_shown_when_long_tapping_on_empty_content", true);
 
-// Android generates long tap (mouse) events.
-pref("layout.accessiblecaret.use_long_tap_injector", false);
-
 // Androids carets are always tilt to match the text selection guideline.
 pref("layout.accessiblecaret.always_tilt", true);
 
@@ -865,13 +866,13 @@ pref("layout.accessiblecaret.hapticfeedback", true);
 pref("layout.accessiblecaret.extend_selection_for_phone_number", true);
 
 // Disable sending console to logcat on release builds.
-#ifdef RELEASE_BUILD
+#ifdef RELEASE_OR_BETA
 pref("consoleservice.logcat", false);
 #else
 pref("consoleservice.logcat", true);
 #endif
 
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
 // Enable VR on mobile, making it enable by default.
 pref("dom.vr.enabled", true);
 #endif

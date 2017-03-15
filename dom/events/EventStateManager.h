@@ -836,7 +836,7 @@ protected:
   void BeginTrackingRemoteDragGesture(nsIContent* aContent);
   void StopTrackingDragGesture();
   void GenerateDragGesture(nsPresContext* aPresContext,
-                           WidgetMouseEvent* aEvent);
+                           WidgetInputEvent* aEvent);
 
   /**
    * Determine which node the drag should be targeted at.
@@ -914,7 +914,7 @@ private:
   // Last mouse event mRefPoint (the offset from the widget's origin in
   // device pixels) when mouse was locked, used to restore mouse position
   // after unlocking.
-  LayoutDeviceIntPoint mPreLockPoint;
+  static LayoutDeviceIntPoint sPreLockPoint;
 
   // Stores the mRefPoint of the last synthetic mouse move we dispatched
   // to re-center the mouse when we were pointer locked. If this is (-1,-1) it
@@ -964,6 +964,8 @@ private:
   uint32_t mMClickCount;
   uint32_t mRClickCount;
 
+  bool mInTouchDrag;
+
   bool m_haveShutdown;
 
   // Time at which we began handling user input. Reset to the epoch
@@ -1008,7 +1010,7 @@ public:
   void KillClickHoldTimer();
   void FireContextClick();
 
-  void SetPointerLock(nsIWidget* aWidget, nsIContent* aElement) ;
+  static void SetPointerLock(nsIWidget* aWidget, nsIContent* aElement) ;
   static void sClickHoldCallback ( nsITimer* aTimer, void* aESM ) ;
 };
 

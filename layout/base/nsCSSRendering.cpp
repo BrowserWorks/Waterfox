@@ -667,25 +667,16 @@ nsCSSRendering::PaintBorder(nsPresContext* aPresContext,
   }
 
   nsStyleBorder newStyleBorder(*styleBorder);
-  // We could do something fancy to avoid the TrackImage/UntrackImage
-  // work, but it doesn't seem worth it.  (We need to call TrackImage
-  // since we're not going through nsRuleNode::ComputeBorderData.)
-  newStyleBorder.TrackImage(aPresContext);
 
   NS_FOR_CSS_SIDES(side) {
-    newStyleBorder.SetBorderColor(side,
-      aStyleContext->GetVisitedDependentColor(
-        nsCSSProps::SubpropertyEntryFor(eCSSProperty_border_color)[side]));
+    nscolor color = aStyleContext->GetVisitedDependentColor(
+      nsCSSProps::SubpropertyEntryFor(eCSSProperty_border_color)[side]);
+    newStyleBorder.mBorderColor[side] = StyleComplexColor::FromColor(color);
   }
   DrawResult result =
     PaintBorderWithStyleBorder(aPresContext, aRenderingContext, aForFrame,
                                aDirtyRect, aBorderArea, newStyleBorder,
                                aStyleContext, aFlags, aSkipSides);
-
-  // We could do something fancy to avoid the TrackImage/UntrackImage
-  // work, but it doesn't seem worth it.  (We need to call UntrackImage
-  // since we're not going through nsStyleBorder::Destroy.)
-  newStyleBorder.UntrackImage(aPresContext);
 
   return result;
 }
@@ -804,13 +795,9 @@ nsCSSRendering::PaintBorderWithStyleBorder(nsPresContext* aPresContext,
 
   // pull out styles, colors, composite colors
   NS_FOR_CSS_SIDES (i) {
-    bool foreground;
     borderStyles[i] = aStyleBorder.GetBorderStyle(i);
-    aStyleBorder.GetBorderColor(i, borderColors[i], foreground);
+    borderColors[i] = ourColor->CalcComplexColor(aStyleBorder.mBorderColor[i]);
     aStyleBorder.GetCompositeColors(i, &compositeColors[i]);
-
-    if (foreground)
-      borderColors[i] = ourColor->mColor;
   }
 
   PrintAsFormatString(" borderStyles: %d %d %d %d\n", borderStyles[0], borderStyles[1], borderStyles[2], borderStyles[3]);
@@ -876,7 +863,7 @@ nsCSSRendering::PaintOutline(nsPresContext* aPresContext,
   MOZ_ASSERT(ourOutline != NS_STYLE_BORDER_STYLE_NONE,
              "shouldn't have created nsDisplayOutline item");
 
-  uint8_t outlineStyle = ourOutline->GetOutlineStyle();
+  uint8_t outlineStyle = ourOutline->mOutlineStyle;
   nscoord width = ourOutline->GetOutlineWidth();
 
   if (width == 0 && outlineStyle != NS_STYLE_BORDER_STYLE_AUTO) {
@@ -1775,16 +1762,13 @@ IsOpaqueBorderEdge(const nsStyleBorder& aBorder, mozilla::css::Side aSide)
   if (aBorder.mBorderImageSource.GetType() != eStyleImageType_Null)
     return false;
 
-  nscolor color;
-  bool isForeground;
-  aBorder.GetBorderColor(aSide, color, isForeground);
-
+  StyleComplexColor color = aBorder.mBorderColor[aSide];
   // We don't know the foreground color here, so if it's being used
   // we must assume it might be transparent.
-  if (isForeground)
+  if (!color.IsNumericColor()) {
     return false;
-
-  return NS_GET_A(color) == 255;
+  }
+  return NS_GET_A(color.mColor) == 255;
 }
 
 /**
@@ -2583,8 +2567,8 @@ ClampColorStops(nsTArray<ColorStop>& aStops)
     }
   }
 
-  MOZ_ASSERT(aStops[0].mPosition >= 0);
-  MOZ_ASSERT(aStops.LastElement().mPosition <= 1);
+  MOZ_ASSERT(aStops[0].mPosition >= -1e6);
+  MOZ_ASSERT(aStops.LastElement().mPosition - 1 <= 1e6);
 
   // The end points won't exist yet if they don't fall in the original range of
   // |aStops|. Create them if needed.
@@ -3243,7 +3227,8 @@ nsCSSRendering::PaintBackgroundWithSC(const PaintBGParams& aParams,
           clipSet = true;
           if (!clipBorderArea.IsEqualEdges(aParams.borderArea)) {
             // We're drawing the background for the joined continuation boxes
-            // so we need to clip that to the slice that we want for this frame.
+            // so we need to clip that to the slice that we want for this
+            // frame.
             gfxRect clip =
               nsLayoutUtils::RectToGfxRect(aParams.borderArea, appUnitsPerPixel);
             autoSR.EnsureSaved(ctx);
@@ -3264,7 +3249,8 @@ nsCSSRendering::PaintBackgroundWithSC(const PaintBGParams& aParams,
         if (!state.mFillArea.IsEmpty()) {
           if (co != CompositionOp::OP_OVER) {
             NS_ASSERTION(ctx->CurrentOp() == CompositionOp::OP_OVER,
-                         "It is assumed the initial op is OP_OVER, when it is restored later");
+                         "It is assumed the initial op is OP_OVER, when it is "
+                         "restored later");
             ctx->SetOp(co);
           }
 
@@ -3343,6 +3329,9 @@ nsCSSRendering::ComputeImageLayerPositioningArea(nsPresContext* aPresContext,
 
   // Background images are tiled over the 'background-clip' area
   // but the origin of the tiling is based on the 'background-origin' area
+  // XXX: Bug 1303623 will bring in new origin value, we should iterate from
+  // NS_STYLE_IMAGELAYER_ORIGIN_MARGIN instead of
+  // NS_STYLE_IMAGELAYER_ORIGIN_BORDER.
   if (aLayer.mOrigin != NS_STYLE_IMAGELAYER_ORIGIN_BORDER && geometryFrame) {
     nsMargin border = geometryFrame->GetUsedBorder();
     if (aLayer.mOrigin != NS_STYLE_IMAGELAYER_ORIGIN_PADDING) {
@@ -5039,8 +5028,13 @@ ShouldTreatAsCompleteDueToSyncDecode(const nsStyleImage* aImage,
     return false;
   }
 
+  imgRequestProxy* req = aImage->GetImageData();
+  if (!req) {
+    return false;
+  }
+
   uint32_t status = 0;
-  if (NS_FAILED(aImage->GetImageData()->GetImageStatus(&status))) {
+  if (NS_FAILED(req->GetImageStatus(&status))) {
     return false;
   }
 
@@ -5048,7 +5042,7 @@ ShouldTreatAsCompleteDueToSyncDecode(const nsStyleImage* aImage,
     // The image is "complete" since it's a corrupt image. If we created an
     // imgIContainer at all, return true.
     nsCOMPtr<imgIContainer> image;
-    aImage->GetImageData()->GetImage(getter_AddRefs(image));
+    req->GetImage(getter_AddRefs(image));
     return bool(image);
   }
 
@@ -5085,8 +5079,9 @@ nsImageRenderer::PrepareImage()
   }
 
   switch (mType) {
-    case eStyleImageType_Image:
-    {
+    case eStyleImageType_Image: {
+      MOZ_ASSERT(mImage->GetImageData(),
+                 "must have image data, since we checked IsEmpty above");
       nsCOMPtr<imgIContainer> srcImage;
       DebugOnly<nsresult> rv =
         mImage->GetImageData()->GetImage(getter_AddRefs(srcImage));
@@ -5445,6 +5440,9 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
   if (ctx->CurrentOp() != CompositionOp::OP_OVER || mMaskOp == NS_STYLE_MASK_MODE_LUMINANCE) {
     gfxRect clipRect = ctx->GetClipExtents();
     tmpDTRect = RoundedOut(ToRect(clipRect));
+    if (tmpDTRect.IsEmpty()) {
+      return DrawResult::SUCCESS;
+    }
     RefPtr<DrawTarget> tempDT =
       gfxPlatform::GetPlatform()->CreateSimilarSoftwareDrawTarget(ctx->GetDrawTarget(),
                                                                   tmpDTRect.Size(),

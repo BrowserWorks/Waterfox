@@ -33,6 +33,7 @@ class nsIDocument;
 class nsIFrame;
 class nsPresContext;
 class nsStyleContext;
+class nsStyleSVGPaint;
 class nsSVGDisplayContainerFrame;
 class nsSVGElement;
 class nsSVGEnum;
@@ -42,7 +43,6 @@ class nsSVGPathGeometryFrame;
 class nsTextFrame;
 
 struct nsStyleSVG;
-struct nsStyleSVGPaint;
 struct nsRect;
 
 namespace mozilla {
@@ -576,6 +576,25 @@ public:
   ToCanvasBounds(const gfxRect &aUserspaceRect,
                  const gfxMatrix &aToCanvas,
                  const nsPresContext *presContext);
+
+  struct MaskUsage {
+    bool shouldGenerateMaskLayer;
+    bool shouldGenerateClipMaskLayer;
+    bool shouldApplyClipPath;
+    bool shouldApplyBasicShape;
+    float opacity;
+
+    MaskUsage()
+      : shouldGenerateMaskLayer(false), shouldGenerateClipMaskLayer(false),
+        shouldApplyClipPath(false), shouldApplyBasicShape(false), opacity(0.0)
+    { }
+  };
+
+  static void
+  DetermineMaskUsage(nsIFrame* aFrame, bool aHandleOpacity, MaskUsage& aUsage);
+
+  static float
+  ComputeOpacity(nsIFrame* aFrame, bool aHandleOpacity);
 };
 
 #endif

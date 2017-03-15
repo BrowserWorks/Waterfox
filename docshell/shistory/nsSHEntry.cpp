@@ -11,7 +11,6 @@
 #include "nsSHEntryShared.h"
 #include "nsILayoutHistoryState.h"
 #include "nsIContentViewer.h"
-#include "nsISupportsArray.h"
 #include "nsIStructuredCloneContainer.h"
 #include "nsIInputStream.h"
 #include "nsIURI.h"
@@ -412,7 +411,9 @@ nsSHEntry::Create(nsIURI* aURI, const nsAString& aTitle,
                   nsIInputStream* aInputStream,
                   nsILayoutHistoryState* aLayoutHistoryState,
                   nsISupports* aCacheKey, const nsACString& aContentType,
-                  nsIPrincipal* aTriggeringPrincipal, uint64_t aDocShellID,
+                  nsIPrincipal* aTriggeringPrincipal,
+                  nsIPrincipal* aPrincipalToInherit,
+                  uint64_t aDocShellID,
                   bool aDynamicCreation)
 {
   mURI = aURI;
@@ -425,6 +426,7 @@ nsSHEntry::Create(nsIURI* aURI, const nsAString& aTitle,
   mShared->mCacheKey = aCacheKey;
   mShared->mContentType = aContentType;
   mShared->mTriggeringPrincipal = aTriggeringPrincipal;
+  mShared->mPrincipalToInherit = aPrincipalToInherit;
   mShared->mDocShellID = aDocShellID;
   mShared->mDynamicallyCreated = aDynamicCreation;
 
@@ -514,6 +516,20 @@ NS_IMETHODIMP
 nsSHEntry::SetTriggeringPrincipal(nsIPrincipal* aTriggeringPrincipal)
 {
   mShared->mTriggeringPrincipal = aTriggeringPrincipal;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::GetPrincipalToInherit(nsIPrincipal** aPrincipalToInherit)
+{
+  NS_IF_ADDREF(*aPrincipalToInherit = mShared->mPrincipalToInherit);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::SetPrincipalToInherit(nsIPrincipal* aPrincipalToInherit)
+{
+  mShared->mPrincipalToInherit = aPrincipalToInherit;
   return NS_OK;
 }
 
@@ -807,14 +823,14 @@ nsSHEntry::ClearChildShells()
 }
 
 NS_IMETHODIMP
-nsSHEntry::GetRefreshURIList(nsISupportsArray** aList)
+nsSHEntry::GetRefreshURIList(nsIMutableArray** aList)
 {
   NS_IF_ADDREF(*aList = mShared->mRefreshURIList);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSHEntry::SetRefreshURIList(nsISupportsArray* aList)
+nsSHEntry::SetRefreshURIList(nsIMutableArray* aList)
 {
   mShared->mRefreshURIList = aList;
   return NS_OK;

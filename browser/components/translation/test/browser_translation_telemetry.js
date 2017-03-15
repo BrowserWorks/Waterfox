@@ -24,7 +24,7 @@ var MetricsChecker = {
     DETECT_LANG           : Services.telemetry.getHistogramById("SHOULD_AUTO_DETECT_LANGUAGE"),
   },
 
-  reset: function(){
+  reset: function() {
     for (let i of Object.keys(this.HISTOGRAMS)) {
       this.HISTOGRAMS[i].clear();
     }
@@ -65,7 +65,7 @@ var MetricsChecker = {
   /**
    * A recurrent loop for making assertions about collected metrics.
    */
-  _assertionLoop: function (prevMetrics, metrics, additions){
+  _assertionLoop: function (prevMetrics, metrics, additions) {
     for (let metric of Object.keys(additions)) {
       let addition = additions[metric];
       // Allows nesting metrics. Useful for keyed histograms.
@@ -117,9 +117,9 @@ var translate = Task.async(function*(text, from, closeTab = true) {
   yield acceptTranslationOffer(tab);
   if (closeTab) {
     gBrowser.removeTab(tab);
-  } else {
-    return tab;
+    return null;
   }
+  return tab;
 });
 
 function waitForMessage({messageManager}, name) {
@@ -218,7 +218,8 @@ add_task(function* test_show_original() {
 });
 
 add_task(function* test_language_change() {
-  for (let i of Array(4)) {
+  // This is run 4 times, the total additions are checked afterwards.
+  for (let i of Array(4)) { // eslint-disable-line no-unused-vars
     let tab = yield offerTranslationFor("<h1>Hallo Welt!</h1>", "fr");
     let browser = tab.linkedBrowser;
     // In the offer state, translation is executed by the Translate button,

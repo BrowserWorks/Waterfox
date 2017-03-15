@@ -90,6 +90,7 @@ namespace jit {
     _(MathFunction)                             \
     _(Random)                                   \
     _(StringSplit)                              \
+    _(NaNToZero)                                \
     _(RegExpMatcher)                            \
     _(RegExpSearcher)                           \
     _(RegExpTester)                             \
@@ -99,6 +100,7 @@ namespace jit {
     _(ToFloat32)                                \
     _(TruncateToInt32)                          \
     _(NewObject)                                \
+    _(NewTypedArray)                            \
     _(NewArray)                                 \
     _(NewDerivedTypedObject)                    \
     _(CreateThisWithTemplate)                   \
@@ -478,6 +480,14 @@ class RStringSplit final : public RInstruction
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const;
 };
 
+class RNaNToZero final : public RInstruction
+{
+  public:
+    RINSTRUCTION_HEADER_NUM_OP_(NaNToZero, 1);
+
+    bool recover(JSContext* cx, SnapshotIterator& iter) const;
+};
+
 class RRegExpMatcher final : public RInstruction
 {
   public:
@@ -552,6 +562,14 @@ class RNewObject final : public RInstruction
 
   public:
     RINSTRUCTION_HEADER_NUM_OP_(NewObject, 1)
+
+    MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const;
+};
+
+class RNewTypedArray final : public RInstruction
+{
+  public:
+    RINSTRUCTION_HEADER_NUM_OP_(NewTypedArray, 1)
 
     MOZ_MUST_USE bool recover(JSContext* cx, SnapshotIterator& iter) const;
 };

@@ -39,6 +39,7 @@
 #include "mozilla/dom/ElementBinding.h"
 #include "mozilla/dom/Nullable.h"
 #include "Units.h"
+#include "DOMIntersectionObserver.h"
 
 class nsIFrame;
 class nsIDOMMozNamedAttrMap;
@@ -56,10 +57,12 @@ class nsDocument;
 class nsDOMStringMap;
 
 namespace mozilla {
+class DeclarationBlock;
 namespace dom {
   struct AnimationFilter;
   struct ScrollIntoViewOptions;
   struct ScrollToOptions;
+  class DOMIntersectionObserver;
   class ElementOrCSSPseudoElement;
   class UnrestrictedDoubleOrKeyframeAnimationOptions;
 } // namespace dom
@@ -136,9 +139,8 @@ class EventStateManager;
 namespace dom {
 
 class Animation;
-class CustomElementsRegistry;
+class CustomElementRegistry;
 class Link;
-class UndoManager;
 class DOMRect;
 class DOMRectList;
 class DestinationInsertionPointList;
@@ -255,13 +257,13 @@ public:
   /**
    * Get the inline style declaration, if any, for this element.
    */
-  virtual css::Declaration* GetInlineStyleDeclaration();
+  virtual DeclarationBlock* GetInlineStyleDeclaration();
 
   /**
    * Set the inline style declaration for this element. This will send
    * an appropriate AttributeChanged notification if aNotify is true.
    */
-  virtual nsresult SetInlineStyleDeclaration(css::Declaration* aDeclaration,
+  virtual nsresult SetInlineStyleDeclaration(DeclarationBlock* aDeclaration,
                                              const nsAString* aSerialized,
                                              bool aNotify);
 
@@ -269,15 +271,15 @@ public:
    * Get the SMIL override style declaration for this element. If the
    * rule hasn't been created, this method simply returns null.
    */
-  virtual css::Declaration* GetSMILOverrideStyleDeclaration();
+  virtual DeclarationBlock* GetSMILOverrideStyleDeclaration();
 
   /**
    * Set the SMIL override style declaration for this element. If
    * aNotify is true, this method will notify the document's pres
    * context, so that the style changes will be noticed.
    */
-  virtual nsresult SetSMILOverrideStyleDeclaration(css::Declaration* aDeclaration,
-                                                   bool aNotify);
+  virtual nsresult SetSMILOverrideStyleDeclaration(
+    DeclarationBlock* aDeclaration, bool aNotify);
 
   /**
    * Returns a new nsISMILAttr that allows the caller to animate the given
@@ -427,7 +429,7 @@ private:
   friend class ::nsFocusManager;
 
   // Allow CusomtElementRegistry to call AddStates.
-  friend class CustomElementsRegistry;
+  friend class CustomElementRegistry;
 
   // Also need to allow Link to call UpdateLinkState.
   friend class Link;
@@ -748,17 +750,15 @@ public:
       aError.Throw(NS_ERROR_DOM_INVALID_POINTER_ERR);
       return;
     }
-    nsIPresShell::PointerCaptureInfo* pointerCaptureInfo = nullptr;
-    if (nsIPresShell::gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo) &&
-        pointerCaptureInfo && pointerCaptureInfo->mPendingContent == this) {
+    if (HasPointerCapture(aPointerId)) {
       nsIPresShell::ReleasePointerCapturingContent(aPointerId);
     }
   }
   bool HasPointerCapture(long aPointerId)
   {
-    nsIPresShell::PointerCaptureInfo* pointerCaptureInfo = nullptr;
-    if (nsIPresShell::gPointerCaptureList->Get(aPointerId, &pointerCaptureInfo) &&
-        pointerCaptureInfo && pointerCaptureInfo->mPendingContent == this) {
+    nsIPresShell::PointerCaptureInfo* pointerCaptureInfo =
+      nsIPresShell::GetPointerCaptureInfo(aPointerId);
+    if (pointerCaptureInfo && pointerCaptureInfo->mPendingContent == this) {
       return true;
     }
     return false;
@@ -869,20 +869,6 @@ public:
   }
 
   void GetGridFragments(nsTArray<RefPtr<Grid>>& aResult);
-
-  virtual already_AddRefed<UndoManager> GetUndoManager()
-  {
-    return nullptr;
-  }
-
-  virtual bool UndoScope()
-  {
-    return false;
-  }
-
-  virtual void SetUndoScope(bool aUndoScope, ErrorResult& aError)
-  {
-  }
 
   already_AddRefed<Animation>
   Animate(JSContext* aContext,
@@ -1165,6 +1151,10 @@ public:
   // to it.
   void ClearDataset();
 
+  void RegisterIntersectionObserver(DOMIntersectionObserver* aObserver);
+  void UnregisterIntersectionObserver(DOMIntersectionObserver* aObserver);
+  bool UpdateIntersectionObservation(DOMIntersectionObserver* aObserver, int32_t threshold);
+
 protected:
   /*
    * Named-bools for use with SetAttrAndNotify to make call sites easier to
@@ -1377,6 +1367,8 @@ protected:
 
   nsDOMTokenList* GetTokenList(nsIAtom* aAtom,
                                const DOMTokenListSupportedTokenArray aSupportedTokens = nullptr);
+
+  nsTArray<nsDOMSlots::IntersectionObserverRegistration>* RegisteredIntersectionObservers();
 
 private:
   /**

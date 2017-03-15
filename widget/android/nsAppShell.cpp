@@ -339,14 +339,16 @@ public:
     }
 
     static void NotifyAlertListener(jni::String::Param aName,
-                                    jni::String::Param aTopic)
+                                    jni::String::Param aTopic,
+                                    jni::String::Param aCookie)
     {
-        if (!aName || !aTopic) {
+        if (!aName || !aTopic || !aCookie) {
             return;
         }
 
         AndroidAlerts::NotifyListener(
-                aName->ToString(), aTopic->ToCString().get());
+                aName->ToString(), aTopic->ToCString().get(),
+                aCookie->ToString().get());
     }
 
     static void OnFullScreenPluginHidden(jni::Object::Param aView)
@@ -374,15 +376,18 @@ nsAppShell::nsAppShell()
         AndroidBridge::ConstructBridge();
         GeckoAppShellSupport::Init();
         GeckoThreadSupport::Init();
-        mozilla::ANRReporter::Init();
         mozilla::GeckoBatteryManager::Init();
         mozilla::GeckoNetworkManager::Init();
         mozilla::GeckoScreenOrientation::Init();
-        mozilla::MemoryMonitor::Init();
         mozilla::PrefsHelper::Init();
-        mozilla::widget::Telemetry::Init();
-        mozilla::ThumbnailHelper::Init();
         nsWindow::InitNatives();
+
+        if (jni::IsFennec()) {
+            mozilla::ANRReporter::Init();
+            mozilla::MemoryMonitor::Init();
+            mozilla::widget::Telemetry::Init();
+            mozilla::ThumbnailHelper::Init();
+        }
 
         java::GeckoThread::SetState(java::GeckoThread::State::JNI_READY());
     }

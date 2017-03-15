@@ -1324,7 +1324,7 @@ LoopChoiceNode::FilterASCII(int depth, bool ignore_case, bool unicode)
 void
 Analysis::EnsureAnalyzed(RegExpNode* that)
 {
-    JS_CHECK_RECURSION(cx, fail("Stack overflow"); return);
+    JS_CHECK_RECURSION(cx, failASCII("Stack overflow"); return);
 
     if (that->info()->been_analyzed || that->info()->being_analyzed)
         return;
@@ -1766,7 +1766,7 @@ RegExpCompiler::Assemble(JSContext* cx,
 
     if (reg_exp_too_big_) {
         code.destroy();
-        JS_ReportError(cx, "regexp too big");
+        JS_ReportErrorASCII(cx, "regexp too big");
         return RegExpCode();
     }
 
@@ -1807,7 +1807,7 @@ irregexp::CompilePattern(JSContext* cx, RegExpShared* shared, RegExpCompileData*
                          bool unicode)
 {
     if ((data->capture_count + 1) * 2 - 1 > RegExpMacroAssembler::kMaxRegister) {
-        JS_ReportError(cx, "regexp too big");
+        JS_ReportErrorASCII(cx, "regexp too big");
         return RegExpCode();
     }
 
@@ -1873,7 +1873,7 @@ irregexp::CompilePattern(JSContext* cx, RegExpShared* shared, RegExpCompileData*
     Analysis analysis(cx, ignore_case, is_ascii, unicode);
     analysis.EnsureAnalyzed(node);
     if (analysis.has_failed()) {
-        JS_ReportError(cx, analysis.errorMessage());
+        JS_ReportErrorASCII(cx, "%s", analysis.errorMessage());
         return RegExpCode();
     }
 
@@ -1884,7 +1884,8 @@ irregexp::CompilePattern(JSContext* cx, RegExpShared* shared, RegExpCompileData*
     RegExpMacroAssembler* assembler;
     if (IsNativeRegExpEnabled(cx) &&
         !force_bytecode &&
-        jit::CanLikelyAllocateMoreExecutableMemory())
+        jit::CanLikelyAllocateMoreExecutableMemory() &&
+        shared->getSource()->length() < 32 * 1024)
     {
         NativeRegExpMacroAssembler::Mode mode =
             is_ascii ? NativeRegExpMacroAssembler::ASCII

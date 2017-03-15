@@ -50,8 +50,7 @@ this.EXPORTED_SYMBOLS = [
   "DownloadPDFSaver",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -142,8 +141,7 @@ function deserializeUnknownProperties(aObject, aSerializable, aFilterFn)
  */
 const kProgressUpdateIntervalMs = 400;
 
-////////////////////////////////////////////////////////////////////////////////
-//// Download
+// Download
 
 /**
  * Represents a single download, with associated state and actions.  This object
@@ -1105,8 +1103,9 @@ this.Download.prototype = {
     };
 
     let saver = this.saver.toSerializable();
-    if (!saver) {
-      // If we are unable to serialize the saver, we won't persist the download.
+    if (!serializable.source || !saver) {
+      // If we are unable to serialize either the source or the saver,
+      // we won't persist the download.
       return null;
     }
 
@@ -1248,8 +1247,7 @@ Download.fromSerializable = function (aSerializable) {
   return download;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadSource
+// DownloadSource
 
 /**
  * Represents the source of a download, for example a document or an URI.
@@ -1276,12 +1274,34 @@ this.DownloadSource.prototype = {
   referrer: null,
 
   /**
+   * For downloads handled by the (default) DownloadCopySaver, this function
+   * can adjust the network channel before it is opened, for example to change
+   * the HTTP headers or to upload a stream as POST data.
+   *
+   * @note If this is defined this object will not be serializable, thus the
+   *       Download object will not be persisted across sessions.
+   *
+   * @param aChannel
+   *        The nsIChannel to be adjusted.
+   *
+   * @return {Promise}
+   * @resolves When the channel has been adjusted and can be opened.
+   * @rejects JavaScript exception that will cause the download to fail.
+   */
+   adjustChannel: null,
+
+  /**
    * Returns a static representation of the current object state.
    *
    * @return A JavaScript object that can be serialized to JSON.
    */
   toSerializable: function ()
   {
+    if (this.adjustChannel) {
+      // If the callback was used, we can't reproduce this across sessions.
+      return null;
+    }
+
     // Simplify the representation if we don't have other details.
     if (!this.isPrivate && !this.referrer && !this._unknownProperties) {
       return this.url;
@@ -1314,6 +1334,10 @@ this.DownloadSource.prototype = {
  *          referrer: String containing the referrer URI of the download source.
  *                    Can be omitted or null if no referrer should be sent or
  *                    the download source is not HTTP.
+ *          adjustChannel: For downloads handled by (default) DownloadCopySaver,
+ *                         this function can adjust the network channel before
+ *                         it is opened, for example to change the HTTP headers
+ *                         or to upload a stream as POST data.  Optional.
  *        }
  *
  * @return The newly created DownloadSource object.
@@ -1338,6 +1362,9 @@ this.DownloadSource.fromSerializable = function (aSerializable) {
     if ("referrer" in aSerializable) {
       source.referrer = aSerializable.referrer;
     }
+    if ("adjustChannel" in aSerializable) {
+      source.adjustChannel = aSerializable.adjustChannel;
+    }
 
     deserializeUnknownProperties(source, aSerializable, property =>
       property != "url" && property != "isPrivate" && property != "referrer");
@@ -1346,8 +1373,7 @@ this.DownloadSource.fromSerializable = function (aSerializable) {
   return source;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadTarget
+// DownloadTarget
 
 /**
  * Represents the target of a download, for example a file in the global
@@ -1475,8 +1501,7 @@ this.DownloadTarget.fromSerializable = function (aSerializable) {
   return target;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadError
+// DownloadError
 
 /**
  * Provides detailed information about a download failure.
@@ -1671,8 +1696,7 @@ this.DownloadError.fromSerializable = function (aSerializable) {
   return e;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadSaver
+// DownloadSaver
 
 /**
  * Template for an object that actually transfers the data for the download.
@@ -1830,8 +1854,7 @@ this.DownloadSaver.fromSerializable = function (aSerializable) {
   return saver;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadCopySaver
+// DownloadCopySaver
 
 /**
  * Saver object that simply copies the entire source file to the target.
@@ -2011,6 +2034,11 @@ this.DownloadCopySaver.prototype = {
             },
             onStatus: function () { },
           };
+
+          // If the callback was set, handle it now before opening the channel.
+          if (download.source.adjustChannel) {
+            yield download.source.adjustChannel(channel);
+          }
 
           // Open the channel, directing output to the background file saver.
           backgroundFileSaver.QueryInterface(Ci.nsIStreamListener);
@@ -2305,8 +2333,7 @@ this.DownloadCopySaver.fromSerializable = function (aSerializable) {
   return saver;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadLegacySaver
+// DownloadLegacySaver
 
 /**
  * Saver object that integrates with the legacy nsITransfer interface.
@@ -2689,8 +2716,7 @@ this.DownloadLegacySaver.fromSerializable = function () {
   return new DownloadLegacySaver();
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadPDFSaver
+// DownloadPDFSaver
 
 /**
  * This DownloadSaver type creates a PDF file from the current document in a
@@ -2843,4 +2869,3 @@ this.DownloadPDFSaver.prototype = {
 this.DownloadPDFSaver.fromSerializable = function (aSerializable) {
   return new DownloadPDFSaver();
 };
-

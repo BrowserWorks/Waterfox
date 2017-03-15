@@ -26,7 +26,11 @@ from mozharness.base.log import INFO, ERROR
 from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
+from mozharness.mozilla.buildbot import TBPL_EXCEPTION
 from mozharness.mozilla.mozbase import MozbaseMixin
+from mozharness.mozilla.structuredlog import StructuredOutputParser
+from mozharness.mozilla.testing.errors import HarnessErrorList
+from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.testing.codecoverage import (
     CodeCoverageMixin,
     code_coverage_config_options
@@ -35,6 +39,7 @@ from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_opt
 
 SUITE_CATEGORIES = ['gtest', 'cppunittest', 'jittest', 'mochitest', 'reftest', 'xpcshell', 'mozbase', 'mozmill']
 SUITE_DEFAULT_E10S = ['mochitest', 'reftest']
+
 
 # DesktopUnittest {{{1
 class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMixin, CodeCoverageMixin):
@@ -394,7 +399,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             if suite_category not in c["suite_definitions"]:
                 self.fatal("'%s' not defined in the config!")
 
-            if suite in ('browser-chrome-coverage', 'xpcshell-coverage'):
+            if suite in ('browser-chrome-coverage', 'xpcshell-coverage', 'mochitest-devtools-chrome-coverage'):
                 base_cmd.append('--jscov-dir-prefix=%s' %
                                 dirs['abs_blob_upload_dir'])
 
@@ -404,7 +409,10 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                     option = option % str_format_values
                     if not option.endswith('None'):
                         base_cmd.append(option)
-                if self.structured_output(suite_category):
+                if self.structured_output(
+                    suite_category,
+                    self._query_try_flavor(suite_category, suite)
+                ):
                     base_cmd.append("--log-raw=-")
                 return base_cmd
             else:
@@ -413,12 +421,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                              "please make sure they are specified in your "
                              "config under %s_options" %
                              (suite_category, suite_category))
-
-
-            for option in options:
-                option = option % str_format_values
-                if not option.endswith('None'):
-                    base_cmd.append(option)
 
             return base_cmd
         else:
@@ -461,7 +463,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
             "mochitest": [("plain.*", "mochitest"),
                           ("browser-chrome.*", "browser-chrome"),
                           ("mochitest-devtools-chrome.*", "devtools-chrome"),
-                          ("chrome", "chrome")],
+                          ("chrome", "chrome"),
+                          ("jetpack.*", "jetpack")],
             "xpcshell": [("xpcshell", "xpcshell")],
             "reftest": [("reftest", "reftest"),
                         ("crashtest", "crashtest")]
@@ -469,6 +472,23 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         for suite_pattern, flavor in flavors.get(category, []):
             if re.compile(suite_pattern).match(suite):
                 return flavor
+
+    def structured_output(self, suite_category, flavor=None):
+        unstructured_flavors = self.config.get('unstructured_flavors')
+        if not unstructured_flavors:
+            return False
+        if suite_category not in unstructured_flavors:
+            return True
+        if not unstructured_flavors.get(suite_category) or flavor in unstructured_flavors.get(suite_category):
+            return False
+        return True
+
+    def get_test_output_parser(self, suite_category, flavor=None, strict=False,
+                               **kwargs):
+        if not self.structured_output(suite_category, flavor):
+            return DesktopUnittestOutputParser(suite_category=suite_category, **kwargs)
+        self.info("Structured output parser in use for %s." % suite_category)
+        return StructuredOutputParser(suite_category=suite_category, strict=strict, **kwargs)
 
     # Actions {{{2
 
@@ -480,6 +500,31 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
     # preflight_install is in TestingMixin.
     # install is in TestingMixin.
     # upload_blobber_files is in BlobUploadMixin
+
+    @PreScriptAction('download-and-extract')
+    def _pre_download_and_extract(self, action):
+        """Abort if --artifact try syntax is used with compiled-code tests"""
+        if not self.try_message_has_flag('artifact'):
+            return
+        self.info('Artifact build requested in try syntax.')
+        rejected = []
+        compiled_code_suites = [
+            "cppunit",
+            "gtest",
+            "jittest",
+        ]
+        for category in SUITE_CATEGORIES:
+            suites = self._query_specified_suites(category) or []
+            for suite in suites:
+                if any([suite.startswith(c) for c in compiled_code_suites]):
+                    rejected.append(suite)
+                    break
+        if rejected:
+            self.buildbot_status(TBPL_EXCEPTION)
+            self.fatal("There are specified suites that are incompatible with "
+                      "--artifact try syntax flag: {}".format(', '.join(rejected)),
+                       exit_code=self.return_code)
+
 
     def download_and_extract(self):
         """
@@ -579,7 +624,6 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                                                     'resources',
                                                     module))
 
-
     # pull defined in VCSScript.
     # preflight_run_tests defined in TestingMixin.
 
@@ -633,11 +677,9 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
 
                 suite_name = suite_category + '-' + suite
                 tbpl_status, log_level = None, None
-                error_list = BaseErrorList + [{
-                    'regex': re.compile(r'''PROCESS-CRASH.*application crashed'''),
-                    'level': ERROR,
-                }]
+                error_list = BaseErrorList + HarnessErrorList
                 parser = self.get_test_output_parser(suite_category,
+                                                     flavor=flavor,
                                                      config=self.config,
                                                      error_list=error_list,
                                                      log_obj=self.log_obj)
@@ -651,6 +693,8 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
 
                 if self.query_minidump_stackwalk():
                     env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+                if self.query_nodejs():
+                    env['MOZ_NODE_PATH'] = self.nodejs_path
                 env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
                 if not os.path.isdir(env['MOZ_UPLOAD_DIR']):

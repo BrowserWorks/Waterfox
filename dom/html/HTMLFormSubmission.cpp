@@ -282,8 +282,12 @@ HandleMailtoSubject(nsCString& aPath)
       return;
     aPath.AppendLiteral("subject=");
     nsCString subjectStrEscaped;
-    aPath.Append(NS_EscapeURL(NS_ConvertUTF16toUTF8(subjectStr), esc_Query,
-                              subjectStrEscaped));
+    rv = NS_EscapeURL(NS_ConvertUTF16toUTF8(subjectStr), esc_Query,
+                      subjectStrEscaped, mozilla::fallible);
+    if (NS_FAILED(rv))
+      return;
+
+    aPath.Append(subjectStrEscaped);
   }
 }
 
@@ -507,11 +511,11 @@ FSMultipartFormData::AddNameBlobOrNullPair(const nsAString& aName, Blob* aBlob)
 
     RefPtr<File> file = aBlob->ToFile();
     if (file) {
-      nsAutoString path;
-      file->GetPath(path);
+      nsAutoString relativePath;
+      file->GetRelativePath(relativePath);
       if (Directory::WebkitBlinkDirectoryPickerEnabled(nullptr, nullptr) &&
-          !path.IsEmpty()) {
-        filename16 = path;
+          !relativePath.IsEmpty()) {
+        filename16 = relativePath;
       }
 
       if (filename16.IsEmpty()) {

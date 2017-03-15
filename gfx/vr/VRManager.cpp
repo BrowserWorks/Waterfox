@@ -10,6 +10,7 @@
 #include "gfxVROpenVR.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/VRDisplay.h"
+#include "mozilla/dom/GamepadEventTypes.h"
 #include "mozilla/layers/TextureHost.h"
 #include "mozilla/Unused.h"
 
@@ -51,6 +52,7 @@ VRManager::VRManager()
   MOZ_ASSERT(sVRManagerSingleton == nullptr);
 
   RefPtr<VRDisplayManager> mgr;
+  RefPtr<VRControllerManager> controllerMgr;
 
   /**
    * We must add the VRDisplayManager's to mManagers in a careful order to
@@ -81,12 +83,21 @@ VRManager::VRManager()
     mManagers.AppendElement(mgr);
   }
 
+  controllerMgr = VRControllerManagerOpenVR::Create();
+  if (mgr) {
+    mControllerManagers.AppendElement(controllerMgr);
+  }
+
   // OSVR is cross platform compatible
   mgr = VRDisplayManagerOSVR::Create();
   if (mgr) {
       mManagers.AppendElement(mgr);
   }
 #endif
+  // Enable gamepad extensions while VR is enabled.
+  if (gfxPrefs::VREnabled()) {
+    Preferences::SetBool("dom.gamepad.extensions.enabled", true);
+  }
 }
 
 VRManager::~VRManager()
@@ -103,6 +114,11 @@ VRManager::Destroy()
   for (uint32_t i = 0; i < mManagers.Length(); ++i) {
     mManagers[i]->Destroy();
   }
+
+  mVRControllers.Clear();
+  for (uint32_t i = 0; i < mControllerManagers.Length(); ++i) {
+    mControllerManagers[i]->Destroy();
+  }
   mInitialized = false;
 }
 
@@ -111,6 +127,10 @@ VRManager::Init()
 {
   for (uint32_t i = 0; i < mManagers.Length(); ++i) {
     mManagers[i]->Init();
+  }
+
+  for (uint32_t i = 0; i < mControllerManagers.Length(); ++i) {
+    mControllerManagers[i]->Init();
   }
   mInitialized = true;
 }
@@ -162,6 +182,9 @@ VRManager::NotifyVsync(const TimeStamp& aVsyncTimestamp)
   }
 
   if (bHaveEventListener) {
+    for (uint32_t i = 0; i < mControllerManagers.Length(); ++i) {
+      mControllerManagers[i]->HandleInput();
+    }
     // If content has set an EventHandler to be notified of VR display events
     // we must continually refresh the VR display enumeration to check
     // for events that we must fire such as Window.onvrdisplayconnect
@@ -171,12 +194,16 @@ VRManager::NotifyVsync(const TimeStamp& aVsyncTimestamp)
     if (mLastRefreshTime.IsNull()) {
       // This is the first vsync, must refresh VR displays
       RefreshVRDisplays();
+      RefreshVRControllers();
+      mLastRefreshTime = TimeStamp::Now();
     } else {
       // We don't have to do this every frame, so check if we
       // have refreshed recently.
       TimeDuration duration = TimeStamp::Now() - mLastRefreshTime;
       if (duration.ToMilliseconds() > kVRDisplayRefreshMaxDuration) {
         RefreshVRDisplays();
+        RefreshVRControllers();
+        mLastRefreshTime = TimeStamp::Now();
       }
     }
   }
@@ -238,8 +265,6 @@ VRManager::RefreshVRDisplays(bool aMustDispatch)
   if (displayInfoChanged || aMustDispatch) {
     DispatchVRDisplayInfoUpdate();
   }
-
-  mLastRefreshTime = TimeStamp::Now();
 }
 
 void
@@ -279,15 +304,88 @@ VRManager::GetDisplay(const uint32_t& aDisplayID)
 }
 
 void
-VRManager::SubmitFrame(VRLayerParent* aLayer, const int32_t& aInputFrameID,
-                     layers::PTextureParent* aTexture, const gfx::Rect& aLeftEyeRect,
-                     const gfx::Rect& aRightEyeRect)
+VRManager::SubmitFrame(VRLayerParent* aLayer, layers::PTextureParent* aTexture,
+                       const gfx::Rect& aLeftEyeRect,
+                       const gfx::Rect& aRightEyeRect)
 {
   TextureHost* th = TextureHost::AsTextureHost(aTexture);
   mLastFrame = th;
   RefPtr<VRDisplayHost> display = GetDisplay(aLayer->GetDisplayID());
   if (display) {
-    display->SubmitFrame(aLayer, aInputFrameID, aTexture, aLeftEyeRect, aRightEyeRect);
+    display->SubmitFrame(aLayer, 0, aTexture, aLeftEyeRect, aRightEyeRect);
+  }
+}
+
+RefPtr<gfx::VRControllerHost>
+VRManager::GetController(const uint32_t& aControllerID)
+{
+  RefPtr<gfx::VRControllerHost> controller;
+  if (mVRControllers.Get(aControllerID, getter_AddRefs(controller))) {
+    return controller;
+  }
+  return nullptr;
+}
+
+void
+VRManager::GetVRControllerInfo(nsTArray<VRControllerInfo>& aControllerInfo)
+{
+  aControllerInfo.Clear();
+  for (auto iter = mVRControllers.Iter(); !iter.Done(); iter.Next()) {
+    gfx::VRControllerHost* controller = iter.UserData();
+    aControllerInfo.AppendElement(VRControllerInfo(controller->GetControllerInfo()));
+  }
+}
+
+void
+VRManager::RefreshVRControllers()
+{
+  nsTArray<RefPtr<gfx::VRControllerHost>> controllers;
+
+  for (uint32_t i = 0; i < mControllerManagers.Length()
+      && controllers.Length() == 0; ++i) {
+    mControllerManagers[i]->GetControllers(controllers);
+  }
+
+  bool controllerInfoChanged = false;
+
+  if (controllers.Length() != mVRControllers.Count()) {
+    // Catch cases where VR controllers has been removed
+    controllerInfoChanged = true;
+  }
+
+  for (const auto& controller : controllers) {
+    if (!GetController(controller->GetControllerInfo().GetControllerID())) {
+      // This is a new controller
+      controllerInfoChanged = true;
+      break;
+    }
+  }
+
+  if (controllerInfoChanged) {
+    mVRControllers.Clear();
+    for (const auto& controller : controllers) {
+      mVRControllers.Put(controller->GetControllerInfo().GetControllerID(),
+                         controller);
+    }
+  }
+}
+
+void
+VRManager::ScanForDevices()
+{
+  for (uint32_t i = 0; i < mControllerManagers.Length(); ++i) {
+    mControllerManagers[i]->ScanForDevices();
+  }
+}
+
+template<class T>
+void
+VRManager::NotifyGamepadChange(const T& aInfo)
+{
+  dom::GamepadChangeEvent e(aInfo);
+
+  for (auto iter = mVRManagerParents.Iter(); !iter.Done(); iter.Next()) {
+    Unused << iter.Get()->GetKey()->SendGamepadUpdate(e);
   }
 }
 

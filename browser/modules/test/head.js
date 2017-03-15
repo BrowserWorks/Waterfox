@@ -29,7 +29,7 @@ function waitForConditionPromise(condition, timeoutMsg, tryCount=NUMBER_OF_TRIES
 
 function waitForCondition(condition, nextTest, errorMsg) {
   waitForConditionPromise(condition, errorMsg).then(nextTest, (reason) => {
-    ok(false, reason + (reason.stack ? "\n" + e.stack : ""));
+    ok(false, reason + (reason.stack ? "\n" + reason.stack : ""));
   });
 }
 
@@ -94,4 +94,20 @@ function checkKeyedHistogram(h, key, expectedValue) {
   const snapshot = h.snapshot();
   Assert.ok(key in snapshot, `The histogram must contain ${key}.`);
   Assert.equal(snapshot[key].sum, expectedValue, `The key ${key} must contain ${expectedValue}.`);
+}
+
+function checkEvents(events, expectedEvents) {
+  if (!Services.telemetry.canRecordExtended) {
+    // Currently we only collect the tested events when extended Telemetry is enabled.
+    return;
+  }
+
+  Assert.equal(events.length, expectedEvents.length, "Should have matching amount of events.");
+
+  // Strip timestamps from the events for easier comparison.
+  events = events.map(e => e.slice(1));
+
+  for (let i = 0; i < events.length; ++i) {
+    Assert.deepEqual(events[i], expectedEvents[i], "Events should match.");
+  }
 }

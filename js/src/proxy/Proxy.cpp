@@ -34,8 +34,7 @@ js::AutoEnterPolicy::reportErrorIfExceptionIsNotPending(JSContext* cx, jsid id)
         return;
 
     if (JSID_IS_VOID(id)) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_OBJECT_ACCESS_DENIED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_OBJECT_ACCESS_DENIED);
     } else {
         RootedValue idVal(cx, IdToValue(id));
         JSString* str = ValueToSource(cx, idVal);
@@ -271,7 +270,7 @@ Proxy::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
 }
 
 static Value
-ValueToWindowProxyIfWindow(Value v)
+ValueToWindowProxyIfWindow(const Value& v)
 {
     if (v.isObject())
         return ObjectValue(*ToWindowProxyIfWindow(&v.toObject()));
@@ -775,7 +774,7 @@ js::NewProxyObject(JSContext* cx, const BaseProxyHandler* handler, HandleValue p
 }
 
 void
-ProxyObject::renew(JSContext* cx, const BaseProxyHandler* handler, Value priv)
+ProxyObject::renew(JSContext* cx, const BaseProxyHandler* handler, const Value& priv)
 {
     MOZ_ASSERT(!IsInsideNursery(this));
     MOZ_ASSERT_IF(IsCrossCompartmentWrapper(this), IsDeadProxyObject(this));

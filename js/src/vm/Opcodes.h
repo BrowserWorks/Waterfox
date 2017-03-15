@@ -1300,10 +1300,10 @@
      * scripts where use of dynamic scoping inhibits optimization.
      *   Category: Variables and Scopes
      *   Type: Variables
-     *   Operands: uint32_t funcIndex
-     *   Stack: =>
+     *   Operands:
+     *   Stack: fun =>
      */ \
-    macro(JSOP_DEFFUN,    127,"deffun",     NULL,         5,  0,  0,  JOF_OBJECT) \
+    macro(JSOP_DEFFUN,    127,"deffun",     NULL,         1,  1,  0,  JOF_BYTE) \
     /* Defines the new constant binding on global lexical scope.
      *
      * Throws if a binding with the same name already exists on the scope, or
@@ -1529,7 +1529,15 @@
      *   Stack: => new.target
      */ \
     macro(JSOP_NEWTARGET,  148, "newtarget", NULL,      1,  0,  1,  JOF_BYTE) \
-    macro(JSOP_UNUSED149,  149, "unused149", NULL,      1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the top of stack value as 'unwrapped', converts it to async
+     * function 'wrapped', and pushes 'wrapped' back on the stack.
+     *   Category: Statements
+     *   Type: Function
+     *   Operands:
+     *   Stack: unwrapped => wrapped
+     */ \
+    macro(JSOP_TOASYNC,       149, "toasync", NULL,       1,  1,  1, JOF_BYTE) \
     /*
      * Pops the top two values 'lval' and 'rval' from the stack, then pushes
      * the result of 'Math.pow(lval, rval)'.

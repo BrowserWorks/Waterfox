@@ -132,9 +132,43 @@ public:
    */
   EventTree* QueueMutation(Accessible* aContainer);
 
+  class MoveGuard final {
+  public:
+    explicit MoveGuard(NotificationController* aController) :
+      mController(aController)
+    {
+#ifdef DEBUG
+      MOZ_ASSERT(!mController->mMoveGuardOnStack,
+                 "Move guard is on stack already!");
+      mController->mMoveGuardOnStack = true;
+#endif
+    }
+    ~MoveGuard() {
+#ifdef DEBUG
+      MOZ_ASSERT(mController->mMoveGuardOnStack, "No move guard on stack!");
+      mController->mMoveGuardOnStack = false;
+#endif
+      mController->mPrecedingEvents.Clear();
+    }
+
+  private:
+    NotificationController* mController;
+  };
+
 #ifdef A11Y_LOG
   const EventTree& RootEventTree() const { return mEventTree; };
 #endif
+
+  /**
+   * Queue a mutation event to emit if not coalesced away.  Returns true if the
+   * event was queued and has not yet been coalesced.
+   */
+  bool QueueMutationEvent(AccTreeMutationEvent* aEvent);
+
+  /**
+   * Coalesce all queued mutation events.
+   */
+  void CoalesceMutationEvents();
 
   /**
    * Schedule binding the child document to the tree of this document.
@@ -247,7 +281,37 @@ private:
   // nsARefreshObserver
   virtual void WillRefresh(mozilla::TimeStamp aTime) override;
 
+  /**
+   * Set and returns a hide event, paired with a show event, for the move.
+   */
+  void WithdrawPrecedingEvents(nsTArray<RefPtr<AccHideEvent>>* aEvs)
+  {
+    if (mPrecedingEvents.Length() > 0) {
+      aEvs->AppendElements(mozilla::Move(mPrecedingEvents));
+    }
+  }
+  void StorePrecedingEvent(AccHideEvent* aEv)
+  {
+    MOZ_ASSERT(mMoveGuardOnStack, "No move guard on stack!");
+    mPrecedingEvents.AppendElement(aEv);
+  }
+  void StorePrecedingEvents(nsTArray<RefPtr<AccHideEvent>>&& aEvs)
+  {
+    MOZ_ASSERT(mMoveGuardOnStack, "No move guard on stack!");
+    mPrecedingEvents.InsertElementsAt(0, aEvs);
+  }
+
 private:
+  /**
+   * get rid of a mutation event that is no longer necessary.
+   */
+  void DropMutationEvent(AccTreeMutationEvent* aEvent);
+
+  /**
+   * Fire all necessary mutation events.
+   */
+  void ProcessMutationEvents();
+
   /**
    * Indicates whether we're waiting on an event queue processing from our
    * notification controller to flush events.
@@ -320,6 +384,53 @@ private:
    * Holds all mutation events.
    */
   EventTree mEventTree;
+
+  /**
+   * A temporary collection of hide events that should be fired before related
+   * show event. Used by EventTree.
+   */
+  nsTArray<RefPtr<AccHideEvent>> mPrecedingEvents;
+
+#ifdef DEBUG
+  bool mMoveGuardOnStack;
+#endif
+
+  friend class MoveGuard;
+  friend class EventTree;
+
+  /**
+   * A list of all mutation events we may want to emit.  Ordered from the first
+   * event that should be emitted to the last one to emit.
+   */
+  RefPtr<AccTreeMutationEvent> mFirstMutationEvent;
+  RefPtr<AccTreeMutationEvent> mLastMutationEvent;
+
+  /**
+   * A class to map an accessible and event type to an event.
+   */
+  class EventMap
+  {
+  public:
+    enum EventType
+    {
+      ShowEvent = 0x0,
+      HideEvent = 0x1,
+      ReorderEvent = 0x2,
+    };
+
+    void PutEvent(AccTreeMutationEvent* aEvent);
+    AccTreeMutationEvent* GetEvent(Accessible* aTarget, EventType aType);
+    void RemoveEvent(AccTreeMutationEvent* aEvent);
+    void Clear() { mTable.Clear(); }
+
+  private:
+    EventType GetEventType(AccTreeMutationEvent* aEvent);
+
+    nsRefPtrHashtable<nsUint64HashKey, AccTreeMutationEvent> mTable;
+  };
+
+  EventMap mMutationMap;
+  uint32_t mEventGeneration;
 };
 
 } // namespace a11y

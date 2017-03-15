@@ -13,11 +13,11 @@ const kLoginsKey = "Software\\Microsoft\\Internet Explorer\\IntelliForms\\Storag
 const kMainKey = "Software\\Microsoft\\Internet Explorer\\Main";
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
-Cu.import("resource://gre/modules/osfile.jsm");
+Cu.import("resource://gre/modules/osfile.jsm"); /* globals OS */
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource:///modules/MigrationUtils.jsm");
+Cu.import("resource:///modules/MigrationUtils.jsm"); /* globals MigratorPrototype */
 Cu.import("resource:///modules/MSMigrationUtils.jsm");
 
 
@@ -32,11 +32,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "WindowsRegistry",
 
 Cu.importGlobalProperties(["URL"]);
 
-var CtypesKernelHelpers = MSMigrationUtils.CtypesKernelHelpers;
-
-////////////////////////////////////////////////////////////////////////////////
-//// Resources
-
+// Resources
 
 function History() {
 }
@@ -109,7 +105,7 @@ History.prototype = {
 };
 
 // IE form password migrator supporting windows from XP until 7 and IE from 7 until 11
-function IE7FormPasswords () {
+function IE7FormPasswords() {
   // used to distinguish between this migrator and other passwords migrators in tests.
   this.name = "IE7FormPasswords";
 }
@@ -362,7 +358,7 @@ Settings.prototype = {
     // Final string is sorted by quality (q=) param.
     function parseAcceptLanguageList(v) {
       return v.match(/([a-z]{1,8}(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/gi)
-              .sort(function (a, b) {
+              .sort(function(a, b) {
                 let qA = parseFloat(a.split(";q=")[1]) || 1.0;
                 let qB = parseFloat(b.split(";q=")[1]) || 1.0;
                 return qB - qA;
@@ -407,11 +403,11 @@ Settings.prototype = {
     this._set("Software\\Microsoft\\Internet Explorer\\Settings",
               "Always Use My Colors",
               "browser.display.document_color_use",
-              v => !Boolean(v) ? 0 : 2);
+              v => (!v ? 0 : 2));
     this._set("Software\\Microsoft\\Internet Explorer\\Settings",
               "Always Use My Font Face",
               "browser.display.use_document_fonts",
-              v => !Boolean(v));
+              v => !v);
     this._set(kMainKey,
               "SmoothScroll",
               "general.smoothScroll",
@@ -423,7 +419,7 @@ Settings.prototype = {
     this._set("Software\\Microsoft\\Internet Explorer\\TabbedBrowsing\\",
               "OpenInForeground",
               "browser.tabs.loadInBackground",
-              v => !Boolean(v));
+              v => !v);
 
     aCallback(true);
   },
@@ -451,7 +447,7 @@ Settings.prototype = {
     if (aTransformFn)
       value = aTransformFn(value);
 
-    switch (typeof(value)) {
+    switch (typeof value) {
       case "string":
         Services.prefs.setCharPref(aPref, value);
         break;
@@ -462,13 +458,10 @@ Settings.prototype = {
         Services.prefs.setBoolPref(aPref, value);
         break;
       default:
-        throw new Error("Unexpected value type: " + typeof(value));
+        throw new Error("Unexpected value type: " + (typeof value));
     }
   }
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//// Migrator
 
 function IEProfileMigrator()
 {
@@ -479,10 +472,10 @@ IEProfileMigrator.prototype = Object.create(MigratorPrototype);
 
 IEProfileMigrator.prototype.getResources = function IE_getResources() {
   let resources = [
-    MSMigrationUtils.getBookmarksMigrator()
-  , new History()
-  , MSMigrationUtils.getCookiesMigrator()
-  , new Settings()
+    MSMigrationUtils.getBookmarksMigrator(),
+    new History(),
+    MSMigrationUtils.getCookiesMigrator(),
+    new Settings(),
   ];
   // Only support the form password migrator for Windows XP to 7.
   if (AppConstants.isPlatformAndVersionAtMost("win", "6.1")) {
@@ -498,7 +491,7 @@ IEProfileMigrator.prototype.getResources = function IE_getResources() {
 IEProfileMigrator.prototype.getLastUsedDate = function IE_getLastUsedDate() {
   let datePromises = ["Favs", "CookD"].map(dirId => {
     let {path} = Services.dirsvc.get(dirId, Ci.nsIFile);
-    return OS.File.stat(path).catch(_ => null).then(info => {
+    return OS.File.stat(path).catch(() => null).then(info => {
       return info ? info.lastModificationDate : 0;
     });
   });

@@ -8,8 +8,10 @@
 #define PlatformDecoderModule_h_
 
 #include "MediaDecoderReader.h"
+#include "MediaInfo.h"
 #include "mozilla/MozPromise.h"
 #include "mozilla/layers/LayersTypes.h"
+#include "mozilla/layers/KnowsCompositor.h"
 #include "nsTArray.h"
 #include "mozilla/RefPtr.h"
 #include "GMPService.h"
@@ -27,6 +29,10 @@ namespace layers {
 class ImageContainer;
 } // namespace layers
 
+namespace dom {
+class RemoteDecoderModule;
+}
+
 class MediaDataDecoder;
 class MediaDataDecoderCallback;
 class TaskQueue;
@@ -34,7 +40,7 @@ class CDMProxy;
 
 static LazyLogModule sPDMLog("PlatformDecoderModule");
 
-struct CreateDecoderParams {
+struct MOZ_STACK_CLASS CreateDecoderParams final {
   explicit CreateDecoderParams(const TrackInfo& aConfig)
     : mConfig(aConfig)
   {}
@@ -58,12 +64,21 @@ struct CreateDecoderParams {
     return *mConfig.GetAsAudioInfo();
   }
 
+  layers::LayersBackend GetLayersBackend() const
+  {
+    if (mKnowsCompositor) {
+      return mKnowsCompositor->GetCompositorBackendType();
+    }
+    return layers::LayersBackend::LAYERS_NONE;
+  }
+
   const TrackInfo& mConfig;
   TaskQueue* mTaskQueue = nullptr;
   MediaDataDecoderCallback* mCallback = nullptr;
   DecoderDoctorDiagnostics* mDiagnostics = nullptr;
   layers::ImageContainer* mImageContainer = nullptr;
-  layers::LayersBackend mLayersBackend = layers::LayersBackend::LAYERS_NONE;
+  MediaResult* mError = nullptr;
+  RefPtr<layers::KnowsCompositor> mKnowsCompositor;
   RefPtr<GMPCrashHelper> mCrashHelper;
   bool mUseBlankDecoder = false;
 
@@ -72,9 +87,10 @@ private:
   void Set(MediaDataDecoderCallback* aCallback) { mCallback = aCallback; }
   void Set(DecoderDoctorDiagnostics* aDiagnostics) { mDiagnostics = aDiagnostics; }
   void Set(layers::ImageContainer* aImageContainer) { mImageContainer = aImageContainer; }
-  void Set(layers::LayersBackend aLayersBackend) { mLayersBackend = aLayersBackend; }
+  void Set(MediaResult* aError) { mError = aError; }
   void Set(GMPCrashHelper* aCrashHelper) { mCrashHelper = aCrashHelper; }
   void Set(bool aUseBlankDecoder) { mUseBlankDecoder = aUseBlankDecoder; }
+  void Set(layers::KnowsCompositor* aKnowsCompositor) { mKnowsCompositor = aKnowsCompositor; }
   template <typename T1, typename T2, typename... Ts>
   void Set(T1&& a1, T2&& a2, Ts&&... args)
   {
@@ -108,6 +124,13 @@ public:
   // Indicates if the PlatformDecoderModule supports decoding of aMimeType.
   virtual bool SupportsMimeType(const nsACString& aMimeType,
                                 DecoderDoctorDiagnostics* aDiagnostics) const = 0;
+  virtual bool Supports(const TrackInfo& aTrackInfo,
+                        DecoderDoctorDiagnostics* aDiagnostics) const
+  {
+    // By default, fall back to SupportsMimeType with just the MIME string.
+    // (So PDMs do not need to override this method -- yet.)
+    return SupportsMimeType(aTrackInfo.mMimeType, aDiagnostics);
+  }
 
   enum class ConversionRequired : uint8_t {
     kNeedNone,
@@ -126,6 +149,7 @@ protected:
 
   friend class H264Converter;
   friend class PDMFactory;
+  friend class dom::RemoteDecoderModule;
 
   // Creates a Video decoder. The layers backend is passed in so that
   // decoders can determine whether hardware accelerated decoding can be used.
@@ -265,14 +289,6 @@ public:
   // Decoder needs to decide whether or not hardware accelearation is supported
   // after creating. It doesn't need to call Init() before calling this function.
   virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const { return false; }
-
-  // ConfigurationChanged will be called to inform the video or audio decoder
-  // that the format of the next input sample is about to change.
-  // If video decoder, aConfig will be a VideoInfo object.
-  // If audio decoder, aConfig will be a AudioInfo object.
-  // It is not safe to store a reference to this object and the decoder must
-  // make a copy.
-  virtual void ConfigurationChanged(const TrackInfo& aConfig) {}
 
   // Return the name of the MediaDataDecoder, only used for decoding.
   // Only return a static const string, as the information may be accessed

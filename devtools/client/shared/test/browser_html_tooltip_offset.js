@@ -23,7 +23,7 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
     </vbox>
   </window>`;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 add_task(function* () {
@@ -39,7 +39,7 @@ add_task(function* () {
   let box3 = doc.getElementById("box3");
   let box4 = doc.getElementById("box4");
 
-  let tooltip = new HTMLTooltip({doc}, {useXulWrapper: false});
+  let tooltip = new HTMLTooltip(doc, {useXulWrapper: false});
 
   let div = doc.createElementNS(HTML_NS, "div");
   div.style.height = "100px";

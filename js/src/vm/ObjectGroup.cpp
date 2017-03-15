@@ -13,6 +13,7 @@
 #include "gc/Policy.h"
 #include "gc/StoreBuffer.h"
 #include "gc/Zone.h"
+#include "js/CharacterEncoding.h"
 #include "vm/ArrayObject.h"
 #include "vm/Shape.h"
 #include "vm/TaggedProto.h"
@@ -38,6 +39,7 @@ ObjectGroup::ObjectGroup(const Class* clasp, TaggedProto proto, JSCompartment* c
 
     /* Windows may not appear on prototype chains. */
     MOZ_ASSERT_IF(proto.isObject(), !IsWindow(proto.toObject()));
+    MOZ_ASSERT(JS::StringIsASCII(clasp->name));
 
     this->clasp_ = clasp;
     this->proto_ = proto;
@@ -861,6 +863,8 @@ ObjectGroup::newArrayObject(ExclusiveContext* cx,
     // information, but make sure when creating an unboxed array that the
     // common element type is suitable for the unboxed representation.
     ShouldUpdateTypes updateTypes = ShouldUpdateTypes::DontUpdate;
+    if (!MaybeAnalyzeBeforeCreatingLargeArray(cx, group, vp, length))
+        return nullptr;
     if (group->maybePreliminaryObjects())
         group->maybePreliminaryObjects()->maybeAnalyze(cx, group);
     if (group->maybeUnboxedLayout()) {

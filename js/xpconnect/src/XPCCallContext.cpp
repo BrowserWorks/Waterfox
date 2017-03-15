@@ -57,7 +57,7 @@ XPCCallContext::XPCCallContext(JSContext* cx,
 
     JSObject* unwrapped = js::CheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
     if (!unwrapped) {
-        JS_ReportError(mJSContext, "Permission denied to call method on |this|");
+        JS_ReportErrorASCII(mJSContext, "Permission denied to call method on |this|");
         mState = INIT_FAILED;
         return;
     }
@@ -199,6 +199,7 @@ XPCCallContext::SystemIsBeingShutDown()
     NS_WARNING("Shutting Down XPConnect even through there is a live XPCCallContext");
     mXPCJSContext = nullptr;
     mState = SYSTEM_SHUTDOWN;
+    mSet = nullptr;
     mInterface = nullptr;
 
     if (mPrevCallContext)

@@ -67,11 +67,10 @@ nsStreamConverterService::nsStreamConverterService()
 {
 }
 
-nsStreamConverterService::~nsStreamConverterService() {
-}
+nsStreamConverterService::~nsStreamConverterService() = default;
 
 // Builds the graph represented as an adjacency list (and built up in
-// memory using an nsObjectHashtable and nsISupportsArray combination).
+// memory using an nsObjectHashtable and nsCOMArray combination).
 //
 // :BuildGraph() consults the category manager for all stream converter
 // CONTRACTIDS then fills the adjacency list with edges.
@@ -194,7 +193,7 @@ typedef nsClassHashtable<nsCStringHashKey, BFSTableData> BFSHashTable;
 
 class CStreamConvDeallocator : public nsDequeFunctor {
 public:
-    virtual void* operator()(void* anObject) {
+    void* operator()(void* anObject) override {
         nsCString *string = (nsCString*)anObject;
         delete string;
         return 0;
@@ -239,7 +238,7 @@ nsStreamConverterService::FindConverter(const char *aContractID, nsTArray<nsCStr
 
     data->color = gray;
     data->distance = 0;
-    CStreamConvDeallocator *dtorFunc = new CStreamConvDeallocator();
+    auto *dtorFunc = new CStreamConvDeallocator();
 
     nsDeque grayQ(dtorFunc);
 
@@ -259,7 +258,7 @@ nsStreamConverterService::FindConverter(const char *aContractID, nsTArray<nsCStr
 
         for (int32_t i = 0; i < edgeCount; i++) {
             nsIAtom* curVertexAtom = data2->ObjectAt(i);
-            nsCString *curVertex = new nsCString();
+            auto *curVertex = new nsCString();
             curVertexAtom->ToUTF8String(*curVertex);
 
             BFSTableData *curVertexState = lBFSTable.Get(*curVertex);
@@ -295,7 +294,7 @@ nsStreamConverterService::FindConverter(const char *aContractID, nsTArray<nsCStr
 
     // get the root CONTRACTID
     nsAutoCString ContractIDPrefix(NS_ISTREAMCONVERTER_KEY);
-    nsTArray<nsCString> *shortestPath = new nsTArray<nsCString>();
+    auto *shortestPath = new nsTArray<nsCString>();
 
     data = lBFSTable.Get(toMIMEType);
     if (!data) {

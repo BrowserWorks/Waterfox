@@ -21,6 +21,15 @@ namespace mozilla {
 enum class CSSPseudoElementType : uint8_t;
 } // namespace mozilla
 
+extern "C" {
+#define STYLE_STRUCT(name_, checkdata_cb_)     \
+  struct nsStyle##name_;                       \
+  const nsStyle##name_* Servo_GetStyle##name_( \
+    ServoComputedValuesBorrowedOrNull computed_values);
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+}
+
 /**
  * An nsStyleContext represents the computed style data for an element.
  * The computed style data are stored in a set of structs (see
@@ -32,7 +41,7 @@ enum class CSSPseudoElementType : uint8_t;
  * (with a few exceptions, like system color changes), the data in an
  * nsStyleContext are also immutable (with the additional exception of
  * GetUniqueStyleData).  When style data change,
- * nsFrameManager::ReResolveStyleContext creates a new style context.
+ * ElementRestyler::Restyle creates a new style context.
  *
  * Style contexts are reference counted.  References are generally held
  * by:
@@ -178,32 +187,6 @@ public:
                      mozilla::NonOwningStyleContextSource aSource,
                      mozilla::NonOwningStyleContextSource aSourceIfVisited,
                      bool aRelevantLinkVisited);
-  /**
-   * Get the color property that should be used to fill text.
-   */
-  nsCSSPropertyID GetTextFillColorProp() {
-    return StyleText()->mWebkitTextFillColorForeground
-           ? eCSSProperty_color : eCSSProperty__webkit_text_fill_color;
-  }
-
-  /**
-   * Get the color that should be used to fill text: either
-   * the current foreground color, or a separately-specified text fill color.
-   */
-  nscolor GetTextFillColor() {
-    return (GetTextFillColorProp() == eCSSProperty_color)
-           ? StyleColor()->mColor : StyleText()->mWebkitTextFillColor;
-  }
-
-  /**
-   * Get the color that should be used to stroke text: either
-   * the current foreground color, or a separately-specified text stroke color.
-   */
-  nscolor GetTextStrokeColor() {
-    const nsStyleText* textStyle = StyleText();
-    return textStyle->mWebkitTextStrokeColorForeground
-           ? StyleColor()->mColor : textStyle->mWebkitTextStrokeColor;
-  }
 
   // Does this style context or any of its ancestors have text
   // decoration lines?
@@ -409,7 +392,7 @@ public:
    * Like the above, but allows comparing ServoComputedValues instead of needing
    * a full-fledged style context.
    */
-  nsChangeHint CalcStyleDifference(ServoComputedValues* aNewComputedValues,
+  nsChangeHint CalcStyleDifference(const ServoComputedValues* aNewComputedValues,
                                    nsChangeHint aParentHintsNotHandledForDescendants,
                                    uint32_t* aEqualStructs,
                                    uint32_t* aSamePointerStructs);
@@ -429,9 +412,6 @@ public:
    * aProperty must be a color-valued property that StyleAnimationValue
    * knows how to extract.  It must also be a property that we know to
    * do change handling for in nsStyleContext::CalcDifference.
-   *
-   * Note that if aProperty is eCSSProperty_border_*_color, this
-   * function handles -moz-use-text-color.
    */
   nscolor GetVisitedDependentColor(nsCSSPropertyID aProperty);
 
@@ -702,6 +682,8 @@ private:
           newData =                                                     \
             Servo_GetStyle##name_(mSource.AsServoComputedValues());     \
         }                                                               \
+        /* perform any remaining main thread work on the struct */      \
+        const_cast<nsStyle##name_*>(newData)->FinishStyle(PresContext());\
         /* the Servo-backed StyleContextSource owns the struct */       \
         AddStyleBit(NS_STYLE_INHERIT_BIT(name_));                       \
       }                                                                 \
@@ -730,6 +712,8 @@ private:
       } else {                                                          \
         newData =                                                       \
           Servo_GetStyle##name_(mSource.AsServoComputedValues());       \
+        /* perform any remaining main thread work on the struct */      \
+        const_cast<nsStyle##name_*>(newData)->FinishStyle(PresContext());\
         /* The Servo-backed StyleContextSource owns the struct.         \
          *                                                              \
          * XXXbholley: Unconditionally caching reset structs here       \

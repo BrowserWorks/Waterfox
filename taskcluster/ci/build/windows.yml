@@ -5,7 +5,7 @@ win32/debug:
         job-name:
             gecko-v2: win32-debug
     treeherder:
-        platform: windowsxp/debug
+        platform: windows2012-32/debug
         symbol: tc(B)
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
@@ -25,7 +25,7 @@ win32/opt:
         job-name:
             gecko-v2: win32-opt
     treeherder:
-        platform: windowsxp/opt
+        platform: windows2012-32/opt
         symbol: tc(B)
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
@@ -38,6 +38,27 @@ win32/opt:
         config:
             - builds/taskcluster_firefox_win32_opt.py
 
+win32/pgo:
+    description: "Win32 Opt PGO"
+    index:
+        product: firefox
+        job-name:
+            gecko-v2: win32-pgo
+    treeherder:
+        platform: windows2012-32/pgo
+        symbol: tc(B)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
+    worker:
+        implementation: generic-worker
+        max-run-time: 9000
+    run:
+        using: mozharness
+        options: [enable-pgo]
+        script: mozharness/scripts/fx_desktop_build.py
+        config:
+            - builds/taskcluster_firefox_win32_opt.py
+
 win64/debug:
     description: "Win64 Debug"
     index:
@@ -45,7 +66,7 @@ win64/debug:
         job-name:
             gecko-v2: win64-debug
     treeherder:
-        platform: windows8-64/debug
+        platform: windows2012-64/debug
         symbol: tc(B)
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
@@ -65,7 +86,7 @@ win64/opt:
         job-name:
             gecko-v2: win64-opt
     treeherder:
-        platform: windows8-64/opt
+        platform: windows2012-64/opt
         symbol: tc(B)
         tier: 2
     worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
@@ -74,6 +95,27 @@ win64/opt:
         max-run-time: 7200
     run:
         using: mozharness
+        script: mozharness/scripts/fx_desktop_build.py
+        config:
+            - builds/taskcluster_firefox_win64_opt.py
+
+win64/pgo:
+    description: "Win64 Opt PGO"
+    index:
+        product: firefox
+        job-name:
+            gecko-v2: win64-pgo
+    treeherder:
+        platform: windows2012-64/pgo
+        symbol: tc(B)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
+    worker:
+        implementation: generic-worker
+        max-run-time: 10800
+    run:
+        using: mozharness
+        options: [enable-pgo]
         script: mozharness/scripts/fx_desktop_build.py
         config:
             - builds/taskcluster_firefox_win64_opt.py

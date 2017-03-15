@@ -5,6 +5,8 @@
 include protocol PContent;
 include protocol PBackground;
 
+using mozilla::camera::CaptureEngine from "mozilla/media/CamerasTypes.h";
+
 namespace mozilla {
 namespace camera {
 
@@ -24,9 +26,9 @@ async protocol PCameras
   manager PBackground;
 
 child:
-  async FrameSizeChange(int capEngine, int cap_id, int w, int h);
+  async FrameSizeChange(CaptureEngine capEngine, int cap_id, int w, int h);
   // transfers ownership of |buffer| from parent to child
-  async DeliverFrame(int capEngine, int cap_id,
+  async DeliverFrame(CaptureEngine capEngine, int cap_id,
                      Shmem buffer, size_t size, uint32_t time_stamp,
                      int64_t ntp_time, int64_t render_time);
   async DeviceChange();
@@ -34,27 +36,29 @@ child:
   async ReplyNumberOfCapabilities(int numdev);
   async ReplyAllocateCaptureDevice(int numdev);
   async ReplyGetCaptureCapability(CaptureCapability cap);
-  async ReplyGetCaptureDevice(nsCString device_name, nsCString device_id);
+  async ReplyGetCaptureDevice(nsCString device_name, nsCString device_id, bool scary);
   async ReplyFailure();
   async ReplySuccess();
   async __delete__();
 
 parent:
-  async NumberOfCaptureDevices(int engine);
-  async NumberOfCapabilities(int engine, nsCString deviceUniqueIdUTF8);
+  async NumberOfCaptureDevices(CaptureEngine engine);
+  async NumberOfCapabilities(CaptureEngine engine, nsCString deviceUniqueIdUTF8);
 
-  async GetCaptureCapability(int engine, nsCString unique_idUTF8, int capability_number);
-  async GetCaptureDevice(int engine, int num);
+  async GetCaptureCapability(CaptureEngine engine, nsCString unique_idUTF8, int capability_number);
+  async GetCaptureDevice(CaptureEngine engine, int num);
 
-  async AllocateCaptureDevice(int engine, nsCString unique_idUTF8, nsCString origin);
-  async ReleaseCaptureDevice(int engine, int numdev);
-  async StartCapture(int engine, int numdev, CaptureCapability capability);
-  async StopCapture(int engine, int numdev);
+  async AllocateCaptureDevice(CaptureEngine engine, nsCString unique_idUTF8, nsCString origin);
+  async ReleaseCaptureDevice(CaptureEngine engine, int numdev);
+  async StartCapture(CaptureEngine engine, int numdev, CaptureCapability capability);
+  async StopCapture(CaptureEngine engine, int numdev);
   // transfers frame back
   async ReleaseFrame(Shmem s);
 
   // Ask parent to delete us
   async AllDone();
+  // setup camera engine
+  async EnsureInitialized(CaptureEngine engine);
 };
 
 } // namespace camera

@@ -9,10 +9,9 @@
 
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/EventStates.h"
-#include "mozilla/RefPtr.h"
-#include "mozilla/ServoBindingHelpers.h"
+#include "mozilla/ServoBindingTypes.h"
 #include "mozilla/ServoElementSnapshot.h"
-#include "mozilla/ServoStyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 #include "mozilla/SheetType.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCSSPseudoElements.h"

@@ -78,7 +78,6 @@
             "description": "Whether the window is set to be always on top."
           },
           "sessionId": {
-            "unsupported": true,
             "type": "string",
             "optional": true,
             "description": "The session ID used to uniquely identify a Window obtained from the $(ref:sessions) API."
@@ -328,6 +327,11 @@
                 "$ref": "WindowState",
                 "optional": true,
                 "description": "The initial state of the window. The 'minimized', 'maximized' and 'fullscreen' states cannot be combined with 'left', 'top', 'width' or 'height'."
+              },
+              "allowScriptsToClose": {
+                "type": "boolean",
+                "optional": true,
+                "description": "Allow scripts to close the window."
               }
             },
             "optional": true

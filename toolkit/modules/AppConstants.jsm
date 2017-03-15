@@ -22,8 +22,8 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
-  RELEASE_BUILD:
-#ifdef RELEASE_BUILD
+  RELEASE_OR_BETA:
+#ifdef RELEASE_OR_BETA
   true,
 #else
   false,
@@ -61,10 +61,18 @@ this.AppConstants = Object.freeze({
 #endif
 
   MOZ_SERVICES_HEALTHREPORT:
+#ifdef MOZ_SERVICES_HEALTHREPORT
+  true,
+#else
   false,
+#endif
 
   MOZ_DATA_REPORTING:
+#ifdef MOZ_DATA_REPORTING
+  true,
+#else
   false,
+#endif
 
   MOZ_SANDBOX:
 #ifdef MOZ_SANDBOX
@@ -81,10 +89,18 @@ this.AppConstants = Object.freeze({
 #endif
 
   MOZ_TELEMETRY_REPORTING:
+#ifdef MOZ_TELEMETRY_REPORTING
+  true,
+#else
   false,
+#endif
 
   MOZ_TELEMETRY_ON_BY_DEFAULT:
+#ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
+  true,
+#else
   false,
+#endif
 
   MOZ_SERVICES_CLOUDSYNC:
 #ifdef MOZ_SERVICES_CLOUDSYNC
@@ -274,6 +290,13 @@ this.AppConstants = Object.freeze({
 
   MOZ_ENABLE_PROFILER_SPS:
 #ifdef MOZ_ENABLE_PROFILER_SPS
+  true,
+#else
+  false,
+#endif
+
+  MOZ_ANDROID_ACTIVITY_STREAM:
+#ifdef MOZ_ANDROID_ACTIVITY_STREAM
   true,
 #else
   false,

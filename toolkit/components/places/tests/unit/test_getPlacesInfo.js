@@ -62,7 +62,7 @@ function* test_promisedHelper() {
 
   uri = NetUtil.newURI("http://www.helper_non_existent_example.tld");
   try {
-    let placeInfo = yield PlacesUtils.promisePlaceInfo(uri);
+    yield PlacesUtils.promisePlaceInfo(uri);
     do_throw("PlacesUtils.promisePlaceInfo should have rejected the promise");
   }
   catch (ex) { }
@@ -81,7 +81,7 @@ add_task(test_infoByGUID);
 
 function* test_invalid_guid() {
   try {
-    let placeInfoByGUID = yield PlacesUtils.promisePlaceInfo("###");
+    yield PlacesUtils.promisePlaceInfo("###");
     do_throw("getPlacesInfo should fail for invalid guids")
   }
   catch (ex) { }

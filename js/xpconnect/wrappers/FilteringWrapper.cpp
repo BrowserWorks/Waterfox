@@ -285,7 +285,7 @@ CrossOriginXrayWrapper::defineProperty(JSContext* cx, JS::Handle<JSObject*> wrap
                                        JS::Handle<PropertyDescriptor> desc,
                                        JS::ObjectOpResult& result) const
 {
-    JS_ReportError(cx, "Permission denied to define property on cross-origin object");
+    JS_ReportErrorASCII(cx, "Permission denied to define property on cross-origin object");
     return false;
 }
 
@@ -293,7 +293,7 @@ bool
 CrossOriginXrayWrapper::delete_(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                 JS::Handle<jsid> id, JS::ObjectOpResult& result) const
 {
-    JS_ReportError(cx, "Permission denied to delete property on cross-origin object");
+    JS_ReportErrorASCII(cx, "Permission denied to delete property on cross-origin object");
     return false;
 }
 

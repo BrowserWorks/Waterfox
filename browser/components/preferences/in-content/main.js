@@ -28,7 +28,7 @@ var gMainPane = {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gMainPane));
     }
-    this.getDefaultLocal();
+    this.getDefaultLocale();
     if (AppConstants.HAVE_SHELL_SERVICE) {
       this.updateSetDefaultBrowser();
       if (AppConstants.platform == "win") {
@@ -130,7 +130,7 @@ var gMainPane = {
   },
   
   // Sets language selector to current locale value
-  getDefaultLocal: function(){
+  getDefaultLocale: function(){
 	  let selectedLocale = document.getElementById("localeSelect");
 	  if (selectedLocale){
 	  	selectedLocale.value = Services.prefs.getCharPref('general.useragent.locale');
@@ -155,7 +155,7 @@ var gMainPane = {
     if (e.which == 13 || e.keyCode == 13){
 		  this.updateLocale();
     }
-  },
+},
     
   enableE10SChange: function ()
   {
@@ -339,9 +339,9 @@ var gMainPane = {
   setHomePageToBookmark: function ()
   {
     var rv = { urls: null, names: null };
-    var dialog = gSubDialog.open("chrome://browser/content/preferences/selectBookmark.xul",
-                                 "resizable=yes, modal=yes", rv,
-                                 this._setHomePageToBookmarkClosed.bind(this, rv));
+    gSubDialog.open("chrome://browser/content/preferences/selectBookmark.xul",
+                    "resizable=yes, modal=yes", rv,
+                    this._setHomePageToBookmarkClosed.bind(this, rv));
   },
 
   _setHomePageToBookmarkClosed: function(rv, aEvent) {

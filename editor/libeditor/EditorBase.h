@@ -7,9 +7,10 @@
 #define mozilla_EditorBase_h
 
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc.
+#include "mozFlushType.h"               // for mozFlushType enum
 #include "mozilla/OwningNonNull.h"      // for OwningNonNull
 #include "mozilla/SelectionState.h"     // for RangeUpdater, etc.
-#include "mozilla/StyleSheetHandle.h"   // for StyleSheetHandle
+#include "mozilla/StyleSheet.h"   // for StyleSheet
 #include "mozilla/dom/Text.h"
 #include "nsCOMPtr.h"                   // for already_AddRefed, nsCOMPtr
 #include "nsCycleCollectionParticipant.h"
@@ -328,14 +329,14 @@ protected:
    * Create a transaction for adding a style sheet.
    */
   NS_IMETHOD CreateTxnForAddStyleSheet(
-               StyleSheetHandle aSheet,
+               StyleSheet* aSheet,
                AddStyleSheetTransaction** aTransaction);
 
   /**
    * Create a transaction for removing a style sheet.
    */
   NS_IMETHOD CreateTxnForRemoveStyleSheet(
-               StyleSheetHandle aSheet,
+               StyleSheet* aSheet,
                RemoveStyleSheetTransaction** aTransaction);
 
   nsresult DeleteText(nsGenericDOMDataNode& aElement,
@@ -928,6 +929,8 @@ public:
    * FindBetterInsertionPoint() tries to look for better insertion point which
    * is typically the nearest text node and offset in it.
    */
+  void FindBetterInsertionPoint(nsCOMPtr<nsIDOMNode>& aNode,
+                                int32_t& aOffset);
   void FindBetterInsertionPoint(nsCOMPtr<nsINode>& aNode,
                                 int32_t& aOffset);
 
@@ -937,6 +940,14 @@ public:
    * nsCaret.  Therefore, this is stateless.
    */
   void HideCaret(bool aHide);
+
+  void FlushFrames()
+  {
+    nsCOMPtr<nsIDocument> doc = GetDocument();
+    if (doc) {
+      doc->FlushPendingNotifications(Flush_Frames);
+    }
+  }
 
 protected:
   enum Tristate

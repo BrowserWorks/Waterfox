@@ -14,7 +14,7 @@ ServoStyleSheet::ServoStyleSheet(css::SheetParsingMode aParsingMode,
                                  net::ReferrerPolicy aReferrerPolicy,
                                  const dom::SRIMetadata& aIntegrity)
   : StyleSheet(StyleBackendType::Servo, aParsingMode)
-  , StyleSheetInfo(aCORSMode, aReferrerPolicy, aIntegrity)
+  , mSheetInfo(aCORSMode, aReferrerPolicy, aIntegrity)
 {
 }
 
@@ -24,21 +24,9 @@ ServoStyleSheet::~ServoStyleSheet()
 }
 
 bool
-ServoStyleSheet::IsApplicable() const
-{
-  return !mDisabled && mComplete;
-}
-
-bool
 ServoStyleSheet::HasRules() const
 {
-  return Servo_StyleSheet_HasRules(RawSheet());
-}
-
-nsIDocument*
-ServoStyleSheet::GetOwningDocument() const
-{
-  return mDocument;
+  return mSheet && Servo_StyleSheet_HasRules(mSheet);
 }
 
 void
@@ -50,7 +38,7 @@ ServoStyleSheet::SetOwningDocument(nsIDocument* aDocument)
   mDocument = aDocument;
 }
 
-StyleSheetHandle
+ServoStyleSheet*
 ServoStyleSheet::GetParentSheet() const
 {
   // XXXheycam: When we implement support for child sheets, we'll have
@@ -60,7 +48,7 @@ ServoStyleSheet::GetParentSheet() const
 }
 
 void
-ServoStyleSheet::AppendStyleSheet(StyleSheetHandle aSheet)
+ServoStyleSheet::AppendStyleSheet(ServoStyleSheet* aSheet)
 {
   // XXXheycam: When we implement support for child sheets, we'll have
   // to fix SetOwningDocument to propagate the owning document down
@@ -87,13 +75,16 @@ ServoStyleSheet::ParseSheet(const nsAString& aInput,
   NS_ENSURE_SUCCESS(rv, rv);
 
   NS_ConvertUTF16toUTF8 input(aInput);
-  mSheet = Servo_StyleSheet_FromUTF8Bytes(
-      reinterpret_cast<const uint8_t*>(input.get()), input.Length(),
-      mParsingMode,
-      reinterpret_cast<const uint8_t*>(baseString.get()), baseString.Length(),
-      base, referrer, principal).Consume();
+  mSheet = Servo_StyleSheet_FromUTF8Bytes(&input, mParsingMode, &baseString,
+                                          base, referrer, principal).Consume();
 
   return NS_OK;
+}
+
+void
+ServoStyleSheet::LoadFailed()
+{
+  mSheet = Servo_StyleSheet_Empty(mParsingMode).Consume();
 }
 
 void
@@ -115,5 +106,38 @@ ServoStyleSheet::List(FILE* aOut, int32_t aIndex) const
   MOZ_CRASH("stylo: not implemented");
 }
 #endif
+
+nsMediaList*
+ServoStyleSheet::Media()
+{
+  return nullptr;
+}
+
+nsIDOMCSSRule*
+ServoStyleSheet::GetDOMOwnerRule() const
+{
+  return nullptr;
+}
+
+CSSRuleList*
+ServoStyleSheet::GetCssRulesInternal(ErrorResult& aRv)
+{
+  aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+  return nullptr;
+}
+
+uint32_t
+ServoStyleSheet::InsertRuleInternal(const nsAString& aRule,
+                                    uint32_t aIndex, ErrorResult& aRv)
+{
+  aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+  return 0;
+}
+
+void
+ServoStyleSheet::DeleteRuleInternal(uint32_t aIndex, ErrorResult& aRv)
+{
+  aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+}
 
 } // namespace mozilla

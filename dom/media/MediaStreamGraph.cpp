@@ -1405,7 +1405,10 @@ MediaStreamGraphImpl::OneIteration(GraphTime aStateEnd)
   // Process graph message from the main thread for this iteration.
   RunMessagesInQueue();
 
+  UpdateStreamOrder();
+
   GraphTime stateEnd = std::min(aStateEnd, mEndTime);
+
   UpdateGraph(stateEnd);
 
   mStateComputedTime = stateEnd;
@@ -3962,7 +3965,7 @@ void
 MediaStreamGraphImpl::UnregisterCaptureStreamForWindow(uint64_t aWindowId)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  for (uint32_t i = 0; i < mWindowCaptureStreams.Length(); i++) {
+  for (int32_t i = mWindowCaptureStreams.Length() - 1; i >= 0; i--) {
     if (mWindowCaptureStreams[i].mWindowId == aWindowId) {
       mWindowCaptureStreams.RemoveElementAt(i);
     }

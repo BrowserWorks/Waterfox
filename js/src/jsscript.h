@@ -274,11 +274,43 @@ typedef HashMap<JSScript*,
 
 class ScriptSource;
 
+struct ScriptSourceChunk
+{
+    ScriptSource* ss;
+    uint32_t chunk;
+
+    ScriptSourceChunk()
+      : ss(nullptr), chunk(0)
+    {}
+    ScriptSourceChunk(ScriptSource* ss, uint32_t chunk)
+      : ss(ss), chunk(chunk)
+    {
+        MOZ_ASSERT(valid());;
+    }
+    bool valid() const { return ss != nullptr; }
+
+    bool operator==(const ScriptSourceChunk& other) const {
+        return ss == other.ss && chunk == other.chunk;
+    }
+};
+
+struct ScriptSourceChunkHasher
+{
+    using Lookup = ScriptSourceChunk;
+
+    static HashNumber hash(const ScriptSourceChunk& ssc) {
+        return mozilla::AddToHash(DefaultHasher<ScriptSource*>::hash(ssc.ss), ssc.chunk);
+    }
+    static bool match(const ScriptSourceChunk& c1, const ScriptSourceChunk& c2) {
+        return c1 == c2;
+    }
+};
+
 class UncompressedSourceCache
 {
-    typedef HashMap<ScriptSource*,
+    typedef HashMap<ScriptSourceChunk,
                     UniqueTwoByteChars,
-                    DefaultHasher<ScriptSource*>,
+                    ScriptSourceChunkHasher,
                     SystemAllocPolicy> Map;
 
   public:
@@ -286,15 +318,16 @@ class UncompressedSourceCache
     class AutoHoldEntry
     {
         UncompressedSourceCache* cache_;
-        ScriptSource* source_;
+        ScriptSourceChunk sourceChunk_;
         UniqueTwoByteChars charsToFree_;
       public:
         explicit AutoHoldEntry();
         ~AutoHoldEntry();
+        void holdChars(UniqueTwoByteChars chars);
       private:
-        void holdEntry(UncompressedSourceCache* cache, ScriptSource* source);
+        void holdEntry(UncompressedSourceCache* cache, const ScriptSourceChunk& sourceChunk);
         void deferDelete(UniqueTwoByteChars chars);
-        ScriptSource* source() const { return source_; }
+        const ScriptSourceChunk& sourceChunk() const { return sourceChunk_; }
         friend class UncompressedSourceCache;
     };
 
@@ -305,15 +338,15 @@ class UncompressedSourceCache
   public:
     UncompressedSourceCache() : holder_(nullptr) {}
 
-    const char16_t* lookup(ScriptSource* ss, AutoHoldEntry& asp);
-    bool put(ScriptSource* ss, UniqueTwoByteChars chars, AutoHoldEntry& asp);
+    const char16_t* lookup(const ScriptSourceChunk& ssc, AutoHoldEntry& asp);
+    bool put(const ScriptSourceChunk& ssc, UniqueTwoByteChars chars, AutoHoldEntry& asp);
 
     void purge();
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 
   private:
-    void holdEntry(AutoHoldEntry& holder, ScriptSource* ss);
+    void holdEntry(AutoHoldEntry& holder, const ScriptSourceChunk& ssc);
     void releaseEntry(AutoHoldEntry& holder);
 };
 
@@ -398,6 +431,9 @@ class ScriptSource
     bool argumentsNotIncluded_:1;
     bool hasIntroductionOffset_:1;
 
+    const char16_t* chunkChars(JSContext* cx, UncompressedSourceCache::AutoHoldEntry& holder,
+                               size_t chunk);
+
   public:
     explicit ScriptSource()
       : refs(0),
@@ -460,9 +496,14 @@ class ScriptSource
         MOZ_ASSERT(hasSourceData());
         return argumentsNotIncluded_;
     }
-    const char16_t* chars(JSContext* cx, UncompressedSourceCache::AutoHoldEntry& asp);
-    JSFlatString* substring(JSContext* cx, uint32_t start, uint32_t stop);
-    JSFlatString* substringDontDeflate(JSContext* cx, uint32_t start, uint32_t stop);
+
+    // Return a string containing the chars starting at |begin| and ending at
+    // |begin + len|.
+    const char16_t* chars(JSContext* cx, UncompressedSourceCache::AutoHoldEntry& asp,
+                          size_t begin, size_t len);
+
+    JSFlatString* substring(JSContext* cx, size_t start, size_t stop);
+    JSFlatString* substringDontDeflate(JSContext* cx, size_t start, size_t stop);
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 JS::ScriptSourceInfo* info) const;
 
@@ -599,6 +640,7 @@ class ScriptSourceObject : public NativeObject
 };
 
 enum GeneratorKind { NotGenerator, LegacyGenerator, StarGenerator };
+enum FunctionAsyncKind { SyncFunction, AsyncFunction };
 
 static inline unsigned
 GeneratorKindAsBits(GeneratorKind generatorKind) {
@@ -609,6 +651,17 @@ static inline GeneratorKind
 GeneratorKindFromBits(unsigned val) {
     MOZ_ASSERT(val <= StarGenerator);
     return static_cast<GeneratorKind>(val);
+}
+
+static inline unsigned
+AsyncKindAsBits(FunctionAsyncKind asyncKind) {
+    return static_cast<unsigned>(asyncKind);
+}
+
+static inline FunctionAsyncKind
+AsyncKindFromBits(unsigned val) {
+    MOZ_ASSERT(val <= AsyncFunction);
+    return static_cast<FunctionAsyncKind>(val);
 }
 
 /*
@@ -947,6 +1000,8 @@ class JSScript : public js::gc::TenuredCell
     bool isDerivedClassConstructor_:1;
     bool isDefaultClassConstructor_:1;
 
+    bool isAsync_:1;
+
     // Add padding so JSScript is gc::Cell aligned. Make padding protected
     // instead of private to suppress -Wunused-private-field compiler warnings.
   protected:
@@ -1233,6 +1288,14 @@ class JSScript : public js::gc::TenuredCell
         // so it can only transition from not being a generator.
         MOZ_ASSERT(!isGenerator());
         generatorKindBits_ = GeneratorKindAsBits(kind);
+    }
+
+    js::FunctionAsyncKind asyncKind() const {
+        return isAsync_ ? js::AsyncFunction : js::SyncFunction;
+    }
+
+    void setAsyncKind(js::FunctionAsyncKind kind) {
+        isAsync_ = kind == js::AsyncFunction;
     }
 
     void setNeedsHomeObject() {
@@ -1840,14 +1903,18 @@ class LazyScript : public gc::TenuredCell
 #endif
 
   private:
+    static const uint32_t NumClosedOverBindingsBits = 21;
+    static const uint32_t NumInnerFunctionsBits = 20;
+
     struct PackedView {
         // Assorted bits that should really be in ScriptSourceObject.
         uint32_t version : 8;
 
         uint32_t shouldDeclareArguments : 1;
         uint32_t hasThisBinding : 1;
-        uint32_t numClosedOverBindings : 22;
-        uint32_t numInnerFunctions : 20;
+        uint32_t isAsync : 1;
+        uint32_t numClosedOverBindings : NumClosedOverBindingsBits;
+        uint32_t numInnerFunctions : NumInnerFunctionsBits;
 
         uint32_t generatorKindBits : 2;
 
@@ -1887,8 +1954,8 @@ class LazyScript : public gc::TenuredCell
                                  uint32_t lineno, uint32_t column);
 
   public:
-    static const uint32_t NumClosedOverBindingsLimit = 1 << 22;
-    static const uint32_t NumInnerFunctionsLimit = 1 << 20;
+    static const uint32_t NumClosedOverBindingsLimit = 1 << NumClosedOverBindingsBits;
+    static const uint32_t NumInnerFunctionsLimit = 1 << NumInnerFunctionsBits;
 
     // Create a LazyScript and initialize closedOverBindings and innerFunctions
     // with the provided vectors.
@@ -1981,6 +2048,14 @@ class LazyScript : public gc::TenuredCell
         // Legacy generators cannot currently be lazy.
         MOZ_ASSERT(kind != LegacyGenerator);
         p_.generatorKindBits = GeneratorKindAsBits(kind);
+    }
+
+    FunctionAsyncKind asyncKind() const {
+        return p_.isAsync ? AsyncFunction : SyncFunction;
+    }
+
+    void setAsyncKind(FunctionAsyncKind kind) {
+        p_.isAsync = kind == AsyncFunction;
     }
 
     bool strict() const {

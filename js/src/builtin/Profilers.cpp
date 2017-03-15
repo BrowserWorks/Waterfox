@@ -41,9 +41,7 @@ static char gLastError[2000];
 
 #if defined(__APPLE__) || defined(__linux__) || defined(MOZ_CALLGRIND)
 static void
-#ifdef __GNUC__
-__attribute__((format(printf,1,2)))
-#endif
+MOZ_FORMAT_PRINTF(1, 2)
 UnsafeError(const char* format, ...)
 {
     va_list args;
@@ -196,9 +194,9 @@ struct RequiredStringArg {
         : mCx(cx), mBytes(nullptr)
     {
         if (args.length() <= argi) {
-            JS_ReportError(cx, "%s: not enough arguments", caller);
+            JS_ReportErrorASCII(cx, "%s: not enough arguments", caller);
         } else if (!args[argi].isString()) {
-            JS_ReportError(cx, "%s: invalid arguments (string expected)", caller);
+            JS_ReportErrorASCII(cx, "%s: invalid arguments (string expected)", caller);
         } else {
             mBytes = JS_EncodeString(cx, args[argi].toString());
         }
@@ -230,7 +228,7 @@ StartProfiling(JSContext* cx, unsigned argc, Value* vp)
     }
 
     if (!args[1].isInt32()) {
-        JS_ReportError(cx, "startProfiling: invalid arguments (int expected)");
+        JS_ReportErrorASCII(cx, "startProfiling: invalid arguments (int expected)");
         return false;
     }
     pid_t pid = static_cast<pid_t>(args[1].toInt32());

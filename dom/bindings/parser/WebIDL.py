@@ -305,8 +305,8 @@ class IDLScope(IDLObject):
         # because we need to merge overloads of NamedConstructors and we need to
         # detect conflicts in those across interfaces. See also the comment in
         # IDLInterface.addExtendedAttributes for "NamedConstructor".
-        if (originalObject.tag == IDLInterfaceMember.Tags.Method and
-           newObject.tag == IDLInterfaceMember.Tags.Method):
+        if (isinstance(originalObject, IDLMethod) and
+            isinstance(newObject, IDLMethod)):
             return originalObject.addOverload(newObject)
 
         # Default to throwing, derived classes can override.
@@ -515,6 +515,9 @@ class IDLExposureMixins():
     def isExposedInWorkerDebugger(self):
         return len(self.getWorkerDebuggerExposureSet()) > 0
 
+    def isExposedInAnyWorklet(self):
+        return len(self.getWorkletExposureSet()) > 0
+
     def isExposedInSystemGlobals(self):
         return 'BackstagePass' in self.exposureSet
 
@@ -533,6 +536,10 @@ class IDLExposureMixins():
     def getWorkerExposureSet(self):
         workerScopes = self._globalScope.globalNameMapping["Worker"]
         return workerScopes.intersection(self.exposureSet)
+
+    def getWorkletExposureSet(self):
+        workletScopes = self._globalScope.globalNameMapping["Worklet"]
+        return workletScopes.intersection(self.exposureSet)
 
     def getWorkerDebuggerExposureSet(self):
         workerDebuggerScopes = self._globalScope.globalNameMapping["WorkerDebugger"]
@@ -1090,7 +1097,10 @@ class IDLInterfaceOrNamespace(IDLObjectWithScope, IDLExposureMixins):
         # {getter,setter,creator,deleter}, at most one stringifier,
         # and at most one legacycaller.  Note that this last is not
         # quite per spec, but in practice no one overloads
-        # legacycallers.
+        # legacycallers.  Also note that in practice we disallow
+        # indexed deleters, but it simplifies some other code to
+        # treat deleter analogously to getter/setter/creator by
+        # prefixing it with "named".
         specialMembersSeen = {}
         for member in self.members:
             if not member.isMethod():
@@ -3458,6 +3468,14 @@ class IDLInterfaceMember(IDLObjectWithIdentifier, IDLExposureMixins):
                 raise WebIDLError("A [NewObject] method is not idempotent, "
                                   "so it has to depend on something other than DOM state.",
                                   [self.location])
+            if (self.getExtendedAttribute("Cached") or
+                self.getExtendedAttribute("StoreInSlot")):
+                raise WebIDLError("A [NewObject] attribute shouldnt be "
+                                  "[Cached] or [StoreInSlot], since the point "
+                                  "of those is to keep returning the same "
+                                  "thing across multiple calls, which is not "
+                                  "what [NewObject] does.",
+                                  [self.location])
 
     def _setDependsOn(self, dependsOn):
         if self.dependsOn != "Everything":
@@ -3529,8 +3547,10 @@ class IDLMaplikeOrSetlikeOrIterableBase(IDLInterfaceMember):
                                   (member.identifier.name,
                                    self.maplikeOrSetlikeOrIterableType),
                                   [self.location, member.location])
-            # Check that there are no disallowed non-method members
-            if (isAncestor or (member.isAttr() or member.isConst()) and
+            # Check that there are no disallowed non-method members.
+            # Ancestor members are always disallowed here; own members
+            # are disallowed only if they're non-methods.
+            if ((isAncestor or member.isAttr() or member.isConst()) and
                 member.identifier.name in self.disallowedNonMethodNames):
                 raise WebIDLError("Member '%s' conflicts "
                                   "with reserved %s method." %
@@ -3732,6 +3752,7 @@ class IDLMaplikeOrSetlike(IDLMaplikeOrSetlikeOrIterableBase):
                                     True,
                                     maplikeOrSetlike=self))
         self.reserved_ro_names = ["size"]
+        self.disallowedMemberNames.append("size")
 
         # object entries()
         self.addMethod("entries", members, False, BuiltinTypes[IDLBuiltinType.Types.object],
@@ -4204,6 +4225,9 @@ class IDLAttribute(IDLInterfaceMember):
               identifier == "Frozen" or
               identifier == "NewObject" or
               identifier == "UnsafeInPrerendering" or
+              identifier == "NeedsSubjectPrincipal" or
+              identifier == "NeedsCallerType" or
+              identifier == "ReturnValueNeedsContainsHack" or
               identifier == "BinaryName"):
             # Known attributes that we don't need to do anything with here
             pass
@@ -4920,6 +4944,8 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
               identifier == "Func" or
               identifier == "SecureContext" or
               identifier == "BinaryName" or
+              identifier == "NeedsSubjectPrincipal" or
+              identifier == "NeedsCallerType" or
               identifier == "StaticClassOverride"):
             # Known attributes that we don't need to do anything with here
             pass
@@ -5839,6 +5865,9 @@ class Parser(Tokenizer):
                 specialType = IDLMethod.NamedOrIndexed.Named
             elif argType == BuiltinTypes[IDLBuiltinType.Types.unsigned_long]:
                 specialType = IDLMethod.NamedOrIndexed.Indexed
+                if deleter:
+                    raise WebIDLError("There is no such thing as an indexed deleter.",
+                                      [self.getLocation(p, 1)])
             else:
                 raise WebIDLError("%s has wrong argument type (must be DOMString or UnsignedLong)" %
                                   ("getter" if getter else "deleter"),

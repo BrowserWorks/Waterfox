@@ -20,6 +20,8 @@
 #include "mozilla/EffectCompositor.h"
 #include "mozilla/KeyframeEffectParams.h"
 #include "mozilla/LayerAnimationInfo.h" // LayerAnimations::kRecords
+#include "mozilla/ServoBindingTypes.h" // RawServoDeclarationBlock and
+                                       // associated RefPtrTraits
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/dom/AnimationEffectReadOnly.h"
 #include "mozilla/dom/Element.h"
@@ -60,12 +62,14 @@ struct PropertyValuePair
   // The specified value for the property. For shorthand properties or invalid
   // property values, we store the specified property value as a token stream
   // (string).
-  nsCSSValue    mValue;
+  nsCSSValue mValue;
 
-  bool operator==(const PropertyValuePair& aOther) const {
-    return mProperty == aOther.mProperty &&
-           mValue == aOther.mValue;
-  }
+  // The specified value when using the Servo backend. However, even when
+  // using the Servo backend, we still fill in |mValue| in the case where we
+  // fail to parse the value since we use it to store the original string.
+  RefPtr<RawServoDeclarationBlock> mServoDeclarationBlock;
+
+  bool operator==(const PropertyValuePair&) const;
 };
 
 /**
@@ -117,14 +121,16 @@ struct AnimationPropertySegment
   StyleAnimationValue mFromValue, mToValue;
   Maybe<ComputedTimingFunction> mTimingFunction;
 
-  bool operator==(const AnimationPropertySegment& aOther) const {
+  bool operator==(const AnimationPropertySegment& aOther) const
+  {
     return mFromKey == aOther.mFromKey &&
            mToKey == aOther.mToKey &&
            mFromValue == aOther.mFromValue &&
            mToValue == aOther.mToValue &&
            mTimingFunction == aOther.mTimingFunction;
   }
-  bool operator!=(const AnimationPropertySegment& aOther) const {
+  bool operator!=(const AnimationPropertySegment& aOther) const
+  {
     return !(*this == aOther);
   }
 };
@@ -132,22 +138,6 @@ struct AnimationPropertySegment
 struct AnimationProperty
 {
   nsCSSPropertyID mProperty = eCSSProperty_UNKNOWN;
-
-  // Does this property win in the CSS Cascade?
-  //
-  // For CSS transitions, this is true as long as a CSS animation on the
-  // same property and element is not running, in which case we set this
-  // to false so that the animation (lower in the cascade) can win.  We
-  // then use this to decide whether to apply the style both in the CSS
-  // cascade and for OMTA.
-  //
-  // For CSS Animations, which are overridden by !important rules in the
-  // cascade, we actually determine this from the CSS cascade
-  // computations, and then use it for OMTA.
-  //
-  // **NOTE**: This member is not included when comparing AnimationProperty
-  // objects for equality.
-  bool mWinsInCascade = false;
 
   // If true, the propery is currently being animated on the compositor.
   //
@@ -164,19 +154,31 @@ struct AnimationProperty
 
   InfallibleTArray<AnimationPropertySegment> mSegments;
 
-  // NOTE: This operator does *not* compare the mWinsInCascade member *or* the
-  // mIsRunningOnCompositor member.
+  // The copy constructor/assignment doesn't copy mIsRunningOnCompositor and
+  // mPerformanceWarning.
+  AnimationProperty() = default;
+  AnimationProperty(const AnimationProperty& aOther)
+    : mProperty(aOther.mProperty), mSegments(aOther.mSegments) { }
+  AnimationProperty& operator=(const AnimationProperty& aOther)
+  {
+    mProperty = aOther.mProperty;
+    mSegments = aOther.mSegments;
+    return *this;
+  }
+
+  // NOTE: This operator does *not* compare the mIsRunningOnCompositor member.
   // This is because AnimationProperty objects are compared when recreating
   // CSS animations to determine if mutation observer change records need to
   // be created or not. However, at the point when these objects are compared
-  // neither the mWinsInCascade nor the mIsRunningOnCompositor will have been
-  // set on the new objects so we ignore these members to avoid generating
-  // spurious change records.
-  bool operator==(const AnimationProperty& aOther) const {
+  // the mIsRunningOnCompositor will not have been set on the new objects so
+  // we ignore this member to avoid generating spurious change records.
+  bool operator==(const AnimationProperty& aOther) const
+  {
     return mProperty == aOther.mProperty &&
            mSegments == aOther.mSegments;
   }
-  bool operator!=(const AnimationProperty& aOther) const {
+  bool operator!=(const AnimationProperty& aOther) const
+  {
     return !(*this == aOther);
   }
 };
@@ -212,6 +214,11 @@ public:
               const UnrestrictedDoubleOrKeyframeEffectOptions& aOptions,
               ErrorResult& aRv);
 
+  static already_AddRefed<KeyframeEffectReadOnly>
+  Constructor(const GlobalObject& aGlobal,
+              KeyframeEffectReadOnly& aSource,
+              ErrorResult& aRv);
+
   void GetTarget(Nullable<OwningElementOrCSSPseudoElement>& aRv) const;
   Maybe<NonOwningAnimationTarget> GetTarget() const
   {
@@ -242,17 +249,26 @@ public:
                     ErrorResult& aRv);
   void SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
                     nsStyleContext* aStyleContext);
-  const AnimationProperty*
-  GetAnimationOfProperty(nsCSSPropertyID aProperty) const;
-  bool HasAnimationOfProperty(nsCSSPropertyID aProperty) const
+
+  // Returns true if the effect includes |aProperty| regardless of whether the
+  // property is overridden by !important rule.
+  bool HasAnimationOfProperty(nsCSSPropertyID aProperty) const;
+
+  // GetEffectiveAnimationOfProperty returns AnimationProperty corresponding
+  // to a given CSS property if the effect includes the property and the
+  // property is not overridden by !important rules.
+  // Also EffectiveAnimationOfProperty returns true under the same condition.
+  //
+  // NOTE: We don't currently check for !important rules for properties that
+  // can't run on the compositor.
+  bool HasEffectiveAnimationOfProperty(nsCSSPropertyID aProperty) const
   {
-    return GetAnimationOfProperty(aProperty) != nullptr;
+    return GetEffectiveAnimationOfProperty(aProperty) != nullptr;
   }
+  const AnimationProperty* GetEffectiveAnimationOfProperty(
+    nsCSSPropertyID aProperty) const;
+
   const InfallibleTArray<AnimationProperty>& Properties() const
-  {
-    return mProperties;
-  }
-  InfallibleTArray<AnimationProperty>& Properties()
   {
     return mProperties;
   }
@@ -262,11 +278,10 @@ public:
   void UpdateProperties(nsStyleContext* aStyleContext);
 
   // Updates |aStyleRule| with the animation values produced by this
-  // AnimationEffect for the current time except any properties already
-  // contained in |aSetProperties|.
-  // Any updated properties are added to |aSetProperties|.
+  // AnimationEffect for the current time except any properties contained
+  // in |aPropertiesToSkip|.
   void ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
-                    nsCSSPropertyIDSet& aSetProperties);
+                    const nsCSSPropertyIDSet& aPropertiesToSkip);
   // Returns true if at least one property is being animated on compositor.
   bool IsRunningOnCompositor() const;
   void SetIsRunningOnCompositor(nsCSSPropertyID aProperty, bool aIsRunning);
@@ -325,6 +340,17 @@ protected:
                           JS::Handle<JSObject*> aKeyframes,
                           const OptionsType& aOptions,
                           ErrorResult& aRv);
+
+  template<class KeyframeEffectType>
+  static already_AddRefed<KeyframeEffectType>
+  ConstructKeyframeEffect(const GlobalObject& aGlobal,
+                          KeyframeEffectReadOnly& aSource,
+                          ErrorResult& aRv);
+
+  // Build properties by recalculating from |mKeyframes| using |aStyleContext|
+  // to resolve specified values. This function also applies paced spacing if
+  // needed.
+  nsTArray<AnimationProperty> BuildProperties(nsStyleContext* aStyleContext);
 
   // This effect is registered with its target element so long as:
   //

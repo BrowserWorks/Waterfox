@@ -990,7 +990,7 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet, bool aAppFonts)
     }
 
     FcChar8* lastFamilyName = (FcChar8*)"";
-    gfxFontconfigFontFamily* fontFamily = nullptr;
+    RefPtr<gfxFontconfigFontFamily> fontFamily;
     nsAutoString familyName;
     for (int f = 0; f < aFontSet->nfont; f++) {
         FcPattern* font = aFontSet->fonts[f];
@@ -1066,12 +1066,9 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet, bool aAppFonts)
 }
 
 nsresult
-gfxFcPlatformFontList::InitFontList()
+gfxFcPlatformFontList::InitFontListForPlatform()
 {
     mLastConfig = FcConfigGetCurrent();
-
-    // reset font lists
-    gfxPlatformFontList::InitFontList();
 
     mLocalNames.Clear();
     mFcSubstituteCache.Clear();
@@ -1187,7 +1184,7 @@ gfxFcPlatformFontList::GetFontList(nsIAtom *aLangGroup,
 }
 
 gfxFontFamily*
-gfxFcPlatformFontList::GetDefaultFont(const gfxFontStyle* aStyle)
+gfxFcPlatformFontList::GetDefaultFontForPlatform(const gfxFontStyle* aStyle)
 {
     // Get the default font by using a fake name to retrieve the first
     // scalable font that fontconfig suggests for the given language.

@@ -181,7 +181,7 @@ public:
     virtual ots::TableAction GetTableAction(uint32_t aTag) override {
         // Preserve Graphite, color glyph and SVG tables
         if (
-#ifdef RELEASE_BUILD // For Beta/Release, also allow OT Layout tables through
+#ifdef RELEASE_OR_BETA // For Beta/Release, also allow OT Layout tables through
                      // unchecked, and rely on harfbuzz to handle them safely.
             aTag == TRUETYPE_TAG('G', 'D', 'E', 'F') ||
             aTag == TRUETYPE_TAG('G', 'P', 'O', 'S') ||
@@ -422,7 +422,10 @@ gfxUserFontEntry::LoadNextSrc()
         // src local ==> lookup and load immediately
 
         if (currSrc.mSourceType == gfxFontFaceSrc::eSourceType_Local) {
-            gfxFontEntry* fe =
+            // Don't look up local fonts if the font whitelist is being used.
+            gfxPlatformFontList* pfl = gfxPlatformFontList::PlatformFontList();
+            gfxFontEntry* fe = pfl && pfl->IsFontFamilyWhitelistActive() ?
+                nullptr :
                 gfxPlatform::GetPlatform()->LookupLocalFont(currSrc.mLocalName,
                                                             mWeight,
                                                             mStretch,

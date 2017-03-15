@@ -17,21 +17,10 @@
 #include "mozilla/layers/LayersMessages.h" // for ShmemSection
 #include "LayersTypes.h"
 
-/*
- * FIXME [bjacob] *** PURE CRAZYNESS WARNING ***
- * (I think that this doesn't apply anymore.)
- *
- * This #define is actually needed here, because subclasses of ISurfaceAllocator,
- * namely ShadowLayerForwarder, will or will not override AllocGrallocBuffer
- * depending on whether MOZ_HAVE_SURFACEDESCRIPTORGRALLOC is defined.
- */
-#ifdef MOZ_WIDGET_GONK
-#define MOZ_HAVE_SURFACEDESCRIPTORGRALLOC
-#endif
-
 namespace mozilla {
 namespace ipc {
 class Shmem;
+class IShmemAllocator;
 } // namespace ipc
 namespace gfx {
 class DataSourceSurface;
@@ -40,7 +29,6 @@ class DataSourceSurface;
 namespace layers {
 
 class CompositableForwarder;
-class ShadowLayerForwarder;
 class TextureForwarder;
 
 class ShmemAllocator;
@@ -48,6 +36,7 @@ class ShmemSectionAllocator;
 class LegacySurfaceDescriptorAllocator;
 class ClientIPCAllocator;
 class HostIPCAllocator;
+class LayersIPCChannel;
 
 enum BufferCapabilities {
   DEFAULT_BUFFER_CAPS = 0,
@@ -91,9 +80,7 @@ public:
 
   virtual CompositableForwarder* AsCompositableForwarder() { return nullptr; }
 
-  virtual TextureForwarder* AsTextureForwarder() { return nullptr; }
-
-  virtual ShadowLayerForwarder* AsLayerForwarder() { return nullptr; }
+  virtual TextureForwarder* GetTextureForwarder() { return nullptr; }
 
   virtual ClientIPCAllocator* AsClientAllocator() { return nullptr; }
 
@@ -149,8 +136,6 @@ public:
   virtual void NotifyNotUsed(PTextureParent* aTexture, uint64_t aTransactionId) = 0;
 
   virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) = 0;
-
-  void SendFenceHandleIfPresent(PTextureParent* aTexture);
 
   virtual void SendPendingAsyncMessages();
 
@@ -217,6 +202,9 @@ public:
   virtual void DestroySurfaceDescriptor(SurfaceDescriptor* aSurface) = 0;
 };
 
+bool
+IsSurfaceDescriptorValid(const SurfaceDescriptor& aSurface);
+
 already_AddRefed<gfx::DrawTarget>
 GetDrawTargetForDescriptor(const SurfaceDescriptor& aDescriptor, gfx::BackendType aBackend);
 
@@ -225,6 +213,9 @@ GetSurfaceForDescriptor(const SurfaceDescriptor& aDescriptor);
 
 uint8_t*
 GetAddressFromDescriptor(const SurfaceDescriptor& aDescriptor);
+
+void
+DestroySurfaceDescriptor(mozilla::ipc::IShmemAllocator* aAllocator, SurfaceDescriptor* aSurface);
 
 class GfxMemoryImageReporter final : public nsIMemoryReporter
 {
@@ -299,7 +290,7 @@ public:
     uint32_t mSize;
   };
 
-  explicit FixedSizeSmallShmemSectionAllocator(ClientIPCAllocator* aShmProvider);
+  explicit FixedSizeSmallShmemSectionAllocator(LayersIPCChannel* aShmProvider);
 
   ~FixedSizeSmallShmemSectionAllocator();
 
@@ -314,13 +305,11 @@ public:
 
   void ShrinkShmemSectionHeap();
 
-  ShmemAllocator* GetShmAllocator() { return mShmProvider->AsShmemAllocator(); }
-
-  bool IPCOpen() const { return mShmProvider->IPCOpen(); }
+  bool IPCOpen() const;
 
 protected:
   std::vector<mozilla::ipc::Shmem> mUsedShmems;
-  ClientIPCAllocator* mShmProvider;
+  LayersIPCChannel* mShmProvider;
 };
 
 } // namespace layers

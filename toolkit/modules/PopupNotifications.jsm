@@ -372,6 +372,11 @@ PopupNotifications.prototype = {
    *                     replaced by another 'do nothing' item, so providing at
    *                     least one secondary action is required; and one of the
    *                     actions needs to have the 'dismiss' property set to true.
+   *        popupIconClass:
+   *                     A string. A class (or space separated list of classes)
+   *                     that will be applied to the icon in the popup so that
+   *                     several notifications using the same panel can use
+   *                     different icons.
    *        popupIconURL:
    *                     A string. URL of the image to be displayed in the popup.
    *                     Normally specified in CSS using list-style-image and the
@@ -545,9 +550,7 @@ PopupNotifications.prototype = {
     }
   },
 
-////////////////////////////////////////////////////////////////////////////////
 // Utility methods
-////////////////////////////////////////////////////////////////////////////////
 
   _ignoreDismissal: null,
   _currentAnchorElement: null,
@@ -685,6 +688,10 @@ PopupNotifications.prototype = {
         popupnotification.removeAttribute("closeitemcommand");
       }
 
+      if (n.options.popupIconClass) {
+        let classes = "popup-notification-icon " + n.options.popupIconClass;
+        popupnotification.setAttribute("iconclass", classes);
+      }
       if (n.options.popupIconURL)
         popupnotification.setAttribute("icon", n.options.popupIconURL);
 
@@ -804,6 +811,7 @@ PopupNotifications.prototype = {
     });
     if (!notificationsToShow.length)
       return;
+    let notificationIds = notificationsToShow.map(n => n.id);
 
     this._refreshPanel(notificationsToShow);
 
@@ -811,6 +819,12 @@ PopupNotifications.prototype = {
       notificationsToShow.forEach(function (n) {
         this._fireCallback(n, NOTIFICATION_EVENT_SHOWN);
       }, this);
+      // Let tests know that the panel was updated and what notifications it was
+      // updated with so that tests can wait for the correct notifications to be
+      // added.
+      let event = new this.window.CustomEvent("PanelUpdated",
+                                              {"detail": notificationIds});
+      this.panel.dispatchEvent(event);
       return;
     }
 
@@ -848,13 +862,38 @@ PopupNotifications.prototype = {
       // the next reason will be that the user clicked elsewhere.
       this.nextDismissReason = TELEMETRY_STAT_DISMISSAL_CLICK_ELSEWHERE;
 
+      let target = this.panel;
+      if (target.parentNode) {
+        // NOTIFICATION_EVENT_SHOWN should be fired for the panel before
+        // anyone listening for popupshown on the panel gets run. Otherwise,
+        // the panel will not be initialized when the popupshown event
+        // listeners run.
+        // By targeting the panel's parent and using a capturing listener, we
+        // can have our listener called before others waiting for the panel to
+        // be shown (which probably expect the panel to be fully initialized)
+        target = target.parentNode;
+      }
+      if (this._popupshownListener) {
+        target.removeEventListener("popupshown", this._popupshownListener, true);
+      }
+      this._popupshownListener = function (e) {
+        target.removeEventListener("popupshown", this._popupshownListener, true);
+        this._popupshownListener = null;
+
+        notificationsToShow.forEach(function (n) {
+          this._fireCallback(n, NOTIFICATION_EVENT_SHOWN);
+        }, this);
+        // These notifications are used by tests to know when all the processing
+        // required to display the panel has happened.
+        this.panel.dispatchEvent(new this.window.CustomEvent("Shown"));
+        let event = new this.window.CustomEvent("PanelUpdated",
+                                                {"detail": notificationIds});
+        this.panel.dispatchEvent(event);
+      };
+      this._popupshownListener = this._popupshownListener.bind(this);
+      target.addEventListener("popupshown", this._popupshownListener, true);
+
       this.panel.openPopup(anchorElement, "bottomcenter topleft");
-      notificationsToShow.forEach(function (n) {
-        this._fireCallback(n, NOTIFICATION_EVENT_SHOWN);
-      }, this);
-      // This notification is used by tests to know when all the processing
-      // required to display the panel has happened.
-      this.panel.dispatchEvent(new this.window.CustomEvent("Shown"));
     });
   },
 
@@ -1075,6 +1114,11 @@ PopupNotifications.prototype = {
     this.panel.removeAttribute("noautofocus", "true");
 
     this._reshowNotifications(anchor);
+
+    // If the user re-selects the current notification, focus it.
+    if (anchor == this._currentAnchorElement && this.panel.firstChild) {
+      this.panel.firstChild.button.focus();
+    }
   },
 
   _reshowNotifications: function PopupNotifications_reshowNotifications(anchor, browser) {

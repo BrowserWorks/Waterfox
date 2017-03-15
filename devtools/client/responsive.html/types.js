@@ -10,6 +10,15 @@ const { createEnum } = require("./utils/enum");
 // React PropTypes are used to describe the expected "shape" of various common
 // objects that get passed down as props to components.
 
+/* GLOBAL */
+
+/**
+ * The location of the document displayed in the viewport(s).
+ */
+exports.location = PropTypes.string;
+
+/* DEVICE */
+
 /**
  * A single device that can be displayed in the viewport.
  */
@@ -85,27 +94,38 @@ exports.devices = {
 
 };
 
-/**
- * The location of the document displayed in the viewport(s).
- */
-exports.location = PropTypes.string;
+/* VIEWPORT */
 
 /**
- * The progression of the screenshot
+ * Network throttling state for a given viewport.
  */
-exports.screenshot = {
+exports.networkThrottling = {
 
-  isCapturing: PropTypes.bool.isRequired,
+  // Whether or not network throttling is enabled
+  enabled: PropTypes.bool,
+
+  // Name of the selected throttling profile
+  profile: PropTypes.string,
 
 };
 
 /**
- * Touch simulation.
+ * Device pixel ratio for a given viewport.
+ */
+const pixelRatio = exports.pixelRatio = {
+
+  // The device pixel ratio value
+  value: PropTypes.number,
+
+};
+
+/**
+ * Touch simulation state for a given viewport.
  */
 exports.touchSimulation = {
 
-  // Whether or not the touch simulation is enabled
-  enabled: PropTypes.bool.isRequired,
+  // Whether or not touch simulation is enabled
+  enabled: PropTypes.bool,
 
 };
 
@@ -115,9 +135,9 @@ exports.touchSimulation = {
 exports.viewport = {
 
   // The id of the viewport
-  id: PropTypes.number.isRequired,
+  id: PropTypes.number,
 
-  // The currently selected device applied to the viewport.
+  // The currently selected device applied to the viewport
   device: PropTypes.string,
 
   // The width of the viewport
@@ -125,5 +145,20 @@ exports.viewport = {
 
   // The height of the viewport
   height: PropTypes.number,
+
+  // The devicePixelRatio of the viewport
+  pixelRatio: PropTypes.shape(pixelRatio),
+
+};
+
+/* ACTIONS IN PROGRESS */
+
+/**
+ * The progression of the screenshot.
+ */
+exports.screenshot = {
+
+  // Whether screenshot capturing is in progress
+  isCapturing: PropTypes.bool,
 
 };

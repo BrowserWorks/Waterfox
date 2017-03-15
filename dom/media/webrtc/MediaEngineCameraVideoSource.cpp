@@ -325,15 +325,6 @@ MediaEngineCameraVideoSource::SetName(nsString aName)
   VideoFacingModeEnum facingMode = VideoFacingModeEnum::User;
 
   // Set facing mode based on device name.
-#if defined(MOZ_B2G_CAMERA) && defined(MOZ_WIDGET_GONK)
-  if (aName.EqualsLiteral("back")) {
-    hasFacingMode = true;
-    facingMode = VideoFacingModeEnum::Environment;
-  } else if (aName.EqualsLiteral("front")) {
-    hasFacingMode = true;
-    facingMode = VideoFacingModeEnum::User;
-  }
-#endif // MOZ_B2G_CAMERA
 #if defined(ANDROID) && !defined(MOZ_WIDGET_GONK)
   // Names are generated. Example: "Camera 0, Facing back, Orientation 90"
   //
@@ -355,6 +346,18 @@ MediaEngineCameraVideoSource::SetName(nsString aName)
     facingMode = VideoFacingModeEnum::User;
   }
 #endif
+#ifdef XP_WIN
+  // The cameras' name of Surface book are "Microsoft Camera Front" and
+  // "Microsoft Camera Rear" respectively.
+
+  if (aName.Find(NS_LITERAL_STRING("Front")) != kNotFound) {
+    hasFacingMode = true;
+    facingMode = VideoFacingModeEnum::User;
+  } else if (aName.Find(NS_LITERAL_STRING("Rear")) != kNotFound) {
+    hasFacingMode = true;
+    facingMode = VideoFacingModeEnum::Environment;
+  }
+#endif // WINDOWS
   if (hasFacingMode) {
     mFacingMode.Assign(NS_ConvertUTF8toUTF16(
         VideoFacingModeEnumValues::strings[uint32_t(facingMode)].value));

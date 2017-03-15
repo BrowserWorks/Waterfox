@@ -431,8 +431,7 @@ ValueNumberer::fixupOSROnlyLoop(MBasicBlock* block, MBasicBlock* backedge)
     // which is hard, especially if the OSR is into a nested loop. Doing all
     // that would produce slightly more optimal code, but this is so
     // extraordinarily rare that it isn't worth the complexity.
-    MBasicBlock* fake = MBasicBlock::NewAsmJS(graph_, block->info(),
-                                              nullptr, MBasicBlock::NORMAL);
+    MBasicBlock* fake = MBasicBlock::New(graph_, block->info(), nullptr, MBasicBlock::NORMAL);
     if (fake == nullptr)
         return false;
 
@@ -481,6 +480,7 @@ ValueNumberer::removePredecessorAndDoDCE(MBasicBlock* block, MBasicBlock* pred, 
     for (MPhiIterator iter(block->phisBegin()), end(block->phisEnd()); iter != end; ) {
         MPhi* phi = *iter++;
         MOZ_ASSERT(!values_.has(phi), "Visited phi in block having predecessor removed");
+        MOZ_ASSERT(!phi->isGuard());
 
         MDefinition* op = phi->getOperand(predIndex);
         phi->removeOperand(predIndex);
@@ -489,9 +489,9 @@ ValueNumberer::removePredecessorAndDoDCE(MBasicBlock* block, MBasicBlock* pred, 
         if (!handleUseReleased(op, DontSetUseRemoved) || !processDeadDefs())
             return false;
 
-        // If |nextDef_| became dead while we had it pinned, advance the iterator
-        // and discard it now.
-        while (nextDef_ && !nextDef_->hasUses()) {
+        // If |nextDef_| became dead while we had it pinned, advance the
+        // iterator and discard it now.
+        while (nextDef_ && !nextDef_->hasUses() && !nextDef_->isGuardRangeBailouts()) {
             phi = nextDef_->toPhi();
             iter++;
             nextDef_ = iter != end ? *iter : nullptr;
@@ -728,7 +728,8 @@ ValueNumberer::visitDefinition(MDefinition* def)
         MResumePoint* rp = nop->resumePoint();
         if (rp && rp->numOperands() > 0 &&
             rp->getOperand(rp->numOperands() - 1) == prev &&
-            !nop->block()->lastIns()->isThrow())
+            !nop->block()->lastIns()->isThrow() &&
+            !prev->isAssertRecoveredOnBailout())
         {
             size_t numOperandsLive = 0;
             for (size_t j = 0; j < prev->numOperands(); j++) {
@@ -797,6 +798,9 @@ ValueNumberer::visitDefinition(MDefinition* def)
         // needed, so we can clear |def|'s guard flag and let it be discarded.
         def->setNotGuardUnchecked();
 
+        if (def->isGuardRangeBailouts())
+            sim->setGuardRangeBailoutsUnchecked();
+
         if (DeadIfUnused(def)) {
             if (!discardDefsRecursively(def))
                 return false;
@@ -804,6 +808,12 @@ ValueNumberer::visitDefinition(MDefinition* def)
             // If that ended up discarding |sim|, then we're done here.
             if (sim->isDiscarded())
                 return true;
+        }
+
+        if (!rerun_ && def->isPhi() && !sim->isPhi()) {
+            rerun_ = true;
+            JitSpew(JitSpew_GVN, "      Replacing phi%u may have enabled cascading optimisations; "
+                                 "will re-run", def->id());
         }
 
         // Otherwise, procede to optimize with |sim| in place of |def|.
@@ -996,7 +1006,7 @@ ValueNumberer::visitBlock(MBasicBlock* block, const MBasicBlock* dominatorRoot)
 bool
 ValueNumberer::visitDominatorTree(MBasicBlock* dominatorRoot)
 {
-    JitSpew(JitSpew_GVN, "  Visiting dominator tree (with %llu blocks) rooted at block%u%s",
+    JitSpew(JitSpew_GVN, "  Visiting dominator tree (with %" PRIu64 " blocks) rooted at block%u%s",
             uint64_t(dominatorRoot->numDominated()), dominatorRoot->id(),
             dominatorRoot == graph_.entryBlock() ? " (normal entry block)" :
             dominatorRoot == graph_.osrBlock() ? " (OSR entry block)" :
@@ -1222,7 +1232,7 @@ ValueNumberer::run(UpdateAliasAnalysisFlag updateAliasAnalysis)
 {
     updateAliasAnalysis_ = updateAliasAnalysis == UpdateAliasAnalysis;
 
-    JitSpew(JitSpew_GVN, "Running GVN on graph (with %llu blocks)",
+    JitSpew(JitSpew_GVN, "Running GVN on graph (with %" PRIu64 " blocks)",
             uint64_t(graph_.numBlocks()));
 
     // Adding fixup blocks only make sense iff we have a second entry point into
@@ -1282,7 +1292,7 @@ ValueNumberer::run(UpdateAliasAnalysisFlag updateAliasAnalysis)
             break;
         }
 
-        JitSpew(JitSpew_GVN, "Re-running GVN on graph (run %d, now with %llu blocks)",
+        JitSpew(JitSpew_GVN, "Re-running GVN on graph (run %d, now with %" PRIu64 " blocks)",
                 runs, uint64_t(graph_.numBlocks()));
     }
 

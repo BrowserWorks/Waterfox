@@ -80,7 +80,10 @@ GMPInstallManager.prototype = {
   /**
    * Performs an addon check.
    * @return a promise which will be resolved or rejected.
-   *         The promise is resolved with an array of GMPAddons
+   *         The promise is resolved with an object with properties:
+   *           gmpAddons: array of GMPAddons
+   *           usedFallback: whether the data was collected from online or
+   *                         from fallback data within the build
    *         The promise is rejected with an object with properties:
    *           target: The XHR request object
    *           status: The HTTP status code
@@ -104,12 +107,16 @@ GMPInstallManager.prototype = {
       }
     }
 
-    ProductAddonChecker.getProductAddonList(url, allowNonBuiltIn, certs).then((addons) => {
-      if (!addons) {
-        this._deferred.resolve([]);
+    let addonPromise = ProductAddonChecker
+      .getProductAddonList(url, allowNonBuiltIn, certs);
+
+    addonPromise.then(res => {
+      if (!res || !res.gmpAddons) {
+        this._deferred.resolve({gmpAddons: []});
       }
       else {
-        this._deferred.resolve(addons.map(a => new GMPAddon(a)));
+        res.gmpAddons = res.gmpAddons.map(a => new GMPAddon(a));
+        this._deferred.resolve(res);
       }
       delete this._deferred;
     }, (ex) => {
@@ -201,7 +208,7 @@ GMPInstallManager.prototype = {
     }
 
     try {
-      let gmpAddons = yield this.checkForAddons();
+      let {usedFallback, gmpAddons} = yield this.checkForAddons();
       this._updateLastCheck();
       log.info("Found " + gmpAddons.length + " addons advertised.");
       let addonsToInstall = gmpAddons.filter(function(gmpAddon) {
@@ -220,6 +227,14 @@ GMPInstallManager.prototype = {
         if (gmpAddon.isInstalled) {
           log.info("Addon |" + gmpAddon.id + "| already installed.");
           return false;
+        }
+
+        // Do not install from fallback if already installed as it
+        // may be a downgrade
+        if (usedFallback && gmpAddon.isUpdate) {
+         log.info("Addon |" + gmpAddon.id + "| not installing updates based " +
+                  "on fallback.");
+         return false;
         }
 
         let addonUpdateEnabled = false;
@@ -340,6 +355,14 @@ GMPAddon.prototype = {
   },
   get isEME() {
     return this.id == "gmp-widevinecdm" || this.id.indexOf("gmp-eme-") == 0;
+  },
+  /**
+   * @return true if the addon has been previously installed and this is
+   * a new version, if this is a fresh install return false
+   */
+  get isUpdate() {
+    return this.version &&
+      GMPPrefs.get(GMPPrefs.KEY_PLUGIN_VERSION, false, this.id);
   },
 };
 /**

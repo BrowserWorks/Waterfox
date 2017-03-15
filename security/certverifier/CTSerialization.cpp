@@ -16,6 +16,8 @@ namespace mozilla { namespace ct {
 
 using namespace mozilla::pkix;
 
+typedef mozilla::pkix::Result Result;
+
 // Note: length is always specified in bytes.
 // Signed Certificate Timestamp (SCT) Version length
 static const size_t kVersionLength = 1;
@@ -508,6 +510,10 @@ DecodeSignedCertificateTimestamp(Reader& reader,
     return rv;
   }
   result.timestamp = timestamp;
+
+  result.origin = SignedCertificateTimestamp::Origin::Unknown;
+  result.verificationStatus =
+    SignedCertificateTimestamp::VerificationStatus::None;
 
   output = Move(result);
   return Success;

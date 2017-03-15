@@ -14,6 +14,7 @@
 #include "InputData.h"                  // for InputData, etc
 #include "Layers.h"                     // for Layer, etc
 #include "mozilla/dom/Touch.h"          // for Touch
+#include "mozilla/gfx/GPUParent.h"      // for GPUParent
 #include "mozilla/gfx/Logging.h"        // for gfx::TreeLog
 #include "mozilla/gfx/Point.h"          // for Point
 #include "mozilla/layers/APZThreadUtils.h"  // for AssertOnCompositorThread, etc
@@ -55,10 +56,10 @@ typedef mozilla::gfx::Matrix4x4 Matrix4x4;
 float APZCTreeManager::sDPI = 160.0;
 
 struct APZCTreeManager::TreeBuildingState {
-  TreeBuildingState(CompositorBridgeParent* aCompositor,
+  TreeBuildingState(const CompositorBridgeParent::LayerTreeState* const aLayerTreeState,
                     bool aIsFirstPaint, uint64_t aOriginatingLayersId,
                     APZTestData* aTestData, uint32_t aPaintSequence)
-    : mCompositor(aCompositor)
+    : mLayerTreeState(aLayerTreeState)
     , mIsFirstPaint(aIsFirstPaint)
     , mOriginatingLayersId(aOriginatingLayersId)
     , mPaintLogger(aTestData, aPaintSequence)
@@ -66,7 +67,7 @@ struct APZCTreeManager::TreeBuildingState {
   }
 
   // State that doesn't change as we recurse in the tree building
-  CompositorBridgeParent* const mCompositor;
+  const CompositorBridgeParent::LayerTreeState* const mLayerTreeState;
   const bool mIsFirstPaint;
   const uint64_t mOriginatingLayersId;
   const APZPaintLogHelper mPaintLogger;
@@ -84,6 +85,76 @@ struct APZCTreeManager::TreeBuildingState {
   std::map<ScrollableLayerGuid, AsyncPanZoomController*> mApzcMap;
 };
 
+class APZCTreeManager::CheckerboardFlushObserver : public nsIObserver {
+public:
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIOBSERVER
+
+  explicit CheckerboardFlushObserver(APZCTreeManager* aTreeManager)
+    : mTreeManager(aTreeManager)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    nsCOMPtr<nsIObserverService> obsSvc = mozilla::services::GetObserverService();
+    MOZ_ASSERT(obsSvc);
+    if (obsSvc) {
+      obsSvc->AddObserver(this, "APZ:FlushActiveCheckerboard", false);
+    }
+  }
+
+  void Unregister()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    nsCOMPtr<nsIObserverService> obsSvc = mozilla::services::GetObserverService();
+    if (obsSvc) {
+      obsSvc->RemoveObserver(this, "APZ:FlushActiveCheckerboard");
+    }
+    mTreeManager = nullptr;
+  }
+
+protected:
+  virtual ~CheckerboardFlushObserver() {}
+
+private:
+  RefPtr<APZCTreeManager> mTreeManager;
+};
+
+NS_IMPL_ISUPPORTS(APZCTreeManager::CheckerboardFlushObserver, nsIObserver)
+
+NS_IMETHODIMP
+APZCTreeManager::CheckerboardFlushObserver::Observe(nsISupports* aSubject,
+                                                    const char* aTopic,
+                                                    const char16_t*)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(mTreeManager.get());
+
+  MutexAutoLock lock(mTreeManager->mTreeLock);
+  if (mTreeManager->mRootNode) {
+    ForEachNode<ReverseIterator>(mTreeManager->mRootNode.get(),
+        [](HitTestingTreeNode* aNode)
+        {
+          if (aNode->IsPrimaryHolder()) {
+            MOZ_ASSERT(aNode->GetApzc());
+            aNode->GetApzc()->FlushActiveCheckerboardReport();
+          }
+        });
+  }
+  if (XRE_IsGPUProcess()) {
+    if (gfx::GPUParent* gpu = gfx::GPUParent::GetSingleton()) {
+      nsCString topic("APZ:FlushActiveCheckerboard:Done");
+      Unused << gpu->SendNotifyUiObservers(topic);
+    }
+  } else {
+    MOZ_ASSERT(XRE_IsParentProcess());
+    nsCOMPtr<nsIObserverService> obsSvc = mozilla::services::GetObserverService();
+    if (obsSvc) {
+      obsSvc->NotifyObservers(nullptr, "APZ:FlushActiveCheckerboard:Done", nullptr);
+    }
+  }
+  return NS_OK;
+}
+
+
 /*static*/ const ScreenMargin
 APZCTreeManager::CalculatePendingDisplayPort(
   const FrameMetrics& aFrameMetrics,
@@ -100,6 +171,10 @@ APZCTreeManager::APZCTreeManager()
       mRetainedTouchIdentifier(-1),
       mApzcTreeLog("apzctree")
 {
+  RefPtr<APZCTreeManager> self(this);
+  NS_DispatchToMainThread(NS_NewRunnableFunction([self] {
+    self->mFlushObserver = new CheckerboardFlushObserver(self);
+  }));
   AsyncPanZoomController::InitializeGlobalState();
   mApzcTreeLog.ConditionOnPrefFunction(gfxPrefs::APZPrintTree);
 }
@@ -137,7 +212,7 @@ APZCTreeManager::SetAllowedTouchBehavior(uint64_t aInputBlockId,
 }
 
 void
-APZCTreeManager::UpdateHitTestingTree(CompositorBridgeParent* aCompositor,
+APZCTreeManager::UpdateHitTestingTree(uint64_t aRootLayerTreeId,
                                       Layer* aRoot,
                                       bool aIsFirstPaint,
                                       uint64_t aOriginatingLayersId,
@@ -157,7 +232,10 @@ APZCTreeManager::UpdateHitTestingTree(CompositorBridgeParent* aCompositor,
     }
   }
 
-  TreeBuildingState state(aCompositor, aIsFirstPaint, aOriginatingLayersId,
+  const CompositorBridgeParent::LayerTreeState* treeState =
+    CompositorBridgeParent::GetIndirectShadowTree(aRootLayerTreeId);
+  MOZ_ASSERT(treeState);
+  TreeBuildingState state(treeState, aIsFirstPaint, aOriginatingLayersId,
                           testData, aPaintSequenceNumber);
 
   // We do this business with collecting the entire tree into an array because otherwise
@@ -180,12 +258,63 @@ APZCTreeManager::UpdateHitTestingTree(CompositorBridgeParent* aCompositor,
   mRootNode = nullptr;
 
   if (aRoot) {
+    std::stack<gfx::TreeAutoIndent> indents;
+    std::stack<gfx::Matrix4x4> ancestorTransforms;
+    HitTestingTreeNode* parent = nullptr;
+    HitTestingTreeNode* next = nullptr;
+    uint64_t layersId = aRootLayerTreeId;
+    ancestorTransforms.push(Matrix4x4());
+
     mApzcTreeLog << "[start]\n";
     LayerMetricsWrapper root(aRoot);
-    UpdateHitTestingTree(state, root,
-                         // aCompositor is null in gtest scenarios
-                         aCompositor ? aCompositor->RootLayerTreeId() : 0,
-                         Matrix4x4(), nullptr, nullptr);
+    mTreeLock.AssertCurrentThreadOwns();
+
+    ForEachNode<ReverseIterator>(root,
+        [&](LayerMetricsWrapper aLayerMetrics)
+        {
+          mApzcTreeLog << aLayerMetrics.Name() << '\t';
+
+          HitTestingTreeNode* node = PrepareNodeForLayer(aLayerMetrics,
+                aLayerMetrics.Metrics(), layersId, ancestorTransforms.top(),
+                parent, next, state);
+          MOZ_ASSERT(node);
+          AsyncPanZoomController* apzc = node->GetApzc();
+          aLayerMetrics.SetApzc(apzc);
+
+          mApzcTreeLog << '\n';
+
+          // Accumulate the CSS transform between layers that have an APZC.
+          // In the terminology of the big comment above APZCTreeManager::GetScreenToApzcTransform, if
+          // we are at layer M, then aAncestorTransform is NC * OC * PC, and we left-multiply MC and
+          // compute ancestorTransform to be MC * NC * OC * PC. This gets passed down as the ancestor
+          // transform to layer L when we recurse into the children below. If we are at a layer
+          // with an APZC, such as P, then we reset the ancestorTransform to just PC, to start
+          // the new accumulation as we go down.
+          // If a transform is a perspective transform, it's ignored for this purpose
+          // (see bug 1168263).
+          Matrix4x4 currentTransform = aLayerMetrics.TransformIsPerspective() ? Matrix4x4() : aLayerMetrics.GetTransform();
+          if (!apzc) {
+            currentTransform = currentTransform * ancestorTransforms.top();
+          }
+          ancestorTransforms.push(currentTransform);
+
+          // Note that |node| at this point will not have any children, otherwise we
+          // we would have to set next to node->GetFirstChild().
+          MOZ_ASSERT(!node->GetFirstChild());
+          parent = node;
+          next = nullptr;
+          layersId = (aLayerMetrics.AsRefLayer() ? aLayerMetrics.AsRefLayer()->GetReferentId() : layersId);
+          indents.push(gfx::TreeAutoIndent(mApzcTreeLog));
+        },
+        [&](LayerMetricsWrapper aLayerMetrics)
+        {
+          next = parent;
+          parent = parent->GetParent();
+          layersId = next->GetLayersId();
+          ancestorTransforms.pop();
+          indents.pop();
+        });
+
     mApzcTreeLog << "[end]\n";
   }
 
@@ -221,30 +350,6 @@ ComputeClipRegion(GeckoContentController* aController,
     // expansions of a multi-metrics layer), fall back to using the comp
     // bounds which should be equivalent.
     clipRegion = RoundedToInt(aLayer.Metrics().GetCompositionBounds());
-  }
-
-  // Optionally, the GeckoContentController can provide a touch-sensitive
-  // region that constrains all frames associated with the controller.
-  // In this case we intersect the composition bounds with that region.
-  CSSRect touchSensitiveRegion;
-  if (aController->GetTouchSensitiveRegion(&touchSensitiveRegion)) {
-    // Here we assume 'touchSensitiveRegion' is in the CSS pixels of the
-    // parent frame. To convert it to ParentLayer pixels, we therefore need
-    // the cumulative resolution of the parent frame. We approximate this as
-    // the quotient of our cumulative resolution and our pres shell resolution;
-    // this approximation may not be accurate in the presence of a css-driven
-    // resolution.
-    LayoutDeviceToParentLayerScale2D parentCumulativeResolution =
-          aLayer.Metrics().GetCumulativeResolution()
-        / ParentLayerToLayerScale(aLayer.Metrics().GetPresShellResolution());
-    // Not sure what rounding option is the most correct here, but if we ever
-    // figure it out we can change this. For now I'm rounding in to minimize
-    // the chances of getting a complex region.
-    ParentLayerIntRegion extraClip = RoundedIn(
-        touchSensitiveRegion
-        * aLayer.Metrics().GetDevPixelsPerCSSPixel()
-        * parentCumulativeResolution);
-    clipRegion.AndWith(extraClip);
   }
 
   return clipRegion;
@@ -445,10 +550,13 @@ APZCTreeManager::PrepareNodeForLayer(const LayerMetricsWrapper& aLayer,
     // a destroyed APZC and so we need to throw that out and make a new one.
     bool newApzc = (apzc == nullptr || apzc->IsDestroyed());
     if (newApzc) {
+      MOZ_ASSERT(aState.mLayerTreeState);
       apzc = NewAPZCInstance(aLayersId, state->mController);
-      apzc->SetCompositorBridgeParent(aState.mCompositor);
-      if (state->mCrossProcessParent != nullptr) {
-        apzc->ShareFrameMetricsAcrossProcesses();
+      apzc->SetCompositorController(aState.mLayerTreeState->GetCompositorController());
+      if (state->mCrossProcessParent) {
+        apzc->SetMetricsSharingController(state->CrossProcessSharingController());
+      } else {
+        apzc->SetMetricsSharingController(aState.mLayerTreeState->InProcessSharingController());
       }
       MOZ_ASSERT(node == nullptr);
       node = new HitTestingTreeNode(apzc, true, aLayersId);
@@ -560,57 +668,6 @@ APZCTreeManager::PrepareNodeForLayer(const LayerMetricsWrapper& aLayer,
                          aLayer.GetScrollbarSize(),
                          aLayer.IsScrollbarContainer());
   node->SetFixedPosData(aLayer.GetFixedPositionScrollContainerId());
-  return node;
-}
-
-HitTestingTreeNode*
-APZCTreeManager::UpdateHitTestingTree(TreeBuildingState& aState,
-                                      const LayerMetricsWrapper& aLayer,
-                                      uint64_t aLayersId,
-                                      const gfx::Matrix4x4& aAncestorTransform,
-                                      HitTestingTreeNode* aParent,
-                                      HitTestingTreeNode* aNextSibling)
-{
-  mTreeLock.AssertCurrentThreadOwns();
-
-  mApzcTreeLog << aLayer.Name() << '\t';
-
-  HitTestingTreeNode* node = PrepareNodeForLayer(aLayer,
-        aLayer.Metrics(), aLayersId, aAncestorTransform,
-        aParent, aNextSibling, aState);
-  MOZ_ASSERT(node);
-  AsyncPanZoomController* apzc = node->GetApzc();
-  aLayer.SetApzc(apzc);
-
-  mApzcTreeLog << '\n';
-
-  // Accumulate the CSS transform between layers that have an APZC.
-  // In the terminology of the big comment above APZCTreeManager::GetScreenToApzcTransform, if
-  // we are at layer M, then aAncestorTransform is NC * OC * PC, and we left-multiply MC and
-  // compute ancestorTransform to be MC * NC * OC * PC. This gets passed down as the ancestor
-  // transform to layer L when we recurse into the children below. If we are at a layer
-  // with an APZC, such as P, then we reset the ancestorTransform to just PC, to start
-  // the new accumulation as we go down.
-  // If a transform is a perspective transform, it's ignored for this purpose
-  // (see bug 1168263).
-  Matrix4x4 ancestorTransform = aLayer.TransformIsPerspective() ? Matrix4x4() : aLayer.GetTransform();
-  if (!apzc) {
-    ancestorTransform = ancestorTransform * aAncestorTransform;
-  }
-
-  // Note that |node| at this point will not have any children, otherwise we
-  // we would have to set next to node->GetFirstChild().
-  MOZ_ASSERT(!node->GetFirstChild());
-  aParent = node;
-  HitTestingTreeNode* next = nullptr;
-
-  uint64_t childLayersId = (aLayer.AsRefLayer() ? aLayer.AsRefLayer()->GetReferentId() : aLayersId);
-  for (LayerMetricsWrapper child = aLayer.GetLastChild(); child; child = child.GetPrevSibling()) {
-    gfx::TreeAutoIndent indent(mApzcTreeLog);
-    next = UpdateHitTestingTree(aState, child, childLayersId,
-                                ancestorTransform, aParent, next);
-  }
-
   return node;
 }
 
@@ -1297,6 +1354,12 @@ APZCTreeManager::ClearTree()
     nodesToDestroy[i]->Destroy();
   }
   mRootNode = nullptr;
+
+  RefPtr<APZCTreeManager> self(this);
+  NS_DispatchToMainThread(NS_NewRunnableFunction([self] {
+    self->mFlushObserver->Unregister();
+    self->mFlushObserver = nullptr;
+  }));
 }
 
 RefPtr<HitTestingTreeNode>

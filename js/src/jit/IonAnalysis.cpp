@@ -6,6 +6,8 @@
 
 #include "jit/IonAnalysis.h"
 
+#include "mozilla/SizePrintfMacros.h"
+
 #include "jit/AliasAnalysis.h"
 #include "jit/BaselineInspector.h"
 #include "jit/BaselineJIT.h"
@@ -281,7 +283,7 @@ ConvertToBailingBlock(TempAllocator& alloc, MBasicBlock* block)
 bool
 jit::PruneUnusedBranches(MIRGenerator* mir, MIRGraph& graph)
 {
-    MOZ_ASSERT(!mir->compilingAsmJS(), "AsmJS compilation have no code coverage support.");
+    MOZ_ASSERT(!mir->compilingWasm(), "wasm compilation has no code coverage support.");
 
     // We do a reverse-post-order traversal, marking basic blocks when the block
     // have to be converted into bailing blocks, and flagging block as
@@ -445,9 +447,10 @@ jit::PruneUnusedBranches(MIRGenerator* mir, MIRGraph& graph)
                 shouldBailout = false;
 
             JitSpew(JitSpew_Prune, "info: block %d,"
-                    " predCount: %lu, domInst: %lu, span: %lu, effectful: %lu, "
-                    " isLoopExit: %s, numSuccessorsOfPred: %lu."
-                    " (score: %lu, shouldBailout: %s)",
+                    " predCount: %" PRIuSIZE ", domInst: %" PRIuSIZE
+                    ", span: %" PRIuSIZE ", effectful: %" PRIuSIZE ", "
+                    " isLoopExit: %s, numSuccessorsOfPred: %" PRIuSIZE "."
+                    " (score: %" PRIuSIZE ", shouldBailout: %s)",
                     block->id(), predCount, numDominatedInst, branchSpan, numEffectfulInst,
                     isLoopExit ? "true" : "false", numSuccessorsOfPreds,
                     score, shouldBailout ? "true" : "false");
@@ -567,6 +570,20 @@ jit::SplitCriticalEdges(MIRGraph& graph)
             return false;
     }
     return true;
+}
+
+bool
+jit::IsUint32Type(const MDefinition* def)
+{
+    if (def->isBeta())
+        def = def->getOperand(0);
+
+    if (def->type() != MIRType::Int32)
+        return false;
+
+    return def->isUrsh() && def->getOperand(1)->isConstant() &&
+        def->getOperand(1)->toConstant()->type() == MIRType::Int32 &&
+        def->getOperand(1)->toConstant()->toInt32() == 0;
 }
 
 // Return whether a block simply computes the specified constant value.
@@ -1892,7 +1909,7 @@ TypeAnalyzer::tryEmitFloatOperations()
 {
     // Asm.js uses the ahead of time type checks to specialize operations, no need to check
     // them again at this point.
-    if (mir->compilingAsmJS())
+    if (mir->compilingWasm())
         return true;
 
     // Check ahead of time that there is at least one definition typed as Float32, otherwise we
@@ -2029,8 +2046,24 @@ IsRegExpHoistableCall(MCall* call, MDefinition* def)
 }
 
 static bool
-CanCompareWithoutToPrimitive(MCompare* compare, MDefinition* def)
+CanCompareRegExp(MCompare* compare, MDefinition* def)
 {
+    MDefinition* value;
+    if (compare->lhs() == def) {
+        value = compare->rhs();
+    } else {
+        MOZ_ASSERT(compare->rhs() == def);
+        value = compare->lhs();
+    }
+
+    // Comparing two regexp that weren't cloned will give different result
+    // than if they were cloned.
+    if (value->mightBeType(MIRType::Object))
+        return false;
+
+    // Make sure @@toPrimitive is not called which could notice
+    // the difference between a not cloned/cloned regexp.
+
     JSOp op = compare->jsop();
     // Strict equality comparison won't invoke @@toPrimitive.
     if (op == JSOP_STRICTEQ || op == JSOP_STRICTNE)
@@ -2043,14 +2076,6 @@ CanCompareWithoutToPrimitive(MCompare* compare, MDefinition* def)
     }
 
     // Loose equality comparison can invoke @@toPrimitive.
-    MDefinition* value;
-    if (compare->lhs() == def) {
-        value = compare->rhs();
-    } else {
-        MOZ_ASSERT(compare->rhs() == def);
-        value = compare->lhs();
-    }
-
     if (value->mightBeType(MIRType::Boolean) || value->mightBeType(MIRType::String) ||
         value->mightBeType(MIRType::Int32) ||
         value->mightBeType(MIRType::Double) || value->mightBeType(MIRType::Float32) ||
@@ -2116,7 +2141,7 @@ IsRegExpHoistable(MIRGenerator* mir, MDefinition* regexp, MDefinitionVector& wor
             } else if (useDef->isLoadFixedSlot() || useDef->isTypeOf()) {
                 continue;
             } else if (useDef->isCompare()) {
-                if (CanCompareWithoutToPrimitive(useDef->toCompare(), def))
+                if (CanCompareRegExp(useDef->toCompare(), def))
                     continue;
             }
             // Instructions that modifies `lastIndex` property.
@@ -3074,9 +3099,31 @@ FindDominatingBoundsCheck(BoundsCheckMap& checks, MBoundsCheck* check, size_t in
     return p->value().check;
 }
 
+static MathSpace
+ExtractMathSpace(MDefinition* ins)
+{
+    MOZ_ASSERT(ins->isAdd() || ins->isSub());
+    MBinaryArithInstruction* arith = nullptr;
+    if (ins->isAdd())
+        arith = ins->toAdd();
+    else
+        arith = ins->toSub();
+    switch (arith->truncateKind()) {
+      case MDefinition::NoTruncate:
+      case MDefinition::TruncateAfterBailouts:
+        // TruncateAfterBailouts is considered as infinite space because the
+        // LinearSum will effectively remove the bailout check.
+        return MathSpace::Infinite;
+      case MDefinition::IndirectTruncate:
+      case MDefinition::Truncate:
+        return MathSpace::Modulo;
+    }
+    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Unknown TruncateKind");
+}
+
 // Extract a linear sum from ins, if possible (otherwise giving the sum 'ins + 0').
 SimpleLinearSum
-jit::ExtractLinearSum(MDefinition* ins)
+jit::ExtractLinearSum(MDefinition* ins, MathSpace space)
 {
     if (ins->isBeta())
         ins = ins->getOperand(0);
@@ -3087,32 +3134,53 @@ jit::ExtractLinearSum(MDefinition* ins)
     if (ins->isConstant())
         return SimpleLinearSum(nullptr, ins->toConstant()->toInt32());
 
-    if (ins->isAdd() || ins->isSub()) {
-        MDefinition* lhs = ins->getOperand(0);
-        MDefinition* rhs = ins->getOperand(1);
-        if (lhs->type() == MIRType::Int32 && rhs->type() == MIRType::Int32) {
-            SimpleLinearSum lsum = ExtractLinearSum(lhs);
-            SimpleLinearSum rsum = ExtractLinearSum(rhs);
+    if (!ins->isAdd() && !ins->isSub())
+        return SimpleLinearSum(ins, 0);
 
-            if (lsum.term && rsum.term)
-                return SimpleLinearSum(ins, 0);
+    // Only allow math which are in the same space.
+    MathSpace insSpace = ExtractMathSpace(ins);
+    if (space == MathSpace::Unknown)
+        space = insSpace;
+    else if (space != insSpace)
+        return SimpleLinearSum(ins, 0);
+    MOZ_ASSERT(space == MathSpace::Modulo || space == MathSpace::Infinite);
 
-            // Check if this is of the form <SUM> + n, n + <SUM> or <SUM> - n.
-            if (ins->isAdd()) {
-                int32_t constant;
-                if (!SafeAdd(lsum.constant, rsum.constant, &constant))
-                    return SimpleLinearSum(ins, 0);
-                return SimpleLinearSum(lsum.term ? lsum.term : rsum.term, constant);
-            }
-            if (lsum.term) {
-                int32_t constant;
-                if (!SafeSub(lsum.constant, rsum.constant, &constant))
-                    return SimpleLinearSum(ins, 0);
-                return SimpleLinearSum(lsum.term, constant);
-            }
-        }
+    MDefinition* lhs = ins->getOperand(0);
+    MDefinition* rhs = ins->getOperand(1);
+    if (lhs->type() != MIRType::Int32 || rhs->type() != MIRType::Int32)
+        return SimpleLinearSum(ins, 0);
+
+    // Extract linear sums of each operand.
+    SimpleLinearSum lsum = ExtractLinearSum(lhs, space);
+    SimpleLinearSum rsum = ExtractLinearSum(rhs, space);
+
+    // LinearSum only considers a single term operand, if both sides have
+    // terms, then ignore extracted linear sums.
+    if (lsum.term && rsum.term)
+        return SimpleLinearSum(ins, 0);
+
+    // Check if this is of the form <SUM> + n or n + <SUM>.
+    if (ins->isAdd()) {
+        int32_t constant;
+        if (space == MathSpace::Modulo)
+            constant = lsum.constant + rsum.constant;
+        else if (!SafeAdd(lsum.constant, rsum.constant, &constant))
+            return SimpleLinearSum(ins, 0);
+        return SimpleLinearSum(lsum.term ? lsum.term : rsum.term, constant);
     }
 
+    MOZ_ASSERT(ins->isSub());
+    // Check if this is of the form <SUM> - n.
+    if (lsum.term) {
+        int32_t constant;
+        if (space == MathSpace::Modulo)
+            constant = lsum.constant - rsum.constant;
+        else if (!SafeSub(lsum.constant, rsum.constant, &constant))
+            return SimpleLinearSum(ins, 0);
+        return SimpleLinearSum(lsum.term, constant);
+    }
+
+    // Ignore any of the form n - <SUM>.
     return SimpleLinearSum(ins, 0);
 }
 
@@ -3660,7 +3728,7 @@ LinearSum::multiply(int32_t scale)
 }
 
 bool
-LinearSum::divide(int32_t scale)
+LinearSum::divide(uint32_t scale)
 {
     MOZ_ASSERT(scale > 0);
 
@@ -4101,7 +4169,7 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, JSFunction* fun,
         return false;
 
     CompileInfo info(script, fun,
-                     /* osrPc = */ nullptr, /* constructing = */ false,
+                     /* osrPc = */ nullptr,
                      Analysis_DefiniteProperties,
                      script->needsArgsObj(),
                      inlineScriptTree);
@@ -4339,7 +4407,7 @@ jit::AnalyzeArgumentsUsage(JSContext* cx, JSScript* scriptArg)
     }
 
     CompileInfo info(script, script->functionNonDelazifying(),
-                     /* osrPc = */ nullptr, /* constructing = */ false,
+                     /* osrPc = */ nullptr,
                      Analysis_ArgumentsUsage,
                      /* needsArgsObj = */ true,
                      inlineScriptTree);
@@ -4657,4 +4725,36 @@ jit::CreateMIRRootList(IonBuilder& builder)
 
     builder.setRootList(*roots);
     return true;
+}
+
+static void
+DumpDefinition(GenericPrinter& out, MDefinition* def, size_t depth)
+{
+    MDefinition::PrintOpcodeName(out, def->op());
+
+    if (depth == 0)
+        return;
+
+    for (size_t i = 0; i < def->numOperands(); i++) {
+        out.printf(" (");
+        DumpDefinition(out, def->getOperand(i), depth - 1);
+        out.printf(")");
+    }
+}
+
+void
+jit::DumpMIRExpressions(MIRGraph& graph)
+{
+    if (!JitSpewEnabled(JitSpew_MIRExpressions))
+        return;
+
+    size_t depth = 2;
+
+    Fprinter& out = JitSpewPrinter();
+    for (ReversePostorderIterator block(graph.rpoBegin()); block != graph.rpoEnd(); block++) {
+        for (MInstructionIterator iter(block->begin()), end(block->end()); iter != end; iter++) {
+            DumpDefinition(out, *iter, depth);
+            out.printf("\n");
+        }
+    }
 }

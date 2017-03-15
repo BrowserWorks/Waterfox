@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Auxiliary functions for PostScript fonts (body).                     */
 /*                                                                         */
-/*  Copyright 1996-2014 by                                                 */
+/*  Copyright 1996-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -81,7 +81,7 @@
     table->max_elems = count;
     table->init      = 0xDEADBEEFUL;
     table->num_elems = 0;
-    table->block     = 0;
+    table->block     = NULL;
     table->capacity  = 0;
     table->cursor    = 0;
 
@@ -165,20 +165,14 @@
   /*    reallocation fails.                                                */
   /*                                                                       */
   FT_LOCAL_DEF( FT_Error )
-  ps_table_add( PS_Table    table,
-                FT_Int      idx,
-                void*       object,
-                FT_PtrDist  length )
+  ps_table_add( PS_Table  table,
+                FT_Int    idx,
+                void*     object,
+                FT_UInt   length )
   {
     if ( idx < 0 || idx >= table->max_elems )
     {
       FT_ERROR(( "ps_table_add: invalid index\n" ));
-      return FT_THROW( Invalid_Argument );
-    }
-
-    if ( length < 0 )
-    {
-      FT_ERROR(( "ps_table_add: invalid length\n" ));
       return FT_THROW( Invalid_Argument );
     }
 
@@ -350,7 +344,7 @@
       FT_Byte  c = *cur;
 
 
-      ++cur;
+      cur++;
 
       if ( c == '\\' )
       {
@@ -376,17 +370,17 @@
         case '\\':
         case '(':
         case ')':
-          ++cur;
+          cur++;
           break;
 
         default:
           /* skip octal escape or ignore backslash */
-          for ( i = 0; i < 3 && cur < limit; ++i )
+          for ( i = 0; i < 3 && cur < limit; i++ )
           {
             if ( !IS_OCTAL_DIGIT( *cur ) )
               break;
 
-            ++cur;
+            cur++;
           }
         }
       }
@@ -461,19 +455,19 @@
 
     FT_ASSERT( **acur == '{' );
 
-    for ( cur = *acur; cur < limit && error == FT_Err_Ok; ++cur )
+    for ( cur = *acur; cur < limit && error == FT_Err_Ok; cur++ )
     {
       switch ( *cur )
       {
       case '{':
-        ++embed;
+        embed++;
         break;
 
       case '}':
-        --embed;
+        embed--;
         if ( embed == 0 )
         {
-          ++cur;
+          cur++;
           goto end;
         }
         break;
@@ -600,6 +594,9 @@
       error = FT_THROW( Invalid_File_Format );
     }
 
+    if ( cur > limit )
+      cur = limit;
+
     parser->error  = error;
     parser->cursor = cur;
   }
@@ -625,8 +622,8 @@
 
 
     token->type  = T1_TOKEN_TYPE_NONE;
-    token->start = 0;
-    token->limit = 0;
+    token->start = NULL;
+    token->limit = NULL;
 
     /* first of all, skip leading whitespace */
     ps_parser_skip_spaces( parser );
@@ -698,7 +695,7 @@
       /* ************ otherwise, it is any token **************/
     default:
       token->start = cur;
-      token->type  = ( *cur == '/' ? T1_TOKEN_TYPE_KEY : T1_TOKEN_TYPE_ANY );
+      token->type  = ( *cur == '/' ) ? T1_TOKEN_TYPE_KEY : T1_TOKEN_TYPE_ANY;
       ps_parser_skip_PS_token( parser );
       cur = parser->cursor;
       if ( !parser->error )
@@ -707,7 +704,7 @@
 
     if ( !token->limit )
     {
-      token->start = 0;
+      token->start = NULL;
       token->type  = T1_TOKEN_TYPE_NONE;
     }
 
@@ -753,7 +750,7 @@
         if ( !token.type )
           break;
 
-        if ( tokens != NULL && cur < limit )
+        if ( tokens && cur < limit )
           *cur = token;
 
         cur++;
@@ -818,12 +815,12 @@
 
       old_cur = cur;
 
-      if ( coords != NULL && count >= max_coords )
+      if ( coords && count >= max_coords )
         break;
 
       /* call PS_Conv_ToFixed() even if coords == NULL */
       /* to properly parse number at `cur'             */
-      *( coords != NULL ? &coords[count] : &dummy ) =
+      *( coords ? &coords[count] : &dummy ) =
         (FT_Short)( PS_Conv_ToFixed( &cur, limit, 0 ) >> 16 );
 
       if ( old_cur == cur )
@@ -898,12 +895,12 @@
 
       old_cur = cur;
 
-      if ( values != NULL && count >= max_values )
+      if ( values && count >= max_values )
         break;
 
       /* call PS_Conv_ToFixed() even if coords == NULL */
       /* to properly parse number at `cur'             */
-      *( values != NULL ? &values[count] : &dummy ) =
+      *( values ? &values[count] : &dummy ) =
         PS_Conv_ToFixed( &cur, limit, power_ten );
 
       if ( old_cur == cur )
@@ -932,7 +929,7 @@
                FT_Memory  memory )
   {
     FT_Byte*    cur = *cursor;
-    FT_PtrDist  len = 0;
+    FT_UInt     len = 0;
     FT_Int      count;
     FT_String*  result;
     FT_Error    error;
@@ -972,7 +969,7 @@
       }
     }
 
-    len = cur - *cursor;
+    len = (FT_UInt)( cur - *cursor );
     if ( cur >= limit || FT_ALLOC( result, len + 1 ) )
       return 0;
 
@@ -1090,9 +1087,9 @@
 
     for ( ; count > 0; count--, idx++ )
     {
-      FT_Byte*    q = (FT_Byte*)objects[idx] + field->offset;
+      FT_Byte*    q      = (FT_Byte*)objects[idx] + field->offset;
       FT_Long     val;
-      FT_String*  string;
+      FT_String*  string = NULL;
 
 
       skip_spaces( &cur, limit );
@@ -1175,7 +1172,7 @@
 
           /* for this to work (FT_String**)q must have been */
           /* initialized to NULL                            */
-          if ( *(FT_String**)q != NULL )
+          if ( *(FT_String**)q )
           {
             FT_TRACE0(( "ps_parser_load_field: overwriting field %s\n",
                         field->ident ));
@@ -1220,7 +1217,7 @@
       case T1_FIELD_TYPE_MM_BBOX:
         {
           FT_Memory  memory = parser->memory;
-          FT_Fixed*  temp;
+          FT_Fixed*  temp   = NULL;
           FT_Int     result;
           FT_UInt    i;
 
@@ -1230,20 +1227,22 @@
 
           for ( i = 0; i < 4; i++ )
           {
-            result = ps_tofixedarray( &cur, limit, max_objects,
+            result = ps_tofixedarray( &cur, limit, (FT_Int)max_objects,
                                       temp + i * max_objects, 0 );
             if ( result < 0 || (FT_UInt)result < max_objects )
             {
               FT_ERROR(( "ps_parser_load_field:"
-                         " expected %d integers in the %s subarray\n"
+                         " expected %d integer%s in the %s subarray\n"
                          "                     "
                          " of /FontBBox in the /Blend dictionary\n",
-                         max_objects,
+                         max_objects, max_objects > 1 ? "s" : "",
                          i == 0 ? "first"
                                 : ( i == 1 ? "second"
                                            : ( i == 2 ? "third"
                                                       : "fourth" ) ) ));
               error = FT_THROW( Invalid_File_Format );
+
+              FT_FREE( temp );
               goto Exit;
             }
 
@@ -1321,7 +1320,7 @@
       goto Exit;
     }
     if ( (FT_UInt)num_elements > field->array_max )
-      num_elements = field->array_max;
+      num_elements = (FT_Int)field->array_max;
 
     old_cursor = parser->cursor;
     old_limit  = parser->limit;
@@ -1379,7 +1378,7 @@
   ps_parser_to_bytes( PS_Parser  parser,
                       FT_Byte*   bytes,
                       FT_Offset  max_bytes,
-                      FT_Long*   pnum_bytes,
+                      FT_ULong*  pnum_bytes,
                       FT_Bool    delimiters )
   {
     FT_Error  error = FT_Err_Ok;
@@ -1553,7 +1552,7 @@
       FT_GlyphLoader_Rewind( loader );
 
       builder->hints_globals = size->internal;
-      builder->hints_funcs   = 0;
+      builder->hints_funcs   = NULL;
 
       if ( hinting )
         builder->hints_funcs = glyph->internal->glyph_hints;

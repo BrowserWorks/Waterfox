@@ -13,7 +13,6 @@ Cu.import("resource://gre/modules/ExtensionManagement.jsm");
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   SingletonEventManager,
-  runSafeSync,
 } = ExtensionUtils;
 
 // EventManager-like class specifically for WebRequest. Inherits from
@@ -23,12 +22,9 @@ function WebRequestEventManager(context, eventName) {
   let name = `webRequest.${eventName}`;
   let register = (callback, filter, info) => {
     let listener = data => {
-      if (!data.browser) {
-        return;
-      }
-
-      let tabId = TabManager.getBrowserId(data.browser);
-      if (tabId == -1) {
+      // Prevent listening in on requests originating from system principal to
+      // prevent tinkering with OCSP, app and addon updates, etc.
+      if (data.isSystemPrincipal) {
         return;
       }
 
@@ -39,20 +35,20 @@ function WebRequestEventManager(context, eventName) {
         method: data.method,
         type: data.type,
         timeStamp: Date.now(),
-        frameId: ExtensionManagement.getFrameId(data.windowId),
+        frameId: data.type == "main_frame" ? 0 : ExtensionManagement.getFrameId(data.windowId),
         parentFrameId: ExtensionManagement.getParentFrameId(data.parentWindowId, data.windowId),
       };
+
+      const maybeCached = ["onResponseStarted", "onBeforeRedirect", "onCompleted", "onErrorOccurred"];
+      if (maybeCached.includes(eventName)) {
+        data2.fromCache = !!data.fromCache;
+      }
 
       if ("ip" in data) {
         data2.ip = data.ip;
       }
 
-      // Fills in tabId typically.
-      let result = {};
-      extensions.emit("fill-browser-data", data.browser, data2, result);
-      if (result.cancel) {
-        return;
-      }
+      extensions.emit("fill-browser-data", data.browser, data2);
 
       let optional = ["requestHeaders", "responseHeaders", "statusCode", "statusLine", "error", "redirectUrl",
                       "requestBody"];
@@ -62,7 +58,7 @@ function WebRequestEventManager(context, eventName) {
         }
       }
 
-      return runSafeSync(context, callback, data2);
+      return context.runSafe(callback, data2);
     };
 
     let filter2 = {};

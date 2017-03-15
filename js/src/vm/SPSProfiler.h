@@ -16,7 +16,7 @@
 
 #include "js/ProfilingStack.h"
 #include "threading/ExclusiveData.h"
-#include "threading/Mutex.h"
+#include "vm/MutexIDs.h"
 
 /*
  * SPS Profiler integration with the JS Engine
@@ -187,7 +187,7 @@ class SPSProfiler
         }
     }
 
-    /* Enter asm.js code */
+    /* Enter wasm code */
     void beginPseudoJS(const char* string, void* sp);
     void endPseudoJS() { pop(); }
 

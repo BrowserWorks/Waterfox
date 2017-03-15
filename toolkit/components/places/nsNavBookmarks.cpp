@@ -38,6 +38,20 @@ PLACES_FACTORY_SINGLETON_IMPLEMENTATION(nsNavBookmarks, gBookmarksService)
 
 namespace {
 
+#define SKIP_TAGS(condition) ((condition) ? SkipTags : DontSkip)
+
+bool DontSkip(nsCOMPtr<nsINavBookmarkObserver> obs) { return false; }
+bool SkipTags(nsCOMPtr<nsINavBookmarkObserver> obs) {
+  bool skipTags = false;
+  (void) obs->GetSkipTags(&skipTags);
+  return skipTags;
+}
+bool SkipDescendants(nsCOMPtr<nsINavBookmarkObserver> obs) {
+  bool skipDescendantsOnItemRemoval = false;
+  (void) obs->GetSkipTags(&skipDescendantsOnItemRemoval);
+  return skipDescendantsOnItemRemoval;
+}
+
 template<typename Method, typename DataType>
 class AsyncGetBookmarksForURI : public AsyncStatementCallback
 {
@@ -120,6 +134,7 @@ nsNavBookmarks::nsNavBookmarks()
   , mTagsRoot(0)
   , mUnfiledRoot(0)
   , mToolbarRoot(0)
+  , mMobileRoot(0)
   , mCanNotify(false)
   , mCacheObservers("bookmark-observers")
   , mBatching(false)
@@ -146,6 +161,17 @@ NS_IMPL_ISUPPORTS(nsNavBookmarks
 , nsIObserver
 , nsISupportsWeakReference
 )
+
+
+Atomic<int64_t> nsNavBookmarks::sLastInsertedItemId(0);
+
+
+void // static
+nsNavBookmarks::StoreLastInsertedId(const nsACString& aTable,
+                                    const int64_t aLastInsertedId) {
+  MOZ_ASSERT(aTable.EqualsLiteral("moz_bookmarks"));
+  sLastInsertedItemId = aLastInsertedId;
+}
 
 
 nsresult
@@ -189,7 +215,7 @@ nsNavBookmarks::ReadRoots()
   nsresult rv = mDB->MainConn()->CreateStatement(NS_LITERAL_CSTRING(
     "SELECT guid, id FROM moz_bookmarks WHERE guid IN ( "
       "'root________', 'menu________', 'toolbar_____', "
-      "'tags________', 'unfiled_____' )"
+      "'tags________', 'unfiled_____', 'mobile______' )"
   ), getter_AddRefs(stmt));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -217,9 +243,13 @@ nsNavBookmarks::ReadRoots()
     else if (guid.EqualsLiteral("unfiled_____")) {
       mUnfiledRoot = id;
     }
+    else if (guid.EqualsLiteral("mobile______")) {
+      mMobileRoot = id;
+    }
   }
 
-  if (!mRoot || !mMenuRoot || !mToolbarRoot || !mTagsRoot || !mUnfiledRoot)
+  if (!mRoot || !mMenuRoot || !mToolbarRoot || !mTagsRoot || !mUnfiledRoot ||
+      !mMobileRoot)
     return NS_ERROR_FAILURE;
 
   return NS_OK;
@@ -320,6 +350,14 @@ nsNavBookmarks::GetUnfiledBookmarksFolder(int64_t* aRoot)
 }
 
 
+NS_IMETHODIMP
+nsNavBookmarks::GetMobileFolder(int64_t* aRoot)
+{
+  *aRoot = mMobileRoot;
+  return NS_OK;
+}
+
+
 nsresult
 nsNavBookmarks::InsertBookmarkInDB(int64_t aPlaceId,
                                    enum ItemType aItemType,
@@ -346,7 +384,7 @@ nsNavBookmarks::InsertBookmarkInDB(int64_t aPlaceId,
        "dateAdded, lastModified, guid) "
     "VALUES (:item_id, :page_id, :item_type, :parent, :item_index, "
             ":item_title, :date_added, :last_modified, "
-            "IFNULL(:item_guid, GENERATE_GUID()))"
+            ":item_guid)"
   );
   NS_ENSURE_STATE(stmt);
   mozStorageStatementScoper scoper(stmt);
@@ -395,34 +433,22 @@ nsNavBookmarks::InsertBookmarkInDB(int64_t aPlaceId,
   if (_guid.Length() == 12) {
     MOZ_ASSERT(IsValidGUID(_guid));
     rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("item_guid"), _guid);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
   else {
-    rv = stmt->BindNullByName(NS_LITERAL_CSTRING("item_guid"));
+    nsAutoCString guid;
+    rv = GenerateGUID(guid);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("item_guid"), guid);
+    NS_ENSURE_SUCCESS(rv, rv);
+    _guid.Assign(guid);
   }
-  NS_ENSURE_SUCCESS(rv, rv);
 
   rv = stmt->Execute();
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (*_itemId == -1) {
-    // Get the newly inserted item id and GUID.
-    nsCOMPtr<mozIStorageStatement> lastInsertIdStmt = mDB->GetStatement(
-      "SELECT id, guid "
-      "FROM moz_bookmarks "
-      "ORDER BY ROWID DESC "
-      "LIMIT 1"
-    );
-    NS_ENSURE_STATE(lastInsertIdStmt);
-    mozStorageStatementScoper lastInsertIdScoper(lastInsertIdStmt);
-
-    bool hasResult;
-    rv = lastInsertIdStmt->ExecuteStep(&hasResult);
-    NS_ENSURE_SUCCESS(rv, rv);
-    NS_ENSURE_TRUE(hasResult, NS_ERROR_UNEXPECTED);
-    rv = lastInsertIdStmt->GetInt64(0, _itemId);
-    NS_ENSURE_SUCCESS(rv, rv);
-    rv = lastInsertIdStmt->GetUTF8String(1, _guid);
-    NS_ENSURE_SUCCESS(rv, rv);
+    *_itemId = sLastInsertedItemId;
   }
 
   if (aParentId > 0) {
@@ -461,7 +487,6 @@ nsNavBookmarks::InsertBookmarkInDB(int64_t aPlaceId,
 
   return NS_OK;
 }
-
 
 NS_IMETHODIMP
 nsNavBookmarks::InsertBookmark(int64_t aFolder,
@@ -525,10 +550,11 @@ nsNavBookmarks::InsertBookmark(int64_t aFolder,
   rv = transaction.Commit();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                   nsINavBookmarkObserver,
-                   OnItemAdded(*aNewBookmarkId, aFolder, index, TYPE_BOOKMARK,
-                               aURI, title, dateAdded, guid, folderGuid, aSource));
+  NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                             SKIP_TAGS(grandParentId == mTagsRoot),
+                             OnItemAdded(*aNewBookmarkId, aFolder, index,
+                                         TYPE_BOOKMARK, aURI, title, dateAdded,
+                                         guid, folderGuid, aSource));
 
   // If the bookmark has been added to a tag container, notify all
   // bookmark-folder result nodes which contain a bookmark for the new
@@ -543,19 +569,19 @@ nsNavBookmarks::InsertBookmark(int64_t aFolder,
       // Check that bookmarks doesn't include the current tag itemId.
       MOZ_ASSERT(bookmarks[i].id != *aNewBookmarkId);
 
-      NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                       nsINavBookmarkObserver,
-                       OnItemChanged(bookmarks[i].id,
-                                     NS_LITERAL_CSTRING("tags"),
-                                     false,
-                                     EmptyCString(),
-                                     bookmarks[i].lastModified,
-                                     TYPE_BOOKMARK,
-                                     bookmarks[i].parentId,
-                                     bookmarks[i].guid,
-                                     bookmarks[i].parentGuid,
-                                     EmptyCString(),
-                                     aSource));
+      NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                                 DontSkip,
+                                 OnItemChanged(bookmarks[i].id,
+                                               NS_LITERAL_CSTRING("tags"),
+                                               false,
+                                               EmptyCString(),
+                                               bookmarks[i].lastModified,
+                                               TYPE_BOOKMARK,
+                                               bookmarks[i].parentId,
+                                               bookmarks[i].guid,
+                                               bookmarks[i].parentGuid,
+                                               EmptyCString(),
+                                               aSource));
     }
   }
 
@@ -633,16 +659,17 @@ nsNavBookmarks::RemoveItem(int64_t aItemId, uint16_t aSource)
     NS_WARNING_ASSERTION(uri, "Invalid URI in RemoveItem");
   }
 
-  NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                   nsINavBookmarkObserver,
-                   OnItemRemoved(bookmark.id,
-                                 bookmark.parentId,
-                                 bookmark.position,
-                                 bookmark.type,
-                                 uri,
-                                 bookmark.guid,
-                                 bookmark.parentGuid,
-                                 aSource));
+  NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                             SKIP_TAGS(bookmark.parentId == mTagsRoot ||
+                                       bookmark.grandParentId == mTagsRoot),
+                             OnItemRemoved(bookmark.id,
+                                           bookmark.parentId,
+                                           bookmark.position,
+                                           bookmark.type,
+                                           uri,
+                                           bookmark.guid,
+                                           bookmark.parentGuid,
+                                           aSource));
 
   if (bookmark.type == TYPE_BOOKMARK && bookmark.grandParentId == mTagsRoot &&
       uri) {
@@ -653,19 +680,19 @@ nsNavBookmarks::RemoveItem(int64_t aItemId, uint16_t aSource)
     NS_ENSURE_SUCCESS(rv, rv);
 
     for (uint32_t i = 0; i < bookmarks.Length(); ++i) {
-      NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                       nsINavBookmarkObserver,
-                       OnItemChanged(bookmarks[i].id,
-                                     NS_LITERAL_CSTRING("tags"),
-                                     false,
-                                     EmptyCString(),
-                                     bookmarks[i].lastModified,
-                                     TYPE_BOOKMARK,
-                                     bookmarks[i].parentId,
-                                     bookmarks[i].guid,
-                                     bookmarks[i].parentGuid,
-                                     EmptyCString(),
-                                     aSource));
+      NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                                 DontSkip,
+                                 OnItemChanged(bookmarks[i].id,
+                                               NS_LITERAL_CSTRING("tags"),
+                                               false,
+                                               EmptyCString(),
+                                               bookmarks[i].lastModified,
+                                               TYPE_BOOKMARK,
+                                               bookmarks[i].parentId,
+                                               bookmarks[i].guid,
+                                               bookmarks[i].parentGuid,
+                                               EmptyCString(),
+                                               aSource));
     }
 
   }
@@ -753,11 +780,11 @@ nsNavBookmarks::CreateContainerWithID(int64_t aItemId,
   rv = transaction.Commit();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                   nsINavBookmarkObserver,
-                   OnItemAdded(*aNewFolder, aParent, index, FOLDER,
-                               nullptr, title, dateAdded, guid, folderGuid,
-                               aSource));
+  NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                             SKIP_TAGS(aParent == mTagsRoot),
+                             OnItemAdded(*aNewFolder, aParent, index, FOLDER,
+                                         nullptr, title, dateAdded, guid,
+                                         folderGuid, aSource));
 
   *aIndex = index;
   return NS_OK;
@@ -800,11 +827,9 @@ nsNavBookmarks::InsertSeparator(int64_t aParent,
 
   *aNewItemId = -1;
   // Set a NULL title rather than an empty string.
-  nsCString voidString;
-  voidString.SetIsVoid(true);
   nsAutoCString guid(aGUID);
   PRTime dateAdded = RoundedPRNow();
-  rv = InsertBookmarkInDB(-1, SEPARATOR, aParent, index, voidString, dateAdded,
+  rv = InsertBookmarkInDB(-1, SEPARATOR, aParent, index, NullCString(), dateAdded,
                           0, folderGuid, grandParentId, nullptr, aSource,
                           aNewItemId, guid);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -812,11 +837,11 @@ nsNavBookmarks::InsertSeparator(int64_t aParent,
   rv = transaction.Commit();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                   nsINavBookmarkObserver,
-                   OnItemAdded(*aNewItemId, aParent, index, TYPE_SEPARATOR,
-                               nullptr, voidString, dateAdded, guid, folderGuid,
-                               aSource));
+  NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                             DontSkip,
+                             OnItemAdded(*aNewItemId, aParent, index, TYPE_SEPARATOR,
+                                         nullptr, NullCString(), dateAdded, guid,
+                                         folderGuid, aSource));
 
   return NS_OK;
 }
@@ -1118,16 +1143,16 @@ nsNavBookmarks::RemoveFolderChildren(int64_t aFolderId, uint16_t aSource)
       NS_WARNING_ASSERTION(uri, "Invalid URI in RemoveFolderChildren");
     }
 
-    NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                     nsINavBookmarkObserver,
-                     OnItemRemoved(child.id,
-                                   child.parentId,
-                                   child.position,
-                                   child.type,
-                                   uri,
-                                   child.guid,
-                                   child.parentGuid,
-                                   aSource));
+    NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                               ((child.grandParentId == mTagsRoot) ? SkipTags : SkipDescendants),
+                               OnItemRemoved(child.id,
+                                             child.parentId,
+                                             child.position,
+                                             child.type,
+                                             uri,
+                                             child.guid,
+                                             child.parentGuid,
+                                             aSource));
 
     if (child.type == TYPE_BOOKMARK && child.grandParentId == mTagsRoot &&
         uri) {
@@ -1139,19 +1164,19 @@ nsNavBookmarks::RemoveFolderChildren(int64_t aFolderId, uint16_t aSource)
       NS_ENSURE_SUCCESS(rv, rv);
 
       for (uint32_t i = 0; i < bookmarks.Length(); ++i) {
-        NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                         nsINavBookmarkObserver,
-                         OnItemChanged(bookmarks[i].id,
-                                       NS_LITERAL_CSTRING("tags"),
-                                       false,
-                                       EmptyCString(),
-                                       bookmarks[i].lastModified,
-                                       TYPE_BOOKMARK,
-                                       bookmarks[i].parentId,
-                                       bookmarks[i].guid,
-                                       bookmarks[i].parentGuid,
-                                       EmptyCString(),
-                                       aSource));
+        NOTIFY_BOOKMARKS_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
+                                   DontSkip,
+                                   OnItemChanged(bookmarks[i].id,
+                                                 NS_LITERAL_CSTRING("tags"),
+                                                 false,
+                                                 EmptyCString(),
+                                                 bookmarks[i].lastModified,
+                                                 TYPE_BOOKMARK,
+                                                 bookmarks[i].parentId,
+                                                 bookmarks[i].guid,
+                                                 bookmarks[i].parentGuid,
+                                                 EmptyCString(),
+                                                 aSource));
       }
     }
   }

@@ -554,6 +554,18 @@
    */
   ERROR(NS_ERROR_DOM_EXCEPTION_ON_JSCONTEXT,       FAILURE(1018)),
 
+  ERROR(NS_ERROR_DOM_MALFORMED_URI,                FAILURE(1019)),
+  ERROR(NS_ERROR_DOM_INVALID_HEADER_NAME,          FAILURE(1020)),
+
+  ERROR(NS_ERROR_DOM_INVALID_STATE_XHR_HAS_INVALID_CONTEXT,                            FAILURE(1021)),
+  ERROR(NS_ERROR_DOM_INVALID_STATE_XHR_MUST_BE_OPENED,                                 FAILURE(1022)),
+  ERROR(NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_SENDING,                            FAILURE(1023)),
+  ERROR(NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_LOADING_OR_DONE,                    FAILURE(1024)),
+  ERROR(NS_ERROR_DOM_INVALID_STATE_XHR_HAS_WRONG_RESPONSETYPE_FOR_RESPONSEXML,         FAILURE(1025)),
+  ERROR(NS_ERROR_DOM_INVALID_STATE_XHR_HAS_WRONG_RESPONSETYPE_FOR_RESPONSETEXT,        FAILURE(1026)),
+  ERROR(NS_ERROR_DOM_INVALID_STATE_XHR_CHUNKED_RESPONSETYPES_UNSUPPORTED_FOR_SYNC,     FAILURE(1027)),
+  ERROR(NS_ERROR_DOM_INVALID_ACCESS_XHR_TIMEOUT_AND_RESPONSETYPE_UNSUPPORTED_FOR_SYNC, FAILURE(1028)),
+
   /* May be used to indicate when e.g. setting a property value didn't
    * actually change the value, like for obj.foo = "bar"; obj.foo = "bar";
    * the second assignment throws NS_SUCCESS_DOM_NO_OPERATION.
@@ -594,11 +606,8 @@
   /* 17: NS_ERROR_MODULE_EDITOR */
   /* ======================================================================= */
 #define MODULE NS_ERROR_MODULE_EDITOR
-  ERROR(NS_ERROR_EDITOR_NO_SELECTION,  FAILURE(1)),
-  ERROR(NS_ERROR_EDITOR_NO_TEXTNODE,   FAILURE(2)),
-  ERROR(NS_FOUND_TARGET,               FAILURE(3)),
-
-  ERROR(NS_EDITOR_ELEMENT_NOT_FOUND,   SUCCESS(1)),
+  ERROR(NS_SUCCESS_EDITOR_ELEMENT_NOT_FOUND,   SUCCESS(1)),
+  ERROR(NS_SUCCESS_EDITOR_FOUND_TARGET,        SUCCESS(2)),
 #undef MODULE
 
 
@@ -684,6 +693,8 @@
   ERROR(NS_ERROR_SRI_CORRUPT,                      FAILURE(200)),
   ERROR(NS_ERROR_SRI_DISABLED,                     FAILURE(201)),
   ERROR(NS_ERROR_SRI_NOT_ELIGIBLE,                 FAILURE(202)),
+  ERROR(NS_ERROR_SRI_UNEXPECTED_HASH_TYPE,         FAILURE(203)),
+  ERROR(NS_ERROR_SRI_IMPORT,                       FAILURE(204)),
 
   /* CMS specific nsresult error codes.  Note: the numbers used here correspond
    * to the values in nsICMSMessageErrors.idl. */
@@ -926,23 +937,6 @@
 #undef MODULE
 
   /* ======================================================================= */
-  /* 37: NS_ERROR_MODULE_DOM_BLUETOOTH */
-  /* ======================================================================= */
-#define MODULE NS_ERROR_MODULE_DOM_BLUETOOTH
-  ERROR(NS_ERROR_DOM_BLUETOOTH_FAIL,                      FAILURE(1)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_NOT_READY,                 FAILURE(2)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_NOMEM,                     FAILURE(3)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_BUSY,                      FAILURE(4)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_DONE,                      FAILURE(5)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_UNSUPPORTED,               FAILURE(6)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_PARM_INVALID,              FAILURE(7)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_UNHANDLED,                 FAILURE(8)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_AUTH_FAILURE,              FAILURE(9)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_RMT_DEV_DOWN,              FAILURE(10)),
-  ERROR(NS_ERROR_DOM_BLUETOOTH_AUTH_REJECTED,             FAILURE(11)),
-#undef MODULE
-
-  /* ======================================================================= */
   /* 38: NS_ERROR_MODULE_SIGNED_APP */
   /* ======================================================================= */
 #define MODULE NS_ERROR_MODULE_SIGNED_APP
@@ -988,6 +982,10 @@
   ERROR(NS_ERROR_DOM_MEDIA_MEDIASINK_ERR,       FAILURE(11)),
   ERROR(NS_ERROR_DOM_MEDIA_DEMUXER_ERR,         FAILURE(12)),
   ERROR(NS_ERROR_DOM_MEDIA_CDM_ERR,             FAILURE(13)),
+  ERROR(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,    FAILURE(14)),
+
+  /* Internal platform-related errors */
+  ERROR(NS_ERROR_DOM_MEDIA_CUBEB_INITIALIZATION_ERR,  FAILURE(101)),
 #undef MODULE
 
   /* ======================================================================= */

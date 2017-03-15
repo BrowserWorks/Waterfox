@@ -14,17 +14,18 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1000870
     <script type="text/javascript">
       SimpleTest.waitForExplicitFinish();
       function startTest() {
-        var iframe = document.getElementById("testFrame");
-        iframe.src = "pointerevent_change-touch-action-onpointerdown_touch-manual.html";
+        runTestInNewWindow("pointerevent_change-touch-action-onpointerdown_touch-manual.html");
       }
       function executeTest(int_win) {
         const WM_VSCROLL = 0x0115;
         sendTouchEvent(int_win, "target0", "touchstart");
         sendTouchEvent(int_win, "target0", "touchmove");
         sendTouchEvent(int_win, "target0", "touchend");
-        //sendTouchEvent(int_win, "target0", "touchstart");
-        //sendTouchEvent(int_win, "target0", "touchmove");
-        //sendTouchEvent(int_win, "target0", "touchend");
+
+        // NOTE: This testcase is about that modifying touch-action during a
+        // pointerdown callback "should not" affect the gesture detection of the
+        // touch session started by the pointerdown. That is, a scroll should
+        // still fired by gesture detection, instead of launching by our own.
         var utils = _getDOMWindowUtils(int_win);
         var target0 = int_win.document.getElementById("target0");
         utils.sendNativeMouseScrollEvent(target0.getBoundingClientRect().left + 5,
@@ -34,6 +35,5 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1000870
     </script>
   </head>
   <body>
-    <iframe id="testFrame" height="800" width="1000"></iframe>
   </body>
 </html>

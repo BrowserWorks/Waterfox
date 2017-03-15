@@ -31,7 +31,6 @@
 #include "nsDOMJSUtils.h"
 #include "nsGlobalWindow.h"
 #include "nsIAlertsService.h"
-#include "nsIAppsService.h"
 #include "nsIContentPermissionPrompt.h"
 #include "nsIDocument.h"
 #include "nsILoadContext.h"
@@ -55,10 +54,6 @@
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 #include "WorkerScope.h"
-
-#ifdef MOZ_B2G
-#include "nsIDOMDesktopNotification.h"
-#endif
 
 namespace mozilla {
 namespace dom {
@@ -928,6 +923,21 @@ NotificationTask::Run()
   return NS_OK;
 }
 
+bool
+Notification::RequireInteractionEnabled(JSContext* aCx, JSObject* aOjb)
+{
+  if (NS_IsMainThread()) {
+    return Preferences::GetBool("dom.webnotifications.requireinteraction.enabled", false);
+  }
+
+  WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(aCx);
+  if (!workerPrivate) {
+    return false;
+  }
+
+  return workerPrivate->DOMWorkerNotificationRIEnabled();
+}
+
 // static
 bool
 Notification::PrefEnabled(JSContext* aCx, JSObject* aObj)
@@ -959,11 +969,13 @@ Notification::Notification(nsIGlobalObject* aGlobal, const nsAString& aID,
                            const nsAString& aTitle, const nsAString& aBody,
                            NotificationDirection aDir, const nsAString& aLang,
                            const nsAString& aTag, const nsAString& aIconUrl,
+                           bool aRequireInteraction,
                            const NotificationBehavior& aBehavior)
   : DOMEventTargetHelper(),
     mWorkerPrivate(nullptr), mObserver(nullptr),
     mID(aID), mTitle(aTitle), mBody(aBody), mDir(aDir), mLang(aLang),
-    mTag(aTag), mIconUrl(aIconUrl), mBehavior(aBehavior), mData(JS::NullValue()),
+    mTag(aTag), mIconUrl(aIconUrl), mRequireInteraction(aRequireInteraction),
+    mBehavior(aBehavior), mData(JS::NullValue()),
     mIsClosed(false), mIsStored(false), mTaskCount(0)
 {
   if (NS_IsMainThread()) {
@@ -1186,6 +1198,7 @@ Notification::CreateInternal(nsIGlobalObject* aGlobal,
                                                          aOptions.mLang,
                                                          aOptions.mTag,
                                                          aOptions.mIcon,
+                                                         aOptions.mRequireInteraction,
                                                          aOptions.mMozbehavior);
   rv = notification->Init();
   NS_ENSURE_SUCCESS(rv, nullptr);
@@ -1488,15 +1501,6 @@ MainThreadNotificationObserver::Observe(nsISupports* aSubject, const char* aTopi
       }
     }
   } else if (!strcmp("alertfinished", aTopic)) {
-    // In b2g-desktop, if the app is closed, closing a notification still
-    // triggers the observer which might be alive even though the owner window
-    // was closed. Keeping this until we remove the close event (Bug 1139363)
-    // from implementation.
-    nsCOMPtr<nsPIDOMWindowInner> window = notification->GetOwner();
-    if (NS_WARN_IF(!window || !window->IsCurrentInnerWindow())) {
-      return NS_ERROR_FAILURE;
-    }
-
     notification->UnpersistNotification();
     notification->mIsClosed = true;
     notification->DispatchTrustedEvent(NS_LITERAL_STRING("close"));
@@ -1766,57 +1770,16 @@ Notification::ShowInternal()
                                                                  IsInPrivateBrowsing());
 
 
-#ifdef MOZ_B2G
-  nsCOMPtr<nsIAppNotificationService> appNotifier =
-    do_GetService("@mozilla.org/system-alerts-service;1");
-  if (appNotifier) {
-    uint32_t appId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
-    if (mWorkerPrivate) {
-      appId = mWorkerPrivate->GetPrincipal()->GetAppId();
-    } else {
-      nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
-      if (window) {
-        appId = window->GetDoc()->NodePrincipal()->GetAppId();
-      }
-    }
-
-    if (appId != nsIScriptSecurityManager::UNKNOWN_APP_ID) {
-      nsCOMPtr<nsIAppsService> appsService = do_GetService("@mozilla.org/AppsService;1");
-      nsString manifestUrl = EmptyString();
-      nsresult rv = appsService->GetManifestURLByLocalId(appId, manifestUrl);
-      if (NS_SUCCEEDED(rv)) {
-        mozilla::AutoSafeJSContext cx;
-        JS::Rooted<JS::Value> val(cx);
-        AppNotificationServiceOptions ops;
-        ops.mTextClickable = true;
-        ops.mManifestURL = manifestUrl;
-        GetAlertName(ops.mId);
-        ops.mDbId = mID;
-        ops.mDir = DirectionToString(mDir);
-        ops.mLang = mLang;
-        ops.mTag = mTag;
-        ops.mData = mDataAsBase64;
-        ops.mMozbehavior = mBehavior;
-        ops.mMozbehavior.mSoundFile = soundUrl;
-
-        if (!ToJSValue(cx, ops, &val)) {
-          NS_WARNING("Converting dict to object failed!");
-          return;
-        }
-
-        appNotifier->ShowAppNotification(iconUrl, mTitle, mBody,
-                                         alertObserver, val);
-        return;
-      }
-    }
-  }
-#endif
-
   // In the case of IPC, the parent process uses the cookie to map to
   // nsIObserver. Thus the cookie must be unique to differentiate observers.
   nsString uniqueCookie = NS_LITERAL_STRING("notification:");
   uniqueCookie.AppendInt(sCount++);
   bool inPrivateBrowsing = IsInPrivateBrowsing();
+
+  bool requireInteraction = mRequireInteraction;
+  if (!Preferences::GetBool("dom.webnotifications.requireinteraction.enabled", false)) {
+    requireInteraction = false;
+  }
 
   nsAutoString alertName;
   GetAlertName(alertName);
@@ -1831,7 +1794,8 @@ Notification::ShowInternal()
                    mLang,
                    mDataAsBase64,
                    GetPrincipal(),
-                   inPrivateBrowsing);
+                   inPrivateBrowsing,
+                   requireInteraction);
   NS_ENSURE_SUCCESS_VOID(rv);
 
   if (isPersistent) {
@@ -2340,25 +2304,16 @@ Notification::GetOrigin(nsIPrincipal* aPrincipal, nsString& aOrigin)
     return NS_ERROR_FAILURE;
   }
 
-  uint16_t appStatus = aPrincipal->GetAppStatus();
-  uint32_t appId = aPrincipal->GetAppId();
-
-  nsresult rv;
-  if (appStatus == nsIPrincipal::APP_STATUS_NOT_INSTALLED ||
-      appId == nsIScriptSecurityManager::NO_APP_ID ||
-      appId == nsIScriptSecurityManager::UNKNOWN_APP_ID) {
-    rv = nsContentUtils::GetUTFOrigin(aPrincipal, aOrigin);
-    NS_ENSURE_SUCCESS(rv, rv);
-  } else {
-    // If we are in "app code", use manifest URL as unique origin since
-    // multiple apps can share the same origin but not same notifications.
-    nsCOMPtr<nsIAppsService> appsService =
-      do_GetService("@mozilla.org/AppsService;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-    appsService->GetManifestURLByLocalId(appId, aOrigin);
-  }
+  nsresult rv = nsContentUtils::GetUTFOrigin(aPrincipal, aOrigin);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
+}
+
+bool
+Notification::RequireInteraction() const
+{
+  return mRequireInteraction;
 }
 
 void
@@ -2392,7 +2347,6 @@ Notification::GetData(JSContext* aCx,
     return;
   }
 
-  JS::ExposeValueToActiveJS(mData);
   aRetval.set(mData);
 }
 
@@ -2698,7 +2652,7 @@ Notification::ShowPersistentNotification(JSContext* aCx,
   // which leads to uglier code.
   NotificationPermission permission = GetPermission(aGlobal, aRv);
 
-  // "If permission for notification’s origin is not "granted", reject promise with a TypeError exception, and terminate these substeps."
+  // "If permission for notification's origin is not "granted", reject promise with a TypeError exception, and terminate these substeps."
   if (NS_WARN_IF(aRv.Failed()) || permission == NotificationPermission::Denied) {
     ErrorResult result;
     result.ThrowTypeError<MSG_NOTIFICATION_PERMISSION_DENIED>();
@@ -2803,22 +2757,7 @@ Notification::Observe(nsISupports* aSubject, const char* aTopic,
         obs->RemoveObserver(this, DOM_WINDOW_FROZEN_TOPIC);
       }
 
-      uint16_t appStatus = nsIPrincipal::APP_STATUS_NOT_INSTALLED;
-      uint32_t appId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
-
-      nsCOMPtr<nsIDocument> doc = window ? window->GetExtantDoc() : nullptr;
-      nsCOMPtr<nsIPrincipal> nodePrincipal = doc ? doc->NodePrincipal() :
-                                             nullptr;
-      if (nodePrincipal) {
-        appStatus = nodePrincipal->GetAppStatus();
-        appId = nodePrincipal->GetAppId();
-      }
-
-      if (appStatus == nsIPrincipal::APP_STATUS_NOT_INSTALLED ||
-          appId == nsIScriptSecurityManager::NO_APP_ID ||
-          appId == nsIScriptSecurityManager::UNKNOWN_APP_ID) {
-        CloseInternal();
-      }
+      CloseInternal();
     }
   }
 

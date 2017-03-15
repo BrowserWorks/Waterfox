@@ -81,71 +81,6 @@ function makeUUID() {
   return uuidGen.generateUUID().toString();
 }
 
-function* serve_update(xml, perform_update) {
-  testserver.registerPathHandler("/data/update.xml", (request, response) => {
-    response.write(xml);
-  });
-
-  try {
-    yield perform_update();
-  }
-  finally {
-    testserver.registerPathHandler("/data/update.xml", null);
-  }
-}
-
-// Runs an update check making it use the passed in xml string. Uses the direct
-// call to the update function so we get rejections on failure.
-function* install_system_addons(xml) {
-  do_print("Triggering system add-on update check.");
-
-  yield serve_update(xml, function*() {
-    let { XPIProvider } = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
-    yield XPIProvider.updateSystemAddons();
-  });
-}
-
-// Runs a full add-on update check which will in some cases do a system add-on
-// update check. Always succeeds.
-function* update_all_addons(xml) {
-  do_print("Triggering full add-on update check.");
-
-  yield serve_update(xml, function() {
-    return new Promise(resolve => {
-      Services.obs.addObserver(function() {
-        Services.obs.removeObserver(arguments.callee, "addons-background-update-complete");
-
-        resolve();
-      }, "addons-background-update-complete", false);
-
-      // Trigger the background update timer handler
-      gInternalManager.notify(null);
-    });
-  });
-}
-
-// Builds an update.xml file for an update check based on the data passed.
-function* build_xml(addons) {
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n\n<updates>\n`;
-  if (addons) {
-    xml += `  <addons>\n`;
-    for (let addon of addons) {
-      xml += `    <addon id="${addon.id}" URL="${root + addon.path}" version="${addon.version}"`;
-      if (addon.size)
-        xml += ` size="${addon.size}"`;
-      if (addon.hashFunction)
-        xml += ` hashFunction="${addon.hashFunction}"`;
-      if (addon.hashValue)
-        xml += ` hashValue="${addon.hashValue}"`;
-      xml += `/>\n`;
-    }
-    xml += `  </addons>\n`;
-  }
-  xml += `</updates>\n`;
-
-  return xml;
-}
-
 function* check_installed(conditions) {
   for (let i = 0; i < conditions.length; i++) {
     let condition = conditions[i];
@@ -289,19 +224,6 @@ const TEST_CONDITIONS = {
  *             if missing the test condition's initialState is used.
  */
 const TESTS = {
-  // Test that an error response does nothing
-  error: {
-    test: function*() {
-      try {
-        yield install_system_addons("foobar");
-        do_throw("Expected to fail the update check");
-      }
-      catch (e) {
-        do_check_true(true, "Expected to fail the update check");
-      }
-    },
-  },
-
   // Test that a blank response does nothing
   blank: {
     updateList: null,
@@ -488,9 +410,9 @@ const TESTS = {
   // Correct sizes and hashes should work
   checkSizeHash: {
     updateList: [
-      { id: "system2@tests.mozilla.org", version: "3.0", path: "system2_3.xpi", size: 4672 },
-      { id: "system3@tests.mozilla.org", version: "3.0", path: "system3_3.xpi", hashFunction: "sha1", hashValue: "2df604b37b13766c0e04f1b7f59800e038f46cd5" },
-      { id: "system5@tests.mozilla.org", version: "1.0", path: "system5_1.xpi", size: 4671, hashFunction: "sha1", hashValue: "f13dcaa8bfacaa222189bcbb0074972c05ceb621" }
+      { id: "system2@tests.mozilla.org", version: "3.0", path: "system2_3.xpi", size: 4697 },
+      { id: "system3@tests.mozilla.org", version: "3.0", path: "system3_3.xpi", hashFunction: "sha1", hashValue: "a4c7198d56deb315511c02937fd96c696de6cb84" },
+      { id: "system5@tests.mozilla.org", version: "1.0", path: "system5_1.xpi", size: 4691, hashFunction: "sha1", hashValue: "6887b916a1a9a5338b0df4181f6187f5396861eb" }
     ],
     finalState: {
       blank: [
@@ -529,6 +451,33 @@ const TESTS = {
     fails: true,
     updateList: [
       { id: "system1@tests.mozilla.org", version: "1.0", path: "system1_1_badcert.xpi" },
+      { id: "system3@tests.mozilla.org", version: "1.0", path: "system3_1.xpi" }
+    ],
+  },
+
+  // An unpacked add-on should stop updates.
+  notPacked: {
+    fails: true,
+    updateList: [
+      { id: "system6@tests.mozilla.org", version: "1.0", path: "system6_1_unpack.xpi" },
+      { id: "system3@tests.mozilla.org", version: "1.0", path: "system3_1.xpi" }
+    ],
+  },
+
+  // A non-bootstrap add-on should stop updates.
+  notBootstrap: {
+    fails: true,
+    updateList: [
+      { id: "system6@tests.mozilla.org", version: "1.0", path: "system6_2_notBootstrap.xpi" },
+      { id: "system3@tests.mozilla.org", version: "1.0", path: "system3_1.xpi" }
+    ],
+  },
+
+  // A non-multiprocess add-on should stop updates.
+  notMultiprocess: {
+    fails: true,
+    updateList: [
+      { id: "system6@tests.mozilla.org", version: "1.0", path: "system6_3_notMultiprocess.xpi" },
       { id: "system3@tests.mozilla.org", version: "1.0", path: "system3_1.xpi" }
     ],
   }
@@ -573,7 +522,7 @@ function* setup_conditions(setup) {
   yield check_installed(setup.initialState);
 }
 
-function* verify_state(initialState, finalState = undefined) {
+function* verify_state(initialState, finalState = undefined, alreadyUpgraded = false) {
   let expectedDirs = 0;
 
   // If the initial state was using the profile set then that directory will
@@ -591,13 +540,17 @@ function* verify_state(initialState, finalState = undefined) {
     expectedDirs++;
   }
 
+  // Since upgrades are restartless now, the previous update dir hasn't been removed.
+  if (alreadyUpgraded) {
+    expectedDirs++;
+  }
+
   do_print("Checking final state.");
 
   let dirs = yield get_directories();
   do_check_eq(dirs.length, expectedDirs);
 
-  // Bug 1204156: Currently switching to the new state requires a restart
-  // yield check_installed(...finalState);
+  yield check_installed(...finalState);
 
   // Check that the new state is active after a restart
   yield promiseRestartManager();
@@ -615,7 +568,7 @@ function* exec_test(setupName, testName) {
       yield test.test();
     }
     else {
-      yield install_system_addons(yield build_xml(test.updateList));
+      yield installSystemAddons(yield buildSystemAddonUpdates(test.updateList, root), testserver);
     }
 
     if (test.fails) {
@@ -656,10 +609,10 @@ add_task(function*() {
 add_task(function* test_addon_update() {
   yield setup_conditions(TEST_CONDITIONS.blank);
 
-  yield update_all_addons(yield build_xml([
+  yield updateAllSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "system2_2.xpi" },
     { id: "system3@tests.mozilla.org", version: "2.0", path: "system3_2.xpi" }
-  ]));
+  ], root), testserver);
 
   yield verify_state(TEST_CONDITIONS.blank.initialState, [
     {isUpgrade: false, version: null},
@@ -677,10 +630,10 @@ add_task(function* test_app_update_disabled() {
   yield setup_conditions(TEST_CONDITIONS.blank);
 
   Services.prefs.setBoolPref(PREF_APP_UPDATE_ENABLED, false);
-  yield update_all_addons(yield build_xml([
+  yield updateAllSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "system2_2.xpi" },
     { id: "system3@tests.mozilla.org", version: "2.0", path: "system3_2.xpi" }
-  ]));
+  ], root), testserver);
   Services.prefs.clearUserPref(PREF_APP_UPDATE_ENABLED);
 
   yield verify_state(TEST_CONDITIONS.blank.initialState);
@@ -695,10 +648,10 @@ add_task(function* test_safe_mode() {
   yield setup_conditions(TEST_CONDITIONS.blank);
 
   Services.prefs.setBoolPref(PREF_APP_UPDATE_ENABLED, false);
-  yield update_all_addons(yield build_xml([
+  yield updateAllSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "system2_2.xpi" },
     { id: "system3@tests.mozilla.org", version: "2.0", path: "system3_2.xpi" }
-  ]));
+  ], root), testserver);
   Services.prefs.clearUserPref(PREF_APP_UPDATE_ENABLED);
 
   yield verify_state(TEST_CONDITIONS.blank.initialState);
@@ -712,10 +665,10 @@ add_task(function* test_safe_mode() {
 add_task(function* test_match_default() {
   yield setup_conditions(TEST_CONDITIONS.withAppSet);
 
-  yield install_system_addons(yield build_xml([
+  yield installSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "system2_2.xpi" },
     { id: "system3@tests.mozilla.org", version: "2.0", path: "system3_2.xpi" }
-  ]));
+  ], root), testserver);
 
   // Shouldn't have installed an updated set
   yield verify_state(TEST_CONDITIONS.withAppSet.initialState);
@@ -727,10 +680,10 @@ add_task(function* test_match_default() {
 add_task(function* test_match_default_revert() {
   yield setup_conditions(TEST_CONDITIONS.withBothSets);
 
-  yield install_system_addons(yield build_xml([
+  yield installSystemAddons(yield buildSystemAddonUpdates([
     { id: "system1@tests.mozilla.org", version: "1.0", path: "system1_1.xpi" },
     { id: "system2@tests.mozilla.org", version: "1.0", path: "system2_1.xpi" }
-  ]));
+  ], root), testserver);
 
   // This should revert to the default set instead of installing new versions
   // into an updated set.
@@ -749,10 +702,10 @@ add_task(function* test_match_default_revert() {
 add_task(function* test_match_current() {
   yield setup_conditions(TEST_CONDITIONS.withBothSets);
 
-  yield install_system_addons(yield build_xml([
+  yield installSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "system2_2.xpi" },
     { id: "system3@tests.mozilla.org", version: "2.0", path: "system3_2.xpi" }
-  ]));
+  ], root), testserver);
 
   // This should remain with the current set instead of creating a new copy
   let set = JSON.parse(Services.prefs.getCharPref(PREF_SYSTEM_ADDON_SET));
@@ -768,10 +721,10 @@ add_task(function* test_no_download() {
   yield setup_conditions(TEST_CONDITIONS.withBothSets);
 
   // The missing file here is unneeded since there is a local version already
-  yield install_system_addons(yield build_xml([
+  yield installSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "missing.xpi" },
     { id: "system4@tests.mozilla.org", version: "1.0", path: "system4_1.xpi" }
-  ]));
+  ], root), testserver);
 
   yield verify_state(TEST_CONDITIONS.withBothSets.initialState, [
     {isUpgrade: false, version: "1.0"},
@@ -788,15 +741,15 @@ add_task(function* test_no_download() {
 add_task(function* test_double_update() {
   yield setup_conditions(TEST_CONDITIONS.withAppSet);
 
-  yield install_system_addons(yield build_xml([
+  yield installSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "system2_2.xpi" },
     { id: "system3@tests.mozilla.org", version: "1.0", path: "system3_1.xpi" }
-  ]));
+  ], root), testserver);
 
-  yield install_system_addons(yield build_xml([
+  yield installSystemAddons(yield buildSystemAddonUpdates([
     { id: "system3@tests.mozilla.org", version: "2.0", path: "system3_2.xpi" },
     { id: "system4@tests.mozilla.org", version: "1.0", path: "system4_1.xpi" }
-  ]));
+  ], root), testserver);
 
   yield verify_state(TEST_CONDITIONS.withAppSet.initialState, [
     {isUpgrade: false, version: null},
@@ -804,7 +757,7 @@ add_task(function* test_double_update() {
     {isUpgrade: true, version: "2.0"},
     {isUpgrade: true, version: "1.0"},
     {isUpgrade: false, version: null}
-  ]);
+  ], true);
 
   yield promiseShutdownManager();
 });
@@ -813,10 +766,10 @@ add_task(function* test_double_update() {
 add_task(function* test_update_purges() {
   yield setup_conditions(TEST_CONDITIONS.withBothSets);
 
-  yield install_system_addons(yield build_xml([
+  yield installSystemAddons(yield buildSystemAddonUpdates([
     { id: "system2@tests.mozilla.org", version: "2.0", path: "system2_2.xpi" },
     { id: "system3@tests.mozilla.org", version: "1.0", path: "system3_1.xpi" }
-  ]));
+  ], root), testserver);
 
   yield verify_state(TEST_CONDITIONS.withBothSets.initialState, [
     {isUpgrade: false, version: "1.0"},
@@ -826,7 +779,7 @@ add_task(function* test_update_purges() {
     {isUpgrade: false, version: null}
   ]);
 
-  yield install_system_addons(yield build_xml(null));
+  yield installSystemAddons(yield buildSystemAddonUpdates(null), testserver);
 
   let dirs = yield get_directories();
   do_check_eq(dirs.length, 1);

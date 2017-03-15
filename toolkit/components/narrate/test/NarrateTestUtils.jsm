@@ -6,6 +6,7 @@
 
 const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://testing-common/ContentTaskUtils.jsm");
 
 this.EXPORTED_SYMBOLS = [ "NarrateTestUtils" ];
@@ -107,22 +108,41 @@ this.NarrateTestUtils = {
     });
   },
 
-  waitForVoiceOptions: function(window) {
-    let options = window.document.querySelector(this.VOICE_OPTIONS);
+  waitForNarrateToggle: function(window) {
+    let toggle = window.document.querySelector(this.TOGGLE);
     return ContentTaskUtils.waitForCondition(
-      () => {
-        return options.childElementCount > 1;
-      }, "voice select options populated.");
+      () => !toggle.hidden, "");
   },
 
   waitForPrefChange: function(pref) {
     return new Promise(resolve => {
       function observeChange() {
         Services.prefs.removeObserver(pref, observeChange);
-        resolve();
+        resolve(Preferences.get(pref));
       }
 
       Services.prefs.addObserver(pref, observeChange, false);
+    });
+  },
+
+  sendBoundaryEvent: function(window, name, charIndex) {
+    let detail = { type: "boundary", args: { name, charIndex } };
+    window.dispatchEvent(new window.CustomEvent("testsynthevent",
+      { detail: detail }));
+  },
+
+  isWordHighlightGone: function(window, ok) {
+    let $ = window.document.querySelector.bind(window.document);
+    ok(!$(".narrate-word-highlight"), "No more word highlights exist");
+  },
+
+  getWordHighlights: function(window) {
+    let $$ = window.document.querySelectorAll.bind(window.document);
+    let nodes = Array.from($$(".narrate-word-highlight"));
+    return nodes.map(node => {
+      return { word: node.dataset.word,
+               left: Number(node.style.left.replace(/px$/, "")),
+               top: Number(node.style.top.replace(/px$/, ""))};
     });
   }
 };

@@ -6,15 +6,18 @@ lag behind in implementing (usually due to not being high priority). High reques
 ### Features
 
 
-* Compiled with Clang-cl on Windows
+* Compiled with Clang-cl on Windows, Clang+LLVM on Linux
 * Disabled Encrypted Media Extensions (EME)
 * Disabled Web Runtime (deprecated as of 2015)
-* Removed Pocket completely
-* Removed all telemetry/data collection being sent back to Mozilla
-* Disabled the 64-Bit NPAPI white-list so that the user can decide what plugins they can run (doesn’t make sense for Mozilla to do this as most of their user base probably aren’t technically proficient), but it’s something Waterfox users are capable of handling.
-* I’ve also allowed unsigned extensions to run as well as there are still some old extensions people like to use (it’s disabled by Mozilla for the same reason as above)
-* Windows XP 64-Bit support
+* Removed Pocket
+* Removed Telemetry
+* Removed data collection
+* Removed startup profiling
+* Allow running of all 64-Bit NPAPI plugins
+* Allow running of unsigned extensions
 * Removal of Sponsored Tiles on New Tab Page
+* Addition of Duplicate Tab option (toggle with browser.tabs.duplicateTab, thanks to PandaCodex)
+* Locale selector in about:preferences > General (further improved by PandaCodex)
 
 
 Waterfox is released under the Mozilla Public License Version 2.0:

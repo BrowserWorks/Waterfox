@@ -2,21 +2,44 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+body {
+  font-size: 1.25rem;
+}
+
 .title {
   background-image: url("chrome://browser/skin/tab-crashed.svg");
+}
+
+.title > h1,
+.offers {
+  margin-left: 14px;
+}
+
+.title > h1 {
+  /**
+   * Add commentary?
+   */
+  padding-right: 14px;
+}
+
+.container {
+  width: 45%;
 }
 
 #reportSent {
   font-weight: bold;
 }
 
-#crash-reporter-container {
-  width: 80%;
+#reportBox {
   background-color: var(--in-content-box-background-hover);
   margin: 24px 0;
   padding: 14px;
   border: 1px solid var(--in-content-box-border-color);
   border-radius: 2px;
+}
+
+#reportBox > h2:first-child {
+  margin-top: 0;
 }
 
 #crash-reporter-title {
@@ -31,12 +54,48 @@ textarea {
   resize: none;
 }
 
+input[type="text"],
+input[type="checkbox"] {
+  -moz-margin-start: 0px;
+}
+
 #options {
   list-style: none;
   margin-inline-start: 0;
 }
 
-input[type="text"],
-#options > li {
-  margin: 14px 0 0 0;
+#options > li,
+#email {
+  margin-top: 14px;
+}
+
+.checkbox-with-label {
+  display: flex;
+}
+
+.checkbox-with-label > label {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+/**
+ * Hack alert: the #autoSubmit checkbox has a long label, which means
+ * it often wraps, at least in en-US. Bug 418833 and bug 1317795 allows
+ * us to fix this properly, but bug 418833 didn't uplift in time for this
+ * release. We use some hackery here to make sure that this label wraps
+ * properly, and doesn't end up underneath the checkbox pseudoelement.
+ * We do this by setting a negative margin on the pseudoelement, and then
+ * a positive equivalent margin on the label itself.
+ *
+ * The magic number of 35px is derived from the total width of the checkbox.
+ * The checkbox width is explicitly set at 23px. This, plus the 1px border on either
+ * side gives us 25px. Then there's the 10px margin-inline-end, which gives us 35px.
+ */
+#autoSubmit + label:before {
+  margin-inline-start: -35px;
+}
+
+#autoSubmit + label {
+  margin-inline-start: 35px;
+  line-height: 1.75em;
 }

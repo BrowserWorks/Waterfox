@@ -7,7 +7,7 @@
 "use strict";
 
 const {LocalizationHelper} = require("devtools/shared/l10n");
-const L10N = new LocalizationHelper("devtools/locale/inspector.properties");
+const L10N = new LocalizationHelper("devtools/client/locales/inspector.properties");
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
@@ -119,12 +119,7 @@ function setImageTooltip(tooltip, doc, imageUrl, options) {
  */
 function setBrokenImageTooltip(tooltip, doc) {
   let div = doc.createElementNS(XHTML_NS, "div");
-  div.style.cssText = `
-    box-sizing: border-box;
-    height: 100%;
-    text-align: center;
-    line-height: 30px;`;
-
+  div.className = "theme-comment devtools-tooltip-image-broken";
   let message = L10N.getStr("previewTooltip.image.brokenImage");
   div.textContent = message;
   tooltip.setContent(div, {width: 150, height: 30});

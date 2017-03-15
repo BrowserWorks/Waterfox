@@ -14,7 +14,7 @@ void
 StreamControl::AddReadStream(ReadStream::Controllable* aReadStream)
 {
   AssertOwningThread();
-  MOZ_ASSERT(aReadStream);
+  MOZ_DIAGNOSTIC_ASSERT(aReadStream);
   MOZ_ASSERT(!mReadStreamList.Contains(aReadStream));
   mReadStreamList.AppendElement(aReadStream);
 }
@@ -38,25 +38,29 @@ StreamControl::NoteClosed(ReadStream::Controllable* aReadStream,
 StreamControl::~StreamControl()
 {
   // owning thread only, but can't call virtual AssertOwningThread in destructor
-  MOZ_ASSERT(mReadStreamList.IsEmpty());
+  MOZ_DIAGNOSTIC_ASSERT(mReadStreamList.IsEmpty());
 }
 
 void
 StreamControl::CloseReadStreams(const nsID& aId)
 {
   AssertOwningThread();
-  DebugOnly<uint32_t> closedCount = 0;
+#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
+  uint32_t closedCount = 0;
+#endif
 
   ReadStreamList::ForwardIterator iter(mReadStreamList);
   while (iter.HasMore()) {
     RefPtr<ReadStream::Controllable> stream = iter.GetNext();
     if (stream->MatchId(aId)) {
       stream->CloseStream();
+#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
       closedCount += 1;
+#endif
     }
   }
 
-  MOZ_ASSERT(closedCount > 0);
+  MOZ_DIAGNOSTIC_ASSERT(closedCount > 0);
 }
 
 void

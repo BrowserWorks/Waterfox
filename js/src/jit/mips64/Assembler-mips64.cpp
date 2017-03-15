@@ -24,6 +24,7 @@ ABIArgGenerator::next(MIRType type)
 {
     switch (type) {
       case MIRType::Int32:
+      case MIRType::Int64:
       case MIRType::Pointer: {
         Register destReg;
         if (GetIntArgReg(usedArgSlots_, &destReg))
@@ -174,11 +175,9 @@ TraceOneDataRelocation(JSTracer* trc, Instruction* inst)
     // are not cleared, this must be a Value.
     uintptr_t word = reinterpret_cast<uintptr_t>(ptr);
     if (word >> JSVAL_TAG_SHIFT) {
-        jsval_layout layout;
-        layout.asBits = word;
-        Value v = IMPL_TO_JSVAL(layout);
+        Value v = Value::fromRawBits(word);
         TraceManuallyBarrieredEdge(trc, &v, "ion-masm-value");
-        ptr = (void*)JSVAL_TO_IMPL(v).asBits;
+        ptr = (void*)v.bitsAsPunboxPointer();
     } else {
         // No barrier needed since these are constants.
         TraceManuallyBarrieredGenericPointerEdge(trc, reinterpret_cast<gc::Cell**>(&ptr),
@@ -335,7 +334,7 @@ Assembler::bind(RepatchLabel* label)
             inst[0].setBOffImm16(BOffImm16(offset));
         } else if (inst[0].encode() == inst_beq.encode()) {
             // Handle open long unconditional jumps created by
-            // MacroAssemblerMIPSShared::ma_b(..., wasm::JumpTarget, ...).
+            // MacroAssemblerMIPSShared::ma_b(..., wasm::Trap, ...).
             // We need to add it to long jumps array here.
             // See MacroAssemblerMIPS64::branchWithCode().
             MOZ_ASSERT(inst[1].encode() == NopInst);
@@ -348,7 +347,7 @@ Assembler::bind(RepatchLabel* label)
             inst[4] = InstReg(op_special, ScratchRegister, zero, zero, ff_jr).encode();
         } else {
             // Handle open long conditional jumps created by
-            // MacroAssemblerMIPSShared::ma_b(..., wasm::JumpTarget, ...).
+            // MacroAssemblerMIPSShared::ma_b(..., wasm::Trap, ...).
             inst[0] = invertBranch(inst[0], BOffImm16(7 * sizeof(uint32_t)));
             // No need for a "nop" here because we can clobber scratch.
             // We need to add it to long jumps array here.

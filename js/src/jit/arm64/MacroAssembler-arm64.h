@@ -306,9 +306,8 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     void pushValue(const Value& val) {
         vixl::UseScratchRegisterScope temps(this);
         const Register scratch = temps.AcquireX().asUnsized();
-        jsval_layout jv = JSVAL_TO_IMPL(val);
         if (val.isMarkable()) {
-            BufferOffset load = movePatchablePtr(ImmPtr((void*)jv.asBits), scratch);
+            BufferOffset load = movePatchablePtr(ImmPtr(val.bitsAsPunboxPointer()), scratch);
             writeDataRelocation(val, load);
             push(scratch);
         } else {
@@ -351,7 +350,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     }
     void moveValue(const Value& val, Register dest) {
         if (val.isMarkable()) {
-            BufferOffset load = movePatchablePtr(ImmPtr((void*)val.asRawBits()), dest);
+            BufferOffset load = movePatchablePtr(ImmPtr(val.bitsAsPunboxPointer()), dest);
             writeDataRelocation(val, load);
         } else {
             movePtr(ImmWord(val.asRawBits()), dest);
@@ -419,18 +418,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
 
     void emitSet(Condition cond, Register dest) {
         Cset(ARMRegister(dest, 64), cond);
-    }
-
-    template <typename T1, typename T2>
-    void cmpPtrSet(Condition cond, T1 lhs, T2 rhs, Register dest) {
-        cmpPtr(lhs, rhs);
-        emitSet(cond, dest);
-    }
-
-    template <typename T1, typename T2>
-    void cmp32Set(Condition cond, T1 lhs, T2 rhs, Register dest) {
-        cmp32(lhs, rhs);
-        emitSet(cond, dest);
     }
 
     void testNullSet(Condition cond, const ValueOperand& value, Register dest) {
@@ -510,10 +497,10 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     }
 
     using vixl::MacroAssembler::B;
-    void B(wasm::JumpTarget) {
+    void B(wasm::TrapDesc) {
         MOZ_CRASH("NYI");
     }
-    void B(wasm::JumpTarget, Condition cond) {
+    void B(wasm::TrapDesc, Condition cond) {
         MOZ_CRASH("NYI");
     }
 
@@ -685,7 +672,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
         loadPtr(addr, ip0);
         Br(vixl::ip0);
     }
-    void jump(wasm::JumpTarget target) {
+    void jump(wasm::TrapDesc target) {
         MOZ_CRASH("NYI");
     }
 
@@ -713,7 +700,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     }
     void movePtr(wasm::SymbolicAddress imm, Register dest) {
         BufferOffset off = movePatchablePtr(ImmWord(0xffffffffffffffffULL), dest);
-        append(AsmJSAbsoluteAddress(CodeOffset(off.getOffset()), imm));
+        append(wasm::SymbolicAccess(CodeOffset(off.getOffset()), imm));
     }
     void movePtr(ImmGCPtr imm, Register dest) {
         BufferOffset load = movePatchablePtr(ImmPtr(imm.value), dest);
@@ -1416,6 +1403,12 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
         convertInt32ToFloat32(operand.valueReg(), dest);
     }
 
+    void loadConstantDouble(wasm::RawF64 d, FloatRegister dest) {
+        loadConstantDouble(d.fp(), dest);
+    }
+    void loadConstantFloat32(wasm::RawF32 f, FloatRegister dest) {
+        loadConstantFloat32(f.fp(), dest);
+    }
     void loadConstantDouble(double d, FloatRegister dest) {
         Fmov(ARMFPRegister(dest, 64), d);
     }
@@ -1843,7 +1836,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     }
     void writeDataRelocation(const Value& val, BufferOffset load) {
         if (val.isMarkable()) {
-            gc::Cell* cell = reinterpret_cast<gc::Cell*>(val.toGCThing());
+            gc::Cell* cell = val.toMarkablePointer();
             if (cell && gc::IsInsideNursery(cell))
                 embedsNurseryPointers_ = true;
             dataRelocations_.writeUnsigned(load.getOffset());
@@ -2232,7 +2225,12 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
         vixl::MacroAssembler::Ret(vixl::lr);
     }
 
-    void convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest) {
+    bool convertUInt64ToDoubleNeedsTemp() {
+        return false;
+    }
+
+    void convertUInt64ToDouble(Register64 src, FloatRegister dest, Register temp) {
+        MOZ_ASSERT(temp == Register::Invalid());
         Ucvtf(ARMFPRegister(dest, 64), ARMRegister(src.reg, 64));
     }
 
@@ -2295,12 +2293,12 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     }
 
     void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
-        loadPtr(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), dest);
+        loadPtr(Address(GlobalReg, globalDataOffset - WasmGlobalRegBias), dest);
     }
     void loadWasmPinnedRegsFromTls() {
         loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg);
         loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalData)), GlobalReg);
-        adds32(Imm32(AsmJSGlobalRegBias), GlobalReg);
+        adds32(Imm32(WasmGlobalRegBias), GlobalReg);
     }
 
     // Overwrites the payload bits of a dest register containing a Value.
@@ -2317,6 +2315,10 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     uint32_t currentOffset() const {
         return nextOffset().getOffset();
     }
+
+    struct AutoPrepareForPatching {
+        explicit AutoPrepareForPatching(MacroAssemblerCompat&) {}
+    };
 
   protected:
     bool buildOOLFakeExitFrame(void* fakeReturnAddr) {

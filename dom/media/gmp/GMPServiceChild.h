@@ -11,6 +11,7 @@
 #include "mozilla/ipc/Transport.h"
 #include "mozilla/gmp/PGMPServiceChild.h"
 #include "nsRefPtrHashtable.h"
+#include "mozilla/dom/ContentChild.h"
 
 namespace mozilla {
 namespace gmp {
@@ -39,10 +40,9 @@ class GeckoMediaPluginServiceChild : public GeckoMediaPluginService
 public:
   static already_AddRefed<GeckoMediaPluginServiceChild> GetSingleton();
 
-  NS_IMETHOD GetPluginVersionForAPI(const nsACString& aAPI,
-                                    nsTArray<nsCString>* aTags,
-                                    bool* aHasPlugin,
-                                    nsACString& aOutVersion) override;
+  NS_IMETHOD HasPluginForAPI(const nsACString& aAPI,
+                             nsTArray<nsCString>* aTags,
+                             bool *aRetVal) override;
   NS_IMETHOD GetNodeId(const nsAString& aOrigin,
                        const nsAString& aTopLevelOrigin,
                        const nsAString& aGMPName,
@@ -54,6 +54,8 @@ public:
   void SetServiceChild(UniquePtr<GMPServiceChild>&& aServiceChild);
 
   void RemoveGMPContentParent(GMPContentParent* aGMPContentParent);
+
+  static void UpdateGMPCapabilities(nsTArray<mozilla::dom::GMPCapabilityData>&& aCapabilities);
 
 protected:
   void InitializePlugins(AbstractThread*) override

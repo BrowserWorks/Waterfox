@@ -55,10 +55,10 @@ PresentationRequesterCallback::NotifySuccess(const nsAString& aUrl)
     PresentationConnection::Create(mRequest->GetOwner(), mSessionId, aUrl,
                                    nsIPresentationService::ROLE_CONTROLLER);
   if (NS_WARN_IF(!connection)) {
-    mPromise->MaybeReject(NS_ERROR_DOM_OPERATION_ERR);
-    return NS_OK;
+    return NotifyError(NS_ERROR_DOM_OPERATION_ERR);
   }
 
+  mRequest->NotifyPromiseSettled();
   mPromise->MaybeResolve(connection);
 
   return mRequest->DispatchConnectionAvailableEvent(connection);
@@ -69,6 +69,7 @@ PresentationRequesterCallback::NotifyError(nsresult aError)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  mRequest->NotifyPromiseSettled();
   mPromise->MaybeReject(aError);
   return NS_OK;
 }
@@ -110,6 +111,10 @@ PresentationReconnectCallback::NotifySuccess(const nsAString& aUrl)
   // the session ID. Resolve the promise with this connection and dispatch
   // the event.
   if (mConnection) {
+    mConnection->NotifyStateChange(
+      mSessionId,
+      nsIPresentationSessionListener::STATE_CONNECTING,
+      NS_OK);
     mPromise->MaybeResolve(mConnection);
     rv = mRequest->DispatchConnectionAvailableEvent(mConnection);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -142,6 +147,12 @@ PresentationReconnectCallback::NotifySuccess(const nsAString& aUrl)
 NS_IMETHODIMP
 PresentationReconnectCallback::NotifyError(nsresult aError)
 {
+  if (mConnection) {
+    mConnection->NotifyStateChange(
+      mSessionId,
+      nsIPresentationSessionListener::STATE_CLOSED,
+      aError);
+  }
   return PresentationRequesterCallback::NotifyError(aError);
 }
 

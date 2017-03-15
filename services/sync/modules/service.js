@@ -44,6 +44,7 @@ const ENGINE_MODULES = {
   Password: "passwords.js",
   Prefs: "prefs.js",
   Tab: "tabs.js",
+  ExtensionStorage: "extension-storage.js",
 };
 
 const STORAGE_INFO_TYPES = [INFO_COLLECTIONS,
@@ -1291,7 +1292,7 @@ Sync11Service.prototype = {
   },
 
   sync: function sync(engineNamesToSync) {
-    let dateStr = new Date().toLocaleFormat(LOG_DATE_FORMAT);
+    let dateStr = Utils.formatTimestamp(new Date());
     this._log.debug("User-Agent: " + Utils.userAgent);
     this._log.info("Starting sync at " + dateStr);
     this._catch(function () {

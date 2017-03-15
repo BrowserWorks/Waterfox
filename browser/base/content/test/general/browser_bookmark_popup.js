@@ -16,58 +16,63 @@ StarUI._closePanelQuickForTesting = true;
 
 function* test_bookmarks_popup({isNewBookmark, popupShowFn, popupEditFn,
                                 shouldAutoClose, popupHideFn, isBookmarkRemoved}) {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "about:home");
-  try {
-    if (!isNewBookmark) {
-      yield PlacesUtils.bookmarks.insert({
-        parentGuid: PlacesUtils.bookmarks.unfiledGuid,
-        url: "about:home",
-        title: "Home Page"
-      });
-    }
+  yield BrowserTestUtils.withNewTab({gBrowser, url: "about:home"}, function*(browser) {
+    try {
+      if (!isNewBookmark) {
+        yield PlacesUtils.bookmarks.insert({
+          parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+          url: "about:home",
+          title: "Home Page"
+        });
+      }
 
-    is(bookmarkStar.hasAttribute("starred"), !isNewBookmark,
-       "Page should only be starred prior to popupshown if editing bookmark");
-    is(bookmarkPanel.state, "closed", "Panel should be 'closed' to start test");
-    let shownPromise = promisePopupShown(bookmarkPanel);
-    yield popupShowFn(tab.linkedBrowser);
-    yield shownPromise;
-    is(bookmarkPanel.state, "open", "Panel should be 'open' after shownPromise is resolved");
+      info(`BookmarkingUI.status is ${BookmarkingUI.status}`);
+      yield BrowserTestUtils.waitForCondition(
+        () => BookmarkingUI.status != BookmarkingUI.STATUS_UPDATING,
+        "BookmarkingUI should not be updating");
 
-    if (popupEditFn) {
-      yield popupEditFn();
-    }
-    let bookmarks = [];
-    yield PlacesUtils.bookmarks.fetch({url: "about:home"}, bm => bookmarks.push(bm));
-    is(bookmarks.length, 1, "Only one bookmark should exist");
-    is(bookmarkStar.getAttribute("starred"), "true", "Page is starred");
-    is(bookmarkPanelTitle.value,
-      isNewBookmark ?
-        gNavigatorBundle.getString("editBookmarkPanel.pageBookmarkedTitle") :
-        gNavigatorBundle.getString("editBookmarkPanel.editBookmarkTitle"),
-      "title should match isEditingBookmark state");
+      is(bookmarkStar.hasAttribute("starred"), !isNewBookmark,
+         "Page should only be starred prior to popupshown if editing bookmark");
+      is(bookmarkPanel.state, "closed", "Panel should be 'closed' to start test");
+      let shownPromise = promisePopupShown(bookmarkPanel);
+      yield popupShowFn(browser);
+      yield shownPromise;
+      is(bookmarkPanel.state, "open", "Panel should be 'open' after shownPromise is resolved");
 
-    if (!shouldAutoClose) {
-      yield new Promise(resolve => setTimeout(resolve, 400));
-      is(bookmarkPanel.state, "open", "Panel should still be 'open' for non-autoclose");
-    }
+      if (popupEditFn) {
+        yield popupEditFn();
+      }
+      let bookmarks = [];
+      yield PlacesUtils.bookmarks.fetch({url: "about:home"}, bm => bookmarks.push(bm));
+      is(bookmarks.length, 1, "Only one bookmark should exist");
+      is(bookmarkStar.getAttribute("starred"), "true", "Page is starred");
+      is(bookmarkPanelTitle.value,
+        isNewBookmark ?
+          gNavigatorBundle.getString("editBookmarkPanel.pageBookmarkedTitle") :
+          gNavigatorBundle.getString("editBookmarkPanel.editBookmarkTitle"),
+        "title should match isEditingBookmark state");
 
-    let hiddenPromise = promisePopupHidden(bookmarkPanel);
-    if (popupHideFn) {
-      yield popupHideFn();
+      if (!shouldAutoClose) {
+        yield new Promise(resolve => setTimeout(resolve, 400));
+        is(bookmarkPanel.state, "open", "Panel should still be 'open' for non-autoclose");
+      }
+
+      let hiddenPromise = promisePopupHidden(bookmarkPanel);
+      if (popupHideFn) {
+        yield popupHideFn();
+      }
+      yield hiddenPromise;
+      is(bookmarkStar.hasAttribute("starred"), !isBookmarkRemoved,
+         "Page is starred after closing");
+    } finally {
+      let bookmark = yield PlacesUtils.bookmarks.fetch({url: "about:home"});
+      is(!!bookmark, !isBookmarkRemoved,
+         "bookmark should not be present if a panel action should've removed it");
+      if (bookmark) {
+        yield PlacesUtils.bookmarks.remove(bookmark);
+      }
     }
-    yield hiddenPromise;
-    is(bookmarkStar.hasAttribute("starred"), !isBookmarkRemoved,
-       "Page is starred after closing");
-  } finally {
-    let bookmark = yield PlacesUtils.bookmarks.fetch({url: "about:home"});
-    is(!!bookmark, !isBookmarkRemoved,
-       "bookmark should not be present if a panel action should've removed it");
-    if (bookmark) {
-      yield PlacesUtils.bookmarks.remove(bookmark);
-    }
-    gBrowser.removeTab(tab);
-  }
+  });
 }
 
 add_task(function* panel_shown_for_new_bookmarks_and_autocloses() {
@@ -81,7 +86,7 @@ add_task(function* panel_shown_for_new_bookmarks_and_autocloses() {
   });
 });
 
-add_task(function* panel_shown_for_once_for_doubleclick_on_new_bookmark_star_and_autocloses() {
+add_task(function* panel_shown_once_for_doubleclick_on_new_bookmark_star_and_autocloses() {
   yield test_bookmarks_popup({
     isNewBookmark: true,
     popupShowFn() {
@@ -98,6 +103,7 @@ add_task(function* panel_shown_once_for_slow_doubleclick_on_new_bookmark_star_an
               "browser-places.js for this.");
   return;
 
+  /*
   yield test_bookmarks_popup({
     isNewBookmark: true,
     *popupShowFn() {
@@ -108,6 +114,7 @@ add_task(function* panel_shown_once_for_slow_doubleclick_on_new_bookmark_star_an
     shouldAutoClose: true,
     isBookmarkRemoved: false,
   });
+  */
 });
 
 add_task(function* panel_shown_for_keyboardshortcut_on_new_bookmark_star_and_autocloses() {
@@ -195,6 +202,92 @@ add_task(function* panel_shown_for_new_bookmark_keypress_no_autoclose() {
   });
 });
 
+
+add_task(function* panel_shown_for_new_bookmark_compositionstart_no_autoclose() {
+  yield test_bookmarks_popup({
+    isNewBookmark: true,
+    popupShowFn() {
+      bookmarkStar.click();
+    },
+    *popupEditFn() {
+      let compositionStartPromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "compositionstart");
+      EventUtils.synthesizeComposition({ type: "compositionstart" }, window);
+      info("Waiting for compositionstart event");
+      yield compositionStartPromise;
+      info("Got compositionstart event");
+    },
+    shouldAutoClose: false,
+    popupHideFn() {
+      EventUtils.synthesizeComposition({ type: "compositioncommitasis" });
+      bookmarkPanel.hidePopup();
+    },
+    isBookmarkRemoved: false,
+  });
+});
+
+add_task(function* panel_shown_for_new_bookmark_compositionstart_mouseout_no_autoclose() {
+  yield test_bookmarks_popup({
+    isNewBookmark: true,
+    popupShowFn() {
+      bookmarkStar.click();
+    },
+    *popupEditFn() {
+      let mouseMovePromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "mousemove");
+      EventUtils.synthesizeMouseAtCenter(bookmarkPanel, {type: "mousemove"});
+      info("Waiting for mousemove event");
+      yield mouseMovePromise;
+      info("Got mousemove event");
+
+      let compositionStartPromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "compositionstart");
+      EventUtils.synthesizeComposition({ type: "compositionstart" }, window);
+      info("Waiting for compositionstart event");
+      yield compositionStartPromise;
+      info("Got compositionstart event");
+
+      let mouseOutPromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "mouseout");
+      EventUtils.synthesizeMouse(bookmarkPanel, 0, 0, {type: "mouseout"});
+      EventUtils.synthesizeMouseAtCenter(document.documentElement, {type: "mousemove"});
+      info("Waiting for mouseout event");
+      yield mouseOutPromise;
+      info("Got mouseout event, but shouldn't run autoclose");
+    },
+    shouldAutoClose: false,
+    popupHideFn() {
+      EventUtils.synthesizeComposition({ type: "compositioncommitasis" });
+      bookmarkPanel.hidePopup();
+    },
+    isBookmarkRemoved: false,
+  });
+});
+
+add_task(function* panel_shown_for_new_bookmark_compositionend_mouseout_autoclose() {
+  yield test_bookmarks_popup({
+    isNewBookmark: true,
+    popupShowFn() {
+      bookmarkStar.click();
+    },
+    *popupEditFn() {
+      let mouseMovePromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "mousemove");
+      EventUtils.synthesizeMouseAtCenter(bookmarkPanel, {type: "mousemove"});
+      info("Waiting for mousemove event");
+      yield mouseMovePromise;
+      info("Got mousemove event");
+
+      EventUtils.synthesizeComposition({ type: "compositioncommit", data: "committed text" });
+    },
+    *popupHideFn() {
+      let mouseOutPromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "mouseout");
+      EventUtils.synthesizeMouse(bookmarkPanel, 0, 0, {type: "mouseout"});
+      EventUtils.synthesizeMouseAtCenter(document.documentElement, {type: "mousemove"});
+      info("Waiting for mouseout event");
+      yield mouseOutPromise;
+      info("Got mouseout event, should autoclose now");
+    },
+    shouldAutoClose: false,
+    isBookmarkRemoved: false,
+  });
+});
+
 add_task(function* contextmenu_new_bookmark_keypress_no_autoclose() {
   yield test_bookmarks_popup({
     isNewBookmark: true,
@@ -247,6 +340,30 @@ add_task(function* ctrl_d_edit_bookmark_remove_bookmark() {
     shouldAutoClose: true,
     popupHideFn() {
       document.getElementById("editBookmarkPanelRemoveButton").click();
+    },
+    isBookmarkRemoved: true,
+  });
+});
+
+add_task(function* enter_on_remove_bookmark_should_remove_bookmark() {
+  if (AppConstants.platform == "macosx") {
+    // "Full Keyboard Access" is disabled by default, and thus doesn't allow
+    // keyboard navigation to the "Remove Bookmarks" button by default.
+    return;
+  }
+
+  yield test_bookmarks_popup({
+    isNewBookmark: true,
+    popupShowFn(browser) {
+      EventUtils.synthesizeKey("D", {accelKey: true}, window);
+    },
+    shouldAutoClose: true,
+    popupHideFn() {
+      while (!document.activeElement ||
+             document.activeElement.id != "editBookmarkPanelRemoveButton") {
+        EventUtils.sendChar("VK_TAB", window);
+      }
+      EventUtils.sendChar("VK_RETURN", window);
     },
     isBookmarkRemoved: true,
   });

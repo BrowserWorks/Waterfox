@@ -8,10 +8,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "FormHistory",
 add_task(function* test() {
   // This test relies on the form history being empty to start with delete
   // all the items first.
-  yield new Promise(resolve => {
+  yield new Promise((resolve, reject) => {
     FormHistory.update({ op: "remove" },
                        { handleError(error) {
-                           do_throw("Error occurred updating form history: " + error);
+                           reject(error);
                          },
                          handleCompletion(reason) {
                            if (!reason) {
@@ -25,9 +25,6 @@ add_task(function* test() {
 
   let prefService = Cc["@mozilla.org/preferences-service;1"]
                     .getService(Components.interfaces.nsIPrefService);
-
-  let findBar = gFindBar;
-  let textbox = gFindBar.getElement("findbar-textbox");
 
   let tempScope = {};
   Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)

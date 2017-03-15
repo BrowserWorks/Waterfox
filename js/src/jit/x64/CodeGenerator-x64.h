@@ -26,9 +26,8 @@ class CodeGeneratorX64 : public CodeGeneratorX86Shared
 
     void storeUnboxedValue(const LAllocation* value, MIRType valueType,
                            Operand dest, MIRType slotType);
-    void memoryBarrier(MemoryBarrierBits barrier);
 
-    void wasmStore(Scalar::Type type, unsigned numSimdElems, const LAllocation* value, Operand dstAddr);
+    void wasmStore(const wasm::MemoryAccessDesc& access, const LAllocation* value, Operand dstAddr);
     template <typename T> void emitWasmLoad(T* ins);
     template <typename T> void emitWasmStore(T* ins);
 
@@ -66,7 +65,7 @@ class CodeGeneratorX64 : public CodeGeneratorX86Shared
     void visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins);
     void visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins);
     void visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins);
-    void visitAsmSelectI64(LAsmSelectI64* ins);
+    void visitWasmSelectI64(LWasmSelectI64* ins);
     void visitWasmCall(LWasmCall* ins);
     void visitWasmCallI64(LWasmCallI64* ins);
     void visitAsmJSLoadHeap(LAsmJSLoadHeap* ins);
@@ -75,10 +74,10 @@ class CodeGeneratorX64 : public CodeGeneratorX86Shared
     void visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins);
     void visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins);
     void visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEffect* ins);
-    void visitAsmJSUInt32ToDouble(LAsmJSUInt32ToDouble* lir);
-    void visitAsmJSUInt32ToFloat32(LAsmJSUInt32ToFloat32* lir);
-    void visitAsmReinterpretFromI64(LAsmReinterpretFromI64* lir);
-    void visitAsmReinterpretToI64(LAsmReinterpretToI64* lir);
+    void visitWasmUint32ToDouble(LWasmUint32ToDouble* lir);
+    void visitWasmUint32ToFloat32(LWasmUint32ToFloat32* lir);
+    void visitWasmReinterpretFromI64(LWasmReinterpretFromI64* lir);
+    void visitWasmReinterpretToI64(LWasmReinterpretToI64* lir);
     void visitTestI64AndBranch(LTestI64AndBranch* lir);
 };
 

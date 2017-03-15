@@ -2,14 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-__all__ = [
-    'check_for_crashes',
-    'check_for_java_exception',
-    'kill_and_get_minidump',
-    'log_crashes',
-    'cleanup_pending_crash_reports',
-]
-
 import glob
 import os
 import re
@@ -25,6 +17,14 @@ from collections import namedtuple
 import mozfile
 import mozinfo
 import mozlog
+
+__all__ = [
+    'check_for_crashes',
+    'check_for_java_exception',
+    'kill_and_get_minidump',
+    'log_crashes',
+    'cleanup_pending_crash_reports',
+]
 
 
 StackInfo = namedtuple("StackInfo",
@@ -75,7 +75,7 @@ def check_for_crashes(dump_directory,
     If `quiet` is set, no PROCESS-CRASH message will be printed to stdout if a
     crash is detected.
 
-    Returns True if any minidumps were found, False otherwise.
+    Returns number of minidump files found.
     """
 
     # try to get the caller's filename if no test name is given
@@ -91,7 +91,9 @@ def check_for_crashes(dump_directory,
     if not crash_info.has_dumps:
         return False
 
+    crash_count = 0
     for info in crash_info:
+        crash_count += 1
         if not quiet:
             stackwalk_output = ["Crash dump filename: %s" % info.minidump_path]
             if info.stackwalk_stderr:
@@ -108,7 +110,7 @@ def check_for_crashes(dump_directory,
             print '\n'.join(stackwalk_output)
             print '\n'.join(info.stackwalk_errors)
 
-    return True
+    return crash_count
 
 
 def log_crashes(logger,
@@ -193,7 +195,8 @@ class CrashInfo(object):
                                 glob.glob(os.path.join(self.dump_directory, '*.dmp'))]
             max_dumps = 10
             if len(self._dump_files) > max_dumps:
-                self.logger.warning("Found %d dump files -- limited to %d!" % (len(self._dump_files), max_dumps))
+                self.logger.warning("Found %d dump files -- limited to %d!" %
+                                    (len(self._dump_files), max_dumps))
                 del self._dump_files[max_dumps:]
 
         return self._dump_files
@@ -238,7 +241,7 @@ class CrashInfo(object):
         retcode = None
         if (self.symbols_path and self.stackwalk_binary and
             os.path.exists(self.stackwalk_binary) and
-            os.access(self.stackwalk_binary, os.X_OK)):
+                os.access(self.stackwalk_binary, os.X_OK)):
 
             command = [
                 self.stackwalk_binary,
@@ -262,12 +265,13 @@ class CrashInfo(object):
                 # Examples:
                 #  0  libc.so + 0xa888
                 #  0  libnss3.so!nssCertificate_Destroy [certificate.c : 102 + 0x0]
-                #  0  mozjs.dll!js::GlobalObject::getDebuggers() [GlobalObject.cpp:89df18f9b6da : 580 + 0x0]
-                #  0  libxul.so!void js::gc::MarkInternal<JSObject>(JSTracer*, JSObject**) [Marking.cpp : 92 + 0x28]
+                #  0  mozjs.dll!js::GlobalObject::getDebuggers() [GlobalObject.cpp:89df18f9b6da : 580 + 0x0] # noqa
+                # 0  libxul.so!void js::gc::MarkInternal<JSObject>(JSTracer*, JSObject**)
+                # [Marking.cpp : 92 + 0x28]
                 lines = out.splitlines()
                 for i, line in enumerate(lines):
                     if "(crashed)" in line:
-                        match = re.search(r"^ 0  (?:.*!)?(?:void )?([^\[]+)", lines[i+1])
+                        match = re.search(r"^ 0  (?:.*!)?(?:void )?([^\[]+)", lines[i + 1])
                         if match:
                             signature = "@ %s" % match.group(1).strip()
                         break
@@ -319,46 +323,60 @@ class CrashInfo(object):
                              os.path.join(self.dump_save_path, os.path.basename(extra)))
 
 
-def check_for_java_exception(logcat, quiet=False):
+def check_for_java_exception(logcat, test_name=None, quiet=False):
     """
     Print a summary of a fatal Java exception, if present in the provided
     logcat output.
 
     Example:
-    PROCESS-CRASH | java-exception | java.lang.NullPointerException at org.mozilla.gecko.GeckoApp$21.run(GeckoApp.java:1833)
+    PROCESS-CRASH | <test-name> | java-exception java.lang.NullPointerException at org.mozilla.gecko.GeckoApp$21.run(GeckoApp.java:1833) # noqa
 
     `logcat` should be a list of strings.
+
+    If `test_name` is set it will be used as the test name in log output. If not set the
+    filename of the calling function will be used.
 
     If `quiet` is set, no PROCESS-CRASH message will be printed to stdout if a
     crash is detected.
 
     Returns True if a fatal Java exception was found, False otherwise.
     """
+
+    # try to get the caller's filename if no test name is given
+    if test_name is None:
+        try:
+            test_name = os.path.basename(sys._getframe(1).f_code.co_filename)
+        except:
+            test_name = "unknown"
+
     found_exception = False
 
     for i, line in enumerate(logcat):
         # Logs will be of form:
         #
-        # 01-30 20:15:41.937 E/GeckoAppShell( 1703): >>> REPORTING UNCAUGHT EXCEPTION FROM THREAD 9 ("GeckoBackgroundThread")
+        # 01-30 20:15:41.937 E/GeckoAppShell( 1703): >>> REPORTING UNCAUGHT EXCEPTION FROM THREAD 9 ("GeckoBackgroundThread") # noqa
         # 01-30 20:15:41.937 E/GeckoAppShell( 1703): java.lang.NullPointerException
-        # 01-30 20:15:41.937 E/GeckoAppShell( 1703): 	at org.mozilla.gecko.GeckoApp$21.run(GeckoApp.java:1833)
-        # 01-30 20:15:41.937 E/GeckoAppShell( 1703): 	at android.os.Handler.handleCallback(Handler.java:587)
-        if "REPORTING UNCAUGHT EXCEPTION" in line or "FATAL EXCEPTION" in line:
+        # 01-30 20:15:41.937 E/GeckoAppShell( 1703): at org.mozilla.gecko.GeckoApp$21.run(GeckoApp.java:1833) # noqa
+        # 01-30 20:15:41.937 E/GeckoAppShell( 1703): at android.os.Handler.handleCallback(Handler.java:587) # noqa
+        if "REPORTING UNCAUGHT EXCEPTION" in line:
             # Strip away the date, time, logcat tag and pid from the next two lines and
             # concatenate the remainder to form a concise summary of the exception.
             found_exception = True
             if len(logcat) >= i + 3:
                 logre = re.compile(r".*\): \t?(.*)")
-                m = logre.search(logcat[i+1])
+                m = logre.search(logcat[i + 1])
                 if m and m.group(1):
                     exception_type = m.group(1)
-                m = logre.search(logcat[i+2])
+                m = logre.search(logcat[i + 2])
                 if m and m.group(1):
                     exception_location = m.group(1)
                 if not quiet:
-                    print "PROCESS-CRASH | java-exception | %s %s" % (exception_type, exception_location)
+                    print "PROCESS-CRASH | %s | java-exception %s %s" % (test_name,
+                                                                         exception_type,
+                                                                         exception_location)
             else:
-                print "Automation Error: java exception in logcat at line %d of %d: %s" % (i, len(logcat), line)
+                print "Automation Error: java exception in logcat at line " \
+                    "%d of %d: %s" % (i, len(logcat), line)
             break
 
     return found_exception
@@ -390,7 +408,7 @@ if mozinfo.isWin:
                                  str(uuid.uuid4()) + ".dmp")
 
         if (mozinfo.info['bits'] != ctypes.sizeof(ctypes.c_voidp) * 8 and
-            utility_path):
+                utility_path):
             # We're not going to be able to write a minidump with ctypes if our
             # python process was compiled for a different architecture than
             # firefox, so we invoke the minidumpwriter utility program.
@@ -465,6 +483,7 @@ else:
         """
         os.kill(pid, signal.SIGKILL)
 
+
 def kill_and_get_minidump(pid, dump_directory, utility_path=None):
     """
     Attempt to kill a process and leave behind a minidump describing its
@@ -491,6 +510,7 @@ def kill_and_get_minidump(pid, dump_directory, utility_path=None):
         needs_killing = False
     if needs_killing:
         kill_pid(pid)
+
 
 def cleanup_pending_crash_reports():
     """

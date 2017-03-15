@@ -10,6 +10,7 @@
 #include "mozilla/dom/PContentParent.h"
 #include "mozilla/dom/nsIContentParent.h"
 #include "mozilla/gfx/gfxVarReceiver.h"
+#include "mozilla/gfx/GPUProcessListener.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/FileUtils.h"
@@ -66,7 +67,6 @@ class PJavaScriptParent;
 } // namespace jsipc
 
 namespace layers {
-class PSharedBufferManagerParent;
 struct TextureFactoryIdentifier;
 } // namespace layers
 
@@ -92,6 +92,7 @@ class ContentParent final : public PContentParent
                           , public nsIDOMGeoPositionErrorCallback
                           , public gfx::gfxVarReceiver
                           , public mozilla::LinkedListElement<ContentParent>
+                          , public gfx::GPUProcessListener
 {
   typedef mozilla::ipc::GeckoChildProcessHost GeckoChildProcessHost;
   typedef mozilla::ipc::OptionalURIParams OptionalURIParams;
@@ -134,7 +135,8 @@ public:
   GetNewOrUsedBrowserProcess(bool aForBrowserElement = false,
                              hal::ProcessPriority aPriority =
                              hal::ProcessPriority::PROCESS_PRIORITY_FOREGROUND,
-                             ContentParent* aOpener = nullptr);
+                             ContentParent* aOpener = nullptr,
+                             bool aLargeAllocationProcess = false);
 
   /**
    * Create a subprocess suitable for use as a preallocated app process.
@@ -149,7 +151,8 @@ public:
   static TabParent*
   CreateBrowserOrApp(const TabContext& aContext,
                      Element* aFrameElement,
-                     ContentParent* aOpenerContentParent);
+                     ContentParent* aOpenerContentParent,
+                     bool aFreshProcess = false);
 
   static void GetAll(nsTArray<ContentParent*>& aArray);
 
@@ -245,16 +248,6 @@ public:
 
   virtual bool RecvCreateGMPService() override;
 
-  virtual bool RecvGetGMPPluginVersionForAPI(const nsCString& aAPI,
-                                             nsTArray<nsCString>&& aTags,
-                                             bool* aHasPlugin,
-                                             nsCString* aVersion) override;
-
-  virtual bool RecvIsGMPPresentOnDisk(const nsString& aKeySystem,
-                                      const nsCString& aVersion,
-                                      bool* aIsPresent,
-                                      nsCString* aMessage) override;
-
   virtual bool RecvLoadPlugin(const uint32_t& aPluginId, nsresult* aRv,
                               uint32_t* aRunID) override;
 
@@ -329,18 +322,6 @@ public:
   DeallocateTabId(const TabId& aTabId,
                   const ContentParentId& aCpId,
                   bool aMarkedDestroying);
-
-  /*
-   * Add the appId's reference count by the given ContentParentId and TabId
-   */
-  static bool
-  PermissionManagerAddref(const ContentParentId& aCpId, const TabId& aTabId);
-
-  /*
-   * Release the appId's reference count by the given ContentParentId and TabId
-   */
-  static bool
-  PermissionManagerRelease(const ContentParentId& aCpId, const TabId& aTabId);
 
   void ReportChildAlreadyBlocked();
 
@@ -577,10 +558,12 @@ protected:
   bool ShouldContinueFromReplyTimeout() override;
 
   void OnVarChanged(const GfxVarUpdate& aVar) override;
+  void OnCompositorUnexpectedShutdown() override;
 
 private:
   static nsDataHashtable<nsStringHashKey, ContentParent*> *sAppContentParents;
   static nsTArray<ContentParent*>* sNonAppContentParents;
+  static nsTArray<ContentParent*>* sLargeAllocationContentParents;
   static nsTArray<ContentParent*>* sPrivateContent;
   static StaticAutoPtr<LinkedList<ContentParent> > sContentParents;
 
@@ -709,10 +692,6 @@ private:
   AllocPGMPServiceParent(mozilla::ipc::Transport* aTransport,
                          base::ProcessId aOtherProcess) override;
 
-  PSharedBufferManagerParent*
-  AllocPSharedBufferManagerParent(mozilla::ipc::Transport* aTranport,
-                                   base::ProcessId aOtherProcess) override;
-
   PBackgroundParent*
   AllocPBackgroundParent(Transport* aTransport, ProcessId aOtherProcess)
                          override;
@@ -728,12 +707,14 @@ private:
   virtual bool
   RecvGetXPCOMProcessAttributes(bool* aIsOffline,
                                 bool* aIsConnected,
+                                int32_t* aCaptivePortalState,
                                 bool* aIsLangRTL,
                                 bool* aHaveBidiKeyboards,
                                 InfallibleTArray<nsString>* dictionaries,
                                 ClipboardCapabilities* clipboardCaps,
                                 DomainPolicyClone* domainPolicy,
-                                StructuredCloneData* initialData) override;
+                                StructuredCloneData* initialData,
+                                OptionalURIParams* aUserContentSheetURL) override;
 
   virtual bool
   DeallocPJavaScriptParent(mozilla::jsipc::PJavaScriptParent*) override;
@@ -795,10 +776,6 @@ private:
   virtual bool
   DeallocPHeapSnapshotTempFileHelperParent(PHeapSnapshotTempFileHelperParent*) override;
 
-  virtual PIccParent* AllocPIccParent(const uint32_t& aServiceId) override;
-
-  virtual bool DeallocPIccParent(PIccParent* aActor) override;
-
   virtual PMemoryReportRequestParent*
   AllocPMemoryReportRequestParent(const uint32_t& aGeneration,
                                   const bool &aAnonymize,
@@ -820,10 +797,6 @@ private:
 
   virtual bool DeallocPTestShellParent(PTestShellParent* shell) override;
 
-  virtual PMobileConnectionParent* AllocPMobileConnectionParent(const uint32_t& aClientId) override;
-
-  virtual bool DeallocPMobileConnectionParent(PMobileConnectionParent* aActor) override;
-
   virtual bool DeallocPNeckoParent(PNeckoParent* necko) override;
 
   virtual PPSMContentDownloaderParent*
@@ -840,6 +813,7 @@ private:
                                 const nsString& aContentDispositionFilename,
                                 const bool& aForceSave,
                                 const int64_t& aContentLength,
+                                const bool& aWasFileChannel,
                                 const OptionalURIParams& aReferrer,
                                 PBrowserParent* aBrowser) override;
 
@@ -850,41 +824,11 @@ private:
 
   virtual bool DeallocPHandlerServiceParent(PHandlerServiceParent*) override;
 
-  virtual PCellBroadcastParent* AllocPCellBroadcastParent() override;
-
-  virtual bool DeallocPCellBroadcastParent(PCellBroadcastParent*) override;
-
-  virtual bool RecvPCellBroadcastConstructor(PCellBroadcastParent* aActor) override;
-
-  virtual PSmsParent* AllocPSmsParent() override;
-
-  virtual bool DeallocPSmsParent(PSmsParent*) override;
-
-  virtual PTelephonyParent* AllocPTelephonyParent() override;
-
-  virtual bool DeallocPTelephonyParent(PTelephonyParent*) override;
-
-  virtual PVoicemailParent* AllocPVoicemailParent() override;
-
-  virtual bool RecvPVoicemailConstructor(PVoicemailParent* aActor) override;
-
-  virtual bool DeallocPVoicemailParent(PVoicemailParent* aActor) override;
-
   virtual PMediaParent* AllocPMediaParent() override;
 
   virtual bool DeallocPMediaParent(PMediaParent* aActor) override;
 
   virtual bool DeallocPStorageParent(PStorageParent* aActor) override;
-
-  virtual PBluetoothParent* AllocPBluetoothParent() override;
-
-  virtual bool DeallocPBluetoothParent(PBluetoothParent* aActor) override;
-
-  virtual bool RecvPBluetoothConstructor(PBluetoothParent* aActor) override;
-
-  virtual PFMRadioParent* AllocPFMRadioParent() override;
-
-  virtual bool DeallocPFMRadioParent(PFMRadioParent* aActor) override;
 
   virtual PPresentationParent* AllocPPresentationParent() override;
 
@@ -1141,6 +1085,10 @@ private:
 
   virtual bool RecvDeleteGetFilesRequest(const nsID& aID) override;
 
+  virtual bool RecvAccumulateChildHistogram(
+                  InfallibleTArray<Accumulation>&& aAccumulations) override;
+  virtual bool RecvAccumulateChildKeyedHistogram(
+                  InfallibleTArray<KeyedAccumulation>&& aAccumulations) override;
 public:
   void SendGetFilesResponseAndForget(const nsID& aID,
                                      const GetFilesResponseResult& aResult);
@@ -1235,6 +1183,7 @@ private:
   nsRefPtrHashtable<nsIDHashKey, GetFilesHelper> mGetFilesPendingRequests;
 
   nsTArray<nsCString> mBlobURLs;
+  bool mLargeAllocationProcess;
 };
 
 } // namespace dom

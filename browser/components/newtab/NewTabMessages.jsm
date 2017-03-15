@@ -1,4 +1,4 @@
-/*global
+/* global
   NewTabWebChannel,
   NewTabPrefsProvider,
   PlacesProvider,
@@ -164,7 +164,7 @@ let NewTabMessages = {
   /*
    * Broadcast current engine has changed to all open newtab pages
    */
-  _handleCurrentEngineChange(name, value) { //jshint unused: false
+  _handleCurrentEngineChange(name, value) { // jshint unused: false
     let engine = value;
     NewTabWebChannel.broadcast(ACTIONS.search.outSearch.currentEngine, engine);
   },
@@ -235,7 +235,6 @@ let NewTabMessages = {
       }
     }
 
-    PlacesProvider.links.uninit();
     NewTabPrefsProvider.prefs.uninit();
     NewTabSearchProvider.search.uninit();
     NewTabWebChannel.uninit();

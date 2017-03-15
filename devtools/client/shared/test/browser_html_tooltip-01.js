@@ -22,7 +22,7 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
     </vbox>
   </window>`;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 let useXulWrapper;
@@ -49,7 +49,7 @@ add_task(function* () {
 
 function* runTests(doc) {
   yield addTab("about:blank");
-  let tooltip = new HTMLTooltip({doc}, {useXulWrapper});
+  let tooltip = new HTMLTooltip(doc, {useXulWrapper});
 
   info("Set tooltip content");
   tooltip.setContent(getTooltipContent(doc), {width: 100, height: 50});

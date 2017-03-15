@@ -20,7 +20,7 @@ class InProcessCompositorSession final : public CompositorSession
 public:
   static RefPtr<InProcessCompositorSession> Create(
     nsIWidget* aWidget,
-    ClientLayerManager* aLayerManager,
+    LayerManager* aLayerManager,
     const uint64_t& aRootLayerTreeId,
     CSSToLayoutDeviceScale aScale,
     bool aUseAPZ,
@@ -30,6 +30,7 @@ public:
   CompositorBridgeParent* GetInProcessBridge() const override;
   void SetContentController(GeckoContentController* aController) override;
   RefPtr<IAPZCTreeManager> GetAPZCTreeManager() const override;
+  bool Reset(const nsTArray<LayersBackend>& aBackendHints, TextureFactoryIdentifier* aOutIdentifier) override;
   void Shutdown() override;
 
 private:

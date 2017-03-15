@@ -94,6 +94,8 @@ TouchEvent::InitTouchEvent(const nsAString& aType,
                            TouchList* aTargetTouches,
                            TouchList* aChangedTouches)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   UIEvent::InitUIEvent(aType, aCanBubble, aCancelable, aView, aDetail);
   mEvent->AsInputEvent()->InitBasicModifiers(aCtrlKey, aAltKey,
                                              aShiftKey, aMetaKey);
@@ -245,6 +247,7 @@ TouchEvent::Constructor(const GlobalObject& aGlobal,
                     aParam.mShiftKey, aParam.mMetaKey, touches, targetTouches,
                     changedTouches);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 

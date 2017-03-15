@@ -39,7 +39,7 @@ loader.lazyRequireGetter(this, "KeyShortcuts", "devtools/client/shared/key-short
 loader.lazyRequireGetter(this, "ZoomKeys", "devtools/client/shared/zoom-keys");
 
 const {PluralForm} = require("devtools/shared/plural-form");
-const STRINGS_URI = "devtools/locale/webconsole.properties";
+const STRINGS_URI = "devtools/client/locales/webconsole.properties";
 var l10n = new WebConsoleUtils.L10n(STRINGS_URI);
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
@@ -494,6 +494,10 @@ WebConsoleFrame.prototype = {
     };
     allReady.then(notifyObservers, notifyObservers);
 
+    if (this.NEW_CONSOLE_OUTPUT_ENABLED) {
+      allReady.then(this.newConsoleOutput.init);
+    }
+
     return allReady;
   },
 
@@ -538,36 +542,18 @@ WebConsoleFrame.prototype = {
       && !this.owner.target.chrome
       && Services.prefs.getBoolPref(PREF_NEW_FRONTEND_ENABLED);
 
-    this._initDefaultFilterPrefs();
+    this.outputNode = this.document.getElementById("output-container");
+    this.outputWrapper = this.document.getElementById("output-wrapper");
+    this.completeNode = this.document.querySelector(".jsterm-complete-node");
+    this.inputNode = this.document.querySelector(".jsterm-input-node");
 
-    // Register the controller to handle "select all" properly.
-    this._commandController = new CommandController(this);
-    this.window.controllers.insertControllerAt(0, this._commandController);
-
-    this._contextMenuHandler = new ConsoleContextMenu(this);
-
-    let doc = this.document;
-
-    this.filterBox = doc.querySelector(".hud-filter-box");
-    this.outputNode = doc.getElementById("output-container");
-    this.outputWrapper = doc.getElementById("output-wrapper");
-
-    this.completeNode = doc.querySelector(".jsterm-complete-node");
-    this.inputNode = doc.querySelector(".jsterm-input-node");
-
-    this._setFilterTextBoxEvents();
-    this._initFilterButtons();
+    // In the old frontend, the area that scrolls is outputWrapper, but in the new
+    // frontend this will be reassigned.
+    this.outputScroller = this.outputWrapper;
 
     // Update the character width and height needed for the popup offset
     // calculations.
     this._updateCharSize();
-
-    let clearButton =
-      doc.getElementsByClassName("webconsole-clear-console-button")[0];
-    clearButton.addEventListener("command", () => {
-      this.owner._onClearButton();
-      this.jsterm.clearOutput(true);
-    });
 
     this.jsterm = new JSTerm(this);
     this.jsterm.init();
@@ -577,20 +563,42 @@ WebConsoleFrame.prototype = {
     if (this.NEW_CONSOLE_OUTPUT_ENABLED) {
       // @TODO Remove this once JSTerm is handled with React/Redux.
       this.window.jsterm = this.jsterm;
-      console.log("Entering experimental mode for console frontend");
+
+      // Remove context menu for now (see Bug 1307239).
+      this.outputWrapper.removeAttribute("context");
 
       // XXX: We should actually stop output from happening on old output
       // panel, but for now let's just hide it.
       this.experimentalOutputNode = this.outputNode.cloneNode();
+      this.experimentalOutputNode.removeAttribute("tabindex");
       this.outputNode.hidden = true;
       this.outputNode.parentNode.appendChild(this.experimentalOutputNode);
       // @TODO Once the toolbox has been converted to React, see if passing
       // in JSTerm is still necessary.
-      this.newConsoleOutput = new this.window.NewConsoleOutput(this.experimentalOutputNode, this.jsterm, toolbox);
-      console.log("Created newConsoleOutput", this.newConsoleOutput);
 
-      let filterToolbar = doc.querySelector(".hud-console-filter-toolbar");
+      this.newConsoleOutput = new this.window.NewConsoleOutput(
+        this.experimentalOutputNode, this.jsterm, toolbox, this.owner, this.document);
+
+      let filterToolbar = this.document.querySelector(".hud-console-filter-toolbar");
       filterToolbar.hidden = true;
+    } else {
+      // Register the controller to handle "select all" properly.
+      this._commandController = new CommandController(this);
+      this.window.controllers.insertControllerAt(0, this._commandController);
+
+      this._contextMenuHandler = new ConsoleContextMenu(this);
+
+      this._initDefaultFilterPrefs();
+      this.filterBox = this.document.querySelector(".hud-filter-box");
+      this._setFilterTextBoxEvents();
+      this._initFilterButtons();
+      let clearButton =
+        this.document.getElementsByClassName("webconsole-clear-console-button")[0];
+      clearButton.addEventListener("command", () => {
+        this.owner._onClearButton();
+        this.jsterm.clearOutput(true);
+      });
+
     }
 
     this.resize();
@@ -2960,9 +2968,7 @@ var Utils = {
   },
 };
 
-// ////////////////////////////////////////////////////////////////////////////
 // CommandController
-// ////////////////////////////////////////////////////////////////////////////
 
 /**
  * A controller (an instance of nsIController) that makes editing actions
@@ -3045,9 +3051,7 @@ CommandController.prototype = {
   }
 };
 
-// ////////////////////////////////////////////////////////////////////////////
 // Web Console connection proxy
-// ////////////////////////////////////////////////////////////////////////////
 
 /**
  * The WebConsoleConnectionProxy handles the connection between the Web Console
@@ -3260,14 +3264,13 @@ WebConsoleConnectionProxy.prototype = {
    */
   dispatchMessageAdd: function(packet) {
     this.webConsoleFrame.newConsoleOutput.dispatchMessageAdd(packet);
+  },
 
-    // Return the last message in the DOM as the message that was just dispatched. This may not
-    // always be true in the case of filtered messages, but it's close enough for our tests.
-    let messageNodes = this.webConsoleFrame.experimentalOutputNode.querySelectorAll(".message");
-    this.webConsoleFrame.emit("new-messages", {
-      response: packet,
-      node: messageNodes[messageNodes.length - 1],
-    });
+  /**
+   * Batched dispatch of messages.
+   */
+  dispatchMessagesAdd: function(packets) {
+    this.webConsoleFrame.newConsoleOutput.dispatchMessagesAdd(packets);
   },
 
   /**
@@ -3296,9 +3299,10 @@ WebConsoleConnectionProxy.prototype = {
     messages.sort((a, b) => a.timeStamp - b.timeStamp);
 
     if (this.webConsoleFrame.NEW_CONSOLE_OUTPUT_ENABLED) {
-      for (let packet of messages) {
-        this.dispatchMessageAdd(packet);
-      }
+      // Filter out CSS page errors.
+      messages = messages.filter(message => !(message._type == "PageError"
+          && Utils.categoryForScriptError(message) === CATEGORY_CSS));
+      this.dispatchMessagesAdd(messages);
     } else {
       this.webConsoleFrame.displayCachedMessages(messages);
       if (!this._hasNativeConsoleAPI) {
@@ -3323,7 +3327,10 @@ WebConsoleConnectionProxy.prototype = {
   _onPageError: function (type, packet) {
     if (this.webConsoleFrame && packet.from == this._consoleActor) {
       if (this.webConsoleFrame.NEW_CONSOLE_OUTPUT_ENABLED) {
-        this.dispatchMessageAdd(packet);
+        let category = Utils.categoryForScriptError(packet.pageError);
+        if (category !== CATEGORY_CSS) {
+          this.dispatchMessageAdd(packet);
+        }
         return;
       }
       this.webConsoleFrame.handlePageError(packet.pageError);
@@ -3378,7 +3385,11 @@ WebConsoleConnectionProxy.prototype = {
    */
   _onNetworkEvent: function (type, networkInfo) {
     if (this.webConsoleFrame) {
-      this.webConsoleFrame.handleNetworkEvent(networkInfo);
+      if (this.webConsoleFrame.NEW_CONSOLE_OUTPUT_ENABLED) {
+        this.dispatchMessageAdd(networkInfo);
+      } else {
+        this.webConsoleFrame.handleNetworkEvent(networkInfo);
+      }
     }
   },
 
@@ -3526,9 +3537,7 @@ WebConsoleConnectionProxy.prototype = {
   },
 };
 
-// ////////////////////////////////////////////////////////////////////////////
 // Context Menu
-// ////////////////////////////////////////////////////////////////////////////
 
 /*
  * ConsoleContextMenu this used to handle the visibility of context menu items.

@@ -227,10 +227,24 @@ public class Tabs implements GeckoEventListener {
 
         // Suppress the ADDED event to prevent animation of tabs created via session restore.
         if (mInitialTabsAdded) {
-            notifyListeners(tab, TabEvents.ADDED);
+            notifyListeners(tab, TabEvents.ADDED,
+                    Integer.toString(getPrivacySpecificTabIndex(tabIndex, isPrivate)));
         }
 
         return tab;
+    }
+
+    // Return the index, among those tabs whose privacy setting matches isPrivate, of the tab at
+    // position index in mOrder.  Returns -1, for "new last tab", when index is -1.
+    private int getPrivacySpecificTabIndex(int index, boolean isPrivate) {
+        int privacySpecificIndex = -1;
+        for (int i = 0; i <= index; i++) {
+            final Tab tab = mOrder.get(i);
+            if (tab.isPrivate() == isPrivate) {
+                privacySpecificIndex++;
+            }
+        }
+        return privacySpecificIndex;
     }
 
     public synchronized void removeTab(int id) {
@@ -489,7 +503,6 @@ public class Tabs implements GeckoEventListener {
                                           message.getString("title"),
                                           message.getBoolean("isPrivate"),
                                           message.getInt("tabIndex"));
-
                     // If we added the tab as a stub, we should have already
                     // selected it, so ignore this flag for stubbed tabs.
                     if (message.getBoolean("selected"))
@@ -569,8 +582,13 @@ public class Tabs implements GeckoEventListener {
                 tab.setIsAudioPlaying(message.getBoolean("isAudioPlaying"));
                 notifyListeners(tab, TabEvents.AUDIO_PLAYING_CHANGE);
             } else if (event.equals("Tab:MediaPlaybackChange")) {
-                tab.setIsMediaPlaying(message.getBoolean("active"));
-                notifyListeners(tab, TabEvents.MEDIA_PLAYING_CHANGE);
+                final String status = message.getString("status");
+                if (status.equals("resume")) {
+                    notifyListeners(tab, TabEvents.MEDIA_PLAYING_RESUME);
+                } else {
+                    tab.setIsMediaPlaying(status.equals("start"));
+                    notifyListeners(tab, TabEvents.MEDIA_PLAYING_CHANGE);
+                }
             }
 
         } catch (Exception e) {
@@ -631,6 +649,7 @@ public class Tabs implements GeckoEventListener {
         AUDIO_PLAYING_CHANGE,
         OPENED_FROM_TABS_TRAY,
         MEDIA_PLAYING_CHANGE,
+        MEDIA_PLAYING_RESUME
     }
 
     public void notifyListeners(Tab tab, TabEvents msg) {
@@ -867,8 +886,7 @@ public class Tabs implements GeckoEventListener {
                 needsNewTab = (flags & LOADURL_NEW_TAB) != 0;
             } else {
                 // If you modify this code, be careful that intent != null.
-                final boolean extraCreateNewTab = (Versions.feature12Plus) ?
-                        intent.getBooleanExtra(Browser.EXTRA_CREATE_NEW_TAB, false) : false;
+                final boolean extraCreateNewTab = intent.getBooleanExtra(Browser.EXTRA_CREATE_NEW_TAB, false);
                 final Tab applicationTab = getTabForApplicationId(applicationId);
                 if (applicationTab == null || extraCreateNewTab) {
                     needsNewTab = true;

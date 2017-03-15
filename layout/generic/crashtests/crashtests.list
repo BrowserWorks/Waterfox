@@ -10,7 +10,7 @@ load 255982-4.html
 load 264937-1.html
 load 265867-1.html
 load 265867-2.html
-load 286491.html
+skip-if(gtkWidget&&isDebugBuild) load 286491.html # Bug 1315855
 load 289864-1.html
 load 295292-1.html
 load 295292-2.html
@@ -615,6 +615,7 @@ pref(dom.details_element.enabled,true) load details-open-overflow-hidden.html
 pref(dom.details_element.enabled,true) load details-three-columns.html
 load first-letter-638937-1.html
 load first-letter-638937-2.html
+load flex-nested-abspos-1.html
 pref(dom.meta-viewport.enabled,true) test-pref(font.size.inflation.emPerLine,15) asserts(0-100) load font-inflation-762332.html # bug 762332
 load outline-on-frameset.xhtml
 pref(dom.details_element.enabled,true) load summary-position-out-of-flow.html
@@ -631,8 +632,13 @@ asserts(2) load 1272983-1.html # bug 586628
 asserts(2) load 1272983-2.html # bug 586628
 load 1275059.html
 load 1278007.html
+load 1279814.html
 load large-border-radius-dashed.html
 load large-border-radius-dashed2.html
 load large-border-radius-dotted.html
 load large-border-radius-dotted2.html
 load 1297427-non-equal-centers.html
+load 1278461-1.html
+load 1278461-2.html
+load 1304441.html
+load 1316649.html

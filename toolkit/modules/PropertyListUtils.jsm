@@ -97,7 +97,7 @@ this.PropertyListUtils = Object.freeze({
           if (!file.exists())
             throw new Error("The file pointed by aFile does not exist");
 
-          file = new File(file);
+          file = File.createFromNsIFile(file);
         }
 
         let fileReader = new FileReader();
@@ -145,7 +145,6 @@ this.PropertyListUtils = Object.freeze({
     catch (ex) {
       throw new Error("aBuffer cannot be parsed as a DOM document: " + ex);
     }
-    return null;
   },
 
   TYPE_PRIMITIVE:    0,

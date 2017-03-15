@@ -18,7 +18,7 @@ namespace layers {
 class DIBTextureData : public TextureData
 {
 public:
-  virtual bool Lock(OpenMode, FenceHandle*) override { return true; }
+  virtual bool Lock(OpenMode) override { return true; }
 
   virtual void Unlock() override {}
 
@@ -28,7 +28,7 @@ public:
 
   static
   DIBTextureData* Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                         ClientIPCAllocator* aAllocator);
+                         LayersIPCChannel* aAllocator);
 
 protected:
   DIBTextureData(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,

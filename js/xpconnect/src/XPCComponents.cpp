@@ -2344,11 +2344,11 @@ nsXPCComponents_Utils::ReportError(HandleValue error, JSContext* cx)
 
         uint32_t column = err->tokenOffset();
 
-        const char16_t* ucmessage = err->ucmessage;
         const char16_t* linebuf = err->linebuf();
 
         nsresult rv = scripterr->InitWithWindowID(
-                ucmessage ? nsDependentString(ucmessage) : EmptyString(),
+                err->message() ? NS_ConvertUTF8toUTF16(err->message().c_str())
+                : EmptyString(),
                 fileUni,
                 linebuf ? nsDependentString(linebuf, err->linebufLength()) : EmptyString(),
                 err->lineno,
@@ -2701,7 +2701,7 @@ nsXPCComponents_Utils::CallFunctionWithAsyncStack(HandleValue function,
     if (NS_FAILED(rv))
         return rv;
     if (!asyncStack.isObject()) {
-        JS_ReportError(cx, "Must use a native JavaScript stack frame");
+        JS_ReportErrorASCII(cx, "Must use a native JavaScript stack frame");
         return NS_ERROR_INVALID_ARG;
     }
 
@@ -3038,7 +3038,7 @@ nsXPCComponents_Utils::BlockScriptForGlobal(HandleValue globalArg,
                                             /* stopAtWindowProxy = */ false));
     NS_ENSURE_TRUE(JS_IsGlobalObject(global), NS_ERROR_INVALID_ARG);
     if (nsContentUtils::IsSystemPrincipal(xpc::GetObjectPrincipal(global))) {
-        JS_ReportError(cx, "Script may not be disabled for system globals");
+        JS_ReportErrorASCII(cx, "Script may not be disabled for system globals");
         return NS_ERROR_FAILURE;
     }
     Scriptability::Get(global).Block();
@@ -3054,7 +3054,7 @@ nsXPCComponents_Utils::UnblockScriptForGlobal(HandleValue globalArg,
                                             /* stopAtWindowProxy = */ false));
     NS_ENSURE_TRUE(JS_IsGlobalObject(global), NS_ERROR_INVALID_ARG);
     if (nsContentUtils::IsSystemPrincipal(xpc::GetObjectPrincipal(global))) {
-        JS_ReportError(cx, "Script may not be disabled for system globals");
+        JS_ReportErrorASCII(cx, "Script may not be disabled for system globals");
         return NS_ERROR_FAILURE;
     }
     Scriptability::Get(global).Unblock();
@@ -3235,12 +3235,12 @@ xpc::CloneInto(JSContext* aCx, HandleValue aValue, HandleValue aScope,
     RootedObject scope(aCx, &aScope.toObject());
     scope = js::CheckedUnwrap(scope);
     if(!scope) {
-        JS_ReportError(aCx, "Permission denied to clone object into scope");
+        JS_ReportErrorASCII(aCx, "Permission denied to clone object into scope");
         return false;
     }
 
     if (!aOptions.isUndefined() && !aOptions.isObject()) {
-        JS_ReportError(aCx, "Invalid argument");
+        JS_ReportErrorASCII(aCx, "Invalid argument");
         return false;
     }
 

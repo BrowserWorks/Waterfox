@@ -19,6 +19,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include <memory>
+#include <iterator>
 
 #define CLANG_VERSION_FULL (CLANG_VERSION_MAJOR * 100 + CLANG_VERSION_MINOR)
 
@@ -40,6 +41,14 @@ typedef ASTConsumer *ASTConsumerPtr;
 #define cxxMethodDecl methodDecl
 #define cxxNewExpr newExpr
 #define cxxRecordDecl recordDecl
+#endif
+
+#ifndef HAS_ACCEPTS_IGNORINGPARENIMPCASTS
+#define hasIgnoringParenImpCasts(x) has(x)
+#else
+// Before clang 3.9 "has" would behave like has(ignoringParenImpCasts(x)),
+// however doing that explicitly would not compile.
+#define hasIgnoringParenImpCasts(x) has(ignoringParenImpCasts(x))
 #endif
 
 // Check if the given expression contains an assignment expression.
@@ -106,6 +115,20 @@ private:
   class RefCountedInsideLambdaChecker : public MatchFinder::MatchCallback {
   public:
     virtual void run(const MatchFinder::MatchResult &Result);
+    void emitDiagnostics(SourceLocation Loc, StringRef Name, QualType Type);
+
+  private:
+    class ThisVisitor : public RecursiveASTVisitor<ThisVisitor> {
+    public:
+      explicit ThisVisitor(RefCountedInsideLambdaChecker& Checker)
+        : Checker(Checker) {}
+
+      bool VisitCXXThisExpr(CXXThisExpr *This);
+    private:
+      RefCountedInsideLambdaChecker& Checker;
+    };
+
+    ASTContext *Context;
   };
 
   class ExplicitOperatorBoolChecker : public MatchFinder::MatchCallback {
@@ -163,6 +186,38 @@ private:
     virtual void run(const MatchFinder::MatchResult &Result);
   };
 
+  class SprintfLiteralChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
+  class OverrideBaseCallChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  private:
+    void evaluateExpression(const Stmt *StmtExpr,
+        std::list<const CXXMethodDecl*> &MethodList);
+    void getRequiredBaseMethod(const CXXMethodDecl* Method,
+        std::list<const CXXMethodDecl*>& MethodsList);
+    void findBaseMethodCall(const CXXMethodDecl* Method,
+        std::list<const CXXMethodDecl*>& MethodsList);
+    bool isRequiredBaseMethod(const CXXMethodDecl *Method);
+  };
+
+/*
+ *  This is a companion checker for OverrideBaseCallChecker that rejects
+ *  the usage of MOZ_REQUIRED_BASE_METHOD on non-virtual base methods.
+ */
+  class OverrideBaseCallUsageChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
+  class NonParamInsideFunctionDeclChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
   ScopeChecker Scope;
   ArithmeticArgChecker ArithmeticArg;
   TrivialCtorDtorChecker TrivialCtorDtor;
@@ -180,6 +235,10 @@ private:
   RefCountedCopyConstructorChecker RefCountedCopyConstructor;
   AssertAssignmentChecker AssertAttribution;
   KungFuDeathGripChecker KungFuDeathGrip;
+  SprintfLiteralChecker SprintfLiteral;
+  OverrideBaseCallChecker OverrideBaseCall;
+  OverrideBaseCallUsageChecker OverrideBaseCallUsage;
+  NonParamInsideFunctionDeclChecker NonParamInsideFunctionDecl;
   MatchFinder AstMatcher;
 };
 
@@ -223,7 +282,8 @@ bool isInIgnoredNamespaceForImplicitCtor(const Decl *Declaration) {
          Name == "MacFileUtilities" ||  // MacFileUtilities
          Name == "dwarf2reader" ||      // dwarf2reader
          Name == "arm_ex_to_module" ||  // arm_ex_to_module
-         Name == "testing";             // gtest
+         Name == "testing" ||           // gtest
+         Name == "Json";                // jsoncpp
 }
 
 bool isInIgnoredNamespaceForImplicitConversion(const Decl *Declaration) {
@@ -251,7 +311,8 @@ bool isIgnoredPathForImplicitCtor(const Decl *Declaration) {
         Begin->compare_lower(StringRef("harfbuzz")) == 0 ||
         Begin->compare_lower(StringRef("hunspell")) == 0 ||
         Begin->compare_lower(StringRef("scoped_ptr.h")) == 0 ||
-        Begin->compare_lower(StringRef("graphite2")) == 0) {
+        Begin->compare_lower(StringRef("graphite2")) == 0 ||
+        Begin->compare_lower(StringRef("icu")) == 0) {
       return true;
     }
     if (Begin->compare_lower(StringRef("chromium")) == 0) {
@@ -279,6 +340,35 @@ bool isIgnoredPathForImplicitConversion(const Decl *Declaration) {
       // Ignore security/sandbox/chromium but not ipc/chromium.
       ++Begin;
       return Begin != End && Begin->compare_lower(StringRef("sandbox")) == 0;
+    }
+  }
+  return false;
+}
+
+bool isIgnoredPathForSprintfLiteral(const CallExpr *Call, const SourceManager &SM) {
+  SourceLocation Loc = Call->getLocStart();
+  SmallString<1024> FileName = SM.getFilename(Loc);
+  llvm::sys::fs::make_absolute(FileName);
+  llvm::sys::path::reverse_iterator Begin = llvm::sys::path::rbegin(FileName),
+                                    End = llvm::sys::path::rend(FileName);
+  for (; Begin != End; ++Begin) {
+    if (Begin->compare_lower(StringRef("angle")) == 0 ||
+        Begin->compare_lower(StringRef("chromium")) == 0 ||
+        Begin->compare_lower(StringRef("crashreporter")) == 0 ||
+        Begin->compare_lower(StringRef("google-breakpad")) == 0 ||
+        Begin->compare_lower(StringRef("harfbuzz")) == 0 ||
+        Begin->compare_lower(StringRef("libstagefright")) == 0 ||
+        Begin->compare_lower(StringRef("mtransport")) == 0 ||
+        Begin->compare_lower(StringRef("protobuf")) == 0 ||
+        Begin->compare_lower(StringRef("skia")) == 0 ||
+        // Gtest uses snprintf as GTEST_SNPRINTF_ with sizeof
+        Begin->compare_lower(StringRef("testing")) == 0) {
+      return true;
+    }
+    if (Begin->compare_lower(StringRef("webrtc")) == 0) {
+      // Ignore trunk/webrtc, but not media/webrtc
+      ++Begin;
+      return Begin != End && Begin->compare_lower(StringRef("trunk")) == 0;
     }
   }
   return false;
@@ -427,6 +517,8 @@ static CustomTypeAnnotation NonTemporaryClass =
     CustomTypeAnnotation("moz_non_temporary_class", "non-temporary");
 static CustomTypeAnnotation MustUse =
     CustomTypeAnnotation("moz_must_use_type", "must-use");
+static CustomTypeAnnotation NonParam =
+    CustomTypeAnnotation("moz_non_param", "non-param");
 
 class MemMoveAnnotation final : public CustomTypeAnnotation {
 public:
@@ -766,13 +858,25 @@ AST_MATCHER(BinaryOperator, isInSystemHeader) {
   return ASTIsInSystemHeader(Finder->getASTContext(), Node);
 }
 
-/// This matcher will match locations in SkScalar.h.  This header contains a
-/// known NaN-testing expression which we would like to whitelist.
-AST_MATCHER(BinaryOperator, isInSkScalarDotH) {
+/// This matcher will match a list of files.  These files contain
+/// known NaN-testing expressions which we would like to whitelist.
+AST_MATCHER(BinaryOperator, isInWhitelistForNaNExpr) {
+  const char* whitelist[] = {
+    "SkScalar.h",
+    "json_writer.cpp"
+  };
+
   SourceLocation Loc = Node.getOperatorLoc();
   auto &SourceManager = Finder->getASTContext().getSourceManager();
   SmallString<1024> FileName = SourceManager.getFilename(Loc);
-  return llvm::sys::path::rbegin(FileName)->equals("SkScalar.h");
+
+  for (auto itr = std::begin(whitelist); itr != std::end(whitelist); itr++) {
+    if (llvm::sys::path::rbegin(FileName)->equals(*itr)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /// This matcher will match all accesses to AddRef or Release methods.
@@ -861,12 +965,47 @@ AST_MATCHER(CallExpr, isAssertAssignmentTestFunc) {
       && Method->getName() == AssertName;
 }
 
+AST_MATCHER(CallExpr, isSnprintfLikeFunc) {
+  static const std::string Snprintf = "snprintf";
+  static const std::string Vsnprintf = "vsnprintf";
+  const FunctionDecl *Func = Node.getDirectCallee();
+
+  if (!Func || isa<CXXMethodDecl>(Func)) {
+    return false;
+  }
+
+  StringRef Name = getNameChecked(Func);
+  if (Name != Snprintf && Name != Vsnprintf) {
+    return false;
+  }
+
+  return !isIgnoredPathForSprintfLiteral(&Node, Finder->getASTContext().getSourceManager());
+}
+
 AST_MATCHER(CXXRecordDecl, isLambdaDecl) {
   return Node.isLambda();
 }
 
 AST_MATCHER(QualType, isRefPtr) {
   return typeIsRefPtr(Node);
+}
+
+AST_MATCHER(CXXRecordDecl, hasBaseClasses) {
+  const CXXRecordDecl *Decl = Node.getCanonicalDecl();
+
+  // Must have definition and should inherit other classes
+  return Decl && Decl->hasDefinition() && Decl->getNumBases();
+}
+
+AST_MATCHER(CXXMethodDecl, isRequiredBaseMethod) {
+  const CXXMethodDecl *Decl = Node.getCanonicalDecl();
+  return Decl
+      && MozChecker::hasCustomAnnotation(Decl, "moz_required_base_method");
+}
+
+AST_MATCHER(CXXMethodDecl, isNonVirtual) {
+  const CXXMethodDecl *Decl = Node.getCanonicalDecl();
+  return Decl && !Decl->isVirtual();
 }
 }
 }
@@ -1091,11 +1230,11 @@ DiagnosticsMatcher::DiagnosticsMatcher() {
   AstMatcher.addMatcher(
       binaryOperator(
           allOf(binaryEqualityOperator(),
-                hasLHS(has(
+                hasLHS(hasIgnoringParenImpCasts(
                     declRefExpr(hasType(qualType((isFloat())))).bind("lhs"))),
-                hasRHS(has(
+                hasRHS(hasIgnoringParenImpCasts(
                     declRefExpr(hasType(qualType((isFloat())))).bind("rhs"))),
-                unless(anyOf(isInSystemHeader(), isInSkScalarDotH()))))
+                unless(anyOf(isInSystemHeader(), isInWhitelistForNaNExpr()))))
           .bind("node"),
       &NaNExpr);
 
@@ -1195,6 +1334,35 @@ DiagnosticsMatcher::DiagnosticsMatcher() {
 
   AstMatcher.addMatcher(varDecl(hasType(isRefPtr())).bind("decl"),
                         &KungFuDeathGrip);
+
+  AstMatcher.addMatcher(
+      callExpr(isSnprintfLikeFunc(),
+        allOf(hasArgument(0, ignoringParenImpCasts(declRefExpr().bind("buffer"))),
+                             anyOf(hasArgument(1, sizeOfExpr(hasIgnoringParenImpCasts(declRefExpr().bind("size")))),
+                                   hasArgument(1, integerLiteral().bind("immediate")),
+                                   hasArgument(1, declRefExpr(to(varDecl(hasType(isConstQualified()),
+                                                                         hasInitializer(integerLiteral().bind("constant")))))))))
+        .bind("funcCall"),
+      &SprintfLiteral
+  );
+
+  AstMatcher.addMatcher(cxxRecordDecl(hasBaseClasses()).bind("class"),
+      &OverrideBaseCall);
+
+  AstMatcher.addMatcher(
+      cxxMethodDecl(isNonVirtual(), isRequiredBaseMethod()).bind("method"),
+      &OverrideBaseCallUsage);
+
+  AstMatcher.addMatcher(
+      functionDecl(anyOf(allOf(isDefinition(),
+                               hasAncestor(classTemplateSpecializationDecl()
+                                               .bind("spec"))),
+                         isDefinition()))
+          .bind("func"),
+      &NonParamInsideFunctionDecl);
+  AstMatcher.addMatcher(
+      lambdaExpr().bind("lambda"),
+      &NonParamInsideFunctionDecl);
 }
 
 // These enum variants determine whether an allocation has occured in the code.
@@ -1444,14 +1612,8 @@ void DiagnosticsMatcher::NoAddRefReleaseOnReturnChecker::run(
 
 void DiagnosticsMatcher::RefCountedInsideLambdaChecker::run(
     const MatchFinder::MatchResult &Result) {
+  Context = Result.Context;
   static DenseSet<const CXXRecordDecl*> CheckedDecls;
-
-  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
-  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
-      DiagnosticIDs::Error,
-      "Refcounted variable %0 of type %1 cannot be captured by a lambda");
-  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
-      DiagnosticIDs::Note, "Please consider using a smart pointer");
 
   const CXXRecordDecl *Lambda = Result.Nodes.getNodeAs<CXXRecordDecl>("decl");
 
@@ -1474,18 +1636,102 @@ void DiagnosticsMatcher::RefCountedInsideLambdaChecker::run(
   }
   CheckedDecls.insert(Lambda);
 
-  for (const LambdaCapture Capture : Lambda->captures()) {
-    if (Capture.capturesVariable() && Capture.getCaptureKind() != LCK_ByRef) {
+  bool StrongRefToThisCaptured = false;
+
+  for (const LambdaCapture& Capture : Lambda->captures()) {
+    // Check if any of the captures are ByRef. If they are, we have nothing to
+    // report, as it's OK to capture raw pointers to refcounted objects so long as
+    // the Lambda doesn't escape the current scope, which is required by ByRef
+    // captures already.
+    if (Capture.getCaptureKind() == LCK_ByRef) {
+      return;
+    }
+
+    // Check if this capture is byvalue, and captures a strong reference to this.
+    // XXX: Do we want to make sure that this type which we are capturing is a "Smart Pointer" somehow?
+    if (!StrongRefToThisCaptured &&
+        Capture.capturesVariable() &&
+        Capture.getCaptureKind() == LCK_ByCopy) {
+      const VarDecl *Var = Capture.getCapturedVar();
+      if (Var->hasInit()) {
+        const Stmt *Init = Var->getInit();
+
+        // Ignore single argument constructors, and trivial nodes.
+        while (true) {
+          auto NewInit = IgnoreImplicit(Init);
+          if (auto ConstructExpr = dyn_cast<CXXConstructExpr>(NewInit)) {
+            if (ConstructExpr->getNumArgs() == 1) {
+              NewInit = ConstructExpr->getArg(0);
+            }
+          }
+          if (Init == NewInit) {
+            break;
+          }
+          Init = NewInit;
+        }
+
+        if (isa<CXXThisExpr>(Init)) {
+          StrongRefToThisCaptured = true;
+        }
+      }
+    }
+  }
+
+  // Now we can go through and produce errors for any captured variables or this pointers.
+  for (const LambdaCapture& Capture : Lambda->captures()) {
+    if (Capture.capturesVariable()) {
       QualType Pointee = Capture.getCapturedVar()->getType()->getPointeeType();
 
       if (!Pointee.isNull() && isClassRefCounted(Pointee)) {
-        Diag.Report(Capture.getLocation(), ErrorID) << Capture.getCapturedVar()
-                                                    << Pointee;
-        Diag.Report(Capture.getLocation(), NoteID);
+        emitDiagnostics(Capture.getLocation(), Capture.getCapturedVar()->getName(), Pointee);
+        return;
+      }
+    }
+
+    // The situation with captures of `this` is more complex. All captures of
+    // `this` look the same-ish (they are LCK_This). We want to complain about
+    // captures of `this` where `this` is a refcounted type, and the capture is
+    // actually used in the body of the lambda (if the capture isn't used, then
+    // we don't care, because it's only being captured in order to give access
+    // to private methods).
+    //
+    // In addition, we don't complain about this, even if it is used, if it was
+    // captured implicitly when the LambdaCaptureDefault was LCD_ByRef, as that
+    // expresses the intent that the lambda won't leave the enclosing scope.
+    bool ImplicitByRefDefaultedCapture =
+      Capture.isImplicit() && Lambda->getLambdaCaptureDefault() == LCD_ByRef;
+    if (Capture.capturesThis() &&
+        !ImplicitByRefDefaultedCapture &&
+        !StrongRefToThisCaptured) {
+      ThisVisitor V(*this);
+      bool NotAborted = V.TraverseDecl(const_cast<CXXMethodDecl *>(Lambda->getLambdaCallOperator()));
+      if (!NotAborted) {
         return;
       }
     }
   }
+}
+
+void DiagnosticsMatcher::RefCountedInsideLambdaChecker::emitDiagnostics(
+    SourceLocation Loc, StringRef Name, QualType Type) {
+  DiagnosticsEngine& Diag = Context->getDiagnostics();
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "Refcounted variable '%0' of type %1 cannot be captured by a lambda");
+  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, "Please consider using a smart pointer");
+
+  Diag.Report(Loc, ErrorID) << Name << Type;
+  Diag.Report(Loc, NoteID);
+}
+
+bool DiagnosticsMatcher::RefCountedInsideLambdaChecker::ThisVisitor::VisitCXXThisExpr(CXXThisExpr *This) {
+  QualType Pointee = This->getType()->getPointeeType();
+  if (!Pointee.isNull() && isClassRefCounted(Pointee)) {
+    Checker.emitDiagnostics(This->getLocStart(), "this", Pointee);
+    return false;
+  }
+
+  return true;
 }
 
 void DiagnosticsMatcher::ExplicitOperatorBoolChecker::run(
@@ -1832,6 +2078,222 @@ void DiagnosticsMatcher::KungFuDeathGripChecker::run(
   // We cannot provide the note if we don't have an initializer
   Diag.Report(D->getLocStart(), ErrorID) << D->getType() << ErrThing;
   Diag.Report(E->getLocStart(), NoteID) << NoteThing << getNameChecked(D);
+}
+
+void DiagnosticsMatcher::SprintfLiteralChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  if (!Result.Context->getLangOpts().CPlusPlus) {
+    // SprintfLiteral is not usable in C, so there is no point in issuing these
+    // warnings.
+    return;
+  }
+
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+    DiagnosticIDs::Error, "Use %1 instead of %0 when writing into a character array.");
+  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+    DiagnosticIDs::Note, "This will prevent passing in the wrong size to %0 accidentally.");
+
+  const CallExpr *D = Result.Nodes.getNodeAs<CallExpr>("funcCall");
+
+  StringRef Name = D->getDirectCallee()->getName();
+  const char *Replacement;
+  if (Name == "snprintf") {
+    Replacement = "SprintfLiteral";
+  } else {
+    assert(Name == "vsnprintf");
+    Replacement = "VsprintfLiteral";
+  }
+
+  const DeclRefExpr *Buffer = Result.Nodes.getNodeAs<DeclRefExpr>("buffer");
+  const DeclRefExpr *Size = Result.Nodes.getNodeAs<DeclRefExpr>("size");
+  if (Size) {
+    // Match calls like snprintf(x, sizeof(x), ...).
+    if (Buffer->getFoundDecl() != Size->getFoundDecl()) {
+      return;
+    }
+
+    Diag.Report(D->getLocStart(), ErrorID) << Name << Replacement;
+    Diag.Report(D->getLocStart(), NoteID) << Name;
+    return;
+  }
+
+  const QualType QType = Buffer->getType();
+  const ConstantArrayType *Type = dyn_cast<ConstantArrayType>(QType.getTypePtrOrNull());
+  if (Type) {
+    // Match calls like snprintf(x, 100, ...), where x is int[100];
+    const IntegerLiteral *Literal = Result.Nodes.getNodeAs<IntegerLiteral>("immediate");
+    if (!Literal) {
+      // Match calls like: const int y = 100; snprintf(x, y, ...);
+      Literal = Result.Nodes.getNodeAs<IntegerLiteral>("constant");
+    }
+
+    if (Type->getSize().ule(Literal->getValue())) {
+      Diag.Report(D->getLocStart(), ErrorID) << Name << Replacement;
+      Diag.Report(D->getLocStart(), NoteID) << Name;
+    }
+  }
+}
+
+bool DiagnosticsMatcher::OverrideBaseCallChecker::isRequiredBaseMethod(
+    const CXXMethodDecl *Method) {
+  return MozChecker::hasCustomAnnotation(Method, "moz_required_base_method");
+}
+
+void DiagnosticsMatcher::OverrideBaseCallChecker::evaluateExpression(
+    const Stmt *StmtExpr, std::list<const CXXMethodDecl*> &MethodList) {
+  // Continue while we have methods in our list
+  if (!MethodList.size()) {
+    return;
+  }
+
+  if (auto MemberFuncCall = dyn_cast<CXXMemberCallExpr>(StmtExpr)) {
+    if (auto Method = dyn_cast<CXXMethodDecl>(
+        MemberFuncCall->getDirectCallee())) {
+      findBaseMethodCall(Method, MethodList);
+    }
+  }
+
+  for (auto S : StmtExpr->children()) {
+    if (S) {
+      evaluateExpression(S, MethodList);
+    }
+  }
+}
+
+void DiagnosticsMatcher::OverrideBaseCallChecker::getRequiredBaseMethod(
+    const CXXMethodDecl *Method,
+    std::list<const CXXMethodDecl*>& MethodsList) {
+
+  if (isRequiredBaseMethod(Method)) {
+    MethodsList.push_back(Method);
+  } else {
+    // Loop through all it's base methods.
+    for (auto BaseMethod = Method->begin_overridden_methods();
+        BaseMethod != Method->end_overridden_methods(); BaseMethod++) {
+      getRequiredBaseMethod(*BaseMethod, MethodsList);
+    }
+  }
+}
+
+void DiagnosticsMatcher::OverrideBaseCallChecker::findBaseMethodCall(
+    const CXXMethodDecl* Method,
+    std::list<const CXXMethodDecl*>& MethodsList) {
+
+  MethodsList.remove(Method);
+  // Loop also through all it's base methods;
+  for (auto BaseMethod = Method->begin_overridden_methods();
+      BaseMethod != Method->end_overridden_methods(); BaseMethod++) {
+    findBaseMethodCall(*BaseMethod, MethodsList);
+  }
+}
+
+void DiagnosticsMatcher::OverrideBaseCallChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned OverrideBaseCallCheckID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error,
+      "Method %0 must be called in all overrides, but is not called in "
+      "this override defined for class %1");
+  const CXXRecordDecl *Decl = Result.Nodes.getNodeAs<CXXRecordDecl>("class");
+
+  // Loop through the methods and look for the ones that are overridden.
+  for (auto Method : Decl->methods()) {
+    // If this method doesn't override other methods or it doesn't have a body,
+    // continue to the next declaration.
+    if (!Method->size_overridden_methods() || !Method->hasBody()) {
+      continue;
+    }
+
+    // Preferred the usage of list instead of vector in order to avoid
+    // calling erase-remove when deleting items
+    std::list<const CXXMethodDecl*> MethodsList;
+    // For each overridden method push it to a list if it meets our
+    // criteria
+    for (auto BaseMethod = Method->begin_overridden_methods();
+        BaseMethod != Method->end_overridden_methods(); BaseMethod++) {
+      getRequiredBaseMethod(*BaseMethod, MethodsList);
+    }
+
+    // If no method has been found then no annotation was used
+    // so checking is not needed
+    if (!MethodsList.size()) {
+      continue;
+    }
+
+    // Loop through the body of our method and search for calls to
+    // base methods
+    evaluateExpression(Method->getBody(), MethodsList);
+
+    // If list is not empty pop up errors
+    for (auto BaseMethod : MethodsList) {
+      Diag.Report(Method->getLocation(), OverrideBaseCallCheckID)
+          << BaseMethod->getQualifiedNameAsString()
+          << Decl->getName();
+    }
+  }
+}
+
+void DiagnosticsMatcher::OverrideBaseCallUsageChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error,
+      "MOZ_REQUIRED_BASE_METHOD can be used only on virtual methods");
+  const CXXMethodDecl *Method = Result.Nodes.getNodeAs<CXXMethodDecl>("method");
+
+  Diag.Report(Method->getLocation(), ErrorID);
+}
+
+void DiagnosticsMatcher::NonParamInsideFunctionDeclChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  static DenseSet<const FunctionDecl*> CheckedFunctionDecls;
+
+  const FunctionDecl *func = Result.Nodes.getNodeAs<FunctionDecl>("func");
+  if (!func) {
+    const LambdaExpr *lambda = Result.Nodes.getNodeAs<LambdaExpr>("lambda");
+    if (lambda) {
+      func = lambda->getCallOperator();
+    }
+  }
+
+  if (!func) {
+    return;
+  }
+
+  if (func->isDeleted()) {
+    return;
+  }
+
+  // Don't report errors on the same declarations more than once.
+  if (CheckedFunctionDecls.count(func)) {
+    return;
+  }
+  CheckedFunctionDecls.insert(func);
+
+  const ClassTemplateSpecializationDecl *Spec =
+      Result.Nodes.getNodeAs<ClassTemplateSpecializationDecl>("spec");
+
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned ErrorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "Type %0 must not be used as parameter");
+  unsigned NoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, "Please consider passing a const reference instead");
+  unsigned SpecNoteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, "The bad argument was passed to %0 here");
+
+  for (ParmVarDecl *p : func->parameters()) {
+    QualType T = p->getType().withoutLocalFastQualifiers();
+    if (NonParam.hasEffectiveAnnotation(T)) {
+      Diag.Report(p->getLocation(), ErrorID) << T;
+      Diag.Report(p->getLocation(), NoteID);
+
+      if (Spec) {
+        Diag.Report(Spec->getPointOfInstantiation(), SpecNoteID)
+          << Spec->getSpecializedTemplate();
+      }
+    }
+  }
 }
 
 class MozCheckAction : public PluginASTAction {

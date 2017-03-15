@@ -84,11 +84,11 @@ class nsIDOMNode;
 class nsIDocShellTreeOwner;
 class nsIGlobalHistory2;
 class nsIHttpChannel;
+class nsIMutableArray;
 class nsIPrompt;
 class nsISHistory;
 class nsISecureBrowserUI;
 class nsIStringBundle;
-class nsISupportsArray;
 class nsIURIFixup;
 class nsIURILoader;
 class nsIWebBrowserFind;
@@ -224,7 +224,6 @@ public:
   NS_IMETHOD GetTopWindow(mozIDOMWindowProxy**) override;
   NS_IMETHOD GetTopFrameElement(nsIDOMElement**) override;
   NS_IMETHOD GetNestedFrameId(uint64_t*) override;
-  NS_IMETHOD IsAppOfType(uint32_t, bool*) override;
   NS_IMETHOD GetIsContent(bool*) override;
   NS_IMETHOD GetUsePrivateBrowsing(bool*) override;
   NS_IMETHOD SetUsePrivateBrowsing(bool) override;
@@ -271,6 +270,10 @@ public:
   }
   bool InFrameSwap();
 
+private:
+  bool CanSetOriginAttributes();
+
+public:
   const mozilla::DocShellOriginAttributes&
   GetOriginAttributes()
   {
@@ -349,14 +352,18 @@ protected:
   // at the parent.
   nsIPrincipal* GetInheritedPrincipal(bool aConsiderCurrentDocument);
 
-  // Actually open a channel and perform a URI load. Note: whatever principal is
-  // passed to this function will be set on the channel. Callers who wish to
-  // not have an principal on the channel should just pass null.
+  // Actually open a channel and perform a URI load. Callers need to pass a
+  // non-null aTriggeringPrincipal which initiated the URI load. Please note
+  // that aTriggeringPrincipal will be used for performing security checks.
+  // If the argument aURI is provided by the web, then please do not pass a
+  // SystemPrincipal as the triggeringPrincipal. If principalToInherit is
+  // null, then no inheritance of any sort will happen and the load will
+  // get a principal based on the URI being loaded.
   // If aSrcdoc is not void, the load will be considered as a srcdoc load,
   // and the contents of aSrcdoc will be loaded instead of aURI.
   // aOriginalURI will be set as the originalURI on the channel that does the
   // load. If aOriginalURI is null, aURI will be set as the originalURI.
-  // If aLoadReplace is true, OLOAD_REPLACE flag will be set to the nsIChannel.
+  // If aLoadReplace is true, LOAD_REPLACE flag will be set to the nsIChannel.
   nsresult DoURILoad(nsIURI* aURI,
                      nsIURI* aOriginalURI,
                      bool aLoadReplace,
@@ -364,6 +371,7 @@ protected:
                      bool aSendReferrer,
                      uint32_t aReferrerPolicy,
                      nsIPrincipal* aTriggeringPrincipal,
+                     nsIPrincipal* aPrincipalToInherit,
                      const char* aTypeHint,
                      const nsAString& aFileName,
                      nsIInputStream* aPostData,
@@ -408,6 +416,7 @@ protected:
   // aCloneSHChildren argument as aCloneChildren.
   bool OnNewURI(nsIURI* aURI, nsIChannel* aChannel,
                 nsIPrincipal* aTriggeringPrincipal,
+                nsIPrincipal* aPrincipalToInherit,
                 uint32_t aLoadType,
                 bool aFireOnLocationChange,
                 bool aAddToGlobalHistory,
@@ -426,6 +435,7 @@ protected:
   // the new session history entry.
   nsresult AddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel,
                                nsIPrincipal* aTriggeringPrincipal,
+                               nsIPrincipal* aPrincipalToInherit,
                                bool aCloneChildren,
                                nsISHEntry** aNewEntry);
   nsresult AddChildSHEntryToParent(nsISHEntry* aNewEntry, int32_t aChildOffset,
@@ -725,12 +735,6 @@ protected:
   // Convenience method for getting our parent docshell. Can return null
   already_AddRefed<nsDocShell> GetParentDocshell();
 
-  // Check if we have an app redirect registered for the URI and redirect if
-  // needed. Returns true if a redirect happened, false otherwise.
-  bool DoAppRedirectIfNeeded(nsIURI* aURI,
-                             nsIDocShellLoadInfo* aLoadInfo,
-                             bool aFirstParty);
-
   // Check if aURI is about:newtab.
   bool IsAboutNewtab(nsIURI* aURI);
 
@@ -808,8 +812,8 @@ protected:
   nsCString mContentTypeHint;
   nsIntPoint mDefaultScrollbarPref; // persistent across doc loads
 
-  nsCOMPtr<nsISupportsArray> mRefreshURIList;
-  nsCOMPtr<nsISupportsArray> mSavedRefreshURIList;
+  nsCOMPtr<nsIMutableArray> mRefreshURIList;
+  nsCOMPtr<nsIMutableArray> mSavedRefreshURIList;
   RefPtr<nsDSURIContentListener> mContentListener;
   nsCOMPtr<nsIContentViewer> mContentViewer;
   nsCOMPtr<nsIWidget> mParentWidget;
@@ -1041,7 +1045,7 @@ private:
 
   // Separate function to do the actual name (i.e. not _top, _self etc.)
   // searching for FindItemWithName.
-  nsresult DoFindItemWithName(const char16_t* aName,
+  nsresult DoFindItemWithName(const nsAString& aName,
                               nsISupports* aRequestor,
                               nsIDocShellTreeItem* aOriginalRequestor,
                               nsIDocShellTreeItem** aResult);

@@ -149,19 +149,15 @@ static void SetWidgetStateSafe(uint8_t *aSafeVector,
   aSafeVector[key >> 3] |= (1 << (key & 7));
 }
 
-static GtkTextDirection GetTextDirection(nsIFrame* aFrame)
+/* static */ GtkTextDirection
+nsNativeThemeGTK::GetTextDirection(nsIFrame* aFrame)
 {
-  if (!aFrame)
-    return GTK_TEXT_DIR_NONE;
-
-  switch (aFrame->StyleVisibility()->mDirection) {
-    case NS_STYLE_DIRECTION_RTL:
-      return GTK_TEXT_DIR_RTL;
-    case NS_STYLE_DIRECTION_LTR:
-      return GTK_TEXT_DIR_LTR;
-  }
-
-  return GTK_TEXT_DIR_NONE;
+  // IsFrameRTL() treats vertical-rl modes as right-to-left (in addition to
+  // horizontal text with direction=RTL), rather than just considering the
+  // text direction.  GtkTextDirection does not have distinct values for
+  // vertical writing modes, but considering the block flow direction is
+  // important for resizers and scrollbar elements, at least.
+  return IsFrameRTL(aFrame) ? GTK_TEXT_DIR_RTL : GTK_TEXT_DIR_LTR;
 }
 
 // Returns positive for negative margins (otherwise 0).
@@ -428,6 +424,12 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
         *aWidgetFlags = MOZ_GTK_TRACK_OPAQUE;
     else
         *aWidgetFlags = 0;
+    break;
+  case NS_THEME_SCROLLBARTRACK_HORIZONTAL:
+    aGtkWidgetType = MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL;
+    break;
+  case NS_THEME_SCROLLBARTRACK_VERTICAL:
+    aGtkWidgetType = MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL;
     break;
   case NS_THEME_SCROLLBARTHUMB_VERTICAL:
     aGtkWidgetType = MOZ_GTK_SCROLLBAR_THUMB_VERTICAL;
@@ -1105,14 +1107,7 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
 {
   GtkWidgetState state;
   WidgetNodeType gtkWidgetType;
-  // For resizer drawing, we want IsFrameRTL, which treats vertical-rl modes
-  // as right-to-left (in addition to horizontal text with direction=RTL),
-  // rather than just considering the text direction.
-  // This will make resizers on vertically-oriented elements render properly.
-  GtkTextDirection direction =
-    aWidgetType == NS_THEME_RESIZER
-    ? (IsFrameRTL(aFrame) ? GTK_TEXT_DIR_RTL : GTK_TEXT_DIR_LTR)
-    : GetTextDirection(aFrame);
+  GtkTextDirection direction = GetTextDirection(aFrame);
   gint flags;
   if (!GetGtkWidgetAndState(aWidgetType, aFrame, gtkWidgetType, &state,
                             &flags))
@@ -1248,6 +1243,21 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
   return NS_OK;
 }
 
+WidgetNodeType
+nsNativeThemeGTK::NativeThemeToGtkTheme(uint8_t aWidgetType, nsIFrame* aFrame)
+{
+  WidgetNodeType gtkWidgetType;
+  gint unusedFlags;
+
+  if (!GetGtkWidgetAndState(aWidgetType, aFrame, gtkWidgetType, nullptr,
+                            &unusedFlags))
+  {
+    MOZ_ASSERT_UNREACHABLE("Unknown native widget to gtk widget mapping");
+    return MOZ_GTK_WINDOW;
+  }
+  return gtkWidgetType;
+}
+
 NS_IMETHODIMP
 nsNativeThemeGTK::GetWidgetBorder(nsDeviceContext* aContext, nsIFrame* aFrame,
                                   uint8_t aWidgetType, nsIntMargin* aResult)
@@ -1255,24 +1265,6 @@ nsNativeThemeGTK::GetWidgetBorder(nsDeviceContext* aContext, nsIFrame* aFrame,
   GtkTextDirection direction = GetTextDirection(aFrame);
   aResult->top = aResult->left = aResult->right = aResult->bottom = 0;
   switch (aWidgetType) {
-  case NS_THEME_SCROLLBAR_VERTICAL:
-  case NS_THEME_SCROLLBARTRACK_HORIZONTAL:
-    {
-      MozGtkScrollbarMetrics metrics;
-      moz_gtk_get_scrollbar_metrics(&metrics);
-      /* Top and bottom border for whole vertical scrollbar, top and bottom
-       * border for horizontal track - to correctly position thumb element */
-      aResult->top = aResult->bottom = metrics.trough_border;
-    }
-    break;
-  case NS_THEME_SCROLLBAR_HORIZONTAL:
-  case NS_THEME_SCROLLBARTRACK_VERTICAL:
-    {
-      MozGtkScrollbarMetrics metrics;
-      moz_gtk_get_scrollbar_metrics(&metrics);
-      aResult->left = aResult->right = metrics.trough_border;
-    }
-    break;
   case NS_THEME_TOOLBOX:
     // gtk has no toolbox equivalent.  So, although we map toolbox to
     // gtk's 'toolbar' for purposes of painting the widget background,
@@ -1312,8 +1304,9 @@ nsNativeThemeGTK::GetWidgetBorder(nsDeviceContext* aContext, nsIFrame* aFrame,
   default:
     {
       WidgetNodeType gtkWidgetType;
+      gint unusedFlags;
       if (GetGtkWidgetAndState(aWidgetType, aFrame, gtkWidgetType, nullptr,
-                               nullptr)) {
+                               &unusedFlags)) {
         moz_gtk_get_widget_border(gtkWidgetType, &aResult->left, &aResult->top,
                                   &aResult->right, &aResult->bottom, direction,
                                   IsFrameContentNodeInNamespace(aFrame, kNameSpaceID_XHTML));
@@ -1426,22 +1419,33 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
     case NS_THEME_SCROLLBARBUTTON_UP:
     case NS_THEME_SCROLLBARBUTTON_DOWN:
       {
-        MozGtkScrollbarMetrics metrics;
-        moz_gtk_get_scrollbar_metrics(&metrics);
+        if (gtk_check_version(3,20,0) == nullptr) {
+          moz_gtk_get_widget_min_size(MOZ_GTK_SCROLLBAR_BUTTON,
+                                      &(aResult->width), &(aResult->height));
+        } else {
+          MozGtkScrollbarMetrics metrics;
+          moz_gtk_get_scrollbar_metrics(&metrics);
 
-        aResult->width = metrics.slider_width;
-        aResult->height = metrics.stepper_size;
+          aResult->width = metrics.slider_width;
+          aResult->height = metrics.stepper_size;
+        }
+
         *aIsOverridable = false;
       }
       break;
     case NS_THEME_SCROLLBARBUTTON_LEFT:
     case NS_THEME_SCROLLBARBUTTON_RIGHT:
       {
-        MozGtkScrollbarMetrics metrics;
-        moz_gtk_get_scrollbar_metrics(&metrics);
+        if (gtk_check_version(3,20,0) == nullptr) {
+          moz_gtk_get_widget_min_size(MOZ_GTK_SCROLLBAR_BUTTON,
+                                      &(aResult->width), &(aResult->height));
+        } else {
+          MozGtkScrollbarMetrics metrics;
+          moz_gtk_get_scrollbar_metrics(&metrics);
 
-        aResult->width = metrics.stepper_size;
-        aResult->height = metrics.slider_width;
+          aResult->width = metrics.stepper_size;
+          aResult->height = metrics.slider_width;
+        }
         *aIsOverridable = false;
       }
       break;
@@ -1468,39 +1472,65 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
        * the thumb isn't a direct child of the scrollbar, unlike the buttons
        * or track. So add a minimum size to the track as well to prevent a
        * 0-width scrollbar. */
-      MozGtkScrollbarMetrics metrics;
-      moz_gtk_get_scrollbar_metrics(&metrics);
+      if (gtk_check_version(3,20,0) == nullptr) {
+        // Thumb min dimensions to start with
+        WidgetNodeType thumbType = aWidgetType == NS_THEME_SCROLLBAR_VERTICAL ?
+          MOZ_GTK_SCROLLBAR_THUMB_VERTICAL : MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL;
+        moz_gtk_get_widget_min_size(thumbType, &(aResult->width), &(aResult->height));
 
-      // Require room for the slider in the track if we don't have buttons.
-      bool hasScrollbarButtons = moz_gtk_has_scrollbar_buttons();
+        // Add scrollbar's borders
+        nsIntMargin border;
+        nsNativeThemeGTK::GetWidgetBorder(aFrame->PresContext()->DeviceContext(),
+                                          aFrame, aWidgetType, &border);
+        aResult->width += border.left + border.right;
+        aResult->height += border.top + border.bottom;
 
-      if (aWidgetType == NS_THEME_SCROLLBAR_VERTICAL) {
-        aResult->width = metrics.slider_width + 2 * metrics.trough_border;
-        if (!hasScrollbarButtons)
-          aResult->height = metrics.min_slider_size + 2 * metrics.trough_border;
+        // Add track's borders
+        uint8_t trackType = aWidgetType == NS_THEME_SCROLLBAR_VERTICAL ?
+          NS_THEME_SCROLLBARTRACK_VERTICAL : NS_THEME_SCROLLBARTRACK_HORIZONTAL;
+        nsNativeThemeGTK::GetWidgetBorder(aFrame->PresContext()->DeviceContext(),
+                                          aFrame, trackType, &border);
+        aResult->width += border.left + border.right;
+        aResult->height += border.top + border.bottom;
       } else {
-        aResult->height = metrics.slider_width + 2 * metrics.trough_border;
-        if (!hasScrollbarButtons)
-          aResult->width = metrics.min_slider_size + 2 * metrics.trough_border;
+        MozGtkScrollbarMetrics metrics;
+        moz_gtk_get_scrollbar_metrics(&metrics);
+
+        // Require room for the slider in the track if we don't have buttons.
+        bool hasScrollbarButtons = moz_gtk_has_scrollbar_buttons();
+
+        if (aWidgetType == NS_THEME_SCROLLBAR_VERTICAL) {
+          aResult->width = metrics.slider_width + 2 * metrics.trough_border;
+          if (!hasScrollbarButtons)
+            aResult->height = metrics.min_slider_size + 2 * metrics.trough_border;
+        } else {
+          aResult->height = metrics.slider_width + 2 * metrics.trough_border;
+          if (!hasScrollbarButtons)
+            aResult->width = metrics.min_slider_size + 2 * metrics.trough_border;
+        }
+        *aIsOverridable = false;
       }
 
-      *aIsOverridable = false;
     }
     break;
     case NS_THEME_SCROLLBARTHUMB_VERTICAL:
     case NS_THEME_SCROLLBARTHUMB_HORIZONTAL:
       {
-        MozGtkScrollbarMetrics metrics;
-        moz_gtk_get_scrollbar_metrics(&metrics);
-
-        if (aWidgetType == NS_THEME_SCROLLBARTHUMB_VERTICAL) {
-          aResult->width = metrics.slider_width;
-          aResult->height = metrics.min_slider_size;
+        if (gtk_check_version(3,20,0) == nullptr) {
+          moz_gtk_get_widget_min_size(NativeThemeToGtkTheme(aWidgetType, aFrame),
+                                      &(aResult->width), &(aResult->height));
         } else {
-          aResult->height = metrics.slider_width;
-          aResult->width = metrics.min_slider_size;
-        }
+          MozGtkScrollbarMetrics metrics;
+          moz_gtk_get_scrollbar_metrics(&metrics);
 
+          if (aWidgetType == NS_THEME_SCROLLBARTHUMB_VERTICAL) {
+            aResult->width = metrics.slider_width;
+            aResult->height = metrics.min_slider_size;
+          } else {
+            aResult->height = metrics.slider_width;
+            aResult->width = metrics.min_slider_size;
+          }
+        }
         *aIsOverridable = false;
       }
       break;

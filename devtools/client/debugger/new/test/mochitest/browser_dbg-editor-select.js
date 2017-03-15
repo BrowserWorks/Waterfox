@@ -12,10 +12,12 @@ function isElementVisible(dbg, elementName) {
 }
 
 add_task(function* () {
-  const dbg = yield initDebugger(
-    "doc-scripts.html",
-    "simple1.js", "simple2.js", "long.js"
-  );
+  // This test runs too slowly on linux debug. I'd like to figure out
+  // which is the slowest part of this and make it run faster, but to
+  // fix a frequent failure allow a longer timeout.
+  requestLongerTimeout(2);
+
+  const dbg = yield initDebugger("doc-scripts.html");
   const { selectors: { getSelectedSource }, getState } = dbg;
   const simple1 = findSource(dbg, "simple1.js");
   const simple2 = findSource(dbg, "simple2.js");

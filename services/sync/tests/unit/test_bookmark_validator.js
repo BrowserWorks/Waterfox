@@ -2,6 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 Components.utils.import("resource://services-sync/bookmark_validator.js");
+Components.utils.import("resource://services-sync/util.js");
 
 function inspectServerRecords(data) {
   return new BookmarkValidator().inspectServerRecords(data);
@@ -104,15 +105,6 @@ add_test(function test_isr_duplicatesAndMissingIDs() {
   run_next_test();
 });
 
-add_test(function test_isr_wrongParentName() {
-  let c = inspectServerRecords([
-    {id: 'A', type: 'folder', title: 'My Amazing Bookmarks', parentName: '', parentid: 'places', children: ['B']},
-    {id: 'B', type: 'bookmark', title: '', parentName: 'My Awesome Bookmarks', parentid: 'A'},
-  ]).problemData;
-  deepEqual(c.wrongParentName, ['B'])
-  run_next_test();
-});
-
 add_test(function test_isr_duplicateChildren()  {
   let c = inspectServerRecords([
     {id: 'A', type: 'folder', parentid: 'places', children: ['B', 'B']},
@@ -127,7 +119,7 @@ add_test(function test_isr_duplicateChildren()  {
 function getDummyServerAndClient() {
   let server = [
     {
-      id: 'aaaaaaaaaaaa',
+      id: 'menu',
       parentid: 'places',
       type: 'folder',
       parentName: '',
@@ -137,14 +129,14 @@ function getDummyServerAndClient() {
     {
       id: 'bbbbbbbbbbbb',
       type: 'bookmark',
-      parentid: 'aaaaaaaaaaaa',
+      parentid: 'menu',
       parentName: 'foo',
       title: 'bar',
       bmkUri: 'http://baz.com'
     },
     {
       id: 'cccccccccccc',
-      parentid: 'aaaaaaaaaaaa',
+      parentid: 'menu',
       parentName: 'foo',
       title: '',
       type: 'query',
@@ -159,7 +151,7 @@ function getDummyServerAndClient() {
     "type": "text/x-moz-place-container",
     "children": [
       {
-        "guid": "aaaaaaaaaaaa",
+        "guid": "menu________",
         "title": "foo",
         "id": 1000,
         "type": "text/x-moz-place-container",
@@ -211,7 +203,7 @@ add_test(function test_cswc_serverMissing() {
   let c = new BookmarkValidator().compareServerWithClient(server, client).problemData;
   deepEqual(c.serverMissing, ['cccccccccccc']);
   equal(c.clientMissing.length, 0);
-  deepEqual(c.structuralDifferences, [{id: 'aaaaaaaaaaaa', differences: ['childGUIDs']}]);
+  deepEqual(c.structuralDifferences, [{id: 'menu', differences: ['childGUIDs']}]);
   run_next_test();
 });
 
@@ -222,7 +214,7 @@ add_test(function test_cswc_clientMissing() {
   let c = new BookmarkValidator().compareServerWithClient(server, client).problemData;
   deepEqual(c.clientMissing, ['cccccccccccc']);
   equal(c.serverMissing.length, 0);
-  deepEqual(c.structuralDifferences, [{id: 'aaaaaaaaaaaa', differences: ['childGUIDs']}]);
+  deepEqual(c.structuralDifferences, [{id: 'menu', differences: ['childGUIDs']}]);
   run_next_test();
 });
 
@@ -245,6 +237,109 @@ add_test(function test_cswc_differences() {
     deepEqual(c.differences, [{id: 'cccccccccccc', differences: ['type']}]);
   }
   run_next_test();
+});
+
+add_test(function test_cswc_serverUnexpected() {
+  let {server, client} = getDummyServerAndClient();
+  client.children.push({
+    "guid": "dddddddddddd",
+    "title": "",
+    "id": 2000,
+    "annos": [{
+      "name": "places/excludeFromBackup",
+      "flags": 0,
+      "expires": 4,
+      "value": 1
+    }, {
+      "name": "PlacesOrganizer/OrganizerFolder",
+      "flags": 0,
+      "expires": 4,
+      "value": 7
+    }],
+    "type": "text/x-moz-place-container",
+    "children": [{
+      "guid": "eeeeeeeeeeee",
+      "title": "History",
+      "annos": [{
+        "name": "places/excludeFromBackup",
+        "flags": 0,
+        "expires": 4,
+        "value": 1
+      }, {
+        "name": "PlacesOrganizer/OrganizerQuery",
+        "flags": 0,
+        "expires": 4,
+        "value": "History"
+      }],
+      "type": "text/x-moz-place",
+      "uri": "place:type=3&sort=4"
+    }]
+  });
+  server.push({
+    id: 'dddddddddddd',
+    parentid: 'places',
+    parentName: '',
+    title: '',
+    type: 'folder',
+    children: ['eeeeeeeeeeee']
+  }, {
+    id: 'eeeeeeeeeeee',
+    parentid: 'dddddddddddd',
+    parentName: '',
+    title: 'History',
+    type: 'query',
+    bmkUri: 'place:type=3&sort=4'
+  });
+
+  let c = new BookmarkValidator().compareServerWithClient(server, client).problemData;
+  equal(c.clientMissing.length, 0);
+  equal(c.serverMissing.length, 0);
+  equal(c.serverUnexpected.length, 2);
+  deepEqual(c.serverUnexpected, ["dddddddddddd", "eeeeeeeeeeee"]);
+  run_next_test();
+});
+
+function validationPing(server, client, duration) {
+  return wait_for_ping(function() {
+    // fake this entirely
+    Svc.Obs.notify("weave:service:sync:start");
+    Svc.Obs.notify("weave:engine:sync:start", null, "bookmarks");
+    Svc.Obs.notify("weave:engine:sync:finish", null, "bookmarks");
+    let validator = new BookmarkValidator();
+    let data = {
+      // We fake duration and version just so that we can verify they're passed through.
+      duration,
+      version: validator.version,
+      recordCount: server.length,
+      problems: validator.compareServerWithClient(server, client).problemData,
+    };
+    Svc.Obs.notify("weave:engine:validate:finish", data, "bookmarks");
+    Svc.Obs.notify("weave:service:sync:finish");
+  }, true); // Allow "failing" pings, since having validation info indicates failure.
+}
+
+add_task(function *test_telemetry_integration() {
+  let {server, client} = getDummyServerAndClient();
+  // remove "c"
+  server.pop();
+  server[0].children.pop();
+  const duration = 50;
+  let ping = yield validationPing(server, client, duration);
+  ok(ping.engines);
+  let bme = ping.engines.find(e => e.name === "bookmarks");
+  ok(bme);
+  ok(bme.validation);
+  ok(bme.validation.problems)
+  equal(bme.validation.checked, server.length);
+  equal(bme.validation.took, duration);
+  bme.validation.problems.sort((a, b) => String.localeCompare(a.name, b.name));
+  equal(bme.validation.version, new BookmarkValidator().version);
+  deepEqual(bme.validation.problems, [
+    { name: "badClientRoots", count: 3 },
+    { name: "sdiff:childGUIDs", count: 1 },
+    { name: "serverMissing", count: 1 },
+    { name: "structuralDifferences", count: 1 },
+  ]);
 });
 
 function run_test() {

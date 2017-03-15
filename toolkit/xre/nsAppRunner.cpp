@@ -168,6 +168,11 @@
 #ifdef MOZ_ENABLE_XREMOTE
 #include "XRemoteClient.h"
 #include "nsIRemoteService.h"
+#include "nsProfileLock.h"
+#include "SpecialSystemDirectory.h"
+#include <sched.h>
+// Time to wait for the remoting service to start
+#define MOZ_XREMOTE_START_TIMEOUT_SEC 5
 #endif
 
 #if defined(DEBUG) && defined(XP_WIN32)
@@ -1009,9 +1014,9 @@ nsXULAppInfo::GetLastRunCrashID(nsAString &aLastRunCrashID)
 }
 
 NS_IMETHODIMP
-nsXULAppInfo::GetIsReleaseBuild(bool* aResult)
+nsXULAppInfo::GetIsReleaseOrBeta(bool* aResult)
 {
-#ifdef RELEASE_BUILD
+#ifdef RELEASE_OR_BETA
   *aResult = true;
 #else
   *aResult = false;
@@ -1552,16 +1557,6 @@ ScopedXPCOMStartup::CreateAppSupport(nsISupports* aOuter, REFNSIID aIID, void** 
 
 nsINativeAppSupport* ScopedXPCOMStartup::gNativeAppSupport;
 
-/**
- * A helper class which calls NS_LogInit/NS_LogTerm in its scope.
- */
-class ScopedLogging
-{
-public:
-  ScopedLogging() { NS_LogInit(); }
-  ~ScopedLogging() { NS_LogTerm(); }
-};
-
 static void DumpArbitraryHelp()
 {
   nsresult rv;
@@ -1609,7 +1604,8 @@ DumpHelp()
          "  --profile <path>   Start with profile at <path>.\n"
          "  --migration        Start with migration wizard.\n"
          "  --ProfileManager   Start with ProfileManager.\n"
-         "  --no-remote        Do not accept or send remote commands; implies --new-instance.\n"
+         "  --no-remote        Do not accept or send remote commands; implies\n"
+         "                     --new-instance.\n"
          "  --new-instance     Open new instance, not a new window in running instance.\n"
          "  --UILocale <locale> Start with <locale> resources as UI Locale.\n"
          "  --safe-mode        Disables extensions and themes for this session.\n", gAppData->name);
@@ -1679,17 +1675,13 @@ DumpVersion()
 
 #ifdef MOZ_ENABLE_XREMOTE
 static RemoteResult
-RemoteCommandLine(const char* aDesktopStartupID)
+ParseRemoteCommandLine(nsCString& program,
+                       const char** profile,
+                       const char** username)
 {
-  nsresult rv;
   ArgResult ar;
 
-  const char *profile = 0;
-  nsAutoCString program(gAppData->remotingName);
-  ToLowerCase(program);
-  const char *username = getenv("LOGNAME");
-
-  ar = CheckArg("p", false, &profile, false);
+  ar = CheckArg("p", false, profile, false);
   if (ar == ARG_BAD) {
     // Leave it to the normal command line handling to handle this situation.
     return REMOTE_NOT_FOUND;
@@ -1704,14 +1696,23 @@ RemoteCommandLine(const char* aDesktopStartupID)
     program.Assign(temp);
   }
 
-  ar = CheckArg("u", true, &username);
+  ar = CheckArg("u", true, username);
   if (ar == ARG_BAD) {
     PR_fprintf(PR_STDERR, "Error: argument -u requires a username\n");
     return REMOTE_ARG_BAD;
   }
 
+  return REMOTE_FOUND;
+}
+
+static RemoteResult
+StartRemoteClient(const char* aDesktopStartupID,
+                  nsCString& program,
+                  const char* profile,
+                  const char* username)
+{
   XRemoteClient client;
-  rv = client.Init();
+  nsresult rv = client.Init();
   if (NS_FAILED(rv))
     return REMOTE_NOT_FOUND;
 
@@ -3018,6 +3019,8 @@ public:
   nsCOMPtr<nsIProfileLock> mProfileLock;
 #ifdef MOZ_ENABLE_XREMOTE
   nsCOMPtr<nsIRemoteService> mRemoteService;
+  nsProfileLock mRemoteLock;
+  nsCOMPtr<nsIFile> mRemoteLockDir;
 #endif
 
   UniquePtr<ScopedXPCOMStartup> mScopedXPCOM;
@@ -3412,7 +3415,6 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     gSafeMode = true;
 #endif
 
-#ifdef MOZ_CRASHREPORTER
 #ifdef XP_WIN
   {
     // Add CPU microcode version to the crash report as "CPUMicrocodeVersion".
@@ -3428,30 +3430,38 @@ XREMain::XRE_mainInit(bool* aExitFlag)
       DWORD len = sizeof(updateRevision);
       DWORD vtype;
 
-      // Windows 7 uses Update Signature, 8 uses "Update Revision".
+      // Windows 7 uses "Update Signature", 8 uses "Update Revision".
+      // For AMD CPUs, "CurrentPatchLevel" is sometimes used.
       // Take the first one we find.
-      LPCWSTR choices[] = {L"Update Signature", L"Update Revision"};
+      LPCWSTR choices[] = {L"Update Signature", L"Update Revision", L"CurrentPatchLevel"};
       for (size_t oneChoice=0; oneChoice<ArrayLength(choices); oneChoice++) {
         if (RegQueryValueExW(key, choices[oneChoice],
                              0, &vtype,
                              reinterpret_cast<LPBYTE>(updateRevision),
-                             &len) == ERROR_SUCCESS &&
-            vtype == REG_BINARY && len == sizeof(updateRevision)) {
-          // The first word is unused
-          cpuUpdateRevision = static_cast<int>(updateRevision[1]);
-          break;
+                             &len) == ERROR_SUCCESS) {
+          if (vtype == REG_BINARY && len == sizeof(updateRevision)) {
+            // The first word is unused
+            cpuUpdateRevision = static_cast<int>(updateRevision[1]);
+            break;
+          } else if (vtype == REG_DWORD && len == sizeof(updateRevision[0])) {
+            cpuUpdateRevision = static_cast<int>(updateRevision[0]);
+            break;
+          }
         }
       }
     }
 
+#ifdef MOZ_CRASHREPORTER
     if (cpuUpdateRevision > 0) {
       CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("CPUMicrocodeVersion"),
                                          nsPrintfCString("0x%x",
                                                          cpuUpdateRevision));
     }
+#endif
   }
 #endif
 
+#ifdef MOZ_CRASHREPORTER
     CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("SafeMode"),
                                        gSafeMode ? NS_LITERAL_CSTRING("1") :
                                                    NS_LITERAL_CSTRING("0"));
@@ -3794,17 +3804,58 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   }
 
   if (!newInstance) {
+    nsAutoCString program(gAppData->remotingName);
+    ToLowerCase(program);
+
+    const char* username = getenv("LOGNAME");
+    const char* profile  = nullptr;
+
+    RemoteResult rr = ParseRemoteCommandLine(program, &profile, &username);
+    if (rr == REMOTE_ARG_BAD) {
+      return 1;
+    }
+
+    nsCOMPtr<nsIFile> mutexDir;
+    rv = GetSpecialSystemDirectory(OS_TemporaryDirectory, getter_AddRefs(mutexDir));
+    if (NS_SUCCEEDED(rv)) {
+      nsAutoCString mutexPath =
+        program + NS_LITERAL_CSTRING("_") + nsDependentCString(username);
+      if (profile) {
+        mutexPath.Append(NS_LITERAL_CSTRING("_") + nsDependentCString(profile));
+      }
+      mutexDir->AppendNative(mutexPath);
+
+      rv = mutexDir->Create(nsIFile::DIRECTORY_TYPE, 0700);
+      if (NS_SUCCEEDED(rv) || rv == NS_ERROR_FILE_ALREADY_EXISTS) {
+        mRemoteLockDir = mutexDir;
+      }
+    }
+
+    if (mRemoteLockDir) {
+      const TimeStamp epoch = mozilla::TimeStamp::Now();
+      do {
+        rv = mRemoteLock.Lock(mRemoteLockDir, nullptr);
+        if (NS_SUCCEEDED(rv))
+          break;
+        sched_yield();
+      } while ((TimeStamp::Now() - epoch)
+               < TimeDuration::FromSeconds(MOZ_XREMOTE_START_TIMEOUT_SEC));
+      if (NS_FAILED(rv)) {
+        NS_WARNING("Cannot lock XRemote start mutex");
+      }
+    }
+
     // Try to remote the entire command line. If this fails, start up normally.
     const char* desktopStartupIDPtr =
       mDesktopStartupID.IsEmpty() ? nullptr : mDesktopStartupID.get();
 
-    RemoteResult rr = RemoteCommandLine(desktopStartupIDPtr);
+    rr = StartRemoteClient(desktopStartupIDPtr, program, profile, username);
     if (rr == REMOTE_FOUND) {
       *aExitFlag = true;
       return 0;
-    }
-    else if (rr == REMOTE_ARG_BAD)
+    } else if (rr == REMOTE_ARG_BAD) {
       return 1;
+    }
   }
 #endif
 #if defined(MOZ_WIDGET_GTK)
@@ -4370,6 +4421,10 @@ XREMain::XRE_mainRun()
       mRemoteService = do_GetService("@mozilla.org/toolkit/remote-service;1");
     if (mRemoteService)
       mRemoteService->Startup(mAppData->remotingName, mProfileName.get());
+    if (mRemoteLockDir) {
+      mRemoteLock.Unlock();
+      mRemoteLockDir->Remove(false);
+    }
 #endif /* MOZ_ENABLE_XREMOTE */
 
     mNativeApp->Enable();
@@ -4385,9 +4440,25 @@ XREMain::XRE_mainRun()
 #if defined(MOZ_SANDBOX) && defined(XP_LINUX) && !defined(MOZ_WIDGET_GONK)
   // If we're on Linux, we now have information about the OS capabilities
   // available to us.
-  SandboxInfo::SubmitTelemetry();
+  SandboxInfo sandboxInfo = SandboxInfo::Get();
+  Telemetry::Accumulate(Telemetry::SANDBOX_HAS_SECCOMP_BPF,
+                        sandboxInfo.Test(SandboxInfo::kHasSeccompBPF));
+  Telemetry::Accumulate(Telemetry::SANDBOX_HAS_SECCOMP_TSYNC,
+                        sandboxInfo.Test(SandboxInfo::kHasSeccompTSync));
+  Telemetry::Accumulate(Telemetry::SANDBOX_HAS_USER_NAMESPACES_PRIVILEGED,
+                        sandboxInfo.Test(SandboxInfo::kHasPrivilegedUserNamespaces));
+  Telemetry::Accumulate(Telemetry::SANDBOX_HAS_USER_NAMESPACES,
+                        sandboxInfo.Test(SandboxInfo::kHasUserNamespaces));
+  Telemetry::Accumulate(Telemetry::SANDBOX_CONTENT_ENABLED,
+                        sandboxInfo.Test(SandboxInfo::kEnabledForContent));
+  Telemetry::Accumulate(Telemetry::SANDBOX_MEDIA_ENABLED,
+                        sandboxInfo.Test(SandboxInfo::kEnabledForMedia));
 #if defined(MOZ_CRASHREPORTER)
-  SandboxInfo::Get().AnnotateCrashReport();
+  nsAutoCString flagsString;
+  flagsString.AppendInt(sandboxInfo.AsInteger());
+
+  CrashReporter::AnnotateCrashReport(
+    NS_LITERAL_CSTRING("ContentSandboxCapabilities"), flagsString);
 #endif /* MOZ_CRASHREPORTER */
 #endif /* MOZ_SANDBOX && XP_LINUX && !MOZ_WIDGET_GONK */
 
@@ -4718,6 +4789,12 @@ XRE_GetProcessType()
 }
 
 bool
+XRE_IsGPUProcess()
+{
+  return XRE_GetProcessType() == GeckoProcessType_GPU;
+}
+
+bool
 XRE_IsParentProcess()
 {
   return XRE_GetProcessType() == GeckoProcessType_Default;
@@ -4737,7 +4814,7 @@ enum {
   // kE10sDisabledInSafeMode = 3, was removed in bug 1172491.
   kE10sDisabledForAccessibility = 4,
   // kE10sDisabledForMacGfx = 5, was removed in bug 1068674.
-  kE10sDisabledForBidi = 6,
+  // kE10sDisabledForBidi = 6, removed in bug 1309599
   kE10sDisabledForAddons = 7,
   kE10sForceDisabled = 8,
   // kE10sDisabledForXPAcceleration = 9, removed in bug 1296353
@@ -4747,16 +4824,17 @@ enum {
 const char* kAccessibilityLastRunDatePref = "accessibility.lastLoadDate";
 const char* kAccessibilityLoadedLastSessionPref = "accessibility.loadedInLastSession";
 
+#if defined(XP_WIN)
 static inline uint32_t
 PRTimeToSeconds(PRTime t_usec)
 {
   PRTime usec_per_sec = PR_USEC_PER_SEC;
   return uint32_t(t_usec /= usec_per_sec);
 }
+#endif
 
 const char* kForceEnableE10sPref = "browser.tabs.remote.force-enable";
 const char* kForceDisableE10sPref = "browser.tabs.remote.force-disable";
-
 
 uint32_t
 MultiprocessBlockPolicy() {
@@ -4782,19 +4860,19 @@ MultiprocessBlockPolicy() {
     return gMultiprocessBlockPolicy;
   }
 
+#if defined(XP_WIN)
   bool disabledForA11y = false;
-
   /**
-   * Avoids enabling e10s if accessibility has recently loaded. Performs the
-   * following checks:
-   * 1) Checks a pref indicating if a11y loaded in the last session. This pref
-   * is set in nsBrowserGlue.js. If a11y was loaded in the last session we
-   * do not enable e10s in this session.
-   * 2) Accessibility stores a last run date (PR_IntervalNow) when it is
-   * initialized (see nsBaseWidget.cpp). We check if this pref exists and
-   * compare it to now. If a11y hasn't run in an extended period of time or
-   * if the date pref does not exist we load e10s.
-   */
+    * Avoids enabling e10s if accessibility has recently loaded. Performs the
+    * following checks:
+    * 1) Checks a pref indicating if a11y loaded in the last session. This pref
+    * is set in nsBrowserGlue.js. If a11y was loaded in the last session we
+    * do not enable e10s in this session.
+    * 2) Accessibility stores a last run date (PR_IntervalNow) when it is
+    * initialized (see nsBaseWidget.cpp). We check if this pref exists and
+    * compare it to now. If a11y hasn't run in an extended period of time or
+    * if the date pref does not exist we load e10s.
+    */
   disabledForA11y = Preferences::GetBool(kAccessibilityLoadedLastSessionPref, false);
   if (!disabledForA11y  &&
       Preferences::HasUserValue(kAccessibilityLastRunDatePref)) {
@@ -4811,47 +4889,24 @@ MultiprocessBlockPolicy() {
     }
   }
 
-  // For linux nightly and aurora builds skip accessibility
-  // checks.
-  bool doAccessibilityCheck = true;
-#if defined(MOZ_WIDGET_GTK) && !defined(RELEASE_BUILD)
-  doAccessibilityCheck = false;
-#endif
-
-  if (doAccessibilityCheck && disabledForA11y) {
+  if (disabledForA11y) {
     gMultiprocessBlockPolicy = kE10sDisabledForAccessibility;
     return gMultiprocessBlockPolicy;
   }
+#endif
 
   /**
    * Avoids enabling e10s for Windows XP users on the release channel.
    */
 #if defined(XP_WIN)
-  if (Preferences::GetDefaultCString("app.update.channel").EqualsLiteral("release") &&
-      !IsVistaOrLater()) {
-    gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
-    return gMultiprocessBlockPolicy;
+  if (!IsVistaOrLater()) {
+    nsAdoptingCString channelName = Preferences::GetDefaultCString("app.update.channel");
+    if (channelName.EqualsLiteral("release") || channelName.EqualsLiteral("esr")) {
+      gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
+      return gMultiprocessBlockPolicy;
+    }
   }
 #endif // XP_WIN
-
-#if defined(MOZ_WIDGET_GTK)
-  /**
-   * Avoids enabling e10s for certain locales that require bidi selection,
-   * which currently doesn't work well with e10s.
-   */
-  bool disabledForBidi = false;
-
-  nsCOMPtr<nsIXULChromeRegistry> registry =
-   mozilla::services::GetXULChromeRegistryService();
-  if (registry) {
-     registry->IsLocaleRTL(NS_LITERAL_CSTRING("global"), &disabledForBidi);
-  }
-
-  if (disabledForBidi) {
-    gMultiprocessBlockPolicy = kE10sDisabledForBidi;
-    return gMultiprocessBlockPolicy;
-  }
-#endif // MOZ_WIDGET_GTK
 
   /*
    * None of the blocking policies matched, so e10s is allowed to run.

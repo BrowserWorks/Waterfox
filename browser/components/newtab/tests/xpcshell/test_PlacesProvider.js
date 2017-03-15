@@ -3,7 +3,6 @@
 /* global XPCOMUtils, PlacesUtils, PlacesTestUtils, PlacesProvider, NetUtil */
 /* global do_get_profile, run_next_test, add_task */
 /* global equal, ok */
-/* exported run_test */
 
 const {
   utils: Cu,
@@ -28,6 +27,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
 do_get_profile();
 
 function run_test() {
+  PlacesProvider.links.init();
   run_next_test();
 }
 
@@ -139,7 +139,6 @@ add_task(function* test_Links_getLinks_Deduplication() {
 
 add_task(function* test_Links_onLinkChanged() {
   let provider = PlacesProvider.links;
-  provider.init();
 
   let url = "https://example.com/onFrecencyChanged1";
   let linkChangedMsgCount = 0;
@@ -170,12 +169,10 @@ add_task(function* test_Links_onLinkChanged() {
   yield linkChangedPromise;
 
   yield PlacesTestUtils.clearHistory();
-  provider.uninit();
 });
 
 add_task(function* test_Links_onClearHistory() {
   let provider = PlacesProvider.links;
-  provider.init();
 
   let clearHistoryPromise = new Promise(resolve => {
     let handler = () => {
@@ -194,12 +191,10 @@ add_task(function* test_Links_onClearHistory() {
   }
   yield PlacesTestUtils.clearHistory();
   yield clearHistoryPromise;
-  provider.uninit();
 });
 
 add_task(function* test_Links_onDeleteURI() {
   let provider = PlacesProvider.links;
-  provider.init();
 
   let testURL = "https://example.com/toDelete";
 
@@ -217,12 +212,10 @@ add_task(function* test_Links_onDeleteURI() {
   yield PlacesTestUtils.addVisits(testURI);
   yield PlacesUtils.history.remove(testURL);
   yield deleteURIPromise;
-  provider.uninit();
 });
 
 add_task(function* test_Links_onManyLinksChanged() {
   let provider = PlacesProvider.links;
-  provider.init();
 
   let promise = new Promise(resolve => {
     let handler = () => {
@@ -243,7 +236,6 @@ add_task(function* test_Links_onManyLinksChanged() {
     observe(null, "idle-daily", "");
 
   yield promise;
-  provider.uninit();
 });
 
 add_task(function* test_Links_execute_query() {

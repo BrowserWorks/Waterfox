@@ -43,13 +43,14 @@ class TextureClientPool;
 struct FrameMetrics;
 
 class CompositorBridgeChild final : public PCompositorBridgeChild,
-                                    public TextureForwarder,
-                                    public ShmemAllocator
+                                    public TextureForwarder
 {
   typedef InfallibleTArray<AsyncParentMessageData> AsyncParentMessageArray;
 
 public:
-  explicit CompositorBridgeChild(ClientLayerManager *aLayerManager);
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositorBridgeChild, override);
+
+  explicit CompositorBridgeChild(LayerManager *aLayerManager);
 
   void Destroy();
 
@@ -64,10 +65,11 @@ public:
    * Initialize the singleton compositor bridge for a content process.
    */
   static bool InitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint);
+  static bool ReinitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint);
 
   static RefPtr<CompositorBridgeChild> CreateRemote(
     const uint64_t& aProcessToken,
-    ClientLayerManager* aLayerManager,
+    LayerManager* aLayerManager,
     Endpoint<PCompositorBridgeChild>&& aEndpoint);
 
   /**
@@ -132,6 +134,8 @@ public:
                                        TextureFlags aFlags,
                                        uint64_t aSerial) override;
 
+  virtual void HandleFatalError(const char* aName, const char* aMsg) const override;
+
   /**
    * Request that the parent tell us when graphics are ready on GPU.
    * When we get that message, we bounce it to the TabParent via
@@ -163,6 +167,7 @@ public:
   bool SendClearApproximatelyVisibleRegions(uint64_t aLayersId, uint32_t aPresShellId);
   bool SendNotifyApproximatelyVisibleRegion(const ScrollableLayerGuid& aGuid,
                                             const mozilla::CSSIntRegion& aRegion);
+  bool SendAllPluginsCaptured();
   bool IsSameProcess() const override;
 
   virtual bool IPCOpen() const override { return mCanSend; }
@@ -184,11 +189,9 @@ public:
    */
   void NotifyNotUsed(uint64_t aTextureId, uint64_t aFwdTransactionId);
 
-  void DeliverFence(uint64_t aTextureId, FenceHandle& aReleaseFenceHandle);
-
   virtual void CancelWaitForRecycle(uint64_t aTextureId) override;
 
-  TextureClientPool* GetTexturePool(LayersBackend aBackend,
+  TextureClientPool* GetTexturePool(KnowsCompositor* aAllocator,
                                     gfx::SurfaceFormat aFormat,
                                     TextureFlags aFlags);
   void ClearTexturePool();
@@ -207,7 +210,7 @@ public:
   virtual bool AllocShmem(size_t aSize,
                           mozilla::ipc::SharedMemory::SharedMemoryType aShmType,
                           mozilla::ipc::Shmem* aShmem) override;
-  virtual void DeallocShmem(mozilla::ipc::Shmem& aShmem) override;
+  virtual bool DeallocShmem(mozilla::ipc::Shmem& aShmem) override;
 
   PCompositorWidgetChild* AllocPCompositorWidgetChild(const CompositorWidgetInitData& aInitData) override;
   bool DeallocPCompositorWidgetChild(PCompositorWidgetChild* aActor) override;
@@ -220,13 +223,16 @@ public:
   PAPZChild* AllocPAPZChild(const uint64_t& aLayersId) override;
   bool DeallocPAPZChild(PAPZChild* aActor) override;
 
-  virtual ShmemAllocator* AsShmemAllocator() override { return this; }
-
   void ProcessingError(Result aCode, const char* aReason) override;
+
+  void WillEndTransaction();
 
 private:
   // Private destructor, to discourage deletion outside of Release():
   virtual ~CompositorBridgeChild();
+
+  void InitIPDL();
+  void DeallocPCompositorBridgeChild() override;
 
   virtual PLayerTransactionChild*
     AllocPLayerTransactionChild(const nsTArray<LayersBackend>& aBackendHints,
@@ -248,6 +254,10 @@ private:
 
   virtual bool
   RecvRemotePaintIsReady() override;
+
+  bool RecvObserveLayerUpdate(const uint64_t& aLayersId,
+                              const uint64_t& aEpoch,
+                              const bool& aActive) override;
 
   // Class used to store the shared FrameMetrics, mutex, and APZCId  in a hash table
   class SharedFrameMetricsData {
@@ -275,7 +285,7 @@ private:
     uint32_t mAPZCId;
   };
 
-  RefPtr<ClientLayerManager> mLayerManager;
+  RefPtr<LayerManager> mLayerManager;
   // When not multi-process, hold a reference to the CompositorBridgeParent to keep it
   // alive. This reference should be null in multi-process.
   RefPtr<CompositorBridgeParent> mCompositorBridgeParent;

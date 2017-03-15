@@ -12,6 +12,9 @@
 #include "mozilla/gfx/gfxVarReceiver.h"
 
 namespace mozilla {
+namespace ipc {
+class CrashReporterHost;
+} // namespace
 namespace gfx {
 
 class GPUProcessHost;
@@ -33,12 +36,20 @@ public:
 
   // PGPUChild overrides.
   bool RecvInitComplete(const GPUDeviceData& aData) override;
+  bool RecvReportCheckerboard(const uint32_t& aSeverity, const nsCString& aLog) override;
+  bool RecvInitCrashReporter(Shmem&& shmem) override;
+  bool RecvAccumulateChildHistogram(InfallibleTArray<Accumulation>&& aAccumulations) override;
+  bool RecvAccumulateChildKeyedHistogram(InfallibleTArray<KeyedAccumulation>&& aAccumulations) override;
   void ActorDestroy(ActorDestroyReason aWhy) override;
+  bool RecvGraphicsError(const nsCString& aError) override;
+  bool RecvNotifyUiObservers(const nsCString& aTopic) override;
+  bool RecvNotifyDeviceReset() override;
 
   static void Destroy(UniquePtr<GPUChild>&& aChild);
 
 private:
   GPUProcessHost* mHost;
+  UniquePtr<ipc::CrashReporterHost> mCrashReporter;
   bool mGPUReady;
 };
 

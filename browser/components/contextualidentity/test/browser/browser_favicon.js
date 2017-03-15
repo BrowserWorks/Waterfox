@@ -22,7 +22,7 @@ function getIconFile() {
     NetUtil.asyncFetch({
       uri: "http://www.example.com/browser/browser/components/contextualidentity/test/browser/favicon-normal32.png",
       loadUsingSystemPrincipal: true,
-      contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE
+      contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE_FAVICON
     }, function(inputStream, status) {
         let size = inputStream.available();
         gFaviconData = NetUtil.readInputStreamToString(inputStream, size);
@@ -113,7 +113,6 @@ add_task(function* test() {
 
     // Load the page in 3 different contexts and set a cookie
     // which should only be visible in that context.
-    let value = USER_CONTEXTS[userContextId];
 
     // Open our tab in the given user context.
     let tabInfo = yield* openTabInUserContext(testURL, userContextId);

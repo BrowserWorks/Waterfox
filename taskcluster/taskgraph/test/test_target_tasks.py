@@ -18,17 +18,13 @@ class FakeTryOptionSyntax(object):
 
     def __init__(self, message, task_graph):
         self.trigger_tests = 0
+        self.notifications = None
 
     def task_matches(self, attributes):
         return 'at-at' in attributes
 
 
 class TestTargetTasks(unittest.TestCase):
-
-    def test_from_parameters(self):
-        method = target_tasks.get_method('from_parameters')
-        self.assertEqual(method(None, {'target_tasks': ['a', 'b']}),
-                         ['a', 'b'])
 
     def default_matches(self, run_on_projects, project):
         method = target_tasks.get_method('default')

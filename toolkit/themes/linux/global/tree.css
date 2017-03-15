@@ -193,10 +193,6 @@ treechildren::-moz-tree-progressmeter {
   color: ThreeDShadow;
 }
 
-treechildren::-moz-tree-progressmeter(progressUndetermined) {
-  list-style-image: url("chrome://global/skin/progressmeter/progressmeter-busy.gif");
-}
-
 treechildren::-moz-tree-cell-text(progressmeter) {
   margin: 2px 4px;
 }
@@ -343,6 +339,17 @@ treechildren::-moz-tree-row(selected, editing) {
 
 treechildren::-moz-tree-cell-text(selected, editing) {
   color: inherit;
+}
+
+treechildren::-moz-tree-cell(active, selected, focus, editing),
+tree[seltype="cell"] > treechildren::-moz-tree-cell(active, selected, focus, editing),
+tree[seltype="text"] > treechildren::-moz-tree-cell(active, selected, focus, editing) {
+  background-color: transparent;
+  border: none;
+}
+
+treechildren::-moz-tree-cell-text(active, selected, editing) {
+  opacity: 0;
 }
 
 .tree-input {

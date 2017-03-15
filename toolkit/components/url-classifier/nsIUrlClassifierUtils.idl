@@ -23,6 +23,15 @@ interface nsIUrlClassifierUtils : nsISupports
   ACString getKeyForURI(in nsIURI uri);
 
   /**
+   * Get the provider by table name.
+   *
+   * @param tableName The table name that we want to lookup
+   *
+   * @returns the provider name that the given table belongs.
+   */
+  ACString getProvider(in ACString tableName);
+
+  /**
    * Get the protocol version for the given provider.
    *
    * @param provider String the provider name. e.g. "google"
@@ -57,7 +66,7 @@ interface nsIUrlClassifierUtils : nsISupports
    * @param aState An array of states (encoded in base64 format) for each list.
    * @param aCount The array length of aList and aState.
    *
-   * @returns A string to store request. Not null-terminated.
+   * @returns A base64url encoded string.
    */
   ACString makeUpdateRequestV4([array, size_is(aCount)] in string aListNames,
                                [array, size_is(aCount)] in string aStatesBase64,

@@ -63,6 +63,7 @@ toolkit.jar:
    content/global/resetProfileProgress.xul
    content/global/select-child.js
    content/global/TopLevelVideoDocument.js
+   content/global/timepicker.xhtml
    content/global/treeUtils.js
    content/global/viewZoomOverlay.js
    content/global/bindings/autocomplete.xml    (widgets/autocomplete.xml)
@@ -71,6 +72,9 @@ toolkit.jar:
    content/global/bindings/checkbox.xml        (widgets/checkbox.xml)
    content/global/bindings/colorpicker.xml     (widgets/colorpicker.xml)
    content/global/bindings/datetimepicker.xml  (widgets/datetimepicker.xml)
+   content/global/bindings/datetimepopup.xml   (widgets/datetimepopup.xml)
+   content/global/bindings/datetimebox.xml     (widgets/datetimebox.xml)
+   content/global/bindings/datetimebox.css     (widgets/datetimebox.css)
 *  content/global/bindings/dialog.xml          (widgets/dialog.xml)
    content/global/bindings/editor.xml          (widgets/editor.xml)
    content/global/bindings/expander.xml        (widgets/expander.xml)
@@ -93,12 +97,15 @@ toolkit.jar:
    content/global/bindings/scale.xml           (widgets/scale.xml)
    content/global/bindings/scrollbar.xml       (widgets/scrollbar.xml)
    content/global/bindings/scrollbox.xml       (widgets/scrollbox.xml)
+   content/global/bindings/spinner.js          (widgets/spinner.js)
    content/global/bindings/splitter.xml        (widgets/splitter.xml)
    content/global/bindings/spinbuttons.xml     (widgets/spinbuttons.xml)
    content/global/bindings/stringbundle.xml    (widgets/stringbundle.xml)
 *  content/global/bindings/tabbox.xml          (widgets/tabbox.xml)
    content/global/bindings/text.xml            (widgets/text.xml)
 *  content/global/bindings/textbox.xml         (widgets/textbox.xml)
+   content/global/bindings/timekeeper.js       (widgets/timekeeper.js)
+   content/global/bindings/timepicker.js       (widgets/timepicker.js)
    content/global/bindings/toolbar.xml         (widgets/toolbar.xml)
    content/global/bindings/toolbarbutton.xml   (widgets/toolbarbutton.xml)
 *  content/global/bindings/tree.xml            (widgets/tree.xml)
@@ -109,3 +116,6 @@ toolkit.jar:
    content/global/macWindowMenu.js
 #endif
    content/global/svg/svgBindings.xml          (/layout/svg/resources/content/svgBindings.xml)
+   content/global/gmp-sources/eme-adobe.json   (gmp-sources/eme-adobe.json)
+   content/global/gmp-sources/openh264.json    (gmp-sources/openh264.json)
+   content/global/gmp-sources/widevinecdm.json (gmp-sources/widevinecdm.json)

@@ -80,8 +80,11 @@ public:
   void SwapFrameLoaders(nsXULElement& aOtherLoaderOwner,
                         mozilla::ErrorResult& aError);
 
-  void SwapFrameLoaders(RefPtr<nsFrameLoader>& aOtherLoader,
+  void SwapFrameLoaders(nsIFrameLoaderOwner* aOtherLoaderOwner,
                         mozilla::ErrorResult& rv);
+
+  void PresetOpenerWindow(mozIDOMWindowProxy* aOpenerWindow,
+                          mozilla::ErrorResult& aRv);
 
   static bool BrowserFramesEnabled();
 
@@ -102,11 +105,12 @@ protected:
   // it makes sense.
   void EnsureFrameLoader();
   nsresult LoadSrc();
-  nsIDocument* GetContentDocument();
+  nsIDocument* GetContentDocument(nsIPrincipal& aSubjectPrincipal);
   nsresult GetContentDocument(nsIDOMDocument** aContentDocument);
   already_AddRefed<nsPIDOMWindowOuter> GetContentWindow();
 
   RefPtr<nsFrameLoader> mFrameLoader;
+  nsCOMPtr<nsPIDOMWindowOuter> mOpenerWindow;
 
   /**
    * True when the element is created by the parser using the
@@ -125,7 +129,7 @@ protected:
   bool mFullscreenFlag = false;
 
 private:
-  void GetManifestURLByType(nsIAtom *aAppType, nsAString& aOut);
+  void GetManifestURL(nsAString& aOut);
 };
 
 #endif // nsGenericHTMLFrameElement_h

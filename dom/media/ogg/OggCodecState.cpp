@@ -6,17 +6,17 @@
 
 #include <string.h>
 
-#include "mozilla/DebugOnly.h"
 #include "mozilla/EndianUtils.h"
 #include <stdint.h>
 
 #include "nsDebug.h"
-#include "MediaDecoderReader.h"
 #include "OggCodecState.h"
-#include "OggDecoder.h"
-#include "nsISupportsImpl.h"
+#include "OpusParser.h"
 #include "VideoUtils.h"
 #include <algorithm>
+
+#include <opus/opus.h>
+#include "opus/opus_multistream.h"
 
 // On Android JellyBean, the hardware.h header redefines version_major and
 // version_minor, which breaks our build.  See:
@@ -228,7 +228,7 @@ OggCodecState::PushFront(OggPacketQueue &&aOther)
   }
 }
 
-RefPtr<MediaRawData>
+already_AddRefed<MediaRawData>
 OggCodecState::PacketOutAsMediaRawData()
 {
   ogg_packet* packet = PacketOut();
@@ -238,6 +238,11 @@ OggCodecState::PacketOutAsMediaRawData()
 
   NS_ASSERTION(!IsHeader(packet), "PacketOutAsMediaRawData can only be called on non-header packets");
   RefPtr<MediaRawData> sample = new MediaRawData(packet->packet, packet->bytes);
+  if (packet->bytes && !sample->Data()) {
+    // OOM.
+    ReleasePacket(packet);
+    return nullptr;
+  }
 
   int64_t end_tstamp = Time(packet->granulepos);
   NS_ASSERTION(end_tstamp >= 0, "timestamp invalid");
@@ -253,7 +258,7 @@ OggCodecState::PacketOutAsMediaRawData()
 
   ReleasePacket(packet);
 
-  return sample;
+  return sample.forget();
 }
 
 nsresult
@@ -1230,6 +1235,40 @@ OpusState::ReconstructOpusGranulepos(void)
   }
   mPrevPageGranulepos = last->granulepos;
   return true;
+}
+
+already_AddRefed<MediaRawData>
+OpusState::PacketOutAsMediaRawData()
+{
+  ogg_packet* packet = PacketPeek();
+  uint32_t frames = 0;
+  const int64_t endFrame = packet->granulepos;
+
+  if (!packet) {
+    return nullptr;
+  }
+  if (packet->e_o_s) {
+    frames = GetOpusDeltaGP(packet);
+  }
+
+  RefPtr<MediaRawData> data = OggCodecState::PacketOutAsMediaRawData();
+  if (!data) {
+    return nullptr;
+  }
+
+  if (data->mEOS && mPrevPacketGranulepos != -1) {
+    // If this is the last packet, perform end trimming.
+    int64_t startFrame = mPrevPacketGranulepos;
+    frames -= std::max<int64_t>(
+      0, std::min(endFrame - startFrame, static_cast<int64_t>(frames)));
+    data->mDiscardPadding = frames;
+  }
+
+  // Save this packet's granule position in case we need to perform end
+  // trimming on the next packet.
+  mPrevPacketGranulepos = endFrame;
+
+  return data.forget();
 }
 
 FlacState::FlacState(ogg_page* aBosPage)

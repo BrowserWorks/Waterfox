@@ -10,6 +10,7 @@
 
 #include "GeckoProfiler.h"
 #include "nsComponentManagerUtils.h"
+#include "nsIIdlePeriod.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "mozilla/Services.h"
@@ -459,6 +460,19 @@ LazyIdleThread::GetPRThread(PRThread** aPRThread)
 }
 
 NS_IMETHODIMP
+LazyIdleThread::GetCanInvokeJS(bool* aCanInvokeJS)
+{
+  *aCanInvokeJS = false;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LazyIdleThread::SetCanInvokeJS(bool aCanInvokeJS)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 LazyIdleThread::AsyncShutdown()
 {
   ASSERT_OWNING_THREAD();
@@ -491,6 +505,18 @@ LazyIdleThread::HasPendingEvents(bool* aHasPendingEvents)
   // implemented here.
   NS_NOTREACHED("Shouldn't ever call this!");
   return NS_ERROR_UNEXPECTED;
+}
+
+NS_IMETHODIMP
+LazyIdleThread::IdleDispatch(already_AddRefed<nsIRunnable> aEvent)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+LazyIdleThread::RegisterIdlePeriod(already_AddRefed<nsIIdlePeriod> aIdlePeriod)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP

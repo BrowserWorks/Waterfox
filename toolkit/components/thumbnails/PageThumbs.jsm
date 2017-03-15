@@ -138,7 +138,7 @@ this.PageThumbs = {
   init: function PageThumbs_init() {
     if (!this._initialized) {
       this._initialized = true;
-      PlacesUtils.history.addObserver(PageThumbsHistoryObserver, false);
+      PlacesUtils.history.addObserver(PageThumbsHistoryObserver, true);
 
       // Migrate the underlying storage, if needed.
       PageThumbsStorageMigrator.migrate();
@@ -149,7 +149,6 @@ this.PageThumbs = {
   uninit: function PageThumbs_uninit() {
     if (this._initialized) {
       this._initialized = false;
-      PlacesUtils.history.removeObserver(PageThumbsHistoryObserver);
     }
   },
 
@@ -618,10 +617,10 @@ this.PageThumbsStorage = {
         tmpPath: path + ".tmp",
         bytes: aData.byteLength,
         noOverwrite: aNoOverwrite,
-        flush: false /*thumbnails do not require the level of guarantee provided by flush*/
+        flush: false /* thumbnails do not require the level of guarantee provided by flush*/
       }];
     return PageThumbsWorker.post("writeAtomic", msg,
-      msg /*we don't want that message garbage-collected,
+      msg /* we don't want that message garbage-collected,
            as OS.Shared.Type.void_t.in_ptr.toMsg uses C-level
            memory tricks to enforce zero-copy*/).
       then(() => this._updateRevision(aURL), this._eatNoOverwriteError(aNoOverwrite));
@@ -859,7 +858,6 @@ var PageThumbsExpiration = {
   },
 
   expireThumbnails: function Expiration_expireThumbnails(aURLsToKeep) {
-    let path = this.path;
     let keep = aURLsToKeep.map(url => PageThumbsStorage.getLeafNameForURL(url));
     let msg = [
       PageThumbsStorage.path,
@@ -883,11 +881,11 @@ var PageThumbsWorker = new BasePromiseWorker("resource://gre/modules/PageThumbsW
 PageThumbsWorker.ExceptionHandlers["OS.File.Error"] = OS.File.Error.fromMsg;
 
 var PageThumbsHistoryObserver = {
-  onDeleteURI: function Thumbnails_onDeleteURI(aURI, aGUID) {
+  onDeleteURI(aURI, aGUID) {
     PageThumbsStorage.remove(aURI.spec);
   },
 
-  onClearHistory: function Thumbnails_onClearHistory() {
+  onClearHistory() {
     PageThumbsStorage.wipe();
   },
 
@@ -898,5 +896,6 @@ var PageThumbsHistoryObserver = {
   onPageChanged: function () {},
   onDeleteVisits: function () {},
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver])
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver,
+                                         Ci.nsISupportsWeakReference])
 };

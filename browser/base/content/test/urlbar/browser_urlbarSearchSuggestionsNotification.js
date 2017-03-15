@@ -114,7 +114,8 @@ add_task(function* enable() {
   let enableButton = document.getAnonymousElementByAttribute(
     gURLBar.popup, "anonid", "search-suggestions-notification-enable"
   );
-  let searchPromise = promiseSuggestionsPresent();
+  let searchPromise = BrowserTestUtils.waitForCondition(suggestionsPresent,
+                                                        "waiting for suggestions");
   enableButton.click();
   yield searchPromise;
   // Clicking Yes should trigger a new search so that suggestions appear
@@ -221,7 +222,6 @@ function setUserMadeChoicePref(userMadeChoice) {
 function suggestionsPresent() {
   let controller = gURLBar.popup.input.controller;
   let matchCount = controller.matchCount;
-  let present = false;
   for (let i = 0; i < matchCount; i++) {
     let url = controller.getValueAt(i);
     let mozActionMatch = url.match(/^moz-action:([^,]+),(.*)$/);
@@ -234,12 +234,6 @@ function suggestionsPresent() {
     }
   }
   return false;
-}
-
-function promiseSuggestionsPresent() {
-  return new Promise(resolve => {
-    waitForCondition(suggestionsPresent, resolve);
-  });
 }
 
 function assertVisible(visible, win=window) {

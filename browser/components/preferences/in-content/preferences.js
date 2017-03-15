@@ -2,6 +2,18 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this file,
    - You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// Import globals from the files imported by the .xul files.
+/* import-globals-from subdialogs.js */
+/* import-globals-from advanced.js */
+/* import-globals-from main.js */
+/* import-globals-from search.js */
+/* import-globals-from content.js */
+/* import-globals-from privacy.js */
+/* import-globals-from applications.js */
+/* import-globals-from security.js */
+/* import-globals-from sync.js */
+/* import-globals-from ../../../base/content/utilityOverlay.js */
+
 "use strict";
 
 var Cc = Components.classes;
@@ -49,6 +61,7 @@ function init_all() {
   register_module("paneGeneral", gMainPane);
   register_module("paneSearch", gSearchPane);
   register_module("panePrivacy", gPrivacyPane);
+  register_module("paneContainers", gContainersPane);
   register_module("paneAdvanced", gAdvancedPane);
   register_module("paneApplications", gApplicationsPane);
   register_module("paneContent", gContentPane);
@@ -187,10 +200,20 @@ function gotoPref(aCategory) {
 }
 
 function search(aQuery, aAttribute) {
-  let elements = document.getElementById("mainPrefPane").children;
+  let mainPrefPane = document.getElementById("mainPrefPane");
+  let elements = mainPrefPane.children;
   for (let element of elements) {
     let attributeValue = element.getAttribute(aAttribute);
     element.hidden = (attributeValue != aQuery);
+  }
+
+  let keysets = mainPrefPane.getElementsByTagName("keyset");
+  for (let element of keysets) {
+    let attributeValue = element.getAttribute(aAttribute);
+    if (attributeValue == aQuery)
+      element.removeAttribute("disabled");
+    else
+      element.setAttribute("disabled", true);
   }
 }
 

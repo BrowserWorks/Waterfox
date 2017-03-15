@@ -44,6 +44,7 @@
 #include "TelemetryCommon.h"
 #include "TelemetryHistogram.h"
 #include "TelemetryScalar.h"
+#include "TelemetryEvent.h"
 #include "WebrtcTelemetry.h"
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
@@ -701,8 +702,7 @@ public:
   typedef nsBaseHashtableET<nsCStringHashKey, StmtStats> SlowSQLEntryType;
 
   static void RecordIceCandidates(const uint32_t iceCandidateBitmask,
-                                  const bool success,
-                                  const bool loop);
+                                  const bool success);
 private:
   TelemetryImpl();
   ~TelemetryImpl();
@@ -1083,13 +1083,6 @@ TelemetryImpl::AddSQLInfo(JSContext *cx, JS::Handle<JSObject*> rootObj, bool mai
   return JS_DefineProperty(cx, rootObj,
                            mainThread ? "mainThread" : "otherThreads",
                            statsObj, JSPROP_ENUMERATE);
-}
-
-NS_IMETHODIMP
-TelemetryImpl::HistogramFrom(const nsACString &name, const nsACString &existing_name,
-                             JSContext *cx, JS::MutableHandle<JS::Value> ret)
-{
-  return TelemetryHistogram::HistogramFrom(name, existing_name, cx, ret);
 }
 
 NS_IMETHODIMP
@@ -1870,6 +1863,7 @@ NS_IMETHODIMP
 TelemetryImpl::SetCanRecordBase(bool canRecord) {
   TelemetryHistogram::SetCanRecordBase(canRecord);
   TelemetryScalar::SetCanRecordBase(canRecord);
+  TelemetryEvent::SetCanRecordBase(canRecord);
   return NS_OK;
 }
 
@@ -1890,6 +1884,7 @@ NS_IMETHODIMP
 TelemetryImpl::SetCanRecordExtended(bool canRecord) {
   TelemetryHistogram::SetCanRecordExtended(canRecord);
   TelemetryScalar::SetCanRecordExtended(canRecord);
+  TelemetryEvent::SetCanRecordExtended(canRecord);
   return NS_OK;
 }
 
@@ -1909,13 +1904,22 @@ TelemetryImpl::CreateTelemetryInstance()
 {
   MOZ_ASSERT(sTelemetry == nullptr, "CreateTelemetryInstance may only be called once, via GetService()");
 
+  bool useTelemetry = false;
+  if (XRE_IsParentProcess() ||
+      XRE_IsContentProcess() ||
+      XRE_IsGPUProcess())
+  {
+    useTelemetry = true;
+  }
+
   // First, initialize the TelemetryHistogram and TelemetryScalar global states.
-  TelemetryHistogram::InitializeGlobalState(
-                        XRE_IsParentProcess() || XRE_IsContentProcess(),
-                        XRE_IsParentProcess() || XRE_IsContentProcess());
+  TelemetryHistogram::InitializeGlobalState(useTelemetry, useTelemetry);
 
   // Only record scalars from the parent process.
   TelemetryScalar::InitializeGlobalState(XRE_IsParentProcess(), XRE_IsParentProcess());
+
+  // Only record events from the parent process.
+  TelemetryEvent::InitializeGlobalState(XRE_IsParentProcess(), XRE_IsParentProcess());
 
   // Now, create and initialize the Telemetry global state.
   sTelemetry = new TelemetryImpl();
@@ -1942,6 +1946,7 @@ TelemetryImpl::ShutdownTelemetry()
   // so as to release any heap storage that would otherwise be kept alive by it.
   TelemetryHistogram::DeInitializeGlobalState();
   TelemetryScalar::DeInitializeGlobalState();
+  TelemetryEvent::DeInitializeGlobalState();
 }
 
 void
@@ -2211,12 +2216,12 @@ TelemetryImpl::RecordSlowStatement(const nsACString &sql,
 
 void
 TelemetryImpl::RecordIceCandidates(const uint32_t iceCandidateBitmask,
-                                   const bool success, const bool loop)
+                                   const bool success)
 {
   if (!sTelemetry || !TelemetryHistogram::CanRecordExtended())
     return;
 
-  sTelemetry->mWebrtcTelemetry.RecordIceCandidateMask(iceCandidateBitmask, success, loop);
+  sTelemetry->mWebrtcTelemetry.RecordIceCandidateMask(iceCandidateBitmask, success);
 }
 
 #if defined(MOZ_ENABLE_PROFILER_SPS)
@@ -2264,12 +2269,12 @@ NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsITelemetry, TelemetryImpl::CreateTele
 NS_DEFINE_NAMED_CID(NS_TELEMETRY_CID);
 
 const Module::CIDEntry kTelemetryCIDs[] = {
-  { &kNS_TELEMETRY_CID, false, nullptr, nsITelemetryConstructor },
+  { &kNS_TELEMETRY_CID, false, nullptr, nsITelemetryConstructor, Module::ALLOW_IN_GPU_PROCESS },
   { nullptr }
 };
 
 const Module::ContractIDEntry kTelemetryContracts[] = {
-  { "@mozilla.org/base/telemetry;1", &kNS_TELEMETRY_CID },
+  { "@mozilla.org/base/telemetry;1", &kNS_TELEMETRY_CID, Module::ALLOW_IN_GPU_PROCESS },
   { nullptr }
 };
 
@@ -2280,7 +2285,8 @@ const Module kTelemetryModule = {
   nullptr,
   nullptr,
   nullptr,
-  TelemetryImpl::ShutdownTelemetry
+  TelemetryImpl::ShutdownTelemetry,
+  Module::ALLOW_IN_GPU_PROCESS
 };
 
 NS_IMETHODIMP
@@ -2305,13 +2311,7 @@ TelemetryImpl::GetFileIOReports(JSContext *cx, JS::MutableHandleValue ret)
 NS_IMETHODIMP
 TelemetryImpl::MsSinceProcessStart(double* aResult)
 {
-  bool error;
-  *aResult = (TimeStamp::NowLoRes() -
-              TimeStamp::ProcessCreation(error)).ToMilliseconds();
-  if (error) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-  return NS_OK;
+  return Telemetry::Common::MsSinceProcessStart(aResult);
 }
 
 // Telemetry Scalars IDL Implementation
@@ -2377,6 +2377,38 @@ TelemetryImpl::ClearScalars()
   return NS_OK;
 }
 
+// Telemetry Event IDL implementation.
+
+NS_IMETHODIMP
+TelemetryImpl::RecordEvent(const nsACString & aCategory, const nsACString & aMethod,
+                           const nsACString & aObject, JS::HandleValue aValue,
+                           JS::HandleValue aExtra, JSContext* aCx, uint8_t optional_argc)
+{
+  return TelemetryEvent::RecordEvent(aCategory, aMethod, aObject, aValue, aExtra, aCx, optional_argc);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::SnapshotBuiltinEvents(uint32_t aDataset, bool aClear, JSContext* aCx,
+                                     uint8_t optional_argc, JS::MutableHandleValue aResult)
+{
+  return TelemetryEvent::CreateSnapshots(aDataset, aClear, aCx, optional_argc, aResult);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::ClearEvents()
+{
+  TelemetryEvent::ClearEvents();
+  return NS_OK;
+}
+
+
+NS_IMETHODIMP
+TelemetryImpl::FlushBatchedChildTelemetry()
+{
+  TelemetryHistogram::IPCTimerFired(nullptr, nullptr);
+  return NS_OK;
+}
+
 size_t
 TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
 {
@@ -2408,6 +2440,7 @@ TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
 
   n += TelemetryHistogram::GetHistogramSizesofIncludingThis(aMallocSizeOf);
   n += TelemetryScalar::GetScalarSizesOfIncludingThis(aMallocSizeOf);
+  n += TelemetryEvent::SizeOfIncludingThis(aMallocSizeOf);
 
   return n;
 }
@@ -2823,9 +2856,17 @@ AccumulateTimeDelta(ID aHistogram, TimeStamp start, TimeStamp end)
 }
 
 void
-ClearHistogram(ID aId)
+AccumulateChild(GeckoProcessType aProcessType,
+                const nsTArray<Accumulation>& aAccumulations)
 {
-  TelemetryHistogram::ClearHistogram(aId);
+  TelemetryHistogram::AccumulateChild(aProcessType, aAccumulations);
+}
+
+void
+AccumulateChildKeyed(GeckoProcessType aProcessType,
+                     const nsTArray<KeyedAccumulation>& aAccumulations)
+{
+  TelemetryHistogram::AccumulateChildKeyed(aProcessType, aAccumulations);
 }
 
 const char*
@@ -2856,9 +2897,9 @@ RecordSlowSQLStatement(const nsACString &statement,
 
 void
 RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
-                          const bool success, const bool loop)
+                          const bool success)
 {
-  TelemetryImpl::RecordIceCandidates(iceCandidateBitmask, success, loop);
+  TelemetryImpl::RecordIceCandidates(iceCandidateBitmask, success);
 }
 
 void Init()

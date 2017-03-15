@@ -16,7 +16,6 @@
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/ContentHost.h"  // for ContentHostBase
 #include "mozilla/layers/ImageBridgeParent.h" // for ImageBridgeParent
-#include "mozilla/layers/SharedBufferManagerParent.h"
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
 #include "mozilla/layers/LayersTypes.h"  // for MOZ_LAYERS_LOG
@@ -60,15 +59,6 @@ ScheduleComposition(CompositableHost* aCompositable)
   cp->ScheduleComposition();
   return true;
 }
-
-#if defined(DEBUG) || defined(MOZ_WIDGET_GONK)
-static bool ValidatePictureRect(const mozilla::gfx::IntSize& aSize,
-                                const nsIntRect& aPictureRect)
-{
-  return nsIntRect(0, 0, aSize.width, aSize.height).Contains(aPictureRect) &&
-      !aPictureRect.IsEmpty();
-}
-#endif
 
 bool
 CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation& aEdit,
@@ -159,21 +149,6 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       compositable->RemoveTextureHost(tex);
       break;
     }
-    case CompositableOperationDetail::TOpRemoveTextureAsync: {
-      const OpRemoveTextureAsync& op = aEdit.detail().get_OpRemoveTextureAsync();
-      RefPtr<TextureHost> tex = TextureHost::AsTextureHost(op.textureParent());
-
-      MOZ_ASSERT(tex.get());
-      compositable->RemoveTextureHost(tex);
-
-      // Only ImageBridge child sends it.
-      MOZ_ASSERT(UsesImageBridge());
-      if (UsesImageBridge()) {
-        ReplyRemoveTexture(OpReplyRemoveTexture(op.holderId(),
-                                                op.transactionId()));
-      }
-      break;
-    }
     case CompositableOperationDetail::TOpUseTexture: {
       const OpUseTexture& op = aEdit.detail().get_OpUseTexture();
 
@@ -188,15 +163,6 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
         t->mFrameID = timedTexture.frameID();
         t->mProducerID = timedTexture.producerID();
         t->mTexture->DeserializeReadLock(timedTexture.sharedLock(), this);
-        MOZ_ASSERT(ValidatePictureRect(t->mTexture->GetSize(), t->mPictureRect));
-
-        MaybeFence maybeFence = timedTexture.fence();
-        if (maybeFence.type() == MaybeFence::TFenceHandle) {
-          FenceHandle fence = maybeFence.get_FenceHandle();
-          if (fence.IsValid()) {
-            t->mTexture->SetAcquireFenceHandle(fence);
-          }
-        }
       }
       if (textures.Length() > 0) {
         compositable->UseTextureHost(textures);
@@ -246,16 +212,6 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       }
       break;
     }
-#ifdef MOZ_WIDGET_GONK
-    case CompositableOperationDetail::TOpUseOverlaySource: {
-      const OpUseOverlaySource& op = aEdit.detail().get_OpUseOverlaySource();
-      if (!ValidatePictureRect(op.overlay().size(), op.picture())) {
-        return false;
-      }
-      compositable->UseOverlaySource(op.overlay(), op.picture());
-      break;
-    }
-#endif
     default: {
       MOZ_ASSERT(false, "bad type");
     }

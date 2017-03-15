@@ -21,9 +21,6 @@
 #include "AudioManager.h"
 
 #include "nsIObserverService.h"
-#ifdef MOZ_B2G_RIL
-#include "nsIRadioInterfaceLayer.h"
-#endif
 #include "nsISettingsService.h"
 #include "nsPrintfCString.h"
 
@@ -694,9 +691,6 @@ AudioManager::AudioManager()
   , mA2dpSwitchDone(true)
 #endif
   , mObserver(new HeadphoneSwitchObserver())
-#ifdef MOZ_B2G_RIL
-  , mMuteCallToRIL(false)
-#endif
 {
   for (uint32_t idx = 0; idx < MOZ_ARRAY_LENGTH(kAudioDeviceInfos); ++idx) {
     mAudioDeviceTableIdMaps.Put(kAudioDeviceInfos[idx].value, idx);
@@ -754,13 +748,6 @@ AudioManager::AudioManager()
     NS_WARNING("Failed to add audio-channel-process-changed observer!");
   }
 
-#ifdef MOZ_B2G_RIL
-  char value[PROPERTY_VALUE_MAX];
-  property_get("ro.moz.mute.call.to_ril", value, "false");
-  if (!strcmp(value, "true")) {
-    mMuteCallToRIL = true;
-  }
-#endif
 }
 
 AudioManager::~AudioManager() {
@@ -815,13 +802,6 @@ AudioManager::GetInstance()
 NS_IMETHODIMP
 AudioManager::GetMicrophoneMuted(bool* aMicrophoneMuted)
 {
-#ifdef MOZ_B2G_RIL
-  if (mMuteCallToRIL) {
-    // Simply return cached mIsMicMuted if mute call go via RIL.
-    *aMicrophoneMuted = mIsMicMuted;
-    return NS_OK;
-  }
-#endif
 
   if (AudioSystem::isMicrophoneMuted(aMicrophoneMuted)) {
     return NS_ERROR_FAILURE;
@@ -833,15 +813,6 @@ NS_IMETHODIMP
 AudioManager::SetMicrophoneMuted(bool aMicrophoneMuted)
 {
   if (!AudioSystem::muteMicrophone(aMicrophoneMuted)) {
-#ifdef MOZ_B2G_RIL
-    if (mMuteCallToRIL) {
-      // Extra mute request to RIL for specific platform.
-      nsCOMPtr<nsIRadioInterfaceLayer> ril = do_GetService("@mozilla.org/ril;1");
-      NS_ENSURE_TRUE(ril, NS_ERROR_FAILURE);
-      ril->SetMicrophoneMuted(aMicrophoneMuted);
-      mIsMicMuted = aMicrophoneMuted;
-    }
-#endif
     return NS_OK;
   }
   return NS_ERROR_FAILURE;
@@ -915,35 +886,6 @@ AudioManager::GetForceForUse(int32_t aUsage, int32_t* aForce) {
   NS_NOTREACHED("Doesn't support force routing on GB version");
   return NS_ERROR_UNEXPECTED;
 #endif
-}
-
-NS_IMETHODIMP
-AudioManager::GetFmRadioAudioEnabled(bool *aFmRadioAudioEnabled)
-{
-  *aFmRadioAudioEnabled = IsFmOutConnected();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-AudioManager::SetFmRadioAudioEnabled(bool aFmRadioAudioEnabled)
-{
-  UpdateDeviceConnectionState(aFmRadioAudioEnabled,
-                              AUDIO_DEVICE_OUT_FM,
-                              NS_LITERAL_CSTRING(""));
-  // AUDIO_STREAM_FM is not used on recent gonk.
-  // AUDIO_STREAM_MUSIC is used for FM radio volume control.
-#if ANDROID_VERSION < 19
-  // sync volume with music after powering on fm radio
-  if (aFmRadioAudioEnabled) {
-    uint32_t volIndex = mStreamStates[AUDIO_STREAM_MUSIC]->GetVolumeIndex();
-    nsresult rv = mStreamStates[AUDIO_STREAM_FM]->
-      SetVolumeIndex(volIndex, AUDIO_DEVICE_OUT_FM);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-  }
-#endif
-  return NS_OK;
 }
 
 NS_IMETHODIMP

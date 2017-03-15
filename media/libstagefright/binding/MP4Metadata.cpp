@@ -18,6 +18,7 @@
 #include "mp4_demuxer/MoofParser.h"
 #include "mp4_demuxer/MP4Metadata.h"
 #include "mp4_demuxer/Stream.h"
+#include "MediaPrefs.h"
 
 #include <limits>
 #include <stdint.h>
@@ -158,6 +159,9 @@ MP4Metadata::MP4Metadata(Stream* aSource)
  , mPreferRust(false)
  , mReportedAudioTrackTelemetry(false)
  , mReportedVideoTrackTelemetry(false)
+#ifndef RELEASE_OR_BETA
+ , mRustTestMode(MediaPrefs::RustTestMode())
+#endif
 #endif
 {
 }
@@ -270,14 +274,52 @@ MP4Metadata::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
       mStagefright->GetTrackInfo(aType, aTrackNumber);
 
 #ifdef MOZ_RUST_MP4PARSE
-  if (!mRust || !mPreferRust) {
+  if (!mRust) {
     return info;
   }
 
   mozilla::UniquePtr<mozilla::TrackInfo> infoRust =
       mRust->GetTrackInfo(aType, aTrackNumber);
-  MOZ_ASSERT(infoRust);
 
+#ifndef RELEASE_OR_BETA
+  if (mRustTestMode && info) {
+    MOZ_DIAGNOSTIC_ASSERT(infoRust);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mId == info->mId);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mKind == info->mKind);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mLabel == info->mLabel);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mLanguage == info->mLanguage);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mEnabled == info->mEnabled);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mTrackId == info->mTrackId);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mMimeType == info->mMimeType);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mDuration == info->mDuration);
+    MOZ_DIAGNOSTIC_ASSERT(infoRust->mMediaTime == info->mMediaTime);
+    switch (aType) {
+    case mozilla::TrackInfo::kAudioTrack: {
+      AudioInfo *audioRust = infoRust->GetAsAudioInfo(), *audio = info->GetAsAudioInfo();
+      MOZ_DIAGNOSTIC_ASSERT(audioRust->mRate == audio->mRate);
+      MOZ_DIAGNOSTIC_ASSERT(audioRust->mChannels == audio->mChannels);
+      MOZ_DIAGNOSTIC_ASSERT(audioRust->mBitDepth == audio->mBitDepth);
+      // TODO: These fields aren't implemented in the Rust demuxer yet.
+      //MOZ_DIAGNOSTIC_ASSERT(audioRust->mProfile != audio->mProfile);
+      //MOZ_DIAGNOSTIC_ASSERT(audioRust->mExtendedProfile != audio->mExtendedProfile);
+      break;
+    }
+    case mozilla::TrackInfo::kVideoTrack: {
+      VideoInfo *videoRust = infoRust->GetAsVideoInfo(), *video = info->GetAsVideoInfo();
+      MOZ_DIAGNOSTIC_ASSERT(videoRust->mDisplay == video->mDisplay);
+      MOZ_DIAGNOSTIC_ASSERT(videoRust->mImage == video->mImage);
+      break;
+    }
+    default:
+      break;
+    }
+  }
+#endif
+
+  if (!mPreferRust) {
+    return info;
+  }
+  MOZ_ASSERT(infoRust);
   return infoRust;
 #endif
 
@@ -703,6 +745,7 @@ MP4MetadataRust::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
     case MP4PARSE_CODEC_FLAC: codec_string = "flac"; break;
     case MP4PARSE_CODEC_AVC: codec_string = "h.264"; break;
     case MP4PARSE_CODEC_VP9: codec_string = "vp9"; break;
+    case MP4PARSE_CODEC_MP3: codec_string = "mp3"; break;
   }
   MOZ_LOG(sLog, LogLevel::Debug, ("track codec %s (%u)\n",
         codec_string, info.codec));
@@ -736,6 +779,8 @@ MP4MetadataRust::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
         track->mMimeType = MEDIA_MIMETYPE_AUDIO_AAC;
       } else if (info.codec == MP4PARSE_CODEC_FLAC) {
         track->mMimeType = MEDIA_MIMETYPE_AUDIO_FLAC;
+      } else if (info.codec == MP4PARSE_CODEC_MP3) {
+        track->mMimeType = MEDIA_MIMETYPE_AUDIO_MPEG;
       }
       track->mCodecSpecificConfig->AppendElements(
           audio.codec_specific_config.data,

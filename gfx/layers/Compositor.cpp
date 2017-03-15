@@ -14,13 +14,6 @@
 #include "gfx2DGlue.h"
 #include "nsAppRunner.h"
 
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-#include "libdisplay/GonkDisplay.h"     // for GonkDisplay
-#include <ui/Fence.h>
-#include "nsWindow.h"
-#include "nsScreenManagerGonk.h"
-#endif
-
 namespace mozilla {
 
 namespace layers {
@@ -94,7 +87,7 @@ Compositor::NotifyNotUsedAfterComposition(TextureHost* aTextureHost)
   const int thresholdCount = 5;
   const double thresholdSec = 2.0f;
   if (mNotifyNotUsedAfterComposition.Length() > thresholdCount) {
-    TimeDuration duration = TimeStamp::Now() - mLastCompositionEndTime;
+    TimeDuration duration = mLastCompositionEndTime ? TimeStamp::Now() - mLastCompositionEndTime : TimeDuration();
     // Check if we could flush
     if (duration.ToSeconds() > thresholdSec) {
       FlushPendingNotifyNotUsed();
@@ -230,6 +223,99 @@ Compositor::DrawDiagnosticsInternal(DiagnosticFlags aFlags,
   }
 
   SlowDrawRect(aVisibleRect, color, aClipRect, aTransform, lWidth);
+}
+
+static void
+UpdateTextureCoordinates(gfx::TexturedTriangle& aTriangle,
+                         const gfx::Rect& aRect,
+                         const gfx::Rect& aIntersection,
+                         gfx::Rect aTextureCoords)
+{
+  // Calculate the relative offset of the intersection within the layer.
+  float dx = (aIntersection.x - aRect.x) / aRect.width;
+  float dy = (aIntersection.y - aRect.y) / aRect.height;
+
+  // Update the texture offset.
+  float x = aTextureCoords.x + dx * aTextureCoords.width;
+  float y = aTextureCoords.y + dy * aTextureCoords.height;
+
+  // Scale the texture width and height.
+  float w = aTextureCoords.width * aIntersection.width / aRect.width;
+  float h = aTextureCoords.height * aIntersection.height / aRect.height;
+
+  static const auto ValidateAndClamp = [](float& f) {
+    // Allow some numerical inaccuracy.
+    MOZ_ASSERT(f >= -0.0001f && f <= 1.0001f);
+
+    if (f >= 1.0f) f = 1.0f;
+    if (f <= 0.0f) f = 0.0f;
+  };
+
+  auto UpdatePoint = [&](const gfx::Point& p, gfx::Point& t)
+  {
+    t.x = x + (p.x - aIntersection.x) / aIntersection.width * w;
+    t.y = y + (p.y - aIntersection.y) / aIntersection.height * h;
+
+    ValidateAndClamp(t.x);
+    ValidateAndClamp(t.y);
+  };
+
+  UpdatePoint(aTriangle.p1, aTriangle.textureCoords.p1);
+  UpdatePoint(aTriangle.p2, aTriangle.textureCoords.p2);
+  UpdatePoint(aTriangle.p3, aTriangle.textureCoords.p3);
+}
+
+void
+Compositor::DrawGeometry(const gfx::Rect& aRect,
+                         const gfx::IntRect& aClipRect,
+                         const EffectChain& aEffectChain,
+                         gfx::Float aOpacity,
+                         const gfx::Matrix4x4& aTransform,
+                         const gfx::Rect& aVisibleRect,
+                         const Maybe<gfx::Polygon3D>& aGeometry)
+{
+  if (!aGeometry) {
+    DrawQuad(aRect, aClipRect, aEffectChain,
+             aOpacity, aTransform, aVisibleRect);
+    return;
+  }
+
+  // Cull invisible polygons.
+  if (aRect.Intersect(aGeometry->BoundingBox()).IsEmpty()) {
+    return;
+  }
+
+  gfx::Polygon3D clipped = aGeometry->ClipPolygon(aRect);
+  nsTArray<gfx::Triangle> triangles = clipped.ToTriangles();
+
+  for (gfx::Triangle& geometry : triangles) {
+    const gfx::Rect intersection = aRect.Intersect(geometry.BoundingBox());
+
+    // Cull invisible triangles.
+    if (intersection.IsEmpty()) {
+      continue;
+    }
+
+    MOZ_ASSERT(aRect.width > 0.0f && aRect.height > 0.0f);
+    MOZ_ASSERT(intersection.width > 0.0f && intersection.height > 0.0f);
+
+    gfx::TexturedTriangle triangle(Move(geometry));
+    triangle.width = aRect.width;
+    triangle.height = aRect.height;
+
+    // Since the texture was created for non-split geometry, we need to
+    // update the texture coordinates to account for the split.
+    if (aEffectChain.mPrimaryEffect->mType == EffectTypes::RGB) {
+      TexturedEffect* texturedEffect =
+        static_cast<TexturedEffect*>(aEffectChain.mPrimaryEffect.get());
+
+      UpdateTextureCoordinates(triangle, aRect, intersection,
+                               texturedEffect->mTextureCoords);
+    }
+
+    DrawTriangle(triangle, aClipRect, aEffectChain,
+                 aOpacity, aTransform, aVisibleRect);
+  }
 }
 
 void
@@ -490,6 +576,18 @@ Compositor::ComputeBackdropCopyRect(const gfx::Rect& aRect,
   return result;
 }
 
+gfx::IntRect
+Compositor::ComputeBackdropCopyRect(const gfx::Triangle& aTriangle,
+                                    const gfx::IntRect& aClipRect,
+                                    const gfx::Matrix4x4& aTransform,
+                                    gfx::Matrix4x4* aOutTransform,
+                                    gfx::Rect* aOutLayerQuad)
+{
+  gfx::Rect boundingBox = aTriangle.BoundingBox();
+  return ComputeBackdropCopyRect(boundingBox, aClipRect, aTransform,
+                                 aOutTransform, aOutLayerQuad);
+}
+
 void
 Compositor::SetInvalid()
 {
@@ -502,48 +600,10 @@ Compositor::IsValid() const
   return !!mParent;
 }
 
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-void
-Compositor::SetDispAcquireFence(Layer* aLayer)
-{
-  // OpenGL does not provide ReleaseFence for rendering.
-  // Instead use DispAcquireFence as layer buffer's ReleaseFence
-  // to prevent flickering and tearing.
-  // DispAcquireFence is DisplaySurface's AcquireFence.
-  // AcquireFence will be signaled when a buffer's content is available.
-  // See Bug 974152.
-  if (!aLayer || !mWidget) {
-    return;
-  }
-  nsWindow* window = static_cast<nsWindow*>(mWidget->RealWidget());
-  RefPtr<FenceHandle::FdObj> fence = new FenceHandle::FdObj(
-      window->GetScreen()->GetPrevDispAcquireFd());
-  mReleaseFenceHandle.Merge(FenceHandle(fence));
-}
-
-FenceHandle
-Compositor::GetReleaseFence()
-{
-  if (!mReleaseFenceHandle.IsValid()) {
-    return FenceHandle();
-  }
-
-  RefPtr<FenceHandle::FdObj> fdObj = mReleaseFenceHandle.GetDupFdObj();
-  return FenceHandle(fdObj);
-}
-
-#else
 void
 Compositor::SetDispAcquireFence(Layer* aLayer)
 {
 }
-
-FenceHandle
-Compositor::GetReleaseFence()
-{
-  return FenceHandle();
-}
-#endif
 
 } // namespace layers
 } // namespace mozilla

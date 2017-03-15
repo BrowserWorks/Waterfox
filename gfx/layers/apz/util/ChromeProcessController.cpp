@@ -187,10 +187,13 @@ ChromeProcessController::HandleTap(TapType aType,
 
   switch (aType) {
   case TapType::eSingleTap:
-    mAPZEventState->ProcessSingleTap(point, scale, aModifiers, aGuid);
+    mAPZEventState->ProcessSingleTap(point, scale, aModifiers, aGuid, 1);
     break;
   case TapType::eDoubleTap:
     HandleDoubleTap(point, aModifiers, aGuid);
+    break;
+  case TapType::eSecondTap:
+    mAPZEventState->ProcessSingleTap(point, scale, aModifiers, aGuid, 2);
     break;
   case TapType::eLongTap:
     mAPZEventState->ProcessLongTap(presShell, point, scale, aModifiers, aGuid,
@@ -204,6 +207,28 @@ ChromeProcessController::HandleTap(TapType aType,
     // compiler to be happy.
     MOZ_ASSERT(false);
     break;
+  }
+}
+
+void
+ChromeProcessController::NotifyPinchGesture(PinchGestureInput::PinchGestureType aType,
+                                            const ScrollableLayerGuid& aGuid,
+                                            LayoutDeviceCoord aSpanChange,
+                                            Modifiers aModifiers)
+{
+  if (MessageLoop::current() != mUILoop) {
+    mUILoop->PostTask(NewRunnableMethod
+                      <PinchGestureInput::PinchGestureType,
+                       ScrollableLayerGuid,
+                       LayoutDeviceCoord,
+                       Modifiers>(this,
+                          &ChromeProcessController::NotifyPinchGesture,
+                          aType, aGuid, aSpanChange, aModifiers));
+    return;
+  }
+
+  if (mWidget) {
+    APZCCallbackHelper::NotifyPinchGesture(aType, aSpanChange, aModifiers, mWidget.get());
   }
 }
 
@@ -225,7 +250,7 @@ ChromeProcessController::NotifyAPZStateChange(const ScrollableLayerGuid& aGuid,
     return;
   }
 
-  mAPZEventState->ProcessAPZStateChange(GetRootDocument(), aGuid.mScrollId, aChange, aArg);
+  mAPZEventState->ProcessAPZStateChange(aGuid.mScrollId, aChange, aArg);
 }
 
 void

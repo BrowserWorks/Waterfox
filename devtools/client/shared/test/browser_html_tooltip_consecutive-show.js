@@ -23,7 +23,7 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
     </vbox>
   </window>`;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 function getTooltipContent(doc) {
@@ -43,7 +43,7 @@ add_task(function* () {
 
   let width = 100, height = 50;
 
-  let tooltip = new HTMLTooltip({doc}, {useXulWrapper: false});
+  let tooltip = new HTMLTooltip(doc, {useXulWrapper: false});
   tooltip.setContent(getTooltipContent(doc), {width, height});
 
   info("Show the tooltip on each of the 4 hbox, without calling hide in between");

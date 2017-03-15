@@ -76,7 +76,7 @@ MacIOSurfaceTextureData::FillInfo(TextureData::Info& aInfo) const
 }
 
 bool
-MacIOSurfaceTextureData::Lock(OpenMode, FenceHandle*)
+MacIOSurfaceTextureData::Lock(OpenMode)
 {
   mSurface->Lock(false);
   return true;
@@ -113,13 +113,13 @@ MacIOSurfaceTextureData::BorrowDrawTarget()
 }
 
 void
-MacIOSurfaceTextureData::Deallocate(ClientIPCAllocator*)
+MacIOSurfaceTextureData::Deallocate(LayersIPCChannel*)
 {
   mSurface = nullptr;
 }
 
 void
-MacIOSurfaceTextureData::Forget(ClientIPCAllocator*)
+MacIOSurfaceTextureData::Forget(LayersIPCChannel*)
 {
   mSurface = nullptr;
 }

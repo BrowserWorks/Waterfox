@@ -11,9 +11,7 @@ transforms:
    - taskgraph.transforms.task:transforms
 
 jobs-from:
-    - android-partner.yml
     - android.yml
     - linux.yml
     - macosx.yml
-    - mulet.yml
     - windows.yml

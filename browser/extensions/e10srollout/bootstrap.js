@@ -14,11 +14,13 @@ Cu.import("resource://gre/modules/UpdateUtils.jsm");
 const TEST_THRESHOLD = {
   "beta"    : 0.5,  // 50%
   "release" : 1.0,  // 100%
+  "esr"     : 1.0,  // 100%
 };
 
 const ADDON_ROLLOUT_POLICY = {
-  "beta"    : "51alladdons", // Any WebExtension or addon except mpc = false
+  "beta"    : "51alladdons", // Any WebExtension or addon except with mpc = false
   "release" : "51set1",
+  "esr"     : "esrA", // WebExtensions and Addons with mpc=true
 };
 
 const PREF_COHORT_SAMPLE       = "e10s.rollout.cohortSample";
@@ -69,9 +71,11 @@ function defineCohort() {
     // This is also the proper place to set the blocklist pref
     // in case it is necessary.
 
-    // Tab Mix Plus exception tracked at bug 1185672.
     Preferences.set(PREF_E10S_ADDON_BLOCKLIST,
-                    "{dc572301-7619-498c-a57d-39143191b318}");
+                    // bug 1185672 - Tab Mix Plus
+                    "{dc572301-7619-498c-a57d-39143191b318};" +
+                    // bug 1332692 - LastPass
+                    "support@lastpass.com;");
   } else {
     Preferences.reset(PREF_E10S_ADDON_POLICY);
   }

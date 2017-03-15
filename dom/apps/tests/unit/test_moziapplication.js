@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+
 Cu.import("resource:///modules/AppsUtils.jsm");
 
 add_test(() => {
@@ -32,7 +34,6 @@ add_test(() => {
     storeId: "aStoreId",
     storeVersion: 1,
     role: "aRole",
-    redirects: "aRedirects",
     kind: "aKind",
     enabled: true,
     sideloaded: false

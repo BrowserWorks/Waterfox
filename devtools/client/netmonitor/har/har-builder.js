@@ -8,11 +8,12 @@ const { LocalizationHelper } = require("devtools/shared/l10n");
 const Services = require("Services");
 const appInfo = Services.appinfo;
 const { CurlUtils } = require("devtools/client/shared/curl");
+const { getFormDataSections } = require("devtools/client/netmonitor/request-utils");
 
 loader.lazyRequireGetter(this, "NetworkHelper", "devtools/shared/webconsole/network-helper");
 
 loader.lazyGetter(this, "L10N", () => {
-  return new LocalizationHelper("devtools/locale/har.properties");
+  return new LocalizationHelper("devtools/client/locales/har.properties");
 });
 
 const HAR_VERSION = "1.1";
@@ -272,16 +273,19 @@ HarBuilder.prototype = {
         postData.mimeType = "application/x-www-form-urlencoded";
 
         // Extract form parameters and produce nice HAR array.
-        this._options.view._getFormDataSections(file.requestHeaders,
+        getFormDataSections(
+          file.requestHeaders,
           file.requestHeadersFromUploadStream,
-          file.requestPostData).then(formDataSections => {
-            formDataSections.forEach(section => {
-              let paramsArray = NetworkHelper.parseQueryString(section);
-              if (paramsArray) {
-                postData.params = [...postData.params, ...paramsArray];
-              }
-            });
+          file.requestPostData,
+          this._options.getString
+        ).then(formDataSections => {
+          formDataSections.forEach(section => {
+            let paramsArray = NetworkHelper.parseQueryString(section);
+            if (paramsArray) {
+              postData.params = [...postData.params, ...paramsArray];
+            }
           });
+        });
       }
     });
 

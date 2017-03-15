@@ -50,6 +50,7 @@ DEFAULT_NO_CONNECTIONS_PREFS = {
     'media.gmp-manager.cert.requireBuiltIn' : False,
     'media.gmp-manager.url' : 'http://localhost/media-dummy/gmpmanager',
     'media.gmp-manager.url.override': 'http://localhost/dummy-gmp-manager.xml',
+    'media.gmp-manager.updateEnabled': False,
     'browser.aboutHomeSnippets.updateUrl': 'https://localhost/snippet-dummy',
     'browser.newtab.url' : 'about:blank',
     'browser.search.update': False,
@@ -228,8 +229,6 @@ DEFAULT_TEST_PREFS = {
     'browser.newtabpage.introShown': True,
     # Disable useragent updates.
     'general.useragent.updates.enabled': False,
-    'dom.mozApps.debug': True,
-    'dom.apps.customization.enabled': True,
     'media.eme.enabled': True,
     'media.eme.apiVisible': True,
     # Don't forceably kill content processes after a timeout

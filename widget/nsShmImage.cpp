@@ -19,6 +19,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+extern "C" {
+#include <X11/ImUtil.h>
+}
+
 using namespace mozilla::ipc;
 using namespace mozilla::gfx;
 
@@ -26,11 +30,14 @@ nsShmImage::nsShmImage(Display* aDisplay,
                        Drawable aWindow,
                        Visual* aVisual,
                        unsigned int aDepth)
-  : mWindow(aWindow)
+  : mDisplay(aDisplay)
+  , mConnection(XGetXCBConnection(aDisplay))
+  , mWindow(aWindow)
   , mVisual(aVisual)
   , mDepth(aDepth)
   , mFormat(mozilla::gfx::SurfaceFormat::UNKNOWN)
   , mSize(0, 0)
+  , mStride(0)
   , mPixmap(XCB_NONE)
   , mGC(XCB_NONE)
   , mRequestPending(false)
@@ -38,8 +45,6 @@ nsShmImage::nsShmImage(Display* aDisplay,
   , mShmId(-1)
   , mShmAddr(nullptr)
 {
-  mConnection = XGetXCBConnection(aDisplay);
-  mozilla::PodZero(&mPutRequest);
   mozilla::PodZero(&mSyncRequest);
 }
 
@@ -59,8 +64,7 @@ bool nsShmImage::UseShm()
 bool
 nsShmImage::CreateShmSegment()
 {
-  size_t size = SharedMemory::PageAlignedSize(BytesPerPixel(mFormat) *
-                                              mSize.width * mSize.height);
+  size_t size = SharedMemory::PageAlignedSize(mStride * mSize.height);
 
   mShmId = shmget(IPC_PRIVATE, size, IPC_CREAT | 0600);
   if (mShmId == -1) {
@@ -188,6 +192,13 @@ nsShmImage::CreateImage(const IntSize& aSize)
     return false;
   }
 
+  // Round up stride to the display's scanline pad (in bits) as XShm expects.
+  int scanlinePad = _XGetScanlinePad(mDisplay, mDepth);
+  int bitsPerPixel = _XGetBitsPerPixel(mDisplay, mDepth);
+  int bitsPerLine = ((bitsPerPixel * aSize.width + scanlinePad - 1)
+                     / scanlinePad) * scanlinePad;
+  mStride = bitsPerLine / 8;
+
   if (!CreateShmSegment()) {
     DestroyImage();
     return false;
@@ -247,7 +258,7 @@ nsShmImage::DestroyImage()
 // Wait for any in-flight shm-affected requests to complete.
 // Typically X clients would wait for a XShmCompletionEvent to be received,
 // but this works as it's sent immediately after the request is sent.
-bool
+void
 nsShmImage::WaitIfPendingReply()
 {
   if (mRequestPending) {
@@ -255,23 +266,13 @@ nsShmImage::WaitIfPendingReply()
       xcb_get_input_focus_reply(mConnection, mSyncRequest, nullptr);
     free(reply);
     mRequestPending = false;
-
-    xcb_generic_error_t* error;
-    if ((error = xcb_request_check(mConnection, mPutRequest))) {
-      gShmAvailable = false;
-      free(error);
-      return false;
-    }
   }
-
-  return true;
 }
 
 already_AddRefed<DrawTarget>
 nsShmImage::CreateDrawTarget(const mozilla::LayoutDeviceIntRegion& aRegion)
 {
-  if (!WaitIfPendingReply())
-    return nullptr;
+  WaitIfPendingReply();
 
   // Due to bug 1205045, we must avoid making GTK calls off the main thread to query window size.
   // Instead we just track the largest offset within the image we are drawing to and grow the image
@@ -288,9 +289,9 @@ nsShmImage::CreateDrawTarget(const mozilla::LayoutDeviceIntRegion& aRegion)
 
   return gfxPlatform::CreateDrawTargetForData(
     reinterpret_cast<unsigned char*>(mShmAddr)
-      + BytesPerPixel(mFormat) * (bounds.y * mSize.width + bounds.x),
+      + bounds.y * mStride + bounds.x * BytesPerPixel(mFormat),
     bounds.Size(),
-    BytesPerPixel(mFormat) * mSize.width,
+    mStride,
     mFormat);
 }
 
@@ -315,19 +316,19 @@ nsShmImage::Put(const mozilla::LayoutDeviceIntRegion& aRegion)
                           xrects.Length(), xrects.Elements());
 
   if (mPixmap != XCB_NONE) {
-    mPutRequest = xcb_copy_area_checked(mConnection, mPixmap, mWindow, mGC,
-                                        0, 0, 0, 0, mSize.width, mSize.height);
+    xcb_copy_area(mConnection, mPixmap, mWindow, mGC,
+                  0, 0, 0, 0, mSize.width, mSize.height);
   } else {
-    mPutRequest = xcb_shm_put_image_checked(mConnection, mWindow, mGC,
-                                            mSize.width, mSize.height,
-                                            0, 0, mSize.width, mSize.height,
-                                            0, 0, mDepth,
-                                            XCB_IMAGE_FORMAT_Z_PIXMAP, 0,
-                                            mShmSeg, 0);
+    xcb_shm_put_image(mConnection, mWindow, mGC,
+                      mSize.width, mSize.height,
+                      0, 0, mSize.width, mSize.height,
+                      0, 0, mDepth,
+                      XCB_IMAGE_FORMAT_Z_PIXMAP, 0,
+                      mShmSeg, 0);
   }
 
   // Send a request that returns a response so that we don't have to start a
-  // sync in nsShmImage::CreateDrawTarget to retrieve the result of mPutRequest.
+  // sync in nsShmImage::CreateDrawTarget.
   mSyncRequest = xcb_get_input_focus(mConnection);
   mRequestPending = true;
 

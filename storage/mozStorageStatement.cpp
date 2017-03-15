@@ -652,19 +652,6 @@ Statement::GetState(int32_t *_state)
   return NS_OK;
 }
 
-NS_IMETHODIMP
-Statement::GetColumnDecltype(uint32_t aParamIndex,
-                             nsACString &_declType)
-{
-  if (!mDBStatement)
-    return NS_ERROR_NOT_INITIALIZED;
-
-  ENSURE_INDEX_VALUE(aParamIndex, mResultColumnCount);
-
-  _declType.Assign(::sqlite3_column_decltype(mDBStatement, aParamIndex));
-  return NS_OK;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 //// mozIStorageValueArray (now part of mozIStorageStatement too)
 
@@ -772,7 +759,6 @@ Statement::GetUTF8String(uint32_t aIndex,
   if (type == mozIStorageStatement::VALUE_TYPE_NULL) {
     // NULL columns should have IsVoid set to distinguish them from the empty
     // string.
-    _value.Truncate(0);
     _value.SetIsVoid(true);
   }
   else {
@@ -795,7 +781,6 @@ Statement::GetString(uint32_t aIndex,
   if (type == mozIStorageStatement::VALUE_TYPE_NULL) {
     // NULL columns should have IsVoid set to distinguish them from the empty
     // string.
-    _value.Truncate(0);
     _value.SetIsVoid(true);
   } else {
     const char16_t *value =

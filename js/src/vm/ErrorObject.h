@@ -38,12 +38,9 @@ class ErrorObject : public NativeObject
          ScopedJSFreePtr<JSErrorReport>* errorReport, HandleString fileName, HandleObject stack,
          uint32_t lineNumber, uint32_t columnNumber, HandleString message);
 
-    static bool checkAndUnwrapThis(JSContext* cx, CallArgs& args, const char* fnName,
-                                   MutableHandle<ErrorObject*> error);
-
     static const ClassSpec errorClassSpec_;
     static const ClassSpec subErrorClassSpec_;
-    static const ClassSpec debuggeeWouldRunClassSpec_;
+    static const ClassSpec nonGlobalErrorClassSpec_;
 
   protected:
     static const uint32_t EXNTYPE_SLOT          = 0;

@@ -11,7 +11,7 @@ add_task(function* testIncognitoViews() {
       },
     },
 
-    background() {
+    background: async function() {
       window.isBackgroundPage = true;
 
       let resolveMessage;
@@ -30,12 +30,11 @@ add_task(function* testIncognitoViews() {
         });
       };
 
-      let testWindow = window => {
+      let testWindow = async window => {
         browser.test.sendMessage("click-browserAction");
 
-        return awaitPopup(window.id).then(msg => {
-          browser.test.assertEq(window.incognito, msg.incognito, "Correct incognito status in browserAction popup");
-        });
+        let msg = await awaitPopup(window.id);
+        browser.test.assertEq(window.incognito, msg.incognito, "Correct incognito status in browserAction popup");
       };
 
       const URL = "http://example.com/incognito";
@@ -48,62 +47,66 @@ add_task(function* testIncognitoViews() {
         });
       });
 
-      browser.windows.getCurrent().then(window => {
-        return testWindow(window);
-      }).then(() => {
-        return browser.windows.create({incognito: true, url: URL});
-      }).then(window => {
-        return windowReady.then(() => {
-          return testWindow(window);
-        }).then(() => {
-          return browser.windows.remove(window.id);
-        });
-      }).then(() => {
+      try {
+        {
+          let window = await browser.windows.getCurrent();
+
+          await testWindow(window);
+        }
+
+        {
+          let window = await browser.windows.create({incognito: true, url: URL});
+          await windowReady;
+
+          await testWindow(window);
+
+          await browser.windows.remove(window.id);
+        }
+
         browser.test.notifyPass("incognito-views");
-      }).catch(error => {
+      } catch (error) {
         browser.test.fail(`Error: ${error} :: ${error.stack}`);
         browser.test.notifyFail("incognito-views");
-      });
+      }
     },
 
     files: {
       "popup.html": '<html><head><meta charset="utf-8"><script src="popup.js"></script></head></html>',
 
-      "popup.js": function() {
+      "popup.js": async function() {
         let views = browser.extension.getViews();
 
-        browser.runtime.getBackgroundPage().then(bgPage => {
-          if (browser.extension.inIncognitoContext) {
-            browser.test.assertEq(null, bgPage, "Should not be able to access background page in incognito context");
+        if (browser.extension.inIncognitoContext) {
+          let bgPage = browser.extension.getBackgroundPage();
+          browser.test.assertEq(null, bgPage, "Should not be able to access background page in incognito context");
 
-            bgPage = browser.extension.getBackgroundPage();
-            browser.test.assertEq(null, bgPage, "Should not be able to access background page in incognito context");
+          bgPage = await browser.runtime.getBackgroundPage();
+          browser.test.assertEq(null, bgPage, "Should not be able to access background page in incognito context");
 
-            browser.test.assertEq(1, views.length, "Should only see one view in incognito popup");
-            browser.test.assertEq(window, views[0], "This window should be the only view");
-          } else {
-            browser.test.assertEq(true, bgPage.isBackgroundPage,
-                                  "Should be able to access background page in non-incognito context");
+          browser.test.assertEq(1, views.length, "Should only see one view in incognito popup");
+          browser.test.assertEq(window, views[0], "This window should be the only view");
+        } else {
+          let bgPage = browser.extension.getBackgroundPage();
+          browser.test.assertEq(true, bgPage.isBackgroundPage,
+                                "Should be able to access background page in non-incognito context");
 
-            bgPage = browser.extension.getBackgroundPage();
-            browser.test.assertEq(true, bgPage.isBackgroundPage,
-                                  "Should be able to access background page in non-incognito context");
+          bgPage = await browser.runtime.getBackgroundPage();
+          browser.test.assertEq(true, bgPage.isBackgroundPage,
+                                "Should be able to access background page in non-incognito context");
 
-            browser.test.assertEq(2, views.length, "Should only two views in non-incognito popup");
-            browser.test.assertEq(bgPage, views[0], "The background page should be the first view");
-            browser.test.assertEq(window, views[1], "This window should be the second view");
-          }
-        }).then(() => {
-          return browser.windows.getCurrent();
-        }).then(win => {
-          browser.runtime.sendMessage({
-            message: "popup-details",
-            windowId: win.id,
-            incognito: browser.extension.inIncognitoContext,
-          });
+          browser.test.assertEq(2, views.length, "Should only two views in non-incognito popup");
+          browser.test.assertEq(bgPage, views[0], "The background page should be the first view");
+          browser.test.assertEq(window, views[1], "This window should be the second view");
+        }
 
-          window.close();
+        let win = await browser.windows.getCurrent();
+        browser.runtime.sendMessage({
+          message: "popup-details",
+          windowId: win.id,
+          incognito: browser.extension.inIncognitoContext,
         });
+
+        window.close();
       },
     },
   });

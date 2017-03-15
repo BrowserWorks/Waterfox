@@ -15,7 +15,6 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/ScriptSettings.h"
-#include "mozilla/TaskQueue.h"
 #include "mozilla/Telemetry.h"
 
 #include "js/RootingAPI.h"
@@ -587,10 +586,9 @@ WorkerMainThreadRunnable::Dispatch(ErrorResult& aRv)
     aRv.ThrowUncatchableException();
   }
 
-  // Telemetry is apparently not threadsafe
-  // Telemetry::Accumulate(Telemetry::SYNC_WORKER_OPERATION, mTelemetryKey,
-  //                       static_cast<uint32_t>((TimeStamp::NowLoRes() - startTime)
-  //                                               .ToMilliseconds()));
+  Telemetry::Accumulate(Telemetry::SYNC_WORKER_OPERATION, mTelemetryKey,
+                        static_cast<uint32_t>((TimeStamp::NowLoRes() - startTime)
+                                                .ToMilliseconds()));
   Unused << startTime; // Shut the compiler up.
 }
 

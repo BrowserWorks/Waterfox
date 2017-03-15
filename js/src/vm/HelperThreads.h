@@ -23,7 +23,11 @@
 #include "frontend/TokenStream.h"
 #include "jit/Ion.h"
 #include "threading/ConditionVariable.h"
-#include "threading/Mutex.h"
+#include "vm/MutexIDs.h"
+
+namespace JS {
+struct Zone;
+} // namespace JS
 
 namespace js {
 
@@ -83,7 +87,7 @@ class GlobalHelperThreadState
     wasm::IonCompileTaskPtrVector wasmWorklist_, wasmFinishedList_;
 
   public:
-    // For now, only allow a single parallel asm.js compilation to happen at a
+    // For now, only allow a single parallel wasm compilation to happen at a
     // time. This avoids race conditions on wasmWorklist/wasmFinishedList/etc.
     mozilla::Atomic<bool> wasmCompilationInProgress;
 
@@ -396,8 +400,10 @@ bool
 StartOffThreadWasmCompile(wasm::IonCompileTask* task);
 
 /*
- * Start executing the given PromiseTask on a helper thread, finishing back on
- * the originating JSContext's owner thread.
+ * If helper threads are available, start executing the given PromiseTask on a
+ * helper thread, finishing back on the originating JSContext's owner thread. If
+ * no helper threads are available, the PromiseTask is synchronously executed
+ * and finished.
  */
 bool
 StartPromiseTask(JSContext* cx, UniquePtr<PromiseTask> task);
@@ -409,13 +415,55 @@ StartPromiseTask(JSContext* cx, UniquePtr<PromiseTask> task);
 bool
 StartOffThreadIonCompile(JSContext* cx, jit::IonBuilder* builder);
 
+struct AllCompilations {};
+struct ZonesInState { JSRuntime* runtime; JS::Zone::GCState state; };
+
+using CompilationSelector = mozilla::Variant<JSScript*,
+                                             JSCompartment*,
+                                             ZonesInState,
+                                             JSRuntime*,
+                                             AllCompilations>;
+
 /*
- * Cancel a scheduled or in progress Ion compilation for script. If script is
- * nullptr, all compilations for the compartment are cancelled.
+ * Cancel scheduled or in progress Ion compilations.
  */
 void
-CancelOffThreadIonCompile(JSCompartment* compartment, JSScript* script,
-                          bool discardLazyLinkList = true);
+CancelOffThreadIonCompile(CompilationSelector selector, bool discardLazyLinkList);
+
+inline void
+CancelOffThreadIonCompile(JSScript* script)
+{
+    CancelOffThreadIonCompile(CompilationSelector(script), true);
+}
+
+inline void
+CancelOffThreadIonCompile(JSCompartment* comp)
+{
+    CancelOffThreadIonCompile(CompilationSelector(comp), true);
+}
+
+inline void
+CancelOffThreadIonCompile(JSRuntime* runtime, JS::Zone::GCState state)
+{
+    CancelOffThreadIonCompile(CompilationSelector(ZonesInState{runtime, state}), true);
+}
+
+inline void
+CancelOffThreadIonCompile(JSRuntime* runtime)
+{
+    CancelOffThreadIonCompile(CompilationSelector(runtime), true);
+}
+
+inline void
+CancelOffThreadIonCompile()
+{
+    CancelOffThreadIonCompile(CompilationSelector(AllCompilations()), false);
+}
+
+#ifdef DEBUG
+bool
+HasOffThreadIonCompile(JSCompartment* comp);
+#endif
 
 /* Cancel all scheduled, in progress or finished parses for runtime. */
 void

@@ -42,12 +42,9 @@ function InspectorSearch(inspector, input, clearBtn) {
   this._onKeyDown = this._onKeyDown.bind(this);
   this._onInput = this._onInput.bind(this);
   this._onClearSearch = this._onClearSearch.bind(this);
-  this._onFilterTextboxContextMenu =
-    this._onFilterTextboxContextMenu.bind(this);
   this.searchBox.addEventListener("keydown", this._onKeyDown, true);
   this.searchBox.addEventListener("input", this._onInput, true);
-  this.searchBox.addEventListener("contextmenu",
-    this._onFilterTextboxContextMenu);
+  this.searchBox.addEventListener("contextmenu", this.inspector.onTextBoxContextMenu);
   this.searchClearButton.addEventListener("click", this._onClearSearch);
 
   // For testing, we need to be able to wait for the most recent node request
@@ -69,7 +66,7 @@ InspectorSearch.prototype = {
     this.searchBox.removeEventListener("keydown", this._onKeyDown, true);
     this.searchBox.removeEventListener("input", this._onInput, true);
     this.searchBox.removeEventListener("contextmenu",
-      this._onFilterTextboxContextMenu);
+      this.inspector.onTextBoxContextMenu);
     this.searchClearButton.removeEventListener("click", this._onClearSearch);
     this.searchBox = null;
     this.searchClearButton = null;
@@ -115,11 +112,9 @@ InspectorSearch.prototype = {
   _onInput: function () {
     if (this.searchBox.value.length === 0) {
       this.searchClearButton.hidden = true;
-      this.searchBox.removeAttribute("filled");
       this._onSearch();
     } else {
       this.searchClearButton.hidden = false;
-      this.searchBox.setAttribute("filled", true);
     }
   },
 
@@ -133,18 +128,6 @@ InspectorSearch.prototype = {
     if (event.keyCode === KeyCodes.DOM_VK_G && modifierKey) {
       this._onSearch(event.shiftKey);
       event.preventDefault();
-    }
-  },
-
-  /**
-   * Context menu handler for filter search box.
-   */
-  _onFilterTextboxContextMenu: function (event) {
-    try {
-      let contextmenu = this.inspector.toolbox.textboxContextMenuPopup;
-      contextmenu.openPopupAtScreen(event.screenX, event.screenY, true);
-    } catch (e) {
-      console.error(e);
     }
   },
 
@@ -190,7 +173,8 @@ function SelectorAutocompleter(inspector, inputNode) {
     onClick: this._onSearchPopupClick,
   };
 
-  this.searchPopup = new AutocompletePopup(inspector._toolbox, options);
+  // The popup will be attached to the toolbox document.
+  this.searchPopup = new AutocompletePopup(inspector._toolbox.doc, options);
 
   this.searchBox.addEventListener("input", this.showSuggestions, true);
   this.searchBox.addEventListener("keypress", this._onSearchKeypress, true);

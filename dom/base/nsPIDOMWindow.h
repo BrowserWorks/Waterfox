@@ -26,25 +26,31 @@ class nsIArray;
 class nsIContent;
 class nsICSSDeclaration;
 class nsIDocShell;
+class nsIDocShellLoadInfo;
 class nsIDocument;
 class nsIIdleObserver;
+class nsIPrincipal;
 class nsIScriptTimeoutHandler;
 class nsIURI;
 class nsPIDOMWindowInner;
 class nsPIDOMWindowOuter;
 class nsPIWindowRoot;
 class nsXBLPrototypeHandler;
-struct nsTimeout;
 
 typedef uint32_t SuspendTypes;
 
 namespace mozilla {
+class ThrottledEventQueue;
 namespace dom {
 class AudioContext;
+class DocGroup;
+class TabGroup;
 class Element;
 class Performance;
 class ServiceWorkerRegistration;
-class CustomElementsRegistry;
+class Timeout;
+class CustomElementRegistry;
+enum class CallerType : uint32_t;
 } // namespace dom
 } // namespace mozilla
 
@@ -94,7 +100,7 @@ public:
   const nsPIDOMWindowOuter* AsOuter() const;
 
   virtual nsPIDOMWindowOuter* GetPrivateRoot() = 0;
-  virtual mozilla::dom::CustomElementsRegistry* CustomElements() = 0;
+  virtual mozilla::dom::CustomElementRegistry* CustomElements() = 0;
   // Outer windows only.
   virtual void ActivateOrDeactivate(bool aActivate) = 0;
 
@@ -117,6 +123,12 @@ public:
   virtual nsPIDOMWindowOuter* GetScriptableTop() = 0;
   virtual nsPIDOMWindowOuter* GetScriptableParent() = 0;
   virtual already_AddRefed<nsPIWindowRoot> GetTopWindowRoot() = 0;
+
+  bool IsRootOuterWindow()
+  {
+    MOZ_ASSERT(IsOuterWindow());
+    return mIsRootOuterWindow;
+  }
 
   /**
    * Behavies identically to GetScriptableParent extept that it returns null
@@ -207,22 +219,16 @@ public:
   // Restore the window state from aState.
   virtual nsresult RestoreWindowState(nsISupports *aState) = 0;
 
-  // Suspend timeouts in this window and in child windows.
-  virtual void SuspendTimeouts(uint32_t aIncrease = 1,
-                               bool aFreezeChildren = true,
-                               bool aFreezeWorkers = true) = 0;
-
-  // Resume suspended timeouts in this window and in child windows.
-  virtual nsresult ResumeTimeouts(bool aThawChildren = true,
-                                  bool aThawWorkers = true) = 0;
-
-  virtual uint32_t TimeoutSuspendCount() = 0;
+  // Determine if the window is suspended or frozen.  Outer windows
+  // will forward this call to the inner window for convenience.  If
+  // there is no inner window then the outer window is considered
+  // suspended and frozen by default.
+  virtual bool IsSuspended() const = 0;
+  virtual bool IsFrozen() const = 0;
 
   // Fire any DOM notification events related to things that happened while
   // the window was frozen.
   virtual nsresult FireDelayedDOMEvents() = 0;
-
-  virtual bool IsFrozen() const = 0;
 
   nsPIDOMWindowOuter* GetOuterWindow()
   {
@@ -542,15 +548,19 @@ public:
   virtual already_AddRefed<nsISelection> GetSelection() = 0;
   virtual already_AddRefed<nsPIDOMWindowOuter> GetOpener() = 0;
   virtual already_AddRefed<nsIDOMWindowCollection> GetFrames() = 0;
+  // aLoadInfo will be passed on through to the windowwatcher.
+  // aForceNoOpener will act just like a "noopener" feature in aOptions except
+  //                will not affect any other window features.
   virtual nsresult Open(const nsAString& aUrl, const nsAString& aName,
                         const nsAString& aOptions,
+                        nsIDocShellLoadInfo* aLoadInfo,
+                        bool aForceNoOpener,
                         nsPIDOMWindowOuter **_retval) = 0;
   virtual nsresult OpenDialog(const nsAString& aUrl, const nsAString& aName,
                               const nsAString& aOptions,
                               nsISupports* aExtraArgument,
                               nsPIDOMWindowOuter** _retval) = 0;
 
-  virtual nsresult GetDevicePixelRatio(float* aRatio) = 0;
   virtual nsresult GetInnerWidth(int32_t* aWidth) = 0;
   virtual nsresult GetInnerHeight(int32_t* aHeight) = 0;
   virtual already_AddRefed<nsICSSDeclaration>
@@ -567,6 +577,12 @@ public:
 
   virtual nsresult MoveBy(int32_t aXDif, int32_t aYDif) = 0;
   virtual nsresult UpdateCommands(const nsAString& anAction, nsISelection* aSel, int16_t aReason) = 0;
+
+  mozilla::dom::TabGroup* TabGroup();
+
+  mozilla::dom::DocGroup* GetDocGroup();
+
+  virtual mozilla::ThrottledEventQueue* GetThrottledEventQueue() = 0;
 
 protected:
   // The nsPIDOMWindow constructor. The aOuterWindow argument should
@@ -614,7 +630,7 @@ protected:
   uint32_t               mModalStateDepth;
 
   // These variables are only used on inner windows.
-  nsTimeout             *mRunningTimeout;
+  mozilla::dom::Timeout *mRunningTimeout;
 
   uint32_t               mMutationBits;
 
@@ -666,6 +682,8 @@ protected:
   // current desktop mode flag.
   bool                   mDesktopModeViewport;
 
+  bool                   mIsRootOuterWindow;
+
   // And these are the references between inner and outer windows.
   nsPIDOMWindowInner* MOZ_NON_OWNING_REF mInnerWindow;
   nsCOMPtr<nsPIDOMWindowOuter> mOuterWindow;
@@ -676,6 +694,9 @@ protected:
 
   // The AudioContexts created for the current document, if any.
   nsTArray<mozilla::dom::AudioContext*> mAudioContexts; // Weak
+
+  // This is present both on outer and inner windows.
+  RefPtr<mozilla::dom::TabGroup> mTabGroup;
 
   // A unique (as long as our 64-bit counter doesn't roll over) id for
   // this window.
@@ -802,6 +823,36 @@ public:
     return mInnerObjectsFreed;
   }
 
+  /**
+   * Check whether this window is a secure context.
+   */
+  bool IsSecureContext() const;
+  bool IsSecureContextIfOpenerIgnored() const;
+
+  // Calling suspend should prevent any asynchronous tasks from
+  // executing javascript for this window.  This means setTimeout,
+  // requestAnimationFrame, and events should not be fired. Suspending
+  // a window also suspends its children and workers.  Workers may
+  // continue to perform computations in the background.  A window
+  // can have Suspend() called multiple times and will only resume after
+  // a matching number of Resume() calls.
+  void Suspend();
+  void Resume();
+
+  // Calling Freeze() on a window will automatically Suspend() it.  In
+  // addition, the window and its children are further treated as no longer
+  // suitable for interaction with the user.  For example, it may be marked
+  // non-visible, cannot be focused, etc.  All worker threads are also frozen
+  // bringing them to a complete stop.  A window can have Freeze() called
+  // multiple times and will only thaw after a matching number of Thaw()
+  // calls.
+  void Freeze();
+  void Thaw();
+
+  // Apply the parent window's suspend, freeze, and modal state to the current
+  // window.
+  void SyncStateFromParentWindow();
+
 protected:
   void CreatePerformanceObjectIfNeeded();
 };
@@ -883,6 +934,8 @@ public:
 
   void SetServiceWorkersTestingEnabled(bool aEnabled);
   bool GetServiceWorkersTestingEnabled();
+
+  float GetDevicePixelRatio(mozilla::dom::CallerType aCallerType);
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsPIDOMWindowOuter, NS_PIDOMWINDOWOUTER_IID)

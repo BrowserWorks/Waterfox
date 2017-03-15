@@ -139,6 +139,9 @@ this.CrashManager.prototype = Object.freeze({
   // A crash in a Gecko media plugin process.
   PROCESS_TYPE_GMPLUGIN: "gmplugin",
 
+  // A crash in the GPU process.
+  PROCESS_TYPE_GPU: "gpu",
+
   // A real crash.
   CRASH_TYPE_CRASH: "crash",
 
@@ -532,6 +535,7 @@ this.CrashManager.prototype = Object.freeze({
           // the current environment.
           let crashEnvironment = null;
           let sessionId = null;
+          let stackTraces = null;
           let reportMeta = Cu.cloneInto(metadata, myScope);
           if ('TelemetryEnvironment' in reportMeta) {
             try {
@@ -545,11 +549,21 @@ this.CrashManager.prototype = Object.freeze({
             sessionId = reportMeta.TelemetrySessionId;
             delete reportMeta.TelemetrySessionId;
           }
+          if ('StackTraces' in reportMeta) {
+            try {
+              stackTraces = JSON.parse(reportMeta.StackTraces);
+            } catch (e) {
+              Cu.reportError(e);
+            }
+            delete reportMeta.StackTraces;
+          }
           TelemetryController.submitExternalPing("crash",
             {
               version: 1,
               crashDate: date.toISOString().slice(0, 10), // YYYY-MM-DD
               sessionId: sessionId,
+              crashId: entry.id,
+              stackTraces: stackTraces,
               metadata: reportMeta,
               hasCrashEnvironment: (crashEnvironment !== null),
             },
@@ -1029,7 +1043,7 @@ CrashStore.prototype = Object.freeze({
    */
   get crashes() {
     let crashes = [];
-    for (let [id, crash] of this._data.crashes) {
+    for (let [, crash] of this._data.crashes) {
       crashes.push(new CrashRecord(crash));
     }
 

@@ -30,7 +30,11 @@ define(function (require, exports, module) {
     },
 
     getLength: function (grip) {
-      return grip.preview ? grip.preview.length : 0;
+      if (!grip.preview) {
+        return 0;
+      }
+
+      return grip.preview.length || grip.preview.childNodesLength || 0;
     },
 
     getTitle: function (object, context) {
@@ -43,51 +47,57 @@ define(function (require, exports, module) {
       return "";
     },
 
+    getPreviewItems: function (grip) {
+      if (!grip.preview) {
+        return null;
+      }
+
+      return grip.preview.items || grip.preview.childNodes || null;
+    },
+
     arrayIterator: function (grip, max) {
       let items = [];
+      const gripLength = this.getLength(grip);
 
-      if (!grip.preview || !grip.preview.length) {
+      if (!gripLength) {
         return items;
       }
 
-      let array = grip.preview.items;
-      if (!array) {
+      const previewItems = this.getPreviewItems(grip);
+      if (!previewItems) {
         return items;
       }
 
       let delim;
-      // number of grip.preview.items is limited to 10, but we may have more
-      // items in grip-array
-      let delimMax = grip.preview.length > array.length ?
-        array.length : array.length - 1;
+      // number of grip preview items is limited to 10, but we may have more
+      // items in grip-array.
+      let delimMax = gripLength > previewItems.length ?
+        previewItems.length : previewItems.length - 1;
       let provider = this.props.provider;
 
-      for (let i = 0; i < array.length && i < max; i++) {
+      for (let i = 0; i < previewItems.length && i < max; i++) {
         try {
-          let itemGrip = array[i];
+          let itemGrip = previewItems[i];
           let value = provider ? provider.getValue(itemGrip) : itemGrip;
 
           delim = (i == delimMax ? "" : ", ");
 
           items.push(GripArrayItem(Object.assign({}, this.props, {
-            key: i,
             object: value,
-            delim: delim}
-          )));
+            delim: delim
+          })));
         } catch (exc) {
           items.push(GripArrayItem(Object.assign({}, this.props, {
             object: exc,
-            delim: delim,
-            key: i}
-          )));
+            delim: delim
+          })));
         }
       }
-      if (array.length > max || grip.preview.length > array.length) {
+      if (previewItems.length > max || gripLength > previewItems.length) {
         let objectLink = this.props.objectLink || span;
-        let leftItemNum = grip.preview.length - max > 0 ?
-          grip.preview.length - max : grip.preview.length - array.length;
+        let leftItemNum = gripLength - max > 0 ?
+          gripLength - max : gripLength - previewItems.length;
         items.push(Caption({
-          key: "more",
           object: objectLink({
             object: this.props.object
           }, leftItemNum + " more…")
@@ -110,7 +120,7 @@ define(function (require, exports, module) {
       if (mode == "tiny") {
         let objectLength = this.getLength(object);
         let isEmpty = objectLength === 0;
-        items = span({className: "length"}, isEmpty ? "" : objectLength);
+        items = [span({className: "length"}, isEmpty ? "" : objectLength)];
         brackets = needSpace(false);
       } else {
         let max = (mode == "short") ? 3 : 300;
@@ -129,7 +139,7 @@ define(function (require, exports, module) {
             className: "arrayLeftBracket",
             object: object
           }, brackets.left),
-          items,
+          ...items,
           objectLink({
             className: "arrayRightBracket",
             object: object
@@ -173,7 +183,11 @@ define(function (require, exports, module) {
       return false;
     }
 
-    return (grip.preview && grip.preview.kind == "ArrayLike");
+    return (grip.preview && (
+        grip.preview.kind == "ArrayLike" ||
+        type === "DocumentFragment"
+      )
+    );
   }
 
   // Exports from this module

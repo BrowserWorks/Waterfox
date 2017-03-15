@@ -4,77 +4,227 @@
 
 // Test utils.
 const expect = require("expect");
-const { renderComponent } = require("devtools/client/webconsole/new-console-output/test/helpers");
+const { render, mount } = require("enzyme");
+const sinon = require("sinon");
+
+// React
+const { createFactory } = require("devtools/client/shared/vendor/react");
+const Provider = createFactory(require("react-redux").Provider);
+const { setupStore } = require("devtools/client/webconsole/new-console-output/test/helpers");
 
 // Components under test.
-const { ConsoleApiCall } = require("devtools/client/webconsole/new-console-output/components/message-types/console-api-call");
+const ConsoleApiCall = createFactory(require("devtools/client/webconsole/new-console-output/components/message-types/console-api-call"));
+const {
+  MESSAGE_OPEN,
+  MESSAGE_CLOSE,
+} = require("devtools/client/webconsole/new-console-output/constants");
+const { INDENT_WIDTH } = require("devtools/client/webconsole/new-console-output/components/message-indent");
 
 // Test fakes.
 const { stubPreparedMessages } = require("devtools/client/webconsole/new-console-output/test/fixtures/stubs/index");
-const onViewSourceInDebugger = () => {};
+const serviceContainer = require("devtools/client/webconsole/new-console-output/test/fixtures/serviceContainer");
+
+const tempfilePath = "http://example.com/browser/devtools/client/webconsole/new-console-output/test/fixtures/stub-generators/test-tempfile.js";
 
 describe("ConsoleAPICall component:", () => {
   describe("console.log", () => {
     it("renders string grips", () => {
       const message = stubPreparedMessages.get("console.log('foobar', 'test')");
-      const rendered = renderComponent(ConsoleApiCall, {message, onViewSourceInDebugger});
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
 
-      const messageBody = getMessageBody(rendered);
-      // @TODO should output: foobar test
-      expect(messageBody.textContent).toBe("\"foobar\"\"test\"");
+      expect(wrapper.find(".message-body").text()).toBe("foobar test");
+      expect(wrapper.find(".objectBox-string").length).toBe(2);
+      expect(wrapper.find("div.message.cm-s-mozilla span span.message-flex-body span.message-body.devtools-monospace").length).toBe(1);
 
-      const consoleStringNodes = messageBody.querySelectorAll(".objectBox-string");
-      expect(consoleStringNodes.length).toBe(2);
+      // There should be the location
+      const locationLink = wrapper.find(`.message-location`);
+      expect(locationLink.length).toBe(1);
+      expect(locationLink.text()).toBe("test-tempfile.js:1:27");
     });
+
+    it("renders string grips with custom style", () => {
+      const message = stubPreparedMessages.get("console.log(%cfoobar)");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      const elements = wrapper.find(".objectBox-string");
+      expect(elements.text()).toBe("foobar");
+      expect(elements.length).toBe(2);
+
+      const firstElementStyle = elements.eq(0).prop("style");
+      // Allowed styles are applied accordingly on the first element.
+      expect(firstElementStyle.color).toBe(`blue`);
+      expect(firstElementStyle["font-size"]).toBe(`1.3em`);
+      // Forbidden styles are not applied.
+      expect(firstElementStyle["background-image"]).toBe(undefined);
+      expect(firstElementStyle.position).toBe(undefined);
+      expect(firstElementStyle.top).toBe(undefined);
+
+      const secondElementStyle = elements.eq(1).prop("style");
+      // Allowed styles are applied accordingly on the second element.
+      expect(secondElementStyle.color).toBe(`red`);
+      // Forbidden styles are not applied.
+      expect(secondElementStyle.background).toBe(undefined);
+    });
+
     it("renders repeat node", () => {
       const message =
         stubPreparedMessages.get("console.log('foobar', 'test')")
         .set("repeat", 107);
-      const rendered = renderComponent(ConsoleApiCall, {message, onViewSourceInDebugger});
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
 
-      const repeatNode = getRepeatNode(rendered);
-      expect(repeatNode[0].textContent).toBe("107");
+      expect(wrapper.find(".message-repeats").text()).toBe("107");
+      expect(wrapper.find(".message-repeats").prop("title")).toBe("107 repeats");
+
+      expect(wrapper.find("span > span.message-flex-body > span.message-body.devtools-monospace + span.message-repeats").length).toBe(1);
+    });
+
+    it("has the expected indent", () => {
+      const message = stubPreparedMessages.get("console.log('foobar', 'test')");
+
+      const indent = 10;
+      let wrapper = render(ConsoleApiCall({ message, serviceContainer, indent }));
+      expect(wrapper.find(".indent").prop("style").width)
+        .toBe(`${indent * INDENT_WIDTH}px`);
+
+      wrapper = render(ConsoleApiCall({ message, serviceContainer}));
+      expect(wrapper.find(".indent").prop("style").width).toBe(`0`);
     });
   });
 
   describe("console.count", () => {
     it("renders", () => {
       const message = stubPreparedMessages.get("console.count('bar')");
-      const rendered = renderComponent(ConsoleApiCall, {message, onViewSourceInDebugger});
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
 
-      const messageBody = getMessageBody(rendered);
-      expect(messageBody.textContent).toBe(message.messageText);
+      expect(wrapper.find(".message-body").text()).toBe("bar: 1");
+    });
+  });
+
+  describe("console.assert", () => {
+    it("renders", () => {
+      const message = stubPreparedMessages.get("console.assert(false, {message: 'foobar'})");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      expect(wrapper.find(".message-body").text()).toBe("Assertion failed: Object { message: \"foobar\" }");
     });
   });
 
   describe("console.time", () => {
     it("does not show anything", () => {
       const message = stubPreparedMessages.get("console.time('bar')");
-      const rendered = renderComponent(ConsoleApiCall, {message, onViewSourceInDebugger});
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
 
-      const messageBody = getMessageBody(rendered);
-      expect(messageBody.textContent).toBe("");
+      expect(wrapper.find(".message-body").text()).toBe("");
     });
   });
 
   describe("console.timeEnd", () => {
     it("renders as expected", () => {
       const message = stubPreparedMessages.get("console.timeEnd('bar')");
-      const rendered = renderComponent(ConsoleApiCall, {message, onViewSourceInDebugger});
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
 
-      const messageBody = getMessageBody(rendered);
-      expect(messageBody.textContent).toBe(message.messageText);
-      expect(messageBody.textContent).toMatch(/^bar: \d+(\.\d+)?ms$/);
+      expect(wrapper.find(".message-body").text()).toBe(message.messageText);
+      expect(wrapper.find(".message-body").text()).toMatch(/^bar: \d+(\.\d+)?ms$/);
+    });
+  });
+
+  describe("console.trace", () => {
+    it("renders", () => {
+      const message = stubPreparedMessages.get("console.trace()");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer, open: true }));
+      const filepath = `${tempfilePath}`;
+
+      expect(wrapper.find(".message-body").text()).toBe("console.trace()");
+
+      const frameLinks = wrapper.find(`.stack-trace span.frame-link[data-url='${filepath}']`);
+      expect(frameLinks.length).toBe(3);
+
+      expect(frameLinks.eq(0).find(".frame-link-function-display-name").text()).toBe("testStacktraceFiltering");
+      expect(frameLinks.eq(0).find(".frame-link-filename").text()).toBe(filepath);
+
+      expect(frameLinks.eq(1).find(".frame-link-function-display-name").text()).toBe("foo");
+      expect(frameLinks.eq(1).find(".frame-link-filename").text()).toBe(filepath);
+
+      expect(frameLinks.eq(2).find(".frame-link-function-display-name").text()).toBe("triggerPacket");
+      expect(frameLinks.eq(2).find(".frame-link-filename").text()).toBe(filepath);
+
+      //it should not be collapsible.
+      expect(wrapper.find(`.theme-twisty`).length).toBe(0);
+    });
+  });
+
+  describe("console.group", () => {
+    it("renders", () => {
+      const message = stubPreparedMessages.get("console.group('bar')");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer, open: true }));
+
+      expect(wrapper.find(".message-body").text()).toBe(message.messageText);
+      expect(wrapper.find(".theme-twisty.open").length).toBe(1);
+    });
+
+    it("toggle the group when the collapse button is clicked", () => {
+      const store = setupStore([]);
+      store.dispatch = sinon.spy();
+      const message = stubPreparedMessages.get("console.group('bar')");
+
+      let wrapper = mount(Provider({store},
+        ConsoleApiCall({
+          message,
+          open: true,
+          dispatch: store.dispatch,
+          serviceContainer,
+        })
+      ));
+      wrapper.find(".theme-twisty.open").simulate("click");
+      let call = store.dispatch.getCall(0);
+      expect(call.args[0]).toEqual({
+        id: message.id,
+        type: MESSAGE_CLOSE
+      });
+
+      wrapper = mount(Provider({store},
+        ConsoleApiCall({
+          message,
+          open: false,
+          dispatch: store.dispatch,
+          serviceContainer,
+        })
+      ));
+      wrapper.find(".theme-twisty").simulate("click");
+      call = store.dispatch.getCall(1);
+      expect(call.args[0]).toEqual({
+        id: message.id,
+        type: MESSAGE_OPEN
+      });
+    });
+  });
+
+  describe("console.groupEnd", () => {
+    it("does not show anything", () => {
+      const message = stubPreparedMessages.get("console.groupEnd('bar')");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      expect(wrapper.find(".message-body").text()).toBe("");
+    });
+  });
+
+  describe("console.groupCollapsed", () => {
+    it("renders", () => {
+      const message = stubPreparedMessages.get("console.groupCollapsed('foo')");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer, open: false}));
+
+      expect(wrapper.find(".message-body").text()).toBe(message.messageText);
+      expect(wrapper.find(".theme-twisty:not(.open)").length).toBe(1);
+    });
+  });
+
+  describe("console.dirxml", () => {
+    it("renders", () => {
+      const message = stubPreparedMessages.get("console.dirxml(window)");
+      const wrapper = render(ConsoleApiCall({ message, serviceContainer }));
+
+      expect(wrapper.find(".message-body").text())
+        .toBe("Window http://example.com/browser/devtools/client/webconsole/new-console-output/test/fixtures/stub-generators/test-console-api.html");
     });
   });
 });
-
-function getMessageBody(rendered) {
-  const queryPath = "div.message.cm-s-mozilla span span.message-flex-body span.message-body.devtools-monospace";
-  return rendered.querySelector(queryPath);
-}
-
-function getRepeatNode(rendered) {
-  const repeatPath = "span > span.message-flex-body > span.message-body.devtools-monospace + span.message-repeats";
-  return rendered.querySelectorAll(repeatPath);
-}

@@ -22,9 +22,7 @@ class nsICycleCollectorListener;
 class nsScriptNameSpaceManager;
 
 namespace JS {
-template <typename T>
-class AutoVectorRooter;
-typedef AutoVectorRooter<Value> AutoValueVector;
+class AutoValueVector;
 } // namespace JS
 
 namespace mozilla {
@@ -65,7 +63,6 @@ public:
 
   virtual void SetWindowProxy(JS::Handle<JSObject*> aWindowProxy) override;
   virtual JSObject* GetWindowProxy() override;
-  virtual JSObject* GetWindowProxyPreserveColor() override;
 
   static void LoadStart();
   static void LoadEnd();

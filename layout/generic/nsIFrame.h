@@ -350,7 +350,91 @@ enum class nsDidReflowStatus : uint32_t {
 #define NS_FRAME_OVERFLOW_LARGE   0x000000ff // overflow is stored as a
                                              // separate rect property
 
+/**
+ * nsBidiLevel is the type of the level values in our Unicode Bidi
+ * implementation.
+ * It holds an embedding level and indicates the visual direction
+ * by its bit 0 (even/odd value).<p>
+ *
+ * <li><code>aParaLevel</code> can be set to the
+ * pseudo-level values <code>NSBIDI_DEFAULT_LTR</code>
+ * and <code>NSBIDI_DEFAULT_RTL</code>.</li></ul>
+ *
+ * @see nsBidi::SetPara
+ *
+ * <p>The related constants are not real, valid level values.
+ * <code>NSBIDI_DEFAULT_XXX</code> can be used to specify
+ * a default for the paragraph level for
+ * when the <code>SetPara</code> function
+ * shall determine it but there is no
+ * strongly typed character in the input.<p>
+ *
+ * Note that the value for <code>NSBIDI_DEFAULT_LTR</code> is even
+ * and the one for <code>NSBIDI_DEFAULT_RTL</code> is odd,
+ * just like with normal LTR and RTL level values -
+ * these special values are designed that way. Also, the implementation
+ * assumes that NSBIDI_MAX_EXPLICIT_LEVEL is odd.
+ *
+ * @see NSBIDI_DEFAULT_LTR
+ * @see NSBIDI_DEFAULT_RTL
+ * @see NSBIDI_LEVEL_OVERRIDE
+ * @see NSBIDI_MAX_EXPLICIT_LEVEL
+ */
+typedef uint8_t nsBidiLevel;
+
+/** Paragraph level setting.
+ *  If there is no strong character, then set the paragraph level to 0 (left-to-right).
+ */
+#define NSBIDI_DEFAULT_LTR 0xfe
+
+/** Paragraph level setting.
+ *  If there is no strong character, then set the paragraph level to 1 (right-to-left).
+ */
+#define NSBIDI_DEFAULT_RTL 0xff
+
+/**
+ * Maximum explicit embedding level.
+ * (The maximum resolved level can be up to <code>NSBIDI_MAX_EXPLICIT_LEVEL+1</code>).
+ *
+ */
+#define NSBIDI_MAX_EXPLICIT_LEVEL 125
+
+/** Bit flag for level input.
+ *  Overrides directional properties.
+ */
+#define NSBIDI_LEVEL_OVERRIDE 0x80
+
+/**
+ * <code>nsBidiDirection</code> values indicate the text direction.
+ */
+enum nsBidiDirection {
+  /** All left-to-right text This is a 0 value. */
+  NSBIDI_LTR,
+  /** All right-to-left text This is a 1 value. */
+  NSBIDI_RTL,
+  /** Mixed-directional text. */
+  NSBIDI_MIXED
+};
+
 namespace mozilla {
+
+// https://drafts.csswg.org/css-align-3/#baseline-sharing-group
+enum BaselineSharingGroup
+{
+  // NOTE Used as an array index so must be 0 and 1.
+  eFirst = 0,
+  eLast = 1,
+};
+
+// Loosely: https://drafts.csswg.org/css-align-3/#shared-alignment-context
+enum class AlignmentContext
+{
+  eInline,
+  eTable,
+  eFlexbox,
+  eGrid,
+};
+
 /*
  * For replaced elements only. Gets the intrinsic dimensions of this element.
  * The dimensions may only be one of the following two types:
@@ -376,6 +460,19 @@ struct IntrinsicSize {
   bool operator!=(const IntrinsicSize& rhs) {
     return !(*this == rhs);
   }
+};
+
+// Pseudo bidi embedding level indicating nonexistence.
+static const nsBidiLevel kBidiLevelNone = 0xff;
+
+struct FrameBidiData
+{
+  nsBidiLevel baseLevel;
+  nsBidiLevel embeddingLevel;
+  // The embedding level of virtual bidi formatting character before
+  // this frame if any. kBidiLevelNone is used to indicate nonexistence
+  // or unnecessity of such virtual character.
+  nsBidiLevel precedingControl;
 };
 
 } // namespace mozilla
@@ -420,6 +517,8 @@ static void ReleaseValue(T* aPropertyValue)
 class nsIFrame : public nsQueryFrame
 {
 public:
+  using AlignmentContext = mozilla::AlignmentContext;
+  using BaselineSharingGroup = mozilla::BaselineSharingGroup;
   template <typename T> using Maybe = mozilla::Maybe<T>;
   using Nothing = mozilla::Nothing;
   using OnNonvisible = mozilla::OnNonvisible;
@@ -947,11 +1046,31 @@ public:
 
   NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(FragStretchBSizeProperty, nscoord)
 
+  // The block-axis margin-box size associated with eBClampMarginBoxMinSize.
+  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(BClampMarginBoxMinSizeProperty, nscoord)
+
   NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(IBaselinePadProperty, nscoord)
   NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(BBaselinePadProperty, nscoord)
 
   NS_DECLARE_FRAME_PROPERTY_WITH_DTOR(GenConProperty, ContentArray,
                                       DestroyContentArray)
+
+  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(BidiDataProperty, mozilla::FrameBidiData)
+
+  mozilla::FrameBidiData GetBidiData()
+  {
+    return Properties().Get(BidiDataProperty());
+  }
+
+  nsBidiLevel GetBaseLevel()
+  {
+    return GetBidiData().baseLevel;
+  }
+
+  nsBidiLevel GetEmbeddingLevel()
+  {
+    return GetBidiData().embeddingLevel;
+  }
 
   nsTArray<nsIContent*>* GetGenConPseudos() {
     return Properties().Get(GenConProperty());
@@ -1084,11 +1203,93 @@ public:
   bool GetContentBoxBorderRadii(nscoord aRadii[8]) const;
 
   /**
+   * XXX: this method will likely be replaced by GetVerticalAlignBaseline
    * Get the position of the frame's baseline, relative to the top of
    * the frame (its top border edge).  Only valid when Reflow is not
    * needed.
+   * @note You should only call this on frames with a WM that's parallel to aWM.
+   * @param aWM the writing-mode of the alignment context, with the ltr/rtl
+   * direction tweak done by nsIFrame::GetWritingMode(nsIFrame*) in inline
+   * contexts (see that method).
    */
-  virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const = 0;
+  virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWM) const = 0;
+
+  /**
+   * Synthesize a first(last) inline-axis baseline from our margin-box.
+   * An alphabetical baseline is at the start(end) edge and a central baseline
+   * is at the center of our block-axis margin-box (aWM tells which to use).
+   * https://drafts.csswg.org/css-align-3/#synthesize-baselines
+   * @note You should only call this on frames with a WM that's parallel to aWM.
+   * @param aWM the writing-mode of the alignment context
+   * @return an offset from our border-box block-axis start(end) edge for
+   * a first(last) baseline respectively
+   * (implemented in nsIFrameInlines.h)
+   */
+  inline nscoord SynthesizeBaselineBOffsetFromMarginBox(
+                   mozilla::WritingMode aWM,
+                   BaselineSharingGroup aGroup) const;
+
+  /**
+   * Synthesize a first(last) inline-axis baseline from our border-box.
+   * An alphabetical baseline is at the start(end) edge and a central baseline
+   * is at the center of our block-axis border-box (aWM tells which to use).
+   * https://drafts.csswg.org/css-align-3/#synthesize-baselines
+   * @note The returned value is only valid when reflow is not needed.
+   * @note You should only call this on frames with a WM that's parallel to aWM.
+   * @param aWM the writing-mode of the alignment context
+   * @return an offset from our border-box block-axis start(end) edge for
+   * a first(last) baseline respectively
+   * (implemented in nsIFrameInlines.h)
+   */
+  inline nscoord SynthesizeBaselineBOffsetFromBorderBox(
+                   mozilla::WritingMode aWM,
+                   BaselineSharingGroup aGroup) const;
+
+  /**
+   * Return the position of the frame's inline-axis baseline, or synthesize one
+   * for the given alignment context. The returned baseline is the distance from
+   * the block-axis border-box start(end) edge for aBaselineGroup eFirst(eLast).
+   * @note The returned value is only valid when reflow is not needed.
+   * @note You should only call this on frames with a WM that's parallel to aWM.
+   * @param aWM the writing-mode of the alignment context
+   * @param aBaselineOffset out-param, only valid if the method returns true
+   * (implemented in nsIFrameInlines.h)
+   */
+  inline nscoord BaselineBOffset(mozilla::WritingMode aWM,
+                                 BaselineSharingGroup aBaselineGroup,
+                                 AlignmentContext     aAlignmentContext) const;
+
+  /**
+   * XXX: this method is taking over the role that GetLogicalBaseline has.
+   * Return true if the frame has a CSS2 'vertical-align' baseline.
+   * If it has, then the returned baseline is the distance from the block-
+   * axis border-box start edge.
+   * @note This method should only be used in AlignmentContext::eInline contexts.
+   * @note The returned value is only valid when reflow is not needed.
+   * @note You should only call this on frames with a WM that's parallel to aWM.
+   * @param aWM the writing-mode of the alignment context
+   * @param aBaseline the baseline offset, only valid if the method returns true
+   */
+  virtual bool GetVerticalAlignBaseline(mozilla::WritingMode aWM,
+                                        nscoord* aBaseline) const {
+    return false;
+  }
+
+  /**
+   * Return true if the frame has a first(last) inline-axis natural baseline per
+   * CSS Box Alignment.  If so, then the returned baseline is the distance from
+   * the block-axis border-box start(end) edge for aBaselineGroup eFirst(eLast).
+   * https://drafts.csswg.org/css-align-3/#natural-baseline
+   * @note The returned value is only valid when reflow is not needed.
+   * @note You should only call this on frames with a WM that's parallel to aWM.
+   * @param aWM the writing-mode of the alignment context
+   * @param aBaseline the baseline offset, only valid if the method returns true
+   */
+  virtual bool GetNaturalBaselineBOffset(mozilla::WritingMode aWM,
+                                         BaselineSharingGroup aBaselineGroup,
+                                         nscoord*             aBaseline) const {
+    return false;
+  }
 
   /**
    * Get the position of the baseline on which the caret needs to be placed,
@@ -1869,7 +2070,7 @@ public:
 
   virtual mozilla::IntrinsicSize GetIntrinsicSize() = 0;
 
-  /*
+  /**
    * Get the intrinsic ratio of this element, or nsSize(0,0) if it has
    * no intrinsic ratio.  The intrinsic ratio is the ratio of the
    * height/width of a box with an intrinsic size or the intrinsic
@@ -1885,14 +2086,25 @@ public:
    */
   enum ComputeSizeFlags {
     eDefault =           0,
-    /* Set if the frame is in a context where non-replaced blocks should
+    /**
+     * Set if the frame is in a context where non-replaced blocks should
      * shrink-wrap (e.g., it's floating, absolutely positioned, or
-     * inline-block). */
+     * inline-block).
+     */
     eShrinkWrap =        1 << 0,
-    /* Set if we'd like to compute our 'auto' bsize, regardless of our actual
+    /**
+     * Set if we'd like to compute our 'auto' bsize, regardless of our actual
      * corresponding computed value. (e.g. to get an intrinsic height for flex
-     * items with "min-height: auto" to use during flexbox layout.) */
-    eUseAutoBSize =      1 << 1
+     * items with "min-height: auto" to use during flexbox layout.)
+     */
+    eUseAutoBSize =      1 << 1,
+    /**
+     * Indicates that we should clamp the margin-box min-size to the given CB
+     * size.  This is used for implementing the grid area clamping here:
+     * https://drafts.csswg.org/css-grid/#min-size-auto
+     */
+    eIClampMarginBoxMinSize = 1 << 2, // clamp in our inline axis
+    eBClampMarginBoxMinSize = 1 << 3, // clamp in our block axis
   };
 
   /**
@@ -2499,8 +2711,8 @@ public:
 
   /**
    * Returns a rect that encompasses everything that might be painted by
-   * this frame.  This includes this frame, all its descendent frames, this
-   * frame's outline, and descentant frames' outline, but does not include
+   * this frame.  This includes this frame, all its descendant frames, this
+   * frame's outline, and descendant frames' outline, but does not include
    * areas clipped out by the CSS "overflow" and "clip" properties.
    *
    * HasOverflowRects() (below) will return true when this overflow
@@ -2837,7 +3049,7 @@ public:
    * @param aParentContent the content node corresponding to the parent frame
    * @return whether the frame is a pseudo frame
    */   
-  bool IsPseudoFrame(nsIContent* aParentContent) {
+  bool IsPseudoFrame(const nsIContent* aParentContent) {
     return mContent == aParentContent;
   }
 
@@ -3260,6 +3472,15 @@ public:
                                            int32_t aIncrement,
                                            bool aForCounting) { return false; }
 
+  /**
+   * Helper function - computes the content-box inline size for aCoord.
+   */
+  nscoord ComputeISizeValue(nsRenderingContext* aRenderingContext,
+                            nscoord             aContainingBlockISize,
+                            nscoord             aContentEdgeToBoxSizing,
+                            nscoord             aBoxSizingToMarginEdge,
+                            const nsStyleCoord& aCoord,
+                            ComputeSizeFlags    aFlags = eDefault);
 protected:
   // Members
   nsRect           mRect;

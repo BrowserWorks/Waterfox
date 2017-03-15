@@ -15,6 +15,7 @@
 #include "mozilla/Compiler.h"
 #include "mozilla/GuardObjects.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/MathAlgorithms.h"
 #include "mozilla/PodOperations.h"
 
 #include <limits.h>
@@ -45,17 +46,6 @@ js_memcpy(void* dst_, const void* src_, size_t len)
 }
 
 namespace js {
-
-template <class T>
-struct AlignmentTestStruct
-{
-    char c;
-    T t;
-};
-
-/* This macro determines the alignment requirements of a type. */
-#define JS_ALIGNMENT_OF(t_) \
-  (sizeof(js::AlignmentTestStruct<t_>) - sizeof(t_))
 
 template <class T>
 class AlignedPtrAndFlag
@@ -207,18 +197,14 @@ class MOZ_RAII AutoScopedAssign
     T old;
 };
 
-template <typename T>
-static inline bool
-IsPowerOfTwo(T t)
-{
-    return t && !(t & (t - 1));
-}
-
 template <typename T, typename U>
 static inline U
 ComputeByteAlignment(T bytes, U alignment)
 {
-    MOZ_ASSERT(IsPowerOfTwo(alignment));
+    static_assert(mozilla::IsUnsigned<U>::value,
+                  "alignment amount must be unsigned");
+
+    MOZ_ASSERT(mozilla::IsPowerOfTwo(alignment));
     return (alignment - (bytes % alignment)) % alignment;
 }
 
@@ -226,13 +212,10 @@ template <typename T, typename U>
 static inline T
 AlignBytes(T bytes, U alignment)
 {
-    return bytes + ComputeByteAlignment(bytes, alignment);
-}
+    static_assert(mozilla::IsUnsigned<U>::value,
+                  "alignment amount must be unsigned");
 
-static MOZ_ALWAYS_INLINE size_t
-UnsignedPtrDiff(const void* bigger, const void* smaller)
-{
-    return size_t(bigger) - size_t(smaller);
+    return bytes + ComputeByteAlignment(bytes, alignment);
 }
 
 /*****************************************************************************/
@@ -306,7 +289,7 @@ namespace mozilla {
  */
 template<typename T>
 static MOZ_ALWAYS_INLINE void
-PodSet(T* aDst, T aSrc, size_t aNElem)
+PodSet(T* aDst, const T& aSrc, size_t aNElem)
 {
     for (const T* dstend = aDst + aNElem; aDst < dstend; ++aDst)
         *aDst = aSrc;
@@ -363,11 +346,11 @@ Poison(void* ptr, uint8_t value, size_t num)
 # if defined(JS_PUNBOX64)
     obj = obj & ((uintptr_t(1) << JSVAL_TAG_SHIFT) - 1);
 # endif
-    const jsval_layout layout = OBJECT_TO_JSVAL_IMPL((JSObject*)obj);
+    JS::Value v = JS::PoisonedObjectValue(reinterpret_cast<JSObject*>(obj));
 
-    size_t value_count = num / sizeof(jsval_layout);
-    size_t byte_count = num % sizeof(jsval_layout);
-    mozilla::PodSet((jsval_layout*)ptr, layout, value_count);
+    size_t value_count = num / sizeof(v);
+    size_t byte_count = num % sizeof(v);
+    mozilla::PodSet(reinterpret_cast<JS::Value*>(ptr), v, value_count);
     if (byte_count) {
         uint8_t* bytes = static_cast<uint8_t*>(ptr);
         uint8_t* end = bytes + num;

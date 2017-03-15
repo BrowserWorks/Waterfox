@@ -73,10 +73,6 @@ XPIDL_SOURCES += [
     'nsINetworkProperties.idl',
     'nsINSSErrorsService.idl',
     'nsINullChannel.idl',
-    'nsIPACGenerator.idl',
-    'nsIPackagedAppService.idl',
-    'nsIPackagedAppUtils.idl',
-    'nsIPackagedAppVerifier.idl',
     'nsIParentChannel.idl',
     'nsIParentRedirectingChannel.idl',
     'nsIPermission.idl',
@@ -99,7 +95,6 @@ XPIDL_SOURCES += [
     'nsIRequestContext.idl',
     'nsIRequestObserver.idl',
     'nsIRequestObserverProxy.idl',
-    'nsIResponseHeadProvider.idl',
     'nsIResumableChannel.idl',
     'nsISecCheckWrapChannel.idl',
     'nsISecureBrowserUI.idl',
@@ -137,6 +132,7 @@ XPIDL_SOURCES += [
     'nsIURIClassifier.idl',
     'nsIURIWithBlobImpl.idl',
     'nsIURIWithPrincipal.idl',
+    'nsIURIWithQuery.idl',
     'nsIURL.idl',
     'nsIURLParser.idl',
     'nsPILoadGroupInternal.idl',
@@ -183,7 +179,6 @@ EXPORTS.mozilla.net += [
     'Dashboard.h',
     'DashboardTypes.h',
     'MemoryDownloader.h',
-    'OfflineObserver.h',
     'Predictor.h',
     'ReferrerPolicy.h',
 ]
@@ -252,7 +247,6 @@ UNIFIED_SOURCES += [
     'nsUnicharStreamLoader.cpp',
     'nsURLHelper.cpp',
     'nsURLParsers.cpp',
-    'OfflineObserver.cpp',
     'PollableEvent.cpp',
     'Predictor.cpp',
     'ProxyAutoConfig.cpp',
@@ -296,11 +290,6 @@ elif CONFIG['OS_ARCH'] == 'Linux':
         'nsNetworkInfoService.cpp',
     ]
 
-EXTRA_COMPONENTS += [
-    'PACGenerator.js',
-    'PACGenerator.manifest'
-]
-
 EXTRA_JS_MODULES += [
     'NetUtil.jsm',
 ]
@@ -313,6 +302,7 @@ LOCAL_INCLUDES += [
     '/docshell/base',
     '/dom/base',
     '/netwerk/protocol/http',
+    '/netwerk/socket',
     '/security/pkix/include'
 ]
 

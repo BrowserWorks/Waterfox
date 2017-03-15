@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* Shared code for xpcshell and mochitests-chrome */
+/* eslint-disable no-undef */
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -10,7 +11,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 const PREF_APP_UPDATE_AUTO                 = "app.update.auto";
 const PREF_APP_UPDATE_BACKGROUNDERRORS     = "app.update.backgroundErrors";
 const PREF_APP_UPDATE_BACKGROUNDMAXERRORS  = "app.update.backgroundMaxErrors";
-const PREF_APP_UPDATE_CERT_REQUIREBUILTIN  = "app.update.cert.requireBuiltIn";
 const PREF_APP_UPDATE_CHANNEL              = "app.update.channel";
 const PREF_APP_UPDATE_ENABLED              = "app.update.enabled";
 const PREF_APP_UPDATE_IDLETIME             = "app.update.idletime";
@@ -24,7 +24,6 @@ const PREF_APP_UPDATE_SOCKET_MAXERRORS     = "app.update.socket.maxErrors";
 const PREF_APP_UPDATE_STAGING_ENABLED      = "app.update.staging.enabled";
 const PREF_APP_UPDATE_URL                  = "app.update.url";
 const PREF_APP_UPDATE_URL_DETAILS          = "app.update.url.details";
-const PREF_APP_UPDATE_URL_OVERRIDE         = "app.update.url.override";
 
 const PREFBRANCH_APP_UPDATE_NEVER = "app.update.never.";
 
@@ -61,7 +60,7 @@ const FILE_UPDATE_TEST               = "update.test";
 const FILE_UPDATE_VERSION            = "update.version";
 
 const UPDATE_SETTINGS_CONTENTS = "[Settings]\n" +
-                                 "ACCEPTED_MAR_CHANNEL_IDS=xpcshell-test\n"
+                                 "ACCEPTED_MAR_CHANNEL_IDS=xpcshell-test\n";
 
 const PR_RDWR        = 0x04;
 const PR_CREATE_FILE = 0x08;
@@ -71,6 +70,7 @@ const DEFAULT_UPDATE_VERSION = "999999.0";
 
 var gChannel;
 
+/* import-globals-from ../data/sharedUpdateXML.js */
 Services.scriptloader.loadSubScript(DATA_URI_SPEC + "sharedUpdateXML.js", this);
 
 const PERMS_FILE      = FileUtils.PERMS_FILE;
@@ -140,19 +140,6 @@ function reloadUpdateManagerData() {
   observe(null, "um-reload-update-data", "");
 }
 
-/**
- * Sets the app.update.channel preference.
- *
- * @param  aChannel
- *         The update channel.
- */
-function setUpdateChannel(aChannel) {
-  gChannel = aChannel;
-  debugDump("setting default pref " + PREF_APP_UPDATE_CHANNEL + " to " + gChannel);
-  gDefaultPrefBranch.setCharPref(PREF_APP_UPDATE_CHANNEL, gChannel);
-  gPrefRoot.addObserver(PREF_APP_UPDATE_CHANNEL, observer, false);
-}
-
 const observer = {
   observe: function(aSubject, aTopic, aData) {
     if (aTopic == "nsPref:changed" && aData == PREF_APP_UPDATE_CHANNEL) {
@@ -167,16 +154,29 @@ const observer = {
 };
 
 /**
- * Sets the app.update.url.override preference.
+ * Sets the app.update.channel preference.
+ *
+ * @param  aChannel
+ *         The update channel.
+ */
+function setUpdateChannel(aChannel) {
+  gChannel = aChannel;
+  debugDump("setting default pref " + PREF_APP_UPDATE_CHANNEL + " to " + gChannel);
+  gDefaultPrefBranch.setCharPref(PREF_APP_UPDATE_CHANNEL, gChannel);
+  gPrefRoot.addObserver(PREF_APP_UPDATE_CHANNEL, observer, false);
+}
+
+/**
+ * Sets the app.update.url default preference.
  *
  * @param  aURL
  *         The update url. If not specified 'URL_HOST + "/update.xml"' will be
  *         used.
  */
-function setUpdateURLOverride(aURL) {
+function setUpdateURL(aURL) {
   let url = aURL ? aURL : URL_HOST + "/update.xml";
-  debugDump("setting " + PREF_APP_UPDATE_URL_OVERRIDE + " to " + url);
-  Services.prefs.setCharPref(PREF_APP_UPDATE_URL_OVERRIDE, url);
+  debugDump("setting " + PREF_APP_UPDATE_URL + " to " + url);
+  gDefaultPrefBranch.setCharPref(PREF_APP_UPDATE_URL, url);
 }
 
 /**
@@ -483,8 +483,8 @@ function cleanUpdatesDir(aDir) {
       try {
         entry.remove(false);
       } catch (e) {
-       logTestInfo("cleanUpdatesDir: unable to remove file. Path: " +
-                   entry.path + ", Exception: " + e);
+        logTestInfo("cleanUpdatesDir: unable to remove file. Path: " +
+                    entry.path + ", Exception: " + e);
         throw (e);
       }
     }
@@ -595,7 +595,7 @@ function getGREBinDir() {
  */
 function logTestInfo(aText, aCaller) {
   let caller = aCaller ? aCaller : Components.stack.caller;
-  let now = new Date;
+  let now = new Date();
   let hh = now.getHours();
   let mm = now.getMinutes();
   let ss = now.getSeconds();

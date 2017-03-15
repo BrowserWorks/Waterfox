@@ -41,7 +41,7 @@ this.Message = {};
  * @throws {TypeError}
  *     If the message type is not recognised.
  */
-Message.fromMsg = function(data) {
+Message.fromMsg = function (data) {
   switch (data[0]) {
     case Command.TYPE:
       return Command.fromMsg(data);
@@ -152,7 +152,7 @@ const validator = {
     "value": ["error", "sessionId", "capabilities"],
   },
 
-  set: function(obj, prop, val) {
+  set: function (obj, prop, val) {
     let tests = this.exclusionary[prop];
     if (tests) {
       for (let t of tests) {
@@ -254,15 +254,12 @@ this.Response = class {
    *     propagated.
    */
   sendError(err) {
-    let wd = error.isWebDriverError(err);
-    let we = wd ? err : new WebDriverError(err.message);
-
-    this.error = error.toJson(we);
+    this.error = error.wrap(err).toJSON();
     this.body = null;
     this.send();
 
-    // propagate errors that are implementation problems
-    if (!wd) {
+    // propagate errors which are implementation problems
+    if (!error.isWebDriverError(err)) {
       throw err;
     }
   }

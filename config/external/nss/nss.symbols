@@ -669,6 +669,7 @@ SSL_GetImplementedCiphers
 SSL_GetNextProto
 SSL_GetNumImplementedCiphers
 SSL_GetSRTPCipher
+SSL_GetStatistics
 SSL_HandshakeCallback
 SSL_HandshakeNegotiatedExtension
 SSL_ImplementedCiphers @DATA@
@@ -679,8 +680,10 @@ SSL_OptionSet
 SSL_OptionSetDefault
 SSL_PeerCertificate
 SSL_PeerCertificateChain
+SSL_PeerSignedCertTimestamps
 SSL_PeerStapledOCSPResponses
 SSL_ResetHandshake
+SSL_SendAdditionalKeyShares
 SSL_SetCanFalseStartCallback
 SSL_SetDowngradeCheckVersion
 SSL_SetNextProtoNego
@@ -691,6 +694,7 @@ SSL_SetStapledOCSPResponses
 SSL_SetTrustAnchors
 SSL_SetURL
 SSL_ShutdownServerSessionIDCache
+SSL_SignatureSchemePrefSet
 SSL_SNISocketConfigHook
 SSL_VersionRangeGet
 SSL_VersionRangeGetDefault

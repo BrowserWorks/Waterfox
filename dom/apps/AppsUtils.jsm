@@ -53,15 +53,6 @@ mozIApplication.prototype = {
     return (perm === Ci.nsIPermissionManager.ALLOW_ACTION);
   },
 
-  hasWidgetPage: function(aPageURL) {
-    let uri = Services.io.newURI(aPageURL, null, null);
-    let filepath = AppsUtils.getFilePath(uri.path);
-    let eliminatedUri = Services.io.newURI(uri.prePath + filepath, null, null);
-    let equalCriterion = aUrl => Services.io.newURI(aUrl, null, null)
-                                            .equals(eliminatedUri);
-    return this.widgetPages.find(equalCriterion) !== undefined;
-  },
-
   get principal() {
     if (this._principal) {
       return this._principal;
@@ -122,8 +113,6 @@ function _setAppProperties(aObj, aApp) {
   aObj.storeId = aApp.storeId || "";
   aObj.storeVersion = aApp.storeVersion || 0;
   aObj.role = aApp.role || "";
-  aObj.redirects = aApp.redirects;
-  aObj.widgetPages = aApp.widgetPages || [];
   aObj.kind = aApp.kind;
   aObj.enabled = aApp.enabled !== undefined ? aApp.enabled : true;
   aObj.sideloaded = aApp.sideloaded;
@@ -156,10 +145,6 @@ this.AppsUtils = {
        },
        usePrivateBrowsing: false,
        isContent: false,
-
-       isAppOfType: function(appType) {
-         throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-       },
 
        QueryInterface: XPCOMUtils.generateQI([Ci.nsILoadContext,
                                               Ci.nsIInterfaceRequestor,
@@ -275,43 +260,6 @@ this.AppsUtils = {
     }
 
     return Ci.nsIScriptSecurityManager.NO_APP_ID;
-  },
-
-  getManifestCSPByLocalId: function getManifestCSPByLocalId(aApps, aLocalId) {
-    debug("getManifestCSPByLocalId " + aLocalId);
-    for (let id in aApps) {
-      let app = aApps[id];
-      if (app.localId == aLocalId) {
-        return ( app.csp || "" );
-      }
-    }
-
-    return "";
-  },
-
-  getDefaultCSPByLocalId: function(aApps, aLocalId) {
-    debug("getDefaultCSPByLocalId " + aLocalId);
-    for (let id in aApps) {
-      let app = aApps[id];
-      if (app.localId == aLocalId) {
-        // Use the app status to choose the right default CSP.
-        try {
-          switch (app.appStatus) {
-            case Ci.nsIPrincipal.APP_STATUS_CERTIFIED:
-              return Services.prefs.getCharPref("security.apps.certified.CSP.default");
-              break;
-            case Ci.nsIPrincipal.APP_STATUS_PRIVILEGED:
-              return Services.prefs.getCharPref("security.apps.privileged.CSP.default");
-              break;
-            case Ci.nsIPrincipal.APP_STATUS_INSTALLED:
-              return "";
-              break;
-          }
-        } catch(e) {}
-      }
-    }
-
-    return "default-src 'self'; object-src 'none'";
   },
 
   getAppByLocalId: function getAppByLocalId(aApps, aLocalId) {
@@ -613,35 +561,6 @@ this.AppsUtils = {
   },
 
   /**
-   * Determines if an update or a factory reset occured.
-   */
-  isFirstRun: function isFirstRun(aPrefBranch) {
-    let savedmstone = null;
-    try {
-      savedmstone = aPrefBranch.getCharPref("dom.apps.lastUpdate.mstone");
-    } catch (e) {}
-
-    let mstone = Services.appinfo.platformVersion;
-
-    let savedBuildID = null;
-    try {
-      savedBuildID = aPrefBranch.getCharPref("dom.apps.lastUpdate.buildID");
-    } catch (e) {}
-
-    let buildID = Services.appinfo.platformBuildID;
-
-    aPrefBranch.setCharPref("dom.apps.lastUpdate.mstone", mstone);
-    aPrefBranch.setCharPref("dom.apps.lastUpdate.buildID", buildID);
-
-    if ((mstone != savedmstone) || (buildID != savedBuildID)) {
-      aPrefBranch.setBoolPref("dom.apps.reset-permissions", false);
-      return true;
-    } else {
-      return false;
-    }
-  },
-
-  /**
    * Check if two manifests have the same set of properties and that the
    * values of these properties are the same, in each locale.
    * Manifests here are raw json ones.
@@ -886,10 +805,6 @@ ManifestHelper.prototype = {
 
   get package_path() {
     return this._localeProp("package_path");
-  },
-
-  get widgetPages() {
-    return this._localeProp("widgetPages");
   },
 
   get size() {

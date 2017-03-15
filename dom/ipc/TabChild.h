@@ -38,9 +38,11 @@
 #include "AudioChannelService.h"
 #include "PuppetWidget.h"
 #include "mozilla/layers/GeckoContentController.h"
+#include "nsISHistoryListener.h"
+#include "nsIPartialSHistoryListener.h"
 
-class nsICachedFileDescriptorListener;
 class nsIDOMWindowUtils;
+class nsIHttpChannel;
 
 namespace mozilla {
 namespace layout {
@@ -165,6 +167,27 @@ protected:
   TabChild* mTabChild;
 };
 
+/**
+ * Listens on session history change, and sends NotifySessionHistoryChange to
+ * parent process.
+ */
+class TabChildSHistoryListener final : public nsISHistoryListener,
+                                       public nsIPartialSHistoryListener,
+                                       public nsSupportsWeakReference
+{
+public:
+  explicit TabChildSHistoryListener(TabChild* aTabChild) : mTabChild(aTabChild) {}
+  void ClearTabChild() { mTabChild = nullptr; }
+
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSISHISTORYLISTENER
+  NS_DECL_NSIPARTIALSHISTORYLISTENER
+
+private:
+  ~TabChildSHistoryListener() {}
+  TabChild* mTabChild;
+};
+
 // This is base clase which helps to share Viewport and touch related
 // functionality between b2g/android FF/embedlite clients implementation.
 // It make sense to place in this class all helper functions, and functionality
@@ -243,6 +266,9 @@ public:
    */
   static already_AddRefed<TabChild> FindTabChild(const TabId& aTabId);
 
+  // Return a list of all active TabChildren.
+  static nsTArray<RefPtr<TabChild>> GetAll();
+
 public:
   /**
    * Create a new TabChild object.
@@ -312,11 +338,6 @@ public:
 
   virtual bool RecvLoadURL(const nsCString& aURI,
                            const ShowInfo& aInfo) override;
-
-  virtual bool RecvCacheFileDescriptor(const nsString& aPath,
-                                       const FileDescriptor& aFileDescriptor)
-                                       override;
-
   virtual bool
   RecvShow(const ScreenIntSize& aSize,
            const ShowInfo& aInfo,
@@ -415,15 +436,12 @@ public:
                                 const IPC::Principal& aPrincipal,
                                 const ClonedMessageData& aData) override;
 
-  virtual bool RecvAppOfflineStatus(const uint32_t& aId,
-                                    const bool& aOffline) override;
-
   virtual bool
   RecvSwappedWithOtherRemoteLoader(const IPCTabContext& aContext) override;
 
   virtual PDocAccessibleChild*
   AllocPDocAccessibleChild(PDocAccessibleChild*, const uint64_t&,
-                           const uint32_t&) override;
+                           const uint32_t&, const IAccessibleHolder&) override;
 
   virtual bool DeallocPDocAccessibleChild(PDocAccessibleChild*) override;
 
@@ -482,6 +500,8 @@ public:
 
   void GetDefaultScale(double *aScale);
 
+  void GetWidgetRounding(int32_t* aRounding);
+
   bool IsTransparent() const { return mIsTransparent; }
 
   void GetMaxTouchPoints(uint32_t* aTouchPoints);
@@ -493,7 +513,7 @@ public:
   void NotifyPainted();
 
   void RequestNativeKeyBindings(mozilla::widget::AutoCacheNativeKeyCommands* aAutoCache,
-                                WidgetKeyboardEvent* aEvent);
+                                const WidgetKeyboardEvent* aEvent);
 
   /**
    * Signal to this TabChild that it should be made visible:
@@ -503,20 +523,7 @@ public:
   void MakeVisible();
   void MakeHidden();
 
-  // Returns true if the file descriptor was found in the cache, false
-  // otherwise.
-  bool GetCachedFileDescriptor(const nsAString& aPath,
-                               nsICachedFileDescriptorListener* aCallback);
-
-  void CancelCachedFileDescriptorCallback(
-                                  const nsAString& aPath,
-                                  nsICachedFileDescriptorListener* aCallback);
-
   nsIContentChild* Manager() const { return mManager; }
-
-  bool GetUpdateHitRegion() const { return mUpdateHitRegion; }
-
-  void UpdateHitRegion(const nsRegion& aRegion);
 
   static inline TabChild*
   GetFrom(nsIDocShell* aDocShell)
@@ -559,6 +566,7 @@ public:
 
   void ClearCachedResources();
   void InvalidateLayers();
+  void ReinitRendering();
   void CompositorUpdated(const TextureFactoryIdentifier& aNewIdentifier);
 
   static inline TabChild* GetFrom(nsIDOMWindow* aWindow)
@@ -569,6 +577,7 @@ public:
   }
 
   virtual bool RecvUIResolutionChanged(const float& aDpi,
+                                       const int32_t& aRounding,
                                        const double& aScale) override;
 
   virtual bool
@@ -645,17 +654,19 @@ public:
                   const CSSRect& aRect,
                   const uint32_t& aFlags);
 
-  void SetAPZChild(layers::APZChild* aAPZChild)
-  {
-      mAPZChild = aAPZChild;
-  }
-
   // Request that the docshell be marked as active.
   void ForcePaint(uint64_t aLayerObserverEpoch);
 
 #if defined(XP_WIN) && defined(ACCESSIBILITY)
   uintptr_t GetNativeWindowHandle() const { return mNativeWindowHandle; }
 #endif
+
+  bool TakeIsFreshProcess()
+  {
+    bool wasFreshProcess = mIsFreshProcess;
+    mIsFreshProcess = false;
+    return wasFreshProcess;
+  }
 
 protected:
   virtual ~TabChild();
@@ -665,8 +676,6 @@ protected:
   virtual bool DeallocPRenderFrameChild(PRenderFrameChild* aFrame) override;
 
   virtual bool RecvDestroy() override;
-
-  virtual bool RecvSetUpdateHitRegion(const bool& aEnabled) override;
 
   virtual bool RecvSetDocShellIsActive(const bool& aIsActive,
                                        const bool& aIsHidden,
@@ -689,9 +698,14 @@ protected:
   virtual bool RecvMenuKeyboardListenerInstalled(
                  const bool& aInstalled) override;
 
-#ifdef MOZ_WIDGET_GONK
-  void MaybeRequestPreinitCamera();
-#endif
+  virtual bool RecvNotifyAttachGroupedSessionHistory(const uint32_t& aOffset) override;
+
+  virtual bool RecvNotifyPartialSessionHistoryActive(const uint32_t& aGlobalLength,
+                                                     const uint32_t& aTargetLocalIndex) override;
+
+  virtual bool RecvNotifyPartialSessionHistoryDeactive() override;
+
+  virtual bool RecvSetFreshProcess() override;
 
 private:
   void HandleDoubleTap(const CSSPoint& aPoint, const Modifiers& aModifiers,
@@ -735,8 +749,6 @@ private:
     mUnscaledInnerSize = aSize;
   }
 
-  class CachedFileDescriptorInfo;
-  class CachedFileDescriptorCallbackRunnable;
   class DelayedDeleteRunnable;
 
   TextureFactoryIdentifier mTextureFactoryIdentifier;
@@ -745,21 +757,16 @@ private:
   nsCOMPtr<nsIURI> mLastURI;
   RenderFrameChild* mRemoteFrame;
   RefPtr<nsIContentChild> mManager;
+  RefPtr<TabChildSHistoryListener> mHistoryListener;
   uint32_t mChromeFlags;
   int32_t mActiveSuppressDisplayport;
   uint64_t mLayersId;
   CSSRect mUnscaledOuterRect;
-  // Whether we have already received a FileDescriptor for the app package.
-  bool mAppPackageFileDescriptorRecved;
-  // At present only 1 of these is really expected.
-  AutoTArray<nsAutoPtr<CachedFileDescriptorInfo>, 1>
-      mCachedFileDescriptorInfos;
   nscolor mLastBackgroundColor;
   bool mDidFakeShow;
   bool mNotified;
   bool mTriedBrowserInit;
   ScreenOrientationInternal mOrientation;
-  bool mUpdateHitRegion;
 
   bool mIgnoreKeyPressEvent;
   RefPtr<APZEventState> mAPZEventState;
@@ -774,6 +781,7 @@ private:
 
   friend class ContentChild;
   float mDPI;
+  int32_t mRounding;
   double mDefaultScale;
 
   bool mIsTransparent;
@@ -784,6 +792,7 @@ private:
   CSSSize mUnscaledInnerSize;
   bool mDidSetRealShowInfo;
   bool mDidLoadURLInit;
+  bool mIsFreshProcess;
 
   AutoTArray<bool, NUMBER_OF_AUDIO_CHANNELS> mAudioChannelsActive;
 

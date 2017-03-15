@@ -273,12 +273,13 @@ VorbisDataDecoder::Flush()
 {
   MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   mIsFlushing = true;
-  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([this] () {
+  RefPtr<VorbisDataDecoder> self = this;
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([self] () {
     // Ignore failed results from vorbis_synthesis_restart. They
     // aren't fatal and it fails when ResetDecode is called at a
     // time when no vorbis data has been read.
-    vorbis_synthesis_restart(&mVorbisDsp);
-    mLastFrameTime.reset();
+    vorbis_synthesis_restart(&self->mVorbisDsp);
+    self->mLastFrameTime.reset();
   });
   SyncRunnable::DispatchToThread(mTaskQueue, r);
   mIsFlushing = false;
@@ -288,8 +289,7 @@ VorbisDataDecoder::Flush()
 bool
 VorbisDataDecoder::IsVorbis(const nsACString& aMimeType)
 {
-  return aMimeType.EqualsLiteral("audio/webm; codecs=vorbis") ||
-         aMimeType.EqualsLiteral("audio/ogg; codecs=vorbis");
+  return aMimeType.EqualsLiteral("audio/vorbis");
 }
 
 /* static */ const AudioConfig::Channel*

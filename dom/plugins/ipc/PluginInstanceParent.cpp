@@ -765,11 +765,11 @@ PluginInstanceParent::RecvShowDirectBitmap(Shmem&& buffer,
     }
 
     // Allocate a texture for the compositor.
-    RefPtr<TextureClientRecycleAllocator> allocator = mParent->EnsureTextureAllocator();
+    RefPtr<TextureClientRecycleAllocator> allocator = mParent->EnsureTextureAllocatorForDirectBitmap();
     RefPtr<TextureClient> texture = allocator->CreateOrRecycle(
         format, size, BackendSelector::Content,
         TextureFlags::NO_FLAGS,
-        ALLOC_FOR_OUT_OF_BAND_CONTENT);
+        TextureAllocationFlags(ALLOC_FOR_OUT_OF_BAND_CONTENT | ALLOC_UPDATE_FROM_SURFACE));
     if (!texture) {
         NS_WARNING("Could not allocate a TextureClient for plugin!");
         return false;
@@ -831,7 +831,7 @@ PluginInstanceParent::RecvShowDirectDXGISurface(const WindowsHandle& handle,
         return false;
     }
 
-    RefPtr<TextureClientRecycleAllocator> allocator = mParent->EnsureTextureAllocator();
+    RefPtr<TextureClientRecycleAllocator> allocator = mParent->EnsureTextureAllocatorForDXGISurface();
     RefPtr<TextureClient> texture = allocator->CreateOrRecycle(
         surface->GetFormat(), surface->GetSize(),
         BackendSelector::Content,

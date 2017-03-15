@@ -18,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.EventDispatcher;
+import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.mozilla.gecko.home.CombinedHistoryItem.ItemType;
+import static org.mozilla.gecko.home.CombinedHistoryPanel.OnPanelLevelChangeListener.PanelLevel.CHILD_RECENT_TABS;
 
 public class RecentTabsAdapter extends RecyclerView.Adapter<CombinedHistoryItem>
                                implements CombinedHistoryRecyclerView.AdapterContextMenuBuilder, NativeEventListener {
@@ -134,7 +136,7 @@ public class RecentTabsAdapter extends RecyclerView.Adapter<CombinedHistoryItem>
                 recentlyClosedTabsReceived = true;
                 recentTabsUpdateHandler.onRecentTabsCountUpdated(
                         getClosedTabsCount(), recentlyClosedTabsReceived);
-                panelStateUpdateHandler.onPanelStateUpdated();
+                panelStateUpdateHandler.onPanelStateUpdated(CHILD_RECENT_TABS);
 
                 // Handle the section header hiding/unhiding.
                 updateHeaderVisibility(prevSectionHeaderVisibility, prevSectionHeaderIndex);
@@ -191,7 +193,7 @@ public class RecentTabsAdapter extends RecyclerView.Adapter<CombinedHistoryItem>
                         lastSessionTabs = closedTabs;
                         recentTabsUpdateHandler.onRecentTabsCountUpdated(
                                 getClosedTabsCount(), recentlyClosedTabsReceived);
-                        panelStateUpdateHandler.onPanelStateUpdated();
+                        panelStateUpdateHandler.onPanelStateUpdated(CHILD_RECENT_TABS);
 
                         // Handle the section header hiding/unhiding.
                         updateHeaderVisibility(prevSectionHeaderVisibility, prevSectionHeaderIndex);
@@ -222,7 +224,7 @@ public class RecentTabsAdapter extends RecyclerView.Adapter<CombinedHistoryItem>
                 lastSessionTabs = emptyLastSessionTabs;
                 recentTabsUpdateHandler.onRecentTabsCountUpdated(
                         getClosedTabsCount(), recentlyClosedTabsReceived);
-                panelStateUpdateHandler.onPanelStateUpdated();
+                panelStateUpdateHandler.onPanelStateUpdated(CHILD_RECENT_TABS);
 
                 // Handle the section header hiding.
                 updateHeaderVisibility(prevSectionHeaderVisibility, prevSectionHeaderIndex);

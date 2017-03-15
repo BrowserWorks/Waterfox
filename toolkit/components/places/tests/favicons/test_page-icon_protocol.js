@@ -7,7 +7,7 @@ function fetchIconForSpec(spec) {
     NetUtil.asyncFetch({
       uri: NetUtil.newURI("page-icon:" + TEST_URI.spec),
       loadUsingSystemPrincipal: true,
-      contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE
+      contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE_FAVICON
     }, (input, status, request) => {
        if (!Components.isSuccessCode(status)) {
         reject(new Error("unable to load icon"));
@@ -30,7 +30,7 @@ var gDefaultFavicon;
 var gFavicon;
 
 add_task(function* setup() {
-  PlacesTestUtils.addVisits({ uri: TEST_URI });
+  yield PlacesTestUtils.addVisits({ uri: TEST_URI });
 
   PlacesUtils.favicons.replaceFaviconDataFromDataURL(
     ICON_URI, ICON_DATA, (Date.now() + 8640000) * 1000,

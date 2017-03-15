@@ -276,8 +276,7 @@ class MediaRecorder::Session: public nsIObserver,
       LOG(LogLevel::Debug, ("Session.ExtractRunnable shutdown = %d", mSession->mEncoder->IsShutdown()));
       if (!mSession->mEncoder->IsShutdown()) {
         mSession->Extract(false);
-        nsCOMPtr<nsIRunnable> event = new ExtractRunnable(mSession);
-        if (NS_FAILED(NS_DispatchToCurrentThread(event))) {
+        if (NS_FAILED(NS_DispatchToCurrentThread(this))) {
           NS_WARNING("Failed to dispatch ExtractRunnable to encoder thread");
         }
       } else {
@@ -286,7 +285,7 @@ class MediaRecorder::Session: public nsIObserver,
         if (mSession->mIsRegisterProfiler)
            profiler_unregister_thread();
         if (NS_FAILED(NS_DispatchToMainThread(
-                        new DestroyRunnable(mSession)))) {
+                        new DestroyRunnable(mSession.forget())))) {
           MOZ_ASSERT(false, "NS_DispatchToMainThread DestroyRunnable failed");
         }
       }
@@ -369,6 +368,9 @@ class MediaRecorder::Session: public nsIObserver,
     explicit DestroyRunnable(Session* aSession)
       : mSession(aSession) {}
 
+    explicit DestroyRunnable(already_AddRefed<Session> aSession)
+      : mSession(aSession) {}
+
     NS_IMETHOD Run() override
     {
       LOG(LogLevel::Debug, ("Session.DestroyRunnable session refcnt = (%d) stopIssued %d s=(%p)",
@@ -388,7 +390,7 @@ class MediaRecorder::Session: public nsIObserver,
         ErrorResult result;
         mSession->mStopIssued = true;
         recorder->Stop(result);
-        if (NS_FAILED(NS_DispatchToMainThread(new DestroyRunnable(mSession)))) {
+        if (NS_FAILED(NS_DispatchToMainThread(new DestroyRunnable(mSession.forget())))) {
           MOZ_ASSERT(false, "NS_DispatchToMainThread failed");
         }
         return NS_OK;
@@ -519,6 +521,10 @@ public:
       // End the Session directly if there is no ExtractRunnable.
       DoSessionEndTask(NS_OK);
     }
+    // If we don't do this, the Session will be purged only when the navigator exit
+    // by the ShutdownObserver and the memory and number of threads will quickly
+    // grows with each couple stop/start.
+    nsContentUtils::UnregisterShutdownObserver(this);
   }
 
   nsresult Pause()
@@ -597,6 +603,7 @@ private:
       mReadThread = nullptr;
       // Inside the if() so that if we delete after xpcom-shutdown's Observe(), we
       // won't try to remove it after the observer service is shut down.
+      // Unregistering for safety in case Stop() was never called
       nsContentUtils::UnregisterShutdownObserver(this);
     }
   }
@@ -879,6 +886,17 @@ private:
     mInputPorts.Clear();
 
     if (mTrackUnionStream) {
+      if (mEncoder) {
+        nsTArray<RefPtr<mozilla::dom::VideoStreamTrack>> videoTracks;
+        DOMMediaStream* domStream = mRecorder->Stream();
+        if (domStream) {
+          domStream->GetVideoTracks(videoTracks);
+          if (!videoTracks.IsEmpty()) {
+            videoTracks[0]->RemoveDirectListener(mEncoder->GetVideoSink());
+          }
+        }
+      }
+
       // Sometimes the MediaEncoder might be initialized fail and go to
       // |CleanupStreams|. So the mEncoder might be a nullptr in this case.
       if (mEncoder && mSelectedVideoTrackID != TRACK_NONE) {
@@ -1337,17 +1355,6 @@ MediaRecorder::IsTypeSupported(const nsAString& aMIMEType)
   else if (mimeType.EqualsLiteral(VIDEO_WEBM) &&
            MediaEncoder::IsWebMEncoderEnabled()) {
     codeclist = gWebMVideoEncoderCodecs;
-  }
-#endif
-#ifdef MOZ_OMX_ENCODER
-    // We're working on MP4 encoder support for desktop
-  else if (mimeType.EqualsLiteral(VIDEO_MP4) ||
-           mimeType.EqualsLiteral(AUDIO_3GPP) ||
-           mimeType.EqualsLiteral(AUDIO_3GPP2)) {
-    if (MediaEncoder::IsOMXEncoderEnabled()) {
-      // XXX check codecs for MP4/3GPP
-      return true;
-    }
   }
 #endif
 

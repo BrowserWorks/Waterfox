@@ -31,6 +31,7 @@
 
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/workers/Workers.h"
+#include "mozilla/ipc/PBackgroundSharedTypes.h"
 #include "mozilla/Unused.h"
 
 #include "Fetch.h"
@@ -54,6 +55,8 @@ FetchDriver::FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
   , mFetchCalled(false)
 #endif
 {
+  MOZ_ASSERT(aRequest);
+  MOZ_ASSERT(aPrincipal);
 }
 
 FetchDriver::~FetchDriver()
@@ -82,6 +85,14 @@ FetchDriver::Fetch(FetchDriverObserver* aObserver)
   MOZ_RELEASE_ASSERT(!mRequest->IsSynchronous(),
                      "Synchronous fetch not supported");
 
+
+  UniquePtr<mozilla::ipc::PrincipalInfo> principalInfo(new mozilla::ipc::PrincipalInfo());
+  nsresult rv = PrincipalToPrincipalInfo(mPrincipal, principalInfo.get());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  mRequest->SetPrincipalInfo(Move(principalInfo));
   if (NS_FAILED(HttpFetch())) {
     FailWithNetworkError();
   }
@@ -329,12 +340,22 @@ FetchDriver::HttpFetch()
   if (uploadChan) {
     nsAutoCString contentType;
     ErrorResult result;
-    mRequest->Headers()->Get(NS_LITERAL_CSTRING("content-type"), contentType, result);
-    // This is an error because the Request constructor explicitly extracts and
-    // sets a content-type per spec.
+    mRequest->Headers()->GetFirst(NS_LITERAL_CSTRING("content-type"), contentType, result);
+    // We don't actually expect "result" to have failed here: that only happens
+    // for invalid header names.  But if for some reason it did, just propagate
+    // it out.
     if (result.Failed()) {
       return result.StealNSResult();
     }
+
+    // Now contentType is the header that was set in mRequest->Headers(), or a
+    // void string if no header was set.
+#ifdef DEBUG
+    bool hasContentTypeHeader =
+      mRequest->Headers()->Has(NS_LITERAL_CSTRING("content-type"), result);
+    MOZ_ASSERT(!result.Failed());
+    MOZ_ASSERT_IF(!hasContentTypeHeader, contentType.IsVoid());
+#endif // DEBUG
 
     nsCOMPtr<nsIInputStream> bodyStream;
     mRequest->GetBody(getter_AddRefs(bodyStream));
@@ -364,19 +385,15 @@ FetchDriver::HttpFetch()
   // Step 4 onwards of "HTTP Fetch" is handled internally by Necko.
   return NS_OK;
 }
-
 already_AddRefed<InternalResponse>
 FetchDriver::BeginAndGetFilteredResponse(InternalResponse* aResponse,
                                          bool aFoundOpaqueRedirect)
 {
   MOZ_ASSERT(aResponse);
-
   AutoTArray<nsCString, 4> reqURLList;
-  mRequest->GetURLList(reqURLList);
-
+  mRequest->GetURLListWithoutFragment(reqURLList);
   MOZ_ASSERT(!reqURLList.IsEmpty());
   aResponse->SetURLList(reqURLList);
-
   RefPtr<InternalResponse> filteredResponse;
   if (aFoundOpaqueRedirect) {
     filteredResponse = aResponse->OpaqueRedirectResponse();
@@ -797,15 +814,18 @@ FetchDriver::AsyncOnChannelRedirect(nsIChannel* aOldChannel,
   if(NS_WARN_IF(NS_FAILED(rv))){
     return rv;
   }
-
   nsCString spec;
   rv = uriClone->GetSpec(spec);
   if(NS_WARN_IF(NS_FAILED(rv))){
     return rv;
   }
+  nsCString fragment;
+  rv = uri->GetRef(fragment);
+  if(NS_WARN_IF(NS_FAILED(rv))){
+    return rv;
+  }
 
-  mRequest->AddURL(spec);
-
+  mRequest->AddURL(spec, fragment);
   NS_ConvertUTF8toUTF16 tRPHeaderValue(tRPHeaderCValue);
   // updates request’s associated referrer policy according to the
   // Referrer-Policy header (if any).

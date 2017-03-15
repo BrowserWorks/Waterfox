@@ -34,14 +34,6 @@ def get_method(method):
     return _target_task_methods[method]
 
 
-@_target_task('from_parameters')
-def target_tasks_from_parameters(full_task_graph, parameters):
-    """Get the target task set from parameters['target_tasks'].  This is
-    useful for re-running a decision task with the same target set as in an
-    earlier run, by copying `target_tasks.json` into `parameters.yml`."""
-    return parameters['target_tasks']
-
-
 @_target_task('try_option_syntax')
 def target_tasks_try_option_syntax(full_task_graph, parameters):
     """Generate a list of target tasks based on try syntax in
@@ -56,6 +48,17 @@ def target_tasks_try_option_syntax(full_task_graph, parameters):
             task = full_task_graph[l]
             if 'unittest_suite' in task.attributes:
                 task.attributes['task_duplicates'] = options.trigger_tests
+
+    # Add notifications here as well
+    if options.notifications:
+        for task in full_task_graph:
+            owner = parameters.get('owner')
+            routes = task.task.setdefault('routes', [])
+            if options.notifications == 'all':
+                routes.append("notify.email.{}.on-any".format(owner))
+            elif options.notifications == 'failure':
+                routes.append("notify.email.{}.on-failed".format(owner))
+                routes.append("notify.email.{}.on-exception".format(owner))
 
     return target_tasks_labels
 
@@ -101,10 +104,27 @@ def target_tasks_ash(full_task_graph, parameters):
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 
 
+@_target_task('cedar_tasks')
+def target_tasks_cedar(full_task_graph, parameters):
+    """Target tasks that only run on the cedar branch."""
+    def filter(task):
+        platform = task.attributes.get('build_platform')
+        # only select platforms
+        if platform not in ['linux64']:
+            return False
+        if task.attributes.get('unittest_suite'):
+            if not (task.attributes['unittest_suite'].startswith('mochitest')
+                    or 'xpcshell' in task.attributes['unittest_suite']):
+                return False
+        return True
+    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
+
+
 @_target_task('nightly_fennec')
 def target_tasks_nightly(full_task_graph, parameters):
     """Select the set of tasks required for a nightly build of fennec. The
     nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
-    return [t.label for t in full_task_graph.tasks.itervalues()
-            if t.attributes.get('kind') in ['nightly-fennec', 'signing']]
+    def filter(task):
+        return task.attributes.get('nightly', False)
+    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]

@@ -582,7 +582,6 @@ add_task(function* search() {
                           { str: "xfoo", type: "formHistory" }, "xbar"], 1);
 
   modifiers.button = 0;
-  let currentTab = gBrowser.selectedTab;
   p = msg("waitForSearch");
   yield msg("click", { eltIdx: 1, modifiers: modifiers });
   mesg = yield p;
@@ -667,12 +666,12 @@ function msg(type, data=null) {
     data: data,
   });
   let deferred = Promise.defer();
-  gMsgMan.addMessageListener(TEST_MSG, function onMsg(msg) {
-    if (msg.data.type != type) {
+  gMsgMan.addMessageListener(TEST_MSG, function onMsg(msgObj) {
+    if (msgObj.data.type != type) {
       return;
     }
     gMsgMan.removeMessageListener(TEST_MSG, onMsg);
-    deferred.resolve(msg.data.data);
+    deferred.resolve(msgObj.data.data);
   });
   return deferred.promise;
 }
@@ -717,11 +716,10 @@ function checkState(actualState, expectedInputVal, expectedSuggestions,
 
 var gMsgMan;
 
-function promiseTab() {
+function* promiseTab() {
   let deferred = Promise.defer();
-  let tab = gBrowser.addTab();
-  registerCleanupFunction(() => gBrowser.removeTab(tab));
-  gBrowser.selectedTab = tab;
+  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser);
+  registerCleanupFunction(() => BrowserTestUtils.removeTab(tab));
   let pageURL = getRootDirectory(gTestPath) + TEST_PAGE_BASENAME;
   tab.linkedBrowser.addEventListener("load", function onLoad(event) {
     tab.linkedBrowser.removeEventListener("load", onLoad, true);
@@ -743,11 +741,11 @@ function promiseTab() {
 function promiseMsg(name, type, msgMan) {
   let deferred = Promise.defer();
   info("Waiting for " + name + " message " + type + "...");
-  msgMan.addMessageListener(name, function onMsg(msg) {
-    info("Received " + name + " message " + msg.data.type + "\n");
-    if (msg.data.type == type) {
+  msgMan.addMessageListener(name, function onMsg(msgObj) {
+    info("Received " + name + " message " + msgObj.data.type + "\n");
+    if (msgObj.data.type == type) {
       msgMan.removeMessageListener(name, onMsg);
-      deferred.resolve(msg);
+      deferred.resolve(msgObj);
     }
   });
   return deferred.promise;
@@ -760,7 +758,7 @@ function setUpEngines() {
     let currentEngines = Services.search.getVisibleEngines();
     info("Adding test search engines");
     let engine1 = yield promiseNewSearchEngine(TEST_ENGINE_BASENAME);
-    let engine2 = yield promiseNewSearchEngine(TEST_ENGINE_2_BASENAME);
+    yield promiseNewSearchEngine(TEST_ENGINE_2_BASENAME);
     Services.search.currentEngine = engine1;
     for (let engine of currentEngines) {
       Services.search.removeEngine(engine);

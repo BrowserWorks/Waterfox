@@ -19,6 +19,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "ScrollPosition", "resource://gre/module
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch", "resource://gre/modules/TelemetryStopwatch.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Log", "resource://gre/modules/AndroidLog.jsm", "AndroidLog");
 XPCOMUtils.defineLazyModuleGetter(this, "SharedPreferences", "resource://gre/modules/SharedPreferences.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Utils", "resource://gre/modules/sessionstore/Utils.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "serializationHelper",
+                                   "@mozilla.org/network/serialization-helper;1",
+                                   "nsISerializationHelper");
 
 function dump(a) {
   Services.console.logStringMessage(a);
@@ -40,6 +44,7 @@ function log(a) {
 const STATE_STOPPED = 0;
 const STATE_RUNNING = 1;
 const STATE_QUITTING = -1;
+const STATE_QUITTING_FLUSHED = -2;
 
 const PRIVACY_NONE = 0;
 const PRIVACY_ENCRYPTED = 1;
@@ -126,10 +131,17 @@ SessionStore.prototype = {
   _clearDisk: function ss_clearDisk() {
     this._sessionDataIsGood = false;
 
-    OS.File.remove(this._sessionFile.path);
-    OS.File.remove(this._sessionFileBackup.path);
-    OS.File.remove(this._sessionFilePrevious.path);
-    OS.File.remove(this._sessionFileTemp.path);
+    if (this._loadState > STATE_QUITTING) {
+      OS.File.remove(this._sessionFile.path);
+      OS.File.remove(this._sessionFileBackup.path);
+      OS.File.remove(this._sessionFilePrevious.path);
+      OS.File.remove(this._sessionFileTemp.path);
+    } else { // We're shutting down and must delete synchronously
+      if (this._sessionFile.exists()) { this._sessionFile.remove(false); }
+      if (this._sessionFileBackup.exists()) { this._sessionFileBackup.remove(false); }
+      if (this._sessionFileBackup.exists()) { this._sessionFilePrevious.remove(false); }
+      if (this._sessionFileBackup.exists()) { this._sessionFileTemp.remove(false); }
+    }
   },
 
   observe: function ss_observe(aSubject, aTopic, aData) {
@@ -192,15 +204,13 @@ SessionStore.prototype = {
         observerService.removeObserver(this, "quit-application-proceeding");
         observerService.removeObserver(this, "quit-application");
 
-        // If a save has been queued, kill the timer and save now
-        if (this._saveTimer) {
-          this._saveTimer.cancel();
-          this._saveTimer = null;
-          this.flushPendingState();
-        }
+        // Flush all pending writes to disk now
+        this.flushPendingState();
+        this._loadState = STATE_QUITTING_FLUSHED;
 
         break;
-      case "browser:purge-session-history": // catch sanitization 
+      case "browser:purge-session-history": // catch sanitization
+        log("browser:purge-session-history");
         this._clearDisk();
 
         // Clear all data about closed tabs
@@ -212,8 +222,11 @@ SessionStore.prototype = {
         if (this._loadState == STATE_RUNNING) {
           // Save the purged state immediately
           this.saveState();
-        } else if (this._loadState == STATE_QUITTING) {
+        } else if (this._loadState <= STATE_QUITTING) {
           this.saveStateDelayed();
+          if (this._loadState == STATE_QUITTING_FLUSHED) {
+            this.flushPendingState();
+          }
         }
 
         Services.obs.notifyObservers(null, "sessionstore-state-purge-complete", "");
@@ -305,9 +318,11 @@ SessionStore.prototype = {
         log("application-background");
         // Tab events dispatched immediately before the application was backgrounded
         // might actually arrive after this point, therefore save them without delay.
-        this._interval = 0;
-        this._minSaveDelay = MINIMUM_SAVE_DELAY_BACKGROUND; // A small delay allows successive tab events to be batched together.
-        this.flushPendingState();
+        if (this._loadState == STATE_RUNNING) {
+          this._interval = 0;
+          this._minSaveDelay = MINIMUM_SAVE_DELAY_BACKGROUND; // A small delay allows successive tab events to be batched together.
+          this.flushPendingState();
+        }
         break;
       case "application-foreground":
         // Reset minimum interval between session store writes back to default.
@@ -318,10 +333,11 @@ SessionStore.prototype = {
         // If we skipped restoring a zombified tab before backgrounding,
         // we might have to do it now instead.
         let window = Services.wm.getMostRecentWindow("navigator:browser");
-        let tab = window.BrowserApp.selectedTab;
-
-        if (tab.browser.__SS_restore) {
-          this._restoreZombieTab(tab.browser, tab.id);
+        if (window) { // Might not yet be ready during a cold startup.
+          let tab = window.BrowserApp.selectedTab;
+          if (tab.browser.__SS_restore) {
+            this._restoreZombieTab(tab.browser, tab.id);
+          }
         }
         break;
       case "ClosedTabs:StartNotifications":
@@ -475,7 +491,7 @@ SessionStore.prototype = {
     }
 
     // Ignore non-browser windows and windows opened while shutting down
-    if (aWindow.document.documentElement.getAttribute("windowtype") != "navigator:browser" || this._loadState == STATE_QUITTING) {
+    if (aWindow.document.documentElement.getAttribute("windowtype") != "navigator:browser" || this._loadState <= STATE_QUITTING) {
       return;
     }
 
@@ -1187,25 +1203,35 @@ SessionStore.prototype = {
       }
     }
 
+    // Collect triggeringPrincipal data for the current history entry.
+    // Please note that before Bug 1297338 there was no concept of a
+    // principalToInherit. To remain backward/forward compatible we
+    // serialize the principalToInherit as triggeringPrincipal_b64.
+    // Once principalToInherit is well established (within FF55)
+    // we can update this code, remove triggeringPrincipal_b64 and
+    // just keep triggeringPrincipal_base64 as well as
+    // principalToInherit_base64;  see Bug 1301666.
+    if (aEntry.principalToInherit) {
+      try {
+        let principalToInherit = Utils.serializePrincipal(aEntry.principalToInherit);
+        if (principalToInherit) {
+          entry.triggeringPrincipal_b64 = principalToInherit;
+          entry.principalToInherit_base64 = principalToInherit;
+        }
+      } catch (e) {
+        dump(e);
+      }
+    }
+
     if (aEntry.triggeringPrincipal) {
       try {
-        let binaryStream = Cc["@mozilla.org/binaryoutputstream;1"].createInstance(Ci.nsIObjectOutputStream);
-        let pipe = Cc["@mozilla.org/pipe;1"].createInstance(Ci.nsIPipe);
-        pipe.init(false, false, 0, 0xffffffff, null);
-        binaryStream.setOutputStream(pipe.outputStream);
-        binaryStream.writeCompoundObject(aEntry.triggeringPrincipal, Ci.nsIPrincipal, true);
-        binaryStream.close();
-
-        // Now we want to read the data from the pipe's input end and encode it.
-        let scriptableStream = Cc["@mozilla.org/binaryinputstream;1"].createInstance(Ci.nsIBinaryInputStream);
-        scriptableStream.setInputStream(pipe.inputStream);
-        let triggeringPrincipalBytes = scriptableStream.readByteArray(scriptableStream.available());
-        // We can stop doing base64 encoding once our serialization into JSON
-        // is guaranteed to handle all chars in strings, including embedded
-        // nulls.
-        entry.triggeringPrincipal_b64 =
-          btoa(String.fromCharCode.apply(null, triggeringPrincipalBytes));
-      } catch (e) { dump(e); }
+        let triggeringPrincipal = Utils.serializePrincipal(aEntry.triggeringPrincipal);
+        if (triggeringPrincipal) {
+          entry.triggeringPrincipal_base64 = triggeringPrincipal;
+        }
+      } catch (e) {
+        dump(e);
+      }
     }
 
     entry.docIdentifier = aEntry.BFCacheEntry.ID;
@@ -1328,17 +1354,41 @@ SessionStore.prototype = {
       delete aEntry.owner_b64;
     }
 
-    if (aEntry.triggeringPrincipal_b64) {
-      let triggeringPrincipalInput = Cc["@mozilla.org/io/string-input-stream;1"]
-                                       .createInstance(Ci.nsIStringInputStream);
-      let binaryData = atob(aEntry.triggeringPrincipal_b64);
-      triggeringPrincipalInput.setData(binaryData, binaryData.length);
-      let binaryStream = Cc["@mozilla.org/binaryinputstream;1"]
-                           .createInstance(Ci.nsIObjectInputStream);
-      binaryStream.setInputStream(triggeringPrincipalInput);
-      try { // Catch possible deserialization exceptions
-        shEntry.triggeringPrincipal = binaryStream.readObject(true);
-      } catch (ex) { Cu.reportError("SessionStore: " + ex); }
+    // Before introducing the concept of principalToInherit we only had
+    // a triggeringPrincipal within every entry which basically is the
+    // equivalent of the new principalToInherit. To avoid compatibility
+    // issues, we first check if the entry has entries for
+    // triggeringPrincipal_base64 and principalToInherit_base64. If not
+    // we fall back to using the principalToInherit (which is stored
+    // as triggeringPrincipal_b64) as the triggeringPrincipal and
+    // the principalToInherit.
+    // FF55 will remove the triggeringPrincipal_b64, see Bug 1301666.
+    if (aEntry.triggeringPrincipal_base64 || aEntry.principalToInherit_base64) {
+      if (aEntry.triggeringPrincipal_base64) {
+        try {
+          shEntry.triggeringPrincipal =
+            Utils.deserializePrincipal(aEntry.triggeringPrincipal_base64);
+        }
+        catch (e) {
+          dump(e);
+        }
+      }
+      if (aEntry.principalToInherit_base64) {
+        try {
+          shEntry.principalToInherit =
+            Utils.deserializePrincipal(aEntry.principalToInherit_base64);
+        } catch (e) {
+          dump(e);
+        }
+      }
+    } else if (aEntry.triggeringPrincipal_b64) {
+      try {
+        shEntry.triggeringPrincipal = Utils.deserializePrincipal(aEntry.triggeringPrincipal_b64);
+        shEntry.principalToInherit = shEntry.triggeringPrincipal;
+      }
+      catch (e) {
+        dump(e);
+      }
     }
 
     if (aEntry.children && shEntry instanceof Ci.nsISHContainer) {
@@ -1748,7 +1798,7 @@ SessionStore.prototype = {
     if (this._loadState == STATE_RUNNING) {
       // Save the purged state immediately
       this.saveState();
-    } else if (this._loadState == STATE_QUITTING) {
+    } else if (this._loadState <= STATE_QUITTING) {
       this.saveStateDelayed();
     }
   }

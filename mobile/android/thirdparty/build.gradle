@@ -25,6 +25,7 @@ android {
             manifest.srcFile 'AndroidManifest.xml'
             java {
                 srcDir '.'
+
                 if (!mozconfig.substs.MOZ_INSTALL_TRACKING) {
                     exclude 'com/adjust/**'
                 }

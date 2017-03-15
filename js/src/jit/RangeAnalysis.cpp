@@ -1214,6 +1214,22 @@ Range::sign(TempAllocator& alloc, const Range* op)
                             0);
 }
 
+Range*
+Range::NaNToZero(TempAllocator& alloc, const Range *op)
+{
+    Range* copy = new(alloc) Range(*op);
+    if (copy->canBeNaN()) {
+        copy->max_exponent_ = Range::IncludesInfinity;
+        if (!copy->canBeZero()) {
+            Range zero;
+            zero.setDoubleSingleton(0);
+            copy->unionWith(&zero);
+        }
+    }
+    copy->refineToExcludeNegativeZero();
+    return copy;
+}
+
 bool
 Range::negativeZeroMul(const Range* lhs, const Range* rhs)
 {
@@ -1567,10 +1583,18 @@ MMod::computeRange(TempAllocator& alloc)
 
     // If both operands are non-negative integers, we can optimize this to an
     // unsigned mod.
-    if (specialization() == MIRType::Int32 && lhs.lower() >= 0 && rhs.lower() > 0 &&
-        !lhs.canHaveFractionalPart() && !rhs.canHaveFractionalPart())
-    {
-        unsigned_ = true;
+    if (specialization() == MIRType::Int32 && rhs.lower() > 0) {
+        bool hasDoubles = lhs.lower() < 0 || lhs.canHaveFractionalPart() ||
+            rhs.canHaveFractionalPart();
+        // It is not possible to check that lhs.lower() >= 0, since the range
+        // of a ursh with rhs a 0 constant is wrapped around the int32 range in
+        // Range::Range(). However, IsUint32Type() will only return true for
+        // nodes that lie in the range [0, UINT32_MAX].
+        bool hasUint32s = IsUint32Type(getOperand(0)) &&
+            getOperand(1)->type() == MIRType::Int32 &&
+            (IsUint32Type(getOperand(1)) || getOperand(1)->isConstant());
+        if (!hasDoubles || hasUint32s)
+            unsigned_ = true;
     }
 
     // For unsigned mod, we have to convert both operands to unsigned.
@@ -1871,6 +1895,13 @@ MRandom::computeRange(TempAllocator& alloc)
     setRange(r);
 }
 
+void
+MNaNToZero::computeRange(TempAllocator& alloc)
+{
+    Range other(input());
+    setRange(Range::NaNToZero(alloc, &other));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Range Analysis
 ///////////////////////////////////////////////////////////////////////////////
@@ -1947,7 +1978,7 @@ RangeAnalysis::analyzeLoop(MBasicBlock* header)
     for (MPhiIterator iter(header->phisBegin()); iter != header->phisEnd(); iter++)
         analyzeLoopPhi(header, iterationBound, *iter);
 
-    if (!mir->compilingAsmJS()) {
+    if (!mir->compilingWasm()) {
         // Try to hoist any bounds checks from the loop using symbolic bounds.
 
         Vector<MBoundsCheck*, 0, JitAllocPolicy> hoistedChecks(alloc());
@@ -2343,6 +2374,10 @@ RangeAnalysis::addRangeAssertions()
     for (ReversePostorderIterator iter(graph_.rpoBegin()); iter != graph_.rpoEnd(); iter++) {
         MBasicBlock* block = *iter;
 
+        // Do not add assertions in unreachable blocks.
+        if (block->unreachable())
+            continue;
+
         for (MDefinitionIterator iter(block); iter; iter++) {
             MDefinition* ins = *iter;
 
@@ -2655,11 +2690,11 @@ MLimitedTruncate::needTruncation(TruncateKind kind)
 bool
 MCompare::needTruncation(TruncateKind kind)
 {
-    // If we're compiling AsmJS, don't try to optimize the comparison type, as
-    // the code presumably is already using the type it wants. Also, AsmJS
+    // If we're compiling wasm, don't try to optimize the comparison type, as
+    // the code presumably is already using the type it wants. Also, wasm
     // doesn't support bailouts, so we woudn't be able to rely on
     // TruncateAfterBailouts to convert our inputs.
-    if (block()->info().compilingAsmJS())
+    if (block()->info().compilingWasm())
        return false;
 
     if (!isDoubleComparison())
@@ -3067,11 +3102,11 @@ RangeAnalysis::truncate()
 {
     JitSpew(JitSpew_Range, "Do range-base truncation (backward loop)");
 
-    // Automatic truncation is disabled for AsmJS because the truncation logic
+    // Automatic truncation is disabled for wasm because the truncation logic
     // is based on IonMonkey which assumes that we can bailout if the truncation
-    // logic fails. As AsmJS code has no bailout mechanism, it is safer to avoid
+    // logic fails. As wasm code has no bailout mechanism, it is safer to avoid
     // any automatic truncations.
-    MOZ_ASSERT(!mir->compilingAsmJS());
+    MOZ_ASSERT(!mir->compilingWasm());
 
     Vector<MDefinition*, 16, SystemAllocPolicy> worklist;
 
@@ -3459,6 +3494,17 @@ MBinaryBitwiseInstruction::collectRangeInfoPreTrunc()
     }
 }
 
+void
+MNaNToZero::collectRangeInfoPreTrunc()
+{
+    Range inputRange(input());
+
+    if (!inputRange.canBeNaN())
+        operandIsNeverNaN_ = true;
+    if (!inputRange.canBeNegativeZero())
+        operandIsNeverNegativeZero_ = true;
+}
+
 bool
 RangeAnalysis::prepareForUCE(bool* shouldRemoveDeadCode)
 {
@@ -3488,16 +3534,16 @@ RangeAnalysis::prepareForUCE(bool* shouldRemoveDeadCode)
         // added by MBeta::computeRange on its own block.
         MTest* test = cond->toTest();
         MDefinition* condition = test->input();
-        MConstant* constant = nullptr;
-        if (block == test->ifTrue()) {
-            constant = MConstant::New(alloc(), BooleanValue(false));
-        } else {
-            MOZ_ASSERT(block == test->ifFalse());
-            constant = MConstant::New(alloc(), BooleanValue(true));
-        }
 
-        if (DeadIfUnused(condition))
-            condition->setGuardRangeBailoutsUnchecked();
+        // If the false-branch is unreachable, then the test condition must be true.
+        // If the true-branch is unreachable, then the test condition must be false.
+        MOZ_ASSERT(block == test->ifTrue() || block == test->ifFalse());
+        bool value = block == test->ifFalse();
+        MConstant* constant = MConstant::New(alloc().fallible(), BooleanValue(value));
+        if (!constant)
+            return false;
+
+        condition->setGuardRangeBailoutsUnchecked();
 
         test->block()->insertBefore(test, constant);
 
@@ -3533,13 +3579,14 @@ bool RangeAnalysis::tryRemovingGuards()
     for (size_t i = 0; i < guards.length(); i++) {
         MDefinition* guard = guards[i];
 
-#ifdef DEBUG
-        // There is no need to mark an instructions if there is
-        // already a more restrictive flag on it.
+        // If this ins is a guard even without guardRangeBailouts,
+        // there is no reason in trying to hoist the guardRangeBailouts check.
         guard->setNotGuardRangeBailouts();
-        MOZ_ASSERT(DeadIfUnused(guard));
+        if (!DeadIfUnused(guard)) {
+            guard->setGuardRangeBailouts();
+            continue;
+        }
         guard->setGuardRangeBailouts();
-#endif
 
         if (!guard->isPhi()) {
             if (!guard->range())
@@ -3569,11 +3616,6 @@ bool RangeAnalysis::tryRemovingGuards()
                 continue;
 
             MOZ_ASSERT(!operand->isGuardRangeBailouts());
-
-            // No need to mark as a guard, since it is has already an even more
-            // restrictive flag set.
-            if (!DeadIfUnused(operand))
-                continue;
 
             operand->setInWorklist();
             operand->setGuardRangeBailouts();

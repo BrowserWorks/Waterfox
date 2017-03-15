@@ -419,8 +419,8 @@
       this.lb = getAccessible("t5_lb");
 
       this.eventSeq = [
-        new invokerChecker(EVENT_HIDE, this.o),
         new invokerChecker(EVENT_HIDE, this.b),
+        new invokerChecker(EVENT_HIDE, this.o),
         new invokerChecker(EVENT_REORDER, "t5"),
         new unexpectedInvokerChecker(EVENT_HIDE, this.ofc),
         new unexpectedInvokerChecker(EVENT_REORDER, this.o),
@@ -501,7 +501,7 @@
     function test7()
     {
       this.eventSeq = [
-        new todo_invokerChecker(EVENT_HIDE, getNode('t7_c')),
+        new invokerChecker(EVENT_HIDE, getNode('t7_c')),
         new invokerChecker(EVENT_SHOW, getNode('t7_c')),
         new invokerChecker(EVENT_REORDER, getNode('t7')),
         new unexpectedInvokerChecker(EVENT_REORDER, getNode('t7_c_directchild')),
@@ -522,11 +522,177 @@
       };
     }
 
+    /**
+     * Move a node by aria-owns from right to left in the tree, so that
+     * the eventing looks this way:
+     * reorder for 't8_c1'
+     *   hide for 't8_c1_child'
+     *   show for 't8_c2_moved'
+     * reorder for 't8_c2'
+     *   hide for 't8_c2_moved'
+     *
+     * The hide event should be delivered before the paired show event.
+     */
+    function test8()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_HIDE, getNode('t8_c1_child')),
+        new invokerChecker(EVENT_HIDE, 't8_c2_moved'),
+        new invokerChecker(EVENT_SHOW, 't8_c2_moved'),
+        new invokerChecker(EVENT_REORDER, 't8_c2'),
+        new invokerChecker(EVENT_REORDER, 't8_c1'),
+      ];
+
+      this.invoke = function test8_invoke()
+      {
+        // Remove a node from 't8_c1' container to give the event tree a
+        // desired structure (the 't8_c1' container node goes first in the event
+        // tree)
+        getNode('t8_c1_child').remove();
+        // then move 't8_c2_moved' from 't8_c2' to 't8_c1'.
+        getNode('t8_c1').setAttribute('aria-owns', 't8_c2_moved');
+      };
+
+      this.getID = function test8_getID() {
+        return "Move a node by aria-owns to left within the tree";
+      };
+    }
+
+    /**
+     * Move 't9_c3_moved' node under 't9_c2_moved', and then move 't9_c2_moved'
+     * node by aria-owns (same as test10 but has different aria-owns
+     * ordering), the eventing looks same way as in test10:
+     * reorder for 't9_c1'
+     *   hide for 't9_c1_child'
+     *   show for 't9_c2_moved'
+     * reorder for 't9_c2'
+    *    hide for 't9_c2_child'
+     *   hide for 't9_c2_moved'
+     * reorder for 't9_c3'
+     *   hide for 't9_c3_moved'
+     *
+     * The hide events for 't9_c2_moved' and 't9_c3_moved' should be delivered
+     * before the show event for 't9_c2_moved'.
+     */
+    function test9()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_HIDE, getNode('t9_c1_child')),
+        new invokerChecker(EVENT_HIDE, getNode('t9_c2_child')),
+        new invokerChecker(EVENT_HIDE, 't9_c3_moved'),
+        new invokerChecker(EVENT_HIDE, 't9_c2_moved'),
+        new invokerChecker(EVENT_SHOW, 't9_c2_moved'),
+        new invokerChecker(EVENT_REORDER, 't9_c3'),
+        new invokerChecker(EVENT_REORDER, 't9_c2'),
+        new invokerChecker(EVENT_REORDER, 't9_c1'),
+        new unexpectedInvokerChecker(EVENT_SHOW, 't9_c3_moved')
+      ];
+
+      this.invoke = function test9_invoke()
+      {
+        // Remove child nodes from 't9_c1' and 't9_c2' containers to give
+        // the event tree a needed structure ('t9_c1' and 't9_c2' nodes go
+        // first in the event tree),
+        getNode('t9_c1_child').remove();
+        getNode('t9_c2_child').remove();
+        // then do aria-owns magic.
+        getNode('t9_c2_moved').setAttribute('aria-owns', 't9_c3_moved');
+        getNode('t9_c1').setAttribute('aria-owns', 't9_c2_moved');
+      };
+
+      this.getID = function test9_getID() {
+        return "Move node #1 by aria-owns and then move node #2 into node #1";
+      };
+    }
+
+    /**
+     * Move a node 't10_c3_moved' by aria-owns under a node 't10_c2_moved',
+     * moved by under 't10_1', so that the eventing looks this way:
+     * reorder for 't10_c1'
+     *   hide for 't10_c1_child'
+     *   show for 't10_c2_moved'
+     * reorder for 't10_c2'
+     *   hide for 't10_c2_child'
+     *   hide for 't10_c2_moved'
+     * reorder for 't10_c3'
+     *   hide for 't10_c3_moved'
+     *
+     * The hide events for 't10_c2_moved' and 't10_c3_moved' should be delivered
+     * before the show event for 't10_c2_moved'.
+     */
+    function test10()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_HIDE, getNode('t10_c1_child')),
+        new invokerChecker(EVENT_HIDE, getNode('t10_c2_child')),
+        new invokerChecker(EVENT_HIDE, getNode('t10_c2_moved')),
+        new invokerChecker(EVENT_HIDE, getNode('t10_c3_moved')),
+        new invokerChecker(EVENT_SHOW, getNode('t10_c2_moved')),
+        new invokerChecker(EVENT_REORDER, 't10_c2'),
+        new invokerChecker(EVENT_REORDER, 't10_c1'),
+        new invokerChecker(EVENT_REORDER, 't10_c3')
+      ];
+
+      this.invoke = function test10_invoke()
+      {
+        // Remove child nodes from 't10_c1' and 't10_c2' containers to give
+        // the event tree a needed structure ('t10_c1' and 't10_c2' nodes go first
+        // in the event tree),
+        getNode('t10_c1_child').remove();
+        getNode('t10_c2_child').remove();
+        // then do aria-owns stuff.
+        getNode('t10_c1').setAttribute('aria-owns', 't10_c2_moved');
+        getNode('t10_c2_moved').setAttribute('aria-owns', 't10_c3_moved');
+      };
+
+      this.getID = function test10_getID() {
+        return "Move a node by aria-owns into a node moved by aria-owns to left within the tree";
+      };
+    }
+
+    /**
+     * Move a node by aria-owns from right to left in the tree, and then
+     * move its parent too by aria-owns. No hide event should be fired for
+     * original node.
+     */
+    function test11()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_HIDE, getNode('t11_c1_child')),
+        new invokerChecker(EVENT_HIDE, getNode('t11_c2')),
+        new orderChecker(),
+        new asyncInvokerChecker(EVENT_SHOW, 't11_c2_child'),
+        new asyncInvokerChecker(EVENT_SHOW, 't11_c2'),
+        new orderChecker(),
+        new invokerChecker(EVENT_REORDER, 't11'),
+        new unexpectedInvokerChecker(EVENT_HIDE, 't11_c2_child'),
+        new unexpectedInvokerChecker(EVENT_REORDER, 't11_c1'),
+        new unexpectedInvokerChecker(EVENT_REORDER, 't11_c2'),
+        new unexpectedInvokerChecker(EVENT_REORDER, 't11_c3')
+      ];
+
+      this.invoke = function test11_invoke()
+      {
+        // Remove a node from 't11_c1' container to give the event tree a
+        // desired structure (the 't11_c1' container node goes first in
+        // the event tree),
+        getNode('t11_c1_child').remove();
+        // then move 't11_c2_moved' from 't11_c2' to 't11_c1', and then move
+        // 't11_c2' to 't11_c3'.
+        getNode('t11_c1').setAttribute('aria-owns', 't11_c2_child');
+        getNode('t11_c3').setAttribute('aria-owns', 't11_c2');
+      };
+
+      this.getID = function test11_getID() {
+        return "Move a node by aria-owns to left within the tree";
+      };
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Do tests.
 
-    //gA11yEventDumpToConsole = true; // debug stuff
-    //enableLogging("tree,eventTree,verbose");
+    gA11yEventDumpToConsole = true; // debug stuff
+    //enableLogging("eventTree");
 
     var gQueue = null;
     function doTests()
@@ -555,6 +721,10 @@
       gQueue.push(new test5());
       gQueue.push(new test6());
       gQueue.push(new test7());
+      gQueue.push(new test8());
+      gQueue.push(new test9());
+      gQueue.push(new test10());
+      gQueue.push(new test11());
 
       gQueue.invoke(); // Will call SimpleTest.finish();
     }
@@ -581,7 +751,6 @@
   <div id="content" style="display: none"></div>
   <pre id="test">
   </pre>
-  <div id="eventdump"></div>
 
   <div id="testContainer">
     <select id="select1">
@@ -655,6 +824,41 @@
       <div><div id="t7_c_grandchild"></div></div>
       <div id="t7_c_directchild"></div>
     </div>
+  </div>
+
+  <div id="t8">
+    <div id="t8_c1"><div id="t8_c1_child"></div></div>
+    <div id="t8_c2">
+      <div id="t8_c2_moved"></div>
+    </div>
+  </div>
+
+  <div id="t9">
+    <div id="t9_c1"><div id="t9_c1_child"></div></div>
+    <div id="t9_c2">
+      <div id="t9_c2_child"></div>
+      <div id="t9_c2_moved"></div>
+    </div>
+    <div id="t9_c3">
+      <div id="t9_c3_moved"></div>
+    </div>
+  </div>
+
+  <div id="t10">
+    <div id="t10_c1"><div id="t10_c1_child"></div></div>
+    <div id="t10_c2">
+      <div id="t10_c2_child"></div>
+      <div id="t10_c2_moved"></div>
+    </div>
+    <div id="t10_c3">
+      <div id="t10_c3_moved"></div>
+    </div>
+  </div>
+
+  <div id="t11">
+    <div id="t11_c1"><div id="t11_c1_child"></div></div>
+    <div id="t11_c2"><div id="t11_c2_child"></div></div>
+    <div id="t11_c3"></div>
   </div>
 </body>
 </html>

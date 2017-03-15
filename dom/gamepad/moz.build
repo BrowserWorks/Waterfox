@@ -10,6 +10,12 @@ IPDL_SOURCES += [
     'ipc/PGamepadTestChannel.ipdl'
 ]
 
+EXPORTS.mozilla.dom += [
+    'GamepadPoseState.h',
+    'ipc/GamepadMessageUtils.h',
+    'ipc/GamepadServiceType.h'
+]
+
 if CONFIG['MOZ_GAMEPAD']:
     EXPORTS.mozilla.dom += [
         'Gamepad.h',
@@ -17,6 +23,7 @@ if CONFIG['MOZ_GAMEPAD']:
         'GamepadManager.h',
         'GamepadMonitoring.h',
         'GamepadPlatformService.h',
+        'GamepadPose.h',
         'GamepadServiceTest.h',
         'ipc/GamepadEventChannelChild.h',
         'ipc/GamepadEventChannelParent.h',
@@ -30,6 +37,7 @@ if CONFIG['MOZ_GAMEPAD']:
         'GamepadManager.cpp',
         'GamepadMonitoring.cpp',
         'GamepadPlatformService.cpp',
+        'GamepadPose.cpp',
         'GamepadServiceTest.cpp',
         'ipc/GamepadEventChannelChild.cpp',
         'ipc/GamepadEventChannelParent.cpp',

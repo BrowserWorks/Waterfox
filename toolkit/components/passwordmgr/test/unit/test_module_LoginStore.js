@@ -9,16 +9,14 @@
 
 "use strict";
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginStore",
                                   "resource://gre/modules/LoginStore.jsm");
 
 const TEST_STORE_FILE_NAME = "test-logins.json";
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 /**
  * Saves login data to a file, then reloads it.
@@ -50,7 +48,7 @@ add_task(function* test_save_reload()
 
   storeForSave.data.disabledHosts.push("http://www.example.org");
 
-  yield storeForSave.save();
+  yield storeForSave._save();
 
   // Test the asynchronous initialization path.
   let storeForLoad = new LoginStore(storeForSave.path);
@@ -100,7 +98,7 @@ add_task(function* test_save_empty()
   let createdFile = yield OS.File.open(store.path, { create: true });
   yield createdFile.close();
 
-  yield store.save();
+  yield store._save();
 
   do_check_true(yield OS.File.exists(store.path));
 });

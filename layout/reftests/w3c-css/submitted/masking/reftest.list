@@ -26,9 +26,11 @@ fails == mask-image-3d.html mask-image-3-ref.html
 fails == mask-image-3e.html mask-image-3-ref.html
 fails == mask-image-3f.html mask-image-3-ref.html
 fails == mask-image-3g.html mask-image-3-ref.html
+fails == mask-image-3h.html mask-image-3-ref.html
 fails == mask-image-4a.html blank.html
 fails == mask-image-4b.html blank.html
 == mask-image-5.html mask-image-5-ref.html
+== mask-image-6.html mask-image-6-ref.html
 
 # mask-clip test cases
 fails == mask-clip-1.html mask-clip-1-ref.html
@@ -98,9 +100,13 @@ fuzzy-if(winWidget,1,21) == clip-path-viewBox-1b.html clip-path-geometryBox-1-re
 fuzzy(64,370) == clip-path-viewBox-1c.html clip-path-geometryBox-1-ref.html
 fuzzy-if(winWidget,9,98) == clip-path-geometryBox-2.html clip-path-geometryBox-2-ref.html
 
+== clip-path-localRef-1.html clip-path-localRef-1-ref.html
+
 default-preferences
 
 # mask with opacity test cases
 fails == mask-opacity-1a.html mask-opacity-1-ref.html
 fails == mask-opacity-1b.html mask-opacity-1-ref.html
 fuzzy(1,5000) == mask-opacity-1c.html mask-opacity-1-ref.html
+
+== clip-path-mix-blend-mode-1.html clip-path-mix-blend-mode-1-ref.html

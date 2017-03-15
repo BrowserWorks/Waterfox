@@ -59,6 +59,7 @@
 #include "mozilla/dom/PromiseNativeHandler.h"
 #include "mozilla/dom/Response.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/dom/SRILogHelper.h"
 #include "mozilla/UniquePtr.h"
 #include "Principal.h"
 #include "WorkerHolder.h"
@@ -350,7 +351,7 @@ public:
 
   explicit CacheCreator(WorkerPrivate* aWorkerPrivate)
     : mCacheName(aWorkerPrivate->ServiceWorkerCacheName())
-    , mPrivateBrowsing(aWorkerPrivate->IsInPrivateBrowsing())
+    , mOriginAttributes(aWorkerPrivate->GetOriginAttributes())
   {
     MOZ_ASSERT(aWorkerPrivate->IsServiceWorker());
     MOZ_ASSERT(aWorkerPrivate->LoadScriptAsPartOfLoadingServiceWorkerScript());
@@ -411,7 +412,7 @@ private:
   nsTArray<RefPtr<CacheScriptLoader>> mLoaders;
 
   nsString mCacheName;
-  bool mPrivateBrowsing;
+  PrincipalOriginAttributes mOriginAttributes;
 };
 
 NS_IMPL_ISUPPORTS0(CacheCreator)
@@ -1110,6 +1111,25 @@ private:
       aLoadInfo.mURL.Assign(NS_ConvertUTF8toUTF16(filename));
     }
 
+    nsCOMPtr<nsILoadInfo> chanLoadInfo = channel->GetLoadInfo();
+    if (chanLoadInfo && chanLoadInfo->GetEnforceSRI()) {
+      // importScripts() and the Worker constructor do not support integrity metadata
+      //  (or any fetch options). Until then, we can just block.
+      //  If we ever have those data in the future, we'll have to the check to
+      //  by using the SRICheck module
+      MOZ_LOG(SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug,
+            ("Scriptloader::Load, SRI required but not supported in workers"));
+      nsCOMPtr<nsIContentSecurityPolicy> wcsp;
+      chanLoadInfo->LoadingPrincipal()->GetCsp(getter_AddRefs(wcsp));
+      MOZ_ASSERT(wcsp, "We sould have a CSP for the worker here");
+      if (wcsp) {
+        wcsp->LogViolationDetails(
+            nsIContentSecurityPolicy::VIOLATION_TYPE_REQUIRE_SRI_FOR_SCRIPT,
+            aLoadInfo.mURL, EmptyString(), 0, EmptyString(), EmptyString());
+      }
+      return NS_ERROR_SRI_CORRUPT;
+    }
+
     // Update the principal of the worker and its base URI if we just loaded the
     // worker's primary script.
     if (IsMainWorkerScript()) {
@@ -1215,7 +1235,8 @@ private:
           rv = csp->GetReferrerPolicy(&rp, &hasReferrerPolicy);
           NS_ENSURE_SUCCESS(rv, rv);
 
-          if (hasReferrerPolicy) {
+
+          if (hasReferrerPolicy) { //FIXME bug 1307366: move RP out of CSP code
             mWorkerPrivate->SetReferrerPolicy(static_cast<net::ReferrerPolicy>(rp));
           }
         }
@@ -1467,7 +1488,7 @@ CacheCreator::CreateCacheStorage(nsIPrincipal* aPrincipal)
   // If we're in private browsing mode, don't even try to create the
   // CacheStorage.  Instead, just fail immediately to terminate the
   // ServiceWorker load.
-  if (NS_WARN_IF(mPrivateBrowsing)) {
+  if (NS_WARN_IF(mOriginAttributes.mPrivateBrowsingId > 0)) {
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
@@ -1478,7 +1499,8 @@ CacheCreator::CreateCacheStorage(nsIPrincipal* aPrincipal)
   mCacheStorage =
     CacheStorage::CreateOnMainThread(mozilla::dom::cache::CHROME_ONLY_NAMESPACE,
                                      mSandboxGlobalObject,
-                                     aPrincipal, mPrivateBrowsing,
+                                     aPrincipal,
+                                     false, /* privateBrowsing can't be true here */
                                      true /* force trusted origin */,
                                      error);
   if (NS_WARN_IF(error.Failed())) {
@@ -1537,19 +1559,27 @@ void
 CacheCreator::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValue)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(aValue.isObject());
+
+  if (!aValue.isObject()) {
+    FailLoaders(NS_ERROR_FAILURE);
+    return;
+  }
 
   JS::Rooted<JSObject*> obj(aCx, &aValue.toObject());
   Cache* cache = nullptr;
   nsresult rv = UNWRAP_OBJECT(Cache, obj, cache);
-  MOZ_ALWAYS_SUCCEEDS(rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    FailLoaders(NS_ERROR_FAILURE);
+    return;
+  }
 
   mCache = cache;
-  MOZ_ASSERT(mCache);
+  MOZ_DIAGNOSTIC_ASSERT(mCache);
 
   // If the worker is canceled, CancelMainThread() will have cleared the
-  // loaders.
+  // loaders via DeleteCache().
   for (uint32_t i = 0, len = mLoaders.Length(); i < len; ++i) {
+    MOZ_DIAGNOSTIC_ASSERT(mLoaders[i]);
     mLoaders[i]->Load(cache);
   }
 }
@@ -1561,19 +1591,16 @@ CacheCreator::DeleteCache()
 
   // This is called when the load is canceled which can occur before
   // mCacheStorage is initialized.
-  if (!mCacheStorage) {
-    return;
+  if (mCacheStorage) {
+    // It's safe to do this while Cache::Match() and Cache::Put() calls are
+    // running.
+    IgnoredErrorResult rv;
+    RefPtr<Promise> promise = mCacheStorage->Delete(mCacheName, rv);
+
+    // We don't care to know the result of the promise object.
   }
 
-  // It's safe to do this while Cache::Match() and Cache::Put() calls are
-  // running.
-  IgnoredErrorResult rv;
-  RefPtr<Promise> promise = mCacheStorage->Delete(mCacheName, rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return;
-  }
-
-  // We don't care to know the result of the promise object.
+  // Always call this here to ensure the loaders array is cleared.
   FailLoaders(NS_ERROR_FAILURE);
 }
 
@@ -2076,7 +2103,7 @@ ScriptExecutorRunnable::LogExceptionToConsole(JSContext* aCx,
   }
 
   RefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
-  xpcReport->Init(report.report(), report.message(),
+  xpcReport->Init(report.report(), report.toStringResult().c_str(),
                   aWorkerPrivate->IsChromeWorker(), aWorkerPrivate->WindowID());
 
   RefPtr<AsyncErrorReporter> r = new AsyncErrorReporter(xpcReport);

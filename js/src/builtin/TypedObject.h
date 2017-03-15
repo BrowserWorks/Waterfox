@@ -103,15 +103,14 @@ namespace js {
 template <typename T>
 static T ConvertScalar(double d)
 {
-    if (TypeIsFloatingPoint<T>()) {
+    if (TypeIsFloatingPoint<T>())
         return T(d);
-    } else if (TypeIsUnsigned<T>()) {
+    if (TypeIsUnsigned<T>()) {
         uint32_t n = JS::ToUint32(d);
         return T(n);
-    } else {
-        int32_t n = JS::ToInt32(d);
-        return T(n);
     }
+    int32_t n = JS::ToInt32(d);
+    return T(n);
 }
 
 namespace type {
@@ -167,12 +166,16 @@ class TypeDescr : public NativeObject
         return !opaque();
     }
 
-    int32_t alignment() const {
-        return getReservedSlot(JS_DESCR_SLOT_ALIGNMENT).toInt32();
+    uint32_t alignment() const {
+        int32_t i = getReservedSlot(JS_DESCR_SLOT_ALIGNMENT).toInt32();
+        MOZ_ASSERT(i >= 0);
+        return uint32_t(i);
     }
 
-    int32_t size() const {
-        return getReservedSlot(JS_DESCR_SLOT_SIZE).toInt32();
+    uint32_t size() const {
+        int32_t i = getReservedSlot(JS_DESCR_SLOT_SIZE).toInt32();
+        MOZ_ASSERT(i >= 0);
+        return uint32_t(i);
     }
 
     // Whether id is an 'own' property of objects with this descriptor.
@@ -219,8 +222,8 @@ class ScalarTypeDescr : public SimpleTypeDescr
 
     static const type::Kind Kind = type::Scalar;
     static const bool Opaque = false;
-    static int32_t size(Type t);
-    static int32_t alignment(Type t);
+    static uint32_t size(Type t);
+    static uint32_t alignment(Type t);
     static const char* typeName(Type type);
 
     static const Class class_;
@@ -300,8 +303,8 @@ class ReferenceTypeDescr : public SimpleTypeDescr
     static const type::Kind Kind = type::Reference;
     static const bool Opaque = true;
     static const Class class_;
-    static int32_t size(Type t);
-    static int32_t alignment(Type t);
+    static uint32_t size(Type t);
+    static uint32_t alignment(Type t);
     static const JSFunctionSpec typeObjectMethods[];
 
     ReferenceTypeDescr::Type type() const {
@@ -343,8 +346,8 @@ class SimdTypeDescr : public ComplexTypeDescr
     static const type::Kind Kind = type::Simd;
     static const bool Opaque = false;
     static const Class class_;
-    static int32_t size(SimdType t);
-    static int32_t alignment(SimdType t);
+    static uint32_t size(SimdType t);
+    static uint32_t alignment(SimdType t);
     static MOZ_MUST_USE bool call(JSContext* cx, unsigned argc, Value* vp);
     static bool is(const Value& v);
 
@@ -408,8 +411,10 @@ class ArrayTypeDescr : public ComplexTypeDescr
         return getReservedSlot(JS_DESCR_SLOT_ARRAY_ELEM_TYPE).toObject().as<TypeDescr>();
     }
 
-    int32_t length() const {
-        return getReservedSlot(JS_DESCR_SLOT_ARRAY_LENGTH).toInt32();
+    uint32_t length() const {
+        int32_t i = getReservedSlot(JS_DESCR_SLOT_ARRAY_LENGTH).toInt32();
+        MOZ_ASSERT(i >= 0);
+        return uint32_t(i);
     }
 
     static int32_t offsetOfLength() {
@@ -534,6 +539,10 @@ class TypedObject : public ShapedObject
     static MOZ_MUST_USE bool obj_enumerate(JSContext* cx, HandleObject obj,
                                            AutoIdVector& properties, bool enumerableOnly);
 
+
+    uint8_t* typedMem() const;
+    uint8_t* typedMemBase() const;
+
   public:
     TypedProto& typedProto() const {
         // Typed objects' prototypes can't be modified.
@@ -544,24 +553,23 @@ class TypedObject : public ShapedObject
         return group()->typeDescr();
     }
 
-    int32_t offset() const;
-    int32_t length() const;
-    uint8_t* typedMem() const;
-    uint8_t* typedMemBase() const;
+    uint32_t offset() const;
+    uint32_t length() const;
+    uint8_t* typedMem(const JS::AutoRequireNoGC&) const { return typedMem(); }
     bool isAttached() const;
 
-    int32_t size() const {
+    uint32_t size() const {
         return typeDescr().size();
     }
 
-    uint8_t* typedMem(size_t offset) const {
+    uint8_t* typedMem(size_t offset, const JS::AutoRequireNoGC& nogc) const {
         // It seems a bit surprising that one might request an offset
         // == size(), but it can happen when taking the "address of" a
         // 0-sized value. (In other words, we maintain the invariant
         // that `offset + size <= size()` -- this is always checked in
         // the caller's side.)
         MOZ_ASSERT(offset <= (size_t) size());
-        return typedMem() + offset;
+        return typedMem(nogc) + offset;
     }
 
     inline MOZ_MUST_USE bool opaque() const;
@@ -619,6 +627,11 @@ class OutlineTypedObject : public TypedObject
         data_ = data;
     }
 
+    void resetOffset(size_t offset) {
+        MOZ_ASSERT(offset <= (size_t) size());
+        setData(typedMemBase() + offset);
+    }
+
     // Helper for createUnattached()
     static OutlineTypedObject* createUnattachedWithClass(JSContext* cx,
                                                          const Class* clasp,
@@ -643,13 +656,13 @@ class OutlineTypedObject : public TypedObject
     static OutlineTypedObject* createDerived(JSContext* cx,
                                              HandleTypeDescr type,
                                              Handle<TypedObject*> typedContents,
-                                             int32_t offset);
+                                             uint32_t offset);
 
     // Use this method when `buffer` is the owner of the memory.
-    void attach(JSContext* cx, ArrayBufferObject& buffer, int32_t offset);
+    void attach(JSContext* cx, ArrayBufferObject& buffer, uint32_t offset);
 
     // Otherwise, use this to attach to memory referenced by another typedObj.
-    void attach(JSContext* cx, TypedObject& typedObj, int32_t offset);
+    void attach(JSContext* cx, TypedObject& typedObj, uint32_t offset);
 
     // Invoked when array buffer is transferred elsewhere
     void notifyBufferDetached(void* newData);
@@ -677,8 +690,15 @@ class OutlineOpaqueTypedObject : public OutlineTypedObject
 // Class for a typed object whose data is allocated inline.
 class InlineTypedObject : public TypedObject
 {
+    friend class TypedObject;
+
     // Start of the inline data, which immediately follows the shape and type.
     uint8_t data_[1];
+
+  protected:
+    uint8_t* inlineTypedMem() const {
+        return (uint8_t*) &data_;
+    }
 
   public:
     static const size_t MaximumSize = JSObject::MAX_BYTE_SIZE - sizeof(TypedObject);
@@ -690,8 +710,12 @@ class InlineTypedObject : public TypedObject
         return gc::GetGCObjectKindForBytes(nbytes + sizeof(TypedObject));
     }
 
-    uint8_t* inlineTypedMem() const {
-        return (uint8_t*) &data_;
+    uint8_t* inlineTypedMem(const JS::AutoRequireNoGC&) const {
+        return inlineTypedMem();
+    }
+
+    uint8_t* inlineTypedMemForGC() const {
+        return inlineTypedMem();
     }
 
     static void obj_trace(JSTracer* trace, JSObject* object);
@@ -715,6 +739,10 @@ class InlineTransparentTypedObject : public InlineTypedObject
     static const Class class_;
 
     ArrayBufferObject* getOrCreateBuffer(JSContext* cx);
+
+    uint8_t* inlineTypedMem() const {
+        return InlineTypedObject::inlineTypedMem();
+    }
 };
 
 // Class for an opaque typed object with inline data and no array buffer.

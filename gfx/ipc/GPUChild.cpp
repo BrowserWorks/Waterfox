@@ -7,10 +7,14 @@
 #include "gfxConfig.h"
 #include "gfxPrefs.h"
 #include "GPUProcessHost.h"
+#include "GPUProcessManager.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/dom/CheckerboardReportService.h"
 #include "mozilla/gfx/gfxVars.h"
 #if defined(XP_WIN)
 # include "mozilla/gfx/DeviceManagerDx.h"
 #endif
+#include "mozilla/ipc/CrashReporterHost.h"
 
 namespace mozilla {
 namespace gfx {
@@ -77,6 +81,7 @@ GPUChild::EnsureGPUReady()
   SendGetDeviceStatus(&data);
 
   gfxPlatform::GetPlatform()->ImportGPUDeviceData(data);
+  Telemetry::AccumulateTimeDelta(Telemetry::GPU_PROCESS_LAUNCH_TIME_MS, mHost->GetLaunchTime());
   mGPUReady = true;
 }
 
@@ -89,13 +94,85 @@ GPUChild::RecvInitComplete(const GPUDeviceData& aData)
   }
 
   gfxPlatform::GetPlatform()->ImportGPUDeviceData(aData);
+  Telemetry::AccumulateTimeDelta(Telemetry::GPU_PROCESS_LAUNCH_TIME_MS, mHost->GetLaunchTime());
   mGPUReady = true;
+  return true;
+}
+
+bool
+GPUChild::RecvReportCheckerboard(const uint32_t& aSeverity, const nsCString& aLog)
+{
+  layers::CheckerboardEventStorage::Report(aSeverity, std::string(aLog.get()));
+  return true;
+}
+
+bool
+GPUChild::RecvGraphicsError(const nsCString& aError)
+{
+  gfx::LogForwarder* lf = gfx::Factory::GetLogForwarder();
+  if (lf) {
+    std::stringstream message;
+    message << "GP+" << aError.get();
+    lf->UpdateStringsVector(message.str());
+  }
+  return true;
+}
+
+bool
+GPUChild::RecvInitCrashReporter(Shmem&& aShmem)
+{
+#ifdef MOZ_CRASHREPORTER
+  mCrashReporter = MakeUnique<ipc::CrashReporterHost>(GeckoProcessType_GPU, aShmem);
+#endif
+  return true;
+}
+
+bool
+GPUChild::RecvNotifyUiObservers(const nsCString& aTopic)
+{
+  nsCOMPtr<nsIObserverService> obsSvc = mozilla::services::GetObserverService();
+  MOZ_ASSERT(obsSvc);
+  if (obsSvc) {
+    obsSvc->NotifyObservers(nullptr, aTopic.get(), nullptr);
+  }
+  return true;
+}
+
+bool
+GPUChild::RecvAccumulateChildHistogram(InfallibleTArray<Accumulation>&& aAccumulations)
+{
+  Telemetry::AccumulateChild(GeckoProcessType_GPU, aAccumulations);
+  return true;
+}
+
+bool
+GPUChild::RecvAccumulateChildKeyedHistogram(InfallibleTArray<KeyedAccumulation>&& aAccumulations)
+{
+  Telemetry::AccumulateChildKeyed(GeckoProcessType_GPU, aAccumulations);
+  return true;
+}
+
+bool
+GPUChild::RecvNotifyDeviceReset()
+{
+  mHost->mListener->OnProcessDeviceReset(mHost);
   return true;
 }
 
 void
 GPUChild::ActorDestroy(ActorDestroyReason aWhy)
 {
+  if (aWhy == AbnormalShutdown) {
+#ifdef MOZ_CRASHREPORTER
+    if (mCrashReporter) {
+      mCrashReporter->GenerateCrashReport(OtherPid());
+      mCrashReporter = nullptr;
+    }
+#endif
+    Telemetry::Accumulate(Telemetry::SUBPROCESS_ABNORMAL_ABORT,
+        nsDependentCString(XRE_ChildProcessTypeToString(GeckoProcessType_GPU), 1));
+  }
+
   gfxVars::RemoveReceiver(this);
   mHost->OnChannelClosed();
 }

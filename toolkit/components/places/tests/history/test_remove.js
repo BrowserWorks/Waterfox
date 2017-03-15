@@ -44,17 +44,17 @@ add_task(function* test_remove_single() {
       observer = {
         onBeginUpdateBatch: function() {},
         onEndUpdateBatch: function() {},
-        onVisit: function(uri) {
-          reject(new Error("Unexpected call to onVisit " + uri.spec));
+        onVisit: function(aUri) {
+          reject(new Error("Unexpected call to onVisit " + aUri.spec));
         },
-        onTitleChanged: function(uri) {
-          reject(new Error("Unexpected call to onTitleChanged " + uri.spec));
+        onTitleChanged: function(aUri) {
+          reject(new Error("Unexpected call to onTitleChanged " + aUri.spec));
         },
         onClearHistory: function() {
           reject("Unexpected call to onClearHistory");
         },
-        onPageChanged: function(uri) {
-          reject(new Error("Unexpected call to onPageChanged " + uri.spec));
+        onPageChanged: function(aUri) {
+          reject(new Error("Unexpected call to onPageChanged " + aUri.spec));
         },
         onFrecencyChanged: function(aURI) {
           try {
@@ -154,7 +154,6 @@ add_task(function* test_remove_many() {
     let uri = NetUtil.newURI("http://mozilla.com/test_browserhistory/test_remove?sample=" + i + "&salt=" + Math.random());
     let title = "Visit " + i + ", " + Math.random();
     let hasBookmark = i % 3 == 0;
-    let resolve;
     let page = {
       uri: uri,
       title: title,
@@ -320,7 +319,7 @@ add_task(function* test_error_cases() {
     "History.remove with an array containing an ill-formed guid/url argument should throw a TypeError"
   );
   Assert.throws(
-    () => PlacesUtils.history.remove(["0123456789ab"/*valid guid*/, null]),
+    () => PlacesUtils.history.remove(["0123456789ab"/* valid guid*/, null]),
     /TypeError: Invalid url or guid: null/,
     "History.remove with an array containing a guid and a second argument that is null should throw a TypeError"
   );

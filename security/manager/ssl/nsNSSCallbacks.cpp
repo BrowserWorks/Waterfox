@@ -6,9 +6,14 @@
 
 #include "nsNSSCallbacks.h"
 
+#include "PSMRunnable.h"
+#include "ScopedNSSTypes.h"
+#include "SharedCertVerifier.h"
+#include "SharedSSLState.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Casting.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Unused.h"
@@ -20,15 +25,13 @@
 #include "nsITokenDialogs.h"
 #include "nsIUploadChannel.h"
 #include "nsIWebProgressListener.h"
-#include "nsNetUtil.h"
+#include "nsNSSCertificate.h"
 #include "nsNSSComponent.h"
 #include "nsNSSIOLayer.h"
+#include "nsNetUtil.h"
 #include "nsProtectedAuthThread.h"
 #include "nsProxyRelease.h"
 #include "pkix/pkixtypes.h"
-#include "PSMRunnable.h"
-#include "ScopedNSSTypes.h"
-#include "SharedSSLState.h"
 #include "ssl.h"
 #include "sslproto.h"
 
@@ -111,6 +114,21 @@ nsHTTPDownloadEvent::Run()
   chan->SetLoadFlags(nsIRequest::LOAD_ANONYMOUS |
                      nsIChannel::LOAD_BYPASS_SERVICE_WORKER);
 
+  // For OCSP requests, only the first party domain aspect of origin attributes
+  // is used. This means that OCSP requests are shared across different
+  // containers.
+  if (mRequestSession->mOriginAttributes != NeckoOriginAttributes()) {
+    NeckoOriginAttributes attrs;
+    attrs.mFirstPartyDomain =
+      mRequestSession->mOriginAttributes.mFirstPartyDomain;
+
+    nsCOMPtr<nsILoadInfo> loadInfo = chan->GetLoadInfo();
+    if (loadInfo) {
+      rv = loadInfo->SetOriginAttributes(attrs);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+  }
+
   // Create a loadgroup for this new channel.  This way if the channel
   // is redirected, we'll have a way to cancel the resulting channel.
   nsCOMPtr<nsILoadGroup> lg = do_CreateInstance(NS_LOADGROUP_CONTRACTID);
@@ -189,7 +207,7 @@ struct nsCancelHTTPDownloadEvent : Runnable {
   }
 };
 
-Result
+mozilla::pkix::Result
 nsNSSHttpServerSession::createSessionFcn(const char* host,
                                          uint16_t portnum,
                                  /*out*/ nsNSSHttpServerSession** pSession)
@@ -210,11 +228,12 @@ nsNSSHttpServerSession::createSessionFcn(const char* host,
   return Success;
 }
 
-Result
+mozilla::pkix::Result
 nsNSSHttpRequestSession::createFcn(const nsNSSHttpServerSession* session,
                                    const char* http_protocol_variant,
                                    const char* path_and_query_string,
                                    const char* http_request_method,
+                                   const NeckoOriginAttributes& origin_attributes,
                                    const PRIntervalTime timeout,
                            /*out*/ nsNSSHttpRequestSession** pRequest)
 {
@@ -244,13 +263,15 @@ nsNSSHttpRequestSession::createFcn(const nsNSSHttpServerSession* session,
   rs->mURL.AppendInt(session->mPort);
   rs->mURL.Append(path_and_query_string);
 
+  rs->mOriginAttributes = origin_attributes;
+
   rs->mRequestMethod = http_request_method;
 
   *pRequest = rs;
   return Success;
 }
 
-Result
+mozilla::pkix::Result
 nsNSSHttpRequestSession::setPostDataFcn(const char* http_data,
                                         const uint32_t http_data_len,
                                         const char* http_content_type)
@@ -262,7 +283,7 @@ nsNSSHttpRequestSession::setPostDataFcn(const char* http_data,
   return Success;
 }
 
-Result
+mozilla::pkix::Result
 nsNSSHttpRequestSession::trySendAndReceiveFcn(PRPollDesc** pPollDesc,
                                               uint16_t* http_response_code,
                                               const char** http_response_content_type,
@@ -353,7 +374,7 @@ nsNSSHttpRequestSession::Release()
   }
 }
 
-Result
+mozilla::pkix::Result
 nsNSSHttpRequestSession::internal_send_receive_attempt(bool &retryable_error,
                                                        PRPollDesc **pPollDesc,
                                                        uint16_t *http_response_code,
@@ -1083,6 +1104,89 @@ AccumulateCipherSuite(Telemetry::ID probe, const SSLChannelInfo& channelInfo)
   Telemetry::Accumulate(probe, value);
 }
 
+// In the case of session resumption, the AuthCertificate hook has been bypassed
+// (because we've previously successfully connected to our peer). That being the
+// case, we unfortunately don't know if the peer's server certificate verified
+// as extended validation or not. To address this, we attempt to build a
+// verified EV certificate chain here using as much of the original context as
+// possible (e.g. stapled OCSP responses, SCTs, the hostname, the first party
+// domain, etc.). Note that because we are on the socket thread, this must not
+// cause any network requests, hence the use of FLAG_LOCAL_ONLY.
+static void
+DetermineEVStatusAndSetNewCert(RefPtr<nsSSLStatus> sslStatus, PRFileDesc* fd,
+                               nsNSSSocketInfo* infoObject)
+{
+  MOZ_ASSERT(sslStatus);
+  MOZ_ASSERT(fd);
+  MOZ_ASSERT(infoObject);
+
+  if (!sslStatus || !fd || !infoObject) {
+    return;
+  }
+
+  UniqueCERTCertificate cert(SSL_PeerCertificate(fd));
+  MOZ_ASSERT(cert, "SSL_PeerCertificate failed in TLS handshake callback?");
+  if (!cert) {
+    return;
+  }
+
+  RefPtr<SharedCertVerifier> certVerifier(GetDefaultCertVerifier());
+  MOZ_ASSERT(certVerifier,
+             "Certificate verifier uninitialized in TLS handshake callback?");
+  if (!certVerifier) {
+    return;
+  }
+
+  // We don't own these pointers.
+  const SECItemArray* stapledOCSPResponses = SSL_PeerStapledOCSPResponses(fd);
+  const SECItem* stapledOCSPResponse = nullptr;
+  // we currently only support single stapled responses
+  if (stapledOCSPResponses && stapledOCSPResponses->len == 1) {
+    stapledOCSPResponse = &stapledOCSPResponses->items[0];
+  }
+  const SECItem* sctsFromTLSExtension = SSL_PeerSignedCertTimestamps(fd);
+  if (sctsFromTLSExtension && sctsFromTLSExtension->len == 0) {
+    // SSL_PeerSignedCertTimestamps returns null on error and empty item
+    // when no extension was returned by the server. We always use null when
+    // no extension was received (for whatever reason), ignoring errors.
+    sctsFromTLSExtension = nullptr;
+  }
+
+  int flags = mozilla::psm::CertVerifier::FLAG_LOCAL_ONLY |
+              mozilla::psm::CertVerifier::FLAG_MUST_BE_EV;
+  if (!infoObject->SharedState().IsOCSPStaplingEnabled() ||
+      !infoObject->SharedState().IsOCSPMustStapleEnabled()) {
+    flags |= CertVerifier::FLAG_TLS_IGNORE_STATUS_REQUEST;
+  }
+
+  SECOidTag evOidPolicy;
+  UniqueCERTCertList unusedBuiltChain;
+  const bool saveIntermediates = false;
+  mozilla::pkix::Result rv = certVerifier->VerifySSLServerCert(
+    cert,
+    stapledOCSPResponse,
+    sctsFromTLSExtension,
+    mozilla::pkix::Now(),
+    infoObject,
+    infoObject->GetHostNameRaw(),
+    unusedBuiltChain,
+    saveIntermediates,
+    flags,
+    infoObject->GetOriginAttributes(),
+    &evOidPolicy);
+
+  RefPtr<nsNSSCertificate> nssc(nsNSSCertificate::Create(cert.get()));
+  if (rv == Success && evOidPolicy != SEC_OID_UNKNOWN) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("HandshakeCallback using NEW cert %p (is EV)", nssc.get()));
+    sslStatus->SetServerCert(nssc, EVStatus::EV);
+  } else {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("HandshakeCallback using NEW cert %p (is not EV)", nssc.get()));
+    sslStatus->SetServerCert(nssc, EVStatus::NotEV);
+  }
+}
+
 void HandshakeCallback(PRFileDesc* fd, void* client_data) {
   nsNSSShutDownPreventionLock locker;
   SECStatus rv;
@@ -1190,11 +1294,16 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
   }
 
   PRBool siteSupportsSafeRenego;
-  rv = SSL_HandshakeNegotiatedExtension(fd, ssl_renegotiation_info_xtn,
-                                        &siteSupportsSafeRenego);
-  MOZ_ASSERT(rv == SECSuccess);
-  if (rv != SECSuccess) {
-    siteSupportsSafeRenego = false;
+  if (channelInfo.protocolVersion != SSL_LIBRARY_VERSION_TLS_1_3) {
+    rv = SSL_HandshakeNegotiatedExtension(fd, ssl_renegotiation_info_xtn,
+                                          &siteSupportsSafeRenego);
+    MOZ_ASSERT(rv == SECSuccess);
+    if (rv != SECSuccess) {
+      siteSupportsSafeRenego = false;
+    }
+  } else {
+    // TLS 1.3 dropped support for renegotiation.
+    siteSupportsSafeRenego = true;
   }
   bool renegotiationUnsafe = !siteSupportsSafeRenego &&
                              ioLayerHelpers.treatUnsafeNegotiationAsBroken();
@@ -1231,11 +1340,7 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
            ("HandshakeCallback KEEPING existing cert\n"));
   } else {
-    UniqueCERTCertificate serverCert(SSL_PeerCertificate(fd));
-    RefPtr<nsNSSCertificate> nssc(nsNSSCertificate::Create(serverCert.get()));
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-           ("HandshakeCallback using NEW cert %p\n", nssc.get()));
-    status->SetServerCert(nssc, nsNSSCertificate::ev_status_unknown);
+    DetermineEVStatusAndSetNewCert(status, fd, infoObject);
   }
 
   bool domainMismatch;

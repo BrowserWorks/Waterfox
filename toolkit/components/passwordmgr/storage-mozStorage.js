@@ -297,8 +297,8 @@ LoginManagerStorage_mozStorage.prototype = {
       transaction.commit();
     } catch (e) {
       this.log("_removeLogin failed: " + e.name + " : " + e.message);
-      throw new Error("Couldn't write to database, login not removed.");
       transaction.rollback();
+      throw new Error("Couldn't write to database, login not removed.");
     } finally {
       if (stmt) {
         stmt.reset();
@@ -802,7 +802,6 @@ LoginManagerStorage_mozStorage.prototype = {
   },
 
 
-  //**************************************************************************//
   // Database Creation & Access
 
   /**

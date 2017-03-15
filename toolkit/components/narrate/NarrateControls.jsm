@@ -10,6 +10,7 @@ Cu.import("resource://gre/modules/narrate/VoiceSelect.jsm");
 Cu.import("resource://gre/modules/narrate/Narrator.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AsyncPrefs.jsm");
+Cu.import("resource://gre/modules/TelemetryStopwatch.jsm");
 
 this.EXPORTED_SYMBOLS = ["NarrateControls"];
 
@@ -18,6 +19,8 @@ var gStrings = Services.strings.createBundle("chrome://global/locale/narrate.pro
 function NarrateControls(mm, win) {
   this._mm = mm;
   this._winRef = Cu.getWeakReference(win);
+
+  win.addEventListener("unload", this);
 
   // Append content style sheet in document head
   let style = win.document.createElement("link");
@@ -126,10 +129,7 @@ function NarrateControls(mm, win) {
   // The rate is stored as an integer.
   rateRange.value = branch.getIntPref("rate");
 
-  if (this._setupVoices(branch.getCharPref("voice"))) {
-    // We disable this entire feature if there are no synthesis voices.
-    dropdown.querySelector("#narrate-toggle").hidden = false;
-  }
+  this._setupVoices();
 
   let tb = win.document.getElementById("reader-toolbar");
   tb.appendChild(dropdown);
@@ -149,9 +149,12 @@ NarrateControls.prototype = {
         this._onButtonClick(evt);
         break;
       case "voiceschanged":
-        // We disable this entire feature if there are no synthesis voices.
-        this._doc.getElementById("narrate-toggle").hidden =
-          !this._setupVoices(Services.prefs.getCharPref("narrate.voice"));
+        this._setupVoices();
+        break;
+      case "unload":
+        if (this.narrator.speaking) {
+          TelemetryStopwatch.finish("NARRATE_CONTENT_SPEAKTIME_MS", this);
+        }
         break;
     }
   },
@@ -159,27 +162,61 @@ NarrateControls.prototype = {
   /**
    * Returns true if synth voices are available.
    */
-  _setupVoices: function(selectedVoice) {
-    this.voiceSelect.clear();
-    let win = this._win;
-    let comparer = win.Intl ?
-      (new Intl.Collator()).compare : (a, b) => a.localeCompare(b);
-    let options = win.speechSynthesis.getVoices().map(v => {
-      return {
-        label: this._createVoiceLabel(v),
-        value: v.voiceURI
-      };
-    }).sort((a, b) => comparer(a.label, b.label));
+  _setupVoices: function() {
+    return this.narrator.languagePromise.then(language => {
+      this.voiceSelect.clear();
+      let win = this._win;
+      let voicePrefs = this._getVoicePref();
+      let selectedVoice = voicePrefs[language || "default"];
+      let comparer = win.Intl ?
+        (new Intl.Collator()).compare : (a, b) => a.localeCompare(b);
+      let filter = !Services.prefs.getBoolPref("narrate.filter-voices");
+      let options = win.speechSynthesis.getVoices().filter(v => {
+        return filter || !language || v.lang.split("-")[0] == language;
+      }).map(v => {
+        return {
+          label: this._createVoiceLabel(v),
+          value: v.voiceURI,
+          selected: selectedVoice == v.voiceURI
+        };
+      }).sort((a, b) => comparer(a.label, b.label));
 
-    if (options.length) {
-      options.unshift({
-        label: gStrings.GetStringFromName("defaultvoice"),
-        value: "automatic"
-      });
-      this.voiceSelect.addOptions(options, selectedVoice);
+      if (options.length) {
+        options.unshift({
+          label: gStrings.GetStringFromName("defaultvoice"),
+          value: "automatic",
+          selected: selectedVoice == "automatic"
+        });
+        this.voiceSelect.addOptions(options);
+      }
+
+      let narrateToggle = win.document.getElementById("narrate-toggle");
+      let histogram = Services.telemetry.getKeyedHistogramById(
+        "NARRATE_CONTENT_BY_LANGUAGE_2");
+      let initial = !this._voicesInitialized;
+      this._voicesInitialized = true;
+
+      if (initial) {
+        histogram.add(language, 0);
+      }
+
+      if (options.length && narrateToggle.hidden) {
+        // About to show for the first time..
+        histogram.add(language, 1);
+      }
+
+      // We disable this entire feature if there are no available voices.
+      narrateToggle.hidden = !options.length;
+    });
+  },
+
+  _getVoicePref: function() {
+    let voicePref = Services.prefs.getCharPref("narrate.voice");
+    try {
+      return JSON.parse(voicePref);
+    } catch (e) {
+      return { default: voicePref };
     }
-
-    return !!options.length;
   },
 
   _onRateInput: function(evt) {
@@ -189,8 +226,14 @@ NarrateControls.prototype = {
 
   _onVoiceChange: function() {
     let voice = this.voice;
-    AsyncPrefs.set("narrate.voice", voice);
     this.narrator.setVoice(voice);
+    this.narrator.languagePromise.then(language => {
+      if (language) {
+        let voicePref = this._getVoicePref();
+        voicePref[language || "default"] = voice;
+        AsyncPrefs.set("narrate.voice", JSON.stringify(voicePref));
+      }
+    });
   },
 
   _onButtonClick: function(evt) {
@@ -229,6 +272,12 @@ NarrateControls.prototype = {
 
     this._doc.getElementById("narrate-skip-previous").disabled = !speaking;
     this._doc.getElementById("narrate-skip-next").disabled = !speaking;
+
+    if (speaking) {
+      TelemetryStopwatch.start("NARRATE_CONTENT_SPEAKTIME_MS", this);
+    } else {
+      TelemetryStopwatch.finish("NARRATE_CONTENT_SPEAKTIME_MS", this);
+    }
   },
 
   _createVoiceLabel: function(voice) {

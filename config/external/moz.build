@@ -58,6 +58,10 @@ external_dirs += [
     'media/libspeex_resampler',
     'media/libstagefright',
     'media/libsoundtouch',
+    'media/psshparser'
 ]
+
+if CONFIG['MOZ_LINKER']:
+    external_dirs += ['modules/xz-embedded']
 
 DIRS += ['../../' + i for i in external_dirs]

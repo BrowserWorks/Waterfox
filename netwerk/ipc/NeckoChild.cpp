@@ -17,12 +17,13 @@
 #include "mozilla/net/WebSocketChannelChild.h"
 #include "mozilla/net/WebSocketEventListenerChild.h"
 #include "mozilla/net/DNSRequestChild.h"
-#include "mozilla/net/RemoteOpenFileChild.h"
 #include "mozilla/net/ChannelDiverterChild.h"
 #include "mozilla/net/IPCTransportProvider.h"
 #include "mozilla/dom/network/TCPSocketChild.h"
 #include "mozilla/dom/network/TCPServerSocketChild.h"
 #include "mozilla/dom/network/UDPSocketChild.h"
+#include "mozilla/net/AltDataOutputStreamChild.h"
+
 #ifdef NECKO_PROTOCOL_rtsp
 #include "mozilla/net/RtspControllerChild.h"
 #include "mozilla/net/RtspChannelChild.h"
@@ -84,6 +85,24 @@ NeckoChild::DeallocPHttpChannelChild(PHttpChannelChild* channel)
   MOZ_ASSERT(IsNeckoChild(), "DeallocPHttpChannelChild called by non-child!");
 
   HttpChannelChild* child = static_cast<HttpChannelChild*>(channel);
+  child->ReleaseIPDLReference();
+  return true;
+}
+
+PAltDataOutputStreamChild*
+NeckoChild::AllocPAltDataOutputStreamChild(
+        const nsCString& type,
+        PHttpChannelChild* channel)
+{
+  AltDataOutputStreamChild* stream = new AltDataOutputStreamChild();
+  stream->AddIPDLReference();
+  return stream;
+}
+
+bool
+NeckoChild::DeallocPAltDataOutputStreamChild(PAltDataOutputStreamChild* aActor)
+{
+  AltDataOutputStreamChild* child = static_cast<AltDataOutputStreamChild*>(aActor);
   child->ReleaseIPDLReference();
   return true;
 }
@@ -296,25 +315,6 @@ NeckoChild::DeallocPDNSRequestChild(PDNSRequestChild* aChild)
   return true;
 }
 
-PRemoteOpenFileChild*
-NeckoChild::AllocPRemoteOpenFileChild(const SerializedLoadContext& aSerialized,
-                                      const URIParams&,
-                                      const OptionalURIParams&)
-{
-  // We don't allocate here: instead we always use IPDL constructor that takes
-  // an existing RemoteOpenFileChild
-  NS_NOTREACHED("AllocPRemoteOpenFileChild should not be called on child");
-  return nullptr;
-}
-
-bool
-NeckoChild::DeallocPRemoteOpenFileChild(PRemoteOpenFileChild* aChild)
-{
-  RemoteOpenFileChild *p = static_cast<RemoteOpenFileChild*>(aChild);
-  p->ReleaseIPDLReference();
-  return true;
-}
-
 PChannelDiverterChild*
 NeckoChild::AllocPChannelDiverterChild(const ChannelDiverterArgs& channel)
 {
@@ -412,18 +412,6 @@ NeckoChild::RecvPredOnPredictDNS(const URIParams& aURI)
   NS_ENSURE_SUCCESS(rv, false);
 
   predictor->OnPredictDNS(uri);
-  return true;
-}
-
-bool
-NeckoChild::RecvAppOfflineStatus(const uint32_t& aId, const bool& aOffline)
-{
-  // Instantiate the service to make sure gIOService is initialized
-  nsCOMPtr<nsIIOService> ioService = do_GetIOService();
-  if (gIOService) {
-    gIOService->SetAppOfflineInternal(aId, aOffline ?
-      nsIAppOfflineInfo::OFFLINE : nsIAppOfflineInfo::ONLINE);
-  }
   return true;
 }
 

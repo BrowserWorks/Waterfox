@@ -13,7 +13,8 @@ namespace mozilla {
 namespace dom {
 
 class File;
-class BlobCallback;
+class FileCallback;
+class FileSystemDirectoryEntry;
 
 class FileSystemFileEntry final : public FileSystemEntry
 {
@@ -22,6 +23,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(FileSystemFileEntry, FileSystemEntry)
 
   FileSystemFileEntry(nsIGlobalObject* aGlobalObject, File* aFile,
+                      FileSystemDirectoryEntry* aParentEntry,
                       FileSystem* aFileSystem);
 
   virtual JSObject*
@@ -40,11 +42,7 @@ public:
   GetFullPath(nsAString& aFullPath, ErrorResult& aRv) const override;
 
   void
-  CreateWriter(VoidCallback& aSuccessCallback,
-               const Optional<OwningNonNull<ErrorCallback>>& aErrorCallback) const;
-
-  void
-  GetFile(BlobCallback& aSuccessCallback,
+  GetFile(FileCallback& aSuccessCallback,
           const Optional<OwningNonNull<ErrorCallback>>& aErrorCallback) const;
 
 private:

@@ -7,6 +7,8 @@
 const {
   ADD_VIEWPORT,
   CHANGE_DEVICE,
+  CHANGE_PIXEL_RATIO,
+  REMOVE_DEVICE,
   RESIZE_VIEWPORT,
   ROTATE_VIEWPORT,
 } = require("../actions/index");
@@ -19,6 +21,9 @@ const INITIAL_VIEWPORT = {
   device: "",
   width: 320,
   height: 480,
+  pixelRatio: {
+    value: 0,
+  },
 };
 
 let reducers = {
@@ -43,10 +48,43 @@ let reducers = {
     });
   },
 
+  [CHANGE_PIXEL_RATIO](viewports, { id, pixelRatio }) {
+    return viewports.map(viewport => {
+      if (viewport.id !== id) {
+        return viewport;
+      }
+
+      return Object.assign({}, viewport, {
+        pixelRatio: {
+          value: pixelRatio
+        },
+      });
+    });
+  },
+
+  [REMOVE_DEVICE](viewports, { id }) {
+    return viewports.map(viewport => {
+      if (viewport.id !== id) {
+        return viewport;
+      }
+
+      return Object.assign({}, viewport, {
+        device: "",
+      });
+    });
+  },
+
   [RESIZE_VIEWPORT](viewports, { id, width, height }) {
     return viewports.map(viewport => {
       if (viewport.id !== id) {
         return viewport;
+      }
+
+      if (!width) {
+        width = viewport.width;
+      }
+      if (!height) {
+        height = viewport.height;
       }
 
       return Object.assign({}, viewport, {

@@ -46,6 +46,16 @@ using mozilla::dom::KeyframeEffectReadOnly;
 using namespace mozilla;
 using namespace mozilla::css;
 
+typedef mozilla::ComputedTiming::AnimationPhase AnimationPhase;
+
+namespace {
+struct TransitionEventParams {
+  EventMessage mMessage;
+  StickyTimeDuration mElapsedTime;
+  TimeStamp mTimeStamp;
+};
+} // anonymous namespace
+
 double
 ElementPropertyTransition::CurrentValuePortion() const
 {
@@ -107,12 +117,12 @@ ElementPropertyTransition::UpdateStartValueFromReplacedTransition()
       MOZ_ASSERT(mProperties.Length() == 1 &&
                  mProperties[0].mSegments.Length() == 1,
                  "The transition should have one property and one segment");
-      mProperties[0].mSegments[0].mFromValue = Move(startValue);
       nsCSSValue cssValue;
       DebugOnly<bool> uncomputeResult =
         StyleAnimationValue::UncomputeValue(mProperties[0].mProperty,
                                             startValue,
                                             cssValue);
+      mProperties[0].mSegments[0].mFromValue = Move(startValue);
       MOZ_ASSERT(uncomputeResult, "UncomputeValue should not fail");
       MOZ_ASSERT(mKeyframes.Length() == 2,
           "Transitions should have exactly two animation keyframes");
@@ -172,12 +182,8 @@ CSSTransition::UpdateTiming(SeekFlag aSeekFlag, SyncNotifyFlag aSyncNotifyFlag)
 void
 CSSTransition::QueueEvents()
 {
-  AnimationPlayState playState = PlayState();
-  bool newlyFinished = !mWasFinishedOnLastTick &&
-                       playState == AnimationPlayState::Finished;
-  mWasFinishedOnLastTick = playState == AnimationPlayState::Finished;
-
-  if (!newlyFinished || !mEffect || !mOwningElement.IsSet()) {
+  if (!mEffect ||
+      !mOwningElement.IsSet()) {
     return;
   }
 
@@ -191,13 +197,83 @@ CSSTransition::QueueEvents()
     return;
   }
 
+  ComputedTiming computedTiming = mEffect->GetComputedTiming();
+  const StickyTimeDuration zeroDuration;
+  StickyTimeDuration intervalStartTime =
+    std::max(std::min(StickyTimeDuration(-mEffect->SpecifiedTiming().mDelay),
+                      computedTiming.mActiveDuration), zeroDuration);
+  StickyTimeDuration intervalEndTime =
+    std::max(std::min((EffectEnd() - mEffect->SpecifiedTiming().mDelay),
+                      computedTiming.mActiveDuration), zeroDuration);
+
+  // TimeStamps to use for ordering the events when they are dispatched. We
+  // use a TimeStamp so we can compare events produced by different elements,
+  // perhaps even with different timelines.
+  // The zero timestamp is for transitionrun events where we ignore the delay
+  // for the purpose of ordering events.
+  TimeStamp startTimeStamp = ElapsedTimeToTimeStamp(intervalStartTime);
+  TimeStamp endTimeStamp   = ElapsedTimeToTimeStamp(intervalEndTime);
+
+  TransitionPhase currentPhase;
+  if (mPendingState != PendingState::NotPending &&
+      (mPreviousTransitionPhase == TransitionPhase::Idle ||
+       mPreviousTransitionPhase == TransitionPhase::Pending))
+  {
+    currentPhase = TransitionPhase::Pending;
+  } else {
+    currentPhase = static_cast<TransitionPhase>(computedTiming.mPhase);
+  }
+
+  AutoTArray<TransitionEventParams, 3> events;
+  switch (mPreviousTransitionPhase) {
+    case TransitionPhase::Idle:
+      if (currentPhase == TransitionPhase::After) {
+        events.AppendElement(TransitionEventParams{ eTransitionEnd,
+                                                   intervalEndTime,
+                                                   endTimeStamp });
+      }
+      break;
+
+    case TransitionPhase::Pending:
+    case TransitionPhase::Before:
+      if (currentPhase == TransitionPhase::After) {
+        events.AppendElement(TransitionEventParams{ eTransitionEnd,
+                                                   intervalEndTime,
+                                                   endTimeStamp });
+      }
+      break;
+
+    case TransitionPhase::Active:
+      if (currentPhase == TransitionPhase::After) {
+        events.AppendElement(TransitionEventParams{ eTransitionEnd,
+                                                   intervalEndTime,
+                                                   endTimeStamp });
+      } else if (currentPhase == TransitionPhase::Before) {
+        events.AppendElement(TransitionEventParams{ eTransitionEnd,
+                                                   intervalStartTime,
+                                                   startTimeStamp });
+      }
+      break;
+
+    case TransitionPhase::After:
+      if (currentPhase == TransitionPhase::Before) {
+        events.AppendElement(TransitionEventParams{ eTransitionEnd,
+                                                   intervalStartTime,
+                                                   endTimeStamp });
+      }
+      break;
+  }
+  mPreviousTransitionPhase = currentPhase;
+
   nsTransitionManager* manager = presContext->TransitionManager();
-  manager->QueueEvent(TransitionEventInfo(owningElement, owningPseudoType,
-                                          TransitionProperty(),
-                                          mEffect->GetComputedTiming()
-                                            .mDuration,
-                                          AnimationTimeToTimeStamp(EffectEnd()),
-                                          this));
+  for (const TransitionEventParams& evt : events) {
+    manager->QueueEvent(TransitionEventInfo(owningElement, owningPseudoType,
+                                            evt.mMessage,
+                                            TransitionProperty(),
+                                            evt.mElapsedTime,
+                                            evt.mTimeStamp,
+                                            this));
+  }
 }
 
 void
@@ -342,7 +418,7 @@ nsTransitionManager::StyleContextChanged(dom::Element *aElement,
     return;
   }
 
-  // NOTE: Things in this function (and ConsiderStartingTransition)
+  // NOTE: Things in this function (and ConsiderInitiatingTransition)
   // should never call PeekStyleData because we don't preserve gotten
   // structs across reframes.
 
@@ -492,22 +568,23 @@ nsTransitionManager::UpdateTransitions(
         for (nsCSSPropertyID p = nsCSSPropertyID(0);
              p < eCSSProperty_COUNT_no_shorthands;
              p = nsCSSPropertyID(p + 1)) {
-          ConsiderStartingTransition(p, t, aElement, aElementTransitions,
-                                     aOldStyleContext, aNewStyleContext,
-                                     &startedAny, &whichStarted);
+          ConsiderInitiatingTransition(p, t, aElement, aElementTransitions,
+                                       aOldStyleContext, aNewStyleContext,
+                                       &startedAny, &whichStarted);
         }
       } else if (nsCSSProps::IsShorthand(property)) {
         CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(subprop, property,
                                              CSSEnabledState::eForAllContent)
         {
-          ConsiderStartingTransition(*subprop, t, aElement, aElementTransitions,
-                                     aOldStyleContext, aNewStyleContext,
-                                     &startedAny, &whichStarted);
+          ConsiderInitiatingTransition(*subprop, t, aElement,
+                                       aElementTransitions,
+                                       aOldStyleContext, aNewStyleContext,
+                                       &startedAny, &whichStarted);
         }
       } else {
-        ConsiderStartingTransition(property, t, aElement, aElementTransitions,
-                                   aOldStyleContext, aNewStyleContext,
-                                   &startedAny, &whichStarted);
+        ConsiderInitiatingTransition(property, t, aElement, aElementTransitions,
+                                     aOldStyleContext, aNewStyleContext,
+                                     &startedAny, &whichStarted);
       }
     }
   }
@@ -594,7 +671,7 @@ nsTransitionManager::UpdateTransitions(
 }
 
 void
-nsTransitionManager::ConsiderStartingTransition(
+nsTransitionManager::ConsiderInitiatingTransition(
   nsCSSPropertyID aProperty,
   const StyleTransition& aTransition,
   dom::Element* aElement,

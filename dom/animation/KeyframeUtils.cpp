@@ -9,6 +9,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Move.h"
 #include "mozilla/RangedArray.h"
+#include "mozilla/ServoBindings.h"
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/TimingParams.h"
 #include "mozilla/dom/BaseKeyframeTypesBinding.h" // For FastBaseKeyframe etc.
@@ -317,8 +318,12 @@ public:
 // ------------------------------------------------------------------
 
 inline bool
-IsInvalidValuePair(const PropertyValuePair& aPair)
+IsInvalidValuePair(const PropertyValuePair& aPair, StyleBackendType aBackend)
 {
+  if (aBackend == StyleBackendType::Servo) {
+    return !aPair.mServoDeclarationBlock;
+  }
+
   // There are three types of values we store as token streams:
   //
   // * Shorthand values (where we manually extract the token stream's string
@@ -412,7 +417,8 @@ PaceRange(const Range<Keyframe>& aKeyframes,
 
 static nsTArray<double>
 GetCumulativeDistances(const nsTArray<ComputedKeyframeValues>& aValues,
-                       nsCSSPropertyID aProperty);
+                       nsCSSPropertyID aProperty,
+                       nsStyleContext* aStyleContext);
 
 // ------------------------------------------------------------------
 //
@@ -476,7 +482,8 @@ KeyframeUtils::GetKeyframesFromObject(JSContext* aCx,
 KeyframeUtils::ApplySpacing(nsTArray<Keyframe>& aKeyframes,
                             SpacingMode aSpacingMode,
                             nsCSSPropertyID aProperty,
-                            nsTArray<ComputedKeyframeValues>& aComputedValues)
+                            nsTArray<ComputedKeyframeValues>& aComputedValues,
+                            nsStyleContext* aStyleContext)
 {
   if (aKeyframes.IsEmpty()) {
     return;
@@ -487,7 +494,8 @@ KeyframeUtils::ApplySpacing(nsTArray<Keyframe>& aKeyframes,
     MOZ_ASSERT(IsAnimatableProperty(aProperty),
                "Paced property should be animatable");
 
-    cumulativeDistances = GetCumulativeDistances(aComputedValues, aProperty);
+    cumulativeDistances = GetCumulativeDistances(aComputedValues, aProperty,
+                                                 aStyleContext);
     // Reset the computed offsets if using paced spacing.
     for (Keyframe& keyframe : aKeyframes) {
       keyframe.mComputedOffset = Keyframe::kComputedOffsetNotSet;
@@ -578,7 +586,7 @@ KeyframeUtils::ApplyDistributeSpacing(nsTArray<Keyframe>& aKeyframes)
 {
   nsTArray<ComputedKeyframeValues> emptyArray;
   ApplySpacing(aKeyframes, SpacingMode::distribute, eCSSProperty_UNKNOWN,
-               emptyArray);
+               emptyArray, nullptr);
 }
 
 /* static */ nsTArray<ComputedKeyframeValues>
@@ -589,6 +597,8 @@ KeyframeUtils::GetComputedKeyframeValues(const nsTArray<Keyframe>& aKeyframes,
   MOZ_ASSERT(aStyleContext);
   MOZ_ASSERT(aElement);
 
+  StyleBackendType styleBackend = aElement->OwnerDoc()->GetStyleBackendType();
+
   const size_t len = aKeyframes.Length();
   nsTArray<ComputedKeyframeValues> result(len);
 
@@ -597,7 +607,12 @@ KeyframeUtils::GetComputedKeyframeValues(const nsTArray<Keyframe>& aKeyframes,
     ComputedKeyframeValues* computedValues = result.AppendElement();
     for (const PropertyValuePair& pair :
            PropertyPriorityIterator(frame.mPropertyValues)) {
-      if (IsInvalidValuePair(pair)) {
+      MOZ_ASSERT(!pair.mServoDeclarationBlock ||
+                 styleBackend == StyleBackendType::Servo,
+                 "Animation values were parsed using Servo backend but target"
+                 " element is not using Servo backend?");
+
+      if (IsInvalidValuePair(pair, styleBackend)) {
         continue;
       }
 
@@ -605,25 +620,33 @@ KeyframeUtils::GetComputedKeyframeValues(const nsTArray<Keyframe>& aKeyframes,
       // a KeyframeValueEntry for each value.
       nsTArray<PropertyStyleAnimationValuePair> values;
 
-      // For shorthands, we store the string as a token stream so we need to
-      // extract that first.
-      if (nsCSSProps::IsShorthand(pair.mProperty)) {
-        nsCSSValueTokenStream* tokenStream = pair.mValue.GetTokenStreamValue();
+      if (styleBackend == StyleBackendType::Servo) {
         if (!StyleAnimationValue::ComputeValues(pair.mProperty,
-              CSSEnabledState::eForAllContent, aElement, aStyleContext,
-              tokenStream->mTokenStream, /* aUseSVGMode */ false, values) ||
-            IsComputeValuesFailureKey(pair)) {
+              CSSEnabledState::eForAllContent, aStyleContext,
+              *pair.mServoDeclarationBlock, values)) {
           continue;
         }
       } else {
-        if (!StyleAnimationValue::ComputeValues(pair.mProperty,
-              CSSEnabledState::eForAllContent, aElement, aStyleContext,
-              pair.mValue, /* aUseSVGMode */ false, values)) {
-          continue;
+        // For shorthands, we store the string as a token stream so we need to
+        // extract that first.
+        if (nsCSSProps::IsShorthand(pair.mProperty)) {
+          nsCSSValueTokenStream* tokenStream = pair.mValue.GetTokenStreamValue();
+          if (!StyleAnimationValue::ComputeValues(pair.mProperty,
+                CSSEnabledState::eForAllContent, aElement, aStyleContext,
+                tokenStream->mTokenStream, /* aUseSVGMode */ false, values) ||
+              IsComputeValuesFailureKey(pair)) {
+            continue;
+          }
+        } else {
+          if (!StyleAnimationValue::ComputeValues(pair.mProperty,
+                CSSEnabledState::eForAllContent, aElement, aStyleContext,
+                pair.mValue, /* aUseSVGMode */ false, values)) {
+            continue;
+          }
+          MOZ_ASSERT(values.Length() == 1,
+                    "Longhand properties should produce a single"
+                    " StyleAnimationValue");
         }
-        MOZ_ASSERT(values.Length() == 1,
-                   "Longhand properties should produce a single"
-                   " StyleAnimationValue");
       }
 
       for (auto& value : values) {
@@ -969,6 +992,33 @@ MakePropertyValuePair(nsCSSPropertyID aProperty, const nsAString& aStringValue,
                       nsCSSParser& aParser, nsIDocument* aDocument)
 {
   MOZ_ASSERT(aDocument);
+  PropertyValuePair result;
+
+  result.mProperty = aProperty;
+
+  if (aDocument->GetStyleBackendType() == StyleBackendType::Servo) {
+    nsCString name = nsCSSProps::GetStringValue(aProperty);
+
+    NS_ConvertUTF16toUTF8 value(aStringValue);
+    RefPtr<ThreadSafeURIHolder> base =
+      new ThreadSafeURIHolder(aDocument->GetDocumentURI());
+    RefPtr<ThreadSafeURIHolder> referrer =
+      new ThreadSafeURIHolder(aDocument->GetDocumentURI());
+    RefPtr<ThreadSafePrincipalHolder> principal =
+      new ThreadSafePrincipalHolder(aDocument->NodePrincipal());
+
+    nsCString baseString;
+    aDocument->GetDocumentURI()->GetSpec(baseString);
+
+    RefPtr<RawServoDeclarationBlock> servoDeclarationBlock =
+      Servo_ParseProperty(&name, &value, &baseString,
+                          base, referrer, principal).Consume();
+
+    if (servoDeclarationBlock) {
+      result.mServoDeclarationBlock = servoDeclarationBlock.forget();
+      return result;
+    }
+  }
 
   nsCSSValue value;
   if (!nsCSSProps::IsShorthand(aProperty)) {
@@ -1001,9 +1051,18 @@ MakePropertyValuePair(nsCSSPropertyID aProperty, const nsAString& aStringValue,
                "The shorthand property of a token stream should be initialized"
                " to unknown");
     value.SetTokenStreamValue(tokenStream);
+  } else {
+    // If we succeeded in parsing with Gecko, but not Servo the animation is
+    // not going to work since, for the purposes of animation, we're going to
+    // ignore |mValue| when the backend is Servo.
+    NS_WARNING_ASSERTION(aDocument->GetStyleBackendType() !=
+                           StyleBackendType::Servo,
+                         "Gecko succeeded in parsing where Servo failed");
   }
 
-  return { aProperty, value };
+  result.mValue = value;
+
+  return result;
 }
 
 /**
@@ -1344,6 +1403,8 @@ RequiresAdditiveAnimation(const nsTArray<Keyframe>& aKeyframes,
     }
   };
 
+  StyleBackendType styleBackend = aDocument->GetStyleBackendType();
+
   for (size_t i = 0, len = aKeyframes.Length(); i < len; i++) {
     const Keyframe& frame = aKeyframes[i];
 
@@ -1359,17 +1420,25 @@ RequiresAdditiveAnimation(const nsTArray<Keyframe>& aKeyframes,
                          : computedOffset;
 
     for (const PropertyValuePair& pair : frame.mPropertyValues) {
-      if (IsInvalidValuePair(pair)) {
+      if (IsInvalidValuePair(pair, styleBackend)) {
         continue;
       }
 
       if (nsCSSProps::IsShorthand(pair.mProperty)) {
-        nsCSSValueTokenStream* tokenStream = pair.mValue.GetTokenStreamValue();
-        nsCSSParser parser(aDocument->CSSLoader());
-        if (!parser.IsValueValidForProperty(pair.mProperty,
-                                            tokenStream->mTokenStream)) {
-          continue;
+        if (styleBackend == StyleBackendType::Gecko) {
+          nsCSSValueTokenStream* tokenStream =
+            pair.mValue.GetTokenStreamValue();
+          nsCSSParser parser(aDocument->CSSLoader());
+          if (!parser.IsValueValidForProperty(pair.mProperty,
+                                              tokenStream->mTokenStream)) {
+            continue;
+          }
         }
+        // For the Servo backend, invalid shorthand values are represented by
+        // a null mServoDeclarationBlock member which we skip above in
+        // IsInvalidValuePair.
+        MOZ_ASSERT(styleBackend != StyleBackendType::Servo ||
+                   pair.mServoDeclarationBlock);
         CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(
             prop, pair.mProperty, CSSEnabledState::eForAllContent) {
           addToPropertySets(*prop, offsetToUse);
@@ -1399,16 +1468,16 @@ static void
 DistributeRange(const Range<Keyframe>& aSpacingRange,
                 const Range<Keyframe>& aRangeToAdjust)
 {
-  MOZ_ASSERT(aRangeToAdjust.start() >= aSpacingRange.start() &&
+  MOZ_ASSERT(aRangeToAdjust.begin() >= aSpacingRange.begin() &&
              aRangeToAdjust.end() <= aSpacingRange.end(),
              "Out of range");
   const size_t n = aSpacingRange.length() - 1;
   const double startOffset = aSpacingRange[0].mComputedOffset;
   const double diffOffset = aSpacingRange[n].mComputedOffset - startOffset;
-  for (auto iter = aRangeToAdjust.start();
+  for (auto iter = aRangeToAdjust.begin();
        iter != aRangeToAdjust.end();
        ++iter) {
-    size_t index = iter - aSpacingRange.start();
+    size_t index = iter - aSpacingRange.begin();
     iter->mComputedOffset = startOffset + double(index) / n * diffOffset;
   }
 }
@@ -1425,7 +1494,7 @@ DistributeRange(const Range<Keyframe>& aSpacingRange)
 {
   // We don't need to apply distribute spacing to keyframe A and keyframe B.
   DistributeRange(aSpacingRange,
-                  Range<Keyframe>(aSpacingRange.start() + 1,
+                  Range<Keyframe>(aSpacingRange.begin() + 1,
                                   aSpacingRange.end() - 1));
 }
 
@@ -1456,7 +1525,7 @@ PaceRange(const Range<Keyframe>& aKeyframes,
     return;
   }
 
-  const double distA = *(aCumulativeDistances.start());
+  const double distA = *(aCumulativeDistances.begin());
   const double distB = *(aCumulativeDistances.end() - 1);
   MOZ_ASSERT(distA != kNotPaceable && distB != kNotPaceable,
              "Both Paced A and Paced B should be paceable");
@@ -1468,7 +1537,7 @@ PaceRange(const Range<Keyframe>& aKeyframes,
     return;
   }
 
-  const RangedPtr<Keyframe> pacedA = aKeyframes.start();
+  const RangedPtr<Keyframe> pacedA = aKeyframes.begin();
   const RangedPtr<Keyframe> pacedB = aKeyframes.end() - 1;
   MOZ_ASSERT(pacedA->mComputedOffset != Keyframe::kComputedOffsetNotSet &&
              pacedB->mComputedOffset != Keyframe::kComputedOffsetNotSet,
@@ -1480,7 +1549,7 @@ PaceRange(const Range<Keyframe>& aKeyframes,
   const double initialDist = distA;
   const double totalDist   = distB - initialDist;
   for (auto iter = pacedA + 1; iter != pacedB; ++iter) {
-    size_t k = iter - aKeyframes.start();
+    size_t k = iter - aKeyframes.begin();
     if (aCumulativeDistances[k] == kNotPaceable) {
       continue;
     }
@@ -1495,12 +1564,14 @@ PaceRange(const Range<Keyframe>& aKeyframes,
  *
  * @param aValues The computed values returned by GetComputedKeyframeValues.
  * @param aPacedProperty The paced property.
+ * @param aStyleContext The style context for computing distance on transform.
  * @return The cumulative distances for the paced property. The length will be
  *   the same as aValues.
  */
 static nsTArray<double>
 GetCumulativeDistances(const nsTArray<ComputedKeyframeValues>& aValues,
-                       nsCSSPropertyID aPacedProperty)
+                       nsCSSPropertyID aPacedProperty,
+                       nsStyleContext* aStyleContext)
 {
   // a) If aPacedProperty is a shorthand property, get its components.
   //    Otherwise, just add the longhand property into the set.
@@ -1568,6 +1639,7 @@ GetCumulativeDistances(const nsTArray<ComputedKeyframeValues>& aValues,
                 prop,
                 prevPacedValues[propIdx].mValue,
                 pacedValues[propIdx].mValue,
+                aStyleContext,
                 componentDistance)) {
             dist += componentDistance * componentDistance;
           }
@@ -1581,6 +1653,7 @@ GetCumulativeDistances(const nsTArray<ComputedKeyframeValues>& aValues,
           StyleAnimationValue::ComputeDistance(aPacedProperty,
                                                prevPacedValues[0].mValue,
                                                pacedValues[0].mValue,
+                                               aStyleContext,
                                                dist);
       }
       cumulativeDistances[i] = cumulativeDistances[preIdx] + dist;

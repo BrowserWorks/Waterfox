@@ -19,12 +19,13 @@
 #include "nsIGfxInfo.h"
 #include "nsWindowsHelpers.h"
 #include "GfxDriverInfo.h"
-#include "gfxWindowsPlatform.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "MediaInfo.h"
 #include "MediaPrefs.h"
 #include "prsystem.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/StaticMutex.h"
+#include "mozilla/WindowsVersion.h"
 #include "MP4Decoder.h"
 #include "VPXDecoder.h"
 
@@ -49,7 +50,7 @@ WMFDecoderModule::~WMFDecoderModule()
 void
 WMFDecoderModule::Init()
 {
-  sDXVAEnabled = gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding();
+  sDXVAEnabled = gfx::gfxVars::CanUseHardwareVideoDecoding();
 }
 
 /* static */
@@ -61,7 +62,10 @@ WMFDecoderModule::GetNumDecoderThreads()
   // If we have more than 4 cores, let the decoder decide how many threads.
   // On an 8 core machine, WMF chooses 4 decoder threads
   const int WMF_DECODER_DEFAULT = -1;
-  int32_t prefThreadCount = MediaPrefs::PDMWMFThreadCount();
+  int32_t prefThreadCount = WMF_DECODER_DEFAULT;
+  if (XRE_GetProcessType() != GeckoProcessType_GPU) {
+    prefThreadCount = MediaPrefs::PDMWMFThreadCount();
+  }
   if (prefThreadCount != WMF_DECODER_DEFAULT) {
     return std::max(prefThreadCount, 1);
   } else if (numCores > 4) {
@@ -82,7 +86,7 @@ WMFDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 {
   nsAutoPtr<WMFVideoMFTManager> manager(
     new WMFVideoMFTManager(aParams.VideoConfig(),
-                           aParams.mLayersBackend,
+                           aParams.mKnowsCompositor,
                            aParams.mImageContainer,
                            sDXVAEnabled));
 
@@ -190,25 +194,48 @@ bool
 WMFDecoderModule::SupportsMimeType(const nsACString& aMimeType,
                                    DecoderDoctorDiagnostics* aDiagnostics) const
 {
-  if ((aMimeType.EqualsLiteral("audio/mp4a-latm") ||
-       aMimeType.EqualsLiteral("audio/mp4")) &&
+  UniquePtr<TrackInfo> trackInfo = CreateTrackInfoWithMIMEType(aMimeType);
+  if (!trackInfo) {
+    return false;
+  }
+  return Supports(*trackInfo, aDiagnostics);
+}
+
+bool
+WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
+                           DecoderDoctorDiagnostics* aDiagnostics) const
+{
+  if ((aTrackInfo.mMimeType.EqualsLiteral("audio/mp4a-latm") ||
+       aTrackInfo.mMimeType.EqualsLiteral("audio/mp4")) &&
        WMFDecoderModule::HasAAC()) {
     return true;
   }
-  if (MP4Decoder::IsH264(aMimeType) && WMFDecoderModule::HasH264()) {
+  if (MP4Decoder::IsH264(aTrackInfo.mMimeType) && WMFDecoderModule::HasH264()) {
+    const VideoInfo* videoInfo = aTrackInfo.GetAsVideoInfo();
+    MOZ_ASSERT(videoInfo);
+    // Check Windows format constraints, based on:
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/dd797815(v=vs.85).aspx
+    if (IsWin8OrLater()) {
+      // Windows >7 supports at most 4096x2304.
+      if (videoInfo->mImage.width > 4096 || videoInfo->mImage.height > 2304) {
+        return false;
+      }
+    } else {
+      // Windows <=7 supports at most 1920x1088.
+      if (videoInfo->mImage.width > 1920 || videoInfo->mImage.height > 1088) {
+        return false;
+      }
+    }
     return true;
   }
-  if (aMimeType.EqualsLiteral("audio/mpeg") &&
+  if (aTrackInfo.mMimeType.EqualsLiteral("audio/mpeg") &&
       CanCreateWMFDecoder<CLSID_CMP3DecMediaObject>()) {
     return true;
   }
-  if (MediaPrefs::PDMWMFIntelDecoderEnabled() && sDXVAEnabled) {
-    if (VPXDecoder::IsVP8(aMimeType) &&
-        CanCreateWMFDecoder<CLSID_WebmMfVp8Dec>()) {
-      return true;
-    }
-    if (VPXDecoder::IsVP9(aMimeType) &&
-        CanCreateWMFDecoder<CLSID_WebmMfVp9Dec>()) {
+  if (MediaPrefs::PDMWMFVP9DecoderEnabled() && sDXVAEnabled) {
+    if ((VPXDecoder::IsVP8(aTrackInfo.mMimeType) ||
+         VPXDecoder::IsVP9(aTrackInfo.mMimeType)) &&
+        CanCreateWMFDecoder<CLSID_WebmMfVpxDec>()) {
       return true;
     }
   }

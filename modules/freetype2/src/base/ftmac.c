@@ -8,7 +8,7 @@
 /*  This file is for Mac OS X only; see builds/mac/ftoldmac.c for          */
 /*  classic platforms built by MPW.                                        */
 /*                                                                         */
-/*  Copyright 1996-2009, 2013, 2014 by                                     */
+/*  Copyright 1996-2016 by                                                 */
 /*  Just van Rossum, David Turner, Robert Wilhelm, and Werner Lemberg.     */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -228,7 +228,7 @@
 
 
     if ( !fontName || !face_index )
-      return FT_THROW( Invalid_Argument) ;
+      return FT_THROW( Invalid_Argument);
 
     err = FT_GetFileRef_From_Mac_ATS_Name( fontName, &ref, face_index );
     if ( err )
@@ -605,7 +605,7 @@
     for (;;)
     {
       post_data = Get1Resource( TTAG_POST, res_id++ );
-      if ( post_data == NULL )
+      if ( !post_data )
         break;  /* we are done */
 
       code = (*post_data)[0];
@@ -618,11 +618,11 @@
           total_size += 6; /* code + 4 bytes chunk length */
       }
 
-      total_size += GetHandleSize( post_data ) - 2;
+      total_size += (FT_ULong)GetHandleSize( post_data ) - 2;
       last_code = code;
 
-      /* detect integer overflows */
-      if ( total_size < old_total_size )
+      /* detect resource fork overflow */
+      if ( FT_MAC_RFORK_MAX_LEN < total_size )
       {
         error = FT_THROW( Array_Too_Large );
         goto Error;
@@ -644,7 +644,7 @@
     for (;;)
     {
       post_data = Get1Resource( TTAG_POST, res_id++ );
-      if ( post_data == NULL )
+      if ( !post_data )
         break;  /* we are done */
 
       post_size = (FT_ULong)GetHandleSize( post_data ) - 2;
@@ -655,7 +655,7 @@
         if ( last_code != -1 )
         {
           /* we are done adding a chunk, fill in the size field */
-          if ( size_p != NULL )
+          if ( size_p )
           {
             *size_p++ = (FT_Byte)(   pfb_chunk_size         & 0xFF );
             *size_p++ = (FT_Byte)( ( pfb_chunk_size >> 8  ) & 0xFF );
@@ -743,10 +743,15 @@
 
 
     sfnt = GetResource( TTAG_sfnt, sfnt_id );
-    if ( sfnt == NULL )
+    if ( !sfnt )
       return FT_THROW( Invalid_Handle );
 
     sfnt_size = (FT_ULong)GetHandleSize( sfnt );
+
+    /* detect resource fork overflow */
+    if ( FT_MAC_RFORK_MAX_LEN < sfnt_size )
+      return FT_THROW( Array_Too_Large );
+
     if ( FT_ALLOC( sfnt_data, (FT_Long)sfnt_size ) )
     {
       ReleaseResource( sfnt );
@@ -816,7 +821,7 @@
       return FT_THROW( Cannot_Open_Resource );
 
     num_faces_in_res = 0;
-    for ( res_index = 1; ; ++res_index )
+    for ( res_index = 1; ; res_index++ )
     {
       short  num_faces_in_fond;
 
@@ -937,13 +942,14 @@
     /* if it works, fine.                                           */
 
     error = FT_New_Face_From_Suitcase( library, pathname, face_index, aface );
-    if ( error == 0 )
-      return error;
+    if ( error )
+    {
+      /* let it fall through to normal loader (.ttf, .otf, etc.); */
+      /* we signal this by returning no error and no FT_Face      */
+      *aface = NULL;
+    }
 
-    /* let it fall through to normal loader (.ttf, .otf, etc.); */
-    /* we signal this by returning no error and no FT_Face      */
-    *aface = NULL;
-    return 0;
+    return FT_Err_Ok;
   }
 
 
@@ -977,12 +983,13 @@
     /* try resourcefork based font: LWFN, FFIL */
     error = FT_New_Face_From_Resource( library, (UInt8 *)pathname,
                                        face_index, aface );
-    if ( error != 0 || *aface != NULL )
+    if ( error || *aface )
       return error;
 
     /* let it fall through to normal loader (.ttf, .otf, etc.) */
     args.flags    = FT_OPEN_PATHNAME;
     args.pathname = (char*)pathname;
+
     return FT_Open_Face( library, &args, face_index, aface );
   }
 
@@ -1022,7 +1029,7 @@
       error = FT_THROW( Cannot_Open_Resource );
 
     error = FT_New_Face_From_Resource( library, pathname, face_index, aface );
-    if ( error != 0 || *aface != NULL )
+    if ( error || *aface )
       return error;
 
     /* fallback to datafork font */

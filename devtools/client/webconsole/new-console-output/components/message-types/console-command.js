@@ -9,52 +9,49 @@
 // React & Redux
 const {
   createFactory,
-  DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const { ConsoleCommand: ConsoleCommandType } = require("devtools/client/webconsole/new-console-output/types");
-const MessageIcon = createFactory(require("devtools/client/webconsole/new-console-output/components/message-icon").MessageIcon);
+const Message = createFactory(require("devtools/client/webconsole/new-console-output/components/message"));
 
 ConsoleCommand.displayName = "ConsoleCommand";
 
 ConsoleCommand.propTypes = {
-  message: PropTypes.instanceOf(ConsoleCommandType).isRequired,
+  message: PropTypes.object.isRequired,
+  autoscroll: PropTypes.bool.isRequired,
+  indent: PropTypes.number.isRequired,
+};
+
+ConsoleCommand.defaultProps = {
+  indent: 0,
 };
 
 /**
  * Displays input from the console.
  */
 function ConsoleCommand(props) {
-  const { message } = props;
-  const {source, level} = message;
+  const { autoscroll, indent, message } = props;
+  const {
+    source,
+    type,
+    level,
+    messageText: messageBody,
+  } = message;
 
-  const icon = MessageIcon({level});
+  const {
+    serviceContainer,
+  } = props;
 
-  const classes = ["message"];
-
-  if (source) {
-    classes.push(source);
-  }
-
-  if (level) {
-    classes.push(level);
-  }
-
-  return dom.div({
-    className: classes.join(" "),
-    ariaLive: "off",
-  },
-    // @TODO add timestamp
-    // @TODO add indent if necessary
-    icon,
-    dom.span({ className: "message-body-wrapper" },
-      dom.span({ className: "message-flex-body" },
-        dom.span({ className: "message-body devtools-monospace" },
-          message.messageText
-        )
-      )
-    )
-  );
+  const childProps = {
+    source,
+    type,
+    level,
+    topLevelClasses: [],
+    messageBody,
+    scrollToMessage: autoscroll,
+    serviceContainer,
+    indent: indent,
+  };
+  return Message(childProps);
 }
 
-module.exports.ConsoleCommand = ConsoleCommand;
+module.exports = ConsoleCommand;

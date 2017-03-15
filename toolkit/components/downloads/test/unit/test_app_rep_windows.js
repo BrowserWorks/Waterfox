@@ -8,8 +8,7 @@
  * downloaded files.
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -80,13 +79,13 @@ function readFileToString(aFilename) {
 function promiseSaverComplete(aSaver, aOnTargetChangeFn) {
   let deferred = Promise.defer();
   aSaver.observer = {
-    onTargetChange: function BFSO_onSaveComplete(aSaver, aTarget)
+    onTargetChange: function BFSO_onSaveComplete(unused, aTarget)
     {
       if (aOnTargetChangeFn) {
         aOnTargetChangeFn(aTarget);
       }
     },
-    onSaveComplete: function BFSO_onSaveComplete(aSaver, aStatus)
+    onSaveComplete: function BFSO_onSaveComplete(unused, aStatus)
     {
       if (Components.isSuccessCode(aStatus)) {
         deferred.resolve();
@@ -160,8 +159,7 @@ function registerTableUpdate(aTable, aFilename) {
   });
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 function run_test()
 {
@@ -264,8 +262,6 @@ function processUpdateRequest() {
 function waitForUpdates() {
   let deferred = Promise.defer();
   gHttpServer.registerPathHandler("/downloads", function(request, response) {
-    let buf = NetUtil.readInputStreamToString(request.bodyInputStream,
-      request.bodyInputStream.available());
     let blob = processUpdateRequest();
     response.setHeader("Content-Type",
                        "application/vnd.google.safebrowsing-update", false);

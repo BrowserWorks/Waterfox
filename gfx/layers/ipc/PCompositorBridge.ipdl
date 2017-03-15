@@ -115,12 +115,15 @@ child:
 
   async ParentAsyncMessages(AsyncParentMessageData[] aMessages);
 
+  async ObserveLayerUpdate(uint64_t aLayersId, uint64_t aEpoch, bool aActive);
+
 parent:
   // Must be called before Initialize().
   async PCompositorWidget(CompositorWidgetInitData aInitData);
 
   // When out-of-process, this must be called to finish initialization.
   sync Initialize(uint64_t rootLayerTreeId);
+  sync Reset(LayersBackend[] aBackendHints) returns (bool aResult, TextureFactoryIdentifier aOutIdentifier);
 
   // Returns whether this Compositor has APZ enabled or not.
   sync AsyncPanZoomEnabled(uint64_t layersId) returns (bool aHasAPZ);
@@ -157,6 +160,12 @@ parent:
   sync NotifyChildCreated(uint64_t id);
 
   async AdoptChild(uint64_t id);
+
+  // Same as NotifyChildCreated, but used when child processes need to
+  // reassociate layers. This must be synchronous to ensure that the
+  // association happens before PLayerTransactions are sent over the
+  // cross-process bridge.
+  sync NotifyChildRecreated(uint64_t id);
 
   // Make a snapshot of the content that would have been drawn to our
   // render target at the time this message is received.  If the size
@@ -214,6 +223,8 @@ parent:
   async AllPluginsCaptured();
 
   async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags, uint64_t id, uint64_t aSerial);
+
+  sync SyncWithCompositor();
 
 child:
   // Send back Compositor Frame Metrics from APZCs so tiled layers can

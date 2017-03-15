@@ -108,123 +108,15 @@ const Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionUtils",
+                                  "resource://gre/modules/ExtensionUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
                                   "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
-/**
- * Acts as a proxy for a message manager or message manager owner, and
- * tracks docShell swaps so that messages are always sent to the same
- * receiver, even if it is moved to a different <browser>.
- *
- * Currently only proxies message sending functions, and does not handle
- * transfering listeners in any way.
- *
- * @param {nsIMessageSender|Element} target
- *        The target message manager on which to send messages, or the
- *        <browser> element which owns it.
- */
-class MessageManagerProxy {
-  constructor(target) {
-    if (target instanceof Ci.nsIMessageSender) {
-      Object.defineProperty(this, "messageManager", {
-        value: target,
-        configurable: true,
-        writable: true,
-      });
-    } else {
-      this.addListeners(target);
-    }
-  }
 
-  /**
-   * Disposes of the proxy object, removes event listeners, and drops
-   * all references to the underlying message manager.
-   *
-   * Must be called before the last reference to the proxy is dropped,
-   * unless the underlying message manager or <browser> is also being
-   * destroyed.
-   */
-  dispose() {
-    if (this.eventTarget) {
-      this.removeListeners(this.eventTarget);
-      this.eventTarget = null;
-    } else {
-      this.messageManager = null;
-    }
-  }
-
-  /**
-   * Returns true if the given target is the same as, or owns, the given
-   * message manager.
-   *
-   * @param {nsIMessageSender|MessageManagerProxy|Element} target
-   *        The message manager, MessageManagerProxy, or <browser>
-   *        element agaisnt which to match.
-   * @param {nsIMessageSender} messageManager
-   *        The message manager against which to match `target`.
-   *
-   * @returns {boolean}
-   *        True if `messageManager` is the same object as `target`, or
-   *        `target` is a MessageManagerProxy or <browser> element that
-   *        is tied to it.
-   */
-  static matches(target, messageManager) {
-    return target === messageManager || target.messageManager === messageManager;
-  }
-
-  /**
-   * @property {nsIMessageSender|null} messageManager
-   *        The message manager that is currently being proxied. This
-   *        may change during the life of the proxy object, so should
-   *        not be stored elsewhere.
-   */
-  get messageManager() {
-    return this.eventTarget && this.eventTarget.messageManager;
-  }
-
-  /**
-   * Sends a message on the proxied message manager.
-   *
-   * @param {array} args
-   *        Arguments to be passed verbatim to the underlying
-   *        sendAsyncMessage method.
-   * @returns {undefined}
-   */
-  sendAsyncMessage(...args) {
-    return this.messageManager.sendAsyncMessage(...args);
-  }
-
-  /**
-   * @private
-   * Adds docShell swap listeners to the message manager owner.
-   *
-   * @param {Element} target
-   *        The target element.
-   */
-  addListeners(target) {
-    target.addEventListener("SwapDocShells", this);
-    this.eventTarget = target;
-  }
-
-  /**
-   * @private
-   * Removes docShell swap listeners to the message manager owner.
-   *
-   * @param {Element} target
-   *        The target element.
-   */
-  removeListeners(target) {
-    target.removeEventListener("SwapDocShells", this);
-  }
-
-  handleEvent(event) {
-    if (event.type == "SwapDocShells") {
-      this.removeListeners(this.eventTarget);
-      this.addListeners(event.detail);
-    }
-  }
-}
+XPCOMUtils.defineLazyGetter(this, "MessageManagerProxy",
+                            () => ExtensionUtils.MessageManagerProxy);
 
 /**
  * Handles the mapping and dispatching of messages to their registered
@@ -250,7 +142,7 @@ class FilteringMessageManager {
    *        data:
    *          An object describing the message, as defined in
    *          `MessageChannel.addListener`.
-   * @param {nsIMessageManager} messageManager
+   * @param {nsIMessageListenerManager} messageManager
    */
   constructor(messageName, callback, messageManager) {
     this.messageName = messageName;
@@ -358,7 +250,7 @@ class FilteringMessageManagerMap extends Map {
    * Returns, and possibly creates, a message broker for the given
    * message manager.
    *
-   * @param {nsIMessageSender} target
+   * @param {nsIMessageListenerManager} target
    *     The message manager for which to return a broker.
    *
    * @returns {FilteringMessageManager}
@@ -385,8 +277,6 @@ class FilteringMessageManagerMap extends Map {
 
 const MESSAGE_MESSAGE = "MessageChannel:Message";
 const MESSAGE_RESPONSE = "MessageChannel:Response";
-
-let gChannelId = 0;
 
 this.MessageChannel = {
   init() {
@@ -460,7 +350,7 @@ this.MessageChannel = {
   /**
    * Initializes message handlers for the given message managers if needed.
    *
-   * @param {[nsIMessageSender]} messageManagers
+   * @param {Array<nsIMessageListenerManager>} messageManagers
    */
   setupMessageManagers(messageManagers) {
     for (let mm of messageManagers) {
@@ -504,7 +394,7 @@ this.MessageChannel = {
   /**
    * Adds a message listener to the given message manager.
    *
-   * @param {nsIMessageSender|[nsIMessageSender]} targets
+   * @param {nsIMessageListenerManager|Array<nsIMessageListenerManager>} targets
    *    The message managers on which to listen.
    * @param {string|number} messageName
    *    The name of the message to listen for.
@@ -570,7 +460,7 @@ this.MessageChannel = {
   /**
    * Removes a message listener from the given message manager.
    *
-   * @param {nsIMessageSender|Array<nsIMessageSender>} targets
+   * @param {nsIMessageListenerManager|Array<nsIMessageListenerManager>} targets
    *    The message managers on which to stop listening.
    * @param {string|number} messageName
    *    The name of the message to stop listening for.
@@ -622,7 +512,7 @@ this.MessageChannel = {
     let recipient = options.recipient || {};
     let responseType = options.responseType || this.RESPONSE_SINGLE;
 
-    let channelId = `${gChannelId++}-${Services.appinfo.uniqueProcessID}`;
+    let channelId = ExtensionUtils.getUniqueId();
     let message = {messageName, channelId, sender, recipient, data, responseType};
 
     if (responseType == this.RESPONSE_NONE) {
@@ -719,7 +609,7 @@ this.MessageChannel = {
    *
    * @param {Array<MessageHandler>} handlers
    * @param {object} data
-   * @param {nsIMessageSender|nsIMessageManagerOwner} data.target
+   * @param {nsIMessageSender|{messageManager:nsIMessageSender}} data.target
    */
   _handleMessage(handlers, data) {
     if (data.responseType == this.RESPONSE_NONE) {
@@ -796,7 +686,7 @@ this.MessageChannel = {
    *
    * @param {Array<MessageHandler>} handlers
    * @param {object} data
-   * @param {nsIMessageSender|nsIMessageManagerOwner} data.target
+   * @param {nsIMessageSender|{messageManager:nsIMessageSender}} data.target
    */
   _handleResponse(handlers, data) {
     // If we have an error at this point, we have handler to report it to,
@@ -872,7 +762,7 @@ this.MessageChannel = {
    * Aborts any pending message responses to the broker for the given
    * message manager.
    *
-   * @param {nsIMessageSender} target
+   * @param {nsIMessageListenerManager} target
    *    The message manager for which to abort brokers.
    * @param {object} reason
    *    An object describing the reason the responses were aborted.

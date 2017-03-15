@@ -120,6 +120,7 @@ class ObjectBox;
     F(VOID) \
     F(NOT) \
     F(BITNOT) \
+    F(AWAIT) \
     \
     /* \
      * Binary operators. \
@@ -192,6 +193,12 @@ inline bool
 IsDeleteKind(ParseNodeKind kind)
 {
     return PNK_DELETENAME <= kind && kind <= PNK_DELETEEXPR;
+}
+
+inline bool
+IsTypeofKind(ParseNodeKind kind)
+{
+    return PNK_TYPEOFNAME <= kind && kind <= PNK_TYPEOFEXPR;
 }
 
 /*
@@ -344,7 +351,8 @@ IsDeleteKind(ParseNodeKind kind)
  * PNK_NEG
  * PNK_VOID,    unary       pn_kid: UNARY expr
  * PNK_NOT,
- * PNK_BITNOT
+ * PNK_BITNOT,
+ * PNK_AWAIT
  * PNK_TYPEOFNAME, unary    pn_kid: UNARY expr
  * PNK_TYPEOFEXPR
  * PNK_PREINCREMENT, unary  pn_kid: MEMBER expr
@@ -357,7 +365,6 @@ IsDeleteKind(ParseNodeKind kind)
  * PNK_DELETENAME unary     pn_kid: PNK_NAME expr
  * PNK_DELETEPROP unary     pn_kid: PNK_DOT expr
  * PNK_DELETEELEM unary     pn_kid: PNK_ELEM expr
- * PNK_DELETESUPERELEM unary pn_kid: PNK_SUPERELEM expr
  * PNK_DELETEEXPR unary     pn_kid: MEMBER expr that's evaluated, then the
  *                          overall delete evaluates to true; can't be a kind
  *                          for a more-specific PNK_DELETE* unless constant
@@ -452,7 +459,7 @@ class ParseNode
       : pn_type(kind),
         pn_op(op),
         pn_arity(arity),
-        pn_parens(0),
+        pn_parens(false),
         pn_pos(0, 0),
         pn_next(nullptr)
     {
@@ -464,7 +471,7 @@ class ParseNode
       : pn_type(kind),
         pn_op(op),
         pn_arity(arity),
-        pn_parens(0),
+        pn_parens(false),
         pn_pos(pos),
         pn_next(nullptr)
     {
@@ -630,12 +637,14 @@ class ParseNode
         MOZ_ASSERT(pn_arity == PN_CODE && getKind() == PNK_FUNCTION);
         MOZ_ASSERT(isOp(JSOP_LAMBDA) ||        // lambda, genexpr
                    isOp(JSOP_LAMBDA_ARROW) ||  // arrow function
+                   isOp(JSOP_FUNWITHPROTO) ||  // already emitted lambda with needsProto
                    isOp(JSOP_DEFFUN) ||        // non-body-level function statement
                    isOp(JSOP_NOP) ||           // body-level function stmt in global code
                    isOp(JSOP_GETLOCAL) ||      // body-level function stmt in function code
                    isOp(JSOP_GETARG) ||        // body-level function redeclaring formal
                    isOp(JSOP_INITLEXICAL));    // block-level function stmt
-        return !isOp(JSOP_LAMBDA) && !isOp(JSOP_LAMBDA_ARROW) && !isOp(JSOP_DEFFUN);
+        return !isOp(JSOP_LAMBDA) && !isOp(JSOP_LAMBDA_ARROW) &&
+               !isOp(JSOP_FUNWITHPROTO) && !isOp(JSOP_DEFFUN);
     }
 
     /*

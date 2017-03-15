@@ -6,6 +6,7 @@ DIRS += [
     'components',
     'computed',
     'fonts',
+    'layout',
     'markup',
     'rules',
     'shared'
@@ -14,8 +15,8 @@ DIRS += [
 DevToolsModules(
     'breadcrumbs.js',
     'inspector-commands.js',
-    'inspector-panel.js',
     'inspector-search.js',
+    'panel.js',
     'toolsidebar.js',
 )
 

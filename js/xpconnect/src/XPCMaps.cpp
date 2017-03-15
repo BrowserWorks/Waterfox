@@ -76,7 +76,7 @@ JSObject2WrappedJSMap::UpdateWeakPointersAfterGC(XPCJSContext* context)
         }
 
         // Remove or update the JSObject key in the table if necessary.
-        JSObject* obj = e.front().key();
+        JSObject* obj = e.front().key().unbarrieredGet();
         JS_UpdateWeakPointerAfterGCUnbarriered(&obj);
         if (!obj)
             e.removeFront();
@@ -202,6 +202,33 @@ IID2NativeInterfaceMap::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) 
 // implement ClassInfo2NativeSetMap...
 
 // static
+bool ClassInfo2NativeSetMap::Entry::Match(const PLDHashEntryHdr* aEntry,
+                                          const void* aKey)
+{
+    return static_cast<const Entry*>(aEntry)->key == aKey;
+}
+
+// static
+void ClassInfo2NativeSetMap::Entry::Clear(PLDHashTable* aTable,
+                                          PLDHashEntryHdr* aEntry)
+{
+    auto entry = static_cast<Entry*>(aEntry);
+    NS_RELEASE(entry->value);
+
+    entry->key = nullptr;
+    entry->value = nullptr;
+}
+
+const PLDHashTableOps ClassInfo2NativeSetMap::Entry::sOps =
+{
+    PLDHashTable::HashVoidPtrKeyStub,
+    Match,
+    PLDHashTable::MoveEntryStub,
+    Clear,
+    nullptr
+};
+
+// static
 ClassInfo2NativeSetMap*
 ClassInfo2NativeSetMap::newMap(int length)
 {
@@ -209,7 +236,7 @@ ClassInfo2NativeSetMap::newMap(int length)
 }
 
 ClassInfo2NativeSetMap::ClassInfo2NativeSetMap(int length)
-  : mTable(PLDHashTable::StubOps(), sizeof(Entry), length)
+  : mTable(&ClassInfo2NativeSetMap::Entry::sOps, sizeof(Entry), length)
 {
 }
 

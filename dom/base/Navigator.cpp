@@ -38,20 +38,13 @@
 #include "mozilla/dom/PowerManager.h"
 #include "mozilla/dom/WakeLock.h"
 #include "mozilla/dom/power/PowerManagerService.h"
-#include "mozilla/dom/CellBroadcast.h"
 #include "mozilla/dom/FlyWebPublishedServer.h"
 #include "mozilla/dom/FlyWebService.h"
-#include "mozilla/dom/IccManager.h"
-#include "mozilla/dom/InputPortManager.h"
-#include "mozilla/dom/MobileMessageManager.h"
 #include "mozilla/dom/Permissions.h"
 #include "mozilla/dom/Presentation.h"
 #include "mozilla/dom/ServiceWorkerContainer.h"
 #include "mozilla/dom/StorageManager.h"
 #include "mozilla/dom/TCPSocket.h"
-#include "mozilla/dom/Telephony.h"
-#include "mozilla/dom/Voicemail.h"
-#include "mozilla/dom/TVManager.h"
 #include "mozilla/dom/VRDisplay.h"
 #include "mozilla/dom/workers/RuntimeService.h"
 #include "mozilla/Hal.h"
@@ -62,9 +55,6 @@
 #include "Connection.h"
 #include "mozilla/dom/Event.h" // for nsIDOMEvent::InternalDOMEvent()
 #include "nsGlobalWindow.h"
-#ifdef MOZ_B2G_RIL
-#include "mozilla/dom/MobileConnectionArray.h"
-#endif
 #include "nsIIdleObserver.h"
 #include "nsIPermissionManager.h"
 #include "nsMimeTypes.h"
@@ -84,17 +74,9 @@
 
 #include "mozilla/dom/MediaDevices.h"
 #include "MediaManager.h"
-#ifdef MOZ_B2G_BT
-#include "BluetoothManager.h"
-#endif
-#include "DOMCameraManager.h"
 
 #ifdef MOZ_AUDIO_CHANNEL_MANAGER
 #include "AudioChannelManager.h"
-#endif
-
-#ifdef MOZ_B2G_FM
-#include "mozilla/dom/FMRadio.h"
 #endif
 
 #include "nsIDOMGlobalPropertyInitializer.h"
@@ -224,25 +206,11 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryPromise)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPowerManager)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCellBroadcast)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mIccManager)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMobileMessageManager)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTelephony)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVoicemail)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTVManager)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mInputPortManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConnection)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mStorageManager)
-#ifdef MOZ_B2G_RIL
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMobileConnections)
-#endif
-#ifdef MOZ_B2G_BT
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBluetooth)
-#endif
 #ifdef MOZ_AUDIO_CHANNEL_MANAGER
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mAudioChannelManager)
 #endif
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCameraManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaDevices)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTimeManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mServiceWorkerContainer)
@@ -295,47 +263,9 @@ Navigator::Invalidate()
 
   mBatteryPromise = nullptr;
 
-#ifdef MOZ_B2G_FM
-  if (mFMRadio) {
-    mFMRadio->Shutdown();
-    mFMRadio = nullptr;
-  }
-#endif
-
   if (mPowerManager) {
     mPowerManager->Shutdown();
     mPowerManager = nullptr;
-  }
-
-  if (mCellBroadcast) {
-    mCellBroadcast = nullptr;
-  }
-
-  if (mIccManager) {
-    mIccManager->Shutdown();
-    mIccManager = nullptr;
-  }
-
-  if (mMobileMessageManager) {
-    mMobileMessageManager->Shutdown();
-    mMobileMessageManager = nullptr;
-  }
-
-  if (mTelephony) {
-    mTelephony = nullptr;
-  }
-
-  if (mVoicemail) {
-    mVoicemail->Shutdown();
-    mVoicemail = nullptr;
-  }
-
-  if (mTVManager) {
-    mTVManager = nullptr;
-  }
-
-  if (mInputPortManager) {
-    mInputPortManager = nullptr;
   }
 
   if (mConnection) {
@@ -343,19 +273,6 @@ Navigator::Invalidate()
     mConnection = nullptr;
   }
 
-#ifdef MOZ_B2G_RIL
-  if (mMobileConnections) {
-    mMobileConnections = nullptr;
-  }
-#endif
-
-#ifdef MOZ_B2G_BT
-  if (mBluetooth) {
-    mBluetooth = nullptr;
-  }
-#endif
-
-  mCameraManager = nullptr;
   mMediaDevices = nullptr;
 
 #ifdef MOZ_AUDIO_CHANNEL_MANAGER
@@ -723,11 +640,6 @@ Navigator::CookieEnabled()
 bool
 Navigator::OnLine()
 {
-  if (mWindow && mWindow->GetDoc()) {
-    return !NS_IsOffline() &&
-      !NS_IsAppOffline(mWindow->GetDoc()->NodePrincipal());
-  }
-
   return !NS_IsOffline();
 }
 
@@ -1325,15 +1237,15 @@ Navigator::SendBeacon(const nsAString& aUrl,
                   doc,
                   doc->GetDocBaseURI());
   if (NS_FAILED(rv)) {
-    aRv.Throw(NS_ERROR_DOM_URL_MISMATCH_ERR);
+    aRv.ThrowTypeError<MSG_INVALID_URL>(aUrl);
     return false;
   }
 
-  // Explicitly disallow loading data: URIs
-  bool isDataScheme = false;
-  rv = uri->SchemeIs("data", &isDataScheme);
-  if (NS_FAILED(rv) || isDataScheme) {
-    aRv.Throw(NS_ERROR_CONTENT_BLOCKED);
+  // Spec disallows any schemes save for HTTP/HTTPs
+  bool isValidScheme;
+  if (!(NS_SUCCEEDED(uri->SchemeIs("http", &isValidScheme)) && isValidScheme) &&
+      !(NS_SUCCEEDED(uri->SchemeIs("https", &isValidScheme)) && isValidScheme)) {
+    aRv.ThrowTypeError<MSG_INVALID_URL_SCHEME>( NS_LITERAL_STRING("Beacon"), aUrl);
     return false;
   }
 
@@ -1559,30 +1471,6 @@ Navigator::GetMozNotification(ErrorResult& aRv)
   return mNotification;
 }
 
-#ifdef MOZ_B2G_FM
-
-using mozilla::dom::FMRadio;
-
-FMRadio*
-Navigator::GetMozFMRadio(ErrorResult& aRv)
-{
-  if (!mFMRadio) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-
-    NS_ENSURE_TRUE(mWindow->GetDocShell(), nullptr);
-
-    mFMRadio = new FMRadio();
-    mFMRadio->Init(mWindow);
-  }
-
-  return mFMRadio;
-}
-
-#endif  // MOZ_B2G_FM
-
 //*****************************************************************************
 //    Navigator::nsINavigatorBattery
 //*****************************************************************************
@@ -1605,10 +1493,6 @@ Navigator::GetBattery(ErrorResult& aRv)
     return nullptr;
   }
   mBatteryPromise = batteryPromise;
-
-  // We just initialized mBatteryPromise, so we know this is the first time
-  // this page has accessed navigator.getBattery(). 1 = navigator.getBattery()
-  Telemetry::Accumulate(Telemetry::BATTERY_STATUS_COUNT, 1);
 
   if (!mBatteryManager) {
     mBatteryManager = new battery::BatteryManager(mWindow);
@@ -1693,133 +1577,11 @@ Navigator::RequestWakeLock(const nsAString &aTopic, ErrorResult& aRv)
   return pmService->NewWakeLock(aTopic, mWindow, aRv);
 }
 
-MobileMessageManager*
-Navigator::GetMozMobileMessage()
-{
-  if (!mMobileMessageManager) {
-    // Check that our window has not gone away
-    NS_ENSURE_TRUE(mWindow, nullptr);
-    NS_ENSURE_TRUE(mWindow->GetDocShell(), nullptr);
-
-    mMobileMessageManager = new MobileMessageManager(mWindow);
-    mMobileMessageManager->Init();
-  }
-
-  return mMobileMessageManager;
-}
-
-Telephony*
-Navigator::GetMozTelephony(ErrorResult& aRv)
-{
-  if (!mTelephony) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-    mTelephony = Telephony::Create(mWindow, aRv);
-  }
-
-  return mTelephony;
-}
-
-TVManager*
-Navigator::GetTv()
-{
-  if (!mTVManager) {
-    if (!mWindow) {
-      return nullptr;
-    }
-    mTVManager = TVManager::Create(mWindow);
-  }
-
-  return mTVManager;
-}
-
-InputPortManager*
-Navigator::GetInputPortManager(ErrorResult& aRv)
-{
-  if (!mInputPortManager) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return nullptr;
-    }
-    mInputPortManager = InputPortManager::Create(mWindow, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return nullptr;
-    }
-  }
-
-  return mInputPortManager;
-}
-
 already_AddRefed<LegacyMozTCPSocket>
 Navigator::MozTCPSocket()
 {
   RefPtr<LegacyMozTCPSocket> socket = new LegacyMozTCPSocket(GetWindow());
   return socket.forget();
-}
-
-#ifdef MOZ_B2G_RIL
-
-MobileConnectionArray*
-Navigator::GetMozMobileConnections(ErrorResult& aRv)
-{
-  if (!mMobileConnections) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-    mMobileConnections = new MobileConnectionArray(mWindow);
-  }
-
-  return mMobileConnections;
-}
-
-#endif // MOZ_B2G_RIL
-
-CellBroadcast*
-Navigator::GetMozCellBroadcast(ErrorResult& aRv)
-{
-  if (!mCellBroadcast) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-    mCellBroadcast = CellBroadcast::Create(mWindow, aRv);
-  }
-
-  return mCellBroadcast;
-}
-
-Voicemail*
-Navigator::GetMozVoicemail(ErrorResult& aRv)
-{
-  if (!mVoicemail) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-
-    mVoicemail = Voicemail::Create(mWindow, aRv);
-  }
-
-  return mVoicemail;
-}
-
-IccManager*
-Navigator::GetMozIccManager(ErrorResult& aRv)
-{
-  if (!mIccManager) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-    NS_ENSURE_TRUE(mWindow->GetDocShell(), nullptr);
-
-    mIccManager = new IccManager(mWindow);
-  }
-
-  return mIccManager;
 }
 
 #ifdef MOZ_GAMEPAD
@@ -1950,22 +1712,6 @@ Navigator::GetConnection(ErrorResult& aRv)
   return mConnection;
 }
 
-#ifdef MOZ_B2G_BT
-bluetooth::BluetoothManager*
-Navigator::GetMozBluetooth(ErrorResult& aRv)
-{
-  if (!mBluetooth) {
-    if (!mWindow) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-    mBluetooth = bluetooth::BluetoothManager::Create(mWindow);
-  }
-
-  return mBluetooth;
-}
-#endif //MOZ_B2G_BT
-
 #ifdef MOZ_TIME_MANAGER
 time::TimeManager*
 Navigator::GetMozTime(ErrorResult& aRv)
@@ -1982,23 +1728,6 @@ Navigator::GetMozTime(ErrorResult& aRv)
   return mTimeManager;
 }
 #endif
-
-nsDOMCameraManager*
-Navigator::GetMozCameras(ErrorResult& aRv)
-{
-  if (!mCameraManager) {
-    if (!mWindow ||
-        !mWindow->GetOuterWindow() ||
-        mWindow->GetOuterWindow()->GetCurrentInnerWindow() != mWindow) {
-      aRv.Throw(NS_ERROR_NOT_AVAILABLE);
-      return nullptr;
-    }
-
-    mCameraManager = nsDOMCameraManager::CreateInstance(mWindow);
-  }
-
-  return mCameraManager;
-}
 
 already_AddRefed<ServiceWorkerContainer>
 Navigator::ServiceWorker()
@@ -2045,9 +1774,6 @@ Navigator::OnNavigation()
   MediaManager *manager = MediaManager::GetIfExists();
   if (manager) {
     manager->OnNavigation(mWindow->WindowID());
-  }
-  if (mCameraManager) {
-    mCameraManager->OnNavigation(mWindow->WindowID());
   }
 }
 
@@ -2104,14 +1830,6 @@ Navigator::HasWakeLockSupport(JSContext* /* unused*/, JSObject* /*unused */)
 
 /* static */
 bool
-Navigator::HasCameraSupport(JSContext* /* unused */, JSObject* aGlobal)
-{
-  nsCOMPtr<nsPIDOMWindowInner> win = GetWindowFromGlobal(aGlobal);
-  return win && nsDOMCameraManager::CheckPermission(win);
-}
-
-/* static */
-bool
 Navigator::HasWifiManagerSupport(JSContext* /* unused */,
                                  JSObject* aGlobal)
 {
@@ -2124,19 +1842,6 @@ Navigator::HasWifiManagerSupport(JSContext* /* unused */,
 
   return permission == nsIPermissionManager::ALLOW_ACTION;
 }
-
-#ifdef MOZ_NFC
-/* static */
-bool
-Navigator::HasNFCSupport(JSContext* /* unused */, JSObject* aGlobal)
-{
-  nsCOMPtr<nsPIDOMWindowInner> win = GetWindowFromGlobal(aGlobal);
-
-  // Do not support NFC if NFC content helper does not exist.
-  nsCOMPtr<nsISupports> contentHelper = do_GetService("@mozilla.org/nfc/content-helper;1");
-  return !!contentHelper;
-}
-#endif // MOZ_NFC
 
 /* static */
 bool

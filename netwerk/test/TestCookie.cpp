@@ -30,6 +30,7 @@ static const char kCookiesLifetimeEnabled[] = "network.cookie.lifetime.enabled";
 static const char kCookiesLifetimeDays[] = "network.cookie.lifetime.days";
 static const char kCookiesLifetimeCurrentSession[] = "network.cookie.lifetime.behavior";
 static const char kCookiesMaxPerHost[] = "network.cookie.maxPerHost";
+static const char kCookieLeaveSecurityAlone[] = "network.cookie.leave-secure-alone";
 
 static char *sBuffer;
 
@@ -71,7 +72,7 @@ SetACookie(nsICookieService *aCookieService, const char *aSpec1, const char *aSp
     if (aSpec2)
         NS_NewURI(getter_AddRefs(uri2), aSpec2);
 
-    sBuffer = PR_sprintf_append(sBuffer, "    for host \"%s\": SET ", aSpec1);
+    sBuffer = PR_sprintf_append(sBuffer, R"(    for host "%s": SET )", aSpec1);
     nsresult rv = aCookieService->SetCookieStringFromHttp(uri1, uri2, nullptr, (char *)aCookieString, aServerTime, nullptr);
     // the following code is useless. the cookieservice blindly returns NS_OK
     // from SetCookieString. we have to call GetCookie to see if the cookie was
@@ -90,7 +91,7 @@ SetACookieNoHttp(nsICookieService *aCookieService, const char *aSpec, const char
     nsCOMPtr<nsIURI> uri;
     NS_NewURI(getter_AddRefs(uri), aSpec);
 
-    sBuffer = PR_sprintf_append(sBuffer, "    for host \"%s\": SET ", aSpec);
+    sBuffer = PR_sprintf_append(sBuffer, R"(    for host "%s": SET )", aSpec);
     nsresult rv = aCookieService->SetCookieString(uri, nullptr, (char *)aCookieString, nullptr);
     // the following code is useless. the cookieservice blindly returns NS_OK
     // from SetCookieString. we have to call GetCookie to see if the cookie was
@@ -113,7 +114,7 @@ GetACookie(nsICookieService *aCookieService, const char *aSpec1, const char *aSp
     if (aSpec2)
         NS_NewURI(getter_AddRefs(uri2), aSpec2);
 
-    sBuffer = PR_sprintf_append(sBuffer, "             \"%s\": GOT ", aSpec1);
+    sBuffer = PR_sprintf_append(sBuffer, R"(             "%s": GOT )", aSpec1);
     nsresult rv = aCookieService->GetCookieStringFromHttp(uri1, uri2, nullptr, aCookie);
     if (NS_FAILED(rv)) {
       sBuffer = PR_sprintf_append(sBuffer, "XXX GetCookieString() failed!\n");
@@ -134,7 +135,7 @@ GetACookieNoHttp(nsICookieService *aCookieService, const char *aSpec, char **aCo
     nsCOMPtr<nsIURI> uri;
     NS_NewURI(getter_AddRefs(uri), aSpec);
 
-    sBuffer = PR_sprintf_append(sBuffer, "             \"%s\": GOT ", aSpec);
+    sBuffer = PR_sprintf_append(sBuffer, R"(             "%s": GOT )", aSpec);
     nsresult rv = aCookieService->GetCookieString(uri, nullptr, aCookie);
     if (NS_FAILED(rv)) {
       sBuffer = PR_sprintf_append(sBuffer, "XXX GetCookieString() failed!\n");
@@ -213,6 +214,7 @@ InitPrefs(nsIPrefBranch *aPrefBranch)
     aPrefBranch->SetBoolPref(kCookiesLifetimeEnabled, true);
     aPrefBranch->SetIntPref(kCookiesLifetimeCurrentSession, 0);
     aPrefBranch->SetIntPref(kCookiesLifetimeDays, 1);
+    aPrefBranch->SetBoolPref(kCookieLeaveSecurityAlone, true);
     // Set the base domain limit to 50 so we have a known value.
     aPrefBranch->SetIntPref(kCookiesMaxPerHost, 50);
 }
@@ -355,7 +357,7 @@ main(int32_t argc, char *argv[])
       GetACookie(cookieService, "http://foo.domain.com", nullptr, getter_Copies(cookie));
       rv[13] = CheckResult(cookie.get(), MUST_BE_NULL);
 
-      SetACookie(cookieService, "http://path.net/path/file", nullptr, "test=taco; path=\"/bogus\"", nullptr);
+      SetACookie(cookieService, "http://path.net/path/file", nullptr, R"(test=taco; path="/bogus")", nullptr);
       GetACookie(cookieService, "http://path.net/path/file", nullptr, getter_Copies(cookie));
       rv[14] = CheckResult(cookie.get(), MUST_EQUAL, "test=taco");
       SetACookie(cookieService, "http://path.net/path/file", nullptr, "test=taco; max-age=-1", nullptr);
@@ -455,10 +457,10 @@ main(int32_t argc, char *argv[])
       SetACookie(cookieService, "http://expireme.org/", nullptr, "test=expiry; expires=Thu, 10 Apr 1980 16:33:12 GMT", nullptr);
       GetACookie(cookieService, "http://expireme.org/", nullptr, getter_Copies(cookie));
       rv[3] = CheckResult(cookie.get(), MUST_BE_NULL);
-      SetACookie(cookieService, "http://expireme.org/", nullptr, "test=expiry; expires=\"Thu, 10 Apr 1980 16:33:12 GMT", nullptr);
+      SetACookie(cookieService, "http://expireme.org/", nullptr, R"(test=expiry; expires="Thu, 10 Apr 1980 16:33:12 GMT)", nullptr);
       GetACookie(cookieService, "http://expireme.org/", nullptr, getter_Copies(cookie));
       rv[4] = CheckResult(cookie.get(), MUST_BE_NULL);
-      SetACookie(cookieService, "http://expireme.org/", nullptr, "test=expiry; expires=\"Thu, 10 Apr 1980 16:33:12 GMT\"", nullptr);
+      SetACookie(cookieService, "http://expireme.org/", nullptr, R"(test=expiry; expires="Thu, 10 Apr 1980 16:33:12 GMT")", nullptr);
       GetACookie(cookieService, "http://expireme.org/", nullptr, getter_Copies(cookie));
       rv[5] = CheckResult(cookie.get(), MUST_BE_NULL);
 
@@ -555,7 +557,7 @@ main(int32_t argc, char *argv[])
       rv[1] = CheckResult(cookie.get(), MUST_BE_NULL);
       SetACookie(cookieService, "http://parser.test/", nullptr, "test=\"fubar! = foo;bar\\\";\" parser; domain=.parser.test; max-age=6\nfive; max-age=2.63,", nullptr);
       GetACookie(cookieService, "http://parser.test/", nullptr, getter_Copies(cookie));
-      rv[2] = CheckResult(cookie.get(), MUST_CONTAIN, "test=\"fubar! = foo");
+      rv[2] = CheckResult(cookie.get(), MUST_CONTAIN, R"(test="fubar! = foo)");
       rv[3] = CheckResult(cookie.get(), MUST_CONTAIN, "five");
       SetACookie(cookieService, "http://parser.test/", nullptr, "test=kill; domain=.parser.test; max-age=0 \n five; max-age=0", nullptr);
       GetACookie(cookieService, "http://parser.test/", nullptr, getter_Copies(cookie));
@@ -686,6 +688,49 @@ main(int32_t argc, char *argv[])
 
       allTestsPassed = PrintResult(rv, 7) && allTestsPassed;
 
+      // *** leave-secure-alone tests
+      sBuffer = PR_sprintf_append(sBuffer, "*** Beginning leave-secure-alone tests...\n");
+
+      // testing items 0 & 1 for 3.1 of spec Deprecate modification of ’secure’
+      // cookies from non-secure origins
+      SetACookie(cookieService, "http://www.security.test/", nullptr, "test=non-security; secure", nullptr);
+      GetACookieNoHttp(cookieService, "https://www.security.test/", getter_Copies(cookie));
+      rv[0] = CheckResult(cookie.get(), MUST_BE_NULL);
+      SetACookie(cookieService, "https://www.security.test/path/", nullptr, "test=security; secure; path=/path/", nullptr);
+      GetACookieNoHttp(cookieService, "https://www.security.test/path/", getter_Copies(cookie));
+      rv[1] = CheckResult(cookie.get(), MUST_EQUAL, "test=security");
+      // testing items 2 & 3 & 4 for 3.2 of spec Deprecate modification of ’secure’
+      // cookies from non-secure origins
+      // Secure site can modify cookie value
+      SetACookie(cookieService, "https://www.security.test/path/", nullptr, "test=security2; secure; path=/path/", nullptr);
+      GetACookieNoHttp(cookieService, "https://www.security.test/path/", getter_Copies(cookie));
+      rv[2] = CheckResult(cookie.get(), MUST_EQUAL, "test=security2");
+      // If new cookie contains same name, same host and partially matching path with
+      // an existing security cookie on non-security site, it can't modify an existing
+      // security cookie.
+      SetACookie(cookieService, "http://www.security.test/path/foo/", nullptr, "test=non-security; path=/path/foo", nullptr);
+      GetACookieNoHttp(cookieService, "https://www.security.test/path/foo/", getter_Copies(cookie));
+      rv[3] = CheckResult(cookie.get(), MUST_EQUAL, "test=security2");
+      // Non-secure cookie can set by same name, same host and non-matching path.
+      SetACookie(cookieService, "http://www.security.test/bar/", nullptr, "test=non-security; path=/bar", nullptr);
+      GetACookieNoHttp(cookieService, "http://www.security.test/bar/", getter_Copies(cookie));
+      rv[4] = CheckResult(cookie.get(), MUST_EQUAL, "test=non-security");
+      // Modify value and downgrade secure level.
+      SetACookie(cookieService, "https://www.security.test/", nullptr, "test_modify_cookie=security-cookie; secure; domain=.security.test", nullptr);
+      GetACookieNoHttp(cookieService, "https://www.security.test/", getter_Copies(cookie));
+      rv[5] = CheckResult(cookie.get(), MUST_EQUAL, "test_modify_cookie=security-cookie");
+      SetACookie(cookieService, "https://www.security.test/", nullptr, "test_modify_cookie=non-security-cookie; domain=.security.test", nullptr);
+      GetACookieNoHttp(cookieService, "https://www.security.test/", getter_Copies(cookie));
+      rv[6] = CheckResult(cookie.get(), MUST_EQUAL, "test_modify_cookie=non-security-cookie");
+      // Test the non-security cookie can set when domain or path not same to secure cookie of same name.
+      SetACookie(cookieService, "https://www.security.test/", nullptr, "test=security3", nullptr);
+      GetACookieNoHttp(cookieService, "http://www.security.test/", getter_Copies(cookie));
+      rv[7] = CheckResult(cookie.get(), MUST_CONTAIN, "test=security3");
+      SetACookie(cookieService, "http://www.security.test/", nullptr, "test=non-security2; domain=security.test", nullptr);
+      GetACookieNoHttp(cookieService, "http://www.security.test/", getter_Copies(cookie));
+      rv[8] = CheckResult(cookie.get(), MUST_CONTAIN, "test=non-security2");
+
+      allTestsPassed = PrintResult(rv, 9) && allTestsPassed;
 
       // *** nsICookieManager{2} interface tests
       sBuffer = PR_sprintf_append(sBuffer, "*** Beginning nsICookieManager{2} interface tests...\n");
@@ -757,9 +802,9 @@ main(int32_t argc, char *argv[])
       uint32_t hostCookies = 0;
       rv[8] = NS_SUCCEEDED(cookieMgr2->CountCookiesFromHost(NS_LITERAL_CSTRING("cookiemgr.test"), &hostCookies)) &&
               hostCookies == 2;
-      // check CookieExists() using the third cookie
+      // check CookieExistsNative() using the third cookie
       bool found;
-      rv[9] = NS_SUCCEEDED(cookieMgr2->CookieExists(newDomainCookie, &found)) && found;
+      rv[9] = NS_SUCCEEDED(cookieMgr2->CookieExistsNative(newDomainCookie, &attrs,  &found)) && found;
 
 
       // remove the cookie, block it, and ensure it can't be added again
@@ -768,7 +813,7 @@ main(int32_t argc, char *argv[])
                                                     NS_LITERAL_CSTRING("/rabbit"),    // path
                                                     true,                             // is blocked
                                                     &attrs));                         // originAttributes
-      rv[11] = NS_SUCCEEDED(cookieMgr2->CookieExists(newDomainCookie, &found)) && !found;
+      rv[11] = NS_SUCCEEDED(cookieMgr2->CookieExistsNative(newDomainCookie, &attrs, &found)) && !found;
       rv[12] = NS_SUCCEEDED(cookieMgr2->AddNative(NS_LITERAL_CSTRING("new.domain"),     // domain
                                             NS_LITERAL_CSTRING("/rabbit"),        // path
                                             NS_LITERAL_CSTRING("test3"),          // name
@@ -778,14 +823,14 @@ main(int32_t argc, char *argv[])
                                             true,                              // is session
                                             INT64_MIN,                            // expiry time
                                             &attrs));                         // originAttributes
-      rv[13] = NS_SUCCEEDED(cookieMgr2->CookieExists(newDomainCookie, &found)) && !found;
+      rv[13] = NS_SUCCEEDED(cookieMgr2->CookieExistsNative(newDomainCookie, &attrs, &found)) && !found;
       // sleep four seconds, to make sure the second cookie has expired
       PR_Sleep(4 * PR_TicksPerSecond());
-      // check that both CountCookiesFromHost() and CookieExists() count the
+      // check that both CountCookiesFromHost() and CookieExistsNative() count the
       // expired cookie
       rv[14] = NS_SUCCEEDED(cookieMgr2->CountCookiesFromHost(NS_LITERAL_CSTRING("cookiemgr.test"), &hostCookies)) &&
               hostCookies == 2;
-      rv[15] = NS_SUCCEEDED(cookieMgr2->CookieExists(expiredCookie, &found)) && found;
+      rv[15] = NS_SUCCEEDED(cookieMgr2->CookieExistsNative(expiredCookie, &attrs, &found)) && found;
       // double-check RemoveAll() using the enumerator
       rv[16] = NS_SUCCEEDED(cookieMgr->RemoveAll());
       rv[17] = NS_SUCCEEDED(cookieMgr->GetEnumerator(getter_AddRefs(enumerator))) &&
@@ -817,6 +862,30 @@ main(int32_t argc, char *argv[])
       }
       GetACookie(cookieService, "http://creation.ordering.tests/", nullptr, getter_Copies(cookie));
       rv[0] = CheckResult(cookie.get(), MUST_EQUAL, expected.get());
+
+      allTestsPassed = PrintResult(rv, 1) && allTestsPassed;
+
+      // *** eviction and creation ordering tests after enable network.cookie.leave-secure-alone
+      sBuffer = PR_sprintf_append(sBuffer, "*** Beginning eviction and creation tests after enable nework.cookie.leave-secure-alone...\n");
+      // reset cookie
+      cookieMgr->RemoveAll();
+
+      for (int32_t i = 0; i < 60; ++i) {
+        name = NS_LITERAL_CSTRING("test");
+        name.AppendInt(i);
+        name += NS_LITERAL_CSTRING("=delete_non_security");
+
+        // Create 50 cookies that include the secure flag.
+        if (i < 50) {
+          name += NS_LITERAL_CSTRING("; secure");
+          SetACookie(cookieService, "https://creation.ordering.tests/", nullptr, name.get(), nullptr);
+        } else {
+          // non-security cookies will be removed beside the latest cookie that be created.
+          SetACookie(cookieService, "http://creation.ordering.tests/", nullptr, name.get(), nullptr);
+        }
+      }
+      GetACookie(cookieService, "http://creation.ordering.tests/", nullptr, getter_Copies(cookie));
+      rv[0] = CheckResult(cookie.get(), MUST_BE_NULL);
 
       allTestsPassed = PrintResult(rv, 1) && allTestsPassed;
 

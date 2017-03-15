@@ -18,7 +18,6 @@
 #include "TestHarness.h"
 #endif
 
-#define ARRAY_LENGTH(_x) (sizeof(_x) / sizeof(_x[0]))
 #define BEGIN_TEST fprintf(stderr, "START %s\n", __func__)
 #define END_TEST fprintf(stderr, "END %s\n", __func__)
 
@@ -30,6 +29,13 @@
 #else
 #define STREAM_FORMAT CUBEB_SAMPLE_S16LE
 #endif
+
+template<typename T, size_t N>
+constexpr size_t
+ARRAY_LENGTH(T(&)[N])
+{
+  return N;
+}
 
 static int dummy;
 static uint64_t total_frames_written;
@@ -462,6 +468,21 @@ test_stream_position(void)
     assert(position >= last_position);
     assert(position <= total_frames_written);
     last_position = position;
+    delay(500);
+  }
+
+  /* test that the position is valid even when starting and
+   * stopping the stream.  */
+  for (i = 0; i < 5; ++i) {
+    r = cubeb_stream_stop(stream);
+    assert(r == 0);
+    r = cubeb_stream_get_position(stream, &position);
+    assert(r == 0);
+    assert(last_position < position);
+    last_position = position;
+    delay(500);
+    r = cubeb_stream_start(stream);
+    assert(r == 0);
     delay(500);
   }
 

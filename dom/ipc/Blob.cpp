@@ -34,6 +34,7 @@
 #include "nsDataHashtable.h"
 #include "nsHashKeys.h"
 #include "nsID.h"
+#include "nsIFileStreams.h"
 #include "nsIInputStream.h"
 #include "nsIIPCSerializableInputStream.h"
 #include "nsIMultiplexInputStream.h"
@@ -208,7 +209,11 @@ EventTargetIsOnCurrentThread(nsIEventTarget* aEventTarget)
   }
 
   bool current;
-  MOZ_ALWAYS_SUCCEEDS(aEventTarget->IsOnCurrentThread(&current));
+
+  // If this fails, we are probably shutting down.
+  if (NS_WARN_IF(NS_FAILED(aEventTarget->IsOnCurrentThread(&current)))) {
+    return true;
+  }
 
   return current;
 }
@@ -405,6 +410,7 @@ class BlobInputStreamTether final
   : public nsIMultiplexInputStream
   , public nsISeekableStream
   , public nsIIPCSerializableInputStream
+  , public nsIFileMetadata
 {
   nsCOMPtr<nsIInputStream> mStream;
   RefPtr<BlobImpl> mBlobImpl;
@@ -412,6 +418,7 @@ class BlobInputStreamTether final
   nsIMultiplexInputStream* mWeakMultiplexStream;
   nsISeekableStream* mWeakSeekableStream;
   nsIIPCSerializableInputStream* mWeakSerializableStream;
+  nsIFileMetadata* mWeakFileMetadata;
 
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -419,6 +426,7 @@ public:
   NS_FORWARD_SAFE_NSIMULTIPLEXINPUTSTREAM(mWeakMultiplexStream)
   NS_FORWARD_SAFE_NSISEEKABLESTREAM(mWeakSeekableStream)
   NS_FORWARD_SAFE_NSIIPCSERIALIZABLEINPUTSTREAM(mWeakSerializableStream)
+  NS_FORWARD_SAFE_NSIFILEMETADATA(mWeakFileMetadata)
 
   BlobInputStreamTether(nsIInputStream* aStream, BlobImpl* aBlobImpl)
     : mStream(aStream)
@@ -426,6 +434,7 @@ public:
     , mWeakMultiplexStream(nullptr)
     , mWeakSeekableStream(nullptr)
     , mWeakSerializableStream(nullptr)
+    , mWeakFileMetadata(nullptr)
   {
     MOZ_ASSERT(aStream);
     MOZ_ASSERT(aBlobImpl);
@@ -449,6 +458,12 @@ public:
       MOZ_ASSERT(SameCOMIdentity(aStream, serializableStream));
       mWeakSerializableStream = serializableStream;
     }
+
+    nsCOMPtr<nsIFileMetadata> fileMetadata = do_QueryInterface(aStream);
+    if (fileMetadata) {
+      MOZ_ASSERT(SameCOMIdentity(aStream, fileMetadata));
+      mWeakFileMetadata = fileMetadata;
+    }
   }
 
 private:
@@ -466,6 +481,8 @@ NS_INTERFACE_MAP_BEGIN(BlobInputStreamTether)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsISeekableStream, mWeakSeekableStream)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIIPCSerializableInputStream,
                                      mWeakSerializableStream)
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIFileMetadata,
+                                     mWeakFileMetadata)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIInputStream)
 NS_INTERFACE_MAP_END
 
@@ -473,6 +490,7 @@ class RemoteInputStream final
   : public nsIInputStream
   , public nsISeekableStream
   , public nsIIPCSerializableInputStream
+  , public nsIFileMetadata
   , public IPrivateRemoteInputStream
 {
   Monitor mMonitor;
@@ -481,6 +499,7 @@ class RemoteInputStream final
   RefPtr<BlobImpl> mBlobImpl;
   nsCOMPtr<nsIEventTarget> mEventTarget;
   nsISeekableStream* mWeakSeekableStream;
+  nsIFileMetadata* mWeakFileMetadata;
   uint64_t mStart;
   uint64_t mLength;
 
@@ -529,9 +548,13 @@ private:
   bool
   IsSeekableStream();
 
+  bool
+  IsFileMetadata();
+
   NS_DECL_NSIINPUTSTREAM
   NS_DECL_NSISEEKABLESTREAM
   NS_DECL_NSIIPCSERIALIZABLEINPUTSTREAM
+  NS_DECL_NSIFILEMETADATA
 
   virtual nsIInputStream*
   BlockAndGetInternalStream() override;
@@ -712,38 +735,38 @@ CreateBlobImpl(const nsID& aKnownBlobIDData,
 }
 
 already_AddRefed<BlobImpl>
-CreateBlobImpl(const IPCStream& aStream,
+CreateBlobImpl(const BlobDataStream& aStream,
                const CreateBlobImplMetadata& aMetadata)
 {
   MOZ_ASSERT(gProcessType == GeckoProcessType_Default);
 
-  nsCOMPtr<nsIInputStream> inputStream = DeserializeIPCStream(aStream);
+  nsCOMPtr<nsIInputStream> inputStream = DeserializeIPCStream(aStream.stream());
   if (!inputStream) {
     ASSERT_UNLESS_FUZZING();
     return nullptr;
   }
 
-  uint64_t available;
-  MOZ_ALWAYS_SUCCEEDS(inputStream->Available(&available));
+  uint64_t length = aStream.length();
 
   RefPtr<BlobImpl> blobImpl;
   if (!aMetadata.mHasRecursed && aMetadata.IsFile()) {
-    if (available) {
+    if (length) {
       blobImpl =
-        new BlobImplStream(inputStream,
-                           aMetadata.mName,
-                           aMetadata.mContentType,
-                           aMetadata.mLastModifiedDate,
-                           available);
+        BlobImplStream::Create(inputStream,
+                               aMetadata.mName,
+                               aMetadata.mContentType,
+                               aMetadata.mLastModifiedDate,
+                               length);
     } else {
       blobImpl =
         new EmptyBlobImpl(aMetadata.mName,
                           aMetadata.mContentType,
                           aMetadata.mLastModifiedDate);
     }
-  } else if (available) {
+  } else if (length) {
     blobImpl =
-      new BlobImplStream(inputStream, aMetadata.mContentType, available);
+      BlobImplStream::Create(inputStream, aMetadata.mContentType,
+                             length);
   } else {
     blobImpl = new EmptyBlobImpl(aMetadata.mContentType);
   }
@@ -771,8 +794,8 @@ CreateBlobImplFromBlobData(const BlobData& aBlobData,
       break;
     }
 
-    case BlobData::TIPCStream: {
-      blobImpl = CreateBlobImpl(aBlobData.get_IPCStream(), aMetadata);
+    case BlobData::TBlobDataStream: {
+      blobImpl = CreateBlobImpl(aBlobData.get_BlobDataStream(), aMetadata);
       break;
     }
 
@@ -811,13 +834,10 @@ CreateBlobImpl(const nsTArray<BlobData>& aBlobDatas,
     return blobImpl.forget();
   }
 
-  FallibleTArray<RefPtr<BlobImpl>> fallibleBlobImpls;
-  if (NS_WARN_IF(!fallibleBlobImpls.SetLength(aBlobDatas.Length(), fallible))) {
+  nsTArray<RefPtr<BlobImpl>> blobImpls;
+  if (NS_WARN_IF(!blobImpls.SetLength(aBlobDatas.Length(), fallible))) {
     return nullptr;
   }
-
-  nsTArray<RefPtr<BlobImpl>> blobImpls;
-  fallibleBlobImpls.SwapElements(blobImpls);
 
   const bool hasRecursed = aMetadata.mHasRecursed;
   aMetadata.mHasRecursed = true;
@@ -841,10 +861,10 @@ CreateBlobImpl(const nsTArray<BlobData>& aBlobDatas,
   ErrorResult rv;
   RefPtr<BlobImpl> blobImpl;
   if (!hasRecursed && aMetadata.IsFile()) {
-    blobImpl = MultipartBlobImpl::Create(blobImpls, aMetadata.mName,
+    blobImpl = MultipartBlobImpl::Create(Move(blobImpls), aMetadata.mName,
                                          aMetadata.mContentType, rv);
   } else {
-    blobImpl = MultipartBlobImpl::Create(blobImpls, aMetadata.mContentType, rv);
+    blobImpl = MultipartBlobImpl::Create(Move(blobImpls), aMetadata.mContentType, rv);
   }
 
   if (NS_WARN_IF(rv.Failed())) {
@@ -951,13 +971,16 @@ BlobDataFromBlobImpl(ChildManagerType* aManager, BlobImpl* aBlobImpl,
   }
 
   ErrorResult rv;
+  uint64_t length = aBlobImpl->GetSize(rv);
+  MOZ_ALWAYS_TRUE(!rv.Failed());
+
   nsCOMPtr<nsIInputStream> inputStream;
   aBlobImpl->GetInternalStream(getter_AddRefs(inputStream), rv);
   MOZ_ALWAYS_TRUE(!rv.Failed());
 
   UniquePtr<AutoIPCStream> autoStream(new AutoIPCStream());
   autoStream->Serialize(inputStream, aManager);
-  aBlobData = autoStream->TakeValue();
+  aBlobData = BlobDataStream(autoStream->TakeValue(), length);
 
   aIPCStreams.AppendElement(Move(autoStream));
 }
@@ -969,6 +992,7 @@ RemoteInputStream::RemoteInputStream(BlobImpl* aBlobImpl,
   , mActor(nullptr)
   , mBlobImpl(aBlobImpl)
   , mWeakSeekableStream(nullptr)
+  , mWeakFileMetadata(nullptr)
   , mStart(aStart)
   , mLength(aLength)
 {
@@ -991,6 +1015,7 @@ RemoteInputStream::RemoteInputStream(BlobChild* aActor,
   , mBlobImpl(aBlobImpl)
   , mEventTarget(NS_GetCurrentThread())
   , mWeakSeekableStream(nullptr)
+  , mWeakFileMetadata(nullptr)
   , mStart(aStart)
   , mLength(aLength)
 {
@@ -1006,6 +1031,7 @@ RemoteInputStream::~RemoteInputStream()
   if (!IsOnOwningThread()) {
     mStream = nullptr;
     mWeakSeekableStream = nullptr;
+    mWeakFileMetadata = nullptr;
 
     if (mBlobImpl) {
       ReleaseOnTarget(mBlobImpl, mEventTarget);
@@ -1021,8 +1047,10 @@ RemoteInputStream::SetStream(nsIInputStream* aStream)
 
   nsCOMPtr<nsIInputStream> stream = aStream;
   nsCOMPtr<nsISeekableStream> seekableStream = do_QueryInterface(aStream);
+  nsCOMPtr<nsIFileMetadata> fileMetadata = do_QueryInterface(aStream);
 
   MOZ_ASSERT_IF(seekableStream, SameCOMIdentity(aStream, seekableStream));
+  MOZ_ASSERT_IF(fileMetadata, SameCOMIdentity(aStream, fileMetadata));
 
   {
     MonitorAutoLock lock(mMonitor);
@@ -1031,9 +1059,11 @@ RemoteInputStream::SetStream(nsIInputStream* aStream)
 
     if (!mStream) {
       MOZ_ASSERT(!mWeakSeekableStream);
+      MOZ_ASSERT(!mWeakFileMetadata);
 
       mStream.swap(stream);
       mWeakSeekableStream = seekableStream;
+      mWeakFileMetadata = fileMetadata;
 
       mMonitor.Notify();
     }
@@ -1115,6 +1145,21 @@ RemoteInputStream::IsSeekableStream()
   return !!mWeakSeekableStream;
 }
 
+bool
+RemoteInputStream::IsFileMetadata()
+{
+  if (IsOnOwningThread()) {
+    if (!mStream) {
+      NS_WARNING("Don't know if this stream supports file metadata yet!");
+      return true;
+    }
+  } else {
+    ReallyBlockAndWaitForStream();
+  }
+
+  return !!mWeakFileMetadata;
+}
+
 NS_IMPL_ADDREF(RemoteInputStream)
 NS_IMPL_RELEASE(RemoteInputStream)
 
@@ -1122,6 +1167,7 @@ NS_INTERFACE_MAP_BEGIN(RemoteInputStream)
   NS_INTERFACE_MAP_ENTRY(nsIInputStream)
   NS_INTERFACE_MAP_ENTRY(nsIIPCSerializableInputStream)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsISeekableStream, IsSeekableStream())
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIFileMetadata, IsFileMetadata())
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIInputStream)
   NS_INTERFACE_MAP_ENTRY(IPrivateRemoteInputStream)
 NS_INTERFACE_MAP_END
@@ -1150,6 +1196,8 @@ RemoteInputStream::Available(uint64_t* aAvailable)
 
     rv = mStream->Available(aAvailable);
     NS_ENSURE_SUCCESS(rv, rv);
+
+    return NS_OK;
   }
 
 #ifdef DEBUG
@@ -1311,6 +1359,69 @@ RemoteInputStream::Deserialize(const InputStreamParams& /* aParams */,
   // See InputStreamUtils.cpp to see how deserialization of a
   // RemoteInputStream is special-cased.
   MOZ_CRASH("RemoteInputStream should never be deserialized");
+}
+
+NS_IMETHODIMP
+RemoteInputStream::GetSize(int64_t* aSize)
+{
+  nsresult rv = BlockAndWaitForStream();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  if (!mWeakFileMetadata) {
+    NS_WARNING("Underlying blob stream doesn't support file metadata!");
+    return NS_ERROR_NO_INTERFACE;
+  }
+
+  rv = mWeakFileMetadata->GetSize(aSize);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+RemoteInputStream::GetLastModified(int64_t* aLastModified)
+{
+  nsresult rv = BlockAndWaitForStream();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  if (!mWeakFileMetadata) {
+    NS_WARNING("Underlying blob stream doesn't support file metadata!");
+    return NS_ERROR_NO_INTERFACE;
+  }
+
+  rv = mWeakFileMetadata->GetLastModified(aLastModified);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+RemoteInputStream::GetFileDescriptor(PRFileDesc** aFileDescriptor)
+{
+  nsresult rv = BlockAndWaitForStream();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  if (!mWeakFileMetadata) {
+    NS_WARNING("Underlying blob stream doesn't support file metadata!");
+    return NS_ERROR_NO_INTERFACE;
+  }
+
+  rv = mWeakFileMetadata->GetFileDescriptor(aFileDescriptor);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
 }
 
 Maybe<uint64_t>
@@ -1965,10 +2076,10 @@ public:
   GetName(nsAString& aName) const override;
 
   virtual void
-  GetPath(nsAString& aPath) const override;
+  GetDOMPath(nsAString& aPath) const override;
 
   virtual void
-  SetPath(const nsAString& aPath) override;
+  SetDOMPath(const nsAString& aPath) override;
 
   virtual int64_t
   GetLastModified(ErrorResult& aRv) override;
@@ -2068,7 +2179,7 @@ RemoteBlobImpl::RemoteBlobImpl(BlobChild* aActor,
                                BlobImpl* aRemoteBlobImpl,
                                const nsAString& aName,
                                const nsAString& aContentType,
-                               const nsAString& aPath,
+                               const nsAString& aDOMPath,
                                uint64_t aLength,
                                int64_t aModDate,
                                BlobImplIsDirectory aIsDirectory,
@@ -2078,7 +2189,7 @@ RemoteBlobImpl::RemoteBlobImpl(BlobChild* aActor,
   , mMutex("BlobChild::RemoteBlobImpl::mMutex")
   , mIsSlice(false), mIsDirectory(aIsDirectory == eDirectory)
 {
-  SetPath(aPath);
+  SetDOMPath(aDOMPath);
 
   if (aIsSameProcessBlob) {
     MOZ_ASSERT(aRemoteBlobImpl);
@@ -2736,16 +2847,16 @@ RemoteBlobImpl::GetName(nsAString& aName) const
 
 void
 BlobParent::
-RemoteBlobImpl::GetPath(nsAString& aPath) const
+RemoteBlobImpl::GetDOMPath(nsAString& aPath) const
 {
-  mBlobImpl->GetPath(aPath);
+  mBlobImpl->GetDOMPath(aPath);
 }
 
 void
 BlobParent::
-RemoteBlobImpl::SetPath(const nsAString& aPath)
+RemoteBlobImpl::SetDOMPath(const nsAString& aPath)
 {
-  mBlobImpl->SetPath(aPath);
+  mBlobImpl->SetDOMPath(aPath);
 }
 
 int64_t
@@ -3087,8 +3198,8 @@ BlobChild::CommonInit(BlobChild* aOther, BlobImpl* aBlobImpl)
     nsAutoString name;
     otherImpl->GetName(name);
 
-    nsAutoString path;
-    otherImpl->GetPath(path);
+    nsAutoString domPath;
+    otherImpl->GetDOMPath(domPath);
 
     int64_t modDate = otherImpl->GetLastModified(rv);
     MOZ_ASSERT(!rv.Failed());
@@ -3098,7 +3209,7 @@ BlobChild::CommonInit(BlobChild* aOther, BlobImpl* aBlobImpl)
       RemoteBlobImpl::BlobImplIsDirectory::eNotDirectory;
 
     remoteBlob =
-      new RemoteBlobImpl(this, otherImpl, name, contentType, path,
+      new RemoteBlobImpl(this, otherImpl, name, contentType, domPath,
                          length, modDate, directory,
                          false /* SameProcessBlobImpl */);
   } else {
@@ -3182,8 +3293,8 @@ BlobChild::CommonInit(const ChildBlobConstructorParams& aParams)
         nsAutoString name;
         blobImpl->GetName(name);
 
-        nsAutoString path;
-        blobImpl->GetPath(path);
+        nsAutoString domPath;
+        blobImpl->GetDOMPath(domPath);
 
         int64_t lastModifiedDate = blobImpl->GetLastModified(rv);
         MOZ_ASSERT(!rv.Failed());
@@ -3198,7 +3309,7 @@ BlobChild::CommonInit(const ChildBlobConstructorParams& aParams)
                              blobImpl,
                              name,
                              contentType,
-                             path,
+                             domPath,
                              size,
                              lastModifiedDate,
                              directory,
@@ -3381,14 +3492,14 @@ BlobChild::GetOrCreateFromImpl(ChildManagerType* aManager,
       nsAutoString name;
       aBlobImpl->GetName(name);
 
-      nsAutoString path;
-      aBlobImpl->GetPath(path);
+      nsAutoString domPath;
+      aBlobImpl->GetDOMPath(domPath);
 
       int64_t modDate = aBlobImpl->GetLastModified(rv);
       MOZ_ASSERT(!rv.Failed());
 
       blobParams =
-        FileBlobConstructorParams(name, contentType, path, length, modDate,
+        FileBlobConstructorParams(name, contentType, domPath, length, modDate,
                                   aBlobImpl->IsDirectory(), blobData);
     } else {
       blobParams = NormalBlobConstructorParams(contentType, length, blobData);
@@ -3591,10 +3702,7 @@ BlobChild::SetMysteryBlobInfo(const nsString& aContentType, uint64_t aLength)
   MOZ_ASSERT(mBlobImpl);
   MOZ_ASSERT(mRemoteBlobImpl);
 
-  nsString voidString;
-  voidString.SetIsVoid(true);
-
-  mBlobImpl->SetLazyData(voidString, aContentType, aLength, INT64_MAX);
+  mBlobImpl->SetLazyData(NullString(), aContentType, aLength, INT64_MAX);
 
   NormalBlobConstructorParams params(aContentType,
                                      aLength,
@@ -3937,14 +4045,14 @@ BlobParent::GetOrCreateFromImpl(ParentManagerType* aManager,
         nsAutoString name;
         aBlobImpl->GetName(name);
 
-        nsAutoString path;
-        aBlobImpl->GetPath(path);
+        nsAutoString domPath;
+        aBlobImpl->GetDOMPath(domPath);
 
         int64_t modDate = aBlobImpl->GetLastModified(rv);
         MOZ_ASSERT(!rv.Failed());
 
         blobParams =
-          FileBlobConstructorParams(name, contentType, path, length, modDate,
+          FileBlobConstructorParams(name, contentType, domPath, length, modDate,
                                     aBlobImpl->IsDirectory(), void_t());
       } else {
         blobParams = NormalBlobConstructorParams(contentType, length, void_t());
@@ -4417,10 +4525,7 @@ BlobParent::RecvResolveMystery(const ResolveMysteryParams& aParams)
         return false;
       }
 
-      nsString voidString;
-      voidString.SetIsVoid(true);
-
-      mBlobImpl->SetLazyData(voidString,
+      mBlobImpl->SetLazyData(NullString(),
                              params.contentType(),
                              params.length(),
                              INT64_MAX);

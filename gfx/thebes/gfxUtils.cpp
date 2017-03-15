@@ -20,6 +20,7 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/Logging.h"
+#include "mozilla/gfx/PathHelpers.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtrExtensions.h"
@@ -719,25 +720,41 @@ gfxUtils::ClipToRegion(gfxContext* aContext, const nsIntRegion& aRegion)
 /*static*/ void
 gfxUtils::ClipToRegion(DrawTarget* aTarget, const nsIntRegion& aRegion)
 {
-  if (!aRegion.IsComplex()) {
-    IntRect rect = aRegion.GetBounds();
-    aTarget->PushClipRect(Rect(rect.x, rect.y, rect.width, rect.height));
+  uint32_t numRects = aRegion.GetNumRects();
+  // If there is only one rect, then the region bounds are equivalent to the
+  // contents. So just use push a single clip rect with the bounds.
+  if (numRects == 1) {
+    aTarget->PushClipRect(Rect(aRegion.GetBounds()));
     return;
   }
 
-  RefPtr<PathBuilder> pb = aTarget->CreatePathBuilder();
-
-  for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
-    const IntRect& r = iter.Get();
-    pb->MoveTo(Point(r.x, r.y));
-    pb->LineTo(Point(r.XMost(), r.y));
-    pb->LineTo(Point(r.XMost(), r.YMost()));
-    pb->LineTo(Point(r.x, r.YMost()));
-    pb->Close();
+  // Check if the target's transform will preserve axis-alignment and
+  // pixel-alignment for each rect. For now, just handle the common case
+  // of integer translations.
+  Matrix transform = aTarget->GetTransform();
+  if (transform.IsIntegerTranslation()) {
+    IntPoint translation = RoundedToInt(transform.GetTranslation());
+    AutoTArray<IntRect, 16> rects;
+    rects.SetLength(numRects);
+    uint32_t i = 0;
+    // Build the list of transformed rects by adding in the translation.
+    for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+      IntRect rect = iter.Get();
+      rect.MoveBy(translation);
+      rects[i++] = rect;
+    }
+    aTarget->PushDeviceSpaceClipRects(rects.Elements(), rects.Length());
+  } else {
+    // The transform does not produce axis-aligned rects or a rect was not
+    // pixel-aligned. So just build a path with all the rects and clip to it
+    // instead.
+    RefPtr<PathBuilder> pathBuilder = aTarget->CreatePathBuilder();
+    for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+      AppendRectToPath(pathBuilder, Rect(iter.Get()));
+    }
+    RefPtr<Path> path = pathBuilder->Finish();
+    aTarget->PushClip(path);
   }
-  RefPtr<Path> path = pb->Finish();
-
-  aTarget->PushClip(path);
 }
 
 /*static*/ gfxFloat
@@ -1129,6 +1146,64 @@ gfxUtils::EncodeSourceSurface(SourceSurface* aSurface,
 {
   return EncodeSourceSurfaceInternal(aSurface, aMimeType, aOutputOptions,
                                      aBinaryOrData, aFile, nullptr);
+}
+
+/* From Rec601:
+[R]   [1.1643835616438356,  0.0,                 1.5960267857142858]      [ Y -  16]
+[G] = [1.1643835616438358, -0.3917622900949137, -0.8129676472377708]    x [Cb - 128]
+[B]   [1.1643835616438356,  2.017232142857143,   8.862867620416422e-17]   [Cr - 128]
+
+For [0,1] instead of [0,255], and to 5 places:
+[R]   [1.16438,  0.00000,  1.59603]   [ Y - 0.06275]
+[G] = [1.16438, -0.39176, -0.81297] x [Cb - 0.50196]
+[B]   [1.16438,  2.01723,  0.00000]   [Cr - 0.50196]
+
+From Rec709:
+[R]   [1.1643835616438356,  4.2781193979771426e-17, 1.7927410714285714]     [ Y -  16]
+[G] = [1.1643835616438358, -0.21324861427372963,   -0.532909328559444]    x [Cb - 128]
+[B]   [1.1643835616438356,  2.1124017857142854,     0.0]                    [Cr - 128]
+
+For [0,1] instead of [0,255], and to 5 places:
+[R]   [1.16438,  0.00000,  1.79274]   [ Y - 0.06275]
+[G] = [1.16438, -0.21325, -0.53291] x [Cb - 0.50196]
+[B]   [1.16438,  2.11240,  0.00000]   [Cr - 0.50196]
+*/
+
+/* static */ float*
+gfxUtils::Get4x3YuvColorMatrix(YUVColorSpace aYUVColorSpace)
+{
+  static const float yuv_to_rgb_rec601[12] = { 1.16438f,  0.0f,      1.59603f, 0.0f,
+                                               1.16438f, -0.39176f, -0.81297f, 0.0f,
+                                               1.16438f,  2.01723f,  0.0f,     0.0f,
+                                             };
+
+  static const float yuv_to_rgb_rec709[12] = { 1.16438f,  0.0f,      1.79274f, 0.0f,
+                                               1.16438f, -0.21325f, -0.53291f, 0.0f,
+                                               1.16438f,  2.11240f,  0.0f,     0.0f,
+                                             };
+
+  if (aYUVColorSpace == YUVColorSpace::BT709) {
+    return const_cast<float*>(yuv_to_rgb_rec709);
+  } else {
+    return const_cast<float*>(yuv_to_rgb_rec601);
+  }
+}
+
+/* static */ float*
+gfxUtils::Get3x3YuvColorMatrix(YUVColorSpace aYUVColorSpace)
+{
+  static const float yuv_to_rgb_rec601[9] = {
+    1.16438f, 1.16438f, 1.16438f, 0.0f, -0.39176f, 2.01723f, 1.59603f, -0.81297f, 0.0f,
+  };
+  static const float yuv_to_rgb_rec709[9] = {
+    1.16438f, 1.16438f, 1.16438f, 0.0f, -0.21325f, 2.11240f, 1.79274f, -0.53291f, 0.0f,
+  };
+
+  if (aYUVColorSpace == YUVColorSpace::BT709) {
+    return const_cast<float*>(yuv_to_rgb_rec709);
+  } else {
+    return const_cast<float*>(yuv_to_rgb_rec601);
+  }
 }
 
 /* static */ void

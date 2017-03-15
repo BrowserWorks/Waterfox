@@ -97,7 +97,13 @@ enum class ImageFormat {
   /**
    * A wrapper around a drawable TextureClient.
    */
-  TEXTURE_WRAPPER
+  TEXTURE_WRAPPER,
+
+  /**
+   * An opaque handle that refers to an Image stored in the GPU
+   * process.
+   */
+  GPU_VIDEO
 };
 
 enum class StereoMode {
@@ -107,6 +113,13 @@ enum class StereoMode {
   BOTTOM_TOP,
   TOP_BOTTOM,
   MAX,
+};
+
+enum class YUVColorSpace {
+  BT601,
+  BT709,
+  // This represents the unknown format.
+  UNKNOWN,
 };
 
 } // namespace mozilla

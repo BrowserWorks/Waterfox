@@ -17,7 +17,7 @@ int32_t XPCWrappedNativeProto::gDEBUG_LiveProtoCount = 0;
 
 XPCWrappedNativeProto::XPCWrappedNativeProto(XPCWrappedNativeScope* Scope,
                                              nsIClassInfo* ClassInfo,
-                                             XPCNativeSet* Set)
+                                             already_AddRefed<XPCNativeSet>&& Set)
     : mScope(Scope),
       mJSProtoObject(nullptr),
       mClassInfo(ClassInfo),
@@ -115,7 +115,7 @@ XPCWrappedNativeProto::CallPostCreatePrototype()
 void
 XPCWrappedNativeProto::JSProtoObjectFinalized(js::FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(obj == mJSProtoObject, "huh?");
+    MOZ_ASSERT(obj == mJSProtoObject.unbarrieredGet(), "huh?");
 
     // Only remove this proto from the map if it is the one in the map.
     ClassInfo2WrappedNativeProtoMap* map = GetScope()->GetWrappedNativeProtoMap();
@@ -130,7 +130,7 @@ XPCWrappedNativeProto::JSProtoObjectFinalized(js::FreeOp* fop, JSObject* obj)
 void
 XPCWrappedNativeProto::JSProtoObjectMoved(JSObject* obj, const JSObject* old)
 {
-    MOZ_ASSERT(mJSProtoObject == old);
+    MOZ_ASSERT(mJSProtoObject.unbarrieredGet() == old);
     mJSProtoObject.init(obj); // Update without triggering barriers.
 }
 
@@ -166,12 +166,11 @@ XPCWrappedNativeProto::GetNewOrUsed(XPCWrappedNativeScope* scope,
     if (proto)
         return proto;
 
-    AutoMarkingNativeSetPtr set(cx);
-    set = XPCNativeSet::GetNewOrUsed(classInfo);
+    RefPtr<XPCNativeSet> set = XPCNativeSet::GetNewOrUsed(classInfo);
     if (!set)
         return nullptr;
 
-    proto = new XPCWrappedNativeProto(scope, classInfo, set);
+    proto = new XPCWrappedNativeProto(scope, classInfo, set.forget());
 
     if (!proto || !proto->Init(scriptableCreateInfo, callPostCreatePrototype)) {
         delete proto.get();
@@ -193,7 +192,7 @@ XPCWrappedNativeProto::DebugDump(int16_t depth)
         XPC_LOG_ALWAYS(("gDEBUG_LiveProtoCount is %d", gDEBUG_LiveProtoCount));
         XPC_LOG_ALWAYS(("mScope @ %x", mScope));
         XPC_LOG_ALWAYS(("mJSProtoObject @ %x", mJSProtoObject.get()));
-        XPC_LOG_ALWAYS(("mSet @ %x", mSet));
+        XPC_LOG_ALWAYS(("mSet @ %x", mSet.get()));
         XPC_LOG_ALWAYS(("mScriptableInfo @ %x", mScriptableInfo));
         if (depth && mScriptableInfo) {
             XPC_LOG_INDENT();

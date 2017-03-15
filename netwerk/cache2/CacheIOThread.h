@@ -43,11 +43,11 @@ public:
   enum ELevel : uint32_t {
     OPEN_PRIORITY,
     READ_PRIORITY,
+    MANAGEMENT, // Doesn't do any actual I/O
     OPEN,
     READ,
-    MANAGEMENT,
+    WRITE_PRIORITY,
     WRITE,
-    CLOSE = WRITE,
     INDEX,
     EVICT,
     LAST_LEVEL,
@@ -66,6 +66,8 @@ public:
   // that is intended to evict stuff from the cache.
   nsresult DispatchAfterPendingOpens(nsIRunnable* aRunnable);
   bool IsCurrentThread();
+
+  uint32_t QueueSize(bool highPriority);
 
   /**
    * Callable only on this thread, checks if there is an event waiting in
@@ -117,6 +119,10 @@ private:
   Atomic<nsIThread *> mXPCOMThread;
   Atomic<uint32_t, Relaxed> mLowestLevelWaiting;
   uint32_t mCurrentlyExecutingLevel;
+
+  // Keeps the length of the each event queue, since LoopOneLevel moves all
+  // events into a local array.
+  Atomic<int32_t> mQueueLength[LAST_LEVEL];
 
   EventQueue mEventQueue[LAST_LEVEL];
   // Raised when nsIEventTarget.Dispatch() is called on this thread

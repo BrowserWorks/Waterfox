@@ -118,7 +118,7 @@ this.FinderIterator = {
     let window = finder._getWindow();
     let resolver;
     let promise = new Promise(resolve => resolver = resolve);
-    let iterParams = { caseSensitive, entireWord, linksOnly, useCache, word };
+    let iterParams = { caseSensitive, entireWord, linksOnly, useCache, window, word };
 
     this._listeners.set(listener, { limit, onEnd: resolver });
 
@@ -150,7 +150,7 @@ this.FinderIterator = {
     // Start!
     this.running = true;
     this._currentParams = iterParams;
-    this._findAllRanges(finder, window, ++this._spawnId);
+    this._findAllRanges(finder, ++this._spawnId);
 
     return promise;
   },
@@ -169,6 +169,10 @@ this.FinderIterator = {
     if (this._timer) {
       clearTimeout(this._timer);
       this._timer = null;
+    }
+    if (this._runningFindResolver) {
+      this._runningFindResolver();
+      this._runningFindResolver = null;
     }
 
     if (cachePrevious) {
@@ -205,7 +209,7 @@ this.FinderIterator = {
     this.running = true;
     this._currentParams = iterParams;
 
-    this._findAllRanges(finder, finder._getWindow(), ++this._spawnId);
+    this._findAllRanges(finder, ++this._spawnId);
     this._notifyListeners("restart", iterParams);
   },
 
@@ -219,6 +223,10 @@ this.FinderIterator = {
     if (this._timer) {
       clearTimeout(this._timer);
       this._timer = null;
+    }
+    if (this._runningFindResolver) {
+      this._runningFindResolver();
+      this._runningFindResolver = null;
     }
 
     this._catchingUp.clear();
@@ -252,6 +260,23 @@ this.FinderIterator = {
       this._currentParams.entireWord === entireWord &&
       this._currentParams.linksOnly === linksOnly &&
       this._currentParams.word == word);
+  },
+
+  /**
+   * The default mode of operation of the iterator is to not accept duplicate
+   * listeners, resolve the promise of the older listeners and replace it with
+   * the new listener.
+   * Consumers may opt-out of this behavior by using this check and not call
+   * start().
+   *
+   * @param  {Object} paramSet Property bag with the same signature as you would
+   *                           pass into `start()`
+   * @return {Boolean}
+   */
+  isAlreadyRunning(paramSet) {
+    return (this.running &&
+      this._areParamsEqual(this._currentParams, paramSet) &&
+      this._listeners.has(paramSet.listener));
   },
 
   /**
@@ -309,6 +334,7 @@ this.FinderIterator = {
       paramSet1.caseSensitive === paramSet2.caseSensitive &&
       paramSet1.entireWord === paramSet2.entireWord &&
       paramSet1.linksOnly === paramSet2.linksOnly &&
+      paramSet1.window === paramSet2.window &&
       NLP.levenshtein(paramSet1.word, paramSet2.word) <= allowDistance);
   },
 
@@ -411,18 +437,31 @@ this.FinderIterator = {
    * Internal; see the documentation of the start() method above.
    *
    * @param {Finder}       finder  Currently active Finder instance
-   * @param {nsIDOMWindow} window  The window to search in
    * @param {Number}       spawnId Since `stop()` is synchronous and this method
    *                               is not, this identifier is used to learn if
    *                               it's supposed to still continue after a pause.
    * @yield {nsIDOMRange}
    */
-  _findAllRanges: Task.async(function* (finder, window, spawnId) {
+  _findAllRanges: Task.async(function* (finder, spawnId) {
     if (this._timeout) {
       if (this._timer)
         clearTimeout(this._timer);
-      yield new Promise(resolve => this._timer = setTimeout(resolve, this._timeout));
-      this._timer = null;
+      if (this._runningFindResolver)
+        this._runningFindResolver();
+
+      let timeout = this._timeout;
+      let searchTerm = this._currentParams.word;
+      // Wait a little longer when the first or second character is typed into
+      // the findbar.
+      if (searchTerm.length == 1)
+        timeout *= 4;
+      else if (searchTerm.length == 2)
+        timeout *= 2;
+      yield new Promise(resolve => {
+        this._runningFindResolver = resolve;
+        this._timer = setTimeout(resolve, timeout);
+      });
+      this._timer = this._runningFindResolver = null;
       // During the timeout, we could have gotten the signal to stop iterating.
       // Make sure we do here.
       if (!this.running || spawnId !== this._spawnId)
@@ -431,10 +470,10 @@ this.FinderIterator = {
 
     this._notifyListeners("start", this.params);
 
+    let { linksOnly, window, word } = this._currentParams;
     // First we collect all frames we need to search through, whilst making sure
     // that the parent window gets dibs.
     let frames = [window].concat(this._collectFrames(window, finder));
-    let { linksOnly, word } = this._currentParams;
     let iterCount = 0;
     for (let frame of frames) {
       for (let range of this._iterateDocument(this._currentParams, frame)) {
@@ -444,7 +483,7 @@ this.FinderIterator = {
           return;
 
         // Deal with links-only mode here.
-        if (linksOnly && this._rangeStartsInLink(range))
+        if (linksOnly && !this._rangeStartsInLink(range))
           continue;
 
         this.ranges.push(range);

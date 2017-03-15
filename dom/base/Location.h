@@ -44,119 +44,179 @@ public:
   NS_DECL_NSIDOMLOCATION
 
   #define THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME() { \
-    if (!CallerSubsumes()) { \
+    if (!CallerSubsumes(&aSubjectPrincipal)) { \
       aError.Throw(NS_ERROR_DOM_SECURITY_ERR); \
       return; \
     } \
   }
 
   // WebIDL API:
-  void Assign(const nsAString& aUrl, ErrorResult& aError)
+  void Assign(const nsAString& aUrl,
+              nsIPrincipal& aSubjectPrincipal,
+              ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = Assign(aUrl);
   }
 
-  void Replace(const nsAString& aUrl, ErrorResult& aError)
+  void Replace(const nsAString& aUrl,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     aError = Replace(aUrl);
   }
 
-  void Reload(bool aForceget, ErrorResult& aError)
+  void Reload(bool aForceget,
+              nsIPrincipal& aSubjectPrincipal,
+              ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = Reload(aForceget);
   }
-  void GetHref(nsAString& aHref, ErrorResult& aError)
+
+  void GetHref(nsAString& aHref,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHref(aHref);
   }
-  void SetHref(const nsAString& aHref, ErrorResult& aError)
+
+  void SetHref(const nsAString& aHref,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     aError = SetHref(aHref);
   }
-  void GetOrigin(nsAString& aOrigin, ErrorResult& aError)
+
+  void GetOrigin(nsAString& aOrigin,
+                 nsIPrincipal& aSubjectPrincipal,
+                 ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetOrigin(aOrigin);
   }
-  void GetProtocol(nsAString& aProtocol, ErrorResult& aError)
+
+  void GetProtocol(nsAString& aProtocol,
+                   nsIPrincipal& aSubjectPrincipal,
+                   ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetProtocol(aProtocol);
   }
-  void SetProtocol(const nsAString& aProtocol, ErrorResult& aError)
+
+  void SetProtocol(const nsAString& aProtocol,
+                   nsIPrincipal& aSubjectPrincipal,
+                   ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetProtocol(aProtocol);
   }
-  void GetHost(nsAString& aHost, ErrorResult& aError)
+
+  void GetHost(nsAString& aHost,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHost(aHost);
   }
-  void SetHost(const nsAString& aHost, ErrorResult& aError)
+
+  void SetHost(const nsAString& aHost,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetHost(aHost);
   }
-  void GetHostname(nsAString& aHostname, ErrorResult& aError)
+
+  void GetHostname(nsAString& aHostname,
+                   nsIPrincipal& aSubjectPrincipal,
+                   ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHostname(aHostname);
   }
-  void SetHostname(const nsAString& aHostname, ErrorResult& aError)
+
+  void SetHostname(const nsAString& aHostname,
+                   nsIPrincipal& aSubjectPrincipal,
+                   ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetHostname(aHostname);
   }
-  void GetPort(nsAString& aPort, ErrorResult& aError)
+
+  void GetPort(nsAString& aPort,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetPort(aPort);
   }
-  void SetPort(const nsAString& aPort, ErrorResult& aError)
+
+  void SetPort(const nsAString& aPort,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetPort(aPort);
   }
-  void GetPathname(nsAString& aPathname, ErrorResult& aError)
+
+  void GetPathname(nsAString& aPathname,
+                   nsIPrincipal& aSubjectPrincipal,
+                   ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetPathname(aPathname);
   }
-  void SetPathname(const nsAString& aPathname, ErrorResult& aError)
+
+  void SetPathname(const nsAString& aPathname,
+                   nsIPrincipal& aSubjectPrincipal,
+                   ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetPathname(aPathname);
   }
-  void GetSearch(nsAString& aSeach, ErrorResult& aError)
+
+  void GetSearch(nsAString& aSeach,
+                 nsIPrincipal& aSubjectPrincipal,
+                 ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetSearch(aSeach);
   }
-  void SetSearch(const nsAString& aSeach, ErrorResult& aError)
+
+  void SetSearch(const nsAString& aSeach,
+                 nsIPrincipal& aSubjectPrincipal,
+                 ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetSearch(aSeach);
   }
 
-  void GetHash(nsAString& aHash, ErrorResult& aError)
+  void GetHash(nsAString& aHash,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHash(aHash);
   }
-  void SetHash(const nsAString& aHash, ErrorResult& aError)
+
+  void SetHash(const nsAString& aHash,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aError)
   {
     THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetHash(aHash);
   }
-  void Stringify(nsAString& aRetval, ErrorResult& aError)
+
+  void Stringify(nsAString& aRetval,
+                 nsIPrincipal& aSubjectPrincipal,
+                 ErrorResult& aError)
   {
     // GetHref checks CallerSubsumes.
-    GetHref(aRetval, aError);
+    GetHref(aRetval, aSubjectPrincipal, aError);
   }
+
   nsPIDOMWindowInner* GetParentObject() const
   {
     return mInnerWindow;
@@ -185,7 +245,7 @@ protected:
 
   nsresult GetSourceBaseURL(JSContext* cx, nsIURI** sourceURL);
   nsresult CheckURL(nsIURI *url, nsIDocShellLoadInfo** aLoadInfo);
-  bool CallerSubsumes();
+  bool CallerSubsumes(nsIPrincipal* aSubjectPrincipal);
 
   nsString mCachedHash;
   nsCOMPtr<nsPIDOMWindowInner> mInnerWindow;

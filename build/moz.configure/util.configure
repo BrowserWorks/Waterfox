@@ -118,6 +118,9 @@ def normalize_path():
                 out = ctypes.create_unicode_buffer(size)
                 needed = GetShortPathNameW(path, out, size)
                 if size >= needed:
+                    if ' ' in out.value:
+                        die("GetShortPathName returned a long path name. "
+                            "Are 8dot3 filenames disabled?")
                     return normsep(out.value)
                 size = needed
 
@@ -333,13 +336,13 @@ def namespace(**kwargs):
 # or, for convenience, a @depends function.
 @template
 @imports(_from='inspect', _import='isfunction')
-@imports(_from='mozbuild.configure', _import='DependsFunction')
+@imports(_from='mozbuild.configure', _import='SandboxDependsFunction')
 def dependable(obj):
-    if isinstance(obj, DependsFunction):
+    if isinstance(obj, SandboxDependsFunction):
         return obj
     if isfunction(obj):
-        return depends('--help')(lambda _: obj())
-    return depends('--help')(lambda _: obj)
+        return depends(when=True)(obj)
+    return depends(when=True)(lambda: obj)
 
 
 always = dependable(True)
@@ -356,21 +359,15 @@ never = dependable(False)
 #       return namespace(foo=value)
 #   set_config('FOO', delayed_getattr(option, 'foo')
 @template
-@imports('__sandbox__')
 def delayed_getattr(func, key):
-    _, deps = __sandbox__._depends.get(func, (None, ()))
-
-    def result(value, _=None):
+    @depends(func)
+    def result(value):
         # The @depends function we're being passed may have returned
         # None, or an object that simply doesn't have the wanted key.
         # In that case, just return None.
         return getattr(value, key, None)
 
-    # Automatically add a dependency on --help when the given @depends
-    # function itself depends on --help.
-    if __sandbox__._help_option in deps:
-        return depends(func, '--help')(result)
-    return depends(func)(result)
+    return result
 
 
 # Like @depends, but the decorated function is only called if one of the
@@ -441,13 +438,3 @@ def add_old_configure_arg(arg):
     def add_arg(args, arg):
         if arg:
             args.append(arg)
-
-# Includes a file when the given condition evaluates to a truthy value.
-@template
-def include_when(filename, when):
-    # Assume, for now, our condition already depends on --help.
-    @depends(when, '--help')
-    def conditional_include(value, _):
-        if value:
-            return filename
-    include(conditional_include)

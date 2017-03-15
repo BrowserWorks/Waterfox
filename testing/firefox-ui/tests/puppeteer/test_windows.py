@@ -2,16 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from marionette_driver import By, Wait
-from marionette_driver.errors import NoSuchWindowException
-
 import firefox_puppeteer.errors as errors
 
+from firefox_puppeteer import PuppeteerMixin
 from firefox_puppeteer.ui.windows import BaseWindow
-from firefox_ui_harness.testcases import FirefoxTestCase
+from marionette_driver import By, Wait
+from marionette_driver.errors import NoSuchWindowException
+from marionette_harness import MarionetteTestCase
 
 
-class BaseWindowTestCase(FirefoxTestCase):
+class BaseWindowTestCase(PuppeteerMixin, MarionetteTestCase):
+
     def setUp(self):
         """
         These tests open and close windows pretty rapidly, which
@@ -26,17 +27,24 @@ class BaseWindowTestCase(FirefoxTestCase):
         setting dom.ipc.tabs.shutdownTimeoutSecs to 0, which disables
         the shutdown timer.
         """
-        FirefoxTestCase.setUp(self)
-        self.prefs.set_pref('dom.ipc.tabs.shutdownTimeoutSecs', 0)
+        super(BaseWindowTestCase, self).setUp()
+
+        self.marionette.set_pref('dom.ipc.tabs.shutdownTimeoutSecs', 0)
+
+    def tearDown(self):
+        try:
+            self.marionette.clear_pref('dom.ipc.tabs.shutdownTimeoutSecs')
+        finally:
+            super(BaseWindowTestCase, self).tearDown()
 
 
 class TestWindows(BaseWindowTestCase):
 
     def tearDown(self):
         try:
-            self.windows.close_all([self.browser])
+            self.puppeteer.windows.close_all([self.browser])
         finally:
-            BaseWindowTestCase.tearDown(self)
+            super(TestWindows, self).tearDown()
 
     def test_switch_to(self):
         url = self.marionette.absolute_url('layout/mozilla.html')
@@ -45,11 +53,11 @@ class TestWindows(BaseWindowTestCase):
         for index in range(0, 2):
             self.marionette.execute_script(""" window.open(); """)
 
-        windows = self.windows.all
+        windows = self.puppeteer.windows.all
         self.assertEquals(len(windows), 3)
 
         # Switch to the 2nd window
-        self.windows.switch_to(windows[1].handle)
+        self.puppeteer.windows.switch_to(windows[1].handle)
         self.assertEquals(windows[1].handle, self.marionette.current_chrome_window_handle)
 
         # TODO: Needs updated tabs module for improved navigation
@@ -57,7 +65,7 @@ class TestWindows(BaseWindowTestCase):
             self.marionette.navigate(url)
 
         # Switch to the last window and find 2nd window by URL
-        self.windows.switch_to(windows[2].handle)
+        self.puppeteer.windows.switch_to(windows[2].handle)
 
         # TODO: A window can have multiple tabs, so this may need an update
         # when the tabs module gets implemented
@@ -65,21 +73,21 @@ class TestWindows(BaseWindowTestCase):
             with win.marionette.using_context('content'):
                 return win.marionette.get_url() == url
 
-        self.windows.switch_to(find_by_url)
+        self.puppeteer.windows.switch_to(find_by_url)
         self.assertEquals(windows[1].handle, self.marionette.current_chrome_window_handle)
 
-        self.windows.switch_to(find_by_url)
+        self.puppeteer.windows.switch_to(find_by_url)
 
         # Switching to an unknown handles has to fail
         self.assertRaises(NoSuchWindowException,
-                          self.windows.switch_to, "humbug")
+                          self.puppeteer.windows.switch_to, "humbug")
         self.assertRaises(NoSuchWindowException,
-                          self.windows.switch_to, lambda win: False)
+                          self.puppeteer.windows.switch_to, lambda win: False)
 
-        self.windows.close_all([self.browser])
+        self.puppeteer.windows.close_all([self.browser])
         self.browser.switch_to()
 
-        self.assertEqual(len(self.windows.all), 1)
+        self.assertEqual(len(self.puppeteer.windows.all), 1)
 
     def test_switch_to_unknown_window_type(self):
         def open_by_js(_):
@@ -98,13 +106,13 @@ class TestBaseWindow(BaseWindowTestCase):
 
     def tearDown(self):
         try:
-            self.windows.close_all([self.browser])
+            self.puppeteer.windows.close_all([self.browser])
         finally:
             BaseWindowTestCase.tearDown(self)
 
     def test_basics(self):
         # force BaseWindow instance
-        win1 = BaseWindow(lambda: self.marionette, self.browser.handle)
+        win1 = BaseWindow(self.marionette, self.browser.handle)
 
         self.assertEquals(win1.handle, self.marionette.current_chrome_window_handle)
         self.assertEquals(win1.window_element,
@@ -114,10 +122,8 @@ class TestBaseWindow(BaseWindowTestCase):
         self.assertFalse(win1.closed)
 
         # Test invalid parameters for BaseWindow constructor
-        self.assertRaises(TypeError,
-                          BaseWindow, self.marionette, self.browser.handle)
         self.assertRaises(errors.UnknownWindowError,
-                          BaseWindow, lambda: self.marionette, 10)
+                          BaseWindow, self.marionette, 10)
 
         # Test invalid shortcuts
         self.assertRaises(KeyError,
@@ -125,13 +131,13 @@ class TestBaseWindow(BaseWindowTestCase):
 
     def test_open_close(self):
         # force BaseWindow instance
-        win1 = BaseWindow(lambda: self.marionette, self.browser.handle)
+        win1 = BaseWindow(self.marionette, self.browser.handle)
 
         # Open a new window (will be focused), and check states
         win2 = win1.open_window()
 
         # force BaseWindow instance
-        win2 = BaseWindow(lambda: self.marionette, win2.handle)
+        win2 = BaseWindow(self.marionette, win2.handle)
 
         self.assertEquals(len(self.marionette.chrome_window_handles), 2)
         self.assertNotEquals(win1.handle, win2.handle)
@@ -156,7 +162,7 @@ class TestBaseWindow(BaseWindowTestCase):
         win2 = win1.open_window(callback=opener)
 
         # force BaseWindow instance
-        win2 = BaseWindow(lambda: self.marionette, win2.handle)
+        win2 = BaseWindow(self.marionette, win2.handle)
 
         self.assertEquals(len(self.marionette.chrome_window_handles), 2)
         win2.close(callback=closer)
@@ -166,20 +172,20 @@ class TestBaseWindow(BaseWindowTestCase):
         # Check for an unexpected window class
         self.assertRaises(errors.UnexpectedWindowTypeError,
                           win1.open_window, expected_window_class=BaseWindow)
-        self.windows.close_all([win1])
+        self.puppeteer.windows.close_all([win1])
 
     def test_switch_to_and_focus(self):
         # force BaseWindow instance
-        win1 = BaseWindow(lambda: self.marionette, self.browser.handle)
+        win1 = BaseWindow(self.marionette, self.browser.handle)
 
         # Open a new window (will be focused), and check states
         win2 = win1.open_window()
 
         # force BaseWindow instance
-        win2 = BaseWindow(lambda: self.marionette, win2.handle)
+        win2 = BaseWindow(self.marionette, win2.handle)
 
         self.assertEquals(win2.handle, self.marionette.current_chrome_window_handle)
-        self.assertEquals(win2.handle, self.windows.focused_chrome_window_handle)
+        self.assertEquals(win2.handle, self.puppeteer.windows.focused_chrome_window_handle)
         self.assertFalse(win1.focused)
         self.assertTrue(win2.focused)
 
@@ -194,7 +200,7 @@ class TestBaseWindow(BaseWindowTestCase):
         # Switch back to win2 by focusing it directly
         win2.focus()
         self.assertEquals(win2.handle, self.marionette.current_chrome_window_handle)
-        self.assertEquals(win2.handle, self.windows.focused_chrome_window_handle)
+        self.assertEquals(win2.handle, self.puppeteer.windows.focused_chrome_window_handle)
         self.assertTrue(win2.focused)
 
         # Close win2, and check that it keeps active but looses focus
@@ -208,7 +214,7 @@ class TestBrowserWindow(BaseWindowTestCase):
 
     def tearDown(self):
         try:
-            self.windows.close_all([self.browser])
+            self.puppeteer.windows.close_all([self.browser])
         finally:
             BaseWindowTestCase.tearDown(self)
 
@@ -225,29 +231,29 @@ class TestBrowserWindow(BaseWindowTestCase):
     def test_open_close(self):
         # open and close a new browser windows by menu
         win2 = self.browser.open_browser(trigger='menu')
-        self.assertEquals(win2, self.windows.current)
+        self.assertEquals(win2, self.puppeteer.windows.current)
         self.assertFalse(self.browser.is_private)
         win2.close(trigger='menu')
 
         # open and close a new browser window by shortcut
         win2 = self.browser.open_browser(trigger='shortcut')
-        self.assertEquals(win2, self.windows.current)
+        self.assertEquals(win2, self.puppeteer.windows.current)
         self.assertFalse(self.browser.is_private)
         win2.close(trigger='shortcut')
 
         # open and close a new private browsing window
         win2 = self.browser.open_browser(is_private=True)
-        self.assertEquals(win2, self.windows.current)
+        self.assertEquals(win2, self.puppeteer.windows.current)
         self.assertTrue(win2.is_private)
         win2.close()
 
         # open and close a new private browsing window
         win2 = self.browser.open_browser(trigger='shortcut', is_private=True)
-        self.assertEquals(win2, self.windows.current)
+        self.assertEquals(win2, self.puppeteer.windows.current)
         self.assertTrue(win2.is_private)
         win2.close()
 
         # force closing a window
         win2 = self.browser.open_browser()
-        self.assertEquals(win2, self.windows.current)
+        self.assertEquals(win2, self.puppeteer.windows.current)
         win2.close(force=True)

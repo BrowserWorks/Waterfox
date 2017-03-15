@@ -50,7 +50,9 @@ check-vanilla-allocations-aggressive:
 	$(PYTHON) $(topsrcdir)/config/check_vanilla_allocations.py --aggressive $(REAL_LIBRARY)
 
 ifeq ($(OS_ARCH),Linux)
+ifeq (,$(filter -flto,$(CFLAGS) $(CXXFLAGS) $(LDFLAGS)))
 check:: check-vanilla-allocations
+endif
 endif
 
 # Help ensure that the number of OOM errors in SpiderMonkey doesn't increase.
@@ -88,6 +90,9 @@ check-style::
 check-masm::
 	(cd $(srcdir) && $(PYTHON) $(topsrcdir)/config/check_macroassembler_style.py);
 
+check-js-msg::
+	(cd $(topsrcdir) && $(PYTHON) $(topsrcdir)/config/check_js_msg_encoding.py);
+
 check-jit-test::
 	$(JITTEST_SANITIZER_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
 	        --no-slow --no-progress --format=automation --jitflags=all \
@@ -95,7 +100,7 @@ check-jit-test::
 			$(JITTEST_EXTRA_ARGS) \
 	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX) $(JITTEST_TEST_ARGS)
 
-check:: check-style check-masm
+check:: check-style check-masm check-js-msg
 
 check-jstests:
 	$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
@@ -197,7 +202,7 @@ install:: js-config.h
 #
 
 install::
-	$(call py_action,process_install_manifest,--no-remove $(DESTDIR)$(includedir) $(DEPTH)/_build_manifests/install/dist_include)
+	$(call py_action,process_install_manifest,--no-remove --no-symlinks $(DESTDIR)$(includedir) $(DEPTH)/_build_manifests/install/dist_include)
 
 #
 # END SpiderMonkey header installation

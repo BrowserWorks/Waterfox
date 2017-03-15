@@ -24,8 +24,12 @@ transforms = TransformSequence()
 def set_worker_implementation(config, tests):
     """Set the worker implementation based on the test platform."""
     for test in tests:
-        # this is simple for now, but soon will not be!
-        test['worker-implementation'] = 'docker-worker'
+        if test['test-platform'].startswith('win'):
+            test['worker-implementation'] = 'generic-worker'
+        elif test['test-platform'].startswith('macosx'):
+            test['worker-implementation'] = 'macosx-engine'
+        else:
+            test['worker-implementation'] = 'docker-worker'
         yield test
 
 
@@ -82,6 +86,9 @@ def resolve_keyed_by(config, tests):
         'instance-size',
         'max-run-time',
         'chunks',
+        'e10s',
+        'suite',
+        'run-on-projects',
     ]
     for test in tests:
         for field in fields:
@@ -90,6 +97,10 @@ def resolve_keyed_by(config, tests):
                                                     field='mozharness',
                                                     subfield='config',
                                                     item_name=test['test-name'])
+        test['mozharness']['extra-options'] = get_keyed_by(item=test,
+                                                           field='mozharness',
+                                                           subfield='extra-options',
+                                                           item_name=test['test-name'])
         yield test
 
 

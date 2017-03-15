@@ -39,16 +39,6 @@ class Directory final
   , public nsWrapperCache
 {
 public:
-  struct FileOrDirectoryPath
-  {
-    nsString mPath;
-
-    enum {
-      eFilePath,
-      eDirectoryPath
-    } mType;
-  };
-
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Directory)
 
@@ -143,6 +133,12 @@ public:
 
   bool
   ClonableToDifferentThreadOrProcess() const;
+
+  nsIFile*
+  GetInternalNsIFile() const
+  {
+    return mFile;
+  }
 
 private:
   Directory(nsISupports* aParent,

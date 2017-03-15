@@ -3,6 +3,7 @@
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- import-globals-from in-content/applications.js -->
 
 <!DOCTYPE overlay [
   <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
@@ -66,6 +67,29 @@
       </constructor>
     </implementation>
 
+  </binding>
+
+  <binding id="container">
+    <content>
+      <xul:hbox flex="1" equalsize="always">
+        <xul:hbox flex="1" align="center">
+          <xul:hbox xbl:inherits="data-identity-icon=containerIcon,data-identity-color=containerColor" height="24" width="24" class="userContext-icon"/>
+          <xul:label flex="1" crop="end" xbl:inherits="value=containerName"/>
+        </xul:hbox>
+        <xul:hbox flex="1" align="right">
+          <xul:button anonid="preferencesButton"
+                      xbl:inherits="value=userContextId"
+                      onclick="gContainersPane.onPeferenceClick(event.originalTarget)">
+            Preferences
+          </xul:button>
+          <xul:button anonid="removeButton"
+                      xbl:inherits="value=userContextId"
+                      onclick="gContainersPane.onRemoveClick(event.originalTarget)">
+            Remove
+          </xul:button>
+        </xul:hbox>
+      </xul:hbox>
+    </content>
   </binding>
 
   <binding id="offlineapp"

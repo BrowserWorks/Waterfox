@@ -28,7 +28,7 @@ this.navigate = {};
  *     If |current| is not defined, or any of |current| or |future|
  *     are invalid URLs.
  */
-navigate.isLoadEventExpected = function(current, future = undefined) {
+navigate.isLoadEventExpected = function (current, future = undefined) {
   if (typeof current == "undefined") {
     throw TypeError("Expected at least one URL");
   }
@@ -94,17 +94,12 @@ navigate.isLoadEventExpected = function(current, future = undefined) {
  *     If |o| is not a valid type or if is a string that cannot be parsed
  *     as a URL.
  */
-navigate.IdempotentURL = function(o) {
+navigate.IdempotentURL = function (o) {
   let url = new URL(o);
 
   let hash = url.hash;
   if (hash == "" && url.href[url.href.length - 1] == "#") {
     hash = "#";
-  }
-
-  let pathname = url.pathname;
-  if (url.protocol == "data:" && hash != "") {
-    pathname = pathname.substring(0, pathname.length - hash.length);
   }
 
   return {
@@ -114,7 +109,7 @@ navigate.IdempotentURL = function(o) {
     href: url.href,
     origin: url.origin,
     password: url.password,
-    pathname: pathname,
+    pathname: url.pathname,
     port: url.port,
     protocol: url.protocol,
     search: url.search,

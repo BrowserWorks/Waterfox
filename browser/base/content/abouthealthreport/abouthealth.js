@@ -124,7 +124,7 @@ var healthReportWrapper = {
         this.setDataSubmission(false);
         break;
       case "EnableDataSubmission":
-        this.setDataSubmission(false);
+        this.setDataSubmission(true);
         break;
       case "RequestCurrentPrefs":
         this.updatePrefState();

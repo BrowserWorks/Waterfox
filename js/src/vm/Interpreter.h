@@ -201,7 +201,7 @@ Execute(JSContext* cx, HandleScript script, JSObject& scopeChain, Value* rval);
 class ExecuteState;
 class InvokeState;
 
-// RunState is passed to RunScript and RunScript then eiter passes it to the
+// RunState is passed to RunScript and RunScript then either passes it to the
 // interpreter or to the JITs. RunState contains all information we need to
 // construct an interpreter or JIT frame.
 class RunState
@@ -233,7 +233,7 @@ class RunState
     JS::HandleScript script() const { return script_; }
 
     virtual InterpreterFrame* pushInterpreterFrame(JSContext* cx) = 0;
-    virtual void setReturnValue(Value v) = 0;
+    virtual void setReturnValue(const Value& v) = 0;
 
     bool maybeCreateThisForConstructor(JSContext* cx);
 
@@ -269,7 +269,7 @@ class ExecuteState : public RunState
 
     virtual InterpreterFrame* pushInterpreterFrame(JSContext* cx);
 
-    virtual void setReturnValue(Value v) {
+    virtual void setReturnValue(const Value& v) {
         if (result_)
             *result_ = v;
     }
@@ -298,7 +298,7 @@ class InvokeState final : public RunState
 
     virtual InterpreterFrame* pushInterpreterFrame(JSContext* cx);
 
-    virtual void setReturnValue(Value v) {
+    virtual void setReturnValue(const Value& v) {
         args_.rval().set(v);
     }
 };
@@ -561,7 +561,8 @@ void
 ReportRuntimeRedeclaration(JSContext* cx, HandlePropertyName name, const char* redeclKind);
 
 enum class CheckIsObjectKind : uint8_t {
-    IteratorNext
+    IteratorNext,
+    GetIterator
 };
 
 bool

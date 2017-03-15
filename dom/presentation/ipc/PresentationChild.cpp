@@ -89,10 +89,14 @@ PresentationChild::DeallocPPresentationBuilderChild(PPresentationBuilderChild* a
 
 
 bool
-PresentationChild::RecvNotifyAvailableChange(const bool& aAvailable)
+PresentationChild::RecvNotifyAvailableChange(
+                                        nsTArray<nsString>&& aAvailabilityUrls,
+                                        const bool& aAvailable)
 {
   if (mService) {
-    Unused << NS_WARN_IF(NS_FAILED(mService->NotifyAvailableChange(aAvailable)));
+    Unused <<
+      NS_WARN_IF(NS_FAILED(mService->NotifyAvailableChange(aAvailabilityUrls,
+                                                           aAvailable)));
   }
   return true;
 }
@@ -129,6 +133,18 @@ PresentationChild::RecvNotifySessionConnect(const uint64_t& aWindowId,
 {
   if (mService) {
     Unused << NS_WARN_IF(NS_FAILED(mService->NotifySessionConnect(aWindowId, aSessionId)));
+  }
+  return true;
+}
+
+bool
+PresentationChild::RecvNotifyCloseSessionTransport(const nsString& aSessionId,
+                                                   const uint8_t& aRole,
+                                                   const nsresult& aReason)
+{
+  if (mService) {
+    Unused << NS_WARN_IF(NS_FAILED(
+      mService->CloseContentSessionTransport(aSessionId, aRole, aReason)));
   }
   return true;
 }

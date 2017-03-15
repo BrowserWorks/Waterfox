@@ -32,6 +32,7 @@ struct LoadInfoArgs
 {
   OptionalPrincipalInfo requestingPrincipalInfo;
   PrincipalInfo         triggeringPrincipalInfo;
+  OptionalPrincipalInfo principalToInheritInfo;
   uint32_t              securityFlags;
   uint32_t              contentPolicyType;
   uint32_t              tainting;
@@ -129,6 +130,8 @@ struct HttpChannelOpenArgs
   bool                        allowStaleCacheContent;
   nsCString                   contentTypeHint;
   nsCString                   channelId;
+  uint64_t                    contentWindowId;
+  nsCString                   preferredAlternativeType;
 };
 
 struct HttpChannelConnectArgs

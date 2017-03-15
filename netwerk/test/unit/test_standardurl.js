@@ -1,3 +1,5 @@
+"use strict";
+
 const StandardURL = Components.Constructor("@mozilla.org/network/standard-url;1",
                                            "nsIStandardURL",
                                            "init");
@@ -14,7 +16,7 @@ function symmetricEquality(expect, a, b)
     /* We don't check port in the loop, because it can be defaulted in
        some cases. */
     ["spec", "prePath", "scheme", "userPass", "username", "password",
-     "hostPort", "host", "path", "filePath", "param", "query",
+     "hostPort", "host", "path", "filePath", "query",
      "ref", "directory", "fileName", "fileBaseName", "fileExtension"]
       .map(function(prop) {
 	dump("Testing '"+ prop + "'\n");
@@ -179,9 +181,9 @@ add_test(function test_ipv6()
 
   url = stringToURL("http://example.com");
   url.hostPort = "2001:1";
-  do_check_eq(url.host, "2001");
+  do_check_eq(url.host, "0.0.7.209");
   do_check_eq(url.port, 1);
-  do_check_eq(url.hostPort, "2001:1");
+  do_check_eq(url.hostPort, "0.0.7.209:1");
   run_next_test();
 });
 
@@ -399,6 +401,7 @@ add_test(function test_ipv4Normalize()
      "http://000177.0.00000.0x0001",
      "http://127.0.0.1.",
     ].map(stringToURL);
+
   var url;
   for (url of localIPv4s) {
     do_check_eq(url.spec, "http://127.0.0.1/");
@@ -421,6 +424,8 @@ add_test(function test_ipv4Normalize()
      "http://1.2.3.4../",
      "http://1..2/",
      "http://.1.2.3.4/",
+     "resource://123/",
+     "resource://4294967296/",
     ];
   var spec;
   for (spec of nonIPv4s) {
@@ -428,5 +433,23 @@ add_test(function test_ipv4Normalize()
     do_check_eq(url.spec, spec);
   }
 
+  var url = stringToURL("resource://path/to/resource/");
+  url.host = "123";
+  do_check_eq(url.host, "123");
+
+  run_next_test();
+});
+
+add_test(function test_invalidHostChars() {
+  var url = stringToURL("http://example.org/");
+  for (let i = 0; i <= 0x20; i++) {
+    Assert.throws(() => { url.host = "a" + String.fromCharCode(i) + "b"; }, "Trying to set hostname containing char code: " + i);
+  }
+  for (let c of "@[]*<>|:\"") {
+    Assert.throws(() => { url.host = "a" + c; }, "Trying to set hostname containing char: " + c);
+  }
+
+  // It also can't contain /, \, #, ?, but we treat these characters as
+  // hostname separators, so there is no way to set them and fail.
   run_next_test();
 });

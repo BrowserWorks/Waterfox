@@ -5,8 +5,6 @@
 
 <?xml-stylesheet href="chrome://global/skin/global.css"?>
 
-<?xml-stylesheet href="chrome://mozapps/content/preferences/preferences.css"?>
-
 <?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css"?>
 <?xml-stylesheet href="chrome://global/skin/in-content/common.css"?>
 <?xml-stylesheet
@@ -15,6 +13,7 @@
   href="chrome://browser/content/preferences/handlers.css"?>
 <?xml-stylesheet href="chrome://browser/skin/preferences/applications.css"?>
 <?xml-stylesheet href="chrome://browser/skin/preferences/in-content/search.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content/containers.css"?>
 
 <!DOCTYPE page [
 <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
@@ -28,6 +27,8 @@
 <!ENTITY % syncDTD SYSTEM "chrome://browser/locale/preferences/sync.dtd">
 <!ENTITY % securityDTD SYSTEM
   "chrome://browser/locale/preferences/security.dtd">
+<!ENTITY % containersDTD SYSTEM
+  "chrome://browser/locale/preferences/containers.dtd">
 <!ENTITY % sanitizeDTD SYSTEM "chrome://browser/locale/sanitize.dtd">
 <!ENTITY % mainDTD SYSTEM "chrome://browser/locale/preferences/main.dtd">
 <!ENTITY % aboutHomeDTD SYSTEM "chrome://browser/locale/aboutHome.dtd">
@@ -45,6 +46,7 @@
 %syncBrandDTD;
 %syncDTD;
 %securityDTD;
+%containersDTD;
 %sanitizeDTD;
 %mainDTD;
 %aboutHomeDTD;
@@ -59,6 +61,7 @@
 
 <page xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
       xmlns:html="http://www.w3.org/1999/xhtml"
+      disablefastfind="true"
 #ifdef USE_WIN_TITLE_STYLE
       title="&prefWindow.titleWin;">
 #else
@@ -139,6 +142,12 @@
         <label class="category-name" flex="1">&panePrivacy.title;</label>
       </richlistitem>
 
+      <richlistitem id="category-containers"
+                    class="category"
+                    value="paneContainers"
+                    helpTopic="prefs-containers"
+                    hidden="true"/>
+
       <richlistitem id="category-security"
                     class="category"
                     value="paneSecurity"
@@ -170,11 +179,19 @@
       </richlistitem>
     </richlistbox>
 
+    <keyset>
+      <!-- Disable the findbar because it doesn't work properly.
+           Remove this keyset once bug 1094240 ("disablefastfind" attribute
+           broken in e10s mode) is fixed. -->
+      <key key="&focusSearch1.key;" modifiers="accel" id="focusSearch1" oncommand=";"/>
+    </keyset>
+
     <vbox class="main-content" flex="1">
       <prefpane id="mainPrefPane">
 #include main.xul
 #include search.xul
 #include privacy.xul
+#include containers.xul
 #include advanced.xul
 #include applications.xul
 #include content.xul

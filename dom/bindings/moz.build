@@ -43,6 +43,7 @@ EXPORTS.mozilla.dom += [
     'TypedArray.h',
     'UnionMember.h',
     'WebIDLGlobalNameHash.h',
+    'XrayExpandoClass.h',
 ]
 
 # Generated bindings reference *Binding.h, not mozilla/dom/*Binding.h. And,
@@ -58,8 +59,6 @@ LOCAL_INCLUDES += [
 LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/battery',
-    '/dom/bluetooth/common/webapi',
-    '/dom/camera',
     '/dom/canvas',
     '/dom/geolocation',
     '/dom/html',

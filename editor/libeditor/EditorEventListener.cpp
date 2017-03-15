@@ -668,6 +668,13 @@ EditorEventListener::MouseClick(nsIDOMMouseEvent* aMouseEvent)
     return rv;
   }
 
+  // IMEStateManager::OnClickInEditor() may cause anything because it may
+  // set input context.  For example, it may cause opening VKB, changing focus
+  // or reflow.  So, mEditorBase here might have been gone.
+  if (!mEditorBase) {
+    return NS_OK;
+  }
+
   // If we got a mouse down inside the editing area, we should force the
   // IME to commit before we change the cursor position
   mEditorBase->ForceCompositionEnd();
@@ -766,7 +773,9 @@ EditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
 {
   // FYI: This may be called by HTMLEditorEventListener::MouseDown() even
   //      when the event is not acceptable for committing composition.
-  mEditorBase->ForceCompositionEnd();
+  if (mEditorBase) {
+    mEditorBase->ForceCompositionEnd();
+  }
   return NS_OK;
 }
 
@@ -934,19 +943,16 @@ EditorEventListener::CanDrop(nsIDOMDragEvent* aEvent)
   nsCOMPtr<DataTransfer> dataTransfer = do_QueryInterface(domDataTransfer);
   NS_ENSURE_TRUE(dataTransfer, false);
 
-  ErrorResult err;
-  RefPtr<DOMStringList> types = dataTransfer->GetTypes(err);
-  if (NS_WARN_IF(err.Failed())) {
-    return false;
-  }
+  nsTArray<nsString> types;
+  dataTransfer->GetTypes(types, *nsContentUtils::GetSystemPrincipal());
 
   // Plaintext editors only support dropping text. Otherwise, HTML and files
   // can be dropped as well.
-  if (!types->Contains(NS_LITERAL_STRING(kTextMime)) &&
-      !types->Contains(NS_LITERAL_STRING(kMozTextInternal)) &&
+  if (!types.Contains(NS_LITERAL_STRING(kTextMime)) &&
+      !types.Contains(NS_LITERAL_STRING(kMozTextInternal)) &&
       (mEditorBase->IsPlaintextEditor() ||
-       (!types->Contains(NS_LITERAL_STRING(kHTMLMime)) &&
-        !types->Contains(NS_LITERAL_STRING(kFileMime))))) {
+       (!types.Contains(NS_LITERAL_STRING(kHTMLMime)) &&
+        !types.Contains(NS_LITERAL_STRING(kFileMime))))) {
     return false;
   }
 
@@ -1091,7 +1097,21 @@ EditorEventListener::Focus(nsIDOMEvent* aEvent)
 
       nsCOMPtr<nsIDOMElement> element;
       fm->GetFocusedElement(getter_AddRefs(element));
-      if (!SameCOMIdentity(element, target)) {
+      if (!element) {
+        return NS_OK;
+      }
+
+      nsCOMPtr<nsIDOMEventTarget> originalTarget;
+      aEvent->GetOriginalTarget(getter_AddRefs(originalTarget));
+
+      nsCOMPtr<nsIContent> originalTargetAsContent =
+        do_QueryInterface(originalTarget);
+      nsCOMPtr<nsIContent> focusedElementAsContent =
+        do_QueryInterface(element);
+
+      if (!SameCOMIdentity(
+            focusedElementAsContent->FindFirstNonChromeOnlyAccessContent(),
+            originalTargetAsContent->FindFirstNonChromeOnlyAccessContent())) {
         return NS_OK;
       }
     }

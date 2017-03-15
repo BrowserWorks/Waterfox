@@ -161,27 +161,6 @@ function runTest()
       ]
     },
     {
-      type: 'time',
-      validData: [
-        '00:00',
-        '09:09:00',
-        '08:23:23.1',
-        '21:43:56.12',
-        '23:12:45.100',
-      ],
-      invalidData: [
-        '00:',
-        '00:00:',
-        '25:00',
-        '-00:00',
-        '00:00:00.',
-        '00:60',
-        '10:58:99',
-        ':19:10',
-        '23:08:09.1012',
-      ]
-    },
-    {
       type: 'month',
       validData: [
         '0001-01',
@@ -216,18 +195,28 @@ function runTest()
         '1000-W'
       ]
     },
-    { type: 'datetime', todo: true },
-    { type: 'datetime-local', todo: true },
+    {
+      type: 'datetime-local',
+      validData: [
+        '0001-01-01T00:00',
+        '2016-11-07T16:45',
+        '2016-11-07T16:45:30',
+        '2016-11-07T16:45:30.10',
+        '2016-11-07T16:45:00.111',
+      ],
+      invalidData: [
+        '1-01-01T00:00',
+        '1970-01-01T9:30',
+        '2016/11/07T16:45',
+        '2016-11-07T16.45',
+        'T',
+        'datetime-local'
+      ]
+    },
   ];
 
   for (test of data) {
     gCurrentTest = test;
-
-    if (test.todo) {
-      input.type = test.type;
-      todo_is(input.type, test.type, test.type + " is not implemented");
-      continue;
-    }
 
     input.type = test.type;
     gValidData = test.validData;

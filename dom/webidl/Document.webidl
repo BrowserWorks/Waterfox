@@ -55,7 +55,7 @@ interface Document : Node {
   [NewObject, Throws]
   Element createElement(DOMString localName, optional (ElementCreationOptions or DOMString) options);
   [NewObject, Throws]
-  Element createElementNS(DOMString? namespace, DOMString qualifiedName, optional ElementCreationOptions options);
+  Element createElementNS(DOMString? namespace, DOMString qualifiedName, optional (ElementCreationOptions or DOMString) options);
   [NewObject]
   DocumentFragment createDocumentFragment();
   [NewObject]
@@ -271,7 +271,7 @@ partial interface Document {
 //http://dvcs.w3.org/hg/webcomponents/raw-file/tip/spec/custom/index.html#dfn-document-register
 partial interface Document {
     // this is deprecated from CustomElements v0
-    [Throws, Func="CustomElementsRegistry::IsCustomElementsEnabled"]
+    [Throws, Func="CustomElementRegistry::IsCustomElementEnabled"]
     object registerElement(DOMString name, optional ElementRegistrationOptions options);
 };
 
@@ -302,12 +302,6 @@ partial interface Document {
     readonly attribute Element? scrollingElement;
 };
 
-// http://dvcs.w3.org/hg/undomanager/raw-file/tip/undomanager.html
-partial interface Document {
-    [Pref="dom.undo_manager.enabled"]
-    readonly attribute UndoManager? undoManager;
-};
-
 // http://dev.w3.org/2006/webapi/selectors-api2/#interface-definitions
 partial interface Document {
   [Throws, Pure]
@@ -327,6 +321,12 @@ partial interface Document {
   sequence<Animation> getAnimations();
 };
 
+// https://svgwg.org/svg2-draft/struct.html#InterfaceDocumentExtensions
+partial interface Document {
+  [BinaryName="SVGRootElement"]
+  readonly attribute SVGSVGElement? rootElement;
+};
+
 //  Mozilla extensions of various sorts
 partial interface Document {
   // nsIDOMDocumentXBL.  Wish we could make these [ChromeOnly], but
@@ -338,7 +338,7 @@ partial interface Document {
                                           DOMString attrValue);
   [Func="IsChromeOrXBL"]
   Element? getBindingParent(Node node);
-  [Throws, Func="IsChromeOrXBL"]
+  [Throws, Func="IsChromeOrXBL", NeedsSubjectPrincipal]
   void loadBindingDocument(DOMString documentURL);
 
   // nsIDOMDocumentTouch

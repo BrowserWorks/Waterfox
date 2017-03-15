@@ -40,17 +40,13 @@ DIRS += [
     'animation',
     'apps',
     'base',
-    'bluetooth',
     'archivereader',
     'bindings',
     'battery',
     'browser-element',
     'cache',
     'canvas',
-    'cellbroadcast',
-    'contacts',
     'crypto',
-    'phonenumberutils',
     'devicestorage',
     'encoding',
     'events',
@@ -58,19 +54,15 @@ DIRS += [
     'filehandle',
     'filesystem',
     'flyweb',
-    'fmradio',
     'gamepad',
     'geolocation',
     'grid',
     'html',
-    'icc',
-    'inputport',
     'json',
     'jsurl',
     'asmjscache',
     'mathml',
     'media',
-    'mobileconnection',
     'notification',
     'offline',
     'power',
@@ -80,7 +72,6 @@ DIRS += [
     'settings',
     'storage',
     'svg',
-    'mobilemessage',
     'time',
     'locales',
     'network',
@@ -91,30 +82,25 @@ DIRS += [
     'system',
     'ipc',
     'workers',
-    'camera',
     'audiochannel',
     'broadcastchannel',
     'messagechannel',
     'promise',
     'smil',
-    'telephony',
-    'tv',
     'url',
-    'voicemail',
     'inputmethod',
     'webidl',
     'xbl',
     'xml',
     'xslt',
     'xul',
-    'resourcestats',
     'manifest',
     'vr',
-    'newapps',
     'u2f',
     'console',
     'performance',
     'xhr',
+    'worklet',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -127,21 +113,12 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'wifi',
     ]
 
-if CONFIG['MOZ_B2G_RIL']:
-    DIRS += [
-        'wappush',
-    ]
-
-if CONFIG['MOZ_NFC']:
-    DIRS += ['nfc']
-
 if CONFIG['MOZ_SECUREELEMENT']:
     DIRS += ['secureelement']
 
 if CONFIG['MOZ_B2G']:
     DIRS += [
         'downloads',
-        'identity'
     ]
 
 DIRS += ['presentation']

@@ -19,11 +19,6 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "DOMApplicationRegistry", function () {
-  Cu.import("resource://gre/modules/Webapps.jsm");
-  return DOMApplicationRegistry;
-});
-
 function debug(msg) {
   //dump("BrowserElementParent - " + msg + "\n");
 }
@@ -134,7 +129,6 @@ BrowserElementParentProxyCallHandler.prototype = {
       case 'reload':
       case 'stop':
       case 'zoom':
-      case 'setNFCFocus':
       case 'findAll':
       case 'findNext':
       case 'clearMatch':
@@ -297,7 +291,6 @@ BrowserElementParent.prototype = {
     // Insert ourself into the prompt service.
     BrowserElementPromptService.mapFrameToBrowserElementParent(this._frameElement, this);
     this._setupMessageListener();
-    this._registerAppManifest();
 
     this.proxyCallHandler.init(
       this._frameElement, this._frameLoader.messageManager);
@@ -323,30 +316,8 @@ BrowserElementParent.prototype = {
     delete this._pendingAPICalls;
   },
 
-  _registerAppManifest: function() {
-    // If this browser represents an app then let the Webapps module register for
-    // any messages that it needs.
-    let appManifestURL =
-          this._frameElement.QueryInterface(Ci.nsIMozBrowserFrame).appManifestURL;
-    if (appManifestURL) {
-      let inParent = Cc["@mozilla.org/xre/app-info;1"]
-                       .getService(Ci.nsIXULRuntime)
-                       .processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
-      if (inParent) {
-        DOMApplicationRegistry.registerBrowserElementParentForApp(
-          { manifestURL: appManifestURL }, this._mm);
-      } else {
-        this._mm.sendAsyncMessage("Webapps:RegisterBEP",
-                                  { manifestURL: appManifestURL });
-      }
-    }
-  },
-
   _setupMessageListener: function() {
     this._mm = this._frameLoader.messageManager;
-    this._isWidget = this._frameLoader
-                         .QueryInterface(Ci.nsIFrameLoader)
-                         .ownerIsWidget;
     this._mm.addMessageListener('browser-element-api:call', this);
     this._mm.loadFrameScript("chrome://global/content/extensions.js", true);
   },
@@ -414,7 +385,7 @@ BrowserElementParent.prototype = {
 
     if (aMsg.data.msg_name in mmCalls) {
       return mmCalls[aMsg.data.msg_name].apply(this, arguments);
-    } else if (!this._isWidget && aMsg.data.msg_name in mmSecuritySensitiveCalls) {
+    } else if (aMsg.data.msg_name in mmSecuritySensitiveCalls) {
       return mmSecuritySensitiveCalls[aMsg.data.msg_name].apply(this, arguments);
     }
   },
@@ -453,10 +424,8 @@ BrowserElementParent.prototype = {
       }
     };
 
-    // 1. We don't handle password-only prompts.
-    // 2. We don't handle for widget case because of security concern.
-    if (authDetail.isOnlyPassword ||
-        this._frameLoader.QueryInterface(Ci.nsIFrameLoader).ownerIsWidget) {
+    // We don't handle password-only prompts.
+    if (authDetail.isOnlyPassword) {
       cancelCallback();
       return;
     }
@@ -1117,35 +1086,6 @@ BrowserElementParent.prototype = {
 
     return this._sendDOMRequest('set-input-method-active',
                                 {isActive: isActive});
-  },
-
-  setNFCFocus: function(isFocus) {
-    if (!this._isAlive()) {
-      throw Components.Exception("Dead content process",
-                                 Cr.NS_ERROR_DOM_INVALID_STATE_ERR);
-    }
-
-    // For now, we use tab id as an identifier to let NFC module know
-    // which app is in foreground. But this approach will not work in
-    // in-process mode because tab id doesn't exist. Fix bug 1116449
-    // if we are going to support in-process mode.
-    try {
-      var tabId = this._frameLoader.QueryInterface(Ci.nsIFrameLoader)
-                                   .tabParent
-                                   .tabId;
-    } catch(e) {
-      debug("SetNFCFocus for in-process mode is not yet supported");
-      throw Components.Exception("SetNFCFocus for in-process mode is not yet supported",
-                                 Cr.NS_ERROR_NOT_IMPLEMENTED);
-    }
-
-    try {
-      let nfcContentHelper =
-        Cc["@mozilla.org/nfc/content-helper;1"].getService(Ci.nsINfcBrowserAPI);
-      nfcContentHelper.setFocusTab(tabId, isFocus);
-    } catch(e) {
-      // Not all platforms support NFC
-    }
   },
 
   getAudioChannelVolume: function(aAudioChannel) {

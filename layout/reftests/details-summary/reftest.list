@@ -11,6 +11,8 @@ pref(dom.details_element.enabled,false) == no-summary.html disabled-no-summary-r
 == summary-not-first-child.html single-summary.html
 == open-summary-not-first-child.html open-single-summary.html
 == open-summary-block-style.html open-summary-block-style-ref.html
+== open-summary-inline-style.html open-summary-inline-style-ref.html
+== open-summary-table-cell-style.html open-summary-table-cell-style-ref.html
 == no-summary.html no-summary-ref.html
 == open-no-summary.html open-no-summary-ref.html
 == summary-not-in-details.html summary-not-in-details-ref.html
@@ -70,6 +72,9 @@ pref(dom.details_element.enabled,false) == no-summary.html disabled-no-summary-r
 == details-writing-mode.html details-writing-mode-ref.html
 == details-in-ol.html details-in-ol-ref.html
 == summary-three-columns.html summary-three-columns-ref.html
+== details-first-line.html details-first-line-ref.html
+== open-details-first-line-1.html open-details-first-line-ref.html
+== open-details-first-line-2.html open-details-first-line-ref.html
 
 # Dispatch mouse click to summary
 == mouse-click-single-summary.html open-single-summary.html
@@ -79,7 +84,7 @@ pref(dom.details_element.enabled,false) == no-summary.html disabled-no-summary-r
 == mouse-click-open-second-summary.html open-multiple-summary.html
 == mouse-click-overflow-hidden-details.html overflow-hidden-open-details.html
 == mouse-click-twice-overflow-hidden-details.html overflow-hidden-details.html
-== mouse-click-overflow-auto-details.html overflow-auto-open-details.html
+fuzzy-if(gtkWidget,1,20) == mouse-click-overflow-auto-details.html overflow-auto-open-details.html #Bug 1294278
 == mouse-click-twice-overflow-auto-details.html overflow-auto-details.html
 == mouse-click-display-none-details.html open-single-summary.html
 == mouse-click-change-details-to-display-none.html open-single-summary.html
@@ -90,7 +95,7 @@ pref(dom.details_element.enabled,false) == no-summary.html disabled-no-summary-r
 == mouse-click-fixed-summary.html open-fixed-summary.html
 == mouse-click-twice-fixed-summary.html fixed-summary.html
 == mouse-click-float-details.html open-float-details.html
-== mouse-click-twice-float-details.html float-details.html
+fuzzy(1,1) == mouse-click-twice-float-details.html float-details.html # Bug 1316430
 
 # Dispatch keyboard event to summary
 == key-enter-single-summary.html open-single-summary.html

@@ -1319,7 +1319,7 @@ TenuredCell::writeBarrierPre(TenuredCell* thing)
 {
     MOZ_ASSERT(!CurrentThreadIsIonCompiling());
     MOZ_ASSERT_IF(thing, !isNullLike(thing));
-    if (!thing || thing->shadowRuntimeFromAnyThread()->isHeapCollecting())
+    if (!thing)
         return;
 
 #ifdef JS_GC_ZEAL

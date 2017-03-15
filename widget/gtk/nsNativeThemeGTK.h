@@ -74,6 +74,7 @@ protected:
   virtual ~nsNativeThemeGTK();
 
 private:
+  GtkTextDirection GetTextDirection(nsIFrame* aFrame);
   gint GetTabMarginPixels(nsIFrame* aFrame);
   bool GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
                             WidgetNodeType& aGtkWidgetType,
@@ -82,6 +83,7 @@ private:
                                nsIntMargin* aExtra);
 
   void RefreshWidgetWindow(nsIFrame* aFrame);
+  WidgetNodeType NativeThemeToGtkTheme(uint8_t aWidgetType, nsIFrame* aFrame);
 
   uint8_t mDisabledWidgetTypes[32];
   uint8_t mSafeWidgetStates[1024];    // 256 widgets * 32 bits per widget

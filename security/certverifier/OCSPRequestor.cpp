@@ -74,6 +74,7 @@ AppendEscapedBase64Item(const SECItem* encodedRequest, nsACString& path)
 
 Result
 DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
+              const NeckoOriginAttributes& originAttributes,
               const SECItem* encodedRequest, PRIntervalTime timeout,
               bool useGET,
       /*out*/ SECItem*& encodedResponse)
@@ -173,7 +174,8 @@ DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
 
   nsNSSHttpRequestSession* requestSessionPtr;
   rv = nsNSSHttpInterface::createFcn(serverSession.get(), "http", path.get(),
-                                     method.get(), timeout, &requestSessionPtr);
+                                     method.get(), originAttributes, timeout,
+                                     &requestSessionPtr);
   if (rv != Success) {
     return rv;
   }

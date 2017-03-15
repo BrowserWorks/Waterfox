@@ -6,7 +6,6 @@
 
 window.performance.mark('gecko-shell-loadstart');
 
-Cu.import('resource://gre/modules/ContactService.jsm');
 Cu.import('resource://gre/modules/NotificationDB.jsm');
 Cu.import("resource://gre/modules/AppsUtils.jsm");
 Cu.import('resource://gre/modules/UserAgentOverrides.jsm');
@@ -708,8 +707,6 @@ var shell = {
 
     Services.obs.notifyObservers(null, 'content-start', null);
 
-    isGonk && Cu.import('resource://gre/modules/OperatorApps.jsm');
-
     if (AppConstants.MOZ_GRAPHENE &&
         Services.prefs.getBoolPref("b2g.nativeWindowGeometry.fullscreen")) {
       window.fullScreen = true;
@@ -948,9 +945,6 @@ window.addEventListener('ContentStart', function cr_onContentStart() {
 });
 
 window.addEventListener('ContentStart', function update_onContentStart() {
-  Cu.import('resource://gre/modules/WebappsUpdater.jsm');
-  WebappsUpdater.handleContentStart(shell);
-
   if (!AppConstants.MOZ_UPDATER) {
     return;
   }

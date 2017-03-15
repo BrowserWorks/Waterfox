@@ -4,11 +4,12 @@
 
 import os
 
-from firefox_ui_harness.testcases import FirefoxTestCase
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import Wait
+from marionette_harness import MarionetteTestCase
 
 
-class TestSafeBrowsingInitialDownload(FirefoxTestCase):
+class TestSafeBrowsingInitialDownload(PuppeteerMixin, MarionetteTestCase):
 
     file_extensions = [
         'pset',
@@ -51,7 +52,7 @@ class TestSafeBrowsingInitialDownload(FirefoxTestCase):
         return set(sorted(files))
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestSafeBrowsingInitialDownload, self).setUp()
 
         # Force the preferences for the new profile
         enforce_prefs = self.prefs_safebrowsing
@@ -67,7 +68,7 @@ class TestSafeBrowsingInitialDownload(FirefoxTestCase):
             # Restart with a fresh profile
             self.restart(clean=True)
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestSafeBrowsingInitialDownload, self).tearDown()
 
     def test_safe_browsing_initial_download(self):
         def check_downloaded(_):
@@ -78,4 +79,6 @@ class TestSafeBrowsingInitialDownload(FirefoxTestCase):
             Wait(self.marionette, timeout=60).until(
                 check_downloaded, message='Not all safebrowsing files have been downloaded')
         finally:
-            self.assertSetEqual(self.safebrowsing_files, set(os.listdir(self.safebrowsing_path)))
+            files_on_disk_toplevel = os.listdir(self.safebrowsing_path)
+            for f in self.safebrowsing_files:
+                self.assertIn(f, files_on_disk_toplevel)

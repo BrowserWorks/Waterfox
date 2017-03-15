@@ -190,9 +190,10 @@ public:
   // height covered by <applet>
   // align covered by <applet>
   // name covered by <applet>
-  nsIDocument* GetSVGDocument()
+  nsIDocument*
+  GetSVGDocument(nsIPrincipal& aSubjectPrincipal)
   {
-    return GetContentDocument();
+    return GetContentDocument(aSubjectPrincipal);
   }
 
   /**

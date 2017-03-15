@@ -29,6 +29,10 @@ else:
             '/accessible/other',
         ]
 
+EXPORTS.mozilla.a11y += [
+    'IPCTypes.h',
+]
+
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']
 
@@ -37,6 +41,7 @@ if CONFIG['ACCESSIBILITY']:
         'DocAccessibleChildBase.h',
         'DocAccessibleParent.h',
         'ProxyAccessibleBase.h',
+        'ProxyAccessibleShared.h',
     ]
 
     UNIFIED_SOURCES += [

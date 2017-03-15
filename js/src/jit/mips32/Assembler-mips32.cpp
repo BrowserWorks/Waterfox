@@ -33,6 +33,21 @@ ABIArgGenerator::next(MIRType type)
             current_ = ABIArg(usedArgSlots_ * sizeof(intptr_t));
         usedArgSlots_++;
         break;
+      case MIRType::Int64:
+        if (!usedArgSlots_) {
+            current_ = ABIArg(a0, a1);
+            usedArgSlots_ = 2;
+        } else if (usedArgSlots_ <= 2) {
+            current_ = ABIArg(a2, a3);
+            usedArgSlots_ = 4;
+        } else {
+            if (usedArgSlots_ < NumIntArgRegs)
+                usedArgSlots_ = NumIntArgRegs;
+            usedArgSlots_ += usedArgSlots_ % 2;
+            current_ = ABIArg(usedArgSlots_ * sizeof(intptr_t));
+            usedArgSlots_ += 2;
+        }
+        break;
       case MIRType::Float32:
         if (!usedArgSlots_) {
             current_ = ABIArg(f12.asSingle());
@@ -223,6 +238,51 @@ Assembler::TraceDataRelocations(JSTracer* trc, JitCode* code, CompactBufferReade
     ::TraceDataRelocations(trc, code->raw(), reader);
 }
 
+Assembler::Condition
+Assembler::UnsignedCondition(Condition cond)
+{
+    switch (cond) {
+      case Zero:
+      case NonZero:
+        return cond;
+      case LessThan:
+      case Below:
+        return Below;
+      case LessThanOrEqual:
+      case BelowOrEqual:
+        return BelowOrEqual;
+      case GreaterThan:
+      case Above:
+        return Above;
+      case AboveOrEqual:
+      case GreaterThanOrEqual:
+        return AboveOrEqual;
+      default:
+        MOZ_CRASH("unexpected condition");
+    }
+}
+
+Assembler::Condition
+Assembler::ConditionWithoutEqual(Condition cond)
+{
+    switch (cond) {
+      case LessThan:
+      case LessThanOrEqual:
+        return LessThan;
+      case Below:
+      case BelowOrEqual:
+        return Below;
+      case GreaterThan:
+      case GreaterThanOrEqual:
+        return GreaterThan;
+      case Above:
+      case AboveOrEqual:
+        return Above;
+      default:
+        MOZ_CRASH("unexpected condition");
+    }
+}
+
 void
 Assembler::trace(JSTracer* trc)
 {
@@ -340,7 +400,7 @@ Assembler::bind(RepatchLabel* label)
             inst[0].setBOffImm16(BOffImm16(offset));
         } else if (inst[0].encode() == inst_beq.encode()) {
             // Handle open long unconditional jumps created by
-            // MacroAssemblerMIPSShared::ma_b(..., wasm::JumpTarget, ...).
+            // MacroAssemblerMIPSShared::ma_b(..., wasm::Trap, ...).
             // We need to add it to long jumps array here.
             // See MacroAssemblerMIPS::branchWithCode().
             MOZ_ASSERT(inst[1].encode() == NopInst);
@@ -351,7 +411,7 @@ Assembler::bind(RepatchLabel* label)
             inst[2] = InstReg(op_special, ScratchRegister, zero, zero, ff_jr).encode();
         } else {
             // Handle open long conditional jumps created by
-            // MacroAssemblerMIPSShared::ma_b(..., wasm::JumpTarget, ...).
+            // MacroAssemblerMIPSShared::ma_b(..., wasm::Trap, ...).
             inst[0] = invertBranch(inst[0], BOffImm16(5 * sizeof(void*)));
             // No need for a "nop" here because we can clobber scratch.
             // We need to add it to long jumps array here.

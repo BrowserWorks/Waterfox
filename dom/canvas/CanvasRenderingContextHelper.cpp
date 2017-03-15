@@ -22,7 +22,7 @@ namespace dom {
 void
 CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
                                      nsIGlobalObject* aGlobal,
-                                     FileCallback& aCallback,
+                                     BlobCallback& aCallback,
                                      const nsAString& aType,
                                      JS::Handle<JS::Value> aParams,
                                      ErrorResult& aRv)
@@ -31,9 +31,9 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
   class EncodeCallback : public EncodeCompleteCallback
   {
   public:
-    EncodeCallback(nsIGlobalObject* aGlobal, FileCallback* aCallback)
+    EncodeCallback(nsIGlobalObject* aGlobal, BlobCallback* aCallback)
       : mGlobal(aGlobal)
-      , mFileCallback(aCallback) {}
+      , mBlobCallback(aCallback) {}
 
     // This is called on main thread.
     nsresult ReceiveBlob(already_AddRefed<Blob> aBlob)
@@ -53,16 +53,16 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
 
       RefPtr<Blob> newBlob = Blob::Create(mGlobal, blob->Impl());
 
-      mFileCallback->Call(*newBlob, rv);
+      mBlobCallback->Call(*newBlob, rv);
 
       mGlobal = nullptr;
-      mFileCallback = nullptr;
+      mBlobCallback = nullptr;
 
       return rv.StealNSResult();
     }
 
     nsCOMPtr<nsIGlobalObject> mGlobal;
-    RefPtr<FileCallback> mFileCallback;
+    RefPtr<BlobCallback> mBlobCallback;
   };
 
   RefPtr<EncodeCompleteCallback> callback =
@@ -123,6 +123,13 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
 already_AddRefed<nsICanvasRenderingContextInternal>
 CanvasRenderingContextHelper::CreateContext(CanvasContextType aContextType)
 {
+  return CreateContextHelper(aContextType, layers::LayersBackend::LAYERS_NONE);
+}
+
+already_AddRefed<nsICanvasRenderingContextInternal>
+CanvasRenderingContextHelper::CreateContextHelper(CanvasContextType aContextType,
+                                                  layers::LayersBackend aCompositorBackend)
+{
   MOZ_ASSERT(aContextType != CanvasContextType::NoContext);
   RefPtr<nsICanvasRenderingContextInternal> ret;
 
@@ -132,7 +139,7 @@ CanvasRenderingContextHelper::CreateContext(CanvasContextType aContextType)
 
   case CanvasContextType::Canvas2D:
     Telemetry::Accumulate(Telemetry::CANVAS_2D_USED, 1);
-    ret = new CanvasRenderingContext2D();
+    ret = new CanvasRenderingContext2D(aCompositorBackend);
     break;
 
   case CanvasContextType::WebGL1:

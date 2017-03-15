@@ -1,5 +1,3 @@
-from marionette import MarionetteTestCase
-from marionette_driver.errors import NoSuchElementException
 import threading
 import SimpleHTTPServer
 import SocketServer
@@ -8,6 +6,9 @@ import urllib
 import urlparse
 import os
 import posixpath
+
+from marionette_driver.errors import NoSuchElementException
+from marionette_harness import MarionetteTestCase
 
 DEBUG = True
 
@@ -100,9 +101,9 @@ class BaseTestFrontendUnits(MarionetteTestCase):
 
         # This extends the timeout for find_element. We need this as the tests
         # take an amount of time to run after loading, which we have to wait for.
-        self.marionette.set_search_timeout(120000)
+        self.marionette.timeout.implicit = 120
 
-        self.marionette.set_page_load_timeout(120000)
+        self.marionette.timeout.page_load = 120
 
     # srcdir_path should be the directory relative to this file.
     def set_server_prefix(self, srcdir_path):

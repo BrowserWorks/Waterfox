@@ -1,4 +1,3 @@
-// |jit-test| test-also-wasm-baseline
 load(libdir + "wasm.js");
 
 // Bug 1298808.
@@ -14,4 +13,4 @@ assertEq(wasmEvalText(`(module
         )
     )
     (export "" 0)
-)`)(), 121);
+)`).exports[""](), 121);

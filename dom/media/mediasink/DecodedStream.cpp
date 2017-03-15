@@ -21,6 +21,9 @@
 
 namespace mozilla {
 
+#undef DUMP_LOG
+#define DUMP_LOG(x, ...) NS_DebugBreak(NS_DEBUG_WARNING, nsPrintfCString(x, ##__VA_ARGS__).get(), nullptr, nullptr, -1)
+
 /*
  * A container class to make it easier to pass the playback info all the
  * way to DecodedStreamGraphListener from DecodedStream.
@@ -36,7 +39,6 @@ public:
                              MozPromiseHolder<GenericPromise>&& aPromise)
     : mMutex("DecodedStreamGraphListener::mMutex")
     , mStream(aStream)
-    , mLastOutputTime(aStream->StreamTimeToMicroseconds(aStream->GetCurrentTime()))
   {
     mFinishPromise = Move(aPromise);
   }
@@ -45,8 +47,9 @@ public:
   {
     MutexAutoLock lock(mMutex);
     if (mStream) {
-      mLastOutputTime = mStream->StreamTimeToMicroseconds(
-          mStream->GraphTimeToStreamTime(aCurrentTime));
+      int64_t t = mStream->StreamTimeToMicroseconds(
+        mStream->GraphTimeToStreamTime(aCurrentTime));
+      mOnOutput.Notify(t);
     }
   }
 
@@ -61,28 +64,32 @@ public:
 
   void DoNotifyFinished()
   {
+    MOZ_ASSERT(NS_IsMainThread());
     mFinishPromise.ResolveIfExists(true, __func__);
-  }
-
-  int64_t GetLastOutputTime()
-  {
-    MutexAutoLock lock(mMutex);
-    return mLastOutputTime;
   }
 
   void Forget()
   {
-    MOZ_ASSERT(NS_IsMainThread());
-    mFinishPromise.ResolveIfExists(true, __func__);
+    RefPtr<DecodedStreamGraphListener> self = this;
+    AbstractThread::MainThread()->Dispatch(NS_NewRunnableFunction([self] () {
+      MOZ_ASSERT(NS_IsMainThread());
+      self->mFinishPromise.ResolveIfExists(true, __func__);
+    }));
     MutexAutoLock lock(mMutex);
     mStream = nullptr;
   }
 
+  MediaEventSource<int64_t>& OnOutput()
+  {
+    return mOnOutput;
+  }
+
 private:
+  MediaEventProducer<int64_t> mOnOutput;
+
   Mutex mMutex;
   // Members below are protected by mMutex.
   RefPtr<MediaStream> mStream;
-  int64_t mLastOutputTime; // microseconds
   // Main thread only.
   MozPromiseHolder<GenericPromise> mFinishPromise;
 };
@@ -121,8 +128,10 @@ public:
                     PlaybackInfoInit&& aInit,
                     MozPromiseHolder<GenericPromise>&& aPromise);
   ~DecodedStreamData();
-  int64_t GetPosition() const;
   void SetPlaying(bool aPlaying);
+  MediaEventSource<int64_t>& OnOutput();
+  void Forget();
+  void DumpDebugInfo();
 
   /* The following group of fields are protected by the decoder's monitor
    * and can be read or written on any thread.
@@ -188,14 +197,13 @@ DecodedStreamData::DecodedStreamData(OutputStreamManager* aOutputStreamManager,
 DecodedStreamData::~DecodedStreamData()
 {
   mOutputStreamManager->Disconnect();
-  mListener->Forget();
   mStream->Destroy();
 }
 
-int64_t
-DecodedStreamData::GetPosition() const
+MediaEventSource<int64_t>&
+DecodedStreamData::OnOutput()
 {
-  return mListener->GetLastOutputTime();
+  return mListener->OnOutput();
 }
 
 void
@@ -205,6 +213,23 @@ DecodedStreamData::SetPlaying(bool aPlaying)
     mPlaying = aPlaying;
     UpdateStreamSuspended(mStream, !mPlaying);
   }
+}
+
+void
+DecodedStreamData::Forget()
+{
+  mListener->Forget();
+}
+
+void
+DecodedStreamData::DumpDebugInfo()
+{
+  DUMP_LOG(
+    "DecodedStreamData=%p mPlaying=%d mAudioFramesWritten=%lld"
+    "mNextAudioTime=%lld mNextVideoTime=%lld mHaveSentFinish=%d"
+    "mHaveSentFinishAudio=%d mHaveSentFinishVideo=%d",
+    this, mPlaying, mAudioFramesWritten, mNextAudioTime, mNextVideoTime,
+    mHaveSentFinish, mHaveSentFinishAudio, mHaveSentFinishVideo);
 }
 
 DecodedStream::DecodedStream(AbstractThread* aOwnerThread,
@@ -266,6 +291,7 @@ DecodedStream::Start(int64_t aStartTime, const MediaInfo& aInfo)
   MOZ_ASSERT(mStartTime.isNothing(), "playback already started.");
 
   mStartTime.emplace(aStartTime);
+  mLastOutputTime = 0;
   mInfo = aInfo;
   mPlaying = true;
   ConnectListener();
@@ -314,6 +340,8 @@ DecodedStream::Start(int64_t aStartTime, const MediaInfo& aInfo)
   mData = static_cast<R*>(r.get())->ReleaseData();
 
   if (mData) {
+    mOutputListener = mData->OnOutput().Connect(
+      mOwnerThread, this, &DecodedStream::NotifyOutput);
     mData->SetPlaying(mPlaying);
     SendData();
   }
@@ -357,7 +385,10 @@ DecodedStream::DestroyData(UniquePtr<DecodedStreamData> aData)
     return;
   }
 
+  mOutputListener.Disconnect();
+
   DecodedStreamData* data = aData.release();
+  data->Forget();
   nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([=] () {
     delete data;
   });
@@ -691,7 +722,22 @@ DecodedStream::GetPosition(TimeStamp* aTimeStamp) const
   if (aTimeStamp) {
     *aTimeStamp = TimeStamp::Now();
   }
-  return mStartTime.ref() + (mData ? mData->GetPosition() : 0);
+  return mStartTime.ref() + mLastOutputTime;
+}
+
+void
+DecodedStream::NotifyOutput(int64_t aTime)
+{
+  AssertOwnerThread();
+  mLastOutputTime = aTime;
+  int64_t currentTime = GetPosition();
+
+  // Remove audio samples that have been played by MSG from the queue.
+  RefPtr<MediaData> a = mAudioQueue.PeekFront();
+  for (; a && a->mTime < currentTime;) {
+    RefPtr<MediaData> releaseMe = mAudioQueue.PopFront();
+    a = mAudioQueue.PeekFront();
+  }
 }
 
 void
@@ -718,6 +764,18 @@ DecodedStream::DisconnectListener()
   mVideoPushListener.Disconnect();
   mAudioFinishListener.Disconnect();
   mVideoFinishListener.Disconnect();
+}
+
+void
+DecodedStream::DumpDebugInfo()
+{
+  AssertOwnerThread();
+  DUMP_LOG(
+    "DecodedStream=%p mStartTime=%lld mLastOutputTime=%lld mPlaying=%d mData=%p",
+    this, mStartTime.valueOr(-1), mLastOutputTime, mPlaying, mData.get());
+  if (mData) {
+    mData->DumpDebugInfo();
+  }
 }
 
 } // namespace mozilla

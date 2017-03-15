@@ -157,7 +157,7 @@ gfxTextRun::gfxTextRun(const gfxTextRunFactory::Parameters *aParams,
     MOZ_COUNT_CTOR(gfxTextRun);
     NS_ADDREF(mFontGroup);
 
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
     gfxTextPerfMetrics *tp = aFontGroup->GetTextPerfMetrics();
     if (tp) {
         tp->current.textrunConst++;
@@ -191,7 +191,7 @@ gfxTextRun::~gfxTextRun()
     // been told to release its reference to the group, so we mustn't do that
     // again here.
     if (!mReleasedFontGroup) {
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
         gfxTextPerfMetrics *tp = mFontGroup->GetTextPerfMetrics();
         if (tp) {
             tp->current.textrunDestr++;
@@ -212,21 +212,26 @@ gfxTextRun::ReleaseFontGroup()
 }
 
 bool
-gfxTextRun::SetPotentialLineBreaks(Range aRange, uint8_t *aBreakBefore)
+gfxTextRun::SetPotentialLineBreaks(Range aRange, const uint8_t* aBreakBefore)
 {
     NS_ASSERTION(aRange.end <= GetLength(), "Overflow");
 
     uint32_t changed = 0;
-    uint32_t i;
-    CompressedGlyph *charGlyphs = mCharacterGlyphs + aRange.start;
-    for (i = 0; i < aRange.Length(); ++i) {
-        uint8_t canBreak = aBreakBefore[i];
-        if (canBreak && !charGlyphs[i].IsClusterStart()) {
-            // This can happen ... there is no guarantee that our linebreaking rules
-            // align with the platform's idea of what constitutes a cluster.
-            canBreak = CompressedGlyph::FLAG_BREAK_TYPE_NONE;
+    CompressedGlyph* cg = mCharacterGlyphs + aRange.start;
+    const CompressedGlyph* const end = cg + aRange.Length();
+    while (cg < end) {
+        uint8_t canBreak = *aBreakBefore++;
+        if (canBreak && !cg->IsClusterStart()) {
+            // XXX If we replace the line-breaker with one based more closely
+            // on UAX#14 (e.g. using ICU), this may not be needed any more.
+            // Avoid possible breaks inside a cluster, EXCEPT when the previous
+            // character was a space (compare UAX#14 rules LB9, LB10).
+            if (cg == mCharacterGlyphs || !(cg - 1)->CharIsSpace()) {
+                canBreak = CompressedGlyph::FLAG_BREAK_TYPE_NONE;
+            }
         }
-        changed |= charGlyphs[i].SetCanBreakBefore(canBreak);
+        changed |= cg->SetCanBreakBefore(canBreak);
+        ++cg;
     }
     return changed != 0;
 }
@@ -1893,7 +1898,7 @@ gfxFontGroup::GetFirstMathFont()
     uint32_t count = mFonts.Length();
     for (uint32_t i = 0; i < count; ++i) {
         gfxFont* font = GetFontAt(i);
-        if (font && font->GetFontEntry()->TryGetMathTable()) {
+        if (font && font->TryGetMathTable()) {
             return font;
         }
     }
@@ -2902,7 +2907,7 @@ void gfxFontGroup::ComputeRanges(nsTArray<gfxTextRange>& aRanges,
             FindFontForChar(ch, prevCh, nextCh, aRunScript, prevFont,
                             &matchType);
 
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
         if (MOZ_UNLIKELY(mTextPerf)) {
             if (matchType == gfxTextRange::kPrefsFallback) {
                 mTextPerf->current.fallbackPrefs++;
@@ -2961,7 +2966,7 @@ void gfxFontGroup::ComputeRanges(nsTArray<gfxTextRange>& aRanges,
 
     aRanges[lastRangeIndex].end = aLength;
 
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
     LogModule* log = mStyle.systemFont
                    ? gfxPlatform::GetLog(eGfxLog_textrunui)
                    : gfxPlatform::GetLog(eGfxLog_textrun);

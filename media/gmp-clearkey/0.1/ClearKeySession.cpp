@@ -19,7 +19,7 @@
 #include "ClearKeySession.h"
 #include "ClearKeyUtils.h"
 #include "ClearKeyStorage.h"
-#include "ClearKeyCencParser.h"
+#include "psshparser/PsshParser.h"
 #include "gmp-task-utils.h"
 #include "gmp-api/gmp-decryption.h"
 #include <assert.h>
@@ -41,15 +41,14 @@ ClearKeySession::~ClearKeySession()
 {
   CK_LOGD("ClearKeySession dtor %p", this);
 
-  auto& keyIds = GetKeyIds();
-  for (auto it = keyIds.begin(); it != keyIds.end(); it++) {
-    assert(ClearKeyDecryptionManager::Get()->HasSeenKeyId(*it));
-
-    ClearKeyDecryptionManager::Get()->ReleaseKeyId(*it);
-    mCallback->KeyStatusChanged(&mSessionId[0], mSessionId.size(),
-                                &(*it)[0], it->size(),
-                                kGMPUnknown);
+  std::vector<GMPMediaKeyInfo> key_infos;
+  for (const KeyId& keyId : mKeyIds) {
+    assert(ClearKeyDecryptionManager::Get()->HasSeenKeyId(keyId));
+    ClearKeyDecryptionManager::Get()->ReleaseKeyId(keyId);
+    key_infos.push_back(GMPMediaKeyInfo(&keyId[0], keyId.size(), kGMPUnknown));
   }
+  mCallback->BatchedKeyStatusChanged(&mSessionId[0], mSessionId.size(),
+                                     key_infos.data(), key_infos.size());
 }
 
 void
@@ -63,14 +62,8 @@ ClearKeySession::Init(uint32_t aCreateSessionToken,
   if (aInitDataType == "cenc") {
     ParseCENCInitData(aInitData, aInitDataSize, mKeyIds);
   } else if (aInitDataType == "keyids") {
-    std::string sessionType;
-    ClearKeyUtils::ParseKeyIdsInitData(aInitData, aInitDataSize, mKeyIds, sessionType);
-    if (sessionType != ClearKeyUtils::SessionTypeToString(mSessionType)) {
-      const char message[] = "Session type specified in keyids init data doesn't match session type.";
-      mCallback->RejectPromise(aPromiseId, kGMPInvalidAccessError, message, strlen(message));
-      return;
-    }
-  } else if (aInitDataType == "webm" && aInitDataSize == 16) {
+    ClearKeyUtils::ParseKeyIdsInitData(aInitData, aInitDataSize, mKeyIds);
+  } else if (aInitDataType == "webm" && aInitDataSize <= kMaxWebmInitDataSize) {
     // "webm" initData format is simply the raw bytes of the keyId.
     vector<uint8_t> keyId;
     keyId.assign(aInitData, aInitData+aInitDataSize);
@@ -79,7 +72,7 @@ ClearKeySession::Init(uint32_t aCreateSessionToken,
 
   if (!mKeyIds.size()) {
     const char message[] = "Couldn't parse init data";
-    mCallback->RejectPromise(aPromiseId, kGMPInvalidAccessError, message, strlen(message));
+    mCallback->RejectPromise(aPromiseId, kGMPTypeError, message, strlen(message));
     return;
   }
 

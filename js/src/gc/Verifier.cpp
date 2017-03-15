@@ -119,6 +119,10 @@ VerifyPreTracer::onChild(const JS::GCCellPtr& thing)
 {
     MOZ_ASSERT(!IsInsideNursery(thing.asCell()));
 
+    // Skip things in other runtimes.
+    if (thing.asCell()->asTenured().runtimeFromAnyThread() != runtime())
+        return;
+
     edgeptr += sizeof(EdgeValue);
     if (edgeptr >= term) {
         edgeptr = term;
@@ -175,7 +179,7 @@ gc::GCRuntime::startVerifyPreBarriers()
     if (verifyPreData || isIncrementalGCInProgress())
         return;
 
-    if (!IsIncrementalGCSafe(rt))
+    if (IsIncrementalGCUnsafe(rt) != AbortReason::None)
         return;
 
     number++;
@@ -274,6 +278,10 @@ static const uint32_t MAX_VERIFIER_EDGES = 1000;
 void
 CheckEdgeTracer::onChild(const JS::GCCellPtr& thing)
 {
+    // Skip things in other runtimes.
+    if (thing.asCell()->asTenured().runtimeFromAnyThread() != runtime())
+        return;
+
     /* Avoid n^2 behavior. */
     if (node->count > MAX_VERIFIER_EDGES)
         return;
@@ -342,7 +350,7 @@ gc::GCRuntime::endVerifyPreBarriers()
     verifyPreData = nullptr;
     incrementalState = State::NotActive;
 
-    if (!compartmentCreated && IsIncrementalGCSafe(rt)) {
+    if (!compartmentCreated && IsIncrementalGCUnsafe(rt) == AbortReason::None) {
         CheckEdgeTracer cetrc(rt);
 
         /* Start after the roots. */
@@ -439,7 +447,7 @@ class CheckHeapTracer : public JS::CallbackTracer
   public:
     explicit CheckHeapTracer(JSRuntime* rt);
     bool init();
-    bool check(AutoLockForExclusiveAccess& lock);
+    void check(AutoLockForExclusiveAccess& lock);
 
   private:
     void onChild(const JS::GCCellPtr& thing) override;
@@ -481,6 +489,12 @@ CheckHeapTracer::init()
     return visited.init();
 }
 
+inline static bool
+IsValidGCThingPointer(Cell* cell)
+{
+    return (uintptr_t(cell) & CellMask) == 0;
+}
+
 void
 CheckHeapTracer::onChild(const JS::GCCellPtr& thing)
 {
@@ -493,9 +507,10 @@ CheckHeapTracer::onChild(const JS::GCCellPtr& thing)
         return;
     }
 
-    if (!IsGCThingValidAfterMovingGC(cell)) {
+    if (!IsValidGCThingPointer(cell) || !IsGCThingValidAfterMovingGC(cell))
+    {
         failures++;
-        fprintf(stderr, "Stale pointer %p\n", cell);
+        fprintf(stderr, "Bad pointer %p\n", cell);
         const char* name = contextName();
         for (int index = parentIndex; index != -1; index = stack[index].parentIndex) {
             const WorkItem& parent = stack[index];
@@ -513,7 +528,7 @@ CheckHeapTracer::onChild(const JS::GCCellPtr& thing)
         oom = true;
 }
 
-bool
+void
 CheckHeapTracer::check(AutoLockForExclusiveAccess& lock)
 {
     // The analysis thinks that traceRuntime might GC by calling a GC callback.
@@ -533,24 +548,22 @@ CheckHeapTracer::check(AutoLockForExclusiveAccess& lock)
     }
 
     if (oom)
-        return false;
+        return;
 
     if (failures) {
-        fprintf(stderr, "Heap check: %zu failure(s) out of %" PRIu32 " pointers checked\n",
+        fprintf(stderr, "Heap check: %" PRIuSIZE " failure(s) out of %" PRIu32 " pointers checked\n",
                 failures, visited.count());
     }
     MOZ_RELEASE_ASSERT(failures == 0);
-
-    return true;
 }
 
 void
-js::gc::CheckHeapAfterMovingGC(JSRuntime* rt)
+js::gc::CheckHeapAfterGC(JSRuntime* rt)
 {
     AutoTraceSession session(rt, JS::HeapState::Tracing);
     CheckHeapTracer tracer(rt);
-    if (!tracer.init() || !tracer.check(session.lock))
-        fprintf(stderr, "OOM checking heap\n");
+    if (tracer.init())
+        tracer.check(session.lock);
 }
 
 #endif /* JSGC_HASH_TABLE_CHECKS */

@@ -55,6 +55,23 @@ function runtimeApiFactory(context) {
         return context.messenger.sendMessage(context.messageManager, message, recipient, responseCallback);
       },
 
+      connectNative(application) {
+        let recipient = {
+          childId: context.childManager.id,
+          toNativeApp: application,
+        };
+
+        return context.messenger.connectNative(context.messageManager, "", recipient);
+      },
+
+      sendNativeMessage(application, message) {
+        let recipient = {
+          childId: context.childManager.id,
+          toNativeApp: application,
+        };
+        return context.messenger.sendNativeMessage(context.messageManager, message, recipient);
+      },
+
       get lastError() {
         return context.lastError;
       },

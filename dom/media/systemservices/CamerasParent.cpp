@@ -21,6 +21,11 @@
 
 #include "webrtc/common_video/libyuv/include/webrtc_libyuv.h"
 
+#if defined(_WIN32)
+#include <process.h>
+#define getpid() _getpid()
+#endif
+
 #undef LOG
 #undef LOG_ENABLED
 mozilla::LazyLogModule gCamerasParentLog("CamerasParent");
@@ -513,7 +518,7 @@ CamerasParent::EnsureInitialized(int aEngine)
 // It would be nice to get rid of the code duplication here,
 // perhaps via Promises.
 bool
-CamerasParent::RecvNumberOfCaptureDevices(const int& aCapEngine)
+CamerasParent::RecvNumberOfCaptureDevices(const CaptureEngine& aCapEngine)
 {
   LOG((__PRETTY_FUNCTION__));
 
@@ -547,7 +552,39 @@ CamerasParent::RecvNumberOfCaptureDevices(const int& aCapEngine)
 }
 
 bool
-CamerasParent::RecvNumberOfCapabilities(const int& aCapEngine,
+CamerasParent::RecvEnsureInitialized(const CaptureEngine& aCapEngine)
+{
+  LOG((__PRETTY_FUNCTION__));
+
+  RefPtr<CamerasParent> self(this);
+  RefPtr<Runnable> webrtc_runnable =
+    media::NewRunnableFrom([self, aCapEngine]() -> nsresult {
+      bool result = self->EnsureInitialized(aCapEngine);
+
+      RefPtr<nsIRunnable> ipc_runnable =
+        media::NewRunnableFrom([self, result]() -> nsresult {
+          if (self->IsShuttingDown()) {
+            return NS_ERROR_FAILURE;
+          }
+          if (!result) {
+            LOG(("RecvEnsureInitialized failed"));
+            Unused << self->SendReplyFailure();
+            return NS_ERROR_FAILURE;
+          } else {
+            LOG(("RecvEnsureInitialized succeeded"));
+            Unused << self->SendReplySuccess();
+            return NS_OK;
+          }
+        });
+        self->mPBackgroundThread->Dispatch(ipc_runnable, NS_DISPATCH_NORMAL);
+      return NS_OK;
+    });
+  DispatchToVideoCaptureThread(webrtc_runnable);
+  return true;
+}
+
+bool
+CamerasParent::RecvNumberOfCapabilities(const CaptureEngine& aCapEngine,
                                         const nsCString& unique_id)
 {
   LOG((__PRETTY_FUNCTION__));
@@ -586,7 +623,7 @@ CamerasParent::RecvNumberOfCapabilities(const int& aCapEngine,
 }
 
 bool
-CamerasParent::RecvGetCaptureCapability(const int &aCapEngine,
+CamerasParent::RecvGetCaptureCapability(const CaptureEngine& aCapEngine,
                                         const nsCString& unique_id,
                                         const int& num)
 {
@@ -636,7 +673,7 @@ CamerasParent::RecvGetCaptureCapability(const int &aCapEngine,
 }
 
 bool
-CamerasParent::RecvGetCaptureDevice(const int& aCapEngine,
+CamerasParent::RecvGetCaptureDevice(const CaptureEngine& aCapEngine,
                                     const int& aListNumber)
 {
   LOG((__PRETTY_FUNCTION__));
@@ -648,20 +685,22 @@ CamerasParent::RecvGetCaptureDevice(const int& aCapEngine,
       char deviceUniqueId[MediaEngineSource::kMaxUniqueIdLength];
       nsCString name;
       nsCString uniqueId;
+      int devicePid = 0;
       int error = -1;
       if (self->EnsureInitialized(aCapEngine)) {
           error = self->mEngines[aCapEngine].mPtrViECapture->GetCaptureDevice(aListNumber,
                                                                               deviceName,
                                                                               sizeof(deviceName),
                                                                               deviceUniqueId,
-                                                                              sizeof(deviceUniqueId));
+                                                                              sizeof(deviceUniqueId),
+                                                                              &devicePid);
       }
       if (!error) {
         name.Assign(deviceName);
         uniqueId.Assign(deviceUniqueId);
       }
       RefPtr<nsIRunnable> ipc_runnable =
-        media::NewRunnableFrom([self, error, name, uniqueId]() -> nsresult {
+        media::NewRunnableFrom([self, error, name, uniqueId, devicePid]() {
           if (self->IsShuttingDown()) {
             return NS_ERROR_FAILURE;
           }
@@ -670,9 +709,11 @@ CamerasParent::RecvGetCaptureDevice(const int& aCapEngine,
             Unused << self->SendReplyFailure();
             return NS_ERROR_FAILURE;
           }
+          bool scary = (devicePid == getpid());
 
-          LOG(("Returning %s name %s id", name.get(), uniqueId.get()));
-          Unused << self->SendReplyGetCaptureDevice(name, uniqueId);
+          LOG(("Returning %s name %s id (pid = %d)%s", name.get(),
+               uniqueId.get(), devicePid, (scary? " (scary)" : "")));
+          Unused << self->SendReplyGetCaptureDevice(name, uniqueId, scary);
           return NS_OK;
         });
       self->mPBackgroundThread->Dispatch(ipc_runnable, NS_DISPATCH_NORMAL);
@@ -739,7 +780,7 @@ HasCameraPermission(const nsCString& aOrigin)
 }
 
 bool
-CamerasParent::RecvAllocateCaptureDevice(const int& aCapEngine,
+CamerasParent::RecvAllocateCaptureDevice(const CaptureEngine& aCapEngine,
                                          const nsCString& unique_id,
                                          const nsCString& aOrigin)
 {
@@ -796,7 +837,7 @@ CamerasParent::RecvAllocateCaptureDevice(const int& aCapEngine,
 }
 
 int
-CamerasParent::ReleaseCaptureDevice(const int& aCapEngine,
+CamerasParent::ReleaseCaptureDevice(const CaptureEngine& aCapEngine,
                                     const int& capnum)
 {
   int error = -1;
@@ -807,7 +848,7 @@ CamerasParent::ReleaseCaptureDevice(const int& aCapEngine,
 }
 
 bool
-CamerasParent::RecvReleaseCaptureDevice(const int& aCapEngine,
+CamerasParent::RecvReleaseCaptureDevice(const CaptureEngine& aCapEngine,
                                         const int& numdev)
 {
   LOG((__PRETTY_FUNCTION__));
@@ -841,7 +882,7 @@ CamerasParent::RecvReleaseCaptureDevice(const int& aCapEngine,
 }
 
 bool
-CamerasParent::RecvStartCapture(const int& aCapEngine,
+CamerasParent::RecvStartCapture(const CaptureEngine& aCapEngine,
                                 const int& capnum,
                                 const CaptureCapability& ipcCaps)
 {
@@ -903,7 +944,7 @@ CamerasParent::RecvStartCapture(const int& aCapEngine,
 }
 
 void
-CamerasParent::StopCapture(const int& aCapEngine,
+CamerasParent::StopCapture(const CaptureEngine& aCapEngine,
                            const int& capnum)
 {
   if (EnsureInitialized(aCapEngine)) {
@@ -924,7 +965,7 @@ CamerasParent::StopCapture(const int& aCapEngine,
 }
 
 bool
-CamerasParent::RecvStopCapture(const int& aCapEngine,
+CamerasParent::RecvStopCapture(const CaptureEngine& aCapEngine,
                                const int& capnum)
 {
   LOG((__PRETTY_FUNCTION__));

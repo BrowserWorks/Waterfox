@@ -24,8 +24,6 @@
 #include "gfxRect.h"
 
 #include "nsIAndroidBridge.h"
-#include "nsIMobileMessageCallback.h"
-#include "nsIMobileMessageCursorCallback.h"
 #include "nsIDOMDOMCursor.h"
 
 #include "mozilla/Likely.h"
@@ -60,12 +58,6 @@ class BatteryInformation;
 class NetworkInformation;
 } // namespace hal
 
-namespace dom {
-namespace mobilemessage {
-class SmsFilterData;
-} // namespace mobilemessage
-} // namespace dom
-
 // The order and number of the members in this structure must correspond
 // to the attrsAppearance array in GeckoAppShell.getSystemColors()
 typedef struct AndroidSystemColors {
@@ -81,24 +73,6 @@ typedef struct AndroidSystemColors {
     nscolor panelColorForeground;
     nscolor panelColorBackground;
 } AndroidSystemColors;
-
-class ThreadCursorContinueCallback : public nsICursorContinueCallback
-{
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSICURSORCONTINUECALLBACK
-
-    ThreadCursorContinueCallback(int aRequestId)
-        : mRequestId(aRequestId)
-    {
-    }
-private:
-    virtual ~ThreadCursorContinueCallback()
-    {
-    }
-
-    int mRequestId;
-};
 
 class MessageCursorContinueCallback : public nsICursorContinueCallback
 {
@@ -144,15 +118,8 @@ public:
         return sBridge;
     }
 
-    /* These are all implemented in Java */
-    bool GetThreadNameJavaProfiling(uint32_t aThreadId, nsCString & aResult);
-    bool GetFrameNameJavaProfiling(uint32_t aThreadId, uint32_t aSampleId, uint32_t aFrameId, nsCString & aResult);
-
-    void ContentDocumentChanged();
-    bool IsContentDocumentDisplayed();
-
-    void SetLayerClient(java::GeckoLayerClient::Param jobj);
-    const java::GeckoLayerClient::Ref& GetLayerClient() { return mLayerClient; }
+    void ContentDocumentChanged(mozIDOMWindowProxy* aDOMWindow);
+    bool IsContentDocumentDisplayed(mozIDOMWindowProxy* aDOMWindow);
 
     bool GetHandlersForURL(const nsAString& aURL,
                            nsIMutableArray* handlersArray = nullptr,
@@ -194,50 +161,7 @@ public:
 
     void GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInfo);
 
-    nsresult GetSegmentInfoForText(const nsAString& aText,
-                                   nsIMobileMessageCallback* aRequest);
-    void SendMessage(const nsAString& aNumber, const nsAString& aText,
-                     nsIMobileMessageCallback* aRequest);
-    void GetMessage(int32_t aMessageId, nsIMobileMessageCallback* aRequest);
-    void DeleteMessage(int32_t aMessageId, nsIMobileMessageCallback* aRequest);
-    void MarkMessageRead(int32_t aMessageId,
-                         bool aValue,
-                         bool aSendReadReport,
-                         nsIMobileMessageCallback* aRequest);
-    already_AddRefed<nsICursorContinueCallback>
-    CreateMessageCursor(bool aHasStartDate,
-                        uint64_t aStartDate,
-                        bool aHasEndDate,
-                        uint64_t aEndDate,
-                        const char16_t** aNumbers,
-                        uint32_t aNumbersCount,
-                        const nsAString& aDelivery,
-                        bool aHasRead,
-                        bool aRead,
-                        bool aHasThreadId,
-                        uint64_t aThreadId,
-                        bool aReverse,
-                        nsIMobileMessageCursorCallback* aRequest);
-    already_AddRefed<nsICursorContinueCallback>
-    CreateThreadCursor(nsIMobileMessageCursorCallback* aRequest);
-    already_AddRefed<nsIMobileMessageCallback> DequeueSmsRequest(uint32_t aRequestId);
-    nsCOMPtr<nsIMobileMessageCursorCallback> GetSmsCursorRequest(uint32_t aRequestId);
-    already_AddRefed<nsIMobileMessageCursorCallback> DequeueSmsCursorRequest(uint32_t aRequestId);
-
     void GetCurrentNetworkInformation(hal::NetworkInformation* aNetworkInfo);
-
-    void SetFirstPaintViewport(const LayerIntPoint& aOffset, const CSSToLayerScale& aZoom, const CSSRect& aCssPageRect);
-    void SetPageRect(const CSSRect& aCssPageRect);
-    void SyncViewportInfo(const LayerIntRect& aDisplayPort, const CSSToLayerScale& aDisplayResolution,
-                          bool aLayersUpdated, int32_t aPaintSyncId, ParentLayerRect& aScrollRect, CSSToParentLayerScale& aScale,
-                          ScreenMargin& aFixedLayerMargins);
-    void SyncFrameMetrics(const ParentLayerPoint& aScrollOffset,
-                          const CSSToParentLayerScale& aZoom,
-                          const CSSRect& aCssPageRect,
-                          const CSSRect& aDisplayPort,
-                          const CSSToLayerScale& aPaintedResolution,
-                          bool aLayersUpdated, int32_t aPaintSyncId,
-                          ScreenMargin& aFixedLayerMargins);
 
     // These methods don't use a ScreenOrientation because it's an
     // enum and that would require including the header which requires
@@ -267,7 +191,6 @@ public:
     static jstring NewJavaString(AutoLocalJNIFrame* frame, const char* string);
     static jstring NewJavaString(AutoLocalJNIFrame* frame, const nsACString& string);
 
-    static jclass GetClassGlobalRef(JNIEnv* env, const char* className);
     static jfieldID GetFieldID(JNIEnv* env, jclass jClass, const char* fieldName, const char* fieldType);
     static jfieldID GetStaticFieldID(JNIEnv* env, jclass jClass, const char* fieldName, const char* fieldType);
     static jmethodID GetMethodID(JNIEnv* env, jclass jClass, const char* methodName, const char* methodType);
@@ -285,21 +208,11 @@ protected:
     static nsDataHashtable<nsStringHashKey, nsString> sStoragePaths;
 
     static AndroidBridge* sBridge;
-    nsTArray<nsCOMPtr<nsIMobileMessageCallback>> mSmsRequests;
-    nsTArray<nsCOMPtr<nsIMobileMessageCursorCallback>> mSmsCursorRequests;
-
-    java::GeckoLayerClient::GlobalRef mLayerClient;
-
-    // the android.telephony.SmsMessage class
-    jclass mAndroidSmsMessageClass;
 
     AndroidBridge();
     ~AndroidBridge();
 
     int mAPIVersion;
-
-    bool QueueSmsRequest(nsIMobileMessageCallback* aRequest, uint32_t* aRequestIdOut);
-    bool QueueSmsCursorRequest(nsIMobileMessageCursorCallback* aRequest, uint32_t* aRequestIdOut);
 
     // intput stream
     jclass jReadableByteChannel;
@@ -315,9 +228,6 @@ protected:
 
     // some convinient types to have around
     jclass jStringClass;
-
-    jni::Object::GlobalRef mClassLoader;
-    jmethodID mClassLoaderLoadClass;
 
     jni::Object::GlobalRef mMessageQueue;
     jfieldID mMessageQueueMessages;
@@ -341,11 +251,11 @@ private:
 public:
     AutoJNIClass(JNIEnv* jEnv, const char* name)
         : mEnv(jEnv)
-        , mClass(AndroidBridge::GetClassGlobalRef(jEnv, name))
+        , mClass(jni::GetClassRef(jEnv, name))
     {}
 
     ~AutoJNIClass() {
-        mEnv->DeleteGlobalRef(mClass);
+        mEnv->DeleteLocalRef(mClass);
     }
 
     jclass getRawRef() const {

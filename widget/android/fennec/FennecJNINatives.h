@@ -14,6 +14,44 @@ namespace mozilla {
 namespace java {
 
 template<class Impl>
+class ANRReporter::Natives : public mozilla::jni::NativeImpl<ANRReporter, Impl>
+{
+public:
+    static const JNINativeMethod methods[3];
+};
+
+template<class Impl>
+const JNINativeMethod ANRReporter::Natives<Impl>::methods[] = {
+
+    mozilla::jni::MakeNativeMethod<ANRReporter::GetNativeStack_t>(
+            mozilla::jni::NativeStub<ANRReporter::GetNativeStack_t, Impl>
+            ::template Wrap<&Impl::GetNativeStack>),
+
+    mozilla::jni::MakeNativeMethod<ANRReporter::ReleaseNativeStack_t>(
+            mozilla::jni::NativeStub<ANRReporter::ReleaseNativeStack_t, Impl>
+            ::template Wrap<&Impl::ReleaseNativeStack>),
+
+    mozilla::jni::MakeNativeMethod<ANRReporter::RequestNativeStack_t>(
+            mozilla::jni::NativeStub<ANRReporter::RequestNativeStack_t, Impl>
+            ::template Wrap<&Impl::RequestNativeStack>)
+};
+
+template<class Impl>
+class GeckoJavaSampler::Natives : public mozilla::jni::NativeImpl<GeckoJavaSampler, Impl>
+{
+public:
+    static const JNINativeMethod methods[1];
+};
+
+template<class Impl>
+const JNINativeMethod GeckoJavaSampler::Natives<Impl>::methods[] = {
+
+    mozilla::jni::MakeNativeMethod<GeckoJavaSampler::GetProfilerTime_t>(
+            mozilla::jni::NativeStub<GeckoJavaSampler::GetProfilerTime_t, Impl>
+            ::template Wrap<&Impl::GetProfilerTime>)
+};
+
+template<class Impl>
 class MemoryMonitor::Natives : public mozilla::jni::NativeImpl<MemoryMonitor, Impl>
 {
 public:
@@ -49,6 +87,25 @@ const JNINativeMethod PresentationMediaPlayerManager::Natives<Impl>::methods[] =
     mozilla::jni::MakeNativeMethod<PresentationMediaPlayerManager::RemovePresentationSurface_t>(
             mozilla::jni::NativeStub<PresentationMediaPlayerManager::RemovePresentationSurface_t, Impl>
             ::template Wrap<&Impl::RemovePresentationSurface>)
+};
+
+template<class Impl>
+class ScreenManagerHelper::Natives : public mozilla::jni::NativeImpl<ScreenManagerHelper, Impl>
+{
+public:
+    static const JNINativeMethod methods[2];
+};
+
+template<class Impl>
+const JNINativeMethod ScreenManagerHelper::Natives<Impl>::methods[] = {
+
+    mozilla::jni::MakeNativeMethod<ScreenManagerHelper::AddDisplay_t>(
+            mozilla::jni::NativeStub<ScreenManagerHelper::AddDisplay_t, Impl>
+            ::template Wrap<&Impl::AddDisplay>),
+
+    mozilla::jni::MakeNativeMethod<ScreenManagerHelper::RemoveDisplay_t>(
+            mozilla::jni::NativeStub<ScreenManagerHelper::RemoveDisplay_t, Impl>
+            ::template Wrap<&Impl::RemoveDisplay>)
 };
 
 template<class Impl>
@@ -141,6 +198,45 @@ const JNINativeMethod CodecProxy::NativeCallbacks::Natives<Impl>::methods[] = {
     mozilla::jni::MakeNativeMethod<CodecProxy::NativeCallbacks::OnOutputFormatChanged_t>(
             mozilla::jni::NativeStub<CodecProxy::NativeCallbacks::OnOutputFormatChanged_t, Impl>
             ::template Wrap<&Impl::OnOutputFormatChanged>)
+};
+
+template<class Impl>
+class MediaDrmProxy::NativeMediaDrmProxyCallbacks::Natives : public mozilla::jni::NativeImpl<NativeMediaDrmProxyCallbacks, Impl>
+{
+public:
+    static const JNINativeMethod methods[7];
+};
+
+template<class Impl>
+const JNINativeMethod MediaDrmProxy::NativeMediaDrmProxyCallbacks::Natives<Impl>::methods[] = {
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnRejectPromise_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnRejectPromise_t, Impl>
+            ::template Wrap<&Impl::OnRejectPromise>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionBatchedKeyChanged_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionBatchedKeyChanged_t, Impl>
+            ::template Wrap<&Impl::OnSessionBatchedKeyChanged>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionClosed_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionClosed_t, Impl>
+            ::template Wrap<&Impl::OnSessionClosed>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionCreated_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionCreated_t, Impl>
+            ::template Wrap<&Impl::OnSessionCreated>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionError_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionError_t, Impl>
+            ::template Wrap<&Impl::OnSessionError>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionMessage_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionMessage_t, Impl>
+            ::template Wrap<&Impl::OnSessionMessage>),
+
+    mozilla::jni::MakeNativeMethod<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionUpdated_t>(
+            mozilla::jni::NativeStub<MediaDrmProxy::NativeMediaDrmProxyCallbacks::OnSessionUpdated_t, Impl>
+            ::template Wrap<&Impl::OnSessionUpdated>)
 };
 
 } /* java */

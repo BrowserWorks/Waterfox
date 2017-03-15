@@ -91,7 +91,7 @@ class IdToObjectMap
     IdToObjectMap();
 
     bool init();
-    void trace(JSTracer* trc);
+    void trace(JSTracer* trc, uint64_t minimumId = 0);
     void sweep();
 
     bool add(ObjectId id, JSObject* obj);
@@ -100,6 +100,10 @@ class IdToObjectMap
 
     void clear();
     bool empty() const;
+
+#ifdef DEBUG
+    bool has(const ObjectId& id, const JSObject* obj) const;
+#endif
 
   private:
     Table table_;
@@ -149,7 +153,7 @@ class JavaScriptShared : public CPOWManager
     bool fromJSIDVariant(JSContext* cx, const JSIDVariant& from, JS::MutableHandleId to);
 
     bool toSymbolVariant(JSContext* cx, JS::Symbol* sym, SymbolVariant* symVarp);
-    JS::Symbol* fromSymbolVariant(JSContext* cx, SymbolVariant symVar);
+    JS::Symbol* fromSymbolVariant(JSContext* cx, const SymbolVariant& symVar);
 
     bool fromDescriptor(JSContext* cx, JS::Handle<JS::PropertyDescriptor> desc,
                         PPropertyDescriptor* out);
@@ -157,13 +161,13 @@ class JavaScriptShared : public CPOWManager
                       JS::MutableHandle<JS::PropertyDescriptor> out);
 
     bool toObjectOrNullVariant(JSContext* cx, JSObject* obj, ObjectOrNullVariant* objVarp);
-    JSObject* fromObjectOrNullVariant(JSContext* cx, ObjectOrNullVariant objVar);
+    JSObject* fromObjectOrNullVariant(JSContext* cx, const ObjectOrNullVariant& objVar);
 
     bool convertIdToGeckoString(JSContext* cx, JS::HandleId id, nsString* to);
     bool convertGeckoStringToId(JSContext* cx, const nsString& from, JS::MutableHandleId id);
 
     virtual bool toObjectVariant(JSContext* cx, JSObject* obj, ObjectVariant* objVarp) = 0;
-    virtual JSObject* fromObjectVariant(JSContext* cx, ObjectVariant objVar) = 0;
+    virtual JSObject* fromObjectVariant(JSContext* cx, const ObjectVariant& objVar) = 0;
 
     static void ConvertID(const nsID& from, JSIID* to);
     static void ConvertID(const JSIID& from, nsID* to);
@@ -172,6 +176,12 @@ class JavaScriptShared : public CPOWManager
         return cpows_.find(objId);
     }
     JSObject* findObjectById(JSContext* cx, const ObjectId& objId);
+
+#ifdef DEBUG
+    bool hasCPOW(const ObjectId& objId, const JSObject* obj) {
+        return cpows_.has(objId, obj);
+    }
+#endif
 
     static bool LoggingEnabled() { return sLoggingEnabled; }
     static bool StackLoggingEnabled() { return sStackLoggingEnabled; }
@@ -189,6 +199,10 @@ class JavaScriptShared : public CPOWManager
     IdToObjectMap cpows_;
 
     uint64_t nextSerialNumber_;
+
+    // nextCPOWNumber_ should be the value of nextSerialNumber_ in the other
+    // process. The next new CPOW we get should have this serial number.
+    uint64_t nextCPOWNumber_;
 
     // CPOW references can be weak, and any object we store in a map may be
     // GCed (at which point the CPOW will report itself "dead" to the owner).

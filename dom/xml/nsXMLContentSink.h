@@ -49,8 +49,6 @@ class nsXMLContentSink : public nsContentSink,
 public:
   nsXMLContentSink();
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
-
   nsresult Init(nsIDocument* aDoc,
                 nsIURI* aURL,
                 nsISupports* aContainer,
@@ -82,7 +80,7 @@ public:
   NS_IMETHOD OnTransformDone(nsresult aResult, nsIDocument *aResultDocument) override;
 
   // nsICSSLoaderObserver
-  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheetHandle aSheet,
+  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheet* aSheet,
                               bool aWasAlternate,
                               nsresult aStatus) override;
   static bool ParsePIData(const nsString &aData, nsString &aHref,

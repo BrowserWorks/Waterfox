@@ -173,6 +173,15 @@ WorkerGlobalScope::GetCaches(ErrorResult& aRv)
   return ref.forget();
 }
 
+bool
+WorkerGlobalScope::IsSecureContext() const
+{
+  bool globalSecure =
+    JS_GetIsSecureContext(js::GetObjectCompartment(GetWrapperPreserveColor()));
+  MOZ_ASSERT(globalSecure == mWorkerPrivate->IsSecureContext());
+  return globalSecure;
+}
+
 already_AddRefed<WorkerLocation>
 WorkerGlobalScope::Location()
 {
@@ -958,7 +967,7 @@ IsDebuggerSandbox(JSObject* object)
 bool
 GetterOnlyJSNative(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
 {
-  JS_ReportErrorNumber(aCx, js::GetErrorMessage, nullptr, JSMSG_GETTER_ONLY);
+  JS_ReportErrorNumberASCII(aCx, js::GetErrorMessage, nullptr, JSMSG_GETTER_ONLY);
   return false;
 }
 

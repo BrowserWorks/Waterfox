@@ -185,82 +185,6 @@ nsDocShellTreeOwner::GetInterface(const nsIID& aIID, void** aSink)
 // nsDocShellTreeOwner::nsIDocShellTreeOwner
 //*****************************************************************************
 
-NS_IMETHODIMP
-nsDocShellTreeOwner::FindItemWithName(const char16_t* aName,
-                                      nsIDocShellTreeItem* aRequestor,
-                                      nsIDocShellTreeItem* aOriginalRequestor,
-                                      nsIDocShellTreeItem** aFoundItem)
-{
-  NS_ENSURE_ARG(aName);
-  NS_ENSURE_ARG_POINTER(aFoundItem);
-
-  // if we don't find one, we return NS_OK and a null result
-  *aFoundItem = nullptr;
-  nsresult rv;
-
-  nsAutoString name(aName);
-
-  if (!mWebBrowser) {
-    return NS_OK; // stymied
-  }
-
-  /* special cases */
-  if (name.IsEmpty()) {
-    return NS_OK;
-  }
-  if (name.LowerCaseEqualsLiteral("_blank")) {
-    return NS_OK;
-  }
-  // _main is an IE target which should be case-insensitive but isn't
-  // see bug 217886 for details
-  // XXXbz what if our browser isn't targetable?  We need to handle that somehow.
-  if (name.LowerCaseEqualsLiteral("_content") || name.EqualsLiteral("_main")) {
-    nsCOMPtr<nsIDocShell> foundItem = mWebBrowser->mDocShell;
-    foundItem.forget(aFoundItem);
-    return NS_OK;
-  }
-
-  if (!SameCOMIdentity(aRequestor, mWebBrowser->mDocShell)) {
-    // This isn't a request coming up from our kid, so check with said kid
-    nsISupports* thisSupports = static_cast<nsIDocShellTreeOwner*>(this);
-    rv = mWebBrowser->mDocShell->FindItemWithName(aName, thisSupports,
-                                                  aOriginalRequestor, aFoundItem);
-    if (NS_FAILED(rv) || *aFoundItem) {
-      return rv;
-    }
-  }
-
-  // next, if we have a parent and it isn't the requestor, ask it
-  if (mTreeOwner) {
-    nsCOMPtr<nsIDocShellTreeOwner> reqAsTreeOwner(do_QueryInterface(aRequestor));
-    if (mTreeOwner != reqAsTreeOwner)
-      return mTreeOwner->FindItemWithName(aName, mWebBrowser->mDocShell,
-                                          aOriginalRequestor, aFoundItem);
-    return NS_OK;
-  }
-
-  // finally, failing everything else, search all windows
-  return FindItemWithNameAcrossWindows(aName, aRequestor, aOriginalRequestor,
-                                       aFoundItem);
-}
-
-nsresult
-nsDocShellTreeOwner::FindItemWithNameAcrossWindows(
-    const char16_t* aName,
-    nsIDocShellTreeItem* aRequestor,
-    nsIDocShellTreeItem* aOriginalRequestor,
-    nsIDocShellTreeItem** aFoundItem)
-{
-  // search for the item across the list of top-level windows
-  nsCOMPtr<nsPIWindowWatcher> wwatch(do_GetService(NS_WINDOWWATCHER_CONTRACTID));
-  if (!wwatch) {
-    return NS_OK;
-  }
-
-  return wwatch->FindItemWithName(aName, aRequestor, aOriginalRequestor,
-                                  aFoundItem);
-}
-
 void
 nsDocShellTreeOwner::EnsurePrompter()
 {
@@ -1062,11 +986,34 @@ nsDocShellTreeOwner::HandleEvent(nsIDOMEvent* aEvent)
     } else if (eventType.EqualsLiteral("drop")) {
       nsIWebNavigation* webnav = static_cast<nsIWebNavigation*>(mWebBrowser);
 
-      nsAutoString link, name;
+      uint32_t linksCount;
+      nsIDroppedLinkItem** links;
       if (webnav &&
-          NS_SUCCEEDED(handler->DropLink(dragEvent, name, true, link))) {
-        if (!link.IsEmpty()) {
-          webnav->LoadURI(link.get(), 0, nullptr, nullptr, nullptr);
+          NS_SUCCEEDED(handler->DropLinks(dragEvent, true, &linksCount, &links))) {
+        if (linksCount >= 1) {
+          nsCOMPtr<nsIWebBrowserChrome> webBrowserChrome = GetWebBrowserChrome();
+          if (webBrowserChrome) {
+            nsCOMPtr<nsITabChild> tabChild = do_QueryInterface(webBrowserChrome);
+            if (tabChild) {
+              nsresult rv = tabChild->RemoteDropLinks(linksCount, links);
+              for (uint32_t i = 0; i < linksCount; i++) {
+                NS_RELEASE(links[i]);
+              }
+              free(links);
+              return rv;
+            }
+          }
+          nsAutoString url;
+          if (NS_SUCCEEDED(links[0]->GetUrl(url))) {
+            if (!url.IsEmpty()) {
+              webnav->LoadURI(url.get(), 0, nullptr, nullptr, nullptr);
+            }
+          }
+
+          for (uint32_t i = 0; i < linksCount; i++) {
+            NS_RELEASE(links[i]);
+          }
+          free(links);
         }
       } else {
         aEvent->StopPropagation();

@@ -47,7 +47,11 @@ private:
   Accessible* mParent;
   uint32_t mStartIdx;
   uint32_t mStateFlagsCopy;
-  EventTree* mEventTree;
+
+  /*
+   * True if mutation events should be queued.
+   */
+  bool mQueueEvents;
 
 #ifdef DEBUG
   bool mIsDone;
@@ -67,22 +71,18 @@ public:
     mFireReorder(aFireReorder) { }
   ~EventTree() { Clear(); }
 
-  void Shown(Accessible* aChild)
-  {
-    RefPtr<AccShowEvent> ev = new AccShowEvent(aChild);
-    Mutated(ev);
-  }
-
-  void Hidden(Accessible* aChild, bool aNeedsShutdown = true)
-  {
-    RefPtr<AccHideEvent> ev = new AccHideEvent(aChild, aNeedsShutdown);
-    Mutated(ev);
-  }
+  void Shown(Accessible* aTarget);
+  void Hidden(Accessible*, bool);
 
   /**
    * Return an event tree node for the given accessible.
    */
   const EventTree* Find(const Accessible* aContainer) const;
+
+  /**
+   * Add a mutation event to this event tree.
+   */
+  void Mutated(AccMutationEvent* aEv);
 
 #ifdef A11Y_LOG
   void Log(uint32_t aLevel = UINT32_MAX) const;
@@ -99,7 +99,6 @@ private:
    */
   EventTree* FindOrInsert(Accessible* aContainer);
 
-  void Mutated(AccMutationEvent* aEv);
   void Clear();
 
   UniquePtr<EventTree> mFirst;
@@ -108,6 +107,9 @@ private:
   Accessible* mContainer;
   nsTArray<RefPtr<AccMutationEvent>> mDependentEvents;
   bool mFireReorder;
+
+  static NotificationController* Controller(Accessible* aAcc)
+    { return aAcc->Document()->Controller(); }
 
   friend class NotificationController;
 };

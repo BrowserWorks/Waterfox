@@ -37,6 +37,9 @@ CrashService.prototype = Object.freeze({
     case Ci.nsICrashService.PROCESS_TYPE_GMPLUGIN:
       processType = Services.crashmanager.PROCESS_TYPE_GMPLUGIN;
       break;
+    case Ci.nsICrashService.PROCESS_TYPE_GPU:
+      processType = Services.crashmanager.PROCESS_TYPE_GPU;
+      break;
     default:
       throw new Error("Unrecognized PROCESS_TYPE: " + processType);
     }
@@ -59,7 +62,7 @@ CrashService.prototype = Object.freeze({
     switch (topic) {
       case "profile-after-change":
         // Side-effect is the singleton is instantiated.
-        let m = Services.crashmanager;
+        Services.crashmanager;
         break;
     }
   },

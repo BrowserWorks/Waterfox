@@ -33,16 +33,6 @@ class BackgroundChildImpl;
 
 namespace camera {
 
-enum CaptureEngine : int {
-  InvalidEngine = 0,
-  ScreenEngine,
-  BrowserEngine,
-  WinEngine,
-  AppEngine,
-  CameraEngine,
-  MaxEngine
-};
-
 struct CapturerElement {
   CaptureEngine engine;
   int id;
@@ -159,13 +149,14 @@ public:
 
   // IPC messages recevied, received on the PBackground thread
   // these are the actual callbacks with data
-  virtual bool RecvDeliverFrame(const int&, const int&, mozilla::ipc::Shmem&&,
+  virtual bool RecvDeliverFrame(const CaptureEngine&, const int&, mozilla::ipc::Shmem&&,
                                 const size_t&, const uint32_t&, const int64_t&,
                                 const int64_t&) override;
-  virtual bool RecvFrameSizeChange(const int&, const int&,
+  virtual bool RecvFrameSizeChange(const CaptureEngine&, const int&,
                                    const int& w, const int& h) override;
 
   virtual bool RecvDeviceChange() override;
+  virtual int AddDeviceChangeCallback(DeviceChangeCallback* aCallback) override;
   int SetFakeDeviceChangeEvents();
 
   // these are response messages to our outgoing requests
@@ -174,7 +165,8 @@ public:
   virtual bool RecvReplyAllocateCaptureDevice(const int&) override;
   virtual bool RecvReplyGetCaptureCapability(const CaptureCapability& capability) override;
   virtual bool RecvReplyGetCaptureDevice(const nsCString& device_name,
-                                         const nsCString& device_id) override;
+                                         const nsCString& device_id,
+                                         const bool& scary) override;
   virtual bool RecvReplyFailure(void) override;
   virtual bool RecvReplySuccess(void) override;
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
@@ -204,8 +196,10 @@ public:
                        unsigned int list_number, char* device_nameUTF8,
                        const unsigned int device_nameUTF8Length,
                        char* unique_idUTF8,
-                       const unsigned int unique_idUTF8Length);
+                       const unsigned int unique_idUTF8Length,
+                       bool* scary = nullptr);
   void ShutdownAll();
+  int EnsureInitialized(CaptureEngine aCapEngine);
 
   webrtc::ExternalRenderer* Callback(CaptureEngine aCapEngine, int capture_id);
 
@@ -247,6 +241,7 @@ private:
   webrtc::CaptureCapability mReplyCapability;
   nsCString mReplyDeviceName;
   nsCString mReplyDeviceID;
+  bool mReplyScary;
 };
 
 } // namespace camera

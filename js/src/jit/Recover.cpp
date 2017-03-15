@@ -6,6 +6,8 @@
 
 #include "jit/Recover.h"
 
+#include "mozilla/SizePrintfMacros.h"
+
 #include "jsapi.h"
 #include "jscntxt.h"
 #include "jsmath.h"
@@ -123,7 +125,7 @@ MResumePoint::writeRecoverData(CompactBufferWriter& writer) const
     uint32_t formalArgs = CountArgSlots(script, fun);
     uint32_t nallocs = formalArgs + script->nfixed() + exprStack;
 
-    JitSpew(JitSpew_IonSnapshots, "Starting frame; implicit %u, formals %u, fixed %u, exprs %u",
+    JitSpew(JitSpew_IonSnapshots, "Starting frame; implicit %u, formals %u, fixed %" PRIuSIZE ", exprs %u",
             implicit, formalArgs - implicit, script->nfixed(), exprStack);
 
     uint32_t pcoff = script->pcToOffset(pc());
@@ -1052,6 +1054,35 @@ RStringSplit::recover(JSContext* cx, SnapshotIterator& iter) const
 }
 
 bool
+MNaNToZero::writeRecoverData(CompactBufferWriter& writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_NaNToZero));
+    return true;
+}
+
+RNaNToZero::RNaNToZero(CompactBufferReader& reader)
+{ }
+
+
+bool
+RNaNToZero::recover(JSContext* cx, SnapshotIterator& iter) const
+{
+    RootedValue v(cx, iter.read());
+    RootedValue result(cx);
+    MOZ_ASSERT(v.isDouble() || v.isInt32());
+
+    // x ? x : 0.0
+    if (ToBoolean(v))
+        result = v;
+    else
+        result.setDouble(0.0);
+
+    iter.storeInstructionResult(result);
+    return true;
+}
+
+bool
 MRegExpMatcher::writeRecoverData(CompactBufferWriter& writer) const
 {
     MOZ_ASSERT(canRecoverOnBailout());
@@ -1266,6 +1297,34 @@ RNewObject::recover(JSContext* cx, SnapshotIterator& iter) const
         break;
     }
 
+    if (!resultObject)
+        return false;
+
+    result.setObject(*resultObject);
+    iter.storeInstructionResult(result);
+    return true;
+}
+
+bool
+MNewTypedArray::writeRecoverData(CompactBufferWriter& writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_NewTypedArray));
+    return true;
+}
+
+RNewTypedArray::RNewTypedArray(CompactBufferReader& reader)
+{
+}
+
+bool
+RNewTypedArray::recover(JSContext* cx, SnapshotIterator& iter) const
+{
+    RootedObject templateObject(cx, &iter.read().toObject());
+    RootedValue result(cx);
+
+    uint32_t length = templateObject.as<TypedArrayObject>()->length();
+    JSObject* resultObject = TypedArrayCreateWithTemplate(cx, templateObject, length);
     if (!resultObject)
         return false;
 

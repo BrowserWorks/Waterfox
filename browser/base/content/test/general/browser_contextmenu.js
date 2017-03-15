@@ -375,6 +375,7 @@ add_task(function* test_textarea() {
   todo(false, "spell checker tests are failing, bug 1246296");
   return;
 
+  /*
   yield test_contextmenu("#test-textarea",
     ["context-undo",                false,
      "---",                         null,
@@ -391,12 +392,14 @@ add_task(function* test_textarea() {
       skipFocusChange: true,
     }
   );
+  */
 });
 
 add_task(function* test_textarea_spellcheck() {
   todo(false, "spell checker tests are failing, bug 1246296");
   return;
 
+  /*
   yield test_contextmenu("#test-textarea",
     ["*chubbiness",         true, // spelling suggestion
      "spell-add-to-dictionary", true,
@@ -425,6 +428,7 @@ add_task(function* test_textarea_spellcheck() {
       }
     }
   );
+  */
 });
 
 add_task(function* test_plaintext2() {
@@ -435,6 +439,7 @@ add_task(function* test_undo_add_to_dictionary() {
   todo(false, "spell checker tests are failing, bug 1246296");
   return;
 
+  /*
   yield test_contextmenu("#test-textarea",
     ["spell-undo-add-to-dictionary", true,
      "---",                 null,
@@ -461,12 +466,14 @@ add_task(function* test_undo_add_to_dictionary() {
       }
     }
   );
+  */
 });
 
 add_task(function* test_contenteditable() {
   todo(false, "spell checker tests are failing, bug 1246296");
   return;
 
+  /*
   yield test_contextmenu("#test-contenteditable",
     ["spell-no-suggestions", false,
      "spell-add-to-dictionary", true,
@@ -488,6 +495,7 @@ add_task(function* test_contenteditable() {
     ],
     {waitForSpellCheck: true}
   );
+  */
 });
 
 add_task(function* test_copylinkcommand() {
@@ -719,6 +727,7 @@ add_task(function* test_select_input_text() {
   todo(false, "spell checker tests are failing, bug 1246296");
   return;
 
+  /*
   yield test_contextmenu("#test-select-input-text",
     ["context-undo",         false,
      "---",                  null,
@@ -744,12 +753,14 @@ add_task(function* test_select_input_text() {
       }
     }
   );
+  */
 });
 
 add_task(function* test_select_input_text_password() {
   todo(false, "spell checker tests are failing, bug 1246296");
   return;
 
+  /*
   yield test_contextmenu("#test-select-input-text-type-password",
     ["context-undo",        false,
      "---",                 null,
@@ -761,7 +772,7 @@ add_task(function* test_select_input_text_password() {
      "context-selectall",   true,
      "---",                 null,
      "spell-check-enabled", true,
-     //spell checker is shown on input[type="password"] on this testcase
+     // spell checker is shown on input[type="password"] on this testcase
      "spell-dictionaries",  true,
          ["spell-check-dictionary-en-US", true,
           "---",                          null,
@@ -785,6 +796,7 @@ add_task(function* test_select_input_text_password() {
       }
     }
   );
+  */
 });
 
 add_task(function* test_click_to_play_blocked_plugin() {
@@ -867,6 +879,7 @@ add_task(function* test_input_spell_false() {
   todo(false, "spell checker tests are failing, bug 1246296");
   return;
 
+  /*
   yield test_contextmenu("#test-contenteditable-spellcheck-false",
     ["context-undo",        false,
      "---",                 null,
@@ -876,10 +889,9 @@ add_task(function* test_input_spell_false() {
      "context-delete",      false,
      "---",                 null,
      "context-selectall",   true,
-     "---",                 null,
-     "spell-add-dictionaries-main",  true,
     ]
   );
+  */
 });
 
 const remoteClientsFixture = [ { id: 1, name: "Foo"}, { id: 2, name: "Bar"} ];
@@ -890,11 +902,12 @@ add_task(function* test_plaintext_sendpagetodevice() {
   }
   const oldGetter = setupRemoteClientsFixture(remoteClientsFixture);
 
-  let plainTextItems = ["context-navigation",   null,
-                        ["context-back",         false,
-                         "context-forward",      false,
-                         "context-reload",       true,
-                         "context-bookmarkpage", true], null,
+  let plainTextItemsWithSendPage =
+                    ["context-navigation",   null,
+                      ["context-back",         false,
+                        "context-forward",      false,
+                        "context-reload",       true,
+                        "context-bookmarkpage", true], null,
                     "---",                  null,
                     "context-savepage",     true,
                     ...(hasPocket ? ["context-pocket", true] : []),
@@ -911,7 +924,7 @@ add_task(function* test_plaintext_sendpagetodevice() {
                     "context-viewsource",   true,
                     "context-viewinfo",     true
                    ];
-  yield test_contextmenu("#test-text", plainTextItems, {
+  yield test_contextmenu("#test-text", plainTextItemsWithSendPage, {
       *onContextMenuShown() {
         yield openMenuItemSubmenu("context-sendpagetodevice");
       }
@@ -968,13 +981,13 @@ add_task(function* test_cleanup_html() {
  *        the element that will be referenced.
  */
 function* selectText(selector) {
-  yield ContentTask.spawn(gBrowser.selectedBrowser, selector, function*(selector) {
-    info(`Selecting text of ${selector}`);
+  yield ContentTask.spawn(gBrowser.selectedBrowser, selector, function*(contentSelector) {
+    info(`Selecting text of ${contentSelector}`);
     let doc = content.document;
     let win = doc.defaultView;
     win.getSelection().removeAllRanges();
     let div = doc.createRange();
-    let element = doc.querySelector(selector);
+    let element = doc.querySelector(contentSelector);
     Assert.ok(element, "Found element to select text from");
     div.setStartBefore(element);
     div.setEndAfter(element);

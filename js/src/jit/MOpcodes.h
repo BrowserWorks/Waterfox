@@ -46,6 +46,7 @@ namespace jit {
     _(Compare)                                                              \
     _(Phi)                                                                  \
     _(Beta)                                                                 \
+    _(NaNToZero)                                                            \
     _(OsrValue)                                                             \
     _(OsrEnvironmentChain)                                                  \
     _(OsrReturnValue)                                                       \
@@ -78,6 +79,7 @@ namespace jit {
     _(CallDirectEval)                                                       \
     _(BitNot)                                                               \
     _(TypeOf)                                                               \
+    _(ToAsync)                                                              \
     _(ToId)                                                                 \
     _(BitAnd)                                                               \
     _(BitOr)                                                                \
@@ -106,6 +108,7 @@ namespace jit {
     _(Concat)                                                               \
     _(CharCodeAt)                                                           \
     _(FromCharCode)                                                         \
+    _(FromCodePoint)                                                        \
     _(SinCos)                                                               \
     _(StringSplit)                                                          \
     _(Substr)                                                               \
@@ -121,7 +124,6 @@ namespace jit {
     _(ToFloat32)                                                            \
     _(ToInt32)                                                              \
     _(TruncateToInt32)                                                      \
-    _(WasmTruncateToInt64)                                                  \
     _(WrapInt64ToInt32)                                                     \
     _(ExtendInt32ToInt64)                                                   \
     _(Int64ToFloatingPoint)                                                 \
@@ -188,7 +190,7 @@ namespace jit {
     _(LoadUnboxedExpando)                                                   \
     _(ArrayLength)                                                          \
     _(SetArrayLength)                                                       \
-    _(GetNextMapEntryForIterator)                                           \
+    _(GetNextEntryForIterator)                                              \
     _(TypedArrayLength)                                                     \
     _(TypedArrayElements)                                                   \
     _(SetDisjointTypedElements)                                             \
@@ -270,32 +272,9 @@ namespace jit {
     _(IsObject)                                                             \
     _(HasClass)                                                             \
     _(CopySign)                                                             \
-    _(WasmBoundsCheck)                                                      \
-    _(WasmAddOffset)                                                        \
-    _(WasmLoad)                                                             \
-    _(WasmStore)                                                            \
-    _(WasmTrap)                                                             \
-    _(WasmTruncateToInt32)                                                  \
-    _(AsmJSNeg)                                                             \
-    _(AsmJSUnsignedToDouble)                                                \
-    _(AsmJSUnsignedToFloat32)                                               \
-    _(AsmJSLoadHeap)                                                        \
-    _(AsmJSStoreHeap)                                                       \
-    _(WasmLoadGlobalVar)                                                    \
-    _(WasmStoreGlobalVar)                                                   \
-    _(AsmJSReturn)                                                          \
-    _(AsmJSParameter)                                                       \
-    _(AsmJSVoidReturn)                                                      \
-    _(AsmJSPassStackArg)                                                    \
-    _(WasmCall)                                                             \
-    _(AsmSelect)                                                            \
-    _(AsmReinterpret)                                                       \
     _(Rotate)                                                               \
     _(NewDerivedTypedObject)                                                \
     _(RecompileCheck)                                                       \
-    _(AsmJSCompareExchangeHeap)                                             \
-    _(AsmJSAtomicExchangeHeap)                                              \
-    _(AsmJSAtomicBinopHeap)                                                 \
     _(UnknownValue)                                                         \
     _(LexicalCheck)                                                         \
     _(ThrowRuntimeLexicalError)                                             \
@@ -304,9 +283,33 @@ namespace jit {
     _(NewTarget)                                                            \
     _(ArrowNewTarget)                                                       \
     _(CheckReturn)                                                          \
-    _(CheckIsObj)                                                             \
+    _(CheckIsObj)                                                           \
     _(CheckObjCoercible)                                                    \
-    _(DebugCheckSelfHosted)
+    _(DebugCheckSelfHosted)                                                 \
+    _(AsmJSNeg)                                                             \
+    _(AsmJSLoadHeap)                                                        \
+    _(AsmJSStoreHeap)                                                       \
+    _(AsmJSCompareExchangeHeap)                                             \
+    _(AsmJSAtomicExchangeHeap)                                              \
+    _(AsmJSAtomicBinopHeap)                                                 \
+    _(WasmBoundsCheck)                                                      \
+    _(WasmAddOffset)                                                        \
+    _(WasmLoad)                                                             \
+    _(WasmStore)                                                            \
+    _(WasmTrap)                                                             \
+    _(WasmTruncateToInt32)                                                  \
+    _(WasmUnsignedToDouble)                                                 \
+    _(WasmUnsignedToFloat32)                                                \
+    _(WasmLoadGlobalVar)                                                    \
+    _(WasmStoreGlobalVar)                                                   \
+    _(WasmReturn)                                                           \
+    _(WasmReturnVoid)                                                       \
+    _(WasmParameter)                                                        \
+    _(WasmStackArg)                                                         \
+    _(WasmCall)                                                             \
+    _(WasmSelect)                                                           \
+    _(WasmReinterpret)                                                      \
+    _(WasmTruncateToInt64)
 
 // Forward declarations of MIR types.
 #define FORWARD_DECLARE(op) class M##op;

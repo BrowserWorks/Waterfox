@@ -107,7 +107,7 @@ Tracker.prototype = {
     Utils.jsonLoad("changes/" + this.file, this, function(json) {
       if (json && (typeof(json) == "object")) {
         this.changedIDs = json;
-      } else {
+      } else if (json !== null) {
         this._log.warn("Changed IDs file " + this.file + " contains non-object value.");
         json = null;
       }
@@ -647,7 +647,7 @@ Engine.prototype = {
   // If this is false, we'll throw, otherwise, we'll ignore the record and
   // continue. This currently can only happen due to the record being larger
   // than the record upload limit.
-  allowSkippedRecord: false,
+  allowSkippedRecord: true,
 
   get prefName() {
     return this.name;
@@ -711,6 +711,15 @@ Engine.prototype = {
 
   wipeClient: function () {
     this._notify("wipe-client", this.name, this._wipeClient)();
+  },
+
+  /**
+   * If one exists, initialize and return a validator for this engine (which
+   * must have a `validate(engine)` method that returns a promise to an object
+   * with a getSummary method). Otherwise return null.
+   */
+  getValidator: function () {
+    return null;
   }
 };
 
@@ -961,7 +970,7 @@ SyncEngine.prototype = {
    * A tiny abstraction to make it easier to test incoming record
    * application.
    */
-  _itemSource: function () {
+  itemSource: function () {
     return new Collection(this.engineURL, this._recordObj, this.service);
   },
 
@@ -978,7 +987,7 @@ SyncEngine.prototype = {
     let isMobile = (Svc.Prefs.get("client.type") == "mobile");
 
     if (!newitems) {
-      newitems = this._itemSource();
+      newitems = this.itemSource();
     }
 
     if (this._defaultSort) {
@@ -1149,7 +1158,7 @@ SyncEngine.prototype = {
 
     // Only bother getting data from the server if there's new things
     if (this.lastModified == null || this.lastModified > this.lastSync) {
-      let resp = newitems.get();
+      let resp = newitems.getBatched();
       doApplyBatchAndPersistFailed.call(this);
       if (!resp.success) {
         resp.failureCode = ENGINE_DOWNLOAD_FAIL;
@@ -1269,6 +1278,16 @@ SyncEngine.prototype = {
     // By default, assume there's no dupe items for the engine
   },
 
+  // Called when the server has a record marked as deleted, but locally we've
+  // changed it more recently than the deletion. If we return false, the
+  // record will be deleted locally. If we return true, we'll reupload the
+  // record to the server -- any extra work that's needed as part of this
+  // process should be done at this point (such as mark the record's parent
+  // for reuploading in the case of bookmarks).
+  _shouldReviveRemotelyDeletedRecord(remoteItem) {
+    return true;
+  },
+
   _deleteId: function (id) {
     this._tracker.removeChangedID(id);
 
@@ -1344,15 +1363,18 @@ SyncEngine.prototype = {
                         "exists and isn't modified.");
         return true;
       }
+      this._log.trace("Incoming record is deleted but we had local changes.");
 
-      // TODO As part of bug 720592, determine whether we should do more here.
-      // In the case where the local changes are newer, it is quite possible
-      // that the local client will restore data a remote client had tried to
-      // delete. There might be a good reason for that delete and it might be
-      // enexpected for this client to restore that data.
-      this._log.trace("Incoming record is deleted but we had local changes. " +
-                      "Applying the youngest record.");
-      return remoteIsNewer;
+      if (remoteIsNewer) {
+        this._log.trace("Remote record is newer -- deleting local record.");
+        return true;
+      }
+      // If the local record is newer, we defer to individual engines for
+      // how to handle this. By default, we revive the record.
+      let willRevive = this._shouldReviveRemotelyDeletedRecord(item);
+      this._log.trace("Local record is newer -- reviving? " + willRevive);
+
+      return !willRevive;
     }
 
     // At this point the incoming record is not for a deletion and must have

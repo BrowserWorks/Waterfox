@@ -4,52 +4,57 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.gecko.home.activitystream.topsites;
 
+import android.content.Context;
 import android.database.Cursor;
-import android.database.CursorWrapper;
 import android.support.annotation.UiThread;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.home.HomePager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TopSitesPageAdapter extends RecyclerView.Adapter<TopSitesCard> {
+    static final class TopSite {
+        public final long id;
+        public final String url;
+        public final String title;
 
-    /**
-     * Cursor wrapper that handles the offsets and limits that we expect.
-     * This allows most of our code to completely ignore the fact that we're only touching part
-     * of the cursor.
-     */
-    private static final class SubsetCursor extends CursorWrapper {
-        private final int start;
-        private final int count;
-
-        public SubsetCursor(Cursor cursor, int start, int maxCount) {
-            super(cursor);
-
-            this.start = start;
-
-            if (start + maxCount < cursor.getCount()) {
-                count = maxCount;
-            } else {
-                count = cursor.getCount() - start;
-            }
-        }
-
-        @Override
-        public boolean moveToPosition(int position) {
-            return super.moveToPosition(position + start);
-        }
-
-        @Override
-        public int getCount() {
-            return count;
+        TopSite(long id, String url, String title) {
+            this.id = id;
+            this.url = url;
+            this.title = title;
         }
     }
 
-    private Cursor cursor;
+    private List<TopSite> topSites;
+    private int tiles;
+    private int tilesWidth;
+    private int tilesHeight;
+    private int textHeight;
+
+    private final HomePager.OnUrlOpenListener onUrlOpenListener;
+    private final HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener;
+
+    public TopSitesPageAdapter(Context context, int tiles, int tilesWidth, int tilesHeight,
+                               HomePager.OnUrlOpenListener onUrlOpenListener, HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener) {
+        setHasStableIds(true);
+
+        this.topSites = new ArrayList<>();
+        this.tiles = tiles;
+        this.tilesWidth = tilesWidth;
+        this.tilesHeight = tilesHeight;
+        this.textHeight = context.getResources().getDimensionPixelSize(R.dimen.activity_stream_top_sites_text_height);
+
+        this.onUrlOpenListener = onUrlOpenListener;
+        this.onUrlOpenInBackgroundListener = onUrlOpenInBackgroundListener;
+    }
 
     /**
      *
@@ -58,14 +63,22 @@ public class TopSitesPageAdapter extends RecyclerView.Adapter<TopSitesCard> {
      * 3 items will be displayed by this adapter.
      */
     public void swapCursor(Cursor cursor, int startIndex) {
-        if (cursor != null) {
-            if (startIndex >= cursor.getCount()) {
-                throw new IllegalArgumentException("startIndex must be within Cursor range");
-            }
+        topSites.clear();
 
-            this.cursor = new SubsetCursor(cursor, startIndex, TopSitesPagerAdapter.ITEMS_PER_PAGE);
-        } else {
-            this.cursor = null;
+        if (cursor == null) {
+            return;
+        }
+
+        for (int i = 0; i < tiles && startIndex + i < cursor.getCount(); i++) {
+            cursor.moveToPosition(startIndex + i);
+
+            // The Combined View only contains pages that have been visited at least once, i.e. any
+            // page in the TopSites query will contain a HISTORY_ID. _ID however will be 0 for all rows.
+            final long id = cursor.getLong(cursor.getColumnIndexOrThrow(BrowserContract.Combined.HISTORY_ID));
+            final String url = cursor.getString(cursor.getColumnIndexOrThrow(BrowserContract.Combined.URL));
+            final String title = cursor.getString(cursor.getColumnIndexOrThrow(BrowserContract.Combined.TITLE));
+
+            topSites.add(new TopSite(id, url, title));
         }
 
         notifyDataSetChanged();
@@ -73,46 +86,32 @@ public class TopSitesPageAdapter extends RecyclerView.Adapter<TopSitesCard> {
 
     @Override
     public void onBindViewHolder(TopSitesCard holder, int position) {
-        cursor.moveToPosition(position);
-        holder.bind(cursor);
-    }
-
-    public TopSitesPageAdapter() {
-        setHasStableIds(true);
+        holder.bind(topSites.get(position));
     }
 
     @Override
     public TopSitesCard onCreateViewHolder(ViewGroup parent, int viewType) {
         final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
-        final CardView card = (CardView) inflater.inflate(R.layout.activity_stream_topsites_card, parent, false);
+        final FrameLayout card = (FrameLayout) inflater.inflate(R.layout.activity_stream_topsites_card, parent, false);
+        final View content = card.findViewById(R.id.content);
 
-        return new TopSitesCard(card);
-    }
+        ViewGroup.LayoutParams layoutParams = content.getLayoutParams();
+        layoutParams.width = tilesWidth;
+        layoutParams.height = tilesHeight + textHeight;
+        content.setLayoutParams(layoutParams);
 
-    @UiThread
-    public String getURLForPosition(int position) {
-        cursor.moveToPosition(position);
-
-        return cursor.getString(cursor.getColumnIndexOrThrow(BrowserContract.Combined.URL));
+        return new TopSitesCard(card, onUrlOpenListener, onUrlOpenInBackgroundListener);
     }
 
     @Override
     public int getItemCount() {
-        if (cursor != null) {
-            return cursor.getCount();
-        } else {
-            return 0;
-        }
+        return topSites.size();
     }
 
     @Override
     @UiThread
     public long getItemId(int position) {
-        cursor.moveToPosition(position);
-
-        // The Combined View only contains pages that have been visited at least once, i.e. any
-        // page in the TopSites query will contain a HISTORY_ID. _ID however will be 0 for all rows.
-        return cursor.getLong(cursor.getColumnIndexOrThrow(BrowserContract.Combined.HISTORY_ID));
+        return topSites.get(position).id;
     }
 }

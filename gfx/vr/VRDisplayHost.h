@@ -16,6 +16,7 @@
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/TypedEnumBits.h"
+#include "mozilla/dom/GamepadPoseState.h"
 
 namespace mozilla {
 namespace layers {
@@ -52,7 +53,7 @@ public:
   bool CheckClearDisplayInfoDirty();
 
 protected:
-  explicit VRDisplayHost(VRDisplayType aType);
+  explicit VRDisplayHost(VRDeviceType aType);
   virtual ~VRDisplayHost();
 
 #if defined(XP_WIN)
@@ -81,6 +82,30 @@ protected:
 
 private:
   VRDisplayInfo mLastUpdateDisplayInfo;
+};
+
+class VRControllerHost {
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VRControllerHost)
+
+  const VRControllerInfo& GetControllerInfo() const;
+  void SetIndex(uint32_t aIndex);
+  uint32_t GetIndex();
+  void SetButtonPressed(uint64_t aBit);
+  uint64_t GetButtonPressed();
+  void SetPose(const dom::GamepadPoseState& aPose);
+  const dom::GamepadPoseState& GetPose();
+
+protected:
+  explicit VRControllerHost(VRDeviceType aType);
+  virtual ~VRControllerHost();
+
+  VRControllerInfo mControllerInfo;
+  // The controller index in VRControllerManager.
+  uint32_t mIndex;
+  // The current button pressed bit of button mask.
+  uint64_t mButtonPressed;
+  dom::GamepadPoseState mPose;
 };
 
 } // namespace gfx

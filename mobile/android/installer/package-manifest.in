@@ -1,4 +1,3 @@
-
 ; This Source Code Form is subject to the terms of the Mozilla Public
 ; License, v. 2.0. If a copy of the MPL was not distributed with this
 ; file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -115,7 +114,6 @@
 @BINPATH@/components/docshell.xpt
 @BINPATH@/components/dom.xpt
 @BINPATH@/components/dom_apps.xpt
-@BINPATH@/components/dom_newapps.xpt
 @BINPATH@/components/dom_base.xpt
 @BINPATH@/components/dom_canvas.xpt
 @BINPATH@/components/dom_core.xpt
@@ -262,8 +260,6 @@
 @BINPATH@/components/zipwriter.xpt
 
 ; JavaScript components
-@BINPATH@/components/ChromeNotifications.js
-@BINPATH@/components/ChromeNotifications.manifest
 @BINPATH@/components/ConsoleAPI.manifest
 @BINPATH@/components/ConsoleAPIStorage.js
 @BINPATH@/components/ContactManager.js
@@ -285,10 +281,10 @@
 @BINPATH@/components/BrowserElementProxy.js
 @BINPATH@/components/FeedProcessor.manifest
 @BINPATH@/components/FeedProcessor.js
-@BINPATH@/components/PackagedAppUtils.manifest
-@BINPATH@/components/PackagedAppUtils.js
 @BINPATH@/components/WellKnownOpportunisticUtils.js
 @BINPATH@/components/WellKnownOpportunisticUtils.manifest
+@BINPATH@/components/mozProtocolHandler.js
+@BINPATH@/components/mozProtocolHandler.manifest
 @BINPATH@/components/PermissionSettings.js
 @BINPATH@/components/PermissionSettings.manifest
 @BINPATH@/components/PermissionPromptService.js
@@ -319,7 +315,7 @@
 @BINPATH@/components/amWebAPI.js
 @BINPATH@/components/amWebInstallListener.js
 @BINPATH@/components/nsBlocklistService.js
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
 @BINPATH@/components/TabSource.js
 #endif
 @BINPATH@/components/webvtt.xpt
@@ -368,8 +364,6 @@
 @BINPATH@/components/TelemetryStartup.manifest
 @BINPATH@/components/XULStore.js
 @BINPATH@/components/XULStore.manifest
-@BINPATH@/components/Webapps.js
-@BINPATH@/components/Webapps.manifest
 @BINPATH@/components/AppsService.js
 @BINPATH@/components/AppsService.manifest
 @BINPATH@/components/htmlMenuBuilder.js
@@ -379,9 +373,6 @@
 @BINPATH@/components/SystemMessageManager.js
 @BINPATH@/components/SystemMessageCache.js
 @BINPATH@/components/SystemMessageManager.manifest
-
-@BINPATH@/components/InstallPackagedWebapp.manifest
-@BINPATH@/components/InstallPackagedWebapp.js
 
 #ifdef MOZ_WEBRTC
 @BINPATH@/components/PeerConnection.js
@@ -417,9 +408,8 @@
 @BINPATH@/components/PresentationDataChannelSessionTransport.manifest
 @BINPATH@/components/LegacyProviders.manifest
 @BINPATH@/components/LegacyPresentationControlService.js
-
-@BINPATH@/components/PACGenerator.js
-@BINPATH@/components/PACGenerator.manifest
+@BINPATH@/components/AndroidCastDeviceProvider.manifest
+@BINPATH@/components/AndroidCastDeviceProvider.js
 
 @BINPATH@/components/TVSimulatorService.js
 @BINPATH@/components/TVSimulatorService.manifest
@@ -546,6 +536,7 @@
 @BINPATH@/components/NSSDialogService.js
 @BINPATH@/components/PersistentNotificationHandler.js
 @BINPATH@/components/PresentationDevicePrompt.js
+@BINPATH@/components/PresentationRequestUIGlue.js
 @BINPATH@/components/PromptService.js
 @BINPATH@/components/SessionStore.js
 @BINPATH@/components/SiteSpecificUserAgent.js

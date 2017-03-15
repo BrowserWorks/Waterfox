@@ -63,6 +63,7 @@ NS_EVENT_MESSAGE(eScroll)
 
 // Application installation
 NS_EVENT_MESSAGE(eInstall)
+NS_EVENT_MESSAGE(eAppInstalled)
 
 // A plugin was clicked or otherwise focused. ePluginActivate should be
 // used when the window is not active. ePluginFocus should be used when
@@ -90,6 +91,7 @@ NS_EVENT_MESSAGE(eMouseOut)
 NS_EVENT_MESSAGE(eMouseHitTest)
 NS_EVENT_MESSAGE(eMouseEnter)
 NS_EVENT_MESSAGE(eMouseLeave)
+NS_EVENT_MESSAGE(eMouseTouchDrag)
 NS_EVENT_MESSAGE(eMouseLongTap)
 NS_EVENT_MESSAGE_FIRST_LAST(eMouseEvent, eMouseMove, eMouseLongTap)
 
@@ -128,6 +130,8 @@ NS_EVENT_MESSAGE(eFormInvalid)
 //Need separate focus/blur notifications for non-native widgets
 NS_EVENT_MESSAGE(eFocus)
 NS_EVENT_MESSAGE(eBlur)
+NS_EVENT_MESSAGE(eFocusIn)
+NS_EVENT_MESSAGE(eFocusOut)
 
 NS_EVENT_MESSAGE(eDragEnter)
 NS_EVENT_MESSAGE(eDragOver)
@@ -142,6 +146,7 @@ NS_EVENT_MESSAGE_FIRST_LAST(eDragDropEvent, eDragEnter, eDragLeave)
 // XUL specific events
 NS_EVENT_MESSAGE(eXULPopupShowing)
 NS_EVENT_MESSAGE(eXULPopupShown)
+NS_EVENT_MESSAGE(eXULPopupPositioned)
 NS_EVENT_MESSAGE(eXULPopupHiding)
 NS_EVENT_MESSAGE(eXULPopupHidden)
 NS_EVENT_MESSAGE(eXULBroadcast)
@@ -332,6 +337,8 @@ NS_EVENT_MESSAGE(eGestureNotify)
 NS_EVENT_MESSAGE(eScrolledAreaChanged)
 
 // CSS Transition & Animation events:
+NS_EVENT_MESSAGE(eTransitionStart)
+NS_EVENT_MESSAGE(eTransitionRun)
 NS_EVENT_MESSAGE(eTransitionEnd)
 NS_EVENT_MESSAGE(eAnimationStart)
 NS_EVENT_MESSAGE(eAnimationEnd)

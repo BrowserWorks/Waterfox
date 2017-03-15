@@ -44,7 +44,7 @@ this.proxy = {};
  * @param {function(string, Object, number)} sendAsyncFn
  *     Callback for sending async messages.
  */
-proxy.toListener = function(mmFn, sendAsyncFn) {
+proxy.toListener = function (mmFn, sendAsyncFn) {
   let sender = new proxy.AsyncMessageChannel(mmFn, sendAsyncFn);
   return new Proxy(sender, ownPriorityGetterTrap);
 };
@@ -114,7 +114,7 @@ proxy.AsyncMessageChannel = class {
             break;
 
           case proxy.AsyncMessageChannel.ReplyType.Error:
-            let err = error.fromJson(msg.json.data);
+            let err = WebDriverError.fromJSON(msg.json.data);
             reject(err);
             break;
 
@@ -172,16 +172,24 @@ proxy.AsyncMessageChannel = class {
       this.sendReply_(uuid, proxy.AsyncMessageChannel.ReplyType.Ok);
     } else if (error.isError(obj)) {
       let err = error.wrap(obj);
-      let serr = error.toJson(err);
-      this.sendReply_(uuid, proxy.AsyncMessageChannel.ReplyType.Error, serr);
+      this.sendReply_(uuid, proxy.AsyncMessageChannel.ReplyType.Error, err);
     } else {
       this.sendReply_(uuid, proxy.AsyncMessageChannel.ReplyType.Value, obj);
     }
   }
 
   sendReply_(uuid, type, data = undefined) {
-    let path = proxy.AsyncMessageChannel.makePath(uuid);
-    let msg = {type: type, data: data};
+    const path = proxy.AsyncMessageChannel.makePath(uuid);
+
+    let payload;
+    if (data && typeof data.toJSON == "function") {
+      payload = data.toJSON();
+    } else {
+      payload = data;
+    }
+
+    const msg = {type: type, data: payload};
+
     // here sendAsync is actually the content frame's
     // sendAsyncMessage(path, message) global
     this.sendAsync(path, msg);
@@ -255,7 +263,7 @@ proxy.AsyncMessageChannel.ReplyType = {
  *     The content frame's message manager, which itself is usually an
  *     implementor of.
  */
-proxy.toChromeAsync = function(frameMessageManager) {
+proxy.toChromeAsync = function (frameMessageManager) {
   let sender = new AsyncChromeSender(frameMessageManager);
   return new Proxy(sender, ownPriorityGetterTrap);
 };
@@ -334,7 +342,7 @@ this.AsyncChromeSender = class {
  * @param {nsISyncMessageSender} sendSyncMessageFn
  *     The frame message manager's sendSyncMessage function.
  */
-proxy.toChrome = function(sendSyncMessageFn) {
+proxy.toChrome = function (sendSyncMessageFn) {
   let sender = new proxy.SyncChromeSender(sendSyncMessageFn);
   return new Proxy(sender, ownPriorityGetterTrap);
 };
@@ -360,7 +368,7 @@ proxy.SyncChromeSender = class {
   }
 };
 
-var marshal = function(args) {
+var marshal = function (args) {
   if (args.length == 1 && typeof args[0] == "object") {
     return args[0];
   }

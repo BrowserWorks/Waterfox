@@ -21,35 +21,14 @@
   height: var(--downloads-item-height);
 }
 
-%ifdef XP_WIN
-@media (-moz-os-version: windows-xp) {
-%endif
-#downloadsRichListBox > richlistitem.download {
-  padding: 5px 8px;
-}
-%ifdef XP_WIN
-}
-%endif
-
 .downloadTypeIcon {
-  margin-top: 8px;
-  margin-inline-end: 12px;
-  margin-bottom: 8px;
-  margin-inline-start: 0;
+  margin: 8px 13px;
   width: 32px;
   height: 32px;
 }
 
-%ifdef XP_WIN
-@media not all and (-moz-os-version: windows-xp) {
-  .downloadTypeIcon {
-    margin-inline-start: 8px;
-  }
-}
-%endif
-
 .downloadBlockedBadge {
-  margin: 0 4px;
+  margin: 0 5px;
   background: url("chrome://browser/skin/downloads/download-blocked.svg") top right / 16px no-repeat;
 }
 
@@ -65,24 +44,88 @@
   background-image: url("chrome://browser/skin/info.svg");
 }
 
+@item@ > toolbarseparator {
+  display: none;
+}
+
 .downloadTarget {
-  margin-bottom: 3px;
-  cursor: inherit;
+  margin: 0;
 }
 
 .downloadDetails {
   opacity: 0.7;
   font-size: 95%;
-  cursor: inherit;
+  /* Use calc() to keep the height consistent with .downloadTarget, so that the
+     progress bar can be vertically centered. */
+  margin: 4px 0 calc(1em / 0.95 - 1em);
 }
 
 .downloadButton {
   -moz-appearance: none;
+  -moz-box-align: center;
   background: transparent;
   min-width: 0;
   min-height: 0;
-  margin: 3px;
+  margin: 0;
   border: none;
-  padding: 5px;
-  list-style-image: url("chrome://browser/skin/downloads/buttons.png");
+  color: inherit;
+  padding: 0 18px;
 }
+
+.downloadButton > .button-box {
+  -moz-appearance: none;
+  padding: 2px !important;
+  border-radius: 50%;
+}
+
+.downloadButton > .button-box > .button-icon {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  filter: url("chrome://browser/skin/filters.svg#fill");
+  fill: currentColor;
+}
+
+.downloadButton > .button-box > .button-text {
+  display: none;
+}
+
+.downloadButton:hover > .button-box {
+  background-color: graytext;
+  color: -moz-field;
+}
+
+.downloadButton:hover:active > .button-box {
+  background-color: -moz-fieldtext;
+}
+
+@itemFocused@ > .downloadButtonArea > .downloadButton:hover > .button-box {
+  background-color: HighlightText;
+  color: Highlight;
+}
+
+@itemFocused@ > .downloadButtonArea > .downloadButton:hover:active > .button-box {
+  background-color: -moz-field;
+  color: -moz-fieldtext;
+}
+
+/*** Button icons ***/
+
+.downloadIconCancel > .button-box > .button-icon {
+  list-style-image: url("chrome://browser/skin/panel-icons.svg#cancel");
+}
+
+.downloadIconShow > .button-box > .button-icon {
+%ifdef XP_MACOSX
+  list-style-image: url("chrome://browser/skin/panel-icons.svg#magnifier");
+%else
+  list-style-image: url("chrome://browser/skin/panel-icons.svg#folder");
+%endif
+}
+
+.downloadIconRetry > .button-box > .button-icon {
+  list-style-image: url("chrome://browser/skin/panel-icons.svg#retry");
+}
+
+/*** Progressmeter ***/
+%include progressmeter.inc.css

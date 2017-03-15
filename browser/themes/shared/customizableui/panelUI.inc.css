@@ -158,7 +158,7 @@
 .panel-subviews {
   padding: 4px;
   background-clip: padding-box;
-  border-left: 1px solid var(--panel-arrowcontent-border-color);
+  border-left: 1px solid var(--arrowpanel-border-color);
   box-shadow: 0 3px 5px hsla(210,4%,10%,.1),
               0 0 7px hsla(210,4%,10%,.1);
   margin-inline-start: var(--panel-ui-exit-subview-gutter-width);
@@ -565,7 +565,7 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
   content: "";
   width: 14px;
   height: 14px;
-  margin-right: 16.5px;
+  margin-inline-end: 16.5px;
   box-shadow: 0px 1px 0px rgba(255,255,255,.2) inset, 0px -1px 0px rgba(0,0,0,.1) inset, 0px 1px 0px rgba(12,27,38,.2);
   border-radius: 2px;
   background-size: contain;

@@ -9,6 +9,7 @@
 #include "xpcprivate.h"
 #include "jsprf.h"
 #include "mozilla/DeferredFinalize.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "nsCCUncollectableMarker.h"
 #include "nsContentUtils.h"
@@ -103,9 +104,9 @@ NS_CYCLE_COLLECTION_CLASSNAME(nsXPCWrappedJS)::Traverse
     if (cb.WantDebugInfo()) {
         char name[72];
         if (tmp->GetClass())
-            snprintf(name, sizeof(name), "nsXPCWrappedJS (%s)", tmp->GetClass()->GetInterfaceName());
+            SprintfLiteral(name, "nsXPCWrappedJS (%s)", tmp->GetClass()->GetInterfaceName());
         else
-            snprintf(name, sizeof(name), "nsXPCWrappedJS");
+            SprintfLiteral(name, "nsXPCWrappedJS");
         cb.DescribeRefCountedNode(refcnt, name);
     } else {
         NS_IMPL_CYCLE_COLLECTION_DESCRIBE(nsXPCWrappedJS, refcnt)
@@ -206,9 +207,7 @@ nsXPCWrappedJS::QueryInterface(REFNSIID aIID, void** aInstancePtr)
     if (aIID.Equals(NS_GET_IID(nsIXPConnectWrappedJSUnmarkGray))) {
         *aInstancePtr = nullptr;
 
-        // No need to null check mJSObj because IsValid() call above did
-        // that already.
-        JS::ExposeObjectToActiveJS(mJSObj);
+        mJSObj.exposeToActiveJS();
 
         // Just return some error value since one isn't supposed to use
         // nsIXPConnectWrappedJSUnmarkGray objects for anything.
@@ -317,9 +316,6 @@ nsXPCWrappedJS::GetWeakReference(nsIWeakReference** aInstancePtr)
 JSObject*
 nsXPCWrappedJS::GetJSObject()
 {
-    if (mJSObj) {
-        JS::ExposeObjectToActiveJS(mJSObj);
-    }
     return mJSObj;
 }
 
@@ -547,10 +543,10 @@ bool
 nsXPCWrappedJS::IsMultiCompartment() const
 {
     MOZ_ASSERT(IsRootWrapper());
-    JSCompartment* compartment = js::GetObjectCompartment(mJSObj);
+    JSCompartment* compartment = Compartment();
     nsXPCWrappedJS* next = mNext;
     while (next) {
-        if (js::GetObjectCompartment(next->mJSObj) != compartment)
+        if (next->Compartment() != compartment)
             return true;
         next = next->mNext;
     }

@@ -151,14 +151,14 @@ const char * PCCounts::numExecName = "interp";
 static MOZ_MUST_USE bool
 DumpIonScriptCounts(Sprinter* sp, HandleScript script, jit::IonScriptCounts* ionCounts)
 {
-    if (!sp->jsprintf("IonScript [%lu blocks]:\n", ionCounts->numBlocks()))
+    if (!sp->jsprintf("IonScript [%" PRIuSIZE " blocks]:\n", ionCounts->numBlocks()))
         return false;
 
     for (size_t i = 0; i < ionCounts->numBlocks(); i++) {
         const jit::IonBlockCounts& block = ionCounts->block(i);
         unsigned lineNumber = 0, columnNumber = 0;
         lineNumber = PCToLineNumber(script, script->offsetToPC(block.offset()), &columnNumber);
-        if (!sp->jsprintf("BB #%lu [%05u,%u,%u]",
+        if (!sp->jsprintf("BB #%" PRIu32 " [%05u,%u,%u]",
                           block.id(), block.offset(), lineNumber, columnNumber))
         {
             return false;
@@ -168,10 +168,10 @@ DumpIonScriptCounts(Sprinter* sp, HandleScript script, jit::IonScriptCounts* ion
                 return false;
         }
         for (size_t j = 0; j < block.numSuccessors(); j++) {
-            if (!sp->jsprintf(" -> #%lu", block.successor(j)))
+            if (!sp->jsprintf(" -> #%" PRIu32, block.successor(j)))
                 return false;
         }
-        if (!sp->jsprintf(" :: %llu hits\n", block.hitCount()))
+        if (!sp->jsprintf(" :: %" PRIu64 " hits\n", block.hitCount()))
             return false;
         if (!sp->jsprintf("%s\n", block.code()))
             return false;
@@ -354,7 +354,7 @@ class BytecodeParser
         uint32_t offset = offsetForStackOperand(script_->pcToOffset(pc), operand);
         if (offset >= SpecialOffsets::FirstSpecialOffset)
             return nullptr;
-        return script_->offsetToPC(offsetForStackOperand(script_->pcToOffset(pc), operand));
+        return script_->offsetToPC(offset);
     }
 
   private:
@@ -931,8 +931,8 @@ js::Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
         char numBuf1[12], numBuf2[12];
         SprintfLiteral(numBuf1, "%d", op);
         SprintfLiteral(numBuf2, "%d", JSOP_LIMIT);
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_BYTECODE_TOO_BIG, numBuf1, numBuf2);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BYTECODE_TOO_BIG,
+                                  numBuf1, numBuf2);
         return 0;
     }
     const JSCodeSpec* cs = &CodeSpec[op];
@@ -1116,8 +1116,7 @@ js::Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
       default: {
         char numBuf[12];
         SprintfLiteral(numBuf, "%x", cs->format);
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_UNKNOWN_FORMAT, numBuf);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_UNKNOWN_FORMAT, numBuf);
         return 0;
       }
     }
@@ -1266,6 +1265,16 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc)
         return write("super.") &&
                quote(prop, '\0');
       }
+      case JSOP_SETELEM:
+      case JSOP_STRICTSETELEM:
+        // NOTE: We don't show the right hand side of the operation because
+        // it's used in error messages like: "a[0] is not readable".
+        //
+        // We could though.
+        return decompilePCForStackOperand(pc, -3) &&
+               write("[") &&
+               decompilePCForStackOperand(pc, -2) &&
+               write("]");
       case JSOP_GETELEM:
       case JSOP_CALLELEM:
         return decompilePCForStackOperand(pc, -2) &&
@@ -1411,10 +1420,11 @@ ExpressionDecompiler::getOutput(char** res)
 }  // anonymous namespace
 
 static bool
-FindStartPC(JSContext* cx, const FrameIter& iter, int spindex, int skipStackHits, Value v,
+FindStartPC(JSContext* cx, const FrameIter& iter, int spindex, int skipStackHits, const Value& v,
             jsbytecode** valuepc)
 {
     jsbytecode* current = *valuepc;
+    *valuepc = nullptr;
 
     if (spindex == JSDVG_IGNORE_STACK)
         return true;
@@ -1425,8 +1435,6 @@ FindStartPC(JSContext* cx, const FrameIter& iter, int spindex, int skipStackHits
      */
     if (iter.isIon())
         return true;
-
-    *valuepc = nullptr;
 
     BytecodeParser parser(cx, iter.script());
     if (!parser.parse())
@@ -1459,13 +1467,12 @@ FindStartPC(JSContext* cx, const FrameIter& iter, int spindex, int skipStackHits
         // If the current PC has fewer values on the stack than the index we are
         // looking for, the blamed value must be one pushed by the current
         // bytecode, so restore *valuepc.
-        jsbytecode* pc = nullptr;
         if (index < size_t(parser.stackDepthAtPC(current)))
-            pc = parser.pcForStackOperand(current, index);
-        *valuepc = pc ? pc : current;
+            *valuepc = parser.pcForStackOperand(current, index);
+        else
+            *valuepc = current;
     } else {
-        jsbytecode* pc = parser.pcForStackOperand(current, spindex);
-        *valuepc = pc ? pc : current;
+        *valuepc = parser.pcForStackOperand(current, spindex);
     }
     return true;
 }
@@ -1579,14 +1586,20 @@ DecompileArgumentFromStack(JSContext* cx, int formalIndex, char** res)
         return true;
 
     /* Don't handle getters, setters or calls from fun.call/fun.apply. */
-    if (JSOp(*current) != JSOP_CALL || static_cast<unsigned>(formalIndex) >= GET_ARGC(current))
+    JSOp op = JSOp(*current);
+    if (op != JSOP_CALL && op != JSOP_NEW)
+        return true;
+
+    if (static_cast<unsigned>(formalIndex) >= GET_ARGC(current))
         return true;
 
     BytecodeParser parser(cx, script);
     if (!parser.parse())
         return false;
 
-    int formalStackIndex = parser.stackDepthAtPC(current) - GET_ARGC(current) + formalIndex;
+    bool pushedNewTarget = op == JSOP_NEW;
+    int formalStackIndex = parser.stackDepthAtPC(current) - GET_ARGC(current) - pushedNewTarget +
+                           formalIndex;
     MOZ_ASSERT(formalStackIndex >= 0);
     if (uint32_t(formalStackIndex) >= parser.stackDepthAtPC(current))
         return true;
@@ -1784,7 +1797,7 @@ js::GetPCCountScriptSummary(JSContext* cx, size_t index)
     JSRuntime* rt = cx->runtime();
 
     if (!rt->scriptAndCountsVector || index >= rt->scriptAndCountsVector->length()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
         return nullptr;
     }
 
@@ -2068,7 +2081,7 @@ js::GetPCCountScriptContents(JSContext* cx, size_t index)
     JSRuntime* rt = cx->runtime();
 
     if (!rt->scriptAndCountsVector || index >= rt->scriptAndCountsVector->length()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
         return nullptr;
     }
 
@@ -2145,7 +2158,7 @@ GenerateLcovInfo(JSContext* cx, JSCompartment* comp, GenericPrinter& out)
                     continue;
                 JSFunction& fun = obj->as<JSFunction>();
 
-                // Let's skip asm.js for now.
+                // Let's skip wasm for now.
                 if (!fun.isInterpreted())
                     continue;
 

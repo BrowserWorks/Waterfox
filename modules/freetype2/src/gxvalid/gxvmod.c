@@ -4,8 +4,8 @@
 /*                                                                         */
 /*    FreeType's TrueTypeGX/AAT validation module implementation (body).   */
 /*                                                                         */
-/*  Copyright 2004-2006, 2013                                              */
-/*  by suzuki toshiya, Masatake YAMATO, Red Hat K.K.,                      */
+/*  Copyright 2004-2016 by                                                 */
+/*  suzuki toshiya, Masatake YAMATO, Red Hat K.K.,                         */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -235,14 +235,14 @@
   static
   const FT_Service_GXvalidateRec  gxvalid_interface =
   {
-    gxv_validate
+    gxv_validate              /* validate */
   };
 
 
   static
   const FT_Service_CKERNvalidateRec  ckernvalid_interface =
   {
-    classic_kern_validate
+    classic_kern_validate     /* validate */
   };
 
 
@@ -274,11 +274,11 @@
     0x10000L,
     0x20000L,
 
-    0,              /* module-specific interface */
+    NULL,              /* module-specific interface */
 
-    (FT_Module_Constructor)0,
-    (FT_Module_Destructor) 0,
-    (FT_Module_Requester)  gxvalid_get_service
+    (FT_Module_Constructor)NULL,                /* module_init   */
+    (FT_Module_Destructor) NULL,                /* module_done   */
+    (FT_Module_Requester)  gxvalid_get_service  /* get_interface */
   };
 
 

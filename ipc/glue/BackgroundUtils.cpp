@@ -226,6 +226,15 @@ LoadInfoToLoadInfoArgs(nsILoadInfo *aLoadInfo,
   rv = PrincipalToPrincipalInfo(aLoadInfo->TriggeringPrincipal(),
                                 &triggeringPrincipalInfo);
 
+  OptionalPrincipalInfo principalToInheritInfo = mozilla::void_t();
+  if (aLoadInfo->PrincipalToInherit()) {
+    PrincipalInfo principalToInheritInfoTemp;
+    rv = PrincipalToPrincipalInfo(aLoadInfo->PrincipalToInherit(),
+                                  &principalToInheritInfoTemp);
+    NS_ENSURE_SUCCESS(rv, rv);
+    principalToInheritInfo = principalToInheritInfoTemp;
+  }
+
   nsTArray<PrincipalInfo> redirectChainIncludingInternalRedirects;
   for (const nsCOMPtr<nsIPrincipal>& principal : aLoadInfo->RedirectChainIncludingInternalRedirects()) {
     rv = PrincipalToPrincipalInfo(principal, redirectChainIncludingInternalRedirects.AppendElement());
@@ -242,6 +251,7 @@ LoadInfoToLoadInfoArgs(nsILoadInfo *aLoadInfo,
     LoadInfoArgs(
       loadingPrincipalInfo,
       triggeringPrincipalInfo,
+      principalToInheritInfo,
       aLoadInfo->GetSecurityFlags(),
       aLoadInfo->InternalContentPolicyType(),
       static_cast<uint32_t>(aLoadInfo->GetTainting()),
@@ -292,6 +302,12 @@ LoadInfoArgsToLoadInfo(const OptionalLoadInfoArgs& aOptionalLoadInfoArgs,
     PrincipalInfoToPrincipal(loadInfoArgs.triggeringPrincipalInfo(), &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsCOMPtr<nsIPrincipal> principalToInherit;
+  if (loadInfoArgs.principalToInheritInfo().type() != OptionalPrincipalInfo::Tvoid_t) {
+    principalToInherit = PrincipalInfoToPrincipal(loadInfoArgs.principalToInheritInfo(), &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
   nsTArray<nsCOMPtr<nsIPrincipal>> redirectChainIncludingInternalRedirects;
   for (const PrincipalInfo& principalInfo : loadInfoArgs.redirectChainIncludingInternalRedirects()) {
     nsCOMPtr<nsIPrincipal> redirectedPrincipal =
@@ -311,6 +327,7 @@ LoadInfoArgsToLoadInfo(const OptionalLoadInfoArgs& aOptionalLoadInfoArgs,
   nsCOMPtr<nsILoadInfo> loadInfo =
     new mozilla::LoadInfo(loadingPrincipal,
                           triggeringPrincipal,
+                          principalToInherit,
                           loadInfoArgs.securityFlags(),
                           loadInfoArgs.contentPolicyType(),
                           static_cast<LoadTainting>(loadInfoArgs.tainting()),

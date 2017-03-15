@@ -79,11 +79,18 @@ public:
   virtual nsresult AddDtlsFingerprint(const std::string& algorithm,
                                       const std::vector<uint8_t>& value) override;
 
+  nsresult AddRtpExtension(std::vector<SdpExtmapAttributeList::Extmap>& extensions,
+                           const std::string& extensionName,
+                           SdpDirectionAttribute::Direction direction);
   virtual nsresult AddAudioRtpExtension(
-      const std::string& extensionName) override;
+      const std::string& extensionName,
+      SdpDirectionAttribute::Direction direction =
+      SdpDirectionAttribute::Direction::kSendrecv) override;
 
   virtual nsresult AddVideoRtpExtension(
-      const std::string& extensionName) override;
+      const std::string& extensionName,
+      SdpDirectionAttribute::Direction direction =
+      SdpDirectionAttribute::Direction::kSendrecv) override;
 
   virtual std::vector<JsepCodecDescription*>&
   Codecs() override
@@ -281,8 +288,7 @@ private:
                                    bool usingBundle,
                                    size_t transportLevel,
                                    JsepTrackPair* trackPairOut);
-  void UpdateTransport(const SdpMediaSection& msection,
-                       JsepTransport* transport);
+  void InitTransport(const SdpMediaSection& msection, JsepTransport* transport);
 
   nsresult FinalizeTransport(const SdpAttributeList& remote,
                              const SdpAttributeList& answer,

@@ -19,43 +19,14 @@
 using namespace js;
 using mozilla::PodEqual;
 
+template<XDRMode mode>
 void
-XDRBuffer::freeBuffer()
+XDRState<mode>::postProcessContextErrors(JSContext* cx)
 {
-    js_free(base);
-#ifdef DEBUG
-    memset(this, 0xe2, sizeof *this);
-#endif
-}
-
-bool
-XDRBuffer::grow(size_t n)
-{
-    MOZ_ASSERT(n > size_t(limit - cursor));
-
-    const size_t MIN_CAPACITY = 8192;
-    const size_t MAX_CAPACITY = size_t(INT32_MAX) + 1;
-    size_t offset = cursor - base;
-    MOZ_ASSERT(offset <= MAX_CAPACITY);
-    if (n > MAX_CAPACITY - offset) {
-        js::gc::AutoSuppressGC suppressGC(cx());
-        JS_ReportErrorNumber(cx(), GetErrorMessage, nullptr, JSMSG_TOO_BIG_TO_ENCODE);
-        return false;
+    if (cx->isExceptionPending()) {
+        MOZ_ASSERT(resultCode_ == JS::TranscodeResult_Ok);
+        resultCode_ = JS::TranscodeResult_Throw;
     }
-    size_t newCapacity = mozilla::RoundUpPow2(offset + n);
-    if (newCapacity < MIN_CAPACITY)
-        newCapacity = MIN_CAPACITY;
-
-    MOZ_ASSERT(newCapacity <= MAX_CAPACITY);
-    void* data = js_realloc(base, newCapacity);
-    if (!data) {
-        ReportOutOfMemory(cx());
-        return false;
-    }
-    base = static_cast<uint8_t*>(data);
-    cursor = base + offset;
-    limit = base + newCapacity;
-    return true;
 }
 
 template<XDRMode mode>
@@ -66,6 +37,8 @@ XDRState<mode>::codeChars(const Latin1Char* chars, size_t nchars)
 
     MOZ_ASSERT(mode == XDR_ENCODE);
 
+    if (nchars == 0)
+        return true;
     uint8_t* ptr = buf.write(nchars);
     if (!ptr)
         return false;
@@ -78,6 +51,8 @@ template<XDRMode mode>
 bool
 XDRState<mode>::codeChars(char16_t* chars, size_t nchars)
 {
+    if (nchars == 0)
+        return true;
     size_t nbytes = nchars * sizeof(char16_t);
     if (mode == XDR_ENCODE) {
         uint8_t* ptr = buf.write(nbytes);
@@ -97,7 +72,8 @@ VersionCheck(XDRState<mode>* xdr)
 {
     JS::BuildIdCharVector buildId;
     if (!xdr->cx()->buildIdOp() || !xdr->cx()->buildIdOp()(&buildId)) {
-        JS_ReportErrorNumber(xdr->cx(), GetErrorMessage, nullptr, JSMSG_BUILD_ID_NOT_AVAILABLE);
+        JS_ReportErrorNumberASCII(xdr->cx(), GetErrorMessage, nullptr,
+                                  JSMSG_BUILD_ID_NOT_AVAILABLE);
         return false;
     }
     MOZ_ASSERT(!buildId.empty());
@@ -109,10 +85,8 @@ VersionCheck(XDRState<mode>* xdr)
     if (!xdr->codeUint32(&buildIdLength))
         return false;
 
-    if (mode == XDR_DECODE && buildIdLength != buildId.length()) {
-        JS_ReportErrorNumber(xdr->cx(), GetErrorMessage, nullptr, JSMSG_BAD_BUILD_ID);
-        return false;
-    }
+    if (mode == XDR_DECODE && buildIdLength != buildId.length())
+        return xdr->fail(JS::TranscodeResult_Failure_BadBuildId);
 
     if (mode == XDR_ENCODE) {
         if (!xdr->codeBytes(buildId.begin(), buildIdLength))
@@ -130,11 +104,9 @@ VersionCheck(XDRState<mode>* xdr)
         if (!xdr->codeBytes(decodedBuildId.begin(), buildIdLength))
             return false;
 
-        if (!PodEqual(decodedBuildId.begin(), buildId.begin(), buildIdLength)) {
-            // We do not provide binary compatibility with older scripts.
-            JS_ReportErrorNumber(xdr->cx(), GetErrorMessage, nullptr, JSMSG_BAD_BUILD_ID);
-            return false;
-        }
+        // We do not provide binary compatibility with older scripts.
+        if (!PodEqual(decodedBuildId.begin(), buildId.begin(), buildIdLength))
+            return xdr->fail(JS::TranscodeResult_Failure_BadBuildId);
     }
 
     return true;
@@ -142,18 +114,26 @@ VersionCheck(XDRState<mode>* xdr)
 
 template<XDRMode mode>
 bool
-XDRState<mode>::codeFunction(MutableHandleFunction objp)
+XDRState<mode>::codeFunction(MutableHandleFunction funp)
 {
     if (mode == XDR_DECODE)
-        objp.set(nullptr);
+        funp.set(nullptr);
     else
-        MOZ_ASSERT(objp->nonLazyScript()->enclosingScope()->is<GlobalScope>());
+        MOZ_ASSERT(funp->nonLazyScript()->enclosingScope()->is<GlobalScope>());
 
-    if (!VersionCheck(this))
+    if (!VersionCheck(this)) {
+        postProcessContextErrors(cx());
         return false;
+    }
 
     RootedScope scope(cx(), &cx()->global()->emptyGlobalScope());
-    return XDRInterpretedFunction(this, scope, nullptr, objp);
+    if (!XDRInterpretedFunction(this, scope, nullptr, funp)) {
+        postProcessContextErrors(cx());
+        funp.set(nullptr);
+        return false;
+    }
+
+    return true;
 }
 
 template<XDRMode mode>
@@ -165,10 +145,18 @@ XDRState<mode>::codeScript(MutableHandleScript scriptp)
     else
         MOZ_ASSERT(!scriptp->enclosingScope());
 
-    if (!VersionCheck(this))
+    if (!VersionCheck(this)) {
+        postProcessContextErrors(cx());
         return false;
+    }
 
-    return XDRScript(this, nullptr, nullptr, nullptr, scriptp);
+    if (!XDRScript(this, nullptr, nullptr, nullptr, scriptp)) {
+        postProcessContextErrors(cx());
+        scriptp.set(nullptr);
+        return false;
+    }
+
+    return true;
 }
 
 template<XDRMode mode>
@@ -176,12 +164,6 @@ bool
 XDRState<mode>::codeConstValue(MutableHandleValue vp)
 {
     return XDRScriptConst(this, vp);
-}
-
-XDRDecoder::XDRDecoder(JSContext* cx, const void* data, uint32_t length)
-  : XDRState<XDR_DECODE>(cx)
-{
-    buf.setData(data, length);
 }
 
 template class js::XDRState<XDR_ENCODE>;

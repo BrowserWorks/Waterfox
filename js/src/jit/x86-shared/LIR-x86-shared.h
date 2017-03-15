@@ -167,6 +167,12 @@ class LUDivOrMod : public LBinaryMath<1>
             return mir_->toMod()->trapOnError();
         return mir_->toDiv()->trapOnError();
     }
+
+    wasm::TrapOffset trapOffset() const {
+        if (mir_->isMod())
+            return mir_->toMod()->trapOffset();
+        return mir_->toDiv()->trapOffset();
+    }
 };
 
 class LUDivOrModConstant : public LInstructionHelper<1, 1, 1>
@@ -202,6 +208,11 @@ class LUDivOrModConstant : public LInstructionHelper<1, 1, 1>
         if (mir_->isMod())
             return mir_->toMod()->trapOnError();
         return mir_->toDiv()->trapOnError();
+    }
+    wasm::TrapOffset trapOffset() const {
+        if (mir_->isMod())
+            return mir_->toMod()->trapOffset();
+        return mir_->toDiv()->trapOffset();
     }
 };
 
@@ -385,17 +396,22 @@ class LSimdValueFloat32x4 : public LInstructionHelper<1, 4, 1>
     }
 };
 
-class LInt64ToFloatingPoint : public LInstructionHelper<1, INT64_PIECES, 0>
+class LInt64ToFloatingPoint : public LInstructionHelper<1, INT64_PIECES, 1>
 {
   public:
     LIR_HEADER(Int64ToFloatingPoint);
 
-    explicit LInt64ToFloatingPoint(const LInt64Allocation& in) {
+    explicit LInt64ToFloatingPoint(const LInt64Allocation& in, const LDefinition& temp) {
         setInt64Operand(0, in);
+        setTemp(0, temp);
     }
 
     MInt64ToFloatingPoint* mir() const {
         return mir_->toInt64ToFloatingPoint();
+    }
+
+    const LDefinition* temp() {
+        return getTemp(0);
     }
 };
 

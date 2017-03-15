@@ -8,22 +8,15 @@ from datetime import datetime
 
 import mozfile
 
-from marionette import MarionetteTestCase
+from firefox_puppeteer import PuppeteerMixin
+from firefox_puppeteer.api.software_update import SoftwareUpdate
+from firefox_puppeteer.ui.update_wizard import UpdateWizardDialog
 from marionette_driver import Wait
 from marionette_driver.errors import NoSuchWindowException
-
-from firefox_puppeteer.api.prefs import Preferences
-from firefox_puppeteer.api.software_update import SoftwareUpdate
-from firefox_puppeteer.testcases import BaseFirefoxTestCase
-from firefox_puppeteer.ui.update_wizard import UpdateWizardDialog
+from marionette_harness import MarionetteTestCase
 
 
-class FirefoxTestCase(BaseFirefoxTestCase, MarionetteTestCase):
-    """ Integrate MarionetteTestCase with BaseFirefoxTestCase by reordering MRO """
-    pass
-
-
-class UpdateTestCase(FirefoxTestCase):
+class UpdateTestCase(PuppeteerMixin, MarionetteTestCase):
 
     TIMEOUT_UPDATE_APPLY = 300
     TIMEOUT_UPDATE_CHECK = 30
@@ -41,54 +34,45 @@ class UpdateTestCase(FirefoxTestCase):
     def __init__(self, *args, **kwargs):
         super(UpdateTestCase, self).__init__(*args, **kwargs)
 
+        self.update_channel = kwargs.pop('update_channel')
+        self.update_mar_channels = set(kwargs.pop('update_mar_channels'))
+
         self.target_buildid = kwargs.pop('update_target_buildid')
         self.target_version = kwargs.pop('update_target_version')
 
-        self.update_channel = kwargs.pop('update_channel')
-        self.default_update_channel = None
+        # Bug 604364 - Preparation to test multiple update steps
+        self.current_update_index = 0
 
-        self.update_mar_channels = set(kwargs.pop('update_mar_channels'))
-        self.default_mar_channels = None
-
+        self.download_duration = None
         self.updates = []
 
     def setUp(self, is_fallback=False):
         super(UpdateTestCase, self).setUp()
 
-        self.software_update = SoftwareUpdate(lambda: self.marionette)
-        self.download_duration = None
+        self.software_update = SoftwareUpdate(self.marionette)
 
-        # Bug 604364 - Preparation to test multiple update steps
-        self.current_update_index = 0
+        # If a custom update channel has to be set, force a restart of
+        # Firefox to actually get it applied as a default pref. Use the clean
+        # option to force a non in_app restart, which would allow Firefox to
+        # dump the logs to the console.
+        if self.update_channel:
+            self.software_update.update_channel = self.update_channel
+            self.restart(clean=True)
+
+            self.assertEqual(self.software_update.update_channel, self.update_channel)
+
+        # If requested modify the list of allowed MAR channels
+        if self.update_mar_channels:
+            self.software_update.mar_channels.add_channels(self.update_mar_channels)
+
+            self.assertTrue(self.update_mar_channels.issubset(
+                            self.software_update.mar_channels.channels),
+                            'Allowed MAR channels have been set: expected "{}" in "{}"'.format(
+                                ', '.join(self.update_mar_channels),
+                                ', '.join(self.software_update.mar_channels.channels)))
 
         # Ensure that there exists no already partially downloaded update
         self.remove_downloaded_update()
-
-        # If requested modify the default update channel. It will be active
-        # after the next restart of the application
-        # Bug 1142805 - Modify file via Python directly
-        if self.update_channel:
-            # Backup the original content and the path of the channel-prefs.js file
-            self.default_update_channel = {
-                'content': self.software_update.update_channel.file_contents,
-                'path': self.software_update.update_channel.file_path,
-            }
-            self.software_update.update_channel.default_channel = self.update_channel
-
-        # If requested modify the list of allowed MAR channels
-        # Bug 1142805 - Modify file via Python directly
-        if self.update_mar_channels:
-            # Backup the original content and the path of the update-settings.ini file
-            self.default_mar_channels = {
-                'content': self.software_update.mar_channels.config_file_contents,
-                'path': self.software_update.mar_channels.config_file_path,
-            }
-            self.software_update.mar_channels.add_channels(self.update_mar_channels)
-
-        # Bug 1142805 - Until we don't modify the channel-prefs.js and update-settings.ini
-        # files before Firefox gets started, a restart of Firefox is necessary to
-        # accept the new update channel.
-        self.restart()
 
         # Dictionary which holds the information for each update
         self.updates = [{
@@ -98,15 +82,6 @@ class UpdateTestCase(FirefoxTestCase):
             'patch': {},
             'success': False,
         }]
-
-        self.assertEqual(self.software_update.update_channel.default_channel,
-                         self.software_update.update_channel.channel)
-
-        self.assertTrue(self.update_mar_channels.issubset(
-                        self.software_update.mar_channels.channels),
-                        'Allowed MAR channels have been set: expected "{}" in "{}"'.format(
-                            ', '.join(self.update_mar_channels),
-                            ', '.join(self.software_update.mar_channels.channels)))
 
         # Check if the user has permissions to run the update
         self.assertTrue(self.software_update.allowed,
@@ -127,8 +102,6 @@ class UpdateTestCase(FirefoxTestCase):
 
             # Ensure that no trace of an partially downloaded update remain
             self.remove_downloaded_update()
-
-            self.restore_config_files()
 
     @property
     def patch_info(self):
@@ -222,8 +195,7 @@ class UpdateTestCase(FirefoxTestCase):
 
             :param dialog: Instance of :class:`UpdateWizardDialog`.
             """
-            prefs = Preferences(lambda: self.marionette)
-            prefs.set_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE, dialog.window_type)
+            self.marionette.set_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE, dialog.window_type)
 
             try:
                 # If updates have already been found, proceed to download
@@ -234,7 +206,8 @@ class UpdateTestCase(FirefoxTestCase):
 
                 # If incompatible add-on are installed, skip over the wizard page
                 # TODO: Remove once we no longer support version Firefox 45.0ESR
-                if self.utils.compare_version(self.appinfo.version, '49.0a1') == -1:
+                if self.puppeteer.utils.compare_version(self.puppeteer.appinfo.version,
+                                                        '49.0a1') == -1:
                     if dialog.wizard.selected_panel == dialog.wizard.incompatible_list:
                         dialog.select_next_page()
 
@@ -262,7 +235,7 @@ class UpdateTestCase(FirefoxTestCase):
                                     dialog.wizard.selected_panel))
 
             finally:
-                prefs.restore_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE)
+                self.marionette.clear_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE)
 
         # The old update wizard dialog has to be handled differently. It's necessary
         # for fallback updates and invalid add-on versions.
@@ -314,7 +287,7 @@ class UpdateTestCase(FirefoxTestCase):
     def download_and_apply_forced_update(self):
         # The update wizard dialog opens automatically after the restart but with a short delay
         dialog = Wait(self.marionette, ignored_exceptions=[NoSuchWindowException]).until(
-            lambda _: self.windows.switch_to(lambda win: type(win) is UpdateWizardDialog)
+            lambda _: self.puppeteer.windows.switch_to(lambda win: type(win) is UpdateWizardDialog)
         )
 
         # In case of a broken complete update the about window has to be used
@@ -373,29 +346,6 @@ class UpdateTestCase(FirefoxTestCase):
         path = os.path.dirname(self.software_update.staging_directory)
         self.logger.info('Clean-up update staging directory: {}'.format(path))
         mozfile.remove(path)
-
-    def restore_config_files(self):
-        # Reset channel-prefs.js file if modified
-        try:
-            if self.default_update_channel:
-                path = self.default_update_channel['path']
-                self.logger.info('Restoring channel defaults for: {}'.format(path))
-                with open(path, 'w') as f:
-                    f.write(self.default_update_channel['content'])
-        except IOError:
-            self.logger.error('Failed to reset the default update channel.',
-                              exc_info=True)
-
-        # Reset update-settings.ini file if modified
-        try:
-            if self.default_mar_channels:
-                path = self.default_mar_channels['path']
-                self.logger.info('Restoring mar channel defaults for: {}'.format(path))
-                with open(path, 'w') as f:
-                    f.write(self.default_mar_channels['content'])
-        except IOError:
-            self.logger.error('Failed to reset the default mar channels.',
-                              exc_info=True)
 
     def wait_for_download_finished(self, window, timeout=TIMEOUT_UPDATE_DOWNLOAD):
         """ Waits until download is completed.

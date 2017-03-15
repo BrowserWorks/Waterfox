@@ -6,14 +6,14 @@ function test () {
 
   function loadListener() {
     function testLocation(link, url, next) {
-      var tabOpenListener = new TabOpenListener(url, function () {
-          gBrowser.removeTab(this.tab);
+      new TabOpenListener(url, function () {
+        gBrowser.removeTab(this.tab);
       }, function () {
         next();
       });
 
-      ContentTask.spawn(gBrowser.selectedBrowser, link, link => {
-        content.document.getElementById(link).click();
+      ContentTask.spawn(gBrowser.selectedBrowser, link, contentLink => {
+        content.document.getElementById(contentLink).click();
       });
     }
 
@@ -29,8 +29,8 @@ function test () {
         });
       });
 
-      ContentTask.spawn(gBrowser.selectedBrowser, link, link => {
-        content.document.getElementById(link).click();
+      ContentTask.spawn(gBrowser.selectedBrowser, link, contentLink => {
+        content.document.getElementById(contentLink).click();
       });
     }
 

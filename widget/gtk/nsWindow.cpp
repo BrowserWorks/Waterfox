@@ -727,6 +727,12 @@ nsWindow::Destroy()
     // destroys the the gl context attached to it).
     DestroyCompositor();
 
+#ifdef MOZ_X11
+    // Ensure any resources assigned to the window get cleaned up first
+    // to avoid double-freeing.
+    mSurfaceProvider.CleanupResources();
+#endif
+
     ClearCachedResources();
 
     g_signal_handlers_disconnect_by_func(gtk_settings_get_default(),
@@ -869,6 +875,12 @@ nsWindow::SetParent(nsIWidget *aNewParent)
                                      oldContainer);
     }
     return NS_OK;
+}
+
+bool
+nsWindow::WidgetTypeSupportsAcceleration()
+{
+  return !IsSmallPopup();
 }
 
 void
@@ -1044,7 +1056,14 @@ void nsWindow::SetSizeConstraints(const SizeConstraints& aConstraints)
         geometry.max_height = DevicePixelsToGdkCoordRoundDown(
                               mSizeConstraints.mMaxSize.height);
 
-        uint32_t hints = GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE;
+        uint32_t hints = 0;
+        if (aConstraints.mMinSize != LayoutDeviceIntSize(0, 0)) {
+            hints |= GDK_HINT_MIN_SIZE;
+        }
+        if (aConstraints.mMaxSize !=
+            LayoutDeviceIntSize(NS_MAXSIZE, NS_MAXSIZE)) {
+            hints |= GDK_HINT_MAX_SIZE;
+        }
         gtk_window_set_geometry_hints(GTK_WINDOW(mShell), nullptr,
                                       &geometry, GdkWindowHints(hints));
     }
@@ -1748,6 +1767,8 @@ nsWindow::GetNativeData(uint32_t aDataType)
         }
         return mIMContext.get();
     }
+    case NS_NATIVE_OPENGL_CONTEXT:
+      return nullptr;
 #ifdef MOZ_X11
     case NS_NATIVE_COMPOSITOR_DISPLAY:
         return gfxPlatformGtk::GetPlatform()->GetCompositorDisplay();
@@ -2131,10 +2152,7 @@ nsWindow::OnExposeEvent(cairo_t *cr)
     LayoutDeviceIntRegion region = exposeRegion;
     region.ScaleRoundOut(scale, scale);
 
-    ClientLayerManager *clientLayers =
-        (GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT)
-        ? static_cast<ClientLayerManager*>(GetLayerManager())
-        : nullptr;
+    ClientLayerManager *clientLayers = GetLayerManager()->AsClientLayerManager();
 
     if (clientLayers && mCompositorSession) {
         // We need to paint to the screen even if nothing changed, since if we
@@ -2402,7 +2420,9 @@ nsWindow::OnConfigureEvent(GtkWidget *aWidget, GdkEventConfigure *aEvent)
     LOG(("configure event [%p] %d %d %d %d\n", (void *)this,
          aEvent->x, aEvent->y, aEvent->width, aEvent->height));
 
-    mPendingConfigures--;
+    if (mPendingConfigures > 0) {
+        mPendingConfigures--;
+    }
 
     LayoutDeviceIntRect screenBounds = GetScreenBounds();
 
@@ -4213,7 +4233,7 @@ nsWindow::NativeShow(bool aAction)
                 event.height = allocation.height;
 
                 auto shellClass = GTK_WIDGET_GET_CLASS(mShell);
-                for (int i = 0; i < mPendingConfigures; i++) {
+                for (unsigned int i = 0; i < mPendingConfigures; i++) {
                     Unused << shellClass->configure_event(mShell, &event);
                 }
                 mPendingConfigures = 0;

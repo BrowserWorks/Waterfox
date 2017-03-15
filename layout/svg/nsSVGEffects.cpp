@@ -303,7 +303,7 @@ nsSVGFilterChainObserver::nsSVGFilterChainObserver(const nsTArray<nsStyleFilter>
     // CanvasRenderingContext2D.
     nsCOMPtr<nsIURI> filterURL = aFilteredFrame
       ? nsSVGEffects::GetFilterURI(aFilteredFrame, i)
-      : aFilters[i].GetURL()->Resolve(aFilteredElement);
+      : aFilters[i].GetURL()->ResolveLocalRef(aFilteredElement);
 
     RefPtr<nsSVGFilterReference> reference =
       new nsSVGFilterReference(filterURL, aFilteredElement, this);
@@ -600,7 +600,7 @@ nsSVGEffects::GetPaintServer(nsIFrame* aTargetFrame,
                              PaintingPropertyDescriptor aType)
 {
   const nsStyleSVG* svgStyle = aTargetFrame->StyleSVG();
-  if ((svgStyle->*aPaint).mType != eStyleSVGPaintType_Server)
+  if ((svgStyle->*aPaint).Type() != eStyleSVGPaintType_Server)
     return nullptr;
 
   // If we're looking at a frame within SVG text, then we need to look up
@@ -708,11 +708,11 @@ nsSVGEffects::UpdateEffects(nsIFrame* aFrame)
       static_cast<nsSVGPathGeometryElement*>(aFrame->GetContent())->IsMarkable()) {
     // Set marker properties here to avoid reference loops
     nsCOMPtr<nsIURI> markerURL =
-      nsSVGEffects::GetMarkerURI(aFrame, &nsStyleSVG::mMarkerStart);
+      GetMarkerURI(aFrame, &nsStyleSVG::mMarkerStart);
     GetMarkerProperty(markerURL, aFrame, MarkerBeginProperty());
-    markerURL = nsSVGEffects::GetMarkerURI(aFrame, &nsStyleSVG::mMarkerMid);
+    markerURL = GetMarkerURI(aFrame, &nsStyleSVG::mMarkerMid);
     GetMarkerProperty(markerURL, aFrame, MarkerMiddleProperty());
-    markerURL = nsSVGEffects::GetMarkerURI(aFrame, &nsStyleSVG::mMarkerEnd);
+    markerURL = GetMarkerURI(aFrame, &nsStyleSVG::mMarkerEnd);
     GetMarkerProperty(markerURL, aFrame, MarkerEndProperty());
   }
 }
@@ -889,40 +889,64 @@ nsSVGEffects::InvalidateDirectRenderingObservers(nsIFrame* aFrame, uint32_t aFla
 }
 
 static already_AddRefed<nsIURI>
-ResolveFragmentOrURL(nsIFrame* aFrame, const FragmentOrURL* aFragmentOrURL)
+ResolveURLUsingLocalRef(nsIFrame* aFrame, const css::URLValueData* aURL)
 {
   MOZ_ASSERT(aFrame);
 
-  if (!aFragmentOrURL) {
+  if (!aURL) {
     return nullptr;
   }
 
   // Non-local-reference URL.
-  if (!aFragmentOrURL->IsLocalRef()) {
-    nsCOMPtr<nsIURI> result = aFragmentOrURL->GetSourceURL();
+  if (!aURL->IsLocalRef()) {
+    nsCOMPtr<nsIURI> result = aURL->GetURI();
     return result.forget();
   }
 
+  // For a local-reference URL, resolve that fragment against the current
+  // document that relative URLs are resolved against.
   nsIContent* content = aFrame->GetContent();
-  nsCOMPtr<nsIURI> baseURI = content->GetBaseURI();
+  nsCOMPtr<nsIURI> baseURI = content->OwnerDoc()->GetDocumentURI();
 
   if (content->IsInAnonymousSubtree()) {
-    // content is in a shadow tree.
-    // Depending on where this url comes from, choose either the baseURI of the
-    // original document of content or the root document of the shadow tree
-    // to resolve URI.
-    if (!aFragmentOrURL->EqualsExceptRef(baseURI))
-      baseURI = content->OwnerDoc()->GetBaseURI();
+    nsIContent* bindingParent = content->GetBindingParent();
+    nsCOMPtr<nsIURI> originalURI;
+
+    // content is in a shadow tree.  If this URL was specified in the subtree
+    // referenced by the <use>(or -moz-binding) element, and that subtree came
+    // from a separate resource document, then we want the fragment-only URL
+    // to resolve to an element from the resource document.  Otherwise, the
+    // URL was specified somewhere in the document with the <use> element, and
+    // we want the fragment-only URL to resolve to an element in that document.
+    if (bindingParent) {
+      if (content->IsAnonymousContentInSVGUseSubtree()) {
+        SVGUseElement* useElement = static_cast<SVGUseElement*>(bindingParent);
+        originalURI = useElement->GetSourceDocURI();
+      } else {
+        nsXBLBinding* binding = bindingParent->GetXBLBinding();
+        if (binding) {
+          originalURI = binding->GetSourceDocURI();
+        } else {
+          MOZ_ASSERT(content->IsInNativeAnonymousSubtree(),
+                     "an non-native anonymous tree which is not from "
+                     "an XBL binding?");
+        }
+      }
+
+      if (originalURI && aURL->EqualsExceptRef(originalURI)) {
+        baseURI = originalURI;
+      }
+    }
   }
 
-  return aFragmentOrURL->Resolve(baseURI);
+  return aURL->ResolveLocalRef(baseURI);
 }
 
 already_AddRefed<nsIURI>
 nsSVGEffects::GetMarkerURI(nsIFrame* aFrame,
-                           FragmentOrURL nsStyleSVG::* aMarker)
+                           RefPtr<css::URLValue> nsStyleSVG::* aMarker)
 {
-  return ResolveFragmentOrURL(aFrame, &(aFrame->StyleSVG()->*aMarker));
+  return ResolveURLUsingLocalRef(aFrame, aFrame->StyleSVG()->*aMarker);
 }
 
 already_AddRefed<nsIURI>
@@ -931,8 +955,8 @@ nsSVGEffects::GetClipPathURI(nsIFrame* aFrame)
   const nsStyleSVGReset* svgResetStyle = aFrame->StyleSVGReset();
   MOZ_ASSERT(svgResetStyle->mClipPath.GetType() == StyleShapeSourceType::URL);
 
-  FragmentOrURL* url = svgResetStyle->mClipPath.GetURL();
-  return ResolveFragmentOrURL(aFrame, url);
+  css::URLValue* url = svgResetStyle->mClipPath.GetURL();
+  return ResolveURLUsingLocalRef(aFrame, url);
 }
 
 already_AddRefed<nsIURI>
@@ -942,7 +966,7 @@ nsSVGEffects::GetFilterURI(nsIFrame* aFrame, uint32_t aIndex)
   MOZ_ASSERT(effects->mFilters.Length() > aIndex);
   MOZ_ASSERT(effects->mFilters[aIndex].GetType() == NS_STYLE_FILTER_URL);
 
-  return ResolveFragmentOrURL(aFrame, effects->mFilters[aIndex].GetURL());
+  return ResolveURLUsingLocalRef(aFrame, effects->mFilters[aIndex].GetURL());
 }
 
 already_AddRefed<nsIURI>
@@ -951,7 +975,7 @@ nsSVGEffects::GetFilterURI(nsIFrame* aFrame, const nsStyleFilter& aFilter)
   MOZ_ASSERT(aFrame->StyleEffects()->mFilters.Length());
   MOZ_ASSERT(aFilter.GetType() == NS_STYLE_FILTER_URL);
 
-  return ResolveFragmentOrURL(aFrame, aFilter.GetURL());
+  return ResolveURLUsingLocalRef(aFrame, aFilter.GetURL());
 }
 
 already_AddRefed<nsIURI>
@@ -959,10 +983,11 @@ nsSVGEffects::GetPaintURI(nsIFrame* aFrame,
                           nsStyleSVGPaint nsStyleSVG::* aPaint)
 {
   const nsStyleSVG* svgStyle = aFrame->StyleSVG();
-  MOZ_ASSERT((svgStyle->*aPaint).mType ==
+  MOZ_ASSERT((svgStyle->*aPaint).Type() ==
              nsStyleSVGPaintType::eStyleSVGPaintType_Server);
 
-  return ResolveFragmentOrURL(aFrame, (svgStyle->*aPaint).mPaint.mPaintServer);
+  return ResolveURLUsingLocalRef(aFrame,
+                                 (svgStyle->*aPaint).GetPaintServer());
 }
 
 already_AddRefed<nsIURI>
@@ -971,6 +996,6 @@ nsSVGEffects::GetMaskURI(nsIFrame* aFrame, uint32_t aIndex)
   const nsStyleSVGReset* svgReset = aFrame->StyleSVGReset();
   MOZ_ASSERT(svgReset->mMask.mLayers.Length() > aIndex);
 
-  return ResolveFragmentOrURL(aFrame,
-                              &svgReset->mMask.mLayers[aIndex].mSourceURI);
+  return ResolveURLUsingLocalRef(aFrame,
+                                 svgReset->mMask.mLayers[aIndex].mSourceURI);
 }

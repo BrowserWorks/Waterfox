@@ -50,11 +50,7 @@
 
 #include "nsLayoutUtils.h"
 
-#include "mozilla/Preferences.h"
-
 using namespace mozilla::net;
-
-static const char *kPrefSrcsetEnabled = "dom.image.srcset.enabled";
 
 NS_IMPL_NS_NEW_HTML_ELEMENT(Image)
 
@@ -170,12 +166,6 @@ HTMLImageElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
           nsGenericHTMLElement::IsInteractiveHTMLContent(aIgnoreTabindex);
 }
 
-bool
-HTMLImageElement::IsSrcsetEnabled()
-{
-  return Preferences::GetBool(kPrefSrcsetEnabled, false);
-}
-
 void
 HTMLImageElement::AsyncEventRunning(AsyncEventDispatcher* aEvent)
 {
@@ -185,10 +175,6 @@ HTMLImageElement::AsyncEventRunning(AsyncEventDispatcher* aEvent)
 nsresult
 HTMLImageElement::GetCurrentSrc(nsAString& aValue)
 {
-  if (!IsSrcsetEnabled()) {
-    return NS_ERROR_FAILURE;
-  }
-
   nsCOMPtr<nsIURI> currentURI;
   GetCurrentURI(getter_AddRefs(currentURI));
   if (currentURI) {
@@ -439,12 +425,10 @@ HTMLImageElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       CancelImageRequests(aNotify);
     }
   } else if (aName == nsGkAtoms::srcset &&
-             aNameSpaceID == kNameSpaceID_None &&
-             IsSrcsetEnabled()) {
+             aNameSpaceID == kNameSpaceID_None) {
     PictureSourceSrcsetChanged(this, attrVal.String(), aNotify);
   } else if (aName == nsGkAtoms::sizes &&
-             aNameSpaceID == kNameSpaceID_None &&
-             HTMLPictureElement::IsPictureEnabled()) {
+             aNameSpaceID == kNameSpaceID_None) {
     PictureSourceSizesChanged(this, attrVal.String(), aNotify);
   }
 
@@ -944,12 +928,8 @@ HTMLImageElement::QueueImageLoadTask(bool aAlwaysLoad)
 bool
 HTMLImageElement::HaveSrcsetOrInPicture()
 {
-  if (IsSrcsetEnabled() && HasAttr(kNameSpaceID_None, nsGkAtoms::srcset)) {
+  if (HasAttr(kNameSpaceID_None, nsGkAtoms::srcset)) {
     return true;
-  }
-
-  if (!HTMLPictureElement::IsPictureEnabled()) {
-    return false;
   }
 
   Element *parent = nsINode::GetParentElement();
@@ -1042,14 +1022,8 @@ HTMLImageElement::PictureSourceSrcsetChanged(nsIContent *aSourceNode,
                                              const nsAString& aNewValue,
                                              bool aNotify)
 {
-  bool isSelf = aSourceNode == this;
-
-  if (!IsSrcsetEnabled() ||
-      (!isSelf && !HTMLPictureElement::IsPictureEnabled())) {
-    return;
-  }
-
-  MOZ_ASSERT(isSelf || IsPreviousSibling(aSourceNode, this),
+  MOZ_ASSERT(aSourceNode == this ||
+             IsPreviousSibling(aSourceNode, this),
              "Should not be getting notifications for non-previous-siblings");
 
   nsIContent *currentSrc =
@@ -1079,10 +1053,6 @@ HTMLImageElement::PictureSourceSizesChanged(nsIContent *aSourceNode,
                                             const nsAString& aNewValue,
                                             bool aNotify)
 {
-  if (!HTMLPictureElement::IsPictureEnabled()) {
-    return;
-  }
-
   MOZ_ASSERT(aSourceNode == this ||
              IsPreviousSibling(aSourceNode, this),
              "Should not be getting notifications for non-previous-siblings");
@@ -1105,10 +1075,6 @@ void
 HTMLImageElement::PictureSourceMediaOrTypeChanged(nsIContent *aSourceNode,
                                                   bool aNotify)
 {
-  if (!HTMLPictureElement::IsPictureEnabled()) {
-    return;
-  }
-
   MOZ_ASSERT(IsPreviousSibling(aSourceNode, this),
              "Should not be getting notifications for non-previous-siblings");
 
@@ -1120,10 +1086,6 @@ HTMLImageElement::PictureSourceMediaOrTypeChanged(nsIContent *aSourceNode,
 void
 HTMLImageElement::PictureSourceAdded(nsIContent *aSourceNode)
 {
-  if (!HTMLPictureElement::IsPictureEnabled()) {
-    return;
-  }
-
   MOZ_ASSERT(aSourceNode == this ||
              IsPreviousSibling(aSourceNode, this),
              "Should not be getting notifications for non-previous-siblings");
@@ -1134,10 +1096,6 @@ HTMLImageElement::PictureSourceAdded(nsIContent *aSourceNode)
 void
 HTMLImageElement::PictureSourceRemoved(nsIContent *aSourceNode)
 {
-  if (!HTMLPictureElement::IsPictureEnabled()) {
-    return;
-  }
-
   MOZ_ASSERT(aSourceNode == this ||
              IsPreviousSibling(aSourceNode, this),
              "Should not be getting notifications for non-previous-siblings");
@@ -1150,15 +1108,9 @@ HTMLImageElement::UpdateResponsiveSource()
 {
   bool hadSelector = !!mResponsiveSelector;
 
-  if (!IsSrcsetEnabled()) {
-    mResponsiveSelector = nullptr;
-    return hadSelector;
-  }
-
   nsIContent *currentSource =
     mResponsiveSelector ? mResponsiveSelector->Content() : nullptr;
-  bool pictureEnabled = HTMLPictureElement::IsPictureEnabled();
-  Element *parent = pictureEnabled ? nsINode::GetParentElement() : nullptr;
+  Element *parent = nsINode::GetParentElement();
 
   nsINode *candidateSource = nullptr;
   if (parent && parent->IsHTMLElement(nsGkAtoms::picture)) {
@@ -1246,7 +1198,6 @@ HTMLImageElement::SourceElementMatches(nsIContent* aSourceNode)
   DebugOnly<Element *> parent(nsINode::GetParentElement());
   MOZ_ASSERT(parent && parent->IsHTMLElement(nsGkAtoms::picture));
   MOZ_ASSERT(IsPreviousSibling(aSourceNode, this));
-  MOZ_ASSERT(HTMLPictureElement::IsPictureEnabled());
 
   // Check media and type
   HTMLSourceElement *src = static_cast<HTMLSourceElement*>(aSourceNode);
@@ -1264,15 +1215,8 @@ HTMLImageElement::SourceElementMatches(nsIContent* aSourceNode)
 }
 
 bool
-HTMLImageElement::TryCreateResponsiveSelector(nsIContent *aSourceNode,
-                                              const nsAString *aSrcset,
-                                              const nsAString *aSizes)
+HTMLImageElement::TryCreateResponsiveSelector(nsIContent *aSourceNode)
 {
-  if (!IsSrcsetEnabled()) {
-    return false;
-  }
-
-  bool pictureEnabled = HTMLPictureElement::IsPictureEnabled();
   // Skip if this is not a <source> with matching media query
   bool isSourceTag = aSourceNode->IsHTMLElement(nsGkAtoms::source);
   if (isSourceTag) {
@@ -1286,10 +1230,7 @@ HTMLImageElement::TryCreateResponsiveSelector(nsIContent *aSourceNode,
 
   // Skip if has no srcset or an empty srcset
   nsString srcset;
-  if (aSrcset) {
-    srcset = *aSrcset;
-  } else if (!aSourceNode->GetAttr(kNameSpaceID_None, nsGkAtoms::srcset,
-                                   srcset)) {
+  if (!aSourceNode->GetAttr(kNameSpaceID_None, nsGkAtoms::srcset, srcset)) {
     return false;
   }
 
@@ -1305,13 +1246,9 @@ HTMLImageElement::TryCreateResponsiveSelector(nsIContent *aSourceNode,
     return false;
   }
 
-  if (pictureEnabled && aSizes) {
-    sel->SetSizesFromDescriptor(*aSizes);
-  } else if (pictureEnabled) {
-    nsAutoString sizes;
-    aSourceNode->GetAttr(kNameSpaceID_None, nsGkAtoms::sizes, sizes);
-    sel->SetSizesFromDescriptor(sizes);
-  }
+  nsAutoString sizes;
+  aSourceNode->GetAttr(kNameSpaceID_None, nsGkAtoms::sizes, sizes);
+  sel->SetSizesFromDescriptor(sizes);
 
   // If this is the <img> tag, also pull in src as the default source
   if (!isSourceTag) {
@@ -1341,12 +1278,7 @@ HTMLImageElement::SelectSourceForTagWithAttrs(nsIDocument *aDocument,
   MOZ_ASSERT(!aIsSourceTag || aSrcAttr.IsEmpty(),
              "Passing aSrcAttr makes no sense with aIsSourceTag set");
 
-  bool pictureEnabled = HTMLPictureElement::IsPictureEnabled();
-  if (aIsSourceTag && !pictureEnabled) {
-    return false;
-  }
-
-  if (!IsSrcsetEnabled() || aSrcsetAttr.IsEmpty()) {
+  if (aSrcsetAttr.IsEmpty()) {
     if (!aIsSourceTag) {
       // For an <img> with no srcset, we would always select the src attr.
       aResult.Assign(aSrcAttr);
@@ -1370,7 +1302,7 @@ HTMLImageElement::SelectSourceForTagWithAttrs(nsIDocument *aDocument,
     new ResponsiveImageSelector(aDocument);
 
   sel->SetCandidatesFromSourceSet(aSrcsetAttr);
-  if (pictureEnabled && !aSizesAttr.IsEmpty()) {
+  if (!aSizesAttr.IsEmpty()) {
     sel->SetSizesFromDescriptor(aSizesAttr);
   }
   if (!aIsSourceTag) {

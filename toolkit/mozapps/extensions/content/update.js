@@ -106,7 +106,6 @@ var gUpdateWizard = {
     this._setUpButton("cancel", aCancelButton, aCancelButtonIsDisabled);
   },
 
-  /////////////////////////////////////////////////////////////////////////////
   // Update Errors
   errorItems: [],
 
@@ -272,13 +271,12 @@ var gVersionInfoPage = {
       logger.info("VersionInfo: No updates require further action");
       // VersionInfo compatibility updates resolved all compatibility problems,
       // close this window and continue starting the application...
-      //XXX Bug 314754 - We need to use setTimeout to close the window due to
+      // XXX Bug 314754 - We need to use setTimeout to close the window due to
       // the EM using xmlHttpRequest when checking for updates.
       setTimeout(close, 0);
     }
   },
 
-  /////////////////////////////////////////////////////////////////////////////
   // UpdateListener
   onUpdateFinished: function(aAddon, status) {
     ++this._completeCount;
@@ -377,7 +375,6 @@ var gUpdatePage = {
     document.documentElement.currentPage = nextPage;
   },
 
-  /////////////////////////////////////////////////////////////////////////////
   // UpdateListener
   onUpdateAvailable: function(aAddon, aInstall) {
     logger.debug("UpdatePage got an update for " + aAddon.id + ": " + aAddon.version);
@@ -551,7 +548,6 @@ var gInstallingPage = {
     install.install();
   },
 
-  /////////////////////////////////////////////////////////////////////////////
   // InstallListener
   onDownloadStarted: function(aInstall) {
     if (gUpdateWizard.shuttingDown) {

@@ -44,6 +44,7 @@
 #include "mozilla/plugins/PluginSurfaceParent.h"
 #include "mozilla/widget/AudioSession.h"
 #include "PluginHangUIParent.h"
+#include "PluginUtilsWin.h"
 #endif
 
 #ifdef MOZ_ENABLE_PROFILER_SPS
@@ -685,16 +686,11 @@ PluginModuleParent::PluginModuleParent(bool aIsChrome, bool aAllowAsyncInit)
     , mIsNPShutdownPending(false)
     , mAsyncNewRv(NS_ERROR_NOT_INITIALIZED)
 {
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
-    mIsStartingAsync = aAllowAsyncInit &&
-                       Preferences::GetBool(kAsyncInitPref, false) &&
-                       !BrowserTabsRemoteAutostart();
 #if defined(MOZ_CRASHREPORTER)
     CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("AsyncPluginInit"),
                                        mIsStartingAsync ?
                                            NS_LITERAL_CSTRING("1") :
                                            NS_LITERAL_CSTRING("0"));
-#endif
 #endif
 }
 
@@ -733,7 +729,6 @@ PluginModuleChromeParent::PluginModuleChromeParent(const char* aFilePath,
     , mPluginId(aPluginId)
     , mChromeTaskFactory(this)
     , mHangAnnotationFlags(0)
-    , mProtocolCallStackMutex("PluginModuleChromeParent::mProtocolCallStackMutex")
 #ifdef XP_WIN
     , mPluginCpuUsageOnHang()
     , mHangUIParent(nullptr)
@@ -774,6 +769,12 @@ PluginModuleChromeParent::~PluginModuleChromeParent()
 
 #ifdef MOZ_ENABLE_PROFILER_SPS
     ShutdownPluginProfiling();
+#endif
+
+#ifdef XP_WIN
+    // If we registered for audio notifications, stop.
+    mozilla::plugins::PluginUtilsWin::RegisterForAudioDeviceChanges(this,
+                                                                    false);
 #endif
 
     if (!mShutdown) {
@@ -999,40 +1000,6 @@ GetProcessCpuUsage(const InfallibleTArray<base::ProcessHandle>& processHandles, 
 
 #endif // #ifdef XP_WIN
 
-void
-PluginModuleChromeParent::OnEnteredCall()
-{
-    mozilla::ipc::IProtocol* protocol = GetInvokingProtocol();
-    MOZ_ASSERT(protocol);
-    mozilla::MutexAutoLock lock(mProtocolCallStackMutex);
-    mProtocolCallStack.AppendElement(protocol);
-}
-
-void
-PluginModuleChromeParent::OnExitedCall()
-{
-    mozilla::MutexAutoLock lock(mProtocolCallStackMutex);
-    MOZ_ASSERT(!mProtocolCallStack.IsEmpty());
-    mProtocolCallStack.RemoveElementAt(mProtocolCallStack.Length() - 1);
-}
-
-void
-PluginModuleChromeParent::OnEnteredSyncSend()
-{
-    mozilla::ipc::IProtocol* protocol = GetInvokingProtocol();
-    MOZ_ASSERT(protocol);
-    mozilla::MutexAutoLock lock(mProtocolCallStackMutex);
-    mProtocolCallStack.AppendElement(protocol);
-}
-
-void
-PluginModuleChromeParent::OnExitedSyncSend()
-{
-    mozilla::MutexAutoLock lock(mProtocolCallStackMutex);
-    MOZ_ASSERT(!mProtocolCallStack.IsEmpty());
-    mProtocolCallStack.RemoveElementAt(mProtocolCallStack.Length() - 1);
-}
-
 /**
  * This function converts the topmost routing id on the call stack (as recorded
  * by the MessageChannel) into a pointer to a IProtocol object.
@@ -1069,8 +1036,7 @@ PluginInstanceParent*
 PluginModuleChromeParent::GetManagingInstance(mozilla::ipc::IProtocol* aProtocol)
 {
     MOZ_ASSERT(aProtocol);
-    mozilla::ipc::MessageListener* listener =
-        static_cast<mozilla::ipc::MessageListener*>(aProtocol);
+    mozilla::ipc::IProtocol* listener = aProtocol;
     switch (listener->GetProtocolTypeId()) {
         case PPluginInstanceMsgStart:
             // In this case, aProtocol is the instance itself. Just cast it.
@@ -1904,6 +1870,26 @@ PluginModuleParent::NPP_SetValue(NPP instance, NPNVariable variable,
                                  void *value)
 {
     RESOLVE_AND_CALL(instance, NPP_SetValue(variable, value));
+}
+
+bool
+PluginModuleChromeParent::AnswerNPN_SetValue_NPPVpluginRequiresAudioDeviceChanges(
+    const bool& shouldRegister, NPError* result)
+{
+#ifdef XP_WIN
+    *result = NPERR_NO_ERROR;
+    nsresult err =
+      mozilla::plugins::PluginUtilsWin::RegisterForAudioDeviceChanges(this,
+                                                               shouldRegister);
+    if (err != NS_OK) {
+      *result = NPERR_GENERIC_ERROR;
+    }
+    return true;
+#else
+    NS_RUNTIMEABORT("NPPVpluginRequiresAudioDeviceChanges is not valid on this platform.");
+    *result = NPERR_GENERIC_ERROR;
+    return true;
+#endif
 }
 
 bool
@@ -3120,12 +3106,32 @@ PluginModuleParent::RecvReturnSitesWithData(nsTArray<nsCString>&& aSites,
 }
 
 layers::TextureClientRecycleAllocator*
-PluginModuleParent::EnsureTextureAllocator()
+PluginModuleParent::EnsureTextureAllocatorForDirectBitmap()
 {
-    if (!mTextureAllocator) {
-        mTextureAllocator = new TextureClientRecycleAllocator(ImageBridgeChild::GetSingleton().get());
+    if (!mTextureAllocatorForDirectBitmap) {
+        mTextureAllocatorForDirectBitmap = new TextureClientRecycleAllocator(ImageBridgeChild::GetSingleton().get());
     }
-    return mTextureAllocator;
+    return mTextureAllocatorForDirectBitmap;
+}
+
+layers::TextureClientRecycleAllocator*
+PluginModuleParent::EnsureTextureAllocatorForDXGISurface()
+{
+    if (!mTextureAllocatorForDXGISurface) {
+        mTextureAllocatorForDXGISurface = new TextureClientRecycleAllocator(ImageBridgeChild::GetSingleton().get());
+    }
+    return mTextureAllocatorForDXGISurface;
+}
+
+
+bool
+PluginModuleParent::AnswerNPN_SetValue_NPPVpluginRequiresAudioDeviceChanges(
+                                        const bool& shouldRegister,
+                                        NPError* result) {
+    NS_RUNTIMEABORT("SetValue_NPPVpluginRequiresAudioDeviceChanges is only valid "
+      "with PluginModuleChromeParent");
+    *result = NPERR_GENERIC_ERROR;
+    return true;
 }
 
 #ifdef MOZ_CRASHREPORTER_INJECTOR

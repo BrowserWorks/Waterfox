@@ -1,26 +1,25 @@
-// |jit-test| test-also-wasm-baseline
 load(libdir + "wasm.js");
 
-assertEq(wasmEvalText('(module (func (result i32) (i32.const -1)) (export "" 0))')(), -1);
-assertEq(wasmEvalText('(module (func (result i32) (i32.const -2147483648)) (export "" 0))')(), -2147483648);
-assertEq(wasmEvalText('(module (func (result i32) (i32.const 4294967295)) (export "" 0))')(), -1);
+assertEq(wasmEvalText('(module (func (result i32) (i32.const -1)) (export "" 0))').exports[""](), -1);
+assertEq(wasmEvalText('(module (func (result i32) (i32.const -2147483648)) (export "" 0))').exports[""](), -2147483648);
+assertEq(wasmEvalText('(module (func (result i32) (i32.const 4294967295)) (export "" 0))').exports[""](), -1);
 
 function testUnary(type, opcode, op, expect) {
-    var assertFunc = assertEq;
+    var fullPass = wasmFullPass;
     if (type === 'i64') {
         expect = createI64(expect);
-        assertFunc = assertEqI64;
+        fullPass = wasmFullPassI64;
     }
 
     // Test with constant
-    assertFunc(wasmEvalText(`(module (func (result ${type}) (${type}.${opcode} (${type}.const ${op}))) (export "" 0))`)(), expect);
+    fullPass(`(module (func (result ${type}) (${type}.${opcode} (${type}.const ${op}))) (export "run" 0))`, expect);
 
     if (type === 'i64') {
         op = createI64(op);
     }
 
     // Test with param
-    assertFunc(wasmEvalText(`(module (func (param ${type}) (result ${type}) (${type}.${opcode} (get_local 0))) (export "" 0))`)(op), expect);
+    fullPass(`(module (func (param ${type}) (result ${type}) (${type}.${opcode} (get_local 0))) (export "run" 0))`, expect, {}, op);
 }
 
 function testBinary64(opcode, lhs, rhs, expect) {
@@ -28,63 +27,63 @@ function testBinary64(opcode, lhs, rhs, expect) {
     let robj = createI64(rhs);
     expect = createI64(expect);
 
-    assertEqI64(wasmEvalText(`(module (func (param i64) (param i64) (result i64) (i64.${opcode} (get_local 0) (get_local 1))) (export "" 0))`)(lobj, robj), expect);
+    wasmFullPassI64(`(module (func (param i64) (param i64) (result i64) (i64.${opcode} (get_local 0) (get_local 1))) (export "run" 0))`, expect, {}, lobj, robj);
     // The same, but now the RHS is a constant.
-    assertEqI64(wasmEvalText(`(module (func (param i64) (result i64) (i64.${opcode} (get_local 0) (i64.const ${rhs}))) (export "" 0))`)(lobj), expect);
+    wasmFullPassI64(`(module (func (param i64) (result i64) (i64.${opcode} (get_local 0) (i64.const ${rhs}))) (export "run" 0))`, expect, {}, lobj);
     // LHS and RHS are constants.
-    assertEqI64(wasmEvalText(`(module (func (result i64) (i64.${opcode} (i64.const ${lhs}) (i64.const ${rhs}))) (export "" 0))`)(), expect);
+    wasmFullPassI64(`(module (func (result i64) (i64.${opcode} (i64.const ${lhs}) (i64.const ${rhs}))) (export "run" 0))`, expect);
 }
 
 function testBinary32(opcode, lhs, rhs, expect) {
-    assertEq(wasmEvalText(`(module (func (param i32) (param i32) (result i32) (i32.${opcode} (get_local 0) (get_local 1))) (export "" 0))`)(lhs, rhs), expect);
+    wasmFullPass(`(module (func (param i32) (param i32) (result i32) (i32.${opcode} (get_local 0) (get_local 1))) (export "run" 0))`, expect, {}, lhs, rhs);
     // The same, but now the RHS is a constant.
-    assertEq(wasmEvalText(`(module (func (param i32) (result i32) (i32.${opcode} (get_local 0) (i32.const ${rhs}))) (export "" 0))`)(lhs), expect);
+    wasmFullPass(`(module (func (param i32) (result i32) (i32.${opcode} (get_local 0) (i32.const ${rhs}))) (export "run" 0))`, expect, {}, lhs);
     // LHS and RHS are constants.
-    assertEq(wasmEvalText(`(module (func (result i32) (i32.${opcode} (i32.const ${lhs}) (i32.const ${rhs}))) (export "" 0))`)(), expect);
+    wasmFullPass(`(module (func (result i32) (i32.${opcode} (i32.const ${lhs}) (i32.const ${rhs}))) (export "run" 0))`, expect);
 }
 
 function testComparison32(opcode, lhs, rhs, expect) {
-    assertEq(wasmEvalText(`(module (func (param i32) (param i32) (result i32) (i32.${opcode} (get_local 0) (get_local 1))) (export "" 0))`)(lhs, rhs), expect);
+    wasmFullPass(`(module (func (param i32) (param i32) (result i32) (i32.${opcode} (get_local 0) (get_local 1))) (export "run" 0))`, expect, {}, lhs, rhs);
 }
 function testComparison64(opcode, lhs, rhs, expect) {
     let lobj = createI64(lhs);
     let robj = createI64(rhs);
 
-    assertEq(wasmEvalText(`(module
-                            (func (param i64) (param i64) (result i32) (i64.${opcode} (get_local 0) (get_local 1)))
-                            (export "" 0))`)(lobj, robj), expect);
+    wasmFullPass(`(module
+                    (func (param i64) (param i64) (result i32) (i64.${opcode} (get_local 0) (get_local 1)))
+                    (export "run" 0))`, expect, {}, lobj, robj);
 
-    // Also test if, for the compare-and-branch path.
-    assertEq(wasmEvalText(`(module
-                            (func (param i64) (param i64) (result i32)
-                             (if (i64.${opcode} (get_local 0) (get_local 1))
-                              (i32.const 1)
-                              (i32.const 0)))
-                              (export "" 0))`)(lobj, robj), expect);
+    // Also test `if`, for the compare-and-branch path.
+    wasmFullPass(`(module
+                    (func (param i64) (param i64) (result i32)
+                      (if i32 (i64.${opcode} (get_local 0) (get_local 1))
+                       (i32.const 1)
+                       (i32.const 0)))
+                       (export "run" 0))`, expect, {}, lobj, robj);
 }
 function testI64Eqz(input, expect) {
-    assertEq(wasmEvalText(`(module (func (result i32) (i64.eqz (i64.const ${input}))) (export "" 0))`)(input), expect);
+    wasmFullPass(`(module (func (result i32) (i64.eqz (i64.const ${input}))) (export "run" 0))`, expect, {});
     input = createI64(input);
-    assertEq(wasmEvalText(`(module (func (param i64) (result i32) (i64.eqz (get_local 0))) (export "" 0))`)(input), expect);
+    wasmFullPass(`(module (func (param i64) (result i32) (i64.eqz (get_local 0))) (export "run" 0))`, expect, {}, input);
 }
 
 function testTrap32(opcode, lhs, rhs, expect) {
-    assertErrorMessage(() => wasmEvalText(`(module (func (param i32) (param i32) (result i32) (i32.${opcode} (get_local 0) (get_local 1))) (export "" 0))`)(lhs, rhs), Error, expect);
+    assertErrorMessage(() => wasmEvalText(`(module (func (param i32) (param i32) (result i32) (i32.${opcode} (get_local 0) (get_local 1))) (export "" 0))`).exports[""](lhs, rhs), Error, expect);
     // The same, but now the RHS is a constant.
-    assertErrorMessage(() => wasmEvalText(`(module (func (param i32) (result i32) (i32.${opcode} (get_local 0) (i32.const ${rhs}))) (export "" 0))`)(lhs), Error, expect);
+    assertErrorMessage(() => wasmEvalText(`(module (func (param i32) (result i32) (i32.${opcode} (get_local 0) (i32.const ${rhs}))) (export "" 0))`).exports[""](lhs), Error, expect);
     // LHS and RHS are constants.
-    assertErrorMessage(wasmEvalText(`(module (func (result i32) (i32.${opcode} (i32.const ${lhs}) (i32.const ${rhs}))) (export "" 0))`), Error, expect);
+    assertErrorMessage(wasmEvalText(`(module (func (result i32) (i32.${opcode} (i32.const ${lhs}) (i32.const ${rhs}))) (export "" 0))`).exports[""], Error, expect);
 }
 
 function testTrap64(opcode, lhs, rhs, expect) {
     let lobj = createI64(lhs);
     let robj = createI64(rhs);
 
-    assertErrorMessage(() => wasmEvalText(`(module (func (param i64) (param i64) (result i64) (i64.${opcode} (get_local 0) (get_local 1))) (export "" 0))`)(lobj, robj), Error, expect);
+    assertErrorMessage(() => wasmEvalText(`(module (func (param i64) (param i64) (result i64) (i64.${opcode} (get_local 0) (get_local 1))) (export "" 0))`).exports[""](lobj, robj), Error, expect);
     // The same, but now the RHS is a constant.
-    assertErrorMessage(() => wasmEvalText(`(module (func (param i64) (result i64) (i64.${opcode} (get_local 0) (i64.const ${rhs}))) (export "" 0))`)(lobj), Error, expect);
+    assertErrorMessage(() => wasmEvalText(`(module (func (param i64) (result i64) (i64.${opcode} (get_local 0) (i64.const ${rhs}))) (export "" 0))`).exports[""](lobj), Error, expect);
     // LHS and RHS are constants.
-    assertErrorMessage(wasmEvalText(`(module (func (result i64) (i64.${opcode} (i64.const ${lhs}) (i64.const ${rhs}))) (export "" 0))`), Error, expect);
+    assertErrorMessage(wasmEvalText(`(module (func (result i64) (i64.${opcode} (i64.const ${lhs}) (i64.const ${rhs}))) (export "" 0))`).exports[""], Error, expect);
 }
 
 testUnary('i32', 'clz', 40, 26);
@@ -110,6 +109,7 @@ testBinary32('mul', 40, 2, 80);
 testBinary32('div_s', -40, 2, -20);
 testBinary32('div_u', -40, 2, 2147483628);
 testBinary32('rem_s', 40, -3, 1);
+testBinary32('rem_s', 0, -3, 0);
 testBinary32('rem_u', 40, -3, 40);
 testBinary32('and', 42, 6, 2);
 testBinary32('or', 42, 6, 46);
@@ -143,7 +143,7 @@ testComparison32('ge_s', 40, 40, 1);
 testComparison32('ge_u', 40, 40, 1);
 
 // Test MTest's GVN branch inversion.
-var testTrunc = wasmEvalText(`(module (func (param f32) (result i32) (if (i32.eqz (i32.trunc_s/f32 (get_local 0))) (i32.const 0) (i32.const 1))) (export "" 0))`);
+var testTrunc = wasmEvalText(`(module (func (param f32) (result i32) (if i32 (i32.eqz (i32.trunc_s/f32 (get_local 0))) (i32.const 0) (i32.const 1))) (export "" 0))`).exports[""];
 assertEq(testTrunc(0), 0);
 assertEq(testTrunc(13.37), 1);
 
@@ -187,31 +187,66 @@ assertEq(testTrunc(13.37), 1);
     testTrap64('rem_s', 10, 0, /integer divide by zero/);
     testTrap64('rem_u', 10, 0, /integer divide by zero/);
 
-    testBinary64('and', 42, 6, 2);
+    // Bitops.
     testBinary64('or', 42, 6, 46);
-    testBinary64('xor', 42, 2, 40);
-    testBinary64('and', "0x8765432112345678", "0xffff0000ffff0000", "0x8765000012340000");
     testBinary64('or', "0x8765432112345678", "0xffff0000ffff0000", "0xffff4321ffff5678");
+
+    testBinary64('xor', 42, 2, 40);
     testBinary64('xor', "0x8765432112345678", "0xffff0000ffff0000", "0x789a4321edcb5678");
-    testBinary64('shl', 40, 2, 160);
-    testBinary64('shr_s', -40, 2, -10);
-    testBinary64('shr_u', -40, 2, "0x3ffffffffffffff6");
-    testBinary64('shl', 0xff00ff, 28, "0xff00ff0000000");
+
+    testBinary64('shl', 0xff00ff, 28, "0x0ff00ff0000000");
+    testBinary64('shl', 0xff00ff, 30, "0x3fc03fc0000000");
+    testBinary64('shl', 0xff00ff, 31, "0x7f807f80000000");
+    testBinary64('shl', 0xff00ff, 32, "0xff00ff00000000");
     testBinary64('shl', 1, 63, "0x8000000000000000");
     testBinary64('shl', 1, 64, 1);
-    testBinary64('shr_s', "0xff00ff0000000", 28, 0xff00ff);
-    testBinary64('shr_u', "0x8ffff00ff0000000", 56, 0x8f);
-    testBinary64('rotl', 40, 2, 160);
-    testBinary64('rotr', 40, 2, 10);
-    testBinary64('rotr', "0x1234567812345678", 4, "0x8123456781234567");
-    testBinary64('rotl', "0x1234567812345678", 4, "0x2345678123456781");
-    testBinary64('rotl', "0x1234567812345678", 60, "0x8123456781234567");
-    testBinary64('rotr', "0x1234567812345678", 60, "0x2345678123456781");
-    testBinary64('rotr', 40, 0, 40);
-    testBinary64('rotl', 40, 0, 40);
-    testBinary64('and', 42, 0, 0);
-    testBinary64('and', "0x0000000012345678", "0xffff0000ffff0000", "0x0000000012340000");
+    testBinary64('shl', 40, 2, 160);
 
+    testBinary64('shr_s', -40, 2, -10);
+    testBinary64('shr_s', "0xff00ff0000000", 28, 0xff00ff);
+    testBinary64('shr_s', "0xff00ff0000000", 30, 0x3fc03f);
+    testBinary64('shr_s', "0xff00ff0000000", 31, 0x1fe01f);
+    testBinary64('shr_s', "0xff00ff0000000", 32, 0x0ff00f);
+
+    testBinary64('shr_u', -40, 2, "0x3ffffffffffffff6");
+    testBinary64('shr_u', "0x8ffff00ff0000000", 30, "0x23fffc03f");
+    testBinary64('shr_u', "0x8ffff00ff0000000", 31, "0x11fffe01f");
+    testBinary64('shr_u', "0x8ffff00ff0000000", 32, "0x08ffff00f");
+    testBinary64('shr_u', "0x8ffff00ff0000000", 56, 0x8f);
+
+    testBinary64('and', 42, 0, 0);
+    testBinary64('and', 42, 6, 2);
+    testBinary64('and', "0x0000000012345678", "0xffff0000ffff0000", "0x0000000012340000");
+    testBinary64('and', "0x8765432112345678", "0xffff0000ffff0000", "0x8765000012340000");
+
+    // Rotations.
+    testBinary64('rotl', 40, 0, 0x28);
+    testBinary64('rotl', 40, 2, 0xA0);
+    testBinary64('rotl', 40, 8, 0x2800);
+    testBinary64('rotl', 40, 30, "0xA00000000");
+    testBinary64('rotl', 40, 31, "0x1400000000");
+    testBinary64('rotl', 40, 32, "0x2800000000");
+
+    testBinary64('rotl', "0x1234567812345678", 4, "0x2345678123456781");
+    testBinary64('rotl', "0x1234567812345678", 30, "0x048D159E048D159E");
+    testBinary64('rotl', "0x1234567812345678", 31, "0x091A2B3C091A2B3C");
+    testBinary64('rotl', "0x1234567812345678", 32, "0x1234567812345678");
+
+    testBinary64('rotl', "0x0000000000001000", 127, "0x0000000000000800");
+
+    testBinary64('rotr', 40, 0, 0x28);
+    testBinary64('rotr', 40, 2, 0x0A);
+    testBinary64('rotr', 40, 30, "0xA000000000");
+    testBinary64('rotr', 40, 31, "0x5000000000");
+    testBinary64('rotr', 40, 32, "0x2800000000");
+
+    testBinary64('rotr', "0x1234567812345678", 4, "0x8123456781234567");
+    testBinary64('rotr', "0x1234567812345678", 30, "0x48D159E048D159E0");
+    testBinary64('rotr', "0x1234567812345678", 31, "0x2468ACF02468ACF0");
+    testBinary64('rotr', "0x1234567812345678", 32, "0x1234567812345678");
+    testBinary64('rotr', "0x1234567812345678", 60, "0x2345678123456781");
+
+    // Comparisons.
     testComparison64('eq', 40, 40, 1);
     testComparison64('ne', 40, 40, 0);
     testComparison64('lt_s', 40, 40, 0);
@@ -278,27 +313,27 @@ assertEq(testTrunc(13.37), 1);
     testI64Eqz(40, 0);
     testI64Eqz(0, 1);
 
-    assertEqI64(wasmEvalText(`(module (func (param i64) (result i64) (local i64) (set_local 1 (i64.shl (get_local 0) (get_local 0))) (i64.shl (get_local 1) (get_local 1))) (export "" 0))`)(createI64(2)), 2048);
+    assertEqI64(wasmEvalText(`(module (func (param i64) (result i64) (local i64) (set_local 1 (i64.shl (get_local 0) (get_local 0))) (i64.shl (get_local 1) (get_local 1))) (export "" 0))`).exports[""](createI64(2)), 2048);
 
     // Test MTest's GVN branch inversion.
-    var testTrunc = wasmEvalText(`(module (func (param f32) (result i32) (if (i64.eqz (i64.trunc_s/f32 (get_local 0))) (i32.const 0) (i32.const 1))) (export "" 0))`);
+    var testTrunc = wasmEvalText(`(module (func (param f32) (result i32) (if i32 (i64.eqz (i64.trunc_s/f32 (get_local 0))) (i32.const 0) (i32.const 1))) (export "" 0))`).exports[""];
     assertEq(testTrunc(0), 0);
     assertEq(testTrunc(13.37), 1);
 
-    assertEqI64(wasmEvalText(`(module (func (result i64) (local i64) (set_local 0 (i64.rem_s (i64.const 1) (i64.const 0xf))) (i64.rem_s (get_local 0) (get_local 0))) (export "" 0))`)(), 0);
+    assertEqI64(wasmEvalText(`(module (func (result i64) (local i64) (set_local 0 (i64.rem_s (i64.const 1) (i64.const 0xf))) (i64.rem_s (get_local 0) (get_local 0))) (export "" 0))`).exports[""](), 0);
 
     setJitCompilerOption('wasm.test-mode', 0);
 }
 
-assertErrorMessage(() => wasmEvalText('(module (func (param f32) (result i32) (i32.clz (get_local 0))))'), TypeError, mismatchError("f32", "i32"));
-assertErrorMessage(() => wasmEvalText('(module (func (param i32) (result f32) (i32.clz (get_local 0))))'), TypeError, mismatchError("i32", "f32"));
-assertErrorMessage(() => wasmEvalText('(module (func (param f32) (result f32) (i32.clz (get_local 0))))'), TypeError, mismatchError("f32", "i32"));
+wasmFailValidateText('(module (func (param f32) (result i32) (i32.clz (get_local 0))))', mismatchError("f32", "i32"));
+wasmFailValidateText('(module (func (param i32) (result f32) (i32.clz (get_local 0))))', mismatchError("i32", "f32"));
+wasmFailValidateText('(module (func (param f32) (result f32) (i32.clz (get_local 0))))', mismatchError("f32", "i32"));
 
-assertErrorMessage(() => wasmEvalText('(module (func (param f32) (param i32) (result i32) (i32.add (get_local 0) (get_local 1))))'), TypeError, mismatchError("f32", "i32"));
-assertErrorMessage(() => wasmEvalText('(module (func (param i32) (param f32) (result i32) (i32.add (get_local 0) (get_local 1))))'), TypeError, mismatchError("f32", "i32"));
-assertErrorMessage(() => wasmEvalText('(module (func (param i32) (param i32) (result f32) (i32.add (get_local 0) (get_local 1))))'), TypeError, mismatchError("i32", "f32"));
-assertErrorMessage(() => wasmEvalText('(module (func (param f32) (param f32) (result f32) (i32.add (get_local 0) (get_local 1))))'), TypeError, mismatchError("f32", "i32"));
+wasmFailValidateText('(module (func (param f32) (param i32) (result i32) (i32.add (get_local 0) (get_local 1))))', mismatchError("f32", "i32"));
+wasmFailValidateText('(module (func (param i32) (param f32) (result i32) (i32.add (get_local 0) (get_local 1))))', mismatchError("f32", "i32"));
+wasmFailValidateText('(module (func (param i32) (param i32) (result f32) (i32.add (get_local 0) (get_local 1))))', mismatchError("i32", "f32"));
+wasmFailValidateText('(module (func (param f32) (param f32) (result f32) (i32.add (get_local 0) (get_local 1))))', mismatchError("f32", "i32"));
 
-assertErrorMessage(() => wasmEvalText('(module (func (param f32) (param i32) (result i32) (i32.eq (get_local 0) (get_local 1))))'), TypeError, mismatchError("f32", "i32"));
-assertErrorMessage(() => wasmEvalText('(module (func (param i32) (param f32) (result i32) (i32.eq (get_local 0) (get_local 1))))'), TypeError, mismatchError("f32", "i32"));
-assertErrorMessage(() => wasmEvalText('(module (func (param i32) (param i32) (result f32) (i32.eq (get_local 0) (get_local 1))))'), TypeError, mismatchError("i32", "f32"));
+wasmFailValidateText('(module (func (param f32) (param i32) (result i32) (i32.eq (get_local 0) (get_local 1))))', mismatchError("f32", "i32"));
+wasmFailValidateText('(module (func (param i32) (param f32) (result i32) (i32.eq (get_local 0) (get_local 1))))', mismatchError("f32", "i32"));
+wasmFailValidateText('(module (func (param i32) (param i32) (result f32) (i32.eq (get_local 0) (get_local 1))))', mismatchError("i32", "f32"));

@@ -9,7 +9,6 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Tools.h"
 #include "mozilla/gfx/gfxVars.h"
-#include "mozilla/gfx/PathHelpers.h"
 #include "gfxPlatform.h"
 #include "gfx2DGlue.h"
 
@@ -101,12 +100,12 @@ WindowSurfaceX11Image::Commit(const LayoutDeviceIntRegion& aInvalidRegion)
 
   uint32_t numRects = aInvalidRegion.GetNumRects();
   if (numRects != 1) {
-    RefPtr<PathBuilder> pathBuilder = dt->CreatePathBuilder();
+    AutoTArray<IntRect, 32> rects;
+    rects.SetCapacity(numRects);
     for (auto iter = aInvalidRegion.RectIter(); !iter.Done(); iter.Next()) {
-      AppendRectToPath(pathBuilder, Rect(iter.Get().ToUnknownRect()));
+      rects.AppendElement(iter.Get().ToUnknownRect());
     }
-    RefPtr<Path> path = pathBuilder->Finish();
-    dt->PushClip(path);
+    dt->PushDeviceSpaceClipRects(rects.Elements(), rects.Length());
   }
 
   dt->DrawSurface(surf, rect, rect);

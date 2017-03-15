@@ -238,13 +238,16 @@ class BuildMonitor(MozbuildObject):
 
         return BuildOutputResult(warning, False, True)
 
-    def finish(self, record_usage=True):
-        """Record the end of the build."""
-        self.end_time = time.time()
-
+    def stop_resource_recording(self):
         if self._resources_started:
             self.resources.stop()
 
+        self._resources_started = False
+
+    def finish(self, record_usage=True):
+        """Record the end of the build."""
+        self.stop_resource_recording()
+        self.end_time = time.time()
         self._finder_end_cpu = self._get_finder_cpu_usage()
         self.elapsed = self.end_time - self.start_time
 
@@ -480,6 +483,7 @@ class CCacheStats(object):
         # Refer to stats.c in ccache project for all the descriptions.
         ('cache_hit_direct', 'cache hit (direct)'),
         ('cache_hit_preprocessed', 'cache hit (preprocessed)'),
+        ('cache_hit_rate', 'cache hit rate'),
         ('cache_miss', 'cache miss'),
         ('link', 'called for link'),
         ('preprocessing', 'called for preprocessing'),
@@ -502,6 +506,7 @@ class CCacheStats(object):
         ('out_device', 'output to a non-regular file'),
         ('no_input', 'no input file'),
         ('bad_extra_file', 'error hashing extra file'),
+        ('num_cleanups', 'cleanups performed'),
         ('cache_files', 'files in cache'),
         ('cache_size', 'cache size'),
         ('cache_max_size', 'max cache size'),

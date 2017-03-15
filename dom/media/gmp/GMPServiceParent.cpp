@@ -8,6 +8,7 @@
 #include "prio.h"
 #include "base/task.h"
 #include "mozilla/Logging.h"
+#include "mozilla/dom/ContentParent.h"
 #include "GMPParent.h"
 #include "GMPVideoDecoderParent.h"
 #include "nsAutoPtr.h"
@@ -834,17 +835,63 @@ GeckoMediaPluginServiceParent::PathRunnable::Run()
   mService->RemoveOnGMPThread(mPath,
                               mOperation == REMOVE_AND_DELETE_FROM_DISK,
                               mDefer);
-#ifndef MOZ_WIDGET_GONK // Bug 1214967: disabled on B2G due to inscrutable test failures.
-  // For e10s, we must fire a notification so that all ContentParents notify
-  // their children to update the codecs that the GMPDecoderModule can use.
-  NS_DispatchToMainThread(new NotifyObserversTask("gmp-changed"), NS_DISPATCH_NORMAL);
-  // For non-e10s, and for decoding in the chrome process, must update GMP
-  // PDM's codecs list directly.
-  NS_DispatchToMainThread(NS_NewRunnableFunction([]() -> void {
-    GMPDecoderModule::UpdateUsableCodecs();
-  }));
-#endif
+
+  mService->UpdateContentProcessGMPCapabilities();
   return NS_OK;
+}
+
+void
+GeckoMediaPluginServiceParent::UpdateContentProcessGMPCapabilities()
+{
+  if (!NS_IsMainThread()) {
+    nsCOMPtr<nsIRunnable> task =
+      NewRunnableMethod(this, &GeckoMediaPluginServiceParent::UpdateContentProcessGMPCapabilities);
+    NS_DispatchToMainThread(task);
+    return;
+  }
+
+  typedef mozilla::dom::GMPCapabilityData GMPCapabilityData;
+  typedef mozilla::dom::GMPAPITags GMPAPITags;
+  typedef mozilla::dom::ContentParent ContentParent;
+
+  nsTArray<GMPCapabilityData> caps;
+  {
+    MutexAutoLock lock(mMutex);
+    for (const RefPtr<GMPParent>& gmp : mPlugins) {
+      // We have multiple instances of a GMPParent for a given GMP in the
+      // list, one per origin. So filter the list so that we don't include
+      // the same GMP's capabilities twice.
+      NS_ConvertUTF16toUTF8 name(gmp->GetPluginBaseName());
+      bool found = false;
+      for (const GMPCapabilityData& cap : caps) {
+        if (cap.name().Equals(name)) {
+          found = true;
+          break;
+        }
+      }
+      if (found) {
+        continue;
+      }
+      GMPCapabilityData x;
+      x.name() = name;
+      x.version() = gmp->GetVersion();
+      for (const GMPCapability& tag : gmp->GetCapabilities()) {
+        x.capabilities().AppendElement(GMPAPITags(tag.mAPIName, tag.mAPITags));
+      }
+      caps.AppendElement(Move(x));
+    }
+  }
+  for (auto* cp : ContentParent::AllProcesses(ContentParent::eLive)) {
+    Unused << cp->SendGMPsChanged(caps);
+  }
+
+  // For non-e10s, we must fire a notification so that any MediaKeySystemAccess
+  // requests waiting on a CDM to download will retry.
+  nsCOMPtr<nsIObserverService> obsService = mozilla::services::GetObserverService();
+  MOZ_ASSERT(obsService);
+  if (obsService) {
+    obsService->NotifyObservers(nullptr, "gmp-changed", nullptr);
+  }
 }
 
 RefPtr<GenericPromise>
@@ -856,22 +903,14 @@ GeckoMediaPluginServiceParent::AsyncAddPluginDirectory(const nsAString& aDirecto
   }
 
   nsString dir(aDirectory);
+  RefPtr<GeckoMediaPluginServiceParent> self = this;
   return InvokeAsync(thread, this, __func__, &GeckoMediaPluginServiceParent::AddOnGMPThread, dir)
     ->Then(AbstractThread::MainThread(), __func__,
-      [dir]() -> void {
+      [dir, self]() -> void {
         LOGD(("GeckoMediaPluginServiceParent::AsyncAddPluginDirectory %s succeeded",
               NS_ConvertUTF16toUTF8(dir).get()));
         MOZ_ASSERT(NS_IsMainThread());
-        // For e10s, we must fire a notification so that all ContentParents notify
-        // their children to update the codecs that the GMPDecoderModule can use.
-        nsCOMPtr<nsIObserverService> obsService = mozilla::services::GetObserverService();
-        MOZ_ASSERT(obsService);
-        if (obsService) {
-          obsService->NotifyObservers(nullptr, "gmp-changed", nullptr);
-        }
-        // For non-e10s, and for decoding in the chrome process, must update GMP
-        // PDM's codecs list directly.
-        GMPDecoderModule::UpdateUsableCodecs();
+        self->UpdateContentProcessGMPCapabilities();
       },
       [dir]() -> void {
         LOGD(("GeckoMediaPluginServiceParent::AsyncAddPluginDirectory %s failed",
@@ -909,14 +948,12 @@ GeckoMediaPluginServiceParent::RemoveAndDeletePluginDirectory(
 }
 
 NS_IMETHODIMP
-GeckoMediaPluginServiceParent::GetPluginVersionForAPI(const nsACString& aAPI,
-                                                      nsTArray<nsCString>* aTags,
-                                                      bool* aHasPlugin,
-                                                      nsACString& aOutVersion)
+GeckoMediaPluginServiceParent::HasPluginForAPI(const nsACString& aAPI,
+                                               nsTArray<nsCString>* aTags,
+                                               bool* aHasPlugin)
 {
   NS_ENSURE_ARG(aTags && aTags->Length() > 0);
   NS_ENSURE_ARG(aHasPlugin);
-  NS_ENSURE_ARG(aOutVersion.IsEmpty());
 
   nsresult rv = EnsurePluginsOnDiskScanned();
   if (NS_FAILED(rv)) {
@@ -928,20 +965,8 @@ GeckoMediaPluginServiceParent::GetPluginVersionForAPI(const nsACString& aAPI,
     MutexAutoLock lock(mMutex);
     nsCString api(aAPI);
     size_t index = 0;
-
-    // We must parse the version number into a float for comparison. Yuck.
-    double maxParsedVersion = -1.;
-
-    *aHasPlugin = false;
-    while (RefPtr<GMPParent> gmp = FindPluginForAPIFrom(index, api, *aTags, &index)) {
-      *aHasPlugin = true;
-      double parsedVersion = atof(gmp->GetVersion().get());
-      if (maxParsedVersion < 0 || parsedVersion > maxParsedVersion) {
-        maxParsedVersion = parsedVersion;
-        aOutVersion = gmp->GetVersion();
-      }
-      index++;
-    }
+    RefPtr<GMPParent> gmp = FindPluginForAPIFrom(index, api, *aTags, &index);
+    *aHasPlugin = !!gmp;
   }
 
   return NS_OK;
@@ -975,15 +1000,7 @@ GeckoMediaPluginServiceParent::FindPluginForAPIFrom(size_t aSearchStartIndex,
   mMutex.AssertCurrentThreadOwns();
   for (size_t i = aSearchStartIndex; i < mPlugins.Length(); i++) {
     RefPtr<GMPParent> gmp = mPlugins[i];
-    bool supportsAllTags = true;
-    for (size_t t = 0; t < aTags.Length(); t++) {
-      const nsCString& tag = aTags.ElementAt(t);
-      if (!gmp->SupportsAPI(aAPI, tag)) {
-        supportsAllTags = false;
-        break;
-      }
-    }
-    if (!supportsAllTags) {
+    if (!GMPCapability::Supports(gmp->GetCapabilities(), aAPI, aTags)) {
       continue;
     }
     if (aOutPluginIndex) {
@@ -1139,7 +1156,7 @@ GeckoMediaPluginServiceParent::RemoveOnGMPThread(const nsAString& aDirectory,
 
   bool inUse = false;
   MutexAutoLock lock(mMutex);
-  for (size_t i = mPlugins.Length() - 1; i < mPlugins.Length(); i--) {
+  for (size_t i = mPlugins.Length(); i-- > 0; ) {
     nsCOMPtr<nsIFile> pluginpath = mPlugins[i]->GetDirectory();
     bool equals;
     if (NS_FAILED(directory->Equals(pluginpath, &equals)) || !equals) {
@@ -2002,20 +2019,6 @@ GMPServiceParent::RecvGetGMPNodeId(const nsString& aOrigin,
   nsresult rv = mService->GetNodeId(aOrigin, aTopLevelOrigin, aGMPName,
                                     aInPrivateBrowsing, *aID);
   return NS_SUCCEEDED(rv);
-}
-
-/* static */
-bool
-GMPServiceParent::RecvGetGMPPluginVersionForAPI(const nsCString& aAPI,
-                                                nsTArray<nsCString>&& aTags,
-                                                bool* aHasPlugin,
-                                                nsCString* aVersion)
-{
-  RefPtr<GeckoMediaPluginServiceParent> service =
-    GeckoMediaPluginServiceParent::GetSingleton();
-  return service &&
-         NS_SUCCEEDED(service->GetPluginVersionForAPI(aAPI, &aTags, aHasPlugin,
-                                                      *aVersion));
 }
 
 class DeleteGMPServiceParent : public mozilla::Runnable

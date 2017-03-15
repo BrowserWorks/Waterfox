@@ -7,11 +7,17 @@
 
 ## CSS Snapshot 2007
 
+# CSS Box Alignment Level 3
+include align3/reftest.list
+
 # CSS2.1
 include css21/reftest.list
 
 # Backgrounds and Borders
 include background/reftest.list
+
+# Color Level 4
+include color4/reftest.list
 
 # Conditional Rules Level 3
 include conditional3/reftest.list

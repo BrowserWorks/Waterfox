@@ -8,6 +8,7 @@
 
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
+#include "nsHostObjectProtocolHandler.h"
 
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -41,7 +42,7 @@ NS_INTERFACE_MAP_END_INHERITING(mozilla::net::nsSimpleURI)
 NS_IMETHODIMP
 nsHostObjectURI::GetBlobImpl(nsISupports** aBlobImpl)
 {
-  RefPtr<BlobImpl> blobImpl(mBlobImpl);
+  RefPtr<mozilla::dom::BlobImpl> blobImpl(mBlobImpl);
   blobImpl.forget(aBlobImpl);
   return NS_OK;
 }
@@ -139,15 +140,20 @@ nsHostObjectURI::Deserialize(const mozilla::ipc::URIParams& aParams)
     return false;
   }
 
-  // XXXbaku: when we will have shared blobURL maps, we can populate mBlobImpl
-  // here asll well.
-
   if (hostParams.principal().type() == OptionalPrincipalInfo::Tvoid_t) {
     return true;
   }
 
   mPrincipal = PrincipalInfoToPrincipal(hostParams.principal().get_PrincipalInfo());
-  return mPrincipal != nullptr;
+  if (!mPrincipal) {
+    return false;
+  }
+
+  // If this fails, we still want to complete the operation. Probably this
+  // blobURL has been revoked in the meantime.
+  NS_GetBlobForBlobURI(this, getter_AddRefs(mBlobImpl));
+
+  return true;
 }
 
 NS_IMETHODIMP

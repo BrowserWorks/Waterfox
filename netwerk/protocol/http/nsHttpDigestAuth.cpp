@@ -121,7 +121,10 @@ nsHttpDigestAuth::GetMethodAndPath(nsIHttpAuthenticableChannel *authChannel,
           // instead of regenerating it here.
           //
           nsAutoCString buf;
-          path = NS_EscapeURL(path, esc_OnlyNonASCII, buf);
+          rv = NS_EscapeURL(path, esc_OnlyNonASCII, buf, mozilla::fallible);
+          if (NS_SUCCEEDED(rv)) {
+            path = buf;
+          }
         }
       }
     }
@@ -563,8 +566,8 @@ nsHttpDigestAuth::ParseChallenge(const char * challenge,
   if (strlen(challenge) > 16000000) {
     return NS_ERROR_INVALID_ARG;
   }
-  
-  const char *p = challenge + 7; // first 7 characters are "Digest "
+
+  const char *p = challenge + 6; // first 6 characters are "Digest"
 
   *stale = false;
   *algorithm = ALGO_MD5; // default is MD5

@@ -9,9 +9,8 @@
 
 #include "mozilla/dom/SRIMetadata.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/ServoBindingHelpers.h"
+#include "mozilla/ServoBindingTypes.h"
 #include "mozilla/StyleSheet.h"
-#include "mozilla/StyleSheetHandle.h"
 #include "mozilla/StyleSheetInfo.h"
 #include "nsStringFwd.h"
 
@@ -21,7 +20,6 @@ namespace mozilla {
  * CSS style sheet object that is a wrapper for a Servo Stylesheet.
  */
 class ServoStyleSheet : public StyleSheet
-                      , public StyleSheetInfo
 {
 public:
   ServoStyleSheet(css::SheetParsingMode aParsingMode,
@@ -29,22 +27,25 @@ public:
                   net::ReferrerPolicy aReferrerPolicy,
                   const dom::SRIMetadata& aIntegrity);
 
-  NS_INLINE_DECL_REFCOUNTING(ServoStyleSheet)
-
-  bool IsApplicable() const;
   bool HasRules() const;
 
-  nsIDocument* GetOwningDocument() const;
   void SetOwningDocument(nsIDocument* aDocument);
 
-  StyleSheetHandle GetParentSheet() const;
-  void AppendStyleSheet(StyleSheetHandle aSheet);
+  ServoStyleSheet* GetParentSheet() const;
+  void AppendStyleSheet(ServoStyleSheet* aSheet);
 
   MOZ_MUST_USE nsresult ParseSheet(const nsAString& aInput,
                                    nsIURI* aSheetURI,
                                    nsIURI* aBaseURI,
                                    nsIPrincipal* aSheetPrincipal,
                                    uint32_t aLineNumber);
+
+  /**
+   * Called instead of ParseSheet to initialize the Servo stylesheet object
+   * for a failed load. Either ParseSheet or LoadFailed must be called before
+   * adding a ServoStyleSheet to a ServoStyleSet.
+   */
+  void LoadFailed();
 
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
@@ -54,13 +55,34 @@ public:
 
   RawServoStyleSheet* RawSheet() const { return mSheet; }
 
+  // WebIDL StyleSheet API
+  nsMediaList* Media() final;
+
+  // WebIDL CSSStyleSheet API
+  // Can't be inline because we can't include ImportRule here.  And can't be
+  // called GetOwnerRule because that would be ambiguous with the ImportRule
+  // version.
+  nsIDOMCSSRule* GetDOMOwnerRule() const final;
+
+  void WillDirty() {}
+  void DidDirty() {}
+
 protected:
-  ~ServoStyleSheet();
+  virtual ~ServoStyleSheet();
+
+  // Internal methods which do not have security check and completeness check.
+  dom::CSSRuleList* GetCssRulesInternal(ErrorResult& aRv);
+  uint32_t InsertRuleInternal(const nsAString& aRule,
+                              uint32_t aIndex, ErrorResult& aRv);
+  void DeleteRuleInternal(uint32_t aIndex, ErrorResult& aRv);
 
 private:
   void DropSheet();
 
   RefPtr<RawServoStyleSheet> mSheet;
+  StyleSheetInfo mSheetInfo;
+
+  friend class StyleSheet;
 };
 
 } // namespace mozilla

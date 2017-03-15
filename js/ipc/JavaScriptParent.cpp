@@ -110,7 +110,7 @@ JavaScriptParent::allowMessage(JSContext* cx)
         if (!xpc::CompartmentPrivate::Get(jsGlobal)->allowCPOWs) {
             if (!addonId && ForbidUnsafeBrowserCPOWs() && !isSafe) {
                 Telemetry::Accumulate(Telemetry::BROWSER_SHIM_USAGE_BLOCKED, 1);
-                JS_ReportError(cx, "unsafe CPOW usage forbidden");
+                JS_ReportErrorASCII(cx, "unsafe CPOW usage forbidden");
                 return false;
             }
 
@@ -122,7 +122,7 @@ JavaScriptParent::allowMessage(JSContext* cx)
                 Telemetry::Accumulate(Telemetry::ADDON_FORBIDDEN_CPOW_USAGE, addonIdCString);
 
                 if (ForbidCPOWsInCompatibleAddon(addonIdCString)) {
-                    JS_ReportError(cx, "CPOW usage forbidden in this add-on");
+                    JS_ReportErrorASCII(cx, "CPOW usage forbidden in this add-on");
                     return false;
                 }
 
@@ -172,15 +172,17 @@ JavaScriptParent::scopeForTargetObjects()
     return xpc::UnprivilegedJunkScope();
 }
 
-mozilla::ipc::IProtocol*
-JavaScriptParent::CloneProtocol(Channel* aChannel, ProtocolCloneContext* aCtx)
+void
+JavaScriptParent::afterProcessTask()
 {
-    ContentParent* contentParent = aCtx->GetContentParent();
-    nsAutoPtr<PJavaScriptParent> actor(contentParent->AllocPJavaScriptParent());
-    if (!actor || !contentParent->RecvPJavaScriptConstructor(actor)) {
-        return nullptr;
-    }
-    return actor.forget();
+    if (savedNextCPOWNumber_ == nextCPOWNumber_)
+        return;
+
+    savedNextCPOWNumber_ = nextCPOWNumber_;
+
+    MOZ_ASSERT(nextCPOWNumber_ > 0);
+    if (active())
+        Unused << SendDropTemporaryStrongReferences(nextCPOWNumber_ - 1);
 }
 
 PJavaScriptParent*
@@ -198,4 +200,13 @@ void
 mozilla::jsipc::ReleaseJavaScriptParent(PJavaScriptParent* parent)
 {
     static_cast<JavaScriptParent*>(parent)->decref();
+}
+
+void
+mozilla::jsipc::AfterProcessTask()
+{
+    for (auto* cp : ContentParent::AllProcesses(ContentParent::eLive)) {
+        if (PJavaScriptParent* p = LoneManagedOrNullAsserts(cp->ManagedPJavaScriptParent()))
+            static_cast<JavaScriptParent*>(p)->afterProcessTask();
+    }
 }

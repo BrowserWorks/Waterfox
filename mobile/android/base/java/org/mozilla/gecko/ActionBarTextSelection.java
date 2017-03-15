@@ -4,20 +4,16 @@
 
 package org.mozilla.gecko;
 
-import org.mozilla.gecko.gfx.BitmapUtils;
-import org.mozilla.gecko.gfx.BitmapUtils.BitmapLoader;
 import org.mozilla.gecko.menu.GeckoMenu;
 import org.mozilla.gecko.menu.GeckoMenuItem;
+import org.mozilla.gecko.util.ResourceDrawableUtils;
 import org.mozilla.gecko.text.TextSelection;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.ActionModeCompat.Callback;
-import org.mozilla.gecko.Telemetry;
-import org.mozilla.gecko.TelemetryContract;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.view.Menu;
 import android.view.MenuItem;
 
 import org.json.JSONArray;
@@ -33,7 +29,7 @@ class ActionBarTextSelection implements TextSelection, GeckoEventListener {
     private static final String LOGTAG = "GeckoTextSelection";
     private static final int SHUTDOWN_DELAY_MS = 250;
 
-    private final TextSelectionHandle anchorHandle;
+    private final Context context;
 
     private boolean mDraggingHandles;
 
@@ -59,17 +55,17 @@ class ActionBarTextSelection implements TextSelection, GeckoEventListener {
     };
     private ActionModeTimerTask mActionModeTimerTask;
 
-    ActionBarTextSelection(TextSelectionHandle anchorHandle) {
-        this.anchorHandle = anchorHandle;
+    ActionBarTextSelection(Context context) {
+        this.context = context;
     }
 
     @Override
     public void create() {
         // Only register listeners if we have valid start/middle/end handles
-        if (anchorHandle == null) {
-            Log.e(LOGTAG, "Failed to initialize text selection because at least one handle is null");
+        if (context == null) {
+            Log.e(LOGTAG, "Failed to initialize text selection because at least one context is null");
         } else {
-            EventDispatcher.getInstance().registerGeckoThreadListener(this,
+            GeckoApp.getEventDispatcher().registerGeckoThreadListener(this,
                 "TextSelection:ActionbarInit",
                 "TextSelection:ActionbarStatus",
                 "TextSelection:ActionbarUninit",
@@ -85,10 +81,10 @@ class ActionBarTextSelection implements TextSelection, GeckoEventListener {
 
     @Override
     public void destroy() {
-        if (anchorHandle == null) {
-            Log.e(LOGTAG, "Do not unregister TextSelection:* listeners since anchorHandle is null");
+        if (context == null) {
+            Log.e(LOGTAG, "Do not unregister TextSelection:* listeners since context is null");
         } else {
-            EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
+            GeckoApp.getEventDispatcher().unregisterGeckoThreadListener(this,
                     "TextSelection:ActionbarInit",
                     "TextSelection:ActionbarStatus",
                     "TextSelection:ActionbarUninit",
@@ -154,7 +150,6 @@ class ActionBarTextSelection implements TextSelection, GeckoEventListener {
             return;
         }
 
-        final Context context = anchorHandle.getContext();
         if (context instanceof ActionModeCompat.Presenter) {
             final ActionModeCompat.Presenter presenter = (ActionModeCompat.Presenter) context;
             mCallback = new TextSelectionActionModeCallback(items);
@@ -164,7 +159,6 @@ class ActionBarTextSelection implements TextSelection, GeckoEventListener {
     }
 
     private void endActionMode() {
-        Context context = anchorHandle.getContext();
         if (context instanceof ActionModeCompat.Presenter) {
             final ActionModeCompat.Presenter presenter = (ActionModeCompat.Presenter) context;
             presenter.endActionModeCompat();
@@ -210,7 +204,7 @@ class ActionBarTextSelection implements TextSelection, GeckoEventListener {
                     menuitem.setShowAsAction(actionEnum, R.attr.menuItemActionModeStyle);
 
                     final String iconString = obj.optString("icon");
-                    BitmapUtils.getDrawable(anchorHandle.getContext(), iconString, new BitmapLoader() {
+                    ResourceDrawableUtils.getDrawable(context, iconString, new ResourceDrawableUtils.BitmapLoader() {
                         @Override
                         public void onBitmapFound(Drawable d) {
                             if (d != null) {

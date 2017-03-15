@@ -33,6 +33,10 @@
 #include "nsWindowWatcher.h"
 #include "nsWeakReference.h"
 
+#ifdef MOZ_WIDGET_ANDROID
+#include "AndroidBridge.h"
+#endif
+
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::dom::workers;
@@ -509,6 +513,12 @@ public:
       return NS_OK;
     }
 
+#ifdef MOZ_WIDGET_ANDROID
+    // This fires an intent that will start launching Fennec and foreground it,
+    // if necessary.
+    java::GeckoAppShell::OpenWindowForNotification();
+#endif
+
     nsCOMPtr<nsPIDOMWindowOuter> window;
     nsresult rv = OpenWindow(getter_AddRefs(window));
     if (NS_SUCCEEDED(rv)) {
@@ -564,6 +574,44 @@ public:
       MOZ_ASSERT(NS_SUCCEEDED(rv));
       return NS_OK;
     }
+#ifdef MOZ_WIDGET_ANDROID
+    else if (rv == NS_ERROR_NOT_AVAILABLE) {
+      // We couldn't get a browser window, so Fennec must not be running.
+      // Send an Intent to launch Fennec and wait for "BrowserChrome:Ready"
+      // to try opening a window again.
+      nsCOMPtr<nsIObserverService> os = services::GetObserverService();
+      NS_ENSURE_STATE(os);
+
+      WorkerPrivate* workerPrivate = mPromiseProxy->GetWorkerPrivate();
+      MOZ_ASSERT(workerPrivate);
+
+      RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+      if (!swm) {
+        // browser shutdown
+        return NS_ERROR_FAILURE;
+      }
+
+      nsCOMPtr<nsIPrincipal> principal = workerPrivate->GetPrincipal();
+      MOZ_ASSERT(principal);
+
+      RefPtr<ServiceWorkerRegistrationInfo> registration =
+        swm->GetRegistration(principal, NS_ConvertUTF16toUTF8(mScope));
+      if (NS_WARN_IF(!registration)) {
+        return NS_ERROR_FAILURE;
+      }
+
+      RefPtr<ServiceWorkerInfo> serviceWorkerInfo =
+        registration->GetServiceWorkerInfoById(workerPrivate->ServiceWorkerID());
+      if (NS_WARN_IF(!serviceWorkerInfo)) {
+        return NS_ERROR_FAILURE;
+      }
+
+      os->AddObserver(static_cast<nsIObserver*>(serviceWorkerInfo->WorkerPrivate()),
+                      "BrowserChrome:Ready", true);
+      serviceWorkerInfo->WorkerPrivate()->AddPendingWindow(this);
+      return NS_OK;
+    }
+#endif
 
     RefPtr<ResolveOpenWindowRunnable> resolveRunnable =
       new ResolveOpenWindowRunnable(mPromiseProxy, nullptr, rv);
@@ -577,6 +625,7 @@ private:
   nsresult
   OpenWindow(nsPIDOMWindowOuter** aWindow)
   {
+    MOZ_DIAGNOSTIC_ASSERT(aWindow);
     WorkerPrivate* workerPrivate = mPromiseProxy->GetWorkerPrivate();
 
     // [[1. Let url be the result of parsing url with entry settings object's API
@@ -613,17 +662,31 @@ private:
       NS_ENSURE_STATE(pwwatch);
 
       nsCString spec;
-      uri->GetSpec(spec);
+      rv = uri->GetSpec(spec);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
 
       nsCOMPtr<mozIDOMWindowProxy> newWindow;
-      pwwatch->OpenWindow2(nullptr,
-                           spec.get(),
-                           nullptr,
-                           nullptr,
-                           false, false, true, nullptr, 1.0f, 0,
-                           getter_AddRefs(newWindow));
+      rv = pwwatch->OpenWindow2(nullptr,
+                                spec.get(),
+                                nullptr,
+                                nullptr,
+                                false, false, true, nullptr,
+                                // Not a spammy popup; we got permission, we swear!
+                                /* aIsPopupSpam = */ false,
+                                // Don't force noopener.  We're not passing in an
+                                // opener anyway, and we _do_ want the returned
+                                // window.
+                                /* aForceNoOpener = */ false,
+                                /* aLoadInfp = */ nullptr,
+                                getter_AddRefs(newWindow));
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
       nsCOMPtr<nsPIDOMWindowOuter> pwindow = nsPIDOMWindowOuter::From(newWindow);
       pwindow.forget(aWindow);
+      MOZ_DIAGNOSTIC_ASSERT(*aWindow);
       return NS_OK;
     }
 
@@ -634,7 +697,7 @@ private:
       // It is possible to be running without a browser window on Mac OS, so
       // we need to open a new chrome window.
       // TODO(catalinb): open new chrome window. Bug 1218080
-      return NS_ERROR_FAILURE;
+      return NS_ERROR_NOT_AVAILABLE;
     }
 
     nsCOMPtr<nsIDOMChromeWindow> chromeWin = do_QueryInterface(browserWindow);
@@ -661,6 +724,7 @@ private:
 
     nsCOMPtr<nsPIDOMWindowOuter> pWin = nsPIDOMWindowOuter::From(win);
     pWin.forget(aWindow);
+    MOZ_DIAGNOSTIC_ASSERT(*aWindow);
 
     return NS_OK;
   }
@@ -765,7 +829,7 @@ ServiceWorkerClients::OpenWindow(const nsAString& aUrl,
   mWorkerScope->GetScope(scope);
 
   RefPtr<OpenWindowRunnable> r = new OpenWindowRunnable(promiseProxy,
-                                                          aUrl, scope);
+                                                        aUrl, scope);
   MOZ_ALWAYS_SUCCEEDS(workerPrivate->DispatchToMainThread(r.forget()));
 
   return promise.forget();

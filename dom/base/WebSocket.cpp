@@ -1974,9 +1974,14 @@ WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
     if (mBinaryType == dom::BinaryType::Blob) {
       messageType = nsIWebSocketEventListener::TYPE_BLOB;
 
-      nsresult rv = nsContentUtils::CreateBlobBuffer(cx, GetOwner(), aData,
-                                                     &jsData);
-      NS_ENSURE_SUCCESS(rv, rv);
+      RefPtr<Blob> blob =
+        Blob::CreateStringBlob(GetOwner(), aData, EmptyString());
+      MOZ_ASSERT(blob);
+
+      if (!ToJSValue(cx, blob, &jsData)) {
+        return NS_ERROR_FAILURE;
+      }
+
     } else if (mBinaryType == dom::BinaryType::Arraybuffer) {
       messageType = nsIWebSocketEventListener::TYPE_ARRAYBUFFER;
 
@@ -2006,11 +2011,11 @@ WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
   // create an event that uses the MessageEvent interface,
   // which does not bubble, is not cancelable, and has no default action
 
-  RefPtr<MessageEvent> event = NS_NewDOMMessageEvent(this, nullptr, nullptr);
+  RefPtr<MessageEvent> event = new MessageEvent(this, nullptr, nullptr);
 
   event->InitMessageEvent(nullptr, NS_LITERAL_STRING("message"), false, false,
                           jsData, mImpl->mUTF16Origin, EmptyString(), nullptr,
-                          nullptr);
+                          Sequence<OwningNonNull<MessagePort>>());
   event->SetTrusted(true);
 
   return DispatchDOMEvent(nullptr, static_cast<Event*>(event), nullptr,
@@ -2022,10 +2027,11 @@ WebSocket::CreateAndDispatchCloseEvent(bool aWasClean,
                                        uint16_t aCode,
                                        const nsAString& aReason)
 {
-  MOZ_ASSERT(mImpl);
   AssertIsOnTargetThread();
 
-  if (mImpl->mChannel) {
+  // This method is called by a runnable and it can happen that, in the
+  // meantime, GC unlinked this object, so mImpl could be null.
+  if (mImpl && mImpl->mChannel) {
     mImpl->mService->WebSocketClosed(mImpl->mChannel->Serial(),
                                      mImpl->mInnerWindowID,
                                      aWasClean, aCode, aReason);
@@ -2290,6 +2296,11 @@ WebSocketImpl::UnregisterWorkerHolder()
   MOZ_ASSERT(mWorkerPrivate);
   mWorkerPrivate->AssertIsOnWorkerThread();
   MOZ_ASSERT(mWorkerHolder);
+
+  {
+    MutexAutoLock lock(mMutex);
+    mWorkerShuttingDown = true;
+  }
 
   // The DTOR of this WorkerHolder will release the worker for us.
   mWorkerHolder = nullptr;
@@ -2845,7 +2856,7 @@ WebSocketImpl::Dispatch(already_AddRefed<nsIRunnable> aEvent, uint32_t aFlags)
     return NS_OK;
   }
 
-  MOZ_ASSERT(mWorkerPrivate);
+  MOZ_DIAGNOSTIC_ASSERT(mWorkerPrivate);
 
 #ifdef DEBUG
   MOZ_ASSERT(HasWorkerHolderRegistered());

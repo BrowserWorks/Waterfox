@@ -282,9 +282,16 @@ nsSVGPathGeometryFrame::PaintSVG(gfxContext& aContext,
   if (!StyleVisibility()->IsVisible())
     return DrawResult::SUCCESS;
 
+  gfxMatrix childToUserSpace = aTransform;
+  if (GetContent()->IsSVGElement()) {
+    childToUserSpace = static_cast<const nsSVGElement*>(GetContent())->
+                         PrependLocalTransformsTo(childToUserSpace,
+                                                  eChildToUserSpace);
+  }
+
   // Matrix to the geometry's user space:
   gfxMatrix newMatrix =
-    aContext.CurrentMatrix().PreMultiply(aTransform).NudgeToIntegers();
+    aContext.CurrentMatrix().PreMultiply(childToUserSpace).NudgeToIntegers();
   if (newMatrix.IsSingular()) {
     return DrawResult::BAD_ARGS;
   }
@@ -511,7 +518,7 @@ nsSVGPathGeometryFrame::GetBBoxContribution(const Matrix &aToBBoxUserspace,
 
   bool getFill = (aFlags & nsSVGUtils::eBBoxIncludeFillGeometry) ||
                  ((aFlags & nsSVGUtils::eBBoxIncludeFill) &&
-                  StyleSVG()->mFill.mType != eStyleSVGPaintType_None);
+                  StyleSVG()->mFill.Type() != eStyleSVGPaintType_None);
 
   bool getStroke = (aFlags & nsSVGUtils::eBBoxIncludeStrokeGeometry) ||
                    ((aFlags & nsSVGUtils::eBBoxIncludeStroke) &&

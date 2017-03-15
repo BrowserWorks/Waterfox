@@ -8,6 +8,7 @@
 #define mozilla_layers_GeckoContentController_h
 
 #include "FrameMetrics.h"               // for FrameMetrics, etc
+#include "InputData.h"                  // for PinchGestureInput
 #include "Units.h"                      // for CSSPoint, CSSRect, etc
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
 #include "mozilla/EventForwards.h"      // for Modifiers
@@ -42,10 +43,16 @@ public:
    * all eLongTap notifications will be followed by an eLongTapUp (for instance,
    * if the user moves their finger after triggering the long-tap but before
    * lifting it).
+   * The difference between eDoubleTap and eSecondTap is subtle - the eDoubleTap
+   * is for an actual double-tap "gesture" while eSecondTap is for the same user
+   * input but where a double-tap gesture is not allowed. This is used to fire
+   * a click event with detail=2 to web content (similar to what a mouse double-
+   * click would do).
    */
   enum class TapType {
     eSingleTap,
     eDoubleTap,
+    eSecondTap,
     eLongTap,
     eLongTapUp,
 
@@ -63,6 +70,27 @@ public:
                          uint64_t aInputBlockId) = 0;
 
   /**
+   * When the apz.allow_zooming pref is set to false, the APZ will not
+   * translate pinch gestures to actual zooming. Instead, it will call this
+   * method to notify gecko of the pinch gesture, and allow it to deal with it
+   * however it wishes. Note that this function is not called if the pinch is
+   * prevented by content calling preventDefault() on the touch events, or via
+   * use of the touch-action property.
+   * @param aType One of PINCHGESTURE_START, PINCHGESTURE_SCALE, or
+   *        PINCHGESTURE_END, indicating the phase of the pinch.
+   * @param aGuid The guid of the APZ that is detecting the pinch. This is
+   *        generally the root APZC for the layers id.
+   * @param aSpanChange For the START or END event, this is always 0.
+   *        For a SCALE event, this is the difference in span between the
+   *        previous state and the new state.
+   * @param aModifiers The keyboard modifiers depressed during the pinch.
+   */
+  virtual void NotifyPinchGesture(PinchGestureInput::PinchGestureType aType,
+                                  const ScrollableLayerGuid& aGuid,
+                                  LayoutDeviceCoord aSpanChange,
+                                  Modifiers aModifiers) = 0;
+
+  /**
    * Schedules a runnable to run on the controller/UI thread at some time
    * in the future.
    * This method must always be called on the controller thread.
@@ -78,23 +106,6 @@ public:
    * Runs the given task on the "repaint" thread.
    */
   virtual void DispatchToRepaintThread(already_AddRefed<Runnable> aTask) = 0;
-
-  /**
-   * APZ uses |FrameMetrics::mCompositionBounds| for hit testing. Sometimes,
-   * widget code has knowledge of a touch-sensitive region that should
-   * additionally constrain hit testing for all frames associated with the
-   * controller. This method allows APZ to query the controller for such a
-   * region. A return value of true indicates that the controller has such a
-   * region, and it is returned in |aOutRegion|.
-   * This method needs to be called on the main thread.
-   * TODO: once bug 928833 is implemented, this should be removed, as
-   * APZ can then get the correct touch-sensitive region for each frame
-   * directly from the layer.
-   */
-  virtual bool GetTouchSensitiveRegion(CSSRect* aOutRegion)
-  {
-    return false;
-  }
 
   enum class APZStateChange {
     /**

@@ -46,6 +46,7 @@
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/ImageTracker.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/Preferences.h"
 
@@ -55,6 +56,7 @@
 #endif
 
 using namespace mozilla;
+using namespace mozilla::dom;
 
 #ifdef DEBUG_chb
 static void PrintReqURL(imgIRequest* req) {
@@ -596,21 +598,21 @@ nsImageLoadingContent::GetCurrentURI(nsIURI** aURI)
   return result.StealNSResult();
 }
 
-already_AddRefed<nsIStreamListener>
+NS_IMETHODIMP
 nsImageLoadingContent::LoadImageWithChannel(nsIChannel* aChannel,
-                                            ErrorResult& aError)
+                                            nsIStreamListener** aListener)
 {
   imgLoader* loader =
     nsContentUtils::GetImgLoaderForChannel(aChannel, GetOurOwnerDoc());
   if (!loader) {
-    aError.Throw(NS_ERROR_NULL_POINTER);
-    return nullptr;
+    return NS_ERROR_NULL_POINTER;
   }
 
   nsCOMPtr<nsIDocument> doc = GetOurOwnerDoc();
   if (!doc) {
     // Don't bother
-    return nullptr;
+    *aListener = nullptr;
+    return NS_OK;
   }
 
   // XXX what should we do with content policies here, if anything?
@@ -621,38 +623,24 @@ nsImageLoadingContent::LoadImageWithChannel(nsIChannel* aChannel,
   AutoStateChanger changer(this, true);
 
   // Do the load.
-  nsCOMPtr<nsIStreamListener> listener;
   RefPtr<imgRequestProxy>& req = PrepareNextRequest(eImageLoadType_Normal);
   nsresult rv = loader->
-    LoadImageWithChannel(aChannel, this, doc,
-                         getter_AddRefs(listener),
-                         getter_AddRefs(req));
+    LoadImageWithChannel(aChannel, this, doc, aListener, getter_AddRefs(req));
   if (NS_SUCCEEDED(rv)) {
     TrackImage(req);
     ResetAnimationIfNeeded();
-  } else {
-    MOZ_ASSERT(!req, "Shouldn't have non-null request here");
-    // If we don't have a current URI, we might as well store this URI so people
-    // know what we tried (and failed) to load.
-    if (!mCurrentRequest)
-      aChannel->GetURI(getter_AddRefs(mCurrentURI));
-
-    FireEvent(NS_LITERAL_STRING("error"));
-    FireEvent(NS_LITERAL_STRING("loadend"));
-    aError.Throw(rv);
+    return NS_OK;
   }
-  return listener.forget();
-}
 
-NS_IMETHODIMP
-nsImageLoadingContent::LoadImageWithChannel(nsIChannel* aChannel,
-                                            nsIStreamListener** aListener)
-{
-  NS_ENSURE_ARG_POINTER(aListener);
+  MOZ_ASSERT(!req, "Shouldn't have non-null request here");
+  // If we don't have a current URI, we might as well store this URI so people
+  // know what we tried (and failed) to load.
+  if (!mCurrentRequest)
+    aChannel->GetURI(getter_AddRefs(mCurrentURI));
 
-  ErrorResult result;
-  *aListener = LoadImageWithChannel(aChannel, result).take();
-  return result.StealNSResult();
+  FireEvent(NS_LITERAL_STRING("error"));
+  FireEvent(NS_LITERAL_STRING("loadend"));
+  return rv;
 }
 
 void
@@ -674,7 +662,7 @@ nsImageLoadingContent::ForceReload(const mozilla::dom::Optional<bool>& aNotify,
   ImageLoadType loadType = \
     (mCurrentRequestFlags & REQUEST_IS_IMAGESET) ? eImageLoadType_Imageset
                                                  : eImageLoadType_Normal;
-  nsresult rv = LoadImage(currentURI, true, notify, loadType, nullptr,
+  nsresult rv = LoadImage(currentURI, true, notify, loadType, true, nullptr,
                           nsIRequest::VALIDATE_ALWAYS);
   if (NS_FAILED(rv)) {
     aError.Throw(rv);
@@ -772,7 +760,10 @@ nsImageLoadingContent::LoadImage(const nsAString& aNewURI,
     return NS_OK;
   }
 
-  // Second, parse the URI string to get image URI
+  // Fire loadstart event
+  FireEvent(NS_LITERAL_STRING("loadstart"));
+
+  // Parse the URI string to get image URI
   nsCOMPtr<nsIURI> imageURI;
   nsresult rv = StringToURI(aNewURI, doc, getter_AddRefs(imageURI));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -780,7 +771,7 @@ nsImageLoadingContent::LoadImage(const nsAString& aNewURI,
 
   NS_TryToSetImmutable(imageURI);
 
-  return LoadImage(imageURI, aForce, aNotify, aImageLoadType, doc);
+  return LoadImage(imageURI, aForce, aNotify, aImageLoadType, false, doc);
 }
 
 nsresult
@@ -788,6 +779,7 @@ nsImageLoadingContent::LoadImage(nsIURI* aNewURI,
                                  bool aForce,
                                  bool aNotify,
                                  ImageLoadType aImageLoadType,
+                                 bool aLoadStart,
                                  nsIDocument* aDocument,
                                  nsLoadFlags aLoadFlags)
 {
@@ -795,6 +787,11 @@ nsImageLoadingContent::LoadImage(nsIURI* aNewURI,
   // is not documented in the spec, but can cause site compat problems if not
   // done. See bug 1309461 and https://github.com/whatwg/html/issues/1872.
   CancelPendingEvent();
+
+  // Fire loadstart event if required
+  if (aLoadStart) {
+    FireEvent(NS_LITERAL_STRING("loadstart"));
+  }
 
   if (!mLoadingEnabled) {
     // XXX Why fire an error here? seems like the callers to SetLoadingEnabled
@@ -1507,11 +1504,11 @@ nsImageLoadingContent::TrackImage(imgIRequest* aImage)
 
   if (aImage == mCurrentRequest && !(mCurrentRequestFlags & REQUEST_IS_TRACKED)) {
     mCurrentRequestFlags |= REQUEST_IS_TRACKED;
-    doc->AddImage(mCurrentRequest);
+    doc->ImageTracker()->Add(mCurrentRequest);
   }
   if (aImage == mPendingRequest && !(mPendingRequestFlags & REQUEST_IS_TRACKED)) {
     mPendingRequestFlags |= REQUEST_IS_TRACKED;
-    doc->AddImage(mPendingRequest);
+    doc->ImageTracker()->Add(mPendingRequest);
   }
 }
 
@@ -1534,10 +1531,11 @@ nsImageLoadingContent::UntrackImage(imgIRequest* aImage,
   if (aImage == mCurrentRequest) {
     if (doc && (mCurrentRequestFlags & REQUEST_IS_TRACKED)) {
       mCurrentRequestFlags &= ~REQUEST_IS_TRACKED;
-      doc->RemoveImage(mCurrentRequest,
-                       aNonvisibleAction == Some(OnNonvisible::DISCARD_IMAGES)
-                         ? nsIDocument::REQUEST_DISCARD
-                         : 0);
+      doc->ImageTracker()->Remove(
+        mCurrentRequest,
+        aNonvisibleAction == Some(OnNonvisible::DISCARD_IMAGES)
+          ? ImageTracker::REQUEST_DISCARD
+          : 0);
     } else if (aNonvisibleAction == Some(OnNonvisible::DISCARD_IMAGES)) {
       // If we're not in the document we may still need to be discarded.
       aImage->RequestDiscard();
@@ -1546,10 +1544,11 @@ nsImageLoadingContent::UntrackImage(imgIRequest* aImage,
   if (aImage == mPendingRequest) {
     if (doc && (mPendingRequestFlags & REQUEST_IS_TRACKED)) {
       mPendingRequestFlags &= ~REQUEST_IS_TRACKED;
-      doc->RemoveImage(mPendingRequest,
-                       aNonvisibleAction == Some(OnNonvisible::DISCARD_IMAGES)
-                         ? nsIDocument::REQUEST_DISCARD
-                         : 0);
+      doc->ImageTracker()->Remove(
+        mPendingRequest,
+        aNonvisibleAction == Some(OnNonvisible::DISCARD_IMAGES)
+          ? ImageTracker::REQUEST_DISCARD
+          : 0);
     } else if (aNonvisibleAction == Some(OnNonvisible::DISCARD_IMAGES)) {
       // If we're not in the document we may still need to be discarded.
       aImage->RequestDiscard();

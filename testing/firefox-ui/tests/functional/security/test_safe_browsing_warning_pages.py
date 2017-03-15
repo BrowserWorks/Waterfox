@@ -4,15 +4,15 @@
 
 import time
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import By, expected, Wait
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestSafeBrowsingWarningPages(FirefoxTestCase):
+class TestSafeBrowsingWarningPages(PuppeteerMixin, MarionetteTestCase):
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestSafeBrowsingWarningPages, self).setUp()
 
         self.urls = [
             # Unwanted software URL
@@ -23,8 +23,8 @@ class TestSafeBrowsingWarningPages(FirefoxTestCase):
             'https://www.itisatrap.org/firefox/its-an-attack.html'
         ]
 
-        self.prefs.set_pref('browser.safebrowsing.phishing.enabled', True)
-        self.prefs.set_pref('browser.safebrowsing.malware.enabled', True)
+        self.marionette.set_pref('browser.safebrowsing.phishing.enabled', True)
+        self.marionette.set_pref('browser.safebrowsing.malware.enabled', True)
 
         # Give the browser a little time, because SafeBrowsing.jsm takes a
         # while between start up and adding the example urls to the db.
@@ -37,10 +37,12 @@ class TestSafeBrowsingWarningPages(FirefoxTestCase):
 
     def tearDown(self):
         try:
-            self.utils.permissions.remove('https://www.itisatrap.org', 'safe-browsing')
+            self.puppeteer.utils.permissions.remove('https://www.itisatrap.org', 'safe-browsing')
             self.browser.tabbar.close_all_tabs([self.browser.tabbar.tabs[0]])
+            self.marionette.clear_pref('browser.safebrowsing.malware.enabled')
+            self.marionette.clear_pref('browser.safebrowsing.phishing.enabled')
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestSafeBrowsingWarningPages, self).tearDown()
 
     def test_warning_pages(self):
         with self.marionette.using_context("content"):
@@ -67,7 +69,7 @@ class TestSafeBrowsingWarningPages(FirefoxTestCase):
         button = self.marionette.find_element(By.ID, "getMeOutButton")
         button.click()
 
-        Wait(self.marionette, timeout=self.browser.timeout_page_load).until(
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
             lambda mn: self.browser.default_homepage in mn.get_url())
 
     def check_report_button(self, unsafe_page):
@@ -84,12 +86,12 @@ class TestSafeBrowsingWarningPages(FirefoxTestCase):
 
         # Wait for the button to become stale, whereby a longer timeout is needed
         # here to not fail in case of slow connections.
-        Wait(self.marionette, timeout=self.browser.timeout_page_load).until(
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
             expected.element_stale(button))
 
         # Wait for page load to be completed, so we can verify the URL even if a redirect happens.
         # TODO: Bug 1140470: use replacement for mozmill's waitforPageLoad
-        Wait(self.marionette, timeout=self.browser.timeout_page_load).until(
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
             lambda mn: mn.execute_script('return document.readyState == "DOMContentLoaded" ||'
                                          '       document.readyState == "complete";')
         )
@@ -101,9 +103,9 @@ class TestSafeBrowsingWarningPages(FirefoxTestCase):
         button = self.marionette.find_element(By.ID, 'ignoreWarningButton')
         button.click()
 
-        Wait(self.marionette, timeout=self.browser.timeout_page_load).until(
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
             expected.element_present(By.ID, 'main-feature'))
         self.assertEquals(self.marionette.get_url(), self.browser.get_final_url(unsafe_page))
 
         # Clean up by removing safe browsing permission for unsafe page
-        self.utils.permissions.remove('https://www.itisatrap.org', 'safe-browsing')
+        self.puppeteer.utils.permissions.remove('https://www.itisatrap.org', 'safe-browsing')

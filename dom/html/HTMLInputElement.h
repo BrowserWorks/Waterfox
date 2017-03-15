@@ -778,7 +778,24 @@ public:
   void MozSetFileArray(const Sequence<OwningNonNull<File>>& aFiles);
   void MozSetDirectory(const nsAString& aDirectoryPath, ErrorResult& aRv);
 
+  /*
+   * The following functions are called from datetime picker to let input box
+   * know the current state of the picker or to update the input box on changes.
+   */
+  void GetDateTimeInputBoxValue(DateTimeValue& aValue);
+  void UpdateDateTimeInputBox(const DateTimeValue& aValue);
+  void SetDateTimePickerState(bool aOpen);
+
+  /*
+   * The following functions are called from datetime input box XBL to control
+   * and update the picker.
+   */
+  void OpenDateTimePicker(const DateTimeValue& aInitialValue);
+  void UpdateDateTimePicker(const DateTimeValue& aValue);
+  void CloseDateTimePicker();
+
   HTMLInputElement* GetOwnerNumberControl();
+  HTMLInputElement* GetOwnerDateTimeControl();
 
   void StartNumberControlSpinnerSpin();
   enum SpinnerStopState {
@@ -809,7 +826,8 @@ public:
 
   nsIEditor* GetEditor();
 
-  // XPCOM SetUserInput() is OK
+  void SetUserInput(const nsAString& aInput,
+                    nsIPrincipal& aSubjectPrincipal);
 
   // XPCOM GetPhonetic() is OK
 
@@ -1043,8 +1061,8 @@ protected:
    */
   bool DoesStepApply() const
   {
-    // TODO: this is temporary until bug 888316 is fixed.
-    return DoesMinMaxApply() && mType != NS_FORM_INPUT_WEEK;
+    // TODO: this is temporary until bug 888331 is fixed.
+    return DoesMinMaxApply() && mType != NS_FORM_INPUT_DATETIME_LOCAL;
   }
 
   /**
@@ -1057,8 +1075,8 @@ protected:
    */
   bool DoesValueAsNumberApply() const
   {
-    // TODO: this is temporary until bug 888316 is fixed.
-    return DoesMinMaxApply() && mType != NS_FORM_INPUT_WEEK;
+    // TODO: this is temporary until bug 888331 is fixed.
+    return DoesMinMaxApply() && mType != NS_FORM_INPUT_DATETIME_LOCAL;
   }
 
   /**
@@ -1195,6 +1213,16 @@ protected:
   bool IsValidDate(const nsAString& aValue) const;
 
   /**
+   * Parse a datetime-local string of the form yyyy-mm-ddThh:mm[:ss.s] or
+   * yyyy-mm-dd hh:mm[:ss.s], where fractions of seconds can be 1 to 3 digits.
+   *
+   * @param the string to be parsed.
+   * @return whether the string is a valid datetime-local string.
+   * Note : this function does not consider the empty string as valid.
+   */
+  bool IsValidDateTimeLocal(const nsAString& aValue) const;
+
+  /**
    * Parse a year string of the form yyyy
    *
    * @param the string to be parsed.
@@ -1238,6 +1266,32 @@ protected:
                  uint32_t* aDay) const;
 
   /**
+   * Parse a datetime-local string of the form yyyy-mm-ddThh:mm[:ss.s] or
+   * yyyy-mm-dd hh:mm[:ss.s], where fractions of seconds can be 1 to 3 digits.
+   *
+   * @param the string to be parsed.
+   * @return the date in aYear, aMonth, aDay and time expressed in milliseconds
+   *         in aTime.
+   * @return whether the parsing was successful.
+   */
+  bool ParseDateTimeLocal(const nsAString& aValue,
+                          uint32_t* aYear,
+                          uint32_t* aMonth,
+                          uint32_t* aDay,
+                          uint32_t* aTime) const;
+
+  /**
+   * Normalize the datetime-local string following the HTML specifications:
+   * https://html.spec.whatwg.org/multipage/infrastructure.html#valid-normalised-local-date-and-time-string
+   */
+  void NormalizeDateTimeLocal(nsAString& aValue) const;
+  /**
+   * This methods returns the number of days since epoch for a given year and
+   * week.
+   */
+  double DaysSinceEpochFromWeek(uint32_t aYear, uint32_t aWeek) const;
+
+  /**
    * This methods returns the number of days in a given month, for a given year.
    */
   uint32_t NumberOfDaysInMonth(uint32_t aMonth, uint32_t aYear) const;
@@ -1249,9 +1303,11 @@ protected:
   int32_t MonthsSinceJan1970(uint32_t aYear, uint32_t aMonth) const;
 
   /**
-   * This methods returns the day of the week given a date, note that 0 = Sunday.
+   * This methods returns the day of the week given a date. If @isoWeek is true,
+   * 7=Sunday, otherwise, 0=Sunday.
    */
-  uint32_t DayOfWeek(uint32_t aYear, uint32_t aMonth, uint32_t aDay) const;
+  uint32_t DayOfWeek(uint32_t aYear, uint32_t aMonth, uint32_t aDay,
+                     bool isoWeek) const;
 
   /**
    * This methods returns the maximum number of week in a given year, the
@@ -1474,6 +1530,12 @@ protected:
   Decimal mRangeThumbDragStartValue;
 
   /**
+   * Current value in the input box, in DateTimeValue dictionary format, see
+   * HTMLInputElement.webidl for details.
+   */
+  nsAutoPtr<DateTimeValue> mDateTimeInputBoxValue;
+
+  /**
    * The selection properties cache for number controls.  This is needed because
    * the number controls don't recycle their text field, so the normal cache in
    * nsTextEditorState cannot do its job.
@@ -1485,9 +1547,13 @@ protected:
   static const Decimal kStepScaleFactorNumberRange;
   static const Decimal kStepScaleFactorTime;
   static const Decimal kStepScaleFactorMonth;
+  static const Decimal kStepScaleFactorWeek;
 
   // Default step base value when a type do not have specific one.
   static const Decimal kDefaultStepBase;
+  // Default step base value when type=week does not not have a specific one,
+  // which is −259200000, the start of week 1970-W01.
+  static const Decimal kDefaultStepBaseWeek;
 
   // Default step used when there is no specified step.
   static const Decimal kDefaultStep;
@@ -1496,12 +1562,21 @@ protected:
   // Float value returned by GetStep() when the step attribute is set to 'any'.
   static const Decimal kStepAny;
 
-  // Maximum year limited by ECMAScript date object range, year <= 275760.
-  static const double kMaximumYear;
   // Minimum year limited by HTML standard, year >= 1.
   static const double kMinimumYear;
+  // Maximum year limited by ECMAScript date object range, year <= 275760.
+  static const double kMaximumYear;
+  // Maximum valid week is 275760-W37.
+  static const double kMaximumWeekInMaximumYear;
+  // Maximum valid day is 275760-09-13.
+  static const double kMaximumDayInMaximumYear;
+  // Maximum valid month is 275760-09.
+  static const double kMaximumMonthInMaximumYear;
   // Long years in a ISO calendar have 53 weeks in them.
   static const double kMaximumWeekInYear;
+  // Milliseconds in a day.
+  static const double kMsPerDay;
+
 
   /**
    * The type of this input (<input type=...>) as an integer.
@@ -1554,7 +1629,8 @@ private:
   static bool MayFireChangeOnBlur(uint8_t aType) {
     return IsSingleLineTextControl(false, aType) ||
            aType == NS_FORM_INPUT_RANGE ||
-           aType == NS_FORM_INPUT_NUMBER;
+           aType == NS_FORM_INPUT_NUMBER ||
+           aType == NS_FORM_INPUT_TIME;
   }
 
   struct nsFilePickerFilter {

@@ -32,6 +32,8 @@
 #include "nsXULAppAPI.h"                // for XRE_GetIOMessageLoop, etc
 #include "FrameLayerBuilder.h"
 #include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/Unused.h"
 #include "mozilla/DebugOnly.h"
 #if defined(XP_WIN)
@@ -51,11 +53,28 @@ using mozilla::gfx::GPUProcessManager;
 namespace mozilla {
 namespace layers {
 
+static int sShmemCreationCounter = 0;
+
+static void ResetShmemCounter()
+{
+  sShmemCreationCounter = 0;
+}
+
+static void ShmemAllocated(CompositorBridgeChild* aProtocol)
+{
+  sShmemCreationCounter++;
+  if (sShmemCreationCounter > 256) {
+    aProtocol->SendSyncWithCompositor();
+    ResetShmemCounter();
+    MOZ_PERFORMANCE_WARNING("gfx", "The number of shmem allocations is too damn high!");
+  }
+}
+
 static StaticRefPtr<CompositorBridgeChild> sCompositorBridge;
 
-Atomic<int32_t> CompositableForwarder::sSerialCounter(0);
+Atomic<int32_t> KnowsCompositor::sSerialCounter(0);
 
-CompositorBridgeChild::CompositorBridgeChild(ClientLayerManager *aLayerManager)
+CompositorBridgeChild::CompositorBridgeChild(LayerManager *aLayerManager)
   : mLayerManager(aLayerManager)
   , mCanSend(false)
   , mFwdTransactionId(0)
@@ -188,12 +207,27 @@ CompositorBridgeChild::InitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoi
     NS_RUNTIMEABORT("Couldn't Open() Compositor channel.");
     return false;
   }
-
-  child->mCanSend = true;
+  child->InitIPDL();
 
   // We release this ref in DeferredDestroyCompositor.
   sCompositorBridge = child;
   return true;
+}
+
+/* static */ bool
+CompositorBridgeChild::ReinitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (RefPtr<CompositorBridgeChild> old = sCompositorBridge.forget()) {
+    // Note that at this point, ActorDestroy may not have been called yet,
+    // meaning mCanSend is still true. In this case we will try to send a
+    // synchronous WillClose message to the parent, and will certainly get
+    // a false result and a MsgDropped processing error. This is okay.
+    old->Destroy();
+  }
+
+  return InitForContent(Move(aEndpoint));
 }
 
 CompositorBridgeParent*
@@ -210,28 +244,41 @@ CompositorBridgeChild::InitSameProcess(widget::CompositorWidget* aWidget,
   mCompositorBridgeParent =
     new CompositorBridgeParent(aScale, vsyncRate, aUseExternalSurface, aSurfaceSize);
 
-  mCanSend = Open(mCompositorBridgeParent->GetIPCChannel(),
-                  CompositorThreadHolder::Loop(),
-                  ipc::ChildSide);
-  MOZ_RELEASE_ASSERT(mCanSend);
+  bool ok = Open(mCompositorBridgeParent->GetIPCChannel(),
+                 CompositorThreadHolder::Loop(),
+                 ipc::ChildSide);
+  MOZ_RELEASE_ASSERT(ok);
 
+  InitIPDL();
   mCompositorBridgeParent->InitSameProcess(aWidget, aLayerTreeId, aUseAPZ);
   return mCompositorBridgeParent;
 }
 
 /* static */ RefPtr<CompositorBridgeChild>
 CompositorBridgeChild::CreateRemote(const uint64_t& aProcessToken,
-                                    ClientLayerManager* aLayerManager,
+                                    LayerManager* aLayerManager,
                                     Endpoint<PCompositorBridgeChild>&& aEndpoint)
 {
   RefPtr<CompositorBridgeChild> child = new CompositorBridgeChild(aLayerManager);
   if (!aEndpoint.Bind(child)) {
     return nullptr;
   }
-
-  child->mCanSend = true;
+  child->InitIPDL();
   child->mProcessToken = aProcessToken;
   return child;
+}
+
+void
+CompositorBridgeChild::InitIPDL()
+{
+  mCanSend = true;
+  AddRef();
+}
+
+void
+CompositorBridgeChild::DeallocPCompositorBridgeChild()
+{
+  Release();
 }
 
 /*static*/ CompositorBridgeChild*
@@ -299,6 +346,13 @@ CompositorBridgeChild::RecvCompositorUpdated(const uint64_t& aLayersId,
   } else if (aLayersId != 0) {
     if (dom::TabChild* child = dom::TabChild::GetFrom(aLayersId)) {
       child->CompositorUpdated(aNewIdentifier);
+
+      // If we still get device reset here, something must wrong when creating
+      // d3d11 devices.
+      if (gfxPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+        gfxCriticalError() << "Unexpected reset device processing when \
+                               updating compositor.";
+      }
     }
     if (!mCanSend) {
       return true;
@@ -491,7 +545,8 @@ CompositorBridgeChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTr
 {
   if (mLayerManager) {
     MOZ_ASSERT(aId == 0);
-    RefPtr<ClientLayerManager> m = mLayerManager;
+    RefPtr<ClientLayerManager> m = mLayerManager->AsClientLayerManager();
+    MOZ_ASSERT(m);
     m->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
   } else if (aId != 0) {
     RefPtr<dom::TabChild> child = dom::TabChild::GetFrom(aId);
@@ -538,19 +593,12 @@ void
 CompositorBridgeChild::ActorDestroy(ActorDestroyReason aWhy)
 {
   if (aWhy == AbnormalShutdown) {
-#ifdef MOZ_B2G
-  // Due to poor lifetime management of gralloc (and possibly shmems) we will
-  // crash at some point in the future when we get destroyed due to abnormal
-  // shutdown. Its better just to crash here. On desktop though, we have a chance
-  // of recovering.
-    NS_RUNTIMEABORT("ActorDestroy by IPC channel failure at CompositorBridgeChild");
-#endif
-
     // If the parent side runs into a problem then the actor will be destroyed.
     // There is nothing we can do in the child side, here sets mCanSend as false.
-    mCanSend = false;
     gfxCriticalNote << "Receive IPC close with reason=AbnormalShutdown";
   }
+
+  mCanSend = false;
 
   if (mProcessToken && XRE_IsParentProcess()) {
     GPUProcessManager::Get()->NotifyRemoteActorDestroyed(mProcessToken);
@@ -809,6 +857,15 @@ CompositorBridgeChild::SendNotifyApproximatelyVisibleRegion(const ScrollableLaye
   return PCompositorBridgeChild::SendNotifyApproximatelyVisibleRegion(aGuid, aRegion);
 }
 
+bool
+CompositorBridgeChild::SendAllPluginsCaptured()
+{
+  if (!mCanSend) {
+    return false;
+  }
+  return PCompositorBridgeChild::SendAllPluginsCaptured();
+}
+
 PTextureChild*
 CompositorBridgeChild::AllocPTextureChild(const SurfaceDescriptor&,
                                           const LayersBackend&,
@@ -832,12 +889,6 @@ CompositorBridgeChild::RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessa
     const AsyncParentMessageData& message = aMessages[i];
 
     switch (message.type()) {
-      case AsyncParentMessageData::TOpDeliverFence: {
-        const OpDeliverFence& op = message.get_OpDeliverFence();
-        FenceHandle fence = op.fence();
-        DeliverFence(op.TextureId(), fence);
-        break;
-      }
       case AsyncParentMessageData::TOpNotifyNotUsed: {
         const OpNotifyNotUsed& op = message.get_OpNotifyNotUsed();
         NotifyNotUsed(op.TextureId(), op.fwdTransactionId());
@@ -851,6 +902,22 @@ CompositorBridgeChild::RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessa
   return true;
 }
 
+bool
+CompositorBridgeChild::RecvObserveLayerUpdate(const uint64_t& aLayersId,
+                                              const uint64_t& aEpoch,
+                                              const bool& aActive)
+{
+  // This message is sent via the window compositor, not the tab compositor -
+  // however it still has a layers id.
+  MOZ_ASSERT(aLayersId);
+  MOZ_ASSERT(XRE_IsParentProcess());
+
+  if (RefPtr<dom::TabParent> tab = dom::TabParent::GetTabParentFromLayersId(aLayersId)) {
+    tab->LayerTreeUpdate(aEpoch, aActive);
+  }
+  return true;
+}
+
 void
 CompositorBridgeChild::HoldUntilCompositableRefReleasedIfNecessary(TextureClient* aClient)
 {
@@ -858,21 +925,12 @@ CompositorBridgeChild::HoldUntilCompositableRefReleasedIfNecessary(TextureClient
     return;
   }
 
-  if (!(aClient->GetFlags() & TextureFlags::RECYCLE) &&
-     !aClient->NeedsFenceHandle()) {
+  if (!(aClient->GetFlags() & TextureFlags::RECYCLE)) {
     return;
   }
 
-  if (aClient->GetFlags() & TextureFlags::RECYCLE) {
-    aClient->SetLastFwdTransactionId(GetFwdTransactionId());
-    mTexturesWaitingRecycled.Put(aClient->GetSerial(), aClient);
-    return;
-  }
-  MOZ_ASSERT(!(aClient->GetFlags() & TextureFlags::RECYCLE));
-  MOZ_ASSERT(aClient->NeedsFenceHandle());
-  // Handle a case of fence delivery via ImageBridge.
-  // GrallocTextureData alwasys requests fence delivery if ANDROID_VERSION >= 17.
-  ImageBridgeChild::GetSingleton()->HoldUntilFenceHandleDelivery(aClient, GetFwdTransactionId());
+  aClient->SetLastFwdTransactionId(GetFwdTransactionId());
+  mTexturesWaitingRecycled.Put(aClient->GetSerial(), aClient);
 }
 
 void
@@ -890,16 +948,6 @@ CompositorBridgeChild::NotifyNotUsed(uint64_t aTextureId, uint64_t aFwdTransacti
 }
 
 void
-CompositorBridgeChild::DeliverFence(uint64_t aTextureId, FenceHandle& aReleaseFenceHandle)
-{
-  RefPtr<TextureClient> client = mTexturesWaitingRecycled.Get(aTextureId);
-  if (!client) {
-    return;
-  }
-  client->SetReleaseFenceHandle(aReleaseFenceHandle);
-}
-
-void
 CompositorBridgeChild::CancelWaitForRecycle(uint64_t aTextureId)
 {
   RefPtr<TextureClient> client = mTexturesWaitingRecycled.Get(aTextureId);
@@ -910,12 +958,13 @@ CompositorBridgeChild::CancelWaitForRecycle(uint64_t aTextureId)
 }
 
 TextureClientPool*
-CompositorBridgeChild::GetTexturePool(LayersBackend aBackend,
+CompositorBridgeChild::GetTexturePool(KnowsCompositor* aAllocator,
                                       SurfaceFormat aFormat,
                                       TextureFlags aFlags)
 {
   for (size_t i = 0; i < mTexturePools.Length(); i++) {
-    if (mTexturePools[i]->GetBackend() == aBackend &&
+    if (mTexturePools[i]->GetBackend() == aAllocator->GetCompositorBackendType() &&
+        mTexturePools[i]->GetMaxTextureSize() == aAllocator->GetMaxTextureSize() &&
         mTexturePools[i]->GetFormat() == aFormat &&
         mTexturePools[i]->GetFlags() == aFlags) {
       return mTexturePools[i];
@@ -923,7 +972,9 @@ CompositorBridgeChild::GetTexturePool(LayersBackend aBackend,
   }
 
   mTexturePools.AppendElement(
-      new TextureClientPool(aBackend, aFormat,
+      new TextureClientPool(aAllocator->GetCompositorBackendType(),
+                            aAllocator->GetMaxTextureSize(),
+                            aFormat,
                             gfx::gfxVars::TileSize(),
                             aFlags,
                             gfxPrefs::LayersTilePoolShrinkTimeout(),
@@ -980,6 +1031,7 @@ CompositorBridgeChild::AllocUnsafeShmem(size_t aSize,
                                    ipc::SharedMemory::SharedMemoryType aType,
                                    ipc::Shmem* aShmem)
 {
+  ShmemAllocated(this);
   return PCompositorBridgeChild::AllocUnsafeShmem(aSize, aType, aShmem);
 }
 
@@ -988,13 +1040,17 @@ CompositorBridgeChild::AllocShmem(size_t aSize,
                              ipc::SharedMemory::SharedMemoryType aType,
                              ipc::Shmem* aShmem)
 {
+  ShmemAllocated(this);
   return PCompositorBridgeChild::AllocShmem(aSize, aType, aShmem);
 }
 
-void
+bool
 CompositorBridgeChild::DeallocShmem(ipc::Shmem& aShmem)
 {
-    PCompositorBridgeChild::DeallocShmem(aShmem);
+  if (!mCanSend) {
+    return false;
+  }
+  return PCompositorBridgeChild::DeallocShmem(aShmem);
 }
 
 widget::PCompositorWidgetChild*
@@ -1072,6 +1128,18 @@ CompositorBridgeChild::ProcessingError(Result aCode, const char* aReason)
   if (aCode != MsgDropped) {
     gfxDevCrash(gfx::LogReason::ProcessingError) << "Processing error in CompositorBridgeChild: " << int(aCode);
   }
+}
+
+void
+CompositorBridgeChild::WillEndTransaction()
+{
+  ResetShmemCounter();
+}
+
+void
+CompositorBridgeChild::HandleFatalError(const char* aName, const char* aMsg) const
+{
+  dom::ContentChild::FatalErrorIfNotUsingGPUProcess(aName, aMsg, OtherPid());
 }
 
 } // namespace layers

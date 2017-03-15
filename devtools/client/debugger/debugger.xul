@@ -189,31 +189,15 @@
     <key id="resumeKey"
          keycode="&debuggerUI.stepping.resume1;"
          command="resumeCommand"/>
-    <key id="resumeKey2"
-         keycode="&debuggerUI.stepping.resume2;"
-         modifiers="accel"
-         command="resumeCommand"/>
     <key id="stepOverKey"
          keycode="&debuggerUI.stepping.stepOver1;"
-         command="stepOverCommand"/>
-    <key id="stepOverKey2"
-         keycode="&debuggerUI.stepping.stepOver2;"
-         modifiers="accel"
          command="stepOverCommand"/>
     <key id="stepInKey"
          keycode="&debuggerUI.stepping.stepIn1;"
          command="stepInCommand"/>
-    <key id="stepInKey2"
-         keycode="&debuggerUI.stepping.stepIn2;"
-         modifiers="accel"
-         command="stepInCommand"/>
     <key id="stepOutKey"
          keycode="&debuggerUI.stepping.stepOut1;"
          modifiers="shift"
-         command="stepOutCommand"/>
-    <key id="stepOutKey2"
-         keycode="&debuggerUI.stepping.stepOut2;"
-         modifiers="accel shift"
          command="stepOutCommand"/>
     <key id="fileSearchKey"
          key="&debuggerUI.searchFile.key;"
@@ -357,11 +341,6 @@
                                class="devtools-toolbarbutton"
                                tooltiptext="&debuggerUI.sources.toggleBreakpoints;"
                                command="toggleBreakpointsCommand"/>
-                <toolbarbutton id="toggle-promise-debugger"
-                               class="devtools-toolbarbutton"
-                               tooltiptext="&debuggerUI.sources.togglePromiseDebugger;"
-                               command="togglePromiseDebuggerCommand"
-                               hidden="true"/>
               </toolbar>
             </tabpanel>
             <tabpanel id="callstack-tabpanel">
@@ -419,12 +398,6 @@
             </tabpanels>
           </tabbox>
         </hbox>
-        <splitter id="editor-and-promise-splitter"
-                class="devtools-horizontal-splitter"/>
-        <vbox id="promise-debugger-pane"
-              flex="1"
-              hidden="true">
-        </vbox>
       </vbox>
       <splitter id="vertical-layout-splitter"
                 class="devtools-horizontal-splitter"/>

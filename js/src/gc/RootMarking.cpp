@@ -154,24 +154,6 @@ AutoGCRooter::trace(JSTracer* trc)
         frontend::MarkParser(trc, this);
         return;
 
-      case VALVECTOR: {
-        AutoValueVector::VectorImpl& vector = static_cast<AutoValueVector*>(this)->vector;
-        TraceRootRange(trc, vector.length(), vector.begin(), "JS::AutoValueVector.vector");
-        return;
-      }
-
-      case IDVECTOR: {
-        AutoIdVector::VectorImpl& vector = static_cast<AutoIdVector*>(this)->vector;
-        TraceRootRange(trc, vector.length(), vector.begin(), "JS::AutoIdVector.vector");
-        return;
-      }
-
-      case OBJVECTOR: {
-        AutoObjectVector::VectorImpl& vector = static_cast<AutoObjectVector*>(this)->vector;
-        TraceRootRange(trc, vector.length(), vector.begin(), "JS::AutoObjectVector.vector");
-        return;
-      }
-
       case VALARRAY: {
         /*
          * We don't know the template size parameter, but we can safely treat it
@@ -366,6 +348,9 @@ js::gc::GCRuntime::traceRuntimeCommon(JSTracer* trc, TraceOrMarkRuntime traceOrM
 
     // Trace the self-hosting global compartment.
     rt->markSelfHostingGlobal(trc);
+
+    // Trace the shared Intl data.
+    rt->traceSharedIntlData(trc);
 
     // Trace anything in the single context. Note that this is actually the
     // same struct as the JSRuntime, but is still split for historical reasons.

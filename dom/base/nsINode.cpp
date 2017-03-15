@@ -152,6 +152,9 @@ nsINode::~nsINode()
 {
   MOZ_ASSERT(!HasSlots(), "nsNodeUtils::LastRelease was not called?");
   MOZ_ASSERT(mSubtreeRoot == this, "Didn't restore state properly?");
+#ifdef MOZ_STYLO
+  ClearServoData();
+#endif
 }
 
 void*
@@ -687,18 +690,19 @@ nsINode::Normalize()
   }
 }
 
-void
+nsresult
 nsINode::GetBaseURI(nsAString &aURI) const
 {
   nsCOMPtr<nsIURI> baseURI = GetBaseURI();
 
   nsAutoCString spec;
   if (baseURI) {
-    // XXX: should handle GetSpec() failure properly. See bug 1301254.
-    Unused << baseURI->GetSpec(spec);
+    nsresult rv = baseURI->GetSpec(spec);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
 
   CopyUTF8toUTF16(spec, aURI);
+  return NS_OK;
 }
 
 void
@@ -1401,6 +1405,15 @@ nsINode::UnoptimizableCCNode() const
          // For strange cases like xbl:content/xbl:children
          (IsElement() &&
           AsElement()->IsInNamespace(kNameSpaceID_XBL));
+}
+
+void
+nsINode::ClearServoData() {
+#ifdef MOZ_STYLO
+  Servo_Node_ClearNodeData(this);
+#else
+  MOZ_CRASH("Accessing servo node data in non-stylo build");
+#endif
 }
 
 /* static */

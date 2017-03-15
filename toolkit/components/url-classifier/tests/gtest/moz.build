@@ -9,12 +9,19 @@ LOCAL_INCLUDES += [
 ]
 
 UNIFIED_SOURCES += [
+    'Common.cpp',
     'TestChunkSet.cpp',
+    'TestFailUpdate.cpp',
+    'TestLookupCacheV4.cpp',
     'TestPerProviderDirectory.cpp',
+    'TestProtocolParser.cpp',
+    'TestRiceDeltaDecoder.cpp',
     'TestSafebrowsingHash.cpp',
     'TestSafeBrowsingProtobuf.cpp',
     'TestTable.cpp',
+    'TestUrlClassifierTableUpdateV4.cpp',
     'TestUrlClassifierUtils.cpp',
+    'TestVariableLengthPrefixSet.cpp',
 ]
 
 FINAL_LIBRARY = 'xul-gtest'

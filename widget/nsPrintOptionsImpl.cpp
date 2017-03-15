@@ -8,18 +8,19 @@
 #include "mozilla/embedding/PPrinting.h"
 #include "mozilla/layout/RemotePrintJobChild.h"
 #include "mozilla/RefPtr.h"
+#include "nsIPrinterEnumerator.h"
 #include "nsPrintingProxy.h"
 #include "nsReadableUtils.h"
 #include "nsPrintSettingsImpl.h"
 #include "nsIPrintSession.h"
 #include "nsServiceManagerUtils.h"
 
+#include "nsArray.h"
 #include "nsIDOMWindow.h"
 #include "nsIDialogParamBlock.h"
 #include "nsXPCOM.h"
 #include "nsISupportsPrimitives.h"
 #include "nsIWindowWatcher.h"
-#include "nsISupportsArray.h"
 #include "prprf.h"
 
 #include "nsIStringEnumerator.h"
@@ -34,7 +35,7 @@ using namespace mozilla::embedding;
 
 typedef mozilla::layout::RemotePrintJobChild RemotePrintJobChild;
 
-NS_IMPL_ISUPPORTS(nsPrintOptions, nsIPrintOptions, nsIPrintSettingsService)
+NS_IMPL_ISUPPORTS(nsPrintOptions, nsIPrintSettingsService)
 
 // Pref Constants
 static const char kMarginTop[]       = "print_margin_top";
@@ -329,48 +330,6 @@ nsPrintOptions::DeserializeToPrintSettings(const PrintData& data,
   return NS_OK;
 }
 
-
-NS_IMETHODIMP
-nsPrintOptions::ShowPrintSetupDialog(nsIPrintSettings *aPS)
-{
-  NS_ENSURE_ARG_POINTER(aPS);
-  nsresult rv;
-
-  // create a nsISupportsArray of the parameters
-  // being passed to the window
-  nsCOMPtr<nsISupportsArray> array;
-  rv = NS_NewISupportsArray(getter_AddRefs(array));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsISupports> psSupports = do_QueryInterface(aPS);
-  NS_ASSERTION(psSupports, "PrintSettings must be a supports");
-  array->AppendElement(psSupports);
-
-  nsCOMPtr<nsIDialogParamBlock> ioParamBlock =
-      do_CreateInstance(NS_DIALOGPARAMBLOCK_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  ioParamBlock->SetInt(0, 0);
-
-  nsCOMPtr<nsISupports> blkSupps = do_QueryInterface(ioParamBlock);
-  NS_ASSERTION(blkSupps, "IOBlk must be a supports");
-  array->AppendElement(blkSupps);
-
-  nsCOMPtr<nsIWindowWatcher> wwatch =
-      do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<mozIDOMWindowProxy> parent;
-  wwatch->GetActiveWindow(getter_AddRefs(parent));
-  // null |parent| is non-fatal
-
-  nsCOMPtr<mozIDOMWindowProxy> newWindow;
-
-  return wwatch->OpenWindow(parent,
-                            "chrome://global/content/printPageSetup.xul",
-                            "_blank","chrome,modal,centerscreen", array,
-                            getter_AddRefs(newWindow));
-}
 
 /** ---------------------------------------------------
  *  Helper function - Creates the "prefix" for the pref
@@ -1071,6 +1030,12 @@ NS_IMETHODIMP
 nsPrintOptions::InitPrintSettingsFromPrinter(const char16_t *aPrinterName,
                                              nsIPrintSettings *aPrintSettings)
 {
+  // Don't get print settings from the printer in the child when printing via
+  // parent, these will be retrieved in the parent later in the print process.
+  if (XRE_IsContentProcess() && Preferences::GetBool("print.print_via_parent")) {
+    return NS_OK;
+  }
+
   NS_ENSURE_ARG_POINTER(aPrintSettings);
   NS_ENSURE_ARG_POINTER(aPrinterName);
 

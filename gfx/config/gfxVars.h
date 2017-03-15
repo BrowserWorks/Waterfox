@@ -29,6 +29,9 @@ class gfxVarReceiver;
   _(UseXRender,                 bool,             false)                \
   _(OffscreenFormat,            gfxImageFormat,   mozilla::gfx::SurfaceFormat::X8R8G8B8_UINT32) \
   _(RequiresAcceleratedGLContextForCompositorOGL, bool, false)          \
+  _(CanUseHardwareVideoDecoding, bool,            false)                \
+  _(PDMWMFDisableD3D11Dlls,     nsCString,        nsCString())          \
+  _(PDMWMFDisableD3D9Dlls,      nsCString,        nsCString())          \
 
   /* Add new entries above this line. */
 

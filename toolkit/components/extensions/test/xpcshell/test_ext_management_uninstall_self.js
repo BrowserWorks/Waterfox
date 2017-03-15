@@ -19,7 +19,7 @@ const manifest = {
   version: "1.0",
 };
 
-const waitForUninstalled = new Promise(resolve => {
+const waitForUninstalled = () => new Promise(resolve => {
   const listener = {
     onUninstalled: (addon) => {
       equal(addon.id, id, "The expected add-on has been uninstalled");
@@ -67,7 +67,7 @@ add_task(function* test_management_uninstall_no_prompt() {
   let addon = yield promiseAddonByID(id);
   notEqual(addon, null, "Add-on is installed");
   extension.sendMessage("uninstall");
-  yield waitForUninstalled;
+  yield waitForUninstalled();
   yield extension.markUnloaded();
   Services.obs.notifyObservers(extension.extension.file, "flush-cache-entry", null);
 });
@@ -91,7 +91,7 @@ add_task(function* test_management_uninstall_prompt_uninstall() {
   let addon = yield promiseAddonByID(id);
   notEqual(addon, null, "Add-on is installed");
   extension.sendMessage("uninstall");
-  yield waitForUninstalled;
+  yield waitForUninstalled();
   yield extension.markUnloaded();
 
   // Test localization strings
@@ -107,15 +107,13 @@ add_task(function* test_management_uninstall_prompt_keep() {
   promptService._response = 1;
 
   function background() {
-    browser.test.onMessage.addListener(msg => {
-      browser.management.uninstallSelf({showConfirmDialog: true}).then(() => {
-        browser.test.fail("uninstallSelf rejects when user declines uninstall");
-      }, error => {
-        browser.test.assertEq("User cancelled uninstall of extension",
-                              error.message,
-                              "Expected rejection when user declines uninstall");
-        browser.test.sendMessage("uninstall-rejected");
-      });
+    browser.test.onMessage.addListener(async msg => {
+      await browser.test.assertRejects(
+        browser.management.uninstallSelf({showConfirmDialog: true}),
+        "User cancelled uninstall of extension",
+        "Expected rejection when user declines uninstall");
+
+      browser.test.sendMessage("uninstall-rejected");
     });
   }
 

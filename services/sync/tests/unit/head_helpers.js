@@ -76,6 +76,24 @@ function loadAddonTestFunctions() {
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 }
 
+function webExtensionsTestPath(path) {
+  if (path[0] != "/") {
+    throw Error("Path must begin with '/': " + path);
+  }
+
+  return "../../../../toolkit/components/extensions/test/xpcshell" + path;
+}
+
+/**
+ * Loads the WebExtension test functions by importing its test file.
+ */
+function loadWebExtensionTestFunctions() {
+  const path = webExtensionsTestPath("/head_sync.js");
+  let file = do_get_file(path);
+  let uri = Services.io.newFileURI(file);
+  Services.scriptloader.loadSubScript(uri.spec, gGlobalScope);
+}
+
 function getAddonInstall(name) {
   let f = do_get_file(ExtensionsTestPath("/addons/" + name + ".xpi"));
   let cb = Async.makeSyncCallback();
@@ -263,6 +281,11 @@ function assert_valid_ping(record) {
     equal(record.version, 1);
     record.syncs.forEach(p => {
       lessOrEqual(p.when, Date.now());
+      if (p.devices) {
+        ok(!p.devices.some(device => device.id == p.deviceID));
+        equal(new Set(p.devices.map(device => device.id)).size,
+              p.devices.length, "Duplicate device ids in ping devices list");
+      }
     });
   }
 }
@@ -278,6 +301,10 @@ function assert_success_ping(ping) {
     for (let e of record.engines) {
       ok(!e.failureReason);
       equal(undefined, e.status);
+      if (e.validation) {
+        equal(undefined, e.validation.problems);
+        equal(undefined, e.validation.failureReason);
+      }
       if (e.outgoing) {
         for (let o of e.outgoing) {
           equal(undefined, o.failed);

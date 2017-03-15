@@ -101,11 +101,33 @@ ToolbarView.prototype = {
    */
   _addCommands: function () {
     XULUtils.addCommands(document.getElementById("debuggerCommands"), {
-      resumeCommand: () => this._onResumePressed(),
-      stepOverCommand: () => this._onStepOverPressed(),
-      stepInCommand: () => this._onStepInPressed(),
-      stepOutCommand: () => this._onStepOutPressed()
+      resumeCommand: this.getCommandHandler("resumeCommand"),
+      stepOverCommand: this.getCommandHandler("stepOverCommand"),
+      stepInCommand: this.getCommandHandler("stepInCommand"),
+      stepOutCommand: this.getCommandHandler("stepOutCommand")
     });
+  },
+
+  /**
+   * Retrieve the callback associated with the provided  debugger command.
+   *
+   * @param {String} command
+   *        The debugger command id.
+   * @return {Function} the corresponding callback.
+   */
+  getCommandHandler: function (command) {
+    switch (command) {
+      case "resumeCommand":
+        return () => this._onResumePressed();
+      case "stepOverCommand":
+        return () => this._onStepOverPressed();
+      case "stepInCommand":
+        return () => this._onStepInPressed();
+      case "stepOutCommand":
+        return () => this._onStepOutPressed();
+      default:
+        return () => {};
+    }
   },
 
   /**
@@ -118,7 +140,7 @@ ToolbarView.prototype = {
   showResumeWarning: function (aPausedUrl) {
     let label = L10N.getFormatStr("resumptionOrderPanelTitle", aPausedUrl);
     let defaultStyle = "default-tooltip-simple-text-colors";
-    this._resumeOrderTooltip.setTextContent({ messages: [label], isAlertTooltip: true });
+    this._resumeOrderTooltip.setTextContent({ messages: [label] });
     this._resumeOrderTooltip.show(this._resumeButton);
   },
 

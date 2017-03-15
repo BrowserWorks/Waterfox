@@ -55,6 +55,8 @@ DragEvent::InitDragEvent(const nsAString& aType,
                          EventTarget* aRelatedTarget,
                          DataTransfer* aDataTransfer)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   MouseEvent::InitMouseEvent(aType, aCanBubble, aCancelable,
                              aView, aDetail, aScreenX, aScreenY,
                              aClientX, aClientY, aCtrlKey, aAltKey,
@@ -111,6 +113,7 @@ DragEvent::Constructor(const GlobalObject& aGlobal,
                    aParam.mDataTransfer);
   e->InitializeExtraMouseEventDictionaryMembers(aParam);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 

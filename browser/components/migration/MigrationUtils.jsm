@@ -28,6 +28,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
                                   "resource://gre/modules/PromiseUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ResponsivenessMonitor",
+                                  "resource://gre/modules/ResponsivenessMonitor.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Sqlite",
                                   "resource://gre/modules/Sqlite.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
@@ -148,7 +150,7 @@ this.MigratorPrototype = {
    *        aProfile is a value returned by the sourceProfiles getter (see
    *        above).
    */
-  getResources: function MP_getResources(aProfile) {
+  getResources: function MP_getResources(/* aProfile */) {
     throw new Error("getResources must be overridden");
   },
 
@@ -209,10 +211,10 @@ this.MigratorPrototype = {
       return [];
     }
     let types = resources.map(r => r.type);
-    return types.reduce((a, b) => a |= b, 0);
+    return types.reduce((a, b) => { a |= b; return a }, 0);
   },
 
-  getKey: function MP_getKey() {
+  getBrowserKey: function MP_getBrowserKey() {
     return this.contractID.match(/\=([^\=]+)$/)[1];
   },
 
@@ -231,46 +233,70 @@ this.MigratorPrototype = {
       resources = resources.filter(r => aItems & r.type);
 
     // Used to periodically give back control to the main-thread loop.
-    let unblockMainThread = function () {
+    let unblockMainThread = function() {
       return new Promise(resolve => {
         Services.tm.mainThread.dispatch(resolve, Ci.nsIThread.DISPATCH_NORMAL);
       });
     };
 
-    let getHistogramForResourceType = resourceType => {
+    let getHistogramIdForResourceType = (resourceType, template) => {
       if (resourceType == MigrationUtils.resourceTypes.HISTORY) {
-        return "FX_MIGRATION_HISTORY_IMPORT_MS";
+        return template.replace("*", "HISTORY");
       }
       if (resourceType == MigrationUtils.resourceTypes.BOOKMARKS) {
-        return "FX_MIGRATION_BOOKMARKS_IMPORT_MS";
+        return template.replace("*", "BOOKMARKS");
       }
       if (resourceType == MigrationUtils.resourceTypes.PASSWORDS) {
-        return "FX_MIGRATION_LOGINS_IMPORT_MS";
+        return template.replace("*", "LOGINS");
       }
       return null;
     };
-    let maybeStartTelemetryStopwatch = (resourceType, resource) => {
-      let histogram = getHistogramForResourceType(resourceType);
-      if (histogram) {
-        TelemetryStopwatch.startKeyed(histogram, this.getKey(), resource);
+
+    let browserKey = this.getBrowserKey();
+
+    let maybeStartTelemetryStopwatch = resourceType => {
+      let histogramId = getHistogramIdForResourceType(resourceType, "FX_MIGRATION_*_IMPORT_MS");
+      if (histogramId) {
+        TelemetryStopwatch.startKeyed(histogramId, browserKey);
       }
+      return histogramId;
     };
-    let maybeStopTelemetryStopwatch = (resourceType, resource) => {
-      let histogram = getHistogramForResourceType(resourceType);
-      if (histogram) {
-        TelemetryStopwatch.finishKeyed(histogram, this.getKey(), resource);
+
+    let maybeStartResponsivenessMonitor = resourceType => {
+      let responsivenessMonitor;
+      let responsivenessHistogramId =
+        getHistogramIdForResourceType(resourceType, "FX_MIGRATION_*_JANK_MS");
+      if (responsivenessHistogramId) {
+        responsivenessMonitor = new ResponsivenessMonitor();
+      }
+      return {responsivenessMonitor, responsivenessHistogramId};
+    };
+
+    let maybeFinishResponsivenessMonitor = (responsivenessMonitor, histogramId) => {
+      if (responsivenessMonitor) {
+        let accumulatedDelay = responsivenessMonitor.finish();
+        if (histogramId) {
+          try {
+            Services.telemetry.getKeyedHistogramById(histogramId)
+                    .add(browserKey, accumulatedDelay);
+          } catch (ex) {
+            Cu.reportError(histogramId + ": " + ex);
+          }
+        }
       }
     };
 
     let collectQuantityTelemetry = () => {
-      try {
-        for (let resourceType of Object.keys(MigrationUtils._importQuantities)) {
-          let histogramId =
-            "FX_MIGRATION_" + resourceType.toUpperCase() + "_QUANTITY";
-          let histogram = Services.telemetry.getKeyedHistogramById(histogramId);
-          histogram.add(this.getKey(), MigrationUtils._importQuantities[resourceType]);
+      for (let resourceType of Object.keys(MigrationUtils._importQuantities)) {
+        let histogramId =
+          "FX_MIGRATION_" + resourceType.toUpperCase() + "_QUANTITY";
+        try {
+          Services.telemetry.getKeyedHistogramById(histogramId)
+                  .add(browserKey, MigrationUtils._importQuantities[resourceType]);
+        } catch (ex) {
+          Cu.reportError(histogramId + ": " + ex);
         }
-      } catch (ex) { /* Telemetry is exception-happy */ }
+      }
     };
 
     // Called either directly or through the bookmarks import callback.
@@ -280,7 +306,7 @@ this.MigratorPrototype = {
         if (!resourcesGroupedByItems.has(resource.type)) {
           resourcesGroupedByItems.set(resource.type, new Set());
         }
-        resourcesGroupedByItems.get(resource.type).add(resource)
+        resourcesGroupedByItems.get(resource.type).add(resource);
       });
 
       if (resourcesGroupedByItems.size == 0)
@@ -288,47 +314,51 @@ this.MigratorPrototype = {
 
       let notify = function(aMsg, aItemType) {
         Services.obs.notifyObservers(null, aMsg, aItemType);
-      }
+      };
 
       for (let resourceType of Object.keys(MigrationUtils._importQuantities)) {
         MigrationUtils._importQuantities[resourceType] = 0;
       }
       notify("Migration:Started");
-      for (let [key, value] of resourcesGroupedByItems) {
-        // Workaround bug 449811.
-        let migrationType = key, itemResources = value;
-
+      for (let [migrationType, itemResources] of resourcesGroupedByItems) {
         notify("Migration:ItemBeforeMigrate", migrationType);
+
+        let stopwatchHistogramId = maybeStartTelemetryStopwatch(migrationType);
+
+        let {responsivenessMonitor, responsivenessHistogramId} =
+          maybeStartResponsivenessMonitor(migrationType);
 
         let itemSuccess = false;
         for (let res of itemResources) {
-          // Workaround bug 449811.
-          let resource = res;
-          maybeStartTelemetryStopwatch(migrationType, resource);
           let completeDeferred = PromiseUtils.defer();
           let resourceDone = function(aSuccess) {
-            maybeStopTelemetryStopwatch(migrationType, resource);
-            itemResources.delete(resource);
+            itemResources.delete(res);
             itemSuccess |= aSuccess;
             if (itemResources.size == 0) {
               notify(itemSuccess ?
                      "Migration:ItemAfterMigrate" : "Migration:ItemError",
                      migrationType);
               resourcesGroupedByItems.delete(migrationType);
+
+              if (stopwatchHistogramId) {
+                TelemetryStopwatch.finishKeyed(stopwatchHistogramId, browserKey);
+              }
+
+              maybeFinishResponsivenessMonitor(responsivenessMonitor, responsivenessHistogramId);
+
               if (resourcesGroupedByItems.size == 0) {
                 collectQuantityTelemetry();
                 notify("Migration:Ended");
               }
             }
             completeDeferred.resolve();
-          }
+          };
 
           // If migrate throws, an error occurred, and the callback
           // (itemMayBeDone) might haven't been called.
           try {
-            resource.migrate(resourceDone);
-          }
-          catch (ex) {
+            res.migrate(resourceDone);
+          } catch (ex) {
             Cu.reportError(ex);
             resourceDone(false);
           }
@@ -411,7 +441,7 @@ this.MigratorPrototype = {
     return exists;
   },
 
-  /*** PRIVATE STUFF - DO NOT OVERRIDE ***/
+  /** * PRIVATE STUFF - DO NOT OVERRIDE ***/
   _getMaybeCachedResources: function PMB__getMaybeCachedResources(aProfile) {
     let profileKey = aProfile ? aProfile.id : "";
     if (this._resourcesByProfile) {
@@ -421,7 +451,8 @@ this.MigratorPrototype = {
     else {
       this._resourcesByProfile = { };
     }
-    return this._resourcesByProfile[profileKey] = this.getResources(aProfile);
+    this._resourcesByProfile[profileKey] = this.getResources(aProfile);
+    return this._resourcesByProfile[profileKey];
   }
 };
 
@@ -486,7 +517,7 @@ this.MigrationUtils = Object.freeze({
       // blocks, because if aCallback throws, we may end up calling aCallback
       // twice.
       aCallback(success);
-    }
+    };
   },
 
   /**
@@ -635,7 +666,10 @@ this.MigrationUtils = Object.freeze({
   },
 
   get _migrators() {
-    return gMigrators ? gMigrators : gMigrators = new Map();
+    if (!gMigrators) {
+      gMigrators = new Map();
+    }
+    return gMigrators;
   },
 
   /*
@@ -693,6 +727,7 @@ this.MigrationUtils = Object.freeze({
       "Microsoft Edge":                    "edge",
       "Safari":                            "safari",
       "Firefox":                           "firefox",
+      "Nightly":                           "firefox",
       "Google Chrome":                     "chrome",  // Windows, Linux
       "Chrome":                            "chrome",  // OS X
       "Chromium":                          "chromium", // Windows, OS X
@@ -700,14 +735,17 @@ this.MigrationUtils = Object.freeze({
       "360\u5b89\u5168\u6d4f\u89c8\u5668": "360se",
     };
 
-    let browserDesc = "";
     let key = "";
     try {
       let browserDesc =
-        Cc["@mozilla.org/uriloader/external-protocol-service;1"].
-        getService(Ci.nsIExternalProtocolService).
-        getApplicationDescription("http");
+        Cc["@mozilla.org/uriloader/external-protocol-service;1"]
+          .getService(Ci.nsIExternalProtocolService)
+          .getApplicationDescription("http");
       key = APP_DESC_TO_KEY[browserDesc] || "";
+      // Handle devedition, as well as "FirefoxNightly" on OS X.
+      if (!key && browserDesc.startsWith("Firefox")) {
+        key = "firefox";
+      }
     }
     catch (ex) {
       Cu.reportError("Could not detect default browser: " + ex);
@@ -828,6 +866,8 @@ this.MigrationUtils = Object.freeze({
                 comtaminatedVal = null;
                 break;
               }
+              /* intentionally falling through to error out here for
+                 non-null/undefined things: */
             default:
               throw new Error("Unexpected parameter type " + (typeof item) + ": " + item);
           }

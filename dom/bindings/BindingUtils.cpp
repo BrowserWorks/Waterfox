@@ -51,6 +51,7 @@
 #include "mozilla/dom/WebIDLGlobalNameHash.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerScope.h"
+#include "mozilla/dom/XrayExpandoClass.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "nsDOMClassInfo.h"
 #include "ipc/ErrorIPCUtils.h"
@@ -92,7 +93,7 @@ binding_detail::ThrowErrorMessage(JSContext* aCx, const unsigned aErrorNumber, .
 {
   va_list ap;
   va_start(ap, aErrorNumber);
-  JS_ReportErrorNumberVA(aCx, GetErrorMessage, nullptr, aErrorNumber, ap);
+  JS_ReportErrorNumberUTF8VA(aCx, GetErrorMessage, nullptr, aErrorNumber, ap);
   va_end(ap);
 }
 
@@ -1117,7 +1118,7 @@ QueryInterface(JSContext* cx, unsigned argc, JS::Value* vp)
   JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrap(origObj,
                                                   /* stopAtWindowProxy = */ false));
   if (!obj) {
-      JS_ReportError(cx, "Permission denied to access object");
+      JS_ReportErrorASCII(cx, "Permission denied to access object");
       return false;
   }
 
@@ -1892,7 +1893,54 @@ XrayOwnPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                    obj, flags, props);
 }
 
+const JSClass*
+XrayGetExpandoClass(JSContext* cx, JS::Handle<JSObject*> obj)
+{
+  DOMObjectType type;
+  const NativePropertyHooks* nativePropertyHooks =
+    GetNativePropertyHooks(cx, obj, type);
+  if (!IsInstance(type)) {
+    // Non-instances don't need any special expando classes.
+    return &DefaultXrayExpandoObjectClass;
+  }
+
+  return nativePropertyHooks->mXrayExpandoClass;
+}
+
+bool
+XrayDeleteNamedProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
+                        JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
+                        JS::ObjectOpResult& opresult)
+{
+  DOMObjectType type;
+  const NativePropertyHooks* nativePropertyHooks =
+    GetNativePropertyHooks(cx, obj, type);
+  if (!IsInstance(type) || !nativePropertyHooks->mDeleteNamedProperty) {
+    return opresult.succeed();
+  }
+  return nativePropertyHooks->mDeleteNamedProperty(cx, wrapper, obj, id,
+                                                   opresult);
+}
+
+JSObject*
+GetCachedSlotStorageObjectSlow(JSContext* cx, JS::Handle<JSObject*> obj,
+                               bool* isXray)
+{
+  if (!xpc::WrapperFactory::IsXrayWrapper(obj)) {
+    JSObject* retval = js::UncheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
+    MOZ_ASSERT(IsDOMObject(retval));
+    *isXray = false;
+    return retval;
+  }
+
+  *isXray = true;
+  return xpc::EnsureXrayExpandoObject(cx, obj);;
+}
+
+DEFINE_XRAY_EXPANDO_CLASS(, DefaultXrayExpandoObjectClass, 0);
+
 NativePropertyHooks sEmptyNativePropertyHooks = {
+  nullptr,
   nullptr,
   nullptr,
   {
@@ -2252,6 +2300,19 @@ GlobalObject::GetAsSupports() const
 
   Throw(mCx, NS_ERROR_XPC_BAD_CONVERT_JS);
   return nullptr;
+}
+
+nsIPrincipal*
+GlobalObject::GetSubjectPrincipal() const
+{
+  if (!NS_IsMainThread()) {
+    return nullptr;
+  }
+
+  JSCompartment* compartment = js::GetContextCompartment(mCx);
+  MOZ_ASSERT(compartment);
+  JSPrincipals* principals = JS_GetCompartmentPrincipals(compartment);
+  return nsJSPrincipals::get(principals);
 }
 
 static bool
@@ -2645,7 +2706,8 @@ IsNonExposedGlobal(JSContext* aCx, JSObject* aGlobal,
                 GlobalNames::DedicatedWorkerGlobalScope |
                 GlobalNames::SharedWorkerGlobalScope |
                 GlobalNames::ServiceWorkerGlobalScope |
-                GlobalNames::WorkerDebuggerGlobalScope)) == 0,
+                GlobalNames::WorkerDebuggerGlobalScope |
+                GlobalNames::WorkletGlobalScope)) == 0,
              "Unknown non-exposed global type");
 
   const char* name = js::GetObjectClass(aGlobal)->name;
@@ -2680,14 +2742,19 @@ IsNonExposedGlobal(JSContext* aCx, JSObject* aGlobal,
     return true;
   }
 
+  if ((aNonExposedGlobals & GlobalNames::WorkletGlobalScope) &&
+      !strcmp(name, "WorkletGlobalScope")) {
+    return true;
+  }
+
   return false;
 }
 
 void
 HandlePrerenderingViolation(nsPIDOMWindowInner* aWindow)
 {
-  // Suspend the window and its workers, and its children too.
-  aWindow->SuspendTimeouts();
+  // Freeze the window and its workers, and its children too.
+  aWindow->Freeze();
 
   // Suspend event handling on the document
   nsCOMPtr<nsIDocument> doc = aWindow->GetExtantDoc();
@@ -3061,6 +3128,13 @@ UnwrapArgImpl(JS::Handle<JSObject*> src,
     return NS_OK;
   }
 
+  // Only allow XPCWrappedJS stuff in system code.  Ideally we would remove this
+  // even there, but that involves converting some things to WebIDL callback
+  // interfaces and making some other things builtinclass...
+  if (!nsContentUtils::IsCallerChrome()) {
+    return NS_ERROR_XPC_BAD_CONVERT_JS;
+  }
+
   RefPtr<nsXPCWrappedJS> wrappedJS;
   nsresult rv = nsXPCWrappedJS::GetNewOrUsed(src, iid, getter_AddRefs(wrappedJS));
   if (NS_FAILED(rv) || !wrappedJS) {
@@ -3328,15 +3402,12 @@ namespace {
 class DeprecationWarningRunnable final : public WorkerProxyToMainThreadRunnable
 {
   nsIDocument::DeprecatedOperations mOperation;
-  nsString mErrorText;
 
 public:
   DeprecationWarningRunnable(WorkerPrivate* aWorkerPrivate,
-                             nsIDocument::DeprecatedOperations aOperation,
-                             const nsAString& aErrorText)
+                             nsIDocument::DeprecatedOperations aOperation)
     : WorkerProxyToMainThreadRunnable(aWorkerPrivate)
     , mOperation(aOperation)
-    , mErrorText(aErrorText)
   {
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
@@ -3356,11 +3427,7 @@ private:
 
     nsPIDOMWindowInner* window = wp->GetWindow();
     if (window && window->GetExtantDoc()) {
-      if (mErrorText.IsEmpty()) {
-        window->GetExtantDoc()->WarnOnceAbout(mOperation);
-      } else {
-        window->GetExtantDoc()->WarnOnceAbout(mOperation, mErrorText);
-      }
+      window->GetExtantDoc()->WarnOnceAbout(mOperation);
     }
   }
 
@@ -3373,8 +3440,7 @@ private:
 
 void
 DeprecationWarning(JSContext* aCx, JSObject* aObject,
-                   nsIDocument::DeprecatedOperations aOperation,
-                   const nsAString& aErrorText /* = EmptyString() */)
+                   nsIDocument::DeprecatedOperations aOperation)
 {
   GlobalObject global(aCx, aObject);
   if (global.Failed()) {
@@ -3385,11 +3451,7 @@ DeprecationWarning(JSContext* aCx, JSObject* aObject,
   if (NS_IsMainThread()) {
     nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(global.GetAsSupports());
     if (window && window->GetExtantDoc()) {
-      if (aErrorText.IsEmpty()) {
-        window->GetExtantDoc()->WarnOnceAbout(aOperation);
-      } else {
-        window->GetExtantDoc()->WarnOnceAbout(aOperation, aErrorText);
-      }
+      window->GetExtantDoc()->WarnOnceAbout(aOperation);
     }
 
     return;
@@ -3401,7 +3463,7 @@ DeprecationWarning(JSContext* aCx, JSObject* aObject,
   }
 
   RefPtr<DeprecationWarningRunnable> runnable =
-    new DeprecationWarningRunnable(workerPrivate, aOperation, aErrorText);
+    new DeprecationWarningRunnable(workerPrivate, aOperation);
   runnable->Dispatch();
 }
 

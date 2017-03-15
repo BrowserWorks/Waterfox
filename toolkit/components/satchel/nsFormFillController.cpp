@@ -39,6 +39,7 @@
 #include "nsILoadContext.h"
 #include "nsIFrame.h"
 #include "nsIScriptSecurityManager.h"
+#include "nsFocusManager.h"
 
 using namespace mozilla::dom;
 
@@ -68,6 +69,7 @@ nsFormFillController::nsFormFillController() :
   mTimeout(50),
   mMinResultsForPopup(1),
   mMaxRows(0),
+  mContextMenuFiredBeforeFocus(false),
   mDisableAutoComplete(false),
   mCompleteDefaultIndex(false),
   mCompleteSelectedIndex(false),
@@ -216,7 +218,7 @@ void
 nsFormFillController::MaybeRemoveMutationObserver(nsINode* aNode)
 {
   // Nodes being tracked in mPwmgrInputs will have their observers removed when
-  // they stop being tracked. 
+  // they stop being tracked.
   if (!mPwmgrInputs.Get(aNode)) {
     aNode->RemoveMutationObserver(this);
   }
@@ -270,8 +272,25 @@ nsFormFillController::MarkAsLoginManagerField(nsIDOMHTMLInputElement *aInput)
    */
   nsCOMPtr<nsINode> node = do_QueryInterface(aInput);
   NS_ENSURE_STATE(node);
+
+  // If the field was already marked, we don't want to show the popup again.
+  if (mPwmgrInputs.Get(node)) {
+    return NS_OK;
+  }
+
   mPwmgrInputs.Put(node, true);
   node->AddMutationObserverUnlessExists(this);
+
+  nsFocusManager *fm = nsFocusManager::GetFocusManager();
+  if (fm) {
+    nsCOMPtr<nsIContent> focusedContent = fm->GetFocusedContent();
+    if (SameCOMIdentity(focusedContent, node)) {
+      nsCOMPtr<nsIDOMHTMLInputElement> input = do_QueryInterface(node);
+      if (!mFocusedInput) {
+        MaybeStartControllingInput(input);
+      }
+    }
+  }
 
   if (!mLoginManager)
     mLoginManager = do_GetService("@mozilla.org/login-manager;1");
@@ -279,6 +298,12 @@ nsFormFillController::MarkAsLoginManagerField(nsIDOMHTMLInputElement *aInput)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsFormFillController::GetFocusedInput(nsIDOMHTMLInputElement **aInput) {
+  *aInput = mFocusedInput;
+  NS_IF_ADDREF(*aInput);
+  return NS_OK;
+}
 
 ////////////////////////////////////////////////////////////////////////
 //// nsIAutoCompleteInput
@@ -522,6 +547,13 @@ nsFormFillController::SetTextValue(const nsAString & aTextValue)
 }
 
 NS_IMETHODIMP
+nsFormFillController::SetTextValueWithReason(const nsAString & aTextValue,
+                                             uint16_t aReason)
+{
+  return SetTextValue(aTextValue);
+}
+
+NS_IMETHODIMP
 nsFormFillController::GetSelectionStart(int32_t *aSelectionStart)
 {
   if (mFocusedInput)
@@ -640,10 +672,24 @@ nsFormFillController::StartSearch(const nsAString &aSearchString, const nsAStrin
                                   nsIAutoCompleteResult *aPreviousResult, nsIAutoCompleteObserver *aListener)
 {
   nsresult rv;
+  nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(mFocusedInputNode);
 
   // If the login manager has indicated it's responsible for this field, let it
   // handle the autocomplete. Otherwise, handle with form history.
-  if (mPwmgrInputs.Get(mFocusedInputNode)) {
+  // This method is sometimes called in unit tests and from XUL without a focused node.
+  if (mFocusedInputNode && (mPwmgrInputs.Get(mFocusedInputNode) ||
+                            formControl->GetType() == NS_FORM_INPUT_PASSWORD)) {
+
+    // Handle the case where a password field is focused but
+    // MarkAsLoginManagerField wasn't called because password manager is disabled.
+    if (!mLoginManager) {
+      mLoginManager = do_GetService("@mozilla.org/login-manager;1");
+    }
+
+    if (NS_WARN_IF(!mLoginManager)) {
+      return NS_ERROR_FAILURE;
+    }
+
     // XXX aPreviousResult shouldn't ever be a historyResult type, since we're not letting
     // satchel manage the field?
     mLastListener = aListener;
@@ -847,6 +893,7 @@ nsFormFillController::HandleEvent(nsIDOMEvent* aEvent)
     return NS_OK;
   }
   if (type.EqualsLiteral("contextmenu")) {
+    mContextMenuFiredBeforeFocus = true;
     if (mFocusedPopup)
       mFocusedPopup->ClosePopup();
     return NS_OK;
@@ -893,7 +940,7 @@ nsFormFillController::MaybeStartControllingInput(nsIDOMHTMLInputElement* aInput)
     return;
 
   nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(aInput);
-  if (!formControl || !formControl->IsSingleLineTextControl(true))
+  if (!formControl || !formControl->IsSingleLineTextControl(false))
     return;
 
   bool isReadOnly = false;
@@ -908,8 +955,10 @@ nsFormFillController::MaybeStartControllingInput(nsIDOMHTMLInputElement* aInput)
   bool hasList = datalist != nullptr;
 
   bool isPwmgrInput = false;
-  if (mPwmgrInputs.Get(inputNode))
-      isPwmgrInput = true;
+  if (mPwmgrInputs.Get(inputNode) ||
+      formControl->GetType() == NS_FORM_INPUT_PASSWORD) {
+    isPwmgrInput = true;
+  }
 
   if (isPwmgrInput || hasList || autocomplete) {
     StartControllingInput(aInput);
@@ -922,6 +971,26 @@ nsFormFillController::Focus(nsIDOMEvent* aEvent)
   nsCOMPtr<nsIDOMHTMLInputElement> input = do_QueryInterface(
     aEvent->InternalDOMEvent()->GetTarget());
   MaybeStartControllingInput(input);
+
+  // Bail if we didn't start controlling the input.
+  if (!mFocusedInputNode) {
+    mContextMenuFiredBeforeFocus = false;
+    return NS_OK;
+  }
+
+#ifndef ANDROID
+  nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(mFocusedInputNode);
+  MOZ_ASSERT(formControl);
+
+  // If this focus doesn't immediately follow a contextmenu event then show
+  // the autocomplete popup for all password fields.
+  if (!mContextMenuFiredBeforeFocus
+      && formControl->GetType() == NS_FORM_INPUT_PASSWORD) {
+    ShowPopup();
+  }
+#endif
+
+  mContextMenuFiredBeforeFocus = false;
   return NS_OK;
 }
 
@@ -1054,6 +1123,12 @@ nsFormFillController::MouseDown(nsIDOMEvent* aEvent)
   if (button != 0)
     return NS_OK;
 
+  return ShowPopup();
+}
+
+NS_IMETHODIMP
+nsFormFillController::ShowPopup()
+{
   bool isOpen = false;
   GetPopupOpen(&isOpen);
   if (isOpen) {
@@ -1216,6 +1291,10 @@ nsFormFillController::StopControllingInput()
 
     mFocusedInputNode = nullptr;
     mFocusedInput = nullptr;
+  }
+
+  if (mFocusedPopup) {
+    mFocusedPopup->ClosePopup();
   }
   mFocusedPopup = nullptr;
 }

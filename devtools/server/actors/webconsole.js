@@ -551,9 +551,7 @@ WebConsoleActor.prototype =
     return this._lastConsoleInputEvaluation;
   },
 
-  // ////////////////
   // Request handlers for known packet types.
-  // ////////////////
 
   /**
    * Handler for the "startListeners" request.
@@ -890,7 +888,7 @@ WebConsoleActor.prototype =
     let evalResult = evalInfo.result;
     let helperResult = evalInfo.helperResult;
 
-    let result, errorDocURL, errorMessage, errorGrip = null;
+    let result, errorDocURL, errorMessage, errorGrip = null, frame = null;
     if (evalResult) {
       if ("return" in evalResult) {
         result = evalResult.return;
@@ -898,19 +896,52 @@ WebConsoleActor.prototype =
         result = evalResult.yield;
       } else if ("throw" in evalResult) {
         let error = evalResult.throw;
-        errorGrip = this.createValueGrip(error);
-        // XXXworkers: Calling unsafeDereference() returns an object with no
-        // toString method in workers. See Bug 1215120.
-        let unsafeDereference = error && (typeof error === "object") &&
-                                error.unsafeDereference();
-        errorMessage = unsafeDereference && unsafeDereference.toString
-          ? unsafeDereference.toString()
-          : String(error);
 
-          // It is possible that we won't have permission to unwrap an
-          // object and retrieve its errorMessageName.
+        errorGrip = this.createValueGrip(error);
+
+        errorMessage = String(error);
+        if (typeof error === "object" && error !== null) {
+          try {
+            errorMessage = DevToolsUtils.callPropertyOnObject(error, "toString");
+          } catch (e) {
+            // If the debuggee is not allowed to access the "toString" property
+            // of the error object, calling this property from the debuggee's
+            // compartment will fail. The debugger should show the error object
+            // as it is seen by the debuggee, so this behavior is correct.
+            //
+            // Unfortunately, we have at least one test that assumes calling the
+            // "toString" property of an error object will succeed if the
+            // debugger is allowed to access it, regardless of whether the
+            // debuggee is allowed to access it or not.
+            //
+            // To accomodate these tests, if calling the "toString" property
+            // from the debuggee compartment fails, we rewrap the error object
+            // in the debugger's compartment, and then call the "toString"
+            // property from there.
+            if (typeof error.unsafeDereference === "function") {
+              errorMessage = error.unsafeDereference().toString();
+            }
+          }
+        }
+
+        // It is possible that we won't have permission to unwrap an
+        // object and retrieve its errorMessageName.
         try {
           errorDocURL = ErrorDocs.GetURL(error);
+        } catch (ex) {}
+
+        try {
+          let line = error.errorLineNumber;
+          let column = error.errorColumnNumber;
+
+          if (typeof line === "number" && typeof column === "number") {
+            // Set frame only if we have line/column numbers.
+            frame = {
+              source: "debugger eval code",
+              line,
+              column
+            };
+          }
         } catch (ex) {}
       }
     }
@@ -934,6 +965,7 @@ WebConsoleActor.prototype =
       exception: errorGrip,
       exceptionMessage: this._createStringGrip(errorMessage),
       exceptionDocURL: errorDocURL,
+      frame,
       helperResult: helperResult,
     };
   },
@@ -1040,7 +1072,7 @@ WebConsoleActor.prototype =
   {
     let prefs = Object.create(null);
     for (let key of aRequest.preferences) {
-      prefs[key] = !!this._prefs[key];
+      prefs[key] = this._prefs[key];
     }
     return { preferences: prefs };
   },
@@ -1074,9 +1106,7 @@ WebConsoleActor.prototype =
     return { updated: Object.keys(aRequest.preferences) };
   },
 
-  // ////////////////
   // End of request handlers.
-  // ////////////////
 
   /**
    * Create an object with the API we expose to the Web Console during
@@ -1188,6 +1218,8 @@ WebConsoleActor.prototype =
    *        in the Inspector (or null, if there is no selection). This is used
    *        for helper functions that make reference to the currently selected
    *        node, like $0.
+   *         - url: the url to evaluate the script as. Defaults to
+   *         "debugger eval code".
    * @return object
    *         An object that holds the following properties:
    *         - dbg: the debugger where the string was evaluated.
@@ -1197,8 +1229,6 @@ WebConsoleActor.prototype =
    *         - result: the result of the evaluation.
    *         - helperResult: any result coming from a Web Console commands
    *         function.
-   *         - url: the url to evaluate the script as. Defaults to
-   *         "debugger eval code".
    */
   evalWithDebugger: function WCA_evalWithDebugger(aString, aOptions = {})
   {
@@ -1410,9 +1440,7 @@ WebConsoleActor.prototype =
     };
   },
 
-  // ////////////////
   // Event handlers for various listeners.
-  // ////////////////
 
   /**
    * Handler for messages received from the ConsoleServiceListener. This method
@@ -1690,9 +1718,7 @@ WebConsoleActor.prototype =
     this.conn.send(packet);
   },
 
-  // ////////////////
   // End of event handlers for various listeners.
-  // ////////////////
 
   /**
    * Prepare a message from the console API to be sent to the remote Web Console

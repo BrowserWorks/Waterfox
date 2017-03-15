@@ -21,8 +21,9 @@ from remotereftest import RemoteReftestResolver, ReftestServer
 from runreftest import RefTest
 import reftestcommandline
 
+from marionette_harness import Marionette
 from mozdevice import DeviceManagerADB, DMError
-from marionette import Marionette
+
 
 class ProfileConfigParser(ConfigParser.RawConfigParser):
     """Subclass of RawConfigParser that outputs .ini files in the exact
@@ -254,16 +255,11 @@ class B2GRemoteReftest(RefTest):
         # Make sure we disable system updates
         prefs["app.update.enabled"] = False
         prefs["app.update.url"] = ""
-        prefs["app.update.url.override"] = ""
         # Disable webapp updates
         prefs["webapps.update.enabled"] = False
         # Disable tiles also
         prefs["browser.newtabpage.directory.source"] = ""
         prefs["browser.newtabpage.directory.ping"] = ""
-
-        if options.oop:
-            prefs['browser.tabs.remote.autostart'] = True
-            prefs['reftest.browser.iframe.enabled'] = True
 
         # Set the extra prefs.
         profile.set_preferences(prefs)

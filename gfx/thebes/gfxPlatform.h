@@ -53,6 +53,7 @@ class DrawEventRecorder;
 class VsyncSource;
 class ContentDeviceData;
 class GPUDeviceData;
+class FeatureState;
 
 inline uint32_t
 BackendTypeBit(BackendType b)
@@ -103,10 +104,6 @@ GetBackendName(mozilla::gfx::BackendType aBackend)
   switch (aBackend) {
       case mozilla::gfx::BackendType::DIRECT2D:
         return "direct2d";
-      case mozilla::gfx::BackendType::COREGRAPHICS_ACCELERATED:
-        return "quartz accelerated";
-      case mozilla::gfx::BackendType::COREGRAPHICS:
-        return "quartz";
       case mozilla::gfx::BackendType::CAIRO:
         return "cairo";
       case mozilla::gfx::BackendType::SKIA:
@@ -133,7 +130,8 @@ enum class DeviceResetReason
   INVALID_CALL,
   OUT_OF_MEMORY,
   FORCED_RESET,
-  UNKNOWN
+  UNKNOWN,
+  D3D9_RESET
 };
 
 enum class ForcedDeviceResetReason
@@ -181,6 +179,8 @@ public:
      */
     static void InitNullMetadata();
 
+    static void InitMoz2DLogging();
+
     /**
      * Create an offscreen surface of the given dimensions
      * and image format.
@@ -197,7 +197,7 @@ public:
      * support the DrawTarget we get back.
      * See SupportsAzureContentForDrawTarget.
      */
-    virtual already_AddRefed<DrawTarget>
+    static already_AddRefed<DrawTarget>
       CreateDrawTargetForSurface(gfxASurface *aSurface, const mozilla::gfx::IntSize& aSize);
 
     /*
@@ -270,14 +270,14 @@ public:
     /// asking for it, we will examine the commands in the first few seconds
     /// of the canvas usage, and potentially change to accelerated or
     /// non-accelerated canvas.
-    virtual bool UseAcceleratedCanvas();
+    bool AllowOpenGLCanvas();
     virtual void InitializeSkiaCacheLimits();
 
     static bool AsyncPanZoomEnabled();
 
     virtual void GetAzureBackendInfo(mozilla::widget::InfoObject &aObj) {
       aObj.DefineProperty("AzureCanvasBackend", GetBackendName(mPreferredCanvasBackend));
-      aObj.DefineProperty("AzureCanvasAccelerated", UseAcceleratedCanvas());
+      aObj.DefineProperty("AzureCanvasAccelerated", AllowOpenGLCanvas());
       aObj.DefineProperty("AzureFallbackCanvasBackend", GetBackendName(mFallbackCanvasBackend));
       aObj.DefineProperty("AzureContentBackend", GetBackendName(mContentBackend));
     }
@@ -456,7 +456,7 @@ public:
 
     static bool OffMainThreadCompositingEnabled();
 
-    virtual bool CanUseHardwareVideoDecoding();
+    void UpdateCanUseHardwareVideoDecoding();
 
     // Returns a prioritized list of all available compositor backends.
     void GetCompositorBackends(bool useAcceleration, nsTArray<mozilla::layers::LayersBackend>& aBackends);
@@ -752,6 +752,8 @@ protected:
     static already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFontWithCairoSkia(mozilla::gfx::DrawTarget* aTarget, gfxFont* aFont);
 
+    virtual bool CanUseHardwareVideoDecoding();
+
     int8_t  mAllowDownloadableFonts;
     int8_t  mGraphiteShapingEnabled;
     int8_t  mOpenTypeSVGEnabled;
@@ -768,7 +770,7 @@ protected:
     // max number of entries in word cache
     int32_t mWordCacheMaxEntries;
 
-    uint32_t mTotalSystemMemory;
+    uint64_t mTotalSystemMemory;
 
     // Hardware vsync source. Only valid on parent process
     RefPtr<mozilla::gfx::VsyncSource> mVsyncSource;
@@ -803,6 +805,7 @@ private:
     void PopulateScreenInfo();
 
     void InitCompositorAccelerationPrefs();
+    void InitGPUProcessPrefs();
 
     RefPtr<gfxASurface> mScreenReferenceSurface;
     nsCOMPtr<nsIObserver> mSRGBOverrideObserver;

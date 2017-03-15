@@ -10,6 +10,7 @@ Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
+Cu.import("chrome://marionette/content/assert.js");
 Cu.import("chrome://marionette/content/driver.js");
 Cu.import("chrome://marionette/content/error.js");
 Cu.import("chrome://marionette/content/message.js");
@@ -31,7 +32,7 @@ const logger = Log.repository.getLogger("Marionette");
  * @param {function(): GeckoDriver} driverFactory
  *     A factory function that produces a GeckoDriver.
  */
-this.Dispatcher = function(connId, transport, driverFactory) {
+this.Dispatcher = function (connId, transport, driverFactory) {
   this.connId = connId;
   this.conn = transport;
 
@@ -55,8 +56,8 @@ this.Dispatcher = function(connId, transport, driverFactory) {
  * Debugger transport callback that cleans up
  * after a connection is closed.
  */
-Dispatcher.prototype.onClosed = function(reason) {
-  this.driver.sessionTearDown();
+Dispatcher.prototype.onClosed = function (reason) {
+  this.driver.deleteSession();
   if (this.onclose) {
     this.onclose(this);
   }
@@ -74,7 +75,7 @@ Dispatcher.prototype.onClosed = function(reason) {
  *     message type, message ID, method name or error, and parameters
  *     or result.
  */
-Dispatcher.prototype.onPacket = function(data) {
+Dispatcher.prototype.onPacket = function (data) {
   let msg = Message.fromMsg(data);
   msg.origin = MessageOrigin.Client;
   this.log_(msg);
@@ -109,7 +110,7 @@ Dispatcher.prototype.onPacket = function(data) {
  * @param {Command} cmd
  *     The requested command to execute.
  */
-Dispatcher.prototype.execute = function(cmd) {
+Dispatcher.prototype.execute = function (cmd) {
   let resp = new Response(cmd.id, this.send.bind(this));
   let sendResponse = () => resp.sendConditionally(resp => !resp.sent);
   let sendError = resp.sendError.bind(resp);
@@ -118,6 +119,10 @@ Dispatcher.prototype.execute = function(cmd) {
     let fn = this.driver.commands[cmd.name];
     if (typeof fn == "undefined") {
       throw new UnknownCommandError(cmd.name);
+    }
+
+    if (cmd.name !== "newSession") {
+      assert.session(this.driver);
     }
 
     let rv = yield fn.bind(this.driver)(cmd, resp);
@@ -134,7 +139,7 @@ Dispatcher.prototype.execute = function(cmd) {
   req.then(sendResponse, sendError).catch(error.report);
 };
 
-Dispatcher.prototype.sendError = function(err, cmdId) {
+Dispatcher.prototype.sendError = function (err, cmdId) {
   let resp = new Response(cmdId, this.send.bind(this));
   resp.sendError(err);
 };
@@ -170,7 +175,7 @@ Dispatcher.prototype.sayHello = function() {
  * @param {Command,Response} msg
  *     The command or response to send.
  */
-Dispatcher.prototype.send = function(msg) {
+Dispatcher.prototype.send = function (msg) {
   msg.origin = MessageOrigin.Server;
   if (msg instanceof Command) {
     this.commands_.set(msg.id, msg);
@@ -188,7 +193,7 @@ Dispatcher.prototype.send = function(msg) {
  * @param {Response} resp
  *     The response to send back to the client.
  */
-Dispatcher.prototype.sendToClient = function(resp) {
+Dispatcher.prototype.sendToClient = function (resp) {
   this.driver.responseCompleted();
   this.sendMessage(resp);
 };
@@ -199,7 +204,7 @@ Dispatcher.prototype.sendToClient = function(resp) {
  * @param {Command,Response} msg
  *     The message to send.
  */
-Dispatcher.prototype.sendMessage = function(msg) {
+Dispatcher.prototype.sendMessage = function (msg) {
   this.log_(msg);
   let payload = msg.toMsg();
   this.sendRaw(payload);
@@ -212,11 +217,11 @@ Dispatcher.prototype.sendMessage = function(msg) {
  * @param {Object} payload
  *     The payload to ship.
  */
-Dispatcher.prototype.sendRaw = function(payload) {
+Dispatcher.prototype.sendRaw = function (payload) {
   this.conn.send(payload);
 };
 
-Dispatcher.prototype.log_ = function(msg) {
+Dispatcher.prototype.log_ = function (msg) {
   let a = (msg.origin == MessageOrigin.Client ? " -> " : " <- ");
   let s = JSON.stringify(msg.toMsg());
   logger.trace(this.connId + a + s);

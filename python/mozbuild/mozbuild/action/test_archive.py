@@ -97,6 +97,33 @@ ARCHIVE_FILES = {
             'pattern': 'modules/**',
         },
         {
+            'source': buildconfig.topsrcdir,
+            'base': 'testing/marionette',
+            'patterns': [
+                'client/**',
+                'harness/**',
+                'puppeteer/**',
+                'mach_test_package_commands.py',
+            ],
+            'dest': 'marionette',
+            'ignore': [
+                'client/docs',
+                'harness/marionette_harness/tests',
+                'puppeteer/firefox/docs',
+            ],
+        },
+        {
+            'source': buildconfig.topsrcdir,
+            'base': '',
+            'manifests': [
+                'testing/marionette/harness/marionette_harness/tests/unit-tests.ini',
+                'testing/marionette/harness/marionette_harness/tests/webapi-tests.ini',
+            ],
+            # We also need the manifests and harness_unit tests
+            'pattern': 'testing/marionette/harness/marionette_harness/tests/**',
+            'dest': 'marionette/tests',
+        },
+        {
             'source': buildconfig.topobjdir,
             'base': '_tests',
             'pattern': 'mozbase/**',
@@ -141,11 +168,6 @@ ARCHIVE_FILES = {
             'base': 'js/src',
             'pattern': 'jsapi.h',
             'dest': 'jit-test',
-        },
-        {
-            'source': buildconfig.topsrcdir,
-            'base': 'testing',
-            'pattern': 'puppeteer/**',
         },
         {
             'source': buildconfig.topsrcdir,

@@ -11,6 +11,7 @@
 
 #include "mozilla/MemoryReporting.h"
 
+#include "js/CharacterEncoding.h"
 #include "js/GCVector.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
@@ -67,7 +68,7 @@ TraceCycleDetectionSet(JSTracer* trc, AutoCycleDetector::Set& set);
 
 struct AutoResolving;
 
-namespace frontend { struct CompileError; }
+namespace frontend { class CompileError; }
 
 /*
  * Execution Context Overview:
@@ -500,7 +501,7 @@ struct JSContext : public js::ExclusiveContext,
     bool isThrowingDebuggeeWouldRun();
     bool isClosingGenerator();
 
-    void setPendingException(js::Value v);
+    void setPendingException(const js::Value& v);
 
     void clearPendingException() {
         throwing = false;
@@ -584,7 +585,8 @@ DestroyContext(JSContext* cx);
 enum ErrorArgumentsType {
     ArgumentsAreUnicode,
     ArgumentsAreASCII,
-    ArgumentsAreLatin1
+    ArgumentsAreLatin1,
+    ArgumentsAreUTF8
 };
 
 /*
@@ -598,7 +600,8 @@ SelfHostedFunction(JSContext* cx, HandlePropertyName propName);
 
 #ifdef va_start
 extern bool
-ReportErrorVA(JSContext* cx, unsigned flags, const char* format, va_list ap);
+ReportErrorVA(JSContext* cx, unsigned flags, const char* format,
+              ErrorArgumentsType argumentsType, va_list ap);
 
 extern bool
 ReportErrorNumberVA(JSContext* cx, unsigned flags, JSErrorCallback callback,
@@ -614,29 +617,29 @@ ReportErrorNumberUCArray(JSContext* cx, unsigned flags, JSErrorCallback callback
 extern bool
 ExpandErrorArgumentsVA(ExclusiveContext* cx, JSErrorCallback callback,
                        void* userRef, const unsigned errorNumber,
-                       char** message, const char16_t** messageArgs,
+                       const char16_t** messageArgs,
                        ErrorArgumentsType argumentsType,
                        JSErrorReport* reportp, va_list ap);
 
 /* |callee| requires a usage string provided by JS_DefineFunctionsWithHelp. */
 extern void
-ReportUsageError(JSContext* cx, HandleObject callee, const char* msg);
+ReportUsageErrorASCII(JSContext* cx, HandleObject callee, const char* msg);
 
 /*
  * Prints a full report and returns true if the given report is non-nullptr
  * and the report doesn't have the JSREPORT_WARNING flag set or reportWarnings
  * is true.
- * Returns false otherwise, printing just the message if the report is nullptr.
+ * Returns false otherwise.
  */
 extern bool
-PrintError(JSContext* cx, FILE* file, const char* message, JSErrorReport* report,
-           bool reportWarnings);
+PrintError(JSContext* cx, FILE* file, JS::ConstUTF8CharsZ toStringResult,
+           JSErrorReport* report, bool reportWarnings);
 
 /*
  * Send a JSErrorReport to the warningReporter callback.
  */
 void
-CallWarningReporter(JSContext* cx, const char* message, JSErrorReport* report);
+CallWarningReporter(JSContext* cx, JSErrorReport* report);
 
 extern bool
 ReportIsNotDefined(JSContext* cx, HandlePropertyName name);
@@ -817,6 +820,19 @@ class MOZ_RAII AutoLockForExclusiveAccess
 
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
+
+/*
+ * ExclusiveContext variants of encoding functions, for off-main-thread use.
+ * Refer to CharacterEncoding.h for details.
+ */
+extern JS::TwoByteCharsZ
+LossyUTF8CharsToNewTwoByteCharsZ(ExclusiveContext* cx, const JS::UTF8Chars utf8, size_t* outlen);
+
+extern JS::TwoByteCharsZ
+LossyUTF8CharsToNewTwoByteCharsZ(ExclusiveContext* cx, const JS::ConstUTF8CharsZ& utf8, size_t* outlen);
+
+extern JS::Latin1CharsZ
+LossyUTF8CharsToNewLatin1CharsZ(ExclusiveContext* cx, const JS::UTF8Chars utf8, size_t* outlen);
 
 } /* namespace js */
 

@@ -178,18 +178,18 @@ LIRGeneratorX64::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop
 }
 
 void
-LIRGeneratorX64::visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins)
+LIRGeneratorX64::visitWasmUnsignedToDouble(MWasmUnsignedToDouble* ins)
 {
     MOZ_ASSERT(ins->input()->type() == MIRType::Int32);
-    LAsmJSUInt32ToDouble* lir = new(alloc()) LAsmJSUInt32ToDouble(useRegisterAtStart(ins->input()));
+    LWasmUint32ToDouble* lir = new(alloc()) LWasmUint32ToDouble(useRegisterAtStart(ins->input()));
     define(lir, ins);
 }
 
 void
-LIRGeneratorX64::visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins)
+LIRGeneratorX64::visitWasmUnsignedToFloat32(MWasmUnsignedToFloat32* ins)
 {
     MOZ_ASSERT(ins->input()->type() == MIRType::Int32);
-    LAsmJSUInt32ToFloat32* lir = new(alloc()) LAsmJSUInt32ToFloat32(useRegisterAtStart(ins->input()));
+    LWasmUint32ToFloat32* lir = new(alloc()) LWasmUint32ToFloat32(useRegisterAtStart(ins->input()));
     define(lir, ins);
 }
 
@@ -216,7 +216,7 @@ LIRGeneratorX64::visitWasmStore(MWasmStore* ins)
 
     MDefinition* value = ins->value();
     LAllocation valueAlloc;
-    switch (ins->accessType()) {
+    switch (ins->access().type()) {
       case Scalar::Int8:
       case Scalar::Uint8:
       case Scalar::Int16:
@@ -266,7 +266,7 @@ LIRGeneratorX64::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins)
     MOZ_ASSERT(base->type() == MIRType::Int32);
 
     LAsmJSStoreHeap* lir = nullptr;  // initialize to silence GCC warning
-    switch (ins->accessType()) {
+    switch (ins->access().type()) {
       case Scalar::Int8:
       case Scalar::Uint8:
       case Scalar::Int16:
@@ -485,7 +485,7 @@ LIRGeneratorX64::visitInt64ToFloatingPoint(MInt64ToFloatingPoint* ins)
     MOZ_ASSERT(opd->type() == MIRType::Int64);
     MOZ_ASSERT(IsFloatingPointType(ins->type()));
 
-    define(new(alloc()) LInt64ToFloatingPoint(useInt64Register(opd)), ins);
+    define(new(alloc()) LInt64ToFloatingPoint(useInt64Register(opd), LDefinition::BogusTemp()), ins);
 }
 
 void

@@ -178,6 +178,8 @@ var gPrivacyPane = {
                      gPrivacyPane.showBlockLists);
     setEventListener("browserContainersCheckbox", "command",
                      gPrivacyPane._checkBrowserContainers);
+    setEventListener("browserContainersSettings", "command",
+                     gPrivacyPane.showContainerSettings);
   },
 
   // TRACKING PROTECTION MODE
@@ -476,6 +478,13 @@ var gPrivacyPane = {
   },
 
   /**
+   * Displays container panel for customising and adding containers.
+   */
+  showContainerSettings() {
+    gotoPref("containers");
+  },
+
+  /**
    * Displays the available block lists for tracking protection.
    */
   showBlockLists: function ()
@@ -651,22 +660,22 @@ var gPrivacyPane = {
    * Displays a dialog from which individual parts of private data may be
    * cleared.
    */
-  clearPrivateDataNow: function (aClearEverything)
-  {
+  clearPrivateDataNow: function (aClearEverything) {
     var ts = document.getElementById("privacy.sanitize.timeSpan");
     var timeSpanOrig = ts.value;
-    if (aClearEverything)
+
+    if (aClearEverything) {
       ts.value = 0;
+    }
 
-    const Cc = Components.classes, Ci = Components.interfaces;
-    var glue = Cc["@mozilla.org/browser/browserglue;1"]
-                 .getService(Ci.nsIBrowserGlue);
-    glue.sanitize(window);
+    gSubDialog.open("chrome://browser/content/sanitize.xul", "resizable=no", null, () => {
+      // reset the timeSpan pref
+      if (aClearEverything) {
+        ts.value = timeSpanOrig;
+      }
 
-    // reset the timeSpan pref
-    if (aClearEverything)
-      ts.value = timeSpanOrig;
-    Services.obs.notifyObservers(null, "clear-private-data", null);
+      Services.obs.notifyObservers(null, "clear-private-data", null);
+    });
   },
 
   /**
@@ -678,6 +687,26 @@ var gPrivacyPane = {
     var sanitizeOnShutdownPref = document.getElementById("privacy.sanitize.sanitizeOnShutdown");
 
     settingsButton.disabled = !sanitizeOnShutdownPref.value;
+   },
+
+  // CONTAINERS
+
+  /*
+   * preferences:
+   *
+   * privacy.userContext.enabled
+   * - true if containers is enabled
+   */
+
+   /**
+    * Enables/disables the Settings button used to configure containers
+    */
+   readBrowserContainersCheckbox: function ()
+   {
+     var pref = document.getElementById("privacy.userContext.enabled");
+     var settings = document.getElementById("browserContainersSettings");
+
+     settings.disabled = !pref.value;
    }
 
 };

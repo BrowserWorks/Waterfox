@@ -695,6 +695,36 @@ BaselineCacheIRCompiler::emitGuardIsObject()
 }
 
 bool
+BaselineCacheIRCompiler::emitGuardType()
+{
+    ValueOperand input = allocator.useRegister(masm, reader.valOperandId());
+    JSValueType type = reader.valueType();
+
+    FailurePath* failure;
+    if (!addFailurePath(&failure))
+        return false;
+
+    switch (type) {
+      case JSVAL_TYPE_STRING:
+        masm.branchTestString(Assembler::NotEqual, input, failure->label());
+        break;
+      case JSVAL_TYPE_SYMBOL:
+        masm.branchTestSymbol(Assembler::NotEqual, input, failure->label());
+        break;
+      case JSVAL_TYPE_DOUBLE:
+        masm.branchTestNumber(Assembler::NotEqual, input, failure->label());
+        break;
+      case JSVAL_TYPE_BOOLEAN:
+        masm.branchTestBoolean(Assembler::NotEqual, input, failure->label());
+        break;
+      default:
+        MOZ_CRASH("Unexpected type");
+    }
+
+    return true;
+}
+
+bool
 BaselineCacheIRCompiler::emitGuardShape()
 {
     Register obj = allocator.useRegister(masm, reader.objOperandId());
@@ -1027,21 +1057,6 @@ BaselineCacheIRCompiler::emitLoadProto()
     Register obj = allocator.useRegister(masm, reader.objOperandId());
     Register reg = allocator.defineRegister(masm, reader.objOperandId());
     masm.loadObjProto(obj, reg);
-    return true;
-}
-
-bool
-BaselineCacheIRCompiler::emitLoadUnboxedExpando()
-{
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-    Register output = allocator.defineRegister(masm, reader.objOperandId());
-
-    FailurePath* failure;
-    if (!addFailurePath(&failure))
-        return false;
-
-    Address expandoAddr(obj, UnboxedPlainObject::offsetOfExpando());
-    masm.loadPtr(expandoAddr, output);
     return true;
 }
 

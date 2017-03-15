@@ -90,7 +90,6 @@ targets.forEach(div => { div.remove(); });
 
 // 2. Test CSS Transition event handlers.
 
-advance_clock(0);
 var targets = createAndRegisterTargets([ 'ontransitionend' ]);
 targets.forEach(div => {
   div.style.transition = 'margin-left 100ms';

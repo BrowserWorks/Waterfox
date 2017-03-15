@@ -306,6 +306,17 @@ StickyScrollContainer::GetScrollRanges(nsIFrame* aFrame, nsRect* aOuter,
     aInner->SetRightEdge(normalPosition.x - stick.x);
     aOuter->SetRightEdge(contain.XMost() - stick.x);
   }
+
+  // Make sure |inner| does not extend outside of |outer|. (The consumers of
+  // the Layers API, to which this information is propagated, expect this
+  // invariant to hold.) The calculated value of |inner| can sometimes extend
+  // outside of |outer|, for example due to margin collapsing, since
+  // GetNormalPosition() returns the actual position after margin collapsing,
+  // while |contain| is calculated based on the frame's GetUsedMargin() which
+  // is pre-collapsing.
+  // Note that this doesn't necessarily solve all problems stemming from
+  // comparing pre- and post-collapsing margins (TODO: find a proper solution).
+  *aInner = aInner->Intersect(*aOuter);
 }
 
 void

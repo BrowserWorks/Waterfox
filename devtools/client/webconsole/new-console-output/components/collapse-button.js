@@ -13,17 +13,25 @@ const {
   PropTypes,
 } = require("devtools/client/shared/vendor/react");
 
+const { l10n } = require("devtools/client/webconsole/new-console-output/utils/messages");
+
 const CollapseButton = createClass({
 
   displayName: "CollapseButton",
 
   propTypes: {
     open: PropTypes.bool.isRequired,
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
+  },
+
+  getDefaultProps: function () {
+    return {
+      title: l10n.getStr("messageToggleDetails")
+    };
   },
 
   render: function () {
-    const { title, open, onClick } = this.props;
+    const { open, onClick, title } = this.props;
 
     let classes = ["theme-twisty"];
 
@@ -33,10 +41,10 @@ const CollapseButton = createClass({
 
     return dom.a({
       className: classes.join(" "),
-      onClick: onClick,
-      title
+      onClick,
+      title: title,
     });
   }
 });
 
-module.exports.CollapseButton = CollapseButton;
+module.exports = CollapseButton;

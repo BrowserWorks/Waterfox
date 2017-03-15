@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* Webconsole specific theme variables */
+.theme-light,
 .theme-firebug {
   --error-color: #FF0000;
   --error-background-color: #FFEBEB;
@@ -54,12 +55,14 @@ a {
 }
 
 .theme-firebug .message[severity="error"],
+.theme-light .message.error,
 .theme-firebug .message.error {
   color: var(--error-color);
   background-color: var(--error-background-color);
 }
 
 .theme-firebug .message[severity="warn"],
+.theme-light .message.warn,
 .theme-firebug .message.warn {
   background-color: var(--warning-background-color);
 }
@@ -354,24 +357,17 @@ a {
 
 .message[category=console][severity=error] > .icon::before,
 .message[category=output][severity=error] > .icon::before,
-.message[category=server][severity=error] > .icon::before,
-.message.console-api.error > .icon::before,
-.message.output.error > .icon::before,
-.message.server.error > .icon::before {
+.message[category=server][severity=error] > .icon::before {
   background-position: -12px -36px;
 }
 
 .message[category=console][severity=warn] > .icon::before,
-.message[category=server][severity=warn] > .icon::before,
-.message.console-api.warn > .icon::before,
-.message.server.warn > .icon::before {
+.message[category=server][severity=warn] > .icon::before {
   background-position: -24px -36px;
 }
 
 .message[category=console][severity=info] > .icon::before,
-.message[category=server][severity=info] > .icon::before,
-.message.console-api.info > .icon::before,
-.message.server.info > .icon::before {
+.message[category=server][severity=info] > .icon::before {
   background-position: -36px -36px;
 }
 
@@ -390,18 +386,18 @@ a {
 /* Input and output styles */
 .message[category=input] > .indent,
 .message[category=output] > .indent,
-.message.input > .indent,
-.message.output > .indent {
+.message.command > .indent,
+.message.result > .indent {
   border-inline-end: solid #808080 6px;
 }
 
 .message[category=input] > .icon::before,
-.message.input > .icon::before {
+.message.command > .icon::before {
   background-position: -48px -36px;
 }
 
 .message[category=output] > .icon::before,
-.message.output > .icon::before {
+.message.result > .icon::before {
   background-position: -60px -36px;
 }
 
@@ -693,6 +689,7 @@ a.learn-more-link.webconsole-learn-more-link {
   display: flex;
   flex-direction: column;
   height: 100%;
+  -moz-user-focus: normal;
 }
 
 .webconsole-filterbar-wrapper {
@@ -708,6 +705,89 @@ a.learn-more-link.webconsole-learn-more-link {
   display: flex;
 }
 
+.devtools-toolbar.webconsole-filterbar-secondary {
+  height: initial;
+}
+
 .webconsole-filterbar-primary .devtools-plaininput {
   flex: 1 1 100%;
+}
+
+.message.startGroup .message-body,
+.message.startGroupCollapsed .message-body {
+  color: var(--theme-body-color);
+  font-weight: bold;
+}
+
+.webconsole-output-wrapper .message > .icon {
+  margin: 3px 0 0 0;
+  padding: 0 0 0 6px;
+}
+
+.message.error > .icon::before {
+  background-position: -12px -36px;
+}
+
+.message.warn > .icon::before {
+  background-position: -24px -36px;
+}
+
+.message.info > .icon::before {
+  background-position: -36px -36px;
+}
+
+.message.network .method {
+  margin-inline-end: 5px;
+}
+
+.webconsole-output-wrapper .message .indent {
+  display: inline-block;
+  border-inline-end: solid 1px var(--theme-splitter-color);
+}
+
+.message.startGroup .indent,
+.message.startGroupCollapsed .indent {
+  border-inline-end-color: transparent;
+  margin-inline-end: 5px;
+}
+
+.message.startGroup .icon,
+.message.startGroupCollapsed .icon {
+    display: none;
+}
+
+/* console.table() */
+.new-consoletable {
+  width: 100%;
+  border-collapse: collapse;
+  --consoletable-border: 1px solid var(--table-splitter-color);
+}
+
+.new-consoletable thead,
+.new-consoletable tbody {
+  background-color: var(--theme-body-background);
+}
+
+.new-consoletable th {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-selection-color);
+  margin: 0;
+  padding: 5px 0 0;
+  font-weight: inherit;
+  border-inline-end: var(--consoletable-border);
+  border-bottom: var(--consoletable-border);
+}
+
+.new-consoletable tr:nth-of-type(even) {
+  background-color: var(--table-zebra-background);
+}
+
+.new-consoletable td {
+  padding: 3px 4px;
+  min-width: 100px;
+  -moz-user-focus: normal;
+  color: var(--theme-body-color);
+  border-inline-end: var(--consoletable-border);
+  height: 1.25em;
+  line-height: 1.25em;
 }

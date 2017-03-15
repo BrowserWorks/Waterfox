@@ -10,11 +10,15 @@
 #ifndef nsStyleTransformMatrix_h_
 #define nsStyleTransformMatrix_h_
 
+#include "mozilla/EnumeratedArray.h"
 #include "nsCSSValue.h"
+
+#include <limits>
 
 class nsIFrame;
 class nsStyleContext;
 class nsPresContext;
+struct gfxQuaternion;
 struct nsRect;
 namespace mozilla {
 class RuleNodeCacheConditions;
@@ -24,6 +28,17 @@ class RuleNodeCacheConditions;
  * A helper to generate gfxMatrixes from css transform functions.
  */
 namespace nsStyleTransformMatrix {
+
+  // Function for applying perspective() transform function. We treat
+  // any value smaller than epsilon as perspective(infinity), which
+  // follows CSSWG's resolution on perspective(0). See bug 1316236.
+  inline void ApplyPerspectiveToMatrix(mozilla::gfx::Matrix4x4& aMatrix,
+                                       float aDepth)
+  {
+    if (aDepth >= std::numeric_limits<float>::epsilon()) {
+      aMatrix.Perspective(aDepth);
+    }
+  }
 
   /**
    * This class provides on-demand access to the 'reference box' for CSS
@@ -108,6 +123,10 @@ namespace nsStyleTransformMatrix {
       return mHeight;
     }
 
+    bool IsEmpty() {
+      return !mFrame;
+    }
+
   private:
     // We don't really need to prevent copying, but since none of our consumers
     // currently need to copy, preventing copying may allow us to catch some
@@ -126,6 +145,8 @@ namespace nsStyleTransformMatrix {
    * nsCSSValue::Array from a transform list.
    */
   nsCSSKeyword TransformFunctionOf(const nsCSSValue::Array* aData);
+
+  void SetIdentityMatrix(nsCSSValue::Array* aMatrix);
 
   float ProcessTranslatePart(const nsCSSValue& aValue,
                              nsStyleContext* aContext,
@@ -169,6 +190,37 @@ namespace nsStyleTransformMatrix {
                                          TransformReferenceBox& aBounds,
                                          float aAppUnitsPerMatrixUnit,
                                          bool* aContains3dTransform);
+
+  // Shear type for decomposition.
+  enum class ShearType {
+    XYSHEAR,
+    XZSHEAR,
+    YZSHEAR,
+    Count
+  };
+  using ShearArray =
+    mozilla::EnumeratedArray<ShearType, ShearType::Count, float>;
+
+  /*
+   * Implements the 2d transform matrix decomposition algorithm.
+   */
+  bool Decompose2DMatrix(const mozilla::gfx::Matrix& aMatrix,
+                         mozilla::gfx::Point3D& aScale,
+                         ShearArray& aShear,
+                         gfxQuaternion& aRotate,
+                         mozilla::gfx::Point3D& aTranslate);
+  /*
+   * Implements the 3d transform matrix decomposition algorithm.
+   */
+  bool Decompose3DMatrix(const mozilla::gfx::Matrix4x4& aMatrix,
+                         mozilla::gfx::Point3D& aScale,
+                         ShearArray& aShear,
+                         gfxQuaternion& aRotate,
+                         mozilla::gfx::Point3D& aTranslate,
+                         mozilla::gfx::Point4D& aPerspective);
+
+  mozilla::gfx::Matrix CSSValueArrayTo2DMatrix(nsCSSValue::Array* aArray);
+  mozilla::gfx::Matrix4x4 CSSValueArrayTo3DMatrix(nsCSSValue::Array* aArray);
 } // namespace nsStyleTransformMatrix
 
 #endif

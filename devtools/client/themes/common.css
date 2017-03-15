@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-@import url("splitters.css");
+@import url("resource://devtools/client/themes/splitters.css");
 
 :root {
   font: message-box;
@@ -366,11 +366,11 @@ checkbox:-moz-focusring {
   opacity: 0.8;
 }
 
-.devtools-button:hover:empty::before,
+.devtools-button:hover:empty:not(:disabled):before,
 .devtools-button.checked:empty::before,
 .devtools-button[checked]:empty::before,
 .devtools-button[open]:empty::before,
-.devtools-toolbarbutton:not([label]):hover > image,
+.devtools-toolbarbutton:not([label]):not([disabled=true]):hover > image,
 .devtools-toolbarbutton:not([label])[checked=true] > image,
 .devtools-toolbarbutton:not([label])[open=true] > image {
   opacity: 1;
@@ -388,6 +388,15 @@ checkbox:-moz-focusring {
 .devtools-toolbarbutton:not([label])[checked=true] > image,
 .devtools-toolbarbutton:not([label])[open=true] > image {
   filter: var(--checked-icon-filter);
+}
+
+/* Checked/opened icon button background */
+.theme-firebug .devtools-button[checked]:empty,
+.theme-firebug .devtools-button[open]:empty,
+.theme-firebug .devtools-button.checked,
+.theme-firebug .devtools-toolbarbutton:not([label])[checked=true],
+.theme-firebug .devtools-toolbarbutton:not([label])[open=true] {
+  background-color: #C8D8E7;
 }
 
 /* Icon-and-text buttons */
@@ -544,7 +553,7 @@ checkbox:-moz-focusring {
 }
 
 .devtools-filterinput {
-  background-image: url(images/filter.svg#filterinput);
+  background-image: url(chrome://devtools/skin/images/filter.svg#filterinput);
 }
 
 .devtools-searchinput:-moz-locale-dir(rtl),
@@ -575,7 +584,7 @@ checkbox:-moz-focusring {
 
 /* Searchbox is a div container element for a search input element */
 .devtools-searchbox {
-  display: flex;
+  display: inline-flex;
   flex: 1;
   height: 23px;
   position: relative;
@@ -588,6 +597,7 @@ checkbox:-moz-focusring {
 .devtools-searchbox > .devtools-filterinput {
   margin-left: 0;
   margin-right: 0;
+  width: 100%;
 }
 
 .devtools-textinput:focus,
@@ -623,7 +633,7 @@ checkbox:-moz-focusring {
   width: 100%;
 }
 
-.devtools-rule-searchbox[filled] {
+.devtools-filterinput:-moz-any([filled],.filled) {
   background-color: var(--searchbox-background-color);
   border-color: var(--searchbox-border-color);
 }
@@ -687,6 +697,74 @@ checkbox:-moz-focusring {
 .devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear:hover,
 .devtools-filterinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear:hover {
   -moz-image-region: rect(0, 32px, 16px, 16px);
+}
+
+/* Twisty and checkbox controls */
+.theme-twisty, .theme-checkbox {
+  width: 14px;
+  height: 14px;
+  background-repeat: no-repeat;
+  background-image: url("chrome://devtools/skin/images/controls.png");
+  background-size: 56px 28px;
+}
+
+.theme-twisty {
+  cursor: pointer;
+  background-position: 0 -14px;
+}
+
+.theme-selected ~ .theme-twisty,
+.theme-dark .theme-twisty {
+  background-position: -28px -14px;
+}
+
+.theme-twisty:-moz-focusring {
+  outline-style: none;
+}
+
+.theme-twisty[open], .theme-twisty.open {
+  background-position: -14px -14px;
+}
+
+.theme-selected ~ .theme-twisty[open],
+.theme-dark .theme-twisty[open], .theme-dark .theme-twisty.open  {
+  background-position: -42px -14px;
+}
+
+.theme-twisty[invisible] {
+  visibility: hidden;
+}
+
+/* Mirror the twisty for rtl direction */
+.theme-twisty:dir(rtl),
+.theme-twisty:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
+}
+
+.theme-checkbox {
+  display: inline-block;
+  border: 0;
+  padding: 0;
+  outline: none;
+  background-position: 0 0;
+}
+
+.theme-dark .theme-checkbox {
+  background-position: -28px 0;
+}
+
+.theme-checkbox[checked] {
+  background-position: -14px 0;
+}
+
+.theme-dark .theme-checkbox[checked] {
+  background-position: -42px 0;
+}
+
+@media (min-resolution: 1.1dppx) {
+  .theme-twisty, .theme-checkbox {
+    background-image: url("chrome://devtools/skin/images/controls@2x.png");
+  }
 }
 
 /* Throbbers */

@@ -10,6 +10,7 @@ include protocol PPresentationBuilder;
 
 include InputStreamParams;
 
+using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 
 namespace mozilla {
@@ -23,6 +24,7 @@ struct StartSessionRequest
   nsString deviceId;
   uint64_t windowId;
   TabId tabId;
+  Principal principal;
 };
 
 struct SendSessionMessageRequest
@@ -75,20 +77,24 @@ sync protocol PPresentation
   manages PPresentationRequest;
 
 child:
-  async NotifyAvailableChange(bool aAvailable);
+  async NotifyAvailableChange(nsString[] aAvailabilityUrls,
+                              bool aAvailable);
   async NotifySessionStateChange(nsString aSessionId,
                                  uint16_t aState,
                                  nsresult aReason);
   async NotifyMessage(nsString aSessionId, nsCString aData, bool aIsBinary);
   async NotifySessionConnect(uint64_t aWindowId, nsString aSessionId);
+  async NotifyCloseSessionTransport(nsString aSessionId,
+                                    uint8_t aRole,
+                                    nsresult aReason);
 
   async PPresentationBuilder(nsString aSessionId, uint8_t aRole);
 
 parent:
   async __delete__();
 
-  async RegisterAvailabilityHandler();
-  async UnregisterAvailabilityHandler();
+  async RegisterAvailabilityHandler(nsString[] aAvailabilityUrls);
+  async UnregisterAvailabilityHandler(nsString[] aAvailabilityUrls);
 
   async RegisterSessionHandler(nsString aSessionId, uint8_t aRole);
   async UnregisterSessionHandler(nsString aSessionId, uint8_t aRole);

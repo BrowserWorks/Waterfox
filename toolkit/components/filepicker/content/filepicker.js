@@ -238,7 +238,7 @@ function selectOnOK()
     try {
       file.normalize();
     } catch (e) {
-      //promptService.alert(window, "Problem", "normalize failed, continuing");
+      // promptService.alert(window, "Problem", "normalize failed, continuing");
     }
 
     var fileExists = file.exists();
@@ -661,9 +661,7 @@ function newDir() {
 
     var parent = file.parent;
     if (!(parent.exists() && parent.isDirectory() && parent.isWritable())) {
-      var oldParent = parent;
       while (!parent.exists()) {
-        oldParent = parent;
         parent = parent.parent;
       }
       if (parent.isFile()) {

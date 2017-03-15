@@ -35,5 +35,6 @@ interface ImageBitmapRenderingContext {
   void transferFromImageBitmap(ImageBitmap bitmap);
 
   // Deprecated version of transferFromImageBitmap
+  [Deprecated="ImageBitmapRenderingContext_TransferImageBitmap"]
   void transferImageBitmap(ImageBitmap bitmap);
 };

@@ -11,7 +11,7 @@ loader.lazyImporter(this, "AddonManager",
   "resource://gre/modules/AddonManager.jsm");
 
 const { Cc, Ci } = require("chrome");
-const { createFactory, createClass, DOM: dom } =
+const { createFactory, createClass, DOM: dom, PropTypes } =
   require("devtools/client/shared/vendor/react");
 const Services = require("Services");
 const AddonsInstallError = createFactory(require("./install-error"));
@@ -24,6 +24,10 @@ const MORE_INFO_URL = "https://developer.mozilla.org/docs/Tools" +
 
 module.exports = createClass({
   displayName: "AddonsControls",
+
+  propTypes: {
+    debugDisabled: PropTypes.bool
+  },
 
   getInitialState() {
     return {
@@ -66,7 +70,7 @@ module.exports = createClass({
 
     return dom.div({ className: "addons-top" },
       dom.div({ className: "addons-controls" },
-        dom.div({ className: "addons-options" },
+        dom.div({ className: "addons-options toggle-container-with-text" },
           dom.input({
             id: "enable-addon-debugging",
             type: "checkbox",

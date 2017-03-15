@@ -59,7 +59,9 @@ class Operand
     // Used as a Register::Encoding and a FloatRegister::Encoding.
     uint32_t base_ : 5;
     Scale scale_ : 3;
-    Register::Encoding index_ : 5;
+    // We don't use all 8 bits, of course, but GCC complains if the size of
+    // this field is smaller than the size of Register::Encoding.
+    Register::Encoding index_ : 8;
     int32_t disp_;
 
   public:
@@ -167,9 +169,8 @@ class Operand
           case REG:          return r.encoding() == reg();
           case MEM_REG_DISP: return r.encoding() == base();
           case MEM_SCALE:    return r.encoding() == base() || r.encoding() == index();
-          default: MOZ_CRASH("Unexpected Operand kind");
+          default:           return false;
         }
-        return false;
     }
 };
 
@@ -920,12 +921,12 @@ class AssemblerX86Shared : public AssemblerShared
     void j(Condition cond, RepatchLabel* label) { jSrc(cond, label); }
     void jmp(RepatchLabel* label) { jmpSrc(label); }
 
-    void j(Condition cond, wasm::JumpTarget target) {
+    void j(Condition cond, wasm::TrapDesc target) {
         Label l;
         j(cond, &l);
         bindLater(&l, target);
     }
-    void jmp(wasm::JumpTarget target) {
+    void jmp(wasm::TrapDesc target) {
         Label l;
         jmp(&l);
         bindLater(&l, target);
@@ -961,11 +962,11 @@ class AssemblerX86Shared : public AssemblerShared
         }
         label->bind(dst.offset());
     }
-    void bindLater(Label* label, wasm::JumpTarget target) {
+    void bindLater(Label* label, wasm::TrapDesc target) {
         if (label->used()) {
             JmpSrc jmp(label->offset());
             do {
-                append(target, jmp.offset());
+                append(wasm::TrapSite(target, jmp.offset()));
             } while (masm.nextJump(jmp, &jmp));
         }
         label->reset();
@@ -1056,21 +1057,28 @@ class AssemblerX86Shared : public AssemblerShared
     CodeOffset callWithPatch() {
         return CodeOffset(masm.call().offset());
     }
+
+    struct AutoPrepareForPatching : X86Encoding::AutoUnprotectAssemblerBufferRegion {
+        explicit AutoPrepareForPatching(AssemblerX86Shared& masm)
+          : X86Encoding::AutoUnprotectAssemblerBufferRegion(masm.masm, 0, masm.size())
+        {}
+    };
+
     void patchCall(uint32_t callerOffset, uint32_t calleeOffset) {
+        // The caller uses AutoUnprotectBuffer.
         unsigned char* code = masm.data();
-        X86Encoding::AutoUnprotectAssemblerBufferRegion unprotect(masm, callerOffset - 4, 4);
         X86Encoding::SetRel32(code + callerOffset, code + calleeOffset);
     }
-    CodeOffset thunkWithPatch() {
+    CodeOffset farJumpWithPatch() {
         return CodeOffset(masm.jmp().offset());
     }
-    void patchThunk(uint32_t thunkOffset, uint32_t targetOffset) {
+    void patchFarJump(CodeOffset farJump, uint32_t targetOffset) {
+        // The caller uses AutoUnprotectBuffer.
         unsigned char* code = masm.data();
-        X86Encoding::AutoUnprotectAssemblerBufferRegion unprotect(masm, thunkOffset - 4, 4);
-        X86Encoding::SetRel32(code + thunkOffset, code + targetOffset);
+        X86Encoding::SetRel32(code + farJump.offset(), code + targetOffset);
     }
-    static void repatchThunk(uint8_t* code, uint32_t thunkOffset, uint32_t targetOffset) {
-        X86Encoding::SetRel32(code + thunkOffset, code + targetOffset);
+    static void repatchFarJump(uint8_t* code, uint32_t farJumpOffset, uint32_t targetOffset) {
+        X86Encoding::SetRel32(code + farJumpOffset, code + targetOffset);
     }
 
     CodeOffset twoByteNop() {

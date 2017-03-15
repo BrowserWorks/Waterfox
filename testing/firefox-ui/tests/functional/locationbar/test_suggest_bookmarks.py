@@ -2,12 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import By, Wait
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestStarInAutocomplete(FirefoxTestCase):
+class TestStarInAutocomplete(PuppeteerMixin, MarionetteTestCase):
     """ This replaces
     http://hg.mozilla.org/qa/mozmill-tests/file/default/firefox/tests/functional/testAwesomeBar/testSuggestBookmarks.js
     Check a star appears in autocomplete list for a bookmarked page.
@@ -16,18 +16,18 @@ class TestStarInAutocomplete(FirefoxTestCase):
     PREF_SUGGEST_SEARCHES = 'browser.urlbar.suggest.searches'
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestStarInAutocomplete, self).setUp()
 
         self.bookmark_panel = None
         self.test_urls = [self.marionette.absolute_url('layout/mozilla_grants.html')]
 
         # Disable search suggestions to only get results for history and bookmarks
-        self.prefs.set_pref(self.PREF_SUGGEST_SEARCHES, False)
+        self.marionette.set_pref(self.PREF_SUGGEST_SEARCHES, False)
 
         with self.marionette.using_context('content'):
             self.marionette.navigate('about:blank')
 
-        self.places.remove_all_history()
+        self.puppeteer.places.remove_all_history()
 
     def tearDown(self):
         # Close the autocomplete results
@@ -38,9 +38,10 @@ class TestStarInAutocomplete(FirefoxTestCase):
                 """, script_args=[self.bookmark_panel])
 
             self.browser.navbar.locationbar.autocomplete_results.close()
-            self.places.restore_default_bookmarks()
+            self.puppeteer.places.restore_default_bookmarks()
+            self.marionette.clear_pref(self.PREF_SUGGEST_SEARCHES)
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestStarInAutocomplete, self).tearDown()
 
     def test_star_in_autocomplete(self):
         search_string = 'grants'
@@ -52,7 +53,7 @@ class TestStarInAutocomplete(FirefoxTestCase):
 
         # Navigate to all the urls specified in self.test_urls and wait for them to
         # be registered as visited
-        self.places.wait_for_visited(self.test_urls, visit_urls)
+        self.puppeteer.places.wait_for_visited(self.test_urls, visit_urls)
 
         # Bookmark the current page using the bookmark menu
         self.browser.menubar.select_by_id('bookmarksMenu',
@@ -70,7 +71,7 @@ class TestStarInAutocomplete(FirefoxTestCase):
         with self.marionette.using_context('content'):
             self.marionette.navigate('about:blank')
 
-        self.places.remove_all_history()
+        self.puppeteer.places.remove_all_history()
 
         # Focus the locationbar, delete any contents there, and type the search string
         locationbar = self.browser.navbar.locationbar

@@ -65,7 +65,7 @@ StorageEvent::Constructor(EventTarget* aOwner,
   e->mUrl = aEventInitDict.mUrl;
   e->mStorageArea = aEventInitDict.mStorageArea;
   e->SetTrusted(trusted);
-
+  e->SetComposed(aEventInitDict.mComposed);
   return e.forget();
 }
 
@@ -87,6 +87,8 @@ StorageEvent::InitStorageEvent(const nsAString& aType, bool aCanBubble,
                                const nsAString& aURL,
                                DOMStorage* aStorageArea)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   InitEvent(aType, aCanBubble, aCancelable);
   mKey = aKey;
   mOldValue = aOldValue;

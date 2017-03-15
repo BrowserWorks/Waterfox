@@ -57,7 +57,7 @@ void nr_ice_component_consent_schedule_consent_timer(nr_ice_component *comp);
 void nr_ice_component_consent_destroy(nr_ice_component *comp);
 
 /* This function takes ownership of the contents of req (but not req itself) */
-static int nr_ice_pre_answer_request_create(nr_socket *sock, nr_stun_server_request *req, nr_ice_pre_answer_request **parp)
+static int nr_ice_pre_answer_request_create(nr_transport_addr *dst, nr_stun_server_request *req, nr_ice_pre_answer_request **parp)
   {
     int r, _status;
     nr_ice_pre_answer_request *par = 0;
@@ -69,7 +69,7 @@ static int nr_ice_pre_answer_request_create(nr_socket *sock, nr_stun_server_requ
     par->req = *req; /* Struct assignment */
     memset(req, 0, sizeof(*req)); /* Zero contents to avoid confusion */
 
-    if (r=nr_socket_getaddr(sock, &par->local_addr))
+    if (r=nr_transport_addr_copy(&par->local_addr, dst))
       ABORT(r);
     if (!nr_stun_message_has_attribute(par->req.request, NR_STUN_ATTR_USERNAME, &attr))
       ABORT(R_INTERNAL);
@@ -1141,6 +1141,41 @@ int nr_ice_component_pair_candidates(nr_ice_peer_ctx *pctx, nr_ice_component *lc
     return(_status);
   }
 
+int nr_ice_pre_answer_enqueue(nr_ice_component *comp, nr_socket *sock, nr_stun_server_request *req, int *dont_free)
+  {
+    int r = 0;
+    int _status;
+    nr_ice_pre_answer_request *r1, *r2;
+    nr_transport_addr dst_addr;
+    nr_ice_pre_answer_request *par = 0;
+
+    if (r=nr_socket_getaddr(sock, &dst_addr))
+      ABORT(r);
+
+    STAILQ_FOREACH_SAFE(r1, &comp->pre_answer_reqs, entry, r2) {
+      if (!nr_transport_addr_cmp(&r1->local_addr, &dst_addr,
+                                 NR_TRANSPORT_ADDR_CMP_MODE_ALL) &&
+          !nr_transport_addr_cmp(&r1->req.src_addr, &req->src_addr,
+                                 NR_TRANSPORT_ADDR_CMP_MODE_ALL)) {
+        return(0);
+      }
+    }
+
+    if (r=nr_ice_pre_answer_request_create(&dst_addr, req, &par))
+      ABORT(r);
+
+    r_log(LOG_ICE,LOG_DEBUG, "ICE(%s)/STREAM(%s)/COMP(%d): Enqueuing STUN request pre-answer from %s",
+          comp->ctx->label, comp->stream->label, comp->component_id,
+          req->src_addr.as_string);
+
+    *dont_free = 1;
+    STAILQ_INSERT_TAIL(&comp->pre_answer_reqs, par, entry);
+
+    _status=0;
+abort:
+    return(_status);
+  }
+
 /* Fires when we have an incoming candidate that doesn't correspond to an existing
    remote peer. This is either pre-answer or just spurious. Store it in the
    component for use when we see the actual answer, at which point we need
@@ -1150,15 +1185,17 @@ static int nr_ice_component_stun_server_default_cb(void *cb_arg,nr_stun_server_c
   {
     int r, _status;
     nr_ice_component *comp = (nr_ice_component *)cb_arg;
-    nr_ice_pre_answer_request *par = 0;
+
     r_log(LOG_ICE,LOG_DEBUG,"ICE(%s)/STREAM(%s)/COMP(%d): Received STUN request pre-answer from %s",
-          comp->ctx->label, comp->stream->label, comp->component_id, req->src_addr.as_string);
+          comp->ctx->label, comp->stream->label, comp->component_id,
+          req->src_addr.as_string);
 
-    if (r=nr_ice_pre_answer_request_create(sock, req, &par))
+    if (r=nr_ice_pre_answer_enqueue(comp, sock, req, dont_free)) {
+      r_log(LOG_ICE,LOG_ERR,"ICE(%s)/STREAM(%s)/COMP(%d): Failed (%d) to enque pre-answer request from %s",
+          comp->ctx->label, comp->stream->label, comp->component_id, r,
+          req->src_addr.as_string);
       ABORT(r);
-
-    *dont_free = 1;
-    STAILQ_INSERT_TAIL(&comp->pre_answer_reqs, par, entry);
+    }
 
     _status=0;
  abort:
@@ -1199,9 +1236,19 @@ static void nr_ice_component_consent_timeout_cb(NR_SOCKET s, int how, void *cb_a
 
     comp->consent_timeout = 0;
 
-    r_log(LOG_ICE,LOG_WARNING,"ICE(%s)/STREAM(%s)/COMP(%d): Consent refresh timed out",
+    r_log(LOG_ICE,LOG_WARNING,"ICE(%s)/STREAM(%s)/COMP(%d): Consent refresh final time out",
           comp->ctx->label, comp->stream->label, comp->component_id);
     nr_ice_component_consent_failed(comp);
+  }
+
+
+static void nr_ice_component_consent_request_timed_out(nr_ice_component *comp)
+  {
+    if (!comp->can_send) {
+      return;
+    }
+
+    nr_ice_peer_ctx_disconnected(comp->stream->pctx);
   }
 
 static void nr_ice_component_consent_refreshed(nr_ice_component *comp)
@@ -1216,6 +1263,9 @@ static void nr_ice_component_consent_refreshed(nr_ice_component *comp)
     r_log(LOG_ICE,LOG_DEBUG,"ICE(%s)/STREAM(%s)/COMP(%d): consent_last_seen is now %lu",
         comp->ctx->label, comp->stream->label, comp->component_id,
         comp->consent_last_seen.tv_sec);
+
+    nr_ice_peer_ctx_connected(comp->stream->pctx);
+
     if (comp->consent_timeout)
       NR_async_timer_cancel(comp->consent_timeout);
 
@@ -1244,6 +1294,11 @@ static void nr_ice_component_refresh_consent_cb(NR_SOCKET s, int how, void *cb_a
               comp->ctx->label, comp->stream->label, comp->component_id);
         nr_ice_component_consent_refreshed(comp);
         break;
+      case NR_STUN_CLIENT_STATE_TIMED_OUT:
+        r_log(LOG_ICE, LOG_INFO, "ICE(%s)/STREAM(%s)/COMP(%d): A single consent refresh request timed out",
+              comp->ctx->label, comp->stream->label, comp->component_id);
+        nr_ice_component_consent_request_timed_out(comp);
+        break;
       default:
         break;
     }
@@ -1261,6 +1316,23 @@ int nr_ice_component_refresh_consent(nr_stun_client_ctx *ctx, NR_async_cb finish
     _status=0;
   abort:
     return(_status);
+  }
+
+void nr_ice_component_consent_calc_consent_timer(nr_ice_component *comp)
+  {
+    uint16_t trange, trand, tval;
+
+    trange = NR_ICE_CONSENT_TIMER_DEFAULT * 20 / 100;
+    tval = NR_ICE_CONSENT_TIMER_DEFAULT - trange;
+    if (!nr_crypto_random_bytes((UCHAR*)&trand, sizeof(trand)))
+      tval += (trand % (trange * 2));
+
+    if (comp->ctx->test_timer_divider)
+      tval = tval / comp->ctx->test_timer_divider;
+
+    /* The timeout of the transaction is the maximum time until we send the
+     * next consent request. */
+    comp->consent_ctx->maximum_transmits_timeout_ms = tval;
   }
 
 static void nr_ice_component_consent_timer_cb(NR_SOCKET s, int how, void *cb_arg)
@@ -1282,6 +1354,8 @@ static void nr_ice_component_consent_timer_cb(NR_SOCKET s, int how, void *cb_arg
     comp->consent_ctx->params.ice_binding_request.priority =
       comp->active->local->priority;
 
+    nr_ice_component_consent_calc_consent_timer(comp);
+
     if (r=nr_ice_component_refresh_consent(comp->consent_ctx,
                                            nr_ice_component_refresh_consent_cb,
                                            comp)) {
@@ -1301,18 +1375,12 @@ static void nr_ice_component_consent_timer_cb(NR_SOCKET s, int how, void *cb_arg
 
 void nr_ice_component_consent_schedule_consent_timer(nr_ice_component *comp)
   {
-    uint16_t trange, trand, tval;
-    void *buf = &trand;
+    if (!comp->can_send) {
+      return;
+    }
 
-    trange = NR_ICE_CONSENT_TIMER_DEFAULT / 100 * 20;
-    tval = NR_ICE_CONSENT_TIMER_DEFAULT - trange;
-    if (!nr_crypto_random_bytes(buf, sizeof(trand)))
-      tval += (trand % (trange * 2));
-
-    if (comp->ctx->test_timer_divider)
-      tval = tval / comp->ctx->test_timer_divider;
-
-    NR_ASYNC_TIMER_SET(tval, nr_ice_component_consent_timer_cb, comp,
+    NR_ASYNC_TIMER_SET(comp->consent_ctx->maximum_transmits_timeout_ms,
+                       nr_ice_component_consent_timer_cb, comp,
                        &comp->consent_timer);
   }
 
@@ -1349,10 +1417,6 @@ int nr_ice_component_setup_consent(nr_ice_component *comp)
       ABORT(r);
     /* Consent request get send only once. */
     comp->consent_ctx->maximum_transmits = 1;
-    /* The timeout of the transaction is the maximum time until we send the
-     * next consent request.
-     * TODO: set this every time we calculate the new random timeout. */
-    comp->consent_ctx->maximum_transmits_timeout_ms = 6000;
 
     if (r=nr_ice_socket_register_stun_client(comp->active->local->isock,
             comp->consent_ctx, &comp->consent_handle))
@@ -1361,6 +1425,7 @@ int nr_ice_component_setup_consent(nr_ice_component *comp)
     comp->can_send = 1;
     nr_ice_component_consent_refreshed(comp);
 
+    nr_ice_component_consent_calc_consent_timer(comp);
     nr_ice_component_consent_schedule_consent_timer(comp);
 
     _status=0;

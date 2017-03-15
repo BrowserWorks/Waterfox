@@ -47,16 +47,6 @@ interface nsIAppsService : nsISupports
   DOMString getManifestURLByLocalId(in unsigned long localId);
 
   /**
-   * Returns the manifest CSP associated to this localId.
-   */
-  DOMString getManifestCSPByLocalId(in unsigned long localId);
-
-  /**
-   * Returns the default CSP associated to this localId.
-   */
-  DOMString getDefaultCSPByLocalId(in unsigned long localId);
-
-  /**
    * Returns the basepath for core apps
    */
   DOMString getCoreAppsBasePath();
@@ -74,12 +64,6 @@ interface nsIAppsService : nsISupports
   jsval getAppInfo(in DOMString appId);
 
   /**
-   * Returns a URI to redirect to when we get a redirection to 'uri'.
-   * Returns null if no redirection is declared for this uri.
-   */
-  nsIURI getRedirect(in unsigned long localId, in nsIURI uri);
-
-  /**
    * Returns the localId if the app was installed from a store
    */
   DOMString getAppLocalIdByStoreId(in DOMString storeID);
@@ -88,11 +72,4 @@ interface nsIAppsService : nsISupports
    * Returns the scope for app to use with service workers.
    */
   DOMString getScopeByLocalId(in unsigned long localId);
-
-  /**
-   * Returns true if this uri is a script or css resource loaded
-   * from an extension.
-   * Available only in the parent process.
-   */
-  bool isExtensionResource(in nsIURI uri);
 };

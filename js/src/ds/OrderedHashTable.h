@@ -532,11 +532,12 @@ class OrderedHashTable
     static size_t offsetOfData() {
         return offsetof(OrderedHashTable, data);
     }
-#ifdef DEBUG
-    static size_t sizeofData() {
+    static constexpr size_t offsetOfDataElement() {
+        return offsetof(Data, element);
+    }
+    static constexpr size_t sizeofData() {
         return sizeof(Data);
     }
-#endif
 
   private:
     /* Logarithm base 2 of the number of buckets in the hash table initially. */
@@ -769,17 +770,21 @@ class OrderedHashMap
         return impl.rekeyOneEntry(current, newKey, Entry(newKey, e->value));
     }
 
+    static size_t offsetOfEntryKey() {
+        return Entry::offsetOfKey();
+    }
     static size_t offsetOfImplDataLength() {
         return Impl::offsetOfDataLength();
     }
     static size_t offsetOfImplData() {
         return Impl::offsetOfData();
     }
-#ifdef DEBUG
-    static size_t sizeofImplData() {
+    static constexpr size_t offsetOfImplDataElement() {
+        return Impl::offsetOfDataElement();
+    }
+    static constexpr size_t sizeofImplData() {
         return Impl::sizeofData();
     }
-#endif
 };
 
 template <class T, class OrderedHashPolicy, class AllocPolicy>
@@ -812,6 +817,22 @@ class OrderedHashSet
 
     void rekeyOneEntry(const T& current, const T& newKey) {
         return impl.rekeyOneEntry(current, newKey, newKey);
+    }
+
+    static size_t offsetOfEntryKey() {
+        return 0;
+    }
+    static size_t offsetOfImplDataLength() {
+        return Impl::offsetOfDataLength();
+    }
+    static size_t offsetOfImplData() {
+        return Impl::offsetOfData();
+    }
+    static constexpr size_t offsetOfImplDataElement() {
+        return Impl::offsetOfDataElement();
+    }
+    static constexpr size_t sizeofImplData() {
+        return Impl::sizeofData();
     }
 };
 

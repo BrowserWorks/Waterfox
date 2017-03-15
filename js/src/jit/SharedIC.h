@@ -202,8 +202,10 @@ class ICFallbackStub;
 #undef FORWARD_DECLARE_STUBS
 
 #ifdef JS_JITSPEW
-void FallbackICSpew(JSContext* cx, ICFallbackStub* stub, const char* fmt, ...);
-void TypeFallbackICSpew(JSContext* cx, ICTypeMonitor_Fallback* stub, const char* fmt, ...);
+void FallbackICSpew(JSContext* cx, ICFallbackStub* stub, const char* fmt, ...)
+    MOZ_FORMAT_PRINTF(3, 4);
+void TypeFallbackICSpew(JSContext* cx, ICTypeMonitor_Fallback* stub, const char* fmt, ...)
+    MOZ_FORMAT_PRINTF(3, 4);
 #else
 #define FallbackICSpew(...)
 #define TypeFallbackICSpew(...)
@@ -2383,74 +2385,6 @@ class ICGetProp_Generic : public ICMonitoredStub
 
         ICStub* getStub(ICStubSpace* space) {
             return newStub<ICGetProp_Generic>(space, getStubCode(), firstMonitorStub_);
-        }
-    };
-};
-
-// Stub for accessing a property on a primitive's prototype.
-class ICGetProp_Primitive : public ICMonitoredStub
-{
-    friend class ICStubSpace;
-
-  protected: // Protected to silence Clang warning.
-    // Shape of String.prototype/Number.prototype to check for.
-    GCPtrShape protoShape_;
-
-    // Fixed or dynamic slot offset.
-    uint32_t offset_;
-
-    ICGetProp_Primitive(JitCode* stubCode, ICStub* firstMonitorStub, JSValueType primitiveType,
-                        Shape* protoShape, uint32_t offset);
-
-  public:
-    GCPtrShape& protoShape() {
-        return protoShape_;
-    }
-    JSValueType primitiveType() const {
-        return JSValueType(extra_);
-    }
-
-    static size_t offsetOfProtoShape() {
-        return offsetof(ICGetProp_Primitive, protoShape_);
-    }
-
-    static size_t offsetOfOffset() {
-        return offsetof(ICGetProp_Primitive, offset_);
-    }
-
-    class Compiler : public ICStubCompiler {
-        ICStub* firstMonitorStub_;
-        JSValueType primitiveType_;
-        RootedObject prototype_;
-        bool isFixedSlot_;
-        uint32_t offset_;
-
-        MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm);
-
-      protected:
-        virtual int32_t getKey() const {
-            static_assert(sizeof(JSValueType) == 1, "JSValueType should fit in one byte");
-            return static_cast<int32_t>(engine_) |
-                  (static_cast<int32_t>(kind) << 1) |
-                  (static_cast<int32_t>(isFixedSlot_) << 17) |
-                  (static_cast<int32_t>(primitiveType_) << 25);
-        }
-
-      public:
-        Compiler(JSContext* cx, Engine engine, ICStub* firstMonitorStub, JSValueType primitiveType,
-                 HandleObject prototype, bool isFixedSlot, uint32_t offset)
-          : ICStubCompiler(cx, ICStub::GetProp_Primitive, engine),
-            firstMonitorStub_(firstMonitorStub),
-            primitiveType_(primitiveType),
-            prototype_(cx, prototype),
-            isFixedSlot_(isFixedSlot),
-            offset_(offset)
-        {}
-
-        ICStub* getStub(ICStubSpace* space) {
-            RootedShape protoShape(cx, prototype_->as<NativeObject>().lastProperty());
-            return newStub<ICGetProp_Primitive>(space, getStubCode(), firstMonitorStub_,
-                                                primitiveType_, protoShape, offset_);
         }
     };
 };

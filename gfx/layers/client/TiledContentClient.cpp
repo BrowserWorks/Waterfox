@@ -308,7 +308,7 @@ ClientTiledLayerBuffer::GetContentType(SurfaceMode* aMode) const
   SurfaceMode mode = mPaintedLayer.GetSurfaceMode();
 
   if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
-#if defined(MOZ_GFX_OPTIMIZE_MOBILE) || defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_GFX_OPTIMIZE_MOBILE)
     mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
 #else
     if (!mPaintedLayer.GetParent() ||
@@ -319,7 +319,7 @@ ClientTiledLayerBuffer::GetContentType(SurfaceMode* aMode) const
     }
 #endif
   } else if (mode == SurfaceMode::SURFACE_OPAQUE) {
-#if defined(MOZ_GFX_OPTIMIZE_MOBILE) || defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_GFX_OPTIMIZE_MOBILE)
     if (IsLowPrecision()) {
       // If we're in low-res mode, drawing can sample from outside the visible
       // region. Make sure that we only sample transparency if that happens.
@@ -1057,7 +1057,7 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
 
   if (!aTile.mAllocator) {
     aTile.SetTextureAllocator(mManager->GetCompositorBridgeChild()->GetTexturePool(
-      mManager->GetCompositorBackendType(),
+      mManager->AsShadowForwarder(),
       gfxPlatform::GetPlatform()->Optimal2DFormatForContent(content),
       TextureFlags::DISALLOW_BIGIMAGE | TextureFlags::IMMEDIATE_UPLOAD));
     MOZ_ASSERT(aTile.mAllocator);

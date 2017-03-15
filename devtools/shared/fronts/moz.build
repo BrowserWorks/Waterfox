@@ -29,6 +29,7 @@ DevToolsModules(
     'preference.js',
     'profiler.js',
     'promises.js',
+    'reflow.js',
     'settings.js',
     'storage.js',
     'string.js',

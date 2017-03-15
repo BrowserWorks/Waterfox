@@ -351,7 +351,7 @@ ImageHost::Composite(LayerComposite* aLayer,
     bool isAlphaPremultiplied =
         !(mCurrentTextureHost->GetFlags() & TextureFlags::NON_PREMULTIPLIED);
     RefPtr<TexturedEffect> effect =
-        CreateTexturedEffect(mCurrentTextureHost->GetReadFormat(),
+        CreateTexturedEffect(mCurrentTextureHost,
             mCurrentTextureSource.get(), aSamplingFilter, isAlphaPremultiplied,
             GetRenderState());
     if (!effect) {
@@ -611,7 +611,7 @@ ImageHost::GenEffect(const gfx::SamplingFilter aSamplingFilter)
     isAlphaPremultiplied = false;
   }
 
-  return CreateTexturedEffect(mCurrentTextureHost->GetReadFormat(),
+  return CreateTexturedEffect(mCurrentTextureHost,
                               mCurrentTextureSource,
                               aSamplingFilter,
                               isAlphaPremultiplied,
@@ -703,15 +703,6 @@ LayerRenderState
 ImageHostOverlay::GetRenderState()
 {
   LayerRenderState state;
-#ifdef MOZ_WIDGET_GONK
-  if (mOverlay.handle().type() == OverlayHandle::Tint32_t) {
-    state.SetOverlayId(mOverlay.handle().get_int32_t());
-  } else if (mOverlay.handle().type() == OverlayHandle::TGonkNativeHandle) {
-    state.SetSidebandStream(mOverlay.handle().get_GonkNativeHandle());
-  }
-  state.mSize.width = mPictureRect.Width();
-  state.mSize.height = mPictureRect.Height();
-#endif
   return state;
 }
 

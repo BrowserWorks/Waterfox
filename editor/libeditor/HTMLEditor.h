@@ -8,7 +8,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/CSSEditUtils.h"
-#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheet.h"
 #include "mozilla/TextEditor.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/File.h"
@@ -365,7 +365,7 @@ public:
   NS_IMETHOD GetRootElement(nsIDOMElement** aRootElement) override;
 
   // nsICSSLoaderObserver
-  NS_IMETHOD StyleSheetLoaded(StyleSheetHandle aSheet,
+  NS_IMETHOD StyleSheetLoaded(StyleSheet* aSheet,
                               bool aWasAlternate, nsresult aStatus) override;
 
   // Utility Routines, not part of public API
@@ -417,15 +417,15 @@ public:
   /**
    * Dealing with the internal style sheet lists.
    */
-  StyleSheetHandle GetStyleSheetForURL(const nsAString& aURL);
-  void GetURLForStyleSheet(StyleSheetHandle aStyleSheet,
+  StyleSheet* GetStyleSheetForURL(const nsAString& aURL);
+  void GetURLForStyleSheet(StyleSheet* aStyleSheet,
                            nsAString& aURL);
 
   /**
    * Add a url + known style sheet to the internal lists.
    */
   nsresult AddNewStyleSheetToList(const nsAString &aURL,
-                                  StyleSheetHandle aStyleSheet);
+                                  StyleSheet* aStyleSheet);
   nsresult RemoveStyleSheetFromList(const nsAString &aURL);
 
   bool IsCSSEnabled()
@@ -648,7 +648,8 @@ protected:
                                         bool aAddCites,
                                         nsIDOMNode** aNodeInserted);
 
-  nsresult InsertObject(const char* aType, nsISupports* aObject, bool aIsSafe,
+  nsresult InsertObject(const nsACString& aType, nsISupports* aObject,
+                        bool aIsSafe,
                         nsIDOMDocument* aSourceDoc,
                         nsIDOMNode* aDestinationNode,
                         int32_t aDestOffset,
@@ -907,7 +908,7 @@ protected:
 
   // Maintain a list of associated style sheets and their urls.
   nsTArray<nsString> mStyleSheetURLs;
-  nsTArray<StyleSheetHandle::RefPtr> mStyleSheets;
+  nsTArray<RefPtr<StyleSheet>> mStyleSheets;
 
   // an array for holding default style settings
   nsTArray<PropItem*> mDefaultStyles;

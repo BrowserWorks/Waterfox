@@ -116,7 +116,7 @@ class GeneratorObject : public NativeObject
     const Value& newTarget() const {
         return getFixedSlot(NEWTARGET_SLOT);
     }
-    void setNewTarget(Value newTarget) {
+    void setNewTarget(const Value& newTarget) {
         setFixedSlot(NEWTARGET_SLOT, newTarget);
     }
 
@@ -215,6 +215,9 @@ class StarGeneratorObject : public GeneratorObject
 bool GeneratorThrowOrClose(JSContext* cx, AbstractFramePtr frame, Handle<GeneratorObject*> obj,
                            HandleValue val, uint32_t resumeKind);
 void SetReturnValueForClosingGenerator(JSContext* cx, AbstractFramePtr frame);
+
+MOZ_MUST_USE bool
+CheckStarGeneratorResumptionValue(JSContext* cx, HandleValue v);
 
 } // namespace js
 

@@ -7,19 +7,22 @@
 '''Python usage, esp. virtualenv.
 '''
 
+import distutils.version
+import errno
 import os
 import subprocess
 import sys
-import time
 import json
+import socket
 import traceback
+import urlparse
 
 import mozharness
 from mozharness.base.script import (
     PostScriptAction,
     PostScriptRun,
     PreScriptAction,
-    PreScriptRun,
+    ScriptMixin,
 )
 from mozharness.base.errors import VirtualenvErrorList
 from mozharness.base.log import WARNING, FATAL
@@ -49,7 +52,7 @@ def get_tlsv1_post():
 
 # Virtualenv {{{1
 virtualenv_config_options = [
-    [["--venv-path", "--virtualenv-path"], {
+    [["--virtualenv-path"], {
         "action": "store",
         "dest": "virtualenv_path",
         "default": "venv",
@@ -111,18 +114,21 @@ class VirtualenvMixin(object):
                                          optional, two_pass, editable))
 
     def query_virtualenv_path(self):
-        c = self.config
+        """Determine the absolute path to the virtualenv."""
         dirs = self.query_abs_dirs()
-        virtualenv = None
+
         if 'abs_virtualenv_dir' in dirs:
-            virtualenv = dirs['abs_virtualenv_dir']
-        elif c.get('virtualenv_path'):
-            if os.path.isabs(c['virtualenv_path']):
-                virtualenv = c['virtualenv_path']
-            else:
-                virtualenv = os.path.join(dirs['abs_work_dir'],
-                                          c['virtualenv_path'])
-        return virtualenv
+            return dirs['abs_virtualenv_dir']
+
+        p = self.config['virtualenv_path']
+        if not p:
+            self.fatal('virtualenv_path config option not set; '
+                       'this should never happen')
+
+        if os.path.isabs(p):
+            return p
+        else:
+            return os.path.join(dirs['abs_work_dir'], p)
 
     def query_python_path(self, binary="python"):
         """Return the path of a binary inside the virtualenv, if
@@ -134,10 +140,8 @@ class VirtualenvMixin(object):
             if self._is_windows():
                 bin_dir = 'Scripts'
             virtualenv_path = self.query_virtualenv_path()
-            if virtualenv_path:
-                self.python_paths[binary] = os.path.abspath(os.path.join(virtualenv_path, bin_dir, binary))
-            else:
-                self.python_paths[binary] = self.query_exe(binary)
+            self.python_paths[binary] = os.path.abspath(os.path.join(virtualenv_path, bin_dir, binary))
+
         return self.python_paths[binary]
 
     def query_python_site_packages_path(self):
@@ -257,10 +261,29 @@ class VirtualenvMixin(object):
         else:
             self.fatal("install_module() doesn't understand an install_method of %s!" % install_method)
 
-        # Add --find-links pages to look at
+        # Add --find-links pages to look at. Add --trusted-host automatically if
+        # the host isn't secure. This allows modern versions of pip to connect
+        # without requiring an override.
         proxxy = Proxxy(self.config, self.log_obj)
+        trusted_hosts = set()
         for link in proxxy.get_proxies_and_urls(c.get('find_links', [])):
+            parsed = urlparse.urlparse(link)
+
+            try:
+                socket.gethostbyname(parsed.hostname)
+            except socket.gaierror as e:
+                self.info('error resolving %s (ignoring): %s' %
+                          (parsed.hostname, e.message))
+                continue
+
             command.extend(["--find-links", link])
+            if parsed.scheme != 'https':
+                trusted_hosts.add(parsed.hostname)
+
+        if (install_method != 'easy_install' and
+                    self.pip_version >= distutils.version.LooseVersion('6.0')):
+            for host in sorted(trusted_hosts):
+                command.extend(['--trusted-host', host])
 
         # module_url can be None if only specifying requirements files
         if module_url:
@@ -349,45 +372,74 @@ class VirtualenvMixin(object):
         dirs = self.query_abs_dirs()
         venv_path = self.query_virtualenv_path()
         self.info("Creating virtualenv %s" % venv_path)
-        virtualenv = c.get('virtualenv', self.query_exe('virtualenv'))
-        if isinstance(virtualenv, str):
-            # allow for [python, virtualenv] in config
-            virtualenv = [virtualenv]
 
-        if not os.path.exists(virtualenv[0]) and not self.which(virtualenv[0]):
-            self.add_summary("The executable '%s' is not found; not creating "
-                             "virtualenv!" % virtualenv[0], level=FATAL)
-            return -1
+        # If running from a source checkout, use the virtualenv that is
+        # vendored since that is deterministic.
+        if self.topsrcdir:
+            virtualenv = [
+                sys.executable,
+                os.path.join(self.topsrcdir, 'python', 'virtualenv', 'virtualenv.py')
+            ]
+            virtualenv_options = c.get('virtualenv_options', [])
+            # Don't create symlinks. If we don't do this, permissions issues may
+            # hinder virtualenv creation or operation. Ideally we should do this
+            # below when using the system virtualenv. However, this is a newer
+            # feature and isn't guaranteed to be supported.
+            virtualenv_options.append('--always-copy')
 
-        # https://bugs.launchpad.net/virtualenv/+bug/352844/comments/3
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=700415#c50
-        if c.get('virtualenv_python_dll'):
-            # We may someday want to copy a differently-named dll, but
-            # let's not think about that right now =\
-            dll_name = os.path.basename(c['virtualenv_python_dll'])
-            target = self.query_python_path(dll_name)
-            scripts_dir = os.path.dirname(target)
-            self.mkdir_p(scripts_dir)
-            self.copyfile(c['virtualenv_python_dll'], target, error_level=WARNING)
+        # No source checkout. Try to find virtualenv from config options
+        # or search path.
         else:
-            self.mkdir_p(dirs['abs_work_dir'])
+            virtualenv = c.get('virtualenv', self.query_exe('virtualenv'))
+            if isinstance(virtualenv, str):
+                # allow for [python, virtualenv] in config
+                virtualenv = [virtualenv]
 
-        # make this list configurable?
-        for module in ('distribute', 'pip'):
-            if c.get('%s_url' % module):
-                self.download_file(c['%s_url' % module],
-                                   parent_dir=dirs['abs_work_dir'])
+            if not os.path.exists(virtualenv[0]) and not self.which(virtualenv[0]):
+                self.add_summary("The executable '%s' is not found; not creating "
+                                 "virtualenv!" % virtualenv[0], level=FATAL)
+                return -1
 
-        virtualenv_options = c.get('virtualenv_options',
-                                   ['--no-site-packages', '--distribute'])
+            # https://bugs.launchpad.net/virtualenv/+bug/352844/comments/3
+            # https://bugzilla.mozilla.org/show_bug.cgi?id=700415#c50
+            if c.get('virtualenv_python_dll'):
+                # We may someday want to copy a differently-named dll, but
+                # let's not think about that right now =\
+                dll_name = os.path.basename(c['virtualenv_python_dll'])
+                target = self.query_python_path(dll_name)
+                scripts_dir = os.path.dirname(target)
+                self.mkdir_p(scripts_dir)
+                self.copyfile(c['virtualenv_python_dll'], target, error_level=WARNING)
+
+            # make this list configurable?
+            for module in ('distribute', 'pip'):
+                if c.get('%s_url' % module):
+                    self.download_file(c['%s_url' % module],
+                                       parent_dir=dirs['abs_work_dir'])
+
+            virtualenv_options = c.get('virtualenv_options',
+                                       ['--no-site-packages', '--distribute'])
 
         if os.path.exists(self.query_python_path()):
             self.info("Virtualenv %s appears to already exist; skipping virtualenv creation." % self.query_python_path())
         else:
+            self.mkdir_p(dirs['abs_work_dir'])
             self.run_command(virtualenv + virtualenv_options + [venv_path],
                              cwd=dirs['abs_work_dir'],
                              error_list=VirtualenvErrorList,
                              halt_on_failure=True)
+
+        # Resolve the pip version so we can conditionally do things if we have
+        # a modern pip.
+        pip = self.query_python_path('pip')
+        output = self.get_output_from_command([pip, '--version'],
+                                              halt_on_failure=True)
+        words = output.split()
+        if words[0] != 'pip':
+            self.fatal('pip --version output is weird: %s' % output)
+        pip_version = words[1]
+        self.pip_version = distutils.version.LooseVersion(pip_version)
+
         if not modules:
             modules = c.get('virtualenv_modules', [])
         if not requirements:
@@ -443,7 +495,43 @@ class VirtualenvMixin(object):
         execfile(activate, dict(__file__=activate))
 
 
-class ResourceMonitoringMixin(object):
+# This is (sadly) a mixin for logging methods.
+class PerfherderResourceOptionsMixin(ScriptMixin):
+    def perfherder_resource_options(self):
+        """Obtain a list of extraOptions values to identify the env."""
+        opts = []
+
+        if 'TASKCLUSTER_INSTANCE_TYPE' in os.environ:
+            # Include the instance type so results can be grouped.
+            opts.append('taskcluster-%s' % os.environ['TASKCLUSTER_INSTANCE_TYPE'])
+        else:
+            # We assume !taskcluster => buildbot.
+            instance = 'unknown'
+
+            # Try to load EC2 instance type from metadata file. This file
+            # may not exist in many scenarios (including when inside a chroot).
+            # So treat it as optional.
+            # TODO support Windows.
+            try:
+                # This file should exist on Linux in EC2.
+                with open('/etc/instance_metadata.json', 'rb') as fh:
+                    im = json.load(fh)
+                    instance = im['aws_instance_type'].encode('ascii')
+            except IOError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                self.info('instance_metadata.json not found; unable to '
+                          'determine instance type')
+            except Exception:
+                self.warning('error reading instance_metadata: %s' %
+                             traceback.format_exc())
+
+            opts.append('buildbot-%s' % instance)
+
+        return opts
+
+
+class ResourceMonitoringMixin(PerfherderResourceOptionsMixin):
     """Provides resource monitoring capabilities to scripts.
 
     When this class is in the inheritance chain, resource usage stats of the
@@ -611,7 +699,7 @@ class ResourceMonitoringMixin(object):
 
             suites.append({
                 'name': '%s.overall' % perfherder_name,
-                'extraOptions': perfherder_options,
+                'extraOptions': perfherder_options + self.perfherder_resource_options(),
                 'subtests': overall,
 
             })
@@ -703,220 +791,6 @@ class ResourceMonitoringMixin(object):
 
     def _tinderbox_print(self, message):
         self.info('TinderboxPrint: %s' % message)
-
-
-class InfluxRecordingMixin(object):
-    """Provides InfluxDB stat recording to scripts.
-
-    This class records stats to an InfluxDB server, if enabled. Stat recording
-    is enabled in a script by inheriting from this class, and adding an
-    influxdb_credentials line to the influx_credentials_file (usually oauth.txt
-    in automation).  This line should look something like:
-
-        influxdb_credentials = 'http://goldiewilson-onepointtwentyone-1.c.influxdb.com:8086/db/DBNAME/series?u=DBUSERNAME&p=DBPASSWORD'
-
-    Where DBNAME, DBUSERNAME, and DBPASSWORD correspond to the database name,
-    and user/pw credentials for recording to the database. The stats from
-    mozharness are recorded in the 'mozharness' table.
-    """
-
-    @PreScriptRun
-    def influxdb_recording_init(self):
-        self.recording = False
-        self.post = None
-        self.posturl = None
-        self.build_metrics_summary = None
-        self.res_props = self.config.get('build_resources_path') % self.query_abs_dirs()
-        self.info("build_resources.json path: %s" % self.res_props)
-        if self.res_props:
-            self.rmtree(self.res_props)
-
-        try:
-            site_packages_path = self.query_python_site_packages_path()
-            if site_packages_path not in sys.path:
-                sys.path.append(site_packages_path)
-
-            self.post = get_tlsv1_post()
-
-            auth = os.path.join(os.getcwd(), self.config['influx_credentials_file'])
-            if not os.path.exists(auth):
-                self.warning("Unable to start influxdb recording: %s not found" % (auth,))
-                return
-            credentials = {}
-            execfile(auth, credentials)
-            if 'influxdb_credentials' in credentials:
-                self.posturl = credentials['influxdb_credentials']
-                self.recording = True
-            else:
-                self.warning("Unable to start influxdb recording: no credentials")
-                return
-
-        except Exception:
-            # The exact reason for failing to start stats doesn't really matter.
-            # If anything fails, we just won't record stats for this job.
-            self.warning("Unable to start influxdb recording: %s" %
-                         traceback.format_exc())
-            return
-
-    @PreScriptAction
-    def influxdb_recording_pre_action(self, action):
-        if not self.recording:
-            return
-
-        self.start_time = time.time()
-
-    @PostScriptAction
-    def influxdb_recording_post_action(self, action, success=None):
-        if not self.recording:
-            return
-
-        elapsed_time = time.time() - self.start_time
-
-        c = {}
-        p = {}
-        if self.buildbot_config:
-            c = self.buildbot_config.get('properties', {})
-        if self.buildbot_properties:
-            p = self.buildbot_properties
-        self.record_influx_stat([{
-            "points": [[
-                action,
-                elapsed_time,
-                c.get('buildername'),
-                c.get('product'),
-                c.get('platform'),
-                c.get('branch'),
-                c.get('slavename'),
-                c.get('revision'),
-                p.get('gaia_revision'),
-                c.get('buildid'),
-            ]],
-            "name": "mozharness",
-            "columns": [
-                "action",
-                "runtime",
-                "buildername",
-                "product",
-                "platform",
-                "branch",
-                "slavename",
-                "gecko_revision",
-                "gaia_revision",
-                "buildid",
-            ],
-        }])
-
-    def _get_resource_usage(self, res, name, iolen, cpulen):
-        c = {}
-        p = {}
-        if self.buildbot_config:
-            c = self.buildbot_config.get('properties', {})
-        if self.buildbot_properties:
-            p = self.buildbot_properties
-
-        data = [
-            # Build properties
-            c.get('buildername'),
-            c.get('product'),
-            c.get('platform'),
-            c.get('branch'),
-            c.get('slavename'),
-            c.get('revision'),
-            p.get('gaia_revision'),
-            c.get('buildid'),
-
-            # Mach step properties
-            name,
-            res.get('start'),
-            res.get('end'),
-            res.get('duration'),
-            res.get('cpu_percent'),
-        ]
-        # The io and cpu_times fields are arrays, though they aren't always
-        # present if a step completes before resource utilization is measured.
-        # We add the arrays if they exist, otherwise we just do an array of None
-        # to fill up the stat point.
-        data.extend(res.get('io', [None] * iolen))
-        data.extend(res.get('cpu_times', [None] * cpulen))
-        return data
-
-    @PostScriptAction('build')
-    def record_mach_stats(self, action, success=None):
-        if not os.path.exists(self.res_props):
-            self.info('No build_resources.json found, not logging stats')
-            return
-        with open(self.res_props) as fh:
-            resources = json.load(fh)
-            data = {
-                "points": [
-                ],
-                "name": "mach",
-                "columns": [
-                    # Build properties
-                    "buildername",
-                    "product",
-                    "platform",
-                    "branch",
-                    "slavename",
-                    "gecko_revision",
-                    "gaia_revision",
-                    "buildid",
-
-                    # Mach step properties
-                    "name",
-                    "start",
-                    "end",
-                    "duration",
-                    "cpu_percent",
-                ],
-            }
-
-            # The io and cpu_times fields aren't static - they may vary based
-            # on the specific platform being measured. Mach records the field
-            # names, which we use as the column names here.
-            data['columns'].extend(resources['io_fields'])
-            data['columns'].extend(resources['cpu_times_fields'])
-            iolen = len(resources['io_fields'])
-            cpulen = len(resources['cpu_times_fields'])
-
-            if 'duration' in resources:
-                self.build_metrics_summary = {
-                    'name': 'build times',
-                    'value': resources['duration'],
-                    'subtests': [],
-                }
-
-            # The top-level data has the overall resource usage, which we record
-            # under the name 'TOTAL' to separate it from the individual phases.
-            data['points'].append(self._get_resource_usage(resources, 'TOTAL', iolen, cpulen))
-
-            # Each phases also has the same resource stats as the top-level.
-            for phase in resources['phases']:
-                data['points'].append(self._get_resource_usage(phase, phase['name'], iolen, cpulen))
-                if 'duration' not in phase:
-                    self.build_metrics_summary = None
-                elif self.build_metrics_summary:
-                    self.build_metrics_summary['subtests'].append({
-                        'name': phase['name'],
-                        'value': phase['duration'],
-                    })
-
-            self.record_influx_stat([data])
-
-    def record_influx_stat(self, json_data):
-        if not self.recording:
-            return
-        try:
-            r = self.post(self.posturl, data=json.dumps(json_data), timeout=5)
-            if r.status_code != 200:
-                self.warning("Failed to log stats. Return code = %i, stats = %s" % (r.status_code, json_data))
-
-                # Disable recording for the rest of this job. Even if it's just
-                # intermittent, we don't want to keep the build from progressing.
-                self.recording = False
-        except Exception, e:
-            self.warning('Failed to log stats. Exception = %s' % str(e))
-            self.recording = False
 
 
 # __main__ {{{1

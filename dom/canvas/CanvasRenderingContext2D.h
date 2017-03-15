@@ -66,13 +66,13 @@ class CanvasRenderingContext2D final :
   virtual ~CanvasRenderingContext2D();
 
 public:
-  CanvasRenderingContext2D();
+  explicit CanvasRenderingContext2D(layers::LayersBackend aCompositorBackend);
 
   virtual JSObject* WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   HTMLCanvasElement* GetCanvas() const
   {
-    if (mCanvasElement->IsInNativeAnonymousSubtree()) {
+    if (!mCanvasElement || mCanvasElement->IsInNativeAnonymousSubtree()) {
       return nullptr;
     }
 
@@ -365,10 +365,6 @@ public:
                                      mozilla::ErrorResult& aError);
   void GetFillRule(nsAString& aFillRule);
   void SetFillRule(const nsAString& aFillRule);
-  void GetMozDash(JSContext* aCx, JS::MutableHandle<JS::Value> aRetval,
-                  mozilla::ErrorResult& aError);
-  void SetMozDash(JSContext* aCx, const JS::Value& aMozDash,
-                  mozilla::ErrorResult& aError);
 
   void SetLineDash(const Sequence<double>& aSegments,
                    mozilla::ErrorResult& aRv);
@@ -376,12 +372,6 @@ public:
 
   void SetLineDashOffset(double aOffset);
   double LineDashOffset() const;
-
-  double MozDashOffset()
-  {
-    return CurrentState().dashOffset;
-  }
-  void SetMozDashOffset(double aMozDashOffset);
 
   void GetMozTextStyle(nsAString& aMozTextStyle)
   {
@@ -548,6 +538,10 @@ public:
   bool GetHitRegionRect(Element* aElement, nsRect& aRect) override;
 
   void OnShutdown();
+
+  // Check the global setup, as well as the compositor type:
+  bool AllowOpenGLCanvas() const;
+
 protected:
   nsresult GetImageDataArray(JSContext* aCx, int32_t aX, int32_t aY,
                              uint32_t aWidth, uint32_t aHeight,
@@ -676,7 +670,7 @@ protected:
   /**
    * Disposes an old target and prepares to lazily create a new target.
    */
-  void ClearTarget(bool aRetainBuffer = false);
+  void ClearTarget();
 
   /*
    * Returns the target to the buffer provider. i.e. this will queue a frame for
@@ -742,6 +736,8 @@ protected:
   static void RemoveDemotableContext(CanvasRenderingContext2D* aContext);
 
   RenderingMode mRenderingMode;
+
+  layers::LayersBackend mCompositorBackend;
 
   // Member vars
   int32_t mWidth, mHeight;

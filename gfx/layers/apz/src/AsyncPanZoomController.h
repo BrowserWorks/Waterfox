@@ -44,9 +44,9 @@ namespace layers {
 
 class AsyncDragMetrics;
 struct ScrollableLayerGuid;
-class CompositorBridgeParent;
+class CompositorController;
+class MetricsSharingController;
 class GestureEventListener;
-class PCompositorBridgeParent;
 struct AsyncTransform;
 class AsyncPanZoomAnimation;
 class AndroidFlingAnimation;
@@ -187,17 +187,16 @@ public:
                            bool aThisLayerTreeUpdated);
 
   /**
-   * The platform implementation must set the compositor parent so that we can
+   * The platform implementation must set the compositor controller so that we can
    * request composites.
    */
-  void SetCompositorBridgeParent(CompositorBridgeParent* aCompositorBridgeParent);
+  void SetCompositorController(CompositorController* aCompositorController);
 
   /**
-   * Inform this APZC that it will be sharing its FrameMetrics with a cross-process
-   * compositor so that the associated content process can access it. This is only
-   * relevant when progressive painting is enabled.
+   * If we need to share the frame metrics with some other thread, this controller
+   * needs to be set and provides relevant information/APIs.
    */
-  void ShareFrameMetricsAcrossProcesses();
+  void SetMetricsSharingController(MetricsSharingController* aMetricsSharingController);
 
   // --------------------------------------------------------------------------
   // These methods can be called from any thread.
@@ -233,6 +232,15 @@ public:
    * Report the number of CSSPixel-milliseconds of checkerboard to telemetry.
    */
   void ReportCheckerboard(const TimeStamp& aSampleTime);
+
+  /**
+   * Flush any active checkerboard report that's in progress. This basically
+   * pretends like any in-progress checkerboard event has terminated, and pushes
+   * out the report to the checkerboard reporting service and telemetry. If the
+   * checkerboard event has not really finished, it will start a new event
+   * on the next composite.
+   */
+  void FlushActiveCheckerboardReport();
 
   /**
    * Returns whether or not the APZC is currently in a state of checkerboarding.
@@ -479,6 +487,11 @@ protected:
   nsEventStatus OnDoubleTap(const TapGestureInput& aEvent);
 
   /**
+   * Helper method for double taps where the double-tap gesture is disabled.
+   */
+  nsEventStatus OnSecondTap(const TapGestureInput& aEvent);
+
+  /**
    * Helper method to cancel any gesture currently going to Gecko. Used
    * primarily when a user taps the screen over some clickable content but then
    * pans down instead of letting go (i.e. to cancel a previous touch so that a
@@ -500,8 +513,7 @@ protected:
                       const CSSPoint& aFocus);
 
   /**
-   * Schedules a composite on the compositor thread. Wrapper for
-   * CompositorBridgeParent::ScheduleRenderOnCompositorThread().
+   * Schedules a composite on the compositor thread.
    */
   void ScheduleComposite();
 
@@ -633,7 +645,8 @@ protected:
   void OnTouchEndOrCancel();
 
   uint64_t mLayersId;
-  RefPtr<CompositorBridgeParent> mCompositorBridgeParent;
+  RefPtr<CompositorController> mCompositorController;
+  RefPtr<MetricsSharingController> mMetricsSharingController;
 
   /* Access to the following two fields is protected by the mRefPtrMonitor,
      since they are accessed on the UI thread but can be cleared on the
@@ -652,12 +665,6 @@ protected:
   /* Utility functions that return a addrefed pointer to the corresponding fields. */
   already_AddRefed<GeckoContentController> GetGeckoContentController() const;
   already_AddRefed<GestureEventListener> GetGestureEventListener() const;
-
-  // If we are sharing our frame metrics with content across processes
-  bool mSharingFrameMetricsAcrossProcesses;
-  /* Utility function to get the Compositor with which we share the FrameMetrics.
-     This function is only callable from the compositor thread. */
-  PCompositorBridgeParent* GetSharedFrameMetricsCompositor();
 
   PlatformSpecificStateBase* GetPlatformSpecificState();
 
@@ -1162,6 +1169,10 @@ private:
    * recording.
    */
 private:
+  // Helper function to update the in-progress checkerboard event, if any.
+  void UpdateCheckerboardEvent(const MutexAutoLock& aProofOfLock,
+                               uint32_t aMagnitude);
+
   // Mutex protecting mCheckerboardEvent
   Mutex mCheckerboardEventLock;
   // This is created when this APZC instance is first included as part of a

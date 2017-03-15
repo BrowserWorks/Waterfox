@@ -75,8 +75,10 @@
     locale/browser/preferences/permissions.dtd        (%chrome/browser/preferences/permissions.dtd)
     locale/browser/preferences/preferences.dtd        (%chrome/browser/preferences/preferences.dtd)
     locale/browser/preferences/preferences.properties (%chrome/browser/preferences/preferences.properties)
+    locale/browser/preferences/containers.properties  (%chrome/browser/preferences/containers.properties)
     locale/browser/preferences/privacy.dtd            (%chrome/browser/preferences/privacy.dtd)
     locale/browser/preferences/security.dtd           (%chrome/browser/preferences/security.dtd)
+    locale/browser/preferences/containers.dtd         (%chrome/browser/preferences/containers.dtd)
     locale/browser/preferences/sync.dtd               (%chrome/browser/preferences/sync.dtd)
     locale/browser/preferences/tabs.dtd               (%chrome/browser/preferences/tabs.dtd)
     locale/browser/preferences/search.dtd             (%chrome/browser/preferences/search.dtd)
@@ -90,12 +92,13 @@
     locale/browser/syncQuota.properties         (%chrome/browser/syncQuota.properties)
 % resource search-plugins chrome://browser/locale/searchplugins/
 #if BUILD_FASTER
-    locale/browser/searchplugins/list.txt       (%searchplugins/list.txt)
-    locale/browser/searchplugins/               (%searchplugins/*.xml)
+    locale/browser/searchplugins/               (searchplugins/*.xml)
+    locale/browser/searchplugins/list.json      (search/list.json)
 #else
-    locale/browser/searchplugins/list.txt       (.deps/generated_@AB_CD@/list.txt)
     locale/browser/searchplugins/               (.deps/generated_@AB_CD@/*.xml)
+    locale/browser/searchplugins/list.json      (.deps/generated_@AB_CD@/list.json)
 #endif
+    locale/browser/searchplugins/images/yandex-en.ico  (searchplugins/images/yandex-en.ico)
 % locale browser-region @AB_CD@ %locale/browser-region/
     locale/browser-region/region.properties        (%chrome/browser-region/region.properties)
 # the following files are browser-specific overrides

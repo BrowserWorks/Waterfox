@@ -12,6 +12,7 @@
 #include "nsIWidget.h"
 #include "mozilla/gfx/D3D11Checks.h"
 #include "mozilla/gfx/DeviceManagerDx.h"
+#include "mozilla/gfx/GPUParent.h"
 #include "mozilla/layers/ImageHost.h"
 #include "mozilla/layers/ContentHost.h"
 #include "mozilla/layers/Effects.h"
@@ -19,6 +20,7 @@
 #include "gfxPrefs.h"
 #include "gfxConfig.h"
 #include "gfxCrashReporterUtils.h"
+#include "gfxUtils.h"
 #include "mozilla/gfx/StackArray.h"
 #include "mozilla/Services.h"
 #include "mozilla/widget/WinCompositorWidget.h"
@@ -26,6 +28,9 @@
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/Telemetry.h"
 #include "BlendShaderConstants.h"
+
+#include "D3D11ShareHandleImage.h"
+#include "D3D9SurfaceImage.h"
 
 #include <dxgi1_2.h>
 
@@ -453,7 +458,7 @@ CompositorD3D11::GetTextureFactoryIdentifier()
 {
   TextureFactoryIdentifier ident;
   ident.mMaxTextureSize = GetMaxTextureSize();
-  ident.mParentProcessId = XRE_GetProcessType();
+  ident.mParentProcessType = XRE_GetProcessType();
   ident.mParentBackend = LayersBackend::LAYERS_D3D11;
   ident.mSyncHandle = mAttachments->mSyncHandle;
   return ident;
@@ -886,6 +891,9 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
         return;
       }
 
+      float* yuvToRgb = gfxUtils::Get4x3YuvColorMatrix(ycbcrEffect->mYUVColorSpace);
+      memcpy(&mPSConstants.yuvColorMatrix, yuvToRgb, sizeof(mPSConstants.yuvColorMatrix));
+
       TextureSourceD3D11* sourceY  = source->GetSubSource(Y)->AsSourceD3D11();
       TextureSourceD3D11* sourceCb = source->GetSubSource(Cb)->AsSourceD3D11();
       TextureSourceD3D11* sourceCr = source->GetSubSource(Cr)->AsSourceD3D11();
@@ -985,6 +993,13 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
     gfxCriticalNote << "GFX: D3D11 skip BeginFrame with device-removed.";
     ReadUnlockTextures();
     *aRenderBoundsOut = IntRect();
+
+    // If we are in the GPU process then the main process doesn't
+    // know that a device reset has happened and needs to be informed
+    if (XRE_IsGPUProcess()) {
+      GPUParent::GetSingleton()->NotifyDeviceReset();
+    }
+
     return;
   }
 
@@ -1051,24 +1066,25 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
     mAttachments->mSyncTexture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
 
     MOZ_ASSERT(mutex);
-    HRESULT hr = mutex->AcquireSync(0, 10000);
-    if (hr == WAIT_TIMEOUT) {
-      hr = mDevice->GetDeviceRemovedReason();
-      if (hr == S_OK) {
-        // There is no driver-removed event. Crash with this timeout.
-        MOZ_CRASH("GFX: D3D11 normal status timeout");
+    {
+      HRESULT hr;
+      AutoTextureLock lock(mutex, hr, 10000);
+      if (hr == WAIT_TIMEOUT) {
+        hr = mDevice->GetDeviceRemovedReason();
+        if (hr == S_OK) {
+          // There is no driver-removed event. Crash with this timeout.
+          MOZ_CRASH("GFX: D3D11 normal status timeout");
+        }
+
+        // Since the timeout is related to the driver-removed, clear the
+        // render-bounding size to skip this frame.
+        gfxCriticalNote << "GFX: D3D11 timeout with device-removed:" << gfx::hexa(hr);
+        *aRenderBoundsOut = IntRect();
+        return;
+      } else if (hr == WAIT_ABANDONED) {
+        gfxCriticalNote << "GFX: D3D11 abandoned sync";
       }
-
-      // Since the timeout is related to the driver-removed, clear the
-      // render-bounding size to skip this frame.
-      gfxCriticalNote << "GFX: D3D11 timeout with device-removed:" << gfx::hexa(hr);
-      *aRenderBoundsOut = IntRect();
-      return;
-    } else if (hr == WAIT_ABANDONED) {
-      gfxCriticalNote << "GFX: D3D11 abandoned sync";
     }
-
-    mutex->ReleaseSync(0);
   }
 }
 

@@ -90,6 +90,7 @@ UIEvent::Constructor(const GlobalObject& aGlobal,
   e->InitUIEvent(aType, aParam.mBubbles, aParam.mCancelable, aParam.mView,
                  aParam.mDetail);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 
@@ -168,6 +169,8 @@ UIEvent::InitUIEvent(const nsAString& typeArg,
                      mozIDOMWindow* viewArg,
                      int32_t detailArg)
 {
+  NS_ENSURE_TRUE(!mEvent->mFlags.mIsBeingDispatched, NS_OK);
+
   Event::InitEvent(typeArg, canBubbleArg, cancelableArg);
 
   mDetail = detailArg;
@@ -283,21 +286,6 @@ UIEvent::RangeOffset() const
   nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(mEvent,
                                                             targetFrame);
   return targetFrame->GetContentOffsetsFromPoint(pt).offset;
-}
-
-NS_IMETHODIMP
-UIEvent::GetCancelBubble(bool* aCancelBubble)
-{
-  NS_ENSURE_ARG_POINTER(aCancelBubble);
-  *aCancelBubble = CancelBubble();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-UIEvent::SetCancelBubble(bool aCancelBubble)
-{
-  mEvent->mFlags.mPropagationStopped = aCancelBubble;
-  return NS_OK;
 }
 
 nsIntPoint

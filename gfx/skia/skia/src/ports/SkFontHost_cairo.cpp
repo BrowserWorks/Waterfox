@@ -13,10 +13,11 @@
 
 #include "SkAdvancedTypefaceMetrics.h"
 #include "SkFDot6.h"
-#include "SkFontHost.h"
 #include "SkPath.h"
 #include "SkScalerContext.h"
 #include "SkTypefaceCache.h"
+
+#include <cmath>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -38,6 +39,12 @@ typedef enum FT_LcdFilter_
     FT_LCD_FILTER_LIGHT   = 2,
     FT_LCD_FILTER_LEGACY  = 16,
 } FT_LcdFilter;
+#endif
+
+// If compiling with FreeType before 2.5.0
+#ifndef FT_LOAD_COLOR
+#    define FT_LOAD_COLOR ( 1L << 20 )
+#    define FT_PIXEL_MODE_BGRA 7
 #endif
 
 #ifndef SK_CAN_USE_DLOPEN
@@ -91,7 +98,7 @@ template<> struct SkTUnref<FcPattern> {
 
 class SkScalerContext_CairoFT : public SkScalerContext_FreeType_Base {
 public:
-    SkScalerContext_CairoFT(SkTypeface* typeface, const SkDescriptor* desc,
+    SkScalerContext_CairoFT(SkTypeface* typeface, const SkScalerContextEffects& effects, const SkDescriptor* desc,
                             cairo_font_face_t* fontFace, FcPattern* pattern);
     virtual ~SkScalerContext_CairoFT();
 
@@ -181,9 +188,7 @@ public:
 
         bool isFixedWidth = face->face_flags & FT_FACE_FLAG_FIXED_WIDTH;
 
-        SkFontID newId = SkTypefaceCache::NewFontID();
-
-        return new SkCairoFTTypeface(style, newId, isFixedWidth, fontFace, pattern);
+        return new SkCairoFTTypeface(style, isFixedWidth, fontFace, pattern);
     }
 
     virtual SkStreamAsset* onOpenStream(int*) const override { return nullptr; }
@@ -196,10 +201,10 @@ public:
         return nullptr;
     }
 
-    virtual SkScalerContext* onCreateScalerContext(const SkDescriptor* desc) const override
+    virtual SkScalerContext* onCreateScalerContext(const SkScalerContextEffects& effects, const SkDescriptor* desc) const override
     {
         SkScalerContext_CairoFT* ctx =
-            new SkScalerContext_CairoFT(const_cast<SkCairoFTTypeface*>(this), desc,
+            new SkScalerContext_CairoFT(const_cast<SkCairoFTTypeface*>(this), effects, desc,
                                         fFontFace, fPattern);
         if (!ctx->isValid()) {
             delete ctx;
@@ -266,9 +271,9 @@ public:
 
 private:
 
-    SkCairoFTTypeface(const SkFontStyle& style, SkFontID id, bool isFixedWidth,
+    SkCairoFTTypeface(const SkFontStyle& style, bool isFixedWidth,
                       cairo_font_face_t* fontFace, FcPattern* pattern)
-        : SkTypeface(style, id, isFixedWidth)
+        : SkTypeface(style, isFixedWidth)
         , fFontFace(fontFace)
         , fPattern(pattern)
     {
@@ -303,7 +308,7 @@ SkTypeface* SkCreateTypefaceFromCairoFTFontWithFontconfig(cairo_scaled_font_t* s
         CairoLockedFTFace faceLock(scaledFont);
         if (FT_Face face = faceLock.getFace()) {
             typeface = SkCairoFTTypeface::CreateTypeface(fontFace, face, pattern);
-            SkTypefaceCache::Add(typeface, typeface->fontStyle());
+            SkTypefaceCache::Add(typeface);
         }
     }
 
@@ -315,9 +320,9 @@ SkTypeface* SkCreateTypefaceFromCairoFTFont(cairo_scaled_font_t* scaledFont)
     return SkCreateTypefaceFromCairoFTFontWithFontconfig(scaledFont, nullptr);
 }
 
-SkScalerContext_CairoFT::SkScalerContext_CairoFT(SkTypeface* typeface, const SkDescriptor* desc,
+SkScalerContext_CairoFT::SkScalerContext_CairoFT(SkTypeface* typeface, const SkScalerContextEffects& effects, const SkDescriptor* desc,
                                                  cairo_font_face_t* fontFace, FcPattern* pattern)
-    : SkScalerContext_FreeType_Base(typeface, desc)
+    : SkScalerContext_FreeType_Base(typeface, effects, desc)
     , fLcdFilter(FT_LCD_FILTER_NONE)
 {
     SkMatrix matrix;
@@ -397,9 +402,7 @@ SkScalerContext_CairoFT::SkScalerContext_CairoFT(SkTypeface* typeface, const SkD
         loadFlags |= FT_LOAD_VERTICAL_LAYOUT;
     }
 
-#ifdef FT_LOAD_COLOR
     loadFlags |= FT_LOAD_COLOR;
-#endif
 
     fLoadGlyphFlags = loadFlags;
 }
@@ -690,11 +693,9 @@ void SkScalerContext_CairoFT::generateMetrics(SkGlyph* glyph)
         }
         break;
     case FT_GLYPH_FORMAT_BITMAP:
-#ifdef FT_LOAD_COLOR
         if (face->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_BGRA) {
             glyph->fMaskFormat = SkMask::kARGB32_Format;
         }
-#endif
 
         if (isLCD(fRec)) {
             fRec.fMaskFormat = SkMask::kA8_Format;
@@ -761,7 +762,15 @@ void SkScalerContext_CairoFT::generateImage(const SkGlyph& glyph)
         gSetLcdFilter(face->glyph->library, fLcdFilter);
     }
 
-    generateGlyphImage(face, glyph);
+    SkMatrix matrix;
+    if (face->glyph->format == FT_GLYPH_FORMAT_BITMAP &&
+        fHaveShape) {
+        matrix.setScale(SkIntToScalar(glyph.fWidth) / SkIntToScalar(face->glyph->bitmap.width),
+                        SkIntToScalar(glyph.fHeight) / SkIntToScalar(face->glyph->bitmap.rows));
+    } else {
+        matrix.setIdentity();
+    }
+    generateGlyphImage(face, glyph, matrix);
 
     if (useLcdFilter) {
         gSetLcdFilter(face->glyph->library, FT_LCD_FILTER_NONE);

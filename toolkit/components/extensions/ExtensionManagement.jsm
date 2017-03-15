@@ -156,16 +156,6 @@ var Service = {
     }
 
     // Create the moz-extension://uuid mapping.
-    // On b2g, in content processes we can't load jar:file:/// content, so we
-    // switch to jar:remoteopenfile:/// instead
-    // This is mostly exercised by generated extensions in tests. Installed
-    // extensions in b2g get an app: uri that also maps to the right jar: uri.
-    if (AppConstants.MOZ_B2G &&
-        Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT &&
-        uri.spec.startsWith("jar:file://")) {
-      uri = Services.io.newURI("jar:remoteopen" + uri.spec.substr("jar:".length), null, null);
-    }
-
     let handler = Services.io.getProtocolHandler("moz-extension");
     handler.QueryInterface(Ci.nsISubstitutingProtocolHandler);
     handler.setSubstitution(uuid, uri);
@@ -249,8 +239,7 @@ var Service = {
 // extensionURIToAddonID, which ensures that we don't inject our
 // API into webAccessibleResources or remote web pages.
 function getAddonIdForWindow(window) {
-  let principal = window.document.nodePrincipal;
-  return principal.originAttributes.addonId;
+  return Cu.getObjectPrincipal(window).originAttributes.addonId;
 }
 
 const API_LEVELS = Object.freeze({

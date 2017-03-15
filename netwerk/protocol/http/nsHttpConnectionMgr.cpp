@@ -178,7 +178,7 @@ nsHttpConnectionMgr::Shutdown()
         // from being posted.  this is how we indicate that we are
         // shutting down.
         mIsShuttingDown = true;
-        mSocketThreadTarget = 0;
+        mSocketThreadTarget = nullptr;
 
         if (NS_FAILED(rv)) {
             NS_WARNING("unable to post SHUTDOWN message");
@@ -2145,7 +2145,10 @@ nsHttpConnectionMgr::OnMsgShutdown(int32_t, ARefBase *param)
             RefPtr<nsHttpConnection> conn(ent->mActiveConns[0]);
             ent->mActiveConns.RemoveElementAt(0);
             DecrementActiveConnCount(conn);
-            conn->Close(NS_ERROR_ABORT, true);
+            // Since nsHttpConnection::Close doesn't break the bond with
+            // the connection's transaction, we must explicitely tell it
+            // to close its transaction and not just self.
+            conn->CloseTransaction(conn->Transaction(), NS_ERROR_ABORT, true);
         }
 
         // Close all idle connections.
@@ -3085,6 +3088,12 @@ nsHalfOpenSocket::SetupStreams(nsISocketTransport **transport,
     }
 
     socketTransport->SetConnectionFlags(tmpFlags);
+
+    NeckoOriginAttributes originAttributes =
+        mEnt->mConnInfo->GetOriginAttributes();
+    if (originAttributes != NeckoOriginAttributes()) {
+        socketTransport->SetOriginAttributes(originAttributes);
+    }
 
     socketTransport->SetQoSBits(gHttpHandler->GetQoSBits());
 

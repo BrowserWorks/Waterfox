@@ -12,14 +12,14 @@
  * License.
  *
  * The Initial Developers of the Original Code are Kevin Hendricks (MySpell)
- * and László Németh (Hunspell). Portions created by the Initial Developers
+ * and LÃ¡szlÃ³ NÃ©meth (Hunspell). Portions created by the Initial Developers
  * are Copyright (C) 2002-2005 the Initial Developers. All Rights Reserved.
  *
  * Contributor(s): Kevin Hendricks (kevin.hendricks@sympatico.ca)
  *                 David Einstein (deinst@world.std.com)
  *                 Michiel van Leeuwen (mvl@exedo.nl)
  *                 Caolan McNamara (cmc@openoffice.org)
- *                 László Németh (nemethl@gyorsposta.hu)
+ *                 LÃ¡szlÃ³ NÃ©meth (nemethl@gyorsposta.hu)
  *                 Davide Prina
  *                 Giuseppe Modugno
  *                 Gianluca Turconi
@@ -355,6 +355,29 @@ mozHunspell::LoadDictionaryList(bool aNotifyChildProcesses)
     if (NS_SUCCEEDED(rv) && NS_SUCCEEDED(appDir->Equals(greDir, &equals)) && !equals) {
       appDir->AppendNative(NS_LITERAL_CSTRING("dictionaries"));
       LoadDictionariesFromDir(appDir);
+    }
+  }
+
+  // find dictionaries in DICPATH
+  char* dicEnv = PR_GetEnv("DICPATH");
+  if (dicEnv) {
+    // do a two-pass dance so dictionaries are loaded right-to-left as preference
+    nsTArray<nsCOMPtr<nsIFile>> dirs;
+    nsAutoCString env(dicEnv); // assume dicEnv is UTF-8
+
+    char* currPath = nullptr;
+    char* nextPaths = env.BeginWriting();
+    while ((currPath = NS_strtok(":", &nextPaths))) {
+      nsCOMPtr<nsIFile> dir;
+      rv = NS_NewNativeLocalFile(nsCString(currPath), true, getter_AddRefs(dir));
+      if (NS_SUCCEEDED(rv)) {
+        dirs.AppendElement(dir);
+      }
+    }
+
+    // load them in reverse order so they override each other properly
+    for (int32_t i = dirs.Length() - 1; i >= 0; i--) {
+      LoadDictionariesFromDir(dirs[i]);
     }
   }
 

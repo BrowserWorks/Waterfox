@@ -14,6 +14,7 @@ EXPORTS.mozilla.gfx += [
     'GPUParent.h',
     'GPUProcessHost.h',
     'GPUProcessImpl.h',
+    'GPUProcessListener.h',
     'GPUProcessManager.h',
     'SharedDIB.h',
     'VsyncBridgeChild.h',
@@ -46,7 +47,6 @@ UNIFIED_SOURCES += [
     'CompositorWidgetVsyncObserver.cpp',
     'D3DMessageUtils.cpp',
     'GPUChild.cpp',
-    'GPUParent.cpp',
     'GPUProcessHost.cpp',
     'GPUProcessImpl.cpp',
     'GPUProcessManager.cpp',
@@ -58,13 +58,21 @@ UNIFIED_SOURCES += [
     'VsyncIOThreadHolder.cpp',
 ]
 
+SOURCES += [
+    'GPUParent.cpp',
+]
+
 IPDL_SOURCES = [
     'GraphicsMessages.ipdlh',
     'PGPU.ipdl',
     'PVsyncBridge.ipdl',
 ]
 
-LOCAL_INCLUDES += ['/dom/ipc']
+LOCAL_INCLUDES += [
+    '/dom/ipc',
+    '/toolkit/crashreporter',
+    '/xpcom/threads',
+]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

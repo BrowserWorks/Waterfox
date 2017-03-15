@@ -5,15 +5,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 XPIDL_SOURCES += [
-    'nsIBrowser.idl',
     'nsIHangReport.idl',
 ]
 
 XPIDL_MODULE = 'dom'
-
-EXPORTS += [
-    'nsICachedFileDescriptorListener.h',
-]
 
 EXPORTS.mozilla.dom.ipc += [
     'BlobChild.h',
@@ -120,20 +115,21 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Darwin':
         'mozsandbox',
     ]
 
+if CONFIG['MOZ_CONTENT_SANDBOX'] and CONFIG['OS_ARCH'] == 'Linux':
+    USE_LIBS += [
+        'mozsandbox',
+    ]
+
 LOCAL_INCLUDES += [
     '/caps',
     '/chrome',
     '/docshell/base',
     '/dom/base',
-    '/dom/bluetooth/common',
-    '/dom/bluetooth/ipc',
     '/dom/devicestorage',
     '/dom/events',
     '/dom/filesystem',
-    '/dom/fmradio/ipc',
     '/dom/geolocation',
     '/dom/media/webspeech/synth/ipc',
-    '/dom/mobilemessage/ipc',
     '/dom/security',
     '/dom/storage',
     '/dom/workers',
@@ -145,6 +141,7 @@ LOCAL_INCLUDES += [
     '/layout/base',
     '/media/webrtc',
     '/netwerk/base',
+    '/toolkit/crashreporter',
     '/toolkit/xre',
     '/uriloader/exthandler',
     '/widget',

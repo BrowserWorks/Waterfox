@@ -73,10 +73,7 @@ public:
 
   void AttributeChanged(dom::Element* aElement, int32_t aNameSpaceID,
                         nsIAtom* aAttribute, int32_t aModType,
-                        const nsAttrValue* aOldValue)
-  {
-    MOZ_ASSERT(SnapshotForElement(aElement)->HasAttrs());
-  }
+                        const nsAttrValue* aOldValue);
 
   nsresult ReparentStyleContext(nsIFrame* aFrame);
 
@@ -93,7 +90,7 @@ public:
    * Right now only supports a null tag, before or after. If the pseudo-element
    * is not null, the content needs to be an element.
    */
-  static nsIFrame* FrameForPseudoElement(nsIContent* aContent,
+  static nsIFrame* FrameForPseudoElement(const nsIContent* aContent,
                                          nsIAtom* aPseudoTagOrNull);
 
 protected:

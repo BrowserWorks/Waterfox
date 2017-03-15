@@ -202,6 +202,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineStrCharCodeAt(callInfo);
       case InlinableNative::StringFromCharCode:
         return inlineStrFromCharCode(callInfo);
+      case InlinableNative::StringFromCodePoint:
+        return inlineStrFromCodePoint(callInfo);
       case InlinableNative::StringCharAt:
         return inlineStrCharAt(callInfo);
 
@@ -282,6 +284,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineHasClass(callInfo, &ArrayIteratorObject::class_);
       case InlinableNative::IntrinsicIsMapIterator:
         return inlineHasClass(callInfo, &MapIteratorObject::class_);
+      case InlinableNative::IntrinsicIsSetIterator:
+        return inlineHasClass(callInfo, &SetIteratorObject::class_);
       case InlinableNative::IntrinsicIsStringIterator:
         return inlineHasClass(callInfo, &StringIteratorObject::class_);
       case InlinableNative::IntrinsicIsListIterator:
@@ -293,7 +297,11 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
 
       // Map intrinsics.
       case InlinableNative::IntrinsicGetNextMapEntryForIterator:
-        return inlineGetNextMapEntryForIterator(callInfo);
+        return inlineGetNextEntryForIterator(callInfo, MGetNextEntryForIterator::Map);
+
+      // Set intrinsics.
+      case InlinableNative::IntrinsicGetNextSetEntryForIterator:
+        return inlineGetNextEntryForIterator(callInfo, MGetNextEntryForIterator::Set);
 
       // ArrayBuffer intrinsics.
       case InlinableNative::IntrinsicArrayBufferByteLength:
@@ -1058,7 +1066,7 @@ IonBuilder::inlineMathClz32(CallInfo& callInfo)
 
     callInfo.setImplicitlyUsedUnchecked();
 
-    MClz* ins = MClz::New(alloc(), callInfo.getArg(0));
+    MClz* ins = MClz::New(alloc(), callInfo.getArg(0), MIRType::Int32);
     current->add(ins);
     current->push(ins);
     return InliningStatus_Inlined;
@@ -1125,7 +1133,7 @@ IonBuilder::inlineMathSqrt(CallInfo& callInfo)
 
     callInfo.setImplicitlyUsedUnchecked();
 
-    MSqrt* sqrt = MSqrt::New(alloc(), callInfo.getArg(0));
+    MSqrt* sqrt = MSqrt::New(alloc(), callInfo.getArg(0), MIRType::Double);
     current->add(sqrt);
     current->push(sqrt);
     return InliningStatus_Inlined;
@@ -1703,10 +1711,28 @@ IonBuilder::inlineStrFromCharCode(CallInfo& callInfo)
 
     callInfo.setImplicitlyUsedUnchecked();
 
-    MToInt32* charCode = MToInt32::New(alloc(), callInfo.getArg(0));
-    current->add(charCode);
+    MFromCharCode* string = MFromCharCode::New(alloc(), callInfo.getArg(0));
+    current->add(string);
+    current->push(string);
+    return InliningStatus_Inlined;
+}
 
-    MFromCharCode* string = MFromCharCode::New(alloc(), charCode);
+IonBuilder::InliningStatus
+IonBuilder::inlineStrFromCodePoint(CallInfo& callInfo)
+{
+    if (callInfo.argc() != 1 || callInfo.constructing()) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
+        return InliningStatus_NotInlined;
+    }
+
+    if (getInlineReturnType() != MIRType::String)
+        return InliningStatus_NotInlined;
+    if (callInfo.getArg(0)->type() != MIRType::Int32)
+        return InliningStatus_NotInlined;
+
+    callInfo.setImplicitlyUsedUnchecked();
+
+    MFromCodePoint* string = MFromCodePoint::New(alloc(), callInfo.getArg(0));
     current->add(string);
     current->push(string);
     return InliningStatus_Inlined;
@@ -2194,7 +2220,7 @@ IonBuilder::inlineHasClass(CallInfo& callInfo,
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineGetNextMapEntryForIterator(CallInfo& callInfo)
+IonBuilder::inlineGetNextEntryForIterator(CallInfo& callInfo, MGetNextEntryForIterator::Mode mode)
 {
     if (callInfo.argc() != 2 || callInfo.constructing()) {
         trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
@@ -2209,8 +2235,15 @@ IonBuilder::inlineGetNextMapEntryForIterator(CallInfo& callInfo)
 
     TemporaryTypeSet* iterTypes = iterArg->resultTypeSet();
     const Class* iterClasp = iterTypes ? iterTypes->getKnownClass(constraints()) : nullptr;
-    if (iterClasp != &MapIteratorObject::class_)
-        return InliningStatus_NotInlined;
+    if (mode == MGetNextEntryForIterator::Map) {
+        if (iterClasp != &MapIteratorObject::class_)
+            return InliningStatus_NotInlined;
+    } else {
+        MOZ_ASSERT(mode == MGetNextEntryForIterator::Set);
+
+        if (iterClasp != &SetIteratorObject::class_)
+            return InliningStatus_NotInlined;
+    }
 
     if (resultArg->type() != MIRType::Object)
         return InliningStatus_NotInlined;
@@ -2222,8 +2255,7 @@ IonBuilder::inlineGetNextMapEntryForIterator(CallInfo& callInfo)
 
     callInfo.setImplicitlyUsedUnchecked();
 
-    MInstruction* next = MGetNextMapEntryForIterator::New(alloc(), iterArg,
-                                                          resultArg);
+    MInstruction* next = MGetNextEntryForIterator::New(alloc(), iterArg, resultArg, mode);
     current->add(next);
     current->push(next);
 
@@ -2340,7 +2372,9 @@ IonBuilder::inlineTypedArray(CallInfo& callInfo, Native native)
             return InliningStatus_NotInlined;
 
         callInfo.setImplicitlyUsedUnchecked();
-        ins = MNewTypedArray::New(alloc(), constraints(), obj,
+        MConstant* templateConst = MConstant::NewConstraintlessObject(alloc(), obj);
+        current->add(templateConst);
+        ins = MNewTypedArray::New(alloc(), constraints(), templateConst,
                                   obj->group()->initialHeap(constraints()));
     }
 
@@ -3058,7 +3092,21 @@ IonBuilder::inlineAtomicsStore(CallInfo& callInfo)
         return InliningStatus_NotInlined;
     }
 
+    // Atomics.store() is annoying because it returns the result of converting
+    // the value by ToInteger(), not the input value, nor the result of
+    // converting the value by ToInt32().  It is especially annoying because
+    // almost nobody uses the result value.
+    //
+    // As an expedient compromise, therefore, we inline only if the result is
+    // obviously unused or if the argument is already Int32 and thus requires no
+    // conversion.
+
     MDefinition* value = callInfo.getArg(2);
+    if (!BytecodeIsPopped(pc) && value->type() != MIRType::Int32) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadType);
+        return InliningStatus_NotInlined;
+    }
+
     if (value->mightBeType(MIRType::Object) || value->mightBeType(MIRType::Symbol))
         return InliningStatus_NotInlined;
 
@@ -3077,15 +3125,15 @@ IonBuilder::inlineAtomicsStore(CallInfo& callInfo)
         addSharedTypedArrayGuard(callInfo.getArg(0));
 
     MDefinition* toWrite = value;
-    if (value->type() != MIRType::Int32) {
-        toWrite = MTruncateToInt32::New(alloc(), value);
+    if (toWrite->type() != MIRType::Int32) {
+        toWrite = MTruncateToInt32::New(alloc(), toWrite);
         current->add(toWrite->toInstruction());
     }
     MStoreUnboxedScalar* store =
         MStoreUnboxedScalar::New(alloc(), elements, index, toWrite, arrayType,
                                  MStoreUnboxedScalar::TruncateInput, DoesRequireMemoryBarrier);
     current->add(store);
-    current->push(value);
+    current->push(value);       // Either Int32 or not used; in either case correct
 
     if (!resumeAfter(store))
         return InliningStatus_Error;

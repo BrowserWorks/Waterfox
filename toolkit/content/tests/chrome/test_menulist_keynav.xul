@@ -20,7 +20,7 @@
 </menulist>
 <button id="button2" label="Two"/>
 <menulist id="list2">
-  <menupopup id="popup" onpopupshown="checkCursorNavigation();" onpopuphidden="done()">
+  <menupopup id="popup" onpopupshown="checkCursorNavigation();">
     <menuitem id="b1" label="One"/>
     <menuitem id="b2" label="Two" selected="true"/>
     <menuitem id="b3" label="Three"/>
@@ -41,6 +41,7 @@ var list = $("list");
 let expectCommandEvent;
 
 var iswin = (navigator.platform.indexOf("Win") == 0);
+var ismac = (navigator.platform.indexOf("Mac") == 0);
 
 function runTests()
 {
@@ -51,7 +52,7 @@ function runTests()
   if (navigator.platform.indexOf("Mac") == -1) {
     expectCommandEvent = true;
     keyCheck(list, "VK_DOWN", 2, "cursor down");
-    keyCheck(list, "VK_DOWN", iswin ? "2b" : 3, "cursor down skip disabled");
+    keyCheck(list, "VK_DOWN", 3, "cursor down skip disabled");
     keyCheck(list, "VK_UP", 2, "cursor up skip disabled");
     keyCheck(list, "VK_UP", 1, "cursor up");
     keyCheck(list, "VK_UP", 4, "cursor up wrap");
@@ -91,7 +92,7 @@ function pressLetter()
 
 function pressedAgain()
 {
-  keyCheck(list, "T", iswin ? "2b" : 3, "letter pressed again");
+  keyCheck(list, "T", 3, "letter pressed again");
   SpecialPowers.setIntPref("ui.menu.incremental_search.timeout", 0); // prevent to timeout
   keyCheck(list, "W", 2, "second letter pressed");
   SpecialPowers.clearUserPref("ui.menu.incremental_search.timeout");
@@ -219,7 +220,7 @@ function verifyPopupOnClose()
   is(gModifiers, 2, "modifiers checked when set");
 
   ok(!list.open, "list closed on enter press with modifiers");
-  list.removeEventListener("popuphidden", done, false);
+  list.removeEventListener("popuphidden", verifyPopupOnClose, false);
 
   list = $("list2");
   list.focus();
@@ -243,11 +244,14 @@ function checkCursorNavigation()
   is(list.selectedIndex, iswin ? 3 : 1, "selectedIndex after page down");
   is(commandEventsCount, iswin ? 2 : 0, "selectedIndex after page down command event");
   is(list.menupopup.state, "open", "page down popup state");
-  list.open = false;
-}
 
-function done()
-{
+  synthesizeKey("VK_UP", { altKey: true });
+  is(list.open, ismac, "alt+up closes popup");
+ 
+  if (ismac) {
+    list.open = false;
+  }
+
   SimpleTest.finish();
 }
 

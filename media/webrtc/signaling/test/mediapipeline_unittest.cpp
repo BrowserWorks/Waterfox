@@ -662,11 +662,11 @@ TEST_F(MediaPipelineFilterTest, TestRemoteSDPNoSSRCs) {
   ASSERT_TRUE(Filter(filter, 0, 555, 110));
 }
 
-TEST_F(MediaPipelineTest, TestAudioSendNoMux) {
+TEST_F(MediaPipelineTest, DISABLED_TestAudioSendNoMux) {
   TestAudioSend(false);
 }
 
-TEST_F(MediaPipelineTest, TestAudioSendMux) {
+TEST_F(MediaPipelineTest, DISABLED_TestAudioSendMux) {
   TestAudioSend(true);
 }
 

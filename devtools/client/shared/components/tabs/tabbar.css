@@ -8,7 +8,7 @@
 }
 
 .tabs .tabs-navigation {
-  height: 23px;
+  height: 24px;
 }
 
 .tabs .tabs-menu-item:first-child {
@@ -27,10 +27,6 @@
 /* Firebug theme is using slightly different height. */
 .theme-firebug .tabs .tabs-navigation {
   height: 24px;
-}
-
-.tabs .tabs-menu-item a {
-  cursor: default;
 }
 
 /* The tab takes entire horizontal space and individual tabs

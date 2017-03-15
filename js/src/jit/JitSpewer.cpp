@@ -21,11 +21,12 @@
 #include "jit/Ion.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
+#include "jit/MIRGraph.h"
 
 #include "threading/LockGuard.h"
-#include "threading/Mutex.h"
 
 #include "vm/HelperThreads.h"
+#include "vm/MutexIDs.h"
 
 #ifndef JIT_SPEW_DIR
 # if defined(_WIN32)
@@ -54,7 +55,8 @@ class IonSpewer
 
   public:
     IonSpewer()
-      : firstFunction_(false),
+      : outputLock_(mutexid::IonSpewer),
+        firstFunction_(false),
         asyncLogging_(false),
         inited_(false)
     { }
@@ -109,7 +111,7 @@ FilterContainsLocation(JSScript* function)
     if (!filter || !filter[0])
         return true;
 
-    // Disable asm.js output when filter is set.
+    // Disable wasm output when filter is set.
     if (!function)
         return false;
 
@@ -301,6 +303,13 @@ GraphSpewer::spewPass(const char* pass)
     jsonSpewer_.endPass();
 
     ionspewer.spewPass(this);
+
+    // As this function is used for debugging, we ignore any of the previous
+    // failures and ensure there is enough ballast space, such that we do not
+    // exhaust the ballast space before running the next phase.
+    AutoEnterOOMUnsafeRegion oomUnsafe;
+    if (!graph_->alloc().ensureBallast())
+        oomUnsafe.crash("Could not ensure enough ballast space after spewing graph information.");
 }
 
 void
@@ -406,44 +415,47 @@ jit::CheckLogging()
             "\n"
             "usage: IONFLAGS=option,option,option,... where options can be:\n"
             "\n"
-            "  aborts     Compilation abort messages\n"
-            "  scripts    Compiled scripts\n"
-            "  mir        MIR information\n"
-            "  prune      Prune unused branches\n"
-            "  escape     Escape analysis\n"
-            "  alias      Alias analysis\n"
-            "  alias-sum  Alias analysis: shows summaries for every block\n"
-            "  gvn        Global Value Numbering\n"
-            "  licm       Loop invariant code motion\n"
-            "  sincos     Replace sin/cos by sincos\n"
-            "  sink       Sink transformation\n"
-            "  regalloc   Register allocation\n"
-            "  inline     Inlining\n"
-            "  snapshots  Snapshot information\n"
-            "  codegen    Native code generation\n"
-            "  bailouts   Bailouts\n"
-            "  caches     Inline caches\n"
-            "  osi        Invalidation\n"
-            "  safepoints Safepoints\n"
-            "  pools      Literal Pools (ARM only for now)\n"
-            "  cacheflush Instruction Cache flushes (ARM only for now)\n"
-            "  range      Range Analysis\n"
-            "  unroll     Loop unrolling\n"
-            "  logs       C1 and JSON visualization logging\n"
-            "  logs-sync  Same as logs, but flushes between each pass (sync. compiled functions only).\n"
-            "  profiling  Profiling-related information\n"
-            "  trackopts  Optimization tracking information\n"
-            "  all        Everything\n"
+            "  aborts        Compilation abort messages\n"
+            "  scripts       Compiled scripts\n"
+            "  mir           MIR information\n"
+            "  prune         Prune unused branches\n"
+            "  escape        Escape analysis\n"
+            "  alias         Alias analysis\n"
+            "  alias-sum     Alias analysis: shows summaries for every block\n"
+            "  gvn           Global Value Numbering\n"
+            "  licm          Loop invariant code motion\n"
+            "  flac          Fold linear arithmetic constants\n"
+            "  eaa           Effective address analysis\n"
+            "  sincos        Replace sin/cos by sincos\n"
+            "  sink          Sink transformation\n"
+            "  regalloc      Register allocation\n"
+            "  inline        Inlining\n"
+            "  snapshots     Snapshot information\n"
+            "  codegen       Native code generation\n"
+            "  bailouts      Bailouts\n"
+            "  caches        Inline caches\n"
+            "  osi           Invalidation\n"
+            "  safepoints    Safepoints\n"
+            "  pools         Literal Pools (ARM only for now)\n"
+            "  cacheflush    Instruction Cache flushes (ARM only for now)\n"
+            "  range         Range Analysis\n"
+            "  unroll        Loop unrolling\n"
+            "  logs          C1 and JSON visualization logging\n"
+            "  logs-sync     Same as logs, but flushes between each pass (sync. compiled functions only).\n"
+            "  profiling     Profiling-related information\n"
+            "  trackopts     Optimization tracking information\n"
+            "  dump-mir-expr Dump the MIR expressions\n"
+            "  all           Everything\n"
             "\n"
-            "  bl-aborts  Baseline compiler abort messages\n"
-            "  bl-scripts Baseline script-compilation\n"
-            "  bl-op      Baseline compiler detailed op-specific messages\n"
-            "  bl-ic      Baseline inline-cache messages\n"
-            "  bl-ic-fb   Baseline IC fallback stub messages\n"
-            "  bl-osr     Baseline IC OSR messages\n"
-            "  bl-bails   Baseline bailouts\n"
-            "  bl-dbg-osr Baseline debug mode on stack recompile messages\n"
-            "  bl-all     All baseline spew\n"
+            "  bl-aborts     Baseline compiler abort messages\n"
+            "  bl-scripts    Baseline script-compilation\n"
+            "  bl-op         Baseline compiler detailed op-specific messages\n"
+            "  bl-ic         Baseline inline-cache messages\n"
+            "  bl-ic-fb      Baseline IC fallback stub messages\n"
+            "  bl-osr        Baseline IC OSR messages\n"
+            "  bl-bails      Baseline bailouts\n"
+            "  bl-dbg-osr    Baseline debug mode on stack recompile messages\n"
+            "  bl-all        All baseline spew\n"
             "\n"
         );
         exit(0);
@@ -471,6 +483,10 @@ jit::CheckLogging()
         EnableChannel(JitSpew_Unrolling);
     if (ContainsFlag(env, "licm"))
         EnableChannel(JitSpew_LICM);
+    if (ContainsFlag(env, "flac"))
+        EnableChannel(JitSpew_FLAC);
+    if (ContainsFlag(env, "eaa"))
+        EnableChannel(JitSpew_EAA);
     if (ContainsFlag(env, "sincos"))
         EnableChannel(JitSpew_Sincos);
     if (ContainsFlag(env, "sink"))
@@ -503,6 +519,8 @@ jit::CheckLogging()
         EnableChannel(JitSpew_Profiling);
     if (ContainsFlag(env, "trackopts"))
         EnableChannel(JitSpew_OptimizationTracking);
+    if (ContainsFlag(env, "dump-mir-expr"))
+        EnableChannel(JitSpew_MIRExpressions);
     if (ContainsFlag(env, "all"))
         LoggingBits = uint64_t(-1);
 

@@ -23,7 +23,11 @@ from mozbuild.util import exec_
 from mozpack import path as mozpath
 
 from buildconfig import topsrcdir
-from common import ConfigureTestSandbox, ensure_exe_extension
+from common import (
+    ConfigureTestSandbox,
+    ensure_exe_extension,
+    fake_short_path,
+)
 
 
 class TestChecksConfigure(unittest.TestCase):
@@ -179,8 +183,9 @@ class TestChecksConfigure(unittest.TestCase):
         config, out, status = self.get_result(
             'check_prog("FOO", ("unknown", "unknown-2", "known c"))')
         self.assertEqual(status, 0)
-        self.assertEqual(config, {'FOO': self.KNOWN_C})
-        self.assertEqual(out, "checking for foo... '%s'\n" % self.KNOWN_C)
+        self.assertEqual(config, {'FOO': fake_short_path(self.KNOWN_C)})
+        self.assertEqual(out, "checking for foo... '%s'\n"
+                              % fake_short_path(self.KNOWN_C))
 
         config, out, status = self.get_result(
             'check_prog("FOO", ("unknown",))')
@@ -259,8 +264,9 @@ class TestChecksConfigure(unittest.TestCase):
             'check_prog("FOO", ("unknown",))',
             ['FOO=known c'])
         self.assertEqual(status, 0)
-        self.assertEqual(config, {'FOO': self.KNOWN_C})
-        self.assertEqual(out, "checking for foo... '%s'\n" % self.KNOWN_C)
+        self.assertEqual(config, {'FOO': fake_short_path(self.KNOWN_C)})
+        self.assertEqual(out, "checking for foo... '%s'\n"
+                              % fake_short_path(self.KNOWN_C))
 
         config, out, status = self.get_result(
             'check_prog("FOO", ("unknown", "unknown-2", "unknown 3"), '
@@ -405,7 +411,7 @@ class TestChecksConfigure(unittest.TestCase):
 
         with self.assertRaises(ConfigureError) as e:
             self.get_result(
-                'foo = depends("--help")(lambda h: ("a", "b"))\n'
+                'foo = depends(when=True)(lambda: ("a", "b"))\n'
                 'check_prog("FOO", ("known-a",), input=foo)'
             )
 
@@ -415,7 +421,7 @@ class TestChecksConfigure(unittest.TestCase):
 
         with self.assertRaises(ConfigureError) as e:
             self.get_result(
-                'foo = depends("--help")(lambda h: {"a": "b"})\n'
+                'foo = depends(when=True)(lambda: {"a": "b"})\n'
                 'check_prog("FOO", ("known-a",), input=foo)'
             )
 
@@ -701,13 +707,21 @@ class TestChecksConfigure(unittest.TestCase):
                 return 0, mock_pkg_config_version, ''
             self.fail("Unexpected arguments to mock_pkg_config: %s" % args)
 
+        def get_result(cmd, args=[], extra_paths=None):
+            return self.get_result(textwrap.dedent('''\
+                option('--disable-compile-environment', help='compile env')
+                include('%(topsrcdir)s/build/moz.configure/util.configure')
+                include('%(topsrcdir)s/build/moz.configure/checks.configure')
+                include('%(topsrcdir)s/build/moz.configure/pkg.configure')
+            ''' % {'topsrcdir': topsrcdir}) + cmd, args=args, extra_paths=extra_paths,
+                                                   includes=())
+
         extra_paths = {
             mock_pkg_config_path: mock_pkg_config,
         }
         includes = ('util.configure', 'checks.configure', 'pkg.configure')
 
-        config, output, status = self.get_result("pkg_check_modules('MOZ_VALID', 'valid')",
-                                                 includes=includes)
+        config, output, status = get_result("pkg_check_modules('MOZ_VALID', 'valid')")
         self.assertEqual(status, 1)
         self.assertEqual(output, textwrap.dedent('''\
             checking for pkg_config... not found
@@ -717,9 +731,8 @@ class TestChecksConfigure(unittest.TestCase):
         '''))
 
 
-        config, output, status = self.get_result("pkg_check_modules('MOZ_VALID', 'valid')",
-                                                 extra_paths=extra_paths,
-                                                 includes=includes)
+        config, output, status = get_result("pkg_check_modules('MOZ_VALID', 'valid')",
+                                            extra_paths=extra_paths)
         self.assertEqual(status, 0)
         self.assertEqual(output, textwrap.dedent('''\
             checking for pkg_config... %s
@@ -734,9 +747,8 @@ class TestChecksConfigure(unittest.TestCase):
             'MOZ_VALID_LIBS': ('-lvalid',),
         })
 
-        config, output, status = self.get_result("pkg_check_modules('MOZ_UKNOWN', 'unknown')",
-                                                 extra_paths=extra_paths,
-                                                 includes=includes)
+        config, output, status = get_result("pkg_check_modules('MOZ_UKNOWN', 'unknown')",
+                                            extra_paths=extra_paths)
         self.assertEqual(status, 1)
         self.assertEqual(output, textwrap.dedent('''\
             checking for pkg_config... %s
@@ -751,9 +763,8 @@ class TestChecksConfigure(unittest.TestCase):
             'PKG_CONFIG': mock_pkg_config_path,
         })
 
-        config, output, status = self.get_result("pkg_check_modules('MOZ_NEW', 'new > 1.1')",
-                                                 extra_paths=extra_paths,
-                                                 includes=includes)
+        config, output, status = get_result("pkg_check_modules('MOZ_NEW', 'new > 1.1')",
+                                            extra_paths=extra_paths)
         self.assertEqual(status, 1)
         self.assertEqual(output, textwrap.dedent('''\
             checking for pkg_config... %s
@@ -774,9 +785,7 @@ class TestChecksConfigure(unittest.TestCase):
                 log.info('Module not found.')
         ''')
 
-        config, output, status = self.get_result(cmd,
-                                                 extra_paths=extra_paths,
-                                                 includes=includes)
+        config, output, status = get_result(cmd, extra_paths=extra_paths)
         self.assertEqual(status, 0)
         self.assertEqual(output, textwrap.dedent('''\
             checking for pkg_config... %s
@@ -789,6 +798,13 @@ class TestChecksConfigure(unittest.TestCase):
             'PKG_CONFIG': mock_pkg_config_path,
         })
 
+        config, output, status = get_result(cmd,
+                                            args=['--disable-compile-environment'],
+                                            extra_paths=extra_paths)
+        self.assertEqual(status, 0)
+        self.assertEqual(output, 'Module not found.\n')
+        self.assertEqual(config, {})
+
         def mock_old_pkg_config(_, args):
             if args[0] == '--version':
                 return 0, '0.8.10', ''
@@ -798,9 +814,8 @@ class TestChecksConfigure(unittest.TestCase):
             mock_pkg_config_path: mock_old_pkg_config,
         }
 
-        config, output, status = self.get_result("pkg_check_modules('MOZ_VALID', 'valid')",
-                                                 extra_paths=extra_paths,
-                                                 includes=includes)
+        config, output, status = get_result("pkg_check_modules('MOZ_VALID', 'valid')",
+                                            extra_paths=extra_paths)
         self.assertEqual(status, 1)
         self.assertEqual(output, textwrap.dedent('''\
             checking for pkg_config... %s
@@ -825,13 +840,24 @@ class TestChecksConfigure(unittest.TestCase):
             "simple_keyfile('Mozilla API')",
             args=['--with-mozilla-api-keyfile=/foo/bar/does/not/exist'],
             includes=includes)
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 1)
         self.assertEqual(output, textwrap.dedent('''\
             checking for the Mozilla API key... no
+            ERROR: '/foo/bar/does/not/exist': No such file or directory.
         '''))
-        self.assertEqual(config, {
-            'MOZ_MOZILLA_API_KEY': 'no-mozilla-api-key',
-        })
+        self.assertEqual(config, {})
+
+        with MockedOpen({'key': ''}):
+            config, output, status = self.get_result(
+                "simple_keyfile('Mozilla API')",
+                args=['--with-mozilla-api-keyfile=key'],
+                includes=includes)
+            self.assertEqual(status, 1)
+            self.assertEqual(output, textwrap.dedent('''\
+                checking for the Mozilla API key... no
+                ERROR: 'key' is empty.
+            '''))
+            self.assertEqual(config, {})
 
         with MockedOpen({'key': 'fake-key\n'}):
             config, output, status = self.get_result(
@@ -864,14 +890,24 @@ class TestChecksConfigure(unittest.TestCase):
             "id_and_secret_keyfile('Bing API')",
             args=['--with-bing-api-keyfile=/foo/bar/does/not/exist'],
             includes=includes)
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 1)
         self.assertEqual(output, textwrap.dedent('''\
             checking for the Bing API key... no
+            ERROR: '/foo/bar/does/not/exist': No such file or directory.
         '''))
-        self.assertEqual(config, {
-            'MOZ_BING_API_CLIENTID': 'no-bing-api-clientid',
-            'MOZ_BING_API_KEY': 'no-bing-api-key',
-        })
+        self.assertEqual(config, {})
+
+        with MockedOpen({'key': ''}):
+            config, output, status = self.get_result(
+                "id_and_secret_keyfile('Bing API')",
+                args=['--with-bing-api-keyfile=key'],
+                includes=includes)
+            self.assertEqual(status, 1)
+            self.assertEqual(output, textwrap.dedent('''\
+                checking for the Bing API key... no
+                ERROR: 'key' is empty.
+            '''))
+            self.assertEqual(config, {})
 
         with MockedOpen({'key': 'fake-id fake-key\n'}):
             config, output, status = self.get_result(

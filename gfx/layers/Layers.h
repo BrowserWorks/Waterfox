@@ -77,6 +77,7 @@ class Animation;
 class AnimationData;
 class AsyncCanvasRenderer;
 class AsyncPanZoomController;
+class BasicLayerManager;
 class ClientLayerManager;
 class Layer;
 class LayerMetricsWrapper;
@@ -196,6 +197,9 @@ public:
   virtual ClientLayerManager* AsClientLayerManager()
   { return nullptr; }
 
+  virtual BasicLayerManager* AsBasicLayerManager()
+  { return nullptr; }
+
   /**
    * Returns true if this LayerManager is owned by an nsIWidget,
    * and is used for drawing into the widget.
@@ -209,7 +213,7 @@ public:
    * This transaction will update the state of the window from which
    * this LayerManager was obtained.
    */
-  virtual void BeginTransaction() = 0;
+  virtual bool BeginTransaction() = 0;
   /**
    * Start a new transaction. Nested transactions are not allowed so
    * there must be no transaction currently in progress.
@@ -217,7 +221,7 @@ public:
    * the given target context. The rendering will be complete when
    * EndTransaction returns.
    */
-  virtual void BeginTransactionWithTarget(gfxContext* aTarget) = 0;
+  virtual bool BeginTransactionWithTarget(gfxContext* aTarget) = 0;
 
   enum EndTransactionFlags {
     END_DEFAULT = 0,
@@ -337,22 +341,6 @@ public:
    * Can be called any time.
    */
   FrameMetrics::ViewID GetRootScrollableLayerId();
-
-  /**
-   * Does a breadth-first search from the root layer to find the first
-   * scrollable layer, and returns all the layers that have that ViewID
-   * as the first scrollable metrics in their ancestor chain. If no
-   * scrollable layers are found it just returns the root of the tree if
-   * there is one.
-   */
-  void GetRootScrollableLayers(nsTArray<Layer*>& aArray);
-
-  /**
-   * Returns a list of all descendant layers for which
-   * GetFrameMetrics().IsScrollable() is true and that
-   * do not already have an ancestor in the return list.
-   */
-  void GetScrollableLayers(nsTArray<Layer*>& aArray);
 
   /**
    * Returns a LayerMetricsWrapper containing the Root
@@ -1749,7 +1737,7 @@ public:
   // and can be used anytime.
   // A layer has an APZC at index aIndex only-if GetFrameMetrics(aIndex).IsScrollable();
   // attempting to get an APZC for a non-scrollable metrics will return null.
-  // The aIndex for these functions must be less than GetFrameMetricsCount().
+  // The aIndex for these functions must be less than GetScrollMetadataCount().
   void SetAsyncPanZoomController(uint32_t aIndex, AsyncPanZoomController *controller);
   AsyncPanZoomController* GetAsyncPanZoomController(uint32_t aIndex) const;
   // The ScrollMetadataChanged function is used internally to ensure the APZC array length
@@ -1837,6 +1825,8 @@ protected:
    */
   gfx::Matrix4x4 SnapTransformTranslation(const gfx::Matrix4x4& aTransform,
                                           gfx::Matrix* aResidualTransform);
+  gfx::Matrix4x4 SnapTransformTranslation3D(const gfx::Matrix4x4& aTransform,
+                                            gfx::Matrix* aResidualTransform);
   /**
    * See comment for SnapTransformTranslation.
    * This function implements type 2 snapping. If aTransform is a translation

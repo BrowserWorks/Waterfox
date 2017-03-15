@@ -7,18 +7,13 @@
 interface FileSystemDirectoryEntry : FileSystemEntry {
     FileSystemDirectoryReader createReader();
 
-    void getFile(DOMString? path,
+    void getFile(optional USVString? path,
                  optional FileSystemFlags options,
                  optional FileSystemEntryCallback successCallback,
                  optional ErrorCallback errorCallback);
 
-    void getDirectory(DOMString? path,
+    void getDirectory(optional USVString? path,
                       optional FileSystemFlags options,
                       optional FileSystemEntryCallback successCallback,
                       optional ErrorCallback errorCallback);
-
-    // This method is not implemented. ErrorCallback will be called
-    // with NS_ERROR_DOM_NOT_SUPPORTED_ERR.
-    void removeRecursively(VoidCallback successCallback,
-                           optional ErrorCallback errorCallback);
 };

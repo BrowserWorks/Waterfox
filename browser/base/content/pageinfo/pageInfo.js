@@ -5,7 +5,7 @@
 Components.utils.import("resource://gre/modules/LoadContextInfo.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
-//******** define a js object to implement nsITreeView
+// define a js object to implement nsITreeView
 function pageInfoTreeView(treeid, copycol)
 {
   // copycol is the index number for the column that we want to add to
@@ -529,7 +529,7 @@ function openCacheEntry(key, cb)
 
 function makeGeneralTab(metaViewRows, docInfo)
 {
-  var title = (docInfo.title) ? gBundle.getFormattedString("pageTitle", [docInfo.title]) : gBundle.getString("noPageTitle");
+  var title = (docInfo.title) ? docInfo.title : gBundle.getString("noPageTitle");
   document.getElementById("titletext").value = title;
 
   var url = docInfo.location;
@@ -636,7 +636,7 @@ function addImage(imageViewRow)
   }
 }
 
-//******** Link Stuff
+// Link Stuff
 function openURL(target)
 {
   var url = target.parentNode.childNodes[2].value;
@@ -668,7 +668,7 @@ function onBeginLinkDrag(event, urlField, descField)
   dt.setData("text/plain", url);
 }
 
-//******** Image Stuff
+// Image Stuff
 function getSelectedRows(tree)
 {
   var start = { };
@@ -824,7 +824,6 @@ function onImageSelect()
 // Makes the media preview (image, video, etc) for the selected row on the media tab.
 function makePreview(row)
 {
-  var imageTree = document.getElementById("imagetree");
   var item = gImageView.data[row][COL_IMAGE_NODE];
   var url = gImageView.data[row][COL_IMAGE_ADDRESS];
   var isBG = gImageView.data[row][COL_IMAGE_BG];
@@ -1015,7 +1014,6 @@ var imagePermissionObserver = {
       if (permission.type == "image") {
         var imageTree = document.getElementById("imagetree");
         var row = getSelectedRow(imageTree);
-        var item = gImageView.data[row][COL_IMAGE_NODE];
         var url = gImageView.data[row][COL_IMAGE_ADDRESS];
         if (permission.matchesURI(makeURI(url), true)) {
           makeBlockImage(url);
@@ -1053,18 +1051,16 @@ function formatNumber(number)
 
 function formatDate(datestr, unknown)
 {
-  // scriptable date formatter, for pretty printing dates
-  var dateService = Components.classes["@mozilla.org/intl/scriptabledateformat;1"]
-                              .getService(Components.interfaces.nsIScriptableDateFormat);
-
   var date = new Date(datestr);
   if (!date.valueOf())
     return unknown;
 
-  return dateService.FormatDateTime("", dateService.dateFormatLong,
-                                    dateService.timeFormatSeconds,
-                                    date.getFullYear(), date.getMonth()+1, date.getDate(),
-                                    date.getHours(), date.getMinutes(), date.getSeconds());
+  const locale = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
+                 .getService(Components.interfaces.nsIXULChromeRegistry)
+                 .getSelectedLocale("global", true);
+  const dtOptions = { year: 'numeric', month: 'long', day: 'numeric',
+                      hour: 'numeric', minute: 'numeric', second: 'numeric' };
+  return date.toLocaleString(locale, dtOptions);
 }
 
 function doCopy()

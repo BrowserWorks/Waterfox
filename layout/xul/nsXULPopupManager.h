@@ -102,7 +102,7 @@ enum nsNavigationDirection {
 enum nsIgnoreKeys {
   eIgnoreKeys_False,
   eIgnoreKeys_True,
-  eIgnoreKeys_Handled,
+  eIgnoreKeys_Shortcuts,
 };
 
 #define NS_DIRECTION_IS_INLINE(dir) (dir == eNavigationDirection_Start ||     \
@@ -237,6 +237,34 @@ private:
   bool mIsRollup;
 };
 
+// this class is used for dispatching popuppositioned events asynchronously.
+class nsXULPopupPositionedEvent : public mozilla::Runnable
+{
+public:
+  explicit nsXULPopupPositionedEvent(nsIContent *aPopup,
+                                     bool aIsContextMenu,
+                                     bool aSelectFirstItem)
+    : mPopup(aPopup)
+    , mIsContextMenu(aIsContextMenu)
+    , mSelectFirstItem(aSelectFirstItem)
+  {
+    NS_ASSERTION(aPopup, "null popup supplied to nsXULPopupShowingEvent constructor");
+  }
+
+  NS_IMETHOD Run() override;
+
+  // Asynchronously dispatch a popuppositioned event at aPopup if this is a
+  // panel that should receieve such events. Return true if the event was sent.
+  static bool DispatchIfNeeded(nsIContent *aPopup,
+                               bool aIsContextMenu,
+                               bool aSelectFirstItem);
+
+private:
+  nsCOMPtr<nsIContent> mPopup;
+  bool mIsContextMenu;
+  bool mSelectFirstItem;
+};
+
 // this class is used for dispatching menu command events asynchronously.
 class nsXULMenuCommandEvent : public mozilla::Runnable
 {
@@ -287,6 +315,7 @@ class nsXULPopupManager final : public nsIDOMEventListener,
 public:
   friend class nsXULPopupShowingEvent;
   friend class nsXULPopupHidingEvent;
+  friend class nsXULPopupPositionedEvent;
   friend class nsXULMenuCommandEvent;
   friend class TransitionEnder;
 
@@ -599,13 +628,12 @@ public:
   void CancelMenuTimer(nsMenuParent* aMenuParent);
 
   /**
-   * Handles navigation for menu accelkeys. Returns true if the key has
-   * been handled. If aFrame is specified, then the key is handled by that
-   * popup, otherwise if aFrame is null, the key is handled by the active
-   * popup or menubar.
+   * Handles navigation for menu accelkeys. If aFrame is specified, then the
+   * key is handled by that popup, otherwise if aFrame is null, the key is
+   * handled by the active popup or menubar.
    */
   bool HandleShortcutNavigation(nsIDOMKeyEvent* aKeyEvent,
-                                  nsMenuPopupFrame* aFrame);
+                                nsMenuPopupFrame* aFrame);
 
   /**
    * Handles cursor navigation within a menu. Returns true if the key has

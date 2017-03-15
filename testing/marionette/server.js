@@ -41,12 +41,13 @@ const MANAGE_OFFLINE_STATUS_PREF = "network.gonk.manage-offline-status";
  *     Listen only to connections from loopback if true.  If false,
  *     accept all connections.
  */
-this.MarionetteServer = function(port, forceLocal) {
+this.MarionetteServer = function (port, forceLocal) {
   this.port = port;
   this.forceLocal = forceLocal;
   this.conns = {};
   this.nextConnId = 0;
   this.alive = false;
+  this._acceptConnections = false;
 };
 
 /**
@@ -70,9 +71,18 @@ MarionetteServer.prototype.driverFactory = function() {
       Services.io.offline = false;
   }
 
-  let stopSignal = () => this.stop();
-  return new GeckoDriver(appName, stopSignal);
+  return new GeckoDriver(appName, this);
 };
+
+MarionetteServer.prototype.__defineSetter__("acceptConnections", function (value) {
+  if (!value) {
+    logger.info("New connections will no longer be accepted");
+  } else {
+    logger.info("New connections are accepted again");
+  }
+
+  this._acceptConnections = value;
+});
 
 MarionetteServer.prototype.start = function() {
   if (this.alive) {
@@ -85,6 +95,7 @@ MarionetteServer.prototype.start = function() {
   this.listener = new ServerSocket(this.port, flags, 1);
   this.listener.asyncListen(this);
   this.alive = true;
+  this._acceptConnections = true;
 };
 
 MarionetteServer.prototype.stop = function() {
@@ -93,6 +104,7 @@ MarionetteServer.prototype.stop = function() {
   }
   this.closeListener();
   this.alive = false;
+  this._acceptConnections = false;
 };
 
 MarionetteServer.prototype.closeListener = function() {
@@ -100,8 +112,13 @@ MarionetteServer.prototype.closeListener = function() {
   this.listener = null;
 };
 
-MarionetteServer.prototype.onSocketAccepted = function(
+MarionetteServer.prototype.onSocketAccepted = function (
     serverSocket, clientSocket) {
+  if (!this._acceptConnections) {
+    logger.warn("New connections are currently not accepted");
+    return;
+  }
+
   let input = clientSocket.openInputStream(0, 0, 0);
   let output = clientSocket.openOutputStream(0, 0, 0);
   let transport = new DebuggerTransport(input, output);
@@ -116,7 +133,7 @@ MarionetteServer.prototype.onSocketAccepted = function(
   transport.ready();
 };
 
-MarionetteServer.prototype.onConnectionClosed = function(conn) {
+MarionetteServer.prototype.onConnectionClosed = function (conn) {
   let id = conn.connId;
   delete this.conns[id];
   logger.debug(`Closed connection ${id}`);

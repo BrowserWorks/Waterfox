@@ -75,17 +75,18 @@ tasks:
           GECKO_HEAD_REPOSITORY: '{{{url}}}'
           GECKO_HEAD_REF: '{{revision}}'
           GECKO_HEAD_REV: '{{revision}}'
+          HG_STORE_PATH: /home/worker/checkouts/hg-store
 
         cache:
-          level-{{level}}-hg-shared: /home/worker/hg-shared
           level-{{level}}-checkouts: /home/worker/checkouts
 
         features:
           taskclusterProxy: true
+          chainOfTrust: true
 
         # Note: This task is built server side without the context or tooling that
         # exist in tree so we must hard code the version
-        image: 'taskcluster/decision:0.1.6'
+        image: 'taskcluster/decision:0.1.7'
 
         maxRunTime: 1800
 
@@ -118,10 +119,6 @@ tasks:
             type: 'directory'
             path: '/home/worker/artifacts'
             expires: '{{#from_now}}364 days{{/from_now}}'
-          'public/docker_image_contexts':
-            type: 'directory'
-            path: '/home/worker/docker_image_contexts'
-            expires: '{{#from_now}}7 days{{/from_now}}'
 
       extra:
         treeherder:

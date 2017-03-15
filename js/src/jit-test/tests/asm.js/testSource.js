@@ -1,4 +1,3 @@
-// |jit-test| test-also-noasmjs
 setCachingEnabled(true);
 
 (function() {
@@ -54,7 +53,7 @@ assertEq(f0.toSource(), "(function anonymous() {\n" + bodyOnly + "\n})");
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var m = new Function(bodyOnly);
-    assertEq(isAsmJSModuleLoadedFromCache(m), false);
+    assertEq(isAsmJSModuleLoadedFromCache(m), true);
     assertEq(m.toString(), "function anonymous() {\n" + bodyOnly + "\n}");
     assertEq(m.toSource(), "(function anonymous() {\n" + bodyOnly + "\n})");
 }
@@ -113,7 +112,7 @@ assertEq(f1.toSource(), "(function anonymous(glob) {\n" + bodyOnly + "\n})");
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var m = new Function('glob', bodyOnly);
-    assertEq(isAsmJSModuleLoadedFromCache(m), false);
+    assertEq(isAsmJSModuleLoadedFromCache(m), true);
     assertEq(m.toString(), "function anonymous(glob) {\n" + bodyOnly + "\n}");
     assertEq(m.toSource(), "(function anonymous(glob) {\n" + bodyOnly + "\n})");
 }
@@ -173,7 +172,7 @@ assertEq(f2.toSource(), "(function anonymous(glob, ffi) {\n" + bodyOnly + "\n})"
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var m = new Function('glob', 'ffi', bodyOnly);
-    assertEq(isAsmJSModuleLoadedFromCache(m), false);
+    assertEq(isAsmJSModuleLoadedFromCache(m), true);
     assertEq(m.toString(), "function anonymous(glob, ffi) {\n" + bodyOnly + "\n}");
     assertEq(m.toSource(), "(function anonymous(glob, ffi) {\n" + bodyOnly + "\n})");
 }
@@ -233,7 +232,7 @@ assertEq(f3.toSource(), "(function anonymous(glob, ffi, heap) {\n" + bodyOnly + 
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var m = new Function('glob', 'ffi', 'heap', bodyOnly);
-    assertEq(isAsmJSModuleLoadedFromCache(m), false);
+    assertEq(isAsmJSModuleLoadedFromCache(m), true);
     assertEq(m.toString(), "function anonymous(glob, ffi, heap) {\n" + bodyOnly + "\n}");
     assertEq(m.toSource(), "(function anonymous(glob, ffi, heap) {\n" + bodyOnly + "\n})");
 }
@@ -260,7 +259,7 @@ assertEq(f4.toSource(), expectedToSource);
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var f5 = eval("\"use strict\";\n(" + funcSource + ")");
-    assertEq(isAsmJSModuleLoadedFromCache(f5), false);
+    assertEq(isAsmJSModuleLoadedFromCache(f5), true);
     assertEq(f5.toString(), expectedToString);
     assertEq(f5.toSource(), expectedToSource);
 }
@@ -321,7 +320,7 @@ checkFuncSrc(moduleG);
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var g2 = new Function(funcBody);
-    assertEq(isAsmJSModuleLoadedFromCache(g2), false);
+    assertEq(isAsmJSModuleLoadedFromCache(g2), true);
     m = g2();
     checkFuncSrc(m);
 
@@ -333,7 +332,7 @@ if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
 
     eval('var x = 42;' + moduleDecl);
     m = g3();
-    assertEq(isAsmJSModuleLoadedFromCache(g3), false);
+    assertEq(isAsmJSModuleLoadedFromCache(g3), true);
     checkFuncSrc(m);
 }
 
@@ -361,7 +360,7 @@ assertEq(f5.toSource(), expectedToSource);
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var mf5 = eval("\"use strict\";\n(" + moduleCode + ")");
-    assertEq(isAsmJSModuleLoadedFromCache(mf5), false);
+    assertEq(isAsmJSModuleLoadedFromCache(mf5), true);
     var f5 = mf5();
     assertEq(f5.toString(), expectedToString);
     assertEq(f5.toSource(), expectedToSource);
@@ -390,7 +389,7 @@ assertEq(f6.toSource(), funcCode);
 
 if (isAsmJSCompilationAvailable() && isCachingEnabled()) {
     var mf6 = eval("\"use strict\";\n(" + moduleCode + ")");
-    assertEq(isAsmJSModuleLoadedFromCache(mf6), false);
+    assertEq(isAsmJSModuleLoadedFromCache(mf6), true);
     var f6 = mf6({Math:{}});
     assertEq(f6.toString(), funcCode);
     assertEq(f6.toSource(), funcCode);

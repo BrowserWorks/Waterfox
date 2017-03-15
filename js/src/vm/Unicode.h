@@ -18,55 +18,62 @@ namespace js {
 namespace unicode {
 
 /*
- * This enum contains the all the knowledge required to handle
- * Unicode in JavaScript.
+ * This namespace contains all the knowledge required to handle Unicode
+ * characters in JavaScript.
  *
  * SPACE
- *   Every character that is either in the ECMA-262 5th Edition
- *   class WhiteSpace or LineTerminator.
+ *   Every character that is either in the ECMAScript class WhiteSpace
+ *   (ES2016, § 11.2) or in LineTerminator (ES2016, § 11.3).
  *
  *   WhiteSpace
  *    \u0009, \u000B, \u000C, \u0020, \u00A0 and \uFEFF
  *    and every other Unicode character with the General Category "Zs".
- *    In pratice this is every character with the value "Zs" as the third
- *    field (after the char code in hex, and the name) called General_Category
- *    (see http://www.unicode.org/reports/tr44/#UnicodeData.txt)
- *     in the file UnicodeData.txt.
+ *    See <http://www.unicode.org/reports/tr44/#UnicodeData.txt> for more
+ *    information about General Categories and the UnicodeData.txt file.
  *
  *   LineTerminator
  *    \u000A, \u000D, \u2028, \u2029
  *
- * LETTER
- *   This are all characters included UnicodeLetter from ECMA-262.
- *   This includes the category 'Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl'
+ * UNICODE_ID_START
+ *   These are all characters with the Unicode property «ID_Start».
  *
- * IDENTIFIER_PART
- *   This is UnicodeCombiningMark, UnicodeDigit, UnicodeConnectorPunctuation.
- *   Aka categories Mn/Mc, Md, Nd, Pc
- *   And <ZWNJ> and <ZWJ>.
- *   Attention: FLAG_LETTER is _not_ IdentifierStart, but you could build
+ * UNICODE_ID_CONTINUE_ONLY
+ *   These are all characters with the Unicode property «ID_Continue» minus all
+ *   characters with the Unicode property «ID_Start».
+ *   And additionally <ZWNJ> and <ZWJ>. (ES2016, § 11.6)
+ *
+ * UNICODE_ID_CONTINUE
+ *   These are all characters with the Unicode property «ID_Continue».
+ *   And additionally <ZWNJ> and <ZWJ>. (ES2016, § 11.6)
+ *
+ *   Attention: UNICODE_ID_START is _not_ IdentifierStart, but you could build
  *   a matcher for the real IdentifierPart like this:
  *
- *   if isEscapeSequence():
- *      handleEscapeSequence()
- *      return True
  *   if char in ['$', '_']:
  *      return True
- *   if GetFlag(char) & (FLAG_IDENTIFIER_PART | FLAG_LETTER):
+ *   if GetFlag(char) & UNICODE_ID_CONTINUE:
  *      return True
  *
  */
 
-struct CharFlag {
-    enum temp {
-        SPACE  = 1 << 0,
-        LETTER = 1 << 1,
-        IDENTIFIER_PART = 1 << 2,
-    };
-};
+namespace CharFlag {
+    const uint8_t SPACE = 1 << 0;
+    const uint8_t UNICODE_ID_START = 1 << 1;
+    const uint8_t UNICODE_ID_CONTINUE_ONLY = 1 << 2;
+    const uint8_t UNICODE_ID_CONTINUE = UNICODE_ID_START + UNICODE_ID_CONTINUE_ONLY;
+}
 
 const char16_t BYTE_ORDER_MARK2 = 0xFFFE;
 const char16_t NO_BREAK_SPACE  = 0x00A0;
+
+const char16_t LeadSurrogateMin = 0xD800;
+const char16_t LeadSurrogateMax = 0xDBFF;
+const char16_t TrailSurrogateMin = 0xDC00;
+const char16_t TrailSurrogateMax = 0xDFFF;
+
+const uint32_t UTF16Max = 0xFFFF;
+const uint32_t NonBMPMin = 0x10000;
+const uint32_t NonBMPMax = 0x10FFFF;
 
 class CharacterInfo {
     /*
@@ -94,12 +101,13 @@ class CharacterInfo {
         return flags & CharFlag::SPACE;
     }
 
-    inline bool isLetter() const {
-        return flags & CharFlag::LETTER;
+    inline bool isUnicodeIDStart() const {
+        return flags & CharFlag::UNICODE_ID_START;
     }
 
-    inline bool isIdentifierPart() const {
-        return flags & (CharFlag::IDENTIFIER_PART | CharFlag::LETTER);
+    inline bool isUnicodeIDContinue() const {
+        // Also matches <ZWNJ> and <ZWJ>!
+        return flags & CharFlag::UNICODE_ID_CONTINUE;
     }
 };
 
@@ -110,7 +118,7 @@ extern const CharacterInfo js_charinfo[];
 inline const CharacterInfo&
 CharInfo(char16_t code)
 {
-    const size_t shift = 5;
+    const size_t shift = 6;
     size_t index = index1[code >> shift];
     index = index2[(index << shift) + (code & ((1 << shift) - 1))];
 
@@ -121,10 +129,10 @@ inline bool
 IsIdentifierStart(char16_t ch)
 {
     /*
-     * ES5 7.6 IdentifierStart
+     * ES2016 11.6 IdentifierStart
      *  $ (dollar sign)
      *  _ (underscore)
-     *  or any UnicodeLetter.
+     *  or any character with the Unicode property «ID_Start».
      *
      * We use a lookup table for small and thus common characters for speed.
      */
@@ -132,24 +140,47 @@ IsIdentifierStart(char16_t ch)
     if (ch < 128)
         return js_isidstart[ch];
 
-    return CharInfo(ch).isLetter();
+    return CharInfo(ch).isUnicodeIDStart();
+}
+
+inline bool
+IsIdentifierStart(uint32_t codePoint)
+{
+    // TODO: Supplemental code points not yet supported (bug 1197230).
+    return codePoint <= UTF16Max && IsIdentifierStart(char16_t(codePoint));
 }
 
 inline bool
 IsIdentifierPart(char16_t ch)
 {
-    /* Matches ES5 7.6 IdentifierPart. */
+    /*
+     * ES2016 11.6 IdentifierPart
+     *  $ (dollar sign)
+     *  _ (underscore)
+     *  <ZWNJ>
+     *  <ZWJ>
+     *  or any character with the Unicode property «ID_Continue».
+     *
+     * We use a lookup table for small and thus common characters for speed.
+     */
 
     if (ch < 128)
         return js_isident[ch];
 
-    return CharInfo(ch).isIdentifierPart();
+    return CharInfo(ch).isUnicodeIDContinue();
 }
 
 inline bool
-IsLetter(char16_t ch)
+IsIdentifierPart(uint32_t codePoint)
 {
-    return CharInfo(ch).isLetter();
+    // TODO: Supplemental code points not yet supported (bug 1197230).
+    return codePoint <= UTF16Max && IsIdentifierPart(char16_t(codePoint));
+}
+
+inline bool
+IsUnicodeIDStart(char16_t ch)
+{
+    return CharInfo(ch).isUnicodeIDStart();
 }
 
 inline bool
@@ -157,7 +188,7 @@ IsSpace(char16_t ch)
 {
     /*
      * IsSpace checks if some character is included in the merged set
-     * of WhiteSpace and LineTerminator, specified by ES5 7.2 and 7.3.
+     * of WhiteSpace and LineTerminator, specified by ES2016 11.2 and 11.3.
      * We combined them, because in practice nearly every
      * calling function wants this, except some code in the tokenizer.
      *
@@ -398,42 +429,67 @@ ReverseFoldCase3(char16_t ch)
     return uint16_t(ch) + info.reverse3;
 }
 
-const size_t LeadSurrogateMin = 0xD800;
-const size_t LeadSurrogateMax = 0xDBFF;
-const size_t TrailSurrogateMin = 0xDC00;
-const size_t TrailSurrogateMax = 0xDFFF;
-const size_t UTF16Max = 0xFFFF;
-const size_t NonBMPMin = 0x10000;
-const size_t NonBMPMax = 0x10FFFF;
-
 inline bool
-IsLeadSurrogate(size_t value)
+IsSupplementary(uint32_t codePoint)
 {
-    return value >= LeadSurrogateMin && value <= LeadSurrogateMax;
+    return codePoint >= NonBMPMin && codePoint <= NonBMPMax;
 }
 
 inline bool
-IsTrailSurrogate(size_t value)
+IsLeadSurrogate(uint32_t codePoint)
 {
-    return value >= TrailSurrogateMin && value <= TrailSurrogateMax;
+    return codePoint >= LeadSurrogateMin && codePoint <= LeadSurrogateMax;
+}
+
+inline bool
+IsTrailSurrogate(uint32_t codePoint)
+{
+    return codePoint >= TrailSurrogateMin && codePoint <= TrailSurrogateMax;
+}
+
+inline char16_t
+LeadSurrogate(uint32_t codePoint)
+{
+    MOZ_ASSERT(IsSupplementary(codePoint));
+
+    return char16_t((codePoint >> 10) + (LeadSurrogateMin - (NonBMPMin >> 10)));
+}
+
+inline char16_t
+TrailSurrogate(uint32_t codePoint)
+{
+    MOZ_ASSERT(IsSupplementary(codePoint));
+
+    return char16_t((codePoint & 0x3FF) | TrailSurrogateMin);
 }
 
 inline void
-UTF16Encode(size_t cp, size_t* lead, size_t* trail)
+UTF16Encode(uint32_t codePoint, char16_t* lead, char16_t* trail)
 {
-    MOZ_ASSERT(cp >= NonBMPMin && cp <= NonBMPMax);
+    MOZ_ASSERT(IsSupplementary(codePoint));
 
-    *lead = (cp - NonBMPMin) / 1024 + LeadSurrogateMin;
-    *trail = ((cp - NonBMPMin) % 1024) + TrailSurrogateMin;
+    *lead = LeadSurrogate(codePoint);
+    *trail = TrailSurrogate(codePoint);
 }
 
-inline size_t
-UTF16Decode(size_t lead, size_t trail)
+static inline void
+UTF16Encode(uint32_t codePoint, char16_t* elements, unsigned* index)
+{
+    if (!IsSupplementary(codePoint)) {
+        elements[(*index)++] = char16_t(codePoint);
+    } else {
+        elements[(*index)++] = LeadSurrogate(codePoint);
+        elements[(*index)++] = TrailSurrogate(codePoint);
+    }
+}
+
+inline uint32_t
+UTF16Decode(char16_t lead, char16_t trail)
 {
     MOZ_ASSERT(IsLeadSurrogate(lead));
     MOZ_ASSERT(IsTrailSurrogate(trail));
 
-    return (lead - LeadSurrogateMin) * 1024 + (trail - TrailSurrogateMin) + NonBMPMin;
+    return (lead << 10) + trail + (NonBMPMin - (LeadSurrogateMin << 10) - TrailSurrogateMin);
 }
 
 } /* namespace unicode */

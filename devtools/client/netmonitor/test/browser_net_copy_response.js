@@ -18,7 +18,7 @@ add_task(function* () {
 
   RequestsMenu.lazyUpdate = false;
 
-  let wait = waitForNetworkEvents(monitor, 7);
+  let wait = waitForNetworkEvents(monitor, CONTENT_TYPE_WITHOUT_CACHE_REQUESTS);
   yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
     content.wrappedJSObject.performRequests();
   });
@@ -28,7 +28,7 @@ add_task(function* () {
   RequestsMenu.selectedItem = requestItem;
 
   yield waitForClipboardPromise(function setup() {
-    RequestsMenu.copyResponse();
+    RequestsMenu.contextMenu.copyResponse();
   }, EXPECTED_RESULT);
 
   yield teardown(monitor);

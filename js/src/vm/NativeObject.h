@@ -335,7 +335,7 @@ class NewObjectCache;
 
 #ifdef DEBUG
 static inline bool
-IsObjectValueInCompartment(Value v, JSCompartment* comp);
+IsObjectValueInCompartment(const Value& v, JSCompartment* comp);
 #endif
 
 // Operations which change an object's dense elements can either succeed, fail,
@@ -638,6 +638,7 @@ class NativeObject : public ShapedObject
         uint32_t nslots = lastProperty()->slotSpan(getClass());
         return Min(nslots, numFixedSlots());
     }
+    uint32_t numFixedSlotsForCompilation() const;
 
     uint32_t slotSpan() const {
         if (inDictionaryMode())
@@ -726,7 +727,7 @@ class NativeObject : public ShapedObject
      * logic across the object vs. shape module wall.
      */
     static bool allocSlot(ExclusiveContext* cx, HandleNativeObject obj, uint32_t* slotp);
-    void freeSlot(uint32_t slot);
+    void freeSlot(ExclusiveContext* cx, uint32_t slot);
 
   private:
     static Shape* getChildPropertyOnDictionary(ExclusiveContext* cx, HandleNativeObject obj,
@@ -781,7 +782,8 @@ class NativeObject : public ShapedObject
     static Shape*
     addPropertyInternal(ExclusiveContext* cx, HandleNativeObject obj, HandleId id,
                         JSGetterOp getter, JSSetterOp setter, uint32_t slot, unsigned attrs,
-                        unsigned flags, ShapeTable::Entry* entry, bool allowDictionary);
+                        unsigned flags, ShapeTable::Entry* entry, bool allowDictionary,
+                        const AutoKeepShapeTables& keep);
 
     bool fillInAfterSwap(JSContext* cx, const Vector<Value>& values, void* priv);
 
@@ -1340,7 +1342,7 @@ NativeObject::privateWriteBarrierPre(void** oldval)
 
 #ifdef DEBUG
 static inline bool
-IsObjectValueInCompartment(Value v, JSCompartment* comp)
+IsObjectValueInCompartment(const Value& v, JSCompartment* comp)
 {
     if (!v.isObject())
         return true;
@@ -1362,7 +1364,7 @@ IsObjectValueInCompartment(Value v, JSCompartment* comp)
 
 extern bool
 NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId id,
-                     Handle<PropertyDescriptor> desc,
+                     Handle<JS::PropertyDescriptor> desc,
                      ObjectOpResult& result);
 
 extern bool
@@ -1395,7 +1397,7 @@ NativeHasProperty(JSContext* cx, HandleNativeObject obj, HandleId id, bool* foun
 
 extern bool
 NativeGetOwnPropertyDescriptor(JSContext* cx, HandleNativeObject obj, HandleId id,
-                               MutableHandle<PropertyDescriptor> desc);
+                               MutableHandle<JS::PropertyDescriptor> desc);
 
 extern bool
 NativeGetProperty(JSContext* cx, HandleNativeObject obj, HandleValue receiver, HandleId id,
@@ -1404,22 +1406,11 @@ NativeGetProperty(JSContext* cx, HandleNativeObject obj, HandleValue receiver, H
 extern bool
 NativeGetPropertyNoGC(JSContext* cx, NativeObject* obj, const Value& receiver, jsid id, Value* vp);
 
-extern bool
-NativeGetElement(JSContext* cx, HandleNativeObject obj, HandleValue receiver, uint32_t index,
-                 MutableHandleValue vp);
-
 inline bool
 NativeGetProperty(JSContext* cx, HandleNativeObject obj, HandleId id, MutableHandleValue vp)
 {
     RootedValue receiver(cx, ObjectValue(*obj));
     return NativeGetProperty(cx, obj, receiver, id, vp);
-}
-
-inline bool
-NativeGetElement(JSContext* cx, HandleNativeObject obj, uint32_t index, MutableHandleValue vp)
-{
-    RootedValue receiver(cx, ObjectValue(*obj));
-    return NativeGetElement(cx, obj, receiver, index, vp);
 }
 
 bool
@@ -1506,6 +1497,9 @@ MaybeNativeObject(JSObject* obj)
 {
     return obj ? &obj->as<NativeObject>() : nullptr;
 }
+
+// Defined in NativeObject-inl.h.
+bool IsPackedArray(JSObject* obj);
 
 } // namespace js
 

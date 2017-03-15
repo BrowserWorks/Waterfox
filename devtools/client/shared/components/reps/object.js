@@ -27,12 +27,13 @@ define(function (require, exports, module) {
     },
 
     getTitle: function (object) {
+      let className = object && object.class ? object.class : "Object";
       if (this.props.objectLink) {
         return this.props.objectLink({
           object: object
-        }, object.class + " ");
+        }, className);
       }
-      return "Object";
+      return className;
     },
 
     safePropIterator: function (object, max) {
@@ -74,7 +75,6 @@ define(function (require, exports, module) {
         let objectLink = this.props.objectLink || span;
 
         props.push(Caption({
-          key: "more",
           object: objectLink({
             object: object
           }, (Object.keys(object).length - max) + " more…")
@@ -115,7 +115,6 @@ define(function (require, exports, module) {
           let t = typeof value;
           if (filter(t, value)) {
             props.push(PropRep({
-              key: name,
               mode: mode,
               name: name,
               object: value,
@@ -139,7 +138,7 @@ define(function (require, exports, module) {
       if (this.props.mode == "tiny" || !props.length) {
         return (
           span({className: "objectBox objectBox-object"},
-            objectLink({className: "objectTitle"}, this.getTitle())
+            objectLink({className: "objectTitle"}, this.getTitle(object))
           )
         );
       }
@@ -151,7 +150,7 @@ define(function (require, exports, module) {
             className: "objectLeftBrace",
             object: object
           }, " { "),
-          props,
+          ...props,
           objectLink({
             className: "objectRightBrace",
             object: object

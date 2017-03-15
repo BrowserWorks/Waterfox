@@ -8,7 +8,7 @@ loader.lazyImporter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 const { Ci } = require("chrome");
-const { createClass, createFactory, DOM: dom } =
+const { createClass, createFactory, DOM: dom, PropTypes } =
   require("devtools/client/shared/vendor/react");
 const { getWorkerForms } = require("../../modules/worker");
 const Services = require("Services");
@@ -18,6 +18,12 @@ const TargetList = createFactory(require("../target-list"));
 const WorkerTarget = createFactory(require("./target"));
 const ServiceWorkerTarget = createFactory(require("./service-worker-target"));
 
+loader.lazyImporter(this, "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm");
+
+loader.lazyRequireGetter(this, "DebuggerClient",
+  "devtools/shared/client/main", true);
+
 const Strings = Services.strings.createBundle(
   "chrome://devtools/locale/aboutdebugging.properties");
 
@@ -26,6 +32,11 @@ const MORE_INFO_URL = "https://developer.mozilla.org/en-US/docs/Tools/about%3Ade
 
 module.exports = createClass({
   displayName: "WorkersPanel",
+
+  propTypes: {
+    client: PropTypes.instanceOf(DebuggerClient).isRequired,
+    id: PropTypes.string.isRequired
+  },
 
   getInitialState() {
     return {
@@ -42,6 +53,8 @@ module.exports = createClass({
     client.addListener("workerListChanged", this.update);
     client.addListener("serviceWorkerRegistrationListChanged", this.update);
     client.addListener("processListChanged", this.update);
+    client.addListener("registration-changed", this.update);
+
     this.update();
   },
 
@@ -50,6 +63,7 @@ module.exports = createClass({
     client.removeListener("processListChanged", this.update);
     client.removeListener("serviceWorkerRegistrationListChanged", this.update);
     client.removeListener("workerListChanged", this.update);
+    client.removeListener("registration-changed", this.update);
   },
 
   update() {
@@ -62,7 +76,8 @@ module.exports = createClass({
           name: form.url,
           url: form.url,
           scope: form.scope,
-          registrationActor: form.actor
+          registrationActor: form.actor,
+          active: form.active
         });
       });
 
@@ -75,16 +90,22 @@ module.exports = createClass({
         };
         switch (form.type) {
           case Ci.nsIWorkerDebugger.TYPE_SERVICE:
-            for (let registration of workers.service) {
-              if (registration.scope === form.scope) {
-                // XXX: Race, sometimes a ServiceWorkerRegistrationInfo doesn't
-                // have a scriptSpec, but its associated WorkerDebugger does.
-                if (!registration.url) {
-                  registration.name = registration.url = form.url;
-                }
-                registration.workerActor = form.actor;
-                break;
+            let registration = this.getRegistrationForWorker(form, workers.service);
+            if (registration) {
+              // XXX: Race, sometimes a ServiceWorkerRegistrationInfo doesn't
+              // have a scriptSpec, but its associated WorkerDebugger does.
+              if (!registration.url) {
+                registration.name = registration.url = form.url;
               }
+              registration.workerActor = form.actor;
+            } else {
+              // If a service worker registration could not be found, this means we are in
+              // e10s, and registrations are not forwarded to other processes until they
+              // reach the activated state. Augment the worker as a registration worker to
+              // display it in aboutdebugging.
+              worker.scope = form.scope;
+              worker.active = false;
+              workers.service.push(worker);
             }
             break;
           case Ci.nsIWorkerDebugger.TYPE_SHARED:
@@ -101,6 +122,15 @@ module.exports = createClass({
 
       this.setState({ workers });
     });
+  },
+
+  getRegistrationForWorker(form, registrations) {
+    for (let registration of registrations) {
+      if (registration.scope === form.scope) {
+        return registration;
+      }
+    }
+    return null;
   },
 
   render() {

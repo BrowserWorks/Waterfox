@@ -188,7 +188,7 @@ js::ParseDecimalNumber(const mozilla::Range<const CharT> chars)
 {
     MOZ_ASSERT(chars.length() > 0);
     uint64_t dec = 0;
-    RangedPtr<const CharT> s = chars.start(), end = chars.end();
+    RangedPtr<const CharT> s = chars.begin(), end = chars.end();
     do {
         CharT c = *s;
         MOZ_ASSERT('0' <= c && c <= '9');
@@ -702,7 +702,7 @@ num_toString_impl(JSContext* cx, const CallArgs& args)
             return false;
 
         if (d2 < 2 || d2 > 36) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_RADIX);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_RADIX);
             return false;
         }
 
@@ -887,7 +887,7 @@ ComputePrecisionInRange(JSContext* cx, int minPrecision, int maxPrecision, doubl
 
     ToCStringBuf cbuf;
     if (char* numStr = NumberToCString(cx, &cbuf, prec, 10))
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PRECISION_RANGE, numStr);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PRECISION_RANGE, numStr);
     return false;
 }
 
@@ -1574,58 +1574,48 @@ js::StringToNumber(ExclusiveContext* cx, JSString* str, double* result)
 }
 
 bool
-js::ToNumberSlow(ExclusiveContext* cx, Value v, double* out)
+js::ToNumberSlow(ExclusiveContext* cx, HandleValue v_, double* out)
 {
+    RootedValue v(cx, v_);
     MOZ_ASSERT(!v.isNumber());
-    goto skip_int_double;
-    for (;;) {
+
+    if (!v.isPrimitive()) {
+        if (!cx->isJSContext())
+            return false;
+
+        if (!ToPrimitive(cx->asJSContext(), JSTYPE_NUMBER, &v))
+            return false;
+
         if (v.isNumber()) {
             *out = v.toNumber();
             return true;
         }
-
-      skip_int_double:
-        if (!v.isObject()) {
-            if (v.isString())
-                return StringToNumber(cx, v.toString(), out);
-            if (v.isBoolean()) {
-                *out = v.toBoolean() ? 1.0 : 0.0;
-                return true;
-            }
-            if (v.isNull()) {
-                *out = 0.0;
-                return true;
-            }
-            if (v.isSymbol()) {
-                if (cx->isJSContext()) {
-                    JS_ReportErrorNumber(cx->asJSContext(), GetErrorMessage, nullptr,
-                                         JSMSG_SYMBOL_TO_NUMBER);
-                }
-                return false;
-            }
-
-            MOZ_ASSERT(v.isUndefined());
-            *out = GenericNaN();
-            return true;
+    }
+    if (v.isString())
+        return StringToNumber(cx, v.toString(), out);
+    if (v.isBoolean()) {
+        *out = v.toBoolean() ? 1.0 : 0.0;
+        return true;
+    }
+    if (v.isNull()) {
+        *out = 0.0;
+        return true;
+    }
+    if (v.isSymbol()) {
+        if (cx->isJSContext()) {
+            JS_ReportErrorNumberASCII(cx->asJSContext(), GetErrorMessage, nullptr,
+                                      JSMSG_SYMBOL_TO_NUMBER);
         }
-
-        if (!cx->isJSContext())
-            return false;
-
-        RootedValue v2(cx, v);
-        if (!ToPrimitive(cx->asJSContext(), JSTYPE_NUMBER, &v2))
-            return false;
-        v = v2;
-        if (v.isObject())
-            break;
+        return false;
     }
 
+    MOZ_ASSERT(v.isUndefined());
     *out = GenericNaN();
     return true;
 }
 
 JS_PUBLIC_API(bool)
-js::ToNumberSlow(JSContext* cx, Value v, double* out)
+js::ToNumberSlow(JSContext* cx, HandleValue v, double* out)
 {
     return ToNumberSlow(static_cast<ExclusiveContext*>(cx), v, out);
 }
@@ -1856,7 +1846,7 @@ js::ToIntegerIndex(JSContext* cx, JS::HandleValue v, uint64_t* index)
 
     // Write relation so NaNs throw a RangeError.
     if (!(0 <= d && d <= (uint64_t(1) << 53))) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
         return false;
     }
 
@@ -1865,7 +1855,7 @@ js::ToIntegerIndex(JSContext* cx, JS::HandleValue v, uint64_t* index)
     // range check above.
     uint64_t i(d);
     if (d != double(i)) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
         return false;
     }
 

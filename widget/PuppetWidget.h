@@ -135,6 +135,8 @@ public:
   virtual LayoutDeviceIntPoint WidgetToScreenOffset() override
   { return LayoutDeviceIntPoint::FromUnknownPoint(GetWindowPosition() + GetChromeDimensions()); }
 
+  int32_t RoundsWidgetCoordinatesTo() override;
+
   void InitEvent(WidgetGUIEvent& aEvent,
                  LayoutDeviceIntPoint* aPoint = nullptr);
 
@@ -173,6 +175,9 @@ public:
                   LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                   LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT) override;
 
+  // This is used after a compositor reset.
+  LayerManager* RecreateLayerManager(PLayerTransactionChild* aShadowManager);
+
   NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                     const InputContextAction& aAction) override;
   NS_IMETHOD_(InputContext) GetInputContext() override;
@@ -199,9 +204,10 @@ public:
 
   virtual TabChild* GetOwningTabChild() override { return mTabChild; }
 
-  void UpdateBackingScaleCache(float aDpi, double aScale)
+  void UpdateBackingScaleCache(float aDpi, int32_t aRounding, double aScale)
   {
     mDPI = aDpi;
+    mRounding = aRounding;
     mDefaultScale = aScale;
   }
 
@@ -355,6 +361,7 @@ private:
 
   // The DPI of the screen corresponding to this widget
   float mDPI;
+  int32_t mRounding;
   double mDefaultScale;
 
   // Precomputed answers for ExecuteNativeKeyBinding

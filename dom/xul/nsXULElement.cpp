@@ -38,6 +38,7 @@
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
+#include "mozilla/DeclarationBlockInlines.h"
 #include "nsFocusManager.h"
 #include "nsHTMLStyleSheet.h"
 #include "nsNameSpaceManager.h"
@@ -94,6 +95,7 @@
 #include "nsIController.h"
 #include "nsQueryObject.h"
 #include <algorithm>
+#include "nsIDOMChromeWindow.h"
 
 // The XUL doc interface
 #include "nsIDOMXULDocument.h"
@@ -180,16 +182,17 @@ nsXULElement::nsXULSlots::nsXULSlots()
 nsXULElement::nsXULSlots::~nsXULSlots()
 {
     NS_IF_RELEASE(mControllers); // Forces release
-    if (mFrameLoader) {
-        mFrameLoader->Destroy();
+    nsCOMPtr<nsIFrameLoader> frameLoader = do_QueryInterface(mFrameLoaderOrOpener);
+    if (frameLoader) {
+        static_cast<nsFrameLoader*>(frameLoader.get())->Destroy();
     }
 }
 
 void
 nsXULElement::nsXULSlots::Traverse(nsCycleCollectionTraversalCallback &cb)
 {
-    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mSlots->mFrameLoader");
-    cb.NoteXPCOMChild(NS_ISUPPORTS_CAST(nsIFrameLoader*, mFrameLoader));
+    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mSlots->mFrameLoaderOrOpener");
+    cb.NoteXPCOMChild(mFrameLoaderOrOpener);
 }
 
 nsINode::nsSlots*
@@ -374,14 +377,15 @@ nsXULElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
         nsAttrValue attrValue;
 
         // Style rules need to be cloned.
-        if (originalValue->Type() == nsAttrValue::eGeckoCSSDeclaration) {
-            RefPtr<css::Declaration> declClone = new css::Declaration(
-                *originalValue->GetGeckoCSSDeclarationValue());
+        if (originalValue->Type() == nsAttrValue::eCSSDeclaration) {
+            DeclarationBlock* decl = originalValue->GetCSSDeclarationValue();
+            RefPtr<css::Declaration>
+              declClone = new css::Declaration(*decl->AsGecko());
 
             nsString stringValue;
             originalValue->ToString(stringValue);
 
-            attrValue.SetTo(declClone, &stringValue);
+            attrValue.SetTo(declClone.forget(), &stringValue);
         } else {
             attrValue.SetTo(*originalValue);
         }
@@ -861,7 +865,8 @@ nsXULElement::BindToTree(nsIDocument* aDocument,
       // Note that add-ons may introduce bindings that cause this assertion to
       // fire.
       NS_ASSERTION(IsInVideoControls(this) ||
-                   IsInFeedSubscribeLine(this),
+                   IsInFeedSubscribeLine(this) ||
+                   IsXULElement(nsGkAtoms::datetimebox),
                    "Unexpected XUL element in non-XUL doc");
     }
   }
@@ -893,15 +898,11 @@ nsXULElement::UnbindFromTree(bool aDeep, bool aNullParent)
     nsXULSlots* slots = static_cast<nsXULSlots*>(GetExistingDOMSlots());
     if (slots) {
         NS_IF_RELEASE(slots->mControllers);
-        if (slots->mFrameLoader) {
-            // This element is being taken out of the document, destroy the
-            // possible frame loader.
-            // XXXbz we really want to only partially destroy the frame
-            // loader... we don't want to tear down the docshell.  Food for
-            // later bug.
-            slots->mFrameLoader->Destroy();
-            slots->mFrameLoader = nullptr;
+        RefPtr<nsFrameLoader> frameLoader = GetFrameLoader();
+        if (frameLoader) {
+            frameLoader->Destroy();
         }
+        slots->mFrameLoaderOrOpener = nullptr;
     }
 
     nsStyledElement::UnbindFromTree(aDeep, aNullParent);
@@ -1243,10 +1244,11 @@ nsXULElement::DestroyContent()
     nsXULSlots* slots = static_cast<nsXULSlots*>(GetExistingDOMSlots());
     if (slots) {
         NS_IF_RELEASE(slots->mControllers);
-        if (slots->mFrameLoader) {
-            slots->mFrameLoader->Destroy();
-            slots->mFrameLoader = nullptr;
+        RefPtr<nsFrameLoader> frameLoader = GetFrameLoader();
+        if (frameLoader) {
+            frameLoader->Destroy();
         }
+        slots->mFrameLoaderOrOpener = nullptr;
     }
 
     nsStyledElement::DestroyContent();
@@ -1573,14 +1575,30 @@ nsXULElement::LoadSrc()
             NodeInfo()->Equals(nsGkAtoms::overlay, kNameSpaceID_XUL)) {
         return NS_OK;
     }
-    nsXULSlots* slots = static_cast<nsXULSlots*>(Slots());
-    if (!slots->mFrameLoader) {
+    RefPtr<nsFrameLoader> frameLoader = GetFrameLoader();
+    if (!frameLoader) {
+        // Check if we have an opener we need to be setting
+        nsXULSlots* slots = static_cast<nsXULSlots*>(Slots());
+        nsCOMPtr<nsPIDOMWindowOuter> opener = do_QueryInterface(slots->mFrameLoaderOrOpener);
+        if (!opener) {
+            // If we are a content-primary xul-browser, we want to take the opener property!
+            nsCOMPtr<nsIDOMChromeWindow> chromeWindow = do_QueryInterface(OwnerDoc()->GetWindow());
+            if (AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
+                            NS_LITERAL_STRING("content-primary"), eIgnoreCase) &&
+                chromeWindow) {
+                nsCOMPtr<mozIDOMWindowProxy> wp;
+                chromeWindow->TakeOpenerForInitialContentBrowser(getter_AddRefs(wp));
+                opener = nsPIDOMWindowOuter::From(wp);
+            }
+        }
+
         // false as the last parameter so that xul:iframe/browser/editor
         // session history handling works like dynamic html:iframes.
         // Usually xul elements are used in chrome, which doesn't have
         // session history at all.
-        slots->mFrameLoader = nsFrameLoader::Create(this, false);
-        NS_ENSURE_TRUE(slots->mFrameLoader, NS_OK);
+        frameLoader = nsFrameLoader::Create(this, opener, false);
+        slots->mFrameLoaderOrOpener = static_cast<nsIFrameLoader*>(frameLoader);
+        NS_ENSURE_TRUE(frameLoader, NS_OK);
 
         (new AsyncEventDispatcher(this,
                                   NS_LITERAL_STRING("XULFrameLoaderCreated"),
@@ -1588,12 +1606,12 @@ nsXULElement::LoadSrc()
 
         if (AttrValueIs(kNameSpaceID_None, nsGkAtoms::prerendered,
                         NS_LITERAL_STRING("true"), eIgnoreCase)) {
-            nsresult rv = slots->mFrameLoader->SetIsPrerendered();
+            nsresult rv = frameLoader->SetIsPrerendered();
             NS_ENSURE_SUCCESS(rv,rv);
         }
     }
 
-    return slots->mFrameLoader->LoadFrame();
+    return frameLoader->LoadFrame();
 }
 
 nsresult
@@ -1610,8 +1628,8 @@ nsXULElement::GetFrameLoader()
     if (!slots)
         return nullptr;
 
-    RefPtr<nsFrameLoader> loader = slots->mFrameLoader;
-    return loader.forget();
+    nsCOMPtr<nsIFrameLoader> loader = do_QueryInterface(slots->mFrameLoaderOrOpener);
+    return already_AddRefed<nsFrameLoader>(static_cast<nsFrameLoader*>(loader.forget().take()));
 }
 
 nsresult
@@ -1625,6 +1643,15 @@ nsXULElement::GetParentApplication(mozIApplication** aApplication)
     return NS_OK;
 }
 
+void
+nsXULElement::PresetOpenerWindow(mozIDOMWindowProxy* aWindow, ErrorResult& aRv)
+{
+    nsXULSlots* slots = static_cast<nsXULSlots*>(Slots());
+    MOZ_ASSERT(!slots->mFrameLoaderOrOpener, "A frameLoader or opener is present when calling PresetOpenerWindow");
+
+    slots->mFrameLoaderOrOpener = aWindow;
+}
+
 nsresult
 nsXULElement::SetIsPrerendered()
 {
@@ -1633,16 +1660,25 @@ nsXULElement::SetIsPrerendered()
 }
 
 void
+nsXULElement::InternalSetFrameLoader(nsIFrameLoader* aNewFrameLoader)
+{
+    nsXULSlots* slots = static_cast<nsXULSlots*>(GetExistingDOMSlots());
+    MOZ_ASSERT(slots);
+
+    slots->mFrameLoaderOrOpener = aNewFrameLoader;
+}
+
+void
 nsXULElement::SwapFrameLoaders(HTMLIFrameElement& aOtherLoaderOwner,
                                ErrorResult& rv)
 {
-    nsXULSlots *ourSlots = static_cast<nsXULSlots*>(GetExistingDOMSlots());
-    if (!ourSlots) {
+    if (!GetExistingDOMSlots()) {
         rv.Throw(NS_ERROR_NOT_IMPLEMENTED);
         return;
     }
 
-    aOtherLoaderOwner.SwapFrameLoaders(ourSlots->mFrameLoader, rv);
+    nsCOMPtr<nsIFrameLoaderOwner> flo = do_QueryInterface(static_cast<nsIDOMXULElement*>(this));
+    aOtherLoaderOwner.SwapFrameLoaders(flo, rv);
 }
 
 void
@@ -1654,29 +1690,33 @@ nsXULElement::SwapFrameLoaders(nsXULElement& aOtherLoaderOwner,
         return;
     }
 
-    nsXULSlots *otherSlots =
-        static_cast<nsXULSlots*>(aOtherLoaderOwner.GetExistingDOMSlots());
-    if (!otherSlots) {
+    if (!GetExistingDOMSlots()) {
         rv.Throw(NS_ERROR_NOT_IMPLEMENTED);
         return;
     }
 
-    SwapFrameLoaders(otherSlots->mFrameLoader, rv);
+    nsCOMPtr<nsIFrameLoaderOwner> flo = do_QueryInterface(static_cast<nsIDOMXULElement*>(this));
+    aOtherLoaderOwner.SwapFrameLoaders(flo, rv);
 }
 
 void
-nsXULElement::SwapFrameLoaders(RefPtr<nsFrameLoader>& aOtherLoader,
+nsXULElement::SwapFrameLoaders(nsIFrameLoaderOwner* aOtherLoaderOwner,
                                mozilla::ErrorResult& rv)
 {
-    nsXULSlots *ourSlots = static_cast<nsXULSlots*>(GetExistingDOMSlots());
-    if (!ourSlots || !ourSlots->mFrameLoader || !aOtherLoader) {
+    if (!GetExistingDOMSlots()) {
         rv.Throw(NS_ERROR_NOT_IMPLEMENTED);
         return;
     }
 
-    rv = ourSlots->mFrameLoader->SwapWithOtherLoader(aOtherLoader,
-                                                     ourSlots->mFrameLoader,
-                                                     aOtherLoader);
+    RefPtr<nsFrameLoader> loader = GetFrameLoader();
+    RefPtr<nsFrameLoader> otherLoader = aOtherLoaderOwner->GetFrameLoader();
+    if (!loader || !otherLoader) {
+        rv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+        return;
+    }
+
+    nsCOMPtr<nsIFrameLoaderOwner> flo = do_QueryInterface(static_cast<nsIDOMXULElement*>(this));
+    rv = loader->SwapWithOtherLoader(otherLoader, flo, aOtherLoaderOwner);
 }
 
 NS_IMETHODIMP
@@ -1859,14 +1899,15 @@ nsXULElement::MakeHeavyweight(nsXULPrototypeElement* aPrototype)
         nsAttrValue attrValue;
 
         // Style rules need to be cloned.
-        if (protoattr->mValue.Type() == nsAttrValue::eGeckoCSSDeclaration) {
-            RefPtr<css::Declaration> declClone = new css::Declaration(
-              *protoattr->mValue.GetGeckoCSSDeclarationValue());
+        if (protoattr->mValue.Type() == nsAttrValue::eCSSDeclaration) {
+            DeclarationBlock* decl = protoattr->mValue.GetCSSDeclarationValue();
+            RefPtr<css::Declaration>
+              declClone = new css::Declaration(*decl->AsGecko());
 
             nsString stringValue;
             protoattr->mValue.ToString(stringValue);
 
-            attrValue.SetTo(declClone, &stringValue);
+            attrValue.SetTo(declClone.forget(), &stringValue);
         } else {
             attrValue.SetTo(protoattr->mValue);
         }
@@ -2253,7 +2294,7 @@ nsXULPrototypeElement::Serialize(nsIObjectOutputStream* aStream,
                   rv = tmp;
                 }
 
-                if (script->GetScriptObject()) {
+                if (script->HasScriptObject()) {
                     // This may return NS_OK without muxing script->mSrcURI's
                     // data into the cache file, in the case where that
                     // muxed document is already there (written by a prior
@@ -2449,7 +2490,7 @@ nsXULPrototypeElement::SetAttrAt(uint32_t aPos, const nsAString& aValue,
                                      mNodeInfo->NodeInfoManager()->
                                        DocumentPrincipal());
         if (declaration) {
-            mAttributes[aPos].mValue.SetTo(declaration, &aValue);
+            mAttributes[aPos].mValue.SetTo(declaration.forget(), &aValue);
 
             return NS_OK;
         }
@@ -2530,15 +2571,10 @@ nsXULPrototypeScript::Serialize(nsIObjectOutputStream* aStream,
     rv = aStream->Write32(mLangVersion);
     if (NS_FAILED(rv)) return rv;
 
-    // Calling fromMarkedLocation() is safe because we trace mScriptObject in
-    // TraceScriptObject() and because its value is never changed after it has
-    // been set.
-    JS::Handle<JSScript*> script =
-        JS::Handle<JSScript*>::fromMarkedLocation(mScriptObject.address());
     JSContext* cx = jsapi.cx();
+    JS::Rooted<JSScript*> script(cx, mScriptObject);
     MOZ_ASSERT(xpc::CompilationScope() == JS::CurrentGlobalOrNull(cx));
-    return nsContentUtils::XPConnect()->WriteScript(aStream, cx,
-                                                    xpc_UnmarkGrayScript(script));
+    return nsContentUtils::XPConnect()->WriteScript(aStream, cx, script);
 }
 
 nsresult
@@ -2672,8 +2708,10 @@ nsXULPrototypeScript::DeserializeOutOfLine(nsIObjectInputStream* aInput,
                 if (useXULCache && mSrcURI) {
                     bool isChrome = false;
                     mSrcURI->SchemeIs("chrome", &isChrome);
-                    if (isChrome)
-                        cache->PutScript(mSrcURI, GetScriptObject());
+                    if (isChrome) {
+                        JS::Rooted<JSScript*> script(RootingCx(), GetScriptObject());
+                        cache->PutScript(mSrcURI, script);
+                    }
                 }
                 cache->FinishInputStream(mSrcURI);
             } else {
@@ -2783,8 +2821,12 @@ nsXULPrototypeScript::Compile(JS::SourceBufferHolder& aSrcBuf,
     }
     JSContext* cx = jsapi.cx();
 
+    nsresult rv;
     nsAutoCString urlspec;
-    nsContentUtils::GetWrapperSafeScriptFilename(aDocument, aURI, urlspec);
+    nsContentUtils::GetWrapperSafeScriptFilename(aDocument, aURI, urlspec, &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
 
     // Ok, compile it to create a prototype script object!
     NS_ENSURE_TRUE(JSVersion(mLangVersion) != JSVERSION_UNKNOWN, NS_OK);

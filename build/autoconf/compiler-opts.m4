@@ -92,18 +92,20 @@ MOZ_ARG_WITH_STRING(debug-label,
 done])
 
 if test -n "$MOZ_DEBUG"; then
-    AC_MSG_CHECKING([for valid debug flags])
-    _SAVE_CFLAGS=$CFLAGS
-    CFLAGS="$CFLAGS $MOZ_DEBUG_FLAGS"
-    AC_TRY_COMPILE([#include <stdio.h>],
-        [printf("Hello World\n");],
-        _results=yes,
-        _results=no)
-    AC_MSG_RESULT([$_results])
-    if test "$_results" = "no"; then
-        AC_MSG_ERROR([These compiler flags are invalid: $MOZ_DEBUG_FLAGS])
+    if test -n "$COMPILE_ENVIRONMENT"; then
+        AC_MSG_CHECKING([for valid debug flags])
+        _SAVE_CFLAGS=$CFLAGS
+        CFLAGS="$CFLAGS $MOZ_DEBUG_FLAGS"
+        AC_TRY_COMPILE([#include <stdio.h>],
+            [printf("Hello World\n");],
+            _results=yes,
+            _results=no)
+        AC_MSG_RESULT([$_results])
+        if test "$_results" = "no"; then
+            AC_MSG_ERROR([These compiler flags are invalid: $MOZ_DEBUG_FLAGS])
+        fi
+        CFLAGS=$_SAVE_CFLAGS
     fi
-    CFLAGS=$_SAVE_CFLAGS
 
     MOZ_DEBUG_DEFINES="$MOZ_DEBUG_ENABLE_DEFS"
 else
@@ -176,6 +178,24 @@ if test "$GNU_CC"; then
     fi
     CFLAGS="$CFLAGS -fno-math-errno"
     CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-math-errno"
+
+    if test -z "$CLANG_CC"; then
+        case "$CC_VERSION" in
+        4.*)
+            ;;
+        *)
+            # Lifetime Dead Store Elimination level 2 (default in GCC6+) breaks Gecko.
+            # Ideally, we'd use -flifetime-dse=1, but that means we'd forcefully
+            # enable it on optimization levels where it would otherwise not be enabled.
+            # So we disable it entirely. But since that would mean inconsistency with
+            # GCC5, which has level 1 depending on optimization level, disable it on
+            # GCC5 as well, because better safe than sorry.
+            # Add it first so that a mozconfig can override by setting CFLAGS/CXXFLAGS.
+            CFLAGS="-fno-lifetime-dse $CFLAGS"
+            CXXFLAGS="-fno-lifetime-dse $CXXFLAGS"
+            ;;
+        esac
+    fi
 fi
 
 dnl ========================================================

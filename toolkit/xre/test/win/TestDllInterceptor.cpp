@@ -2,8 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#if _WIN32_WINNT < 0x0600
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+
+#include <shlobj.h>
 #include <stdio.h>
+
+#include "mozilla/WindowsVersion.h"
 #include "nsWindowsDllInterceptor.h"
+#include "nsWindowsHelpers.h"
 
 using namespace mozilla;
 
@@ -74,6 +83,54 @@ bool TestDetour(const char *dll, const char *func)
     printf("TEST-UNEXPECTED-FAIL | WindowsDllInterceptor | Failed to detour %s from %s\n", func, dll);
     return false;
   }
+}
+
+bool MaybeTestHook(const bool cond, const char* dll, const char* func)
+{
+  if (!cond) {
+    return true;
+  }
+
+  return TestHook(dll, func);
+}
+
+bool ShouldTestTipTsf()
+{
+#if defined(_M_X64)
+  return false;
+#else
+  if (!IsWin8OrLater()) {
+    return false;
+  }
+
+  nsModuleHandle shell32(LoadLibraryW(L"shell32.dll"));
+  if (!shell32) {
+    return true;
+  }
+
+  auto pSHGetKnownFolderPath = reinterpret_cast<decltype(&SHGetKnownFolderPath)>(GetProcAddress(shell32, "SHGetKnownFolderPath"));
+  if (!pSHGetKnownFolderPath) {
+    return true;
+  }
+
+  PWSTR commonFilesPath = nullptr;
+  if (FAILED(pSHGetKnownFolderPath(FOLDERID_ProgramFilesCommon, 0, nullptr,
+                                   &commonFilesPath))) {
+    return true;
+  }
+
+  wchar_t fullPath[MAX_PATH + 1] = {};
+  wcscpy(fullPath, commonFilesPath);
+  wcscat(fullPath, L"\\Microsoft Shared\\Ink\\tiptsf.dll");
+  CoTaskMemFree(commonFilesPath);
+
+  if (!LoadLibraryW(fullPath)) {
+    return false;
+  }
+
+  // Leak the module so that it's loaded for the interceptor test
+  return true;
+#endif
 }
 
 int main()
@@ -159,11 +216,17 @@ int main()
       TestHook("gdi32.dll", "CreateDIBSection") &&
       TestHook("kernel32.dll", "CreateFileW") &&
 #endif
+      TestDetour("user32.dll", "CreateWindowExW") &&
+      TestHook("user32.dll", "InSendMessageEx") &&
       TestHook("imm32.dll", "ImmGetContext") &&
       TestHook("imm32.dll", "ImmGetCompositionStringW") &&
       TestHook("imm32.dll", "ImmSetCandidateWindow") &&
 #ifdef _M_X64
       TestHook("user32.dll", "GetKeyState") &&
+#endif
+      MaybeTestHook(ShouldTestTipTsf(), "tiptsf.dll", "ProcessCaretEvents") &&
+#ifdef _M_IX86
+      TestHook("user32.dll", "SendMessageTimeoutW") &&
 #endif
       TestDetour("ntdll.dll", "LdrLoadDll")) {
     printf("TEST-PASS | WindowsDllInterceptor | all checks passed\n");

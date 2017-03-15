@@ -22,7 +22,7 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
     </vbox>
   </window>`;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 let useXulWrapper;
@@ -41,7 +41,7 @@ add_task(function* () {
 });
 
 function* runTests(doc) {
-  let tooltip = new HTMLTooltip({doc}, {useXulWrapper});
+  let tooltip = new HTMLTooltip(doc, {useXulWrapper});
   info("Create tooltip content width to 150px");
   let tooltipContent = doc.createElementNS(HTML_NS, "div");
   tooltipContent.style.cssText = "height: 100%; width: 150px; background: red;";

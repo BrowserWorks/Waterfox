@@ -7,9 +7,13 @@
 EXTRA_JS_MODULES += [
     'Extension.jsm',
     'ExtensionAPI.jsm',
+    'ExtensionChild.jsm',
+    'ExtensionCommon.jsm',
     'ExtensionContent.jsm',
     'ExtensionManagement.jsm',
+    'ExtensionParent.jsm',
     'ExtensionStorage.jsm',
+    'ExtensionStorageSync.jsm',
     'ExtensionUtils.jsm',
     'LegacyExtensionsUtils.jsm',
     'MessageChannel.jsm',
@@ -22,6 +26,7 @@ EXTRA_COMPONENTS += [
 ]
 
 TESTING_JS_MODULES += [
+    'ExtensionTestCommon.jsm',
     'ExtensionXPCShellUtils.jsm',
 ]
 

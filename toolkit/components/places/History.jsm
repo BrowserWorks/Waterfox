@@ -90,6 +90,9 @@ Cu.importGlobalProperties(["URL"]);
 const NOTIFICATION_CHUNK_SIZE = 300;
 const ONRESULT_CHUNK_SIZE = 300;
 
+// Timers resolution is not always good, it can have a 16ms precision on Win.
+const TIMERS_RESOLUTION_SKEW_MS = 16;
+
 /**
  * Sends a bookmarks notification through the given observers.
  *
@@ -496,7 +499,7 @@ function validatePageInfo(pageInfo) {
 
   info.url = normalizeToURLOrGUID(pageInfo.url);
 
-  if (typeof pageInfo.title === "string" && pageInfo.title.length) {
+  if (typeof pageInfo.title === "string") {
     info.title = pageInfo.title;
   } else if (pageInfo.title != null && pageInfo.title != undefined) {
     throw new TypeError(`title property of PageInfo object: ${pageInfo.title} must be a string if provided`);
@@ -517,7 +520,7 @@ function validatePageInfo(pageInfo) {
 
     if (inVisit.date) {
       ensureDate(inVisit.date);
-      if (inVisit.date > Date.now()) {
+      if (inVisit.date > (Date.now() + TIMERS_RESOLUTION_SKEW_MS)) {
         throw new TypeError(`date: ${inVisit.date} cannot be a future date`);
       }
       visit.date = inVisit.date;
@@ -745,7 +748,7 @@ var notifyCleanup = Task.async(function*(db, pages) {
       // We have removed all visits, but the page is still alive, e.g.
       // because of a bookmark.
       notify(observers, "onDeleteVisits",
-        [uri, /*last visit*/0, guid, reason, -1]);
+        [uri, /* last visit*/0, guid, reason, -1]);
     } else {
       // The page has been entirely removed.
       notify(observers, "onDeleteURI",
@@ -905,13 +908,10 @@ var remove = Task.async(function*(db, {guids, urls}, onResult = null) {
 
   let onResultData = onResult ? [] : null;
   let pages = [];
-  let hasPagesToKeep = false;
   let hasPagesToRemove = false;
   yield db.execute(query, null, Task.async(function*(row) {
     let hasForeign = row.getResultByName("foreign_count") != 0;
-    if (hasForeign) {
-      hasPagesToKeep = true;
-    } else {
+    if (!hasForeign) {
       hasPagesToRemove = true;
     }
     let id = row.getResultByName("id");

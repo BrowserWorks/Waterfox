@@ -15,6 +15,7 @@ import org.mozilla.gecko.db.BrowserContract.ExpirePriority;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.icons.decoders.LoadFaviconResult;
 
+import android.content.ContentProviderClient;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -112,6 +113,8 @@ public abstract class BrowserDB {
     public abstract void updateBookmark(ContentResolver cr, int id, String uri, String title, String keyword);
     public abstract boolean hasBookmarkWithGuid(ContentResolver cr, String guid);
 
+    public abstract boolean insertPageMetadata(ContentProviderClient contentProviderClient, String pageUrl, boolean hasImage, String metadataJSON);
+    public abstract int deletePageMetadata(ContentProviderClient contentProviderClient, String pageUrl);
     /**
      * Can return <code>null</code>.
      */
@@ -175,6 +178,13 @@ public abstract class BrowserDB {
      * @param limit Maximum number of results to return.
      */
     public abstract CursorLoader getHighlights(Context context, int limit);
+
+    /**
+     * Block a page from the highlights list.
+     *
+     * @param url The page URL. Only pages exactly matching this URL will be blocked.
+     */
+    public abstract void blockActivityStreamSite(ContentResolver cr, String url);
 
     public static BrowserDB from(final Context context) {
         return from(GeckoProfile.get(context));

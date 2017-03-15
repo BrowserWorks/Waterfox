@@ -834,7 +834,7 @@ WebContentConverterRegistrar.prototype = {
       autoBranch = ps.getBranch(PREF_CONTENTHANDLERS_AUTO);
     } catch (e) {
       // No auto branch yet, that's fine
-      //LOG("WCCR.init: There is no auto branch, benign");
+      // LOG("WCCR.init: There is no auto branch, benign");
     }
 
     if (autoBranch) {
@@ -920,7 +920,7 @@ WebContentConverterRegistrarContent.prototype = {
       let branch = ps.getBranch(PREF_CONTENTHANDLERS_BRANCH + num + ".");
       try {
         this._registerContentHandlerHavingBranch(branch);
-      } catch(ex) {
+      } catch (ex) {
         // do nothing, the next branch might have values
       }
     }

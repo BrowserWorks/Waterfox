@@ -49,6 +49,7 @@
 #include "nsDocLoader.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Preferences.h"
+#include "nsContentUtils.h"
 
 mozilla::LazyLogModule nsURILoader::mLog("URILoader");
 
@@ -234,6 +235,23 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStartRequest(nsIRequest *request, nsISupport
     if (204 == responseCode || 205 == responseCode) {
       return NS_BINDING_ABORTED;
     }
+
+    static bool sLargeAllocationHeaderEnabled = false;
+    static bool sCachedLargeAllocationPref = false;
+    if (!sCachedLargeAllocationPref) {
+      sCachedLargeAllocationPref = true;
+      mozilla::Preferences::AddBoolVarCache(&sLargeAllocationHeaderEnabled,
+                                            "dom.largeAllocationHeader.enabled");
+    }
+
+    if (sLargeAllocationHeaderEnabled) {
+      // If we have a Large-Allocation header, let's check if we should perform a process switch.
+      nsAutoCString largeAllocationHeader;
+      rv = httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Large-Allocation"), largeAllocationHeader);
+      if (NS_SUCCEEDED(rv) && nsContentUtils::AttemptLargeAllocationLoad(httpChannel)) {
+        return NS_BINDING_ABORTED;
+      }
+    }
   }
 
   //
@@ -315,7 +333,7 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStopRequest(nsIRequest *request, nsISupports
 
     // If this is a multipart stream, we could get another
     // OnStartRequest after this... reset state.
-    m_targetStreamListener = 0;
+    m_targetStreamListener = nullptr;
     mContentType.Truncate();
     listener->OnStopRequest(request, aCtxt, aStatus);
   }

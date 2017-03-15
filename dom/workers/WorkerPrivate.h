@@ -9,6 +9,7 @@
 
 #include "Workers.h"
 
+#include "js/CharacterEncoding.h"
 #include "nsIContentPolicy.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsILoadGroup.h"
@@ -59,7 +60,7 @@ struct RuntimeStats;
 } // namespace JS
 
 namespace mozilla {
-class TaskQueue;
+class ThrottledEventQueue;
 namespace dom {
 class Function;
 class MessagePort;
@@ -167,7 +168,6 @@ protected:
 
   SharedMutex mMutex;
   mozilla::CondVar mCondVar;
-  mozilla::CondVar mMemoryReportCondVar;
 
   // Protected by mMutex.
   RefPtr<EventTarget> mEventTarget;
@@ -197,11 +197,22 @@ private:
   nsTArray<RefPtr<SharedWorker>> mSharedWorkers;
 
   uint64_t mBusyCount;
+  // SharedWorkers may have multiple windows paused, so this must be
+  // a count instead of just a boolean.
+  uint32_t mParentWindowPausedDepth;
   Status mParentStatus;
   bool mParentFrozen;
-  bool mParentSuspended;
   bool mIsChromeWorker;
   bool mMainThreadObjectsForgotten;
+  // mIsSecureContext is set once in our constructor; after that it can be read
+  // from various threads.  We could make this const if we were OK with setting
+  // it in the initializer list via calling some function that takes all sorts
+  // of state (loadinfo, worker type, parent).
+  //
+  // It's a bit unfortunate that we have to have an out-of-band boolean for
+  // this, but we need access to this state from the parent thread, and we can't
+  // use our global object's secure state there.
+  bool mIsSecureContext;
   WorkerType mWorkerType;
   TimeStamp mCreationTimeStamp;
   DOMHighResTimeStamp mCreationTimeHighRes;
@@ -323,11 +334,14 @@ public:
   bool
   Thaw(nsPIDOMWindowInner* aWindow);
 
+  // When we debug a worker, we want to disconnect the window and the worker
+  // communication. This happens calling this method.
+  // Note: this method doesn't suspend the worker! Use Freeze/Thaw instead.
   void
-  Suspend();
+  ParentWindowPaused();
 
   void
-  Resume();
+  ParentWindowResumed();
 
   bool
   Terminate()
@@ -407,7 +421,7 @@ public:
   void
   QueueRunnable(nsIRunnable* aRunnable)
   {
-    AssertIsOnMainThread();
+    AssertIsOnParentThread();
     mQueuedRunnables.AppendElement(aRunnable);
   }
 
@@ -425,10 +439,10 @@ public:
   }
 
   bool
-  IsSuspended() const
+  IsParentWindowPaused() const
   {
     AssertIsOnParentThread();
-    return mParentSuspended;
+    return mParentWindowPausedDepth > 0;
   }
 
   bool
@@ -783,10 +797,10 @@ public:
     return mLoadInfo.mStorageAllowed;
   }
 
-  bool
-  IsInPrivateBrowsing() const
+  const PrincipalOriginAttributes&
+  GetOriginAttributes() const
   {
-    return mLoadInfo.mPrivateBrowsing;
+    return mLoadInfo.mOriginAttributes;
   }
 
   // Determine if the SW testing per-window flag is set by devtools
@@ -819,6 +833,16 @@ public:
 
   IMPL_EVENT_HANDLER(message)
   IMPL_EVENT_HANDLER(error)
+
+  // Check whether this worker is a secure context.  For use from the parent
+  // thread only; the canonical "is secure context" boolean is stored on the
+  // compartment of the worker global.  The only reason we don't
+  // AssertIsOnParentThread() here is so we can assert that this value matches
+  // the one on the compartment, which has to be done from the worker thread.
+  bool IsSecureContext() const
+  {
+    return mIsSecureContext;
+  }
 
 #ifdef DEBUG
   void
@@ -918,7 +942,7 @@ class WorkerPrivate : public WorkerPrivateParent<WorkerPrivate>
   nsTObserverArray<WorkerHolder*> mHolders;
   nsTArray<nsAutoPtr<TimeoutInfo>> mTimeouts;
   uint32_t mDebuggerEventLoopLevel;
-  RefPtr<TaskQueue> mMainThreadTaskQueue;
+  RefPtr<ThrottledEventQueue> mMainThreadThrottledEventQueue;
   nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
 
   struct SyncLoopInfo
@@ -959,8 +983,6 @@ class WorkerPrivate : public WorkerPrivateParent<WorkerPrivate>
   bool mTimerRunning;
   bool mRunningExpiredTimeouts;
   bool mPendingEventQueueClearing;
-  bool mMemoryReporterRunning;
-  bool mBlockedForMemoryReporter;
   bool mCancelAllPendingRunnables;
   bool mPeriodicGCTimerRunning;
   bool mIdleGCTimerRunning;
@@ -1142,7 +1164,8 @@ public:
   NotifyInternal(JSContext* aCx, Status aStatus);
 
   void
-  ReportError(JSContext* aCx, const char* aMessage, JSErrorReport* aReport);
+  ReportError(JSContext* aCx, JS::ConstUTF8CharsZ aToStringResult,
+              JSErrorReport* aReport);
 
   static void
   ReportErrorToConsole(const char* aMessage);
@@ -1182,7 +1205,7 @@ public:
   ScheduleDeletion(WorkerRanOrNot aRanOrNot);
 
   bool
-  BlockAndCollectRuntimeStats(JS::RuntimeStats* aRtStats, bool aAnonymize);
+  CollectRuntimeStats(JS::RuntimeStats* aRtStats, bool aAnonymize);
 
 #ifdef JS_GC_ZEAL
   void
@@ -1346,7 +1369,7 @@ public:
 
   // Get the event target to use when dispatching to the main thread
   // from this Worker thread.  This may be the main thread itself or
-  // a TaskQueue throttling runnables to the main thread.
+  // a ThrottledEventQueue to the main thread.
   nsIEventTarget*
   MainThreadEventTarget();
 

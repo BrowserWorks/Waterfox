@@ -166,35 +166,38 @@ function commonInit(selfFilling) {
 }
 
 function registerRunTests() {
-  // We provide a general mechanism for our tests to know when they can
-  // safely run: we add a final form that we know will be filled in, wait
-  // for the login manager to tell us that it's filled in and then continue
-  // with the rest of the tests.
-  window.addEventListener("DOMContentLoaded", (event) => {
-    var form = document.createElement('form');
-    form.id = 'observerforcer';
-    var username = document.createElement('input');
-    username.name = 'testuser';
-    form.appendChild(username);
-    var password = document.createElement('input');
-    password.name = 'testpass';
-    password.type = 'password';
-    form.appendChild(password);
+  return new Promise(resolve => {
+    // We provide a general mechanism for our tests to know when they can
+    // safely run: we add a final form that we know will be filled in, wait
+    // for the login manager to tell us that it's filled in and then continue
+    // with the rest of the tests.
+    window.addEventListener("DOMContentLoaded", (event) => {
+      var form = document.createElement('form');
+      form.id = 'observerforcer';
+      var username = document.createElement('input');
+      username.name = 'testuser';
+      form.appendChild(username);
+      var password = document.createElement('input');
+      password.name = 'testpass';
+      password.type = 'password';
+      form.appendChild(password);
 
-    var observer = SpecialPowers.wrapCallback(function(subject, topic, data) {
-      var formLikeRoot = subject.QueryInterface(SpecialPowers.Ci.nsIDOMNode);
-      if (formLikeRoot.id !== 'observerforcer')
-        return;
-      SpecialPowers.removeObserver(observer, "passwordmgr-processed-form");
-      formLikeRoot.remove();
-      SimpleTest.executeSoon(() => {
-        var event = new Event("runTests");
-        window.dispatchEvent(event);
+      var observer = SpecialPowers.wrapCallback(function(subject, topic, data) {
+        var formLikeRoot = subject.QueryInterface(SpecialPowers.Ci.nsIDOMNode);
+        if (formLikeRoot.id !== 'observerforcer')
+          return;
+        SpecialPowers.removeObserver(observer, "passwordmgr-processed-form");
+        formLikeRoot.remove();
+        SimpleTest.executeSoon(() => {
+          var runTestEvent = new Event("runTests");
+          window.dispatchEvent(runTestEvent);
+          resolve();
+        });
       });
-    });
-    SpecialPowers.addObserver(observer, "passwordmgr-processed-form", false);
+      SpecialPowers.addObserver(observer, "passwordmgr-processed-form", false);
 
-    document.body.appendChild(form);
+      document.body.appendChild(form);
+    });
   });
 }
 
@@ -401,14 +404,13 @@ if (this.addMessageListener) {
     sendAsyncMessage("doneSetup");
   });
 
-  addMessageListener("loadRecipes", Task.async(function* loadRecipes(recipes) {
-
+  addMessageListener("loadRecipes", Task.async(function*(recipes) {
     var recipeParent = yield LoginManagerParent.recipeParentPromise;
     yield recipeParent.load(recipes);
     sendAsyncMessage("loadedRecipes", recipes);
   }));
 
-  addMessageListener("resetRecipes", Task.async(function* resetRecipes() {
+  addMessageListener("resetRecipes", Task.async(function*() {
     let recipeParent = yield LoginManagerParent.recipeParentPromise;
     yield recipeParent.reset();
     sendAsyncMessage("recipesReset");
@@ -437,7 +439,12 @@ if (this.addMessageListener) {
   });
 } else {
   // Code to only run in the mochitest pages (not in the chrome script).
+  SpecialPowers.pushPrefEnv({"set": [["signon.autofillForms.http", true],
+                                     ["security.insecure_field_warning.contextual.enabled", false]]
+                            });
+
   SimpleTest.registerCleanupFunction(() => {
+    SpecialPowers.popPrefEnv();
     runInParent(function cleanupParent() {
       const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
       Cu.import("resource://gre/modules/Services.jsm");

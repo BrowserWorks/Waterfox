@@ -114,8 +114,8 @@
 #include "nsIFrame.h"
 #include "nsIContent.h"
 #include "nsLayoutStylesheetCache.h"
-#include "mozilla/StyleSheetHandle.h"
-#include "mozilla/StyleSheetHandleInlines.h"
+#include "mozilla/StyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -2311,8 +2311,9 @@ nsHTMLDocument::CreateAndAddWyciwygChannel(void)
                      NodePrincipal(),
                      nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
                      nsIContentPolicy::TYPE_OTHER);
-
   NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
+  loadInfo->SetPrincipalToInherit(NodePrincipal());
 
   mWyciwygChannel = do_QueryInterface(channel);
 
@@ -2390,7 +2391,7 @@ nsHTMLDocument::GenerateParserKey(void)
 }
 
 NS_IMETHODIMP
-nsHTMLDocument::GetDesignMode(nsAString & aDesignMode)
+nsHTMLDocument::GetDesignMode(nsAString& aDesignMode)
 {
   if (HasFlag(NODE_IS_EDITABLE)) {
     aDesignMode.AssignLiteral("on");
@@ -2550,7 +2551,7 @@ nsHTMLDocument::TearingDownEditor(nsIEditor *aEditor)
     if (!presShell)
       return;
 
-    nsTArray<StyleSheetHandle::RefPtr> agentSheets;
+    nsTArray<RefPtr<StyleSheet>> agentSheets;
     presShell->GetAgentStyleSheets(agentSheets);
 
     auto cache = nsLayoutStylesheetCache::For(GetStyleBackendType());
@@ -2693,13 +2694,13 @@ nsHTMLDocument::EditingStateChanged()
     // Before making this window editable, we need to modify UA style sheet
     // because new style may change whether focused element will be focusable
     // or not.
-    nsTArray<StyleSheetHandle::RefPtr> agentSheets;
+    nsTArray<RefPtr<StyleSheet>> agentSheets;
     rv = presShell->GetAgentStyleSheets(agentSheets);
     NS_ENSURE_SUCCESS(rv, rv);
 
     auto cache = nsLayoutStylesheetCache::For(GetStyleBackendType());
 
-    StyleSheetHandle contentEditableSheet = cache->ContentEditableSheet();
+    StyleSheet* contentEditableSheet = cache->ContentEditableSheet();
 
     if (!agentSheets.Contains(contentEditableSheet)) {
       agentSheets.AppendElement(contentEditableSheet);
@@ -2710,7 +2711,7 @@ nsHTMLDocument::EditingStateChanged()
     // specific states on the elements.
     if (designMode) {
       // designMode is being turned on (overrides contentEditable).
-      StyleSheetHandle designModeSheet = cache->DesignModeSheet();
+      StyleSheet* designModeSheet = cache->DesignModeSheet();
       if (!agentSheets.Contains(designModeSheet)) {
         agentSheets.AppendElement(designModeSheet);
       }
@@ -2832,17 +2833,30 @@ nsHTMLDocument::EditingStateChanged()
 }
 
 NS_IMETHODIMP
-nsHTMLDocument::SetDesignMode(const nsAString & aDesignMode)
+nsHTMLDocument::SetDesignMode(const nsAString& aDesignMode)
 {
   ErrorResult rv;
-  SetDesignMode(aDesignMode, rv);
+  SetDesignMode(aDesignMode, nsContentUtils::GetCurrentJSContext()
+                               ? Some(nsContentUtils::SubjectPrincipal())
+                               : Nothing(), rv);
   return rv.StealNSResult();
 }
 
 void
-nsHTMLDocument::SetDesignMode(const nsAString& aDesignMode, ErrorResult& rv)
+nsHTMLDocument::SetDesignMode(const nsAString& aDesignMode,
+                              nsIPrincipal& aSubjectPrincipal,
+                              ErrorResult& rv)
 {
-  if (!nsContentUtils::LegacyIsCallerNativeCode() && !nsContentUtils::SubjectPrincipal()->Subsumes(NodePrincipal())) {
+  SetDesignMode(aDesignMode, Some(&aSubjectPrincipal), rv);
+}
+
+void
+nsHTMLDocument::SetDesignMode(const nsAString& aDesignMode,
+                              const Maybe<nsIPrincipal*>& aSubjectPrincipal,
+                              ErrorResult& rv)
+{
+  if (aSubjectPrincipal.isSome() &&
+      !aSubjectPrincipal.value()->Subsumes(NodePrincipal())) {
     rv.Throw(NS_ERROR_DOM_PROP_ACCESS_DENIED);
     return;
   }

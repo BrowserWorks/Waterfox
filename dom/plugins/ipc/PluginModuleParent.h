@@ -198,6 +198,11 @@ protected:
     static BrowserStreamParent* StreamCast(NPP instance, NPStream* s,
                                            PluginAsyncSurrogate** aSurrogate = nullptr);
 
+    virtual bool
+    AnswerNPN_SetValue_NPPVpluginRequiresAudioDeviceChanges(
+                                        const bool& shouldRegister,
+                                        NPError* result) override;
+
 protected:
     void SetChildTimeout(const int32_t aChildTimeout);
     static void TimeoutChanged(const char* aPref, void* aModule);
@@ -312,7 +317,8 @@ public:
 
     void InitAsyncSurrogates();
 
-    layers::TextureClientRecycleAllocator* EnsureTextureAllocator();
+    layers::TextureClientRecycleAllocator* EnsureTextureAllocatorForDirectBitmap();
+    layers::TextureClientRecycleAllocator* EnsureTextureAllocatorForDXGISurface();
 
 protected:
     void NotifyFlashHang();
@@ -362,7 +368,8 @@ protected:
     nsresult          mAsyncNewRv;
     uint32_t          mRunID;
 
-    RefPtr<layers::TextureClientRecycleAllocator> mTextureAllocator;
+    RefPtr<layers::TextureClientRecycleAllocator> mTextureAllocatorForDirectBitmap;
+    RefPtr<layers::TextureClientRecycleAllocator> mTextureAllocatorForDXGISurface;
 };
 
 class PluginModuleContentParent : public PluginModuleParent
@@ -487,11 +494,6 @@ class PluginModuleChromeParent
 
     void CachedSettingChanged();
 
-    void OnEnteredCall() override;
-    void OnExitedCall() override;
-    void OnEnteredSyncSend() override;
-    void OnExitedSyncSend() override;
-
 #ifdef  MOZ_ENABLE_PROFILER_SPS
     void GatherAsyncProfile();
     void GatheredAsyncProfile(nsIProfileSaveEvent* aSaveEvent);
@@ -569,6 +571,11 @@ private:
 
     static void CachedSettingChanged(const char* aPref, void* aModule);
 
+    virtual bool
+    AnswerNPN_SetValue_NPPVpluginRequiresAudioDeviceChanges(
+                                        const bool& shouldRegister,
+                                        NPError* result) override;
+
     PluginProcessParent* mSubprocess;
     uint32_t mPluginId;
 
@@ -582,8 +589,6 @@ private:
         kHangUIDontShow = (1u << 3)
     };
     Atomic<uint32_t> mHangAnnotationFlags;
-    mozilla::Mutex mProtocolCallStackMutex;
-    InfallibleTArray<mozilla::ipc::IProtocol*> mProtocolCallStack;
 #ifdef XP_WIN
     InfallibleTArray<float> mPluginCpuUsageOnHang;
     PluginHangUIParent *mHangUIParent;

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueTypeGX/AAT morx table validation (body).                         */
 /*                                                                         */
-/*  Copyright 2005, 2008, 2013 by                                          */
+/*  Copyright 2005-2016 by                                                 */
 /*  suzuki toshiya, Masatake YAMATO, Red Hat K.K.,                         */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
@@ -98,7 +98,7 @@
         FT_INVALID_FORMAT;
 
       func = fmt_funcs_table[type];
-      if ( func == NULL )
+      if ( !func )
         GXV_TRACE(( "morx type %d is reserved\n", type ));
 
       func( p, p + rest, gxvalid );
@@ -107,7 +107,7 @@
       p += rest;
     }
 
-    gxvalid->subtable_length = p - table;
+    gxvalid->subtable_length = (FT_ULong)( p - table );
 
     GXV_EXIT;
   }

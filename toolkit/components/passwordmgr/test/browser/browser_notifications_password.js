@@ -78,27 +78,30 @@ add_task(function* test_edit_password() {
       // Submit the form in the content page with the credentials from the test
       // case. This will cause the doorhanger notification to be displayed.
       let promiseShown = BrowserTestUtils.waitForEvent(PopupNotifications.panel,
-                                                       "popupshown");
+                                                       "popupshown",
+                                                       (event) => event.target == PopupNotifications.panel);
       yield ContentTask.spawn(browser, testCase,
-        function* (testCase) {
+        function* (contentTestCase) {
           let doc = content.document;
-          doc.getElementById("form-basic-username").value = testCase.usernameInPage;
-          doc.getElementById("form-basic-password").value = testCase.passwordInPage;
+          doc.getElementById("form-basic-username").value = contentTestCase.usernameInPage;
+          doc.getElementById("form-basic-password").value = contentTestCase.passwordInPage;
           doc.getElementById("form-basic").submit();
         });
       yield promiseShown;
-
       let notificationElement = PopupNotifications.panel.childNodes[0];
+      // Style flush to make sure binding is attached
+      notificationElement.querySelector("#password-notification-password").clientTop;
+
       // Modify the username in the dialog if requested.
       if (testCase.usernameChangedTo) {
         notificationElement.querySelector("#password-notification-username")
-                .setAttribute("value", testCase.usernameChangedTo);
+                .value = testCase.usernameChangedTo;
       }
 
       // Modify the password in the dialog if requested.
       if (testCase.passwordChangedTo) {
         notificationElement.querySelector("#password-notification-password")
-                .setAttribute("value", testCase.passwordChangedTo);
+                .value = testCase.passwordChangedTo;
       }
 
       // We expect a modifyLogin notification if the final username used by the

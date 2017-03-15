@@ -8,7 +8,7 @@ const {
   DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const actions = require("devtools/client/webconsole/new-console-output/actions/filters");
+const actions = require("devtools/client/webconsole/new-console-output/actions/index");
 
 const FilterButton = createClass({
 
@@ -26,9 +26,12 @@ const FilterButton = createClass({
   },
 
   render() {
-    const {label, active} = this.props;
+    const {active, label, filterKey} = this.props;
 
-    let classList = ["menu-filter-button"];
+    let classList = [
+      "menu-filter-button",
+      filterKey,
+    ];
     if (active) {
       classList.push("checked");
     }
@@ -40,4 +43,4 @@ const FilterButton = createClass({
   }
 });
 
-exports.FilterButton = FilterButton;
+module.exports = FilterButton;

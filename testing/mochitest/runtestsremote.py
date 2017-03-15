@@ -22,7 +22,6 @@ import mozinfo
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 
 
-# TODO inherit from MochitestBase instead
 class MochiRemote(MochitestDesktop):
     _automation = None
     _dm = None
@@ -190,11 +189,11 @@ class MochiRemote(MochitestDesktop):
     def addChromeToProfile(self, options):
         manifest = MochitestDesktop.addChromeToProfile(self, options)
 
-        # Support Firefox (browser), B2G (shell), SeaMonkey (navigator), and Webapp
-        # Runtime (webapp).
+        # Support Firefox (browser), SeaMonkey (navigator), and Webapp Runtime (webapp).
         if options.flavor == 'chrome':
             # append overlay to chrome.manifest
-            chrome = "overlay chrome://browser/content/browser.xul chrome://mochikit/content/browser-test-overlay.xul"
+            chrome = ("overlay chrome://browser/content/browser.xul "
+                      "chrome://mochikit/content/browser-test-overlay.xul")
             path = os.path.join(options.profilePath, 'extensions', 'staged',
                                 'mochikit@mozilla.org', 'chrome.manifest')
             with open(path, "a") as f:
@@ -288,7 +287,6 @@ class MochiRemote(MochitestDesktop):
 
         # remove args not supported by automation.py
         kwargs.pop('marionette_args', None)
-        kwargs.pop('quiet', None)
 
         return self._automation.runApp(*args, **kwargs)
 

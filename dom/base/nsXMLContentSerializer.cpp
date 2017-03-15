@@ -658,26 +658,20 @@ nsXMLContentSerializer::SerializeAttr(const nsAString& aPrefix,
     bool bIncludesSingle = false;
     bool bIncludesDouble = false;
     nsAString::const_iterator iCurr, iEnd;
-    uint32_t uiSize, i;
     aValue.BeginReading(iCurr);
     aValue.EndReading(iEnd);
-    for ( ; iCurr != iEnd; iCurr.advance(uiSize) ) {
-      const char16_t * buf = iCurr.get();
-      uiSize = iCurr.size_forward();
-      for ( i = 0; i < uiSize; i++, buf++ ) {
-        if ( *buf == char16_t('\'') )
-        {
-          bIncludesSingle = true;
-          if ( bIncludesDouble ) break;
+    for ( ; iCurr != iEnd; ++iCurr) {
+      if (*iCurr == char16_t('\'')) {
+        bIncludesSingle = true;
+        if (bIncludesDouble) {
+          break;
         }
-        else if ( *buf == char16_t('"') )
-        {
-          bIncludesDouble = true;
-          if ( bIncludesSingle ) break;
+      } else if (*iCurr == char16_t('"')) {
+        bIncludesDouble = true;
+        if (bIncludesSingle) {
+          break;
         }
       }
-      // if both have been found we don't need to search further
-      if ( bIncludesDouble && bIncludesSingle ) break;
     }
 
     // Delimiter and escaping is according to the following table
@@ -898,6 +892,10 @@ nsXMLContentSerializer::AppendElementStart(Element* aElement,
   bool forceFormat = false;
   nsresult rv = NS_OK;
   if (!CheckElementStart(content, forceFormat, aStr, rv)) {
+    // When we go to AppendElementEnd for this element, we're going to
+    // MaybeLeaveFromPreContent().  So make sure to MaybeEnterInPreContent()
+    // now, so our PreLevel() doesn't get confused.
+    MaybeEnterInPreContent(content);
     return rv;
   }
 
@@ -1046,8 +1044,11 @@ nsXMLContentSerializer::AppendElementEnd(Element* aElement,
   }
 
   if (!outputElementEnd) {
+    // Keep this in sync with the cleanup at the end of this method.
     PopNameSpaceDeclsFor(aElement);
+    MaybeLeaveFromPreContent(content);
     MaybeFlagNewlineForRootNode(aElement);
+    AfterElementEnd(content, aStr);
     return NS_OK;
   }
 
@@ -1091,6 +1092,7 @@ nsXMLContentSerializer::AppendElementEnd(Element* aElement,
   NS_ENSURE_TRUE(AppendToString(tagLocalName, aStr), NS_ERROR_OUT_OF_MEMORY);
   NS_ENSURE_TRUE(AppendToString(kGreaterThan, aStr), NS_ERROR_OUT_OF_MEMORY);
 
+  // Keep what follows in sync with the cleanup in the !outputElementEnd case.
   PopNameSpaceDeclsFor(aElement);
 
   MaybeLeaveFromPreContent(content);
@@ -1246,7 +1248,7 @@ nsXMLContentSerializer::AppendAndTranslateEntities(const nsAString& aStr,
   for (aStr.BeginReading(iter);
        iter != done_reading;
        iter.advance(int32_t(advanceLength))) {
-    uint32_t fragmentLength = iter.size_forward();
+    uint32_t fragmentLength = done_reading - iter;
     const char16_t* c = iter.get();
     const char16_t* fragmentStart = c;
     const char16_t* fragmentEnd = c + fragmentLength;

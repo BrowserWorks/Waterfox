@@ -40,18 +40,19 @@ interface MessageEvent : Event {
    * the similarly-named method on the nsIDOMEvent interface, also setting the
    * data, origin, source, and lastEventId attributes of this appropriately.
    */
-  readonly attribute MessagePortList? ports;
+  [Pure, Cached, Frozen]
+  readonly attribute sequence<MessagePort> ports;
 
   void initMessageEvent(DOMString type, boolean bubbles, boolean cancelable,
                         any data, DOMString origin, DOMString lastEventId,
                         (WindowProxy or MessagePort)? source,
-                        sequence<MessagePort>? ports);
+                        sequence<MessagePort> ports);
 };
 
 dictionary MessageEventInit : EventInit {
-  any data;
-  DOMString origin;
-  DOMString lastEventId;
+  any data = null;
+  DOMString origin = "";
+  DOMString lastEventId = "";
   (Window or MessagePort)? source = null;
-  sequence<MessagePort>? ports;
+  sequence<MessagePort> ports = [];
 };

@@ -559,7 +559,7 @@ nsComputedDOMStyle::GetPresShellForContent(nsIContent* aContent)
 // nsDOMCSSDeclaration abstract methods which should never be called
 // on a nsComputedDOMStyle object, but must be defined to avoid
 // compile errors.
-css::Declaration*
+DeclarationBlock*
 nsComputedDOMStyle::GetCSSDeclaration(Operation)
 {
   NS_RUNTIMEABORT("called nsComputedDOMStyle::GetCSSDeclaration");
@@ -567,7 +567,7 @@ nsComputedDOMStyle::GetCSSDeclaration(Operation)
 }
 
 nsresult
-nsComputedDOMStyle::SetCSSDeclaration(css::Declaration*)
+nsComputedDOMStyle::SetCSSDeclaration(DeclarationBlock*)
 {
   NS_RUNTIMEABORT("called nsComputedDOMStyle::SetCSSDeclaration");
   return NS_ERROR_FAILURE;
@@ -957,6 +957,13 @@ nsComputedDOMStyle::SetToRGBAColor(nsROCSSPrimitiveValue* aValue,
   aValue->SetColor(rgbColor);
 }
 
+void
+nsComputedDOMStyle::SetValueFromComplexColor(nsROCSSPrimitiveValue* aValue,
+                                             const StyleComplexColor& aColor)
+{
+  SetToRGBAColor(aValue, StyleColor()->CalcComplexColor(aColor));
+}
+
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetColor()
 {
@@ -1057,16 +1064,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetColumnRuleColor()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
-  const nsStyleColumn* column = StyleColumn();
-  nscolor ruleColor;
-  if (column->mColumnRuleColorIsForeground) {
-    ruleColor = StyleColor()->mColor;
-  } else {
-    ruleColor = column->mColumnRuleColor;
-  }
-
-  SetToRGBAColor(val, ruleColor);
+  SetValueFromComplexColor(val, StyleColumn()->mColumnRuleColor);
   return val.forget();
 }
 
@@ -2084,7 +2082,15 @@ nsComputedDOMStyle::SetValueToStyleImage(const nsStyleImage& aStyleImage,
   switch (aStyleImage.GetType()) {
     case eStyleImageType_Image:
     {
-      imgIRequest *req = aStyleImage.GetImageData();
+      imgIRequest* req = aStyleImage.GetImageData();
+      if (!req) {
+        // XXXheycam If we had some problem resolving the imgRequestProxy,
+        // maybe we should just use the URL stored in the nsStyleImage's
+        // mImageValue?  (Similarly in DoGetListStyleImage.)
+        aValue->SetIdent(eCSSKeyword_none);
+        break;
+      }
+
       nsCOMPtr<nsIURI> uri;
       req->GetURI(getter_AddRefs(uri));
 
@@ -2145,10 +2151,11 @@ nsComputedDOMStyle::DoGetImageLayerImage(const nsStyleImageLayers& aLayers)
     //    Instead, we store the local URI in one place -- on Layer::mSourceURI.
     //    Hence, we must serialize using mSourceURI (instead of
     //    SetValueToStyleImage()/mImage) in this case.
-    if (aLayers.mLayers[i].mSourceURI.IsLocalRef()) {
+    if (aLayers.mLayers[i].mSourceURI &&
+        aLayers.mLayers[i].mSourceURI->IsLocalRef()) {
       // This is how we represent a 'mask-image' reference for a local URI,
       // such as 'mask-image:url(#mymask)' or 'mask:url(#mymask)'
-      SetValueToFragmentOrURL(&aLayers.mLayers[i].mSourceURI, val);
+      SetValueToURLValue(aLayers.mLayers[i].mSourceURI, val);
     } else {
       SetValueToStyleImage(image, val);
     }
@@ -2389,19 +2396,18 @@ nsComputedDOMStyle::SetValueToPosition(
 
 
 void
-nsComputedDOMStyle::SetValueToFragmentOrURL(
-    const FragmentOrURL* aFragmentOrURL,
-    nsROCSSPrimitiveValue* aValue)
+nsComputedDOMStyle::SetValueToURLValue(const css::URLValueData* aURL,
+                                       nsROCSSPrimitiveValue* aValue)
 {
-  if (aFragmentOrURL->IsLocalRef()) {
+  if (aURL && aURL->IsLocalRef()) {
     nsString fragment;
-    aFragmentOrURL->GetSourceString(fragment);
+    aURL->GetSourceString(fragment);
     fragment.Insert(u"url(\"", 0);
     fragment.Append(u"\")");
     aValue->SetString(fragment);
   } else {
-    nsCOMPtr<nsIURI> url = aFragmentOrURL->GetSourceURL();
-    if (url) {
+    nsCOMPtr<nsIURI> url;
+    if (aURL && (url = aURL->GetURI())) {
       aValue->SetURI(url);
     } else {
       aValue->SetIdent(eCSSKeyword_none);
@@ -2550,6 +2556,15 @@ nsComputedDOMStyle::GetGridTrackSize(const nsStyleCoord& aMinValue,
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
     SetValueToCoord(val, aMinValue, true,
                     nullptr, nsCSSProps::kGridTrackBreadthKTable);
+    return val.forget();
+  }
+
+  // minmax(auto, <flex>) is equivalent to (and is our internal representation
+  // of) <flex>, and both compute to <flex>
+  if (aMinValue.GetUnit() == eStyleUnit_Auto &&
+      aMaxValue.GetUnit() == eStyleUnit_FlexFraction) {
+    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+    SetValueToCoord(val, aMaxValue, true);
     return val.forget();
   }
 
@@ -3071,28 +3086,28 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetBorderBottomLeftRadius()
 {
   return GetEllipseRadii(StyleBorder()->mBorderRadius,
-                         NS_CORNER_BOTTOM_LEFT, true);
+                         NS_CORNER_BOTTOM_LEFT);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetBorderBottomRightRadius()
 {
   return GetEllipseRadii(StyleBorder()->mBorderRadius,
-                         NS_CORNER_BOTTOM_RIGHT, true);
+                         NS_CORNER_BOTTOM_RIGHT);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetBorderTopLeftRadius()
 {
   return GetEllipseRadii(StyleBorder()->mBorderRadius,
-                         NS_CORNER_TOP_LEFT, true);
+                         NS_CORNER_TOP_LEFT);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetBorderTopRightRadius()
 {
   return GetEllipseRadii(StyleBorder()->mBorderRadius,
-                         NS_CORNER_TOP_RIGHT, true);
+                         NS_CORNER_TOP_RIGHT);
 }
 
 already_AddRefed<CSSValue>
@@ -3165,14 +3180,6 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetMarginRightWidth()
 {
   return GetMarginWidthFor(NS_SIDE_RIGHT);
-}
-
-already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetMarkerOffset()
-{
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StyleContent()->mMarkerOffset, false);
-  return val.forget();
 }
 
 already_AddRefed<CSSValue>
@@ -3297,7 +3304,7 @@ nsComputedDOMStyle::DoGetOutlineWidth()
   const nsStyleOutline* outline = StyleOutline();
 
   nscoord width;
-  if (outline->GetOutlineStyle() == NS_STYLE_BORDER_STYLE_NONE) {
+  if (outline->mOutlineStyle == NS_STYLE_BORDER_STYLE_NONE) {
     NS_ASSERTION(outline->GetOutlineWidth() == 0, "unexpected width");
     width = 0;
   } else {
@@ -3313,7 +3320,7 @@ nsComputedDOMStyle::DoGetOutlineStyle()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleOutline()->GetOutlineStyle(),
+    nsCSSProps::ValueToKeywordEnum(StyleOutline()->mOutlineStyle,
                                    nsCSSProps::kOutlineStyleKTable));
   return val.forget();
 }
@@ -3330,81 +3337,49 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetOutlineRadiusBottomLeft()
 {
   return GetEllipseRadii(StyleOutline()->mOutlineRadius,
-                         NS_CORNER_BOTTOM_LEFT, false);
+                         NS_CORNER_BOTTOM_LEFT);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetOutlineRadiusBottomRight()
 {
   return GetEllipseRadii(StyleOutline()->mOutlineRadius,
-                         NS_CORNER_BOTTOM_RIGHT, false);
+                         NS_CORNER_BOTTOM_RIGHT);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetOutlineRadiusTopLeft()
 {
   return GetEllipseRadii(StyleOutline()->mOutlineRadius,
-                         NS_CORNER_TOP_LEFT, false);
+                         NS_CORNER_TOP_LEFT);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetOutlineRadiusTopRight()
 {
   return GetEllipseRadii(StyleOutline()->mOutlineRadius,
-                         NS_CORNER_TOP_RIGHT, false);
+                         NS_CORNER_TOP_RIGHT);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetOutlineColor()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
-  nscolor color;
-  if (!StyleOutline()->GetOutlineColor(color))
-    color = StyleColor()->mColor;
-
-  SetToRGBAColor(val, color);
+  SetValueFromComplexColor(val, StyleOutline()->mOutlineColor);
   return val.forget();
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::GetEllipseRadii(const nsStyleCorners& aRadius,
-                                    uint8_t aFullCorner,
-                                    bool aIsBorder) // else outline
+                                    uint8_t aFullCorner)
 {
-  nsStyleCoord radiusX, radiusY;
-  if (mInnerFrame && aIsBorder) {
-    nscoord radii[8];
-    mInnerFrame->GetBorderRadii(radii);
-    radiusX.SetCoordValue(radii[NS_FULL_TO_HALF_CORNER(aFullCorner, false)]);
-    radiusY.SetCoordValue(radii[NS_FULL_TO_HALF_CORNER(aFullCorner, true)]);
-  } else {
-    radiusX = aRadius.Get(NS_FULL_TO_HALF_CORNER(aFullCorner, false));
-    radiusY = aRadius.Get(NS_FULL_TO_HALF_CORNER(aFullCorner, true));
-
-    if (mInnerFrame) {
-      // We need to convert to absolute coordinates before doing the
-      // equality check below.
-      nscoord v;
-
-      v = StyleCoordToNSCoord(radiusX,
-                              &nsComputedDOMStyle::GetFrameBorderRectWidth,
-                              0, true);
-      radiusX.SetCoordValue(v);
-
-      v = StyleCoordToNSCoord(radiusY,
-                              &nsComputedDOMStyle::GetFrameBorderRectHeight,
-                              0, true);
-      radiusY.SetCoordValue(v);
-    }
-  }
+  nsStyleCoord radiusX = aRadius.Get(NS_FULL_TO_HALF_CORNER(aFullCorner, false));
+  nsStyleCoord radiusY = aRadius.Get(NS_FULL_TO_HALF_CORNER(aFullCorner, true));
 
   // for compatibility, return a single value if X and Y are equal
   if (radiusX == radiusY) {
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
     SetValueToCoord(val, radiusX, true);
-
     return val.forget();
   }
 
@@ -3529,13 +3504,16 @@ nsComputedDOMStyle::DoGetListStyleImage()
 
   const nsStyleList* list = StyleList();
 
-  if (!list->GetListStyleImage()) {
+  // XXXheycam As in SetValueToStyleImage, we might want to use the
+  // URL stored in the nsStyleImageRequest's mImageValue if we
+  // failed to resolve the imgRequestProxy.
+
+  imgRequestProxy* image = list->GetListStyleImage();
+  if (!image) {
     val->SetIdent(eCSSKeyword_none);
   } else {
     nsCOMPtr<nsIURI> uri;
-    if (list->GetListStyleImage()) {
-      list->GetListStyleImage()->GetURI(getter_AddRefs(uri));
-    }
+    image->GetURI(getter_AddRefs(uri));
     val->SetURI(uri);
   }
 
@@ -3682,8 +3660,7 @@ nsComputedDOMStyle::DoGetVerticalAlign()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   SetValueToCoord(val, StyleDisplay()->mVerticalAlign, false,
-                  &nsComputedDOMStyle::GetLineHeightCoord,
-                  nsCSSProps::kVerticalAlignKTable);
+                  nullptr, nsCSSProps::kVerticalAlignKTable);
   return val.forget();
 }
 
@@ -3749,12 +3726,10 @@ nsComputedDOMStyle::DoGetTextDecoration()
   const nsStyleTextReset* textReset = StyleTextReset();
 
   bool isInitialStyle =
-    textReset->GetDecorationStyle() == NS_STYLE_TEXT_DECORATION_STYLE_SOLID;
-  nscolor color;
-  bool isForegroundColor;
-  textReset->GetDecorationColor(color, isForegroundColor);
+    textReset->mTextDecorationStyle == NS_STYLE_TEXT_DECORATION_STYLE_SOLID;
+  StyleComplexColor color = textReset->mTextDecorationColor;
 
-  if (isInitialStyle && isForegroundColor) {
+  if (isInitialStyle && color.IsCurrentColor()) {
     return DoGetTextDecorationLine();
   }
 
@@ -3764,7 +3739,7 @@ nsComputedDOMStyle::DoGetTextDecoration()
   if (!isInitialStyle) {
     valueList->AppendCSSValue(DoGetTextDecorationStyle());
   }
-  if (!isForegroundColor) {
+  if (!color.IsCurrentColor()) {
     valueList->AppendCSSValue(DoGetTextDecorationColor());
   }
 
@@ -3775,16 +3750,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetTextDecorationColor()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
-  nscolor color;
-  bool isForeground;
-  StyleTextReset()->GetDecorationColor(color, isForeground);
-  if (isForeground) {
-    color = StyleColor()->mColor;
-  }
-
-  SetToRGBAColor(val, color);
-
+  SetValueFromComplexColor(val, StyleTextReset()->mTextDecorationColor);
   return val.forget();
 }
 
@@ -3818,7 +3784,7 @@ nsComputedDOMStyle::DoGetTextDecorationStyle()
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
   val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleTextReset()->GetDecorationStyle(),
+    nsCSSProps::ValueToKeywordEnum(StyleTextReset()->mTextDecorationStyle,
                                    nsCSSProps::kTextDecorationStyleKTable));
 
   return val.forget();
@@ -3828,10 +3794,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetTextEmphasisColor()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  const nsStyleText* text = StyleText();
-  nscolor color = text->mTextEmphasisColorForeground ?
-    StyleColor()->mColor : text->mTextEmphasisColor;
-  SetToRGBAColor(val, color);
+  SetValueFromComplexColor(val, StyleText()->mTextEmphasisColor);
   return val.forget();
 }
 
@@ -3901,8 +3864,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetTextIndent()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StyleText()->mTextIndent, false,
-                  &nsComputedDOMStyle::GetCBContentWidth);
+  SetValueToCoord(val, StyleText()->mTextIndent, false);
   return val.forget();
 }
 
@@ -4076,7 +4038,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetWebkitTextFillColor()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetToRGBAColor(val, mStyleContext->GetTextFillColor());
+  SetValueFromComplexColor(val, StyleText()->mWebkitTextFillColor);
   return val.forget();
 }
 
@@ -4084,7 +4046,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetWebkitTextStrokeColor()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetToRGBAColor(val, mStyleContext->GetTextStrokeColor());
+  SetValueFromComplexColor(val, StyleText()->mWebkitTextStrokeColor);
   return val.forget();
 }
 
@@ -4155,24 +4117,22 @@ nsComputedDOMStyle::DoGetCursor()
 
   const nsStyleUserInterface *ui = StyleUserInterface();
 
-  for (nsCursorImage *item = ui->mCursorArray,
-         *item_end = ui->mCursorArray + ui->mCursorArrayLength;
-       item < item_end; ++item) {
+  for (const nsCursorImage& item : ui->mCursorImages) {
     RefPtr<nsDOMCSSValueList> itemList = GetROCSSValueList(false);
 
     nsCOMPtr<nsIURI> uri;
-    item->GetImage()->GetURI(getter_AddRefs(uri));
+    item.GetImage()->GetURI(getter_AddRefs(uri));
 
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
     val->SetURI(uri);
     itemList->AppendCSSValue(val.forget());
 
-    if (item->mHaveHotspot) {
+    if (item.mHaveHotspot) {
       RefPtr<nsROCSSPrimitiveValue> valX = new nsROCSSPrimitiveValue;
       RefPtr<nsROCSSPrimitiveValue> valY = new nsROCSSPrimitiveValue;
 
-      valX->SetNumber(item->mHotspotX);
-      valY->SetNumber(item->mHotspotY);
+      valX->SetNumber(item.mHotspotX);
+      valY->SetNumber(item.mHotspotY);
 
       itemList->AppendCSSValue(valX.forget());
       itemList->AppendCSSValue(valY.forget());
@@ -4423,7 +4383,7 @@ nsComputedDOMStyle::DoGetAlignContent()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString str;
-  auto align = StylePosition()->ComputedAlignContent();
+  auto align = StylePosition()->mAlignContent;
   nsCSSValue::AppendAlignJustifyValueToString(align & NS_STYLE_ALIGN_ALL_BITS, str);
   auto fallback = align >> NS_STYLE_ALIGN_ALL_SHIFT;
   if (fallback) {
@@ -4439,7 +4399,7 @@ nsComputedDOMStyle::DoGetAlignItems()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString str;
-  auto align = StylePosition()->ComputedAlignItems();
+  auto align = StylePosition()->mAlignItems;
   nsCSSValue::AppendAlignJustifyValueToString(align, str);
   val->SetString(str);
   return val.forget();
@@ -4449,8 +4409,8 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetAlignSelf()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  auto align = StylePosition()->ComputedAlignSelf(mStyleContext->GetParent());
   nsAutoString str;
+  auto align = StylePosition()->mAlignSelf;
   nsCSSValue::AppendAlignJustifyValueToString(align, str);
   val->SetString(str);
   return val.forget();
@@ -4461,7 +4421,7 @@ nsComputedDOMStyle::DoGetJustifyContent()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString str;
-  auto justify = StylePosition()->ComputedJustifyContent();
+  auto justify = StylePosition()->mJustifyContent;
   nsCSSValue::AppendAlignJustifyValueToString(justify & NS_STYLE_JUSTIFY_ALL_BITS, str);
   auto fallback = justify >> NS_STYLE_JUSTIFY_ALL_SHIFT;
   if (fallback) {
@@ -4492,8 +4452,7 @@ nsComputedDOMStyle::DoGetJustifySelf()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString str;
-  auto justify =
-    StylePosition()->ComputedJustifySelf(mStyleContext->GetParent());
+  auto justify = StylePosition()->mJustifySelf;
   nsCSSValue::AppendAlignJustifyValueToString(justify, str);
   val->SetString(str);
   return val.forget();
@@ -4908,8 +4867,7 @@ nsComputedDOMStyle::DoGetMaxHeight()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   SetValueToCoord(val, StylePosition()->mMaxHeight, true,
-                  &nsComputedDOMStyle::GetCBContentHeight,
-                  nsCSSProps::kWidthKTable);
+                  nullptr, nsCSSProps::kWidthKTable);
   return val.forget();
 }
 
@@ -4918,9 +4876,41 @@ nsComputedDOMStyle::DoGetMaxWidth()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   SetValueToCoord(val, StylePosition()->mMaxWidth, true,
-                  &nsComputedDOMStyle::GetCBContentWidth,
-                  nsCSSProps::kWidthKTable);
+                  nullptr, nsCSSProps::kWidthKTable);
   return val.forget();
+}
+
+bool
+nsComputedDOMStyle::ShouldHonorMinSizeAutoInAxis(PhysicalAxis aAxis)
+{
+  // A {flex,grid} item's min-{width|height} "auto" value gets special
+  // treatment in getComputedStyle().
+  // https://drafts.csswg.org/css-flexbox-1/#valdef-min-width-auto
+  // https://drafts.csswg.org/css-grid/#min-size-auto
+  // In most cases, "min-{width|height}: auto" is mapped to "0px", unless
+  // we're a flex item (and the min-size is in the flex container's main
+  // axis), or we're a grid item, AND we also have overflow:visible.
+
+  // Note: We only need to bother checking one "overflow" subproperty for
+  // "visible", because a non-"visible" value in either axis would force the
+  // other axis to also be non-"visible" as well.
+
+  if (mOuterFrame) {
+    nsIFrame* containerFrame = mOuterFrame->GetParent();
+    if (containerFrame &&
+        StyleDisplay()->mOverflowX == NS_STYLE_OVERFLOW_VISIBLE) {
+      auto containerType = containerFrame->GetType();
+      if (containerType == nsGkAtoms::flexContainerFrame &&
+          (static_cast<nsFlexContainerFrame*>(containerFrame)->IsHorizontal() ==
+           (aAxis == eAxisHorizontal))) {
+        return true;
+      }
+      if (containerType == nsGkAtoms::gridContainerFrame) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 already_AddRefed<CSSValue>
@@ -4929,17 +4919,12 @@ nsComputedDOMStyle::DoGetMinHeight()
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsStyleCoord minHeight = StylePosition()->mMinHeight;
 
-  if (eStyleUnit_Auto == minHeight.GetUnit()) {
-    // In non-flexbox contexts, "min-height: auto" means "min-height: 0"
-    // XXXdholbert For flex items, we should set |minHeight| to the
-    // -moz-min-content keyword, instead of 0, once we support -moz-min-content
-    // as a height value.
+  if (eStyleUnit_Auto == minHeight.GetUnit() &&
+      !ShouldHonorMinSizeAutoInAxis(eAxisVertical)) {
     minHeight.SetCoordValue(0);
   }
 
-  SetValueToCoord(val, minHeight, true,
-                  &nsComputedDOMStyle::GetCBContentHeight,
-                  nsCSSProps::kWidthKTable);
+  SetValueToCoord(val, minHeight, true, nullptr, nsCSSProps::kWidthKTable);
   return val.forget();
 }
 
@@ -4950,24 +4935,12 @@ nsComputedDOMStyle::DoGetMinWidth()
 
   nsStyleCoord minWidth = StylePosition()->mMinWidth;
 
-  if (eStyleUnit_Auto == minWidth.GetUnit()) {
-    // "min-width: auto" means "0", unless we're a flex item in a horizontal
-    // flex container, in which case it means "min-content"
+  if (eStyleUnit_Auto == minWidth.GetUnit() &&
+      !ShouldHonorMinSizeAutoInAxis(eAxisHorizontal)) {
     minWidth.SetCoordValue(0);
-    if (mOuterFrame && mOuterFrame->IsFlexItem()) {
-      nsIFrame* flexContainer = mOuterFrame->GetParent();
-      MOZ_ASSERT(flexContainer &&
-                 flexContainer->GetType() == nsGkAtoms::flexContainerFrame,
-                 "IsFlexItem() lied...?");
-
-      if (static_cast<nsFlexContainerFrame*>(flexContainer)->IsHorizontal()) {
-        minWidth.SetIntValue(NS_STYLE_WIDTH_MIN_CONTENT, eStyleUnit_Enumerated);
-      }
-    }
   }
-  SetValueToCoord(val, minWidth, true,
-                  &nsComputedDOMStyle::GetCBContentWidth,
-                  nsCSSProps::kWidthKTable);
+
+  SetValueToCoord(val, minWidth, true, nullptr, nsCSSProps::kWidthKTable);
   return val.forget();
 }
 
@@ -5294,15 +5267,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::GetBorderColorFor(mozilla::css::Side aSide)
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
-  nscolor color;
-  bool foreground;
-  StyleBorder()->GetBorderColor(aSide, color, foreground);
-  if (foreground) {
-    color = StyleColor()->mColor;
-  }
-
-  SetToRGBAColor(val, color);
+  SetValueFromComplexColor(val, StyleBorder()->mBorderColor[aSide]);
   return val.forget();
 }
 
@@ -5630,38 +5595,31 @@ nsComputedDOMStyle::GetSVGPaintFor(bool aFill)
 
   nsAutoString paintString;
 
-  switch (paint->mType) {
+  switch (paint->Type()) {
     case eStyleSVGPaintType_None:
-    {
       val->SetIdent(eCSSKeyword_none);
       break;
-    }
     case eStyleSVGPaintType_Color:
-    {
-      SetToRGBAColor(val, paint->mPaint.mColor);
+      SetToRGBAColor(val, paint->GetColor());
       break;
-    }
-    case eStyleSVGPaintType_Server:
-    {
+    case eStyleSVGPaintType_Server: {
       RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
       RefPtr<nsROCSSPrimitiveValue> fallback = new nsROCSSPrimitiveValue;
-      SetValueToFragmentOrURL(paint->mPaint.mPaintServer, val);
-      SetToRGBAColor(fallback, paint->mFallbackColor);
+      SetValueToURLValue(paint->GetPaintServer(), val);
+      SetToRGBAColor(fallback, paint->GetFallbackColor());
 
       valueList->AppendCSSValue(val.forget());
       valueList->AppendCSSValue(fallback.forget());
       return valueList.forget();
     }
     case eStyleSVGPaintType_ContextFill:
-    {
       val->SetIdent(eCSSKeyword_context_fill);
+      // XXXheycam context-fill and context-stroke can have fallback colors,
+      // so they should be serialized here too
       break;
-    }
     case eStyleSVGPaintType_ContextStroke:
-    {
       val->SetIdent(eCSSKeyword_context_stroke);
       break;
-    }
   }
 
   return val.forget();
@@ -5683,7 +5641,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetMarkerEnd()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToFragmentOrURL(&StyleSVG()->mMarkerEnd, val);
+  SetValueToURLValue(StyleSVG()->mMarkerEnd, val);
 
   return val.forget();
 }
@@ -5692,7 +5650,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetMarkerMid()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToFragmentOrURL(&StyleSVG()->mMarkerMid, val);
+  SetValueToURLValue(StyleSVG()->mMarkerMid, val);
 
   return val.forget();
 }
@@ -5701,7 +5659,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetMarkerStart()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToFragmentOrURL(&StyleSVG()->mMarkerStart, val);
+  SetValueToURLValue(StyleSVG()->mMarkerStart, val);
 
   return val.forget();
 }
@@ -6096,7 +6054,7 @@ nsComputedDOMStyle::GetShapeSource(
                                                 aBoxKeywordTable);
     case StyleShapeSourceType::URL: {
       RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-      SetValueToFragmentOrURL(aShapeSource.GetURL(), val);
+      SetValueToURLValue(aShapeSource.GetURL(), val);
       return val.forget();
     }
     case StyleShapeSourceType::None: {
@@ -6141,8 +6099,9 @@ nsComputedDOMStyle::CreatePrimitiveValueForStyleFilter(
   RefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
   // Handle url().
   if (aStyleFilter.GetType() == NS_STYLE_FILTER_URL) {
-    MOZ_ASSERT(aStyleFilter.GetURL()->GetSourceURL());
-    SetValueToFragmentOrURL(aStyleFilter.GetURL(), value);
+    MOZ_ASSERT(aStyleFilter.GetURL() &&
+               aStyleFilter.GetURL()->GetURI());
+    SetValueToURLValue(aStyleFilter.GetURL(), value);
     return value.forget();
   }
 
@@ -6211,7 +6170,7 @@ nsComputedDOMStyle::DoGetMask()
       firstLayer.mMaskMode != NS_STYLE_MASK_MODE_MATCH_SOURCE ||
       !nsStyleImageLayers::IsInitialPositionForLayerType(
         firstLayer.mPosition, nsStyleImageLayers::LayerType::Mask) ||
-      !firstLayer.mRepeat.IsInitialValue(nsStyleImageLayers::LayerType::Mask) ||
+      !firstLayer.mRepeat.IsInitialValue() ||
       !firstLayer.mSize.IsInitialValue() ||
       !(firstLayer.mImage.GetType() == eStyleImageType_Null ||
         firstLayer.mImage.GetType() == eStyleImageType_Image)) {
@@ -6220,11 +6179,7 @@ nsComputedDOMStyle::DoGetMask()
 
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  if (firstLayer.mSourceURI.GetSourceURL()) {
-    SetValueToFragmentOrURL(&firstLayer.mSourceURI, val);
-  } else {
-    val->SetIdent(eCSSKeyword_none);
-  }
+  SetValueToURLValue(firstLayer.mSourceURI, val);
 
   return val.forget();
 }

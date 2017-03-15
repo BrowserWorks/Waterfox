@@ -28,6 +28,7 @@
 #include "nsTArrayForwardDeclare.h"
 #include "Units.h"
 #include "mozilla/dom/AutocompleteInfoBinding.h"
+#include "mozilla/dom/BindingDeclarations.h" // For CallerType
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/net/ReferrerPolicy.h"
@@ -85,7 +86,6 @@ class nsIScriptContext;
 class nsIScriptSecurityManager;
 class nsIStringBundle;
 class nsIStringBundleService;
-class nsISupportsArray;
 class nsISupportsHashKey;
 class nsIURI;
 class nsIUUIDGenerator;
@@ -786,6 +786,18 @@ public:
                                uint32_t *aArgCount, const char*** aArgNames);
 
   /**
+   * Returns origin attributes of the document.
+   **/
+  static mozilla::PrincipalOriginAttributes
+  GetOriginAttributes(nsIDocument* aDoc);
+
+  /**
+   * Returns origin attributes of the load group.
+   **/
+  static mozilla::PrincipalOriginAttributes
+  GetOriginAttributes(nsILoadGroup* aLoadGroup);
+
+  /**
    * Returns true if this document is in a Private Browsing window.
    */
   static bool IsInPrivateBrowsing(nsIDocument* aDoc);
@@ -1018,7 +1030,8 @@ public:
    */
   static bool GetWrapperSafeScriptFilename(nsIDocument *aDocument,
                                              nsIURI *aURI,
-                                             nsACString& aScriptURI);
+                                             nsACString& aScriptURI,
+                                             nsresult* aRv);
 
 
   /**
@@ -1851,11 +1864,6 @@ public:
   static nsresult CreateArrayBuffer(JSContext *aCx, const nsACString& aData,
                                     JSObject** aResult);
 
-  static nsresult CreateBlobBuffer(JSContext* aCx,
-                                   nsISupports* aParent,
-                                   const nsACString& aData,
-                                   JS::MutableHandle<JS::Value> aBlob);
-
   static void StripNullChars(const nsAString& aInStr, nsAString& aOutStr);
 
   /**
@@ -2059,6 +2067,17 @@ public:
   static bool ResistFingerprinting()
   {
     return sPrivacyResistFingerprinting;
+  }
+
+  /*
+   * Returns true if the browser should attempt to prevent the given caller type
+   * from collecting distinctive information about the browser that could
+   * be used to "fingerprint" and track the user across websites.
+   */
+  static bool ResistFingerprinting(mozilla::dom::CallerType aCallerType)
+  {
+    return aCallerType != mozilla::dom::CallerType::System &&
+           ResistFingerprinting();
   }
 
   /**
@@ -2388,7 +2407,7 @@ public:
    *
    * @param aContent The content to test for being an insertion point.
    */
-  static bool IsContentInsertionPoint(const nsIContent* aContent);
+  static bool IsContentInsertionPoint(nsIContent* aContent);
 
 
   /**
@@ -2487,7 +2506,7 @@ public:
                                                 mozilla::dom::nsIContentParent* aContentParent,
                                                 mozilla::dom::TabChild* aTabChild);
 
-  static void TransferablesToIPCTransferables(nsISupportsArray* aTransferables,
+  static void TransferablesToIPCTransferables(nsIArray* aTransferables,
                                               nsTArray<mozilla::dom::IPCDataTransfer>& aIPC,
                                               bool aInSyncMessage,
                                               mozilla::dom::nsIContentChild* aChild,
@@ -2697,6 +2716,8 @@ public:
                                  int32_t aNamespaceID,
                                  nsIAtom* aAtom,
                                  JS::MutableHandle<JSObject*> prototype);
+
+  static bool AttemptLargeAllocationLoad(nsIHttpChannel* aChannel);
 
 private:
   static bool InitializeEventTable();

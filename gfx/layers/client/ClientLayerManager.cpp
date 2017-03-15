@@ -24,6 +24,7 @@
 #include "mozilla/layers/PersistentBufferProvider.h"
 #include "ClientReadbackLayer.h"        // for ClientReadbackLayer
 #include "nsAString.h"
+#include "nsDisplayList.h"
 #include "nsIWidgetListener.h"
 #include "nsTArray.h"                   // for AutoTArray
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType, etc
@@ -198,9 +199,15 @@ ClientLayerManager::CreateReadbackLayer()
   return layer.forget();
 }
 
-void
+bool
 ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
 {
+  MOZ_ASSERT(mForwarder, "ClientLayerManager::BeginTransaction without forwarder");
+  if (!mForwarder->IPCOpen()) {
+    gfxCriticalNote << "ClientLayerManager::BeginTransaction with IPC channel down. GPU process may have died.";
+    return false;
+  }
+
   mInTransaction = true;
   mTransactionStart = TimeStamp::Now();
 
@@ -243,7 +250,7 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
   //
   // Desktop does not support async zoom yet, so we ignore this for those
   // platforms.
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_UIKIT)
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_UIKIT)
   if (mWidget && mWidget->GetOwningTabChild()) {
     mCompositorMightResample = AsyncPanZoomEnabled();
   }
@@ -268,12 +275,13 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
       mApzTestData.StartNewPaint(mPaintSequenceNumber);
     }
   }
+  return true;
 }
 
-void
+bool
 ClientLayerManager::BeginTransaction()
 {
-  BeginTransactionWithTarget(nullptr);
+  return BeginTransactionWithTarget(nullptr);
 }
 
 bool
@@ -281,6 +289,8 @@ ClientLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback,
                                            void* aCallbackData,
                                            EndTransactionFlags)
 {
+  PaintTelemetry::AutoRecord record(PaintTelemetry::Metric::Rasterization);
+
   PROFILER_LABEL("ClientLayerManager", "EndTransactionInternal",
     js::ProfileEntry::Category::GRAPHICS);
 
@@ -306,12 +316,17 @@ ClientLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback,
 
   GetRoot()->ComputeEffectiveTransforms(Matrix4x4());
 
-  if (gfxPrefs::AlwaysPaint() && XRE_IsContentProcess()) {
-    TimeStamp start = TimeStamp::Now();
-    root->RenderLayer();
-    mLastPaintTime = TimeStamp::Now() - start;
+  // Skip the painting if the device is in device-reset status.
+  if (!gfxPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+    if (gfxPrefs::AlwaysPaint() && XRE_IsContentProcess()) {
+      TimeStamp start = TimeStamp::Now();
+      root->RenderLayer();
+      mLastPaintTime = TimeStamp::Now() - start;
+    } else {
+      root->RenderLayer();
+    }
   } else {
-    root->RenderLayer();
+    gfxCriticalNote << "LayerManager::EndTransaction skip RenderLayer().";
   }
 
   if (!mRepeatTransaction && !GetRoot()->GetInvalidRegion().IsEmpty()) {
@@ -354,7 +369,6 @@ ClientLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
                                    EndTransactionFlags aFlags)
 {
   if (!mForwarder->IPCOpen()) {
-    mTransactionIdAllocator->RevokeTransactionId(mLatestTransactionId);
     mInTransaction = false;
     return;
   }
@@ -368,8 +382,9 @@ ClientLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
   if (mRepeatTransaction) {
     mRepeatTransaction = false;
     mIsRepeatTransaction = true;
-    BeginTransaction();
-    ClientLayerManager::EndTransaction(aCallback, aCallbackData, aFlags);
+    if (BeginTransaction()) {
+      ClientLayerManager::EndTransaction(aCallback, aCallbackData, aFlags);
+    }
     mIsRepeatTransaction = false;
   } else {
     MakeSnapshotIfRequired();
@@ -385,7 +400,6 @@ ClientLayerManager::EndEmptyTransaction(EndTransactionFlags aFlags)
   mInTransaction = false;
 
   if (!mRoot || !mForwarder->IPCOpen()) {
-    mTransactionIdAllocator->RevokeTransactionId(mLatestTransactionId);
     return false;
   }
 
@@ -636,8 +650,13 @@ ClientLayerManager::ForwardTransaction(bool aScheduleComposite)
 {
   TimeStamp start = TimeStamp::Now();
 
-  if (mForwarder->GetSyncObject()) {
-    mForwarder->GetSyncObject()->FinalizeFrame();
+  // Skip the synchronization for buffer since we also skip the painting during
+  // device-reset status.
+  if (!gfxPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+    if (mForwarder->GetSyncObject() &&
+        mForwarder->GetSyncObject()->IsSyncObjectValid()) {
+      mForwarder->GetSyncObject()->FinalizeFrame();
+    }
   }
 
   mPhase = PHASE_FORWARD;
@@ -736,6 +755,7 @@ bool
 ClientLayerManager::AreComponentAlphaLayersEnabled()
 {
   return GetCompositorBackendType() != LayersBackend::LAYERS_BASIC &&
+         AsShadowForwarder()->SupportsComponentAlpha() &&
          LayerManager::AreComponentAlphaLayersEnabled();
 }
 

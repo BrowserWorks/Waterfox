@@ -87,6 +87,8 @@ namespace jit {
         AssemblerBuffer()
             : m_oom(false)
         {
+            // Provide memory protection once the buffer starts to get big.
+            m_buffer.setLowerBoundForProtection(32 * 1024);
         }
 
         void ensureSpace(size_t space)
@@ -139,9 +141,6 @@ namespace jit {
             return m_buffer.begin();
         }
 
-        void enableBufferProtection() { m_buffer.enableProtection(); }
-        void disableBufferProtection() { m_buffer.disableProtection(); }
-
         void unprotectDataRegion(size_t firstByteOffset, size_t lastByteOffset) {
             m_buffer.unprotectRegion(firstByteOffset, lastByteOffset);
         }
@@ -187,10 +186,7 @@ namespace jit {
             printer = sp;
         }
 
-        void spew(const char* fmt, ...)
-#ifdef __GNUC__
-            __attribute__ ((format (printf, 2, 3)))
-#endif
+        void spew(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3)
         {
             if (MOZ_UNLIKELY(printer || JitSpewEnabled(JitSpew_Codegen))) {
                 va_list va;

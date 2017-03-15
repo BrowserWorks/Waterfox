@@ -10,14 +10,17 @@ Cu.import("chrome://marionette/content/action.js");
 Cu.import("chrome://marionette/content/element.js");
 Cu.import("chrome://marionette/content/error.js");
 
+action.inputStateMap = new Map();
+
 add_test(function test_createAction() {
   Assert.throws(() => new action.Action(), InvalidArgumentError,
       "Missing Action constructor args");
-  Assert.throws(() => new action.Action(1,2), InvalidArgumentError,
+  Assert.throws(() => new action.Action(1, 2), InvalidArgumentError,
       "Missing Action constructor args");
   Assert.throws(
       () => new action.Action(1, 2, "sometype"), /Expected string/, "Non-string arguments.");
   ok(new action.Action("id", "sometype", "sometype"));
+
   run_next_test();
 });
 
@@ -31,14 +34,13 @@ add_test(function test_defaultPointerParameters() {
 add_test(function test_processPointerParameters() {
   let check = (regex, message, arg) => checkErrors(
       regex, action.PointerParameters.fromJson, [arg], message);
-  let parametersData = {pointerType: "foo"};
+  let parametersData = {pointerType: "foo", primary: undefined};
   let message = `parametersData: [pointerType: ${parametersData.pointerType}, ` +
       `primary: ${parametersData.primary}]`;
   check(/Unknown pointerType/, message, parametersData);
   parametersData.pointerType = "pen";
   parametersData.primary = "a";
-  check(/Expected boolean \(primary\)/, message, parametersData);
-
+  check(/Expected \[object String\] "a" to be boolean/, message, parametersData);
   parametersData.primary = false;
   deepEqual(action.PointerParameters.fromJson(parametersData),
       {pointerType: action.PointerType.Pen, primary: false});
@@ -52,7 +54,7 @@ add_test(function test_processPointerUpDownAction() {
   for (let d of [-1, "a"]) {
     actionItem.button = d;
     checkErrors(
-        /integer >= 0/, action.Action.fromJson, [actionSequence, actionItem],
+        /Expected 'button' \(.*\) to be >= 0/, action.Action.fromJson, [actionSequence, actionItem],
         `button: ${actionItem.button}`);
   }
   actionItem.button = 5;
@@ -65,11 +67,11 @@ add_test(function test_processPointerUpDownAction() {
 add_test(function test_validateActionDurationAndCoordinates() {
   let actionItem = {};
   let actionSequence = {id: "some_id"};
-  let check = function(type, subtype, message = undefined) {
+  let check = function (type, subtype, message = undefined) {
     message = message || `duration: ${actionItem.duration}, subtype: ${subtype}`;
     actionItem.type = subtype;
     actionSequence.type = type;
-    checkErrors(/integer >= 0/,
+    checkErrors(/Expected '.*' \(.*\) to be >= 0/,
         action.Action.fromJson, [actionSequence, actionItem], message);
   };
   for (let d of [-1, "a"]) {
@@ -77,7 +79,7 @@ add_test(function test_validateActionDurationAndCoordinates() {
     check("none", "pause");
     check("pointer", "pointerMove");
   }
-  actionItem.duration = 5;
+  actionItem.duration = 5000;
   for (let d of [-1, "a"]) {
     for (let name of ["x", "y"]) {
       actionItem[name] = d;
@@ -89,7 +91,7 @@ add_test(function test_validateActionDurationAndCoordinates() {
 
 add_test(function test_processPointerMoveActionElementValidation() {
   let actionSequence = {type: "pointer", id: "some_id"};
-  let actionItem = {duration: 5, type: "pointerMove"};
+  let actionItem = {duration: 5000, type: "pointerMove"};
   for (let d of [-1, "a", {a: "blah"}]) {
     actionItem.element = d;
     checkErrors(/Expected 'actionItem.element' to be a web element reference/,
@@ -97,7 +99,7 @@ add_test(function test_processPointerMoveActionElementValidation() {
         [actionSequence, actionItem],
         `actionItem.element: (${getTypeString(d)})`);
   }
-  actionItem.element = {[element.Key]:"something"};
+  actionItem.element = {[element.Key]: "something"};
   let a = action.Action.fromJson(actionSequence, actionItem);
   deepEqual(a.element, actionItem.element);
 
@@ -108,7 +110,7 @@ add_test(function test_processPointerMoveAction() {
   let actionSequence = {id: "some_id", type: "pointer"};
   let actionItems = [
     {
-      duration: 5,
+      duration: 5000,
       type: "pointerMove",
       element: undefined,
       x: undefined,
@@ -122,14 +124,14 @@ add_test(function test_processPointerMoveAction() {
       y: undefined,
     },
     {
-      duration: 5,
+      duration: 5000,
       type: "pointerMove",
       x: 0,
       y: undefined,
       element: undefined,
     },
     {
-      duration: 5,
+      duration: 5000,
       type: "pointerMove",
       x: 1,
       y: 2,
@@ -155,15 +157,15 @@ add_test(function test_processPointerAction() {
       pointerType: "touch",
       primary: false,
     },
-  }
+  };
   let actionItems = [
     {
-      duration: 2,
+      duration: 2000,
       type: "pause",
     },
     {
       type: "pointerMove",
-      duration: 2,
+      duration: 2000,
     },
     {
       type: "pointerUp",
@@ -190,7 +192,7 @@ add_test(function test_processPointerAction() {
 });
 
 add_test(function test_processPauseAction() {
-  let actionItem = {type: "pause", duration: 5};
+  let actionItem = {type: "pause", duration: 5000};
   let actionSequence = {id: "some_id"};
   for (let type of ["none", "key", "pointer"]) {
     actionSequence.type = type;
@@ -211,7 +213,7 @@ add_test(function test_processPauseAction() {
 add_test(function test_processActionSubtypeValidation() {
   let actionItem = {type: "dancing"};
   let actionSequence = {id: "some_id"};
-  let check = function(regex) {
+  let check = function (regex) {
     let message = `type: ${actionSequence.type}, subtype: ${actionItem.type}`;
     checkErrors(regex, action.Action.fromJson, [actionSequence, actionItem], message);
   };
@@ -226,16 +228,16 @@ add_test(function test_processKeyActionUpDown() {
   let actionSequence = {type: "key", id: "some_id"};
   let actionItem = {type: "keyDown"};
 
-  for (let v of [-1, "bad", undefined, [], ["a"], {length: 1}, null]) {
+  for (let v of [-1, undefined, [], ["a"], {length: 1}, null]) {
     actionItem.value = v;
     let message = `actionItem.value: (${getTypeString(v)})`;
     Assert.throws(() => action.Action.fromJson(actionSequence, actionItem),
         InvalidArgumentError, message);
     Assert.throws(() => action.Action.fromJson(actionSequence, actionItem),
-        /Expected 'key' to be a single-character string/, message);
+        /Expected 'value' to be a string that represents single code point/, message);
   }
 
-  actionItem.value = "a";
+  actionItem.value = "\uE004";
   let act = action.Action.fromJson(actionSequence, actionItem);
   ok(act instanceof action.Action);
   equal(act.type, actionSequence.type);
@@ -256,6 +258,10 @@ add_test(function test_processInputSourceActionSequenceValidation() {
   actionSequence.id = -1;
   check(`actionSequence.id: ${getTypeString(actionSequence.id)}`,
       /Expected 'id' to be a string/);
+
+  actionSequence.id = undefined;
+  check(`actionSequence.id: ${getTypeString(actionSequence.id)}`,
+      /Expected 'id' to be defined/);
 
   actionSequence.id = "some_id";
   actionSequence.actions = -1;
@@ -318,26 +324,10 @@ add_test(function test_processInputSourceActionSequenceKey() {
   run_next_test();
 });
 
-add_test(function test_processInputSourceActionSequenceGenerateID() {
-  let actionItems = [
-    {
-      type: "pause",
-      duration: 5,
-    },
-  ];
-  let actionSequence = {
-    type: "key",
-    actions: actionItems,
-  };
-  let actions = action.Sequence.fromJson(actionSequence);
-  equal(typeof actions[0].id, "string");
-  ok(actions[0].id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i));
-  run_next_test();
-});
 
 add_test(function test_processInputSourceActionSequenceInputStateMap() {
   let id = "1";
-  let actionItem = {type: "pause", duration: 5};
+  let actionItem = {type: "pause", duration: 5000};
   let actionSequence = {
     type: "key",
     id: id,
@@ -362,7 +352,7 @@ add_test(function test_processPointerActionInputStateMap() {
   let parameters = {pointerType: "mouse", primary: false};
   let a = new action.Action(id, "pointer", actionItem.type);
   let wrongInputState = new action.InputState.Pointer("pause", true);
-  action.inputStateMap.set(id, wrongInputState)
+  action.inputStateMap.set(id, wrongInputState);
   checkErrors(
       /to be mapped to InputState whose subtype is/, action.processPointerAction,
       [id, parameters, a],
@@ -376,9 +366,22 @@ add_test(function test_processPointerActionInputStateMap() {
   run_next_test();
 });
 
+add_test(function test_createInputState() {
+  for (let kind in action.InputState) {
+    let state = new action.InputState[kind]();
+    ok(state);
+    if (kind === "Null") {
+      equal(state.type, "none");
+    } else {
+      equal(state.type, kind.toLowerCase());
+    }
+  }
+  run_next_test();
+});
+
 add_test(function test_extractActionChainValidation() {
   for (let actions of [-1, "a", undefined, null]) {
-    let message = `actions: ${getTypeString(actions)}`
+    let message = `actions: ${getTypeString(actions)}`;
     Assert.throws(() => action.Chain.fromJson(actions),
         InvalidArgumentError, message);
     Assert.throws(() => action.Chain.fromJson(actions),
@@ -393,7 +396,7 @@ add_test(function test_extractActionChainEmpty() {
 });
 
 add_test(function test_extractActionChain_oneTickOneInput() {
-  let actionItem = {type: "pause", duration: 5};
+  let actionItem = {type: "pause", duration: 5000};
   let actionSequence = {
     type: "none",
     id: "some id",
@@ -458,11 +461,48 @@ add_test(function test_extractActionChain_twoAndThreeTicks() {
   deepEqual(actionsByTick[2][0], expectedAction);
 
   // one empty action sequence
-  actionsByTick = action.Chain.fromJson([keyActionSequence, {type: "none", actions: []}]);
+  actionsByTick = action.Chain.fromJson(
+      [keyActionSequence, {type: "none", id: "some", actions: []}]);
   equal(keyActionItems.length, actionsByTick.length);
   equal(1, actionsByTick[0].length);
   run_next_test();
 });
+
+add_test(function test_computeTickDuration() {
+  let expected = 8000;
+  let tickActions = [
+    {type: "none", subtype: "pause", duration: 5000},
+    {type: "key", subtype: "pause", duration: 1000},
+    {type: "pointer", subtype: "pointerMove", duration: 6000},
+    // invalid because keyDown should not have duration, so duration should be ignored.
+    {type: "key", subtype: "keyDown", duration: 100000},
+    {type: "pointer", subtype: "pause", duration: expected},
+    {type: "pointer", subtype: "pointerUp"},
+  ];
+  equal(expected, action.computeTickDuration(tickActions));
+  run_next_test();
+});
+
+add_test(function test_computeTickDuration_empty() {
+  equal(0, action.computeTickDuration([]));
+  run_next_test();
+});
+
+add_test(function test_computeTickDuration_noDurations() {
+  let tickActions = [
+    // invalid because keyDown should not have duration, so duration should be ignored.
+    {type: "key", subtype: "keyDown", duration: 100000},
+    // undefined duration permitted
+    {type: "none", subtype: "pause"},
+    {type: "pointer", subtype: "pointerMove"},
+    {type: "pointer", subtype: "pointerDown"},
+    {type: "key", subtype: "keyUp"},
+  ];
+
+  equal(0, action.computeTickDuration(tickActions));
+  run_next_test();
+});
+
 
 // helpers
 function getTypeString(obj) {

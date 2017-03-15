@@ -26,18 +26,18 @@ public:
 
   static already_AddRefed<TextureClient>
   CreateTextureClient(EGLImageImage* aImage, gfx::IntSize aSize,
-                      ClientIPCAllocator* aAllocator, TextureFlags aFlags);
+                      LayersIPCChannel* aAllocator, TextureFlags aFlags);
 
   virtual void FillInfo(TextureData::Info& aInfo) const override;
 
   virtual bool Serialize(SurfaceDescriptor& aOutDescriptor) override;
 
-  virtual void Deallocate(ClientIPCAllocator*) override { mImage = nullptr; }
+  virtual void Deallocate(LayersIPCChannel*) override { mImage = nullptr; }
 
-  virtual void Forget(ClientIPCAllocator*) override { mImage = nullptr; }
+  virtual void Forget(LayersIPCChannel*) override { mImage = nullptr; }
 
   // Unused functions.
-  virtual bool Lock(OpenMode, FenceHandle*) override { return true; }
+  virtual bool Lock(OpenMode) override { return true; }
 
   virtual void Unlock() override {}
 
@@ -57,7 +57,7 @@ public:
   CreateTextureClient(gl::AndroidSurfaceTexture* aSurfTex,
                       gfx::IntSize aSize,
                       gl::OriginPos aOriginPos,
-                      ClientIPCAllocator* aAllocator,
+                      LayersIPCChannel* aAllocator,
                       TextureFlags aFlags);
 
   ~AndroidSurfaceTextureData();
@@ -67,12 +67,12 @@ public:
   virtual bool Serialize(SurfaceDescriptor& aOutDescriptor) override;
 
   // Useless functions.
-  virtual bool Lock(OpenMode, FenceHandle*) override { return true; }
+  virtual bool Lock(OpenMode) override { return true; }
 
   virtual void Unlock() override {}
 
   // Our data is always owned externally.
-  virtual void Deallocate(ClientIPCAllocator*) override {}
+  virtual void Deallocate(LayersIPCChannel*) override {}
 
 protected:
   AndroidSurfaceTextureData(gl::AndroidSurfaceTexture* aSurfTex, gfx::IntSize aSize);

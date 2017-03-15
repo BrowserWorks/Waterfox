@@ -19,6 +19,7 @@ var gGrid = {
    * The DOM node of the grid.
    */
   _node: null,
+  _gridDefaultContent: null,
   get node() { return this._node; },
 
   /**
@@ -49,6 +50,7 @@ var gGrid = {
    */
   init: function Grid_init() {
     this._node = document.getElementById("newtab-grid");
+    this._gridDefaultContent = this._node.lastChild;
     this._createSiteFragment();
 
     gLinks.populateCache(() => {
@@ -140,15 +142,24 @@ var gGrid = {
 
     // Create sites.
     let numLinks = Math.min(links.length, cells.length);
+    let hasHistoryTiles = false;
     for (let i = 0; i < numLinks; i++) {
       if (links[i]) {
         this.createSite(links[i], cells[i]);
+        if (links[i].type == "history") {
+          hasHistoryTiles = true;
+        }
       }
     }
 
     this._cells = cells;
-    this._node.innerHTML = "";
+    while (this._gridDefaultContent.nextSibling) {
+      this._gridDefaultContent.nextSibling.remove();
+    }
     this._node.appendChild(fragment);
+
+    document.getElementById("topsites-heading").textContent =
+      hasHistoryTiles ? "Your Top Sites" : "Top Sites";
   },
 
   /**

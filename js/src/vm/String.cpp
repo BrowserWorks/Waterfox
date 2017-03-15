@@ -10,6 +10,7 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/RangedPtr.h"
+#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/TypeTraits.h"
 #include "mozilla/Unused.h"
 
@@ -42,6 +43,10 @@ JSString::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
     if (isDependent())
         return 0;
 
+    // JSExternalString: don't count, the chars could be stored anywhere.
+    if (isExternal())
+        return 0;
+
     MOZ_ASSERT(isFlat());
 
     // JSExtensibleString: count the full capacity, not just the used space.
@@ -51,10 +56,6 @@ JSString::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
                ? mallocSizeOf(extensible.rawLatin1Chars())
                : mallocSizeOf(extensible.rawTwoByteChars());
     }
-
-    // JSExternalString: don't count, the chars could be stored anywhere.
-    if (isExternal())
-        return 0;
 
     // JSInlineString, JSFatInlineString [JSInlineAtom, JSFatInlineAtom]: the chars are inline.
     if (isInline())
@@ -191,7 +192,7 @@ JSString::dumpRepresentationHeader(FILE* fp, int indent, const char* subclass) c
     uint32_t flags = d.u1.flags;
     // Print the string's address as an actual C++ expression, to facilitate
     // copy-and-paste into a debugger.
-    fprintf(fp, "((%s*) %p) length: %zu  flags: 0x%x", subclass, this, length(), flags);
+    fprintf(fp, "((%s*) %p) length: %" PRIuSIZE "  flags: 0x%x", subclass, this, length(), flags);
     if (flags & FLAT_BIT)               fputs(" FLAT", fp);
     if (flags & HAS_BASE_BIT)           fputs(" HAS_BASE", fp);
     if (flags & INLINE_CHARS_BIT)       fputs(" INLINE_CHARS", fp);
@@ -581,6 +582,17 @@ JSRope::flatten(ExclusiveContext* maybecx)
 }
 
 template <AllowGC allowGC>
+static JSLinearString*
+EnsureLinear(ExclusiveContext* cx, typename MaybeRooted<JSString*, allowGC>::HandleType string)
+{
+    JSLinearString* linear = string->ensureLinear(cx);
+    // Don't report an exception if GC is not allowed, just return nullptr.
+    if (!linear && !allowGC)
+        cx->recoverFromOutOfMemory();
+    return linear;
+}
+
+template <AllowGC allowGC>
 JSString*
 js::ConcatStrings(ExclusiveContext* cx,
                   typename MaybeRooted<JSString*, allowGC>::HandleType left,
@@ -598,8 +610,12 @@ js::ConcatStrings(ExclusiveContext* cx,
         return left;
 
     size_t wholeLength = leftLen + rightLen;
-    if (!JSString::validateLength(cx, wholeLength))
+    if (MOZ_UNLIKELY(wholeLength > JSString::MAX_LENGTH)) {
+        // Don't report an exception if GC is not allowed, just return nullptr.
+        if (allowGC)
+            js::ReportAllocationOverflow(cx);
         return nullptr;
+    }
 
     bool isLatin1 = left->hasLatin1Chars() && right->hasLatin1Chars();
     bool canUseInline = isLatin1
@@ -615,10 +631,10 @@ js::ConcatStrings(ExclusiveContext* cx,
             return nullptr;
 
         AutoCheckCannotGC nogc;
-        JSLinearString* leftLinear = left->ensureLinear(cx);
+        JSLinearString* leftLinear = EnsureLinear<allowGC>(cx, left);
         if (!leftLinear)
             return nullptr;
-        JSLinearString* rightLinear = right->ensureLinear(cx);
+        JSLinearString* rightLinear = EnsureLinear<allowGC>(cx, right);
         if (!rightLinear)
             return nullptr;
 
@@ -648,11 +664,11 @@ template JSString*
 js::ConcatStrings<CanGC>(ExclusiveContext* cx, HandleString left, HandleString right);
 
 template JSString*
-js::ConcatStrings<NoGC>(ExclusiveContext* cx, JSString* left, JSString* right);
+js::ConcatStrings<NoGC>(ExclusiveContext* cx, JSString* const& left, JSString* const& right);
 
 template <typename CharT>
 JSFlatString*
-JSDependentString::undependInternal(ExclusiveContext* cx)
+JSDependentString::undependInternal(JSContext* cx)
 {
     size_t n = length();
     CharT* s = cx->pod_malloc<CharT>(n + 1);
@@ -677,7 +693,7 @@ JSDependentString::undependInternal(ExclusiveContext* cx)
 }
 
 JSFlatString*
-JSDependentString::undepend(ExclusiveContext* cx)
+JSDependentString::undepend(JSContext* cx)
 {
     MOZ_ASSERT(JSString::isDependent());
     return hasLatin1Chars()
@@ -692,7 +708,7 @@ JSDependentString::dumpRepresentation(FILE* fp, int indent) const
     dumpRepresentationHeader(fp, indent, "JSDependentString");
     indent += 2;
 
-    fprintf(fp, "%*soffset: %zu\n", indent, "", baseOffset());
+    fprintf(fp, "%*soffset: %" PRIuSIZE "\n", indent, "", baseOffset());
     fprintf(fp, "%*sbase: ", indent, "");
     base()->dumpRepresentation(fp, indent);
 }
@@ -1028,6 +1044,45 @@ AutoStableStringChars::copyTwoByteChars(JSContext* cx, HandleLinearString linear
     return true;
 }
 
+JSFlatString*
+JSString::ensureFlat(JSContext* cx)
+{
+    if (isFlat())
+        return &asFlat();
+    if (isDependent())
+        return asDependent().undepend(cx);
+    if (isRope())
+        return asRope().flatten(cx);
+    return asExternal().ensureFlat(cx);
+}
+
+JSFlatString*
+JSExternalString::ensureFlat(JSContext* cx)
+{
+    MOZ_ASSERT(hasTwoByteChars());
+
+    size_t n = length();
+    char16_t* s = cx->pod_malloc<char16_t>(n + 1);
+    if (!s)
+        return nullptr;
+
+    // Copy the chars before finalizing the string.
+    {
+        AutoCheckCannotGC nogc;
+        PodCopy(s, nonInlineChars<char16_t>(nogc), n);
+        s[n] = '\0';
+    }
+
+    // Release the external chars.
+    finalize(cx->runtime()->defaultFreeOp());
+
+    // Transform the string into a non-external, flat string.
+    setNonInlineChars<char16_t>(s);
+    d.u1.flags = FLAT_BIT;
+
+    return &this->asFlat();
+}
+
 #ifdef DEBUG
 void
 JSAtom::dump(FILE* fp)
@@ -1316,7 +1371,7 @@ NewStringCopyUTF8N(JSContext* cx, const JS::UTF8Chars utf8)
 {
     JS::SmallestEncoding encoding = JS::FindSmallestEncoding(utf8);
     if (encoding == JS::SmallestEncoding::ASCII)
-        return NewStringCopyN<allowGC>(cx, utf8.start().get(), utf8.length());
+        return NewStringCopyN<allowGC>(cx, utf8.begin().get(), utf8.length());
 
     size_t length;
     if (encoding == JS::SmallestEncoding::Latin1) {
@@ -1354,7 +1409,7 @@ JSExtensibleString::dumpRepresentation(FILE* fp, int indent) const
     dumpRepresentationHeader(fp, indent, "JSExtensibleString");
     indent += 2;
 
-    fprintf(fp, "%*scapacity: %zu\n", indent, "", capacity());
+    fprintf(fp, "%*scapacity: %" PRIuSIZE "\n", indent, "", capacity());
     dumpRepresentationChars(fp, indent);
 }
 

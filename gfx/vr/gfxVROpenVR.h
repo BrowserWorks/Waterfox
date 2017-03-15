@@ -86,6 +86,53 @@ protected:
   bool mOpenVRInstalled;
 };
 
+namespace impl {
+
+class VRControllerOpenVR : public VRControllerHost
+{
+public:
+  explicit VRControllerOpenVR();
+  void SetTrackedIndex(uint32_t aTrackedIndex);
+  uint32_t GetTrackedIndex();
+
+protected:
+  virtual ~VRControllerOpenVR();
+
+  // The index of tracked devices from vr::IVRSystem.
+  uint32_t mTrackedIndex;
+};
+
+} // namespace impl
+
+class VRControllerManagerOpenVR : public VRControllerManager
+{
+public:
+  static already_AddRefed<VRControllerManagerOpenVR> Create();
+
+  virtual bool Init() override;
+  virtual void Destroy() override;
+  virtual void HandleInput() override;
+  virtual void GetControllers(nsTArray<RefPtr<VRControllerHost>>&
+                              aControllerResult) override;
+  virtual void ScanForDevices() override;
+
+private:
+  VRControllerManagerOpenVR();
+  ~VRControllerManagerOpenVR();
+
+  virtual void HandleButtonPress(uint32_t aControllerIdx,
+                                 uint64_t aButtonPressed) override;
+  virtual void HandleAxisMove(uint32_t aControllerIdx, uint32_t aAxis,
+                              float aValue) override;
+  virtual void HandlePoseTracking(uint32_t aControllerIdx,
+                                  const dom::GamepadPoseState& aPose,
+                                  VRControllerHost* aController) override;
+
+  bool mOpenVRInstalled;
+  nsTArray<RefPtr<impl::VRControllerOpenVR>> mOpenVRController;
+  vr::IVRSystem *mVRSystem;
+};
+
 } // namespace gfx
 } // namespace mozilla
 

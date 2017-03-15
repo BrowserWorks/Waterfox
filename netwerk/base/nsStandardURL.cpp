@@ -65,6 +65,19 @@ static LazyLogModule gStandardURLLog("nsStandardURL");
 
 //----------------------------------------------------------------------------
 
+#ifdef MOZ_RUST_URLPARSE
+extern "C" int32_t c_fn_set_size(void * container, size_t size)
+{
+  ((nsACString *) container)->SetLength(size);
+  return 0;
+}
+
+extern "C" char * c_fn_get_buffer(void * container)
+{
+  return ((nsACString *) container)->BeginWriting();
+}
+#endif
+
 static nsresult
 EncodeString(nsIUnicodeEncoder *encoder, const nsAFlatString &str, nsACString &result)
 {
@@ -380,7 +393,7 @@ void
 nsStandardURL::InvalidateCache(bool invalidateCachedFile)
 {
     if (invalidateCachedFile)
-        mFile = 0;
+        mFile = nullptr;
     if (mHostA) {
         free(mHostA);
         mHostA = nullptr;
@@ -575,7 +588,7 @@ nsStandardURL::ValidIPv6orHostname(const char *host, uint32_t length)
     }
 
     const char *end = host + length;
-    if (end != net_FindCharInSet(host, end, "\t\n\v\f\r #/:?@[\\]")) {
+    if (end != net_FindCharInSet(host, end, CONTROL_CHARACTERS " #/:?@[\\]*<>|\"")) {
         // We still allow % because it is in the ID of addons.
         // Any percent encoded ASCII characters that are not allowed in the
         // hostname are not percent decoded, and will be parsed just fine.
@@ -725,10 +738,12 @@ nsStandardURL::BuildNormalizedSpec(const char *spec)
         if (NS_FAILED(rv)) {
             return rv;
         }
-        nsAutoCString ipString;
-        rv = NormalizeIPv4(encHost, ipString);
-        if (NS_SUCCEEDED(rv)) {
-          encHost = ipString;
+        if (!SegmentIs(spec, mScheme, "resource") &&
+            !SegmentIs(spec, mScheme, "chrome")) {
+            nsAutoCString ipString;
+            if (NS_SUCCEEDED(NormalizeIPv4(encHost, ipString))) {
+                encHost = ipString;
+            }
         }
 
         // NormalizeIDN always copies, if the call was successful.
@@ -1178,6 +1193,7 @@ NS_IMPL_RELEASE(nsStandardURL)
 NS_INTERFACE_MAP_BEGIN(nsStandardURL)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIStandardURL)
     NS_INTERFACE_MAP_ENTRY(nsIURI)
+    NS_INTERFACE_MAP_ENTRY(nsIURIWithQuery)
     NS_INTERFACE_MAP_ENTRY(nsIURL)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIFileURL, mSupportsFileURL)
     NS_INTERFACE_MAP_ENTRY(nsIStandardURL)
@@ -1325,6 +1341,8 @@ nsStandardURL::GetAsciiSpec(nsACString &result)
 
     result = Substring(mSpec, 0, mScheme.mLen + 3);
 
+    // This is left fallible as this entire function is expected to be
+    // infallible.
     NS_EscapeURL(Userpass(true), esc_OnlyNonASCII | esc_AlwaysCopy, result);
 
     // get the hostport
@@ -1332,6 +1350,8 @@ nsStandardURL::GetAsciiSpec(nsACString &result)
     MOZ_ALWAYS_SUCCEEDS(GetAsciiHostPort(hostport));
     result += hostport;
 
+    // This is left fallible as this entire function is expected to be
+    // infallible.
     NS_EscapeURL(Path(), esc_OnlyNonASCII | esc_AlwaysCopy, result);
     return NS_OK;
 }
@@ -1913,6 +1933,13 @@ nsStandardURL::SetHost(const nsACString &input)
     nsresult rv = NormalizeIDN(flat, hostBuf);
     if (NS_FAILED(rv)) {
         return rv;
+    }
+
+    if (!SegmentIs(mScheme, "resource") && !SegmentIs(mScheme, "chrome")) {
+        nsAutoCString ipString;
+        if (NS_SUCCEEDED(NormalizeIPv4(hostBuf, ipString))) {
+          hostBuf = ipString;
+        }
     }
 
     // NormalizeIDN always copies if the call was successful
@@ -3088,7 +3115,7 @@ nsStandardURL::SetFile(nsIFile *file)
         if (NS_FAILED(file->Clone(getter_AddRefs(mFile)))) {
             NS_WARNING("nsIFile::Clone failed");
             // failure to clone is not fatal (GetFile will generate mFile)
-            mFile = 0;
+            mFile = nullptr;
         }
     }
     return rv;

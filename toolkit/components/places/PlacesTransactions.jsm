@@ -313,7 +313,6 @@ var PlacesTransactions = {
    * @see Batches in the module documentation.
    */
   batch(aToBatch) {
-    let batchFunc;
     if (Array.isArray(aToBatch)) {
       if (aToBatch.length == 0)
         throw new Error("aToBatch must not be an empty array");
@@ -1064,7 +1063,7 @@ function* createItemsFromBookmarksTree(aBookmarksTree, aRestoring = false,
                           aBookmarksTree.index);
 }
 
-/*****************************************************************************
+/** ***************************************************************************
  * The Standard Places Transactions.
  *
  * See the documentation at the top of this file. The valid values for input
@@ -1314,7 +1313,7 @@ PT.Annotate.prototype = {
       let undoAnnos = [];
       for (let newAnno of aNewAnnos) {
         let currentAnno = currentAnnos.find(a => a.name == newAnno.name);
-        if (!!currentAnno) {
+        if (currentAnno) {
           undoAnnos.push(currentAnno);
         }
         else {

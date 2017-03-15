@@ -9,6 +9,7 @@
 #include "AbstractMediaDecoder.h"
 #include "OggDemuxer.h"
 #include "OggCodecState.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/Telemetry.h"
@@ -49,6 +50,8 @@ static const uint32_t OGG_SEEK_FUZZ_USECS = 500000;
 // The number of microseconds of "pre-roll" we use for Opus streams.
 // The specification recommends 80 ms.
 static const int64_t OGG_SEEK_OPUS_PREROLL = 80 * USECS_PER_MS;
+
+static Atomic<uint32_t> sStreamSourceID(0u);
 
 class OggHeaders
 {
@@ -154,8 +157,13 @@ OggDemuxer::~OggDemuxer()
     // If we were able to initialize our decoders, report whether we encountered
     // a chained stream or not.
     bool isChained = mIsChained;
-    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([=]() -> void {
-      OGG_DEBUG("Reporting telemetry MEDIA_OGG_LOADED_IS_CHAINED=%d", isChained);
+    void* ptr = this;
+    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([ptr, isChained]() -> void {
+      // We can't use OGG_DEBUG here because it implicitly refers to `this`,
+      // which we can't capture in this runnable.
+      MOZ_LOG(gMediaDemuxerLog, mozilla::LogLevel::Debug,
+              ("OggDemuxer(%p)::%s: Reporting telemetry MEDIA_OGG_LOADED_IS_CHAINED=%d",
+               ptr, __func__, isChained));
       Telemetry::Accumulate(Telemetry::ID::MEDIA_OGG_LOADED_IS_CHAINED, isChained);
     });
     AbstractThread::MainThread()->Dispatch(task.forget());
@@ -393,7 +401,7 @@ OggDemuxer::SetupTargetTheora(TheoraState* aTheoraState, OggHeaders& aHeaders)
                       aTheoraState->mInfo.frame_height);
   if (IsValidVideoRegion(frameSize, picture, displaySize)) {
     // Video track's frame sizes will not overflow. Activate the video track.
-    mInfo.mVideo.mMimeType = "video/ogg; codecs=theora";
+    mInfo.mVideo.mMimeType = "video/theora";
     mInfo.mVideo.mDisplay = displaySize;
     mInfo.mVideo.mImage = frameSize;
     mInfo.mVideo.SetImageRect(picture);
@@ -423,7 +431,7 @@ OggDemuxer::SetupTargetVorbis(VorbisState* aVorbisState, OggHeaders& aHeaders)
   memcpy(&mVorbisInfo, &aVorbisState->mInfo, sizeof(mVorbisInfo));
   mVorbisInfo.codec_setup = nullptr;
 
-  mInfo.mAudio.mMimeType = "audio/ogg; codecs=vorbis";
+  mInfo.mAudio.mMimeType = "audio/vorbis";
   mInfo.mAudio.mRate = aVorbisState->mInfo.rate;
   mInfo.mAudio.mChannels = aVorbisState->mInfo.channels;
 
@@ -444,7 +452,7 @@ OggDemuxer::SetupTargetOpus(OpusState* aOpusState, OggHeaders& aHeaders)
     mOpusState->Reset();
   }
 
-  mInfo.mAudio.mMimeType = "audio/ogg; codecs=opus";
+  mInfo.mAudio.mMimeType = "audio/opus";
   mInfo.mAudio.mRate = aOpusState->mRate;
   mInfo.mAudio.mChannels = aOpusState->mChannels;
 
@@ -830,7 +838,7 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
     if (msgInfo) {
       InitTrack(msgInfo, &mInfo.mAudio, true);
     }
-    mInfo.mAudio.mMimeType = NS_LITERAL_CSTRING("audio/ogg; codec=vorbis");
+    mInfo.mAudio.mMimeType = NS_LITERAL_CSTRING("audio/vorbis");
     mInfo.mAudio.mRate = newVorbisState->mInfo.rate;
     mInfo.mAudio.mChannels = newVorbisState->mInfo.channels;
 
@@ -849,7 +857,7 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
     if (msgInfo) {
       InitTrack(msgInfo, &mInfo.mAudio, true);
     }
-    mInfo.mAudio.mMimeType = NS_LITERAL_CSTRING("audio/ogg; codec=opus");
+    mInfo.mAudio.mMimeType = NS_LITERAL_CSTRING("audio/opus");
     mInfo.mAudio.mRate = newOpusState->mRate;
     mInfo.mAudio.mChannels = newOpusState->mChannels;
 
@@ -885,6 +893,9 @@ OggDemuxer::ReadOggChain(const media::TimeUnit& aLastEndTime)
                       Move(tags),
                       nsAutoPtr<MediaInfo>(new MediaInfo(mInfo))));
     }
+    // Setup a new TrackInfo so that the MediaFormatReader will flush the
+    // current decoder.
+    mSharedAudioTrackInfo = new SharedTrackInfo(mInfo.mAudio, ++sStreamSourceID);
     return true;
   }
 
@@ -1488,6 +1499,9 @@ OggTrackDemuxer::NextSample()
   if (mQueuedSample) {
     RefPtr<MediaRawData> nextSample = mQueuedSample;
     mQueuedSample = nullptr;
+    if (mType == TrackInfo::kAudioTrack) {
+      nextSample->mTrackInfo = mParent->mSharedAudioTrackInfo;
+    }
     return nextSample;
   }
   ogg_packet* packet = mParent->GetNextPacket(mType);
@@ -1497,10 +1511,17 @@ OggTrackDemuxer::NextSample()
   // Check the eos state in case we need to look for chained streams.
   bool eos = packet->e_o_s;
   OggCodecState* state = mParent->GetTrackCodecState(mType);
-  RefPtr<MediaRawData> data = state->PacketOutAsMediaRawData();;
+  RefPtr<MediaRawData> data = state->PacketOutAsMediaRawData();
+  if (!data) {
+    return nullptr;
+  }
+  if (mType == TrackInfo::kAudioTrack) {
+    data->mTrackInfo = mParent->mSharedAudioTrackInfo;
+  }
   if (eos) {
     // We've encountered an end of bitstream packet; check for a chained
     // bitstream following this one.
+    // This will also update mSharedAudioTrackInfo.
     mParent->ReadOggChain(TimeUnit::FromMicroseconds(data->GetEndTime()));
   }
   return data;

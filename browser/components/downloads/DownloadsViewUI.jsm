@@ -114,7 +114,7 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
     this.element.setAttribute("state",
                               DownloadsCommon.stateOfDownload(this.download));
 
-    if (this.download.error &&
+    if (!this.download.succeeded && this.download.error &&
         this.download.error.becauseBlockedByReputationCheck) {
       this.element.setAttribute("verdict",
                                 this.download.error.reputationCheckVerdict);
@@ -153,6 +153,13 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       this.element.setAttribute("progress", this.download.progress);
     } else {
       this.element.setAttribute("progressmode", "undetermined");
+    }
+
+    if (this.download.stopped && this.download.canceled &&
+        this.download.hasPartialData) {
+      this.element.setAttribute("progresspaused", "true");
+    } else {
+      this.element.removeAttribute("progresspaused");
     }
 
     // Dispatch the ValueChange event for accessibility, if possible.

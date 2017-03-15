@@ -7,15 +7,26 @@
 UNIFIED_SOURCES += [
     'Helpers.cpp',
     'TestAtoms.cpp',
+    'TestAutoPtr.cpp',
+    'TestAutoRef.cpp',
+    'TestBase64.cpp',
+    'TestCallTemplates.cpp',
     'TestCloneInputStream.cpp',
+    'TestCOMArray.cpp',
+    'TestCOMPtrEq.cpp',
     'TestCRT.cpp',
     'TestEncoding.cpp',
     'TestEscapeURL.cpp',
     'TestExpirationTracker.cpp',
+    'TestFile.cpp',
+    'TestID.cpp',
     'TestNSPRLogModulesParser.cpp',
+    'TestObserverArray.cpp',
+    'TestObserverService.cpp',
     'TestPipes.cpp',
     'TestPLDHash.cpp',
     'TestPriorityQueue.cpp',
+    'TestRacingServiceManager.cpp',
     'TestSlicedInputStream.cpp',
     'TestSnappyStreams.cpp',
     'TestStateWatching.cpp',
@@ -24,18 +35,39 @@ UNIFIED_SOURCES += [
     'TestStringStream.cpp',
     'TestSynchronization.cpp',
     'TestTArray.cpp',
+    'TestTArray2.cpp',
+    'TestTextFormatter.cpp',
     'TestThreadPool.cpp',
+    'TestThreadPoolListener.cpp',
     'TestThreads.cpp',
+    'TestThreadUtils.cpp',
+    'TestTimers.cpp',
     'TestTimeStamp.cpp',
     'TestTokenizer.cpp',
     'TestUTF.cpp',
     'TestXPIDLString.cpp',
 ]
 
+if CONFIG['MOZ_DEBUG'] and CONFIG['OS_ARCH'] not in ('WINNT') and CONFIG['OS_TARGET'] != 'Android':
+    # FIXME bug 523392: TestDeadlockDetector doesn't like Windows
+    # Bug 1054249: Doesn't work on Android
+    UNIFIED_SOURCES += [
+        'TestDeadlockDetector.cpp',
+        'TestDeadlockDetectorScalability.cpp',
+    ]
+
+if CONFIG['WRAP_STL_INCLUDES'] and not CONFIG['CLANG_CL']:
+    UNIFIED_SOURCES += [
+        'TestSTLWrappers.cpp',
+    ]
+
 # Compile TestAllocReplacement separately so Windows headers don't pollute
 # the global namespace for other files.
 SOURCES += [
     'TestAllocReplacement.cpp',
+    'TestCOMPtr.cpp', # Redefines IFoo and IBar
+    'TestHashtables.cpp', # Redefines IFoo
+    'TestNsRefPtr.cpp', # Redefines Foo
 ]
 
 LOCAL_INCLUDES += [

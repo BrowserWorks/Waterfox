@@ -59,7 +59,7 @@ define(function (require, exports, module) {
       }
 
       let json = JSON.stringify(object).toLowerCase();
-      return json.indexOf(this.props.searchFilter) >= 0;
+      return json.indexOf(this.props.searchFilter.toLowerCase()) >= 0;
     },
 
     getExpandedNodes: function (object, path = "", level = 0) {
@@ -93,7 +93,9 @@ define(function (require, exports, module) {
       }
 
       // Render the value (summary) using Reps library.
-      return Rep(props);
+      return Rep(Object.assign({}, props, {
+        cropLimit: 50,
+      }));
     },
 
     renderTree: function () {

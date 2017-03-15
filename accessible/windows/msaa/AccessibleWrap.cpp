@@ -91,10 +91,11 @@ void
 AccessibleWrap::Shutdown()
 {
   if (mID != kNoID) {
-    auto doc = static_cast<DocAccessibleWrap*>(mDoc);
+    auto doc = static_cast<DocAccessibleWrap*>(mDoc.get());
     MOZ_ASSERT(doc);
     if (doc) {
       doc->RemoveID(mID);
+      mID = kNoID;
     }
   }
 
@@ -1216,6 +1217,7 @@ AccessibleWrap::SetID(uint32_t aID)
 void
 AccessibleWrap::FireWinEvent(Accessible* aTarget, uint32_t aEventType)
 {
+  MOZ_ASSERT(XRE_IsParentProcess());
   static_assert(sizeof(gWinEventMap)/sizeof(gWinEventMap[0]) == nsIAccessibleEvent::EVENT_LAST_ENTRY,
                 "MSAA event map skewed");
 
@@ -1453,6 +1455,10 @@ GetProxiedAccessibleInSubtree(const DocAccessibleParent* aDoc,
   }
 
   wrapper->GetNativeInterface(getter_AddRefs(comProxy));
+  MOZ_ASSERT(comProxy);
+  if (!comProxy) {
+    return nullptr;
+  }
 
   RefPtr<IDispatch> disp;
   if (FAILED(comProxy->get_accChild(aVarChild, getter_AddRefs(disp)))) {

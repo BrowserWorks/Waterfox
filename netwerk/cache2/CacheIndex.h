@@ -56,11 +56,16 @@ typedef struct {
   uint32_t mIsDirty;
 } CacheIndexHeader;
 
+static_assert(
+  sizeof(CacheIndexHeader::mVersion) + sizeof(CacheIndexHeader::mTimeStamp) +
+  sizeof(CacheIndexHeader::mIsDirty) == sizeof(CacheIndexHeader),
+  "Unexpected sizeof(CacheIndexHeader)!");
+
 struct CacheIndexRecord {
   SHA1Sum::Hash   mHash;
   uint32_t        mFrecency;
-  uint32_t        mExpirationTime;
   OriginAttrsHash mOriginAttrsHash;
+  uint32_t        mExpirationTime;
 
   /*
    *    1000 0000 0000 0000 0000 0000 0000 0000 : initialized
@@ -72,15 +77,21 @@ struct CacheIndexRecord {
    *    0000 0011 0000 0000 0000 0000 0000 0000 : reserved
    *    0000 0000 1111 1111 1111 1111 1111 1111 : file size (in kB)
    */
-  uint32_t      mFlags;
+  uint32_t        mFlags;
 
   CacheIndexRecord()
     : mFrecency(0)
-    , mExpirationTime(nsICacheEntry::NO_EXPIRATION_TIME)
     , mOriginAttrsHash(0)
+    , mExpirationTime(nsICacheEntry::NO_EXPIRATION_TIME)
     , mFlags(0)
   {}
 };
+
+static_assert(
+  sizeof(CacheIndexRecord::mHash) + sizeof(CacheIndexRecord::mFrecency) +
+  sizeof(CacheIndexRecord::mOriginAttrsHash) + sizeof(CacheIndexRecord::mExpirationTime) +
+  sizeof(CacheIndexRecord::mFlags) == sizeof(CacheIndexRecord),
+  "Unexpected sizeof(CacheIndexRecord)!");
 
 class CacheIndexEntry : public PLDHashEntryHdr
 {
@@ -221,36 +232,24 @@ public:
 
   void WriteToBuf(void *aBuf)
   {
-    CacheIndexRecord *dst = reinterpret_cast<CacheIndexRecord *>(aBuf);
-
-    // Copy the whole record to the buffer.
-    memcpy(aBuf, mRec, sizeof(CacheIndexRecord));
-
+    uint8_t* ptr = static_cast<uint8_t*>(aBuf);
+    memcpy(ptr, mRec->mHash, sizeof(SHA1Sum::Hash)); ptr += sizeof(SHA1Sum::Hash);
+    NetworkEndian::writeUint32(ptr, mRec->mFrecency); ptr += sizeof(uint32_t);
+    NetworkEndian::writeUint64(ptr, mRec->mOriginAttrsHash); ptr += sizeof(uint64_t);
+    NetworkEndian::writeUint32(ptr, mRec->mExpirationTime); ptr += sizeof(uint32_t);
     // Dirty and fresh flags should never go to disk, since they make sense only
     // during current session.
-    dst->mFlags &= ~kDirtyMask;
-    dst->mFlags &= ~kFreshMask;
-
-#if defined(IS_LITTLE_ENDIAN)
-    // Data in the buffer are in machine byte order and we want them in network
-    // byte order.
-    NetworkEndian::writeUint32(&dst->mFrecency, dst->mFrecency);
-    NetworkEndian::writeUint32(&dst->mExpirationTime, dst->mExpirationTime);
-    NetworkEndian::writeUint64(&dst->mOriginAttrsHash, dst->mOriginAttrsHash);
-    NetworkEndian::writeUint32(&dst->mFlags, dst->mFlags);
-#endif
+    NetworkEndian::writeUint32(ptr, mRec->mFlags & ~(kDirtyMask | kFreshMask));
   }
 
   void ReadFromBuf(void *aBuf)
   {
-    CacheIndexRecord *src= reinterpret_cast<CacheIndexRecord *>(aBuf);
-    MOZ_ASSERT(memcmp(&mRec->mHash, &src->mHash,
-               sizeof(SHA1Sum::Hash)) == 0);
-
-    mRec->mFrecency = NetworkEndian::readUint32(&src->mFrecency);
-    mRec->mExpirationTime = NetworkEndian::readUint32(&src->mExpirationTime);
-    mRec->mOriginAttrsHash = NetworkEndian::readUint64(&src->mOriginAttrsHash);
-    mRec->mFlags = NetworkEndian::readUint32(&src->mFlags);
+    const uint8_t* ptr = static_cast<const uint8_t*>(aBuf);
+    MOZ_ASSERT(memcmp(&mRec->mHash, ptr, sizeof(SHA1Sum::Hash)) == 0); ptr += sizeof(SHA1Sum::Hash);
+    mRec->mFrecency = NetworkEndian::readUint32(ptr); ptr += sizeof(uint32_t);
+    mRec->mOriginAttrsHash = NetworkEndian::readUint64(ptr); ptr += sizeof(uint64_t);
+    mRec->mExpirationTime = NetworkEndian::readUint32(ptr); ptr += sizeof(uint32_t);
+    mRec->mFlags = NetworkEndian::readUint32(ptr);
   }
 
   void Log() const {
@@ -910,10 +909,6 @@ private:
   void AllocBuffer();
   void ReleaseBuffer();
 
-  // Methods used by CacheIndexEntryAutoManage to keep the arrays up to date.
-  void InsertRecordToFrecencyArray(CacheIndexRecord *aRecord);
-  void RemoveRecordFromFrecencyArray(CacheIndexRecord *aRecord);
-
   // Methods used by CacheIndexEntryAutoManage to keep the iterators up to date.
   void AddRecordToIterators(CacheIndexRecord *aRecord);
   void RemoveRecordFromIterators(CacheIndexRecord *aRecord);
@@ -1020,12 +1015,79 @@ private:
   // of the journal fails or the hash does not match.
   nsTHashtable<CacheIndexEntry> mTmpJournal;
 
-  // An array that keeps entry records ordered by eviction preference; we take
-  // the entry with lowest valid frecency. Zero frecency is an initial value
-  // and such entries are stored at the end of the array. Uninitialized entries
-  // and entries marked as deleted are not present in this array.
-  nsTArray<CacheIndexRecord *>  mFrecencyArray;
-  bool                          mFrecencyArraySorted;
+  // FrecencyArray maintains order of entry records for eviction. Ideally, the
+  // records would be ordered by frecency all the time, but since this would be
+  // quite expensive, we allow certain amount of entries to be out of order.
+  // When the frecency is updated the new value is always bigger than the old
+  // one. Instead of keeping updated entries at the same position, we move them
+  // at the end of the array. This protects recently updated entries from
+  // eviction. The array is sorted once we hit the limit of maximum unsorted
+  // entries.
+  class FrecencyArray
+  {
+    class Iterator
+    {
+    public:
+      explicit Iterator(nsTArray<CacheIndexRecord *> *aRecs)
+        : mRecs(aRecs)
+        , mIdx(0)
+      {
+        while (!Done() && !(*mRecs)[mIdx]) {
+          mIdx++;
+        }
+      }
+
+      bool Done() const { return mIdx == mRecs->Length(); }
+
+      CacheIndexRecord* Get() const
+      {
+        MOZ_ASSERT(!Done());
+        return (*mRecs)[mIdx];
+      }
+
+      void Next()
+      {
+        MOZ_ASSERT(!Done());
+        ++mIdx;
+        while (!Done() && !(*mRecs)[mIdx]) {
+          mIdx++;
+        }
+      }
+
+    private:
+      nsTArray<CacheIndexRecord *> *mRecs;
+      uint32_t mIdx;
+    };
+
+  public:
+    Iterator Iter() { return Iterator(&mRecs); }
+
+    FrecencyArray() : mUnsortedElements(0)
+                    , mRemovedElements(0) {}
+
+    // Methods used by CacheIndexEntryAutoManage to keep the array up to date.
+    void AppendRecord(CacheIndexRecord *aRecord);
+    void RemoveRecord(CacheIndexRecord *aRecord);
+    void ReplaceRecord(CacheIndexRecord *aOldRecord,
+                       CacheIndexRecord *aNewRecord);
+    void SortIfNeeded();
+
+    size_t Length() const { return mRecs.Length() - mRemovedElements; }
+    void Clear() { mRecs.Clear(); }
+
+  private:
+    friend class CacheIndex;
+
+    nsTArray<CacheIndexRecord *> mRecs;
+    uint32_t                     mUnsortedElements;
+    // Instead of removing elements from the array immediately, we null them out
+    // and the iterator skips them when accessing the array. The null pointers
+    // are placed at the end during sorting and we strip them out all at once.
+    // This saves moving a lot of memory in nsTArray::RemoveElementsAt.
+    uint32_t                     mRemovedElements;
+  };
+
+  FrecencyArray mFrecencyArray;
 
   nsTArray<CacheIndexIterator *> mIterators;
 

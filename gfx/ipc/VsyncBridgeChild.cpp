@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "VsyncBridgeChild.h"
 #include "VsyncIOThreadHolder.h"
+#include "mozilla/dom/ContentChild.h"
 
 namespace mozilla {
 namespace gfx {
@@ -113,8 +114,14 @@ VsyncBridgeChild::Close()
   if (!mProcessToken) {
     return;
   }
-  PVsyncBridgeChild::Close();
+
+  // Clear the process token so we don't notify the GPUProcessManager. It already
+  // knows we're closed since it manually called Close, and in fact the GPM could
+  // have already been destroyed during shutdown.
   mProcessToken = 0;
+
+  // Close the underlying IPC channel.
+  PVsyncBridgeChild::Close();
 }
 
 void
@@ -136,6 +143,12 @@ void
 VsyncBridgeChild::ProcessingError(Result aCode, const char* aReason)
 {
   MOZ_RELEASE_ASSERT(aCode == MsgDropped, "Processing error in VsyncBridgeChild");
+}
+
+void
+VsyncBridgeChild::HandleFatalError(const char* aName, const char* aMsg) const
+{
+  dom::ContentChild::FatalErrorIfNotUsingGPUProcess(aName, aMsg, OtherPid());
 }
 
 } // namespace gfx

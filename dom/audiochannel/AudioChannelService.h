@@ -68,9 +68,15 @@ public:
   NS_DECL_NSIOBSERVER
   NS_DECL_NSIAUDIOCHANNELSERVICE
 
-  enum AudibleState : bool {
-    eAudible = true,
-    eNotAudible = false
+  /**
+   * eNotAudible : agent is not audible
+   * eMaybeAudible : agent is not audible now, but it might be audible later
+   * eAudible : agent is audible now
+   */
+  enum AudibleState : uint8_t {
+    eNotAudible = 0,
+    eMaybeAudible = 1,
+    eAudible = 2
   };
 
   enum AudioCaptureState : bool {
@@ -230,8 +236,7 @@ private:
   void SetDefaultVolumeControlChannelInternal(int32_t aChannel,
                                               bool aVisible, uint64_t aChildID);
 
-  void RefreshAgentsAudioFocusChanged(AudioChannelAgent* aAgent,
-                                      bool aActive);
+  void RefreshAgentsAudioFocusChanged(AudioChannelAgent* aAgent);
 
   class AudioChannelConfig final : public AudioPlaybackConfig
   {
@@ -257,7 +262,7 @@ private:
       mChannels[(int16_t)AudioChannel::System].mMuted = false;
     }
 
-    void AudioFocusChanged(AudioChannelAgent* aNewPlayingAgent, bool aActive);
+    void AudioFocusChanged(AudioChannelAgent* aNewPlayingAgent);
     void AudioAudibleChanged(AudioChannelAgent* aAgent,
                              AudibleState aAudible,
                              AudibleChangedReasons aReason);
@@ -298,13 +303,14 @@ private:
 
     void NotifyChannelActive(uint64_t aWindowID, AudioChannel aChannel,
                              bool aActive);
+    void MaybeNotifyMediaBlocked(AudioChannelAgent* aAgent);
 
     void RequestAudioFocus(AudioChannelAgent* aAgent);
-    void NotifyAudioCompetingChanged(AudioChannelAgent* aAgent, bool aActive);
+    // We need to do audio competing only when the new incoming agent started.
+    void NotifyAudioCompetingChanged(AudioChannelAgent* aAgent);
 
     uint32_t GetCompetingBehavior(AudioChannelAgent* aAgent,
-                                  int32_t aIncomingChannelType,
-                                  bool aIncomingChannelActive) const;
+                                  int32_t aIncomingChannelType) const;
     bool IsAgentInvolvingInAudioCompeting(AudioChannelAgent* aAgent) const;
     bool IsAudioCompetingInSameTab() const;
     bool IsContainingPlayingAgent(AudioChannelAgent* aAgent) const;

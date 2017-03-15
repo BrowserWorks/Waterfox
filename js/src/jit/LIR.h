@@ -190,7 +190,6 @@ class LAllocation : public TempObject
     UniqueChars toString() const;
     bool aliases(const LAllocation& other) const;
     void dump() const;
-
 };
 
 class LUse : public LAllocation
@@ -1814,7 +1813,8 @@ class LIRGraph
         return mir_.numBlockIds();
     }
     MOZ_MUST_USE bool initBlock(MBasicBlock* mir) {
-        LBlock* lir = new (&blocks_[mir->id()]) LBlock(mir);
+        auto* block = &blocks_[mir->id()];
+        auto* lir = new (block) LBlock(mir);
         return lir->init(mir_.alloc());
     }
     uint32_t getVirtualRegister() {

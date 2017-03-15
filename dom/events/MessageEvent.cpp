@@ -8,7 +8,6 @@
 #include "mozilla/dom/MessageEventBinding.h"
 #include "mozilla/dom/MessagePort.h"
 #include "mozilla/dom/MessagePortBinding.h"
-#include "mozilla/dom/MessagePortList.h"
 
 #include "mozilla/HoldDropJSObjects.h"
 #include "jsapi.h"
@@ -66,7 +65,6 @@ void
 MessageEvent::GetData(JSContext* aCx, JS::MutableHandle<JS::Value> aData,
                       ErrorResult& aRv)
 {
-  JS::ExposeValueToActiveJS(mData);
   aData.set(mData);
   if (!JS_WrapValue(aCx, aData)) {
     aRv.Throw(NS_ERROR_FAILURE);
@@ -121,13 +119,8 @@ MessageEvent::Constructor(EventTarget* aEventTarget,
 
   mozilla::HoldJSObjects(event.get());
 
-  if (aParam.mOrigin.WasPassed()) {
-    event->mOrigin = aParam.mOrigin.Value();
-  }
-
-  if (aParam.mLastEventId.WasPassed()) {
-    event->mLastEventId = aParam.mLastEventId.Value();
-  }
+  event->mOrigin = aParam.mOrigin;
+  event->mLastEventId = aParam.mLastEventId;
 
   if (!aParam.mSource.IsNull()) {
     if (aParam.mSource.Value().IsWindow()) {
@@ -139,14 +132,7 @@ MessageEvent::Constructor(EventTarget* aEventTarget,
     MOZ_ASSERT(event->mWindowSource || event->mPortSource);
   }
 
-  if (aParam.mPorts.WasPassed() && !aParam.mPorts.Value().IsNull()) {
-    nsTArray<RefPtr<MessagePort>> ports;
-    for (uint32_t i = 0, len = aParam.mPorts.Value().Value().Length(); i < len; ++i) {
-      ports.AppendElement(aParam.mPorts.Value().Value()[i].get());
-    }
-
-    event->mPorts = new MessagePortList(static_cast<Event*>(event), ports);
-  }
+  event->mPorts.AppendElements(aParam.mPorts);
 
   return event.forget();
 }
@@ -158,8 +144,10 @@ MessageEvent::InitMessageEvent(JSContext* aCx, const nsAString& aType,
                                const nsAString& aOrigin,
                                const nsAString& aLastEventId,
                                const Nullable<WindowProxyOrMessagePort>& aSource,
-                               const Nullable<Sequence<OwningNonNull<MessagePort>>>& aPorts)
+                               const Sequence<OwningNonNull<MessagePort>>& aPorts)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   Event::InitEvent(aType, aCanBubble, aCancelable);
   mData = aData;
   mozilla::HoldJSObjects(this);
@@ -178,42 +166,16 @@ MessageEvent::InitMessageEvent(JSContext* aCx, const nsAString& aType,
     }
   }
 
-  mPorts = nullptr;
-
-  if (!aPorts.IsNull()) {
-    nsTArray<RefPtr<MessagePort>> ports;
-    for (uint32_t i = 0, len = aPorts.Value().Length(); i < len; ++i) {
-      ports.AppendElement(aPorts.Value()[i]);
-    }
-
-    mPorts = new MessagePortList(static_cast<Event*>(this), ports);
-  }
+  mPorts.Clear();
+  mPorts.AppendElements(aPorts);
+  MessageEventBinding::ClearCachedPortsValue(this);
 }
 
 void
-MessageEvent::SetPorts(MessagePortList* aPorts)
+MessageEvent::GetPorts(nsTArray<RefPtr<MessagePort>>& aPorts)
 {
-  MOZ_ASSERT(!mPorts && aPorts);
-  mPorts = aPorts;
-}
-
-void
-MessageEvent::SetSource(mozilla::dom::MessagePort* aPort)
-{
-  mPortSource = aPort;
+  aPorts = mPorts;
 }
 
 } // namespace dom
 } // namespace mozilla
-
-using namespace mozilla;
-using namespace mozilla::dom;
-
-already_AddRefed<MessageEvent>
-NS_NewDOMMessageEvent(EventTarget* aOwner,
-                      nsPresContext* aPresContext,
-                      WidgetEvent* aEvent)
-{
-  RefPtr<MessageEvent> it = new MessageEvent(aOwner, aPresContext, aEvent);
-  return it.forget();
-}

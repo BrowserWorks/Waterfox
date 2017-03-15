@@ -3,12 +3,10 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* globals gDevTools */
 
 "use strict";
 
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const Services = require("Services");
 const {Task} = require("devtools/shared/task");
 const {Tools} = require("devtools/client/definitions");
@@ -19,16 +17,22 @@ const {PrefObserver, PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/u
 const {ElementStyle} = require("devtools/client/inspector/rules/models/element-style");
 const {Rule} = require("devtools/client/inspector/rules/models/rule");
 const {RuleEditor} = require("devtools/client/inspector/rules/views/rule-editor");
-const {createChild, promiseWarn, throttle} = require("devtools/client/inspector/shared/utils");
 const {gDevTools} = require("devtools/client/framework/devtools");
 const {getCssProperties} = require("devtools/shared/fronts/css-properties");
-
-const overlays = require("devtools/client/inspector/shared/style-inspector-overlays");
-const EventEmitter = require("devtools/shared/event-emitter");
+const HighlightersOverlay = require("devtools/client/inspector/shared/highlighters-overlay");
+const {
+  VIEW_NODE_SELECTOR_TYPE,
+  VIEW_NODE_PROPERTY_TYPE,
+  VIEW_NODE_VALUE_TYPE,
+  VIEW_NODE_IMAGE_URL_TYPE,
+  VIEW_NODE_LOCATION_TYPE,
+} = require("devtools/client/inspector/shared/node-types");
 const StyleInspectorMenu = require("devtools/client/inspector/shared/style-inspector-menu");
+const TooltipsOverlay = require("devtools/client/inspector/shared/tooltips-overlay");
+const {createChild, promiseWarn, throttle} = require("devtools/client/inspector/shared/utils");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {KeyShortcuts} = require("devtools/client/shared/key-shortcuts");
 const clipboardHelper = require("devtools/shared/platform/clipboard");
-
 const {AutocompletePopup} = require("devtools/client/shared/autocomplete-popup");
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
@@ -79,47 +83,6 @@ const FILTER_STRICT_RE = /\s*`(.*?)`\s*$/;
  */
 
 /**
- * To figure out how shorthand properties are interpreted by the
- * engine, we will set properties on a dummy element and observe
- * how their .style attribute reflects them as computed values.
- * This function creates the document in which those dummy elements
- * will be created.
- */
-var gDummyPromise;
-function createDummyDocument() {
-  if (gDummyPromise) {
-    return gDummyPromise;
-  }
-  const { getDocShell, create: makeFrame } = require("sdk/frame/utils");
-
-  let frame = makeFrame(Services.appShell.hiddenDOMWindow.document, {
-    nodeName: "iframe",
-    namespaceURI: "http://www.w3.org/1999/xhtml",
-    allowJavascript: false,
-    allowPlugins: false,
-    allowAuth: false
-  });
-  let docShell = getDocShell(frame);
-  let eventTarget = docShell.chromeEventHandler;
-  let ssm = Services.scriptSecurityManager;
-
-  // We probably need to call InheritFromDocShellToDoc to get the correct origin
-  // attributes, but right now we can't call it from JS.
-  let nullPrincipal = ssm.createNullPrincipal(docShell.getOriginAttributes());
-  docShell.createAboutBlankContentViewer(nullPrincipal);
-  let window = docShell.contentViewer.DOMDocument.defaultView;
-  window.location = "data:text/html,<html></html>";
-  let deferred = defer();
-  eventTarget.addEventListener("DOMContentLoaded", function handler() {
-    eventTarget.removeEventListener("DOMContentLoaded", handler, false);
-    deferred.resolve(window.document);
-    frame.remove();
-  }, false);
-  gDummyPromise = deferred.promise;
-  return gDummyPromise;
-}
-
-/**
  * CssRuleView is a view of the style rules and declarations that
  * apply to a given element.  After construction, the 'element'
  * property will be available with the user interface.
@@ -147,15 +110,13 @@ function CssRuleView(inspector, document, store, pageStyle) {
 
   this.cssProperties = getCssProperties(inspector.toolbox);
 
-  this._outputParser = new OutputParser(document, this.cssProperties.supportsType);
+  this._outputParser = new OutputParser(document, this.cssProperties);
 
   this._onAddRule = this._onAddRule.bind(this);
   this._onContextMenu = this._onContextMenu.bind(this);
   this._onCopy = this._onCopy.bind(this);
   this._onFilterStyles = this._onFilterStyles.bind(this);
   this._onClearSearch = this._onClearSearch.bind(this);
-  this._onFilterTextboxContextMenu =
-    this._onFilterTextboxContextMenu.bind(this);
   this._onTogglePseudoClassPanel = this._onTogglePseudoClassPanel.bind(this);
   this._onTogglePseudoClass = this._onTogglePseudoClass.bind(this);
 
@@ -182,8 +143,7 @@ function CssRuleView(inspector, document, store, pageStyle) {
   this.element.addEventListener("contextmenu", this._onContextMenu);
   this.addRuleButton.addEventListener("click", this._onAddRule);
   this.searchField.addEventListener("input", this._onFilterStyles);
-  this.searchField.addEventListener("contextmenu",
-                                    this._onFilterTextboxContextMenu);
+  this.searchField.addEventListener("contextmenu", this.inspector.onTextBoxContextMenu);
   this.searchClearButton.addEventListener("click", this._onClearSearch);
   this.pseudoClassToggle.addEventListener("click",
                                           this._onTogglePseudoClassPanel);
@@ -204,20 +164,20 @@ function CssRuleView(inspector, document, store, pageStyle) {
   this.enableMdnDocsTooltip =
     Services.prefs.getBoolPref(PREF_ENABLE_MDN_DOCS_TOOLTIP);
 
-  let options = {
+  // The popup will be attached to the toolbox document.
+  this.popup = new AutocompletePopup(inspector._toolbox.doc, {
     autoSelect: true,
     theme: "auto"
-  };
-  this.popup = new AutocompletePopup(inspector._toolbox, options);
+  });
 
   this._showEmpty();
 
   this._contextmenu = new StyleInspectorMenu(this, { isRuleView: true });
 
   // Add the tooltips and highlighters to the view
-  this.tooltips = new overlays.TooltipsOverlay(this);
+  this.tooltips = new TooltipsOverlay(this);
   this.tooltips.addToView();
-  this.highlighters = new overlays.HighlightersOverlay(this);
+  this.highlighters = new HighlightersOverlay(this);
   this.highlighters.addToView();
 
   EventEmitter.decorate(this);
@@ -295,15 +255,15 @@ CssRuleView.prototype = {
     selectorIcon.classList.remove("highlighted");
 
     this.unhighlightSelector().then(() => {
-      if (selector !== this.highlightedSelector) {
-        this.highlightedSelector = selector;
+      if (selector !== this.highlighters.selectorHighlighterShown) {
+        this.highlighters.selectorHighlighterShown = selector;
         selectorIcon.classList.add("highlighted");
         this.lastSelectorIcon = selectorIcon;
         this.highlightSelector(selector).then(() => {
           this.emit("ruleview-selectorhighlighter-toggled", true);
         }, e => console.error(e));
       } else {
-        this.highlightedSelector = null;
+        this.highlighters.selectorHighlighterShown = null;
         this.emit("ruleview-selectorhighlighter-toggled", false);
       }
     }, e => console.error(e));
@@ -340,7 +300,7 @@ CssRuleView.prototype = {
    *        The node which we want information about
    * @return {Object} The type information object contains the following props:
    * - type {String} One of the VIEW_NODE_XXX_TYPE const in
-   *   style-inspector-overlays
+   *   client/inspector/shared/node-types
    * - value {Object} Depends on the type of the node
    * returns null of the node isn't anything we care about
    */
@@ -354,7 +314,7 @@ CssRuleView.prototype = {
     let prop = getParentTextProperty(node);
 
     if (classes.contains("ruleview-propertyname") && prop) {
-      type = overlays.VIEW_NODE_PROPERTY_TYPE;
+      type = VIEW_NODE_PROPERTY_TYPE;
       value = {
         property: node.textContent,
         value: getPropertyNameAndValue(node).value,
@@ -365,7 +325,7 @@ CssRuleView.prototype = {
         textProperty: prop
       };
     } else if (classes.contains("ruleview-propertyvalue") && prop) {
-      type = overlays.VIEW_NODE_VALUE_TYPE;
+      type = VIEW_NODE_VALUE_TYPE;
       value = {
         property: getPropertyNameAndValue(node).name,
         value: node.textContent,
@@ -377,7 +337,7 @@ CssRuleView.prototype = {
       };
     } else if (classes.contains("theme-link") &&
                !classes.contains("ruleview-rule-source") && prop) {
-      type = overlays.VIEW_NODE_IMAGE_URL_TYPE;
+      type = VIEW_NODE_IMAGE_URL_TYPE;
       value = {
         property: getPropertyNameAndValue(node).name,
         value: node.parentNode.textContent,
@@ -395,11 +355,11 @@ CssRuleView.prototype = {
                classes.contains("ruleview-selector-attribute") ||
                classes.contains("ruleview-selector-pseudo-class") ||
                classes.contains("ruleview-selector-pseudo-class-lock")) {
-      type = overlays.VIEW_NODE_SELECTOR_TYPE;
+      type = VIEW_NODE_SELECTOR_TYPE;
       value = this._getRuleEditorForNode(node).selectorText.textContent;
     } else if (classes.contains("ruleview-rule-source") ||
                classes.contains("ruleview-rule-source-label")) {
-      type = overlays.VIEW_NODE_LOCATION_TYPE;
+      type = VIEW_NODE_LOCATION_TYPE;
       let rule = this._getRuleEditorForNode(node).rule;
       value = (rule.sheet && rule.sheet.href) ? rule.sheet.href : rule.title;
     } else {
@@ -512,7 +472,7 @@ CssRuleView.prototype = {
   _onAddRule: function () {
     let elementStyle = this._elementStyle;
     let element = elementStyle.element;
-    let client = this.inspector.toolbox.target.client;
+    let client = this.inspector.target.client;
     let pseudoClasses = element.pseudoClassLocks;
 
     if (!client.traits.addNewRule) {
@@ -687,19 +647,6 @@ CssRuleView.prototype = {
   },
 
   /**
-   * Context menu handler for filter style search box.
-   */
-  _onFilterTextboxContextMenu: function (event) {
-    try {
-      this.styleWindow.focus();
-      let contextmenu = this.inspector.toolbox.textboxContextMenuPopup;
-      contextmenu.openPopupAtScreen(event.screenX, event.screenY, true);
-    } catch (e) {
-      console.error(e);
-    }
-  },
-
-  /**
    * Called when the user clicks on the clear button in the filter style search
    * box. Returns true if the search box is cleared and false otherwise.
    */
@@ -717,8 +664,6 @@ CssRuleView.prototype = {
     this.clear();
 
     this._dummyElement = null;
-    this.dummyElementPromise = null;
-    gDummyPromise = null;
 
     this._prefObserver.off(PREF_ORIG_SOURCES, this._onSourcePrefChanged);
     this._prefObserver.off(PREF_UA_STYLES, this._handlePrefChange);
@@ -743,7 +688,7 @@ CssRuleView.prototype = {
     this.addRuleButton.removeEventListener("click", this._onAddRule);
     this.searchField.removeEventListener("input", this._onFilterStyles);
     this.searchField.removeEventListener("contextmenu",
-      this._onFilterTextboxContextMenu);
+      this.inspector.onTextBoxContextMenu);
     this.searchClearButton.removeEventListener("click", this._onClearSearch);
     this.pseudoClassToggle.removeEventListener("click",
       this._onTogglePseudoClassPanel);
@@ -825,14 +770,12 @@ CssRuleView.prototype = {
     // To figure out how shorthand properties are interpreted by the
     // engine, we will set properties on a dummy element and observe
     // how their .style attribute reflects them as computed values.
-    this.dummyElementPromise = createDummyDocument().then(document => {
+    let dummyElementPromise = promise.resolve(this.styleDocument).then(document => {
       // ::before and ::after do not have a namespaceURI
       let namespaceURI = this.element.namespaceURI ||
           document.documentElement.namespaceURI;
       this._dummyElement = document.createElementNS(namespaceURI,
                                                    this.element.tagName);
-      document.documentElement.appendChild(this._dummyElement);
-      return this._dummyElement;
     }).then(null, promiseWarn);
 
     let elementStyle = new ElementStyle(element, this, this.store,
@@ -841,7 +784,7 @@ CssRuleView.prototype = {
 
     this._startSelectingElement();
 
-    return this.dummyElementPromise.then(() => {
+    return dummyElementPromise.then(() => {
       if (this._elementStyle === elementStyle) {
         return this._populate();
       }
@@ -1562,15 +1505,15 @@ function RuleViewTool(inspector, window) {
 
   this.view = new CssRuleView(this.inspector, this.document);
 
-  this.onLinkClicked = this.onLinkClicked.bind(this);
-  this.onSelected = this.onSelected.bind(this);
-  this.refresh = this.refresh.bind(this);
   this.clearUserProperties = this.clearUserProperties.bind(this);
-  this.onPropertyChanged = this.onPropertyChanged.bind(this);
-  this.onViewRefreshed = this.onViewRefreshed.bind(this);
-  this.onPanelSelected = this.onPanelSelected.bind(this);
+  this.refresh = this.refresh.bind(this);
+  this.onLinkClicked = this.onLinkClicked.bind(this);
   this.onMutations = this.onMutations.bind(this);
+  this.onPanelSelected = this.onPanelSelected.bind(this);
+  this.onPropertyChanged = this.onPropertyChanged.bind(this);
   this.onResized = this.onResized.bind(this);
+  this.onSelected = this.onSelected.bind(this);
+  this.onViewRefreshed = this.onViewRefreshed.bind(this);
 
   this.view.on("ruleview-changed", this.onPropertyChanged);
   this.view.on("ruleview-refreshed", this.onViewRefreshed);

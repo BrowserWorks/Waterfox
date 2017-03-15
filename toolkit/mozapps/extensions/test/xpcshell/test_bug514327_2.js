@@ -26,11 +26,13 @@ function run_test() {
   var blocklist = Cc["@mozilla.org/extensions/blocklist;1"].getService(nsIBLS);
   var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 
+  prefs.setBoolPref("plugin.load_flash_only", false);
+
   var plugin = get_test_plugintag();
   if (!plugin)
     do_throw("Plugin tag not found");
 
-  //run the code after the blocklist is closed
+  // run the code after the blocklist is closed
   Services.obs.notifyObservers(null, "addon-blocklist-closed", null);
   do_execute_soon(function() {
     // should be marked as outdated by the blocklist

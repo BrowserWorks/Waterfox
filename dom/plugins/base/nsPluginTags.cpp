@@ -375,7 +375,7 @@ void nsPluginTag::InitMime(const char* const* aMimeTypes,
         break;
       case nsPluginHost::eSpecialType_None:
       default:
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
         // Allow async init for all plugins on Nightly and Aurora
         mSupportsAsyncInit = true;
 #endif
@@ -755,13 +755,6 @@ nsPluginTag::GetNiceName(nsACString & aResult)
 {
   aResult = GetNiceFileName();
   return NS_OK;
-}
-
-void nsPluginTag::ImportFlagsToPrefs(uint32_t flags)
-{
-  if (!(flags & NS_PLUGIN_FLAG_ENABLED)) {
-    SetPluginState(ePluginState_Disabled);
-  }
 }
 
 NS_IMETHODIMP

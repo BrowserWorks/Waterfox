@@ -9,27 +9,16 @@
 namespace mozilla {
 namespace layers {
 
-gfx::Polygon3D PopFront(std::deque<gfx::Polygon3D>& aPolygons)
+LayerPolygon PopFront(std::deque<LayerPolygon>& aLayers)
 {
-  gfx::Polygon3D polygon = std::move(aPolygons.front());
-  aPolygons.pop_front();
-  return polygon;
-}
-
-namespace {
-
-static int sign(float d) {
-  if (d > 0) return 1;
-  if (d < 0) return -1;
-
-  return 0;
-}
-
+  LayerPolygon layer = Move(aLayers.front());
+  aLayers.pop_front();
+  return layer;
 }
 
 void
 BSPTree::BuildDrawOrder(const UniquePtr<BSPTreeNode>& aNode,
-                        nsTArray<gfx::Polygon3D>& aPolygons) const
+                        nsTArray<LayerPolygon>& aLayers) const
 {
   const gfx::Point3D& normal = aNode->First().GetNormal();
 
@@ -45,141 +34,72 @@ BSPTree::BuildDrawOrder(const UniquePtr<BSPTreeNode>& aNode,
   }
 
   if (*front) {
-    BuildDrawOrder(*front, aPolygons);
+    BuildDrawOrder(*front, aLayers);
   }
 
-  for (gfx::Polygon3D& polygon : aNode->polygons) {
-    aPolygons.AppendElement(std::move(polygon));
+  for (LayerPolygon& layer : aNode->layers) {
+    MOZ_ASSERT(layer.geometry);
+
+    if (layer.geometry->GetPoints().Length() >= 3) {
+      aLayers.AppendElement(Move(layer));
+    }
   }
 
   if (*back) {
-    BuildDrawOrder(*back, aPolygons);
+    BuildDrawOrder(*back, aLayers);
   }
-}
-
-nsTArray<float>
-BSPTree::CalculateDotProduct(const gfx::Polygon3D& aFirst,
-                             const gfx::Polygon3D& aSecond,
-                             size_t& aPos, size_t& aNeg) const
-{
-  // Point classification might produce incorrect results due to numerical
-  // inaccuracies. Using an epsilon value makes the splitting plane "thicker".
-  const float epsilon = 0.05f;
-
-  const gfx::Point3D& normal = aFirst.GetNormal();
-  const gfx::Point3D& planePoint = aFirst[0];
-
-  nsTArray<float> dotProducts;
-
-  for (const gfx::Point3D& point : aSecond.GetPoints()) {
-    float dot = (point - planePoint).DotProduct(normal);
-
-    if (dot > epsilon) {
-      aPos++;
-    } else if (dot < -epsilon) {
-      aNeg++;
-    } else {
-      // The point is within the thick plane.
-      dot = 0.0f;
-    }
-
-    dotProducts.AppendElement(dot);
-  }
-
-  return dotProducts;
 }
 
 void
 BSPTree::BuildTree(UniquePtr<BSPTreeNode>& aRoot,
-                   std::deque<gfx::Polygon3D>& aPolygons)
+                   std::deque<LayerPolygon>& aLayers)
 {
-  if (aPolygons.empty()) {
+  if (aLayers.empty()) {
     return;
   }
 
-  const gfx::Polygon3D& splittingPlane = aRoot->First();
-  std::deque<gfx::Polygon3D> backPolygons, frontPolygons;
+  const gfx::Polygon3D& plane = aRoot->First();
+  std::deque<LayerPolygon> backLayers, frontLayers;
 
-  for (gfx::Polygon3D& polygon : aPolygons) {
+  for (LayerPolygon& layerPolygon : aLayers) {
+    const Maybe<gfx::Polygon3D>& geometry = layerPolygon.geometry;
+
     size_t pos = 0, neg = 0;
-    nsTArray<float> dots = CalculateDotProduct(splittingPlane, polygon,
-                                               pos, neg);
+    nsTArray<float> dots = geometry->CalculateDotProducts(plane, pos, neg);
 
     // Back polygon
     if (pos == 0 && neg > 0) {
-      backPolygons.push_back(std::move(polygon));
+      backLayers.push_back(Move(layerPolygon));
     }
     // Front polygon
     else if (pos > 0 && neg == 0) {
-     frontPolygons.push_back(std::move(polygon));
+      frontLayers.push_back(Move(layerPolygon));
     }
     // Coplanar polygon
     else if (pos == 0 && neg == 0) {
-      aRoot->polygons.push_back(std::move(polygon));
+      aRoot->layers.push_back(Move(layerPolygon));
     }
     // Polygon intersects with the splitting plane.
     else if (pos > 0 && neg > 0) {
       nsTArray<gfx::Point3D> backPoints, frontPoints;
-      SplitPolygon(splittingPlane, polygon, dots, backPoints, frontPoints);
+      geometry->SplitPolygon(plane, dots, backPoints, frontPoints);
 
-      backPolygons.push_back(gfx::Polygon3D(std::move(backPoints)));
-      frontPolygons.push_back(gfx::Polygon3D(std::move(frontPoints)));
+      const gfx::Point3D& normal = geometry->GetNormal();
+      Layer *layer = layerPolygon.layer;
+
+      backLayers.push_back(LayerPolygon(layer, Move(backPoints), normal));
+      frontLayers.push_back(LayerPolygon(layer, Move(frontPoints), normal));
     }
   }
 
-  if (!backPolygons.empty()) {
-    aRoot->back.reset(new BSPTreeNode(PopFront(backPolygons)));
-    BuildTree(aRoot->back, backPolygons);
+  if (!backLayers.empty()) {
+    aRoot->back.reset(new BSPTreeNode(PopFront(backLayers)));
+    BuildTree(aRoot->back, backLayers);
   }
 
-  if (!frontPolygons.empty()) {
-    aRoot->front.reset(new BSPTreeNode(PopFront(frontPolygons)));
-    BuildTree(aRoot->front, frontPolygons);
-  }
-}
-
-void
-BSPTree::SplitPolygon(const gfx::Polygon3D& aSplittingPlane,
-                      const gfx::Polygon3D& aPolygon,
-                      const nsTArray<float>& dots,
-                      nsTArray<gfx::Point3D>& backPoints,
-                      nsTArray<gfx::Point3D>& frontPoints)
-{
-  const gfx::Point3D& normal = aSplittingPlane.GetNormal();
-  const size_t pointCount = aPolygon.GetPoints().Length();
-
-  for (size_t i = 0; i < pointCount; ++i) {
-    size_t j = (i + 1) % pointCount;
-
-    const gfx::Point3D& a = aPolygon[i];
-    const gfx::Point3D& b = aPolygon[j];
-    const float dotA = dots[i];
-    const float dotB = dots[j];
-
-    // The point is in front of the plane.
-    if (dotA >= 0) {
-      frontPoints.AppendElement(a);
-    }
-
-    // The point is behind the plane.
-    if (dotA <= 0) {
-      backPoints.AppendElement(a);
-    }
-
-    // If the sign of the dot product changes between two consecutive vertices,
-    // the splitting plane intersects the corresponding polygon edge.
-    if (sign(dotA) != sign(dotB)) {
-
-      // Calculate the line segment and plane intersection point.
-      const gfx::Point3D ab = b - a;
-      const float dotAB = ab.DotProduct(normal);
-      const float t = -dotA / dotAB;
-      const gfx::Point3D p = a + (ab * t);
-
-      // Add the intersection point to both polygons.
-      backPoints.AppendElement(p);
-      frontPoints.AppendElement(p);
-    }
+  if (!frontLayers.empty()) {
+    aRoot->front.reset(new BSPTreeNode(PopFront(frontLayers)));
+    BuildTree(aRoot->front, frontLayers);
   }
 }
 

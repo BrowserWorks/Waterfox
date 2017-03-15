@@ -9,7 +9,6 @@ var FindHelper = {
   _initialViewport: null,
   _viewportChanged: false,
   _result: null,
-  _limit: 0,
 
   // Start of nsIObserver implementation.
 
@@ -39,13 +38,6 @@ var FindHelper = {
    * 2. initialize the Finder instance, if necessary.
    */
   _findOpened: function() {
-    try {
-      this._limit = Services.prefs.getIntPref("accessibility.typeaheadfind.matchesCountLimit");
-    } catch (e) {
-      // Pref not available, assume 0, no match counting.
-      this._limit = 0;
-    }
-
     Messaging.addListener(data => this.doFind(data), "FindInPage:Find");
     Messaging.addListener(data => this.findAgain(data, false), "FindInPage:Next");
     Messaging.addListener(data => this.findAgain(data, true), "FindInPage:Prev");
@@ -119,7 +111,6 @@ var FindHelper = {
     }
 
     this._finder.fastFind(searchString, false);
-    this._finder.requestMatchesCount(searchString, this._limit);
     return { searchString, findBackwards: false };
   },
 
@@ -140,7 +131,6 @@ var FindHelper = {
     }
 
     this._finder.findAgain(findBackwards, false, false);
-    this._finder.requestMatchesCount(searchString, this._limit);
     return { searchString, findBackwards };
   },
 
@@ -159,7 +149,6 @@ var FindHelper = {
    */
   onMatchesCountResult: function(result) {
     this._result = result;
-    this._result.limit = this._limit;
 
     Messaging.sendRequest(Object.assign({
       type: "FindInPage:MatchesCountResult"

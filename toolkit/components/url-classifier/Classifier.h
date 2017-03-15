@@ -24,6 +24,9 @@ namespace safebrowsing {
  */
 class Classifier {
 public:
+  typedef nsClassHashtable<nsCStringHashKey, nsCString> ProviderDictType;
+
+public:
   Classifier();
   ~Classifier();
 
@@ -32,9 +35,15 @@ public:
   void Reset();
 
   /**
-   * Clear In-Memory & On-Disk data for specific tables
+   * Clear data for specific tables.
+   * If ClearType is Clear_Cache, this function will only clear cache in lookup
+   * cache, otherwise, it will clear data in lookup cache and data stored on disk.
    */
-  void ResetTables(const nsTArray<nsCString>& aTables);
+  enum ClearType {
+    Clear_Cache,
+    Clear_All,
+  };
+  void ResetTables(ClearType aType, const nsTArray<nsCString>& aTables);
 
   /**
    * Get the list of active tables and their chunks in a format
@@ -66,11 +75,6 @@ public:
    */
   nsresult ApplyFullHashes(nsTArray<TableUpdate*>* aUpdates);
 
-  /**
-   * Failed update. Spoil the entries so we don't block hosts
-   * unnecessarily
-   */
-  nsresult MarkSpoiled(const nsTArray<nsCString>& aTables);
   void SetLastUpdateTime(const nsACString& aTableName, uint64_t updateTime);
   int64_t GetLastUpdateTime(const nsACString& aTableName);
   nsresult CacheCompletions(const CacheResultArray& aResults);
@@ -83,6 +87,11 @@ public:
                             const nsACString& aTableName,
                             uint32_t aCount,
                             PrefixArray* aNoiseEntries);
+
+#ifdef MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES
+  nsresult DumpRawTableUpdates(const nsACString& aRawUpdates);
+#endif
+
   static void SplitTables(const nsACString& str, nsTArray<nsCString>& tables);
 
   // Given a root store directory, return a private store directory
@@ -97,11 +106,13 @@ public:
   // the root directory.
   static nsresult GetPrivateStoreDirectory(nsIFile* aRootStoreDirectory,
                                            const nsACString& aTableName,
+                                           const nsACString& aProvider,
                                            nsIFile** aPrivateStoreDirectory);
 
 private:
   void DropStores();
-  void DeleteTables(const nsTArray<nsCString>& aTables);
+  void DeleteTables(nsIFile* aDirectory, const nsTArray<nsCString>& aTables);
+  void AbortUpdateAndReset(const nsCString& aTable);
 
   nsresult CreateStoreDirectory();
   nsresult SetupPathNames();
@@ -110,10 +121,19 @@ private:
   nsresult BackupTables();
   nsresult RemoveBackupTables();
   nsresult RegenActiveTables();
+
+#ifdef MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES
+  already_AddRefed<nsIFile> GetFailedUpdateDirectroy();
+  nsresult DumpFailedUpdate();
+#endif
+
   nsresult ScanStoreDir(nsTArray<nsCString>& aTables);
 
   nsresult UpdateHashStore(nsTArray<TableUpdate*>* aUpdates,
                            const nsACString& aTable);
+
+  nsresult UpdateTableV4(nsTArray<TableUpdate*>* aUpdates,
+                         const nsACString& aTable);
 
   nsresult UpdateCache(TableUpdate* aUpdates);
 
@@ -121,6 +141,10 @@ private:
 
   bool CheckValidUpdate(nsTArray<TableUpdate*>* aUpdates,
                         const nsACString& aTable);
+
+  nsresult LoadMetadata(nsIFile* aDirectory, nsACString& aResult);
+
+  nsCString GetProvider(const nsACString& aTableName);
 
   // Root dir of the Local profile.
   nsCOMPtr<nsIFile> mCacheDirectory;

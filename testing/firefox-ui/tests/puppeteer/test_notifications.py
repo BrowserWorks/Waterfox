@@ -2,34 +2,37 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from marionette_driver import By
-from marionette_driver.errors import TimeoutException
-
-from firefox_ui_harness.testcases import FirefoxTestCase
+from firefox_puppeteer import PuppeteerMixin
 from firefox_puppeteer.ui.browser.notifications import (
     AddOnInstallFailedNotification,
-    AddOnInstallConfirmationNotification
+    AddOnInstallConfirmationNotification,
 )
+from marionette_driver import By
+from marionette_driver.errors import TimeoutException
+from marionette_harness import MarionetteTestCase
 
 
-class TestNotifications(FirefoxTestCase):
+class TestNotifications(PuppeteerMixin, MarionetteTestCase):
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestNotifications, self).setUp()
 
-        self.prefs.set_pref('extensions.install.requireSecureOrigin', False)
+        self.marionette.set_pref('extensions.install.requireSecureOrigin', False)
 
         self.addons_url = self.marionette.absolute_url('addons/extensions/')
-        self.utils.permissions.add(self.marionette.baseurl, 'install')
+        self.puppeteer.utils.permissions.add(self.marionette.baseurl, 'install')
 
     def tearDown(self):
         try:
-            self.utils.permissions.remove(self.addons_url, 'install')
+            self.marionette.clear_pref('extensions.install.requireSecureOrigin')
+            self.marionette.clear_pref('xpinstall.signatures.required')
+
+            self.puppeteer.utils.permissions.remove(self.addons_url, 'install')
 
             if self.browser.notification:
                 self.browser.notification.close(force=True)
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestNotifications, self).tearDown()
 
     def test_open_close_notification(self):
         """Trigger and dismiss a notification"""
@@ -66,7 +69,7 @@ class TestNotifications(FirefoxTestCase):
     def test_addon_install_failed_notification(self):
         """Trigger add-on blocked notification using an unsigned add-on"""
         # Ensure that installing unsigned extensions will fail
-        self.prefs.set_pref('xpinstall.signatures.required', True)
+        self.marionette.set_pref('xpinstall.signatures.required', True)
 
         self.trigger_addon_notification(
             'restartless_addon_unsigned.xpi',

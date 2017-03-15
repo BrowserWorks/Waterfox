@@ -116,6 +116,7 @@ add_task(function* test_verifiedUserEmptyProfile() {
   // we first fetch the profile. We want them both to fire or we aren't testing
   // the state we think we are testing.
   let promiseUpdateDone = promiseObserver("test:browser_fxaccounts:updateAppMenuItem", 2);
+  gFxAccounts._cachedProfile = null;
   configureProfileURL({}); // successful but empty profile.
   yield setSignedInUser(true); // this will fire the observer that does the update.
   yield promiseUpdateDone;
@@ -135,6 +136,7 @@ add_task(function* test_verifiedUserEmptyProfile() {
 
 add_task(function* test_verifiedUserDisplayName() {
   let promiseUpdateDone = promiseObserver("test:browser_fxaccounts:updateAppMenuItem", 2);
+  gFxAccounts._cachedProfile = null;
   configureProfileURL({ displayName: "Test User Display Name" });
   yield setSignedInUser(true); // this will fire the observer that does the update.
   yield promiseUpdateDone;
@@ -150,6 +152,7 @@ add_task(function* test_verifiedUserDisplayName() {
 add_task(function* test_verifiedUserProfileFailure() {
   // profile failure means only one observer fires.
   let promiseUpdateDone = promiseObserver("test:browser_fxaccounts:updateAppMenuItem", 1);
+  gFxAccounts._cachedProfile = null;
   configureProfileURL(null, 500);
   yield setSignedInUser(true); // this will fire the observer that does the update.
   yield promiseUpdateDone;
@@ -175,7 +178,7 @@ function configureProfileURL(profile, responseStatus = 200) {
             "responseBody=" + responseBody +
             // This is a bit cheeky - the FxA code will just append "/profile"
             // to the preference value. We arrange for this to be seen by our
-            //.sjs as part of the query string.
+            // .sjs as part of the query string.
             "&path=";
 
   Services.prefs.setCharPref("identity.fxaccounts.remote.profile.uri", url);
@@ -183,10 +186,10 @@ function configureProfileURL(profile, responseStatus = 200) {
 
 function promiseObserver(topic, count = 1) {
   return new Promise(resolve => {
-    let obs = (subject, topic, data) => {
+    let obs = (aSubject, aTopic, aData) => {
       if (--count == 0) {
-        Services.obs.removeObserver(obs, topic);
-        resolve(subject);
+        Services.obs.removeObserver(obs, aTopic);
+        resolve(aSubject);
       }
     }
     Services.obs.addObserver(obs, topic, false);

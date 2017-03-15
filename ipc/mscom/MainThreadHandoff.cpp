@@ -13,6 +13,7 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
 #include "nsThreadUtils.h"
+#include "nsProxyRelease.h"
 
 using mozilla::DebugOnly;
 
@@ -110,12 +111,11 @@ MainThreadHandoff::Release()
     if (NS_IsMainThread()) {
       delete this;
     } else {
-      mozilla::DebugOnly<nsresult> rv =
-        NS_DispatchToMainThread(NS_NewRunnableFunction([=]() -> void
-        {
-          delete this;
-        }));
-      MOZ_ASSERT(NS_SUCCEEDED(rv));
+      // We need to delete this object on the main thread, but we aren't on the
+      // main thread right now, so we send a reference to ourselves to the main
+      // thread to be re-released there.
+      RefPtr<MainThreadHandoff> self = this;
+      NS_ReleaseOnMainThread(self.forget());
     }
   }
   return newRefCnt;
@@ -256,11 +256,18 @@ MainThreadHandoff::FixArrayElements(ICallFrame* aFrame,
       return hr;
     }
     PVOID stackBase = aFrame->GetStackLocation();
-    // We dereference twice because we need to obtain the value of a parameter
-    // from a stack offset (one), and since that is an outparam, we need to
-    // find the value that is actually being returned (two).
-    arrayPtr = **reinterpret_cast<PVOID**>(reinterpret_cast<PBYTE>(stackBase) +
+    if (aArrayData.mFlag == ArrayData::Flag::eAllocatedByServer) {
+      // In order for the server to allocate the array's buffer and store it in
+      // an outparam, the parameter must be typed as Type***. Since the base
+      // of the array is Type*, we must dereference twice.
+      arrayPtr = **reinterpret_cast<PVOID**>(reinterpret_cast<PBYTE>(stackBase) +
+                                             paramInfo.stackOffset);
+    } else {
+      // We dereference because we need to obtain the value of a parameter
+      // from a stack offset. This pointer is the base of the array.
+      arrayPtr = *reinterpret_cast<PVOID*>(reinterpret_cast<PBYTE>(stackBase) +
                                            paramInfo.stackOffset);
+    }
   } else if (FAILED(hr)) {
     return hr;
   } else {

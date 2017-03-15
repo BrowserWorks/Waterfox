@@ -1172,50 +1172,6 @@ SpecialPowersAPI.prototype = {
     }
   },
 
-  // Disables the app install prompt for the duration of this test. There is
-  // no need to re-enable the prompt at the end of the test.
-  //
-  // The provided callback is invoked once the prompt is disabled.
-  autoConfirmAppInstall: function(cb) {
-    this.pushPrefEnv({set: [['dom.mozApps.auto_confirm_install', true]]}, cb);
-  },
-
-  autoConfirmAppUninstall: function(cb) {
-    this.pushPrefEnv({set: [['dom.mozApps.auto_confirm_uninstall', true]]}, cb);
-  },
-
-  // Allow tests to install addons without signing the package, for convenience.
-  allowUnsignedAddons: function() {
-    this._sendSyncMessage("SPWebAppService", {
-      op: "allow-unsigned-addons"
-    });
-  },
-
-  // Turn on debug information from UserCustomizations.jsm
-  debugUserCustomizations: function(value) {
-    this._sendSyncMessage("SPWebAppService", {
-      op: "debug-customizations",
-      value: value
-    });
-  },
-
-  // Force-registering an app in the registry
-  injectApp: function(aAppId, aApp) {
-    this._sendSyncMessage("SPWebAppService", {
-      op: "inject-app",
-      appId: aAppId,
-      app: aApp
-    });
-  },
-
-  // Removing app from the registry
-  rejectApp: function(aAppId) {
-    this._sendSyncMessage("SPWebAppService", {
-      op: "reject-app",
-      appId: aAppId
-    });
-  },
-
   _proxiedObservers: {
     "specialpowers-http-notify-request": function(aMessage) {
       let uri = aMessage.json.uri;
@@ -1945,7 +1901,23 @@ SpecialPowersAPI.prototype = {
   },
 
   _nextExtensionID: 0,
+  _extensionListeners: null,
+
   loadExtension: function(ext, handler) {
+    if (this._extensionListeners == null) {
+      this._extensionListeners = new Set();
+
+      this._addMessageListener("SPExtensionMessage", msg => {
+        for (let listener of this._extensionListeners) {
+          try {
+            listener(msg);
+          } catch (e) {
+            Cu.reportError(e);
+          }
+        }
+      });
+    }
+
     // Note, this is not the addon is as used by the AddonManager etc,
     // this is just an identifier used for specialpowers messaging
     // between this content process and the chrome process.
@@ -1959,7 +1931,7 @@ SpecialPowersAPI.prototype = {
     let unloadPromise = new Promise(resolve => { resolveUnload = resolve; });
 
     startupPromise.catch(() => {
-      this._removeMessageListener("SPExtensionMessage", listener);
+      this._extensionListeners.delete(listener);
     });
 
     handler = Cu.waiveXrays(handler);
@@ -2000,7 +1972,7 @@ SpecialPowersAPI.prototype = {
           state = "failed";
           rejectStartup("startup failed");
         } else if (msg.data.type == "extensionUnloaded") {
-          this._removeMessageListener("SPExtensionMessage", listener);
+          this._extensionListeners.delete(listener);
           state = "unloaded";
           resolveUnload();
         } else if (msg.data.type in handler) {
@@ -2011,7 +1983,7 @@ SpecialPowersAPI.prototype = {
       }
     };
 
-    this._addMessageListener("SPExtensionMessage", listener);
+    this._extensionListeners.add(listener);
     return extension;
   },
 
@@ -2112,9 +2084,14 @@ SpecialPowersAPI.prototype = {
                                 {nativeAnonymousChildList, subtree});
   },
 
-  clearAppPrivateData: function(appId, browserOnly) {
-    return this._sendAsyncMessage('SPClearAppPrivateData',
-                                  { appId: appId, browserOnly: browserOnly });
+  doCommand(window, cmd) {
+    return this._getDocShell(window).doCommand(cmd);
+  },
+
+  setCommandNode(window, node) {
+    return this._getDocShell(window).contentViewer
+               .QueryInterface(Ci.nsIContentViewerEdit)
+               .setCommandNode(node);
   },
 };
 
