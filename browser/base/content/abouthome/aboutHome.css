@@ -328,7 +328,7 @@ body[narrow] #restorePreviousSession::before {
   display: block;
   position: absolute;
   top: 12px;
-  right: 12px;
+  right: 69px;
   width: 69px;
   height: 19px;
 }

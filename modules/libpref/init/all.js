@@ -26,7 +26,7 @@ pref("general.useragent.compatMode.firefox", true);
 // This pref exists only for testing purposes. In order to disable all
 // overrides by default, don't initialize UserAgentOverrides.jsm.
 pref("general.useragent.site_specific_overrides", true);
-#ifdef defined(XP_WIN)
+#ifdef XP_WIN
 pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
@@ -841,12 +841,8 @@ pref("canvas.filters.enabled", true);
 pref("canvas.path.enabled", true);
 pref("canvas.capturestream.enabled", true);
 
-// Disable the ImageBitmap-extensions in the release build.
-#ifdef RELEASE_OR_BETA
+// Disable the ImageBitmap-extensions for now.
 pref("canvas.imagebitmap_extensions.enabled", false);
-#else
-pref("canvas.imagebitmap_extensions.enabled", true);
-#endif
 
 // We want the ability to forcibly disable platform a11y, because
 // some non-a11y-related components attempt to bring it up.  See bug
@@ -1183,10 +1179,10 @@ pref("dom.forms.color", true);
 
 // Support for input type=date, time, month, week and datetime-local. By
 // default, disabled.
-pref("dom.forms.datetime", false);
+pref("dom.forms.datetime", true);
 
 // Enable time picker UI. By default, disabled.
-pref("dom.forms.datetime.timepicker", false);
+pref("dom.forms.datetime.timepicker", true);
 
 // Support for new @autocomplete values
 pref("dom.forms.autocomplete.experimental", false);
@@ -1232,7 +1228,7 @@ pref("dom.event.highrestimestamp.enabled",  false);
 #endif
 
 pref("dom.webcomponents.enabled",           false);
-pref("dom.webcomponents.customelements.enabled", false);
+pref("dom.webcomponents.customelements.enabled", true);
 
 pref("javascript.enabled",                  true);
 pref("javascript.options.strict",           false);
@@ -4969,15 +4965,15 @@ pref("dom.placeholder.show_on_focus", true);
 
 // VR is disabled by default in release and enabled for nightly and aurora
 #ifdef RELEASE_OR_BETA
-pref("dom.vr.enabled", false);
+pref("dom.vr.enabled", true);
 #else
 pref("dom.vr.enabled", true);
 #endif
 pref("dom.vr.oculus.enabled", true);
 // OSVR device
-pref("dom.vr.osvr.enabled", false);
+pref("dom.vr.osvr.enabled", true);
 // OpenVR device
-pref("dom.vr.openvr.enabled", false);
+pref("dom.vr.openvr.enabled", true);
 // Pose prediction reduces latency effects by returning future predicted HMD
 // poses to callers of the WebVR API.  This currently only has an effect for
 // Oculus Rift on SDK 0.8 or greater.  It is disabled by default for now due to
