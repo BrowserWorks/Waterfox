@@ -1,24 +1,24 @@
 {
   "default": {
     "visibleDefaultEngines": [
-      "google", "yahoo", "ecosia", "bing", "ddg", "twitter", "wikipedia"
+      "google", "yahoo", "ecosia", "bing", "ddg", "disconnect", "wikipedia"
     ]
   },
   "locales": {
     "en-US": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "ecosia", "bing", "ddg", "twitter", "wikipedia"
+          "google", "yahoo", "ecosia", "bing", "ddg", "disconnect", "wikipedia"
         ]
       },
       "US": {
         "visibleDefaultEngines": [
-          "yahoo", "google-nocodes", "bing", "ecosia", "ddg", "twitter", "wikipedia"
+          "yahoo", "google-nocodes", "bing", "ecosia", "ddg", "disconnect", "wikipedia"
         ]
       },
       "CA": {
         "visibleDefaultEngines": [
-          "google-nocodes", "yahoo", "bing", "ecosia", "ddg", "twitter", "wikipedia"
+          "google-nocodes", "yahoo", "bing", "ecosia", "ddg", "disconnect", "wikipedia"
         ]
       },
       "experimental-hidden": {
@@ -30,7 +30,7 @@
     "ach": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "bing", "ecosia", "ddg", "twitter", "wikipedia"
+          "google", "yahoo", "bing", "ecosia", "ddg", "disconnect", "wikipedia"
         ]
       }
     },
@@ -44,7 +44,7 @@
     "an": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-es", "bing", "wikipedia-an", "ddg", "twitter"
+          "google", "yahoo-es", "bing", "wikipedia-an", "ddg", "disconnect"
         ]
       }
     },
@@ -107,14 +107,14 @@
     "bs": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "ddg", "olx", "twitter", "wikipedia-bs"
+          "google", "yahoo", "ddg", "olx", "disconnect", "wikipedia-bs"
         ]
       }
     },
     "ca": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "bing", "diec2", "ddg", "twitter", "wikipedia-ca"
+          "google", "bing", "diec2", "ddg", "disconnect", "wikipedia-ca"
         ]
       }
     },
@@ -170,7 +170,7 @@
     "en-GB": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-en-GB", "bing", "ecosia", "chambers-en-GB", "ddg", "twitter", "wikipedia"
+          "google", "yahoo-en-GB", "bing", "ecosia", "chambers-en-GB", "ddg", "disconnect", "wikipedia"
         ]
       },
       "experimental-hidden": {
@@ -182,7 +182,7 @@
     "en-ZA": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "bing", "ecosia", "ddg", "twitter", "wikipedia"
+          "google", "bing", "ecosia", "ddg", "disconnect", "wikipedia"
         ]
       }
     },
@@ -210,7 +210,7 @@
     "es-ES": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-es", "bing", "drae", "ddg", "twitter", "wikipedia-es"
+          "google", "yahoo-es", "bing", "drae", "ddg", "disconnect", "wikipedia-es"
         ]
       }
     },
@@ -273,7 +273,7 @@
     "ga-IE": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-en-GB", "ecosia", "ddg", "tearma", "twitter", "wikipedia-ga-IE"
+          "google", "yahoo-en-GB", "ecosia", "ddg", "tearma", "disconnect", "wikipedia-ga-IE"
         ]
       }
     },
@@ -294,7 +294,7 @@
     "gn": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-es", "bing", "ecosia", "ddg", "twitter", "wikipedia-gn"
+          "google", "yahoo-es", "bing", "ecosia", "ddg", "disconnect", "wikipedia-gn"
         ]
       }
     },
@@ -322,7 +322,7 @@
     "hr": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "ecosia", "bing", "ddg", "eudict", "twitter", "wikipedia-hr"
+          "google", "yahoo", "ecosia", "bing", "ddg", "eudict", "disconnect", "wikipedia-hr"
         ]
       }
     },
@@ -371,21 +371,21 @@
     "ja-JP-mac": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-jp", "bing", "ecosia", "rakuten", "yahoo-jp-auctions", "oshiete-goo", "twitter-ja", "wikipedia-ja", "ddg"
+          "google", "yahoo-jp", "bing", "ecosia", "rakuten", "yahoo-jp-auctions", "oshiete-goo", "disconnect-ja", "wikipedia-ja", "ddg"
         ]
       }
     },
     "ja": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-jp", "bing", "ecosia", "rakuten", "yahoo-jp-auctions", "oshiete-goo", "twitter-ja", "wikipedia-ja", "ddg"
+          "google", "yahoo-jp", "bing", "ecosia", "rakuten", "yahoo-jp-auctions", "oshiete-goo", "disconnect-ja", "wikipedia-ja", "ddg"
         ]
       }
     },
     "ka": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "bing", "ecosia", "ddg", "twitter", "wikipedia-ka"
+          "google", "yahoo", "bing", "ecosia", "ddg", "disconnect", "wikipedia-ka"
         ]
       }
     },
@@ -399,39 +399,39 @@
     "kk": {
       "default": {
         "visibleDefaultEngines": [
-          "yandex-kk", "google", "ddg", "flip", "kaz-kk", "twitter", "wikipedia-kk"
+          "yandex-kk", "google", "ddg", "flip", "kaz-kk", "disconnect", "wikipedia-kk"
         ]
       },
       "KZ": {
         "visibleDefaultEngines": [
-          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "twitter", "wikipedia-kk"
+          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "disconnect", "wikipedia-kk"
         ]
       },
       "BY": {
         "visibleDefaultEngines": [
-          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "twitter", "wikipedia-kk"
+          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "disconnect", "wikipedia-kk"
         ]
       },
       "RU": {
         "visibleDefaultEngines": [
-          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "twitter", "wikipedia-kk"
+          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "disconnect", "wikipedia-kk"
         ]
       },
       "TR": {
         "visibleDefaultEngines": [
-          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "twitter", "wikipedia-kk"
+          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "disconnect", "wikipedia-kk"
         ]
       },
       "UA": {
         "visibleDefaultEngines": [
-          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "twitter", "wikipedia-kk"
+          "yandex-kk", "google-nocodes", "ddg", "flip", "kaz-kk", "disconnect", "wikipedia-kk"
         ]
       }
     },
     "km": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "bing", "ecosia", "ddg", "twitter", "wikipedia-km"
+          "google", "yahoo", "bing", "ecosia", "ddg", "disconnect", "wikipedia-km"
         ]
       }
     },
@@ -459,7 +459,7 @@
     "lt": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "wikipedia-lt", "bing", "ecosia", "ddg", "twitter"
+          "google", "wikipedia-lt", "bing", "ecosia", "ddg", "disconnect"
         ]
       }
     },
@@ -480,7 +480,7 @@
     "mai": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-in", "bing", "ddg", "twitter", "wikipedia-hi"
+          "google", "yahoo-in", "bing", "ddg", "disconnect", "wikipedia-hi"
         ]
       }
     },
@@ -508,14 +508,14 @@
     "ms": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "bing", "ecosia", "ddg", "twitter", "wikipedia-ms"
+          "google", "yahoo", "bing", "ecosia", "ddg", "disconnect", "wikipedia-ms"
         ]
       }
     },
     "my": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "bing", "ecosia", "ddg", "twitter", "wikipedia-my"
+          "google", "yahoo", "bing", "ecosia", "ddg", "disconnect", "wikipedia-my"
         ]
       }
     },
@@ -529,7 +529,7 @@
     "ne-NP": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "bing", "ddg", "twitter", "wikipedia-ne"
+          "google", "yahoo", "bing", "ddg", "disconnect", "wikipedia-ne"
         ]
       }
     },
@@ -571,7 +571,7 @@
     "pt-BR": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-br", "bing", "buscape", "ddg", "mercadolivre", "twitter", "wikipedia-pt"
+          "google", "yahoo-br", "bing", "buscape", "ddg", "mercadolivre", "disconnect", "wikipedia-pt"
         ]
       }
     },
@@ -645,7 +645,7 @@
     "sl": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "ceneji", "ddg", "najdi-si", "odpiralni", "twitter", "wikipedia-sl"
+          "google", "ceneji", "ddg", "najdi-si", "odpiralni", "disconnect", "wikipedia-sl"
         ]
       }
     },
@@ -701,39 +701,39 @@
     "tl": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-tl", "bing", "ecosia", "ddg", "twitter", "wikipedia-tl"
+          "google", "yahoo-tl", "bing", "ecosia", "ddg", "disconnect", "wikipedia-tl"
         ]
       }
     },
     "tr": {
       "default": {
         "visibleDefaultEngines": [
-          "yandex-tr", "google", "ddg", "twitter", "wikipedia-tr"
+          "yandex-tr", "google", "ddg", "disconnect", "wikipedia-tr"
         ]
       },
       "TR": {
         "visibleDefaultEngines": [
-          "yandex-tr", "google-nocodes", "ddg", "twitter", "wikipedia-tr"
+          "yandex-tr", "google-nocodes", "ddg", "disconnect", "wikipedia-tr"
         ]
       },
       "BY": {
         "visibleDefaultEngines": [
-          "yandex-tr", "google-nocodes", "ddg", "twitter", "wikipedia-tr"
+          "yandex-tr", "google-nocodes", "ddg", "disconnect", "wikipedia-tr"
         ]
       },
       "KZ": {
         "visibleDefaultEngines": [
-          "yandex-tr", "google-nocodes", "ddg", "twitter", "wikipedia-tr"
+          "yandex-tr", "google-nocodes", "ddg", "disconnect", "wikipedia-tr"
         ]
       },
       "RU": {
         "visibleDefaultEngines": [
-          "yandex-tr", "google-nocodes", "ddg", "twitter", "wikipedia-tr"
+          "yandex-tr", "google-nocodes", "ddg", "disconnect", "wikipedia-tr"
         ]
       },
       "UA": {
         "visibleDefaultEngines": [
-          "yandex-tr", "google-nocodes", "ddg", "twitter", "wikipedia-tr"
+          "yandex-tr", "google-nocodes", "ddg", "disconnect", "wikipedia-tr"
         ]
       }
     },
@@ -772,14 +772,14 @@
     "ur": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo-in", "bing", "ecosia", "ddg", "twitter", "wikipedia-ur"
+          "google", "yahoo-in", "bing", "ecosia", "ddg", "disconnect", "wikipedia-ur"
         ]
       }
     },
     "uz": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "yahoo", "bing", "ecosia", "ddg", "twitter", "wikipedia-uz"
+          "google", "yahoo", "bing", "ecosia", "ddg", "disconnect", "wikipedia-uz"
         ]
       }
     },

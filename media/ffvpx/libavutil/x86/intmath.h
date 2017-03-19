@@ -32,6 +32,11 @@
 #endif
 #include "config.h"
 
+#if defined(__clang__)
+#   define _tzcnt_u32(v) __builtin_ctz(v)
+#   define _tzcnt_u64(v) __builtin_ctzll(v)
+#endif
+
 #if HAVE_FAST_CLZ
 #if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER>=1216)) || defined(_MSC_VER)
 #   if defined(__INTEL_COMPILER)
