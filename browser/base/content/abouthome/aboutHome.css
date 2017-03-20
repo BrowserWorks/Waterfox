@@ -328,9 +328,9 @@ body[narrow] #restorePreviousSession::before {
   display: block;
   position: absolute;
   top: 12px;
-  right: 69px;
-  width: 69px;
-  height: 19px;
+  right: 12px;
+  width: 128px;
+  height: 22px;
 }
 
 /* [HiDPI]
@@ -342,9 +342,13 @@ body[narrow] #restorePreviousSession::before {
     background-image: url("chrome://branding/content/about-logo@2x.png");
   }
 
-  .launchButton::before,
-  #aboutMozilla::before {
+  .launchButton::before {
     transform: scale(.5);
+    transform-origin: 0 0;
+  }
+  
+  #aboutMozilla::before {
+    transform: scale(1);
     transform-origin: 0 0;
   }
 
