@@ -31,6 +31,8 @@ pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Windows NT 10.0; WO
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
 pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
+pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
+
 #endif
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
