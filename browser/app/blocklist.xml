@@ -662,6 +662,14 @@
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
+    <emItem blockID="89a61123-79a2-45d1-aec2-97afca0863eb" id="InternetProtection@360safe.com">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="5.0.0.1002" severity="3">
+        <targetApplication id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}">
+          <versionRange maxVersion="*" minVersion="52.0a1"/>
+        </targetApplication>
+      </versionRange>
+    </emItem>
     <emItem blockID="i471" id="firefox@luckyleap.net">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
@@ -862,14 +870,6 @@
       <versionRange minVersion="0" maxVersion="*" severity="1"/>
     </emItem>
     <emItem blockID="i65" id="activity@facebook.com">
-      <prefs/>
-      <versionRange minVersion="0" maxVersion="*" severity="3"/>
-    </emItem>
-    <emItem blockID="i228" id="crossriderapp5060@crossrider.com">
-      <prefs/>
-      <versionRange minVersion="0" maxVersion="*" severity="1"/>
-    </emItem>
-    <emItem blockID="i470" id="extension@FastFreeConverter.com">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
@@ -1527,6 +1527,14 @@
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
+    <emItem blockID="08addad8-2f03-4cff-a791-e6f2a1b170ed" id="WebProtection@360safe.com">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3">
+        <targetApplication id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}">
+          <versionRange maxVersion="*" minVersion="52.0a1"/>
+        </targetApplication>
+      </versionRange>
+    </emItem>
     <emItem blockID="i838" id="{87b5a11e-3b54-42d2-9102-0a7cb1f79ebf}">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
@@ -1714,7 +1722,7 @@
     </emItem>
     <emItem blockID="d33f6d48-a555-49dd-96ff-8d75473403a8" id="mozilla_cc2@internetdownloadmanager.com">
       <prefs/>
-      <versionRange minVersion="0" maxVersion="6.26.11" severity="1">
+      <versionRange minVersion="0" maxVersion="6.26.11" severity="3">
         <targetApplication id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}">
           <versionRange maxVersion="*" minVersion="53.0a1"/>
         </targetApplication>
@@ -2043,6 +2051,14 @@
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
+    <emItem blockID="i228" id="crossriderapp5060@crossrider.com">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="1"/>
+    </emItem>
+    <emItem blockID="i470" id="extension@FastFreeConverter.com">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
   </emItems>
   <pluginItems>
     <pluginItem blockID="p416">
@@ -2164,6 +2180,11 @@
       <infoURL>https://get.adobe.com/flashplayer/</infoURL>
       <versionRange maxVersion="23.0.0.205" minVersion="23.0.0.185" severity="0" vulnerabilitystatus="1"/>
     </pluginItem>
+    <pluginItem blockID="26c2a4e2-9aff-4ab1-b654-20e478b375f0" os="Linux">
+      <match exp="libflashplayer\.so" name="filename"/>
+      <infoURL>https://get.adobe.com/flashplayer/</infoURL>
+      <versionRange maxVersion="24.0.0.221" minVersion="24.0.0.194" severity="0" vulnerabilitystatus="1"/>
+    </pluginItem>
     <pluginItem blockID="p248">
       <match exp="Scorch\.plugin" name="filename"/>
       <versionRange maxVersion="6.2.0b88" minVersion="0" severity="1"/>
@@ -2189,6 +2210,11 @@
     </pluginItem>
     <pluginItem blockID="p31">
       <match exp="NPMySrch.dll" name="filename"/>
+    </pluginItem>
+    <pluginItem blockID="2b608fae-1750-4a06-a142-0bc9ba17a7d0">
+      <match exp="(NPSWF32.*\.dll)|(NPSWF64.*\.dll)|(Flash\ Player\.plugin)" name="filename"/>
+      <infoURL>https://get.adobe.com/flashplayer/</infoURL>
+      <versionRange maxVersion="24.0.0.221" minVersion="24.0.0.194" severity="0" vulnerabilitystatus="1"/>
     </pluginItem>
     <pluginItem blockID="p1020">
       <match exp="(NPSWF32.*\.dll)|(NPSWF64.*\.dll)|(Flash\ Player\.plugin)" name="filename"/>

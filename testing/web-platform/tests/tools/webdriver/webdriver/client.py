@@ -70,6 +70,147 @@ class Timeouts(object):
         self._implicit_wait = value
 
 
+class ActionSequence(object):
+    """API for creating and performing action sequences.
+
+    Each action method adds one or more actions to a queue. When perform()
+    is called, the queued actions fire in order.
+
+    May be chained together as in::
+
+         ActionSequence(session, "key", id) \
+            .key_down("a") \
+            .key_up("a") \
+            .perform()
+    """
+    def __init__(self, session, action_type, input_id, pointer_params=None):
+        """Represents a sequence of actions of one type for one input source.
+
+        :param session: WebDriver session.
+        :param action_type: Action type; may be "none", "key", or "pointer".
+        :param input_id: ID of input source.
+        :param pointer_params: Optional dictionary of pointer parameters.
+        """
+        self.session = session
+        self._id = input_id
+        self._type = action_type
+        self._actions = []
+        self._pointer_params = pointer_params
+
+    @property
+    def dict(self):
+        d = {
+            "type": self._type,
+            "id": self._id,
+            "actions": self._actions,
+        }
+        if self._pointer_params is not None:
+            d["parameters"] = self._pointer_params
+        return d
+
+    @command
+    def perform(self):
+        """Perform all queued actions."""
+        self.session.actions.perform([self.dict])
+
+    def _key_action(self, subtype, value):
+        self._actions.append({"type": subtype, "value": value})
+
+    def _pointer_action(self, subtype, button):
+        self._actions.append({"type": subtype, "button": button})
+
+    def pointer_move(self, x, y, duration=None, origin=None):
+        """Queue a pointerMove action.
+
+        :param x: Destination x-axis coordinate of pointer in CSS pixels.
+        :param y: Destination y-axis coordinate of pointer in CSS pixels.
+        :param duration: Number of milliseconds over which to distribute the
+                         move. If None, remote end defaults to 0.
+        :param origin: Origin of coordinates, either "viewport", "pointer" or
+                       an Element. If None, remote end defaults to "viewport".
+        """
+        # TODO change to pointerMove once geckodriver > 0.14 is available on mozilla-central
+        action = {
+            "type": "move",
+            "x": x,
+            "y": y
+        }
+        if duration is not None:
+            action["duration"] = duration
+        if origin is not None:
+            action["origin"] = origin if isinstance(origin, basestring) else origin.json()
+        self._actions.append(action)
+        return self
+
+    def pointer_up(self, button):
+        """Queue a pointerUp action for `button`.
+
+        :param button: Pointer button to perform action with.
+        """
+        self._pointer_action("pointerUp", button)
+        return self
+
+    def pointer_down(self, button):
+        """Queue a pointerDown action for `button`.
+
+        :param button: Pointer button to perform action with.
+        """
+        self._pointer_action("pointerDown", button)
+        return self
+
+    def key_up(self, value):
+        """Queue a keyUp action for `value`.
+
+        :param value: Character to perform key action with.
+        """
+        self._key_action("keyUp", value)
+        return self
+
+    def key_down(self, value):
+        """Queue a keyDown action for `value`.
+
+        :param value: Character to perform key action with.
+        """
+        self._key_action("keyDown", value)
+        return self
+
+    def send_keys(self, keys):
+        """Queue a keyDown and keyUp action for each character in `keys`.
+
+        :param keys: String of keys to perform key actions with.
+        """
+        for c in keys:
+            self.key_down(c)
+            self.key_up(c)
+        return self
+
+
+class Actions(object):
+    def __init__(self, session):
+        self.session = session
+
+    @command
+    def perform(self, actions=None):
+        """Performs actions by tick from each action sequence in `actions`.
+
+        :param actions: List of input source action sequences. A single action
+                        sequence may be created with the help of
+                        ``ActionSequence.dict``.
+        """
+        body = {"actions": [] if actions is None else actions}
+        return self.session.send_command("POST", "actions", body)
+
+    @command
+    def release(self):
+        return self.session.send_command("DELETE", "actions")
+
+    def sequence(self, *args, **kwargs):
+        """Return an empty ActionSequence of the designated type.
+
+        See ActionSequence for parameter list.
+        """
+        return ActionSequence(self.session, *args, **kwargs)
+
 class Window(object):
     def __init__(self, session):
         self.session = session
@@ -190,6 +331,7 @@ class Session(object):
         self.window = Window(self)
         self.find = Find(self)
         self.alert = UserPrompt(self)
+        self.actions = Actions(self)
 
     def __enter__(self):
         self.start()
@@ -428,16 +570,16 @@ class Element(object):
     @property
     @command
     def text(self):
-        return self.session.send_command("GET", self.url("text"))
+        return self.session.send_command("GET", self.url("text"), key="value")
 
     @property
     @command
     def name(self):
-        return self.session.send_command("GET", self.url("name"))
+        return self.session.send_command("GET", self.url("name"), key="value")
 
     @command
     def style(self, property_name):
-        return self.session.send_command("GET", self.url("css/%s" % property_name))
+        return self.session.send_command("GET", self.url("css/%s" % property_name), key="value")
 
     @property
     @command
@@ -445,5 +587,9 @@ class Element(object):
         return self.session.send_command("GET", self.url("rect"))
 
     @command
+    def property(self, name):
+        return self.session.send_command("GET", self.url("property/%s" % name), key="value")
+
+    @command
     def attribute(self, name):
-        return self.session.send_command("GET", self.url("attribute/%s" % name))
+        return self.session.send_command("GET", self.url("attribute/%s" % name), key="value")
