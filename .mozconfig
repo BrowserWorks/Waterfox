@@ -22,6 +22,8 @@ ac_add_options --enable-clang-plugin
 ac_add_options --enable-optimize="-O3 -fcolor-diagnostics -w"
 ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --with-ccache=ccache
+ac_add_options --disable-pulseaudio
+ac_add_options --enable-alsa
 fi
 
 mk_add_options AUTOCLOBBER=1
