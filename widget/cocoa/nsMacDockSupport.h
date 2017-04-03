@@ -28,7 +28,7 @@ protected:
 
   NSImage *mAppIcon, *mProgressBackground;
 
-  HIRect mProgressBounds;
+  HIRect mProgressBounds, mProgressBoundsMask;
   nsTaskbarProgressState mProgressState;
   double mProgressFraction;
   nsCOMPtr<nsITimer> mProgressTimer;

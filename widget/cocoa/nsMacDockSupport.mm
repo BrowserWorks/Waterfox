@@ -4,10 +4,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #import <Cocoa/Cocoa.h>
+#import <AppKit/AppKit.h>
 
 #include "nsComponentManagerUtils.h"
 #include "nsMacDockSupport.h"
 #include "nsObjCExceptions.h"
+
+#define NSAppKitVersionNumber10_9 1265
 
 NS_IMPL_ISUPPORTS(nsMacDockSupport, nsIMacDockSupport, nsITaskbarProgress)
 
@@ -140,9 +143,15 @@ bool nsMacDockSupport::InitProgress()
     NSSize sz = [mProgressBackground size];
     mProgressBounds = CGRectMake(sz.width * 1/32, sz.height * 3/32,
                                  sz.width * 30/32, sz.height * 4/32);
+    if (floor(NSAppKitVersionNumber) >= NSAppKitVersionNumber10_9) {
+      mProgressBoundsMask = CGRectMake(sz.width * 1/32, sz.height * 35/256,
+                                       sz.width * 30/32, sz.height * 1/24);
+    } else {
+      mProgressBoundsMask = mProgressBounds;
+    }
     [mProgressBackground lockFocus];
-    [[NSColor whiteColor] set];
-    NSRectFill(NSRectFromCGRect(mProgressBounds));
+    [[NSColor clearColor] set];
+    NSRectFill(NSRectFromCGRect(mProgressBoundsMask));
     [mProgressBackground unlockFocus];
   }
   return true;
