@@ -24,16 +24,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
   "resource://gre/modules/Promise.jsm");
 
-// Url to fetch snippets, in the urlFormatter service format.
-const SNIPPETS_URL_PREF = "browser.aboutHomeSnippets.updateUrl";
-
-// Should be bumped up if the snippets content format changes.
-const STARTPAGE_VERSION = 4;
-
 this.AboutHomeUtils = {
-  get snippetsVersion() {
-    return STARTPAGE_VERSION;
-  },
 
   /*
    * showKnowYourRights - Determines if the user should be shown the
@@ -75,16 +66,6 @@ this.AboutHomeUtils = {
     return true;
   }
 };
-
-/**
- * Returns the URL to fetch snippets from, in the urlFormatter service format.
- */
-XPCOMUtils.defineLazyGetter(AboutHomeUtils, "snippetsURL", function() {
-  let updateURL = Services.prefs
-                          .getCharPref(SNIPPETS_URL_PREF)
-                          .replace("%STARTPAGE_VERSION%", STARTPAGE_VERSION);
-  return Services.urlFormatter.formatURL(updateURL);
-});
 
 /**
  * This code provides services to the about:home page. Whenever
@@ -169,9 +150,7 @@ var AboutHome = {
     ss.promiseInitialized.then(function() {
       let data = {
         showRestoreLastSession: ss.canRestoreLastSession,
-        snippetsURL: AboutHomeUtils.snippetsURL,
         showKnowYourRights: AboutHomeUtils.showKnowYourRights,
-        snippetsVersion: AboutHomeUtils.snippetsVersion,
       };
 
       if (AboutHomeUtils.showKnowYourRights) {
