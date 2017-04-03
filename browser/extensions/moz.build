@@ -9,7 +9,6 @@ DIRS += [
     'deployment-checker',
     'e10srollout',
     'pdfjs',
-    'pocket',
     'webcompat',
 ]
 
