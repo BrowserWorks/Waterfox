@@ -7873,6 +7873,14 @@ var TabContextMenu = {
       toggleMute.accessKey = gNavigatorBundle.getString("muteTab.accesskey");
     }
 
+    // Adjust the state of duplicate Tab menu item.
+    let toggleDuplicateTab = document.getElementById("context_duplicateTab");
+    if (Services.prefs.getBoolPref("browser.tabs.duplicateTab")){
+      toggleDuplicateTab.hidden = false;
+    } else {
+      toggleDuplicateTab.hidden = true;
+    }
+
     this.contextTab.toggleMuteMenuItem = toggleMute;
     this._updateToggleMuteMenuItem(this.contextTab);
 
