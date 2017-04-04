@@ -1222,8 +1222,8 @@ pref("social.sidebar.unload_timeout_ms", 10000);
 
 // Activation from inside of share panel is possible if activationPanelEnabled
 // is true. Pref'd off for release while usage testing is done through beta.
-pref("social.share.activationPanelEnabled", true);
-pref("social.shareDirectory", "https://activations.cdn.mozilla.net/sharePanel.html");
+pref("social.share.activationPanelEnabled", false);
+pref("social.shareDirectory", "");
 
 // Block insecure active content on https pages
 pref("security.mixed_content.block_active_content", true);
