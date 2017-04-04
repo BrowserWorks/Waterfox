@@ -641,6 +641,7 @@ pref("accessibility.loadedInLastSession", false);
 
 pref("plugins.click_to_play", true);
 pref("plugins.testmode", false);
+pref("plugin.load_flash_only", false);
 
 pref("plugin.default.state", 1);
 
@@ -651,6 +652,7 @@ pref("plugin.defaultXpi.state", 2);
 // all channels.
 pref("plugin.state.flash", 2);
 pref("plugin.state.java", 1);
+
 
 #ifdef XP_MACOSX
 pref("browser.preferences.animateFadeIn", true);
