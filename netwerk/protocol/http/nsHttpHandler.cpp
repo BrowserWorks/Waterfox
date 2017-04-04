@@ -318,7 +318,7 @@ nsHttpHandler::Init()
 
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
-    mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_UAVERSION);
+    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
@@ -719,16 +719,12 @@ nsHttpHandler::BuildUserAgent()
 
     bool isFirefox = mAppName.EqualsLiteral("Firefox");
     if (isFirefox || mCompatFirefoxEnabled) {
-        // "Firefox/x.y" (compatibility) app token
         mUserAgent += ' ';
-        mUserAgent += mCompatFirefox;
-    }
-    if (!isFirefox) {
-        // App portion
-        mUserAgent += ' ';
-        mUserAgent += mAppName;
+        mUserAgent += "Firefox";
         mUserAgent += '/';
         mUserAgent += mAppVersion;
+        mUserAgent += ' ';
+        mUserAgent += mCompatFirefox;
     }
 }
 
