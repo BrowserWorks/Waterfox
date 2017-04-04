@@ -8,6 +8,7 @@ Components.utils.import("resource://gre/modules/Task.jsm");
 Components.utils.import("resource:///modules/ShellService.jsm");
 Components.utils.import("resource:///modules/TransientPrefs.jsm");
 
+
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 
@@ -27,7 +28,7 @@ var gMainPane = {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gMainPane));
     }
-
+    this.getDefaultLocale();
     if (AppConstants.HAVE_SHELL_SERVICE) {
       this.updateSetDefaultBrowser();
       if (AppConstants.platform == "win") {
@@ -83,6 +84,13 @@ var gMainPane = {
     setEventListener("chooseFolder", "command",
                      gMainPane.chooseFolder);
 
+    setEventListener("localeSelect", "popuphidden", function () {
+      gMainPane.updateLocale();
+    });
+    setEventListener("localeSelect", "keypress", function (e) {
+      gMainPane._updateLocale(e);
+    });
+	
     if (AppConstants.E10S_TESTING_ONLY) {
       setEventListener("e10sAutoStart", "command",
                        gMainPane.enableE10SChange);
@@ -120,7 +128,34 @@ var gMainPane = {
               .getService(Components.interfaces.nsIObserverService)
               .notifyObservers(window, "main-pane-loaded", null);
   },
-
+  
+  // Sets language selector to current locale value
+  getDefaultLocale: function(){
+	  let selectedLocale = document.getElementById("localeSelect");
+	  if (selectedLocale){
+	  	selectedLocale.value = Services.prefs.getCharPref('general.useragent.locale');
+	  }
+  },
+  
+  updateLocale: function ()
+  {
+    let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
+    let selectedLocale = document.getElementById("localeSelect").value;
+	  
+    if (selectedLocale === Services.prefs.getCharPref('general.useragent.locale')) return;
+	
+    if (selectedLocale != "") {
+      Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
+      alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
+    }
+  },
+  _updateLocale: function (e)
+  {
+    if (e.which == 13 || e.keyCode == 13){
+		  this.updateLocale();
+    }
+},
+    
   enableE10SChange: function ()
   {
     if (AppConstants.E10S_TESTING_ONLY) {

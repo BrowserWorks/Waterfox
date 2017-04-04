@@ -63,6 +63,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "AlertsService", "@mozilla.org/alerts-s
   ["Task", "resource://gre/modules/Task.jsm"],
   ["UITour", "resource:///modules/UITour.jsm"],
   ["URLBarZoom", "resource:///modules/URLBarZoom.jsm"],
+  ["UserAgentOverrides", "resource://gre/modules/UserAgentOverrides.jsm"],
   ["WebChannel", "resource://gre/modules/WebChannel.jsm"],
   ["WindowsRegistry", "resource://gre/modules/WindowsRegistry.jsm"],
   ["webrtcUI", "resource:///modules/webrtcUI.jsm"],
@@ -554,6 +555,7 @@ BrowserGlue.prototype = {
     LoginManagerParent.init();
     ReaderParent.init();
     URLBarZoom.init();
+    UserAgentOverrides.init();
 
     SelfSupportBackend.init();
 
@@ -916,6 +918,7 @@ BrowserGlue.prototype = {
     FormValidationHandler.uninit();
     AutoCompletePopup.uninit();
     DateTimePickerHelper.uninit();
+    UserAgentOverrides.uninit();
   },
 
   _initServiceDiscovery: function () {

@@ -226,6 +226,107 @@
   </html:table>
 </groupbox>
 
+<!-- Locale -->
+<groupbox id="localeGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <caption><label>Locale Select</label></caption>
+  <menulist id="localeSelect">
+    <menupopup>
+      <menuitem value="ach" label="Acholi - Acholi"/>
+      <menuitem value="af" label="Afrikaans - Afrikaans"/>
+      <menuitem value="an" label="Aragonese - Aragonés"/>
+      <menuitem value="ar" label="Arabic - العربية"/>
+      <menuitem value="as" label="Assamese - অসমীয়া"/>
+      <menuitem value="ast" label="Asturian - Asturianu"/>
+      <menuitem value="bg" label="Bulgarian - Български"/>
+      <menuitem value="bn-BD" label="Bengali (Bangladesh) - বাংলা (বাংলাদেশ)"/>
+      <menuitem value="bn-IN" label="Bengali (India) - বাংলা (ভারত)"/>
+      <menuitem value="br" label="Breton - Brezhoneg"/>
+      <menuitem value="bs" label="Bosnian - Bosanski"/>
+      <menuitem value="ca" label="Catalan - Català"/>
+      <menuitem value="cak" label="Cakchiquel / Kaqchiquel"/>
+      <menuitem value="cs" label="Czech - Česky"/>
+      <menuitem value="cy" label="Welsh - Cymraeg"/>
+      <menuitem value="da" label="Danish - Dansk"/>
+      <menuitem value="de" label="German - Deutsch"/>
+      <menuitem value="el" label="Greek - Ελληνικά"/>
+      <menuitem value="en-GB" label="English (British) - English (British)"/>
+      <menuitem value="en-US" label="English (US) - English (US)"/>
+      <menuitem value="en-ZA" label="English (South African) - English (South African)"/>
+      <menuitem value="eo" label="Esperanto - Esperanto"/>
+      <menuitem value="es-AR" label="Spanish (Argentina) - Español (de Argentina)"/>
+      <menuitem value="es-CL" label="Spanish (Chile) - Español (de Chile)"/>
+      <menuitem value="es-ES" label="Spanish (Spain) - Español (de España)"/>
+      <menuitem value="es-MX" label="Spanish (Mexico) - Español (de México)"/>
+      <menuitem value="et" label="Estonian - Eesti"/>
+      <menuitem value="eu" label="Basque - Euskara"/>
+      <menuitem value="fa" label="Persian - فارسی"/>
+      <menuitem value="ff" label="Peul - Fulfulde"/>
+      <menuitem value="fi" label="Finnish - Suomi"/>
+      <menuitem value="fr" label="French - Français"/>
+      <menuitem value="fy-NL" label="West Frisian - Frysk"/>
+      <menuitem value="ga-IE" label="Irish - Gaeilge"/>
+      <menuitem value="gd" label="Scottish Gaelic - Gàidhlig"/>
+      <menuitem value="gl" label="Galician - Galego"/>
+      <menuitem value="gn" label="Guarani"/>
+      <menuitem value="gu-IN" label="Gujarati - ગુજરાતી"/>
+      <menuitem value="he" label="Hebrew - עברית"/>
+      <menuitem value="hi-IN" label="Hindi - हिन्दी"/>
+      <menuitem value="hr" label="Croatian - Hrvatski"/>
+      <menuitem value="hsb" label="Upper Sorbian - Hornjoserbsce"/>
+      <menuitem value="hu" label="Hungarian - Magyar"/>
+      <menuitem value="hy-AM" label="Armenian - Հայերեն"/>
+      <menuitem value="id" label="Indonesian - Bahasa Indonesia"/>
+      <menuitem value="is" label="Icelandic - Íslenska"/>
+      <menuitem value="it" label="Italian - Italiano"/>
+      <menuitem value="ja" label="Japanese - 日本語"/>
+      <menuitem value="ka" label="Georgian - ქართული"/>
+      <menuitem value="kab" label="Kabyle - Taqbaylit"/>
+      <menuitem value="kk" label="Kazakh - Қазақша"/>
+      <menuitem value="km" label="Cambodian - ភាសាខ្មែរ"/>
+      <menuitem value="kn" label="Kannada - ಕನ್ನಡ"/>
+      <menuitem value="ko" label="Korean - 한국어"/>
+      <menuitem value="lij" label="Ligurian - Líguru"/>
+      <menuitem value="lt" label="Lithuanian - Lietuvių"/>
+      <menuitem value="lv" label="Latvian - Latviešu"/>
+      <menuitem value="mai" label="Maithili - मैथिली মৈথিল"/>
+      <menuitem value="mk" label="Macedonian - Македонски"/>
+      <menuitem value="ml" label="Malayalam - മലയാളം"/>
+      <menuitem value="mr" label="Marathi - मराठी"/>
+      <menuitem value="ms" label="Malay - Bahasa Melayu"/>
+      <menuitem value="nb-NO" label="Norwegian (Bokmål) - Norsk bokmål"/>
+      <menuitem value="nl" label="Dutch - Nederlands"/>
+      <menuitem value="nn-NO" label="Norwegian (Nynorsk) - Norsk nynorsk"/>
+      <menuitem value="or" label="Oriya - ଓଡ଼ିଆ"/>
+      <menuitem value="pa-IN" label="Punjabi - ਪੰਜਾਬੀ (ਭਾਰਤ)"/>
+      <menuitem value="pl" label="Polish - Polski"/>
+      <menuitem value="pt-BR" label="Portuguese (Brazilian) - Português (do Brasil)"/>
+      <menuitem value="pt-PT" label="Portuguese (Portugal) - Português (Europeu)"/>
+      <menuitem value="rm" label="Raeto Romance - Rumantsch"/>
+      <menuitem value="ro" label="Romanian - Română"/>
+      <menuitem value="ru" label="Russian - Русский"/>
+      <menuitem value="si" label="Sinhalese - සිංහල"/>
+      <menuitem value="sk" label="Slovak - Slovenčina"/>
+      <menuitem value="sl" label="Slovenian - Slovenščina"/>
+      <menuitem value="son" label="Songhai - Soŋay"/>
+      <menuitem value="sq" label="Albanian - Shqip"/>
+      <menuitem value="sr" label="Serbian - Српски"/>
+      <menuitem value="sv-SE" label="Swedish - Svenska"/>
+      <menuitem value="ta" label="Tamil - தமிழ்"/>
+      <menuitem value="te" label="Telugu - తెలుగు"/>
+      <menuitem value="th" label="Thai - ไทย"/>
+      <menuitem value="tr" label="Turkish - Türkçe"/>
+      <menuitem value="uk" label="Ukrainian - Українська"/>
+      <menuitem value="uz" label="Uzbek - Oʻzbek tili"/>
+      <menuitem value="vi" label="Vietnamese - Tiếng Việt"/>
+      <menuitem value="xh" label="Xhosa - isiXhosa"/>
+      <menuitem value="zh-CN" label="Chinese (Simplified) - 中文 (简体)"/>
+      <menuitem value="zh-TW" label="Chinese (Traditional) - 正體中文 (繁體)"/>
+    </menupopup>
+  </menulist>
+</groupbox>
+
 <!-- Downloads -->
 <groupbox id="downloadsGroup"
           data-category="paneGeneral"
