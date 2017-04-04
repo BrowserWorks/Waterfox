@@ -1145,7 +1145,7 @@ Function .onInit
 !ifdef HAVE_64BIT_BUILD
   ; Restrict x64 builds from being installed on x86 and pre Win7
   ${Unless} ${RunningX64}
-  ${OrUnless} ${AtLeastWin7}
+  ${OrUnless} ${AtLeastWinXP}
     ${If} "$R7" == "0"
       strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
     ${Else}
