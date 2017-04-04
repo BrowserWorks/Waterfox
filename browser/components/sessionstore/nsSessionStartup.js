@@ -45,8 +45,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "console",
   "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SessionFile",
   "resource:///modules/sessionstore/SessionFile.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "StartupPerformance",
-  "resource:///modules/sessionstore/StartupPerformance.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CrashMonitor",
   "resource://gre/modules/CrashMonitor.jsm");
 
@@ -98,7 +96,6 @@ SessionStartup.prototype = {
    */
   init: function sss_init() {
     Services.obs.notifyObservers(null, "sessionstore-init-started", null);
-    StartupPerformance.init();
 
     // do not need to initialize anything in auto-started private browsing sessions
     if (PrivateBrowsingUtils.permanentPrivateBrowsing) {

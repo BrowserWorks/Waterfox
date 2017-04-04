@@ -41,7 +41,6 @@ EXTRA_JS_MODULES.sessionstore = [
     'SessionStore.jsm',
     'SessionWorker.js',
     'SessionWorker.jsm',
-    'StartupPerformance.jsm',
     'TabAttributes.jsm',
     'TabState.jsm',
     'TabStateCache.jsm',

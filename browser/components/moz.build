@@ -21,7 +21,6 @@ DIRS += [
     'search',
     'sessionstore',
     'shell',
-    'selfsupport',
     'syncedtabs',
     'uitour',
     'translation',
