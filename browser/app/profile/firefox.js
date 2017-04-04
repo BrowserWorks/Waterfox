@@ -122,11 +122,7 @@ pref("app.update.auto", true);
 pref("app.update.silent", false);
 
 // If set to true, the hamburger button will show badges for update events.
-#ifndef RELEASE_OR_BETA
 pref("app.update.badge", true);
-#else
-pref("app.update.badge", false);
-#endif
 // app.update.badgeWaitTime is in branding section
 
 // If set to true, the Update Service will apply updates in the background
