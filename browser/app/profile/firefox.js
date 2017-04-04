@@ -1173,10 +1173,10 @@ pref("browser.newtabpage.rows", 3);
 pref("browser.newtabpage.columns", 5);
 
 // directory tiles download URL
-pref("browser.newtabpage.directory.source", "https://tiles.services.mozilla.com/v3/links/fetch/%LOCALE%/%CHANNEL%");
+sticky_pref("browser.newtabpage.directory.source", "");
 
 // endpoint to send newtab click and view pings
-pref("browser.newtabpage.directory.ping", "https://tiles.services.mozilla.com/v3/links/");
+sticky_pref("browser.newtabpage.directory.ping", "");
 
 // activates the remote-hosted newtab page
 pref("browser.newtabpage.remote", false);
