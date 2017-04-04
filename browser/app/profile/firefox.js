@@ -642,6 +642,7 @@ pref("accessibility.loadedInLastSession", false);
 pref("plugins.click_to_play", true);
 pref("plugins.testmode", false);
 pref("plugin.load_flash_only", false);
+pref("plugins.update.url", "https://www.mozilla.org/%LOCALE%/plugincheck/");
 
 pref("plugin.default.state", 1);
 
