@@ -16,7 +16,6 @@ Cu.import("resource://gre/modules/NotificationDB.jsm");
   ["AboutHome", "resource:///modules/AboutHome.jsm"],
   ["AppConstants", "resource://gre/modules/AppConstants.jsm"],
   ["BrowserUITelemetry", "resource:///modules/BrowserUITelemetry.jsm"],
-  ["BrowserUsageTelemetry", "resource:///modules/BrowserUsageTelemetry.jsm"],
   ["BrowserUtils", "resource://gre/modules/BrowserUtils.jsm"],
   ["CastingApps", "resource:///modules/CastingApps.jsm"],
   ["CharsetMenu", "resource://gre/modules/CharsetMenu.jsm"],
@@ -3737,7 +3736,6 @@ const BrowserSearch = {
   loadSearchFromContext: function (terms) {
     let engine = BrowserSearch._loadSearch(terms, true, "contextmenu");
     if (engine) {
-      BrowserSearch.recordSearchInTelemetry(engine, "contextmenu");
     }
   },
 
@@ -3777,32 +3775,6 @@ const BrowserSearch = {
   },
 
   /**
-   * Helper to record a search with Telemetry.
-   *
-   * Telemetry records only search counts and nothing pertaining to the search itself.
-   *
-   * @param engine
-   *        (nsISearchEngine) The engine handling the search.
-   * @param source
-   *        (string) Where the search originated from. See BrowserUsageTelemetry for
-   *        allowed values.
-   * @param details [optional]
-   *        An optional parameter passed to |BrowserUsageTelemetry.recordSearch|.
-   *        See its documentation for allowed options.
-   *        Additionally, if the search was a suggested search, |details.selection|
-   *        indicates where the item was in the suggestion list and how the user
-   *        selected it: {selection: {index: The selected index, kind: "key" or "mouse"}}
-   */
-  recordSearchInTelemetry: function (engine, source, details={}) {
-    BrowserUITelemetry.countSearchEvent(source, null, details.selection);
-    try {
-      BrowserUsageTelemetry.recordSearch(engine, source, details);
-    } catch (ex) {
-      Cu.reportError(ex);
-    }
-  },
-
-  /**
    * Helper to record a one-off search with Telemetry.
    *
    * Telemetry records only search counts and nothing pertaining to the search itself.
@@ -3821,8 +3793,7 @@ const BrowserSearch = {
     let id = this._getSearchEngineId(engine) + "." + source;
     BrowserUITelemetry.countOneoffSearchEvent(id, type, where);
     try {
-      const details = {type, isOneOff: true};
-      BrowserUsageTelemetry.recordSearch(engine, source, details);
+
     } catch (ex) {
       Cu.reportError(ex);
     }

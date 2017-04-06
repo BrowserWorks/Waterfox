@@ -27,7 +27,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "AlertsService", "@mozilla.org/alerts-s
   ["BookmarkHTMLUtils", "resource://gre/modules/BookmarkHTMLUtils.jsm"],
   ["BookmarkJSONUtils", "resource://gre/modules/BookmarkJSONUtils.jsm"],
   ["BrowserUITelemetry", "resource:///modules/BrowserUITelemetry.jsm"],
-  ["BrowserUsageTelemetry", "resource:///modules/BrowserUsageTelemetry.jsm"],
   ["ContentClick", "resource:///modules/ContentClick.jsm"],
   ["ContentPrefServiceParent", "resource://gre/modules/ContentPrefServiceParent.jsm"],
   ["ContentSearch", "resource:///modules/ContentSearch.jsm"],
@@ -323,7 +322,6 @@ BrowserGlue.prototype = {
           Cu.reportError(ex);
         }
         let win = RecentWindow.getMostRecentBrowserWindow();
-        win.BrowserSearch.recordSearchInTelemetry(engine, "urlbar");
         break;
       case "browser-search-engine-modified":
         // Ensure we cleanup the hiddenOneOffs pref when removing
@@ -541,7 +539,6 @@ BrowserGlue.prototype = {
     NewTabMessages.init();
 
     SessionStore.init();
-    BrowserUsageTelemetry.init();
     BrowserUITelemetry.init();
     ContentSearch.init();
     FormValidationHandler.init();
@@ -906,7 +903,6 @@ BrowserGlue.prototype = {
       delete this._bookmarksBackupIdleTime;
     }
 
-    BrowserUsageTelemetry.uninit();
     PageThumbs.uninit();
     NewTabMessages.uninit();
     AboutNewTab.uninit();

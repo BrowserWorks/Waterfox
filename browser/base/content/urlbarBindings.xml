@@ -623,7 +623,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           details.isOneOff = isOneOff;
           details.type = eventType;
 
-          BrowserSearch.recordSearchInTelemetry(engine, "urlbar", details);
           let submission = engine.getSubmission(query, null, "keyword");
           return [submission.uri.spec, submission.postData];
         ]]></body>

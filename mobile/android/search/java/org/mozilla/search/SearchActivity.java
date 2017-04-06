@@ -255,7 +255,6 @@ public class SearchActivity extends Locales.LocaleAwareFragmentActivity
         storeQuery(query);
 
         try {
-            //BrowserHealthRecorder.recordSearchDelayed("activity", engine.getIdentifier());
         } catch (Exception e) {
             // This should never happen: it'll only throw if the
             // search location is wrong. But let's not tempt fate.

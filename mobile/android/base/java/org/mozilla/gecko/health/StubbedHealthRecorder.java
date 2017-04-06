@@ -28,8 +28,6 @@ public class StubbedHealthRecorder implements HealthRecorder {
     @Override
     public void recordJavaStartupTime(long duration) { }
     @Override
-    public void recordSearch(final String engineID, final String location) { }
-    @Override
     public void recordSessionEnd(String reason, SharedPreferences.Editor editor) { }
     @Override
     public void recordSessionEnd(String reason, SharedPreferences.Editor editor, final int environment) { }

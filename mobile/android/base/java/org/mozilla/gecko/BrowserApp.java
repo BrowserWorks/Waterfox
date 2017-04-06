@@ -2109,8 +2109,6 @@ public class BrowserApp extends GeckoApp
 
                 case "Search:Keyword":
                     storeSearchQuery(message.getString("query"));
-                    recordSearch(GeckoSharedPrefs.forProfile(this), message.getString("identifier"),
-                            TelemetryContract.Method.ACTIONBAR);
                     break;
 
                 case "LightweightTheme:Update":
@@ -2638,19 +2636,6 @@ public class BrowserApp extends GeckoApp
                                       "keyword");
             }
         });
-    }
-
-    /**
-     * Records in telemetry that a search has occurred.
-     *
-     * @param where where the search was started from
-     */
-    private static void recordSearch(@NonNull final SharedPreferences prefs, @NonNull final String engineIdentifier,
-            @NonNull final TelemetryContract.Method where) {
-        // We could include the engine identifier as an extra but we'll
-        // just capture that with core ping telemetry (bug 1253319).
-        Telemetry.sendUIEvent(TelemetryContract.Event.SEARCH, where);
-        SearchCountMeasurements.incrementSearch(prefs, engineIdentifier, where.toString());
     }
 
     /**
@@ -4141,7 +4126,6 @@ public class BrowserApp extends GeckoApp
         // We don't use SearchEngine.getEngineIdentifier because it can
         // return a custom search engine name, which is a privacy concern.
         final String identifierToRecord = (engine.identifier != null) ? engine.identifier : "other";
-        recordSearch(GeckoSharedPrefs.forProfile(this), identifierToRecord, method);
         openUrlAndStopEditing(text, engine.name);
     }
 
