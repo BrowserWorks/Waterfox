@@ -55,7 +55,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "AlertsService", "@mozilla.org/alerts-s
   ["ReaderParent", "resource:///modules/ReaderParent.jsm"],
   ["RecentWindow", "resource:///modules/RecentWindow.jsm"],
   ["RemotePrompt", "resource:///modules/RemotePrompt.jsm"],
-  ["SelfSupportBackend", "resource:///modules/SelfSupportBackend.jsm"],
   ["SessionStore", "resource:///modules/sessionstore/SessionStore.jsm"],
   ["ShellService", "resource:///modules/ShellService.jsm"],
   ["SimpleServiceDiscovery", "resource://gre/modules/SimpleServiceDiscovery.jsm"],
@@ -557,8 +556,6 @@ BrowserGlue.prototype = {
     URLBarZoom.init();
     UserAgentOverrides.init();
 
-    SelfSupportBackend.init();
-
     // Ensure we keep track of places/pw-mananager undo by init'ing this early.
     Cu.import("resource:///modules/AutoMigrate.jsm");
 
@@ -910,7 +907,6 @@ BrowserGlue.prototype = {
     }
 
     BrowserUsageTelemetry.uninit();
-    SelfSupportBackend.uninit();
     PageThumbs.uninit();
     NewTabMessages.uninit();
     AboutNewTab.uninit();
