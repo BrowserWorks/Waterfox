@@ -15,7 +15,6 @@ Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils", "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/ReaderMode.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UITour", "resource:///modules/UITour.jsm");
 
 const gStringBundle = Services.strings.createBundle("chrome://global/locale/aboutReader.properties");
 
@@ -113,13 +112,9 @@ var ReaderParent = {
     if (browser.isArticle &&
         !Services.prefs.getBoolPref("browser.reader.detectedFirstArticle") &&
         currentUriHost && !currentUriHost.endsWith("mozilla.org")) {
-      this.showReaderModeInfoPanel(browser);
       Services.prefs.setBoolPref("browser.reader.detectedFirstArticle", true);
       this._readerModeInfoPanelOpen = true;
     } else if (this._readerModeInfoPanelOpen) {
-      if (UITour.isInfoOnTarget(win, "readerMode-urlBar")) {
-        UITour.hideInfo(win);
-      }
       this._readerModeInfoPanelOpen = false;
     }
   },
@@ -140,29 +135,6 @@ var ReaderParent = {
     let win = event.target.ownerGlobal;
     let browser = win.gBrowser.selectedBrowser;
     browser.messageManager.sendAsyncMessage("Reader:ToggleReaderMode");
-  },
-
-  /**
-   * Shows an info panel from the UITour for Reader Mode.
-   *
-   * @param browser The <browser> that the tour should be started for.
-   */
-  showReaderModeInfoPanel(browser) {
-    let win = browser.ownerGlobal;
-    let targetPromise = UITour.getTarget(win, "readerMode-urlBar");
-    targetPromise.then(target => {
-      let browserBundle = Services.strings.createBundle("chrome://browser/locale/browser.properties");
-      let icon = "chrome://browser/skin/";
-      if (win.devicePixelRatio > 1) {
-        icon += "reader-tour@2x.png";
-      } else {
-        icon += "reader-tour.png";
-      }
-      UITour.showInfo(win, target,
-                      browserBundle.GetStringFromName("readingList.promo.firstUse.readerView.title"),
-                      browserBundle.GetStringFromName("readingList.promo.firstUse.readerView.body"),
-                      icon);
-    });
   },
 
   /**

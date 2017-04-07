@@ -8,8 +8,6 @@ requestLongerTimeout(2);
 
 let {SyncedTabs} = Cu.import("resource://services-sync/SyncedTabs.jsm", {});
 
-XPCOMUtils.defineLazyModuleGetter(this, "UITour", "resource:///modules/UITour.jsm");
-
 // These are available on the widget implementation, but it seems impossible
 // to grab that impl at runtime.
 const DECKINDEX_TABS = 0;
@@ -57,11 +55,6 @@ function* openPrefsFromMenuPanel(expectedPanelId, entryPoint) {
 
   // check the button's functionality
   yield PanelUI.show();
-
-  if (entryPoint == "uitour") {
-    UITour.tourBrowsersByWindow.set(window, new Set());
-    UITour.tourBrowsersByWindow.get(window).add(gBrowser.selectedBrowser);
-  }
 
   let syncButton = document.getElementById("sync-button");
   ok(syncButton, "The Sync button was added to the Panel Menu");
@@ -113,7 +106,6 @@ function* asyncCleanup() {
   // restore the tabs
   gBrowser.addTab(initialLocation);
   gBrowser.removeTab(newTab);
-  UITour.tourBrowsersByWindow.delete(window);
 }
 
 // When Sync is not setup.

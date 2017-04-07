@@ -37,7 +37,6 @@ XPCOMUtils.defineLazyGetter(this, "strings",
 
 XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Prompt", "resource://gre/modules/Prompt.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry", "resource://gre/modules/UITelemetry.jsm");
 
 this.FxAccountsWebChannelHelpers = function() {
 };
@@ -271,7 +270,6 @@ this.FxAccountsWebChannel.prototype = {
                   if (!success) {
                     throw new Error("Could not create Firefox Account!");
                   }
-                  UITelemetry.addEvent("action.1", "content", null, "fxaccount-create");
                   return success;
                 });
               } else {
@@ -279,7 +277,6 @@ this.FxAccountsWebChannel.prototype = {
                   if (!success) {
                     throw new Error("Could not update Firefox Account!");
                   }
-                  UITelemetry.addEvent("action.1", "content", null, "fxaccount-login");
                   return success;
                 });
               }
@@ -311,7 +308,6 @@ this.FxAccountsWebChannel.prototype = {
               if (!success) {
                 throw new Error("Could not change Firefox Account password!");
               }
-              UITelemetry.addEvent("action.1", "content", null, "fxaccount-changepassword");
               log.i("Changed Firefox Account password.");
             })
             .catch(e => {
@@ -332,7 +328,6 @@ this.FxAccountsWebChannel.prototype = {
                 if (!success) {
                   throw new Error("Could not delete Firefox Account!");
                 }
-                UITelemetry.addEvent("action.1", "content", null, "fxaccount-delete");
                 log.i("Firefox Account deleted.");
               });
             }).catch(e => {
@@ -346,7 +341,6 @@ this.FxAccountsWebChannel.prototype = {
               if (!account) {
                 throw new Error("Can't change profile of non-existent Firefox Account!");
               }
-              UITelemetry.addEvent("action.1", "content", null, "fxaccount-changeprofile");
               return Accounts.notifyFirefoxAccountProfileChanged();
             })
             .catch(e => {
@@ -355,7 +349,6 @@ this.FxAccountsWebChannel.prototype = {
             break;
 
           case COMMAND_SYNC_PREFERENCES:
-            UITelemetry.addEvent("action.1", "content", null, "fxaccount-syncprefs");
             Accounts.showSyncPreferences()
             .catch(e => {
               log.e(e.toString());

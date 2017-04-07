@@ -363,7 +363,6 @@ var CastingApps = {
     this.closeExternal();
 
     // Start the new session
-    UITelemetry.addEvent("cast.1", "button", null);
     this.openExternal(video, 0, 0);
   },
 
@@ -600,7 +599,6 @@ var CastingApps = {
       let videos = browser.contentDocument.querySelectorAll("video");
       for (let video of videos) {
         if (!video.paused && video.mozAllowCasting) {
-          UITelemetry.addEvent("cast.1", "pageaction", null);
           CastingApps.openExternal(video, 0, 0);
           return;
         }
@@ -717,8 +715,6 @@ var CastingApps = {
   },
 
   handleContextMenu: function(aElement, aX, aY) {
-    UITelemetry.addEvent("action.1", "contextmenu", null, "web_cast");
-    UITelemetry.addEvent("cast.1", "contextmenu", null);
     this.openExternal(aElement, aX, aY);
   },
 

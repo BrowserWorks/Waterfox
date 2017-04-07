@@ -1308,7 +1308,6 @@
 
       <method name="showSettings">
         <body><![CDATA[
-          BrowserUITelemetry.countSearchSettingsEvent(this.telemetryOrigin);
           openPreferences("paneSearch");
           // If the preference tab was already selected, the panel doesn't
           // close itself automatically.

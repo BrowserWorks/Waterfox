@@ -194,10 +194,6 @@ var SidebarUI = {
         return;
       }
 
-      if (this.isOpen && commandID != this.currentID) {
-        BrowserUITelemetry.countSidebarEvent(this.currentID, "hide");
-      }
-
       let broadcasters = document.getElementsByAttribute("group", "sidebar");
       for (let broadcaster of broadcasters) {
         // skip elements that observe sidebar broadcasters and random
@@ -260,7 +256,6 @@ var SidebarUI = {
       selBrowser.messageManager.sendAsyncMessage("Sidebar:VisibilityChange",
         {commandID: commandID, isOpen: true}
       );
-      BrowserUITelemetry.countSidebarEvent(commandID, "show");
     });
   },
 
@@ -298,7 +293,6 @@ var SidebarUI = {
     selBrowser.messageManager.sendAsyncMessage("Sidebar:VisibilityChange",
       {commandID: commandID, isOpen: false}
     );
-    BrowserUITelemetry.countSidebarEvent(commandID, "hide");
   },
 };
 

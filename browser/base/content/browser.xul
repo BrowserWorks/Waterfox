@@ -234,42 +234,6 @@
       </hbox>
     </panel>
 
-    <!-- UI tour experience -->
-    <panel id="UITourTooltip"
-           type="arrow"
-           hidden="true"
-           noautofocus="true"
-           noautohide="true"
-           align="start"
-           orient="vertical"
-           role="alert">
-     <vbox>
-      <hbox id="UITourTooltipBody">
-        <image id="UITourTooltipIcon"/>
-        <vbox flex="1">
-          <hbox id="UITourTooltipTitleContainer">
-            <label id="UITourTooltipTitle" flex="1"/>
-            <toolbarbutton id="UITourTooltipClose" class="close-icon"
-                           tooltiptext="&uiTour.infoPanel.close;"/>
-          </hbox>
-          <description id="UITourTooltipDescription" flex="1"/>
-        </vbox>
-      </hbox>
-      <hbox id="UITourTooltipButtons" flex="1" align="center"/>
-     </vbox>
-    </panel>
-    <!-- type="default" forces frames to be created so that the panel's size can be determined -->
-    <panel id="UITourHighlightContainer"
-           type="default"
-           hidden="true"
-           noautofocus="true"
-           noautohide="true"
-           flip="none"
-           consumeoutsideclicks="false"
-           mousethrough="always">
-      <box id="UITourHighlight"></box>
-    </panel>
-
     <panel id="social-share-panel"
            class="social-panel"
            type="arrow"

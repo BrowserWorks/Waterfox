@@ -851,7 +851,6 @@ you can use these alternative items. Otherwise, their values should be empty.  -
      a CSS length value. -->
 <!ENTITY pluginNotification.width "28em">
 
-<!ENTITY uiTour.infoPanel.close "Close">
 
 <!ENTITY appMenuSidebars.label         "Sidebars">
 

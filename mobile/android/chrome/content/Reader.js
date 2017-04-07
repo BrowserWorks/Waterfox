@@ -153,9 +153,7 @@ var Reader = {
     readerModeCallback: function(browser) {
       let url = browser.currentURI.spec;
       if (url.startsWith("about:reader")) {
-        UITelemetry.addEvent("action.1", "button", null, "reader_exit");
       } else {
-        UITelemetry.addEvent("action.1", "button", null, "reader_enter");
       }
       browser.messageManager.sendAsyncMessage("Reader:ToggleReaderMode");
     },
@@ -185,18 +183,12 @@ var Reader = {
       showPageAction("drawable://reader_active", Strings.reader.GetStringFromName("readerView.close"));
       // Only start a reader session if the viewer is in the foreground. We do
       // not track background reader viewers.
-      UITelemetry.startSession("reader.1", null);
       return;
     }
 
-    // Only stop a reader session if the foreground viewer is not visible.
-    UITelemetry.stopSession("reader.1", "", null);
-
     if (browser.isArticle) {
       showPageAction("drawable://reader", Strings.reader.GetStringFromName("readerView.enter"));
-      UITelemetry.addEvent("show.1", "button", null, "reader_available");
     } else {
-      UITelemetry.addEvent("show.1", "button", null, "reader_unavailable");
     }
   },
 

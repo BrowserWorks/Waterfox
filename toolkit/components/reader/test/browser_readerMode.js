@@ -33,8 +33,6 @@ add_task(function* test_reader_button() {
 
   let tab = gBrowser.selectedTab = gBrowser.addTab();
   is_element_hidden(readerButton, "Reader mode button is not present on a new tab");
-  ok(!UITour.isInfoOnTarget(window, "readerMode-urlBar"),
-     "Info panel shouldn't appear without the reader mode button");
   ok(!Services.prefs.getBoolPref("browser.reader.detectedFirstArticle"),
      "Shouldn't have detected the first article");
 
@@ -47,15 +45,12 @@ add_task(function* test_reader_button() {
   yield promiseWaitForCondition(() => !readerButton.hidden);
   yield tourPopupShownPromise;
   is_element_visible(readerButton, "Reader mode button is present on a reader-able page");
-  ok(UITour.isInfoOnTarget(window, "readerMode-urlBar"),
-     "Info panel should be anchored at the reader mode button");
   ok(Services.prefs.getBoolPref("browser.reader.detectedFirstArticle"),
      "Should have detected the first article");
 
   // Switch page into reader mode.
   readerButton.click();
   yield promiseTabLoadEvent(tab);
-  ok(!UITour.isInfoOnTarget(window, "readerMode-urlBar"), "Info panel should have closed");
 
   let readerUrl = gBrowser.selectedBrowser.currentURI.spec;
   ok(readerUrl.startsWith("about:reader"), "about:reader loaded after clicking reader mode button");

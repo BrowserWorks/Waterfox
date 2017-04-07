@@ -13,9 +13,6 @@ Cu.import('resource://gre/modules/Services.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, "Prompt",
                                   "resource://gre/modules/Prompt.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry",
-                                  "resource://gre/modules/UITelemetry.jsm");
-
 const kPRESENTATIONDEVICEPROMPT_CONTRACTID = "@mozilla.org/presentation-device/prompt;1";
 const kPRESENTATIONDEVICEPROMPT_CID        = Components.ID("{388bd149-c919-4a43-b646-d7ec57877689}");
 
@@ -127,7 +124,6 @@ PresentationDevicePrompt.prototype = {
 
     this._showPrompt(prompt, this._selectDevice.bind(this));
 
-    UITelemetry.addEvent("show.1", "dialog", null, "prompt_device_selection");
   },
 };
 

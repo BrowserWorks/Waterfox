@@ -356,7 +356,6 @@ var ActionBarHandler = {
 
         // Close ActionBarHandler, then selectAll, and display handles.
         ActionBarHandler._getSelectAllController(element, win).selectAll();
-        UITelemetry.addEvent("action.1", "actionbar", null, "select_all");
       },
     },
 
@@ -401,7 +400,6 @@ var ActionBarHandler = {
         ActionBarHandler._getSelection(element, win).deleteFromDocument();
 
         ActionBarHandler._uninit();
-        UITelemetry.addEvent("action.1", "actionbar", null, "cut");
       },
     },
 
@@ -434,7 +432,6 @@ var ActionBarHandler = {
         Snackbars.show(msg, Snackbars.LENGTH_LONG);
 
         ActionBarHandler._uninit();
-        UITelemetry.addEvent("action.1", "actionbar", null, "copy");
       },
     },
 
@@ -467,7 +464,6 @@ var ActionBarHandler = {
         ActionBarHandler._getEditor(element, win).
           paste(Ci.nsIClipboard.kGlobalClipboard);
         ActionBarHandler._uninit();
-        UITelemetry.addEvent("action.1", "actionbar", null, "paste");
       },
     },
 
@@ -489,7 +485,6 @@ var ActionBarHandler = {
           ActionBarHandler._getSelectedPhoneNumber());
 
         ActionBarHandler._uninit();
-        UITelemetry.addEvent("action.1", "actionbar", null, "call");
       },
     },
 
@@ -524,7 +519,6 @@ var ActionBarHandler = {
           }
         );
 
-        UITelemetry.addEvent("action.1", "actionbar", null, "search");
       },
     },
 
@@ -562,7 +556,6 @@ var ActionBarHandler = {
       },
 
       action: function(element, win) {
-        UITelemetry.addEvent("action.1", "actionbar", null, "add_search_engine");
 
         // Engines are added asynch. If required, update SelectionUI on callback.
         SearchEngines.addEngine(element, (result) => {
@@ -597,7 +590,6 @@ var ActionBarHandler = {
         });
 
         ActionBarHandler._uninit();
-        UITelemetry.addEvent("action.1", "actionbar", null, "share");
       },
     },
   },

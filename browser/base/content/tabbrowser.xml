@@ -6896,11 +6896,9 @@
             if (browser.audioMuted) {
               browser.unmute();
               this.removeAttribute("muted");
-              BrowserUITelemetry.countTabMutingEvent("unmute", aMuteReason);
             } else {
               browser.mute();
               this.setAttribute("muted", "true");
-              BrowserUITelemetry.countTabMutingEvent("mute", aMuteReason);
             }
             this.muteReason = aMuteReason || null;
             modifiedAttrs.push("muted");

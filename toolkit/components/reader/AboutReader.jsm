@@ -16,7 +16,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "AsyncPrefs", "resource://gre/modules/As
 XPCOMUtils.defineLazyModuleGetter(this, "NarrateControls", "resource://gre/modules/narrate/NarrateControls.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Rect", "resource://gre/modules/Geometry.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task", "resource://gre/modules/Task.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry", "resource://gre/modules/UITelemetry.jsm");
 
 var gStrings = Services.strings.createBundle("chrome://global/locale/aboutReader.properties");
 
@@ -866,10 +865,6 @@ AboutReader.prototype = {
           return;
 
         aEvent.stopPropagation();
-
-        // Just pass the ID of the button as an extra and hope the ID doesn't change
-        // unless the context changes
-        UITelemetry.addEvent("action.1", "button", null, id);
 
         let items = segmentedButton.children;
         for (let j = items.length - 1; j >= 0; j--) {

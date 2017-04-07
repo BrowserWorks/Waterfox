@@ -15,7 +15,6 @@ Cu.import("resource://gre/modules/NotificationDB.jsm");
 [
   ["AboutHome", "resource:///modules/AboutHome.jsm"],
   ["AppConstants", "resource://gre/modules/AppConstants.jsm"],
-  ["BrowserUITelemetry", "resource:///modules/BrowserUITelemetry.jsm"],
   ["BrowserUtils", "resource://gre/modules/BrowserUtils.jsm"],
   ["CastingApps", "resource:///modules/CastingApps.jsm"],
   ["CharsetMenu", "resource://gre/modules/CharsetMenu.jsm"],
@@ -47,7 +46,6 @@ Cu.import("resource://gre/modules/NotificationDB.jsm");
   ["Task", "resource://gre/modules/Task.jsm"],
   ["TelemetryStopwatch", "resource://gre/modules/TelemetryStopwatch.jsm"],
   ["Translation", "resource:///modules/translation/Translation.jsm"],
-  ["UITour", "resource:///modules/UITour.jsm"],
   ["UpdateUtils", "resource://gre/modules/UpdateUtils.jsm"],
   ["Weave", "resource://services-sync/main.js"],
   ["fxAccounts", "resource://gre/modules/FxAccounts.jsm"],
@@ -989,7 +987,6 @@ var gBrowserInit = {
     let mm = window.getGroupMessageManager("browsers");
     mm.loadFrameScript("chrome://browser/content/tab-content.js", true);
     mm.loadFrameScript("chrome://browser/content/content.js", true);
-    mm.loadFrameScript("chrome://browser/content/content-UITour.js", true);
     mm.loadFrameScript("chrome://global/content/manifestMessages.js", true);
 
     // initialize observers and listeners
@@ -3773,31 +3770,6 @@ const BrowserSearch = {
 
     return "other-" + engine.name;
   },
-
-  /**
-   * Helper to record a one-off search with Telemetry.
-   *
-   * Telemetry records only search counts and nothing pertaining to the search itself.
-   *
-   * @param engine
-   *        (nsISearchEngine) The engine handling the search.
-   * @param source
-   *        (string) Where the search originated from. See BrowserUsageTelemetry for
-   *        allowed values.
-   * @param type
-   *        (string) Indicates how the user selected the search item.
-   * @param where
-   *        (string) Where was the search link opened (e.g. new tab, current tab, ..).
-   */
-  recordOneoffSearchInTelemetry: function (engine, source, type, where) {
-    let id = this._getSearchEngineId(engine) + "." + source;
-    BrowserUITelemetry.countOneoffSearchEvent(id, type, where);
-    try {
-
-    } catch (ex) {
-      Cu.reportError(ex);
-    }
-  }
 };
 
 XPCOMUtils.defineConstant(this, "BrowserSearch", BrowserSearch);
@@ -4484,8 +4456,6 @@ var XULBrowserWindow = {
       gIdentityHandler.onLocationChange();
 
       SocialUI.updateState();
-
-      UITour.onLocationChange(location);
 
       gTabletModePageCounter.inc();
 

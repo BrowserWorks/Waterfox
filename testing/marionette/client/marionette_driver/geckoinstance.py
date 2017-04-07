@@ -438,9 +438,6 @@ class DesktopInstance(GeckoInstance):
         # Do not warn when multiple tabs will be opened
         "browser.tabs.warnOnOpen": False,
 
-        # Disable the UI tour
-        "browser.uitour.enabled": False,
-
         # Disable first-run welcome page
         "startup.homepage_welcome_url": "about:blank",
         "startup.homepage_welcome_url.additional": "",

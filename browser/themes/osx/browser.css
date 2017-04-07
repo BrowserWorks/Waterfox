@@ -3367,24 +3367,6 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   -moz-box-ordinal-group: 0;
 }
 
-%include ../shared/UITour.inc.css
-
-#UITourTooltipDescription {
-  font-size: 1.18rem;
-  line-height: 2rem;
-}
-
-#UITourTooltipClose {
-  margin-inline-end: -10px;
-  margin-top: -14px;
-}
-
-@media (min-resolution: 2dppx) {
-  #UITourTooltipClose > .toolbarbutton-icon {
-    width: 16px;
-  }
-}
-
 %include ../shared/contextmenu.inc.css
 
 #context-navigation > .menuitem-iconic {

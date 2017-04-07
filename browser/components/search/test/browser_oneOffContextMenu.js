@@ -30,13 +30,11 @@ add_task(function* init() {
 add_task(function* extendedTelemetryDisabled() {
   yield SpecialPowers.pushPrefEnv({set: [["toolkit.telemetry.enabled", false]]});
   yield doTest();
-  checkTelemetry("other");
 });
 
 add_task(function* extendedTelemetryEnabled() {
   yield SpecialPowers.pushPrefEnv({set: [["toolkit.telemetry.enabled", true]]});
   yield doTest();
-  checkTelemetry("other-" + TEST_ENGINE_NAME);
 });
 
 function* doTest() {
@@ -85,21 +83,4 @@ function* doTest() {
 
   // Move the cursor out of the panel area to avoid messing with other tests.
   yield EventUtils.synthesizeNativeMouseMove(searchbar);
-}
-
-function checkTelemetry(expectedEngineName) {
-  let propertyPath = [
-    "countableEvents",
-    "__DEFAULT__",
-    "search-oneoff",
-    expectedEngineName + ".oneoff-context-searchbar",
-    "unknown",
-    "tab-background",
-  ];
-  let telem = BrowserUITelemetry.getToolbarMeasures();
-  for (let prop of propertyPath) {
-    Assert.ok(prop in telem, "Property " + prop + " should be in the telemetry");
-    telem = telem[prop];
-  }
-  Assert.equal(telem, 1, "Click count");
 }

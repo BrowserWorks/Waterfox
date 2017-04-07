@@ -69,7 +69,6 @@ EXTRA_JS_MODULES += [
     'TelemetryTimestamps.jsm',
     'TelemetryUtils.jsm',
     'ThirdPartyCookieProbe.jsm',
-    'UITelemetry.jsm',
 ]
 
 TESTING_JS_MODULES += [

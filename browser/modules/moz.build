@@ -14,7 +14,6 @@ EXTRA_JS_MODULES += [
     'AboutHome.jsm',
     'AboutNewTab.jsm',
     'AttributionCode.jsm',
-    'BrowserUITelemetry.jsm',
     'CastingApps.jsm',
     'ContentClick.jsm',
     'ContentCrashHandlers.jsm',

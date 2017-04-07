@@ -295,10 +295,6 @@ user_pref("browser.aboutHomeSnippets.updateUrl", "nonexistent://test");
 user_pref("browser.newtabpage.directory.source", 'data:application/json,{"testing":1}');
 user_pref("browser.newtabpage.directory.ping", "");
 
-// Ensure UITour won't hit the network
-user_pref("browser.uitour.pinnedTabUrl", "http://%(server)s/uitour-dummy/pinnedTab");
-user_pref("browser.uitour.url", "http://%(server)s/uitour-dummy/tour");
-
 // Tell the search service we are running in the US.  This also has the desired
 // side-effect of preventing our geoip lookup.
 user_pref("browser.search.isUS", true);
