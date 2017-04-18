@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const nsPK11TokenDB = "@mozilla.org/security/pk11tokendb;1";
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+
 const nsIPK11TokenDB = Components.interfaces.nsIPK11TokenDB;
-const nsIDialogParamBlock = Components.interfaces.nsIDialogParamBlock;
 const nsPKCS11ModuleDB = "@mozilla.org/security/pkcs11moduledb;1";
 const nsIPKCS11ModuleDB = Components.interfaces.nsIPKCS11ModuleDB;
 const nsIPKCS11Slot = Components.interfaces.nsIPKCS11Slot;
@@ -27,94 +27,53 @@ function onLoad()
   document.documentElement.getButton("accept").disabled = true;
 
   pw1 = document.getElementById("pw1");
-  try {
-     params = window.arguments[0].QueryInterface(nsIDialogParamBlock);
-     tokenName = params.GetString(1);
-  } catch (e) {
-      // this should not happen.
-      // previously we had self.name, but self.name was a bad idea
-      // as window name must be a subset of ascii, and the code was
-      // previously trying to assign unicode to the window's name.
-      // I checked all the places where we get a password prompt and
-      // all of them pass an argument as part of this patch.
-      tokenName = "";
-  }
+  params = window.arguments[0].QueryInterface(Ci.nsIDialogParamBlock);
+  tokenName = params.GetString(1);
 
-  if (tokenName == "") {
-    let tokenDB = Components.classes[nsPK11TokenDB].getService(nsIPK11TokenDB);
-    let tokenList = tokenDB.listTokens();
-    let i = 0;
-    let menu = document.getElementById("tokenMenu");
-    while (tokenList.hasMoreElements()) {
-      let token = tokenList.getNext().QueryInterface(nsIPK11Token);
-      if (token.needsLogin() || !(token.needsUserInit)) {
-        let menuItemNode = document.createElement("menuitem");
-        menuItemNode.setAttribute("value", token.tokenName);
-        menuItemNode.setAttribute("label", token.tokenName);
-        menu.firstChild.appendChild(menuItemNode);
-        if (i == 0) {
-          menu.selectedItem = menuItemNode;
-          tokenName = token.tokenName;
-        }
-        i++;
-      }
-    }
-  } else {
-    var sel = document.getElementById("tokenMenu");
-    sel.setAttribute("hidden", "true");
-    var tag = document.getElementById("tokenName");
-    tag.setAttribute("value", tokenName);
-  }
+  document.getElementById("tokenName").setAttribute("value", tokenName);
 
   process();
 }
 
-function onMenuChange()
-{
-   //get the selected token
-   var list = document.getElementById("tokenMenu");
-   tokenName = list.value;
-
-   process();
-}
-
-
 function process()
 {
-   var secmoddb = Components.classes[nsPKCS11ModuleDB].getService(nsIPKCS11ModuleDB);
-   var bundle = document.getElementById("pippki_bundle");
+  let bundle = document.getElementById("pippki_bundle");
 
-   // If the token is unitialized, don't use the old password box.
-   // Otherwise, do.
+  // If the token is unitialized, don't use the old password box.
+  // Otherwise, do.
 
-   var slot = secmoddb.findSlotByName(tokenName);
-   if (slot) {
-     var oldpwbox = document.getElementById("oldpw");
-     var msgBox = document.getElementById("message");
-     var status = slot.status;
-     if (status == nsIPKCS11Slot.SLOT_UNINITIALIZED
-         || status == nsIPKCS11Slot.SLOT_READY) {
+  let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
+                  .getService(Ci.nsIPK11TokenDB);
+  let token;
+  if (tokenName.length > 0) {
+    token = tokenDB.findTokenByName(tokenName);
+  } else {
+    token = tokenDB.getInternalKeyToken();
+  }
+  if (token) {
+    let oldpwbox = document.getElementById("oldpw");
+    let msgBox = document.getElementById("message");
+    if ((token.needsLogin() && token.needsUserInit) || !token.needsLogin()) {
+      oldpwbox.setAttribute("hidden", "true");
+      msgBox.setAttribute("value", bundle.getString("password_not_set"));
+      msgBox.setAttribute("hidden", "false");
 
-       oldpwbox.setAttribute("hidden", "true");
-       msgBox.setAttribute("value", bundle.getString("password_not_set"));
-       msgBox.setAttribute("hidden", "false");
+      if (!token.needsLogin()) {
+        oldpwbox.setAttribute("inited", "empty");
+      } else {
+        oldpwbox.setAttribute("inited", "true");
+      }
 
-       if (status == nsIPKCS11Slot.SLOT_READY) {
-         oldpwbox.setAttribute("inited", "empty");
-       } else {
-         oldpwbox.setAttribute("inited", "true");
-       }
-
-       // Select first password field
-       document.getElementById('pw1').focus();
-     } else {
-       // Select old password field
-       oldpwbox.setAttribute("hidden", "false");
-       msgBox.setAttribute("hidden", "true");
-       oldpwbox.setAttribute("inited", "false");
-       oldpwbox.focus();
-     }
-   }
+      // Select first password field
+      document.getElementById("pw1").focus();
+    } else {
+      // Select old password field
+      oldpwbox.setAttribute("hidden", "false");
+      msgBox.setAttribute("hidden", "true");
+      oldpwbox.setAttribute("inited", "false");
+      oldpwbox.focus();
+    }
+  }
 
   if (params) {
     // Return value 0 means "canceled"
@@ -126,8 +85,14 @@ function process()
 
 function setPassword()
 {
-  var pk11db = Components.classes[nsPK11TokenDB].getService(nsIPK11TokenDB);
-  var token = pk11db.findTokenByName(tokenName);
+  let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
+                  .getService(Ci.nsIPK11TokenDB);
+  let token;
+  if (tokenName.length > 0) {
+    token = tokenDB.findTokenByName(tokenName);
+  } else {
+    token = tokenDB.getInternalKeyToken();
+  }
 
   var oldpwbox = document.getElementById("oldpw");
   var initpw = oldpwbox.getAttribute("inited");

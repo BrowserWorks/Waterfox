@@ -90,10 +90,15 @@ public:
   bool mRembFbSet;
   bool mFECFbSet;
 
+  uint32_t mTias;
   EncodingConstraints mEncodingConstraints;
   struct SimulcastEncoding {
     std::string rid;
     EncodingConstraints constraints;
+    bool operator==(const SimulcastEncoding& aOther) const {
+      return rid == aOther.rid &&
+        constraints == aOther.constraints;
+    }
   };
   std::vector<SimulcastEncoding> mSimulcastEncodings;
   std::string mSpropParameterSets;
@@ -103,6 +108,28 @@ public:
   uint8_t mPacketizationMode;
   // TODO: add external negotiated SPS/PPS
 
+  bool operator==(const VideoCodecConfig& aRhs) const {
+    if (mType != aRhs.mType ||
+        mName != aRhs.mName ||
+        mAckFbTypes != aRhs.mAckFbTypes ||
+        mNackFbTypes != aRhs.mNackFbTypes ||
+        mCcmFbTypes != aRhs.mCcmFbTypes ||
+        mRembFbSet != aRhs.mRembFbSet ||
+        mFECFbSet != aRhs.mFECFbSet ||
+        mTias != aRhs.mTias ||
+        !(mEncodingConstraints == aRhs.mEncodingConstraints) ||
+        !(mSimulcastEncodings == aRhs.mSimulcastEncodings) ||
+        mSpropParameterSets != aRhs.mSpropParameterSets ||
+        mProfile != aRhs.mProfile ||
+        mConstraints != aRhs.mConstraints ||
+        mLevel != aRhs.mLevel ||
+        mPacketizationMode != aRhs.mPacketizationMode) {
+      return false;
+    }
+
+    return true;
+  }
+
   VideoCodecConfig(int type,
                    std::string name,
                    const EncodingConstraints& constraints,
@@ -110,6 +137,7 @@ public:
     mType(type),
     mName(name),
     mFECFbSet(false),
+    mTias(0),
     mEncodingConstraints(constraints),
     mProfile(0x42),
     mConstraints(0xE0),
@@ -123,6 +151,20 @@ public:
       mPacketizationMode = h264->packetization_mode;
       mSpropParameterSets = h264->sprop_parameter_sets;
     }
+  }
+
+  bool ResolutionEquals(const VideoCodecConfig& aConfig) const
+  {
+    if (mSimulcastEncodings.size() != aConfig.mSimulcastEncodings.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < mSimulcastEncodings.size(); ++i) {
+      if (!mSimulcastEncodings[i].constraints.ResolutionEquals(
+            aConfig.mSimulcastEncodings[i].constraints)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // Nothing seems to use this right now. Do we intend to support this

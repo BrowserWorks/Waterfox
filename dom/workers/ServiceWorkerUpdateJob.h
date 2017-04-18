@@ -27,7 +27,8 @@ public:
   ServiceWorkerUpdateJob(nsIPrincipal* aPrincipal,
                          const nsACString& aScope,
                          const nsACString& aScriptSpec,
-                         nsILoadGroup* aLoadGroup);
+                         nsILoadGroup* aLoadGroup,
+                         nsLoadFlags aLoadFlags);
 
   already_AddRefed<ServiceWorkerRegistrationInfo>
   GetRegistration() const;
@@ -38,7 +39,8 @@ protected:
                          nsIPrincipal* aPrincipal,
                          const nsACString& aScope,
                          const nsACString& aScriptSpec,
-                         nsILoadGroup* aLoadGroup);
+                         nsILoadGroup* aLoadGroup,
+                         nsLoadFlags aLoadFlags);
 
   virtual ~ServiceWorkerUpdateJob();
 
@@ -68,6 +70,12 @@ protected:
   void
   Update();
 
+  nsLoadFlags
+  GetLoadFlags() const;
+
+  void
+  SetLoadFlags(nsLoadFlags aLoadFlags);
+
 private:
   class CompareCallback;
   class ContinueUpdateRunnable;
@@ -94,6 +102,8 @@ private:
   ContinueAfterInstallEvent(bool aInstallEventSuccess);
 
   nsCOMPtr<nsILoadGroup> mLoadGroup;
+  nsLoadFlags mLoadFlags;
+
   RefPtr<ServiceWorkerRegistrationInfo> mRegistration;
 };
 

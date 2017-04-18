@@ -100,9 +100,7 @@ function PaintWaitFinishedListener(event)
 
 function OnInitialLoad()
 {
-#ifndef REFTEST_B2G
     removeEventListener("load", OnInitialLoad, true);
-#endif
 
     gDebug = CC[DEBUG_CONTRACTID].getService(CI.nsIDebug2);
     var env = CC[ENVIRONMENT_CONTRACTID].getService(CI.nsIEnvironment);
@@ -145,7 +143,7 @@ function StartTestURI(type, uri, timeout)
     // the JS ref tests disable the normal browser chrome and do not otherwise
     // create substatial DOM garbage, the CC tends not to run enough normally.
     ++gTestCount;
-    if (gTestCount % 3000 == 0) {
+    if (gTestCount % 1000 == 0) {
         CU.forceGC();
         CU.forceCC();
     }
@@ -182,16 +180,11 @@ function resetZoom() {
 }
 
 function doPrintMode(contentRootElement) {
-#if REFTEST_B2G
-    // nsIPrintSettings not available in B2G
-    return false;
-#else
     // use getAttribute because className works differently in HTML and SVG
     return contentRootElement &&
            contentRootElement.hasAttribute('class') &&
            contentRootElement.getAttribute('class').split(/\s+/)
                              .indexOf("reftest-print") != -1;
-#endif
 }
 
 function setupPrintMode() {
@@ -492,7 +485,7 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
         // OK, we can end the test now.
         removeEventListener("MozAfterPaint", AfterPaintListener, false);
         if (contentRootElement) {
-            contentRootElement.removeEventListener("DOMAttrModified", AttrModifiedListener, false);
+            contentRootElement.removeEventListener("DOMAttrModified", AttrModifiedListener);
         }
         gExplicitPendingPaintsCompleteHook = null;
         gTimeoutHook = null;
@@ -652,7 +645,7 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
     // If contentRootElement is null then shouldWaitForReftestWaitRemoval will
     // always return false so we don't need a listener anyway
     if (contentRootElement) {
-      contentRootElement.addEventListener("DOMAttrModified", AttrModifiedListener, false);
+      contentRootElement.addEventListener("DOMAttrModified", AttrModifiedListener);
     }
     gExplicitPendingPaintsCompleteHook = ExplicitPaintsCompleteListener;
     gTimeoutHook = RemoveListeners;
@@ -1162,13 +1155,9 @@ function SendUpdateCanvasForEvent(event, contentRootElement)
         sendAsyncMessage("reftest:UpdateCanvasForInvalidation", { rects: rects });
     }
 }
-#if REFTEST_B2G
-OnInitialLoad();
-#else
 if (content.document.readyState == "complete") {
   // load event has already fired for content, get started
   OnInitialLoad();
 } else {
   addEventListener("load", OnInitialLoad, true);
 }
-#endif

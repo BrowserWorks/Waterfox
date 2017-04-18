@@ -111,7 +111,7 @@ MacroAssemblerX86::convertUInt64ToDouble(Register64 src, FloatRegister dest, Reg
 }
 
 void
-MacroAssemblerX86::loadConstantDouble(wasm::RawF64 d, FloatRegister dest)
+MacroAssemblerX86::loadConstantDouble(double d, FloatRegister dest)
 {
     if (maybeInlineDouble(d, dest))
         return;
@@ -123,13 +123,7 @@ MacroAssemblerX86::loadConstantDouble(wasm::RawF64 d, FloatRegister dest)
 }
 
 void
-MacroAssemblerX86::loadConstantDouble(double d, FloatRegister dest)
-{
-    loadConstantDouble(wasm::RawF64(d), dest);
-}
-
-void
-MacroAssemblerX86::loadConstantFloat32(wasm::RawF32 f, FloatRegister dest)
+MacroAssemblerX86::loadConstantFloat32(float f, FloatRegister dest)
 {
     if (maybeInlineFloat(f, dest))
         return;
@@ -138,12 +132,6 @@ MacroAssemblerX86::loadConstantFloat32(wasm::RawF32 f, FloatRegister dest)
         return;
     masm.vmovss_mr(nullptr, dest.encoding());
     propagateOOM(flt->uses.append(CodeOffset(masm.size())));
-}
-
-void
-MacroAssemblerX86::loadConstantFloat32(float f, FloatRegister dest)
-{
-    loadConstantFloat32(wasm::RawF32(f), dest);
 }
 
 void
@@ -179,7 +167,7 @@ MacroAssemblerX86::finish()
         CodeOffset cst(masm.currentOffset());
         for (CodeOffset use : d.uses)
             addCodeLabel(CodeLabel(use, cst));
-        masm.int64Constant(d.value);
+        masm.doubleConstant(d.value);
         if (!enoughMemory_)
             return;
     }
@@ -190,7 +178,7 @@ MacroAssemblerX86::finish()
         CodeOffset cst(masm.currentOffset());
         for (CodeOffset use : f.uses)
             addCodeLabel(CodeLabel(use, cst));
-        masm.int32Constant(f.value);
+        masm.floatConstant(f.value);
         if (!enoughMemory_)
             return;
     }
@@ -331,15 +319,41 @@ MacroAssembler::subFromStackPtr(Imm32 imm32)
         // On windows, we cannot skip very far down the stack without touching the
         // memory pages in-between.  This is a corner-case code for situations where the
         // Ion frame data for a piece of code is very large.  To handle this special case,
-        // for frames over 1k in size we allocate memory on the stack incrementally, touching
+        // for frames over 4k in size we allocate memory on the stack incrementally, touching
         // it as we go.
+        //
+        // When the amount is quite large, which it can be, we emit an actual loop, in order
+        // to keep the function prologue compact.  Compactness is a requirement for eg
+        // Wasm's CodeRange data structure, which can encode only 8-bit offsets.
         uint32_t amountLeft = imm32.value;
-        while (amountLeft > 4096) {
+        uint32_t fullPages = amountLeft / 4096;
+        if (fullPages <= 8) {
+            while (amountLeft > 4096) {
+                subl(Imm32(4096), StackPointer);
+                store32(Imm32(0), Address(StackPointer, 0));
+                amountLeft -= 4096;
+            }
+            subl(Imm32(amountLeft), StackPointer);
+        } else {
+            // Save scratch register.
+            push(eax);
+            amountLeft -= 4;
+            fullPages = amountLeft / 4096;
+
+            Label top;
+            move32(Imm32(fullPages), eax);
+            bind(&top);
             subl(Imm32(4096), StackPointer);
             store32(Imm32(0), Address(StackPointer, 0));
-            amountLeft -= 4096;
+            subl(Imm32(1), eax);
+            j(Assembler::NonZero, &top);
+            amountLeft -= fullPages * 4096;
+            if (amountLeft)
+                subl(Imm32(amountLeft), StackPointer);
+
+            // Restore scratch register.
+            movl(Operand(StackPointer, uint32_t(imm32.value) - 4), eax);
         }
-        subl(Imm32(amountLeft), StackPointer);
     }
 }
 
@@ -499,8 +513,8 @@ MacroAssembler::branchTestValue(Condition cond, const ValueOperand& lhs,
                                 const Value& rhs, Label* label)
 {
     MOZ_ASSERT(cond == Equal || cond == NotEqual);
-    if (rhs.isMarkable())
-        cmpPtr(lhs.payloadReg(), ImmGCPtr(rhs.toMarkablePointer()));
+    if (rhs.isGCThing())
+        cmpPtr(lhs.payloadReg(), ImmGCPtr(rhs.toGCThing()));
     else
         cmpPtr(lhs.payloadReg(), ImmWord(rhs.toNunboxPayload()));
 

@@ -2,11 +2,10 @@
 // mozIStorageStatement::getColumnName of a statement created with
 // "PRAGMA user_version" or "PRAGMA schema_version"
 function run_test() {
-  test('user');
-  test('schema');
+  test("user");
+  test("schema");
 
-  function test(param)
-  {
+  function test(param) {
     var colName = param + "_version";
     var sql = "PRAGMA " + colName;
 

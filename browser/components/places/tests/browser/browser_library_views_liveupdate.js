@@ -20,7 +20,7 @@ function test() {
   ok(PlacesUIUtils, "PlacesUIUtils in context");
 
   // Open Library, we will check the left pane.
-  openLibrary(function (library) {
+  openLibrary(function(library) {
     gLibrary = library;
     startTest();
   });
@@ -120,7 +120,7 @@ function startTest() {
   bs.moveItem(id, bs.unfiledBookmarksFolder, 0);
 
   // Remove all added bookmarks.
-  addedBookmarks.forEach(function (aItem) {
+  addedBookmarks.forEach(function(aItem) {
     // If we remove an item after its containing folder has been removed,
     // this will throw, but we can ignore that.
     try {
@@ -154,10 +154,10 @@ var bookmarksObserver = {
   ]),
 
   // nsIAnnotationObserver
-  onItemAnnotationSet: function() {},
-  onItemAnnotationRemoved: function() {},
-  onPageAnnotationSet: function() {},
-  onPageAnnotationRemoved: function() {},
+  onItemAnnotationSet() {},
+  onItemAnnotationRemoved() {},
+  onPageAnnotationSet() {},
+  onPageAnnotationRemoved() {},
 
   // nsINavBookmarkObserver
   onItemAdded: function PSB_onItemAdded(aItemId, aFolderId, aIndex, aItemType,
@@ -191,7 +191,7 @@ var bookmarksObserver = {
     is(node, null, "Places node not found in left pane");
   },
 
-  onItemMoved: function(aItemId,
+  onItemMoved(aItemId,
                         aOldFolderId, aOldIndex,
                         aNewFolderId, aNewIndex, aItemType) {
     var node = null;
@@ -219,7 +219,7 @@ var bookmarksObserver = {
 
   onBeginUpdateBatch: function PSB_onBeginUpdateBatch() {},
   onEndUpdateBatch: function PSB_onEndUpdateBatch() {},
-  onItemVisited: function() {},
+  onItemVisited() {},
   onItemChanged: function PSB_onItemChanged(aItemId, aProperty,
                                             aIsAnnotationProperty, aNewValue) {
     if (aProperty == "title") {

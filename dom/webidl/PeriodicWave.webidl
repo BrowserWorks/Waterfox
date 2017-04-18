@@ -10,8 +10,19 @@
  * liability, trademark and document use rules apply.
  */
 
-[Pref="dom.webaudio.enabled"]
-interface PeriodicWave {
-
+dictionary PeriodicWaveConstraints {
+  boolean disableNormalization = false;
 };
 
+dictionary PeriodicWaveOptions : PeriodicWaveConstraints {
+             sequence<float> real;
+             sequence<float> imag;
+};
+
+[Pref="dom.webaudio.enabled",
+ // XXXbz The second arg is not optional in the spec, but that looks
+ // like a spec bug to me.  See
+ // <https://github.com/WebAudio/web-audio-api/issues/1116>.
+ Constructor(BaseAudioContext context, optional PeriodicWaveOptions options)]
+interface PeriodicWave {
+};

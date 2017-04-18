@@ -156,12 +156,11 @@ class Assembler : public AssemblerMIPSShared
 
     // Copy the assembly code to the given buffer, and perform any pending
     // relocations relying on the target address.
-    void executableCopy(uint8_t* buffer);
+    void executableCopy(uint8_t* buffer, bool flushICache = true);
 
     static uint32_t PatchWrite_NearCallSize();
 
     static uint32_t ExtractLuiOriValue(Instruction* inst0, Instruction* inst1);
-    static void UpdateLuiOriValue(Instruction* inst0, Instruction* inst1, uint32_t value);
     static void WriteLuiOriInstructions(Instruction* inst, Instruction* inst1,
                                         Register reg, uint32_t value);
 

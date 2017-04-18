@@ -203,6 +203,7 @@ config = {
         "jetpack-package-clipboard": ["--flavor=jetpack-package", "--subsuite=clipboard"],
         "jetpack-addon": ["--flavor=jetpack-addon"],
         "a11y": ["--flavor=a11y"],
+        "mochitest-style": ["--disable-e10s", "layout/style/test"],
     },
     # local reftest suites
     "all_reftest_suites": {
@@ -223,6 +224,12 @@ config = {
             "options": ["--suite=reftest",
                         "--setpref=layers.acceleration.force-enabled=disabled"],
             "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]},
+        "reftest-stylo": {
+            "options": ["--suite=reftest",
+                        "--disable-e10s",
+                        "--setpref=reftest.compareStyloToGecko=true"],
+            "tests": ["tests/reftest/tests/layout/reftests/reftest-stylo.list"],
+        },
     },
     "all_xpcshell_suites": {
         "xpcshell": {

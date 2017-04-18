@@ -73,18 +73,17 @@ Damp.prototype = {
     });
   },
 
-  closeToolbox: function() {
+  closeToolbox: Task.async(function*() {
     let tab = getActiveTab(getMostRecentBrowserWindow());
     let target = devtools.TargetFactory.forTab(tab);
+    yield target.client.waitForRequestsToSettle();
     let startRecordTimestamp = performance.now();
-    let closePromise = gDevTools.closeToolbox(target);
-    return closePromise.then(() => {
-      let stopRecordTimestamp = performance.now();
-      return {
-        time: stopRecordTimestamp - startRecordTimestamp
-      };
-    });
-  },
+    yield gDevTools.closeToolbox(target);
+    let stopRecordTimestamp = performance.now();
+    return {
+      time: stopRecordTimestamp - startRecordTimestamp
+    };
+  }),
 
   saveHeapSnapshot: function(label) {
     let tab = getActiveTab(getMostRecentBrowserWindow());
@@ -114,6 +113,17 @@ Damp.prototype = {
     });
     return Promise.resolve();
   },
+
+  waitForNetworkRequests: Task.async(function*(label, toolbox) {
+    const { NetMonitorController } = toolbox.getCurrentPanel().panelWin;
+    const start = performance.now();
+    yield NetMonitorController.waitForAllRequestsFinished();
+    const end = performance.now();
+    this._results.push({
+      name: label + ".requestsFinished.DAMP",
+      value: end - start
+    });
+  }),
 
   _consoleBulkLoggingTest: Task.async(function*() {
     let TOTAL_MESSAGES = 10;
@@ -311,8 +321,10 @@ Damp.prototype = {
 
       netmonitorOpen: Task.async(function*() {
         yield this.testSetup(url);
-        yield openToolboxAndLog(label + ".netmonitor", "netmonitor");
+        const toolbox = yield openToolboxAndLog(label + ".netmonitor", "netmonitor");
+        const requestsDone = this.waitForNetworkRequests(label + ".netmonitor", toolbox);
         yield reloadPageAndLog(label + ".netmonitor");
+        yield requestsDone;
         yield closeToolboxAndLog(label + ".netmonitor");
         yield this.testTeardown();
       }),

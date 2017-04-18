@@ -155,7 +155,7 @@ TileManager.prototype = {
     if (destCriticalRect)
       this._tileCache.forEachIntersectingRect(destCriticalRect, false, appendNonDirtyTile, this);
     let end = Date.now();
-    dump("start: " + (end-start) + "\n")
+    dump("start: " + (end - start) + "\n")
   },
 
   beginCriticalMove: function beginCriticalMove(destCriticalRect) {
@@ -176,17 +176,16 @@ TileManager.prototype = {
 
       // this._tileCache.forEachIntersectingRect(destCriticalRect, false, appendNonDirtyTile, this);
       let visited = {};
-      let evictGuard = null;
       if (create) {
 	evictGuard = function evictGuard(tile) {
 	  return !visited[tile.toString()];
 	};
       }
 
-      let starti = rect.left  >> kTileExponentWidth;
+      let starti = rect.left >> kTileExponentWidth;
       let endi   = rect.right >> kTileExponentWidth;
 
-      let startj = rect.top    >> kTileExponentHeight;
+      let startj = rect.top >> kTileExponentHeight;
       let endj   = rect.bottom >> kTileExponentHeight;
 
       let tile = null;
@@ -237,7 +236,7 @@ TileManager.prototype = {
     }
 
     let end = Date.now();
-    dump("start: " + (end-start) + "\n")
+    dump("start: " + (end - start) + "\n")
   },
 
   endCriticalMove: function endCriticalMove(destCriticalRect, doCriticalPaint) {
@@ -365,7 +364,7 @@ TileManager.prototype = {
 
   _idleTileCrawler: function _idleTileCrawler(self) {
     if (!self) self = this;
-    dump('crawl pass.\n');
+    dump("crawl pass.\n");
     let itered = 0, rendered = 0;
 
     let start = Date.now();
@@ -386,13 +385,13 @@ TileManager.prototype = {
       ++itered;
     }
 
-    dump('crawl itered:' + itered + ' rendered:' + rendered + '\n');
+    dump("crawl itered:" + itered + " rendered:" + rendered + "\n");
 
     if (comeAgain) {
       self._idleTileCrawlerTimeout = setTimeout(self._idleTileCrawler, 2000, self);
     } else {
       self.stopLazyCrawl();
-      dump('crawl end\n');
+      dump("crawl end\n");
     }
   }
 
@@ -534,8 +533,7 @@ TileManager.TileCache.prototype = {
 
     for (; k >= 0; --k) {
       if (pool[k].free &&
-          (!evictionGuard || evictionGuard(pool[k])))
-      {
+          (!evictionGuard || evictionGuard(pool[k]))) {
         victim = pool[k];
         break;
       }
@@ -679,10 +677,10 @@ TileManager.TileCache.prototype = {
       };
     }
 
-    let starti = rect.left  >> kTileExponentWidth;
+    let starti = rect.left >> kTileExponentWidth;
     let endi   = rect.right >> kTileExponentWidth;
 
-    let startj = rect.top    >> kTileExponentHeight;
+    let startj = rect.top >> kTileExponentHeight;
     let endj   = rect.bottom >> kTileExponentHeight;
 
     let tile = null;
@@ -828,8 +826,6 @@ TileManager.Tile.prototype = {
 
     ctx.translate(x, y);
 
-    let cw = browserView._contentWindow;
-    // let cw = browser.contentWindow;
     ctx.asyncDrawXULElement(browserView._browser,
                    rect.left, rect.top,
                    rect.right - rect.left, rect.bottom - rect.top,
@@ -843,14 +839,14 @@ TileManager.Tile.prototype = {
 
   toString: function toString(more) {
     if (more) {
-      return 'Tile(' + [this.i,
+      return "Tile(" + [this.i,
                         this.j,
                         "dirty=" + this.isDirty(),
-                        "boundRect=" + this.boundRect].join(', ')
-               + ')';
+                        "boundRect=" + this.boundRect].join(", ")
+               + ")";
     }
 
-    return 'Tile(' + this.i + ', ' + this.j + ')';
+    return "Tile(" + this.i + ", " + this.j + ")";
   },
 
   _hold: function hold() { this.free = false; },
@@ -941,7 +937,7 @@ TileManager.CrawlIterator = function CrawlIterator(tileCache, startRect) {
 };
 
 TileManager.CrawlIterator.prototype = {
-  __iterator__: function*() {
+  *__iterator__() {
     while (true) {
       let tile = this.next();
       if (!tile) break;
@@ -1012,7 +1008,7 @@ TileManager.CrawlIterator.prototype = {
   },
 
   _unstrIndices: function _unstrIndices(str) {
-    return str.split(',');
+    return str.split(",");
   }
 
 };

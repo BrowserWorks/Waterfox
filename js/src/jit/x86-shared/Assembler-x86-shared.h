@@ -387,6 +387,8 @@ class AssemblerX86Shared : public AssemblerShared
     static Condition UnsignedCondition(Condition cond);
     static Condition ConditionWithoutEqual(Condition cond);
 
+    static DoubleCondition InvertCondition(DoubleCondition cond);
+
     // Return the primary condition to test. Some primary conditions may not
     // handle NaNs properly and may therefore require a secondary condition.
     // Use NaNCondFromDoubleCondition to determine what else is needed.
@@ -405,6 +407,18 @@ class AssemblerX86Shared : public AssemblerShared
                jumpRelocations_.oom() ||
                dataRelocations_.oom() ||
                preBarriers_.oom();
+    }
+
+    void disableProtection() { masm.disableProtection(); }
+    void enableProtection() { masm.enableProtection(); }
+    void setLowerBoundForProtection(size_t size) {
+        masm.setLowerBoundForProtection(size);
+    }
+    void unprotectRegion(unsigned char* first, size_t size) {
+        masm.unprotectRegion(first, size);
+    }
+    void reprotectRegion(unsigned char* first, size_t size) {
+        masm.reprotectRegion(first, size);
     }
 
     void setPrinter(Sprinter* sp) {
@@ -1058,27 +1072,28 @@ class AssemblerX86Shared : public AssemblerShared
         return CodeOffset(masm.call().offset());
     }
 
-    struct AutoPrepareForPatching : X86Encoding::AutoUnprotectAssemblerBufferRegion {
-        explicit AutoPrepareForPatching(AssemblerX86Shared& masm)
-          : X86Encoding::AutoUnprotectAssemblerBufferRegion(masm.masm, 0, masm.size())
-        {}
-    };
-
     void patchCall(uint32_t callerOffset, uint32_t calleeOffset) {
-        // The caller uses AutoUnprotectBuffer.
-        unsigned char* code = masm.data();
+        unsigned char* code = masm.acquireData();
         X86Encoding::SetRel32(code + callerOffset, code + calleeOffset);
+        masm.releaseData();
     }
     CodeOffset farJumpWithPatch() {
         return CodeOffset(masm.jmp().offset());
     }
     void patchFarJump(CodeOffset farJump, uint32_t targetOffset) {
-        // The caller uses AutoUnprotectBuffer.
-        unsigned char* code = masm.data();
+        unsigned char* code = masm.acquireData();
         X86Encoding::SetRel32(code + farJump.offset(), code + targetOffset);
+        masm.releaseData();
     }
     static void repatchFarJump(uint8_t* code, uint32_t farJumpOffset, uint32_t targetOffset) {
         X86Encoding::SetRel32(code + farJumpOffset, code + targetOffset);
+    }
+
+    // This is for patching during code generation, not after.
+    void patchAddl(CodeOffset offset, int32_t n) {
+        unsigned char* code = masm.acquireData();
+        X86Encoding::SetInt32(code + offset.offset(), n);
+        masm.releaseData();
     }
 
     CodeOffset twoByteNop() {
@@ -1089,6 +1104,13 @@ class AssemblerX86Shared : public AssemblerShared
     }
     static void patchJumpToTwoByteNop(uint8_t* jump) {
         X86Encoding::BaseAssembler::patchJumpToTwoByteNop(jump);
+    }
+
+    static void patchFiveByteNopToCall(uint8_t* callsite, uint8_t* target) {
+        X86Encoding::BaseAssembler::patchFiveByteNopToCall(callsite, target);
+    }
+    static void patchCallToFiveByteNop(uint8_t* callsite) {
+        X86Encoding::BaseAssembler::patchCallToFiveByteNop(callsite);
     }
 
     void breakpoint() {

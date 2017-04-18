@@ -67,6 +67,14 @@ using namespace dom;
 
 static const char* logTag = "PeerConnectionMedia";
 
+//XXX(pkerr) What about bitrate settings? Going with the defaults for now.
+RefPtr<WebRtcCallWrapper>
+CreateCall()
+{
+  WebRtcCallWrapper::Config call_config;
+  return WebRtcCallWrapper::Create(call_config);
+}
+
 nsresult
 PeerConnectionMedia::ReplaceTrack(const std::string& aOldStreamId,
                                   const std::string& aOldTrackId,
@@ -406,6 +414,9 @@ nsresult PeerConnectionMedia::Init(const std::vector<NrIceStunServer>& stun_serv
   }
   ConnectSignals(mIceCtxHdlr->ctx().get());
 
+  // This webrtc:Call instance will be shared by audio and video media conduits.
+  mCall = CreateCall();
+
   return NS_OK;
 }
 
@@ -457,7 +468,8 @@ PeerConnectionMedia::EnsureTransport_s(size_t aLevel, size_t aComponentCount)
 }
 
 void
-PeerConnectionMedia::ActivateOrRemoveTransports(const JsepSession& aSession)
+PeerConnectionMedia::ActivateOrRemoveTransports(const JsepSession& aSession,
+                                                const bool forceIceTcp)
 {
   auto transports = aSession.GetTransports();
   for (size_t i = 0; i < transports.size(); ++i) {
@@ -478,6 +490,14 @@ PeerConnectionMedia::ActivateOrRemoveTransports(const JsepSession& aSession)
       // Make sure the MediaPipelineFactory doesn't try to use these.
       RemoveTransportFlow(i, false);
       RemoveTransportFlow(i, true);
+    }
+
+    if (forceIceTcp) {
+      candidates.erase(std::remove_if(candidates.begin(),
+                                      candidates.end(),
+                                      [](const std::string & s) {
+                                        return s.find(" UDP "); }),
+                       candidates.end());
     }
 
     RUN_ON_THREAD(
@@ -567,6 +587,7 @@ nsresult PeerConnectionMedia::UpdateMediaPipelines(
     JsepTrackPair pair = *i;
 
     if (pair.mReceiving) {
+
       rv = factory.CreateOrUpdateMediaPipeline(pair, *pair.mReceiving);
       if (NS_FAILED(rv)) {
         return rv;
@@ -846,6 +867,7 @@ PeerConnectionMedia::AddIceCandidate(const std::string& candidate,
                     aMLine),
                 NS_DISPATCH_NORMAL);
 }
+
 void
 PeerConnectionMedia::AddIceCandidate_s(const std::string& aCandidate,
                                        const std::string& aMid,
@@ -863,6 +885,21 @@ PeerConnectionMedia::AddIceCandidate_s(const std::string& aCandidate,
                 static_cast<unsigned>(aMLine));
     return;
   }
+}
+
+void
+PeerConnectionMedia::UpdateNetworkState(bool online) {
+  RUN_ON_THREAD(GetSTSThread(),
+                WrapRunnable(
+                    RefPtr<PeerConnectionMedia>(this),
+                    &PeerConnectionMedia::UpdateNetworkState_s,
+                    online),
+                NS_DISPATCH_NORMAL);
+}
+
+void
+PeerConnectionMedia::UpdateNetworkState_s(bool online) {
+  mIceCtxHdlr->ctx()->UpdateNetworkState(online);
 }
 
 void

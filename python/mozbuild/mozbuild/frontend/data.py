@@ -420,6 +420,49 @@ class HostSimpleProgram(HostMixin, BaseProgram):
     KIND = 'host'
 
 
+def cargo_target_directory(context, target_var='RUST_TARGET'):
+    # cargo creates several directories and places its build artifacts
+    # in those directories.  The directory structure depends not only
+    # on the target, but also what sort of build we are doing.
+    rust_build_kind = 'release'
+    if context.config.substs.get('MOZ_DEBUG'):
+        rust_build_kind = 'debug'
+    return mozpath.join(context.config.substs[target_var], rust_build_kind)
+
+
+# Rust programs aren't really Linkable, since Cargo handles all the details
+# of linking things.
+class BaseRustProgram(ContextDerived):
+    __slots__ = (
+        'name',
+        'cargo_file',
+        'location',
+        'SUFFIX_VAR',
+        'KIND',
+        'TARGET_SUBST_VAR',
+    )
+
+    def __init__(self, context, name, cargo_file):
+        ContextDerived.__init__(self, context)
+        self.name = name
+        self.cargo_file = cargo_file
+        cargo_dir = cargo_target_directory(context, self.TARGET_SUBST_VAR)
+        exe_file = '%s%s' % (name, context.config.substs.get(self.SUFFIX_VAR, ''))
+        self.location = mozpath.join(cargo_dir, exe_file)
+
+
+class RustProgram(BaseRustProgram):
+    SUFFIX_VAR = 'BIN_SUFFIX'
+    KIND = 'target'
+    TARGET_SUBST_VAR = 'RUST_TARGET'
+
+
+class HostRustProgram(BaseRustProgram):
+    SUFFIX_VAR = 'HOST_BIN_SUFFIX'
+    KIND = 'host'
+    TARGET_SUBST_VAR = 'RUST_HOST_TARGET'
+
+
 class BaseLibrary(Linkable):
     """Generic context derived container object for libraries."""
     __slots__ = (
@@ -451,13 +494,11 @@ class Library(BaseLibrary):
     """Context derived container object for a library"""
     KIND = 'target'
     __slots__ = (
-        'is_sdk',
     )
 
-    def __init__(self, context, basename, real_name=None, is_sdk=False):
+    def __init__(self, context, basename, real_name=None):
         BaseLibrary.__init__(self, context, real_name or basename)
         self.basename = basename
-        self.is_sdk = is_sdk
 
 
 class StaticLibrary(Library):
@@ -467,9 +508,9 @@ class StaticLibrary(Library):
         'no_expand_lib',
     )
 
-    def __init__(self, context, basename, real_name=None, is_sdk=False,
+    def __init__(self, context, basename, real_name=None,
         link_into=None, no_expand_lib=False):
-        Library.__init__(self, context, basename, real_name, is_sdk)
+        Library.__init__(self, context, basename, real_name)
         self.link_into = link_into
         self.no_expand_lib = no_expand_lib
 
@@ -481,9 +522,11 @@ class RustLibrary(StaticLibrary):
         'crate_type',
         'dependencies',
         'deps_path',
+        'features',
     )
 
-    def __init__(self, context, basename, cargo_file, crate_type, dependencies, **args):
+    def __init__(self, context, basename, cargo_file, crate_type, dependencies,
+                 features, **args):
         StaticLibrary.__init__(self, context, basename, **args)
         self.cargo_file = cargo_file
         self.crate_type = crate_type
@@ -496,16 +539,10 @@ class RustLibrary(StaticLibrary):
                                      basename.replace('-', '_'),
                                      context.config.lib_suffix)
         self.dependencies = dependencies
-        # cargo creates several directories and places its build artifacts
-        # in those directories.  The directory structure depends not only
-        # on the target, but also what sort of build we are doing.
-        rust_build_kind = 'release'
-        if context.config.substs.get('MOZ_DEBUG'):
-            rust_build_kind = 'debug'
-        build_dir = mozpath.join(context.config.substs['RUST_TARGET'],
-                                 rust_build_kind)
+        build_dir = cargo_target_directory(context)
         self.import_name = mozpath.join(build_dir, self.lib_name)
         self.deps_path = mozpath.join(build_dir, 'deps')
+        self.features = features
 
 
 class SharedLibrary(Library):
@@ -529,10 +566,10 @@ class SharedLibrary(Library):
     COMPONENT = 2
     MAX_VARIANT = 3
 
-    def __init__(self, context, basename, real_name=None, is_sdk=False,
+    def __init__(self, context, basename, real_name=None,
                  soname=None, variant=None, symbols_file=False):
         assert(variant in range(1, self.MAX_VARIANT) or variant is None)
-        Library.__init__(self, context, basename, real_name, is_sdk)
+        Library.__init__(self, context, basename, real_name)
         self.variant = variant
         self.lib_name = real_name or basename
         assert self.lib_name
@@ -639,13 +676,17 @@ class TestManifest(ContextDerived):
         # The relative path of the parsed manifest within the objdir.
         'manifest_obj_relpath',
 
+        # The relative paths to all source files for this manifest.
+        'source_relpaths',
+
         # If this manifest is a duplicate of another one, this is the
         # manifestparser.TestManifest of the other one.
         'dupe_manifest',
     )
 
     def __init__(self, context, path, manifest, flavor=None,
-            install_prefix=None, relpath=None, dupe_manifest=False):
+            install_prefix=None, relpath=None, sources=(),
+            dupe_manifest=False):
         ContextDerived.__init__(self, context)
 
         assert flavor in all_test_flavors()
@@ -657,6 +698,7 @@ class TestManifest(ContextDerived):
         self.install_prefix = install_prefix
         self.manifest_relpath = relpath
         self.manifest_obj_relpath = relpath
+        self.source_relpaths = sources
         self.dupe_manifest = dupe_manifest
         self.installs = {}
         self.pattern_installs = []
@@ -884,31 +926,19 @@ class FinalTargetPreprocessedFiles(ContextDerived):
         self.files = files
 
 
-class ObjdirFiles(ContextDerived):
+class ObjdirFiles(FinalTargetFiles):
     """Sandbox container object for OBJDIR_FILES, which is a
     HierarchicalStringList.
     """
-    __slots__ = ('files')
-
-    def __init__(self, sandbox, files):
-        ContextDerived.__init__(self, sandbox)
-        self.files = files
-
     @property
     def install_target(self):
         return ''
 
 
-class ObjdirPreprocessedFiles(ContextDerived):
+class ObjdirPreprocessedFiles(FinalTargetPreprocessedFiles):
     """Sandbox container object for OBJDIR_PP_FILES, which is a
     HierarchicalStringList.
     """
-    __slots__ = ('files')
-
-    def __init__(self, sandbox, files):
-        ContextDerived.__init__(self, sandbox)
-        self.files = files
-
     @property
     def install_target(self):
         return ''
@@ -947,19 +977,6 @@ class BrandingFiles(FinalTargetFiles):
     @property
     def install_target(self):
         return 'dist/branding'
-
-
-class SdkFiles(FinalTargetFiles):
-    """Sandbox container object for SDK_FILES, which is a
-    HierarchicalStringList.
-
-    We need an object derived from ContextDerived for use in the backend, so
-    this object fills that role. It just has a reference to the underlying
-    HierarchicalStringList, which is created when parsing SDK_FILES.
-    """
-    @property
-    def install_target(self):
-        return 'dist/sdk'
 
 
 class GeneratedFile(ContextDerived):

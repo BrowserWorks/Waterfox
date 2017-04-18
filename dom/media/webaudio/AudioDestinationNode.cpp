@@ -8,6 +8,7 @@
 #include "AlignmentUtils.h"
 #include "AudioContext.h"
 #include "mozilla/dom/AudioDestinationNodeBinding.h"
+#include "mozilla/dom/OfflineAudioCompletionEvent.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/Services.h"
 #include "AudioChannelAgent.h"
@@ -15,7 +16,6 @@
 #include "AudioNodeEngine.h"
 #include "AudioNodeStream.h"
 #include "MediaStreamGraph.h"
-#include "OfflineAudioCompletionEvent.h"
 #include "nsContentUtils.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIDocShell.h"
@@ -131,9 +131,13 @@ public:
 
     NS_IMETHOD Run() override
     {
+      OfflineAudioCompletionEventInit param;
+      param.mRenderedBuffer = mRenderedBuffer;
+
       RefPtr<OfflineAudioCompletionEvent> event =
-          new OfflineAudioCompletionEvent(mAudioContext, nullptr, nullptr);
-      event->InitEvent(mRenderedBuffer);
+          OfflineAudioCompletionEvent::Constructor(mAudioContext,
+                                                   NS_LITERAL_STRING("complete"),
+                                                   param);
       mAudioContext->DispatchTrustedEvent(event);
 
       return NS_OK;
@@ -154,8 +158,8 @@ public:
     // Create the input buffer
     ErrorResult rv;
     RefPtr<AudioBuffer> renderedBuffer =
-      AudioBuffer::Create(context, mNumberOfChannels, mLength, mSampleRate,
-                          mBuffer.forget(), rv);
+      AudioBuffer::Create(context->GetOwner(), mNumberOfChannels, mLength,
+                          mSampleRate, mBuffer.forget(), rv);
     if (rv.Failed()) {
       rv.SuppressException();
       return;
@@ -258,7 +262,8 @@ public:
       RefPtr<InputMutedRunnable> runnable =
         new InputMutedRunnable(aStream, newInputMuted);
       aStream->Graph()->
-        DispatchToMainThreadAfterStreamStateUpdate(runnable.forget());
+        DispatchToMainThreadAfterStreamStateUpdate(mAbstractMainThread,
+                                                   runnable.forget());
     }
   }
 

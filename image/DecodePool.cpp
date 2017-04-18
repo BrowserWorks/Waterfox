@@ -16,6 +16,7 @@
 #include "nsThreadUtils.h"
 #include "nsXPCOMCIDInternal.h"
 #include "prsystem.h"
+#include "nsIXULRuntime.h"
 
 #include "gfxPrefs.h"
 
@@ -58,14 +59,6 @@ public:
     : mMonitor("DecodePoolImpl")
     , mShuttingDown(false)
   { }
-
-  /// Initialize the current thread for use by the decode pool.
-  void InitCurrentThread()
-  {
-    MOZ_ASSERT(!NS_IsMainThread());
-
-    mThreadNaming.SetThreadPoolName(NS_LITERAL_CSTRING("ImgDecoder"));
-  }
 
   /// Shut down the provided decode pool thread.
   static void ShutdownThread(nsIThread* aThisThread)
@@ -134,6 +127,12 @@ public:
     } while (true);
   }
 
+  nsresult CreateThread(nsIThread** aThread, nsIRunnable* aInitialEvent)
+  {
+    return NS_NewNamedThread(mThreadNaming.GetNextThreadName("ImgDecoder"),
+                             aThread, aInitialEvent);
+  }
+
 private:
   ~DecodePoolImpl() { }
 
@@ -159,13 +158,13 @@ private:
 class DecodePoolWorker : public Runnable
 {
 public:
-  explicit DecodePoolWorker(DecodePoolImpl* aImpl) : mImpl(aImpl) { }
+  explicit DecodePoolWorker(DecodePoolImpl* aImpl)
+    : mImpl(aImpl)
+  { }
 
   NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread());
-
-    mImpl->InitCurrentThread();
 
     nsCOMPtr<nsIThread> thisThread;
     nsThreadManager::get().GetCurrentThread(getter_AddRefs(thisThread));
@@ -179,6 +178,11 @@ public:
 
         case Work::Type::SHUTDOWN:
           DecodePoolImpl::ShutdownThread(thisThread);
+
+#ifdef MOZ_ENABLE_PROFILER_SPS
+          profiler_unregister_thread();
+#endif // MOZ_ENABLE_PROFILER_SPS
+
           return NS_OK;
 
         default:
@@ -245,12 +249,17 @@ DecodePool::DecodePool()
   if (limit > 32) {
     limit = 32;
   }
+  // The parent process where there are content processes doesn't need as many
+  // threads for decoding images.
+  if (limit > 4 && XRE_IsParentProcess() && BrowserTabsRemoteAutostart()) {
+    limit = 4;
+  }
 
   // Initialize the thread pool.
   for (uint32_t i = 0 ; i < limit ; ++i) {
     nsCOMPtr<nsIRunnable> worker = new DecodePoolWorker(mImpl);
     nsCOMPtr<nsIThread> thread;
-    nsresult rv = NS_NewThread(getter_AddRefs(thread), worker);
+    nsresult rv = mImpl->CreateThread(getter_AddRefs(thread), worker);
     MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv) && thread,
                        "Should successfully create image decoding threads");
     mThreads.AppendElement(Move(thread));
@@ -306,7 +315,7 @@ DecodePool::AsyncRun(IDecodingTask* aTask)
   mImpl->PushWork(aTask);
 }
 
-void
+bool
 DecodePool::SyncRunIfPreferred(IDecodingTask* aTask)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -314,10 +323,11 @@ DecodePool::SyncRunIfPreferred(IDecodingTask* aTask)
 
   if (aTask->ShouldPreferSyncRun()) {
     aTask->Run();
-    return;
+    return true;
   }
 
   AsyncRun(aTask);
+  return false;
 }
 
 void

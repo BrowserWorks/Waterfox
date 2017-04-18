@@ -27,7 +27,7 @@ class nsIStringBundle;
 class nsSystemPrincipal;
 
 namespace mozilla {
-class PrincipalOriginAttributes;
+class OriginAttributes;
 } // namespace mozilla
 
 /////////////////////////////
@@ -66,8 +66,6 @@ public:
      */
     static bool SecurityCompareURIs(nsIURI* aSourceURI, nsIURI* aTargetURI);
     static uint32_t SecurityHashURI(nsIURI* aURI);
-
-    static uint16_t AppStatusForPrincipal(nsIPrincipal *aPrin);
 
     static nsresult
     ReportError(JSContext* cx, const nsAString& messageTag,
@@ -114,7 +112,7 @@ private:
     AddSitesToFileURIWhitelist(const nsCString& aSiteList);
 
     // If aURI is a moz-extension:// URI, set mAddonId to the associated addon.
-    nsresult MaybeSetAddonIdFromURI(mozilla::PrincipalOriginAttributes& aAttrs, nsIURI* aURI);
+    nsresult MaybeSetAddonIdFromURI(mozilla::OriginAttributes& aAttrs, nsIURI* aURI);
 
     nsresult GetChannelResultPrincipal(nsIChannel* aChannel,
                                        nsIPrincipal** aPrincipal,

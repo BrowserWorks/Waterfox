@@ -94,8 +94,8 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     }
     void moveValue(const Value& val, Register type, Register data) {
         movl(Imm32(val.toNunboxTag()), type);
-        if (val.isMarkable())
-            movl(ImmGCPtr(val.toMarkablePointer()), data);
+        if (val.isGCThing())
+            movl(ImmGCPtr(val.toGCThing()), data);
         else
             movl(Imm32(val.toNunboxPayload()), data);
     }
@@ -213,8 +213,8 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     }
     void pushValue(const Value& val) {
         push(Imm32(val.toNunboxTag()));
-        if (val.isMarkable())
-            push(ImmGCPtr(val.toMarkablePointer()));
+        if (val.isGCThing())
+            push(ImmGCPtr(val.toGCThing()));
         else
             push(Imm32(val.toNunboxPayload()));
     }
@@ -235,8 +235,8 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         pop(dest.high);
     }
     void storePayload(const Value& val, Operand dest) {
-        if (val.isMarkable())
-            movl(ImmGCPtr(val.toMarkablePointer()), ToPayload(dest));
+        if (val.isGCThing())
+            movl(ImmGCPtr(val.toGCThing()), ToPayload(dest));
         else
             movl(Imm32(val.toNunboxPayload()), ToPayload(dest));
     }
@@ -779,8 +779,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
 
     void loadConstantDouble(double d, FloatRegister dest);
     void loadConstantFloat32(float f, FloatRegister dest);
-    void loadConstantDouble(wasm::RawF64 d, FloatRegister dest);
-    void loadConstantFloat32(wasm::RawF32 f, FloatRegister dest);
 
     void loadConstantSimd128Int(const SimdConstant& v, FloatRegister dest);
     void loadConstantSimd128Float(const SimdConstant& v, FloatRegister dest);

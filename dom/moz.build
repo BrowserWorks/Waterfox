@@ -12,7 +12,6 @@ interfaces = [
     'core',
     'html',
     'events',
-    'settings',
     'stylesheets',
     'sidebar',
     'css',
@@ -27,10 +26,8 @@ interfaces = [
     'offline',
     'geolocation',
     'notification',
-    'permission',
     'svg',
     'smil',
-    'apps',
     'push',
 ]
 
@@ -38,7 +35,6 @@ DIRS += ['interfaces/' + i for i in interfaces]
 
 DIRS += [
     'animation',
-    'apps',
     'base',
     'archivereader',
     'bindings',
@@ -46,11 +42,12 @@ DIRS += [
     'browser-element',
     'cache',
     'canvas',
+    'commandhandler',
     'crypto',
-    'devicestorage',
     'encoding',
     'events',
     'fetch',
+    'file',
     'filehandle',
     'filesystem',
     'flyweb',
@@ -69,7 +66,6 @@ DIRS += [
     'push',
     'quota',
     'security',
-    'settings',
     'storage',
     'svg',
     'time',
@@ -88,7 +84,7 @@ DIRS += [
     'promise',
     'smil',
     'url',
-    'inputmethod',
+    'webauthn',
     'webidl',
     'xbl',
     'xml',
@@ -99,6 +95,7 @@ DIRS += [
     'u2f',
     'console',
     'performance',
+    'webbrowserpersist',
     'xhr',
     'worklet',
 ]
@@ -106,20 +103,8 @@ DIRS += [
 if CONFIG['OS_ARCH'] == 'WINNT':
     DIRS += ['plugins/ipc/hangui']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    DIRS += [
-        'speakermanager',
-        'tethering',
-        'wifi',
-    ]
-
 if CONFIG['MOZ_SECUREELEMENT']:
     DIRS += ['secureelement']
-
-if CONFIG['MOZ_B2G']:
-    DIRS += [
-        'downloads',
-    ]
 
 DIRS += ['presentation']
 

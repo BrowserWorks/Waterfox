@@ -20,6 +20,7 @@ Cu.import("resource://gre/modules/Services.jsm", this);
 Services.scriptloader.loadSubScript(
   "chrome://mochikit/content/tests/SimpleTest/SimpleTest.js", this);
 
+/* import-globals-from ../loader_common.js */
 var sharedUrl = SimpleTest.getTestFileURL("loader_common.js");
 Services.scriptloader.loadSubScript(sharedUrl, this);
 
@@ -30,10 +31,10 @@ var parentScript = SpecialPowers.loadChromeScript(
 var testUrl = location.href.replace(/\.\w+$/, ".js");
 
 // Start loading the test script in the parent process.
-var promiseParentInitFinished = new Promise(function (resolve) {
+var promiseParentInitFinished = new Promise(function(resolve) {
   parentScript.addMessageListener("finish_load_in_parent", resolve);
 });
-parentScript.sendAsyncMessage("start_load_in_parent", { testUrl: testUrl });
+parentScript.sendAsyncMessage("start_load_in_parent", { testUrl });
 
 // Define output functions so they look the same across all frameworks.
 var Output = {
@@ -78,7 +79,7 @@ window.addEventListener("load", function onLoad() {
         } else {
           // This is a task executed in the parent process.
           info("Running task in parent process: " + taskFn.name);
-          let promiseFinished = new Promise(function (resolve) {
+          let promiseFinished = new Promise(function(resolve) {
             parentScript.addMessageListener("finish_task_" + taskId, resolve);
           });
           parentScript.sendAsyncMessage("start_task_" + taskId);
@@ -100,6 +101,7 @@ add_task(function* wait_loading_in_parent_process() {
   yield promiseParentInitFinished;
 });
 
+/* import-globals-from ../head_common.js */
 var headUrl = SimpleTest.getTestFileURL("head_common.js");
 Services.scriptloader.loadSubScript(headUrl, this);
 

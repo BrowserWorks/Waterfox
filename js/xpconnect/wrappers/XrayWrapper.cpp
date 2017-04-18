@@ -89,6 +89,8 @@ IsJSXraySupported(JSProtoKey key)
       case JSProto_Promise:
       case JSProto_ArrayBuffer:
       case JSProto_SharedArrayBuffer:
+      case JSProto_Map:
+      case JSProto_Set:
         return true;
       default:
         return false;
@@ -636,18 +638,6 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
         return true;
     }
 
-    // Handle the 'name' property for error prototypes.
-    if (IsErrorObjectKey(key) && id == GetJSIDByIndex(cx, XPCJSContext::IDX_NAME)) {
-        RootedId className(cx);
-        ProtoKeyToId(cx, key, &className);
-        FillPropertyDescriptor(desc, wrapper, 0, UndefinedValue());
-        return JS_IdToValue(cx, className, desc.value());
-    }
-
-    // Handle the 'lastIndex' property for RegExp prototypes.
-    if (key == JSProto_RegExp && id == GetJSIDByIndex(cx, XPCJSContext::IDX_LASTINDEX))
-        return getOwnPropertyFromWrapperIfSafe(cx, wrapper, id, desc);
-
     // Grab the JSClass. We require all Xrayable classes to have a ClassSpec.
     const js::Class* clasp = js::GetObjectClass(target);
     MOZ_ASSERT(clasp->specDefined());
@@ -887,14 +877,6 @@ JSXrayTraits::enumerateNames(JSContext* cx, HandleObject wrapper, unsigned flags
 
     // Add the 'constructor' property.
     if (!props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_CONSTRUCTOR)))
-        return false;
-
-    // For Error protoypes, add the 'name' property.
-    if (IsErrorObjectKey(key) && !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_NAME)))
-        return false;
-
-    // For RegExp protoypes, add the 'lastIndex' property.
-    if (key == JSProto_RegExp && !props.append(GetJSIDByIndex(cx, XPCJSContext::IDX_LASTINDEX)))
         return false;
 
     // Grab the JSClass. We require all Xrayable classes to have a ClassSpec.
@@ -1591,14 +1573,13 @@ XPCWrappedNativeXrayTraits::call(JSContext* cx, HandleObject wrapper,
 {
     // Run the call hook of the wrapped native.
     XPCWrappedNative* wn = getWN(wrapper);
-    if (NATIVE_HAS_FLAG(wn, WantCall)) {
+    if (wn->GetScriptable() && wn->GetScriptable()->WantCall()) {
         XPCCallContext ccx(cx, wrapper, nullptr, JSID_VOIDHANDLE, args.length(),
                            args.array(), args.rval().address());
         if (!ccx.IsValid())
             return false;
         bool ok = true;
-        nsresult rv = wn->GetScriptableInfo()->GetCallback()->Call(
-            wn, cx, wrapper, args, &ok);
+        nsresult rv = wn->GetScriptable()->Call(wn, cx, wrapper, args, &ok);
         if (NS_FAILED(rv)) {
             if (ok)
                 XPCThrower::Throw(rv, cx);
@@ -1617,14 +1598,14 @@ XPCWrappedNativeXrayTraits::construct(JSContext* cx, HandleObject wrapper,
 {
     // Run the construct hook of the wrapped native.
     XPCWrappedNative* wn = getWN(wrapper);
-    if (NATIVE_HAS_FLAG(wn, WantConstruct)) {
+    if (wn->GetScriptable() && wn->GetScriptable()->WantConstruct()) {
         XPCCallContext ccx(cx, wrapper, nullptr, JSID_VOIDHANDLE, args.length(),
                            args.array(), args.rval().address());
         if (!ccx.IsValid())
             return false;
         bool ok = true;
-        nsresult rv = wn->GetScriptableInfo()->GetCallback()->Construct(
-            wn, cx, wrapper, args, &ok);
+        nsresult rv =
+            wn->GetScriptable()->Construct(wn, cx, wrapper, args, &ok);
         if (NS_FAILED(rv)) {
             if (ok)
                 XPCThrower::Throw(rv, cx);
@@ -1721,6 +1702,22 @@ bool
 DOMXrayTraits::enumerateNames(JSContext* cx, HandleObject wrapper, unsigned flags,
                               AutoIdVector& props)
 {
+    // Put the indexed properties for a window first.
+    nsGlobalWindow* win = AsWindow(cx, wrapper);
+    if (win) {
+        uint32_t length = win->Length();
+        if (!props.reserve(props.length() + length)) {
+            return false;
+        }
+        JS::RootedId indexId(cx);
+        for (uint32_t i = 0; i < length; ++i) {
+            if (!JS_IndexToId(cx, i, &indexId)) {
+                return false;
+            }
+            props.infallibleAppend(indexId);
+        }
+    }
+
     JS::Rooted<JSObject*> obj(cx, getTargetObject(wrapper));
     return XrayOwnPropertyKeys(cx, wrapper, obj, flags, props);
 }

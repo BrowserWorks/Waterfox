@@ -36,7 +36,7 @@ class WebSocketChannelChild final : public BaseWebSocketChannel,
   NS_IMETHOD SendMsg(const nsACString &aMsg) override;
   NS_IMETHOD SendBinaryMsg(const nsACString &aMsg) override;
   NS_IMETHOD SendBinaryStream(nsIInputStream *aStream, uint32_t aLength) override;
-  nsresult SendBinaryStream(OptionalInputStreamParams *aStream, uint32_t aLength);
+  MOZ_MUST_USE nsresult SendBinaryStream(OptionalInputStreamParams *aStream, uint32_t aLength);
   NS_IMETHOD GetSecurityInfo(nsISupports **aSecurityInfo) override;
 
   void AddIPDLReference();
@@ -49,13 +49,13 @@ class WebSocketChannelChild final : public BaseWebSocketChannel,
  private:
   ~WebSocketChannelChild();
 
-  bool RecvOnStart(const nsCString& aProtocol, const nsCString& aExtensions,
-                   const nsString& aEffectiveURL, const bool& aSecure) override;
-  bool RecvOnStop(const nsresult& aStatusCode) override;
-  bool RecvOnMessageAvailable(const nsCString& aMsg) override;
-  bool RecvOnBinaryMessageAvailable(const nsCString& aMsg) override;
-  bool RecvOnAcknowledge(const uint32_t& aSize) override;
-  bool RecvOnServerClose(const uint16_t& aCode, const nsCString &aReason) override;
+  mozilla::ipc::IPCResult RecvOnStart(const nsCString& aProtocol, const nsCString& aExtensions,
+                                   const nsString& aEffectiveURL, const bool& aSecure) override;
+  mozilla::ipc::IPCResult RecvOnStop(const nsresult& aStatusCode) override;
+  mozilla::ipc::IPCResult RecvOnMessageAvailable(const nsCString& aMsg) override;
+  mozilla::ipc::IPCResult RecvOnBinaryMessageAvailable(const nsCString& aMsg) override;
+  mozilla::ipc::IPCResult RecvOnAcknowledge(const uint32_t& aSize) override;
+  mozilla::ipc::IPCResult RecvOnServerClose(const uint16_t& aCode, const nsCString &aReason) override;
 
   void OnStart(const nsCString& aProtocol, const nsCString& aExtensions,
                const nsString& aEffectiveURL, const bool& aSecure);

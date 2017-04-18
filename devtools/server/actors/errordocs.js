@@ -10,7 +10,8 @@
 "use strict";
 
 const baseURL = "https://developer.mozilla.org/docs/Web/JavaScript/Reference/Errors/";
-const params = "?utm_source=mozilla&utm_medium=firefox-console-errors&utm_campaign=default";
+const params =
+  "?utm_source=mozilla&utm_medium=firefox-console-errors&utm_campaign=default";
 const ErrorDocs = {
   JSMSG_READ_ONLY: "Read-only",
   JSMSG_BAD_ARRAY_LENGTH: "Invalid_array_length",
@@ -18,7 +19,6 @@ const ErrorDocs = {
   JSMSG_RESULTING_STRING_TOO_LARGE: "Resulting_string_too_large",
   JSMSG_BAD_RADIX: "Bad_radix",
   JSMSG_PRECISION_RANGE: "Precision_range",
-  JSMSG_BAD_FORMAL: "Malformed_formal_parameter",
   JSMSG_STMT_AFTER_RETURN: "Stmt_after_return",
   JSMSG_NOT_A_CODEPOINT: "Not_a_codepoint",
   JSMSG_BAD_SORT_ARG: "Array_sort_argument",
@@ -49,6 +49,7 @@ const ErrorDocs = {
   JSMSG_NOT_CONSTRUCTOR: "Not_a_constructor",
   JSMSG_CURLY_AFTER_LIST: "Missing_curly_after_property_list",
   JSMSG_DEPRECATED_FOR_EACH: "For-each-in_loops_are_deprecated",
+  JSMSG_STRICT_NON_SIMPLE_PARAMS: "Strict_Non_Simple_Params",
 };
 
 const MIXED_CONTENT_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/Mixed_content";
@@ -57,6 +58,7 @@ const INSECURE_PASSWORDS_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Se
 const PUBLIC_KEY_PINS_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/Public_Key_Pinning";
 const STRICT_TRANSPORT_SECURITY_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/HTTP_strict_transport_security";
 const WEAK_SIGNATURE_ALGORITHM_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/Weak_Signature_Algorithm";
+const MIME_TYPE_MISMATCH_LEARN_MORE = "https://developer.mozilla.org/docs/Web/HTTP/Headers/X-Content-Type-Options";
 const ErrorCategories = {
   "Insecure Password Field": INSECURE_PASSWORDS_LEARN_MORE,
   "Mixed Content Message": MIXED_CONTENT_LEARN_MORE,
@@ -65,11 +67,12 @@ const ErrorCategories = {
   "Invalid HSTS Headers": STRICT_TRANSPORT_SECURITY_LEARN_MORE,
   "SHA-1 Signature": WEAK_SIGNATURE_ALGORITHM_LEARN_MORE,
   "Tracking Protection": TRACKING_PROTECTION_LEARN_MORE,
+  "MIMEMISMATCH": MIME_TYPE_MISMATCH_LEARN_MORE,
 };
 
 exports.GetURL = (error) => {
   if (!error) {
-    return;
+    return undefined;
   }
 
   let doc = ErrorDocs[error.errorMessageName];
@@ -81,4 +84,5 @@ exports.GetURL = (error) => {
   if (categoryURL) {
     return categoryURL + params;
   }
+  return undefined;
 };

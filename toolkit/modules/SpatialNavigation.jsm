@@ -22,8 +22,8 @@
 this.EXPORTED_SYMBOLS = ["SpatialNavigation"];
 
 var SpatialNavigation = {
-  init: function(browser, callback) {
-          browser.addEventListener("keydown", function (event) {
+  init(browser, callback) {
+          browser.addEventListener("keydown", function(event) {
             _onInputKeyPress(event, callback);
           }, true);
   }
@@ -35,13 +35,13 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu["import"]("resource://gre/modules/Services.jsm", this);
+Cu.import("resource://gre/modules/Services.jsm", this);
 
 var eventListenerService = Cc["@mozilla.org/eventlistenerservice;1"]
                              .getService(Ci.nsIEventListenerService);
 var focusManager         = Cc["@mozilla.org/focus-manager;1"]
                              .getService(Ci.nsIFocusManager);
-var windowMediator       = Cc['@mozilla.org/appshell/window-mediator;1']
+var windowMediator       = Cc["@mozilla.org/appshell/window-mediator;1"]
                              .getService(Ci.nsIWindowMediator);
 
 // Debug helpers:
@@ -57,7 +57,7 @@ function dumpRect(desc, rect) {
 
 function dumpNodeCoord(desc, node) {
   let rect = node.getBoundingClientRect();
-  dump(desc + " " + node.tagName + " x:" + Math.round(rect.left + rect.width/2) +
+  dump(desc + " " + node.tagName + " x:" + Math.round(rect.left + rect.width / 2) +
        " y:" + Math.round(rect.top + rect.height / 2));
 }
 
@@ -68,9 +68,9 @@ const kShift = "shift";
 const kCtrl  = "ctrl";
 const kNone  = "none";
 
-function _onInputKeyPress (event, callback) {
+function _onInputKeyPress(event, callback) {
   // If Spatial Navigation isn't enabled, return.
-  if (!PrefObserver['enabled']) {
+  if (!PrefObserver["enabled"]) {
     return;
   }
 
@@ -79,15 +79,15 @@ function _onInputKeyPress (event, callback) {
   // key to be used here (e.g. "a", "F1", "arrowUp", ...).
   var key = event.which || event.keyCode;
 
-  if (key != PrefObserver['keyCodeDown']  &&
-      key != PrefObserver['keyCodeRight'] &&
-      key != PrefObserver['keyCodeUp'] &&
-      key != PrefObserver['keyCodeLeft'] &&
-      key != PrefObserver['keyCodeReturn']) {
+  if (key != PrefObserver["keyCodeDown"] &&
+      key != PrefObserver["keyCodeRight"] &&
+      key != PrefObserver["keyCodeUp"] &&
+      key != PrefObserver["keyCodeLeft"] &&
+      key != PrefObserver["keyCodeReturn"]) {
     return;
   }
 
-  if (key == PrefObserver['keyCodeReturn']) {
+  if (key == PrefObserver["keyCodeReturn"]) {
     // We report presses of the action button on a gamepad "A" as the return
     // key to the DOM. The behaviour of hitting the return key and clicking an
     // element is the same for some elements, but not all, so we handle the
@@ -105,9 +105,9 @@ function _onInputKeyPress (event, callback) {
   }
 
   // If it is not using the modifiers it should, return.
-  if (!event.altKey && PrefObserver['modifierAlt'] ||
-      !event.shiftKey && PrefObserver['modifierShift'] ||
-      !event.crtlKey && PrefObserver['modifierCtrl']) {
+  if (!event.altKey && PrefObserver["modifierAlt"] ||
+      !event.shiftKey && PrefObserver["modifierShift"] ||
+      !event.crtlKey && PrefObserver["modifierCtrl"]) {
     return;
   }
 
@@ -134,8 +134,8 @@ function _onInputKeyPress (event, callback) {
 
     // If there is no text, there is nothing special to do.
     if (currentlyFocused.textLength > 0) {
-      if (key == PrefObserver['keyCodeRight'] ||
-          key == PrefObserver['keyCodeDown'] ) {
+      if (key == PrefObserver["keyCodeRight"] ||
+          key == PrefObserver["keyCodeDown"] ) {
         // We are moving forward into the document.
         if (currentlyFocused.textLength != currentlyFocused.selectionEnd) {
           return;
@@ -158,16 +158,16 @@ function _onInputKeyPress (event, callback) {
 
   while (!bestElementToFocus && !searchRectOverflows) {
     switch (key) {
-      case PrefObserver['keyCodeLeft']:
-      case PrefObserver['keyCodeRight']: {
+      case PrefObserver["keyCodeLeft"]:
+      case PrefObserver["keyCodeRight"]: {
         if (searchRect.top < cssPageRect.top &&
             searchRect.bottom > cssPageRect.bottom) {
           searchRectOverflows = true;
         }
         break;
       }
-      case PrefObserver['keyCodeUp']:
-      case PrefObserver['keyCodeDown']: {
+      case PrefObserver["keyCodeUp"]:
+      case PrefObserver["keyCodeDown"]: {
         if (searchRect.left < cssPageRect.left &&
             searchRect.right > cssPageRect.right) {
           searchRectOverflows = true;
@@ -182,15 +182,15 @@ function _onInputKeyPress (event, callback) {
     // Make the search rectangle "wider": double it's size in the direction
     // that is not the keypress.
     switch (key) {
-      case PrefObserver['keyCodeLeft']:
-      case PrefObserver['keyCodeRight']: {
+      case PrefObserver["keyCodeLeft"]:
+      case PrefObserver["keyCodeRight"]: {
         searchRect.top = searchRect.top - (searchRect.height / 2);
         searchRect.bottom = searchRect.top + (searchRect.height * 2);
         searchRect.height = searchRect.height * 2;
         break;
       }
-      case PrefObserver['keyCodeUp']:
-      case PrefObserver['keyCodeDown']: {
+      case PrefObserver["keyCodeUp"]:
+      case PrefObserver["keyCodeDown"]: {
         searchRect.left = searchRect.left - (searchRect.width / 2);
         searchRect.right = searchRect.left + (searchRect.width * 2);
         searchRect.width = searchRect.width * 2;
@@ -249,7 +249,6 @@ function _getRootBounds(windowUtils) {
 function _getBestToFocus(nodes, key, currentlyFocused) {
   let best = null;
   let bestDist;
-  let bestMid;
   let nodeMid;
   let currentlyFocusedMid = _getMidpoint(currentlyFocused);
   let currentlyFocusedRect = currentlyFocused.getBoundingClientRect();
@@ -264,23 +263,23 @@ function _getBestToFocus(nodes, key, currentlyFocused) {
     // keypress
     nodeMid = _getMidpoint(nodes[i]);
     switch (key) {
-      case PrefObserver['keyCodeLeft']:
+      case PrefObserver["keyCodeLeft"]:
         if (nodeMid.x >= (currentlyFocusedMid.x - currentlyFocusedRect.width / 2)) {
           continue;
         }
         break;
-      case PrefObserver['keyCodeRight']:
+      case PrefObserver["keyCodeRight"]:
         if (nodeMid.x <= (currentlyFocusedMid.x + currentlyFocusedRect.width / 2)) {
           continue;
         }
         break;
 
-      case PrefObserver['keyCodeUp']:
+      case PrefObserver["keyCodeUp"]:
         if (nodeMid.y >= (currentlyFocusedMid.y - currentlyFocusedRect.height / 2)) {
           continue;
         }
         break;
-      case PrefObserver['keyCodeDown']:
+      case PrefObserver["keyCodeDown"]:
         if (nodeMid.y <= (currentlyFocusedMid.y + currentlyFocusedRect.height / 2)) {
           continue;
         }
@@ -301,8 +300,7 @@ function _getBestToFocus(nodes, key, currentlyFocused) {
     let curDist = _spatialDistanceOfCorner(currentlyFocused, nodes[i], key);
     if ((curDist > bestDist) || curDist === -1) {
       continue;
-    }
-    else if (curDist === bestDist) {
+    } else if (curDist === bestDist) {
       let midCurDist = _spatialDistance(currentlyFocused, nodes[i]);
       let midBestDist = _spatialDistance(currentlyFocused, best);
       if (midCurDist > midBestDist)
@@ -357,7 +355,7 @@ function _getSearchRect(currentlyFocused, key, cssPageRect) {
   newRect.height = currentlyFocusedRect.height;
 
   switch (key) {
-    case PrefObserver['keyCodeLeft']:
+    case PrefObserver["keyCodeLeft"]:
       newRect.right = newRect.left;
       newRect.left = cssPageRect.left;
       newRect.width = newRect.right - newRect.left;
@@ -367,7 +365,7 @@ function _getSearchRect(currentlyFocused, key, cssPageRect) {
       newRect.height = newRect.bottom - newRect.top;
       break;
 
-    case PrefObserver['keyCodeRight']:
+    case PrefObserver["keyCodeRight"]:
       newRect.left = newRect.right;
       newRect.right = cssPageRect.right;
       newRect.width = newRect.right - newRect.left;
@@ -377,7 +375,7 @@ function _getSearchRect(currentlyFocused, key, cssPageRect) {
       newRect.height = newRect.bottom - newRect.top;
       break;
 
-    case PrefObserver['keyCodeUp']:
+    case PrefObserver["keyCodeUp"]:
       newRect.bottom = newRect.top;
       newRect.top = cssPageRect.top;
       newRect.height = newRect.bottom - newRect.top;
@@ -387,7 +385,7 @@ function _getSearchRect(currentlyFocused, key, cssPageRect) {
       newRect.width = newRect.right - newRect.left;
       break;
 
-    case PrefObserver['keyCodeDown']:
+    case PrefObserver["keyCodeDown"]:
       newRect.top = newRect.bottom;
       newRect.bottom = cssPageRect.bottom;
       newRect.height = newRect.bottom - newRect.top;
@@ -419,7 +417,7 @@ function _spatialDistanceOfCorner(from, to, key) {
   let vDistance = 0;
 
   switch (key) {
-    case PrefObserver['keyCodeLeft']:
+    case PrefObserver["keyCodeLeft"]:
       // Make sure the "to" node is really at the left side of "from" node by
       //  1. Check the mid point
       //  2. The right border of "to" node must be less than the "from" node
@@ -428,56 +426,48 @@ function _spatialDistanceOfCorner(from, to, key) {
       hDistance = Math.abs(fromRect.left - toRect.right);
       if (toRect.bottom <= fromRect.top) {
         vDistance = fromRect.top - toRect.bottom;
-      }
-      else if (fromRect.bottom <= toRect.top) {
+      } else if (fromRect.bottom <= toRect.top) {
         vDistance = toRect.top - fromRect.bottom;
-      }
-      else {
+      } else {
         vDistance = 0;
       }
       break;
 
-    case PrefObserver['keyCodeRight']:
+    case PrefObserver["keyCodeRight"]:
       if ((toMid.x - fromMid.x) < 0 || toRect.left <= fromRect.left)
         return -1;
       hDistance = Math.abs(toRect.left - fromRect.right);
       if (toRect.bottom <= fromRect.top) {
         vDistance = fromRect.top - toRect.bottom;
-      }
-      else if (fromRect.bottom <= toRect.top) {
+      } else if (fromRect.bottom <= toRect.top) {
         vDistance = toRect.top - fromRect.bottom;
-      }
-      else {
+      } else {
         vDistance = 0;
       }
       break;
 
-    case PrefObserver['keyCodeUp']:
+    case PrefObserver["keyCodeUp"]:
       if ((fromMid.y - toMid.y) < 0 || toRect.bottom >= fromRect.bottom)
         return -1;
       vDistance = Math.abs(fromRect.top - toRect.bottom);
       if (fromRect.right <= toRect.left) {
         hDistance = toRect.left - fromRect.right;
-      }
-      else if (toRect.right <= fromRect.left) {
+      } else if (toRect.right <= fromRect.left) {
         hDistance = fromRect.left - toRect.right;
-      }
-      else {
+      } else {
         hDistance = 0;
       }
       break;
 
-    case PrefObserver['keyCodeDown']:
+    case PrefObserver["keyCodeDown"]:
       if ((toMid.y - fromMid.y) < 0 || toRect.top <= fromRect.top)
         return -1;
       vDistance = Math.abs(toRect.top - fromRect.bottom);
       if (fromRect.right <= toRect.left) {
         hDistance = toRect.left - fromRect.right;
-      }
-      else if (toRect.right <= fromRect.left) {
+      } else if (toRect.right <= fromRect.left) {
         hDistance = fromRect.left - toRect.right;
-      }
-      else {
+      } else {
         hDistance = 0;
       }
       break;
@@ -488,7 +478,7 @@ function _spatialDistanceOfCorner(from, to, key) {
 
 // Snav preference observer
 var PrefObserver = {
-  register: function() {
+  register() {
     this.prefService = Cc["@mozilla.org/preferences-service;1"]
                           .getService(Ci.nsIPrefService);
 
@@ -507,7 +497,7 @@ var PrefObserver = {
     this.observe(null, "nsPref:changed", "keyCode.return");
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic != "nsPref:changed") {
       return;
     }

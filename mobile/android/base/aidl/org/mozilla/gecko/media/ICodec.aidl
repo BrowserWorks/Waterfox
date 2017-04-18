@@ -13,14 +13,15 @@ import org.mozilla.gecko.media.Sample;
 
 interface ICodec {
     void setCallbacks(in ICodecCallbacks callbacks);
-    boolean configure(in FormatParam format, inout Surface surface, int flags);
-    oneway void start();
-    oneway void stop();
-    oneway void flush();
-    oneway void release();
+    boolean configure(in FormatParam format, inout Surface surface, int flags, in String drmStubId);
+    boolean isAdaptivePlaybackSupported();
+    void start();
+    void stop();
+    void flush();
+    void release();
 
     Sample dequeueInput(int size);
     oneway void queueInput(in Sample sample);
 
-    oneway void releaseOutput(in Sample sample);
+    oneway void releaseOutput(in Sample sample, in boolean render);
 }

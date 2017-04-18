@@ -17,13 +17,14 @@ class CompositorWidgetParent final
    public WinCompositorWidget
 {
 public:
-  CompositorWidgetParent(const CompositorWidgetInitData& aInitData);
+  explicit CompositorWidgetParent(const CompositorWidgetInitData& aInitData,
+                                  const layers::CompositorOptions& aOptions);
   ~CompositorWidgetParent() override;
 
-  bool RecvEnterPresentLock() override;
-  bool RecvLeavePresentLock() override;
-  bool RecvUpdateTransparency(const int32_t& aMode) override;
-  bool RecvClearTransparentWindow() override;
+  mozilla::ipc::IPCResult RecvEnterPresentLock() override;
+  mozilla::ipc::IPCResult RecvLeavePresentLock() override;
+  mozilla::ipc::IPCResult RecvUpdateTransparency(const int32_t& aMode) override;
+  mozilla::ipc::IPCResult RecvClearTransparentWindow() override;
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
   nsIWidget* RealWidget() override;

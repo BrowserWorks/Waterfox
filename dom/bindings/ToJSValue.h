@@ -132,7 +132,7 @@ ToJSValue(JSContext* aCx,
   // Make sure we're called in a compartment
   MOZ_ASSERT(JS::CurrentGlobalOrNull(aCx));
 
-  aValue.setObject(*aArgument.Callback());
+  aValue.setObjectOrNull(aArgument.CallbackOrNull());
 
   return MaybeWrapValue(aCx, aValue);
 }
@@ -306,13 +306,11 @@ ToJSValue(JSContext* aCx,
   return ToJSValue(aCx, *aArgument, aValue);
 }
 
-#ifdef SPIDERMONKEY_PROMISE
 // Accept Promise objects, which need special handling.
 MOZ_MUST_USE bool
 ToJSValue(JSContext* aCx,
           Promise& aArgument,
           JS::MutableHandle<JS::Value> aValue);
-#endif // SPIDERMONKEY_PROMISE
 
 // Accept arrays of other things we accept
 template <typename T>

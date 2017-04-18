@@ -91,7 +91,7 @@ public:
     uint64_t ByteCount()    { return mByteCount; }
 
     // called by the socket transport on the socket thread...
-    void OnSocketReady(nsresult condition); 
+    void OnSocketReady(nsresult condition);
 
 private:
     static nsresult WriteFromSegments(nsIInputStream *, void *,
@@ -302,14 +302,15 @@ private:
     bool mProxyTransparentResolvesHost;
     bool mHttpsProxy;
     uint32_t     mConnectionFlags;
+    bool mReuseAddrPort;
 
     // The origin attributes are used to create sockets.  The first party domain
     // will eventually be used to isolate OCSP cache and is only non-empty when
     // "privacy.firstparty.isolate" is enabled.  Setting this is the only way to
     // carry origin attributes down to NSPR layers which are final consumers.
     // It must be set before the socket transport is built.
-    NeckoOriginAttributes mOriginAttributes;
-    
+    OriginAttributes mOriginAttributes;
+
     uint16_t         SocketPort() { return (!mProxyHost.IsEmpty() && !mProxyTransparent) ? mProxyPort : mPort; }
     const nsCString &SocketHost() { return (!mProxyHost.IsEmpty() && !mProxyTransparent) ? mProxyHost : mHost; }
 
@@ -350,7 +351,7 @@ private:
 
     void     SendStatus(nsresult status);
     nsresult ResolveHost();
-    nsresult BuildSocket(PRFileDesc *&, bool &, bool &); 
+    nsresult BuildSocket(PRFileDesc *&, bool &, bool &);
     nsresult InitiateSocket();
     bool     RecoverFromError();
 

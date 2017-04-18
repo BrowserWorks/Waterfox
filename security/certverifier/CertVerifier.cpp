@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "CTKnownLogs.h"
+#include "CTLogVerifier.h"
 #include "ExtendedValidation.h"
 #include "MultiLogCTVerifier.h"
 #include "NSSCertDBTrustDomain.h"
@@ -21,10 +22,7 @@
 #include "pk11pub.h"
 #include "pkix/pkix.h"
 #include "pkix/pkixnss.h"
-#include "prerror.h"
-#include "secerr.h"
 #include "secmod.h"
-#include "sslerr.h"
 
 using namespace mozilla::ct;
 using namespace mozilla::pkix;
@@ -159,14 +157,25 @@ CertVerifier::LoadKnownCTLogs()
   for (const CTLogInfo& log : kCTLogList) {
     Input publicKey;
     Result rv = publicKey.Init(
-      BitwiseCast<const uint8_t*, const char*>(log.logKey), log.logKeyLength);
+      BitwiseCast<const uint8_t*, const char*>(log.key), log.keyLength);
     if (rv != Success) {
       MOZ_ASSERT_UNREACHABLE("Failed reading a log key for a known CT Log");
       continue;
     }
-    rv = mCTVerifier->AddLog(publicKey);
+
+    CTLogVerifier logVerifier;
+    const CTLogOperatorInfo& logOperator =
+      kCTLogOperatorList[log.operatorIndex];
+    rv = logVerifier.Init(publicKey, logOperator.id, log.status,
+                          log.disqualificationTime);
     if (rv != Success) {
       MOZ_ASSERT_UNREACHABLE("Failed initializing a known CT Log");
+      continue;
+    }
+
+    rv = mCTVerifier->AddLog(Move(logVerifier));
+    if (rv != Success) {
+      MOZ_ASSERT_UNREACHABLE("Failed activating a known CT Log");
       continue;
     }
   }
@@ -259,35 +268,39 @@ CertVerifier::VerifySignedCertificateTimestamps(
   }
 
   if (MOZ_LOG_TEST(gCertVerifierLog, LogLevel::Debug)) {
-    size_t verifiedCount = 0;
+    size_t validCount = 0;
     size_t unknownLogCount = 0;
+    size_t disqualifiedLogCount = 0;
     size_t invalidSignatureCount = 0;
     size_t invalidTimestampCount = 0;
-    for (const SignedCertificateTimestamp& sct : result.scts) {
-      switch (sct.verificationStatus) {
-        case SignedCertificateTimestamp::VerificationStatus::OK:
-          verifiedCount++;
+    for (const VerifiedSCT& verifiedSct : result.verifiedScts) {
+      switch (verifiedSct.status) {
+        case VerifiedSCT::Status::Valid:
+          validCount++;
           break;
-        case SignedCertificateTimestamp::VerificationStatus::UnknownLog:
+        case VerifiedSCT::Status::ValidFromDisqualifiedLog:
+          disqualifiedLogCount++;
+          break;
+        case VerifiedSCT::Status::UnknownLog:
           unknownLogCount++;
           break;
-        case SignedCertificateTimestamp::VerificationStatus::InvalidSignature:
+        case VerifiedSCT::Status::InvalidSignature:
           invalidSignatureCount++;
           break;
-        case SignedCertificateTimestamp::VerificationStatus::InvalidTimestamp:
+        case VerifiedSCT::Status::InvalidTimestamp:
           invalidTimestampCount++;
           break;
-        case SignedCertificateTimestamp::VerificationStatus::None:
+        case VerifiedSCT::Status::None:
         default:
-          MOZ_ASSERT_UNREACHABLE("Unexpected SCT verificationStatus");
+          MOZ_ASSERT_UNREACHABLE("Unexpected SCT verification status");
       }
     }
     MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
             ("SCT verification result: "
-             "verified=%zu unknownLog=%zu "
+             "valid=%zu unknownLog=%zu disqualifiedLog=%zu "
              "invalidSignature=%zu invalidTimestamp=%zu "
              "decodingErrors=%zu\n",
-             verifiedCount, unknownLogCount,
+             validCount, unknownLogCount, disqualifiedLogCount,
              invalidSignatureCount, invalidTimestampCount,
              result.decodingErrors));
   }
@@ -329,7 +342,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
             /*optional*/ const Flags flags,
             /*optional*/ const SECItem* stapledOCSPResponseSECItem,
             /*optional*/ const SECItem* sctsFromTLSSECItem,
-            /*optional*/ const NeckoOriginAttributes& originAttributes,
+            /*optional*/ const OriginAttributes& originAttributes,
         /*optional out*/ SECOidTag* evOidPolicy,
         /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus,
         /*optional out*/ KeySizeStatus* keySizeStatus,
@@ -339,10 +352,10 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
 {
   MOZ_LOG(gCertVerifierLog, LogLevel::Debug, ("Top of VerifyCert\n"));
 
-  PR_ASSERT(cert);
-  PR_ASSERT(usage == certificateUsageSSLServer || !(flags & FLAG_MUST_BE_EV));
-  PR_ASSERT(usage == certificateUsageSSLServer || !keySizeStatus);
-  PR_ASSERT(usage == certificateUsageSSLServer || !sha1ModeResult);
+  MOZ_ASSERT(cert);
+  MOZ_ASSERT(usage == certificateUsageSSLServer || !(flags & FLAG_MUST_BE_EV));
+  MOZ_ASSERT(usage == certificateUsageSSLServer || !keySizeStatus);
+  MOZ_ASSERT(usage == certificateUsageSSLServer || !sha1ModeResult);
 
   if (evOidPolicy) {
     *evOidPolicy = SEC_OID_UNKNOWN;
@@ -471,9 +484,9 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
 
       CertPolicyId evPolicy;
       SECOidTag evPolicyOidTag;
-      SECStatus srv = GetFirstEVPolicy(cert, evPolicy, evPolicyOidTag);
+      bool foundEVPolicy = GetFirstEVPolicy(*cert, evPolicy, evPolicyOidTag);
       for (size_t i = 0;
-           i < sha1ModeConfigurationsCount && rv != Success && srv == SECSuccess;
+           i < sha1ModeConfigurationsCount && rv != Success && foundEVPolicy;
            i++) {
         // Don't attempt verification if the SHA1 mode set by preferences
         // (mSHA1Mode) is more restrictive than the SHA1 mode option we're on.
@@ -812,7 +825,7 @@ CertVerifier::VerifySSLServerCert(const UniqueCERTCertificate& peerCert,
                           /*out*/ UniqueCERTCertList& builtChain,
                      /*optional*/ bool saveIntermediatesInPermanentDatabase,
                      /*optional*/ Flags flags,
-                     /*optional*/ const NeckoOriginAttributes& originAttributes,
+                     /*optional*/ const OriginAttributes& originAttributes,
                  /*optional out*/ SECOidTag* evOidPolicy,
                  /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus,
                  /*optional out*/ KeySizeStatus* keySizeStatus,
@@ -820,10 +833,10 @@ CertVerifier::VerifySSLServerCert(const UniqueCERTCertificate& peerCert,
                  /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo,
                  /*optional out*/ CertificateTransparencyInfo* ctInfo)
 {
-  PR_ASSERT(peerCert);
-  // XXX: PR_ASSERT(pinarg)
-  PR_ASSERT(hostname);
-  PR_ASSERT(hostname[0]);
+  MOZ_ASSERT(peerCert);
+  // XXX: MOZ_ASSERT(pinarg);
+  MOZ_ASSERT(hostname);
+  MOZ_ASSERT(hostname[0]);
 
   if (evOidPolicy) {
     *evOidPolicy = SEC_OID_UNKNOWN;

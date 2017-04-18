@@ -157,17 +157,10 @@ function load_cert(cert, trust) {
 
 function test_is_revoked(certList, issuerString, serialString, subjectString,
                          pubKeyString) {
-  let issuer = converter.convertToByteArray(issuerString ? issuerString : '',
-                                            {});
-
-  let serial = converter.convertToByteArray(serialString ? serialString : '',
-                                            {});
-
-  let subject = converter.convertToByteArray(subjectString ? subjectString : '',
-                                             {});
-
-  let pubKey = converter.convertToByteArray(pubKeyString ? pubKeyString : '',
-                                            {});
+  let issuer = converter.convertToByteArray(issuerString || "", {});
+  let serial = converter.convertToByteArray(serialString || "", {});
+  let subject = converter.convertToByteArray(subjectString || "", {});
+  let pubKey = converter.convertToByteArray(pubKeyString || "", {});
 
   return certList.isCertRevoked(issuer,
                                 issuerString ? issuerString.length : 0,
@@ -302,7 +295,7 @@ function run_test() {
 
     // test a subject / pubKey revocation
     ok(test_is_revoked(certList, "nonsense", "more nonsense",
-       "some imaginary subject", "some imaginary pubkey"),
+                       "some imaginary subject", "some imaginary pubkey"),
        "issuer / serial pair should be blocked");
 
     // Check the blocklist entry has been persisted properly to the backing

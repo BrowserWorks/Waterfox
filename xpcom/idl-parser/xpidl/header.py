@@ -460,7 +460,7 @@ def write_interface(iface, fd):
     fd.write(iface_epilog % names)
 
     def writeDeclaration(fd, iface, virtual):
-        declType = "NS_IMETHOD" if virtual else "NS_METHOD"
+        declType = "NS_IMETHOD" if virtual else "nsresult"
         suffix = " override" if virtual else ""
         for member in iface.members:
             if isinstance(member, xpidl.Attribute):
@@ -548,7 +548,7 @@ def write_interface(iface, fd):
 
 
 def main(outputfile):
-    cachedir = '.'
+    cachedir = os.path.dirname(outputfile.name if outputfile else '') or '.'
     if not os.path.isdir(cachedir):
         os.mkdir(cachedir)
     sys.path.append(cachedir)

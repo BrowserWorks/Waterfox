@@ -9,9 +9,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "clearTimeout",
 XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
                                   "resource://gre/modules/Timer.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "colorUtils", () => {
-  return require("devtools/shared/css/color").colorUtils;
-});
+XPCOMUtils.defineLazyServiceGetter(this, "DOMUtils",
+                                   "@mozilla.org/inspector/dom-utils;1",
+                                   "inIDOMUtils");
 
 Cu.import("resource://devtools/shared/event-emitter.js");
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
@@ -91,6 +91,7 @@ BrowserAction.prototype = {
         view.setAttribute("flex", "1");
 
         document.getElementById("PanelUI-multiView").appendChild(view);
+        document.addEventListener("popupshowing", this);
       },
 
       onDestroyed: document => {
@@ -100,6 +101,7 @@ BrowserAction.prototype = {
           CustomizableUI.hidePanelForNode(view);
           view.remove();
         }
+        document.removeEventListener("popupshowing", this);
       },
 
       onCreated: node => {
@@ -225,6 +227,21 @@ BrowserAction.prototype = {
               this.clearPopup();
             }
           }
+        }
+        break;
+
+      case "popupshowing":
+        const menu = event.target;
+        const trigger = menu.triggerNode;
+        const node = window.document.getElementById(this.id);
+        const contexts = ["toolbar-context-menu", "customizationPanelItemContextMenu"];
+
+        if (contexts.includes(menu.id) && node && isAncestorOrSelf(node, trigger)) {
+          global.actionContextMenu({
+            extension: this.extension,
+            onBrowserAction: true,
+            menu: menu,
+          });
         }
         break;
     }
@@ -511,7 +528,7 @@ extensions.registerSchemaAPI("browserAction", "addon_parent", context => {
         let tab = details.tabId !== null ? TabManager.getTab(details.tabId, context) : null;
         let color = details.color;
         if (!Array.isArray(color)) {
-          let col = colorUtils.colorToRGBA(color);
+          let col = DOMUtils.colorToRGBA(color);
           color = col && [col.r, col.g, col.b, Math.round(col.a * 255)];
         }
         BrowserAction.for(extension).setProperty(tab, "badgeBackgroundColor", color);

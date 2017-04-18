@@ -10,10 +10,12 @@
 #define nsFloatManager_h_
 
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/WritingModes.h"
 #include "nsCoord.h"
 #include "nsFrameList.h" // for DEBUG_FRAME_DUMP
 #include "nsIntervalSet.h"
+#include "nsPoint.h"
 #include "nsTArray.h"
 
 class nsIPresShell;
@@ -21,6 +23,7 @@ class nsIFrame;
 class nsPresContext;
 namespace mozilla {
 struct ReflowInput;
+class StyleBasicShape;
 } // namespace mozilla
 
 /**
@@ -44,6 +47,26 @@ struct nsFlowAreaRect {
 
 #define NS_FLOAT_MANAGER_CACHE_SIZE 4
 
+/**
+ * nsFloatManager is responsible for implementing CSS's rules for
+ * positioning floats. An nsFloatManager object is created during reflow for
+ * any block with NS_BLOCK_FLOAT_MGR. During reflow, the float manager for
+ * the nearest such ancestor block is found in ReflowInput::mFloatManager.
+ *
+ * According to the line-relative mappings in CSS Writing Modes spec [1],
+ * line-right and line-left are calculated with respect to the writing mode
+ * of the containing block of the floats. All the writing modes passed to
+ * nsFloatManager methods should be the containing block's writing mode.
+ *
+ * However, according to the abstract-to-physical mappings table [2], the
+ * 'direction' property of the containing block doesn't affect the
+ * interpretation of line-right and line-left. We actually implement this by
+ * passing in the writing mode of the block formatting context (BFC), i.e.
+ * the of BlockReflowInput's writing mode.
+ *
+ * [1] https://drafts.csswg.org/css-writing-modes/#line-mappings
+ * [2] https://drafts.csswg.org/css-writing-modes/#logical-to-physical
+ */
 class nsFloatManager {
 public:
   explicit nsFloatManager(nsIPresShell* aPresShell, mozilla::WritingMode aWM);
@@ -124,7 +147,7 @@ public:
   /**
    * Get information about the area available to content that flows
    * around floats.  Two different types of space can be requested:
-   *   BAND_FROM_POINT: returns the band containing block-dir coordinate
+   *   BandFromPoint: returns the band containing block-dir coordinate
    *     |aBCoord| (though actually with the top truncated to begin at
    *     aBCoord), but up to at most |aBSize| (which may be nscoord_MAX).
    *     This will return the tallest rectangle whose block start is
@@ -134,7 +157,7 @@ public:
    *     of the rectangle give the area available for line boxes in that
    *     space. The inline size of this resulting rectangle will not be
    *     negative.
-   *   WIDTH_WITHIN_HEIGHT: This returns a rectangle whose block start
+   *   WidthWithinHeight: This returns a rectangle whose block start
    *     is aBCoord and whose block size is exactly aBSize.  Its inline
    *     start and end edges give the corresponding edges of the space
    *     that can be used for line boxes *throughout* that space.  (It
@@ -142,8 +165,14 @@ public:
    *     space if a float begins or ends in it.)  The inline size of the
    *     resulting rectangle can be negative.
    *
-   * @param aBCoord [in] block-dir coordinate for block start of
-   *           available space desired
+   * ShapeType can be used to request two different types of flow areas.
+   * (This is the float area defined in CSS Shapes Module Level 1 §1.4):
+   *    Margin: uses the float element's margin-box to request the flow area.
+   *    ShapeOutside: uses the float element's shape-outside value to request
+   *      the float area.
+   *
+   * @param aBCoord [in] block-dir coordinate for block start of available space
+   *          desired, which are positioned relative to the current translation.
    * @param aBSize [in] see above
    * @param aContentArea [in] an nsRect representing the content area
    * @param aState [in] If null, use the current state, otherwise, do
@@ -153,16 +182,16 @@ public:
    *           mRect is the resulting rectangle for line boxes.  It will not
    *             extend beyond aContentArea's inline bounds, but may be
    *             narrower when floats are present.
-   *          mBandHasFloats is whether there are floats at the sides of the
-   *            return value including those that do not reduce the line box
-   *            inline size at all (because they are entirely in the margins)
-   *
-   * aBCoord and aAvailSpace are positioned relative to the current translation
+   *           mHasFloats is whether there are floats at the sides of the
+   *             return value including those that do not reduce the line box
+   *             inline size at all (because they are entirely in the margins)
    */
-  enum BandInfoType { BAND_FROM_POINT, WIDTH_WITHIN_HEIGHT };
+  enum class BandInfoType { BandFromPoint, WidthWithinHeight };
+  enum class ShapeType { Margin, ShapeOutside };
   nsFlowAreaRect GetFlowArea(mozilla::WritingMode aWM,
-                             nscoord aBCoord, BandInfoType aInfoType,
-                             nscoord aBSize, mozilla::LogicalRect aContentArea,
+                             nscoord aBCoord, nscoord aBSize,
+                             BandInfoType aBandInfoType, ShapeType aShapeType,
+                             mozilla::LogicalRect aContentArea,
                              SavedState* aState,
                              const nsSize& aContainerSize) const;
 
@@ -174,9 +203,9 @@ public:
    * aMarginRect is relative to the current translation.  The caller
    * must ensure aMarginRect.height >= 0 and aMarginRect.width >= 0.
    */
-  nsresult AddFloat(nsIFrame* aFloatFrame,
-                    const mozilla::LogicalRect& aMarginRect,
-                    mozilla::WritingMode aWM, const nsSize& aContainerSize);
+  void AddFloat(nsIFrame* aFloatFrame,
+                const mozilla::LogicalRect& aMarginRect,
+                mozilla::WritingMode aWM, const nsSize& aContainerSize);
 
   /**
    * Notify that we tried to place a float that could not fit at all and
@@ -305,14 +334,110 @@ public:
 
 private:
 
+  // ShapeInfo is an abstract class for implementing all the shapes in CSS
+  // Shapes Module. A subclass needs to override all the methods to adjust
+  // the flow area with respect to its shape.
+  class ShapeInfo
+  {
+  public:
+    virtual ~ShapeInfo() {}
+
+    virtual nscoord LineLeft(mozilla::WritingMode aWM,
+                             const nscoord aBStart,
+                             const nscoord aBEnd) const = 0;
+    virtual nscoord LineRight(mozilla::WritingMode aWM,
+                              const nscoord aBStart,
+                              const nscoord aBEnd) const = 0;
+    virtual nscoord BStart() const = 0;
+    virtual nscoord BEnd() const = 0;
+    virtual bool IsEmpty() const = 0;
+
+  protected:
+    // Compute the minimum line-axis difference between the bounding shape
+    // box and its rounded corner within the given band (block-axis region).
+    // This is used as a helper function to compute the LineRight() and
+    // LineLeft(). See the picture in the implementation for an example.
+    // RadiusL and RadiusB stand for radius on the line-axis and block-axis.
+    //
+    // Returns radius-x diff on the line-axis, or 0 if there's no rounded
+    // corner within the given band.
+    static nscoord ComputeEllipseLineInterceptDiff(
+      const nscoord aShapeBoxBStart, const nscoord aShapeBoxBEnd,
+      const nscoord aBStartCornerRadiusL, const nscoord aBStartCornerRadiusB,
+      const nscoord aBEndCornerRadiusL, const nscoord aBEndCornerRadiusB,
+      const nscoord aBandBStart, const nscoord aBandBEnd);
+
+    static nscoord XInterceptAtY(const nscoord aY, const nscoord aRadiusX,
+                                 const nscoord aRadiusY);
+  };
+
+  // Implements shape-outside: <shape-box>.
+  class BoxShapeInfo final : public ShapeInfo
+  {
+  public:
+    BoxShapeInfo(const nsRect& aShapeBoxRect, nsIFrame* const aFrame)
+      : mShapeBoxRect(aShapeBoxRect)
+      , mFrame(aFrame)
+    {
+    }
+
+    nscoord LineLeft(mozilla::WritingMode aWM,
+                     const nscoord aBStart,
+                     const nscoord aBEnd) const override;
+    nscoord LineRight(mozilla::WritingMode aWM,
+                      const nscoord aBStart,
+                      const nscoord aBEnd) const override;
+    nscoord BStart() const override { return mShapeBoxRect.y; }
+    nscoord BEnd() const override { return mShapeBoxRect.YMost(); }
+    bool IsEmpty() const override { return mShapeBoxRect.IsEmpty(); };
+
+  private:
+    // This is the reference box of css shape-outside if specified, which
+    // implements the <shape-box> value in the CSS Shapes Module Level 1.
+    // The coordinate space is the same as FloatInfo::mRect.
+    const nsRect mShapeBoxRect;
+    // The frame of the float.
+    nsIFrame* const mFrame;
+  };
+
+  // Implements shape-outside: circle().
+  class CircleShapeInfo final : public ShapeInfo
+  {
+  public:
+    CircleShapeInfo(mozilla::StyleBasicShape* const aBasicShape,
+                    nscoord aLineLeft,
+                    nscoord aBlockStart,
+                    const mozilla::LogicalRect& aShapeBoxRect,
+                    mozilla::WritingMode aWM,
+                    const nsSize& aContainerSize);
+
+    nscoord LineLeft(mozilla::WritingMode aWM,
+                     const nscoord aBStart,
+                     const nscoord aBEnd) const override;
+    nscoord LineRight(mozilla::WritingMode aWM,
+                      const nscoord aBStart,
+                      const nscoord aBEnd) const override;
+    nscoord BStart() const override { return mCenter.y - mRadius; }
+    nscoord BEnd() const override { return mCenter.y + mRadius; }
+    bool IsEmpty() const override { return mRadius == 0; };
+
+  private:
+    // The position of the center of the circle. The coordinate space is the
+    // same as FloatInfo::mRect.
+    nsPoint mCenter;
+    // The radius of the circle in app units.
+    nscoord mRadius;
+  };
+
   struct FloatInfo {
     nsIFrame *const mFrame;
     // The lowest block-ends of left/right floats up to and including
     // this one.
     nscoord mLeftBEnd, mRightBEnd;
 
-    FloatInfo(nsIFrame* aFrame, nscoord aLineLeft, nscoord aBStart,
-              nscoord aISize, nscoord aBSize);
+    FloatInfo(nsIFrame* aFrame, nscoord aLineLeft, nscoord aBlockStart,
+              const mozilla::LogicalRect& aMarginRect,
+              mozilla::WritingMode aWM, const nsSize& aContainerSize);
 
     nscoord LineLeft() const { return mRect.x; }
     nscoord LineRight() const { return mRect.XMost(); }
@@ -322,8 +447,19 @@ private:
     nscoord BSize() const { return mRect.height; }
     bool IsEmpty() const { return mRect.IsEmpty(); }
 
+    // aBStart and aBEnd are the starting and ending coordinate of a band.
+    // LineLeft() and LineRight() return the innermost line-left extent and
+    // line-right extent within the given band, respectively.
+    nscoord LineLeft(mozilla::WritingMode aWM, ShapeType aShapeType,
+                     const nscoord aBStart, const nscoord aBEnd) const;
+    nscoord LineRight(mozilla::WritingMode aWM, ShapeType aShapeType,
+                      const nscoord aBStart, const nscoord aBEnd) const;
+    nscoord BStart(ShapeType aShapeType) const;
+    nscoord BEnd(ShapeType aShapeType) const;
+    bool IsEmpty(ShapeType aShapeType) const;
+
 #ifdef NS_BUILD_REFCNT_LOGGING
-    FloatInfo(const FloatInfo& aOther);
+    FloatInfo(FloatInfo&& aOther);
     ~FloatInfo();
 #endif
 
@@ -334,9 +470,14 @@ private:
     // the line-relative axis of the frame manager and its block
     // coordinates are in the frame manager's real block direction.
     nsRect mRect;
+    // Pointer to a concrete subclass of ShapeInfo or null, which means that
+    // there is no shape-outside.
+    mozilla::UniquePtr<ShapeInfo> mShapeInfo;
   };
 
 #ifdef DEBUG
+  // Store the writing mode from the block frame which establishes the block
+  // formatting context (BFC) when the nsFloatManager is created.
   mozilla::WritingMode mWritingMode;
 #endif
 

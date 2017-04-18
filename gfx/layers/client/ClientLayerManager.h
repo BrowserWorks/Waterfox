@@ -87,6 +87,8 @@ public:
   virtual already_AddRefed<CanvasLayer> CreateCanvasLayer() override;
   virtual already_AddRefed<ReadbackLayer> CreateReadbackLayer() override;
   virtual already_AddRefed<ColorLayer> CreateColorLayer() override;
+  virtual already_AddRefed<TextLayer> CreateTextLayer() override;
+  virtual already_AddRefed<BorderLayer> CreateBorderLayer() override;
   virtual already_AddRefed<RefLayer> CreateRefLayer() override;
 
   void UpdateTextureFactoryIdentifier(const TextureFactoryIdentifier& aNewIdentifier);
@@ -349,22 +351,6 @@ public:
 
   ~ClientLayer();
 
-  void SetShadow(PLayerChild* aShadow)
-  {
-    MOZ_ASSERT(!mShadow, "can't have two shadows (yet)");
-    mShadow = aShadow;
-  }
-
-  virtual void Disconnect()
-  {
-    // This is an "emergency Disconnect()", called when the compositing
-    // process has died.  |mShadow| and our Shmem buffers are
-    // automatically managed by IPDL, so we don't need to explicitly
-    // free them here (it's hard to get that right on emergency
-    // shutdown anyway).
-    mShadow = nullptr;
-  }
-
   virtual void ClearCachedResources() { }
 
   // Shrink memory usage.
@@ -401,12 +387,12 @@ CreateShadowFor(ClientLayer* aLayer,
                 ClientLayerManager* aMgr,
                 CreatedMethod aMethod)
 {
-  PLayerChild* shadow = aMgr->AsShadowForwarder()->ConstructShadowFor(aLayer);
+  LayerHandle shadow = aMgr->AsShadowForwarder()->ConstructShadowFor(aLayer);
   if (!shadow) {
     return;
   }
 
-  aLayer->SetShadow(shadow);
+  aLayer->SetShadow(aMgr->AsShadowForwarder(), shadow);
   (aMgr->AsShadowForwarder()->*aMethod)(aLayer);
   aMgr->Hold(aLayer->AsLayer());
 }

@@ -22,8 +22,7 @@
             var enabled = true;
             try {
               enabled = this.mPrefs.getBoolPref("general.autoScroll");
-            }
-            catch (ex) {
+            } catch (ex) {
             }
 
             return enabled;
@@ -134,15 +133,19 @@
             if (!aURI)
               aURI = "about:blank";
 
-            var aReferrerPolicy = Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT;
+            var aReferrerPolicy = Components.interfaces.nsIHttpChannel.REFERRER_POLICY_UNSET;
+            var aTriggeringPrincipal;
 
             // Check for loadURIWithFlags(uri, { ... });
             var params = arguments[1];
             if (params && typeof(params) == "object") {
               aFlags = params.flags;
               aReferrerURI = params.referrerURI;
-              if ('referrerPolicy' in params) {
+              if ("referrerPolicy" in params) {
                 aReferrerPolicy = params.referrerPolicy;
+              }
+              if ("triggeringPrincipal" in params) {
+                aTriggeringPrincipal = params.triggeringPrincipal;
               }
               aCharset = params.charset;
               aPostData = params.postData;
@@ -151,7 +154,7 @@
             this._wrapURIChangeCall(() =>
               this.webNavigation.loadURIWithOptions(
                   aURI, aFlags, aReferrerURI, aReferrerPolicy,
-                  aPostData, null, null));
+                  aPostData, null, null, aTriggeringPrincipal));
           ]]>
         </body>
       </method>
@@ -161,8 +164,7 @@
           <![CDATA[
             try {
               this.loadURI(this.homePage);
-            }
-            catch (e) {
+            } catch (e) {
             }
           ]]>
         </body>
@@ -307,17 +309,6 @@
         </body>
       </method>
 
-      <method name="makePrerenderedBrowserActive">
-        <body>
-        <![CDATA[
-          let frameLoader = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
-          if (frameLoader) {
-            frameLoader.makePrerenderedLoaderActive();
-          }
-        ]]>
-        </body>
-      </method>
-
       <property name="imageDocument"
                 readonly="true">
         <getter>
@@ -337,6 +328,25 @@
       <property name="isRemoteBrowser"
                 onget="return (this.getAttribute('remote') == 'true');"
                 readonly="true"/>
+
+      <property name="remoteType"
+                readonly="true">
+        <getter>
+          <![CDATA[
+            if (!this.isRemoteBrowser) {
+              return null;
+            }
+
+            let remoteType = this.getAttribute("remoteType");
+            if (remoteType) {
+              return remoteType;
+            }
+
+            let E10SUtils = Components.utils.import("resource://gre/modules/E10SUtils.jsm", {}).E10SUtils;
+            return E10SUtils.DEFAULT_REMOTE_TYPE;
+          ]]>
+        </getter>
+      </property>
 
       <property name="messageManager"
                 readonly="true">
@@ -560,7 +570,7 @@
       </property>
 
       <field name="mPrefs" readonly="true">
-        Components.classes['@mozilla.org/preferences-service;1']
+        Components.classes["@mozilla.org/preferences-service;1"]
                   .getService(Components.interfaces.nsIPrefBranch);
       </field>
 
@@ -794,7 +804,7 @@
             this._audioBlocked = false;
             this.messageManager.sendAsyncMessage("AudioPlayback",
                                                  {type: "resumeMedia"});
-            let  event = document.createEvent("Events");
+            let event = document.createEvent("Events");
             event.initEvent("DOMAudioPlaybackBlockStopped", true, false);
             this.dispatchEvent(event);
           ]]>
@@ -920,14 +930,13 @@
                 }
               }
             }
-          }
-          catch (e) {
+          } catch (e) {
             Components.utils.reportError(e);
           }
           try {
-            var securityUI = this.securityUI;
-          }
-          catch (e) {
+            // Ensures the securityUI is initialized.
+            var securityUI = this.securityUI; // eslint-disable-line no-unused-vars
+          } catch (e) {
           }
 
           // XXX tabbrowser.xml sets "relatedBrowser" as a direct property on
@@ -951,6 +960,12 @@
             this.messageManager.addMessageListener("AudioPlayback:Start", this);
             this.messageManager.addMessageListener("AudioPlayback:Stop", this);
             this.messageManager.addMessageListener("AudioPlayback:Block", this);
+
+            if (this.hasAttribute("selectmenulist")) {
+              this.messageManager.addMessageListener("Forms:ShowDropDown", this);
+              this.messageManager.addMessageListener("Forms:HideDropDown", this);
+            }
+
           }
         ]]>
       </constructor>
@@ -969,6 +984,11 @@
       <method name="destroy">
         <body>
           <![CDATA[
+          // Make sure that any open select is closed.
+          if (this._selectParentHelper) {
+            let menulist = document.getElementById(this.getAttribute("selectmenulist"));
+            this._selectParentHelper.hide(menulist, this);
+          }
           if (this.mDestroyed)
             return;
           this.mDestroyed = true;
@@ -1040,6 +1060,27 @@
             case "AudioPlayback:Block":
               this.audioPlaybackBlocked();
               break;
+            case "Forms:ShowDropDown": {
+              if (!this._selectParentHelper) {
+                this._selectParentHelper =
+                  Cu.import("resource://gre/modules/SelectParentHelper.jsm", {}).SelectParentHelper;
+              }
+
+              let menulist = document.getElementById(this.getAttribute("selectmenulist"));
+              menulist.menupopup.style.direction = data.direction;
+              this._selectParentHelper.populate(menulist, data.options, data.selectedIndex, this._fullZoom);
+              this._selectParentHelper.open(this, menulist, data.rect, data.isOpenedViaTouch);
+              break;
+            }
+
+            case "Forms:HideDropDown": {
+              if (this._selectParentHelper) {
+                let menulist = document.getElementById(this.getAttribute("selectmenulist"));
+                this._selectParentHelper.hide(menulist, this);
+              }
+              break;
+            }
+
           }
           return undefined;
         ]]></body>
@@ -1134,8 +1175,7 @@
               if (this.hasAttribute("autoscrollpopup")) {
                 // our creator provided a popup to share
                 this._autoScrollPopup = document.getElementById(this.getAttribute("autoscrollpopup"));
-              }
-              else {
+              } else {
                 // we weren't provided a popup; we have to use the global scope
                 this._autoScrollPopup = this._createAutoScrollPopup();
                 document.documentElement.appendChild(this._autoScrollPopup);
@@ -1255,21 +1295,22 @@
 
       <method name="swapBrowsers">
         <parameter name="aOtherBrowser"/>
+        <parameter name="aFlags"/>
         <body>
         <![CDATA[
           // The request comes from a XPCOM component, we'd want to redirect
           // the request to tabbrowser so tabbrowser will be setup correctly,
           // and it will eventually call swapDocShells.
-          let tabbrowser = this.getTabBrowser();
-          if (tabbrowser) {
-            let tab = tabbrowser.getTabForBrowser(this);
-            if (tab) {
-              tabbrowser.swapBrowsers(tab, aOtherBrowser);
-              return;
-            }
+          let ourTabBrowser = this.getTabBrowser();
+          let otherTabBrowser = aOtherBrowser.getTabBrowser();
+          if (ourTabBrowser && otherTabBrowser) {
+            let ourTab = ourTabBrowser.getTabForBrowser(this);
+            let otherTab = otherTabBrowser.getTabForBrowser(aOtherBrowser);
+            ourTabBrowser.swapBrowsers(ourTab, otherTab, aFlags);
+            return;
           }
 
-          // If we're not attached to a tabbrowser, just swap.
+          // One of us is not connected to a tabbrowser, so just swap.
           this.swapDocShells(aOtherBrowser);
         ]]>
         </body>
@@ -1364,8 +1405,7 @@
             // lazily re-created on access. We need to do this because they
             // might have attached the wrong docShell.
             this._fastFind = aOtherBrowser._fastFind = null;
-          }
-          else {
+          } else {
             // Rewire the remote listeners
             this._remoteWebNavigationImpl.swapBrowser(this);
             aOtherBrowser._remoteWebNavigationImpl.swapBrowser(aOtherBrowser);
@@ -1485,11 +1525,11 @@
                                           .getService(Components.interfaces.nsIPromptService);
 
             var buttonPressed = promptService.confirmEx(window,
-              this.mStrBundle.GetStringFromName('browsewithcaret.checkWindowTitle'),
-              this.mStrBundle.GetStringFromName('browsewithcaret.checkLabel'),
+              this.mStrBundle.GetStringFromName("browsewithcaret.checkWindowTitle"),
+              this.mStrBundle.GetStringFromName("browsewithcaret.checkLabel"),
               // Make "No" the default:
               promptService.STD_YES_NO_BUTTONS | promptService.BUTTON_POS_1_DEFAULT,
-              null, null, null, this.mStrBundle.GetStringFromName('browsewithcaret.checkMsg'),
+              null, null, null, this.mStrBundle.GetStringFromName("browsewithcaret.checkMsg"),
               checkValue);
             if (buttonPressed != 0) {
               if (checkValue.value) {
@@ -1503,8 +1543,7 @@
             if (checkValue.value) {
               try {
                 this.mPrefs.setBoolPref(kPrefWarnOnEnable, false);
-              }
-              catch (ex) {
+              } catch (ex) {
               }
             }
           }
@@ -1549,7 +1588,6 @@
         if (!this.droppedLinkHandler || event.defaultPrevented || this.isRemoteBrowser)
           return;
 
-        let name = { };
         let linkHandler = Components.classes["@mozilla.org/content/dropped-link-handler;1"].
                             getService(Components.interfaces.nsIDroppedLinkHandler);
         try {

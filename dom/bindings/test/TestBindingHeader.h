@@ -696,6 +696,9 @@ public:
   void PassUnionWithDefaultValue17(const DoubleOrSupportedType& arg);
   void PassUnionWithDefaultValue18(const DoubleOrSupportedType& arg);
   void PassUnionWithDefaultValue19(const DoubleOrSupportedType& arg);
+  void PassUnionWithDefaultValue20(const DoubleOrUSVString& arg);
+  void PassUnionWithDefaultValue21(const DoubleOrUSVString& arg);
+  void PassUnionWithDefaultValue22(const DoubleOrUSVString& arg);
 
   void PassNullableUnionWithDefaultValue1(const Nullable<DoubleOrString>& arg);
   void PassNullableUnionWithDefaultValue2(const Nullable<DoubleOrString>& arg);
@@ -717,6 +720,10 @@ public:
   void PassNullableUnionWithDefaultValue18(const Nullable<DoubleOrSupportedType>& arg);
   void PassNullableUnionWithDefaultValue19(const Nullable<DoubleOrSupportedType>& arg);
   void PassNullableUnionWithDefaultValue20(const Nullable<DoubleOrSupportedType>& arg);
+  void PassNullableUnionWithDefaultValue21(const Nullable<DoubleOrUSVString>& arg);
+  void PassNullableUnionWithDefaultValue22(const Nullable<DoubleOrUSVString>& arg);
+  void PassNullableUnionWithDefaultValue23(const Nullable<DoubleOrUSVString>& arg);
+  void PassNullableUnionWithDefaultValue24(const Nullable<DoubleOrUSVString>& arg);
 
   void PassSequenceOfUnions(const Sequence<OwningCanvasPatternOrCanvasGradient>&);
   void PassSequenceOfUnions2(JSContext*, const Sequence<OwningObjectOrLong>&);
@@ -753,13 +760,9 @@ public:
 
   // Promise types
   void PassPromise(Promise&);
-  void PassNullablePromise(Promise*);
   void PassOptionalPromise(const Optional<OwningNonNull<Promise>>&);
-  void PassOptionalNullablePromise(const Optional<RefPtr<Promise>>&);
-  void PassOptionalNullablePromiseWithDefaultValue(Promise*);
   void PassPromiseSequence(const Sequence<OwningNonNull<Promise>>&);
   void PassPromiseMozMap(const MozMap<RefPtr<Promise>>&);
-  void PassNullablePromiseSequence(const Sequence<RefPtr<Promise>> &);
   Promise* ReceivePromise();
   already_AddRefed<Promise> ReceiveAddrefedPromise();
 
@@ -933,6 +936,13 @@ public:
   void SetThrowingGetterAttr(bool arg);
   bool ThrowingSetterAttr() const;
   void SetThrowingSetterAttr(bool arg, ErrorResult& aRv);
+  void CanOOMMethod(OOMReporter& aRv);
+  bool GetCanOOMAttr(OOMReporter& aRv) const;
+  void SetCanOOMAttr(bool arg, OOMReporter& aRv);
+  bool GetCanOOMGetterAttr(OOMReporter& aRv) const;
+  void SetCanOOMGetterAttr(bool arg);
+  bool CanOOMSetterAttr() const;
+  void SetCanOOMSetterAttr(bool arg, OOMReporter& aRv);
   void NeedsSubjectPrincipalMethod(nsIPrincipal&);
   bool NeedsSubjectPrincipalAttr(nsIPrincipal&);
   void SetNeedsSubjectPrincipalAttr(bool, nsIPrincipal&);
@@ -1423,6 +1433,12 @@ public:
   void NeedsCallerTypeMethod(CallerType);
   bool NeedsCallerTypeAttr(CallerType);
   void SetNeedsCallerTypeAttr(bool, CallerType);
+};
+
+class TestHTMLConstructorInterface : public nsGenericHTMLElement
+{
+public:
+  virtual nsISupports* GetParentObject();
 };
 
 } // namespace dom

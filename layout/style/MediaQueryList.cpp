@@ -8,7 +8,7 @@
 
 #include "mozilla/dom/MediaQueryList.h"
 #include "nsPresContext.h"
-#include "nsIMediaList.h"
+#include "nsMediaList.h"
 #include "nsCSSParser.h"
 #include "nsIDocument.h"
 
@@ -24,7 +24,7 @@ MediaQueryList::MediaQueryList(nsIDocument *aDocument,
   PR_INIT_CLIST(this);
 
   nsCSSParser parser;
-  parser.ParseMediaList(aMediaQueryList, nullptr, 0, mMediaList, false);
+  parser.ParseMediaList(aMediaQueryList, nullptr, 0, mMediaList);
 }
 
 MediaQueryList::~MediaQueryList()
@@ -39,7 +39,6 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(MediaQueryList)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(MediaQueryList)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDocument)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCallbacks)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(MediaQueryList)
@@ -147,7 +146,7 @@ MediaQueryList::RecomputeMatches()
   if (mDocument->GetParentDocument()) {
     // Flush frames on the parent so our prescontext will get
     // recreated as needed.
-    mDocument->GetParentDocument()->FlushPendingNotifications(Flush_Frames);
+    mDocument->GetParentDocument()->FlushPendingNotifications(FlushType::Frames);
     // That might have killed our document, so recheck that.
     if (!mDocument) {
       return;

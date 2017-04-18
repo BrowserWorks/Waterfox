@@ -10,7 +10,7 @@ Cu.import("resource://gre/modules/WebChannel.jsm");
 
 const VALID_WEB_CHANNEL_ID = "id";
 const URL_STRING = "http://example.com";
-const VALID_WEB_CHANNEL_ORIGIN = Services.io.newURI(URL_STRING, null, null);
+const VALID_WEB_CHANNEL_ORIGIN = Services.io.newURI(URL_STRING);
 
 function run_test() {
   run_next_test();
@@ -58,7 +58,7 @@ add_task(function test_web_channel_broker_listener() {
       _originCheckCallback: requestPrincipal => {
         return VALID_WEB_CHANNEL_ORIGIN.prePath === requestPrincipal.origin;
       },
-      deliver: function(data, sender) {
+      deliver(data, sender) {
         do_check_eq(data.id, VALID_WEB_CHANNEL_ID);
         do_check_eq(data.message.command, "hello");
         do_check_neq(sender, undefined);

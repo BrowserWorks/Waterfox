@@ -10,8 +10,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_saveBookmarksToJSONFile_and_create()
-{
+add_task(function* test_saveBookmarksToJSONFile_and_create() {
   // Add a bookmark
   let uri = NetUtil.newURI("http://getfirefox.com/");
   let bookmarkId =
@@ -43,7 +42,7 @@ add_task(function* test_saveBookmarksToJSONFile_and_create()
   yield PlacesBackups.create();
   do_check_eq((yield PlacesBackups.getBackupFiles()).length, 1);
 
-  mostRecentBackupFile = yield PlacesBackups.getMostRecentBackup();
+  let mostRecentBackupFile = yield PlacesBackups.getMostRecentBackup();
   do_check_neq(mostRecentBackupFile, null);
   matches = OS.Path.basename(recentBackup).match(PlacesBackups.filenamesRegex);
   do_check_eq(matches[2], nodeCount);
@@ -54,4 +53,3 @@ add_task(function* test_saveBookmarksToJSONFile_and_create()
   yield PlacesBackups.create(0);
   PlacesUtils.bookmarks.removeItem(bookmarkId);
 });
-

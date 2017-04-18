@@ -32,6 +32,7 @@
 #include "wasm/WasmSerialize.h"
 #include "wasm/WasmSignalHandlers.h"
 
+#include "vm/Debugger-inl.h"
 #include "vm/Stack-inl.h"
 
 using namespace js;
@@ -96,6 +97,81 @@ WasmHandleExecutionInterrupt()
     activation->setResumePC(nullptr);
 
     return success;
+}
+
+static bool
+WasmHandleDebugTrap()
+{
+    WasmActivation* activation = JSRuntime::innermostWasmActivation();
+    MOZ_ASSERT(activation);
+    JSContext* cx = activation->cx();
+
+    FrameIterator iter(activation);
+    MOZ_ASSERT(iter.debugEnabled());
+    const CallSite* site = iter.debugTrapCallsite();
+    MOZ_ASSERT(site);
+    if (site->kind() == CallSite::EnterFrame) {
+        if (!iter.instance()->enterFrameTrapsEnabled())
+            return true;
+        DebugFrame* frame = iter.debugFrame();
+        frame->setIsDebuggee();
+        frame->observeFrame(cx);
+        // TODO call onEnterFrame
+        JSTrapStatus status = Debugger::onEnterFrame(cx, frame);
+        if (status == JSTRAP_RETURN) {
+            // Ignoring forced return (JSTRAP_RETURN) -- changing code execution
+            // order is not yet implemented in the wasm baseline.
+            // TODO properly handle JSTRAP_RETURN and resume wasm execution.
+            JS_ReportErrorASCII(cx, "Unexpected resumption value from onEnterFrame");
+            return false;
+        }
+        return status == JSTRAP_CONTINUE;
+    }
+    if (site->kind() == CallSite::LeaveFrame) {
+        DebugFrame* frame = iter.debugFrame();
+        bool ok = Debugger::onLeaveFrame(cx, frame, nullptr, true);
+        frame->leaveFrame(cx);
+        return ok;
+    }
+    // TODO baseline debug traps
+    MOZ_CRASH();
+    return true;
+}
+
+static void
+WasmHandleThrow()
+{
+    WasmActivation* activation = JSRuntime::innermostWasmActivation();
+    MOZ_ASSERT(activation);
+    JSContext* cx = activation->cx();
+
+    for (FrameIterator iter(activation, FrameIterator::Unwind::True); !iter.done(); ++iter) {
+        if (!iter.debugEnabled())
+            continue;
+
+        DebugFrame* frame = iter.debugFrame();
+
+        // Assume JSTRAP_ERROR status if no exception is pending --
+        // no onExceptionUnwind handlers must be fired.
+        if (cx->isExceptionPending()) {
+            JSTrapStatus status = Debugger::onExceptionUnwind(cx, frame);
+            if (status == JSTRAP_RETURN) {
+                // Unexpected trap return -- raising error since throw recovery
+                // is not yet implemented in the wasm baseline.
+                // TODO properly handle JSTRAP_RETURN and resume wasm execution.
+                JS_ReportErrorASCII(cx, "Unexpected resumption value from onExceptionUnwind");
+            }
+        }
+
+        bool ok = Debugger::onLeaveFrame(cx, frame, nullptr, false);
+        if (ok) {
+            // Unexpected success from the handler onLeaveFrame -- raising error
+            // since throw recovery is not yet implemented in the wasm baseline.
+            // TODO properly handle success and resume wasm execution.
+            JS_ReportErrorASCII(cx, "Unexpected success from onLeaveFrame");
+        }
+        frame->leaveFrame(cx);
+     }
 }
 
 static void
@@ -277,6 +353,10 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
         return FuncCast(WasmReportOverRecursed, Args_General0);
       case SymbolicAddress::HandleExecutionInterrupt:
         return FuncCast(WasmHandleExecutionInterrupt, Args_General0);
+      case SymbolicAddress::HandleDebugTrap:
+        return FuncCast(WasmHandleDebugTrap, Args_General0);
+      case SymbolicAddress::HandleThrow:
+        return FuncCast(WasmHandleThrow, Args_General0);
       case SymbolicAddress::ReportTrap:
         return FuncCast(WasmReportTrap, Args_General1);
       case SymbolicAddress::ReportOutOfBounds:
@@ -590,6 +670,132 @@ size_t
 SigWithId::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
 {
     return Sig::sizeOfExcludingThis(mallocSizeOf);
+}
+
+size_t
+Import::serializedSize() const
+{
+    return module.serializedSize() +
+           field.serializedSize() +
+           sizeof(kind);
+}
+
+uint8_t*
+Import::serialize(uint8_t* cursor) const
+{
+    cursor = module.serialize(cursor);
+    cursor = field.serialize(cursor);
+    cursor = WriteScalar<DefinitionKind>(cursor, kind);
+    return cursor;
+}
+
+const uint8_t*
+Import::deserialize(const uint8_t* cursor)
+{
+    (cursor = module.deserialize(cursor)) &&
+    (cursor = field.deserialize(cursor)) &&
+    (cursor = ReadScalar<DefinitionKind>(cursor, &kind));
+    return cursor;
+}
+
+size_t
+Import::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
+{
+    return module.sizeOfExcludingThis(mallocSizeOf) +
+           field.sizeOfExcludingThis(mallocSizeOf);
+}
+
+Export::Export(UniqueChars fieldName, uint32_t index, DefinitionKind kind)
+  : fieldName_(Move(fieldName))
+{
+    pod.kind_ = kind;
+    pod.index_ = index;
+}
+
+Export::Export(UniqueChars fieldName, DefinitionKind kind)
+  : fieldName_(Move(fieldName))
+{
+    pod.kind_ = kind;
+    pod.index_ = 0;
+}
+
+uint32_t
+Export::funcIndex() const
+{
+    MOZ_ASSERT(pod.kind_ == DefinitionKind::Function);
+    return pod.index_;
+}
+
+uint32_t
+Export::globalIndex() const
+{
+    MOZ_ASSERT(pod.kind_ == DefinitionKind::Global);
+    return pod.index_;
+}
+
+size_t
+Export::serializedSize() const
+{
+    return fieldName_.serializedSize() +
+           sizeof(pod);
+}
+
+uint8_t*
+Export::serialize(uint8_t* cursor) const
+{
+    cursor = fieldName_.serialize(cursor);
+    cursor = WriteBytes(cursor, &pod, sizeof(pod));
+    return cursor;
+}
+
+const uint8_t*
+Export::deserialize(const uint8_t* cursor)
+{
+    (cursor = fieldName_.deserialize(cursor)) &&
+    (cursor = ReadBytes(cursor, &pod, sizeof(pod)));
+    return cursor;
+}
+
+size_t
+Export::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
+{
+    return fieldName_.sizeOfExcludingThis(mallocSizeOf);
+}
+
+size_t
+ElemSegment::serializedSize() const
+{
+    return sizeof(tableIndex) +
+           sizeof(offset) +
+           SerializedPodVectorSize(elemFuncIndices) +
+           SerializedPodVectorSize(elemCodeRangeIndices);
+}
+
+uint8_t*
+ElemSegment::serialize(uint8_t* cursor) const
+{
+    cursor = WriteBytes(cursor, &tableIndex, sizeof(tableIndex));
+    cursor = WriteBytes(cursor, &offset, sizeof(offset));
+    cursor = SerializePodVector(cursor, elemFuncIndices);
+    cursor = SerializePodVector(cursor, elemCodeRangeIndices);
+    return cursor;
+}
+
+const uint8_t*
+ElemSegment::deserialize(const uint8_t* cursor)
+{
+    (cursor = ReadBytes(cursor, &tableIndex, sizeof(tableIndex))) &&
+    (cursor = ReadBytes(cursor, &offset, sizeof(offset))) &&
+    (cursor = DeserializePodVector(cursor, &elemFuncIndices)) &&
+    (cursor = DeserializePodVector(cursor, &elemCodeRangeIndices));
+    return cursor;
+}
+
+size_t
+ElemSegment::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
+{
+    return elemFuncIndices.sizeOfExcludingThis(mallocSizeOf) +
+           elemCodeRangeIndices.sizeOfExcludingThis(mallocSizeOf);
 }
 
 Assumptions::Assumptions(JS::BuildIdCharVector&& buildId)

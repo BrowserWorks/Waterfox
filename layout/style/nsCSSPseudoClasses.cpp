@@ -8,9 +8,13 @@
 #include "mozilla/ArrayUtils.h"
 
 #include "nsCSSPseudoClasses.h"
+#include "nsCSSPseudoElements.h"
 #include "nsStaticAtom.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/dom/Element.h"
 #include "nsString.h"
+#include "nsAttrValueInlines.h"
+#include "nsIMozBrowserFrame.h"
 
 using namespace mozilla;
 
@@ -88,7 +92,6 @@ nsCSSPseudoClasses::HasStringArg(Type aType)
          aType == Type::mozEmptyExceptChildrenWithLocalname ||
          aType == Type::mozSystemMetric ||
          aType == Type::mozLocaleDir ||
-         aType == Type::mozDir ||
          aType == Type::dir;
 }
 
@@ -128,4 +131,28 @@ nsCSSPseudoClasses::IsUserActionPseudoClass(Type aType)
   return aType == Type::hover ||
          aType == Type::active ||
          aType == Type::focus;
+}
+
+/* static */ Maybe<bool>
+nsCSSPseudoClasses::MatchesElement(Type aType, const dom::Element* aElement)
+{
+  switch (aType) {
+    case CSSPseudoClassType::mozNativeAnonymous:
+      return Some(aElement->IsInNativeAnonymousSubtree());
+    case CSSPseudoClassType::mozTableBorderNonzero: {
+      if (!aElement->IsHTMLElement(nsGkAtoms::table)) {
+        return Some(false);
+      }
+      const nsAttrValue *val = aElement->GetParsedAttr(nsGkAtoms::border);
+      return Some(val && (val->Type() != nsAttrValue::eInteger ||
+                          val->GetIntegerValue() != 0));
+    }
+    case CSSPseudoClassType::mozBrowserFrame: {
+      nsCOMPtr<nsIMozBrowserFrame> browserFrame =
+        do_QueryInterface(const_cast<Element*>(aElement));
+      return Some(browserFrame && browserFrame->GetReallyIsBrowser());
+    }
+    default:
+      return Nothing();
+  }
 }

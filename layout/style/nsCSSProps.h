@@ -13,7 +13,6 @@
 
 #include <limits>
 #include <type_traits>
-#include "nsIAtom.h"
 #include "nsString.h"
 #include "nsCSSPropertyID.h"
 #include "nsStyleStructFwd.h"
@@ -331,10 +330,6 @@ enum nsStyleAnimType {
   // property not animatable
   eStyleAnimType_None
 };
-
-// Empty class derived from nsIAtom so that function signatures can
-// require an atom from the atom list.
-class nsICSSProperty : public nsIAtom {};
 
 class nsCSSProps {
 public:
@@ -674,25 +669,6 @@ public:
   }
 
 public:
-  static void AddRefAtoms();
-  static nsICSSProperty* AtomForProperty(nsCSSPropertyID aProperty)
-  {
-    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT);
-    return gPropertyAtomTable[aProperty];
-  }
-
-#define CSS_PROP(name_, id_, ...) static nsICSSProperty* id_;
-#define CSS_PROP_SHORTHAND(name_, id_, ...) CSS_PROP(name_, id_, ...)
-#define CSS_PROP_LIST_INCLUDE_LOGICAL
-#include "nsCSSPropList.h"
-#undef CSS_PROP_LIST_INCLUDE_LOGICAL
-#undef CSS_PROP_SHORTHAND
-#undef CSS_PROP
-
-private:
-  static nsICSSProperty* gPropertyAtomTable[eCSSProperty_COUNT];
-
-public:
 
 // Storing the enabledstate_ value in an nsCSSPropertyID variable is a small hack
 // to avoid needing a separate variable declaration for its real type
@@ -716,7 +692,8 @@ public:
   static const KTableEntry kBackfaceVisibilityKTable[];
   static const KTableEntry kTransformStyleKTable[];
   static const KTableEntry kImageLayerAttachmentKTable[];
-  static const KTableEntry kImageLayerOriginKTable[];
+  static const KTableEntry kBackgroundOriginKTable[];
+  static const KTableEntry kMaskOriginKTable[];
   static const KTableEntry kImageLayerPositionKTable[];
   static const KTableEntry kImageLayerRepeatKTable[];
   static const KTableEntry kImageLayerRepeatPartKTable[];
@@ -726,6 +703,7 @@ public:
   // Not const because we modify its entries when the pref
   // "layout.css.background-clip.text" changes:
   static KTableEntry kBackgroundClipKTable[];
+  static const KTableEntry kMaskClipKTable[];
   static const KTableEntry kBlendModeKTable[];
   static const KTableEntry kBorderCollapseKTable[];
   static const KTableEntry kBorderImageRepeatKTable[];

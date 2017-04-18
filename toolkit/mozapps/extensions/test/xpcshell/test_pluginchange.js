@@ -5,8 +5,8 @@
 const LIST_UPDATED_TOPIC     = "plugins-list-updated";
 
 // We need to use the same algorithm for generating IDs for plugins
-var { getIDHashForString } = Components.utils.import("resource://gre/modules/addons/PluginProvider.jsm");
-var { MockRegistrar } = Components.utils.import("resource://testing-common/MockRegistrar.jsm");
+var { getIDHashForString } = Components.utils.import("resource://gre/modules/addons/PluginProvider.jsm", {});
+var { MockRegistrar } = Components.utils.import("resource://testing-common/MockRegistrar.jsm", {});
 
 function PluginTag(name, description) {
   this.name = name;
@@ -25,7 +25,7 @@ PluginTag.prototype = {
 
   mimeTypes: [],
 
-  getMimeTypes: function(count) {
+  getMimeTypes(count) {
     count.value = this.mimeTypes.length;
     return this.mimeTypes;
   }
@@ -42,7 +42,7 @@ const PLUGINS = [
 
 const gPluginHost = {
   // nsIPluginHost
-  getPluginTags: function(count) {
+  getPluginTags(count) {
     count.value = PLUGINS.length;
     return PLUGINS;
   },

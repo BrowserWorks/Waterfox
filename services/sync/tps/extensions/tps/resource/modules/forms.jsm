@@ -146,7 +146,7 @@ FormData.prototype = {
    *        'now', and -1 is 1 hour ago)
    * @return the corresponding number of microseconds since the epoch
    */
-  hours_to_us: function(hours) {
+  hours_to_us(hours) {
     return this.usSinceEpoch + (hours * 60 * 60 * 1000 * 1000);
   },
 
@@ -158,7 +158,7 @@ FormData.prototype = {
    *
    * @return nothing
    */
-  Create: function() {
+  Create() {
     Logger.AssertTrue(this.fieldname != null && this.value != null,
       "Must specify both fieldname and value");
 
@@ -167,12 +167,11 @@ FormData.prototype = {
         // this item doesn't exist yet in the db, so we need to insert it
         return FormDB.insertValue(this.fieldname, this.value,
                                   this.hours_to_us(this.date));
-      } else {
-        /* Right now, we ignore this case.  If bug 552531 is ever fixed,
-           we might need to add code here to update the firstUsed or
-           lastUsed fields, as appropriate.
-         */
       }
+      /* Right now, we ignore this case.  If bug 552531 is ever fixed,
+         we might need to add code here to update the firstUsed or
+         lastUsed fields, as appropriate.
+       */
     });
   },
 
@@ -184,7 +183,7 @@ FormData.prototype = {
    *
    * @return true if this entry exists in the database, otherwise false
    */
-  Find: function() {
+  Find() {
     return FormDB.getDataForValue(this.fieldname, this.value).then(formdata => {
       let status = formdata != null;
       if (status) {
@@ -211,7 +210,7 @@ FormData.prototype = {
    *
    * @return nothing
    */
-  Remove: function() {
+  Remove() {
     /* Right now Weave doesn't handle this correctly, see bug 568363.
      */
     return FormDB.remove(this.id);

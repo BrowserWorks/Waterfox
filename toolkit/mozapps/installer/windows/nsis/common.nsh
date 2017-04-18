@@ -1292,169 +1292,6 @@
 !macroend
 
 /**
- * Writes common registry values for a handler that uses DDE using SHCTX.
- *
- * @param   _KEY
- *          The key name in relation to the HKCR root. SOFTWARE\Classes is
- *          prefixed to this value when using SHCTX.
- * @param   _VALOPEN
- *          The path and args to launch the application.
- * @param   _VALICON
- *          The path to the binary that contains the icon group for the default icon
- *          followed by a comma and either the icon group's resource index or the icon
- *          group's resource id prefixed with a minus sign
- * @param   _DISPNAME
- *          The display name for the handler. If emtpy no value will be set.
- * @param   _ISPROTOCOL
- *          Sets protocol handler specific registry values when "true".
- *          Deletes protocol handler specific registry values when "delete".
- *          Otherwise doesn't touch handler specific registry values.
- * @param   _DDE_APPNAME
- *          Sets DDE specific registry values when not an empty string.
- *
- * $R0 = storage for SOFTWARE\Classes
- * $R1 = string value of the current registry key path.
- * $R2 = _KEY
- * $R3 = _VALOPEN
- * $R4 = _VALICON
- * $R5 = _DISPNAME
- * $R6 = _ISPROTOCOL
- * $R7 = _DDE_APPNAME
- * $R8 = _DDE_DEFAULT
- * $R9 = _DDE_TOPIC
- */
-!macro AddDDEHandlerValues
-
-  !ifndef ${_MOZFUNC_UN}AddDDEHandlerValues
-    !verbose push
-    !verbose ${_MOZFUNC_VERBOSE}
-    !define ${_MOZFUNC_UN}AddDDEHandlerValues "!insertmacro ${_MOZFUNC_UN}AddDDEHandlerValuesCall"
-
-    Function ${_MOZFUNC_UN}AddDDEHandlerValues
-      Exch $R9
-      Exch 1
-      Exch $R8
-      Exch 2
-      Exch $R7
-      Exch 3
-      Exch $R6
-      Exch 4
-      Exch $R5
-      Exch 5
-      Exch $R4
-      Exch 6
-      Exch $R3
-      Exch 7
-      Exch $R2
-      Push $R1
-      Push $R0
-
-      StrCpy $R0 "SOFTWARE\Classes"
-      StrCmp "$R5" "" +6 +1
-      ReadRegStr $R1 SHCTX "$R2" "FriendlyTypeName"
-
-      StrCmp "$R1" "" +1 +3
-      WriteRegStr SHCTX "$R0\$R2" "" "$R5"
-      WriteRegStr SHCTX "$R0\$R2" "FriendlyTypeName" "$R5"
-
-      StrCmp "$R6" "true" +1 +2
-      WriteRegStr SHCTX "$R0\$R2" "URL Protocol" ""
-      StrCmp "$R6" "delete" +1 +2
-      DeleteRegValue SHCTX "$R0\$R2" "URL Protocol"
-      StrCpy $R1 ""
-      ReadRegDWord $R1 SHCTX "$R0\$R2" "EditFlags"
-      StrCmp $R1 "" +1 +3  ; Only add EditFlags if a value doesn't exist
-      DeleteRegValue SHCTX "$R0\$R2" "EditFlags"
-      WriteRegDWord SHCTX "$R0\$R2" "EditFlags" 0x00000002
-
-      StrCmp "$R4" "" +2 +1
-      WriteRegStr SHCTX "$R0\$R2\DefaultIcon" "" "$R4"
-
-      WriteRegStr SHCTX "$R0\$R2\shell" "" "open"
-      WriteRegStr SHCTX "$R0\$R2\shell\open\command" "" "$R3"
-
-      WriteRegStr SHCTX "$R0\$R2\shell\open\ddeexec" "" "$R8"
-      WriteRegStr SHCTX "$R0\$R2\shell\open\ddeexec" "NoActivateHandler" ""
-      WriteRegStr SHCTX "$R0\$R2\shell\open\ddeexec\Application" "" "$R7"
-      WriteRegStr SHCTX "$R0\$R2\shell\open\ddeexec\Topic" "" "$R9"
-
-      ; The ifexec key may have been added by another application so try to
-      ; delete it to prevent it from breaking this app's shell integration.
-      ; Also, IE 6 and below doesn't remove this key when it sets itself as the
-      ; default handler and if this key exists IE's shell integration breaks.
-      DeleteRegKey HKLM "$R0\$R2\shell\open\ddeexec\ifexec"
-      DeleteRegKey HKCU "$R0\$R2\shell\open\ddeexec\ifexec"
-      ClearErrors
-
-      Pop $R0
-      Pop $R1
-      Exch $R2
-      Exch 7
-      Exch $R3
-      Exch 6
-      Exch $R4
-      Exch 5
-      Exch $R5
-      Exch 4
-      Exch $R6
-      Exch 3
-      Exch $R7
-      Exch 2
-      Exch $R8
-      Exch 1
-      Exch $R9
-    FunctionEnd
-
-    !verbose pop
-  !endif
-!macroend
-
-!macro AddDDEHandlerValuesCall _KEY _VALOPEN _VALICON _DISPNAME _ISPROTOCOL _DDE_APPNAME _DDE_DEFAULT _DDE_TOPIC
-  !verbose push
-  !verbose ${_MOZFUNC_VERBOSE}
-  Push "${_KEY}"
-  Push "${_VALOPEN}"
-  Push "${_VALICON}"
-  Push "${_DISPNAME}"
-  Push "${_ISPROTOCOL}"
-  Push "${_DDE_APPNAME}"
-  Push "${_DDE_DEFAULT}"
-  Push "${_DDE_TOPIC}"
-  Call AddDDEHandlerValues
-  !verbose pop
-!macroend
-
-!macro un.AddDDEHandlerValuesCall _KEY _VALOPEN _VALICON _DISPNAME _ISPROTOCOL _DDE_APPNAME _DDE_DEFAULT _DDE_TOPIC
-  !verbose push
-  !verbose ${_MOZFUNC_VERBOSE}
-  Push "${_KEY}"
-  Push "${_VALOPEN}"
-  Push "${_VALICON}"
-  Push "${_DISPNAME}"
-  Push "${_ISPROTOCOL}"
-  Push "${_DDE_APPNAME}"
-  Push "${_DDE_DEFAULT}"
-  Push "${_DDE_TOPIC}"
-  Call un.AddDDEHandlerValues
-  !verbose pop
-!macroend
-
-!macro un.AddDDEHandlerValues
-  !ifndef un.AddDDEHandlerValues
-    !verbose push
-    !verbose ${_MOZFUNC_VERBOSE}
-    !undef _MOZFUNC_UN
-    !define _MOZFUNC_UN "un."
-
-    !insertmacro AddDDEHandlerValues
-
-    !undef _MOZFUNC_UN
-    !define _MOZFUNC_UN
-    !verbose pop
-  !endif
-!macroend
-
-/**
  * Writes common registry values for a handler that DOES NOT use DDE using SHCTX.
  *
  * @param   _KEY
@@ -3424,7 +3261,11 @@
       ${${_MOZFUNC_UN}GetLongPath} "$INSTDIR" $R6
       StrLen $R4 "$R6"
 
+!ifdef HAVE_64BIT_BUILD
+      ${${_MOZFUNC_UN}GetLongPath} "$PROGRAMFILES64" $R5
+!else
       ${${_MOZFUNC_UN}GetLongPath} "$PROGRAMFILES" $R5
+!endif
       StrLen $R3 "$R5"
 
       ${If} $R7 != "" ; _OLD_REL_PATH was passed
@@ -5107,46 +4948,15 @@
         Quit
       ${EndIf}
 
+      ; Windows NT 6.0 (Vista/Server 2008) and lower are not supported.
+      ${Unless} ${AtLeastWin7}
+        MessageBox MB_OK|MB_ICONSTOP "$R9"
+        ; Nothing initialized so no need to call OnEndCommon
+        Quit
+      ${EndUnless}
+
       !ifdef HAVE_64BIT_BUILD
-        ${Unless} ${RunningX64}
-        ${OrUnless} ${AtLeastWin7}
-          MessageBox MB_OK|MB_ICONSTOP "$R9"
-          ; Nothing initialized so no need to call OnEndCommon
-          Quit
-        ${EndUnless}
-
         SetRegView 64
-      !else
-        StrCpy $R8 "0"
-        ${If} ${AtMostWin2000}
-          StrCpy $R8 "1"
-        ${EndIf}
-
-        ${If} ${IsWinXP}
-        ${AndIf} ${AtMostServicePack} 1
-          StrCpy $R8 "1"
-        ${EndIf}
-
-        ${If} $R8 == "1"
-          ; XXX-rstrong - some systems failed the AtLeastWin2000 test that we
-          ; used to use for an unknown reason and likely fail the AtMostWin2000
-          ; and possibly the IsWinXP test as well. To work around this also
-          ; check if the Windows NT registry Key exists and if it does if the
-          ; first char in CurrentVersion is equal to 3 (Windows NT 3.5 and
-          ; 3.5.1), to 4 (Windows NT 4) or 5 (Windows 2000 and Windows XP).
-          StrCpy $R8 ""
-          ClearErrors
-          ReadRegStr $R8 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentVersion"
-          StrCpy $R8 "$R8" 1
-          ${If} ${Errors}
-          ${OrIf} "$R8" == "3"
-          ${OrIf} "$R8" == "4"
-          ${OrIf} "$R8" == "5"
-            MessageBox MB_OK|MB_ICONSTOP "$R9"
-            ; Nothing initialized so no need to call OnEndCommon
-            Quit
-          ${EndIf}
-        ${EndUnless}
       !endif
 
       ${GetParameters} $R8
@@ -8021,4 +7831,3 @@
   Pop $1
   Exch $0 ; return elapsed seconds
 !macroend
-

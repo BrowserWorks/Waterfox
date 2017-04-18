@@ -1,14 +1,17 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* globals window, dumpn, gNetwork, $, EVENTS, NetMonitorView */
+
 "use strict";
 
-const {Task} = require("devtools/shared/task");
-const {writeHeaderText, getKeyWithEvent} = require("./request-utils");
-
-loader.lazyRequireGetter(this, "NetworkHelper",
-  "devtools/shared/webconsole/network-helper");
+const { Task } = require("devtools/shared/task");
+const { writeHeaderText,
+        getKeyWithEvent,
+        getUrlQuery,
+        parseQueryString } = require("./request-utils");
+const Actions = require("./actions/index");
 
 /**
  * Functions handling the custom request view.
@@ -26,7 +29,7 @@ CustomRequestView.prototype = {
 
     this.updateCustomRequestEvent = getKeyWithEvent(this.onUpdate.bind(this));
     $("#custom-pane").addEventListener("input",
-      this.updateCustomRequestEvent, false);
+      this.updateCustomRequestEvent);
   },
 
   /**
@@ -36,7 +39,7 @@ CustomRequestView.prototype = {
     dumpn("Destroying the CustomRequestView");
 
     $("#custom-pane").removeEventListener("input",
-      this.updateCustomRequestEvent, false);
+      this.updateCustomRequestEvent);
   },
 
   /**
@@ -72,37 +75,41 @@ CustomRequestView.prototype = {
    */
   onUpdate: function (field) {
     let selectedItem = NetMonitorView.RequestsMenu.selectedItem;
+    let store = NetMonitorView.RequestsMenu.store;
     let value;
 
     switch (field) {
       case "method":
         value = $("#custom-method-value").value.trim();
-        selectedItem.attachment.method = value;
+        store.dispatch(Actions.updateRequest(selectedItem.id, { method: value }));
         break;
       case "url":
         value = $("#custom-url-value").value;
         this.updateCustomQuery(value);
-        selectedItem.attachment.url = value;
+        store.dispatch(Actions.updateRequest(selectedItem.id, { url: value }));
         break;
       case "query":
         let query = $("#custom-query-value").value;
         this.updateCustomUrl(query);
-        field = "url";
         value = $("#custom-url-value").value;
-        selectedItem.attachment.url = value;
+        store.dispatch(Actions.updateRequest(selectedItem.id, { url: value }));
         break;
       case "body":
         value = $("#custom-postdata-value").value;
-        selectedItem.attachment.requestPostData = { postData: { text: value } };
+        store.dispatch(Actions.updateRequest(selectedItem.id, {
+          requestPostData: {
+            postData: { text: value }
+          }
+        }));
         break;
       case "headers":
         let headersText = $("#custom-headers-value").value;
         value = parseHeadersText(headersText);
-        selectedItem.attachment.requestHeaders = { headers: value };
+        store.dispatch(Actions.updateRequest(selectedItem.id, {
+          requestHeaders: { headers: value }
+        }));
         break;
     }
-
-    NetMonitorView.RequestsMenu.updateMenuView(selectedItem, field, value);
   },
 
   /**
@@ -112,8 +119,7 @@ CustomRequestView.prototype = {
    *        The URL to extract query string from.
    */
   updateCustomQuery: function (url) {
-    let paramsArray = NetworkHelper.parseQueryString(
-      NetworkHelper.nsIURL(url).query);
+    const paramsArray = parseQueryString(getUrlQuery(url));
 
     if (!paramsArray) {
       $("#custom-query").hidden = true;
@@ -135,7 +141,7 @@ CustomRequestView.prototype = {
     let queryString = writeQueryString(params);
 
     let url = $("#custom-url-value").value;
-    let oldQuery = NetworkHelper.nsIURL(url).query;
+    let oldQuery = getUrlQuery(url);
     let path = url.replace(oldQuery, queryString);
 
     $("#custom-url-value").value = path;
@@ -158,7 +164,7 @@ function parseHeadersText(text) {
  * Parse readable text list of a query string.
  *
  * @param string text
- *        Text of query string represetation
+ *        Text of query string representation
  * @return array
  *         Array of query params {name, value}
  */

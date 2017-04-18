@@ -10,12 +10,15 @@ var Cr = Components.results;
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/BrowserUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/RemoteAddonsChild.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PageThumbUtils",
   "resource://gre/modules/PageThumbUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "Utils",
+  "resource://gre/modules/sessionstore/Utils.jsm");
 
 if (AppConstants.MOZ_CRASHREPORTER) {
   XPCOMUtils.defineLazyServiceGetter(this, "CrashReporter",
@@ -23,15 +26,8 @@ if (AppConstants.MOZ_CRASHREPORTER) {
                                      "nsICrashReporter");
 }
 
-function makeInputStream(aString) {
-  let stream = Cc["@mozilla.org/io/string-input-stream;1"].
-               createInstance(Ci.nsISupportsCString);
-  stream.data = aString;
-  return stream; // XPConnect will QI this to nsIInputStream for us.
-}
-
 var WebProgressListener = {
-  init: function() {
+  init() {
     this._filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
                      .createInstance(Ci.nsIWebProgress);
     this._filter.addProgressListener(this, Ci.nsIWebProgress.NOTIFY_ALL);
@@ -50,7 +46,7 @@ var WebProgressListener = {
     this._filter = null;
   },
 
-  _requestSpec: function (aRequest, aPropertyName) {
+  _requestSpec(aRequest, aPropertyName) {
     if (!aRequest || !(aRequest instanceof Ci.nsIChannel))
       return null;
     return aRequest.QueryInterface(Ci.nsIChannel)[aPropertyName].spec;
@@ -234,7 +230,7 @@ addEventListener("unload", () => {
 });
 
 var WebNavigation =  {
-  init: function() {
+  init() {
     addMessageListener("WebNavigation:GoBack", this);
     addMessageListener("WebNavigation:GoForward", this);
     addMessageListener("WebNavigation:GotoIndex", this);
@@ -254,7 +250,7 @@ var WebNavigation =  {
     return this._inLoadURI;
   },
 
-  receiveMessage: function(message) {
+  receiveMessage(message) {
     switch (message.name) {
       case "WebNavigation:GoBack":
         this.goBack();
@@ -269,7 +265,7 @@ var WebNavigation =  {
         this.loadURI(message.data.uri, message.data.flags,
                      message.data.referrer, message.data.referrerPolicy,
                      message.data.postData, message.data.headers,
-                     message.data.baseURI);
+                     message.data.baseURI, message.data.triggeringPrincipal);
         break;
       case "WebNavigation:SetOriginAttributes":
         this.setOriginAttributes(message.data.originAttributes);
@@ -293,27 +289,27 @@ var WebNavigation =  {
     }
   },
 
-  goBack: function() {
+  goBack() {
     if (this.webNavigation.canGoBack) {
       this._wrapURIChangeCall(() => this.webNavigation.goBack());
     }
   },
 
-  goForward: function() {
+  goForward() {
     if (this.webNavigation.canGoForward) {
       this._wrapURIChangeCall(() => this.webNavigation.goForward());
     }
   },
 
-  gotoIndex: function(index) {
+  gotoIndex(index) {
     this._wrapURIChangeCall(() => this.webNavigation.gotoIndex(index));
   },
 
-  loadURI: function(uri, flags, referrer, referrerPolicy, postData, headers, baseURI) {
+  loadURI(uri, flags, referrer, referrerPolicy, postData, headers, baseURI, triggeringPrincipal) {
     if (AppConstants.MOZ_CRASHREPORTER && CrashReporter.enabled) {
       let annotation = uri;
       try {
-        let url = Services.io.newURI(uri, null, null);
+        let url = Services.io.newURI(uri);
         // If the current URI contains a username/password, remove it.
         url.userPass = "";
         annotation = url.spec;
@@ -322,30 +318,32 @@ var WebNavigation =  {
       CrashReporter.annotateCrashReport("URL", annotation);
     }
     if (referrer)
-      referrer = Services.io.newURI(referrer, null, null);
+      referrer = Services.io.newURI(referrer);
     if (postData)
-      postData = makeInputStream(postData);
+      postData = Utils.makeInputStream(postData);
     if (headers)
-      headers = makeInputStream(headers);
+      headers = Utils.makeInputStream(headers);
     if (baseURI)
-      baseURI = Services.io.newURI(baseURI, null, null);
+      baseURI = Services.io.newURI(baseURI);
+    if (triggeringPrincipal)
+      triggeringPrincipal = Utils.deserializePrincipal(triggeringPrincipal)
     this._wrapURIChangeCall(() => {
       return this.webNavigation.loadURIWithOptions(uri, flags, referrer, referrerPolicy,
-                                                   postData, headers, baseURI);
+                                                   postData, headers, baseURI, triggeringPrincipal);
     });
   },
 
-  setOriginAttributes: function(originAttributes) {
+  setOriginAttributes(originAttributes) {
     if (originAttributes) {
       this.webNavigation.setOriginAttributesBeforeLoading(originAttributes);
     }
   },
 
-  reload: function(flags) {
+  reload(flags) {
     this.webNavigation.reload(flags);
   },
 
-  stop: function(flags) {
+  stop(flags) {
     this.webNavigation.stop(flags);
   }
 };
@@ -353,7 +351,7 @@ var WebNavigation =  {
 WebNavigation.init();
 
 var SecurityUI = {
-  getSSLStatusAsString: function() {
+  getSSLStatusAsString() {
     let status = docShell.securityUI.QueryInterface(Ci.nsISSLStatusProvider).SSLStatus;
 
     if (status) {
@@ -369,12 +367,12 @@ var SecurityUI = {
 };
 
 var ControllerCommands = {
-  init: function () {
+  init() {
     addMessageListener("ControllerCommands:Do", this);
     addMessageListener("ControllerCommands:DoWithParams", this);
   },
 
-  receiveMessage: function(message) {
+  receiveMessage(message) {
     switch (message.name) {
       case "ControllerCommands:Do":
         if (docShell.isCommandEnabled(message.data))
@@ -403,7 +401,7 @@ var ControllerCommands = {
 
 ControllerCommands.init()
 
-addEventListener("DOMTitleChanged", function (aEvent) {
+addEventListener("DOMTitleChanged", function(aEvent) {
   let document = content.document;
   switch (aEvent.type) {
   case "DOMTitleChanged":
@@ -415,13 +413,13 @@ addEventListener("DOMTitleChanged", function (aEvent) {
   }
 }, false);
 
-addEventListener("DOMWindowClose", function (aEvent) {
+addEventListener("DOMWindowClose", function(aEvent) {
   if (!aEvent.isTrusted)
     return;
   sendAsyncMessage("DOMWindowClose");
 }, false);
 
-addEventListener("ImageContentLoaded", function (aEvent) {
+addEventListener("ImageContentLoaded", function(aEvent) {
   if (content.document instanceof Ci.nsIImageDocument) {
     let req = content.document.imageRequest;
     if (!req.image)
@@ -450,12 +448,12 @@ const ZoomManager = {
     this._markupViewer.textZoom = value;
   },
 
-  refreshFullZoom: function() {
-    return this._refreshZoomValue('fullZoom');
+  refreshFullZoom() {
+    return this._refreshZoomValue("fullZoom");
   },
 
-  refreshTextZoom: function() {
-    return this._refreshZoomValue('textZoom');
+  refreshTextZoom() {
+    return this._refreshZoomValue("textZoom");
   },
 
   /**
@@ -465,7 +463,7 @@ const ZoomManager = {
    * @returns Returns true if cached value was actually refreshed.
    * @private
    */
-  _refreshZoomValue: function(valueName) {
+  _refreshZoomValue(valueName) {
     let actualZoomValue = this._markupViewer[valueName];
     // Round to remove any floating-point error.
     actualZoomValue = Number(actualZoomValue.toFixed(2));
@@ -486,31 +484,31 @@ const ZoomManager = {
   }
 };
 
-addMessageListener("FullZoom", function (aMessage) {
+addMessageListener("FullZoom", function(aMessage) {
   ZoomManager.fullZoom = aMessage.data.value;
 });
 
-addMessageListener("TextZoom", function (aMessage) {
+addMessageListener("TextZoom", function(aMessage) {
   ZoomManager.textZoom = aMessage.data.value;
 });
 
-addEventListener("FullZoomChange", function () {
+addEventListener("FullZoomChange", function() {
   if (ZoomManager.refreshFullZoom()) {
     sendAsyncMessage("FullZoomChange", { value: ZoomManager.fullZoom });
   }
 }, false);
 
-addEventListener("TextZoomChange", function (aEvent) {
+addEventListener("TextZoomChange", function(aEvent) {
   if (ZoomManager.refreshTextZoom()) {
     sendAsyncMessage("TextZoomChange", { value: ZoomManager.textZoom });
   }
 }, false);
 
-addEventListener("ZoomChangeUsingMouseWheel", function () {
+addEventListener("ZoomChangeUsingMouseWheel", function() {
   sendAsyncMessage("ZoomChangeUsingMouseWheel", {});
 }, false);
 
-addMessageListener("UpdateCharacterSet", function (aMessage) {
+addMessageListener("UpdateCharacterSet", function(aMessage) {
   docShell.charset = aMessage.data.value;
   docShell.gatherCharsetMenuTelemetry();
 });
@@ -518,7 +516,7 @@ addMessageListener("UpdateCharacterSet", function (aMessage) {
 /**
  * Remote thumbnail request handler for PageThumbs thumbnails.
  */
-addMessageListener("Browser:Thumbnail:Request", function (aMessage) {
+addMessageListener("Browser:Thumbnail:Request", function(aMessage) {
   let snapshot;
   let args = aMessage.data.additionalArgs;
   let fullScale = args ? args.fullScale : false;
@@ -532,7 +530,7 @@ addMessageListener("Browser:Thumbnail:Request", function (aMessage) {
     PageThumbUtils.createSnapshotThumbnail(content, snapshot, args);
   }
 
-  snapshot.toBlob(function (aBlob) {
+  snapshot.toBlob(function(aBlob) {
     sendAsyncMessage("Browser:Thumbnail:Response", {
       thumbnail: aBlob,
       id: aMessage.data.id
@@ -543,17 +541,17 @@ addMessageListener("Browser:Thumbnail:Request", function (aMessage) {
 /**
  * Remote isSafeForCapture request handler for PageThumbs.
  */
-addMessageListener("Browser:Thumbnail:CheckState", function (aMessage) {
+addMessageListener("Browser:Thumbnail:CheckState", function(aMessage) {
   let result = PageThumbUtils.shouldStoreContentThumbnail(content, docShell);
   sendAsyncMessage("Browser:Thumbnail:CheckState:Response", {
-    result: result
+    result
   });
 });
 
 /**
  * Remote GetOriginalURL request handler for PageThumbs.
  */
-addMessageListener("Browser:Thumbnail:GetOriginalURL", function (aMessage) {
+addMessageListener("Browser:Thumbnail:GetOriginalURL", function(aMessage) {
   let channel = docShell.currentDocumentChannel;
   let channelError = PageThumbUtils.isChannelErrorResponse(channel);
   let originalURL;
@@ -561,8 +559,8 @@ addMessageListener("Browser:Thumbnail:GetOriginalURL", function (aMessage) {
     originalURL = channel.originalURI.spec;
   } catch (ex) {}
   sendAsyncMessage("Browser:Thumbnail:GetOriginalURL:Response", {
-    channelError: channelError,
-    originalURL: originalURL,
+    channelError,
+    originalURL,
   });
 });
 
@@ -622,4 +620,4 @@ addMessageListener("PermitUnload", msg => {
 var outerWindowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils)
                            .outerWindowID;
-sendAsyncMessage("Browser:Init", {outerWindowID: outerWindowID});
+sendAsyncMessage("Browser:Init", {outerWindowID});

@@ -42,6 +42,7 @@
 
 #include "nsWrapperCacheInlines.h"
 
+class nsGenericHTMLElement;
 class nsIJSID;
 
 namespace mozilla {
@@ -236,50 +237,10 @@ UnwrapObject(JSObject* obj, U& value)
                          PrototypeTraits<PrototypeID>::Depth);
 }
 
-inline bool
-IsNotDateOrRegExp(JSContext* cx, JS::Handle<JSObject*> obj,
-                  bool* notDateOrRegExp)
-{
-  MOZ_ASSERT(obj);
-
-  js::ESClass cls;
-  if (!js::GetBuiltinClass(cx, obj, &cls)) {
-    return false;
-  }
-
-  *notDateOrRegExp = cls != js::ESClass::Date && cls != js::ESClass::RegExp;
-  return true;
-}
-
 MOZ_ALWAYS_INLINE bool
-IsObjectValueConvertibleToDictionary(JSContext* cx,
-                                     JS::Handle<JS::Value> objVal,
-                                     bool* convertible)
+IsConvertibleToDictionary(JS::Handle<JS::Value> val)
 {
-  JS::Rooted<JSObject*> obj(cx, &objVal.toObject());
-  return IsNotDateOrRegExp(cx, obj, convertible);
-}
-
-MOZ_ALWAYS_INLINE bool
-IsConvertibleToDictionary(JSContext* cx, JS::Handle<JS::Value> val,
-                          bool* convertible)
-{
-  if (val.isNullOrUndefined()) {
-    *convertible = true;
-    return true;
-  }
-  if (!val.isObject()) {
-    *convertible = false;
-    return true;
-  }
-  return IsObjectValueConvertibleToDictionary(cx, val, convertible);
-}
-
-MOZ_ALWAYS_INLINE bool
-IsConvertibleToCallbackInterface(JSContext* cx, JS::Handle<JSObject*> obj,
-                                 bool* convertible)
-{
-  return IsNotDateOrRegExp(cx, obj, convertible);
+  return val.isNullOrUndefined() || val.isObject();
 }
 
 // The items in the protoAndIfaceCache are indexed by the prototypes::id::ID,
@@ -937,6 +898,7 @@ DoGetOrCreateDOMReflector(JSContext* cx, T* value,
                           JS::MutableHandle<JS::Value> rval)
 {
   MOZ_ASSERT(value);
+  MOZ_ASSERT_IF(givenProto, js::IsObjectInContextCompartment(givenProto, cx));
   // We can get rid of this when we remove support for hasXPConnectImpls.
   bool couldBeDOMBinding = CouldBeDOMBinding(value);
   JSObject* obj = value->GetWrapper();
@@ -1103,7 +1065,7 @@ WrapNewBindingNonWrapperCachedObject(JSContext* cx,
   // We do a runtime check on value, because otherwise we might in
   // fact end up wrapping a null and invoking methods on it later.
   if (!value) {
-    NS_RUNTIMEABORT("Don't try to wrap null objects");
+    MOZ_CRASH("Don't try to wrap null objects");
   }
   // We try to wrap in the compartment of the underlying object of "scope"
   JS::Rooted<JSObject*> obj(cx);
@@ -1766,7 +1728,7 @@ template <class T>
 inline JSObject*
 GetCallbackFromCallbackObject(T* aObj)
 {
-  return aObj->Callback();
+  return aObj->CallbackOrNull();
 }
 
 // Helper for getting the callback JSObject* of a smart ptr around a
@@ -1889,16 +1851,6 @@ bool
 AppendNamedPropertyIds(JSContext* cx, JS::Handle<JSObject*> proxy,
                        nsTArray<nsString>& names,
                        bool shadowPrototypeProperties, JS::AutoIdVector& props);
-
-namespace binding_detail {
-
-class FastErrorResult :
-    public mozilla::binding_danger::TErrorResult<
-      mozilla::binding_danger::JustAssertCleanupPolicy>
-{
-};
-
-} // namespace binding_detail
 
 enum StringificationBehavior {
   eStringify,
@@ -3218,6 +3170,13 @@ bool GetSetlikeBackingObject(JSContext* aCx, JS::Handle<JSObject*> aObj,
 bool
 GetDesiredProto(JSContext* aCx, const JS::CallArgs& aCallArgs,
                 JS::MutableHandle<JSObject*> aDesiredProto);
+
+// This function is expected to be called from the constructor function for an
+// HTML element interface; the global/callargs need to be whatever was passed to
+// that constructor function.
+already_AddRefed<nsGenericHTMLElement>
+CreateHTMLElement(const GlobalObject& aGlobal, const JS::CallArgs& aCallArgs,
+                  ErrorResult& aRv);
 
 void
 SetDocumentAndPageUseCounter(JSContext* aCx, JSObject* aObject,

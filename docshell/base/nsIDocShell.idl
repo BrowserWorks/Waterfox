@@ -52,7 +52,7 @@ interface nsIDocShell : nsIDocShellTreeItem
 {
   /**
    * Loads a given URI.  This will give priority to loading the requested URI
-   * in the object implementing	this interface.  If it can't be loaded here
+   * in the object implementing this interface.  If it can't be loaded here
    * however, the URL dispatcher will go through its normal process of content
    * loading.
    *
@@ -187,10 +187,11 @@ interface nsIDocShell : nsIDocShellTreeItem
                               in nsIInputStream aHeadersStream,
                               in unsigned long aLoadFlags,
                               in nsISHEntry aSHEntry,
-                              in boolean firstParty,
+                              in boolean aFirstParty,
                               in AString aSrcdoc,
                               in nsIDocShell aSourceDocShell,
                               in nsIURI aBaseURI,
+                              in boolean aCheckForPrerender,
                               out nsIDocShell aDocShell,
                               out nsIRequest aRequest);
 
@@ -527,31 +528,6 @@ interface nsIDocShell : nsIDocShellTreeItem
    */
   void historyPurged(in long numEntries);
 
-  /*
-   * @deprecated, use nsIDocShell.QueryInterface(nsIDOMStorageManager) instead.
-   *
-   * Retrieves the WebApps session storage object for the supplied principal.
-   *
-   * @param principal returns a storage for this principal
-   * @param documentURI new storage will be created with reference to this
-   *                    document.documentURI that will appear in storage event
-   * @param create If true and a session storage object doesn't
-   *               already exist, a new one will be created.
-   */
-  nsIDOMStorage getSessionStorageForPrincipal(in nsIPrincipal principal,
-                                              in DOMString documentURI,
-                                              in boolean create);
-
-  /*
-   * @deprecated, use nsIDocShell.QueryInterface(nsIDOMStorageManager) instead.
-   *
-   * Add a WebApps session storage object to the docshell.
-   *
-   * @param principal the principal the storage object is associated with
-   * @param storage the storage object to add
-   */
-  void addSessionStorage(in nsIPrincipal principal, in nsIDOMStorage storage);
-
   /**
    * Gets the channel for the currently loaded document, if any.
    * For a new document load, this will be the channel of the previous document
@@ -678,7 +654,12 @@ interface nsIDocShell : nsIDocShellTreeItem
   /**
    * The ID of the docshell in the session history.
    */
-  readonly attribute unsigned long long historyID;
+  readonly attribute nsIDPtr historyID;
+
+  /**
+   * Helper method for accessing this value from C++
+   */
+  [noscript, notxpcom] nsID HistoryID();
 
   /**
    * Sets whether a docshell is an app tab. An app tab docshell may behave
@@ -692,6 +673,13 @@ interface nsIDocShell : nsIDocShellTreeItem
    * @param aPrincipal the principal to use for the new document.
    */
   void createAboutBlankContentViewer(in nsIPrincipal aPrincipal);
+
+  /**
+   * Like createAboutBlankContentViewer, but don't check for permit unload.
+   * Only used by special session history operation.
+   * @param aPrincipal the principal to use for the new document.
+   */
+  [noscript] void forceCreateAboutBlankContentViewer(in nsIPrincipal aPrincipal);
 
   /**
    * Upon getting, returns the canonical encoding label of the document
@@ -793,33 +781,27 @@ interface nsIDocShell : nsIDocShellTreeItem
   [noscript] void notifyScrollObservers();
 
   /**
-   * Returns true iff the docshell corresponds to an <iframe mozapp>.
-   */
-  [infallible] readonly attribute boolean isApp;
-
-  /**
    * The type of iframe that this docshell lives.
    */
   const unsigned long FRAME_TYPE_REGULAR = 0;
   const unsigned long FRAME_TYPE_BROWSER = 1;
-  const unsigned long FRAME_TYPE_APP     = 2;
 
   [infallible] attribute unsigned long frameType;
 
   /**
-   * Returns true if this docshell corresponds to an <iframe mozbrowser> or
-   * <iframe mozapp>.  <xul:browser> returns false here.
+   * Returns true if this docshell corresponds to an <iframe mozbrowser>.
+   * <xul:browser> returns false here.
    */
-  [infallible] readonly attribute boolean isMozBrowserOrApp;
+  [infallible] readonly attribute boolean isMozBrowser;
 
   /**
    * Returns true if this docshell corresponds to an isolated <iframe
    * mozbrowser>.
    *
-   * <iframe mozbrowser mozapp> and <xul:browser> are not considered to be
-   * mozbrowser elements.  <iframe mozbrowser noisolation> does not count as
-   * isolated since isolation is disabled.  Isolation can only be disabled if
-   * the containing document is chrome.
+   * <xul:browser> is not considered to be a mozbrowser element.
+   * <iframe mozbrowser noisolation> does not count as isolated since
+   * isolation is disabled.  Isolation can only be disabled if the
+   * containing document is chrome.
    */
   [infallible] readonly attribute boolean isIsolatedMozBrowserElement;
 
@@ -828,28 +810,28 @@ interface nsIDocShell : nsIDocShellTreeItem
    * mozbrowser> or if the docshell is contained in an isolated <iframe
    * mozbrowser>.
    *
-   * <iframe mozbrowser mozapp> and <xul:browser> are not considered to be
-   * mozbrowser elements.  <iframe mozbrowser noisolation> does not count as
-   * isolated since isolation is disabled.  Isolation can only be disabled if
-   * the containing document is chrome.
+   * <xul:browser> is not considered to be a mozbrowser element. <iframe
+   * mozbrowser noisolation> does not count as isolated since isolation is
+   * disabled.  Isolation can only be disabled if the containing document is
+   * chrome.
    *
    * Our notion here of "contained in" means: Walk up the docshell hierarchy in
-   * this process until we hit an <iframe mozapp> or <iframe mozbrowser> (or
-   * until the hierarchy ends).  Return true iff the docshell we stopped on has
+   * this process until we hit an <iframe mozbrowser> (or until the hierarchy
+   * ends).  Return true iff the docshell we stopped on has
    * isIsolatedMozBrowserElement == true.
    */
   [infallible] readonly attribute boolean isInIsolatedMozBrowserElement;
 
   /**
-   * Returns true if this docshell corresponds to an <iframe mozbrowser> or
-   * <iframe mozapp>, or if this docshell is contained in an <iframe mozbrowser>
-   * or <iframe mozapp>.  <xul:browser> returns false here.
+   * Returns true if this docshell corresponds to an <iframe mozbrowser>, or
+   * if this docshell is contained in an <iframe mozbrowser>. <xul:browser>
+   * returns false here.
    *
    * To compute this value, we walk up the docshell hierarchy.  If we encounter
-   * a docshell with isMozBrowserOrApp before we hit the end of the hierarchy,
+   * a docshell with isMozBrowser before we hit the end of the hierarchy,
    * we return true.  Otherwise, we return false.
    */
-  [infallible] readonly attribute boolean isInMozBrowserOrApp;
+  [infallible] readonly attribute boolean isInMozBrowser;
 
   /**
    * Returns true if this docshell is the top level content docshell.
@@ -857,40 +839,16 @@ interface nsIDocShell : nsIDocShellTreeItem
   [infallible] readonly attribute boolean isTopLevelContentDocShell;
 
   /**
-   * Returns the id of the app associated with this docshell.  If this docshell
-   * is an <iframe mozbrowser> inside an <iframe mozapp>, we return the app's
-   * appId.
-   *
-   * We compute this value by walking up the docshell hierarchy until we find a
-   * docshell on which origin attributes was set. (ignoring those docshells
-   * where x == UNKNOWN_APP_ID).  We return the app id x.
-   *
-   * If we don't find a docshell with an associated app id in our hierarchy, we
-   * return NO_APP_ID.  We never return UNKNOWN_APP_ID.
-   *
-   * Notice that a docshell may have an associated app even if it returns true
-   * for isBrowserElement!
-   */
-  [infallible] readonly attribute unsigned long appId;
-
-  /**
-   * Return the manifest URL of the app associated with this docshell.
-   *
-   * If there is no associated app in our hierarchy, we return empty string.
-   */
-  readonly attribute DOMString appManifestURL;
-
-  /**
    * Like nsIDocShellTreeItem::GetSameTypeParent, except this ignores <iframe
-   * mozbrowser> and <iframe mozapp> boundaries.
+   * mozbrowser> boundaries.
    */
-  nsIDocShell getSameTypeParentIgnoreBrowserAndAppBoundaries();
+  nsIDocShell getSameTypeParentIgnoreBrowserBoundaries();
 
   /**
    * Like nsIDocShellTreeItem::GetSameTypeRootTreeItem, except this ignores
-   * <iframe mozbrowser> and <iframe mozapp> boundaries.
+   * <iframe mozbrowser> boundaries.
    */
-  nsIDocShell getSameTypeRootTreeItemIgnoreBrowserAndAppBoundaries();
+  nsIDocShell getSameTypeRootTreeItemIgnoreBrowserBoundaries();
 
   /**
    * True iff asynchronous panning and zooming is enabled for this
@@ -1154,33 +1112,28 @@ interface nsIDocShell : nsIDocShellTreeItem
   const unsigned long TOUCHEVENTS_OVERRIDE_NONE = 2;
 
   /**
-   * A DocShell is locked to the current process if it would be
-   * content-observable for a process switch to occur before performing a
-   * navigation load. It is important to ensure that a DocShell is not process
-   * locked before perfoming process changing loads.
-   */
-  [infallible] readonly attribute unsigned long processLockReason;
-  /**
-   * The DocShell is not locked to the current process, and a navigation may
-   * proceed in a new process.
-   */
-  const unsigned long PROCESS_LOCK_NONE = 0;
-  /**
-   * The DocShell is locked to the current process because it is not a
-   * toplevel browsing context.
-   */
-  const unsigned long PROCESS_LOCK_IFRAME = 1;
-  /**
-   * The DocShell is locked to the current process because there exist other
-   * related browsing contexts which may be holding a reference.
-   */
-  const unsigned long PROCESS_LOCK_RELATED_CONTEXTS = 2;
-  /**
-   * The DocShell is locked to the current process because the current
-   * process is not a content process.
+   * This value is `true` if its corresponding unit of related browsing contexts
+   * (TabGroup) contains only 1 toplevel window, and that window is the outer
+   * window corresponding to this docshell.
    *
-   * NOTE: Some loads may not consider this a hard process lock, and may wish to
-   * ignore this reason.
+   * The value is `false` otherwise. This is the case if the docshell is an
+   * iframe, has window.opener set, or another window with window.opener
+   * referring to this window exists.
+   *
+   * If this value is `false`, it would be web content visible for a load
+   * occuring in this docshell to be performed within a different docshell.
    */
-  const unsigned long PROCESS_LOCK_NON_CONTENT = 3;
+  [infallible] readonly attribute boolean isOnlyToplevelInTabGroup;
+
+  /**
+   * Returns `true` if this docshell is loaded within a Large-Allocation
+   * process.
+   */
+  [infallible] readonly attribute boolean inLargeAllocProcess;
+
+  /**
+   * Returns `true` if this docshell was created due to a Large-Allocation
+   * header, and has not seen the initiating load yet.
+   */
+  [infallible] readonly attribute boolean awaitingLargeAlloc;
 };

@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.support.v4.widget.TextViewCompat;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
@@ -57,7 +58,7 @@ public class MenuItemDefault extends TextView
             sIconBounds = new Rect(0, 0, iconSize, iconSize);
         }
 
-        setCompoundDrawables(mIcon, null, mState, null);
+        TextViewCompat.setCompoundDrawablesRelative(this, mIcon, null, mState, null);
     }
 
     @Override
@@ -88,7 +89,7 @@ public class MenuItemDefault extends TextView
     }
 
     private void refreshIcon() {
-        setCompoundDrawables(mShowIcon ? mIcon : null, null, mState, null);
+        TextViewCompat.setCompoundDrawablesRelative(this, mShowIcon ? mIcon : null, null, mState, null);
     }
 
     void setIcon(Drawable icon) {

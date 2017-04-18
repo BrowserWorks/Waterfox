@@ -24,6 +24,11 @@ class nsPluginFrame;
 class nsITreeView;
 
 namespace mozilla {
+
+namespace dom {
+  class DOMStringList;
+}
+
 namespace a11y {
 
 class ApplicationAccessible;
@@ -108,6 +113,8 @@ public:
   /**
    * Get a string equivalent for an accessible state/extra state.
    */
+  already_AddRefed<mozilla::dom::DOMStringList>
+    GetStringStates(uint64_t aStates) const;
   void GetStringStates(uint32_t aState, uint32_t aExtraState,
                        nsISupports **aStringStates);
 
@@ -336,12 +343,7 @@ void MaybeShutdownAccService(uint32_t aFormerConsumer);
 inline bool
 IPCAccessibilityActive()
 {
-#ifdef MOZ_B2G
-  return false;
-#else
-  return XRE_IsContentProcess() &&
-    mozilla::Preferences::GetBool("accessibility.ipc_architecture.enabled", true);
-#endif
+  return XRE_IsContentProcess();
 }
 
 /**

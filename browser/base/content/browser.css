@@ -95,10 +95,6 @@ panelview:not([mainview]):not([current]) {
   visibility: collapse;
 }
 
-browser[frameType="social"][remote="true"] {
-  -moz-binding: url("chrome://global/content/bindings/remote-browser.xml#remote-browser");
-}
-
 tabbrowser {
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser");
 }
@@ -438,13 +434,7 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   background-position: bottom left;
 }
 
-.menuitem-tooltip {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#menuitem-tooltip");
-}
-
-.menuitem-iconic-tooltip,
-.menuitem-tooltip[type="checkbox"],
-.menuitem-tooltip[type="radio"] {
+.menuitem-iconic-tooltip {
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#menuitem-iconic-tooltip");
 }
 
@@ -527,7 +517,8 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 
 /* Overlay a badge on top of the icon of additional open search providers
    in the search panel. */
-.addengine-item > .button-box > .button-icon {
+.addengine-item > .button-box > .button-icon,
+.addengine-item[type="menu"] > .button-box > .box-inherit > .button-icon {
   -moz-binding: url("chrome://browser/content/search/search.xml#addengine-icon");
   display: -moz-stack;
 }
@@ -568,6 +559,8 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   visibility: collapse;
 }
 
+#urlbar[pageproxystate="invalid"] > #identity-box > #blocked-permissions-container,
+#urlbar[pageproxystate="invalid"] > #identity-box > #notification-popup-box,
 #urlbar[pageproxystate="invalid"] > #identity-box > #identity-icon-labels {
   visibility: collapse;
 }
@@ -579,10 +572,6 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 #urlbar[pageproxystate="invalid"] > #identity-box {
   pointer-events: none;
   -moz-user-focus: ignore;
-}
-
-#urlbar[pageproxystate="invalid"] > #identity-box > #notification-popup-box {
-  pointer-events: auto;
 }
 
 #identity-icon-labels {
@@ -640,6 +629,12 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 }
 .unified-nav-current {
   font-weight: bold;
+}
+
+.bookmark-item > label {
+  /* ensure we use the direction of the bookmarks label instead of the
+   * browser locale */
+  unicode-bidi: plaintext;
 }
 
 toolbarbutton.bookmark-item {
@@ -847,10 +842,9 @@ statuspanel {
   pointer-events: none;
 }
 
-statuspanel:-moz-locale-dir(ltr)[mirror],
-statuspanel:-moz-locale-dir(rtl):not([mirror]) {
-  left: auto;
-  right: 0;
+statuspanel[mirror] {
+  offset-inline-start: auto;
+  offset-inline-end: 0;
 }
 
 statuspanel[sizelimit] {
@@ -869,6 +863,9 @@ statuspanel[type=status] {
 
 statuspanel[type=overLink] {
   transition: opacity 120ms ease-out;
+}
+
+statuspanel[type=overLink] > .statuspanel-inner {
   direction: ltr;
 }
 

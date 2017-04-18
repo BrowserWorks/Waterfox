@@ -27,17 +27,17 @@ InProcessCompositorSession::Create(nsIWidget* aWidget,
                                    LayerManager* aLayerManager,
                                    const uint64_t& aRootLayerTreeId,
                                    CSSToLayoutDeviceScale aScale,
-                                   bool aUseAPZ,
+                                   const CompositorOptions& aOptions,
                                    bool aUseExternalSurfaceSize,
                                    const gfx::IntSize& aSurfaceSize)
 {
   CompositorWidgetInitData initData;
   aWidget->GetCompositorWidgetInitData(&initData);
 
-  RefPtr<CompositorWidget> widget = CompositorWidget::CreateLocal(initData, aWidget);
+  RefPtr<CompositorWidget> widget = CompositorWidget::CreateLocal(initData, aOptions, aWidget);
   RefPtr<CompositorBridgeChild> child = new CompositorBridgeChild(aLayerManager);
   RefPtr<CompositorBridgeParent> parent =
-    child->InitSameProcess(widget, aRootLayerTreeId, aScale, aUseAPZ, aUseExternalSurfaceSize, aSurfaceSize);
+    child->InitSameProcess(widget, aRootLayerTreeId, aScale, aOptions, aUseExternalSurfaceSize, aSurfaceSize);
 
   return new InProcessCompositorSession(widget, child, parent);
 }
@@ -61,9 +61,11 @@ InProcessCompositorSession::GetAPZCTreeManager() const
 }
 
 bool
-InProcessCompositorSession::Reset(const nsTArray<LayersBackend>& aBackendHints, TextureFactoryIdentifier* aOutIdentifier)
+InProcessCompositorSession::Reset(const nsTArray<LayersBackend>& aBackendHints,
+                                  uint64_t aSeqNo,
+                                  TextureFactoryIdentifier* aOutIdentifier)
 {
-  return mCompositorBridgeParent->ResetCompositor(aBackendHints, aOutIdentifier);
+  return mCompositorBridgeParent->ResetCompositor(aBackendHints, aSeqNo, aOutIdentifier);
 }
 
 void

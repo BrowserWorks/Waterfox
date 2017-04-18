@@ -55,6 +55,7 @@ Structure:
                             // e.g.: { "yahoo.suggestion": 3, "other.listitem": 1 }
       "experiments": [<string>, /* … */], // Optional, array of identifiers
                                     // for the active experiments
+      "flashUsage": <integer>, // number of times flash plugin is played since last upload
     }
 
 Field details
@@ -157,13 +158,14 @@ et al (e.g. "Tue, 01 Feb 2011 14:00:00 GMT").
 
 Version history
 ---------------
+* v8: added ``flashUsage``
 * v7: added ``sessionCount`` & ``sessionDuration``
 * v6: added ``searches``
 * v5: added ``created`` & ``tz``
 * v4: ``profileDate`` will return package install time when times.json is not available
 * v3: added ``defaultSearch``
 * v2: added ``distributionId``
-* v1: initial version
+* v1: initial version - shipped in `Fennec 45 <https://bugzilla.mozilla.org/show_bug.cgi?id=1205835>`_.
 
 Notes
 ~~~~~

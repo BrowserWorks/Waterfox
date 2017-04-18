@@ -153,9 +153,7 @@ add_task(function* init() {
   // New profile so new add-ons are ignored
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
 
-  let a1, a2, a3, a4, a5, a6, a7, t1, t2;
-
-  [a2, a3, a4, a7, t2] =
+  let [a2, a3, a4, a7, t2] =
     yield promiseAddonsByIDs(["addon2@tests.mozilla.org",
                               "addon3@tests.mozilla.org",
                               "addon4@tests.mozilla.org",
@@ -170,9 +168,9 @@ add_task(function* init() {
   a7.userDisabled = true;
   t2.userDisabled = false;
   a3.findUpdates({
-    onUpdateFinished: function() {
+    onUpdateFinished() {
       a4.findUpdates({
-        onUpdateFinished: function() {
+        onUpdateFinished() {
           deferredUpdateFinished.resolve();
         }
       }, AddonManager.UPDATE_WHEN_PERIODIC_UPDATE);
@@ -496,8 +494,7 @@ add_task(function* run_test_1() {
     do_check_true(a3.isActive);
     do_check_false(a3.appDisabled);
     do_check_true(isExtensionInAddonsList(profileDir, a3.id));
-  }
-  else {
+  } else {
     do_print("XPI save succeeded");
     do_check_false(a3.isActive);
     do_check_true(a3.appDisabled);
@@ -513,8 +510,7 @@ add_task(function* run_test_1() {
   if (OS.Constants.Win) {
     do_check_true(a4.userDisabled);
     do_check_false(a4.appDisabled);
-  }
-  else {
+  } else {
     do_check_false(a4.userDisabled);
     do_check_true(a4.appDisabled);
   }

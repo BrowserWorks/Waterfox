@@ -2,15 +2,27 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using mozilla::PrincipalOriginAttributes from "mozilla/ipc/BackgroundUtils.h";
+using mozilla::OriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 
 namespace mozilla {
 namespace ipc {
 
+union ContentPrincipalInfoOriginNoSuffix
+{
+  nsCString;
+  void_t;
+};
+
 struct ContentPrincipalInfo
 {
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
+
+  // nsIPrincipal.originNoSuffix can fail. In case this happens, this value
+  // will be set to void_t. So far, this is used only for dom/media.
+  // It will be removed in bug 1347817.
+  ContentPrincipalInfoOriginNoSuffix originNoSuffix;
+
   nsCString spec;
 };
 
@@ -19,12 +31,13 @@ struct SystemPrincipalInfo
 
 struct NullPrincipalInfo
 {
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
+  nsCString spec;
 };
 
 struct ExpandedPrincipalInfo
 {
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
   PrincipalInfo[] whitelist;
 };
 

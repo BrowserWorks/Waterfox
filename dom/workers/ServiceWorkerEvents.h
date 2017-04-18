@@ -51,16 +51,35 @@ public:
 
 class ExtendableEvent : public Event
 {
+public:
+  class ExtensionsHandler {
+  public:
+    virtual bool
+    WaitOnPromise(Promise& aPromise) = 0;
+
+    NS_IMETHOD_(MozExternalRefCountType)
+    AddRef() = 0;
+
+    NS_IMETHOD_(MozExternalRefCountType)
+    Release() = 0;
+  };
+
+private:
+  RefPtr<ExtensionsHandler> mExtensionsHandler;
+
 protected:
-  nsTArray<RefPtr<Promise>> mPromises;
+  bool
+  WaitOnPromise(Promise& aPromise);
 
   explicit ExtendableEvent(mozilla::dom::EventTarget* aOwner);
   ~ExtendableEvent() {}
 
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ExtendableEvent, Event)
   NS_FORWARD_TO_EVENT
+
+  void
+  SetKeepAliveHandler(ExtensionsHandler* aExtensionsHandler);
 
   virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
@@ -93,9 +112,6 @@ public:
   void
   WaitUntil(JSContext* aCx, Promise& aPromise, ErrorResult& aRv);
 
-  already_AddRefed<Promise>
-  GetPromise();
-
   virtual ExtendableEvent* AsExtendableEvent() override
   {
     return this;
@@ -123,7 +139,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(FetchEvent, ExtendableEvent)
 
   // Note, we cannot use NS_FORWARD_TO_EVENT because we want a different
-  // PreventDefault(JSContext*) override.
+  // PreventDefault(JSContext*, CallerType) override.
   NS_FORWARD_NSIDOMEVENT(Event::)
 
   virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
@@ -176,7 +192,7 @@ public:
   Default();
 
   void
-  PreventDefault(JSContext* aCx) override;
+  PreventDefault(JSContext* aCx, CallerType aCallerType) override;
 
   void
   ReportCanceled();

@@ -20,11 +20,13 @@
 #include "ipc/IPCMessageUtils.h"
 #include "mozilla/gfx/Matrix.h"
 #include "mozilla/layers/AsyncDragMetrics.h"
+#include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/GeckoContentController.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "nsRect.h"
 #include "nsRegion.h"
+#include "mozilla/Array.h"
 
 #include <stdint.h>
 
@@ -699,6 +701,32 @@ struct ParamTraits<mozilla::layers::FrameMetrics::ScrollOffsetUpdateType>
              mozilla::layers::FrameMetrics::ScrollOffsetUpdateType::eSentinel>
 {};
 
+template<>
+struct ParamTraits<mozilla::layers::LayerHandle>
+{
+  typedef mozilla::layers::LayerHandle paramType;
+
+  static void Write(Message* msg, const paramType& param) {
+    WriteParam(msg, param.mHandle);
+  }
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result) {
+    return ReadParam(msg, iter, &result->mHandle);
+  }
+};
+
+template<>
+struct ParamTraits<mozilla::layers::CompositableHandle>
+{
+  typedef mozilla::layers::CompositableHandle paramType;
+
+  static void Write(Message* msg, const paramType& param) {
+    WriteParam(msg, param.mHandle);
+  }
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result) {
+    return ReadParam(msg, iter, &result->mHandle);
+  }
+};
+
 // Helper class for reading bitfields.
 // If T has bitfields members, derive ParamTraits<T> from BitfieldHelper<T>.
 template <typename ParamType>
@@ -1265,6 +1293,56 @@ struct ParamTraits<mozilla::layers::AsyncDragMetrics>
             ReadParam(aMsg, aIter, &aResult->mScrollbarDragOffset) &&
             ReadParam(aMsg, aIter, &aResult->mScrollTrack) &&
             ReadParam(aMsg, aIter, &aResult->mDirection));
+  }
+};
+
+template <>
+struct ParamTraits<mozilla::gfx::Glyph>
+{
+  typedef mozilla::gfx::Glyph paramType;
+  static void Write(Message* aMsg, const paramType& aParam) {
+    WriteParam(aMsg, aParam.mIndex);
+    WriteParam(aMsg, aParam.mPosition);
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult) {
+    return (ReadParam(aMsg, aIter, &aResult->mIndex) &&
+            ReadParam(aMsg, aIter, &aResult->mPosition)
+      );
+  }
+};
+
+template<typename T, size_t Length>
+struct ParamTraits<mozilla::Array<T, Length>>
+{
+  typedef mozilla::Array<T, Length> paramType;
+  static void Write(Message* aMsg, const paramType& aParam) {
+    for (size_t i = 0; i < Length; i++) {
+      WriteParam(aMsg, aParam[i]);
+    }
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult) {
+    for (size_t i = 0; i < Length; i++) {
+      if (!ReadParam<T>(aMsg, aIter, &aResult->operator[](i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+template <>
+struct ParamTraits<mozilla::layers::CompositorOptions>
+{
+  typedef mozilla::layers::CompositorOptions paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam) {
+    WriteParam(aMsg, aParam.mUseAPZ);
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult) {
+    return ReadParam(aMsg, aIter, &aResult->mUseAPZ);
   }
 };
 

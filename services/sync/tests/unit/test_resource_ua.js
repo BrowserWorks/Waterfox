@@ -26,18 +26,16 @@ function uaHandler(f) {
   };
 }
 
-function run_test() {
+add_task(async function setup() {
+
   Log.repository.rootLogger.addAppender(new Log.DumpAppender());
-  meta_global = new ServerWBO('global');
+  meta_global = new ServerWBO("global");
   server = httpd_setup({
     "/1.1/johndoe/info/collections": uaHandler(collectionsHelper.handler),
     "/1.1/johndoe/storage/meta/global": uaHandler(meta_global.handler()),
   });
 
-  ensureLegacyIdentityManager();
-  setBasicCredentials("johndoe", "ilovejane");
-  Service.serverURL = server.baseURI + "/";
-  Service.clusterURL = server.baseURI + "/";
+  await configureIdentity({ username: "johndoe" }, server);
   _("Server URL: " + server.baseURI);
 
   // Note this string is missing the trailing ".destkop" as the test
@@ -47,11 +45,11 @@ function run_test() {
                " FxSync/" + WEAVE_VERSION + "." +
                Services.appinfo.appBuildID;
 
-  run_next_test();
-}
+})
 
 add_test(function test_fetchInfo() {
   _("Testing _fetchInfo.");
+  Service.login();
   Service._fetchInfo();
   _("User-Agent: " + ua);
   do_check_eq(ua, expectedUA + ".desktop");
@@ -62,7 +60,7 @@ add_test(function test_fetchInfo() {
 add_test(function test_desktop_post() {
   _("Testing direct Resource POST.");
   let r = new AsyncResource(server.baseURI + "/1.1/johndoe/storage/meta/global");
-  r.post("foo=bar", function (error, content) {
+  r.post("foo=bar", function(error, content) {
     _("User-Agent: " + ua);
     do_check_eq(ua, expectedUA + ".desktop");
     ua = "";
@@ -86,7 +84,7 @@ add_test(function test_mobile_get() {
   _("Testing mobile.");
   Svc.Prefs.set("client.type", "mobile");
   let r = new AsyncResource(server.baseURI + "/1.1/johndoe/storage/meta/global");
-  r.get(function (error, content) {
+  r.get(function(error, content) {
     _("User-Agent: " + ua);
     do_check_eq(ua, expectedUA + ".mobile");
     ua = "";

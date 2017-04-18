@@ -239,6 +239,7 @@ class TestExecuteContent(MarionetteTestCase):
         self.assertTrue(self.marionette.execute_script(
             "return typeof arguments[0] == 'undefined'"))
 
+    @skip_if_mobile("Intermittent on Android - bug 1334035")
     def test_window_set_timeout_is_not_cancelled(self):
         def content_timeout_triggered(mn):
             return mn.execute_script("return window.n", sandbox=None) > 0
@@ -313,25 +314,6 @@ class TestExecuteChrome(WindowManagerMixin, TestExecuteContent):
                 var cb = arguments[arguments.length - 1];
                 setTimeout(function() { cb() }, 250);
                 """, script_timeout=100)
-
-    @skip_if_mobile("New windows not supported in Fennec")
-    def test_invalid_chrome_handle(self):
-        try:
-            win = self.open_window()
-            self.marionette.switch_to_window(win)
-
-            # Close new window and don't switch back to the original one
-            self.marionette.close_chrome_window()
-            self.assertNotEqual(self.start_window, win)
-
-            # Call execute_script on an invalid chrome handle
-            with self.marionette.using_context('chrome'):
-                self.marionette.execute_script("""
-                    return true;
-                """)
-
-        finally:
-            self.close_all_windows()
 
     def test_lasting_side_effects(self):
         pass

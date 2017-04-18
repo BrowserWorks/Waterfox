@@ -10,7 +10,7 @@ const kTestWidget2 = "test-customize-mode-create-destroy2";
 // Creating and destroying a widget should correctly wrap/unwrap stuff
 add_task(function* testWrapUnwrap() {
   yield startCustomizing();
-  CustomizableUI.createWidget({id: kTestWidget1, label: 'Pretty label', tooltiptext: 'Pretty tooltip'});
+  CustomizableUI.createWidget({id: kTestWidget1, label: "Pretty label", tooltiptext: "Pretty tooltip"});
   let elem = document.getElementById(kTestWidget1);
   let wrapper = document.getElementById("wrapper-" + kTestWidget1);
   ok(elem, "There should be an item");
@@ -30,16 +30,21 @@ add_task(function* testPanelPlaceholders() {
   // The value of expectedPlaceholders depends on the default palette layout.
   // Bug 1229236 is for these tests to be smarter so the test doesn't need to
   // change when the default placements change.
-  let expectedPlaceholders = 1 + (isInDevEdition() ? 1 : 0);
+  let expectedPlaceholders = 1;
+  if (isInDevEdition()) {
+    expectedPlaceholders += 1;
+  } else if (isInNightly()) {
+    expectedPlaceholders += 2;
+  }
   is(panel.querySelectorAll(".panel-customization-placeholder").length, expectedPlaceholders, "The number of placeholders should be correct.");
-  CustomizableUI.createWidget({id: kTestWidget2, label: 'Pretty label', tooltiptext: 'Pretty tooltip', defaultArea: CustomizableUI.AREA_PANEL});
+  CustomizableUI.createWidget({id: kTestWidget2, label: "Pretty label", tooltiptext: "Pretty tooltip", defaultArea: CustomizableUI.AREA_PANEL});
   let elem = document.getElementById(kTestWidget2);
   let wrapper = document.getElementById("wrapper-" + kTestWidget2);
   ok(elem, "There should be an item");
   ok(wrapper, "There should be a wrapper");
   is(wrapper.firstChild.id, kTestWidget2, "Wrapper should have test widget");
   is(wrapper.parentNode, panel, "Wrapper should be in panel");
-  expectedPlaceholders = isInDevEdition() ? 1 : 3;
+  expectedPlaceholders = (expectedPlaceholders - 1) || 3;
   is(panel.querySelectorAll(".panel-customization-placeholder").length, expectedPlaceholders, "The number of placeholders should be correct.");
   CustomizableUI.destroyWidget(kTestWidget2);
   wrapper = document.getElementById("wrapper-" + kTestWidget2);

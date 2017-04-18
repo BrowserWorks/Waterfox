@@ -103,6 +103,7 @@ bool GetExtraFileForID(const nsAString& id, nsIFile** extraFile);
 bool GetExtraFileForMinidump(nsIFile* minidump, nsIFile** extraFile);
 bool AppendExtraData(const nsAString& id, const AnnotationTable& data);
 bool AppendExtraData(nsIFile* extraFile, const AnnotationTable& data);
+void RunMinidumpAnalyzer(const nsAString& id);
 
 /*
  * Renames the stand alone dump file aDumpFile to:
@@ -263,6 +264,10 @@ bool SetRemoteExceptionHandler();
 bool UnsetRemoteExceptionHandler();
 
 #if defined(MOZ_WIDGET_ANDROID)
+// Android creates child process as services so we must explicitly set
+// the handle for the pipe since it can't get remapped to a default value.
+void SetNotificationPipeForChild(int childCrashFd);
+
 // Android builds use a custom library loader, so /proc/<pid>/maps
 // will just show anonymous mappings for all the non-system
 // shared libraries. This API is to work around that by providing

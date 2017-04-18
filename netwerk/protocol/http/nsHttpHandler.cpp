@@ -34,7 +34,6 @@
 #include "nsSocketTransportService2.h"
 #include "nsAlgorithm.h"
 #include "ASpdySession.h"
-#include "mozIApplicationClearPrivateDataParams.h"
 #include "EventTokenBucket.h"
 #include "Tickler.h"
 #include "nsIXULAppInfo.h"
@@ -75,6 +74,10 @@
 #if defined(XP_MACOSX)
 #include <CoreServices/CoreServices.h>
 #include "nsCocoaFeatures.h"
+#endif
+
+#ifdef MOZ_TASK_TRACER
+#include "GeckoTaskTracer.h"
 #endif
 
 //-----------------------------------------------------------------------------
@@ -391,7 +394,6 @@ nsHttpHandler::Init()
         obsService->AddObserver(this, "net:prune-all-connections", true);
         obsService->AddObserver(this, "net:failed-to-process-uri-content", true);
         obsService->AddObserver(this, "last-pb-context-exited", true);
-        obsService->AddObserver(this, "webapps-clear-data", true);
         obsService->AddObserver(this, "browser:purge-session-history", true);
         obsService->AddObserver(this, NS_NETWORK_LINK_TOPIC, true);
         obsService->AddObserver(this, "application-background", true);
@@ -1995,6 +1997,14 @@ nsHttpHandler::NewProxiedChannel2(nsIURI *uri,
     LOG(("nsHttpHandler::NewProxiedChannel [proxyInfo=%p]\n",
         givenProxyInfo));
 
+#ifdef MOZ_TASK_TRACER
+    {
+        nsAutoCString urispec;
+        uri->GetSpec(urispec);
+        tasktracer::AddLabel("nsHttpHandler::NewProxiedChannel2 %s", urispec.get());
+    }
+#endif
+
     nsCOMPtr<nsProxyInfo> proxyInfo;
     if (givenProxyInfo) {
         proxyInfo = do_QueryInterface(givenProxyInfo);
@@ -2167,10 +2177,6 @@ nsHttpHandler::Observe(nsISupports *subject,
         if (mConnMgr) {
             mConnMgr->ClearAltServiceMappings();
         }
-    } else if (!strcmp(topic, "webapps-clear-data")) {
-        if (mConnMgr) {
-            mConnMgr->ClearAltServiceMappings();
-        }
     } else if (!strcmp(topic, "browser:purge-session-history")) {
         if (mConnMgr) {
             if (gSocketTransportService) {
@@ -2295,22 +2301,20 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     nsAutoCString username;
     aURI->GetUsername(username);
 
-    NeckoOriginAttributes neckoOriginAttributes;
+    OriginAttributes originAttributes;
     // If the principal is given, we use the originAttributes from this
     // principal. Otherwise, we use the originAttributes from the
     // loadContext.
     if (aPrincipal) {
-        neckoOriginAttributes.InheritFromDocToNecko(
-            BasePrincipal::Cast(aPrincipal)->OriginAttributesRef());
+        originAttributes.Inherit(aPrincipal->OriginAttributesRef());
     } else if (loadContext) {
-        DocShellOriginAttributes docshellOriginAttributes;
-        loadContext->GetOriginAttributes(docshellOriginAttributes);
-        neckoOriginAttributes.InheritFromDocShellToNecko(docshellOriginAttributes);
+        loadContext->GetOriginAttributes(originAttributes);
+        originAttributes.StripAttributes(OriginAttributes::STRIP_ADDON_ID);
     }
 
     auto *ci =
         new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
-                                 neckoOriginAttributes, usingSSL);
+                                 originAttributes, usingSSL);
     ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);

@@ -28,13 +28,11 @@ function uri_in_db(aURI) {
 const TOTAL_SITES = 20;
 
 // main
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_execute()
-{
+add_task(function* test_execute() {
   // add pages to global history
   for (let i = 0; i < TOTAL_SITES; i++) {
     let site = "http://www.test-" + i + ".com/";
@@ -86,7 +84,7 @@ add_task(function* test_execute()
 
   // check that annotation on the removed item does not exists
   try {
-    PlacesUtils.annotations.getPageAnnotation(testAnnoDeletedURI, testAnnoName);
+    PlacesUtils.annotations.getPageAnnotation(testAnnoDeletedURI, testAnnoDeletedName);
     do_throw("fetching page-annotation that doesn't exist, should've thrown");
   } catch (ex) {}
 

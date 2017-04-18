@@ -14,7 +14,7 @@ var testRunner = {
   tests:
     [
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "test.com";
           params.btnAllow.doCommand();
           is(params.tree.view.rowCount, 1, "added exception shows up in treeview");
@@ -28,7 +28,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.ALLOW_ACTION }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "test.com";
           params.btnBlock.doCommand();
           is(params.tree.view.getCellText(0, params.nameCol), "http://test.com",
@@ -41,7 +41,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.DENY_ACTION  }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "test.com";
           params.btnAllow.doCommand();
           is(params.tree.view.getCellText(0, params.nameCol), "http://test.com",
@@ -54,7 +54,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.ALLOW_ACTION }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "test.com";
           params.btnRemove.doCommand();
           is(params.tree.view.rowCount, 0, "exception should be removed");
@@ -64,21 +64,21 @@ var testRunner = {
       },
       {
         expectPermObservancesDuringTestFunction: true,
-        test: function(params) {
-          let uri = params.ioService.newURI("http://test.com", null, null);
+        test(params) {
+          let uri = params.ioService.newURI("http://test.com");
           params.pm.add(uri, "popup", Ci.nsIPermissionManager.DENY_ACTION);
           is(params.tree.view.rowCount, 0, "adding unrelated permission should not change display");
           params.btnApplyChanges.doCommand();
         },
         observances: [{ type: "popup", origin: "http://test.com", data: "added",
                         capability: Ci.nsIPermissionManager.DENY_ACTION }],
-        cleanUp: function(params) {
-          let uri = params.ioService.newURI("http://test.com", null, null);
+        cleanUp(params) {
+          let uri = params.ioService.newURI("http://test.com");
           params.pm.remove(uri, "popup");
         },
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "https://test.com:12345";
           params.btnAllow.doCommand();
           is(params.tree.view.rowCount, 1, "added exception shows up in treeview");
@@ -92,7 +92,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.ALLOW_ACTION }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "https://test.com:12345";
           params.btnBlock.doCommand();
           is(params.tree.view.getCellText(0, params.nameCol), "https://test.com:12345",
@@ -105,7 +105,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.DENY_ACTION  }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "https://test.com:12345";
           params.btnAllow.doCommand();
           is(params.tree.view.getCellText(0, params.nameCol), "https://test.com:12345",
@@ -118,7 +118,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.ALLOW_ACTION }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "https://test.com:12345";
           params.btnRemove.doCommand();
           is(params.tree.view.rowCount, 0, "exception should be removed");
@@ -127,7 +127,7 @@ var testRunner = {
         observances: [{ type: "cookie", origin: "https://test.com:12345", data: "deleted" }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "localhost:12345";
           params.btnAllow.doCommand();
           is(params.tree.view.rowCount, 1, "added exception shows up in treeview");
@@ -141,7 +141,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.ALLOW_ACTION }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "localhost:12345";
           params.btnBlock.doCommand();
           is(params.tree.view.getCellText(0, params.nameCol), "http://localhost:12345",
@@ -154,7 +154,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.DENY_ACTION  }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "localhost:12345";
           params.btnAllow.doCommand();
           is(params.tree.view.getCellText(0, params.nameCol), "http://localhost:12345",
@@ -167,7 +167,7 @@ var testRunner = {
                         capability: Ci.nsIPermissionManager.ALLOW_ACTION }],
       },
       {
-        test: function(params) {
+        test(params) {
           params.url.value = "localhost:12345";
           params.btnRemove.doCommand();
           is(params.tree.view.rowCount, 0, "exception should be removed");
@@ -179,7 +179,7 @@ var testRunner = {
         expectPermObservancesDuringTestFunction: true,
         test(params) {
           for (let URL of ["http://a", "http://z", "http://b"]) {
-            let URI = params.ioService.newURI(URL, null, null);
+            let URI = params.ioService.newURI(URL);
             params.pm.add(URI, "cookie", Ci.nsIPermissionManager.ALLOW_ACTION);
           }
 
@@ -211,7 +211,7 @@ var testRunner = {
              "site should be sorted. 'a' should be third");
 
           for (let URL of ["http://a", "http://z", "http://b"]) {
-            let uri = params.ioService.newURI(URL, null, null);
+            let uri = params.ioService.newURI(URL);
             params.pm.remove(uri, "cookie");
           }
         },
@@ -220,7 +220,7 @@ var testRunner = {
 
   _currentTest: -1,
 
-  runTests: function() {
+  runTests() {
     this._currentTest++;
 
     info("Running test #" + (this._currentTest + 1) + "\n");
@@ -229,18 +229,17 @@ var testRunner = {
     p.then(function() {
       if (that._currentTest == that.tests.length - 1) {
         finish();
-      }
-      else {
+      } else {
         that.runTests();
       }
     });
   },
 
-  runCurrentTest: function(testNumber) {
+  runCurrentTest(testNumber) {
     return new Promise(function(resolve, reject) {
 
       let helperFunctions = {
-        windowLoad: function(win) {
+        windowLoad(win) {
           let doc = win.document;
           let params = {
             doc,
@@ -265,7 +264,7 @@ var testRunner = {
           };
 
           let permObserver = {
-            observe: function(aSubject, aTopic, aData) {
+            observe(aSubject, aTopic, aData) {
               if (aTopic != "perm-changed")
                 return;
 
@@ -282,7 +281,7 @@ var testRunner = {
               for (let prop of ["type", "capability"]) {
                 if (expected[prop])
                   is(permission[prop], expected[prop],
-                    "property: \"" + prop  + "\" should be equal");
+                    "property: \"" + prop + "\" should be equal");
               }
 
               if (expected.origin) {
@@ -292,10 +291,10 @@ var testRunner = {
 
               os.removeObserver(permObserver, "perm-changed");
 
-              let test = testRunner.tests[testRunner._currentTest];
-              if (!test.expectPermObservancesDuringTestFunction) {
-                if (test.cleanUp) {
-                  test.cleanUp(params);
+              let testCase = testRunner.tests[testRunner._currentTest];
+              if (!testCase.expectPermObservancesDuringTestFunction) {
+                if (testCase.cleanUp) {
+                  testCase.cleanUp(params);
                 }
 
                 gBrowser.removeCurrentTab();
@@ -314,11 +313,11 @@ var testRunner = {
           }
 
           try {
-            let test = testRunner.tests[testRunner._currentTest];
-            test.test(params);
-            if (test.expectPermObservancesDuringTestFunction) {
-              if (test.cleanUp) {
-                test.cleanUp(params);
+            let testCase = testRunner.tests[testRunner._currentTest];
+            testCase.test(params);
+            if (testCase.expectPermObservancesDuringTestFunction) {
+              if (testCase.cleanUp) {
+                testCase.cleanUp(params);
               }
 
               gBrowser.removeCurrentTab();
@@ -330,6 +329,10 @@ var testRunner = {
           }
         },
       };
+
+      registerCleanupFunction(function() {
+        Services.prefs.clearUserPref("privacy.history.custom");
+      });
 
       openPreferencesViaOpenPreferencesAPI("panePrivacy", null, {leaveOpen: true}).then(function() {
         let doc = gBrowser.contentDocument;

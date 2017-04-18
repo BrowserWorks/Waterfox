@@ -7,7 +7,7 @@
 == ico-size-3x3-8bpp.ico ico-size-3x3-8bpp.ico
 == ico-size-4x4-8bpp.ico ico-size-4x4-8bpp.ico
 == ico-size-5x5-8bpp.ico ico-size-5x5-8bpp.ico
-skip == ico-size-6x6-8bpp.ico ico-size-6x6-8bpp.ico
+== ico-size-6x6-8bpp.ico ico-size-6x6-8bpp.ico
 == ico-size-7x7-8bpp.ico ico-size-7x7-8bpp.ico
 == ico-size-8x8-8bpp.ico ico-size-8x8-8bpp.ico
 == ico-size-9x9-8bpp.ico ico-size-9x9-8bpp.ico
@@ -17,9 +17,8 @@ skip == ico-size-6x6-8bpp.ico ico-size-6x6-8bpp.ico
 == ico-size-31x31-8bpp.ico ico-size-31x31-8bpp.ico
 == ico-size-32x32-8bpp.ico ico-size-32x32-8bpp.ico
 == ico-size-33x33-8bpp.ico ico-size-33x33-8bpp.ico
-skip-if(B2G) == ico-size-256x256-8bpp.ico ico-size-256x256-8bpp.ico
-# bug 773482
-== ico-partial-transparent-8bpp.ico ico-partial-transparent-8bpp.ico
-== ico-transparent-8bpp.ico ico-transparent-8bpp.ico
-== ico-not-square-transparent-8bpp.ico ico-not-square-transparent-8bpp.ico
+== ico-size-256x256-8bpp.ico ico-size-256x256-8bpp.ico
+fails == ico-partial-transparent-8bpp.ico ico-partial-transparent-8bpp.ico
+fails == ico-transparent-8bpp.ico ico-transparent-8bpp.ico
+fails == ico-not-square-transparent-8bpp.ico ico-not-square-transparent-8bpp.ico
 

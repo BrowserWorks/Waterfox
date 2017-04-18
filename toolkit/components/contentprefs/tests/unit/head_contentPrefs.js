@@ -9,8 +9,8 @@ var Ci = Components.interfaces;
 var Cr = Components.results;
 var Cu = Components.utils;
 
-Cu.import('resource://gre/modules/Services.jsm');
-Cu.import('resource://gre/modules/ContentPrefInstance.jsm');
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/ContentPrefInstance.jsm");
 
 const CONTENT_PREFS_DB_FILENAME = "content-prefs.sqlite";
 const CONTENT_PREFS_BACKUP_DB_FILENAME = "content-prefs.sqlite.corrupt";
@@ -72,7 +72,7 @@ var ContentPrefTest = {
   // Utilities
 
   getURI: function ContentPrefTest_getURI(spec) {
-    return this._ioSvc.newURI(spec, null, null);
+    return this._ioSvc.newURI(spec);
   },
 
   /**
@@ -142,6 +142,11 @@ function exitPBMode() {
 
 ContentPrefTest.deleteDatabase();
 
+do_register_cleanup(function() {
+  ContentPrefTest.deleteDatabase();
+  ContentPrefTest.__dirSvc = null;
+});
+
 function inChildProcess() {
   var appInfo = Cc["@mozilla.org/xre/app-info;1"];
   if (!appInfo || appInfo.getService(Ci.nsIXULRuntime).processType ==
@@ -159,4 +164,3 @@ if (!inChildProcess()) {
                    getService(Ci.nsIPrefBranch);
   prefBranch.setBoolPref("browser.preferences.content.log", true);
 }
-

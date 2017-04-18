@@ -10,9 +10,14 @@ define(function (require, exports, module) {
   // ReactJS
   const React = require("devtools/client/shared/vendor/react");
   // Dependencies
-  const { createFactories, isGrip } = require("./rep-utils");
+  const {
+    createFactories,
+    isGrip,
+    wrapRender,
+  } = require("./rep-utils");
   const { Caption } = createFactories(require("./caption"));
   const { PropRep } = createFactories(require("./prop-rep"));
+  const { MODE } = require("./constants");
   // Shortcuts
   const { span } = React.DOM;
 
@@ -26,17 +31,21 @@ define(function (require, exports, module) {
 
     propTypes: {
       object: React.PropTypes.object.isRequired,
-      mode: React.PropTypes.string,
-      isInterestingProp: React.PropTypes.func
+      // @TODO Change this to Object.values once it's supported in Node's version of V8
+      mode: React.PropTypes.oneOf(Object.keys(MODE).map(key => MODE[key])),
+      isInterestingProp: React.PropTypes.func,
+      title: React.PropTypes.string,
+      objectLink: React.PropTypes.func,
     },
 
     getTitle: function (object) {
+      let title = this.props.title || object.class || "Object";
       if (this.props.objectLink) {
         return this.props.objectLink({
           object: object
-        }, object.class);
+        }, title);
       }
-      return object.class || "Object";
+      return title;
     },
 
     safePropIterator: function (object, max) {
@@ -55,7 +64,7 @@ define(function (require, exports, module) {
 
         return [Rep({
           object: object.preview.wrappedValue,
-          mode: this.props.mode || "tiny",
+          mode: this.props.mode || MODE.TINY,
           defaultRep: Grip,
         })];
       }
@@ -100,7 +109,7 @@ define(function (require, exports, module) {
         props.push(Caption({
           object: objectLink({
             object: object
-          }, `${object.ownPropertyLength - max} more…`)
+          }, `${propertiesLength - max} more…`)
         }));
       }
 
@@ -128,7 +137,7 @@ define(function (require, exports, module) {
         let value = this.getPropValue(properties[name]);
 
         props.push(PropRep(Object.assign({}, this.props, {
-          mode: "tiny",
+          mode: MODE.TINY,
           name: name,
           object: value,
           equal: ": ",
@@ -194,13 +203,13 @@ define(function (require, exports, module) {
       return value;
     },
 
-    render: function () {
+    render: wrapRender(function () {
       let object = this.props.object;
       let props = this.safePropIterator(object,
-        (this.props.mode == "long") ? 100 : 3);
+        (this.props.mode === MODE.LONG) ? 10 : 3);
 
       let objectLink = this.props.objectLink || span;
-      if (this.props.mode == "tiny") {
+      if (this.props.mode === MODE.TINY) {
         return (
           span({className: "objectBox objectBox-object"},
             this.getTitle(object),
@@ -226,7 +235,7 @@ define(function (require, exports, module) {
           }, " }")
         )
       );
-    },
+    }),
   });
 
   // Registration

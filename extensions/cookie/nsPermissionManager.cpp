@@ -29,8 +29,6 @@
 #include "nsIPrincipal.h"
 #include "nsContentUtils.h"
 #include "nsIScriptSecurityManager.h"
-#include "nsIAppsService.h"
-#include "mozIApplication.h"
 #include "nsIEffectiveTLDService.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDocument.h"
@@ -65,7 +63,7 @@ ChildProcess()
   if (IsChildProcess()) {
     ContentChild* cpc = ContentChild::GetSingleton();
     if (!cpc)
-      NS_RUNTIMEABORT("Content Process is nullptr!");
+      MOZ_CRASH("Content Process is nullptr!");
     return cpc;
   }
 
@@ -113,7 +111,7 @@ GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin)
   rv = aPrincipal->GetOriginSuffix(suffix);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mozilla::PrincipalOriginAttributes attrs;
+  mozilla::OriginAttributes attrs;
   if (!attrs.PopulateFromSuffix(suffix)) {
     return NS_ERROR_FAILURE;
   }
@@ -123,7 +121,8 @@ GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin)
   attrs.mPrivateBrowsingId = 0;
 
   // Disable userContext and firstParty isolation for permissions.
-  attrs.StripUserContextIdAndFirstPartyDomain();
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
+                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
 
   attrs.CreateSuffix(suffix);
   aOrigin.Append(suffix);
@@ -134,13 +133,14 @@ nsresult
 GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
 {
   nsAutoCString originNoSuffix;
-  mozilla::PrincipalOriginAttributes attrs;
+  mozilla::OriginAttributes attrs;
   if (!attrs.PopulateFromOrigin(aOrigin, originNoSuffix)) {
     return NS_ERROR_FAILURE;
   }
 
   // Disable userContext and firstParty isolation for permissions.
-  attrs.StripUserContextIdAndFirstPartyDomain();
+  attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
+                        mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
 
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), originNoSuffix);
@@ -154,7 +154,7 @@ GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
 nsresult
 GetPrincipal(nsIURI* aURI, uint32_t aAppId, bool aIsInIsolatedMozBrowserElement, nsIPrincipal** aPrincipal)
 {
-  mozilla::PrincipalOriginAttributes attrs(aAppId, aIsInIsolatedMozBrowserElement);
+  mozilla::OriginAttributes attrs(aAppId, aIsInIsolatedMozBrowserElement);
   nsCOMPtr<nsIPrincipal> principal = mozilla::BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
   NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
 
@@ -165,7 +165,7 @@ GetPrincipal(nsIURI* aURI, uint32_t aAppId, bool aIsInIsolatedMozBrowserElement,
 nsresult
 GetPrincipal(nsIURI* aURI, nsIPrincipal** aPrincipal)
 {
-  mozilla::PrincipalOriginAttributes attrs;
+  mozilla::OriginAttributes attrs;
   nsCOMPtr<nsIPrincipal> principal = mozilla::BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
   NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
 
@@ -606,9 +606,17 @@ IsExpandedPrincipal(nsIPrincipal* aPrincipal)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-nsPermissionManager::PermissionKey::PermissionKey(nsIPrincipal* aPrincipal)
+nsPermissionManager::PermissionKey*
+nsPermissionManager::PermissionKey::CreateFromPrincipal(nsIPrincipal* aPrincipal,
+                                                        nsresult& aResult)
 {
-  MOZ_ALWAYS_SUCCEEDS(GetOriginFromPrincipal(aPrincipal, mOrigin));
+  nsAutoCString origin;
+  aResult = GetOriginFromPrincipal(aPrincipal, origin);
+  if (NS_WARN_IF(NS_FAILED(aResult))) {
+    return nullptr;
+  }
+
+  return new PermissionKey(origin);
 }
 
 /**
@@ -1575,12 +1583,6 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
     ContentParent::GetAll(cplist);
     for (uint32_t i = 0; i < cplist.Length(); ++i) {
       ContentParent* cp = cplist[i];
-      // On platforms where we use a preallocated template process we don't
-      // want to notify this process about session specific permissions so
-      // new tabs or apps created on it won't inherit the session permissions.
-      if (cp->IsPreallocated() &&
-          aExpireType == nsIPermissionManager::EXPIRE_SESSION)
-        continue;
       if (cp->NeedsPermissionsUpdate())
         Unused << cp->SendAddPermission(permission);
     }
@@ -1592,7 +1594,13 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
 
   // When an entry already exists, PutEntry will return that, instead
   // of adding a new one
-  RefPtr<PermissionKey> key = new PermissionKey(aPrincipal);
+  RefPtr<PermissionKey> key =
+    PermissionKey::CreateFromPrincipal(aPrincipal, rv);
+  if (!key) {
+    MOZ_ASSERT(NS_FAILED(rv));
+    return rv;
+  }
+
   PermissionHashKey* entry = mPermissionTable.PutEntry(key);
   if (!entry) return NS_ERROR_FAILURE;
   if (!entry->GetKey()) {
@@ -2014,6 +2022,19 @@ nsPermissionManager::TestPermissionFromPrincipal(nsIPrincipal* aPrincipal,
 }
 
 NS_IMETHODIMP
+nsPermissionManager::GetPermissionObjectForURI(nsIURI* aURI,
+                                               const char* aType,
+                                               bool aExactHostMatch,
+                                               nsIPermission** aResult)
+{
+  nsCOMPtr<nsIPrincipal> principal;
+  nsresult rv = GetPrincipal(aURI, getter_AddRefs(principal));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return GetPermissionObject(principal, aType, aExactHostMatch, aResult);
+}
+
+NS_IMETHODIMP
 nsPermissionManager::GetPermissionObject(nsIPrincipal* aPrincipal,
                                          const char* aType,
                                          bool aExactHostMatch,
@@ -2141,10 +2162,14 @@ nsPermissionManager::GetPermissionHashKey(nsIPrincipal* aPrincipal,
                                           uint32_t aType,
                                           bool aExactHostMatch)
 {
-  PermissionHashKey* entry = nullptr;
+  nsresult rv;
+  RefPtr<PermissionKey> key =
+    PermissionKey::CreateFromPrincipal(aPrincipal, rv);
+  if (!key) {
+    return nullptr;
+  }
 
-  RefPtr<PermissionKey> key = new PermissionKey(aPrincipal);
-  entry = mPermissionTable.GetEntry(key);
+  PermissionHashKey* entry = mPermissionTable.GetEntry(key);
 
   if (entry) {
     PermissionEntry permEntry = entry->GetPermission(aType);
@@ -2198,11 +2223,11 @@ nsPermissionManager::GetPermissionHashKey(nsIPrincipal* aPrincipal,
     }
 
     // Copy the attributes over
-    mozilla::PrincipalOriginAttributes attrs =
-      mozilla::BasePrincipal::Cast(aPrincipal)->OriginAttributesRef();
+    mozilla::OriginAttributes attrs = aPrincipal->OriginAttributesRef();
 
     // Disable userContext and firstParty isolation for permissions.
-    attrs.StripUserContextIdAndFirstPartyDomain();
+    attrs.StripAttributes(mozilla::OriginAttributes::STRIP_USER_CONTEXT_ID |
+                          mozilla::OriginAttributes::STRIP_FIRST_PARTY_DOMAIN);
 
     nsCOMPtr<nsIPrincipal> principal =
       mozilla::BasePrincipal::CreateCodebasePrincipal(newURI, attrs);
@@ -2260,7 +2285,12 @@ NS_IMETHODIMP nsPermissionManager::GetAllForURI(nsIURI* aURI, nsISimpleEnumerato
   nsresult rv = GetPrincipal(aURI, getter_AddRefs(principal));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  RefPtr<PermissionKey> key = new PermissionKey(principal);
+  RefPtr<PermissionKey> key = PermissionKey::CreateFromPrincipal(principal, rv);
+  if (!key) {
+    MOZ_ASSERT(NS_FAILED(rv));
+    return rv;
+  }
+
   PermissionHashKey* entry = mPermissionTable.GetEntry(key);
 
   if (entry) {
@@ -2395,7 +2425,7 @@ nsPermissionManager::RemovePermissionsWithAttributes(mozilla::OriginAttributesPa
       continue;
     }
 
-    if (!aPattern.Matches(mozilla::BasePrincipal::Cast(principal)->OriginAttributesRef())) {
+    if (!aPattern.Matches(principal->OriginAttributesRef())) {
       continue;
     }
 

@@ -73,36 +73,35 @@ this.Log = {
     Log.repository = value;
   },
 
-  LogMessage: LogMessage,
-  Logger: Logger,
-  LoggerRepository: LoggerRepository,
+  LogMessage,
+  Logger,
+  LoggerRepository,
 
-  Formatter: Formatter,
-  BasicFormatter: BasicFormatter,
-  MessageOnlyFormatter: MessageOnlyFormatter,
-  StructuredFormatter: StructuredFormatter,
+  Formatter,
+  BasicFormatter,
+  MessageOnlyFormatter,
+  StructuredFormatter,
 
-  Appender: Appender,
-  DumpAppender: DumpAppender,
-  ConsoleAppender: ConsoleAppender,
-  StorageStreamAppender: StorageStreamAppender,
+  Appender,
+  DumpAppender,
+  ConsoleAppender,
+  StorageStreamAppender,
 
-  FileAppender: FileAppender,
-  BoundedFileAppender: BoundedFileAppender,
+  FileAppender,
+  BoundedFileAppender,
 
-  ParameterFormatter: ParameterFormatter,
+  ParameterFormatter,
   // Logging helper:
   // let logger = Log.repository.getLogger("foo");
   // logger.info(Log.enumerateInterfaces(someObject).join(","));
   enumerateInterfaces: function Log_enumerateInterfaces(aObject) {
     let interfaces = [];
 
-    for (i in Ci) {
+    for (let i in Ci) {
       try {
         aObject.QueryInterface(Ci[i]);
         interfaces.push(i);
-      }
-      catch (ex) {}
+      } catch (ex) {}
     }
 
     return interfaces;
@@ -111,17 +110,16 @@ this.Log = {
   // Logging helper:
   // let logger = Log.repository.getLogger("foo");
   // logger.info(Log.enumerateProperties(someObject).join(","));
-  enumerateProperties: function (aObject, aExcludeComplexTypes) {
+  enumerateProperties(aObject, aExcludeComplexTypes) {
     let properties = [];
 
-    for (p in aObject) {
+    for (let p in aObject) {
       try {
         if (aExcludeComplexTypes &&
             (typeof(aObject[p]) == "object" || typeof(aObject[p]) == "function"))
           continue;
         properties.push(p + " = " + aObject[p]);
-      }
-      catch (ex) {
+      } catch (ex) {
         properties.push(p + " = " + ex);
       }
     }
@@ -152,8 +150,7 @@ this.Log = {
     }
     if (e instanceof Ci.nsIException) {
       return e.toString() + " " + Log.stackTrace(e);
-    }
-    else if (isError(e)) {
+    } else if (isError(e)) {
       return Log._formatError(e);
     }
     // else
@@ -345,7 +342,7 @@ Logger.prototype = {
    *          at the indicated level. If _message is included as a key, the
    *          value is used as the descriptive text for the message.
    */
-  logStructured: function (action, params) {
+  logStructured(action, params) {
     if (!action) {
       throw "An action is required when logging a structured message.";
     }
@@ -371,7 +368,7 @@ Logger.prototype = {
     this.log(level, params._message, params);
   },
 
-  log: function (level, string, params) {
+  log(level, string, params) {
     if (this.level > level)
       return;
 
@@ -390,25 +387,25 @@ Logger.prototype = {
     }
   },
 
-  fatal: function (string, params) {
+  fatal(string, params) {
     this.log(Log.Level.Fatal, string, params);
   },
-  error: function (string, params) {
+  error(string, params) {
     this.log(Log.Level.Error, string, params);
   },
-  warn: function (string, params) {
+  warn(string, params) {
     this.log(Log.Level.Warn, string, params);
   },
-  info: function (string, params) {
+  info(string, params) {
     this.log(Log.Level.Info, string, params);
   },
-  config: function (string, params) {
+  config(string, params) {
     this.log(Log.Level.Config, string, params);
   },
-  debug: function (string, params) {
+  debug(string, params) {
     this.log(Log.Level.Debug, string, params);
   },
-  trace: function (string, params) {
+  trace(string, params) {
     this.log(Log.Level.Trace, string, params);
   }
 };
@@ -435,7 +432,7 @@ LoggerRepository.prototype = {
   },
 
   _updateParents: function LogRep__updateParents(name) {
-    let pieces = name.split('.');
+    let pieces = name.split(".");
     let cur, parent;
 
     // find the closest parent
@@ -443,7 +440,7 @@ LoggerRepository.prototype = {
     // there in this._loggers
     for (let i = 0; i < pieces.length - 1; i++) {
       if (cur)
-        cur += '.' + pieces[i];
+        cur += "." + pieces[i];
       else
         cur = pieces[i];
       if (cur in this._loggers)
@@ -472,7 +469,7 @@ LoggerRepository.prototype = {
    *
    * @return Logger
    */
-  getLogger: function (name) {
+  getLogger(name) {
     if (name in this._loggers)
       return this._loggers[name];
     this._loggers[name] = new Logger(name, this);
@@ -497,7 +494,7 @@ LoggerRepository.prototype = {
    * @param prefix
    *        (string) The string to prefix each logged message with.
    */
-  getLoggerWithMessagePrefix: function (name, prefix) {
+  getLoggerWithMessagePrefix(name, prefix) {
     let log = this.getLogger(name);
 
     let proxy = Object.create(log);
@@ -536,14 +533,14 @@ BasicFormatter.prototype = {
    * into the text, format the entire object and append that
    * to the message.
    */
-  formatText: function (message) {
+  formatText(message) {
     let params = message.params;
     if (typeof(params) == "undefined") {
       return message.message || "";
     }
     // Defensive handling of non-object params
     // We could add a special case for NSRESULT values here...
-    let pIsObject = (typeof(params) == 'object' || typeof(params) == 'function');
+    let pIsObject = (typeof(params) == "object" || typeof(params) == "function");
 
     // if we have params, try and find substitutions.
     if (this.parameterFormatter) {
@@ -560,7 +557,7 @@ BasicFormatter.prototype = {
               subDone = true;
               return this.parameterFormatter.format(message.params[sub]);
             }
-            return '${' + sub + '}';
+            return "${" + sub + "}";
           }
           // ${} means use the entire params object.
           subDone = true;
@@ -574,7 +571,7 @@ BasicFormatter.prototype = {
           textParts.push(rest);
         }
       }
-      return textParts.join(': ');
+      return textParts.join(": ");
     }
     return undefined;
   },
@@ -595,7 +592,7 @@ function MessageOnlyFormatter() {
 MessageOnlyFormatter.prototype = Object.freeze({
   __proto__: Formatter.prototype,
 
-  format: function (message) {
+  format(message) {
     return message.message;
   },
 });
@@ -607,7 +604,7 @@ function StructuredFormatter() { }
 StructuredFormatter.prototype = {
   __proto__: Formatter.prototype,
 
-  format: function (logMessage) {
+  format(logMessage) {
     let output = {
       _time: logMessage.time,
       _namespace: logMessage.loggerName,
@@ -634,7 +631,7 @@ StructuredFormatter.prototype = {
  * Test an object to see if it is a Mozilla JS Error.
  */
 function isError(aObj) {
-  return (aObj && typeof(aObj) == 'object' && "name" in aObj && "message" in aObj &&
+  return (aObj && typeof(aObj) == "object" && "name" in aObj && "message" in aObj &&
           "fileName" in aObj && "lineNumber" in aObj && "stack" in aObj);
 }
 
@@ -648,7 +645,7 @@ function ParameterFormatter() {
   this._name = "ParameterFormatter"
 }
 ParameterFormatter.prototype = {
-  format: function(ob) {
+  format(ob) {
     try {
       if (ob === undefined) {
         return "undefined";
@@ -663,8 +660,7 @@ ParameterFormatter.prototype = {
       }
       if (ob instanceof Ci.nsIException) {
         return ob.toString() + " " + Log.stackTrace(ob);
-      }
-      else if (isError(ob)) {
+      } else if (isError(ob)) {
         return Log._formatError(ob);
       }
       // Just JSONify it. Filter out our internal fields and those the caller has
@@ -675,8 +671,7 @@ ParameterFormatter.prototype = {
         }
         return val;
       });
-    }
-    catch (e) {
+    } catch (e) {
       dumpError("Exception trying to format object for log message: " + Log.exceptionStr(e));
     }
     // Fancy formatting failed. Just toSource() it - but even this may fail!
@@ -699,7 +694,7 @@ ParameterFormatter.prototype = {
 
 function Appender(formatter) {
   this._name = "Appender";
-  this._formatter = formatter? formatter : new BasicFormatter();
+  this._formatter = formatter ? formatter : new BasicFormatter();
 }
 Appender.prototype = {
   level: Log.Level.All,
@@ -828,7 +823,7 @@ StorageStreamAppender.prototype = {
     this._ss = null;
   },
 
-  doAppend: function (formatted) {
+  doAppend(formatted) {
     if (!formatted) {
       return;
     }
@@ -868,7 +863,7 @@ function FileAppender(path, formatter) {
 FileAppender.prototype = {
   __proto__: Appender.prototype,
 
-  _openFile: function () {
+  _openFile() {
     return Task.spawn(function* _openFile() {
       try {
         this._file = yield OS.File.open(this._path,
@@ -883,7 +878,7 @@ FileAppender.prototype = {
     }.bind(this));
   },
 
-  _getFile: function() {
+  _getFile() {
     if (!this._fileReadyPromise) {
       this._fileReadyPromise = this._openFile();
     }
@@ -891,7 +886,7 @@ FileAppender.prototype = {
     return this._fileReadyPromise;
   },
 
-  doAppend: function (formatted) {
+  doAppend(formatted) {
     let array = this._encoder.encode(formatted + "\n");
     if (this._file) {
       this._lastWritePromise = this._file.write(array);
@@ -906,7 +901,7 @@ FileAppender.prototype = {
     }
   },
 
-  reset: function () {
+  reset() {
     let fileClosePromise = this._file.close();
     return fileClosePromise.then(_ => {
       this._file = null;
@@ -922,7 +917,7 @@ FileAppender.prototype = {
  * (as defined by formatted.length) exceeds maxSize, existing messages
  * will be discarded, and subsequent writes will be appended to a new log file.
  */
-function BoundedFileAppender(path, formatter, maxSize=2*ONE_MEGABYTE) {
+function BoundedFileAppender(path, formatter, maxSize = 2 * ONE_MEGABYTE) {
   FileAppender.call(this, path, formatter);
   this._name = "BoundedFileAppender";
   this._size = 0;
@@ -933,7 +928,7 @@ function BoundedFileAppender(path, formatter, maxSize=2*ONE_MEGABYTE) {
 BoundedFileAppender.prototype = {
   __proto__: FileAppender.prototype,
 
-  doAppend: function (formatted) {
+  doAppend(formatted) {
     if (!this._removeFilePromise) {
       if (this._size < this._maxSize) {
         this._size += formatted.length;
@@ -948,7 +943,7 @@ BoundedFileAppender.prototype = {
     return undefined;
   },
 
-  reset: function () {
+  reset() {
     let fileClosePromise;
     if (this._fileReadyPromise) {
       // An attempt to open the file may still be in progress.
@@ -966,4 +961,3 @@ BoundedFileAppender.prototype = {
     });
   }
 };
-

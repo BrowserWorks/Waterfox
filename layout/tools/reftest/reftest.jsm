@@ -55,6 +55,7 @@ const FOCUS_FILTER_ALL_TESTS = "all";
 const FOCUS_FILTER_NEEDS_FOCUS_TESTS = "needs-focus";
 const FOCUS_FILTER_NON_NEEDS_FOCUS_TESTS = "non-needs-focus";
 var gFocusFilterMode = FOCUS_FILTER_ALL_TESTS;
+var gCompareStyloToGecko = false;
 
 // "<!--CLEAR-->"
 const BLANK_URL_FOR_CLEARING = "data:text/html;charset=UTF-8,%3C%21%2D%2DCLEAR%2D%2D%3E";
@@ -62,7 +63,6 @@ const BLANK_URL_FOR_CLEARING = "data:text/html;charset=UTF-8,%3C%21%2D%2DCLEAR%2
 var gBrowser;
 // Are we testing web content loaded in a separate process?
 var gBrowserIsRemote;           // bool
-var gB2GisMulet;                // bool
 // Are we using <iframe mozbrowser>?
 var gBrowserIsIframe;           // bool
 var gBrowserMessageManager;
@@ -222,8 +222,9 @@ function LogWidgetLayersFailure()
 
 function AllocateCanvas()
 {
-    if (gRecycledCanvases.length > 0)
+    if (gRecycledCanvases.length > 0) {
         return gRecycledCanvases.shift();
+    }
 
     var canvas = gContainingWindow.document.createElementNS(XHTML_NS, "canvas");
     var r = gBrowser.getBoundingClientRect();
@@ -236,8 +237,9 @@ function AllocateCanvas()
 function ReleaseCanvas(canvas)
 {
     // store a maximum of 2 canvases, if we're not caching
-    if (!gNoCanvasCache || gRecycledCanvases.length < 2)
+    if (!gNoCanvasCache || gRecycledCanvases.length < 2) {
         gRecycledCanvases.push(canvas);
+    }
 }
 
 function IDForEventTarget(event)
@@ -282,12 +284,6 @@ this.OnRefTestLoad = function OnRefTestLoad(win)
     }
 
     try {
-        gB2GisMulet = prefs.getBoolPref("b2g.is_mulet");
-    } catch (e) {
-        gB2GisMulet = false;
-    }
-
-    try {
       gBrowserIsIframe = prefs.getBoolPref("reftest.browser.iframe.enabled");
     } catch (e) {
       gBrowserIsIframe = false;
@@ -309,24 +305,20 @@ this.OnRefTestLoad = function OnRefTestLoad(win)
     if (gBrowserIsIframe) {
       gBrowser = gContainingWindow.document.createElementNS(XHTML_NS, "iframe");
       gBrowser.setAttribute("mozbrowser", "");
-      gBrowser.setAttribute("mozapp", prefs.getCharPref("b2g.system_manifest_url"));
     } else {
       gBrowser = gContainingWindow.document.createElementNS(XUL_NS, "xul:browser");
+      gBrowser.setAttribute("class", "lightweight");
     }
     gBrowser.setAttribute("id", "browser");
-    gBrowser.setAttribute("type", "content-primary");
+    gBrowser.setAttribute("type", "content");
+    gBrowser.setAttribute("primary", "true");
     gBrowser.setAttribute("remote", gBrowserIsRemote ? "true" : "false");
     // Make sure the browser element is exactly 800x1000, no matter
     // what size our window is
     gBrowser.setAttribute("style", "padding: 0px; margin: 0px; border:none; min-width: 800px; min-height: 1000px; max-width: 800px; max-height: 1000px");
 
     if (Services.appinfo.OS == "Android") {
-      let doc;
-      if (Services.appinfo.widgetToolkit == "gonk") {
-        doc = gContainingWindow.document.getElementsByTagName("html")[0];
-      } else {
-        doc = gContainingWindow.document.getElementById('main-window');
-      }
+      let doc = gContainingWindow.document.getElementById('main-window');
       while (doc.hasChildNodes()) {
         doc.removeChild(doc.firstChild);
       }
@@ -408,6 +400,12 @@ function InitAndStartRefTests()
     try {
         gFocusFilterMode = prefs.getCharPref("reftest.focusFilterMode");
     } catch(e) {}
+
+#ifdef MOZ_STYLO
+    try {
+        gCompareStyloToGecko = prefs.getBoolPref("reftest.compareStyloToGecko");
+    } catch(e) {}
+#endif
 
     gWindowUtils = gContainingWindow.QueryInterface(CI.nsIInterfaceRequestor).getInterface(CI.nsIDOMWindowUtils);
     if (!gWindowUtils || !gWindowUtils.compareCanvases)
@@ -661,6 +659,7 @@ function BuildConditionSandbox(aURL) {
     var contentBackend = readGfxInfo(info, "AzureContentBackend");
     var canvasAccelerated = readGfxInfo(info, "AzureCanvasAccelerated");
 
+    sandbox.gpuProcess = gfxInfo.usingGPUProcess;
     sandbox.azureCairo = canvasBackend == "cairo";
     sandbox.azureQuartz = canvasBackend == "quartz";
     sandbox.azureSkia = canvasBackend == "skia";
@@ -682,8 +681,7 @@ function BuildConditionSandbox(aURL) {
       gWindowUtils.layerManagerRemote == true;
 
     // Shortcuts for widget toolkits.
-    sandbox.B2G = xr.widgetToolkit == "gonk";
-    sandbox.Android = xr.OS == "Android" && !sandbox.B2G;
+    sandbox.Android = xr.OS == "Android";
     sandbox.cocoaWidget = xr.widgetToolkit == "cocoa";
     sandbox.gtkWidget = xr.widgetToolkit == "gtk2"
                         || xr.widgetToolkit == "gtk3";
@@ -711,6 +709,12 @@ function BuildConditionSandbox(aURL) {
     sandbox.webrtc = true;
 #else
     sandbox.webrtc = false;
+#endif
+
+#ifdef MOZ_STYLO
+    sandbox.stylo = true;
+#else
+    sandbox.stylo = false;
 #endif
 
     var hh = CC[NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX + "http"].
@@ -744,6 +748,11 @@ function BuildConditionSandbox(aURL) {
     } catch (e) {
         sandbox.nativeThemePref = true;
     }
+    try {
+        sandbox.gpuProcessForceEnabled = prefs.getBoolPref("layers.gpu-process.force-enabled");
+    } catch (e) {
+        sandbox.gpuProcessForceEnabled = false;
+    }
 
     sandbox.prefs = CU.cloneInto({
         getBoolPref: function(p) { return prefs.getBoolPref(p); },
@@ -753,7 +762,6 @@ function BuildConditionSandbox(aURL) {
     // Tests shouldn't care about this except for when they need to
     // crash the content process
     sandbox.browserIsRemote = gBrowserIsRemote;
-    sandbox.Mulet = gB2GisMulet;
 
     try {
         sandbox.asyncPan = gContainingWindow.document.docShell.asyncPanZoomEnabled;
@@ -800,7 +808,7 @@ function AddPrefSettings(aWhere, aPrefName, aPrefValExpression, aSandbox, aTestP
 
 function ReadTopManifest(aFileURL, aFilter)
 {
-    var url = gIOService.newURI(aFileURL, null, null);
+    var url = gIOService.newURI(aFileURL);
     if (!url)
         throw "Expected a file or http URL for the manifest.";
     ReadManifest(url, EXPECTED_PASS, aFilter);
@@ -1166,6 +1174,10 @@ function AddURIUseCount(uri)
 
 function BuildUseCounts()
 {
+    if (gNoCanvasCache) {
+        return;
+    }
+
     gURIUseCounts = {};
     for (var i = 0; i < gURLs.length; ++i) {
         var url = gURLs[i];
@@ -1204,7 +1216,7 @@ function ServeFiles(manifestPrincipal, depth, aURL, files)
                      .getService(CI.nsIScriptSecurityManager);
 
     var testbase = gIOService.newURI("http://localhost:" + gHttpServerPort +
-                                     path + dirPath, null, null);
+                                     path + dirPath);
 
     // Give the testbase URI access to XUL and XBL
     Services.perms.add(testbase, "allowXULXBL", Services.perms.ALLOW_ACTION);
@@ -1305,10 +1317,21 @@ function StartCurrentURI(aState)
 
     RestoreChangedPreferences();
 
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+        getService(Components.interfaces.nsIPrefBranch);
+
+    if (gCompareStyloToGecko) {
+        if (gState == 2){
+            logger.info("Disabling Servo-backed style system");
+            prefs.setBoolPref('layout.css.servo.enabled', false);
+        } else {
+            logger.info("Enabling Servo-backed style system");
+            prefs.setBoolPref('layout.css.servo.enabled', true);
+        }
+    }
+
     var prefSettings = gURLs[0]["prefSettings" + aState];
     if (prefSettings.length > 0) {
-        var prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                    getService(Components.interfaces.nsIPrefBranch);
         var badPref = undefined;
         try {
             prefSettings.forEach(function(ps) {
@@ -1427,7 +1450,7 @@ function UpdateCanvasCache(url, canvas)
 
     --gURIUseCounts[spec];
 
-    if (gNoCanvasCache || gURIUseCounts[spec] == 0) {
+    if (gURIUseCounts[spec] == 0) {
         ReleaseCanvas(canvas);
         delete gURICanvases[spec];
     } else if (gURIUseCounts[spec] > 0) {
@@ -1737,11 +1760,16 @@ function RecordResult(testRunTime, errorMsg, scriptResults)
                 }
                 logger.testEnd(gURLs[0].identifier, output.s[0], output.s[1], message, null, extra);
 
-                if (gURLs[0].prefSettings1.length == 0) {
-                    UpdateCanvasCache(gURLs[0].url1, gCanvas1);
-                }
-                if (gURLs[0].prefSettings2.length == 0) {
-                    UpdateCanvasCache(gURLs[0].url2, gCanvas2);
+                if (gNoCanvasCache) {
+                    ReleaseCanvas(gCanvas1);
+                    ReleaseCanvas(gCanvas2);
+                } else {
+                    if (gURLs[0].prefSettings1.length == 0) {
+                        UpdateCanvasCache(gURLs[0].url1, gCanvas1);
+                    }
+                    if (gURLs[0].prefSettings2.length == 0) {
+                        UpdateCanvasCache(gURLs[0].url2, gCanvas2);
+                    }
                 }
             }
 
@@ -1849,28 +1877,7 @@ function DoAssertionCheck(numAsserts)
         var minAsserts = gURLs[0].minAsserts;
         var maxAsserts = gURLs[0].maxAsserts;
 
-        var expectedAssertions = "expected " + minAsserts;
-        if (minAsserts != maxAsserts) {
-            expectedAssertions += " to " + maxAsserts;
-        }
-        expectedAssertions += " assertions";
-
-        if (numAsserts < minAsserts) {
-            ++gTestResults.AssertionUnexpectedFixed;
-            gDumpFn("REFTEST TEST-UNEXPECTED-PASS | " + gURLs[0].prettyPath +
-                    " | assertion count " + numAsserts + " is less than " +
-                       expectedAssertions + "\n");
-        } else if (numAsserts > maxAsserts) {
-            ++gTestResults.AssertionUnexpected;
-            gDumpFn("REFTEST TEST-UNEXPECTED-FAIL | " + gURLs[0].prettyPath +
-                    " | assertion count " + numAsserts + " is more than " +
-                       expectedAssertions + "\n");
-        } else if (numAsserts != 0) {
-            ++gTestResults.AssertionKnown;
-            gDumpFn("REFTEST TEST-KNOWN-FAIL | " + gURLs[0].prettyPath +
-                    "assertion count " + numAsserts + " matches " +
-                    expectedAssertions + "\n");
-        }
+        logger.assertionCount(gCurrentURL, numAsserts, minAsserts, maxAsserts);
     }
 
     if (gURLs[0].chaosMode) {

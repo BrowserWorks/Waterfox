@@ -42,9 +42,9 @@ session.Timeouts = class {
 
   toJSON () {
     return {
-      "implicit": this.implicit,
-      "page load": this.pageLoad,
-      "script": this.script,
+      implicit: this.implicit,
+      pageLoad: this.pageLoad,
+      script: this.script,
     };
   }
 
@@ -53,23 +53,21 @@ session.Timeouts = class {
     let t = new session.Timeouts();
 
     for (let [typ, ms] of Object.entries(json)) {
-      assert.positiveInteger(ms);
-
       switch (typ) {
         case "implicit":
-          t.implicit = ms;
+          t.implicit = assert.positiveInteger(ms);
           break;
 
         case "script":
-          t.script = ms;
+          t.script = assert.positiveInteger(ms);
           break;
 
-        case "page load":
-          t.pageLoad = ms;
+        case "pageLoad":
+          t.pageLoad = assert.positiveInteger(ms);
           break;
 
         default:
-          throw new InvalidArgumentError();
+          throw new InvalidArgumentError("Unrecognised timeout: " + typ);
       }
     }
 

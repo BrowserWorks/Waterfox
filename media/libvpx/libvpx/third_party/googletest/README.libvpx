@@ -1,0 +1,21 @@
+URL: http://code.google.com/p/googletest/
+Version: 1.7.0
+License: BSD
+License File: COPYING
+
+Description:
+Google's framework for writing C++ tests on a variety of platforms
+(Linux, Mac OS X, Windows, Windows CE, Symbian, etc).  Based on the
+xUnit architecture.  Supports automatic test discovery, a rich set of
+assertions, user-defined assertions, death tests, fatal and non-fatal
+failures, various options for running the tests, and XML test report
+generation.
+
+Local Modifications:
+- Removed unused declarations of kPathSeparatorString to have warning
+  free build.
+- Added GTEST_ATTRIBUTE_UNUSED_ to test registering dummies in TEST_P
+  and INSTANTIATE_TEST_CASE_P to remove warnings about unused variables
+  under GCC 5.
+- Only define g_in_fast_death_test_child for non-Windows builds; quiets an
+  unused variable warning.

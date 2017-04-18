@@ -104,8 +104,6 @@ FontFaceSet::FontFaceSet(nsPIDOMWindowInner* aWindow, nsIDocument* aDocument)
   , mHasLoadingFontFacesIsDirty(false)
   , mDelayedLoadCheck(false)
 {
-  MOZ_COUNT_CTOR(FontFaceSet);
-
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aWindow);
 
   // If the pref is not set, don't create the Promise (which the page wouldn't
@@ -127,8 +125,6 @@ FontFaceSet::FontFaceSet(nsPIDOMWindowInner* aWindow, nsIDocument* aDocument)
 
 FontFaceSet::~FontFaceSet()
 {
-  MOZ_COUNT_DTOR(FontFaceSet);
-
   Disconnect();
   for (auto it = mLoaders.Iter(); !it.Done(); it.Next()) {
     it.Get()->GetKey()->Cancel();
@@ -1264,7 +1260,7 @@ FontFaceSet::LogMessage(gfxUserFontEntry* aUserFontEntry,
   if (rule) {
     rv = rule->GetCssText(text);
     NS_ENSURE_SUCCESS(rv, rv);
-    CSSStyleSheet* sheet = rule->GetStyleSheet();
+    StyleSheet* sheet = rule->GetStyleSheet();
     // if the style sheet is removed while the font is loading can be null
     if (sheet) {
       nsCString spec = sheet->GetSheetURI()->GetSpecOrDefault();

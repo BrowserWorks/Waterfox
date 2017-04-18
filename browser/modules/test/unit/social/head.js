@@ -28,7 +28,7 @@ const MANIFEST_PREFS = Services.prefs.getBranch("social.manifest.");
 // initApp below).
 const gProfD = do_get_profile();
 
-function createAppInfo(ID, name, version, platformVersion="1.0") {
+function createAppInfo(ID, name, version, platformVersion = "1.0") {
   let tmp = {};
   Cu.import("resource://testing-common/AppInfo.jsm", tmp);
   tmp.updateAppInfo({
@@ -88,7 +88,7 @@ function do_initialize_social(enabledOnStartup, cb) {
 
   if (enabledOnStartup) {
     // set prefs before initializing social
-    manifests.forEach(function (manifest) {
+    manifests.forEach(function(manifest) {
       setManifestPref(manifest);
     });
     // Set both providers active and flag the first one as "current"
@@ -102,7 +102,7 @@ function do_initialize_social(enabledOnStartup, cb) {
                                    Ci.nsISupportsString, activeVal);
 
     do_register_cleanup(function() {
-      manifests.forEach(function (manifest) {
+      manifests.forEach(function(manifest) {
         Services.prefs.clearUserPref("social.manifest." + manifest.origin);
       });
       Services.prefs.clearUserPref("social.activeProviders");
@@ -132,7 +132,7 @@ function AsyncRunner() {
 
   this._callbacks = {
     done: do_test_finished,
-    error: function (err) {
+    error(err) {
       // xpcshell test functions like do_check_eq throw NS_ERROR_ABORT on
       // failure.  Ignore those so they aren't rethrown here.
       if (err !== Cr.NS_ERROR_ABORT) {
@@ -143,7 +143,7 @@ function AsyncRunner() {
         do_throw(err);
       }
     },
-    consoleError: function (scriptErr) {
+    consoleError(scriptErr) {
       // Try to ensure the error is related to the test.
       let filename = scriptErr.sourceName || scriptErr.toString() || "";
       if (filename.indexOf("/toolkit/components/social/") >= 0)
@@ -179,8 +179,7 @@ AsyncRunner.prototype = {
         this.next();
         return;
       }
-    }
-    catch (err) {
+    } catch (err) {
       this._callbacks.error(err);
     }
 
@@ -202,8 +201,7 @@ AsyncRunner.prototype = {
 
   observe: function observe(msg) {
     if (msg instanceof Ci.nsIScriptError &&
-        !(msg.flags & Ci.nsIScriptError.warningFlag))
-    {
+        !(msg.flags & Ci.nsIScriptError.warningFlag)) {
       this._callbacks.consoleError(msg);
     }
   },

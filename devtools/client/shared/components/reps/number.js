@@ -11,6 +11,8 @@ define(function (require, exports, module) {
   // Dependencies
   const React = require("devtools/client/shared/vendor/react");
 
+  const { wrapRender } = require("./rep-utils");
+
   // Shortcuts
   const { span } = React.DOM;
 
@@ -20,6 +22,13 @@ define(function (require, exports, module) {
   const Number = React.createClass({
     displayName: "Number",
 
+    propTypes: {
+      object: React.PropTypes.oneOfType([
+        React.PropTypes.object,
+        React.PropTypes.number,
+      ]).isRequired
+    },
+
     stringify: function (object) {
       let isNegativeZero = Object.is(object, -0) ||
         (object.type && object.type == "-0");
@@ -27,7 +36,7 @@ define(function (require, exports, module) {
       return (isNegativeZero ? "-0" : String(object));
     },
 
-    render: function () {
+    render: wrapRender(function () {
       let value = this.props.object;
 
       return (
@@ -35,7 +44,7 @@ define(function (require, exports, module) {
           this.stringify(value)
         )
       );
-    }
+    })
   });
 
   function supportsObject(object, type) {

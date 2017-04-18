@@ -730,13 +730,18 @@ class GCRuntime
 #endif // DEBUG
 
     bool isInsideUnsafeRegion() { return inUnsafeRegion != 0; }
-    void enterUnsafeRegion() { ++inUnsafeRegion; }
+    void enterUnsafeRegion() {
+        MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt));
+        ++inUnsafeRegion;
+    }
     void leaveUnsafeRegion() {
+        MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt));
         MOZ_ASSERT(inUnsafeRegion > 0);
         --inUnsafeRegion;
     }
 
     void verifyIsSafeToGC() {
+        MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt));
         MOZ_DIAGNOSTIC_ASSERT(!isInsideUnsafeRegion(),
                               "[AutoAssertNoGC] possible GC in GC-unsafe region");
     }
@@ -788,14 +793,6 @@ class GCRuntime
     void callDoCycleCollectionCallback(JSContext* cx);
 
     void setFullCompartmentChecks(bool enable);
-
-    bool isManipulatingDeadZones() { return manipulatingDeadZones; }
-    void setManipulatingDeadZones(bool value) { manipulatingDeadZones = value; }
-    unsigned objectsMarkedInDeadZonesCount() { return objectsMarkedInDeadZones; }
-    void incObjectsMarkedInDeadZone() {
-        MOZ_ASSERT(manipulatingDeadZones);
-        ++objectsMarkedInDeadZones;
-    }
 
     JS::Zone* getCurrentZoneGroup() { return currentZoneGroup; }
     void setFoundBlackGrayEdges(TenuredCell& target) {
@@ -930,7 +927,8 @@ class GCRuntime
 
     void requestMajorGC(JS::gcreason::Reason reason);
     SliceBudget defaultBudget(JS::gcreason::Reason reason, int64_t millis);
-    void budgetIncrementalGC(SliceBudget& budget, AutoLockForExclusiveAccess& lock);
+    void budgetIncrementalGC(JS::gcreason::Reason reason, SliceBudget& budget,
+                             AutoLockForExclusiveAccess& lock);
     void resetIncrementalGC(AbortReason reason, AutoLockForExclusiveAccess& lock);
 
     // Assert if the system state is such that we should never
@@ -945,6 +943,7 @@ class GCRuntime
     void collect(bool nonincrementalByAPI, SliceBudget budget, JS::gcreason::Reason reason) JS_HAZ_GC_CALL;
     MOZ_MUST_USE bool gcCycle(bool nonincrementalByAPI, SliceBudget& budget,
                               JS::gcreason::Reason reason);
+    bool shouldRepeatForDeadZone(JS::gcreason::Reason reason);
     void incrementalCollectSlice(SliceBudget& budget, JS::gcreason::Reason reason,
                                  AutoLockForExclusiveAccess& lock);
 
@@ -971,7 +970,7 @@ class GCRuntime
 
     void beginSweepPhase(bool lastGC, AutoLockForExclusiveAccess& lock);
     void findZoneGroups(AutoLockForExclusiveAccess& lock);
-    MOZ_MUST_USE bool findZoneEdgesForWeakMaps();
+    MOZ_MUST_USE bool findInterZoneEdges();
     void getNextZoneGroup();
     void endMarkingZoneGroup();
     void beginSweepingZoneGroup(AutoLockForExclusiveAccess& lock);
@@ -1254,23 +1253,6 @@ class GCRuntime
      * with AutoDisableCompactingGC which uses this counter.
      */
     unsigned compactingDisabledCount;
-
-    /*
-     * This is true if we are in the middle of a brain transplant (e.g.,
-     * JS_TransplantObject) or some other operation that can manipulate
-     * dead zones.
-     */
-    bool manipulatingDeadZones;
-
-    /*
-     * This field is incremented each time we mark an object inside a
-     * zone with no incoming cross-compartment pointers. Typically if
-     * this happens it signals that an incremental GC is marking too much
-     * stuff. At various times we check this counter and, if it has changed, we
-     * run an immediate, non-incremental GC to clean up the dead
-     * zones. This should happen very rarely.
-     */
-    unsigned objectsMarkedInDeadZones;
 
     bool poked;
 

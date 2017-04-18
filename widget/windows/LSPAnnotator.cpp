@@ -34,15 +34,12 @@ class LSPAnnotationGatherer : public Runnable
   ~LSPAnnotationGatherer() {}
 
 public:
-  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIRUNNABLE
 
   void Annotate();
   nsCString mString;
   nsCOMPtr<nsIThread> mThread;
 };
-
-NS_IMPL_ISUPPORTS(LSPAnnotationGatherer, nsIRunnable)
 
 void
 LSPAnnotationGatherer::Annotate()
@@ -154,7 +151,7 @@ void LSPAnnotate()
   nsCOMPtr<nsIThread> thread;
   nsCOMPtr<nsIRunnable> runnable =
     do_QueryObject(new LSPAnnotationGatherer());
-  NS_NewThread(getter_AddRefs(thread), runnable);
+  NS_NewNamedThread("LSP Annotate", getter_AddRefs(thread), runnable);
 }
 
 } // namespace crashreporter

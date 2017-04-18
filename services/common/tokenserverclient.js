@@ -99,7 +99,7 @@ TokenServerClientNetworkError.prototype._toStringFields = function() {
  *        (string) Error message.
  */
 this.TokenServerClientServerError =
- function TokenServerClientServerError(message, cause="general") {
+ function TokenServerClientServerError(message, cause = "general") {
   this.now = new Date().toISOString(); // may be useful to diagnose time-skew issues.
   this.name = "TokenServerClientServerError";
   this.message = message || "Server error.";
@@ -244,7 +244,7 @@ TokenServerClient.prototype = {
    *         (bool) Whether to send acceptance to service conditions.
    */
   getTokenFromBrowserIDAssertion:
-    function getTokenFromBrowserIDAssertion(url, assertion, cb, addHeaders={}) {
+    function getTokenFromBrowserIDAssertion(url, assertion, cb, addHeaders = {}) {
     if (!url) {
       throw new TokenServerClientError("url argument is not valid.");
     }
@@ -368,14 +368,12 @@ TokenServerClient.prototype = {
         // invalid-generation.
         error.message = "Authentication failed.";
         error.cause = result.status;
-      }
-
-      // 403 should represent a "condition acceptance needed" response.
-      //
-      // The extra validation of "urls" is important. We don't want to signal
-      // conditions required unless we are absolutely sure that is what the
-      // server is asking for.
-      else if (response.status == 403) {
+      } else if (response.status == 403) {
+        // 403 should represent a "condition acceptance needed" response.
+        //
+        // The extra validation of "urls" is important. We don't want to signal
+        // conditions required unless we are absolutely sure that is what the
+        // server is asking for.
         if (!("urls" in result)) {
           this._log.warn("403 response without proper fields!");
           this._log.warn("Response body: " + response.body);
@@ -436,7 +434,7 @@ TokenServerClient.prototype = {
   observerPrefix: null,
 
   // Given an optional header value, notify that a backoff has been requested.
-  _maybeNotifyBackoff: function (response, headerName) {
+  _maybeNotifyBackoff(response, headerName) {
     if (!this.observerPrefix) {
       return;
     }
@@ -456,7 +454,7 @@ TokenServerClient.prototype = {
   },
 
   // override points for testing.
-  newRESTRequest: function(url) {
+  newRESTRequest(url) {
     return new RESTRequest(url);
   }
 };

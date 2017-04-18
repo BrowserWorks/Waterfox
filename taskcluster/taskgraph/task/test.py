@@ -48,16 +48,17 @@ class TestTask(transform.TransformTask):
                 test['test-platform'] = test_platform_name
                 test['build-label'] = test_platform['build-label']
                 test['test-name'] = test_name
+                if test_platform['nightly']:
+                    test.setdefault('attributes', {})['nightly'] = True
 
-                logger.debug("Generating tasks for {} test {} on platform {}".format(
-                    kind, test_name, test['test-platform']))
+                logger.debug("Generating tasks for test {} on platform {}".format(
+                    test_name, test['test-platform']))
                 yield test
 
     @classmethod
     def get_builds_by_platform(cls, dep_kind, loaded_tasks):
         """Find the build tasks on which tests will depend, keyed by
-        platform/type.  Returns a dictionary mapping build platform to task
-        label."""
+        platform/type.  Returns a dictionary mapping build platform to task."""
         builds_by_platform = {}
         for task in loaded_tasks:
             if task.kind != dep_kind:
@@ -70,7 +71,7 @@ class TestTask(transform.TransformTask):
             platform = "{}/{}".format(build_platform, build_type)
             if platform in builds_by_platform:
                 raise Exception("multiple build jobs for " + platform)
-            builds_by_platform[platform] = task.label
+            builds_by_platform[platform] = task
         return builds_by_platform
 
     @classmethod
@@ -87,10 +88,11 @@ class TestTask(transform.TransformTask):
                         build_platform, test_platform))
                 continue
             test_platforms[test_platform] = {
-                'test-set': cfg['test-set'],
+                'nightly': builds_by_platform[build_platform].attributes.get('nightly', False),
                 'build-platform': build_platform,
-                'build-label': builds_by_platform[build_platform],
+                'build-label': builds_by_platform[build_platform].label,
             }
+            test_platforms[test_platform].update(cfg)
         return test_platforms
 
     @classmethod
@@ -101,12 +103,14 @@ class TestTask(transform.TransformTask):
         names."""
         rv = {}
         for test_platform, cfg in test_platforms.iteritems():
-            test_set = cfg['test-set']
-            if test_set not in test_sets_cfg:
+            test_sets = cfg['test-sets']
+            if not set(test_sets) < set(test_sets_cfg):
                 raise Exception(
-                    "Test set '{}' for test platform {} is not defined".format(
-                        test_set, test_platform))
-            test_names = test_sets_cfg[test_set]
+                    "Test sets {} for test platform {} are not defined".format(
+                        ', '.join(test_sets), test_platform))
+            test_names = set()
+            for test_set in test_sets:
+                test_names.update(test_sets_cfg[test_set])
             rv[test_platform] = cfg.copy()
             rv[test_platform]['test-names'] = test_names
         return rv

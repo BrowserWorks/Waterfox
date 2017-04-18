@@ -71,9 +71,8 @@ function testUnregister()
   gDevTools.unregisterTool("test-tool");
 }
 
-function toolUnregistered(event, toolDefinition)
+function toolUnregistered(event, toolId)
 {
-  let toolId = toolDefinition.id;
   is(toolId, "test-tool", "tool-unregistered event handler sent tool id");
 
   ok(!gDevTools.getToolDefinitionMap().has(toolId), "tool removed from map");
@@ -98,8 +97,9 @@ function toolUnregistered(event, toolDefinition)
 
 function cleanup()
 {
-  toolbox.destroy();
-  toolbox = null;
-  gBrowser.removeCurrentTab();
-  finish();
+  toolbox.destroy().then(() => {;
+    toolbox = null;
+    gBrowser.removeCurrentTab();
+    finish();
+  })
 }

@@ -7,9 +7,7 @@
 
 include LayersSurfaces;
 include LayersMessages;
-include protocol PCompositable;
 include protocol PCompositorBridge;
-include protocol PLayer;
 include protocol PRenderFrame;
 include protocol PTexture;
 
@@ -21,6 +19,8 @@ using class mozilla::layers::APZTestData from "mozilla/layers/APZTestData.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
 using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
+using mozilla::layers::LayerHandle from "mozilla/layers/LayersTypes.h";
+using mozilla::layers::CompositableHandle from "mozilla/layers/LayersTypes.h";
 
 /**
  * The layers protocol is spoken between thread contexts that manage
@@ -38,39 +38,36 @@ union MaybeTransform {
   void_t;
 };
 
+/**
+ * The PLayerTransaction protocol manages the layer tree for a single "browser".
+ * The "browser" can be a top-level browser window, in which case the PLayer-
+ * TransactionChild exists in the UI process. The "browser" can also be a content
+ * tab, in which case the PLayerTransactionChild exists in the content process.
+ * In either case, the PLayerTransactionParent exists in the GPU process (if
+ * there is one) or the UI process otherwise.
+ */
 sync protocol PLayerTransaction {
   manager PCompositorBridge;
-  manages PLayer;
-  manages PCompositable;
 
 parent:
-  async PLayer();
-  async PCompositable(TextureInfo aTextureInfo);
-
   // The isFirstPaint flag can be used to indicate that this is the first update
   // for a particular document.
-  sync Update(Edit[] cset, OpDestroy[] toDestroy,
-              uint64_t fwdTransactionId,
-              uint64_t id, TargetConfig targetConfig,
-              PluginWindowData[] plugins, bool isFirstPaint,
-              bool scheduleComposite, uint32_t paintSequenceNumber,
-              bool isRepeatTransaction, TimeStamp transactionStart,
-              int32_t paintSyncId)
-    returns (EditReply[] reply);
+  sync Update(TransactionInfo txn) returns (EditReply[] reply);
 
   async PaintTime(uint64_t id, TimeDuration paintTime);
 
   // We don't need to send a sync transaction if
   // no transaction operate require a swap.
-  async UpdateNoSwap(Edit[] cset, OpDestroy[] toDestroy,
-                     uint64_t fwdTransactionId,
-                     uint64_t id, TargetConfig targetConfig,
-                     PluginWindowData[] plugins, bool isFirstPaint,
-                     bool scheduleComposite, uint32_t paintSequenceNumber,
-                     bool isRepeatTransaction, TimeStamp transactionStart,
-                     int32_t paintSyncId);
+  async UpdateNoSwap(TransactionInfo txn);
 
   async SetLayerObserverEpoch(uint64_t layerObserverEpoch);
+
+  // Create a new Compositable.
+  async NewCompositable(CompositableHandle handle, TextureInfo info);
+
+  // Release an object that is no longer in use.
+  async ReleaseLayer(LayerHandle layer);
+  async ReleaseCompositable(CompositableHandle compositable);
 
   // Testing APIs
 
@@ -83,7 +80,7 @@ parent:
   // Returns the value of the opacity applied to the layer by animation.
   // |hasAnimationOpacity| is true if the layer has an opacity value
   // specified by animation. If it's false, |opacity| value is indefinite.
-  sync GetAnimationOpacity(PLayer layer) returns (float opacity,
+  sync GetAnimationOpacity(LayerHandle layer) returns (float opacity,
                                                   bool hasAnimationOpacity);
 
   // Returns the value of the transform applied to the layer by animation after
@@ -91,7 +88,7 @@ parent:
   // of the corresponding frame and transform origin and after converting to CSS
   // pixels. If the layer is not transformed by animation, the return value will
   // be void_t.
-  sync GetAnimationTransform(PLayer layer) returns (MaybeTransform transform);
+  sync GetAnimationTransform(LayerHandle layer) returns (MaybeTransform transform);
 
   // The next time the layer tree is composited, add this async scroll offset in
   // CSS pixels for the given ViewID.

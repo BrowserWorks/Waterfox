@@ -20,50 +20,186 @@
 #define wasm_generator_h
 
 #include "jit/MacroAssembler.h"
-#include "wasm/WasmCompile.h"
 #include "wasm/WasmModule.h"
+#include "wasm/WasmValidate.h"
 
 namespace js {
 namespace wasm {
 
+struct ModuleEnvironment;
+
+typedef Vector<jit::MIRType, 8, SystemAllocPolicy> MIRTypeVector;
+typedef jit::ABIArgIter<MIRTypeVector> ABIArgMIRTypeIter;
+typedef jit::ABIArgIter<ValTypeVector> ABIArgValTypeIter;
+
+struct CompileArgs;
+
 class FunctionGenerator;
 
-// The ModuleGeneratorData holds all the state shared between the
-// ModuleGenerator thread and background compile threads. The background
-// threads are given a read-only view of the ModuleGeneratorData and the
-// ModuleGenerator is careful to initialize, and never subsequently mutate,
-// any given datum before being read by a background thread. In particular,
-// once created, the Vectors are never resized.
+// The FuncBytes class represents a single, concurrently-compilable function.
+// A FuncBytes object is composed of the wasm function body bytes along with the
+// ambient metadata describing the function necessary to compile it.
 
-struct ModuleGeneratorData
+class FuncBytes
 {
-    ModuleKind                kind;
-    MemoryUsage               memoryUsage;
-    mozilla::Atomic<uint32_t> minMemoryLength;
-    Maybe<uint32_t>           maxMemoryLength;
+    Bytes            bytes_;
+    uint32_t         index_;
+    const SigWithId* sig_;
+    uint32_t         lineOrBytecode_;
+    Uint32Vector     callSiteLineNums_;
 
-    SigWithIdVector           sigs;
-    SigWithIdPtrVector        funcSigs;
-    Uint32Vector              funcImportGlobalDataOffsets;
-    GlobalDescVector          globals;
-    TableDescVector           tables;
-    Uint32Vector              asmJSSigToTableIndex;
-
-    explicit ModuleGeneratorData(ModuleKind kind = ModuleKind::Wasm)
-      : kind(kind),
-        memoryUsage(MemoryUsage::None),
-        minMemoryLength(0)
+  public:
+    FuncBytes()
+      : index_(UINT32_MAX),
+        sig_(nullptr),
+        lineOrBytecode_(UINT32_MAX)
     {}
 
-    bool isAsmJS() const {
-        return kind == ModuleKind::AsmJS;
+    Bytes& bytes() {
+        return bytes_;
     }
-    bool funcIsImport(uint32_t funcIndex) const {
-        return funcIndex < funcImportGlobalDataOffsets.length();
+    MOZ_MUST_USE bool addCallSiteLineNum(uint32_t lineno) {
+        return callSiteLineNums_.append(lineno);
+    }
+    void setLineOrBytecode(uint32_t lineOrBytecode) {
+        MOZ_ASSERT(lineOrBytecode_ == UINT32_MAX);
+        lineOrBytecode_ = lineOrBytecode;
+    }
+    void setFunc(uint32_t index, const SigWithId* sig) {
+        MOZ_ASSERT(index_ == UINT32_MAX);
+        MOZ_ASSERT(sig_ == nullptr);
+        index_ = index;
+        sig_ = sig;
+    }
+    void reset() {
+        bytes_.clear();
+        index_ = UINT32_MAX;
+        sig_ = nullptr;
+        lineOrBytecode_ = UINT32_MAX;
+        callSiteLineNums_.clear();
+    }
+
+    const Bytes& bytes() const { return bytes_; }
+    uint32_t index() const { return index_; }
+    const SigWithId& sig() const { return *sig_; }
+    uint32_t lineOrBytecode() const { return lineOrBytecode_; }
+    const Uint32Vector& callSiteLineNums() const { return callSiteLineNums_; }
+};
+
+typedef UniquePtr<FuncBytes> UniqueFuncBytes;
+typedef Vector<UniqueFuncBytes, 8, SystemAllocPolicy> UniqueFuncBytesVector;
+
+enum class CompileMode
+{
+    Baseline,
+    Ion
+};
+
+// FuncCompileUnit contains all the data necessary to produce and store the
+// results of a single function's compilation.
+
+class FuncCompileUnit
+{
+    UniqueFuncBytes func_;
+    FuncOffsets offsets_;
+    DebugOnly<bool> finished_;
+
+  public:
+    explicit FuncCompileUnit(UniqueFuncBytes func)
+      : func_(Move(func)),
+        finished_(false)
+    {}
+
+    const FuncBytes& func() const { return *func_; }
+    FuncOffsets offsets() const { MOZ_ASSERT(finished_); return offsets_; }
+
+    void finish(FuncOffsets offsets) {
+        MOZ_ASSERT(!finished_);
+        offsets_ = offsets;
+        finished_ = true;
+    }
+
+    UniqueFuncBytes recycle() {
+        MOZ_ASSERT(finished_);
+        func_->reset();
+        return Move(func_);
     }
 };
 
-typedef UniquePtr<ModuleGeneratorData> UniqueModuleGeneratorData;
+typedef Vector<FuncCompileUnit, 8, SystemAllocPolicy> FuncCompileUnitVector;
+
+// A CompileTask represents the task of compiling a batch of functions. It is
+// filled with a certain number of function's bodies that are sent off to a
+// compilation helper thread, which fills in the resulting code offsets, and
+// finally sent back to the validation thread. To save time allocating and
+// freeing memory, CompileTasks are reset() and reused.
+
+class CompileTask
+{
+    const ModuleEnvironment&   env_;
+    CompileMode                mode_;
+    LifoAlloc                  lifo_;
+    Maybe<jit::TempAllocator>  alloc_;
+    Maybe<jit::MacroAssembler> masm_;
+    FuncCompileUnitVector      units_;
+    bool                       debugEnabled_;
+
+    CompileTask(const CompileTask&) = delete;
+    CompileTask& operator=(const CompileTask&) = delete;
+
+    void init() {
+        alloc_.emplace(&lifo_);
+        masm_.emplace(jit::MacroAssembler::WasmToken(), *alloc_);
+        debugEnabled_ = false;
+    }
+
+  public:
+    CompileTask(const ModuleEnvironment& env, CompileMode mode, size_t defaultChunkSize)
+      : env_(env),
+        mode_(mode),
+        lifo_(defaultChunkSize)
+    {
+        init();
+    }
+    LifoAlloc& lifo() {
+        return lifo_;
+    }
+    jit::TempAllocator& alloc() {
+        return *alloc_;
+    }
+    const ModuleEnvironment& env() const {
+        return env_;
+    }
+    jit::MacroAssembler& masm() {
+        return *masm_;
+    }
+    FuncCompileUnitVector& units() {
+        return units_;
+    }
+    CompileMode mode() const {
+        return mode_;
+    }
+    bool debugEnabled() const {
+        return debugEnabled_;
+    }
+    void setDebugEnabled(bool enabled) {
+        debugEnabled_ = enabled;
+    }
+    bool reset(UniqueFuncBytesVector* freeFuncBytes) {
+        for (FuncCompileUnit& unit : units_) {
+            if (!freeFuncBytes->emplaceBack(Move(unit.recycle())))
+                return false;
+        }
+
+        units_.clear();
+        masm_.reset();
+        alloc_.reset();
+        lifo_.releaseAll();
+
+        init();
+        return true;
+    }
+};
 
 // A ModuleGenerator encapsulates the creation of a wasm module. During the
 // lifetime of a ModuleGenerator, a sequence of FunctionGenerators are created
@@ -74,24 +210,21 @@ typedef UniquePtr<ModuleGeneratorData> UniqueModuleGeneratorData;
 class MOZ_STACK_CLASS ModuleGenerator
 {
     typedef HashSet<uint32_t, DefaultHasher<uint32_t>, SystemAllocPolicy> Uint32Set;
-    typedef Vector<IonCompileTask, 0, SystemAllocPolicy> IonCompileTaskVector;
-    typedef Vector<IonCompileTask*, 0, SystemAllocPolicy> IonCompileTaskPtrVector;
+    typedef Vector<CompileTask, 0, SystemAllocPolicy> CompileTaskVector;
+    typedef Vector<CompileTask*, 0, SystemAllocPolicy> CompileTaskPtrVector;
     typedef EnumeratedArray<Trap, Trap::Limit, ProfilingOffsets> TrapExitOffsetArray;
 
     // Constant parameters
-    bool                            alwaysBaseline_;
+    CompileMode                     compileMode_;
+    UniqueChars*                    error_;
 
     // Data that is moved into the result of finish()
     Assumptions                     assumptions_;
     LinkData                        linkData_;
     MutableMetadata                 metadata_;
-    ExportVector                    exports_;
-    ImportVector                    imports_;
-    DataSegmentVector               dataSegments_;
-    ElemSegmentVector               elemSegments_;
 
     // Data scoped to the ModuleGenerator's lifetime
-    UniqueModuleGeneratorData       shared_;
+    UniqueModuleEnvironment         env_;
     uint32_t                        numSigs_;
     uint32_t                        numTables_;
     LifoAlloc                       lifo_;
@@ -102,12 +235,16 @@ class MOZ_STACK_CLASS ModuleGenerator
     Uint32Set                       exportedFuncs_;
     uint32_t                        lastPatchedCallsite_;
     uint32_t                        startOfUnpatchedCallsites_;
+    Uint32Vector                    debugTrapFarJumps_;
 
     // Parallel compilation
     bool                            parallel_;
     uint32_t                        outstanding_;
-    IonCompileTaskVector            tasks_;
-    IonCompileTaskPtrVector         freeTasks_;
+    CompileTaskVector               tasks_;
+    CompileTaskPtrVector            freeTasks_;
+    UniqueFuncBytesVector           freeFuncBytes_;
+    CompileTask*                    currentTask_;
+    uint32_t                        batchedBytecode_;
 
     // Assertions
     DebugOnly<FunctionGenerator*>   activeFuncDef_;
@@ -117,9 +254,10 @@ class MOZ_STACK_CLASS ModuleGenerator
 
     bool funcIsCompiled(uint32_t funcIndex) const;
     const CodeRange& funcCodeRange(uint32_t funcIndex) const;
+    uint32_t numFuncImports() const;
     MOZ_MUST_USE bool patchCallSites(TrapExitOffsetArray* maybeTrapExits = nullptr);
-    MOZ_MUST_USE bool patchFarJumps(const TrapExitOffsetArray& trapExits);
-    MOZ_MUST_USE bool finishTask(IonCompileTask* task);
+    MOZ_MUST_USE bool patchFarJumps(const TrapExitOffsetArray& trapExits, const Offsets& debugTrapStub);
+    MOZ_MUST_USE bool finishTask(CompileTask* task);
     MOZ_MUST_USE bool finishOutstandingTask();
     MOZ_MUST_USE bool finishFuncExports();
     MOZ_MUST_USE bool finishCodegen();
@@ -128,58 +266,46 @@ class MOZ_STACK_CLASS ModuleGenerator
     MOZ_MUST_USE bool allocateGlobalBytes(uint32_t bytes, uint32_t align, uint32_t* globalDataOff);
     MOZ_MUST_USE bool allocateGlobal(GlobalDesc* global);
 
+    MOZ_MUST_USE bool launchBatchCompile();
+
+    MOZ_MUST_USE bool initAsmJS(Metadata* asmJSMetadata);
+    MOZ_MUST_USE bool initWasm(const CompileArgs& args);
+
   public:
-    explicit ModuleGenerator(ImportVector&& imports);
+    explicit ModuleGenerator(UniqueChars* error);
     ~ModuleGenerator();
 
-    MOZ_MUST_USE bool init(UniqueModuleGeneratorData shared, const CompileArgs& args,
+    MOZ_MUST_USE bool init(UniqueModuleEnvironment env, const CompileArgs& args,
                            Metadata* maybeAsmJSMetadata = nullptr);
+
+    const ModuleEnvironment& env() const { return *env_; }
+    ModuleEnvironment& mutableEnv();
 
     bool isAsmJS() const { return metadata_->kind == ModuleKind::AsmJS; }
     jit::MacroAssembler& masm() { return masm_; }
 
     // Memory:
-    bool usesMemory() const { return UsesMemory(shared_->memoryUsage); }
-    uint32_t minMemoryLength() const { return shared_->minMemoryLength; }
+    bool usesMemory() const { return env_->usesMemory(); }
+    uint32_t minMemoryLength() const { return env_->minMemoryLength; }
 
     // Tables:
     uint32_t numTables() const { return numTables_; }
-    const TableDescVector& tables() const { return shared_->tables; }
+    const TableDescVector& tables() const { return env_->tables; }
 
     // Signatures:
     uint32_t numSigs() const { return numSigs_; }
     const SigWithId& sig(uint32_t sigIndex) const;
     const SigWithId& funcSig(uint32_t funcIndex) const;
+    const SigWithIdPtrVector& funcSigs() const { return env_->funcSigs; }
 
     // Globals:
-    const GlobalDescVector& globals() const { return shared_->globals; }
-
-    // Functions declarations:
-    uint32_t numFuncImports() const;
-    uint32_t numFuncDefs() const;
-    uint32_t numFuncs() const;
-
-    // Exports:
-    MOZ_MUST_USE bool addFuncExport(UniqueChars fieldName, uint32_t funcIndex);
-    MOZ_MUST_USE bool addTableExport(UniqueChars fieldName);
-    MOZ_MUST_USE bool addMemoryExport(UniqueChars fieldName);
-    MOZ_MUST_USE bool addGlobalExport(UniqueChars fieldName, uint32_t globalIndex);
+    const GlobalDescVector& globals() const { return env_->globals; }
 
     // Function definitions:
     MOZ_MUST_USE bool startFuncDefs();
     MOZ_MUST_USE bool startFuncDef(uint32_t lineOrBytecode, FunctionGenerator* fg);
     MOZ_MUST_USE bool finishFuncDef(uint32_t funcIndex, FunctionGenerator* fg);
     MOZ_MUST_USE bool finishFuncDefs();
-
-    // Start function:
-    bool setStartFunction(uint32_t funcIndex);
-
-    // Segments:
-    void setDataSegments(DataSegmentVector&& segments);
-    MOZ_MUST_USE bool addElemSegment(InitExpr offset, Uint32Vector&& elemFuncIndices);
-
-    // Function names:
-    void setFuncNames(NameInBytecodeVector&& funcNames);
 
     // asm.js lazy initialization:
     void initSig(uint32_t sigIndex, Sig&& sig);
@@ -190,38 +316,32 @@ class MOZ_STACK_CLASS ModuleGenerator
     void initMemoryUsage(MemoryUsage memoryUsage);
     void bumpMinMemoryLength(uint32_t newMinMemoryLength);
     MOZ_MUST_USE bool addGlobal(ValType type, bool isConst, uint32_t* index);
+    MOZ_MUST_USE bool addExport(CacheableChars&& fieldChars, uint32_t funcIndex);
 
-    // Finish compilation, provided the list of imports and source bytecode.
-    // Both these Vectors may be empty (viz., b/c asm.js does different things
-    // for imports and source).
+    // Finish compilation of the given bytecode.
     SharedModule finish(const ShareableBytes& bytecode);
 };
 
 // A FunctionGenerator encapsulates the generation of a single function body.
-// ModuleGenerator::startFunc must be called after construction and before doing
-// anything else. After the body is complete, ModuleGenerator::finishFunc must
-// be called before the FunctionGenerator is destroyed and the next function is
-// started.
+// ModuleGenerator::startFuncDef must be called after construction and before
+// doing anything else.
+//
+// After the body is complete, ModuleGenerator::finishFuncDef must be called
+// before the FunctionGenerator is destroyed and the next function is started.
 
 class MOZ_STACK_CLASS FunctionGenerator
 {
     friend class ModuleGenerator;
 
     ModuleGenerator* m_;
-    IonCompileTask*  task_;
     bool             usesSimd_;
     bool             usesAtomics_;
 
-    // Data created during function generation, then handed over to the
-    // FuncBytes in ModuleGenerator::finishFunc().
-    Bytes            bytes_;
-    Uint32Vector     callSiteLineNums_;
-
-    uint32_t lineOrBytecode_;
+    UniqueFuncBytes  funcBytes_;
 
   public:
     FunctionGenerator()
-      : m_(nullptr), task_(nullptr), usesSimd_(false), usesAtomics_(false), lineOrBytecode_(0)
+      : m_(nullptr), usesSimd_(false), usesAtomics_(false), funcBytes_(nullptr)
     {}
 
     bool usesSimd() const {
@@ -238,11 +358,15 @@ class MOZ_STACK_CLASS FunctionGenerator
         usesAtomics_ = true;
     }
 
+    bool isAsmJS() const {
+      return m_->isAsmJS();
+    }
+
     Bytes& bytes() {
-        return bytes_;
+        return funcBytes_->bytes();
     }
     MOZ_MUST_USE bool addCallSiteLineNum(uint32_t lineno) {
-        return callSiteLineNums_.append(lineno);
+        return funcBytes_->addCallSiteLineNum(lineno);
     }
 };
 

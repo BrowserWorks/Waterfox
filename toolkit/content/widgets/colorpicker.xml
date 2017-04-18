@@ -212,8 +212,7 @@
           this.hoverCell(this.mBox.childNodes[0].childNodes[0]);
 
           // used to capture keydown at the document level
-          this.mPickerKeyDown = function(aEvent)
-          {
+          this.mPickerKeyDown = function(aEvent) {
             document._focusedPicker.pickerKeyDown(aEvent);
           }
 
@@ -230,14 +229,13 @@
             event.initEvent(aEventName, true, true);
             var cancel = !aTarget.dispatchEvent(event);
             if (aTarget.hasAttribute("on" + aEventName)) {
-              var fn = new Function ("event", aTarget.getAttribute("on" + aEventName));
+              var fn = new Function("event", aTarget.getAttribute("on" + aEventName));
               var rv = fn.call(aTarget, event);
               if (rv == false)
                 cancel = true;
             }
             return !cancel;
-          }
-          catch (e) {
+          } catch (e) {
             Components.utils.reportError(e);
           }
           return false;
@@ -328,8 +326,8 @@
             this.resetHover();
             aCell.setAttribute("hover", "true");
             this.mHoverCell = aCell;
-            var event = document.createEvent('Events');
-            event.initEvent('DOMMenuItemActive', true, true);
+            var event = document.createEvent("Events");
+            event.initEvent("DOMMenuItemActive", true, true);
             aCell.dispatchEvent(event);
           }
         ]]></body>
@@ -403,8 +401,8 @@
 
       <handler event="focus" phase="capturing">
       <![CDATA[
-        if (!mIsPopup && this.getAttribute('focused') != 'true') {
-          this.setAttribute('focused', 'true');
+        if (!mIsPopup && this.getAttribute("focused") != "true") {
+          this.setAttribute("focused", "true");
           document.addEventListener("keydown", this, true);
           if (this.mSelectedCell)
             this.hoverCell(this.mSelectedCell);
@@ -414,9 +412,9 @@
 
       <handler event="blur" phase="capturing">
       <![CDATA[
-        if (!mIsPopup && this.getAttribute('focused') == 'true') {
+        if (!mIsPopup && this.getAttribute("focused") == "true") {
           document.removeEventListener("keydown", this, true);
-          this.removeAttribute('focused');
+          this.removeAttribute("focused");
           this.resetHover();
         }
       ]]>
@@ -486,14 +484,13 @@
             event.initEvent(aEventName, true, true);
             var cancel = !aTarget.dispatchEvent(event);
             if (aTarget.hasAttribute("on" + aEventName)) {
-              var fn = new Function ("event", aTarget.getAttribute("on" + aEventName));
+              var fn = new Function("event", aTarget.getAttribute("on" + aEventName));
               var rv = fn.call(aTarget, event);
               if (rv == false)
                 cancel = true;
             }
             return !cancel;
-          }
-          catch (e) {
+          } catch (e) {
             dump(e);
           }
           return false;

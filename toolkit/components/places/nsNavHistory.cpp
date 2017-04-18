@@ -93,6 +93,8 @@ using namespace mozilla::places;
 #define PREF_FREC_PERM_REDIRECT_VISIT_BONUS_DEF 0
 #define PREF_FREC_TEMP_REDIRECT_VISIT_BONUS     "places.frecency.tempRedirectVisitBonus"
 #define PREF_FREC_TEMP_REDIRECT_VISIT_BONUS_DEF 0
+#define PREF_FREC_REDIR_SOURCE_VISIT_BONUS      "places.frecency.redirectSourceVisitBonus"
+#define PREF_FREC_REDIR_SOURCE_VISIT_BONUS_DEF  25
 #define PREF_FREC_DEFAULT_VISIT_BONUS           "places.frecency.defaultVisitBonus"
 #define PREF_FREC_DEFAULT_VISIT_BONUS_DEF       0
 #define PREF_FREC_UNVISITED_BOOKMARK_BONUS      "places.frecency.unvisitedBookmarkBonus"
@@ -155,6 +157,7 @@ static const char* kObservedPrefs[] = {
 , PREF_FREC_DOWNLOAD_VISIT_BONUS
 , PREF_FREC_PERM_REDIRECT_VISIT_BONUS
 , PREF_FREC_TEMP_REDIRECT_VISIT_BONUS
+, PREF_FREC_REDIR_SOURCE_VISIT_BONUS
 , PREF_FREC_DEFAULT_VISIT_BONUS
 , PREF_FREC_UNVISITED_BOOKMARK_BONUS
 , PREF_FREC_UNVISITED_TYPED_BONUS
@@ -431,7 +434,6 @@ nsNavHistory::GetOrCreateIdForPage(nsIURI* aURI,
   rv = stmt->BindInt32ByName(NS_LITERAL_CSTRING("frecency"),
                              IsQueryURI(spec) ? 0 : -1);
   NS_ENSURE_SUCCESS(rv, rv);
-  nsAutoCString guid;
   rv = GenerateGUID(_GUID);
   NS_ENSURE_SUCCESS(rv, rv);
   rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("guid"), _GUID);
@@ -469,6 +471,7 @@ nsNavHistory::LoadPrefs()
   FRECENCY_PREF(mDownloadVisitBonus,       PREF_FREC_DOWNLOAD_VISIT_BONUS);
   FRECENCY_PREF(mPermRedirectVisitBonus,   PREF_FREC_PERM_REDIRECT_VISIT_BONUS);
   FRECENCY_PREF(mTempRedirectVisitBonus,   PREF_FREC_TEMP_REDIRECT_VISIT_BONUS);
+  FRECENCY_PREF(mRedirectSourceVisitBonus, PREF_FREC_REDIR_SOURCE_VISIT_BONUS);
   FRECENCY_PREF(mDefaultVisitBonus,        PREF_FREC_DEFAULT_VISIT_BONUS);
   FRECENCY_PREF(mUnvisitedBookmarkBonus,   PREF_FREC_UNVISITED_BOOKMARK_BONUS);
   FRECENCY_PREF(mUnvisitedTypedBonus,      PREF_FREC_UNVISITED_TYPED_BONUS);
@@ -485,16 +488,18 @@ nsNavHistory::LoadPrefs()
 
 void
 nsNavHistory::NotifyOnVisit(nsIURI* aURI,
-                          int64_t aVisitId,
-                          PRTime aTime,
-                          int64_t aReferrerVisitId,
-                          int32_t aTransitionType,
-                          const nsACString& aGuid,
-                          bool aHidden,
-                          uint32_t aVisitCount,
-                          uint32_t aTyped)
+                            int64_t aVisitId,
+                            PRTime aTime,
+                            int64_t aReferrerVisitId,
+                            int32_t aTransitionType,
+                            const nsACString& aGuid,
+                            bool aHidden,
+                            uint32_t aVisitCount,
+                            uint32_t aTyped,
+                            const nsAString& aLastKnownTitle)
 {
   MOZ_ASSERT(!aGuid.IsEmpty());
+  MOZ_ASSERT(aVisitCount, "Should have at least 1 visit when notifying");
   // If there's no history, this visit will surely add a day.  If the visit is
   // added before or after the last cached day, the day count may have changed.
   // Otherwise adding multiple visits in the same day should not invalidate
@@ -508,7 +513,7 @@ nsNavHistory::NotifyOnVisit(nsIURI* aURI,
   NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
                    nsINavHistoryObserver,
                    OnVisit(aURI, aVisitId, aTime, 0, aReferrerVisitId,
-                           aTransitionType, aGuid, aHidden, aVisitCount, aTyped));
+                           aTransitionType, aGuid, aHidden, aVisitCount, aTyped, aLastKnownTitle));
 }
 
 void
@@ -3699,6 +3704,15 @@ nsNavHistory::clearEmbedVisits() {
 NS_IMETHODIMP
 nsNavHistory::ClearEmbedVisits() {
   clearEmbedVisits();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNavHistory::MakeGuid(nsACString& aGuid) {
+  if (NS_FAILED(GenerateGUID(aGuid))) {
+    MOZ_ASSERT(false, "Shouldn't fail to create a guid!");
+    aGuid.SetIsVoid(true);
+  }
   return NS_OK;
 }
 

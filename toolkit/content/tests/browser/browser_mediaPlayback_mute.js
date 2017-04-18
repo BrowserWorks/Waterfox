@@ -11,16 +11,16 @@ function wait_for_event(browser, event) {
 function* test_audio_in_browser() {
   function get_audio_element() {
     var doc = content.document;
-    var list = doc.getElementsByTagName('audio');
+    var list = doc.getElementsByTagName("audio");
     if (list.length == 1) {
       return list[0];
     }
 
     // iframe?
-    list = doc.getElementsByTagName('iframe');
+    list = doc.getElementsByTagName("iframe");
 
     var iframe = list[0];
-    list = iframe.contentDocument.getElementsByTagName('audio');
+    list = iframe.contentDocument.getElementsByTagName("audio");
     return list[0];
   }
 
@@ -75,11 +75,9 @@ function* test_visibility(url, browser) {
 }
 
 add_task(function*() {
-  yield new Promise((resolve) => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["media.useAudioChannelService.testing", true]
-    ]}, resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+    ["media.useAudioChannelService.testing", true]
+  ]});
 });
 
 add_task(function* test_page() {

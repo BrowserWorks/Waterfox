@@ -51,8 +51,6 @@ this.LightweightThemes = {
           }, 500);
         });
       },
-
-      verifyConfig: verifyConfigHelper,
     },
 
     lightLWT: {
@@ -72,21 +70,6 @@ this.LightweightThemes = {
           }, 500);
         });
       },
-
-      verifyConfig: verifyConfigHelper,
     },
-
   },
 };
-
-
-function verifyConfigHelper() {
-  return new Promise((resolve, reject) => {
-    let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
-    if (browserWindow.document.documentElement.hasAttribute("lwtheme")) {
-      resolve("verifyConfigHelper");
-    } else {
-      reject("The @lwtheme attribute wasn't present so themes may not be available");
-    }
-  });
-}

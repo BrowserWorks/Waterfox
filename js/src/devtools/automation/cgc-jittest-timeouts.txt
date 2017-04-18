@@ -11,6 +11,7 @@ basic/bug656261.js
 basic/bug677957-2.js
 basic/bug753283.js
 basic/bug867946.js
+basic/destructuring-iterator.js
 basic/testAtomize.js
 basic/testBug614653.js
 basic/testBug686274.js
@@ -40,6 +41,7 @@ v8-v5/check-earley-boyer.js
 v8-v5/check-raytrace.js
 v8-v5/check-regexp.js
 v8-v5/check-splay.js
+wasm/spec/br_table.wast.js
 wasm/spec/f32.wast.js
 wasm/spec/f32_cmp.wast.js
 wasm/spec/f64.wast.js

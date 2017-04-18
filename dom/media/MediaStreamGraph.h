@@ -77,6 +77,7 @@ namespace media {
  * reprocess it. This is triggered automatically by the MediaStreamGraph.
  */
 
+class AbstractThread;
 class AudioNodeEngine;
 class AudioNodeExternalInputStream;
 class AudioNodeStream;
@@ -275,7 +276,7 @@ class MediaStream : public mozilla::LinkedListElement<MediaStream>
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaStream)
 
-  MediaStream();
+  explicit MediaStream(AbstractThread* aMainThread);
 
 protected:
   // Protected destructor, to discourage deletion outside of Release():
@@ -552,12 +553,8 @@ public:
   dom::AudioChannel AudioChannelType() const { return mAudioChannelType; }
 
   bool IsSuspended() { return mSuspendedCount > 0; }
-  void IncrementSuspendCount() { ++mSuspendedCount; }
-  void DecrementSuspendCount()
-  {
-    NS_ASSERTION(mSuspendedCount > 0, "Suspend count underrun");
-    --mSuspendedCount;
-  }
+  void IncrementSuspendCount();
+  void DecrementSuspendCount();
 
 protected:
   // |AdvanceTimeVaryingValuesToCurrentTime| will be override in SourceMediaStream.
@@ -689,6 +686,8 @@ protected:
   MediaStreamGraphImpl* mGraph;
 
   dom::AudioChannel mAudioChannelType;
+
+  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 /**
@@ -700,7 +699,7 @@ protected:
 class SourceMediaStream : public MediaStream
 {
 public:
-  explicit SourceMediaStream();
+  explicit SourceMediaStream(AbstractThread* aMainThread);
 
   SourceMediaStream* AsSourceStream() override { return this; }
 
@@ -981,7 +980,8 @@ private:
   // Do not call this constructor directly. Instead call aDest->AllocateInputPort.
   MediaInputPort(MediaStream* aSource, TrackID& aSourceTrack,
                  ProcessedMediaStream* aDest, TrackID& aDestTrack,
-                 uint16_t aInputNumber, uint16_t aOutputNumber)
+                 uint16_t aInputNumber, uint16_t aOutputNumber,
+                 AbstractThread* aMainThread)
     : mSource(aSource)
     , mSourceTrack(aSourceTrack)
     , mDest(aDest)
@@ -989,6 +989,7 @@ private:
     , mInputNumber(aInputNumber)
     , mOutputNumber(aOutputNumber)
     , mGraph(nullptr)
+    , mAbstractMainThread(aMainThread)
   {
     MOZ_COUNT_CTOR(MediaInputPort);
   }
@@ -1080,10 +1081,21 @@ public:
    */
   MediaStreamGraphImpl* GraphImpl();
   MediaStreamGraph* Graph();
+
   /**
    * Sets the graph that owns this stream.  Should only be called once.
    */
   void SetGraphImpl(MediaStreamGraphImpl* aGraph);
+
+  /**
+   * Notify the port that the source MediaStream has been suspended.
+  */
+  void Suspended();
+
+  /**
+   * Notify the port that the source MediaStream has been resumed.
+  */
+  void Resumed();
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
   {
@@ -1120,6 +1132,8 @@ private:
 
   // Our media stream graph
   MediaStreamGraphImpl* mGraph;
+
+  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 /**
@@ -1130,8 +1144,8 @@ private:
 class ProcessedMediaStream : public MediaStream
 {
 public:
-  explicit ProcessedMediaStream()
-    : MediaStream(), mAutofinish(false), mCycleMarker(0)
+  explicit ProcessedMediaStream(AbstractThread* aMainThread)
+    : MediaStream(aMainThread), mAutofinish(false), mCycleMarker(0)
   {}
 
   // Control API.
@@ -1182,16 +1196,18 @@ public:
   virtual void AddInput(MediaInputPort* aPort);
   virtual void RemoveInput(MediaInputPort* aPort)
   {
-    mInputs.RemoveElement(aPort);
+    mInputs.RemoveElement(aPort) || mSuspendedInputs.RemoveElement(aPort);
   }
   bool HasInputPort(MediaInputPort* aPort)
   {
-    return mInputs.Contains(aPort);
+    return mInputs.Contains(aPort) || mSuspendedInputs.Contains(aPort);
   }
   uint32_t InputPortCount()
   {
-    return mInputs.Length();
+    return mInputs.Length() + mSuspendedInputs.Length();
   }
+  void InputSuspended(MediaInputPort* aPort);
+  void InputResumed(MediaInputPort* aPort);
   virtual MediaStream* GetInputStreamFor(TrackID aTrackID) { return nullptr; }
   virtual TrackID GetInputTrackIDFor(TrackID aTrackID) { return TRACK_NONE; }
   void DestroyImpl() override;
@@ -1227,7 +1243,9 @@ public:
     size_t amount = MediaStream::SizeOfExcludingThis(aMallocSizeOf);
     // Not owned:
     // - mInputs elements
+    // - mSuspendedInputs elements
     amount += mInputs.ShallowSizeOfExcludingThis(aMallocSizeOf);
+    amount += mSuspendedInputs.ShallowSizeOfExcludingThis(aMallocSizeOf);
     return amount;
   }
 
@@ -1239,8 +1257,10 @@ public:
 protected:
   // This state is all accessed only on the media graph thread.
 
-  // The list of all inputs that are currently enabled or waiting to be enabled.
+  // The list of all inputs that are not currently suspended.
   nsTArray<MediaInputPort*> mInputs;
+  // The list of all inputs that are currently suspended.
+  nsTArray<MediaInputPort*> mSuspendedInputs;
   bool mAutofinish;
   // After UpdateStreamOrder(), mCycleMarker is either 0 or 1 to indicate
   // whether this stream is in a muted cycle.  During ordering it can contain
@@ -1292,7 +1312,7 @@ public:
    * Create a stream that a media decoder (or some other source of
    * media data, such as a camera) can write to.
    */
-  SourceMediaStream* CreateSourceStream();
+  SourceMediaStream* CreateSourceStream(AbstractThread* aMainThread);
   /**
    * Create a stream that will form the union of the tracks of its input
    * streams.
@@ -1307,11 +1327,12 @@ public:
    * TODO at some point we will probably need to add API to select
    * particular tracks of each input stream.
    */
-  ProcessedMediaStream* CreateTrackUnionStream();
+  ProcessedMediaStream* CreateTrackUnionStream(AbstractThread* aMainThread);
   /**
    * Create a stream that will mix all its audio input.
    */
-  ProcessedMediaStream* CreateAudioCaptureStream(TrackID aTrackId);
+  ProcessedMediaStream* CreateAudioCaptureStream(TrackID aTrackId,
+                                                 AbstractThread* aMainThread);
 
   /**
    * Add a new stream to the graph.  Main thread.
@@ -1346,14 +1367,22 @@ public:
    * Media graph thread only.
    * Dispatches a runnable that will run on the main thread after all
    * main-thread stream state has been next updated.
+   *
    * Should only be called during MediaStreamListener callbacks or during
    * ProcessedMediaStream::ProcessInput().
+   *
+   * |aMainThread| is the corresponding AbstractThread on the main thread to
+   * drain the direct tasks generated by |aRunnable|.
+   * Note: The reasons for assigning proper |aMainThread| are
+   * - MSG serves media elements in multiple windows run on main thread.
+   * - DocGroup-specific AbstractMainThread is introduced to cluster the tasks
+   *   of the same window for prioritizing tasks among different windows.
+   * - Proper |aMainThread| ensures that tasks dispatched to the main thread are
+   *   clustered to the right queue and are executed in right order.
    */
-  virtual void DispatchToMainThreadAfterStreamStateUpdate(already_AddRefed<nsIRunnable> aRunnable)
-  {
-    AssertOnGraphThreadOrNotRunning();
-    *mPendingUpdateRunnables.AppendElement() = aRunnable;
-  }
+  virtual void
+  DispatchToMainThreadAfterStreamStateUpdate(AbstractThread* aMainThread,
+                                             already_AddRefed<nsIRunnable> aRunnable);
 
   /**
    * Returns graph sample rate in Hz.

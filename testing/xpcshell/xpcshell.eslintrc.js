@@ -8,12 +8,15 @@ module.exports = {
 
   // All globals made available in the test environment.
   "globals": {
+    "_TEST_FILE": false,
     "add_task": false,
     "add_test": false,
     "Assert": false,
     "deepEqual": false,
+    "do_await_remote_message": false,
     "do_check_eq": false,
     "do_check_false": false,
+    "do_check_instanceof": false,
     "do_check_matches": false,
     "do_check_neq": false,
     "do_check_null": false,
@@ -24,12 +27,14 @@ module.exports = {
     "do_get_idle": false,
     "do_get_profile": false,
     "do_get_tempdir": false,
+    "do_load_child_test_harness": false,
     "do_load_manifest": false,
     "do_load_module": false,
     "do_parse_document": false,
     "do_print": false,
     "do_register_cleanup": false,
     "do_report_unexpected_exception": false,
+    "do_send_remote_message": false,
     "do_test_finished": false,
     "do_test_pending": false,
     "do_throw": false,
@@ -45,13 +50,19 @@ module.exports = {
     "notEqual": false,
     "notStrictEqual": false,
     "ok": false,
+    "runningInParent": false,
     "run_next_test": false,
     "run_test": false,
     "run_test_in_child": false,
+    // Defined in XPCShellImpl.
+    "sendCommand": false,
     "strictEqual": false,
     "throws": false,
     "todo": false,
     "todo_check_false": false,
     "todo_check_true": false,
+    // Firefox specific function.
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/uneval
+    "uneval": false,
   }
 };

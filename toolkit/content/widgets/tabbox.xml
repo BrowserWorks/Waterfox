@@ -31,7 +31,7 @@
         ]]>
         </getter>
       </property>
-      
+
       <property name="handleCtrlPageUpDown">
         <setter>
         <![CDATA[
@@ -74,7 +74,7 @@
         ]]>
         </getter>
       </property>
-      
+
       <property name="selectedIndex">
         <getter>
         <![CDATA[
@@ -244,7 +244,7 @@
       <children/>
       <xul:spacer class="tabs-right" flex="1"/>
     </content>
-    
+
     <implementation implements="nsIDOMXULSelectControlElement, nsIDOMXULRelatedElement">
       <constructor>
       <![CDATA[
@@ -299,8 +299,6 @@
 
           // Get linked tab panel by 'linkedpanel' attribute on the given tab
           // element.
-          let linkedPanelElm = null;
-
           let linkedPanelId = aTabElm.linkedPanel;
           if (linkedPanelId) {
             let ownerDoc = this.ownerDocument;
@@ -386,14 +384,14 @@
           return -1;
         ]]>
         </getter>
-        
+
         <setter>
         <![CDATA[
           var tab = this.getItemAtIndex(val);
           if (tab) {
             var alreadySelected = tab.selected;
 
-            Array.forEach(this.childNodes, function (aTab) {
+            Array.forEach(this.childNodes, function(aTab) {
               if (aTab.selected && aTab != tab)
                 aTab._selected = false;
             });
@@ -412,8 +410,8 @@
 
             if (!alreadySelected) {
               // Fire an onselect event for the tabs element.
-              var event = document.createEvent('Events');
-              event.initEvent('select', true, true);
+              var event = document.createEvent("Events");
+              event.initEvent("select", true, true);
               this.dispatchEvent(event);
             }
           }
@@ -487,8 +485,7 @@
           this.selectedItem = aNewTab;
           if (isTabFocused) {
             aNewTab.focus();
-          }
-          else if (this.getAttribute("setfocus") != "false") {
+          } else if (this.getAttribute("setfocus") != "false") {
             let selectedPanel = this.tabbox.selectedPanel;
             document.commandDispatcher.advanceFocusIntoSubtree(selectedPanel);
 
@@ -551,7 +548,7 @@
         ]]>
         </body>
       </method>
-      
+
       <method name="insertItemAt">
         <parameter name="index"/>
         <parameter name="label"/>
@@ -850,14 +847,14 @@
       <handler event="keydown" keycode="VK_LEFT" group="system" preventdefault="true">
       <![CDATA[
         var direction = window.getComputedStyle(this.parentNode, null).direction;
-        this.parentNode.advanceSelectedTab(direction == 'ltr' ? -1 : 1, this.arrowKeysShouldWrap);
+        this.parentNode.advanceSelectedTab(direction == "ltr" ? -1 : 1, this.arrowKeysShouldWrap);
       ]]>
       </handler>
 
       <handler event="keydown" keycode="VK_RIGHT" group="system" preventdefault="true">
       <![CDATA[
         var direction = window.getComputedStyle(this.parentNode, null).direction;
-        this.parentNode.advanceSelectedTab(direction == 'ltr' ? 1 : -1, this.arrowKeysShouldWrap);
+        this.parentNode.advanceSelectedTab(direction == "ltr" ? 1 : -1, this.arrowKeysShouldWrap);
       ]]>
       </handler>
 
@@ -889,4 +886,3 @@
   </binding>
 
 </bindings>
-

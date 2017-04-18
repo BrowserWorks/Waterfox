@@ -27,8 +27,7 @@ var dragDirections = { LEFT: 0, UP: 1, RIGHT: 2, DOWN: 3 };
  */
 function synthesizeDragWithDirection(aElement, aExpectedDragData, aDirection, aCallback) {
   // Dragstart listener function.
-  gBookmarksToolbar.addEventListener("dragstart", function(event)
-  {
+  gBookmarksToolbar.addEventListener("dragstart", function(event) {
     info("A dragstart event has been trapped.");
     var dataTransfer = event.dataTransfer;
     is(dataTransfer.mozItemCount, aExpectedDragData.length,
@@ -55,22 +54,22 @@ function synthesizeDragWithDirection(aElement, aExpectedDragData, aDirection, aC
     event.preventDefault();
     event.stopPropagation();
 
-    gBookmarksToolbar.removeEventListener("dragstart", arguments.callee, false);
+    gBookmarksToolbar.removeEventListener("dragstart", arguments.callee);
 
     // This is likely to cause a click event, and, in case we are dragging a
     // bookmark, an unwanted page visit.  Prevent the click event.
-    aElement.addEventListener("click", prevent, false);
+    aElement.addEventListener("click", prevent);
     EventUtils.synthesizeMouse(aElement,
                                startingPoint.x + xIncrement * 9,
                                startingPoint.y + yIncrement * 9,
                                { type: "mouseup" });
-    aElement.removeEventListener("click", prevent, false);
+    aElement.removeEventListener("click", prevent);
 
     // Cleanup eventually opened menus.
     if (aElement.localName == "menu" && aElement.open)
       aElement.open = false;
     aCallback()
-  }, false);
+  });
 
   var prevent = function(aEvent) { aEvent.preventDefault(); }
 
@@ -93,8 +92,8 @@ function synthesizeDragWithDirection(aElement, aExpectedDragData, aDirection, aC
   }
 
   var rect = aElement.getBoundingClientRect();
-  var startingPoint = { x: (rect.right - rect.left)/2,
-                        y: (rect.bottom - rect.top)/2 };
+  var startingPoint = { x: (rect.right - rect.left) / 2,
+                        y: (rect.bottom - rect.top) / 2 };
 
   EventUtils.synthesizeMouse(aElement,
                              startingPoint.x,
@@ -144,7 +143,7 @@ var gTests = [
 
   {
     desc: "Drag a folder on toolbar",
-    run: function() {
+    run() {
       // Create a test folder to be dragged.
       var folderId = PlacesUtils.bookmarks
                                 .createFolder(PlacesUtils.toolbarFolderId,
@@ -158,19 +157,16 @@ var gTests = [
 
       info("Dragging left");
       synthesizeDragWithDirection(element, expectedData, dragDirections.LEFT,
-        function ()
-        {
+        function() {
           info("Dragging right");
           synthesizeDragWithDirection(element, expectedData, dragDirections.RIGHT,
-            function ()
-            {
+            function() {
               info("Dragging up");
               synthesizeDragWithDirection(element, expectedData, dragDirections.UP,
-                function ()
-                {
+                function() {
                   info("Dragging down");
                   synthesizeDragWithDirection(element, new Array(), dragDirections.DOWN,
-                    function () {
+                    function() {
                       // Cleanup.
                       PlacesUtils.bookmarks.removeItem(folderId);
                       nextTest();
@@ -185,7 +181,7 @@ var gTests = [
 
   {
     desc: "Drag a bookmark on toolbar",
-    run: function() {
+    run() {
       // Create a test bookmark to be dragged.
       var itemId = PlacesUtils.bookmarks
                               .insertBookmark(PlacesUtils.toolbarFolderId,
@@ -200,19 +196,16 @@ var gTests = [
 
       info("Dragging left");
       synthesizeDragWithDirection(element, expectedData, dragDirections.LEFT,
-        function ()
-        {
+        function() {
           info("Dragging right");
           synthesizeDragWithDirection(element, expectedData, dragDirections.RIGHT,
-            function ()
-            {
+            function() {
               info("Dragging up");
               synthesizeDragWithDirection(element, expectedData, dragDirections.UP,
-                function ()
-                {
+                function() {
                   info("Dragging down");
                   synthesizeDragWithDirection(element, expectedData, dragDirections.DOWN,
-                    function () {
+                    function() {
                       // Cleanup.
                       PlacesUtils.bookmarks.removeItem(itemId);
                       nextTest();
@@ -226,13 +219,12 @@ var gTests = [
 
 function nextTest() {
   if (gTests.length) {
-    var test = gTests.shift();
+    var testCase = gTests.shift();
     waitForFocus(function() {
-      info("Start of test: " + test.desc);
-      test.run();
+      info("Start of test: " + testCase.desc);
+      testCase.run();
     });
-  }
-  else if (wasCollapsed) {
+  } else if (wasCollapsed) {
     // Collapse the personal toolbar if needed.
     promiseSetToolbarVisibility(toolbar, false).then(finish);
   } else {

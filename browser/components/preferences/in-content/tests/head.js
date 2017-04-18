@@ -32,7 +32,7 @@ function is_element_hidden(aElement, aMsg) {
 function open_preferences(aCallback) {
   gBrowser.selectedTab = gBrowser.addTab("about:preferences");
   let newTabBrowser = gBrowser.getBrowserForTab(gBrowser.selectedTab);
-  newTabBrowser.addEventListener("Initialized", function () {
+  newTabBrowser.addEventListener("Initialized", function() {
     newTabBrowser.removeEventListener("Initialized", arguments.callee, true);
     aCallback(gBrowser.contentWindow);
   }, true);
@@ -102,7 +102,7 @@ function waitForEvent(aSubject, aEventName, aTimeoutMs, aTarget) {
     eventDeferred.reject(new Error(aEventName + " event timeout at " + stack));
   }, timeoutMs);
 
-  var listener = function (aEvent) {
+  var listener = function(aEvent) {
     if (aTarget && aTarget !== aEvent.target)
         return;
 
@@ -116,7 +116,7 @@ function waitForEvent(aSubject, aEventName, aTimeoutMs, aTarget) {
     aSubject.removeEventListener(aEventName, listener);
     return aEventOrError;
   }
-  aSubject.addEventListener(aEventName, listener, false);
+  aSubject.addEventListener(aEventName, listener);
   return eventDeferred.promise.then(cleanup, cleanup);
 }
 
@@ -136,14 +136,14 @@ function openPreferencesViaOpenPreferencesAPI(aPane, aAdvancedTab, aOptions) {
       let selectedAdvancedTab = aAdvancedTab && doc.getElementById("advancedPrefs").selectedTab.id;
       if (!aOptions || !aOptions.leaveOpen)
         gBrowser.removeCurrentTab();
-      deferred.resolve({selectedPane: selectedPane, selectedAdvancedTab: selectedAdvancedTab});
+      deferred.resolve({selectedPane, selectedAdvancedTab});
     });
   }, true);
 
   return deferred.promise;
 }
 
-function waitForCondition(aConditionFn, aMaxTries=50, aCheckInterval=100) {
+function waitForCondition(aConditionFn, aMaxTries = 50, aCheckInterval = 100) {
   return new Promise((resolve, reject) => {
     function tryNow() {
       tries++;
@@ -161,5 +161,23 @@ function waitForCondition(aConditionFn, aMaxTries=50, aCheckInterval=100) {
     }
     let tries = 0;
     tryAgain();
+  });
+}
+
+function promiseAlertDialogOpen(buttonAction) {
+  return new Promise(resolve => {
+    Services.ww.registerNotification(function onOpen(subj, topic, data) {
+      if (topic == "domwindowopened" && subj instanceof Ci.nsIDOMWindow) {
+        subj.addEventListener("load", function onLoad() {
+          subj.removeEventListener("load", onLoad);
+          if (subj.document.documentURI == "chrome://global/content/commonDialog.xul") {
+            Services.ww.unregisterNotification(onOpen);
+            let doc = subj.document.documentElement;
+            doc.getButton(buttonAction).click();
+            resolve();
+          }
+        });
+      }
+    });
   });
 }

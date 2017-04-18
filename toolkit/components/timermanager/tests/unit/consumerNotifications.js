@@ -5,7 +5,7 @@
 
 /* General Update Timer Manager Tests */
 
-'use strict';
+"use strict";
 
 const { classes: Cc, interfaces: Ci, manager: Cm, results: Cr,
         utils: Cu } = Components;
@@ -111,6 +111,14 @@ const TESTS = [ {
   classID: Components.ID("5136b201-d64c-4328-8cf1-1a63491cc117"),
   notified: false,
   lastUpdateTime: 0
+}, {
+  desc: "Test Timer Callback 10",
+  timerID: "test10-update-timer",
+  defaultInterval: CONSUMER_TIMER_INTERVAL,
+  contractID: "@mozilla.org/test9/timercallback;1",
+  classID: Components.ID("1f42bbb3-d116-4012-8491-3ec4797a97ee"),
+  notified: false,
+  lastUpdateTime: 0
 } ];
 
 var gUTM;
@@ -124,7 +132,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gCatMan",
                                    "@mozilla.org/categorymanager;1",
                                    "nsICategoryManager");
 
-XPCOMUtils.defineLazyGetter(this, "gCompReg", function () {
+XPCOMUtils.defineLazyGetter(this, "gCompReg", function() {
   return Cm.QueryInterface(Ci.nsIComponentRegistrar);
 });
 
@@ -271,8 +279,8 @@ const gTest8TimerCallback = {
   notify: function T8CB_notify(aTimer) {
     TESTS[8].notified = true;
     TESTS[8].notifyTime = Date.now();
-    do_execute_soon(function () {
-      check_test8thru9(gTest8TimerCallback);
+    do_execute_soon(function() {
+      check_test8thru10(gTest8TimerCallback);
     });
   },
   QueryInterface: XPCOMUtils.generateQI([Ci.nsITimerCallback])
@@ -291,9 +299,18 @@ const gTest9TimerCallback = {
   notify: function T9CB_notify(aTimer) {
     TESTS[9].notified = true;
     TESTS[9].notifyTime = Date.now();
-    do_execute_soon(function () {
-      check_test8thru9(gTest9TimerCallback);
+    do_execute_soon(function() {
+      check_test8thru10(gTest9TimerCallback);
     });
+  },
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsITimerCallback])
+};
+
+const gTest10TimerCallback = {
+  notify: function T9CB_notify(aTimer) {
+    // The timer should have been unregistered before this could
+    // be called.
+    do_throw("gTest10TimerCallback notify method should not have been called");
   },
   QueryInterface: XPCOMUtils.generateQI([Ci.nsITimerCallback])
 };
@@ -469,10 +486,10 @@ function check_test0thru7() {
             "no " + CATEGORY_UPDATE_TIMER + " categories should still be " +
             "registered");
 
-  do_execute_soon(run_test8thru9);
+  do_execute_soon(run_test8thru10);
 }
 
-function run_test8thru9() {
+function run_test8thru10() {
   gPref.setIntPref(PREF_BRANCH_LAST_UPDATE_TIME + TESTS[8].timerID, 1);
   gCompReg.registerFactory(TESTS[8].classID, TESTS[8].desc,
                            TESTS[8].contractID, gTest8Factory);
@@ -483,9 +500,12 @@ function run_test8thru9() {
                            TESTS[9].contractID, gTest9Factory);
   gUTM.registerTimer(TESTS[9].timerID, gTest9TimerCallback,
                      TESTS[9].defaultInterval);
+  gUTM.registerTimer(TESTS[10].timerID, gTest10TimerCallback,
+                     TESTS[10].defaultInterval);
+  gUTM.unregisterTimer(TESTS[10].timerID);
 }
 
-function check_test8thru9(aTestTimerCallback) {
+function check_test8thru10(aTestTimerCallback) {
   aTestTimerCallback.timesCalled = (aTestTimerCallback.timesCalled || 0) + 1;
   if (aTestTimerCallback.timesCalled < 2) {
     return;

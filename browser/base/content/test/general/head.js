@@ -32,7 +32,7 @@ function waitForNotificationClose(notification, cb) {
   observer.observe(parent, {childList: true});
 }
 
-function closeAllNotifications () {
+function closeAllNotifications() {
   let notificationBox = document.getElementById("global-notificationbox");
 
   if (!notificationBox || !notificationBox.currentNotification) {
@@ -41,7 +41,7 @@ function closeAllNotifications () {
 
   let deferred = Promise.defer();
   for (let notification of notificationBox.allNotifications) {
-    waitForNotificationClose(notification, function () {
+    waitForNotificationClose(notification, function() {
       if (notificationBox.allNotifications.length === 0) {
         deferred.resolve();
       }
@@ -104,7 +104,7 @@ function closeToolbarCustomizationUI(aCallback, aBrowserWin) {
 }
 
 function waitForCondition(condition, nextTest, errorMsg, retryTimes) {
-  retryTimes = typeof retryTimes !== 'undefined' ?  retryTimes : 30;
+  retryTimes = typeof retryTimes !== "undefined" ? retryTimes : 30;
   var tries = 0;
   var interval = setInterval(function() {
     if (tries >= retryTimes) {
@@ -188,22 +188,6 @@ function setTestPluginEnabledState(newEnabledState, pluginName) {
   });
 }
 
-// after a test is done using the plugin doorhanger, we should just clear
-// any permissions that may have crept in
-function clearAllPluginPermissions() {
-  clearAllPermissionsByPrefix("plugin");
-}
-
-function clearAllPermissionsByPrefix(aPrefix) {
-  let perms = Services.perms.enumerator;
-  while (perms.hasMoreElements()) {
-    let perm = perms.getNext();
-    if (perm.type.startsWith(aPrefix)) {
-      Services.perms.removePermission(perm);
-    }
-  }
-}
-
 function pushPrefs(...aPrefs) {
   let deferred = Promise.defer();
   SpecialPowers.pushPrefEnv({"set": aPrefs}, deferred.resolve);
@@ -236,9 +220,9 @@ function resetBlocklist() {
 function whenNewWindowLoaded(aOptions, aCallback) {
   let win = OpenBrowserWindow(aOptions);
   win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
+    win.removeEventListener("load", onLoad);
     aCallback(win);
-  }, false);
+  });
 }
 
 function promiseWindowWillBeClosed(win) {
@@ -258,7 +242,7 @@ function promiseWindowClosed(win) {
   return promise;
 }
 
-function promiseOpenAndLoadWindow(aOptions, aWaitForDelayedStartup=false) {
+function promiseOpenAndLoadWindow(aOptions, aWaitForDelayedStartup = false) {
   let deferred = Promise.defer();
   let win = OpenBrowserWindow(aOptions);
   if (aWaitForDelayedStartup) {
@@ -307,9 +291,9 @@ function waitForAsyncUpdates(aCallback, aScope, aArguments) {
 
   let commit = db.createAsyncStatement("COMMIT");
   commit.executeAsync({
-    handleResult: function() {},
-    handleError: function() {},
-    handleCompletion: function(aReason) {
+    handleResult() {},
+    handleError() {},
+    handleCompletion(aReason) {
       aCallback.apply(scope, args);
     }
   });
@@ -372,7 +356,7 @@ function promiseHistoryClearedState(aURIs, aShouldBeCleared) {
     if (++callbackCount == aURIs.length)
       deferred.resolve();
   }
-  aURIs.forEach(function (aURI) {
+  aURIs.forEach(function(aURI) {
     PlacesUtils.asyncHistory.isURIVisited(aURI, function(uri, isVisited) {
       is(isVisited, !aShouldBeCleared,
          "history visit " + uri.spec + " should " + niceStr + " exist");
@@ -399,7 +383,7 @@ function promiseHistoryClearedState(aURIs, aShouldBeCleared) {
  *        progress listener callback.
  * @return promise
  */
-function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser, aStopFromProgressListener=true) {
+function waitForDocLoadAndStopIt(aExpectedURL, aBrowser = gBrowser.selectedBrowser, aStopFromProgressListener = true) {
   function content_script(contentStopFromProgressListener) {
     let { interfaces: Ci, utils: Cu } = Components;
     Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -418,7 +402,7 @@ function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser
     }
 
     let progressListener = {
-      onStateChange: function (webProgress, req, flags, status) {
+      onStateChange(webProgress, req, flags, status) {
         dump("waitForDocLoadAndStopIt: onStateChange " + flags.toString(16) + ": " + req.name + "\n");
 
         if (webProgress.isTopLevel &&
@@ -440,7 +424,7 @@ function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser
      * event handler is the easiest way to ensure the weakly referenced
      * progress listener is kept alive as long as necessary.
      */
-    addEventListener("unload", function () {
+    addEventListener("unload", function() {
       try {
         wp.removeProgressListener(progressListener);
       } catch (e) { /* Will most likely fail. */ }
@@ -467,10 +451,10 @@ function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser
  *
  * @return promise
  */
-function waitForDocLoadComplete(aBrowser=gBrowser) {
+function waitForDocLoadComplete(aBrowser = gBrowser) {
   return new Promise(resolve => {
     let listener = {
-      onStateChange: function (webProgress, req, flags, status) {
+      onStateChange(webProgress, req, flags, status) {
         let docStop = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
                       Ci.nsIWebProgressListener.STATE_STOP;
         info("Saw state " + flags.toString(16) + " and status " + status.toString(16));
@@ -541,7 +525,7 @@ var FullZoomHelper = {
           resolve();
       }, true);
 
-      this.waitForLocationChange().then(function () {
+      this.waitForLocationChange().then(function() {
         didZoom = true;
         if (didLoad)
           resolve();
@@ -586,7 +570,7 @@ var FullZoomHelper = {
       else if (direction == this.FORWARD)
         gBrowser.goForward();
 
-      this.waitForLocationChange().then(function () {
+      this.waitForLocationChange().then(function() {
         didZoom = true;
         if (didPs)
           resolve();
@@ -595,7 +579,7 @@ var FullZoomHelper = {
   },
 
   failAndContinue: function failAndContinue(func) {
-    return function (err) {
+    return function(err) {
       ok(false, err);
       func();
     };
@@ -614,8 +598,7 @@ var FullZoomHelper = {
  * @resolves to the received event
  * @rejects if a valid load event is not received within a meaningful interval
  */
-function promiseTabLoadEvent(tab, url)
-{
+function promiseTabLoadEvent(tab, url) {
   info("Wait tab event: load");
 
   function handle(loadedUrl) {
@@ -673,7 +656,7 @@ function waitForNewTabEvent(aTabBrowser) {
  */
 function assertMixedContentBlockingState(tabbrowser, states = {}) {
   if (!tabbrowser || !("activeLoaded" in states) ||
-      !("activeBlocked" in states) || !("passiveLoaded" in states))  {
+      !("activeBlocked" in states) || !("passiveLoaded" in states)) {
     throw new Error("assertMixedContentBlockingState requires a browser and a states object");
   }
 
@@ -902,8 +885,7 @@ function promiseNotificationShown(notification) {
  *           notification.
  * @rejects Never.
  */
-function promiseTopicObserved(aTopic)
-{
+function promiseTopicObserved(aTopic) {
   return new Promise((resolve) => {
     Services.obs.addObserver(
       function PTO_observe(aSubject, aTopic2, aData) {
@@ -918,12 +900,12 @@ function promiseNewSearchEngine(basename) {
     info("Waiting for engine to be added: " + basename);
     let url = getRootDirectory(gTestPath) + basename;
     Services.search.addEngine(url, null, "", false, {
-      onSuccess: function (engine) {
+      onSuccess(engine) {
         info("Search engine added: " + basename);
         registerCleanupFunction(() => Services.search.removeEngine(engine));
         resolve(engine);
       },
-      onError: function (errCode) {
+      onError(errCode) {
         Assert.ok(false, "addEngine failed with error code " + errCode);
         reject();
       },
@@ -966,22 +948,21 @@ function isSecurityState(expectedState) {
 function promiseOnBookmarkItemAdded(aExpectedURI) {
   return new Promise((resolve, reject) => {
     let bookmarksObserver = {
-      onItemAdded: function (aItemId, aFolderId, aIndex, aItemType, aURI) {
+      onItemAdded(aItemId, aFolderId, aIndex, aItemType, aURI) {
         info("Added a bookmark to " + aURI.spec);
         PlacesUtils.bookmarks.removeObserver(bookmarksObserver);
         if (aURI.equals(aExpectedURI)) {
           resolve();
-        }
-        else {
+        } else {
           reject(new Error("Added an unexpected bookmark"));
         }
       },
-      onBeginUpdateBatch: function () {},
-      onEndUpdateBatch: function () {},
-      onItemRemoved: function () {},
-      onItemChanged: function () {},
-      onItemVisited: function () {},
-      onItemMoved: function () {},
+      onBeginUpdateBatch() {},
+      onEndUpdateBatch() {},
+      onItemRemoved() {},
+      onItemChanged() {},
+      onItemVisited() {},
+      onItemMoved() {},
       QueryInterface: XPCOMUtils.generateQI([
         Ci.nsINavBookmarkObserver,
       ])
@@ -1006,7 +987,7 @@ function* loadBadCertPage(url) {
     // When the certificate exception dialog has opened, click the button to add
     // an exception.
     let certExceptionDialogObserver = {
-      observe: function(aSubject, aTopic, aData) {
+      observe(aSubject, aTopic, aData) {
         if (aTopic == "cert-exception-ui-ready") {
           Services.obs.removeObserver(this, "cert-exception-ui-ready");
           let certExceptionDialog = getCertExceptionDialog(EXCEPTION_DIALOG_URI);
@@ -1066,7 +1047,7 @@ function setupRemoteClientsFixture(fixture) {
     Object.getOwnPropertyDescriptor(gFxAccounts, "remoteClients").get;
 
   Object.defineProperty(gFxAccounts, "remoteClients", {
-    get: function() { return fixture; }
+    get() { return fixture; }
   });
   return oldRemoteClientsGetter;
 }

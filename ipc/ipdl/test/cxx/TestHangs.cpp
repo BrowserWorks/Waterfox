@@ -12,7 +12,9 @@ namespace _ipdltest {
 //-----------------------------------------------------------------------------
 // parent
 
-TestHangsParent::TestHangsParent() : mDetectedHang(false)
+TestHangsParent::TestHangsParent()
+  : mDetectedHang(false)
+  , mNumAnswerStackFrame(0)
 {
     MOZ_COUNT_CTOR(TestHangsParent);
 }
@@ -47,7 +49,7 @@ TestHangsParent::Main()
     // the child.  since we're not blocked on anything, the IO thread
     // will enqueue an OnMaybeDequeueOne() task to process that
     // message
-    // 
+    //
     // NB: PR_Sleep is exactly what we want, only the current thread
     // sleeping
     PR_Sleep(5000);
@@ -82,23 +84,29 @@ TestHangsParent::ShouldContinueFromReplyTimeout()
     return false;
 }
 
-bool
+mozilla::ipc::IPCResult
 TestHangsParent::AnswerStackFrame()
 {
-    if (PTestHangs::HANG != state()) {
-        if (CallStackFrame())
-            fail("should have timed out!");
-    }
-    else {
+    ++mNumAnswerStackFrame;
+
+    // MOZ_ASSERT((PTestHangs::HANG != state()) == (mNumAnswerStackFrame == 1));
+
+    if (mNumAnswerStackFrame == 1) {
+        if (CallStackFrame()) {
+          fail("should have timed out!");
+        }
+    } else if (mNumAnswerStackFrame == 2) {
         // minimum possible, 2 ms.  We want to detecting a hang to race
         // with the reply coming in, as reliably as possible
         SetReplyTimeoutMs(2);
 
         if (CallHang())
             fail("should have timed out!");
+    } else {
+        fail("unexpected state");
     }
 
-    return true;
+    return IPC_OK();
 }
 
 void
@@ -129,7 +137,7 @@ TestHangsChild::~TestHangsChild()
     MOZ_COUNT_DTOR(TestHangsChild);
 }
 
-bool
+mozilla::ipc::IPCResult
 TestHangsChild::AnswerHang()
 {
     puts(" (child process is 'hanging' now)");
@@ -139,7 +147,7 @@ TestHangsChild::AnswerHang()
     // ShouldContinueFromReplyTimeout()
     PR_Sleep(1000);
 
-    return true;
+    return IPC_OK();
 }
 
 } // namespace _ipdltest

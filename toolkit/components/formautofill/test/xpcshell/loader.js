@@ -17,6 +17,7 @@ var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
 
+/* import-globals-from ../loader_common.js */
 Services.scriptloader.loadSubScript(
   Services.io.newFileURI(do_get_file("loader_common.js")).spec, this);
 
@@ -30,9 +31,10 @@ var setTimeout = (fn, delay) => do_timeout(delay, fn);
 
 // Define task registration functions, see description in "loader_common.js".
 var add_task_in_parent_process = add_task;
-var add_task_in_child_process = function () {};
+var add_task_in_child_process = function() {};
 var add_task_in_both_processes = add_task;
 
+/* import-globals-from ../head_common.js */
 Services.scriptloader.loadSubScript(
   Services.io.newFileURI(do_get_file("head_common.js")).spec, this);
 

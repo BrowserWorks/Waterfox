@@ -11,6 +11,7 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/RestyleLogging.h"
 #include "mozilla/StyleContextSource.h"
+#include "mozilla/StyleComplexColor.h"
 #include "nsCSSAnonBoxes.h"
 #include "nsStyleSet.h"
 
@@ -398,7 +399,12 @@ public:
                                    uint32_t* aSamePointerStructs);
 
 private:
-  template<class StyleContextLike>
+  enum class NeutralChangeHandling {
+    Retain,
+    Strip,
+  };
+
+  template<class StyleContextLike, NeutralChangeHandling aNeutralChangeHandling>
   nsChangeHint CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
                                            nsChangeHint aParentHintsNotHandledForDescendants,
                                            uint32_t* aEqualStructs,
@@ -409,11 +415,12 @@ public:
    * Get a color that depends on link-visitedness using this and
    * this->GetStyleIfVisited().
    *
-   * aProperty must be a color-valued property that StyleAnimationValue
-   * knows how to extract.  It must also be a property that we know to
-   * do change handling for in nsStyleContext::CalcDifference.
+   * @param aField A pointer to a member variable in a style struct.
+   *               The member variable and its style struct must have
+   *               been listed in nsCSSVisitedDependentPropList.h.
    */
-  nscolor GetVisitedDependentColor(nsCSSPropertyID aProperty);
+  template<typename T, typename S>
+  nscolor GetVisitedDependentColor(T S::* aField);
 
   /**
    * aColors should be a two element array of nscolor in which the first
@@ -511,45 +518,6 @@ public:
   }
 
   mozilla::NonOwningStyleContextSource StyleSource() const { return mSource.AsRaw(); }
-
-#ifdef MOZ_STYLO
-  // NOTE: It'd be great to assert here that the previous change hint is always
-  // consumed.
-  //
-  // This is not the case right now, since the changes of childs of frames that
-  // go through frame construction are not consumed.
-  void StoreChangeHint(nsChangeHint aHint)
-  {
-    MOZ_ASSERT(!IsShared());
-    mStoredChangeHint = aHint;
-#ifdef DEBUG
-    mConsumedChangeHint = false;
-#endif
-  }
-
-  nsChangeHint ConsumeStoredChangeHint()
-  {
-    MOZ_ASSERT(!mConsumedChangeHint, "Re-consuming the same change hint!");
-    nsChangeHint result = mStoredChangeHint;
-    mStoredChangeHint = nsChangeHint(0);
-#ifdef DEBUG
-    mConsumedChangeHint = true;
-#endif
-    return result;
-  }
-#else
-  void StoreChangeHint(nsChangeHint aHint)
-  {
-    MOZ_CRASH("stylo: Called nsStyleContext::StoreChangeHint in a non MOZ_STYLO "
-              "build.");
-  }
-
-  nsChangeHint ConsumeStoredChangeHint()
-  {
-    MOZ_CRASH("stylo: Called nsStyleContext::ComsumeStoredChangeHint in a non "
-               "MOZ_STYLO build.");
-  }
-#endif
 
 private:
   // Private destructor, to discourage deletion outside of Release():
@@ -808,15 +776,6 @@ private:
   uint64_t                mBits;
 
   uint32_t                mRefCnt;
-
-  // For now we store change hints on the style context during parallel traversal.
-  // We should improve this - see bug 1289861.
-#ifdef MOZ_STYLO
-  nsChangeHint            mStoredChangeHint;
-#ifdef DEBUG
-  bool                    mConsumedChangeHint;
-#endif
-#endif
 
 #ifdef DEBUG
   uint32_t                mFrameRefCnt; // number of frames that use this

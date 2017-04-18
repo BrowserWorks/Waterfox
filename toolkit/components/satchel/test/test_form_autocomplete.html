@@ -139,6 +139,8 @@ Form History test: form field autocomplete
 
 <pre id="test">
 <script class="testbody" type="text/javascript">
+/* import-globals-from ../../../../testing/mochitest/tests/SimpleTest/EventUtils.js */
+/* import-globals-from satchel_common.js */
 
 /** Test for Form History autocomplete **/
 
@@ -172,7 +174,7 @@ function setupFormHistory(aCallback) {
     { op : "add", fieldname : "field8", value : "value" },
     { op : "add", fieldname : "field9", value : "value" },
     { op : "add", fieldname : "field10", value : "42" },
-    { op : "add", fieldname : "field11", value : "2010-10-10" },
+    { op : "add", fieldname : "field11", value : "2010-10-10" }, // not used, since type=date doesn't have autocomplete currently
     { op : "add", fieldname : "field12", value : "21:21" }, // not used, since type=time doesn't have autocomplete currently
     { op : "add", fieldname : "field13", value : "32" },  // not used, since type=range doesn't have a drop down menu
     { op : "add", fieldname : "field14", value : "#ffffff" }, // not used, since type=color doesn't have autocomplete currently
@@ -202,20 +204,17 @@ function checkForm(expectedValue) {
 var testNum = 0;
 var expectingPopup = false;
 
-function expectPopup()
-{
+function expectPopup() {
   info("expecting popup for test " + testNum);
   expectingPopup = true;
 }
 
-function popupShownListener()
-{
+function popupShownListener() {
   info("popup shown for test " + testNum);
   if (expectingPopup) {
     expectingPopup = false;
     SimpleTest.executeSoon(runTest);
-  }
-  else {
+  } else {
     ok(false, "Autocomplete popup not expected during test " + testNum);
   }
 }
@@ -443,7 +442,7 @@ function runTest() {
     case 51:
         checkForm("value");
         countEntries("field1", "value1",
-          function (num) {
+          function(num) {
             ok(!num, testNum + " checking that f1/v1 was deleted");
             runTest();
           });
@@ -483,7 +482,7 @@ function runTest() {
     case 55:
         checkForm("");
         countEntries("field1", "value3",
-          function (num) {
+          function(num) {
             ok(!num, testNum + " checking that f1/v3 was deleted");
             runTest();
           });
@@ -523,7 +522,7 @@ function runTest() {
 
     case 59:
         countEntries("field1", "value4",
-          function (num) {
+          function(num) {
             ok(!num, testNum + " checking that f1/v4 was deleted");
             runTest();
           });
@@ -562,7 +561,7 @@ function runTest() {
     case 63:
         checkForm("");
         countEntries("field1", "value2",
-          function (num) {
+          function(num) {
             ok(!num, testNum + " checking that f1/v2 was deleted");
             runTest();
           });
@@ -899,15 +898,13 @@ function runTest() {
 
         input = $_(14, "field11");
         restoreForm();
-        expectPopup();
-        doKey("down");
+        waitForMenuChange(0);
         break;
 
     case 405:
-        checkMenuEntries(["2010-10-10"]);
-        doKey("down");
-        doKey("return");
-        checkForm("2010-10-10");
+        checkMenuEntries([]); // type=date with it's own control frame does not
+                              // have a drop down menu for now
+        checkForm("");
 
         input = $_(15, "field12");
         restoreForm();
@@ -992,11 +989,11 @@ function runTest() {
     // Check that the input event is fired.
     case 500:
       input.addEventListener("input", function(event) {
-        input.removeEventListener("input", arguments.callee, false);
+        input.removeEventListener("input", arguments.callee);
         ok(true, testNum + " oninput should have been received");
         ok(event.bubbles, testNum + " input event should bubble");
         ok(event.cancelable, testNum + " input event should be cancelable");
-      }, false);
+      });
 
       doKey("down");
       checkForm("");
@@ -1026,18 +1023,15 @@ function runTest() {
     default:
         ok(false, "Unexpected invocation of test #" + testNum);
         SimpleTest.finish();
-        return;
   }
 }
 
-function addEntry(name, value)
-{
-  updateFormHistory({ op : "add", fieldname : name, value: value }, runTest);
+function addEntry(name, value) {
+  updateFormHistory({ op : "add", fieldname : name, value }, runTest);
 }
 
 // Runs the next test when scroll event occurs
-function waitForScroll()
-{
+function waitForScroll() {
   addEventListener("scroll", function() {
     if (!window.pageYOffset)
       return;
@@ -1047,8 +1041,7 @@ function waitForScroll()
   }, false);
 }
 
-function waitForMenuChange(expectedCount, expectedFirstValue)
-{
+function waitForMenuChange(expectedCount, expectedFirstValue) {
     notifyMenuChanged(expectedCount, expectedFirstValue, runTest);
 }
 
@@ -1056,7 +1049,7 @@ function checkMenuEntries(expectedValues, testNumber) {
     var actualValues = getMenuEntries();
     is(actualValues.length, expectedValues.length, testNumber + " Checking length of expected menu");
     for (var i = 0; i < expectedValues.length; i++)
-        is(actualValues[i], expectedValues[i], testNumber + " Checking menu entry #"+i);
+        is(actualValues[i], expectedValues[i], testNumber + " Checking menu entry #" + i);
 }
 
 function startTest() {
@@ -1073,4 +1066,3 @@ SimpleTest.requestFlakyTimeout("untriaged");
 </pre>
 </body>
 </html>
-

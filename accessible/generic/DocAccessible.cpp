@@ -46,6 +46,7 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/EventStates.h"
+#include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/DocumentType.h"
 #include "mozilla/dom/Element.h"
 
@@ -1466,8 +1467,25 @@ DocAccessible::NotifyOfLoading(bool aIsReloading)
 void
 DocAccessible::DoInitialUpdate()
 {
-  if (nsCoreUtils::IsTabDocument(mDocumentNode))
+  if (nsCoreUtils::IsTabDocument(mDocumentNode)) {
     mDocFlags |= eTabDocument;
+    if (IPCAccessibilityActive()) {
+      nsIDocShell* docShell = mDocumentNode->GetDocShell();
+      if (RefPtr<dom::TabChild> tabChild = dom::TabChild::GetFrom(docShell)) {
+        DocAccessibleChild* ipcDoc = new DocAccessibleChild(this, tabChild);
+        SetIPCDoc(ipcDoc);
+
+#if defined(XP_WIN)
+        IAccessibleHolder holder(CreateHolderFromAccessible(this));
+        int32_t childID = AccessibleWrap::GetChildIDFor(this);
+#else
+        int32_t holder = 0, childID = 0;
+#endif
+        tabChild->SendPDocAccessibleConstructor(ipcDoc, nullptr, 0, childID,
+                                                holder);
+      }
+    }
+  }
 
   mLoadState |= eTreeConstructed;
 
@@ -2160,7 +2178,14 @@ DocAccessible::PutChildrenBack(nsTArray<RefPtr<Accessible> >* aChildren,
       TreeWalker walker(origContainer);
       if (walker.Seek(child->GetContent())) {
         Accessible* prevChild = walker.Prev();
-        idxInParent = prevChild ? prevChild->IndexInParent() + 1 : 0;
+        if (prevChild) {
+          idxInParent = prevChild->IndexInParent() + 1;
+          MOZ_ASSERT(origContainer == prevChild->Parent(), "Broken tree");
+          origContainer = prevChild->Parent();
+        }
+        else {
+          idxInParent = 0;
+        }
       }
     }
     MoveChild(child, origContainer, idxInParent);
@@ -2214,6 +2239,11 @@ DocAccessible::MoveChild(Accessible* aChild, Accessible* aNewParent,
 
   // No insertion point for the child.
   if (aIdxInParent == -1) {
+    return true;
+  }
+
+  if (aIdxInParent > static_cast<int32_t>(aNewParent->ChildCount())) {
+    MOZ_ASSERT_UNREACHABLE("Wrong insertion point for a moving child");
     return true;
   }
 

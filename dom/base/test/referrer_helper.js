@@ -66,7 +66,7 @@ function resetState() {
 /**
  * testing if anchor and area referrer attributes are honoured (1174913)
  */
-var tests = (function() {
+var tests = (function*() {
 
   // enable referrer attribute
   yield SpecialPowers.pushPrefEnv({"set": [['network.http.enablePerElementReferrer', true]]}, advance);
@@ -76,6 +76,10 @@ var tests = (function() {
   var iframe = document.getElementById("testframe");
 
   for (var j = 0; j < testCases.length; j++) {
+    if (testCases[j].PREFS) {
+      yield SpecialPowers.pushPrefEnv({"set": testCases[j].PREFS}, advance);
+    }
+
     var actions = testCases[j].ACTION;
     var tests = testCases[j].TESTS;
     for (var k = 0; k < actions.length; k++) {
@@ -97,6 +101,6 @@ var tests = (function() {
     };
   };
 
-  // complete.  Be sure to yield so we don't call this twice.
-  yield SimpleTest.finish();
+  // complete.
+  SimpleTest.finish();
 })();

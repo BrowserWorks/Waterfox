@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
 
@@ -42,7 +42,7 @@ function testSteps()
     is(event.newVersion, 2, "Correct event newVersion");
     is(versionChangeEventCount++, 0, "Correct count");
     db1.close();
-  }, false);
+  });
 
   // Open the database again and trigger an upgrade that should succeed
   request = indexedDB.open(name, 2);
@@ -76,7 +76,7 @@ function testSteps()
     is(event.oldVersion, 2, "Correct event oldVersion");
     is(event.newVersion, 3, "Correct event newVersion");
     is(versionChangeEventCount++, 1, "Correct count");
-  }, false);
+  });
 
   // Test opening the existing version again
   request = indexedDB.open(name, 2);
@@ -160,6 +160,5 @@ function testSteps()
   is(event.newVersion, 2, "Correct new version");
 
   finishTest();
-  yield undefined;
 }
 

@@ -24,11 +24,12 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.importGlobalProperties(["XMLHttpRequest"]);
 
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils", "resource://services-common/utils.js");
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher", "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderWorker", "resource://gre/modules/reader/ReaderWorker.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task", "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch", "resource://gre/modules/TelemetryStopwatch.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "LanguageDetector", "resource:///modules/translation/LanguageDetector.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "Readability", function() {
   let scope = {};
@@ -36,6 +37,8 @@ XPCOMUtils.defineLazyGetter(this, "Readability", function() {
   Services.scriptloader.loadSubScript("resource://gre/modules/reader/Readability.js", scope);
   return scope["Readability"];
 });
+
+const gIsFirefoxDesktop = Services.appinfo.ID == "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
 
 this.ReaderMode = {
   // Version of the cache schema.
@@ -67,7 +70,7 @@ this.ReaderMode = {
     return this.isOnLowMemoryPlatform = memory.isLowMemoryPlatform();
   },
 
-  _getStateForParseOnLoad: function () {
+  _getStateForParseOnLoad() {
     let isEnabled = Services.prefs.getBoolPref("reader.parse-on-load.enabled");
     let isForceEnabled = Services.prefs.getBoolPref("reader.parse-on-load.force-enabled");
     // For low-memory devices, don't allow reader mode since it takes up a lot of memory.
@@ -75,7 +78,7 @@ this.ReaderMode = {
     return isForceEnabled || (isEnabled && !this.isOnLowMemoryPlatform);
   },
 
-  observe: function(aMessage, aTopic, aData) {
+  observe(aMessage, aTopic, aData) {
     switch (aTopic) {
       case "nsPref:changed":
         if (aData.startsWith("reader.parse-on-load.")) {
@@ -91,7 +94,7 @@ this.ReaderMode = {
    * Enter the reader mode by going forward one step in history if applicable,
    * if not, append the about:reader page in the history instead.
    */
-  enterReaderMode: function(docShell, win) {
+  enterReaderMode(docShell, win) {
     let url = win.document.location.href;
     let readerURL = "about:reader?url=" + encodeURIComponent(url);
     let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
@@ -112,7 +115,7 @@ this.ReaderMode = {
    * Exit the reader mode by going back one step in history if applicable,
    * if not, append the original page in the history instead.
    */
-  leaveReaderMode: function(docShell, win) {
+  leaveReaderMode(docShell, win) {
     let url = win.document.location.href;
     let originalURL = this.getOriginalUrl(url);
     let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
@@ -136,14 +139,14 @@ this.ReaderMode = {
    * @return The original URL for the article, or null if we did not find
    *         a properly formatted about:reader URL.
    */
-  getOriginalUrl: function(url) {
+  getOriginalUrl(url) {
     if (!url.startsWith("about:reader?")) {
       return null;
     }
 
     let outerHash = "";
     try {
-      let uriObj = Services.io.newURI(url, null, null);
+      let uriObj = Services.io.newURI(url);
       url = uriObj.specIgnoringRef;
       outerHash = uriObj.ref;
     } catch (ex) { /* ignore, use the raw string */ }
@@ -155,8 +158,8 @@ this.ReaderMode = {
     let originalUrl = searchParams.get("url");
     if (outerHash) {
       try {
-        let uriObj = Services.io.newURI(originalUrl, null, null);
-        uriObj = Services.io.newURI('#' + outerHash, null, uriObj);
+        let uriObj = Services.io.newURI(originalUrl);
+        uriObj = Services.io.newURI("#" + outerHash, null, uriObj);
         originalUrl = uriObj.spec;
       } catch (ex) {}
     }
@@ -169,13 +172,13 @@ this.ReaderMode = {
    * @param doc A document to parse.
    * @return boolean Whether or not we should show the reader mode button.
    */
-  isProbablyReaderable: function(doc) {
+  isProbablyReaderable(doc) {
     // Only care about 'real' HTML documents:
     if (doc.mozSyntheticDocument || !(doc instanceof doc.defaultView.HTMLDocument)) {
       return false;
     }
 
-    let uri = Services.io.newURI(doc.location.href, null, null);
+    let uri = Services.io.newURI(doc.location.href);
     if (!this._shouldCheckUri(uri)) {
       return false;
     }
@@ -187,12 +190,12 @@ this.ReaderMode = {
     return new Readability(uri, doc).isProbablyReaderable(this.isNodeVisible.bind(this, utils));
   },
 
-  isNodeVisible: function(utils, node) {
+  isNodeVisible(utils, node) {
     let bounds = utils.getBoundsWithoutFlushing(node);
     return bounds.height > 0 && bounds.width > 0;
   },
 
-  getUtilsForWin: function(win) {
+  getUtilsForWin(win) {
     return win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
   },
 
@@ -205,8 +208,8 @@ this.ReaderMode = {
    * @resolves JS object representing the article, or null if no article is found.
    */
   parseDocument: Task.async(function* (doc) {
-    let documentURI = Services.io.newURI(doc.documentURI, null, null);
-    let baseURI = Services.io.newURI(doc.baseURI, null, null);
+    let documentURI = Services.io.newURI(doc.documentURI);
+    let baseURI = Services.io.newURI(doc.baseURI);
     if (!this._shouldCheckUri(documentURI) || !this._shouldCheckUri(baseURI, true)) {
       this.log("Reader mode disabled for URI");
       return null;
@@ -224,7 +227,7 @@ this.ReaderMode = {
    */
   downloadAndParseDocument: Task.async(function* (url) {
     let doc = yield this._downloadDocument(url);
-    let uri = Services.io.newURI(doc.baseURI, null, null);
+    let uri = Services.io.newURI(doc.baseURI);
     if (!this._shouldCheckUri(uri, true)) {
       this.log("Reader mode disabled for URI");
       return null;
@@ -233,7 +236,7 @@ this.ReaderMode = {
     return yield this._readerParse(uri, doc);
   }),
 
-  _downloadDocument: function (url) {
+  _downloadDocument(url) {
     let histogram = Services.telemetry.getHistogramById("READER_MODE_DOWNLOAD_RESULT");
     return new Promise((resolve, reject) => {
       let xhr = new XMLHttpRequest();
@@ -261,7 +264,7 @@ this.ReaderMode = {
           if (content) {
             let urlIndex = content.toUpperCase().indexOf("URL=");
             if (urlIndex > -1) {
-              let baseURI = Services.io.newURI(url, null, null);
+              let baseURI = Services.io.newURI(url);
               let newURI = Services.io.newURI(content.substring(urlIndex + 4), null, baseURI);
               let newURL = newURI.spec;
               let ssm = Services.scriptSecurityManager;
@@ -290,10 +293,10 @@ this.ReaderMode = {
         // Convert these to real URIs to make sure the escaping (or lack
         // thereof) is identical:
         try {
-          responseURL = Services.io.newURI(responseURL, null, null).specIgnoringRef;
+          responseURL = Services.io.newURI(responseURL).specIgnoringRef;
         } catch (ex) { /* Ignore errors - we'll use what we had before */ }
         try {
-          givenURL = Services.io.newURI(givenURL, null, null).specIgnoringRef;
+          givenURL = Services.io.newURI(givenURL).specIgnoringRef;
         } catch (ex) { /* Ignore errors - we'll use what we had before */ }
 
         if (responseURL != givenURL) {
@@ -345,11 +348,11 @@ this.ReaderMode = {
     return OS.File.writeAtomic(path, array, { tmpPath: path + ".tmp" })
       .then(success => {
         OS.File.stat(path).then(info => {
-          return Messaging.sendRequest({
+          return EventDispatcher.instance.sendRequest({
             type: "Reader:AddedToCache",
             url: article.url,
             size: info.size,
-            path: path,
+            path,
           });
         });
       });
@@ -368,7 +371,7 @@ this.ReaderMode = {
     yield OS.File.remove(path);
   }),
 
-  log: function(msg) {
+  log(msg) {
     if (this.DEBUG)
       dump("Reader: " + msg);
   },
@@ -382,7 +385,7 @@ this.ReaderMode = {
     "youtube.com",
   ],
 
-  _shouldCheckUri: function (uri, isBaseUri = false) {
+  _shouldCheckUri(uri, isBaseUri = false) {
     if (!(uri.schemeIs("http") || uri.schemeIs("https"))) {
       this.log("Not parsing URI scheme: " + uri.scheme);
       return false;
@@ -461,6 +464,12 @@ this.ReaderMode = {
     let flags = Ci.nsIDocumentEncoder.OutputSelectionOnly | Ci.nsIDocumentEncoder.OutputAbsoluteLinks;
     article.title = Cc["@mozilla.org/parserutils;1"].getService(Ci.nsIParserUtils)
                                                     .convertToPlainText(article.title, flags, 0);
+    if (gIsFirefoxDesktop) {
+      yield this._assignLanguage(article);
+      this._maybeAssignTextDirection(article);
+    }
+
+    this._assignReadTime(article);
 
     histogram.add(PARSE_SUCCESS);
     return article;
@@ -485,7 +494,7 @@ this.ReaderMode = {
    * @param url The article URL. This should have referrers removed.
    * @return The file path to the cached article.
    */
-  _toHashedPath: function (url) {
+  _toHashedPath(url) {
     let value = this._unicodeConverter.convertToByteArray(url);
     this._cryptoHash.init(this._cryptoHash.MD5);
     this._cryptoHash.update(value, value.length);
@@ -502,7 +511,7 @@ this.ReaderMode = {
    * @resolves When the cache directory exists.
    * @rejects OS.File.Error
    */
-  _ensureCacheDir: function () {
+  _ensureCacheDir() {
     let dir = OS.Path.join(OS.Constants.Path.profileDir, "readercache");
     return OS.File.exists(dir).then(exists => {
       if (!exists) {
@@ -510,5 +519,73 @@ this.ReaderMode = {
       }
       return undefined;
     });
-  }
+  },
+
+  /**
+   * Sets a global language string value if the result is confident
+   *
+   * @return Promise
+   * @resolves when the language is detected
+   */
+  _assignLanguage(article) {
+    return LanguageDetector.detectLanguage(article.textContent).then(result => {
+      article.language = result.confident ? result.language : null;
+    });
+  },
+
+  _maybeAssignTextDirection(article) {
+    // TODO: Remove the hardcoded language codes below once bug 1320265 is resolved.
+    if (!article.dir && ["ar", "fa", "he", "ug", "ur"].includes(article.language)) {
+      article.dir = "rtl";
+    }
+  },
+
+  /**
+   * Assigns the estimated reading time range of the article to the article object.
+   *
+   * @param article the article object to assign the reading time estimate to.
+   */
+  _assignReadTime(article) {
+    let lang = article.language || "en";
+    const readingSpeed = this._getReadingSpeedForLanguage(lang);
+    const charactersPerMinuteLow = readingSpeed.cpm - readingSpeed.variance;
+    const charactersPerMinuteHigh = readingSpeed.cpm + readingSpeed.variance;
+    const length = article.length;
+
+    article.readingTimeMinsSlow = Math.ceil(length / charactersPerMinuteLow);
+    article.readingTimeMinsFast  = Math.ceil(length / charactersPerMinuteHigh);
+  },
+
+  /**
+   * Returns the reading speed of a selection of languages with likely variance.
+   *
+   * Reading speed estimated from a study done on reading speeds in various languages.
+   * study can be found here: http://iovs.arvojournals.org/article.aspx?articleid=2166061
+   *
+   * @return object with characters per minute and variance. Defaults to English
+   *         if no suitable language is found in the collection.
+   */
+  _getReadingSpeedForLanguage(lang) {
+    const readingSpeed = new Map([
+      [ "en", {cpm: 987,  variance: 118 } ],
+      [ "ar", {cpm: 612,  variance: 88 } ],
+      [ "de", {cpm: 920,  variance: 86 } ],
+      [ "es", {cpm: 1025, variance: 127 } ],
+      [ "fi", {cpm: 1078, variance: 121 } ],
+      [ "fr", {cpm: 998,  variance: 126 } ],
+      [ "he", {cpm: 833,  variance: 130 } ],
+      [ "it", {cpm: 950,  variance: 140 } ],
+      [ "jw", {cpm: 357,  variance: 56 } ],
+      [ "nl", {cpm: 978,  variance: 143 } ],
+      [ "pl", {cpm: 916,  variance: 126 } ],
+      [ "pt", {cpm: 913,  variance: 145 } ],
+      [ "ru", {cpm: 986,  variance: 175 } ],
+      [ "sk", {cpm: 885,  variance: 145 } ],
+      [ "sv", {cpm: 917,  variance: 156 } ],
+      [ "tr", {cpm: 1054, variance: 156 } ],
+      [ "zh", {cpm: 255,  variance: 29 } ],
+    ]);
+
+    return readingSpeed.get(lang) || readingSpeed.get("en");
+  },
 };

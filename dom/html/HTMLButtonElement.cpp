@@ -207,7 +207,7 @@ HTMLButtonElement::IsDisabledForEvents(EventMessage aMessage)
 }
 
 nsresult
-HTMLButtonElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
+HTMLButtonElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = false;
   if (IsDisabledForEvents(aVisitor.mEvent->mMessage)) {
@@ -235,7 +235,7 @@ HTMLButtonElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
     }
   }
 
-  return nsGenericHTMLElement::PreHandleEvent(aVisitor);
+  return nsGenericHTMLElement::GetEventTargetParent(aVisitor);
 }
 
 nsresult
@@ -476,8 +476,8 @@ HTMLButtonElement::SaveState()
 bool
 HTMLButtonElement::RestoreState(nsPresState* aState)
 {
-  if (aState && aState->IsDisabledSet()) {
-    SetDisabled(aState->GetDisabled());
+  if (aState && aState->IsDisabledSet() && !aState->GetDisabled()) {
+    SetDisabled(false);
   }
 
   return false;

@@ -24,8 +24,13 @@ registerCleanupFunction(() => {
   flags.testing = false;
 });
 
+// Toggle this pref on to see all DevTools event communication. This is hugely
+// useful for fixing race conditions.
+// Services.prefs.setBoolPref("devtools.dump.emit", true);
+
 // Clear preferences that may be set during the course of tests.
 registerCleanupFunction(() => {
+  Services.prefs.clearUserPref("devtools.dump.emit");
   Services.prefs.clearUserPref("devtools.inspector.htmlPanelOpen");
   Services.prefs.clearUserPref("devtools.inspector.sidebarOpen");
   Services.prefs.clearUserPref("devtools.markup.pagesize");
@@ -79,13 +84,21 @@ function getContainerForNodeFront(nodeFront, {markup}) {
  * @param {String|NodeFront} selector
  * @param {InspectorPanel} inspector The instance of InspectorPanel currently
  * loaded in the toolbox
+ * @param {Boolean} Set to true in the event that the node shouldn't be found.
  * @return {MarkupContainer}
  */
-var getContainerForSelector = Task.async(function* (selector, inspector) {
+var getContainerForSelector =
+Task.async(function* (selector, inspector, expectFailure = false) {
   info("Getting the markup-container for node " + selector);
   let nodeFront = yield getNodeFront(selector, inspector);
   let container = getContainerForNodeFront(nodeFront, inspector);
-  info("Found markup-container " + container);
+
+  if (expectFailure) {
+    ok(!container, "Shouldn't find markup-container for selector: " + selector);
+  } else {
+    ok(container, "Found markup-container for selector: " + selector);
+  }
+
   return container;
 });
 
@@ -417,37 +430,6 @@ function* waitForMultipleChildrenUpdates(inspector) {
     return yield waitForMultipleChildrenUpdates(inspector);
   }
   return undefined;
-}
-
-/**
- * Create an HTTP server that can be used to simulate custom requests within
- * a test.  It is automatically cleaned up when the test ends, so no need to
- * call `destroy`.
- *
- * See https://developer.mozilla.org/en-US/docs/Httpd.js/HTTP_server_for_unit_tests
- * for more information about how to register handlers.
- *
- * The server can be accessed like:
- *
- *   const server = createTestHTTPServer();
- *   let url = "http://localhost: " + server.identity.primaryPort + "/path";
- *
- * @returns {HttpServer}
- */
-function createTestHTTPServer() {
-  const {HttpServer} = Cu.import("resource://testing-common/httpd.js", {});
-  let server = new HttpServer();
-
-  registerCleanupFunction(function* cleanup() {
-    let destroyed = defer();
-    server.stop(() => {
-      destroyed.resolve();
-    });
-    yield destroyed.promise;
-  });
-
-  server.start(-1);
-  return server;
 }
 
 /**

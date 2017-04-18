@@ -30,7 +30,7 @@ module.exports = {
     "uneval": true,
     "URL": true,
     "WebSocket": true,
-    "XMLHttpRequest": true,
+    "XMLHttpRequest": true
   },
   "rules": {
     // These are the rules that have been configured so far to match the
@@ -56,8 +56,7 @@ module.exports = {
     "react/no-direct-mutation-state": "error",
     "react/no-unknown-property": "error",
     "react/prefer-es6-class": ["warn", "never"],
-    // Disabled temporarily until errors are fixed.
-    "react/prop-types": "off",
+    "react/prop-types": "error",
     "react/sort-comp": ["error", {
       order: [
         "lifecycle",
@@ -142,7 +141,7 @@ module.exports = {
     // Only useful in a node environment.
     "handle-callback-err": "off",
     // Tab width.
-    "indent": ["error", 2, {"SwitchCase": 1}],
+    "indent": ["error", 2, {"SwitchCase": 1, "ArrayExpression": "first", "ObjectExpression": "first"}],
     // Enforces spacing between keys and values in object literal properties.
     "key-spacing": ["error", {"beforeColon": false, "afterColon": true}],
     // Enforces unix style line breaks.
@@ -273,7 +272,7 @@ module.exports = {
     // Disallow declaring the same variable more than once (we use let anyway).
     "no-redeclare": "error",
     // Disallow multiple spaces in a regular expression literal.
-    "no-regex-spaces": "error",
+    "no-regex-spaces": "off",
     // Allow reserved words being used as object literal keys.
     "no-reserved-keys": "off",
     // Don't restrict usage of specified node modules (not a node environment).
@@ -283,6 +282,8 @@ module.exports = {
     "no-return-assign": "error",
     // Allow use of javascript: urls.
     "no-script-url": "off",
+    // Disallow assignments like foo = foo
+    "no-self-assign": "error",
     // Disallow comparisons where both sides are exactly the same.
     "no-self-compare": "error",
     // Disallow use of comma operator.
@@ -328,8 +329,14 @@ module.exports = {
     // Disallow global and local variables that aren't used, but allow unused
     // function arguments.
     "no-unused-vars": ["error", {"vars": "all", "args": "none"}],
+    // Disallow flow control that escapes from "finally".
+    "no-unsafe-finally": "error",
     // Allow using variables before they are defined.
     "no-use-before-define": "off",
+    // Disallow useless Function.prototype.{call/apply}
+    "no-useless-call": "error",
+    // Disallow useless return;
+    "no-useless-return": "error",
     // We use var-only-at-top-level instead of no-var as we allow top level
     // vars.
     "no-var": "off",

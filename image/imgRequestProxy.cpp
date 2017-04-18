@@ -23,7 +23,7 @@ using namespace mozilla::image;
 class ProxyBehaviour
 {
  public:
-  virtual ~ProxyBehaviour() {}
+  virtual ~ProxyBehaviour() = default;
 
   virtual already_AddRefed<mozilla::image::Image> GetImage() const = 0;
   virtual bool HasImage() const = 0;
@@ -37,15 +37,15 @@ class RequestBehaviour : public ProxyBehaviour
  public:
   RequestBehaviour() : mOwner(nullptr), mOwnerHasImage(false) {}
 
-  virtual already_AddRefed<mozilla::image::Image>GetImage() const override;
-  virtual bool HasImage() const override;
-  virtual already_AddRefed<ProgressTracker> GetProgressTracker() const override;
+  already_AddRefed<mozilla::image::Image>GetImage() const override;
+  bool HasImage() const override;
+  already_AddRefed<ProgressTracker> GetProgressTracker() const override;
 
-  virtual imgRequest* GetOwner() const override {
+  imgRequest* GetOwner() const override {
     return mOwner;
   }
 
-  virtual void SetOwner(imgRequest* aOwner) override {
+  void SetOwner(imgRequest* aOwner) override {
     mOwner = aOwner;
 
     if (mOwner) {
@@ -229,7 +229,7 @@ imgRequestProxy::ChangeOwner(imgRequest* aNewOwner)
   // If we'd previously requested a synchronous decode, request a decode on the
   // new image.
   if (mDecodeRequested) {
-    StartDecoding();
+    StartDecoding(imgIContainer::FLAG_NONE);
   }
 
   return NS_OK;
@@ -358,14 +358,14 @@ imgRequestProxy::CancelAndForgetObserver(nsresult aStatus)
 }
 
 NS_IMETHODIMP
-imgRequestProxy::StartDecoding()
+imgRequestProxy::StartDecoding(uint32_t aFlags)
 {
   // Flag this, so we know to transfer the request if our owner changes
   mDecodeRequested = true;
 
   RefPtr<Image> image = GetImage();
   if (image) {
-    return image->StartDecoding();
+    return image->StartDecoding(aFlags);
   }
 
   if (GetOwner()) {
@@ -373,6 +373,24 @@ imgRequestProxy::StartDecoding()
   }
 
   return NS_OK;
+}
+
+bool
+imgRequestProxy::StartDecodingWithResult(uint32_t aFlags)
+{
+  // Flag this, so we know to transfer the request if our owner changes
+  mDecodeRequested = true;
+
+  RefPtr<Image> image = GetImage();
+  if (image) {
+    return image->StartDecodingWithResult(aFlags);
+  }
+
+  if (GetOwner()) {
+    GetOwner()->StartDecoding();
+  }
+
+  return false;
 }
 
 NS_IMETHODIMP
@@ -1027,26 +1045,26 @@ class StaticBehaviour : public ProxyBehaviour
 public:
   explicit StaticBehaviour(mozilla::image::Image* aImage) : mImage(aImage) {}
 
-  virtual already_AddRefed<mozilla::image::Image>
+  already_AddRefed<mozilla::image::Image>
   GetImage() const override {
     RefPtr<mozilla::image::Image> image = mImage;
     return image.forget();
   }
 
-  virtual bool HasImage() const override {
+  bool HasImage() const override {
     return mImage;
   }
 
-  virtual already_AddRefed<ProgressTracker> GetProgressTracker()
+  already_AddRefed<ProgressTracker> GetProgressTracker()
     const override  {
     return mImage->GetProgressTracker();
   }
 
-  virtual imgRequest* GetOwner() const override {
+  imgRequest* GetOwner() const override {
     return nullptr;
   }
 
-  virtual void SetOwner(imgRequest* aOwner) override {
+  void SetOwner(imgRequest* aOwner) override {
     MOZ_ASSERT(!aOwner,
                "We shouldn't be giving static requests a non-null owner.");
   }

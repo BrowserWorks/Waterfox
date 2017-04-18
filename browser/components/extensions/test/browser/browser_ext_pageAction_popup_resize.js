@@ -2,10 +2,6 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-let delay = ms => new Promise(resolve => {
-  setTimeout(resolve, ms);
-});
-
 add_task(function* testPageActionPopupResize() {
   let browser;
 
@@ -74,17 +70,8 @@ add_task(function* testPageActionPopupResize() {
     yield checkSize(size);
   }
 
-  yield alterContent(browser, setSize, 1400);
-
-  let dims = yield promiseContentDimensions(browser);
+  let dims = yield alterContent(browser, setSize, 1400);
   let {body, root} = dims;
-
-  if (AppConstants.platform == "win") {
-    while (dims.window.innerWidth < 800) {
-      yield delay(50);
-      dims = yield promiseContentDimensions(browser);
-    }
-  }
 
   is(dims.window.innerWidth, 800, "Panel window width");
   ok(body.clientWidth <= 800, `Panel body width ${body.clientWidth} is less than 800`);
@@ -144,13 +131,6 @@ add_task(function* testPageActionPopupReflow() {
   /* eslint-enable mozilla/no-cpows-in-tests */
 
   let dims = yield alterContent(browser, setSize, 18);
-
-  if (AppConstants.platform == "win") {
-    while (dims.window.innerWidth < 800) {
-      yield delay(50);
-      dims = yield promiseContentDimensions(browser);
-    }
-  }
 
   is(dims.window.innerWidth, 800, "Panel window should be 800px wide");
   is(dims.body.clientWidth, 800, "Panel body should be 800px wide");

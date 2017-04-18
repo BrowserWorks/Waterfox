@@ -12,6 +12,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/LoadContextInfo.jsm");
 
 // Import common head.
+/* import-globals-from ../../../../../toolkit/components/places/tests/head_common.js */
 var commonFile = do_get_file("../../../../../toolkit/components/places/tests/head_common.js", false);
 if (commonFile) {
   let uri = Services.io.newFileURI(commonFile);
@@ -120,7 +121,7 @@ const NUMBER_OF_TRIES = 30;
  * @resolves to the asynchronous value being polled.
  * @rejects if the asynchronous value is not available after tryCount attempts.
  */
-var waitForResolvedPromise = Task.async(function* (promiseFn, timeoutMsg, tryCount=NUMBER_OF_TRIES) {
+var waitForResolvedPromise = Task.async(function* (promiseFn, timeoutMsg, tryCount = NUMBER_OF_TRIES) {
   let tries = 0;
   do {
     try {

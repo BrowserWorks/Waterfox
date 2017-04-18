@@ -38,8 +38,7 @@ function isBlankPageURL(aURL) {
   return aURL == "about:blank" || aURL == BROWSER_NEW_TAB_URL;
 }
 
-function getBrowserURL()
-{
+function getBrowserURL() {
   return "chrome://browser/content/browser.xul";
 }
 
@@ -61,12 +60,10 @@ function openTopWin(url) {
   openUILinkIn(url, "current");
 }
 
-function getBoolPref(prefname, def)
-{
+function getBoolPref(prefname, def) {
   try {
     return Services.prefs.getBoolPref(prefname);
-  }
-  catch (er) {
+  } catch (er) {
     return def;
   }
 }
@@ -93,7 +90,7 @@ function openUILink(url, event, aIgnoreButton, aIgnoreAlt, aAllowThirdPartyFixup
       allowThirdPartyFixup: aAllowThirdPartyFixup,
       postData: aPostData,
       referrerURI: aReferrerURI,
-      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
+      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_UNSET,
       initiatingDoc: event ? event.target.ownerDocument : null,
     };
   }
@@ -122,8 +119,7 @@ function openUILink(url, event, aIgnoreButton, aIgnoreAlt, aAllowThirdPartyFixup
  * - Alt can't be used on the bookmarks toolbar because Alt is used for "treat this as something draggable".
  * - The button is ignored for the middle-click-paste-URL feature, since it's always a middle-click.
  */
-function whereToOpenLink( e, ignoreButton, ignoreAlt )
-{
+function whereToOpenLink(e, ignoreButton, ignoreAlt) {
   // This method must treat a null event like a left click without modifier keys (i.e.
   // e = { shiftKey:false, ctrlKey:false, metaKey:false, altKey:false, button:0 })
   // for compatibility purposes.
@@ -177,6 +173,7 @@ function whereToOpenLink( e, ignoreButton, ignoreAlt )
  *   allowPinnedTabHostChange (boolean)
  *   allowPopups          (boolean)
  *   userContextId        (unsigned int)
+ *   targetBrowser        (XUL browser)
  */
 function openUILinkIn(url, where, aAllowThirdPartyFixup, aPostData, aReferrerURI) {
   var params;
@@ -188,7 +185,7 @@ function openUILinkIn(url, where, aAllowThirdPartyFixup, aPostData, aReferrerURI
       allowThirdPartyFixup: aAllowThirdPartyFixup,
       postData: aPostData,
       referrerURI: aReferrerURI,
-      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
+      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_UNSET,
     };
   }
 
@@ -208,8 +205,8 @@ function openLinkIn(url, where, params) {
   var aPostData             = params.postData;
   var aCharset              = params.charset;
   var aReferrerURI          = params.referrerURI;
-  var aReferrerPolicy       = ('referrerPolicy' in params ?
-      params.referrerPolicy : Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT);
+  var aReferrerPolicy       = ("referrerPolicy" in params ?
+      params.referrerPolicy : Ci.nsIHttpChannel.REFERRER_POLICY_UNSET);
   var aRelatedToCurrent     = params.relatedToCurrent;
   var aAllowMixedContent    = params.allowMixedContent;
   var aInBackground         = params.inBackground;
@@ -226,27 +223,13 @@ function openLinkIn(url, where, params) {
   var aForceAboutBlankViewerInCurrent =
       params.forceAboutBlankViewerInCurrent;
 
-  // Establish a window in which we're running this code.
-  var w = getTopWin();
-
-  if ((where == "tab" || where == "tabshifted") &&
-      w && !w.toolbar.visible) {
-    w = getTopWin(true);
-    aRelatedToCurrent = false;
-  }
-
-  // Can only do this after we're sure of what |w| will be the rest of this function.
-  // Note that if |w| is null we might have no current browser (we'll open a new window).
-  var aCurrentBrowser = params.currentBrowser || (w && w.gBrowser.selectedBrowser);
-
   if (where == "save") {
     // TODO(1073187): propagate referrerPolicy.
 
     // ContentClick.jsm passes isContentWindowPrivate for saveURL instead of passing a CPOW initiatingDoc
     if ("isContentWindowPrivate" in params) {
       saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI, null, params.isContentWindowPrivate);
-    }
-    else {
+    } else {
       if (!aInitiatingDoc) {
         Components.utils.reportError("openUILink/openLinkIn was called with " +
           "where == 'save' but without initiatingDoc.  See bug 814264.");
@@ -255,6 +238,34 @@ function openLinkIn(url, where, params) {
       saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI, aInitiatingDoc);
     }
     return;
+  }
+
+  // Establish which window we'll load the link in.
+  let w;
+  if (where == "current" && params.targetBrowser) {
+    w = params.targetBrowser.ownerGlobal;
+  } else {
+    w = getTopWin();
+  }
+  // We don't want to open tabs in popups, so try to find a non-popup window in
+  // that case.
+  if ((where == "tab" || where == "tabshifted") &&
+      w && !w.toolbar.visible) {
+    w = getTopWin(true);
+    aRelatedToCurrent = false;
+  }
+
+  // Teach the principal about the right OA to use, e.g. in case when
+  // opening a link in a new private window, or in a new container tab.
+  // Please note we do not have to do that for SystemPrincipals and we
+  // can not do it for NullPrincipals since NullPrincipals are only
+  // identical if they actually are the same object (See Bug: 1346759)
+  if (aPrincipal && aPrincipal.isCodebasePrincipal) {
+    let attrs = {
+      userContextId: aUserContextId,
+      privateBrowsingId: aIsPrivate || (w && PrivateBrowsingUtils.isWindowPrivate(w)),
+    };
+    aPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(aPrincipal.URI, attrs);
   }
 
   if (!w || where == "window") {
@@ -310,45 +321,47 @@ function openLinkIn(url, where, params) {
     return;
   }
 
-  let loadInBackground = where == "current" ? false : aInBackground;
-  if (loadInBackground == null) {
-    loadInBackground = aFromChrome ?
-                         false :
-                         getBoolPref("browser.tabs.loadInBackground");
-  }
-
-  let uriObj;
-  if (where == "current") {
-    try {
-      uriObj = Services.io.newURI(url, null, null);
-    } catch (e) {}
-  }
-
-  // We avoid using |w| here because in the 'popup window' case,
-  // if we pass a currentBrowser param |w.gBrowser| might not be the
-  // tabbrowser that contains |aCurrentBrowser|. We really only care
-  // about the tab linked to |aCurrentBrowser|.
-  let tab = aCurrentBrowser.getTabBrowser().getTabForBrowser(aCurrentBrowser);
-  if (where == "current" && tab.pinned &&
-      !aAllowPinnedTabHostChange) {
-    try {
-      // nsIURI.host can throw for non-nsStandardURL nsIURIs.
-      if (!uriObj || (!uriObj.schemeIs("javascript") &&
-                      aCurrentBrowser.currentURI.host != uriObj.host)) {
-        where = "tab";
-        loadInBackground = false;
-      }
-    } catch (err) {
-      where = "tab";
-      loadInBackground = false;
-    }
-  }
+  // We're now committed to loading the link in an existing browser window.
 
   // Raise the target window before loading the URI, since loading it may
   // result in a new frontmost window (e.g. "javascript:window.open('');").
   w.focus();
 
-  let browserUsedForLoad = null;
+  let targetBrowser;
+  let loadInBackground;
+  let uriObj;
+
+  if (where == "current") {
+    targetBrowser = params.targetBrowser || w.gBrowser.selectedBrowser;
+    loadInBackground = false;
+
+    try {
+      uriObj = Services.io.newURI(url);
+    } catch (e) {}
+
+    if (w.gBrowser.getTabForBrowser(targetBrowser).pinned &&
+        !aAllowPinnedTabHostChange) {
+      try {
+        // nsIURI.host can throw for non-nsStandardURL nsIURIs.
+        if (!uriObj || (!uriObj.schemeIs("javascript") &&
+                        targetBrowser.currentURI.host != uriObj.host)) {
+          where = "tab";
+          loadInBackground = false;
+        }
+      } catch (err) {
+        where = "tab";
+        loadInBackground = false;
+      }
+    }
+  } else {
+    // 'where' is "tab" or "tabshifted", so we'll load the link in a new tab.
+    loadInBackground = aInBackground;
+    if (loadInBackground == null) {
+      loadInBackground =
+        aFromChrome ? false : getBoolPref("browser.tabs.loadInBackground");
+    }
+  }
+
   switch (where) {
   case "current":
     let flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
@@ -374,17 +387,17 @@ function openLinkIn(url, where, params) {
     }
 
     if (aForceAboutBlankViewerInCurrent) {
-      aCurrentBrowser.createAboutBlankContentViewer(aPrincipal);
+      targetBrowser.createAboutBlankContentViewer(aPrincipal);
     }
 
-    aCurrentBrowser.loadURIWithFlags(url, {
-      flags: flags,
+    targetBrowser.loadURIWithFlags(url, {
+      triggeringPrincipal: aPrincipal,
+      flags,
       referrerURI: aNoReferrer ? null : aReferrerURI,
       referrerPolicy: aReferrerPolicy,
       postData: aPostData,
       userContextId: aUserContextId
     });
-    browserUsedForLoad = aCurrentBrowser;
     break;
   case "tabshifted":
     loadInBackground = !loadInBackground;
@@ -403,15 +416,15 @@ function openLinkIn(url, where, params) {
       noReferrer: aNoReferrer,
       userContextId: aUserContextId,
       originPrincipal: aPrincipal,
+      triggeringPrincipal: aPrincipal,
     });
-    browserUsedForLoad = tabUsedForLoad.linkedBrowser;
+    targetBrowser = tabUsedForLoad.linkedBrowser;
     break;
   }
 
   // Focus the content, but only if the browser used for the load is selected.
-  if (browserUsedForLoad &&
-      browserUsedForLoad == browserUsedForLoad.getTabBrowser().selectedBrowser) {
-    browserUsedForLoad.focus();
+  if (targetBrowser == w.gBrowser.selectedBrowser) {
+    targetBrowser.focus();
   }
 
   if (!loadInBackground && w.isBlankPageURL(url)) {
@@ -446,7 +459,11 @@ function checkForMiddleClick(node, event) {
 
 // Populate a menu with user-context menu items. This method should be called
 // by onpopupshowing passing the event as first argument.
-function createUserContextMenu(event, isContextMenu = false, excludeUserContextId = 0) {
+function createUserContextMenu(event, {
+                                        isContextMenu = false,
+                                        excludeUserContextId = 0,
+                                        useAccessKeys = true
+                                      } = {}) {
   while (event.target.hasChildNodes()) {
     event.target.removeChild(event.target.firstChild);
   }
@@ -480,7 +497,7 @@ function createUserContextMenu(event, isContextMenu = false, excludeUserContextI
     menuitem.setAttribute("data-usercontextid", identity.userContextId);
     menuitem.setAttribute("label", ContextualIdentityService.getUserContextLabel(identity.userContextId));
 
-    if (identity.accessKey) {
+    if (identity.accessKey && useAccessKeys) {
       menuitem.setAttribute("accesskey", bundle.getString(identity.accessKey));
     }
 
@@ -502,8 +519,10 @@ function createUserContextMenu(event, isContextMenu = false, excludeUserContextI
     let menuitem = document.createElement("menuitem");
     menuitem.setAttribute("label",
                           bundle.getString("userContext.aboutPage.label"));
-    menuitem.setAttribute("accesskey",
-                          bundle.getString("userContext.aboutPage.accesskey"));
+    if (useAccessKeys) {
+      menuitem.setAttribute("accesskey",
+                            bundle.getString("userContext.aboutPage.accesskey"));
+    }
     menuitem.setAttribute("command", "Browser:OpenAboutContainers");
     docfrag.appendChild(menuitem);
   }
@@ -513,8 +532,7 @@ function createUserContextMenu(event, isContextMenu = false, excludeUserContextI
 }
 
 // Closes all popups that are ancestors of the node.
-function closeMenus(node)
-{
+function closeMenus(node) {
   if ("tagName" in node) {
     if (node.namespaceURI == "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     && (node.tagName == "menupopup" || node.tagName == "popup"))
@@ -534,8 +552,7 @@ function closeMenus(node)
  *        For example, aKey can be a variable set to document.getElementById("key_close")
  *        to check if the close command key was pressed in aEvent.
 */
-function eventMatchesKey(aEvent, aKey)
-{
+function eventMatchesKey(aEvent, aKey) {
   let keyPressed = aKey.getAttribute("key").toLowerCase();
   let keyModifiers = aKey.getAttribute("modifiers");
   let modifiers = ["Alt", "Control", "Meta", "Shift"];
@@ -554,7 +571,7 @@ function eventMatchesKey(aEvent, aKey)
     // Capitalize first letter of aKey's modifers to compare to aEvent's modifier
     keyModifiers.forEach(function(modifier, index) {
       if (modifier == "accel") {
-        keyModifiers[index] = AppConstants.platform == "macosx" ?  "Meta" : "Control";
+        keyModifiers[index] = AppConstants.platform == "macosx" ? "Meta" : "Control";
       } else {
         keyModifiers[index] = modifier[0].toUpperCase() + modifier.slice(1);
       }
@@ -565,8 +582,7 @@ function eventMatchesKey(aEvent, aKey)
 }
 
 // Gather all descendent text under given document node.
-function gatherTextUnder ( root )
-{
+function gatherTextUnder(root) {
   var text = "";
   var node = root.firstChild;
   var depth = 1;
@@ -607,8 +623,7 @@ function gatherTextUnder ( root )
 }
 
 // This function exists for legacy reasons.
-function getShellService()
-{
+function getShellService() {
   return ShellService;
 }
 
@@ -670,8 +685,7 @@ function openAboutDialog() {
   window.openDialog("chrome://browser/content/aboutDialog.xul", "", features);
 }
 
-function openPreferences(paneID, extraArgs)
-{
+function openPreferences(paneID, extraArgs) {
   function switchToAdvancedSubPane(doc) {
     if (extraArgs && extraArgs["advancedTab"]) {
       let advancedPaneTabs = doc.getElementById("advancedPrefs");
@@ -737,8 +751,7 @@ function openPreferences(paneID, extraArgs)
   }
 }
 
-function openAdvancedPreferences(tabID)
-{
+function openAdvancedPreferences(tabID) {
   openPreferences("paneAdvanced", { "advancedTab" : tabID });
 }
 
@@ -746,8 +759,7 @@ function openAdvancedPreferences(tabID)
  * Opens the troubleshooting information (about:support) page for this version
  * of the application.
  */
-function openTroubleshootingPage()
-{
+function openTroubleshootingPage() {
   openUILinkIn("about:support", "tab");
 }
 
@@ -755,16 +767,14 @@ function openTroubleshootingPage()
  * Opens the troubleshooting information (about:support) page for this version
  * of the application.
  */
-function openHealthReport()
-{
+function openHealthReport() {
   openUILinkIn("about:healthreport", "tab");
 }
 
 /**
  * Opens the feedback page for this version of the application.
  */
-function openFeedbackPage()
-{
+function openFeedbackPage() {
   var url = Components.classes["@mozilla.org/toolkit/URLFormatterService;1"]
                       .getService(Components.interfaces.nsIURLFormatter)
                       .formatURLPref("app.feedback.baseURL");
@@ -779,8 +789,7 @@ function buildHelpMenu()
   }
 }
 
-function isElementVisible(aElement)
-{
+function isElementVisible(aElement) {
   if (!aElement)
     return false;
 
@@ -790,8 +799,7 @@ function isElementVisible(aElement)
   return (bo.height > 0 && bo.width > 0);
 }
 
-function makeURLAbsolute(aBase, aUrl)
-{
+function makeURLAbsolute(aBase, aUrl) {
   // Note:  makeURI() will throw if aUri is not a valid URI
   return makeURI(aUrl, null, makeURI(aBase)).spec;
 }

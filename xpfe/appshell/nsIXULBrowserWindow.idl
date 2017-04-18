@@ -8,11 +8,13 @@
 #include "nsIURI.idl"
 #include "nsIDOMNode.idl"
 
+interface nsIBrowser;
 interface nsIRequest;
 interface nsIDOMElement;
 interface nsIInputStream;
 interface nsIDocShell;
 interface nsITabParent;
+interface nsIPrincipal;
 interface mozIDOMWindowProxy;
 
 /**
@@ -43,12 +45,11 @@ interface nsIXULBrowserWindow : nsISupports
                                 in boolean isAppTab);
 
   /**
-   * Find the initial browser of the window and set its remote attribute.
-   * This can be used to ensure that there is a remote browser in a new
-   * window when it first spawns.
-   *
+   * Find the initial browser of the window and set its remote attributes.
+   * This can be used to ensure that there is a browser in a new window of the
+   * correct type when it first spawns.
    */
-  nsITabParent forceInitialBrowserRemote();
+  void forceInitialBrowserRemote(in AString aRemoteType);
   void forceInitialBrowserNonRemote(in mozIDOMWindowProxy openerWindow);
 
   /**
@@ -60,10 +61,18 @@ interface nsIXULBrowserWindow : nsISupports
    *        The URI being loaded.
    * @param aReferrer
    *        The referrer of the load.
+   * @param aHasPostData
+   *        True if the load which is being asked about has associated post data
+   *        which would be discarded if the load was redirected across process
+   *        boundaries.
+   * @param aTriggeringPrincipal
+   *        The principal that initiated the load of aURI.
    */
   bool shouldLoadURI(in nsIDocShell    aDocShell,
                      in nsIURI         aURI,
-                     in nsIURI         aReferrer);
+                     in nsIURI         aReferrer,
+                     in boolean        aHasPostData,
+                     in nsIPrincipal   aTriggeringPrincipal);
   /**
    * Show/hide a tooltip (when the user mouses over a link, say).
    */
@@ -74,5 +83,14 @@ interface nsIXULBrowserWindow : nsISupports
    * Return the number of tabs in this window.
    */
   uint32_t getTabCount();
+
+  /**
+   * Navigate the browser to the given history index after restoring the full history
+   * from SessionStore. If the browser is currently in GroupedSHistory mode, it will
+   * be reverted to a non-grouped history mode. If a process change is required to
+   * perform the load, this will also occur.
+   */
+  void navigateAndRestoreByIndex(in nsIBrowser aBrowser, in long aIndex);
+
 };
 

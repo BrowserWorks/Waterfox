@@ -17,7 +17,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/ExtensionContent.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "acs",
                                    "@mozilla.org/audiochannel/service;1",
@@ -116,38 +115,6 @@ var LISTENED_SYSTEM_EVENTS = [
 
 var global = this;
 
-function BrowserElementProxyForwarder() {
-}
-
-BrowserElementProxyForwarder.prototype = {
-  init: function() {
-    Services.obs.addObserver(this, "browser-element-api:proxy-call", false);
-    addMessageListener("browser-element-api:proxy", this);
-  },
-
-  uninit: function() {
-    Services.obs.removeObserver(this, "browser-element-api:proxy-call", false);
-    removeMessageListener("browser-element-api:proxy", this);
-  },
-
-  // Observer callback receives messages from BrowserElementProxy.js
-  observe: function(subject, topic, stringifedData) {
-    if (subject !== content) {
-      return;
-    }
-
-    // Forward it to BrowserElementParent.js
-    sendAsyncMessage(topic, JSON.parse(stringifedData));
-  },
-
-  // Message manager callback receives messages from BrowserElementParent.js
-  receiveMessage: function(mmMsg) {
-    // Forward it to BrowserElementProxy.js
-    Services.obs.notifyObservers(
-      content, mmMsg.name, JSON.stringify(mmMsg.json));
-  }
-};
-
 function BrowserElementChild() {
   // Maps outer window id --> weak ref to window.  Used by modal dialog code.
   this._windowIDDict = {};
@@ -164,9 +131,6 @@ function BrowserElementChild() {
   this._nextPaintHandler = null;
 
   this._isContentWindowCreated = false;
-  this._pendingSetInputMethodActive = [];
-
-  this.forwarder = new BrowserElementProxyForwarder();
 
   this._init();
 };
@@ -226,8 +190,6 @@ BrowserElementChild.prototype = {
     OBSERVED_EVENTS.forEach((aTopic) => {
       Services.obs.addObserver(this, aTopic, false);
     });
-
-    this.forwarder.init();
   },
 
   /**
@@ -262,9 +224,6 @@ BrowserElementChild.prototype = {
     OBSERVED_EVENTS.forEach((aTopic) => {
       Services.obs.removeObserver(this, aTopic);
     });
-
-    this.forwarder.uninit();
-    this.forwarder = null;
   },
 
   handleEvent: function(event) {
@@ -352,7 +311,6 @@ BrowserElementChild.prototype = {
       "entered-fullscreen": this._recvEnteredFullscreen,
       "exit-fullscreen": this._recvExitFullscreen,
       "activate-next-paint-listener": this._activateNextPaintListener,
-      "set-input-method-active": this._recvSetInputMethodActive,
       "deactivate-next-paint-listener": this._deactivateNextPaintListener,
       "find-all": this._recvFindAll,
       "find-next": this._recvFindNext,
@@ -828,10 +786,6 @@ BrowserElementChild.prototype = {
         sendAsyncMsg('documentfirstpaint');
       });
       this._isContentWindowCreated = true;
-      // Handle pending SetInputMethodActive request.
-      while (this._pendingSetInputMethodActive.length > 0) {
-        this._recvSetInputMethodActive(this._pendingSetInputMethodActive.shift());
-      }
     }
   },
 
@@ -1060,7 +1014,7 @@ BrowserElementChild.prototype = {
     if (expectedUrl) {
       let expectedURI
       try {
-       expectedURI = Services.io.newURI(expectedUrl, null, null);
+       expectedURI = Services.io.newURI(expectedUrl);
       } catch(e) {
         sendError("Malformed URL");
         return;
@@ -1545,31 +1499,6 @@ BrowserElementChild.prototype = {
     }
     this._finder.removeSelection();
     sendAsyncMsg("findchange", {active: false});
-  },
-
-  _recvSetInputMethodActive: function(data) {
-    let msgData = { id: data.json.id };
-    if (!this._isContentWindowCreated) {
-      if (data.json.args.isActive) {
-        // To activate the input method, we should wait before the content
-        // window is ready.
-        this._pendingSetInputMethodActive.push(data);
-        return;
-      }
-      msgData.successRv = null;
-      sendAsyncMsg('got-set-input-method-active', msgData);
-      return;
-    }
-    // Unwrap to access webpage content.
-    let nav = XPCNativeWrapper.unwrap(content.document.defaultView.navigator);
-    if (nav.mozInputMethod) {
-      // Wrap to access the chrome-only attribute setActive.
-      new XPCNativeWrapper(nav.mozInputMethod).setActive(data.json.args.isActive);
-      msgData.successRv = null;
-    } else {
-      msgData.errorMsg = 'Cannot access mozInputMethod.';
-    }
-    sendAsyncMsg('got-set-input-method-active', msgData);
   },
 
   // The docShell keeps a weak reference to the progress listener, so we need

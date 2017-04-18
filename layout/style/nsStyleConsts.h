@@ -10,61 +10,11 @@
 
 #include "gfxRect.h"
 #include "nsFont.h"
-#include "mozilla/MacroArgs.h" // for MOZ_CONCAT
 #include "X11UndefineNone.h"
 
 // XXX fold this into nsStyleContext and group by nsStyleXXX struct
 
 namespace mozilla {
-namespace css {
-typedef mozilla::Side Side;
-} // namespace css
-
-// Creates a for loop that walks over the four mozilla::css::Side values.
-// We use an int32_t helper variable (instead of a Side) for our loop counter,
-// to avoid triggering undefined behavior just before we exit the loop (at
-// which point the counter is incremented beyond the largest valid Side value).
-#define NS_FOR_CSS_SIDES(var_)                                           \
-  int32_t MOZ_CONCAT(var_,__LINE__) = NS_SIDE_TOP;                       \
-  for (mozilla::css::Side var_;                                          \
-       MOZ_CONCAT(var_,__LINE__) <= NS_SIDE_LEFT &&                      \
-         ((var_ = mozilla::css::Side(MOZ_CONCAT(var_,__LINE__))), true); \
-       MOZ_CONCAT(var_,__LINE__)++)
-
-static inline css::Side operator++(css::Side& side, int) {
-    NS_PRECONDITION(side >= NS_SIDE_TOP &&
-                    side <= NS_SIDE_LEFT, "Out of range side");
-    side = css::Side(side + 1);
-    return side;
-}
-
-#define NS_FOR_CSS_FULL_CORNERS(var_) for (int32_t var_ = 0; var_ < 4; ++var_)
-
-// Indices into "half corner" arrays (nsStyleCorners e.g.)
-#define NS_CORNER_TOP_LEFT_X      0
-#define NS_CORNER_TOP_LEFT_Y      1
-#define NS_CORNER_TOP_RIGHT_X     2
-#define NS_CORNER_TOP_RIGHT_Y     3
-#define NS_CORNER_BOTTOM_RIGHT_X  4
-#define NS_CORNER_BOTTOM_RIGHT_Y  5
-#define NS_CORNER_BOTTOM_LEFT_X   6
-#define NS_CORNER_BOTTOM_LEFT_Y   7
-
-#define NS_FOR_CSS_HALF_CORNERS(var_) for (int32_t var_ = 0; var_ < 8; ++var_)
-
-// The results of these conversion macros are exhaustively checked in
-// nsStyleCoord.cpp.
-// Arguments must not have side effects.
-
-#define NS_HALF_CORNER_IS_X(var_) (!((var_)%2))
-#define NS_HALF_TO_FULL_CORNER(var_) ((var_)/2)
-#define NS_FULL_TO_HALF_CORNER(var_, vert_) ((var_)*2 + !!(vert_))
-
-#define NS_SIDE_IS_VERTICAL(side_) ((side_) % 2)
-#define NS_SIDE_TO_FULL_CORNER(side_, second_) \
-  (((side_) + !!(second_)) % 4)
-#define NS_SIDE_TO_HALF_CORNER(side_, second_, parallel_) \
-  ((((side_) + !!(second_))*2 + ((side_) + !(parallel_))%2) % 8)
 
 // Basic shapes
 enum class StyleBasicShapeType : uint8_t {
@@ -134,16 +84,35 @@ enum class StyleClear : uint8_t {
   Max = 13  // Max = (Both | Line)
 };
 
-// clip-path geometry box
-enum class StyleClipPathGeometryBox : uint8_t {
-  NoBox,
+// Define geometry box for clip-path's reference-box, background-clip,
+// background-origin, mask-clip and mask-origin.
+enum class StyleGeometryBox : uint8_t {
   Content,
   Padding,
   Border,
-  Margin,
-  Fill,
-  Stroke,
-  View,
+  Margin,  // XXX Bug 1260094 comment 9.
+           // Although margin-box is required by mask-origin and mask-clip, we
+           // do not implement that due to lack of support in other browsers.
+           // clip-path reference-box only.
+  Fill,    // mask-clip, mask-origin and clip-path reference-box only.
+  Stroke,  // mask-clip, mask-origin and clip-path reference-box only.
+  View,    // mask-clip, mask-origin and clip-path reference-box only.
+  NoClip,  // mask-clip only.
+  Text,    // background-clip only.
+  NoBox,   // Depending on which kind of element this style value applied on,
+           // the default value of a reference-box can be different.
+           // For an HTML element, the default value of reference-box is
+           // border-box; for an SVG element, the default value is fill-box.
+           // Since we can not determine the default value at parsing time,
+           // set it as NoBox so that we make a decision later.
+           // clip-path reference-box only.
+  MozAlmostPadding = 127 // A magic value that we use for our "pretend that
+                         // background-clip is 'padding' when we have a solid
+                         // border" optimization.  This isn't actually equal
+                         // to StyleGeometryBox::Padding because using that
+                         // causes antialiasing seams between the background
+                         // and border.
+                         // background-clip only.
 };
 
 // fill-rule
@@ -168,6 +137,13 @@ enum class StyleFloatEdge : uint8_t {
   MarginBox,
 };
 
+// Hyphens
+enum class StyleHyphens : uint8_t {
+  None,
+  Manual,
+  Auto,
+};
+
 // shape-box for shape-outside
 enum class StyleShapeOutsideShapeBox : uint8_t {
   NoBox,
@@ -175,6 +151,12 @@ enum class StyleShapeOutsideShapeBox : uint8_t {
   Padding,
   Border,
   Margin
+};
+
+// <shape-radius> for <basic-shape>
+enum class StyleShapeRadius : uint8_t {
+  ClosestSide,
+  FarthestSide,
 };
 
 // Shape source type
@@ -240,9 +222,6 @@ enum class StyleOrient : uint8_t {
   Horizontal,
   Vertical,
 };
-
-#define NS_RADIUS_FARTHEST_SIDE 0
-#define NS_RADIUS_CLOSEST_SIDE  1
 
 // stack-sizing
 #define NS_STYLE_STACK_SIZING_IGNORE         0
@@ -335,8 +314,8 @@ enum class StyleOrient : uint8_t {
 // See AnimationEffectReadOnly.webidl
 // and mozilla/dom/AnimationEffectReadOnlyBinding.h
 namespace dom {
-enum class PlaybackDirection : uint32_t;
-enum class FillMode : uint32_t;
+enum class PlaybackDirection : uint8_t;
+enum class FillMode : uint8_t;
 }
 
 // See nsStyleDisplay
@@ -351,26 +330,12 @@ enum class FillMode : uint32_t;
 #define NS_STYLE_IMAGELAYER_ATTACHMENT_FIXED         1
 #define NS_STYLE_IMAGELAYER_ATTACHMENT_LOCAL         2
 
-// See nsStyleImageLayers
-// Code depends on these constants having the same values as IMAGELAYER_ORIGIN_*
-#define NS_STYLE_IMAGELAYER_CLIP_BORDER              0
-#define NS_STYLE_IMAGELAYER_CLIP_PADDING             1
-#define NS_STYLE_IMAGELAYER_CLIP_CONTENT             2
-// One extra constant which does not exist in IMAGELAYER_ORIGIN_*
-#define NS_STYLE_IMAGELAYER_CLIP_TEXT                3
-
 // A magic value that we use for our "pretend that background-clip is
 // 'padding' when we have a solid border" optimization.  This isn't
 // actually equal to NS_STYLE_IMAGELAYER_CLIP_PADDING because using that
 // causes antialiasing seams between the background and border.  This
 // is a backend-only value.
 #define NS_STYLE_IMAGELAYER_CLIP_MOZ_ALMOST_PADDING  127
-
-// See nsStyleImageLayers
-// Code depends on these constants having the same values as BG_CLIP_*
-#define NS_STYLE_IMAGELAYER_ORIGIN_BORDER            0
-#define NS_STYLE_IMAGELAYER_ORIGIN_PADDING           1
-#define NS_STYLE_IMAGELAYER_ORIGIN_CONTENT           2
 
 // See nsStyleImageLayers
 // The parser code depends on |ing these values together.
@@ -511,6 +476,7 @@ enum class FillMode : uint32_t;
 enum class StyleDisplay : uint8_t {
   None = 0,
   Block,
+  FlowRoot,
   Inline,
   InlineBlock,
   ListItem,
@@ -536,18 +502,18 @@ enum class StyleDisplay : uint8_t {
   Contents,
   WebkitBox,
   WebkitInlineBox,
-  Box,
-  InlineBox,
+  MozBox,
+  MozInlineBox,
 #ifdef MOZ_XUL
-  XulGrid,
-  InlineXulGrid,
-  XulGridGroup,
-  XulGridLine,
-  Stack,
-  InlineStack,
-  Deck,
-  Groupbox,
-  Popup,
+  MozGrid,
+  MozInlineGrid,
+  MozGridGroup,
+  MozGridLine,
+  MozStack,
+  MozInlineStack,
+  MozDeck,
+  MozGroupbox,
+  MozPopup,
 #endif
 };
 
@@ -983,11 +949,6 @@ enum class StyleDisplay : uint8_t {
 // See nsStyleText
 #define NS_STYLE_OVERFLOWWRAP_NORMAL            0
 #define NS_STYLE_OVERFLOWWRAP_BREAK_WORD        1
-
-// See nsStyleText
-#define NS_STYLE_HYPHENS_NONE                   0
-#define NS_STYLE_HYPHENS_MANUAL                 1
-#define NS_STYLE_HYPHENS_AUTO                   2
 
 // ruby-align, see nsStyleText
 #define NS_STYLE_RUBY_ALIGN_START               0

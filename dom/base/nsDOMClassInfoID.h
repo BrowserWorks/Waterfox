@@ -14,18 +14,40 @@
 
 #include "nsIXPCScriptable.h"
 
-#define DOMCI_CLASS(_dom_class)                                               \
-  eDOMClassInfo_##_dom_class##_id,
+enum nsDOMClassInfoID
+{
+  eDOMClassInfo_DOMPrototype_id,
+  eDOMClassInfo_DOMConstructor_id,
 
-enum nsDOMClassInfoID {
+  // XUL classes
+#ifdef MOZ_XUL
+  eDOMClassInfo_XULCommandDispatcher_id,
+#endif
+  eDOMClassInfo_XULControllers_id,
+#ifdef MOZ_XUL
+  eDOMClassInfo_TreeSelection_id,
+  eDOMClassInfo_TreeContentView_id,
+#endif
 
-#include "nsDOMClassInfoClasses.h"
+#ifdef MOZ_XUL
+  eDOMClassInfo_XULTemplateBuilder_id,
+  eDOMClassInfo_XULTreeBuilder_id,
+#endif
+
+  eDOMClassInfo_ContentFrameMessageManager_id,
+  eDOMClassInfo_ContentProcessMessageManager_id,
+  eDOMClassInfo_ChromeMessageBroadcaster_id,
+  eDOMClassInfo_ChromeMessageSender_id,
+
+  eDOMClassInfo_XULControlElement_id,
+  eDOMClassInfo_XULLabeledControlElement_id,
+  eDOMClassInfo_XULButtonElement_id,
+  eDOMClassInfo_XULCheckboxElement_id,
+  eDOMClassInfo_XULPopupElement_id,
 
   // This one better be the last one in this list
   eDOMClassInfoIDCount
 };
-
-#undef DOMCI_CLASS
 
 /**
  * nsIClassInfo helper macros

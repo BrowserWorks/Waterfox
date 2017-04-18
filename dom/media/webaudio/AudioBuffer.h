@@ -13,9 +13,9 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/StaticMutex.h"
 #include "nsTArray.h"
-#include "AudioContext.h"
 #include "js/TypeDecls.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/dom/TypedArray.h"
 
 namespace mozilla {
 
@@ -24,7 +24,7 @@ class ThreadSharedFloatArrayBufferList;
 
 namespace dom {
 
-class AudioContext;
+struct AudioBufferOptions;
 
 /**
  * An AudioBuffer keeps its data either in the mJSChannels objects, which
@@ -37,17 +37,17 @@ public:
   // If non-null, aInitialContents must have number of channels equal to
   // aNumberOfChannels and their lengths must be at least aLength.
   static already_AddRefed<AudioBuffer>
-  Create(AudioContext* aContext, uint32_t aNumberOfChannels,
+  Create(nsPIDOMWindowInner* aWindow, uint32_t aNumberOfChannels,
          uint32_t aLength, float aSampleRate,
          already_AddRefed<ThreadSharedFloatArrayBufferList> aInitialContents,
          ErrorResult& aRv);
 
   static already_AddRefed<AudioBuffer>
-  Create(AudioContext* aContext, uint32_t aNumberOfChannels,
+  Create(nsPIDOMWindowInner* aWindow, uint32_t aNumberOfChannels,
          uint32_t aLength, float aSampleRate,
          ErrorResult& aRv)
   {
-    return Create(aContext, aNumberOfChannels, aLength, aSampleRate,
+    return Create(aWindow, aNumberOfChannels, aLength, aSampleRate,
                   nullptr, aRv);
   }
 
@@ -55,6 +55,10 @@ public:
 
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(AudioBuffer)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(AudioBuffer)
+
+  static already_AddRefed<AudioBuffer>
+  Constructor(const GlobalObject& aGlobal,
+              const AudioBufferOptions& aOptions, ErrorResult& aRv);
 
   nsPIDOMWindowInner* GetParentObject() const
   {
@@ -105,7 +109,7 @@ public:
   ThreadSharedFloatArrayBufferList* GetThreadSharedChannelsForRate(JSContext* aContext);
 
 protected:
-  AudioBuffer(AudioContext* aContext, uint32_t aNumberOfChannels,
+  AudioBuffer(nsPIDOMWindowInner* aWindow, uint32_t aNumberOfChannels,
               uint32_t aLength, float aSampleRate,
               already_AddRefed<ThreadSharedFloatArrayBufferList>
                 aInitialContents);
@@ -134,4 +138,3 @@ protected:
 } // namespace mozilla
 
 #endif
-

@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/StorageEvent.h"
-#include "mozilla/dom/DOMStorage.h"
+#include "mozilla/dom/Storage.h"
 
 namespace mozilla {
 namespace dom {
@@ -85,7 +85,7 @@ StorageEvent::InitStorageEvent(const nsAString& aType, bool aCanBubble,
                                const nsAString& aOldValue,
                                const nsAString& aNewValue,
                                const nsAString& aURL,
-                               DOMStorage* aStorageArea)
+                               Storage* aStorageArea)
 {
   NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
 
@@ -99,16 +99,3 @@ StorageEvent::InitStorageEvent(const nsAString& aType, bool aCanBubble,
 
 } // namespace dom
 } // namespace mozilla
-
-using namespace mozilla;
-using namespace mozilla::dom;
-
-already_AddRefed<StorageEvent>
-NS_NewDOMStorageEvent(EventTarget* aOwner)
-{
-  RefPtr<StorageEvent> e = new StorageEvent(aOwner);
-
-  e->SetTrusted(e->Init(aOwner));
-  return e.forget();
-}
-

@@ -132,8 +132,11 @@ class MockExtension {
   }
 
   cleanupGeneratedFile() {
-    flushJarCache(this.file);
-    return OS.File.remove(this.file.path);
+    return this._extensionPromise.then(extension => {
+      return extension.broadcast("Extension:FlushJarCache", {path: this.file.path});
+    }).then(() => {
+      return OS.File.remove(this.file.path);
+    });
   }
 }
 
@@ -311,11 +314,11 @@ class ExtensionTestCommon {
   static generate(data) {
     let file = this.generateXPI(data);
 
-    flushJarCache(file);
+    flushJarCache(file.path);
     Services.ppmm.broadcastAsyncMessage("Extension:FlushJarCache", {path: file.path});
 
     let fileURI = Services.io.newFileURI(file);
-    let jarURI = Services.io.newURI("jar:" + fileURI.spec + "!/", null, null);
+    let jarURI = Services.io.newURI("jar:" + fileURI.spec + "!/");
 
     // This may be "temporary" or "permanent".
     if (data.useAddonManager) {

@@ -178,7 +178,7 @@ Structure:
               //   "disabled"    - User explicitly disabled this default feature.
               //   "failed"      - This feature was attempted but failed to initialize.
               //   "available"   - User has this feature available.
-              "d3d11" { // This feature is Windows-only.
+              d3d11: { // This feature is Windows-only.
                 status: <string>,
                 warp: <bool>,           // Software rendering (WARP) mode was chosen.
                 textureSharing: <bool>  // Whether or not texture sharing works.
@@ -186,9 +186,12 @@ Structure:
                 blacklisted: <bool>,    // Whether D3D11 is blacklisted; use to see whether WARP
                                         // was blacklist induced or driver-failure induced.
               },
-              "d2d" { // This feature is Windows-only.
+              d2d: { // This feature is Windows-only.
                 status: <string>,
                 version: <string>,      // Either "1.0" or "1.1".
+              },
+              gpuProcess: { // Out-of-process compositing ("GPU process") feature
+                status: <string>, // "Available" means currently in use
               },
             },
           },
@@ -254,6 +257,10 @@ Structure:
         },
         persona: <string>, // id of the current persona, null on GONK
       },
+      experiments: {
+        "<experiment id>": { branch: "<branch>" },
+        // ...
+      }
     }
 
 build
@@ -321,7 +328,7 @@ The following is a partial list of collected preferences.
 
 - ``browser.urlbar.userMadeSearchSuggestionsChoice``: True if the user has clicked Yes or No in the urlbar's opt-in notification. Defaults to false.
 
-- ``browser.zoom.full``: True if zoom is enabled for both text and images, that is if "Zoom Text Only" is not enabled. Defaults to true. Collection of this preference has been enabled in Firefox 50 and will be disabled again in Firefox 53 (`Bug 979323 <https://bugzilla.mozilla.org/show_bug.cgi?id=979323>`_).
+- ``browser.zoom.full`` (deprecated): True if zoom is enabled for both text and images, that is if "Zoom Text Only" is not enabled. Defaults to true. This preference was collected in Firefox 50 to 52 (`Bug 979323 <https://bugzilla.mozilla.org/show_bug.cgi?id=979323>`_).
 
 - ``security.sandbox.content.level``: The meanings of the values are OS dependent, but 0 means not sandboxed for all OS. Details of the meanings can be found in the `Firefox prefs file <http://hg.mozilla.org/mozilla-central/file/tip/browser/app/profile/firefox.js>`_.
 
@@ -371,3 +378,7 @@ activeAddons
 ~~~~~~~~~~~~
 
 Starting from Firefox 44, the length of the following string fields: ``name``, ``description`` and ``version`` is limited to 100 characters. The same limitation applies to the same fields in ``theme`` and ``activePlugins``.
+
+experiments
+-----------
+For each experiment we collect the ``id`` and the ``branch`` the client is enrolled in. Both fields are truncated to 100 characters and a warning is printed when that happens. This section will eventually supersede ``addons/activeExperiment``.

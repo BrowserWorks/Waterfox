@@ -26,7 +26,7 @@ function parentDocShell(docshell) {
 function isTopBrowserElement(docShell) {
   while (docShell) {
     docShell = parentDocShell(docShell);
-    if (docShell && docShell.isMozBrowserOrApp) {
+    if (docShell && docShell.isMozBrowser) {
       return false;
     }
   }
@@ -39,15 +39,6 @@ debug(`Might load BE scripts: BEIR: ${BrowserElementIsReady}`);
 if (!BrowserElementIsReady) {
   debug("Loading BE scripts")
   if (!("BrowserElementIsPreloaded" in this)) {
-    if (isTopBrowserElement(docShell)) {
-      if (Services.prefs.getBoolPref("dom.mozInputMethod.enabled")) {
-        try {
-          Services.scriptloader.loadSubScript("chrome://global/content/forms.js");
-        } catch (e) {
-        }
-      }
-    }
-
     if(Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
       // general content apps
       if (isTopBrowserElement(docShell)) {

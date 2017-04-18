@@ -30,8 +30,6 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/HashFunctions.h"
 
-#include "nsIAppsService.h"
-
 using namespace mozilla;
 
 static bool gIsWhitelistingTestDomains = false;
@@ -76,7 +74,7 @@ nsPrincipal::nsPrincipal()
 { }
 
 nsPrincipal::~nsPrincipal()
-{ 
+{
   // let's clear the principal within the csp to avoid a tangling pointer
   if (mCSP) {
     static_cast<nsCSPContext*>(mCSP.get())->clearLoadingPrincipal();
@@ -84,7 +82,7 @@ nsPrincipal::~nsPrincipal()
 }
 
 nsresult
-nsPrincipal::Init(nsIURI *aCodebase, const PrincipalOriginAttributes& aOriginAttributes)
+nsPrincipal::Init(nsIURI *aCodebase, const OriginAttributes& aOriginAttributes)
 {
   NS_ENSURE_STATE(!mInitialized);
   NS_ENSURE_ARG(aCodebase);
@@ -104,14 +102,14 @@ nsPrincipal::GetScriptLocation(nsACString &aStr)
   return mCodebase->GetSpec(aStr);
 }
 
-/* static */ nsresult
-nsPrincipal::GetOriginForURI(nsIURI* aURI, nsACString& aOrigin)
+nsresult
+nsPrincipal::GetOriginInternal(nsACString& aOrigin)
 {
-  if (!aURI) {
+  if (!mCodebase) {
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsIURI> origin = NS_GetInnermostURI(aURI);
+  nsCOMPtr<nsIURI> origin = NS_GetInnermostURI(mCodebase);
   if (!origin) {
     return NS_ERROR_FAILURE;
   }
@@ -163,27 +161,50 @@ nsPrincipal::GetOriginForURI(nsIURI* aURI, nsACString& aOrigin)
     NS_ENSURE_SUCCESS(rv, rv);
     aOrigin.AppendLiteral("://");
     aOrigin.Append(hostPort);
+    return NS_OK;
   }
-  else {
-    // If we reached this branch, we can only create an origin if we have a nsIStandardURL.
-    // So, we query to a nsIStandardURL, and fail if we aren't an instance of an nsIStandardURL
-    // nsIStandardURLs have the good property of escaping the '^' character in their specs,
-    // which means that we can be sure that the caret character (which is reserved for delimiting
-    // the end of the spec, and the beginning of the origin attributes) is not present in the
-    // origin string
-    nsCOMPtr<nsIStandardURL> standardURL = do_QueryInterface(origin);
-    NS_ENSURE_TRUE(standardURL, NS_ERROR_FAILURE);
-    rv = origin->GetAsciiSpec(aOrigin);
+
+  // This URL can be a blobURL. In this case, we should use the 'parent'
+  // principal instead.
+  nsCOMPtr<nsIURIWithPrincipal> uriWithPrincipal = do_QueryInterface(origin);
+  if (uriWithPrincipal) {
+    nsCOMPtr<nsIPrincipal> uriPrincipal;
+    rv = uriWithPrincipal->GetPrincipal(getter_AddRefs(uriPrincipal));
     NS_ENSURE_SUCCESS(rv, rv);
+
+    if (uriPrincipal) {
+      return uriPrincipal->GetOriginNoSuffix(aOrigin);
+    }
+  }
+
+  // If we reached this branch, we can only create an origin if we have a
+  // nsIStandardURL.  So, we query to a nsIStandardURL, and fail if we aren't
+  // an instance of an nsIStandardURL nsIStandardURLs have the good property
+  // of escaping the '^' character in their specs, which means that we can be
+  // sure that the caret character (which is reserved for delimiting the end
+  // of the spec, and the beginning of the origin attributes) is not present
+  // in the origin string
+  nsCOMPtr<nsIStandardURL> standardURL = do_QueryInterface(origin);
+  NS_ENSURE_TRUE(standardURL, NS_ERROR_FAILURE);
+
+  rv = origin->GetAsciiSpec(aOrigin);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // The origin, when taken from the spec, should not contain the ref part of
+  // the URL.
+
+  int32_t pos = aOrigin.FindChar('?');
+  int32_t hashPos = aOrigin.FindChar('#');
+
+  if (hashPos != kNotFound && (pos == kNotFound || hashPos < pos)) {
+    pos = hashPos;
+  }
+
+  if (pos != kNotFound) {
+    aOrigin.Truncate(pos);
   }
 
   return NS_OK;
-}
-
-nsresult
-nsPrincipal::GetOriginInternal(nsACString& aOrigin)
-{
-  return GetOriginForURI(mCodebase, aOrigin);
 }
 
 bool
@@ -386,7 +407,7 @@ nsPrincipal::Read(nsIObjectInputStream* aStream)
   rv = aStream->ReadCString(suffix);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
   bool ok = attrs.PopulateFromSuffix(suffix);
   NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
 
@@ -670,7 +691,7 @@ struct OriginComparator
 };
 
 nsExpandedPrincipal::nsExpandedPrincipal(nsTArray<nsCOMPtr<nsIPrincipal>> &aWhiteList,
-                                         const PrincipalOriginAttributes& aAttrs)
+                                         const OriginAttributes& aAttrs)
 {
   // We force the principals to be sorted by origin so that nsExpandedPrincipal
   // origins can have a canonical form.

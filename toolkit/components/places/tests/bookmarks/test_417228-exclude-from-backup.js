@@ -77,7 +77,7 @@ var test = {
       do_check_eq(rootNode.childCount, PLACES_ROOTS_COUNT + 2);
       // open exclude root and check it still contains one item
       var restoreRootIndex = PLACES_ROOTS_COUNT;
-      var excludeRootIndex = PLACES_ROOTS_COUNT+1;
+      var excludeRootIndex = PLACES_ROOTS_COUNT + 1;
       var excludeRootNode = rootNode.getChild(excludeRootIndex);
       do_check_eq(this._excludeRootTitle, excludeRootNode.title);
       excludeRootNode.QueryInterface(Ci.nsINavHistoryQueryResultNode);
@@ -86,8 +86,7 @@ var test = {
       var excludeRootChildNode = excludeRootNode.getChild(0);
       do_check_eq(excludeRootChildNode.uri, this._restoreRootExcludeURI.spec);
       excludeRootNode.containerOpen = false;
-    }
-    else {
+    } else {
       // exclude root should not exist anymore
       do_check_eq(rootNode.childCount, PLACES_ROOTS_COUNT + 1);
       restoreRootIndex = PLACES_ROOTS_COUNT;

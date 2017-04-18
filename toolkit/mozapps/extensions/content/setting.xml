@@ -22,7 +22,7 @@
 
         this.addEventListener("keypress", function(event) {
           event.stopPropagation();
-        }, false);
+        });
 
         if (this.usePref)
           Services.prefs.addObserver(this.pref, this._observer, true);
@@ -31,7 +31,7 @@
       <field name="_observer"><![CDATA[({
         _self: this,
 
-        QueryInterface: function(aIID) {
+        QueryInterface(aIID) {
           const Ci = Components.interfaces;
           if (aIID.equals(Ci.nsIObserver) ||
               aIID.equals(Ci.nsISupportsWeakReference) ||
@@ -41,7 +41,7 @@
           throw Components.Exception("No interface", Components.results.NS_ERROR_NO_INTERFACE);
         },
 
-        observe: function(aSubject, aTopic, aPrefName) {
+        observe(aSubject, aTopic, aPrefName) {
           if (aTopic != "nsPref:changed")
             return;
 
@@ -65,8 +65,7 @@
               event.initEvent(eventName, true, true);
               let f = new Function("event", body);
               f.call(this, event);
-            }
-            catch (e) {
+            } catch (e) {
               Cu.reportError(e);
             }
           ]]>
@@ -442,7 +441,7 @@
     <implementation>
       <constructor>
       <![CDATA[
-        this.control.addEventListener("command", this.inputChanged.bind(this), false);
+        this.control.addEventListener("command", this.inputChanged.bind(this));
       ]]>
       </constructor>
 

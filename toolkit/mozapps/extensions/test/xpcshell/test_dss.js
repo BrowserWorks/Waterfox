@@ -24,7 +24,7 @@ profileDir.append("extensions");
 // when expected
 var gLWThemeChanged = false;
 var LightweightThemeObserver = {
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic != "lightweight-theme-styling-update")
       return;
 
@@ -274,8 +274,7 @@ function run_test_3() {
       addons.forEach(function(a) {
         if (a.id == "1@personas.mozilla.org") {
           seen = true;
-        }
-        else {
+        } else {
           dump("Checking theme " + a.id + "\n");
           do_check_false(a.isActive);
           do_check_true(a.userDisabled);
@@ -344,8 +343,7 @@ function run_test_4() {
       addons.forEach(function(a) {
         if (a.id == "2@personas.mozilla.org") {
           seen = true;
-        }
-        else {
+        } else {
           dump("Checking theme " + a.id + "\n");
           do_check_false(a.isActive);
           do_check_true(a.userDisabled);

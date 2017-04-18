@@ -33,7 +33,6 @@
 #include "nsIScriptElement.h"
 #include "nsStubMutationObserver.h"
 #include "nsAttrName.h"
-#include "nsParserConstants.h"
 #include "nsComputedDOMStyle.h"
 #include "mozilla/dom/Element.h"
 
@@ -306,7 +305,7 @@ nsXHTMLContentSerializer::SerializeAttributes(nsIContent* aContent,
         continue;
     }
 
-    BorrowedAttrInfo info = aContent->GetAttrInfoAt(index);
+    mozilla::dom::BorrowedAttrInfo info = aContent->GetAttrInfoAt(index);
     const nsAttrName* name = info.mName;
 
     int32_t namespaceID = name->NamespaceID();

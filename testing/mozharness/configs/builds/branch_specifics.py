@@ -52,7 +52,7 @@ config = {
                 'force_clobber': True,
             },
             'macosx64': {
-                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/release',
+                'src_mozconfig': 'browser/config/mozconfigs/macosx64/release',
                 'force_clobber': True,
             },
             'win32': {
@@ -75,16 +75,10 @@ config = {
             'linux64-asan': {
                 'update_channel': 'default',
             },
-            'linux64-cc': {
-                'update_channel': 'default',
-            },
             'linux64-st-an-debug': {
                 'update_channel': 'default',
             },
             'linux64-st-an': {
-                'update_channel': 'default',
-            },
-            'linux64-tsan': {
                 'update_channel': 'default',
             },
             'linux64-add-on-devel': {
@@ -132,7 +126,7 @@ config = {
                 'force_clobber': True,
             },
             'macosx64': {
-                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/beta',
+                'src_mozconfig': 'browser/config/mozconfigs/macosx64/beta',
                 'force_clobber': True,
             },
             'win32': {
@@ -155,16 +149,10 @@ config = {
             'linux64-asan': {
                 'update_channel': 'default',
             },
-            'linux64-cc': {
-                'update_channel': 'default',
-            },
             'linux64-st-an-debug': {
                 'update_channel': 'default',
             },
             'linux64-st-an': {
-                'update_channel': 'default',
-            },
-            'linux64-tsan': {
                 'update_channel': 'default',
             },
             'linux64-add-on-devel': {
@@ -236,16 +224,10 @@ config = {
             'linux64-asan': {
                 'update_channel': 'default',
             },
-            'linux64-cc': {
-                'update_channel': 'default',
-            },
             'linux64-st-an-debug': {
                 'update_channel': 'default',
             },
             'linux64-st-an': {
-                'update_channel': 'default',
-            },
-            'linux64-tsan': {
                 'update_channel': 'default',
             },
             'macosx64-debug': {
@@ -275,9 +257,6 @@ config = {
         'repo_path': 'try',
         'clone_by_revision': True,
         'clone_with_purge': True,
-        # FUTURE this should be a unified repo because Try pushes may e.g.
-        # be on Aurora or Beta revisions.
-        'clone_upstream_url': 'https://hg.mozilla.org/mozilla-central',
         'tinderbox_build_dir': '%(who)s-%(got_revision)s',
         'to_tinderbox_dated': False,
         'include_post_upload_builddir': True,
@@ -307,67 +286,8 @@ config = {
         "graph_server_branch_name": "UX",
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
     },
-    # When build promotion goes live the mozconfig changes are probably better
-    # expressed once in files like configs/builds/releng_base_windows_32_builds.py
     'date': {
-        'update_channel': 'beta-dev',
-        'enable_release_promotion': 1,
-        'platform_overrides': {
-            'linux': {
-                'src_mozconfig': 'browser/config/mozconfigs/linux32/beta',
-            },
-            'linux-debug': {
-                'update_channel': 'default',
-            },
-            'linux64': {
-                'src_mozconfig': 'browser/config/mozconfigs/linux64/beta',
-            },
-            'linux64-debug': {
-                'update_channel': 'default',
-            },
-            'linux64-asan-debug': {
-                'update_channel': 'default',
-            },
-            'linux64-asan': {
-                'update_channel': 'default',
-            },
-            'linux64-cc': {
-                'update_channel': 'default',
-            },
-            'linux64-st-an-debug': {
-                'update_channel': 'default',
-            },
-            'linux64-st-an': {
-                'update_channel': 'default',
-            },
-            'linux64-tsan': {
-                'update_channel': 'default',
-            },
-            'macosx64': {
-                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/beta',
-            },
-            'macosx64-debug': {
-                'update_channel': 'default',
-            },
-            'macosx64-st-an': {
-                'update_channel': 'default',
-            },
-            'macosx64-st-an-debug': {
-                'update_channel': 'default',
-            },
-            'win32': {
-                'src_mozconfig': 'browser/config/mozconfigs/win32/beta',
-            },
-            'win32-debug': {
-                'update_channel': 'default',
-            },
-            'win64': {
-                'src_mozconfig': 'browser/config/mozconfigs/win64/beta',
-            },
-            'win64-debug': {
-                'update_channel': 'default',
-            },
-        },
+        'update_channel': 'nightly-date',
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
     },
     'cypress': {
@@ -420,16 +340,10 @@ config = {
             'linux64-asan': {
                 'update_channel': 'default',
             },
-            'linux64-cc': {
-                'update_channel': 'default',
-            },
             'linux64-st-an-debug': {
                 'update_channel': 'default',
             },
             'linux64-st-an': {
-                'update_channel': 'default',
-            },
-            'linux64-tsan': {
                 'update_channel': 'default',
             },
             'macosx64': {

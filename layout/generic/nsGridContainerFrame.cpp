@@ -9,10 +9,10 @@
 #include "nsGridContainerFrame.h"
 
 #include <algorithm> // for std::stable_sort
+#include <functional>
 #include <limits>
 #include "mozilla/CSSAlignUtils.h"
 #include "mozilla/dom/GridBinding.h"
-#include "mozilla/Function.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/PodOperations.h" // for PodZero
 #include "mozilla/Poison.h"
@@ -470,7 +470,7 @@ public:
   void SetGridItemCount(size_t aGridItemCount)
   {
 #ifndef CLANG_CRASH_BUG
-    MOZ_ASSERT(mIter.isSome() || mArray->Length() == aGridItemCount,
+    MOZ_ASSERT(mIter.isSome() || aGridItemCount <= mArray->Length(),
                "grid item count mismatch");
 #endif
     mGridItemCount.emplace(aGridItemCount);
@@ -1461,7 +1461,7 @@ struct nsGridContainerFrame::Tracks
   }
 
   using FitContentClamper =
-    function<bool(uint32_t aTrack, nscoord aMinSize, nscoord* aSize)>;
+    std::function<bool(uint32_t aTrack, nscoord aMinSize, nscoord* aSize)>;
   /**
    * Grow the planned size for tracks in aGrowableTracks up to their limit
    * and then freeze them (all aGrowableTracks must be unfrozen on entry).
@@ -2134,7 +2134,7 @@ struct MOZ_STACK_CLASS nsGridContainerFrame::GridReflowInput
   /**
    * BStart of this fragment in "grid space" (i.e. the concatenation of content
    * areas of all fragments).  Equal to mRows.mSizes[mStartRow].mPosition,
-   * or, if this fragment starts after the last row, the GetConsumedBSize().
+   * or, if this fragment starts after the last row, the ConsumedBSize().
    */
   nscoord mFragBStart;
   /** The start row for this fragment. */
@@ -4758,14 +4758,14 @@ nsGridContainerFrame::Tracks::StretchFlexibleTracks(
                                          : ri->ComputedMaxISize();
   }
   Maybe<nsTArray<TrackSize>> origSizes;
+  bool applyMinMax = (minSize != 0 || maxSize != NS_UNCONSTRAINEDSIZE) &&
+                     aAvailableSize == NS_UNCONSTRAINEDSIZE;
   // We iterate twice at most.  The 2nd time if the grid size changed after
   // applying a min/max-size (can only occur if aAvailableSize is indefinite).
   while (true) {
     float fr = FindUsedFlexFraction(aState, aGridItems, flexTracks,
                                     aFunctions, aAvailableSize);
     if (fr != 0.0f) {
-      bool applyMinMax = (minSize != 0 || maxSize != NS_UNCONSTRAINEDSIZE) &&
-                         aAvailableSize == NS_UNCONSTRAINEDSIZE;
       for (uint32_t i : flexTracks) {
         float flexFactor = aFunctions.MaxSizingFor(i).GetFlexFractionValue();
         nscoord flexLength = NSToCoordRound(flexFactor * fr);
@@ -4777,36 +4777,36 @@ nsGridContainerFrame::Tracks::StretchFlexibleTracks(
           base = flexLength;
         }
       }
-      if (applyMinMax && origSizes.isSome()) {
-        // https://drafts.csswg.org/css-grid/#algo-flex-tracks
-        // "If using this flex fraction would cause the grid to be smaller than
-        // the grid container’s min-width/height (or larger than the grid
-        // container’s max-width/height), then redo this step, treating the free
-        // space as definite [...]"
-        nscoord newSize = 0;
-        for (auto& sz : mSizes) {
-          newSize += sz.mBase;
-        }
-        const auto sumOfGridGaps = SumOfGridGaps();
-        newSize += sumOfGridGaps;
-        if (newSize > maxSize) {
-          aAvailableSize = maxSize;
-        } else if (newSize < minSize) {
-          aAvailableSize = minSize;
-        }
-        if (aAvailableSize != NS_UNCONSTRAINEDSIZE) {
-          // Reset min/max-size to ensure 'applyMinMax' becomes false next time.
-          minSize = 0;
-          maxSize = NS_UNCONSTRAINEDSIZE;
-          aAvailableSize = std::max(0, aAvailableSize - sumOfGridGaps);
-          // Restart with the original track sizes and definite aAvailableSize.
+    }
+    if (applyMinMax) {
+      applyMinMax = false;
+      // https://drafts.csswg.org/css-grid/#algo-flex-tracks
+      // "If using this flex fraction would cause the grid to be smaller than
+      // the grid container’s min-width/height (or larger than the grid
+      // container’s max-width/height), then redo this step, treating the free
+      // space as definite [...]"
+      nscoord newSize = 0;
+      for (auto& sz : mSizes) {
+        newSize += sz.mBase;
+      }
+      const auto sumOfGridGaps = SumOfGridGaps();
+      newSize += sumOfGridGaps;
+      if (newSize > maxSize) {
+        aAvailableSize = maxSize;
+      } else if (newSize < minSize) {
+        aAvailableSize = minSize;
+      }
+      if (aAvailableSize != NS_UNCONSTRAINEDSIZE) {
+        aAvailableSize = std::max(0, aAvailableSize - sumOfGridGaps);
+        // Restart with the original track sizes and definite aAvailableSize.
+        if (origSizes.isSome()) {
           mSizes = Move(*origSizes);
           origSizes.reset();
-          if (aAvailableSize == 0) {
-            break; // zero available size wouldn't change any sizes though...
-          }
-          continue;
+        } // else, no mSizes[].mBase were changed above so it's still correct
+        if (aAvailableSize == 0) {
+          break; // zero available size wouldn't change any sizes though...
         }
+        continue;
       }
     }
     break;
@@ -6129,7 +6129,7 @@ nsGridContainerFrame::Reflow(nsPresContext*           aPresContext,
                                         SizingConstraint::eNoConstraint);
     bSize = computedSize.BSize(wm);
   } else {
-    consumedBSize = GetConsumedBSize();
+    consumedBSize = ConsumedBSize(wm);
     gridReflowInput.InitializeForContinuation(this, consumedBSize);
     const uint32_t numRows = gridReflowInput.mRows.mSizes.Length();
     bSize = gridReflowInput.mRows.GridLineEdge(numRows,
@@ -7085,7 +7085,7 @@ nsGridContainerFrame::GetGridFrameWithComputedInfo(nsIFrame* aFrame)
       shell->FrameNeedsReflow(gridFrame,
                               nsIPresShell::eResize,
                               NS_FRAME_IS_DIRTY);
-      shell->FlushPendingNotifications(Flush_Layout);
+      shell->FlushPendingNotifications(FlushType::Layout);
 
       // Since the reflow may have side effects, get the grid frame again.
       gridFrame = GetGridContainerFrame(aFrame);

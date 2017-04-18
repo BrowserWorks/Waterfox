@@ -22,6 +22,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "DeferredSave",
                                   "resource://gre/modules/DeferredSave.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonRepository_SQLiteMigrator",
                                   "resource://gre/modules/addons/AddonRepository_SQLiteMigrator.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ServiceRequest",
@@ -53,7 +55,6 @@ const XMLURI_PARSE_ERROR  = "http://www.mozilla.org/newlayout/xml/parsererror.xm
 const API_VERSION = "1.5";
 const DEFAULT_CACHE_TYPES = "extension,theme,locale,dictionary";
 
-const KEY_PROFILEDIR        = "ProfD";
 const FILE_DATABASE         = "addons.json";
 const DB_SCHEMA             = 5;
 const DB_MIN_JSON_SCHEMA    = 5;
@@ -120,36 +121,26 @@ function convertHTMLToPlainText(html) {
   return html;
 }
 
-function getAddonsToCache(aIds, aCallback) {
-  try {
-    var types = Services.prefs.getCharPref(PREF_GETADDONS_CACHE_TYPES);
-  }
-  catch (e) { }
-  if (!types)
-    types = DEFAULT_CACHE_TYPES;
+function getAddonsToCache(aIds) {
+  let types = Preferences.get(PREF_GETADDONS_CACHE_TYPES) || DEFAULT_CACHE_TYPES;
 
   types = types.split(",");
 
-  AddonManager.getAddonsByIDs(aIds, function(aAddons) {
+  return AddonManager.getAddonsByIDs(aIds).then(addons => {
     let enabledIds = [];
-    for (var i = 0; i < aIds.length; i++) {
+    for (let [i, addon] of addons.entries()) {
       var preference = PREF_GETADDONS_CACHE_ID_ENABLED.replace("%ID%", aIds[i]);
-      try {
-        if (!Services.prefs.getBoolPref(preference))
-          continue;
-      } catch (e) {
-        // If the preference doesn't exist caching is enabled by default
-      }
+      // If the preference doesn't exist caching is enabled by default
+      if (!Preferences.get(preference, true))
+        continue;
 
       // The add-ons manager may not know about this ID yet if it is a pending
       // install. In that case we'll just cache it regardless
-      if (aAddons[i] && (types.indexOf(aAddons[i].type) == -1))
-        continue;
-
-      enabledIds.push(aIds[i]);
+      if (!addon || types.includes(addon.type))
+        enabledIds.push(aIds[i]);
     }
 
-    aCallback(enabledIds);
+    return enabledIds;
   });
 }
 
@@ -398,7 +389,7 @@ AddonSearchResult.prototype = {
    *         A platform version to test against
    * @return Boolean representing if the add-on is compatible
    */
-  isCompatibleWith: function(aAppVersion, aPlatformVersion) {
+  isCompatibleWith(aAppVersion, aPlatformVersion) {
     return true;
   },
 
@@ -415,7 +406,7 @@ AddonSearchResult.prototype = {
    * @param  aPlatformVersion
    *         A platform version to check for updates for
    */
-  findUpdates: function(aListener, aReason, aAppVersion, aPlatformVersion) {
+  findUpdates(aListener, aReason, aAppVersion, aPlatformVersion) {
     if ("onNoCompatibilityUpdateAvailable" in aListener)
       aListener.onNoCompatibilityUpdateAvailable(this);
     if ("onNoUpdateAvailable" in aListener)
@@ -424,7 +415,7 @@ AddonSearchResult.prototype = {
       aListener.onUpdateFinished(this);
   },
 
-  toJSON: function() {
+  toJSON() {
     let json = {};
 
     for (let property of Object.keys(this)) {
@@ -524,14 +515,14 @@ this.AddonRepository = {
    * return: promise{integer} resolves with the result of flushing
    *         the AddonRepository database
    */
-  shutdown: function() {
+  shutdown() {
     this.cancelSearch();
 
     this._addons = null;
     return AddonDatabase.shutdown(false);
   },
 
-  metadataAge: function() {
+  metadataAge() {
     let now = Math.round(Date.now() / 1000);
 
     let lastUpdate = 0;
@@ -546,7 +537,7 @@ this.AddonRepository = {
     return now - lastUpdate;
   },
 
-  isMetadataStale: function() {
+  isMetadataStale() {
     let threshold = DEFAULT_METADATA_UPDATETHRESHOLD_SEC;
     try {
       threshold = Services.prefs.getIntPref(PREF_METADATA_UPDATETHRESHOLD_SEC);
@@ -597,7 +588,7 @@ this.AddonRepository = {
    * @return Promise{null}
    *         Resolves when the metadata ping is complete
    */
-  repopulateCache: function(aTimeout) {
+  repopulateCache(aTimeout) {
     return this._repopulateCacheInternal(false, aTimeout);
   },
 
@@ -605,17 +596,14 @@ this.AddonRepository = {
    * Clear and delete the AddonRepository database
    * @return Promise{null} resolves when the database is deleted
    */
-  _clearCache: function() {
+  _clearCache() {
     this._addons = null;
     return AddonDatabase.delete().then(() =>
-      new Promise((resolve, reject) =>
-        AddonManagerPrivate.updateAddonRepositoryData(resolve))
-    );
+      AddonManagerPrivate.updateAddonRepositoryData());
   },
 
   _repopulateCacheInternal: Task.async(function*(aSendPerformance, aTimeout) {
-    let allAddons = yield new Promise((resolve, reject) =>
-      AddonManager.getAllAddons(resolve));
+    let allAddons = yield AddonManager.getAllAddons();
 
     // Filter the hotfix out of our list of add-ons
     allAddons = allAddons.filter(a => a.id != AddonManager.hotfixID);
@@ -630,8 +618,7 @@ this.AddonRepository = {
     let ids = allAddons.map(a => a.id);
     logger.debug("Repopulate add-on cache with " + ids.toSource());
 
-    let addonsToCache = yield new Promise((resolve, reject) =>
-      getAddonsToCache(ids, resolve));
+    let addonsToCache = yield getAddonsToCache(ids);
 
     // Completely remove cache if there are no add-ons to cache
     if (addonsToCache.length == 0) {
@@ -656,8 +643,7 @@ this.AddonRepository = {
       }, aSendPerformance, aTimeout));
 
     // Always call AddonManager updateAddonRepositoryData after we refill the cache
-    yield new Promise((resolve, reject) =>
-      AddonManagerPrivate.updateAddonRepositoryData(resolve));
+    yield AddonManagerPrivate.updateAddonRepositoryData();
   }),
 
   /**
@@ -670,7 +656,7 @@ this.AddonRepository = {
    * @param  aCallback
    *         The optional callback to call once complete
    */
-  cacheAddons: function(aIds, aCallback) {
+  cacheAddons(aIds, aCallback) {
     logger.debug("cacheAddons: enabled " + this.cacheEnabled + " IDs " + aIds.toSource());
     if (!this.cacheEnabled) {
       if (aCallback)
@@ -678,7 +664,7 @@ this.AddonRepository = {
       return;
     }
 
-    getAddonsToCache(aIds, aAddons => {
+    getAddonsToCache(aIds).then(aAddons => {
       // If there are no add-ons to cache, act as if caching is disabled
       if (aAddons.length == 0) {
         if (aCallback)
@@ -723,7 +709,7 @@ this.AddonRepository = {
    * The url that can be visited to see recommended add-ons in this repository.
    * If the corresponding preference is not defined, defaults to about:blank.
    */
-  getRecommendedURL: function() {
+  getRecommendedURL() {
     let url = this._formatURLPref(PREF_GETADDONS_BROWSERECOMMENDED, {});
     return (url != null) ? url : "about:blank";
   },
@@ -736,7 +722,7 @@ this.AddonRepository = {
    * @param  aSearchTerms
    *         Search terms used to search the repository
    */
-  getSearchURL: function(aSearchTerms) {
+  getSearchURL(aSearchTerms) {
     let url = this._formatURLPref(PREF_GETADDONS_BROWSESEARCHRESULTS, {
       TERMS : encodeURIComponent(aSearchTerms)
     });
@@ -747,7 +733,7 @@ this.AddonRepository = {
    * Cancels the search in progress. If there is no search in progress this
    * does nothing.
    */
-  cancelSearch: function() {
+  cancelSearch() {
     this._searching = false;
     if (this._request) {
       this._request.abort();
@@ -765,7 +751,7 @@ this.AddonRepository = {
    * @param  aCallback
    *         The callback to pass results to
    */
-  getAddonsByIDs: function(aIDs, aCallback) {
+  getAddonsByIDs(aIDs, aCallback) {
     return this._beginGetAddons(aIDs, aCallback, false);
   },
 
@@ -783,12 +769,12 @@ this.AddonRepository = {
    *         (Optional) timeout in milliseconds to abandon the XHR request
    *         if we have not received a response from the server.
    */
-  _beginGetAddons: function(aIDs, aCallback, aSendPerformance, aTimeout) {
+  _beginGetAddons(aIDs, aCallback, aSendPerformance, aTimeout) {
     let ids = aIDs.slice(0);
 
     let params = {
-      API_VERSION : API_VERSION,
-      IDS : ids.map(encodeURIComponent).join(',')
+      API_VERSION,
+      IDS : ids.map(encodeURIComponent).join(",")
     };
 
     let pref = PREF_GETADDONS_BYIDS;
@@ -823,7 +809,7 @@ this.AddonRepository = {
 
     let url = this._formatURLPref(pref, params);
 
-    let  handleResults = (aElements, aTotalResults, aCompatData) => {
+    let handleResults = (aElements, aTotalResults, aCompatData) => {
       // Don't use this._parseAddons() so that, for example,
       // incompatible add-ons are not filtered out
       let results = [];
@@ -859,7 +845,7 @@ this.AddonRepository = {
         addon.type = "extension";
         addon.compatibilityOverrides = addonCompat.compatRanges;
         let result = {
-          addon: addon,
+          addon,
           xpiURL: null,
           xpiHash: null
         };
@@ -882,7 +868,7 @@ this.AddonRepository = {
    *
    * @return Promise{null} Resolves when the metadata update is complete.
    */
-  backgroundUpdateCheck: function() {
+  backgroundUpdateCheck() {
     return this._repopulateCacheInternal(true);
   },
 
@@ -895,9 +881,9 @@ this.AddonRepository = {
    * @param  aCallback
    *         The callback to pass results to
    */
-  retrieveRecommendedAddons: function(aMaxResults, aCallback) {
+  retrieveRecommendedAddons(aMaxResults, aCallback) {
     let url = this._formatURLPref(PREF_GETADDONS_GETRECOMMENDED, {
-      API_VERSION : API_VERSION,
+      API_VERSION,
 
       // Get twice as many results to account for potential filtering
       MAX_RESULTS : 2 * aMaxResults
@@ -924,7 +910,7 @@ this.AddonRepository = {
    * @param  aCallback
    *         The callback to pass results to
    */
-  searchAddons: function(aSearchTerms, aMaxResults, aCallback) {
+  searchAddons(aSearchTerms, aMaxResults, aCallback) {
     let compatMode = "normal";
     if (!AddonManager.checkCompatibility)
       compatMode = "ignore";
@@ -932,7 +918,7 @@ this.AddonRepository = {
       compatMode = "strict";
 
     let substitutions = {
-      API_VERSION : API_VERSION,
+      API_VERSION,
       TERMS : encodeURIComponent(aSearchTerms),
       // Get twice as many results to account for potential filtering
       MAX_RESULTS : 2 * aMaxResults,
@@ -951,7 +937,7 @@ this.AddonRepository = {
   },
 
   // Posts results to the callback
-  _reportSuccess: function(aResults, aTotalResults) {
+  _reportSuccess(aResults, aTotalResults) {
     this._searching = false;
     this._request = null;
     // The callback may want to trigger a new search so clear references early
@@ -962,7 +948,7 @@ this.AddonRepository = {
   },
 
   // Notifies the callback of a failure
-  _reportFailure: function() {
+  _reportFailure() {
     this._searching = false;
     this._request = null;
     // The callback may want to trigger a new search so clear references early
@@ -972,28 +958,28 @@ this.AddonRepository = {
   },
 
   // Get descendant by unique tag name. Returns null if not unique tag name.
-  _getUniqueDescendant: function(aElement, aTagName) {
+  _getUniqueDescendant(aElement, aTagName) {
     let elementsList = aElement.getElementsByTagName(aTagName);
     return (elementsList.length == 1) ? elementsList[0] : null;
   },
 
   // Get direct descendant by unique tag name.
   // Returns null if not unique tag name.
-  _getUniqueDirectDescendant: function(aElement, aTagName) {
+  _getUniqueDirectDescendant(aElement, aTagName) {
     let elementsList = Array.filter(aElement.children,
                                     aChild => aChild.tagName == aTagName);
     return (elementsList.length == 1) ? elementsList[0] : null;
   },
 
   // Parse out trimmed text content. Returns null if text content empty.
-  _getTextContent: function(aElement) {
+  _getTextContent(aElement) {
     let textContent = aElement.textContent.trim();
     return (textContent.length > 0) ? textContent : null;
   },
 
   // Parse out trimmed text content of a descendant with the specified tag name
   // Returns null if the parsing unsuccessful.
-  _getDescendantTextContent: function(aElement, aTagName) {
+  _getDescendantTextContent(aElement, aTagName) {
     let descendant = this._getUniqueDescendant(aElement, aTagName);
     return (descendant != null) ? this._getTextContent(descendant) : null;
   },
@@ -1001,7 +987,7 @@ this.AddonRepository = {
   // Parse out trimmed text content of a direct descendant with the specified
   // tag name.
   // Returns null if the parsing unsuccessful.
-  _getDirectDescendantTextContent: function(aElement, aTagName) {
+  _getDirectDescendantTextContent(aElement, aTagName) {
     let descendant = this._getUniqueDirectDescendant(aElement, aTagName);
     return (descendant != null) ? this._getTextContent(descendant) : null;
   },
@@ -1019,7 +1005,7 @@ this.AddonRepository = {
    * @return Result object containing the parsed AddonSearchResult, xpiURL and
    *         xpiHash if the parsing was successful. Otherwise returns null.
    */
-  _parseAddon: function(aElement, aSkip, aCompatData) {
+  _parseAddon(aElement, aSkip, aCompatData) {
     let skipIDs = (aSkip && aSkip.ids) ? aSkip.ids : [];
     let skipSourceURIs = (aSkip && aSkip.sourceURIs) ? aSkip.sourceURIs : [];
 
@@ -1029,7 +1015,7 @@ this.AddonRepository = {
 
     let addon = new AddonSearchResult(guid);
     let result = {
-      addon: addon,
+      addon,
       xpiURL: null,
       xpiHash: null
     };
@@ -1244,7 +1230,7 @@ this.AddonRepository = {
     return result;
   },
 
-  _parseAddons: function(aElements, aTotalResults, aSkip) {
+  _parseAddons(aElements, aTotalResults, aSkip) {
     let results = [];
 
     let isSameApplication = aAppNode => this._getTextContent(aAppNode) == Services.appinfo.ID;
@@ -1335,15 +1321,14 @@ this.AddonRepository = {
         AddonManager.getInstallForURL(result.xpiURL, callback,
                                       "application/x-xpinstall", result.xpiHash,
                                       addon.name, addon.icons, addon.version);
-      }
-      else {
+      } else {
         callback(null);
       }
     }
   },
 
   // Parses addon_compatibility nodes, that describe compatibility overrides.
-  _parseAddonCompatElement: function(aResultObj, aElement) {
+  _parseAddonCompatElement(aResultObj, aElement) {
     let guid = this._getDescendantTextContent(aElement, "guid");
     if (!guid) {
         logger.debug("Compatibility override is missing guid.");
@@ -1365,7 +1350,7 @@ this.AddonRepository = {
         if (minVersion == null || maxVersion == null)
           continue;
 
-        let appRange = { appID: appID,
+        let appRange = { appID,
                          appMinVersion: minVersion,
                          appMaxVersion: maxVersion };
 
@@ -1424,14 +1409,14 @@ this.AddonRepository = {
   },
 
   // Parses addon_compatibility elements.
-  _parseAddonCompatData: function(aElements) {
+  _parseAddonCompatData(aElements) {
     let compatData = {};
     Array.forEach(aElements, this._parseAddonCompatElement.bind(this, compatData));
     return compatData;
   },
 
   // Begins a new search if one isn't currently executing
-  _beginSearch: function(aURI, aMaxResults, aCallback, aHandleResults, aTimeout) {
+  _beginSearch(aURI, aMaxResults, aCallback, aHandleResults, aTimeout) {
     if (this._searching || aURI == null || aMaxResults <= 0) {
       logger.warn("AddonRepository search failed: searching " + this._searching + " aURI " + aURI +
                   " aMaxResults " + aMaxResults);
@@ -1453,8 +1438,8 @@ this.AddonRepository = {
       this._request.timeout = aTimeout;
     }
 
-    this._request.addEventListener("error", aEvent => this._reportFailure(), false);
-    this._request.addEventListener("timeout", aEvent => this._reportFailure(), false);
+    this._request.addEventListener("error", aEvent => this._reportFailure());
+    this._request.addEventListener("timeout", aEvent => this._reportFailure());
     this._request.addEventListener("load", aEvent => {
       logger.debug("Got metadata search load event");
       let request = aEvent.target;
@@ -1478,13 +1463,13 @@ this.AddonRepository = {
       let compatData = this._parseAddonCompatData(compatElements);
 
       aHandleResults(elements, totalResults, compatData);
-    }, false);
+    });
     this._request.send(null);
   },
 
   // Gets the id's of local add-ons, and the sourceURI's of local installs,
   // passing the results to aCallback
-  _getLocalAddonIds: function(aCallback) {
+  _getLocalAddonIds(aCallback) {
     let localAddonIds = {ids: null, sourceURIs: null};
 
     AddonManager.getAllAddons(function(aAddons) {
@@ -1506,7 +1491,7 @@ this.AddonRepository = {
   },
 
   // Create url from preference, returning null if preference does not exist
-  _formatURLPref: function(aPreference, aSubstitutions) {
+  _formatURLPref(aPreference, aSubstitutions) {
     let url = null;
     try {
       url = Services.prefs.getCharPref(aPreference);
@@ -1524,7 +1509,7 @@ this.AddonRepository = {
 
   // Find a AddonCompatibilityOverride that matches a given aAddonVersion and
   // application/platform version.
-  findMatchingCompatOverride: function(aAddonVersion,
+  findMatchingCompatOverride(aAddonVersion,
                                                                      aCompatOverrides,
                                                                      aAppVersion,
                                                                      aPlatformVersion) {
@@ -1546,7 +1531,7 @@ this.AddonRepository = {
     return null;
   },
 
-  flush: function() {
+  flush() {
     return AddonDatabase.flush();
   }
 };
@@ -1568,7 +1553,7 @@ var AddonDatabase = {
    *
    * @return {Promise} a promise that resolves to the database.
    */
-  openConnection: function() {
+  openConnection() {
     if (!this.connectionPromise) {
      this.connectionPromise = Task.spawn(function*() {
        this.DB = BLANK_DB();
@@ -1657,7 +1642,7 @@ var AddonDatabase = {
    *         An optional boolean to skip flushing data to disk. Useful
    *         when the database is going to be deleted afterwards.
    */
-  shutdown: function(aSkipFlush) {
+  shutdown(aSkipFlush) {
     if (!this.connectionPromise) {
       return Promise.resolve();
     }
@@ -1678,7 +1663,7 @@ var AddonDatabase = {
    *         An optional callback to call once complete
    * @return Promise{null} resolves when the database has been deleted
    */
-  delete: function(aCallback) {
+  delete(aCallback) {
     this.DB = BLANK_DB();
 
     this._deleting = this.Writer.flush()
@@ -1693,7 +1678,7 @@ var AddonDatabase = {
     return this._deleting;
   },
 
-  toJSON: function() {
+  toJSON() {
     let json = {
       schema: this.DB.schema,
       addons: []
@@ -1726,7 +1711,7 @@ var AddonDatabase = {
    *          Resolves when the pending I/O (writing out or deleting
    *          addons.json) completes
    */
-  flush: function() {
+  flush() {
     if (this._deleting) {
       return this._deleting;
     }
@@ -1738,7 +1723,7 @@ var AddonDatabase = {
    * @return: Promise{Map}
    *          Resolves when the add-ons are retrieved from the database
    */
-  retrieveStoredData: function() {
+  retrieveStoredData() {
     return this.openConnection().then(db => db.addons);
   },
 
@@ -1751,7 +1736,7 @@ var AddonDatabase = {
    * @param  aCallback
    *         An optional callback to call once complete
    */
-  repopulate: function(aAddons, aCallback) {
+  repopulate(aAddons, aCallback) {
     this.DB.addons.clear();
     this.insertAddons(aAddons, function() {
       let now = Math.round(Date.now() / 1000);
@@ -1794,7 +1779,7 @@ var AddonDatabase = {
    * @param  aCallback
    *         The callback to call once complete
    */
-  _insertAddon: function(aAddon) {
+  _insertAddon(aAddon) {
     let newAddon = this._parseAddon(aAddon);
     if (!newAddon ||
         !newAddon.id ||
@@ -1812,7 +1797,7 @@ var AddonDatabase = {
    *         The object to parse
    * @return Returns an AddonSearchResult object.
    */
-  _parseAddon: function(aObj) {
+  _parseAddon(aObj) {
     if (aObj instanceof AddonSearchResult)
       return aObj;
 
@@ -1832,7 +1817,7 @@ var AddonDatabase = {
       try {
         switch (expectedProperty) {
           case "sourceURI":
-            addon.sourceURI = value ? NetUtil.newURI(value) :  null;
+            addon.sourceURI = value ? NetUtil.newURI(value) : null;
             break;
 
           case "creator":
@@ -1923,7 +1908,7 @@ var AddonDatabase = {
    * @return Promise A promise that resolves after the
    *                 write to disk has completed.
    */
-  _saveDBToDisk: function() {
+  _saveDBToDisk() {
     return this.Writer.saveChanges().then(
       null,
       e => logger.error("SaveDBToDisk failed", e));
@@ -1937,7 +1922,7 @@ var AddonDatabase = {
    *         The JS object to use
    * @return The created developer
    */
-  _makeDeveloper: function(aObj) {
+  _makeDeveloper(aObj) {
     let name = aObj.name;
     let url = aObj.url;
     return new AddonManagerPrivate.AddonAuthor(name, url);
@@ -1951,7 +1936,7 @@ var AddonDatabase = {
    *         The JS object to use
    * @return The created screenshot
    */
-  _makeScreenshot: function(aObj) {
+  _makeScreenshot(aObj) {
     let url = aObj.url;
     let width = aObj.width;
     let height = aObj.height;
@@ -1971,7 +1956,7 @@ var AddonDatabase = {
    *         The JS object to use
    * @return The created CompatibilityOverride
    */
-  _makeCompatOverride: function(aObj) {
+  _makeCompatOverride(aObj) {
     let type = aObj.type;
     let minVersion = aObj.minVersion;
     let maxVersion = aObj.maxVersion;

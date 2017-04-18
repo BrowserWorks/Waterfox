@@ -16,9 +16,10 @@ this.EXPORTED_SYMBOLS = ["NarrateControls"];
 
 var gStrings = Services.strings.createBundle("chrome://global/locale/narrate.properties");
 
-function NarrateControls(mm, win) {
+function NarrateControls(mm, win, languagePromise) {
   this._mm = mm;
   this._winRef = Cu.getWeakReference(win);
+  this._languagePromise = languagePromise;
 
   win.addEventListener("unload", this);
 
@@ -110,7 +111,7 @@ function NarrateControls(mm, win) {
       <div class="dropdown-arrow"></div>
     </li>`;
 
-  this.narrator = new Narrator(win);
+  this.narrator = new Narrator(win, languagePromise);
 
   let branch = Services.prefs.getBranch("narrate.");
   let selectLabel = gStrings.GetStringFromName("selectvoicelabel");
@@ -136,7 +137,7 @@ function NarrateControls(mm, win) {
 }
 
 NarrateControls.prototype = {
-  handleEvent: function(evt) {
+  handleEvent(evt) {
     switch (evt.type) {
       case "change":
         if (evt.target.id == "narrate-rate-input") {
@@ -162,8 +163,8 @@ NarrateControls.prototype = {
   /**
    * Returns true if synth voices are available.
    */
-  _setupVoices: function() {
-    return this.narrator.languagePromise.then(language => {
+  _setupVoices() {
+    return this._languagePromise.then(language => {
       this.voiceSelect.clear();
       let win = this._win;
       let voicePrefs = this._getVoicePref();
@@ -210,7 +211,7 @@ NarrateControls.prototype = {
     });
   },
 
-  _getVoicePref: function() {
+  _getVoicePref() {
     let voicePref = Services.prefs.getCharPref("narrate.voice");
     try {
       return JSON.parse(voicePref);
@@ -219,15 +220,15 @@ NarrateControls.prototype = {
     }
   },
 
-  _onRateInput: function(evt) {
+  _onRateInput(evt) {
     AsyncPrefs.set("narrate.rate", parseInt(evt.target.value, 10));
     this.narrator.setRate(this._convertRate(evt.target.value));
   },
 
-  _onVoiceChange: function() {
+  _onVoiceChange() {
     let voice = this.voice;
     this.narrator.setVoice(voice);
-    this.narrator.languagePromise.then(language => {
+    this._languagePromise.then(language => {
       if (language) {
         let voicePref = this._getVoicePref();
         voicePref[language || "default"] = voice;
@@ -236,7 +237,7 @@ NarrateControls.prototype = {
     });
   },
 
-  _onButtonClick: function(evt) {
+  _onButtonClick(evt) {
     switch (evt.target.id) {
       case "narrate-skip-previous":
         this.narrator.skipPrevious();
@@ -261,7 +262,7 @@ NarrateControls.prototype = {
     }
   },
 
-  _updateSpeechControls: function(speaking) {
+  _updateSpeechControls(speaking) {
     let dropdown = this._doc.getElementById("narrate-dropdown");
     dropdown.classList.toggle("keep-open", speaking);
     dropdown.classList.toggle("speaking", speaking);
@@ -280,7 +281,7 @@ NarrateControls.prototype = {
     }
   },
 
-  _createVoiceLabel: function(voice) {
+  _createVoiceLabel(voice) {
     // This is a highly imperfect method of making human-readable labels
     // for system voices. Because each platform has a different naming scheme
     // for voices, we use a different method for each platform.
@@ -303,7 +304,7 @@ NarrateControls.prototype = {
     }
   },
 
-  _getLanguageName: function(lang) {
+  _getLanguageName(lang) {
     if (!this._langStrings) {
       this._langStrings = Services.strings.createBundle(
         "chrome://global/locale/languageNames.properties ");
@@ -317,7 +318,7 @@ NarrateControls.prototype = {
     }
   },
 
-  _convertRate: function(rate) {
+  _convertRate(rate) {
     // We need to convert a relative percentage value to a fraction rate value.
     // eg. -100 is half the speed, 100 is twice the speed in percentage,
     // 0.5 is half the speed and 2 is twice the speed in fractions.

@@ -11,7 +11,7 @@ function test() {
     windows: [{
       tabs: [{
         entries: [
-          { url: "about:mozilla", title: "Mozilla" },
+          { url: "about:mozilla", triggeringPrincipal_base64, title: "Mozilla" },
           {}
         ]
       }]
@@ -20,7 +20,7 @@ function test() {
 
   var theWin = openDialog(location, "", "chrome,all,dialog=no");
   theWin.addEventListener("load", function () {
-    theWin.removeEventListener("load", arguments.callee, false);
+    theWin.removeEventListener("load", arguments.callee);
 
     executeSoon(function () {
       var gotError = false;
@@ -33,6 +33,6 @@ function test() {
       ok(!gotError, "Didn't get a malformed URI error.");
       BrowserTestUtils.closeWindow(theWin).then(finish);
     });
-  }, false);
+  });
 }
 

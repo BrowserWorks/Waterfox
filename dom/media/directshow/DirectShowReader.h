@@ -46,7 +46,7 @@ class SourceFilter;
 class DirectShowReader : public MediaDecoderReader
 {
 public:
-  DirectShowReader(AbstractMediaDecoder* aDecoder);
+  explicit DirectShowReader(AbstractMediaDecoder* aDecoder);
 
   virtual ~DirectShowReader();
 
@@ -57,8 +57,7 @@ public:
   nsresult ReadMetadata(MediaInfo* aInfo,
                         MetadataTags** aTags) override;
 
-  RefPtr<SeekPromise>
-  Seek(SeekTarget aTarget, int64_t aEndTime) override;
+  RefPtr<SeekPromise> Seek(const SeekTarget& aTarget) override;
 
   static const GUID CLSID_MPEG_LAYER_3_DECODER_FILTER;
 

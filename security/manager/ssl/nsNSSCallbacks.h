@@ -11,6 +11,7 @@
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/CondVar.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/TimeStamp.h"
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsIStreamLoader.h"
@@ -21,7 +22,7 @@
 
 #include "ocspt.h" // Must be included after pk11func.h.
 
-using mozilla::NeckoOriginAttributes;
+using mozilla::OriginAttributes;
 
 class nsILoadGroup;
 
@@ -102,8 +103,8 @@ public:
                           const char* httpProtocolVariant,
                           const char* pathAndQueryString,
                           const char* httpRequestMethod,
-                          const NeckoOriginAttributes& originAttributes,
-                          const PRIntervalTime timeout,
+                          const OriginAttributes& originAttributes,
+                          const mozilla::TimeDuration timeout,
                   /*out*/ nsNSSHttpRequestSession** pRequest);
 
   Result setPostDataFcn(const char* httpData,
@@ -127,9 +128,9 @@ public:
   nsCString mPostData;
   nsCString mPostContentType;
 
-  NeckoOriginAttributes mOriginAttributes;
+  OriginAttributes mOriginAttributes;
 
-  PRIntervalTime mTimeoutInterval;
+  mozilla::TimeDuration mTimeout;
 
   RefPtr<nsHTTPListener> mListener;
 
@@ -162,8 +163,8 @@ public:
                           const char* httpProtocolVariant,
                           const char* pathAndQueryString,
                           const char* httpRequestMethod,
-                          const NeckoOriginAttributes& originAttributes,
-                          const PRIntervalTime timeout,
+                          const OriginAttributes& originAttributes,
+                          const mozilla::TimeDuration timeout,
                   /*out*/ nsNSSHttpRequestSession** pRequest)
   {
     return nsNSSHttpRequestSession::createFcn(session, httpProtocolVariant,

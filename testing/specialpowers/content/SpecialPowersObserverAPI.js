@@ -179,7 +179,7 @@ SpecialPowersObserverAPI.prototype = {
   },
 
   _getURI: function (url) {
-    return Services.io.newURI(url, null, null);
+    return Services.io.newURI(url);
   },
 
   _readUrlAsString: function(aUrl) {
@@ -383,7 +383,7 @@ SpecialPowersObserverAPI.prototype = {
             let hasPerm = Services.perms.testPermissionFromPrincipal(principal, msg.type);
             return hasPerm == Ci.nsIPermissionManager.ALLOW_ACTION;
           case "test":
-            let testPerm = Services.perms.testPermissionFromPrincipal(principal, msg.type, msg.value);
+            let testPerm = Services.perms.testPermissionFromPrincipal(principal, msg.type);
             return testPerm == msg.value;
           default:
             throw new SpecialPowersError(
@@ -508,7 +508,7 @@ SpecialPowersObserverAPI.prototype = {
       case "SPCleanUpSTSData": {
         let origin = aMessage.data.origin;
         let flags = aMessage.data.flags;
-        let uri = Services.io.newURI(origin, null, null);
+        let uri = Services.io.newURI(origin);
         let sss = Cc["@mozilla.org/ssservice;1"].
                   getService(Ci.nsISiteSecurityService);
         sss.removeState(Ci.nsISiteSecurityService.HEADER_HSTS, uri, flags);
@@ -544,17 +544,13 @@ SpecialPowersObserverAPI.prototype = {
       }
 
       case "SPStartupExtension": {
-        let {ExtensionData, Management} = Components.utils.import("resource://gre/modules/Extension.jsm", {});
+        let {ExtensionData} = Components.utils.import("resource://gre/modules/Extension.jsm", {});
 
         let id = aMessage.data.id;
         let extension = this._extensions.get(id);
-        let startupListener = (msg, ext) => {
-          if (ext == extension) {
-            this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionSetId", args: [extension.id]});
-            Management.off("startup", startupListener);
-          }
-        };
-        Management.on("startup", startupListener);
+        extension.on("startup", () => {
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionSetId", args: [extension.id]});
+        });
 
         // Make sure the extension passes the packaging checks when
         // they're run on a bare archive rather than a running instance,
@@ -579,7 +575,6 @@ SpecialPowersObserverAPI.prototype = {
           this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionStarted", args: []});
         }).catch(e => {
           dump(`Extension startup failed: ${e}\n${e.stack}`);
-          Management.off("startup", startupListener);
           this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionFailed", args: []});
         });
         return undefined;
@@ -598,28 +593,6 @@ SpecialPowersObserverAPI.prototype = {
         this._extensions.delete(id);
         extension.shutdown();
         this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionUnloaded", args: []});
-        return undefined;
-      }
-
-      case "SPClearAppPrivateData": {
-        let appId = aMessage.data.appId;
-        let browserOnly = aMessage.data.browserOnly;
-
-        let attributes = { appId: appId };
-        if (browserOnly) {
-          attributes.inIsolatedMozBrowser = true;
-        }
-        this._notifyCategoryAndObservers(null,
-                                         "clear-origin-attributes-data",
-                                         JSON.stringify(attributes));
-
-        let subject = {
-          appId: appId,
-          browserOnly: browserOnly,
-          QueryInterface: XPCOMUtils.generateQI([Ci.mozIApplicationClearPrivateDataParams])
-        };
-        this._notifyCategoryAndObservers(subject, "webapps-clear-data", null);
-
         return undefined;
       }
 

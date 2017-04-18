@@ -1,7 +1,6 @@
-import os
-
 config = {
-    "locales_file": "src/mobile/android/locales/all-locales",
+    "stage_platform": "android-api-15",
+    "locales_file": "src/mobile/locales/l10n-changesets.json",
     "tools_repo": "https://hg.mozilla.org/build/tools",
     "mozconfig": "src/mobile/android/config/mozconfigs/android-api-15/l10n-nightly",
     "tooltool_config": {
@@ -15,4 +14,5 @@ config = {
         'UPLOAD_PATH': '/home/worker/artifacts/',
     },
     "mozilla_dir": "src/",
+    "simple_name_move": True,
 }

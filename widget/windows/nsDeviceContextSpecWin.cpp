@@ -36,7 +36,6 @@
 
 #include "mozilla/gfx/Logging.h"
 
-#include "mozilla/Logging.h"
 static mozilla::LazyLogModule kWidgetPrintingLogMod("printing-widget");
 #define PR_PL(_p1)  MOZ_LOG(kWidgetPrintingLogMod, mozilla::LogLevel::Debug, _p1)
 

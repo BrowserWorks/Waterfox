@@ -77,20 +77,21 @@ var gNeedsPaint = false;
 function executeTests() {
   var testYielder = tests();
   function execNext() {
-    try {
-      if (!gNeedsPaint) {
-        testYielder.next();
-        button.getBoundingClientRect(); // Flush.
-        gNeedsPaint = true;
+    if (!gNeedsPaint) {
+      let {done} = testYielder.next();
+      if (done) {
+        return;
       }
-      SimpleTest.executeSoon(execNext);
-    } catch (e) {}
+      button.getBoundingClientRect(); // Flush.
+      gNeedsPaint = true;
+    }
+    SimpleTest.executeSoon(execNext);
   }
   execNext();
 }
 
-function tests() {
-  window.addEventListener("MozAfterPaint", paintListener, false);
+function* tests() {
+  window.addEventListener("MozAfterPaint", paintListener);
   normalButtonCanvas = takeSnapshot();
   // Press the button.
   sendMouseEvent("mousemove", button);
@@ -139,7 +140,7 @@ function tests() {
   yield undefined;
   compareSnapshots_(normalButtonCanvas, currentSnapshot, true, "Removing the label should have unpressed the button.");
   sendMouseEvent("mouseup", label);
-  window.removeEventListener("MozAfterPaint", paintListener, false);
+  window.removeEventListener("MozAfterPaint", paintListener);
   window.opener.finishTests();
  }
 

@@ -22,8 +22,8 @@ struct BrowserElementDownloadOptions;
 struct BrowserElementExecuteScriptOptions;
 class BrowserElementNextPaintEventCallback;
 class DOMRequest;
-enum class BrowserFindCaseSensitivity: uint32_t;
-enum class BrowserFindDirection: uint32_t;
+enum class BrowserFindCaseSensitivity: uint8_t;
+enum class BrowserFindDirection: uint8_t;
 } // namespace dom
 
 class ErrorResult;
@@ -105,9 +105,6 @@ public:
   void RemoveNextPaintListener(dom::BrowserElementNextPaintEventCallback& listener,
                                ErrorResult& aRv);
 
-  already_AddRefed<dom::DOMRequest> SetInputMethodActive(bool isActive,
-                                                         ErrorResult& aRv);
-
   already_AddRefed<dom::DOMRequest> ExecuteScript(const nsAString& aScript,
                                                   const dom::BrowserElementExecuteScriptOptions& aOptions,
                                                   ErrorResult& aRv);
@@ -124,7 +121,6 @@ public:
 
 protected:
   NS_IMETHOD_(already_AddRefed<nsFrameLoader>) GetFrameLoader() = 0;
-  NS_IMETHOD GetParentApplication(mozIApplication** aApplication) = 0;
 
   void InitBrowserElementAPI();
   void DestroyBrowserElementFrameScripts();

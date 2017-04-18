@@ -224,7 +224,7 @@ VRManagerParent::OnChannelConnected(int32_t aPid)
   mCompositorThreadHolder = layers::CompositorThreadHolder::GetSingleton();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvRefreshDisplays()
 {
   // This is called to refresh the VR Displays for Navigator.GetVRDevices().
@@ -234,18 +234,18 @@ VRManagerParent::RecvRefreshDisplays()
   VRManager* vm = VRManager::Get();
   vm->RefreshVRDisplays(true);
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvGetDisplays(nsTArray<VRDisplayInfo> *aDisplays)
 {
   VRManager* vm = VRManager::Get();
   vm->GetVRDisplayInfo(*aDisplays);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvResetSensor(const uint32_t& aDisplayID)
 {
   VRManager* vm = VRManager::Get();
@@ -254,10 +254,10 @@ VRManagerParent::RecvResetSensor(const uint32_t& aDisplayID)
     display->ZeroSensor();
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvGetSensorState(const uint32_t& aDisplayID, VRHMDSensorState* aState)
 {
   VRManager* vm = VRManager::Get();
@@ -265,10 +265,10 @@ VRManagerParent::RecvGetSensorState(const uint32_t& aDisplayID, VRHMDSensorState
   if (display != nullptr) {
     *aState = display->GetSensorState();
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvGetImmediateSensorState(const uint32_t& aDisplayID, VRHMDSensorState* aState)
 {
   VRManager* vm = VRManager::Get();
@@ -276,7 +276,7 @@ VRManagerParent::RecvGetImmediateSensorState(const uint32_t& aDisplayID, VRHMDSe
   if (display != nullptr) {
     *aState = display->GetImmediateSensorState();
   }
-  return true;
+  return IPC_OK();
 }
 
 bool
@@ -285,35 +285,36 @@ VRManagerParent::HaveEventListener()
   return mHaveEventListener;
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvSetHaveEventListener(const bool& aHaveEventListener)
 {
   mHaveEventListener = aHaveEventListener;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvControllerListenerAdded()
 {
   VRManager* vm = VRManager::Get();
   // Ask the connected gamepads to be added to GamepadManager
-  vm->ScanForDevices();
-
-  return true;
+  vm->ScanForControllers();
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvControllerListenerRemoved()
 {
-  return true;
+  VRManager* vm = VRManager::Get();
+  vm->RemoveControllers();
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VRManagerParent::RecvGetControllers(nsTArray<VRControllerInfo> *aControllers)
 {
   VRManager* vm = VRManager::Get();
   vm->GetVRControllerInfo(*aControllers);
-  return true;
+  return IPC_OK();
 }
 
 bool

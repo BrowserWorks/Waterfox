@@ -22,6 +22,7 @@
 
 #include "mozilla/ArenaObjectID.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/FlushType.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/StyleSetHandle.h"
@@ -39,7 +40,6 @@
 #include "nsFrameManagerBase.h"
 #include "nsRect.h"
 #include "nsRegionFwd.h"
-#include "mozFlushType.h"
 #include "nsWeakReference.h"
 #include <stdio.h> // for FILE definition
 #include "nsChangeHint.h"
@@ -206,29 +206,16 @@ public:
   bool IsDestroying() { return mIsDestroying; }
 
   /**
-   * Make a one-way transition into a "zombie" state.  In this state,
-   * no reflow is done, no painting is done, and no refresh driver
-   * ticks are processed.  This is a dangerous state: it can leave
-   * areas of the composition target unpainted if callers aren't
-   * careful.  (Don't let your zombie presshell out of the shed.)
-   *
-   * This is used in cases where a presshell is created for reasons
-   * other than reflow/painting.
-   */
-  virtual void MakeZombie() = 0;
-
-  /**
    * All frames owned by the shell are allocated from an arena.  They
    * are also recycled using free lists.  Separate free lists are
    * maintained for each frame type (aID), which must always correspond
-   * to the same aSize value.  AllocateFrame returns zero-filled memory.
-   * AllocateFrame is infallible and will abort on out-of-memory.
+   * to the same aSize value.  AllocateFrame is infallible and will abort
+   * on out-of-memory.
    */
   void* AllocateFrame(nsQueryFrame::FrameIID aID, size_t aSize)
   {
     void* result = mFrameArena.AllocateByFrameID(aID, aSize);
     RecordAlloc(result);
-    memset(result, 0, aSize);
     return result;
   }
 
@@ -242,14 +229,13 @@ public:
   /**
    * This is for allocating other types of objects (not frames).  Separate free
    * lists are maintained for each type (aID), which must always correspond to
-   * the same aSize value.  AllocateByObjectID returns zero-filled memory.
-   * AllocateByObjectID is infallible and will abort on out-of-memory.
+   * the same aSize value.  AllocateByObjectID is infallible and will abort on
+   * out-of-memory.
    */
   void* AllocateByObjectID(mozilla::ArenaObjectID aID, size_t aSize)
   {
     void* result = mFrameArena.AllocateByObjectID(aID, aSize);
     RecordAlloc(result);
-    memset(result, 0, aSize);
     return result;
   }
 
@@ -594,7 +580,7 @@ public:
    *
    * @param aType the type of notifications to flush
    */
-  virtual void FlushPendingNotifications(mozFlushType aType) = 0;
+  virtual void FlushPendingNotifications(mozilla::FlushType aType) = 0;
   virtual void FlushPendingNotifications(mozilla::ChangesToFlush aType) = 0;
 
   /**
@@ -879,13 +865,6 @@ public:
   virtual nsresult HandleDOMEventWithTarget(nsIContent* aTargetContent,
                                                         nsIDOMEvent* aEvent,
                                                         nsEventStatus* aStatus) = 0;
-
-  /**
-   * Dispatch AfterKeyboardEvent with specific target.
-   */
-  virtual void DispatchAfterKeyboardEvent(nsINode* aTarget,
-                                          const mozilla::WidgetKeyboardEvent& aEvent,
-                                          bool aEmbeddedCancelled) = 0;
 
   /**
    * Return whether or not the event is valid to be dispatched
@@ -1289,11 +1268,13 @@ public:
     uint16_t mPointerType;
     bool mActiveState;
     bool mPrimaryState;
+    bool mPreventMouseEventByContent;
     explicit PointerInfo(bool aActiveState, uint16_t aPointerType,
                          bool aPrimaryState)
       : mPointerType(aPointerType)
       , mActiveState(aActiveState)
       , mPrimaryState(aPrimaryState)
+      , mPreventMouseEventByContent(false)
     {
     }
   };
@@ -1637,13 +1618,13 @@ public:
    */
 protected:
   virtual bool AddRefreshObserverExternal(nsARefreshObserver* aObserver,
-                                          mozFlushType aFlushType);
+                                          mozilla::FlushType aFlushType);
   bool AddRefreshObserverInternal(nsARefreshObserver* aObserver,
-                                  mozFlushType aFlushType);
+                                  mozilla::FlushType aFlushType);
   virtual bool RemoveRefreshObserverExternal(nsARefreshObserver* aObserver,
-                                             mozFlushType aFlushType);
+                                             mozilla::FlushType aFlushType);
   bool RemoveRefreshObserverInternal(nsARefreshObserver* aObserver,
-                                     mozFlushType aFlushType);
+                                     mozilla::FlushType aFlushType);
 
   /**
    * Do computations necessary to determine if font size inflation is enabled.
@@ -1668,7 +1649,7 @@ protected:
 
 public:
   bool AddRefreshObserver(nsARefreshObserver* aObserver,
-                          mozFlushType aFlushType) {
+                          mozilla::FlushType aFlushType) {
 #ifdef MOZILLA_INTERNAL_API
     return AddRefreshObserverInternal(aObserver, aFlushType);
 #else
@@ -1677,7 +1658,7 @@ public:
   }
 
   bool RemoveRefreshObserver(nsARefreshObserver* aObserver,
-                             mozFlushType aFlushType) {
+                             mozilla::FlushType aFlushType) {
 #ifdef MOZILLA_INTERNAL_API
     return RemoveRefreshObserverInternal(aObserver, aFlushType);
 #else
@@ -1766,11 +1747,6 @@ protected:
   // moving/sizing loop is running, see bug 491700 for details.
   nsCOMPtr<nsITimer>        mReflowContinueTimer;
 
-#ifdef MOZ_B2G
-  // Forward hardware key events to the input-method-app
-  nsCOMPtr<nsIHardwareKeyHandler> mHardwareKeyHandler;
-#endif // MOZ_B2G
-
 #ifdef DEBUG
   nsIFrame*                 mDrawEventTargetFrame;
 
@@ -1810,7 +1786,6 @@ protected:
   bool                      mStylesHaveChanged : 1;
   bool                      mDidInitialize : 1;
   bool                      mIsDestroying : 1;
-  bool                      mIsZombie : 1;
   bool                      mIsReflowing : 1;
 
   // For all documents we initially lock down painting.

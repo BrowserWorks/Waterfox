@@ -61,7 +61,7 @@ public:
   /**
    * DEBUG ONLY method to verify integrity of style tree versus frame tree
    */
-  static void DebugVerifyStyleTree(nsIFrame* aFrame);
+  void DebugVerifyStyleTree(nsIFrame* aFrame);
 #endif
 
   void FlushOverflowChangedTracker() {
@@ -80,6 +80,8 @@ public:
   // If the caller wants that to happen synchronously, it needs to handle that
   // itself.
   nsresult ProcessRestyledFrames(nsStyleChangeList& aChangeList);
+
+  bool IsInStyleRefresh() const { return mInStyleRefresh; }
 
 protected:
   void ContentStateChangedInternal(Element* aElement,

@@ -1,15 +1,25 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+@import "resource://devtools/client/shared/components/tree/tree-view.css";
+
 #toolbar-labels {
   overflow: hidden;
+  display: flex;
+  flex: auto;
 }
 
-#react-clear-button-hook,
-#react-details-pane-toggle-hook {
+.devtools-toolbar-container {
   display: flex;
+  justify-content: space-between;
+}
+
+.devtools-toolbar-group {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 /**
@@ -39,17 +49,6 @@
 .cropped-textbox .textbox-input {
   /* workaround for textbox not supporting the @crop attribute */
   text-overflow: ellipsis;
-}
-
-/* Responsive sidebar */
-@media (max-width: 700px) {
-  #toolbar-spacer,
-  #details-pane-toggle,
-  #details-pane.pane-collapsed,
-  .requests-menu-waterfall,
-  #requests-menu-network-summary-button > .toolbarbutton-text {
-    display: none;
-  }
 }
 
 :root.theme-dark {
@@ -97,7 +96,20 @@
   --sort-descending-image: url(chrome://devtools/skin/images/firebug/arrow-down.svg);
 }
 
-#requests-menu-empty-notice {
+#network-table {
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-flex: 1;
+  overflow: hidden;
+}
+
+.request-list-container {
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-flex: 1;
+}
+
+.request-list-empty-notice {
   margin: 0;
   padding: 12px;
   font-size: 120%;
@@ -110,42 +122,73 @@
 #requests-menu-perf-notice-button {
   min-width: 30px;
   min-height: 26px;
-  margin: 0;
-  list-style-image: url(images/profiler-stopwatch.svg);
+  margin: 0 5px;
+  vertical-align: middle;
 }
 
-/* Make sure the icon is visible on Linux (to overwrite a rule
-  in xul.css that hides the icon if there is no label.
-  See also bug 1278050. */
-#requests-menu-perf-notice-button .button-icon {
-  display: block;
-}
-
-#requests-menu-perf-notice-button .button-text {
-  display: none;
+#requests-menu-perf-notice-button::before {
+  background-image: url(images/profiler-stopwatch.svg);
 }
 
 #requests-menu-reload-notice-button {
+  font-size: inherit;
   min-height: 26px;
-  margin: 0;
+  padding-left: 10px;
+  padding-right: 10px;
+  margin: 0 5px;
   background-color: var(--theme-toolbar-background);
 }
 
 /* Network requests table */
 
 #requests-menu-toolbar {
+  display: flex;
   padding: 0;
 }
 
+#requests-menu-filter-buttons {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
 .theme-firebug #requests-menu-toolbar {
-  height: 16px !important;
+  height: 19px !important;
+}
+
+.requests-menu-contents {
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  --timings-scale: 1;
+  --timings-rev-scale: 1;
 }
 
 .requests-menu-subitem {
+  display: flex;
+  flex: none;
+  box-sizing: border-box;
+  align-items: center;
   padding: 3px;
 }
 
+.subitem-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.requests-menu-header {
+  display: flex;
+  flex: none;
+}
+
 .requests-menu-header-button {
+  display: flex;
+  align-items: center;
+  flex: auto;
   -moz-appearance: none;
   background-color: transparent;
   border-image: linear-gradient(transparent 15%,
@@ -158,12 +201,18 @@
   min-width: 1px;
   min-height: 24px;
   margin: 0;
-  padding-bottom: 2px;
-  padding-inline-start: 13px;
   padding-top: 2px;
+  padding-bottom: 2px;
+  padding-inline-start: 16px;
+  padding-inline-end: 0;
   text-align: center;
   color: inherit;
   font-weight: inherit !important;
+}
+
+.requests-menu-header-button::-moz-focus-inner {
+  border: 0;
+  padding: 0;
 }
 
 .requests-menu-header:first-child .requests-menu-header-button {
@@ -174,38 +223,41 @@
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.requests-menu-header-button > .button-box > .button-icon,
-#requests-menu-waterfall-image {
-  display: -moz-box;
+.requests-menu-header-button > .button-text {
+  flex: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.requests-menu-header-button > .button-icon {
+  flex: none;
   height: 4px;
+  margin-inline-start: 3px;
   margin-inline-end: 6px;
-  -moz-box-ordinal-group: 2;
   width: 7px;
 }
 
-.requests-menu-header-button[sorted=ascending] > .button-box > .button-icon,
-.requests-menu-header-button[sorted=ascending] #requests-menu-waterfall-image {
-  list-style-image: var(--sort-ascending-image);
+.requests-menu-header-button[data-sorted=ascending] > .button-icon {
+  background-image: var(--sort-ascending-image);
 }
 
-.requests-menu-header-button[sorted=descending] > .button-box > .button-icon,
-.requests-menu-header-button[sorted=descending] #requests-menu-waterfall-image {
-  list-style-image: var(--sort-descending-image);
+.requests-menu-header-button[data-sorted=descending] > .button-icon {
+  background-image: var(--sort-descending-image);
 }
 
-.requests-menu-header-button > .button-box > .button-text,
-#requests-menu-waterfall-label-wrapper {
-  -moz-box-flex: 1;
+.requests-menu-waterfall-label-wrapper {
+  display: flex;
 }
 
-.requests-menu-header-button[sorted],
-.requests-menu-header-button[sorted]:hover {
+.requests-menu-header-button[data-sorted],
+.requests-menu-header-button[data-sorted]:hover {
   background-color: var(--theme-selection-background);
   color: var(--theme-selection-color);
 }
 
-.requests-menu-header-button[sorted],
-.requests-menu-header[active] + .requests-menu-header .requests-menu-header-button {
+.requests-menu-header-button[data-sorted],
+.requests-menu-header[data-active] + .requests-menu-header .requests-menu-header-button {
   border-image: linear-gradient(var(--theme-splitter-color), var(--theme-splitter-color)) 1 1;
 }
 
@@ -223,11 +275,20 @@
   min-height: 17px;
 }
 
-.theme-firebug .requests-header-menu-button[sorted] {
+.theme-firebug .requests-menu-header-button > .button-icon {
+  height: 7px;
+}
+
+.theme-firebug .requests-menu-header-button[data-sorted] {
   background-color: #AAC3DC;
 }
 
-.theme-firebug .requests-header-menu:hover:active {
+:root[platform="linux"].theme-firebug .requests-menu-header-button[data-sorted] {
+  background-color: #FAC8AF !important;
+  color: inherit !important;
+}
+
+.theme-firebug .requests-menu-header:hover:active {
   background-image: linear-gradient(rgba(0, 0, 0, 0.1),
                                     transparent);
 }
@@ -253,10 +314,9 @@
 }
 
 .requests-menu-icon {
-  background: #fff;
-  width: calc(1em + 4px);
-  height: calc(1em + 4px);
-  margin: -4px 0px;
+  background: transparent;
+  width: 15px;
+  height: 15px;
   margin-inline-end: 4px;
 }
 
@@ -269,40 +329,47 @@
 }
 
 .requests-security-state-icon {
+  flex: none;
   width: 16px;
   height: 16px;
   margin-inline-end: 4px;
 }
 
-.side-menu-widget-item.selected .requests-security-state-icon {
+.request-list-item.selected .requests-security-state-icon {
   filter: brightness(1.3);
 }
 
 .security-state-insecure {
-  list-style-image: url(chrome://devtools/skin/images/security-state-insecure.svg);
+  background-image: url(chrome://devtools/skin/images/security-state-insecure.svg);
 }
 
 .security-state-secure {
-  list-style-image: url(chrome://devtools/skin/images/security-state-secure.svg);
+  background-image: url(chrome://devtools/skin/images/security-state-secure.svg);
 }
 
 .security-state-weak {
-  list-style-image: url(chrome://devtools/skin/images/security-state-weak.svg);
+  background-image: url(chrome://devtools/skin/images/security-state-weak.svg);
 }
 
 .security-state-broken {
-  list-style-image: url(chrome://devtools/skin/images/security-state-broken.svg);
+  background-image: url(chrome://devtools/skin/images/security-state-broken.svg);
 }
 
 .security-state-local {
-  list-style-image: url(chrome://devtools/skin/images/globe.svg);
+  background-image: url(chrome://devtools/skin/images/globe.svg);
 }
 
 .requests-menu-type,
 .requests-menu-size {
   max-width: 6em;
-  text-align: center;
   width: 8vw;
+  justify-content: center;
+}
+
+.requests-menu-transferred {
+  max-width: 8em;
+  width: 8vw;
+  justify-content: center;
 }
 
 .requests-menu-cause {
@@ -323,13 +390,7 @@
   -moz-user-select: none;
 }
 
-.requests-menu-transferred {
-  max-width: 8em;
-  text-align: center;
-  width: 8vw;
-}
-
-.side-menu-widget-item.selected .requests-menu-transferred.theme-comment {
+.request-list-item.selected .requests-menu-transferred.theme-comment {
   color: var(--theme-selection-color);
 }
 
@@ -349,31 +410,32 @@
   margin-inline-end: 5px;
   border-radius: 10px;
   transition: box-shadow 0.5s ease-in-out;
+  box-sizing: border-box;
 }
 
-.side-menu-widget-item.selected .requests-menu-status-icon {
+.request-list-item.selected .requests-menu-status-icon {
   filter: brightness(1.3);
 }
 
-.requests-menu-status-icon:not([code]) {
+.requests-menu-status-icon:not([data-code]) {
   background-color: var(--theme-content-color2);
 }
 
-.requests-menu-status-icon[code="cached"] {
+.requests-menu-status-icon[data-code="cached"] {
   border: 2px solid var(--theme-content-color2);
   background-color: transparent;
 }
 
-.requests-menu-status-icon[code^="1"] {
+.requests-menu-status-icon[data-code^="1"] {
   background-color: var(--theme-highlight-blue);
 }
 
-.requests-menu-status-icon[code^="2"] {
+.requests-menu-status-icon[data-code^="2"] {
   background-color: var(--theme-highlight-green);
 }
 
 /* 3xx are triangles */
-.requests-menu-status-icon[code^="3"] {
+.requests-menu-status-icon[data-code^="3"] {
   background-color: transparent;
   width: 0;
   height: 0;
@@ -384,12 +446,12 @@
 }
 
 /* 4xx and 5xx are squares - error codes */
-.requests-menu-status-icon[code^="4"] {
+.requests-menu-status-icon[data-code^="4"] {
  background-color: var(--theme-highlight-red);
   border-radius: 0; /* squares */
 }
 
-.requests-menu-status-icon[code^="5"] {
+.requests-menu-status-icon[data-code^="5"] {
   background-color: var(--theme-highlight-pink);
   border-radius: 0;
   transform: rotate(45deg);
@@ -398,30 +460,28 @@
 /* Network requests table: waterfall header */
 
 .requests-menu-waterfall {
+  flex: auto;
   padding-inline-start: 0;
 }
 
-#requests-menu-waterfall-label:not(.requests-menu-waterfall-visible) {
-  padding-inline-start: 13px;
+.requests-menu-waterfall-label-wrapper:not(.requests-menu-waterfall-visible) {
+  padding-inline-start: 16px;
 }
 
 .requests-menu-timings-division {
-  width: 100px;
   padding-top: 2px;
   padding-inline-start: 4px;
   font-size: 75%;
   pointer-events: none;
   box-sizing: border-box;
   text-align: start;
-}
-
-.requests-menu-timings-division:first-child {
-  width: 98px; /* Substract 2px for borders */
+  /* Allow the timing label to shrink if the container gets too narrow.
+   * The container width then is not limited by the content. */
+  flex: initial;
 }
 
 .requests-menu-timings-division:not(:first-child) {
   border-inline-start: 1px dashed;
-  margin-inline-start: -100px !important; /* Don't affect layout. */
 }
 
 .requests-menu-timings-division:-moz-locale-dir(ltr) {
@@ -440,25 +500,32 @@
   border-inline-start-color: #585959 !important;
 }
 
-.requests-menu-timings-division[division-scale=second],
-.requests-menu-timings-division[division-scale=minute] {
+.requests-menu-timings-division[data-division-scale=second],
+.requests-menu-timings-division[data-division-scale=minute] {
   font-weight: 600;
 }
 
 /* Network requests table: waterfall items */
 
 .requests-menu-subitem.requests-menu-waterfall {
-  padding-inline-start: 0px;
+  padding-inline-start: 0;
   padding-inline-end: 4px;
   /* Background created on a <canvas> in js. */
   /* @see devtools/client/netmonitor/netmonitor-view.js */
   background-image: -moz-element(#waterfall-background);
   background-repeat: repeat-y;
-  background-position: -1px center;
+  background-position: left center;
 }
 
 .requests-menu-subitem.requests-menu-waterfall:-moz-locale-dir(rtl) {
   background-position: right center;
+}
+
+.requests-menu-timings {
+  display: flex;
+  flex: none;
+  align-items: center;
+  transform: scaleX(var(--timings-scale));
 }
 
 .requests-menu-timings:-moz-locale-dir(ltr) {
@@ -478,12 +545,17 @@
 }
 
 .requests-menu-timings-total {
+  display: inline-block;
   padding-inline-start: 4px;
   font-size: 85%;
   font-weight: 600;
+  white-space: nowrap;
+  /* This node should not be scaled - apply a reversed transformation */
+  transform: scaleX(var(--timings-rev-scale));
 }
 
 .requests-menu-timings-box {
+  display: inline-block;
   height: 9px;
 }
 
@@ -517,29 +589,32 @@
 }
 
 /* SideMenuWidget */
-#network-table .side-menu-widget-empty-text,
-#network-table .side-menu-widget-container {
+#network-table .request-list-empty-notice,
+#network-table .request-list-container {
   background-color: var(--theme-body-background);
 }
 
-#network-table .side-menu-widget-item {
+.request-list-item {
+  display: flex;
   border-top-color: transparent;
   border-bottom-color: transparent;
+  padding: 0;
 }
 
-.side-menu-widget-item-contents {
-  padding: 0px;
+.request-list-item.selected {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-selection-color);
 }
 
-.side-menu-widget-item:not(.selected)[odd] {
+.request-list-item:not(.selected).odd {
   background-color: var(--table-zebra-background);
 }
 
-.side-menu-widget-item:not(.selected):hover {
+.request-list-item:not(.selected):hover {
   background-color: var(--theme-selection-background-semitransparent);
 }
 
-.theme-firebug .side-menu-widget-item:not(.selected):hover {
+.theme-firebug .request-list-item:not(.selected):hover {
   background: #EFEFEF;
 }
 
@@ -558,13 +633,13 @@
   color: rgb(128, 128, 128);
 }
 
-.side-menu-widget-item.selected .requests-menu-method {
+.request-list-item.selected .requests-menu-method {
   color: var(--theme-selection-color);
 }
 
 /* Size Column */
 .theme-firebug .requests-menu-subitem.requests-menu-size {
-  text-align: end;
+  justify-content: end;
   padding-inline-end: 4px;
 }
 
@@ -590,10 +665,6 @@
   color: var(--theme-selection-color);
 }
 
-#headers-tabpanel {
-  background-color: var(--theme-toolbar-background);
-}
-
 .theme-firebug .variables-view-scope:focus > .title {
   color: var(--theme-body-color);
 }
@@ -605,6 +676,7 @@
 }
 
 .tabpanel-summary-label {
+  display: inline-block;
   padding-inline-start: 4px;
   padding-inline-end: 3px;
   font-weight: 600;
@@ -621,74 +693,60 @@
 
 /* Headers tabpanel */
 
-#headers-summary-status,
-#headers-summary-version {
-  padding-bottom: 2px;
-}
-
-#headers-summary-size {
-  padding-top: 2px;
-}
-
-#headers-summary-resend {
-  margin-top: -10px;
-  margin-inline-end: 6px;
-}
-
-#toggle-raw-headers {
-  margin-top: -10px;
-  margin-inline-end: 6px;
-}
-
-.raw-response-textarea {
-  height: 50vh;
+#headers-tabpanel .summary {
+  background: var(--theme-toolbar-background);
 }
 
 /* Response tabpanel */
 
-#response-content-info-header {
+.response-error-header {
   margin: 0;
   padding: 3px 8px;
   background-color: var(--theme-highlight-red);
   color: var(--theme-selection-color);
 }
 
-#response-content-image-box {
-  padding-top: 10px;
-  padding-bottom: 10px;
+.response-image-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  padding: 10px;
 }
 
-#response-content-image {
+.response-image {
   background: #fff;
   border: 1px dashed GrayText;
   margin-bottom: 10px;
-}
-
-/* Preview tabpanel */
-
-#preview-tabpanel {
-  background: #fff;
-}
-
-#response-preview {
-  display: -moz-box;
-  -moz-box-flex: 1;
+  max-width: 300px;
+  max-height: 100px;
 }
 
 /* Timings tabpanel */
+
+#timings-tabpanel .tabpanel-summary-container {
+  display: flex;
+}
 
 #timings-tabpanel .tabpanel-summary-label {
   width: 10em;
 }
 
-#timings-tabpanel .requests-menu-timings-box {
-  transition: transform 0.2s ease-out;
-  border: none;
-  min-width: 1px;
+#timings-tabpanel .requests-menu-timings-container {
+  display: flex;
+  flex: 1;
+  align-items: center;
 }
 
-#timings-tabpanel .requests-menu-timings-total {
-  transition: transform 0.2s ease-out;
+#timings-tabpanel .requests-menu-timings-offset {
+  transition: width 0.2s ease-out;
+}
+
+#timings-tabpanel .requests-menu-timings-box {
+  border: none;
+  min-width: 1px;
+  transition: width 0.2s ease-out;
 }
 
 .theme-firebug #timings-tabpanel .requests-menu-timings-total {
@@ -696,16 +754,16 @@
 }
 
 /* Security tabpanel */
-.security-info-section {
-  padding-inline-start: 1em;
+
+/* Overwrite tree-view cell colon `:` for security panel and tree section */
+#security-tabpanel .treeTable .treeLabelCell::after,
+.treeTable .tree-section .treeLabelCell::after {
+  content: "";
 }
 
-.theme-dark #security-error-message {
-  color: var(--theme-selection-color);
-}
-
-#security-tabpanel {
-  overflow: auto;
+/* Layout additional warning icon in tree value cell  */
+.security-info-value {
+  display: flex;
 }
 
 .security-warning-icon {
@@ -744,17 +802,41 @@
 /* Performance analysis buttons */
 
 #requests-menu-network-summary-button {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   background: none;
   box-shadow: none;
   border-color: transparent;
-  list-style-image: url(images/profiler-stopwatch.svg);
   padding-inline-end: 0;
   cursor: pointer;
   margin-inline-end: 1em;
   min-width: 0;
 }
 
+#requests-menu-network-summary-button > .summary-info-icon {
+  background-image: url(images/profiler-stopwatch.svg);
+  filter: var(--icon-filter);
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+}
+
+#requests-menu-network-summary-button > .summary-info-text {
+  opacity: 0.8;
+  margin-inline-start: 0.5em;
+}
+
+#requests-menu-network-summary-button:hover > .summary-info-icon,
+#requests-menu-network-summary-button:hover > .summary-info-text {
+  opacity: 1;
+}
+
 /* Performance analysis view */
+
+#network-statistics-view {
+  display: -moz-box;
+}
 
 #network-statistics-toolbar {
   border: none;
@@ -902,6 +984,13 @@
 
 /* Responsive sidebar */
 @media (max-width: 700px) {
+  #toolbar-spacer,
+  #details-pane-toggle,
+  #details-pane.pane-collapsed,
+  #requests-menu-network-summary-button > .summary-info-text {
+    display: none;
+  }
+
   #requests-menu-toolbar {
     height: 22px;
   }
@@ -918,7 +1007,7 @@
 
   .requests-menu-status {
     max-width: none;
-    width: 12vw;
+    width: 10vw;
   }
 
   .requests-menu-status-code {
@@ -928,7 +1017,7 @@
   .requests-menu-method,
   .requests-menu-method-box {
     max-width: none;
-    width: 14vw;
+    width: 12vw;
   }
 
   .requests-menu-icon-and-file {
@@ -936,16 +1025,19 @@
   }
 
   .requests-menu-security-and-domain {
-    width: 18vw;
+    width: 16vw;
   }
 
-  .requests-menu-type {
+  .requests-menu-cause,
+  .requests-menu-type,
+  .requests-menu-transferred,
+  .requests-menu-size {
+    max-width: none;
     width: 10vw;
   }
 
-  .requests-menu-transferred,
-  .requests-menu-size {
-    width: 12vw;
+  .requests-menu-waterfall {
+    display: none;
   }
 }
 
@@ -972,4 +1064,240 @@
   :root[platform="linux"] .requests-menu-header-button {
     font-size: 85%;
   }
+}
+
+.textbox-input {
+  text-overflow: ellipsis;
+  border: none;
+  background: none;
+  color: inherit;
+  width: 100%;
+}
+
+.treeTable .textbox-input:focus {
+  outline: 0;
+  box-shadow: var(--theme-focus-box-shadow-textbox);
+}
+
+.panel-container,
+.properties-view {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.properties-view .searchbox-section {
+  flex: 0 1 auto;
+}
+
+.properties-view .devtools-searchbox {
+  padding: 0;
+}
+
+.properties-view .devtools-searchbox input {
+  margin: 1px 3px;
+}
+
+.tree-container {
+  position: relative;
+  height: 100%;
+}
+
+/* Make treeTable fill parent element and scrollable */
+.tree-container .treeTable {
+  position: absolute;
+  display: block;
+  overflow-y: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* Apply flex to table tbody in order to fill available vertical space */
+.tree-container .treeTable tbody {
+  display: flex;
+  flex-direction: column;
+  /* Apply flex to table will create an anonymous table element outside of tbody
+   * See also http://stackoverflow.com/a/30851678
+   * Therefore, we set height with this magic number in order to remove the
+   * redundant scrollbar when source editor appears.
+   */
+  height: calc(100% - 4px);
+}
+
+.tree-container .treeTable tr {
+  display: block;
+}
+
+/* Make right td fill available horizontal space */
+.tree-container .treeTable td:last-child {
+  width: 100%;
+}
+
+/* If there is a source editor shows up in the last row of TreeView,
+ * it should occupy the available vertical space.
+ */
+.tree-container .treeTable .editor-row-container,
+.tree-container .treeTable tr:last-child td[colspan="2"] {
+  display: block;
+  height: 100%;
+}
+
+.properties-view .devtools-searchbox,
+.tree-container .treeTable .tree-section {
+  width: 100%;
+  background-color: var(--theme-toolbar-background);
+}
+
+.tree-container .treeTable tr.tree-section:not(:first-child) td:not([class=""]) {
+  border-top: 1px solid var(--theme-splitter-color);
+}
+
+.properties-view .devtools-searchbox,
+.tree-container .treeTable tr.tree-section:not(:last-child) td:not([class=""]) {
+  border-bottom: 1px solid var(--theme-splitter-color);
+}
+
+.tree-container .treeTable .tree-section > * {
+  vertical-align: middle;
+}
+
+.tree-container .treeTable .treeRow.tree-section > .treeLabelCell > .treeLabel,
+.tree-container .treeTable .treeRow.tree-section > .treeLabelCell > .treeLabel:hover {
+  color: var(--theme-body-color-alt);
+}
+
+.tree-container .treeTable .treeValueCell {
+  /* FIXME: Make value cell can be reduced to shorter width */
+  max-width: 0;
+  padding-inline-end: 5px;
+}
+
+.headers-summary input:not([type="button"]) {
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  margin-inline-end: 2px;
+}
+
+.headers-summary input:not([type="button"]):focus {
+  outline: none;
+  box-shadow: var(--theme-focus-box-shadow-textbox);
+  transition: all 0.2s ease-in-out;
+}
+
+.headers-summary-label,
+.tree-container .objectBox {
+  white-space: nowrap;
+}
+
+.headers-summary,
+.response-summary {
+  display: flex;
+  align-items: center;
+}
+
+.headers-summary .tool-button {
+  border: 1px solid transparent;
+  color: var(--theme-body-color);
+  transition: background 0.05s ease-in-out;
+  margin-inline-end: 6px;
+  padding: 0 5px;
+}
+
+.theme-light .headers-summary .tool-button {
+  background-color: var(--toolbar-tab-hover);
+}
+
+.theme-light .headers-summary .tool-button:hover {
+  background-color: rgba(170, 170, 170, 0.3);
+}
+
+.theme-light .headers-summary .tool-button:hover:active {
+  background-color: var(--toolbar-tab-hover-active);
+}
+
+.theme-dark .headers-summary .tool-button {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.theme-dark .headers-summary .tool-button:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .headers-summary .tool-button:hover:active {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.headers-summary .requests-menu-status-icon {
+  min-width: 10px;
+}
+
+.headers-summary .raw-headers-container {
+  display: flex;
+  width: 100%;
+}
+
+.headers-summary .raw-headers {
+  width: 50%;
+  padding: 0px 4px;
+}
+
+.headers-summary .raw-headers textarea {
+  width: 100%;
+  height: 50vh;
+  font: message-box;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.headers-summary .raw-headers .tabpanel-summary-label {
+  padding: 0 0 4px 0;
+}
+
+.empty-notice {
+  color: var(--theme-body-color-alt);
+  padding: 3px 8px;
+}
+
+.response-summary {
+  display: flex;
+}
+
+.editor-container,
+.editor-mount,
+.panel-container iframe {
+  border: none;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * FIXME: normal html block element cannot fill outer XUL element
+ * This workaround should be removed after netmonitor is migrated to react
+ */
+#react-cookies-tabpanel-hook,
+#react-headers-tabpanel-hook,
+#react-params-tabpanel-hook,
+#react-preview-tabpanel-hook,
+#react-response-tabpanel-hook,
+#react-security-tabpanel-hook,
+#react-timings-tabpanel-hook {
+  display: flex;
+  -moz-box-flex: 1;
+  -moz-box-orient: vertical;
+}
+
+#network-statistics-charts,
+#primed-cache-chart,
+#empty-cache-chart {
+  display: -moz-box;
+  -moz-box-flex: 1;
+}
+
+#primed-cache-chart,
+#empty-cache-chart {
+  -moz-box-pack: center;
 }

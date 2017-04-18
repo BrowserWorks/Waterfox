@@ -11,6 +11,8 @@
 
 namespace mozilla {
 
+class MediaContainerType;
+
 class WebMDecoder : public MediaDecoder
 {
 public:
@@ -23,19 +25,12 @@ public:
   }
   MediaDecoderStateMachine* CreateStateMachine() override;
 
-  // Returns true if the WebM backend is preffed on.
-  static bool IsEnabled();
+  // Returns true if aContainerType is a WebM type that we think we can render
+  // with an enabled platform decoder backend.
+  // If provided, codecs are checked for support.
+  static bool IsSupportedType(const MediaContainerType& aContainerType);
 
-  // Returns true if aMIMEType is a type that we think we can render with the
-  // a WebM platform decoder backend. If aCodecs is non emtpy, it is filled
-  // with a comma-delimited list of codecs to check support for. Notes in
-  // out params whether the codecs string contains Opus/Vorbis or VP8/VP9.
-  static bool CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
-                                 const nsAString& aCodecs);
-
-  static bool CanHandleMediaType(const nsAString& aContentType);
-
-  void GetMozDebugReaderData(nsAString& aString) override;
+  void GetMozDebugReaderData(nsACString& aString) override;
 
 private:
   RefPtr<MediaFormatReader> mReader;

@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 var gEMEHandler = {
   get uiEnabled() {
     let emeUIEnabled = Services.prefs.getBoolPref("browser.eme.ui.enabled");
@@ -12,28 +14,19 @@ var gEMEHandler = {
     }
     return emeUIEnabled;
   },
-  ensureEMEEnabled: function(browser, keySystem) {
+  ensureEMEEnabled(browser, keySystem) {
     Services.prefs.setBoolPref("media.eme.enabled", true);
-    if (keySystem) {
-      if (keySystem.startsWith("com.adobe") &&
-          Services.prefs.getPrefType("media.gmp-eme-adobe.enabled") &&
-          !Services.prefs.getBoolPref("media.gmp-eme-adobe.enabled")) {
-        Services.prefs.setBoolPref("media.gmp-eme-adobe.enabled", true);
-      } else if (keySystem == "com.widevine.alpha" &&
-                 Services.prefs.getPrefType("media.gmp-widevinecdm.enabled") &&
-                 !Services.prefs.getBoolPref("media.gmp-widevinecdm.enabled")) {
-        Services.prefs.setBoolPref("media.gmp-widevinecdm.enabled", true);
-      }
+    if (keySystem &&
+        keySystem == "com.widevine.alpha" &&
+        Services.prefs.getPrefType("media.gmp-widevinecdm.enabled") &&
+        !Services.prefs.getBoolPref("media.gmp-widevinecdm.enabled")) {
+      Services.prefs.setBoolPref("media.gmp-widevinecdm.enabled", true);
     }
     browser.reload();
   },
-  isKeySystemVisible: function(keySystem) {
+  isKeySystemVisible(keySystem) {
     if (!keySystem) {
       return false;
-    }
-    if (keySystem.startsWith("com.adobe") &&
-        Services.prefs.getPrefType("media.gmp-eme-adobe.visible")) {
-      return Services.prefs.getBoolPref("media.gmp-eme-adobe.visible");
     }
     if (keySystem == "com.widevine.alpha" &&
         Services.prefs.getPrefType("media.gmp-widevinecdm.visible")) {
@@ -41,13 +34,13 @@ var gEMEHandler = {
     }
     return true;
   },
-  getLearnMoreLink: function(msgId) {
+  getLearnMoreLink(msgId) {
     let text = gNavigatorBundle.getString("emeNotifications." + msgId + ".learnMoreLabel");
     let baseURL = Services.urlFormatter.formatURLPref("app.support.baseURL");
     return "<label class='text-link' href='" + baseURL + "drm-content'>" +
            text + "</label>";
   },
-  receiveMessage: function({target: browser, data: data}) {
+  receiveMessage({target: browser, data: data}) {
     let parsedData;
     try {
       parsedData = JSON.parse(data);
@@ -102,7 +95,7 @@ var gEMEHandler = {
 
     this.showNotificationBar(browser, notificationId, keySystem, params, buttonCallback);
   },
-  showNotificationBar: function(browser, notificationId, keySystem, labelParams, callback) {
+  showNotificationBar(browser, notificationId, keySystem, labelParams, callback) {
     let box = gBrowser.getNotificationBox(browser);
     if (box.getNotificationWithValue(notificationId)) {
       return;
@@ -122,7 +115,7 @@ var gEMEHandler = {
       buttons.push({
         label: gNavigatorBundle.getString(btnLabelId),
         accessKey: gNavigatorBundle.getString(btnAccessKeyId),
-        callback: callback
+        callback
       });
     }
 
@@ -139,12 +132,12 @@ var gEMEHandler = {
     box.appendNotification(fragment, notificationId, iconURL, box.PRIORITY_WARNING_MEDIUM,
                            buttons);
   },
-  showPopupNotificationForSuccess: function(browser, keySystem) {
+  showPopupNotificationForSuccess(browser, keySystem) {
     // We're playing EME content! Remove any "we can't play because..." messages.
     var box = gBrowser.getNotificationBox(browser);
     ["drmContentDisabled",
      "drmContentCDMInstalling"
-     ].forEach(function (value) {
+     ].forEach(function(value) {
         var notification = box.getNotificationWithValue(value);
         if (notification)
           box.removeNotification(notification);
@@ -174,7 +167,7 @@ var gEMEHandler = {
     let mainAction = {
       label: gNavigatorBundle.getString(btnLabelId),
       accessKey: gNavigatorBundle.getString(btnAccessKeyId),
-      callback: function() { openPreferences("paneContent"); },
+      callback() { openPreferences("paneContent"); },
       dismiss: true
     };
     let options = {
@@ -201,28 +194,15 @@ let gDecoderDoctorHandler = {
   getLabelForNotificationBox(type) {
     if (type == "adobe-cdm-not-found" &&
         AppConstants.platform == "win") {
-      if (AppConstants.isPlatformAndVersionAtMost("win", "5.9")) {
-        // We supply our own Learn More button so we don't need to populate the message here.
-        return gNavigatorBundle.getFormattedString("emeNotifications.drmContentDisabled.message", [""]);
-      }
       return gNavigatorBundle.getString("decoder.noCodecs.message");
     }
     if (type == "adobe-cdm-not-activated" &&
         AppConstants.platform == "win") {
-      if (AppConstants.isPlatformAndVersionAtMost("win", "5.9")) {
-        return gNavigatorBundle.getString("decoder.noCodecsXP.message");
-      }
-      if (!AppConstants.isPlatformAndVersionAtLeast("win", "6.1")) {
-        return gNavigatorBundle.getString("decoder.noCodecsVista.message");
-      }
       return gNavigatorBundle.getString("decoder.noCodecs.message");
     }
     if (type == "platform-decoder-not-found") {
-      if (AppConstants.isPlatformAndVersionAtLeast("win", "6.1")) {
+      if (AppConstants.platform == "win") {
         return gNavigatorBundle.getString("decoder.noHWAcceleration.message");
-      }
-      if (AppConstants.isPlatformAndVersionAtLeast("win", "6")) {
-        return gNavigatorBundle.getString("decoder.noHWAccelerationVista.message");
       }
       if (AppConstants.platform == "linux") {
         return gNavigatorBundle.getString("decoder.noCodecsLinux.message");
@@ -277,6 +257,10 @@ let gDecoderDoctorHandler = {
     //   resolution of that issue, to be reported as telemetry.
     let {type, isSolved, decoderDoctorReportId, formats} = parsedData;
     type = type.toLowerCase();
+    // Error out early on invalid ReportId
+    if (!(/^\w+$/mi).test(decoderDoctorReportId)) {
+      return
+    }
     let title = gDecoderDoctorHandler.getLabelForNotificationBox(type);
     if (!title) {
       return;
@@ -303,9 +287,9 @@ let gDecoderDoctorHandler = {
         histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_SHOWN_FIRST);
       } else {
         // Split existing formats into an array of strings.
-        let existing = formatsInPref.split(",").map(String.trim);
+        let existing = formatsInPref.split(",").map(x => x.trim());
         // Keep given formats that were not already recorded.
-        let newbies = formats.split(",").map(String.trim)
+        let newbies = formats.split(",").map(x => x.trim())
                       .filter(x => !existing.includes(x));
         // And rewrite pref with the added new formats (if any).
         if (newbies.length) {
@@ -358,4 +342,4 @@ window.getGroupMessageManager("browsers").addMessageListener("EMEVideo:ContentMe
 window.addEventListener("unload", function() {
   window.getGroupMessageManager("browsers").removeMessageListener("EMEVideo:ContentMediaKeysRequest", gEMEHandler);
   window.getGroupMessageManager("browsers").removeMessageListener("DecoderDoctor:Notification", gDecoderDoctorHandler);
-}, false);
+});

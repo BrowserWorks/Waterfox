@@ -1018,7 +1018,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(CanvasRenderingContext2D)
       ImplCycleCollectionTraverse(cb, info.mElement, "Hit region fallback element");
     }
   }
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(CanvasRenderingContext2D)
@@ -1352,7 +1351,7 @@ CanvasRenderingContext2D::AllowOpenGLCanvas() const
 
 bool CanvasRenderingContext2D::SwitchRenderingMode(RenderingMode aRenderingMode)
 {
-  if (!IsTargetValid() || mRenderingMode == aRenderingMode) {
+  if (!(IsTargetValid() || mBufferProvider) || mRenderingMode == aRenderingMode) {
     return false;
   }
 
@@ -1375,23 +1374,37 @@ bool CanvasRenderingContext2D::SwitchRenderingMode(RenderingMode aRenderingMode)
   mBufferProvider = nullptr;
   mResetLayer = true;
 
-  // Borrowing the snapshot must be done after ReturnTarget.
-  RefPtr<SourceSurface> snapshot = oldBufferProvider->BorrowSnapshot();
-
   // Recreate mTarget using the new rendering mode
   RenderingMode attemptedMode = EnsureTarget(nullptr, aRenderingMode);
+
   if (!IsTargetValid()) {
-    oldBufferProvider->ReturnSnapshot(snapshot.forget());
     return false;
+  }
+
+  if (oldBufferProvider && mTarget) {
+    CopyBufferProvider(*oldBufferProvider, *mTarget, IntRect(0, 0, mWidth, mHeight));
   }
 
   // We succeeded, so update mRenderingMode to reflect reality
   mRenderingMode = attemptedMode;
 
-  // Restore the content from the old DrawTarget
-  // Clips and transform were already restored in EnsureTarget.
-  mTarget->CopySurface(snapshot, IntRect(0, 0, mWidth, mHeight), IntPoint());
-  oldBufferProvider->ReturnSnapshot(snapshot.forget());
+  return true;
+}
+
+bool
+CanvasRenderingContext2D::CopyBufferProvider(PersistentBufferProvider& aOld,
+                                             DrawTarget& aTarget,
+                                             IntRect aCopyRect)
+{
+  // Borrowing the snapshot must be done after ReturnTarget.
+  RefPtr<SourceSurface> snapshot = aOld.BorrowSnapshot();
+
+  if (!snapshot) {
+    return false;
+  }
+
+  aTarget.CopySurface(snapshot, aCopyRect, IntPoint());
+  aOld.ReturnSnapshot(snapshot.forget());
   return true;
 }
 
@@ -1446,12 +1459,15 @@ CanvasRenderingContext2D::RemoveDemotableContext(CanvasRenderingContext2D* aCont
     DemotableContexts().erase(iter);
 }
 
+#define MIN_SKIA_GL_DIMENSION 16
+
 bool
 CanvasRenderingContext2D::CheckSizeForSkiaGL(IntSize aSize) {
   MOZ_ASSERT(NS_IsMainThread());
 
   int minsize = Preferences::GetInt("gfx.canvas.min-size-for-skia-gl", 128);
-  if (aSize.width < minsize || aSize.height < minsize) {
+  if (aSize.width < MIN_SKIA_GL_DIMENSION || aSize.height < MIN_SKIA_GL_DIMENSION ||
+      (aSize.width * aSize.height < minsize * minsize)) {
     return false;
   }
 
@@ -1635,24 +1651,41 @@ CanvasRenderingContext2D::EnsureTarget(const gfx::Rect* aCoveredRect,
   if (mode == RenderingMode::SoftwareBackendMode &&
       !TrySharedTarget(newTarget, newProvider) &&
       !TryBasicTarget(newTarget, newProvider)) {
+
+    gfxCriticalError(
+      CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(GetSize()))
+    ) << "Failed borrow shared and basic targets.";
+
     SetErrorState();
     return mode;
   }
 
+
   MOZ_ASSERT(newTarget);
   MOZ_ASSERT(newProvider);
+
+  bool needsClear = !canDiscardContent;
+  if (newTarget->GetBackendType() == gfx::BackendType::SKIA) {
+    // Skia expects the unused X channel to contains 0xFF even for opaque operations
+    // so we can't skip clearing in that case, even if we are going to cover the
+    // entire canvas in the next drawing operation.
+    newTarget->ClearRect(canvasRect);
+    needsClear = false;
+  }
+
+  // Try to copy data from the previous buffer provider if there is one.
+  if (!canDiscardContent && mBufferProvider && CopyBufferProvider(*mBufferProvider, *newTarget, persistedRect)) {
+    needsClear = false;
+  }
+
+  if (needsClear) {
+    newTarget->ClearRect(canvasRect);
+  }
 
   mTarget = newTarget.forget();
   mBufferProvider = newProvider.forget();
 
   RegisterAllocation();
-
-  // Skia expects the unused X channel to contains 0 even for opaque operations
-  // so we can't skip clearing in that case, even if we are going to cover the
-  // entire canvas in the next drawing operation.
-  if (!canDiscardContent || mTarget->GetBackendType() == gfx::BackendType::SKIA) {
-    mTarget->ClearRect(canvasRect);
-  }
 
   RestoreClipsAndTransformToTarget();
 
@@ -1789,6 +1822,12 @@ CanvasRenderingContext2D::TrySharedTarget(RefPtr<gfx::DrawTarget>& aOutDT,
   aOutProvider = nullptr;
 
   if (!mCanvasElement || !mCanvasElement->OwnerDoc()) {
+    return false;
+  }
+
+  if (mBufferProvider && mBufferProvider->GetType() == LayersBackend::LAYERS_CLIENT) {
+    // we are already using a shared buffer provider, we are allocating a new one
+    // because the current one failed so let's just fall back to the basic provider.
     return false;
   }
 
@@ -2863,7 +2902,7 @@ CanvasRenderingContext2D::UpdateFilter()
   // The filter might reference an SVG filter that is declared inside this
   // document. Flush frames so that we'll have an nsSVGFilterFrame to work
   // with.
-  presShell->FlushPendingNotifications(Flush_Frames);
+  presShell->FlushPendingNotifications(FlushType::Frames);
 
   bool sourceGraphicIsTainted =
     (mCanvasElement && mCanvasElement->IsWriteOnly());
@@ -4972,8 +5011,13 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
       // that we need.
       srcSurf = ExtractSubrect(srcSurf, &sourceRect, mTarget);
     }
-    AdjustedTarget(this, bounds.IsEmpty() ? nullptr : &bounds)->
-      DrawSurface(srcSurf,
+
+    AdjustedTarget tempTarget(this, bounds.IsEmpty() ? nullptr : &bounds);
+    if (!tempTarget) {
+      gfxDevCrash(LogReason::InvalidDrawTarget) << "Invalid adjusted target in Canvas2D " << gfx::hexa((DrawTarget*)mTarget) << ", " << NeedToDrawShadow() << NeedToApplyFilter();
+      return;
+    }
+    tempTarget->DrawSurface(srcSurf,
                   gfx::Rect(aDx, aDy, aDw, aDh),
                   sourceRect,
                   DrawSurfaceOptions(samplingFilter, SamplingBounds::UNBOUNDED),
@@ -5043,7 +5087,7 @@ CanvasRenderingContext2D::DrawDirectlyToCanvas(
   auto result = aImage.mImgContainer->
     Draw(context, scaledImageSize,
          ImageRegion::Create(gfxRect(aSrc.x, aSrc.y, aSrc.width, aSrc.height)),
-         aImage.mWhichFrame, SamplingFilter::GOOD, Some(svgContext), modifiedFlags);
+         aImage.mWhichFrame, SamplingFilter::GOOD, Some(svgContext), modifiedFlags, 1.0);
 
   if (result != DrawResult::SUCCESS) {
     NS_WARNING("imgIContainer::Draw failed");
@@ -5928,7 +5972,7 @@ CanvasRenderingContext2D::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
   // we have nothing to paint and there is no need to create a surface just
   // to paint nothing. Also, EnsureTarget() can cause creation of a persistent
   // layer manager which must NOT happen during a paint.
-  if ((!mBufferProvider && !mTarget) || !IsTargetValid()) {
+  if (!mBufferProvider && !IsTargetValid()) {
     // No DidTransactionCallback will be received, so mark the context clean
     // now so future invalidations will be dispatched.
     MarkContextClean();

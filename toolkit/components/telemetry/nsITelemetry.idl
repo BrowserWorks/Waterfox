@@ -140,6 +140,47 @@ interface nsITelemetry : nsISupports
   readonly attribute jsval chromeHangs;
 
   /*
+   * Record the current thread's call stack on demand. Note that, the stack is
+   * only captured at the first call. All subsequent calls result in incrementing
+   * the capture counter without doing actual stack unwinding.
+   *
+   * @param aKey - A user defined key associated with the captured stack.
+   *
+   * NOTE: Unwinding call stacks is an expensive operation performance-wise.
+   */
+  void captureStack(in ACString name);
+
+  /*
+   * Returns a snapshot of captured stacks. The data has the following structure:
+   *
+   * {
+   *  "memoryMap": [
+   *      ["wgdi32.pdb", "08A541B5942242BDB4AEABD8C87E4CFF2"],
+   *      ["igd10iumd32.pdb", "D36DEBF2E78149B5BE1856B772F1C3991"],
+   *      ... other entries in the format ["module name", "breakpad identifier"] ...
+   *   ],
+   *   "stacks": [
+   *      [
+   *         [
+   *           0, // the module index or -1 for invalid module indices
+   *           190649 // the offset of this program counter in its module or an absolute pc
+   *         ],
+   *         [1, 2540075],
+   *         ... other frames ...
+   *      ],
+   *      ... other stacks ...
+   *   ],
+   *   "captures": [["string-key", stack-index, count], ... ]
+   * }
+   *
+   * @param clear Whether to clear out the subsession histograms after taking a  snapshot.
+   *
+   * @return A snapshot of captured stacks.
+   */
+  [implicit_jscontext]
+  jsval snapshotCapturedStacks([optional] in boolean clear);
+
+  /*
    * An array of thread hang stats,
    *   [<thread>, <thread>, ...]
    * <thread> represents a single thread,
@@ -369,7 +410,7 @@ interface nsITelemetry : nsISupports
   /**
    * Serializes the scalars from the given dataset to a JSON-style object and resets them.
    * The returned structure looks like:
-   *   { "group1.probe": 1, "group1.other_probe": false, ... }
+   *   {"process": {"group1.probe":1,"group1.other_probe":false,...}, ... }.
    *
    * @param aDataset DATASET_RELEASE_CHANNEL_OPTOUT or DATASET_RELEASE_CHANNEL_OPTIN.
    * @param [aClear=false] Whether to clear out the scalars after snapshotting.
@@ -412,7 +453,7 @@ interface nsITelemetry : nsISupports
    * Serializes the keyed scalars from the given dataset to a JSON-style object and
    * resets them.
    * The returned structure looks like:
-   *   { "group1.probe": { "key_1": 2, "key_2": 1, ... }, ... }
+   *   { "process": { "group1.probe": { "key_1": 2, "key_2": 1, ... }, ... }, ... }
    *
    * @param aDataset DATASET_RELEASE_CHANNEL_OPTOUT or DATASET_RELEASE_CHANNEL_OPTIN.
    * @param [aClear=false] Whether to clear out the scalars after snapshotting.
@@ -445,6 +486,16 @@ interface nsITelemetry : nsISupports
    */
   [implicit_jscontext, optional_argc]
   void recordEvent(in ACString aCategory, in ACString aMethod, in ACString aObject, [optional] in jsval aValue, [optional] in jsval extra);
+
+  /**
+   * Enable recording of events in a category.
+   * Events default to recording disabled. This allows to toggle recording for all events
+   * in the specified category.
+   *
+   * @param aCategory The category name.
+   * @param aEnabled Whether recording is enabled for events in that category.
+   */
+  void setEventRecordingEnabled(in ACString aCategory, in boolean aEnabled);
 
   /**
    * Serializes the recorded events to a JSON-appropriate array and optionally resets them.

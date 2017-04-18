@@ -8,6 +8,7 @@ const SAVE_PER_SITE_PREF = "browser.download.lastDir.savePerSite";
 const ALWAYS_DOWNLOAD_DIR_PREF = "browser.download.useDownloadDir";
 const UCT_URI = "chrome://mozapps/content/downloads/unknownContentType.xul";
 
+/* import-globals-from ../../../../../toolkit/content/tests/browser/common/mockTransfer.js */
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://mochitests/content/browser/toolkit/content/tests/browser/common/mockTransfer.js",
@@ -43,7 +44,7 @@ function triggerSave(aWindow, aCallback) {
     info("showCallback");
     fileName = fp.defaultString;
     info("fileName: " + fileName);
-    destFile.append (fileName);
+    destFile.append(fileName);
     MockFilePicker.returnFiles = [destFile];
     MockFilePicker.filterIndex = 1; // kSaveAsType_URL
     info("done showCallback");
@@ -61,7 +62,7 @@ function triggerSave(aWindow, aCallback) {
 
   function onUCTDialog(dialog) {
     function doLoad() {
-      content.document.querySelector('iframe').remove();
+      content.document.querySelector("iframe").remove();
     }
     testBrowser.messageManager.loadFrameScript("data:,(" + doLoad.toString() + ")()", false);
     executeSoon(continueDownloading);
@@ -90,13 +91,13 @@ function triggerSave(aWindow, aCallback) {
 
 
 var windowObserver = {
-  setCallback: function(aCallback) {
+  setCallback(aCallback) {
     if (this._callback) {
       ok(false, "Should only be dealing with one callback at a time.");
     }
     this._callback = aCallback;
   },
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic != "domwindowopened") {
       return;
     }
@@ -104,7 +105,7 @@ var windowObserver = {
     let win = aSubject.QueryInterface(Ci.nsIDOMEventTarget);
 
     win.addEventListener("load", function onLoad(event) {
-      win.removeEventListener("load", onLoad, false);
+      win.removeEventListener("load", onLoad);
 
       if (win.location == UCT_URI) {
         SimpleTest.executeSoon(function() {
@@ -116,7 +117,7 @@ var windowObserver = {
           }
         });
       }
-    }, false);
+    });
   }
 };
 
@@ -146,7 +147,7 @@ function test() {
 
   mockTransferRegisterer.register();
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     info("Running the cleanup code");
     mockTransferRegisterer.unregister();
     MockFilePicker.cleanup();
@@ -170,4 +171,3 @@ function test() {
     });
   });
 }
-

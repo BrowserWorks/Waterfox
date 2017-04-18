@@ -16,11 +16,12 @@ let hasContainers = Services.prefs.getBoolPref("privacy.userContext.enabled");
 const example_base = "http://example.com/browser/browser/base/content/test/general/";
 const chrome_base = "chrome://mochitests/content/browser/browser/base/content/test/general/";
 
+/* import-globals-from contextmenu_common.js */
 Services.scriptloader.loadSubScript(chrome_base + "contextmenu_common.js", this);
 
 // Below are test cases for XUL element
 add_task(function* test_xul_text_link_label() {
-  let  url = chrome_base + "subtst_contextmenu_xul.xul";
+  let url = chrome_base + "subtst_contextmenu_xul.xul";
 
   yield BrowserTestUtils.openNewForegroundTab(gBrowser, url);
 
@@ -373,7 +374,6 @@ add_task(function* test_textarea() {
   // Disabled since this is seeing spell-check-enabled
   // instead of spell-add-dictionaries-main
   todo(false, "spell checker tests are failing, bug 1246296");
-  return;
 
   /*
   yield test_contextmenu("#test-textarea",
@@ -397,7 +397,6 @@ add_task(function* test_textarea() {
 
 add_task(function* test_textarea_spellcheck() {
   todo(false, "spell checker tests are failing, bug 1246296");
-  return;
 
   /*
   yield test_contextmenu("#test-textarea",
@@ -437,7 +436,6 @@ add_task(function* test_plaintext2() {
 
 add_task(function* test_undo_add_to_dictionary() {
   todo(false, "spell checker tests are failing, bug 1246296");
-  return;
 
   /*
   yield test_contextmenu("#test-textarea",
@@ -471,7 +469,6 @@ add_task(function* test_undo_add_to_dictionary() {
 
 add_task(function* test_contenteditable() {
   todo(false, "spell checker tests are failing, bug 1246296");
-  return;
 
   /*
   yield test_contextmenu("#test-contenteditable",
@@ -500,7 +497,7 @@ add_task(function* test_contenteditable() {
 
 add_task(function* test_copylinkcommand() {
   yield test_contextmenu("#test-link", null, {
-    postCheckContextMenuFn: function*() {
+    *postCheckContextMenuFn() {
       document.commandDispatcher
               .getControllerForCommand("cmd_copyLink")
               .doCommand("cmd_copyLink");
@@ -562,7 +559,7 @@ add_task(function* test_pagemenu() {
      "context-viewsource",   true,
      "context-viewinfo",     true
     ],
-    {postCheckContextMenuFn: function*() {
+    {*postCheckContextMenuFn() {
       let item = contextMenu.getElementsByAttribute("generateditemid", "1")[0];
       ok(item, "Got generated XUL menu item");
       item.doCommand();
@@ -725,7 +722,6 @@ add_task(function* test_imagelink() {
 
 add_task(function* test_select_input_text() {
   todo(false, "spell checker tests are failing, bug 1246296");
-  return;
 
   /*
   yield test_contextmenu("#test-select-input-text",
@@ -758,7 +754,6 @@ add_task(function* test_select_input_text() {
 
 add_task(function* test_select_input_text_password() {
   todo(false, "spell checker tests are failing, bug 1246296");
-  return;
 
   /*
   yield test_contextmenu("#test-select-input-text-type-password",
@@ -820,11 +815,11 @@ add_task(function* test_click_to_play_blocked_plugin() {
      "context-viewinfo",     true
     ],
     {
-      preCheckContextMenuFn: function*() {
+      *preCheckContextMenuFn() {
         pushPrefs(["plugins.click_to_play", true]);
         setTestPluginEnabledState(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
       },
-      postCheckContextMenuFn: function*() {
+      *postCheckContextMenuFn() {
         getTestPlugin().enabledState = Ci.nsIPluginTag.STATE_ENABLED;
       }
     }
@@ -877,7 +872,6 @@ add_task(function* test_srcdoc() {
 
 add_task(function* test_input_spell_false() {
   todo(false, "spell checker tests are failing, bug 1246296");
-  return;
 
   /*
   yield test_contextmenu("#test-contenteditable-spellcheck-false",

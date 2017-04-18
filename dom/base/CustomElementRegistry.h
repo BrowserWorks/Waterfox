@@ -7,13 +7,14 @@
 #ifndef mozilla_dom_CustomElementRegistry_h
 #define mozilla_dom_CustomElementRegistry_h
 
+#include "js/GCHashTable.h"
 #include "js/TypeDecls.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/FunctionBinding.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
-#include "mozilla/dom/FunctionBinding.h"
 
 class nsDocument;
 
@@ -127,6 +128,41 @@ struct CustomElementDefinition
 
   // The document custom element order.
   uint32_t mDocOrder;
+
+  bool IsCustomBuiltIn() {
+    return mType != mLocalName;
+  }
+};
+
+class CustomElementReaction
+{
+public:
+  explicit CustomElementReaction(CustomElementRegistry* aRegistry,
+                                 CustomElementDefinition* aDefinition)
+    : mRegistry(aRegistry)
+    , mDefinition(aDefinition)
+  {
+  };
+
+  virtual ~CustomElementReaction() = default;
+  virtual void Invoke(Element* aElement) = 0;
+
+protected:
+  CustomElementRegistry* mRegistry;
+  CustomElementDefinition* mDefinition;
+};
+
+class CustomElementUpgradeReaction final : public CustomElementReaction
+{
+public:
+  explicit CustomElementUpgradeReaction(CustomElementRegistry* aRegistry,
+                                        CustomElementDefinition* aDefinition)
+    : CustomElementReaction(aRegistry, aDefinition)
+  {
+  }
+
+private:
+   virtual void Invoke(Element* aElement) override;
 };
 
 class CustomElementRegistry final : public nsISupports,
@@ -154,6 +190,9 @@ public:
   CustomElementDefinition* LookupCustomElementDefinition(
     const nsAString& aLocalName, const nsAString* aIs = nullptr) const;
 
+  CustomElementDefinition* LookupCustomElementDefinition(
+    JSContext* aCx, JSObject *aConstructor) const;
+
   /**
    * Enqueue created callback or register upgrade candidate for
    * newly created custom elements, possibly extending an existing type.
@@ -169,9 +208,29 @@ public:
   void GetCustomPrototype(nsIAtom* aAtom,
                           JS::MutableHandle<JSObject*> aPrototype);
 
+  /**
+   * Enqueue a custom element upgrade reaction
+   * https://html.spec.whatwg.org/multipage/scripting.html#enqueue-a-custom-element-upgrade-reaction
+   */
+  void EnqueueUpgradeReaction(Element* aElement,
+                              CustomElementDefinition* aDefinition);
+
+  void Upgrade(Element* aElement, CustomElementDefinition* aDefinition);
+
+  // [CEReactions] Before executing the algorithm's steps
+  // Push a new element queue onto the custom element reactions stack.
+  void CreateAndPushElementQueue();
+
+  // [CEReactions] After executing the algorithm's steps
+  // Pop the element queue from the custom element reactions stack,
+  // and invoke custom element reactions in that queue.
+  void PopAndInvokeElementQueue();
+
 private:
   explicit CustomElementRegistry(nsPIDOMWindowInner* aWindow);
   ~CustomElementRegistry();
+
+  bool Init();
 
   /**
    * Registers an unresolved custom element that is a candidate for
@@ -188,19 +247,44 @@ private:
                          nsIAtom* aKey,
                          CustomElementDefinition* aDefinition);
 
+  void InvokeBackupQueue();
+
+  void Enqueue(Element* aElement, CustomElementReaction* aReaction);
+
+  // nsWeakPtr is a weak pointer of Element
+  // The element reaction queues are stored in ElementReactionQueueMap.
+  // We need to lookup ElementReactionQueueMap again to get relevant reaction queue.
+  typedef nsTArray<nsWeakPtr> ElementQueue;
+
+  /**
+   * Invoke custom element reactions
+   * https://html.spec.whatwg.org/multipage/scripting.html#invoke-custom-element-reactions
+   */
+  void InvokeReactions(ElementQueue& aElementQueue);
+
   typedef nsClassHashtable<nsISupportsHashKey, CustomElementDefinition>
     DefinitionMap;
   typedef nsClassHashtable<nsISupportsHashKey, nsTArray<nsWeakPtr>>
     CandidateMap;
+  typedef JS::GCHashMap<JS::Heap<JSObject*>,
+                        nsCOMPtr<nsIAtom>,
+                        js::MovableCellHasher<JS::Heap<JSObject*>>,
+                        js::SystemAllocPolicy> ConstructorMap;
 
   // Hashtable for custom element definitions in web components.
   // Custom prototypes are stored in the compartment where
   // registerElement was called.
   DefinitionMap mCustomDefinitions;
 
+  // Hashtable for looking up definitions by using constructor as key.
+  // Custom elements' name are stored here and we need to lookup
+  // mCustomDefinitions again to get definitions.
+  ConstructorMap mConstructors;
+
   typedef nsRefPtrHashtable<nsISupportsHashKey, Promise>
     WhenDefinedPromiseMap;
   WhenDefinedPromiseMap mWhenDefinedPromiseMap;
+
   // The "upgrade candidates map" from the web components spec. Maps from a
   // namespace id and local name to a list of elements to upgrade if that
   // element is registered as a custom element.
@@ -218,6 +302,17 @@ private:
 
   // It is used to prevent reentrant invocations of element definition.
   bool mIsCustomDefinitionRunning;
+  // https://html.spec.whatwg.org/#enqueue-an-element-on-the-appropriate-element-queue
+  bool mIsBackupQueueProcessing;
+
+  typedef nsTArray<nsAutoPtr<CustomElementReaction>> ReactionQueue;
+  typedef nsClassHashtable<nsISupportsHashKey, ReactionQueue>
+    ElementReactionQueueMap;
+
+  ElementReactionQueueMap mElementReactionQueueMap;
+
+  nsTArray<ElementQueue> mReactionsStack;
+  ElementQueue mBackupQueue;
 
 private:
   class MOZ_RAII AutoSetRunningFlag final {
@@ -238,6 +333,28 @@ private:
       CustomElementRegistry* mRegistry;
   };
 
+private:
+  class ProcessBackupQueueRunnable : public mozilla::Runnable {
+    public:
+      explicit ProcessBackupQueueRunnable(CustomElementRegistry* aRegistry)
+        : mRegistry(aRegistry)
+      {
+        MOZ_ASSERT(!mRegistry->mIsBackupQueueProcessing,
+                   "mIsBackupQueueProcessing should be initially false");
+        mRegistry->mIsBackupQueueProcessing = true;
+      }
+
+      NS_IMETHOD Run() override
+      {
+        mRegistry->InvokeBackupQueue();
+        mRegistry->mIsBackupQueueProcessing = false;
+        return NS_OK;
+      }
+
+    private:
+      RefPtr<CustomElementRegistry> mRegistry;
+  };
+
 public:
   nsISupports* GetParentObject() const;
 
@@ -250,6 +367,19 @@ public:
            JS::MutableHandle<JS::Value> aRetVal);
 
   already_AddRefed<Promise> WhenDefined(const nsAString& aName, ErrorResult& aRv);
+};
+
+class MOZ_RAII AutoCEReaction final {
+  public:
+    explicit AutoCEReaction(CustomElementRegistry* aRegistry)
+      : mRegistry(aRegistry) {
+      mRegistry->CreateAndPushElementQueue();
+    }
+    ~AutoCEReaction() {
+      mRegistry->PopAndInvokeElementQueue();
+    }
+  private:
+    RefPtr<CustomElementRegistry> mRegistry;
 };
 
 } // namespace dom

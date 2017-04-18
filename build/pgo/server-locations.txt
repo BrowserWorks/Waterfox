@@ -25,9 +25,9 @@
 #
 # "primary" denotes a location which is the canonical location of
 # the server; this location is the one assumed for requests which don't
-# otherwise identify a particular origin (e.g. HTTP/1.0 requests).  
+# otherwise identify a particular origin (e.g. HTTP/1.0 requests).
 #
-# "privileged" denotes a location which should have the ability to request 
+# "privileged" denotes a location which should have the ability to request
 # elevated privileges; the default is no privileges.
 #
 # "nocert" makes sense only for https:// hosts and means there is not
@@ -125,6 +125,7 @@ http://fxfeeds.mozilla.com:80
 # Prevent safebrowsing tests from hitting the network for its-a-trap.html and
 # its-an-attack.html.
 http://www.itisatrap.org:80
+https://www.itisatrap.org:443
 
 #
 # These are subdomains of <ält.example.org>.
@@ -180,6 +181,23 @@ https://unwanted.example.com:443
 https://tracking.example.com:443
 https://not-tracking.example.com:443
 https://tracking.example.org:443
+
+#
+# Used while testing flash blocking (Bug 1307604)
+#
+http://flashallow.example.com:80
+http://exception.flashallow.example.com:80
+http://flashblock.example.com:80
+http://exception.flashblock.example.com:80
+http://subdocument.example.com:80
+https://subdocument.example.com:443
+http://exception.subdocument.example.com:80
+
+#
+# Flash usage can fail unless this URL exists
+#
+http://fpdownload2.macromedia.com:80
+https://fpdownload2.macromedia.com:443
 
 # Bug 1281083
 http://bug1281083.example.com:80

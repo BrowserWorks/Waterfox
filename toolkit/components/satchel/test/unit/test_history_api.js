@@ -7,50 +7,47 @@ var dbConnection; // used for deleted table tests
 
 Cu.import("resource://gre/modules/Promise.jsm");
 
-function countDeletedEntries(expected)
-{
+function countDeletedEntries(expected) {
   let deferred = Promise.defer();
   let stmt = dbConnection.createAsyncStatement("SELECT COUNT(*) AS numEntries FROM moz_deleted_formhistory");
   stmt.executeAsync({
-    handleResult: function(resultSet) {
+    handleResult(resultSet) {
       do_check_eq(expected, resultSet.getNextRow().getResultByName("numEntries"));
       deferred.resolve();
     },
-    handleError : function () {
+    handleError(error) {
       do_throw("Error occurred counting deleted entries: " + error);
       deferred.reject();
     },
-    handleCompletion : function () {
+    handleCompletion() {
       stmt.finalize();
     }
   });
   return deferred.promise;
 }
 
-function checkTimeDeleted(guid, checkFunction)
-{
+function checkTimeDeleted(guid, checkFunction) {
   let deferred = Promise.defer();
   let stmt = dbConnection.createAsyncStatement("SELECT timeDeleted FROM moz_deleted_formhistory WHERE guid = :guid");
   stmt.params.guid = guid;
   stmt.executeAsync({
-    handleResult: function(resultSet) {
+    handleResult(resultSet) {
       checkFunction(resultSet.getNextRow().getResultByName("timeDeleted"));
       deferred.resolve();
     },
-    handleError : function () {
+    handleError(error) {
       do_throw("Error occurred getting deleted entries: " + error);
       deferred.reject();
     },
-    handleCompletion : function () {
+    handleCompletion() {
       stmt.finalize();
     }
   });
   return deferred.promise;
 }
 
-function promiseUpdateEntry(op, name, value)
-{
-  var change = { op: op };
+function promiseUpdateEntry(op, name, value) {
+  var change = { op };
   if (name !== null)
     change.fieldname = name;
   if (value !== null)
@@ -75,30 +72,27 @@ function promiseUpdate(change) {
   });
 }
 
-function promiseSearchEntries(terms, params)
-{
+function promiseSearchEntries(terms, params) {
   let deferred = Promise.defer();
   let results = [];
   FormHistory.search(terms, params,
                      { handleResult: result => results.push(result),
-                       handleError: function (error) {
+                       handleError(error) {
                          do_throw("Error occurred searching form history: " + error);
                          deferred.reject(error);
                        },
-                       handleCompletion: function (reason) { if (!reason) deferred.resolve(results); }
+                       handleCompletion(reason) { if (!reason) deferred.resolve(results); }
                      });
   return deferred.promise;
 }
 
-function promiseCountEntries(name, value, checkFn)
-{
+function promiseCountEntries(name, value, checkFn) {
   let deferred = Promise.defer();
-  countEntries(name, value, function (result) { checkFn(result); deferred.resolve(); } );
+  countEntries(name, value, function(result) { checkFn(result); deferred.resolve(); } );
   return deferred.promise;
 }
 
-add_task(function* ()
-{
+add_task(function* () {
   let oldSupportsDeletedTable = FormHistory._supportsDeletedTable;
   FormHistory._supportsDeletedTable = true;
 
@@ -142,11 +136,11 @@ add_task(function* ()
 
   let stmt = dbConnection.createAsyncStatement("DELETE FROM moz_deleted_formhistory");
   stmt.executeAsync({
-    handleResult: function(resultSet) { },
-    handleError : function () {
+    handleResult(resultSet) { },
+    handleError(error) {
       do_throw("Error occurred counting deleted all entries: " + error);
     },
-    handleCompletion : function () {
+    handleCompletion() {
       stmt.finalize();
       deferred.resolve();
     }
@@ -170,10 +164,10 @@ add_task(function* ()
   deferred = Promise.defer();
   yield FormHistory.count({ fieldname: null, value: null },
                           { handleResult: result => checkNotExists(result),
-                            handleError: function (error) {
+                            handleError(error) {
                               do_throw("Error occurred searching form history: " + error);
                             },
-                            handleCompletion: function(reason) { if (!reason) deferred.resolve() }
+                            handleCompletion(reason) { if (!reason) deferred.resolve() }
                           });
   yield deferred.promise;
 
@@ -258,8 +252,7 @@ add_task(function* ()
   yield promiseUpdateEntry("add", "field1", "value1");
   yield promiseCountEntries("field1", "value1", checkExists);
 
-  let processFirstResult = function processResults(results)
-  {
+  let processFirstResult = function processResults(results) {
     // Only handle the first result
     if (results.length > 0) {
       let result = results[0];
@@ -268,8 +261,8 @@ add_task(function* ()
     return undefined;
   }
 
-  results = yield promiseSearchEntries(["timesUsed", "firstUsed", "lastUsed"],
-                                       { fieldname: "field1", value: "value1" });
+  let results = yield promiseSearchEntries(["timesUsed", "firstUsed", "lastUsed"],
+                                           { fieldname: "field1", value: "value1" });
   let [timesUsed, firstUsed, lastUsed] = processFirstResult(results);
   do_check_eq(1, timesUsed);
   do_check_true(firstUsed > 0);
@@ -291,7 +284,7 @@ add_task(function* ()
   results = yield promiseSearchEntries(["guid"], { fieldname: "field1", value: "value1" });
   let guid = processFirstResult(results)[3];
 
-  yield promiseUpdate({ op : "update", guid: guid, value: "modifiedValue" });
+  yield promiseUpdate({ op : "update", guid, value: "modifiedValue" });
   yield promiseCountEntries("field1", "modifiedValue", checkExists);
   yield promiseCountEntries("field1", "value1", checkNotExists);
   yield promiseCountEntries("field1", "value1b", checkExists);
@@ -343,7 +336,7 @@ add_task(function* ()
   testnum++;
   results = yield promiseSearchEntries(["guid"], { fieldname: "field3", value: "value3" });
   guid = processFirstResult(results)[3];
-  yield promiseUpdate({ op : "bump", guid: guid, timesUsed: 20, firstUsed: 55, lastUsed: 400 });
+  yield promiseUpdate({ op : "bump", guid, timesUsed: 20, firstUsed: 55, lastUsed: 400 });
   results = yield promiseSearchEntries(["timesUsed", "firstUsed", "lastUsed"],
                                        { fieldname: "field3", value: "value3" });
   [timesUsed, firstUsed, lastUsed] = processFirstResult(results);
@@ -360,7 +353,7 @@ add_task(function* ()
   results = yield promiseSearchEntries(["guid"], { fieldname: "field1", value: "value1b" });
   guid = processFirstResult(results)[3];
 
-  yield promiseUpdate({ op : "remove", guid: guid});
+  yield promiseUpdate({ op : "remove", guid});
   yield promiseCountEntries("field1", "modifiedValue", checkExists);
   yield promiseCountEntries("field1", "value1b", checkNotExists);
   yield promiseCountEntries(null, null, num => do_check_eq(num, 3));
@@ -445,8 +438,7 @@ add_task(function* ()
 
   } catch (e) {
     throw "FAILED in test #" + testnum + " -- " + e;
-  }
-  finally {
+  } finally {
     FormHistory._supportsDeletedTable = oldSupportsDeletedTable;
     dbConnection.asyncClose(do_test_finished);
   }

@@ -1158,18 +1158,20 @@ DebuggerServer.ObjectActorPreviewers = {
   }],
 
   RegExp: [function ({obj, hooks}, grip) {
-    // Avoid having any special preview for the RegExp.prototype itself.
-    if (!obj.proto || obj.proto.class != "RegExp") {
+    let str = DevToolsUtils.callPropertyOnObject(obj, "toString");
+    if (typeof str != "string") {
       return false;
     }
 
-    let str = RegExp.prototype.toString.call(obj.unsafeDereference());
     grip.displayString = hooks.createValueGrip(str);
     return true;
   }],
 
   Date: [function ({obj, hooks}, grip) {
-    let time = Date.prototype.getTime.call(obj.unsafeDereference());
+    let time = DevToolsUtils.callPropertyOnObject(obj, "getTime");
+    if (typeof time != "number") {
+      return false;
+    }
 
     grip.preview = {
       timestamp: hooks.createValueGrip(time),
@@ -2081,9 +2083,9 @@ function LongStringActor(string) {
 LongStringActor.prototype = {
   actorPrefix: "longString",
 
-  disconnect: function () {
+  destroy: function () {
     // Because longStringActors is not a weak map, we won't automatically leave
-    // it so we need to manually leave on disconnect so that we don't leak
+    // it so we need to manually leave on destroy so that we don't leak
     // memory.
     this._releaseActor();
   },

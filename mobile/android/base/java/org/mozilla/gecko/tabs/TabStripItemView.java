@@ -10,6 +10,7 @@ import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.widget.ResizablePathDrawable;
 import org.mozilla.gecko.widget.ResizablePathDrawable.NonScaledPathShape;
 import org.mozilla.gecko.widget.themed.ThemedImageButton;
@@ -26,6 +27,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Path;
 import android.graphics.Region;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.TextViewCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -104,6 +107,11 @@ public class TabStripItemView extends ThemedLinearLayout
                 tabs.closeTab(tabs.getTab(id), true);
             }
         });
+    }
+
+    @RobocopTarget
+    public int getTabId() {
+        return id;
     }
 
     @Override
@@ -192,6 +200,7 @@ public class TabStripItemView extends ThemedLinearLayout
 
         id = tab.getId();
 
+        setChecked(Tabs.getInstance().isSelectedTab(tab));
         updateTitle(tab);
         updateFavicon(tab.getFavicon());
         setPrivateMode(tab.isPrivate());
@@ -210,9 +219,9 @@ public class TabStripItemView extends ThemedLinearLayout
 
         // TODO: Set content description to indicate audio is playing.
         if (tab.isAudioPlaying()) {
-            titleView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.tab_audio_playing, 0, 0, 0);
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(titleView, R.drawable.tab_audio_playing, 0, 0, 0);
         } else {
-            titleView.setCompoundDrawables(null, null, null, null);
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(titleView, null, null, null, null);
         }
     }
 

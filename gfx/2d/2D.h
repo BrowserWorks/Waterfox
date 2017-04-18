@@ -12,6 +12,7 @@
 #include "Matrix.h"
 #include "Quaternion.h"
 #include "UserData.h"
+#include <vector>
 
 // GenericRefCountedBase allows us to hold on to refcounted objects of any type
 // (contrary to RefCounted<T> which requires knowing the type T) and, in particular,
@@ -41,9 +42,13 @@ typedef _cairo_scaled_font cairo_scaled_font_t;
 struct _FcPattern;
 typedef _FcPattern FcPattern;
 
+struct FT_LibraryRec_;
+typedef FT_LibraryRec_* FT_Library;
+
 struct ID3D11Texture2D;
 struct ID3D11Device;
 struct ID2D1Device;
+struct IDWriteFactory;
 struct IDWriteRenderingParams;
 struct IDWriteFontFace;
 
@@ -630,6 +635,10 @@ struct Glyph
   Point mPosition;
 };
 
+static inline bool operator==(const Glyph& aOne, const Glyph& aOther) {
+  return aOne.mIndex == aOther.mIndex && aOne.mPosition == aOther.mPosition;
+}
+
 /** This class functions as a glyph buffer that can be drawn to a DrawTarget.
  * @todo XXX - This should probably contain the guts of gfxTextRun in the future as
  * roc suggested. But for now it's a simple container for a glyph vector.
@@ -664,14 +673,22 @@ struct GlyphMetrics
  * at a particular size. It is passed into text drawing calls to describe
  * the font used for the drawing call.
  */
-class ScaledFont : public RefCounted<ScaledFont>
+class ScaledFont : public external::AtomicRefCounted<ScaledFont>
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFont)
   virtual ~ScaledFont() {}
 
-  typedef void (*FontFileDataOutput)(const uint8_t *aData, uint32_t aLength, uint32_t aIndex, Float aGlyphSize, void *aBaton);
-  typedef void (*FontDescriptorOutput)(const uint8_t *aData, uint32_t aLength, Float aFontSize, void *aBaton);
+  typedef struct {
+    uint32_t mTag;
+    Float    mValue;
+  } VariationSetting;
+
+  typedef void (*FontFileDataOutput)(const uint8_t *aData, uint32_t aLength, uint32_t aIndex, Float aGlyphSize,
+                                     uint32_t aVariationCount, const VariationSetting* aVariations,
+                                     void *aBaton);
+  typedef void (*FontInstanceDataOutput)(const uint8_t* aData, uint32_t aLength, void* aBaton);
+  typedef void (*FontDescriptorOutput)(const uint8_t* aData, uint32_t aLength, Float aFontSize, void* aBaton);
 
   virtual FontType GetType() const = 0;
   virtual AntialiasMode GetDefaultAAMode() {
@@ -701,6 +718,8 @@ public:
   virtual void GetGlyphDesignMetrics(const uint16_t* aGlyphIndices, uint32_t aNumGlyphs, GlyphMetrics* aGlyphMetrics) = 0;
 
   virtual bool GetFontFileData(FontFileDataOutput, void *) { return false; }
+
+  virtual bool GetFontInstanceData(FontInstanceDataOutput, void *) { return false; }
 
   virtual bool GetFontDescriptor(FontDescriptorOutput, void *) { return false; }
 
@@ -732,10 +751,13 @@ public:
    *
    * @param aIndex index for the font within the resource.
    * @param aGlyphSize the size of ScaledFont required.
+   * @param aInstanceData pointer to read-only buffer of any available instance data.
+   * @param aInstanceDataLength the size of the instance data.
    * @return an already_addrefed ScaledFont, containing nullptr if failed.
    */
   virtual already_AddRefed<ScaledFont>
-    CreateScaledFont(uint32_t aIndex, Float aGlyphSize) = 0;
+    CreateScaledFont(uint32_t aIndex, Float aGlyphSize,
+                     const uint8_t* aInstanceData, uint32_t aInstanceDataLength) = 0;
 
   virtual ~NativeFontResource() {};
 };
@@ -778,6 +800,7 @@ public:
   virtual BackendType GetBackendType() const = 0;
 
   virtual bool IsRecording() const { return false; }
+  virtual bool IsCaptureDT() const { return false; }
 
   /**
    * Returns a SourceSurface which is a snapshot of the current contents of the DrawTarget.
@@ -1272,6 +1295,17 @@ protected:
 
 class DrawTargetCapture : public DrawTarget
 {
+public:
+  virtual bool IsCaptureDT() const { return true; }
+
+  /**
+   * Returns true if the recording only contains FillGlyph calls with
+   * a single font and color. Returns the list of Glyphs along with
+   * the font and color as outparams if so.
+   */
+  virtual bool ContainsOnlyColoredGlyphs(RefPtr<ScaledFont>& aScaledFont,
+                                         Color& aColor,
+                                         std::vector<Glyph>& aGlyphs) = 0;
 };
 
 class DrawEventRecorder : public RefCounted<DrawEventRecorder>
@@ -1371,11 +1405,23 @@ public:
    *
    * @param aData Pointer to the data
    * @param aSize Size of the TrueType data
+   * @param aVariationCount Number of VariationSetting records provided.
+   * @param aVariations Pointer to VariationSetting records.
    * @param aType Type of NativeFontResource that should be created.
    * @return a NativeFontResource of nullptr if failed.
    */
   static already_AddRefed<NativeFontResource>
-    CreateNativeFontResource(uint8_t *aData, uint32_t aSize, FontType aType);
+    CreateNativeFontResource(uint8_t *aData, uint32_t aSize,
+                             uint32_t aVariationCount,
+                             const ScaledFont::VariationSetting* aVariations,
+                             FontType aType);
+
+  /**
+   * This creates a scaled font of the given type based on font descriptor
+   * data retrieved from ScaledFont::GetFontDescriptor.
+   */
+  static already_AddRefed<ScaledFont>
+    CreateScaledFontFromFontDescriptor(FontType aType, const uint8_t* aData, uint32_t aDataLength, Float aSize);
 
   /**
    * This creates a scaled font with an associated cairo_scaled_font_t, and
@@ -1476,6 +1522,15 @@ public:
     CreateCGGlyphRenderingOptions(const Color &aFontSmoothingBackgroundColor);
 #endif
 
+#ifdef MOZ_ENABLE_FREETYPE
+  static void SetFTLibrary(FT_Library aFTLibrary);
+  static FT_Library GetFTLibrary();
+
+private:
+  static FT_Library mFTLibrary;
+public:
+#endif
+
 #ifdef WIN32
   static already_AddRefed<DrawTarget> CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat);
 
@@ -1484,8 +1539,10 @@ public:
    * Returns true on success, or false on failure and leaves the D2D1/Direct3D11 devices unset.
    */
   static bool SetDirect3D11Device(ID3D11Device *aDevice);
+  static bool SetDWriteFactory(IDWriteFactory *aFactory);
   static ID3D11Device *GetDirect3D11Device();
   static ID2D1Device *GetD2D1Device();
+  static IDWriteFactory *GetDWriteFactory();
   static bool SupportsD2D1();
 
   static already_AddRefed<GlyphRenderingOptions>
@@ -1502,9 +1559,12 @@ public:
                                   bool aUseEmbeddedBitmap,
                                   bool aForceGDIMode);
 
+  static void UpdateSystemTextQuality();
+
 private:
   static ID2D1Device *mD2D1Device;
   static ID3D11Device *mD3D11Device;
+  static IDWriteFactory *mDWriteFactory;
 #endif
 
   static DrawEventRecorder *mRecorder;

@@ -408,7 +408,7 @@ class ModuleEnvironmentObject : public EnvironmentObject
 
   private:
     static bool lookupProperty(JSContext* cx, HandleObject obj, HandleId id,
-                               MutableHandleObject objp, MutableHandleShape propp);
+                               MutableHandleObject objp, MutableHandle<PropertyResult> propp);
     static bool hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
     static bool getProperty(JSContext* cx, HandleObject obj, HandleValue receiver, HandleId id,
                             MutableHandleValue vp);
@@ -425,6 +425,23 @@ class ModuleEnvironmentObject : public EnvironmentObject
 typedef Rooted<ModuleEnvironmentObject*> RootedModuleEnvironmentObject;
 typedef Handle<ModuleEnvironmentObject*> HandleModuleEnvironmentObject;
 typedef MutableHandle<ModuleEnvironmentObject*> MutableHandleModuleEnvironmentObject;
+
+class WasmFunctionCallObject : public EnvironmentObject
+{
+    // Currently WasmFunctionCallObjects do not use their scopes in a
+    // meaningful way. However, it is an invariant of DebugEnvironments that
+    // environments kept in those maps have live scopes, thus this strong
+    // reference.
+    static const uint32_t SCOPE_SLOT = 1;
+
+  public:
+    static const Class class_;
+
+    static const uint32_t RESERVED_SLOTS = 2;
+
+    static WasmFunctionCallObject* createHollowForDebug(JSContext* cx,
+                                                        Handle<WasmFunctionScope*> scope);
+};
 
 class LexicalEnvironmentObject : public EnvironmentObject
 {
@@ -661,6 +678,12 @@ class MOZ_RAII EnvironmentIter
     EnvironmentIter(JSContext* cx, AbstractFramePtr frame, jsbytecode* pc
                     MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
 
+    // Constructing from an environment, scope and frame. The frame is given
+    // to initialize to proper enclosing environment/scope.
+    EnvironmentIter(JSContext* cx, JSObject* env, Scope* scope, AbstractFramePtr frame
+                    MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+
+
     bool done() const {
         return si_.done();
     }
@@ -872,7 +895,8 @@ class DebugEnvironmentProxy : public ProxyObject
 
     // Get a property by 'id', but returns sentinel values instead of throwing
     // on exceptional cases.
-    bool getMaybeSentinelValue(JSContext* cx, HandleId id, MutableHandleValue vp);
+    static bool getMaybeSentinelValue(JSContext* cx, Handle<DebugEnvironmentProxy*> env,
+                                      HandleId id, MutableHandleValue vp);
 
     // Returns true iff this is a function environment with its own this-binding
     // (all functions except arrow functions and generator expression lambdas).
@@ -927,7 +951,7 @@ class DebugEnvironments
     static void onPopGeneric(JSContext* cx, const EnvironmentIter& ei);
 
   public:
-    void mark(JSTracer* trc);
+    void trace(JSTracer* trc);
     void sweep(JSRuntime* rt);
     void finish();
 #ifdef JS_GC_ZEAL
@@ -936,7 +960,7 @@ class DebugEnvironments
 
     // If a live frame has a synthesized entry in missingEnvs, make sure it's not
     // collected.
-    void markLiveFrame(JSTracer* trc, AbstractFramePtr frame);
+    void traceLiveFrame(JSTracer* trc, AbstractFramePtr frame);
 
     static DebugEnvironmentProxy* hasDebugEnvironment(JSContext* cx, EnvironmentObject& env);
     static bool addDebugEnvironment(JSContext* cx, Handle<EnvironmentObject*> env,
@@ -984,6 +1008,7 @@ JSObject::is<js::EnvironmentObject>() const
     return is<js::CallObject>() ||
            is<js::VarEnvironmentObject>() ||
            is<js::ModuleEnvironmentObject>() ||
+           is<js::WasmFunctionCallObject>() ||
            is<js::LexicalEnvironmentObject>() ||
            is<js::WithEnvironmentObject>() ||
            is<js::NonSyntacticVariablesObject>() ||
@@ -1107,6 +1132,10 @@ InitFunctionEnvironmentObjects(JSContext* cx, AbstractFramePtr frame);
 
 MOZ_MUST_USE bool
 PushVarEnvironmentObject(JSContext* cx, HandleScope scope, AbstractFramePtr frame);
+
+MOZ_MUST_USE bool
+GetFrameEnvironmentAndScope(JSContext* cx, AbstractFramePtr frame, jsbytecode* pc,
+                            MutableHandleObject env, MutableHandleScope scope);
 
 #ifdef DEBUG
 bool

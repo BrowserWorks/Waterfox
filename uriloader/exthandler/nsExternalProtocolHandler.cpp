@@ -91,6 +91,7 @@ nsExtProtocolChannel::nsExtProtocolChannel(nsIURI* aURI,
   : mUrl(aURI)
   , mOriginalURI(aURI)
   , mStatus(NS_OK)
+  , mLoadFlags(nsIRequest::LOAD_NORMAL)
   , mWasOpened(false)
   , mConnectedParent(false)
   , mLoadInfo(aLoadInfo)
@@ -225,7 +226,10 @@ NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen2(nsIStreamListener *aListener)
 {
   nsCOMPtr<nsIStreamListener> listener = aListener;
   nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_FAILED(rv)) {
+    mCallbacks = nullptr;
+    return rv;
+  }
   return AsyncOpen(listener, nullptr);
 }
 
@@ -396,6 +400,12 @@ NS_IMETHODIMP nsExtProtocolChannel::SetParentListener(HttpChannelParentListener*
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::NotifyTrackingProtectionDisabled()
+{
+  // nothing to do
+  return NS_OK;
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::NotifyTrackingResource()
 {
   // nothing to do
   return NS_OK;

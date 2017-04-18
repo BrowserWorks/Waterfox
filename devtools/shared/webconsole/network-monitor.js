@@ -86,9 +86,16 @@ function matchRequest(channel, filters) {
 
   if (filters.outerWindowID) {
     let topFrame = NetworkHelper.getTopFrameForRequest(channel);
-    if (topFrame && topFrame.outerWindowID &&
-        topFrame.outerWindowID == filters.outerWindowID) {
-      return true;
+    // topFrame is typically null for some chrome requests like favicons
+    if (topFrame) {
+      try {
+        if (topFrame.outerWindowID == filters.outerWindowID) {
+          return true;
+        }
+      } catch (e) {
+        // outerWindowID getter from browser.xml (non-remote <xul:browser>) may
+        // throw when closing a tab while resources are still loading.
+      }
     }
   }
 
@@ -1074,10 +1081,18 @@ NetworkMonitor.prototype = {
     }
 
     // Determine the cause and if this is an XHR request.
-    let causeType = channel.loadInfo.externalContentPolicyType;
-    let loadingPrincipal = channel.loadInfo.loadingPrincipal;
-    let causeUri = loadingPrincipal ? loadingPrincipal.URI : null;
+    let causeType = Ci.nsIContentPolicy.TYPE_OTHER;
+    let causeUri = null;
     let stacktrace;
+
+    if (channel.loadInfo) {
+      causeType = channel.loadInfo.externalContentPolicyType;
+      const { loadingPrincipal } = channel.loadInfo;
+      if (loadingPrincipal && loadingPrincipal.URI) {
+        causeUri = loadingPrincipal.URI.spec;
+      }
+    }
+
     // If this is the parent process, there is no stackTraceCollector - the stack
     // trace will be added in NetworkMonitorChild._onNewEvent.
     if (this.owner.stackTraceCollector) {
@@ -1085,8 +1100,8 @@ NetworkMonitor.prototype = {
     }
 
     event.cause = {
-      type: causeType,
-      loadingDocumentUri: causeUri ? causeUri.spec : null,
+      type: causeTypeToString(causeType),
+      loadingDocumentUri: causeUri,
       stacktrace
     };
 
@@ -1474,7 +1489,7 @@ NetworkMonitor.prototype = {
       Services.obs.removeObserver(this._httpResponseExaminer,
                                   "http-on-examine-cached-response");
       Services.obs.removeObserver(this._httpModifyExaminer,
-                                  "http-on-modify-request", false);
+                                  "http-on-modify-request");
     }
 
     Services.obs.removeObserver(this._serviceWorkerRequest,
@@ -1503,8 +1518,6 @@ NetworkMonitor.prototype = {
  * data to the WebConsoleActor or to a NetworkEventActor.
  *
  * @constructor
- * @param number appId
- *        The web appId of the child process.
  * @param number outerWindowID
  *        The outerWindowID of the TabActor's main window.
  * @param nsIMessageManager messageManager
@@ -1514,8 +1527,7 @@ NetworkMonitor.prototype = {
  * @param object owner
  *        The WebConsoleActor that is listening for the network requests.
  */
-function NetworkMonitorChild(appId, outerWindowID, messageManager, conn, owner) {
-  this.appId = appId;
+function NetworkMonitorChild(outerWindowID, messageManager, conn, owner) {
   this.outerWindowID = outerWindowID;
   this.conn = conn;
   this.owner = owner;
@@ -1529,7 +1541,6 @@ function NetworkMonitorChild(appId, outerWindowID, messageManager, conn, owner) 
 exports.NetworkMonitorChild = NetworkMonitorChild;
 
 NetworkMonitorChild.prototype = {
-  appId: null,
   owner: null,
   _netEvents: null,
   _saveRequestAndResponseBodies: true,
@@ -1575,7 +1586,6 @@ NetworkMonitorChild.prototype = {
     mm.addMessageListener(`${this._msgName}:newEvent`, this._onNewEvent);
     mm.addMessageListener(`${this._msgName}:updateEvent`, this._onUpdateEvent);
     mm.sendAsyncMessage(this._msgName, {
-      appId: this.appId,
       outerWindowID: this.outerWindowID,
       action: "start",
     });
@@ -2042,3 +2052,36 @@ function gSequenceId() {
   return gSequenceId.n++;
 }
 gSequenceId.n = 1;
+
+/**
+ * Convert a nsIContentPolicy constant to a display string
+ */
+const LOAD_CAUSE_STRINGS = {
+  [Ci.nsIContentPolicy.TYPE_INVALID]: "invalid",
+  [Ci.nsIContentPolicy.TYPE_OTHER]: "other",
+  [Ci.nsIContentPolicy.TYPE_SCRIPT]: "script",
+  [Ci.nsIContentPolicy.TYPE_IMAGE]: "img",
+  [Ci.nsIContentPolicy.TYPE_STYLESHEET]: "stylesheet",
+  [Ci.nsIContentPolicy.TYPE_OBJECT]: "object",
+  [Ci.nsIContentPolicy.TYPE_DOCUMENT]: "document",
+  [Ci.nsIContentPolicy.TYPE_SUBDOCUMENT]: "subdocument",
+  [Ci.nsIContentPolicy.TYPE_REFRESH]: "refresh",
+  [Ci.nsIContentPolicy.TYPE_XBL]: "xbl",
+  [Ci.nsIContentPolicy.TYPE_PING]: "ping",
+  [Ci.nsIContentPolicy.TYPE_XMLHTTPREQUEST]: "xhr",
+  [Ci.nsIContentPolicy.TYPE_OBJECT_SUBREQUEST]: "objectSubdoc",
+  [Ci.nsIContentPolicy.TYPE_DTD]: "dtd",
+  [Ci.nsIContentPolicy.TYPE_FONT]: "font",
+  [Ci.nsIContentPolicy.TYPE_MEDIA]: "media",
+  [Ci.nsIContentPolicy.TYPE_WEBSOCKET]: "websocket",
+  [Ci.nsIContentPolicy.TYPE_CSP_REPORT]: "csp",
+  [Ci.nsIContentPolicy.TYPE_XSLT]: "xslt",
+  [Ci.nsIContentPolicy.TYPE_BEACON]: "beacon",
+  [Ci.nsIContentPolicy.TYPE_FETCH]: "fetch",
+  [Ci.nsIContentPolicy.TYPE_IMAGESET]: "imageset",
+  [Ci.nsIContentPolicy.TYPE_WEB_MANIFEST]: "webManifest"
+};
+
+function causeTypeToString(causeType) {
+  return LOAD_CAUSE_STRINGS[causeType] || "unknown";
+}

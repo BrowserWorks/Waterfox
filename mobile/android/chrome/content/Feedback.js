@@ -31,10 +31,10 @@ var Feedback = {
     // This will be used by the page to determine it's being loaded directly by the browser,
     // instead of by the user visiting the page, e.g. through browser history.
     function loadListener(event) {
-      browser.removeEventListener("DOMContentLoaded", loadListener, false);
+      browser.removeEventListener("DOMContentLoaded", loadListener);
       browser.contentDocument.dispatchEvent(new CustomEvent("FeedbackPrompted"));
     }
-    browser.addEventListener("DOMContentLoaded", loadListener, false);
+    browser.addEventListener("DOMContentLoaded", loadListener);
   },
 
   handleEvent: function(event) {
@@ -48,7 +48,7 @@ var Feedback = {
         break;
 
       case "FeedbackMaybeLater":
-        Messaging.sendRequest({ type: "Feedback:MaybeLater" });
+        GlobalEventDispatcher.sendRequest({ type: "Feedback:MaybeLater" });
         break;
     }
 
@@ -58,7 +58,7 @@ var Feedback = {
 
   _isAllowed: function(node) {
     let uri = node.ownerDocument.documentURIObject;
-    let feedbackURI = Services.io.newURI(this._feedbackURL, null, null);
+    let feedbackURI = Services.io.newURI(this._feedbackURL);
     return uri.prePath === feedbackURI.prePath;
   }
 };

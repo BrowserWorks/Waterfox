@@ -86,6 +86,20 @@ DocManager::FindAccessibleInCache(nsINode* aNode) const
 }
 
 void
+DocManager::RemoveFromXPCDocumentCache(DocAccessible* aDocument)
+{
+  xpcAccessibleDocument* xpcDoc = mXPCDocumentCache.GetWeak(aDocument);
+  if (xpcDoc) {
+    xpcDoc->Shutdown();
+    mXPCDocumentCache.Remove(aDocument);
+  }
+
+  if (!HasXPCDocuments()) {
+    MaybeShutdownAccService(nsAccessibilityService::eXPCOM);
+  }
+}
+
+void
 DocManager::NotifyOfDocumentShutdown(DocAccessible* aDocument,
                                      nsIDocument* aDOMDocument)
 {
@@ -99,23 +113,28 @@ DocManager::NotifyOfDocumentShutdown(DocAccessible* aDocument,
     return;
   }
 
-  xpcAccessibleDocument* xpcDoc = mXPCDocumentCache.GetWeak(aDocument);
-  if (xpcDoc) {
-    xpcDoc->Shutdown();
-    mXPCDocumentCache.Remove(aDocument);
-  }
-
+  RemoveFromXPCDocumentCache(aDocument);
   mDocAccessibleCache.Remove(aDOMDocument);
 }
 
 void
-DocManager::NotifyOfRemoteDocShutdown(DocAccessibleParent* aDoc)
+DocManager::RemoveFromRemoteXPCDocumentCache(DocAccessibleParent* aDoc)
 {
   xpcAccessibleDocument* doc = GetCachedXPCDocument(aDoc);
   if (doc) {
     doc->Shutdown();
     sRemoteXPCDocumentCache->Remove(aDoc);
   }
+
+  if (sRemoteXPCDocumentCache && sRemoteXPCDocumentCache->Count() == 0) {
+    MaybeShutdownAccService(nsAccessibilityService::eXPCOM);
+  }
+}
+
+void
+DocManager::NotifyOfRemoteDocShutdown(DocAccessibleParent* aDoc)
+{
+  RemoveFromRemoteXPCDocumentCache(aDoc);
 }
 
 xpcAccessibleDocument*
@@ -502,34 +521,6 @@ DocManager::CreateDocOrRootAccessible(nsIDocument* aDocument)
     docAcc->FireDelayedEvent(nsIAccessibleEvent::EVENT_REORDER,
                              ApplicationAcc());
 
-    if (IPCAccessibilityActive()) {
-      nsIDocShell* docShell = aDocument->GetDocShell();
-      if (docShell) {
-        nsCOMPtr<nsITabChild> tabChild = docShell->GetTabChild();
-
-        // XXX We may need to handle the case that we don't have a tab child
-        // differently.  It may be that this will cause us to fail to notify
-        // the parent process about important accessible documents.
-        if (tabChild) {
-          DocAccessibleChild* ipcDoc = new DocAccessibleChild(docAcc);
-          docAcc->SetIPCDoc(ipcDoc);
-
-#if defined(XP_WIN)
-          IAccessibleHolder holder(CreateHolderFromAccessible(docAcc));
-#endif
-
-          static_cast<TabChild*>(tabChild.get())->
-            SendPDocAccessibleConstructor(ipcDoc, nullptr, 0,
-#if defined(XP_WIN)
-                                          AccessibleWrap::GetChildIDFor(docAcc),
-                                          holder
-#else
-                                          0, 0
-#endif
-                                          );
-        }
-      }
-    }
   } else {
     parentDocAcc->BindChildDocument(docAcc);
   }

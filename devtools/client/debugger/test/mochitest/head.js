@@ -1,4 +1,4 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+  /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
@@ -29,7 +29,7 @@ promise = Cu.import("resource://devtools/shared/deprecated-sync-thenables.js", {
 const EXAMPLE_URL = "http://example.com/browser/devtools/client/debugger/test/mochitest/";
 const FRAME_SCRIPT_URL = getRootDirectory(gTestPath) + "code_frame-script.js";
 const CHROME_URL = "chrome://mochitests/content/browser/devtools/client/debugger/test/mochitest/";
-const CHROME_URI = Services.io.newURI(CHROME_URL, null, null);
+const CHROME_URI = Services.io.newURI(CHROME_URL);
 
 Services.prefs.setBoolPref("devtools.debugger.new-debugger-frontend", false);
 
@@ -109,11 +109,11 @@ this.removeTab = function removeTab(aTab, aWindow) {
   let tabContainer = targetBrowser.tabContainer;
 
   tabContainer.addEventListener("TabClose", function onClose(aEvent) {
-    tabContainer.removeEventListener("TabClose", onClose, false);
+    tabContainer.removeEventListener("TabClose", onClose);
 
     info("Tab removed and finished closing.");
     deferred.resolve();
-  }, false);
+  });
 
   targetBrowser.removeTab(aTab);
   return deferred.promise;
@@ -1348,4 +1348,3 @@ function* initWorkerDebugger(TAB_URL, WORKER_URL) {
 
   return {client, tab, tabClient, workerClient, toolbox, gDebugger};
 }
-

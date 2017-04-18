@@ -31,7 +31,6 @@
 class CSSRuleListImpl;
 class nsCSSRuleProcessor;
 class nsIURI;
-class nsMediaList;
 class nsMediaQueryResultCacheKey;
 class nsStyleSet;
 class nsPresContext;
@@ -116,20 +115,10 @@ public:
 
   bool HasRules() const;
 
-  /**
-   * Set the stylesheet to be enabled.  This may or may not make it
-   * applicable.  Note that this WILL inform the sheet's document of
-   * its new applicable state if the state changes but WILL NOT call
-   * BeginUpdate() or EndUpdate() on the document -- calling those is
-   * the caller's responsibility.  This allows use of SetEnabled when
-   * batched updates are desired.  If you want updates handled for
-   * you, see nsIDOMStyleSheet::SetDisabled().
-   */
-  void SetEnabled(bool aEnabled);
-
   // style sheet owner info
   CSSStyleSheet* GetParentSheet() const;  // may be null
-  void SetOwningDocument(nsIDocument* aDocument);
+  void SetAssociatedDocument(nsIDocument* aDocument,
+                             DocumentAssociationMode aAssociationMode);
 
   // Find the ID of the owner inner window.
   uint64_t FindOwningWindowInnerID() const;
@@ -147,9 +136,6 @@ public:
 
   nsresult DeleteRuleFromGroup(css::GroupRule* aGroup, uint32_t aIndex);
   nsresult InsertRuleIntoGroup(const nsAString& aRule, css::GroupRule* aGroup, uint32_t aIndex, uint32_t* _retval);
-
-  void SetTitle(const nsAString& aTitle) { mTitle = aTitle; }
-  void SetMedia(nsMediaList* aMedia);
 
   void SetOwnerRule(css::ImportRule* aOwnerRule) { mOwnerRule = aOwnerRule; /* Not ref counted */ }
   css::ImportRule* GetOwnerRule() const { return mOwnerRule; }
@@ -205,14 +191,11 @@ public:
     mScopeElement = aScopeElement;
   }
 
-  // WebIDL StyleSheet API
-  nsMediaList* Media() final;
-
   // WebIDL CSSStyleSheet API
   // Can't be inline because we can't include ImportRule here.  And can't be
   // called GetOwnerRule because that would be ambiguous with the ImportRule
   // version.
-  nsIDOMCSSRule* GetDOMOwnerRule() const final;
+  css::Rule* GetDOMOwnerRule() const final;
 
   void WillDirty();
   void DidDirty();
@@ -238,9 +221,6 @@ protected:
   // Drop our reference to mRuleCollection
   void DropRuleCollection();
 
-  // Drop our reference to mMedia
-  void DropMedia();
-
   // Unlink our inner, if needed, for cycle collection
   void UnlinkInner();
   // Traverse our inner, if needed, for cycle collection
@@ -253,7 +233,8 @@ protected:
                               uint32_t aIndex, ErrorResult& aRv);
   void DeleteRuleInternal(uint32_t aIndex, ErrorResult& aRv);
 
-  RefPtr<nsMediaList> mMedia;
+  void EnabledStateChangedInternal();
+
   RefPtr<CSSStyleSheet> mNext;
   CSSStyleSheet*        mParent;    // weak ref
   css::ImportRule*      mOwnerRule; // weak ref
@@ -268,7 +249,6 @@ protected:
   AutoTArray<nsCSSRuleProcessor*, 8>* mRuleProcessors;
   nsTArray<nsStyleSet*> mStyleSets;
 
-  friend class ::nsMediaList;
   friend class ::nsCSSRuleProcessor;
   friend class mozilla::StyleSheet;
   friend struct mozilla::ChildSheetListBuilder;

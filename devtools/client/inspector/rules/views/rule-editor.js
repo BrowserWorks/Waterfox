@@ -6,8 +6,7 @@
 
 const {l10n} = require("devtools/shared/inspector/css-logic");
 const {ELEMENT_STYLE} = require("devtools/shared/specs/styles");
-const {PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/utils");
-const {Rule} = require("devtools/client/inspector/rules/models/rule");
+const Rule = require("devtools/client/inspector/rules/models/rule");
 const {InplaceEditor, editableField, editableItem} =
       require("devtools/client/shared/inplace-editor");
 const {TextPropertyEditor} =
@@ -18,7 +17,7 @@ const {
   promiseWarn
 } = require("devtools/client/inspector/shared/utils");
 const {
-  parseDeclarations,
+  parseNamedDeclarations,
   parsePseudoClassesAndAttributes,
   SELECTOR_ATTRIBUTE,
   SELECTOR_ELEMENT,
@@ -32,6 +31,8 @@ const {Task} = require("devtools/shared/task");
 const STYLE_INSPECTOR_PROPERTIES = "devtools/shared/locales/styleinspector.properties";
 const {LocalizationHelper} = require("devtools/shared/l10n");
 const STYLE_INSPECTOR_L10N = new LocalizationHelper(STYLE_INSPECTOR_PROPERTIES);
+
+const PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
 /**
  * RuleEditor is responsible for the following:
@@ -137,7 +138,7 @@ RuleEditor.prototype = {
       this.selectorText.addEventListener("click", event => {
         // Clicks within the selector shouldn't propagate any further.
         event.stopPropagation();
-      }, false);
+      });
 
       editableField({
         element: this.selectorText,
@@ -197,11 +198,11 @@ RuleEditor.prototype = {
         }
         // Cleanup the _ruleViewIsEditing flag
         this._ruleViewIsEditing = false;
-      }, false);
+      });
 
       this.element.addEventListener("mousedown", () => {
         this.doc.defaultView.focus();
-      }, false);
+      });
 
       // Create a property editor when the close brace is clicked.
       editableItem({ element: this.closeBrace }, () => {
@@ -452,7 +453,7 @@ RuleEditor.prototype = {
 
     // Auto-close the input if multiple rules get pasted into new property.
     this.editor.input.addEventListener("paste",
-      blurOnMultipleProperties(this.rule.cssProperties), false);
+      blurOnMultipleProperties(this.rule.cssProperties));
   },
 
   /**
@@ -472,8 +473,7 @@ RuleEditor.prototype = {
     // case, we're creating a new declaration, it doesn't make sense to accept
     // these entries
     this.multipleAddedProperties =
-      parseDeclarations(this.rule.cssProperties.isKnown, value, true)
-      .filter(d => d.name);
+      parseNamedDeclarations(this.rule.cssProperties.isKnown, value, true);
 
     // Blur the editor field now and deal with adding declarations later when
     // the field gets destroyed (see _newPropertyDestroy)
@@ -617,4 +617,4 @@ RuleEditor.prototype = {
   }
 };
 
-exports.RuleEditor = RuleEditor;
+module.exports = RuleEditor;

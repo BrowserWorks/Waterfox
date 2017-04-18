@@ -39,7 +39,7 @@ var gSyncUI = {
   _syncStartTime: 0,
   _syncAnimationTimer: 0,
 
-  init: function () {
+  init() {
     Cu.import("resource://services-common/stringbundle.js");
 
     // Proceed to set up the UI if Sync has already started up.
@@ -62,7 +62,7 @@ var gSyncUI = {
     // was triggered.
     window.addEventListener("unload", function onUnload() {
       gSyncUI._unloaded = true;
-      window.removeEventListener("unload", onUnload, false);
+      window.removeEventListener("unload", onUnload);
       Services.obs.removeObserver(gSyncUI, "weave:service:ready");
       Services.obs.removeObserver(gSyncUI, "quit-application");
 
@@ -71,7 +71,7 @@ var gSyncUI = {
           Services.obs.removeObserver(gSyncUI, topic);
         });
       }
-    }, false);
+    });
   },
 
   initUI: function SUI_initUI() {
@@ -137,15 +137,15 @@ var gSyncUI = {
   // Note that we don't show login errors in a notification bar here, but do
   // still need to track a login-failed state so the "Tools" menu updates
   // with the correct state.
-  _loginFailed: function () {
+  loginFailed() {
     // If Sync isn't already ready, we don't want to force it to initialize
     // by referencing Weave.Status - and it isn't going to be accurate before
     // Sync is ready anyway.
     if (!this.weaveService.ready) {
-      this.log.debug("_loginFailed has sync not ready, so returning false");
+      this.log.debug("loginFailed has sync not ready, so returning false");
       return false;
     }
-    this.log.debug("_loginFailed has sync state=${sync}",
+    this.log.debug("loginFailed has sync state=${sync}",
                    { sync: Weave.Status.login});
     return Weave.Status.login == Weave.LOGIN_FAILED_LOGIN_REJECTED;
   },
@@ -163,7 +163,7 @@ var gSyncUI = {
       if (!gBrowser)
         return Promise.resolve();
 
-      let loginFailed = this._loginFailed();
+      let loginFailed = this.loginFailed();
 
       // Start off with a clean slate
       document.getElementById("sync-reauth-state").hidden = true;
@@ -242,7 +242,7 @@ var gSyncUI = {
     this.updateUI();
   },
 
-  _getAppName: function () {
+  _getAppName() {
     let brand = new StringBundle("chrome://branding/locale/brand.properties");
     return brand.get("brandShortName");
   },
@@ -266,7 +266,7 @@ var gSyncUI = {
   // via the UI.
   handleToolbarButton() {
     this._needsSetup().then(needsSetup => {
-      if (needsSetup || this._loginFailed()) {
+      if (needsSetup || this.loginFailed()) {
         this.openSetup();
       } else {
         this.doSync();
@@ -304,7 +304,7 @@ var gSyncUI = {
   },
 
   // Open the legacy-sync device pairing UI. Note used for FxA Sync.
-  openAddDevice: function () {
+  openAddDevice() {
     if (!Weave.Utils.ensureMPUnlocked())
       return;
 
@@ -316,11 +316,11 @@ var gSyncUI = {
                         "syncAddDevice", "centerscreen,chrome,resizable=no");
   },
 
-  openPrefs: function (entryPoint) {
+  openPrefs(entryPoint) {
     openPreferences("paneSync", { urlParams: { entrypoint: entryPoint } });
   },
 
-  openSignInAgainPage: function (entryPoint = "syncbutton") {
+  openSignInAgainPage(entryPoint = "syncbutton") {
     gFxAccounts.openSignInAgainPage(entryPoint);
   },
 
@@ -380,7 +380,7 @@ var gSyncUI = {
 
     let needsSetup = yield this._needsSetup();
     let needsVerification = yield this._needsVerification();
-    let loginFailed = this._loginFailed();
+    let loginFailed = this.loginFailed();
     // This is a little messy as the Sync buttons are 1/2 Sync related and
     // 1/2 FxA related - so for some strings we use Sync strings, but for
     // others we reach into gFxAccounts for strings.
@@ -399,8 +399,7 @@ var gSyncUI = {
       try {
         let lastSync = new Date(Services.prefs.getCharPref("services.sync.lastSync"));
         tooltiptext = this.formatLastSyncDate(lastSync);
-      }
-      catch (e) {
+      } catch (e) {
         // pref doesn't exist (which will be the case until we've seen the
         // first successful sync) or is invalid (which should be impossible!)
         // Just leave tooltiptext as the empty string in these cases, which
@@ -423,25 +422,25 @@ var gSyncUI = {
     }
   }),
 
-  formatLastSyncDate: function(date) {
+  formatLastSyncDate(date) {
     let dateFormat;
     let sixDaysAgo = (() => {
-      let date = new Date();
-      date.setDate(date.getDate() - 6);
-      date.setHours(0, 0, 0, 0);
-      return date;
+      let tempDate = new Date();
+      tempDate.setDate(tempDate.getDate() - 6);
+      tempDate.setHours(0, 0, 0, 0);
+      return tempDate;
     })();
     // It may be confusing for the user to see "Last Sync: Monday" when the last sync was a indeed a Monday but 3 weeks ago
     if (date < sixDaysAgo) {
-      dateFormat = {month: 'long', day: 'numeric'};
+      dateFormat = {month: "long", day: "numeric"};
     } else {
-      dateFormat = {weekday: 'long', hour: 'numeric', minute: 'numeric'};
+      dateFormat = {weekday: "long", hour: "numeric", minute: "numeric"};
     }
     let lastSyncDateString = date.toLocaleDateString(undefined, dateFormat);
     return this._stringBundle.formatStringFromName("lastSync2.label", [lastSyncDateString], 1);
   },
 
-  onClientsSynced: function() {
+  onClientsSynced() {
     let broadcaster = document.getElementById("sync-syncnow-state");
     if (broadcaster) {
       if (Weave.Service.clientsEngine.stats.numClients > 1) {

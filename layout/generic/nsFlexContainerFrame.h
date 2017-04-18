@@ -56,29 +56,30 @@ public:
   class FlexLine;
   class FlexboxAxisTracker;
   struct StrutInfo;
+  class CachedMeasuringReflowResult;
 
   // nsIFrame overrides
   void Init(nsIContent*       aContent,
             nsContainerFrame* aParent,
             nsIFrame*         aPrevInFlow) override;
 
-  virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
-                                const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) override;
+  void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                        const nsRect&           aDirtyRect,
+                        const nsDisplayListSet& aLists) override;
 
-  virtual void Reflow(nsPresContext*           aPresContext,
-                      ReflowOutput&     aDesiredSize,
-                      const ReflowInput& aReflowInput,
-                      nsReflowStatus&          aStatus) override;
+  void MarkIntrinsicISizesDirty() override;
 
-  virtual nscoord
-    GetMinISize(nsRenderingContext* aRenderingContext) override;
-  virtual nscoord
-    GetPrefISize(nsRenderingContext* aRenderingContext) override;
+  void Reflow(nsPresContext* aPresContext,
+              ReflowOutput& aDesiredSize,
+              const ReflowInput& aReflowInput,
+              nsReflowStatus& aStatus) override;
 
-  virtual nsIAtom* GetType() const override;
+  nscoord GetMinISize(nsRenderingContext* aRenderingContext) override;
+  nscoord GetPrefISize(nsRenderingContext* aRenderingContext) override;
+
+  nsIAtom* GetType() const override;
 #ifdef DEBUG_FRAME_DUMP
-  virtual nsresult GetFrameName(nsAString& aResult) const override;
+  nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
   nscoord GetLogicalBaseline(mozilla::WritingMode aWM) const override;
@@ -193,6 +194,18 @@ protected:
                                      nsIFrame* aChildFrame,
                                      const ReflowInput& aParentReflowInput,
                                      const FlexboxAxisTracker& aAxisTracker);
+
+  /**
+   * This method gets a cached measuring reflow for a flex item, or does it and
+   * caches it.
+   *
+   * This avoids exponential reflows, see the comment on
+   * CachedMeasuringReflowResult.
+   */
+  const CachedMeasuringReflowResult& MeasureAscentAndHeightForFlexItem(
+    FlexItem& aItem,
+    nsPresContext* aPresContext,
+    ReflowInput& aChildReflowInput);
 
   /**
    * This method performs a "measuring" reflow to get the content height of

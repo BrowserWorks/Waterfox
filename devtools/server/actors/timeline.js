@@ -26,7 +26,7 @@ const events = require("sdk/event/core");
 /**
  * The timeline actor pops and forwards timeline markers registered in docshells.
  */
-var TimelineActor = exports.TimelineActor = protocol.ActorClassWithSpec(timelineSpec, {
+exports.TimelineActor = protocol.ActorClassWithSpec(timelineSpec, {
   /**
    * Initializes this actor with the provided connection and tab actor.
    */
@@ -37,15 +37,6 @@ var TimelineActor = exports.TimelineActor = protocol.ActorClassWithSpec(timeline
 
     this._onTimelineEvent = this._onTimelineEvent.bind(this);
     events.on(this.bridge, "*", this._onTimelineEvent);
-  },
-
-  /**
-   * The timeline actor is the first (and last) in its hierarchy to use
-   * protocol.js so it doesn't have a parent protocol actor that takes care of
-   * its lifetime. So it needs a disconnect method to cleanup.
-   */
-  disconnect: function () {
-    this.destroy();
   },
 
   /**

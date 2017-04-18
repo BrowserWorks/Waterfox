@@ -179,6 +179,7 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     destroyZoneCallback(nullptr),
     sweepZoneCallback(nullptr),
     compartmentNameCallback(nullptr),
+    externalStringSizeofCallback(nullptr),
     activityCallback(nullptr),
     activityCallbackArg(nullptr),
     requestDepth(0),
@@ -221,6 +222,7 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     keepAtoms_(0),
     trustedPrincipals_(nullptr),
     beingDestroyed_(false),
+    allowContentJS_(true),
     atoms_(nullptr),
     atomsCompartment_(nullptr),
     staticStrings(nullptr),
@@ -876,6 +878,7 @@ void
 JSRuntime::setUsedByExclusiveThread(Zone* zone)
 {
     MOZ_ASSERT(!zone->usedByExclusiveThread);
+    MOZ_ASSERT(!zone->wasGCStarted());
     zone->usedByExclusiveThread = true;
     numExclusiveThreads++;
 }

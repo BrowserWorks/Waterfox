@@ -28,7 +28,7 @@ function createProxyTest(html, callback) {
       uri: testURI
     });
 
-    element.addEventListener("DOMContentLoaded", onDOMReady, false);
+    element.addEventListener("DOMContentLoaded", onDOMReady);
 
     function onDOMReady() {
       // Reload frame after getting principal from `testURI`
@@ -39,8 +39,7 @@ function createProxyTest(html, callback) {
       }
 
       assert.equal(element.getAttribute("src"), url, "correct URL loaded");
-      element.removeEventListener("DOMContentLoaded", onDOMReady,
-                                                  false);
+      element.removeEventListener("DOMContentLoaded", onDOMReady);
       let xrayWindow = element.contentWindow;
       let rawWindow = xrayWindow.wrappedJSObject;
 
@@ -175,7 +174,7 @@ exports["test postMessage"] = createProxyTest(html, function (helper, assert) {
   // Listen without proxies, to check that it will work in regular case
   // simulate listening from a web document.
   ifWindow.addEventListener("message", function listener(event) {
-    ifWindow.removeEventListener("message", listener, false);
+    ifWindow.removeEventListener("message", listener);
     // As we are in system principal, event is an XrayWrapper
     // xrays use current compartments when calling postMessage method.
     // Whereas js proxies was using postMessage method compartment,
@@ -188,7 +187,7 @@ exports["test postMessage"] = createProxyTest(html, function (helper, assert) {
                      "message data is correct");
 
     helper.done();
-  }, false);
+  });
 
   helper.createWorker(
     'new ' + function ContentScriptScope() {
@@ -423,9 +422,9 @@ exports["test Object Tag"] = createProxyTest("", function (helper) {
 
   helper.createWorker(
     'new ' + function ContentScriptScope() {
-      // <object>, <embed> and other tags return typeof 'function'
+      // <object>, <embed> and other tags return typeof 'object'
       let flash = document.createElement("object");
-      assert(typeof flash == "function", "<object> is typeof 'function'");
+      assert(typeof flash == "object", "<object> is typeof 'function'");
       assert(flash.toString().match(/\[object HTMLObjectElement.*\]/), "<object> is HTMLObjectElement");
       assert("setAttribute" in flash, "<object> has a setAttribute method");
       done();

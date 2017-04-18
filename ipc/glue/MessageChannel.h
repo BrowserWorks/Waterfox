@@ -11,7 +11,6 @@
 #include "base/basictypes.h"
 #include "base/message_loop.h"
 
-#include "mozilla/Function.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Vector.h"
@@ -26,6 +25,7 @@
 #include "MessageLink.h"
 
 #include <deque>
+#include <functional>
 #include <stack>
 #include <math.h>
 
@@ -92,6 +92,10 @@ class MessageChannel : HasResultCodes
     explicit MessageChannel(IToplevelProtocol *aListener);
     ~MessageChannel();
 
+    IToplevelProtocol *Listener() const {
+        return mListener;
+    }
+
     // "Open" from the perspective of the transport layer; the underlying
     // socketpair/pipe should already be created.
     //
@@ -126,7 +130,7 @@ class MessageChannel : HasResultCodes
     // Call aInvoke for each pending message until it returns false.
     // XXX: You must get permission from an IPC peer to use this function
     //      since it requires custom deserialization and re-orders events.
-    void PeekMessages(mozilla::function<bool(const Message& aMsg)> aInvoke);
+    void PeekMessages(std::function<bool(const Message& aMsg)> aInvoke);
 
     // Misc. behavioral traits consumers can request for this channel
     enum ChannelFlags {
@@ -346,10 +350,6 @@ class MessageChannel : HasResultCodes
 
     void EnteredSyncSend();
     void ExitedSyncSend();
-
-    IToplevelProtocol *Listener() const {
-        return mListener;
-    }
 
     void DebugAbort(const char* file, int line, const char* cond,
                     const char* why,

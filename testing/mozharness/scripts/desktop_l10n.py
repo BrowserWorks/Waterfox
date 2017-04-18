@@ -9,6 +9,7 @@
 This script manages Desktop repacks for nightly builds.
 """
 import os
+import glob
 import re
 import sys
 import time
@@ -800,6 +801,38 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         else:
             self.error('failed to upload %s' % locale)
             ret = FAILURE
+
+        if ret == FAILURE:
+            # If we failed above, we shouldn't even attempt a SIMPLE_NAME move
+            # even if we are configured to do so
+            return ret
+
+        # XXX Move the files to a SIMPLE_NAME format until we can enable
+        #     Simple names in the build system
+        if self.config.get("simple_name_move"):
+            # Assume an UPLOAD PATH
+            upload_target = self.config["upload_env"]["UPLOAD_PATH"]
+            target_path = os.path.join(upload_target, locale)
+            self.mkdir_p(target_path)
+            glob_name = "*.%s.*" % locale
+            matches = (glob.glob(os.path.join(upload_target, glob_name)) +
+                       glob.glob(os.path.join(upload_target, 'update', glob_name)) +
+                       glob.glob(os.path.join(upload_target, '*', 'xpi', glob_name)))
+            targets_exts = ["tar.bz2", "langpack.xpi", "complete.mar", "checksums"]
+            targets = ["target.%s" % ext for ext in targets_exts]
+            for f in matches:
+                target_file = next(target_file for target_file in targets
+                                    if f.endswith(target_file[6:]))
+                if target_file:
+                    # Remove from list of available options for this locale
+                    targets.remove(target_file)
+                else:
+                    # wasn't valid (or already matched)
+                    raise RuntimeError("Unexpected matching file name encountered: %s"
+                                       % f)
+                self.move(os.path.join(f),
+                          os.path.join(target_path, target_file))
+            self.log("Converted uploads for %s to simple names" % locale)
         return ret
 
     def set_upload_files(self, locale):
@@ -888,9 +921,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
 
     def submit_to_balrog(self):
         """submit to balrog"""
-        if not self.config.get("balrog_servers"):
-            self.info("balrog_servers not set; skipping balrog submission.")
-            return
         self.info("Reading buildbot build properties...")
         self.read_buildbot_config()
         # get platform, appName and hashType from configuration
@@ -910,9 +940,23 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.set_buildbot_property("buildid", self._query_buildid())
         self.set_buildbot_property("appVersion", self.query_version())
 
-        # submit complete mar to balrog
-        # clean up buildbot_properties
-        self._map(self.submit_repack_to_balrog, self.query_locales())
+        # YAY
+        def balrog_props_wrapper(locale):
+            env = self._query_upload_env()
+            props_path = os.path.join(env["UPLOAD_PATH"], locale,
+                                      'balrog_props.json')
+            self.generate_balrog_props(props_path)
+            return SUCCESS
+
+        if self.config.get('taskcluster_nightly'):
+            self._map(balrog_props_wrapper, self.query_locales())
+        else:
+            if not self.config.get("balrog_servers"):
+                self.info("balrog_servers not set; skipping balrog submission.")
+                return
+            # submit complete mar to balrog
+            # clean up buildbot_properties
+            self._map(self.submit_repack_to_balrog, self.query_locales())
 
     def submit_repack_to_balrog(self, locale):
         """submit a single locale to balrog"""

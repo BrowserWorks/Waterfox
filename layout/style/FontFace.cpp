@@ -75,7 +75,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(FontFace)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRule)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFontFaceSet)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOtherFontFaceSets)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FontFace)
@@ -109,13 +108,10 @@ FontFace::FontFace(nsISupports* aParent, FontFaceSet* aFontFaceSet)
   , mFontFaceSet(aFontFaceSet)
   , mInFontFaceSet(false)
 {
-  MOZ_COUNT_CTOR(FontFace);
 }
 
 FontFace::~FontFace()
 {
-  MOZ_COUNT_DTOR(FontFace);
-
   SetUserFontEntry(nullptr);
 
   if (mSourceBuffer) {

@@ -171,6 +171,15 @@ var DebuggerServer = {
   allowChromeProcess: false,
 
   /**
+   * We run a special server in child process whose main actor is an instance
+   * of ContentActor, but that isn't a root actor. Instead there is no root
+   * actor registered on DebuggerServer.
+   */
+  get rootlessServer() {
+    return !this.isModuleRegistered("devtools/server/actors/webbrowser");
+  },
+
+  /**
    * Initialize the debugger server.
    */
   init() {
@@ -229,9 +238,43 @@ var DebuggerServer = {
       throw new Error("DebuggerServer has not been initialized.");
     }
 
-    if (!this.createRootActor) {
+    if (!this.rootlessServer && !this.createRootActor) {
       throw new Error("Use DebuggerServer.addActors() to add a root actor " +
                       "implementation.");
+    }
+  },
+
+  /**
+   * Register all type of actors. Only register the one that are not already
+   * registered.
+   *
+   * @param root boolean
+   *        Registers the root actor from webbrowser module, which is used to
+   *        connect to and fetch any other actor.
+   * @param browser boolean
+   *        Registers all the parent process actors useful for debugging the
+   *        runtime itself, like preferences and addons actors.
+   * @param tab boolean
+   *        Registers all the tab actors like console, script, ... all useful
+   *        for debugging a target context.
+   * @param windowType string
+   *        "windowtype" attribute of the main chrome windows. Used by some
+   *        actors to retrieve them.
+   */
+  registerActors({ root = true, browser = true, tab = true,
+                   windowType = "navigator:browser" }) {
+    this.chromeWindowType = windowType;
+
+    if (browser) {
+      this.addBrowserActors(windowType);
+    }
+
+    if (root) {
+      this.registerModule("devtools/server/actors/webbrowser");
+    }
+
+    if (tab) {
+      this.addTabActors();
     }
   },
 
@@ -284,7 +327,7 @@ var DebuggerServer = {
    */
   registerModule(id, options) {
     if (id in gRegisteredModules) {
-      throw new Error("Tried to register a module twice: " + id + "\n");
+      return;
     }
 
     if (options) {
@@ -390,13 +433,6 @@ var DebuggerServer = {
         type: { global: true }
       });
     }
-    if (Services.prefs.getBoolPref("dom.mozSettings.enabled")) {
-      this.registerModule("devtools/server/actors/settings", {
-        prefix: "settings",
-        constructor: "SettingsActor",
-        type: { global: true }
-      });
-    }
     this.registerModule("devtools/server/actors/addons", {
       prefix: "addons",
       constructor: "AddonsActor",
@@ -417,25 +453,6 @@ var DebuggerServer = {
       constructor: "HeapSnapshotFileActor",
       type: { global: true }
     });
-  },
-
-  /**
-   * Install tab actors in documents loaded in content childs
-   */
-  addChildActors() {
-    // In case of apps being loaded in parent process, DebuggerServer is already
-    // initialized and browser actors are already loaded,
-    // but childtab.js hasn't been loaded yet.
-    if (!DebuggerServer.tabActorFactories.hasOwnProperty("consoleActor")) {
-      this.addTabActors();
-    }
-    // But webbrowser.js and childtab.js aren't loaded from shell.js.
-    if (!this.isModuleRegistered("devtools/server/actors/webbrowser")) {
-      this.registerModule("devtools/server/actors/webbrowser");
-    }
-    if (!("ContentActor" in this)) {
-      this.addActors("resource://devtools/server/actors/childtab.js");
-    }
   },
 
   /**
@@ -567,6 +584,11 @@ var DebuggerServer = {
     this.registerModule("devtools/server/actors/emulation", {
       prefix: "emulation",
       constructor: "EmulationActor",
+      type: { tab: true }
+    });
+    this.registerModule("devtools/server/actors/webextension-inspected-window", {
+      prefix: "webExtensionInspectedWindow",
+      constructor: "WebExtensionInspectedWindowActor",
       type: { tab: true }
     });
   },
@@ -715,7 +737,7 @@ var DebuggerServer = {
     return this._onConnection(transport, prefix, true);
   },
 
-  connectToContent(connection, mm) {
+  connectToContent(connection, mm, onDestroy) {
     let deferred = SyncPromise.defer();
 
     let prefix = connection.allocID("content-process");
@@ -763,6 +785,10 @@ var DebuggerServer = {
         } catch (e) {
           // Nothing to do
         }
+      }
+
+      if (onDestroy) {
+        onDestroy(mm);
       }
     }
 
@@ -1040,7 +1066,7 @@ var DebuggerServer = {
       try {
         m = require(module);
 
-        if (!setupParent in m) {
+        if (!(setupParent in m)) {
           dumpn(`ERROR: module '${module}' does not export '${setupParent}'`);
           return false;
         }
@@ -1490,14 +1516,14 @@ DebuggerServerConnection.prototype = {
    * @param ActorPool actorPool
    *        The ActorPool instance you want to remove.
    * @param boolean noCleanup [optional]
-   *        True if you don't want to disconnect each actor from the pool, false
+   *        True if you don't want to destroy each actor from the pool, false
    *        otherwise.
    */
   removeActorPool(actorPool, noCleanup) {
     // When a connection is closed, it removes each of its actor pools. When an
-    // actor pool is removed, it calls the disconnect method on each of its
+    // actor pool is removed, it calls the destroy method on each of its
     // actors. Some actors, such as ThreadActor, manage their own actor pools.
-    // When the disconnect method is called on these actors, they manually
+    // When the destroy method is called on these actors, they manually
     // remove their actor pools. Consequently, this method is reentrant.
     //
     // In addition, some actors, such as ThreadActor, perform asynchronous work
@@ -1506,7 +1532,7 @@ DebuggerServerConnection.prototype = {
     // be completed, we can end up in this function recursively after the
     // connection already set this._extraPools to null.
     //
-    // This is a bug: if the disconnect method can perform asynchronous work,
+    // This is a bug: if the destroy method can perform asynchronous work,
     // then we should wait for that work to be completed before setting this.
     // _extraPools to null. As a temporary solution, it should be acceptable
     // to just return early (if this._extraPools has been set to null, all

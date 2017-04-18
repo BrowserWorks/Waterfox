@@ -1,8 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-add_task(function* ()
-{
+add_task(function* () {
   let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, null, false);
 
   let browser = tab.linkedBrowser;
@@ -15,15 +14,15 @@ add_task(function* ()
       name: "view background image",
       url: "http://mochi.test:8888/",
       element: "body",
-      go: function () {
-        return ContentTask.spawn(gBrowser.selectedBrowser, { writeDomainURL: writeDomainURL }, function* (arg) {
+      go() {
+        return ContentTask.spawn(gBrowser.selectedBrowser, { writeDomainURL }, function* (arg) {
           let contentBody = content.document.body;
           contentBody.style.backgroundImage = "url('" + arg.writeDomainURL + "')";
 
           return "context-viewbgimage";
         });
       },
-      verify: function () {
+      verify() {
         return ContentTask.spawn(gBrowser.selectedBrowser, null, function* (arg) {
           Assert.ok(!content.document.body.textContent,
             "no domain was inherited for view background image");
@@ -34,8 +33,8 @@ add_task(function* ()
       name: "view image",
       url: "http://mochi.test:8888/",
       element: "img",
-      go: function () {
-        return ContentTask.spawn(gBrowser.selectedBrowser, { writeDomainURL: writeDomainURL }, function* (arg) {
+      go() {
+        return ContentTask.spawn(gBrowser.selectedBrowser, { writeDomainURL }, function* (arg) {
           let doc = content.document;
           let img = doc.createElement("img");
           img.height = 100;
@@ -46,7 +45,7 @@ add_task(function* ()
           return "context-viewimage";
         });
       },
-      verify: function () {
+      verify() {
         return ContentTask.spawn(gBrowser.selectedBrowser, null, function* (arg) {
           Assert.ok(!content.document.body.textContent,
             "no domain was inherited for view image");
@@ -57,8 +56,8 @@ add_task(function* ()
       name: "show only this frame",
       url: "http://mochi.test:8888/",
       element: "iframe",
-      go: function () {
-        return ContentTask.spawn(gBrowser.selectedBrowser, { writeDomainURL: writeDomainURL }, function* (arg) {
+      go() {
+        return ContentTask.spawn(gBrowser.selectedBrowser, { writeDomainURL }, function* (arg) {
           let doc = content.document;
           let iframe = doc.createElement("iframe");
           iframe.setAttribute("src", arg.writeDomainURL);
@@ -73,7 +72,7 @@ add_task(function* ()
           });
         });
       },
-      verify: function () {
+      verify() {
         return ContentTask.spawn(gBrowser.selectedBrowser, null, function* (arg) {
           Assert.ok(!content.document.body.textContent,
             "no domain was inherited for 'show only this frame'");

@@ -14,16 +14,12 @@ using namespace mozilla;
 
 NS_IMPL_ISUPPORTS(MozIntl, mozIMozIntl)
 
-MozIntl::MozIntl()
-{
-}
+MozIntl::MozIntl() = default;
 
-MozIntl::~MozIntl()
-{
-}
+MozIntl::~MozIntl() = default;
 
-NS_IMETHODIMP
-MozIntl::AddGetCalendarInfo(JS::Handle<JS::Value> val, JSContext* cx)
+static nsresult
+AddFunctions(JSContext* cx, JS::Handle<JS::Value> val, const JSFunctionSpec* funcs)
 {
   if (!val.isObject()) {
     return NS_ERROR_INVALID_ARG;
@@ -36,12 +32,50 @@ MozIntl::AddGetCalendarInfo(JS::Handle<JS::Value> val, JSContext* cx)
 
   JSAutoCompartment ac(cx, realIntlObj);
 
+  if (!JS_DefineFunctions(cx, realIntlObj, funcs)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+MozIntl::AddGetCalendarInfo(JS::Handle<JS::Value> val, JSContext* cx)
+{
   static const JSFunctionSpec funcs[] = {
     JS_SELF_HOSTED_FN("getCalendarInfo", "Intl_getCalendarInfo", 1, 0),
     JS_FS_END
   };
 
-  if (!JS_DefineFunctions(cx, realIntlObj, funcs)) {
+  return AddFunctions(cx, val, funcs);
+}
+
+NS_IMETHODIMP
+MozIntl::AddGetDisplayNames(JS::Handle<JS::Value> val, JSContext* cx)
+{
+  static const JSFunctionSpec funcs[] = {
+    JS_SELF_HOSTED_FN("getDisplayNames", "Intl_getDisplayNames", 2, 0),
+    JS_FS_END
+  };
+
+  return AddFunctions(cx, val, funcs);
+}
+
+NS_IMETHODIMP
+MozIntl::AddPluralRulesConstructor(JS::Handle<JS::Value> val, JSContext* cx)
+{
+  if (!val.isObject()) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  JS::Rooted<JSObject*> realIntlObj(cx, js::CheckedUnwrap(&val.toObject()));
+  if (!realIntlObj) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  JSAutoCompartment ac(cx, realIntlObj);
+
+  if (!js::AddPluralRulesConstructor(cx, realIntlObj)) {
     return NS_ERROR_FAILURE;
   }
 

@@ -1,7 +1,16 @@
 function test() {
   waitForExplicitFinish();
-  // test the main (normal) browser window
-  testCustomize(window, testChromeless);
+
+  // test a normal browser window
+  var newWin = openDialog(getBrowserURL(), "_blank", "chrome,all,dialog=no", "about:blank");
+  ok(newWin, "got new normal window");
+
+  whenDelayedStartupFinished(newWin, function() {
+    testCustomize(newWin, function() {
+      newWin.close();
+      testChromeless();
+    });
+  });
 }
 
 function testChromeless() {
@@ -10,7 +19,7 @@ function testChromeless() {
                           "chrome,dialog=no,location=yes,toolbar=no", "about:blank");
   ok(newWin, "got new window");
 
-  whenDelayedStartupFinished(newWin, function () {
+  whenDelayedStartupFinished(newWin, function() {
     // Check that the search bar is hidden
     var searchBar = newWin.BrowserSearch.searchBar;
     ok(searchBar, "got search bar");
@@ -19,7 +28,7 @@ function testChromeless() {
     is(searchBarBO.width, 0, "search bar hidden");
     is(searchBarBO.height, 0, "search bar hidden");
 
-    testCustomize(newWin, function () {
+    testCustomize(newWin, function() {
       newWin.close();
       finish();
     });
@@ -31,7 +40,7 @@ function testCustomize(aWindow, aCallback) {
   ok(fileMenu, "got file menu");
   is(fileMenu.disabled, false, "file menu initially enabled");
 
-  openToolbarCustomizationUI(function () {
+  openToolbarCustomizationUI(function() {
     // Can't use the property, since the binding may have since been removed
     // if the element is hidden (see bug 422590)
     is(fileMenu.getAttribute("disabled"), "true",

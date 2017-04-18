@@ -14,6 +14,8 @@ add_task(function* () {
   yield addTab(TEST_URI);
   let Telemetry = loadTelemetryAndRecordLogs();
 
+  yield pushPref("devtools.command-button-scratchpad.enabled", true);
+
   let target = TargetFactory.forTab(gBrowser.selectedTab);
   let toolbox = yield gDevTools.showToolbox(target, "inspector");
   info("inspector opened");
@@ -41,7 +43,7 @@ function trackScratchpadWindows() {
       if (topic == "domwindowopened") {
         let win = subject.QueryInterface(Ci.nsIDOMWindow);
         win.addEventListener("load", function onLoad() {
-          win.removeEventListener("load", onLoad, false);
+          win.removeEventListener("load", onLoad);
 
           if (win.Scratchpad) {
             win.Scratchpad.addObserver({
@@ -61,7 +63,7 @@ function trackScratchpadWindows() {
               },
             });
           }
-        }, false);
+        });
       }
     });
   });

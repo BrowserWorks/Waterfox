@@ -1116,7 +1116,13 @@ nsMenuPopupFrame::AdjustPositionForAnchorAlign(nsRect& anchorRect,
 
     nsIFrame* selectedItemFrame = GetSelectedItemForAlignment();
     if (selectedItemFrame) {
-      pnt.y -= originalAnchorRect.height + selectedItemFrame->GetRect().y;
+      int32_t scrolly = 0;
+      nsIScrollableFrame *scrollframe = do_QueryFrame(nsBox::GetChildXULBox(this));
+      if (scrollframe) {
+        scrolly = scrollframe->GetScrollPosition().y;
+      }
+
+      pnt.y -= originalAnchorRect.height + selectedItemFrame->GetRect().y - scrolly;
     }
   }
 
@@ -1308,6 +1314,27 @@ nsMenuPopupFrame::FlipOrResize(nscoord& aScreenPoint, nscoord aSize,
   return std::min(popupSize, aScreenEnd - aScreenPoint);
 }
 
+nsRect
+nsMenuPopupFrame::ComputeAnchorRect(nsPresContext* aRootPresContext, nsIFrame* aAnchorFrame)
+{
+  // Get the root frame for a reference
+  nsIFrame* rootFrame = aRootPresContext->FrameManager()->GetRootFrame();
+
+  // The dimensions of the anchor
+  nsRect anchorRect = aAnchorFrame->GetRectRelativeToSelf();
+
+  // Relative to the root
+  anchorRect = nsLayoutUtils::TransformFrameRectToAncestor(aAnchorFrame,
+                                                           anchorRect,
+                                                           rootFrame);
+  // Relative to the screen
+  anchorRect.MoveBy(rootFrame->GetScreenRectInAppUnits().TopLeft());
+
+  // In its own app units
+  return anchorRect.ScaleToOtherAppUnitsRoundOut(aRootPresContext->AppUnitsPerDevPixel(),
+                                                 PresContext()->AppUnitsPerDevPixel());
+}
+
 nsresult
 nsMenuPopupFrame::SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove, bool aSizedToPopup, bool aNotify)
 {
@@ -1364,22 +1391,7 @@ nsMenuPopupFrame::SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove, bool aS
         }
       }
 
-      // And then we need its root frame for a reference
-      nsIFrame* referenceFrame = rootPresContext->FrameManager()->GetRootFrame();
-
-      // the dimensions of the anchor
-      nsRect parentRect = aAnchorFrame->GetRectRelativeToSelf();
-      // Relative to the root
-      anchorRect = nsLayoutUtils::TransformFrameRectToAncestor(aAnchorFrame,
-                                                               parentRect,
-                                                               referenceFrame);
-      // Relative to the screen
-      anchorRect.MoveBy(referenceFrame->GetScreenRectInAppUnits().TopLeft());
-
-      // In its own app units
-      anchorRect =
-        anchorRect.ScaleToOtherAppUnitsRoundOut(rootPresContext->AppUnitsPerDevPixel(),
-                                                presContext->AppUnitsPerDevPixel());
+      anchorRect = ComputeAnchorRect(rootPresContext, aAnchorFrame);
     }
 
     // The width is needed when aSizedToPopup is true
@@ -1706,23 +1718,23 @@ void nsMenuPopupFrame::CanAdjustEdges(int8_t aHorizontalSide,
     popupAlign = -popupAlign;
   }
 
-  if (aHorizontalSide == (mHFlip ? NS_SIDE_RIGHT : NS_SIDE_LEFT)) {
+  if (aHorizontalSide == (mHFlip ? eSideRight : eSideLeft)) {
     if (popupAlign == POPUPALIGNMENT_TOPLEFT || popupAlign == POPUPALIGNMENT_BOTTOMLEFT) {
       aChange.x = 0;
     }
   }
-  else if (aHorizontalSide == (mHFlip ? NS_SIDE_LEFT : NS_SIDE_RIGHT)) {
+  else if (aHorizontalSide == (mHFlip ? eSideLeft : eSideRight)) {
     if (popupAlign == POPUPALIGNMENT_TOPRIGHT || popupAlign == POPUPALIGNMENT_BOTTOMRIGHT) {
       aChange.x = 0;
     }
   }
 
-  if (aVerticalSide == (mVFlip ? NS_SIDE_BOTTOM : NS_SIDE_TOP)) {
+  if (aVerticalSide == (mVFlip ? eSideBottom : eSideTop)) {
     if (popupAlign == POPUPALIGNMENT_TOPLEFT || popupAlign == POPUPALIGNMENT_TOPRIGHT) {
       aChange.y = 0;
     }
   }
-  else if (aVerticalSide == (mVFlip ? NS_SIDE_TOP : NS_SIDE_BOTTOM)) {
+  else if (aVerticalSide == (mVFlip ? eSideTop : eSideBottom)) {
     if (popupAlign == POPUPALIGNMENT_BOTTOMLEFT || popupAlign == POPUPALIGNMENT_BOTTOMRIGHT) {
       aChange.y = 0;
     }
@@ -1759,7 +1771,6 @@ ConsumeOutsideClicksResult nsMenuPopupFrame::ConsumeOutsideClicks()
 #if defined(XP_WIN)
     // Don't consume outside clicks for menus in Windows
     if (ni->Equals(nsGkAtoms::menu, kNameSpaceID_XUL) ||
-        ni->Equals(nsGkAtoms::splitmenu, kNameSpaceID_XUL) ||
         ni->Equals(nsGkAtoms::popupset, kNameSpaceID_XUL) ||
         ((ni->Equals(nsGkAtoms::button, kNameSpaceID_XUL) ||
           ni->Equals(nsGkAtoms::toolbarbutton, kNameSpaceID_XUL)) &&
@@ -1838,7 +1849,7 @@ void nsMenuPopupFrame::ChangeByPage(bool aIsUp)
     // just use this as the newMenu and leave currentMenu null so that no
     // check for a later element is performed. When moving down, set currentMenu
     // so that we look for one page down from the first item.
-    newMenu = nsXULPopupManager::GetNextMenuItem(this, nullptr, true);
+    newMenu = nsXULPopupManager::GetNextMenuItem(this, nullptr, true, false);
     if (!aIsUp) {
       currentMenu = newMenu;
     }
@@ -2066,7 +2077,7 @@ nsMenuPopupFrame::FindMenuWithShortcut(nsIDOMKeyEvent* aKeyEvent, bool& doAction
   //       been destroyed already.  One strategy would be to 
   //       setTimeout(<func>,0) as detailed in:
   //       <http://bugzilla.mozilla.org/show_bug.cgi?id=126675#c32>
-  nsIFrame* firstMenuItem = nsXULPopupManager::GetNextMenuItem(immediateParent, nullptr, true);
+  nsIFrame* firstMenuItem = nsXULPopupManager::GetNextMenuItem(immediateParent, nullptr, true, false);
   nsIFrame* currFrame = firstMenuItem;
 
   int32_t menuAccessKey = -1;
@@ -2131,7 +2142,7 @@ nsMenuPopupFrame::FindMenuWithShortcut(nsIDOMKeyEvent* aKeyEvent, bool& doAction
     }
 
     nsMenuFrame* menu = do_QueryFrame(currFrame);
-    currFrame = nsXULPopupManager::GetNextMenuItem(immediateParent, menu, true);
+    currFrame = nsXULPopupManager::GetNextMenuItem(immediateParent, menu, true, true);
     if (currFrame == firstMenuItem)
       break;
   }
@@ -2215,6 +2226,13 @@ nsMenuPopupFrame::AttributeChanged(int32_t aNameSpaceID,
   }
 #endif
 
+  if (aAttribute == nsGkAtoms::followanchor) {
+    nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
+    if (pm) {
+      pm->UpdateFollowAnchor(this);
+    }
+  }
+
   if (aAttribute == nsGkAtoms::label) {
     // set the label for the titlebar
     nsView* view = GetView();
@@ -2227,6 +2245,13 @@ nsMenuPopupFrame::AttributeChanged(int32_t aNameSpaceID,
           widget->SetTitle(title);
         }
       }
+    }
+  } else if (aAttribute == nsGkAtoms::ignorekeys) {
+    nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
+    if (pm) {
+      nsAutoString ignorekeys;
+      mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::ignorekeys, ignorekeys);
+      pm->UpdateIgnoreKeys(ignorekeys.EqualsLiteral("true"));
     }
   }
 
@@ -2352,6 +2377,10 @@ void
 nsMenuPopupFrame::SetAutoPosition(bool aShouldAutoPosition)
 {
   mShouldAutoPosition = aShouldAutoPosition;
+  nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
+  if (pm) {
+    pm->UpdateFollowAnchor(this);
+  }
 }
 
 void
@@ -2439,4 +2468,98 @@ nsMenuPopupFrame::CreatePopupView()
 
   NS_FRAME_LOG(NS_FRAME_TRACE_CALLS,
     ("nsMenuPopupFrame::CreatePopupView: frame=%p view=%p", this, view));
+}
+
+bool
+nsMenuPopupFrame::ShouldFollowAnchor()
+{
+  if (!mShouldAutoPosition ||
+      mAnchorType != MenuPopupAnchorType_Node || !mAnchorContent) {
+    return false;
+  }
+
+  // Follow anchor mode is used when followanchor="true" is set or for arrow panels.
+  if (mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::followanchor,
+                            nsGkAtoms::_true, eCaseMatters)) {
+    return true;
+  }
+
+  if (mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::followanchor,
+                            nsGkAtoms::_false, eCaseMatters)) {
+    return false;
+  }
+
+  return (mPopupType == ePopupTypePanel &&
+          mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
+                                nsGkAtoms::arrow, eCaseMatters));
+}
+
+bool
+nsMenuPopupFrame::ShouldFollowAnchor(nsRect& aRect)
+{
+  if (!ShouldFollowAnchor()) {
+    return false;
+  }
+
+  nsIFrame* anchorFrame = mAnchorContent->GetPrimaryFrame();
+  if (anchorFrame) {
+    nsPresContext* rootPresContext = PresContext()->GetRootPresContext();
+    if (rootPresContext) {
+      aRect = ComputeAnchorRect(rootPresContext, anchorFrame);
+    }
+  }
+
+  return true;
+}
+
+void
+nsMenuPopupFrame::CheckForAnchorChange(nsRect& aRect)
+{
+  // Don't update if the popup isn't visible or we shouldn't be following the anchor.
+  if (!IsVisible() || !ShouldFollowAnchor()) {
+    return;
+  }
+
+  bool shouldHide = false;
+
+  nsPresContext* rootPresContext = PresContext()->GetRootPresContext();
+
+  // If the frame for the anchor has gone away, hide the popup.
+  nsIFrame* anchor = mAnchorContent->GetPrimaryFrame();
+  if (!anchor || !rootPresContext) {
+    shouldHide = true;
+  } else if (!anchor->IsVisibleConsideringAncestors(VISIBILITY_CROSS_CHROME_CONTENT_BOUNDARY)) {
+    // If the anchor is now inside something that is invisible, hide the popup.
+    shouldHide = true;
+  } else {
+    // If the anchor is now inside a hidden parent popup, hide the popup.
+    nsIFrame* frame = anchor;
+    while (frame) {
+      nsMenuPopupFrame* popup = do_QueryFrame(frame);
+      if (popup && popup->PopupState() != ePopupShown) {
+        shouldHide = true;
+        break;
+      }
+
+      frame = frame->GetParent();
+    }
+  }
+
+  if (shouldHide) {
+    nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
+    if (pm) {
+      // As the caller will be iterating over the open popups, hide asyncronously.
+      pm->HidePopup(mContent, false, true, true, false);
+    }
+
+    return;
+  }
+
+  nsRect anchorRect = ComputeAnchorRect(rootPresContext, anchor);
+
+  // If the rectangles are different, move the popup.
+  if (!anchorRect.IsEqualEdges(aRect)) {
+    aRect = anchorRect;
+    SetPopupPosition(nullptr, true, false, true);
+  }
 }

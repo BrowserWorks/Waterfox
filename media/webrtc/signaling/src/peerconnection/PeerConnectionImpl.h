@@ -414,6 +414,8 @@ public:
                          NS_ConvertUTF16toUTF8(aMid).get(), aLevel);
   }
 
+  void UpdateNetworkState(bool online);
+
   NS_IMETHODIMP CloseStreams();
 
   void CloseStreams(ErrorResult &rv)
@@ -811,6 +813,7 @@ private:
 
   bool mAllowIceLoopback;
   bool mAllowIceLinkLocal;
+  bool mForceIceTcp;
   RefPtr<PeerConnectionMedia> mMedia;
 
   // The JSEP negotiation session.

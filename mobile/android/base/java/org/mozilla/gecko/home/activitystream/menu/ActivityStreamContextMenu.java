@@ -7,7 +7,6 @@ package org.mozilla.gecko.home.activitystream.menu;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,9 +16,12 @@ import org.mozilla.gecko.IntentHelper;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.activitystream.ActivityStreamTelemetry;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.home.HomePager;
+import org.mozilla.gecko.home.activitystream.model.Item;
+import org.mozilla.gecko.reader.SavedReaderViewHelper;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -36,15 +38,13 @@ public abstract class ActivityStreamContextMenu
         TOPSITE
     }
 
-    final Context context;
+    private final Context context;
+    private final Item item;
 
-    final String title;
-    final String url;
+    private final ActivityStreamTelemetry.Extras.Builder telemetryExtraBuilder;
 
-    final HomePager.OnUrlOpenListener onUrlOpenListener;
-    final HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener;
-
-    boolean isAlreadyBookmarked; // default false;
+    private final HomePager.OnUrlOpenListener onUrlOpenListener;
+    private final HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener;
 
     public abstract MenuItem getItemByID(int id);
 
@@ -52,19 +52,20 @@ public abstract class ActivityStreamContextMenu
 
     public abstract void dismiss();
 
-    final MenuMode mode;
+    private final MenuMode mode;
 
     /* package-private */ ActivityStreamContextMenu(final Context context,
+                                                    final ActivityStreamTelemetry.Extras.Builder telemetryExtraBuilder,
                                                     final MenuMode mode,
-                                                    final String title, @NonNull final String url,
+                                                    final Item item,
                                                     HomePager.OnUrlOpenListener onUrlOpenListener,
                                                     HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener) {
         this.context = context;
+        this.item = item;
+        this.telemetryExtraBuilder = telemetryExtraBuilder;
 
         this.mode = mode;
 
-        this.title = title;
-        this.url = url;
         this.onUrlOpenListener = onUrlOpenListener;
         this.onUrlOpenInBackgroundListener = onUrlOpenInBackgroundListener;
     }
@@ -75,7 +76,18 @@ public abstract class ActivityStreamContextMenu
      * Your implementation must be ready to return items from getItemByID() before postInit() is
      * called, i.e. you should probably inflate your menu items before this call.
      */
-    protected void postInit() {
+    /* package-local */ void postInit() {
+        final MenuItem bookmarkItem = getItemByID(R.id.bookmark);
+        if (Boolean.TRUE.equals(item.isBookmarked())) {
+            bookmarkItem.setTitle(R.string.bookmark_remove);
+            bookmarkItem.setIcon(R.drawable.as_bookmark_filled);
+        }
+
+        final MenuItem pinItem = getItemByID(R.id.pin);
+        if (Boolean.TRUE.equals(item.isPinned())) {
+            pinItem.setTitle(R.string.contextmenu_top_sites_unpin);
+        }
+
         // Disable "dismiss" for topsites until we have decided on its behaviour for topsites
         // (currently "dismiss" adds the URL to a highlights-specific blocklist, which the topsites
         // query has no knowledge of).
@@ -84,98 +96,181 @@ public abstract class ActivityStreamContextMenu
             dismissItem.setVisible(false);
         }
 
-        // Disable the bookmark item until we know its bookmark state
-        final MenuItem bookmarkItem = getItemByID(R.id.bookmark);
-        bookmarkItem.setEnabled(false);
+        if (item.isBookmarked() == null) {
+            // Disable the bookmark item until we know its bookmark state
+            bookmarkItem.setEnabled(false);
 
-        (new UIAsyncTask.WithoutParams<Void>(ThreadUtils.getBackgroundHandler()) {
-            @Override
-            protected Void doInBackground() {
-                isAlreadyBookmarked = BrowserDB.from(context).isBookmark(context.getContentResolver(), url);
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                if (isAlreadyBookmarked) {
-                    bookmarkItem.setTitle(R.string.bookmark_remove);
+            (new UIAsyncTask.WithoutParams<Boolean>(ThreadUtils.getBackgroundHandler()) {
+                @Override
+                protected Boolean doInBackground() {
+                    return BrowserDB.from(context).isBookmark(context.getContentResolver(), item.getUrl());
                 }
 
-                bookmarkItem.setEnabled(true);
-            }
-        }).execute();
+                @Override
+                protected void onPostExecute(Boolean hasBookmark) {
+                    if (hasBookmark) {
+                        bookmarkItem.setTitle(R.string.bookmark_remove);
+                        bookmarkItem.setIcon(R.drawable.as_bookmark_filled);
+                    }
+
+                    item.updateBookmarked(hasBookmark);
+                    bookmarkItem.setEnabled(true);
+                }
+            }).execute();
+        }
+
+        if (item.isPinned() == null) {
+            // Disable the pin item until we know its pinned state
+            pinItem.setEnabled(false);
+
+            (new UIAsyncTask.WithoutParams<Boolean>(ThreadUtils.getBackgroundHandler()) {
+                @Override
+                protected Boolean doInBackground() {
+                    return BrowserDB.from(context).isPinnedForAS(context.getContentResolver(), item.getUrl());
+                }
+
+                @Override
+                protected void onPostExecute(Boolean hasPin) {
+                    if (hasPin) {
+                        pinItem.setTitle(R.string.contextmenu_top_sites_unpin);
+                    }
+
+                    item.updatePinned(hasPin);
+                    pinItem.setEnabled(true);
+                }
+            }).execute();
+        }
 
         // Only show the "remove from history" item if a page actually has history
         final MenuItem deleteHistoryItem = getItemByID(R.id.delete);
         deleteHistoryItem.setVisible(false);
 
-        (new UIAsyncTask.WithoutParams<Void>(ThreadUtils.getBackgroundHandler()) {
-            boolean hasHistory;
-
+        (new UIAsyncTask.WithoutParams<Boolean>(ThreadUtils.getBackgroundHandler()) {
             @Override
-            protected Void doInBackground() {
-                final Cursor cursor = BrowserDB.from(context).getHistoryForURL(context.getContentResolver(), url);
+            protected Boolean doInBackground() {
+                final Item item = ActivityStreamContextMenu.this.item;
+
+                final Cursor cursor = BrowserDB.from(context).getHistoryForURL(context.getContentResolver(), item.getUrl());
+                // It's tempting to throw here, but crashing because of a (hopefully) inconsequential
+                // oddity is somewhat questionable.
+                if (cursor == null) {
+                    return false;
+                }
                 try {
-                    if (cursor != null &&
-                            cursor.getCount() == 1) {
-                        hasHistory = true;
-                    } else {
-                        hasHistory = false;
-                    }
+                    return cursor.getCount() == 1;
                 } finally {
                     cursor.close();
                 }
-                return null;
             }
 
             @Override
-            protected void onPostExecute(Void aVoid) {
-                if (hasHistory) {
-                    deleteHistoryItem.setVisible(true);
-                }
+            protected void onPostExecute(Boolean hasHistory) {
+                deleteHistoryItem.setVisible(hasHistory);
             }
         }).execute();
     }
 
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+    public boolean onNavigationItemSelected(MenuItem menuItem) {
+        final int menuItemId = menuItem.getItemId();
+
+        // Sets extra telemetry which doesn't require additional state information.
+        // Pin and bookmark items are handled separately below, since they do require state
+        // information to handle correctly.
+        telemetryExtraBuilder.fromMenuItemId(menuItemId);
+
+        switch (menuItem.getItemId()) {
             case R.id.share:
-                Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST, "menu");
-                IntentHelper.openUriExternal(url, "text/plain", "", "", Intent.ACTION_SEND, title, false);
+                // NB: Generic menu item action event will be sent at the end of this function.
+                // We have a seemingly duplicate telemetry event here because we want to emit
+                // a concrete event in case it is used by other queries to estimate feature usage.
+                Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST, "as_contextmenu");
+
+                IntentHelper.openUriExternal(item.getUrl(), "text/plain", "", "", Intent.ACTION_SEND, item.getTitle(), false);
                 break;
 
             case R.id.bookmark:
+                final TelemetryContract.Event telemetryEvent;
+                final String telemetryExtra;
+                SavedReaderViewHelper rch = SavedReaderViewHelper.getSavedReaderViewHelper(context);
+                final boolean isReaderViewPage = rch.isURLCached(item.getUrl());
+
+                // While isBookmarked is nullable, behaviour of postInit - disabling 'bookmark' item
+                // until we know value of isBookmarked - guarantees that it will be set when we get here.
+                if (item.isBookmarked()) {
+                    telemetryEvent = TelemetryContract.Event.UNSAVE;
+
+                    if (isReaderViewPage) {
+                        telemetryExtra = "as_bookmark_reader";
+                    } else {
+                        telemetryExtra = "as_bookmark";
+                    }
+                    telemetryExtraBuilder.set(ActivityStreamTelemetry.Contract.ITEM, ActivityStreamTelemetry.Contract.ITEM_REMOVE_BOOKMARK);
+                } else {
+                    telemetryEvent = TelemetryContract.Event.SAVE;
+                    telemetryExtra = "as_bookmark";
+                    telemetryExtraBuilder.set(ActivityStreamTelemetry.Contract.ITEM, ActivityStreamTelemetry.Contract.ITEM_ADD_BOOKMARK);
+                }
+                // NB: Generic menu item action event will be sent at the end of this function.
+                // We have a seemingly duplicate telemetry event here because we want to emit
+                // a concrete event in case it is used by other queries to estimate feature usage.
+                Telemetry.sendUIEvent(telemetryEvent, TelemetryContract.Method.CONTEXT_MENU, telemetryExtra);
+
                 ThreadUtils.postToBackgroundThread(new Runnable() {
                     @Override
                     public void run() {
                         final BrowserDB db = BrowserDB.from(context);
 
-                        if (isAlreadyBookmarked) {
-                            db.removeBookmarksWithURL(context.getContentResolver(), url);
-                        } else {
-                            db.addBookmark(context.getContentResolver(), title, url);
-                        }
+                        if (item.isBookmarked()) {
+                            db.removeBookmarksWithURL(context.getContentResolver(), item.getUrl());
 
+                        } else {
+                            // We only store raw URLs in history (and bookmarks), hence we won't ever show about:reader
+                            // URLs in AS topsites or highlights. Therefore we don't need to do any special about:reader handling here.
+                            db.addBookmark(context.getContentResolver(), item.getTitle(), item.getUrl());
+                        }
+                    }
+                });
+                break;
+
+            case R.id.pin:
+                // While isPinned is nullable, behaviour of postInit - disabling 'pin' item
+                // until we know value of isPinned - guarantees that it will be set when we get here.
+                if (item.isPinned()) {
+                    telemetryExtraBuilder.set(ActivityStreamTelemetry.Contract.ITEM, ActivityStreamTelemetry.Contract.ITEM_UNPIN);
+                } else {
+                    telemetryExtraBuilder.set(ActivityStreamTelemetry.Contract.ITEM, ActivityStreamTelemetry.Contract.ITEM_PIN);
+                }
+
+                ThreadUtils.postToBackgroundThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        final BrowserDB db = BrowserDB.from(context);
+
+                        if (item.isPinned()) {
+                            db.unpinSiteForAS(context.getContentResolver(), item.getUrl());
+                        } else {
+                            db.pinSiteForAS(context.getContentResolver(), item.getUrl(), item.getTitle());
+                        }
                     }
                 });
                 break;
 
             case R.id.copy_url:
-                Clipboard.setText(url);
+                Clipboard.setText(item.getUrl());
                 break;
 
             case R.id.add_homescreen:
-                GeckoAppShell.createShortcut(title, url);
+                GeckoAppShell.createShortcut(item.getTitle(), item.getUrl());
                 break;
 
             case R.id.open_new_tab:
-                onUrlOpenInBackgroundListener.onUrlOpenInBackground(url, EnumSet.noneOf(HomePager.OnUrlOpenInBackgroundListener.Flags.class));
+                onUrlOpenInBackgroundListener.onUrlOpenInBackground(item.getUrl(), EnumSet.noneOf(HomePager.OnUrlOpenInBackgroundListener.Flags.class));
                 break;
 
             case R.id.open_new_private_tab:
-                onUrlOpenInBackgroundListener.onUrlOpenInBackground(url, EnumSet.of(HomePager.OnUrlOpenInBackgroundListener.Flags.PRIVATE));
+                onUrlOpenInBackgroundListener.onUrlOpenInBackground(item.getUrl(), EnumSet.of(HomePager.OnUrlOpenInBackgroundListener.Flags.PRIVATE));
                 break;
 
             case R.id.dismiss:
@@ -183,8 +278,7 @@ public abstract class ActivityStreamContextMenu
                     @Override
                     public void run() {
                         BrowserDB.from(context)
-                                .blockActivityStreamSite(context.getContentResolver(),
-                                        url);
+                                .blockActivityStreamSite(context.getContentResolver(), item.getUrl());
                     }
                 });
                 break;
@@ -194,15 +288,20 @@ public abstract class ActivityStreamContextMenu
                     @Override
                     public void run() {
                         BrowserDB.from(context)
-                                .removeHistoryEntry(context.getContentResolver(),
-                                        url);
+                                .removeHistoryEntry(context.getContentResolver(), item.getUrl());
                     }
                 });
                 break;
 
             default:
-                throw new IllegalArgumentException("Menu item with ID=" + item.getItemId() + " not handled");
+                throw new IllegalArgumentException("Menu item with ID=" + menuItem.getItemId() + " not handled");
         }
+
+        Telemetry.sendUIEvent(
+                TelemetryContract.Event.ACTION,
+                TelemetryContract.Method.CONTEXT_MENU,
+                telemetryExtraBuilder.build()
+        );
 
         dismiss();
         return true;
@@ -211,9 +310,8 @@ public abstract class ActivityStreamContextMenu
 
     @RobocopTarget
     public static ActivityStreamContextMenu show(Context context,
-                                                      View anchor,
-                                                      final MenuMode menuMode,
-                                                      final String title, @NonNull final String url,
+                                                      View anchor, ActivityStreamTelemetry.Extras.Builder telemetryExtraBuilder,
+                                                      final MenuMode menuMode, final Item item,
                                                       HomePager.OnUrlOpenListener onUrlOpenListener,
                                                       HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener,
                                                       final int tilesWidth, final int tilesHeight) {
@@ -221,16 +319,14 @@ public abstract class ActivityStreamContextMenu
 
         if (!HardwareUtils.isTablet()) {
             menu = new BottomSheetContextMenu(context,
-                    menuMode,
-                    title, url,
-                    onUrlOpenListener, onUrlOpenInBackgroundListener,
+                    telemetryExtraBuilder, menuMode,
+                    item, onUrlOpenListener, onUrlOpenInBackgroundListener,
                     tilesWidth, tilesHeight);
         } else {
             menu = new PopupContextMenu(context,
                     anchor,
-                    menuMode,
-                    title, url,
-                    onUrlOpenListener, onUrlOpenInBackgroundListener);
+                    telemetryExtraBuilder, menuMode,
+                    item, onUrlOpenListener, onUrlOpenInBackgroundListener);
         }
 
         menu.show();

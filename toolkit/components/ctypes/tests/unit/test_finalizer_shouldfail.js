@@ -7,8 +7,7 @@ try {
 
 var acquire, dispose, null_dispose, compare, dispose_64;
 
-function run_test()
-{
+function run_test() {
   let library = open_ctypes_test_lib();
 
   let start = library.declare("test_finalizer_start", ctypes.default_abi,
@@ -64,20 +63,23 @@ function test_finalize_bad_construction() {
   must_throw(function() { ctypes.CDataFinalizer(dispose, dispose); });
 
   // Not enough arguments
-  must_throw(function() { ctypes.CDataFinalizer(init(0)); });
+  must_throw(function() { ctypes.CDataFinalizer(dispose); },
+             "TypeError: CDataFinalizer constructor takes two arguments");
 
   // Too many arguments
-  must_throw(function() { ctypes.CDataFinalizer(init(0), dispose, dispose); });
+  must_throw(function() { ctypes.CDataFinalizer(dispose, dispose, dispose); },
+             "TypeError: CDataFinalizer constructor takes two arguments");
 
   // Second argument is null
-  must_throw(function() { ctypes.CDataFinalizer(init(0), null); });
+  must_throw(function() { ctypes.CDataFinalizer(dispose, null); },
+             "TypeError: expected _a CData object_ of a function pointer type, got null");
 
   // Second argument is undefined
   must_throw(function() {
     let a;
-    ctypes.CDataFinalizer(init(0), a);
-  });
-
+    ctypes.CDataFinalizer(dispose, a);
+  },
+  "TypeError: expected _a CData object_ of a function pointer type, got undefined");
 }
 
 /**
@@ -107,8 +109,7 @@ function test_double_dispose() {
 /**
  * Test that nothing (too) bad happens when the finalizer is NULL
  */
-function test_null_dispose()
-{
+function test_null_dispose() {
   let exception;
 
   exception = false;
@@ -124,8 +125,7 @@ function test_null_dispose()
  * Test that conversion of a disposed/forgotten CDataFinalizer to a C
  * value fails nicely.
  */
-function test_pass_disposed()
-{
+function test_pass_disposed() {
   let exception, v;
 
   exception = false;
@@ -161,8 +161,7 @@ function test_pass_disposed()
   do_check_true(exception);
 }
 
-function test_wrong_type()
-{
+function test_wrong_type() {
   let int32_v = ctypes.int32_t(99);
   let exception;
   try {

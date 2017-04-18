@@ -7,8 +7,6 @@
 
 const URI_EXTENSION_UPDATE_DIALOG = "chrome://mozapps/content/extensions/update.xul";
 
-const PREF_GETADDONS_BYIDS            = "extensions.getAddons.get.url";
-const PREF_MIN_PLATFORM_COMPAT        = "extensions.minCompatiblePlatformVersion";
 const PREF_METADATA_LASTUPDATE        = "extensions.getAddons.cache.lastUpdate";
 
 Components.utils.import("resource://gre/modules/Promise.jsm");
@@ -69,28 +67,28 @@ function promise_open_compatibility_window(aInactiveAddonIds) {
         info("Page " + aEvent.target.pageid + " shown");
     }
 
-    win.removeEventListener("load", arguments.callee, false);
+    win.removeEventListener("load", arguments.callee);
 
     info("Compatibility dialog opened");
 
-    win.addEventListener("pageshow", page_shown, false);
+    win.addEventListener("pageshow", page_shown);
     win.addEventListener("unload", function() {
-      win.removeEventListener("unload", arguments.callee, false);
-      win.removeEventListener("pageshow", page_shown, false);
+      win.removeEventListener("unload", arguments.callee);
+      win.removeEventListener("pageshow", page_shown);
       dump("Compatibility dialog closed\n");
-    }, false);
+    });
 
     deferred.resolve(win);
-  }, false);
+  });
   return deferred.promise;
 }
 
 function promise_window_close(aWindow) {
   let deferred = Promise.defer();
   aWindow.addEventListener("unload", function() {
-    aWindow.removeEventListener("unload", arguments.callee, false);
+    aWindow.removeEventListener("unload", arguments.callee);
     deferred.resolve(aWindow);
-  }, false);
+  });
   return deferred.promise;
 }
 

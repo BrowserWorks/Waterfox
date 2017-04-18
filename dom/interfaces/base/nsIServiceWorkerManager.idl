@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "domstubs.idl"
+#include "nsIRequest.idl"
 
 interface mozIDOMWindow;
 interface nsPIDOMWindowInner;
@@ -43,6 +44,8 @@ interface nsIServiceWorkerInfo : nsISupports
   readonly attribute unsigned short state;
 
   readonly attribute nsIWorkerDebugger debugger;
+
+  readonly attribute bool handlesFetchEvents;
 
   void attachDebugger();
 
@@ -98,7 +101,10 @@ interface nsIServiceWorkerManager : nsISupports
    *
    * Returns a Promise.
    */
-  nsISupports register(in mozIDOMWindow aWindow, in nsIURI aScope, in nsIURI aScriptURI);
+  nsISupports register(in mozIDOMWindow aWindow,
+                       in nsIURI aScope,
+                       in nsIURI aScriptURI,
+                       in nsLoadFlags aLoadFlags);
 
   /**
    * Unregister an existing ServiceWorker registration for `aScope`.

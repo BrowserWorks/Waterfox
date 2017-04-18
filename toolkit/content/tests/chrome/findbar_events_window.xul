@@ -60,7 +60,7 @@
       gFindBar.onFindCommand();
 
       yield testFind();
-      yield testFindAgain();
+      yield* testFindAgain();
       yield testCaseSensitivity();
       yield testHighlight();
     }
@@ -116,7 +116,7 @@
       yield checkSelection();
     }
 
-    function testFindAgain() {
+    function* testFindAgain() {
       info("Testing repeating normal find.");
       let promise = once(gFindBar, "findagain");
 
@@ -167,7 +167,7 @@
     }
   ]]></script>
 
-  <browser type="content-primary" flex="1" id="content" src="about:blank"/>
-  <browser type="content-primary" flex="1" id="content-remote" remote="true" src="about:blank"/>
+  <browser type="content" primary="true" flex="1" id="content" src="about:blank"/>
+  <browser type="content" primary="true" flex="1" id="content-remote" remote="true" src="about:blank"/>
   <findbar id="FindToolbar" browserid="content"/>
 </window>

@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from ../../../../testing/mochitest/tests/SimpleTest/SimpleTest.js */
+
 var gPopupShownExpected = false;
 var gPopupShownListener;
 var gLastAutoCompleteResults;
@@ -48,10 +50,10 @@ function doKey(aKey, modifier) {
     // Window utils for sending fake key events.
     var wutils = SpecialPowers.getDOMWindowUtils(window);
 
-    if (wutils.sendKeyEvent("keydown",  key, 0, modifier)) {
+    if (wutils.sendKeyEvent("keydown", key, 0, modifier)) {
       wutils.sendKeyEvent("keypress", key, 0, modifier);
     }
-    wutils.sendKeyEvent("keyup",    key, 0, modifier);
+    wutils.sendKeyEvent("keyup", key, 0, modifier);
 }
 
 function registerPopupShownListener(listener) {
@@ -91,14 +93,14 @@ var checkObserver = {
     gChromeScript.sendAsyncMessage("removeObserver");
   },
 
-  waitForChecks: function(callback) {
+  waitForChecks(callback) {
     if (this.verifyStack.length == 0)
       callback();
     else
       this.callback = callback;
   },
 
-  observe: function({ subject, topic, data }) {
+  observe({ subject, topic, data }) {
     if (data != "formhistory-add" && data != "formhistory-update")
       return;
     ok(this.verifyStack.length > 0, "checking if saved form data was expected");
@@ -127,7 +129,7 @@ var checkObserver = {
 };
 
 function checkForSave(name, value, message) {
-  checkObserver.verifyStack.push({ name : name, value: value, message: message });
+  checkObserver.verifyStack.push({ name, value, message });
 }
 
 function getFormSubmitButton(formNum) {

@@ -734,9 +734,15 @@ function ArrayIteratorNext() {
     var itemKind = UnsafeGetInt32FromReservedSlot(this, ITERATOR_SLOT_ITEM_KIND);
 
     // Step 8-9.
-    var len = IsPossiblyWrappedTypedArray(a)
-              ? PossiblyWrappedTypedArrayLength(a)
-              : ToLength(a.length);
+    var len;
+    if (IsPossiblyWrappedTypedArray(a)) {
+        if (PossiblyWrappedTypedArrayHasDetachedBuffer(a))
+            ThrowTypeError(JSMSG_TYPED_ARRAY_DETACHED);
+
+        len = PossiblyWrappedTypedArrayLength(a);
+    } else {
+        len = ToLength(a.length);
+    }
 
     // Step 10.
     if (index >= len) {
@@ -784,7 +790,7 @@ function ArrayKeys() {
     return CreateArrayIterator(this, ITEM_KIND_KEY);
 }
 
-// ES6 draft rev31 (2015/01/15) 22.1.2.1 Array.from(source[, mapfn[, thisArg]]).
+// ES 2017 draft 0f10dba4ad18de92d47d421f378233a2eae8f077 22.1.2.1
 function ArrayFrom(items, mapfn=undefined, thisArg=undefined) {
     // Step 1.
     var C = this;
@@ -795,44 +801,40 @@ function ArrayFrom(items, mapfn=undefined, thisArg=undefined) {
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, mapfn));
     var T = thisArg;
 
-    // Steps 4-5.
+    // Step 4.
     var usingIterator = GetMethod(items, std_iterator);
 
-    // Step 6.
+    // Step 5.
     if (usingIterator !== undefined) {
-        // Steps 6.a-c.
+        // Steps 5.a-c.
         var A = IsConstructor(C) ? new C() : [];
 
-        // Steps 6.d-e.
-        var iterator = GetIterator(items, usingIterator);
-
-        // Step 6.f.
+        // Step 5.d.
         var k = 0;
 
-        // Step 6.g.
-        // These steps cannot be implemented using a for-of loop.
-        // See <https://bugs.ecmascript.org/show_bug.cgi?id=2883>.
-        while (true) {
-            // Steps 6.g.i-iii.
-            var next = callContentFunction(iterator.next, iterator);
-            if (!IsObject(next))
-                ThrowTypeError(JSMSG_NEXT_RETURNED_PRIMITIVE);
+        // Step 5.c, 5.e.
+        var iteratorWrapper = { [std_iterator]() { return GetIterator(items, usingIterator); } };
+        for (var nextValue of allowContentIter(iteratorWrapper)) {
+            // Step 5.e.i.
+            // Disabled for performance reason.  We won't hit this case on
+            // normal array, since _DefineDataProperty will throw before it.
+            // We could hit this when |A| is a proxy and it ignores
+            // |_DefineDataProperty|, but it happens only after too long loop.
+            /*
+            if (k >= 0x1fffffffffffff)
+                ThrowTypeError(JSMSG_TOO_LONG_ARRAY);
+            */
 
-            // Step 6.g.iv.
-            if (next.done) {
-                A.length = k;
-                return A;
-            }
-
-            // Steps 6.g.v-vi.
-            var nextValue = next.value;
-
-            // Steps 6.g.vii-viii.
+            // Steps 5.e.vi-vii.
             var mappedValue = mapping ? callContentFunction(mapfn, thisArg, nextValue, k) : nextValue;
 
-            // Steps 6.g.ix-xi.
+            // Steps 5.e.ii (reordered), 5.e.viii.
             _DefineDataProperty(A, k++, mappedValue);
         }
+
+        // Step 5.e.iv.
+        A.length = k;
+        return A;
     }
 
     // Step 7.

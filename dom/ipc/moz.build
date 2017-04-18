@@ -11,10 +11,7 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'dom'
 
 EXPORTS.mozilla.dom.ipc += [
-    'BlobChild.h',
-    'BlobParent.h',
     'IdType.h',
-    'nsIRemoteBlob.h',
     'StructuredCloneData.h',
 ]
 
@@ -36,18 +33,17 @@ EXPORTS.mozilla.dom += [
     'TabContext.h',
     'TabMessageUtils.h',
     'TabParent.h',
+    'URLClassifierChild.h',
+    'URLClassifierParent.h',
 ]
 
 EXPORTS.mozilla += [
-    'AppProcessChecker.h',
-    'PreallocatedProcessManager.h',
     'ProcessHangMonitor.h',
     'ProcessHangMonitorIPC.h',
     'ProcessPriorityManager.h',
 ]
 
 UNIFIED_SOURCES += [
-    'AppProcessChecker.cpp',
     'ColorPickerParent.cpp',
     'ContentBridgeChild.cpp',
     'ContentBridgeParent.cpp',
@@ -60,7 +56,6 @@ UNIFIED_SOURCES += [
     'nsIContentChild.cpp',
     'nsIContentParent.cpp',
     'PermissionMessageUtils.cpp',
-    'PreallocatedProcessManager.cpp',
     'ProcessPriorityManager.cpp',
     'ScreenManagerParent.cpp',
     'StructuredCloneData.cpp',
@@ -68,24 +63,21 @@ UNIFIED_SOURCES += [
     'TabContext.cpp',
     'TabMessageUtils.cpp',
     'TabParent.cpp',
+    'URLClassifierChild.cpp',
+    'URLClassifierParent.cpp',
 ]
 
-# Blob.cpp cannot be compiled in unified mode because it triggers a fatal gcc warning.
 # CrashReporterChild.cpp cannot be compiled in unified mode because of name clashes
 # in OS X headers.
 # ContentChild.cpp cannot be compiled in unified mode on  linux due to Time conflict
 SOURCES += [
-    'Blob.cpp',
     'ContentChild.cpp',
     'CrashReporterChild.cpp',
     'ProcessHangMonitor.cpp',
 ]
 
 IPDL_SOURCES += [
-    'BlobTypes.ipdlh',
     'DOMTypes.ipdlh',
-    'PBlob.ipdl',
-    'PBlobStream.ipdl',
     'PBrowser.ipdl',
     'PBrowserOrId.ipdlh',
     'PColorPicker.ipdl',
@@ -103,6 +95,7 @@ IPDL_SOURCES += [
     'PProcessHangMonitor.ipdl',
     'PScreenManager.ipdl',
     'PTabContext.ipdlh',
+    'PURLClassifier.ipdl',
     'ServiceWorkerConfiguration.ipdlh',
 ]
 
@@ -125,7 +118,6 @@ LOCAL_INCLUDES += [
     '/chrome',
     '/docshell/base',
     '/dom/base',
-    '/dom/devicestorage',
     '/dom/events',
     '/dom/filesystem',
     '/dom/geolocation',
@@ -133,7 +125,6 @@ LOCAL_INCLUDES += [
     '/dom/security',
     '/dom/storage',
     '/dom/workers',
-    '/embedding/components/printingui/ipc',
     '/extensions/cookie',
     '/extensions/spellcheck/src',
     '/gfx/2d',
@@ -141,6 +132,7 @@ LOCAL_INCLUDES += [
     '/layout/base',
     '/media/webrtc',
     '/netwerk/base',
+    '/toolkit/components/printingui/ipc',
     '/toolkit/crashreporter',
     '/toolkit/xre',
     '/uriloader/exthandler',

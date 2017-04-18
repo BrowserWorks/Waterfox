@@ -6,13 +6,13 @@
  */
 
 const { UnsubmittedCrashHandler } =
-  Cu.import("resource:///modules/ContentCrashHandlers.jsm", this);
+  Cu.import("resource:///modules/ContentCrashHandlers.jsm", {});
 const { FileUtils } =
-  Cu.import("resource://gre/modules/FileUtils.jsm", this);
+  Cu.import("resource://gre/modules/FileUtils.jsm", {});
 const { makeFakeAppDir }  =
-  Cu.import("resource://testing-common/AppData.jsm", this);
+  Cu.import("resource://testing-common/AppData.jsm", {});
 const { OS } =
-  Cu.import("resource://gre/modules/osfile.jsm", this);
+  Cu.import("resource://gre/modules/osfile.jsm", {});
 
 const DAY = 24 * 60 * 60 * 1000; // milliseconds
 const SERVER_URL = "http://example.com/browser/toolkit/crashreporter/test/browser/crashreport.sjs";
@@ -85,11 +85,11 @@ function* createPendingCrashReports(howMany, accessDate) {
    *        Set this to whatever the file needs to contain, if anything.
    * @returns Promise
    */
-  let createFile = (fileName, extension, accessDate, contents) => {
+  let createFile = (fileName, extension, lastAccessedDate, contents) => {
     let file = dir.clone();
     file.append(fileName + "." + extension);
     file.create(Ci.nsILocalFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
-    let promises = [OS.File.setDates(file.path, accessDate)];
+    let promises = [OS.File.setDates(file.path, lastAccessedDate)];
 
     if (contents) {
       let encoder = new TextEncoder();

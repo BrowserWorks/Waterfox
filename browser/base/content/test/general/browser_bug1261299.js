@@ -9,10 +9,9 @@
  * current selection (transferable) is cached properly on the parent process.
  */
 
-add_task(function* test_content_and_chrome_selection()
-{
+add_task(function* test_content_and_chrome_selection() {
   let testPage =
-    'data:text/html,' +
+    "data:text/html," +
     '<textarea id="textarea">Write something here</textarea>';
   let DOMWindowUtils = EventUtils._getDOMWindowUtils(window);
   let selectedText;
@@ -39,13 +38,12 @@ add_task(function* test_content_and_chrome_selection()
 // active aka the current selection.
 // Expect: The active selection is what is being sent to OSX service menu.
 
-add_task(function* test_active_selection_switches_properly()
-{
+add_task(function* test_active_selection_switches_properly() {
   let testPage1 =
-    'data:text/html,' +
+    "data:text/html," +
     '<textarea id="textarea">Write something here</textarea>';
   let testPage2 =
-    'data:text/html,' +
+    "data:text/html," +
     '<textarea id="textarea">Nothing available</textarea>';
   let DOMWindowUtils = EventUtils._getDOMWindowUtils(window);
   let selectedText;

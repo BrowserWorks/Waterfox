@@ -173,6 +173,7 @@ void TlsConnectTestBase::ClearServerCache() {
 void TlsConnectTestBase::SetUp() {
   SSL_ConfigServerSessionIDCache(1024, 0, 0, g_working_dir_path.c_str());
   SSLInt_ClearSessionTicketKey();
+  SSLInt_SetTicketLifetime(10);
   ClearStats();
   Init();
 }
@@ -371,6 +372,22 @@ void TlsConnectTestBase::ConnectExpectFail() {
   Handshake();
   ASSERT_EQ(TlsAgent::STATE_ERROR, client_->state());
   ASSERT_EQ(TlsAgent::STATE_ERROR, server_->state());
+}
+
+void TlsConnectTestBase::ConnectExpectFailOneSide(TlsAgent::Role failing_side) {
+  server_->StartConnect();
+  client_->StartConnect();
+  client_->SetServerKeyBits(server_->server_key_bits());
+  client_->Handshake();
+  server_->Handshake();
+  TlsAgent* fail_agent;
+
+  if (failing_side == TlsAgent::CLIENT) {
+    fail_agent = client_;
+  } else {
+    fail_agent = server_;
+  }
+  ASSERT_TRUE_WAIT(fail_agent->state() == TlsAgent::STATE_ERROR, 5000);
 }
 
 void TlsConnectTestBase::ConfigureVersion(uint16_t version) {

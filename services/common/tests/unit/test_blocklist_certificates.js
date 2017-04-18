@@ -2,8 +2,9 @@ const { Constructor: CC } = Components;
 
 Cu.import("resource://testing-common/httpd.js");
 
-const { OneCRLBlocklistClient } = Cu.import("resource://services-common/blocklist-clients.js");
-const { loadKinto } = Cu.import("resource://services-common/kinto-offline-client.js");
+const { OneCRLBlocklistClient } = Cu.import("resource://services-common/blocklist-clients.js", {});
+const { Kinto } = Cu.import("resource://services-common/kinto-offline-client.js", {});
+const { FirefoxAdapter } = Cu.import("resource://services-common/kinto-storage-adapter.js", {});
 
 const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
   "nsIBinaryInputStream", "setInputStream");
@@ -11,32 +12,26 @@ const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
 let server;
 
 // set up what we need to make storage adapters
-const Kinto = loadKinto();
-const FirefoxAdapter = Kinto.adapters.FirefoxAdapter;
 const kintoFilename = "kinto.sqlite";
 
-let kintoClient;
-
-function do_get_kinto_collection(collectionName) {
-  if (!kintoClient) {
-    let config = {
-      // Set the remote to be some server that will cause test failure when
-      // hit since we should never hit the server directly, only via maybeSync()
-      remote: "https://firefox.settings.services.mozilla.com/v1/",
-      // Set up the adapter and bucket as normal
-      adapter: FirefoxAdapter,
-      bucket: "blocklists"
-    };
-    kintoClient = new Kinto(config);
-  }
-  return kintoClient.collection(collectionName);
+function do_get_kinto_collection(collectionName, sqliteHandle) {
+  let config = {
+    // Set the remote to be some server that will cause test failure when
+    // hit since we should never hit the server directly, only via maybeSync()
+    remote: "https://firefox.settings.services.mozilla.com/v1/",
+    // Set up the adapter and bucket as normal
+    adapter: FirefoxAdapter,
+    adapterOptions: {sqliteHandle},
+    bucket: "blocklists"
+  };
+  return new Kinto(config).collection(collectionName);
 }
 
 // Some simple tests to demonstrate that the logic inside maybeSync works
 // correctly and that simple kinto operations are working as expected. There
 // are more tests for core Kinto.js (and its storage adapter) in the
 // xpcshell tests under /services/common
-add_task(function* test_something(){
+add_task(function* test_something() {
   const configPath = "/v1/";
   const recordsPath = "/v1/buckets/blocklists/collections/certificates/records";
 
@@ -44,7 +39,7 @@ add_task(function* test_something(){
                              `http://localhost:${server.identity.primaryPort}/v1`);
 
   // register a handler
-  function handleResponse (request, response) {
+  function handleResponse(request, response) {
     try {
       const sample = getSampleResponse(request, server.identity.primaryPort);
       if (!sample) {
@@ -55,7 +50,7 @@ add_task(function* test_something(){
                              sample.status.statusText);
       // send the headers
       for (let headerLine of sample.sampleHeaders) {
-        let headerElements = headerLine.split(':');
+        let headerElements = headerLine.split(":");
         response.setHeader(headerElements[0], headerElements[1].trimLeft());
       }
       response.setHeader("Date", (new Date()).toUTCString());
@@ -69,26 +64,26 @@ add_task(function* test_something(){
   server.registerPathHandler(recordsPath, handleResponse);
 
   // Test an empty db populates
-  let result = yield OneCRLBlocklistClient.maybeSync(2000, Date.now());
+  yield OneCRLBlocklistClient.maybeSync(2000, Date.now());
 
   // Open the collection, verify it's been populated:
   // Our test data has a single record; it should be in the local collection
-  let collection = do_get_kinto_collection("certificates");
-  yield collection.db.open();
+  let sqliteHandle = yield FirefoxAdapter.openConnection({path: kintoFilename});
+  let collection = do_get_kinto_collection("certificates", sqliteHandle);
   let list = yield collection.list();
   do_check_eq(list.data.length, 1);
-  yield collection.db.close();
+  yield sqliteHandle.close();
 
   // Test the db is updated when we call again with a later lastModified value
   result = yield OneCRLBlocklistClient.maybeSync(4000, Date.now());
 
   // Open the collection, verify it's been updated:
   // Our test data now has two records; both should be in the local collection
-  collection = do_get_kinto_collection("certificates");
-  yield collection.db.open();
+  sqliteHandle = yield FirefoxAdapter.openConnection({path: kintoFilename});
+  collection = do_get_kinto_collection("certificates", sqliteHandle);
   list = yield collection.list();
   do_check_eq(list.data.length, 3);
-  yield collection.db.close();
+  yield sqliteHandle.close();
 
   // Try to maybeSync with the current lastModified value - no connection
   // should be attempted.
@@ -184,7 +179,7 @@ function getSampleResponse(req, port) {
         "serialNumber":"ATFpsA==",
         "id":"dabafde9-df4a-ddba-2548-748da04cc02c",
         "last_modified":4000
-      },{
+      }, {
         "subject":"MCIxIDAeBgNVBAMMF0Fub3RoZXIgVGVzdCBFbmQtZW50aXR5",
         "pubKeyHash":"VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=",
         "id":"dabafde9-df4a-ddba-2548-748da04cc02d",
@@ -205,12 +200,12 @@ function getSampleResponse(req, port) {
         "serialNumber":"not a base64 encoded serial",
         "id":"dabafde9-df4a-ddba-2548-748da04cc02e",
         "last_modified":5000
-      },{
+      }, {
         "subject":"not a base64 encoded subject",
         "pubKeyHash":"not a base64 encoded pubKeyHash",
         "id":"dabafde9-df4a-ddba-2548-748da04cc02f",
         "last_modified":5000
-      },{
+      }, {
         "subject":"MCIxIDAeBgNVBAMMF0Fub3RoZXIgVGVzdCBFbmQtZW50aXR5",
         "pubKeyHash":"VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=",
         "id":"dabafde9-df4a-ddba-2548-748da04cc02g",

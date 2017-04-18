@@ -63,20 +63,10 @@ dnl ========================================================
 USE_PTHREADS=
 _PTHREAD_LDFLAGS=""
 
-dnl Do not allow objdir == srcdir builds
-dnl ==============================================================
-_topsrcdir=`cd $srcdir; pwd -W 2>/dev/null || pwd -P`
-_objdir=`pwd -P`
-
-MOZ_BUILD_ROOT=`pwd -W 2>/dev/null || pwd -P`
-
 MOZ_DEFAULT_COMPILER
 
 if test -z "$JS_STANDALONE"; then
   autoconfmk=autoconf-js.mk
-  #DIST is exported from top-level configure
-else
-  DIST="$MOZ_BUILD_ROOT/dist"
 fi
 AC_SUBST(autoconfmk)
 
@@ -118,7 +108,6 @@ else
     AC_PROG_RANLIB
     MOZ_PATH_PROGS(AS, $AS as, $CC)
     AC_CHECK_PROGS(AR, ar, :)
-    AC_CHECK_PROGS(LD, ld, :)
     AC_CHECK_PROGS(STRIP, strip, :)
     AC_CHECK_PROGS(WINDRES, windres, :)
     if test -z "$HOST_CC"; then
@@ -159,17 +148,15 @@ case "$target" in
             CFLAGS="$CFLAGS -utf-8"
             CXXFLAGS="$CXXFLAGS -utf-8"
         fi
-        # MSVC warning C4345 warns of newly conformant behavior as of VS2003.
-        # MSVC warning C4351 warns of newly conformant behavior as of VS2005.
         # MSVC warning C4800 warns when a value is implicitly cast to bool,
         # because this also forces narrowing to a single byte, which can be a
         # perf hit.  But this matters so little in practice (and often we want
         # that behavior) that it's better to turn it off.
         # _CRT_SECURE_NO_WARNINGS disables warnings about using MSVC-specific
         # secure CRT functions.
-        # MSVC warning wd4595 warns non-member operator new or delete functions
+        # MSVC warning C4595 warns non-member operator new or delete functions
         # may not be declared inline, as of VS2015 Update 2.
-        CXXFLAGS="$CXXFLAGS -wd4345 -wd4351 -wd4800 -wd4595 -D_CRT_SECURE_NO_WARNINGS"
+        CXXFLAGS="$CXXFLAGS -wd4800 -wd4595 -D_CRT_SECURE_NO_WARNINGS"
         AC_LANG_SAVE
         AC_LANG_C
         AC_TRY_COMPILE([#include <stdio.h>],
@@ -207,10 +194,6 @@ case "$target" in
 
             # -Zc:sizedDealloc- disables C++14 global sized deallocation (see bug 1160146)
             CXXFLAGS="$CXXFLAGS -Zc:sizedDealloc-"
-
-            # Disable C++11 thread-safe statics due to crashes on XP (bug 1204752)
-            # See https://connect.microsoft.com/VisualStudio/feedback/details/1789709/visual-c-2015-runtime-broken-on-windows-server-2003-c-11-magic-statics
-            CXXFLAGS="$CXXFLAGS -Zc:threadSafeInit-"
             ;;
         esac
         AC_SUBST(MSVS_VERSION)
@@ -218,7 +201,7 @@ case "$target" in
         AC_SUBST(MSVC_CXX_RUNTIME_DLL)
 
         # Check linker version
-        _LD_FULL_VERSION=`"${LD}" -v 2>&1 | sed -nre "$_MSVC_VER_FILTER"`
+        _LD_FULL_VERSION=`"${LINK}" -v 2>&1 | sed -nre "$_MSVC_VER_FILTER"`
         _LD_MAJOR_VERSION=`echo ${_LD_FULL_VERSION} | $AWK -F\. '{ print $1 }'`
         if test "$_LD_MAJOR_VERSION" != "$_CC_SUITE"; then
             AC_MSG_ERROR([The linker major version, $_LD_FULL_VERSION,  does not match the compiler suite version, $_CC_SUITE.])
@@ -309,7 +292,6 @@ AC_SUBST(QEMU_CANT_RUN_JS_SHELL)
 AC_SUBST(_MSC_VER)
 
 AC_SUBST(GNU_AS)
-AC_SUBST(GNU_LD)
 AC_SUBST(GNU_CC)
 AC_SUBST(GNU_CXX)
 
@@ -520,28 +502,11 @@ if test "$GNU_CC"; then
 
     _DEFINES_CFLAGS='-include $(topobjdir)/js/src/js-confdefs.h -DMOZILLA_CLIENT'
     _USE_CPP_INCLUDE_FLAG=1
-
-else
-    MKSHLIB='$(LD) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
-    MKCSHLIB='$(LD) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
-
-    DSO_LDOPTS='-shared'
-    if test "$GNU_LD"; then
-        # Don't allow undefined symbols in libraries
-        DSO_LDOPTS="$DSO_LDOPTS -z defs"
-    fi
-
-    DSO_CFLAGS=''
-    DSO_PIC_CFLAGS='-KPIC'
-    _DEFINES_CFLAGS='$(ACDEFINES) -D_JS_CONFDEFS_H_ -DMOZILLA_CLIENT'
 fi
 
 if test "$GNU_CXX"; then
     _DEFINES_CXXFLAGS='-DMOZILLA_CLIENT -include $(topobjdir)/js/src/js-confdefs.h'
     _USE_CPP_INCLUDE_FLAG=1
-
-else
-    _DEFINES_CXXFLAGS='-DMOZILLA_CLIENT -D_JS_CONFDEFS_H_ $(ACDEFINES)'
 fi
 
 dnl ========================================================
@@ -705,7 +670,6 @@ case "$target" in
         TARGET_COMPILER_ABI=msvc
         HOST_CC='$(CC)'
         HOST_CXX='$(CXX)'
-        HOST_LD='$(LD)'
         if test "$AS_BIN"; then
             AS="$(basename "$AS_BIN")"
         fi
@@ -720,14 +684,9 @@ case "$target" in
         DLL_PREFIX=
         LIB_PREFIX=
         IMPORT_LIB_SUFFIX=lib
-        MKSHLIB='$(LD) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
-        MKCSHLIB='$(LD) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
-        dnl Set subsystem version 5 for Windows XP.
-        if test "$CPU_ARCH" = "x86"; then
-            WIN32_SUBSYSTEM_VERSION=5.01
-        else
-            WIN32_SUBSYSTEM_VERSION=5.02
-        fi
+        MKSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
+        MKCSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
+        WIN32_SUBSYSTEM_VERSION=6.01
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
         DSO_LDOPTS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -944,26 +903,9 @@ fi
 
 dnl Configure JIT support
 
-case "$target" in
-i?86-*)
+case "$CPU_ARCH" in
+x86|x86_64|arm|aarch64|mips*)
     ENABLE_ION=1
-    AC_DEFINE(JS_CPU_X86)
-    ;;
-x86_64*-*)
-    ENABLE_ION=1
-    AC_DEFINE(JS_CPU_X64)
-    ;;
-arm*-*)
-    ENABLE_ION=1
-    AC_DEFINE(JS_CPU_ARM)
-    ;;
-sparc-*)
-dnl ENABLE_ION=0
-    AC_DEFINE(JS_CPU_SPARC)
-    ;;
-mips*-*)
-    ENABLE_ION=1
-    AC_DEFINE(JS_CPU_MIPS)
     ;;
 esac
 
@@ -1364,26 +1306,6 @@ if test "$GNU_CC"; then
   TARGET_COMPILER_ABI="${TARGET_COMPILER_ABI-${ARM_ABI_PREFIX}gcc3}"
 fi
 
-dnl Check to see if we can resolve ambiguity with |using|.
-AC_CACHE_CHECK(whether the C++ \"using\" keyword resolves ambiguity,
-               ac_cv_cpp_ambiguity_resolving_using,
-               [AC_TRY_COMPILE(class X {
-                                 public: int go(const X&) {return 3;}
-                                         int jo(const X&) {return 3;}
-                               };
-                               class Y : public X {
-                                 public:  int go(int) {return 2;}
-                                          int jo(int) {return 2;}
-                                          using X::jo;
-                                 private: using X::go;
-                               };,
-                               X x; Y y; y.jo(x);,
-                               ac_cv_cpp_ambiguity_resolving_using=yes,
-                               ac_cv_cpp_ambiguity_resolving_using=no)])
-if test "$ac_cv_cpp_ambiguity_resolving_using" = yes ; then
-   AC_DEFINE(HAVE_CPP_AMBIGUITY_RESOLVING_USING)
-fi
-
 dnl See if a dynamic_cast to void* gives the most derived object.
 AC_CACHE_CHECK(for C++ dynamic_cast to void*,
                ac_cv_cpp_dynamic_cast_void_ptr,
@@ -1436,15 +1358,6 @@ if test "$ac_cv_thread_keyword" = yes; then
       ;;
   esac
 fi
-
-dnl See if compiler supports some gcc-style attributes
-
-AC_CACHE_CHECK(for __attribute__((always_inline)),
-               ac_cv_attribute_always_inline,
-               [AC_TRY_COMPILE([inline void f(void) __attribute__((always_inline));],
-                               [],
-                               ac_cv_attribute_always_inline=yes,
-                               ac_cv_attribute_always_inline=no)])
 
 dnl End of C++ language/feature checks
 AC_LANG_C
@@ -1755,6 +1668,9 @@ elif test "$CPU_ARCH" = "arm"; then
 
     dnl ARM platforms may trap on unaligned accesses; catch the signal and
     dnl recover.
+elif test "$CPU_ARCH" = "aarch64"; then
+    AC_DEFINE(JS_CODEGEN_ARM64)
+    JS_CODEGEN_ARM64=1
 elif test "$CPU_ARCH" = "mips32"; then
     AC_DEFINE(JS_CODEGEN_MIPS32)
     JS_CODEGEN_MIPS32=1
@@ -2096,7 +2012,6 @@ AC_SUBST(AR_EXTRACT)
 AC_SUBST(AS)
 AC_SUBST(ASFLAGS)
 AC_SUBST(AS_DASH_C_FLAG)
-AC_SUBST(LD)
 AC_SUBST(RC)
 AC_SUBST(RCFLAGS)
 AC_SUBST(WINDRES)
@@ -2183,7 +2098,6 @@ AC_SUBST(HOST_LDFLAGS)
 AC_SUBST(HOST_OPTIMIZE_FLAGS)
 AC_SUBST(HOST_AR)
 AC_SUBST(HOST_AR_FLAGS)
-AC_SUBST(HOST_LD)
 AC_SUBST(HOST_RANLIB)
 AC_SUBST(HOST_BIN_SUFFIX)
 

@@ -4,6 +4,7 @@
 
 "use strict";
 
+const Services = require("Services");
 const {Task} = require("devtools/shared/task");
 const {colorUtils} = require("devtools/shared/css/color");
 const {Spectrum} = require("devtools/client/shared/widgets/Spectrum");
@@ -13,6 +14,8 @@ const L10N = new LocalizationHelper("devtools/client/locales/inspector.propertie
 
 const Heritage = require("sdk/core/heritage");
 
+const colorWidgetPref = "devtools.inspector.colorWidget.enabled";
+const NEW_COLOR_WIDGET = Services.prefs.getBoolPref(colorWidgetPref);
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 /**
@@ -28,9 +31,15 @@ const XHTML_NS = "http://www.w3.org/1999/xhtml";
  *        inline editor.
  * @param {InspectorPanel} inspector
  *        The inspector panel, needed for the eyedropper.
+ * @param {Function} supportsCssColor4ColorFunction
+ *        A function for checking the supporting of css-color-4 color function.
  */
-function SwatchColorPickerTooltip(document, inspector) {
-  let stylesheet = "chrome://devtools/content/shared/widgets/spectrum.css";
+function SwatchColorPickerTooltip(document,
+                                  inspector,
+                                  {supportsCssColor4ColorFunction}) {
+  let stylesheet = NEW_COLOR_WIDGET ?
+    "chrome://devtools/content/shared/widgets/color-widget.css" :
+    "chrome://devtools/content/shared/widgets/spectrum.css";
   SwatchBasedEditorTooltip.call(this, document, stylesheet);
 
   this.inspector = inspector;
@@ -40,6 +49,7 @@ function SwatchColorPickerTooltip(document, inspector) {
   this.spectrum = this.setColorPickerContent([0, 0, 0, 1]);
   this._onSpectrumColorChange = this._onSpectrumColorChange.bind(this);
   this._openEyeDropper = this._openEyeDropper.bind(this);
+  this.cssColor4 = supportsCssColor4ColorFunction();
 }
 
 SwatchColorPickerTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.prototype, {
@@ -66,7 +76,13 @@ SwatchColorPickerTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.pr
 
     this.tooltip.setContent(container, { width: 218, height: 224 });
 
-    let spectrum = new Spectrum(spectrumNode, color);
+    let spectrum;
+    if (NEW_COLOR_WIDGET) {
+      const {ColorWidget} = require("devtools/client/shared/widgets/ColorWidget");
+      spectrum = new ColorWidget(spectrumNode, color);
+    } else {
+      spectrum = new Spectrum(spectrumNode, color);
+    }
 
     // Wait for the tooltip to be shown before calling spectrum.show
     // as it expect to be visible in order to compute DOM element sizes.
@@ -95,20 +111,18 @@ SwatchColorPickerTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.pr
       this.spectrum.updateUI();
     }
 
-    let {target} = this.inspector;
-    target.actorHasMethod("inspector", "pickColorFromPage").then(value => {
-      let tooltipDoc = this.tooltip.doc;
-      let eyeButton = tooltipDoc.querySelector("#eyedropper-button");
-      if (value && this.inspector.selection.nodeFront.isInHTMLDocument) {
-        eyeButton.disabled = false;
-        eyeButton.removeAttribute("title");
-        eyeButton.addEventListener("click", this._openEyeDropper);
-      } else {
-        eyeButton.disabled = true;
-        eyeButton.title = L10N.getStr("eyedropper.disabled.title");
-      }
-      this.emit("ready");
-    }, e => console.error(e));
+    let tooltipDoc = this.tooltip.doc;
+    let eyeButton = tooltipDoc.querySelector("#eyedropper-button");
+    let canShowEyeDropper = yield this.inspector.supportsEyeDropper();
+    if (canShowEyeDropper) {
+      eyeButton.disabled = false;
+      eyeButton.removeAttribute("title");
+      eyeButton.addEventListener("click", this._openEyeDropper);
+    } else {
+      eyeButton.disabled = true;
+      eyeButton.title = L10N.getStr("eyedropper.disabled.title");
+    }
+    this.emit("ready");
   }),
 
   _onSpectrumColorChange: function (event, rgba, cssColor) {
@@ -159,14 +173,14 @@ SwatchColorPickerTooltip.prototype = Heritage.extend(SwatchBasedEditorTooltip.pr
   },
 
   _colorToRgba: function (color) {
-    color = new colorUtils.CssColor(color);
+    color = new colorUtils.CssColor(color, this.cssColor4);
     let rgba = color._getRGBATuple();
     return [rgba.r, rgba.g, rgba.b, rgba.a];
   },
 
   _toDefaultType: function (color) {
     let colorObj = new colorUtils.CssColor(color);
-    colorObj.setAuthoredUnitFromColor(this._originalColor);
+    colorObj.setAuthoredUnitFromColor(this._originalColor, this.cssColor4);
     return colorObj.toString();
   },
 

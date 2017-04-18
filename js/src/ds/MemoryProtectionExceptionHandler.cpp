@@ -95,8 +95,20 @@ static ProtectedRegionTree sProtectedRegions;
 bool
 MemoryProtectionExceptionHandler::isDisabled()
 {
-    // Disabled everywhere for this release.
+#if defined(XP_WIN) && defined(MOZ_ASAN)
+    // Under Windows ASan, WasmFaultHandler registers itself at 'last' priority
+    // in order to let ASan's ShadowExceptionHandler stay at 'first' priority.
+    // Unfortunately that results in spurious wasm faults passing through the
+    // MemoryProtectionExceptionHandler, which breaks its assumption that any
+    // faults it sees are fatal. Just disable this handler in that case, as the
+    // crash annotations provided here are not critical for ASan builds.
     return true;
+#elif defined(RELEASE_OR_BETA)
+    // Disable the exception handler for Beta and Release builds.
+    return true;
+#else
+    return false;
+#endif
 }
 
 void
@@ -128,7 +140,6 @@ ReportCrashIfDebug(const char* aStr)
     DWORD bytesWritten;
     BOOL ret = WriteFile(GetStdHandle(STD_ERROR_HANDLE), aStr,
                          strlen(aStr) + 1, &bytesWritten, nullptr);
-    ::__debugbreak();
 # elif defined(ANDROID)
     int ret = __android_log_write(ANDROID_LOG_FATAL, "MOZ_CRASH", aStr);
 # else
@@ -510,6 +521,9 @@ struct ExceptionHandlerState
 
     /* Each Mach exception handler runs in its own thread. */
     Thread handlerThread;
+
+    /* Ensure that the exception handler thread is terminated before we quit. */
+    ~ExceptionHandlerState() { MemoryProtectionExceptionHandler::uninstall(); }
 };
 
 /* This choice of ID is arbitrary, but must not match our exception ID. */

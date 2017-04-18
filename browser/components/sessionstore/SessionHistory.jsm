@@ -15,6 +15,8 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Utils",
   "resource://gre/modules/sessionstore/Utils.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "uuidGenerator",
+  "@mozilla.org/uuid-generator;1", "nsIUUIDGenerator");
 
 function debug(msg) {
   Services.console.logStringMessage("SessionHistory: " + msg);
@@ -28,8 +30,8 @@ this.SessionHistory = Object.freeze({
     return SessionHistoryInternal.isEmpty(docShell);
   },
 
-  collect: function (docShell) {
-    return SessionHistoryInternal.collect(docShell);
+  collect: function (docShell, aFromIdx = -1) {
+    return SessionHistoryInternal.collect(docShell, aFromIdx);
   },
 
   restore: function (docShell, tabData) {
@@ -41,6 +43,11 @@ this.SessionHistory = Object.freeze({
  * The internal API for the SessionHistory module.
  */
 var SessionHistoryInternal = {
+  /**
+   * Mapping from legacy docshellIDs to docshellUUIDs.
+   */
+  _docshellUUIDMap: new Map(),
+
   /**
    * Returns whether the given docShell's session history is empty.
    *
@@ -62,11 +69,15 @@ var SessionHistoryInternal = {
    *
    * @param docShell
    *        The docShell that owns the session history.
+   * @param aFromIdx
+   *        The starting local index to collect the history from.
+   * @return An object reprereseting a partial global history update.
    */
-  collect: function (docShell) {
+  collect: function (docShell, aFromIdx = -1) {
     let loadContext = docShell.QueryInterface(Ci.nsILoadContext);
     let webNavigation = docShell.QueryInterface(Ci.nsIWebNavigation);
     let history = webNavigation.sessionHistory.QueryInterface(Ci.nsISHistoryInternal);
+    let ihistory = history.QueryInterface(Ci.nsISHistory);
 
     let data = {entries: [], userContextId: loadContext.originAttributes.userContextId };
 
@@ -95,9 +106,29 @@ var SessionHistoryInternal = {
       // record it. For about:blank we explicitly want an empty array without
       // an 'index' property to denote that there are no history entries.
       if (uri != "about:blank" || (body && body.hasChildNodes())) {
-        data.entries.push({ url: uri });
+        data.entries.push({
+          url: uri,
+          triggeringPrincipal_base64: Utils.SERIALIZED_SYSTEMPRINCIPAL
+        });
         data.index = 1;
       }
+    }
+
+    // Check if we should discard some of the entries which didn't change
+    if (aFromIdx > -1) {
+      data.entries.splice(0, aFromIdx + 1);
+    }
+
+    // Transform the entries from local to global index space.
+    data.index += ihistory.globalIndexOffset;
+    data.fromIdx = aFromIdx + ihistory.globalIndexOffset;
+
+    // If we are not the most recent partialSHistory in our groupedSHistory, we
+    // need to make certain that we don't replace the entries from the following
+    // SHistories - so we replace only the number of entries which our SHistory
+    // takes up.
+    if (ihistory.globalIndexOffset + ihistory.count < ihistory.globalCount) {
+      data.toIdx = data.fromIdx + ihistory.count;
     }
 
     return data;
@@ -132,7 +163,7 @@ var SessionHistoryInternal = {
       entry.cacheKey = cacheKey.data;
     }
     entry.ID = shEntry.ID;
-    entry.docshellID = shEntry.docshellID;
+    entry.docshellUUID = shEntry.docshellID.toString();
 
     // We will include the property only if it's truthy to save a couple of
     // bytes when the resulting object is stringified and saved to disk.
@@ -328,8 +359,22 @@ var SessionHistoryInternal = {
       shEntry.ID = id;
     }
 
-    if (entry.docshellID)
-      shEntry.docshellID = entry.docshellID;
+    // If we have the legacy docshellID on our entry, upgrade it to a
+    // docshellUUID by going through the mapping.
+    if (entry.docshellID) {
+      if (!this._docshellUUIDMap.has(entry.docshellID)) {
+        // Convert the nsID to a string so that the docshellUUID property
+        // is correctly stored as a string.
+        this._docshellUUIDMap.set(entry.docshellID,
+                                  uuidGenerator.generateUUID().toString());
+      }
+      entry.docshellUUID = this._docshellUUIDMap.get(entry.docshellID);
+      delete entry.docshellID;
+    }
+
+    if (entry.docshellUUID) {
+      shEntry.docshellID = Components.ID(entry.docshellUUID);
+    }
 
     if (entry.structuredCloneState && entry.structuredCloneVersion) {
       shEntry.stateData =

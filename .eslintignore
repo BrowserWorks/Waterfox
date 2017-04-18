@@ -6,7 +6,7 @@ obj*/**
 
 # We ignore all these directories by default, until we get them enabled.
 # If you are enabling a directory, please add directory specific exclusions
-# below.
+# below.
 addon-sdk/**
 build/**
 caps/**
@@ -40,9 +40,7 @@ python/**
 rdf/**
 startupcache/**
 testing/**
-!tools/lint/eslint/eslint-plugin-mozilla/
-tools/lint/eslint/eslint-plugin-mozilla/node_modules/**
-tools/**
+tools/update-packaging/**
 uriloader/**
 view/**
 widget/**
@@ -70,11 +68,13 @@ browser/components/sessionstore/**
 browser/components/tabview/**
 # generated files in cld2
 browser/components/translation/cld2/cld-worker.js
-browser/extensions/pdfjs/**
+browser/extensions/pdfjs/content/**
 # generated or library files in pocket
 browser/extensions/pocket/content/panels/js/tmpl.js
 browser/extensions/pocket/content/panels/js/vendor/**
 browser/locales/**
+# imported from chromium
+browser/extensions/mortar/**
 
 # devtools/ exclusions
 devtools/client/canvasdebugger/**
@@ -83,74 +83,38 @@ devtools/client/debugger/**
 devtools/client/framework/**
 !devtools/client/framework/selection.js
 !devtools/client/framework/toolbox.js
-devtools/client/jsonview/lib/**
-devtools/client/memory/**
 devtools/client/netmonitor/test/**
 devtools/client/netmonitor/har/test/**
 devtools/client/projecteditor/**
-devtools/client/promisedebugger/**
 devtools/client/responsivedesign/**
 devtools/client/scratchpad/**
 devtools/client/shadereditor/**
 devtools/client/shared/*.jsm
+devtools/client/shared/components/reps/reps.js
 devtools/client/shared/webgl-utils.js
 devtools/client/shared/widgets/*.jsm
-devtools/client/sourceeditor/test/*.js
 devtools/client/webaudioeditor/**
-devtools/client/webconsole/**
-!devtools/client/webconsole/panel.js
-!devtools/client/webconsole/jsterm.js
-!devtools/client/webconsole/console-commands.js
+devtools/client/webconsole/net/**
+devtools/client/webconsole/test/**
+devtools/client/webconsole/console-output.js
+devtools/client/webconsole/hudservice.js
+devtools/client/webconsole/utils.js
+devtools/client/webconsole/webconsole-connection-proxy.js
+devtools/client/webconsole/webconsole.js
 devtools/client/webide/**
 !devtools/client/webide/components/webideCli.js
-devtools/server/*.js
-devtools/server/*.jsm
-!devtools/server/child.js
-!devtools/server/css-logic.js
-!devtools/server/main.js
-!devtools/server/websocket-server.js
-devtools/server/actors/**
-!devtools/server/actors/csscoverage.js
-!devtools/server/actors/inspector.js
-!devtools/server/actors/highlighters/css-grid.js
-!devtools/server/actors/highlighters/eye-dropper.js
-!devtools/server/actors/layout.js
-!devtools/server/actors/string.js
-!devtools/server/actors/styles.js
-!devtools/server/actors/webbrowser.js
-!devtools/server/actors/webextension.js
-devtools/server/performance/**
-devtools/server/tests/**
-devtools/shared/*.js
-!devtools/shared/async-storage.js
-!devtools/shared/async-utils.js
-!devtools/shared/defer.js
-!devtools/shared/event-emitter.js
-!devtools/shared/indentation.js
-!devtools/shared/loader-plugin-raw.jsm
-!devtools/shared/task.js
-devtools/shared/apps/**
-devtools/shared/client/**
-devtools/shared/discovery/**
-devtools/shared/gcli/**
-!devtools/shared/gcli/templater.js
+devtools/server/actors/webconsole.js
+devtools/server/actors/object.js
+devtools/server/actors/script.js
+devtools/server/actors/styleeditor.js
+devtools/server/actors/stylesheets.js
+devtools/server/tests/browser/**
+!devtools/server/tests/browser/browser_webextension_inspected_window.js
+devtools/server/tests/mochitest/**
+devtools/server/tests/unit/**
 devtools/shared/heapsnapshot/**
-devtools/shared/layout/**
-devtools/shared/locales/**
-devtools/shared/performance/**
-!devtools/shared/platform/**
-devtools/shared/qrcode/**
-devtools/shared/security/**
-devtools/shared/shims/**
-devtools/shared/tests/**
-!devtools/shared/tests/unit/test_csslexer.js
-devtools/shared/touch/**
-devtools/shared/transport/**
-!devtools/shared/transport/transport.js
-!devtools/shared/transport/websocket-transport.js
+devtools/shared/transport/tests/unit/**
 devtools/shared/webconsole/test/**
-devtools/shared/worker/**
-!devtools/shared/worker/worker.js
 
 # Ignore devtools pre-processed files
 devtools/client/framework/toolbox-process-window.js
@@ -161,7 +125,7 @@ devtools/client/preferences/**
 # Ignore devtools third-party libs
 devtools/shared/jsbeautify/*
 devtools/shared/acorn/*
-devtools/client/sourceeditor/tern/*
+devtools/shared/gcli/source/*
 devtools/shared/node-properties/*
 devtools/shared/pretty-fast/*
 devtools/shared/sourcemap/*
@@ -172,6 +136,8 @@ devtools/client/shared/demangle.js
 devtools/client/shared/vendor/*
 devtools/client/sourceeditor/codemirror/*.js
 devtools/client/sourceeditor/codemirror/**/*.js
+devtools/client/sourceeditor/tern/*
+devtools/client/sourceeditor/test/cm_mode_ruby.js
 devtools/client/sourceeditor/test/codemirror/*
 devtools/client/inspector/markup/test/lib_*
 devtools/client/jsonview/lib/require.js
@@ -213,6 +179,12 @@ mobile/android/modules/HomeProvider.jsm
 
 # Uses `#filter substitution`
 services/sync/modules/constants.js
+
+# Third party services
+services/sync/tps/extensions/mozmill/resource/stdlib/json2.js
+services/common/kinto-http-client.js
+services/common/kinto-offline-client.js
+services/sync/tps/extensions/mozmill
 
 # toolkit/ exclusions
 

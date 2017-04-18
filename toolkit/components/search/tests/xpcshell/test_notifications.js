@@ -37,7 +37,7 @@ function search_observer(subject, topic, data) {
       do_check_eq(engine, retrievedEngine);
       Services.search.defaultEngine = engine;
       Services.search.currentEngine = engine;
-      do_execute_soon(function () {
+      do_execute_soon(function() {
         Services.search.removeEngine(engine);
       });
       break;
@@ -57,7 +57,6 @@ function search_observer(subject, topic, data) {
 
 function run_test() {
   removeMetadata();
-  updateAppInfo();
   useHttpServer();
 
   do_register_cleanup(function cleanup() {

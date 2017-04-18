@@ -413,7 +413,7 @@ private:
 class SyncObjectD3D11 : public SyncObject
 {
 public:
-  SyncObjectD3D11(SyncHandle aSyncHandle);
+  explicit SyncObjectD3D11(SyncHandle aSyncHandle);
   virtual void FinalizeFrame();
   virtual bool IsSyncObjectValid();
 
@@ -422,10 +422,14 @@ public:
   void RegisterTexture(ID3D11Texture2D* aTexture);
 
 private:
-  RefPtr<ID3D11Texture2D> mD3D11Texture;
+  bool Init();
+
+private:
+  SyncHandle mSyncHandle;
   RefPtr<ID3D11Device> mD3D11Device;
+  RefPtr<ID3D11Texture2D> mD3D11Texture;
+  RefPtr<IDXGIKeyedMutex> mKeyedMutex;
   std::vector<ID3D11Texture2D*> mD3D11SyncedTextures;
-  SyncHandle mHandle;
 };
 
 inline uint32_t GetMaxTextureSizeForFeatureLevel(D3D_FEATURE_LEVEL aFeatureLevel)

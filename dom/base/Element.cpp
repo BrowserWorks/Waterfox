@@ -102,7 +102,6 @@
 #include "nsIDOMDocumentType.h"
 #include "nsGenericHTMLElement.h"
 #include "nsIEditor.h"
-#include "nsIEditorIMESupport.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsIControllers.h"
 #include "nsView.h"
@@ -347,27 +346,30 @@ Element::Blur(mozilla::ErrorResult& aError)
 EventStates
 Element::StyleStateFromLocks() const
 {
-  EventStates locks = LockedStyleStates();
-  EventStates state = mState | locks;
+  StyleStateLocks locksAndValues = LockedStyleStates();
+  EventStates locks = locksAndValues.mLocks;
+  EventStates values = locksAndValues.mValues;
+  EventStates state = (mState & ~locks) | (locks & values);
 
-  if (locks.HasState(NS_EVENT_STATE_VISITED)) {
+  if (state.HasState(NS_EVENT_STATE_VISITED)) {
     return state & ~NS_EVENT_STATE_UNVISITED;
   }
-  if (locks.HasState(NS_EVENT_STATE_UNVISITED)) {
+  if (state.HasState(NS_EVENT_STATE_UNVISITED)) {
     return state & ~NS_EVENT_STATE_VISITED;
   }
+
   return state;
 }
 
-EventStates
+Element::StyleStateLocks
 Element::LockedStyleStates() const
 {
-  EventStates* locks =
-    static_cast<EventStates*>(GetProperty(nsGkAtoms::lockedStyleStates));
+  StyleStateLocks* locks =
+    static_cast<StyleStateLocks*>(GetProperty(nsGkAtoms::lockedStyleStates));
   if (locks) {
     return *locks;
   }
-  return EventStates();
+  return StyleStateLocks();
 }
 
 void
@@ -384,21 +386,26 @@ Element::NotifyStyleStateChange(EventStates aStates)
 }
 
 void
-Element::LockStyleStates(EventStates aStates)
+Element::LockStyleStates(EventStates aStates, bool aEnabled)
 {
-  EventStates* locks = new EventStates(LockedStyleStates());
+  StyleStateLocks* locks = new StyleStateLocks(LockedStyleStates());
 
-  *locks |= aStates;
+  locks->mLocks |= aStates;
+  if (aEnabled) {
+    locks->mValues |= aStates;
+  } else {
+    locks->mValues &= ~aStates;
+  }
 
   if (aStates.HasState(NS_EVENT_STATE_VISITED)) {
-    *locks &= ~NS_EVENT_STATE_UNVISITED;
+    locks->mLocks &= ~NS_EVENT_STATE_UNVISITED;
   }
   if (aStates.HasState(NS_EVENT_STATE_UNVISITED)) {
-    *locks &= ~NS_EVENT_STATE_VISITED;
+    locks->mLocks &= ~NS_EVENT_STATE_VISITED;
   }
 
   SetProperty(nsGkAtoms::lockedStyleStates, locks,
-              nsINode::DeleteProperty<EventStates>);
+              nsINode::DeleteProperty<StyleStateLocks>);
   SetHasLockedStyleStates();
 
   NotifyStyleStateChange(aStates);
@@ -407,18 +414,18 @@ Element::LockStyleStates(EventStates aStates)
 void
 Element::UnlockStyleStates(EventStates aStates)
 {
-  EventStates* locks = new EventStates(LockedStyleStates());
+  StyleStateLocks* locks = new StyleStateLocks(LockedStyleStates());
 
-  *locks &= ~aStates;
+  locks->mLocks &= ~aStates;
 
-  if (locks->IsEmpty()) {
+  if (locks->mLocks.IsEmpty()) {
     DeleteProperty(nsGkAtoms::lockedStyleStates);
     ClearHasLockedStyleStates();
     delete locks;
   }
   else {
     SetProperty(nsGkAtoms::lockedStyleStates, locks,
-                nsINode::DeleteProperty<EventStates>);
+                nsINode::DeleteProperty<StyleStateLocks>);
   }
 
   NotifyStyleStateChange(aStates);
@@ -427,12 +434,12 @@ Element::UnlockStyleStates(EventStates aStates)
 void
 Element::ClearStyleStateLocks()
 {
-  EventStates locks = LockedStyleStates();
+  StyleStateLocks locks = LockedStyleStates();
 
   DeleteProperty(nsGkAtoms::lockedStyleStates);
   ClearHasLockedStyleStates();
 
-  NotifyStyleStateChange(locks);
+  NotifyStyleStateChange(locks.mLocks);
 }
 
 bool
@@ -449,7 +456,6 @@ Element::GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult)
   nsCOMPtr<nsIPresShell> shell = aDocument->GetShell();
   if (!shell || GetPrimaryFrame() || !isXULorPluginElement) {
     *aResult = nullptr;
-
     return true;
   }
 
@@ -458,8 +464,7 @@ Element::GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult)
     nsComputedDOMStyle::GetStyleContextForElementNoFlush(this, nullptr, shell);
   NS_ENSURE_TRUE(sc, false);
 
-  *aResult = sc->StyleDisplay()->mBinding;
-
+  NS_IF_ADDREF(*aResult = sc->StyleDisplay()->mBinding);
   return true;
 }
 
@@ -536,42 +541,40 @@ Element::WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 
   // Make sure the style context goes away _before_ we load the binding
   // since that can destroy the relevant presshell.
-  mozilla::css::URLValue *bindingURL;
-  bool ok = GetBindingURL(doc, &bindingURL);
-  if (!ok) {
-    dom::Throw(aCx, NS_ERROR_FAILURE);
-    return nullptr;
-  }
-
-  if (!bindingURL) {
-    // No binding, nothing left to do here.
-    return obj;
-  }
-
-  nsCOMPtr<nsIURI> uri = bindingURL->GetURI();
-  nsCOMPtr<nsIPrincipal> principal = bindingURL->mOriginPrincipal.get();
-
-  // We have a binding that must be installed.
-  bool dummy;
-
-  nsXBLService* xblService = nsXBLService::GetInstance();
-  if (!xblService) {
-    dom::Throw(aCx, NS_ERROR_NOT_AVAILABLE);
-    return nullptr;
-  }
 
   {
     // Make a scope so that ~nsRefPtr can GC before returning obj.
-    RefPtr<nsXBLBinding> binding;
-    xblService->LoadBindings(this, uri, principal, getter_AddRefs(binding), &dummy);
+    RefPtr<css::URLValue> bindingURL;
+    bool ok = GetBindingURL(doc, getter_AddRefs(bindingURL));
+    if (!ok) {
+      dom::Throw(aCx, NS_ERROR_FAILURE);
+      return nullptr;
+    }
 
-    if (binding) {
-      if (nsContentUtils::IsSafeToRunScript()) {
-        binding->ExecuteAttachedHandler();
+    if (bindingURL) {
+      nsCOMPtr<nsIURI> uri = bindingURL->GetURI();
+      nsCOMPtr<nsIPrincipal> principal = bindingURL->mOriginPrincipal.get();
+
+      // We have a binding that must be installed.
+      bool dummy;
+
+      nsXBLService* xblService = nsXBLService::GetInstance();
+      if (!xblService) {
+        dom::Throw(aCx, NS_ERROR_NOT_AVAILABLE);
+        return nullptr;
       }
-      else {
-        nsContentUtils::AddScriptRunner(
-          NewRunnableMethod(binding, &nsXBLBinding::ExecuteAttachedHandler));
+
+      RefPtr<nsXBLBinding> binding;
+      xblService->LoadBindings(this, uri, principal, getter_AddRefs(binding),
+                               &dummy);
+
+      if (binding) {
+        if (nsContentUtils::IsSafeToRunScript()) {
+          binding->ExecuteAttachedHandler();
+        } else {
+          nsContentUtils::AddScriptRunner(
+            NewRunnableMethod(binding, &nsXBLBinding::ExecuteAttachedHandler));
+        }
       }
     }
   }
@@ -630,7 +633,7 @@ Element::GetElementsByTagName(const nsAString& aLocalName,
 nsIFrame*
 Element::GetStyledFrame()
 {
-  nsIFrame *frame = GetPrimaryFrame(Flush_Layout);
+  nsIFrame *frame = GetPrimaryFrame(FlushType::Layout);
   return frame ? nsLayoutUtils::GetStyleFrame(frame) : nullptr;
 }
 
@@ -645,8 +648,9 @@ Element::GetScrollFrame(nsIFrame **aStyledFrame, bool aFlushLayout)
     return nullptr;
   }
 
-  // Inline version of GetStyledFrame to use Flush_None if needed.
-  nsIFrame* frame = GetPrimaryFrame(aFlushLayout ? Flush_Layout : Flush_None);
+  // Inline version of GetStyledFrame to use FlushType::None if needed.
+  nsIFrame* frame =
+    GetPrimaryFrame(aFlushLayout ? FlushType::Layout : FlushType::None);
   if (frame) {
     frame = nsLayoutUtils::GetStyleFrame(frame);
   }
@@ -976,7 +980,7 @@ Element::GetBoundingClientRect()
 {
   RefPtr<DOMRect> rect = new DOMRect(this);
 
-  nsIFrame* frame = GetPrimaryFrame(Flush_Layout);
+  nsIFrame* frame = GetPrimaryFrame(FlushType::Layout);
   if (!frame) {
     // display:none, perhaps? Return the empty rect
     return rect.forget();
@@ -994,7 +998,7 @@ Element::GetClientRects()
 {
   RefPtr<DOMRectList> rectList = new DOMRectList(this);
 
-  nsIFrame* frame = GetPrimaryFrame(Flush_Layout);
+  nsIFrame* frame = GetPrimaryFrame(FlushType::Layout);
   if (!frame) {
     // display:none, perhaps? Return an empty list
     return rectList.forget();
@@ -1736,18 +1740,6 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     }
   }
 
-  // It would be cleanest to mark nodes as dirty when (a) they're created and
-  // (b) they're unbound from a tree. However, we can't easily do (a) right now,
-  // because IsStyledByServo() is not always easy to check at node creation time,
-  // and the bits have different meaning in the non-IsStyledByServo case.
-  //
-  // So for now, we just mark nodes as dirty when they're inserted into a
-  // document or shadow tree.
-  if (IsStyledByServo() && IsInComposedDoc()) {
-    MOZ_ASSERT(!HasServoData());
-    SetIsDirtyForServo();
-  }
-
   // XXXbz script execution during binding can trigger some of these
   // postcondition asserts....  But we do want that, since things will
   // generally be quite broken when that happens.
@@ -2017,8 +2009,17 @@ Element::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
 }
 
 DeclarationBlock*
-Element::GetInlineStyleDeclaration()
+Element::GetInlineStyleDeclaration() const
 {
+  if (!MayHaveStyle()) {
+    return nullptr;
+  }
+  const nsAttrValue* attrVal = mAttrsAndChildren.GetAttr(nsGkAtoms::style);
+
+  if (attrVal && attrVal->Type() == nsAttrValue::eCSSDeclaration) {
+    return attrVal->GetCSSDeclarationValue();
+  }
+
   return nullptr;
 }
 
@@ -2159,17 +2160,20 @@ Element::DispatchClickEvent(nsPresContext* aPresContext,
   event.mRefPoint = aSourceEvent->mRefPoint;
   uint32_t clickCount = 1;
   float pressure = 0;
+  uint32_t pointerId = 0; // Use the default value here.
   uint16_t inputSource = 0;
   WidgetMouseEvent* sourceMouseEvent = aSourceEvent->AsMouseEvent();
   if (sourceMouseEvent) {
     clickCount = sourceMouseEvent->mClickCount;
     pressure = sourceMouseEvent->pressure;
+    pointerId = sourceMouseEvent->pointerId;
     inputSource = sourceMouseEvent->inputSource;
   } else if (aSourceEvent->mClass == eKeyboardEventClass) {
     inputSource = nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD;
   }
   event.pressure = pressure;
   event.mClickCount = clickCount;
+  event.pointerId = pointerId;
   event.inputSource = inputSource;
   event.mModifiers = aSourceEvent->mModifiers;
   if (aExtraEventFlags) {
@@ -2181,7 +2185,7 @@ Element::DispatchClickEvent(nsPresContext* aPresContext,
 }
 
 nsIFrame*
-Element::GetPrimaryFrame(mozFlushType aType)
+Element::GetPrimaryFrame(FlushType aType)
 {
   nsIDocument* doc = GetComposedDoc();
   if (!doc) {
@@ -2190,7 +2194,7 @@ Element::GetPrimaryFrame(mozFlushType aType)
 
   // Cause a flush, so we get up-to-date frame
   // information
-  if (aType != Flush_None) {
+  if (aType != FlushType::None) {
     doc->FlushPendingNotifications(aType);
   }
 
@@ -2991,7 +2995,7 @@ Element::CheckHandleEventForLinksPrecondition(EventChainVisitor& aVisitor,
 }
 
 nsresult
-Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
+Element::GetEventTargetParentForLinks(EventChainPreVisitor& aVisitor)
 {
   // Optimisation: return early if this event doesn't interest us.
   // IMPORTANT: this switch and the switch below it must be kept in sync!
@@ -3013,8 +3017,9 @@ Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
 
   nsresult rv = NS_OK;
 
-  // We do the status bar updates in PreHandleEvent so that the status bar gets
-  // updated even if the event is consumed before we have a chance to set it.
+  // We do the status bar updates in GetEventTargetParent so that the status bar
+  // gets updated even if the event is consumed before we have a chance to set
+  // it.
   switch (aVisitor.mEvent->mMessage) {
   // Set the status bar similarly for mouseover and focus
   case eMouseOver:
@@ -3312,14 +3317,6 @@ Element::AttrValueToCORSMode(const nsAttrValue* aValue)
 static const char*
 GetFullScreenError(nsIDocument* aDoc)
 {
-  if (aDoc->NodePrincipal()->GetAppStatus() >= nsIPrincipal::APP_STATUS_INSTALLED) {
-    // Request is in a web app and in the same origin as the web app.
-    // Don't enforce as strict security checks for web apps, the user
-    // is supposed to have trust in them. However documents cross-origin
-    // to the web app must still confirm to the normal security checks.
-    return nullptr;
-  }
-
   if (!nsContentUtils::IsRequestFullScreenAllowed()) {
     return "FullscreenDeniedNotInputDriven";
   }
@@ -3328,7 +3325,7 @@ GetFullScreenError(nsIDocument* aDoc)
 }
 
 void
-Element::RequestFullscreen(ErrorResult& aError)
+Element::RequestFullscreen(CallerType aCallerType, ErrorResult& aError)
 {
   // Only grant full-screen requests if this is called from inside a trusted
   // event handler (i.e. inside an event handler for a user initiated event).
@@ -3343,15 +3340,15 @@ Element::RequestFullscreen(ErrorResult& aError)
   }
 
   auto request = MakeUnique<FullscreenRequest>(this);
-  request->mIsCallerChrome = nsContentUtils::IsCallerChrome();
+  request->mIsCallerChrome = (aCallerType == CallerType::System);
 
   OwnerDoc()->AsyncRequestFullScreen(Move(request));
 }
 
 void
-Element::RequestPointerLock()
+Element::RequestPointerLock(CallerType aCallerType)
 {
-  OwnerDoc()->RequestPointerLock(this);
+  OwnerDoc()->RequestPointerLock(this, aCallerType);
 }
 
 void
@@ -3452,7 +3449,7 @@ Element::GetAnimations(const AnimationFilter& filter,
 {
   nsIDocument* doc = GetComposedDoc();
   if (doc) {
-    doc->FlushPendingNotifications(Flush_Style);
+    doc->FlushPendingNotifications(FlushType::Style);
   }
 
   Element* elem = this;
@@ -3888,7 +3885,7 @@ Element::ClearDataset()
   slots->mDataset = nullptr;
 }
 
-nsTArray<Element::nsDOMSlots::IntersectionObserverRegistration>*
+nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>*
 Element::RegisteredIntersectionObservers()
 {
   nsDOMSlots* slots = DOMSlots();
@@ -3898,34 +3895,43 @@ Element::RegisteredIntersectionObservers()
 void
 Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  RegisteredIntersectionObservers()->AppendElement(
-    nsDOMSlots::IntersectionObserverRegistration { aObserver, -1 });
+  nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
+    RegisteredIntersectionObservers();
+  if (observers->Contains(aObserver)) {
+    return;
+  }
+  RegisteredIntersectionObservers()->Put(aObserver, -1);
 }
 
 void
 Element::UnregisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  nsTArray<nsDOMSlots::IntersectionObserverRegistration>* observers =
+  nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
     RegisteredIntersectionObservers();
-  for (uint32_t i = 0; i < observers->Length(); ++i) {
-    nsDOMSlots::IntersectionObserverRegistration reg = observers->ElementAt(i);
-    if (reg.observer == aObserver) {
-      observers->RemoveElementAt(i);
-      break;
-    }
-  }
+  observers->Remove(aObserver);
 }
 
 bool
 Element::UpdateIntersectionObservation(DOMIntersectionObserver* aObserver, int32_t aThreshold)
 {
-  nsTArray<nsDOMSlots::IntersectionObserverRegistration>* observers =
+  nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
     RegisteredIntersectionObservers();
-  for (auto& reg : *observers) {
-    if (reg.observer == aObserver && reg.previousThreshold != aThreshold) {
-      reg.previousThreshold = aThreshold;
-      return true;
-    }
+  if (!observers->Contains(aObserver)) {
+    return false;
+  }
+  int32_t previousThreshold = observers->Get(aObserver);
+  if (previousThreshold != aThreshold) {
+    observers->Put(aObserver, aThreshold);
+    return true;
   }
   return false;
+}
+
+void
+Element::ClearServoData() {
+#ifdef MOZ_STYLO
+  Servo_Element_ClearData(this);
+#else
+  MOZ_CRASH("Accessing servo node data in non-stylo build");
+#endif
 }

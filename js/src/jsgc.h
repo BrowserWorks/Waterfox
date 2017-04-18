@@ -12,6 +12,7 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/TimeStamp.h"
 #include "mozilla/TypeTraits.h"
 
 #include "js/GCAPI.h"
@@ -55,12 +56,13 @@ enum class State {
     D(None) \
     D(NonIncrementalRequested) \
     D(AbortRequested) \
-    D(KeepAtomsSet) \
+    D(Unused1) \
     D(IncrementalDisabled) \
     D(ModeChange) \
     D(MallocBytesTrigger) \
     D(GCBytesTrigger) \
-    D(ZoneChange)
+    D(ZoneChange) \
+    D(CompartmentRevived)
 enum class AbortReason {
 #define MAKE_REASON(name) name,
     GC_ABORT_REASONS(MAKE_REASON)
@@ -453,6 +455,11 @@ class ArenaList {
         return !*cursorp_;
     }
 
+    void moveCursorToEnd() {
+        while (!isCursorAtEnd())
+            cursorp_ = &(*cursorp_)->next;
+    }
+
     // This can return nullptr.
     Arena* arenaAfterCursor() const {
         check();
@@ -738,7 +745,7 @@ class ArenaLists
             freeLists[i] = &placeholder;
     }
 
-    inline void prepareForIncrementalGC(JSRuntime* rt);
+    inline void prepareForIncrementalGC();
 
     /* Check if this arena is in use. */
     bool arenaIsInUse(Arena* arena, AllocKind kind) const {
@@ -802,14 +809,10 @@ class ArenaLists
     };
 
   private:
-    inline void finalizeNow(FreeOp* fop, const FinalizePhase& phase);
     inline void queueForForegroundSweep(FreeOp* fop, const FinalizePhase& phase);
     inline void queueForBackgroundSweep(FreeOp* fop, const FinalizePhase& phase);
 
-    inline void finalizeNow(FreeOp* fop, AllocKind thingKind,
-                            KeepArenasEnum keepArenas, Arena** empty = nullptr);
-    inline void forceFinalizeNow(FreeOp* fop, AllocKind thingKind,
-                                 KeepArenasEnum keepArenas, Arena** empty = nullptr);
+    inline void finalizeNow(FreeOp* fop, AllocKind thingKind, Arena** empty = nullptr);
     inline void queueForForegroundSweep(FreeOp* fop, AllocKind thingKind);
     inline void queueForBackgroundSweep(FreeOp* fop, AllocKind thingKind);
     inline void mergeSweptArenas(AllocKind thingKind);
@@ -832,9 +835,6 @@ const size_t MAX_EMPTY_CHUNK_AGE = 4;
 } /* namespace gc */
 
 class InterpreterFrame;
-
-extern void
-MarkCompartmentActive(js::InterpreterFrame* fp);
 
 extern void
 TraceRuntime(JSTracer* trc);
@@ -948,7 +948,7 @@ class GCParallelTask
     } state;
 
     // Amount of time this task took to execute.
-    uint64_t duration_;
+    mozilla::TimeDuration duration_;
 
     explicit GCParallelTask(const GCParallelTask&) = delete;
 
@@ -971,7 +971,7 @@ class GCParallelTask
     virtual ~GCParallelTask();
 
     // Time spent in the most recent invocation of this task.
-    int64_t duration() const { return duration_; }
+    mozilla::TimeDuration duration() const { return duration_; }
 
     // The simple interface to a parallel task works exactly like pthreads.
     bool start();

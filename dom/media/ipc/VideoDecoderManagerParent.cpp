@@ -44,7 +44,7 @@ StaticRefPtr<TaskQueue> sManagerTaskQueue;
 
 class ManagerThreadShutdownObserver : public nsIObserver
 {
-  virtual ~ManagerThreadShutdownObserver() {}
+  virtual ~ManagerThreadShutdownObserver() = default;
 public:
   ManagerThreadShutdownObserver() {}
 
@@ -93,7 +93,7 @@ VideoDecoderManagerParent::StartupThreads()
 
   sManagerTaskQueue = new TaskQueue(managerThread.forget());
 
-  ManagerThreadShutdownObserver* obs = new ManagerThreadShutdownObserver();
+  auto* obs = new ManagerThreadShutdownObserver();
   observerService->AddObserver(obs, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
 }
 
@@ -155,9 +155,13 @@ VideoDecoderManagerParent::~VideoDecoderManagerParent()
 }
 
 PVideoDecoderParent*
-VideoDecoderManagerParent::AllocPVideoDecoderParent()
+VideoDecoderManagerParent::AllocPVideoDecoderParent(const VideoInfo& aVideoInfo,
+                                                    const layers::TextureFactoryIdentifier& aIdentifier,
+                                                    bool* aSuccess)
 {
-  return new VideoDecoderParent(this, sManagerTaskQueue, new TaskQueue(SharedThreadPool::Get(NS_LITERAL_CSTRING("VideoDecoderParent"), 4)));
+  return new VideoDecoderParent(this, aVideoInfo, aIdentifier, sManagerTaskQueue,
+                                new TaskQueue(SharedThreadPool::Get(NS_LITERAL_CSTRING("VideoDecoderParent"), 4)),
+                                aSuccess);
 }
 
 bool
@@ -184,19 +188,19 @@ VideoDecoderManagerParent::DeallocPVideoDecoderManagerParent()
   Release();
 }
 
-bool
+mozilla::ipc::IPCResult
 VideoDecoderManagerParent::RecvReadback(const SurfaceDescriptorGPUVideo& aSD, SurfaceDescriptor* aResult)
 {
   RefPtr<Image> image = mImageMap[aSD.handle()];
   if (!image) {
     *aResult = null_t();
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<SourceSurface> source = image->GetAsSourceSurface();
-  if (!image) {
+  if (!source) {
     *aResult = null_t();
-    return true;
+    return IPC_OK();
   }
 
   SurfaceFormat format = source->GetFormat();
@@ -206,7 +210,7 @@ VideoDecoderManagerParent::RecvReadback(const SurfaceDescriptorGPUVideo& aSD, Su
   Shmem buffer;
   if (!length || !AllocShmem(length, Shmem::SharedMemory::TYPE_BASIC, &buffer)) {
     *aResult = null_t();
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<DrawTarget> dt = Factory::CreateDrawTargetForData(gfx::BackendType::CAIRO,
@@ -216,22 +220,22 @@ VideoDecoderManagerParent::RecvReadback(const SurfaceDescriptorGPUVideo& aSD, Su
   if (!dt) {
     DeallocShmem(buffer);
     *aResult = null_t();
-    return true;
+    return IPC_OK();
   }
 
   dt->CopySurface(source, IntRect(0, 0, size.width, size.height), IntPoint());
   dt->Flush();
 
   *aResult = SurfaceDescriptorBuffer(RGBDescriptor(size, format, true), MemoryOrShmem(buffer));
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 VideoDecoderManagerParent::RecvDeallocateSurfaceDescriptorGPUVideo(const SurfaceDescriptorGPUVideo& aSD)
 {
   mImageMap.erase(aSD.handle());
   mTextureMap.erase(aSD.handle());
-  return true;
+  return IPC_OK();
 }
 
 } // namespace dom

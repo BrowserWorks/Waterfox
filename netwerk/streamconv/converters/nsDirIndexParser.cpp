@@ -153,10 +153,10 @@ nsDirIndexParser::ParseFormat(const char* aFormatStr) {
   // Prevent nullptr Deref - Bug 443299 
   if (mFormat == nullptr)
     return NS_ERROR_OUT_OF_MEMORY;
-  mFormat[num] = -1;
-  
   int formatNum=0;
   do {
+    mFormat[formatNum] = -1;
+
     while (*aFormatStr && nsCRT::IsAsciiSpace(char16_t(*aFormatStr)))
       ++aFormatStr;
     
@@ -192,47 +192,68 @@ nsDirIndexParser::ParseFormat(const char* aFormatStr) {
 }
 
 nsresult
-nsDirIndexParser::ParseData(nsIDirIndex *aIdx, char* aDataStr) {
+nsDirIndexParser::ParseData(nsIDirIndex *aIdx, char* aDataStr, int32_t aLineLen)
+{
   // Parse a "201" data line, using the field ordering specified in
   // mFormat.
 
-  if (!mFormat) {
+  if (!mFormat || (mFormat[0] == -1)) {
     // Ignore if we haven't seen a format yet.
     return NS_OK;
   }
 
   nsresult rv = NS_OK;
-
   nsAutoCString filename;
+  int32_t lineLen = aLineLen;
 
   for (int32_t i = 0; mFormat[i] != -1; ++i) {
-    // If we've exhausted the data before we run out of fields, just
-    // bail.
-    if (! *aDataStr)
-      break;
+    // If we've exhausted the data before we run out of fields, just bail.
+    if (!*aDataStr || (lineLen < 1)) {
+      return NS_OK;
+    }
 
-    while (*aDataStr && nsCRT::IsAsciiSpace(*aDataStr))
+    while ((lineLen > 0) && nsCRT::IsAsciiSpace(*aDataStr)) {
       ++aDataStr;
+      --lineLen;
+    }
+
+    if (lineLen < 1) {
+      // invalid format, bail
+      return NS_OK;
+    }
 
     char    *value = aDataStr;
-
     if (*aDataStr == '"' || *aDataStr == '\'') {
       // it's a quoted string. snarf everything up to the next quote character
       const char quotechar = *(aDataStr++);
+      lineLen--;
       ++value;
-      while (*aDataStr && *aDataStr != quotechar)
+      while ((lineLen > 0) && *aDataStr != quotechar) {
         ++aDataStr;
-      *aDataStr++ = '\0';
+        --lineLen;
+      }
+      if (lineLen > 0) {
+        *aDataStr++ = '\0';
+        --lineLen;
+      }
 
-      if (! aDataStr) {
-        NS_WARNING("quoted value not terminated");
+      if (!lineLen) {
+        // invalid format, bail
+        return NS_OK;
       }
     } else {
       // it's unquoted. snarf until we see whitespace.
       value = aDataStr;
-      while (*aDataStr && (!nsCRT::IsAsciiSpace(*aDataStr)))
+      while ((lineLen > 0) && (!nsCRT::IsAsciiSpace(*aDataStr))) {
         ++aDataStr;
-      *aDataStr++ = '\0';
+        --lineLen;
+      }
+      if (lineLen > 0) {
+        *aDataStr++ = '\0';
+        --lineLen;
+      }
+      // even if we ran out of line length here, there's still a trailing zero
+      // byte afterwards
     }
 
     fieldType t = fieldType(mFormat[i]);
@@ -404,7 +425,7 @@ nsDirIndexParser::ProcessData(nsIRequest *aRequest, nsISupports *aCtxt) {
             if (NS_FAILED(rv))
               return rv;
             
-            rv = ParseData(idx, ((char *)buf) + 4);
+            rv = ParseData(idx, ((char *)buf) + 4, lineLen - 4);
             if (NS_FAILED(rv)) {
               return rv;
             }

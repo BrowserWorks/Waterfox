@@ -69,6 +69,7 @@ using namespace mozilla;
 using namespace mozilla::css;
 using namespace mozilla::dom;
 using namespace mozilla::layout;
+using ShapeType = nsFloatManager::ShapeType;
 typedef nsAbsoluteContainingBlock::AbsPosReflowFlags AbsPosReflowFlags;
 
 static void MarkAllDescendantLinesDirty(nsBlockFrame* aBlock)
@@ -305,7 +306,7 @@ NS_NewBlockFormattingContext(nsIPresShell* aPresShell,
                              nsStyleContext* aStyleContext)
 {
   nsBlockFrame* blockFrame = NS_NewBlockFrame(aPresShell, aStyleContext);
-  blockFrame->AddStateBits(NS_BLOCK_FLOAT_MGR | NS_BLOCK_MARGIN_ROOT);
+  blockFrame->AddStateBits(NS_BLOCK_FORMATTING_CONTEXT_STATE_BITS);
   return blockFrame;
 }
 
@@ -837,7 +838,14 @@ nsBlockFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
       AutoNoisyIndenter lineindent(gNoisyIntrinsic);
 #endif
       if (line->IsBlock()) {
-        data.ForceBreak();
+        StyleClear breakType;
+        if (!data.mLineIsEmpty || BlockCanIntersectFloats(line->mFirstChild)) {
+          breakType = StyleClear::Both;
+        } else {
+          breakType = line->mFirstChild->
+            StyleDisplay()->PhysicalBreakType(data.mLineContainerWM);
+        }
+        data.ForceBreak(breakType);
         data.mCurrentLine = nsLayoutUtils::IntrinsicForContainer(aRenderingContext,
                         line->mFirstChild, nsLayoutUtils::PREF_ISIZE);
         data.ForceBreak();
@@ -848,8 +856,13 @@ nsBlockFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
           // percentage basis of 0 unconditionally would give strange
           // behavior for calc(10%-3px).
           const nsStyleCoord &indent = StyleText()->mTextIndent;
-          if (indent.ConvertsToLength())
-            data.mCurrentLine += nsRuleNode::ComputeCoordPercentCalc(indent, 0);
+          if (indent.ConvertsToLength()) {
+            nscoord length = indent.ToLength();
+            if (length != 0) {
+              data.mCurrentLine += length;
+              data.mLineIsEmpty = false;
+            }
+          }
         }
         // XXX Bug NNNNNN Should probably handle percentage text-indent.
 
@@ -1098,7 +1111,7 @@ nsBlockFrame::Reflow(nsPresContext*           aPresContext,
 
   const ReflowInput *reflowInput = &aReflowInput;
   WritingMode wm = aReflowInput.GetWritingMode();
-  nscoord consumedBSize = GetConsumedBSize();
+  nscoord consumedBSize = ConsumedBSize(wm);
   nscoord effectiveComputedBSize = GetEffectiveComputedBSize(aReflowInput,
                                                              consumedBSize);
   Maybe<ReflowInput> mutableReflowInput;
@@ -1615,7 +1628,7 @@ nsBlockFrame::ComputeFinalSize(const ReflowInput& aReflowInput,
                                      aState.mBCoord + nonCarriedOutBDirMargin);
       // ... but don't take up more block size than is available
       nscoord effectiveComputedBSize =
-        GetEffectiveComputedBSize(aReflowInput, aState.GetConsumedBSize());
+        GetEffectiveComputedBSize(aReflowInput, aState.ConsumedBSize());
       finalSize.BSize(wm) =
         std::min(finalSize.BSize(wm),
                  borderPadding.BStart(wm) + effectiveComputedBSize);
@@ -3502,6 +3515,7 @@ nsBlockFrame::ReflowBlockFrame(BlockReflowInput& aState,
         // Start over with a new available space rect at the new height.
         floatAvailableSpace =
           aState.GetFloatAvailableSpaceWithState(aState.mBCoord,
+                                                 ShapeType::ShapeOutside,
                                                  &floatManagerState);
       }
 
@@ -3884,7 +3898,7 @@ nsBlockFrame::DoReflowInlineFrames(BlockReflowInput& aState,
 #endif
 
   WritingMode outerWM = aState.mReflowInput.GetWritingMode();
-  WritingMode lineWM = GetWritingMode(aLine->mFirstChild);
+  WritingMode lineWM = WritingModeForLine(outerWM, aLine->mFirstChild);
   LogicalRect lineRect =
     aFloatAvailableSpace.mRect.ConvertTo(lineWM, outerWM,
                                          aState.ContainerSize());
@@ -6898,6 +6912,7 @@ nsBlockFrame::Init(nsIContent*       aContent,
     AddStateBits(NS_BLOCK_NEEDS_BIDI_RESOLUTION);
   }
 
+  // A display:flow-root box establishes a block formatting context.
   // If a box has a different block flow direction than its containing block:
   // ...
   //   If the box is a block container, then it establishes a new block
@@ -6905,10 +6920,11 @@ nsBlockFrame::Init(nsIContent*       aContent,
   // (http://dev.w3.org/csswg/css-writing-modes/#block-flow)
   // If the box has contain: paint (or contain: strict), then it should also
   // establish a formatting context.
-  if ((GetParent() && StyleVisibility()->mWritingMode !=
+  if (StyleDisplay()->mDisplay == mozilla::StyleDisplay::FlowRoot ||
+      (GetParent() && StyleVisibility()->mWritingMode !=
                       GetParent()->StyleVisibility()->mWritingMode) ||
       StyleDisplay()->IsContainPaint()) {
-    AddStateBits(NS_BLOCK_FLOAT_MGR | NS_BLOCK_MARGIN_ROOT);
+    AddStateBits(NS_BLOCK_FORMATTING_CONTEXT_STATE_BITS);
   }
 
   if ((GetStateBits() &
@@ -7128,7 +7144,7 @@ nsBlockFrame::ReflowBullet(nsIFrame* aBulletFrame,
   // FIXME: aLineTop isn't actually set correctly by some callers, since
   // they reposition the line.
   LogicalRect floatAvailSpace =
-    aState.GetFloatAvailableSpaceWithState(aLineTop,
+    aState.GetFloatAvailableSpaceWithState(aLineTop, ShapeType::ShapeOutside,
                                            &aState.mFloatManagerStateBefore)
           .mRect;
   // FIXME (bug 25888): need to check the entire region that the first

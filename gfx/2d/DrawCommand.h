@@ -46,13 +46,13 @@ public:
 
   virtual bool GetAffectedRect(Rect& aDeviceRect, const Matrix& aTransform) const { return false; }
 
+  CommandType GetType() { return mType; }
+
 protected:
   explicit DrawingCommand(CommandType aType)
     : mType(aType)
   {
   }
-
-  CommandType GetType() { return mType; }
 
 private:
   CommandType mType;
@@ -372,6 +372,11 @@ PathExtentsToMaxStrokeExtents(const StrokeOptions &aStrokeOptions,
   double dx = styleExpansionFactor * hypot(aTransform._11, aTransform._21);
   double dy = styleExpansionFactor * hypot(aTransform._22, aTransform._12);
 
+  // Even if the stroke only partially covers a pixel, it must still render to
+  // full pixels. Round up to compensate for this.
+  dx = ceil(dx);
+  dy = ceil(dy);
+
   Rect result = aRect;
   result.Inflate(dx, dy);
   return result;
@@ -418,6 +423,7 @@ private:
 
 class FillGlyphsCommand : public DrawingCommand
 {
+  friend class DrawTargetCaptureImpl;
 public:
   FillGlyphsCommand(ScaledFont* aFont,
                     const GlyphBuffer& aBuffer,
@@ -553,6 +559,7 @@ public:
 
 class SetTransformCommand : public DrawingCommand
 {
+  friend class DrawTargetCaptureImpl;
 public:
   explicit SetTransformCommand(const Matrix& aTransform)
     : DrawingCommand(CommandType::SETTRANSFORM)

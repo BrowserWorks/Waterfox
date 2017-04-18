@@ -54,12 +54,6 @@ function setState(component, newState) {
   });
 }
 
-function setProps(component, newProps) {
-  return new Promise(resolve => {
-    component.setProps(newProps, onNextAnimationFrame(resolve));
-  });
-}
-
 function dumpn(msg) {
   dump(`SHARED-COMPONENTS-TEST: ${msg}\n`);
 }
@@ -199,19 +193,4 @@ function shallowRenderComponent(component, props) {
   const renderer = TestUtils.createRenderer();
   renderer.render(el, {});
   return renderer.getRenderOutput();
-}
-
-/**
- * Test that a rep renders correctly across different modes.
- */
-function testRepRenderModes(modeTests, testName, componentUnderTest, gripStub) {
-  modeTests.forEach(({mode, expectedOutput, message}) => {
-    const modeString = typeof mode === "undefined" ? "no mode" : mode;
-    if (!message) {
-      message = `${testName}: ${modeString} renders correctly.`;
-    }
-
-    const rendered = renderComponent(componentUnderTest.rep, { object: gripStub, mode });
-    is(rendered.textContent, expectedOutput, message);
-  });
 }

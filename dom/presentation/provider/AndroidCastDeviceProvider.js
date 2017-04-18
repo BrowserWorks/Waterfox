@@ -43,6 +43,7 @@ function descriptionToString(aDescription) {
 
 const TOPIC_ANDROID_CAST_DEVICE_SYNCDEVICE = "AndroidCastDevice:SyncDevice";
 const TOPIC_ANDROID_CAST_DEVICE_ADDED      = "AndroidCastDevice:Added";
+const TOPIC_ANDROID_CAST_DEVICE_CHANGED    = "AndroidCastDevice:Changed";
 const TOPIC_ANDROID_CAST_DEVICE_REMOVED    = "AndroidCastDevice:Removed";
 const TOPIC_ANDROID_CAST_DEVICE_START      = "AndroidCastDevice:Start";
 const TOPIC_ANDROID_CAST_DEVICE_STOP       = "AndroidCastDevice:Stop";
@@ -331,7 +332,7 @@ ChromecastRemoteDisplayDevice.prototype = {
   isRequestedUrlSupported: function CRDD_isRequestedUrlSupported(aUrl) {
     let url = Cc["@mozilla.org/network/io-service;1"]
                 .getService(Ci.nsIIOService)
-                .newURI(aUrl, null, null);
+                .newURI(aUrl);
     return url.scheme == "http" || url.scheme == "https";
   },
 
@@ -403,14 +404,16 @@ AndroidCastDeviceProvider.prototype = {
     if (!this._listener) {
       // remove observer
       Services.obs.removeObserver(this, TOPIC_ANDROID_CAST_DEVICE_ADDED);
+      Services.obs.removeObserver(this, TOPIC_ANDROID_CAST_DEVICE_CHANGED);
       Services.obs.removeObserver(this, TOPIC_ANDROID_CAST_DEVICE_REMOVED);
       return;
     }
 
     // Sync all device already found by Android.
-    Services.obs.notifyObservers(null, TOPIC_ANDROID_CAST_DEVICE_SYNCDEVICE, "");
+    Messaging.sendRequest({ type: TOPIC_ANDROID_CAST_DEVICE_SYNCDEVICE });
     // Observer registration
     Services.obs.addObserver(this, TOPIC_ANDROID_CAST_DEVICE_ADDED, false);
+    Services.obs.addObserver(this, TOPIC_ANDROID_CAST_DEVICE_CHANGED, false);
     Services.obs.addObserver(this, TOPIC_ANDROID_CAST_DEVICE_REMOVED, false);
   },
 
@@ -424,8 +427,10 @@ AndroidCastDeviceProvider.prototype = {
 
   // nsIObserver
   observe: function APDP_observe(aSubject, aTopic, aData) {
+    log('observe ' + aTopic + ': ' + aData);
     switch (aTopic) {
-      case TOPIC_ANDROID_CAST_DEVICE_ADDED: {
+      case TOPIC_ANDROID_CAST_DEVICE_ADDED:
+      case TOPIC_ANDROID_CAST_DEVICE_CHANGED: {
         let deviceInfo = JSON.parse(aData);
         let deviceId   = deviceInfo.uuid;
 
@@ -445,6 +450,10 @@ AndroidCastDeviceProvider.prototype = {
       }
       case TOPIC_ANDROID_CAST_DEVICE_REMOVED: {
         let deviceId = aData;
+        if (!this._deviceList.has(deviceId)) {
+          break;
+        }
+
         let device   = this._deviceList.get(deviceId);
         this._listener.removeDevice(device);
         this._deviceList.delete(deviceId);

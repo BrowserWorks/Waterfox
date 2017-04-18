@@ -9,7 +9,7 @@ const {Task} = require("devtools/shared/task");
 const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const EventEmitter = require("devtools/shared/event-emitter");
-const {AutocompletePopup} = require("devtools/client/shared/autocomplete-popup");
+const AutocompletePopup = require("devtools/client/shared/autocomplete-popup");
 const Services = require("Services");
 
 // Maximum number of selector suggestions shown in the panel.
@@ -330,7 +330,6 @@ SelectorAutocompleter.prototype = {
    */
   _onSearchKeypress: function (event) {
     let popup = this.searchPopup;
-
     switch (event.keyCode) {
       case KeyCodes.DOM_VK_RETURN:
       case KeyCodes.DOM_VK_TAB:
@@ -373,6 +372,9 @@ SelectorAutocompleter.prototype = {
       case KeyCodes.DOM_VK_ESCAPE:
         if (popup.isOpen) {
           this.hidePopup();
+        } else {
+          this.emit("processing-done");
+          return;
         }
         break;
 
@@ -543,7 +545,5 @@ SelectorAutocompleter.prototype = {
       // the autoSelect item has been selected.
       return this._showPopup(result.suggestions, firstPart, state);
     });
-
-    return;
   }
 };

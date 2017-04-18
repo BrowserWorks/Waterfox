@@ -131,14 +131,6 @@ AllowedImageSize(int32_t aWidth, int32_t aHeight)
     NS_WARNING("width or height too large");
     return false;
   }
-#if defined(XP_MACOSX)
-  // CoreGraphics is limited to images < 32K in *height*, so clamp all surfaces
-  // on the Mac to that height
-  if (MOZ_UNLIKELY(aHeight > SHRT_MAX)) {
-    NS_WARNING("image too big");
-    return false;
-  }
-#endif
   return true;
 }
 
@@ -539,7 +531,8 @@ imgFrame::SurfaceForDrawing(bool               aDoPartialDecode,
 }
 
 bool imgFrame::Draw(gfxContext* aContext, const ImageRegion& aRegion,
-                    SamplingFilter aSamplingFilter, uint32_t aImageFlags)
+                    SamplingFilter aSamplingFilter, uint32_t aImageFlags,
+                    float aOpacity)
 {
   PROFILER_LABEL("imgFrame", "Draw",
     js::ProfileEntry::Category::GRAPHICS);
@@ -581,7 +574,7 @@ bool imgFrame::Draw(gfxContext* aContext, const ImageRegion& aRegion,
   if (surfaceResult.IsValid()) {
     gfxUtils::DrawPixelSnapped(aContext, surfaceResult.mDrawable,
                                imageRect.Size(), region, surfaceResult.mFormat,
-                               aSamplingFilter, aImageFlags);
+                               aSamplingFilter, aImageFlags, aOpacity);
   }
   return true;
 }

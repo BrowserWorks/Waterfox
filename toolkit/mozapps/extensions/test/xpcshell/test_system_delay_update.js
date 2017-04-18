@@ -7,10 +7,6 @@
 Components.utils.import("resource://testing-common/httpd.js");
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
-const tempdir = gTmpD.clone();
-
-const PREF_SYSTEM_ADDON_SET           = "extensions.systemAddonSet";
-const PREF_SYSTEM_ADDON_UPDATE_URL    = "extensions.systemAddon.update.url";
 
 const IGNORE_ID = "system_delay_ignore@tests.mozilla.org";
 const COMPLETE_ID = "system_delay_complete@tests.mozilla.org";
@@ -133,7 +129,7 @@ add_task(function*() {
   yield postponed;
 
   // addon upgrade has been delayed.
-  let addon_postponed = yield promiseAddonByID(IGNORE_ID, NORMAL_ID);
+  let addon_postponed = yield promiseAddonByID(IGNORE_ID);
   do_check_neq(addon_postponed, null);
   do_check_eq(addon_postponed.version, "1.0");
   do_check_eq(addon_postponed.name, "System Test Delay Update Ignore");

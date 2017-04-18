@@ -29,8 +29,7 @@ this.Preferences =
         this._defaultBranch = args.defaultBranch;
       if (args.privacyContext)
         this._privacyContext = args.privacyContext;
-    }
-    else if (args)
+    } else if (args)
       this._branchStr = args;
   };
 
@@ -71,9 +70,9 @@ Preferences._get = function(prefName, defaultValue, valueType) {
 
     default:
       // This should never happen.
-      throw "Error getting pref " + prefName + "; its value's type is " +
-            this._prefBranch.getPrefType(prefName) + ", which I don't " +
-            "know how to handle.";
+      throw new Error(`Error getting pref ${prefName}; its value's type is ` +
+                      `${this._prefBranch.getPrefType(prefName)}, which I don't ` +
+                      `know how to handle.`);
   }
 };
 
@@ -130,10 +129,11 @@ Preferences._set = function(prefName, prefValue) {
       // if the number is non-integer, since the consumer might not mind
       // the loss of precision.
       if (prefValue > MAX_INT || prefValue < MIN_INT)
-        throw ("you cannot set the " + prefName + " pref to the number " +
-              prefValue + ", as number pref values must be in the signed " +
-              "32-bit integer range -(2^31-1) to 2^31-1.  To store numbers " +
-              "outside that range, store them as strings.");
+        throw new Error(
+              `you cannot set the ${prefName} pref to the number ` +
+              `${prefValue}, as number pref values must be in the signed ` +
+              `32-bit integer range -(2^31-1) to 2^31-1.  To store numbers ` +
+              `outside that range, store them as strings.`);
       this._prefBranch.setIntPref(prefName, prefValue);
       if (prefValue % 1 != 0)
         Cu.reportError("Warning: setting the " + prefName + " pref to the " +
@@ -148,8 +148,8 @@ Preferences._set = function(prefName, prefValue) {
       break;
 
     default:
-      throw "can't set pref " + prefName + " to value '" + prefValue +
-            "'; it isn't a String, Number, or Boolean";
+      throw new Error(`can't set pref ${prefName} to value '${prefValue}'; ` +
+                      `it isn't a String, Number, or Boolean`);
   }
 };
 
@@ -312,8 +312,8 @@ Preferences.ignore = function(prefName, callback, thisObject) {
   // make it.  We could index by fullBranch, but we can't index by callback
   // or thisObject, as far as I know, since the keys to JavaScript hashes
   // (a.k.a. objects) can apparently only be primitive values.
-  let [observer] = observers.filter(v => v.prefName   == fullPrefName &&
-                                         v.callback   == callback &&
+  let [observer] = observers.filter(v => v.prefName == fullPrefName &&
+                                         v.callback == callback &&
                                          v.thisObject == thisObject);
 
   if (observer) {
@@ -327,8 +327,7 @@ Preferences.ignore = function(prefName, callback, thisObject) {
 Preferences.resetBranch = function(prefBranch = "") {
   try {
     this._prefBranch.resetBranch(prefBranch);
-  }
-  catch (ex) {
+  } catch (ex) {
     // The current implementation of nsIPrefBranch in Mozilla
     // doesn't implement resetBranch, so we do it ourselves.
     if (ex.result == Cr.NS_ERROR_NOT_IMPLEMENTED)
@@ -399,7 +398,7 @@ function PrefObserver(prefName, callback, thisObject) {
 PrefObserver.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     // The pref service only observes whole branches, but we only observe
     // individual preferences, so we check here that the pref that changed
     // is the exact one we're observing (and not some sub-pref on the branch).
@@ -413,8 +412,7 @@ PrefObserver.prototype = {
         this.callback.call(this.thisObject, prefValue);
       else
         this.callback(prefValue);
-    }
-    else // typeof this.callback == "object" (nsIObserver)
+    } else // typeof this.callback == "object" (nsIObserver)
       this.callback.observe(subject, topic, data);
   }
 };

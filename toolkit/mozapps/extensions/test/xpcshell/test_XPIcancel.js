@@ -4,7 +4,7 @@
 
 // Test the cancellable doing/done/cancelAll API in XPIProvider
 
-var scope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
+var scope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm", {});
 var XPIProvider = scope.XPIProvider;
 
 function run_test() {
@@ -14,7 +14,7 @@ function run_test() {
   // Check that a basic object gets cancelled
   let getsCancelled = {
     isCancelled: false,
-    cancel: function () {
+    cancel() {
       if (this.isCancelled)
         do_throw("Already cancelled");
       this.isCancelled = true;
@@ -36,7 +36,7 @@ function run_test() {
   getsCancelled.isCancelled = false;
   let addsAnother = {
     isCancelled: false,
-    cancel: function () {
+    cancel() {
       if (this.isCancelled)
         do_throw("Already cancelled");
       this.isCancelled = true;
@@ -52,7 +52,7 @@ function run_test() {
   // order that members were added
   let removesAnother = {
     isCancelled: false,
-    cancel: function () {
+    cancel() {
       if (this.isCancelled)
         do_throw("Already cancelled");
       this.isCancelled = true;

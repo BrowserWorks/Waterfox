@@ -50,7 +50,7 @@ add_test(function test_user_agent_mobile() {
                    Services.appinfo.appBuildID + ".mobile";
 
   let request = new SyncStorageRequest(server.baseURI + "/resource");
-  request.get(function (error) {
+  request.get(function(error) {
     do_check_eq(error, null);
     do_check_eq(this.response.status, 200);
     do_check_eq(handler.request.getHeader("User-Agent"), expectedUA);
@@ -66,7 +66,7 @@ add_test(function test_auth() {
   setBasicCredentials("johndoe", "ilovejane", "XXXXXXXXX");
 
   let request = Service.getStorageRequest(server.baseURI + "/resource");
-  request.get(function (error) {
+  request.get(function(error) {
     do_check_eq(error, null);
     do_check_eq(this.response.status, 200);
     do_check_true(basic_auth_matches(handler.request, "johndoe", "ilovejane"));
@@ -90,7 +90,7 @@ add_test(function test_weave_timestamp() {
 
   do_check_eq(SyncStorageRequest.serverTime, undefined);
   let request = new SyncStorageRequest(server.baseURI + "/resource");
-  request.get(function (error) {
+  request.get(function(error) {
     do_check_eq(error, null);
     do_check_eq(this.response.status, 200);
     do_check_eq(SyncStorageRequest.serverTime, TIMESTAMP);
@@ -104,7 +104,7 @@ add_test(function test_weave_timestamp() {
  */
 add_test(function test_weave_backoff() {
   function handler(request, response) {
-    response.setHeader("X-Weave-Backoff", '600', false);
+    response.setHeader("X-Weave-Backoff", "600", false);
     response.setStatusLine(request.httpVersion, 200, "OK");
   }
   let server = httpd_setup({"/resource": handler});
@@ -116,7 +116,7 @@ add_test(function test_weave_backoff() {
   });
 
   let request = new SyncStorageRequest(server.baseURI + "/resource");
-  request.get(function (error) {
+  request.get(function(error) {
     do_check_eq(error, null);
     do_check_eq(this.response.status, 200);
     do_check_eq(backoffInterval, 600);
@@ -129,7 +129,7 @@ add_test(function test_weave_backoff() {
  */
 add_test(function test_weave_quota_notice() {
   function handler(request, response) {
-    response.setHeader("X-Weave-Quota-Remaining", '1048576', false);
+    response.setHeader("X-Weave-Quota-Remaining", "1048576", false);
     response.setStatusLine(request.httpVersion, 200, "OK");
   }
   let server = httpd_setup({"/resource": handler});
@@ -141,7 +141,7 @@ add_test(function test_weave_quota_notice() {
   });
 
   let request = new SyncStorageRequest(server.baseURI + "/resource");
-  request.get(function (error) {
+  request.get(function(error) {
     do_check_eq(error, null);
     do_check_eq(this.response.status, 200);
     do_check_eq(quotaValue, 1048576);
@@ -154,7 +154,7 @@ add_test(function test_weave_quota_notice() {
  */
 add_test(function test_weave_quota_error() {
   function handler(request, response) {
-    response.setHeader("X-Weave-Quota-Remaining", '1048576', false);
+    response.setHeader("X-Weave-Quota-Remaining", "1048576", false);
     response.setStatusLine(request.httpVersion, 400, "Bad Request");
   }
   let server = httpd_setup({"/resource": handler});
@@ -166,7 +166,7 @@ add_test(function test_weave_quota_error() {
   Svc.Obs.add("weave:service:quota:remaining", onQuota);
 
   let request = new SyncStorageRequest(server.baseURI + "/resource");
-  request.get(function (error) {
+  request.get(function(error) {
     do_check_eq(error, null);
     do_check_eq(this.response.status, 400);
     do_check_eq(quotaValue, undefined);
@@ -178,8 +178,8 @@ add_test(function test_weave_quota_error() {
 add_test(function test_abort() {
   function handler(request, response) {
     response.setHeader("X-Weave-Timestamp", "" + TIMESTAMP, false);
-    response.setHeader("X-Weave-Quota-Remaining", '1048576', false);
-    response.setHeader("X-Weave-Backoff", '600', false);
+    response.setHeader("X-Weave-Quota-Remaining", "1048576", false);
+    response.setHeader("X-Weave-Backoff", "600", false);
     response.setStatusLine(request.httpVersion, 200, "OK");
   }
   let server = httpd_setup({"/resource": handler});
@@ -187,7 +187,7 @@ add_test(function test_abort() {
   let request = new SyncStorageRequest(server.baseURI + "/resource");
 
   // Aborting a request that hasn't been sent yet is pointless and will throw.
-  do_check_throws(function () {
+  do_check_throws(function() {
     request.abort();
   });
 
@@ -204,11 +204,11 @@ add_test(function test_abort() {
   do_check_eq(request.status, request.ABORTED);
 
   // Aborting an already aborted request is pointless and will throw.
-  do_check_throws(function () {
+  do_check_throws(function() {
     request.abort();
   });
 
-  Utils.nextTick(function () {
+  Utils.nextTick(function() {
     // Verify that we didn't try to process any of the values.
     do_check_eq(SyncStorageRequest.serverTime, undefined);
 

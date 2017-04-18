@@ -30,14 +30,14 @@ add_task(function* schema_change() {
     }]
   });
 
-  yield promiseInstallAllFiles([xpiFile]);
+  yield promiseInstallFile(xpiFile);
 
   let addon = yield promiseAddonByID(ID);
 
   notEqual(addon, null, "Got an addon object as expected");
   equal(addon.version, "1.0", "Got the expected version");
 
-  yield shutdownManager();
+  yield promiseShutdownManager();
 
   xpiFile = createTempXPIFile({
     id: ID,
@@ -62,7 +62,7 @@ add_task(function* schema_change() {
 
   file.lastModifiedTime = timestamp;
 
-  yield startupManager();
+  yield promiseStartupManager();
 
   addon = yield promiseAddonByID(ID);
   notEqual(addon, null, "Got an addon object as expected");
@@ -91,14 +91,14 @@ add_task(function* schema_change() {
     }]
   });
 
-  yield promiseInstallAllFiles([xpiFile]);
+  yield promiseInstallFile(xpiFile);
 
   let addon = yield promiseAddonByID(ID);
 
   notEqual(addon, null, "Got an addon object as expected");
   equal(addon.version, "1.0", "Got the expected version");
 
-  yield shutdownManager();
+  yield promiseShutdownManager();
 
   xpiFile = createTempXPIFile({
     id: ID,
@@ -122,7 +122,7 @@ add_task(function* schema_change() {
 
   file.lastModifiedTime = timestamp;
 
-  yield startupManager();
+  yield promiseStartupManager();
 
   addon = yield promiseAddonByID(ID);
   notEqual(addon, null, "Got an addon object as expected");
@@ -151,14 +151,14 @@ add_task(function* schema_change_app_update() {
     }]
   });
 
-  yield promiseInstallAllFiles([xpiFile]);
+  yield promiseInstallFile(xpiFile);
 
   let addon = yield promiseAddonByID(ID);
 
   notEqual(addon, null, "Got an addon object as expected");
   equal(addon.version, "1.0", "Got the expected version");
 
-  yield shutdownManager();
+  yield promiseShutdownManager();
 
   xpiFile = createTempXPIFile({
     id: ID,
@@ -184,7 +184,7 @@ add_task(function* schema_change_app_update() {
 
   file.lastModifiedTime = timestamp;
 
-  yield startupManager();
+  yield promiseStartupManager();
 
   addon = yield promiseAddonByID(ID);
   notEqual(addon, null, "Got an addon object as expected");
@@ -214,14 +214,14 @@ add_task(function* schema_change() {
     }]
   });
 
-  yield promiseInstallAllFiles([xpiFile]);
+  yield promiseInstallFile(xpiFile);
 
   let addon = yield promiseAddonByID(ID);
 
   notEqual(addon, null, "Got an addon object as expected");
   equal(addon.version, "1.0", "Got the expected version");
 
-  yield shutdownManager();
+  yield promiseShutdownManager();
 
   xpiFile = createTempXPIFile({
     id: ID,
@@ -244,7 +244,7 @@ add_task(function* schema_change() {
 
   file.lastModifiedTime = timestamp;
 
-  yield startupManager();
+  yield promiseStartupManager();
 
   addon = yield promiseAddonByID(ID);
   notEqual(addon, null, "Got an addon object as expected");
@@ -273,14 +273,14 @@ add_task(function* schema_change() {
     }]
   });
 
-  yield promiseInstallAllFiles([xpiFile]);
+  yield promiseInstallFile(xpiFile);
 
   let addon = yield promiseAddonByID(ID);
 
   notEqual(addon, null, "Got an addon object as expected");
   equal(addon.version, "1.0", "Got the expected version");
 
-  yield shutdownManager();
+  yield promiseShutdownManager();
 
   xpiFile = createTempXPIFile({
     id: ID,
@@ -305,7 +305,7 @@ add_task(function* schema_change() {
 
   file.lastModifiedTime = timestamp;
 
-  yield startupManager();
+  yield promiseStartupManager();
 
   addon = yield promiseAddonByID(ID);
   notEqual(addon, null, "Got an addon object as expected");

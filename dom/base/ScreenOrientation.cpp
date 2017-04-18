@@ -368,8 +368,11 @@ ScreenOrientation::LockDeviceOrientation(ScreenOrientationInternal aOrientation,
   }
 
   // We are fullscreen and lock has been accepted.
-  if (aIsFullScreen && !mFullScreenListener) {
-    mFullScreenListener = new FullScreenEventListener();
+  if (aIsFullScreen) {
+    if (!mFullScreenListener) {
+      mFullScreenListener = new FullScreenEventListener();
+    }
+
     aRv = target->AddSystemEventListener(NS_LITERAL_STRING("fullscreenchange"),
                                          mFullScreenListener, /* useCapture = */ true);
     if (NS_WARN_IF(aRv.Failed())) {
@@ -410,22 +413,22 @@ ScreenOrientation::UnlockDeviceOrientation()
 }
 
 OrientationType
-ScreenOrientation::DeviceType() const
+ScreenOrientation::DeviceType(CallerType aCallerType) const
 {
-  return ShouldResistFingerprinting() ? OrientationType::Landscape_primary
-                                      : mType;
+  return nsContentUtils::ResistFingerprinting(aCallerType) ?
+    OrientationType::Landscape_primary : mType;
 }
 
 uint16_t
-ScreenOrientation::DeviceAngle() const
+ScreenOrientation::DeviceAngle(CallerType aCallerType) const
 {
-  return ShouldResistFingerprinting() ? 0 : mAngle;
+  return nsContentUtils::ResistFingerprinting(aCallerType) ? 0 : mAngle;
 }
 
 OrientationType
-ScreenOrientation::GetType(ErrorResult& aRv) const
+ScreenOrientation::GetType(CallerType aCallerType, ErrorResult& aRv) const
 {
-  if (ShouldResistFingerprinting()) {
+  if (nsContentUtils::ResistFingerprinting(aCallerType)) {
     return OrientationType::Landscape_primary;
   }
 
@@ -439,9 +442,9 @@ ScreenOrientation::GetType(ErrorResult& aRv) const
 }
 
 uint16_t
-ScreenOrientation::GetAngle(ErrorResult& aRv) const
+ScreenOrientation::GetAngle(CallerType aCallerType, ErrorResult& aRv) const
 {
-  if (ShouldResistFingerprinting()) {
+  if (nsContentUtils::ResistFingerprinting(aCallerType)) {
     return 0;
   }
 
@@ -476,12 +479,6 @@ ScreenOrientation::GetLockOrientationPermission(bool aCheckSandbox) const
   // Sandboxed without "allow-orientation-lock"
   if (aCheckSandbox && doc->GetSandboxFlags() & SANDBOXED_ORIENTATION_LOCK) {
     return LOCK_DENIED;
-  }
-
-  // Apps can always lock the screen orientation.
-  if (doc->NodePrincipal()->GetAppStatus() >=
-        nsIPrincipal::APP_STATUS_INSTALLED) {
-    return LOCK_ALLOWED;
   }
 
   if (Preferences::GetBool("dom.screenorientation.testing.non_fullscreen_lock_allow",
@@ -633,8 +630,9 @@ ScreenOrientation::VisibleEventListener::HandleEvent(nsIDOMEvent* aEvent)
     return rv.StealNSResult();
   }
 
-  if (doc->CurrentOrientationType() != orientation->DeviceType()) {
-    doc->SetCurrentOrientation(orientation->DeviceType(), orientation->DeviceAngle());
+  if (doc->CurrentOrientationType() != orientation->DeviceType(CallerType::System)) {
+    doc->SetCurrentOrientation(orientation->DeviceType(CallerType::System),
+			       orientation->DeviceAngle(CallerType::System));
 
     Promise* pendingPromise = doc->GetOrientationPendingPromise();
     if (pendingPromise) {

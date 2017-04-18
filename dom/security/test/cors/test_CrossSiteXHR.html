@@ -30,15 +30,15 @@ function initTest() {
 
 function initTestCallback() {
   window.addEventListener("message", function(e) {
-    gen.send(e.data);
-  }, false);
+    gen.next(e.data);
+  });
 
   gen = runTest();
   
   gen.next()
 }
 
-function runTest() {
+function* runTest() {
   var loader = document.getElementById('loader');
   var loaderWindow = loader.contentWindow;
   loader.onload = function () { gen.next() };
@@ -673,7 +673,7 @@ function runTest() {
       reqHeaders =
         escape(Object.keys(test.headers)
                .filter(isUnsafeHeader)
-               .map(String.toLowerCase)
+               .map(s => s.toLowerCase())
                .sort()
                .join(","));
       req.url += reqHeaders ? "&requestHeaders=" + reqHeaders : "";
@@ -1451,8 +1451,6 @@ function runTest() {
 
 
   SimpleTest.finish();
-
-  yield undefined;
 }
 
 </script>

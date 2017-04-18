@@ -6,11 +6,9 @@
 
 const APP_STARTUP                     = 1;
 const APP_SHUTDOWN                    = 2;
-const ADDON_ENABLE                    = 3;
 const ADDON_DISABLE                   = 4;
 const ADDON_INSTALL                   = 5;
 const ADDON_UNINSTALL                 = 6;
-const ADDON_UPGRADE                   = 7;
 const ADDON_DOWNGRADE                 = 8;
 
 const ID = "undouninstall1@tests.mozilla.org";
@@ -53,23 +51,8 @@ function getUninstallReason(id) {
   return info ? info.reason : undefined;
 }
 
-function getStartupOldVersion(id) {
-  let info = BootstrapMonitor.started.get(id);
-  return info ? info.data.oldVersion : undefined;
-}
-
 function getShutdownNewVersion(id) {
   let info = BootstrapMonitor.stopped.get(id);
-  return info ? info.data.newVersion : undefined;
-}
-
-function getInstallOldVersion(id) {
-  let info = BootstrapMonitor.installed.get(id);
-  return info ? info.data.oldVersion : undefined;
-}
-
-function getUninstallNewVersion(id) {
-  let info = BootstrapMonitor.uninstalled.get(id);
   return info ? info.data.newVersion : undefined;
 }
 
@@ -720,7 +703,7 @@ add_task(function* cancelUninstallTemporary() {
   BootstrapMonitor.checkAddonInstalled(ID, "1.0");
   BootstrapMonitor.checkAddonStarted(ID, "1.0");
   do_check_eq(getInstallReason(ID), ADDON_INSTALL);
-  do_check_eq(getStartupReason(ID), ADDON_ENABLE);
+  do_check_eq(getStartupReason(ID), ADDON_INSTALL);
   do_check_eq(a1.pendingOperations, AddonManager.PENDING_NONE);
   do_check_true(a1.isActive);
   do_check_false(a1.userDisabled);

@@ -18,7 +18,6 @@ function Spinner(props, context) {
 }
 
 {
-  const debug = 0 ? console.log.bind(console, "[spinner]") : function() {};
 
   const ITEM_HEIGHT = 2.5,
         VIEWPORT_SIZE = 7,
@@ -96,9 +95,8 @@ function Spinner(props, context) {
      *        }
      */
     setState(newState) {
-      const { spinner } = this.elements;
       const { value, items } = this.state;
-      const { value: newValue, items: newItems, isValueSet, isInvalid } = newState;
+      const { value: newValue, items: newItems, isValueSet, isInvalid, smoothScroll = true } = newState;
 
       if (this._isArrayDiff(newItems, items)) {
         this.state = Object.assign(this.state, newState);
@@ -106,15 +104,17 @@ function Spinner(props, context) {
         this._scrollTo(newValue, true);
       } else if (newValue != value) {
         this.state = Object.assign(this.state, newState);
-        this._smoothScrollTo(newValue);
+        if (smoothScroll) {
+          this._smoothScrollTo(newValue, true);
+        } else {
+          this._scrollTo(newValue, true);
+        }
       }
 
-      if (isValueSet) {
-        if (isInvalid) {
-          this._removeSelection();
-        } else {
-          this._updateSelection();
-        }
+      if (isValueSet && !isInvalid) {
+        this._updateSelection();
+      } else {
+        this._removeSelection();
       }
     },
 
@@ -129,7 +129,7 @@ function Spinner(props, context) {
     _onScroll() {
       const { items, itemsView, isInfiniteScroll } = this.state;
       const { viewportSize, viewportTopOffset } = this.props;
-      const { spinner, itemsViewElements } = this.elements;
+      const { spinner } = this.elements;
 
       this.state.index = this._getIndexByOffset(spinner.scrollTop);
 
@@ -266,11 +266,11 @@ function Spinner(props, context) {
      * Attach event listeners to the spinner and buttons.
      */
     _attachEventListeners() {
-      const { spinner } = this.elements;
+      const { spinner, container } = this.elements;
 
       spinner.addEventListener("scroll", this, { passive: true });
-      document.addEventListener("mouseup", this, { passive: true });
-      document.addEventListener("mousedown", this);
+      container.addEventListener("mouseup", this, { passive: true });
+      container.addEventListener("mousedown", this, { passive: true });
     },
 
     /**
@@ -288,9 +288,6 @@ function Spinner(props, context) {
           break;
         }
         case "mousedown": {
-          // Use preventDefault to keep focus on input boxes
-          event.preventDefault();
-          event.target.setCapture();
           this.state.mouseState = {
             down: true,
             layerX: event.layerX,

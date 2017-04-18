@@ -41,7 +41,7 @@ WeakReferenceSupport::QueryInterface(REFIID riid, void** ppv)
   *ppv = nullptr;
 
   // Raise the refcount for stabilization purposes during aggregation
-  RefPtr<IUnknown> kungFuDeathGrip(static_cast<IUnknown*>(this));
+  RefPtr<IUnknown> kungFuDeathGrip(this);
 
   if (riid == IID_IUnknown || riid == IID_IWeakReferenceSource) {
     punk = static_cast<IUnknown*>(this);
@@ -97,7 +97,7 @@ WeakReferenceSupport::ClearWeakRefs()
 {
   for (uint32_t i = 0, len = mWeakRefs.Length(); i < len; ++i) {
     mWeakRefs[i]->Clear();
-    mWeakRefs[i]->Release();
+    mWeakRefs[i] = nullptr;
   }
   mWeakRefs.Clear();
 }
@@ -118,8 +118,7 @@ WeakReferenceSupport::GetWeakReference(IWeakReference** aOutWeakRef)
     return hr;
   }
 
-  mWeakRefs.AppendElement(weakRef.get());
-  weakRef->AddRef();
+  mWeakRefs.AppendElement(weakRef);
   return S_OK;
 }
 

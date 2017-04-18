@@ -16,14 +16,14 @@ var gCategoryManager = AM_Cc["@mozilla.org/categorymanager;1"].getService(AM_Ci.
 
 // Factory for our parameter handler
 var paramHandlerFactory = {
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(AM_Ci.nsIFactory) || iid.equals(AM_Ci.nsISupports))
       return this;
 
     throw Components.results.NS_ERROR_NO_INTERFACE;
   },
 
-  createInstance: function(outer, iid) {
+  createInstance(outer, iid) {
     var bag = AM_Cc["@mozilla.org/hash-property-bag;1"].
               createInstance(AM_Ci.nsIWritablePropertyBag);
     bag.setProperty("CUSTOM1", "custom_parameter_1");
@@ -32,8 +32,7 @@ var paramHandlerFactory = {
   }
 };
 
-function initTest()
-{
+function initTest() {
   do_test_pending();
   // Setup extension manager
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9");
@@ -67,8 +66,7 @@ function initTest()
   startupManager();
 }
 
-function shutdownTest()
-{
+function shutdownTest() {
   shutdownManager();
 
   gComponentRegistrar.unregisterFactory(CLASS_ID, paramHandlerFactory);
@@ -78,22 +76,21 @@ function shutdownTest()
   do_test_finished();
 }
 
-function run_test()
-{
+function run_test() {
   initTest();
 
   AddonManager.getAddonByID("test@mozilla.org", function(item) {
     // Initiate update
     item.findUpdates({
-      onCompatibilityUpdateAvailable: function(addon) {
+      onCompatibilityUpdateAvailable(addon) {
         do_throw("Should not have seen a compatibility update");
       },
 
-      onUpdateAvailable: function(addon, install) {
+      onUpdateAvailable(addon, install) {
         do_throw("Should not have seen an available update");
       },
 
-      onUpdateFinished: function(addon, error) {
+      onUpdateFinished(addon, error) {
         do_check_eq(error, AddonManager.UPDATE_STATUS_DOWNLOAD_ERROR);
         do_check_true(gSeenExpectedURL);
         do_execute_soon(shutdownTest);

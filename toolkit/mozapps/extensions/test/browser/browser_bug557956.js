@@ -53,8 +53,6 @@ function end_test() {
 }
 
 function install_test_addons(aCallback) {
-  var installs = [];
-
   // Use a blank update URL
   Services.prefs.setCharPref(PREF_UPDATEURL, TESTROOT + "missing.rdf");
 
@@ -68,30 +66,31 @@ function install_test_addons(aCallback) {
                "browser_bug557956_8_1",
                "browser_bug557956_9_1",
                "browser_bug557956_10"];
-  for (let name of names) {
-    AddonManager.getInstallForURL(TESTROOT + "addons/" + name + ".xpi", function(aInstall) {
-      installs.push(aInstall);
-    }, "application/x-xpinstall");
-  }
 
-  var listener = {
-    installCount: 0,
+  let installPromises = Promise.all(
+    names.map(name => AddonManager.getInstallForURL(`${TESTROOT}addons/${name}.xpi`,
+                                                    null, "application/x-xpinstall")));
 
-    onInstallEnded: function() {
-      this.installCount++;
-      if (this.installCount == installs.length) {
-        // Switch to the test update URL
-        Services.prefs.setCharPref(PREF_UPDATEURL, TESTROOT + "browser_bug557956.rdf");
+  installPromises.then(installs => {
+    var listener = {
+      installCount: 0,
 
-        executeSoon(aCallback);
+      onInstallEnded() {
+        this.installCount++;
+        if (this.installCount == installs.length) {
+          // Switch to the test update URL
+          Services.prefs.setCharPref(PREF_UPDATEURL, TESTROOT + "browser_bug557956.rdf");
+
+          executeSoon(aCallback);
+        }
       }
-    }
-  };
+    };
 
-  for (let install of installs) {
-    install.addListener(listener);
-    install.install();
-  }
+    for (let install of installs) {
+      install.addListener(listener);
+      install.install();
+    }
+  });
 }
 
 function uninstall_test_addons(aCallback) {
@@ -134,7 +133,7 @@ function open_compatibility_window(aDisabledAddons, aCallback) {
   var win = ww.openWindow(null, URI_EXTENSION_UPDATE_DIALOG, "", features, variant);
 
   win.addEventListener("load", function() {
-    win.removeEventListener("load", arguments.callee, false);
+    win.removeEventListener("load", arguments.callee);
 
     info("Compatibility dialog opened");
 
@@ -143,32 +142,32 @@ function open_compatibility_window(aDisabledAddons, aCallback) {
         info("Page " + aEvent.target.pageid + " shown");
     }
 
-    win.addEventListener("pageshow", page_shown, false);
+    win.addEventListener("pageshow", page_shown);
     win.addEventListener("unload", function() {
-      win.removeEventListener("unload", arguments.callee, false);
-      win.removeEventListener("pageshow", page_shown, false);
+      win.removeEventListener("unload", arguments.callee);
+      win.removeEventListener("pageshow", page_shown);
       info("Compatibility dialog closed");
-    }, false);
+    });
 
     aCallback(win);
-  }, false);
+  });
 }
 
 function wait_for_window_close(aWindow, aCallback) {
   aWindow.addEventListener("unload", function() {
-    aWindow.removeEventListener("unload", arguments.callee, false);
+    aWindow.removeEventListener("unload", arguments.callee);
     aCallback();
-  }, false);
+  });
 }
 
 function wait_for_page(aWindow, aPageId, aCallback) {
   var page = aWindow.document.getElementById(aPageId);
   page.addEventListener("pageshow", function() {
-    page.removeEventListener("pageshow", arguments.callee, false);
+    page.removeEventListener("pageshow", arguments.callee);
     executeSoon(function() {
       aCallback(aWindow);
     });
-  }, false);
+  });
 }
 
 function get_list_names(aList) {
@@ -200,7 +199,7 @@ function check_telemetry({disabled, metaenabled, metadisabled, upgraded, failed,
 add_test(function test_setup() {
   let oldCanRecord = Services.telemetry.canRecordExtended;
   Services.telemetry.canRecordExtended = true;
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.telemetry.canRecordExtended = oldCanRecord;
   });
   run_next_test();

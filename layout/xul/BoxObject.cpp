@@ -53,7 +53,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(BoxObject)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(BoxObject)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   if (tmp->mPropertyTable) {
     for (auto iter = tmp->mPropertyTable->Iter(); !iter.Done(); iter.Next()) {
       cb.NoteXPCOMChild(iter.UserData());
@@ -117,7 +116,7 @@ BoxObject::GetFrame(bool aFlushLayout)
     // flush to make sure our frame model is up to date.
     // XXXbz should flush on document, no?  Except people call this from
     // frame code, maybe?
-    shell->FlushPendingNotifications(Flush_Frames);
+    shell->FlushPendingNotifications(FlushType::Frames);
   }
 
   // The flush might have killed mContent.
@@ -141,7 +140,7 @@ BoxObject::GetPresShell(bool aFlushLayout)
   }
 
   if (aFlushLayout) {
-    doc->FlushPendingNotifications(Flush_Layout);
+    doc->FlushPendingNotifications(FlushType::Layout);
   }
 
   return doc->GetShell();
@@ -185,13 +184,13 @@ BoxObject::GetOffsetRect(nsIntRect& aRect)
 
     // For the origin, add in the border for the frame
     const nsStyleBorder* border = frame->StyleBorder();
-    origin.x += border->GetComputedBorderWidth(NS_SIDE_LEFT);
-    origin.y += border->GetComputedBorderWidth(NS_SIDE_TOP);
+    origin.x += border->GetComputedBorderWidth(eSideLeft);
+    origin.y += border->GetComputedBorderWidth(eSideTop);
 
     // And subtract out the border for the parent
     const nsStyleBorder* parentBorder = parent->StyleBorder();
-    origin.x -= parentBorder->GetComputedBorderWidth(NS_SIDE_LEFT);
-    origin.y -= parentBorder->GetComputedBorderWidth(NS_SIDE_TOP);
+    origin.x -= parentBorder->GetComputedBorderWidth(eSideLeft);
+    origin.y -= parentBorder->GetComputedBorderWidth(eSideTop);
 
     aRect.x = nsPresContext::AppUnitsToIntCSSPixels(origin.x);
     aRect.y = nsPresContext::AppUnitsToIntCSSPixels(origin.y);

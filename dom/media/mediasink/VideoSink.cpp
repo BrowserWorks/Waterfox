@@ -185,7 +185,7 @@ VideoSink::Start(int64_t aStartTime, const MediaInfo& aInfo)
     RefPtr<GenericPromise> p = mAudioSink->OnEnded(TrackInfo::kVideoTrack);
     if (p) {
       RefPtr<VideoSink> self = this;
-      mVideoSinkEndRequest.Begin(p->Then(mOwnerThread, __func__,
+      p->Then(mOwnerThread, __func__,
         [self] () {
           self->mVideoSinkEndRequest.Complete();
           self->TryUpdateRenderedVideoFrames();
@@ -197,7 +197,8 @@ VideoSink::Start(int64_t aStartTime, const MediaInfo& aInfo)
           self->mVideoSinkEndRequest.Complete();
           self->TryUpdateRenderedVideoFrames();
           self->MaybeResolveEndPromise();
-        }));
+        })
+        ->Track(mVideoSinkEndRequest);
     }
 
     ConnectListener();
@@ -259,7 +260,7 @@ VideoSink::OnVideoQueuePushed(RefPtr<MediaData>&& aSample)
   // Listen to push event, VideoSink should try rendering ASAP if first frame
   // arrives but update scheduler is not triggered yet.
   VideoData* v = aSample->As<VideoData>();
-  if (!v->mSentToCompositor) {
+  if (!v->IsSentToCompositor()) {
     // Since we push rendered frames back to the queue, we will receive
     // push events for them. We only need to trigger render loop
     // when this frame is not rendered yet.
@@ -289,8 +290,11 @@ VideoSink::Redraw(const VideoInfo& aInfo)
     return;
   }
 
-  if (VideoQueue().GetSize() > 0) {
-    RenderVideoFrames(1);
+  RefPtr<MediaData> frame = VideoQueue().PeekFront();
+  if (frame) {
+    VideoData* video = frame->As<VideoData>();
+    video->MarkSentToCompositor();
+    mContainer->SetCurrentFrame(video->mDisplay, video->mImage, TimeStamp::Now());
     return;
   }
 
@@ -357,7 +361,7 @@ VideoSink::RenderVideoFrames(int32_t aMaxFrames,
   for (uint32_t i = 0; i < frames.Length(); ++i) {
     VideoData* frame = frames[i]->As<VideoData>();
 
-    frame->mSentToCompositor = true;
+    frame->MarkSentToCompositor();
 
     if (!frame->mImage || !frame->mImage->IsValid() ||
         !frame->mImage->GetSize().width || !frame->mImage->GetSize().height) {
@@ -415,7 +419,7 @@ VideoSink::UpdateRenderedVideoFrames()
          clockTime >= VideoQueue().PeekFront()->GetEndTime()) {
     RefPtr<MediaData> frame = VideoQueue().PopFront();
     lastFrameEndTime = frame->GetEndTime();
-    if (frame->As<VideoData>()->mSentToCompositor) {
+    if (frame->As<VideoData>()->IsSentToCompositor()) {
       mFrameStats.NotifyPresentedFrame();
     } else {
       mFrameStats.NotifyDecodedFrames({ 0, 0, 1 });

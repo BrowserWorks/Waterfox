@@ -51,7 +51,6 @@
 #include "nsIDOMNode.h"
 #include "nsIDocument.h"
 #include "nsIEditor.h"
-#include "nsIEditorIMESupport.h"
 #include "nsIEditorMailSupport.h"
 #include "nsIEditRules.h"
 #include "nsIFile.h"
@@ -1274,7 +1273,8 @@ HTMLEditor::InsertFromDataTransfer(DataTransfer* aDataTransfer,
                                    bool aDoDeleteSelection)
 {
   ErrorResult rv;
-  RefPtr<DOMStringList> types = aDataTransfer->MozTypesAt(aIndex, rv);
+  RefPtr<DOMStringList> types =
+    aDataTransfer->MozTypesAt(aIndex, CallerType::System, rv);
   if (rv.Failed()) {
     return rv.StealNSResult();
   }
@@ -2126,6 +2126,7 @@ HTMLEditor::CreateDOMFragmentFromPaste(const nsAString& aInputString,
   }
 
   nsCOMPtr<nsIContent> contextLeafAsContent = do_QueryInterface(contextLeaf);
+  MOZ_ASSERT_IF(contextLeaf, contextLeafAsContent);
 
   // create fragment for pasted html
   nsIAtom* contextAtom;
@@ -2150,8 +2151,8 @@ HTMLEditor::CreateDOMFragmentFromPaste(const nsAString& aInputString,
 
   if (contextAsNode) {
     // unite the two trees
-    nsCOMPtr<nsIDOMNode> junk;
-    contextLeaf->AppendChild(fragment, getter_AddRefs(junk));
+    IgnoredErrorResult ignored;
+    contextLeafAsContent->AppendChild(*fragment, ignored);
     fragment = contextAsNode;
   }
 

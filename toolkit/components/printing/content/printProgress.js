@@ -18,16 +18,15 @@ var docURL   = "";
 var progressParams = null;
 var switchUI = true;
 
-function ellipseString(aStr, doFront)
-{
-  if (aStr.length > 3 && (aStr.substr(0, 3) == "..." || aStr.substr(aStr.length-4, 3) == "...")) {
+function ellipseString(aStr, doFront) {
+  if (aStr.length > 3 && (aStr.substr(0, 3) == "..." || aStr.substr(aStr.length - 4, 3) == "...")) {
     return aStr;
   }
 
   var fixedLen = 64;
   if (aStr.length > fixedLen) {
     if (doFront) {
-      var endStr = aStr.substr(aStr.length-fixedLen, fixedLen);
+      var endStr = aStr.substr(aStr.length - fixedLen, fixedLen);
       return "..." + endStr;
     }
     var frontStr = aStr.substr(0, fixedLen);
@@ -38,17 +37,14 @@ function ellipseString(aStr, doFront)
 
 // all progress notifications are done through the nsIWebProgressListener implementation...
 var progressListener = {
-    onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus)
-    {
-      if (aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_START)
-      {
+    onStateChange(aWebProgress, aRequest, aStateFlags, aStatus) {
+      if (aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_START) {
         // Put progress meter in undetermined mode.
         // dialog.progress.setAttribute( "value", 0 );
         dialog.progress.setAttribute( "mode", "undetermined" );
       }
 
-      if (aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP)
-      {
+      if (aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP) {
         // we are done printing
         // Indicate completion in title area.
         var msg = getString( "printComplete" );
@@ -84,10 +80,8 @@ var progressListener = {
       }
     },
 
-    onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress)
-    {
-      if (switchUI)
-      {
+    onProgressChange(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
+      if (switchUI) {
         dialog.tempLabel.setAttribute("hidden", "true");
         dialog.progress.setAttribute("hidden", "false");
 
@@ -98,8 +92,7 @@ var progressListener = {
         switchUI = false;
       }
 
-      if (progressParams)
-      {
+      if (progressParams) {
         var docTitleStr = ellipseString(progressParams.docTitle, false);
         if (docTitleStr != docTitle) {
           docTitle = docTitleStr;
@@ -116,9 +109,8 @@ var progressListener = {
 
       // Calculate percentage.
       var percent;
-      if ( aMaxTotalProgress > 0 )
-      {
-        percent = Math.round( (aCurTotalProgress*100)/aMaxTotalProgress );
+      if ( aMaxTotalProgress > 0 ) {
+        percent = Math.round( (aCurTotalProgress * 100) / aMaxTotalProgress );
         if ( percent > 100 )
           percent = 100;
 
@@ -131,9 +123,7 @@ var progressListener = {
         var percentPrint = getString( "progressText" );
         percentPrint = replaceInsert( percentPrint, 1, percent );
         dialog.progressText.setAttribute("value", percentPrint);
-      }
-      else
-      {
+      } else {
         // Progress meter should be barber-pole in this case.
         dialog.progress.setAttribute( "mode", "undetermined" );
         // Update percentage label on progress meter.
@@ -141,24 +131,20 @@ var progressListener = {
       }
     },
 
-	  onLocationChange: function(aWebProgress, aRequest, aLocation, aFlags)
-    {
+	  onLocationChange(aWebProgress, aRequest, aLocation, aFlags) {
       // we can ignore this notification
     },
 
-    onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage)
-    {
+    onStatusChange(aWebProgress, aRequest, aStatus, aMessage) {
       if (aMessage != "")
         dialog.title.setAttribute("value", aMessage);
     },
 
-    onSecurityChange: function(aWebProgress, aRequest, state)
-    {
+    onSecurityChange(aWebProgress, aRequest, state) {
       // we can ignore this notification
     },
 
-    QueryInterface : function(iid)
-    {
+    QueryInterface(iid) {
      if (iid.equals(Components.interfaces.nsIWebProgressListener) || iid.equals(Components.interfaces.nsISupportsWeakReference))
       return this;
 
@@ -170,7 +156,7 @@ function getString( stringId ) {
    // Check if we've fetched this string already.
    if (!(stringId in dialog.strings)) {
       // Try to get it.
-      var elem = document.getElementById( "dialog.strings."+stringId );
+      var elem = document.getElementById( "dialog.strings." + stringId );
       try {
         if ( elem
            &&
@@ -189,13 +175,12 @@ function getString( stringId ) {
    return dialog.strings[stringId];
 }
 
-function loadDialog()
-{
+function loadDialog() {
 }
 
 function replaceInsert( text, index, value ) {
    var result = text;
-   var regExp = new RegExp( "#"+index );
+   var regExp = new RegExp( "#" + index );
    result = result.replace( regExp, value );
    return result;
 }
@@ -204,11 +189,9 @@ function onLoad() {
 
     // Set global variables.
     printProgress = window.arguments[0];
-    if (window.arguments[1])
-    {
+    if (window.arguments[1]) {
       progressParams = window.arguments[1].QueryInterface(Components.interfaces.nsIPrintProgressParams)
-      if (progressParams)
-      {
+      if (progressParams) {
         docTitle = ellipseString(progressParams.docTitle, false);
         docURL   = ellipseString(progressParams.docURL, true);
       }
@@ -248,35 +231,26 @@ function onLoad() {
     window.setTimeout(doneIniting, 500);
 }
 
-function onUnload()
-{
-  if (printProgress)
-  {
-   try
-   {
+function onUnload() {
+  if (printProgress) {
+   try {
      printProgress.unregisterListener(progressListener);
      printProgress = null;
-   }
-
-   catch ( exception ) {}
+   } catch ( exception ) {}
   }
 }
 
 // If the user presses cancel, tell the app launcher and close the dialog...
-function onCancel ()
-{
+function onCancel() {
   // Cancel app launcher.
-   try
-   {
+   try {
      printProgress.processCanceledByUser = true;
-   }
-   catch ( exception ) { return true; }
+   } catch ( exception ) { return true; }
 
   // don't Close up dialog by returning false, the backend will close the dialog when everything will be aborted.
   return false;
 }
 
-function doneIniting()
-{
+function doneIniting() {
   printProgress.doneIniting();
 }

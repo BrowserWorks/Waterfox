@@ -1044,8 +1044,9 @@ Null_Cipher(void *ctx, unsigned char *output, int *outputLen, int maxOutputLen,
         return SECFailure;
     }
     *outputLen = inputLen;
-    if (input != output)
+    if (inputLen > 0 && input != output) {
         PORT_Memcpy(output, input, inputLen);
+    }
     return SECSuccess;
 }
 
@@ -1088,10 +1089,11 @@ ssl_ClientReadVersion(sslSocket *ss, SSL3Opaque **b, unsigned int *len,
                       SSL3ProtocolVersion *version)
 {
     SSL3ProtocolVersion v;
-    PRInt32 temp;
+    PRUint32 temp;
+    SECStatus rv;
 
-    temp = ssl3_ConsumeHandshakeNumber(ss, 2, b, len);
-    if (temp < 0) {
+    rv = ssl3_ConsumeHandshakeNumber(ss, &temp, 2, b, len);
+    if (rv != SECSuccess) {
         return SECFailure; /* alert has been sent */
     }
 
@@ -1624,10 +1626,6 @@ ssl3_SetupPendingCipherSpec(sslSocket *ss)
     pwSpec->compressContext = NULL;
     pwSpec->decompressContext = NULL;
 
-    if (ss->version >= SSL_LIBRARY_VERSION_TLS_1_3) {
-        PORT_Assert(ss->ssl3.hs.kea_def->ephemeral);
-        PORT_Assert(pwSpec->cipher_def->type == type_aead);
-    }
     ssl_ReleaseSpecWriteLock(ss); /*******************************/
     return SECSuccess;
 }
@@ -3124,6 +3122,10 @@ SSL3_SendAlert(sslSocket *ss, SSL3AlertLevel level, SSL3AlertDescription desc)
 {
     PRUint8 bytes[2];
     SECStatus rv;
+    PRBool needHsLock = !ssl_HaveSSL3HandshakeLock(ss);
+
+    /* Check that if I need the HS lock I also need the Xmit lock */
+    PORT_Assert(!needHsLock || !ssl_HaveXmitBufLock(ss));
 
     SSL_TRC(3, ("%d: SSL3[%d]: send alert record, level=%d desc=%d",
                 SSL_GETPID(), ss->fd, level, desc));
@@ -3131,7 +3133,9 @@ SSL3_SendAlert(sslSocket *ss, SSL3AlertLevel level, SSL3AlertDescription desc)
     bytes[0] = level;
     bytes[1] = desc;
 
-    ssl_GetSSL3HandshakeLock(ss);
+    if (needHsLock) {
+        ssl_GetSSL3HandshakeLock(ss);
+    }
     if (level == alert_fatal) {
         if (!ss->opt.noCache && ss->sec.ci.sid) {
             ss->sec.uncache(ss->sec.ci.sid);
@@ -3149,7 +3153,9 @@ SSL3_SendAlert(sslSocket *ss, SSL3AlertLevel level, SSL3AlertDescription desc)
         ss->ssl3.fatalAlertSent = PR_TRUE;
     }
     ssl_ReleaseXmitBufLock(ss);
-    ssl_ReleaseSSL3HandshakeLock(ss);
+    if (needHsLock) {
+        ssl_ReleaseSSL3HandshakeLock(ss);
+    }
     return rv; /* error set by ssl3_FlushHandshake or ssl3_SendRecord */
 }
 
@@ -4330,7 +4336,7 @@ ssl3_AppendHandshakeHeader(sslSocket *ss, SSL3HandshakeType t, PRUint32 length)
  * override the generic error code by setting another.
  */
 SECStatus
-ssl3_ConsumeHandshake(sslSocket *ss, void *v, PRInt32 bytes, SSL3Opaque **b,
+ssl3_ConsumeHandshake(sslSocket *ss, void *v, PRUint32 bytes, SSL3Opaque **b,
                       PRUint32 *length)
 {
     PORT_Assert(ss->opt.noLocks || ssl_HaveRecvBufLock(ss));
@@ -4348,37 +4354,33 @@ ssl3_ConsumeHandshake(sslSocket *ss, void *v, PRInt32 bytes, SSL3Opaque **b,
 
 /* Read up the next "bytes" number of bytes from the (decrypted) input
  * stream "b" (which is *length bytes long), and interpret them as an
- * integer in network byte order.  Returns the received value.
+ * integer in network byte order.  Sets *num to the received value.
  * Reduces *length by bytes.  Advances *b by bytes.
  *
- * Returns SECFailure (-1) on failure.
- * This value is indistinguishable from the equivalent received value.
- * Only positive numbers are to be received this way.
- * Thus, the largest value that may be sent this way is 0x7fffffff.
  * On error, an alert has been sent, and a generic error code has been set.
  */
-PRInt32
-ssl3_ConsumeHandshakeNumber(sslSocket *ss, PRInt32 bytes, SSL3Opaque **b,
-                            PRUint32 *length)
+SECStatus
+ssl3_ConsumeHandshakeNumber(sslSocket *ss, PRUint32 *num, PRUint32 bytes,
+                            SSL3Opaque **b, PRUint32 *length)
 {
     PRUint8 *buf = *b;
     int i;
-    PRInt32 num = 0;
 
     PORT_Assert(ss->opt.noLocks || ssl_HaveRecvBufLock(ss));
     PORT_Assert(ss->opt.noLocks || ssl_HaveSSL3HandshakeLock(ss));
-    PORT_Assert(bytes <= sizeof num);
 
-    if ((PRUint32)bytes > *length) {
+    *num = 0;
+    if (bytes > *length || bytes > sizeof(*num)) {
         return ssl3_DecodeError(ss);
     }
     PRINT_BUF(60, (ss, "consume bytes:", *b, bytes));
 
-    for (i = 0; i < bytes; i++)
-        num = (num << 8) + buf[i];
+    for (i = 0; i < bytes; i++) {
+        *num = (*num << 8) + buf[i];
+    }
     *b += bytes;
     *length -= bytes;
-    return num;
+    return SECSuccess;
 }
 
 /* Read in two values from the incoming decrypted byte stream "b", which is
@@ -4396,21 +4398,22 @@ ssl3_ConsumeHandshakeNumber(sslSocket *ss, PRInt32 bytes, SSL3Opaque **b,
  * point to the values in the buffer **b.
  */
 SECStatus
-ssl3_ConsumeHandshakeVariable(sslSocket *ss, SECItem *i, PRInt32 bytes,
+ssl3_ConsumeHandshakeVariable(sslSocket *ss, SECItem *i, PRUint32 bytes,
                               SSL3Opaque **b, PRUint32 *length)
 {
-    PRInt32 count;
+    PRUint32 count;
+    SECStatus rv;
 
     PORT_Assert(bytes <= 3);
     i->len = 0;
     i->data = NULL;
     i->type = siBuffer;
-    count = ssl3_ConsumeHandshakeNumber(ss, bytes, b, length);
-    if (count < 0) { /* Can't test for SECSuccess here. */
+    rv = ssl3_ConsumeHandshakeNumber(ss, &count, bytes, b, length);
+    if (rv != SECSuccess) {
         return SECFailure;
     }
     if (count > 0) {
-        if ((PRUint32)count > *length) {
+        if (count > *length) {
             return ssl3_DecodeError(ss);
         }
         i->data = *b;
@@ -4681,10 +4684,11 @@ SECStatus
 ssl_ConsumeSignatureScheme(sslSocket *ss, SSL3Opaque **b,
                            PRUint32 *length, SSLSignatureScheme *out)
 {
-    PRInt32 tmp;
+    PRUint32 tmp;
+    SECStatus rv;
 
-    tmp = ssl3_ConsumeHandshakeNumber(ss, 2, b, length);
-    if (tmp < 0) {
+    rv = ssl3_ConsumeHandshakeNumber(ss, &tmp, 2, b, length);
+    if (rv != SECSuccess) {
         return SECFailure; /* Error code set already. */
     }
     if (!ssl_IsSupportedSignatureScheme((SSLSignatureScheme)tmp)) {
@@ -6606,7 +6610,7 @@ ssl3_SetCipherSuite(sslSocket *ss, ssl3CipherSuite chosenSuite,
 static SECStatus
 ssl3_HandleServerHello(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
-    PRInt32 temp; /* allow for consume number failure */
+    PRUint32 temp;
     PRBool suite_found = PR_FALSE;
     int i;
     int errCode = SSL_ERROR_RX_MALFORMED_SERVER_HELLO;
@@ -6649,11 +6653,21 @@ ssl3_HandleServerHello(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         goto loser; /* alert has been sent */
     }
 
-    /* We got a HelloRetryRequest, but the server didn't pick 1.3.  Scream. */
-    if (ss->ssl3.hs.helloRetry && ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
-        desc = illegal_parameter;
-        errCode = SSL_ERROR_RX_MALFORMED_SERVER_HELLO;
-        goto alert_loser;
+    /* The server didn't pick 1.3 although we either received a
+     * HelloRetryRequest, or we prepared to send early app data. */
+    if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
+        if (ss->ssl3.hs.helloRetry) {
+            /* SSL3_SendAlert() will uncache the SID. */
+            desc = illegal_parameter;
+            errCode = SSL_ERROR_RX_MALFORMED_SERVER_HELLO;
+            goto alert_loser;
+        }
+        if (ss->ssl3.hs.zeroRttState == ssl_0rtt_sent) {
+            /* SSL3_SendAlert() will uncache the SID. */
+            desc = illegal_parameter;
+            errCode = SSL_ERROR_DOWNGRADE_WITH_EARLY_DATA;
+            goto alert_loser;
+        }
     }
 
     /* Check that the server negotiated the same version as it did
@@ -6721,8 +6735,8 @@ ssl3_HandleServerHello(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     }
 
     /* find selected cipher suite in our list. */
-    temp = ssl3_ConsumeHandshakeNumber(ss, 2, &b, &length);
-    if (temp < 0) {
+    rv = ssl3_ConsumeHandshakeNumber(ss, &temp, 2, &b, &length);
+    if (rv != SECSuccess) {
         goto loser; /* alert has been sent */
     }
     i = ssl3_config_match_init(ss);
@@ -6767,8 +6781,8 @@ ssl3_HandleServerHello(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
         /* find selected compression method in our list. */
-        temp = ssl3_ConsumeHandshakeNumber(ss, 1, &b, &length);
-        if (temp < 0) {
+        rv = ssl3_ConsumeHandshakeNumber(ss, &temp, 1, &b, &length);
+        if (rv != SECSuccess) {
             goto loser; /* alert has been sent */
         }
         suite_found = PR_FALSE;
@@ -7009,6 +7023,19 @@ ssl3_HandleServerHelloPart2(sslSocket *ss, const SECItem *sidBytes,
         SSL_AtomicIncrementLong(&ssl3stats.hsh_sid_cache_not_ok);
     else
         SSL_AtomicIncrementLong(&ssl3stats.hsh_sid_cache_misses);
+
+    /* We tried to resume a 1.3 session but the server negotiated 1.2. */
+    if (ss->statelessResume) {
+        PORT_Assert(sid->version == SSL_LIBRARY_VERSION_TLS_1_3);
+        PORT_Assert(ss->ssl3.hs.currentSecret);
+
+        /* Reset resumption state, only used by 1.3 code. */
+        ss->statelessResume = PR_FALSE;
+
+        /* Clear TLS 1.3 early data traffic key. */
+        PK11_FreeSymKey(ss->ssl3.hs.currentSecret);
+        ss->ssl3.hs.currentSecret = NULL;
+    }
 
     /* throw the old one away */
     sid->u.ssl3.keys.resumable = PR_FALSE;
@@ -7276,16 +7303,17 @@ SECStatus
 ssl3_ParseCertificateRequestCAs(sslSocket *ss, SSL3Opaque **b, PRUint32 *length,
                                 PLArenaPool *arena, CERTDistNames *ca_list)
 {
-    PRInt32 remaining;
+    PRUint32 remaining;
     int nnames = 0;
     dnameNode *node;
+    SECStatus rv;
     int i;
 
-    remaining = ssl3_ConsumeHandshakeNumber(ss, 2, b, length);
-    if (remaining < 0)
+    rv = ssl3_ConsumeHandshakeNumber(ss, &remaining, 2, b, length);
+    if (rv != SECSuccess)
         return SECFailure; /* malformed, alert has been sent */
 
-    if ((PRUint32)remaining > *length)
+    if (remaining > *length)
         goto alert_loser;
 
     ca_list->head = node = PORT_ArenaZNew(arena, dnameNode);
@@ -7293,19 +7321,19 @@ ssl3_ParseCertificateRequestCAs(sslSocket *ss, SSL3Opaque **b, PRUint32 *length,
         goto no_mem;
 
     while (remaining > 0) {
-        PRInt32 len;
+        PRUint32 len;
 
         if (remaining < 2)
             goto alert_loser; /* malformed */
 
-        node->name.len = len = ssl3_ConsumeHandshakeNumber(ss, 2, b, length);
-        if (len <= 0)
+        rv = ssl3_ConsumeHandshakeNumber(ss, &len, 2, b, length);
+        if (rv != SECSuccess)
             return SECFailure; /* malformed, alert has been sent */
-
-        remaining -= 2;
-        if (remaining < len)
+        if (len == 0 || remaining < len + 2)
             goto alert_loser; /* malformed */
 
+        remaining -= 2;
+        node->name.len = len;
         node->name.data = *b;
         *b += len;
         *length -= len;
@@ -7381,9 +7409,9 @@ ssl_ParseSignatureSchemes(const sslSocket *ss, PLArenaPool *arena,
     }
 
     for (; max; --max) {
-        PRInt32 tmp;
-        tmp = ssl3_ExtConsumeHandshakeNumber(ss, 2, &buf.data, &buf.len);
-        if (tmp < 0) {
+        PRUint32 tmp;
+        rv = ssl3_ExtConsumeHandshakeNumber(ss, &tmp, 2, &buf.data, &buf.len);
+        if (rv != SECSuccess) {
             PORT_Assert(0);
             PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
             return SECFailure;
@@ -8261,7 +8289,7 @@ static SECStatus
 ssl3_HandleClientHello(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
     sslSessionID *sid = NULL;
-    PRInt32 tmp;
+    PRUint32 tmp;
     unsigned int i;
     SECStatus rv;
     int errCode = SSL_ERROR_RX_MALFORMED_CLIENT_HELLO;
@@ -8321,8 +8349,8 @@ ssl3_HandleClientHello(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         dtls_RehandshakeCleanup(ss);
     }
 
-    tmp = ssl3_ConsumeHandshakeNumber(ss, 2, &b, &length);
-    if (tmp < 0)
+    rv = ssl3_ConsumeHandshakeNumber(ss, &tmp, 2, &b, &length);
+    if (rv != SECSuccess)
         goto loser; /* malformed, alert already sent */
 
     /* Translate the version. */
@@ -8375,9 +8403,9 @@ ssl3_HandleClientHello(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 
     if (length) {
         /* Get length of hello extensions */
-        PRInt32 extension_length;
-        extension_length = ssl3_ConsumeHandshakeNumber(ss, 2, &b, &length);
-        if (extension_length < 0) {
+        PRUint32 extension_length;
+        rv = ssl3_ConsumeHandshakeNumber(ss, &extension_length, 2, &b, &length);
+        if (rv != SECSuccess) {
             goto loser; /* alert already sent */
         }
         if (extension_length != length) {
@@ -9929,9 +9957,9 @@ ssl3_HandleRSAClientKeyExchange(sslSocket *ss,
     enc_pms.len = length;
 
     if (ss->ssl3.prSpec->version > SSL_LIBRARY_VERSION_3_0) { /* isTLS */
-        PRInt32 kLen;
-        kLen = ssl3_ConsumeHandshakeNumber(ss, 2, &enc_pms.data, &enc_pms.len);
-        if (kLen < 0) {
+        PRUint32 kLen;
+        rv = ssl3_ConsumeHandshakeNumber(ss, &kLen, 2, &enc_pms.data, &enc_pms.len);
+        if (rv != SECSuccess) {
             PORT_SetError(SSL_ERROR_CLIENT_KEY_EXCHANGE_FAILURE);
             return SECFailure;
         }
@@ -10228,7 +10256,7 @@ ssl3_SendNewSessionTicket(sslSocket *ss)
         goto loser;
 
     /* This is a fixed value. */
-    rv = ssl3_AppendHandshakeNumber(ss, TLS_EX_SESS_TICKET_LIFETIME_HINT, 4);
+    rv = ssl3_AppendHandshakeNumber(ss, ssl_ticket_lifetime, 4);
     if (rv != SECSuccess)
         goto loser;
 
@@ -10251,6 +10279,7 @@ ssl3_HandleNewSessionTicket(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
     SECStatus rv;
     SECItem ticketData;
+    PRUint32 temp;
 
     SSL_TRC(3, ("%d: SSL3[%d]: handle session_ticket handshake",
                 SSL_GETPID(), ss->fd));
@@ -10271,14 +10300,19 @@ ssl3_HandleNewSessionTicket(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
      * until it has verified the server's Finished message." See the comment in
      * ssl3_FinishHandshake for more details.
      */
-    ss->ssl3.hs.newSessionTicket.received_timestamp = ssl_Time();
+    ss->ssl3.hs.newSessionTicket.received_timestamp = PR_Now();
     if (length < 4) {
         (void)SSL3_SendAlert(ss, alert_fatal, decode_error);
         PORT_SetError(SSL_ERROR_RX_MALFORMED_NEW_SESSION_TICKET);
         return SECFailure;
     }
-    ss->ssl3.hs.newSessionTicket.ticket_lifetime_hint =
-        (PRUint32)ssl3_ConsumeHandshakeNumber(ss, 4, &b, &length);
+
+    rv = ssl3_ConsumeHandshakeNumber(ss, &temp, 4, &b, &length);
+    if (rv != SECSuccess) {
+        PORT_SetError(SSL_ERROR_RX_MALFORMED_NEW_SESSION_TICKET);
+        return SECFailure;
+    }
+    ss->ssl3.hs.newSessionTicket.ticket_lifetime_hint = temp;
 
     rv = ssl3_ConsumeHandshakeVariable(ss, &ticketData, 2, &b, &length);
     if (rv != SECSuccess || length != 0) {
@@ -10573,21 +10607,20 @@ ssl3_HandleCertificateStatus(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 SECStatus
 ssl_ReadCertificateStatus(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
-    PRInt32 status, len;
+    PRUint32 status, len;
+    SECStatus rv;
 
     PORT_Assert(!ss->sec.isServer);
 
     /* Consume the CertificateStatusType enum */
-    status = ssl3_ConsumeHandshakeNumber(ss, 1, &b, &length);
-    if (status != 1 /* ocsp */) {
-        ssl3_DecodeError(ss); /* sets error code */
-        return SECFailure;
+    rv = ssl3_ConsumeHandshakeNumber(ss, &status, 1, &b, &length);
+    if (rv != SECSuccess || status != 1 /* ocsp */) {
+        return ssl3_DecodeError(ss);
     }
 
-    len = ssl3_ConsumeHandshakeNumber(ss, 3, &b, &length);
-    if (len != length) {
-        ssl3_DecodeError(ss); /* sets error code */
-        return SECFailure;
+    rv = ssl3_ConsumeHandshakeNumber(ss, &len, 3, &b, &length);
+    if (rv != SECSuccess || len != length) {
+        return ssl3_DecodeError(ss);
     }
 
 #define MAX_CERTSTATUS_LEN 0x1ffff /* 128k - 1 */
@@ -10644,8 +10677,8 @@ ssl3_CompleteHandleCertificate(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
     ssl3CertNode *c;
     ssl3CertNode *lastCert = NULL;
-    PRInt32 remaining = 0;
-    PRInt32 size;
+    PRUint32 remaining = 0;
+    PRUint32 size;
     SECStatus rv;
     PRBool isServer = ss->sec.isServer;
     PRBool isTLS;
@@ -10661,10 +10694,10 @@ ssl3_CompleteHandleCertificate(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     ** normal no_certificates message to maximize interoperability.
     */
     if (length) {
-        remaining = ssl3_ConsumeHandshakeNumber(ss, 3, &b, &length);
-        if (remaining < 0)
+        rv = ssl3_ConsumeHandshakeNumber(ss, &remaining, 3, &b, &length);
+        if (rv != SECSuccess)
             goto loser; /* fatal alert already sent by ConsumeHandshake. */
-        if ((PRUint32)remaining > length)
+        if (remaining > length)
             goto decode_loser;
     }
 
@@ -10695,15 +10728,14 @@ ssl3_CompleteHandleCertificate(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     }
 
     /* First get the peer cert. */
-    remaining -= 3;
-    if (remaining < 0)
+    if (remaining < 3)
         goto decode_loser;
 
-    size = ssl3_ConsumeHandshakeNumber(ss, 3, &b, &length);
-    if (size <= 0)
+    remaining -= 3;
+    rv = ssl3_ConsumeHandshakeNumber(ss, &size, 3, &b, &length);
+    if (rv != SECSuccess)
         goto loser; /* fatal alert already sent by ConsumeHandshake. */
-
-    if (remaining < size)
+    if (size == 0 || remaining < size)
         goto decode_loser;
 
     certItem.data = b;
@@ -10723,15 +10755,14 @@ ssl3_CompleteHandleCertificate(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 
     /* Now get all of the CA certs. */
     while (remaining > 0) {
-        remaining -= 3;
-        if (remaining < 0)
+        if (remaining < 3)
             goto decode_loser;
 
-        size = ssl3_ConsumeHandshakeNumber(ss, 3, &b, &length);
-        if (size <= 0)
+        remaining -= 3;
+        rv = ssl3_ConsumeHandshakeNumber(ss, &size, 3, &b, &length);
+        if (rv != SECSuccess)
             goto loser; /* fatal alert already sent by ConsumeHandshake. */
-
-        if (remaining < size)
+        if (size == 0 || remaining < size)
             goto decode_loser;
 
         certItem.data = b;
@@ -10759,9 +10790,6 @@ ssl3_CompleteHandleCertificate(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         }
         lastCert = c;
     }
-
-    if (remaining != 0)
-        goto decode_loser;
 
     SECKEY_UpdateCertPQG(ss->sec.peerCert);
 
@@ -11050,13 +11078,10 @@ ssl3_ComputeTLSFinished(sslSocket *ss, ssl3CipherSpec *spec,
     PK11Context *prf_context;
     unsigned int retLen;
 
+    PORT_Assert(spec->master_secret);
     if (!spec->master_secret) {
-        const char *label = isServer ? "server finished" : "client finished";
-        unsigned int len = 15;
-        HASH_HashType hashType = ssl3_GetTls12HashType(ss);
-        return ssl3_TLSPRFWithMasterSecret(spec, label, len, hashes->u.raw,
-                                           hashes->len, tlsFinished->verify_data,
-                                           sizeof tlsFinished->verify_data, hashType);
+        PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
+        return SECFailure;
     }
 
     if (spec->version < SSL_LIBRARY_VERSION_TLS_1_2) {
@@ -11089,9 +11114,10 @@ ssl3_ComputeTLSFinished(sslSocket *ss, ssl3CipherSpec *spec,
  * ss->ssl3.crSpec).
  */
 SECStatus
-ssl3_TLSPRFWithMasterSecret(ssl3CipherSpec *spec, const char *label,
-                            unsigned int labelLen, const unsigned char *val, unsigned int valLen,
-                            unsigned char *out, unsigned int outLen, HASH_HashType tls12HashType)
+ssl3_TLSPRFWithMasterSecret(sslSocket *ss, ssl3CipherSpec *spec,
+                            const char *label, unsigned int labelLen,
+                            const unsigned char *val, unsigned int valLen,
+                            unsigned char *out, unsigned int outLen)
 {
     SECStatus rv = SECSuccess;
 
@@ -11102,6 +11128,12 @@ ssl3_TLSPRFWithMasterSecret(ssl3CipherSpec *spec, const char *label,
         unsigned int retLen;
 
         if (spec->version >= SSL_LIBRARY_VERSION_TLS_1_2) {
+            /* Bug 1312976 non-SHA256 exporters are broken. */
+            if (ssl3_GetPrfHashMechanism(ss) != CKM_SHA256) {
+                PORT_Assert(0);
+                PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
+                return SECFailure;
+            }
             mech = CKM_NSS_TLS_PRF_GENERAL_SHA256;
         }
         prf_context = PK11_CreateContextBySymKey(mech, CKA_SIGN,
@@ -13294,8 +13326,6 @@ ssl3_DestroySSL3Info(sslSocket *ss)
     tls13_DestroyEarlyData(&ss->ssl3.hs.bufferedEarlyData);
 
     ss->ssl3.initialized = PR_FALSE;
-
-    SECITEM_FreeItem(&ss->xtnData.nextProto, PR_FALSE);
 }
 
 #define MAP_NULL(x) (((x) != 0) ? (x) : SEC_OID_NULL_CIPHER)

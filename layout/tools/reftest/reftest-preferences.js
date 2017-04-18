@@ -8,6 +8,7 @@ user_pref("gfx.color_management.force_srgb", true);
 user_pref("gfx.logging.level", 1);
 user_pref("browser.dom.window.dump.enabled", true);
 user_pref("ui.caretBlinkTime", -1);
+user_pref("ui.caretWidth", 1);
 user_pref("dom.send_after_paint_to_content", true);
 // no slow script dialogs
 user_pref("dom.max_script_run_time", 0);
@@ -30,7 +31,9 @@ user_pref("urlclassifier.updateinterval", 172800);
 // Disable downscale-during-decode, since it makes reftests more difficult.
 user_pref("image.downscale-during-decode.enabled", false);
 // Checking whether two files are the same is slow on Windows.
-// Setting this pref makes tests run much faster there.
+// Setting this pref makes tests run much faster there. Reftests also
+// rely on this to load downloadable fonts (which are restricted to same
+// origin policy by default) from outside their directory.
 user_pref("security.fileuri.strict_origin_policy", false);
 // Disable the thumbnailing service
 user_pref("browser.pagethumbnails.capturing_disabled", true);
@@ -60,6 +63,7 @@ user_pref("browser.search.geoSpecificDefaults", false);
 
 // Make sure SelfSupport doesn't hit the network.
 user_pref("browser.selfsupport.url", "https://localhost/selfsupport-dummy/");
+user_pref("extensions.shield-recipe-client.api_url", "https://localhost/selfsupport-dummy/");
 
 // use about:blank, not browser.startup.homepage
 user_pref("browser.startup.page", 0);

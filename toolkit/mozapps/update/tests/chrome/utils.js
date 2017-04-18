@@ -67,7 +67,7 @@
  *   checkPrefHasUserValue function.
  */
 
-'use strict';
+"use strict";
 
 /* globals TESTS, runTest, finishTest */
 
@@ -184,15 +184,14 @@ const gWindowObserver = {
       // named finishTest) for finishing the test.
       try {
         finishTest();
-      }
-      catch (e) {
+      } catch (e) {
         finishTestDefault();
       }
       return;
     }
 
     win.addEventListener("load", function WO_observe_onLoad() {
-      win.removeEventListener("load", WO_observe_onLoad, false);
+      win.removeEventListener("load", WO_observe_onLoad);
       // Ignore windows other than the update UI window.
       if (win.location != URI_UPDATE_PROMPT_DIALOG) {
         debugDump("load event for window not being tested - location: " +
@@ -212,8 +211,8 @@ const gWindowObserver = {
 
       gWin = win;
       gDocElem = gWin.document.documentElement;
-      gDocElem.addEventListener("pageshow", onPageShowDefault, false);
-    }, false);
+      gDocElem.addEventListener("pageshow", onPageShowDefault);
+    });
   }
 };
 
@@ -248,8 +247,7 @@ function runTestDefaultWaitForWindowClosed() {
   if (gCloseWindowTimeoutCounter > CLOSE_WINDOW_TIMEOUT_MAXCOUNT) {
     try {
       finishTest();
-    }
-    catch (e) {
+    } catch (e) {
       finishTestDefault();
     }
     return;
@@ -303,7 +301,7 @@ function finishTestDefault() {
 
   Services.ww.unregisterNotification(gWindowObserver);
   if (gDocElem) {
-    gDocElem.removeEventListener("pageshow", onPageShowDefault, false);
+    gDocElem.removeEventListener("pageshow", onPageShowDefault);
   }
 
   finishTestRestoreUpdaterBackup();
@@ -323,8 +321,7 @@ function finishTestTimeout(aTimer) {
 
   try {
     finishTest();
-  }
-  catch (e) {
+  } catch (e) {
     finishTestDefault();
   }
 }
@@ -845,8 +842,7 @@ function resetFiles() {
   if (updatedDir.exists()) {
     try {
       removeDirRecursive(updatedDir);
-    }
-    catch (e) {
+    } catch (e) {
       logTestInfo("Unable to remove directory. Path: " + updatedDir.path +
                   ", Exception: " + e);
     }
@@ -913,8 +909,7 @@ function resetPrefs() {
 
   try {
     Services.prefs.deleteBranch(PREFBRANCH_APP_UPDATE_NEVER);
-  }
-  catch (e) {
+  } catch (e) {
   }
 }
 
@@ -976,7 +971,7 @@ const errorsPrefObserver = {
    * @param  aMaxErrorCount
    *         The value to set the maximum errors preference to.
    */
-  init: function(aObservePref, aMaxErrorPref, aMaxErrorCount) {
+  init(aObservePref, aMaxErrorPref, aMaxErrorCount) {
     this.observedPref = aObservePref;
     this.maxErrorPref = aMaxErrorPref;
 

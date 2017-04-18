@@ -175,7 +175,7 @@ StereoPannerNode::StereoPannerNode(AudioContext* aContext)
               2,
               ChannelCountMode::Clamped_max,
               ChannelInterpretation::Speakers)
-  , mPan(new AudioParam(this, StereoPannerNodeEngine::PAN, 0.f, "pan"))
+  , mPan(new AudioParam(this, StereoPannerNodeEngine::PAN, "pan", 0.f, -1.f, 1.f))
 {
   StereoPannerNodeEngine* engine = new StereoPannerNodeEngine(this, aContext->Destination());
   mStream = AudioNodeStream::Create(aContext, engine,
@@ -183,8 +183,24 @@ StereoPannerNode::StereoPannerNode(AudioContext* aContext)
                                     aContext->Graph());
 }
 
-StereoPannerNode::~StereoPannerNode()
+/* static */ already_AddRefed<StereoPannerNode>
+StereoPannerNode::Create(AudioContext& aAudioContext,
+                         const StereoPannerOptions& aOptions,
+                         ErrorResult& aRv)
 {
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<StereoPannerNode> audioNode = new StereoPannerNode(&aAudioContext);
+
+  audioNode->Initialize(aOptions, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  audioNode->Pan()->SetValue(aOptions.mPan);
+  return audioNode.forget();
 }
 
 size_t

@@ -22,7 +22,6 @@ function do_check_keypair_eq(a, b) {
 }
 
 function test_time_keyFromString(iterations) {
-  let k;
   let o;
   let b = new BulkKeyBundle("dummy");
   let d = Utils.decodeKeyBase32("ababcdefabcdefabcdefabcdef");
@@ -154,7 +153,7 @@ add_test(function test_keymanager() {
 
   // Encryption key is stored in base64 for WeaveCrypto convenience.
   do_check_eq(encryptKey, new SyncKeyBundle(username, testKey).encryptionKey);
-  do_check_eq(hmacKey,    new SyncKeyBundle(username, testKey).hmacKey);
+  do_check_eq(hmacKey, new SyncKeyBundle(username, testKey).hmacKey);
 
   // Test with the same KeyBundle for both.
   let obj = new SyncKeyBundle(username, testKey);
@@ -192,7 +191,7 @@ add_test(function test_collections_manager() {
     "default": [default_key64, default_hmac64],
     "collections": {"bookmarks": [bookmarks_key64, bookmarks_hmac64]},
   };
-  storage_keys.modified = Date.now()/1000;
+  storage_keys.modified = Date.now() / 1000;
   storage_keys.id = "keys";
 
   log.info("Encrypting storage keys...");
@@ -228,8 +227,8 @@ add_test(function test_collections_manager() {
   do_check_keypair_eq(payload.default, wbo.cleartext.default);
   do_check_keypair_eq(payload.collections.bookmarks, wbo.cleartext.collections.bookmarks);
 
-  do_check_true('bookmarks' in collectionKeys._collections);
-  do_check_false('tabs' in collectionKeys._collections);
+  do_check_true("bookmarks" in collectionKeys._collections);
+  do_check_false("tabs" in collectionKeys._collections);
 
   _("Updating contents twice with the same data doesn't proceed.");
   storage_keys.encrypt(keyBundle);
@@ -264,7 +263,7 @@ add_test(function test_collections_manager() {
   do_check_true(collectionKeys.updateNeeded(info_collections));
   info_collections["crypto"] = 5000;
   do_check_false(collectionKeys.updateNeeded(info_collections));
-  info_collections["crypto"] = 1 + (Date.now()/1000);              // Add one in case computers are fast!
+  info_collections["crypto"] = 1 + (Date.now() / 1000);              // Add one in case computers are fast!
   do_check_true(collectionKeys.updateNeeded(info_collections));
 
   collectionKeys.lastModified = null;

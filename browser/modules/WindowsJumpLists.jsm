@@ -101,7 +101,7 @@ var tasksCfg = [
    */
   // Open new tab
   {
-    get title()       { return _getString("taskbar.tasks.newTab.label"); },
+    get title() { return _getString("taskbar.tasks.newTab.label"); },
     get description() { return _getString("taskbar.tasks.newTab.description"); },
     args:             "-new-tab about:blank",
     iconIndex:        3, // New window icon
@@ -113,7 +113,7 @@ var tasksCfg = [
 
   // Open new window
   {
-    get title()       { return _getString("taskbar.tasks.newWindow.label"); },
+    get title() { return _getString("taskbar.tasks.newWindow.label"); },
     get description() { return _getString("taskbar.tasks.newWindow.description"); },
     args:             "-browser",
     iconIndex:        2, // New tab icon
@@ -124,7 +124,7 @@ var tasksCfg = [
 
   // Open new private window
   {
-    get title()       { return _getString("taskbar.tasks.newPrivateWindow.label"); },
+    get title() { return _getString("taskbar.tasks.newPrivateWindow.label"); },
     get description() { return _getString("taskbar.tasks.newPrivateWindow.description"); },
     args:             "-private-window",
     iconIndex:        4, // Private browsing mode icon
@@ -274,7 +274,7 @@ this.WinTaskbarJumpList =
   _buildTasks: function WTBJL__buildTasks() {
     var items = Cc["@mozilla.org/array;1"].
                 createInstance(Ci.nsIMutableArray);
-    this._tasks.forEach(function (task) {
+    this._tasks.forEach(function(task) {
       if ((this._shuttingDown && !task.close) || (!this._shuttingDown && !task.open))
         return;
       var item = this._getHandlerAppItem(task.title, task.description,
@@ -311,7 +311,7 @@ this.WinTaskbarJumpList =
     this._pendingStatements[LIST_TYPE.FREQUENT] = this._getHistoryResults(
       Ci.nsINavHistoryQueryOptions.SORT_BY_VISITCOUNT_DESCENDING,
       this._maxItemCount,
-      function (aResult) {
+      function(aResult) {
         if (!aResult) {
           delete this._pendingStatements[LIST_TYPE.FREQUENT];
           // The are no more results, build the list.
@@ -321,7 +321,7 @@ this.WinTaskbarJumpList =
         }
 
         let title = aResult.title || aResult.uri;
-        let faviconPageUri = Services.io.newURI(aResult.uri, null, null);
+        let faviconPageUri = Services.io.newURI(aResult.uri);
         let shortcut = this._getHandlerAppItem(title, title, aResult.uri, 1,
                                                faviconPageUri);
         items.appendElement(shortcut, false);
@@ -346,7 +346,7 @@ this.WinTaskbarJumpList =
     this._pendingStatements[LIST_TYPE.RECENT] = this._getHistoryResults(
       Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING,
       this._maxItemCount * 2,
-      function (aResult) {
+      function(aResult) {
         if (!aResult) {
           // The are no more results, build the list.
           this._buildCustom(_getString("taskbar.recent.label"), items);
@@ -366,7 +366,7 @@ this.WinTaskbarJumpList =
         }
 
         let title = aResult.title || aResult.uri;
-        let faviconPageUri = Services.io.newURI(aResult.uri, null, null);
+        let faviconPageUri = Services.io.newURI(aResult.uri);
         let shortcut = this._getHandlerAppItem(title, title, aResult.uri, 1,
                                                faviconPageUri);
         items.appendElement(shortcut, false);
@@ -426,7 +426,7 @@ this.WinTaskbarJumpList =
     // Return the pending statement to the caller, to allow cancelation.
     return PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
                               .asyncExecuteLegacyQueries([query], 1, options, {
-      handleResult: function (aResultSet) {
+      handleResult(aResultSet) {
         for (let row; (row = aResultSet.getNextRow());) {
           try {
             aCallback.call(aScope,
@@ -436,11 +436,11 @@ this.WinTaskbarJumpList =
           } catch (e) {}
         }
       },
-      handleError: function (aError) {
+      handleError(aError) {
         Components.utils.reportError(
           "Async execution error (" + aError.result + "): " + aError.message);
       },
-      handleCompletion: function (aReason) {
+      handleCompletion(aReason) {
         aCallback.call(WinTaskbarJumpList, null);
       },
     });
@@ -508,10 +508,9 @@ this.WinTaskbarJumpList =
     if (this._enabled && !this._shuttingDown && !this._timer) {
       this._timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
       this._timer.initWithCallback(this,
-                                   _prefs.getIntPref(PREF_TASKBAR_REFRESH)*1000,
+                                   _prefs.getIntPref(PREF_TASKBAR_REFRESH) * 1000,
                                    this._timer.TYPE_REPEATING_SLACK);
-    }
-    else if ((!this._enabled || this._shuttingDown) && this._timer) {
+    } else if ((!this._enabled || this._shuttingDown) && this._timer) {
       this._timer.cancel();
       delete this._timer;
     }
@@ -522,8 +521,7 @@ this.WinTaskbarJumpList =
     if (this._enabled && !this._shuttingDown && !this._hasIdleObserver) {
       _idle.addIdleObserver(this, IDLE_TIMEOUT_SECONDS);
       this._hasIdleObserver = true;
-    }
-    else if ((!this._enabled || this._shuttingDown) && this._hasIdleObserver) {
+    } else if ((!this._enabled || this._shuttingDown) && this._hasIdleObserver) {
       _idle.removeIdleObserver(this, IDLE_TIMEOUT_SECONDS);
       this._hasIdleObserver = false;
     }

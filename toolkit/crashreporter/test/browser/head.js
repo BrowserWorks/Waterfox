@@ -26,7 +26,7 @@ function make_fake_appdir() {
   create_subdir(crashesDir, "submitted");
 
   _provider = {
-    getFile: function(prop, persistent) {
+    getFile(prop, persistent) {
       persistent.value = true;
       if (prop == "UAppData") {
         return appD.clone();
@@ -39,7 +39,7 @@ function make_fake_appdir() {
       dump("WARNING: make_fake_appdir - fake nsIDirectoryServiceProvider - Unexpected getFile for: '" + prop + "'\n");
       return null;
     },
-    QueryInterface: function(iid) {
+    QueryInterface(iid) {
       if (iid.equals(Ci.nsIDirectoryServiceProvider) ||
           iid.equals(Ci.nsISupports)) {
         return this;
@@ -66,7 +66,7 @@ function cleanup_fake_appdir() {
   try {
     dirSvc.undefine("UAppData");
   } catch (ex) {
-    dump("cleanup_fake_appdir: dirSvc.undefine failed: " + ex.message +"\n");
+    dump("cleanup_fake_appdir: dirSvc.undefine failed: " + ex.message + "\n");
   }
 }
 
@@ -88,7 +88,7 @@ function add_fake_crashes(crD, count) {
     file.append(fn);
     file.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
     file.lastModifiedTime = date;
-    results.push({'id': uuid, 'date': date, 'pending': false});
+    results.push({"id": uuid, "date": date, "pending": false});
 
     date += 60000;
   }
@@ -135,5 +135,5 @@ function addPendingCrashreport(crD, date, extra) {
   dumpfile.lastModifiedTime = date;
   extrafile.lastModifiedTime = date;
   memoryfile.lastModifiedTime = date;
-  return {'id': uuid, 'date': date, 'pending': true, 'extra': extra};
+  return {"id": uuid, "date": date, "pending": true, "extra": extra};
 }

@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* jshint esnext:true */
 /* globals Components, Services, XPCOMUtils, PdfjsChromeUtils,
            PdfjsContentUtils, PdfStreamConverter */
 
@@ -93,6 +92,7 @@ function initializeDefaultPreferences() {
   "useOnlyCssZoom": false,
   "externalLinkTarget": 0,
   "enhanceTextSelection": false,
+  "renderer": "canvas",
   "renderInteractiveForms": false,
   "disablePageLabels": false
 }
@@ -197,11 +197,11 @@ var PdfJs = {
 
   uninit: function uninit() {
     if (this._initialized) {
-      Services.prefs.removeObserver(PREF_DISABLED, this, false);
-      Services.prefs.removeObserver(PREF_DISABLED_PLUGIN_TYPES, this, false);
-      Services.obs.removeObserver(this, TOPIC_PDFJS_HANDLER_CHANGED, false);
-      Services.obs.removeObserver(this, TOPIC_PLUGINS_LIST_UPDATED, false);
-      Services.obs.removeObserver(this, TOPIC_PLUGIN_INFO_UPDATED, false);
+      Services.prefs.removeObserver(PREF_DISABLED, this);
+      Services.prefs.removeObserver(PREF_DISABLED_PLUGIN_TYPES, this);
+      Services.obs.removeObserver(this, TOPIC_PDFJS_HANDLER_CHANGED);
+      Services.obs.removeObserver(this, TOPIC_PLUGINS_LIST_UPDATED);
+      Services.obs.removeObserver(this, TOPIC_PLUGIN_INFO_UPDATED);
       this._initialized = false;
     }
     this._ensureUnregistered();

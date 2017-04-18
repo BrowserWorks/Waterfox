@@ -34,13 +34,13 @@ XPCOMUtils.defineLazyServiceGetter(this, "eTLD",
 XPCOMUtils.defineLazyGetter(this, "gTextDecoder", () => {
   return new TextDecoder();
 });
-XPCOMUtils.defineLazyGetter(this, "gCryptoHash", function () {
+XPCOMUtils.defineLazyGetter(this, "gCryptoHash", function() {
   return Cc["@mozilla.org/security/hash;1"].createInstance(Ci.nsICryptoHash);
 });
-XPCOMUtils.defineLazyGetter(this, "gUnicodeConverter", function () {
+XPCOMUtils.defineLazyGetter(this, "gUnicodeConverter", function() {
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
                     .createInstance(Ci.nsIScriptableUnicodeConverter);
-  converter.charset = 'utf8';
+  converter.charset = "utf8";
   return converter;
 });
 
@@ -88,7 +88,7 @@ const DEFAULT_TOTAL_FREQUENCY_CAP = 10;
 
 // Default timeDelta to prune unused frequency cap objects
 // currently set to 10 days in milliseconds
-const DEFAULT_PRUNE_TIME_DELTA = 10*24*60*60*1000;
+const DEFAULT_PRUNE_TIME_DELTA = 10 * 24 * 60 * 60 * 1000;
 
 // The min number of visible (not blocked) history tiles to have before showing suggested tiles
 const MIN_VISIBLE_HISTORY_TILES = 8;
@@ -106,7 +106,7 @@ const INADJACENCY_SOURCE = "chrome://browser/content/newtab/newTab.inadjacent.js
 const FAKE_SUGGESTED_BLOCK_URL = "ignore://suggested_block";
 
 // Time before suggested tile is allowed to play again after block - default to 1 day
-const AFTER_SUGGESTED_BLOCK_DECAY_TIME = 24*60*60*1000;
+const AFTER_SUGGESTED_BLOCK_DECAY_TIME = 24 * 60 * 60 * 1000;
 
 /**
  * Singleton that serves as the provider of directory links.
@@ -176,8 +176,7 @@ var DirectoryLinksProvider = {
       try {
         this.__linksURL = Services.prefs.getCharPref(this._observedPrefs["linksURL"]);
         this.__linksURLModified = Services.prefs.prefHasUserValue(this._observedPrefs["linksURL"]);
-      }
-      catch (e) {
+      } catch (e) {
         Cu.reportError("Error fetching directory links url from prefs: " + e);
       }
     }
@@ -192,8 +191,7 @@ var DirectoryLinksProvider = {
     let matchOS;
     try {
       matchOS = Services.prefs.getBoolPref(PREF_MATCH_OS_LOCALE);
-    }
-    catch (e) {}
+    } catch (e) {}
 
     if (matchOS) {
       return Services.locale.getLocaleComponentForUserAgent();
@@ -205,13 +203,11 @@ var DirectoryLinksProvider = {
       if (locale) {
         return locale.data;
       }
-    }
-    catch (e) {}
+    } catch (e) {}
 
     try {
       return Services.prefs.getCharPref(PREF_SELECTED_LOCALE);
-    }
-    catch (e) {}
+    } catch (e) {}
 
     return "en-US";
   },
@@ -227,8 +223,7 @@ var DirectoryLinksProvider = {
         if (Services.prefs.getBoolPref("privacy.donottrackheader.enabled")) {
           enhanced = false;
         }
-      }
-      catch (ex) {}
+      } catch (ex) {}
       Services.prefs.setBoolPref(PREF_NEWTAB_ENHANCED, enhanced);
     }
   },
@@ -268,7 +263,7 @@ var DirectoryLinksProvider = {
     }
   },
 
-  _cacheSuggestedLinks: function(link) {
+  _cacheSuggestedLinks(link) {
     // Don't cache links that don't have the expected 'frecent_sites'
     if (!link.frecent_sites) {
       return;
@@ -331,7 +326,7 @@ var DirectoryLinksProvider = {
    * Downloads directory links if needed
    * @return promise resolved immediately if no download needed, or upon completion
    */
-  _fetchAndCacheLinksIfNecessary: function DirectoryLinksProvider_fetchAndCacheLinksIfNecessary(forceDownload=false) {
+  _fetchAndCacheLinksIfNecessary: function DirectoryLinksProvider_fetchAndCacheLinksIfNecessary(forceDownload = false) {
     if (this._downloadDeferred) {
       // fetching links already - just return the promise
       return this._downloadDeferred.promise;
@@ -361,7 +356,7 @@ var DirectoryLinksProvider = {
   /**
    * @return true if download is needed, false otherwise
    */
-  get _needsDownload () {
+  get _needsDownload() {
     // fail if last download occured less then 24 hours ago
     if ((Date.now() - this._lastDownloadMS) > this._downloadIntervalMS) {
       return true;
@@ -391,9 +386,8 @@ var DirectoryLinksProvider = {
         let linksObj = JSON.parse(json);
         output = {directory: linksObj.directory || [],
                   suggested: linksObj.suggested || [],
-                  enhanced:  linksObj.enhanced  || []};
-      }
-      catch (e) {
+                  enhanced:  linksObj.enhanced || []};
+      } catch (e) {
         Cu.reportError(e);
       }
       return output || emptyOutput;
@@ -534,12 +528,11 @@ var DirectoryLinksProvider = {
           this._addFrequencyCapView(url);
         }
       });
-    }
-    // any click action on a suggested tile should stop that tile suggestion
-    // click/block - user either removed a tile or went to a landing page
-    // pin - tile turned into history tile, should no longer be suggested
-    // unpin - the tile was pinned before, should not matter
-    else {
+    } else {
+      // any click action on a suggested tile should stop that tile suggestion
+      // click/block - user either removed a tile or went to a landing page
+      // pin - tile turned into history tile, should no longer be suggested
+      // unpin - the tile was pinned before, should not matter
       // suggested tile has targetedSite, or frecent_sites if it was pinned
       let {frecent_sites, targetedSite, url} = sites[triggeringSiteIndex].link;
       if (frecent_sites || targetedSite) {
@@ -552,8 +545,7 @@ var DirectoryLinksProvider = {
     try {
       newtabEnhanced = Services.prefs.getBoolPref(PREF_NEWTAB_ENHANCED);
       pingEndPoint = Services.prefs.getCharPref(PREF_DIRECTORY_PING);
-    }
-    catch (ex) {}
+    } catch (ex) {}
 
     // Bug 1240245 - We no longer send pings, but frequency capping and fetching
     // tests depend on the following actions, so references to PING remain.
@@ -595,24 +587,23 @@ var DirectoryLinksProvider = {
     let scheme = "", base = "";
     try {
       // A malformed url will not be allowed
-      let uri = Services.io.newURI(url, null, null);
+      let uri = Services.io.newURI(url);
       scheme = uri.scheme;
 
       // URIs without base domains will be allowed
       base = Services.eTLD.getBaseDomain(uri);
-    }
-    catch (ex) {}
+    } catch (ex) {}
     // Require a scheme match and the base only if desired
     return allowed.has(scheme) && (!checkBase || ALLOWED_URL_BASE.has(base));
   },
 
   _escapeChars(text) {
     let charMap = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
     };
 
     return text.replace(/[&<>"']/g, (character) => charMap[character]);
@@ -729,7 +720,7 @@ var DirectoryLinksProvider = {
     }.bind(this));
   },
 
-  _handleManyLinksChanged: function() {
+  _handleManyLinksChanged() {
     this._topSitesWithSuggestedLinks.clear();
     this._suggestedLinks.forEach((suggestedLinks, site) => {
       if (NewTabUtils.isTopPlacesSite(site)) {
@@ -744,7 +735,7 @@ var DirectoryLinksProvider = {
    *
    * @return true if _topSitesWithSuggestedLinks was modified, false otherwise.
    */
-  _handleLinkChanged: function(aLink) {
+  _handleLinkChanged(aLink) {
     let changedLinkSite = NewTabUtils.extractSite(aLink.url);
     let linkStored = this._topSitesWithSuggestedLinks.has(changedLinkSite);
 
@@ -768,13 +759,13 @@ var DirectoryLinksProvider = {
     return false;
   },
 
-  _populatePlacesLinks: function () {
+  _populatePlacesLinks() {
     NewTabUtils.links.populateProviderCache(NewTabUtils.placesProvider, () => {
       this._handleManyLinksChanged();
     });
   },
 
-  onDeleteURI: function(aProvider, aLink) {
+  onDeleteURI(aProvider, aLink) {
     let {url} = aLink;
     // remove clicked flag for that url and
     // call observer upon disk write completion
@@ -783,14 +774,14 @@ var DirectoryLinksProvider = {
     });
   },
 
-  onClearHistory: function() {
+  onClearHistory() {
     // remove all clicked flags and call observers upon file write
     this._removeAllTileClicks().then(() => {
       this._callObservers("onClearHistory");
     });
   },
 
-  onLinkChanged: function (aProvider, aLink) {
+  onLinkChanged(aProvider, aLink) {
     // Make sure NewTabUtils.links handles the notification first.
     setTimeout(() => {
       if (this._handleLinkChanged(aLink) || this._shouldUpdateSuggestedTile()) {
@@ -799,14 +790,14 @@ var DirectoryLinksProvider = {
     }, 0);
   },
 
-  onManyLinksChanged: function () {
+  onManyLinksChanged() {
     // Make sure NewTabUtils.links handles the notification first.
     setTimeout(() => {
       this._handleManyLinksChanged();
     }, 0);
   },
 
-  _getCurrentTopSiteCount: function() {
+  _getCurrentTopSiteCount() {
     let visibleTopSiteCount = 0;
     let newTabLinks = NewTabUtils.links.getLinks();
     for (let link of newTabLinks.slice(0, MIN_VISIBLE_HISTORY_TILES)) {
@@ -822,7 +813,7 @@ var DirectoryLinksProvider = {
     return visibleTopSiteCount;
   },
 
-  _shouldUpdateSuggestedTile: function() {
+  _shouldUpdateSuggestedTile() {
     let sortedLinks = NewTabUtils.getProviderLinks(this);
 
     let mostFrecentLink = {};
@@ -850,7 +841,7 @@ var DirectoryLinksProvider = {
    *
    * @return the chosen suggested tile, or undefined if there isn't one
    */
-  _updateSuggestedTile: function() {
+  _updateSuggestedTile() {
     let sortedLinks = NewTabUtils.getProviderLinks(this);
 
     if (!sortedLinks) {
@@ -965,8 +956,7 @@ var DirectoryLinksProvider = {
       let jsonObject = {};
       try {
         jsonObject = JSON.parse(jsonString);
-      }
-      catch (e) {
+      } catch (e) {
         Cu.reportError(e);
       }
 
@@ -1028,8 +1018,7 @@ var DirectoryLinksProvider = {
       let binaryData = yield OS.File.read(filePath);
       let json = gTextDecoder.decode(binaryData);
       jsonObj = JSON.parse(json);
-    }
-    catch (e) {}
+    } catch (e) {}
     return jsonObj || nullObject;
   }),
 
@@ -1081,8 +1070,7 @@ var DirectoryLinksProvider = {
     if (link.frequency_caps) {
       capsObject.dailyCap = link.frequency_caps.daily || DEFAULT_DAILY_FREQUENCY_CAP;
       capsObject.totalCap = link.frequency_caps.total || DEFAULT_TOTAL_FREQUENCY_CAP;
-    }
-    else {
+    } else {
       // fallback to defaults
       capsObject.dailyCap = DEFAULT_DAILY_FREQUENCY_CAP;
       capsObject.totalCap = DEFAULT_TOTAL_FREQUENCY_CAP;
@@ -1249,7 +1237,7 @@ var DirectoryLinksProvider = {
     }
   },
 
-  _removeObservers: function() {
+  _removeObservers() {
     this._observers.clear();
   }
 };

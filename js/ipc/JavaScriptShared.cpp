@@ -33,10 +33,10 @@ IdToObjectMap::init()
 }
 
 void
-IdToObjectMap::trace(JSTracer* trc, uint64_t minimimId)
+IdToObjectMap::trace(JSTracer* trc, uint64_t minimumId)
 {
     for (Table::Range r(table_.all()); !r.empty(); r.popFront()) {
-        if (r.front().key().serialNumber() >= minimimId)
+        if (r.front().key().serialNumber() >= minimumId)
             JS::TraceEdge(trc, &r.front().value(), "ipc-object");
     }
 }
@@ -59,6 +59,15 @@ IdToObjectMap::find(ObjectId id)
     if (!p)
         return nullptr;
     return p->value();
+}
+
+JSObject*
+IdToObjectMap::findPreserveColor(ObjectId id)
+{
+    Table::Ptr p = table_.lookup(id);
+    if (!p)
+        return nullptr;
+    return p->value().unbarrieredGet();
 }
 
 bool
@@ -92,7 +101,7 @@ IdToObjectMap::has(const ObjectId& id, const JSObject* obj) const
     auto p = table_.lookup(id);
     if (!p)
         return false;
-    return p->value().unbarrieredGet() == obj;
+    return p->value() == obj;
 }
 #endif
 

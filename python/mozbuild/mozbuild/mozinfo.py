@@ -86,6 +86,7 @@ def build_dict(config, env=os.environ):
     d['datareporting'] = bool(substs.get('MOZ_DATA_REPORTING'))
     d['healthreport'] = substs.get('MOZ_SERVICES_HEALTHREPORT') == '1'
     d['sync'] = substs.get('MOZ_SERVICES_SYNC') == '1'
+    d['stylo'] = substs.get('MOZ_STYLO') == '1'
     d['asan'] = substs.get('MOZ_ASAN') == '1'
     d['tsan'] = substs.get('MOZ_TSAN') == '1'
     d['telemetry'] = substs.get('MOZ_TELEMETRY_REPORTING') == '1'
@@ -94,7 +95,7 @@ def build_dict(config, env=os.environ):
     d['addon_signing'] = substs.get('MOZ_ADDON_SIGNING') == '1'
     d['require_signing'] = substs.get('MOZ_REQUIRE_SIGNING') == '1'
     d['official'] = bool(substs.get('MOZILLA_OFFICIAL'))
-    d['sm_promise'] = bool(substs.get('SPIDERMONKEY_PROMISE'))
+    d['updater'] = substs.get('MOZ_UPDATER') == '1'
 
     def guess_platform():
         if d['buildapp'] in ('browser', 'mulet'):

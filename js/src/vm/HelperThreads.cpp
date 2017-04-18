@@ -20,7 +20,6 @@
 #include "vm/SharedImmutableStringsCache.h"
 #include "vm/Time.h"
 #include "vm/TraceLogging.h"
-#include "wasm/WasmIonCompile.h"
 
 #include "jscntxtinlines.h"
 #include "jscompartmentinlines.h"
@@ -84,13 +83,9 @@ js::SetFakeCPUCount(size_t count)
 }
 
 bool
-js::StartOffThreadWasmCompile(wasm::IonCompileTask* task)
+js::StartOffThreadWasmCompile(wasm::CompileTask* task)
 {
     AutoLockHelperThreadState lock;
-
-    // Don't append this task if another failed.
-    if (HelperThreadState().wasmFailed(lock))
-        return false;
 
     if (!HelperThreadState().wasmWorklist(lock).append(task))
         return false;
@@ -645,7 +640,7 @@ js::EnqueuePendingParseTasksAfterGC(JSRuntime* rt)
 
         for (size_t i = 0; i < waiting.length(); i++) {
             ParseTask* task = waiting[i];
-            if (task->runtimeMatches(rt)) {
+            if (task->runtimeMatches(rt) && !task->exclusiveContextGlobal->zone()->wasGCStarted()) {
                 AutoEnterOOMUnsafeRegion oomUnsafe;
                 if (!newTasks.append(task))
                     oomUnsafe.crash("EnqueuePendingParseTasksAfterGC");
@@ -867,10 +862,8 @@ GlobalHelperThreadState::maxUnpausedIonCompilationThreads() const
 size_t
 GlobalHelperThreadState::maxWasmCompilationThreads() const
 {
-    if (IsHelperThreadSimulatingOOM(js::oom::THREAD_TYPE_ASMJS))
+    if (IsHelperThreadSimulatingOOM(js::oom::THREAD_TYPE_WASM))
         return 1;
-    if (cpuCount < 2)
-        return 2;
     return cpuCount;
 }
 
@@ -920,7 +913,7 @@ GlobalHelperThreadState::canStartWasmCompile(const AutoLockHelperThreadState& lo
 
     // Honor the maximum allowed threads to compile wasm jobs at once,
     // to avoid oversaturating the machine.
-    if (!checkTaskThreadLimit<wasm::IonCompileTask*>(maxWasmCompilationThreads()))
+    if (!checkTaskThreadLimit<wasm::CompileTask*>(maxWasmCompilationThreads()))
         return false;
 
     return true;
@@ -1143,9 +1136,9 @@ js::GCParallelTask::runFromMainThread(JSRuntime* rt)
 {
     MOZ_ASSERT(state == NotStarted);
     MOZ_ASSERT(js::CurrentThreadCanAccessRuntime(rt));
-    uint64_t timeStart = PRMJ_Now();
+    mozilla::TimeStamp timeStart = mozilla::TimeStamp::Now();
     run();
-    duration_ = PRMJ_Now() - timeStart;
+    duration_ = mozilla::TimeStamp::Now() - timeStart;
 }
 
 void
@@ -1154,9 +1147,9 @@ js::GCParallelTask::runFromHelperThread(AutoLockHelperThreadState& locked)
     {
         AutoUnlockHelperThreadState parallelSection(locked);
         gc::AutoSetThreadIsPerformingGC performingGC;
-        uint64_t timeStart = PRMJ_Now();
+        mozilla::TimeStamp timeStart = mozilla::TimeStamp::Now();
         run();
-        duration_ = PRMJ_Now() - timeStart;
+        duration_ = mozilla::TimeStamp::Now() - timeStart;
     }
 
     state = Finished;
@@ -1408,6 +1401,7 @@ HelperThread::ThreadMain(void* arg)
     FIX_FPU();
 
     static_cast<HelperThread*>(arg)->threadLoop();
+    Mutex::ShutDown();
 }
 
 void
@@ -1418,11 +1412,12 @@ HelperThread::handleWasmWorkload(AutoLockHelperThreadState& locked)
 
     currentTask.emplace(HelperThreadState().wasmWorklist(locked).popCopy());
     bool success = false;
+    UniqueChars error;
 
-    wasm::IonCompileTask* task = wasmTask();
+    wasm::CompileTask* task = wasmTask();
     {
         AutoUnlockHelperThreadState unlock(locked);
-        success = wasm::CompileFunction(task);
+        success = wasm::CompileFunction(task, &error);
     }
 
     // On success, try to move work to the finished list.
@@ -1430,8 +1425,10 @@ HelperThread::handleWasmWorkload(AutoLockHelperThreadState& locked)
         success = HelperThreadState().wasmFinishedList(locked).append(task);
 
     // On failure, note the failure for harvesting by the parent.
-    if (!success)
+    if (!success) {
         HelperThreadState().noteWasmFailure(locked);
+        HelperThreadState().setWasmError(locked, Move(error));
+    }
 
     // Notify the main thread in case it's waiting.
     HelperThreadState().notifyAll(GlobalHelperThreadState::CONSUMER, locked);
@@ -1872,7 +1869,7 @@ HelperThread::threadLoop()
             js::oom::SetThreadType(js::oom::THREAD_TYPE_ION);
             handleIonWorkload(lock);
         } else if (HelperThreadState().canStartWasmCompile(lock)) {
-            js::oom::SetThreadType(js::oom::THREAD_TYPE_ASMJS);
+            js::oom::SetThreadType(js::oom::THREAD_TYPE_WASM);
             handleWasmWorkload(lock);
         } else if (HelperThreadState().canStartPromiseTask(lock)) {
             js::oom::SetThreadType(js::oom::THREAD_TYPE_PROMISE_TASK);

@@ -22,6 +22,7 @@
 #include "nsIObserver.h"
 #include "mozilla/Services.h"
 #include "nsXULAppAPI.h"
+#include "GeckoProfiler.h"
 
 #include <algorithm>
 
@@ -54,6 +55,7 @@ private:
   // Background hang monitor thread function
   static void MonitorThread(void* aData)
   {
+    AutoProfilerRegister registerThread("BgHangMonitor");
     PR_SetCurrentThreadName("BgHangManager");
 
     /* We do not hold a reference to BackgroundHangManager here
@@ -93,13 +95,11 @@ public:
     autoLock.Notify();
   }
 
+  // Attempt to wakeup the hang monitor thread.
   void Wakeup()
   {
-    // PR_CreateThread could have failed earlier
-    if (mHangMonitorThread) {
-      // Use PR_Interrupt to avoid potentially taking a lock
-      PR_Interrupt(mHangMonitorThread);
-    }
+    mLock.AssertCurrentThreadOwns();
+    mLock.NotifyAll();
   }
 
   BackgroundHangManager();
@@ -273,8 +273,6 @@ BackgroundHangManager::RunMonitorThread()
   PRIntervalTime recheckTimeout = PR_INTERVAL_NO_WAIT;
 
   while (!mShutdown) {
-
-    PR_ClearInterrupt();
     nsresult rv = autoLock.Wait(waitTime);
 
     PRIntervalTime newTime = PR_IntervalNow();
@@ -289,9 +287,9 @@ BackgroundHangManager::RunMonitorThread()
       mIntervalNow += systemInterval;
     }
 
-    /* If it's before the next recheck timeout, and our wait did not
-       get interrupted (either through Notify or PR_Interrupt), we can
-       keep the current waitTime and skip iterating through hang monitors. */
+    /* If it's before the next recheck timeout, and our wait did not get
+       interrupted, we can keep the current waitTime and skip iterating
+       through hang monitors. */
     if (MOZ_LIKELY(systemInterval < recheckTimeout &&
                    systemInterval >= waitTime &&
                    rv == NS_OK)) {

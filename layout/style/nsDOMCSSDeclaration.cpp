@@ -261,13 +261,13 @@ nsDOMCSSDeclaration::RemoveProperty(const nsAString& aPropertyName,
 nsDOMCSSDeclaration::GetCSSParsingEnvironmentForRule(css::Rule* aRule,
                                                      CSSParsingEnvironment& aCSSParseEnv)
 {
-  CSSStyleSheet* sheet = aRule ? aRule->GetStyleSheet() : nullptr;
+  StyleSheet* sheet = aRule ? aRule->GetStyleSheet() : nullptr;
   if (!sheet) {
     aCSSParseEnv.mPrincipal = nullptr;
     return;
   }
 
-  nsIDocument* document = sheet->GetOwningDocument();
+  nsIDocument* document = sheet->GetAssociatedDocument();
   aCSSParseEnv.mSheetURI = sheet->GetSheetURI();
   aCSSParseEnv.mBaseURI = sheet->GetBaseURI();
   aCSSParseEnv.mPrincipal = sheet->Principal();
@@ -305,10 +305,9 @@ nsDOMCSSDeclaration::ParsePropertyValue(const nsCSSPropertyID aPropID,
                             env.mSheetURI, env.mBaseURI, env.mPrincipal,
                             decl->AsGecko(), &changed, aIsImportant);
   } else {
-    nsIAtom* atom = nsCSSProps::AtomForProperty(aPropID);
     NS_ConvertUTF16toUTF8 value(aPropValue);
-    changed = Servo_DeclarationBlock_SetProperty(
-      decl->AsServo()->Raw(), atom, false, &value, aIsImportant);
+    changed = Servo_DeclarationBlock_SetPropertyById(
+      decl->AsServo()->Raw(), aPropID, &value, aIsImportant);
   }
   if (!changed) {
     // Parsing failed -- but we don't throw an exception for that.
@@ -345,17 +344,17 @@ nsDOMCSSDeclaration::ParseCustomPropertyValue(const nsAString& aPropertyName,
   RefPtr<DeclarationBlock> decl = olddecl->EnsureMutable();
 
   bool changed;
-  auto propName = Substring(aPropertyName, CSS_CUSTOM_NAME_PREFIX_LENGTH);
   if (decl->IsGecko()) {
     nsCSSParser cssParser(env.mCSSLoader);
+    auto propName = Substring(aPropertyName, CSS_CUSTOM_NAME_PREFIX_LENGTH);
     cssParser.ParseVariable(propName, aPropValue, env.mSheetURI,
                             env.mBaseURI, env.mPrincipal, decl->AsGecko(),
                             &changed, aIsImportant);
   } else {
-    RefPtr<nsIAtom> atom = NS_Atomize(propName);
+    NS_ConvertUTF16toUTF8 property(aPropertyName);
     NS_ConvertUTF16toUTF8 value(aPropValue);
     changed = Servo_DeclarationBlock_SetProperty(
-      decl->AsServo()->Raw(), atom, true, &value, aIsImportant);
+      decl->AsServo()->Raw(), &property, &value, aIsImportant);
   }
   if (!changed) {
     // Parsing failed -- but we don't throw an exception for that.

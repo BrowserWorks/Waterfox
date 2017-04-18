@@ -7,9 +7,8 @@
  * http://w3c.github.io/webrtc-pc/#interface-definition
  */
 
-callback RTCSessionDescriptionCallback = void (RTCSessionDescription sdp);
+callback RTCSessionDescriptionCallback = void (RTCSessionDescriptionInit description);
 callback RTCPeerConnectionErrorCallback = void (DOMError error);
-callback VoidFunction = void ();
 callback RTCStatsCallback = void (RTCStatsReport report);
 
 enum RTCSignalingState {
@@ -38,18 +37,15 @@ enum RTCIceConnectionState {
 };
 
 dictionary RTCDataChannelInit {
-  boolean         ordered = true;
-  unsigned short? maxRetransmitTime = null;
-  unsigned short? maxRetransmits = null;
-  DOMString       protocol = "";
-  boolean         negotiated = false; // spec currently says 'true'; we disagree
-  unsigned short? id = null;
+  boolean        ordered = true;
+  unsigned short maxPacketLifeTime;
+  unsigned short maxRetransmits;
+  DOMString      protocol = "";
+  boolean        negotiated = false;
+  unsigned short id;
 
-  // these are deprecated due to renaming in the spec, but still supported for Fx22
-  boolean outOfOrderAllowed; // now ordered, and the default changes to keep behavior the same
-  unsigned short maxRetransmitNum; // now maxRetransmits
-  boolean preset; // now negotiated
-  unsigned short stream; // now id
+  // These are deprecated due to renaming in the spec, but still supported for Fx53
+  unsigned short maxRetransmitTime;
 };
 
 dictionary RTCOfferAnswerOptions {
@@ -67,17 +63,6 @@ dictionary RTCOfferOptions : RTCOfferAnswerOptions {
   // Mozilla proprietary options (at risk: Bug 1196974)
   boolean mozDontOfferDataChannel;
   boolean mozBundleOnly;
-
-  // TODO: Remove old constraint-like RTCOptions support soon (Bug 1064223).
-  DeprecatedRTCOfferOptionsSet mandatory;
-  sequence<DeprecatedRTCOfferOptionsSet> _optional;
-};
-
-dictionary DeprecatedRTCOfferOptionsSet {
-  boolean OfferToReceiveAudio;     // Note the uppercase 'O'
-  boolean OfferToReceiveVideo;     // Note the uppercase 'O'
-  boolean MozDontOfferDataChannel; // Note the uppercase 'M'
-  boolean MozBundleOnly;           // Note the uppercase 'M'
 };
 
 interface RTCDataChannel;
@@ -96,14 +81,14 @@ interface RTCPeerConnection : EventTarget  {
                             optional DOMString username);
   [Pref="media.peerconnection.identity.enabled"]
   Promise<DOMString> getIdentityAssertion();
-  Promise<RTCSessionDescription> createOffer (optional RTCOfferOptions options);
-  Promise<RTCSessionDescription> createAnswer (optional RTCAnswerOptions options);
-  Promise<void> setLocalDescription (RTCSessionDescription description);
-  Promise<void> setRemoteDescription (RTCSessionDescription description);
+  Promise<RTCSessionDescriptionInit> createOffer (optional RTCOfferOptions options);
+  Promise<RTCSessionDescriptionInit> createAnswer (optional RTCAnswerOptions options);
+  Promise<void> setLocalDescription (RTCSessionDescriptionInit description);
+  Promise<void> setRemoteDescription (RTCSessionDescriptionInit description);
   readonly attribute RTCSessionDescription? localDescription;
   readonly attribute RTCSessionDescription? remoteDescription;
   readonly attribute RTCSignalingState signalingState;
-  Promise<void> addIceCandidate (RTCIceCandidate candidate);
+  Promise<void> addIceCandidate ((RTCIceCandidateInit or RTCIceCandidate)? candidate);
   readonly attribute boolean? canTrickleIceCandidates;
   readonly attribute RTCIceGatheringState iceGatheringState;
   readonly attribute RTCIceConnectionState iceConnectionState;
@@ -120,8 +105,6 @@ interface RTCPeerConnection : EventTarget  {
   sequence<MediaStream> getLocalStreams ();
   [UnsafeInPrerendering, Deprecated="RTCPeerConnectionGetStreams"]
   sequence<MediaStream> getRemoteStreams ();
-  [UnsafeInPrerendering]
-  MediaStream? getStreamById (DOMString streamId);
   void addStream (MediaStream stream);
 
   // replaces addStream; fails if already added
@@ -148,6 +131,7 @@ interface RTCPeerConnection : EventTarget  {
   attribute EventHandler ontrack;     // replaces onaddtrack and onaddstream.
   attribute EventHandler onremovestream;
   attribute EventHandler oniceconnectionstatechange;
+  attribute EventHandler onicegatheringstatechange;
 
   Promise<RTCStatsReport> getStats (optional MediaStreamTrack? selector);
 
@@ -169,10 +153,10 @@ partial interface RTCPeerConnection {
                              optional RTCOfferOptions options);
   Promise<void> createAnswer (RTCSessionDescriptionCallback successCallback,
                               RTCPeerConnectionErrorCallback failureCallback);
-  Promise<void> setLocalDescription (RTCSessionDescription description,
+  Promise<void> setLocalDescription (RTCSessionDescriptionInit description,
                                      VoidFunction successCallback,
                                      RTCPeerConnectionErrorCallback failureCallback);
-  Promise<void> setRemoteDescription (RTCSessionDescription description,
+  Promise<void> setRemoteDescription (RTCSessionDescriptionInit description,
                                       VoidFunction successCallback,
                                       RTCPeerConnectionErrorCallback failureCallback);
   Promise<void> addIceCandidate (RTCIceCandidate candidate,

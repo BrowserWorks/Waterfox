@@ -12,7 +12,7 @@
 
 #include "nsCSSParser.h"
 #include "nsCSSProps.h"
-#include "nsIMediaList.h"
+#include "nsMediaList.h"
 #include "nsRuleNode.h"
 #include "nsRuleData.h"
 
@@ -242,7 +242,7 @@ ResponsiveImageSelector::SetSizesFromDescriptor(const nsAString & aSizes)
   nsCSSParser cssParser;
 
   return cssParser.ParseSourceSizeList(aSizes, nullptr, 0,
-                                       mSizeQueries, mSizeValues, true);
+                                       mSizeQueries, mSizeValues);
 }
 
 void

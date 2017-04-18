@@ -512,7 +512,7 @@ CertErrorRunnable::CheckCertOverrides()
                                                mDefaultErrorCodeToReport);
   }
   nsresult nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HSTS,
-                                    mInfoObject->GetHostNameRaw(),
+                                    mInfoObject->GetHostName(),
                                     mProviderFlags,
                                     nullptr,
                                     &strictTransportSecurityEnabled);
@@ -523,7 +523,7 @@ CertErrorRunnable::CheckCertOverrides()
                                                mDefaultErrorCodeToReport);
   }
   nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HPKP,
-                           mInfoObject->GetHostNameRaw(),
+                           mInfoObject->GetHostName(),
                            mProviderFlags,
                            nullptr,
                            &hasPinningInformation);
@@ -827,8 +827,7 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
 
   status->GetServerCert(getter_AddRefs(cert));
   if (!cert) {
-    NS_NOTREACHED("every nsSSLStatus must have a cert"
-                  "that implements nsIX509Cert");
+    MOZ_ASSERT_UNREACHABLE("nsSSLStatus must have a cert implementing nsIX509Cert");
     PR_SetError(SEC_ERROR_LIBRARY_FAILURE, 0);
     return SECFailure;
   }
@@ -836,8 +835,7 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
   // Filter out sockets that did not neogtiate SPDY via NPN
   nsAutoCString negotiatedNPN;
   nsresult rv = infoObject->GetNegotiatedNPN(negotiatedNPN);
-  NS_ASSERTION(NS_SUCCEEDED(rv),
-               "GetNegotiatedNPN() failed during renegotiation");
+  MOZ_ASSERT(NS_SUCCEEDED(rv), "GetNegotiatedNPN() failed during renegotiation");
 
   if (NS_SUCCEEDED(rv) && !StringBeginsWith(negotiatedNPN,
                                             NS_LITERAL_CSTRING("spdy/"))) {
@@ -852,7 +850,7 @@ BlockServerCertChangeForSpdy(nsNSSSocketInfo* infoObject,
 
   // Check to see if the cert has actually changed
   UniqueCERTCertificate c(cert->GetCert());
-  NS_ASSERTION(c, "very bad and hopefully impossible state");
+  MOZ_ASSERT(c, "Somehow couldn't get underlying cert from nsIX509Cert");
   bool sameCert = CERT_CompareCerts(c.get(), serverCert.get());
   if (sameCert) {
     return SECSuccess;
@@ -913,14 +911,14 @@ GatherBaselineRequirementsTelemetry(const UniqueCERTCertList& certList)
 {
   CERTCertListNode* endEntityNode = CERT_LIST_HEAD(certList);
   CERTCertListNode* rootNode = CERT_LIST_TAIL(certList);
-  PR_ASSERT(!(CERT_LIST_END(endEntityNode, certList) ||
-              CERT_LIST_END(rootNode, certList)));
+  MOZ_ASSERT(!(CERT_LIST_END(endEntityNode, certList) ||
+               CERT_LIST_END(rootNode, certList)));
   if (CERT_LIST_END(endEntityNode, certList) ||
       CERT_LIST_END(rootNode, certList)) {
     return;
   }
   CERTCertificate* cert = endEntityNode->cert;
-  PR_ASSERT(cert);
+  MOZ_ASSERT(cert);
   if (!cert) {
     return;
   }
@@ -928,7 +926,7 @@ GatherBaselineRequirementsTelemetry(const UniqueCERTCertList& certList)
   // This only applies to certificates issued by authorities in our root
   // program.
   CERTCertificate* rootCert = rootNode->cert;
-  PR_ASSERT(rootCert);
+  MOZ_ASSERT(rootCert);
   if (!rootCert) {
     return;
   }
@@ -1073,21 +1071,21 @@ GatherEKUTelemetry(const UniqueCERTCertList& certList)
 {
   CERTCertListNode* endEntityNode = CERT_LIST_HEAD(certList);
   CERTCertListNode* rootNode = CERT_LIST_TAIL(certList);
-  PR_ASSERT(!(CERT_LIST_END(endEntityNode, certList) ||
-              CERT_LIST_END(rootNode, certList)));
+  MOZ_ASSERT(!(CERT_LIST_END(endEntityNode, certList) ||
+               CERT_LIST_END(rootNode, certList)));
   if (CERT_LIST_END(endEntityNode, certList) ||
       CERT_LIST_END(rootNode, certList)) {
     return;
   }
   CERTCertificate* endEntityCert = endEntityNode->cert;
-  PR_ASSERT(endEntityCert);
+  MOZ_ASSERT(endEntityCert);
   if (!endEntityCert) {
     return;
   }
 
   // Only log telemetry if the root CA is built-in
   CERTCertificate* rootCert = rootNode->cert;
-  PR_ASSERT(rootCert);
+  MOZ_ASSERT(rootCert);
   if (!rootCert) {
     return;
   }
@@ -1154,16 +1152,16 @@ void
 GatherRootCATelemetry(const UniqueCERTCertList& certList)
 {
   CERTCertListNode* rootNode = CERT_LIST_TAIL(certList);
-  PR_ASSERT(rootNode);
+  MOZ_ASSERT(rootNode);
   if (!rootNode) {
     return;
   }
-  PR_ASSERT(!CERT_LIST_END(rootNode, certList));
+  MOZ_ASSERT(!CERT_LIST_END(rootNode, certList));
   if (CERT_LIST_END(rootNode, certList)) {
     return;
   }
   CERTCertificate* rootCert = rootNode->cert;
-  PR_ASSERT(rootCert);
+  MOZ_ASSERT(rootCert);
   if (!rootCert) {
     return;
   }
@@ -1186,7 +1184,7 @@ GatherEndEntityTelemetry(const UniqueCERTCertList& certList)
   }
 
   CERTCertificate* endEntityCert = endEntityNode->cert;
-  PR_ASSERT(endEntityCert);
+  MOZ_ASSERT(endEntityCert);
   if (!endEntityCert) {
     return;
   }
@@ -1198,7 +1196,7 @@ GatherEndEntityTelemetry(const UniqueCERTCertList& certList)
     return;
   }
 
-  PR_ASSERT(notAfter > notBefore);
+  MOZ_ASSERT(notAfter > notBefore);
   if (notAfter <= notBefore) {
     return;
   }
@@ -1227,42 +1225,45 @@ GatherSuccessfulValidationTelemetry(const UniqueCERTCertList& certList)
 }
 
 void
-GatherTelemetryForSingleSCT(const ct::SignedCertificateTimestamp& sct)
+GatherTelemetryForSingleSCT(const ct::VerifiedSCT& verifiedSct)
 {
   // See SSL_SCTS_ORIGIN in Histograms.json.
   uint32_t origin = 0;
-  switch (sct.origin) {
-    case ct::SignedCertificateTimestamp::Origin::Embedded:
+  switch (verifiedSct.origin) {
+    case ct::VerifiedSCT::Origin::Embedded:
       origin = 1;
       break;
-    case ct::SignedCertificateTimestamp::Origin::TLSExtension:
+    case ct::VerifiedSCT::Origin::TLSExtension:
       origin = 2;
       break;
-    case ct::SignedCertificateTimestamp::Origin::OCSPResponse:
+    case ct::VerifiedSCT::Origin::OCSPResponse:
       origin = 3;
       break;
     default:
-      MOZ_ASSERT_UNREACHABLE("Unexpected SCT::Origin type");
+      MOZ_ASSERT_UNREACHABLE("Unexpected VerifiedSCT::Origin type");
   }
   Telemetry::Accumulate(Telemetry::SSL_SCTS_ORIGIN, origin);
 
   // See SSL_SCTS_VERIFICATION_STATUS in Histograms.json.
   uint32_t verificationStatus = 0;
-  switch (sct.verificationStatus) {
-    case ct::SignedCertificateTimestamp::VerificationStatus::OK:
+  switch (verifiedSct.status) {
+    case ct::VerifiedSCT::Status::Valid:
       verificationStatus = 1;
       break;
-    case ct::SignedCertificateTimestamp::VerificationStatus::UnknownLog:
+    case ct::VerifiedSCT::Status::UnknownLog:
       verificationStatus = 2;
       break;
-    case ct::SignedCertificateTimestamp::VerificationStatus::InvalidSignature:
+    case ct::VerifiedSCT::Status::InvalidSignature:
       verificationStatus = 3;
       break;
-    case ct::SignedCertificateTimestamp::VerificationStatus::InvalidTimestamp:
+    case ct::VerifiedSCT::Status::InvalidTimestamp:
       verificationStatus = 4;
       break;
+    case ct::VerifiedSCT::Status::ValidFromDisqualifiedLog:
+      verificationStatus = 5;
+      break;
     default:
-      MOZ_ASSERT_UNREACHABLE("Unexpected SCT::VerificationStatus type");
+      MOZ_ASSERT_UNREACHABLE("Unexpected VerifiedSCT::Status type");
   }
   Telemetry::Accumulate(Telemetry::SSL_SCTS_VERIFICATION_STATUS,
                         verificationStatus);
@@ -1283,7 +1284,7 @@ GatherCertificateTransparencyTelemetry(const UniqueCERTCertList& certList,
     return;
   }
 
-  for (const ct::SignedCertificateTimestamp& sct : info.verifyResult.scts) {
+  for (const ct::VerifiedSCT& sct : info.verifyResult.verifiedScts) {
     GatherTelemetryForSingleSCT(sct);
   }
 
@@ -1294,7 +1295,8 @@ GatherCertificateTransparencyTelemetry(const UniqueCERTCertList& certList,
   }
 
   // Handle the histogram of SCTs counts.
-  uint32_t sctsCount = static_cast<uint32_t>(info.verifyResult.scts.length());
+  uint32_t sctsCount =
+    static_cast<uint32_t>(info.verifyResult.verifiedScts.length());
   // Note that sctsCount can be 0 in case we've received SCT binary data,
   // but it failed to parse (e.g. due to unsupported CT protocol version).
   Telemetry::Accumulate(Telemetry::SSL_SCTS_PER_CONNECTION, sctsCount);
@@ -1564,7 +1566,7 @@ SSLServerCertVerificationJob::Run()
   }
 
   if (error == 0) {
-    NS_NOTREACHED("no error set during certificate validation failure");
+    MOZ_ASSERT_UNREACHABLE("No error set during certificate validation failure");
     error = PR_INVALID_STATE_ERROR;
   }
 
@@ -1595,11 +1597,11 @@ AuthCertificateHook(void* arg, PRFileDesc* fd, PRBool checkSig, PRBool isServer)
 
   // Modern libssl always passes PR_TRUE for checkSig, and we have no means of
   // doing verification without checking signatures.
-  NS_ASSERTION(checkSig, "AuthCertificateHook: checkSig unexpectedly false");
+  MOZ_ASSERT(checkSig, "AuthCertificateHook: checkSig unexpectedly false");
 
   // PSM never causes libssl to call this function with PR_TRUE for isServer,
   // and many things in PSM assume that we are a client.
-  NS_ASSERTION(!isServer, "AuthCertificateHook: isServer unexpectedly true");
+  MOZ_ASSERT(!isServer, "AuthCertificateHook: isServer unexpectedly true");
 
   nsNSSSocketInfo* socketInfo = static_cast<nsNSSSocketInfo*>(arg);
 
@@ -1772,11 +1774,11 @@ SSLServerCertVerificationResult::Dispatch()
   nsresult rv;
   nsCOMPtr<nsIEventTarget> stsTarget
     = do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
-  NS_ASSERTION(stsTarget,
-               "Failed to get socket transport service event target");
+  MOZ_ASSERT(stsTarget,
+             "Failed to get socket transport service event target");
   rv = stsTarget->Dispatch(this, NS_DISPATCH_NORMAL);
-  NS_ASSERTION(NS_SUCCEEDED(rv),
-               "Failed to dispatch SSLServerCertVerificationResult");
+  MOZ_ASSERT(NS_SUCCEEDED(rv),
+             "Failed to dispatch SSLServerCertVerificationResult");
 }
 
 NS_IMETHODIMP

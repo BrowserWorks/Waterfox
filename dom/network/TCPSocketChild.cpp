@@ -50,7 +50,6 @@ namespace dom {
 NS_IMPL_CYCLE_COLLECTION_CLASS(TCPSocketChildBase)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(TCPSocketChildBase)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSocket)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -110,7 +109,7 @@ void
 TCPSocketChild::SendWindowlessOpenBind(nsITCPSocketCallback* aSocket,
                                        const nsACString& aRemoteHost, uint16_t aRemotePort,
                                        const nsACString& aLocalHost, uint16_t aLocalPort,
-                                       bool aUseSSL)
+                                       bool aUseSSL, bool aReuseAddrPort)
 {
   mSocket = aSocket;
   AddIPDLReference();
@@ -119,7 +118,8 @@ TCPSocketChild::SendWindowlessOpenBind(nsITCPSocketCallback* aSocket,
                                          aRemotePort);
   PTCPSocketChild::SendOpenBind(nsCString(aRemoteHost), aRemotePort,
                                 nsCString(aLocalHost), aLocalPort,
-                                aUseSSL, true, mFilterName);
+                                aUseSSL, aReuseAddrPort,
+                                true, mFilterName);
 }
 
 void
@@ -143,15 +143,15 @@ TCPSocketChild::~TCPSocketChild()
 {
 }
 
-bool
+mozilla::ipc::IPCResult
 TCPSocketChild::RecvUpdateBufferedAmount(const uint32_t& aBuffered,
                                          const uint32_t& aTrackingNumber)
 {
   mSocket->UpdateBufferedAmount(aBuffered, aTrackingNumber);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TCPSocketChild::RecvCallback(const nsString& aType,
                              const CallbackData& aData,
                              const uint32_t& aReadyState)
@@ -178,7 +178,7 @@ TCPSocketChild::RecvCallback(const nsString& aType,
   } else {
     MOZ_CRASH("Invalid callback type!");
   }
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -243,11 +243,11 @@ TCPSocketChild::SetFilterName(const nsACString& aFilterName)
   return NS_OK;
 }
 
-bool
+mozilla::ipc::IPCResult
 TCPSocketChild::RecvRequestDelete()
 {
   mozilla::Unused << Send__delete__(this);
-  return true;
+  return IPC_OK();
 }
 
 } // namespace dom

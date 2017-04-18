@@ -1275,9 +1275,19 @@ Http2Session::RecvHeaders(Http2Session *self)
   self->mInputFrameDataStream->UpdateTransportReadEvents(self->mInputFrameDataSize);
   self->mLastDataReadEpoch = self->mLastReadEpoch;
 
+  if (!isContinuation) {
+    self->mAggregatedHeaderSize = self->mInputFrameDataSize - paddingControlBytes - priorityLen - paddingLength;
+  } else {
+    self->mAggregatedHeaderSize += self->mInputFrameDataSize - paddingControlBytes - priorityLen - paddingLength;
+  }
+
   if (!endHeadersFlag) { // more are coming - don't process yet
     self->ResetDownstreamState();
     return NS_OK;
+  }
+
+  if (isContinuation) {
+    Telemetry::Accumulate(Telemetry::SPDY_CONTINUED_HEADERS, self->mAggregatedHeaderSize);
   }
 
   rv = self->ResponseHeadersComplete();
@@ -1673,10 +1683,20 @@ Http2Session::RecvPushPromise(Http2Session *self)
   self->mDecompressBuffer.Append(&self->mInputFrameBuffer[kFrameHeaderBytes + paddingControlBytes + promiseLen],
                                  self->mInputFrameDataSize - paddingControlBytes - promiseLen - paddingLength);
 
+  if (self->mInputFrameType != FRAME_TYPE_CONTINUATION) {
+    self->mAggregatedHeaderSize = self->mInputFrameDataSize - paddingControlBytes - promiseLen - paddingLength;
+  } else {
+    self->mAggregatedHeaderSize += self->mInputFrameDataSize - paddingControlBytes - promiseLen - paddingLength;
+  }
+
   if (!(self->mInputFrameFlags & kFlag_END_PUSH_PROMISE)) {
     LOG3(("Http2Session::RecvPushPromise not finishing processing for multi-frame push\n"));
     self->ResetDownstreamState();
     return NS_OK;
+  }
+
+  if (self->mInputFrameType == FRAME_TYPE_CONTINUATION) {
+    Telemetry::Accumulate(Telemetry::SPDY_CONTINUED_HEADERS, self->mAggregatedHeaderSize);
   }
 
   // Create the buffering transaction and push stream
@@ -2673,7 +2693,11 @@ Http2Session::WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
     LOG3(("Http2Session::WriteSegments %p stream 0x%X mPaddingLength=%d", this,
           mInputFrameID, mPaddingLength));
 
-    if (1U + mPaddingLength == mInputFrameDataSize) {
+    if (1U + mPaddingLength > mInputFrameDataSize) {
+      LOG3(("Http2Session::WriteSegments %p stream 0x%X padding too large for "
+            "frame", this, mInputFrameID));
+      RETURN_SESSION_ERROR(this, PROTOCOL_ERROR);
+    } else if (1U + mPaddingLength == mInputFrameDataSize) {
       // This frame consists entirely of padding, we can just discard it
       LOG3(("Http2Session::WriteSegments %p stream 0x%X frame with only padding",
             this, mInputFrameID));

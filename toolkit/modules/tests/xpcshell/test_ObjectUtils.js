@@ -12,6 +12,14 @@ add_task(function* test_deepEqual() {
 
   Assert.ok(!deepEqual(new Date(), new Date(2000, 3, 14)), "deepEqual date");
 
+  let now = Date.now();
+  Assert.ok(!deepEqual(new Date(now), now), "Dates and times should not be equal");
+  Assert.ok(!deepEqual(now, new Date(now)), "Times and dates should not be equal");
+
+  Assert.ok(!deepEqual("", {}), "Objects and primitives should not be equal");
+  Assert.ok(!deepEqual(/a/, "a"), "RegExps and strings should not be equal");
+  Assert.ok(!deepEqual("a", /a/), "Strings and RegExps should not be equal");
+
   // 7.3
   Assert.ok(deepEqual(/a/, /a/));
   Assert.ok(deepEqual(/a/g, /a/g));
@@ -51,7 +59,7 @@ add_task(function* test_deepEqual() {
   Assert.ok(deepEqual(a1, a2));
 
   let nbRoot = {
-    toString: function() { return this.first + " " + this.last; }
+    toString() { return this.first + " " + this.last; }
   };
 
   function nameBuilder(first, last) {

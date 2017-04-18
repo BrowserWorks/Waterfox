@@ -10,32 +10,27 @@ var gLanguagesDialog = {
 
   _selectedItemID         : null,
 
-  init: function ()
-  {
+  init() {
     if (!this._availableLanguagesList.length)
       this._loadAvailableLanguages();
   },
 
   // Ugly hack used to trigger extra reflow in order to work around XUL bug 1194844;
   // see bug 1194346.
-  forceReflow: function ()
-  {
+  forceReflow() {
     this._activeLanguages.style.fontKerning = "none";
     setTimeout("gLanguagesDialog._activeLanguages.style.removeProperty('font-kerning')", 0);
   },
 
-  get _activeLanguages()
-  {
+  get _activeLanguages() {
     return document.getElementById("activeLanguages");
   },
 
-  get _availableLanguages()
-  {
+  get _availableLanguages() {
     return document.getElementById("availableLanguages");
   },
 
-  _loadAvailableLanguages: function ()
-  {
+  _loadAvailableLanguages() {
     // This is a parser for: resource://gre/res/language.properties
     // The file is formatted like so:
     // ab[-cd].accept=true|false
@@ -46,8 +41,7 @@ var gLanguagesDialog = {
     var bundleLanguages   = document.getElementById("bundleLanguages");
     var bundlePreferences = document.getElementById("bundlePreferences");
 
-    function LanguageInfo(aName, aABCD, aIsVisible)
-    {
+    function LanguageInfo(aName, aABCD, aIsVisible) {
       this.name = aName;
       this.abcd = aABCD;
       this.isVisible = aIsVisible;
@@ -71,15 +65,13 @@ var gLanguagesDialog = {
           var language = "";
           try {
             language = bundleLanguages.getString(ab);
-          }
-          catch (e) { continue; }
+          } catch (e) { continue; }
 
           var region = "";
           if (useABCDFormat) {
             try {
               region = bundleRegions.getString(cd);
-            }
-            catch (e) { continue; }
+            } catch (e) { continue; }
           }
 
           var name = "";
@@ -102,14 +94,13 @@ var gLanguagesDialog = {
     this._buildAvailableLanguageList();
   },
 
-  _buildAvailableLanguageList: function ()
-  {
+  _buildAvailableLanguageList() {
     var availableLanguagesPopup = document.getElementById("availableLanguagesPopup");
     while (availableLanguagesPopup.hasChildNodes())
       availableLanguagesPopup.removeChild(availableLanguagesPopup.firstChild);
 
     // Sort the list of languages by name
-    this._availableLanguagesList.sort(function (a, b) {
+    this._availableLanguagesList.sort(function(a, b) {
                                         return a.name.localeCompare(b.name);
                                       });
 
@@ -126,8 +117,7 @@ var gLanguagesDialog = {
     }
   },
 
-  readAcceptLanguages: function ()
-  {
+  readAcceptLanguages() {
     while (this._activeLanguages.hasChildNodes())
       this._activeLanguages.removeChild(this._activeLanguages.firstChild);
 
@@ -160,21 +150,18 @@ var gLanguagesDialog = {
     return undefined;
   },
 
-  writeAcceptLanguages: function ()
-  {
+  writeAcceptLanguages() {
     return undefined;
   },
 
-  onAvailableLanguageSelect: function ()
-  {
+  onAvailableLanguageSelect() {
     var addButton = document.getElementById("addButton");
     addButton.disabled = false;
 
     this._availableLanguages.removeAttribute("accesskey");
   },
 
-  addLanguage: function ()
-  {
+  addLanguage() {
     var selectedID = this._availableLanguages.selectedItem.id;
     var preference = document.getElementById("intl.accept_languages");
     var arrayOfPrefs = preference.value.toLowerCase().split(/\s*,\s*/);
@@ -201,8 +188,7 @@ var gLanguagesDialog = {
     this._availableLanguages.setAttribute("label", this._availableLanguages.getAttribute("label2"));
   },
 
-  removeLanguage: function ()
-  {
+  removeLanguage() {
     // Build the new preference value string.
     var languagesArray = [];
     for (var i = 0; i < this._activeLanguages.childNodes.length; ++i) {
@@ -216,7 +202,7 @@ var gLanguagesDialog = {
 
     // Get the item to select after the remove operation completes.
     var selection = this._activeLanguages.selectedItems;
-    var lastSelected = selection[selection.length-1];
+    var lastSelected = selection[selection.length - 1];
     var selectItem = lastSelected.nextSibling || lastSelected.previousSibling;
     selectItem = selectItem ? selectItem.id : null;
 
@@ -229,8 +215,7 @@ var gLanguagesDialog = {
     this._buildAvailableLanguageList();
   },
 
-  _getLanguageName: function (aABCD)
-  {
+  _getLanguageName(aABCD) {
     if (!this._availableLanguagesList.length)
       this._loadAvailableLanguages();
     for (var i = 0; i < this._availableLanguagesList.length; ++i) {
@@ -240,8 +225,7 @@ var gLanguagesDialog = {
     return "";
   },
 
-  moveUp: function ()
-  {
+  moveUp() {
     var selectedItem = this._activeLanguages.selectedItems[0];
     var previousItem = selectedItem.previousSibling;
 
@@ -264,8 +248,7 @@ var gLanguagesDialog = {
     preference.value = string;
   },
 
-  moveDown: function ()
-  {
+  moveDown() {
     var selectedItem = this._activeLanguages.selectedItems[0];
     var nextItem = selectedItem.nextSibling;
 
@@ -288,8 +271,7 @@ var gLanguagesDialog = {
     preference.value = string;
   },
 
-  onLanguageSelect: function ()
-  {
+  onLanguageSelect() {
     var upButton = document.getElementById("up");
     var downButton = document.getElementById("down");
     var removeButton = document.getElementById("remove");

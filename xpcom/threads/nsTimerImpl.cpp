@@ -237,7 +237,7 @@ nsTimerImpl::InitWithFuncCallbackCommon(nsTimerCallbackFunc aFunc,
   return InitCommon(aDelay, aType);
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::InitWithFuncCallback(nsTimerCallbackFunc aFunc,
                                   void* aClosure,
                                   uint32_t aDelay,
@@ -247,7 +247,7 @@ nsTimerImpl::InitWithFuncCallback(nsTimerCallbackFunc aFunc,
   return InitWithFuncCallbackCommon(aFunc, aClosure, aDelay, aType, name);
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::InitWithNamedFuncCallback(nsTimerCallbackFunc aFunc,
                                        void* aClosure,
                                        uint32_t aDelay,
@@ -258,7 +258,7 @@ nsTimerImpl::InitWithNamedFuncCallback(nsTimerCallbackFunc aFunc,
   return InitWithFuncCallbackCommon(aFunc, aClosure, aDelay, aType, name);
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::InitWithNameableFuncCallback(nsTimerCallbackFunc aFunc,
                                           void* aClosure,
                                           uint32_t aDelay,
@@ -269,7 +269,7 @@ nsTimerImpl::InitWithNameableFuncCallback(nsTimerCallbackFunc aFunc,
   return InitWithFuncCallbackCommon(aFunc, aClosure, aDelay, aType, name);
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::InitWithCallback(nsITimerCallback* aCallback,
                               uint32_t aDelay,
                               uint32_t aType)
@@ -289,7 +289,7 @@ nsTimerImpl::InitWithCallback(nsITimerCallback* aCallback,
   return InitCommon(aDelay, aType);
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::Init(nsIObserver* aObserver, uint32_t aDelay, uint32_t aType)
 {
   if (NS_WARN_IF(!aObserver)) {
@@ -307,7 +307,7 @@ nsTimerImpl::Init(nsIObserver* aObserver, uint32_t aDelay, uint32_t aType)
   return InitCommon(aDelay, aType);
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::Cancel()
 {
   Callback cb;
@@ -324,7 +324,7 @@ nsTimerImpl::Cancel()
   return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::SetDelay(uint32_t aDelay)
 {
   MutexAutoLock lock(mMutex);
@@ -351,7 +351,7 @@ nsTimerImpl::SetDelay(uint32_t aDelay)
   return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::GetDelay(uint32_t* aDelay)
 {
   MutexAutoLock lock(mMutex);
@@ -359,7 +359,7 @@ nsTimerImpl::GetDelay(uint32_t* aDelay)
   return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::SetType(uint32_t aType)
 {
   MutexAutoLock lock(mMutex);
@@ -370,7 +370,7 @@ nsTimerImpl::SetType(uint32_t aType)
   return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::GetType(uint32_t* aType)
 {
   MutexAutoLock lock(mMutex);
@@ -379,7 +379,7 @@ nsTimerImpl::GetType(uint32_t* aType)
 }
 
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::GetClosure(void** aClosure)
 {
   MutexAutoLock lock(mMutex);
@@ -388,7 +388,7 @@ nsTimerImpl::GetClosure(void** aClosure)
 }
 
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::GetCallback(nsITimerCallback** aCallback)
 {
   MutexAutoLock lock(mMutex);
@@ -402,7 +402,7 @@ nsTimerImpl::GetCallback(nsITimerCallback** aCallback)
 }
 
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::GetTarget(nsIEventTarget** aTarget)
 {
   MutexAutoLock lock(mMutex);
@@ -411,7 +411,7 @@ nsTimerImpl::GetTarget(nsIEventTarget** aTarget)
 }
 
 
-NS_IMETHODIMP
+nsresult
 nsTimerImpl::SetTarget(nsIEventTarget* aTarget)
 {
   MutexAutoLock lock(mMutex);
@@ -625,6 +625,45 @@ nsTimerImpl::LogFiring(const Callback& aCallback, uint8_t aType, uint32_t aDelay
                getpid(), typeStr, aDelay));
       break;
     }
+  }
+}
+
+void
+nsTimerImpl::GetName(nsACString& aName)
+{
+  MutexAutoLock lock(mMutex);
+  Callback& cb(GetCallback());
+  switch (cb.mType) {
+    case Callback::Type::Function:
+      if (cb.mName.is<Callback::NameString>()) {
+        aName.Assign(cb.mName.as<Callback::NameString>());
+      } else if (cb.mName.is<Callback::NameFunc>()) {
+        static const size_t buflen = 1024;
+        char buf[buflen];
+        cb.mName.as<Callback::NameFunc>()(
+            mITimer, cb.mClosure, buf, buflen);
+        aName.Assign(buf);
+      } else {
+        MOZ_ASSERT(cb.mName.is<Callback::NameNothing>());
+        aName.Truncate();
+      }
+      break;
+
+    case Callback::Type::Interface:
+      if (nsCOMPtr<nsINamed> named = do_QueryInterface(cb.mCallback.i)) {
+        named->GetName(aName);
+      }
+      break;
+
+    case Callback::Type::Observer:
+      if (nsCOMPtr<nsINamed> named = do_QueryInterface(cb.mCallback.o)) {
+        named->GetName(aName);
+      }
+      break;
+
+    case Callback::Type::Unknown:
+      aName.Truncate();
+      break;
   }
 }
 

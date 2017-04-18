@@ -17,11 +17,13 @@ const {
   createFactory,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
-const { Rep } = createFactories(require("devtools/client/shared/components/reps/rep"));
-const StringRep = createFactories(require("devtools/client/shared/components/reps/string").StringRep).rep;
+
 const VariablesViewLink = createFactory(require("devtools/client/webconsole/new-console-output/components/variables-view-link"));
-const { Grip } = require("devtools/client/shared/components/reps/grip");
+
+const { REPS, MODE, createFactories } = require("devtools/client/shared/components/reps/load-reps");
+const Rep = createFactory(REPS.Rep);
+const Grip = REPS.Grip;
+const StringRep = createFactories(REPS.StringRep).rep;
 
 GripMessageBody.displayName = "GripMessageBody";
 
@@ -37,12 +39,23 @@ GripMessageBody.propTypes = {
   userProvidedStyle: PropTypes.string,
 };
 
+GripMessageBody.defaultProps = {
+  mode: MODE.LONG,
+};
+
 function GripMessageBody(props) {
   const { grip, userProvidedStyle, serviceContainer } = props;
 
   let styleObject;
   if (userProvidedStyle && userProvidedStyle !== "") {
     styleObject = cleanupStyle(userProvidedStyle, serviceContainer.createElement);
+  }
+
+  let onDOMNodeMouseOver;
+  let onDOMNodeMouseOut;
+  if (serviceContainer) {
+    onDOMNodeMouseOver = (object) => serviceContainer.highlightDomElement(object);
+    onDOMNodeMouseOut = serviceContainer.unHighlightDomElement;
   }
 
   return (
@@ -57,6 +70,8 @@ function GripMessageBody(props) {
       : Rep({
         object: grip,
         objectLink: VariablesViewLink,
+        onDOMNodeMouseOver,
+        onDOMNodeMouseOut,
         defaultRep: Grip,
         mode: props.mode,
       })

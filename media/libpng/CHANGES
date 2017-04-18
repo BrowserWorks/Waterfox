@@ -5754,6 +5754,46 @@ Version 1.6.26 [October 20, 2016]
   Cosmetic change, "ptr != 0" to "ptr != NULL" in png.c and pngrutil.c
   Despammed email addresses (replaced "@" with " at ").
 
+Version 1.6.27beta01 [November 2, 2016]
+  Restrict the new ADLER32-skipping to IDAT chunks.  It broke iCCP chunk
+    handling: an erroneous iCCP chunk would throw a png_error and reject the
+    entire PNG image instead of rejecting just the iCCP chunk with a warning,
+    if built with zlib-1.2.8.1.
+
+Version 1.6.27rc01 [December 27, 2016]
+  Control ADLER32 checking with new PNG_IGNORE_ADLER32 option.
+  Removed the use of a macro containing the pre-processor 'defined'
+    operator.  It is unclear whether this is valid; a macro that
+    "generates" 'defined' is not permitted, but the use of the word
+    "generates" within the C90 standard seems to imply more than simple
+    substitution of an expression itself containing a well-formed defined
+    operation.
+  Added ARM support to CMakeLists.txt (Andreas Franek).
+
+Version 1.6.27 [December 29, 2016]
+  Fixed a potential null pointer dereference in png_set_text_2() (bug report
+    and patch by Patrick Keshishian, CVE-2016-10087).
+
+Version 1.6.28rc01 [January 3, 2017]
+  Fixed arm/aarch64 detection in CMakeLists.txt (Gianfranco Costamagna).
+  Added option to Cmake build allowing a custom location of zlib to be
+    specified in a scenario where libpng is being built as a subproject
+    alongside zlib by another project (Sam Serrels).
+  Changed png_ptr->options from a png_byte to png_uint_32, to accomodate
+    up to 16 options.
+
+Version 1.6.28rc02 [January 4, 2017]
+  Added "include(GNUInstallDirs)" to CMakeLists.txt (Gianfranco Costamagna).
+  Moved SSE2 optimization code into the main libpng source directory.
+    Configure libpng with "configure --enable-intel-sse" or compile
+    libpng with "-DPNG_INTEL_SSE" in CPPFLAGS to enable it.
+
+Version 1.6.28rc03 [January 4, 2017]
+  Backed out the SSE optimization and last CMakeLists.txt to allow time for QA.
+
+Version 1.6.28 [January 5, 2017]
+  No changes.
+
 Send comments/corrections/commendations to png-mng-implement at lists.sf.net
 (subscription required; visit
 https://lists.sourceforge.net/lists/listinfo/png-mng-implement

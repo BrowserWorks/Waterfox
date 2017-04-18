@@ -133,6 +133,17 @@ def read_derived_core_properties(derived_core_properties):
             for char in range(int(start, 16), int(end, 16) + 1):
                 yield (char, char_property)
 
+def int_ranges(ints):
+    """ Yields consecutive ranges (inclusive) from integer values. """
+    from itertools import tee, izip_longest
+
+    (a, b) = tee(sorted(ints))
+    start = next(b)
+    for (curr, succ) in izip_longest(a, b):
+        if curr + 1 != succ:
+            yield (start, curr)
+            start = succ
+
 def utf16_encode(code):
     NonBMPMin = 0x10000
     LeadSurrogateMin = 0xD800
@@ -144,36 +155,63 @@ def utf16_encode(code):
     return lead, trail
 
 def make_non_bmp_convert_macro(out_file, name, convert_map):
+    # Find continuous range in convert_map.
     convert_list = []
     entry = None
     for code in sorted(convert_map.keys()):
+        lead, trail = utf16_encode(code)
         converted = convert_map[code]
         diff = converted - code
 
-        if entry and code == entry['code'] + entry['length'] and diff == entry['diff']:
+        if (entry and code == entry['code'] + entry['length'] and
+            diff == entry['diff'] and lead == entry['lead']):
             entry['length'] += 1
             continue
 
-        entry = { 'code': code, 'diff': diff, 'length': 1 }
+        entry = {
+            'code': code,
+            'diff': diff,
+            'length': 1,
+            'lead': lead,
+            'trail': trail,
+        }
         convert_list.append(entry)
 
+    # Generate macro call for each range.
     lines = []
     for entry in convert_list:
         from_code = entry['code']
         to_code = entry['code'] + entry['length'] - 1
         diff = entry['diff']
 
-        from_lead, from_trail = utf16_encode(from_code)
-        to_lead, to_trail = utf16_encode(to_code)
-
-        assert from_lead == to_lead
+        lead = entry['lead']
+        from_trail = entry['trail']
+        to_trail = entry['trail'] + entry['length'] - 1
 
         lines.append('    macro(0x{:x}, 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x}, {:d})'.format(
-            from_code, to_code, from_lead, from_trail, to_trail, diff))
+            from_code, to_code, lead, from_trail, to_trail, diff))
 
     out_file.write('#define FOR_EACH_NON_BMP_{}(macro) \\\n'.format(name))
     out_file.write(' \\\n'.join(lines))
     out_file.write('\n')
+
+def for_each_non_bmp_group(group_set):
+    # Find continuous range in group_set.
+    group_list = []
+    entry = None
+    for code in sorted(group_set.keys()):
+        if entry and code == entry['code'] + entry['length']:
+            entry['length'] += 1
+            continue
+
+        entry = {
+            'code': code,
+            'length': 1
+        }
+        group_list.append(entry)
+
+    for entry in group_list:
+        yield (entry['code'], entry['code'] + entry['length'] - 1)
 
 def process_derived_core_properties(derived_core_properties):
     id_start = set()
@@ -203,6 +241,9 @@ def process_unicode_data(unicode_data, derived_core_properties):
 
     non_bmp_lower_map = {}
     non_bmp_upper_map = {}
+    non_bmp_id_start_set = {}
+    non_bmp_id_cont_set = {}
+    non_bmp_space_set = {}
 
     (id_start, id_continue) = process_derived_core_properties(derived_core_properties)
 
@@ -235,6 +276,13 @@ def process_unicode_data(unicode_data, derived_core_properties):
                 non_bmp_lower_map[code] = lower
             if code != upper:
                 non_bmp_upper_map[code] = upper
+            if category == 'Zs':
+                non_bmp_space_set[code] = 1
+                test_space_table.append(code)
+            if code in id_start:
+                non_bmp_id_start_set[code] = 1
+            if code in id_continue:
+                non_bmp_id_cont_set[code] = 1
             continue
 
         # we combine whitespace and lineterminators because in pratice we don't need them separated
@@ -304,6 +352,8 @@ def process_unicode_data(unicode_data, derived_core_properties):
         table, index,
         same_upper_table, same_upper_index,
         non_bmp_lower_map, non_bmp_upper_map,
+        non_bmp_space_set,
+        non_bmp_id_start_set, non_bmp_id_cont_set,
         test_table, test_space_table,
     )
 
@@ -401,6 +451,16 @@ def make_non_bmp_file(version,
 #ifndef vm_UnicodeNonBMP_h
 #define vm_UnicodeNonBMP_h
 
+// |macro| receives the following arguments
+//   macro(FROM, TO, LEAD, TRAIL_FROM, TRAIL_TO, DIFF)
+//     FROM:       code point where the range starts
+//     TO:         code point where the range ends
+//     LEAD:       common lead surrogate of FROM and TO
+//     TRAIL_FROM: trail surrogate of FROM
+//     TRAIL_FROM: trail surrogate of TO
+//     DIFF:       the difference between the code point in the range and
+//                 converted code point
+
 """)
 
         make_non_bmp_convert_macro(non_bmp_file, 'LOWERCASE', non_bmp_lower_map)
@@ -484,6 +544,36 @@ if (typeof reportCompare === "function")
     reportCompare(true, true);
 """)
 
+def make_regexp_space_test(version, test_space_table):
+    file_name = '../tests/ecma_6/RegExp/character-class-escape-s.js'
+    with io.open(file_name, mode='wb') as test_space:
+        test_space.write(warning_message)
+        test_space.write(unicode_version_message.format(version))
+        test_space.write(public_domain)
+        test_space.write('var onlySpace = String.fromCodePoint(' +
+                        ', '.join(map(lambda c: hex(c), test_space_table)) + ');\n')
+        test_space.write("""
+assertEq(/^\s+$/.exec(onlySpace) !== null, true);
+assertEq(/^[\s]+$/.exec(onlySpace) !== null, true);
+assertEq(/^[^\s]+$/.exec(onlySpace) === null, true);
+
+assertEq(/^\S+$/.exec(onlySpace) === null, true);
+assertEq(/^[\S]+$/.exec(onlySpace) === null, true);
+assertEq(/^[^\S]+$/.exec(onlySpace) !== null, true);
+
+// Also test with Unicode RegExps.
+assertEq(/^\s+$/u.exec(onlySpace) !== null, true);
+assertEq(/^[\s]+$/u.exec(onlySpace) !== null, true);
+assertEq(/^[^\s]+$/u.exec(onlySpace) === null, true);
+
+assertEq(/^\S+$/u.exec(onlySpace) === null, true);
+assertEq(/^[\S]+$/u.exec(onlySpace) === null, true);
+assertEq(/^[^\S]+$/u.exec(onlySpace) !== null, true);
+
+if (typeof reportCompare === "function")
+    reportCompare(true, true);
+""")
+
 def make_icase_test(version, folding_tests):
     file_name = '../tests/ecma_6/RegExp/unicode-ignoreCase.js'
     with io.open(file_name, mode='wb') as test_icase:
@@ -514,7 +604,9 @@ if (typeof reportCompare === "function")
 def make_unicode_file(version,
                       table, index,
                       same_upper_table, same_upper_index,
-                      folding_table, folding_index):
+                      folding_table, folding_index,
+                      non_bmp_space_set,
+                      non_bmp_id_start_set, non_bmp_id_cont_set):
     index1, index2, shift = splitbins(index)
 
     # Don't forget to update CharInfo in Unicode.h if you need to change this
@@ -629,7 +721,7 @@ def make_unicode_file(version,
         data_file.write(unicode_version_message.format(version))
         data_file.write(public_domain)
         data_file.write('#include "vm/Unicode.h"\n\n')
-        data_file.write('using namespace js;\n')
+        data_file.write('using namespace js;\n');
         data_file.write('using namespace js::unicode;\n')
         data_file.write(comment)
         data_file.write('const CharacterInfo unicode::js_charinfo[] = {\n')
@@ -670,6 +762,43 @@ def make_unicode_file(version,
         data_file.write('\n')
         dump(folding_index2, 'folding_index2', data_file)
         data_file.write('\n')
+
+        # If the following assert fails, it means space character is added to
+        # non-BMP area.  In that case the following code should be uncommented
+        # and the corresponding code should be added to frontend.
+        assert len(non_bmp_space_set.keys()) == 0
+
+        data_file.write("""\
+bool
+js::unicode::IsIdentifierStartNonBMP(uint32_t codePoint)
+{
+""")
+
+        for (from_code, to_code) in for_each_non_bmp_group(non_bmp_id_start_set):
+            data_file.write("""\
+    if (codePoint >= 0x{:x} && codePoint <= 0x{:x})
+        return true;
+""".format(from_code, to_code))
+
+        data_file.write("""\
+    return false;
+}
+
+bool
+js::unicode::IsIdentifierPartNonBMP(uint32_t codePoint)
+{
+""")
+
+        for (from_code, to_code) in for_each_non_bmp_group(non_bmp_id_cont_set):
+            data_file.write("""\
+    if (codePoint >= 0x{:x} && codePoint <= 0x{:x})
+        return true;
+""".format(from_code, to_code))
+
+        data_file.write("""\
+    return false;
+}
+""")
 
 def getsize(data):
     """ return smallest possible integer size for the given array """
@@ -740,6 +869,204 @@ def splitbins(t):
         assert t[i] == t2[(t1[i >> shift] << shift) + (i & mask)]
     return best
 
+def make_irregexp_tables(version,
+                         table, index,
+                         folding_table, folding_index,
+                         test_table):
+    import string
+    from functools import partial
+    from itertools import chain, ifilter, imap
+
+    MAX_ASCII = 0x7F
+    MAX_LATIN1 = 0xFF
+    LEAD_SURROGATE_MIN = 0xD800
+    TRAIL_SURROGATE_MAX = 0xDFFF
+
+    def hex2(n):
+        assert 0 <= n and n < 16**2
+        return '0x{:02X}'.format(n)
+
+    def hex4(n):
+        assert 0 <= n and n < 16**4
+        return '0x{:04X}'.format(n)
+
+    def uhex4(n):
+        assert 0 <= n and n < 16**4
+        return 'U+{:04X}'.format(n)
+
+    def case_info(code):
+        assert 0 <= code and code <= MAX_BMP
+        (upper, lower, flags) = table[index[code]]
+        return ((code + upper) & 0xffff, (code + lower) & 0xffff, flags)
+
+    def is_space(code):
+        (_, _, flags) = case_info(code)
+        return bool(flags & FLAG_SPACE)
+
+    def to_upper(code):
+        (upper, _, _) = case_info(code)
+        return upper
+
+    def casefold(code):
+        assert 0 <= code and code <= MAX_BMP
+        (folding, _, _, _) = folding_table[folding_index[code]]
+        return (code + folding) & 0xffff
+
+    def casefolds_to_ascii(code):
+        return casefold(code) <= MAX_ASCII
+
+    def casefolds_to_latin1(code):
+        return casefold(code) <= MAX_LATIN1
+
+    def casemaps_to_nonlatin1(code):
+        upper = to_upper(code)
+        return upper > MAX_LATIN1
+
+    def char_name(code):
+        assert 0 <= code and code <= MAX_BMP
+        if code not in test_table:
+            return '<Unused>'
+        if code == LEAD_SURROGATE_MIN:
+            return '<Lead Surrogate Min>'
+        if code == TRAIL_SURROGATE_MAX:
+            return '<Trail Surrogate Max>'
+        (_, _, name, alias) = test_table[code]
+        return name if not name.startswith('<') else alias
+
+    def write_character_range(println, name, characters):
+        char_ranges = list(int_ranges(characters))
+        println('')
+        println('const int js::irregexp::k{}Ranges[] = {{'.format(name))
+        for (start, end) in char_ranges:
+            s_name = char_name(start)
+            e_name = char_name(end)
+            println('    {}, {} + 1, // {}'.format(hex4(start), hex4(end),
+                                                               '{}..{}'.format(s_name, e_name)
+                                                               if start != end else s_name))
+        println('    {} + 1'.format(hex4(MAX_BMP)))
+        println('};')
+        println('const int js::irregexp::k{}RangeCount = {};'.format(name,
+                                                                     len(char_ranges) * 2 + 1))
+
+    def write_character_test(println, test, consequent, default):
+        # Latin1 characters which, when case-mapped through
+        # String.prototype.toUpperCase(), canonicalize to a non-Latin1 character.
+        # ES2017, §21.2.2.8.2 Runtime Semantics: Canonicalize
+        casemapped_to_nonlatin1 = ifilter(casemaps_to_nonlatin1, xrange(0, MAX_LATIN1 + 1))
+
+        def casemap_closure(ch):
+            upper = to_upper(ch)
+            return (ch, [c for c in xrange(MAX_LATIN1 + 1, MAX_BMP + 1) if upper == to_upper(c)])
+
+        # Mapping from Latin1 characters to the list of case map equivalent
+        # non-Latin1 characters.
+        casemap_for_latin1 = dict(chain(imap(casemap_closure, casemapped_to_nonlatin1)))
+
+        # Non-latin1 characters which, when Unicode case-folded, canonicalize to
+        # a Latin1 character.
+        # ES2017, §21.2.2.8.2 Runtime Semantics: Canonicalize
+        casefolded_to_latin1 = ifilter(casefolds_to_latin1, xrange(MAX_LATIN1 + 1, MAX_BMP + 1))
+
+        println('    if (unicode) {')
+        for ch in casefolded_to_latin1:
+            casefolded = casefold(ch)
+            # Skip if also handled below for case mapping.
+            if casefolded in casemap_for_latin1 and ch in casemap_for_latin1[casefolded]:
+                continue
+            println('        // "{}" case folds to "{}".'.format(char_name(ch),
+                                                                 char_name(casefolded)))
+            println('        if ({})'.format(test(ch)))
+            println('            return {};'.format(consequent(casefolded)))
+        println('    }')
+        println('')
+        for (ch, casemapped_chars) in casemap_for_latin1.iteritems():
+            for casemapped in casemapped_chars:
+                println('    // "{}" case maps to "{}".'.format(char_name(casemapped),
+                                                                char_name(ch)))
+            println('    if ({})'.format(' || '.join(imap(test, casemapped_chars))))
+            println('        return {};'.format(consequent(ch)))
+        println('    return {};'.format(default))
+
+    with io.open('../irregexp/RegExpCharacters-inl.h', 'wb') as chars_file:
+        write = partial(print, file=chars_file, sep='', end='')
+        println = partial(write, end='\n')
+
+        write(warning_message)
+        write(unicode_version_message.format(version))
+
+        println('#ifndef V8_JSREGEXPCHARACTERS_INL_H_')
+        println('#define V8_JSREGEXPCHARACTERS_INL_H_')
+        println('')
+        println('namespace js {')
+        println('')
+        println('namespace irregexp {')
+        println('')
+
+        println('static inline bool')
+        println('RangeContainsLatin1Equivalents(CharacterRange range, bool unicode)')
+        println('{')
+        write_character_test(println, lambda ch: 'range.Contains({})'.format(hex4(ch)),
+                             lambda _: 'true', 'false')
+        println('}')
+
+        println('')
+        println('} } // namespace js::irregexp')
+        println('')
+        println('#endif // V8_JSREGEXPCHARACTERS_INL_H_')
+
+    with io.open('../irregexp/RegExpCharacters.cpp', 'wb') as chars_file:
+        write = partial(print, file=chars_file, sep='', end='')
+        println = partial(write, end='\n')
+        character_range = partial(write_character_range, println)
+
+        # Characters in \s, 21.2.2.12 CharacterClassEscape.
+        space_chars = filter(is_space, xrange(0, MAX_BMP + 1))
+
+        # Characters in \d, 21.2.2.12 CharacterClassEscape.
+        digit_chars = map(ord, string.digits)
+        assert all(ch <= MAX_ASCII for ch in digit_chars)
+
+        # Characters in \w, 21.2.2.12 CharacterClassEscape.
+        word_chars = map(ord, string.digits + string.ascii_letters + '_')
+        assert all(ch <= MAX_ASCII for ch in word_chars)
+
+        # Characters which case-fold to characters in \w.
+        ignorecase_word_chars = (word_chars +
+                                filter(casefolds_to_ascii, xrange(MAX_ASCII + 1, MAX_BMP + 1)))
+
+        # Surrogate characters.
+        surrogate_chars = range(LEAD_SURROGATE_MIN, TRAIL_SURROGATE_MAX + 1)
+
+        write(warning_message)
+        write(unicode_version_message.format(version))
+        println('#include "irregexp/RegExpCharacters.h"')
+        println('')
+        println('#include "mozilla/Assertions.h"')
+        println('')
+
+        println('char16_t')
+        println('js::irregexp::ConvertNonLatin1ToLatin1(char16_t c, bool unicode)')
+        println('{')
+        println('    MOZ_ASSERT(c > {}, "Character mustn\'t be Latin1");'.format(hex2(MAX_LATIN1)))
+        write_character_test(println, lambda ch: 'c == {}'.format(hex4(ch)), hex2, '0')
+        println('}')
+
+        character_range('Space', space_chars)
+        character_range('SpaceAndSurrogate', space_chars + surrogate_chars)
+
+        character_range('Word', word_chars)
+        character_range('IgnoreCaseWord', ignorecase_word_chars)
+        character_range('WordAndSurrogate', word_chars + surrogate_chars)
+        character_range('NegatedIgnoreCaseWordAndSurrogate',
+                        set(xrange(0, MAX_BMP + 1)) - set(ignorecase_word_chars + surrogate_chars))
+
+        character_range('Digit', digit_chars)
+        character_range('DigitAndSurrogate', digit_chars + surrogate_chars)
+
+        character_range('Surrogate', surrogate_chars)
+
+        character_range('LineTerminator', line_terminator)
+
 def update_unicode(args):
     import urllib2
 
@@ -791,6 +1118,8 @@ def update_unicode(args):
             table, index,
             same_upper_table, same_upper_index,
             non_bmp_lower_map, non_bmp_upper_map,
+            non_bmp_space_set,
+            non_bmp_id_start_set, non_bmp_id_cont_set,
             test_table, test_space_table
         ) = process_unicode_data(unicode_data, derived_core_properties)
         (
@@ -803,14 +1132,21 @@ def update_unicode(args):
     make_unicode_file(unicode_version,
                       table, index,
                       same_upper_table, same_upper_index,
-                      folding_table, folding_index)
+                      folding_table, folding_index,
+                      non_bmp_space_set,
+                      non_bmp_id_start_set, non_bmp_id_cont_set)
     make_non_bmp_file(unicode_version,
                       non_bmp_lower_map, non_bmp_upper_map,
                       non_bmp_folding_map, non_bmp_rev_folding_map)
+    make_irregexp_tables(unicode_version,
+                         table, index,
+                         folding_table, folding_index,
+                         test_table)
 
     make_bmp_mapping_test(unicode_version, test_table)
     make_non_bmp_mapping_test(unicode_version, non_bmp_upper_map, non_bmp_lower_map)
     make_space_test(unicode_version, test_space_table)
+    make_regexp_space_test(unicode_version, test_space_table)
     make_icase_test(unicode_version, folding_tests)
 
 if __name__ == '__main__':

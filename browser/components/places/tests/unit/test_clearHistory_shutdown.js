@@ -133,11 +133,11 @@ function storeCache(aURL, aContent) {
 
   return new Promise(resolve => {
     let storeCacheListener = {
-      onCacheEntryCheck: function (entry, appcache) {
+      onCacheEntryCheck(entry, appcache) {
         return Ci.nsICacheEntryOpenCallback.ENTRY_WANTED;
       },
 
-      onCacheEntryAvailable: function (entry, isnew, appcache, status) {
+      onCacheEntryAvailable(entry, isnew, appcache, status) {
         do_check_eq(status, Cr.NS_OK);
 
         entry.setMetaDataElement("servertype", "0");
@@ -146,7 +146,7 @@ function storeCache(aURL, aContent) {
         var written = os.write(aContent, aContent.length);
         if (written != aContent.length) {
           do_throw("os.write has not written all data!\n" +
-                   "  Expected: " + written  + "\n" +
+                   "  Expected: " + written + "\n" +
                    "  Actual: " + aContent.length + "\n");
         }
         os.close();
@@ -155,7 +155,7 @@ function storeCache(aURL, aContent) {
       }
     };
 
-    storage.asyncOpenURI(Services.io.newURI(aURL, null, null), "",
+    storage.asyncOpenURI(Services.io.newURI(aURL), "",
                          Ci.nsICacheStorage.OPEN_NORMALLY,
                          storeCacheListener);
   });
@@ -168,14 +168,14 @@ function checkCache(aURL) {
 
   return new Promise(resolve => {
     let checkCacheListener = {
-      onCacheEntryAvailable: function (entry, isnew, appcache, status) {
+      onCacheEntryAvailable(entry, isnew, appcache, status) {
         do_check_eq(status, Cr.NS_ERROR_CACHE_KEY_NOT_FOUND);
         resolve();
       }
     };
 
-    storage.asyncOpenURI(Services.io.newURI(aURL, null, null), "",
-                        Ci.nsICacheStorage.OPEN_READONLY,
-                        checkCacheListener);
+    storage.asyncOpenURI(Services.io.newURI(aURL), "",
+                         Ci.nsICacheStorage.OPEN_READONLY,
+                         checkCacheListener);
   });
 }

@@ -10,6 +10,7 @@
 #include "MediaPrefs.h"
 #include "PDMFactory.h"
 #include "WebMDemuxer.h"
+#include "mozilla/AbstractThread.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/dom/ContentChild.h"
@@ -22,7 +23,7 @@ namespace mozilla {
 
 // Update this version number to force re-running the benchmark. Such as when
 // an improvement to FFVP9 or LIBVPX is deemed worthwhile.
-const uint32_t VP9Benchmark::sBenchmarkVersionID = 1;
+const uint32_t VP9Benchmark::sBenchmarkVersionID = 2;
 
 const char* VP9Benchmark::sBenchmarkFpsPref = "media.benchmark.vp9.fps";
 const char* VP9Benchmark::sBenchmarkFpsVersionCheck = "media.benchmark.vp9.versioncheck";
@@ -44,8 +45,9 @@ VP9Benchmark::IsVP9DecodeFast()
     sHasRunTest = true;
 
     RefPtr<WebMDemuxer> demuxer =
-      new WebMDemuxer(new BufferMediaResource(sWebMSample, sizeof(sWebMSample), nullptr,
-                                              NS_LITERAL_CSTRING("video/webm")));
+      new WebMDemuxer(
+        new BufferMediaResource(sWebMSample, sizeof(sWebMSample), nullptr,
+                                MediaContainerType(MEDIAMIMETYPE("video/webm"))));
     RefPtr<Benchmark> estimiser =
       new Benchmark(demuxer,
                     {
@@ -56,6 +58,7 @@ VP9Benchmark::IsVP9DecodeFast()
                         Preferences::GetUint("media.benchmark.timeout", 1000))
                     });
     estimiser->Run()->Then(
+      // Non-DocGroup version of AbstractThread::MainThread for utility function.
       AbstractThread::MainThread(), __func__,
       [](uint32_t aDecodeFps) {
         if (XRE_IsContentProcess()) {

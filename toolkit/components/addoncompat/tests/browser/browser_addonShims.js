@@ -6,15 +6,14 @@ const COMPAT_ADDON_URL = "http://example.com/browser/toolkit/components/addoncom
 
 // Install a test add-on that will exercise e10s shims.
 //   url: Location of the add-on.
-function addAddon(url)
-{
+function addAddon(url) {
   info("Installing add-on: " + url);
 
   return new Promise(function(resolve, reject) {
     AddonManager.getInstallForURL(url, installer => {
       installer.install();
       let listener = {
-        onInstallEnded: function(addon, addonInstall) {
+        onInstallEnded(addon, addonInstall) {
           installer.removeListener(listener);
 
           // Wait for add-on's startup scripts to execute. See bug 997408
@@ -30,13 +29,12 @@ function addAddon(url)
 
 // Uninstall a test add-on.
 //   addon: The addon reference returned from addAddon.
-function removeAddon(addon)
-{
+function removeAddon(addon) {
   info("Removing addon.");
 
   return new Promise(function(resolve, reject) {
     let listener = {
-      onUninstalled: function(uninstalledAddon) {
+      onUninstalled(uninstalledAddon) {
         if (uninstalledAddon != addon) {
           return;
         }
@@ -50,18 +48,15 @@ function removeAddon(addon)
 }
 
 add_task(function* test_addon_shims() {
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({set: [["dom.ipc.shims.enabledWarnings", true]]},
-                             resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({set: [["dom.ipc.shims.enabledWarnings", true]]});
 
   let addon = yield addAddon(ADDON_URL);
-  yield window.runAddonShimTests({ok: ok, is: is, info: info});
+  yield window.runAddonShimTests({ok, is, info});
   yield removeAddon(addon);
 
   if (Services.appinfo.browserTabsRemoteAutostart) {
     addon = yield addAddon(COMPAT_ADDON_URL);
-    yield window.runAddonTests({ok: ok, is: is, info: info});
+    yield window.runAddonTests({ok, is, info});
     yield removeAddon(addon);
   }
 });

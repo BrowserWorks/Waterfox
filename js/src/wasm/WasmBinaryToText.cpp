@@ -42,11 +42,16 @@ struct WasmRenderContext
     WasmPrintBuffer& buffer;
     GeneratedSourceMap* maybeSourceMap;
     uint32_t indent;
-
     uint32_t currentFuncIndex;
 
-    WasmRenderContext(JSContext* cx, AstModule* module, WasmPrintBuffer& buffer, GeneratedSourceMap* sourceMap)
-      : cx(cx), module(module), buffer(buffer), maybeSourceMap(sourceMap), indent(0), currentFuncIndex(0)
+    WasmRenderContext(JSContext* cx, AstModule* module, WasmPrintBuffer& buffer,
+                      GeneratedSourceMap* sourceMap)
+      : cx(cx),
+        module(module),
+        buffer(buffer),
+        maybeSourceMap(sourceMap),
+        indent(0),
+        currentFuncIndex(0)
     {}
 
     StringBuffer& sb() { return buffer.stringBuffer(); }
@@ -96,11 +101,10 @@ RenderInt64(WasmRenderContext& c, int64_t num)
 }
 
 static bool
-RenderDouble(WasmRenderContext& c, RawF64 num)
+RenderDouble(WasmRenderContext& c, double d)
 {
-    double d = num.fp();
     if (IsNaN(d))
-        return RenderNaN(c.sb(), num);
+        return RenderNaN(c.sb(), d);
     if (IsNegativeZero(d))
         return c.buffer.append("-0");
     if (IsInfinite(d)) {
@@ -112,12 +116,11 @@ RenderDouble(WasmRenderContext& c, RawF64 num)
 }
 
 static bool
-RenderFloat32(WasmRenderContext& c, RawF32 num)
+RenderFloat32(WasmRenderContext& c, float f)
 {
-    float f = num.fp();
     if (IsNaN(f))
-        return RenderNaN(c.sb(), num);
-    return RenderDouble(c, RawF64(double(f)));
+        return RenderNaN(c.sb(), f);
+    return RenderDouble(c, double(f));
 }
 
 static bool
@@ -428,9 +431,9 @@ RenderSetGlobal(WasmRenderContext& c, AstSetGlobal& sg)
 }
 
 static bool
-RenderExprList(WasmRenderContext& c, const AstExprVector& exprs)
+RenderExprList(WasmRenderContext& c, const AstExprVector& exprs, uint32_t startAt = 0)
 {
-    for (uint32_t i = 0; i < exprs.length(); i++) {
+    for (uint32_t i = startAt; i < exprs.length(); i++) {
         if (!RenderExpr(c, *exprs[i]))
             return false;
     }
@@ -438,9 +441,9 @@ RenderExprList(WasmRenderContext& c, const AstExprVector& exprs)
 }
 
 static bool
-RenderBlock(WasmRenderContext& c, AstBlock& block)
+RenderBlock(WasmRenderContext& c, AstBlock& block, bool isInline = false)
 {
-    if (!RenderIndent(c))
+    if (!isInline && !RenderIndent(c))
         return false;
 
     MAP_AST_EXPR(c, block);
@@ -457,18 +460,36 @@ RenderBlock(WasmRenderContext& c, AstBlock& block)
     if (!RenderBlockNameAndSignature(c, block.name(), block.type()))
         return false;
 
+    uint32_t startAtSubExpr = 0;
+
+    // If there is a stack of blocks, print them all inline.
+    if (block.op() == Op::Block &&
+        block.exprs().length() &&
+        block.exprs()[0]->kind() == AstExprKind::Block &&
+        block.exprs()[0]->as<AstBlock>().op() == Op::Block)
+    {
+        if (!c.buffer.append(' '))
+            return false;
+
+        // Render the first inner expr (block) at the same indent level, but
+        // next instructions one level further.
+        if (!RenderBlock(c, block.exprs()[0]->as<AstBlock>(), /* isInline */ true))
+            return false;
+
+        startAtSubExpr = 1;
+    }
+
     if (!c.buffer.append('\n'))
         return false;
 
     c.indent++;
-    if (!RenderExprList(c, block.exprs()))
+    if (!RenderExprList(c, block.exprs(), startAtSubExpr))
         return false;
     c.indent--;
 
-    if (!RenderIndent(c))
-        return false;
-
-    return c.buffer.append("end");
+    return RenderIndent(c) &&
+           c.buffer.append("end ") &&
+           RenderName(c, block.name());
 }
 
 static bool
@@ -1723,7 +1744,8 @@ RenderModule(WasmRenderContext& c, AstModule& module)
 // Top-level functions
 
 bool
-wasm::BinaryToText(JSContext* cx, const uint8_t* bytes, size_t length, StringBuffer& buffer, GeneratedSourceMap* sourceMap)
+wasm::BinaryToText(JSContext* cx, const uint8_t* bytes, size_t length, StringBuffer& buffer,
+                   GeneratedSourceMap* sourceMap /* = nullptr */)
 {
     LifoAlloc lifo(AST_LIFO_DEFAULT_CHUNK_SIZE);
 

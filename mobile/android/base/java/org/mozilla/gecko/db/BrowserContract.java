@@ -8,6 +8,7 @@ package org.mozilla.gecko.db;
 import org.mozilla.gecko.AppConstants;
 
 import android.net.Uri;
+import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 
 import org.mozilla.gecko.annotation.RobocopTarget;
@@ -45,13 +46,14 @@ public class BrowserContract {
     public static final String PARAM_PROFILE_PATH = "profilePath";
     public static final String PARAM_LIMIT = "limit";
     public static final String PARAM_SUGGESTEDSITES_LIMIT = "suggestedsites_limit";
-    public static final String PARAM_TOPSITES_DISABLE_PINNED = "topsites_disable_pinned";
+    public static final String PARAM_TOPSITES_EXCLUDE_REMOTE_ONLY = "topsites_exclude_remote_only";
     public static final String PARAM_IS_SYNC = "sync";
     public static final String PARAM_SHOW_DELETED = "show_deleted";
     public static final String PARAM_IS_TEST = "test";
     public static final String PARAM_INSERT_IF_NEEDED = "insert_if_needed";
     public static final String PARAM_INCREMENT_VISITS = "increment_visits";
     public static final String PARAM_INCREMENT_REMOTE_AGGREGATES = "increment_remote_aggregates";
+    public static final String PARAM_NON_POSITIONED_PINS = "non_positioned_pins";
     public static final String PARAM_EXPIRE_PRIORITY = "priority";
     public static final String PARAM_DATASET_ID = "dataset_id";
     public static final String PARAM_GROUP_BY = "group_by";
@@ -242,6 +244,10 @@ public class BrowserContract {
         public static final int FIXED_SCREENSHOT_FOLDER_ID = -4;
         public static final int FAKE_READINGLIST_SMARTFOLDER_ID = -5;
 
+        // Fixed position used by Activity Stream pins. A-S displays pins in front of other top sites,
+        // so position is constant for all pins.
+        public static final int FIXED_AS_PIN_POSITION = -1;
+
         /**
          * This ID and the following negative IDs are reserved for bookmarks from Android's partner
          * bookmark provider.
@@ -431,7 +437,7 @@ public class BrowserContract {
 
     public static final class Clients implements CommonColumns {
         private Clients() {}
-        public static final Uri CONTENT_RECENCY_URI = Uri.withAppendedPath(TABS_AUTHORITY_URI, "clients_recency");
+        public static final Uri CONTENT_NO_STALE_SORTED_URI = Uri.withAppendedPath(TABS_AUTHORITY_URI, "clients_no_stale_sorted");
         public static final Uri CONTENT_URI = Uri.withAppendedPath(TABS_AUTHORITY_URI, "clients");
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/client";
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/client";
@@ -590,6 +596,9 @@ public class BrowserContract {
         public static final int TYPE_PINNED = 2;
         public static final int TYPE_SUGGESTED = 3;
 
+        @IntDef({TYPE_BLANK, TYPE_TOP, TYPE_PINNED, TYPE_SUGGESTED})
+        public @interface TopSiteType {}
+
         public static final String BOOKMARK_ID = "bookmark_id";
         public static final String HISTORY_ID = "history_id";
         public static final String TYPE = "type";
@@ -601,6 +610,7 @@ public class BrowserContract {
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "highlights");
 
         public static final String DATE = "date";
+        public static final String METADATA = "metadata";
     }
 
     @RobocopTarget

@@ -5,7 +5,7 @@
 "use strict";
 
 const { Cc, Ci, Cu } = require("chrome");
-const { getCurrentZoom,
+const { getCurrentZoom, getWindowDimensions,
   getRootBindingParent } = require("devtools/shared/layout/utils");
 const { on, emit } = require("sdk/event/core");
 
@@ -34,6 +34,7 @@ exports.getCSSStyleRules = (...args) =>
   lazyContainer.DOMUtils.getCSSStyleRules(...args);
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+const XHTML_NS = "http://www.w3.org/1999/xhtml";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const STYLESHEET_URI = "resource://devtools/server/actors/" +
                        "highlighters.css";
@@ -181,8 +182,7 @@ exports.createSVGNode = createSVGNode;
  * @param {Window} This window's document will be used to create the element
  * @param {Object} Options for the node include:
  * - nodeType: the type of node, defaults to "div".
- * - namespace: if passed, doc.createElementNS will be used instead of
- *   doc.creatElement.
+ * - namespace: the namespace to use to create the node, defaults to XHTML namespace.
  * - attributes: a {name:value} object to be used as attributes for the node.
  * - prefix: a string that will be used to prefix the values of the id and class
  *   attributes.
@@ -191,13 +191,9 @@ exports.createSVGNode = createSVGNode;
  */
 function createNode(win, options) {
   let type = options.nodeType || "div";
+  let namespace = options.namespace || XHTML_NS;
 
-  let node;
-  if (options.namespace) {
-    node = win.document.createElementNS(options.namespace, type);
-  } else {
-    node = win.document.createElement(type);
-  }
+  let node = win.document.createElementNS(namespace, type);
 
   for (let name in options.attributes || {}) {
     let value = options.attributes[name];
@@ -243,28 +239,22 @@ function CanvasFrameAnonymousContentHelper(highlighterEnv, nodeBuilder) {
                                 this.anonymousContentDocument);
 
   // Only try to create the highlighter when the document is loaded,
-  // otherwise, wait for the navigate event to fire.
+  // otherwise, wait for the window-ready event to fire.
   let doc = this.highlighterEnv.document;
   if (doc.documentElement && doc.readyState != "uninitialized") {
     this._insert();
   }
 
-  this._onNavigate = this._onNavigate.bind(this);
-  this.highlighterEnv.on("navigate", this._onNavigate);
+  this._onWindowReady = this._onWindowReady.bind(this);
+  this.highlighterEnv.on("window-ready", this._onWindowReady);
 
   this.listeners = new Map();
 }
 
 CanvasFrameAnonymousContentHelper.prototype = {
   destroy: function () {
-    try {
-      let doc = this.anonymousContentDocument;
-      doc.removeAnonymousContent(this._content);
-    } catch (e) {
-      // If the current window isn't the one the content was inserted into, this
-      // will fail, but that's fine.
-    }
-    this.highlighterEnv.off("navigate", this._onNavigate);
+    this._remove();
+    this.highlighterEnv.off("window-ready", this._onWindowReady);
     this.highlighterEnv = this.nodeBuilder = this._content = null;
     this.anonymousContentDocument = null;
     this.anonymousContentGlobal = null;
@@ -274,13 +264,15 @@ CanvasFrameAnonymousContentHelper.prototype = {
 
   _insert: function () {
     let doc = this.highlighterEnv.document;
-    // Insert the content node only if the document:
-    // * is loaded (navigate event will fire once it is),
-    // * still exists,
-    // * isn't in XUL.
-    if (doc.readyState == "uninitialized" ||
-        !doc.documentElement ||
-        isXUL(this.highlighterEnv.window)) {
+    // Wait for DOMContentLoaded before injecting the anonymous content.
+    if (doc.readyState != "interactive" && doc.readyState != "complete") {
+      doc.addEventListener("DOMContentLoaded", this._insert.bind(this),
+                           { once: true });
+      return;
+    }
+    // Reject XUL documents. Check that after DOMContentLoaded as we query
+    // documentElement which is only available after this event.
+    if (isXUL(this.highlighterEnv.window)) {
       return;
     }
 
@@ -288,8 +280,16 @@ CanvasFrameAnonymousContentHelper.prototype = {
     // <style scoped> doesn't work inside anonymous content (see bug 1086532).
     // If it did, highlighters.css would be injected as an anonymous content
     // node using CanvasFrameAnonymousContentHelper instead.
-    installHelperSheet(this.highlighterEnv.window,
-      "@import url('" + STYLESHEET_URI + "');");
+    if (!installedHelperSheets.has(doc)) {
+      installedHelperSheets.set(doc, true);
+      let source = "@import url('" + STYLESHEET_URI + "');";
+      let url = "data:text/css;charset=utf-8," + encodeURIComponent(source);
+      let winUtils = this.highlighterEnv.window
+                         .QueryInterface(Ci.nsIInterfaceRequestor)
+                         .getInterface(Ci.nsIDOMWindowUtils);
+      winUtils.loadSheetUsingURIString(url, winUtils.AGENT_SHEET);
+    }
+
     let node = this.nodeBuilder();
 
     // It was stated that hidden documents don't accept
@@ -300,8 +300,26 @@ CanvasFrameAnonymousContentHelper.prototype = {
     this._content = doc.insertAnonymousContent(node);
   },
 
-  _onNavigate: function (e, {isTopLevel}) {
+  _remove() {
+    try {
+      let doc = this.anonymousContentDocument;
+      doc.removeAnonymousContent(this._content);
+    } catch (e) {
+      // If the current window isn't the one the content was inserted into, this
+      // will fail, but that's fine.
+    }
+  },
+
+  /**
+   * The "window-ready" event can be triggered when:
+   *   - a new window is created
+   *   - a window is unfrozen from bfcache
+   *   - when first attaching to a page
+   *   - when swapping frame loaders (moving tabs, toggling RDM)
+   */
+  _onWindowReady: function (e, {isTopLevel}) {
     if (isTopLevel) {
+      this._remove();
       this._removeAllListeners();
       this._insert();
       this.anonymousContentDocument = this.highlighterEnv.document;
@@ -523,14 +541,23 @@ CanvasFrameAnonymousContentHelper.prototype = {
    * @param {String} id The ID of the root element inserted with this API.
    */
   scaleRootElement: function (node, id) {
+    let boundaryWindow = this.highlighterEnv.window;
     let zoom = getCurrentZoom(node);
-    let value = "position:absolute;width:100%;height:100%;";
+    // Hide the root element and force the reflow in order to get the proper window's
+    // dimensions without increasing them.
+    this.setAttributeForElement(id, "style", "display: none");
+    node.offsetWidth;
+
+    let { width, height } = getWindowDimensions(boundaryWindow);
+    let value = "";
 
     if (zoom !== 1) {
-      value = "position:absolute;";
-      value += "transform-origin:top left;transform:scale(" + (1 / zoom) + ");";
-      value += "width:" + (100 * zoom) + "%;height:" + (100 * zoom) + "%;";
+      value = `transform-origin:top left; transform:scale(${1 / zoom}); `;
+      width *= zoom;
+      height *= zoom;
     }
+
+    value += `position:absolute; width:${width}px;height:${height}px; overflow:hidden`;
 
     this.setAttributeForElement(id, "style", value);
   }

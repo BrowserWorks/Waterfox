@@ -12,7 +12,7 @@ import sys
 import urllib2
 
 from distutils.version import LooseVersion
-
+from mozboot import rust
 
 NO_MERCURIAL = '''
 Could not find Mercurial (hg) in the current shell's path. Try starting a new
@@ -73,6 +73,65 @@ We recommend the following tools for installing Python:
     official installers -- http://www.python.org/
 '''
 
+RUST_INSTALL_COMPLETE = '''
+Rust installation complete. You should now have rustc and cargo
+in %(cargo_bin)s
+
+The installer tries to add these to your default shell PATH, so
+restarting your shell and running this script again may work.
+If it doesn't, you'll need to add the new command location
+manually.
+
+If restarting doesn't work, edit your shell initialization
+script, which may be called ~/.bashrc or ~/.bash_profile or
+~/.profile, and add the following line:
+
+    %(cmd)s
+
+Then restart your shell and run the bootstrap script again.
+'''
+
+RUST_NOT_IN_PATH = '''
+You have some rust files in %(cargo_bin)s
+but they're not part of this shell's PATH.
+
+To add these to the PATH, edit your shell initialization
+script, which may be called ~/.bashrc or ~/.bash_profile or
+~/.profile, and add the following line:
+
+    %(cmd)s
+
+Then restart your shell and run the bootstrap script again.
+'''
+
+RUSTUP_OLD = '''
+We found an executable called `rustup` which we normally use to install
+and upgrade Rust programming language support, but we didn't understand
+its output. It may be an old version, or not be the installer from
+https://rustup.rs/
+
+Please move it out of the way and run the bootstrap script again.
+Or if you prefer and know how, use the current rustup to install
+a compatible version of the Rust programming language yourself.
+'''
+
+RUST_UPGRADE_FAILED = '''
+We attempted to upgrade Rust to a modern version (%s or newer).
+However, you appear to still have version %s.
+
+It's possible rustup failed. It's also possible the new Rust is not being
+installed in the search path for this shell. Try creating a new shell and
+run this bootstrapper again.
+
+If this continues to fail and you are sure you have a modern Rust on your
+system, ensure it is on the $PATH and try again. If that fails, you'll need to
+install Rust manually.
+
+We recommend the installer from https://rustup.rs/ for installing Rust,
+but you may be able to get a recent enough version from a software install
+tool or package manager on your system, or directly from https://rust-lang.org/
+'''
+
 BROWSER_ARTIFACT_MODE_MOZCONFIG = '''
 Paste the lines between the chevrons (>>> and <<<) into your mozconfig file:
 
@@ -90,6 +149,8 @@ MODERN_MERCURIAL_VERSION = LooseVersion('3.7.3')
 # Upgrade Python older than this.
 MODERN_PYTHON_VERSION = LooseVersion('2.7.3')
 
+# Upgrade rust older than this.
+MODERN_RUST_VERSION = LooseVersion('1.13.0')
 
 class BaseBootstrapper(object):
     """Base class for system bootstrappers."""
@@ -321,6 +382,36 @@ class BaseBootstrapper(object):
         This should be defined in child classes.
         """
 
+    def _parse_version(self, path, name=None, env=None):
+        '''Execute the given path, returning the version.
+
+        Invokes the path argument with the --version switch
+        and returns a LooseVersion representing the output
+        if successful. If not, returns None.
+
+        An optional name argument gives the expected program
+        name returned as part of the version string, if it's
+        different from the basename of the executable.
+
+        An optional env argument allows modifying environment
+        variable during the invocation to set options, PATH,
+        etc.
+        '''
+        if not name:
+            name = os.path.basename(path)
+        if name.endswith('.exe'):
+            name = name[:-4]
+
+        info = self.check_output([path, '--version'],
+                                 env=env,
+                                 stderr=subprocess.STDOUT)
+        match = re.search(name + ' ([a-z0-9\.]+)', info)
+        if not match:
+            print('ERROR! Unable to identify %s version.' % name)
+            return None
+
+        return LooseVersion(match.group(1))
+
     def _hgplain_env(self):
         """ Returns a copy of the current environment updated with the HGPLAIN
         environment variable.
@@ -339,14 +430,9 @@ class BaseBootstrapper(object):
             print(NO_MERCURIAL)
             return False, False, None
 
-        info = self.check_output([hg, '--version'], env=self._hgplain_env()).splitlines()[0]
-
-        match = re.search('version ([^\+\)]+)', info)
-        if not match:
-            print('ERROR: Unable to identify Mercurial version.')
+        our = self._parse_version(hg, 'version', self._hgplain_env())
+        if not our:
             return True, False, None
-
-        our = LooseVersion(match.group(1))
 
         return True, our >= MODERN_MERCURIAL_VERSION, our
 
@@ -399,14 +485,9 @@ class BaseBootstrapper(object):
 
         assert python
 
-        info = self.check_output([python, '--version'],
-                                 stderr=subprocess.STDOUT)
-        match = re.search('Python ([a-z0-9\.]+)', info)
-        if not match:
-            print('ERROR Unable to identify Python version.')
+        our = self._parse_version(python, 'Python')
+        if not our:
             return False, None
-
-        our = LooseVersion(match.group(1))
 
         return our >= MODERN_PYTHON_VERSION, our
 
@@ -435,6 +516,131 @@ class BaseBootstrapper(object):
         Child classes should reimplement this.
         """
         print(PYTHON_UNABLE_UPGRADE % (current, MODERN_PYTHON_VERSION))
+
+    def is_rust_modern(self):
+        rustc = self.which('rustc')
+        if not rustc:
+            print('Could not find a Rust compiler.')
+            return False, None
+
+        cargo = self.which('cargo')
+
+        our = self._parse_version(rustc)
+        if not our:
+            return False, None
+
+        return our >= MODERN_RUST_VERSION, our
+
+    def cargo_home(self):
+        cargo_home = os.environ.get('CARGO_HOME',
+                os.path.expanduser(os.path.join('~', '.cargo')))
+        cargo_bin = os.path.join(cargo_home, 'bin')
+        return cargo_home, cargo_bin
+
+    def win_to_msys_path(self, path):
+        '''Convert a windows-style path to msys style.'''
+        drive, path = os.path.splitdrive(path)
+        path = '/'.join(path.split('\\'))
+        if drive:
+            if path[0] == '/':
+                path = path[1:]
+            path = '/%s/%s' % (drive[:-1], path)
+        return path
+
+    def print_rust_path_advice(self, template, cargo_home, cargo_bin):
+        # Suggest ~/.cargo/env if it exists.
+        if os.path.exists(os.path.join(cargo_home, 'env')):
+            cmd = 'source %s/env' % cargo_home
+        else:
+            # On Windows rustup doesn't write out ~/.cargo/env
+            # so fall back to a manual PATH update. Bootstrap
+            # only runs under msys, so a unix-style shell command
+            # is appropriate there.
+            cargo_bin = self.win_to_msys_path(cargo_bin)
+            cmd = 'export PATH=%s:$PATH' % cargo_bin
+        print(template % {
+            'cargo_bin': cargo_bin,
+            'cmd': cmd,
+        })
+
+    def ensure_rust_modern(self):
+        modern, version = self.is_rust_modern()
+
+        if modern:
+            print('Your version of Rust (%s) is new enough.' % version)
+            return
+
+        if not version:
+            # Rust wasn't in PATH. Check the standard location.
+            cargo_home, cargo_bin = self.cargo_home()
+            try_rustc = os.path.join(cargo_bin, 'rustc' + rust.exe_suffix())
+            try_cargo = os.path.join(cargo_bin, 'cargo' + rust.exe_suffix())
+            have_rustc = os.path.exists(try_rustc)
+            have_cargo = os.path.exists(try_cargo)
+            if have_rustc or have_cargo:
+                self.print_rust_path_advice(RUST_NOT_IN_PATH,
+                        cargo_home, cargo_bin)
+                sys.exit(1)
+        else:
+            print('Your version of Rust (%s) is too old.' % version)
+
+        rustup = self.which('rustup')
+        if rustup:
+            rustup_version = self._parse_version(rustup)
+            if not rustup_version:
+                print(RUSTUP_OLD)
+                sys.exit(1)
+            print('Found rustup. Will try to upgrade.')
+            self.upgrade_rust(rustup)
+
+            modern, after = self.is_rust_modern()
+            if not modern:
+                print(RUST_UPGRADE_FAILED % (MODERN_RUST_VERSION, after))
+                sys.exit(1)
+        else:
+            # No rustup. Download and run the installer.
+            print('Will try to install Rust.')
+            self.install_rust()
+
+    def upgrade_rust(self, rustup):
+        """Upgrade Rust.
+
+        Invoke rustup from the given path to update the rust install."""
+        subprocess.check_call([rustup, 'update'])
+
+    def install_rust(self):
+        """Download and run the rustup installer."""
+        import errno
+        import stat
+        import tempfile
+        platform = rust.platform()
+        url = rust.rustup_url(platform)
+        checksum = rust.rustup_hash(platform)
+        if not url or not checksum:
+            print('ERROR: Could not download installer.')
+            sys.exit(1)
+        print('Downloading rustup-init... ', end='')
+        fd, rustup_init = tempfile.mkstemp(prefix=os.path.basename(url))
+        os.close(fd)
+        try:
+            self.http_download_and_save(url, rustup_init, checksum)
+            mode = os.stat(rustup_init).st_mode
+            os.chmod(rustup_init, mode | stat.S_IRWXU)
+            print('Ok')
+            print('Running rustup-init...')
+            subprocess.check_call([rustup_init, '-y',
+                '--default-toolchain', 'stable',
+                '--default-host', platform,
+            ])
+            cargo_home, cargo_bin = self.cargo_home()
+            self.print_rust_path_advice(RUST_INSTALL_COMPLETE,
+                    cargo_home, cargo_bin)
+        finally:
+            try:
+                os.remove(rustup_init)
+            except OSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
 
     def http_download_and_save(self, url, dest, sha256hexhash):
         f = urllib2.urlopen(url)

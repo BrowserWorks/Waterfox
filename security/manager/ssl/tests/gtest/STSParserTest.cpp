@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "gtest/gtest.h"
+#include "nsDependentString.h"
 #include "nsNetUtil.h"
 #include "nsISiteSecurityService.h"
 #include "nsIURI.h"
@@ -21,7 +22,8 @@ TestSuccess(const char* hdr, bool extraTokens,
   uint64_t maxAge = 0;
   bool includeSubdomains = false;
   rv = sss->UnsafeProcessHeader(nsISiteSecurityService::HEADER_HSTS, dummyUri,
-                                hdr, 0, &maxAge, &includeSubdomains, nullptr);
+                                nsDependentCString(hdr), 0, &maxAge,
+                                &includeSubdomains, nullptr);
   ASSERT_TRUE(NS_SUCCEEDED(rv)) << "Failed to process valid header: " << hdr;
 
   ASSERT_EQ(maxAge, expectedMaxAge) << "Did not correctly parse maxAge";
@@ -46,7 +48,8 @@ void TestFailure(const char* hdr,
   ASSERT_TRUE(NS_SUCCEEDED(rv)) << "Failed to create URI";
 
   rv = sss->UnsafeProcessHeader(nsISiteSecurityService::HEADER_HSTS, dummyUri,
-                                hdr, 0, nullptr, nullptr, nullptr);
+                                nsDependentCString(hdr), 0, nullptr, nullptr,
+                                nullptr);
   ASSERT_TRUE(NS_FAILED(rv)) << "Parsed invalid header: " << hdr;
 
   printf("%s\n", hdr);
@@ -69,9 +72,9 @@ TEST(psm_STSParser, Test)
     TestSuccess("max-age  =100", false, 100, false, sss);
     TestSuccess(" max-age=100", false, 100, false, sss);
     TestSuccess("max-age = 100 ", false, 100, false, sss);
-    TestSuccess("max-age = \"100\" ", false, 100, false, sss);
-    TestSuccess("max-age=\"100\"", false, 100, false, sss);
-    TestSuccess(" max-age =\"100\" ", false, 100, false, sss);
+    TestSuccess(R"(max-age = "100" )", false, 100, false, sss);
+    TestSuccess(R"(max-age="100")", false, 100, false, sss);
+    TestSuccess(R"( max-age ="100" )", false, 100, false, sss);
     TestSuccess("\tmax-age\t=\t\"100\"\t", false, 100, false, sss);
     TestSuccess("max-age  =       100             ", false, 100, false, sss);
 
@@ -104,7 +107,7 @@ TEST(psm_STSParser, Test)
     TestSuccess("\r\n\t\t    \tcompletelyUnrelated = foobar; max-age= 34520103"
                 "\t \t; alsoUnrelated;asIsThis;\tincludeSubdomains\t\t \t",
                 true, 34520103, true, sss);
-    TestSuccess("max-age=100; unrelated=\"quoted \\\"thingy\\\"\"",
+    TestSuccess(R"(max-age=100; unrelated="quoted \"thingy\"")",
                 true, 100, false, sss);
 
     // SHOULD FAIL:
@@ -125,7 +128,7 @@ TEST(psm_STSParser, Test)
     TestFailure("max-ag=100", sss);
     TestFailure("includesubdomains", sss);
     TestFailure(";", sss);
-    TestFailure("max-age=\"100", sss);
+    TestFailure(R"(max-age="100)", sss);
     // The max-age directive here doesn't conform to the spec, so it MUST
     // be ignored. Consequently, the REQUIRED max-age directive is not
     // present in this header, and so it is invalid.

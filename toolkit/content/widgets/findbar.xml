@@ -316,7 +316,7 @@
       <field name="_observer"><![CDATA[({
         _self: this,
 
-        QueryInterface: function(aIID) {
+        QueryInterface(aIID) {
           if (aIID.equals(Components.interfaces.nsIObserver) ||
               aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
               aIID.equals(Components.interfaces.nsISupports))
@@ -325,7 +325,7 @@
           throw Components.results.NS_ERROR_NO_INTERFACE;
         },
 
-        observe: function(aSubject, aTopic, aPrefName) {
+        observe(aSubject, aTopic, aPrefName) {
           if (aTopic != "nsPref:changed")
             return;
 
@@ -366,8 +366,6 @@
         this._findStatusIcon = this.getElement("find-status-icon");
         this._findStatusDesc = this.getElement("find-status");
 
-        this._foundURL = null;
-
         let prefsvc = this._prefsvc;
 
         this._quickFindTimeoutLength =
@@ -395,17 +393,17 @@
         this._entireWord = prefsvc.getBoolPref("findbar.entireword");
         this._highlightAll = prefsvc.getBoolPref("findbar.highlightAll");
 
-        // Convenience
+        // Convenience.
         this.nsITypeAheadFind = Components.interfaces.nsITypeAheadFind;
-        this.nsISelectionController = Components.interfaces.nsISelectionController;
-        this._findSelection = this.nsISelectionController.SELECTION_FIND;
 
         this._findResetTimeout = -1;
 
         // Make sure the FAYT keypress listener is attached by initializing the
-        // browser property
+        // browser property.
         if (this.getAttribute("browserid"))
-          setTimeout(function(aSelf) { aSelf.browser = aSelf.browser; }, 0, this);
+          setTimeout(() => this.browser = this.browser, 0);
+
+        this._enableFindButtons(false);
       ]]></constructor>
 
       <destructor><![CDATA[
@@ -563,18 +561,6 @@
           this._highlightAll = aHighlight;
           let checkbox = this.getElement("highlight");
           checkbox.checked = this._highlightAll;
-        ]]></body>
-      </method>
-
-      <method name="_maybeHighlightAll">
-        <body><![CDATA[
-          let word = this._findField.value;
-          // Bug 429723. Don't attempt to highlight ""
-          if (!this._highlightAll || !word)
-            return;
-
-          this.browser.finder.highlight(true, word,
-            this._findMode == this.FIND_LINKS);
         ]]></body>
       </method>
 
@@ -804,8 +790,7 @@
                       .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
                       .getInterface(Components.interfaces.nsIXULWindow)
                       .XULBrowserWindow;
-            }
-            catch (ex) { }
+            } catch (ex) { }
             if (!this._xulBrowserWindow)
               return false;
           }
@@ -1013,7 +998,6 @@
               this._startFindDeferred = null;
             }
 
-            this._enableFindButtons(val);
             this._updateCaseSensitivity(val);
             this._setEntireWord();
 
@@ -1100,7 +1084,8 @@
         <parameter name="aFindPrevious"/>
         <body><![CDATA[
           this._updateStatusUI(aResult, aFindPrevious);
-          this._enableFindButtons(aResult !== this.nsITypeAheadFind.FIND_NOTFOUND);
+          this._enableFindButtons(aResult !== this.nsITypeAheadFind.FIND_NOTFOUND &&
+            !!this._findField.value);
         ]]></body>
       </method>
 
@@ -1119,7 +1104,6 @@
           return this.dispatchEvent(event);
         ]]></body>
       </method>
-
 
       <!--
         - Opens the findbar, focuses the findfield and selects its contents.
@@ -1286,7 +1270,7 @@
             this._findFailedString = null;
           }
 
-          this._updateStatusUI(aData.result, aData.findBackwards);
+          this.updateControlState(aData.result, aData.findBackwards);
           this._updateStatusUIBar(aData.linkURL);
 
           if (this._findMode != this.FIND_NORMAL)

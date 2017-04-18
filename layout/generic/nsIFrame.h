@@ -543,6 +543,17 @@ public:
 
   NS_DECL_QUERYFRAME_TARGET(nsIFrame)
 
+  nsIFrame()
+    : mRect()
+    , mContent(nullptr)
+    , mStyleContext(nullptr)
+    , mParent(nullptr)
+    , mNextSibling(nullptr)
+    , mPrevSibling(nullptr)
+  {
+    mozilla::PodZero(&mOverflow);
+  }
+
   nsPresContext* PresContext() const {
     return StyleContext()->PresContext();
   }
@@ -716,8 +727,9 @@ public:
   #undef STYLE_STRUCT
 
   /** Also forward GetVisitedDependentColor to the style context */
-  nscolor GetVisitedDependentColor(nsCSSPropertyID aProperty)
-    { return mStyleContext->GetVisitedDependentColor(aProperty); }
+  template<typename T, typename S>
+  nscolor GetVisitedDependentColor(T S::* aField)
+    { return mStyleContext->GetVisitedDependentColor(aField); }
 
   /**
    * These methods are to access any additional style contexts that
@@ -754,13 +766,16 @@ public:
   }
 
   /**
-   * Get the writing mode of this frame, but if it is styled with
-   * unicode-bidi: plaintext, reset the direction to the resolved paragraph
+   * Construct a writing mode for line layout in this frame.  This is
+   * the writing mode of this frame, except that if this frame is styled with
+   * unicode-bidi:plaintext, we reset the direction to the resolved paragraph
    * level of the given subframe (typically the first frame on the line),
-   * not this frame's writing mode, because the container frame could be split
-   * by hard line breaks into multiple paragraphs with different base direction.
+   * because the container frame could be split by hard line breaks into
+   * multiple paragraphs with different base direction.
+   * @param aSelfWM the WM of 'this'
    */
-  mozilla::WritingMode GetWritingMode(nsIFrame* aSubFrame) const;
+  mozilla::WritingMode WritingModeForLine(mozilla::WritingMode aSelfWM,
+                                          nsIFrame* aSubFrame) const;
 
   /**
    * Bounding rect of the frame. The values are in app units, and the origin is
@@ -1192,15 +1207,20 @@ public:
    * Indices into aRadii are the NS_CORNER_* constants in nsStyleConsts.h
    * aSkipSides is a union of SIDE_BIT_LEFT/RIGHT/TOP/BOTTOM bits that says
    * which side(s) to skip.
+   *
+   * Note: GetMarginBoxBorderRadii() and GetShapeBoxBorderRadii() work only
+   * on frames that establish block formatting contexts since they don't
+   * participate in margin-collapsing.
    */
   virtual bool GetBorderRadii(const nsSize& aFrameSize,
                               const nsSize& aBorderArea,
                               Sides aSkipSides,
                               nscoord aRadii[8]) const;
   bool GetBorderRadii(nscoord aRadii[8]) const;
-
+  bool GetMarginBoxBorderRadii(nscoord aRadii[8]) const;
   bool GetPaddingBoxBorderRadii(nscoord aRadii[8]) const;
   bool GetContentBoxBorderRadii(nscoord aRadii[8]) const;
+  bool GetShapeBoxBorderRadii(nscoord aRadii[8]) const;
 
   /**
    * XXX: this method will likely be replaced by GetVerticalAlignBaseline
@@ -2004,10 +2024,35 @@ public:
   };
 
   struct InlinePrefISizeData : public InlineIntrinsicISizeData {
-    void ForceBreak();
+    typedef mozilla::StyleClear StyleClear;
+
+    InlinePrefISizeData()
+      : mLineIsEmpty(true)
+    {}
+
+    /**
+     * Finish the current line and start a new line.
+     *
+     * @param aBreakType controls whether isize of floats are considered
+     * and what floats are kept for the next line:
+     *  * |None| skips handling floats, which means no floats are
+     *    removed, and isizes of floats are not considered either.
+     *  * |Both| takes floats into consideration when computing isize
+     *    of the current line, and removes all floats after that.
+     *  * |Left| and |Right| do the same as |Both| except that they only
+     *    remove floats on the given side, and any floats on the other
+     *    side that are prior to a float on the given side that has a
+     *    'clear' property that clears them.
+     * All other values of StyleClear must be converted to the four
+     * physical values above for this function.
+     */
+    void ForceBreak(StyleClear aBreakType = StyleClear::Both);
 
     // The default implementation for nsIFrame::AddInlinePrefISize.
     void DefaultAddInlinePrefISize(nscoord aISize);
+
+    // True if the current line contains nothing other than placeholders.
+    bool mLineIsEmpty;
   };
 
   /**
@@ -2871,14 +2916,14 @@ public:
   /**
    *  called to discover where this frame, or a parent frame has user-select style
    *  applied, which affects that way that it is selected.
-   *    
-   *  @param aIsSelectable out param. Set to true if the frame can be selected
-   *                       (i.e. is not affected by user-select: none)
+   *
    *  @param aSelectStyle  out param. Returns the type of selection style found
    *                        (using values defined in nsStyleConsts.h).
+   *
+   *  @return Whether the frame can be selected (i.e. is not affected by
+   *          user-select: none)
    */
-  virtual nsresult IsSelectable(bool* aIsSelectable,
-                            mozilla::StyleUserSelect* aSelectStyle) const = 0;
+  bool IsSelectable(mozilla::StyleUserSelect* aSelectStyle) const;
 
   /** 
    *  Called to retrieve the SelectionController associated with the frame.

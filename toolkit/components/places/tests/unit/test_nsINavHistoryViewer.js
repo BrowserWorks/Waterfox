@@ -11,19 +11,19 @@ var bmsvc = PlacesUtils.bookmarks;
 
 var resultObserver = {
   insertedNode: null,
-  nodeInserted: function(parent, node, newIndex) {
+  nodeInserted(parent, node, newIndex) {
     this.insertedNode = node;
   },
   removedNode: null,
-  nodeRemoved: function(parent, node, oldIndex) {
+  nodeRemoved(parent, node, oldIndex) {
     this.removedNode = node;
   },
 
-  nodeAnnotationChanged: function() {},
+  nodeAnnotationChanged() {},
 
   newTitle: "",
   nodeChangedByTitle: null,
-  nodeTitleChanged: function(node, newTitle) {
+  nodeTitleChanged(node, newTitle) {
     this.nodeChangedByTitle = node;
     this.newTitle = newTitle;
   },
@@ -31,7 +31,7 @@ var resultObserver = {
   newAccessCount: 0,
   newTime: 0,
   nodeChangedByHistoryDetails: null,
-  nodeHistoryDetailsChanged: function(node,
+  nodeHistoryDetailsChanged(node,
                                          updatedVisitDate,
                                          updatedVisitCount) {
     this.nodeChangedByHistoryDetails = node
@@ -40,34 +40,33 @@ var resultObserver = {
   },
 
   movedNode: null,
-  nodeMoved: function(node, oldParent, oldIndex, newParent, newIndex) {
+  nodeMoved(node, oldParent, oldIndex, newParent, newIndex) {
     this.movedNode = node;
   },
   openedContainer: null,
   closedContainer: null,
-  containerStateChanged: function (aNode, aOldState, aNewState) {
+  containerStateChanged(aNode, aOldState, aNewState) {
     if (aNewState == Ci.nsINavHistoryContainerResultNode.STATE_OPENED) {
       this.openedContainer = aNode;
-    }
-    else if (aNewState == Ci.nsINavHistoryContainerResultNode.STATE_CLOSED) {
+    } else if (aNewState == Ci.nsINavHistoryContainerResultNode.STATE_CLOSED) {
       this.closedContainer = aNode;
     }
   },
   invalidatedContainer: null,
-  invalidateContainer: function(node) {
+  invalidateContainer(node) {
     this.invalidatedContainer = node;
   },
   sortingMode: null,
-  sortingChanged: function(sortingMode) {
+  sortingChanged(sortingMode) {
     this.sortingMode = sortingMode;
   },
   inBatchMode: false,
-  batching: function(aToggleMode) {
+  batching(aToggleMode) {
     do_check_neq(this.inBatchMode, aToggleMode);
     this.inBatchMode = aToggleMode;
   },
   result: null,
-  reset: function() {
+  reset() {
     this.insertedNode = null;
     this.removedNode = null;
     this.nodeChangedByTitle = null;
@@ -109,7 +108,7 @@ add_test(function check_history_query() {
     do_check_eq(root.uri, resultObserver.nodeChangedByHistoryDetails.uri);
 
     // nsINavHistoryResultObserver.itemTitleChanged for a leaf node
-    PlacesTestUtils.addVisits({ uri: testURI, title: "baz" }).then(function () {
+    PlacesTestUtils.addVisits({ uri: testURI, title: "baz" }).then(function() {
       do_check_eq(resultObserver.nodeChangedByTitle.title, "baz");
 
       // nsINavHistoryResultObserver.nodeRemoved
@@ -135,13 +134,13 @@ add_test(function check_history_query() {
           // nsINavHistoryResultObserver.batching
           do_check_false(resultObserver.inBatchMode);
           histsvc.runInBatchMode({
-            runBatched: function (aUserData) {
+            runBatched(aUserData) {
               do_check_true(resultObserver.inBatchMode);
             }
           }, null);
           do_check_false(resultObserver.inBatchMode);
           bmsvc.runInBatchMode({
-            runBatched: function (aUserData) {
+            runBatched(aUserData) {
               do_check_true(resultObserver.inBatchMode);
             }
           }, null);
@@ -203,13 +202,13 @@ add_test(function check_bookmarks_query() {
   // nsINavHistoryResultObserver.batching
   do_check_false(resultObserver.inBatchMode);
   histsvc.runInBatchMode({
-    runBatched: function (aUserData) {
+    runBatched(aUserData) {
       do_check_true(resultObserver.inBatchMode);
     }
   }, null);
   do_check_false(resultObserver.inBatchMode);
   bmsvc.runInBatchMode({
-    runBatched: function (aUserData) {
+    runBatched(aUserData) {
       do_check_true(resultObserver.inBatchMode);
     }
   }, null);
@@ -236,13 +235,13 @@ add_test(function check_mixed_query() {
   // nsINavHistoryResultObserver.batching
   do_check_false(resultObserver.inBatchMode);
   histsvc.runInBatchMode({
-    runBatched: function (aUserData) {
+    runBatched(aUserData) {
       do_check_true(resultObserver.inBatchMode);
     }
   }, null);
   do_check_false(resultObserver.inBatchMode);
   bmsvc.runInBatchMode({
-    runBatched: function (aUserData) {
+    runBatched(aUserData) {
       do_check_true(resultObserver.inBatchMode);
     }
   }, null);

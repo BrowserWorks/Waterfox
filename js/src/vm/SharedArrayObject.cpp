@@ -165,16 +165,30 @@ SharedArrayRawBuffer::New(JSContext* cx, uint32_t length)
     return rawbuf;
 }
 
-void
+bool
 SharedArrayRawBuffer::addReference()
 {
-    MOZ_ASSERT(this->refcount_ > 0);
-    ++this->refcount_; // Atomic.
+    MOZ_RELEASE_ASSERT(this->refcount_ > 0);
+
+    // Be careful never to overflow the refcount field.
+    for (;;) {
+        uint32_t old_refcount = this->refcount_;
+        uint32_t new_refcount = old_refcount+1;
+        if (new_refcount == 0)
+            return false;
+        if (this->refcount_.compareExchange(old_refcount, new_refcount))
+            return true;
+    }
 }
 
 void
 SharedArrayRawBuffer::dropReference()
 {
+    // Normally if the refcount is zero then the memory will have been unmapped
+    // and this test may just crash, but if the memory has been retained for any
+    // reason we will catch the underflow here.
+    MOZ_RELEASE_ASSERT(this->refcount_ > 0);
+
     // Drop the reference to the buffer.
     uint32_t refcount = --this->refcount_; // Atomic.
     if (refcount)
@@ -341,28 +355,11 @@ SharedArrayBufferObject::copyData(Handle<SharedArrayBufferObject*> toBuffer,
                                               count);
 }
 
-static const ClassSpec SharedArrayBufferObjectProtoClassSpec = {
-    DELEGATED_CLASSSPEC(SharedArrayBufferObject::class_.spec),
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    ClassSpec::IsDelegated
-};
-
-static const Class SharedArrayBufferObjectProtoClass = {
-    "SharedArrayBufferPrototype",
-    JSCLASS_HAS_CACHED_PROTO(JSProto_SharedArrayBuffer),
-    JS_NULL_CLASS_OPS,
-    &SharedArrayBufferObjectProtoClassSpec
-};
-
 static JSObject*
 CreateSharedArrayBufferPrototype(JSContext* cx, JSProtoKey key)
 {
-    return cx->global()->createBlankPrototype(cx, &SharedArrayBufferObjectProtoClass);
+    return GlobalObject::createBlankPrototype(cx, cx->global(),
+                                              &SharedArrayBufferObject::protoClass_);
 }
 
 static const ClassOps SharedArrayBufferObjectClassOps = {
@@ -400,7 +397,7 @@ static const JSPropertySpec prototype_properties[] = {
     JS_PS_END
 };
 
-static const ClassSpec ArrayBufferObjectClassSpec = {
+static const ClassSpec SharedArrayBufferObjectClassSpec = {
     GenericCreateConstructor<SharedArrayBufferObject::class_constructor, 1, gc::AllocKind::FUNCTION>,
     CreateSharedArrayBufferPrototype,
     static_functions,
@@ -416,8 +413,15 @@ const Class SharedArrayBufferObject::class_ = {
     JSCLASS_HAS_CACHED_PROTO(JSProto_SharedArrayBuffer) |
     JSCLASS_BACKGROUND_FINALIZE,
     &SharedArrayBufferObjectClassOps,
-    &ArrayBufferObjectClassSpec,
+    &SharedArrayBufferObjectClassSpec,
     JS_NULL_CLASS_EXT
+};
+
+const Class SharedArrayBufferObject::protoClass_ = {
+    "SharedArrayBufferPrototype",
+    JSCLASS_HAS_CACHED_PROTO(JSProto_SharedArrayBuffer),
+    JS_NULL_CLASS_OPS,
+    &SharedArrayBufferObjectClassSpec
 };
 
 bool

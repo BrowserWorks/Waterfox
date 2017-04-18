@@ -67,13 +67,20 @@ In the item, this looks like:
         by-test-platform:
             linux64/debug: 12
             linux64/opt: 8
+            android.*: 14
             default: 10
 
 This is a simple but powerful way to encode business rules in the items
 provided as input to the transforms, rather than expressing those rules in the
 transforms themselves.  If you are implementing a new business rule, prefer
 this mode where possible.  The structure is easily resolved to a single value
-using :func:`taskgraph.transform.base.get_keyed_by`.
+using :func:`taskgraph.transform.base.resolve_keyed_by`.
+
+Exact matches are used immediately.  If no exact matches are found, each
+alternative is treated as a regular expression, matched against the whole
+value.  Thus ``android.*`` would match ``android-api-15/debug``.  If nothing
+matches as a regular expression, but there is a ``default`` alternative, it is
+used.  Otherwise, an exception is raised and graph generation stops.
 
 Organization
 -------------
@@ -93,40 +100,17 @@ suitable for ``queue.createTask``.
 Test Descriptions
 -----------------
 
-The transforms configured for test kinds proceed as follows, based on
-configuration in ``kind.yml``:
+Test descriptions specify how to run a unittest or talos run.  They aim to
+describe this abstractly, although in many cases the unique nature of
+invocation on different platforms leaves a lot of specific behavior in the test
+description, divided by ``by-test-platform``.
 
- * The test description is validated to conform to the schema in
-   ``taskcluster/taskgraph/transforms/tests/test_description.py``.  This schema
-   is extensively documented and is a the primary reference for anyone
-   modifying tests.
+Test descriptions are validated to conform to the schema in
+``taskcluster/taskgraph/transforms/tests.py``.  This schema is extensively
+documented and is a the primary reference for anyone modifying tests.
 
- * Kind-specific transformations are applied.  These may apply default
-   settings, split tests (e.g., one to run with feature X enabled, one with it
-   disabled), or apply across-the-board business rules such as "all desktop
-   debug test platforms should have a max-run-time of 5400s".
-
- * Transformations generic to all tests are applied.  These apply policies
-   which apply to multiple kinds, e.g., for treeherder tiers.  This is also the
-   place where most values which differ based on platform are resolved, and
-   where chunked tests are split out into a test per chunk.
-
- * The test is again validated against the same schema.  At this point it is
-   still a test description, just with defaults and policies applied, and
-   per-platform options resolved.  So transforms up to this point do not modify
-   the "shape" of the test description, and are still governed by the schema in
-   ``test_description.py``.
-
- * The ``taskgraph.transforms.tests.make_task_description:transforms`` then
-   take the test description and create a *task* description.  This transform
-   embodies the specifics of how test runs work: invoking mozharness, various
-   worker options, and so on.
-
- * Finally, the ``taskgraph.transforms.task:transforms``, described above
-   under "Task-Generation Transforms", are applied.
-
-Test dependencies are produced in the form of a dictionary mapping dependency
-name to task label.
+The output of ``tests.py`` is a task description.  Test dependencies are
+produced in the form of a dictionary mapping dependency name to task label.
 
 Job Descriptions
 ----------------
@@ -140,14 +124,26 @@ The remainder of the run section is specific to the run-using implementation.
 The effect of a job description is to say "run this thing on this worker".  The
 job description must contain enough information about the worker to identify
 the workerType and the implementation (docker-worker, generic-worker, etc.).
-Any other task-description information is passed along verbatim, although it is
-augmented by the run-using implementation.
+Alternatively, job descriptions can specify the ``platforms`` field in
+conjunction with the  ``by-platform`` key to specify multiple workerTypes and
+implementations. Any other task-description information is passed along
+verbatim, although it is augmented by the run-using implementation.
 
 The run-using implementations are all located in
 ``taskcluster/taskgraph/transforms/job``, along with the schemas for their
 implementations.  Those well-commented source files are the canonical
 documentation for what constitutes a job description, and should be considered
 part of the documentation.
+
+following ``run-using`` are available
+
+  * ``hazard``
+  * ``mach``
+  * ``mozharness``
+  * ``run-task``
+  * ``spidermonkey`` or ``spidermonkey-package`` or ``spidermonkey-mozjs-crate``
+  * ``toolchain-script``
+
 
 Task Descriptions
 -----------------
@@ -189,6 +185,21 @@ its payload format.
 The ``task.py`` file also contains a dictionary mapping treeherder groups to
 group names using an internal list of group names.  Feel free to add additional
 groups to this list as necessary.
+
+Signing Descriptions
+--------------------
+
+Signing kinds are passed a single dependent job (from its kind dependency) to act
+on.
+
+The transforms in ``taskcluster/taskgraph/transforms/signing.py`` implement
+this common functionality.  They expect a "signing description", and produce a
+task definition.  The schema for a signing description is defined at the top of
+``signing.py``, with copious comments.
+
+In particular you define a set of upstream artifact urls (that point at the dependent
+task) and can optionally provide a dependent name (defaults to build) for use in
+task-reference. You also need to provide the signing formats to use.
 
 More Detail
 -----------

@@ -8,13 +8,9 @@ add_task(function* test_displayURI() {
     gBrowser,
     url: "https://test1.example.com/",
   }, function*(browser) {
-    let popupShownPromise = new Promise((resolve, reject) => {
-      onPopupEvent("popupshown", function() {
-        resolve(this);
-      });
-    });
+    let popupShownPromise = waitForNotificationPanel();
     yield ContentTask.spawn(browser, null, function*() {
-      content.navigator.geolocation.getCurrentPosition(function (pos) {
+      content.navigator.geolocation.getCurrentPosition(function(pos) {
         // Do nothing
       });
     });

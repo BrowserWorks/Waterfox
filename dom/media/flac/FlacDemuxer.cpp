@@ -60,7 +60,7 @@ public:
   // bytes.
   bool Parse(const uint8_t* aPacket)
   {
-    mp4_demuxer::BitReader br(aPacket, FLAC_MAX_FRAME_HEADER_SIZE);
+    mp4_demuxer::BitReader br(aPacket, FLAC_MAX_FRAME_HEADER_SIZE * 8);
 
     // Frame sync code.
     if ((br.ReadBits(15) & 0x7fff) != 0x7ffc) {
@@ -722,7 +722,7 @@ FlacTrackDemuxer::IsSeekable() const
 }
 
 RefPtr<FlacTrackDemuxer::SeekPromise>
-FlacTrackDemuxer::Seek(TimeUnit aTime)
+FlacTrackDemuxer::Seek(const TimeUnit& aTime)
 {
   // Efficiently seek to the position.
   FastSeek(aTime);
@@ -895,7 +895,7 @@ FlacTrackDemuxer::Reset()
 }
 
 RefPtr<FlacTrackDemuxer::SkipAccessPointPromise>
-FlacTrackDemuxer::SkipToNextRandomAccessPoint(TimeUnit aTimeThreshold)
+FlacTrackDemuxer::SkipToNextRandomAccessPoint(const TimeUnit& aTimeThreshold)
 {
   // Will not be called for audio-only resources.
   return SkipAccessPointPromise::CreateAndReject(

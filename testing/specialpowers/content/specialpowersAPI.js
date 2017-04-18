@@ -1316,13 +1316,11 @@ SpecialPowersAPI.prototype = {
   },
   addAutoCompletePopupEventListener: function(window, eventname, listener) {
     this._getAutoCompletePopup(window).addEventListener(eventname,
-                                                        listener,
-                                                        false);
+                                                        listener);
   },
   removeAutoCompletePopupEventListener: function(window, eventname, listener) {
     this._getAutoCompletePopup(window).removeEventListener(eventname,
-                                                           listener,
-                                                           false);
+                                                           listener);
   },
   get formHistory() {
     let tmp = {};
@@ -1772,24 +1770,14 @@ SpecialPowersAPI.prototype = {
 
     if (typeof(arg) == "string") {
       // It's an URL.
-      let uri = Services.io.newURI(arg, null, null);
+      let uri = Services.io.newURI(arg);
       principal = secMan.createCodebasePrincipal(uri, {});
-    } else if (arg.manifestURL) {
-      // It's a thing representing an app.
-      let appsSvc = Cc["@mozilla.org/AppsService;1"]
-                      .getService(Ci.nsIAppsService)
-      let app = appsSvc.getAppByManifestURL(arg.manifestURL);
-      if (!app) {
-        throw "No app for this manifest!";
-      }
-
-      principal = app.principal;
     } else if (arg.nodePrincipal) {
       // It's a document.
       // In some tests the arg is a wrapped DOM element, so we unwrap it first.
       principal = unwrapIfWrapped(arg).nodePrincipal;
     } else {
-      let uri = Services.io.newURI(arg.url, null, null);
+      let uri = Services.io.newURI(arg.url);
       let attrs = arg.originAttributes || {};
       principal = secMan.createCodebasePrincipal(uri, attrs);
     }

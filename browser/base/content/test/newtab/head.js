@@ -67,7 +67,7 @@ if (screenWidth < gBrowser.contentWindow.outerWidth) {
        ". That may cause problems.");
 }
 
-registerCleanupFunction(function () {
+registerCleanupFunction(function() {
   while (gWindow.gBrowser.tabs.length > 1)
     gWindow.gBrowser.removeTab(gWindow.gBrowser.tabs[1]);
 
@@ -91,8 +91,7 @@ registerCleanupFunction(function () {
 });
 
 function pushPrefs(...aPrefs) {
-  return new Promise(resolve =>
-                     SpecialPowers.pushPrefEnv({"set": aPrefs}, resolve));
+  return SpecialPowers.pushPrefEnv({"set": aPrefs});
 }
 
 /**
@@ -171,7 +170,7 @@ function setLinks(aLinks) {
     let links = aLinks;
 
     if (typeof links == "string") {
-      links = aLinks.split(/\s*,\s*/).map(function (id) {
+      links = aLinks.split(/\s*,\s*/).map(function(id) {
         return {url: "http://example" + (id != "-1" ? id : "") + ".com/",
                 title: "site#" + id};
       });
@@ -181,10 +180,10 @@ function setLinks(aLinks) {
     // currently in progress has ended. We clear the history, fill it with the
     // given entries and call populateCache() now again to make sure the cache
     // has the desired contents.
-    NewTabUtils.links.populateCache(function () {
+    NewTabUtils.links.populateCache(function() {
       PlacesTestUtils.clearHistory().then(() => {
         fillHistory(links).then(() => {
-          NewTabUtils.links.populateCache(function () {
+          NewTabUtils.links.populateCache(function() {
             NewTabUtils.allPages.update();
             resolve();
           }, true);
@@ -221,8 +220,8 @@ function fillHistory(aLinks) {
 
       PlacesUtils.asyncHistory.updatePlaces(place, {
         handleError: () => ok(false, "couldn't add visit to history"),
-        handleResult: function () {},
-        handleCompletion: function () {
+        handleResult() {},
+        handleCompletion() {
           if (--numLinks == 0) {
             resolve();
           }
@@ -245,7 +244,7 @@ function setPinnedLinks(aLinks) {
   let links = aLinks;
 
   if (typeof links == "string") {
-    links = aLinks.split(/\s*,\s*/).map(function (id) {
+    links = aLinks.split(/\s*,\s*/).map(function(id) {
       if (id)
         return {url: "http://example" + (id != "-1" ? id : "") + ".com/",
                 title: "site#" + id,
@@ -277,7 +276,7 @@ function restore() {
 /**
  * Wait until a given condition becomes true.
  */
-function waitForCondition(aConditionFn, aMaxTries=50, aCheckInterval=100) {
+function waitForCondition(aConditionFn, aMaxTries = 50, aCheckInterval = 100) {
   return new Promise((resolve, reject) => {
     let tries = 0;
 
@@ -314,7 +313,7 @@ function* addNewTabPageTab() {
   yield new Promise(resolve => {
     if (NewTabUtils.allPages.enabled) {
       // Continue when the link cache has been populated.
-      NewTabUtils.links.populateCache(function () {
+      NewTabUtils.links.populateCache(function() {
         whenSearchInitDone().then(resolve);
       });
     } else {
@@ -342,7 +341,7 @@ function* checkGrid(pattern) {
     let grid = content.wrappedJSObject.gGrid;
 
     let sites = grid.sites.slice(0, args.length);
-    let foundPattern = sites.map(function (aSite) {
+    let foundPattern = sites.map(function(aSite) {
       if (!aSite)
         return "";
 
@@ -464,7 +463,7 @@ function whenPagesUpdated() {
     };
 
     NewTabUtils.allPages.register(page);
-    registerCleanupFunction(function () {
+    registerCleanupFunction(function() {
       NewTabUtils.allPages.unregister(page);
     });
   });
@@ -492,7 +491,6 @@ function whenSearchInitDone() {
             // Wait for the search controller to receive the event, then resolve.
             if (content.gSearch._contentSearchController.defaultEngine) {
               resolve();
-              return;
             }
           }
           content.setTimeout(resolver, 0);
@@ -509,7 +507,7 @@ function whenSearchInitDone() {
  *        Can be any of("blank"|"classic"|"enhanced")
  */
 function customizeNewTabPage(aTheme) {
-  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, aTheme, function*(aTheme) {
+  return ContentTask.spawn(gWindow.gBrowser.selectedBrowser, aTheme, function*(contentTheme) {
 
     let document = content.document;
     let panel = document.getElementById("newtab-customize-panel");
@@ -520,7 +518,7 @@ function customizeNewTabPage(aTheme) {
         let options = {attributes: true, oldValue: true};
         let observer = new content.MutationObserver(function(mutations) {
           mutations.forEach(function(mutation) {
-            document.getElementById("newtab-customize-" + aTheme).click();
+            document.getElementById("newtab-customize-" + contentTheme).click();
             observer.disconnect();
             if (opened == panel.hasAttribute("open")) {
               resolve();

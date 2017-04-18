@@ -8,8 +8,10 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
 
+Cu.import("chrome://marionette/content/assert.js");
 Cu.import("chrome://marionette/content/atom.js");
 Cu.import("chrome://marionette/content/error.js");
+Cu.import("chrome://marionette/content/wait.js");
 
 const logger = Log.repository.getLogger("Marionette");
 
@@ -173,14 +175,18 @@ element.Store = class {
     if (container.shadowRoot) {
       wrappedShadowRoot = new XPCNativeWrapper(container.shadowRoot);
     }
-
     let wrappedEl = new XPCNativeWrapper(el);
+    let wrappedContainer = {
+      frame: wrappedFrame,
+      shadowRoot: wrappedShadowRoot,
+    };
     if (!el ||
         !(wrappedEl.ownerDocument == wrappedFrame.document) ||
-        element.isDisconnected(wrappedEl, wrappedFrame, wrappedShadowRoot)) {
+        element.isDisconnected(wrappedEl, wrappedContainer)) {
       throw new StaleElementReferenceError(
-          "The element reference is stale. Either the element " +
-          "is no longer attached to the DOM or the page has been refreshed.");
+          error.pprint`The element reference of ${el} stale: ` +
+              "either the element is no longer attached to the DOM " +
+              "or the page has been refreshed");
     }
 
     return el;
@@ -246,9 +252,14 @@ element.find = function (container, strategy, selector, opts = {}) {
   }
 
   return new Promise((resolve, reject) => {
-    let findElements = implicitlyWaitFor(
-        () => find_(container, strategy, selector, searchFn, opts),
-        opts.timeout);
+    let findElements = wait.until((resolve, reject) => {
+      let res = find_(container, strategy, selector, searchFn, opts);
+      if (res.length > 0) {
+        resolve(Array.from(res));
+      } else {
+        reject([]);
+      }
+    }, opts.timeout);
 
     findElements.then(foundEls => {
       // the following code ought to be moved into findElement
@@ -329,7 +340,7 @@ function find_(container, strategy, selector, searchFn, opts) {
  */
 element.findByXPath = function (root, startNode, expr) {
   let iter = root.evaluate(expr, startNode, null,
-      Ci.nsIDOMXPathResult.FIRST_ORDERED_NODE_TYPE, null)
+      Ci.nsIDOMXPathResult.FIRST_ORDERED_NODE_TYPE, null);
   return iter.singleNodeValue;
 };
 
@@ -477,6 +488,7 @@ function findElement(using, value, rootNode, startNode) {
       } catch (e) {
         throw new InvalidSelectorError(`${e.message}: "${value}"`);
       }
+      break;
 
     case element.Strategy.Anon:
       return rootNode.getAnonymousNodes(startNode);
@@ -488,7 +500,7 @@ function findElement(using, value, rootNode, startNode) {
     default:
       throw new InvalidSelectorError(`No such strategy: ${using}`);
   }
-};
+}
 
 /**
  * Find multiple elements.
@@ -554,82 +566,6 @@ function findElements(using, value, rootNode, startNode) {
     default:
       throw new InvalidSelectorError(`No such strategy: ${using}`);
   }
-}
-
-/**
- * Runs function off the main thread until its return value is truthy
- * or the provided timeout is reached.  The function is guaranteed to be
- * run at least once, irregardless of the timeout.
- *
- * A truthy return value constitutes a truthful boolean, positive number,
- * object, or non-empty array.
- *
- * The |func| is evaluated every |interval| for as long as its runtime
- * duration does not exceed |interval|.  If the runtime evaluation duration
- * of |func| is greater than |interval|, evaluations of |func| are queued.
- *
- * @param {function(): ?} func
- *     Function to run off the main thread.
- * @param {number} timeout
- *     Desired timeout.  If 0 or less than the runtime evaluation time
- *     of |func|, |func| is guaranteed to run at least once.
- * @param {number=} interval
- *     Duration between each poll of |func| in milliseconds.  Defaults to
- *     100 milliseconds.
- *
- * @return {Promise}
- *     Yields the return value from |func|.  The promise is rejected if
- *     |func| throws.
- */
-function implicitlyWaitFor(func, timeout, interval = 100) {
-  let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-
-  return new Promise((resolve, reject) => {
-    let startTime = new Date().getTime();
-    let endTime = startTime + timeout;
-
-    let elementSearch = function() {
-      let res;
-      try {
-        res = func();
-      } catch (e) {
-        reject(e);
-      }
-
-      if (
-        // collections that might contain web elements
-        // should be checked until they are not empty
-        (element.isCollection(res) && res.length > 0)
-
-        // !![] (ensuring boolean type on empty array) always returns true
-        // and we can only use it on non-collections
-        || (!element.isCollection(res) && !!res)
-
-        // return immediately if timeout is 0,
-        // allowing |func| to be evaluted at least once
-        || startTime == endTime
-
-        // return if timeout has elapsed
-        || new Date().getTime() >= endTime
-      ) {
-        resolve(res);
-      }
-    };
-
-    // the repeating slack timer waits |interval|
-    // before invoking |elementSearch|
-    elementSearch();
-
-    timer.init(elementSearch, interval, Ci.nsITimer.TYPE_REPEATING_SLACK);
-
-  // cancel timer and propagate result
-  }).then(res => {
-    timer.cancel();
-    return res;
-  }, err => {
-    timer.cancel();
-    throw err;
-  });
 }
 
 /** Determines if |obj| is an HTML or JS collection. */
@@ -792,18 +728,19 @@ element.toJson = function (obj, seenEls) {
  *
  * @param {nsIDOMElement} el
  *     Element to be checked.
- * @param {nsIDOMWindow} frame
- *     Window object that contains the element or the current host
- *     of the shadow root.
- * @param {ShadowRoot=} shadowRoot
- *     An optional shadow root containing an element.
+ * @param {Container} container
+ *     Container with |frame|, which is the window object that contains
+ *     the element, and an optional |shadowRoot|.
  *
  * @return {boolean}
  *     Flag indicating that the element is disconnected.
  */
-element.isDisconnected = function (el, frame, shadowRoot = undefined) {
+element.isDisconnected = function (el, container = {}) {
+  const {frame, shadowRoot} = container;
+  assert.defined(frame);
+
   // shadow dom
-  if (shadowRoot && frame.ShadowRoot) {
+  if (frame.ShadowRoot && shadowRoot) {
     if (el.compareDocumentPosition(shadowRoot) &
         DOCUMENT_POSITION_DISCONNECTED) {
       return true;
@@ -814,7 +751,9 @@ element.isDisconnected = function (el, frame, shadowRoot = undefined) {
     while (parent && !(parent instanceof frame.ShadowRoot)) {
       parent = parent.parentNode;
     }
-    return element.isDisconnected(shadowRoot.host, frame, parent);
+    return element.isDisconnected(
+        shadowRoot.host,
+        {frame: frame, shadowRoot: parent});
 
   // outside shadow dom
   } else {
@@ -898,13 +837,69 @@ element.inViewport = function (el, x = undefined, y = undefined) {
 };
 
 /**
+ * Gets the element's container element.
+ *
+ * An element container is defined by the WebDriver
+ * specification to be an <option> element in a valid element context
+ * (https://html.spec.whatwg.org/#concept-element-contexts), meaning
+ * that it has an ancestral element that is either <datalist> or <select>.
+ *
+ * If the element does not have a valid context, its container element
+ * is itself.
+ *
+ * @param {Element} el
+ *     Element to get the container of.
+ *
+ * @return {Element}
+ *     Container element of |el|.
+ */
+element.getContainer = function (el) {
+  if (el.localName != "option") {
+    return el;
+  }
+
+  function validContext(ctx) {
+    return ctx.localName == "datalist" || ctx.localName == "select";
+  }
+
+  // does <option> have a valid context,
+  // meaning is it a child of <datalist> or <select>?
+  let parent = el;
+  while (parent.parentNode && !validContext(parent)) {
+    parent = parent.parentNode;
+  }
+
+  if (!validContext(parent)) {
+    return el;
+  }
+  return parent;
+};
+
+/**
+ * An element is in view if it is a member of its own pointer-interactable
+ * paint tree.
+ *
+ * This means an element is considered to be in view, but not necessarily
+ * pointer-interactable, if it is found somewhere in the
+ * |elementsFromPoint| list at |el|'s in-view centre coordinates.
+ *
+ * @param {Element} el
+ *     Element to check if is in view.
+ *
+ * @return {boolean}
+ *     True if |el| is inside the viewport, or false otherwise.
+ */
+element.isInView = function (el) {
+  let tree = element.getPointerInteractablePaintTree(el);
+  return tree.includes(el);
+};
+
+/**
  * This function throws the visibility of the element error if the element is
  * not displayed or the given coordinates are not within the viewport.
  *
- * @param {Element} element
+ * @param {Element} el
  *     Element to check if visible.
- * @param {Window} window
- *     Window object.
  * @param {number=} x
  *     Horizontal offset relative to target.  Defaults to the centre of
  *     the target's bounding box.
@@ -936,11 +931,6 @@ element.isVisible = function (el, x = undefined, y = undefined) {
   return true;
 };
 
-element.isInteractable = function (el) {
-  return element.isPointerInteractable(el) ||
-      element.isKeyboardInteractable(el);
-};
-
 /**
  * A pointer-interactable element is defined to be the first
  * non-transparent element, defined by the paint order found at the centre
@@ -954,7 +944,7 @@ element.isInteractable = function (el) {
  *     True if interactable, false otherwise.
  */
 element.isPointerInteractable = function (el) {
-  let tree = element.getInteractableElementTree(el, el.ownerDocument);
+  let tree = element.getPointerInteractablePaintTree(el);
   return tree[0] === el;
 };
 
@@ -998,17 +988,16 @@ element.getInViewCentrePoint = function (rect, win) {
  *
  * @param {DOMElement} el
  *     Element to determine if is pointer-interactable.
- * @param {DOMDocument} doc
- *     Current browsing context's active document.
  *
  * @return {Array.<DOMElement>}
- *     Sequence of non-opaque elements in paint order.
+ *     Sequence of elements in paint order.
  */
-element.getInteractableElementTree = function (el, doc) {
-  let win = doc.defaultView;
+element.getPointerInteractablePaintTree = function (el) {
+  const doc = el.ownerDocument;
+  const win = doc.defaultView;
 
   // pointer-interactable elements tree, step 1
-  if (element.isDisconnected(el, win)) {
+  if (element.isDisconnected(el, {frame: win})) {
     return [];
   }
 
@@ -1022,10 +1011,7 @@ element.getInteractableElementTree = function (el, doc) {
   let centre = element.getInViewCentrePoint(rects[0], win);
 
   // step 5
-  let tree = doc.elementsFromPoint(centre.x, centre.y);
-
-  // only visible elements are considered interactable
-  return tree.filter(el => win.getComputedStyle(el).opacity === "1");
+  return doc.elementsFromPoint(centre.x, centre.y);
 };
 
 // TODO(ato): Not implemented.

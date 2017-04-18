@@ -36,6 +36,7 @@ class UpdateTestCase(PuppeteerMixin, MarionetteTestCase):
 
         self.update_channel = kwargs.pop('update_channel')
         self.update_mar_channels = set(kwargs.pop('update_mar_channels'))
+        self.update_url = kwargs.pop('update_url')
 
         self.target_buildid = kwargs.pop('update_target_buildid')
         self.target_version = kwargs.pop('update_target_version')
@@ -73,6 +74,8 @@ class UpdateTestCase(PuppeteerMixin, MarionetteTestCase):
 
         # Ensure that there exists no already partially downloaded update
         self.remove_downloaded_update()
+
+        self.set_preferences_defaults()
 
         # Dictionary which holds the information for each update
         self.updates = [{
@@ -319,7 +322,6 @@ class UpdateTestCase(PuppeteerMixin, MarionetteTestCase):
 
                 # Start downloading the fallback update
                 self.download_update(dialog)
-                dialog.close()
 
             finally:
                 self.updates[self.current_update_index]['patch'] = self.patch_info
@@ -346,6 +348,18 @@ class UpdateTestCase(PuppeteerMixin, MarionetteTestCase):
         path = os.path.dirname(self.software_update.staging_directory)
         self.logger.info('Clean-up update staging directory: {}'.format(path))
         mozfile.remove(path)
+
+    def restart(self, *args, **kwargs):
+        super(UpdateTestCase, self).restart(*args, **kwargs)
+
+        # After a restart default preference values as set in the former session are lost.
+        # Make sure that any of those are getting restored.
+        self.set_preferences_defaults()
+
+    def set_preferences_defaults(self):
+        """Set the default value for specific preferences to force its usage."""
+        if self.update_url:
+            self.software_update.update_url = self.update_url
 
     def wait_for_download_finished(self, window, timeout=TIMEOUT_UPDATE_DOWNLOAD):
         """ Waits until download is completed.

@@ -145,8 +145,11 @@ typedef enum {
   MOZ_GTK_ENTRY,
   /* Paints a GtkExpander. */
   MOZ_GTK_EXPANDER,
-  /* Paints a GtkTextView. */
+  /* Paints a GtkTextView or gets the style context corresponding to the
+     root node of a GtkTextView. */
   MOZ_GTK_TEXT_VIEW,
+  /* The "text" window or node of a GtkTextView */
+  MOZ_GTK_TEXT_VIEW_TEXT,
   /* Paints a GtkOptionMenu. */
   MOZ_GTK_DROPDOWN,
   /* Paints a dropdown arrow (a GtkButton containing a down GtkArrow). */
@@ -160,11 +163,15 @@ typedef enum {
   MOZ_GTK_TOOLBAR_SEPARATOR,
   /* Paints a GtkToolTip */
   MOZ_GTK_TOOLTIP,
+  /* Paints a GtkBox from GtkToolTip  */
+  MOZ_GTK_TOOLTIP_BOX,
+  /* Paints a GtkLabel of GtkToolTip */
+  MOZ_GTK_TOOLTIP_BOX_LABEL,
   /* Paints a GtkFrame (e.g. a status bar panel). */
   MOZ_GTK_FRAME,
   /* Paints the border of a GtkFrame */
   MOZ_GTK_FRAME_BORDER,
-  /* Paints a resize grip for a GtkWindow */
+  /* Paints a resize grip for a GtkTextView */
   MOZ_GTK_RESIZER,
   /* Paints a GtkProgressBar. */
   MOZ_GTK_PROGRESSBAR,
@@ -210,11 +217,13 @@ typedef enum {
   MOZ_GTK_MENUBARITEM,
   /* Paints items of popup menus. */
   MOZ_GTK_MENUITEM,
-  MOZ_GTK_IMAGEMENUITEM,
-  MOZ_GTK_CHECKMENUITEM_CONTAINER,
-  MOZ_GTK_RADIOMENUITEM_CONTAINER,
+  /* Paints a menuitem with check indicator, or the gets the style context for
+     a menuitem that contains a checkbox. */
   MOZ_GTK_CHECKMENUITEM,
+  /* Gets the style context for a checkbox in a check menuitem. */
+  MOZ_GTK_CHECKMENUITEM_INDICATOR,
   MOZ_GTK_RADIOMENUITEM,
+  MOZ_GTK_RADIOMENUITEM_INDICATOR,
   MOZ_GTK_MENUSEPARATOR,
   /* GtkVPaned base class */
   MOZ_GTK_SPLITTER_HORIZONTAL,

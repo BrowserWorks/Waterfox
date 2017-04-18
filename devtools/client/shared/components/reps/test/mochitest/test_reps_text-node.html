@@ -1,0 +1,146 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE HTML>
+<html>
+<!--
+Test text-node rep
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Rep test - text-node</title>
+  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
+</head>
+<body>
+<pre id="test">
+<script src="head.js" type="application/javascript;version=1.8"></script>
+<script type="application/javascript;version=1.8">
+"use strict";
+
+window.onload = Task.async(function* () {
+  let { Rep } = browserRequire("devtools/client/shared/components/reps/rep");
+  let { TextNode } = browserRequire("devtools/client/shared/components/reps/text-node");
+  const { MODE } = browserRequire("devtools/client/shared/components/reps/constants");
+
+  let gripStubs = new Map();
+  gripStubs.set("testRendering", {
+    "class": "Text",
+    "actor": "server1.conn1.child1/obj50",
+    "preview": {
+      "textContent": "hello world"
+    }
+  });
+  gripStubs.set("testRenderingWithEOL", {
+    "class": "Text",
+    "actor": "server1.conn1.child1/obj50",
+    "preview": {
+      "textContent": "hello\nworld"
+    }
+  });
+
+  try {
+    // Test that correct rep is chosen
+    const renderedRep = shallowRenderComponent(Rep, {
+      object: gripStubs.get("testRendering")
+    });
+
+    is(renderedRep.type, TextNode.rep,
+      `Rep correctly selects ${TextNode.rep.displayName}`);
+
+    yield testRendering();
+    yield testRenderingWithEOL();
+
+    yield testOnMouseOver();
+    yield testOnMouseOut();
+  } catch (e) {
+    ok(false, "Got an error: " + DevToolsUtils.safeErrorString(e));
+  } finally {
+    SimpleTest.finish();
+  }
+
+  function testRendering() {
+    const stub = gripStubs.get("testRendering");
+    const defaultOutput = `#text "hello world"`;
+
+    const modeTests = [
+      {
+        mode: undefined,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: "#text",
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: defaultOutput,
+      }
+    ];
+
+    testRepRenderModes(modeTests, "testRendering", TextNode, stub);
+  }
+
+  function testRenderingWithEOL() {
+    const stub = gripStubs.get("testRenderingWithEOL");
+    const defaultOutput = `#text "hello\nworld"`;
+
+    const modeTests = [
+      {
+        mode: undefined,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.TINY,
+        expectedOutput: "#text",
+      },
+      {
+        mode: MODE.SHORT,
+        expectedOutput: defaultOutput,
+      },
+      {
+        mode: MODE.LONG,
+        expectedOutput: defaultOutput,
+      }
+    ];
+
+    testRepRenderModes(modeTests, "testRenderingWithEOL", TextNode, stub);
+  }
+
+  function testOnMouseOver() {
+    const stub = gripStubs.get("testRendering");
+
+    let mouseOverValue;
+    let onDOMNodeMouseOver = (object) => {
+      mouseOverValue = object;
+    };
+    const renderedComponent = renderComponent(
+      TextNode.rep, {object: stub, onDOMNodeMouseOver});
+
+    TestUtils.Simulate.mouseOver(renderedComponent);
+    is(mouseOverValue, stub, "onDOMNodeMouseOver is called with the expected argument " +
+      "when mouseover is fired on the Rep");
+  }
+
+  function testOnMouseOut() {
+    const stub = gripStubs.get("testRendering");
+
+    let called = false;
+    let onDOMNodeMouseOut = (object) => {
+      called = true;
+    };
+    const renderedComponent = renderComponent(
+      TextNode.rep, {object: stub, onDOMNodeMouseOut});
+
+    TestUtils.Simulate.mouseOut(renderedComponent);
+    is(called, true, "onDOMNodeMouseOut is called when mouseout is fired on the Rep");
+  }
+});
+</script>
+</pre>
+</body>
+</html>

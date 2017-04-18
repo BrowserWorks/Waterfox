@@ -13,6 +13,7 @@
 
 #include "js/CharacterEncoding.h"
 #include "js/GCVector.h"
+#include "js/Result.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
 #include "vm/Caches.h"
@@ -315,6 +316,30 @@ class ExclusiveContext : public ContextFriendFields,
     bool addPendingCompileError(frontend::CompileError** err);
     void addPendingOverRecursed();
     void addPendingOutOfMemory();
+
+  private:
+    static JS::Error reportedError;
+    static JS::OOM reportedOOM;
+
+  public:
+    inline JS::Result<> boolToResult(bool ok);
+
+    /**
+     * Intentionally awkward signpost method that is stationed on the
+     * boundary between Result-using and non-Result-using code.
+     */
+    template <typename V, typename E>
+    bool resultToBool(JS::Result<V, E> result) {
+        return result.isOk();
+    }
+
+    template <typename V, typename E>
+    V* resultToPtr(JS::Result<V*, E> result) {
+        return result.isOk() ? result.unwrap() : nullptr;
+    }
+
+    mozilla::GenericErrorResult<JS::OOM&> alreadyReportedOOM();
+    mozilla::GenericErrorResult<JS::Error&> alreadyReportedError();
 };
 
 void ReportOverRecursed(JSContext* cx, unsigned errorNumber);
@@ -451,9 +476,6 @@ struct JSContext : public js::ExclusiveContext,
      */
     bool asyncCallIsExplicit;
 
-    /* Whether this context has JS frames on the stack. */
-    bool currentlyRunning() const;
-
     bool currentlyRunningInInterpreter() const {
         return activation()->isInterpreter();
     }
@@ -490,7 +512,7 @@ struct JSContext : public js::ExclusiveContext,
     }
 
   public:
-    bool isExceptionPending() {
+    bool isExceptionPending() const {
         return throwing;
     }
 
@@ -522,7 +544,7 @@ struct JSContext : public js::ExclusiveContext,
 
     JS_FRIEND_API(size_t) sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 
-    void mark(JSTracer* trc);
+    void trace(JSTracer* trc);
 
   private:
     /*
@@ -535,6 +557,17 @@ struct JSContext : public js::ExclusiveContext,
 }; /* struct JSContext */
 
 namespace js {
+
+inline JS::Result<>
+ExclusiveContext::boolToResult(bool ok)
+{
+    if (MOZ_LIKELY(ok)) {
+        MOZ_ASSERT_IF(isJSContext(), !asJSContext()->isExceptionPending());
+        MOZ_ASSERT_IF(isJSContext(), !asJSContext()->isPropagatingForcedReturn());
+        return JS::Ok();
+    }
+    return JS::Result<>(reportedError);
+}
 
 struct MOZ_RAII AutoResolving {
   public:

@@ -35,8 +35,7 @@ let gFileCounter = Math.floor(Math.random() * 1000000);
  *       operation in the file system may still be pending, preventing a new
  *       file with the same name to be created.
  */
-function getTempFile(aLeafName)
-{
+function getTempFile(aLeafName) {
   // Prepend a serial number to the extension in the suggested leaf name.
   let [base, ext] = DownloadPaths.splitBaseNameAndExtension(aLeafName);
   let leafName = base + "-" + gFileCounter + ext;
@@ -46,7 +45,7 @@ function getTempFile(aLeafName)
   let file = FileUtils.getFile("TmpD", [leafName]);
   do_check_false(file.exists());
 
-  do_register_cleanup(function () {
+  do_register_cleanup(function() {
     if (file.exists()) {
       file.remove(false);
     }
@@ -68,8 +67,7 @@ const TEST_DATA = {
 
 // Tests
 
-add_task(function* test_save_reload()
-{
+add_task(function* test_save_reload() {
   let storeForSave = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path,
   });
@@ -99,8 +97,7 @@ add_task(function* test_save_reload()
   Assert.deepEqual(storeForLoad.data, TEST_DATA);
 });
 
-add_task(function* test_load_sync()
-{
+add_task(function* test_load_sync() {
   let storeForSave = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path
   });
@@ -116,8 +113,7 @@ add_task(function* test_load_sync()
   Assert.deepEqual(storeForLoad.data, TEST_DATA);
 });
 
-add_task(function* test_load_with_dataPostProcessor()
-{
+add_task(function* test_load_with_dataPostProcessor() {
   let storeForSave = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path
   });
@@ -141,8 +137,7 @@ add_task(function* test_load_with_dataPostProcessor()
   do_check_eq(storeForLoad.data.test, random);
 });
 
-add_task(function* test_load_with_dataPostProcessor_fails()
-{
+add_task(function* test_load_with_dataPostProcessor_fails() {
   let store = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path,
     dataPostProcessor: () => {
@@ -155,8 +150,7 @@ add_task(function* test_load_with_dataPostProcessor_fails()
   do_check_false(store.dataReady);
 });
 
-add_task(function* test_load_sync_with_dataPostProcessor_fails()
-{
+add_task(function* test_load_sync_with_dataPostProcessor_fails() {
   let store = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path,
     dataPostProcessor: () => {
@@ -173,8 +167,7 @@ add_task(function* test_load_sync_with_dataPostProcessor_fails()
  * Loads data from a string in a predefined format.  The purpose of this test is
  * to verify that the JSON format used in previous versions can be loaded.
  */
-add_task(function* test_load_string_predefined()
-{
+add_task(function* test_load_string_predefined() {
   let store = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path,
   });
@@ -193,8 +186,7 @@ add_task(function* test_load_string_predefined()
 /**
  * Loads data from a malformed JSON string.
  */
-add_task(function* test_load_string_malformed()
-{
+add_task(function* test_load_string_malformed() {
   let store = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path,
   });
@@ -219,8 +211,7 @@ add_task(function* test_load_string_malformed()
  * Loads data from a malformed JSON string, using the synchronous initialization
  * path.
  */
-add_task(function* test_load_string_malformed_sync()
-{
+add_task(function* test_load_string_malformed_sync() {
   let store = new JSONFile({
     path: getTempFile(TEST_STORE_FILE_NAME).path,
   });
@@ -239,4 +230,74 @@ add_task(function* test_load_string_malformed_sync()
   // The store should be ready to accept new data.
   do_check_true(store.dataReady);
   do_check_matches(store.data, {});
+});
+
+add_task(function* test_overwrite_data() {
+  let storeForSave = new JSONFile({
+    path: getTempFile(TEST_STORE_FILE_NAME).path,
+  });
+
+  let string = `{"number":456,"string":"tset","object":{"prop1":3,"prop2":4}}`;
+
+  yield OS.File.writeAtomic(storeForSave.path, new TextEncoder().encode(string),
+                            { tmpPath: storeForSave.path + ".tmp" });
+
+  Assert.ok(!storeForSave.dataReady);
+  storeForSave.data = TEST_DATA;
+  Assert.ok(storeForSave.dataReady);
+  Assert.equal(storeForSave.data, TEST_DATA);
+
+  yield new Promise((resolve) => {
+    let save = storeForSave._save.bind(storeForSave);
+    storeForSave._save = () => {
+      save();
+      resolve();
+    };
+    storeForSave.saveSoon();
+  });
+
+  let storeForLoad = new JSONFile({
+    path: storeForSave.path,
+  });
+
+  yield storeForLoad.load();
+
+  Assert.deepEqual(storeForLoad.data, TEST_DATA);
+});
+
+add_task(function* test_beforeSave() {
+  let store;
+  let promiseBeforeSave = new Promise((resolve) => {
+    store = new JSONFile({
+      path: getTempFile(TEST_STORE_FILE_NAME).path,
+      beforeSave: resolve,
+      saveDelayMs: 250,
+    });
+  });
+
+  store.saveSoon();
+
+  yield promiseBeforeSave;
+});
+
+add_task(function* test_beforeSave_rejects() {
+  let storeForSave = new JSONFile({
+    path: getTempFile(TEST_STORE_FILE_NAME).path,
+    beforeSave() {
+      return Promise.reject(new Error("oops"));
+    },
+    saveDelayMs: 250,
+  });
+
+  let promiseSave = new Promise((resolve, reject) => {
+    let save = storeForSave._save.bind(storeForSave);
+    storeForSave._save = () => {
+      save().then(resolve, reject);
+    };
+    storeForSave.saveSoon();
+  });
+
+  yield Assert.rejects(promiseSave, function(ex) {
+    return ex.message == "oops";
+  });
 });

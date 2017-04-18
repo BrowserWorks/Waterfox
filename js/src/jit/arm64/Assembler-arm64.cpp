@@ -127,7 +127,7 @@ Assembler::emitExtendedJumpTable()
 }
 
 void
-Assembler::executableCopy(uint8_t* buffer)
+Assembler::executableCopy(uint8_t* buffer, bool flushICache)
 {
     // Copy the code and all constant pools into the output buffer.
     armbuffer_.executableCopy(buffer);
@@ -161,6 +161,9 @@ Assembler::executableCopy(uint8_t* buffer)
             // into a single instruction call + nop in some instances, but this will work.
         }
     }
+
+    if (flushICache)
+        AutoFlushICache::setRange(uintptr_t(buffer), armbuffer_.size());
 }
 
 BufferOffset

@@ -9,14 +9,14 @@
  */
 
 enum RTCStatsType {
-  "inboundrtp",
-  "outboundrtp",
+  "inbound-rtp",
+  "outbound-rtp",
   "session",
   "track",
   "transport",
-  "candidatepair",
-  "localcandidate",
-  "remotecandidate"
+  "candidate-pair",
+  "local-candidate",
+  "remote-candidate"
 };
 
 dictionary RTCStats {
@@ -163,6 +163,8 @@ dictionary RTCStatsReportInternal {
   DOMString                           localSdp;
   DOMString                           remoteSdp;
   DOMHighResTimeStamp                 timestamp;
+  unsigned long                       iceRestarts;
+  unsigned long                       iceRollbacks;
   boolean                             closed; // Is the PC now closed
 };
 

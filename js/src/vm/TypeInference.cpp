@@ -1324,7 +1324,8 @@ js::EnsureTrackPropertyTypes(JSContext* cx, JSObject* obj, jsid id)
         AutoEnterAnalysis enter(cx);
         if (obj->hasLazyGroup()) {
             AutoEnterOOMUnsafeRegion oomUnsafe;
-            if (!obj->getGroup(cx)) {
+            RootedObject objRoot(cx, obj);
+            if (!JSObject::getGroup(cx, objRoot)) {
                 oomUnsafe.crash("Could not allocate ObjectGroup in EnsureTrackPropertyTypes");
                 return;
             }
@@ -1343,9 +1344,12 @@ HeapTypeSetKey::instantiate(JSContext* cx)
 {
     if (maybeTypes())
         return true;
-    if (object()->isSingleton() && !object()->singleton()->getGroup(cx)) {
-        cx->clearPendingException();
-        return false;
+    if (object()->isSingleton()) {
+        RootedObject obj(cx, object()->singleton());
+        if (!JSObject::getGroup(cx, obj)) {
+            cx->clearPendingException();
+            return false;
+        }
     }
     JSObject* obj = object()->isSingleton() ? object()->singleton() : nullptr;
     maybeTypes_ = object()->maybeGroup()->getProperty(cx, obj, id());
@@ -2530,6 +2534,7 @@ js::ClassCanHaveExtraProperties(const Class* clasp)
     if (clasp == &UnboxedPlainObject::class_ || clasp == &UnboxedArrayObject::class_)
         return false;
     return clasp->getResolve()
+        || clasp->getGetProperty()
         || clasp->getOpsLookupProperty()
         || clasp->getOpsGetProperty()
         || IsTypedArrayClass(clasp);
@@ -3031,7 +3036,8 @@ ObjectGroup::clearNewScript(ExclusiveContext* cx, ObjectGroup* replacement /* = 
 
         // Mark the constructing function as having its 'new' script cleared, so we
         // will not try to construct another one later.
-        if (!newScript->function()->setNewScriptCleared(cx))
+        RootedFunction fun(cx, newScript->function());
+        if (!JSObject::setNewScriptCleared(cx, fun))
             cx->recoverFromOutOfMemory();
     }
 
@@ -3178,7 +3184,7 @@ js::AddClearDefiniteGetterSetterForPrototypeChain(JSContext* cx, ObjectGroup* gr
      */
     RootedObject proto(cx, group->proto().toObjectOrNull());
     while (proto) {
-        ObjectGroup* protoGroup = proto->getGroup(cx);
+        ObjectGroup* protoGroup = JSObject::getGroup(cx, proto);
         if (!protoGroup) {
             cx->recoverFromOutOfMemory();
             return false;
@@ -3821,7 +3827,8 @@ TypeNewScript::maybeAnalyze(JSContext* cx, ObjectGroup* group, bool* regenerate,
     Vector<Initializer> initializerVector(cx);
 
     RootedPlainObject templateRoot(cx, templateObject());
-    if (!jit::AnalyzeNewScriptDefiniteProperties(cx, function(), group, templateRoot, &initializerVector))
+    RootedFunction fun(cx, function());
+    if (!jit::AnalyzeNewScriptDefiniteProperties(cx, fun, group, templateRoot, &initializerVector))
         return false;
 
     if (!group->newScript())
@@ -4244,8 +4251,10 @@ EnsureHasAutoClearTypeInferenceStateOnOOM(AutoClearTypeInferenceStateOnOOM*& oom
                                           Maybe<AutoClearTypeInferenceStateOnOOM>& fallback)
 {
     if (!oom) {
-        if (zone->types.activeAnalysis) {
-            oom = &zone->types.activeAnalysis->oom;
+        if (AutoEnterAnalysis* analysis = zone->types.activeAnalysis) {
+            if (analysis->oom.isNothing())
+                analysis->oom.emplace(zone);
+            oom = analysis->oom.ptr();
         } else {
             fallback.emplace(zone);
             oom = &fallback.ref();
@@ -4438,6 +4447,7 @@ TypeZone::TypeZone(Zone* zone)
     sweepTypeLifoAlloc(TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
     sweepCompilerOutputs(nullptr),
     sweepReleaseTypes(false),
+    sweepingTypes(false),
     activeAnalysis(nullptr)
 {
 }
@@ -4446,6 +4456,7 @@ TypeZone::~TypeZone()
 {
     js_delete(compilerOutputs);
     js_delete(sweepCompilerOutputs);
+    MOZ_RELEASE_ASSERT(!sweepingTypes);
 }
 
 void
@@ -4519,8 +4530,17 @@ TypeZone::clearAllNewScriptsOnOOM()
     }
 }
 
+AutoClearTypeInferenceStateOnOOM::AutoClearTypeInferenceStateOnOOM(Zone* zone)
+  : zone(zone), oom(false)
+{
+    MOZ_RELEASE_ASSERT(CurrentThreadCanAccessZone(zone));
+    zone->types.setSweepingTypes(true);
+}
+
 AutoClearTypeInferenceStateOnOOM::~AutoClearTypeInferenceStateOnOOM()
 {
+    zone->types.setSweepingTypes(false);
+
     if (oom) {
         JSRuntime* rt = zone->runtimeFromMainThread();
         js::CancelOffThreadIonCompile(rt);
@@ -4551,7 +4571,7 @@ TypeScript::printTypes(JSContext* cx, HandleScript script) const
             uintptr_t(script.get()), script->filename(), script->lineno());
 
     if (script->functionNonDelazifying()) {
-        if (JSAtom* name = script->functionNonDelazifying()->name())
+        if (JSAtom* name = script->functionNonDelazifying()->explicitName())
             name->dumpCharsNoNewline();
     }
 

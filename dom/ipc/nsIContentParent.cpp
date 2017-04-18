@@ -6,7 +6,6 @@
 
 #include "nsIContentParent.h"
 
-#include "mozilla/AppProcessChecker.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/ContentParent.h"
@@ -122,11 +121,9 @@ nsIContentParent::AllocPBrowserParent(const TabId& aTabId,
                                       const IPCTabContext& aContext,
                                       const uint32_t& aChromeFlags,
                                       const ContentParentId& aCpId,
-                                      const bool& aIsForApp,
                                       const bool& aIsForBrowser)
 {
   Unused << aCpId;
-  Unused << aIsForApp;
   Unused << aIsForBrowser;
 
   if (!CanOpenBrowser(aContext)) {
@@ -212,23 +209,13 @@ nsIContentParent::GetOrCreateActorForBlobImpl(BlobImpl* aImpl)
   return actor;
 }
 
-bool
+mozilla::ipc::IPCResult
 nsIContentParent::RecvSyncMessage(const nsString& aMsg,
                                   const ClonedMessageData& aData,
                                   InfallibleTArray<CpowEntry>&& aCpows,
                                   const IPC::Principal& aPrincipal,
                                   nsTArray<ipc::StructuredCloneData>* aRetvals)
 {
-  // FIXME Permission check in Content process
-  nsIPrincipal* principal = aPrincipal;
-  if (IsContentParent()) {
-    ContentParent* parent = AsContentParent();
-    if (!ContentParent::IgnoreIPCPrincipal() &&
-        parent && principal && !AssertAppPrincipal(parent, principal)) {
-      return false;
-    }
-  }
-
   RefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
     ipc::StructuredCloneData data;
@@ -238,26 +225,16 @@ nsIContentParent::RecvSyncMessage(const nsString& aMsg,
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
                         aMsg, true, &data, &cpows, aPrincipal, aRetvals);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 nsIContentParent::RecvRpcMessage(const nsString& aMsg,
                                  const ClonedMessageData& aData,
                                  InfallibleTArray<CpowEntry>&& aCpows,
                                  const IPC::Principal& aPrincipal,
                                  nsTArray<ipc::StructuredCloneData>* aRetvals)
 {
-  // FIXME Permission check in Content process
-  nsIPrincipal* principal = aPrincipal;
-  if (IsContentParent()) {
-    ContentParent* parent = AsContentParent();
-    if (!ContentParent::IgnoreIPCPrincipal() &&
-        parent && principal && !AssertAppPrincipal(parent, principal)) {
-      return false;
-    }
-  }
-
   RefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
     ipc::StructuredCloneData data;
@@ -267,7 +244,7 @@ nsIContentParent::RecvRpcMessage(const nsString& aMsg,
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
                         aMsg, true, &data, &cpows, aPrincipal, aRetvals);
   }
-  return true;
+  return IPC_OK();
 }
 
 PFileDescriptorSetParent*
@@ -296,22 +273,12 @@ nsIContentParent::DeallocPSendStreamParent(PSendStreamParent* aActor)
   return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 nsIContentParent::RecvAsyncMessage(const nsString& aMsg,
                                    InfallibleTArray<CpowEntry>&& aCpows,
                                    const IPC::Principal& aPrincipal,
                                    const ClonedMessageData& aData)
 {
-  // FIXME Permission check in Content process
-  nsIPrincipal* principal = aPrincipal;
-  if (IsContentParent()) {
-    ContentParent* parent = AsContentParent();
-    if (!ContentParent::IgnoreIPCPrincipal() &&
-        parent && principal && !AssertAppPrincipal(parent, principal)) {
-      return false;
-    }
-  }
-
   RefPtr<nsFrameMessageManager> ppm = mMessageManager;
   if (ppm) {
     ipc::StructuredCloneData data;
@@ -321,7 +288,7 @@ nsIContentParent::RecvAsyncMessage(const nsString& aMsg,
     ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
                         aMsg, false, &data, &cpows, aPrincipal, nullptr);
   }
-  return true;
+  return IPC_OK();
 }
 
 } // namespace dom

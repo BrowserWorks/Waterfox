@@ -130,6 +130,8 @@ var observer = {
       }
 
       case "contextmenu": {
+        // Date.now() is used instead of event.timeStamp since
+        // dom.event.highrestimestamp.enabled isn't true on all channels yet.
         gLastContextMenuEventTimeStamp = Date.now();
         break;
       }
@@ -266,7 +268,7 @@ var LoginManagerContent = {
         let loginsFound = LoginHelper.vanillaObjectsToLogins(msg.data.logins);
         request.promise.resolve({
           form: request.form,
-          loginsFound: loginsFound,
+          loginsFound,
           recipes: msg.data.recipes,
         });
         break;
@@ -307,10 +309,10 @@ var LoginManagerContent = {
     let messageManager = messageManagerFromWindow(win);
 
     // XXX Weak??
-    let requestData = { form: form };
-    let messageData = { formOrigin: formOrigin,
-                        actionOrigin: actionOrigin,
-                        options: options };
+    let requestData = { form };
+    let messageData = { formOrigin,
+                        actionOrigin,
+                        options };
 
     return this._sendRequest(messageManager, requestData,
                              "RemoteLogins:findLogins",
@@ -337,14 +339,14 @@ var LoginManagerContent = {
                            null;
 
     let requestData = {};
-    let messageData = { formOrigin: formOrigin,
-                        actionOrigin: actionOrigin,
+    let messageData = { formOrigin,
+                        actionOrigin,
                         searchString: aSearchString,
-                        previousResult: previousResult,
+                        previousResult,
                         rect: aRect,
                         isSecure: InsecurePasswordUtils.isFormSecure(form),
                         isPasswordField: aElement.type == "password",
-                        remote: remote };
+                        remote };
 
     return this._sendRequest(messageManager, requestData,
                              "RemoteLogins:autoCompleteLogins",
@@ -587,11 +589,14 @@ var LoginManagerContent = {
      * overlapping so we spin the event loop to see if a `contextmenu` event is coming next. If no
      * `contextmenu` event was seen and the focused field is still focused by the form fill
      * controller then show the autocomplete popup.
+     * Date.now() is used instead of event.timeStamp since dom.event.highrestimestamp.enabled isn't
+     * true on all channels yet.
      */
     let timestamp = Date.now();
     setTimeout(function maybeOpenAutocompleteAfterFocus() {
-      // Even though the `focus` event happens first, its .timeStamp is greater in
-      // testing and I don't want to rely on that so the absolute value is used.
+      // Even though the `focus` event happens first in testing, I don't want to
+      // rely on that since it was supposedly in the opposite order before. Use
+      // the absolute value to handle both orders.
       let timeDiff = Math.abs(gLastContextMenuEventTimeStamp - timestamp);
       if (timeDiff < AUTOCOMPLETE_AFTER_CONTEXTMENU_THRESHOLD_MS) {
         log("Not opening autocomplete after focus since a context menu was opened within",
@@ -600,7 +605,7 @@ var LoginManagerContent = {
       }
 
       if (this._formFillService.focusedInput == focusedField) {
-        log("maybeOpenAutocompleteAfterFocus: Opening the autocomplete popup. Time diff:", timeDiff);
+        log("maybeOpenAutocompleteAfterFocus: Opening the autocomplete popup");
         this._formFillService.showPopup();
       } else {
         log("maybeOpenAutocompleteAfterFocus: FormFillController has a different focused input");
@@ -662,14 +667,19 @@ var LoginManagerContent = {
 
   /**
    * @param {FormLike} form - the FormLike to look for password fields in.
-   * @param {bool} [skipEmptyFields=false] - Whether to ignore password fields with no value.
-   *                                         Used at capture time since saving empty values isn't
-   *                                         useful.
+   * @param {Object} options
+   * @param {bool} [options.skipEmptyFields=false] - Whether to ignore password fields with no value.
+   *                                                 Used at capture time since saving empty values isn't
+   *                                                 useful.
+   * @param {Object} [options.fieldOverrideRecipe=null] - A relevant field override recipe to use.
    * @return {Array|null} Array of password field elements for the specified form.
    *                      If no pw fields are found, or if more than 3 are found, then null
    *                      is returned.
    */
-  _getPasswordFields(form, skipEmptyFields = false) {
+  _getPasswordFields(form, {
+    fieldOverrideRecipe = null,
+    skipEmptyFields = false,
+  } = {}) {
     // Locate the password fields in the form.
     let pwFields = [];
     for (let i = 0; i < form.elements.length; i++) {
@@ -679,13 +689,21 @@ var LoginManagerContent = {
         continue;
       }
 
+      // Exclude ones matching a `notPasswordSelector`, if specified.
+      if (fieldOverrideRecipe && fieldOverrideRecipe.notPasswordSelector &&
+          element.matches(fieldOverrideRecipe.notPasswordSelector)) {
+        log("skipping password field (id/name is", element.id, " / ",
+            element.name + ") due to recipe:", fieldOverrideRecipe);
+        continue;
+      }
+
       if (skipEmptyFields && !element.value.trim()) {
         continue;
       }
 
       pwFields[pwFields.length] = {
                                     index   : i,
-                                    element : element
+                                    element
                                   };
     }
 
@@ -752,7 +770,10 @@ var LoginManagerContent = {
     if (!pwFields) {
       // Locate the password field(s) in the form. Up to 3 supported.
       // If there's no password field, there's nothing for us to do.
-      pwFields = this._getPasswordFields(form, isSubmission);
+      pwFields = this._getPasswordFields(form, {
+        fieldOverrideRecipe,
+        skipEmptyFields: isSubmission,
+      });
     }
 
     if (!pwFields) {
@@ -815,7 +836,7 @@ var LoginManagerContent = {
       } else if (pw2 == pw3) {
         oldPasswordField = pwFields[0].element;
         newPasswordField = pwFields[2].element;
-      } else  if (pw1 == pw3) {
+      } else if (pw1 == pw3) {
         // A bit odd, but could make sense with the right page layout.
         newPasswordField = pwFields[0].element;
         oldPasswordField = pwFields[1].element;
@@ -958,8 +979,8 @@ var LoginManagerContent = {
     let openerTopWindow = win.opener ? win.opener.top : null;
 
     messageManager.sendAsyncMessage("RemoteLogins:onFormSubmit",
-                                    { hostname: hostname,
-                                      formSubmitURL: formSubmitURL,
+                                    { hostname,
+                                      formSubmitURL,
                                       usernameField: mockUsername,
                                       newPasswordField: mockPassword,
                                       oldPasswordField: mockOldPassword },
@@ -1104,7 +1125,7 @@ var LoginManagerContent = {
       if (passwordField.maxLength >= 0)
         maxPasswordLen = passwordField.maxLength;
 
-      var logins = foundLogins.filter(function (l) {
+      var logins = foundLogins.filter(function(l) {
         var fit = (l.username.length <= maxUsernameLen &&
                    l.password.length <= maxPasswordLen);
         if (!fit)
@@ -1359,7 +1380,7 @@ var LoginUtils = {
   _getPasswordOrigin(uriString, allowJS) {
     var realm = "";
     try {
-      var uri = Services.io.newURI(uriString, null, null);
+      var uri = Services.io.newURI(uriString);
 
       if (allowJS && uri.scheme == "javascript")
         return "javascript:";
@@ -1472,18 +1493,16 @@ UserAutoCompleteResult.prototype = {
       throw new Error("Index out of range.");
     }
 
-    if (this._showInsecureFieldWarning && index === 0) {
-      return this._stringBundle.GetStringFromName("insecureFieldWarningDescription") + " " +
-        this._stringBundle.GetStringFromName("insecureFieldWarningLearnMore");
-    }
-
-    let that = this;
-
-    function getLocalizedString(key, formatArgs) {
+    let getLocalizedString = (key, formatArgs = null) => {
       if (formatArgs) {
-        return that._stringBundle.formatStringFromName(key, formatArgs, formatArgs.length);
+        return this._stringBundle.formatStringFromName(key, formatArgs, formatArgs.length);
       }
-      return that._stringBundle.GetStringFromName(key);
+      return this._stringBundle.GetStringFromName(key);
+    };
+
+    if (this._showInsecureFieldWarning && index === 0) {
+      let learnMoreString = getLocalizedString("insecureFieldWarningLearnMore");
+      return getLocalizedString("insecureFieldWarningDescription2", [learnMoreString]);
     }
 
     let login = this.logins[index - this._showInsecureFieldWarning];

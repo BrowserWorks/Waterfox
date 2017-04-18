@@ -25,21 +25,21 @@ AutoCompleteInput.prototype = {
     return this.searches.length;
   },
 
-  getSearchAt: function(aIndex) {
+  getSearchAt(aIndex) {
     return this.searches[aIndex];
   },
 
-  onSearchBegin: function() {},
-  onSearchComplete: function() {},
+  onSearchBegin() {},
+  onSearchComplete() {},
 
   popupOpen: false,
 
   popup: {
-    setSelectedIndex: function(aIndex) {},
-    invalidate: function() {},
+    setSelectedIndex(aIndex) {},
+    invalidate() {},
 
     // nsISupports implementation
-    QueryInterface: function(iid) {
+    QueryInterface(iid) {
       if (iid.equals(Ci.nsISupports) ||
           iid.equals(Ci.nsIAutoCompletePopup))
         return this;
@@ -49,7 +49,7 @@ AutoCompleteInput.prototype = {
   },
 
   // nsISupports implementation
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.nsISupports) ||
         iid.equals(Ci.nsIAutoCompleteInput))
       return this;
@@ -66,8 +66,7 @@ try {
   do_throw("Could not get tagging service\n");
 }
 
-function ensure_tag_results(uris, searchTerm)
-{
+function ensure_tag_results(uris, searchTerm) {
   var controller = Components.classes["@mozilla.org/autocomplete/controller;1"].
                    getService(Components.interfaces.nsIAutoCompleteController);
 
@@ -92,7 +91,7 @@ function ensure_tag_results(uris, searchTerm)
                 Ci.nsIAutoCompleteController.STATUS_COMPLETE_MATCH);
     do_check_eq(controller.matchCount, uris.length);
     let vals = [];
-    for (let i=0; i<controller.matchCount; i++) {
+    for (let i = 0; i < controller.matchCount; i++) {
       // Keep the URL for later because order of tag results is undefined
       vals.push(controller.getValueAt(i));
       do_check_eq(controller.getStyleAt(i), "bookmark-tag");

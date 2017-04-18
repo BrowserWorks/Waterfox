@@ -18,14 +18,14 @@ MainProcessSingleton.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
 
-  logConsoleMessage: function(message) {
+  logConsoleMessage(message) {
     let logMsg = message.data;
     logMsg.wrappedJSObject = logMsg;
     Services.obs.notifyObservers(logMsg, "console-api-log-event", null);
   },
 
   // Called when a webpage calls window.external.AddSearchProvider
-  addSearchEngine: function({ target: browser, data: { pageURL, engineURL } }) {
+  addSearchEngine({ target: browser, data: { pageURL, engineURL } }) {
     pageURL = NetUtil.newURI(pageURL);
     engineURL = NetUtil.newURI(engineURL, null, pageURL);
 
@@ -43,8 +43,7 @@ MainProcessSingleton.prototype = {
 
       if (iconURL && isWeb.indexOf(iconURL.scheme) < 0)
         throw "Unsupported search icon URL: " + iconURL;
-    }
-    catch (ex) {
+    } catch (ex) {
       Cu.reportError("Invalid argument passed to window.external.AddSearchProvider: " + ex);
 
       var searchBundle = Services.strings.createBundle("chrome://global/locale/search/search.properties");
@@ -65,7 +64,7 @@ MainProcessSingleton.prototype = {
     })
   },
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     switch (topic) {
     case "app-startup": {
       Services.obs.addObserver(this, "xpcom-shutdown", false);

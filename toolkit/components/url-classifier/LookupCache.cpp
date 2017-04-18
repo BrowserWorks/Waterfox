@@ -144,6 +144,10 @@ LookupCache::DumpCache()
 nsresult
 LookupCache::WriteFile()
 {
+  if (nsUrlClassifierDBService::ShutdownHasStarted()) {
+    return NS_ERROR_ABORT;
+  }
+
   nsCOMPtr<nsIFile> psFile;
   nsresult rv = mStoreDirectory->Clone(getter_AddRefs(psFile));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -417,9 +421,11 @@ LookupCacheV2::ClearAll()
 
 nsresult
 LookupCacheV2::Has(const Completion& aCompletion,
-                   bool* aHas, bool* aComplete)
+                   bool* aHas, bool* aComplete,
+                   uint32_t* aMatchLength)
 {
   *aHas = *aComplete = false;
+  *aMatchLength = 0;
 
   uint32_t prefix = aCompletion.ToUint32();
 
@@ -431,6 +437,7 @@ LookupCacheV2::Has(const Completion& aCompletion,
 
   if (found) {
     *aHas = true;
+    *aMatchLength = PREFIX_SIZE;
   }
 
   if ((mGetHashCache.BinaryIndexOf(aCompletion) != nsTArray<Completion>::NoIndex) ||
@@ -438,6 +445,7 @@ LookupCacheV2::Has(const Completion& aCompletion,
     LOG(("Complete in %s", mTableName.get()));
     *aComplete = true;
     *aHas = true;
+    *aMatchLength = COMPLETE_SIZE;
   }
 
   return NS_OK;

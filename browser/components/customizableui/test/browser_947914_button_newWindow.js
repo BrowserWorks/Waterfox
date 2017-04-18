@@ -13,16 +13,16 @@ add_task(function*() {
   let newWindow = null;
 
   let observerWindowOpened = {
-    observe: function(aSubject, aTopic, aData) {
+    observe(aSubject, aTopic, aData) {
       if (aTopic == "domwindowopened") {
         newWindow = aSubject.QueryInterface(Components.interfaces.nsIDOMWindow);
         newWindow.addEventListener("load", function newWindowHandler() {
-          newWindow.removeEventListener("load", newWindowHandler, false);
+          newWindow.removeEventListener("load", newWindowHandler);
           is(newWindow.location.href, "chrome://browser/content/browser.xul",
              "A new browser window was opened");
           ok(!PrivateBrowsingUtils.isWindowPrivate(newWindow), "Window is not private");
           windowWasHandled = true;
-        }, false);
+        });
       }
     }
   }
@@ -37,11 +37,9 @@ add_task(function*() {
     yield waitForCondition(() => windowWasHandled);
     yield promiseWindowClosed(newWindow);
     info("The new window was closed");
-  }
-  catch (e) {
+  } catch (e) {
     ok(false, "The new browser window was not properly handled");
-  }
-  finally {
+  } finally {
     Services.ww.unregisterNotification(observerWindowOpened);
   }
 });

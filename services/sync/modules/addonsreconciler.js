@@ -252,8 +252,7 @@ AddonsReconciler.prototype = {
       for (let [k, v] of Object.entries(record)) {
         if (k == "modified") {
           state.addons[id][k] = v.getTime();
-        }
-        else {
+        } else {
           state.addons[id][k] = v;
         }
       }
@@ -297,9 +296,8 @@ AddonsReconciler.prototype = {
       if (element == listener) {
         this._log.debug("Removing change listener.");
         return false;
-      } else {
-        return true;
       }
+      return true;
     }.bind(this));
   },
 
@@ -348,7 +346,7 @@ AddonsReconciler.prototype = {
 
     let installs;
 
-    AddonManager.getAllAddons(function (addons) {
+    AddonManager.getAllAddons(function(addons) {
       let ids = {};
 
       for (let addon of addons) {
@@ -427,9 +425,9 @@ AddonsReconciler.prototype = {
 
     if (!(id in this._addons)) {
       let record = {
-        id: id,
-        guid: guid,
-        enabled: enabled,
+        id,
+        guid,
+        enabled,
         installed: true,
         modified: now,
         type: addon.type,
@@ -488,7 +486,7 @@ AddonsReconciler.prototype = {
 
     for (let listener of this._listeners) {
       try {
-        listener.changeListener.call(listener, date, change, state);
+        listener.changeListener(date, change, state);
       } catch (ex) {
         this._log.warn("Exception calling change listener", ex);
       }
@@ -634,8 +632,7 @@ AddonsReconciler.prototype = {
         this.saveState(null, cb);
         cb.wait();
       }
-    }
-    catch (ex) {
+    } catch (ex) {
       this._log.warn("Exception", ex);
     }
   },

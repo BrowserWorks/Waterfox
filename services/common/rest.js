@@ -83,7 +83,7 @@ this.RESTRequest = function RESTRequest(uri) {
   // If we don't have an nsIURI object yet, make one. This will throw if
   // 'uri' isn't a valid URI string.
   if (!(uri instanceof Ci.nsIURI)) {
-    uri = Services.io.newURI(uri, null, null);
+    uri = Services.io.newURI(uri);
   }
   this.uri = uri;
 
@@ -102,7 +102,7 @@ RESTRequest.prototype = {
     Ci.nsIChannelEventSink
   ]),
 
-  /*** Public API: ***/
+  /** Public API: **/
 
   /**
    * A constant boolean that indicates whether this object will automatically
@@ -293,7 +293,7 @@ RESTRequest.prototype = {
     }
   },
 
-  /*** Implementation stuff ***/
+  /** Implementation stuff **/
 
   dispatch: function dispatch(method, data, onComplete, onProgress) {
     if (this.status != this.NOT_SENT) {
@@ -320,7 +320,7 @@ RESTRequest.prototype = {
     // Set request headers.
     let headers = this._headers;
     for (let key in headers) {
-      if (key == 'authorization') {
+      if (key == "authorization") {
         this._log.trace("HTTP Header " + key + ": ***** (suppressed)");
       } else {
         this._log.trace("HTTP Header " + key + ": " + headers[key]);
@@ -412,7 +412,7 @@ RESTRequest.prototype = {
     this.onComplete(error);
   },
 
-  /*** nsIStreamListener ***/
+  /** nsIStreamListener **/
 
   onStartRequest: function onStartRequest(channel) {
     if (this.status == this.ABORTED) {
@@ -573,13 +573,13 @@ RESTRequest.prototype = {
     this.delayTimeout();
   },
 
-  /*** nsIInterfaceRequestor ***/
+  /** nsIInterfaceRequestor **/
 
-  getInterface: function(aIID) {
+  getInterface(aIID) {
     return this.QueryInterface(aIID);
   },
 
-  /*** nsIBadCertListener2 ***/
+  /** nsIBadCertListener2 **/
 
   notifyCertProblem: function notifyCertProblem(socketInfo, sslStatus, targetHost) {
     this._log.warn("Invalid HTTPS certificate encountered!");
@@ -601,7 +601,7 @@ RESTRequest.prototype = {
     return isInternal && isSameURI;
   },
 
-  /*** nsIChannelEventSink ***/
+  /** nsIChannelEventSink **/
   asyncOnChannelRedirect:
     function asyncOnChannelRedirect(oldChannel, newChannel, flags, callback) {
 
@@ -707,7 +707,7 @@ RESTResponse.prototype = {
     try {
       this._log.trace("Processing response headers.");
       let channel = this.request.channel.QueryInterface(Ci.nsIHttpChannel);
-      channel.visitResponseHeaders(function (header, value) {
+      channel.visitResponseHeaders(function(header, value) {
         headers[header.toLowerCase()] = value;
       });
     } catch (ex) {

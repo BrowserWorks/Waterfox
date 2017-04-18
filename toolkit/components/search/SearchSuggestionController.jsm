@@ -16,8 +16,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "NS_ASSERT", "resource://gre/modules/deb
 const SEARCH_RESPONSE_SUGGESTION_JSON = "application/x-suggestions+json";
 const DEFAULT_FORM_HISTORY_PARAM      = "searchbar-history";
 const HTTP_OK            = 200;
-const REMOTE_TIMEOUT     = 500; // maximum time (ms) to wait before giving up on a remote suggestions
 const BROWSER_SUGGEST_PREF = "browser.search.suggest.enabled";
+const REMOTE_TIMEOUT_PREF = "browser.search.suggest.timeout";
+const REMOTE_TIMEOUT_DEFAULT = 500; // maximum time (ms) to wait before giving up on a remote suggestions
 
 /**
  * Remote search suggestions will be shown if gRemoteSuggestionsEnabled
@@ -58,11 +59,6 @@ this.SearchSuggestionController.prototype = {
    * maxRemoteResults - <displayed local results count> remote results.
    */
   maxRemoteResults: 10,
-
-  /**
-   * The maximum time (ms) to wait before giving up on a remote suggestions.
-   */
-  remoteTimeout: REMOTE_TIMEOUT,
 
   /**
    * The additional parameter used when searching form history.
@@ -110,7 +106,7 @@ this.SearchSuggestionController.prototype = {
    *
    * @return {Promise} resolving to an object containing results or null.
    */
-  fetch: function(searchTerm, privateMode, engine, userContextId) {
+  fetch(searchTerm, privateMode, engine, userContextId) {
     // There is no smart filtering from previous results here (as there is when looking through
     // history/form data) because the result set returned by the server is different for every typed
     // value - e.g. "ocean breathes" does not return a subset of the results returned for "ocean".
@@ -168,11 +164,11 @@ this.SearchSuggestionController.prototype = {
    * will still be returned because stopping relies on aborting the XMLHTTPRequest to reject the
    * promise for Promise.all.
    */
-  stop: function() {
+  stop() {
     if (this._request) {
       this._request.abort();
     } else if (!this.maxRemoteResults) {
-      Cu.reportError("SearchSuggestionController: Cannot stop fetching if remote results were not "+
+      Cu.reportError("SearchSuggestionController: Cannot stop fetching if remote results were not " +
                      "requested");
     }
     this._reset();
@@ -180,7 +176,7 @@ this.SearchSuggestionController.prototype = {
 
   // Private methods
 
-  _fetchFormHistory: function(searchTerm) {
+  _fetchFormHistory(searchTerm) {
     let deferredFormHistory = Promise.defer();
 
     let acSearchObserver = {
@@ -192,8 +188,7 @@ this.SearchSuggestionController.prototype = {
           this._remoteResultTimer = Cc["@mozilla.org/timer;1"].
                                     createInstance(Ci.nsITimer);
           this._remoteResultTimer.initWithCallback(this._onRemoteTimeout.bind(this),
-                                                   this.remoteTimeout || REMOTE_TIMEOUT,
-                                                   Ci.nsITimer.TYPE_ONE_SHOT);
+                                                   this.remoteTimeout, Ci.nsITimer.TYPE_ONE_SHOT);
         }
 
         switch (result.searchResult) {
@@ -231,7 +226,7 @@ this.SearchSuggestionController.prototype = {
   /**
    * Fetch suggestions from the search engine over the network.
    */
-  _fetchRemote: function(searchTerm, engine, privateMode, userContextId) {
+  _fetchRemote(searchTerm, engine, privateMode, userContextId) {
     let deferredResponse = Promise.defer();
     this._request = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].
                     createInstance(Ci.nsIXMLHttpRequest);
@@ -261,7 +256,7 @@ this.SearchSuggestionController.prototype = {
    * so we can handle the response data.
    * @private
    */
-  _onRemoteLoaded: function(deferredResponse) {
+  _onRemoteLoaded(deferredResponse) {
     if (!this._request) {
       deferredResponse.resolve("Got HTTP response after the request was cancelled");
       return;
@@ -302,7 +297,7 @@ this.SearchSuggestionController.prototype = {
   /**
    * Called when this._remoteResultTimer fires indicating the remote request took too long.
    */
-  _onRemoteTimeout: function () {
+  _onRemoteTimeout() {
     this._request = null;
 
     // FIXME: bug 387341
@@ -321,7 +316,7 @@ this.SearchSuggestionController.prototype = {
    * @param {Array} suggestResults - an array of result objects from different sources (local or remote)
    * @return {Object}
    */
-  _dedupeAndReturnResults: function(suggestResults) {
+  _dedupeAndReturnResults(suggestResults) {
     if (this._searchString === null) {
       // _searchString can be null if stop() was called and remote suggestions
       // were disabled (stopping if we are fetching remote suggestions will
@@ -376,7 +371,7 @@ this.SearchSuggestionController.prototype = {
     return results;
   },
 
-  _reset: function() {
+  _reset() {
     this._request = null;
     if (this._remoteResultTimer) {
       this._remoteResultTimer.cancel();
@@ -396,3 +391,9 @@ this.SearchSuggestionController.prototype = {
 this.SearchSuggestionController.engineOffersSuggestions = function(engine) {
  return engine.supportsResponseType(SEARCH_RESPONSE_SUGGESTION_JSON);
 };
+
+/**
+ * The maximum time (ms) to wait before giving up on a remote suggestions.
+ */
+XPCOMUtils.defineLazyPreferenceGetter(this.SearchSuggestionController.prototype, "remoteTimeout",
+                                      REMOTE_TIMEOUT_PREF, REMOTE_TIMEOUT_DEFAULT);

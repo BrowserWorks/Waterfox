@@ -12,7 +12,8 @@ function wasmEvalText(str, imports) {
         m = new WebAssembly.Module(binary);
         assertEq(valid, true);
     } catch(e) {
-        assertEq(valid, false);
+        if (!e.toString().match(/out of memory/))
+            assertEq(valid, false);
         throw e;
     }
 
@@ -33,6 +34,9 @@ function mismatchError(actual, expect) {
     var str = `type mismatch: expression has type ${actual} but expected ${expect}`;
     return RegExp(str);
 }
+
+const emptyStackError = /from empty stack/;
+const unusedValuesError = /unused values not explicitly dropped by end of block/;
 
 function jsify(wasmVal) {
     if (wasmVal === 'nan')

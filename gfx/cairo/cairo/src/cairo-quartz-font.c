@@ -335,6 +335,40 @@ const cairo_font_face_backend_t _cairo_quartz_font_face_backend = {
     _cairo_quartz_font_face_scaled_font_create
 };
 
+// Helper to create a CTFont from a CGFont, copying any variations that were
+// set on the original CGFont.
+static CTFontRef
+CreateCTFontFromCGFontWithVariations(CGFontRef aCGFont, CGFloat aSize)
+{
+    // Avoid calling potentially buggy variation APIs on pre-Sierra macOS
+    // versions (see bug 1331683)
+    // Declare helper provided by widget/cocoa/nsCocoaFeatures.mm
+    extern bool Gecko_OnSierraOrLater();
+    if (!Gecko_OnSierraOrLater()) {
+        return CTFontCreateWithGraphicsFont(aCGFont, aSize, NULL, NULL);
+    }
+    CFDictionaryRef vars = CGFontCopyVariations(aCGFont);
+    CTFontRef ctFont;
+    if (vars) {
+        CFDictionaryRef varAttr =
+            CFDictionaryCreate(NULL,
+                               (const void**)&kCTFontVariationAttribute,
+                               (const void**)&vars, 1,
+                               &kCFTypeDictionaryKeyCallBacks,
+                               &kCFTypeDictionaryValueCallBacks);
+        CFRelease(vars);
+
+        CTFontDescriptorRef varDesc = CTFontDescriptorCreateWithAttributes(varAttr);
+        CFRelease(varAttr);
+
+        ctFont = CTFontCreateWithGraphicsFont(aCGFont, aSize, NULL, varDesc);
+        CFRelease(varDesc);
+    } else {
+        ctFont = CTFontCreateWithGraphicsFont(aCGFont, aSize, NULL, NULL);
+    }
+    return ctFont;
+}
+
 /**
  * cairo_quartz_font_face_create_for_cgfont
  * @font: a #CGFontRef obtained through a method external to cairo.
@@ -365,7 +399,7 @@ cairo_quartz_font_face_create_for_cgfont (CGFontRef font)
     font_face->cgFont = CGFontRetain (font);
 
     if (CTFontCreateWithGraphicsFontPtr) {
-        font_face->ctFont = CTFontCreateWithGraphicsFontPtr (font, 1.0, NULL, NULL);
+        font_face->ctFont = CreateCTFontFromCGFontWithVariations (font, 1.0);
     } else {
         font_face->ctFont = NULL;
     }
@@ -570,7 +604,7 @@ _cairo_quartz_init_glyph_path (cairo_quartz_scaled_font_t *font,
 					-font->base.scale.yy,
 					0, 0);
 
-    ctFont = CTFontCreateWithGraphicsFont (font_face->cgFont, 1.0, NULL, NULL);
+    ctFont = CreateCTFontFromCGFontWithVariations (font_face->cgFont, 1.0);
     glyphPath = CTFontCreatePathForGlyph (ctFont, glyph, &textMatrix);
     CFRelease (ctFont);
     if (!glyphPath)

@@ -45,8 +45,7 @@ StringBundle.prototype = {
       return Cc["@mozilla.org/intl/nslocaleservice;1"].
              getService(Ci.nsILocaleService).
              getApplicationLocale();
-    }
-    catch(ex) {
+    } catch (ex) {
       return null;
     }
   },
@@ -90,11 +89,10 @@ StringBundle.prototype = {
    *
    * @returns {String} the value of the string
    */
-  get: function(key, args) {
+  get(key, args) {
     if (args)
       return this.stringBundle.formatStringFromName(key, args, args.length);
-    else
-      return this.stringBundle.GetStringFromName(key);
+    return this.stringBundle.GetStringFromName(key);
   },
 
   /**
@@ -103,7 +101,7 @@ StringBundle.prototype = {
    * @returns {Array}
    *          an array of objects with key and value properties
    */
-  getAll: function() {
+  getAll() {
     let strings = [];
 
     // FIXME: for performance, return an enumerable array that wraps the string
@@ -170,7 +168,7 @@ StringBundle.prototype = {
    * @returns {String}
    *          the value of the string
    */
-  getString: function(key) {
+  getString(key) {
     return this.get(key);
   },
 
@@ -186,7 +184,7 @@ StringBundle.prototype = {
    * @returns {String}
    *          the formatted value of the string
    */
-  getFormattedString: function(key, args) {
+  getFormattedString(key, args) {
     return this.get(key, args);
   },
 

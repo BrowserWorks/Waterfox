@@ -16,10 +16,6 @@ MOCHITEST_MANIFESTS += [
     'test/mochitest.ini',
 ]
 
-BROWSER_CHROME_MANIFESTS += [
-    'test/browser.ini',
-]
-
 TEST_HARNESS_FILES.testing.mochitest.tests.dom.media.webaudio.test.blink += [
     'test/blink/audio-testing.js',
     'test/blink/convolution-testing.js',
@@ -54,6 +50,7 @@ EXPORTS.mozilla.dom += [
     'AudioNode.h',
     'AudioParam.h',
     'AudioProcessingEvent.h',
+    'AudioScheduledSourceNode.h',
     'BiquadFilterNode.h',
     'ChannelMergerNode.h',
     'ChannelSplitterNode.h',
@@ -66,7 +63,6 @@ EXPORTS.mozilla.dom += [
     'MediaElementAudioSourceNode.h',
     'MediaStreamAudioDestinationNode.h',
     'MediaStreamAudioSourceNode.h',
-    'OfflineAudioCompletionEvent.h',
     'OscillatorNode.h',
     'PannerNode.h',
     'PeriodicWave.h',
@@ -90,6 +86,7 @@ UNIFIED_SOURCES += [
     'AudioNodeStream.cpp',
     'AudioParam.cpp',
     'AudioProcessingEvent.cpp',
+    'AudioScheduledSourceNode.cpp',
     'BiquadFilterNode.cpp',
     'BufferDecoder.cpp',
     'ChannelMergerNode.cpp',
@@ -106,7 +103,6 @@ UNIFIED_SOURCES += [
     'MediaElementAudioSourceNode.cpp',
     'MediaStreamAudioDestinationNode.cpp',
     'MediaStreamAudioSourceNode.cpp',
-    'OfflineAudioCompletionEvent.cpp',
     'OscillatorNode.cpp',
     'PannerNode.cpp',
     'PeriodicWave.cpp',

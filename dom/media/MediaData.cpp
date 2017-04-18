@@ -8,6 +8,8 @@
 #include "MediaInfo.h"
 #include "VideoUtils.h"
 #include "ImageContainer.h"
+#include "mozilla/layers/SharedRGBImage.h"
+#include "YCbCrUtils.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include <cutils/properties.h>
@@ -93,6 +95,45 @@ ValidatePlane(const VideoData::YCbCrBuffer::Plane& aPlane)
          aPlane.mStride > 0;
 }
 
+static bool ValidateBufferAndPicture(const VideoData::YCbCrBuffer& aBuffer,
+                                     const IntRect& aPicture)
+{
+  // The following situation should never happen unless there is a bug
+  // in the decoder
+  if (aBuffer.mPlanes[1].mWidth != aBuffer.mPlanes[2].mWidth ||
+      aBuffer.mPlanes[1].mHeight != aBuffer.mPlanes[2].mHeight) {
+    NS_ERROR("C planes with different sizes");
+    return false;
+  }
+
+  // The following situations could be triggered by invalid input
+  if (aPicture.width <= 0 || aPicture.height <= 0) {
+    // In debug mode, makes the error more noticeable
+    MOZ_ASSERT(false, "Empty picture rect");
+    return false;
+  }
+  if (!ValidatePlane(aBuffer.mPlanes[0]) ||
+      !ValidatePlane(aBuffer.mPlanes[1]) ||
+      !ValidatePlane(aBuffer.mPlanes[2])) {
+    NS_WARNING("Invalid plane size");
+    return false;
+  }
+
+  // Ensure the picture size specified in the headers can be extracted out of
+  // the frame we've been supplied without indexing out of bounds.
+  CheckedUint32 xLimit = aPicture.x + CheckedUint32(aPicture.width);
+  CheckedUint32 yLimit = aPicture.y + CheckedUint32(aPicture.height);
+  if (!xLimit.isValid() || xLimit.value() > aBuffer.mPlanes[0].mStride ||
+      !yLimit.isValid() || yLimit.value() > aBuffer.mPlanes[0].mHeight)
+  {
+    // The specified picture dimensions can't be contained inside the video
+    // frame, we'll stomp memory if we try to copy it. Fail.
+    NS_WARNING("Overflowing picture rect");
+    return false;
+  }
+  return true;
+}
+
 #ifdef MOZ_WIDGET_GONK
 static bool
 IsYV12Format(const VideoData::YCbCrBuffer::Plane& aYPlane,
@@ -139,6 +180,28 @@ VideoData::~VideoData()
 {
 }
 
+void
+VideoData::SetListener(UniquePtr<Listener> aListener)
+{
+  MOZ_ASSERT(!mSentToCompositor, "Listener should be registered before sending data");
+
+  mListener = Move(aListener);
+}
+
+void
+VideoData::MarkSentToCompositor()
+{
+  if (mSentToCompositor) {
+    return;
+  }
+
+  mSentToCompositor = true;
+  if (mListener != nullptr) {
+    mListener->OnSentToCompositor();
+    mListener = nullptr;
+  }
+}
+
 size_t
 VideoData::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 {
@@ -155,55 +218,24 @@ VideoData::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
   return size;
 }
 
-/* static */
-already_AddRefed<VideoData>
-VideoData::ShallowCopyUpdateDuration(const VideoData* aOther,
-                                     int64_t aDuration)
+void
+VideoData::UpdateDuration(int64_t aDuration)
 {
-  RefPtr<VideoData> v = new VideoData(aOther->mOffset,
-                                        aOther->mTime,
-                                        aDuration,
-                                        aOther->mKeyframe,
-                                        aOther->mTimecode,
-                                        aOther->mDisplay,
-                                        aOther->mFrameID);
-  v->mImage = aOther->mImage;
-  return v.forget();
+  MOZ_ASSERT(aDuration >= 0);
+
+  mDuration = aDuration;
 }
 
-/* static */
-already_AddRefed<VideoData>
-VideoData::ShallowCopyUpdateTimestamp(const VideoData* aOther,
-                                      int64_t aTimestamp)
+void
+VideoData::UpdateTimestamp(int64_t aTimestamp)
 {
-  NS_ENSURE_TRUE(aOther, nullptr);
-  RefPtr<VideoData> v = new VideoData(aOther->mOffset,
-                                        aTimestamp,
-                                        aOther->GetEndTime() - aTimestamp,
-                                        aOther->mKeyframe,
-                                        aOther->mTimecode,
-                                        aOther->mDisplay,
-                                        aOther->mFrameID);
-  v->mImage = aOther->mImage;
-  return v.forget();
-}
+  MOZ_ASSERT(aTimestamp >= 0);
 
-/* static */
-already_AddRefed<VideoData>
-VideoData::ShallowCopyUpdateTimestampAndDuration(const VideoData* aOther,
-                                                 int64_t aTimestamp,
-                                                 int64_t aDuration)
-{
-  NS_ENSURE_TRUE(aOther, nullptr);
-  RefPtr<VideoData> v = new VideoData(aOther->mOffset,
-                                        aTimestamp,
-                                        aDuration,
-                                        aOther->mKeyframe,
-                                        aOther->mTimecode,
-                                        aOther->mDisplay,
-                                        aOther->mFrameID);
-  v->mImage = aOther->mImage;
-  return v.forget();
+  int64_t updatedDuration = GetEndTime() - aTimestamp;
+  MOZ_ASSERT(updatedDuration >= 0);
+
+  mTime = aTimestamp;
+  mDuration = updatedDuration;
 }
 
 /* static */
@@ -270,36 +302,7 @@ VideoData::CreateAndCopyData(const VideoInfo& aInfo,
     return v.forget();
   }
 
-  // The following situation should never happen unless there is a bug
-  // in the decoder
-  if (aBuffer.mPlanes[1].mWidth != aBuffer.mPlanes[2].mWidth ||
-      aBuffer.mPlanes[1].mHeight != aBuffer.mPlanes[2].mHeight) {
-    NS_ERROR("C planes with different sizes");
-    return nullptr;
-  }
-
-  // The following situations could be triggered by invalid input
-  if (aPicture.width <= 0 || aPicture.height <= 0) {
-    // In debug mode, makes the error more noticeable
-    MOZ_ASSERT(false, "Empty picture rect");
-    return nullptr;
-  }
-  if (!ValidatePlane(aBuffer.mPlanes[0]) || !ValidatePlane(aBuffer.mPlanes[1]) ||
-      !ValidatePlane(aBuffer.mPlanes[2])) {
-    NS_WARNING("Invalid plane size");
-    return nullptr;
-  }
-
-  // Ensure the picture size specified in the headers can be extracted out of
-  // the frame we've been supplied without indexing out of bounds.
-  CheckedUint32 xLimit = aPicture.x + CheckedUint32(aPicture.width);
-  CheckedUint32 yLimit = aPicture.y + CheckedUint32(aPicture.height);
-  if (!xLimit.isValid() || xLimit.value() > aBuffer.mPlanes[0].mStride ||
-      !yLimit.isValid() || yLimit.value() > aBuffer.mPlanes[0].mHeight)
-  {
-    // The specified picture dimensions can't be contained inside the video
-    // frame, we'll stomp memory if we try to copy it. Fail.
-    NS_WARNING("Overflowing picture rect");
+  if (!ValidateBufferAndPicture(aBuffer, aPicture)) {
     return nullptr;
   }
 
@@ -330,8 +333,7 @@ VideoData::CreateAndCopyData(const VideoInfo& aInfo,
   if (!v->mImage) {
     return nullptr;
   }
-  NS_ASSERTION(v->mImage->GetFormat() == ImageFormat::PLANAR_YCBCR ||
-               v->mImage->GetFormat() == ImageFormat::GRALLOC_PLANAR_YCBCR,
+  NS_ASSERTION(v->mImage->GetFormat() == ImageFormat::PLANAR_YCBCR,
                "Wrong format?");
   PlanarYCbCrImage* videoImage = v->mImage->AsPlanarYCbCrImage();
   MOZ_ASSERT(videoImage);
@@ -355,6 +357,74 @@ VideoData::CreateAndCopyData(const VideoInfo& aInfo,
     }
   }
 #endif
+  return v.forget();
+}
+
+
+/* static */
+already_AddRefed<VideoData>
+VideoData::CreateAndCopyData(const VideoInfo& aInfo,
+                             ImageContainer* aContainer,
+                             int64_t aOffset,
+                             int64_t aTime,
+                             int64_t aDuration,
+                             const YCbCrBuffer& aBuffer,
+                             const YCbCrBuffer::Plane &aAlphaPlane,
+                             bool aKeyframe,
+                             int64_t aTimecode,
+                             const IntRect& aPicture)
+{
+  if (!aContainer) {
+    // Create a dummy VideoData with no image. This gives us something to
+    // send to media streams if necessary.
+    RefPtr<VideoData> v(new VideoData(aOffset,
+                                      aTime,
+                                      aDuration,
+                                      aKeyframe,
+                                      aTimecode,
+                                      aInfo.mDisplay,
+                                      0));
+    return v.forget();
+  }
+
+  if (!ValidateBufferAndPicture(aBuffer, aPicture)) {
+    return nullptr;
+  }
+
+  RefPtr<VideoData> v(new VideoData(aOffset,
+                                    aTime,
+                                    aDuration,
+                                    aKeyframe,
+                                    aTimecode,
+                                    aInfo.mDisplay,
+                                    0));
+
+  // Convert from YUVA to BGRA format on the software side.
+  RefPtr<layers::SharedRGBImage> videoImage =
+    aContainer->CreateSharedRGBImage();
+  v->mImage = videoImage;
+
+  if (!v->mImage) {
+    return nullptr;
+  }
+  if (!videoImage->Allocate(IntSize(aBuffer.mPlanes[0].mWidth,
+                                    aBuffer.mPlanes[0].mHeight),
+                            SurfaceFormat::B8G8R8A8)) {
+    return nullptr;
+  }
+  uint8_t* argb_buffer = videoImage->GetBuffer();
+  IntSize size = videoImage->GetSize();
+
+  // The naming convention for libyuv and associated utils is word-order.
+  // The naming convention in the gfx stack is byte-order.
+  ConvertYCbCrAToARGB(aBuffer.mPlanes[0].mData,
+                      aBuffer.mPlanes[1].mData,
+                      aBuffer.mPlanes[2].mData,
+                      aAlphaPlane.mData,
+                      aBuffer.mPlanes[0].mStride, aBuffer.mPlanes[1].mStride,
+                      argb_buffer, size.width * 4,
+                      size.width, size.height);
+
   return v.forget();
 }
 
@@ -393,6 +463,15 @@ MediaRawData::MediaRawData(const uint8_t* aData, size_t aSize)
 {
 }
 
+MediaRawData::MediaRawData(const uint8_t* aData, size_t aSize,
+                           const uint8_t* aAlphaData, size_t aAlphaSize)
+  : MediaData(RAW_DATA, 0)
+  , mCrypto(mCryptoInternal)
+  , mBuffer(aData, aSize)
+  , mAlphaBuffer(aAlphaData, aAlphaSize)
+{
+}
+
 already_AddRefed<MediaRawData>
 MediaRawData::Clone() const
 {
@@ -407,6 +486,9 @@ MediaRawData::Clone() const
   s->mTrackInfo = mTrackInfo;
   s->mEOS = mEOS;
   if (!s->mBuffer.Append(mBuffer.Data(), mBuffer.Length())) {
+    return nullptr;
+  }
+  if (!s->mAlphaBuffer.Append(mAlphaBuffer.Data(), mAlphaBuffer.Length())) {
     return nullptr;
   }
   return s.forget();

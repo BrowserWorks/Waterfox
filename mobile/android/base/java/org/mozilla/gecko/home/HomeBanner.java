@@ -6,12 +6,13 @@
 package org.mozilla.gecko.home;
 
 import org.json.JSONObject;
-import org.mozilla.gecko.GeckoApp;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.PropertyAnimator.Property;
 import org.mozilla.gecko.animation.ViewHelper;
+import org.mozilla.gecko.util.FloatUtils;
 import org.mozilla.gecko.util.ResourceDrawableUtils;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -113,14 +114,14 @@ public class HomeBanner extends LinearLayout
             }
         });
 
-        GeckoApp.getEventDispatcher().registerGeckoThreadListener(this, "HomeBanner:Data");
+        EventDispatcher.getInstance().registerGeckoThreadListener(this, "HomeBanner:Data");
     }
 
     @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
 
-        GeckoApp.getEventDispatcher().unregisterGeckoThreadListener(this, "HomeBanner:Data");
+        EventDispatcher.getInstance().unregisterGeckoThreadListener(this, "HomeBanner:Data");
     }
 
     public void setScrollingPages(boolean scrollingPages) {
@@ -291,7 +292,7 @@ public class HomeBanner extends LinearLayout
 
                 // Don't change this value if it wasn't a significant movement
                 if (delta >= 10 || delta <= -10) {
-                    mUserSwipedDown = (newTranslationY == mHeight);
+                    mUserSwipedDown = FloatUtils.fuzzyEquals(newTranslationY, mHeight);
                 }
 
                 ViewHelper.setTranslationY(this, newTranslationY);

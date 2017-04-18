@@ -292,7 +292,7 @@ add_task(function* () {
         }
 
         if (n > 0) {
-          executeSoon(() => check(n-1));
+          executeSoon(() => check(n - 1));
         } else {
           resolve();
         }
@@ -316,9 +316,6 @@ add_task(function* () {
     yield p;
 
     yield ContentTask.spawn(browser, null, function* () {
-      // Avoid intermittent failures.
-      content.wrappedJSObject.gContentSearchController.remoteTimeout = 5000;
-
       // Type an X in the search input.
       let input = content.document.getElementById("searchText");
       input.focus();
@@ -497,8 +494,8 @@ add_task(function* () {
   yield BrowserTestUtils.withNewTab({ gBrowser, url: "about:home" }, function* (browser) {
     let oldOpenPrefs = window.openPreferences;
     let openPrefsPromise = new Promise(resolve => {
-      window.openPreferences = function (pane, params) {
-        resolve({ pane: pane, params: params });
+      window.openPreferences = function(pane, params) {
+        resolve({ pane, params });
       };
     });
 
@@ -650,7 +647,7 @@ function promiseNewEngine(basename) {
   return new Promise((resolve, reject) => {
     let url = getRootDirectory(gTestPath) + basename;
     Services.search.addEngine(url, null, "", false, {
-      onSuccess: function (engine) {
+      onSuccess(engine) {
         info("Search engine added: " + basename);
         registerCleanupFunction(() => {
           try {
@@ -659,7 +656,7 @@ function promiseNewEngine(basename) {
         });
         resolve(engine);
       },
-      onError: function (errCode) {
+      onError(errCode) {
         ok(false, "addEngine failed with error code " + errCode);
         reject();
       },

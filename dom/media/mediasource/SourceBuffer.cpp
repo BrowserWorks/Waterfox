@@ -35,9 +35,9 @@ class JSObject;
 extern mozilla::LogModule* GetMediaSourceLog();
 extern mozilla::LogModule* GetMediaSourceAPILog();
 
-#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#define MSE_DEBUGV(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Verbose, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#define MSE_API(arg, ...) MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUGV(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Verbose, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
+#define MSE_API(arg, ...) MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 
@@ -258,15 +258,15 @@ SourceBuffer::RangeRemoval(double aStart, double aEnd)
   StartUpdating();
 
   RefPtr<SourceBuffer> self = this;
-  mPendingRemoval.Begin(
     mTrackBuffersManager->RangeRemoval(TimeUnit::FromSeconds(aStart),
                                        TimeUnit::FromSeconds(aEnd))
-      ->Then(AbstractThread::MainThread(), __func__,
+      ->Then(mAbstractMainThread, __func__,
              [self] (bool) {
                self->mPendingRemoval.Complete();
                self->StopUpdating();
              },
-             []() { MOZ_ASSERT(false); }));
+             []() { MOZ_ASSERT(false); })
+      ->Track(mPendingRemoval);
 }
 
 void
@@ -297,11 +297,13 @@ SourceBuffer::Ended()
   mTrackBuffersManager->Ended();
 }
 
-SourceBuffer::SourceBuffer(MediaSource* aMediaSource, const nsACString& aType)
+SourceBuffer::SourceBuffer(MediaSource* aMediaSource,
+                           const MediaContainerType& aType)
   : DOMEventTargetHelper(aMediaSource->GetParentObject())
   , mMediaSource(aMediaSource)
-  , mCurrentAttributes(aType.LowerCaseEqualsLiteral("audio/mpeg") ||
-                       aType.LowerCaseEqualsLiteral("audio/aac"))
+  , mAbstractMainThread(aMediaSource->AbstractMainThread())
+  , mCurrentAttributes(aType.Type() == MEDIAMIMETYPE("audio/mpeg") ||
+                       aType.Type() == MEDIAMIMETYPE("audio/aac"))
   , mUpdating(false)
   , mActive(false)
   , mType(aType)
@@ -415,10 +417,11 @@ SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aR
   }
   StartUpdating();
 
-  mPendingAppend.Begin(mTrackBuffersManager->AppendData(data, mCurrentAttributes)
-                       ->Then(AbstractThread::MainThread(), __func__, this,
-                              &SourceBuffer::AppendDataCompletedWithSuccess,
-                              &SourceBuffer::AppendDataErrored));
+  mTrackBuffersManager->AppendData(data, mCurrentAttributes)
+    ->Then(mAbstractMainThread, __func__, this,
+           &SourceBuffer::AppendDataCompletedWithSuccess,
+           &SourceBuffer::AppendDataErrored)
+    ->Track(mPendingAppend);
 }
 
 void

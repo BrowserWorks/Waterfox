@@ -428,7 +428,7 @@ NS_IMPL_FRAMEARENA_HELPERS(nsFrame)
 void
 nsFrame::operator delete(void *, size_t)
 {
-  NS_RUNTIMEABORT("nsFrame::operator delete should never be called");
+  MOZ_CRASH("nsFrame::operator delete should never be called");
 }
 
 NS_QUERYFRAME_HEAD(nsFrame)
@@ -1116,9 +1116,11 @@ nsIFrame::GetPaddingRect() const
 }
 
 WritingMode
-nsIFrame::GetWritingMode(nsIFrame* aSubFrame) const
+nsIFrame::WritingModeForLine(WritingMode aSelfWM,
+                             nsIFrame*   aSubFrame) const
 {
-  WritingMode writingMode = GetWritingMode();
+  MOZ_ASSERT(aSelfWM == GetWritingMode());
+  WritingMode writingMode = aSelfWM;
 
   if (StyleTextReset()->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_PLAINTEXT) {
     nsBidiLevel frameLevel = nsBidiPresUtils::GetFrameBaseLevel(aSubFrame);
@@ -1254,7 +1256,7 @@ nsIFrame::ComputeBorderRadii(const nsStyleCorners& aBorderRadius,
   NS_FOR_CSS_HALF_CORNERS(i) {
     const nsStyleCoord c = aBorderRadius.Get(i);
     nscoord axis =
-      NS_HALF_CORNER_IS_X(i) ? aFrameSize.width : aFrameSize.height;
+      HalfCornerIsX(i) ? aFrameSize.width : aFrameSize.height;
 
     if (c.IsCoordPercentCalcUnit()) {
       aRadii[i] = nsRuleNode::ComputeCoordPercentCalc(c, axis);
@@ -1269,31 +1271,31 @@ nsIFrame::ComputeBorderRadii(const nsStyleCorners& aBorderRadius,
   }
 
   if (aSkipSides.Top()) {
-    aRadii[NS_CORNER_TOP_LEFT_X] = 0;
-    aRadii[NS_CORNER_TOP_LEFT_Y] = 0;
-    aRadii[NS_CORNER_TOP_RIGHT_X] = 0;
-    aRadii[NS_CORNER_TOP_RIGHT_Y] = 0;
+    aRadii[eCornerTopLeftX] = 0;
+    aRadii[eCornerTopLeftY] = 0;
+    aRadii[eCornerTopRightX] = 0;
+    aRadii[eCornerTopRightY] = 0;
   }
 
   if (aSkipSides.Right()) {
-    aRadii[NS_CORNER_TOP_RIGHT_X] = 0;
-    aRadii[NS_CORNER_TOP_RIGHT_Y] = 0;
-    aRadii[NS_CORNER_BOTTOM_RIGHT_X] = 0;
-    aRadii[NS_CORNER_BOTTOM_RIGHT_Y] = 0;
+    aRadii[eCornerTopRightX] = 0;
+    aRadii[eCornerTopRightY] = 0;
+    aRadii[eCornerBottomRightX] = 0;
+    aRadii[eCornerBottomRightY] = 0;
   }
 
   if (aSkipSides.Bottom()) {
-    aRadii[NS_CORNER_BOTTOM_RIGHT_X] = 0;
-    aRadii[NS_CORNER_BOTTOM_RIGHT_Y] = 0;
-    aRadii[NS_CORNER_BOTTOM_LEFT_X] = 0;
-    aRadii[NS_CORNER_BOTTOM_LEFT_Y] = 0;
+    aRadii[eCornerBottomRightX] = 0;
+    aRadii[eCornerBottomRightY] = 0;
+    aRadii[eCornerBottomLeftX] = 0;
+    aRadii[eCornerBottomLeftY] = 0;
   }
 
   if (aSkipSides.Left()) {
-    aRadii[NS_CORNER_BOTTOM_LEFT_X] = 0;
-    aRadii[NS_CORNER_BOTTOM_LEFT_Y] = 0;
-    aRadii[NS_CORNER_TOP_LEFT_X] = 0;
-    aRadii[NS_CORNER_TOP_LEFT_Y] = 0;
+    aRadii[eCornerBottomLeftX] = 0;
+    aRadii[eCornerBottomLeftY] = 0;
+    aRadii[eCornerTopLeftX] = 0;
+    aRadii[eCornerTopLeftY] = 0;
   }
 
   // css3-background specifies this algorithm for reducing
@@ -1301,10 +1303,10 @@ nsIFrame::ComputeBorderRadii(const nsStyleCorners& aBorderRadius,
   bool haveRadius = false;
   double ratio = 1.0f;
   NS_FOR_CSS_SIDES(side) {
-    uint32_t hc1 = NS_SIDE_TO_HALF_CORNER(side, false, true);
-    uint32_t hc2 = NS_SIDE_TO_HALF_CORNER(side, true, true);
+    uint32_t hc1 = SideToHalfCorner(side, false, true);
+    uint32_t hc2 = SideToHalfCorner(side, true, true);
     nscoord length =
-      NS_SIDE_IS_VERTICAL(side) ? aBorderArea.height : aBorderArea.width;
+      SideIsVertical(side) ? aBorderArea.height : aBorderArea.width;
     nscoord sum = aRadii[hc1] + aRadii[hc2];
     if (sum)
       haveRadius = true;
@@ -1327,8 +1329,8 @@ nsIFrame::InsetBorderRadii(nscoord aRadii[8], const nsMargin &aOffsets)
 {
   NS_FOR_CSS_SIDES(side) {
     nscoord offset = aOffsets.Side(side);
-    uint32_t hc1 = NS_SIDE_TO_HALF_CORNER(side, false, false);
-    uint32_t hc2 = NS_SIDE_TO_HALF_CORNER(side, true, false);
+    uint32_t hc1 = SideToHalfCorner(side, false, false);
+    uint32_t hc2 = SideToHalfCorner(side, true, false);
     aRadii[hc1] = std::max(0, aRadii[hc1] - offset);
     aRadii[hc2] = std::max(0, aRadii[hc2] - offset);
   }
@@ -1337,14 +1339,31 @@ nsIFrame::InsetBorderRadii(nscoord aRadii[8], const nsMargin &aOffsets)
 /* static */ void
 nsIFrame::OutsetBorderRadii(nscoord aRadii[8], const nsMargin &aOffsets)
 {
+  auto AdjustOffset = [] (const uint32_t aRadius, const nscoord aOffset) {
+    // Implement the cubic formula to adjust offset when aOffset > 0 and
+    // aRadius / aOffset < 1.
+    // https://drafts.csswg.org/css-shapes/#valdef-shape-box-margin-box
+    if (aOffset > 0) {
+      const double ratio = aRadius / double(aOffset);
+      if (ratio < 1.0) {
+        return nscoord(aOffset * (1.0 + std::pow(ratio - 1, 3)));
+      }
+    }
+    return aOffset;
+  };
+
   NS_FOR_CSS_SIDES(side) {
-    nscoord offset = aOffsets.Side(side);
-    uint32_t hc1 = NS_SIDE_TO_HALF_CORNER(side, false, false);
-    uint32_t hc2 = NS_SIDE_TO_HALF_CORNER(side, true, false);
-    if (aRadii[hc1] > 0)
-      aRadii[hc1] += offset;
-    if (aRadii[hc2] > 0)
-      aRadii[hc2] += offset;
+    const nscoord offset = aOffsets.Side(side);
+    const uint32_t hc1 = SideToHalfCorner(side, false, false);
+    const uint32_t hc2 = SideToHalfCorner(side, true, false);
+    if (aRadii[hc1] > 0) {
+      const nscoord offset1 = AdjustOffset(aRadii[hc1], offset);
+      aRadii[hc1] = std::max(0, aRadii[hc1] + offset1);
+    }
+    if (aRadii[hc2] > 0) {
+      const nscoord offset2 = AdjustOffset(aRadii[hc2], offset);
+      aRadii[hc2] = std::max(0, aRadii[hc2] + offset2);
+    }
   }
 }
 
@@ -1378,6 +1397,21 @@ nsIFrame::GetBorderRadii(nscoord aRadii[8]) const
 }
 
 bool
+nsIFrame::GetMarginBoxBorderRadii(nscoord aRadii[8]) const
+{
+  if (!GetBorderRadii(aRadii)) {
+    return false;
+  }
+  OutsetBorderRadii(aRadii, GetUsedMargin());
+  NS_FOR_CSS_HALF_CORNERS(corner) {
+    if (aRadii[corner]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
 nsIFrame::GetPaddingBoxBorderRadii(nscoord aRadii[8]) const
 {
   if (!GetBorderRadii(aRadii))
@@ -1399,6 +1433,24 @@ nsIFrame::GetContentBoxBorderRadii(nscoord aRadii[8]) const
   NS_FOR_CSS_HALF_CORNERS(corner) {
     if (aRadii[corner])
       return true;
+  }
+  return false;
+}
+
+bool
+nsIFrame::GetShapeBoxBorderRadii(nscoord aRadii[8]) const
+{
+  switch (StyleDisplay()->mShapeOutside.GetReferenceBox()) {
+    case StyleShapeOutsideShapeBox::NoBox:
+      return false;
+    case StyleShapeOutsideShapeBox::Content:
+      return GetContentBoxBorderRadii(aRadii);
+    case StyleShapeOutsideShapeBox::Padding:
+      return GetPaddingBoxBorderRadii(aRadii);
+    case StyleShapeOutsideShapeBox::Border:
+      return GetBorderRadii(aRadii);
+    case StyleShapeOutsideShapeBox::Margin:
+      return GetMarginBoxBorderRadii(aRadii);
   }
   return false;
 }
@@ -1677,9 +1729,7 @@ nsFrame::DisplaySelection(nsPresContext* aPresContext, bool isOkToTurnOn)
     result = selCon->GetDisplaySelection(&selType);
     if (NS_SUCCEEDED(result) && (selType != nsISelectionController::SELECTION_OFF)) {
       // Check whether style allows selection.
-      bool selectable;
-      IsSelectable(&selectable, nullptr);
-      if (!selectable) {
+      if (!IsSelectable(nullptr)) {
         selType = nsISelectionController::SELECTION_OFF;
         isOkToTurnOn = false;
       }
@@ -1834,8 +1884,7 @@ nsIFrame::DisplayCaret(nsDisplayListBuilder* aBuilder,
 nscolor
 nsIFrame::GetCaretColorAt(int32_t aOffset)
 {
-  // Use text color.
-  return StyleColor()->mColor;
+  return nsLayoutUtils::GetColor(this, &nsStyleUserInterface::mCaretColor);
 }
 
 bool
@@ -1847,7 +1896,7 @@ nsFrame::DisplayBackgroundUnconditional(nsDisplayListBuilder* aBuilder,
   // receive a propagated background should just set aForceBackground to
   // true.
   if (aBuilder->IsForEventDelivery() || aForceBackground ||
-      !StyleBackground()->IsTransparent() || StyleDisplay()->mAppearance) {
+      !StyleBackground()->IsTransparent(this) || StyleDisplay()->mAppearance) {
     return nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
         aBuilder, this, GetRectRelativeToSelf(), aLists.BorderBackground());
   }
@@ -2158,12 +2207,20 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
   aBuilder->SetContainsBlendMode(false);
  
   nsRect dirtyRectOutsideTransform = dirtyRect;
+  bool allowAsyncAnimation = false;
   if (isTransformed) {
     const nsRect overflow = GetVisualOverflowRectRelativeToSelf();
-    if (nsDisplayTransform::ShouldPrerenderTransformedContent(aBuilder,
-                                                              this)) {
-      dirtyRect = overflow;
-    } else {
+    nsDisplayTransform::PrerenderDecision decision =
+        nsDisplayTransform::ShouldPrerenderTransformedContent(aBuilder, this, &dirtyRect);
+    switch (decision) {
+    case nsDisplayTransform::FullPrerender:
+      allowAsyncAnimation = true;
+      break;
+    case nsDisplayTransform::PartialPrerender:
+      allowAsyncAnimation = true;
+      MOZ_FALLTHROUGH;
+      // fall through to the NoPrerender case
+    case nsDisplayTransform::NoPrerender:
       if (overflow.IsEmpty() && !extend3DContext) {
         return;
       }
@@ -2524,12 +2581,10 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
 
     if (!aBuilder->IsForGenerateGlyphMask() &&
         !aBuilder->IsForPaintingSelectionBG()) {
-      bool isFullyVisible =
-        dirtyRectOutsideSVGEffects.Contains(GetVisualOverflowRectRelativeToSelf());
       nsDisplayTransform *transformItem =
         new (aBuilder) nsDisplayTransform(aBuilder, this,
                                           &resultList, dirtyRect, 0,
-                                          isFullyVisible);
+                                          allowAsyncAnimation);
       resultList.AppendNewToTop(transformItem);
     }
 
@@ -3121,11 +3176,10 @@ nsFrame::GetDataForTableSelection(const nsFrameSelection* aFrameSelection,
   return NS_OK;
 }
 
-nsresult
-nsFrame::IsSelectable(bool* aSelectable, StyleUserSelect* aSelectStyle) const
+bool
+nsIFrame::IsSelectable(StyleUserSelect* aSelectStyle) const
 {
-  if (!aSelectable) //it's ok if aSelectStyle is null
-    return NS_ERROR_NULL_POINTER;
+  // it's ok if aSelectStyle is null
 
   // Like 'visibility', we must check all the parents: if a parent
   // is not selectable, none of its children is selectable.
@@ -3149,7 +3203,7 @@ nsFrame::IsSelectable(bool* aSelectable, StyleUserSelect* aSelectStyle) const
   //    AUTO     -> CELL      -> TEXT -> AUTO,      the returned value is TEXT
   //
   StyleUserSelect selectStyle  = StyleUserSelect::Auto;
-  nsIFrame* frame              = const_cast<nsFrame*>(this);
+  nsIFrame* frame              = const_cast<nsIFrame*>(this);
   bool containsEditable        = false;
 
   while (frame) {
@@ -3197,13 +3251,9 @@ nsFrame::IsSelectable(bool* aSelectable, StyleUserSelect* aSelectStyle) const
     *aSelectStyle = selectStyle;
   }
 
-  if (mState & NS_FRAME_GENERATED_CONTENT) {
-    *aSelectable = false;
-  } else {
-    *aSelectable = allowSelection && (selectStyle != StyleUserSelect::None);
-  }
-
-  return NS_OK;
+  return !(mState & NS_FRAME_GENERATED_CONTENT) &&
+         allowSelection &&
+         selectStyle != StyleUserSelect::None;
 }
 
 /**
@@ -3230,7 +3280,6 @@ nsFrame::HandlePress(nsPresContext* aPresContext,
   if (!aPresContext->EventStateManager()->EventStatusOK(aEvent)) 
     return NS_OK;
 
-  nsresult rv;
   nsIPresShell *shell = aPresContext->GetPresShell();
   if (!shell)
     return NS_ERROR_FAILURE;
@@ -3260,14 +3309,11 @@ nsFrame::HandlePress(nsPresContext* aPresContext,
 
   // check whether style allows selection
   // if not, don't tell selection the mouse event even occurred.  
-  bool    selectable;
   StyleUserSelect selectStyle;
-  rv = IsSelectable(&selectable, &selectStyle);
-  if (NS_FAILED(rv)) return rv;
-  
   // check for select: none
-  if (!selectable)
+  if (!IsSelectable(&selectStyle)) {
     return NS_OK;
+  }
 
   // When implementing StyleUserSelect::Element, StyleUserSelect::Elements and
   // StyleUserSelect::Toggle, need to change this logic
@@ -3348,6 +3394,7 @@ nsFrame::HandlePress(nsPresContext* aPresContext,
   nsCOMPtr<nsIContent>parentContent;
   int32_t  contentOffset;
   int32_t target;
+  nsresult rv;
   rv = GetDataForTableSelection(frameselection, shell, mouseEvent,
                                 getter_AddRefs(parentContent), &contentOffset,
                                 &target);
@@ -4433,6 +4480,7 @@ nsIFrame::InlinePrefISizeData::DefaultAddInlinePrefISize(nscoord aISize)
   mCurrentLine = NSCoordSaturatingAdd(mCurrentLine, aISize);
   mTrailingWhitespace = 0;
   mSkipWhitespace = false;
+  mLineIsEmpty = false;
 }
 
 void
@@ -4466,9 +4514,17 @@ nsIFrame::InlineMinISizeData::OptionallyBreak(nscoord aHyphenWidth)
 }
 
 void
-nsIFrame::InlinePrefISizeData::ForceBreak()
+nsIFrame::InlinePrefISizeData::ForceBreak(StyleClear aBreakType)
 {
-  if (mFloats.Length() != 0) {
+  MOZ_ASSERT(aBreakType == StyleClear::None ||
+             aBreakType == StyleClear::Both ||
+             aBreakType == StyleClear::Left ||
+             aBreakType == StyleClear::Right,
+             "Must be a physical break type");
+
+  // If this force break is not clearing any float, we can leave all the
+  // floats to the next force break.
+  if (mFloats.Length() != 0 && aBreakType != StyleClear::None) {
             // preferred widths accumulated for floats that have already
             // been cleared past
     nscoord floats_done = 0,
@@ -4476,11 +4532,12 @@ nsIFrame::InlinePrefISizeData::ForceBreak()
             // been cleared past
             floats_cur_left = 0,
             floats_cur_right = 0;
+    const WritingMode wm = mLineContainerWM;
 
     for (uint32_t i = 0, i_end = mFloats.Length(); i != i_end; ++i) {
       const FloatInfo& floatInfo = mFloats[i];
       const nsStyleDisplay* floatDisp = floatInfo.Frame()->StyleDisplay();
-      StyleClear breakType = floatDisp->PhysicalBreakType(mLineContainerWM);
+      StyleClear breakType = floatDisp->PhysicalBreakType(wm);
       if (breakType == StyleClear::Left ||
           breakType == StyleClear::Right ||
           breakType == StyleClear::Both) {
@@ -4497,7 +4554,7 @@ nsIFrame::InlinePrefISizeData::ForceBreak()
         }
       }
 
-      StyleFloat floatStyle = floatDisp->PhysicalFloats(mLineContainerWM);
+      StyleFloat floatStyle = floatDisp->PhysicalFloats(wm);
       nscoord& floats_cur =
         floatStyle == StyleFloat::Left ? floats_cur_left : floats_cur_right;
       nscoord floatWidth = floatInfo.Width();
@@ -4514,7 +4571,44 @@ nsIFrame::InlinePrefISizeData::ForceBreak()
 
     mCurrentLine = NSCoordSaturatingAdd(mCurrentLine, floats_done);
 
-    mFloats.Clear();
+    if (aBreakType == StyleClear::Both) {
+      mFloats.Clear();
+    } else {
+      // If the break type does not clear all floats, it means there may
+      // be some floats whose isize should contribute to the intrinsic
+      // isize of the next line. The code here scans the current mFloats
+      // and keeps floats which are not cleared by this break. Note that
+      // floats may be cleared directly or indirectly. See below.
+      nsTArray<FloatInfo> newFloats;
+      MOZ_ASSERT(aBreakType == StyleClear::Left ||
+                 aBreakType == StyleClear::Right,
+                 "Other values should have been handled in other branches");
+      StyleFloat clearFloatType =
+        aBreakType == StyleClear::Left ? StyleFloat::Left : StyleFloat::Right;
+      // Iterate the array in reverse so that we can stop when there are
+      // no longer any floats we need to keep. See below.
+      for (FloatInfo& floatInfo : Reversed(mFloats)) {
+        const nsStyleDisplay* floatDisp = floatInfo.Frame()->StyleDisplay();
+        if (floatDisp->PhysicalFloats(wm) != clearFloatType) {
+          newFloats.AppendElement(floatInfo);
+        } else {
+          // This is a float on the side that this break directly clears
+          // which means we're not keeping it in mFloats. However, if
+          // this float clears floats on the opposite side (via a value
+          // of either 'both' or one of 'left'/'right'), any remaining
+          // (earlier) floats on that side would be indirectly cleared
+          // as well. Thus, we should break out of this loop and stop
+          // considering earlier floats to be kept in mFloats.
+          StyleClear floatBreakType = floatDisp->PhysicalBreakType(wm);
+          if (floatBreakType != aBreakType &&
+              floatBreakType != StyleClear::None) {
+            break;
+          }
+        }
+      }
+      newFloats.Reverse();
+      mFloats = Move(newFloats);
+    }
   }
 
   mCurrentLine =
@@ -4522,6 +4616,7 @@ nsIFrame::InlinePrefISizeData::ForceBreak()
   mPrevLines = std::max(mPrevLines, mCurrentLine);
   mCurrentLine = mTrailingWhitespace = 0;
   mSkipWhitespace = true;
+  mLineIsEmpty = true;
 }
 
 static void
@@ -4589,11 +4684,11 @@ IntrinsicSizeOffsets(nsIFrame* aFrame, bool aForISize)
 
   const nsStyleBorder* styleBorder = aFrame->StyleBorder();
   if (verticalAxis) {
-    result.hBorder += styleBorder->GetComputedBorderWidth(NS_SIDE_TOP);
-    result.hBorder += styleBorder->GetComputedBorderWidth(NS_SIDE_BOTTOM);
+    result.hBorder += styleBorder->GetComputedBorderWidth(eSideTop);
+    result.hBorder += styleBorder->GetComputedBorderWidth(eSideBottom);
   } else {
-    result.hBorder += styleBorder->GetComputedBorderWidth(NS_SIDE_LEFT);
-    result.hBorder += styleBorder->GetComputedBorderWidth(NS_SIDE_RIGHT);
+    result.hBorder += styleBorder->GetComputedBorderWidth(eSideLeft);
+    result.hBorder += styleBorder->GetComputedBorderWidth(eSideRight);
   }
 
   const nsStyleDisplay* disp = aFrame->StyleDisplay();
@@ -5009,7 +5104,7 @@ nsFrame::ComputeSizeWithIntrinsicDimensions(nsRenderingContext*  aRenderingConte
   nscoord iSize, minISize, maxISize, bSize, minBSize, maxBSize;
   enum class Stretch {
     // stretch to fill the CB (preserving intrinsic ratio) in the relevant axis
-    eStretchPreservingRatio,
+    eStretchPreservingRatio, // XXX not used yet
     // stretch to fill the CB in the relevant axis
     eStretch,
     // no stretching in the relevant axis
@@ -5022,6 +5117,35 @@ nsFrame::ComputeSizeWithIntrinsicDimensions(nsRenderingContext*  aRenderingConte
 
   Stretch stretchI = eNoStretch; // stretch behavior in the inline axis
   Stretch stretchB = eNoStretch; // stretch behavior in the block axis
+
+  const bool isVertical = aWM.IsVertical();
+  const nsStyleCoord& isizeCoord =
+    isVertical ? aIntrinsicSize.height : aIntrinsicSize.width;
+  const bool hasIntrinsicISize = isizeCoord.GetUnit() == eStyleUnit_Coord;
+  nscoord intrinsicISize;
+  if (hasIntrinsicISize) {
+    intrinsicISize = std::max(nscoord(0), isizeCoord.GetCoordValue());
+  } else {
+    NS_ASSERTION(isizeCoord.GetUnit() == eStyleUnit_None,
+                 "unexpected unit");
+    intrinsicISize = 0;
+  }
+
+  const nsStyleCoord& bsizeCoord =
+    isVertical ? aIntrinsicSize.width : aIntrinsicSize.height;
+  const bool hasIntrinsicBSize = bsizeCoord.GetUnit() == eStyleUnit_Coord;
+  nscoord intrinsicBSize;
+  if (hasIntrinsicBSize) {
+    intrinsicBSize = std::max(nscoord(0), bsizeCoord.GetCoordValue());
+  } else {
+    NS_ASSERTION(bsizeCoord.GetUnit() == eStyleUnit_None,
+                 "unexpected unit");
+    intrinsicBSize = 0;
+  }
+
+  NS_ASSERTION(aIntrinsicRatio.width >= 0 && aIntrinsicRatio.height >= 0,
+               "Intrinsic ratio has a negative component!");
+  LogicalSize logicalRatio(aWM, aIntrinsicRatio);
 
   if (!isAutoISize) {
     iSize = ComputeISizeValue(aRenderingContext,
@@ -5037,9 +5161,13 @@ nsFrame::ComputeSizeWithIntrinsicDimensions(nsRenderingContext*  aRenderingConte
           aWM.IsOrthogonalTo(GetParent()->GetWritingMode()) ?
             stylePos->UsedAlignSelf(GetParent()->StyleContext()) :
             stylePos->UsedJustifySelf(GetParent()->StyleContext());
-        if (inlineAxisAlignment == NS_STYLE_ALIGN_NORMAL) {
-          stretchI = eStretchPreservingRatio;
-        } else if (inlineAxisAlignment == NS_STYLE_ALIGN_STRETCH) {
+        // Note: 'normal' means 'start' for elements with an intrinsic size
+        // or ratio in the relevant dimension, otherwise 'stretch'.
+        // https://drafts.csswg.org/css-grid/#grid-item-sizing
+        if ((inlineAxisAlignment == NS_STYLE_ALIGN_NORMAL &&
+             !hasIntrinsicISize &&
+             !(logicalRatio.ISize(aWM) > 0)) ||
+            inlineAxisAlignment == NS_STYLE_ALIGN_STRETCH) {
           stretchI = eStretch;
         }
       }
@@ -5102,9 +5230,13 @@ nsFrame::ComputeSizeWithIntrinsicDimensions(nsRenderingContext*  aRenderingConte
           !aWM.IsOrthogonalTo(GetParent()->GetWritingMode()) ?
             stylePos->UsedAlignSelf(GetParent()->StyleContext()) :
             stylePos->UsedJustifySelf(GetParent()->StyleContext());
-        if (blockAxisAlignment == NS_STYLE_ALIGN_NORMAL) {
-          stretchB = eStretchPreservingRatio;
-        } else if (blockAxisAlignment == NS_STYLE_ALIGN_STRETCH) {
+        // Note: 'normal' means 'start' for elements with an intrinsic size
+        // or ratio in the relevant dimension, otherwise 'stretch'.
+        // https://drafts.csswg.org/css-grid/#grid-item-sizing
+        if ((blockAxisAlignment == NS_STYLE_ALIGN_NORMAL &&
+             !hasIntrinsicBSize &&
+             !(logicalRatio.BSize(aWM) > 0)) ||
+            blockAxisAlignment == NS_STYLE_ALIGN_STRETCH) {
           stretchB = eStretch;
         }
       }
@@ -5142,47 +5274,8 @@ nsFrame::ComputeSizeWithIntrinsicDimensions(nsRenderingContext*  aRenderingConte
     minBSize = 0;
   }
 
-  // Resolve percentage intrinsic iSize/bSize as necessary:
-
   NS_ASSERTION(aCBSize.ISize(aWM) != NS_UNCONSTRAINEDSIZE,
                "Our containing block must not have unconstrained inline-size!");
-
-  const bool isVertical = aWM.IsVertical();
-  const nsStyleCoord& isizeCoord =
-    isVertical ? aIntrinsicSize.height : aIntrinsicSize.width;
-  const nsStyleCoord& bsizeCoord =
-    isVertical ? aIntrinsicSize.width : aIntrinsicSize.height;
-
-  bool hasIntrinsicISize, hasIntrinsicBSize;
-  nscoord intrinsicISize, intrinsicBSize;
-
-  if (isizeCoord.GetUnit() == eStyleUnit_Coord) {
-    hasIntrinsicISize = true;
-    intrinsicISize = isizeCoord.GetCoordValue();
-    if (intrinsicISize < 0)
-      intrinsicISize = 0;
-  } else {
-    NS_ASSERTION(isizeCoord.GetUnit() == eStyleUnit_None,
-                 "unexpected unit");
-    hasIntrinsicISize = false;
-    intrinsicISize = 0;
-  }
-
-  if (bsizeCoord.GetUnit() == eStyleUnit_Coord) {
-    hasIntrinsicBSize = true;
-    intrinsicBSize = bsizeCoord.GetCoordValue();
-    if (intrinsicBSize < 0)
-      intrinsicBSize = 0;
-  } else {
-    NS_ASSERTION(bsizeCoord.GetUnit() == eStyleUnit_None,
-                 "unexpected unit");
-    hasIntrinsicBSize = false;
-    intrinsicBSize = 0;
-  }
-
-  NS_ASSERTION(aIntrinsicRatio.width >= 0 && aIntrinsicRatio.height >= 0,
-               "Intrinsic ratio has a negative component!");
-  LogicalSize logicalRatio(aWM, aIntrinsicRatio);
 
   // Now calculate the used values for iSize and bSize:
 
@@ -5343,7 +5436,7 @@ nsRect
 nsFrame::ComputeSimpleTightBounds(DrawTarget* aDrawTarget) const
 {
   if (StyleOutline()->mOutlineStyle != NS_STYLE_BORDER_STYLE_NONE ||
-      StyleBorder()->HasBorder() || !StyleBackground()->IsTransparent() ||
+      StyleBorder()->HasBorder() || !StyleBackground()->IsTransparent(this) ||
       StyleDisplay()->mAppearance) {
     // Not necessarily tight, due to clipping, negative
     // outline-offset, and lots of other issues, but that's OK
@@ -5782,8 +5875,8 @@ nsIFrame::GetOffsetToCrossDoc(const nsIFrame* aOther, const int32_t aAPD) const
   if (PresContext()->GetRootPresContext() !=
         aOther->PresContext()->GetRootPresContext()) {
     // crash right away, we are almost certainly going to crash anyway.
-    NS_RUNTIMEABORT("trying to get the offset between frames in different "
-                    "document hierarchies?");
+    MOZ_CRASH("trying to get the offset between frames in different "
+              "document hierarchies?");
   }
 
   const nsIFrame* root = nullptr;
@@ -7398,10 +7491,7 @@ nsFrame::GetNextPrevLineFromeBlockFrame(nsPresContext* aPresContext,
           aPos->mAttach = offsets.associate;
           if (offsets.content)
           {
-            bool selectable;
-            resultFrame->IsSelectable(&selectable, nullptr);
-            if (selectable)
-            {
+            if (resultFrame->IsSelectable(nullptr)) {
               found = true;
               break;
             }
@@ -7443,10 +7533,7 @@ nsFrame::GetNextPrevLineFromeBlockFrame(nsPresContext* aPresContext,
         aPos->mAttach = offsets.associate;
         if (offsets.content)
         {
-          bool selectable;
-          resultFrame->IsSelectable(&selectable, nullptr);
-          if (selectable)
-          {
+          if (resultFrame->IsSelectable(nullptr)) {
             found = true;
             if (resultFrame == farStoppingFrame)
               aPos->mAttach = CARET_ASSOCIATE_BEFORE;
@@ -8226,12 +8313,27 @@ nsIFrame::GetFrameFromDirection(nsDirection aDirection, bool aVisual,
     if (NS_FAILED(result))
       return result;
 
-    if (aDirection == eDirNext)
-      frameTraversal->Next();
-    else
-      frameTraversal->Prev();
+    auto Advance = [&frameTraversal, aDirection] () {
+      if (aDirection == eDirNext) {
+        frameTraversal->Next();
+      } else {
+        frameTraversal->Prev();
+      }
+      return frameTraversal->CurrentItem();
+    };
 
-    traversedFrame = frameTraversal->CurrentItem();
+    traversedFrame = Advance();
+
+    if (nsIContent* content = GetContent()) {
+      // Advance until the frame is inside the same tree as 'this'.
+      for (nsIContent* traversedContent;
+           traversedFrame &&
+             !traversedFrame->IsGeneratedContentFrame() &&
+             (traversedContent = traversedFrame->GetContent()) &&
+             !nsContentUtils::IsInSameAnonymousTree(content, traversedContent);) {
+        traversedFrame = Advance();
+      }
+    }
 
     // Skip anonymous elements, but watch out for generated content
     if (!traversedFrame ||
@@ -8257,7 +8359,7 @@ nsIFrame::GetFrameFromDirection(nsDirection aDirection, bool aVisual,
       }
     }
 
-    traversedFrame->IsSelectable(&selectable, nullptr);
+    selectable = traversedFrame->IsSelectable(nullptr);
     if (!selectable) {
       *aOutMovedOverNonSelectableText = true;
     }
@@ -9088,23 +9190,31 @@ nsFrame::DoGetParentStyleContext(nsIFrame** aProviderFrame) const
 void
 nsFrame::GetLastLeaf(nsPresContext* aPresContext, nsIFrame **aFrame)
 {
-  if (!aFrame || !*aFrame)
+  if (!aFrame || !*aFrame) {
     return;
-  nsIFrame *child = *aFrame;
-  //if we are a block frame then go for the last line of 'this'
-  while (1){
+  }
+
+  nsIFrame* child = *aFrame;
+  while (true) {
     child = child->PrincipalChildList().FirstChild();
-    if (!child)
-      return;//nothing to do
-    nsIFrame* siblingFrame;
-    nsIContent* content;
-    //ignore anonymous elements, e.g. mozTableAdd* mozTableRemove*
-    //see bug 278197 comment #12 #13 for details
-    while ((siblingFrame = child->GetNextSibling()) &&
-           (content = siblingFrame->GetContent()) &&
-           !content->IsRootOfNativeAnonymousSubtree())
-      child = siblingFrame;
-    *aFrame = child;
+    if (!child) {
+      return; // done
+    }
+
+    // Ignore anonymous elements, e.g. mozTableAdd* mozTableRemove*
+    // see bug 278197 comment #12 #13 for details.
+    nsIFrame* nonAnonymousChild = nullptr;
+    const nsIContent* content;
+    while (child &&
+           (content = child->GetContent()) &&
+           !content->IsRootOfNativeAnonymousSubtree()) {
+      nonAnonymousChild = child;
+      child = child->GetNextSibling();
+    }
+    if (!nonAnonymousChild) {
+      return;
+    }
+    *aFrame = child = nonAnonymousChild;
   }
 }
 
@@ -9246,20 +9356,21 @@ void nsFrame::FillCursorInformationFromStyle(const nsStyleUserInterface* ui,
 
   for (const nsCursorImage& item : ui->mCursorImages) {
     uint32_t status;
-    nsresult rv = item.GetImage()->GetImageStatus(&status);
-    if (NS_SUCCEEDED(rv)) {
-      if (!(status & imgIRequest::STATUS_LOAD_COMPLETE)) {
-        // If we are falling back because any cursor before is loading,
-        // let the consumer know.
-        aCursor.mLoading = true;
-      } else if (!(status & imgIRequest::STATUS_ERROR)) {
-        // This is the one we want
-        item.GetImage()->GetImage(getter_AddRefs(aCursor.mContainer));
-        aCursor.mHaveHotspot = item.mHaveHotspot;
-        aCursor.mHotspotX = item.mHotspotX;
-        aCursor.mHotspotY = item.mHotspotY;
-        break;
-      }
+    imgRequestProxy* req = item.GetImage();
+    if (!req || NS_FAILED(req->GetImageStatus(&status))) {
+      continue;
+    }
+    if (!(status & imgIRequest::STATUS_LOAD_COMPLETE)) {
+      // If we are falling back because any cursor before is loading,
+      // let the consumer know.
+      aCursor.mLoading = true;
+    } else if (!(status & imgIRequest::STATUS_ERROR)) {
+      // This is the one we want
+      req->GetImage(getter_AddRefs(aCursor.mContainer));
+      aCursor.mHaveHotspot = item.mHaveHotspot;
+      aCursor.mHotspotX = item.mHotspotX;
+      aCursor.mHotspotY = item.mHotspotY;
+      break;
     }
   }
 }

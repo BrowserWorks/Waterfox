@@ -340,13 +340,38 @@ endif
 HOST_CFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CFLAGS)
 HOST_CXXFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CXXFLAGS)
 
+# We only add color flags if neither the flag to disable color
+# (e.g. "-fno-color-diagnostics" nor a flag to control color
+# (e.g. "-fcolor-diagnostics=never") is present.
+define colorize_flags
+ifeq (,$(filter $(COLOR_CFLAGS:-f%=-fno-%),$$(1))$(findstring $(COLOR_CFLAGS),$$(1)))
+$(1) += $(COLOR_CFLAGS)
+endif
+endef
+
+color_flags_vars := \
+  COMPILE_CFLAGS \
+  COMPILE_CXXFLAGS \
+  COMPILE_CMFLAGS \
+  COMPILE_CMMFLAGS \
+  LDFLAGS \
+  $(NULL)
+
+ifdef MACH_STDOUT_ISATTY
+ifdef COLOR_CFLAGS
+# TODO Bug 1319166 - iTerm2 interprets some bytes  sequences as a
+# request to show a print dialog. Don't enable color on iTerm2 until
+# a workaround is in place.
+ifneq ($(TERM_PROGRAM),iTerm.app)
+$(foreach var,$(color_flags_vars),$(eval $(call colorize_flags,$(var))))
+endif
+endif
+endif
+
 #
 # Name of the binary code directories
 #
 # Override defaults
-
-SDK_LIB_DIR = $(DIST)/sdk/lib
-SDK_BIN_DIR = $(DIST)/sdk/bin
 
 DEPENDENCIES	= .md
 
@@ -518,7 +543,7 @@ EXPAND_LIBS_GEN = $(PYTHON) $(MOZILLA_DIR)/config/expandlibs_gen.py
 EXPAND_AR = $(EXPAND_LIBS_EXEC) --extract -- $(AR)
 EXPAND_CC = $(EXPAND_LIBS_EXEC) --uselist -- $(CC)
 EXPAND_CCC = $(EXPAND_LIBS_EXEC) --uselist -- $(CCC)
-EXPAND_LD = $(EXPAND_LIBS_EXEC) --uselist -- $(LD)
+EXPAND_LINK = $(EXPAND_LIBS_EXEC) --uselist -- $(LINK)
 EXPAND_MKSHLIB_ARGS = --uselist
 ifdef SYMBOL_ORDER
 EXPAND_MKSHLIB_ARGS += --symbol-order $(SYMBOL_ORDER)

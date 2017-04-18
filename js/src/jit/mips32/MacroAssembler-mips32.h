@@ -55,7 +55,6 @@ class MacroAssemblerMIPS : public MacroAssemblerMIPSShared
 
     void ma_li(Register dest, CodeOffset* label);
 
-    void ma_liPatchable(Register dest, Imm32 imm);
     void ma_li(Register dest, ImmWord imm);
     void ma_liPatchable(Register dest, ImmPtr imm);
     void ma_liPatchable(Register dest, ImmWord imm);
@@ -361,12 +360,10 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     void loadInt32OrDouble(Register base, Register index,
                            FloatRegister dest, int32_t shift = defaultShift);
     void loadConstantDouble(double dp, FloatRegister dest);
-    void loadConstantDouble(wasm::RawF64 d, FloatRegister dest);
 
     void boolValueToFloat32(const ValueOperand& operand, FloatRegister dest);
     void int32ValueToFloat32(const ValueOperand& operand, FloatRegister dest);
     void loadConstantFloat32(float f, FloatRegister dest);
-    void loadConstantFloat32(wasm::RawF32 f, FloatRegister dest);
 
     void testNullSet(Condition cond, const ValueOperand& value, Register dest);
 
@@ -480,8 +477,8 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
     void popValue(ValueOperand val);
     void pushValue(const Value& val) {
         push(Imm32(val.toNunboxTag()));
-        if (val.isMarkable())
-            push(ImmGCPtr(val.toMarkablePointer()));
+        if (val.isGCThing())
+            push(ImmGCPtr(val.toGCThing()));
         else
             push(Imm32(val.toNunboxPayload()));
     }
@@ -988,12 +985,6 @@ class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
 
     void ma_storeImm(Imm32 imm, const Address& addr) {
         ma_sw(imm, addr);
-    }
-
-    BufferOffset ma_BoundsCheck(Register bounded) {
-        BufferOffset bo = m_buffer.nextOffset();
-        ma_liPatchable(bounded, ImmWord(0));
-        return bo;
     }
 
     void moveFloat32(FloatRegister src, FloatRegister dest) {

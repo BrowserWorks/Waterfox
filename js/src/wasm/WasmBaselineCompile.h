@@ -19,28 +19,22 @@
 #ifndef asmjs_wasm_baseline_compile_h
 #define asmjs_wasm_baseline_compile_h
 
-#include "wasm/WasmIonCompile.h"
+#include "wasm/WasmTypes.h"
 
 namespace js {
 namespace wasm {
 
-class FunctionGenerator;
+class CompileTask;
+class FuncCompileUnit;
 
-// Return true if BaselineCompileFunction can generate code for the
-// function held in the FunctionGenerator.  If false is returned a
-// different compilation strategy must be chosen.
-//
-// This allows the baseline compiler to have different capabilities on
-// different platforms and defer to the full Ion compiler if
-// capabilities are missing.  The FunctionGenerator and other data
-// structures contain information about the capabilities that are
-// required to compile the function.
+// Return whether BaselineCompileFunction can generate code on the current device.
+// Note: asm.js is also currently not supported due to Atomics and SIMD.
 bool
-BaselineCanCompile(const FunctionGenerator* fg);
+BaselineCanCompile();
 
 // Generate adequate code quickly.
 bool
-BaselineCompileFunction(IonCompileTask* task);
+BaselineCompileFunction(CompileTask* task, FuncCompileUnit* unit, UniqueChars* error);
 
 } // namespace wasm
 } // namespace js

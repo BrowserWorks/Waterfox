@@ -8,7 +8,6 @@ EXPORTS += [
     'nsXPCOM.h',
     'nsXPCOMCID.h',
     'nsXPCOMCIDInternal.h',
-    'nsXREAppData.h',
     'nsXULAppAPI.h',
     'XREChildData.h',
     'xrecore.h',
@@ -24,6 +23,7 @@ EXPORTS.mozilla += [
     'ServiceList.h',
     'Services.h',
     'XPCOM.h',
+    'XREAppData.h',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -50,7 +50,6 @@ UNIFIED_SOURCES += xpcom_gluens_src_cppsrcs
 UNIFIED_SOURCES += xpcom_glue_src_cppsrcs
 
 UNIFIED_SOURCES += [
-    'FrozenFunctions.cpp',
     'IOInterposer.cpp',
     'LateWriteChecks.cpp',
     'MainThreadIOLogger.cpp',

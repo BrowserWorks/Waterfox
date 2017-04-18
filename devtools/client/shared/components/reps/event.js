@@ -11,7 +11,11 @@ define(function (require, exports, module) {
   const React = require("devtools/client/shared/vendor/react");
 
   // Reps
-  const { createFactories, isGrip } = require("./rep-utils");
+  const {
+    createFactories,
+    isGrip,
+    wrapRender,
+  } = require("./rep-utils");
   const { rep } = createFactories(require("./grip").Grip);
 
   /**
@@ -24,43 +28,64 @@ define(function (require, exports, module) {
       object: React.PropTypes.object.isRequired
     },
 
-    render: function () {
+    getTitle: function (props) {
+      let preview = props.object.preview;
+      let title = preview.type;
+
+      if (preview.eventKind == "key" && preview.modifiers && preview.modifiers.length) {
+        title = `${title} ${preview.modifiers.join("-")}`;
+      }
+      return title;
+    },
+
+    render: wrapRender(function () {
       // Use `Object.assign` to keep `this.props` without changes because:
       // 1. JSON.stringify/JSON.parse is slow.
       // 2. Immutable.js is planned for the future.
-      let props = Object.assign({}, this.props);
-      props.object = Object.assign({}, this.props.object);
-      props.object.preview = Object.assign({}, this.props.object.preview);
-      props.object.preview.ownProperties = props.object.preview.properties;
-      delete props.object.preview.properties;
-      props.object.ownPropertyLength =
-        Object.keys(props.object.preview.ownProperties).length;
+      let gripProps = Object.assign({
+        title: this.getTitle(this.props)
+      }, this.props);
+      gripProps.object = Object.assign({}, this.props.object);
+      gripProps.object.preview = Object.assign({}, this.props.object.preview);
 
-      switch (props.object.class) {
+      gripProps.object.preview.ownProperties = {};
+      if (gripProps.object.preview.target) {
+        Object.assign(gripProps.object.preview.ownProperties, {
+          target: gripProps.object.preview.target
+        });
+      }
+      Object.assign(gripProps.object.preview.ownProperties,
+        gripProps.object.preview.properties);
+
+      delete gripProps.object.preview.properties;
+      gripProps.object.ownPropertyLength =
+        Object.keys(gripProps.object.preview.ownProperties).length;
+
+      switch (gripProps.object.class) {
         case "MouseEvent":
-          props.isInterestingProp = (type, value, name) => {
-            return (name == "clientX" ||
-                    name == "clientY" ||
-                    name == "layerX" ||
-                    name == "layerY");
+          gripProps.isInterestingProp = (type, value, name) => {
+            return ["target", "clientX", "clientY", "layerX", "layerY"].includes(name);
           };
           break;
         case "KeyboardEvent":
-          props.isInterestingProp = (type, value, name) => {
-            return (name == "key" ||
-                    name == "charCode" ||
-                    name == "keyCode");
+          gripProps.isInterestingProp = (type, value, name) => {
+            return ["target", "key", "charCode", "keyCode"].includes(name);
           };
           break;
         case "MessageEvent":
-          props.isInterestingProp = (type, value, name) => {
-            return (name == "isTrusted" ||
-                    name == "data");
+          gripProps.isInterestingProp = (type, value, name) => {
+            return ["target", "isTrusted", "data"].includes(name);
           };
           break;
+        default:
+          gripProps.isInterestingProp = (type, value, name) => {
+            // We want to show the properties in the order they are declared.
+            return Object.keys(gripProps.object.preview.ownProperties).includes(name);
+          };
       }
-      return rep(props);
-    }
+
+      return rep(gripProps);
+    })
   });
 
   // Registration

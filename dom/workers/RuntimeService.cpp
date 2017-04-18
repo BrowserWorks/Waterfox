@@ -252,7 +252,7 @@ GetWorkerPref(const nsACString& aPref,
 void
 GenerateSharedWorkerKey(const nsACString& aScriptSpec,
                         const nsACString& aName,
-                        const PrincipalOriginAttributes& aAttrs,
+                        const OriginAttributes& aAttrs,
                         nsCString& aKey)
 {
   nsAutoCString suffix;
@@ -623,7 +623,7 @@ ContentSecurityPolicyAllows(JSContext* aCx)
         new LogViolationDetailsRunnable(worker, fileName, lineNum);
 
     ErrorResult rv;
-    runnable->Dispatch(rv);
+    runnable->Dispatch(Killing, rv);
     if (NS_WARN_IF(rv.Failed())) {
       rv.SuppressException();
     }
@@ -1454,17 +1454,11 @@ GetCurrentThreadWorkerPrivate()
   JSContext* cx = ccjscx->Context();
   MOZ_ASSERT(cx);
 
-  void* cxPrivate = JS_GetContextPrivate(cx);
-  if (!cxPrivate) {
-    // This can happen if the nsCycleCollector_shutdown() in ~WorkerJSContext()
-    // triggers any calls to GetCurrentThreadWorkerPrivate().  At this stage
-    // CycleCollectedJSContext::Get() will still return a context, but
-    // the context private has already been cleared.
-    return nullptr;
-  }
-
-  return
-    static_cast<WorkerThreadContextPrivate*>(cxPrivate)->GetWorkerPrivate();
+  // Note that we can return nullptr if the nsCycleCollector_shutdown() in
+  // ~WorkerJSContext() triggers any calls to GetCurrentThreadWorkerPrivate().
+  // At this stage CycleCollectedJSContext::Get() will still return a context,
+  // but the context private has already been cleared.
+  return GetWorkerPrivateFromContext(cx);
 }
 
 bool
@@ -2445,7 +2439,7 @@ RuntimeService::CreateSharedWorkerFromLoadInfo(JSContext* aCx,
     MOZ_ASSERT(aLoadInfo->mPrincipal);
     nsAutoCString key;
     GenerateSharedWorkerKey(scriptSpec, aName,
-        BasePrincipal::Cast(aLoadInfo->mPrincipal)->OriginAttributesRef(), key);
+        aLoadInfo->mPrincipal->OriginAttributesRef(), key);
 
     if (mDomainMap.Get(aLoadInfo->mDomain, &domainInfo) &&
         domainInfo->mSharedWorkerInfos.Get(key, &sharedWorkerInfo)) {
@@ -2877,7 +2871,7 @@ WorkerThreadPrimaryRunnable::Run()
 
     {
 #ifdef MOZ_ENABLE_PROFILER_SPS
-      PseudoStack* stack = mozilla_get_pseudo_stack();
+      PseudoStack* stack = profiler_get_pseudo_stack();
       if (stack) {
         stack->sampleContext(cx);
       }

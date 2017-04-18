@@ -1766,7 +1766,7 @@ public:
   bool SetRefreshObserver(ScrollFrameHelper *aCallee) {
     NS_ASSERTION(aCallee && !mCallee, "AsyncSmoothMSDScroll::SetRefreshObserver - Invalid usage.");
 
-    if (!RefreshDriver(aCallee)->AddRefreshObserver(this, Flush_Style)) {
+    if (!RefreshDriver(aCallee)->AddRefreshObserver(this, FlushType::Style)) {
       return false;
     }
 
@@ -1793,7 +1793,7 @@ private:
    */
   void RemoveObserver() {
     if (mCallee) {
-      RefreshDriver(mCallee)->RemoveRefreshObserver(this, Flush_Style);
+      RefreshDriver(mCallee)->RemoveRefreshObserver(this, FlushType::Style);
     }
   }
 
@@ -1860,7 +1860,7 @@ public:
   bool SetRefreshObserver(ScrollFrameHelper *aCallee) {
     NS_ASSERTION(aCallee && !mCallee, "AsyncScroll::SetRefreshObserver - Invalid usage.");
 
-    if (!RefreshDriver(aCallee)->AddRefreshObserver(this, Flush_Style)) {
+    if (!RefreshDriver(aCallee)->AddRefreshObserver(this, FlushType::Style)) {
       return false;
     }
 
@@ -1889,7 +1889,7 @@ private:
    */
   void RemoveObserver() {
     if (mCallee) {
-      RefreshDriver(mCallee)->RemoveRefreshObserver(this, Flush_Style);
+      RefreshDriver(mCallee)->RemoveRefreshObserver(this, FlushType::Style);
       APZCCallbackHelper::SuppressDisplayport(false, mCallee->mOuter->PresContext()->PresShell());
     }
   }
@@ -2052,6 +2052,7 @@ ScrollFrameHelper::ScrollFrameHelper(nsContainerFrame* aOuter,
   , mTransformingByAPZ(false)
   , mScrollableByAPZ(false)
   , mZoomableByAPZ(false)
+  , mSuppressScrollbarRepaints(false)
   , mScrollsClipOnUnscrolledOutOfFlow(false)
   , mVelocityQueue(aOuter->PresContext())
 {
@@ -2919,6 +2920,9 @@ ScrollFrameHelper::ScrollToImpl(nsPoint aPt, const nsRect& aRange, nsIAtom* aOri
     }
   }
 
+  presContext->RecordInteractionTime(
+    nsPresContext::InteractionType::eScrollInteraction);
+
   PostScrollEvent();
 
   // notify the listeners.
@@ -3665,6 +3669,30 @@ ScrollFrameHelper::DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
               rootCompBounds += CSSPoint::ToAppUnits(
                   nsLayoutUtils::GetCumulativeApzCallbackTransform(mOuter));
 
+              // We want to limit displayportBase to be no larger than rootCompBounds on
+              // either axis, but we don't want to just blindly intersect the two, because
+              // rootCompBounds might be offset from where displayportBase is (see bug
+              // 1327095 comment 8). Instead, we translate rootCompBounds so as to
+              // maximize the overlap with displayportBase, and *then* do the intersection.
+              if (rootCompBounds.x > displayportBase.x && rootCompBounds.XMost() > displayportBase.XMost()) {
+                // rootCompBounds is at a greater x-position for both left and right, so translate it such
+                // that the XMost() values are the same. This will line up the right edge of the two rects,
+                // and might mean that rootCompbounds.x is smaller than displayportBase.x. We can avoid that
+                // by taking the min of the x delta and XMost() delta, but it doesn't really matter because
+                // the intersection between the two rects below will end up the same.
+                rootCompBounds.x -= (rootCompBounds.XMost() - displayportBase.XMost());
+              } else if (rootCompBounds.x < displayportBase.x && rootCompBounds.XMost() < displayportBase.XMost()) {
+                // Analaogous code for when the rootCompBounds is at a smaller x-position.
+                rootCompBounds.x = displayportBase.x;
+              }
+              // Do the same for y-axis
+              if (rootCompBounds.y > displayportBase.y && rootCompBounds.YMost() > displayportBase.YMost()) {
+                rootCompBounds.y -= (rootCompBounds.YMost() - displayportBase.YMost());
+              } else if (rootCompBounds.y < displayportBase.y && rootCompBounds.YMost() < displayportBase.YMost()) {
+                rootCompBounds.y = displayportBase.y;
+              }
+
+              // Now we can do the intersection
               displayportBase = displayportBase.Intersect(rootCompBounds);
             }
           }
@@ -4687,13 +4715,13 @@ ScrollFrameHelper::ScrollEvent::ScrollEvent(ScrollFrameHelper* aHelper)
   : mHelper(aHelper)
 {
   mDriver = mHelper->mOuter->PresContext()->RefreshDriver();
-  mDriver->AddRefreshObserver(this, Flush_Layout);
+  mDriver->AddRefreshObserver(this, FlushType::Layout);
 }
 
 ScrollFrameHelper::ScrollEvent::~ScrollEvent()
 {
   if (mDriver) {
-    mDriver->RemoveRefreshObserver(this, Flush_Layout);
+    mDriver->RemoveRefreshObserver(this, FlushType::Layout);
     mDriver = nullptr;
   }
 }
@@ -4701,7 +4729,7 @@ ScrollFrameHelper::ScrollEvent::~ScrollEvent()
 void
 ScrollFrameHelper::ScrollEvent::WillRefresh(mozilla::TimeStamp aTime)
 {
-  mDriver->RemoveRefreshObserver(this, Flush_Layout);
+  mDriver->RemoveRefreshObserver(this, FlushType::Layout);
   mDriver = nullptr;
   mHelper->FireScrollEvent();
 }
@@ -4749,7 +4777,7 @@ ScrollFrameHelper::AsyncScrollPortEvent::Run()
 {
   if (mHelper) {
     mHelper->mOuter->PresContext()->GetPresShell()->
-      FlushPendingNotifications(Flush_InterruptibleLayout);
+      FlushPendingNotifications(FlushType::InterruptibleLayout);
   }
   return mHelper ? mHelper->FireScrollPortEvent() : NS_OK;
 }
@@ -5725,26 +5753,26 @@ ScrollFrameHelper::GetBorderRadii(const nsSize& aFrameSize,
 
   if (sb.left > 0 || sb.top > 0) {
     ReduceRadii(border.left, border.top,
-                aRadii[NS_CORNER_TOP_LEFT_X],
-                aRadii[NS_CORNER_TOP_LEFT_Y]);
+                aRadii[eCornerTopLeftX],
+                aRadii[eCornerTopLeftY]);
   }
 
   if (sb.top > 0 || sb.right > 0) {
     ReduceRadii(border.right, border.top,
-                aRadii[NS_CORNER_TOP_RIGHT_X],
-                aRadii[NS_CORNER_TOP_RIGHT_Y]);
+                aRadii[eCornerTopRightX],
+                aRadii[eCornerTopRightY]);
   }
 
   if (sb.right > 0 || sb.bottom > 0) {
     ReduceRadii(border.right, border.bottom,
-                aRadii[NS_CORNER_BOTTOM_RIGHT_X],
-                aRadii[NS_CORNER_BOTTOM_RIGHT_Y]);
+                aRadii[eCornerBottomRightX],
+                aRadii[eCornerBottomRightY]);
   }
 
   if (sb.bottom > 0 || sb.left > 0) {
     ReduceRadii(border.left, border.bottom,
-                aRadii[NS_CORNER_BOTTOM_LEFT_X],
-                aRadii[NS_CORNER_BOTTOM_LEFT_Y]);
+                aRadii[eCornerBottomLeftX],
+                aRadii[eCornerBottomLeftY]);
   }
 
   return true;
@@ -6159,4 +6187,61 @@ ScrollFrameHelper::UsesContainerScrolling() const
     return mIsRoot;
   }
   return false;
+}
+
+bool
+ScrollFrameHelper::DragScroll(WidgetEvent* aEvent)
+{
+  // Dragging is allowed while within a 20 pixel border. Note that device pixels
+  // are used so that the same margin is used even when zoomed in or out.
+  nscoord margin = 20 * mOuter->PresContext()->AppUnitsPerDevPixel();
+
+  // Don't drag scroll for small scrollareas.
+  if (mScrollPort.width < margin * 2 || mScrollPort.height < margin * 2) {
+    return false;
+  }
+
+  // If willScroll is computed as false, then the frame is already scrolled as
+  // far as it can go in both directions. Return false so that an ancestor
+  // scrollframe can scroll instead.
+  bool willScroll = false;
+  nsPoint pnt = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, mOuter);
+  nsPoint scrollPoint = GetScrollPosition();
+  nsRect rangeRect = GetScrollRangeForClamping();
+
+  // Only drag scroll when a scrollbar is present.
+  nsPoint offset;
+  if (mHasHorizontalScrollbar) {
+    if (pnt.x >= mScrollPort.x && pnt.x <= mScrollPort.x + margin) {
+      offset.x = -margin;
+      if (scrollPoint.x > 0) {
+        willScroll = true;
+      }
+    } else if (pnt.x >= mScrollPort.XMost() - margin && pnt.x <= mScrollPort.XMost()) {
+      offset.x = margin;
+      if (scrollPoint.x < rangeRect.width) {
+        willScroll = true;
+      }
+    }
+  }
+
+  if (mHasVerticalScrollbar) {
+    if (pnt.y >= mScrollPort.y && pnt.y <= mScrollPort.y + margin) {
+      offset.y = -margin;
+      if (scrollPoint.y > 0) {
+        willScroll = true;
+      }
+    } else if (pnt.y >= mScrollPort.YMost() - margin && pnt.y <= mScrollPort.YMost()) {
+      offset.y = margin;
+      if (scrollPoint.y < rangeRect.height) {
+        willScroll = true;
+      }
+    }
+  }
+
+  if (offset.x || offset.y) {
+    ScrollTo(GetScrollPosition() + offset, nsIScrollableFrame::NORMAL);
+  }
+
+  return willScroll;
 }

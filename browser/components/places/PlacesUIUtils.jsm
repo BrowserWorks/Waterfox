@@ -295,7 +295,7 @@ this.PlacesUIUtils = {
     let str = PluralForm.get(aNumber, bundle.GetStringFromName(aKey));
 
     // Replace #1 with aParams[0], #2 with aParams[1], and so on.
-    return str.replace(/\#(\d+)/g, function (matchedId, matchedNumber) {
+    return str.replace(/\#(\d+)/g, function(matchedId, matchedNumber) {
       let param = aParams[parseInt(matchedNumber, 10) - 1];
       return param !== undefined ? param : matchedId;
     });
@@ -330,8 +330,7 @@ this.PlacesUIUtils = {
    * @see this._copyableAnnotations for the list of copyable annotations.
    */
   _getURIItemCopyTransaction:
-  function PUIU__getURIItemCopyTransaction(aData, aContainer, aIndex)
-  {
+  function PUIU__getURIItemCopyTransaction(aData, aContainer, aIndex) {
     let transactions = [];
     if (aData.dateAdded) {
       transactions.push(
@@ -346,7 +345,7 @@ this.PlacesUIUtils = {
 
     let annos = [];
     if (aData.annos) {
-      annos = aData.annos.filter(function (aAnno) {
+      annos = aData.annos.filter(function(aAnno) {
         return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
@@ -400,22 +399,18 @@ this.PlacesUIUtils = {
             transactions.push(
               PlacesUIUtils._getLivemarkCopyTransaction(node, aContainer, index)
             );
-          }
-          else {
+          } else {
             transactions.push(
               PlacesUIUtils._getFolderCopyTransaction(node, aContainer, index)
             );
           }
-        }
-        else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
+        } else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
           transactions.push(new PlacesCreateSeparatorTransaction(-1, index));
-        }
-        else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE) {
+        } else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE) {
           transactions.push(
             PlacesUIUtils._getURIItemCopyTransaction(node, -1, index)
           );
-        }
-        else {
+        } else {
           throw new Error("Unexpected item under a bookmarks folder");
         }
       }
@@ -458,7 +453,7 @@ this.PlacesUIUtils = {
 
     let annos = [];
     if (aData.annos) {
-      annos = aData.annos.filter(function (aAnno) {
+      annos = aData.annos.filter(function(aAnno) {
         return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
@@ -484,8 +479,7 @@ this.PlacesUIUtils = {
    * @see this._copyableAnnotations for the list of copyable annotations.
    */
   _getLivemarkCopyTransaction:
-  function PUIU__getLivemarkCopyTransaction(aData, aContainer, aIndex)
-  {
+  function PUIU__getLivemarkCopyTransaction(aData, aContainer, aIndex) {
     if (!aData.livemark || !aData.annos) {
       throw new Error("node is not a livemark");
     }
@@ -493,11 +487,10 @@ this.PlacesUIUtils = {
     let feedURI, siteURI;
     let annos = [];
     if (aData.annos) {
-      annos = aData.annos.filter(function (aAnno) {
+      annos = aData.annos.filter(function(aAnno) {
         if (aAnno.name == PlacesUtils.LMANNO_FEEDURI) {
           feedURI = PlacesUtils._uri(aAnno.value);
-        }
-        else if (aAnno.name == PlacesUtils.LMANNO_SITEURI) {
+        } else if (aAnno.name == PlacesUtils.LMANNO_SITEURI) {
           siteURI = PlacesUtils._uri(aAnno.value);
         }
         return this._copyableAnnotations.includes(aAnno.name)
@@ -525,8 +518,7 @@ this.PlacesUIUtils = {
    *         the move/insert.
    */
   makeTransaction:
-  function PUIU_makeTransaction(data, type, container, index, copy)
-  {
+  function PUIU_makeTransaction(data, type, container, index, copy) {
     switch (data.type) {
       case PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER:
         if (copy) {
@@ -584,13 +576,13 @@ this.PlacesUIUtils = {
    * @return  a Places Transaction that can be transacted for performing the
    *          move/insert command.
    */
-  getTransactionForData: function(aData, aType, aNewParentGuid, aIndex, aCopy) {
+  getTransactionForData(aData, aType, aNewParentGuid, aIndex, aCopy) {
     if (!this.SUPPORTED_FLAVORS.includes(aData.type))
       throw new Error(`Unsupported '${aData.type}' data type`);
 
     if ("itemGuid" in aData) {
       if (!this.PLACES_FLAVORS.includes(aData.type))
-        throw new Error (`itemGuid unexpectedly set on ${aData.type} data`);
+        throw new Error(`itemGuid unexpectedly set on ${aData.type} data`);
 
       let info = { guid: aData.itemGuid
                  , newParentGuid: aNewParentGuid
@@ -617,7 +609,7 @@ this.PlacesUIUtils = {
     let title = aData.type != PlacesUtils.TYPE_UNICODE ? aData.title
                                                        : aData.uri;
     return PlacesTransactions.NewBookmark({ uri: NetUtil.newURI(aData.uri)
-                                          , title: title
+                                          , title
                                           , parentGuid: aNewParentGuid
                                           , index: aIndex });
   },
@@ -797,7 +789,7 @@ this.PlacesUIUtils = {
    *        a node, except the root node of a query.
    * @return true if the aNode represents a removable entry, false otherwise.
    */
-  canUserRemove: function (aNode) {
+  canUserRemove(aNode) {
     let parentNode = aNode.parent;
     if (!parentNode) {
       // canUserRemove doesn't accept root nodes.
@@ -845,15 +837,13 @@ this.PlacesUIUtils = {
    * @note livemark "folders" are considered read-only (but see bug 1072833).
    * @return true if aItemId points to a read-only folder, false otherwise.
    */
-  isContentsReadOnly: function (aNodeOrItemId) {
+  isContentsReadOnly(aNodeOrItemId) {
     let itemId;
     if (typeof(aNodeOrItemId) == "number") {
       itemId = aNodeOrItemId;
-    }
-    else if (PlacesUtils.nodeIsFolder(aNodeOrItemId)) {
+    } else if (PlacesUtils.nodeIsFolder(aNodeOrItemId)) {
       itemId = PlacesUtils.getConcreteItemId(aNodeOrItemId);
-    }
-    else {
+    } else {
       throw new Error("invalid value for aNodeOrItemId");
     }
 
@@ -1004,7 +994,7 @@ this.PlacesUIUtils = {
     let window = aView.ownerWindow;
 
     let urlsToOpen = [];
-    for (var i=0; i < aNodes.length; i++) {
+    for (var i = 0; i < aNodes.length; i++) {
       // Skip over separators and folders.
       if (PlacesUtils.nodeIsURI(aNodes[i]))
         urlsToOpen.push({uri: aNodes[i].uri, isBookmark: PlacesUtils.nodeIsBookmark(aNodes[i])});
@@ -1040,7 +1030,7 @@ this.PlacesUIUtils = {
     this._openNodeIn(aNode, aWhere, window, aPrivate);
   },
 
-  _openNodeIn: function PUIU_openNodeIn(aNode, aWhere, aWindow, aPrivate=false) {
+  _openNodeIn: function PUIU_openNodeIn(aNode, aWhere, aWindow, aPrivate = false) {
     if (aNode && PlacesUtils.nodeIsURI(aNode) &&
         this.checkURLSecurity(aNode, aWindow)) {
       let isBookmark = PlacesUtils.nodeIsBookmark(aNode);
@@ -1104,13 +1094,11 @@ this.PlacesUIUtils = {
                            (host ? "/" + this.ellipsis + "/" : "") + fileName :
                            uri.path);
         }
-      }
-      catch (e) {
+      } catch (e) {
         // Use (no title) for non-standard URIs (data:, javascript:, ...)
         title = "";
       }
-    }
-    else
+    } else
       title = aNode.title;
 
     return title || this.getString("noTitle");
@@ -1169,8 +1157,7 @@ this.PlacesUIUtils = {
         as.removeItemAnnotation(aItemId, PlacesUIUtils.ORGANIZER_QUERY_ANNO);
         // This will throw if the annotation is an orphan.
         bs.removeItem(aItemId);
-      }
-      catch (e) { /* orphan anno */ }
+      } catch (e) { /* orphan anno */ }
     }
 
     // Returns true if item really exists, false otherwise.
@@ -1178,8 +1165,7 @@ this.PlacesUIUtils = {
       try {
         bs.getItemIndex(aItemId);
         return true;
-      }
-      catch (e) {
+      } catch (e) {
         return false;
       }
     }
@@ -1190,8 +1176,7 @@ this.PlacesUIUtils = {
       // Something went wrong, we cannot have more than one left pane folder,
       // remove all left pane folders and continue.  We will create a new one.
       items.forEach(safeRemoveItem);
-    }
-    else if (items.length == 1 && items[0] != -1) {
+    } else if (items.length == 1 && items[0] != -1) {
       leftPaneRoot = items[0];
       // Check that organizer left pane root is valid.
       let version = as.getItemAnnotation(leftPaneRoot, this.ORGANIZER_FOLDER_ANNO);
@@ -1210,12 +1195,12 @@ this.PlacesUIUtils = {
       delete this.leftPaneQueries;
       this.leftPaneQueries = {};
 
-      let items = as.getItemsWithAnnotation(this.ORGANIZER_QUERY_ANNO);
+      let queryItems = as.getItemsWithAnnotation(this.ORGANIZER_QUERY_ANNO);
       // While looping through queries we will also check for their validity.
       let queriesCount = 0;
       let corrupt = false;
-      for (let i = 0; i < items.length; i++) {
-        let queryName = as.getItemAnnotation(items[i], this.ORGANIZER_QUERY_ANNO);
+      for (let i = 0; i < queryItems.length; i++) {
+        let queryName = as.getItemAnnotation(queryItems[i], this.ORGANIZER_QUERY_ANNO);
 
         // Some extension did use our annotation to decorate their items
         // with icons, so we should check only our elements, to avoid dataloss.
@@ -1223,7 +1208,7 @@ this.PlacesUIUtils = {
           continue;
 
         let query = queries[queryName];
-        query.itemId = items[i];
+        query.itemId = queryItems[i];
 
         if (!itemExists(query.itemId)) {
           // Orphan annotation, bail out and create a new left pane root.
@@ -1233,7 +1218,7 @@ this.PlacesUIUtils = {
 
         // Check that all queries have valid parents.
         let parentId = bs.getFolderIdForItem(query.itemId);
-        if (!items.includes(parentId) && parentId != leftPaneRoot) {
+        if (!queryItems.includes(parentId) && parentId != leftPaneRoot) {
           // The parent is not part of the left pane, bail out and create a new
           // left pane root.
           corrupt = true;
@@ -1262,10 +1247,9 @@ this.PlacesUIUtils = {
         // Queries number is wrong, so the left pane must be corrupt.
         // Note: we can't just remove the leftPaneRoot, because some query could
         // have a bad parent, so we have to remove all items one by one.
-        items.forEach(safeRemoveItem);
+        queryItems.forEach(safeRemoveItem);
         safeRemoveItem(leftPaneRoot);
-      }
-      else {
+      } else {
         // Everything is fine, return the current left pane folder.
         delete this.leftPaneFolderId;
         return this.leftPaneFolderId = leftPaneRoot;
@@ -1306,8 +1290,7 @@ this.PlacesUIUtils = {
           as.setItemAnnotation(folderId, PlacesUIUtils.ORGANIZER_FOLDER_ANNO,
                                PlacesUIUtils.ORGANIZER_LEFTPANE_VERSION,
                                0, as.EXPIRE_NEVER);
-        }
-        else {
+        } else {
           // Mark as special organizer folder.
           as.setItemAnnotation(folderId, PlacesUIUtils.ORGANIZER_QUERY_ANNO, aFolderName,
                            0, as.EXPIRE_NEVER);
@@ -1391,13 +1374,11 @@ this.PlacesUIUtils = {
       try {
         queryName = PlacesUtils.annotations.
                                 getItemAnnotation(aItemId, this.ORGANIZER_QUERY_ANNO);
-      }
-      catch (ex) {
+      } catch (ex) {
         // doesn't have the annotation
         queryName = "";
       }
-    }
-    else {
+    } else {
       // If the left pane has already been built, use the name->id map
       // cached in PlacesUIUtils.
       for (let [name, id] of Object.entries(this.leftPaneQueries)) {
@@ -1408,7 +1389,7 @@ this.PlacesUIUtils = {
     return queryName;
   },
 
-  shouldShowTabsFromOtherComputersMenuitem: function() {
+  shouldShowTabsFromOtherComputersMenuitem() {
     let weaveOK = Weave.Status.checkSetup() != Weave.CLIENT_NOT_CONFIGURED &&
                   Weave.Svc.Prefs.get("firstSync", "") != "notReady";
     return weaveOK;
@@ -1481,8 +1462,7 @@ this.PlacesUIUtils = {
         let uri = null;
         try {
           uri = PlacesUtils.bookmarks.getBookmarkURI(itemId);
-        }
-        catch (ex) { }
+        } catch (ex) { }
         return uri ? uri.spec : "";
       });
     }
@@ -1588,8 +1568,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ellipsis", function() {
 XPCOMUtils.defineLazyGetter(PlacesUIUtils, "useAsyncTransactions", function() {
   try {
     return Services.prefs.getBoolPref("browser.places.useAsyncTransactions");
-  }
-  catch (ex) { }
+  } catch (ex) { }
   return false;
 });
 
@@ -1691,8 +1670,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
      *        boolean value.
      * @return nsITransaction object.
      */
-    setLoadInSidebar: function(aItemId, aLoadInSidebar)
-    {
+    setLoadInSidebar(aItemId, aLoadInSidebar) {
       let annoObj = { name: PlacesUIUtils.LOAD_IN_SIDEBAR_ANNO,
                       type: Ci.nsIAnnotationService.TYPE_INT32,
                       flags: 0,
@@ -1710,8 +1688,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
     *        new description.
     * @return nsITransaction object.
     */
-    editItemDescription: function(aItemId, aDescription)
-    {
+    editItemDescription(aItemId, aDescription) {
       let annoObj = { name: PlacesUIUtils.DESCRIPTION_ANNO,
                       type: Ci.nsIAnnotationService.TYPE_STRING,
                       flags: 0,

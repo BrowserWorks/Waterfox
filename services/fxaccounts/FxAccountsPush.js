@@ -135,7 +135,6 @@ FxAccountsPushService.prototype = {
         return this.unsubscribe().catch(err => {
           this.log.error("Error during unsubscribe", err);
         });
-        break;
       default:
         break;
     }
@@ -164,13 +163,14 @@ FxAccountsPushService.prototype = {
     let payload = message.data.json();
     this.log.debug(`push command: ${payload.command}`);
     switch (payload.command) {
+      case ON_DEVICE_CONNECTED_NOTIFICATION:
+        Services.obs.notifyObservers(null, ON_DEVICE_CONNECTED_NOTIFICATION, payload.data.deviceName);
+        break;
       case ON_DEVICE_DISCONNECTED_NOTIFICATION:
         return this.fxAccounts.handleDeviceDisconnection(payload.data.id);
-        break;
       case ON_PASSWORD_CHANGED_NOTIFICATION:
       case ON_PASSWORD_RESET_NOTIFICATION:
         return this._onPasswordChanged();
-        break;
       case ON_COLLECTION_CHANGED_NOTIFICATION:
         Services.obs.notifyObservers(null, ON_COLLECTION_CHANGED_NOTIFICATION, payload.data.collections);
       default:
@@ -235,6 +235,3 @@ FxAccountsPushService.prototype = {
 // Service registration below registers with FxAccountsComponents.manifest
 const components = [FxAccountsPushService];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);
-
-// The following registration below helps with testing this service.
-this.EXPORTED_SYMBOLS=["FxAccountsPushService"];

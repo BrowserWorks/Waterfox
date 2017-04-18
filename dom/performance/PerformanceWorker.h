@@ -21,9 +21,6 @@ class PerformanceWorker final : public Performance
 public:
   explicit PerformanceWorker(workers::WorkerPrivate* aWorkerPrivate);
 
-  // Performance WebIDL methods
-  DOMHighResTimeStamp Now() const override;
-
   virtual PerformanceTiming* Timing() override
   {
     MOZ_CRASH("This should not be called on workers.");
@@ -64,12 +61,6 @@ public:
     return nullptr;
   }
 
-  virtual Performance* GetParentPerformance() const override
-  {
-    MOZ_CRASH("This should not be called on workers.");
-    return nullptr;
-  }
-
 protected:
   ~PerformanceWorker();
 
@@ -79,11 +70,6 @@ protected:
   }
 
   void InsertUserEntry(PerformanceEntry* aEntry) override;
-
-  bool IsPerformanceTimingAttribute(const nsAString& aName) override;
-
-  DOMHighResTimeStamp
-  GetPerformanceTimingFromString(const nsAString& aTimingName) override;
 
   void DispatchBufferFullEvent() override
   {

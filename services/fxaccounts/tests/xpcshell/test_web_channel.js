@@ -5,7 +5,7 @@
 
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 const { FxAccountsWebChannel, FxAccountsWebChannelHelpers } =
-    Cu.import("resource://gre/modules/FxAccountsWebChannel.jsm");
+    Cu.import("resource://gre/modules/FxAccountsWebChannel.jsm", {});
 
 const URL_STRING = "https://example.com";
 
@@ -15,7 +15,7 @@ const mockSendingContext = {
   eventTarget: {}
 };
 
-add_test(function () {
+add_test(function() {
   validationHelper(undefined,
   "Error: Missing configuration options");
 
@@ -25,7 +25,7 @@ add_test(function () {
   "Error: Missing 'content_uri' option");
 
   validationHelper({
-    content_uri: 'bad uri',
+    content_uri: "bad uri",
     channel_id: WEBCHANNEL_ID
   },
   /NS_ERROR_MALFORMED_URI/);
@@ -33,16 +33,16 @@ add_test(function () {
   validationHelper({
     content_uri: URL_STRING
   },
-  'Error: Missing \'channel_id\' option');
+  "Error: Missing 'channel_id' option");
 
   run_next_test();
 });
 
 add_task(function* test_rejection_reporting() {
   let mockMessage = {
-    command: 'fxaccounts:login',
-    messageId: '1234',
-    data: { email: 'testuser@testuser.com' },
+    command: "fxaccounts:login",
+    messageId: "1234",
+    data: { email: "testuser@testuser.com" },
   };
 
   let channel = new FxAccountsWebChannel({
@@ -50,9 +50,9 @@ add_task(function* test_rejection_reporting() {
     content_uri: URL_STRING,
     helpers: {
       login(accountData) {
-        equal(accountData.email, 'testuser@testuser.com',
-          'Should forward incoming message data to the helper');
-        return Promise.reject(new Error('oops'));
+        equal(accountData.email, "testuser@testuser.com",
+          "Should forward incoming message data to the helper");
+        return Promise.reject(new Error("oops"));
       },
     },
   });
@@ -67,21 +67,21 @@ add_task(function* test_rejection_reporting() {
 
   let { message, context } = yield promiseSend;
 
-  equal(context, mockSendingContext, 'Should forward the original context');
-  equal(message.command, 'fxaccounts:login',
-    'Should include the incoming command');
-  equal(message.messageId, '1234', 'Should include the message ID');
-  equal(message.data.error.message, 'Error: oops',
-    'Should convert the error message to a string');
+  equal(context, mockSendingContext, "Should forward the original context");
+  equal(message.command, "fxaccounts:login",
+    "Should include the incoming command");
+  equal(message.messageId, "1234", "Should include the message ID");
+  equal(message.data.error.message, "Error: oops",
+    "Should convert the error message to a string");
   notStrictEqual(message.data.error.stack, null,
-    'Should include the stack for JS error rejections');
+    "Should include the stack for JS error rejections");
 });
 
 add_test(function test_exception_reporting() {
   let mockMessage = {
-    command: 'fxaccounts:sync_preferences',
-    messageId: '5678',
-    data: { entryPoint: 'fxa:verification_complete' }
+    command: "fxaccounts:sync_preferences",
+    messageId: "5678",
+    data: { entryPoint: "fxa:verification_complete" }
   };
 
   let channel = new FxAccountsWebChannel({
@@ -89,22 +89,22 @@ add_test(function test_exception_reporting() {
     content_uri: URL_STRING,
     helpers: {
       openSyncPreferences(browser, entryPoint) {
-        equal(entryPoint, 'fxa:verification_complete',
-          'Should forward incoming message data to the helper');
-        throw new TypeError('splines not reticulated');
+        equal(entryPoint, "fxa:verification_complete",
+          "Should forward incoming message data to the helper");
+        throw new TypeError("splines not reticulated");
       },
     },
   });
 
   channel._channel.send = (message, context) => {
-    equal(context, mockSendingContext, 'Should forward the original context');
-    equal(message.command, 'fxaccounts:sync_preferences',
-      'Should include the incoming command');
-    equal(message.messageId, '5678', 'Should include the message ID');
-    equal(message.data.error.message, 'TypeError: splines not reticulated',
-      'Should convert the exception to a string');
+    equal(context, mockSendingContext, "Should forward the original context");
+    equal(message.command, "fxaccounts:sync_preferences",
+      "Should include the incoming command");
+    equal(message.messageId, "5678", "Should include the message ID");
+    equal(message.data.error.message, "TypeError: splines not reticulated",
+      "Should convert the exception to a string");
     notStrictEqual(message.data.error.stack, null,
-      'Should include the stack for JS exceptions');
+      "Should include the stack for JS exceptions");
 
     run_next_test();
   };
@@ -118,7 +118,7 @@ add_test(function test_profile_image_change_message() {
     data: { uid: "foo" }
   };
 
-  makeObserver(ON_PROFILE_CHANGE_NOTIFICATION, function (subject, topic, data) {
+  makeObserver(ON_PROFILE_CHANGE_NOTIFICATION, function(subject, topic, data) {
     do_check_eq(data, "foo");
     run_next_test();
   });
@@ -133,16 +133,16 @@ add_test(function test_profile_image_change_message() {
 
 add_test(function test_login_message() {
   let mockMessage = {
-    command: 'fxaccounts:login',
-    data: { email: 'testuser@testuser.com' }
+    command: "fxaccounts:login",
+    data: { email: "testuser@testuser.com" }
   };
 
   let channel = new FxAccountsWebChannel({
     channel_id: WEBCHANNEL_ID,
     content_uri: URL_STRING,
     helpers: {
-      login: function (accountData) {
-        do_check_eq(accountData.email, 'testuser@testuser.com');
+      login(accountData) {
+        do_check_eq(accountData.email, "testuser@testuser.com");
         run_next_test();
         return Promise.resolve();
       }
@@ -154,7 +154,7 @@ add_test(function test_login_message() {
 
 add_test(function test_logout_message() {
   let mockMessage = {
-    command: 'fxaccounts:logout',
+    command: "fxaccounts:logout",
     data: { uid: "foo" }
   };
 
@@ -162,8 +162,8 @@ add_test(function test_logout_message() {
     channel_id: WEBCHANNEL_ID,
     content_uri: URL_STRING,
     helpers: {
-      logout: function (uid) {
-        do_check_eq(uid, 'foo');
+      logout(uid) {
+        do_check_eq(uid, "foo");
         run_next_test();
         return Promise.resolve();
       }
@@ -175,7 +175,7 @@ add_test(function test_logout_message() {
 
 add_test(function test_delete_message() {
   let mockMessage = {
-    command: 'fxaccounts:delete',
+    command: "fxaccounts:delete",
     data: { uid: "foo" }
   };
 
@@ -183,8 +183,8 @@ add_test(function test_delete_message() {
     channel_id: WEBCHANNEL_ID,
     content_uri: URL_STRING,
     helpers: {
-      logout: function (uid) {
-        do_check_eq(uid, 'foo');
+      logout(uid) {
+        do_check_eq(uid, "foo");
         run_next_test();
         return Promise.resolve();
       }
@@ -196,16 +196,16 @@ add_test(function test_delete_message() {
 
 add_test(function test_can_link_account_message() {
   let mockMessage = {
-    command: 'fxaccounts:can_link_account',
-    data: { email: 'testuser@testuser.com' }
+    command: "fxaccounts:can_link_account",
+    data: { email: "testuser@testuser.com" }
   };
 
   let channel = new FxAccountsWebChannel({
     channel_id: WEBCHANNEL_ID,
     content_uri: URL_STRING,
     helpers: {
-      shouldAllowRelink: function (email) {
-        do_check_eq(email, 'testuser@testuser.com');
+      shouldAllowRelink(email) {
+        do_check_eq(email, "testuser@testuser.com");
         run_next_test();
       }
     }
@@ -216,16 +216,16 @@ add_test(function test_can_link_account_message() {
 
 add_test(function test_sync_preferences_message() {
   let mockMessage = {
-    command: 'fxaccounts:sync_preferences',
-    data: { entryPoint: 'fxa:verification_complete' }
+    command: "fxaccounts:sync_preferences",
+    data: { entryPoint: "fxa:verification_complete" }
   };
 
   let channel = new FxAccountsWebChannel({
     channel_id: WEBCHANNEL_ID,
     content_uri: URL_STRING,
     helpers: {
-      openSyncPreferences: function (browser, entryPoint) {
-        do_check_eq(entryPoint, 'fxa:verification_complete');
+      openSyncPreferences(browser, entryPoint) {
+        do_check_eq(entryPoint, "fxa:verification_complete");
         do_check_eq(browser, mockSendingContext.browser);
         run_next_test();
       }
@@ -237,7 +237,7 @@ add_test(function test_sync_preferences_message() {
 
 add_test(function test_unrecognized_message() {
   let mockMessage = {
-    command: 'fxaccounts:unrecognized',
+    command: "fxaccounts:unrecognized",
     data: {}
   };
 
@@ -255,8 +255,8 @@ add_test(function test_unrecognized_message() {
 add_test(function test_helpers_should_allow_relink_same_email() {
   let helpers = new FxAccountsWebChannelHelpers();
 
-  helpers.setPreviousAccountNameHashPref('testuser@testuser.com');
-  do_check_true(helpers.shouldAllowRelink('testuser@testuser.com'));
+  helpers.setPreviousAccountNameHashPref("testuser@testuser.com");
+  do_check_true(helpers.shouldAllowRelink("testuser@testuser.com"));
 
   run_next_test();
 });
@@ -264,14 +264,14 @@ add_test(function test_helpers_should_allow_relink_same_email() {
 add_test(function test_helpers_should_allow_relink_different_email() {
   let helpers = new FxAccountsWebChannelHelpers();
 
-  helpers.setPreviousAccountNameHashPref('testuser@testuser.com');
+  helpers.setPreviousAccountNameHashPref("testuser@testuser.com");
 
   helpers._promptForRelink = (acctName) => {
-    return acctName === 'allowed_to_relink@testuser.com';
+    return acctName === "allowed_to_relink@testuser.com";
   };
 
-  do_check_true(helpers.shouldAllowRelink('allowed_to_relink@testuser.com'));
-  do_check_false(helpers.shouldAllowRelink('not_allowed_to_relink@testuser.com'));
+  do_check_true(helpers.shouldAllowRelink("allowed_to_relink@testuser.com"));
+  do_check_false(helpers.shouldAllowRelink("not_allowed_to_relink@testuser.com"));
 
   run_next_test();
 });
@@ -279,19 +279,19 @@ add_test(function test_helpers_should_allow_relink_different_email() {
 add_task(function* test_helpers_login_without_customize_sync() {
   let helpers = new FxAccountsWebChannelHelpers({
     fxAccounts: {
-      setSignedInUser: function(accountData) {
+      setSignedInUser(accountData) {
         return new Promise(resolve => {
           // ensure fxAccounts is informed of the new user being signed in.
-          do_check_eq(accountData.email, 'testuser@testuser.com');
+          do_check_eq(accountData.email, "testuser@testuser.com");
 
           // verifiedCanLinkAccount should be stripped in the data.
-          do_check_false('verifiedCanLinkAccount' in accountData);
+          do_check_false("verifiedCanLinkAccount" in accountData);
 
           // the customizeSync pref should not update
           do_check_false(helpers.getShowCustomizeSyncPref());
 
           // previously signed in user preference is updated.
-          do_check_eq(helpers.getPreviousAccountNameHashPref(), helpers.sha256('testuser@testuser.com'));
+          do_check_eq(helpers.getPreviousAccountNameHashPref(), helpers.sha256("testuser@testuser.com"));
 
           resolve();
         });
@@ -303,10 +303,10 @@ add_task(function* test_helpers_login_without_customize_sync() {
   helpers.setShowCustomizeSyncPref(false);
 
   // ensure the previous account pref is overwritten.
-  helpers.setPreviousAccountNameHashPref('lastuser@testuser.com');
+  helpers.setPreviousAccountNameHashPref("lastuser@testuser.com");
 
   yield helpers.login({
-    email: 'testuser@testuser.com',
+    email: "testuser@testuser.com",
     verifiedCanLinkAccount: true,
     customizeSync: false
   });
@@ -315,13 +315,13 @@ add_task(function* test_helpers_login_without_customize_sync() {
 add_task(function* test_helpers_login_with_customize_sync() {
   let helpers = new FxAccountsWebChannelHelpers({
     fxAccounts: {
-      setSignedInUser: function(accountData) {
+      setSignedInUser(accountData) {
         return new Promise(resolve => {
           // ensure fxAccounts is informed of the new user being signed in.
-          do_check_eq(accountData.email, 'testuser@testuser.com');
+          do_check_eq(accountData.email, "testuser@testuser.com");
 
           // customizeSync should be stripped in the data.
-          do_check_false('customizeSync' in accountData);
+          do_check_false("customizeSync" in accountData);
 
           // the customizeSync pref should not update
           do_check_true(helpers.getShowCustomizeSyncPref());
@@ -336,7 +336,7 @@ add_task(function* test_helpers_login_with_customize_sync() {
   helpers.setShowCustomizeSyncPref(false);
 
   yield helpers.login({
-    email: 'testuser@testuser.com',
+    email: "testuser@testuser.com",
     verifiedCanLinkAccount: true,
     customizeSync: true
   });
@@ -345,14 +345,14 @@ add_task(function* test_helpers_login_with_customize_sync() {
 add_task(function* test_helpers_login_with_customize_sync_and_declined_engines() {
   let helpers = new FxAccountsWebChannelHelpers({
     fxAccounts: {
-      setSignedInUser: function(accountData) {
+      setSignedInUser(accountData) {
         return new Promise(resolve => {
           // ensure fxAccounts is informed of the new user being signed in.
-          do_check_eq(accountData.email, 'testuser@testuser.com');
+          do_check_eq(accountData.email, "testuser@testuser.com");
 
           // customizeSync should be stripped in the data.
-          do_check_false('customizeSync' in accountData);
-          do_check_false('declinedSyncEngines' in accountData);
+          do_check_false("customizeSync" in accountData);
+          do_check_false("declinedSyncEngines" in accountData);
           do_check_eq(Services.prefs.getBoolPref("services.sync.engine.addons"), false);
           do_check_eq(Services.prefs.getBoolPref("services.sync.engine.bookmarks"), true);
           do_check_eq(Services.prefs.getBoolPref("services.sync.engine.history"), true);
@@ -379,10 +379,10 @@ add_task(function* test_helpers_login_with_customize_sync_and_declined_engines()
   do_check_eq(Services.prefs.getBoolPref("services.sync.engine.prefs"), true);
   do_check_eq(Services.prefs.getBoolPref("services.sync.engine.tabs"), true);
   yield helpers.login({
-    email: 'testuser@testuser.com',
+    email: "testuser@testuser.com",
     verifiedCanLinkAccount: true,
     customizeSync: true,
-    declinedSyncEngines: ['addons', 'prefs']
+    declinedSyncEngines: ["addons", "prefs"]
   });
 });
 
@@ -456,7 +456,7 @@ add_task(function* test_helpers_change_password_with_error() {
   });
   try {
     yield helpers.changePassword({});
-    do_check_false('changePassword should have rejected');
+    do_check_false("changePassword should have rejected");
   } catch (_) {
     do_check_true(wasCalled.updateUserAccountData);
     do_check_false(wasCalled.updateDeviceRegistration);
@@ -468,7 +468,7 @@ function run_test() {
 }
 
 function makeObserver(aObserveTopic, aObserveFunc) {
-  let callback = function (aSubject, aTopic, aData) {
+  let callback = function(aSubject, aTopic, aData) {
     log.debug("observed " + aTopic + " " + aData);
     if (aTopic == aObserveTopic) {
       removeMe();
@@ -489,11 +489,10 @@ function validationHelper(params, expected) {
   try {
     new FxAccountsWebChannel(params);
   } catch (e) {
-    if (typeof expected === 'string') {
+    if (typeof expected === "string") {
       return do_check_eq(e.toString(), expected);
-    } else {
-      return do_check_true(e.toString().match(expected));
     }
+    return do_check_true(e.toString().match(expected));
   }
   throw new Error("Validation helper error");
 }

@@ -9,6 +9,10 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Attributes.h"
 
+#include "GeckoProfiler.h"
+
+#include "gfxASurface.h"
+
 namespace mozilla {
 namespace layers {
 class Layer;
@@ -33,13 +37,10 @@ class UniqueStacks;
 class ProfilerMarkerPayload
 {
 public:
-  /**
-   * ProfilerMarkerPayload takes ownership of aStack
-   */
-  explicit ProfilerMarkerPayload(ProfilerBacktrace* aStack = nullptr);
+  explicit ProfilerMarkerPayload(UniqueProfilerBacktrace aStack = nullptr);
   ProfilerMarkerPayload(const mozilla::TimeStamp& aStartTime,
                         const mozilla::TimeStamp& aEndTime,
-                        ProfilerBacktrace* aStack = nullptr);
+                        UniqueProfilerBacktrace aStack = nullptr);
 
   /**
    * Called from the main thread
@@ -61,19 +62,20 @@ protected:
   void streamCommonProps(const char* aMarkerType, SpliceableJSONWriter& aWriter,
                          UniqueStacks& aUniqueStacks);
 
-  void SetStack(ProfilerBacktrace* aStack) { mStack = aStack; }
+  void SetStack(UniqueProfilerBacktrace aStack) { mStack = mozilla::Move(aStack); }
 
 private:
   mozilla::TimeStamp  mStartTime;
   mozilla::TimeStamp  mEndTime;
-  ProfilerBacktrace*  mStack;
+  UniqueProfilerBacktrace  mStack;
 };
 
 class ProfilerMarkerTracing : public ProfilerMarkerPayload
 {
 public:
   ProfilerMarkerTracing(const char* aCategory, TracingMetadata aMetaData);
-  ProfilerMarkerTracing(const char* aCategory, TracingMetadata aMetaData, ProfilerBacktrace* aCause);
+  ProfilerMarkerTracing(const char* aCategory, TracingMetadata aMetaData,
+                        UniqueProfilerBacktrace aCause);
 
   const char *GetCategory() const { return mCategory; }
   TracingMetadata GetMetaData() const { return mMetaData; }
@@ -86,9 +88,6 @@ private:
   TracingMetadata mMetaData;
 };
 
-
-#ifndef SPS_STANDALONE
-#include "gfxASurface.h"
 class ProfilerMarkerImagePayload : public ProfilerMarkerPayload
 {
 public:
@@ -106,7 +105,7 @@ class IOMarkerPayload : public ProfilerMarkerPayload
 public:
   IOMarkerPayload(const char* aSource, const char* aFilename, const mozilla::TimeStamp& aStartTime,
                   const mozilla::TimeStamp& aEndTime,
-                  ProfilerBacktrace* aStack);
+                  UniqueProfilerBacktrace aStack);
   ~IOMarkerPayload();
 
   virtual void StreamPayload(SpliceableJSONWriter& aWriter,
@@ -115,6 +114,22 @@ public:
 private:
   const char* mSource;
   char* mFilename;
+};
+
+class DOMEventMarkerPayload : public ProfilerMarkerPayload
+{
+public:
+  DOMEventMarkerPayload(const nsAString& aType, uint16_t aPhase,
+                        const mozilla::TimeStamp& aStartTime,
+                        const mozilla::TimeStamp& aEndTime);
+  ~DOMEventMarkerPayload();
+
+  virtual void StreamPayload(SpliceableJSONWriter& aWriter,
+                             UniqueStacks& aUniqueStacks) override;
+
+private:
+  nsString mType;
+  uint16_t mPhase;
 };
 
 /**
@@ -188,6 +203,5 @@ private:
   uint64_t mGpuTimeStart;
   uint64_t mGpuTimeEnd;
 };
-#endif
 
 #endif // PROFILER_MARKERS_H

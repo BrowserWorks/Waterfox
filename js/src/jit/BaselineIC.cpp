@@ -16,6 +16,7 @@
 #include "builtin/Eval.h"
 #include "builtin/SIMD.h"
 #include "gc/Policy.h"
+#include "jit/BaselineCacheIRCompiler.h"
 #include "jit/BaselineDebugModeOSR.h"
 #include "jit/BaselineJIT.h"
 #include "jit/InlinableNatives.h"
@@ -279,16 +280,59 @@ DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame, ICUpdatedStub* stub, H
     RootedObject obj(cx, &objval.toObject());
     RootedId id(cx);
 
-    switch(stub->kind()) {
+    switch (stub->kind()) {
+      case ICStub::CacheIR_Updated: {
+        id = stub->toCacheIR_Updated()->updateStubId();
+        MOZ_ASSERT(id != JSID_EMPTY);
+
+        // The group should match the object's group, except when the object is
+        // an unboxed expando object: in that case, the group is the group of
+        // the unboxed object.
+        RootedObjectGroup group(cx, stub->toCacheIR_Updated()->updateStubGroup());
+#ifdef DEBUG
+        if (obj->is<UnboxedExpandoObject>())
+            MOZ_ASSERT(group->clasp() == &UnboxedPlainObject::class_);
+        else
+            MOZ_ASSERT(obj->group() == group);
+#endif
+
+        // If we're storing null/undefined to a typed object property, check if
+        // we want to include it in this property's type information.
+        if (MOZ_UNLIKELY(obj->is<TypedObject>()) && value.isNullOrUndefined()) {
+            StructTypeDescr* structDescr = &obj->as<TypedObject>().typeDescr().as<StructTypeDescr>();
+            size_t fieldIndex;
+            MOZ_ALWAYS_TRUE(structDescr->fieldIndex(id, &fieldIndex));
+
+            TypeDescr* fieldDescr = &structDescr->fieldDescr(fieldIndex);
+            ReferenceTypeDescr::Type type = fieldDescr->as<ReferenceTypeDescr>().type();
+            if (type == ReferenceTypeDescr::TYPE_ANY) {
+                // Ignore undefined values, which are included implicitly in type
+                // information for this property.
+                if (value.isUndefined())
+                    break;
+            } else {
+                MOZ_ASSERT(type == ReferenceTypeDescr::TYPE_OBJECT);
+
+                // Ignore null values being written here. Null is included
+                // implicitly in type information for this property. Note that
+                // non-object, non-null values are not possible here, these
+                // should have been filtered out by the IR emitter.
+                if (value.isNull())
+                    break;
+            }
+        }
+
+        JSObject* maybeSingleton = obj->isSingleton() ? obj.get() : nullptr;
+        AddTypePropertyId(cx, group, maybeSingleton, id, value);
+        break;
+      }
       case ICStub::SetElem_DenseOrUnboxedArray:
       case ICStub::SetElem_DenseOrUnboxedArrayAdd: {
         id = JSID_VOID;
         AddTypePropertyId(cx, obj, id, value);
         break;
       }
-      case ICStub::SetProp_Native:
-      case ICStub::SetProp_NativeAdd:
-      case ICStub::SetProp_Unboxed: {
+      case ICStub::SetProp_NativeAdd: {
         MOZ_ASSERT(obj->isNative() || obj->is<UnboxedPlainObject>());
         jsbytecode* pc = stub->getChainFallback()->icEntry()->pc(script);
         if (*pc == JSOP_SETALIASEDVAR || *pc == JSOP_INITALIASEDLEXICAL)
@@ -296,25 +340,6 @@ DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame, ICUpdatedStub* stub, H
         else
             id = NameToId(script->getName(pc));
         AddTypePropertyId(cx, obj, id, value);
-        break;
-      }
-      case ICStub::SetProp_TypedObject: {
-        MOZ_ASSERT(obj->is<TypedObject>());
-        jsbytecode* pc = stub->getChainFallback()->icEntry()->pc(script);
-        id = NameToId(script->getName(pc));
-        if (stub->toSetProp_TypedObject()->isObjectReference()) {
-            // Ignore all values being written except plain objects. Null
-            // is included implicitly in type information for this property,
-            // and non-object non-null values will cause the stub to fail to
-            // match shortly and we will end up doing the assignment in the VM.
-            if (value.isObject())
-                AddTypePropertyId(cx, obj, id, value);
-        } else {
-            // Ignore undefined values, which are included implicitly in type
-            // information for this property.
-            if (!value.isUndefined())
-                AddTypePropertyId(cx, obj, id, value);
-        }
         break;
       }
       default:
@@ -433,10 +458,6 @@ ICTypeUpdate_ObjectGroup::Compiler::generateStubCode(MacroAssembler& masm)
     EmitStubGuardFailure(masm);
     return true;
 }
-
-typedef bool (*DoCallNativeGetterFn)(JSContext*, HandleFunction, HandleObject, MutableHandleValue);
-static const VMFunction DoCallNativeGetterInfo =
-    FunctionInfo<DoCallNativeGetterFn>(DoCallNativeGetter, "DoCallNativeGetter");
 
 //
 // ToBool_Fallback
@@ -741,23 +762,6 @@ LastPropertyForSetProp(JSObject* obj)
 }
 
 static bool
-IsCacheableSetPropWriteSlot(JSObject* obj, Shape* oldShape, Shape* propertyShape)
-{
-    // Object shape must not have changed during the property set.
-    if (LastPropertyForSetProp(obj) != oldShape)
-        return false;
-
-    if (!propertyShape->hasSlot() ||
-        !propertyShape->hasDefaultSetter() ||
-        !propertyShape->writable())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-static bool
 IsCacheableSetPropAddSlot(JSContext* cx, JSObject* obj, Shape* oldShape,
                           jsid id, Shape* propertyShape, size_t* protoChainDepth)
 {
@@ -860,228 +864,6 @@ IsCacheableSetPropCall(JSContext* cx, JSObject* obj, JSObject* holder, Shape* sh
     return true;
 }
 
-template <class T>
-static bool
-GetElemNativeStubExists(ICGetElem_Fallback* stub, HandleObject obj, HandleObject holder,
-                        Handle<T> key, bool needsAtomize)
-{
-    bool indirect = (obj.get() != holder.get());
-    MOZ_ASSERT_IF(indirect, holder->isNative());
-
-    for (ICStubConstIterator iter = stub->beginChainConst(); !iter.atEnd(); iter++) {
-        if (iter->kind() != ICStub::GetElem_NativeSlotName &&
-            iter->kind() != ICStub::GetElem_NativeSlotSymbol &&
-            iter->kind() != ICStub::GetElem_NativePrototypeSlotName &&
-            iter->kind() != ICStub::GetElem_NativePrototypeSlotSymbol &&
-            iter->kind() != ICStub::GetElem_NativePrototypeCallNativeName &&
-            iter->kind() != ICStub::GetElem_NativePrototypeCallNativeSymbol &&
-            iter->kind() != ICStub::GetElem_NativePrototypeCallScriptedName &&
-            iter->kind() != ICStub::GetElem_NativePrototypeCallScriptedSymbol)
-        {
-            continue;
-        }
-
-        if (indirect && (iter->kind() != ICStub::GetElem_NativePrototypeSlotName &&
-                         iter->kind() != ICStub::GetElem_NativePrototypeSlotSymbol &&
-                         iter->kind() != ICStub::GetElem_NativePrototypeCallNativeName &&
-                         iter->kind() != ICStub::GetElem_NativePrototypeCallNativeSymbol &&
-                         iter->kind() != ICStub::GetElem_NativePrototypeCallScriptedName &&
-                         iter->kind() != ICStub::GetElem_NativePrototypeCallScriptedSymbol))
-        {
-            continue;
-        }
-
-        if(mozilla::IsSame<T, JS::Symbol*>::value !=
-           static_cast<ICGetElemNativeStub*>(*iter)->isSymbol())
-        {
-            continue;
-        }
-
-        ICGetElemNativeStubImpl<T>* getElemNativeStub =
-            reinterpret_cast<ICGetElemNativeStubImpl<T>*>(*iter);
-        if (key != getElemNativeStub->key())
-            continue;
-
-        if (ReceiverGuard(obj) != getElemNativeStub->receiverGuard())
-            continue;
-
-        // If the new stub needs atomization, and the old stub doesn't atomize, then
-        // an appropriate stub doesn't exist.
-        if (needsAtomize && !getElemNativeStub->needsAtomize())
-            continue;
-
-        // For prototype gets, check the holder and holder shape.
-        if (indirect) {
-            if (iter->isGetElem_NativePrototypeSlotName() ||
-                iter->isGetElem_NativePrototypeSlotSymbol()) {
-                ICGetElem_NativePrototypeSlot<T>* protoStub =
-                    reinterpret_cast<ICGetElem_NativePrototypeSlot<T>*>(*iter);
-
-                if (holder != protoStub->holder())
-                    continue;
-
-                if (holder->as<NativeObject>().lastProperty() != protoStub->holderShape())
-                    continue;
-            } else {
-                MOZ_ASSERT(iter->isGetElem_NativePrototypeCallNativeName() ||
-                           iter->isGetElem_NativePrototypeCallNativeSymbol() ||
-                           iter->isGetElem_NativePrototypeCallScriptedName() ||
-                           iter->isGetElem_NativePrototypeCallScriptedSymbol());
-
-                ICGetElemNativePrototypeCallStub<T>* protoStub =
-                    reinterpret_cast<ICGetElemNativePrototypeCallStub<T>*>(*iter);
-
-                if (holder != protoStub->holder())
-                    continue;
-
-                if (holder->as<NativeObject>().lastProperty() != protoStub->holderShape())
-                    continue;
-            }
-        }
-
-        return true;
-    }
-    return false;
-}
-
-template <class T>
-static void
-RemoveExistingGetElemNativeStubs(JSContext* cx, ICGetElem_Fallback* stub, HandleObject obj,
-                                 HandleObject holder, Handle<T> key, bool needsAtomize)
-{
-    bool indirect = (obj.get() != holder.get());
-    MOZ_ASSERT_IF(indirect, holder->isNative());
-
-    for (ICStubIterator iter = stub->beginChain(); !iter.atEnd(); iter++) {
-        switch (iter->kind()) {
-          case ICStub::GetElem_NativeSlotName:
-          case ICStub::GetElem_NativeSlotSymbol:
-            if (indirect)
-                continue;
-            MOZ_FALLTHROUGH;
-          case ICStub::GetElem_NativePrototypeSlotName:
-          case ICStub::GetElem_NativePrototypeSlotSymbol:
-          case ICStub::GetElem_NativePrototypeCallNativeName:
-          case ICStub::GetElem_NativePrototypeCallNativeSymbol:
-          case ICStub::GetElem_NativePrototypeCallScriptedName:
-          case ICStub::GetElem_NativePrototypeCallScriptedSymbol:
-            break;
-          default:
-            continue;
-        }
-
-        if(mozilla::IsSame<T, JS::Symbol*>::value !=
-           static_cast<ICGetElemNativeStub*>(*iter)->isSymbol())
-        {
-            continue;
-        }
-
-        ICGetElemNativeStubImpl<T>* getElemNativeStub =
-            reinterpret_cast<ICGetElemNativeStubImpl<T>*>(*iter);
-        if (key != getElemNativeStub->key())
-            continue;
-
-        if (ReceiverGuard(obj) != getElemNativeStub->receiverGuard())
-            continue;
-
-        // For prototype gets, check the holder and holder shape.
-        if (indirect) {
-            if (iter->isGetElem_NativePrototypeSlotName() ||
-                iter->isGetElem_NativePrototypeSlotSymbol()) {
-                ICGetElem_NativePrototypeSlot<T>* protoStub =
-                    reinterpret_cast<ICGetElem_NativePrototypeSlot<T>*>(*iter);
-
-                if (holder != protoStub->holder())
-                    continue;
-
-                // If the holder matches, but the holder's lastProperty doesn't match, then
-                // this stub is invalid anyway.  Unlink it.
-                if (holder->as<NativeObject>().lastProperty() != protoStub->holderShape()) {
-                    iter.unlink(cx);
-                    continue;
-                }
-            } else {
-                MOZ_ASSERT(iter->isGetElem_NativePrototypeCallNativeName() ||
-                           iter->isGetElem_NativePrototypeCallNativeSymbol() ||
-                           iter->isGetElem_NativePrototypeCallScriptedName() ||
-                           iter->isGetElem_NativePrototypeCallScriptedSymbol());
-                ICGetElemNativePrototypeCallStub<T>* protoStub =
-                    reinterpret_cast<ICGetElemNativePrototypeCallStub<T>*>(*iter);
-
-                if (holder != protoStub->holder())
-                    continue;
-
-                // If the holder matches, but the holder's lastProperty doesn't match, then
-                // this stub is invalid anyway.  Unlink it.
-                if (holder->as<NativeObject>().lastProperty() != protoStub->holderShape()) {
-                    iter.unlink(cx);
-                    continue;
-                }
-            }
-        }
-
-        // If the new stub needs atomization, and the old stub doesn't atomize, then
-        // remove the old stub.
-        if (needsAtomize && !getElemNativeStub->needsAtomize()) {
-            iter.unlink(cx);
-            continue;
-        }
-
-        // Should never get here, because this means a matching stub exists, and if
-        // a matching stub exists, this procedure should never have been called.
-        MOZ_CRASH("Procedure should never have been called.");
-    }
-}
-
-static bool
-TypedArrayGetElemStubExists(ICGetElem_Fallback* stub, HandleObject obj)
-{
-    for (ICStubConstIterator iter = stub->beginChainConst(); !iter.atEnd(); iter++) {
-        if (!iter->isGetElem_TypedArray())
-            continue;
-        if (obj->maybeShape() == iter->toGetElem_TypedArray()->shape())
-            return true;
-    }
-    return false;
-}
-
-static bool
-ArgumentsGetElemStubExists(ICGetElem_Fallback* stub, ICGetElem_Arguments::Which which)
-{
-    for (ICStubConstIterator iter = stub->beginChainConst(); !iter.atEnd(); iter++) {
-        if (!iter->isGetElem_Arguments())
-            continue;
-        if (iter->toGetElem_Arguments()->which() == which)
-            return true;
-    }
-    return false;
-}
-
-template <class T>
-static T
-getKey(jsid id)
-{
-    MOZ_ASSERT_UNREACHABLE("Key has to be PropertyName or Symbol");
-    return false;
-}
-
-template <>
-JS::Symbol* getKey<JS::Symbol*>(jsid id)
-{
-    if (!JSID_IS_SYMBOL(id))
-        return nullptr;
-    return JSID_TO_SYMBOL(id);
-}
-
-template <>
-PropertyName* getKey<PropertyName*>(jsid id)
-{
-    uint32_t dummy;
-    if (!JSID_IS_ATOM(id) || JSID_TO_ATOM(id)->isIndex(&dummy))
-        return nullptr;
-    return JSID_TO_ATOM(id)->asPropertyName();
-}
-
 static bool
 IsOptimizableElementPropertyName(JSContext* cx, HandleValue key, MutableHandleId idp)
 {
@@ -1099,228 +881,7 @@ IsOptimizableElementPropertyName(JSContext* cx, HandleValue key, MutableHandleId
     return true;
 }
 
-template <class T>
-static bool
-checkAtomize(HandleValue key)
-{
-    MOZ_ASSERT_UNREACHABLE("Key has to be PropertyName or Symbol");
-    return false;
-}
-
-template <>
-bool checkAtomize<JS::Symbol*>(HandleValue key)
-{
-    return false;
-}
-
-template <>
-bool checkAtomize<PropertyName*>(HandleValue key)
-{
-    return !key.toString()->isAtom();
-}
-
-template <class T>
-static bool
-TryAttachNativeOrUnboxedGetValueElemStub(JSContext* cx, HandleScript script, jsbytecode* pc,
-                                         ICGetElem_Fallback* stub, HandleObject obj,
-                                         HandleValue keyVal, bool* attached)
-{
-    MOZ_ASSERT(keyVal.isString() || keyVal.isSymbol());
-
-    // Convert to id.
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, keyVal, &id))
-        return false;
-
-    Rooted<T> key(cx, getKey<T>(id));
-    if (!key)
-        return true;
-    bool needsAtomize = checkAtomize<T>(keyVal);
-
-    RootedShape shape(cx);
-    RootedObject holder(cx);
-    if (!EffectlesslyLookupProperty(cx, obj, id, &holder, &shape))
-        return false;
-    if (!holder || (holder != obj && !holder->isNative()))
-        return true;
-
-    // If a suitable stub already exists, nothing else to do.
-    if (GetElemNativeStubExists<T>(stub, obj, holder, key, needsAtomize))
-        return true;
-
-    // Remove any existing stubs that may interfere with the new stub being added.
-    RemoveExistingGetElemNativeStubs<T>(cx, stub, obj, holder, key, needsAtomize);
-
-    ICStub* monitorStub = stub->fallbackMonitorStub()->firstMonitorStub();
-
-    if (obj->is<UnboxedPlainObject>() && holder == obj) {
-        const UnboxedLayout::Property* property = obj->as<UnboxedPlainObject>().layout().lookup(id);
-
-        // Once unboxed objects support symbol-keys, we need to change the following accordingly
-        MOZ_ASSERT_IF(!keyVal.isString(), !property);
-
-        if (property) {
-            if (!cx->runtime()->jitSupportsFloatingPoint)
-                return true;
-
-            RootedPropertyName name(cx, JSID_TO_ATOM(id)->asPropertyName());
-            ICGetElemNativeCompiler<PropertyName*> compiler(cx, ICStub::GetElem_UnboxedPropertyName,
-                                                            monitorStub, obj, holder,
-                                                            name,
-                                                            ICGetElemNativeStub::UnboxedProperty,
-                                                            needsAtomize, property->offset +
-                                                            UnboxedPlainObject::offsetOfData(),
-                                                            property->type);
-            ICStub* newStub = compiler.getStub(compiler.getStubSpace(script));
-            if (!newStub)
-                return false;
-
-            stub->addNewStub(newStub);
-            *attached = true;
-            return true;
-        }
-
-        Shape* shape = obj->as<UnboxedPlainObject>().maybeExpando()->lookup(cx, id);
-        if (!shape->hasDefaultGetter() || !shape->hasSlot())
-            return true;
-
-        bool isFixedSlot;
-        uint32_t offset;
-        GetFixedOrDynamicSlotOffset(shape, &isFixedSlot, &offset);
-
-        ICGetElemNativeStub::AccessType acctype =
-            isFixedSlot ? ICGetElemNativeStub::FixedSlot
-                        : ICGetElemNativeStub::DynamicSlot;
-        ICGetElemNativeCompiler<T> compiler(cx, getGetElemStubKind<T>(ICStub::GetElem_NativeSlotName),
-                                            monitorStub, obj, holder, key,
-                                            acctype, needsAtomize, offset);
-        ICStub* newStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!newStub)
-            return false;
-
-        stub->addNewStub(newStub);
-        *attached = true;
-        return true;
-    }
-
-    if (!holder->isNative())
-        return true;
-
-    if (IsCacheableGetPropReadSlot(obj, holder, shape)) {
-        bool isFixedSlot;
-        uint32_t offset;
-        GetFixedOrDynamicSlotOffset(shape, &isFixedSlot, &offset);
-
-        ICStub::Kind kind = (obj == holder) ? ICStub::GetElem_NativeSlotName
-                                            : ICStub::GetElem_NativePrototypeSlotName;
-        kind = getGetElemStubKind<T>(kind);
-
-        JitSpew(JitSpew_BaselineIC, "  Generating GetElem(Native %s%s slot) stub "
-                                    "(obj=%p, holder=%p, holderShape=%p)",
-                    (obj == holder) ? "direct" : "prototype",
-                    needsAtomize ? " atomizing" : "",
-                obj.get(), holder.get(), holder->as<NativeObject>().lastProperty());
-
-        AccType acctype = isFixedSlot ? ICGetElemNativeStub::FixedSlot
-                                      : ICGetElemNativeStub::DynamicSlot;
-        ICGetElemNativeCompiler<T> compiler(cx, kind, monitorStub, obj, holder, key,
-                                            acctype, needsAtomize, offset);
-        ICStub* newStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!newStub)
-            return false;
-
-        stub->addNewStub(newStub);
-        *attached = true;
-        return true;
-    }
-
-    return true;
-}
-
-template <class T>
-static bool
-TryAttachNativeGetAccessorElemStub(JSContext* cx, HandleScript script, jsbytecode* pc,
-                                   ICGetElem_Fallback* stub, HandleNativeObject obj,
-                                   HandleValue keyVal, bool* attached,
-                                   bool* isTemporarilyUnoptimizable)
-{
-    MOZ_ASSERT(!*attached);
-    MOZ_ASSERT(keyVal.isString() || keyVal.isSymbol());
-
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, keyVal, &id))
-        return false;
-
-    Rooted<T> key(cx, getKey<T>(id));
-    if (!key)
-        return true;
-    bool needsAtomize = checkAtomize<T>(keyVal);
-
-    RootedShape shape(cx);
-    RootedObject baseHolder(cx);
-    if (!EffectlesslyLookupProperty(cx, obj, id, &baseHolder, &shape))
-        return false;
-    if (!baseHolder || !baseHolder->isNative())
-        return true;
-
-    HandleNativeObject holder = baseHolder.as<NativeObject>();
-
-    bool getterIsScripted = false;
-    if (IsCacheableGetPropCall(cx, obj, baseHolder, shape, &getterIsScripted,
-                               isTemporarilyUnoptimizable, /*isDOMProxy=*/false))
-    {
-        RootedFunction getter(cx, &shape->getterObject()->as<JSFunction>());
-
-        // For now, we do not handle own property getters
-        if (obj == holder)
-            return true;
-
-        // If a suitable stub already exists, nothing else to do.
-        if (GetElemNativeStubExists<T>(stub, obj, holder, key, needsAtomize))
-            return true;
-
-        // Remove any existing stubs that may interfere with the new stub being added.
-        RemoveExistingGetElemNativeStubs<T>(cx, stub, obj, holder, key, needsAtomize);
-
-        ICStub* monitorStub = stub->fallbackMonitorStub()->firstMonitorStub();
-        ICStub::Kind kind = getterIsScripted ? ICStub::GetElem_NativePrototypeCallScriptedName
-                                             : ICStub::GetElem_NativePrototypeCallNativeName;
-        kind = getGetElemStubKind<T>(kind);
-
-        if (getterIsScripted) {
-            JitSpew(JitSpew_BaselineIC,
-                    "  Generating GetElem(Native %s%s call scripted %s:%" PRIuSIZE ") stub "
-                    "(obj=%p, shape=%p, holder=%p, holderShape=%p)",
-                        (obj == holder) ? "direct" : "prototype",
-                        needsAtomize ? " atomizing" : "",
-                        getter->nonLazyScript()->filename(), getter->nonLazyScript()->lineno(),
-                        obj.get(), obj->lastProperty(), holder.get(), holder->lastProperty());
-        } else {
-            JitSpew(JitSpew_BaselineIC,
-                    "  Generating GetElem(Native %s%s call native) stub "
-                    "(obj=%p, shape=%p, holder=%p, holderShape=%p)",
-                        (obj == holder) ? "direct" : "prototype",
-                        needsAtomize ? " atomizing" : "",
-                        obj.get(), obj->lastProperty(), holder.get(), holder->lastProperty());
-        }
-
-        AccType acctype = getterIsScripted ? ICGetElemNativeStub::ScriptedGetter
-                                           : ICGetElemNativeStub::NativeGetter;
-        ICGetElemNativeCompiler<T> compiler(cx, kind, monitorStub, obj, holder, key, acctype,
-                                            needsAtomize, getter, script->pcToOffset(pc));
-        ICStub* newStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!newStub)
-            return false;
-
-        stub->addNewStub(newStub);
-        *attached = true;
-        return true;
-    }
-
-    return true;
-}
-
-static bool
+bool
 IsPrimitiveArrayTypedObject(JSObject* obj)
 {
     if (!obj->is<TypedObject>())
@@ -1338,7 +899,7 @@ PrimitiveArrayTypedObjectType(JSObject* obj)
     return descr.as<ArrayTypeDescr>().elementType().as<ScalarTypeDescr>().type();
 }
 
-static Scalar::Type
+Scalar::Type
 TypedThingElementType(JSObject* obj)
 {
     return obj->is<TypedArrayObject>()
@@ -1346,7 +907,7 @@ TypedThingElementType(JSObject* obj)
            : PrimitiveArrayTypedObjectType(obj);
 }
 
-static bool
+bool
 TypedThingRequiresFloatingPoint(JSObject* obj)
 {
     Scalar::Type type = TypedThingElementType(obj);
@@ -1371,160 +932,6 @@ IsNativeOrUnboxedDenseElementAccess(HandleObject obj, HandleValue key)
     if (key.isInt32() && key.toInt32() >= 0 && !obj->is<TypedArrayObject>())
         return true;
     return false;
-}
-
-static bool
-TryAttachGetElemStub(JSContext* cx, JSScript* script, jsbytecode* pc, ICGetElem_Fallback* stub,
-                     HandleValue lhs, HandleValue rhs, HandleValue res, bool* attached)
-{
-    // Check for String[i] => Char accesses.
-    if (lhs.isString() && rhs.isInt32() && res.isString() &&
-        !stub->hasStub(ICStub::GetElem_String))
-    {
-        // NoSuchMethod handling doesn't apply to string targets.
-
-        JitSpew(JitSpew_BaselineIC, "  Generating GetElem(String[Int32]) stub");
-        ICGetElem_String::Compiler compiler(cx);
-        ICStub* stringStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!stringStub)
-            return false;
-
-        stub->addNewStub(stringStub);
-        *attached = true;
-        return true;
-    }
-
-    if (lhs.isMagic(JS_OPTIMIZED_ARGUMENTS) && rhs.isInt32() &&
-        !ArgumentsGetElemStubExists(stub, ICGetElem_Arguments::Magic))
-    {
-        JitSpew(JitSpew_BaselineIC, "  Generating GetElem(MagicArgs[Int32]) stub");
-        ICGetElem_Arguments::Compiler compiler(cx, stub->fallbackMonitorStub()->firstMonitorStub(),
-                                               ICGetElem_Arguments::Magic);
-        ICStub* argsStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!argsStub)
-            return false;
-
-        stub->addNewStub(argsStub);
-        *attached = true;
-        return true;
-    }
-
-    // Otherwise, GetElem is only optimized on objects.
-    if (!lhs.isObject())
-        return true;
-    RootedObject obj(cx, &lhs.toObject());
-
-    // Check for ArgumentsObj[int] accesses
-    if (obj->is<ArgumentsObject>() && rhs.isInt32() &&
-        !obj->as<ArgumentsObject>().hasOverriddenElement())
-    {
-        ICGetElem_Arguments::Which which = ICGetElem_Arguments::Mapped;
-        if (obj->is<UnmappedArgumentsObject>())
-            which = ICGetElem_Arguments::Unmapped;
-        if (!ArgumentsGetElemStubExists(stub, which)) {
-            JitSpew(JitSpew_BaselineIC, "  Generating GetElem(ArgsObj[Int32]) stub");
-            ICGetElem_Arguments::Compiler compiler(
-                cx, stub->fallbackMonitorStub()->firstMonitorStub(), which);
-            ICStub* argsStub = compiler.getStub(compiler.getStubSpace(script));
-            if (!argsStub)
-                return false;
-
-            stub->addNewStub(argsStub);
-            *attached = true;
-            return true;
-        }
-    }
-
-    // Check for NativeObject[int] dense accesses.
-    if (IsNativeDenseElementAccess(obj, rhs)) {
-        JitSpew(JitSpew_BaselineIC, "  Generating GetElem(Native[Int32] dense) stub");
-        ICGetElem_Dense::Compiler compiler(cx, stub->fallbackMonitorStub()->firstMonitorStub(),
-                                           obj->as<NativeObject>().lastProperty());
-        ICStub* denseStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!denseStub)
-            return false;
-
-        stub->addNewStub(denseStub);
-        *attached = true;
-        return true;
-    }
-
-    // Check for NativeObject[id] and UnboxedPlainObject[id] shape-optimizable accesses.
-    if (obj->isNative() || obj->is<UnboxedPlainObject>()) {
-        RootedScript rootedScript(cx, script);
-        if (rhs.isString()) {
-            if (!TryAttachNativeOrUnboxedGetValueElemStub<PropertyName*>(cx, rootedScript, pc, stub,
-                                                                         obj, rhs, attached))
-            {
-                return false;
-            }
-        } else if (rhs.isSymbol()) {
-            if (!TryAttachNativeOrUnboxedGetValueElemStub<JS::Symbol*>(cx, rootedScript, pc, stub,
-                                                                       obj, rhs, attached))
-            {
-                return false;
-            }
-        }
-        if (*attached)
-            return true;
-        script = rootedScript;
-    }
-
-    // Check for UnboxedArray[int] accesses.
-    if (obj->is<UnboxedArrayObject>() && rhs.isInt32() && rhs.toInt32() >= 0) {
-        JitSpew(JitSpew_BaselineIC, "  Generating GetElem(UnboxedArray[Int32]) stub");
-        ICGetElem_UnboxedArray::Compiler compiler(cx, stub->fallbackMonitorStub()->firstMonitorStub(),
-                                                  obj->group());
-        ICStub* unboxedStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!unboxedStub)
-            return false;
-
-        stub->addNewStub(unboxedStub);
-        *attached = true;
-        return true;
-    }
-
-    // Check for TypedArray[int] => Number and TypedObject[int] => Number accesses.
-    if ((obj->is<TypedArrayObject>() || IsPrimitiveArrayTypedObject(obj)) &&
-        rhs.isNumber() &&
-        res.isNumber() &&
-        !TypedArrayGetElemStubExists(stub, obj))
-    {
-        if (!cx->runtime()->jitSupportsFloatingPoint &&
-            (TypedThingRequiresFloatingPoint(obj) || rhs.isDouble()))
-        {
-            return true;
-        }
-
-        // Don't attach typed object stubs if the underlying storage could be
-        // detached, as the stub will always bail out.
-        if (IsPrimitiveArrayTypedObject(obj) && cx->compartment()->detachedTypedObjects)
-            return true;
-
-        JitSpew(JitSpew_BaselineIC, "  Generating GetElem(TypedArray[Int32]) stub");
-        ICGetElem_TypedArray::Compiler compiler(cx, obj->maybeShape(), TypedThingElementType(obj));
-        ICStub* typedArrayStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!typedArrayStub)
-            return false;
-
-        stub->addNewStub(typedArrayStub);
-        *attached = true;
-        return true;
-    }
-
-    // GetElem operations on non-native objects cannot be cached by either
-    // Baseline or Ion. Indicate this in the cache so that Ion does not
-    // generate a cache for this op.
-    if (!obj->isNative())
-        stub->noteNonNativeAccess();
-
-    // GetElem operations which could access negative indexes generally can't
-    // be optimized without the potential for bailouts, as we can't statically
-    // determine that an object has no properties on such indexes.
-    if (rhs.isNumber() && rhs.toNumber() < 0)
-        stub->noteNegativeIndex();
-
-    return true;
 }
 
 static bool
@@ -1563,29 +970,22 @@ DoGetElemFallback(JSContext* cx, BaselineFrame* frame, ICGetElem_Fallback* stub_
         attached = true;
     }
 
-    // Try to attach an optimized getter stub.
     bool isTemporarilyUnoptimizable = false;
-    if (!attached && lhs.isObject() && lhs.toObject().isNative()){
-        if (rhs.isString()) {
-            RootedScript rootedScript(cx, frame->script());
-            RootedNativeObject obj(cx, &lhs.toObject().as<NativeObject>());
-            if (!TryAttachNativeGetAccessorElemStub<PropertyName*>(cx, rootedScript, pc, stub,
-                                                                   obj, rhs, &attached,
-                                                                   &isTemporarilyUnoptimizable))
-            {
-                return false;
+    if (!attached && !JitOptions.disableCacheIR) {
+        ICStubEngine engine = ICStubEngine::Baseline;
+        GetPropIRGenerator gen(cx, pc, CacheKind::GetElem, engine, &isTemporarilyUnoptimizable,
+                               lhs, rhs, CanAttachGetter::Yes);
+        if (gen.tryAttachStub()) {
+            ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
+                                                        engine, info.outerScript(cx), stub);
+            if (newStub) {
+                JitSpew(JitSpew_BaselineIC, "  Attached CacheIR stub");
+                attached = true;
+                if (gen.shouldNotePreliminaryObjectStub())
+                    newStub->toCacheIR_Monitored()->notePreliminaryObject();
+                else if (gen.shouldUnlinkPreliminaryObjectStubs())
+                    StripPreliminaryObjectStubs(cx, stub);
             }
-            script = rootedScript;
-        } else if (rhs.isSymbol()) {
-            RootedScript rootedScript(cx, frame->script());
-            RootedNativeObject obj(cx, &lhs.toObject().as<NativeObject>());
-            if (!TryAttachNativeGetAccessorElemStub<JS::Symbol*>(cx, rootedScript, pc, stub,
-                                                                 obj, rhs, &attached,
-                                                                 &isTemporarilyUnoptimizable))
-            {
-                return false;
-            }
-            script = rootedScript;
         }
     }
 
@@ -1608,9 +1008,17 @@ DoGetElemFallback(JSContext* cx, BaselineFrame* frame, ICGetElem_Fallback* stub_
     if (attached)
         return true;
 
-    // Try to attach an optimized stub.
-    if (!TryAttachGetElemStub(cx, frame->script(), pc, stub, lhs, rhs, res, &attached))
-        return false;
+    // GetElem operations on non-native objects cannot be cached by either
+    // Baseline or Ion. Indicate this in the cache so that Ion does not
+    // generate a cache for this op.
+    if (lhs.isObject() && !lhs.toObject().isNative())
+        stub->noteNonNativeAccess();
+
+    // GetElem operations which could access negative indexes generally can't
+    // be optimized without the potential for bailouts, as we can't statically
+    // determine that an object has no properties on such indexes.
+    if (rhs.isNumber() && rhs.toNumber() < 0)
+        stub->noteNegativeIndex();
 
     if (!attached && !isTemporarilyUnoptimizable)
         stub->noteUnoptimizableAccess();
@@ -1646,504 +1054,7 @@ ICGetElem_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
     return tailCallVM(DoGetElemFallbackInfo, masm);
 }
 
-//
-// GetElem_NativeSlot
-//
-
-static bool
-DoAtomizeString(JSContext* cx, HandleString string, MutableHandleValue result)
-{
-    JitSpew(JitSpew_BaselineIC, "  AtomizeString called");
-
-    RootedValue key(cx, StringValue(string));
-
-    // Convert to interned property name.
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, key, &id))
-        return false;
-
-    if (!JSID_IS_ATOM(id)) {
-        result.set(key);
-        return true;
-    }
-
-    result.set(StringValue(JSID_TO_ATOM(id)));
-    return true;
-}
-
-typedef bool (*DoAtomizeStringFn)(JSContext*, HandleString, MutableHandleValue);
-static const VMFunction DoAtomizeStringInfo = FunctionInfo<DoAtomizeStringFn>(DoAtomizeString,
-                                                                              "DoAtomizeString");
-
-template <class T>
-bool
-ICGetElemNativeCompiler<T>::emitCallNative(MacroAssembler& masm, Register objReg)
-{
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(0));
-    regs.takeUnchecked(objReg);
-    regs.takeUnchecked(ICTailCallReg);
-
-    enterStubFrame(masm, regs.getAny());
-
-    // Push object.
-    masm.push(objReg);
-
-    // Push native callee.
-    masm.loadPtr(Address(ICStubReg, ICGetElemNativeGetterStub<T>::offsetOfGetter()), objReg);
-    masm.push(objReg);
-
-    regs.add(objReg);
-
-    // Call helper.
-    if (!callVM(DoCallNativeGetterInfo, masm))
-        return false;
-
-    leaveStubFrame(masm);
-
-    return true;
-}
-
-template <class T>
-bool
-ICGetElemNativeCompiler<T>::emitCallScripted(MacroAssembler& masm, Register objReg)
-{
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(0));
-    regs.takeUnchecked(objReg);
-    regs.takeUnchecked(ICTailCallReg);
-
-    // Enter stub frame.
-    enterStubFrame(masm, regs.getAny());
-
-    // Align the stack such that the JitFrameLayout is aligned on
-    // JitStackAlignment.
-    masm.alignJitStackBasedOnNArgs(0);
-
-    // Push |this| for getter (target object).
-    {
-        ValueOperand val = regs.takeAnyValue();
-        masm.tagValue(JSVAL_TYPE_OBJECT, objReg, val);
-        masm.Push(val);
-        regs.add(val);
-    }
-
-    regs.add(objReg);
-
-    Register callee = regs.takeAny();
-    masm.loadPtr(Address(ICStubReg, ICGetElemNativeGetterStub<T>::offsetOfGetter()), callee);
-
-    // Push argc, callee, and descriptor.
-    {
-        Register callScratch = regs.takeAny();
-        EmitBaselineCreateStubFrameDescriptor(masm, callScratch, JitFrameLayout::Size());
-        masm.Push(Imm32(0));  // ActualArgc is 0
-        masm.Push(callee);
-        masm.Push(callScratch);
-        regs.add(callScratch);
-    }
-
-    Register code = regs.takeAnyExcluding(ArgumentsRectifierReg);
-    masm.loadPtr(Address(callee, JSFunction::offsetOfNativeOrScript()), code);
-    masm.loadBaselineOrIonRaw(code, code, nullptr);
-
-    Register scratch = regs.takeAny();
-
-    // Handle arguments underflow.
-    Label noUnderflow;
-    masm.load16ZeroExtend(Address(callee, JSFunction::offsetOfNargs()), scratch);
-    masm.branch32(Assembler::Equal, scratch, Imm32(0), &noUnderflow);
-    {
-        // Call the arguments rectifier.
-        MOZ_ASSERT(ArgumentsRectifierReg != code);
-
-        JitCode* argumentsRectifier =
-            cx->runtime()->jitRuntime()->getArgumentsRectifier();
-
-        masm.movePtr(ImmGCPtr(argumentsRectifier), code);
-        masm.loadPtr(Address(code, JitCode::offsetOfCode()), code);
-        masm.movePtr(ImmWord(0), ArgumentsRectifierReg);
-    }
-
-    masm.bind(&noUnderflow);
-    masm.callJit(code);
-
-    leaveStubFrame(masm, true);
-
-    return true;
-}
-
-template <class T>
-bool
-ICGetElemNativeCompiler<T>::emitCheckKey(MacroAssembler& masm, Label& failure)
-{
-    MOZ_ASSERT_UNREACHABLE("Key has to be PropertyName or Symbol");
-    return false;
-}
-
-template <>
-bool
-ICGetElemNativeCompiler<JS::Symbol*>::emitCheckKey(MacroAssembler& masm, Label& failure)
-{
-    MOZ_ASSERT(!needsAtomize_);
-    masm.branchTestSymbol(Assembler::NotEqual, R1, &failure);
-    Address symbolAddr(ICStubReg, ICGetElemNativeStubImpl<JS::Symbol*>::offsetOfKey());
-    Register symExtract = masm.extractObject(R1, ExtractTemp1);
-    masm.branchPtr(Assembler::NotEqual, symbolAddr, symExtract, &failure);
-    return true;
-}
-
-template <>
-bool
-ICGetElemNativeCompiler<PropertyName*>::emitCheckKey(MacroAssembler& masm, Label& failure)
-{
-    masm.branchTestString(Assembler::NotEqual, R1, &failure);
-    // Check key identity.  Don't automatically fail if this fails, since the incoming
-    // key maybe a non-interned string.  Switch to a slowpath vm-call based check.
-    Address nameAddr(ICStubReg, ICGetElemNativeStubImpl<PropertyName*>::offsetOfKey());
-    Register strExtract = masm.extractString(R1, ExtractTemp1);
-
-    // If needsAtomize_ is true, and the string is not already an atom, then atomize the
-    // string before proceeding.
-    if (needsAtomize_) {
-        Label skipAtomize;
-
-        // If string is already an atom, skip the atomize.
-        masm.branchTest32(Assembler::NonZero,
-                          Address(strExtract, JSString::offsetOfFlags()),
-                          Imm32(JSString::ATOM_BIT),
-                          &skipAtomize);
-
-        // Stow R0.
-        EmitStowICValues(masm, 1);
-
-        enterStubFrame(masm, R0.scratchReg());
-
-        // Atomize the string into a new value.
-        masm.push(strExtract);
-        if (!callVM(DoAtomizeStringInfo, masm))
-            return false;
-
-        // Atomized string is now in JSReturnOperand (R0).
-        // Leave stub frame, move atomized string into R1.
-        MOZ_ASSERT(R0 == JSReturnOperand);
-        leaveStubFrame(masm);
-        masm.moveValue(JSReturnOperand, R1);
-
-        // Unstow R0
-        EmitUnstowICValues(masm, 1);
-
-        // Extract string from R1 again.
-        DebugOnly<Register> strExtract2 = masm.extractString(R1, ExtractTemp1);
-        MOZ_ASSERT(Register(strExtract2) == strExtract);
-
-        masm.bind(&skipAtomize);
-    }
-
-    // Key has been atomized if necessary.  Do identity check on string pointer.
-    masm.branchPtr(Assembler::NotEqual, nameAddr, strExtract, &failure);
-    return true;
-}
-
-template <class T>
-bool
-ICGetElemNativeCompiler<T>::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-    Label failurePopR1;
-    bool popR1 = false;
-
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratchReg = regs.takeAny();
-
-    // Unbox object.
-    Register objReg = masm.extractObject(R0, ExtractTemp0);
-
-    // Check object shape/group.
-    GuardReceiverObject(masm, ReceiverGuard(obj_), objReg, scratchReg,
-                        ICGetElemNativeStub::offsetOfReceiverGuard(), &failure);
-
-    // Since this stub sometimes enters a stub frame, we manually set this to true (lie).
-#ifdef DEBUG
-    entersStubFrame_ = true;
-#endif
-
-    if (!emitCheckKey(masm, failure))
-        return false;
-
-    Register holderReg;
-    if (obj_ == holder_) {
-        holderReg = objReg;
-
-        if (obj_->is<UnboxedPlainObject>() && acctype_ != ICGetElemNativeStub::UnboxedProperty) {
-            // The property will be loaded off the unboxed expando.
-            masm.push(R1.scratchReg());
-            popR1 = true;
-            holderReg = R1.scratchReg();
-            masm.loadPtr(Address(objReg, UnboxedPlainObject::offsetOfExpando()), holderReg);
-        }
-    } else {
-        // Shape guard holder.
-        if (regs.empty()) {
-            masm.push(R1.scratchReg());
-            popR1 = true;
-            holderReg = R1.scratchReg();
-        } else {
-            holderReg = regs.takeAny();
-        }
-
-        if (kind == ICStub::GetElem_NativePrototypeCallNativeName ||
-            kind == ICStub::GetElem_NativePrototypeCallNativeSymbol ||
-            kind == ICStub::GetElem_NativePrototypeCallScriptedName ||
-            kind == ICStub::GetElem_NativePrototypeCallScriptedSymbol)
-        {
-            masm.loadPtr(Address(ICStubReg,
-                                 ICGetElemNativePrototypeCallStub<T>::offsetOfHolder()),
-                         holderReg);
-            masm.loadPtr(Address(ICStubReg,
-                                 ICGetElemNativePrototypeCallStub<T>::offsetOfHolderShape()),
-                         scratchReg);
-        } else {
-            masm.loadPtr(Address(ICStubReg,
-                                 ICGetElem_NativePrototypeSlot<T>::offsetOfHolder()),
-                         holderReg);
-            masm.loadPtr(Address(ICStubReg,
-                                 ICGetElem_NativePrototypeSlot<T>::offsetOfHolderShape()),
-                         scratchReg);
-        }
-        masm.branchTestObjShape(Assembler::NotEqual, holderReg, scratchReg,
-                                popR1 ? &failurePopR1 : &failure);
-    }
-
-    if (acctype_ == ICGetElemNativeStub::DynamicSlot ||
-        acctype_ == ICGetElemNativeStub::FixedSlot)
-    {
-        masm.load32(Address(ICStubReg, ICGetElemNativeSlotStub<T>::offsetOfOffset()),
-                    scratchReg);
-
-        // Load from object.
-        if (acctype_ == ICGetElemNativeStub::DynamicSlot)
-            masm.addPtr(Address(holderReg, NativeObject::offsetOfSlots()), scratchReg);
-        else
-            masm.addPtr(holderReg, scratchReg);
-
-        Address valAddr(scratchReg, 0);
-        masm.loadValue(valAddr, R0);
-        if (popR1)
-            masm.addToStackPtr(ImmWord(sizeof(size_t)));
-
-    } else if (acctype_ == ICGetElemNativeStub::UnboxedProperty) {
-        masm.load32(Address(ICStubReg, ICGetElemNativeSlotStub<T>::offsetOfOffset()),
-                    scratchReg);
-        masm.loadUnboxedProperty(BaseIndex(objReg, scratchReg, TimesOne), unboxedType_,
-                                 TypedOrValueRegister(R0));
-        if (popR1)
-            masm.addToStackPtr(ImmWord(sizeof(size_t)));
-    } else {
-        MOZ_ASSERT(acctype_ == ICGetElemNativeStub::NativeGetter ||
-                   acctype_ == ICGetElemNativeStub::ScriptedGetter);
-        MOZ_ASSERT(kind == ICStub::GetElem_NativePrototypeCallNativeName ||
-                   kind == ICStub::GetElem_NativePrototypeCallNativeSymbol ||
-                   kind == ICStub::GetElem_NativePrototypeCallScriptedName ||
-                   kind == ICStub::GetElem_NativePrototypeCallScriptedSymbol);
-
-        if (acctype_ == ICGetElemNativeStub::NativeGetter) {
-            // If calling a native getter, there is no chance of failure now.
-
-            // GetElem key (R1) is no longer needed.
-            if (popR1)
-                masm.addToStackPtr(ImmWord(sizeof(size_t)));
-
-            if (!emitCallNative(masm, objReg))
-                return false;
-
-        } else {
-            MOZ_ASSERT(acctype_ == ICGetElemNativeStub::ScriptedGetter);
-
-            // Load function in scratchReg and ensure that it has a jit script.
-            masm.loadPtr(Address(ICStubReg, ICGetElemNativeGetterStub<T>::offsetOfGetter()),
-                         scratchReg);
-            masm.branchIfFunctionHasNoScript(scratchReg, popR1 ? &failurePopR1 : &failure);
-            masm.loadPtr(Address(scratchReg, JSFunction::offsetOfNativeOrScript()), scratchReg);
-            masm.loadBaselineOrIonRaw(scratchReg, scratchReg, popR1 ? &failurePopR1 : &failure);
-
-            // At this point, we are guaranteed to successfully complete.
-            if (popR1)
-                masm.addToStackPtr(Imm32(sizeof(size_t)));
-
-            if (!emitCallScripted(masm, objReg))
-                return false;
-        }
-    }
-
-    // Enter type monitor IC to type-check result.
-    EmitEnterTypeMonitorIC(masm);
-
-    // Failure case - jump to next stub
-    if (popR1) {
-        masm.bind(&failurePopR1);
-        masm.pop(R1.scratchReg());
-    }
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-
-    return true;
-}
-
-//
-// GetElem_String
-//
-
-bool
-ICGetElem_String::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-    masm.branchTestString(Assembler::NotEqual, R0, &failure);
-    masm.branchTestInt32(Assembler::NotEqual, R1, &failure);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratchReg = regs.takeAny();
-
-    // Unbox string in R0.
-    Register str = masm.extractString(R0, ExtractTemp0);
-
-    // Check for non-linear strings.
-    masm.branchIfRope(str, &failure);
-
-    // Unbox key.
-    Register key = masm.extractInt32(R1, ExtractTemp1);
-
-    // Bounds check.
-    masm.branch32(Assembler::BelowOrEqual, Address(str, JSString::offsetOfLength()),
-                  key, &failure);
-
-    // Get char code.
-    masm.loadStringChar(str, key, scratchReg);
-
-    // Check if char code >= UNIT_STATIC_LIMIT.
-    masm.branch32(Assembler::AboveOrEqual, scratchReg, Imm32(StaticStrings::UNIT_STATIC_LIMIT),
-                  &failure);
-
-    // Load static string.
-    masm.movePtr(ImmPtr(&cx->staticStrings().unitStaticTable), str);
-    masm.loadPtr(BaseIndex(str, scratchReg, ScalePointer), str);
-
-    // Return.
-    masm.tagValue(JSVAL_TYPE_STRING, str, R0);
-    EmitReturnFromIC(masm);
-
-    // Failure case - jump to next stub
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
-}
-
-//
-// GetElem_Dense
-//
-
-bool
-ICGetElem_Dense::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-    masm.branchTestInt32(Assembler::NotEqual, R1, &failure);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratchReg = regs.takeAny();
-
-    // Unbox R0 and shape guard.
-    Register obj = masm.extractObject(R0, ExtractTemp0);
-    masm.loadPtr(Address(ICStubReg, ICGetElem_Dense::offsetOfShape()), scratchReg);
-    masm.branchTestObjShape(Assembler::NotEqual, obj, scratchReg, &failure);
-
-    // Load obj->elements.
-    masm.loadPtr(Address(obj, NativeObject::offsetOfElements()), scratchReg);
-
-    // Unbox key.
-    Register key = masm.extractInt32(R1, ExtractTemp1);
-
-    // Bounds check.
-    Address initLength(scratchReg, ObjectElements::offsetOfInitializedLength());
-    masm.branch32(Assembler::BelowOrEqual, initLength, key, &failure);
-
-    // Hole check and load value.
-    BaseObjectElementIndex element(scratchReg, key);
-    masm.branchTestMagic(Assembler::Equal, element, &failure);
-
-    // Load value from element location.
-    masm.loadValue(element, R0);
-
-    // Enter type monitor IC to type-check result.
-    EmitEnterTypeMonitorIC(masm);
-
-    // Failure case - jump to next stub
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
-}
-
-//
-// GetElem_UnboxedArray
-//
-
-bool
-ICGetElem_UnboxedArray::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-    masm.branchTestInt32(Assembler::NotEqual, R1, &failure);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratchReg = regs.takeAny();
-
-    // Unbox R0 and group guard.
-    Register obj = masm.extractObject(R0, ExtractTemp0);
-    masm.loadPtr(Address(ICStubReg, ICGetElem_UnboxedArray::offsetOfGroup()), scratchReg);
-    masm.branchTestObjGroup(Assembler::NotEqual, obj, scratchReg, &failure);
-
-    // Unbox key.
-    Register key = masm.extractInt32(R1, ExtractTemp1);
-
-    // Bounds check.
-    masm.load32(Address(obj, UnboxedArrayObject::offsetOfCapacityIndexAndInitializedLength()),
-                scratchReg);
-    masm.and32(Imm32(UnboxedArrayObject::InitializedLengthMask), scratchReg);
-    masm.branch32(Assembler::BelowOrEqual, scratchReg, key, &failure);
-
-    // Load obj->elements.
-    masm.loadPtr(Address(obj, UnboxedArrayObject::offsetOfElements()), scratchReg);
-
-    // Load value.
-    size_t width = UnboxedTypeSize(elementType_);
-    BaseIndex addr(scratchReg, key, ScaleFromElemWidth(width));
-    masm.loadUnboxedProperty(addr, elementType_, R0);
-
-    // Only monitor the result if its type might change.
-    if (elementType_ == JSVAL_TYPE_OBJECT)
-        EmitEnterTypeMonitorIC(masm);
-    else
-        EmitReturnFromIC(masm);
-
-    // Failure case - jump to next stub
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
-}
-
-//
-// GetElem_TypedArray
-//
-
-static void
+void
 LoadTypedThingLength(MacroAssembler& masm, TypedThingLayout layout, Register obj, Register result)
 {
     switch (layout) {
@@ -2159,192 +1070,6 @@ LoadTypedThingLength(MacroAssembler& masm, TypedThingLayout layout, Register obj
       default:
         MOZ_CRASH();
     }
-}
-
-bool
-ICGetElem_TypedArray::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-
-    if (layout_ != Layout_TypedArray)
-        CheckForTypedObjectWithDetachedStorage(cx, masm, &failure);
-
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratchReg = regs.takeAny();
-
-    // Unbox R0 and shape guard.
-    Register obj = masm.extractObject(R0, ExtractTemp0);
-    masm.loadPtr(Address(ICStubReg, ICGetElem_TypedArray::offsetOfShape()), scratchReg);
-    masm.branchTestObjShape(Assembler::NotEqual, obj, scratchReg, &failure);
-
-    // Ensure the index is an integer.
-    if (cx->runtime()->jitSupportsFloatingPoint) {
-        Label isInt32;
-        masm.branchTestInt32(Assembler::Equal, R1, &isInt32);
-        {
-            // If the index is a double, try to convert it to int32. It's okay
-            // to convert -0 to 0: the shape check ensures the object is a typed
-            // array so the difference is not observable.
-            masm.branchTestDouble(Assembler::NotEqual, R1, &failure);
-            masm.unboxDouble(R1, FloatReg0);
-            masm.convertDoubleToInt32(FloatReg0, scratchReg, &failure, /* negZeroCheck = */false);
-            masm.tagValue(JSVAL_TYPE_INT32, scratchReg, R1);
-        }
-        masm.bind(&isInt32);
-    } else {
-        masm.branchTestInt32(Assembler::NotEqual, R1, &failure);
-    }
-
-    // Unbox key.
-    Register key = masm.extractInt32(R1, ExtractTemp1);
-
-    // Bounds check.
-    LoadTypedThingLength(masm, layout_, obj, scratchReg);
-    masm.branch32(Assembler::BelowOrEqual, scratchReg, key, &failure);
-
-    // Load the elements vector.
-    LoadTypedThingData(masm, layout_, obj, scratchReg);
-
-    // Load the value.
-    BaseIndex source(scratchReg, key, ScaleFromElemWidth(Scalar::byteSize(type_)));
-    masm.loadFromTypedArray(type_, source, R0, false, scratchReg, &failure);
-
-    // Todo: Allow loading doubles from uint32 arrays, but this requires monitoring.
-    EmitReturnFromIC(masm);
-
-    // Failure case - jump to next stub
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
-}
-
-//
-// GetElem_Arguments
-//
-bool
-ICGetElem_Arguments::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-    if (which_ == ICGetElem_Arguments::Magic) {
-        // Ensure that this is a magic arguments value.
-        masm.branchTestMagicValue(Assembler::NotEqual, R0, JS_OPTIMIZED_ARGUMENTS, &failure);
-
-        // Ensure that frame has not loaded different arguments object since.
-        masm.branchTest32(Assembler::NonZero,
-                          Address(BaselineFrameReg, BaselineFrame::reverseOffsetOfFlags()),
-                          Imm32(BaselineFrame::HAS_ARGS_OBJ),
-                          &failure);
-
-        // Ensure that index is an integer.
-        masm.branchTestInt32(Assembler::NotEqual, R1, &failure);
-        Register idx = masm.extractInt32(R1, ExtractTemp1);
-
-        AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-        Register scratch = regs.takeAny();
-
-        // Load num actual arguments
-        Address actualArgs(BaselineFrameReg, BaselineFrame::offsetOfNumActualArgs());
-        masm.loadPtr(actualArgs, scratch);
-
-        // Ensure idx < argc
-        masm.branch32(Assembler::AboveOrEqual, idx, scratch, &failure);
-
-        // Load argval
-        masm.movePtr(BaselineFrameReg, scratch);
-        masm.addPtr(Imm32(BaselineFrame::offsetOfArg(0)), scratch);
-        BaseValueIndex element(scratch, idx);
-        masm.loadValue(element, R0);
-
-        // Enter type monitor IC to type-check result.
-        EmitEnterTypeMonitorIC(masm);
-
-        masm.bind(&failure);
-        EmitStubGuardFailure(masm);
-        return true;
-    }
-
-    MOZ_ASSERT(which_ == ICGetElem_Arguments::Mapped ||
-               which_ == ICGetElem_Arguments::Unmapped);
-
-    const Class* clasp = (which_ == ICGetElem_Arguments::Mapped)
-                         ? &MappedArgumentsObject::class_
-                         : &UnmappedArgumentsObject::class_;
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratchReg = regs.takeAny();
-
-    // Guard on input being an arguments object.
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-    Register objReg = masm.extractObject(R0, ExtractTemp0);
-    masm.branchTestObjClass(Assembler::NotEqual, objReg, scratchReg, clasp, &failure);
-
-    // Guard on index being int32
-    masm.branchTestInt32(Assembler::NotEqual, R1, &failure);
-    Register idxReg = masm.extractInt32(R1, ExtractTemp1);
-
-    // Get initial ArgsObj length value.
-    masm.unboxInt32(Address(objReg, ArgumentsObject::getInitialLengthSlotOffset()), scratchReg);
-
-    // Test if length or any element have been overridden.
-    masm.branchTest32(Assembler::NonZero,
-                      scratchReg,
-                      Imm32(ArgumentsObject::LENGTH_OVERRIDDEN_BIT |
-                            ArgumentsObject::ELEMENT_OVERRIDDEN_BIT),
-                      &failure);
-
-    // Length has not been overridden, ensure that R1 is an integer and is <= length.
-    masm.rshiftPtr(Imm32(ArgumentsObject::PACKED_BITS_COUNT), scratchReg);
-    masm.branch32(Assembler::AboveOrEqual, idxReg, scratchReg, &failure);
-
-    // Length check succeeded, now check the correct bit.  We clobber potential type regs
-    // now.  Inputs will have to be reconstructed if we fail after this point, but that's
-    // unlikely.
-    Label failureReconstructInputs;
-    regs = availableGeneralRegs(0);
-    regs.takeUnchecked(objReg);
-    regs.takeUnchecked(idxReg);
-    regs.take(scratchReg);
-    Register argData = regs.takeAny();
-
-    // Load ArgumentsData
-    masm.loadPrivate(Address(objReg, ArgumentsObject::getDataSlotOffset()), argData);
-
-    // Fail if we have a RareArgumentsData (elements were deleted).
-    masm.branchPtr(Assembler::NotEqual,
-                   Address(argData, offsetof(ArgumentsData, rareData)),
-                   ImmWord(0),
-                   &failureReconstructInputs);
-
-    // Load the value. Use scratchReg to form a ValueOperand to load into.
-    masm.addPtr(Imm32(ArgumentsData::offsetOfArgs()), argData);
-    regs.add(scratchReg);
-    ValueOperand tempVal = regs.takeAnyValue();
-    masm.loadValue(BaseValueIndex(argData, idxReg), tempVal);
-
-    // Makesure that this is not a FORWARD_TO_CALL_SLOT magic value.
-    masm.branchTestMagic(Assembler::Equal, tempVal, &failureReconstructInputs);
-
-    // Copy value from temp to R0.
-    masm.moveValue(tempVal, R0);
-
-    // Type-check result
-    EmitEnterTypeMonitorIC(masm);
-
-    // Failed, but inputs are deconstructed into object and int, and need to be
-    // reconstructed into values.
-    masm.bind(&failureReconstructInputs);
-    masm.tagValue(JSVAL_TYPE_OBJECT, objReg, R0);
-    masm.tagValue(JSVAL_TYPE_INT32, idxReg, R1);
-
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
 }
 
 //
@@ -2387,14 +1112,20 @@ DenseOrUnboxedArraySetElemStubExists(JSContext* cx, ICStub::Kind kind,
     for (ICStubConstIterator iter = stub->beginChainConst(); !iter.atEnd(); iter++) {
         if (kind == ICStub::SetElem_DenseOrUnboxedArray && iter->isSetElem_DenseOrUnboxedArray()) {
             ICSetElem_DenseOrUnboxedArray* nstub = iter->toSetElem_DenseOrUnboxedArray();
-            if (obj->maybeShape() == nstub->shape() && obj->getGroup(cx) == nstub->group())
+            if (obj->maybeShape() == nstub->shape() &&
+                JSObject::getGroup(cx, obj) == nstub->group())
+            {
                 return true;
+            }
         }
 
         if (kind == ICStub::SetElem_DenseOrUnboxedArrayAdd && iter->isSetElem_DenseOrUnboxedArrayAdd()) {
             ICSetElem_DenseOrUnboxedArrayAdd* nstub = iter->toSetElem_DenseOrUnboxedArrayAdd();
-            if (obj->getGroup(cx) == nstub->group() && SetElemAddHasSameShapes(nstub, obj))
+            if (JSObject::getGroup(cx, obj) == nstub->group() &&
+                SetElemAddHasSameShapes(nstub, obj))
+            {
                 return true;
+            }
         }
     }
     return false;
@@ -2584,7 +1315,7 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
                                                   &addingCase, &protoDepth))
         {
             RootedShape shape(cx, obj->maybeShape());
-            RootedObjectGroup group(cx, obj->getGroup(cx));
+            RootedObjectGroup group(cx, JSObject::getGroup(cx, obj));
             if (!group)
                 return false;
 
@@ -2741,9 +1472,8 @@ BaselineScript::noteArrayWriteHole(uint32_t pcOffset)
 // SetElem_DenseOrUnboxedArray
 //
 
-template <typename T>
 void
-EmitUnboxedPreBarrierForBaseline(MacroAssembler &masm, T address, JSValueType type)
+EmitUnboxedPreBarrierForBaseline(MacroAssembler &masm, const BaseIndex& address, JSValueType type)
 {
     if (type == JSVAL_TYPE_OBJECT)
         EmitPreBarrier(masm, address, MIRType::Object);
@@ -2807,7 +1537,7 @@ ICSetElem_DenseOrUnboxedArray::Compiler::generateStubCode(MacroAssembler& masm)
         saveRegs.add(R0);
         saveRegs.addUnchecked(obj);
         saveRegs.add(ICStubReg);
-        emitPostWriteBarrierSlot(masm, obj, R1, scratchReg, saveRegs);
+        BaselineEmitPostWriteBarrierSlot(masm, obj, R1, scratchReg, saveRegs, cx);
 
         masm.Pop(R1);
     }
@@ -3015,7 +1745,7 @@ ICSetElemDenseOrUnboxedArrayAddCompiler::generateStubCode(MacroAssembler& masm)
         saveRegs.add(R0);
         saveRegs.addUnchecked(obj);
         saveRegs.add(ICStubReg);
-        emitPostWriteBarrierSlot(masm, obj, R1, scratchReg, saveRegs);
+        BaselineEmitPostWriteBarrierSlot(masm, obj, R1, scratchReg, saveRegs, cx);
 
         masm.Pop(R1);
     }
@@ -3147,13 +1877,11 @@ ICSetElemDenseOrUnboxedArrayAddCompiler::generateStubCode(MacroAssembler& masm)
 // SetElem_TypedArray
 //
 
-// Write an arbitrary value to a typed array or typed object address at dest.
-// If the value could not be converted to the appropriate format, jump to
-// failure or failureModifiedScratch.
-template <typename T>
-static void
-StoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type, Address value, T dest,
-                  Register scratch, Label* failure, Label* failureModifiedScratch)
+template <typename S, typename T>
+void
+BaselineStoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type, const S& value,
+                          const T& dest, Register scratch, Label* failure,
+                          Label* failureModifiedScratch)
 {
     Label done;
 
@@ -3212,6 +1940,16 @@ StoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type, Addres
 
     masm.bind(&done);
 }
+
+template void
+BaselineStoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type,
+                          const ValueOperand& value, const Address& dest, Register scratch,
+                          Label* failure, Label* failureModifiedScratch);
+
+template void
+BaselineStoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type,
+                          const Address& value, const BaseIndex& dest, Register scratch,
+                          Label* failure, Label* failureModifiedScratch);
 
 bool
 ICSetElem_TypedArray::Compiler::generateStubCode(MacroAssembler& masm)
@@ -3275,8 +2013,8 @@ ICSetElem_TypedArray::Compiler::generateStubCode(MacroAssembler& masm)
     Register secondScratch = regs.takeAny();
 
     Label failureModifiedSecondScratch;
-    StoreToTypedArray(cx, masm, type_, value, dest,
-                      secondScratch, &failure, &failureModifiedSecondScratch);
+    BaselineStoreToTypedArray(cx, masm, type_, value, dest,
+                              secondScratch, &failure, &failureModifiedSecondScratch);
     EmitReturnFromIC(masm);
 
     if (failureModifiedSecondScratch.used()) {
@@ -3334,11 +2072,17 @@ TryAttachNativeInStub(JSContext* cx, HandleScript outerScript, ICIn_Fallback* st
         return true;
 
     RootedPropertyName name(cx, JSID_TO_ATOM(id)->asPropertyName());
-    RootedShape shape(cx);
+    Rooted<PropertyResult> prop(cx);
     RootedObject holder(cx);
-    if (!EffectlesslyLookupProperty(cx, obj, id, &holder, &shape))
+    if (!EffectlesslyLookupProperty(cx, obj, id, &holder, &prop))
         return false;
 
+    if (prop.isNonNativeProperty()) {
+        MOZ_ASSERT(!IsCacheableProtoChain(obj, holder, false));
+        return true;
+    }
+
+    RootedShape shape(cx, prop.maybeShape());
     if (IsCacheableGetPropReadSlot(obj, holder, shape)) {
         ICStub::Kind kind = (obj == holder) ? ICStub::In_Native
                                             : ICStub::In_NativePrototype;
@@ -3372,7 +2116,7 @@ TryAttachNativeInDoesNotExistStub(JSContext* cx, HandleScript outerScript,
     RootedPropertyName name(cx, JSID_TO_ATOM(id)->asPropertyName());
     RootedObject lastProto(cx);
     size_t protoChainDepth = SIZE_MAX;
-    if (!CheckHasNoSuchProperty(cx, obj.get(), name.get(), lastProto.address(), &protoChainDepth))
+    if (!CheckHasNoSuchProperty(cx, obj.get(), id, lastProto.address(), &protoChainDepth))
         return true;
     MOZ_ASSERT(protoChainDepth < SIZE_MAX);
 
@@ -3643,312 +2387,6 @@ ICIn_Dense::Compiler::generateStubCode(MacroAssembler& masm)
     return true;
 }
 
-// Try to update existing SetProp setter call stubs for the given holder in
-// place with a new shape and setter.
-static bool
-UpdateExistingSetPropCallStubs(ICSetProp_Fallback* fallbackStub,
-                               ICStub::Kind kind,
-                               NativeObject* holder,
-                               JSObject* receiver,
-                               JSFunction* setter)
-{
-    MOZ_ASSERT(kind == ICStub::SetProp_CallScripted ||
-               kind == ICStub::SetProp_CallNative);
-    MOZ_ASSERT(holder);
-    MOZ_ASSERT(receiver);
-
-    bool isOwnSetter = (holder == receiver);
-    bool foundMatchingStub = false;
-    ReceiverGuard receiverGuard(receiver);
-    for (ICStubConstIterator iter = fallbackStub->beginChainConst(); !iter.atEnd(); iter++) {
-        if (iter->kind() == kind) {
-            ICSetPropCallSetter* setPropStub = static_cast<ICSetPropCallSetter*>(*iter);
-            if (setPropStub->holder() == holder && setPropStub->isOwnSetter() == isOwnSetter) {
-                // If this is an own setter, update the receiver guard as well,
-                // since that's the shape we'll be guarding on. Furthermore,
-                // isOwnSetter() relies on holderShape_ and receiverGuard_ being
-                // the same shape.
-                if (isOwnSetter)
-                    setPropStub->receiverGuard().update(receiverGuard);
-
-                MOZ_ASSERT(setPropStub->holderShape() != holder->lastProperty() ||
-                           !setPropStub->receiverGuard().matches(receiverGuard),
-                           "Why didn't we end up using this stub?");
-
-                // We want to update the holder shape to match the new one no
-                // matter what, even if the receiver shape is different.
-                setPropStub->holderShape() = holder->lastProperty();
-
-                // Make sure to update the setter, since a shape change might
-                // have changed which setter we want to use.
-                setPropStub->setter() = setter;
-                if (setPropStub->receiverGuard().matches(receiverGuard))
-                    foundMatchingStub = true;
-            }
-        }
-    }
-
-    return foundMatchingStub;
-}
-
-// Attach an optimized stub for a GETGNAME/CALLGNAME slot-read op.
-static bool
-TryAttachGlobalNameValueStub(JSContext* cx, HandleScript script, jsbytecode* pc,
-                             ICGetName_Fallback* stub,
-                             Handle<LexicalEnvironmentObject*> globalLexical,
-                             HandlePropertyName name, bool* attached)
-{
-    MOZ_ASSERT(globalLexical->isGlobal());
-    MOZ_ASSERT(!*attached);
-
-    RootedId id(cx, NameToId(name));
-
-    // The property must be found, and it must be found as a normal data property.
-    RootedShape shape(cx, globalLexical->lookup(cx, id));
-    RootedNativeObject current(cx, globalLexical);
-    while (true) {
-        shape = current->lookup(cx, id);
-        if (shape)
-            break;
-        if (current == globalLexical) {
-            current = &globalLexical->global();
-        } else {
-            JSObject* proto = current->staticPrototype();
-            if (!proto || !proto->is<NativeObject>())
-                return true;
-            current = &proto->as<NativeObject>();
-        }
-    }
-
-    // Instantiate this global property, for use during Ion compilation.
-    if (IsIonEnabled(cx))
-        EnsureTrackPropertyTypes(cx, current, id);
-
-    if (shape->hasDefaultGetter() && shape->hasSlot()) {
-
-        // TODO: if there's a previous stub discard it, or just update its Shape + slot?
-
-        ICStub* monitorStub = stub->fallbackMonitorStub()->firstMonitorStub();
-        ICStub* newStub;
-        if (current == globalLexical) {
-            MOZ_ASSERT(shape->slot() >= current->numFixedSlots());
-            uint32_t slot = shape->slot() - current->numFixedSlots();
-
-            JitSpew(JitSpew_BaselineIC, "  Generating GetName(GlobalName lexical) stub");
-            ICGetName_GlobalLexical::Compiler compiler(cx, monitorStub, slot);
-            newStub = compiler.getStub(compiler.getStubSpace(script));
-        } else {
-            bool isFixedSlot;
-            uint32_t offset;
-            GetFixedOrDynamicSlotOffset(shape, &isFixedSlot, &offset);
-
-            // Check the prototype chain from the global to the current
-            // prototype. Ignore the global lexical scope as it doesn' figure
-            // into the prototype chain. We guard on the global lexical
-            // scope's shape independently.
-            if (!IsCacheableGetPropReadSlot(&globalLexical->global(), current, shape))
-                return true;
-
-            JitSpew(JitSpew_BaselineIC, "  Generating GetName(GlobalName non-lexical) stub");
-            ICGetPropNativeCompiler compiler(cx, ICStub::GetName_Global,
-                                             ICStubCompiler::Engine::Baseline, monitorStub,
-                                             globalLexical, current, name, isFixedSlot, offset,
-                                             /* inputDefinitelyObject = */ true);
-            newStub = compiler.getStub(compiler.getStubSpace(script));
-        }
-        if (!newStub)
-            return false;
-
-        stub->addNewStub(newStub);
-        *attached = true;
-    }
-    return true;
-}
-
-// Attach an optimized stub for a GETGNAME/CALLGNAME getter op.
-static bool
-TryAttachGlobalNameAccessorStub(JSContext* cx, HandleScript script, jsbytecode* pc,
-                                ICGetName_Fallback* stub,
-                                Handle<LexicalEnvironmentObject*> globalLexical,
-                                HandlePropertyName name, bool* attached,
-                                bool* isTemporarilyUnoptimizable)
-{
-    MOZ_ASSERT(globalLexical->isGlobal());
-    RootedId id(cx, NameToId(name));
-
-    // There must not be a shadowing binding on the global lexical scope.
-    if (globalLexical->lookup(cx, id))
-        return true;
-
-    RootedGlobalObject global(cx, &globalLexical->global());
-
-    // The property must be found, and it must be found as a normal data property.
-    RootedShape shape(cx);
-    RootedNativeObject current(cx, global);
-    while (true) {
-        shape = current->lookup(cx, id);
-        if (shape)
-            break;
-        JSObject* proto = current->staticPrototype();
-        if (!proto || !proto->is<NativeObject>())
-            return true;
-        current = &proto->as<NativeObject>();
-    }
-
-    // Instantiate this global property, for use during Ion compilation.
-    if (IsIonEnabled(cx))
-        EnsureTrackPropertyTypes(cx, current, id);
-
-    // Try to add a getter stub. We don't handle scripted getters yet; if this
-    // changes we need to make sure IonBuilder::getPropTryCommonGetter (which
-    // requires a Baseline stub) handles non-outerized this objects correctly.
-    bool isScripted;
-    if (IsCacheableGetPropCall(cx, global, current, shape, &isScripted, isTemporarilyUnoptimizable) &&
-        !isScripted)
-    {
-        ICStub* monitorStub = stub->fallbackMonitorStub()->firstMonitorStub();
-        RootedFunction getter(cx, &shape->getterObject()->as<JSFunction>());
-
-        // The CallNativeGlobal stub needs to generate 3 shape checks:
-        //
-        // 1. The global lexical scope shape check.
-        // 2. The global object shape check.
-        // 3. The holder shape check.
-        //
-        // 1 is done as the receiver check, as for GETNAME the global lexical scope is in the
-        // receiver position. 2 is done as a manual check that other GetProp stubs don't do. 3 is
-        // done as the holder check per normal.
-        //
-        // In the case the holder is the global object, check 2 is redundant but is not yet
-        // optimized away.
-        JitSpew(JitSpew_BaselineIC, "  Generating GetName(GlobalName/NativeGetter) stub");
-        if (UpdateExistingGetPropCallStubs(stub, ICStub::GetProp_CallNativeGlobal, current,
-                                           globalLexical, getter))
-        {
-            *attached = true;
-            return true;
-        }
-        ICGetPropCallNativeCompiler compiler(cx, ICStub::GetProp_CallNativeGlobal,
-                                             ICStubCompiler::Engine::Baseline,
-                                             monitorStub, globalLexical, current,
-                                             getter, script->pcToOffset(pc),
-                                             /* outerClass = */ nullptr,
-                                             /* inputDefinitelyObject = */ true);
-
-        ICStub* newStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!newStub)
-            return false;
-
-        stub->addNewStub(newStub);
-        *attached = true;
-    }
-    return true;
-}
-
-static bool
-TryAttachEnvNameStub(JSContext* cx, HandleScript script, ICGetName_Fallback* stub,
-                     HandleObject initialEnvChain, HandlePropertyName name, bool* attached)
-{
-    MOZ_ASSERT(!*attached);
-
-    Rooted<ShapeVector> shapes(cx, ShapeVector(cx));
-    RootedId id(cx, NameToId(name));
-    RootedObject envChain(cx, initialEnvChain);
-
-    Shape* shape = nullptr;
-    while (envChain) {
-        if (!shapes.append(envChain->maybeShape()))
-            return false;
-
-        if (envChain->is<GlobalObject>()) {
-            shape = envChain->as<GlobalObject>().lookup(cx, id);
-            if (shape)
-                break;
-            return true;
-        }
-
-        if (!envChain->is<EnvironmentObject>() || envChain->is<WithEnvironmentObject>())
-            return true;
-
-        // Check for an 'own' property on the env. There is no need to
-        // check the prototype as non-with scopes do not inherit properties
-        // from any prototype.
-        shape = envChain->as<NativeObject>().lookup(cx, id);
-        if (shape)
-            break;
-
-        envChain = envChain->enclosingEnvironment();
-    }
-
-    // We don't handle getters here. When this changes, we need to make sure
-    // IonBuilder::getPropTryCommonGetter (which requires a Baseline stub to
-    // work) handles non-outerized this objects correctly.
-
-    if (!IsCacheableGetPropReadSlot(envChain, envChain, shape))
-        return true;
-
-    bool isFixedSlot;
-    uint32_t offset;
-    GetFixedOrDynamicSlotOffset(shape, &isFixedSlot, &offset);
-
-    ICStub* monitorStub = stub->fallbackMonitorStub()->firstMonitorStub();
-    ICStub* newStub;
-
-    switch (shapes.length()) {
-      case 1: {
-        ICGetName_Env<0>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                            offset);
-        newStub = compiler.getStub(compiler.getStubSpace(script));
-        break;
-      }
-      case 2: {
-        ICGetName_Env<1>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                            offset);
-        newStub = compiler.getStub(compiler.getStubSpace(script));
-        break;
-      }
-      case 3: {
-        ICGetName_Env<2>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                            offset);
-        newStub = compiler.getStub(compiler.getStubSpace(script));
-        break;
-      }
-      case 4: {
-        ICGetName_Env<3>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                            offset);
-        newStub = compiler.getStub(compiler.getStubSpace(script));
-        break;
-      }
-      case 5: {
-        ICGetName_Env<4>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                            offset);
-        newStub = compiler.getStub(compiler.getStubSpace(script));
-        break;
-      }
-      case 6: {
-        ICGetName_Env<5>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                            offset);
-        newStub = compiler.getStub(compiler.getStubSpace(script));
-        break;
-      }
-      case 7: {
-        ICGetName_Env<6>::Compiler compiler(cx, monitorStub, Move(shapes.get()), isFixedSlot,
-                                            offset);
-        newStub = compiler.getStub(compiler.getStubSpace(script));
-        break;
-      }
-      default:
-        return true;
-    }
-
-    if (!newStub)
-        return false;
-
-    stub->addNewStub(newStub);
-    *attached = true;
-    return true;
-}
-
 static bool
 DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_,
                   HandleObject envChain, MutableHandleValue res)
@@ -3967,7 +2405,6 @@ DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_
 
     RootedPropertyName name(cx, script->getName(pc));
     bool attached = false;
-    bool isTemporarilyUnoptimizable = false;
 
     // Attach new stub.
     if (stub->numOptimizedStubs() >= ICGetName_Fallback::MAX_OPTIMIZED_STUBS) {
@@ -3975,12 +2412,16 @@ DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_
         attached = true;
     }
 
-    if (!attached && IsGlobalOp(JSOp(*pc)) && !script->hasNonSyntacticScope()) {
-        if (!TryAttachGlobalNameAccessorStub(cx, script, pc, stub,
-                                             envChain.as<LexicalEnvironmentObject>(),
-                                             name, &attached, &isTemporarilyUnoptimizable))
-        {
-            return false;
+    if (!attached && !JitOptions.disableCacheIR) {
+        ICStubEngine engine = ICStubEngine::Baseline;
+        GetNameIRGenerator gen(cx, pc, script, envChain, name);
+        if (gen.tryAttachStub()) {
+            ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
+                                                        engine, info.outerScript(cx), stub);
+            if (newStub) {
+                JitSpew(JitSpew_BaselineIC, "  Attached CacheIR stub");
+                attached = true;
+            }
         }
     }
 
@@ -4003,19 +2444,8 @@ DoGetNameFallback(JSContext* cx, BaselineFrame* frame, ICGetName_Fallback* stub_
     // Add a type monitor stub for the resulting value.
     if (!stub->addMonitorStubForValue(cx, &info, res))
         return false;
-    if (attached)
-        return true;
 
-    if (IsGlobalOp(JSOp(*pc)) && !script->hasNonSyntacticScope()) {
-        Handle<LexicalEnvironmentObject*> globalLexical = envChain.as<LexicalEnvironmentObject>();
-        if (!TryAttachGlobalNameValueStub(cx, script, pc, stub, globalLexical, name, &attached))
-            return false;
-    } else {
-        if (!TryAttachEnvNameStub(cx, script, stub, envChain, name, &attached))
-            return false;
-    }
-
-    if (!attached && !isTemporarilyUnoptimizable)
+    if (!attached)
         stub->noteUnoptimizableAccess();
     return true;
 }
@@ -4038,83 +2468,6 @@ ICGetName_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
     pushStubPayload(masm, R0.scratchReg());
 
     return tailCallVM(DoGetNameFallbackInfo, masm);
-}
-
-bool
-ICGetName_GlobalLexical::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-    Register obj = R0.scratchReg();
-    Register scratch = R1.scratchReg();
-
-    // There's no need to guard on the shape. Lexical bindings are
-    // non-configurable, and this stub cannot be shared across globals.
-
-    // Load dynamic slot.
-    masm.loadPtr(Address(obj, NativeObject::offsetOfSlots()), obj);
-    masm.load32(Address(ICStubReg, ICGetName_GlobalLexical::offsetOfSlot()), scratch);
-    masm.loadValue(BaseIndex(obj, scratch, TimesEight), R0);
-
-    // Enter type monitor IC to type-check result.
-    EmitEnterTypeMonitorIC(masm);
-
-    // Failure case - jump to next stub
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
-}
-
-template <size_t NumHops>
-bool
-ICGetName_Env<NumHops>::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(1));
-    Register obj = R0.scratchReg();
-    Register walker = regs.takeAny();
-    Register scratch = regs.takeAny();
-
-    // Use a local to silence Clang tautological-compare warning if NumHops is 0.
-    size_t numHops = NumHops;
-
-    for (size_t index = 0; index < NumHops + 1; index++) {
-        Register scope = index ? walker : obj;
-
-        // Shape guard.
-        masm.loadPtr(Address(ICStubReg, ICGetName_Env::offsetOfShape(index)), scratch);
-        masm.branchTestObjShape(Assembler::NotEqual, scope, scratch, &failure);
-
-        if (index < numHops) {
-            masm.extractObject(Address(scope, EnvironmentObject::offsetOfEnclosingEnvironment()),
-                               walker);
-        }
-    }
-
-    Register scope = NumHops ? walker : obj;
-
-    if (!isFixedSlot_) {
-        masm.loadPtr(Address(scope, NativeObject::offsetOfSlots()), walker);
-        scope = walker;
-    }
-
-    masm.load32(Address(ICStubReg, ICGetName_Env::offsetOfOffset()), scratch);
-
-    // GETNAME needs to check for uninitialized lexicals.
-    BaseIndex slot(scope, scratch, TimesOne);
-    masm.branchTestMagic(Assembler::Equal, slot, &failure);
-    masm.loadValue(slot, R0);
-
-    // Enter type monitor IC to type-check result.
-    EmitEnterTypeMonitorIC(masm);
-
-    // Failure case - jump to next stub
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
 }
 
 //
@@ -4248,14 +2601,17 @@ TryAttachSetValuePropStub(JSContext* cx, HandleScript script, jsbytecode* pc, IC
     if (obj->watched())
         return true;
 
-    RootedShape shape(cx);
+    Rooted<PropertyResult> prop(cx);
     RootedObject holder(cx);
-    if (!EffectlesslyLookupProperty(cx, obj, id, &holder, &shape))
+    if (!EffectlesslyLookupProperty(cx, obj, id, &holder, &prop))
         return false;
     if (obj != holder)
         return true;
 
-    if (!obj->isNative()) {
+    RootedShape shape(cx);
+    if (obj->isNative()) {
+        shape = prop.shape();
+    } else {
         if (obj->is<UnboxedPlainObject>()) {
             UnboxedExpandoObject* expando = obj->as<UnboxedPlainObject>().maybeExpando();
             if (expando) {
@@ -4303,42 +2659,55 @@ TryAttachSetValuePropStub(JSContext* cx, HandleScript script, jsbytecode* pc, IC
         return true;
     }
 
-    if (IsCacheableSetPropWriteSlot(obj, oldShape, shape)) {
-        // For some property writes, such as the initial overwrite of global
-        // properties, TI will not mark the property as having been
-        // overwritten. Don't attach a stub in this case, so that we don't
-        // execute another write to the property without TI seeing that write.
-        EnsureTrackPropertyTypes(cx, obj, id);
-        if (!PropertyHasBeenMarkedNonConstant(obj, id)) {
-            *attached = true;
-            return true;
+    return true;
+}
+
+// Try to update existing SetProp setter call stubs for the given holder in
+// place with a new shape and setter.
+static bool
+UpdateExistingSetPropCallStubs(ICSetProp_Fallback* fallbackStub,
+                               ICStub::Kind kind,
+                               NativeObject* holder,
+                               JSObject* receiver,
+                               JSFunction* setter)
+{
+    MOZ_ASSERT(kind == ICStub::SetProp_CallScripted ||
+               kind == ICStub::SetProp_CallNative);
+    MOZ_ASSERT(holder);
+    MOZ_ASSERT(receiver);
+
+    bool isOwnSetter = (holder == receiver);
+    bool foundMatchingStub = false;
+    ReceiverGuard receiverGuard(receiver);
+    for (ICStubConstIterator iter = fallbackStub->beginChainConst(); !iter.atEnd(); iter++) {
+        if (iter->kind() == kind) {
+            ICSetPropCallSetter* setPropStub = static_cast<ICSetPropCallSetter*>(*iter);
+            if (setPropStub->holder() == holder && setPropStub->isOwnSetter() == isOwnSetter) {
+                // If this is an own setter, update the receiver guard as well,
+                // since that's the shape we'll be guarding on. Furthermore,
+                // isOwnSetter() relies on holderShape_ and receiverGuard_ being
+                // the same shape.
+                if (isOwnSetter)
+                    setPropStub->receiverGuard().update(receiverGuard);
+
+                MOZ_ASSERT(setPropStub->holderShape() != holder->lastProperty() ||
+                           !setPropStub->receiverGuard().matches(receiverGuard),
+                           "Why didn't we end up using this stub?");
+
+                // We want to update the holder shape to match the new one no
+                // matter what, even if the receiver shape is different.
+                setPropStub->holderShape() = holder->lastProperty();
+
+                // Make sure to update the setter, since a shape change might
+                // have changed which setter we want to use.
+                setPropStub->setter() = setter;
+                if (setPropStub->receiverGuard().matches(receiverGuard))
+                    foundMatchingStub = true;
+            }
         }
-
-        bool isFixedSlot;
-        uint32_t offset;
-        GetFixedOrDynamicSlotOffset(shape, &isFixedSlot, &offset);
-
-        JitSpew(JitSpew_BaselineIC, "  Generating SetProp(NativeObject.PROP) stub");
-        MOZ_ASSERT(LastPropertyForSetProp(obj) == oldShape,
-                   "Should this really be a SetPropWriteSlot?");
-        ICSetProp_Native::Compiler compiler(cx, obj, isFixedSlot, offset);
-        ICSetProp_Native* newStub = compiler.getStub(compiler.getStubSpace(script));
-        if (!newStub)
-            return false;
-        if (!newStub->addUpdateStubForValue(cx, script, obj, id, rhs))
-            return false;
-
-        if (IsPreliminaryObject(obj))
-            newStub->notePreliminaryObject();
-        else
-            StripPreliminaryObjectStubs(cx, stub);
-
-        stub->addNewStub(newStub);
-        *attached = true;
-        return true;
     }
 
-    return true;
+    return foundMatchingStub;
 }
 
 // Attach an optimized property set stub for a SETPROP/SETGNAME/SETNAME op on
@@ -4357,11 +2726,17 @@ TryAttachSetAccessorPropStub(JSContext* cx, HandleScript script, jsbytecode* pc,
     if (obj->watched())
         return true;
 
-    RootedShape shape(cx);
+    Rooted<PropertyResult> prop(cx);
     RootedObject holder(cx);
-    if (!EffectlesslyLookupProperty(cx, obj, id, &holder, &shape))
+    if (!EffectlesslyLookupProperty(cx, obj, id, &holder, &prop))
         return false;
 
+    if (prop.isNonNativeProperty()) {
+        MOZ_ASSERT(!IsCacheableProtoChain(obj, holder));
+        return true;
+    }
+
+    RootedShape shape(cx, prop.maybeShape());
     bool isScripted = false;
     bool cacheableCall = IsCacheableSetPropCall(cx, obj, holder, shape,
                                                 &isScripted, isTemporarilyUnoptimizable);
@@ -4418,84 +2793,8 @@ TryAttachSetAccessorPropStub(JSContext* cx, HandleScript script, jsbytecode* pc,
 }
 
 static bool
-TryAttachUnboxedSetPropStub(JSContext* cx, HandleScript script,
-                            ICSetProp_Fallback* stub, HandleId id,
-                            HandleObject obj, HandleValue rhs, bool* attached)
-{
-    MOZ_ASSERT(!*attached);
-
-    if (!cx->runtime()->jitSupportsFloatingPoint)
-        return true;
-
-    if (!obj->is<UnboxedPlainObject>())
-        return true;
-
-    const UnboxedLayout::Property* property = obj->as<UnboxedPlainObject>().layout().lookup(id);
-    if (!property)
-        return true;
-
-    ICSetProp_Unboxed::Compiler compiler(cx, obj->group(),
-                                         property->offset + UnboxedPlainObject::offsetOfData(),
-                                         property->type);
-    ICUpdatedStub* newStub = compiler.getStub(compiler.getStubSpace(script));
-    if (!newStub)
-        return false;
-    if (compiler.needsUpdateStubs() && !newStub->addUpdateStubForValue(cx, script, obj, id, rhs))
-        return false;
-
-    stub->addNewStub(newStub);
-
-    StripPreliminaryObjectStubs(cx, stub);
-
-    *attached = true;
-    return true;
-}
-
-static bool
-TryAttachTypedObjectSetPropStub(JSContext* cx, HandleScript script,
-                                ICSetProp_Fallback* stub, HandleId id,
-                                HandleObject obj, HandleValue rhs, bool* attached)
-{
-    MOZ_ASSERT(!*attached);
-
-    if (!cx->runtime()->jitSupportsFloatingPoint)
-        return true;
-
-    if (!obj->is<TypedObject>())
-        return true;
-
-    if (!obj->as<TypedObject>().typeDescr().is<StructTypeDescr>())
-        return true;
-    Rooted<StructTypeDescr*> structDescr(cx);
-    structDescr = &obj->as<TypedObject>().typeDescr().as<StructTypeDescr>();
-
-    size_t fieldIndex;
-    if (!structDescr->fieldIndex(id, &fieldIndex))
-        return true;
-
-    Rooted<TypeDescr*> fieldDescr(cx, &structDescr->fieldDescr(fieldIndex));
-    if (!fieldDescr->is<SimpleTypeDescr>())
-        return true;
-
-    uint32_t fieldOffset = structDescr->fieldOffset(fieldIndex);
-
-    ICSetProp_TypedObject::Compiler compiler(cx, obj->maybeShape(), obj->group(), fieldOffset,
-                                             &fieldDescr->as<SimpleTypeDescr>());
-    ICUpdatedStub* newStub = compiler.getStub(compiler.getStubSpace(script));
-    if (!newStub)
-        return false;
-    if (compiler.needsUpdateStubs() && !newStub->addUpdateStubForValue(cx, script, obj, id, rhs))
-        return false;
-
-    stub->addNewStub(newStub);
-
-    *attached = true;
-    return true;
-}
-
-static bool
-DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_,
-                  HandleValue lhs, HandleValue rhs, MutableHandleValue res)
+DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_, Value* stack,
+                  HandleValue lhs, HandleValue rhs)
 {
     // This fallback stub may trigger debug mode toggling.
     DebugModeOSRVolatileStub<ICSetProp_Fallback*> stub(frame, stub_);
@@ -4529,7 +2828,7 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
     if (!obj)
         return false;
     RootedShape oldShape(cx, obj->maybeShape());
-    RootedObjectGroup oldGroup(cx, obj->getGroup(cx));
+    RootedObjectGroup oldGroup(cx, JSObject::getGroup(cx, obj));
     if (!oldGroup)
         return false;
     RootedReceiverGuard oldGuard(cx, ReceiverGuard(obj));
@@ -4552,6 +2851,31 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
                                       rhs, &attached, &isTemporarilyUnoptimizable))
     {
         return false;
+    }
+
+    if (!attached &&
+        stub->numOptimizedStubs() < ICSetProp_Fallback::MAX_OPTIMIZED_STUBS &&
+        !JitOptions.disableCacheIR)
+    {
+        RootedValue idVal(cx, StringValue(name));
+        SetPropIRGenerator gen(cx, pc, CacheKind::SetProp, &isTemporarilyUnoptimizable,
+                               lhs, idVal, rhs);
+        if (gen.tryAttachStub()) {
+            ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
+                                                        ICStubEngine::Baseline, frame->script(), stub);
+            if (newStub) {
+                JitSpew(JitSpew_BaselineIC, "  Attached CacheIR stub");
+                attached = true;
+
+                newStub->toCacheIR_Updated()->updateStubGroup() = gen.updateStubGroup();
+                newStub->toCacheIR_Updated()->updateStubId() = gen.updateStubId();
+
+                if (gen.shouldNotePreliminaryObjectStub())
+                    newStub->toCacheIR_Updated()->notePreliminaryObject();
+                else if (gen.shouldUnlinkPreliminaryObjectStubs())
+                    StripPreliminaryObjectStubs(cx, stub);
+            }
+        }
     }
 
     if (op == JSOP_INITPROP ||
@@ -4588,8 +2912,9 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
         }
     }
 
-    // Leave the RHS on the stack.
-    res.set(rhs);
+    // Overwrite the LHS on the stack (pushed for the decompiler) with the RHS.
+    MOZ_ASSERT(stack[1] == lhs);
+    stack[1] = rhs;
 
     // Check if debug mode toggling made the stub invalid.
     if (stub.invalid())
@@ -4610,24 +2935,6 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
     if (attached)
         return true;
 
-    if (!attached &&
-        lhs.isObject() &&
-        !TryAttachUnboxedSetPropStub(cx, script, stub, id, obj, rhs, &attached))
-    {
-        return false;
-    }
-    if (attached)
-        return true;
-
-    if (!attached &&
-        lhs.isObject() &&
-        !TryAttachTypedObjectSetPropStub(cx, script, stub, id, obj, rhs, &attached))
-    {
-        return false;
-    }
-    if (attached)
-        return true;
-
     MOZ_ASSERT(!attached);
     if (!isTemporarilyUnoptimizable)
         stub->noteUnoptimizableAccess();
@@ -4635,11 +2942,11 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
     return true;
 }
 
-typedef bool (*DoSetPropFallbackFn)(JSContext*, BaselineFrame*, ICSetProp_Fallback*,
-                                    HandleValue, HandleValue, MutableHandleValue);
+typedef bool (*DoSetPropFallbackFn)(JSContext*, BaselineFrame*, ICSetProp_Fallback*, Value*,
+                                    HandleValue, HandleValue);
 static const VMFunction DoSetPropFallbackInfo =
     FunctionInfo<DoSetPropFallbackFn>(DoSetPropFallback, "DoSetPropFallback", TailCall,
-                                      PopValues(2));
+                                      PopValues(1));
 
 bool
 ICSetProp_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
@@ -4650,12 +2957,21 @@ ICSetProp_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
     EmitRestoreTailCallReg(masm);
 
     // Ensure stack is fully synced for the expression decompiler.
-    masm.pushValue(R0);
+    // Overwrite the RHS value on top of the stack with the object, then push
+    // the RHS in R1 on top of that.
+    masm.storeValue(R0, Address(masm.getStackPointer(), 0));
     masm.pushValue(R1);
 
     // Push arguments.
     masm.pushValue(R1);
     masm.pushValue(R0);
+
+    // Push pointer to stack values, so that the stub can overwrite the object
+    // (pushed for the decompiler) with the RHS.
+    masm.computeEffectiveAddress(Address(masm.getStackPointer(), 2 * sizeof(Value)),
+                                 R0.scratchReg());
+    masm.push(R0.scratchReg());
+
     masm.push(ICStubReg);
     pushStubPayload(masm, R0.scratchReg());
 
@@ -4677,9 +2993,6 @@ ICSetProp_Fallback::Compiler::generateStubCode(MacroAssembler& masm)
     returnOffset_ = masm.currentOffset();
 
     leaveStubFrame(masm, true);
-
-    // Retrieve the stashed initial argument from the caller's frame before returning
-    EmitUnstowICValues(masm, 1);
     EmitReturnFromIC(masm);
 
     return true;
@@ -4717,79 +3030,6 @@ GuardGroupAndShapeMaybeUnboxedExpando(MacroAssembler& masm, JSObject* obj,
     } else {
         masm.branchTestObjShape(Assembler::NotEqual, object, scratch, failure);
     }
-}
-
-bool
-ICSetProp_Native::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-
-    // Guard input is an object.
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-    Register objReg = masm.extractObject(R0, ExtractTemp0);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratch = regs.takeAny();
-
-    GuardGroupAndShapeMaybeUnboxedExpando(masm, obj_, objReg, scratch,
-                                          ICSetProp_Native::offsetOfGroup(),
-                                          ICSetProp_Native::offsetOfShape(),
-                                          &failure);
-
-    // Stow both R0 and R1 (object and value).
-    EmitStowICValues(masm, 2);
-
-    // Type update stub expects the value to check in R0.
-    masm.moveValue(R1, R0);
-
-    // Call the type-update stub.
-    if (!callTypeUpdateIC(masm, sizeof(Value)))
-        return false;
-
-    // Unstow R0 and R1 (object and key)
-    EmitUnstowICValues(masm, 2);
-
-    regs.add(R0);
-    regs.takeUnchecked(objReg);
-
-    Register holderReg;
-    if (obj_->is<UnboxedPlainObject>()) {
-        // We are loading off the expando object, so use that for the holder.
-        holderReg = regs.takeAny();
-        masm.loadPtr(Address(objReg, UnboxedPlainObject::offsetOfExpando()), holderReg);
-        if (!isFixedSlot_)
-            masm.loadPtr(Address(holderReg, NativeObject::offsetOfSlots()), holderReg);
-    } else if (isFixedSlot_) {
-        holderReg = objReg;
-    } else {
-        holderReg = regs.takeAny();
-        masm.loadPtr(Address(objReg, NativeObject::offsetOfSlots()), holderReg);
-    }
-
-    // Perform the store.
-    masm.load32(Address(ICStubReg, ICSetProp_Native::offsetOfOffset()), scratch);
-    EmitPreBarrier(masm, BaseIndex(holderReg, scratch, TimesOne), MIRType::Value);
-    masm.storeValue(R1, BaseIndex(holderReg, scratch, TimesOne));
-    if (holderReg != objReg)
-        regs.add(holderReg);
-    if (cx->runtime()->gc.nursery.exists()) {
-        Register scr = regs.takeAny();
-        LiveGeneralRegisterSet saveRegs;
-        saveRegs.add(R1);
-        emitPostWriteBarrierSlot(masm, objReg, R1, scr, saveRegs);
-        regs.add(scr);
-    }
-
-    // The RHS has to be in R0.
-    masm.moveValue(R1, R0);
-    EmitReturnFromIC(masm);
-
-    // Failure case - jump to next stub
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
 }
 
 ICUpdatedStub*
@@ -4937,204 +3177,14 @@ ICSetPropNativeAddCompiler::generateStubCode(MacroAssembler& masm)
         Register scr = regs.takeAny();
         LiveGeneralRegisterSet saveRegs;
         saveRegs.add(R1);
-        emitPostWriteBarrierSlot(masm, objReg, R1, scr, saveRegs);
+        BaselineEmitPostWriteBarrierSlot(masm, objReg, R1, scr, saveRegs, cx);
     }
 
-    // The RHS has to be in R0.
-    masm.moveValue(R1, R0);
     EmitReturnFromIC(masm);
 
     // Failure case - jump to next stub
     masm.bind(&failureUnstow);
     EmitUnstowICValues(masm, 2);
-
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
-}
-
-bool
-ICSetProp_Unboxed::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-
-    // Guard input is an object.
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratch = regs.takeAny();
-
-    // Unbox and group guard.
-    Register object = masm.extractObject(R0, ExtractTemp0);
-    masm.loadPtr(Address(ICStubReg, ICSetProp_Unboxed::offsetOfGroup()), scratch);
-    masm.branchPtr(Assembler::NotEqual, Address(object, JSObject::offsetOfGroup()), scratch,
-                   &failure);
-
-    if (needsUpdateStubs()) {
-        // Stow both R0 and R1 (object and value).
-        EmitStowICValues(masm, 2);
-
-        // Move RHS into R0 for TypeUpdate check.
-        masm.moveValue(R1, R0);
-
-        // Call the type update stub.
-        if (!callTypeUpdateIC(masm, sizeof(Value)))
-            return false;
-
-        // Unstow R0 and R1 (object and key)
-        EmitUnstowICValues(masm, 2);
-
-        // The TypeUpdate IC may have smashed object. Rederive it.
-        masm.unboxObject(R0, object);
-
-        // Trigger post barriers here on the values being written. Fields which
-        // objects can be written to also need update stubs.
-        LiveGeneralRegisterSet saveRegs;
-        saveRegs.add(R0);
-        saveRegs.add(R1);
-        saveRegs.addUnchecked(object);
-        saveRegs.add(ICStubReg);
-        emitPostWriteBarrierSlot(masm, object, R1, scratch, saveRegs);
-    }
-
-    // Compute the address being written to.
-    masm.load32(Address(ICStubReg, ICSetProp_Unboxed::offsetOfFieldOffset()), scratch);
-    BaseIndex address(object, scratch, TimesOne);
-
-    EmitUnboxedPreBarrierForBaseline(masm, address, fieldType_);
-    masm.storeUnboxedProperty(address, fieldType_,
-                              ConstantOrRegister(TypedOrValueRegister(R1)), &failure);
-
-    // The RHS has to be in R0.
-    masm.moveValue(R1, R0);
-
-    EmitReturnFromIC(masm);
-
-    masm.bind(&failure);
-    EmitStubGuardFailure(masm);
-    return true;
-}
-
-bool
-ICSetProp_TypedObject::Compiler::generateStubCode(MacroAssembler& masm)
-{
-    MOZ_ASSERT(engine_ == Engine::Baseline);
-
-    Label failure;
-
-    CheckForTypedObjectWithDetachedStorage(cx, masm, &failure);
-
-    // Guard input is an object.
-    masm.branchTestObject(Assembler::NotEqual, R0, &failure);
-
-    AllocatableGeneralRegisterSet regs(availableGeneralRegs(2));
-    Register scratch = regs.takeAny();
-
-    // Unbox and shape guard.
-    Register object = masm.extractObject(R0, ExtractTemp0);
-    masm.loadPtr(Address(ICStubReg, ICSetProp_TypedObject::offsetOfShape()), scratch);
-    masm.branchTestObjShape(Assembler::NotEqual, object, scratch, &failure);
-
-    // Guard that the object group matches.
-    masm.loadPtr(Address(ICStubReg, ICSetProp_TypedObject::offsetOfGroup()), scratch);
-    masm.branchPtr(Assembler::NotEqual, Address(object, JSObject::offsetOfGroup()), scratch,
-                   &failure);
-
-    if (needsUpdateStubs()) {
-        // Stow both R0 and R1 (object and value).
-        EmitStowICValues(masm, 2);
-
-        // Move RHS into R0 for TypeUpdate check.
-        masm.moveValue(R1, R0);
-
-        // Call the type update stub.
-        if (!callTypeUpdateIC(masm, sizeof(Value)))
-            return false;
-
-        // Unstow R0 and R1 (object and key)
-        EmitUnstowICValues(masm, 2);
-
-        // We may have clobbered object in the TypeUpdate IC. Rederive it.
-        masm.unboxObject(R0, object);
-
-        // Trigger post barriers here on the values being written. Descriptors
-        // which can write objects also need update stubs.
-        LiveGeneralRegisterSet saveRegs;
-        saveRegs.add(R0);
-        saveRegs.add(R1);
-        saveRegs.addUnchecked(object);
-        saveRegs.add(ICStubReg);
-        emitPostWriteBarrierSlot(masm, object, R1, scratch, saveRegs);
-    }
-
-    // Save the rhs on the stack so we can get a second scratch register.
-    Label failurePopRHS;
-    masm.pushValue(R1);
-    regs = availableGeneralRegs(1);
-    regs.takeUnchecked(object);
-    regs.take(scratch);
-    Register secondScratch = regs.takeAny();
-
-    // Get the object's data pointer.
-    LoadTypedThingData(masm, layout_, object, scratch);
-
-    // Compute the address being written to.
-    masm.load32(Address(ICStubReg, ICSetProp_TypedObject::offsetOfFieldOffset()), secondScratch);
-    masm.addPtr(secondScratch, scratch);
-
-    Address dest(scratch, 0);
-    Address value(masm.getStackPointer(), 0);
-
-    if (fieldDescr_->is<ScalarTypeDescr>()) {
-        Scalar::Type type = fieldDescr_->as<ScalarTypeDescr>().type();
-        StoreToTypedArray(cx, masm, type, value, dest,
-                          secondScratch, &failurePopRHS, &failurePopRHS);
-        masm.popValue(R1);
-    } else {
-        ReferenceTypeDescr::Type type = fieldDescr_->as<ReferenceTypeDescr>().type();
-
-        masm.popValue(R1);
-
-        switch (type) {
-          case ReferenceTypeDescr::TYPE_ANY:
-            EmitPreBarrier(masm, dest, MIRType::Value);
-            masm.storeValue(R1, dest);
-            break;
-
-          case ReferenceTypeDescr::TYPE_OBJECT: {
-            EmitPreBarrier(masm, dest, MIRType::Object);
-            Label notObject;
-            masm.branchTestObject(Assembler::NotEqual, R1, &notObject);
-            Register rhsObject = masm.extractObject(R1, ExtractTemp0);
-            masm.storePtr(rhsObject, dest);
-            EmitReturnFromIC(masm);
-            masm.bind(&notObject);
-            masm.branchTestNull(Assembler::NotEqual, R1, &failure);
-            masm.storePtr(ImmWord(0), dest);
-            break;
-          }
-
-          case ReferenceTypeDescr::TYPE_STRING: {
-            EmitPreBarrier(masm, dest, MIRType::String);
-            masm.branchTestString(Assembler::NotEqual, R1, &failure);
-            Register rhsString = masm.extractString(R1, ExtractTemp0);
-            masm.storePtr(rhsString, dest);
-            break;
-          }
-
-          default:
-            MOZ_CRASH();
-        }
-    }
-
-    // The RHS has to be in R0.
-    masm.moveValue(R1, R0);
-    EmitReturnFromIC(masm);
-
-    masm.bind(&failurePopRHS);
-    masm.popValue(R1);
 
     masm.bind(&failure);
     EmitStubGuardFailure(masm);
@@ -5233,7 +3283,6 @@ ICSetProp_CallScripted::Compiler::generateStubCode(MacroAssembler& masm)
     // Do not care about return value from function. The original RHS should be returned
     // as the result of this operation.
     EmitUnstowICValues(masm, 2);
-    masm.moveValue(R1, R0);
     EmitReturnFromIC(masm);
 
     // Leave stub frame and go to next stub.
@@ -5327,7 +3376,6 @@ ICSetProp_CallNative::Compiler::generateStubCode(MacroAssembler& masm)
     // Do not care about return value from function. The original RHS should be returned
     // as the result of this operation.
     EmitUnstowICValues(masm, 2);
-    masm.moveValue(R1, R0);
     EmitReturnFromIC(masm);
 
     // Unstow R0 and R1
@@ -5549,14 +3597,13 @@ GetTemplateObjectForNative(JSContext* cx, HandleFunction target, const CallArgs&
 
     if (native == js::array_slice) {
         if (args.thisv().isObject()) {
-            JSObject* obj = &args.thisv().toObject();
+            RootedObject obj(cx, &args.thisv().toObject());
             if (!obj->isSingleton()) {
                 if (obj->group()->maybePreliminaryObjects()) {
                     *skipAttach = true;
                     return true;
                 }
-                res.set(NewFullyAllocatedArrayTryReuseGroup(cx, &args.thisv().toObject(), 0,
-                                                            TenuredObject));
+                res.set(NewFullyAllocatedArrayTryReuseGroup(cx, obj, 0, TenuredObject));
                 if (!res)
                     return false;
                 EnsureArrayGroupAnalyzed(cx, res);
@@ -7990,6 +6037,9 @@ DoTypeOfFallback(JSContext* cx, BaselineFrame* frame, ICTypeOf_Fallback* stub, H
 
     res.setString(string);
 
+    if (stub->numOptimizedStubs() >= ICTypeOf_Fallback::MAX_OPTIMIZED_STUBS)
+        return true;
+
     MOZ_ASSERT(type != JSTYPE_NULL);
     if (type != JSTYPE_OBJECT && type != JSTYPE_FUNCTION) {
         // Create a new TypeOf stub.
@@ -8194,141 +6244,6 @@ ICTypeUpdate_ObjectGroup::ICTypeUpdate_ObjectGroup(JitCode* stubCode, ObjectGrou
     group_(group)
 { }
 
-ICGetElemNativeStub::ICGetElemNativeStub(ICStub::Kind kind, JitCode* stubCode,
-                                         ICStub* firstMonitorStub,
-                                         ReceiverGuard guard, AccessType acctype,
-                                         bool needsAtomize, bool isSymbol)
-  : ICMonitoredStub(kind, stubCode, firstMonitorStub),
-    receiverGuard_(guard)
-{
-    extra_ = (static_cast<uint16_t>(acctype) << ACCESSTYPE_SHIFT) |
-             (static_cast<uint16_t>(needsAtomize) << NEEDS_ATOMIZE_SHIFT) |
-             (static_cast<uint16_t>(isSymbol) << ISSYMBOL_SHIFT);
-}
-
-ICGetElemNativeStub::~ICGetElemNativeStub()
-{ }
-
-template <class T>
-ICGetElemNativeGetterStub<T>::ICGetElemNativeGetterStub(
-                           ICStub::Kind kind, JitCode* stubCode, ICStub* firstMonitorStub,
-                           ReceiverGuard guard, const T* key, AccType acctype, bool needsAtomize,
-                           JSFunction* getter, uint32_t pcOffset)
-  : ICGetElemNativeStubImpl<T>(kind, stubCode, firstMonitorStub, guard, key, acctype, needsAtomize),
-    getter_(getter),
-    pcOffset_(pcOffset)
-{
-    MOZ_ASSERT(kind == ICStub::GetElem_NativePrototypeCallNativeName ||
-               kind == ICStub::GetElem_NativePrototypeCallNativeSymbol ||
-               kind == ICStub::GetElem_NativePrototypeCallScriptedName ||
-               kind == ICStub::GetElem_NativePrototypeCallScriptedSymbol);
-    MOZ_ASSERT(acctype == ICGetElemNativeStub::NativeGetter ||
-               acctype == ICGetElemNativeStub::ScriptedGetter);
-}
-
-template <class T>
-ICGetElem_NativePrototypeSlot<T>::ICGetElem_NativePrototypeSlot(
-                               JitCode* stubCode, ICStub* firstMonitorStub, ReceiverGuard guard,
-                               const T* key, AccType acctype, bool needsAtomize, uint32_t offset,
-                               JSObject* holder, Shape* holderShape)
-  : ICGetElemNativeSlotStub<T>(getGetElemStubKind<T>(ICStub::GetElem_NativePrototypeSlotName),
-                               stubCode, firstMonitorStub, guard, key, acctype, needsAtomize, offset),
-    holder_(holder),
-    holderShape_(holderShape)
-{ }
-
-template <class T>
-ICGetElemNativePrototypeCallStub<T>::ICGetElemNativePrototypeCallStub(
-                                  ICStub::Kind kind, JitCode* stubCode, ICStub* firstMonitorStub,
-                                  ReceiverGuard guard, const T* key, AccType acctype,
-                                  bool needsAtomize, JSFunction* getter, uint32_t pcOffset,
-                                  JSObject* holder, Shape* holderShape)
-  : ICGetElemNativeGetterStub<T>(kind, stubCode, firstMonitorStub, guard, key, acctype, needsAtomize,
-                                 getter, pcOffset),
-    holder_(holder),
-    holderShape_(holderShape)
-{}
-
-template <class T>
-/* static */ ICGetElem_NativePrototypeCallNative<T>*
-ICGetElem_NativePrototypeCallNative<T>::Clone(JSContext* cx,
-                                              ICStubSpace* space,
-                                              ICStub* firstMonitorStub,
-                                              ICGetElem_NativePrototypeCallNative<T>& other)
-{
-    return ICStub::New<ICGetElem_NativePrototypeCallNative<T>>(cx, space, other.jitCode(),
-                firstMonitorStub, other.receiverGuard(), &other.key().get(), other.accessType(),
-                other.needsAtomize(), other.getter(), other.pcOffset_, other.holder(),
-                other.holderShape());
-}
-
-template ICGetElem_NativePrototypeCallNative<JS::Symbol*>*
-ICGetElem_NativePrototypeCallNative<JS::Symbol*>::Clone(JSContext*, ICStubSpace*, ICStub*,
-                                          ICGetElem_NativePrototypeCallNative<JS::Symbol*>&);
-template ICGetElem_NativePrototypeCallNative<js::PropertyName*>*
-ICGetElem_NativePrototypeCallNative<js::PropertyName*>::Clone(JSContext*, ICStubSpace*, ICStub*,
-                                          ICGetElem_NativePrototypeCallNative<js::PropertyName*>&);
-
-template <class T>
-/* static */ ICGetElem_NativePrototypeCallScripted<T>*
-ICGetElem_NativePrototypeCallScripted<T>::Clone(JSContext* cx,
-                                                ICStubSpace* space,
-                                                ICStub* firstMonitorStub,
-                                                ICGetElem_NativePrototypeCallScripted<T>& other)
-{
-    return ICStub::New<ICGetElem_NativePrototypeCallScripted<T>>(cx, space, other.jitCode(),
-                firstMonitorStub, other.receiverGuard(), &other.key().get(), other.accessType(),
-                other.needsAtomize(), other.getter(), other.pcOffset_, other.holder(),
-                other.holderShape());
-}
-
-template ICGetElem_NativePrototypeCallScripted<JS::Symbol*>*
-ICGetElem_NativePrototypeCallScripted<JS::Symbol*>::Clone(JSContext*, ICStubSpace*, ICStub*,
-                                        ICGetElem_NativePrototypeCallScripted<JS::Symbol*>&);
-template ICGetElem_NativePrototypeCallScripted<js::PropertyName*>*
-ICGetElem_NativePrototypeCallScripted<js::PropertyName*>::Clone(JSContext*, ICStubSpace*, ICStub*,
-                                        ICGetElem_NativePrototypeCallScripted<js::PropertyName*>&);
-
-ICGetElem_Dense::ICGetElem_Dense(JitCode* stubCode, ICStub* firstMonitorStub, Shape* shape)
-    : ICMonitoredStub(GetElem_Dense, stubCode, firstMonitorStub),
-      shape_(shape)
-{ }
-
-/* static */ ICGetElem_Dense*
-ICGetElem_Dense::Clone(JSContext* cx, ICStubSpace* space, ICStub* firstMonitorStub,
-                       ICGetElem_Dense& other)
-{
-    return New<ICGetElem_Dense>(cx, space, other.jitCode(), firstMonitorStub, other.shape_);
-}
-
-ICGetElem_UnboxedArray::ICGetElem_UnboxedArray(JitCode* stubCode, ICStub* firstMonitorStub,
-                                               ObjectGroup *group)
-  : ICMonitoredStub(GetElem_UnboxedArray, stubCode, firstMonitorStub),
-    group_(group)
-{ }
-
-/* static */ ICGetElem_UnboxedArray*
-ICGetElem_UnboxedArray::Clone(JSContext* cx, ICStubSpace* space, ICStub* firstMonitorStub,
-                              ICGetElem_UnboxedArray& other)
-{
-    return New<ICGetElem_UnboxedArray>(cx, space, other.jitCode(), firstMonitorStub, other.group_);
-}
-
-ICGetElem_TypedArray::ICGetElem_TypedArray(JitCode* stubCode, Shape* shape, Scalar::Type type)
-  : ICStub(GetElem_TypedArray, stubCode),
-    shape_(shape)
-{
-    extra_ = uint16_t(type);
-    MOZ_ASSERT(extra_ == type);
-}
-
-/* static */ ICGetElem_Arguments*
-ICGetElem_Arguments::Clone(JSContext* cx, ICStubSpace* space, ICStub* firstMonitorStub,
-                           ICGetElem_Arguments& other)
-{
-    return New<ICGetElem_Arguments>(cx, space, other.jitCode(), firstMonitorStub, other.which());
-}
-
 ICSetElem_DenseOrUnboxedArray::ICSetElem_DenseOrUnboxedArray(JitCode* stubCode, Shape* shape, ObjectGroup* group)
   : ICUpdatedStub(SetElem_DenseOrUnboxedArray, stubCode),
     shape_(shape),
@@ -8349,7 +6264,7 @@ ICUpdatedStub*
 ICSetElemDenseOrUnboxedArrayAddCompiler::getStubSpecific(ICStubSpace* space,
                                                          Handle<ShapeVector> shapes)
 {
-    RootedObjectGroup group(cx, obj_->getGroup(cx));
+    RootedObjectGroup group(cx, JSObject::getGroup(cx, obj_));
     if (!group)
         return nullptr;
     Rooted<JitCode*> stubCode(cx, getStubCode());
@@ -8424,23 +6339,6 @@ ICIn_Dense::ICIn_Dense(JitCode* stubCode, HandleShape shape)
     shape_(shape)
 { }
 
-ICGetName_GlobalLexical::ICGetName_GlobalLexical(JitCode* stubCode, ICStub* firstMonitorStub,
-                                                 uint32_t slot)
-  : ICMonitoredStub(GetName_GlobalLexical, stubCode, firstMonitorStub),
-    slot_(slot)
-{ }
-
-template <size_t NumHops>
-ICGetName_Env<NumHops>::ICGetName_Env(JitCode* stubCode, ICStub* firstMonitorStub,
-                                      Handle<ShapeVector> shapes, uint32_t offset)
-  : ICMonitoredStub(GetStubKind(), stubCode, firstMonitorStub),
-    offset_(offset)
-{
-    JS_STATIC_ASSERT(NumHops <= MAX_HOPS);
-    MOZ_ASSERT(shapes.length() == NumHops + 1);
-    for (size_t i = 0; i < NumHops + 1; i++)
-        shapes_[i].init(shapes[i]);
-}
 
 ICGetIntrinsic_Constant::ICGetIntrinsic_Constant(JitCode* stubCode, const Value& value)
   : ICStub(GetIntrinsic_Constant, stubCode),
@@ -8450,23 +6348,6 @@ ICGetIntrinsic_Constant::ICGetIntrinsic_Constant(JitCode* stubCode, const Value&
 ICGetIntrinsic_Constant::~ICGetIntrinsic_Constant()
 { }
 
-ICGetName_Global::ICGetName_Global(JitCode* stubCode, ICStub* firstMonitorStub,
-                                   ReceiverGuard guard, uint32_t offset,
-                                   JSObject* holder, Shape* holderShape, Shape* globalShape)
-  : ICGetPropNativePrototypeStub(GetName_Global, stubCode, firstMonitorStub, guard, offset,
-                                 holder, holderShape),
-    globalShape_(globalShape)
-{ }
-
-/* static */ ICGetName_Global*
-ICGetName_Global::Clone(JSContext* cx, ICStubSpace* space, ICStub* firstMonitorStub,
-                        ICGetName_Global& other)
-{
-    return New<ICGetName_Global>(cx, space, other.jitCode(), firstMonitorStub,
-                                 other.receiverGuard(), other.offset(),
-                                 other.holder(), other.holderShape(), other.globalShape());
-}
-
 ICInstanceOf_Function::ICInstanceOf_Function(JitCode* stubCode, Shape* shape,
                                              JSObject* prototypeObj, uint32_t slot)
   : ICStub(InstanceOf_Function, stubCode),
@@ -8474,28 +6355,6 @@ ICInstanceOf_Function::ICInstanceOf_Function(JitCode* stubCode, Shape* shape,
     prototypeObj_(prototypeObj),
     slot_(slot)
 { }
-
-ICSetProp_Native::ICSetProp_Native(JitCode* stubCode, ObjectGroup* group, Shape* shape,
-                                   uint32_t offset)
-  : ICUpdatedStub(SetProp_Native, stubCode),
-    group_(group),
-    shape_(shape),
-    offset_(offset)
-{ }
-
-ICSetProp_Native*
-ICSetProp_Native::Compiler::getStub(ICStubSpace* space)
-{
-    RootedObjectGroup group(cx, obj_->getGroup(cx));
-    if (!group)
-        return nullptr;
-
-    RootedShape shape(cx, LastPropertyForSetProp(obj_));
-    ICSetProp_Native* stub = newStub<ICSetProp_Native>(space, getStubCode(), group, shape, offset_);
-    if (!stub || !stub->initUpdatingChain(cx, space))
-        return nullptr;
-    return stub;
-}
 
 ICSetProp_NativeAdd::ICSetProp_NativeAdd(JitCode* stubCode, ObjectGroup* group,
                                          size_t protoChainDepth,

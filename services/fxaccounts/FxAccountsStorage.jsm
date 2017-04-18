@@ -34,7 +34,7 @@ this.FxAccountsStorageManager = function(options = {}) {
   this.plainStorage = new JSONStorage(this.options);
   // On b2g we have no loginManager for secure storage, and tests may want
   // to pretend secure storage isn't available.
-  let useSecure = 'useSecure' in options ? options.useSecure : haveLoginManager;
+  let useSecure = "useSecure" in options ? options.useSecure : haveLoginManager;
   if (useSecure) {
     this.secureStorage = new LoginManagerStorage();
   } else {
@@ -150,7 +150,7 @@ this.FxAccountsStorageManager.prototype = {
     // We know we are initialized - this means our .cachedPlain is accurate
     // and doesn't need to be read (it was read if necessary by initialize).
     // So if there's no uid, there's no user signed in.
-    if (!('uid' in this.cachedPlain)) {
+    if (!("uid" in this.cachedPlain)) {
       return null;
     }
     let result = {};
@@ -205,12 +205,12 @@ this.FxAccountsStorageManager.prototype = {
   // a different user, nor to set the user as signed-out.
   updateAccountData: Task.async(function* (newFields) {
     yield this._promiseInitialized;
-    if (!('uid' in this.cachedPlain)) {
+    if (!("uid" in this.cachedPlain)) {
       // If this storage instance shows no logged in user, then you can't
       // update fields.
       throw new Error("No user is logged in");
     }
-    if (!newFields || 'uid' in newFields || 'email' in newFields) {
+    if (!newFields || "uid" in newFields || "email" in newFields) {
       // Once we support
       // user changing email address this may need to change, but it's not
       // clear how we would be told of such a change anyway...
@@ -274,7 +274,7 @@ this.FxAccountsStorageManager.prototype = {
     let got;
     try {
       got = yield this.plainStorage.get();
-    } catch(err) {
+    } catch (err) {
       // File hasn't been created yet.  That will be done
       // when write is called.
       if (!(err instanceof OS.File.Error) || !err.becauseNoSuchFile) {
@@ -403,7 +403,7 @@ this.FxAccountsStorageManager.prototype = {
     try {
       yield this.secureStorage.set(this.cachedPlain.uid, toWriteSecure);
     } catch (ex) {
-      if (!ex instanceof this.secureStorage.STORAGE_LOCKED) {
+      if (!(ex instanceof this.secureStorage.STORAGE_LOCKED)) {
         throw ex;
       }
       // This shouldn't be possible as once it is unlocked it can't be
@@ -444,25 +444,25 @@ this.FxAccountsStorageManager.prototype = {
 function JSONStorage(options) {
   this.baseDir = options.baseDir;
   this.path = OS.Path.join(options.baseDir, options.filename);
-};
+}
 
 JSONStorage.prototype = {
-  set: function(contents) {
+  set(contents) {
     log.trace("starting write of json user data", contents ? Object.keys(contents.accountData) : "null");
     let start = Date.now();
     return OS.File.makeDir(this.baseDir, {ignoreExisting: true})
       .then(CommonUtils.writeJSON.bind(null, contents, this.path))
       .then(result => {
-        log.trace("finished write of json user data - took", Date.now()-start);
+        log.trace("finished write of json user data - took", Date.now() - start);
         return result;
       });
   },
 
-  get: function() {
+  get() {
     log.trace("starting fetch of json user data");
     let start = Date.now();
     return CommonUtils.readJSON(this.path).then(result => {
-      log.trace("finished fetch of json user data - took", Date.now()-start);
+      log.trace("finished fetch of json user data - took", Date.now() - start);
       return result;
     });
   },

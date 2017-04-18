@@ -43,9 +43,9 @@ define(function (require, exports, module) {
 
     render: function () {
       return (
-        input({className: "searchBox",
-          placeholder: Locale.$STR("jsonViewer.filterJSON"),
-          onChange: this.onSearch})
+        input({className: "searchBox devtools-filterinput",
+               placeholder: Locale.$STR("jsonViewer.filterJSON"),
+               onChange: this.onSearch})
       );
     },
   });

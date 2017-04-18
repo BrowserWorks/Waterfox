@@ -361,6 +361,7 @@ struct JSCompartment
     bool                         marked;
     bool                         warnedAboutExprClosure;
     bool                         warnedAboutForEach;
+    uint32_t                     warnedAboutStringGenericsMethods;
 
 #ifdef DEBUG
     bool                         firedOnNewGlobalObject;
@@ -692,6 +693,8 @@ struct JSCompartment
     }
 
     void findOutgoingEdges(js::gc::ZoneComponentFinder& finder);
+
+    MOZ_MUST_USE bool findDeadProxyZoneEdges(bool* foundAny);
 
     js::DtoaCache dtoaCache;
 

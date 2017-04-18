@@ -14,11 +14,15 @@ let whitelist = [
   {sourceName: /codemirror\.css$/i,
    isFromDevTools: true},
   // The debugger uses cross-browser CSS.
-  {sourceName: /devtools\/client\/debugger\/new\/styles.css/i,
+  {sourceName: /devtools\/client\/debugger\/new\/debugger.css/i,
    isFromDevTools: true},
   // PDFjs is futureproofing its pseudoselectors, and those rules are dropped.
   {sourceName: /web\/viewer\.css$/i,
    errorMessage: /Unknown pseudo-class.*(fullscreen|selection)/i,
+   isFromDevTools: false},
+  // PDFjs rules needed for compat with other UAs.
+  {sourceName: /web\/viewer\.css$/i,
+   errorMessage: /Unknown property.*appearance/i,
    isFromDevTools: false},
   // Tracked in bug 1004428.
   {sourceName: /aboutaccounts\/(main|normalize)\.css$/i,
@@ -42,13 +46,15 @@ let whitelist = [
   {sourceName: /res\/forms\.css$/i,
    errorMessage: /Unknown property.*overflow-clip-box/i,
    isFromDevTools: false},
-  {sourceName: /res\/(ua|html)\.css$/i,
-   errorMessage: /Unknown pseudo-class .*\bfullscreen\b/i,
-   isFromDevTools: false},
-  {sourceName: /skin\/timepicker\.css$/i,
-   errorMessage: /Error in parsing.*mask/i,
-   isFromDevTools: false},
 ];
+
+if (!Services.prefs.getBoolPref("full-screen-api.unprefix.enabled")) {
+  whitelist.push({
+    sourceName: /res\/(ua|html)\.css$/i,
+    errorMessage: /Unknown pseudo-class .*\bfullscreen\b/i,
+    isFromDevTools: false
+  });
+}
 
 // Platform can be "linux", "macosx" or "win". If omitted, the exception applies to all platforms.
 let allowedImageReferences = [
@@ -134,14 +140,14 @@ var gChromeMap = new Map();
 
 function getBaseUriForChromeUri(chromeUri) {
   let chromeFile = chromeUri + "gobbledygooknonexistentfile.reallynothere";
-  let uri = Services.io.newURI(chromeFile, null, null);
+  let uri = Services.io.newURI(chromeFile);
   let fileUri = gChromeReg.convertChromeURL(uri);
   return fileUri.resolve(".");
 }
 
 function parseManifest(manifestUri) {
   return fetchFile(manifestUri.spec).then(data => {
-    for (let line of data.split('\n')) {
+    for (let line of data.split("\n")) {
       let [type, ...argv] = line.split(/\s+/);
       let component;
       if (type == "content" || type == "skin") {
@@ -170,7 +176,7 @@ function convertToChromeUri(fileUri) {
     if (gChromeMap.has(baseUri)) {
       let chromeBaseUri = gChromeMap.get(baseUri);
       let chromeUri = `${chromeBaseUri}${path}`;
-      return Services.io.newURI(chromeUri, null, null);
+      return Services.io.newURI(chromeUri);
     }
   }
 }
@@ -217,7 +223,7 @@ function processCSSRules(sheet) {
         continue;
 
       // Make the url absolute and remove the ref.
-      let baseURI = Services.io.newURI(rule.parentStyleSheet.href, null, null);
+      let baseURI = Services.io.newURI(rule.parentStyleSheet.href);
       url = Services.io.newURI(url, null, baseURI).specIgnoringRef;
 
       // Store the image url along with the css file referencing it.
@@ -231,8 +237,7 @@ function processCSSRules(sheet) {
   }
 }
 
-function chromeFileExists(aURI)
-{
+function chromeFileExists(aURI) {
   let available = 0;
   try {
     let channel = NetUtil.newChannel({uri: aURI, loadUsingSystemPrincipal: true});
@@ -264,7 +269,7 @@ add_task(function* checkAllTheCSS() {
   let windowless = Services.appShell.createWindowlessBrowser();
   let iframe = windowless.document.createElementNS("http://www.w3.org/1999/xhtml", "html:iframe");
   windowless.document.documentElement.appendChild(iframe);
-  let iframeLoaded = once(iframe, 'load');
+  let iframeLoaded = once(iframe, "load");
   iframe.contentWindow.location = testFile;
   yield iframeLoaded;
   let doc = iframe.contentWindow.document;
@@ -367,7 +372,7 @@ add_task(function* checkAllTheCSS() {
 
   // Clean up to avoid leaks:
   iframe.remove();
-  doc.head.innerHTML = '';
+  doc.head.innerHTML = "";
   doc = null;
   iframe = null;
   windowless.close();

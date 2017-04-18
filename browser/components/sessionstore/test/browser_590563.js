@@ -5,14 +5,14 @@ function test() {
   let sessionData = {
     windows: [{
       tabs: [
-        { entries: [{ url: "about:mozilla" }], hidden: true },
-        { entries: [{ url: "about:blank" }], hidden: false }
+        { entries: [{ url: "about:mozilla", triggeringPrincipal_base64 }], hidden: true },
+        { entries: [{ url: "about:blank", triggeringPrincipal_base64 }], hidden: false }
       ]
     }]
   };
   let url = "about:sessionrestore";
   let formdata = {id: {sessionData}, url};
-  let state = { windows: [{ tabs: [{ entries: [{url}], formdata }] }] };
+  let state = { windows: [{ tabs: [{ entries: [{url, triggeringPrincipal_base64}], formdata }] }] };
 
   waitForExplicitFinish();
 
@@ -56,7 +56,7 @@ function newWindowWithState(state, callback) {
   let win = window.openDialog(getBrowserURL(), "_blank", opts);
 
   win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
+    win.removeEventListener("load", onLoad);
 
     let tab = win.gBrowser.selectedTab;
 
@@ -70,5 +70,5 @@ function newWindowWithState(state, callback) {
     executeSoon(function () {
       ss.setWindowState(win, JSON.stringify(state), true);
     });
-  }, false);
+  });
 }

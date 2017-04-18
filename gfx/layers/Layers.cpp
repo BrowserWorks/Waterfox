@@ -28,7 +28,9 @@
 #include "mozilla/gfx/2D.h"             // for DrawTarget
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
+#include "mozilla/gfx/Polygon.h"        // for Polygon
 #include "mozilla/layers/AsyncCanvasRenderer.h"
+#include "mozilla/layers/BSPTree.h"     // for BSPTree
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/CompositorTypes.h"
@@ -46,6 +48,9 @@
 #include "protobuf/LayerScopePacket.pb.h"
 #include "mozilla/Compression.h"
 #include "TreeTraversal.h"              // for ForEachNode
+
+#include <deque>
+#include <set>
 
 uint8_t gLayerManagerLayerBuilder;
 
@@ -214,12 +219,10 @@ Layer::Layer(LayerManager* aManager, void* aImplData) :
 #endif
   mAnimationGeneration(0)
 {
-  MOZ_COUNT_CTOR(Layer);
 }
 
 Layer::~Layer()
 {
-  MOZ_COUNT_DTOR(Layer);
 }
 
 Animation*
@@ -423,6 +426,30 @@ CreateCSSValueList(const InfallibleTArray<TransformFunction>& aFunctions)
   return new nsCSSValueSharedList(result.forget());
 }
 
+static StyleAnimationValue
+ToStyleAnimationValue(const Animatable& aAnimatable)
+{
+  StyleAnimationValue result;
+
+  switch (aAnimatable.type()) {
+    case Animatable::Tnull_t:
+      break;
+    case Animatable::TArrayOfTransformFunction: {
+      const InfallibleTArray<TransformFunction>& transforms =
+        aAnimatable.get_ArrayOfTransformFunction();
+      result.SetTransformValue(CreateCSSValueList(transforms));
+      break;
+    }
+    case Animatable::Tfloat:
+      result.SetFloatValue(aAnimatable.get_float());
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unsupported type");
+  }
+
+  return result;
+}
+
 void
 Layer::SetAnimations(const AnimationArray& aAnimations)
 {
@@ -446,6 +473,10 @@ Layer::SetAnimations(const AnimationArray& aAnimations)
         break;
     }
 
+    if (animation.baseStyle().type() != Animatable::Tnull_t) {
+      mBaseAnimationStyle = ToStyleAnimationValue(animation.baseStyle());
+    }
+
     AnimData* data = mAnimationData.AppendElement();
     InfallibleTArray<Maybe<ComputedTimingFunction>>& functions =
       data->mFunctions;
@@ -462,24 +493,9 @@ Layer::SetAnimations(const AnimationArray& aAnimations)
     // animation.
     InfallibleTArray<StyleAnimationValue>& startValues = data->mStartValues;
     InfallibleTArray<StyleAnimationValue>& endValues = data->mEndValues;
-    for (uint32_t j = 0; j < segments.Length(); j++) {
-      const AnimationSegment& segment = segments[j];
-      StyleAnimationValue* startValue = startValues.AppendElement();
-      StyleAnimationValue* endValue = endValues.AppendElement();
-      if (segment.endState().type() == Animatable::TArrayOfTransformFunction) {
-        const InfallibleTArray<TransformFunction>& startFunctions =
-          segment.startState().get_ArrayOfTransformFunction();
-        startValue->SetTransformValue(CreateCSSValueList(startFunctions));
-
-        const InfallibleTArray<TransformFunction>& endFunctions =
-          segment.endState().get_ArrayOfTransformFunction();
-        endValue->SetTransformValue(CreateCSSValueList(endFunctions));
-      } else {
-        NS_ASSERTION(segment.endState().type() == Animatable::Tfloat,
-                     "Unknown Animatable type");
-        startValue->SetFloatValue(segment.startState().get_float());
-        endValue->SetFloatValue(segment.endState().get_float());
-      }
+    for (const AnimationSegment& segment : segments) {
+      startValues.AppendElement(ToStyleAnimationValue(segment.startState()));
+      endValues.AppendElement(ToStyleAnimationValue(segment.endState()));
     }
   }
 
@@ -497,8 +513,10 @@ Layer::StartPendingAnimations(const TimeStamp& aReadyTime)
         for (size_t animIdx = 0, animEnd = layer->mAnimations.Length();
              animIdx < animEnd; animIdx++) {
           Animation& anim = layer->mAnimations[animIdx];
-          if (anim.startTime().IsNull()) {
-            anim.startTime() = aReadyTime - anim.initialCurrentTime();
+
+          // If the animation is play-pending, resolve the start time.
+          if (anim.startTime().IsNull() && !anim.isNotPlaying()) {
+            anim.startTime() = aReadyTime - anim.holdTime() + anim.delay();
             updated = true;
           }
         }
@@ -576,7 +594,7 @@ Layer::CanUseOpaqueSurface()
 const Maybe<ParentLayerIntRect>&
 Layer::GetLocalClipRect()
 {
-  if (LayerComposite* shadow = AsLayerComposite()) {
+  if (HostLayer* shadow = AsHostLayer()) {
     return shadow->GetShadowClipRect();
   }
   return GetClipRect();
@@ -585,7 +603,7 @@ Layer::GetLocalClipRect()
 const LayerIntRegion&
 Layer::GetLocalVisibleRegion()
 {
-  if (LayerComposite* shadow = AsLayerComposite()) {
+  if (HostLayer* shadow = AsHostLayer()) {
     return shadow->GetShadowVisibleRegion();
   }
   return GetVisibleRegion();
@@ -782,7 +800,7 @@ Layer::CalculateScissorRect(const RenderTargetIntRect& aCurrentScissorRect)
   }
 
   if (GetLocalVisibleRegion().IsEmpty() &&
-      !(AsLayerComposite() && AsLayerComposite()->NeedToDrawCheckerboarding())) {
+      !(AsHostLayer() && AsHostLayer()->NeedToDrawCheckerboarding())) {
     // When our visible region is empty, our parent may not have created the
     // intermediate surface that we would require for correct clipping; however,
     // this does not matter since we are invisible.
@@ -887,7 +905,7 @@ Layer::GetTransformTyped() const
 Matrix4x4
 Layer::GetLocalTransform()
 {
-  if (LayerComposite* shadow = AsLayerComposite())
+  if (HostLayer* shadow = AsHostLayer())
     return shadow->GetShadowTransform();
   else
     return GetTransform();
@@ -941,7 +959,7 @@ float
 Layer::GetLocalOpacity()
 {
   float opacity = mOpacity;
-  if (LayerComposite* shadow = AsLayerComposite())
+  if (HostLayer* shadow = AsHostLayer())
     opacity = shadow->GetShadowOpacity();
   return std::min(std::max(opacity, 0.0f), 1.0f);
 }
@@ -1108,13 +1126,11 @@ ContainerLayer::ContainerLayer(LayerManager* aManager, void* aImplData)
     mChildrenChanged(false),
     mEventRegionsOverride(EventRegionsOverride::NoOverride)
 {
-  MOZ_COUNT_CTOR(ContainerLayer);
   mContentFlags = 0; // Clear NO_TEXT, NO_TEXT_OVER_TRANSPARENT
 }
 
 ContainerLayer::~ContainerLayer()
 {
-  MOZ_COUNT_DTOR(ContainerLayer);
 }
 
 bool
@@ -1166,6 +1182,43 @@ ContainerLayer::InsertAfter(Layer* aChild, Layer* aAfter)
   return true;
 }
 
+void
+ContainerLayer::RemoveAllChildren()
+{
+  // Optimizes "while (mFirstChild) ContainerLayer::RemoveChild(mFirstChild);"
+  Layer* current = mFirstChild;
+
+  // This is inlining DidRemoveChild() on each layer; we can skip the calls
+  // to NotifyPaintedLayerRemoved as it gets taken care of when as we call
+  // NotifyRemoved prior to removing any layers.
+  while (current) {
+    Layer* next = current->GetNextSibling();
+    if (current->GetType() == TYPE_READBACK) {
+      static_cast<ReadbackLayer*>(current)->NotifyRemoved();
+    }
+    current = next;
+  }
+
+  current = mFirstChild;
+  mFirstChild = nullptr;
+  while (current) {
+    MOZ_ASSERT(!current->GetPrevSibling());
+
+    Layer* next = current->GetNextSibling();
+    current->SetParent(nullptr);
+    current->SetNextSibling(nullptr);
+    if (next) {
+      next->SetPrevSibling(nullptr);
+    }
+    NS_RELEASE(current);
+    current = next;
+  }
+}
+
+// Note that ContainerLayer::RemoveAllChildren is an optimized
+// version of this code; if you make changes to ContainerLayer::RemoveChild
+// consider whether the matching changes need to be made to
+// ContainerLayer::RemoveAllChildren
 bool
 ContainerLayer::RemoveChild(Layer *aChild)
 {
@@ -1327,34 +1380,122 @@ ContainerLayer::Collect3DContextLeaves(nsTArray<Layer*>& aToSort)
   );
 }
 
-void
-ContainerLayer::SortChildrenBy3DZOrder(nsTArray<Layer*>& aArray)
+static nsTArray<LayerPolygon>
+SortLayersWithBSPTree(nsTArray<Layer*>& aArray)
 {
-  AutoTArray<Layer*, 10> toSort;
+  std::deque<LayerPolygon> inputLayers;
+  nsTArray<LayerPolygon> orderedLayers;
 
-  for (Layer* l = GetFirstChild(); l; l = l->GetNextSibling()) {
-    ContainerLayer* container = l->AsContainerLayer();
-    if (container && container->Extend3DContext() &&
-        !container->UseIntermediateSurface()) {
-      container->Collect3DContextLeaves(toSort);
-    } else {
-      if (toSort.Length() > 0) {
-        SortLayersBy3DZOrder(toSort);
-        aArray.AppendElements(Move(toSort));
-        // XXX The move analysis gets confused here, because toSort gets moved
-        // here, and then gets used again outside of the loop. To clarify that
-        // we realize that the array is going to be empty to the move checker,
-        // we clear it again here. (This method renews toSort for the move
-        // analysis)
-        toSort.ClearAndRetainStorage();
-      }
-      aArray.AppendElement(l);
+  // Build a list of polygons to be sorted.
+  for (Layer* layer : aArray) {
+    // Ignore invisible layers.
+    if (!layer->IsVisible()) {
+      continue;
+    }
+
+    const gfx::IntRect& bounds =
+      layer->GetLocalVisibleRegion().ToUnknownRegion().GetBounds();
+    const gfx::Matrix4x4& transform = layer->GetEffectiveTransform();
+
+    gfx::Polygon polygon = gfx::Polygon::FromRect(gfx::Rect(bounds));
+
+    // Transform the polygon to screen space.
+    polygon.TransformToScreenSpace(transform);
+
+    if (polygon.GetPoints().Length() >= 3) {
+      inputLayers.push_back(LayerPolygon(layer, Move(polygon)));
     }
   }
-  if (toSort.Length() > 0) {
-    SortLayersBy3DZOrder(toSort);
-    aArray.AppendElements(Move(toSort));
+
+  if (inputLayers.empty()) {
+    return orderedLayers;
   }
+
+  // Build a BSP tree from the list of polygons.
+  BSPTree tree(inputLayers);
+  orderedLayers = Move(tree.GetDrawOrder());
+
+  // Transform the polygons back to layer space.
+  for (LayerPolygon& layerPolygon : orderedLayers) {
+    gfx::Matrix4x4 inverse =
+      layerPolygon.layer->GetEffectiveTransform().Inverse();
+
+    MOZ_ASSERT(layerPolygon.geometry);
+    layerPolygon.geometry->TransformToLayerSpace(inverse);
+  }
+
+  return orderedLayers;
+}
+
+static nsTArray<LayerPolygon>
+StripLayerGeometry(const nsTArray<LayerPolygon>& aLayers)
+{
+  nsTArray<LayerPolygon> layers;
+  std::set<Layer*> uniqueLayers;
+
+  for (const LayerPolygon& layerPolygon : aLayers) {
+    auto result = uniqueLayers.insert(layerPolygon.layer);
+
+    if (result.second) {
+      // Layer was added to the set.
+      layers.AppendElement(LayerPolygon(layerPolygon.layer));
+    }
+  }
+
+  return layers;
+}
+
+nsTArray<LayerPolygon>
+ContainerLayer::SortChildrenBy3DZOrder(SortMode aSortMode)
+{
+  AutoTArray<Layer*, 10> toSort;
+  nsTArray<LayerPolygon> drawOrder;
+
+  for (Layer* layer = GetFirstChild(); layer; layer = layer->GetNextSibling()) {
+    ContainerLayer* container = layer->AsContainerLayer();
+
+    if (container && container->Extend3DContext() &&
+        !container->UseIntermediateSurface()) {
+
+      // Collect 3D layers in toSort array.
+      container->Collect3DContextLeaves(toSort);
+
+      // Sort the 3D layers.
+      if (toSort.Length() > 0) {
+        nsTArray<LayerPolygon> sorted = SortLayersWithBSPTree(toSort);
+        drawOrder.AppendElements(Move(sorted));
+
+        toSort.ClearAndRetainStorage();
+      }
+
+      continue;
+    }
+
+    drawOrder.AppendElement(LayerPolygon(layer));
+  }
+
+  if (aSortMode == SortMode::WITHOUT_GEOMETRY) {
+    // Compositor does not support arbitrary layers, strip the layer geometry
+    // and duplicate layers.
+    return StripLayerGeometry(drawOrder);
+  }
+
+  return drawOrder;
+}
+
+bool
+ContainerLayer::AnyAncestorOrThisIs3DContextLeaf()
+{
+  Layer* parent = this;
+  while (parent != nullptr) {
+    if (parent->Is3DContextLeaf()) {
+      return true;
+    }
+
+    parent = parent->GetParent();
+  }
+
+  return false;
 }
 
 void
@@ -1387,7 +1528,8 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
         ((opacity != 1.0f && !Extend3DContext()) ||
          (blendMode != CompositionOp::OP_OVER))) {
       useIntermediateSurface = true;
-    } else if (!idealTransform.Is2D() && Creates3DContextWithExtendingChildren()) {
+    } else if ((!idealTransform.Is2D() || AnyAncestorOrThisIs3DContextLeaf()) &&
+               Creates3DContextWithExtendingChildren()) {
       useIntermediateSurface = true;
     } else {
       useIntermediateSurface = false;
@@ -1520,6 +1662,10 @@ ContainerLayer::HasOpaqueAncestorLayer(Layer* aLayer)
   return false;
 }
 
+// Note that ContainerLayer::RemoveAllChildren contains an optimized
+// version of this code; if you make changes to ContainerLayer::DidRemoveChild
+// consider whether the matching changes need to be made to
+// ContainerLayer::RemoveAllChildren
 void
 ContainerLayer::DidRemoveChild(Layer* aLayer)
 {
@@ -1661,7 +1807,7 @@ LayerManager::BeginTabSwitch()
   mTabSwitchStart = TimeStamp::Now();
 }
 
-static void PrintInfo(std::stringstream& aStream, LayerComposite* aLayerComposite);
+static void PrintInfo(std::stringstream& aStream, HostLayer* aLayerComposite);
 
 #ifdef MOZ_DUMP_PAINTING
 template <typename T>
@@ -1671,11 +1817,11 @@ void WriteSnapshotToDumpFile_internal(T* aObj, DataSourceSurface* aSurf)
   string.Append('-');
   string.AppendInt((uint64_t)aObj);
   if (gfxUtils::sDumpPaintFile != stderr) {
-    fprintf_stderr(gfxUtils::sDumpPaintFile, "array[\"%s\"]=\"", string.BeginReading());
+    fprintf_stderr(gfxUtils::sDumpPaintFile, R"(array["%s"]=")", string.BeginReading());
   }
   gfxUtils::DumpAsDataURI(aSurf, gfxUtils::sDumpPaintFile);
   if (gfxUtils::sDumpPaintFile != stderr) {
-    fprintf_stderr(gfxUtils::sDumpPaintFile, "\";");
+    fprintf_stderr(gfxUtils::sDumpPaintFile, R"(";)");
   }
 }
 
@@ -1699,11 +1845,11 @@ void WriteSnapshotToDumpFile(Compositor* aCompositor, DrawTarget* aTarget)
 
 void
 Layer::Dump(std::stringstream& aStream, const char* aPrefix,
-            bool aDumpHtml, bool aSorted)
+            bool aDumpHtml, bool aSorted, const Maybe<gfx::Polygon>& aGeometry)
 {
 #ifdef MOZ_DUMP_PAINTING
-  bool dumpCompositorTexture = gfxEnv::DumpCompositorTextures() && AsLayerComposite() &&
-                               AsLayerComposite()->GetCompositableHost();
+  bool dumpCompositorTexture = gfxEnv::DumpCompositorTextures() && AsHostLayer() &&
+                               AsHostLayer()->GetCompositableHost();
   bool dumpClientTexture = gfxEnv::DumpPaint() && AsShadowableLayer() &&
                            AsShadowableLayer()->GetCompositableClient();
   nsCString layerId(Name());
@@ -1711,27 +1857,27 @@ Layer::Dump(std::stringstream& aStream, const char* aPrefix,
   layerId.AppendInt((uint64_t)this);
 #endif
   if (aDumpHtml) {
-    aStream << nsPrintfCString("<li><a id=\"%p\" ", this).get();
+    aStream << nsPrintfCString(R"(<li><a id="%p" )", this).get();
 #ifdef MOZ_DUMP_PAINTING
     if (dumpCompositorTexture || dumpClientTexture) {
-      aStream << nsPrintfCString("href=\"javascript:ViewImage('%s')\"", layerId.BeginReading()).get();
+      aStream << nsPrintfCString(R"lit(href="javascript:ViewImage('%s')")lit", layerId.BeginReading()).get();
     }
 #endif
     aStream << ">";
   }
-  DumpSelf(aStream, aPrefix);
+  DumpSelf(aStream, aPrefix, aGeometry);
 
 #ifdef MOZ_DUMP_PAINTING
   if (dumpCompositorTexture) {
-    AsLayerComposite()->GetCompositableHost()->Dump(aStream, aPrefix, aDumpHtml);
+    AsHostLayer()->GetCompositableHost()->Dump(aStream, aPrefix, aDumpHtml);
   } else if (dumpClientTexture) {
     if (aDumpHtml) {
-      aStream << nsPrintfCString("<script>array[\"%s\"]=\"", layerId.BeginReading()).get();
+      aStream << nsPrintfCString(R"(<script>array["%s"]=")", layerId.BeginReading()).get();
     }
     AsShadowableLayer()->GetCompositableClient()->Dump(aStream, aPrefix,
         aDumpHtml, TextureDumpMode::DoNotCompress);
     if (aDumpHtml) {
-      aStream << "\";</script>";
+      aStream << R"(";</script>)";
     }
   }
 #endif
@@ -1767,12 +1913,13 @@ Layer::Dump(std::stringstream& aStream, const char* aPrefix,
 #endif
 
   if (ContainerLayer* container = AsContainerLayer()) {
-    AutoTArray<Layer*, 12> children;
+    nsTArray<LayerPolygon> children;
     if (aSorted) {
-      container->SortChildrenBy3DZOrder(children);
+      children =
+        container->SortChildrenBy3DZOrder(ContainerLayer::SortMode::WITH_GEOMETRY);
     } else {
       for (Layer* l = container->GetFirstChild(); l; l = l->GetNextSibling()) {
-        children.AppendElement(l);
+        children.AppendElement(LayerPolygon(l));
       }
     }
     nsAutoCString pfx(aPrefix);
@@ -1781,8 +1928,8 @@ Layer::Dump(std::stringstream& aStream, const char* aPrefix,
       aStream << "<ul>";
     }
 
-    for (Layer* child : children) {
-      child->Dump(aStream, pfx.get(), aDumpHtml, aSorted);
+    for (LayerPolygon& child : children) {
+      child.layer->Dump(aStream, pfx.get(), aDumpHtml, aSorted, child.geometry);
     }
 
     if (aDumpHtml) {
@@ -1795,10 +1942,31 @@ Layer::Dump(std::stringstream& aStream, const char* aPrefix,
   }
 }
 
+static void
+DumpGeometry(std::stringstream& aStream, const Maybe<gfx::Polygon>& aGeometry)
+{
+  aStream << " [geometry=[";
+
+  const nsTArray<gfx::Point4D>& points = aGeometry->GetPoints();
+  for (size_t i = 0; i < points.Length(); ++i) {
+    const gfx::IntPoint point = TruncatedToInt(points[i].As2DPoint());
+    const char* sfx = (i != points.Length() - 1) ? "," : "";
+    AppendToString(aStream, point, "", sfx);
+  }
+
+  aStream << "]]";
+}
+
 void
-Layer::DumpSelf(std::stringstream& aStream, const char* aPrefix)
+Layer::DumpSelf(std::stringstream& aStream, const char* aPrefix,
+                const Maybe<gfx::Polygon>& aGeometry)
 {
   PrintInfo(aStream, aPrefix);
+
+  if (aGeometry) {
+    DumpGeometry(aStream, aGeometry);
+  }
+
   aStream << "\n";
 }
 
@@ -1875,7 +2043,7 @@ Layer::LogSelf(const char* aPrefix)
 
   if (mMaskLayer) {
     nsAutoCString pfx(aPrefix);
-    pfx += "   \\ MaskLayer ";
+    pfx += R"(   \ MaskLayer )";
     mMaskLayer->LogSelf(pfx.get());
   }
 }
@@ -1886,7 +2054,7 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   aStream << aPrefix;
   aStream << nsPrintfCString("%s%s (0x%p)", mManager->Name(), Name(), this).get();
 
-  layers::PrintInfo(aStream, AsLayerComposite());
+  layers::PrintInfo(aStream, AsHostLayer());
 
   if (mClipRect) {
     AppendToString(aStream, *mClipRect, " [clip=", "]");
@@ -1971,6 +2139,9 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
       AppendToString(aStream, mScrollMetadata[i], "", "]");
     }
   }
+  if (!mAnimations.IsEmpty()) {
+    aStream << nsPrintfCString(" [%d animations]", (int) mAnimations.Length()).get();
+  }
 }
 
 // The static helper function sets the transform matrix into the packet
@@ -2030,7 +2201,7 @@ Layer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
   layer->set_ptr(reinterpret_cast<uint64_t>(this));
   layer->set_parentptr(reinterpret_cast<uint64_t>(aParent));
   // Shadow
-  if (LayerComposite* lc = AsLayerComposite()) {
+  if (HostLayer* lc = AsHostLayer()) {
     LayersPacket::Layer::Shadow* s = layer->mutable_shadow();
     if (const Maybe<ParentLayerIntRect>& clipRect = lc->GetShadowClipRect()) {
       DumpRect(s->mutable_clip(), *clipRect);
@@ -2200,6 +2371,35 @@ ColorLayer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
   layer->set_color(mColor.ToABGR());
 }
 
+void
+TextLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
+{
+  Layer::PrintInfo(aStream, aPrefix);
+  AppendToString(aStream, mBounds, " [bounds=", "]");
+}
+
+void
+TextLayer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
+{
+  Layer::DumpPacket(aPacket, aParent);
+  // Get this layer data
+  using namespace layerscope;
+  LayersPacket::Layer* layer = aPacket->mutable_layer(aPacket->layer_size()-1);
+  layer->set_type(LayersPacket::Layer::TextLayer);
+}
+
+void
+BorderLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
+{
+  Layer::PrintInfo(aStream, aPrefix);
+}
+
+void
+BorderLayer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
+{
+  Layer::DumpPacket(aPacket, aParent);
+}
+
 CanvasLayer::CanvasLayer(LayerManager* aManager, void* aImplData)
   : Layer(aManager, aImplData)
   , mPreTransCallback(nullptr)
@@ -2210,8 +2410,7 @@ CanvasLayer::CanvasLayer(LayerManager* aManager, void* aImplData)
   , mDirty(false)
 {}
 
-CanvasLayer::~CanvasLayer()
-{}
+CanvasLayer::~CanvasLayer() = default;
 
 void
 CanvasLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
@@ -2351,7 +2550,7 @@ LayerManager::Dump(std::stringstream& aStream, const char* aPrefix,
   if (aDumpHtml) {
     aStream << "<ul>";
   }
-  GetRoot()->Dump(aStream, pfx.get(), aDumpHtml);
+  GetRoot()->Dump(aStream, pfx.get(), aDumpHtml, aSorted);
   if (aDumpHtml) {
     aStream << "</ul></li></ul>";
   }
@@ -2459,7 +2658,7 @@ LayerManager::ClearPendingScrollInfoUpdate()
 }
 
 void
-PrintInfo(std::stringstream& aStream, LayerComposite* aLayerComposite)
+PrintInfo(std::stringstream& aStream, HostLayer* aLayerComposite)
 {
   if (!aLayerComposite) {
     return;
@@ -2499,6 +2698,21 @@ IntRect
 ToOutsideIntRect(const gfxRect &aRect)
 {
   return IntRect::RoundOut(aRect.x, aRect.y, aRect.width, aRect.height);
+}
+
+TextLayer::TextLayer(LayerManager* aManager, void* aImplData)
+  : Layer(aManager, aImplData)
+{}
+
+TextLayer::~TextLayer()
+{}
+
+void
+TextLayer::SetGlyphs(nsTArray<GlyphArray>&& aGlyphs)
+{
+  MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) Glyphs", this));
+  mGlyphs = Move(aGlyphs);
+  Mutated();
 }
 
 } // namespace layers

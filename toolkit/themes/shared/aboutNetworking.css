@@ -18,6 +18,10 @@ body {
   float: left;
 }
 
+#sectionTitle:dir(rtl) {
+  float: right;
+}
+
 #refreshDiv {
   justify-content: flex-end;
   margin-bottom: 0.5em;
@@ -84,6 +88,11 @@ body {
   height: 1.6em;
   background: url("chrome://global/skin/icons/warning.svg") no-repeat left center;
   background-size: 1.6em;
+}
+
+.title:dir(rtl)::before {
+  left: auto;
+  right: -2.3em;
 }
 
 .warningBackground button {

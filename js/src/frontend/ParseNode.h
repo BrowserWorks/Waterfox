@@ -54,6 +54,7 @@ class ObjectBox;
     F(TRUE) \
     F(FALSE) \
     F(NULL) \
+    F(RAW_UNDEFINED) \
     F(THIS) \
     F(FUNCTION) \
     F(MODULE) \
@@ -406,7 +407,8 @@ IsTypeofKind(ParseNodeKind kind)
  * PNK_NUMBER   dval        pn_dval: double value of numeric literal
  * PNK_TRUE,    nullary     pn_op: JSOp bytecode
  * PNK_FALSE,
- * PNK_NULL
+ * PNK_NULL,
+ * PNK_RAW_UNDEFINED
  *
  * PNK_THIS,        unary   pn_kid: '.this' Name if function `this`, else nullptr
  * PNK_SUPERBASE    unary   pn_kid: '.this' Name
@@ -450,6 +452,9 @@ class ParseNode
     uint8_t pn_op;      /* see JSOp enum and jsopcode.tbl */
     uint8_t pn_arity:4; /* see ParseNodeArity enum */
     bool pn_parens:1;   /* this expr was enclosed in parens */
+    bool pn_rhs_anon_fun:1;  /* this expr is anonymous function or class that
+                              * is a direct RHS of PNK_ASSIGN or PNK_COLON of
+                              * property, that needs SetFunctionName. */
 
     ParseNode(const ParseNode& other) = delete;
     void operator=(const ParseNode& other) = delete;
@@ -460,6 +465,7 @@ class ParseNode
         pn_op(op),
         pn_arity(arity),
         pn_parens(false),
+        pn_rhs_anon_fun(false),
         pn_pos(0, 0),
         pn_next(nullptr)
     {
@@ -472,6 +478,7 @@ class ParseNode
         pn_op(op),
         pn_arity(arity),
         pn_parens(false),
+        pn_rhs_anon_fun(false),
         pn_pos(pos),
         pn_next(nullptr)
     {
@@ -511,6 +518,13 @@ class ParseNode
     bool isInParens() const                { return pn_parens; }
     bool isLikelyIIFE() const              { return isInParens(); }
     void setInParens(bool enabled)         { pn_parens = enabled; }
+
+    bool isDirectRHSAnonFunction() const {
+        return pn_rhs_anon_fun;
+    }
+    void setDirectRHSAnonFunction(bool enabled) {
+        pn_rhs_anon_fun = enabled;
+    }
 
     TokenPos            pn_pos;         /* two 16-bit pairs here, for 64 bits */
     ParseNode*          pn_next;        /* intrinsic link in parent PN_LIST */
@@ -637,14 +651,12 @@ class ParseNode
         MOZ_ASSERT(pn_arity == PN_CODE && getKind() == PNK_FUNCTION);
         MOZ_ASSERT(isOp(JSOP_LAMBDA) ||        // lambda, genexpr
                    isOp(JSOP_LAMBDA_ARROW) ||  // arrow function
-                   isOp(JSOP_FUNWITHPROTO) ||  // already emitted lambda with needsProto
                    isOp(JSOP_DEFFUN) ||        // non-body-level function statement
                    isOp(JSOP_NOP) ||           // body-level function stmt in global code
                    isOp(JSOP_GETLOCAL) ||      // body-level function stmt in function code
                    isOp(JSOP_GETARG) ||        // body-level function redeclaring formal
                    isOp(JSOP_INITLEXICAL));    // block-level function stmt
-        return !isOp(JSOP_LAMBDA) && !isOp(JSOP_LAMBDA_ARROW) &&
-               !isOp(JSOP_FUNWITHPROTO) && !isOp(JSOP_DEFFUN);
+        return !isOp(JSOP_LAMBDA) && !isOp(JSOP_LAMBDA_ARROW) && !isOp(JSOP_DEFFUN);
     }
 
     /*
@@ -676,7 +688,8 @@ class ParseNode
                isKind(PNK_STRING) ||
                isKind(PNK_TRUE) ||
                isKind(PNK_FALSE) ||
-               isKind(PNK_NULL);
+               isKind(PNK_NULL) ||
+               isKind(PNK_RAW_UNDEFINED);
     }
 
     /* Return true if this node appears in a Directive Prologue. */
@@ -916,10 +929,14 @@ struct ListNode : public ParseNode
 
 struct CodeNode : public ParseNode
 {
-    CodeNode(ParseNodeKind kind, const TokenPos& pos)
-      : ParseNode(kind, JSOP_NOP, PN_CODE, pos)
+    CodeNode(ParseNodeKind kind, JSOp op, const TokenPos& pos)
+      : ParseNode(kind, op, PN_CODE, pos)
     {
         MOZ_ASSERT(kind == PNK_FUNCTION || kind == PNK_MODULE);
+        MOZ_ASSERT_IF(kind == PNK_MODULE, op == JSOP_NOP);
+        MOZ_ASSERT(op == JSOP_NOP || // statement, module
+                   op == JSOP_LAMBDA_ARROW || // arrow function
+                   op == JSOP_LAMBDA); // expression, method, comprehension, accessor, &c.
         MOZ_ASSERT(!pn_body);
         MOZ_ASSERT(!pn_objbox);
     }
@@ -1125,6 +1142,16 @@ class NullLiteral : public ParseNode
 {
   public:
     explicit NullLiteral(const TokenPos& pos) : ParseNode(PNK_NULL, JSOP_NULL, PN_NULLARY, pos) { }
+};
+
+// This is only used internally, currently just for tagged templates.
+// It represents the value 'undefined' (aka `void 0`), like NullLiteral
+// represents the value 'null'.
+class RawUndefinedLiteral : public ParseNode
+{
+  public:
+    explicit RawUndefinedLiteral(const TokenPos& pos)
+      : ParseNode(PNK_RAW_UNDEFINED, JSOP_UNDEFINED, PN_NULLARY, pos) { }
 };
 
 class BooleanLiteral : public ParseNode
@@ -1347,6 +1374,7 @@ ParseNode::isConstant()
       case PNK_STRING:
       case PNK_TEMPLATE_STRING:
       case PNK_NULL:
+      case PNK_RAW_UNDEFINED:
       case PNK_FALSE:
       case PNK_TRUE:
         return true;
@@ -1443,6 +1471,9 @@ FunctionFormalParametersList(ParseNode* fn, unsigned* numFormals)
     MOZ_ASSERT(argsBody->isArity(PN_LIST));
     return argsBody->pn_head;
 }
+
+bool
+IsAnonymousFunctionDefinition(ParseNode* pn);
 
 } /* namespace frontend */
 } /* namespace js */

@@ -148,6 +148,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
 
     testArrayBuffer();
 
+    testMap();
+
+    testSet();
+
     // We could also test DataView and Iterator here for completeness, but it's
     // more trouble than it's worth.
 
@@ -220,11 +224,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   // There is no TypedArray constructor, looks like.
   is(window.TypedArray, undefined, "If this ever changes, add to this test!");
   for (var c of errorObjectClasses) {
-      gPrototypeProperties[c] = ["constructor", "name",
-                                 // We don't actually resolve these empty data properties
-                                 // onto the Xray prototypes, but we list them here to make
-                                 // the test happy.
-                                 "lineNumber", "columnNumber", "fileName", "message", "stack"];
+      gPrototypeProperties[c] = ["constructor", "name", "message", "stack"];
       gConstructorProperties[c] = constructorProps([]);
   }
   // toString and toSource only live on the parent proto (Error.prototype).
@@ -239,8 +239,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   gPrototypeProperties['RegExp'] =
     ["constructor", "toSource", "toString", "compile", "exec", "test",
      Symbol.match, Symbol.replace, Symbol.search, Symbol.split,
-     "flags", "global", "ignoreCase", "multiline", "source", "sticky", "unicode",
-     "lastIndex"];
+     "flags", "global", "ignoreCase", "multiline", "source", "sticky", "unicode"];
   gConstructorProperties['RegExp'] =
     constructorProps(["input", "lastMatch", "lastParen",
                       "leftContext", "rightContext", "$1", "$2", "$3", "$4",
@@ -255,7 +254,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   gPrototypeProperties['ArrayBuffer'] =
     ["constructor", "byteLength", "slice", Symbol.toStringTag];
   gConstructorProperties['ArrayBuffer'] =
-    constructorProps(["isView", "slice", Symbol.species]);
+    constructorProps(["isView", Symbol.species]);
 
   if (!isReleaseOrBeta) {
     gPrototypeProperties['SharedArrayBuffer'] = ["constructor", "slice", "byteLength", Symbol.toStringTag];
@@ -263,6 +262,18 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   } else {
     is(typeof SharedArrayBuffer, "undefined", "Enable tests!");
   }
+
+  gPrototypeProperties['Map'] =
+    ["constructor", "size", Symbol.toStringTag, "get", "has", "set", "delete",
+     "keys", "values", "clear", "forEach", "entries", Symbol.iterator];
+  gConstructorProperties['Map'] =
+    constructorProps([Symbol.species]);
+
+  gPrototypeProperties['Set'] =
+    ["constructor", "size", Symbol.toStringTag, "has", "add", "delete",
+     "keys", "values", "clear", "forEach", "entries", Symbol.iterator];
+  gConstructorProperties['Set'] =
+    constructorProps([Symbol.species]);
 
   // Sort an array that may contain symbols as well as strings.
   function sortProperties(arr) {
@@ -319,10 +330,12 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
 
         // If invoking this method returns something non-Xrayable, the
         // stringification is going to return [object Opaque].
-        ok(!/Opaque/.test(method.call(xray)), "Method result is xrayable");
-        is(method.call(xray) + "",
-           lookupCallable(xray.wrappedJSObject).call(xray.wrappedJSObject) + "",
-           "Xray and waived method results stringify identically");
+        // This happens for set[@@iterator] and other Iterator objects.
+        if (!/Opaque/.test(method.call(xray))) {
+          is(method.call(xray) + "",
+             lookupCallable(xray.wrappedJSObject).call(xray.wrappedJSObject) + "",
+             "Xray and waived method results stringify identically");
+        }
       }
     }
   }
@@ -791,8 +804,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     // We only invoke testXray with Error, because that function isn't set up
     // to deal with dependent classes and fixing it up is more trouble than
     // it's worth.
-    testXray('Error', new iwin.Error('some error message'), new iwin.Error(),
-             ['fileName', 'lineNumber', 'columnNumber', 'message']);
+    testXray('Error', new iwin.Error('some error message'), new iwin.Error());
 
     // Make sure that the dependent classes have their prototypes set up correctly.
     for (let c of errorObjectClasses.filter(x => x != "Error")) {
@@ -806,7 +818,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
         e.wrappedJSObject[name] = goodReplacement;
         is(e[name], goodReplacement, name + " property ok after replacement: " + goodReplacement);
         e.wrappedJSObject[name] = faultyReplacement;
-        is(e[name], undefined, name + " property censored after suspicious replacement");
+        is(e[name], name == 'message' ? "" : undefined, name + " property skipped after suspicious replacement");
       }
       testProperty('message', x => x == 'some message', 'some other message', 42);
       testProperty('fileName', x => x == '', 'otherFilename.html', new iwin.Object());
@@ -916,11 +928,6 @@ for (var prop of props) {
       is(Cu.getGlobalForObject(t.slice(4)), iwin, "Slice results lives in the target compartment");
       is(Object.getPrototypeOf(t.slice(4)), iwin[c].prototype, "Slice results proto lives in target compartment")
 
-      // SharedArrayBuffer does not have static slice method
-      if (c === 'ArrayBuffer') {
-        is(ArrayBuffer.slice(t, 4).byteLength, 8, `${c}.slice (deprecated) works`);
-      }
-
       var i32Array = new Int32Array(t);
       // i32Array is going to be created in the buffer's target compartment,
       // but usually this is unobservable, because the proto is set to
@@ -940,6 +947,43 @@ for (var prop of props) {
       t = (new iwin.Int32Array(2)).buffer;
       is(t.byteLength, 8, `Can access ${c} returned by buffer property`);
     }
+  }
+
+  function testMap() {
+    testXray('Map', new iwin.Map(), new iwin.Map());
+
+    var t = iwin.eval(`new Map([[1, "a"], [null, "b"]])`);
+    is(t.size, 2, "Map size is correct");
+    is(t.get(1), "a", "Key 1 has the correct value");
+    is(t.get(null), "b", "Key null has the correct value");
+    is(t.has(1), true, "Has Key 1");
+    is(t.set(3, 5).get(3), 5, "Correctly sets key");
+    is(t.delete(null), true, "Key null can be deleted");
+
+    let values = [];
+    t.forEach((value, key) => values.push(value));
+    is(values.toString(), "a,5", "forEach enumerates values correctly");
+
+    t.clear();
+    is(t.size, 0, "Map is empty after calling clear");
+  }
+
+  function testSet() {
+    testXray('Set', new iwin.Set(), new iwin.Set());
+
+    var t = iwin.eval(`new Set([1, null])`);
+    is(t.size, 2, "Set size is correct");
+    is(t.has(1), true, "Contains 1");
+    is(t.has(null), true, "Contains null");
+    is(t.add(5).has(5), true, "Can add value to set");
+    is(t.delete(null), true, "Value null can be deleted");
+
+    let values = [];
+    t.forEach(value => values.push(value));
+    is(values.toString(), "1,5", "forEach enumerates values correctly");
+
+    t.clear();
+    is(t.size, 0, "Set is empty after calling clear");
   }
 
   ]]>

@@ -8,6 +8,7 @@
 #include "WidevineAdapter.h"
 #include "WidevineUtils.h"
 #include "WidevineFileIO.h"
+#include "WidevineVideoFrame.h"
 #include <mozilla/SizePrintfMacros.h>
 #include <stdarg.h>
 
@@ -33,13 +34,13 @@ WidevineDecryptor::GetInstance(uint32_t aInstanceId)
 WidevineDecryptor::WidevineDecryptor()
   : mCallback(nullptr)
 {
-  Log("WidevineDecryptor created this=%p", this);
+  Log("WidevineDecryptor created this=%p, instanceId=%u", this, mInstanceId);
   AddRef(); // Released in DecryptingComplete().
 }
 
 WidevineDecryptor::~WidevineDecryptor()
 {
-  Log("WidevineDecryptor destroyed this=%p", this);
+  Log("WidevineDecryptor destroyed this=%p, instanceId=%u", this, mInstanceId);
 }
 
 void
@@ -47,7 +48,7 @@ WidevineDecryptor::SetCDM(RefPtr<CDMWrapper> aCDM, uint32_t aInstanceId)
 {
   mCDM = aCDM;
   mInstanceId = aInstanceId;
-  sDecryptors[mInstanceId] = aCDM;
+  sDecryptors[mInstanceId] = aCDM.forget();
 }
 
 void
@@ -168,7 +169,7 @@ public:
   {
   }
 
-  ~WidevineDecryptedBlock() {
+  ~WidevineDecryptedBlock() override {
     if (mBuffer) {
       mBuffer->Destroy();
       mBuffer = nullptr;
@@ -224,7 +225,7 @@ WidevineDecryptor::Decrypt(GMPBuffer* aBuffer,
 void
 WidevineDecryptor::DecryptingComplete()
 {
-  Log("WidevineDecryptor::DecryptingComplete() this=%p", this);
+  Log("WidevineDecryptor::DecryptingComplete() this=%p, instanceId=%u", this, mInstanceId);
   // Drop our references to the CDMWrapper. When any other references
   // held elsewhere are dropped (for example references held by a
   // WidevineVideoDecoder, or a runnable), the CDMWrapper destroys
@@ -241,7 +242,7 @@ public:
     Log("WidevineBuffer(size=" PRIuSIZE ") created", aSize);
     mBuffer.SetLength(aSize);
   }
-  ~WidevineBuffer() {
+  ~WidevineBuffer() override {
     Log("WidevineBuffer(size=" PRIuSIZE ") destroyed", Size());
   }
   void Destroy() override { delete this; }
@@ -256,6 +257,33 @@ private:
 
   nsTArray<uint8_t> mBuffer;
 };
+
+void
+WidevineVideoFrame::InitToBlack(uint32_t aWidth, uint32_t aHeight, int64_t aTimeStamp)
+{
+  SetFormat(VideoFormat::kI420);
+  SetSize(cdm::Size(aWidth, aHeight));
+  size_t ySize = aWidth * aHeight;
+  size_t uSize = ((aWidth + 1) / 2) * ((aHeight + 1) / 2);
+  WidevineBuffer* buffer = new WidevineBuffer(ySize + uSize);
+  // Black in YCbCr is (0,128,128).
+  memset(buffer->Data(), 0, ySize);
+  memset(buffer->Data() + ySize, 128, uSize);
+  if (mBuffer) {
+    mBuffer->Destroy();
+    mBuffer = nullptr;
+  }
+  SetFrameBuffer(buffer);
+  SetPlaneOffset(VideoFrame::kYPlane, 0);
+  SetStride(VideoFrame::kYPlane, aWidth);
+  // Note: U and V planes are stored at the same place in order to
+  // save memory since their contents are the same.
+  SetPlaneOffset(VideoFrame::kUPlane, ySize);
+  SetStride(VideoFrame::kUPlane, (aWidth + 1) / 2);
+  SetPlaneOffset(VideoFrame::kVPlane, ySize);
+  SetStride(VideoFrame::kVPlane, (aWidth + 1) / 2);
+  SetTimestamp(aTimeStamp);
+}
 
 Buffer*
 WidevineDecryptor::Allocate(uint32_t aCapacity)
@@ -274,7 +302,7 @@ public:
     , mContext(aContext)
   {
   }
-  ~TimerTask() override {}
+  ~TimerTask() override = default;
   void Run() override {
     mCDM->GetCDM()->TimerExpired(mContext);
   }
@@ -313,6 +341,17 @@ WidevineDecryptor::OnResolveNewSessionPromise(uint32_t aPromiseId,
     Log("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d) FAIL; !mCallback", aPromiseId);
     return;
   }
+
+  // This is laid out in the API. If we fail to load a session we should
+  // call OnResolveNewSessionPromise with nullptr as the sessionId.
+  // We can safely assume this means that we have failed to load a session
+  // as the other methods specify calling 'OnRejectPromise' when they fail.
+  if (!aSessionId) {
+    Log("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d) Failed to load session", aPromiseId);
+    mCallback->ResolveLoadSessionPromise(aPromiseId, false);
+    return;
+  }
+
   Log("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d)", aPromiseId);
   auto iter = mPromiseIdToNewSessionTokens.find(aPromiseId);
   if (iter == mPromiseIdToNewSessionTokens.end()) {

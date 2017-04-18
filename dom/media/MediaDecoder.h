@@ -42,8 +42,10 @@ namespace mozilla {
 
 namespace dom {
 class Promise;
+class HTMLMediaElement;
 }
 
+class AbstractThread;
 class VideoFrameContainer;
 class MediaDecoderStateMachine;
 
@@ -58,10 +60,6 @@ enum class MediaEventType : int8_t;
 class MediaDecoder : public AbstractMediaDecoder
 {
 public:
-  struct SeekResolveValue {
-    bool mAtEnd;
-  };
-
   // Used to register with MediaResource to receive notifications which will
   // be forwarded to MediaDecoder.
   class ResourceCallback : public MediaResourceCallback {
@@ -70,6 +68,7 @@ public:
     static const uint32_t sDelay = 500;
 
   public:
+    explicit ResourceCallback(AbstractThread* aMainThread);
     // Start to receive notifications from ResourceCallback.
     void Connect(MediaDecoder* aDecoder);
     // Called upon shutdown to stop receiving notifications.
@@ -94,9 +93,10 @@ public:
     MediaDecoder* mDecoder = nullptr;
     nsCOMPtr<nsITimer> mTimer;
     bool mTimerArmed = false;
+    const RefPtr<AbstractThread> mAbstractMainThread;
   };
 
-  typedef MozPromise<SeekResolveValue, bool /* aIgnored */, /* IsExclusive = */ true> SeekPromise;
+  typedef MozPromise<bool /* aIgnored */, bool /* aIgnored */, /* IsExclusive = */ true> SeekPromise;
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -129,6 +129,11 @@ public:
   // Cleanup internal data structures. Must be called on the main
   // thread by the owning object before that object disposes of this object.
   virtual void Shutdown();
+
+  // Notified by the shutdown manager that XPCOM shutdown has begun.
+  // The decoder should notify its owner to drop the reference to the decoder
+  // to prevent further calls into the decoder.
+  void NotifyXPCOMShutdown();
 
   // Start downloading the media. Decode the downloaded data up to the
   // point of the first frame of data.
@@ -195,6 +200,8 @@ public:
   // not be played. Note that seeking also doesn't cause us start prerolling.
   void SetMinimizePrerollUntilPlaybackStarts();
 
+  bool GetMinimizePreroll() const { return mMinimizePreroll; }
+
   // All MediaStream-related data is protected by mReentrantMonitor.
   // We have at most one DecodedStreamData per MediaDecoder. Its stream
   // is used as the input for each ProcessedMediaStream created by calls to
@@ -229,6 +236,9 @@ public:
 
   // Return true if the decoder has reached the end of playback.
   bool IsEnded() const;
+
+  // True if we are playing a MediaSource object.
+  virtual bool IsMSE() const { return false; }
 
   // Return true if the MediaDecoderOwner's error attribute is not null.
   // Must be called before Shutdown().
@@ -386,7 +396,7 @@ private:
   void PlaybackEnded();
 
   void OnSeekRejected();
-  void OnSeekResolved(SeekResolveValue aVal);
+  void OnSeekResolved();
 
   void SeekingChanged()
   {
@@ -403,7 +413,7 @@ private:
   void UpdateLogicalPosition()
   {
     MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(!IsShutdown());
+    MOZ_DIAGNOSTIC_ASSERT(!IsShutdown());
     // Per spec, offical position remains stable during pause and seek.
     if (mPlayState == PLAY_STATE_PAUSED || IsSeeking()) {
       return;
@@ -422,6 +432,11 @@ private:
   void UpdateSameOriginStatus(bool aSameOrigin);
 
   MediaDecoderOwner* GetOwner() const override;
+
+  AbstractThread* AbstractMainThread() const final override
+  {
+    return mAbstractMainThread;
+  }
 
   typedef MozPromise<RefPtr<CDMProxy>, bool /* aIgnored */, /* IsExclusive = */ true> CDMProxyPromise;
 
@@ -465,8 +480,8 @@ private:
   void UpdateReadyState()
   {
     MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(!IsShutdown());
-    mOwner->UpdateReadyState();
+    MOZ_DIAGNOSTIC_ASSERT(!IsShutdown());
+    GetOwner()->UpdateReadyState();
   }
 
   virtual MediaDecoderOwner::NextFrameStatus NextFrameStatus() { return mNextFrameStatus; }
@@ -474,7 +489,7 @@ private:
 
   // Returns a string describing the state of the media player internal
   // data. Used for debugging purposes.
-  virtual void GetMozDebugReaderData(nsAString& aString) {}
+  virtual void GetMozDebugReaderData(nsACString& aString) {}
 
   virtual void DumpDebugInfo();
 
@@ -504,7 +519,7 @@ protected:
 
   void SetExplicitDuration(double aValue)
   {
-    MOZ_ASSERT(!IsShutdown());
+    MOZ_DIAGNOSTIC_ASSERT(!IsShutdown());
     mExplicitDuration.Set(Some(aValue));
 
     // We Invoke DurationChanged explicitly, rather than using a watcher, so
@@ -629,6 +644,9 @@ protected:
   // It is set in the constructor and cleared in Shutdown when the element goes
   // away. The decoder does not add a reference the element.
   MediaDecoderOwner* mOwner;
+
+  // The AbstractThread from mOwner.
+  const RefPtr<AbstractThread> mAbstractMainThread;
 
   // Counters related to decode and presentation of frames.
   const RefPtr<FrameStatistics> mFrameStats;
@@ -849,6 +867,10 @@ private:
   void NotifyDownloadEnded(nsresult aStatus);
 
   bool mTelemetryReported;
+
+  // Used to debug how mOwner becomes a dangling pointer in bug 1326294.
+  bool mIsMediaElement;
+  WeakPtr<dom::HTMLMediaElement> mElement;
 };
 
 } // namespace mozilla

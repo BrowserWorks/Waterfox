@@ -111,7 +111,7 @@ JS::detail::InitWithFailureDiagnostic(bool isDebugBuild)
 
     RETURN_IF_FAIL(js::jit::InitializeIon());
 
-    js::DateTimeInfo::init();
+    RETURN_IF_FAIL(js::InitDateTimeState());
 
 #if EXPOSE_INTL_API
     UErrorCode err = U_ZERO_ERROR;
@@ -174,6 +174,8 @@ JS_ShutDown(void)
 #if EXPOSE_INTL_API
     u_cleanup();
 #endif // EXPOSE_INTL_API
+
+    js::FinishDateTimeState();
 
     if (!JSRuntime::hasLiveRuntimes())
         js::jit::ReleaseProcessExecutableMemory();

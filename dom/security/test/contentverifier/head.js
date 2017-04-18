@@ -66,15 +66,13 @@ var aboutNewTabService = Cc["@mozilla.org/browser/aboutnewtab-service;1"]
                            .getService(Ci.nsIAboutNewTabService);
 
 function pushPrefs(...aPrefs) {
-  return new Promise((resolve) => {
-    SpecialPowers.pushPrefEnv({"set": aPrefs}, resolve);
-  });
+  return SpecialPowers.pushPrefEnv({"set": aPrefs});
 }
 
 /*
  * run tests with input from TESTS
  */
-function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
+function* doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
   // set about:newtab location for this test if it's a newtab test
   if (aNewTabPref) {
     aboutNewTabService.newTabURL = aNewTabPref;
@@ -188,7 +186,7 @@ function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
   );
 }
 
-function runTests() {
+function* runTests() {
   // run tests from TESTS
   for (let i = 0; i < TESTS.length; i++) {
     let testCase = TESTS[i];
@@ -205,6 +203,6 @@ function runTests() {
       url = testCase.url;
     }
 
-    yield doTest(aExpectedStrings, reload, url, aNewTabPref);
+    yield* doTest(aExpectedStrings, reload, url, aNewTabPref);
   }
 }

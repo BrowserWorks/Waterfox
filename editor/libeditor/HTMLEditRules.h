@@ -28,6 +28,7 @@ class nsRange;
 
 namespace mozilla {
 
+class EditActionResult;
 class HTMLEditor;
 class RulesInfo;
 class TextEditor;
@@ -52,6 +53,14 @@ struct StyleCache final : public PropItem
              const nsAString& aAttr,
              const nsAString& aValue)
     : PropItem(aTag, aAttr, aValue)
+    , mPresent(false)
+  {
+    MOZ_COUNT_CTOR(StyleCache);
+  }
+
+  StyleCache(nsIAtom* aTag,
+             const nsAString& aAttr)
+    : PropItem(aTag, aAttr, EmptyString())
     , mPresent(false)
   {
     MOZ_COUNT_CTOR(StyleCache);
@@ -163,14 +172,63 @@ protected:
   nsresult InsertBRIfNeeded(Selection* aSelection);
   mozilla::EditorDOMPoint GetGoodSelPointForNode(nsINode& aNode,
                                                  nsIEditor::EDirection aAction);
-  nsresult JoinBlocks(nsIContent& aLeftNode, nsIContent& aRightNode,
-                      bool* aCanceled);
-  nsresult MoveBlock(Element& aLeftBlock, Element& aRightBlock,
-                     int32_t aLeftOffset, int32_t aRightOffset);
-  nsresult MoveNodeSmart(nsIContent& aNode, Element& aDestElement,
-                         int32_t* aOffset);
-  nsresult MoveContents(Element& aElement, Element& aDestElement,
-                        int32_t* aOffset);
+
+  /**
+   * TryToJoinBlocks() tries to join two block elements.  The right element is
+   * always joined to the left element.  If the elements are the same type and
+   * not nested within each other, JoinNodesSmart() is called (example, joining
+   * two list items together into one).  If the elements are not the same type,
+   * or one is a descendant of the other, we instead destroy the right block
+   * placing its children into leftblock.  DTD containment rules are followed
+   * throughout.
+   *
+   * @return            Sets canceled to true if the operation should do
+   *                    nothing anymore even if this doesn't join the blocks.
+   *                    Sets handled to true if this actually handles the
+   *                    request.  Note that this may set it to true even if this
+   *                    does not join the block.  E.g., if the blocks shouldn't
+   *                    be joined or it's impossible to join them but it's not
+   *                    unexpected case, this returns true with this.
+   */
+  EditActionResult TryToJoinBlocks(nsIContent& aLeftNode,
+                                   nsIContent& aRightNode);
+
+  /**
+   * MoveBlock() moves the content from aRightBlock starting from aRightOffset
+   * into aLeftBlock at aLeftOffset. Note that the "block" can be inline nodes
+   * between <br>s, or between blocks, etc.  DTD containment rules are followed
+   * throughout.
+   *
+   * @return            Sets handled to true if this actually joins the nodes.
+   *                    canceled is always false.
+   */
+  EditActionResult MoveBlock(Element& aLeftBlock, Element& aRightBlock,
+                             int32_t aLeftOffset, int32_t aRightOffset);
+
+  /**
+   * MoveNodeSmart() moves aNode to (aDestElement, aInOutDestOffset).
+   * DTD containment rules are followed throughout.
+   *
+   * @param aOffset                 returns the point after inserted content.
+   * @return                        Sets true to handled if this actually moves
+   *                                the nodes.
+   *                                canceled is always false.
+   */
+  EditActionResult MoveNodeSmart(nsIContent& aNode, Element& aDestElement,
+                                 int32_t* aInOutDestOffset);
+
+  /**
+   * MoveContents() moves the contents of aElement to (aDestElement,
+   * aInOutDestOffset).  DTD containment rules are followed throughout.
+   *
+   * @param aInOutDestOffset        updated to point after inserted content.
+   * @return                        Sets true to handled if this actually moves
+   *                                the nodes.
+   *                                canceled is always false.
+   */
+  EditActionResult MoveContents(Element& aElement, Element& aDestElement,
+                                int32_t* aInOutDestOffset);
+
   nsresult DeleteNonTableElements(nsINode* aNode);
   nsresult WillMakeList(Selection* aSelection,
                         const nsAString* aListType,
@@ -314,7 +372,7 @@ protected:
   EditorDOMPoint JoinNodesSmart(nsIContent& aNodeLeft,
                                 nsIContent& aNodeRight);
   Element* GetTopEnclosingMailCite(nsINode& aNode);
-  nsresult PopListItem(nsIDOMNode* aListItem, bool* aOutOfList);
+  nsresult PopListItem(nsIContent& aListItem, bool* aOutOfList = nullptr);
   nsresult RemoveListStructure(Element& aList);
   nsresult CacheInlineStyles(nsIDOMNode* aNode);
   nsresult ReapplyCachedStyles();
@@ -355,6 +413,19 @@ protected:
   nsresult ChangeIndentation(Element& aElement, Change aChange);
   void DocumentModifiedWorker();
 
+  /**
+   * InitStyleCacheArray() initializes aStyleCache for usable with
+   * GetInlineStyles().
+   */
+  void InitStyleCacheArray(StyleCache aStyleCache[SIZE_STYLE_TABLE]);
+
+  /**
+   * GetInlineStyles() retrieves the style of aNode and modifies each item of
+   * aStyleCache.
+   */
+  nsresult GetInlineStyles(nsIDOMNode* aNode,
+                           StyleCache aStyleCache[SIZE_STYLE_TABLE]);
+
 protected:
   HTMLEditor* mHTMLEditor;
   RefPtr<nsRange> mDocChangeRange;
@@ -368,6 +439,11 @@ protected:
   uint32_t mJoinOffset;
   nsCOMPtr<Element> mNewBlock;
   RefPtr<RangeItem> mRangeItem;
+
+  // XXX In strict speaking, mCachedStyles isn't enough to cache inline styles
+  //     because inline style can be specified with "style" attribute and/or
+  //     CSS in <style> elements or CSS files.  So, we need to look for better
+  //     implementation about this.
   StyleCache mCachedStyles[SIZE_STYLE_TABLE];
 };
 

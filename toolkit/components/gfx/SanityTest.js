@@ -7,41 +7,41 @@
 const { utils: Cu, interfaces: Ci, classes: Cc, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import('resource://gre/modules/Preferences.jsm');
+Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const FRAME_SCRIPT_URL = "chrome://gfxsanity/content/gfxFrameScript.js";
 
-const PAGE_WIDTH=92;
-const PAGE_HEIGHT=166;
-const DRIVER_PREF="sanity-test.driver-version";
-const DEVICE_PREF="sanity-test.device-id";
-const VERSION_PREF="sanity-test.version";
-const DISABLE_VIDEO_PREF="media.hardware-video-decoding.failed";
-const RUNNING_PREF="sanity-test.running";
-const TIMEOUT_SEC=20;
+const PAGE_WIDTH = 92;
+const PAGE_HEIGHT = 166;
+const DRIVER_PREF = "sanity-test.driver-version";
+const DEVICE_PREF = "sanity-test.device-id";
+const VERSION_PREF = "sanity-test.version";
+const DISABLE_VIDEO_PREF = "media.hardware-video-decoding.failed";
+const RUNNING_PREF = "sanity-test.running";
+const TIMEOUT_SEC = 20;
 
 // GRAPHICS_SANITY_TEST histogram enumeration values
-const TEST_PASSED=0;
-const TEST_FAILED_RENDER=1;
-const TEST_FAILED_VIDEO=2;
-const TEST_CRASHED=3;
-const TEST_TIMEOUT=4;
+const TEST_PASSED = 0;
+const TEST_FAILED_RENDER = 1;
+const TEST_FAILED_VIDEO = 2;
+const TEST_CRASHED = 3;
+const TEST_TIMEOUT = 4;
 
 // GRAPHICS_SANITY_TEST_REASON enumeration values.
-const REASON_FIRST_RUN=0;
-const REASON_FIREFOX_CHANGED=1;
-const REASON_DEVICE_CHANGED=2;
-const REASON_DRIVER_CHANGED=3;
+const REASON_FIRST_RUN = 0;
+const REASON_FIREFOX_CHANGED = 1;
+const REASON_DEVICE_CHANGED = 2;
+const REASON_DRIVER_CHANGED = 3;
 
 // GRAPHICS_SANITY_TEST_OS_SNAPSHOT histogram enumeration values
-const SNAPSHOT_VIDEO_OK=0;
-const SNAPSHOT_VIDEO_FAIL=1;
-const SNAPSHOT_ERROR=2;
-const SNAPSHOT_TIMEOUT=3;
-const SNAPSHOT_LAYERS_OK=4;
-const SNAPSHOT_LAYERS_FAIL=5;
+const SNAPSHOT_VIDEO_OK = 0;
+const SNAPSHOT_VIDEO_FAIL = 1;
+const SNAPSHOT_ERROR = 2;
+const SNAPSHOT_TIMEOUT = 3;
+const SNAPSHOT_LAYERS_OK = 4;
+const SNAPSHOT_LAYERS_FAIL = 5;
 
 function testPixel(ctx, x, y, r, g, b, a, fuzz) {
   var data = ctx.getImageData(x, y, 1, 1);
@@ -73,7 +73,7 @@ function reportTestReason(val) {
 function annotateCrashReport(value) {
   try {
     // "1" if we're annotating the crash report, "" to remove the annotation.
-    var crashReporter = Cc['@mozilla.org/toolkit/crash-reporter;1'].
+    var crashReporter = Cc["@mozilla.org/toolkit/crash-reporter;1"].
                           getService(Ci.nsICrashReporter);
     crashReporter.annotateCrashReport("GraphicsSanityTest", value ? "1" : "");
   } catch (e) {
@@ -81,7 +81,7 @@ function annotateCrashReport(value) {
 }
 
 function setTimeout(aMs, aCallback) {
-  var timer = Cc['@mozilla.org/timer;1'].
+  var timer = Cc["@mozilla.org/timer;1"].
                 createInstance(Ci.nsITimer);
   timer.initWithCallback(aCallback, aMs, Ci.nsITimer.TYPE_ONE_SHOT);
 }
@@ -153,7 +153,7 @@ var listener = {
     "gfxSanity:ContentLoaded",
   ],
 
-  scheduleTest: function(win) {
+  scheduleTest(win) {
     this.win = win;
     this.win.onload = this.onWindowLoaded.bind(this);
     this.utils = this.win.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -166,7 +166,7 @@ var listener = {
     });
   },
 
-  runSanityTest: function() {
+  runSanityTest() {
     this.canvas = this.win.document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
     this.canvas.setAttribute("width", PAGE_WIDTH);
     this.canvas.setAttribute("height", PAGE_HEIGHT);
@@ -187,7 +187,7 @@ var listener = {
     }
   },
 
-  onWindowLoaded: function() {
+  onWindowLoaded() {
     let browser = this.win.document.createElementNS(XUL_NS, "browser");
     browser.setAttribute("type", "content");
 
@@ -208,7 +208,7 @@ var listener = {
     this.mm.loadFrameScript(FRAME_SCRIPT_URL, false);
   },
 
-  endTest: function() {
+  endTest() {
     if (!this.win) {
       return;
     }
@@ -240,7 +240,7 @@ SanityTest.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
 
-  shouldRunTest: function() {
+  shouldRunTest() {
     // Only test gfx features if firefox has updated, or if the user has a new
     // gpu or drivers.
     var buildId = Services.appinfo.platformBuildID;
@@ -268,8 +268,7 @@ SanityTest.prototype = {
     // TODO: Handle dual GPU setups
     if (checkPref(DRIVER_PREF, gfxinfo.adapterDriverVersion, REASON_DRIVER_CHANGED) &&
         checkPref(DEVICE_PREF, gfxinfo.adapterDeviceID, REASON_DEVICE_CHANGED) &&
-        checkPref(VERSION_PREF, buildId, REASON_FIREFOX_CHANGED))
-    {
+        checkPref(VERSION_PREF, buildId, REASON_FIREFOX_CHANGED)) {
       return false;
     }
 
@@ -286,7 +285,7 @@ SanityTest.prototype = {
     return true;
   },
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (topic != "profile-after-change") return;
 
     // profile-after-change fires only at startup, so we won't need

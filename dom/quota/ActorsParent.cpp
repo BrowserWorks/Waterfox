@@ -193,6 +193,39 @@ uint32_t
 GetMajorStorageVersion(int32_t aStorageVersion)
 {
   return uint32_t(aStorageVersion >> 16);
+
+}
+
+nsresult
+CreateTables(mozIStorageConnection* aConnection)
+{
+  AssertIsOnIOThread();
+  MOZ_ASSERT(aConnection);
+
+  // The database doesn't have any tables for now. It's only used for storage
+  // version checking.
+  // However, this is the place where any future tables should be created.
+
+  nsresult rv;
+
+#ifdef DEBUG
+  {
+    int32_t storageVersion;
+    rv = aConnection->GetSchemaVersion(&storageVersion);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    MOZ_ASSERT(storageVersion == 0);
+  }
+#endif
+
+  rv = aConnection->SetSchemaVersion(kStorageVersion);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
 }
 
 /******************************************************************************
@@ -978,7 +1011,7 @@ private:
   virtual PQuotaUsageRequestParent*
   AllocPQuotaUsageRequestParent(const UsageRequestParams& aParams) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvPQuotaUsageRequestConstructor(PQuotaUsageRequestParent* aActor,
                                     const UsageRequestParams& aParams) override;
 
@@ -988,17 +1021,17 @@ private:
   virtual PQuotaRequestParent*
   AllocPQuotaRequestParent(const RequestParams& aParams) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvPQuotaRequestConstructor(PQuotaRequestParent* aActor,
                                const RequestParams& aParams) override;
 
   virtual bool
   DeallocPQuotaRequestParent(PQuotaRequestParent* aActor) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvStartIdleMaintenance() override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvStopIdleMaintenance() override;
 };
 
@@ -1044,7 +1077,7 @@ private:
   virtual void
   ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvCancel() override;
 };
 
@@ -1329,7 +1362,7 @@ struct StorageDirectoryHelper::OriginProps
 
   nsCOMPtr<nsIFile> mDirectory;
   nsCString mSpec;
-  PrincipalOriginAttributes mAttrs;
+  OriginAttributes mAttrs;
   int64_t mTimestamp;
   nsCString mSuffix;
   nsCString mGroup;
@@ -1382,7 +1415,7 @@ class MOZ_STACK_CLASS OriginParser final
   };
 
   const nsCString mOrigin;
-  const PrincipalOriginAttributes mOriginAttributes;
+  const OriginAttributes mOriginAttributes;
   Tokenizer mTokenizer;
 
   uint32_t mAppId;
@@ -1400,7 +1433,7 @@ class MOZ_STACK_CLASS OriginParser final
 
 public:
   OriginParser(const nsACString& aOrigin,
-               const PrincipalOriginAttributes& aOriginAttributes)
+               const OriginAttributes& aOriginAttributes)
     : mOrigin(aOrigin)
     , mOriginAttributes(aOriginAttributes)
     , mTokenizer(aOrigin, '+')
@@ -1416,10 +1449,10 @@ public:
   static bool
   ParseOrigin(const nsACString& aOrigin,
               nsCString& aSpec,
-              PrincipalOriginAttributes* aAttrs);
+              OriginAttributes* aAttrs);
 
   bool
-  Parse(nsACString& aSpec, PrincipalOriginAttributes* aAttrs);
+  Parse(nsACString& aSpec, OriginAttributes* aAttrs);
 
 private:
   void
@@ -1842,7 +1875,7 @@ CreateDirectoryMetadata(nsIFile* aDirectory, int64_t aTimestamp,
 {
   AssertIsOnIOThread();
 
-  PrincipalOriginAttributes groupAttributes;
+  OriginAttributes groupAttributes;
 
   nsCString groupNoSuffix;
   bool ok = groupAttributes.PopulateFromOrigin(aGroup, groupNoSuffix);
@@ -1857,7 +1890,7 @@ CreateDirectoryMetadata(nsIFile* aDirectory, int64_t aTimestamp,
 
   nsCString group = groupPrefix + groupNoSuffix;
 
-  PrincipalOriginAttributes originAttributes;
+  OriginAttributes originAttributes;
 
   nsCString originNoSuffix;
   ok = originAttributes.PopulateFromOrigin(aOrigin, originNoSuffix);
@@ -4096,12 +4129,25 @@ QuotaManager::MaybeRemoveOldDirectories()
 }
 
 nsresult
-QuotaManager::UpgradeStorageFrom0ToCurrent(mozIStorageConnection* aConnection)
+QuotaManager::UpgradeStorageFrom0_0To1_0(mozIStorageConnection* aConnection)
 {
   AssertIsOnIOThread();
   MOZ_ASSERT(aConnection);
 
-  nsresult rv;
+  nsresult rv = MaybeUpgradeIndexedDBDirectory();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  rv = MaybeUpgradePersistentStorageDirectory();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  rv = MaybeRemoveOldDirectories();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   for (const PersistenceType persistenceType : kAllPersistenceTypes) {
     nsCOMPtr<nsIFile> directory =
@@ -4147,12 +4193,26 @@ QuotaManager::UpgradeStorageFrom0ToCurrent(mozIStorageConnection* aConnection)
 
 #if 0
 nsresult
-QuotaManager::UpgradeStorageFrom1To2(mozIStorageConnection* aConnection)
+QuotaManager::UpgradeStorageFrom1_0To2_0(mozIStorageConnection* aConnection)
 {
   AssertIsOnIOThread();
   MOZ_ASSERT(aConnection);
 
-  nsresult rv = aConnection->SetSchemaVersion(MakeStorageVersion(2, 0));
+  nsresult rv;
+
+#ifdef DEBUG
+  {
+    int32_t storageVersion;
+    rv = aConnection->GetSchemaVersion(&storageVersion);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    MOZ_ASSERT(storageVersion == MakeStorageVersion(1, 0));
+  }
+#endif
+
+  rv = aConnection->SetSchemaVersion(MakeStorageVersion(2, 0));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -4233,6 +4293,43 @@ QuotaManager::EnsureStorageIsInitialized()
   if (storageVersion < kStorageVersion) {
     const bool newDatabase = !storageVersion;
 
+    nsCOMPtr<nsIFile> storageDir =
+      do_CreateInstance(NS_LOCAL_FILE_CONTRACTID, &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    rv = storageDir->InitWithPath(mStoragePath);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    bool exists;
+    rv = storageDir->Exists(&exists);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    if (!exists) {
+      nsCOMPtr<nsIFile> indexedDBDir =
+        do_CreateInstance(NS_LOCAL_FILE_CONTRACTID, &rv);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
+
+      rv = indexedDBDir->InitWithPath(mIndexedDBPath);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
+
+      rv = indexedDBDir->Exists(&exists);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
+    }
+
+    const bool newDirectory = !exists;
+
     if (newDatabase) {
       // Set the page size first.
       if (kSQLitePageSizeOverride) {
@@ -4247,23 +4344,12 @@ QuotaManager::EnsureStorageIsInitialized()
 
     mozStorageTransaction transaction(connection, false,
                                   mozIStorageConnection::TRANSACTION_IMMEDIATE);
-    if (newDatabase) {
-      rv = MaybeUpgradeIndexedDBDirectory();
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
 
-      rv = MaybeUpgradePersistentStorageDirectory();
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
-
-      rv = MaybeRemoveOldDirectories();
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
-
-      rv = UpgradeStorageFrom0ToCurrent(connection);
+    // An upgrade method can upgrade the database, the storage or both.
+    // The upgrade loop below can only be avoided when there's no database and
+    // no storage yet (e.g. new profile).
+    if (newDatabase && newDirectory) {
+      rv = CreateTables(connection);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
@@ -4276,9 +4362,13 @@ QuotaManager::EnsureStorageIsInitialized()
                     "Upgrade function needed due to storage version increase.");
 
       while (storageVersion != kStorageVersion) {
-        /* if (storageVersion == MakeStorageVersion(1, 0)) {
-          rv = UpgradeStorageFrom1To2(connection);
-        } else */ {
+        if (storageVersion == 0) {
+          rv = UpgradeStorageFrom0_0To1_0(connection);
+#if 0
+        } else if (storageVersion == MakeStorageVersion(1, 0)) {
+          rv = UpgradeStorageFrom1_0To2_0(connection);
+#endif
+        } else {
           NS_WARNING("Unable to initialize storage, no upgrade path is "
                      "available!");
           return NS_ERROR_FAILURE;
@@ -4384,7 +4474,7 @@ QuotaManager::OpenDirectoryInternal(Nullable<PersistenceType> aPersistenceType,
     }
   }
 
-  for (uint32_t index : MakeRange(uint32_t(Client::TYPE_MAX))) {
+  for (uint32_t index : IntegerRange(uint32_t(Client::TYPE_MAX))) {
     if (origins[index]) {
       for (auto iter = origins[index]->Iter(); !iter.Done(); iter.Next()) {
         MOZ_ASSERT(mClients[index]);
@@ -4462,6 +4552,35 @@ QuotaManager::EnsureOriginIsInitialized(PersistenceType aPersistenceType,
   }
 
   int64_t timestamp;
+
+#ifndef RELEASE_OR_BETA
+  bool exists;
+  rv = directory->Exists(&exists);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  if (!exists) {
+    nsString leafName;
+    nsresult rv = directory->GetLeafName(leafName);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    if (!leafName.EqualsLiteral(kChromeOrigin)) {
+      nsCString spec;
+      OriginAttributes attrs;
+      bool result = OriginParser::ParseOrigin(NS_ConvertUTF16toUTF8(leafName),
+                                              spec, &attrs);
+      if (NS_WARN_IF(!result)) {
+        QM_WARNING("Preventing creation of a new origin directory which is not "
+                   "supported by our origin parser!");
+
+        return NS_ERROR_FAILURE;
+      }
+    }
+  }
+#endif
 
   bool created;
   rv = EnsureDirectory(directory, &created);
@@ -4671,7 +4790,7 @@ QuotaManager::GetInfoFromPrincipal(nsIPrincipal* aPrincipal,
   }
 
   nsCString suffix;
-  BasePrincipal::Cast(aPrincipal)->OriginAttributesRef().CreateSuffix(suffix);
+  aPrincipal->OriginAttributesRef().CreateSuffix(suffix);
 
   if (aSuffix)
   {
@@ -5652,7 +5771,7 @@ Quota::AllocPQuotaUsageRequestParent(const UsageRequestParams& aParams)
   return actor.forget().take();
 }
 
-bool
+mozilla::ipc::IPCResult
 Quota::RecvPQuotaUsageRequestConstructor(PQuotaUsageRequestParent* aActor,
                                          const UsageRequestParams& aParams)
 {
@@ -5663,11 +5782,11 @@ Quota::RecvPQuotaUsageRequestConstructor(PQuotaUsageRequestParent* aActor,
   auto* op = static_cast<GetUsageOp*>(aActor);
 
   if (NS_WARN_IF(!op->Init(this))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   op->RunImmediately();
-  return true;
+  return IPC_OK();
 }
 
 bool
@@ -5724,7 +5843,7 @@ Quota::AllocPQuotaRequestParent(const RequestParams& aParams)
   return actor.forget().take();
 }
 
-bool
+mozilla::ipc::IPCResult
 Quota::RecvPQuotaRequestConstructor(PQuotaRequestParent* aActor,
                                     const RequestParams& aParams)
 {
@@ -5734,11 +5853,11 @@ Quota::RecvPQuotaRequestConstructor(PQuotaRequestParent* aActor,
 
   auto* op = static_cast<QuotaRequestBase*>(aActor);
   if (NS_WARN_IF(!op->Init(this))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   op->RunImmediately();
-  return true;
+  return IPC_OK();
 }
 
 bool
@@ -5753,7 +5872,7 @@ Quota::DeallocPQuotaRequestParent(PQuotaRequestParent* aActor)
   return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 Quota::RecvStartIdleMaintenance()
 {
   AssertIsOnBackgroundThread();
@@ -5763,11 +5882,11 @@ Quota::RecvStartIdleMaintenance()
 
   if (BackgroundParent::IsOtherProcessActor(actor)) {
     ASSERT_UNLESS_FUZZING();
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   if (QuotaManager::IsShuttingDown()) {
-    return true;
+    return IPC_OK();
   }
 
   QuotaManager* quotaManager = QuotaManager::Get();
@@ -5776,15 +5895,15 @@ Quota::RecvStartIdleMaintenance()
       NewRunnableMethod(this, &Quota::StartIdleMaintenance);
 
     QuotaManager::GetOrCreate(callback);
-    return true;
+    return IPC_OK();
   }
 
   quotaManager->StartIdleMaintenance();
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 Quota::RecvStopIdleMaintenance()
 {
   AssertIsOnBackgroundThread();
@@ -5794,21 +5913,21 @@ Quota::RecvStopIdleMaintenance()
 
   if (BackgroundParent::IsOtherProcessActor(actor)) {
     ASSERT_UNLESS_FUZZING();
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   if (QuotaManager::IsShuttingDown()) {
-    return true;
+    return IPC_OK();
   }
 
   QuotaManager* quotaManager = QuotaManager::Get();
   if (!quotaManager) {
-    return true;
+    return IPC_OK();
   }
 
   quotaManager->StopIdleMaintenance();
 
-  return true;
+  return IPC_OK();
 }
 
 GetUsageOp::GetUsageOp(const UsageRequestParams& aParams)
@@ -6051,17 +6170,17 @@ GetUsageOp::ActorDestroy(ActorDestroyReason aWhy)
   NoteActorDestroyed();
 }
 
-bool
+mozilla::ipc::IPCResult
 GetUsageOp::RecvCancel()
 {
   AssertIsOnOwningThread();
 
   nsresult rv = mUsageInfo.Cancel();
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
-  return true;
+  return IPC_OK();
 }
 
 bool
@@ -6430,7 +6549,7 @@ StorageDirectoryHelper::AddOriginDirectory(nsIFile* aDirectory,
     originProps->mType = OriginProps::eChrome;
   } else {
     nsCString spec;
-    PrincipalOriginAttributes attrs;
+    OriginAttributes attrs;
     bool result = OriginParser::ParseOrigin(NS_ConvertUTF16toUTF8(leafName),
                                             spec, &attrs);
     if (NS_WARN_IF(!result)) {
@@ -6568,12 +6687,12 @@ StorageDirectoryHelper::Run()
 bool
 OriginParser::ParseOrigin(const nsACString& aOrigin,
                           nsCString& aSpec,
-                          PrincipalOriginAttributes* aAttrs)
+                          OriginAttributes* aAttrs)
 {
   MOZ_ASSERT(!aOrigin.IsEmpty());
   MOZ_ASSERT(aAttrs);
 
-  PrincipalOriginAttributes originAttributes;
+  OriginAttributes originAttributes;
 
   nsCString originNoSuffix;
   bool ok = originAttributes.PopulateFromOrigin(aOrigin, originNoSuffix);
@@ -6586,7 +6705,7 @@ OriginParser::ParseOrigin(const nsACString& aOrigin,
 }
 
 bool
-OriginParser::Parse(nsACString& aSpec, PrincipalOriginAttributes* aAttrs)
+OriginParser::Parse(nsACString& aSpec, OriginAttributes* aAttrs)
 {
   MOZ_ASSERT(aAttrs);
 
@@ -6625,7 +6744,7 @@ OriginParser::Parse(nsACString& aSpec, PrincipalOriginAttributes* aAttrs)
   } else {
     MOZ_ASSERT(mOriginAttributes.mAppId == kNoAppId);
 
-    *aAttrs = PrincipalOriginAttributes(mAppId, mInIsolatedMozBrowser);
+    *aAttrs = OriginAttributes(mAppId, mInIsolatedMozBrowser);
   }
 
   nsAutoCString spec(mSchema);
@@ -6678,7 +6797,8 @@ OriginParser::HandleSchema(const nsDependentCSubstring& aToken)
       aToken.EqualsLiteral("indexeddb") ||
       (isFile = aToken.EqualsLiteral("file")) ||
       aToken.EqualsLiteral("app") ||
-      aToken.EqualsLiteral("resource")) {
+      aToken.EqualsLiteral("resource") ||
+      aToken.EqualsLiteral("moz-extension")) {
     mSchema = aToken;
 
     if (isAbout) {

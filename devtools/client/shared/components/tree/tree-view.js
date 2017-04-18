@@ -49,7 +49,7 @@ define(function (require, exports, module) {
    *   getHeaderClass: function(colId);
    *   renderValue: function(object, colId);
    *   renderRow: function(object);
-   *   renderCelL: function(object, colId);
+   *   renderCell: function(object, colId);
    *   renderLabelCell: function(object);
    * }
    */
@@ -78,7 +78,7 @@ define(function (require, exports, module) {
         getHeaderClass: PropTypes.func,
         renderValue: PropTypes.func,
         renderRow: PropTypes.func,
-        renderCelL: PropTypes.func,
+        renderCell: PropTypes.func,
         renderLabelCell: PropTypes.func,
       }),
       // Custom tree row (node) renderer
@@ -97,6 +97,8 @@ define(function (require, exports, module) {
       onSort: PropTypes.func,
       // A header is displayed if set to true
       header: PropTypes.bool,
+      // Long string is expandable by a toggle button
+      expandableStrings: PropTypes.bool,
       // Array of columns
       columns: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -111,6 +113,7 @@ define(function (require, exports, module) {
         renderRow: null,
         provider: ObjectProvider,
         expandedNodes: new Set(),
+        expandableStrings: true,
         columns: []
       };
     },
@@ -120,6 +123,13 @@ define(function (require, exports, module) {
         expandedNodes: this.props.expandedNodes,
         columns: ensureDefaultColumn(this.props.columns)
       };
+    },
+
+    componentWillReceiveProps: function (nextProps) {
+      let { expandedNodes } = nextProps;
+      this.setState(Object.assign({}, this.state, {
+        expandedNodes,
+      }));
     },
 
     // Node expand/collapse
@@ -179,7 +189,7 @@ define(function (require, exports, module) {
         return [];
       }
 
-      let provider = this.props.provider;
+      let { expandableStrings, provider } = this.props;
       let children = provider.getChildren(parent) || [];
 
       // If the return value is non-array, the children
@@ -201,7 +211,7 @@ define(function (require, exports, module) {
         // Value for actual column is get when a cell is rendered.
         let value = provider.getValue(child);
 
-        if (isLongString(value)) {
+        if (expandableStrings && isLongString(value)) {
           hasChildren = true;
         }
 

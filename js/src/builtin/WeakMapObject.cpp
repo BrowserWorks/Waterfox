@@ -224,7 +224,7 @@ JS_NondeterministicGetWeakMapKeys(JSContext* cx, HandleObject objArg, MutableHan
 }
 
 static void
-WeakMap_mark(JSTracer* trc, JSObject* obj)
+WeakMap_trace(JSTracer* trc, JSObject* obj)
 {
     if (ObjectValueMap* map = obj->as<WeakMapObject>().getMap())
         map->trace(trc);
@@ -326,7 +326,7 @@ static const ClassOps WeakMapObjectClassOps = {
     nullptr, /* call */
     nullptr, /* hasInstance */
     nullptr, /* construct */
-    WeakMap_mark
+    WeakMap_trace
 };
 
 const Class WeakMapObject::class_ = {
@@ -350,14 +350,14 @@ InitWeakMapClass(JSContext* cx, HandleObject obj, bool defineMembers)
 {
     MOZ_ASSERT(obj->isNative());
 
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
 
     RootedPlainObject proto(cx, NewBuiltinClassInstance<PlainObject>(cx));
     if (!proto)
         return nullptr;
 
-    RootedFunction ctor(cx, global->createConstructor(cx, WeakMap_construct,
-                                                      cx->names().WeakMap, 0));
+    RootedFunction ctor(cx, GlobalObject::createConstructor(cx, WeakMap_construct,
+                                                            cx->names().WeakMap, 0));
     if (!ctor)
         return nullptr;
 

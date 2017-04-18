@@ -10,7 +10,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://services-common/async.js");
 
-Cu.importGlobalProperties(['crypto']);
+Cu.importGlobalProperties(["crypto"]);
 
 const CRYPT_ALGO        = "AES-CBC";
 const CRYPT_ALGO_LENGTH = 256;
@@ -56,8 +56,8 @@ WeaveCrypto.prototype = {
         } catch (x) {
           this.debug = false;
         }
-        XPCOMUtils.defineLazyGetter(this, 'encoder', () => new TextEncoder(UTF_LABEL));
-        XPCOMUtils.defineLazyGetter(this, 'decoder', () => new TextDecoder(UTF_LABEL, { fatal: true }));
+        XPCOMUtils.defineLazyGetter(this, "encoder", () => new TextEncoder(UTF_LABEL));
+        XPCOMUtils.defineLazyGetter(this, "decoder", () => new TextDecoder(UTF_LABEL, { fatal: true }));
     },
 
     log(message) {
@@ -120,7 +120,7 @@ WeaveCrypto.prototype = {
                            ? crypto.subtle.encrypt
                            : crypto.subtle.decrypt)
                           .bind(crypto.subtle);
-        let algo = { name: CRYPT_ALGO, iv: iv };
+        let algo = { name: CRYPT_ALGO, iv };
 
 
         return Async.promiseSpinningly(
@@ -245,7 +245,7 @@ WeaveCrypto.prototype = {
         let importAlgo = { name: KEY_DERIVATION_ALGO };
         let deriveAlgo = {
             name: KEY_DERIVATION_ALGO,
-            salt: salt,
+            salt,
             iterations: KEY_DERIVATION_ITERATIONS,
             hash: { name: KEY_DERIVATION_HASHING_ALGO },
         };

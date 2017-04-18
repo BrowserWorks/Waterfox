@@ -18,6 +18,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "ESEDBReader",
                                   "resource:///modules/ESEDBReader.jsm");
 
+Cu.importGlobalProperties(["URL"]);
+
 const kEdgeRegistryRoot = "SOFTWARE\\Classes\\Local Settings\\Software\\" +
   "Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\" +
   "microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge";
@@ -35,6 +37,7 @@ XPCOMUtils.defineLazyGetter(this, "gEdgeDatabase", function() {
   let expectedLocation = edgeDir.clone();
   expectedLocation.appendRelativePath("nouser1\\120712-0049\\DBStore\\spartan.edb");
   if (expectedLocation.exists() && expectedLocation.isReadable() && expectedLocation.isFile()) {
+    expectedLocation.normalize();
     return expectedLocation;
   }
   // We used to recurse into arbitrary subdirectories here, but that code
@@ -107,13 +110,13 @@ EdgeTypedURLMigrator.prototype = {
     return this._typedURLs.size > 0;
   },
 
-  migrate: function(aCallback) {
+  migrate(aCallback) {
     let typedURLs = this._typedURLs;
     let places = [];
     for (let [urlString, time] of typedURLs) {
       let uri;
       try {
-        uri = Services.io.newURI(urlString, null, null);
+        uri = Services.io.newURI(urlString);
         if (["http", "https", "ftp"].indexOf(uri.scheme) == -1) {
           continue;
         }
@@ -139,27 +142,26 @@ EdgeTypedURLMigrator.prototype = {
     }
 
     MigrationUtils.insertVisitsWrapper(places, {
-      _success: false,
-      handleResult: function() {
-        // Importing any entry is considered a successful import.
-        this._success = true;
-      },
-      handleError: function() {},
-      handleCompletion: function() {
-        aCallback(this._success);
+      ignoreErrors: true,
+      ignoreResults: true,
+      handleCompletion(updatedCount) {
+        aCallback(updatedCount > 0);
       }
     });
   },
 };
 
-function EdgeReadingListMigrator() {
+function EdgeReadingListMigrator(dbOverride) {
+  this.dbOverride = dbOverride;
 }
 
 EdgeReadingListMigrator.prototype = {
   type: MigrationUtils.resourceTypes.BOOKMARKS,
 
+  get db() { return this.dbOverride || gEdgeDatabase },
+
   get exists() {
-    return !!gEdgeDatabase;
+    return !!this.db;
   },
 
   migrate(callback) {
@@ -173,6 +175,9 @@ EdgeReadingListMigrator.prototype = {
   },
 
   _migrateReadingList: Task.async(function*(parentGuid) {
+    if (yield ESEDBReader.dbLocked(this.db)) {
+      throw new Error("Edge seems to be running - its database is locked.");
+    }
     let columnFn = db => {
       let columns = [
         {name: "URL", type: "string"},
@@ -192,27 +197,24 @@ EdgeReadingListMigrator.prototype = {
       return !row.IsDeleted;
     };
 
-    let readingListItems = readTableFromEdgeDB("ReadingList", columnFn, filterFn);
+    let readingListItems = readTableFromEdgeDB("ReadingList", columnFn, filterFn, this.db);
     if (!readingListItems.length) {
       return;
     }
 
     let destFolderGuid = yield this._ensureReadingListFolder(parentGuid);
-    let exceptionThrown;
+    let bookmarks = [];
     for (let item of readingListItems) {
       let dateAdded = item.AddedDate || new Date();
-      yield MigrationUtils.insertBookmarkWrapper({
-        parentGuid: destFolderGuid, url: item.URL, title: item.Title, dateAdded
-      }).catch(ex => {
-        if (!exceptionThrown) {
-          exceptionThrown = ex;
-        }
-        Cu.reportError(ex);
-      });
+      // Avoid including broken URLs:
+      try {
+        new URL(item.URL);
+      } catch (ex) {
+        continue;
+      }
+      bookmarks.push({ url: item.URL, title: item.Title, dateAdded });
     }
-    if (exceptionThrown) {
-      throw exceptionThrown;
-    }
+    yield MigrationUtils.insertManyBookmarksWrapper(bookmarks, destFolderGuid);
   }),
 
   _ensureReadingListFolder: Task.async(function*(parentGuid) {
@@ -238,34 +240,13 @@ EdgeBookmarksMigrator.prototype = {
 
   get exists() {
     if (!("_exists" in this)) {
-      this._exists = !!this.db && this._checkTableExists();
+      this._exists = !!this.db;
     }
     return this._exists;
   },
 
-  _checkTableExists() {
-    let database;
-    let rv;
-    try {
-      let logFile = this.db.parent;
-      logFile.append("LogFiles");
-      database = ESEDBReader.openDB(this.db.parent, this.db, logFile);
-
-      rv = database.tableExists(this.TABLE_NAME);
-    } catch (ex) {
-      Cu.reportError("Failed to check for table " + this.TABLE_NAME + " in Edge database at " +
-                     this.db.path + " due to the following error: " + ex);
-      return false;
-    } finally {
-      if (database) {
-        ESEDBReader.closeDB(database);
-      }
-    }
-    return rv;
-  },
-
   migrate(callback) {
-    this._migrateBookmarks(PlacesUtils.bookmarks.menuGuid).then(
+    this._migrateBookmarks().then(
       () => callback(true),
       ex => {
         Cu.reportError(ex);
@@ -274,64 +255,24 @@ EdgeBookmarksMigrator.prototype = {
     );
   },
 
-  _migrateBookmarks: Task.async(function*(rootGuid) {
-    let {bookmarks, folderMap} = this._fetchBookmarksFromDB();
-    if (!bookmarks.length) {
-      return;
+  _migrateBookmarks: Task.async(function*() {
+    if (yield ESEDBReader.dbLocked(this.db)) {
+      throw new Error("Edge seems to be running - its database is locked.");
     }
-    yield this._importBookmarks(bookmarks, folderMap, rootGuid);
-  }),
-
-  _importBookmarks: Task.async(function*(bookmarks, folderMap, rootGuid) {
-    if (!MigrationUtils.isStartupMigration) {
-      rootGuid =
-        yield MigrationUtils.createImportedBookmarksFolder("Edge", rootGuid);
+    let {toplevelBMs, toolbarBMs} = this._fetchBookmarksFromDB();
+    if (toplevelBMs.length) {
+      let parentGuid = PlacesUtils.bookmarks.menuGuid;
+      if (!MigrationUtils.isStartupMigration) {
+        parentGuid = yield MigrationUtils.createImportedBookmarksFolder("Edge", parentGuid);
+      }
+      yield MigrationUtils.insertManyBookmarksWrapper(toplevelBMs, parentGuid);
     }
-
-    let exceptionThrown;
-    for (let bookmark of bookmarks) {
-      // If this is a folder, we might have created it already to put other bookmarks in.
-      if (bookmark.IsFolder && bookmark._guid) {
-        continue;
+    if (toolbarBMs.length) {
+      let parentGuid = PlacesUtils.bookmarks.toolbarGuid;
+      if (!MigrationUtils.isStartupMigration) {
+        parentGuid = yield MigrationUtils.createImportedBookmarksFolder("Edge", parentGuid);
       }
-
-      // If this is a folder, just create folders up to and including that folder.
-      // Otherwise, create folders until we have a parent for this bookmark.
-      // This avoids duplicating logic for the bookmarks bar.
-      let folderId = bookmark.IsFolder ? bookmark.ItemId : bookmark.ParentId;
-      let parentGuid = yield this._getGuidForFolder(folderId, folderMap, rootGuid).catch(ex => {
-        if (!exceptionThrown) {
-          exceptionThrown = ex;
-        }
-        Cu.reportError(ex);
-      });
-
-      // If this was a folder, we're done with this item
-      if (bookmark.IsFolder) {
-        continue;
-      }
-
-      if (!parentGuid) {
-        // If we couldn't sort out a parent, fall back to importing on the root:
-        parentGuid = rootGuid;
-      }
-      let placesInfo = {
-        parentGuid,
-        url: bookmark.URL,
-        dateAdded: bookmark.DateUpdated || new Date(),
-        title: bookmark.Title,
-      };
-
-      yield MigrationUtils.insertBookmarkWrapper(placesInfo).catch(ex => {
-        if (!exceptionThrown) {
-          exceptionThrown = ex;
-        }
-        Cu.reportError(ex);
-      });
-    }
-
-    if (exceptionThrown) {
-      throw exceptionThrown;
+      yield MigrationUtils.insertManyBookmarksWrapper(toolbarBMs, parentGuid);
     }
   }),
 
@@ -356,44 +297,54 @@ EdgeBookmarksMigrator.prototype = {
       return true;
     };
     let bookmarks = readTableFromEdgeDB(this.TABLE_NAME, columns, filterFn, this.db);
-    return {bookmarks, folderMap};
-  },
-
-  _getGuidForFolder: Task.async(function*(folderId, folderMap, rootGuid) {
-    // If the folderId is not known as a folder in the folder map, we assume
-    // we just need the root
-    if (!folderMap.has(folderId)) {
-      return rootGuid;
-    }
-    let folder = folderMap.get(folderId);
-    // If the folder already has a places guid, just return that.
-    if (folder._guid) {
-      return folder._guid;
-    }
-
-    // Hacks! The bookmarks bar is special:
-    if (folder.Title == "_Favorites_Bar_") {
-      let toolbarGuid = PlacesUtils.bookmarks.toolbarGuid;
-      if (!MigrationUtils.isStartupMigration) {
-        toolbarGuid =
-          yield MigrationUtils.createImportedBookmarksFolder("Edge", toolbarGuid);
+    let toplevelBMs = [], toolbarBMs = [];
+    for (let bookmark of bookmarks) {
+      let bmToInsert;
+      // Ignore invalid URLs:
+      if (!bookmark.IsFolder) {
+        try {
+          new URL(bookmark.URL);
+        } catch (ex) {
+          Cu.reportError(`Ignoring ${bookmark.URL} when importing from Edge because of exception: ${ex}`);
+          continue;
+        }
+        bmToInsert = {
+          dateAdded: bookmark.DateUpdated || new Date(),
+          title: bookmark.Title,
+          url: bookmark.URL,
+        };
+      } else /* bookmark.IsFolder */ {
+        // Ignore the favorites bar bookmark itself.
+        if (bookmark.Title == "_Favorites_Bar_") {
+          continue;
+        }
+        if (!bookmark._childrenRef) {
+          bookmark._childrenRef = [];
+        }
+        bmToInsert = {
+          title: bookmark.Title,
+          type: PlacesUtils.bookmarks.TYPE_FOLDER,
+          dateAdded: bookmark.DateUpdated || new Date(),
+          children: bookmark._childrenRef,
+        };
       }
-      folder._guid = toolbarGuid;
-      return folder._guid;
+
+      if (!folderMap.has(bookmark.ParentId)) {
+        toplevelBMs.push(bmToInsert);
+      } else {
+        let parent = folderMap.get(bookmark.ParentId);
+        if (parent.Title == "_Favorites_Bar_") {
+          toolbarBMs.push(bmToInsert);
+          continue;
+        }
+        if (!parent._childrenRef) {
+          parent._childrenRef = [];
+        }
+        parent._childrenRef.push(bmToInsert);
+      }
     }
-    // Otherwise, get the right parent guid recursively:
-    let parentGuid = yield this._getGuidForFolder(folder.ParentId, folderMap, rootGuid);
-    let folderInfo = {
-      title: folder.Title,
-      type: PlacesUtils.bookmarks.TYPE_FOLDER,
-      dateAdded: folder.DateUpdated || new Date(),
-      parentGuid,
-    };
-    // and add ourselves as a kid, and return the guid we got.
-    let parentBM = yield MigrationUtils.insertBookmarkWrapper(folderInfo);
-    folder._guid = parentBM.guid;
-    return folder._guid;
-  }),
+    return {toplevelBMs, toolbarBMs};
+  },
 };
 
 function EdgeProfileMigrator() {
@@ -402,17 +353,17 @@ function EdgeProfileMigrator() {
 
 EdgeProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-EdgeProfileMigrator.prototype.getESEMigratorForTesting = function(dbOverride) {
+EdgeProfileMigrator.prototype.getBookmarksMigratorForTesting = function(dbOverride) {
   return new EdgeBookmarksMigrator(dbOverride);
 };
 
+EdgeProfileMigrator.prototype.getReadingListMigratorForTesting = function(dbOverride) {
+  return new EdgeReadingListMigrator(dbOverride);
+};
+
 EdgeProfileMigrator.prototype.getResources = function() {
-  let bookmarksMigrator = new EdgeBookmarksMigrator();
-  if (!bookmarksMigrator.exists) {
-    bookmarksMigrator = MSMigrationUtils.getBookmarksMigrator(MSMigrationUtils.MIGRATION_TYPE_EDGE);
-  }
   let resources = [
-    bookmarksMigrator,
+    new EdgeBookmarksMigrator(),
     MSMigrationUtils.getCookiesMigrator(MSMigrationUtils.MIGRATION_TYPE_EDGE),
     new EdgeTypedURLMigrator(),
     new EdgeReadingListMigrator(),
@@ -434,7 +385,7 @@ EdgeProfileMigrator.prototype.getLastUsedDate = function() {
   let dbPath = gEdgeDatabase.path;
   let cookieMigrator = MSMigrationUtils.getCookiesMigrator(MSMigrationUtils.MIGRATION_TYPE_EDGE);
   let cookiePaths = cookieMigrator._cookiesFolders.map(f => f.path);
-  let datePromises = [logFilePath, dbPath, ... cookiePaths].map(path => {
+  let datePromises = [logFilePath, dbPath, ...cookiePaths].map(path => {
     return OS.File.stat(path).catch(() => null).then(info => {
       return info ? info.lastModificationDate : 0;
     });
@@ -444,7 +395,7 @@ EdgeProfileMigrator.prototype.getLastUsedDate = function() {
     try {
       typedURLs = MSMigrationUtils.getTypedURLs(kEdgeRegistryRoot);
     } catch (ex) {}
-    let times = [0, ... typedURLs.values()];
+    let times = [0, ...typedURLs.values()];
     resolve(Math.max.apply(Math, times));
   }));
   return Promise.all(datePromises).then(dates => {

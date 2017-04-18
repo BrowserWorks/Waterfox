@@ -491,7 +491,7 @@ HTMLFormElement::UnbindFromTree(bool aDeep, bool aNullParent)
 }
 
 nsresult
-HTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
+HTMLFormElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mWantsWillHandleEvent = true;
   if (aVisitor.mEvent->mOriginalTarget == static_cast<nsIContent*>(this)) {
@@ -515,7 +515,7 @@ HTMLFormElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
       mGeneratingReset = true;
     }
   }
-  return nsGenericHTMLElement::PreHandleEvent(aVisitor);
+  return nsGenericHTMLElement::GetEventTargetParent(aVisitor);
 }
 
 nsresult
@@ -587,7 +587,7 @@ HTMLFormElement::DoSubmitOrReset(WidgetEvent* aEvent,
   // Make sure the presentation is up-to-date
   nsIDocument* doc = GetComposedDoc();
   if (doc) {
-    doc->FlushPendingNotifications(Flush_ContentAndNotify);
+    doc->FlushPendingNotifications(FlushType::ContentAndNotify);
   }
 
   // JBK Don't get form frames anymore - bug 34297
@@ -829,7 +829,7 @@ HTMLFormElement::SubmitSubmission(HTMLFormSubmission* aFormSubmission)
     rv = linkHandler->OnLinkClickSync(this, actionURI,
                                       target.get(),
                                       NullString(),
-                                      postDataStream, nullptr,
+                                      postDataStream, nullptr, false,
                                       getter_AddRefs(docShell),
                                       getter_AddRefs(mSubmittingRequest));
     NS_ENSURE_SUBMIT_SUCCESS(rv);
@@ -1346,6 +1346,8 @@ nsresult
 HTMLFormElement::RemoveElement(nsGenericHTMLFormElement* aChild,
                                bool aUpdateValidity)
 {
+  RemoveElementFromPastNamesMap(aChild);
+
   //
   // Remove it from the radio group if it's a radio button
   //
@@ -1496,23 +1498,8 @@ HTMLFormElement::RemoveElementFromTableInternal(
 
 nsresult
 HTMLFormElement::RemoveElementFromTable(nsGenericHTMLFormElement* aElement,
-                                        const nsAString& aName,
-                                        RemoveElementReason aRemoveReason)
+                                        const nsAString& aName)
 {
-  // If the element is being removed from the form, we have to remove it from
-  // the past names map.
-  if (aRemoveReason == ElementRemoved) {
-    uint32_t oldCount = mPastNameLookupTable.Count();
-    for (auto iter = mPastNameLookupTable.Iter(); !iter.Done(); iter.Next()) {
-      if (static_cast<void*>(aElement) == iter.Data()) {
-        iter.Remove();
-      }
-    }
-    if (oldCount != mPastNameLookupTable.Count()) {
-      ++mExpandoAndGeneration.generation;
-    }
-  }
-
   return mControls->RemoveElementFromTable(aElement, aName);
 }
 
@@ -2537,6 +2524,8 @@ HTMLFormElement::AddImageElementToTable(HTMLImageElement* aChild,
 nsresult
 HTMLFormElement::RemoveImageElement(HTMLImageElement* aChild)
 {
+  RemoveElementFromPastNamesMap(aChild);
+
   size_t index = mImageElements.IndexOf(aChild);
   NS_ENSURE_STATE(index != mImageElements.NoIndex);
 
@@ -2546,19 +2535,8 @@ HTMLFormElement::RemoveImageElement(HTMLImageElement* aChild)
 
 nsresult
 HTMLFormElement::RemoveImageElementFromTable(HTMLImageElement* aElement,
-                                             const nsAString& aName,
-                                             RemoveElementReason aRemoveReason)
+                                             const nsAString& aName)
 {
-  // If the element is being removed from the form, we have to remove it from
-  // the past names map.
-  if (aRemoveReason == ElementRemoved) {
-    for (auto iter = mPastNameLookupTable.Iter(); !iter.Done(); iter.Next()) {
-      if (static_cast<void*>(aElement) == iter.Data()) {
-        iter.Remove();
-      }
-    }
-  }
-
   return RemoveElementFromTableInternal(mImageNameLookupTable, aElement, aName);
 }
 
@@ -2571,7 +2549,28 @@ HTMLFormElement::AddToPastNamesMap(const nsAString& aName,
   // previous entry with the same name, if any.
   nsCOMPtr<nsIContent> node = do_QueryInterface(aChild);
   if (node) {
-    mPastNameLookupTable.Put(aName, aChild);
+    mPastNameLookupTable.Put(aName, node);
+    node->SetFlags(MAY_BE_IN_PAST_NAMES_MAP);
+  }
+}
+
+void
+HTMLFormElement::RemoveElementFromPastNamesMap(Element* aElement)
+{
+  if (!aElement->HasFlag(MAY_BE_IN_PAST_NAMES_MAP)) {
+    return;
+  }
+
+  aElement->UnsetFlags(MAY_BE_IN_PAST_NAMES_MAP);
+
+  uint32_t oldCount = mPastNameLookupTable.Count();
+  for (auto iter = mPastNameLookupTable.Iter(); !iter.Done(); iter.Next()) {
+    if (aElement == iter.Data()) {
+      iter.Remove();
+    }
+  }
+  if (oldCount != mPastNameLookupTable.Count()) {
+    ++mExpandoAndGeneration.generation;
   }
 }
 

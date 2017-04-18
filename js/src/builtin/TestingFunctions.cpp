@@ -140,7 +140,7 @@ GetBuildConfiguration(JSContext* cx, unsigned argc, Value* vp)
     if (!JS_SetProperty(cx, info, "has-ctypes", value))
         return false;
 
-#ifdef JS_CPU_X86
+#if defined(_M_IX86) || defined(__i386__)
     value = BooleanValue(true);
 #else
     value = BooleanValue(false);
@@ -148,7 +148,7 @@ GetBuildConfiguration(JSContext* cx, unsigned argc, Value* vp)
     if (!JS_SetProperty(cx, info, "x86", value))
         return false;
 
-#ifdef JS_CPU_X64
+#if defined(_M_X64) || defined(__x86_64__)
     value = BooleanValue(true);
 #else
     value = BooleanValue(false);
@@ -610,9 +610,10 @@ WasmBinaryToText(JSContext* cx, unsigned argc, Value* vp)
     StringBuffer buffer(cx);
     bool ok;
     if (experimental)
-        ok = wasm::BinaryToExperimentalText(cx, bytes, length, buffer, wasm::ExperimentalTextFormatting());
+        ok = wasm::BinaryToExperimentalText(cx, bytes, length, buffer);
     else
         ok = wasm::BinaryToText(cx, bytes, length, buffer);
+
     if (!ok) {
         if (!cx->isExceptionPending())
             JS_ReportErrorASCII(cx, "wasm binary to text print error");
@@ -1054,7 +1055,7 @@ HasChild(JSContext* cx, unsigned argc, Value* vp)
     RootedValue parent(cx, args.get(0));
     RootedValue child(cx, args.get(1));
 
-    if (!parent.isMarkable() || !child.isMarkable()) {
+    if (!parent.isGCThing() || !child.isGCThing()) {
         args.rval().setBoolean(false);
         return true;
     }
@@ -1266,7 +1267,10 @@ NewExternalString(JSContext* cx, unsigned argc, Value* vp)
     RootedString str(cx, args[0].toString());
     size_t len = str->length();
 
-    UniqueTwoByteChars buf(js_pod_malloc<char16_t>(len));
+    UniqueTwoByteChars buf(cx->pod_malloc<char16_t>(len));
+    if (!buf)
+        return false;
+
     if (!JS_CopyStringChars(cx, mozilla::Range<char16_t>(buf.get(), len), str))
         return false;
 
@@ -1505,7 +1509,6 @@ OOMTest(JSContext* cx, unsigned argc, Value* vp)
 }
 #endif
 
-#ifdef SPIDERMONKEY_PROMISE
 static bool
 SettlePromiseNow(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -1613,43 +1616,6 @@ RejectPromise(JSContext* cx, unsigned argc, Value* vp)
         args.rval().setUndefined();
     return result;
 }
-
-#else
-
-static const js::Class FakePromiseClass = {
-    "Promise", JSCLASS_IS_ANONYMOUS
-};
-
-static bool
-MakeFakePromise(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    RootedObject obj(cx, NewObjectWithGivenProto(cx, &FakePromiseClass, nullptr));
-    if (!obj)
-        return false;
-
-    JS::dbg::onNewPromise(cx, obj);
-    args.rval().setObject(*obj);
-    return true;
-}
-
-static bool
-SettleFakePromise(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (!args.requireAtLeast(cx, "settleFakePromise", 1))
-        return false;
-    if (!args[0].isObject() || args[0].toObject().getClass() != &FakePromiseClass) {
-        JS_ReportErrorASCII(cx, "first argument must be a (fake) Promise object");
-        return false;
-    }
-
-    RootedObject promise(cx, &args[0].toObject());
-    JS::dbg::onPromiseSettled(cx, promise);
-    return true;
-}
-#endif // SPIDERMONKEY_PROMISE
 
 static unsigned finalizeCount = 0;
 
@@ -1807,8 +1773,8 @@ ReadSPSProfilingStack(JSContext* cx, unsigned argc, Value* vp)
 
     struct InlineFrameInfo
     {
-        InlineFrameInfo(const char* kind, UniqueChars&& label)
-          : kind(kind), label(mozilla::Move(label)) {}
+        InlineFrameInfo(const char* kind, char* label)
+          : kind(kind), label(label) {}
         const char* kind;
         UniqueChars label;
     };
@@ -1842,7 +1808,11 @@ ReadSPSProfilingStack(JSContext* cx, unsigned argc, Value* vp)
                 frameKindStr = "unknown";
             }
 
-            if (!frameInfo.back().emplaceBack(frameKindStr, mozilla::Move(frames[i].label)))
+            char* label = JS_strdup(cx, frames[i].label);
+            if (!label)
+                return false;
+
+            if (!frameInfo.back().emplaceBack(frameKindStr, label))
                 return false;
         }
     }
@@ -1875,8 +1845,9 @@ ReadSPSProfilingStack(JSContext* cx, unsigned argc, Value* vp)
             if (!JS_DefineProperty(cx, inlineFrameInfo, "kind", frameKind, propAttrs))
                 return false;
 
-            auto chars = inlineFrame.label.release();
-            frameLabel = NewString<CanGC>(cx, reinterpret_cast<Latin1Char*>(chars), strlen(chars));
+            size_t length = strlen(inlineFrame.label.get());
+            auto label = reinterpret_cast<Latin1Char*>(inlineFrame.label.release());
+            frameLabel = NewString<CanGC>(cx, label, length);
             if (!frameLabel)
                 return false;
 
@@ -2701,7 +2672,7 @@ SharedAddress(JSContext* cx, unsigned argc, Value* vp)
 #else
     RootedObject obj(cx, CheckedUnwrap(&args[0].toObject()));
     if (!obj) {
-        JS_ReportErrorASCII(cx, "Permission denied to access object");
+        ReportAccessDenied(cx);
         return false;
     }
     if (!obj->is<SharedArrayBufferObject>()) {
@@ -3393,13 +3364,13 @@ ByteSizeOfScript(JSContext*cx, unsigned argc, Value* vp)
         return false;
     }
 
-    JSFunction* fun = &args[0].toObject().as<JSFunction>();
+    RootedFunction fun(cx, &args[0].toObject().as<JSFunction>());
     if (fun->isNative()) {
         JS_ReportErrorASCII(cx, "Argument must be a scripted function");
         return false;
     }
 
-    RootedScript script(cx, fun->getOrCreateScript(cx));
+    RootedScript script(cx, JSFunction::getOrCreateScript(cx, fun));
     if (!script)
         return false;
 
@@ -3494,7 +3465,8 @@ GetConstructorName(JSContext* cx, unsigned argc, Value* vp)
     }
 
     RootedAtom name(cx);
-    if (!args[0].toObject().constructorDisplayAtom(cx, &name))
+    RootedObject obj(cx, &args[0].toObject());
+    if (!JSObject::constructorDisplayAtom(cx, obj, &name))
         return false;
 
     if (name) {
@@ -3698,12 +3670,12 @@ GetLcovInfo(JSContext* cx, unsigned argc, Value* vp)
     if (args.hasDefined(0)) {
         global = ToObject(cx, args[0]);
         if (!global) {
-            JS_ReportErrorASCII(cx, "First argument should be an object");
+            JS_ReportErrorASCII(cx, "Permission denied to access global");
             return false;
         }
         global = CheckedUnwrap(global);
         if (!global) {
-            JS_ReportErrorASCII(cx, "Permission denied to access global");
+            ReportAccessDenied(cx);
             return false;
         }
         if (!global->is<GlobalObject>()) {
@@ -4206,6 +4178,24 @@ DisRegExp(JSContext* cx, unsigned argc, Value* vp)
 }
 #endif // DEBUG
 
+static bool
+EnableForEach(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    JS::ContextOptionsRef(cx).setForEachStatement(true);
+    args.rval().setUndefined();
+    return true;
+}
+
+static bool
+DisableForEach(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    JS::ContextOptionsRef(cx).setForEachStatement(false);
+    args.rval().setUndefined();
+    return true;
+}
+
 static const JSFunctionSpecWithHelp TestingFunctions[] = {
     JS_FN_HELP("gc", ::GC, 0, 0,
 "gc([obj] | 'zone' [, 'shrinking'])",
@@ -4323,7 +4313,6 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
 "  This is also disabled when --fuzzing-safe is specified."),
 #endif
 
-#ifdef SPIDERMONKEY_PROMISE
     JS_FN_HELP("settlePromiseNow", SettlePromiseNow, 1, 0,
 "settlePromiseNow(promise)",
 "  'Settle' a 'promise' immediately. This just marks the promise as resolved\n"
@@ -4340,20 +4329,6 @@ JS_FN_HELP("resolvePromise", ResolvePromise, 2, 0,
 JS_FN_HELP("rejectPromise", RejectPromise, 2, 0,
 "rejectPromise(promise, reason)",
 "  Reject a Promise by calling the JSAPI function JS::RejectPromise."),
-#else
-    JS_FN_HELP("makeFakePromise", MakeFakePromise, 0, 0,
-"makeFakePromise()",
-"  Create an object whose [[Class]] name is 'Promise' and call\n"
-"  JS::dbg::onNewPromise on it before returning it. It doesn't actually have\n"
-"  any of the other behavior associated with promises."),
-
-    JS_FN_HELP("settleFakePromise", SettleFakePromise, 1, 0,
-"settleFakePromise(promise)",
-"  'Settle' a 'promise' created by makeFakePromise(). This doesn't have any\n"
-"  observable effects outside of firing any onPromiseSettled hooks set on\n"
-"  Debugger instances that are observing the given promise's global as a\n"
-"  debuggee."),
-#endif // SPIDERMONKEY_PROMISE
 
     JS_FN_HELP("makeFinalizeObserver", MakeFinalizeObserver, 0, 0,
 "makeFinalizeObserver()",
@@ -4751,6 +4726,14 @@ gc::ZealModeHelpText),
     JS_FN_HELP("getModuleEnvironmentValue", GetModuleEnvironmentValue, 2, 0,
 "getModuleEnvironmentValue(module, name)",
 "  Get the value of a bound name in a module environment.\n"),
+
+    JS_FN_HELP("enableForEach", EnableForEach, 0, 0,
+"enableForEach()",
+"  Enables the deprecated, non-standard for-each.\n"),
+
+    JS_FN_HELP("disableForEach", DisableForEach, 0, 0,
+"disableForEach()",
+"  Disables the deprecated, non-standard for-each.\n"),
 
     JS_FS_HELP_END
 };

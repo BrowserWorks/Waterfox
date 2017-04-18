@@ -313,7 +313,7 @@ class LinuxToolchainTest(BaseToolchainTest):
         '/usr/bin/clang-3.3': CLANG_3_3 + CLANG_PLATFORM_X86_64_LINUX,
         '/usr/bin/clang++-3.3': CLANGXX_3_3 + CLANG_PLATFORM_X86_64_LINUX,
     }
-    GCC_4_7_RESULT = ('Only GCC 4.8 or newer is supported '
+    GCC_4_7_RESULT = ('Only GCC 4.9 or newer is supported '
                       '(found version 4.7.3).')
     GXX_4_7_RESULT = GCC_4_7_RESULT
     GCC_4_9_RESULT = CompilerResult(
@@ -786,7 +786,7 @@ class WindowsToolchainTest(BaseToolchainTest):
     )
     CLANG_CL_3_9_RESULT = CompilerResult(
         flags=['-Xclang', '-std=gnu99',
-               '-fms-compatibility-version=19.00.24213', '-fallback'],
+               '-fms-compatibility-version=19.00.24213'],
         version='19.00.24213',
         type='clang-cl',
         compiler='/usr/bin/clang-cl',
@@ -794,7 +794,7 @@ class WindowsToolchainTest(BaseToolchainTest):
     )
     CLANGXX_CL_3_9_RESULT = CompilerResult(
         flags=['-Xclang', '-std=c++14',
-               '-fms-compatibility-version=19.00.24213', '-fallback'],
+               '-fms-compatibility-version=19.00.24213'],
         version='19.00.24213',
         type='clang-cl',
         compiler='/usr/bin/clang-cl',
@@ -1036,6 +1036,9 @@ class LinuxCrossCompileToolchainTest(BaseToolchainTest):
         },
         'mips-unknown-linux-gnu': big_endian + {
             '__mips__': 1,
+        },
+        'sh4-unknown-linux-gnu': little_endian + {
+            '__sh__': 1,
         },
     }
 

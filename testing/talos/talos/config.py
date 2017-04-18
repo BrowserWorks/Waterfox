@@ -100,6 +100,10 @@ DEFAULTS = dict(
             'http://127.0.0.1/safebrowsing-dummy/gethash',
         'browser.safebrowsing.provider.google.updateURL':
             'http://127.0.0.1/safebrowsing-dummy/update',
+        'browser.safebrowsing.provider.google4.gethashURL':
+            'http://127.0.0.1/safebrowsing4-dummy/gethash',
+        'browser.safebrowsing.provider.google4.updateURL':
+            'http://127.0.0.1/safebrowsing4-dummy/update',
         'browser.safebrowsing.provider.mozilla.gethashURL':
             'http://127.0.0.1/safebrowsing-dummy/gethash',
         'browser.safebrowsing.provider.mozilla.updateURL':
@@ -143,6 +147,8 @@ DEFAULTS = dict(
         'media.gmp-manager.updateEnabled': False,
         'extensions.systemAddon.update.url':
             'http://127.0.0.1/dummy-system-addons.xml',
+        'extensions.shield-recipe-client.api_url':
+            'https://127.0.0.1/selfsupport-dummy/',
         'media.navigator.enabled': True,
         'media.peerconnection.enabled': True,
         'media.navigator.permission.disabled': True,

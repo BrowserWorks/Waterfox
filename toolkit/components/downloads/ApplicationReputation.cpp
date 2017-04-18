@@ -51,11 +51,11 @@
 #include "nsIContentPolicy.h"
 #include "nsILoadInfo.h"
 #include "nsContentUtils.h"
+#include "nsWeakReference.h"
 
 using mozilla::ArrayLength;
 using mozilla::BasePrincipal;
-using mozilla::DocShellOriginAttributes;
-using mozilla::PrincipalOriginAttributes;
+using mozilla::OriginAttributes;
 using mozilla::Preferences;
 using mozilla::TimeStamp;
 using mozilla::Telemetry::Accumulate;
@@ -92,13 +92,16 @@ class PendingDBLookup;
 // created by ApplicationReputationService, it is guaranteed to call mCallback.
 // This class is private to ApplicationReputationService.
 class PendingLookup final : public nsIStreamListener,
-                            public nsITimerCallback
+                            public nsITimerCallback,
+                            public nsIObserver,
+                            public nsSupportsWeakReference
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSIOBSERVER
 
   // Constructor and destructor.
   PendingLookup(nsIApplicationReputationQuery* aQuery,
@@ -307,7 +310,7 @@ PendingDBLookup::LookupSpecInternal(const nsACString& aSpec)
   rv = ios->NewURI(aSpec, nullptr, nullptr, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
   nsCOMPtr<nsIPrincipal> principal =
     BasePrincipal::CreateCodebasePrincipal(uri, attrs);
   if (!principal) {
@@ -370,7 +373,9 @@ PendingDBLookup::HandleEvent(const nsACString& tables)
 
 NS_IMPL_ISUPPORTS(PendingLookup,
                   nsIStreamListener,
-                  nsIRequestObserver)
+                  nsIRequestObserver,
+                  nsIObserver,
+                  nsISupportsWeakReference)
 
 PendingLookup::PendingLookup(nsIApplicationReputationQuery* aQuery,
                              nsIApplicationReputationCallback* aCallback) :
@@ -1275,8 +1280,9 @@ PendingLookup::SendRemoteQueryInternal()
 
   nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
   if (loadInfo) {
-    loadInfo->SetOriginAttributes(
-      mozilla::NeckoOriginAttributes(NECKO_SAFEBROWSING_APP_ID, false));
+    mozilla::OriginAttributes attrs;
+    attrs.mFirstPartyDomain.AssignLiteral(NECKO_SAFEBROWSING_FIRST_PARTY_DOMAIN);
+    loadInfo->SetOriginAttributes(attrs);
   }
 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(mChannel, &rv));
@@ -1290,14 +1296,6 @@ PendingLookup::SendRemoteQueryInternal()
   rv = uploadChannel->ExplicitSetUploadStream(sstream,
     NS_LITERAL_CSTRING("application/octet-stream"), serialized.size(),
     NS_LITERAL_CSTRING("POST"), false);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Set the Safebrowsing cookie jar, so that the regular Google cookie is not
-  // sent with this request. See bug 897516.
-  DocShellOriginAttributes attrs;
-  attrs.mAppId = NECKO_SAFEBROWSING_APP_ID;
-  nsCOMPtr<nsIInterfaceRequestor> loadContext = new mozilla::LoadContext(attrs);
-  rv = mChannel->SetNotificationCallbacks(loadContext);
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint32_t timeoutMs = Preferences::GetUint(PREF_SB_DOWNLOADS_REMOTE_TIMEOUT, 10000);
@@ -1319,6 +1317,24 @@ PendingLookup::Notify(nsITimer* aTimer)
     true);
   mChannel->Cancel(NS_ERROR_NET_TIMEOUT);
   mTimeoutTimer->Cancel();
+  return NS_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// nsIObserver implementation
+NS_IMETHODIMP
+PendingLookup::Observe(nsISupports *aSubject, const char *aTopic,
+                       const char16_t *aData)
+{
+  if (!strcmp(aTopic, "quit-application")) {
+    if (mTimeoutTimer) {
+      mTimeoutTimer->Cancel();
+      mTimeoutTimer = nullptr;
+    }
+    if (mChannel) {
+      mChannel->Cancel(NS_ERROR_ABORT);
+    }
+  }
   return NS_OK;
 }
 
@@ -1519,5 +1535,13 @@ nsresult ApplicationReputationService::QueryReputationInternal(
   RefPtr<PendingLookup> lookup(new PendingLookup(aQuery, aCallback));
   NS_ENSURE_STATE(lookup);
 
+  // Add an observer for shutdown
+  nsCOMPtr<nsIObserverService> observerService =
+    mozilla::services::GetObserverService();
+  if (!observerService) {
+    return NS_ERROR_FAILURE;
+  }
+
+  observerService->AddObserver(lookup, "quit-application", true);
   return lookup->StartLookup();
 }

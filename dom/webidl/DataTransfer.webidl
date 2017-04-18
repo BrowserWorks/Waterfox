@@ -14,12 +14,11 @@ interface DataTransfer {
 
   readonly attribute DataTransferItemList items;
 
-  [Throws]
   void setDragImage(Element image, long x, long y);
 
   // ReturnValueNeedsContainsHack on .types because lots of extension
   // code was expecting .contains() back when it was a DOMStringList.
-  [Pure, Cached, Frozen, NeedsSubjectPrincipal, ReturnValueNeedsContainsHack]
+  [Pure, Cached, Frozen, NeedsCallerType, ReturnValueNeedsContainsHack]
   readonly attribute sequence<DOMString> types;
   [Throws, NeedsSubjectPrincipal]
   DOMString getData(DOMString format);
@@ -76,7 +75,7 @@ partial interface DataTransfer {
    * at the specified index. If the index is not in the range from 0 to
    * itemCount - 1, an empty string list is returned.
    */
-  [Throws]
+  [Throws, NeedsCallerType]
   DOMStringList mozTypesAt(unsigned long index);
 
   /**
@@ -131,6 +130,13 @@ partial interface DataTransfer {
    */
   [Throws, NeedsSubjectPrincipal]
   any mozGetDataAt(DOMString format, unsigned long index);
+
+  /**
+   * Update the drag image. Arguments are the same as setDragImage. This is only
+   * valid within the parent chrome process.
+   */
+  [ChromeOnly]
+  void updateDragImage(Element image, long x, long y);
 
   /**
    * Will be true when the user has cancelled the drag (typically by pressing

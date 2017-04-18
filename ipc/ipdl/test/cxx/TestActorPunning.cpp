@@ -16,13 +16,37 @@ TestActorPunningParent::Main()
         fail("sending Start");
 }
 
-bool
+mozilla::ipc::IPCResult
 TestActorPunningParent::RecvPun(PTestActorPunningSubParent* a, const Bad& bad)
 {
     if (a->SendBad())
         fail("bad!");
     fail("shouldn't have received this message in the first place");
-    return true;
+    return IPC_OK();
+}
+
+// By default, fatal errors kill the parent process, but this makes it
+// hard to test, so instead we use the previous behavior and kill the
+// child process.
+void
+TestActorPunningParent::HandleFatalError(const char* aProtocolName, const char* aErrorMsg) const
+{
+  if (!!strcmp(aProtocolName, "PTestActorPunningParent")) {
+    fail("wrong protocol hit a fatal error");
+  }
+
+  if (!!strcmp(aErrorMsg, "Error deserializing 'PTestActorPunningSubParent'")) {
+    fail("wrong fatal error");
+  }
+
+  ipc::ScopedProcessHandle otherProcessHandle;
+  if (!base::OpenProcessHandle(OtherPid(), &otherProcessHandle.rwget())) {
+    fail("couldn't open child process");
+  } else {
+    if (!base::KillProcess(otherProcessHandle, 0, false)) {
+      fail("terminating child process");
+    }
+  }
 }
 
 PTestActorPunningPunnedParent*
@@ -80,7 +104,7 @@ TestActorPunningChild::DeallocPTestActorPunningSubChild(PTestActorPunningSubChil
     return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 TestActorPunningChild::RecvStart()
 {
     SendPTestActorPunningSubConstructor();
@@ -89,14 +113,14 @@ TestActorPunningChild::RecvStart()
     // We can't assert whether this succeeds or fails, due to race
     // conditions.
     SendPun(a, Bad());
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestActorPunningSubChild::RecvBad()
 {
     fail("things are going really badly right now");
-    return true;
+    return IPC_OK();
 }
 
 

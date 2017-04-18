@@ -432,6 +432,11 @@ SetDisjointTypedElements(TypedArrayObject* target, uint32_t targetOffset,
 extern JSObject*
 InitDataViewClass(JSContext* cx, HandleObject obj);
 
+// In the DataViewObject, the private slot contains a raw pointer into
+// the buffer.  The buffer may be shared memory and the raw pointer
+// should not be exposed without sharedness information accompanying
+// it.
+
 class DataViewObject : public NativeObject
 {
   private:
@@ -442,8 +447,8 @@ class DataViewObject : public NativeObject
     }
 
     template <typename NativeType>
-    static uint8_t*
-    getDataPointer(JSContext* cx, Handle<DataViewObject*> obj, double offset);
+    static SharedMem<uint8_t*>
+    getDataPointer(JSContext* cx, Handle<DataViewObject*> obj, uint64_t offset, bool* isSharedMemory);
 
     template<Value ValueGetter(DataViewObject* view)>
     static bool
@@ -457,15 +462,15 @@ class DataViewObject : public NativeObject
     static bool
     defineGetter(JSContext* cx, PropertyName* name, HandleNativeObject proto);
 
-    static bool getAndCheckConstructorArgs(JSContext* cx, JSObject* bufobj, const CallArgs& args,
-                                           uint32_t *byteOffset, uint32_t* byteLength);
+    static bool
+    getAndCheckConstructorArgs(JSContext* cx, HandleObject bufobj, const CallArgs& args,
+                               uint32_t* byteOffset, uint32_t* byteLength);
     static bool constructSameCompartment(JSContext* cx, HandleObject bufobj, const CallArgs& args);
     static bool constructWrapped(JSContext* cx, HandleObject bufobj, const CallArgs& args);
 
-    friend bool ArrayBufferObject::createDataViewForThisImpl(JSContext* cx, const CallArgs& args);
     static DataViewObject*
     create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
-           Handle<ArrayBufferObject*> arrayBuffer, JSObject* proto);
+           Handle<ArrayBufferObjectMaybeShared*> arrayBuffer, JSObject* proto);
 
   public:
     static const Class class_;
@@ -494,11 +499,25 @@ class DataViewObject : public NativeObject
         return byteLengthValue(const_cast<DataViewObject*>(this)).toInt32();
     }
 
-    ArrayBufferObject& arrayBuffer() const {
-        return bufferValue(const_cast<DataViewObject*>(this)).toObject().as<ArrayBufferObject>();
+    ArrayBufferObjectMaybeShared& arrayBufferEither() const {
+        return bufferValue(
+            const_cast<DataViewObject*>(this)).toObject().as<ArrayBufferObjectMaybeShared>();
     }
 
-    void* dataPointer() const {
+    SharedMem<void*> dataPointerEither() const {
+        void *p = getPrivate();
+        if (isSharedMemory())
+            return SharedMem<void*>::shared(p);
+        return SharedMem<void*>::unshared(p);
+    }
+
+    void* dataPointerUnshared() const {
+        MOZ_ASSERT(!isSharedMemory());
+        return getPrivate();
+    }
+
+    void* dataPointerShared() const {
+        MOZ_ASSERT(isSharedMemory());
         return getPrivate();
     }
 

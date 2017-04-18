@@ -1,6 +1,6 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 /**
@@ -9,8 +9,9 @@
 
 add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
-  let { $, EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu, NetworkDetails } = NetMonitorView;
+  let { document, NetMonitorView } = monitor.panelWin;
+  let { RequestsMenu } = NetMonitorView;
+
   RequestsMenu.lazyUpdate = false;
 
   info("Performing a secure request.");
@@ -21,82 +22,56 @@ add_task(function* () {
   });
   yield wait;
 
-  info("Selecting the request.");
-  RequestsMenu.selectedIndex = 0;
+  wait = waitForDOM(document, "#security-tabpanel");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.getElementById("details-pane-toggle"));
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll("#details-pane tab")[5]);
+  yield wait;
 
-  info("Waiting for details pane to be updated.");
-  yield monitor.panelWin.once(EVENTS.TAB_UPDATED);
-
-  info("Selecting security tab.");
-  NetworkDetails.widget.selectedIndex = 5;
-
-  info("Waiting for security tab to be updated.");
-  yield monitor.panelWin.once(EVENTS.TAB_UPDATED);
-
-  let errorbox = $("#security-error");
-  let infobox = $("#security-information");
-
-  is(errorbox.hidden, true, "Error box is hidden.");
-  is(infobox.hidden, false, "Information box visible.");
+  let tabpanel = document.querySelector("#security-tabpanel");
+  let textboxes = tabpanel.querySelectorAll(".textbox-input");
 
   // Connection
-
   // The protocol will be TLS but the exact version depends on which protocol
   // the test server example.com supports.
-  let protocol = $("#security-protocol-version-value").value;
+  let protocol = textboxes[0].value;
   ok(protocol.startsWith("TLS"), "The protocol " + protocol + " seems valid.");
 
   // The cipher suite used by the test server example.com might change at any
   // moment but all of them should start with "TLS_".
   // http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml
-  let suite = $("#security-ciphersuite-value").value;
+  let suite = textboxes[1].value;
   ok(suite.startsWith("TLS_"), "The suite " + suite + " seems valid.");
 
   // Host
-  checkLabel("#security-info-host-header", "Host example.com:");
-  checkLabel("#security-http-strict-transport-security-value", "Disabled");
-  checkLabel("#security-public-key-pinning-value", "Disabled");
+  is(tabpanel.querySelectorAll(".treeLabel.objectLabel")[1].textContent,
+    "Host example.com:",
+    "Label has the expected value.");
+  is(textboxes[2].value, "Disabled", "Label has the expected value.");
+  is(textboxes[3].value, "Disabled", "Label has the expected value.");
 
   // Cert
-  checkLabel("#security-cert-subject-cn", "example.com");
-  checkLabel("#security-cert-subject-o", "<Not Available>");
-  checkLabel("#security-cert-subject-ou", "<Not Available>");
+  is(textboxes[4].value, "example.com", "Label has the expected value.");
+  is(textboxes[5].value, "<Not Available>", "Label has the expected value.");
+  is(textboxes[6].value, "<Not Available>", "Label has the expected value.");
 
-  checkLabel("#security-cert-issuer-cn", "Temporary Certificate Authority");
-  checkLabel("#security-cert-issuer-o", "Mozilla Testing");
-  checkLabel("#security-cert-issuer-ou", "<Not Available>");
+  is(textboxes[7].value, "Temporary Certificate Authority", "Label has the expected value.");
+  is(textboxes[8].value, "Mozilla Testing", "Label has the expected value.");
+  is(textboxes[9].value, "Profile Guided Optimization", "Label has the expected value.");
 
   // Locale sensitive and varies between timezones. Cant't compare equality or
   // the test fails depending on which part of the world the test is executed.
-  checkLabelNotEmpty("#security-cert-validity-begins");
-  checkLabelNotEmpty("#security-cert-validity-expires");
 
-  checkLabelNotEmpty("#security-cert-sha1-fingerprint");
-  checkLabelNotEmpty("#security-cert-sha256-fingerprint");
+  // cert validity begins
+  isnot(textboxes[10].value, "", "Label was not empty.");
+  // cert validity expires
+  isnot(textboxes[11].value, "", "Label was not empty.");
+
+  // cert sha1 fingerprint
+  isnot(textboxes[12].value, "", "Label was not empty.");
+  // cert sha256 fingerprint
+  isnot(textboxes[13].value, "", "Label was not empty.");
+
   yield teardown(monitor);
-
-  /**
-   * A helper that compares value attribute of a label with given selector to the
-   * expected value.
-   */
-  function checkLabel(selector, expected) {
-    info("Checking label " + selector);
-
-    let element = $(selector);
-
-    ok(element, "Selector matched an element.");
-    is(element.value, expected, "Label has the expected value.");
-  }
-
-  /**
-   * A helper that checks the label with given selector is not an empty string.
-   */
-  function checkLabelNotEmpty(selector) {
-    info("Checking that label " + selector + " is non-empty.");
-
-    let element = $(selector);
-
-    ok(element, "Selector matched an element.");
-    isnot(element.value, "", "Label was not empty.");
-  }
 });

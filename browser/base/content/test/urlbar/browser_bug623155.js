@@ -7,12 +7,12 @@ const REDIRECT_FROM = "https://example.com/browser/browser/base/content/test/url
 const REDIRECT_TO = "https://www.bank1.com/"; // Bad-cert host.
 
 function isRedirectedURISpec(aURISpec) {
-  return isRedirectedURI(Services.io.newURI(aURISpec, null, null));
+  return isRedirectedURI(Services.io.newURI(aURISpec));
 }
 
 function isRedirectedURI(aURI) {
   // Compare only their before-hash portion.
-  return Services.io.newURI(REDIRECT_TO, null, null)
+  return Services.io.newURI(REDIRECT_TO)
                  .equalsExceptRef(aURI);
 }
 
@@ -58,7 +58,7 @@ function test() {
 }
 
 var gWebProgressListener = {
-  QueryInterface: function(aIID) {
+  QueryInterface(aIID) {
     if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
         aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
         aIID.equals(Components.interfaces.nsISupports))
@@ -75,7 +75,7 @@ var gWebProgressListener = {
   // onSecurityChange: function() {},
   // ----------------------------------------------------------------------------
 
-  onLocationChange: function(aWebProgress, aRequest, aLocation, aFlags) {
+  onLocationChange(aWebProgress, aRequest, aLocation, aFlags) {
     if (!aRequest) {
       // This is bug 673752, or maybe initial "about:blank".
       return;
@@ -91,8 +91,7 @@ var gWebProgressListener = {
     } else if (aLocation.ref == "FG") {
       // This is foreground tab's request.
       is(gNewTab, gBrowser.selectedTab, "This is a foreground tab.");
-    }
-    else {
+    } else {
       // We shonuld not reach here.
       ok(false, "This URI hash is not expected:" + aLocation.ref);
     }
@@ -117,8 +116,7 @@ function delayed(aIsSelectedTab) {
   if (!aIsSelectedTab) {
     // If this was a background request, go on a foreground request.
     gBrowser.selectedBrowser.loadURI(REDIRECT_FROM + "#FG");
-  }
-  else {
+  } else {
     // Othrewise, nothing to do remains.
     finish();
   }

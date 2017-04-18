@@ -137,139 +137,19 @@ LinkData::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
            symbolicLinks.sizeOfExcludingThis(mallocSizeOf);
 }
 
-size_t
-Import::serializedSize() const
-{
-    return module.serializedSize() +
-           field.serializedSize() +
-           sizeof(kind);
-}
-
-uint8_t*
-Import::serialize(uint8_t* cursor) const
-{
-    cursor = module.serialize(cursor);
-    cursor = field.serialize(cursor);
-    cursor = WriteScalar<DefinitionKind>(cursor, kind);
-    return cursor;
-}
-
-const uint8_t*
-Import::deserialize(const uint8_t* cursor)
-{
-    (cursor = module.deserialize(cursor)) &&
-    (cursor = field.deserialize(cursor)) &&
-    (cursor = ReadScalar<DefinitionKind>(cursor, &kind));
-    return cursor;
-}
-
-size_t
-Import::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
-{
-    return module.sizeOfExcludingThis(mallocSizeOf) +
-           field.sizeOfExcludingThis(mallocSizeOf);
-}
-
-Export::Export(UniqueChars fieldName, uint32_t index, DefinitionKind kind)
-  : fieldName_(Move(fieldName))
-{
-    pod.kind_ = kind;
-    pod.index_ = index;
-}
-
-Export::Export(UniqueChars fieldName, DefinitionKind kind)
-  : fieldName_(Move(fieldName))
-{
-    pod.kind_ = kind;
-    pod.index_ = 0;
-}
-
-uint32_t
-Export::funcIndex() const
-{
-    MOZ_ASSERT(pod.kind_ == DefinitionKind::Function);
-    return pod.index_;
-}
-
-uint32_t
-Export::globalIndex() const
-{
-    MOZ_ASSERT(pod.kind_ == DefinitionKind::Global);
-    return pod.index_;
-}
-
-size_t
-Export::serializedSize() const
-{
-    return fieldName_.serializedSize() +
-           sizeof(pod);
-}
-
-uint8_t*
-Export::serialize(uint8_t* cursor) const
-{
-    cursor = fieldName_.serialize(cursor);
-    cursor = WriteBytes(cursor, &pod, sizeof(pod));
-    return cursor;
-}
-
-const uint8_t*
-Export::deserialize(const uint8_t* cursor)
-{
-    (cursor = fieldName_.deserialize(cursor)) &&
-    (cursor = ReadBytes(cursor, &pod, sizeof(pod)));
-    return cursor;
-}
-
-size_t
-Export::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
-{
-    return fieldName_.sizeOfExcludingThis(mallocSizeOf);
-}
-
-size_t
-ElemSegment::serializedSize() const
-{
-    return sizeof(tableIndex) +
-           sizeof(offset) +
-           SerializedPodVectorSize(elemFuncIndices) +
-           SerializedPodVectorSize(elemCodeRangeIndices);
-}
-
-uint8_t*
-ElemSegment::serialize(uint8_t* cursor) const
-{
-    cursor = WriteBytes(cursor, &tableIndex, sizeof(tableIndex));
-    cursor = WriteBytes(cursor, &offset, sizeof(offset));
-    cursor = SerializePodVector(cursor, elemFuncIndices);
-    cursor = SerializePodVector(cursor, elemCodeRangeIndices);
-    return cursor;
-}
-
-const uint8_t*
-ElemSegment::deserialize(const uint8_t* cursor)
-{
-    (cursor = ReadBytes(cursor, &tableIndex, sizeof(tableIndex))) &&
-    (cursor = ReadBytes(cursor, &offset, sizeof(offset))) &&
-    (cursor = DeserializePodVector(cursor, &elemFuncIndices)) &&
-    (cursor = DeserializePodVector(cursor, &elemCodeRangeIndices));
-    return cursor;
-}
-
-size_t
-ElemSegment::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
-{
-    return elemFuncIndices.sizeOfExcludingThis(mallocSizeOf) +
-           elemCodeRangeIndices.sizeOfExcludingThis(mallocSizeOf);
-}
-
 /* virtual */ void
 Module::serializedSize(size_t* maybeBytecodeSize, size_t* maybeCompiledSize) const
 {
     if (maybeBytecodeSize)
         *maybeBytecodeSize = bytecode_->bytes.length();
 
-    if (maybeCompiledSize) {
+    // The compiled debug code must not be saved, set compiled size to 0,
+    // so Module::assumptionsMatch will return false during assumptions
+    // deserialization.
+    if (maybeCompiledSize && metadata_->debugEnabled)
+        *maybeCompiledSize = 0;
+
+    if (maybeCompiledSize && !metadata_->debugEnabled) {
         *maybeCompiledSize = assumptions_.serializedSize() +
                              SerializedPodVectorSize(code_) +
                              linkData_.serializedSize() +
@@ -300,7 +180,9 @@ Module::serialize(uint8_t* maybeBytecodeBegin, size_t maybeBytecodeSize,
         MOZ_RELEASE_ASSERT(bytecodeEnd == maybeBytecodeBegin + maybeBytecodeSize);
     }
 
-    if (maybeCompiledBegin) {
+    MOZ_ASSERT_IF(maybeCompiledBegin && metadata_->debugEnabled, maybeCompiledSize == 0);
+
+    if (maybeCompiledBegin && !metadata_->debugEnabled) {
         // Assumption must be serialized at the beginning of the compiled bytes so
         // that compiledAssumptionsMatch can detect a build-id mismatch before any
         // other decoding occurs.
@@ -319,11 +201,10 @@ Module::serialize(uint8_t* maybeBytecodeBegin, size_t maybeBytecodeSize,
 }
 
 /* static */ bool
-Module::assumptionsMatch(const Assumptions& current, const uint8_t* compiledBegin,
-                         size_t compiledSize)
+Module::assumptionsMatch(const Assumptions& current, const uint8_t* compiledBegin, size_t remain)
 {
     Assumptions cached;
-    if (!cached.deserialize(compiledBegin, compiledSize))
+    if (!cached.deserialize(compiledBegin, remain))
         return false;
 
     return current == cached;
@@ -686,6 +567,19 @@ Module::initSegments(JSContext* cx,
     return true;
 }
 
+static const Import&
+FindImportForFuncImport(const ImportVector& imports, uint32_t funcImportIndex)
+{
+    for (const Import& import : imports) {
+        if (import.kind != DefinitionKind::Function)
+            continue;
+        if (funcImportIndex == 0)
+            return import;
+        funcImportIndex--;
+    }
+    MOZ_CRASH("ran out of imports");
+}
+
 bool
 Module::instantiateFunctions(JSContext* cx, Handle<FunctionVector> funcImports) const
 {
@@ -704,7 +598,9 @@ Module::instantiateFunctions(JSContext* cx, Handle<FunctionVector> funcImports) 
         const FuncExport& funcExport = instance.metadata().lookupFuncExport(funcIndex);
 
         if (funcExport.sig() != metadata_->funcImports[i].sig()) {
-            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_WASM_BAD_IMPORT_SIG);
+            const Import& import = FindImportForFuncImport(imports_, i);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_WASM_BAD_IMPORT_SIG,
+                                      import.module.get(), import.field.get());
             return false;
         }
     }
@@ -878,10 +774,9 @@ GetGlobalExport(JSContext* cx, const GlobalDescVector& globals, uint32_t globalI
         return true;
       }
       case ValType::F32: {
-        float f = val.f32().fp();
+        float f = val.f32();
         if (JitOptions.wasmTestMode && IsNaN(f)) {
-            uint32_t bits = val.f32().bits();
-            RootedObject obj(cx, CreateCustomNaNObject(cx, (float*)&bits));
+            RootedObject obj(cx, CreateCustomNaNObject(cx, &f));
             if (!obj)
                 return false;
             jsval.set(ObjectValue(*obj));
@@ -891,10 +786,9 @@ GetGlobalExport(JSContext* cx, const GlobalDescVector& globals, uint32_t globalI
         return true;
       }
       case ValType::F64: {
-        double d = val.f64().fp();
+        double d = val.f64();
         if (JitOptions.wasmTestMode && IsNaN(d)) {
-            uint64_t bits = val.f64().bits();
-            RootedObject obj(cx, CreateCustomNaNObject(cx, (double*)&bits));
+            RootedObject obj(cx, CreateCustomNaNObject(cx, &d));
             if (!obj)
                 return false;
             jsval.set(ObjectValue(*obj));
@@ -999,12 +893,16 @@ Module::instantiate(JSContext* cx,
     // instance must hold onto a ref of the bytecode (keeping it alive). This
     // wastes memory for most users, so we try to only save the source when a
     // developer actually cares: when the compartment is debuggable (which is
-    // true when the web console is open) or a names section is present (since
-    // this going to be stripped for non-developer builds).
+    // true when the web console is open), has code compiled with debug flag
+    // enabled or a names section is present (since this going to be stripped
+    // for non-developer builds).
 
     const ShareableBytes* maybeBytecode = nullptr;
-    if (cx->compartment()->isDebuggee() || !metadata_->funcNames.empty())
+    if (cx->compartment()->isDebuggee() || metadata_->debugEnabled ||
+        !metadata_->funcNames.empty())
+    {
         maybeBytecode = bytecode_.get();
+    }
 
     auto codeSegment = CodeSegment::create(cx, code_, linkData_, *metadata_, memory);
     if (!codeSegment)

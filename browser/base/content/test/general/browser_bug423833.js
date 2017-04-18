@@ -1,8 +1,8 @@
 /* Tests for proper behaviour of "Show this frame" context menu options */
 
 // Two frames, one with text content, the other an error page
-var invalidPage = 'http://127.0.0.1:55555/';
-var validPage = 'http://example.com/';
+var invalidPage = "http://127.0.0.1:55555/";
+var validPage = "http://example.com/";
 var testPage = 'data:text/html,<frameset cols="400,400"><frame src="' + validPage + '"><frame src="' + invalidPage + '"></frameset>';
 
 // Store the tab and window created in tests 2 and 3 respectively
@@ -71,10 +71,10 @@ function test2Setup() {
   var contentAreaContextMenu = document.getElementById("contentAreaContextMenu");
   var contextMenu = new nsContextMenu(contentAreaContextMenu);
 
-  gBrowser.tabContainer.addEventListener("TabOpen", function (event) {
+  gBrowser.tabContainer.addEventListener("TabOpen", function(event) {
     test2tab = event.target;
-    gBrowser.tabContainer.removeEventListener("TabOpen", arguments.callee, false);
-  }, false);
+    gBrowser.tabContainer.removeEventListener("TabOpen", arguments.callee);
+  });
   contextMenu.openFrameInTab();
   ok(test2tab, "openFrameInTab() opened a tab");
 
@@ -107,7 +107,7 @@ function test3Setup() {
   var contentAreaContextMenu = document.getElementById("contentAreaContextMenu");
   var contextMenu = new nsContextMenu(contentAreaContextMenu);
 
-  Services.ww.registerNotification(function (aSubject, aTopic, aData) {
+  Services.ww.registerNotification(function(aSubject, aTopic, aData) {
     if (aTopic == "domwindowopened")
       test3window = aSubject;
     Services.ww.unregisterNotification(arguments.callee);

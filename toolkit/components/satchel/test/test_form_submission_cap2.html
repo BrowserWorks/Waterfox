@@ -122,13 +122,14 @@
 </div>
 <pre id="test">
 <script class="testbody" type="text/javascript">
+/* import-globals-from satchel_common.js */
 
 var numSubmittedForms = 0;
 var numInputFields = 101;
 
 function checkInitialState() {
   countEntries(null, null,
-    function (num) {
+    function(num) {
       ok(!num, "checking for initially empty storage");
       startTest();
     });
@@ -147,15 +148,13 @@ function startTest() {
 
 // Make sure that the first (numInputFields - 1) were not saved (as they were not changed).
 // Call done() when finished.
-function checkCountEntries(formNum, index, done)
-{
+function checkCountEntries(formNum, index, done) {
   countEntries("test" + index, index,
-    function (num) {
+    function(num) {
       ok(!num, "checking unsaved value " + index);
       if (index < numInputFields) {
         checkCountEntries(formNum, index + 1, done);
-      }
-      else {
+      } else {
         done(formNum);
       }
     });

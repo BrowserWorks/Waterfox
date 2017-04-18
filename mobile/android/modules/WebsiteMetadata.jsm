@@ -10,7 +10,7 @@ this.EXPORTED_SYMBOLS = ["WebsiteMetadata"];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher", "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task", "resource://gre/modules/Task.jsm");
 
 var WebsiteMetadata = {
@@ -21,7 +21,8 @@ var WebsiteMetadata = {
   parseAsynchronously: function(doc) {
     Task.spawn(function() {
       let metadata = getMetadata(doc, doc.location.href, {
-        image_url: metadataRules['image_url']
+        image_url: metadataRules['image_url'],
+        provider: metadataRules['provider']
       });
 
       // No metadata was extracted, so don't bother sending it.
@@ -32,10 +33,11 @@ var WebsiteMetadata = {
       let msg = {
         type: 'Website:Metadata',
         location: doc.location.href,
-        metadata: metadata,
+        hasImage: metadata.image_url && metadata.image_url !== "",
+        metadata: JSON.stringify(metadata),
       };
 
-      Messaging.sendRequest(msg);
+      EventDispatcher.instance.sendRequest(msg);
     });
   }
 };
@@ -155,6 +157,12 @@ const metadataRules = {
       ['meta[property="og:url"]', node => node.element.getAttribute('content')],
       ['link[rel="canonical"]', node => node.element.getAttribute('href')],
     ],
+  },
+
+  provider: {
+    rules: [
+      ['meta[property="og:site_name"]', node => node.element.getAttribute('content')]
+    ]
   },
 };
 

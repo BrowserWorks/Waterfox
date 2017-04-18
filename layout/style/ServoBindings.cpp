@@ -7,9 +7,10 @@
 #include "mozilla/ServoBindings.h"
 
 #include "ChildIterator.h"
-#include "StyleStructContext.h"
 #include "gfxFontFamilyList.h"
 #include "nsAttrValueInlines.h"
+#include "nsCSSProps.h"
+#include "nsCSSParser.h"
 #include "nsCSSRuleProcessor.h"
 #include "nsContentUtils.h"
 #include "nsDOMTokenList.h"
@@ -19,7 +20,9 @@
 #include "nsIFrame.h"
 #include "nsINode.h"
 #include "nsIPrincipal.h"
+#include "nsMediaFeatures.h"
 #include "nsNameSpaceManager.h"
+#include "nsNetUtil.h"
 #include "nsRuleNode.h"
 #include "nsString.h"
 #include "nsStyleStruct.h"
@@ -32,23 +35,20 @@
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/DeclarationBlockInlines.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/ElementInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
 
-#define IMPL_STRONG_REF_TYPE_FOR(type_) \
-  already_AddRefed<type_>               \
-  type_##Strong::Consume() {            \
-    RefPtr<type_> result;               \
-    result.swap(mPtr);                  \
-    return result.forget();             \
+#define SERVO_ARC_TYPE(name_, type_) \
+  already_AddRefed<type_>            \
+  type_##Strong::Consume() {         \
+    RefPtr<type_> result;            \
+    result.swap(mPtr);               \
+    return result.forget();          \
   }
-
-IMPL_STRONG_REF_TYPE_FOR(ServoComputedValues)
-IMPL_STRONG_REF_TYPE_FOR(RawServoStyleSheet)
-IMPL_STRONG_REF_TYPE_FOR(RawServoDeclarationBlock)
-
-#undef IMPL_STRONG_REF_TYPE_FOR
+#include "mozilla/ServoArcTypeList.h"
+#undef SERVO_ARC_TYPE
 
 uint32_t
 Gecko_ChildrenCount(RawGeckoNodeBorrowed aNode)
@@ -62,10 +62,16 @@ Gecko_NodeIsElement(RawGeckoNodeBorrowed aNode)
   return aNode->IsElement();
 }
 
+bool
+Gecko_IsInDocument(RawGeckoNodeBorrowed aNode)
+{
+  return aNode->IsInComposedDoc();
+}
+
 RawGeckoNodeBorrowedOrNull
 Gecko_GetParentNode(RawGeckoNodeBorrowed aNode)
 {
-  return aNode->GetFlattenedTreeParentNode();
+  return aNode->GetFlattenedTreeParentNodeForStyle();
 }
 
 RawGeckoNodeBorrowedOrNull
@@ -95,8 +101,7 @@ Gecko_GetNextSibling(RawGeckoNodeBorrowed aNode)
 RawGeckoElementBorrowedOrNull
 Gecko_GetParentElement(RawGeckoElementBorrowed aElement)
 {
-  nsINode* parentNode = aElement->GetFlattenedTreeParentNode();
-  return parentNode->IsElement() ? parentNode->AsElement() : nullptr;
+  return aElement->GetFlattenedTreeParentElementForStyle();
 }
 
 RawGeckoElementBorrowedOrNull
@@ -196,6 +201,13 @@ Gecko_IsRootElement(RawGeckoElementBorrowed aElement)
   return aElement->OwnerDoc()->GetRootElement() == aElement;
 }
 
+bool
+Gecko_MatchesElement(CSSPseudoClassType aType,
+                     RawGeckoElementBorrowed aElement)
+{
+  return nsCSSPseudoClasses::MatchesElement(aType, aElement).value();
+}
+
 nsIAtom*
 Gecko_LocalName(RawGeckoElementBorrowed aElement)
 {
@@ -273,62 +285,38 @@ Gecko_CalcStyleDifference(nsStyleContext* aOldStyleContext,
   return result;
 }
 
-void
-Gecko_StoreStyleDifference(RawGeckoNodeBorrowed aNode, nsChangeHint aChangeHintToStore)
+ServoElementSnapshotOwned
+Gecko_CreateElementSnapshot(RawGeckoElementBorrowed aElement)
 {
-#ifdef MOZ_STYLO
-  MOZ_ASSERT(aNode->IsElement());
-  MOZ_ASSERT(aNode->IsDirtyForServo(),
-             "Change hint stored in a not-dirty node");
+  MOZ_ASSERT(NS_IsMainThread());
+  return new ServoElementSnapshot(aElement);
+}
 
-  const Element* aElement = aNode->AsElement();
-  nsIFrame* primaryFrame = aElement->GetPrimaryFrame();
-  if (!primaryFrame) {
-    // If there's no primary frame, that means that either this content is
-    // undisplayed (so we only need to check at the restyling phase for the
-    // display value on the element), or is a display: contents element.
-    //
-    // In this second case, we should store it in the frame constructor display
-    // contents map. Note that while this operation looks hairy, this would be
-    // thread-safe because the content should be there already (we'd only need
-    // to read the map and modify our entry).
-    //
-    // That being said, we still don't support display: contents anyway, so it's
-    // probably not worth it to do all the roundtrip just yet until we have a
-    // more concrete plan.
-    return;
+void
+Gecko_DropElementSnapshot(ServoElementSnapshotOwned aSnapshot)
+{
+  // Proxy deletes have a lot of overhead, so Servo tries hard to only drop
+  // snapshots on the main thread. However, there are certain cases where
+  // it's unavoidable (i.e. synchronously dropping the style data for the
+  // descendants of a new display:none root).
+  if (MOZ_UNLIKELY(!NS_IsMainThread())) {
+    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([=]() { delete aSnapshot; });
+    NS_DispatchToMainThread(task.forget());
+  } else {
+    delete aSnapshot;
   }
-
-  if ((aChangeHintToStore & nsChangeHint_ReconstructFrame) &&
-      aNode->IsInNativeAnonymousSubtree())
-  {
-    NS_WARNING("stylo: Removing forbidden frame reconstruction hint on native "
-               "anonymous content. Fix this in bug 1297857!");
-    aChangeHintToStore &= ~nsChangeHint_ReconstructFrame;
-  }
-
-  primaryFrame->StyleContext()->StoreChangeHint(aChangeHintToStore);
-#else
-  MOZ_CRASH("stylo: Shouldn't call Gecko_StoreStyleDifference in "
-            "non-stylo build");
-#endif
 }
 
 RawServoDeclarationBlockStrongBorrowedOrNull
 Gecko_GetServoDeclarationBlock(RawGeckoElementBorrowed aElement)
 {
-  const nsAttrValue* attr = aElement->GetParsedAttr(nsGkAtoms::style);
-  if (!attr || attr->Type() != nsAttrValue::eCSSDeclaration) {
-    return nullptr;
-  }
-  DeclarationBlock* decl = attr->GetCSSDeclarationValue();
+  DeclarationBlock* decl = aElement->GetInlineStyleDeclaration();
   if (!decl) {
     return nullptr;
   }
   if (decl->IsGecko()) {
-    // XXX This can happen at least when script sets style attribute
-    //     since we haven't implemented Element.style for stylo. But
-    //     we may want to turn it into an assertion after that's done.
+    // XXX This can happen when nodes are adopted from a Gecko-style-backend
+    //     document into a Servo-style-backend document.  See bug 1330051.
     NS_WARNING("stylo: requesting a Gecko declaration block?");
     return nullptr;
   }
@@ -579,7 +567,7 @@ ClassOrClassList(Implementor* aElement, nsIAtom** aClass, nsIAtom*** aClassList)
   }
 
 SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS(Gecko_, RawGeckoElementBorrowed)
-SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS(Gecko_Snapshot, ServoElementSnapshot*)
+SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS(Gecko_Snapshot, const ServoElementSnapshot*)
 
 #undef SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS
 
@@ -634,19 +622,6 @@ Gecko_AtomEqualsUTF8IgnoreCase(nsIAtom* aAtom, const char* aString, uint32_t aLe
 }
 
 void
-Gecko_Utf8SliceToString(nsString* aString,
-                        const uint8_t* aBuffer,
-                        size_t aBufferLen)
-{
-  MOZ_ASSERT(aString);
-  MOZ_ASSERT(aBuffer);
-
-  aString->Truncate();
-  AppendUTF8toUTF16(Substring(reinterpret_cast<const char*>(aBuffer),
-                              aBufferLen), *aString);
-}
-
-void
 Gecko_FontFamilyList_Clear(FontFamilyList* aList) {
   aList->Clear();
 }
@@ -697,8 +672,12 @@ Gecko_SetMozBinding(nsStyleDisplay* aDisplay,
                     ThreadSafeURIHolder* aReferrer,
                     ThreadSafePrincipalHolder* aPrincipal)
 {
+  if (!aURLString) {
+    aDisplay->mBinding = nullptr;
+    return;
+  }
+
   MOZ_ASSERT(aDisplay);
-  MOZ_ASSERT(aURLString);
   MOZ_ASSERT(aBaseURI);
   MOZ_ASSERT(aReferrer);
   MOZ_ASSERT(aPrincipal);
@@ -780,6 +759,33 @@ Gecko_CopyImageValueFrom(nsStyleImage* aImage, const nsStyleImage* aOther)
   MOZ_ASSERT(aOther);
 
   *aImage = *aOther;
+}
+
+void
+Gecko_SetCursorArrayLength(nsStyleUserInterface* aStyleUI, size_t aLen)
+{
+  aStyleUI->mCursorImages.Clear();
+  aStyleUI->mCursorImages.SetLength(aLen);
+}
+
+void
+Gecko_SetCursorImage(nsCursorImage* aCursor,
+                     const uint8_t* aURLString, uint32_t aURLStringLength,
+                     ThreadSafeURIHolder* aBaseURI,
+                     ThreadSafeURIHolder* aReferrer,
+                     ThreadSafePrincipalHolder* aPrincipal)
+{
+  aCursor->mImage =
+    CreateStyleImageRequest(nsStyleImageRequest::Mode::Discard,
+                            aURLString, aURLStringLength,
+                            aBaseURI, aReferrer, aPrincipal);
+}
+
+void
+Gecko_CopyCursorArrayFrom(nsStyleUserInterface* aDest,
+                          const nsStyleUserInterface* aSrc)
+{
+  aDest->mCursorImages = aSrc->mCursorImages;
 }
 
 nsStyleGradient*
@@ -889,6 +895,15 @@ Gecko_EnsureImageLayersLength(nsStyleImageLayers* aLayers, size_t aLen,
   for (size_t i = oldLength; i < aLen; ++i) {
     aLayers->mLayers[i].Initialize(aLayerType);
   }
+}
+
+void
+Gecko_EnsureStyleAnimationArrayLength(void* aArray, size_t aLen)
+{
+  auto base =
+    reinterpret_cast<nsStyleAutoArray<StyleAnimation>*>(aArray);
+
+  base->EnsureLengthAtLeast(aLen);
 }
 
 void
@@ -1034,14 +1049,74 @@ Gecko_CSSValue_GetArrayItem(nsCSSValueBorrowedMut aCSSValue, int32_t aIndex)
   return &aCSSValue->GetArrayValue()->Item(aIndex);
 }
 
+
+bool
+Gecko_PropertyId_IsPrefEnabled(nsCSSPropertyID id)
+{
+  return nsCSSProps::IsEnabled(id);
+}
+
+void
+Gecko_CSSValue_Drop(nsCSSValueBorrowedMut aCSSValue)
+{
+  aCSSValue->~nsCSSValue();
+}
+
+void
+Gecko_LoadStyleSheet(css::Loader* aLoader,
+                     ServoStyleSheet* aParent,
+                     RawServoImportRuleBorrowed aImportRule,
+                     const uint8_t* aURLString,
+                     uint32_t aURLStringLength,
+                     const uint8_t* aMediaString,
+                     uint32_t aMediaStringLength)
+{
+  MOZ_ASSERT(aLoader, "Should've catched this before");
+  MOZ_ASSERT(aParent, "Only used for @import, so parent should exist!");
+  MOZ_ASSERT(aURLString, "Invalid URLs shouldn't be loaded!");
+  RefPtr<nsMediaList> media = new nsMediaList();
+  if (aMediaStringLength) {
+    MOZ_ASSERT(aMediaString);
+    // TODO(emilio, bug 1325878): This is not great, though this is going away
+    // soon anyway, when we can have a Servo-backed nsMediaList.
+    nsDependentCSubstring medium(reinterpret_cast<const char*>(aMediaString),
+                                 aMediaStringLength);
+    nsCSSParser mediumParser(aLoader);
+    mediumParser.ParseMediaList(
+        NS_ConvertUTF8toUTF16(medium), nullptr, 0, media);
+  }
+
+  nsDependentCSubstring urlSpec(reinterpret_cast<const char*>(aURLString),
+                                aURLStringLength);
+  nsCOMPtr<nsIURI> uri;
+  nsresult rv = NS_NewURI(getter_AddRefs(uri), urlSpec);
+
+  if (NS_FAILED(rv)) {
+    // Servo and Gecko have different ideas of what a valid URL is, so we might
+    // get in here with a URL string that NS_NewURI can't handle.  If so,
+    // silently do nothing.  Eventually we should be able to assert that the
+    // NS_NewURI succeeds, here.
+    return;
+  }
+
+  aLoader->LoadChildSheet(aParent, uri, media, nullptr, aImportRule, nullptr);
+}
+
+const nsMediaFeature*
+Gecko_GetMediaFeatures()
+{
+  return nsMediaFeatures::features;
+}
+
 NS_IMPL_THREADSAFE_FFI_REFCOUNTING(nsCSSValueSharedList, CSSValueSharedList);
 
 #define STYLE_STRUCT(name, checkdata_cb)                                      \
                                                                               \
 void                                                                          \
-Gecko_Construct_nsStyle##name(nsStyle##name* ptr)                             \
+Gecko_Construct_Default_nsStyle##name(nsStyle##name* ptr,                     \
+                                      const nsPresContext* pres_context)      \
 {                                                                             \
-  new (ptr) nsStyle##name(StyleStructContext::ServoContext());                \
+  new (ptr) nsStyle##name(pres_context);                                      \
 }                                                                             \
                                                                               \
 void                                                                          \
@@ -1057,6 +1132,12 @@ Gecko_Destroy_nsStyle##name(nsStyle##name* ptr)                               \
   ptr->~nsStyle##name();                                                      \
 }
 
+void
+Gecko_Construct_nsStyleVariables(nsStyleVariables* ptr)
+{
+  new (ptr) nsStyleVariables();
+}
+
 #include "nsStyleStructList.h"
 
 #undef STYLE_STRUCT
@@ -1068,16 +1149,4 @@ Gecko_Destroy_nsStyle##name(nsStyle##name* ptr)                               \
   }
 #include "ServoBindingList.h"
 #undef SERVO_BINDING_FUNC
-#endif
-
-#ifdef MOZ_STYLO
-const nsStyleVariables*
-Servo_GetStyleVariables(ServoComputedValuesBorrowed aComputedValues)
-{
-  // Servo can't provide us with Variables structs yet, so instead of linking
-  // to a Servo_GetStyleVariables defined in Servo we define one here that
-  // always returns the same, empty struct.
-  static nsStyleVariables variables(StyleStructContext::ServoContext());
-  return &variables;
-}
 #endif

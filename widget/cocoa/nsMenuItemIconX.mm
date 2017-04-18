@@ -59,6 +59,8 @@ nsMenuItemIconX::nsMenuItemIconX(nsMenuObjectX* aMenuItem,
                                  nsIContent*    aContent,
                                  NSMenuItem*    aNativeMenuItem)
 : mContent(aContent)
+, mLoadingPrincipal(aContent->NodePrincipal())
+, mContentType(nsIContentPolicy::TYPE_INTERNAL_IMAGE)
 , mMenuObject(aMenuItem)
 , mLoadedIcon(false)
 , mSetIcon(false)
@@ -209,6 +211,10 @@ nsMenuItemIconX::GetIconURI(nsIURI** aIconURI)
 
     rv = primitiveValue->GetStringValue(imageURIString);
     if (NS_FAILED(rv)) return rv;
+  } else {
+    nsContentUtils::GetContentPolicyTypeForUIImageLoading(mContent,
+                                                          getter_AddRefs(mLoadingPrincipal),
+                                                          mContentType);
   }
 
   // Empty the mImageRegionRect initially as the image region CSS could
@@ -310,10 +316,10 @@ nsMenuItemIconX::LoadIcon(nsIURI* aIconURI)
   }
 
   nsresult rv = loader->LoadImage(aIconURI, nullptr, nullptr,
-                                  mozilla::net::RP_Default,
-                                  nullptr, loadGroup, this,
-                                  nullptr, nullptr, nsIRequest::LOAD_NORMAL, nullptr,
-                                  nsIContentPolicy::TYPE_INTERNAL_IMAGE, EmptyString(),
+                                  mozilla::net::RP_Unset,
+                                  mLoadingPrincipal, loadGroup, this,
+                                  mContent, document, nsIRequest::LOAD_NORMAL, nullptr,
+                                  mContentType, EmptyString(),
                                   getter_AddRefs(mIconRequest));
   if (NS_FAILED(rv)) return rv;
 

@@ -49,20 +49,6 @@ namespace jit {
     _(Call_IsSuspendedStarGenerator)             \
                                                  \
     _(GetElem_Fallback)                          \
-    _(GetElem_NativeSlotName)                    \
-    _(GetElem_NativeSlotSymbol)                  \
-    _(GetElem_NativePrototypeSlotName)           \
-    _(GetElem_NativePrototypeSlotSymbol)         \
-    _(GetElem_NativePrototypeCallNativeName)     \
-    _(GetElem_NativePrototypeCallNativeSymbol)   \
-    _(GetElem_NativePrototypeCallScriptedName)   \
-    _(GetElem_NativePrototypeCallScriptedSymbol) \
-    _(GetElem_UnboxedPropertyName)               \
-    _(GetElem_String)                            \
-    _(GetElem_Dense)                             \
-    _(GetElem_UnboxedArray)                      \
-    _(GetElem_TypedArray)                        \
-    _(GetElem_Arguments)                         \
                                                  \
     _(SetElem_Fallback)                          \
     _(SetElem_DenseOrUnboxedArray)               \
@@ -76,15 +62,6 @@ namespace jit {
     _(In_Dense)                                  \
                                                  \
     _(GetName_Fallback)                          \
-    _(GetName_GlobalLexical)                     \
-    _(GetName_Global)                            \
-    _(GetName_Env0)                              \
-    _(GetName_Env1)                              \
-    _(GetName_Env2)                              \
-    _(GetName_Env3)                              \
-    _(GetName_Env4)                              \
-    _(GetName_Env5)                              \
-    _(GetName_Env6)                              \
                                                  \
     _(BindName_Fallback)                         \
                                                  \
@@ -92,10 +69,7 @@ namespace jit {
     _(GetIntrinsic_Constant)                     \
                                                  \
     _(SetProp_Fallback)                          \
-    _(SetProp_Native)                            \
     _(SetProp_NativeAdd)                         \
-    _(SetProp_Unboxed)                           \
-    _(SetProp_TypedObject)                       \
     _(SetProp_CallScripted)                      \
     _(SetProp_CallNative)                        \
                                                  \

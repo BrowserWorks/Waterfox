@@ -5,6 +5,10 @@
 const STORAGE_SYNC_PREF = "webextensions.storage.sync.enabled";
 Cu.import("resource://gre/modules/Preferences.jsm");
 
+add_task(function* setup() {
+  yield ExtensionTestUtils.startAddonManager();
+});
+
 /**
  * Utility function to ensure that all supported APIs for getting are
  * tested.
@@ -88,6 +92,7 @@ add_task(function* test_config_flag_needed() {
     Promise.all(promises).then(() => browser.test.notifyPass("flag needed"));
   }
 
+  Preferences.set(STORAGE_SYNC_PREF, false);
   ok(!Preferences.get(STORAGE_SYNC_PREF));
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -99,6 +104,7 @@ add_task(function* test_config_flag_needed() {
   yield extension.startup();
   yield extension.awaitFinish("flag needed");
   yield extension.unload();
+  Preferences.reset(STORAGE_SYNC_PREF);
 });
 
 add_task(function* test_reloading_extensions_works() {
@@ -328,6 +334,37 @@ add_task(function* test_backgroundScript() {
 
   extension.sendMessage("test-sync");
   yield extension.awaitMessage("test-finished");
+
+  Preferences.reset(STORAGE_SYNC_PREF);
+  yield extension.unload();
+});
+
+add_task(function* test_storage_requires_real_id() {
+  async function backgroundScript() {
+    const EXCEPTION_MESSAGE =
+          "The storage API is not available with a temporary addon ID. " +
+          "Please add an explicit addon ID to your manifest. " +
+          "For more information see https://bugzil.la/1323228.";
+
+    await browser.test.assertRejects(browser.storage.sync.set({"foo": "bar"}),
+                                     EXCEPTION_MESSAGE);
+
+    browser.test.notifyPass("exception correct");
+  }
+
+  let extensionData = {
+    background: `(${backgroundScript})(${checkGetImpl})`,
+    manifest: {
+      permissions: ["storage"],
+    },
+    useAddonManager: "temporary",
+  };
+
+  Preferences.set(STORAGE_SYNC_PREF, true);
+
+  let extension = ExtensionTestUtils.loadExtension(extensionData);
+  yield extension.startup();
+  yield extension.awaitFinish("exception correct");
 
   Preferences.reset(STORAGE_SYNC_PREF);
   yield extension.unload();

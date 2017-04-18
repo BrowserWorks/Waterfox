@@ -52,6 +52,21 @@
   <area id="rectG" shape="rect" coords="0,0,90,100" href="#" alt="area 1"/>
   <area id="circleO" shape="circle" coords="120,60,30" href="#" alt="area 2"/>
   <area id="polyLE" shape="poly" coords="280,0,310,0,360,30,360,90,280,90" href="#" alt="area 3"/>
+  <!-- Test for fieldsets not doing weird things.  Use a 200x200 div to hold
+       all the bits for this test. Also, place it top/right, so it is not below
+       the bottom edge of the viewport. -->
+  <div style="position: absolute; width: 200px; height: 200px; right: 0; top: 0">
+    <div id="fieldset-div"
+         class="size" style="position: absolute; top: 0; left: 0">
+    </div>
+    <fieldset id="fieldset"
+              class="size"
+              style="position: absolute; top: 100px; left: 100px; border-radius: 100px">
+      <!-- Place the child span so the overflow area of the fieldset overlaps
+           the div -->
+      <span style="position: absolute; top: -100px; left: -100px; height: 1px; width: 1px"></span>
+    </fieldset>
+  </div>
   <script>
     setup({explicit_done:true});
     window.onload = function () {
@@ -100,6 +115,7 @@
 
       test(function () {
              var svg = document.getElementById('squiggle');
+             svg.scrollIntoView();
              var svgRect = svg.getBoundingClientRect();
              assert_equals(document.elementFromPoint(svgRect.left + Math.round(svgRect.width/2),
                                                      svgRect.top + Math.round(svgRect.height/2)),
@@ -109,6 +125,7 @@
 
       test(function () {
               var svg = document.getElementById('svg-transform');
+              svg.scrollIntoView();
               var svgRect = svg.getBoundingClientRect();
               assert_equals(document.elementFromPoint(svgRect.left + Math.round(svgRect.width/2),
                                                       svgRect.top + Math.round(svgRect.height/2)),
@@ -116,6 +133,7 @@
                             "Should have returned SVG with Hello WPT! that has a transform");
 
               var pink = document.getElementById('pink');
+              pink.scrollIntoView();
               var pinkRect = pink.getBoundingClientRect();
               assert_equals(document.elementFromPoint(pinkRect.left + Math.round(pinkRect.width/2),
                                                       pinkRect.top + Math.round(pinkRect.height/2)),
@@ -126,11 +144,12 @@
 
       test(function () {
             var anotherteal = document.getElementById('anotherteal');
+            anotherteal.scrollIntoView();
             var anothertealRect = anotherteal.getBoundingClientRect();
             assert_equals(document.elementFromPoint(anothertealRect.left + Math.round(anothertealRect.width/2),
                                                     anothertealRect.top + Math.round(anothertealRect.height/2)),
                           document.body,
-                          "Should have returned the root");
+                          "Should have returned the root as it has pointer-events:none");
 
             var doc = frames[2].document;
             doc.removeChild(doc.documentElement);
@@ -145,13 +164,42 @@
       }, "No viewport available");
 
       test(function () {
+          // HTML says:
+          // Pointing device interaction with an image associated with a set of layered shapes per
+          // the above algorithm must result in the relevant user interaction events being first
+          // fired to the top-most shape covering the point that the pointing device indicated, if
+          // any, or to the image element itself, if there is no shape covering that point.
+          // https://html.spec.whatwg.org/multipage/embedded-content.html#image-map-processing-model
           var area = document.getElementById('rectG');
+          var image = document.getElementById('dinos');
+          area.scrollIntoView();
           var areaRect = area.getBoundingClientRect();
           assert_equals(document.elementFromPoint(areaRect.left + Math.round(areaRect.width/2),
                                                   areaRect.top + Math.round(areaRect.height/2)),
                         area,
+                        "Should have returned the area element");
+          assert_equals(document.elementFromPoint(areaRect.left + 92,
+                                                  areaRect.top + 2),
+                        image,
                         "Should have returned the image element");
       }, "Image Maps");
+
+      test(function(){
+          var fieldsetDiv = document.getElementById("fieldset-div");
+          var divRect = fieldsetDiv.getBoundingClientRect();
+          assert_equals(document.elementFromPoint(divRect.left + divRect.width/2,
+                                                  divRect.top + divRect.height/2),
+                        fieldsetDiv,
+                        "The fieldset should not cover up the div it doesn't even overlap");
+
+          var fieldset = document.getElementById("fieldset");
+          var rect = fieldset.getBoundingClientRect();
+          // A point 5px in from topleft will be outside the rounded border.
+          assert_not_equals(document.elementFromPoint(rect.left + 5,
+                                                      rect.top + 5),
+                            fieldset,
+                            "The fieldset should not be hit by hit-tests outside its rounded border");
+      }, "Fieldsets");
       done();
     }
  </script>

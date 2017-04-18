@@ -8,7 +8,8 @@
 #define A11Y_AOM_ACCESSIBLENODE_H
 
 #include "nsWrapperCache.h"
-#include "mozilla/RefPtr.h"
+#include "mozilla/ErrorResult.h"
+#include "mozilla/dom/BindingDeclarations.h"
 
 class nsINode;
 
@@ -20,6 +21,7 @@ namespace a11y {
 
 namespace dom {
 
+class DOMStringList;
 struct ParentObject;
 
 class AccessibleNode : public nsISupports,
@@ -35,7 +37,17 @@ public:
   virtual dom::ParentObject GetParentObject() const final;
 
   void GetRole(nsAString& aRole);
+  void GetStates(nsTArray<nsString>& aStates);
+  void GetAttributes(nsTArray<nsString>& aAttributes);
   nsINode* GetDOMNode();
+
+  bool Is(const Sequence<nsString>& aFlavors);
+  bool Has(const Sequence<nsString>& aAttributes);
+  void Get(JSContext* cx, const nsAString& aAttribute,
+           JS::MutableHandle<JS::Value> aValue,
+           ErrorResult& aRv);
+
+  a11y::Accessible* Internal() const { return mIntl; }
 
 protected:
   AccessibleNode(const AccessibleNode& aCopy) = delete;
@@ -44,6 +56,7 @@ protected:
 
   RefPtr<a11y::Accessible> mIntl;
   RefPtr<nsINode> mDOMNode;
+  RefPtr<dom::DOMStringList> mStates;
 };
 
 } // dom

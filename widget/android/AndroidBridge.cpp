@@ -42,6 +42,7 @@
 #include "nsIScriptError.h"
 #include "nsIHttpChannel.h"
 
+#include "EventDispatcher.h"
 #include "MediaCodec.h"
 #include "SurfaceTexture.h"
 #include "GLContextProvider.h"
@@ -733,16 +734,25 @@ AndroidBridge::GetGlobalContextRef() {
 }
 
 /* Implementation file */
-NS_IMPL_ISUPPORTS(nsAndroidBridge, nsIAndroidBridge)
+NS_IMPL_ISUPPORTS(nsAndroidBridge,
+                  nsIAndroidEventDispatcher,
+                  nsIAndroidBridge,
+                  nsIObserver)
 
 nsAndroidBridge::nsAndroidBridge()
 {
+  if (jni::IsAvailable()) {
+    RefPtr<widget::EventDispatcher> dispatcher = new widget::EventDispatcher();
+    dispatcher->Attach(java::EventDispatcher::GetInstance(),
+                       /* window */ nullptr);
+    mEventDispatcher = dispatcher;
+  }
+
   AddObservers();
 }
 
 nsAndroidBridge::~nsAndroidBridge()
 {
-  RemoveObservers();
 }
 
 NS_IMETHODIMP nsAndroidBridge::HandleGeckoMessage(JS::HandleValue val,
@@ -989,12 +999,12 @@ class AndroidBridge::DelayedTask
     using TimeDuration = mozilla::TimeDuration;
 
 public:
-    DelayedTask(already_AddRefed<Runnable> aTask)
+    DelayedTask(already_AddRefed<nsIRunnable> aTask)
         : mTask(aTask)
         , mRunTime() // Null timestamp representing no delay.
     {}
 
-    DelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs)
+    DelayedTask(already_AddRefed<nsIRunnable> aTask, int aDelayMs)
         : mTask(aTask)
         , mRunTime(TimeStamp::Now() + TimeDuration::FromMilliseconds(aDelayMs))
     {}
@@ -1017,19 +1027,19 @@ public:
         return 0;
     }
 
-    already_AddRefed<Runnable> TakeTask()
+    already_AddRefed<nsIRunnable> TakeTask()
     {
         return mTask.forget();
     }
 
 private:
-    RefPtr<Runnable> mTask;
+    nsCOMPtr<nsIRunnable> mTask;
     const TimeStamp mRunTime;
 };
 
 
 void
-AndroidBridge::PostTaskToUiThread(already_AddRefed<Runnable> aTask, int aDelayMs)
+AndroidBridge::PostTaskToUiThread(already_AddRefed<nsIRunnable> aTask, int aDelayMs)
 {
     // add the new task into the mUiTaskQueue, sorted with
     // the earliest task first in the queue
@@ -1076,7 +1086,7 @@ AndroidBridge::RunDelayedUiThreadTasks()
         }
 
         // Retrieve task before unlocking/running.
-        RefPtr<Runnable> nextTask(mUiTaskQueue[0].TakeTask());
+        nsCOMPtr<nsIRunnable> nextTask(mUiTaskQueue[0].TakeTask());
         mUiTaskQueue.RemoveElementAt(0);
 
         // Unlock to allow posting new tasks reentrantly.
@@ -1122,39 +1132,5 @@ nsresult AndroidBridge::InputStreamRead(Object::Param obj, char *aBuf, uint32_t 
         return NS_OK;
     }
     *aRead = read;
-    return NS_OK;
-}
-
-nsresult AndroidBridge::GetExternalPublicDirectory(const nsAString& aType, nsAString& aPath) {
-    if (XRE_IsContentProcess()) {
-        nsString key(aType);
-        nsAutoString path;
-        if (AndroidBridge::sStoragePaths.Get(key, &path)) {
-            aPath = path;
-            return NS_OK;
-        }
-
-        // Lazily get the value from the parent.
-        dom::ContentChild* child = dom::ContentChild::GetSingleton();
-        if (child) {
-          nsAutoString type(aType);
-          child->SendGetDeviceStorageLocation(type, &path);
-          if (!path.IsEmpty()) {
-            AndroidBridge::sStoragePaths.Put(key, path);
-            aPath = path;
-            return NS_OK;
-          }
-        }
-
-        ALOG_BRIDGE("AndroidBridge::GetExternalPublicDirectory no cache for %s",
-              NS_ConvertUTF16toUTF8(aType).get());
-        return NS_ERROR_NOT_AVAILABLE;
-    }
-
-    auto path = GeckoAppShell::GetExternalPublicDirectory(aType);
-    if (!path) {
-        return NS_ERROR_NOT_AVAILABLE;
-    }
-    aPath = path->ToString();
     return NS_OK;
 }

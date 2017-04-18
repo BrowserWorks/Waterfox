@@ -99,9 +99,9 @@ pref("network.protocol-handler.warn-external.mailto", false);
 pref("network.protocol-handler.warn-external.vnd.youtube", false);
 
 /* http prefs */
-pref("network.http.pipelining", true);
-pref("network.http.pipelining.ssl", true);
-pref("network.http.proxy.pipelining", true);
+pref("network.http.pipelining", false);
+pref("network.http.pipelining.ssl", false);
+pref("network.http.proxy.pipelining", false);
 pref("network.http.pipelining.maxrequests" , 6);
 pref("network.http.keep-alive.timeout", 109);
 pref("network.http.max-connections", 20);
@@ -121,8 +121,8 @@ pref("network.predictor.enabled", true);
 pref("network.predictor.max-db-size", 2097152); // bytes
 pref("network.predictor.preserve", 50); // percentage of predictor data to keep when cleaning up
 
-// Do not use JS mDNS as a fallback
-pref("network.mdns.use_js_fallback", false);
+// Use JS mDNS as a fallback
+pref("network.mdns.use_js_fallback", true);
 
 /* history max results display */
 pref("browser.display.history.maxresults", 100);
@@ -615,6 +615,13 @@ pref("media.cache_readahead_limit", 30);
 // chronically starved of video frames. All decoders seen so far have a value
 // of at least 4.
 pref("media.video-queue.default-size", 3);
+// The maximum number of queued frames to send to the compositor.
+// On Android, it needs to be throttled because SurfaceTexture contains only one
+// (the most recent) image data.
+pref("media.video-queue.send-to-compositor-size", 1);
+
+// Allow to check if the decoder supports recycling only on Fennec nightly build.
+pref("media.decoder.recycle.enabled", true);
 
 // Enable the MediaCodec PlatformDecoderModule by default.
 pref("media.android-media-codec.enabled", true);
@@ -626,6 +633,10 @@ pref("media.android-remote-codec.enabled", false);
 pref("media.mediasource.enabled", true);
 
 pref("media.mediadrm-widevinecdm.visible", true);
+
+// Enable EME(Encrypted media extensions)
+pref("media.eme.enabled", false);
+pref("media.eme.apiVisible", false);
 
 // optimize images memory usage
 pref("image.downscale-during-decode.enabled", true);
@@ -726,10 +737,6 @@ pref("media.stagefright.omxcodec.flags", 0);
 
 // Coalesce touch events to prevent them from flooding the event queue
 pref("dom.event.touch.coalescing.enabled", false);
-
-// default orientation for the app, default to undefined
-// the java GeckoScreenOrientationListener needs this to be defined
-pref("app.orientation.default", "");
 
 // On memory pressure, release dirty but unused pages held by jemalloc
 // back to the system.
@@ -840,9 +847,6 @@ pref("reader.toolbar.vertical", false);
 // Whether to use the unified telemetry behavior, requires a restart.
 pref("toolkit.telemetry.unified", false);
 
-// Unified AccessibleCarets (touch-caret and selection-carets).
-pref("layout.accessiblecaret.enabled", true);
-
 // AccessibleCaret CSS for the Android L style assets.
 pref("layout.accessiblecaret.width", "22.0");
 pref("layout.accessiblecaret.height", "22.0");
@@ -905,10 +909,12 @@ pref("identity.fxaccounts.remote.oauth.uri", "https://oauth.accounts.firefox.com
 // Token server used by Firefox Account-authenticated Sync.
 pref("identity.sync.tokenserver.uri", "https://token.services.mozilla.com/1.0/sync/1.5");
 
-// Enable Presentation API
-pref("dom.presentation.enabled", false);
-pref("dom.presentation.discovery.enabled", false);
-pref("dom.presentation.discovery.legacy.enabled", false); // for TV 2.5 backward capability
+#ifndef RELEASE_OR_BETA
+// Enable Presentation API on Nightly
+pref("dom.presentation.enabled", true);
+pref("dom.presentation.controller.enabled", true); // enable 1-UA mode
+pref("dom.presentation.receiver.enabled", true); // enable 1-UA mode
+#endif
 
 pref("dom.audiochannel.audioCompeting", true);
 pref("dom.audiochannel.mediaControl", true);

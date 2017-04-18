@@ -27,13 +27,10 @@ function prepareCryptoWrap(collection, id) {
   return w;
 }
 
-function run_test() {
+add_task(async function test_records_crypto() {
   let server;
-  do_test_pending();
 
-  ensureLegacyIdentityManager();
-  Service.identity.username = "john@example.com";
-  Service.identity.syncKey = "a-abcde-abcde-abcde-abcde-abcde";
+  await configureIdentity({ username: "john@example.com" });
   let keyBundle = Service.identity.syncKeyBundle;
 
   try {
@@ -46,7 +43,6 @@ function run_test() {
 
     log.info("Creating a record");
 
-    let cryptoUri = "http://localhost:8080/crypto/steam";
     cryptoWrap = prepareCryptoWrap("steam", "resource");
 
     log.info("cryptoWrap: " + cryptoWrap.toString());
@@ -69,8 +65,7 @@ function run_test() {
     let error = "";
     try {
       payload = cryptoWrap.decrypt(keyBundle);
-    }
-    catch(ex) {
+    } catch (ex) {
       error = ex;
     }
     do_check_eq(error, "No ciphertext: nothing to decrypt?");
@@ -92,8 +87,7 @@ function run_test() {
     error = "";
     try {
       cryptoWrap.decrypt(keyBundle);
-    }
-    catch(ex) {
+    } catch (ex) {
       error = ex;
     }
     do_check_eq(error, "Record id mismatch: resource != other");
@@ -104,8 +98,7 @@ function run_test() {
     error = "";
     try {
       cryptoWrap.decrypt(keyBundle);
-    }
-    catch(ex) {
+    } catch (ex) {
       error = ex;
     }
     do_check_eq(error.substr(0, 42), "Record SHA256 HMAC mismatch: should be foo");
@@ -113,7 +106,6 @@ function run_test() {
     // Checking per-collection keys and default key handling.
 
     generateNewKeys(Service.collectionKeys);
-    let bu = "http://localhost:8080/storage/bookmarks/foo";
     let bookmarkItem = prepareCryptoWrap("bookmarks", "foo");
     bookmarkItem.encrypt(Service.collectionKeys.keyForCollection("bookmarks"));
     log.info("Ciphertext is " + bookmarkItem.ciphertext);
@@ -175,8 +167,7 @@ function run_test() {
     emptyKeys.setContents(payload, null);
 
     log.info("Done!");
+  } finally {
+    await promiseStopServer(server);
   }
-  finally {
-    server.stop(do_test_finished);
-  }
-}
+});

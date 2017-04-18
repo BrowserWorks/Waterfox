@@ -11,7 +11,12 @@ define(function (require, exports, module) {
   const React = require("devtools/client/shared/vendor/react");
 
   // Reps
-  const { isGrip, cropString } = require("./rep-utils");
+  const {
+    isGrip,
+    cropString,
+    wrapRender,
+  } = require("./rep-utils");
+  const { MODE } = require("./constants");
 
   // Shortcuts
   const DOM = React.DOM;
@@ -24,7 +29,11 @@ define(function (require, exports, module) {
 
     propTypes: {
       object: React.PropTypes.object.isRequired,
-      mode: React.PropTypes.string,
+      // @TODO Change this to Object.values once it's supported in Node's version of V8
+      mode: React.PropTypes.oneOf(Object.keys(MODE).map(key => MODE[key])),
+      objectLink: React.PropTypes.func,
+      onDOMNodeMouseOver: React.PropTypes.func,
+      onDOMNodeMouseOut: React.PropTypes.func,
     },
 
     getTextContent: function (grip) {
@@ -32,48 +41,48 @@ define(function (require, exports, module) {
     },
 
     getTitle: function (grip) {
+      const title = "#text";
       if (this.props.objectLink) {
         return this.props.objectLink({
           object: grip
-        }, "#text ");
+        }, title);
       }
-      return "";
+      return title;
     },
 
-    render: function () {
-      let grip = this.props.object;
-      let mode = this.props.mode || "short";
+    render: wrapRender(function () {
+      let {
+        object: grip,
+        mode = MODE.SHORT,
+      } = this.props;
 
-      if (mode == "short" || mode == "tiny") {
-        return (
-          DOM.span({className: "objectBox objectBox-textNode"},
-            this.getTitle(grip),
-            DOM.span({className: "nodeValue"},
-              "\"" + this.getTextContent(grip) + "\""
-            )
-          )
-        );
+      let baseConfig = {className: "objectBox objectBox-textNode"};
+      if (this.props.onDOMNodeMouseOver) {
+        Object.assign(baseConfig, {
+          onMouseOver: _ => this.props.onDOMNodeMouseOver(grip)
+        });
       }
 
-      let objectLink = this.props.objectLink || DOM.span;
+      if (this.props.onDOMNodeMouseOut) {
+        Object.assign(baseConfig, {
+          onMouseOut: this.props.onDOMNodeMouseOut
+        });
+      }
+
+      if (mode === MODE.TINY) {
+        return DOM.span(baseConfig, this.getTitle(grip));
+      }
+
       return (
-        DOM.span({className: "objectBox objectBox-textNode"},
+        DOM.span(baseConfig,
           this.getTitle(grip),
-          objectLink({
-            object: grip
-          }, "<"),
-          DOM.span({className: "nodeTag"}, "TextNode"),
-          " textContent=\"",
           DOM.span({className: "nodeValue"},
-            this.getTextContent(grip)
-          ),
-          "\"",
-          objectLink({
-            object: grip
-          }, ">;")
+            " ",
+            `"${this.getTextContent(grip)}"`
+          )
         )
       );
-    },
+    }),
   });
 
   // Registration

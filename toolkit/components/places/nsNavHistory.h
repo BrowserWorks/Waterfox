@@ -394,8 +394,13 @@ public:
   }
 
   int32_t GetFrecencyTransitionBonus(int32_t aTransitionType,
-                                     bool aVisited) const
+                                     bool aVisited,
+                                     bool aRedirect = false) const
   {
+    if (aRedirect) {
+      return mRedirectSourceVisitBonus;
+    }
+
     switch (aTransitionType) {
       case nsINavHistoryService::TRANSITION_EMBED:
         return mEmbedVisitBonus;
@@ -439,7 +444,8 @@ public:
                      const nsACString& aGuid,
                      bool aHidden,
                      uint32_t aVisitCount,
-                     uint32_t aTyped);
+                     uint32_t aTyped,
+                     const nsAString& aLastKnownTitle);
 
   /**
    * Fires onTitleChanged event to nsINavHistoryService observers
@@ -619,6 +625,7 @@ protected:
   int32_t mDownloadVisitBonus;
   int32_t mPermRedirectVisitBonus;
   int32_t mTempRedirectVisitBonus;
+  int32_t mRedirectSourceVisitBonus;
   int32_t mDefaultVisitBonus;
   int32_t mUnvisitedBookmarkBonus;
   int32_t mUnvisitedTypedBonus;

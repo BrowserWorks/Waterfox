@@ -230,6 +230,10 @@ Animation::SetTimelineNoUpdate(AnimationTimeline* aTimeline)
     return;
   }
 
+  StickyTimeDuration activeTime = mEffect
+                                  ? mEffect->GetComputedTiming().mActiveTime
+                                  : StickyTimeDuration();
+
   RefPtr<AnimationTimeline> oldTimeline = mTimeline;
   if (oldTimeline) {
     oldTimeline->RemoveAnimation(this);
@@ -240,6 +244,9 @@ Animation::SetTimelineNoUpdate(AnimationTimeline* aTimeline)
     mHoldTime.SetNull();
   }
 
+  if (!aTimeline) {
+    MaybeQueueCancelEvent(activeTime);
+  }
   UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 }
 
@@ -722,10 +729,11 @@ TimeStamp
 Animation::ElapsedTimeToTimeStamp(
   const StickyTimeDuration& aElapsedTime) const
 {
-  return AnimationTimeToTimeStamp(aElapsedTime +
-                                  mEffect->SpecifiedTiming().mDelay);
+  TimeDuration delay = mEffect
+                       ? mEffect->SpecifiedTiming().mDelay
+                       : TimeDuration();
+  return AnimationTimeToTimeStamp(aElapsedTime + delay);
 }
-
 
 // https://w3c.github.io/web-animations/#silently-set-the-current-time
 void
@@ -771,6 +779,10 @@ Animation::CancelNoUpdate()
 
   DispatchPlaybackEvent(NS_LITERAL_STRING("cancel"));
 
+  StickyTimeDuration activeTime = mEffect
+                                  ? mEffect->GetComputedTiming().mActiveTime
+                                  : StickyTimeDuration();
+
   mHoldTime.SetNull();
   mStartTime.SetNull();
 
@@ -779,6 +791,45 @@ Animation::CancelNoUpdate()
   if (mTimeline) {
     mTimeline->RemoveAnimation(this);
   }
+  MaybeQueueCancelEvent(activeTime);
+}
+
+bool
+Animation::ShouldBeSynchronizedWithMainThread(
+  nsCSSPropertyID aProperty,
+  const nsIFrame* aFrame,
+  AnimationPerformanceWarning::Type& aPerformanceWarning) const
+{
+  // Only synchronize playing animations
+  if (!IsPlaying()) {
+    return false;
+  }
+
+  // Currently only transform animations need to be synchronized
+  if (aProperty != eCSSProperty_transform) {
+    return false;
+  }
+
+  KeyframeEffectReadOnly* keyframeEffect = mEffect
+                                           ? mEffect->AsKeyframeEffect()
+                                           : nullptr;
+  if (!keyframeEffect) {
+    return false;
+  }
+
+  // Are we starting at the same time as other geometric animations?
+  // We check this before calling ShouldBlockAsyncTransformAnimations, partly
+  // because it's cheaper, but also because it's often the most useful thing
+  // to know when you're debugging performance.
+  if (mSyncWithGeometricAnimations &&
+      keyframeEffect->HasAnimationOfProperty(eCSSProperty_transform)) {
+    aPerformanceWarning = AnimationPerformanceWarning::Type::
+                          TransformWithSyncGeometricAnimations;
+    return true;
+  }
+
+  return keyframeEffect->
+           ShouldBlockAsyncTransformAnimations(aFrame, aPerformanceWarning);
 }
 
 void
@@ -819,6 +870,17 @@ Animation::HasLowerCompositeOrderThan(const Animation& aOther) const
       return thisTransition->HasLowerCompositeOrderThan(*otherTransition);
     }
     if (thisTransition || otherTransition) {
+      // Cancelled transitions no longer have an owning element. To be strictly
+      // correct we should store a strong reference to the owning element
+      // so that if we arrive here while sorting cancel events, we can sort
+      // them in the correct order.
+      //
+      // However, given that cancel events are almost always queued
+      // synchronously in some deterministic manner, we can be fairly sure
+      // that cancel events will be dispatched in a deterministic order
+      // (which is our only hard requirement until specs say otherwise).
+      // Furthermore, we only reach here when we have events with equal
+      // timestamps so this is an edge case we can probably ignore for now.
       return thisTransition;
     }
   }
@@ -858,10 +920,6 @@ Animation::ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
                         const nsCSSPropertyIDSet& aPropertiesToSkip)
 {
   if (!mEffect) {
-    return;
-  }
-
-  if (!IsInEffect()) {
     return;
   }
 
@@ -939,6 +997,16 @@ Animation::NotifyEffectTimingUpdated()
                Animation::SyncNotifyFlag::Async);
 }
 
+void
+Animation::NotifyGeometricAnimationsStartingThisFrame()
+{
+  if (!IsNewlyStarted() || !mEffect) {
+    return;
+  }
+
+  mSyncWithGeometricAnimations = true;
+}
+
 // https://w3c.github.io/web-animations/#play-an-animation
 void
 Animation::PlayNoUpdate(ErrorResult& aRv, LimitBehavior aLimitBehavior)
@@ -1003,6 +1071,11 @@ Animation::PlayNoUpdate(ErrorResult& aRv, LimitBehavior aLimitBehavior)
   }
 
   mPendingState = PendingState::PlayPending;
+
+  // Clear flag that causes us to sync transform animations with the main
+  // thread for now. We'll set this when we go to set up compositor
+  // animations if it applies.
+  mSyncWithGeometricAnimations = false;
 
   nsIDocument* doc = GetRenderedDocument();
   if (doc) {
@@ -1204,7 +1277,7 @@ Animation::FlushStyle() const
 {
   nsIDocument* doc = GetRenderedDocument();
   if (doc) {
-    doc->FlushPendingNotifications(Flush_Style);
+    doc->FlushPendingNotifications(FlushType::Style);
   }
 }
 

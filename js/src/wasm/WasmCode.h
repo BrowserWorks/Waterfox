@@ -19,17 +19,19 @@
 #ifndef wasm_code_h
 #define wasm_code_h
 
-#include "wasm/WasmGeneratedSourceMap.h"
+#include "js/HashTable.h"
 #include "wasm/WasmTypes.h"
 
 namespace js {
 
 struct AsmJSMetadata;
+class WasmActivation;
 
 namespace wasm {
 
 struct LinkData;
 struct Metadata;
+class FrameIterator;
 
 // A wasm CodeSegment owns the allocated executable code for a wasm module.
 // This allocation also currently includes the global data segment, which allows
@@ -241,6 +243,8 @@ class CodeRange
         ImportJitExit,     // fast-path calling from wasm into JIT code
         ImportInterpExit,  // slow-path calling from wasm into C++ interp
         TrapExit,          // calls C++ to report and jumps to throw stub
+        DebugTrap,         // calls C++ to handle debug event such as
+                           // enter/leave frame or breakpoint
         FarJumpIsland,     // inserted to connect otherwise out-of-range insns
         Inline             // stub that is jumped-to, not called, and thus
                            // replaces/loses preceding innermost frame
@@ -398,11 +402,30 @@ struct NameInBytecode
     uint32_t length;
 
     NameInBytecode() = default;
-    NameInBytecode(uint32_t offset, uint32_t length) : offset(offset), length(length) {}
+    NameInBytecode(uint32_t offset, uint32_t length)
+      : offset(offset), length(length)
+    {}
 };
 
 typedef Vector<NameInBytecode, 0, SystemAllocPolicy> NameInBytecodeVector;
-typedef Vector<char16_t, 64> TwoByteName;
+
+// CustomSection represents a custom section in the bytecode which can be
+// extracted via Module.customSections. The (offset, length) pair does not
+// include the custom section name.
+
+struct CustomSection
+{
+    NameInBytecode name;
+    uint32_t offset;
+    uint32_t length;
+
+    CustomSection() = default;
+    CustomSection(NameInBytecode name, uint32_t offset, uint32_t length)
+      : name(name), offset(offset), length(length)
+    {}
+};
+
+typedef Vector<CustomSection, 0, SystemAllocPolicy> CustomSectionVector;
 
 // Metadata holds all the data that is needed to describe compiled wasm code
 // at runtime (as opposed to data that is only used to statically link or
@@ -446,7 +469,12 @@ struct Metadata : ShareableBase<Metadata>, MetadataCacheablePod
     CallSiteVector        callSites;
     CallThunkVector       callThunks;
     NameInBytecodeVector  funcNames;
+    CustomSectionVector   customSections;
     CacheableChars        filename;
+
+    // Debug-enabled code is not serialized.
+    bool                  debugEnabled;
+    Uint32Vector          debugTrapFarJumpOffsets;
 
     bool usesMemory() const { return UsesMemory(memoryUsage); }
     bool hasSharedMemory() const { return memoryUsage == MemoryUsage::Shared; }
@@ -474,14 +502,71 @@ struct Metadata : ShareableBase<Metadata>, MetadataCacheablePod
     virtual ScriptSource* maybeScriptSource() const {
         return nullptr;
     }
-    virtual bool getFuncName(JSContext* cx, const Bytes* maybeBytecode, uint32_t funcIndex,
-                             TwoByteName* name) const;
+    virtual bool getFuncName(const Bytes* maybeBytecode, uint32_t funcIndex, UTF8Bytes* name) const;
 
     WASM_DECLARE_SERIALIZABLE_VIRTUAL(Metadata);
 };
 
 typedef RefPtr<Metadata> MutableMetadata;
 typedef RefPtr<const Metadata> SharedMetadata;
+
+// The generated source location for the AST node/expression. The offset field refers
+// an offset in an binary format file.
+
+struct ExprLoc
+{
+    uint32_t lineno;
+    uint32_t column;
+    uint32_t offset;
+    ExprLoc() : lineno(0), column(0), offset(0) {}
+    ExprLoc(uint32_t lineno_, uint32_t column_, uint32_t offset_)
+      : lineno(lineno_), column(column_), offset(offset_)
+    {}
+};
+
+typedef Vector<ExprLoc, 0, TempAllocPolicy> ExprLocVector;
+
+// The generated source WebAssembly function lines and expressions ranges.
+
+struct FunctionLoc
+{
+    size_t startExprsIndex;
+    size_t endExprsIndex;
+    uint32_t startLineno;
+    uint32_t endLineno;
+    FunctionLoc(size_t startExprsIndex_, size_t endExprsIndex_, uint32_t startLineno_, uint32_t endLineno_)
+      : startExprsIndex(startExprsIndex_),
+        endExprsIndex(endExprsIndex_),
+        startLineno(startLineno_),
+        endLineno(endLineno_)
+    {}
+};
+
+typedef Vector<FunctionLoc, 0, TempAllocPolicy> FunctionLocVector;
+
+// The generated source map for WebAssembly binary file. This map is generated during
+// building the text buffer (see BinaryToExperimentalText).
+
+class GeneratedSourceMap
+{
+    ExprLocVector exprlocs_;
+    FunctionLocVector functionlocs_;
+    uint32_t totalLines_;
+
+  public:
+    explicit GeneratedSourceMap(JSContext* cx)
+     : exprlocs_(cx),
+       functionlocs_(cx),
+       totalLines_(0)
+    {}
+    ExprLocVector& exprlocs() { return exprlocs_; }
+    FunctionLocVector& functionlocs() { return functionlocs_; }
+
+    uint32_t totalLines() { return totalLines_; }
+    void setTotalLines(uint32_t val) { totalLines_ = val; }
+};
+
+typedef UniquePtr<GeneratedSourceMap> UniqueGeneratedSourceMap;
 
 // Code objects own executable code and the metadata that describes it. At the
 // moment, Code objects are owned uniquely by instances since CodeSegments are
@@ -495,7 +580,10 @@ class Code
     const SharedBytes        maybeBytecode_;
     UniqueGeneratedSourceMap maybeSourceMap_;
     CacheableCharsVector     funcLabels_;
+    uint32_t                 enterAndLeaveFrameTrapsCounter_;
     bool                     profilingEnabled_;
+
+    void toggleDebugTrap(uint32_t offset, bool enabled);
 
   public:
     Code(UniqueCodeSegment segment,
@@ -515,7 +603,7 @@ class Code
     // Return the name associated with a given function index, or generate one
     // if none was given by the module.
 
-    bool getFuncName(JSContext* cx, uint32_t funcIndex, TwoByteName* name) const;
+    bool getFuncName(uint32_t funcIndex, UTF8Bytes* name) const;
     JSAtom* getFuncAtom(JSContext* cx, uint32_t funcIndex) const;
 
     // If the source bytecode was saved when this Code was constructed, this
@@ -531,9 +619,15 @@ class Code
     // asynchronously walk the stack. Otherwise, the ProfilingFrameIterator will
     // skip any activations of this code.
 
-    MOZ_MUST_USE bool ensureProfilingState(JSContext* cx, bool enabled);
+    MOZ_MUST_USE bool ensureProfilingState(JSRuntime* rt, bool enabled);
     bool profilingEnabled() const { return profilingEnabled_; }
     const char* profilingLabel(uint32_t funcIndex) const { return funcLabels_[funcIndex].get(); }
+
+    // The Code can track enter/leave frame events. Any such event triggers
+    // debug trap. The enter frame events enabled across all functions, but
+    // the leave frame events only for particular function.
+
+    void adjustEnterAndLeaveFrameTrapsState(JSContext* cx, bool enabled);
 
     // about:memory reporting:
 

@@ -120,10 +120,7 @@ Function .onInit
 
   SetSilent silent
 
-  ; On Windows 2000 we do not install the maintenance service.
-  ; We won't run this installer from the parent installer, but just in case 
-  ; someone tries to execute it on Windows 2000...
-  ${Unless} ${AtLeastWinXP}
+  ${Unless} ${AtLeastWin7}
     Abort
   ${EndUnless}
 FunctionEnd
@@ -190,6 +187,20 @@ Section "MaintenanceService"
   ${EndIf}
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+  ; Since the Maintenance service can be installed either x86 or x64,
+  ; always use the 64-bit registry.
+  ${If} ${RunningX64}
+    ; Previous versions always created the uninstall key in the 32-bit registry.
+    ; Clean those old entries out if they still exist.
+    SetRegView 32
+    DeleteRegKey HKLM "${MaintUninstallKey}"
+    ; Preserve the lastused value before we switch to 64.
+    SetRegView lastused
+
+    SetRegView 64
+  ${EndIf}
+
   WriteRegStr HKLM "${MaintUninstallKey}" "DisplayName" "${MaintFullName}"
   WriteRegStr HKLM "${MaintUninstallKey}" "UninstallString" \
                    '"$INSTDIR\uninstall.exe"'
@@ -207,11 +218,6 @@ Section "MaintenanceService"
   ; want to install once on the first upgrade to maintenance service.
   ; Also write out that we are currently installed, preferences will check
   ; this value to determine if we should show the service update pref.
-  ; Since the Maintenance service can be installed either x86 or x64,
-  ; always use the 64-bit registry for checking if an attempt was made.
-  ${If} ${RunningX64}
-    SetRegView 64
-  ${EndIf}
   WriteRegDWORD HKLM "Software\Mozilla\MaintenanceService" "Attempted" 1
   WriteRegDWORD HKLM "Software\Mozilla\MaintenanceService" "Installed" 1
   DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "FFPrefetchDisabled"
@@ -321,11 +327,10 @@ Section "Uninstall"
   RMDir /REBOOTOK "$INSTDIR\update"
   RMDir /REBOOTOK "$INSTDIR"
 
-  DeleteRegKey HKLM "${MaintUninstallKey}"
-
   ${If} ${RunningX64}
     SetRegView 64
   ${EndIf}
+  DeleteRegKey HKLM "${MaintUninstallKey}"
   DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "Installed"
   DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "FFPrefetchDisabled"
   DeleteRegKey HKLM "${FallbackKey}\"

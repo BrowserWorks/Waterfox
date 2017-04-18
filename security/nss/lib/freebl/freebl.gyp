@@ -104,6 +104,10 @@
                 '<(DEPTH)/lib/util/util.gyp:nssutil3',
               ],
             }],
+          ]
+        }],
+        [ 'OS=="linux" or OS=="android"', {
+          'conditions': [
             [ 'target_arch=="x64"', {
               'sources': [
                 'arcfour-amd64-gas.s',
@@ -142,7 +146,7 @@
             }],
           ],
         }, {
-          # not Linux
+          # not Linux or Android
           'conditions': [
             [ 'moz_fold_libs==0', {
               'dependencies': [
@@ -159,8 +163,6 @@
           'sources': [
             #TODO: building with mingw should not need this.
             'ecl/uint128.c',
-            #TODO: clang-cl needs -msse3 here
-            'intel-gcm-wrap.c',
           ],
           'libraries': [
             'advapi32.lib',
@@ -181,6 +183,16 @@
                 'mpi/mpi_x86_asm.c',
                 'intel-aes-x86-masm.asm',
                 'intel-gcm-x86-masm.asm',
+              ],
+            }],
+            [ 'cc_is_clang==1', {
+              'dependencies': [
+                'intel-gcm-wrap_c_lib',
+              ],
+            }, {
+              # MSVC
+              'sources': [
+                'intel-gcm-wrap.c',
               ],
             }],
           ],
@@ -213,7 +225,7 @@
             }],
           ],
         }],
-        [ 'fuzz==1', {
+        [ 'fuzz_tls==1', {
           'sources': [
             'det_rng.c',
           ],
@@ -221,7 +233,7 @@
             'UNSAFE_FUZZER_MODE',
           ],
         }],
-        [ 'test_build==1', {
+        [ 'ct_verif==1', {
           'defines': [
             'CT_VERIF',
           ],
@@ -366,6 +378,10 @@
               'FREEBL_NO_DEPEND',
             ],
           }],
+        ],
+      }],
+      [ 'OS=="linux" or OS=="android"', {
+        'conditions': [
           [ 'target_arch=="x64"', {
             'defines': [
               'MP_IS_LITTLE_ENDIAN',
@@ -375,7 +391,7 @@
               'NSS_USE_COMBA',
             ],
           }],
-          [ 'target_arch=="x64" and use_msan==0', {
+          [ 'target_arch=="x64"', {
             'defines': [
               'USE_HW_AES',
               'INTEL_GCM',
@@ -396,6 +412,11 @@
               'MP_ASSEMBLY_SQUARE',
               'MP_USE_UINT_DIGIT',
               'SHA_NO_LONG_LONG',
+            ],
+          }],
+          [ 'target_arch=="arm64" or target_arch=="aarch64"', {
+            'defines': [
+              'NSS_USE_64',
             ],
           }],
         ],

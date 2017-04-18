@@ -135,11 +135,6 @@ nsLayoutStylesheetCache::UASheet()
 StyleSheet*
 nsLayoutStylesheetCache::HTMLSheet()
 {
-  if (!mHTMLSheet) {
-    LoadSheetURL("resource://gre-resources/html.css",
-                 &mHTMLSheet, eAgentSheetFeatures, eCrash);
-  }
-
   return mHTMLSheet;
 }
 
@@ -335,6 +330,8 @@ nsLayoutStylesheetCache::nsLayoutStylesheetCache(StyleBackendType aType)
   // per-profile, since they're profile-invariant.
   LoadSheetURL("resource://gre-resources/counterstyles.css",
                &mCounterStylesSheet, eAgentSheetFeatures, eCrash);
+  LoadSheetURL("resource://gre-resources/html.css",
+               &mHTMLSheet, eAgentSheetFeatures, eCrash);
   LoadSheetURL("chrome://global/content/minimal-xul.css",
                &mMinimalXULSheet, eAgentSheetFeatures, eCrash);
   LoadSheetURL("resource://gre-resources/quirk.css",
@@ -395,8 +392,6 @@ nsLayoutStylesheetCache::For(StyleBackendType aType)
     //                               "layout.css.example-pref.enabled");
     Preferences::RegisterCallback(&DependentPrefChanged,
                                   "layout.css.grid.enabled");
-    Preferences::RegisterCallback(&DependentPrefChanged,
-                                  "dom.details_element.enabled");
   }
 
   return cache;
@@ -604,7 +599,10 @@ AnnotateCrashReport(nsIURI* aURI)
       annotation.AppendLiteral("(ResolveURI failed)\n");
     } else {
       nsAutoCString resolvedSpec;
-      handler->ResolveURI(aURI, resolvedSpec);
+      nsresult rv = handler->ResolveURI(aURI, resolvedSpec);
+      if (NS_FAILED(rv)) {
+        annotation.AppendPrintf("(ResolveURI failed with 0x%08x)\n", rv);
+      }
       annotation.Append(NS_ConvertUTF8toUTF16(resolvedSpec));
       annotation.Append('\n');
     }
@@ -848,7 +846,6 @@ nsLayoutStylesheetCache::DependentPrefChanged(const char* aPref, void* aData)
                   gStyleCache_Servo ? &gStyleCache_Servo->sheet_ : nullptr);
 
   INVALIDATE(mUASheet);  // for layout.css.grid.enabled
-  INVALIDATE(mHTMLSheet); // for dom.details_element.enabled
 
 #undef INVALIDATE
 }
@@ -872,10 +869,10 @@ nsLayoutStylesheetCache::BuildPreferenceSheet(RefPtr<StyleSheet>* aSheet,
 {
   if (mBackendType == StyleBackendType::Gecko) {
     *aSheet = new CSSStyleSheet(eAgentSheetFeatures, CORS_NONE,
-                                mozilla::net::RP_Default);
+                                mozilla::net::RP_Unset);
   } else {
     *aSheet = new ServoStyleSheet(eAgentSheetFeatures, CORS_NONE,
-                                  mozilla::net::RP_Default, dom::SRIMetadata());
+                                  mozilla::net::RP_Unset, dom::SRIMetadata());
   }
 
   StyleSheet* sheet = *aSheet;
@@ -933,7 +930,6 @@ nsLayoutStylesheetCache::BuildPreferenceSheet(RefPtr<StyleSheet>* aSheet,
           "button::-moz-focus-inner, input[type=\"reset\"]::-moz-focus-inner, "
           "input[type=\"button\"]::-moz-focus-inner, "
           "input[type=\"submit\"]::-moz-focus-inner { "
-          "padding: 1px 2px 1px 2px; "
           "border: %dpx %s transparent !important; }\n",
           focusRingWidth,
           focusRingStyle == 0 ? "solid" : "dotted");
@@ -975,7 +971,10 @@ nsLayoutStylesheetCache::BuildPreferenceSheet(RefPtr<StyleSheet>* aSheet,
   if (sheet->IsGecko()) {
     sheet->AsGecko()->ReparseSheet(sheetText);
   } else {
-    nsresult rv = sheet->AsServo()->ParseSheet(sheetText, uri, uri, nullptr, 0);
+    ServoStyleSheet* servoSheet = sheet->AsServo();
+    // NB: The pref sheet never has @import rules.
+    nsresult rv =
+      servoSheet->ParseSheet(nullptr, sheetText, uri, uri, nullptr, 0);
     // Parsing the about:PreferenceStyleSheet URI can only fail on OOM. If we
     // are OOM before we parsed any documents we might as well abort.
     MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));

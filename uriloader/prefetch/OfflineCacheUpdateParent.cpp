@@ -18,8 +18,7 @@
 
 using namespace mozilla::ipc;
 using mozilla::BasePrincipal;
-using mozilla::DocShellOriginAttributes;
-using mozilla::PrincipalOriginAttributes;
+using mozilla::OriginAttributes;
 using mozilla::dom::TabParent;
 
 //
@@ -261,13 +260,6 @@ OfflineCacheUpdateParent::GetIsInIsolatedMozBrowserElement(bool *aIsInIsolatedMo
 {
     NS_ENSURE_TRUE(mLoadingPrincipal, NS_ERROR_UNEXPECTED);
     return mLoadingPrincipal->GetIsInIsolatedMozBrowserElement(aIsInIsolatedMozBrowserElement);
-}
-
-NS_IMETHODIMP
-OfflineCacheUpdateParent::GetAppId(uint32_t *aAppId)
-{
-    NS_ENSURE_TRUE(mLoadingPrincipal, NS_ERROR_UNEXPECTED);
-    return mLoadingPrincipal->GetAppId(aAppId);
 }
 
 NS_IMETHODIMP

@@ -1,4 +1,8 @@
-Components.utils.import("resource://gre/modules/osfile.jsm");
+var {utils: Cu} = Components;
+
+Cu.import("resource://gre/modules/osfile.jsm");
+Cu.import("resource://gre/modules/Services.jsm", this);
+Cu.import("resource://testing-common/AppData.jsm", this);
 
 function getEventDir() {
   return OS.Path.join(do_get_tempdir().path, "crash-events");
@@ -30,8 +34,7 @@ function getEventDir() {
  *       Certain types of crashes may not cause the process to
  *       exit with an error.
  */
-function do_crash(setup, callback, canReturnZero)
-{
+function do_crash(setup, callback, canReturnZero) {
   // get current process filename (xpcshell)
   let ds = Components.classes["@mozilla.org/file/directory_service;1"]
     .getService(Components.interfaces.nsIProperties);
@@ -48,15 +51,15 @@ function do_crash(setup, callback, canReturnZero)
   let process = Components.classes["@mozilla.org/process/util;1"]
                   .createInstance(Components.interfaces.nsIProcess);
   process.init(bin);
-  let args = ['-g', greD.path,
-              '-f', headfile.path];
+  let args = ["-g", greD.path,
+              "-f", headfile.path];
   if (setup) {
     if (typeof(setup) == "function")
       // funky, but convenient
-      setup = "("+setup.toSource()+")();";
-    args.push('-e', setup);
+      setup = "(" + setup.toSource() + ")();";
+    args.push("-e", setup);
   }
-  args.push('-f', tailfile.path);
+  args.push("-f", tailfile.path);
 
   let env = Components.classes["@mozilla.org/process/environment;1"]
                               .getService(Components.interfaces.nsIEnvironment);
@@ -71,9 +74,9 @@ function do_crash(setup, callback, canReturnZero)
 
   try {
       process.run(true, args, args.length);
-  }
-  catch (ex) {} // on Windows we exit with a -1 status when crashing.
-  finally {
+  } catch (ex) {
+    // on Windows we exit with a -1 status when crashing.
+  } finally {
     env.set("CRASHES_EVENTS_DIR", "");
   }
 
@@ -85,21 +88,25 @@ function do_crash(setup, callback, canReturnZero)
   handleMinidump(callback);
 }
 
-function handleMinidump(callback)
-{
-  // find minidump
-  let minidump = null;
+function getMinidump() {
   let en = do_get_tempdir().directoryEntries;
   while (en.hasMoreElements()) {
     let f = en.getNext().QueryInterface(Components.interfaces.nsILocalFile);
     if (f.leafName.substr(-4) == ".dmp") {
-      minidump = f;
-      break;
+      return f;
     }
   }
 
-  if (minidump == null)
+  return null;
+}
+
+function handleMinidump(callback) {
+  // find minidump
+  let minidump = getMinidump();
+
+  if (minidump == null) {
     do_throw("No minidump found!");
+  }
 
   let extrafile = minidump.clone();
   extrafile.leafName = extrafile.leafName.slice(0, -4) + ".extra";
@@ -109,29 +116,36 @@ function handleMinidump(callback)
 
   // Just in case, don't let these files linger.
   do_register_cleanup(function() {
-          if (minidump.exists())
-              minidump.remove(false);
-          if (extrafile.exists())
-              extrafile.remove(false);
-          if (memoryfile.exists())
-              memoryfile.remove(false);
-      });
+    if (minidump.exists()) {
+      minidump.remove(false);
+    }
+    if (extrafile.exists()) {
+      extrafile.remove(false);
+    }
+    if (memoryfile.exists()) {
+      memoryfile.remove(false);
+    }
+  });
+
   do_check_true(extrafile.exists());
   let extra = parseKeyValuePairsFromFile(extrafile);
 
-  if (callback)
+  if (callback) {
     callback(minidump, extra);
+  }
 
-  if (minidump.exists())
+  if (minidump.exists()) {
     minidump.remove(false);
-  if (extrafile.exists())
+  }
+  if (extrafile.exists()) {
     extrafile.remove(false);
-  if (memoryfile.exists())
+  }
+  if (memoryfile.exists()) {
     memoryfile.remove(false);
+  }
 }
 
-function do_content_crash(setup, callback)
-{
+function do_content_crash(setup, callback) {
   do_load_child_test_harness();
   do_test_pending();
 
@@ -139,24 +153,34 @@ function do_content_crash(setup, callback)
   // that here.
   let crashReporter =
       Components.classes["@mozilla.org/toolkit/crash-reporter;1"]
-      .getService(Components.interfaces.nsICrashReporter);
+                .getService(Components.interfaces.nsICrashReporter);
   crashReporter.minidumpPath = do_get_tempdir();
+
+  /* import-globals-from ../unit/crasher_subprocess_head.js */
+  /* import-globals-from ../unit/crasher_subprocess_tail.js */
 
   let headfile = do_get_file("../unit/crasher_subprocess_head.js");
   let tailfile = do_get_file("../unit/crasher_subprocess_tail.js");
   if (setup) {
-    if (typeof(setup) == "function")
+    if (typeof(setup) == "function") {
       // funky, but convenient
-      setup = "("+setup.toSource()+")();";
+      setup = "(" + setup.toSource() + ")();";
+    }
   }
 
   let handleCrash = function() {
-    try {
-      handleMinidump(callback);
-    } catch (x) {
-      do_report_unexpected_exception(x);
-    }
-    do_test_finished();
+    do_get_profile();
+    makeFakeAppDir().then(() => {
+      let id = getMinidump().leafName.slice(0, -4);
+      return Services.crashmanager.ensureCrashIsPresent(id);
+    }).then(() => {
+      try {
+        handleMinidump(callback);
+      } catch (x) {
+        do_report_unexpected_exception(x);
+      }
+      do_test_finished();
+    });
   };
 
   sendCommand("load(\"" + headfile.path.replace(/\\/g, "/") + "\");", () =>

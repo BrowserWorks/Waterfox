@@ -84,20 +84,13 @@ toolbarbutton[checked="true"]:not([disabled="true"]) {
     text-shadow: none;
   }
 
-  toolbarbutton:-moz-lwtheme:not(:hover):not([checked="true"]):not([open="true"]):not([disabled="true"]) {
+  toolbarbutton:-moz-lwtheme:not([disabled="true"]) {
     color: inherit;
     text-shadow: inherit;
   }
-
-  @media not all and (-moz-os-version: windows-xp) {
-    toolbarbutton:-moz-lwtheme:not([disabled="true"]) {
-      color: inherit;
-      text-shadow: inherit;
-    }
-  }
 }
 
-@media not all and (-moz-windows-default-theme) {
+@media (-moz-windows-default-theme: 0) {
   toolbarbutton:-moz-lwtheme {
     -moz-appearance: none;
   }

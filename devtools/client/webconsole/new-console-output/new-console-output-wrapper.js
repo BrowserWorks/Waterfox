@@ -9,8 +9,10 @@ const ReactDOM = require("devtools/client/shared/vendor/react-dom");
 const { Provider } = require("devtools/client/shared/vendor/react-redux");
 
 const actions = require("devtools/client/webconsole/new-console-output/actions/index");
+const { createContextMenu } = require("devtools/client/webconsole/new-console-output/utils/context-menu");
 const { configureStore } = require("devtools/client/webconsole/new-console-output/store");
 
+const EventEmitter = require("devtools/shared/event-emitter");
 const ConsoleOutput = React.createFactory(require("devtools/client/webconsole/new-console-output/components/console-output"));
 const FilterBar = React.createFactory(require("devtools/client/webconsole/new-console-output/components/filter-bar"));
 
@@ -19,6 +21,8 @@ let queuedActions = [];
 let throttledDispatchTimeout = false;
 
 function NewConsoleOutputWrapper(parentNode, jsterm, toolbox, owner, document) {
+  EventEmitter.decorate(this);
+
   this.parentNode = parentNode;
   this.jsterm = jsterm;
   this.toolbox = toolbox;
@@ -44,21 +48,58 @@ NewConsoleOutputWrapper.prototype = {
           }]));
         },
         hudProxyClient: this.jsterm.hud.proxy.client,
-        onViewSourceInDebugger: frame => this.toolbox.viewSourceInDebugger.call(
-          this.toolbox,
+        onViewSourceInDebugger: frame => {
+          this.toolbox.viewSourceInDebugger(frame.url, frame.line).then(() =>
+            this.jsterm.hud.emit("source-in-debugger-opened")
+          );
+        },
+        onViewSourceInScratchpad: frame => this.toolbox.viewSourceInScratchpad(
           frame.url,
           frame.line
         ),
+        onViewSourceInStyleEditor: frame => this.toolbox.viewSourceInStyleEditor(
+          frame.url,
+          frame.line
+        ),
+        openContextMenu: (e, message) => {
+          let { screenX, screenY, target } = e;
+
+          let messageEl = target.closest(".message");
+          let clipboardText = messageEl ? messageEl.textContent : null;
+
+          // Retrieve closes actor id from the DOM.
+          let actorEl = target.closest("[data-link-actor-id]");
+          let actor = actorEl ? actorEl.dataset.linkActorId : null;
+
+          let menu = createContextMenu(this.jsterm, this.parentNode,
+            { actor, clipboardText, message });
+
+          // Emit the "menu-open" event for testing.
+          menu.once("open", () => this.emit("menu-open"));
+          menu.popup(screenX, screenY, this.toolbox);
+
+          return menu;
+        },
         openNetworkPanel: (requestId) => {
           return this.toolbox.selectTool("netmonitor").then(panel => {
             return panel.panelWin.NetMonitorController.inspectRequest(requestId);
           });
         },
         sourceMapService: this.toolbox ? this.toolbox._sourceMapService : null,
-        openLink: url => this.jsterm.hud.owner.openLink.call(this.jsterm.hud.owner, url),
+        openLink: url => this.jsterm.hud.owner.openLink(url),
         createElement: nodename => {
           return this.document.createElementNS("http://www.w3.org/1999/xhtml", nodename);
-        }
+        },
+        highlightDomElement: (grip, options = {}) => {
+          return this.toolbox && this.toolbox.highlighterUtils
+            ? this.toolbox.highlighterUtils.highlightDomValueGrip(grip, options)
+            : null;
+        },
+        unHighlightDomElement: (forceHide = false) => {
+          return this.toolbox && this.toolbox.highlighterUtils
+            ? this.toolbox.highlighterUtils.unhighlight(forceHide)
+            : null;
+        },
       }
     });
     let filterBar = FilterBar({
@@ -66,6 +107,7 @@ NewConsoleOutputWrapper.prototype = {
         attachRefToHud
       }
     });
+
     let provider = React.createElement(
       Provider,
       { store },
@@ -113,6 +155,11 @@ NewConsoleOutputWrapper.prototype = {
   dispatchMessagesClear: function () {
     store.dispatch(actions.messagesClear());
   },
+
+  dispatchTimestampsToggle: function (enabled) {
+    store.dispatch(actions.timestampsToggle(enabled));
+  },
+
   // Should be used for test purpose only.
   getStore: function () {
     return store;

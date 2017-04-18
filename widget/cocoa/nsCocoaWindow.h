@@ -237,15 +237,15 @@ public:
 
     virtual void            Destroy() override;
 
-    NS_IMETHOD              Show(bool aState) override;
+    virtual void            Show(bool aState) override;
     virtual nsIWidget*      GetSheetWindowParent(void) override;
-    NS_IMETHOD              Enable(bool aState) override;
+    virtual void            Enable(bool aState) override;
     virtual bool            IsEnabled() const override;
     virtual void            SetModal(bool aState) override;
     virtual void            SetFakeModal(bool aState) override;
     virtual bool            IsRunningAppModal() override;
     virtual bool            IsVisible() const override;
-    NS_IMETHOD              SetFocus(bool aState=false) override;
+    virtual nsresult        SetFocus(bool aState=false) override;
     virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
     virtual LayoutDeviceIntPoint GetClientOffset() override;
     virtual LayoutDeviceIntSize
@@ -256,9 +256,9 @@ public:
     virtual void            ConstrainPosition(bool aAllowSlop,
                                               int32_t *aX, int32_t *aY) override;
     virtual void            SetSizeConstraints(const SizeConstraints& aConstraints) override;
-    NS_IMETHOD              Move(double aX, double aY) override;
+    virtual void            Move(double aX, double aY) override;
     virtual void            SetSizeMode(nsSizeMode aMode) override;
-    NS_IMETHOD              HideWindowChrome(bool aShouldHide) override;
+    virtual void            HideWindowChrome(bool aShouldHide) override;
 
     void EnteredFullScreen(bool aFullScreen, bool aNativeMode = true);
     virtual bool PrepareForFullscreenTransition(nsISupports** aData) override;
@@ -268,7 +268,7 @@ public:
                                              nsIRunnable* aCallback) override;
     virtual nsresult MakeFullScreen(
       bool aFullScreen, nsIScreen* aTargetScreen = nullptr) override final;
-    NS_IMETHOD MakeFullScreenWithNativeTransition(
+    virtual nsresult MakeFullScreenWithNativeTransition(
       bool aFullScreen, nsIScreen* aTargetScreen = nullptr) override final;
     NSAnimation* FullscreenTransitionAnimation() const { return mFullscreenTransitionAnimation; }
     void ReleaseFullscreenTransitionAnimation()
@@ -279,14 +279,16 @@ public:
       mFullscreenTransitionAnimation = nil;
     }
 
-    NS_IMETHOD              Resize(double aWidth, double aHeight, bool aRepaint) override;
-    NS_IMETHOD              Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
+    virtual void            Resize(double aWidth, double aHeight, bool aRepaint) override;
+    virtual void            Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
     virtual LayoutDeviceIntRect GetClientBounds() override;
     virtual LayoutDeviceIntRect GetScreenBounds() override;
     void                    ReportMoveEvent();
     void                    ReportSizeEvent();
-    NS_IMETHOD              SetCursor(nsCursor aCursor) override;
-    NS_IMETHOD              SetCursor(imgIContainer* aCursor, uint32_t aHotspotX, uint32_t aHotspotY) override;
+    virtual void            SetCursor(nsCursor aCursor) override;
+    virtual nsresult        SetCursor(imgIContainer* aCursor,
+                                      uint32_t aHotspotX, uint32_t aHotspotY)
+                                      override;
 
     CGFloat                 BackingScaleFactor();
     void                    BackingScaleFactorChanged();
@@ -297,18 +299,18 @@ public:
       return mozilla::DesktopToLayoutDeviceScale(BackingScaleFactor());
     }
 
-    NS_IMETHOD              SetTitle(const nsAString& aTitle) override;
+    virtual nsresult        SetTitle(const nsAString& aTitle) override;
 
-    NS_IMETHOD Invalidate(const LayoutDeviceIntRect& aRect) override;
+    virtual void Invalidate(const LayoutDeviceIntRect& aRect) override;
     virtual nsresult ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override;
     virtual LayerManager* GetLayerManager(PLayerTransactionChild* aShadowManager = nullptr,
                                           LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                                           LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT) override;
-    NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
-                             nsEventStatus& aStatus) override;
+    virtual nsresult DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
+                                   nsEventStatus& aStatus) override;
     virtual void CaptureRollupEvents(nsIRollupListener * aListener,
                                      bool aDoCapture) override;
-    NS_IMETHOD GetAttention(int32_t aCycleCount) override;
+    virtual MOZ_MUST_USE nsresult GetAttention(int32_t aCycleCount) override;
     virtual bool HasPendingInputEvent() override;
     virtual nsTransparencyMode GetTransparencyMode() override;
     virtual void SetTransparencyMode(nsTransparencyMode aMode) override;
@@ -318,7 +320,7 @@ public:
     virtual void SetWindowAnimationType(WindowAnimationType aType) override;
     virtual void SetDrawsTitle(bool aDrawTitle) override;
     virtual void SetUseBrightTitlebarForeground(bool aBrightForeground) override;
-    NS_IMETHOD SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
+    virtual nsresult SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
     virtual void SetWindowTitlebarColor(nscolor aColor, bool aActive) override;
     virtual void SetDrawsInTitlebar(bool aState) override;
     virtual void UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries) override;
@@ -338,14 +340,13 @@ public:
     void SetMenuBar(nsMenuBarX* aMenuBar);
     nsMenuBarX *GetMenuBar();
 
-    NS_IMETHOD_(void) SetInputContext(
-                        const InputContext& aContext,
-                        const InputContextAction& aAction) override;
-    NS_IMETHOD_(InputContext) GetInputContext() override
+    virtual void SetInputContext(const InputContext& aContext,
+                                 const InputContextAction& aAction) override;
+    virtual InputContext GetInputContext() override
     {
       return mInputContext;
     }
-    NS_IMETHOD_(bool) ExecuteNativeKeyBinding(
+    virtual bool ExecuteNativeKeyBinding(
                         NativeKeyBindingsType aType,
                         const mozilla::WidgetKeyboardEvent& aEvent,
                         DoCommandCallback aCallback,
@@ -365,7 +366,7 @@ protected:
   void                 SetWindowBackgroundBlur();
   void                 UpdateBounds();
 
-  nsresult             DoResize(double aX, double aY, double aWidth, double aHeight,
+  void                 DoResize(double aX, double aY, double aWidth, double aHeight,
                                 bool aRepaint, bool aConstrainToCurrentScreen);
 
   inline bool ShouldToggleNativeFullscreen(bool aFullScreen,

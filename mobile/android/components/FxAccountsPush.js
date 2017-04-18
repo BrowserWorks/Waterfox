@@ -13,7 +13,7 @@ Cu.import("resource://gre/modules/Messaging.jsm");
 const {
   PushCrypto,
   getCryptoParams,
-} = Cu.import("resource://gre/modules/PushCrypto.jsm");
+} = Cu.import("resource://gre/modules/PushCrypto.jsm", {});
 
 XPCOMUtils.defineLazyServiceGetter(this, "PushService",
   "@mozilla.org/push/Service;1", "nsIPushService");
@@ -38,6 +38,9 @@ FxAccountsPush.prototype = {
           this._subscribe();
         } else if (data === "android-fxa-unsubscribe") {
           this._unsubscribe();
+        } else if (data === "android-fxa-resubscribe") {
+          // If unsubscription fails, we still want to try to subscribe.
+          this._unsubscribe().then(this._subscribe, this._subscribe);
         }
         break;
       case "FxAccountsPush:ReceivedPushMessageToDecode":

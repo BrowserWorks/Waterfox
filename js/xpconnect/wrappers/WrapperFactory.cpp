@@ -174,6 +174,24 @@ WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
         ExposeObjectToActiveJS(obj);
     }
 
+    // If we've somehow gotten to this point after either the source or target
+    // compartment has been nuked, return a DeadObjectProxy to prevent further
+    // access.
+    JSCompartment* origin = js::GetObjectCompartment(obj);
+    JSCompartment* target = js::GetObjectCompartment(scope);
+    if (CompartmentPrivate::Get(origin)->wasNuked ||
+        CompartmentPrivate::Get(target)->wasNuked) {
+        NS_WARNING("Trying to create a wrapper into or out of a nuked compartment");
+
+        RootedObject ccw(cx, Wrapper::New(cx, obj, &CrossCompartmentWrapper::singleton));
+
+        NukeCrossCompartmentWrapper(cx, ccw);
+
+        retObj.set(ccw);
+        return;
+    }
+
+
     // If we've got a WindowProxy, there's nothing special that needs to be
     // done here, and we can move on to the next phase of wrapping. We handle
     // this case first to allow us to assert against wrappers below.
@@ -203,7 +221,7 @@ WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
     RootedObject wrapScope(cx, scope);
 
     {
-        if (NATIVE_HAS_FLAG(&ccx, WantPreCreate)) {
+        if (ccx.GetScriptable() && ccx.GetScriptable()->WantPreCreate()) {
             // We have a precreate hook. This object might enforce that we only
             // ever create JS object for it.
 
@@ -211,7 +229,7 @@ WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
             // being accessed across compartments. We would really prefer to
             // replace the above code with a test that says "do you only have one
             // wrapper?"
-            nsresult rv = wn->GetScriptableInfo()->GetCallback()->
+            nsresult rv = wn->GetScriptable()->
                 PreCreate(wn->Native(), cx, scope, wrapScope.address());
             if (NS_FAILED(rv)) {
                 retObj.set(waive ? WaiveXray(cx, obj) : obj);
@@ -250,7 +268,7 @@ WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
                 // (the old scope). If (2) is the case, PreCreate will return the
                 // scope of the document (the new scope).
                 RootedObject probe(cx);
-                rv = wn->GetScriptableInfo()->GetCallback()->
+                rv = wn->GetScriptable()->
                     PreCreate(wn->Native(), cx, currentScope, probe.address());
 
                 // Check for case (2).
@@ -324,7 +342,12 @@ static void
 DEBUG_CheckUnwrapSafety(HandleObject obj, const js::Wrapper* handler,
                         JSCompartment* origin, JSCompartment* target)
 {
-    if (AccessCheck::isChrome(target) || xpc::IsUniversalXPConnectEnabled(target)) {
+    if (CompartmentPrivate::Get(origin)->wasNuked || CompartmentPrivate::Get(target)->wasNuked) {
+        // If either compartment has already been nuked, we should have returned
+        // a dead wrapper from our prewrap callback, and this function should
+        // not be called.
+        MOZ_ASSERT_UNREACHABLE("CheckUnwrapSafety called for a dead wrapper");
+    } else if (AccessCheck::isChrome(target) || xpc::IsUniversalXPConnectEnabled(target)) {
         // If the caller is chrome (or effectively so), unwrap should always be allowed.
         MOZ_ASSERT(!handler->hasSecurityPolicy());
     } else if (CompartmentPrivate::Get(origin)->forcePermissiveCOWs) {

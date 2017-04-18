@@ -1299,6 +1299,10 @@ RecordedSourceSurfaceCreation::~RecordedSourceSurfaceCreation()
 bool
 RecordedSourceSurfaceCreation::PlayEvent(Translator *aTranslator) const
 {
+  if (!mData) {
+    return false;
+  }
+
   RefPtr<SourceSurface> src = aTranslator->GetReferenceDrawTarget()->
     CreateSourceSurfaceFromData(mData, mSize, mSize.width * BytesPerPixel(mFormat), mFormat);
   aTranslator->AddSourceSurface(mRefPtr, src);
@@ -1311,6 +1315,7 @@ RecordedSourceSurfaceCreation::RecordToStream(ostream &aStream) const
   WriteElement(aStream, mRefPtr);
   WriteElement(aStream, mSize);
   WriteElement(aStream, mFormat);
+  MOZ_ASSERT(mData);
   for (int y = 0; y < mSize.height; y++) {
     aStream.write((const char*)mData + y * mStride, BytesPerPixel(mFormat) * mSize.width);
   }
@@ -1322,8 +1327,12 @@ RecordedSourceSurfaceCreation::RecordedSourceSurfaceCreation(istream &aStream)
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, mSize);
   ReadElement(aStream, mFormat);
-  mData = (uint8_t*)new char[mSize.width * mSize.height * BytesPerPixel(mFormat)];
-  aStream.read((char*)mData, mSize.width * mSize.height * BytesPerPixel(mFormat));
+  mData = (uint8_t*)new (fallible) char[mSize.width * mSize.height * BytesPerPixel(mFormat)];
+  if (!mData) {
+    gfxWarning() << "RecordedSourceSurfaceCreation failed to allocate data";
+  } else {
+    aStream.read((char*)mData, mSize.width * mSize.height * BytesPerPixel(mFormat));
+  }
 }
 
 void
@@ -1513,6 +1522,7 @@ RecordedSnapshot::OutputSimpleEventInfo(stringstream &aStringStream) const
 RecordedFontData::~RecordedFontData()
 {
   delete[] mData;
+  delete[] mVariations;
 }
 
 bool
@@ -1520,6 +1530,7 @@ RecordedFontData::PlayEvent(Translator *aTranslator) const
 {
   RefPtr<NativeFontResource> fontResource =
     Factory::CreateNativeFontResource(mData, mFontDetails.size,
+                                      mFontDetails.variationCount, mVariations,
                                       aTranslator->GetDesiredFontType());
   if (!fontResource) {
     return false;
@@ -1537,6 +1548,8 @@ RecordedFontData::RecordToStream(std::ostream &aStream) const
   WriteElement(aStream, mFontDetails.fontDataKey);
   WriteElement(aStream, mFontDetails.size);
   aStream.write((const char*)mData, mFontDetails.size);
+  WriteElement(aStream, mFontDetails.variationCount);
+  aStream.write((const char*)mVariations, mFontDetails.variationCount * sizeof(ScaledFont::VariationSetting));
 }
 
 void
@@ -1546,14 +1559,23 @@ RecordedFontData::OutputSimpleEventInfo(stringstream &aStringStream) const
 }
 
 void
-RecordedFontData::SetFontData(const uint8_t *aData, uint32_t aSize, uint32_t aIndex, Float aGlyphSize)
+RecordedFontData::SetFontData(const uint8_t *aData, uint32_t aSize, uint32_t aIndex,
+                              Float aGlyphSize, uint32_t aVariationCount,
+                              const ScaledFont::VariationSetting* aVariations)
 {
   mData = new uint8_t[aSize];
   memcpy(mData, aData, aSize);
-  mFontDetails.fontDataKey = SFNTData::GetUniqueKey(aData, aSize);
+  uint32_t varDataSize = aVariationCount * sizeof(ScaledFont::VariationSetting);
+  mFontDetails.fontDataKey =
+    SFNTData::GetUniqueKey(aData, aSize, varDataSize, aVariations);
   mFontDetails.size = aSize;
   mFontDetails.index = aIndex;
   mFontDetails.glyphSize = aGlyphSize;
+  mFontDetails.variationCount = aVariationCount;
+  if (aVariationCount > 0) {
+    mVariations = new ScaledFont::VariationSetting[aVariationCount];
+    memcpy(mVariations, aVariations, varDataSize);
+  }
 }
 
 bool
@@ -1567,16 +1589,26 @@ RecordedFontData::GetFontDetails(RecordedFontDetails& fontDetails)
   fontDetails.size = mFontDetails.size;
   fontDetails.glyphSize = mFontDetails.glyphSize;
   fontDetails.index = mFontDetails.index;
+  fontDetails.variationCount = mFontDetails.variationCount;
   return true;
 }
 
 RecordedFontData::RecordedFontData(istream &aStream)
   : RecordedEvent(FONTDATA)
+  , mData(nullptr)
+  , mVariations(nullptr)
 {
   ReadElement(aStream, mFontDetails.fontDataKey);
   ReadElement(aStream, mFontDetails.size);
   mData = new uint8_t[mFontDetails.size];
   aStream.read((char*)mData, mFontDetails.size);
+  ReadElement(aStream, mFontDetails.variationCount);
+  if (mFontDetails.variationCount > 0) {
+    mVariations = new ScaledFont::VariationSetting[mFontDetails.variationCount];
+    aStream.read((char*)mVariations, mFontDetails.variationCount * sizeof(ScaledFont::VariationSetting));
+  } else {
+    mVariations = nullptr;
+  }
 }
 
 RecordedFontDescriptor::~RecordedFontDescriptor()
@@ -1586,18 +1618,13 @@ RecordedFontDescriptor::~RecordedFontDescriptor()
 bool
 RecordedFontDescriptor::PlayEvent(Translator *aTranslator) const
 {
-  MOZ_ASSERT(mType == FontType::GDI);
-
-  NativeFont nativeFont;
-  nativeFont.mType = (NativeFontType)mType;
-  nativeFont.mFont = (void*)&mData[0];
-
   RefPtr<ScaledFont> font =
-    Factory::CreateScaledFontForNativeFont(nativeFont, mFontSize);
-
-#ifdef USE_CAIRO_SCALED_FONT
-  static_cast<ScaledFontBase*>(font.get())->PopulateCairoScaledFont();
-#endif
+    Factory::CreateScaledFontFromFontDescriptor(mType, mData.data(), mData.size(), mFontSize);
+  if (!font) {
+    gfxDevCrash(LogReason::InvalidFont) <<
+      "Failed creating ScaledFont of type " << int(mType) << " from font descriptor";
+    return false;
+  }
 
   aTranslator->AddScaledFont(mRefPtr, font);
   return true;
@@ -1611,7 +1638,7 @@ RecordedFontDescriptor::RecordToStream(std::ostream &aStream) const
   WriteElement(aStream, mFontSize);
   WriteElement(aStream, mRefPtr);
   WriteElement(aStream, (size_t)mData.size());
-  aStream.write((char*)&mData[0], mData.size());
+  aStream.write((char*)mData.data(), mData.size());
 }
 
 void
@@ -1637,7 +1664,7 @@ RecordedFontDescriptor::RecordedFontDescriptor(istream &aStream)
   size_t size;
   ReadElement(aStream, size);
   mData.resize(size);
-  aStream.read((char*)&mData[0], size);
+  aStream.read((char*)mData.data(), size);
 }
 
 bool
@@ -1650,7 +1677,8 @@ RecordedScaledFontCreation::PlayEvent(Translator *aTranslator) const
     return false;
   }
 
-  RefPtr<ScaledFont> scaledFont = fontResource->CreateScaledFont(mIndex, mGlyphSize);
+  RefPtr<ScaledFont> scaledFont =
+    fontResource->CreateScaledFont(mIndex, mGlyphSize, mInstanceData.data(), mInstanceData.size());
   aTranslator->AddScaledFont(mRefPtr, scaledFont);
   return true;
 }
@@ -1662,12 +1690,20 @@ RecordedScaledFontCreation::RecordToStream(std::ostream &aStream) const
   WriteElement(aStream, mFontDataKey);
   WriteElement(aStream, mIndex);
   WriteElement(aStream, mGlyphSize);
+  WriteElement(aStream, (size_t)mInstanceData.size());
+  aStream.write((char*)mInstanceData.data(), mInstanceData.size());
 }
 
 void
 RecordedScaledFontCreation::OutputSimpleEventInfo(stringstream &aStringStream) const
 {
   aStringStream << "[" << mRefPtr << "] ScaledFont Created";
+}
+
+void
+RecordedScaledFontCreation::SetFontInstanceData(const uint8_t *aData, uint32_t aSize)
+{
+  mInstanceData.assign(aData, aData + aSize);
 }
 
 RecordedScaledFontCreation::RecordedScaledFontCreation(istream &aStream)
@@ -1677,6 +1713,11 @@ RecordedScaledFontCreation::RecordedScaledFontCreation(istream &aStream)
   ReadElement(aStream, mFontDataKey);
   ReadElement(aStream, mIndex);
   ReadElement(aStream, mGlyphSize);
+
+  size_t size;
+  ReadElement(aStream, size);
+  mInstanceData.resize(size);
+  aStream.read((char*)mInstanceData.data(), size);
 }
 
 bool

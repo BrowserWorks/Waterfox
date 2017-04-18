@@ -18,8 +18,8 @@ const TEST_THRESHOLD = {
 };
 
 const ADDON_ROLLOUT_POLICY = {
-  "beta"    : "51alladdons", // Any WebExtension or addon except with mpc = false
-  "release" : "51set1",
+  "beta"    : "50allmpc", // Any WebExtension or addon except with mpc = false
+  "release" : "50allmpc",
   "esr"     : "esrA", // WebExtensions and Addons with mpc=true
 };
 
@@ -73,9 +73,10 @@ function defineCohort() {
 
     Preferences.set(PREF_E10S_ADDON_BLOCKLIST,
                     // bug 1185672 - Tab Mix Plus
-                    "{dc572301-7619-498c-a57d-39143191b318};" +
-                    // bug 1332692 - LastPass
-                    "support@lastpass.com;");
+                    "{dc572301-7619-498c-a57d-39143191b318};"
+                    // bug 1344345 - Mega
+                    + "firefox@mega.co.nz"
+                    );
   } else {
     Preferences.reset(PREF_E10S_ADDON_POLICY);
   }
@@ -83,9 +84,11 @@ function defineCohort() {
   let userOptedOut = optedOut();
   let userOptedIn = optedIn();
   let disqualified = (Services.appinfo.multiprocessBlockPolicy != 0);
-  let testGroup = (getUserSample() < TEST_THRESHOLD[updateChannel]);
+  let testThreshold = TEST_THRESHOLD[updateChannel];
+  let testGroup = (getUserSample() < testThreshold);
   let hasNonExemptAddon = Preferences.get(PREF_E10S_HAS_NONEXEMPT_ADDON, false);
   let temporaryDisqualification = getTemporaryDisqualification();
+  let temporaryQualification = getTemporaryQualification();
 
   let cohortPrefix = "";
   if (disqualified) {
@@ -109,6 +112,13 @@ function defineCohort() {
     // here will be accumulated as "2 - Disabled", which is fine too.
     setCohort(`temp-disqualified-${temporaryDisqualification}`);
     Preferences.reset(PREF_TOGGLE_E10S);
+  } else if (!disqualified && testThreshold < 1.0 &&
+             temporaryQualification != "") {
+    // Users who are qualified for e10s and on channels where some population
+    // would not receive e10s can be pushed into e10s anyway via a temporary
+    // qualification which overrides the user sample value when non-empty.
+    setCohort(`temp-qualified-${temporaryQualification}`);
+    Preferences.set(PREF_TOGGLE_E10S, true);
   } else if (testGroup) {
     setCohort(`${cohortPrefix}test`);
     Preferences.set(PREF_TOGGLE_E10S, true);
@@ -174,5 +184,25 @@ function optedOut() {
  * string must be returned.
  */
 function getTemporaryDisqualification() {
+  return "";
+}
+
+/* If this function returns a non-empty string, it
+ * means that this particular user should be temporarily
+ * qualified due to some particular reason.
+ * If a user shouldn't be qualified, then an empty
+ * string must be returned.
+ */
+function getTemporaryQualification() {
+  // Whenever the DevTools toolbox is opened for the first time in a release, it
+  // records this fact in the following pref as part of the DevTools telemetry
+  // system.  If this pref is set, then it means the user has opened DevTools at
+  // some point in time.
+  const PREF_OPENED_DEVTOOLS = "devtools.telemetry.tools.opened.version";
+  let hasOpenedDevTools = Preferences.isSet(PREF_OPENED_DEVTOOLS);
+  if (hasOpenedDevTools) {
+    return "devtools";
+  }
+
   return "";
 }

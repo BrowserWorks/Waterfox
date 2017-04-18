@@ -12,7 +12,7 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(CYRILLIC_URL);
   info("Starting test... ");
 
-  let { document, EVENTS, Editor, NetMonitorView } = monitor.panelWin;
+  let { document, NetMonitorView } = monitor.panelWin;
   let { RequestsMenu } = NetMonitorView;
 
   RequestsMenu.lazyUpdate = false;
@@ -21,24 +21,25 @@ add_task(function* () {
   tab.linkedBrowser.reload();
   yield wait;
 
-  verifyRequestItemTarget(RequestsMenu.getItemAtIndex(0),
+  verifyRequestItemTarget(RequestsMenu, RequestsMenu.getItemAtIndex(0),
     "GET", CYRILLIC_URL, {
       status: 200,
       statusText: "OK"
     });
 
+  wait = waitForDOM(document, "#response-tabpanel .editor-mount iframe");
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.getElementById("details-pane-toggle"));
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll("#details-pane tab")[3]);
+  let [editor] = yield wait;
+  yield once(editor, "DOMContentLoaded");
+  yield waitForDOM(editor.contentDocument, ".CodeMirror-code");
+  let text = editor.contentDocument
+          .querySelector(".CodeMirror-code").textContent;
 
-  yield monitor.panelWin.once(EVENTS.RESPONSE_BODY_DISPLAYED);
-  let editor = yield NetMonitorView.editor("#response-content-textarea");
-  // u044F = я
-  is(editor.getText().indexOf("\u044F"), 486,
+  ok(text.includes("\u0411\u0440\u0430\u0442\u0430\u043d"),
     "The text shown in the source editor is correct.");
-  is(editor.getMode(), Editor.modes.html,
-    "The mode active in the source editor is correct.");
 
   return teardown(monitor);
 });

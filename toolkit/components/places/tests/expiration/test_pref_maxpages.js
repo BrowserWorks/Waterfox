@@ -69,14 +69,13 @@ add_task(function* test_pref_maxpages() {
   try {
     getMaxPages();
     do_throw("interval pref should not exist by default");
-  }
-  catch (ex) {}
+  } catch (ex) {}
 
   // Set interval to a large value so we don't expire on it.
   setInterval(3600); // 1h
 
   for (let testIndex = 1; testIndex <= tests.length; testIndex++) {
-    let currentTest = tests[testIndex -1];
+    let currentTest = tests[testIndex - 1];
     print("\nTEST " + testIndex + ": " + currentTest.desc);
     currentTest.receivedNotifications = 0;
 
@@ -91,15 +90,15 @@ add_task(function* test_pref_maxpages() {
     let historyObserver = {
       onBeginUpdateBatch: function PEX_onBeginUpdateBatch() {},
       onEndUpdateBatch: function PEX_onEndUpdateBatch() {},
-      onClearHistory: function() {},
-      onVisit: function() {},
-      onTitleChanged: function() {},
-      onDeleteURI: function(aURI) {
+      onClearHistory() {},
+      onVisit() {},
+      onTitleChanged() {},
+      onDeleteURI(aURI) {
         print("onDeleteURI " + aURI.spec);
         currentTest.receivedNotifications++;
       },
-      onPageChanged: function() {},
-      onDeleteVisits: function(aURI, aTime) {
+      onPageChanged() {},
+      onDeleteVisits(aURI, aTime) {
         print("onDeleteVisits " + aURI.spec + " " + aTime);
       },
     };

@@ -2,11 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-"use strict";
 /* eslint-disable mozilla/reject-some-requires */
+
+"use strict";
+
 const { Cc, Ci } = require("chrome");
 const Services = require("Services");
-/* eslint-disable mozilla/reject-some-requires */
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 const { resolve } = require("promise");
 const { HarUtils } = require("./har-utils.js");
@@ -58,8 +59,8 @@ const HarExporter = {
    *   This represents great disk-space optimization.
    *
    * - defaultFileName {String}: Default name of the target HAR file.
-   *   The default file name supports formatters, see:
-   *   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleFormat
+   *   The default file name supports the format specifier %date to output the
+   *   current date/time.
    *
    * - defaultLogDir {String}: Default log directory for automated logs.
    *

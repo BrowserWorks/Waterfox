@@ -43,13 +43,23 @@ MediaStreamAudioSourceNode::MediaStreamAudioSourceNode(AudioContext* aContext)
 }
 
 /* static */ already_AddRefed<MediaStreamAudioSourceNode>
-MediaStreamAudioSourceNode::Create(AudioContext* aContext,
-                                   DOMMediaStream* aStream, ErrorResult& aRv)
+MediaStreamAudioSourceNode::Create(AudioContext& aAudioContext,
+                                   const MediaStreamAudioSourceOptions& aOptions,
+                                   ErrorResult& aRv)
 {
-  RefPtr<MediaStreamAudioSourceNode> node =
-    new MediaStreamAudioSourceNode(aContext);
+  if (aAudioContext.IsOffline()) {
+    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return nullptr;
+  }
 
-  node->Init(aStream, aRv);
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<MediaStreamAudioSourceNode> node =
+    new MediaStreamAudioSourceNode(&aAudioContext);
+
+  node->Init(aOptions.mMediaStream, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -74,7 +84,9 @@ MediaStreamAudioSourceNode::Init(DOMMediaStream* aMediaStream, ErrorResult& aRv)
 
   mInputStream = aMediaStream;
   AudioNodeEngine* engine = new MediaStreamAudioSourceNodeEngine(this);
-  mStream = AudioNodeExternalInputStream::Create(graph, engine);
+  mStream =
+    AudioNodeExternalInputStream::Create(graph, engine,
+                                         aMediaStream->AbstractMainThread());
   mInputStream->AddConsumerToKeepAlive(static_cast<nsIDOMEventTarget*>(this));
 
   mInputStream->RegisterTrackListener(this);

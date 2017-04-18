@@ -31,14 +31,14 @@ function run_test() {
   _("Engines are registered.");
   let engines = Service.engineManager.getAll();
   do_check_true(Utils.deepEquals(engines.map(engine => engine.name),
-                                 ['tabs', 'bookmarks', 'forms', 'history']));
+                                 ["tabs", "bookmarks", "forms", "history"]));
 
   _("Observers are notified of startup");
   do_test_pending();
 
   do_check_false(Service.status.ready);
   do_check_false(xps.ready);
-  Observers.add("weave:service:ready", function (subject, data) {
+  Observers.add("weave:service:ready", function(subject, data) {
     do_check_true(Service.status.ready);
     do_check_true(xps.ready);
 

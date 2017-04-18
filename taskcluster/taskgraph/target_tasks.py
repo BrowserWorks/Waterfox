@@ -6,18 +6,7 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 from taskgraph import try_option_syntax
-
-INTEGRATION_PROJECTS = set([
-    'mozilla-inbound',
-    'autoland',
-])
-
-RELEASE_PROJECTS = set([
-    'mozilla-central',
-    'mozilla-aurora',
-    'mozilla-beta',
-    'mozilla-release',
-])
+from taskgraph.util.attributes import match_run_on_projects
 
 _target_task_methods = {}
 
@@ -32,6 +21,14 @@ def _target_task(name):
 def get_method(method):
     """Get a target_task_method to pass to a TaskGraphGenerator."""
     return _target_task_methods[method]
+
+
+def filter_for_project(task, parameters):
+    """Filter tasks by project.  Optionally enable nightlies."""
+    if task.attributes.get('nightly') and not parameters.get('include_nightly'):
+        return False
+    run_on_projects = set(task.attributes.get('run_on_projects', []))
+    return match_run_on_projects(parameters['project'], run_on_projects)
 
 
 @_target_task('try_option_syntax')
@@ -67,19 +64,9 @@ def target_tasks_try_option_syntax(full_task_graph, parameters):
 def target_tasks_default(full_task_graph, parameters):
     """Target the tasks which have indicated they should be run on this project
     via the `run_on_projects` attributes."""
-    def filter(task):
-        run_on_projects = set(t.attributes.get('run_on_projects', []))
-        if 'all' in run_on_projects:
-            return True
-        project = parameters['project']
-        if 'integration' in run_on_projects:
-            if project in INTEGRATION_PROJECTS:
-                return True
-        if 'release' in run_on_projects:
-            if project in RELEASE_PROJECTS:
-                return True
-        return project in run_on_projects
-    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
+
+    return [l for l, t in full_task_graph.tasks.iteritems()
+            if filter_for_project(t, parameters)]
 
 
 @_target_task('ash_tasks')
@@ -93,8 +80,8 @@ def target_tasks_ash(full_task_graph, parameters):
         # and none of this linux64-asan/debug stuff
         if platform == 'linux64-asan' and task.attributes['build_type'] == 'debug':
             return False
-        # no non-et10s tests
-        if task.attributes.get('unittest_suite') or task.attributes.get('talos_siute'):
+        # no non-e10s tests
+        if task.attributes.get('unittest_suite') or task.attributes.get('talos_suite'):
             if not task.attributes.get('e10s'):
                 return False
         # don't upload symbols
@@ -120,11 +107,91 @@ def target_tasks_cedar(full_task_graph, parameters):
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 
 
+@_target_task('graphics_tasks')
+def target_tasks_graphics(full_task_graph, parameters):
+    """In addition to doing the filtering by project that the 'default'
+       filter does, also remove artifact builds because we have csets on
+       the graphics branch that aren't on the candidate branches of artifact
+       builds"""
+    filtered_for_project = target_tasks_default(full_task_graph, parameters)
+
+    def filter(task):
+        if task.attributes['kind'] == 'artifact-build':
+            return False
+        return True
+    return [l for l in filtered_for_project if filter(full_task_graph[l])]
+
+
 @_target_task('nightly_fennec')
-def target_tasks_nightly(full_task_graph, parameters):
+def target_tasks_nightly_fennec(full_task_graph, parameters):
     """Select the set of tasks required for a nightly build of fennec. The
     nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
     def filter(task):
-        return task.attributes.get('nightly', False)
+        platform = task.attributes.get('build_platform')
+        if platform in ('android-api-15-nightly', 'android-x86-nightly', 'android-nightly'):
+            return task.attributes.get('nightly', False)
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
+
+
+@_target_task('nightly_linux')
+def target_tasks_nightly_linux(full_task_graph, parameters):
+    """Select the set of tasks required for a nightly build of linux. The
+    nightly build process involves a pipeline of builds, signing,
+    and, eventually, uploading the tasks to balrog."""
+    def filter(task):
+        platform = task.attributes.get('build_platform')
+        if platform in ('linux64-nightly', 'linux-nightly'):
+            return task.attributes.get('nightly', False)
+    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
+
+
+@_target_task('mozilla_beta_tasks')
+def target_tasks_mozilla_beta(full_task_graph, parameters):
+    """Select the set of tasks required for a promotable beta or release build
+    of linux, plus android CI. The candidates build process involves a pipeline
+    of builds and signing, but does not include beetmover or balrog jobs."""
+
+    def filter(task):
+        if not filter_for_project(task, parameters):
+            return False
+        platform = task.attributes.get('build_platform')
+        if platform in ('linux64-pgo', 'linux-pgo', 'win32-pgo', 'win64-pgo',
+                        'android-api-15-nightly', 'android-x86-nightly',
+                        'win32', 'win64', 'macosx64'):
+            return False
+        if platform in ('linux64', 'linux'):
+            if task.attributes['build_type'] == 'opt':
+                return False
+        # skip l10n, beetmover, balrog
+        if task.kind in [
+            'balrog', 'beetmover', 'beetmover-checksums', 'beetmover-l10n',
+            'checksums-signing', 'nightly-l10n', 'nightly-l10n-signing',
+            'push-apk', 'push-apk-breakpoint',
+        ]:
+            return False
+        return True
+
+    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
+
+
+@_target_task('mozilla_release_tasks')
+def target_tasks_mozilla_release(full_task_graph, parameters):
+    """Select the set of tasks required for a promotable beta or release build
+    of linux, plus android CI. The candidates build process involves a pipeline
+    of builds and signing, but does not include beetmover or balrog jobs."""
+    return target_tasks_mozilla_beta(full_task_graph, parameters)
+
+
+@_target_task('candidates_fennec')
+def target_tasks_candidates_fennec(full_task_graph, parameters):
+    """Select the set of tasks required for a candidates build of fennec. The
+    nightly build process involves a pipeline of builds, signing,
+    and, eventually, uploading the tasks to balrog."""
+    filtered_for_project = target_tasks_nightly_fennec(full_task_graph, parameters)
+
+    def filter(task):
+        if task.kind not in ['balrog']:
+            return task.attributes.get('nightly', False)
+
+    return [l for l in filtered_for_project if filter(full_task_graph[l])]

@@ -334,7 +334,7 @@ const ADDON_IDS = ["softblock1@tests.mozilla.org",
 // Don't need the full interface, attempts to call other methods will just
 // throw which is just fine
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, openArgs) {
+  openWindow(parent, url, name, features, openArgs) {
     // Should be called to list the newly blocklisted items
     do_check_eq(url, URI_EXTENSION_BLOCKLIST_DIALOG);
 
@@ -350,7 +350,7 @@ var WindowWatcher = {
 
   },
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.nsIWindowWatcher)
      || iid.equals(Ci.nsISupports))
       return this;
@@ -362,13 +362,13 @@ var WindowWatcher = {
 MockRegistrar.register("@mozilla.org/embedcomp/window-watcher;1", WindowWatcher);
 
 var InstallConfirm = {
-  confirm: function(aWindow, aUrl, aInstalls, aInstallCount) {
+  confirm(aWindow, aUrl, aInstalls, aInstallCount) {
     aInstalls.forEach(function(aInstall) {
       aInstall.install();
     });
   },
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.amIWebInstallPrompt)
      || iid.equals(Ci.nsISupports))
       return this;
@@ -417,11 +417,11 @@ function Pbackground_update() {
 
   let updated = new Promise((resolve, reject) => {
     AddonManager.addInstallListener({
-      onNewInstall: function(aInstall) {
+      onNewInstall(aInstall) {
         installCount++;
       },
 
-      onInstallEnded: function(aInstall) {
+      onInstallEnded(aInstall) {
         installCount--;
         // Wait until all started installs have completed
         if (installCount)
@@ -459,11 +459,10 @@ function Pbackground_update() {
 function Pmanual_update(aVersion) {
   let Pinstalls = [];
   for (let name of ["soft1", "soft2", "soft3", "soft4", "soft5", "hard1", "regexp1"]) {
-    Pinstalls.push(new Promise((resolve, reject) => {
-      AddonManager.getInstallForURL("http://localhost:" + gPort + "/addons/blocklist_"
-                                       + name + "_" + aVersion + ".xpi",
-                                    resolve, "application/x-xpinstall");
-    }));
+    Pinstalls.push(
+      AddonManager.getInstallForURL(
+        `http://localhost:${gPort}/addons/blocklist_${name}_${aVersion}.xpi`,
+        null, "application/x-xpinstall"));
   }
 
   return Promise.all(Pinstalls).then(installs => {
@@ -475,13 +474,9 @@ function Pmanual_update(aVersion) {
           onInstallEnded: resolve
         })
       }));
-    }
 
-    // Use the default web installer to cancel/allow installs based on whether
-    // the add-on is valid or not.
-    let webInstaller = Cc["@mozilla.org/addons/web-install-listener;1"]
-                       .getService(Ci.amIWebInstallListener);
-    webInstaller.onWebInstallRequested(null, null, installs);
+      AddonManager.installAddonFromAOM(null, null, install);
+    }
 
     return Promise.all(completePromises);
   });
@@ -507,14 +502,12 @@ function check_addon(aAddon, aExpectedVersion, aExpectedUserDisabled,
     do_check_false(hasFlag(aAddon.permissions, AddonManager.PERM_CAN_ENABLE));
     do_print("blocked, PERM_CAN_DISABLE " + aAddon.id);
     do_check_false(hasFlag(aAddon.permissions, AddonManager.PERM_CAN_DISABLE));
-  }
-  else if (aAddon.userDisabled) {
+  } else if (aAddon.userDisabled) {
     do_print("userDisabled, PERM_CAN_ENABLE " + aAddon.id);
     do_check_true(hasFlag(aAddon.permissions, AddonManager.PERM_CAN_ENABLE));
     do_print("userDisabled, PERM_CAN_DISABLE " + aAddon.id);
     do_check_false(hasFlag(aAddon.permissions, AddonManager.PERM_CAN_DISABLE));
-  }
-  else {
+  } else {
     do_print("other, PERM_CAN_ENABLE " + aAddon.id);
     do_check_false(hasFlag(aAddon.permissions, AddonManager.PERM_CAN_ENABLE));
     if (aAddon.type != "theme") {
@@ -532,8 +525,7 @@ function check_addon(aAddon, aExpectedVersion, aExpectedUserDisabled,
 
   if (aExpectedUserDisabled || aExpectedState == Ci.nsIBlocklistService.STATE_BLOCKED) {
     do_check_false(willBeActive);
-  }
-  else {
+  } else {
     do_check_true(willBeActive);
   }
 }
@@ -554,7 +546,7 @@ add_task(function* init() {
   writeInstallRDFForExtension(regexpblock_1, profileDir);
   startupManager();
 
-  let [s1, s2, s3, s4, s5, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
+  let [/* s1 */, /* s2 */, /* s3 */, s4, s5, /* h, r */] = yield promiseAddonsByIDs(ADDON_IDS);
   s4.userDisabled = true;
   s5.userDisabled = false;
 });
@@ -968,7 +960,7 @@ add_task(function* run_addon_change_2_test() {
 
   startupManager(false);
 
-  let [s1, s2, s3, s4, s5, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
+  let [s1, s2, s3, /* s4 */, /* s5 */, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
 
   check_addon(s1, "2.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
   check_addon(s2, "2.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
@@ -1005,7 +997,7 @@ add_task(function* addon_change_2_test_2() {
 
   startupManager(false);
 
-  let [s1, s2, s3, s4, s5, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
+  let [s1, s2, s3, /* s4 */, /* s5 */, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
 
   check_addon(s1, "3.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
   check_addon(s2, "3.0", true, false, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
@@ -1219,7 +1211,7 @@ add_task(function* run_manual_update_2_test() {
 
   startupManager(false);
 
-  let [s1, s2, s3, s4, s5, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
+  let [s1, s2, s3, s4, /* s5 */, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
 
   check_addon(s1, "1.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
   check_addon(s2, "1.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
@@ -1237,7 +1229,7 @@ add_task(function* run_manual_update_2_test() {
   yield Pmanual_update("2");
   yield promiseRestartManager();
 
-  [s1, s2, s3, s4, s5, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
+  [s1, s2, s3, s4, /* s5 */, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
 
   check_addon(s1, "2.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
   check_addon(s2, "2.0", true, false, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
@@ -1251,7 +1243,7 @@ add_task(function* run_manual_update_2_test() {
   yield Pmanual_update("3");
   yield promiseRestartManager();
 
-  [s1, s2, s3, s4, s5, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
+  [s1, s2, s3, s4, /* s5 */, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
 
   check_addon(s1, "3.0", false, false, Ci.nsIBlocklistService.STATE_NOT_BLOCKED);
   check_addon(s2, "3.0", true, false, Ci.nsIBlocklistService.STATE_NOT_BLOCKED);
@@ -1289,13 +1281,11 @@ add_task(function* run_local_install_test() {
     do_get_file("addons/blocklist_regexp1_1.xpi")
   ]);
 
-  let aInstalls = yield new Promise((resolve, reject) => {
-    AddonManager.getAllInstalls(resolve)
-  });
+  let aInstalls = yield AddonManager.getAllInstalls();
   // Should have finished all installs without needing to restart
   do_check_eq(aInstalls.length, 0);
 
-  let [s1, s2, s3, s4, s5, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
+  let [s1, s2, s3, /* s4 */, /* s5 */, h, r] = yield promiseAddonsByIDs(ADDON_IDS);
 
   check_addon(s1, "1.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);
   check_addon(s2, "1.0", true, true, Ci.nsIBlocklistService.STATE_SOFTBLOCKED);

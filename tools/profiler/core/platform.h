@@ -29,11 +29,6 @@
 #ifndef TOOLS_PLATFORM_H_
 #define TOOLS_PLATFORM_H_
 
-#ifdef SPS_STANDALONE
-#define MOZ_COUNT_CTOR(name)
-#define MOZ_COUNT_DTOR(name)
-#endif
-
 #ifdef ANDROID
 #include <android/log.h>
 #else
@@ -46,11 +41,9 @@
 
 #include <stdint.h>
 #include <math.h>
-#ifndef SPS_STANDALONE
 #include "MainThreadUtils.h"
 #include "mozilla/Mutex.h"
 #include "ThreadResponsiveness.h"
-#endif
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
@@ -59,17 +52,22 @@
 #include <vector>
 #include "StackTop.h"
 
-// We need a definition of gettid(), but Linux libc implementations don't
-// provide a wrapper for it (except for Bionic)
-#if defined(__linux__)
+// We need a definition of gettid(), but glibc doesn't provide a
+// wrapper for it.
+#if defined(__GLIBC__)
 #include <unistd.h>
-#if !defined(__BIONIC__)
 #include <sys/syscall.h>
 static inline pid_t gettid()
 {
   return (pid_t) syscall(SYS_gettid);
 }
-#endif
+#elif defined(XP_MACOSX)
+#include <unistd.h>
+#include <sys/syscall.h>
+static inline pid_t gettid()
+{
+  return (pid_t) syscall(SYS_thread_selfid);
+}
 #endif
 
 #ifdef XP_WIN
@@ -78,7 +76,7 @@ static inline pid_t gettid()
 
 #define ASSERT(a) MOZ_ASSERT(a)
 
-bool moz_profiler_verbose();
+bool profiler_verbose();
 
 #ifdef ANDROID
 # if defined(__arm__) || defined(__thumb__)
@@ -86,22 +84,22 @@ bool moz_profiler_verbose();
 #  define ENABLE_ARM_LR_SAVING
 # endif
 # define LOG(text) \
-    do { if (moz_profiler_verbose()) \
+    do { if (profiler_verbose()) \
            __android_log_write(ANDROID_LOG_ERROR, "Profiler", text); \
     } while (0)
 # define LOGF(format, ...) \
-    do { if (moz_profiler_verbose()) \
+    do { if (profiler_verbose()) \
            __android_log_print(ANDROID_LOG_ERROR, "Profiler", format, \
                                __VA_ARGS__); \
     } while (0)
 
 #else
 # define LOG(text) \
-    do { if (moz_profiler_verbose()) fprintf(stderr, "Profiler: %s\n", text); \
+    do { if (profiler_verbose()) fprintf(stderr, "Profiler: %s\n", text); \
     } while (0)
 # define LOGF(format, ...) \
-    do { if (moz_profiler_verbose()) fprintf(stderr, "Profiler: " format \
-                                             "\n", __VA_ARGS__);        \
+    do { if (profiler_verbose()) fprintf(stderr, "Profiler: " format "\n", \
+                                         __VA_ARGS__); \
     } while (0)
 
 #endif
@@ -269,8 +267,6 @@ bool set_profiler_entries(const char*);
 bool set_profiler_scan(const char*);
 bool is_native_unwinding_avail();
 
-void set_tls_stack_top(void* stackTop);
-
 // ----------------------------------------------------------------------------
 // Sampler
 //
@@ -360,9 +356,15 @@ class Sampler {
   int EntrySize() { return entrySize_; }
 
   // We can't new/delete the type safely without defining it
-  // (-Wdelete-incomplete). Use these Alloc/Free functions instead.
-  static PlatformData* AllocPlatformData(int aThreadId);
-  static void FreePlatformData(PlatformData*);
+  // (-Wdelete-incomplete).  Use these to hide the details from
+  // clients.
+  struct PlatformDataDestructor {
+    void operator()(PlatformData*);
+  };
+
+  typedef mozilla::UniquePtr<PlatformData, PlatformDataDestructor>
+    UniquePlatformData;
+  static UniquePlatformData AllocPlatformData(int aThreadId);
 
   // If we move the backtracing code into the platform files we won't
   // need to have these hacks
@@ -374,7 +376,7 @@ class Sampler {
   static pthread_t GetProfiledThread(PlatformData*);
 #endif
 
-  static std::vector<ThreadInfo*> GetRegisteredThreads() {
+  static const std::vector<ThreadInfo*>& GetRegisteredThreads() {
     return *sRegisteredThreads;
   }
 

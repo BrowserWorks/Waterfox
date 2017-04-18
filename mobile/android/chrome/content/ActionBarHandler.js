@@ -143,7 +143,7 @@ var ActionBarHandler = {
     this._boundingClientRect = boundingClientRect;
 
     // Open the ActionBar, send it's actions list.
-    Messaging.sendRequest({
+    WindowEventDispatcher.sendRequest({
       type: "TextSelection:ActionbarInit",
       selectionID: this._selectionID,
     });
@@ -156,7 +156,7 @@ var ActionBarHandler = {
    * Called when content is scrolled and handles are hidden.
    */
   _updateVisibility: function() {
-    Messaging.sendRequest({
+    WindowEventDispatcher.sendRequest({
       type: "TextSelection:Visibility",
       selectionID: this._selectionID,
     });
@@ -207,7 +207,7 @@ var ActionBarHandler = {
     }
 
     // Close the ActionBar.
-    Messaging.sendRequest({
+    WindowEventDispatcher.sendRequest({
       type: "TextSelection:ActionbarUninit",
     });
 
@@ -233,9 +233,9 @@ var ActionBarHandler = {
   _clearSelection: function(element = this._targetElement, win = this._contentWindow) {
     // Commit edit compositions, and clear focus from editables.
     if (element) {
-      let imeSupport = this._getEditor(element, win).QueryInterface(Ci.nsIEditorIMESupport);
-      if (imeSupport.composing) {
-        imeSupport.forceCompositionEnd();
+      let editor = this._getEditor(element, win);
+      if (editor.composing) {
+        editor.forceCompositionEnd();
       }
       element.blur();
     }
@@ -266,7 +266,7 @@ var ActionBarHandler = {
       });
 
     if (sendAlways || !actionsMatch) {
-      Messaging.sendRequest({
+      WindowEventDispatcher.sendRequest({
         type: "TextSelection:ActionbarStatus",
         selectionID: this._selectionID,
         actions: actions,
@@ -346,9 +346,8 @@ var ActionBarHandler = {
         if (element) {
           // If we have an active composition string, commit it, and 
           // ensure proper element focus.
-          let imeSupport = ActionBarHandler._getEditor(element, win).
-            QueryInterface(Ci.nsIEditorIMESupport);
-          if (imeSupport.composing) {
+          let editor = ActionBarHandler._getEditor(element, win)
+          if (editor.composing) {
             element.blur();
             element.focus();
           }
@@ -584,7 +583,7 @@ var ActionBarHandler = {
       },
 
       action: function(element, win) {
-        Messaging.sendRequest({
+        WindowEventDispatcher.sendRequest({
           type: "Share:Text",
           text: ActionBarHandler._getSelectedText(),
         });

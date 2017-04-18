@@ -9,7 +9,6 @@ const PREF_GETADDONS_GETSEARCHRESULTS = "extensions.getAddons.search.url";
 const SEARCH_URL = TESTROOT + "browser_bug593535.xml";
 const QUERY = "NOTFOUND";
 
-var gProvider;
 var gManagerWindow;
 
 function test() {
@@ -88,7 +87,7 @@ add_test(function() {
   var remoteItem;
 
   var listener = {
-    onDownloadFailed: function(aInstall) {
+    onDownloadFailed(aInstall) {
       aInstall.removeListener(this);
       ok(true, "Install failed as expected");
 
@@ -101,7 +100,7 @@ add_test(function() {
       });
     },
 
-    onInstallEnded: function() {
+    onInstallEnded() {
       ok(false, "Install should have failed");
     }
   }

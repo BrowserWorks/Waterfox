@@ -149,12 +149,6 @@ GetFilesTaskChild::HandlerCallback()
   mPromise = nullptr;
 }
 
-void
-GetFilesTaskChild::GetPermissionAccessType(nsCString& aAccess) const
-{
-  aAccess.AssignLiteral("read");
-}
-
 /**
  * GetFilesTaskParent
  */
@@ -259,10 +253,10 @@ GetFilesTaskParent::IOWork()
   return NS_OK;
 }
 
-void
-GetFilesTaskParent::GetPermissionAccessType(nsCString& aAccess) const
+nsresult
+GetFilesTaskParent::GetTargetPath(nsAString& aPath) const
 {
-  aAccess.AssignLiteral(DIRECTORY_READ_PERMISSION);
+  return mTargetPath->GetPath(aPath);
 }
 
 } // namespace dom

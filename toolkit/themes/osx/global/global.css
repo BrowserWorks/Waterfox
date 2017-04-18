@@ -253,11 +253,13 @@ notification > button {
   border-radius: 10000px;
   border: @roundButtonBorder@;
   text-shadow: @loweredShadow@;
+  color: @roundButtonColor@;
   background: @roundButtonBackground@;
   box-shadow: @roundButtonShadow@;
 }
 
 notification > button:active:hover {
+  color: @roundButtonColor@;
   background: @roundButtonPressedBackground@;
   box-shadow: @roundButtonPressedShadow@;
 }
@@ -277,6 +279,8 @@ notification > button > .button-box > .button-text {
 popupnotificationcontent {
   margin-top: .5em;
 }
+
+%include ../../shared/notification-popup.inc.css
 
 /* :::::: autoscroll popup ::::: */
 

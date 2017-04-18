@@ -56,8 +56,8 @@ public:
 
   CComPtr(const CComPtr& aOther) : mPtr(nullptr) { Set(aOther.Get()); }
   CComPtr() : mPtr(nullptr) { }
-  CComPtr(T* const & aPtr) : mPtr(nullptr) { Set(aPtr); }
-  CComPtr(const std::nullptr_t& aNullPtr) : mPtr(aNullPtr) { }
+  MOZ_IMPLICIT CComPtr(T* const & aPtr) : mPtr(nullptr) { Set(aPtr); }
+  MOZ_IMPLICIT CComPtr(const std::nullptr_t& aNullPtr) : mPtr(aNullPtr) { }
   T** operator&() { return &mPtr; }
   T* operator->(){ return mPtr; }
   operator T*() { return mPtr; }
@@ -119,8 +119,8 @@ typedef int64_t Microseconds;
 #define ENSURE(condition, ret) \
 { if (!(condition)) { LOG("##condition## FAILED %S:%d\n", __FILE__, __LINE__); return ret; } }
 
-#define GMP_SUCCEEDED(x) ((x) == GMPNoErr)
-#define GMP_FAILED(x) ((x) != GMPNoErr)
+#define STATUS_SUCCEEDED(x) ((x) == Status::kSuccess)
+#define STATUS_FAILED(x) ((x) != Status::kSuccess)
 
 #define MFPLAT_FUNC(_func, _dllname) \
   extern decltype(::_func)* _func;
@@ -178,7 +178,7 @@ public:
   {
   }
 
-  AutoPtr(Type* aPtr)
+  explicit AutoPtr(Type* aPtr)
     : mPtr(aPtr)
   {
   }
@@ -250,14 +250,9 @@ CreateMFT(const CLSID& clsid,
           const char* aDllName,
           CComPtr<IMFTransform>& aOutMFT);
 
-enum CodecType {
-  H264,
-  AAC,
-};
-
-// Returns the name of the DLL that is needed to decode H.264 or AAC on
+// Returns the name of the DLL that is needed to decode H.264 on
 // the given windows version we're running on.
-const char* WMFDecoderDllNameFor(CodecType aCodec);
+const char* WMFDecoderDllName();
 
 // Returns the maximum number of threads we want WMF to use for decoding
 // given the number of logical processors available.

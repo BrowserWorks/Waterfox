@@ -11,6 +11,7 @@
 let bookmarkPanel = document.getElementById("editBookmarkPanel");
 let bookmarkStar = document.getElementById("bookmarks-menu-button");
 let bookmarkPanelTitle = document.getElementById("editBookmarkPanelTitle");
+let editBookmarkPanelRemoveButtonRect;
 
 StarUI._closePanelQuickForTesting = true;
 
@@ -38,6 +39,9 @@ function* test_bookmarks_popup({isNewBookmark, popupShowFn, popupEditFn,
       yield popupShowFn(browser);
       yield shownPromise;
       is(bookmarkPanel.state, "open", "Panel should be 'open' after shownPromise is resolved");
+
+    editBookmarkPanelRemoveButtonRect =
+      document.getElementById("editBookmarkPanelRemoveButton").getBoundingClientRect();
 
       if (popupEditFn) {
         yield popupEditFn();
@@ -101,7 +105,6 @@ add_task(function* panel_shown_once_for_doubleclick_on_new_bookmark_star_and_aut
 add_task(function* panel_shown_once_for_slow_doubleclick_on_new_bookmark_star_and_autocloses() {
   todo(false, "bug 1250267, may need to add some tracking state to " +
               "browser-places.js for this.");
-  return;
 
   /*
   yield test_bookmarks_popup({
@@ -260,7 +263,7 @@ add_task(function* panel_shown_for_new_bookmark_compositionstart_mouseout_no_aut
   });
 });
 
-add_task(function* panel_shown_for_new_bookmark_compositionend_mouseout_autoclose() {
+add_task(function* panel_shown_for_new_bookmark_compositionend_no_autoclose() {
   yield test_bookmarks_popup({
     isNewBookmark: true,
     popupShowFn() {
@@ -275,13 +278,8 @@ add_task(function* panel_shown_for_new_bookmark_compositionend_mouseout_autoclos
 
       EventUtils.synthesizeComposition({ type: "compositioncommit", data: "committed text" });
     },
-    *popupHideFn() {
-      let mouseOutPromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "mouseout");
-      EventUtils.synthesizeMouse(bookmarkPanel, 0, 0, {type: "mouseout"});
-      EventUtils.synthesizeMouseAtCenter(document.documentElement, {type: "mousemove"});
-      info("Waiting for mouseout event");
-      yield mouseOutPromise;
-      info("Got mouseout event, should autoclose now");
+    popupHideFn() {
+      bookmarkPanel.hidePopup();
     },
     shouldAutoClose: false,
     isBookmarkRemoved: false,
@@ -369,6 +367,64 @@ add_task(function* enter_on_remove_bookmark_should_remove_bookmark() {
   });
 });
 
+add_task(function* ctrl_d_new_bookmark_mousedown_mouseout_no_autoclose() {
+  yield test_bookmarks_popup({
+    isNewBookmark: true,
+    popupShowFn(browser) {
+      EventUtils.synthesizeKey("D", {accelKey: true}, window);
+    },
+    *popupEditFn() {
+      let mouseMovePromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "mousemove");
+      EventUtils.synthesizeMouseAtCenter(bookmarkPanel, {type: "mousemove"});
+      info("Waiting for mousemove event");
+      yield mouseMovePromise;
+      info("Got mousemove event");
+
+      yield new Promise(resolve => setTimeout(resolve, 400));
+      is(bookmarkPanel.state, "open", "Panel should still be open on mousemove");
+
+      EventUtils.synthesizeMouseAtCenter(bookmarkPanelTitle, {button: 1, type: "mousedown"});
+
+      let mouseOutPromise = BrowserTestUtils.waitForEvent(bookmarkPanel, "mouseout");
+      EventUtils.synthesizeMouse(bookmarkPanel, 0, 0, {type: "mouseout"});
+      EventUtils.synthesizeMouseAtCenter(document.documentElement, {type: "mousemove"});
+      info("Waiting for mouseout event");
+      yield mouseOutPromise;
+    },
+    shouldAutoClose: false,
+    popupHideFn() {
+      document.getElementById("editBookmarkPanelRemoveButton").click();
+    },
+    isBookmarkRemoved: true,
+  });
+});
+
+add_task(function* mouse_hovering_panel_should_prevent_autoclose() {
+  if (AppConstants.platform != "win") {
+    // This test requires synthesizing native mouse movement which is
+    // best supported on Windows.
+    return;
+  }
+  yield test_bookmarks_popup({
+    isNewBookmark: true,
+    *popupShowFn(browser) {
+      yield new Promise(resolve => {
+        EventUtils.synthesizeNativeMouseMove(
+          document.documentElement,
+          editBookmarkPanelRemoveButtonRect.left,
+          editBookmarkPanelRemoveButtonRect.top,
+          resolve);
+      });
+      EventUtils.synthesizeKey("D", {accelKey: true}, window);
+    },
+    shouldAutoClose: false,
+    popupHideFn() {
+      document.getElementById("editBookmarkPanelRemoveButton").click();
+    },
+    isBookmarkRemoved: true,
+  });
+});
+
 registerCleanupFunction(function() {
   delete StarUI._closePanelQuickForTesting;
-})
+});

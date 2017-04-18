@@ -923,6 +923,42 @@ jit::FoldTests(MIRGraph& graph)
     return true;
 }
 
+bool
+jit::FoldEmptyBlocks(MIRGraph& graph)
+{
+    for (MBasicBlockIterator iter(graph.begin()); iter != graph.end(); ) {
+        MBasicBlock* block = *iter;
+        iter++;
+
+        if (block->numPredecessors() != 1 || block->numSuccessors() != 1)
+            continue;
+
+        if (!block->phisEmpty())
+            continue;
+
+        if (block->outerResumePoint())
+            continue;
+
+        if (*block->begin() != *block->rbegin())
+            continue;
+
+        MBasicBlock* succ = block->getSuccessor(0);
+        MBasicBlock* pred = block->getPredecessor(0);
+
+        if (succ->numPredecessors() != 1)
+            continue;
+
+        size_t pos = pred->getSuccessorIndex(block);
+        pred->lastIns()->replaceSuccessor(pos, succ);
+
+        graph.removeBlock(block);
+
+        succ->addPredecessorSameInputsAs(pred, block);
+        succ->removePredecessor(block);
+    }
+    return true;
+}
+
 static void
 EliminateTriviallyDeadResumePointOperands(MIRGraph& graph, MResumePoint* rp)
 {
@@ -2610,11 +2646,12 @@ CheckOperand(const MNode* consumer, const MUse* use, int32_t* usesBalance)
     MOZ_ASSERT(producer->block() != nullptr);
     MOZ_ASSERT(use->consumer() == consumer);
 #ifdef _DEBUG_CHECK_OPERANDS_USES_BALANCE
-    fprintf(stderr, "==Check Operand\n");
-    use->producer()->dump(stderr);
-    fprintf(stderr, "  index: %" PRIuSIZE "\n", use->consumer()->indexOf(use));
-    use->consumer()->dump(stderr);
-    fprintf(stderr, "==End\n");
+    Fprinter print(stderr);
+    print.printf("==Check Operand\n");
+    use->producer()->dump(print);
+    print.printf("  index: %" PRIuSIZE "\n", use->consumer()->indexOf(use));
+    use->consumer()->dump(print);
+    print.printf("==End\n");
 #endif
     --*usesBalance;
 }
@@ -2628,11 +2665,12 @@ CheckUse(const MDefinition* producer, const MUse* use, int32_t* usesBalance)
     MOZ_ASSERT(use->consumer()->block() != nullptr);
     MOZ_ASSERT(use->consumer()->getOperand(use->index()) == producer);
 #ifdef _DEBUG_CHECK_OPERANDS_USES_BALANCE
-    fprintf(stderr, "==Check Use\n");
-    use->producer()->dump(stderr);
-    fprintf(stderr, "  index: %" PRIuSIZE "\n", use->consumer()->indexOf(use));
-    use->consumer()->dump(stderr);
-    fprintf(stderr, "==End\n");
+    Fprinter print(stderr);
+    print.printf("==Check Use\n");
+    use->producer()->dump(print);
+    print.printf("  index: %" PRIuSIZE "\n", use->consumer()->indexOf(use));
+    use->consumer()->dump(print);
+    print.printf("==End\n");
 #endif
     ++*usesBalance;
 }
@@ -4115,7 +4153,7 @@ CmpInstructions(const void* a, const void* b)
 }
 
 bool
-jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, JSFunction* fun,
+jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, HandleFunction fun,
                                         ObjectGroup* group, HandlePlainObject baseobj,
                                         Vector<TypeNewScript::Initializer>* initializerList)
 {
@@ -4125,7 +4163,7 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, JSFunction* fun,
     // which will definitely be added to the created object before it has a
     // chance to escape and be accessed elsewhere.
 
-    RootedScript script(cx, fun->getOrCreateScript(cx));
+    RootedScript script(cx, JSFunction::getOrCreateScript(cx, fun));
     if (!script)
         return false;
 
@@ -4188,11 +4226,13 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext* cx, JSFunction* fun,
     IonBuilder builder(cx, CompileCompartment::get(cx->compartment()), options, &temp, &graph, constraints,
                        &inspector, &info, optimizationInfo, /* baselineFrame = */ nullptr);
 
-    if (!builder.build()) {
-        if (cx->isThrowingOverRecursed() ||
-            cx->isThrowingOutOfMemory() ||
-            builder.abortReason() == AbortReason_Alloc)
-        {
+    AbortReasonOr<Ok> buildResult = builder.build();
+    if (buildResult.isErr()) {
+        AbortReason reason = buildResult.unwrapErr();
+        if (cx->isThrowingOverRecursed() || cx->isThrowingOutOfMemory())
+            return false;
+        if (reason == AbortReason::Alloc) {
+            ReportOutOfMemory(cx);
             return false;
         }
         MOZ_ASSERT(!cx->isExceptionPending());
@@ -4426,9 +4466,15 @@ jit::AnalyzeArgumentsUsage(JSContext* cx, JSScript* scriptArg)
     IonBuilder builder(nullptr, CompileCompartment::get(cx->compartment()), options, &temp, &graph, constraints,
                        &inspector, &info, optimizationInfo, /* baselineFrame = */ nullptr);
 
-    if (!builder.build()) {
-        if (cx->isThrowingOverRecursed() || builder.abortReason() == AbortReason_Alloc)
+    AbortReasonOr<Ok> buildResult = builder.build();
+    if (buildResult.isErr()) {
+        AbortReason reason = buildResult.unwrapErr();
+        if (cx->isThrowingOverRecursed() || cx->isThrowingOutOfMemory())
             return false;
+        if (reason == AbortReason::Alloc) {
+            ReportOutOfMemory(cx);
+            return false;
+        }
         MOZ_ASSERT(!cx->isExceptionPending());
         return true;
     }
@@ -4512,6 +4558,7 @@ jit::MarkLoopBlocks(MIRGraph& graph, MBasicBlock* header, bool* canOsr)
         // A block not marked by the time we reach it is not in the loop.
         if (!block->isMarked())
             continue;
+
         // This block is in the loop; trace to its predecessors.
         for (size_t p = 0, e = block->numPredecessors(); p != e; ++p) {
             MBasicBlock* pred = block->getPredecessor(p);
@@ -4546,7 +4593,7 @@ jit::MarkLoopBlocks(MIRGraph& graph, MBasicBlock* header, bool* canOsr)
 
                     // If the nested loop is not contiguous, we may have already
                     // passed its backedge. If this happens, back up.
-                    if (backedge->id() > block->id()) {
+                    if (innerBackedge->id() > block->id()) {
                         i = graph.poBegin(innerBackedge);
                         --i;
                     }

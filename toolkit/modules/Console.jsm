@@ -63,8 +63,7 @@ function fmt(aStr, aMaxLen, aMinLen, aOptions) {
   if (aStr.length > aMaxLen) {
     if (aOptions && aOptions.truncate == "start") {
       return "_" + aStr.substring(aStr.length - aMaxLen + 1);
-    }
-    else if (aOptions && aOptions.truncate == "center") {
+    } else if (aOptions && aOptions.truncate == "center") {
       let start = aStr.substring(0, (aMaxLen / 2));
 
       let end = aStr.substring((aStr.length - (aMaxLen / 2)) + 1);
@@ -150,8 +149,7 @@ function stringify(aThing, aAllowNewLines) {
     let json;
     try {
       json = JSON.stringify(aThing);
-    }
-    catch (ex) {
+    } catch (ex) {
       // Can't use a real ellipsis here, because cmd.exe isn't unicode-enabled
       json = "{" + Object.keys(aThing).join(":..,") + ":.., " + "}";
     }
@@ -211,16 +209,14 @@ function log(aThing) {
       for (let [key, value] of aThing) {
         reply += logProperty(key, value);
       }
-    }
-    else if (type == "Set") {
+    } else if (type == "Set") {
       let i = 0;
       reply += "Set\n";
       for (let value of aThing) {
-        reply += logProperty('' + i, value);
+        reply += logProperty("" + i, value);
         i++;
       }
-    }
-    else if (isError(aThing)) {
+    } else if (isError(aThing)) {
       reply += "  Message: " + aThing + "\n";
       if (aThing.stack) {
         reply += "  Stack:\n";
@@ -230,19 +226,16 @@ function log(aThing) {
           frame = frame.caller;
         }
       }
-    }
-    else if (aThing instanceof Components.interfaces.nsIDOMNode && aThing.tagName) {
+    } else if (aThing instanceof Components.interfaces.nsIDOMNode && aThing.tagName) {
       reply += "  " + debugElement(aThing) + "\n";
-    }
-    else {
+    } else {
       let keys = Object.getOwnPropertyNames(aThing);
       if (keys.length > 0) {
         reply += type + "\n";
         keys.forEach(function(aProp) {
           reply += logProperty(aProp, aThing[aProp]);
         });
-      }
-      else {
+      } else {
         reply += type + "\n";
         let root = aThing;
         let logged = [];
@@ -258,7 +251,7 @@ function log(aThing) {
 
           root = Object.getPrototypeOf(root);
           if (root != null) {
-            reply += '  - prototype ' + getCtorName(root) + '\n';
+            reply += "  - prototype " + getCtorName(root) + "\n";
           }
         }
       }
@@ -286,8 +279,7 @@ function logProperty(aProp, aValue) {
   if (aProp == "stack" && typeof value == "string") {
     let trace = parseStack(aValue);
     reply += formatTrace(trace);
-  }
-  else {
+  } else {
     reply += "    - " + aProp + " = " + stringify(aValue) + "\n";
   }
   return reply;
@@ -304,6 +296,8 @@ const LOG_LEVELS = {
   "time": 3,
   "group": 3,
   "groupEnd": 3,
+  "profile": 3,
+  "profileEnd": 3,
   "dir": 3,
   "dirxml": 3,
   "warn": 4,
@@ -442,7 +436,7 @@ function stopTimer(aName, aTimestamp) {
   let key = aName.toString();
   let duration = (aTimestamp || Date.now()) - gTimerRegistry.get(key);
   gTimerRegistry.delete(key);
-  return { name: aName, duration: duration };
+  return { name: aName, duration };
 }
 
 /**
@@ -459,7 +453,7 @@ function stopTimer(aName, aTimestamp) {
 function dumpMessage(aConsole, aLevel, aMessage) {
   aConsole.dump(
     "console." + aLevel + ": " +
-    (aConsole.prefix ? aConsole.prefix + ": " : "")  +
+    (aConsole.prefix ? aConsole.prefix + ": " : "") +
     aMessage + "\n"
   );
 }
@@ -537,8 +531,7 @@ function createMultiLineDumper(aLevel) {
  *        - stacktrace: for trace(). Holds the array of stack frames as given by
  *        getStack().
  */
-function sendConsoleAPIMessage(aConsole, aLevel, aFrame, aArgs, aOptions = {})
-{
+function sendConsoleAPIMessage(aConsole, aLevel, aFrame, aArgs, aOptions = {}) {
   let consoleEvent = {
     ID: "jsm",
     innerID: aConsole.innerID || aFrame.filename,
@@ -567,8 +560,7 @@ function sendConsoleAPIMessage(aConsole, aLevel, aFrame, aArgs, aOptions = {})
     case "groupEnd":
       try {
         consoleEvent.groupName = Array.prototype.join.call(aArgs, " ");
-      }
-      catch (ex) {
+      } catch (ex) {
         Cu.reportError(ex);
         Cu.reportError(ex.stack);
         return;
@@ -683,7 +675,7 @@ ConsoleAPI.prototype = {
     let args = Array.prototype.slice.call(arguments, 0);
     let frame = getStack(Components.stack.caller, 1)[0];
     let timer = startTimer(args[0]);
-    sendConsoleAPIMessage(this, "time", frame, args, { timer: timer });
+    sendConsoleAPIMessage(this, "time", frame, args, { timer });
     dumpMessage(this, "time",
                 "'" + timer.name + "' @ " + (new Date()));
   },
@@ -695,9 +687,35 @@ ConsoleAPI.prototype = {
     let args = Array.prototype.slice.call(arguments, 0);
     let frame = getStack(Components.stack.caller, 1)[0];
     let timer = stopTimer(args[0]);
-    sendConsoleAPIMessage(this, "timeEnd", frame, args, { timer: timer });
+    sendConsoleAPIMessage(this, "timeEnd", frame, args, { timer });
     dumpMessage(this, "timeEnd",
                 "'" + timer.name + "' " + timer.duration + "ms");
+  },
+
+  profile(profileName) {
+    if (!shouldLog("profile", this.maxLogLevel)) {
+      return;
+    }
+    Services.obs.notifyObservers({
+      wrappedJSObject: {
+        action: "profile",
+        arguments: [ profileName ]
+      }
+    }, "console-api-profiler", null);
+    dumpMessage(this, "profile", `'${profileName}'`);
+  },
+
+  profileEnd(profileName) {
+    if (!shouldLog("profileEnd", this.maxLogLevel)) {
+      return;
+    }
+    Services.obs.notifyObservers({
+      wrappedJSObject: {
+        action: "profileEnd",
+        arguments: [ profileName ]
+      }
+    }, "console-api-profiler", null);
+    dumpMessage(this, "profileEnd", `'${profileName}'`);
   },
 
   get maxLogLevel() {

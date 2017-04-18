@@ -17,6 +17,7 @@
 #include "nsIDOMNSEditableElement.h"
 #include "nsCOMPtr.h"
 #include "nsIConstraintValidation.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/HTMLFormElement.h" // for HasEverTriedInvalidSubmit()
 #include "mozilla/dom/HTMLInputElementBinding.h"
 #include "mozilla/dom/Promise.h"
@@ -185,7 +186,9 @@ public:
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
 
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
+  virtual nsresult PreHandleEvent(EventChainVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
                      EventChainPostVisitor& aVisitor) override;
   void PostHandleEventForRangeThumb(EventChainPostVisitor& aVisitor);
@@ -660,8 +663,9 @@ public:
     SetHTMLAttr(nsGkAtoms::value, aValue, aRv);
   }
 
-  void GetValue(nsAString& aValue, ErrorResult& aRv);
-  void SetValue(const nsAString& aValue, ErrorResult& aRv);
+  void SetValue(const nsAString& aValue, CallerType aCallerType,
+                ErrorResult& aRv);
+  void GetValue(nsAString& aValue, CallerType aCallerType);
 
   Nullable<Date> GetValueAsDate(ErrorResult& aRv);
 
@@ -770,13 +774,19 @@ public:
 
   nsIControllers* GetControllers(ErrorResult& aRv);
 
-  int32_t GetTextLength(ErrorResult& aRv);
+  int32_t InputTextLength(CallerType aCallerType);
 
   void MozGetFileNameArray(nsTArray<nsString>& aFileNames, ErrorResult& aRv);
 
   void MozSetFileNameArray(const Sequence< nsString >& aFileNames, ErrorResult& aRv);
   void MozSetFileArray(const Sequence<OwningNonNull<File>>& aFiles);
   void MozSetDirectory(const nsAString& aDirectoryPath, ErrorResult& aRv);
+
+  bool MozInputRangeIgnorePreventDefault() const
+  {
+    return (IsInChromeDocument() || IsInNativeAnonymousSubtree()) &&
+      GetBoolAttr(nsGkAtoms::mozinputrangeignorepreventdefault);
+  }
 
   /*
    * The following functions are called from datetime picker to let input box
@@ -925,10 +935,17 @@ protected:
    */
   nsresult SetValueInternal(const nsAString& aValue, uint32_t aFlags);
 
-  nsresult GetValueInternal(nsAString& aValue) const;
+  // Generic getter for the value that doesn't do experimental control type
+  // sanitization.
+  void GetValueInternal(nsAString& aValue, CallerType aCallerType) const;
+
+  // A getter for callers that know we're not dealing with a file input, so they
+  // don't have to think about the caller type.
+  void GetNonFileValueInternal(nsAString& aValue) const;
 
   /**
-   * Returns whether the current value is the empty string.
+   * Returns whether the current value is the empty string.  This only makes
+   * sense for some input types; does NOT make sense for file inputs.
    *
    * @return whether the current value is the empty string.
    */
@@ -1073,11 +1090,7 @@ protected:
   /**
    * Returns if valueAsNumber attribute applies for the current type.
    */
-  bool DoesValueAsNumberApply() const
-  {
-    // TODO: this is temporary until bug 888331 is fixed.
-    return DoesMinMaxApply() && mType != NS_FORM_INPUT_DATETIME_LOCAL;
-  }
+  bool DoesValueAsNumberApply() const { return DoesMinMaxApply(); }
 
   /**
    * Returns if autocomplete attribute applies for the current type.
@@ -1285,6 +1298,7 @@ protected:
    * https://html.spec.whatwg.org/multipage/infrastructure.html#valid-normalised-local-date-and-time-string
    */
   void NormalizeDateTimeLocal(nsAString& aValue) const;
+
   /**
    * This methods returns the number of days since epoch for a given year and
    * week.
@@ -1314,6 +1328,13 @@ protected:
    * result is either 52 or 53.
    */
   uint32_t MaximumWeekInYear(uint32_t aYear) const;
+
+  /**
+   * This method converts aValue (milliseconds within a day) to hours, minutes,
+   * seconds and milliseconds.
+   */
+  bool GetTimeFromMs(double aValue, uint16_t* aHours, uint16_t* aMinutes,
+                     uint16_t* aSeconds, uint16_t* aMilliseconds) const;
 
   /**
    * This methods returns true if it's a leap year.
@@ -1347,7 +1368,7 @@ protected:
    *
    * @param aValue The Decimal that will be used to set the value.
    */
-  void SetValue(Decimal aValue);
+  void SetValue(Decimal aValue, CallerType aCallerType);
 
   /**
    * Update the HAS_RANGE bit field value.
@@ -1457,7 +1478,7 @@ protected:
   void ClearGetFilesHelpers();
 
   /**
-   * nsINode::SetMayBeApzAware() will be invoked in this function if necessary 
+   * nsINode::SetMayBeApzAware() will be invoked in this function if necessary
    * to prevent default action of APZC so that we can increase/decrease the
    * value of this InputElement when mouse wheel event comes without scrolling
    * the page.

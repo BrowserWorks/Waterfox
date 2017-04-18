@@ -46,19 +46,19 @@ AutoCompleteInput.prototype = {
   get searchCount() {
     return this.searches.length;
   },
-  getSearchAt: function (aIndex) {
+  getSearchAt(aIndex) {
     return this.searches[aIndex];
   },
 
-  onSearchBegin: function () {},
-  onSearchComplete: function() {},
+  onSearchBegin() {},
+  onSearchComplete() {},
 
   get popupOpen() {
     return false;
   },
   popup: {
     set selectedIndex(aIndex) {},
-    invalidate: function () {},
+    invalidate() {},
     QueryInterface: XPCOMUtils.generateQI([Ci.nsIAutoCompletePopup])
   },
 
@@ -68,8 +68,7 @@ AutoCompleteInput.prototype = {
 /**
  * Checks that autocomplete results are ordered correctly.
  */
-function ensure_results(expected, searchTerm)
-{
+function ensure_results(expected, searchTerm) {
   let controller = Cc["@mozilla.org/autocomplete/controller;1"].
                    getService(Ci.nsIAutoCompleteController);
 
@@ -98,8 +97,7 @@ function ensure_results(expected, searchTerm)
 /**
  * Asynchronous task that bumps up the rank for an uri.
  */
-function* task_setCountRank(aURI, aCount, aRank, aSearch, aBookmark)
-{
+function* task_setCountRank(aURI, aCount, aRank, aSearch, aBookmark) {
   // Bump up the visit count for the uri.
   let visits = [];
   for (let i = 0; i < aCount; i++) {
@@ -120,7 +118,7 @@ function* task_setCountRank(aURI, aCount, aRank, aSearch, aBookmark)
     },
     popupOpen: true,
     selectedIndex: 0,
-    getValueAt: function() {
+    getValueAt() {
       return aURI.spec;
     },
     searchString: aSearch
@@ -148,10 +146,9 @@ function* task_setCountRank(aURI, aCount, aRank, aSearch, aBookmark)
 /**
  * Decay the adaptive entries by sending the daily idle topic.
  */
-function doAdaptiveDecay()
-{
+function doAdaptiveDecay() {
   PlacesUtils.history.runInBatchMode({
-    runBatched: function() {
+    runBatched() {
       for (let i = 0; i < 10; i++) {
         PlacesUtils.history.QueryInterface(Ci.nsIObserver)
                            .observe(null, "idle-daily", null);
@@ -177,8 +174,7 @@ var observer = {
   results: null,
   search: null,
   runCount: -1,
-  observe: function(aSubject, aTopic, aData)
-  {
+  observe(aSubject, aTopic, aData) {
     if (--this.runCount > 0)
       return;
     ensure_results(this.results, this.search);
@@ -379,8 +375,7 @@ var deferEnsureResults;
 /**
  * Test adaptive autocomplete.
  */
-add_task(function* test_adaptive()
-{
+add_task(function* test_adaptive() {
   // Disable autoFill for this test.
   Services.prefs.setBoolPref("browser.urlbar.autoFill", false);
   do_register_cleanup(() => Services.prefs.clearUserPref("browser.urlbar.autoFill"));

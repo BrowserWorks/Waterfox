@@ -25,6 +25,20 @@
 #include "mozilla/layers/ImageHost.h"
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "TreeTraversal.h"              // for ForEachNode
+#include "LayersLogging.h"
+
+// LayerTreeInvalidation debugging
+#define LTI_DEBUG 0
+
+#if LTI_DEBUG
+#  define LTI_DEEPER(aPrefix) nsPrintfCString("%s  ", aPrefix).get()
+#  define LTI_DUMP(rgn, label) if (!(rgn).IsEmpty()) printf_stderr("%s%p: " label " portion is %s\n", aPrefix, mLayer.get(), Stringify(rgn).c_str());
+#  define LTI_LOG(...) printf_stderr(__VA_ARGS__)
+#else
+#  define LTI_DEEPER(aPrefix) nullptr
+#  define LTI_DUMP(rgn, label)
+#  define LTI_LOG(...)
+#endif
 
 using namespace mozilla::gfx;
 
@@ -157,7 +171,7 @@ struct LayerPropertiesBase : public LayerProperties
   {
     MOZ_COUNT_CTOR(LayerPropertiesBase);
   }
-  ~LayerPropertiesBase()
+  ~LayerPropertiesBase() override
   {
     MOZ_COUNT_DTOR(LayerPropertiesBase);
   }
@@ -167,13 +181,14 @@ protected:
   LayerPropertiesBase& operator=(const LayerPropertiesBase& a) = delete;
 
 public:
-  virtual nsIntRegion ComputeDifferences(Layer* aRoot,
-                                         NotifySubDocInvalidationFunc aCallback,
-                                         bool* aGeometryChanged);
+  nsIntRegion ComputeDifferences(Layer* aRoot,
+                                 NotifySubDocInvalidationFunc aCallback,
+                                 bool* aGeometryChanged) override;
 
-  virtual void MoveBy(const IntPoint& aOffset);
+  void MoveBy(const IntPoint& aOffset) override;
 
-  nsIntRegion ComputeChange(NotifySubDocInvalidationFunc aCallback,
+  nsIntRegion ComputeChange(const char* aPrefix,
+                            NotifySubDocInvalidationFunc aCallback,
                             bool& aGeometryChanged)
   {
     // Bug 1251615: This canary is sometimes hit. We're still not sure why.
@@ -203,26 +218,32 @@ public:
     {
       aGeometryChanged = true;
       result = OldTransformedBounds();
+      LTI_DUMP(result, "oldtransform");
+      LTI_DUMP(NewTransformedBounds(), "newtransform");
       AddRegion(result, NewTransformedBounds());
 
       // We can't bail out early because we need to update mChildrenChanged.
     }
 
-    AddRegion(result, ComputeChangeInternal(aCallback, aGeometryChanged));
+    nsIntRegion internal = ComputeChangeInternal(aPrefix, aCallback, aGeometryChanged);
+    LTI_DUMP(internal, "internal");
+    AddRegion(result, internal);
+    LTI_DUMP(mLayer->GetInvalidRegion().GetRegion(), "invalid");
     AddTransformedRegion(result, mLayer->GetInvalidRegion().GetRegion(), mTransform);
 
     if (mMaskLayer && otherMask) {
-      AddTransformedRegion(result, mMaskLayer->ComputeChange(aCallback, aGeometryChanged),
-                           mTransform);
+      nsIntRegion mask = mMaskLayer->ComputeChange(aPrefix, aCallback, aGeometryChanged);
+      LTI_DUMP(mask, "mask");
+      AddTransformedRegion(result, mask, mTransform);
     }
 
     for (size_t i = 0;
          i < std::min(mAncestorMaskLayers.Length(), mLayer->GetAncestorMaskLayerCount());
          i++)
     {
-      AddTransformedRegion(result,
-                           mAncestorMaskLayers[i]->ComputeChange(aCallback, aGeometryChanged),
-                           mTransform);
+      nsIntRegion mask = mAncestorMaskLayers[i]->ComputeChange(aPrefix, aCallback, aGeometryChanged);
+      LTI_DUMP(mask, "ancestormask");
+      AddTransformedRegion(result, mask, mTransform);
     }
 
     if (mUseClipRect && otherClip) {
@@ -230,6 +251,7 @@ public:
         aGeometryChanged = true;
         nsIntRegion tmp;
         tmp.Xor(mClipRect.ToUnknownRect(), otherClip->ToUnknownRect());
+        LTI_DUMP(tmp, "clip");
         AddRegion(result, tmp);
       }
     }
@@ -255,7 +277,8 @@ public:
     return TransformRect(mVisibleRegion.ToUnknownRegion().GetBounds(), mTransform);
   }
 
-  virtual nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
+  virtual nsIntRegion ComputeChangeInternal(const char* aPrefix,
+                                            NotifySubDocInvalidationFunc aCallback,
                                             bool& aGeometryChanged)
   {
     return IntRect();
@@ -292,7 +315,8 @@ protected:
   ContainerLayerProperties& operator=(const ContainerLayerProperties& a) = delete;
 
 public:
-  nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
+  nsIntRegion ComputeChangeInternal(const char *aPrefix,
+                                    NotifySubDocInvalidationFunc aCallback,
                                     bool& aGeometryChanged) override
   {
     // Make sure we got our virtual call right
@@ -343,6 +367,7 @@ public:
             // rather than removed, we will invalidate their new area when we
             // encounter them in the new list):
             for (uint32_t j = i; j < childsOldIndex; ++j) {
+              LTI_DUMP(mChildren[j]->OldTransformedBounds(), "reordered child");
               AddRegion(result, mChildren[j]->OldTransformedBounds());
               childrenChanged |= true;
             }
@@ -350,9 +375,11 @@ public:
               MOZ_CRASH("Out of bounds");
             }
             // Invalidate any regions of the child that have changed:
-            nsIntRegion region = mChildren[childsOldIndex]->ComputeChange(aCallback, aGeometryChanged);
+            nsIntRegion region = mChildren[childsOldIndex]->ComputeChange(LTI_DEEPER(aPrefix), aCallback, aGeometryChanged);
             i = childsOldIndex + 1;
             if (!region.IsEmpty()) {
+              LTI_LOG("%s%p: child %p produced %s\n", aPrefix, mLayer.get(),
+                mChildren[childsOldIndex]->mLayer.get(), Stringify(region).c_str());
               AddRegion(result, region);
               childrenChanged |= true;
             }
@@ -372,6 +399,7 @@ public:
       }
       if (invalidateChildsCurrentArea) {
         aGeometryChanged = true;
+        LTI_DUMP(child->GetLocalVisibleRegion().ToUnknownRegion(), "invalidateChidlsCurrentArea");
         AddTransformedRegion(result, child->GetLocalVisibleRegion().ToUnknownRegion(),
                              GetTransformForInvalidation(child));
         if (aCallback) {
@@ -386,6 +414,7 @@ public:
     // Process remaining removed children.
     while (i < mChildren.Length()) {
       childrenChanged |= true;
+      LTI_DUMP(mChildren[i]->OldTransformedBounds(), "removed child");
       AddRegion(result, mChildren[i]->OldTransformedBounds());
       i++;
     }
@@ -404,6 +433,7 @@ public:
     }
     // else, effective transforms have applied on children.
 
+    LTI_DUMP(invalidOfLayer, "invalidOfLayer");
     result.OrWith(invalidOfLayer);
 
     return result;
@@ -454,18 +484,21 @@ protected:
   ColorLayerProperties& operator=(const ColorLayerProperties& a) = delete;
 
 public:
-  virtual nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
-                                            bool& aGeometryChanged)
+  nsIntRegion ComputeChangeInternal(const char* aPrefix,
+                                    NotifySubDocInvalidationFunc aCallback,
+                                    bool& aGeometryChanged) override
   {
     ColorLayer* color = static_cast<ColorLayer*>(mLayer.get());
 
     if (mColor != color->GetColor()) {
       aGeometryChanged = true;
+      LTI_DUMP(NewTransformedBounds(), "color");
       return NewTransformedBounds();
     }
 
     nsIntRegion boundsDiff;
     boundsDiff.Xor(mBounds, color->GetBounds());
+    LTI_DUMP(boundsDiff, "colorbounds");
 
     nsIntRegion result;
     AddTransformedRegion(result, boundsDiff, mTransform);
@@ -477,11 +510,57 @@ public:
   IntRect mBounds;
 };
 
+struct BorderLayerProperties : public LayerPropertiesBase
+{
+  explicit BorderLayerProperties(BorderLayer *aLayer)
+    : LayerPropertiesBase(aLayer)
+    , mColors(aLayer->GetColors())
+    , mRect(aLayer->GetRect())
+    , mCorners(aLayer->GetCorners())
+    , mWidths(aLayer->GetWidths())
+  { }
+
+protected:
+  BorderLayerProperties(const BorderLayerProperties& a) = delete;
+  BorderLayerProperties& operator=(const BorderLayerProperties& a) = delete;
+
+public:
+  nsIntRegion ComputeChangeInternal(const char* aPrefix,
+                                    NotifySubDocInvalidationFunc aCallback,
+                                    bool& aGeometryChanged) override
+  {
+    BorderLayer* border = static_cast<BorderLayer*>(mLayer.get());
+
+    if (!border->GetLocalVisibleRegion().ToUnknownRegion().IsEqual(mVisibleRegion)) {
+      aGeometryChanged = true;
+      IntRect result = NewTransformedBounds();
+      result = result.Union(OldTransformedBounds());
+      return result;
+    }
+
+    if (!PodEqual(&mColors[0], &border->GetColors()[0], 4) ||
+        !PodEqual(&mWidths[0], &border->GetWidths()[0], 4) ||
+        !PodEqual(&mCorners[0], &border->GetCorners()[0], 4) ||
+        !mRect.IsEqualEdges(border->GetRect())) {
+      aGeometryChanged = true;
+      LTI_DUMP(NewTransformedBounds(), "bounds");
+      return NewTransformedBounds();
+    }
+
+    return nsIntRegion();
+  }
+
+  BorderColors mColors;
+  LayerRect mRect;
+  BorderCorners mCorners;
+  BorderWidths mWidths;
+};
+
 static ImageHost* GetImageHost(Layer* aLayer)
 {
-  LayerComposite* composite = aLayer->AsLayerComposite();
-  if (composite) {
-    return static_cast<ImageHost*>(composite->GetCompositableHost());
+  HostLayer* compositor = aLayer->AsHostLayer();
+  if (compositor) {
+    return static_cast<ImageHost*>(compositor->GetCompositableHost());
   }
   return nullptr;
 }
@@ -505,8 +584,9 @@ struct ImageLayerProperties : public LayerPropertiesBase
     }
   }
 
-  virtual nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
-                                            bool& aGeometryChanged)
+  nsIntRegion ComputeChangeInternal(const char* aPrefix,
+                                    NotifySubDocInvalidationFunc aCallback,
+                                    bool& aGeometryChanged) override
   {
     ImageLayer* imageLayer = static_cast<ImageLayer*>(mLayer.get());
 
@@ -539,8 +619,10 @@ struct ImageLayerProperties : public LayerPropertiesBase
           size = host->GetImageSize();
         }
         IntRect rect(0, 0, size.width, size.height);
+        LTI_DUMP(rect, "mask");
         return TransformRect(rect, GetTransformForInvalidation(mLayer));
       }
+      LTI_DUMP(NewTransformedBounds(), "bounds");
       return NewTransformedBounds();
     }
 
@@ -566,8 +648,9 @@ struct CanvasLayerProperties : public LayerPropertiesBase
     mFrameID = mImageHost ? mImageHost->GetFrameID() : -1;
   }
 
-  virtual nsIntRegion ComputeChangeInternal(NotifySubDocInvalidationFunc aCallback,
-                                            bool& aGeometryChanged)
+  nsIntRegion ComputeChangeInternal(const char* aPrefix,
+                                    NotifySubDocInvalidationFunc aCallback,
+                                    bool& aGeometryChanged) override
   {
     CanvasLayer* canvasLayer = static_cast<CanvasLayer*>(mLayer.get());
 
@@ -575,6 +658,7 @@ struct CanvasLayerProperties : public LayerPropertiesBase
     if (host && host->GetFrameID() != mFrameID) {
       aGeometryChanged = true;
 
+      LTI_DUMP(NewTransformedBounds(), "frameId");
       return NewTransformedBounds();
     }
 
@@ -606,9 +690,12 @@ CloneLayerTreePropertiesInternal(Layer* aRoot, bool aIsMask /* = false */)
       return MakeUnique<ImageLayerProperties>(static_cast<ImageLayer*>(aRoot), aIsMask);
     case Layer::TYPE_CANVAS:
       return MakeUnique<CanvasLayerProperties>(static_cast<CanvasLayer*>(aRoot));
+  case Layer::TYPE_BORDER:
+      return MakeUnique<BorderLayerProperties>(static_cast<BorderLayer*>(aRoot));
     case Layer::TYPE_READBACK:
     case Layer::TYPE_SHADOW:
     case Layer::TYPE_PAINTED:
+    case Layer::TYPE_TEXT:
       return MakeUnique<LayerPropertiesBase>(aRoot);
   }
 
@@ -661,7 +748,7 @@ LayerPropertiesBase::ComputeDifferences(Layer* aRoot, NotifySubDocInvalidationFu
     return result;
   } else {
     bool geometryChanged = (aGeometryChanged != nullptr) ? *aGeometryChanged : false;
-    nsIntRegion invalid = ComputeChange(aCallback, geometryChanged);
+    nsIntRegion invalid = ComputeChange("  ", aCallback, geometryChanged);
     if (aGeometryChanged != nullptr) {
       *aGeometryChanged = geometryChanged;
     }

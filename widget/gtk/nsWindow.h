@@ -107,20 +107,20 @@ public:
     {
         return mozilla::DesktopToLayoutDeviceScale(1.0);
     }
-    virtual nsresult   SetParent(nsIWidget* aNewParent) override;
+    virtual void       SetParent(nsIWidget* aNewParent) override;
     virtual void       SetModal(bool aModal) override;
     virtual bool       IsVisible() const override;
     virtual void       ConstrainPosition(bool aAllowSlop,
                                          int32_t *aX,
                                          int32_t *aY) override;
     virtual void       SetSizeConstraints(const SizeConstraints& aConstraints) override;
-    NS_IMETHOD         Move(double aX,
+    virtual void       Move(double aX,
                             double aY) override;
-    NS_IMETHOD         Show             (bool aState) override;
-    NS_IMETHOD         Resize           (double aWidth,
+    virtual void       Show             (bool aState) override;
+    virtual void       Resize           (double aWidth,
                                          double aHeight,
                                          bool   aRepaint) override;
-    NS_IMETHOD         Resize           (double aX,
+    virtual void       Resize           (double aX,
                                          double aY,
                                          double aWidth,
                                          double aHeight,
@@ -129,26 +129,26 @@ public:
 
     void               SetZIndex(int32_t aZIndex) override;
     virtual void       SetSizeMode(nsSizeMode aMode) override;
-    NS_IMETHOD         Enable(bool aState) override;
-    NS_IMETHOD         SetFocus(bool aRaise = false) override;
+    virtual void       Enable(bool aState) override;
+    virtual nsresult   SetFocus(bool aRaise = false) override;
     virtual LayoutDeviceIntRect GetScreenBounds() override;
     virtual LayoutDeviceIntRect GetClientBounds() override;
     virtual LayoutDeviceIntSize GetClientSize() override;
     virtual LayoutDeviceIntPoint GetClientOffset() override;
-    NS_IMETHOD         SetCursor(nsCursor aCursor) override;
-    NS_IMETHOD         SetCursor(imgIContainer* aCursor,
+    virtual void       SetCursor(nsCursor aCursor) override;
+    virtual nsresult   SetCursor(imgIContainer* aCursor,
                                  uint32_t aHotspotX, uint32_t aHotspotY) override;
-    NS_IMETHOD         Invalidate(const LayoutDeviceIntRect& aRect) override;
+    virtual void       Invalidate(const LayoutDeviceIntRect& aRect) override;
     virtual void*      GetNativeData(uint32_t aDataType) override;
     void               SetNativeData(uint32_t aDataType, uintptr_t aVal) override;
-    NS_IMETHOD         SetTitle(const nsAString& aTitle) override;
-    NS_IMETHOD         SetIcon(const nsAString& aIconSpec) override;
+    virtual nsresult   SetTitle(const nsAString& aTitle) override;
+    virtual void       SetIcon(const nsAString& aIconSpec) override;
     virtual void       SetWindowClass(const nsAString& xulWinType) override;
     virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
     virtual void       CaptureMouse(bool aCapture) override;
     virtual void       CaptureRollupEvents(nsIRollupListener *aListener,
                                            bool aDoCapture) override;
-    NS_IMETHOD         GetAttention(int32_t aCycleCount) override;
+    virtual MOZ_MUST_USE nsresult GetAttention(int32_t aCycleCount) override;
     virtual nsresult   SetWindowClipRegion(const nsTArray<LayoutDeviceIntRect>& aRects,
                                            bool aIntersectWithExisting) override;
     virtual bool       HasPendingInputEvent() override;
@@ -160,7 +160,7 @@ public:
                                              nsIRunnable* aCallback) override;
     virtual nsresult   MakeFullScreen(bool aFullScreen,
                                       nsIScreen* aTargetScreen = nullptr) override;
-    NS_IMETHOD         HideWindowChrome(bool aShouldHide) override;
+    virtual void       HideWindowChrome(bool aShouldHide) override;
 
     /**
      * GetLastUserInputTime returns a timestamp for the most recent user input
@@ -258,10 +258,12 @@ public:
 
     static guint32     sLastButtonPressTime;
 
-    NS_IMETHOD         BeginResizeDrag(mozilla::WidgetGUIEvent* aEvent,
+    virtual MOZ_MUST_USE nsresult
+                       BeginResizeDrag(mozilla::WidgetGUIEvent* aEvent,
                                        int32_t aHorizontal,
                                        int32_t aVertical) override;
-    NS_IMETHOD         BeginMoveDrag(mozilla::WidgetMouseEvent* aEvent) override;
+    virtual MOZ_MUST_USE nsresult
+                       BeginMoveDrag(mozilla::WidgetMouseEvent* aEvent) override;
 
     MozContainer*      GetMozContainer() { return mContainer; }
     // GetMozContainerWidget returns the MozContainer even for undestroyed
@@ -283,11 +285,11 @@ public:
     mozilla::TimeStamp GetEventTimeStamp(guint32 aEventTime);
     mozilla::CurrentX11TimeGetter* GetCurrentTimeGetter();
 
-    NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
-                                      const InputContextAction& aAction) override;
-    NS_IMETHOD_(InputContext) GetInputContext() override;
+    virtual void SetInputContext(const InputContext& aContext,
+                                 const InputContextAction& aAction) override;
+    virtual InputContext GetInputContext() override;
     virtual nsIMEUpdatePreference GetIMEUpdatePreference() override;
-    NS_IMETHOD_(TextEventDispatcherListener*)
+    virtual TextEventDispatcherListener*
         GetNativeTextEventDispatcherListener() override;
     bool ExecuteNativeKeyBindingRemapped(
                         NativeKeyBindingsType aType,
@@ -296,7 +298,7 @@ public:
                         void* aCallbackData,
                         uint32_t aGeckoKeyCode,
                         uint32_t aNativeKeyCode);
-    NS_IMETHOD_(bool) ExecuteNativeKeyBinding(
+    virtual bool ExecuteNativeKeyBinding(
                         NativeKeyBindingsType aType,
                         const mozilla::WidgetKeyboardEvent& aEvent,
                         DoCommandCallback aCallback,

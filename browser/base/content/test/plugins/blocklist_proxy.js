@@ -7,7 +7,7 @@ const kBlocklistServiceUUID = "{66354bc9-7ed1-4692-ae1d-8da97d6b205e}";
 const kBlocklistServiceContractID = "@mozilla.org/extensions/blocklist;1";
 const kBlocklistServiceFactory = Cm.getClassObject(Cc[kBlocklistServiceContractID], Ci.nsIFactory);
 
-Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 /*
  * A lightweight blocklist proxy for the testing purposes.
@@ -19,7 +19,7 @@ var BlocklistProxy = {
                                          Ci.nsIBlocklistService,
                                          Ci.nsITimerCallback]),
 
-  init: function() {
+  init() {
     if (!this._uuid) {
       this._uuid =
         Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator)
@@ -30,7 +30,7 @@ var BlocklistProxy = {
     }
   },
 
-  uninit: function() {
+  uninit() {
     if (this._uuid) {
       Cm.nsIComponentRegistrar.unregisterFactory(this._uuid, this);
       Cm.nsIComponentRegistrar.registerFactory(Components.ID(kBlocklistServiceUUID),
@@ -41,33 +41,33 @@ var BlocklistProxy = {
     }
   },
 
-  notify: function (aTimer) {
+  notify(aTimer) {
   },
 
-  observe: function (aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
   },
 
-  isAddonBlocklisted: function (aAddon, aAppVersion, aToolkitVersion) {
+  isAddonBlocklisted(aAddon, aAppVersion, aToolkitVersion) {
     return false;
   },
 
-  getAddonBlocklistState: function (aAddon, aAppVersion, aToolkitVersion) {
+  getAddonBlocklistState(aAddon, aAppVersion, aToolkitVersion) {
     return 0; // STATE_NOT_BLOCKED
   },
 
-  getPluginBlocklistState: function (aPluginTag, aAppVersion, aToolkitVersion) {
+  getPluginBlocklistState(aPluginTag, aAppVersion, aToolkitVersion) {
     return 0; // STATE_NOT_BLOCKED
   },
 
-  getAddonBlocklistURL: function (aAddon, aAppVersion, aToolkitVersion) {
+  getAddonBlocklistURL(aAddon, aAppVersion, aToolkitVersion) {
     return "";
   },
 
-  getPluginBlocklistURL: function (aPluginTag) {
+  getPluginBlocklistURL(aPluginTag) {
     return "";
   },
 
-  getPluginInfoURL: function (aPluginTag) {
+  getPluginInfoURL(aPluginTag) {
     return "";
   },
 }

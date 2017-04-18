@@ -31,3 +31,38 @@ function pushPrefs(...aPrefs) {
   SpecialPowers.pushPrefEnv({"set": aPrefs}, deferred.resolve);
   return deferred.promise;
 }
+
+/**
+ * Used to check whether the audio unblocking icon is in the tab.
+ */
+function* waitForTabBlockEvent(tab, expectBlocked) {
+  if (tab.soundBlocked == expectBlocked) {
+    ok(true, "The tab should " + (expectBlocked ? "" : "not ") + "be blocked");
+  } else {
+    yield BrowserTestUtils.waitForEvent(tab, "TabAttrModified", false, (event) => {
+      if (event.detail.changed.indexOf("blocked") >= 0) {
+        is(tab.soundBlocked, expectBlocked, "The tab should " + (expectBlocked ? "" : "not ") + "be blocked");
+        return true;
+      }
+      return false;
+    });
+  }
+}
+
+/**
+ * Used to check whether the tab has soundplaying attribute.
+ */
+function* waitForTabPlayingEvent(tab, expectPlaying) {
+  if (tab.soundPlaying == expectPlaying) {
+    ok(true, "The tab should " + (expectPlaying ? "" : "not ") + "be playing");
+  } else {
+    info("Playing state doens't match, wait for attributes changes.");
+    yield BrowserTestUtils.waitForEvent(tab, "TabAttrModified", false, (event) => {
+      if (event.detail.changed.indexOf("soundplaying") >= 0) {
+        is(tab.soundPlaying, expectPlaying, "The tab should " + (expectPlaying ? "" : "not ") + "be playing");
+        return true;
+      }
+      return false;
+    });
+  }
+}

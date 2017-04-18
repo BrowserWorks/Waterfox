@@ -10,10 +10,6 @@ this.EXPORTED_SYMBOLS = ["LaterRun"];
 
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "setInterval", "resource://gre/modules/Timer.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "clearInterval", "resource://gre/modules/Timer.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow", "resource://gre/modules/RecentWindow.jsm");
 
 const kEnabledPref = "browser.laterrun.enabled";
 const kPagePrefRoot = "browser.laterrun.pages.";
@@ -68,7 +64,6 @@ let LaterRun = {
     if (this.hoursSinceInstall > kSelfDestructHoursLimit ||
         this.sessionCount > kSelfDestructSessionLimit) {
       this.selfDestruct();
-      return;
     }
   },
 
@@ -134,7 +129,7 @@ let LaterRun = {
         let uri = null;
         try {
           let urlString = Services.urlFormatter.formatURL(pageData.url.trim());
-          uri = Services.io.newURI(urlString, null, null);
+          uri = Services.io.newURI(urlString);
         } catch (ex) {
           Cu.reportError("Invalid LaterRun page URL " + pageData.url + " ignored.");
           continue;
@@ -160,7 +155,7 @@ let LaterRun = {
       return null;
     }
     let pages = this.readPages();
-    let page = pages.find(page => page.applies(this));
+    let page = pages.find(p => p.applies(this));
     if (page) {
       Services.prefs.setBoolPref(page.pref + "hasRun", true);
       return page.url;

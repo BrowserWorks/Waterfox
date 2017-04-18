@@ -50,7 +50,6 @@ window[chromehidden~="toolbar"] .chromeclass-toolbar-additional {
 /****** elements that have no visual representation ******/
 
 script, data,
-xbl|children,
 commands, commandset, command,
 broadcasterset, broadcaster, observes,
 keyset, key, toolbarpalette, toolbarset,
@@ -58,6 +57,10 @@ template, rule, conditions, action,
 bindings, binding, content, member, triple,
 treechildren, treeitem, treeseparator, treerow, treecell {
   display: none;
+}
+
+xbl|children {
+  display: none !important;
 }
 
 /********** focus rules **********/
@@ -166,6 +169,10 @@ iframe {
 
 browser {
   -moz-binding: url("chrome://global/content/bindings/browser.xml#browser");
+}
+
+browser[remote=true]:not(.lightweight) {
+  -moz-binding: url("chrome://global/content/bindings/remote-browser.xml#remote-browser");
 }
 
 editor {

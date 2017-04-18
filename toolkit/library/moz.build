@@ -47,6 +47,9 @@ def Libxul(name):
             'api-ms-win-core-winrt-string-l1-1-0.dll',
         ]
 
+    if CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['ACCESSIBILITY']:
+        LOCAL_INCLUDES += ['!/accessible/interfaces/gecko/']
+
     if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
         LOCAL_INCLUDES += [
             '/widget/windows',
@@ -69,8 +72,6 @@ def Libxul(name):
         LDFLAGS += ['-Wl,-no_compact_unwind']
 
 Libxul('xul')
-
-SDK_LIBRARY = True
 
 FORCE_STATIC_LIB = True
 
@@ -247,11 +248,6 @@ if CONFIG['MOZ_ALSA']:
 if CONFIG['HAVE_CLOCK_MONOTONIC']:
     OS_LIBS += CONFIG['REALTIME_LIBS']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
-    OS_LIBS += [
-        'GLESv2',
-    ]
-
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     OS_LIBS += [
         'ui',
@@ -385,12 +381,13 @@ if CONFIG['COMPILE_ENVIRONMENT']:
             LIBRARY_NAME,
             CONFIG['DLL_SUFFIX']
         )
-    GENERATED_FILES += ['dependentlibs.list']
-    GENERATED_FILES['dependentlibs.list'].script = 'dependentlibs.py:gen_list'
-    GENERATED_FILES['dependentlibs.list'].inputs = [
+    GENERATED_FILES += [('dependentlibs.list', 'dependentlibs.list.gtest')]
+    dep_libs_list = GENERATED_FILES[('dependentlibs.list', 'dependentlibs.list.gtest')]
+    dep_libs_list.script = 'dependentlibs.py:gen_list'
+    dep_libs_list.inputs = [
         '!%s' % full_libname,
     ]
-    FINAL_TARGET_FILES += ['!dependentlibs.list']
+    FINAL_TARGET_FILES += ['!dependentlibs.list', '!dependentlibs.list.gtest']
 
 # This library needs to be last to make XPCOM module registration work.
 USE_LIBS += ['StaticXULComponentsEnd']

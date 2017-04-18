@@ -192,7 +192,7 @@ public:
     }
   }
 
-  operator bool() {
+  explicit operator bool() {
     return module && mXInputGetState;
   }
 
@@ -306,7 +306,7 @@ public:
     }
   }
 
-  operator bool() {
+  explicit operator bool() {
     return mModule &&
       mHidD_GetProductString &&
       mHidP_GetCaps &&
@@ -1073,7 +1073,7 @@ StartGamepadMonitoring()
     return;
   }
   sIsShutdown = false;
-  NS_NewThread(getter_AddRefs(gMonitorThread));
+  NS_NewNamedThread("Gamepad", getter_AddRefs(gMonitorThread));
   gMonitorThread->Dispatch(new StartWindowsGamepadServiceRunnable(),
                            NS_DISPATCH_NORMAL);
 }

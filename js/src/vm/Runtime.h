@@ -62,6 +62,7 @@ namespace js {
 
 class PerThreadData;
 class ExclusiveContext;
+class AutoAssertNoContentJS;
 class AutoKeepAtoms;
 class EnterDebuggeeNoExecute;
 #ifdef JS_TRACE_LOGGING
@@ -87,6 +88,10 @@ namespace js {
 
 extern MOZ_COLD void
 ReportOutOfMemory(ExclusiveContext* cx);
+
+/* Different signature because the return type has MOZ_MUST_USE_TYPE. */
+extern MOZ_COLD mozilla::GenericErrorResult<OOM&>
+ReportOutOfMemoryResult(ExclusiveContext* cx);
 
 extern MOZ_COLD void
 ReportAllocationOverflow(ExclusiveContext* maybecx);
@@ -784,7 +789,7 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     bool initSelfHosting(JSContext* cx);
     void finishSelfHosting();
-    void markSelfHostingGlobal(JSTracer* trc);
+    void traceSelfHostingGlobal(JSTracer* trc);
     bool isSelfHostingGlobal(JSObject* global) {
         return global == selfHostingGlobal_;
     }
@@ -848,6 +853,9 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     /* Call this to get the name of a compartment. */
     JSCompartmentNameCallback compartmentNameCallback;
+
+    /* Callback for doing memory reporting on external strings. */
+    JSExternalStringSizeofCallback externalStringSizeofCallback;
 
     js::ActivityCallback  activityCallback;
     void*                activityCallbackArg;
@@ -1034,6 +1042,15 @@ struct JSRuntime : public JS::shadow::Runtime,
     bool isBeingDestroyed() const {
         return beingDestroyed_;
     }
+
+  private:
+    bool allowContentJS_;
+  public:
+    bool allowContentJS() const {
+        return allowContentJS_;
+    }
+
+    friend class js::AutoAssertNoContentJS;
 
   private:
     // Set of all atoms other than those in permanentAtoms and staticStrings.

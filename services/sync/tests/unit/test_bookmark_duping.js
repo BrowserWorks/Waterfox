@@ -2,6 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
+Cu.import("resource://gre/modules/PlacesSyncUtils.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-sync/engines.js");
@@ -23,17 +24,7 @@ const store = engine._store;
 store._log.level = Log.Level.Trace;
 engine._log.level = Log.Level.Trace;
 
-function promiseOneObserver(topic) {
-  return new Promise((resolve, reject) => {
-    let observer = function(subject, topic, data) {
-      Services.obs.removeObserver(observer, topic);
-      resolve({ subject: subject, data: data });
-    }
-    Services.obs.addObserver(observer, topic, false);
-  });
-}
-
-function setup() {
+async function setup() {
  let server = serverForUsers({"foo": "password"}, {
     meta: {global: {engines: {bookmarks: {version: engine.version,
                                           syncID: engine.syncID}}}},
@@ -42,50 +33,54 @@ function setup() {
 
   generateNewKeys(Service.collectionKeys);
 
-  new SyncTestingInfrastructure(server.server);
+  await SyncTestingInfrastructure(server);
 
   let collection = server.user("foo").collection("bookmarks");
+
+  // The bookmarks engine *always* tracks changes, meaning we might try
+  // and sync due to the bookmarks we ourselves create! Worse, because we
+  // do an engine sync only, there's no locking - so we end up with multiple
+  // syncs running. Neuter that by making the threshold very large.
+  Service.scheduler.syncThreshold = 10000000;
 
   Svc.Obs.notify("weave:engine:start-tracking");   // We skip usual startup...
 
   return { server, collection };
 }
 
-function* cleanup(server) {
+async function cleanup(server) {
   Svc.Obs.notify("weave:engine:stop-tracking");
   Services.prefs.setBoolPref("services.sync-testing.startOverKeepIdentity", true);
   let promiseStartOver = promiseOneObserver("weave:service:start-over:finish");
   Service.startOver();
-  yield promiseStartOver;
-  yield new Promise(resolve => server.stop(resolve));
-  yield bms.eraseEverything();
+  await promiseStartOver;
+  await promiseStopServer(server);
+  await bms.eraseEverything();
 }
 
-function getFolderChildrenIDs(folderId) {
-  let index = 0;
-  let result = [];
-  while (true) {
-    let childId = bms.getIdForItemAt(folderId, index);
-    if (childId == -1) {
-      break;
-    }
-    result.push(childId);
-    index++;
-  }
-  return result;
+async function syncIdToId(syncId) {
+  let guid = await PlacesSyncUtils.bookmarks.syncIdToGuid(syncId);
+  return PlacesUtils.promiseItemId(guid);
 }
 
-function createFolder(parentId, title) {
-  let id = bms.createFolder(parentId, title, 0);
-  let guid = store.GUIDForId(id);
-  return { id, guid };
+async function getFolderChildrenIDs(folderId) {
+  let folderSyncId = PlacesSyncUtils.bookmarks.guidToSyncId(await PlacesUtils.promiseItemGuid(folderId));
+  let syncIds = await PlacesSyncUtils.bookmarks.fetchChildSyncIds(folderSyncId);
+  return Promise.all(syncIds.map(async (syncId) => await syncIdToId(syncId)));
 }
 
-function createBookmark(parentId, url, title, index = bms.DEFAULT_INDEX) {
-  let uri = Utils.makeURI(url);
-  let id = bms.insertBookmark(parentId, uri, index, title)
-  let guid = store.GUIDForId(id);
-  return { id, guid };
+async function createFolder(parentId, title) {
+  let parentGuid = await PlacesUtils.promiseItemGuid(parentId);
+  let folder = await bms.insert({ type: bms.TYPE_FOLDER, parentGuid, title, index: 0 });
+  let id = await PlacesUtils.promiseItemId(folder.guid);
+  return { id, guid: folder.guid };
+}
+
+async function createBookmark(parentId, url, title, index = bms.DEFAULT_INDEX) {
+  let parentGuid = await PlacesUtils.promiseItemGuid(parentId);
+  let bookmark = await bms.insert({ parentGuid, url, index, title });
+  let id = await PlacesUtils.promiseItemId(bookmark.guid);
+  return { id, guid: bookmark.guid };
 }
 
 function getServerRecord(collection, id) {
@@ -94,15 +89,15 @@ function getServerRecord(collection, id) {
   return JSON.parse(JSON.parse(JSON.parse(wbo).payload).ciphertext);
 }
 
-function* promiseNoLocalItem(guid) {
+async function promiseNoLocalItem(guid) {
   // Check there's no item with the specified guid.
-  let got = yield bms.fetch({ guid });
+  let got = await bms.fetch({ guid });
   ok(!got, `No record remains with GUID ${guid}`);
   // and while we are here ensure the places cache doesn't still have it.
-  yield Assert.rejects(PlacesUtils.promiseItemId(guid));
+  await Assert.rejects(PlacesUtils.promiseItemId(guid));
 }
 
-function* validate(collection, expectedFailures = []) {
+async function validate(collection, expectedFailures = []) {
   let validator = new BookmarkValidator();
   let records = collection.payloads();
 
@@ -111,7 +106,7 @@ function* validate(collection, expectedFailures = []) {
   let summary = problems.getSummary().filter(prob => prob.count != 0);
 
   // split into 2 arrays - expected and unexpected.
-  let isInExpectedFailures = elt =>  {
+  let isInExpectedFailures = elt => {
     for (let i = 0; i < expectedFailures.length; i++) {
       if (elt.name == expectedFailures[i].name && elt.count == expectedFailures[i].count) {
         return true;
@@ -131,27 +126,27 @@ function* validate(collection, expectedFailures = []) {
     do_print(JSON.stringify(problems, undefined, 2));
     // All server records and the entire bookmark tree.
     do_print("Server records:\n" + JSON.stringify(collection.payloads(), undefined, 2));
-    let tree = yield PlacesUtils.promiseBookmarksTree("", { includeItemIds: true });
+    let tree = await PlacesUtils.promiseBookmarksTree("", { includeItemIds: true });
     do_print("Local bookmark tree:\n" + JSON.stringify(tree, undefined, 2));
     ok(false);
   }
 }
 
-add_task(function* test_dupe_bookmark() {
+add_task(async function test_dupe_bookmark() {
   _("Ensure that a bookmark we consider a dupe is handled correctly.");
 
-  let { server, collection } = this.setup();
+  let { server, collection } = await this.setup();
 
   try {
     // The parent folder and one bookmark in it.
-    let {id: folder1_id, guid: folder1_guid } = createFolder(bms.toolbarFolder, "Folder 1");
-    let {id: bmk1_id, guid: bmk1_guid} = createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
+    let {id: folder1_id, guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
+    let {guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
 
     engine.sync();
 
     // We've added the bookmark, its parent (folder1) plus "menu", "toolbar", "unfiled", and "mobile".
     equal(collection.count(), 6);
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
 
     // Now create a new incoming record that looks alot like a dupe.
     let newGUID = Utils.makeGUID();
@@ -164,7 +159,7 @@ add_task(function* test_dupe_bookmark() {
       parentid: folder1_guid,
     };
 
-    collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + 10);
+    collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + 500);
     _("Syncing so new dupe record is processed");
     engine.lastSync = engine.lastSync - 0.01;
     engine.sync();
@@ -173,32 +168,32 @@ add_task(function* test_dupe_bookmark() {
     equal(collection.count(), 7);
     ok(getServerRecord(collection, bmk1_guid).deleted);
     // and physically removed from the local store.
-    yield promiseNoLocalItem(bmk1_guid);
+    await promiseNoLocalItem(bmk1_guid);
     // Parent should still only have 1 item.
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
     // The parent record on the server should now reference the new GUID and not the old.
     let serverRecord = getServerRecord(collection, folder1_guid);
     ok(!serverRecord.children.includes(bmk1_guid));
     ok(serverRecord.children.includes(newGUID));
 
     // and a final sanity check - use the validator
-    yield validate(collection);
+    await validate(collection);
   } finally {
-    yield cleanup(server);
+    await cleanup(server);
   }
 });
 
-add_task(function* test_dupe_reparented_bookmark() {
+add_task(async function test_dupe_reparented_bookmark() {
   _("Ensure that a bookmark we consider a dupe from a different parent is handled correctly");
 
-  let { server, collection } = this.setup();
+  let { server, collection } = await this.setup();
 
   try {
     // The parent folder and one bookmark in it.
-    let {id: folder1_id, guid: folder1_guid } = createFolder(bms.toolbarFolder, "Folder 1");
-    let {id: bmk1_id, guid: bmk1_guid} = createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
+    let {id: folder1_id, guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
+    let {guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
     // Another parent folder *with the same name*
-    let {id: folder2_id, guid: folder2_guid } = createFolder(bms.toolbarFolder, "Folder 1");
+    let {id: folder2_id, guid: folder2_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
 
     do_print(`folder1_guid=${folder1_guid}, folder2_guid=${folder2_guid}, bmk1_guid=${bmk1_guid}`);
 
@@ -206,8 +201,8 @@ add_task(function* test_dupe_reparented_bookmark() {
 
     // We've added the bookmark, 2 folders plus "menu", "toolbar", "unfiled", and "mobile".
     equal(collection.count(), 7);
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
-    equal(getFolderChildrenIDs(folder2_id).length, 0);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
+    equal((await getFolderChildrenIDs(folder2_id)).length, 0);
 
     // Now create a new incoming record that looks alot like a dupe of the
     // item in folder1_guid, but with a record that points to folder2_guid.
@@ -221,7 +216,7 @@ add_task(function* test_dupe_reparented_bookmark() {
       parentid: folder2_guid,
     };
 
-    collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + 10);
+    collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + 500);
 
     _("Syncing so new dupe record is processed");
     engine.lastSync = engine.lastSync - 0.01;
@@ -231,11 +226,11 @@ add_task(function* test_dupe_reparented_bookmark() {
     equal(collection.count(), 8);
     ok(getServerRecord(collection, bmk1_guid).deleted);
     // and physically removed from the local store.
-    yield promiseNoLocalItem(bmk1_guid);
+    await promiseNoLocalItem(bmk1_guid);
     // The original folder no longer has the item
-    equal(getFolderChildrenIDs(folder1_id).length, 0);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 0);
     // But the second dupe folder does.
-    equal(getFolderChildrenIDs(folder2_id).length, 1);
+    equal((await getFolderChildrenIDs(folder2_id)).length, 1);
 
     // The record for folder1 on the server should reference neither old or new GUIDs.
     let serverRecord1 = getServerRecord(collection, folder1_guid);
@@ -248,23 +243,23 @@ add_task(function* test_dupe_reparented_bookmark() {
     ok(serverRecord2.children.includes(newGUID));
 
     // and a final sanity check - use the validator
-    yield validate(collection);
+    await validate(collection);
   } finally {
-    yield cleanup(server);
+    await cleanup(server);
   }
 });
 
-add_task(function* test_dupe_reparented_locally_changed_bookmark() {
+add_task(async function test_dupe_reparented_locally_changed_bookmark() {
   _("Ensure that a bookmark with local changes we consider a dupe from a different parent is handled correctly");
 
-  let { server, collection } = this.setup();
+  let { server, collection } = await this.setup();
 
   try {
     // The parent folder and one bookmark in it.
-    let {id: folder1_id, guid: folder1_guid } = createFolder(bms.toolbarFolder, "Folder 1");
-    let {id: bmk1_id, guid: bmk1_guid} = createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
+    let {id: folder1_id, guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
+    let {guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
     // Another parent folder *with the same name*
-    let {id: folder2_id, guid: folder2_guid } = createFolder(bms.toolbarFolder, "Folder 1");
+    let {id: folder2_id, guid: folder2_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
 
     do_print(`folder1_guid=${folder1_guid}, folder2_guid=${folder2_guid}, bmk1_guid=${bmk1_guid}`);
 
@@ -272,8 +267,8 @@ add_task(function* test_dupe_reparented_locally_changed_bookmark() {
 
     // We've added the bookmark, 2 folders plus "menu", "toolbar", "unfiled", and "mobile".
     equal(collection.count(), 7);
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
-    equal(getFolderChildrenIDs(folder2_id).length, 0);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
+    equal((await getFolderChildrenIDs(folder2_id)).length, 0);
 
     // Now create a new incoming record that looks alot like a dupe of the
     // item in folder1_guid, but with a record that points to folder2_guid.
@@ -287,13 +282,18 @@ add_task(function* test_dupe_reparented_locally_changed_bookmark() {
       parentid: folder2_guid,
     };
 
-    collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + 10);
+    let deltaSeconds = 500;
+    collection.insert(newGUID, encryptPayload(to_apply), Date.now() / 1000 + deltaSeconds);
 
     // Make a change to the bookmark that's a dupe, and set the modification
     // time further in the future than the incoming record. This will cause
     // us to issue the infamous "DATA LOSS" warning in the logs but cause us
     // to *not* apply the incoming record.
-    engine._tracker.addChangedID(bmk1_guid, Date.now() / 1000 + 60);
+    await PlacesTestUtils.setBookmarkSyncFields({
+      guid: bmk1_guid,
+      syncChangeCounter: 1,
+      lastModified: Date.now() + (deltaSeconds + 10) * 1000,
+    });
 
     _("Syncing so new dupe record is processed");
     engine.lastSync = engine.lastSync - 0.01;
@@ -303,11 +303,11 @@ add_task(function* test_dupe_reparented_locally_changed_bookmark() {
     equal(collection.count(), 8);
     ok(getServerRecord(collection, bmk1_guid).deleted);
     // and physically removed from the local store.
-    yield promiseNoLocalItem(bmk1_guid);
+    await promiseNoLocalItem(bmk1_guid);
     // The original folder still longer has the item
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
     // The second folder does not.
-    equal(getFolderChildrenIDs(folder2_id).length, 0);
+    equal((await getFolderChildrenIDs(folder2_id)).length, 0);
 
     // The record for folder1 on the server should reference only the GUID.
     let serverRecord1 = getServerRecord(collection, folder1_guid);
@@ -320,24 +320,24 @@ add_task(function* test_dupe_reparented_locally_changed_bookmark() {
     ok(!serverRecord2.children.includes(newGUID));
 
     // and a final sanity check - use the validator
-    yield validate(collection);
+    await validate(collection);
   } finally {
-    yield cleanup(server);
+    await cleanup(server);
   }
 });
 
-add_task(function* test_dupe_reparented_to_earlier_appearing_parent_bookmark() {
+add_task(async function test_dupe_reparented_to_earlier_appearing_parent_bookmark() {
   _("Ensure that a bookmark we consider a dupe from a different parent that " +
     "appears in the same sync before the dupe item");
 
-  let { server, collection } = this.setup();
+  let { server, collection } = await this.setup();
 
   try {
     // The parent folder and one bookmark in it.
-    let {id: folder1_id, guid: folder1_guid } = createFolder(bms.toolbarFolder, "Folder 1");
-    let {id: bmk1_id, guid: bmk1_guid} = createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
+    let {id: folder1_id, guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
+    let {guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
     // One more folder we'll use later.
-    let {id: folder2_id, guid: folder2_guid} = createFolder(bms.toolbarFolder, "A second folder");
+    let {guid: folder2_guid} = await createFolder(bms.toolbarFolder, "A second folder");
 
     do_print(`folder1=${folder1_guid}, bmk1=${bmk1_guid} folder2=${folder2_guid}`);
 
@@ -345,7 +345,7 @@ add_task(function* test_dupe_reparented_to_earlier_appearing_parent_bookmark() {
 
     // We've added the bookmark, 2 folders plus "menu", "toolbar", "unfiled", and "mobile".
     equal(collection.count(), 7);
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
 
     let newGUID = Utils.makeGUID();
     let newParentGUID = Utils.makeGUID();
@@ -359,7 +359,7 @@ add_task(function* test_dupe_reparented_to_earlier_appearing_parent_bookmark() {
       parentid: folder2_guid,
       children: [newGUID],
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
     // And also the update to "folder 2" that references the new parent.
     collection.insert(folder2_guid, encryptPayload({
@@ -370,7 +370,7 @@ add_task(function* test_dupe_reparented_to_earlier_appearing_parent_bookmark() {
       parentid: "toolbar",
       children: [newParentGUID],
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
     // Now create a new incoming record that looks alot like a dupe of the
     // item in folder1_guid, with a record that points to a parent with the
@@ -383,7 +383,7 @@ add_task(function* test_dupe_reparented_to_earlier_appearing_parent_bookmark() {
       parentName: "Folder 1",
       parentid: newParentGUID,
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
 
     _("Syncing so new records are processed.");
@@ -391,30 +391,30 @@ add_task(function* test_dupe_reparented_to_earlier_appearing_parent_bookmark() {
     engine.sync();
 
     // Everything should be parented correctly.
-    equal(getFolderChildrenIDs(folder1_id).length, 0);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 0);
     let newParentID = store.idForGUID(newParentGUID);
     let newID = store.idForGUID(newGUID);
-    deepEqual(getFolderChildrenIDs(newParentID), [newID]);
+    deepEqual(await getFolderChildrenIDs(newParentID), [newID]);
 
     // Make sure the validator thinks everything is hunky-dory.
-    yield validate(collection);
+    await validate(collection);
   } finally {
-    yield cleanup(server);
+    await cleanup(server);
   }
 });
 
-add_task(function* test_dupe_reparented_to_later_appearing_parent_bookmark() {
+add_task(async function test_dupe_reparented_to_later_appearing_parent_bookmark() {
   _("Ensure that a bookmark we consider a dupe from a different parent that " +
     "doesn't exist locally as we process the child, but does appear in the same sync");
 
-  let { server, collection } = this.setup();
+  let { server, collection } = await this.setup();
 
   try {
     // The parent folder and one bookmark in it.
-    let {id: folder1_id, guid: folder1_guid } = createFolder(bms.toolbarFolder, "Folder 1");
-    let {id: bmk1_id, guid: bmk1_guid} = createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
+    let {id: folder1_id, guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
+    let {guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
     // One more folder we'll use later.
-    let {id: folder2_id, guid: folder2_guid} = createFolder(bms.toolbarFolder, "A second folder");
+    let {guid: folder2_guid} = await createFolder(bms.toolbarFolder, "A second folder");
 
     do_print(`folder1=${folder1_guid}, bmk1=${bmk1_guid} folder2=${folder2_guid}`);
 
@@ -422,7 +422,7 @@ add_task(function* test_dupe_reparented_to_later_appearing_parent_bookmark() {
 
     // We've added the bookmark, 2 folders plus "menu", "toolbar", "unfiled", and "mobile".
     equal(collection.count(), 7);
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
 
     // Now create a new incoming record that looks alot like a dupe of the
     // item in folder1_guid, but with a record that points to a parent with the
@@ -438,7 +438,7 @@ add_task(function* test_dupe_reparented_to_later_appearing_parent_bookmark() {
       parentName: "Folder 1",
       parentid: newParentGUID,
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
     // Now have the parent appear after (so when the record above is processed
     // this is still unknown.)
@@ -450,7 +450,7 @@ add_task(function* test_dupe_reparented_to_later_appearing_parent_bookmark() {
       parentid: folder2_guid,
       children: [newGUID],
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
     // And also the update to "folder 2" that references the new parent.
     collection.insert(folder2_guid, encryptPayload({
       id: folder2_guid,
@@ -460,7 +460,7 @@ add_task(function* test_dupe_reparented_to_later_appearing_parent_bookmark() {
       parentid: "toolbar",
       children: [newParentGUID],
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
     _("Syncing so out-of-order records are processed.");
     engine.lastSync = engine.lastSync - 0.01;
@@ -468,30 +468,30 @@ add_task(function* test_dupe_reparented_to_later_appearing_parent_bookmark() {
 
     // The intended parent did end up existing, so it should be parented
     // correctly after de-duplication.
-    equal(getFolderChildrenIDs(folder1_id).length, 0);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 0);
     let newParentID = store.idForGUID(newParentGUID);
     let newID = store.idForGUID(newGUID);
-    deepEqual(getFolderChildrenIDs(newParentID), [newID]);
+    deepEqual(await getFolderChildrenIDs(newParentID), [newID]);
 
     // Make sure the validator thinks everything is hunky-dory.
-    yield validate(collection);
+    await validate(collection);
   } finally {
-    yield cleanup(server);
+    await cleanup(server);
   }
 });
 
-add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
+add_task(async function test_dupe_reparented_to_future_arriving_parent_bookmark() {
   _("Ensure that a bookmark we consider a dupe from a different parent that " +
     "doesn't exist locally and doesn't appear in this Sync is handled correctly");
 
-  let { server, collection } = this.setup();
+  let { server, collection } = await this.setup();
 
   try {
     // The parent folder and one bookmark in it.
-    let {id: folder1_id, guid: folder1_guid } = createFolder(bms.toolbarFolder, "Folder 1");
-    let {id: bmk1_id, guid: bmk1_guid} = createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
+    let {id: folder1_id, guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
+    let {guid: bmk1_guid} = await createBookmark(folder1_id, "http://getfirefox.com/", "Get Firefox!");
     // One more folder we'll use later.
-    let {id: folder2_id, guid: folder2_guid} = createFolder(bms.toolbarFolder, "A second folder");
+    let {guid: folder2_guid} = await createFolder(bms.toolbarFolder, "A second folder");
 
     do_print(`folder1=${folder1_guid}, bmk1=${bmk1_guid} folder2=${folder2_guid}`);
 
@@ -499,7 +499,7 @@ add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
 
     // We've added the bookmark, 2 folders plus "menu", "toolbar", "unfiled", and "mobile".
     equal(collection.count(), 7);
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
 
     // Now create a new incoming record that looks alot like a dupe of the
     // item in folder1_guid, but with a record that points to a parent with the
@@ -515,7 +515,7 @@ add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
       parentName: "Folder 1",
       parentid: newParentGUID,
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
     _("Syncing so new dupe record is processed");
     engine.lastSync = engine.lastSync - 0.01;
@@ -525,9 +525,9 @@ add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
     equal(collection.count(), 8);
     ok(getServerRecord(collection, bmk1_guid).deleted);
     // and physically removed from the local store.
-    yield promiseNoLocalItem(bmk1_guid);
+    await promiseNoLocalItem(bmk1_guid);
     // The intended parent doesn't exist, so it remains in the original folder
-    equal(getFolderChildrenIDs(folder1_id).length, 1);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 1);
 
     // The record for folder1 on the server should reference the new GUID.
     let serverRecord1 = getServerRecord(collection, folder1_guid);
@@ -545,7 +545,7 @@ add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
       // We haven't fixed the incoming record that referenced the missing parent.
       { name: "orphans", count: 1 },
     ];
-    yield validate(collection, expected);
+    await validate(collection, expected);
 
     // Now have the parent magically appear in a later sync - but
     // it appears as being in a different parent from our existing "Folder 1",
@@ -558,7 +558,7 @@ add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
       parentid: folder2_guid,
       children: [newGUID],
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
     // We also queue an update to "folder 2" that references the new parent.
     collection.insert(folder2_guid, encryptPayload({
       id: folder2_guid,
@@ -568,17 +568,17 @@ add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
       parentid: "toolbar",
       children: [newParentGUID],
       tags: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
     _("Syncing so missing parent appears");
     engine.lastSync = engine.lastSync - 0.01;
     engine.sync();
 
     // The intended parent now does exist, so it should have been reparented.
-    equal(getFolderChildrenIDs(folder1_id).length, 0);
+    equal((await getFolderChildrenIDs(folder1_id)).length, 0);
     let newParentID = store.idForGUID(newParentGUID);
     let newID = store.idForGUID(newGUID);
-    deepEqual(getFolderChildrenIDs(newParentID), [newID]);
+    deepEqual(await getFolderChildrenIDs(newParentID), [newID]);
 
     // validation now has different errors :(
     expected = [
@@ -593,22 +593,22 @@ add_task(function* test_dupe_reparented_to_future_arriving_parent_bookmark() {
       // Hence, newGUID is a child of both those server records :(
       { name: "multipleParents", count: 1 },
     ];
-    yield validate(collection, expected);
+    await validate(collection, expected);
 
   } finally {
-    yield cleanup(server);
+    await cleanup(server);
   }
 });
 
-add_task(function* test_dupe_empty_folder() {
+add_task(async function test_dupe_empty_folder() {
   _("Ensure that an empty folder we consider a dupe is handled correctly.");
   // Empty folders aren't particularly interesting in practice (as that seems
   // an edge-case) but duping folders with items is broken - bug 1293163.
-  let { server, collection } = this.setup();
+  let { server, collection } = await this.setup();
 
   try {
     // The folder we will end up duping away.
-    let {id: folder1_id, guid: folder1_guid } = createFolder(bms.toolbarFolder, "Folder 1");
+    let {guid: folder1_guid } = await createFolder(bms.toolbarFolder, "Folder 1");
 
     engine.sync();
 
@@ -624,21 +624,21 @@ add_task(function* test_dupe_empty_folder() {
       parentName: "Bookmarks Toolbar",
       parentid: "toolbar",
       children: [],
-    }), Date.now() / 1000 + 10);
+    }), Date.now() / 1000 + 500);
 
     _("Syncing so new dupe records are processed");
     engine.lastSync = engine.lastSync - 0.01;
     engine.sync();
 
-    yield validate(collection);
+    await validate(collection);
 
     // Collection now has one additional record - the logically deleted dupe.
     equal(collection.count(), 6);
     // original folder should be logically deleted.
     ok(getServerRecord(collection, folder1_guid).deleted);
-    yield promiseNoLocalItem(folder1_guid);
+    await promiseNoLocalItem(folder1_guid);
   } finally {
-    yield cleanup(server);
+    await cleanup(server);
   }
 });
 // XXX - TODO - folders with children. Bug 1293163

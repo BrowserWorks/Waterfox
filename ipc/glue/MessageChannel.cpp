@@ -17,10 +17,17 @@
 #include "mozilla/Sprintf.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Logging.h"
+#include "mozilla/TimeStamp.h"
 #include "nsAutoPtr.h"
 #include "nsDebug.h"
 #include "nsISupportsImpl.h"
 #include "nsContentUtils.h"
+#include <math.h>
+
+#ifdef MOZ_TASK_TRACER
+#include "GeckoTaskTracer.h"
+using namespace mozilla::tasktracer;
+#endif
 
 using mozilla::Move;
 
@@ -122,6 +129,14 @@ namespace mozilla {
 namespace ipc {
 
 static const uint32_t kMinTelemetryMessageSize = 8192;
+
+// Note: we round the time we spend to the nearest millisecond. So a min value
+// of 1 ms actually captures from 500us and above.
+static const uint32_t kMinTelemetryIPCWriteLatencyMs = 1;
+
+// Note: we round the time we spend waiting for a response to the nearest
+// millisecond. So a min value of 1 ms actually captures from 500us and above.
+static const uint32_t kMinTelemetrySyncIPCLatencyMs = 1;
 
 const int32_t MessageChannel::kNoTimeout = INT32_MIN;
 
@@ -770,6 +785,18 @@ MessageChannel::Send(Message* aMsg)
                               nsDependentCString(aMsg->name()), aMsg->size());
     }
 
+    // If the message was created by the IPC bindings, the create time will be
+    // recorded. Use this information to report the IPC_WRITE_MAIN_THREAD_LATENCY_MS (time
+    // from message creation to it being sent).
+    if (NS_IsMainThread() && aMsg->create_time()) {
+        uint32_t latencyMs = round((mozilla::TimeStamp::Now() - aMsg->create_time()).ToMilliseconds());
+        if (latencyMs >= kMinTelemetryIPCWriteLatencyMs) {
+            mozilla::Telemetry::Accumulate(mozilla::Telemetry::IPC_WRITE_MAIN_THREAD_LATENCY_MS,
+                                           nsDependentCString(aMsg->name()),
+                                           latencyMs);
+        }
+    }
+
     MOZ_RELEASE_ASSERT(!aMsg->is_sync());
     MOZ_RELEASE_ASSERT(aMsg->nested_level() != IPC::Message::NESTED_INSIDE_SYNC);
 
@@ -979,6 +1006,9 @@ MessageChannel::OnMessageReceivedFromLink(Message&& aMsg)
     // blocked. This is okay, since we always check for pending events before
     // blocking again.
 
+#ifdef MOZ_TASK_TRACER
+    aMsg.TaskTracerDispatch();
+#endif
     RefPtr<MessageTask> task = new MessageTask(this, Move(aMsg));
     mPending.insertBack(task);
 
@@ -992,7 +1022,7 @@ MessageChannel::OnMessageReceivedFromLink(Message&& aMsg)
 }
 
 void
-MessageChannel::PeekMessages(mozilla::function<bool(const Message& aMsg)> aInvoke)
+MessageChannel::PeekMessages(std::function<bool(const Message& aMsg)> aInvoke)
 {
     // FIXME: We shouldn't be holding the lock for aInvoke!
     MonitorAutoLock lock(*mMonitor);
@@ -1064,6 +1094,7 @@ MessageChannel::ProcessPendingRequests(AutoEnterTransaction& aTransaction)
 bool
 MessageChannel::Send(Message* aMsg, Message* aReply)
 {
+    mozilla::TimeStamp start = TimeStamp::Now();
     if (aMsg->size() >= kMinTelemetryMessageSize) {
         Telemetry::Accumulate(Telemetry::IPC_MESSAGE_SIZE,
                               nsDependentCString(aMsg->name()), aMsg->size());
@@ -1078,6 +1109,9 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
 #ifdef OS_WIN
     SyncStackFrame frame(this, false);
     NeuteredWindowRegion neuteredRgn(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION);
+#endif
+#ifdef MOZ_TASK_TRACER
+    AutoScopedLabel autolabel("sync message %s", aMsg->name());
 #endif
 
     CxxStackFrame f(*this, OUT_MESSAGE, msg);
@@ -1242,7 +1276,9 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
         return false;
     }
 
-    IPC_LOG("Got reply: seqno=%d, xid=%d", seqno, transaction);
+    uint32_t latencyMs = round((TimeStamp::Now() - start).ToMilliseconds());
+    IPC_LOG("Got reply: seqno=%d, xid=%d, msgName=%s, latency=%ums",
+            seqno, transaction, msgName, latencyMs);
 
     nsAutoPtr<Message> reply = transact.GetReply();
 
@@ -1258,6 +1294,12 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
         Telemetry::Accumulate(Telemetry::IPC_REPLY_SIZE,
                               nsDependentCString(msgName), aReply->size());
     }
+
+    // NOTE: Only collect IPC_SYNC_MAIN_LATENCY_MS on the main thread (bug 1343729)
+    if (NS_IsMainThread() && latencyMs >= kMinTelemetrySyncIPCLatencyMs) {
+      Telemetry::Accumulate(Telemetry::IPC_SYNC_MAIN_LATENCY_MS,
+                            nsDependentCString(msgName), latencyMs);
+    }
     return true;
 }
 
@@ -1270,6 +1312,9 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
 
 #ifdef OS_WIN
     SyncStackFrame frame(this, true);
+#endif
+#ifdef MOZ_TASK_TRACER
+    AutoScopedLabel autolabel("sync message %s", aMsg->name());
 #endif
 
     // This must come before MonitorAutoLock, as its destructor acquires the
@@ -1416,6 +1461,9 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
         // own the monitor.
         size_t stackDepth = InterruptStackDepth();
         {
+#ifdef MOZ_TASK_TRACER
+            Message::AutoTaskTracerRun tasktracerRun(recvd);
+#endif
             MonitorAutoUnlock unlock(*mMonitor);
 
             CxxStackFrame frame(*this, IN_MESSAGE, &recvd);
@@ -1628,7 +1676,14 @@ MessageChannel::MessageTask::Post()
     mScheduled = true;
 
     RefPtr<MessageTask> self = this;
-    mChannel->mWorkerLoop->PostTask(self.forget());
+    nsCOMPtr<nsIEventTarget> eventTarget =
+        mChannel->mListener->GetMessageEventTarget(mMessage);
+
+    if (eventTarget) {
+        eventTarget->Dispatch(self.forget(), NS_DISPATCH_NORMAL);
+    } else {
+        mChannel->mWorkerLoop->PostTask(self.forget());
+    }
 }
 
 void
@@ -1668,6 +1723,9 @@ MessageChannel::DispatchMessage(Message &&aMsg)
         MOZ_RELEASE_ASSERT(!aMsg.is_sync() || id == transaction.TransactionID());
 
         {
+#ifdef MOZ_TASK_TRACER
+            Message::AutoTaskTracerRun tasktracerRun(aMsg);
+#endif
             MonitorAutoUnlock unlock(*mMonitor);
             CxxStackFrame frame(*this, IN_MESSAGE, &aMsg);
 
@@ -1704,6 +1762,9 @@ MessageChannel::DispatchSyncMessage(const Message& aMsg, Message*& aReply)
     int nestedLevel = aMsg.nested_level();
 
     MOZ_RELEASE_ASSERT(nestedLevel == IPC::Message::NOT_NESTED || NS_IsMainThread());
+#ifdef MOZ_TASK_TRACER
+    AutoScopedLabel autolabel("sync message %s", aMsg.name());
+#endif
 
     MessageChannel* dummy;
     MessageChannel*& blockingVar = mSide == ChildSide && NS_IsMainThread() ? gParentProcessBlocker : dummy;
@@ -1732,7 +1793,7 @@ MessageChannel::DispatchAsyncMessage(const Message& aMsg)
     MOZ_RELEASE_ASSERT(!aMsg.is_interrupt() && !aMsg.is_sync());
 
     if (aMsg.routing_id() == MSG_ROUTING_NONE) {
-        NS_RUNTIMEABORT("unhandled special message!");
+        MOZ_CRASH("unhandled special message!");
     }
 
     Result rv;
@@ -1776,10 +1837,10 @@ MessageChannel::DispatchInterruptMessage(Message&& aMsg, size_t stackDepth)
             defer = (mSide != ChildSide);
             break;
           case RIPError:
-            NS_RUNTIMEABORT("NYI: 'Error' Interrupt race policy");
+            MOZ_CRASH("NYI: 'Error' Interrupt race policy");
             return;
           default:
-            NS_RUNTIMEABORT("not reached");
+            MOZ_CRASH("not reached");
             return;
         }
 
@@ -2060,7 +2121,7 @@ MessageChannel::ReportConnectionError(const char* aChannelName, Message* aMsg) c
         break;
 
       default:
-        NS_RUNTIMEABORT("unreached");
+        MOZ_CRASH("unreached");
     }
 
     if (aMsg) {
@@ -2105,7 +2166,7 @@ MessageChannel::MaybeHandleError(Result code, const Message& aMsg, const char* c
         break;
 
     default:
-        NS_RUNTIMEABORT("unknown Result code");
+        MOZ_CRASH("unknown Result code");
         return false;
     }
 
@@ -2118,6 +2179,11 @@ MessageChannel::MaybeHandleError(Result code, const Message& aMsg, const char* c
     }
 
     PrintErrorMessage(mSide, channelName, reason);
+
+    // Error handled in mozilla::ipc::IPCResult.
+    if (code == MsgProcessingError) {
+        return false;
+    }
 
     mListener->ProcessingError(code, reason);
 
@@ -2140,7 +2206,7 @@ MessageChannel::OnChannelErrorFromLink()
 
     if (ChannelClosing != mChannelState) {
         if (mAbortOnError) {
-            NS_RUNTIMEABORT("Aborting on channel error.");
+            MOZ_CRASH("Aborting on channel error.");
         }
         mChannelState = ChannelError;
         mMonitor->Notify();
@@ -2311,7 +2377,7 @@ MessageChannel::Close()
         if (ChannelClosed == mChannelState) {
             // XXX be strict about this until there's a compelling reason
             // to relax
-            NS_RUNTIMEABORT("Close() called on closed channel!");
+            MOZ_CRASH("Close() called on closed channel!");
         }
 
         // Notify the other side that we're about to close our socket. If we've
@@ -2332,7 +2398,7 @@ MessageChannel::NotifyChannelClosed()
     mMonitor->AssertNotCurrentThreadOwns();
 
     if (ChannelClosed != mChannelState)
-        NS_RUNTIMEABORT("channel should have been closed!");
+        MOZ_CRASH("channel should have been closed!");
 
     Clear();
 

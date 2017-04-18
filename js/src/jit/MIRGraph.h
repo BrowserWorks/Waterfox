@@ -57,6 +57,9 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // This block cannot be reached by any means.
     bool unreachable_;
 
+    // Keeps track if the phis has been type specialized already.
+    bool specialized_;
+
     // Pushes a copy of a local variable or argument.
     void pushVariable(uint32_t slot);
 
@@ -141,6 +144,9 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     }
     // Move the definition to the top of the stack.
     void pick(int32_t depth);
+
+    // Move the top of the stack definition under the depth-th stack value.
+    void unpick(int32_t depth);
 
     // Exchange 2 stack slots at the defined depth
     void swapAt(int32_t depth);
@@ -304,6 +310,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     void discardAllPhiOperands();
     void discardAllPhis();
     void discardAllResumePoints(bool discardEntry = true);
+    void clear();
 
     // Same as |void discard(MInstruction* ins)| but assuming that
     // all operands are already discarded.
@@ -662,7 +669,6 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
         friend MBasicBlock;
 
         MBasicBlock* current_;
-        MBasicBlock* lastBlock_;
         MInstruction* lastIns_;
         uint32_t stackPosition_;
         FixedList<MDefinition*> slots_;
@@ -839,18 +845,22 @@ class MIRGraph
     ReversePostorderIterator rpoEnd() {
         return blocks_.end();
     }
-    void removeBlocksAfter(MBasicBlock* block);
+    MOZ_MUST_USE bool removeSuccessorBlocks(MBasicBlock* block);
     void removeBlock(MBasicBlock* block);
     void removeBlockIncludingPhis(MBasicBlock* block);
     void moveBlockToEnd(MBasicBlock* block) {
-        MOZ_ASSERT(block->id());
         blocks_.remove(block);
+        MOZ_ASSERT_IF(!blocks_.empty(), block->id());
         blocks_.pushBack(block);
     }
     void moveBlockBefore(MBasicBlock* at, MBasicBlock* block) {
         MOZ_ASSERT(block->id());
         blocks_.remove(block);
         blocks_.insertBefore(at, block);
+    }
+    void removeBlockFromList(MBasicBlock* block) {
+        blocks_.remove(block);
+        numBlocks_--;
     }
     size_t numBlocks() const {
         return numBlocks_;

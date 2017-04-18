@@ -13,9 +13,11 @@
 #include "nsTHashtable.h"
 #include "nsString.h"
 
+#include "mozilla/dom/Dispatcher.h"
 #include "mozilla/RefPtr.h"
 
 namespace mozilla {
+class AbstractThread;
 namespace dom {
 
 // Two browsing contexts are considered "related" if they are reachable from one
@@ -35,7 +37,7 @@ namespace dom {
 
 class TabGroup;
 
-class DocGroup final : public nsISupports
+class DocGroup final : public Dispatcher
 {
 public:
   typedef nsTArray<nsIDocument*>::iterator Iterator;
@@ -43,7 +45,12 @@ public:
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  static void GetKey(nsIPrincipal* aPrincipal, nsACString& aString);
+  // Returns NS_ERROR_FAILURE and sets |aString| to an empty string if the TLD
+  // service isn't available. Returns NS_OK on success, but may still set
+  // |aString| may still be set to an empty string.
+  static MOZ_MUST_USE nsresult
+  GetKey(nsIPrincipal* aPrincipal, nsACString& aString);
+
   bool MatchesKey(const nsACString& aKey)
   {
     return aKey == mKey;
@@ -63,6 +70,15 @@ public:
   {
     return mDocuments.end();
   }
+
+  virtual nsresult Dispatch(const char* aName,
+                            TaskCategory aCategory,
+                            already_AddRefed<nsIRunnable>&& aRunnable) override;
+
+  virtual nsIEventTarget* EventTargetFor(TaskCategory aCategory) const override;
+
+  virtual AbstractThread*
+  AbstractMainThreadFor(TaskCategory aCategory) override;
 
 private:
   DocGroup(TabGroup* aTabGroup, const nsACString& aKey);

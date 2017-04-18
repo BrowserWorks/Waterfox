@@ -1,6 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+// Note: All tests in this directory are expected to have a runTests function
+// which TestRunner will use.
+/* global runTests */
+
 var tmp = {};
 Cu.import("resource://gre/modules/PageThumbs.jsm", tmp);
 Cu.import("resource://gre/modules/BackgroundPageThumbs.jsm", tmp);
@@ -16,7 +20,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
 var oldEnabledPref = Services.prefs.getBoolPref("browser.pagethumbnails.capturing_disabled");
 Services.prefs.setBoolPref("browser.pagethumbnails.capturing_disabled", false);
 
-registerCleanupFunction(function () {
+registerCleanupFunction(function() {
   while (gBrowser.tabs.length > 1)
     gBrowser.removeTab(gBrowser.tabs[1]);
   Services.prefs.setBoolPref("browser.pagethumbnails.capturing_disabled", oldEnabledPref)
@@ -36,10 +40,10 @@ var TestRunner = {
   /**
    * Starts the test runner.
    */
-  run: function () {
+  run() {
     waitForExplicitFinish();
 
-    SessionStore.promiseInitialized.then(function () {
+    SessionStore.promiseInitialized.then(function() {
       this._iter = runTests();
       if (this._iter) {
         this.next();
@@ -54,7 +58,7 @@ var TestRunner = {
    * @param aValue This value will be passed to the yielder via the runner's
    *               iterator.
    */
-  next: function (aValue) {
+  next(aValue) {
     let obj = TestRunner._iter.next(aValue);
     if (obj.done) {
       finish();
@@ -129,8 +133,8 @@ function captureAndCheckColor(aRed, aGreen, aBlue, aMessage) {
   dontExpireThumbnailURLs([browser.currentURI.spec]);
 
   // Capture the screenshot.
-  PageThumbs.captureAndStore(browser, function () {
-    retrieveImageDataForURL(browser.currentURI.spec, function ([r, g, b]) {
+  PageThumbs.captureAndStore(browser, function() {
+    retrieveImageDataForURL(browser.currentURI.spec, function([r, g, b]) {
       is("" + [r, g, b], "" + [aRed, aGreen, aBlue], aMessage);
       next();
     });
@@ -152,7 +156,7 @@ function retrieveImageDataForURL(aURL, aCallback) {
   let img = document.createElementNS(htmlns, "img");
   img.setAttribute("src", thumb);
 
-  whenLoaded(img, function () {
+  whenLoaded(img, function() {
     let canvas = document.createElementNS(htmlns, "canvas");
     canvas.setAttribute("width", width);
     canvas.setAttribute("height", height);
@@ -251,7 +255,7 @@ function dontExpireThumbnailURLs(aURLs) {
   let dontExpireURLs = (cb) => cb(aURLs);
   PageThumbs.addExpirationFilter(dontExpireURLs);
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     PageThumbs.removeExpirationFilter(dontExpireURLs);
   });
 }
@@ -302,30 +306,30 @@ function bgAddPageThumbObserver(url) {
 function bgAddCrashObserver() {
   let crashed = false;
   Services.obs.addObserver(function crashObserver(subject, topic, data) {
-    is(topic, 'ipc:content-shutdown', 'Received correct observer topic.');
+    is(topic, "ipc:content-shutdown", "Received correct observer topic.");
     ok(subject instanceof Components.interfaces.nsIPropertyBag2,
-       'Subject implements nsIPropertyBag2.');
+       "Subject implements nsIPropertyBag2.");
     // we might see this called as the process terminates due to previous tests.
     // We are only looking for "abnormal" exits...
     if (!subject.hasKey("abnormal")) {
       info("This is a normal termination and isn't the one we are looking for...");
       return;
     }
-    Services.obs.removeObserver(crashObserver, 'ipc:content-shutdown');
+    Services.obs.removeObserver(crashObserver, "ipc:content-shutdown");
     crashed = true;
 
     var dumpID;
-    if ('nsICrashReporter' in Components.interfaces) {
-      dumpID = subject.getPropertyAsAString('dumpID');
+    if ("nsICrashReporter" in Components.interfaces) {
+      dumpID = subject.getPropertyAsAString("dumpID");
       ok(dumpID, "dumpID is present and not an empty string");
     }
 
     if (dumpID) {
       var minidumpDirectory = getMinidumpDirectory();
-      removeFile(minidumpDirectory, dumpID + '.dmp');
-      removeFile(minidumpDirectory, dumpID + '.extra');
+      removeFile(minidumpDirectory, dumpID + ".dmp");
+      removeFile(minidumpDirectory, dumpID + ".extra");
     }
-  }, 'ipc:content-shutdown', false);
+  }, "ipc:content-shutdown", false);
   return {
     get crashed() {
       return crashed;
@@ -342,7 +346,7 @@ function bgInjectCrashContentScript() {
 }
 
 function getMinidumpDirectory() {
-  var dir = Services.dirsvc.get('ProfD', Components.interfaces.nsIFile);
+  var dir = Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
   dir.append("minidumps");
   return dir;
 }

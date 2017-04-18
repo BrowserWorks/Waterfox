@@ -18,7 +18,6 @@ const {defaultTools: DefaultTools, defaultThemes: DefaultThemes} =
 const EventEmitter = require("devtools/shared/event-emitter");
 const {JsonView} = require("devtools/client/jsonview/main");
 const AboutDevTools = require("devtools/client/framework/about-devtools-toolbox");
-const {when: unload} = require("sdk/system/unload");
 const {Task} = require("devtools/shared/task");
 
 const FORBIDDEN_IDS = new Set(["toolbox", ""]);
@@ -28,15 +27,12 @@ const MAX_ORDINAL = 99;
  * DevTools is a class that represents a set of developer tools, it holds a
  * set of tools and keeps track of open toolboxes in the browser.
  */
-this.DevTools = function DevTools() {
+function DevTools() {
   this._tools = new Map();     // Map<toolId, tool>
   this._themes = new Map();    // Map<themeId, theme>
   this._toolboxes = new Map(); // Map<target, toolbox>
   // List of toolboxes that are still in process of creation
   this._creatingToolboxes = new Map(); // Map<target, toolbox Promise>
-
-  // destroy() is an observer's handler so we need to preserve context.
-  this.destroy = this.destroy.bind(this);
 
   // JSON Viewer for 'application/json' documents.
   JsonView.initialize();
@@ -44,8 +40,6 @@ this.DevTools = function DevTools() {
   AboutDevTools.register();
 
   EventEmitter.decorate(this);
-
-  Services.obs.addObserver(this.destroy, "quit-application", false);
 
   // This is important step in initialization codepath where we are going to
   // start registering all default tools and themes: create menuitems, keys, emit
@@ -142,12 +136,16 @@ DevTools.prototype = {
       tool = this._tools.get(tool);
     }
     else {
+      let {Deprecated} = Cu.import("resource://gre/modules/Deprecated.jsm", {});
+      Deprecated.warning("Deprecation WARNING: gDevTools.unregisterTool(tool) is deprecated. " +
+                         "You should unregister a tool using its toolId: " +
+                         "gDevTools.unregisterTool(toolId).");
       toolId = tool.id;
     }
     this._tools.delete(toolId);
 
     if (!isQuitApplication) {
-      this.emit("tool-unregistered", tool);
+      this.emit("tool-unregistered", toolId);
     }
   },
 
@@ -313,14 +311,6 @@ DevTools.prototype = {
         !isCoreTheme &&
         theme.id == currTheme) {
       Services.prefs.setCharPref("devtools.theme", "light");
-
-      let data = {
-        pref: "devtools.theme",
-        newValue: "light",
-        oldValue: currTheme
-      };
-
-      this.emit("pref-changed", data);
 
       this.emit("theme-unregistered", theme);
     }
@@ -488,20 +478,23 @@ DevTools.prototype = {
   }),
 
   /**
-   * Called to tear down a tools provider.
-   */
-  _teardown: function DT_teardown() {
-    for (let [target, toolbox] of this._toolboxes) {
-      toolbox.destroy();
-    }
-    AboutDevTools.unregister();
-  },
+   * Either the SDK Loader has been destroyed by the add-on contribution
+   * workflow, or firefox is shutting down.
 
-  /**
-   * All browser windows have been closed, tidy up remaining objects.
+   * @param {boolean} shuttingDown
+   *        True if firefox is currently shutting down. We may prevent doing
+   *        some cleanups to speed it up. Otherwise everything need to be
+   *        cleaned up in order to be able to load devtools again.
    */
-  destroy: function () {
-    Services.obs.removeObserver(this.destroy, "quit-application");
+  destroy: function ({ shuttingDown }) {
+    // Do not cleanup everything during firefox shutdown, but only when
+    // devtools are reloaded via the add-on contribution workflow.
+    if (!shuttingDown) {
+      for (let [target, toolbox] of this._toolboxes) {
+        toolbox.destroy();
+      }
+      AboutDevTools.unregister();
+    }
 
     for (let [key, tool] of this.getToolDefinitionMap()) {
       this.unregisterTool(key, true);
@@ -527,8 +520,3 @@ DevTools.prototype = {
 };
 
 const gDevTools = exports.gDevTools = new DevTools();
-
-// Watch for module loader unload. Fires when the tools are reloaded.
-unload(function () {
-  gDevTools._teardown();
-});

@@ -371,7 +371,7 @@
 
           // Initialize contentPrincipal to the about:blank principal for this loadcontext
           let {Services} = Components.utils.import("resource://gre/modules/Services.jsm", {});
-          let aboutBlank = Services.io.newURI("about:blank", null, null);
+          let aboutBlank = Services.io.newURI("about:blank");
           let ssm = Services.scriptSecurityManager;
           this._contentPrincipal = ssm.getLoadContextCodebasePrincipal(aboutBlank, this.loadContext);
 
@@ -389,7 +389,6 @@
           if (this.hasAttribute("selectmenulist")) {
             this.messageManager.addMessageListener("Forms:ShowDropDown", this);
             this.messageManager.addMessageListener("Forms:HideDropDown", this);
-            this.messageManager.loadFrameScript("chrome://global/content/select-child.js", true);
           }
 
           if (!this.hasAttribute("disablehistory")) {
@@ -497,14 +496,6 @@
               let event = document.createEvent("Events");
               event.initEvent("ZoomChangeUsingMouseWheel", true, false);
               this.dispatchEvent(event);
-              break;
-            }
-
-            case "Forms:HideDropDown": {
-              if (this._selectParentHelper) {
-                let menulist = document.getElementById(this.getAttribute("selectmenulist"));
-                this._selectParentHelper.hide(menulist, this);
-              }
               break;
             }
 

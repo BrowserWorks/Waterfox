@@ -128,6 +128,7 @@ function transformPacket(packet) {
         messageText,
         stacktrace: message.stacktrace ? message.stacktrace : null,
         frame,
+        timeStamp: message.timeStamp,
         userProvidedStyles: message.styles,
       });
     }
@@ -139,6 +140,7 @@ function transformPacket(packet) {
         type: MESSAGE_TYPE.LOG,
         level: MESSAGE_LEVEL.LOG,
         messageText: "Navigated to " + message.url,
+        timeStamp: message.timeStamp
       });
     }
 
@@ -157,14 +159,18 @@ function transformPacket(packet) {
         column: pageError.columnNumber
       } : null;
 
+      let matchesCSS = /^(?:CSS|Layout)\b/.test(pageError.category);
+      let messageSource = matchesCSS ? MESSAGE_SOURCE.CSS
+                                     : MESSAGE_SOURCE.JAVASCRIPT;
       return new ConsoleMessage({
-        source: MESSAGE_SOURCE.JAVASCRIPT,
+        source: messageSource,
         type: MESSAGE_TYPE.LOG,
         level,
         messageText: pageError.errorMessage,
         stacktrace: pageError.stacktrace ? pageError.stacktrace : null,
         frame,
         exceptionDocURL: pageError.exceptionDocURL,
+        timeStamp: pageError.timeStamp
       });
     }
 
@@ -176,6 +182,7 @@ function transformPacket(packet) {
         isXHR: networkEvent.isXHR,
         request: networkEvent.request,
         response: networkEvent.response,
+        timeStamp: networkEvent.timeStamp
       });
     }
 
@@ -185,7 +192,8 @@ function transformPacket(packet) {
         exceptionMessage: messageText,
         exceptionDocURL,
         frame,
-        result: parameters
+        result: parameters,
+        timestamp: timeStamp,
       } = packet;
 
       const level = messageText ? MESSAGE_LEVEL.ERROR : MESSAGE_LEVEL.LOG;
@@ -197,6 +205,7 @@ function transformPacket(packet) {
         parameters,
         exceptionDocURL,
         frame,
+        timeStamp,
       });
     }
   }

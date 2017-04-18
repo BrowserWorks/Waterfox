@@ -211,6 +211,7 @@ class TestCopyDebug(HelperMixin, unittest.TestCase):
         d.Finish(stop_pool=False)
         self.assertEqual(1, len(copied))
 
+    @patch.dict('buildconfig.substs', {'MAKECAB': 'makecab'})
     def test_copy_debug_copies_binaries(self):
         """
         Test that CopyDebug copies binaries as well on Windows.
@@ -568,7 +569,7 @@ class TestFunctional(HelperMixin, unittest.TestCase):
         self.assertTrue(os.path.isfile(symbol_file))
         symlines = open(symbol_file, 'r').readlines()
         file_lines = filter(lambda x: x.startswith('FILE') and 'nsBrowserApp.cpp' in x, symlines)
-        self.assertEqual(len(file_lines), 1,
+        self.assertTrue(len(file_lines) >= 1,
                          'should have nsBrowserApp.cpp FILE line')
         filename = file_lines[0].split(None, 2)[2]
         self.assertEqual('hg:', filename[:3])

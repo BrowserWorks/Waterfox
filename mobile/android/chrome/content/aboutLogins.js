@@ -5,7 +5,6 @@
 var Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils;
 
 Cu.import("resource://services-common/utils.js"); /*global: CommonUtils */
-Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/TelemetryStopwatch.jsm");
@@ -19,6 +18,8 @@ XPCOMUtils.defineLazyGetter(window, "gChromeWin", () =>
     .getInterface(Ci.nsIDOMWindow)
     .QueryInterface(Ci.nsIDOMChromeWindow));
 
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
+                                  "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Prompt",
                                   "resource://gre/modules/Prompt.jsm");
@@ -151,11 +152,11 @@ var Logins = {
   },
 
   init: function () {
-    window.addEventListener("popstate", this , false);
+    window.addEventListener("popstate", this);
 
     Services.obs.addObserver(this, "passwordmgr-storage-changed", false);
-    document.getElementById("update-btn").addEventListener("click", this._onSaveEditLogin.bind(this), false);
-    document.getElementById("password-btn").addEventListener("click", this._onPasswordBtn.bind(this), false);
+    document.getElementById("update-btn").addEventListener("click", this._onSaveEditLogin.bind(this));
+    document.getElementById("password-btn").addEventListener("click", this._onPasswordBtn.bind(this));
 
     let filterInput = document.getElementById("filter-input");
     let filterContainer = document.getElementById("filter-input-container");
@@ -171,7 +172,7 @@ var Logins = {
       this._filterTimer = setTimeout(() => {
         this._filter(event);
       }, FILTER_DELAY);
-    }, false);
+    });
 
     filterInput.addEventListener("blur", (event) => {
       filterContainer.setAttribute("hidden", true);
@@ -180,7 +181,7 @@ var Logins = {
     document.getElementById("filter-button").addEventListener("click", (event) => {
       filterContainer.removeAttribute("hidden");
       filterInput.focus();
-    }, false);
+    });
 
     document.getElementById("filter-clear").addEventListener("click", (event) => {
       // Stop any in-progress filter timer
@@ -192,7 +193,7 @@ var Logins = {
       filterInput.blur();
       filterInput.value = "";
       this._loadList(this._logins);
-    }, false);
+    });
 
     this._showList();
 
@@ -203,7 +204,7 @@ var Logins = {
 
   uninit: function () {
     Services.obs.removeObserver(this, "passwordmgr-storage-changed");
-    window.removeEventListener("popstate", this, false);
+    window.removeEventListener("popstate", this);
   },
 
   _loadList: function (logins) {
@@ -276,7 +277,7 @@ var Logins = {
         updateBtn.disabled = false;
         updateBtn.classList.remove("disabled-btn");
       }
-    }, false);
+    });
   },
 
   _onSaveEditLogin: function() {
@@ -416,9 +417,10 @@ var Logins = {
 
   _loadFavicon: function (aImg, aHostname) {
     // Load favicon from cache.
-    Messaging.sendRequestForResult({
-      type: "Favicon:CacheLoad",
+    EventDispatcher.instance.sendRequestForResult({
+      type: "Favicon:Request",
       url: aHostname,
+      skipNetwork: true
     }).then(function(faviconUrl) {
       aImg.style.backgroundImage= "url('" + faviconUrl + "')";
       aImg.style.visibility = "visible";
@@ -514,5 +516,5 @@ var Logins = {
   }
 };
 
-window.addEventListener("load", Logins.init.bind(Logins), false);
-window.addEventListener("unload", Logins.uninit.bind(Logins), false);
+window.addEventListener("load", Logins.init.bind(Logins));
+window.addEventListener("unload", Logins.uninit.bind(Logins));

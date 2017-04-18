@@ -1,9 +1,12 @@
 Cu.import("resource://gre/modules/Promise.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
+                                  "resource://testing-common/PlacesTestUtils.jsm");
+
 const SINGLE_TRY_TIMEOUT = 100;
 const NUMBER_OF_TRIES = 30;
 
-function waitForConditionPromise(condition, timeoutMsg, tryCount=NUMBER_OF_TRIES) {
+function waitForConditionPromise(condition, timeoutMsg, tryCount = NUMBER_OF_TRIES) {
   let defer = Promise.defer();
   let tries = 0;
   function checkCondition() {
@@ -66,15 +69,11 @@ function checkKeyedScalar(scalars, scalarName, key, expectedValue) {
  *        The name of the field to write to.
  */
 let typeInSearchField = Task.async(function* (browser, text, fieldName) {
-  yield ContentTask.spawn(browser, { fieldName, text }, function* ({fieldName, text}) {
-    // Avoid intermittent failures.
-    if (fieldName === "searchText") {
-      content.wrappedJSObject.gContentSearchController.remoteTimeout = 5000;
-    }
+  yield ContentTask.spawn(browser, [fieldName, text], function* ([contentFieldName, contentText]) {
     // Put the focus on the search box.
-    let searchInput = content.document.getElementById(fieldName);
+    let searchInput = content.document.getElementById(contentFieldName);
     searchInput.focus();
-    searchInput.value = text;
+    searchInput.value = contentText;
   });
 });
 
@@ -96,6 +95,16 @@ function checkKeyedHistogram(h, key, expectedValue) {
   Assert.equal(snapshot[key].sum, expectedValue, `The key ${key} must contain ${expectedValue}.`);
 }
 
+/**
+ * Return the scalars from the parent-process.
+ */
+function getParentProcessScalars(aChannel, aKeyed = false, aClear = false) {
+  const scalars = aKeyed ?
+    Services.telemetry.snapshotKeyedScalars(aChannel, aClear)["default"] :
+    Services.telemetry.snapshotScalars(aChannel, aClear)["default"];
+  return scalars || {};
+}
+
 function checkEvents(events, expectedEvents) {
   if (!Services.telemetry.canRecordExtended) {
     // Currently we only collect the tested events when extended Telemetry is enabled.
@@ -111,3 +120,89 @@ function checkEvents(events, expectedEvents) {
     Assert.deepEqual(events[i], expectedEvents[i], "Events should match.");
   }
 }
+
+/**
+ * Given a <xul:browser> at some non-internal web page,
+ * return something that resembles an nsIContentPermissionRequest,
+ * using the browsers currently loaded document to get a principal.
+ *
+ * @param browser (<xul:browser>)
+ *        The browser that we'll create a nsIContentPermissionRequest
+ *        for.
+ * @returns A nsIContentPermissionRequest-ish object.
+ */
+function makeMockPermissionRequest(browser) {
+  let result = {
+    types: null,
+    principal: browser.contentPrincipal,
+    requester: null,
+    _cancelled: false,
+    cancel() {
+      this._cancelled = true;
+    },
+    _allowed: false,
+    allow() {
+      this._allowed = true;
+    },
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionRequest]),
+  };
+
+  // In the e10s-case, nsIContentPermissionRequest will have
+  // element defined. window is defined otherwise.
+  if (browser.isRemoteBrowser) {
+    result.element = browser;
+  } else {
+    result.window = browser.contentWindow;
+  }
+
+  return result;
+}
+
+/**
+ * For an opened PopupNotification, clicks on the main action,
+ * and waits for the panel to fully close.
+ *
+ * @return {Promise}
+ *         Resolves once the panel has fired the "popuphidden"
+ *         event.
+ */
+function clickMainAction() {
+  let removePromise =
+    BrowserTestUtils.waitForEvent(PopupNotifications.panel, "popuphidden");
+  let popupNotification = getPopupNotificationNode();
+  popupNotification.button.click();
+  return removePromise;
+}
+
+/**
+ * For an opened PopupNotification, clicks on the secondary action,
+ * and waits for the panel to fully close.
+ *
+ * @return {Promise}
+ *         Resolves once the panel has fired the "popuphidden"
+ *         event.
+ */
+function clickSecondaryAction() {
+  let removePromise =
+    BrowserTestUtils.waitForEvent(PopupNotifications.panel, "popuphidden");
+  let popupNotification = getPopupNotificationNode();
+  popupNotification.secondaryButton.click();
+  return removePromise;
+}
+
+/**
+ * Makes sure that 1 (and only 1) <xul:popupnotification> is being displayed
+ * by PopupNotification, and then returns that <xul:popupnotification>.
+ *
+ * @return {<xul:popupnotification>}
+ */
+function getPopupNotificationNode() {
+  // PopupNotification is a bit overloaded here, so to be
+  // clear, popupNotifications is a list of <xul:popupnotification>
+  // nodes.
+  let popupNotifications = PopupNotifications.panel.childNodes;
+  Assert.equal(popupNotifications.length, 1,
+               "Should be showing a <xul:popupnotification>");
+  return popupNotifications[0];
+}
+

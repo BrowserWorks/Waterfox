@@ -106,8 +106,7 @@ protected:
 
    // See nsIDocShellTreeOwner for docs on next two methods
    nsresult ContentShellAdded(nsIDocShellTreeItem* aContentShell,
-                                          bool aPrimary, bool aTargetable,
-                                          const nsAString& aID);
+                              bool aPrimary);
    nsresult ContentShellRemoved(nsIDocShellTreeItem* aContentShell);
    NS_IMETHOD GetPrimaryContentSize(int32_t* aWidth,
                                     int32_t* aHeight);
@@ -133,6 +132,7 @@ protected:
    void       SetContentScrollbarVisibility(bool aVisible);
    bool       GetContentScrollbarVisibility();
    void       PersistentAttributesDirty(uint32_t aDirtyFlags);
+   nsresult   GetTabCount(uint32_t* aResult);
 
    nsChromeTreeOwner*      mChromeTreeOwner;
    nsContentTreeOwner*     mContentTreeOwner;
@@ -145,7 +145,6 @@ protected:
    nsCOMPtr<nsIAuthPrompt> mAuthPrompter;
    nsCOMPtr<nsIXULBrowserWindow> mXULBrowserWindow;
    nsCOMPtr<nsIDocShellTreeItem> mPrimaryContentShell;
-   nsTArray<nsContentShellInfo*> mContentShells; // array of doc shells by id
    nsresult                mModalStatus;
    bool                    mContinueModalLoop;
    bool                    mDebuting;       // being made visible right now
@@ -163,14 +162,11 @@ protected:
    // otherwise happen due to script running as we tear down various things.
    bool                    mDestroying;
    bool                    mRegistered;
-   uint32_t                mContextFlags;
    uint32_t                mPersistentAttributesDirty; // persistentAttributes
    uint32_t                mPersistentAttributesMask;
    uint32_t                mChromeFlags;
    nsString                mTitle;
    nsIntRect               mOpenerScreenRect; // the screen rect of the opener
-
-   nsCOMArray<nsIWeakReference> mTargetableShells; // targetable shells only
 
    nsCOMPtr<nsITabParent> mPrimaryTabParent;
 private:
@@ -180,20 +176,4 @@ private:
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsXULWindow, NS_XULWINDOW_IMPL_CID)
-
-// nsContentShellInfo
-// Used to map shell IDs to nsIDocShellTreeItems.
-
-class nsContentShellInfo
-{
-public:
-   nsContentShellInfo(const nsAString& aID,
-                      nsIWeakReference* aContentShell);
-   ~nsContentShellInfo();
-
-public:
-   nsString id; // The identifier of the content shell
-   nsWeakPtr child; // content shell (weak reference to nsIDocShellTreeItem)
-};
-
 #endif /* nsXULWindow_h__ */

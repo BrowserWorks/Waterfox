@@ -116,7 +116,7 @@ var Reader = {
       }
 
       case "Reader:FaviconRequest": {
-        Messaging.sendRequestForResult({
+        GlobalEventDispatcher.sendRequestForResult({
           type: "Reader:FaviconRequest",
           url: message.data.url
         }).then(data => {
@@ -126,10 +126,7 @@ var Reader = {
       }
 
       case "Reader:SystemUIVisibility":
-        Messaging.sendRequest({
-          type: "SystemUI:Visibility",
-          visible: message.data.visible
-        });
+        this._showSystemUI(message.data.visible);
         break;
 
       case "Reader:ToolbarHidden":
@@ -186,10 +183,20 @@ var Reader = {
       return;
     }
 
+    // not in ReaderMode, to make sure System UI is visible, not dimmed.
+    this._showSystemUI(true);
+
     if (browser.isArticle) {
       showPageAction("drawable://reader", Strings.reader.GetStringFromName("readerView.enter"));
     } else {
     }
+  },
+
+  _showSystemUI: function(visibility) {
+      WindowEventDispatcher.sendRequest({
+          type: "SystemUI:Visibility",
+          visible: visibility
+      });
   },
 
   /**

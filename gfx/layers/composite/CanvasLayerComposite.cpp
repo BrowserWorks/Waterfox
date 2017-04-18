@@ -59,7 +59,7 @@ CanvasLayerComposite::GetLayer()
 }
 
 void
-CanvasLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
+CanvasLayerComposite::SetLayerManager(HostLayerManager* aManager)
 {
   LayerComposite::SetLayerManager(aManager);
   mManager = aManager;
@@ -78,7 +78,8 @@ CanvasLayerComposite::GetRenderState()
 }
 
 void
-CanvasLayerComposite::RenderLayer(const IntRect& aClipRect)
+CanvasLayerComposite::RenderLayer(const IntRect& aClipRect,
+                                  const Maybe<gfx::Polygon>& aGeometry)
 {
   if (!mCompositableHost || !mCompositableHost->IsAttached()) {
     return;

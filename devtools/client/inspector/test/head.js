@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
 /* import-globals-from ../../framework/test/shared-head.js */
-/* import-globals-from ../../commandline/test/helpers.js */
 /* import-globals-from ../../shared/test/test-actor-registry.js */
 /* import-globals-from ../../inspector/test/shared-head.js */
 "use strict";
@@ -18,11 +17,6 @@ Services.scriptloader.loadSubScript(
 // SimpleTest.registerCleanupFunction(() => {
 //   Services.prefs.clearUserPref("devtools.debugger.log");
 // });
-
-// Import the GCLI test helper
-Services.scriptloader.loadSubScript(
-  "chrome://mochitests/content/browser/devtools/client/commandline/test/helpers.js",
-  this);
 
 // Import helpers registering the test-actor in remote targets
 Services.scriptloader.loadSubScript(
@@ -236,13 +230,21 @@ function getContainerForNodeFront(nodeFront, {markup}) {
  * @param {String|NodeFront} selector
  * @param {InspectorPanel} inspector The instance of InspectorPanel currently
  * loaded in the toolbox
+ * @param {Boolean} Set to true in the event that the node shouldn't be found.
  * @return {MarkupContainer}
  */
-var getContainerForSelector = Task.async(function* (selector, inspector) {
+var getContainerForSelector =
+Task.async(function* (selector, inspector, expectFailure = false) {
   info("Getting the markup-container for node " + selector);
   let nodeFront = yield getNodeFront(selector, inspector);
   let container = getContainerForNodeFront(nodeFront, inspector);
-  info("Found markup-container " + container);
+
+  if (expectFailure) {
+    ok(!container, "Shouldn't find markup-container for selector: " + selector);
+  } else {
+    ok(container, "Found markup-container for selector: " + selector);
+  }
+
   return container;
 });
 

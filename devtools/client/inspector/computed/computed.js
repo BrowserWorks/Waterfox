@@ -12,12 +12,11 @@ const {ELEMENT_STYLE} = require("devtools/shared/specs/styles");
 const promise = require("promise");
 const defer = require("devtools/shared/defer");
 const Services = require("Services");
-const {OutputParser} = require("devtools/client/shared/output-parser");
-const {PrefObserver, PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/utils");
+const OutputParser = require("devtools/client/shared/output-parser");
+const {PrefObserver} = require("devtools/client/shared/prefs");
 const {createChild} = require("devtools/client/inspector/shared/utils");
 const {gDevTools} = require("devtools/client/framework/devtools");
 const {getCssProperties} = require("devtools/shared/fronts/css-properties");
-const HighlightersOverlay = require("devtools/client/inspector/shared/highlighters-overlay");
 const {
   VIEW_NODE_SELECTOR_TYPE,
   VIEW_NODE_PROPERTY_TYPE,
@@ -26,13 +25,15 @@ const {
 } = require("devtools/client/inspector/shared/node-types");
 const StyleInspectorMenu = require("devtools/client/inspector/shared/style-inspector-menu");
 const TooltipsOverlay = require("devtools/client/inspector/shared/tooltips-overlay");
-const {KeyShortcuts} = require("devtools/client/shared/key-shortcuts");
-const {BoxModelView} = require("devtools/client/inspector/components/box-model");
+const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
+const BoxModelView = require("devtools/client/inspector/components/box-model");
 const clipboardHelper = require("devtools/shared/platform/clipboard");
 
 const STYLE_INSPECTOR_PROPERTIES = "devtools/shared/locales/styleinspector.properties";
 const {LocalizationHelper} = require("devtools/shared/l10n");
 const STYLE_INSPECTOR_L10N = new LocalizationHelper(STYLE_INSPECTOR_PROPERTIES);
+
+const PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
 const FILTER_CHANGED_TIMEOUT = 150;
 const HTML_NS = "http://www.w3.org/1999/xhtml";
@@ -152,6 +153,7 @@ UpdateProcess.prototype = {
  */
 function CssComputedView(inspector, document, pageStyle) {
   this.inspector = inspector;
+  this.highlighters = inspector.highlighters;
   this.styleDocument = document;
   this.styleWindow = this.styleDocument.defaultView;
   this.pageStyle = pageStyle;
@@ -196,14 +198,13 @@ function CssComputedView(inspector, document, pageStyle) {
   // No results text.
   this.noResults = this.styleDocument.getElementById("computedview-no-results");
 
-  // Refresh panel when color unit changed.
+  // Refresh panel when color unit changed or pref for showing
+  // original sources changes.
   this._handlePrefChange = this._handlePrefChange.bind(this);
-  gDevTools.on("pref-changed", this._handlePrefChange);
-
-  // Refresh panel when pref for showing original sources changes
   this._onSourcePrefChanged = this._onSourcePrefChanged.bind(this);
   this._prefObserver = new PrefObserver("devtools.");
   this._prefObserver.on(PREF_ORIG_SOURCES, this._onSourcePrefChanged);
+  this._prefObserver.on("devtools.defaultColorUnit", this._handlePrefChange);
 
   // The element that we're inspecting, and the document that it comes from.
   this._viewedElement = null;
@@ -216,8 +217,7 @@ function CssComputedView(inspector, document, pageStyle) {
   this.tooltips = new TooltipsOverlay(this);
   this.tooltips.addToView();
 
-  this.highlighters = new HighlightersOverlay(this);
-  this.highlighters.addToView();
+  this.highlighters.addToView(this);
 }
 
 /**
@@ -261,8 +261,7 @@ CssComputedView.prototype = {
   },
 
   _handlePrefChange: function (event, data) {
-    if (this._computed && (data.pref === "devtools.defaultColorUnit" ||
-        data.pref === PREF_ORIG_SOURCES)) {
+    if (this._computed) {
       this.refreshPanel();
     }
   },
@@ -599,6 +598,7 @@ CssComputedView.prototype = {
   },
 
   _onSourcePrefChanged: function () {
+    this._handlePrefChange();
     for (let propView of this.propertyViews) {
       propView.updateSourceLinks();
     }
@@ -733,9 +733,8 @@ CssComputedView.prototype = {
     this._viewedElement = null;
     this._outputParser = null;
 
-    gDevTools.off("pref-changed", this._handlePrefChange);
-
     this._prefObserver.off(PREF_ORIG_SOURCES, this._onSourcePrefChanged);
+    this._prefObserver.off("devtools.defaultColorUnit", this._handlePrefChange);
     this._prefObserver.destroy();
 
     // Cancel tree construction
@@ -753,7 +752,7 @@ CssComputedView.prototype = {
     }
 
     this.tooltips.destroy();
-    this.highlighters.destroy();
+    this.highlighters.removeFromView(this);
 
     // Remove bound listeners
     this.styleDocument.removeEventListener("mousedown", this.focusWindow);
@@ -781,6 +780,7 @@ CssComputedView.prototype = {
     this.propertyViews = null;
 
     this.inspector = null;
+    this.highlighters = null;
     this.styleDocument = null;
     this.styleWindow = null;
 
@@ -935,7 +935,7 @@ PropertyView.prototype = {
     this.onMatchedToggle = this.onMatchedToggle.bind(this);
     this.element = doc.createElementNS(HTML_NS, "div");
     this.element.setAttribute("class", this.propertyHeaderClassName);
-    this.element.addEventListener("dblclick", this.onMatchedToggle, false);
+    this.element.addEventListener("dblclick", this.onMatchedToggle);
 
     // Make it keyboard navigable
     this.element.setAttribute("tabindex", "0");
@@ -959,7 +959,7 @@ PropertyView.prototype = {
     // Build the twisty expand/collapse
     this.matchedExpander = doc.createElementNS(HTML_NS, "div");
     this.matchedExpander.className = "expander theme-twisty";
-    this.matchedExpander.addEventListener("click", this.onMatchedToggle, false);
+    this.matchedExpander.addEventListener("click", this.onMatchedToggle);
     nameContainer.appendChild(this.matchedExpander);
 
     // Build the style name element
@@ -974,7 +974,7 @@ PropertyView.prototype = {
     this.nameNode.textContent = this.nameNode.title = this.name;
     // Make it hand over the focus to the container
     this.onFocus = () => this.element.focus();
-    this.nameNode.addEventListener("click", this.onFocus, false);
+    this.nameNode.addEventListener("click", this.onFocus);
     nameContainer.appendChild(this.nameNode);
 
     let valueContainer = doc.createElementNS(HTML_NS, "div");
@@ -989,7 +989,7 @@ PropertyView.prototype = {
     this.valueNode.setAttribute("tabindex", "");
     this.valueNode.setAttribute("dir", "ltr");
     // Make it hand over the focus to the container
-    this.valueNode.addEventListener("click", this.onFocus, false);
+    this.valueNode.addEventListener("click", this.onFocus);
     valueContainer.appendChild(this.valueNode);
 
     return this.element;
@@ -1100,7 +1100,7 @@ PropertyView.prototype = {
         tabindex: "0",
         textContent: selector.source
       });
-      link.addEventListener("click", selector.openStyleEditor, false);
+      link.addEventListener("click", selector.openStyleEditor);
       let shortcuts = new KeyShortcuts({
         window: this.tree.styleWindow,
         target: link
@@ -1185,18 +1185,17 @@ PropertyView.prototype = {
    * Destroy this property view, removing event listeners
    */
   destroy: function () {
-    this.element.removeEventListener("dblclick", this.onMatchedToggle, false);
+    this.element.removeEventListener("dblclick", this.onMatchedToggle);
     this.shortcuts.destroy();
     this.element = null;
 
-    this.matchedExpander.removeEventListener("click", this.onMatchedToggle,
-                                             false);
+    this.matchedExpander.removeEventListener("click", this.onMatchedToggle);
     this.matchedExpander = null;
 
-    this.nameNode.removeEventListener("click", this.onFocus, false);
+    this.nameNode.removeEventListener("click", this.onFocus);
     this.nameNode = null;
 
-    this.valueNode.removeEventListener("click", this.onFocus, false);
+    this.valueNode.removeEventListener("click", this.onFocus);
     this.valueNode = null;
   }
 };

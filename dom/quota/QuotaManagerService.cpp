@@ -441,7 +441,11 @@ QuotaManagerService::PerformIdleMaintenance()
   if (!QuotaManager::IsRunningXPCShellTests())
 #endif
   {
+    // In order to give the correct battery level, hal must have registered
+    // battery observers.
+    RegisterBatteryObserver(this);
     GetCurrentBatteryInformation(&batteryInfo);
+    UnregisterBatteryObserver(this);
   }
 
   // If we're running XPCShell because we always want to be able to test this
@@ -568,7 +572,7 @@ QuotaManagerService::ClearStoragesForPrincipal(nsIPrincipal* aPrincipal,
   MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   nsCString suffix;
-  BasePrincipal::Cast(aPrincipal)->OriginAttributesRef().CreateSuffix(suffix);
+  aPrincipal->OriginAttributesRef().CreateSuffix(suffix);
 
   if (NS_WARN_IF(aClearAll && !suffix.IsEmpty())) {
     // The originAttributes should be default originAttributes when the
@@ -705,6 +709,13 @@ QuotaManagerService::Observe(nsISupports* aSubject,
 
   MOZ_ASSERT_UNREACHABLE("Should never get here!");
   return NS_OK;
+}
+
+void
+QuotaManagerService::Notify(const hal::BatteryInformation& aBatteryInfo)
+{
+  // This notification is received when battery data changes. We don't need to
+  // deal with this notification.
 }
 
 NS_IMETHODIMP

@@ -60,6 +60,7 @@ GetDocumentFromView(nsView* aView)
 
 nsSubDocumentFrame::nsSubDocumentFrame(nsStyleContext* aContext)
   : nsAtomicContainerFrame(aContext)
+  , mInnerView(nullptr)
   , mIsInline(false)
   , mPostedReflowCallback(false)
   , mDidCreateDoc(false)
@@ -112,6 +113,8 @@ nsSubDocumentFrame::Init(nsIContent*       aContent,
 
   static bool addedShowPreviousPage = false;
   if (!addedShowPreviousPage) {
+    // If layout.show_previous_page is true then during loading of a new page we
+    // will draw the previous page if the new page has painting suppressed.
     Preferences::AddBoolVarCache(&sShowPreviousPage, "layout.show_previous_page", true);
     addedShowPreviousPage = true;
   }
@@ -910,7 +913,7 @@ public:
     // Note it can be unsafe to flush if we've destroyed the presentation
     // for some other reason, like if we're shutting down.
     if (!mPresShell->IsDestroying()) {
-      mPresShell->FlushPendingNotifications(Flush_Frames);
+      mPresShell->FlushPendingNotifications(FlushType::Frames);
     }
 
     // Either the frame has been constructed by now, or it never will be,

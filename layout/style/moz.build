@@ -64,6 +64,8 @@ EXPORTS += [
     'nsIStyleRule.h',
     'nsIStyleRuleProcessor.h',
     'nsLayoutStylesheetCache.h',
+    'nsMediaFeatures.h',
+    'nsMediaList.h',
     'nsRuleData.h',
     'nsRuleNode.h',
     'nsRuleProcessorData.h',
@@ -81,6 +83,7 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'AnimationCollection.h',
+    'BindingStyleRule.h',
     'CSSEnabledState.h',
     'CSSStyleSheet.h',
     'CSSVariableDeclarations.h',
@@ -88,16 +91,22 @@ EXPORTS.mozilla += [
     'CSSVariableValues.h',
     'DeclarationBlock.h',
     'DeclarationBlockInlines.h',
+    'DocumentStyleRootIterator.h',
     'HandleRefPtr.h',
     'IncrementalClearCOMRuleArray.h',
     'LayerAnimationInfo.h',
+    'PreloadedStyleSheet.h',
     'RuleNodeCacheConditions.h',
     'RuleProcessorCache.h',
+    'ServoArcTypeList.h',
     'ServoBindingList.h',
     'ServoBindings.h',
     'ServoBindingTypes.h',
+    'ServoCSSRuleList.h',
     'ServoDeclarationBlock.h',
     'ServoElementSnapshot.h',
+    'ServoPropPrefList.h',
+    'ServoStyleRule.h',
     'ServoStyleSet.h',
     'ServoStyleSheet.h',
     'ServoTypes.h',
@@ -112,7 +121,6 @@ EXPORTS.mozilla += [
     'StyleSheet.h',
     'StyleSheetInfo.h',
     'StyleSheetInlines.h',
-    'StyleStructContext.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -151,6 +159,7 @@ UNIFIED_SOURCES += [
     'CSSVariableResolver.cpp',
     'CSSVariableValues.cpp',
     'Declaration.cpp',
+    'DocumentStyleRootIterator.cpp',
     'ErrorReporter.cpp',
     'FontFace.cpp',
     'FontFaceSet.cpp',
@@ -182,6 +191,7 @@ UNIFIED_SOURCES += [
     'nsHTMLCSSStyleSheet.cpp',
     'nsHTMLStyleSheet.cpp',
     'nsMediaFeatures.cpp',
+    'nsMediaList.cpp',
     'nsNthIndexCache.cpp',
     'nsROCSSPrimitiveValue.cpp',
     'nsRuleData.cpp',
@@ -193,11 +203,14 @@ UNIFIED_SOURCES += [
     'nsStyleTransformMatrix.cpp',
     'nsStyleUtil.cpp',
     'nsTransitionManager.cpp',
+    'PreloadedStyleSheet.cpp',
     'RuleNodeCacheConditions.cpp',
     'RuleProcessorCache.cpp',
     'ServoBindings.cpp',
+    'ServoCSSRuleList.cpp',
     'ServoDeclarationBlock.cpp',
     'ServoElementSnapshot.cpp',
+    'ServoStyleRule.cpp',
     'ServoStyleSet.cpp',
     'ServoStyleSheet.cpp',
     'StyleAnimationValue.cpp',
@@ -206,10 +219,18 @@ UNIFIED_SOURCES += [
     'SVGAttrAnimationRuleProcessor.cpp',
 ]
 
-# nsCSSRuleProcessor.cpp needs to be built separately because it uses plarena.h.
-# nsLayoutStylesheetCache.cpp needs to be built separately because it uses
+# - BindingStyleRule.cpp doesn't _really_ needs to be built separately,
+# except insofar as it shifts unified build boundaries, causing
+# Unified_cpp_layout_style4.cpp to include nsStyleCoord.cpp, which
+# includes, via nsStyleCoord.h, <type_traits>, which ends up including
+# <xutility>, which fails in much the way described in
+# <https://bugzilla.mozilla.org/show_bug.cgi?id=1331102>.
+# - nsCSSRuleProcessor.cpp needs to be built separately because it uses
+# plarena.h.
+# - nsLayoutStylesheetCache.cpp needs to be built separately because it uses
 # nsExceptionHandler.h, which includes windows.h.
 SOURCES += [
+    'BindingStyleRule.cpp',
     'nsCSSRuleProcessor.cpp',
     'nsLayoutStylesheetCache.cpp',
 ]

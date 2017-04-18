@@ -4,7 +4,9 @@
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu, manager: Cm} = Components;
 const URL_HOST = "http://localhost";
 
-var GMPScope = Cu.import("resource://gre/modules/GMPInstallManager.jsm");
+var GMPScope = Cu.import("resource://gre/modules/GMPInstallManager.jsm", {});
+var GMPInstallManager = GMPScope.GMPInstallManager;
+
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -13,12 +15,12 @@ Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm")
 Cu.import("resource://gre/modules/UpdateUtils.jsm");
 
-var { computeHash } = Cu.import("resource://gre/modules/addons/ProductAddonChecker.jsm");
-var ProductAddonCheckerScope = Cu.import("resource://gre/modules/addons/ProductAddonChecker.jsm");
+var ProductAddonCheckerScope = Cu.import("resource://gre/modules/addons/ProductAddonChecker.jsm", {});
 
 do_get_profile();
 
-function run_test() { Cu.import("resource://gre/modules/Preferences.jsm")
+function run_test() {
+ Cu.import("resource://gre/modules/Preferences.jsm")
   Preferences.set("media.gmp.log.dump", true);
   Preferences.set("media.gmp.log.level", 0);
   run_next_test();
@@ -417,7 +419,7 @@ function* test_checkForAddons_installAddon(id, includeSize, wantInstallReject) {
   let data = "e~=0.5772156649";
   let zipFile = createNewZipFile(zipFileName, data);
   let hashFunc = "sha256";
-  let expectedDigest = yield computeHash(hashFunc, zipFile.path);
+  let expectedDigest = yield ProductAddonCheckerScope.computeHash(hashFunc, zipFile.path);
   let fileSize = zipFile.fileSize;
   if (wantInstallReject) {
     fileSize = 1;
@@ -549,12 +551,8 @@ add_task(function* test_simpleCheckAndInstall_tooFrequent() {
  * Tests that installing addons when there is no server works as expected
  */
 add_test(function test_installAddon_noServer() {
-  let dir = FileUtils.getDir("TmpD", [], true);
   let zipFileName = "test_GMP.zip";
   let zipURL = URL_HOST + ":0/" + zipFileName;
-
-  let data = "e~=0.5772156649";
-  let zipFile = createNewZipFile(zipFileName, data);
 
   let responseXML =
     "<?xml version=\"1.0\"?>" +
@@ -648,21 +646,21 @@ function xhr(inputStatus, inputResponse, options) {
   this._options = options || {};
 }
 xhr.prototype = {
-  overrideMimeType: function(aMimetype) { },
-  setRequestHeader: function(aHeader, aValue) { },
+  overrideMimeType(aMimetype) { },
+  setRequestHeader(aHeader, aValue) { },
   status: null,
   channel: { set notificationCallbacks(aVal) { } },
-  open: function(aMethod, aUrl) {
-    this.channel.originalURI = Services.io.newURI(aUrl, null, null);
+  open(aMethod, aUrl) {
+    this.channel.originalURI = Services.io.newURI(aUrl);
     this._method = aMethod; this._url = aUrl;
   },
-  abort: function() {
+  abort() {
     this._dropRequest = true;
     this._notify(["abort", "loadend"]);
   },
   responseXML: null,
   responseText: null,
-  send: function(aBody) {
+  send(aBody) {
     do_execute_soon(function() {
       try {
         if (this._options.dropRequest) {
@@ -704,7 +702,7 @@ xhr.prototype = {
   set ontimeout(aValue) { this._ontimeout = makeHandler(aValue); },
   get ontimeout() { return this._ontimeout; },
   set timeout(aValue) { this._timeout = aValue; },
-  _notify: function(events) {
+  _notify(events) {
     if (this._notified) {
       return;
     }
@@ -723,12 +721,12 @@ xhr.prototype = {
       }
     }
   },
-  addEventListener: function(aEvent, aValue, aCapturing) {
+  addEventListener(aEvent, aValue, aCapturing) {
     eval("this._on" + aEvent + " = aValue");
   },
   flags: Ci.nsIClassInfo.SINGLETON,
   getScriptableHelper: () => null,
-  getInterfaces: function(aCount) {
+  getInterfaces(aCount) {
     let interfaces = [Ci.nsISupports];
     aCount.value = interfaces.length;
     return interfaces;
@@ -736,12 +734,12 @@ xhr.prototype = {
   classDescription: "XMLHttpRequest",
   contractID: "@mozilla.org/xmlextras/xmlhttprequest;1",
   classID: Components.ID("{c9b37f43-4278-4304-a5e0-600991ab08cb}"),
-  createInstance: function(aOuter, aIID) {
+  createInstance(aOuter, aIID) {
     if (aOuter == null)
       return this.QueryInterface(aIID);
     throw Cr.NS_ERROR_NO_AGGREGATION;
   },
-  QueryInterface: function(aIID) {
+  QueryInterface(aIID) {
     if (aIID.equals(Ci.nsIClassInfo) ||
         aIID.equals(Ci.nsISupports))
       return this;

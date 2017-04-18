@@ -149,6 +149,8 @@ public:
     return NS_OK;
   }
 
+  NS_IMETHOD GetName(nsACString& aName) override;
+
   nsTimerEvent()
     : mTimer()
     , mGeneration(0)
@@ -268,6 +270,16 @@ nsTimerEvent::DeleteAllocatorIfNeeded()
 }
 
 NS_IMETHODIMP
+nsTimerEvent::GetName(nsACString& aName)
+{
+  bool current;
+  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(mTimer->mEventTarget->IsOnCurrentThread(&current)) && current);
+
+  mTimer->GetName(aName);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsTimerEvent::Run()
 {
   if (!mTimer) {
@@ -307,7 +319,8 @@ TimerThread::Init()
 
   if (mInitInProgress.exchange(true) == false) {
     // We hold on to mThread to keep the thread alive.
-    nsresult rv = NS_NewThread(getter_AddRefs(mThread), this);
+    nsresult rv =
+      NS_NewNamedThread("Timer Thread", getter_AddRefs(mThread), this);
     if (NS_FAILED(rv)) {
       mThread = nullptr;
     } else {

@@ -6,15 +6,13 @@ var testnum = 0;
 
 var iter;
 
-function run_test()
-{
+function run_test() {
   do_test_pending();
   iter = next_test();
   iter.next();
 }
 
-function* next_test()
-{
+function* next_test() {
   try {
 
   // ===== test init =====
@@ -48,7 +46,7 @@ function* next_test()
   do_check_eq(CURRENT_SCHEMA, FormHistory.schemaVersion);
   // check that an entry still exists
   yield countEntries("name-A", "value-A",
-    function (num) {
+    function(num) {
       do_check_true(num > 0);
       do_test_finished();
     }

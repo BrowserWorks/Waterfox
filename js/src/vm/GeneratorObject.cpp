@@ -256,7 +256,7 @@ static const JSFunctionSpec legacy_generator_methods[] = {
 static JSObject*
 NewSingletonObjectWithObjectPrototype(JSContext* cx, Handle<GlobalObject*> global)
 {
-    RootedObject proto(cx, global->getOrCreateObjectPrototype(cx));
+    RootedObject proto(cx, GlobalObject::getOrCreateObjectPrototype(cx, global));
     if (!proto)
         return nullptr;
     return NewObjectWithGivenProto<PlainObject>(cx, proto, SingletonObject);
@@ -265,7 +265,7 @@ NewSingletonObjectWithObjectPrototype(JSContext* cx, Handle<GlobalObject*> globa
 JSObject*
 js::NewSingletonObjectWithFunctionPrototype(JSContext* cx, Handle<GlobalObject*> global)
 {
-    RootedObject proto(cx, global->getOrCreateFunctionPrototype(cx));
+    RootedObject proto(cx, GlobalObject::getOrCreateFunctionPrototype(cx, global));
     if (!proto)
         return nullptr;
     return NewObjectWithGivenProto<PlainObject>(cx, proto, SingletonObject);
@@ -278,7 +278,7 @@ GlobalObject::initLegacyGeneratorProto(JSContext* cx, Handle<GlobalObject*> glob
         return true;
 
     RootedObject proto(cx, NewSingletonObjectWithObjectPrototype(cx, global));
-    if (!proto || !proto->setDelegate(cx))
+    if (!proto || !JSObject::setDelegate(cx, proto))
         return false;
     if (!DefinePropertiesAndFunctions(cx, proto, nullptr, legacy_generator_methods))
         return false;
@@ -297,9 +297,9 @@ GlobalObject::initStarGenerators(JSContext* cx, Handle<GlobalObject*> global)
     if (!iteratorProto)
         return false;
 
-    RootedObject genObjectProto(cx, global->createBlankPrototypeInheriting(cx,
-                                                                           &PlainObject::class_,
-                                                                           iteratorProto));
+    RootedObject genObjectProto(cx, GlobalObject::createBlankPrototypeInheriting(cx, global,
+                                                                                 &PlainObject::class_,
+                                                                                 iteratorProto));
     if (!genObjectProto)
         return false;
     if (!DefinePropertiesAndFunctions(cx, genObjectProto, nullptr, star_generator_methods) ||
@@ -309,9 +309,10 @@ GlobalObject::initStarGenerators(JSContext* cx, Handle<GlobalObject*> global)
     }
 
     RootedObject genFunctionProto(cx, NewSingletonObjectWithFunctionPrototype(cx, global));
-    if (!genFunctionProto || !genFunctionProto->setDelegate(cx))
+    if (!genFunctionProto || !JSObject::setDelegate(cx, genFunctionProto))
         return false;
-    if (!LinkConstructorAndPrototype(cx, genFunctionProto, genObjectProto) ||
+    if (!LinkConstructorAndPrototype(cx, genFunctionProto, genObjectProto, JSPROP_READONLY,
+                                     JSPROP_READONLY) ||
         !DefineToStringTag(cx, genFunctionProto, cx->names().GeneratorFunction))
     {
         return false;
@@ -328,8 +329,11 @@ GlobalObject::initStarGenerators(JSContext* cx, Handle<GlobalObject*> global)
                                                       SingletonObject));
     if (!genFunction)
         return false;
-    if (!LinkConstructorAndPrototype(cx, genFunction, genFunctionProto))
+    if (!LinkConstructorAndPrototype(cx, genFunction, genFunctionProto,
+                                     JSPROP_PERMANENT | JSPROP_READONLY, JSPROP_READONLY))
+    {
         return false;
+    }
 
     global->setReservedSlot(STAR_GENERATOR_OBJECT_PROTO, ObjectValue(*genObjectProto));
     global->setReservedSlot(STAR_GENERATOR_FUNCTION, ObjectValue(*genFunction));
@@ -355,12 +359,14 @@ js::CheckStarGeneratorResumptionValue(JSContext* cx, HandleValue v)
 
     // It should have `value` data property, but the type doesn't matter
     JSObject* ignored;
-    Shape* shape;
-    if (!LookupPropertyPure(cx, obj, NameToId(cx->names().value), &ignored, &shape))
+    PropertyResult prop;
+    if (!LookupPropertyPure(cx, obj, NameToId(cx->names().value), &ignored, &prop))
         return false;
-    if (!shape)
+    if (!prop)
         return false;
-    if (!shape->hasDefaultGetter())
+    if (!prop.isNativeProperty())
+        return false;
+    if (!prop.shape()->hasDefaultGetter())
         return false;
 
     return true;

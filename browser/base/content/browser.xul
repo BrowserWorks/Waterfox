@@ -180,6 +180,7 @@
     <menulist popuponly="true" id="ContentSelectDropdown" hidden="true">
       <menupopup rolluponmousewheel="true"
                  activateontab="true" position="after_start"
+                 level="parent"
 #ifdef XP_WIN
                  consumeoutsideclicks="false" ignorekeys="shortcuts"
 #endif
@@ -441,6 +442,9 @@
                 accesskey="&syncedTabs.context.copy.accesskey;"
                 id="syncedTabsCopySelected"/>
       <menuseparator/>
+      <menuitem label="&syncedTabs.context.openAllInTabs.label;"
+                accesskey="&syncedTabs.context.openAllInTabs.accesskey;"
+                id="syncedTabsOpenAllInTabs"/>
       <menuitem label="&syncSyncNowItem.label;"
                 accesskey="&syncSyncNowItem.accesskey;"
                 id="syncedTabsRefresh"/>
@@ -512,9 +516,7 @@
 #ifdef MENUBAR_CAN_AUTOHIDE
              toolbarname="&menubarCmd.label;"
              accesskey="&menubarCmd.accesskey;"
-#if defined(MOZ_WIDGET_GTK)
              autohide="true"
-#endif
 #endif
              context="toolbar-context-menu">
       <toolbaritem id="menubar-items" align="center">

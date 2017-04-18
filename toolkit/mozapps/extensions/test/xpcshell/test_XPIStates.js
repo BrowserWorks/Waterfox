@@ -100,13 +100,13 @@ function checkChange(XS, aPath, aChange) {
 
 // Get a reference to the XPIState (loaded by startupManager) so we can unit test it.
 function getXS() {
-  let XPI = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
+  let XPI = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm", {});
   return XPI.XPIStates;
 }
 
 add_task(function* detect_touches() {
   startupManager();
-  let [pe, pd, ue, ud] = yield promiseAddonsByIDs([
+  let [/* pe */, pd, /* ue */, ud] = yield promiseAddonsByIDs([
          "packed-enabled@tests.mozilla.org",
          "packed-disabled@tests.mozilla.org",
          "unpacked-enabled@tests.mozilla.org",
@@ -181,7 +181,7 @@ add_task(function* detect_touches() {
  * extensions.xpiState preference.
  */
 add_task(function* uninstall_bootstrap() {
-  let [pe, pd, ue, ud] = yield promiseAddonsByIDs([
+  let [pe, /* pd, ue, ud */] = yield promiseAddonsByIDs([
          "packed-enabled@tests.mozilla.org",
          "packed-disabled@tests.mozilla.org",
          "unpacked-enabled@tests.mozilla.org",
@@ -198,19 +198,10 @@ add_task(function* uninstall_bootstrap() {
 add_task(function* install_bootstrap() {
   let XS = getXS();
 
-  let installer = yield new Promise((resolve, reject) =>
-    AddonManager.getInstallForFile(do_get_addon("test_bootstrap1_1"), resolve));
+  let installer = yield promiseInstallFile(
+    do_get_addon("test_bootstrap1_1"));
 
-  let promiseInstalled = new Promise((resolve, reject) => {
-    AddonManager.addInstallListener({
-      onInstallFailed: reject,
-      onInstallEnded: (install, newAddon) => resolve(newAddon)
-    });
-  });
-
-  installer.install();
-
-  let newAddon = yield promiseInstalled;
+  let newAddon = installer.addon;
   let xState = XS.getAddon("app-profile", newAddon.id);
   do_check_true(!!xState);
   do_check_true(xState.enabled);
@@ -228,19 +219,10 @@ add_task(function* install_bootstrap() {
 add_task(function* install_restart() {
   let XS = getXS();
 
-  let installer = yield new Promise((resolve, reject) =>
-    AddonManager.getInstallForFile(do_get_addon("test_bootstrap1_4"), resolve));
+  let installer = yield promiseInstallFile(
+    do_get_addon("test_bootstrap1_4"));
 
-  let promiseInstalled = new Promise((resolve, reject) => {
-    AddonManager.addInstallListener({
-      onInstallFailed: reject,
-      onInstallEnded: (install, newAddon) => resolve(newAddon)
-    });
-  });
-
-  installer.install();
-
-  let newAddon = yield promiseInstalled;
+  let newAddon = installer.addon;
   let newID = newAddon.id;
   let xState = XS.getAddon("app-profile", newID);
   do_check_false(xState);

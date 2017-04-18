@@ -19,7 +19,7 @@ if (arguments.length != 3) {
                   "<absolute path to StaticHPKPins.h>");
 }
 
-var { 'classes': Cc, 'interfaces': Ci, 'utils': Cu, 'results': Cr } = Components;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
@@ -28,7 +28,6 @@ var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 var gCertDB = Cc["@mozilla.org/security/x509certdb;1"]
                 .getService(Ci.nsIX509CertDB);
 
-const BUILT_IN_NICK_PREFIX = "Builtin Object Token:";
 const SHA256_PREFIX = "sha256/";
 const GOOGLE_PIN_PREFIX = "GOOGLE_PIN_";
 
@@ -237,7 +236,7 @@ function downloadAndParseChromeCerts(filename, certNameToSKD, certSKDToName) {
   let chromeName;
   for (let line of lines) {
     // Skip comments and newlines.
-    if (line.length == 0 || line[0] == '#') {
+    if (line.length == 0 || line[0] == "#") {
       continue;
     }
     switch (state) {
@@ -402,7 +401,7 @@ function loadNSSCertinfo(extraCertificates) {
     if (!isCertBuiltIn(cert)) {
       continue;
     }
-    let name = cert.nickname.substr(BUILT_IN_NICK_PREFIX.length);
+    let name = cert.displayName;
     let SKD = cert.sha256SubjectPublicKeyInfoDigest;
     certNameToSKD[name] = SKD;
     certSKDToName[SKD] = name;
@@ -441,7 +440,7 @@ function nameToAlias(certName) {
   return "k" + certName + "Fingerprint";
 }
 
-function compareByName (a, b) {
+function compareByName(a, b) {
   return a.name.localeCompare(b.name);
 }
 
@@ -487,7 +486,7 @@ function writeFingerprints(certNameToSKD, certSKDToName, name, hashes) {
 }
 
 function writeEntry(entry) {
-  let printVal = "  { \"" + entry.name + "\",\ ";
+  let printVal = `  { "${entry.name}", `;
   if (entry.include_subdomains) {
     printVal += "true, ";
   } else {

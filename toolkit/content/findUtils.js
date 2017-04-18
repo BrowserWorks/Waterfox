@@ -31,7 +31,7 @@ nsFindInstData.prototype =
 
   get webBrowserFind() { return this.browser.webBrowserFind; },
 
-  init : function() {
+  init() {
     var findInst = this.webBrowserFind;
     // set up the find to search the focussedWindow, bounded by the content window.
     var findInFrames = findInst.QueryInterface(Components.interfaces.nsIWebBrowserFindInFrames);
@@ -42,7 +42,7 @@ nsFindInstData.prototype =
     findInst.searchFrames = true;
   },
 
-  window : window,
+  window,
   _root : null,
   _current : null
 }
@@ -50,24 +50,20 @@ nsFindInstData.prototype =
 // browser is the <browser> element
 // rootSearchWindow is the window to constrain the search to (normally window.content)
 // currentSearchWindow is the frame to start searching (can be, and normally, rootSearchWindow)
-function findInPage(findInstData)
-{
+function findInPage(findInstData) {
   // is the dialog up already?
   if ("findDialog" in window && window.findDialog)
     window.findDialog.focus();
-  else
-  {
+  else {
     findInstData.init();
     window.findDialog = window.openDialog("chrome://global/content/finddialog.xul", "_blank", "chrome,resizable=no,dependent=yes", findInstData);
   }
 }
 
-function findAgainInPage(findInstData, reverse)
-{
+function findAgainInPage(findInstData, reverse) {
   if ("findDialog" in window && window.findDialog)
     window.findDialog.focus();
-  else
-  {
+  else {
     // get the find service, which stores global find state, and init the
     // nsIWebBrowser find with it. We don't assume that there was a previous
     // Find that set this up.
@@ -102,8 +98,7 @@ function findAgainInPage(findInstData, reverse)
   }
 }
 
-function canFindAgainInPage()
-{
+function canFindAgainInPage() {
     var findService = Components.classes["@mozilla.org/find/find_service;1"]
                            .getService(Components.interfaces.nsIFindService);
     return (findService.searchString.length > 0);

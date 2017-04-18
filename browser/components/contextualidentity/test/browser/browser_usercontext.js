@@ -27,12 +27,10 @@ function openTabInUserContext(uri, userContextId) {
 
 add_task(function* setup() {
   // make sure userContext is enabled.
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["privacy.userContext.enabled", true],
-      ["dom.ipc.processCount", 1]
-    ]}, resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+    ["privacy.userContext.enabled", true],
+    ["dom.ipc.processCount", 1]
+  ]});
 });
 
 add_task(function* test() {
@@ -42,7 +40,7 @@ add_task(function* test() {
     let cookie = USER_CONTEXTS[userContextId];
 
     // open our tab in the given user context
-    let tab = openTabInUserContext(BASE_URI+"?"+cookie, userContextId);
+    let tab = openTabInUserContext(BASE_URI + "?" + cookie, userContextId);
 
     // wait for tab load
     yield BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
@@ -55,7 +53,7 @@ add_task(function* test() {
     // Set a cookie in a different context so we can detect if that affects
     // cross-context properly. If we don't do that, we get an UNEXPECTED-PASS
     // for the localStorage case for the last tab we set.
-    let tab = openTabInUserContext(BASE_URI+"?foo", 9999);
+    let tab = openTabInUserContext(BASE_URI + "?foo", 9999);
     yield BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
     gBrowser.removeTab(tab);
   }
@@ -71,7 +69,7 @@ add_task(function* test() {
     yield BrowserTestUtils.browserLoaded(browser);
 
     // get the title
-    let title = browser.contentTitle.trim().split("|");
+    let title = browser.contentDocument.title.trim().split("|");
 
     // check each item in the title and validate it meets expectatations
     for (let part of title) {

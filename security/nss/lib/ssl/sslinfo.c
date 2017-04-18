@@ -140,6 +140,9 @@ SSL_GetPreliminaryChannelInfo(PRFileDesc *fd,
     inf.valuesSet = ss->ssl3.hs.preliminaryInfo;
     inf.protocolVersion = ss->version;
     inf.cipherSuite = ss->ssl3.hs.cipher_suite;
+    inf.canSendEarlyData = !ss->sec.isServer &&
+                           (ss->ssl3.hs.zeroRttState == ssl_0rtt_sent) &&
+                           !ss->firstHsDone;
 
     memcpy(info, &inf, inf.length);
     return SECSuccess;
@@ -455,9 +458,8 @@ SSL_ExportKeyingMaterial(PRFileDesc *fd,
         PORT_SetError(SSL_ERROR_HANDSHAKE_NOT_COMPLETED);
         rv = SECFailure;
     } else {
-        HASH_HashType ht = ssl3_GetTls12HashType(ss);
-        rv = ssl3_TLSPRFWithMasterSecret(ss->ssl3.cwSpec, label, labelLen, val,
-                                         valLen, out, outLen, ht);
+        rv = ssl3_TLSPRFWithMasterSecret(ss, ss->ssl3.cwSpec, label, labelLen,
+                                         val, valLen, out, outLen);
     }
     ssl_ReleaseSpecReadLock(ss);
 

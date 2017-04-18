@@ -13,6 +13,7 @@
 #include "ReadbackManagerD3D11.h"
 #include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/gfx/Logging.h"
+#include "mozilla/layers/CompositorBridgeChild.h"
 
 namespace mozilla {
 
@@ -29,7 +30,7 @@ static const GUID sD3D11TextureUsage =
 class TextureMemoryMeasurer : public IUnknown
 {
 public:
-  TextureMemoryMeasurer(size_t aMemoryUsed)
+  explicit TextureMemoryMeasurer(size_t aMemoryUsed)
   {
     mMemoryUsed = aMemoryUsed;
     gfxWindowsPlatform::sD3D11SharedTextures += mMemoryUsed;
@@ -1194,11 +1195,45 @@ CompositingRenderTargetD3D11::GetSize() const
   return TextureSourceD3D11::GetSize();
 }
 
-SyncObjectD3D11::SyncObjectD3D11(SyncHandle aHandle)
+SyncObjectD3D11::SyncObjectD3D11(SyncHandle aSyncHandle)
+ : mSyncHandle(aSyncHandle)
 {
-  MOZ_ASSERT(aHandle);
   mD3D11Device = DeviceManagerDx::Get()->GetContentDevice();
-  mHandle = aHandle;
+}
+
+bool
+SyncObjectD3D11::Init()
+{
+  if (mKeyedMutex) {
+    return true;
+  }
+
+  RefPtr<ID3D11Device> device = DeviceManagerDx::Get()->GetContentDevice();
+
+  HRESULT hr = device->OpenSharedResource(
+    mSyncHandle,
+    __uuidof(ID3D11Texture2D),
+    (void**)(ID3D11Texture2D**)getter_AddRefs(mD3D11Texture));
+  if (FAILED(hr) || !mD3D11Texture) {
+    gfxCriticalNote << "Failed to OpenSharedResource for SyncObjectD3D11: " << hexa(hr);
+    if (!CompositorBridgeChild::CompositorIsInGPUProcess() &&
+        !DeviceManagerDx::Get()->HasDeviceReset())
+    {
+      gfxDevCrash(LogReason::D3D11FinalizeFrame) << "Without device reset: " << hexa(hr);
+    } else {
+      return false;
+    }
+  }
+
+  hr = mD3D11Texture->QueryInterface(__uuidof(IDXGIKeyedMutex), getter_AddRefs(mKeyedMutex));
+  if (FAILED(hr) || !mKeyedMutex) {
+    // Leave both the critical error and MOZ_CRASH for now; the critical error lets
+    // us "save" the hr value.  We will probably eventuall replace this with gfxDevCrash.
+    gfxCriticalError() << "Failed to get KeyedMutex (2): " << hexa(hr);
+    MOZ_CRASH("GFX: Cannot get D3D11 KeyedMutex");
+  }
+
+  return true;
 }
 
 void
@@ -1220,71 +1255,44 @@ SyncObjectD3D11::IsSyncObjectValid()
 void
 SyncObjectD3D11::FinalizeFrame()
 {
+  if (!mD3D11SyncedTextures.size()) {
+    return;
+  }
+  if (!Init()) {
+    return;
+  }
+
   HRESULT hr;
+  AutoTextureLock lock(mKeyedMutex, hr, 20000);
 
-  if (!mD3D11Texture && mD3D11SyncedTextures.size()) {
-    RefPtr<ID3D11Device> device = DeviceManagerDx::Get()->GetContentDevice();
-
-    hr = device->OpenSharedResource(mHandle, __uuidof(ID3D11Texture2D), (void**)(ID3D11Texture2D**)getter_AddRefs(mD3D11Texture));
-
-    if (FAILED(hr) || !mD3D11Texture) {
-      gfxCriticalError() << "Failed to D3D11 OpenSharedResource for frame finalization: " << hexa(hr);
-
-      if (DeviceManagerDx::Get()->HasDeviceReset()) {
-        return;
-      }
-
-      gfxDevCrash(LogReason::D3D11FinalizeFrame) << "Without device reset: " << hexa(hr);
+  if (hr == WAIT_TIMEOUT) {
+    if (DeviceManagerDx::Get()->HasDeviceReset()) {
+      gfxWarning() << "AcquireSync timed out because of device reset.";
+      return;
     }
-
-    // test QI
-    RefPtr<IDXGIKeyedMutex> mutex;
-    hr = mD3D11Texture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
-
-    if (FAILED(hr) || !mutex) {
-      // Leave both the critical error and MOZ_CRASH for now; the critical error lets
-      // us "save" the hr value.  We will probably eventuall replace this with gfxDevCrash.
-      gfxCriticalError() << "Failed to get KeyedMutex (2): " << hexa(hr);
-      MOZ_CRASH("GFX: Cannot get D3D11 KeyedMutex");
-    }
+    gfxDevCrash(LogReason::D3D11SyncLock) << "Timeout on the D3D11 sync lock";
   }
 
-  if (mD3D11SyncedTextures.size()) {
-    RefPtr<IDXGIKeyedMutex> mutex;
-    hr = mD3D11Texture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
-    {
-      AutoTextureLock lock(mutex, hr, 20000);
+  D3D11_BOX box;
+  box.front = box.top = box.left = 0;
+  box.back = box.bottom = box.right = 1;
 
-      if (hr == WAIT_TIMEOUT) {
-        if (DeviceManagerDx::Get()->HasDeviceReset()) {
-          gfxWarning() << "AcquireSync timed out because of device reset.";
-          return;
-        }
-        gfxDevCrash(LogReason::D3D11SyncLock) << "Timeout on the D3D11 sync lock";
-      }
-
-      D3D11_BOX box;
-      box.front = box.top = box.left = 0;
-      box.back = box.bottom = box.right = 1;
-
-      RefPtr<ID3D11Device> dev = DeviceManagerDx::Get()->GetContentDevice();
-      if (!dev) {
-        if (DeviceManagerDx::Get()->HasDeviceReset()) {
-          return;
-        }
-        MOZ_CRASH("GFX: Invalid D3D11 content device");
-      }
-
-      RefPtr<ID3D11DeviceContext> ctx;
-      dev->GetImmediateContext(getter_AddRefs(ctx));
-
-      for (auto iter = mD3D11SyncedTextures.begin(); iter != mD3D11SyncedTextures.end(); iter++) {
-        ctx->CopySubresourceRegion(mD3D11Texture, 0, 0, 0, 0, *iter, 0, &box);
-      }
+  RefPtr<ID3D11Device> dev = DeviceManagerDx::Get()->GetContentDevice();
+  if (!dev) {
+    if (DeviceManagerDx::Get()->HasDeviceReset()) {
+      return;
     }
-
-    mD3D11SyncedTextures.clear();
+    MOZ_CRASH("GFX: Invalid D3D11 content device");
   }
+
+  RefPtr<ID3D11DeviceContext> ctx;
+  dev->GetImmediateContext(getter_AddRefs(ctx));
+
+  for (auto iter = mD3D11SyncedTextures.begin(); iter != mD3D11SyncedTextures.end(); iter++) {
+    ctx->CopySubresourceRegion(mD3D11Texture, 0, 0, 0, 0, *iter, 0, &box);
+  }
+
+  mD3D11SyncedTextures.clear();
 }
 
 }

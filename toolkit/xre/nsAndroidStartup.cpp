@@ -18,11 +18,14 @@
 #include "nsAppRunner.h"
 #include "APKOpen.h"
 #include "nsExceptionHandler.h"
+#include "mozilla/Bootstrap.h"
 
 #define LOG(args...) __android_log_print(ANDROID_LOG_INFO, MOZ_APP_NAME, args)
 
+using namespace mozilla;
+
 extern "C" NS_EXPORT void
-GeckoStart(JNIEnv* env, char* data, const nsXREAppData* appData)
+GeckoStart(JNIEnv* env, char** argv, int argc, const StaticXREAppData& aAppData)
 {
     mozilla::jni::SetGeckoThreadEnv(env);
 
@@ -35,20 +38,16 @@ GeckoStart(JNIEnv* env, char* data, const nsXREAppData* appData)
     }
 #endif
 
-    if (!data) {
+    if (!argv) {
         LOG("Failed to get arguments for GeckoStart\n");
         return;
     }
 
-    nsTArray<char *> targs;
-    char *arg = strtok(data, " ");
-    while (arg) {
-        targs.AppendElement(arg);
-        arg = strtok(nullptr, " ");
-    }
-    targs.AppendElement(static_cast<char *>(nullptr));
+    BootstrapConfig config;
+    config.appData = &aAppData;
+    config.appDataPath = nullptr;
 
-    int result = XRE_main(targs.Length() - 1, targs.Elements(), appData, 0);
+    int result = XRE_main(argc, argv, config);
 
     if (result)
         LOG("XRE_main returned %d", result);

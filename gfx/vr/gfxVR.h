@@ -21,7 +21,8 @@ namespace layers {
 class PTextureParent;
 }
 namespace dom {
-enum class GamepadMappingType : uint32_t;
+enum class GamepadMappingType : uint8_t;
+enum class GamepadHand : uint8_t;
 struct GamepadPoseState;
 }
 namespace gfx {
@@ -219,24 +220,24 @@ struct VRControllerInfo
   VRDeviceType GetType() const { return mType; }
   uint32_t GetControllerID() const { return mControllerID; }
   const nsCString& GetControllerName() const { return mControllerName; }
-  uint32_t GetMappingType() const { return mMappingType; }
+  dom::GamepadMappingType GetMappingType() const { return mMappingType; }
   uint32_t GetNumButtons() const { return mNumButtons; }
   uint32_t GetNumAxes() const { return mNumAxes; }
 
   uint32_t mControllerID;
   VRDeviceType mType;
   nsCString mControllerName;
-  uint32_t mMappingType;
+  dom::GamepadMappingType mMappingType;
   uint32_t mNumButtons;
   uint32_t mNumAxes;
 
   bool operator==(const VRControllerInfo& other) const {
-  return mType == other.mType &&
-         mControllerID == other.mControllerID &&
-         mControllerName == other.mControllerName &&
-         mMappingType == other.mMappingType &&
-         mNumButtons == other.mNumButtons &&
-         mNumAxes == other.mNumAxes;
+    return mType == other.mType &&
+           mControllerID == other.mControllerID &&
+           mControllerName == other.mControllerName &&
+           mMappingType == other.mMappingType &&
+           mNumButtons == other.mNumButtons &&
+           mNumAxes == other.mNumAxes;
   }
 
   bool operator!=(const VRControllerInfo& other) const {
@@ -254,11 +255,12 @@ public:
   virtual void HandleInput() = 0;
   virtual void GetControllers(nsTArray<RefPtr<VRControllerHost>>& aControllerResult) = 0;
   virtual void ScanForDevices() = 0;
+  virtual void RemoveDevices() = 0;
   void NewButtonEvent(uint32_t aIndex, uint32_t aButton, bool aPressed);
   void NewAxisMove(uint32_t aIndex, uint32_t aAxis, double aValue);
   void NewPoseState(uint32_t aIndex, const dom::GamepadPoseState& aPose);
-  void AddGamepad(const char* aID, uint32_t aMapping,
-                  uint32_t aNumButtons, uint32_t aNumAxes);
+  void AddGamepad(const char* aID, dom::GamepadMappingType aMapping,
+                  dom::GamepadHand aHand, uint32_t aNumButtons, uint32_t aNumAxes);
   void RemoveGamepad(uint32_t aIndex);
 
 protected:

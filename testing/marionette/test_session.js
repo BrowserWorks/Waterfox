@@ -29,21 +29,58 @@ add_test(function test_Timeouts_toString() {
 
 add_test(function test_Timeouts_toJSON() {
   let ts = new session.Timeouts();
-  deepEqual(ts.toJSON(), {"implicit": 0, "page load": 300000, "script": 30000});
+  deepEqual(ts.toJSON(), {"implicit": 0, "pageLoad": 300000, "script": 30000});
 
   run_next_test();
 });
 
 add_test(function test_Timeouts_fromJSON() {
   let json = {
-    "implicit": 10,
-    "page load": 20,
-    "script": 30,
+    implicit: 10,
+    pageLoad: 20,
+    script: 30,
   };
   let ts = session.Timeouts.fromJSON(json);
-  equal(ts.implicit, json["implicit"]);
-  equal(ts.pageLoad, json["page load"]);
-  equal(ts.script, json["script"]);
+  equal(ts.implicit, json.implicit);
+  equal(ts.pageLoad, json.pageLoad);
+  equal(ts.script, json.script);
+
+  run_next_test();
+});
+
+add_test(function test_Timeouts_fromJSON_unrecognised_field() {
+  let json = {
+    sessionId: "foobar",
+    script: 42,
+  };
+  try {
+    session.Timeouts.fromJSON(json);
+  } catch (e) {
+    equal(e.name, InvalidArgumentError.name);
+    equal(e.message, "Unrecognised timeout: sessionId");
+  }
+
+  run_next_test();
+});
+
+add_test(function test_Timeouts_fromJSON_invalid_type() {
+  try {
+    session.Timeouts.fromJSON({script: "foobar"});
+  } catch (e) {
+    equal(e.name, InvalidArgumentError.name);
+    equal(e.message, "Expected [object String] \"foobar\" to be an integer");
+  }
+
+  run_next_test();
+});
+
+add_test(function test_Timeouts_fromJSON_bounds() {
+  try {
+    session.Timeouts.fromJSON({script: -42});
+  } catch (e) {
+    equal(e.name, InvalidArgumentError.name);
+    equal(e.message, "Expected [object Number] -42 to be >= 0");
+  }
 
   run_next_test();
 });

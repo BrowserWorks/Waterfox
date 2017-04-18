@@ -38,10 +38,10 @@ function test() {
   // non-builtin roots.
   Services.prefs.setIntPref(kpkpEnforcementPref, 2);
   Services.prefs.setBoolPref(khpkpPinninEnablePref, true);
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref(kpkpEnforcementPref);
     Services.prefs.clearUserPref(khpkpPinninEnablePref);
-    let uri = gIOService.newURI("https://" + kPinningDomain, null, null);
+    let uri = gIOService.newURI("https://" + kPinningDomain);
     gSSService.removeState(Ci.nsISiteSecurityService.HEADER_HPKP, uri, 0);
   });
   whenNewTabLoaded(window, loadPinningPage);
@@ -60,7 +60,7 @@ function loadPinningPage() {
 // After the site is pinned try to load with a subdomain site that should
 // fail to validate
 var successfulPinningPageListener = {
-  handleEvent: function() {
+  handleEvent() {
     gBrowser.selectedBrowser.removeEventListener("load", this, true);
     BrowserTestUtils.loadURI(gBrowser.selectedBrowser, "https://" + kBadPinningDomain).then(function() {
       return promiseErrorPageLoaded(gBrowser.selectedBrowser);

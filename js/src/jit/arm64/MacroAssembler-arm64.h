@@ -306,7 +306,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     void pushValue(const Value& val) {
         vixl::UseScratchRegisterScope temps(this);
         const Register scratch = temps.AcquireX().asUnsized();
-        if (val.isMarkable()) {
+        if (val.isGCThing()) {
             BufferOffset load = movePatchablePtr(ImmPtr(val.bitsAsPunboxPointer()), scratch);
             writeDataRelocation(val, load);
             push(scratch);
@@ -349,7 +349,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
         }
     }
     void moveValue(const Value& val, Register dest) {
-        if (val.isMarkable()) {
+        if (val.isGCThing()) {
             BufferOffset load = movePatchablePtr(ImmPtr(val.bitsAsPunboxPointer()), dest);
             writeDataRelocation(val, load);
         } else {
@@ -1403,12 +1403,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
         convertInt32ToFloat32(operand.valueReg(), dest);
     }
 
-    void loadConstantDouble(wasm::RawF64 d, FloatRegister dest) {
-        loadConstantDouble(d.fp(), dest);
-    }
-    void loadConstantFloat32(wasm::RawF32 f, FloatRegister dest) {
-        loadConstantFloat32(f.fp(), dest);
-    }
     void loadConstantDouble(double d, FloatRegister dest) {
         Fmov(ARMFPRegister(dest, 64), d);
     }
@@ -1835,8 +1829,8 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
             dataRelocations_.writeUnsigned(load.getOffset());
     }
     void writeDataRelocation(const Value& val, BufferOffset load) {
-        if (val.isMarkable()) {
-            gc::Cell* cell = val.toMarkablePointer();
+        if (val.isGCThing()) {
+            gc::Cell* cell = val.toGCThing();
             if (cell && gc::IsInsideNursery(cell))
                 embedsNurseryPointers_ = true;
             dataRelocations_.writeUnsigned(load.getOffset());
@@ -2315,10 +2309,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     uint32_t currentOffset() const {
         return nextOffset().getOffset();
     }
-
-    struct AutoPrepareForPatching {
-        explicit AutoPrepareForPatching(MacroAssemblerCompat&) {}
-    };
 
   protected:
     bool buildOOLFakeExitFrame(void* fakeReturnAddr) {

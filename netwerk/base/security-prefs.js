@@ -6,15 +6,12 @@ pref("security.tls.version.min", 1);
 pref("security.tls.version.max", 3);
 pref("security.tls.version.fallback-limit", 3);
 pref("security.tls.insecure_fallback_hosts", "");
-pref("security.tls.unrestricted_rc4_fallback", false);
 pref("security.tls.enable_0rtt_data", false);
 
 pref("security.ssl.treat_unsafe_negotiation_as_broken", false);
 pref("security.ssl.require_safe_negotiation",  false);
 pref("security.ssl.enable_ocsp_stapling", true);
 pref("security.ssl.enable_false_start", true);
-pref("security.ssl.false_start.require-npn", false);
-pref("security.ssl.enable_npn", true);
 pref("security.ssl.enable_alpn", true);
 
 pref("security.ssl3.ecdhe_rsa_aes_128_gcm_sha256", true);
@@ -91,11 +88,15 @@ pref("security.pki.netscape_step_up_policy", 2);
 // Configures Certificate Transparency support mode:
 // 0: Fully disabled.
 // 1: Only collect telemetry. CT qualification checks are not performed.
-pref("security.pki.certificate_transparency.mode", 1);
+pref("security.pki.certificate_transparency.mode", 0);
 
 pref("security.webauth.u2f", false);
 pref("security.webauth.u2f_enable_softtoken", false);
 pref("security.webauth.u2f_enable_usbtoken", false);
+
+pref("security.webauth.webauthn", false);
+pref("security.webauth.webauthn_enable_softtoken", false);
+pref("security.webauth.webauthn_enable_usbtoken", false);
 
 pref("security.ssl.errorReporting.enabled", true);
 pref("security.ssl.errorReporting.url", "https://incoming.telemetry.mozilla.org/submit/sslreports/");
@@ -106,14 +107,22 @@ pref("security.ssl.errorReporting.automatic", false);
 // https://tools.ietf.org/html/rfc7469#section-4.1
 pref("security.cert_pinning.max_max_age_seconds", 5184000);
 
+// HSTS Priming
 // If a request is mixed-content, send an HSTS priming request to attempt to
 // see if it is available over HTTPS.
-pref("security.mixed_content.send_hsts_priming", true);
 #ifdef RELEASE_OR_BETA
-// Don't change the order of evaluation of mixed-content and HSTS upgrades
+// Don't change the order of evaluation of mixed-content and HSTS upgrades in
+// order to be most compatible with current standards
+pref("security.mixed_content.send_hsts_priming", false);
 pref("security.mixed_content.use_hsts", false);
 #else
 // Change the order of evaluation so HSTS upgrades happen before
 // mixed-content blocking
+pref("security.mixed_content.send_hsts_priming", true);
 pref("security.mixed_content.use_hsts", true);
 #endif
+// Approximately 1 week default cache for HSTS priming failures, in seconds
+pref ("security.mixed_content.hsts_priming_cache_timeout", 10080);
+// Force the channel to timeout in 3 seconds if we have not received
+// expects a time in milliseconds
+pref ("security.mixed_content.hsts_priming_request_timeout", 3000);

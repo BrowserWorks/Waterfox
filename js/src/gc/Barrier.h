@@ -245,15 +245,6 @@ bool
 IsMarkedBlack(NativeObject* obj);
 #endif
 
-namespace gc {
-
-// Marking.h depends on these barrier definitions, so we need a separate
-// entry point for marking to implement the pre-barrier.
-void MarkValueForBarrier(JSTracer* trc, Value* v, const char* name);
-void MarkIdForBarrier(JSTracer* trc, jsid* idp, const char* name);
-
-} // namespace gc
-
 template <typename T>
 struct InternalBarrierMethods {};
 
@@ -282,7 +273,7 @@ template <typename S> struct ReadBarrierFunctor : public VoidDefaultAdaptor<S> {
 template <>
 struct InternalBarrierMethods<Value>
 {
-    static bool isMarkable(const Value& v) { return v.isMarkable(); }
+    static bool isMarkable(const Value& v) { return v.isGCThing(); }
     static bool isMarkableTaggedPointer(const Value& v) { return isMarkable(v); }
 
     static void preBarrier(const Value& v) {
@@ -325,15 +316,9 @@ struct InternalBarrierMethods<jsid>
     static void postBarrier(jsid* idp, jsid prev, jsid next) {}
 };
 
-// Barrier classes can use Mixins to add methods to a set of barrier
-// instantiations, to make the barriered thing look and feel more like the
-// thing itself.
-template <typename T>
-class BarrieredBaseMixins {};
-
 // Base class of all barrier types.
 template <typename T>
-class BarrieredBase : public BarrieredBaseMixins<T>
+class BarrieredBase
 {
   protected:
     // BarrieredBase is not directly instantiable.
@@ -354,14 +339,18 @@ class BarrieredBase : public BarrieredBaseMixins<T>
 
 // Base class for barriered pointer types that intercept only writes.
 template <class T>
-class WriteBarrieredBase : public BarrieredBase<T>
+class WriteBarrieredBase : public BarrieredBase<T>,
+                           public WrappedPtrOperations<T, WriteBarrieredBase<T>>
 {
   protected:
+    using BarrieredBase<T>::value;
+
     // WriteBarrieredBase is not directly instantiable.
     explicit WriteBarrieredBase(const T& v) : BarrieredBase<T>(v) {}
 
   public:
-    DECLARE_POINTER_COMPARISON_OPS(T);
+    using ElementType = T;
+
     DECLARE_POINTER_CONSTREF_OPS(T);
 
     // Use this if the automatic coercion to T isn't working.
@@ -457,10 +446,6 @@ class GCPtr : public WriteBarrieredBase<T>
     }
 
     DECLARE_POINTER_ASSIGN_OPS(GCPtr, T);
-
-    T unbarrieredGet() const {
-        return this->value;
-    }
 
   private:
     void set(const T& v) {
@@ -578,8 +563,12 @@ class ReadBarrieredBase : public BarrieredBase<T>
 // insert manual post-barriers on the table for rekeying if the key is based in
 // any way on the address of the object.
 template <typename T>
-class ReadBarriered : public ReadBarrieredBase<T>
+class ReadBarriered : public ReadBarrieredBase<T>,
+                      public WrappedPtrOperations<T, ReadBarriered<T>>
 {
+  protected:
+    using ReadBarrieredBase<T>::value;
+
   public:
     ReadBarriered() : ReadBarrieredBase<T>(JS::GCPolicy<T>::initial()) {}
 
@@ -612,14 +601,13 @@ class ReadBarriered : public ReadBarrieredBase<T>
         return *this;
     }
 
-    const T get() const {
-        if (!InternalBarrierMethods<T>::isMarkable(this->value))
-            return JS::GCPolicy<T>::initial();
-        this->read();
+    const T& get() const {
+        if (InternalBarrierMethods<T>::isMarkable(this->value))
+            this->read();
         return this->value;
     }
 
-    const T unbarrieredGet() const {
+    const T& unbarrieredGet() const {
         return this->value;
     }
 
@@ -627,9 +615,9 @@ class ReadBarriered : public ReadBarrieredBase<T>
         return bool(this->value);
     }
 
-    operator const T() const { return get(); }
+    operator const T&() const { return get(); }
 
-    const T operator->() const { return get(); }
+    const T& operator->() const { return get(); }
 
     T* unsafeGet() { return &this->value; }
     T const* unsafeGet() const { return &this->value; }
@@ -646,12 +634,6 @@ class ReadBarriered : public ReadBarrieredBase<T>
 // out when the GC discovers that it is not reachable from any other path.
 template <typename T>
 using WeakRef = ReadBarriered<T>;
-
-// Add Value operations to all Barrier types. Note, this must be defined before
-// HeapSlot for HeapSlot's base to get these operations.
-template <>
-class BarrieredBaseMixins<JS::Value> : public ValueOperations<WriteBarrieredBase<JS::Value>>
-{};
 
 // A pre- and post-barriered Value that is specialized to be aware that it
 // resides in a slots or elements vector. This allows it to be relocated in
@@ -689,8 +671,8 @@ class HeapSlot : public WriteBarrieredBase<Value>
 
 #ifdef DEBUG
     bool preconditionForSet(NativeObject* owner, Kind kind, uint32_t slot) const;
-    bool preconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot,
-                                         const Value& target) const;
+    void assertPreconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot,
+                                               const Value& target) const;
 #endif
 
     void set(NativeObject* owner, Kind kind, uint32_t slot, const Value& v) {
@@ -707,7 +689,9 @@ class HeapSlot : public WriteBarrieredBase<Value>
 
   private:
     void post(NativeObject* owner, Kind kind, uint32_t slot, const Value& target) {
-        MOZ_ASSERT(preconditionForWriteBarrierPost(owner, kind, slot, target));
+#ifdef DEBUG
+        assertPreconditionForWriteBarrierPost(owner, kind, slot, target);
+#endif
         if (this->value.isObject()) {
             gc::Cell* cell = reinterpret_cast<gc::Cell*>(&this->value.toObject());
             if (cell->storeBuffer())
@@ -959,6 +943,35 @@ typedef ReadBarriered<WasmInstanceObject*> ReadBarrieredWasmInstanceObject;
 typedef ReadBarriered<WasmTableObject*> ReadBarrieredWasmTableObject;
 
 typedef ReadBarriered<Value> ReadBarrieredValue;
+
+namespace detail {
+
+template <typename T>
+struct DefineComparisonOps<PreBarriered<T>> : mozilla::TrueType {
+    static const T& get(const PreBarriered<T>& v) { return v.get(); }
+};
+
+template <typename T>
+struct DefineComparisonOps<GCPtr<T>> : mozilla::TrueType {
+    static const T& get(const GCPtr<T>& v) { return v.get(); }
+};
+
+template <typename T>
+struct DefineComparisonOps<HeapPtr<T>> : mozilla::TrueType {
+    static const T& get(const HeapPtr<T>& v) { return v.get(); }
+};
+
+template <typename T>
+struct DefineComparisonOps<ReadBarriered<T>> : mozilla::TrueType {
+    static const T& get(const ReadBarriered<T>& v) { return v.unbarrieredGet(); }
+};
+
+template <>
+struct DefineComparisonOps<HeapSlot> : mozilla::TrueType {
+    static const Value& get(const HeapSlot& v) { return v.get(); }
+};
+
+} /* namespace detail */
 
 } /* namespace js */
 

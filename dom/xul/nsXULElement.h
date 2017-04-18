@@ -33,7 +33,7 @@
 #include "nsIFrameLoader.h"
 #include "nsFrameLoader.h"
 #include "mozilla/dom/DOMRect.h"
-#include "mozilla/dom/ElementInlines.h"
+#include "mozilla/dom/Element.h"
 
 class nsIDocument;
 class nsString;
@@ -355,9 +355,10 @@ public:
     NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsXULElement, nsStyledElement)
 
     // nsINode
-    virtual nsresult PreHandleEvent(
+    virtual nsresult GetEventTargetParent(
                        mozilla::EventChainPreVisitor& aVisitor) override;
-
+    virtual nsresult PreHandleEvent(
+                       mozilla::EventChainVisitor& aVisitor) override;
     // nsIContent
     virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                                 nsIContent* aBindingParent,
@@ -411,7 +412,6 @@ public:
     virtual mozilla::EventStates IntrinsicState() const override;
 
     nsresult GetFrameLoaderXPCOM(nsIFrameLoader** aFrameLoader);
-    nsresult GetParentApplication(mozIApplication** aApplication);
     void PresetOpenerWindow(mozIDOMWindowProxy* aWindow, ErrorResult& aRv);
     nsresult SetIsPrerendered();
 
@@ -702,6 +702,11 @@ protected:
     virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
     void MaybeUpdatePrivateLifetime();
+
+    bool IsEventStoppedFromAnonymousScrollbar(mozilla::EventMessage aMessage);
+
+    nsresult DispatchXULCommand(const mozilla::EventChainVisitor& aVisitor,
+                                nsAutoString& aCommand);
 };
 
 #endif // nsXULElement_h__

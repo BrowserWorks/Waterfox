@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* jshint esnext:true */
 /* globals Components, Services, XPCOMUtils, NetUtil, PrivateBrowsingUtils,
            dump, NetworkManager, PdfJsTelemetry, PdfjsContentUtils */
 
@@ -148,21 +147,6 @@ function getLocalizedString(strings, id, property) {
   return id;
 }
 
-function createNewChannel(uri, node) {
-  return NetUtil.newChannel({
-    uri: uri,
-    loadUsingSystemPrincipal: true,
-  });
-}
-
-function asyncOpenChannel(channel, listener, context) {
-  return channel.asyncOpen2(listener);
-}
-
-function asyncFetchChannel(channel, callback) {
-  return NetUtil.asyncFetch(channel, callback);
-}
-
 // PDF data storage
 function PdfDataListener(length) {
   this.length = length; // less than 0, if length is unknown
@@ -187,7 +171,7 @@ PdfDataListener.prototype = {
     if (this.length >= 0 && this.length < this.loaded) {
       this.length = -1; // reset the length, server is giving incorrect one
     }
-    this.onprogress(this.loaded, this.length >= 0 ? this.length : void(0));
+    this.onprogress(this.loaded, this.length >= 0 ? this.length : void 0);
   },
   readData: function PdfDataListener_readData() {
     var result = this.buffer;
@@ -256,12 +240,15 @@ ChromeActions.prototype = {
              getService(Ci.nsIExternalHelperAppService);
 
     var docIsPrivate = this.isInPrivateBrowsing();
-    var netChannel = createNewChannel(blobUri, this.domWindow.document);
+    var netChannel = NetUtil.newChannel({
+      uri: blobUri,
+      loadUsingSystemPrincipal: true,
+    });
     if ('nsIPrivateBrowsingChannel' in Ci &&
         netChannel instanceof Ci.nsIPrivateBrowsingChannel) {
       netChannel.setPrivate(docIsPrivate);
     }
-    asyncFetchChannel(netChannel, function(aInputStream, aResult) {
+    NetUtil.asyncFetch(netChannel, function(aInputStream, aResult) {
       if (!Components.isSuccessCode(aResult)) {
         if (sendResponse) {
           sendResponse(true);
@@ -319,7 +306,7 @@ ChromeActions.prototype = {
         }
       };
 
-      asyncOpenChannel(channel, listener, null);
+      channel.asyncOpen2(listener);
     });
   },
   getLocale: function() {
@@ -961,7 +948,10 @@ PdfStreamConverter.prototype = {
                         .createInstance(Ci.nsIBinaryInputStream);
 
     // Create a new channel that is viewer loaded as a resource.
-    var channel = createNewChannel(PDF_VIEWER_WEB_PAGE, null);
+    var channel = NetUtil.newChannel({
+      uri: PDF_VIEWER_WEB_PAGE,
+      loadUsingSystemPrincipal: true,
+    });
 
     var listener = this.listener;
     var dataListener = this.dataListener;
@@ -1018,12 +1008,12 @@ PdfStreamConverter.prototype = {
     // from the request channel to keep isolation consistent.
     var ssm = Cc['@mozilla.org/scriptsecuritymanager;1']
                 .getService(Ci.nsIScriptSecurityManager);
-    var uri = NetUtil.newURI(PDF_VIEWER_WEB_PAGE, null, null);
-    var resourcePrincipal;
-    resourcePrincipal =
+    var uri = NetUtil.newURI(PDF_VIEWER_WEB_PAGE);
+    var resourcePrincipal =
       ssm.createCodebasePrincipal(uri, aRequest.loadInfo.originAttributes);
     aRequest.owner = resourcePrincipal;
-    asyncOpenChannel(channel, proxy, aContext);
+
+    channel.asyncOpen2(proxy);
   },
 
   // nsIRequestObserver::onStopRequest

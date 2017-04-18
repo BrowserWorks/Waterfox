@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "MP4Decoder.h"
-#include "MediaContentType.h"
+#include "MediaContainerType.h"
 #include "MediaDecoderStateMachine.h"
 #include "MP4Demuxer.h"
 #include "mozilla/Preferences.h"
@@ -16,9 +16,6 @@
 #include "nsMimeTypes.h"
 #include "VideoUtils.h"
 
-#ifdef XP_WIN
-#include "mozilla/WindowsVersion.h"
-#endif
 #ifdef MOZ_WIDGET_ANDROID
 #include "nsIGfxInfo.h"
 #endif
@@ -52,14 +49,6 @@ IsWhitelistedH264Codec(const nsAString& aCodec)
     return false;
   }
 
-#ifdef XP_WIN
-  // Disable 4k video on windows vista since it performs poorly.
-  if (!IsWin7OrLater() &&
-      level >= H264_LEVEL_5) {
-    return false;
-  }
-#endif
-
   // Just assume what we can play on all platforms the codecs/formats that
   // WMF can play, since we don't have documentation about what other
   // platforms can play... According to the WMF documentation:
@@ -78,8 +67,8 @@ IsWhitelistedH264Codec(const nsAString& aCodec)
 
 /* static */
 bool
-MP4Decoder::CanHandleMediaType(const MediaContentType& aType,
-                               DecoderDoctorDiagnostics* aDiagnostics)
+MP4Decoder::IsSupportedType(const MediaContainerType& aType,
+                            DecoderDoctorDiagnostics* aDiagnostics)
 {
   if (!IsEnabled()) {
     return false;
@@ -88,70 +77,66 @@ MP4Decoder::CanHandleMediaType(const MediaContentType& aType,
   // Whitelist MP4 types, so they explicitly match what we encounter on
   // the web, as opposed to what we use internally (i.e. what our demuxers
   // etc output).
-  const bool isMP4Audio = aType.GetMIMEType().EqualsASCII("audio/mp4") ||
-                          aType.GetMIMEType().EqualsASCII("audio/x-m4a");
-  const bool isMP4Video =
+  const bool isAudio = aType.Type() == MEDIAMIMETYPE("audio/mp4")
+                       || aType.Type() == MEDIAMIMETYPE("audio/x-m4a");
+  const bool isVideo = aType.Type() == MEDIAMIMETYPE("video/mp4")
+                       || aType.Type() == MEDIAMIMETYPE("video/quicktime")
   // On B2G, treat 3GPP as MP4 when Gonk PDM is available.
 #ifdef MOZ_GONK_MEDIACODEC
-      aType.GetMIMEType().EqualsASCII(VIDEO_3GPP) ||
+                       || aType.Type() == MEDIAMIMETYPE(VIDEO_3GPP)
 #endif
-      aType.GetMIMEType().EqualsASCII("video/mp4") ||
-      aType.GetMIMEType().EqualsASCII("video/quicktime") ||
-      aType.GetMIMEType().EqualsASCII("video/x-m4v");
-  if (!isMP4Audio && !isMP4Video) {
+                       || aType.Type() == MEDIAMIMETYPE("video/x-m4v");
+
+  if (!isAudio && !isVideo) {
     return false;
   }
 
   nsTArray<UniquePtr<TrackInfo>> trackInfos;
-  if (aType.GetCodecs().IsEmpty()) {
+  if (aType.ExtendedType().Codecs().IsEmpty()) {
     // No codecs specified. Assume H.264
-    if (isMP4Audio) {
+    if (isAudio) {
       trackInfos.AppendElement(
-        CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+        CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
           NS_LITERAL_CSTRING("audio/mp4a-latm"), aType));
     } else {
-      MOZ_ASSERT(isMP4Video);
+      MOZ_ASSERT(isVideo);
       trackInfos.AppendElement(
-        CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+        CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
           NS_LITERAL_CSTRING("video/avc"), aType));
     }
   } else {
     // Verify that all the codecs specified are ones that we expect that
     // we can play.
-    nsTArray<nsString> codecs;
-    if (!ParseCodecsString(aType.GetCodecs(), codecs)) {
-      return false;
-    }
-    for (const nsString& codec : codecs) {
+    for (const auto& codec : aType.ExtendedType().Codecs().Range()) {
       if (IsAACCodecString(codec)) {
         trackInfos.AppendElement(
-          CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+          CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
             NS_LITERAL_CSTRING("audio/mp4a-latm"), aType));
         continue;
       }
       if (codec.EqualsLiteral("mp3")) {
         trackInfos.AppendElement(
-          CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+          CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
             NS_LITERAL_CSTRING("audio/mpeg"), aType));
         continue;
       }
       if (codec.EqualsLiteral("opus")) {
         trackInfos.AppendElement(
-          CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+          CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
             NS_LITERAL_CSTRING("audio/opus"), aType));
         continue;
       }
       if (codec.EqualsLiteral("flac")) {
         trackInfos.AppendElement(
-          CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+          CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
             NS_LITERAL_CSTRING("audio/flac"), aType));
         continue;
       }
       // Note: Only accept H.264 in a video content type, not in an audio
       // content type.
-      if (IsWhitelistedH264Codec(codec) && isMP4Video) {
+      if (IsWhitelistedH264Codec(codec) && isVideo) {
         trackInfos.AppendElement(
-          CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+          CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
             NS_LITERAL_CSTRING("video/avc"), aType));
         continue;
       }
@@ -267,7 +252,8 @@ MP4Decoder::IsVideoAccelerated(layers::KnowsCompositor* aKnowsCompositor, nsIGlo
   }
 
   decoder->Init()
-    ->Then(AbstractThread::MainThread(), __func__,
+    ->Then(aParent->AbstractMainThreadFor(dom::TaskCategory::Other),
+           __func__,
            [promise, decoder, taskQueue] (TrackInfo::TrackType aTrack) {
              nsCString failureReason;
              bool ok = decoder->IsHardwareAccelerated(failureReason);
@@ -297,7 +283,7 @@ MP4Decoder::IsVideoAccelerated(layers::KnowsCompositor* aKnowsCompositor, nsIGlo
 }
 
 void
-MP4Decoder::GetMozDebugReaderData(nsAString& aString)
+MP4Decoder::GetMozDebugReaderData(nsACString& aString)
 {
   if (mReader) {
     mReader->GetMozDebugReaderData(aString);

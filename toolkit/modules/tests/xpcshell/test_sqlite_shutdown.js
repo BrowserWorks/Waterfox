@@ -15,9 +15,9 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 
-function getConnection(dbName, extraOptions={}) {
+function getConnection(dbName, extraOptions = {}) {
   let path = dbName + ".sqlite";
-  let options = {path: path};
+  let options = {path};
   for (let [k, v] of Object.entries(extraOptions)) {
     options[k] = v;
   }
@@ -25,7 +25,7 @@ function getConnection(dbName, extraOptions={}) {
   return Sqlite.openConnection(options);
 }
 
-function* getDummyDatabase(name, extraOptions={}) {
+function* getDummyDatabase(name, extraOptions = {}) {
   const TABLES = {
     dirs: "id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT",
     files: "id INTEGER PRIMARY KEY AUTOINCREMENT, dir_id INTEGER, path TEXT",
@@ -49,7 +49,7 @@ function sleep(ms) {
                 .createInstance(Ci.nsITimer);
 
   timer.initWithCallback({
-    notify: function () {
+    notify() {
       deferred.resolve();
     },
   }, ms, timer.TYPE_ONE_SHOT);

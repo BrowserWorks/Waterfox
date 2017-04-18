@@ -163,7 +163,7 @@ this.Task = {
    *         called when the task terminates.
    */
   spawn: function Task_spawn(aTask) {
-    return createAsyncFunction(aTask).call(undefined);
+    return createAsyncFunction(aTask)();
   },
 
   /**
@@ -225,7 +225,7 @@ this.Task = {
 };
 
 function createAsyncFunction(aTask) {
-  let asyncFunction = function () {
+  let asyncFunction = function() {
     let result = aTask;
     if (aTask && typeof(aTask) == "function") {
       if (aTask.isAsyncFunction) {
@@ -423,7 +423,6 @@ TaskImpl.prototype = {
         // Rewrite the stack for more readability.
 
         let bottomStack = this._stack;
-        let topStack = stack;
 
         stack = Task.Debugging.generateReadableStack(stack);
 
@@ -501,7 +500,7 @@ Task.Debugging = {
    * @param {string} topStack The stack provided by the error.
    * @param {string=} prefix Optionally, a prefix for each line.
    */
-  generateReadableStack: function(topStack, prefix = "") {
+  generateReadableStack(topStack, prefix = "") {
     if (!gCurrentTask) {
       return topStack;
     }

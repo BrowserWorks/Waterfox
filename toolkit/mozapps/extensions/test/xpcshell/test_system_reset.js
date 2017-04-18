@@ -1,6 +1,5 @@
 // Tests that we reset to the default system add-ons correctly when switching
 // application versions
-const PREF_SYSTEM_ADDON_SET = "extensions.systemAddonSet";
 
 BootstrapMonitor.init();
 
@@ -75,13 +74,11 @@ function* check_installed(conditions) {
 
       // Verify the add-on actually started
       BootstrapMonitor.checkAddonStarted(id, version);
-    }
-    else {
+    } else {
       if (isUpgrade) {
         // Add-on should not be installed
         do_check_eq(addon, null);
-      }
-      else {
+      } else {
         // Either add-on should not be installed or it shouldn't be active
         do_check_true(!addon || !addon.isActive);
       }
@@ -362,6 +359,10 @@ add_task(function* test_bad_app_cert() {
   distroDir.leafName = "app3";
   startupManager();
 
+  // Since we updated the app version, the system addon set should be reset as well.
+  let addonSet = Services.prefs.getCharPref(PREF_SYSTEM_ADDON_SET);
+  do_check_eq(addonSet, `{"schema":1,"addons":{}}`);
+
   // Add-on will still be present
   let addon = yield promiseAddonByID("system1@tests.mozilla.org");
   do_check_neq(addon, null);
@@ -416,3 +417,4 @@ add_task(function* test_updated() {
 
   yield promiseShutdownManager();
 });
+

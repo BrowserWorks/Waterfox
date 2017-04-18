@@ -16,6 +16,7 @@ Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/rotaryengine.js");
 Cu.import("resource://services-sync/browserid_identity.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 
 Service.engineManager.clear();
 
@@ -79,12 +80,12 @@ function prepareServer(cbAfterTokenFetch) {
   let numReassigns = 0;
   return configureIdentity(config).then(() => {
     Service.identity._tokenServerClient = {
-      getTokenFromBrowserIDAssertion: function(uri, assertion, cb) {
+      getTokenFromBrowserIDAssertion(uri, assertion, cb) {
         // Build a new URL with trailing zeros for the SYNC_VERSION part - this
         // will still be seen as equivalent by the test server, but different
         // by sync itself.
         numReassigns += 1;
-        let trailingZeros = new Array(numReassigns + 1).join('0');
+        let trailingZeros = new Array(numReassigns + 1).join("0");
         let token = config.fxaccount.token;
         token.endpoint = server.baseURI + "1.1" + trailingZeros + "/johndoe";
         token.uid = config.username;
@@ -117,10 +118,10 @@ function getReassigned() {
  * Runs `between` between the two. This can be used to undo deliberate failure
  * setup, detach observers, etc.
  */
-function* syncAndExpectNodeReassignment(server, firstNotification, between,
-                                       secondNotification, url) {
+async function syncAndExpectNodeReassignment(server, firstNotification, between,
+                                             secondNotification, url) {
   _("Starting syncAndExpectNodeReassignment\n");
-  let deferred = Promise.defer();
+  let deferred = PromiseUtils.defer();
   function onwards() {
     let numTokenRequestsBefore;
     function onFirstSync() {
@@ -143,7 +144,7 @@ function* syncAndExpectNodeReassignment(server, firstNotification, between,
 
       // Make absolutely sure that any event listeners are done with their work
       // before we proceed.
-      waitForZeroTimer(function () {
+      waitForZeroTimer(function() {
         _("Second sync nextTick.");
         do_check_eq(numTokenRequests, numTokenRequestsBefore + 1, "fetched a new token");
         Service.startOver();
@@ -160,7 +161,7 @@ function* syncAndExpectNodeReassignment(server, firstNotification, between,
   if (Service.isLoggedIn) {
     _("Making request to " + url + " which should 401");
     let request = new RESTRequest(url);
-    request.get(function () {
+    request.get(function() {
       do_check_eq(request.response.status, 401);
       Utils.nextTick(onwards);
     });
@@ -168,13 +169,13 @@ function* syncAndExpectNodeReassignment(server, firstNotification, between,
     _("Skipping preliminary validation check for a 401 as we aren't logged in");
     Utils.nextTick(onwards);
   }
-  yield deferred.promise;
+  await deferred.promise;
 }
 
 // Check that when we sync we don't request a new token by default - our
 // test setup has configured the client with a valid token, and that token
 // should be used to form the cluster URL.
-add_task(function* test_single_token_fetch() {
+add_task(async function test_single_token_fetch() {
   _("Test a normal sync only fetches 1 token");
 
   let numTokenFetches = 0;
@@ -190,7 +191,7 @@ add_task(function* test_single_token_fetch() {
   // it will crash.
   Service.clusterURL = "http://example.com/";
 
-  let server = yield prepareServer(afterTokenFetch);
+  let server = await prepareServer(afterTokenFetch);
 
   do_check_false(Service.isLoggedIn, "not already logged in");
   Service.sync();
@@ -200,12 +201,12 @@ add_task(function* test_single_token_fetch() {
   // that clusterURL we expect.
   let expectedClusterURL = server.baseURI + "1.1/johndoe/";
   do_check_eq(Service.clusterURL, expectedClusterURL);
-  yield new Promise(resolve => server.stop(resolve));
+  await promiseStopServer(server);
 });
 
-add_task(function* test_momentary_401_engine() {
+add_task(async function test_momentary_401_engine() {
   _("Test a failure for engine URLs that's resolved by reassignment.");
-  let server = yield prepareServer();
+  let server = await prepareServer();
   let john   = server.user("johndoe");
 
   _("Enabling the Rotary engine.");
@@ -247,7 +248,7 @@ add_task(function* test_momentary_401_engine() {
     Svc.Obs.add("weave:service:login:start", onLoginStart);
   }
 
-  yield syncAndExpectNodeReassignment(server,
+  await syncAndExpectNodeReassignment(server,
                                       "weave:service:sync:finish",
                                       between,
                                       "weave:service:sync:finish",
@@ -255,9 +256,9 @@ add_task(function* test_momentary_401_engine() {
 });
 
 // This test ends up being a failing info fetch *after we're already logged in*.
-add_task(function* test_momentary_401_info_collections_loggedin() {
+add_task(async function test_momentary_401_info_collections_loggedin() {
   _("Test a failure for info/collections after login that's resolved by reassignment.");
-  let server = yield prepareServer();
+  let server = await prepareServer();
 
   _("First sync to prepare server contents.");
   Service.sync();
@@ -273,7 +274,7 @@ add_task(function* test_momentary_401_info_collections_loggedin() {
 
   do_check_true(Service.isLoggedIn, "already logged in");
 
-  yield syncAndExpectNodeReassignment(server,
+  await syncAndExpectNodeReassignment(server,
                                       "weave:service:sync:error",
                                       undo,
                                       "weave:service:sync:finish",
@@ -283,7 +284,7 @@ add_task(function* test_momentary_401_info_collections_loggedin() {
 // This test ends up being a failing info fetch *before we're logged in*.
 // In this case we expect to recover during the login phase - so the first
 // sync succeeds.
-add_task(function* test_momentary_401_info_collections_loggedout() {
+add_task(async function test_momentary_401_info_collections_loggedout() {
   _("Test a failure for info/collections before login that's resolved by reassignment.");
 
   let oldHandler;
@@ -296,7 +297,7 @@ add_task(function* test_momentary_401_info_collections_loggedout() {
     sawTokenFetch = true;
   }
 
-  let server = yield prepareServer(afterTokenFetch);
+  let server = await prepareServer(afterTokenFetch);
 
   // Return a 401 for the next /info request - it will be reset immediately
   // after a new token is fetched.
@@ -311,16 +312,14 @@ add_task(function* test_momentary_401_info_collections_loggedout() {
   do_check_true(sawTokenFetch, "a new token was fetched by this test.")
   // and we are done.
   Service.startOver();
-  let deferred = Promise.defer();
-  server.stop(deferred.resolve);
-  yield deferred.promise;
+  await promiseStopServer(server);
 });
 
 // This test ends up being a failing meta/global fetch *after we're already logged in*.
-add_task(function* test_momentary_401_storage_loggedin() {
+add_task(async function test_momentary_401_storage_loggedin() {
   _("Test a failure for any storage URL after login that's resolved by" +
     "reassignment.");
-  let server = yield prepareServer();
+  let server = await prepareServer();
 
   _("First sync to prepare server contents.");
   Service.sync();
@@ -336,7 +335,7 @@ add_task(function* test_momentary_401_storage_loggedin() {
 
   do_check_true(Service.isLoggedIn, "already logged in");
 
-  yield syncAndExpectNodeReassignment(server,
+  await syncAndExpectNodeReassignment(server,
                                       "weave:service:sync:error",
                                       undo,
                                       "weave:service:sync:finish",
@@ -344,10 +343,10 @@ add_task(function* test_momentary_401_storage_loggedin() {
 });
 
 // This test ends up being a failing meta/global fetch *before we've logged in*.
-add_task(function* test_momentary_401_storage_loggedout() {
+add_task(async function test_momentary_401_storage_loggedout() {
   _("Test a failure for any storage URL before login, not just engine parts. " +
     "Resolved by reassignment.");
-  let server = yield prepareServer();
+  let server = await prepareServer();
 
   // Return a 401 for all storage requests.
   let oldHandler = server.toplevelHandlers.storage;
@@ -360,7 +359,7 @@ add_task(function* test_momentary_401_storage_loggedout() {
 
   do_check_false(Service.isLoggedIn, "already logged in");
 
-  yield syncAndExpectNodeReassignment(server,
+  await syncAndExpectNodeReassignment(server,
                                       "weave:service:login:error",
                                       undo,
                                       "weave:service:sync:finish",

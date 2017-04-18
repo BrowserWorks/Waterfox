@@ -113,10 +113,37 @@ private:
 class NS_NO_VTABLE nsCycleCollectionParticipant
 {
 public:
-  constexpr nsCycleCollectionParticipant() : mMightSkip(false) {}
-  constexpr explicit nsCycleCollectionParticipant(bool aSkip) : mMightSkip(aSkip) {}
+  constexpr nsCycleCollectionParticipant()
+    : mMightSkip(false)
+    , mTraverseShouldTrace(false)
+  {
+  }
 
-  NS_IMETHOD Traverse(void* aPtr, nsCycleCollectionTraversalCallback& aCb) = 0;
+  constexpr explicit nsCycleCollectionParticipant(bool aSkip,
+                                                  bool aTraverseShouldTrace = false)
+    : mMightSkip(aSkip)
+    , mTraverseShouldTrace(aTraverseShouldTrace)
+  {
+  }
+
+  NS_IMETHOD TraverseNative(void* aPtr, nsCycleCollectionTraversalCallback& aCb) = 0;
+
+  nsresult TraverseNativeAndJS(void* aPtr,
+                               nsCycleCollectionTraversalCallback& aCb)
+  {
+    nsresult rv = TraverseNative(aPtr, aCb);
+    if (mTraverseShouldTrace) {
+      // Note, we always call Trace, even if Traverse returned
+      // NS_SUCCESS_INTERRUPTED_TRAVERSE.
+      TraceCallbackFunc noteJsChild(&nsCycleCollectionParticipant::NoteJSChild);
+      Trace(aPtr, noteJsChild, &aCb);
+    }
+    return rv;
+  }
+
+    // Implemented in nsCycleCollectorTraceJSHelpers.cpp.
+  static void NoteJSChild(JS::GCCellPtr aGCThing, const char* aName,
+                          void* aClosure);
 
   NS_IMETHOD_(void) Root(void* aPtr) = 0;
   NS_IMETHOD_(void) Unlink(void* aPtr) = 0;
@@ -126,26 +153,69 @@ public:
   NS_IMETHOD_(void) Trace(void* aPtr, const TraceCallbacks& aCb,
                           void* aClosure) {}
 
-  // If CanSkip returns true, p is removed from the purple buffer during
-  // a call to nsCycleCollector_forgetSkippable().
-  // Note, calling CanSkip may remove objects from the purple buffer!
-  // If aRemovingAllowed is true, p can be removed from the purple buffer.
+  // CanSkip is called during nsCycleCollector_forgetSkippable.  If it returns
+  // true, aPtr is removed from the purple buffer and therefore might be left
+  // out from the cycle collector graph the next time that's constructed (unless
+  // it's reachable in some other way).
+  //
+  // CanSkip is allowed to expand the set of certainly-alive objects by removing
+  // other objects from the purple buffer, marking JS things black (in the GC
+  // sense), and so forth.  Furthermore, if aRemovingAllowed is true, this call
+  // is allowed to remove aPtr itself from the purple buffer.
+  //
+  // Things can return true from CanSkip if either they know they have no
+  // outgoing edges at all in the cycle collection graph (because then they
+  // can't be parts of a cycle) or they know for sure they're alive.
   bool CanSkip(void* aPtr, bool aRemovingAllowed)
   {
     return mMightSkip ? CanSkipReal(aPtr, aRemovingAllowed) : false;
   }
 
-  // If CanSkipInCC returns true, p is skipped when selecting roots for the
-  // cycle collector graph.
-  // Note, calling CanSkipInCC may remove other objects from the purple buffer!
+  // CanSkipInCC is called during construction of the initial set of roots for
+  // the cycle collector graph.  If it returns true, aPtr is left out of that
+  // set of roots.  Note that the set of roots includes whatever is in the
+  // purple buffer (after earlier CanSkip calls) plus various other sources of
+  // roots, so an object can end up having CanSkipInCC called on it even if it
+  // returned true from CanSkip.  One example of this would be an object that
+  // can potentially trace JS things.
+  //
+  // CanSkipInCC is allowed to remove other objects from the purple buffer but
+  // should not remove aPtr and should not mark JS things black.  It should also
+  // not modify any reference counts.
+  //
+  // Things can return true from CanSkipInCC if either they know they have no
+  // outgoing edges at all in the cycle collection graph or they know for sure
+  // they're alive _and_ none of their outgoing edges are to gray (in the GC
+  // sense) gcthings.  See also nsWrapperCache::HasNothingToTrace and
+  // nsWrapperCache::IsBlackAndDoesNotNeedTracing.  The restriction on not
+  // having outgoing edges to gray gcthings is because if we _do_ have them that
+  // means we have a "strong" edge to a JS thing and since we're alive we need
+  // to trace through it and mark keep them alive.  Outgoing edges to C++ things
+  // don't matter here, because the criteria for when a CC participant is
+  // considered alive are slightly different for JS and C++ things: JS things
+  // are only considered alive when reachable via an edge from a live thing,
+  // while C++ things are also considered alive when their refcount exceeds the
+  // number of edges via which they are reachable.
   bool CanSkipInCC(void* aPtr)
   {
     return mMightSkip ? CanSkipInCCReal(aPtr) : false;
   }
 
-  // If CanSkipThis returns true, p is not added to the graph.
-  // This method is called during cycle collection, so don't
-  // change the state of any objects!
+  // CanSkipThis is called during construction of the cycle collector graph,
+  // when we traverse an edge to aPtr and consider adding it to the graph.  If
+  // it returns true, aPtr is not added to the graph.
+  //
+  // CanSkipThis is not allowed to change the liveness or reference count of any
+  // objects.
+  //
+  // Things can return true from CanSkipThis if either they know they have no
+  // outgoing edges at all in the cycle collection graph or they know for sure
+  // they're alive.
+  //
+  // Note that CanSkipThis doesn't have to worry about outgoing edges to gray GC
+  // things, because if this object could have those it already got added to the
+  // graph during root set construction.  An object should never have
+  // CanSkipThis called on it if it has outgoing strong references to JS things.
   bool CanSkipThis(void* aPtr)
   {
     return mMightSkip ? CanSkipThisReal(aPtr) : false;
@@ -172,26 +242,24 @@ protected:
 
 private:
   const bool mMightSkip;
+  const bool mTraverseShouldTrace;
 };
 
 class NS_NO_VTABLE nsScriptObjectTracer : public nsCycleCollectionParticipant
 {
 public:
   constexpr nsScriptObjectTracer()
-    : nsCycleCollectionParticipant(false)
+    : nsCycleCollectionParticipant(false, true)
   {
   }
   constexpr explicit nsScriptObjectTracer(bool aSkip)
-    : nsCycleCollectionParticipant(aSkip)
+    : nsCycleCollectionParticipant(aSkip, true)
   {
   }
 
   NS_IMETHOD_(void) Trace(void* aPtr, const TraceCallbacks& aCb,
                           void* aClosure) override = 0;
 
-  // Implemented in nsCycleCollectorTraceJSHelpers.cpp.
-  static void NoteJSChild(JS::GCCellPtr aGCThing, const char* aName,
-                          void* aClosure);
 };
 
 class NS_NO_VTABLE nsXPCOMCycleCollectionParticipant : public nsScriptObjectTracer
@@ -323,6 +391,8 @@ DowncastCCParticipant(void* aPtr)
 // Helpers for implementing CanSkip methods
 ///////////////////////////////////////////////////////////////////////////////
 
+// See documentation for nsCycleCollectionParticipant::CanSkip for documentation
+// about this method.
 #define NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(_class)                        \
   NS_IMETHODIMP_(bool)                                                         \
   NS_CYCLE_COLLECTION_CLASSNAME(_class)::CanSkipReal(void *p,                  \
@@ -335,6 +405,8 @@ DowncastCCParticipant(void* aPtr)
     return false;                                                              \
   }
 
+// See documentation for nsCycleCollectionParticipant::CanSkipInCC for
+// documentation about this method.
 #define NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(_class)                  \
   NS_IMETHODIMP_(bool)                                                         \
   NS_CYCLE_COLLECTION_CLASSNAME(_class)::CanSkipInCCReal(void *p)              \
@@ -346,6 +418,8 @@ DowncastCCParticipant(void* aPtr)
     return false;                                                              \
   }
 
+// See documentation for nsCycleCollectionParticipant::CanSkipThis for
+// documentation about this method.
 #define NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(_class)                   \
   NS_IMETHODIMP_(bool)                                                         \
   NS_CYCLE_COLLECTION_CLASSNAME(_class)::CanSkipThisReal(void *p)              \
@@ -409,7 +483,7 @@ DowncastCCParticipant(void* aPtr)
 
 #define NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(_class)               \
   NS_IMETHODIMP                                                                \
-  NS_CYCLE_COLLECTION_CLASSNAME(_class)::Traverse                              \
+  NS_CYCLE_COLLECTION_CLASSNAME(_class)::TraverseNative                        \
                          (void *p, nsCycleCollectionTraversalCallback &cb)     \
   {                                                                            \
     _class *tmp = DowncastCCParticipant<_class >(p);
@@ -425,7 +499,7 @@ DowncastCCParticipant(void* aPtr)
 #define NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(_class, _base_class) \
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(_class)                     \
     nsISupports *s = static_cast<nsISupports*>(p);                             \
-    if (NS_CYCLE_COLLECTION_CLASSNAME(_base_class)::Traverse(s, cb)            \
+    if (NS_CYCLE_COLLECTION_CLASSNAME(_base_class)::TraverseNative(s, cb)      \
         == NS_SUCCESS_INTERRUPTED_TRAVERSE) {                                  \
       return NS_SUCCESS_INTERRUPTED_TRAVERSE;                                  \
     }
@@ -439,12 +513,6 @@ DowncastCCParticipant(void* aPtr)
 
 #define NS_IMPL_CYCLE_COLLECTION_TRAVERSE_RAWPTR(_field)                       \
   CycleCollectionNoteChild(cb, tmp->_field, #_field);
-
-#define NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS                       \
-  {                                                                            \
-  TraceCallbackFunc noteJsChild(&nsScriptObjectTracer::NoteJSChild);           \
-  Trace(p, noteJsChild, &cb);                                                  \
-  }
 
 #define NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END                                  \
     (void)tmp;                                                                 \
@@ -513,7 +581,7 @@ DowncastCCParticipant(void* aPtr)
 
 #define NS_DECL_CYCLE_COLLECTION_CLASS_BODY_NO_UNLINK(_class, _base)           \
 public:                                                                        \
-  NS_IMETHOD Traverse(void *p, nsCycleCollectionTraversalCallback &cb)         \
+  NS_IMETHOD TraverseNative(void *p, nsCycleCollectionTraversalCallback &cb)   \
     override;                                                                  \
   NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(_class)                           \
   NS_IMETHOD_(void) DeleteCycleCollectable(void *p) override                   \
@@ -648,7 +716,7 @@ static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
 #define NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY_NO_UNLINK(_class,        \
                                                                 _base_class)   \
 public:                                                                        \
-  NS_IMETHOD Traverse(void *p, nsCycleCollectionTraversalCallback &cb)         \
+  NS_IMETHOD TraverseNative(void *p, nsCycleCollectionTraversalCallback &cb)   \
     override;                                                                  \
   NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(_class)                           \
   static _class* Downcast(nsISupports* s)                                      \
@@ -704,7 +772,7 @@ static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
     NS_IMETHOD_(void) Root(void *n) override;                                  \
     NS_IMETHOD_(void) Unlink(void *n) override;                                \
     NS_IMETHOD_(void) Unroot(void *n) override;                                \
-    NS_IMETHOD Traverse(void *n, nsCycleCollectionTraversalCallback &cb)       \
+    NS_IMETHOD TraverseNative(void *n, nsCycleCollectionTraversalCallback &cb) \
       override;                                                                \
     NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(_class)                         \
     NS_IMETHOD_(void) DeleteCycleCollectable(void *n) override                 \

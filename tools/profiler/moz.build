@@ -11,8 +11,6 @@ if CONFIG['MOZ_ENABLE_PROFILER_SPS']:
         'gecko/nsIProfileSaveEvent.idl',
     ]
     EXPORTS += [
-        'public/GeckoProfilerFunc.h',
-        'public/GeckoProfilerImpl.h',
         'public/ProfilerBacktrace.h',
         'public/ProfilerMarkers.h',
         'public/PseudoStack.h',
@@ -39,11 +37,18 @@ if CONFIG['MOZ_ENABLE_PROFILER_SPS']:
         'gecko/nsProfiler.cpp',
         'gecko/nsProfilerFactory.cpp',
         'gecko/nsProfilerStartParams.cpp',
-        'gecko/ProfileGatherer.cpp',
         'gecko/ProfilerIOInterposeObserver.cpp',
         'gecko/SaveProfileTask.cpp',
         'gecko/ThreadResponsiveness.cpp',
     ]
+    if CONFIG['OS_TARGET'] == 'Darwin':
+        SOURCES += [
+            'gecko/ProfileGatherer.cpp',
+        ]
+    else:
+        UNIFIED_SOURCES += [
+            'gecko/ProfileGatherer.cpp',
+        ]
 
     if CONFIG['OS_TARGET'] in ('Android', 'Linux'):
         UNIFIED_SOURCES += [
@@ -79,7 +84,6 @@ if CONFIG['MOZ_ENABLE_PROFILER_SPS']:
         ]
     elif CONFIG['OS_TARGET'] == 'WINNT':
         SOURCES += [
-            'core/IntelPowerGadget.cpp',
             'core/platform-win32.cc',
             'core/shared-libraries-win32.cc',
         ]
@@ -128,6 +132,7 @@ if CONFIG['MOZ_TASK_TRACER']:
     EXPORTS += [
         'tasktracer/GeckoTaskTracer.h',
         'tasktracer/GeckoTaskTracerImpl.h',
+        'tasktracer/SourceEventTypeMap.h',
         'tasktracer/TracedTaskCommon.h',
     ]
     UNIFIED_SOURCES += [

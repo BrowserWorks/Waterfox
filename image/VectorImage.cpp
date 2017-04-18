@@ -750,7 +750,8 @@ VectorImage::GetFrameAtSize(const IntSize& aSize,
   MOZ_ASSERT(context); // already checked the draw target above
 
   auto result = Draw(context, aSize, ImageRegion::Create(aSize),
-                     aWhichFrame, SamplingFilter::POINT, Nothing(), aFlags);
+                     aWhichFrame, SamplingFilter::POINT, Nothing(), aFlags,
+                     1.0);
 
   return result == DrawResult::SUCCESS ? dt->Snapshot() : nullptr;
 }
@@ -776,7 +777,8 @@ struct SVGDrawingParameters
                        SamplingFilter aSamplingFilter,
                        const Maybe<SVGImageContext>& aSVGContext,
                        float aAnimationTime,
-                       uint32_t aFlags)
+                       uint32_t aFlags,
+                       float aOpacity)
     : context(aContext)
     , size(aSize.width, aSize.height)
     , region(aRegion)
@@ -785,7 +787,7 @@ struct SVGDrawingParameters
     , viewportSize(aSize)
     , animationTime(aAnimationTime)
     , flags(aFlags)
-    , opacity(aSVGContext ? aSVGContext->GetGlobalOpacity() : 1.0)
+    , opacity(aSVGContext ? aSVGContext->GetGlobalOpacity() : aOpacity)
   {
     if (aSVGContext) {
       CSSIntSize sz = aSVGContext->GetViewportSize();
@@ -812,7 +814,8 @@ VectorImage::Draw(gfxContext* aContext,
                   uint32_t aWhichFrame,
                   SamplingFilter aSamplingFilter,
                   const Maybe<SVGImageContext>& aSVGContext,
-                  uint32_t aFlags)
+                  uint32_t aFlags,
+                  float aOpacity)
 {
   if (aWhichFrame > FRAME_MAX_VALUE) {
     return DrawResult::BAD_ARGS;
@@ -835,8 +838,8 @@ VectorImage::Draw(gfxContext* aContext,
     return DrawResult::TEMPORARY_ERROR;
   }
 
-  if (mAnimationConsumers == 0 && mProgressTracker) {
-    mProgressTracker->OnUnlockedDraw();
+  if (mAnimationConsumers == 0) {
+    SendOnUnlockedDraw(aFlags);
   }
 
   AutoRestore<bool> autoRestoreIsDrawing(mIsDrawing);
@@ -867,7 +870,7 @@ VectorImage::Draw(gfxContext* aContext,
 
 
   SVGDrawingParameters params(aContext, aSize, aRegion, aSamplingFilter,
-                              svgContext, animTime, aFlags);
+                              svgContext, animTime, aFlags, aOpacity);
 
   // If we have an prerasterized version of this image that matches the
   // drawing parameters, use that.
@@ -985,8 +988,19 @@ VectorImage::CreateSurfaceAndShow(const SVGDrawingParameters& aParams, BackendTy
 
   // Send out an invalidation so that surfaces that are still in use get
   // re-locked. See the discussion of the UnlockSurfaces call above.
-  mProgressTracker->SyncNotifyProgress(FLAG_FRAME_COMPLETE,
-                                       GetMaxSizedIntRect());
+  if (!(aParams.flags & FLAG_ASYNC_NOTIFY)) {
+    mProgressTracker->SyncNotifyProgress(FLAG_FRAME_COMPLETE,
+                                         GetMaxSizedIntRect());
+  } else {
+    NotNull<RefPtr<VectorImage>> image = WrapNotNull(this);
+    NS_DispatchToMainThread(NS_NewRunnableFunction([=]() -> void {
+      RefPtr<ProgressTracker> tracker = image->GetProgressTracker();
+      if (tracker) {
+        tracker->SyncNotifyProgress(FLAG_FRAME_COMPLETE,
+                                    GetMaxSizedIntRect());
+      }
+    }));
+  }
 }
 
 
@@ -1015,10 +1029,17 @@ VectorImage::RecoverFromLossOfSurfaces()
 }
 
 NS_IMETHODIMP
-VectorImage::StartDecoding()
+VectorImage::StartDecoding(uint32_t aFlags)
 {
   // Nothing to do for SVG images
   return NS_OK;
+}
+
+bool
+VectorImage::StartDecodingWithResult(uint32_t aFlags)
+{
+  // SVG images are ready to draw when they are loaded
+  return mIsFullyLoaded;
 }
 
 NS_IMETHODIMP

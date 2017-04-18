@@ -12,6 +12,7 @@
 #ifndef jit_MIR_h
 #define jit_MIR_h
 
+#include "mozilla/Alignment.h"
 #include "mozilla/Array.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/MacroForEach.h"
@@ -1580,8 +1581,8 @@ class MConstant : public MNullaryInstruction
     static MConstant* New(TempAllocator::Fallible alloc, const Value& v,
                           CompilerConstraintList* constraints = nullptr);
     static MConstant* New(TempAllocator& alloc, const Value& v, MIRType type);
-    static MConstant* New(TempAllocator& alloc, wasm::RawF32 bits);
-    static MConstant* New(TempAllocator& alloc, wasm::RawF64 bits);
+    static MConstant* NewRawFloat32(TempAllocator& alloc, float f);
+    static MConstant* NewRawDouble(TempAllocator& alloc, double d);
     static MConstant* NewFloat32(TempAllocator& alloc, double d);
     static MConstant* NewInt64(TempAllocator& alloc, int64_t i);
     static MConstant* NewConstraintlessObject(TempAllocator& alloc, JSObject* v);
@@ -1649,21 +1650,13 @@ class MConstant : public MNullaryInstruction
     bool isInt32(int32_t i) const {
         return type() == MIRType::Int32 && payload_.i32 == i;
     }
-    double toDouble() const {
+    const double& toDouble() const {
         MOZ_ASSERT(type() == MIRType::Double);
         return payload_.d;
     }
-    wasm::RawF64 toRawF64() const {
-        MOZ_ASSERT(type() == MIRType::Double);
-        return wasm::RawF64::fromBits(payload_.i64);
-    }
-    float toFloat32() const {
+    const float& toFloat32() const {
         MOZ_ASSERT(type() == MIRType::Float32);
         return payload_.f;
-    }
-    wasm::RawF32 toRawF32() const {
-        MOZ_ASSERT(type() == MIRType::Float32);
-        return wasm::RawF32::fromBits(payload_.i32);
     }
     JSString* toString() const {
         MOZ_ASSERT(type() == MIRType::String);
@@ -2841,12 +2834,10 @@ class MTableSwitch final
 {
     // The successors of the tableswitch
     // - First successor = the default case
-    // - Successor 2 and higher = the cases sorted on case index.
+    // - Successors 2 and higher = the cases
     Vector<MBasicBlock*, 0, JitAllocPolicy> successors_;
+    // Index into successors_ sorted on case index
     Vector<size_t, 0, JitAllocPolicy> cases_;
-
-    // Contains the blocks/cases that still need to get build
-    Vector<MBasicBlock*, 0, JitAllocPolicy> blocks_;
 
     MUse operand_;
     int32_t low_;
@@ -2861,7 +2852,6 @@ class MTableSwitch final
                  int32_t low, int32_t high)
       : successors_(alloc),
         cases_(alloc),
-        blocks_(alloc),
         low_(low),
         high_(high)
     {
@@ -2904,14 +2894,6 @@ class MTableSwitch final
         successors_[i] = successor;
     }
 
-    MBasicBlock** blocks() {
-        return &blocks_[0];
-    }
-
-    size_t numBlocks() const {
-        return blocks_.length();
-    }
-
     int32_t low() const {
         return low_;
     }
@@ -2928,10 +2910,6 @@ class MTableSwitch final
         return getSuccessor(cases_[i]);
     }
 
-    size_t numCases() const {
-        return high() - low() + 1;
-    }
-
     MOZ_MUST_USE bool addDefault(MBasicBlock* block, size_t* index = nullptr) {
         MOZ_ASSERT(successors_.empty());
         if (index)
@@ -2943,13 +2921,8 @@ class MTableSwitch final
         return cases_.append(successorIndex);
     }
 
-    MBasicBlock* getBlock(size_t i) const {
-        MOZ_ASSERT(i < numBlocks());
-        return blocks_[i];
-    }
-
-    MOZ_MUST_USE bool addBlock(MBasicBlock* block) {
-        return blocks_.append(block);
+    size_t numCases() const {
+        return high() - low() + 1;
     }
 
     MDefinition* getOperand(size_t index) const override {
@@ -6563,11 +6536,20 @@ class MPow
     MPow(MDefinition* input, MDefinition* power, MIRType powerType)
       : MBinaryInstruction(input, power)
     {
-        MOZ_ASSERT(powerType == MIRType::Double || powerType == MIRType::Int32);
+        MOZ_ASSERT(powerType == MIRType::Double ||
+                   powerType == MIRType::Int32 ||
+                   powerType == MIRType::None);
         specialization_ = powerType;
-        setResultType(MIRType::Double);
+        if (powerType == MIRType::None)
+            setResultType(MIRType::Value);
+        else
+            setResultType(MIRType::Double);
         setMovable();
     }
+
+    // Helpers for `foldsTo`
+    MDefinition* foldsConstant(TempAllocator &alloc);
+    MDefinition* foldsConstantPower(TempAllocator &alloc);
 
   public:
     INSTRUCTION_HEADER(Pow)
@@ -6583,6 +6565,8 @@ class MPow
         return congruentIfOperandsEqual(ins);
     }
     AliasSet getAliasSet() const override {
+        if (specialization_ == MIRType::None)
+            return AliasSet::Store(AliasSet::Any);
         return AliasSet::None();
     }
     bool possiblyCalls() const override {
@@ -6590,8 +6574,7 @@ class MPow
     }
     MOZ_MUST_USE bool writeRecoverData(CompactBufferWriter& writer) const override;
     bool canRecoverOnBailout() const override {
-        // Temporarily disable recovery to relieve fuzzer pressure. See bug 1188586.
-        return false;
+        return specialization_ != MIRType::None;
     }
 
     MDefinition* foldsTo(TempAllocator& alloc) override;
@@ -6788,13 +6771,13 @@ class MAdd : public MBinaryArithInstruction
         setResultType(MIRType::Value);
     }
 
-    MAdd(MDefinition* left, MDefinition* right, MIRType type)
+    MAdd(MDefinition* left, MDefinition* right, MIRType type, TruncateKind truncateKind = Truncate)
       : MAdd(left, right)
     {
         specialization_ = type;
         setResultType(type);
         if (type == MIRType::Int32) {
-            setTruncateKind(Truncate);
+            setTruncateKind(truncateKind);
             setCommutative();
         }
     }
@@ -8461,6 +8444,34 @@ class MLambdaArrow
     }
     bool appendRoots(MRootList& roots) const override {
         return info_.appendRoots(roots);
+    }
+};
+
+class MSetFunName
+  : public MAryInstruction<2>,
+    public MixPolicy<ObjectPolicy<0>, BoxPolicy<1> >::Data
+{
+    uint8_t prefixKind_;
+
+    explicit MSetFunName(MDefinition* fun, MDefinition* name, uint8_t prefixKind)
+      : prefixKind_(prefixKind)
+    {
+        initOperand(0, fun);
+        initOperand(1, name);
+        setResultType(MIRType::None);
+    }
+
+  public:
+    INSTRUCTION_HEADER(SetFunName)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, fun), (1, name))
+
+    uint8_t prefixKind() const {
+        return prefixKind_;
+    }
+
+    bool possiblyCalls() const override {
+        return true;
     }
 };
 
@@ -13426,8 +13437,9 @@ class MCheckIsObj
 {
     uint8_t checkKind_;
 
-    explicit MCheckIsObj(MDefinition* toCheck, uint8_t checkKind)
-      : MUnaryInstruction(toCheck), checkKind_(checkKind)
+    MCheckIsObj(MDefinition* toCheck, uint8_t checkKind)
+      : MUnaryInstruction(toCheck),
+        checkKind_(checkKind)
     {
         setResultType(MIRType::Value);
         setResultTypeSet(toCheck->resultTypeSet());
@@ -13436,6 +13448,33 @@ class MCheckIsObj
 
   public:
     INSTRUCTION_HEADER(CheckIsObj)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, checkValue))
+
+    uint8_t checkKind() const { return checkKind_; }
+
+    AliasSet getAliasSet() const override {
+        return AliasSet::None();
+    }
+};
+
+class MCheckIsCallable
+  : public MUnaryInstruction,
+    public BoxInputsPolicy::Data
+{
+    uint8_t checkKind_;
+
+    MCheckIsCallable(MDefinition* toCheck, uint8_t checkKind)
+      : MUnaryInstruction(toCheck),
+        checkKind_(checkKind)
+    {
+        setResultType(MIRType::Value);
+        setResultTypeSet(toCheck->resultTypeSet());
+        setGuard();
+    }
+
+  public:
+    INSTRUCTION_HEADER(CheckIsCallable)
     TRIVIAL_NEW_WRAPPERS
     NAMED_OPERANDS((0, checkValue))
 
@@ -14209,7 +14248,8 @@ bool ElementAccessIsTypedArray(CompilerConstraintList* constraints,
 bool ElementAccessIsPacked(CompilerConstraintList* constraints, MDefinition* obj);
 bool ElementAccessMightBeCopyOnWrite(CompilerConstraintList* constraints, MDefinition* obj);
 bool ElementAccessMightBeFrozen(CompilerConstraintList* constraints, MDefinition* obj);
-bool ElementAccessHasExtraIndexedProperty(IonBuilder* builder, MDefinition* obj);
+AbortReasonOr<bool>
+ElementAccessHasExtraIndexedProperty(IonBuilder* builder, MDefinition* obj);
 MIRType DenseNativeElementType(CompilerConstraintList* constraints, MDefinition* obj);
 BarrierKind PropertyReadNeedsTypeBarrier(JSContext* propertycx,
                                          CompilerConstraintList* constraints,
@@ -14219,7 +14259,7 @@ BarrierKind PropertyReadNeedsTypeBarrier(JSContext* propertycx,
                                          CompilerConstraintList* constraints,
                                          MDefinition* obj, PropertyName* name,
                                          TemporaryTypeSet* observed);
-ResultWithOOM<BarrierKind>
+AbortReasonOr<BarrierKind>
 PropertyReadOnPrototypeNeedsTypeBarrier(IonBuilder* builder,
                                         MDefinition* obj, PropertyName* name,
                                         TemporaryTypeSet* observed);
@@ -14234,10 +14274,29 @@ bool PropertyWriteNeedsTypeBarrier(TempAllocator& alloc, CompilerConstraintList*
                                    MBasicBlock* current, MDefinition** pobj,
                                    PropertyName* name, MDefinition** pvalue,
                                    bool canModify, MIRType implicitType = MIRType::None);
-bool ArrayPrototypeHasIndexedProperty(IonBuilder* builder, JSScript* script);
-bool TypeCanHaveExtraIndexedProperties(IonBuilder* builder, TemporaryTypeSet* types);
+AbortReasonOr<bool>
+ArrayPrototypeHasIndexedProperty(IonBuilder* builder, JSScript* script);
+AbortReasonOr<bool>
+TypeCanHaveExtraIndexedProperties(IonBuilder* builder, TemporaryTypeSet* types);
 
 } // namespace jit
 } // namespace js
+
+// Specialize the AlignmentFinder class to make Result<V, E> works with abstract
+// classes such as MDefinition*, and MInstruction*
+namespace mozilla
+{
+
+template <>
+class AlignmentFinder<js::jit::MDefinition> : public AlignmentFinder<js::jit::MStart>
+{
+};
+
+template <>
+class AlignmentFinder<js::jit::MInstruction> : public AlignmentFinder<js::jit::MStart>
+{
+};
+
+} // namespace mozilla
 
 #endif /* jit_MIR_h */

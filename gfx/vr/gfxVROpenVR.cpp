@@ -25,10 +25,8 @@
 #include "nsIScreenManager.h"
 #include "openvr/openvr.h"
 
-#ifdef MOZ_GAMEPAD
 #include "mozilla/dom/GamepadEventTypes.h"
 #include "mozilla/dom/GamepadBinding.h"
-#endif
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846
@@ -60,17 +58,18 @@ static pfn_VR_GetGenericInterface vr_GetGenericInterface = nullptr;
 
 // EButton_System, EButton_DPad_xx, and EButton_A
 // can not be triggered in Steam Vive in OpenVR SDK 1.0.3.
+// Reminder: changing the order of these buttons may break web content.
 const uint64_t gOpenVRButtonMask[] = {
   // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_System),
-  vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_ApplicationMenu),
+  vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_SteamVR_Touchpad),
+  vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_SteamVR_Trigger),
+  // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_A),
   vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_Grip),
+  vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_ApplicationMenu)
   // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_DPad_Left),
   // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_DPad_Up),
   // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_DPad_Right),
-  // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_DPad_Down),
-  // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_A),
-  vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_SteamVR_Touchpad),
-  vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_SteamVR_Trigger)
+  // vr::ButtonMaskFromId(vr::EVRButtonId::k_EButton_DPad_Down)
 };
 
 const uint32_t gNumOpenVRButtonMask = sizeof(gOpenVRButtonMask) /
@@ -99,12 +98,12 @@ bool
 LoadOpenVRRuntime()
 {
   static PRLibrary *openvrLib = nullptr;
+  std::string openvrPath = gfxPrefs::VROpenVRRuntime();
 
-  nsAdoptingCString openvrPath = Preferences::GetCString("gfx.vr.openvr-runtime");
-  if (!openvrPath)
+  if (!openvrPath.c_str())
     return false;
 
-  openvrLib = PR_LoadLibrary(openvrPath.BeginReading());
+  openvrLib = PR_LoadLibrary(openvrPath.c_str());
   if (!openvrLib)
     return false;
 
@@ -489,11 +488,7 @@ VRControllerOpenVR::VRControllerOpenVR()
 {
   MOZ_COUNT_CTOR_INHERITED(VRControllerOpenVR, VRControllerHost);
   mControllerInfo.mControllerName.AssignLiteral("OpenVR HMD");
-#ifdef MOZ_GAMEPAD
-  mControllerInfo.mMappingType = static_cast<uint32_t>(GamepadMappingType::_empty);
-#else
-  mControllerInfo.mMappingType = 0;
-#endif
+  mControllerInfo.mMappingType = GamepadMappingType::_empty;
   mControllerInfo.mNumButtons = gNumOpenVRButtonMask;
   mControllerInfo.mNumAxes = gNumOpenVRAxis;
 }
@@ -566,7 +561,7 @@ VRControllerManagerOpenVR::Init()
 void
 VRControllerManagerOpenVR::Destroy()
 {
-  mOpenVRController.Clear();
+  RemoveDevices();
   mOpenVRInstalled = false;
 }
 
@@ -712,38 +707,70 @@ VRControllerManagerOpenVR::GetControllers(nsTArray<RefPtr<VRControllerHost>>& aC
 void
 VRControllerManagerOpenVR::ScanForDevices()
 {
-  // Remove the existing gamepads
-  for (uint32_t i = 0; i < mOpenVRController.Length(); ++i) {
-    RemoveGamepad(mOpenVRController[i]->GetIndex());
-  }
-  mControllerCount = 0;
-  mOpenVRController.Clear();
-
   if (!mVRSystem)
     return;
 
-  // Basically, we would have HMDs in the tracked devices, but we are just interested in the controllers.
-  for ( vr::TrackedDeviceIndex_t trackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1;
-        trackedDevice < vr::k_unMaxTrackedDeviceCount; ++trackedDevice ) {
+  vr::TrackedDeviceIndex_t trackedIndexArray[vr::k_unMaxTrackedDeviceCount];
+  uint32_t newControllerCount = 0;
+  // Basically, we would have HMDs in the tracked devices,
+  // but we are just interested in the controllers.
+  for (vr::TrackedDeviceIndex_t trackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1;
+       trackedDevice < vr::k_unMaxTrackedDeviceCount; ++trackedDevice) {
+
     if (!mVRSystem->IsTrackedDeviceConnected(trackedDevice)) {
       continue;
     }
-
-    if (mVRSystem->GetTrackedDeviceClass(trackedDevice) != vr::TrackedDeviceClass_Controller) {
+    if (mVRSystem->GetTrackedDeviceClass(trackedDevice)
+        != vr::TrackedDeviceClass_Controller) {
       continue;
     }
 
-    RefPtr<VRControllerOpenVR> openVRController = new VRControllerOpenVR();
-    openVRController->SetIndex(mControllerCount);
-    openVRController->SetTrackedIndex(trackedDevice);
-    mOpenVRController.AppendElement(openVRController);
-
-// Only in MOZ_GAMEPAD platform, We add gamepads.
-#ifdef MOZ_GAMEPAD
-    // Not already present, add it.
-    AddGamepad("OpenVR Gamepad", static_cast<uint32_t>(GamepadMappingType::_empty),
-               gNumOpenVRButtonMask, gNumOpenVRAxis);
-    ++mControllerCount;
-#endif
+    trackedIndexArray[newControllerCount] = trackedDevice;
+    ++newControllerCount;
   }
+
+  if (newControllerCount != mControllerCount) {
+    // controller count is changed, removing the existing gamepads first.
+    for (uint32_t i = 0; i < mOpenVRController.Length(); ++i) {
+      RemoveGamepad(mOpenVRController[i]->GetIndex());
+    }
+    mControllerCount = 0;
+    mOpenVRController.Clear();
+
+    // Re-adding controllers to VRControllerManager.
+    for (vr::TrackedDeviceIndex_t i = 0; i < newControllerCount; ++i) {
+      vr::TrackedDeviceIndex_t trackedDevice = trackedIndexArray[i];
+      vr::ETrackedControllerRole role =
+      mVRSystem->GetControllerRoleForTrackedDeviceIndex(trackedDevice);
+      GamepadHand hand;
+
+      switch(role) {
+        case vr::ETrackedControllerRole::TrackedControllerRole_Invalid:
+          hand = GamepadHand::_empty;
+          break;
+        case vr::ETrackedControllerRole::TrackedControllerRole_LeftHand:
+          hand = GamepadHand::Left;
+          break;
+        case vr::ETrackedControllerRole::TrackedControllerRole_RightHand:
+          hand = GamepadHand::Right;
+          break;
+      }
+      RefPtr<VRControllerOpenVR> openVRController = new VRControllerOpenVR();
+      openVRController->SetIndex(mControllerCount);
+      openVRController->SetTrackedIndex(trackedDevice);
+      mOpenVRController.AppendElement(openVRController);
+
+      // Not already present, add it.
+      AddGamepad("OpenVR Gamepad", GamepadMappingType::_empty,
+                 hand, gNumOpenVRButtonMask, gNumOpenVRAxis);
+      ++mControllerCount;
+    }
+  }
+}
+
+void
+VRControllerManagerOpenVR::RemoveDevices()
+{
+  mOpenVRController.Clear();
+  mControllerCount = 0;
 }

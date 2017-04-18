@@ -118,7 +118,7 @@ var PendingErrors = {
   /**
    * Initialize PendingErrors
    */
-  init: function() {
+  init() {
     Services.obs.addObserver(function observe(aSubject, aTopic, aValue) {
       PendingErrors.report(aValue);
     }, "promise-finalization-witness", false);
@@ -129,7 +129,7 @@ var PendingErrors = {
    *
    * @return The unique identifier of the error.
    */
-  register: function(error) {
+  register(error) {
     let id = "pending-error-" + (this._counter++);
     //
     // At this stage, ideally, we would like to store the error itself
@@ -222,7 +222,7 @@ var PendingErrors = {
    * @param id The identifier of the pending error, as returned by
    * |register|.
    */
-  report: function(id) {
+  report(id) {
     let value = this._map.get(id);
     if (!value) {
       return; // The error has already been reported
@@ -236,7 +236,7 @@ var PendingErrors = {
   /**
    * Mark all pending errors are uncaught, notify the observers.
    */
-  flush: function() {
+  flush() {
     // Since we are going to modify the map while walking it,
     // let's copying the keys first.
     for (let key of Array.from(this._map.keys())) {
@@ -248,7 +248,7 @@ var PendingErrors = {
    * Stop tracking an error, as this error has been caught,
    * eventually.
    */
-  unregister: function(id) {
+  unregister(id) {
     this._map.delete(id);
   },
 
@@ -260,21 +260,21 @@ var PendingErrors = {
    *   {message, date, fileName, stack, lineNumber}
    * All arguments are optional.
    */
-  addObserver: function(observer) {
+  addObserver(observer) {
     this._observers.add(observer);
   },
 
   /**
    * Remove an observer added with addObserver
    */
-  removeObserver: function(observer) {
+  removeObserver(observer) {
     this._observers.delete(observer);
   },
 
   /**
    * Remove all the observers added with addObserver
    */
-  removeAllObservers: function() {
+  removeAllObservers() {
     this._observers.clear();
   }
 };
@@ -291,14 +291,14 @@ PendingErrors.addObserver(function(details) {
     " Did you forget to '.catch', or did you forget to 'return'?\nSee" +
     " https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise\n\n";
 
-  let error = Cc['@mozilla.org/scripterror;1'].createInstance(Ci.nsIScriptError);
+  let error = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError);
   if (!error || !Services.console) {
     // Too late during shutdown to use the nsIConsole
     dump("*************************\n");
     dump(generalDescription);
     dump("On: " + details.date + "\n");
     dump("Full message: " + details.message + "\n");
-    dump("Full stack: " + (details.stack||"not available") + "\n");
+    dump("Full stack: " + (details.stack || "not available") + "\n");
     dump("*************************\n");
     return;
   }
@@ -310,7 +310,7 @@ PendingErrors.addObserver(function(details) {
              /* message*/ generalDescription +
              "Date: " + details.date + "\nFull Message: " + message,
              /* sourceName*/ details.fileName,
-             /* sourceLine*/ details.lineNumber?("" + details.lineNumber):0,
+             /* sourceLine*/ details.lineNumber ? ("" + details.lineNumber) : 0,
              /* lineNumber*/ details.lineNumber || 0,
              /* columnNumber*/ 0,
              /* flags*/ Ci.nsIScriptError.errorFlag,
@@ -334,8 +334,7 @@ const ERRORS_TO_REPORT = ["EvalError", "RangeError", "ReferenceError", "TypeErro
  * @param aExecutor
  *        The callback that will be called with resolve and reject.
  */
-this.Promise = function Promise(aExecutor)
-{
+this.Promise = function Promise(aExecutor) {
   if (typeof(aExecutor) != "function") {
     throw new TypeError("Promise constructor must be called with an executor.");
   }
@@ -383,7 +382,7 @@ this.Promise = function Promise(aExecutor)
                             .bind(PromiseWalker, this, STATUS_REJECTED);
 
   try {
-    aExecutor.call(undefined, resolve, reject);
+    aExecutor(resolve, reject);
   } catch (ex) {
     reject(ex);
   }
@@ -432,8 +431,7 @@ this.Promise = function Promise(aExecutor)
  *       the returned promise instead, to process any exception occurred in
  *       either of the callbacks registered on this promise.
  */
-Promise.prototype.then = function (aOnResolve, aOnReject)
-{
+Promise.prototype.then = function(aOnResolve, aOnReject) {
   let handler = new Handler(this, aOnResolve, aOnReject);
   this[N_INTERNALS].handlers.push(handler);
 
@@ -466,8 +464,7 @@ Promise.prototype.then = function (aOnResolve, aOnReject)
  *
  * @see Promise.prototype.then
  */
-Promise.prototype.catch = function (aOnReject)
-{
+Promise.prototype.catch = function(aOnReject) {
   return this.then(undefined, aOnReject);
 };
 
@@ -478,8 +475,7 @@ Promise.prototype.catch = function (aOnReject)
  *         and the methods to change its state in the "resolve" and "reject"
  *         properties.  See the Deferred documentation for details.
  */
-Promise.defer = function ()
-{
+Promise.defer = function() {
   return new Deferred();
 };
 
@@ -495,8 +491,7 @@ Promise.defer = function ()
  *
  * @return A promise that can be pending, resolved, or rejected.
  */
-Promise.resolve = function (aValue)
-{
+Promise.resolve = function(aValue) {
   if (aValue && typeof(aValue) == "function" && aValue.isAsyncFunction) {
     throw new TypeError(
       "Cannot resolve a promise with an async function. " +
@@ -526,8 +521,7 @@ Promise.resolve = function (aValue)
  *       promise for the value of aReason would make the rejection reason
  *       equal to the rejected promise itself, and not its rejection reason.
  */
-Promise.reject = function (aReason)
-{
+Promise.reject = function(aReason) {
   return new Promise((_, aReject) => aReject(aReason));
 };
 
@@ -547,8 +541,7 @@ Promise.reject = function (aReason)
  *         reason will be forwarded from the first promise in the list of
  *         given promises to be rejected.
  */
-Promise.all = function (aValues)
-{
+Promise.all = function(aValues) {
   if (aValues == null || typeof(aValues[Symbol.iterator]) != "function") {
     throw new Error("Promise.all() expects an iterable.");
   }
@@ -598,8 +591,7 @@ Promise.all = function (aValues)
  *         rejected. Its resolution value will be forwarded from the resolution
  *         value or rejection reason.
  */
-Promise.race = function (aValues)
-{
+Promise.race = function(aValues) {
   if (aValues == null || typeof(aValues[Symbol.iterator]) != "function") {
     throw new Error("Promise.race() expects an iterable.");
   }
@@ -620,7 +612,7 @@ Promise.Debugging = {
    *   {message, date, fileName, stack, lineNumber}
    * All arguments are optional.
    */
-  addUncaughtErrorObserver: function(observer) {
+  addUncaughtErrorObserver(observer) {
     PendingErrors.addObserver(observer);
   },
 
@@ -630,14 +622,14 @@ Promise.Debugging = {
    * @param {function} An observer registered with
    * addUncaughtErrorObserver.
    */
-  removeUncaughtErrorObserver: function(observer) {
+  removeUncaughtErrorObserver(observer) {
     PendingErrors.removeObserver(observer);
   },
 
   /**
    * Remove all the observers added with addUncaughtErrorObserver
    */
-  clearUncaughtErrorObservers: function() {
+  clearUncaughtErrorObservers() {
     PendingErrors.removeAllObservers();
   },
 
@@ -645,7 +637,7 @@ Promise.Debugging = {
    * Force all pending errors to be reported immediately as uncaught.
    * Note that this may cause some false positives.
    */
-  flushUncaughtErrors: function() {
+  flushUncaughtErrors() {
     PendingErrors.flush();
   },
 };
@@ -688,8 +680,7 @@ this.PromiseWalker = {
    * @param aValue
    *        Associated resolution value or rejection reason.
    */
-  completePromise: function (aPromise, aStatus, aValue)
-  {
+  completePromise(aPromise, aStatus, aValue) {
     // Do nothing if the promise is already resolved or rejected.
     if (aPromise[N_INTERNALS].status != STATUS_PENDING) {
       return;
@@ -722,8 +713,7 @@ this.PromiseWalker = {
   /**
    * Sets up the PromiseWalker loop to start on the next tick of the event loop
    */
-  scheduleWalkerLoop: function()
-  {
+  scheduleWalkerLoop() {
     this.walkerLoopScheduled = true;
 
     // If this file is loaded on a worker thread, DOMPromise will not behave as
@@ -763,8 +753,7 @@ this.PromiseWalker = {
    *        Resolved or rejected promise whose handlers should be processed.  It
    *        is expected that this promise has at least one handler to process.
    */
-  schedulePromise: function (aPromise)
-  {
+  schedulePromise(aPromise) {
     // Migrate the handlers from the provided promise to the global list.
     for (let handler of aPromise[N_INTERNALS].handlers) {
       this.handlers.push(handler);
@@ -790,8 +779,7 @@ this.PromiseWalker = {
    *
    * This function is called with "this" bound to the PromiseWalker object.
    */
-  walkerLoop: function ()
-  {
+  walkerLoop() {
     // If there is more than one handler waiting, reschedule the walker loop
     // immediately.  Otherwise, use walkerLoopScheduled to tell schedulePromise()
     // to reschedule the loop if it adds more handlers to the queue.  This makes
@@ -824,8 +812,7 @@ PromiseWalker.walkerLoop = PromiseWalker.walkerLoop.bind(PromiseWalker);
  * Returned by "Promise.defer" to provide a new promise along with methods to
  * change its state.
  */
-function Deferred()
-{
+function Deferred() {
   this.promise = new Promise((aResolve, aReject) => {
     this.resolve = aResolve;
     this.reject = aReject;
@@ -884,8 +871,7 @@ Deferred.prototype = {
 /**
  * Handler registered on a promise by the "then" function.
  */
-function Handler(aThisPromise, aOnResolve, aOnReject)
-{
+function Handler(aThisPromise, aOnResolve, aOnReject) {
   this.thisPromise = aThisPromise;
   this.onResolve = aOnResolve;
   this.onReject = aOnReject;
@@ -917,8 +903,7 @@ Handler.prototype = {
    * Called after thisPromise is resolved or rejected, invokes the appropriate
    * callback and propagates the result to nextPromise.
    */
-  process: function()
-  {
+  process() {
     // The state of this promise is propagated unless a handler is defined.
     let nextStatus = this.thisPromise[N_INTERNALS].status;
     let nextValue = this.thisPromise[N_INTERNALS].value;
@@ -950,11 +935,11 @@ Handler.prototype = {
 
         dump("*************************\n");
         dump("A coding exception was thrown in a Promise " +
-             ((nextStatus == STATUS_RESOLVED) ? "resolution":"rejection") +
+             ((nextStatus == STATUS_RESOLVED) ? "resolution" : "rejection") +
              " callback.\n");
         dump("See https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise\n\n");
         dump("Full message: " + ex + "\n");
-        dump("Full stack: " + (("stack" in ex)?ex.stack:"not available") + "\n");
+        dump("Full stack: " + (("stack" in ex) ? ex.stack : "not available") + "\n");
         dump("*************************\n");
 
       }

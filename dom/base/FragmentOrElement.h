@@ -21,6 +21,7 @@
 #include "nsIWeakReference.h"             // base class
 #include "nsNodeUtils.h"                  // class member nsNodeUtils::CloneNodeImpl
 #include "nsIHTMLCollection.h"
+#include "nsDataHashtable.h"
 
 class ContentUnbinder;
 class nsContentList;
@@ -123,7 +124,7 @@ public:
                                  bool aNotify) override;
   virtual void RemoveChildAt(uint32_t aIndex, bool aNotify) override;
   virtual void GetTextContentInternal(nsAString& aTextContent,
-                                      mozilla::ErrorResult& aError) override;
+                                      mozilla::OOMReporter& aError) override;
   virtual void SetTextContentInternal(const nsAString& aTextContent,
                                       mozilla::ErrorResult& aError) override;
 
@@ -347,12 +348,7 @@ public:
     /**
      * Registered Intersection Observers on the element.
      */
-    struct IntersectionObserverRegistration {
-      DOMIntersectionObserver* observer;
-      int32_t previousThreshold;
-    };
-
-    nsTArray<IntersectionObserverRegistration> mRegisteredIntersectionObservers;
+    nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t> mRegisteredIntersectionObservers;
   };
 
 protected:

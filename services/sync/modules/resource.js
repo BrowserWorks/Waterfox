@@ -102,7 +102,7 @@ AsyncResource.prototype = {
     return this._uri;
   },
   set uri(value) {
-    if (typeof value == 'string')
+    if (typeof value == "string")
       this._uri = CommonUtils.makeURI(value);
     else
       this._uri = value;
@@ -163,8 +163,8 @@ AsyncResource.prototype = {
       this._log.debug("No authenticator found.");
     }
 
-    for (let [key, value] of Object.entries(headers)) {
-      if (key == 'authorization')
+    for (let key of Object.keys(headers)) {
+      if (key == "authorization")
         this._log.trace("HTTP Header " + key + ": ***** (suppressed)");
       else
         this._log.trace("HTTP Header " + key + ": " + headers[key]);
@@ -192,8 +192,8 @@ AsyncResource.prototype = {
       this._log.debug(action + " Length: " + this._data.length);
       this._log.trace(action + " Body: " + this._data);
 
-      let type = ('content-type' in this._headers) ?
-        this._headers['content-type'] : 'text/plain';
+      let type = ("content-type" in this._headers) ?
+        this._headers["content-type"] : "text/plain";
 
       let stream = Cc["@mozilla.org/io/string-input-stream;1"].
         createInstance(Ci.nsIStringInputStream);
@@ -229,7 +229,7 @@ AsyncResource.prototype = {
     let action = channel.requestMethod;
 
     this._log.trace("Channel: " + channel);
-    this._log.trace("Action: "  + action);
+    this._log.trace("Action: " + action);
 
     // Process status and success first. This way a problem with headers
     // doesn't fail to include accurate status information.
@@ -256,7 +256,7 @@ AsyncResource.prototype = {
       if (this._log.level <= Log.Level.Trace)
         this._log.trace(action + " body: " + data);
 
-    } catch(ex) {
+    } catch (ex) {
       // Got a response, but an exception occurred during processing.
       // This shouldn't occur.
       this._log.warn("Caught unexpected exception in _oncomplete", ex);
@@ -464,12 +464,11 @@ ChannelListener.prototype = {
     // Save the latest server timestamp when possible.
     try {
       AsyncResource.serverTime = channel.getResponseHeader("X-Weave-Timestamp") - 0;
-    }
-    catch(ex) {}
+    } catch (ex) {}
 
     this._log.trace("onStartRequest: " + channel.requestMethod + " " +
                     channel.URI.spec);
-    this._data = '';
+    this._data = "";
     this.delayAbort();
   },
 
@@ -498,7 +497,7 @@ ChannelListener.prototype = {
     this._log.trace("Channel for " + channel.requestMethod + " " + uri + ": " +
                     "isSuccessCode(" + status + ")? " + statusSuccess);
 
-    if (this._data == '') {
+    if (this._data == "") {
       this._data = null;
     }
 
@@ -598,11 +597,11 @@ function ChannelNotificationListener(headersToCopy) {
 ChannelNotificationListener.prototype = {
   _logName: "Sync.Resource",
 
-  getInterface: function(aIID) {
+  getInterface(aIID) {
     return this.QueryInterface(aIID);
   },
 
-  QueryInterface: function(aIID) {
+  QueryInterface(aIID) {
     if (aIID.equals(Ci.nsIBadCertListener2) ||
         aIID.equals(Ci.nsIInterfaceRequestor) ||
         aIID.equals(Ci.nsISupports) ||

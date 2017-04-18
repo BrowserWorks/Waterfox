@@ -30,6 +30,8 @@
 #include "nsToolkitCompsCID.h"
 #include "nsGeoPosition.h"
 
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/Services.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Hal.h"
@@ -59,6 +61,7 @@
 #endif
 
 #include "AndroidAlerts.h"
+#include "AndroidUiThread.h"
 #include "ANRReporter.h"
 #include "GeckoBatteryManager.h"
 #include "GeckoNetworkManager.h"
@@ -80,6 +83,9 @@ nsIGeolocationUpdate *gLocationCallback = nullptr;
 
 nsAppShell* nsAppShell::sAppShell;
 StaticAutoPtr<Mutex> nsAppShell::sAppShellLock;
+
+uint32_t nsAppShell::Queue::sLatencyCount[];
+uint64_t nsAppShell::Queue::sLatencyTime[];
 
 NS_IMPL_ISUPPORTS_INHERITED(nsAppShell, nsBaseAppShell, nsIObserver)
 
@@ -250,6 +256,19 @@ public:
         NotifyObservers(aTopic, aData);
     }
 
+    template<typename Functor>
+    static void OnNativeCall(Functor&& aCall)
+    {
+        MOZ_ASSERT(aCall.IsTarget(&NotifyPushObservers));
+        NS_DispatchToMainThread(NS_NewRunnableFunction(mozilla::Move(aCall)));
+    }
+
+    static void NotifyPushObservers(jni::String::Param aTopic,
+                                    jni::String::Param aData)
+    {
+        NotifyObservers(aTopic, aData);
+    }
+
     static void NotifyObservers(jni::String::Param aTopic,
                                 jni::String::Param aData)
     {
@@ -390,6 +409,8 @@ nsAppShell::nsAppShell()
         }
 
         java::GeckoThread::SetState(java::GeckoThread::State::JNI_READY());
+
+        CreateAndroidUiThread();
     }
 
     sPowerManagerService = do_GetService(POWERMANAGERSERVICE_CONTRACTID);
@@ -420,6 +441,7 @@ nsAppShell::~nsAppShell()
     }
 
     if (jni::IsAvailable()) {
+        DestroyAndroidUiThread();
         AndroidBridge::DeconstructBridge();
     }
 }
@@ -428,6 +450,43 @@ void
 nsAppShell::NotifyNativeEvent()
 {
     mEventQueue.Signal();
+}
+
+void
+nsAppShell::RecordLatencies()
+{
+    if (!mozilla::Telemetry::CanRecordExtended()) {
+        return;
+    }
+
+    const mozilla::Telemetry::ID timeIDs[] = {
+        mozilla::Telemetry::ID::FENNEC_LOOP_UI_LATENCY,
+        mozilla::Telemetry::ID::FENNEC_LOOP_OTHER_LATENCY
+    };
+
+    static_assert(ArrayLength(Queue::sLatencyCount) == Queue::LATENCY_COUNT,
+                  "Count array length mismatch");
+    static_assert(ArrayLength(Queue::sLatencyTime) == Queue::LATENCY_COUNT,
+                  "Time array length mismatch");
+    static_assert(ArrayLength(timeIDs) == Queue::LATENCY_COUNT,
+                  "Time ID array length mismatch");
+
+    for (size_t i = 0; i < Queue::LATENCY_COUNT; i++) {
+        if (!Queue::sLatencyCount[i]) {
+            continue;
+        }
+
+        const uint64_t time = Queue::sLatencyTime[i] / 1000ull /
+                              Queue::sLatencyCount[i];
+        if (time) {
+            mozilla::Telemetry::Accumulate(
+                    timeIDs[i], uint32_t(std::min<uint64_t>(UINT32_MAX, time)));
+        }
+
+        // Reset latency counts.
+        Queue::sLatencyCount[i] = 0;
+        Queue::sLatencyTime[i] = 0;
+    }
 }
 
 #define PREFNAME_COALESCE_TOUCHES "dom.event.touch.coalescing.enabled"

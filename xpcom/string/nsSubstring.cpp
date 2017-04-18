@@ -370,6 +370,11 @@ void Gecko_AppendCString(nsACString* aThis, const nsACString* aOther)
   aThis->Append(*aOther);
 }
 
+void Gecko_TruncateCString(nsACString* aThis)
+{
+  aThis->Truncate();
+}
+
 void Gecko_FinalizeString(nsAString* aThis)
 {
   aThis->~nsAString();
@@ -383,6 +388,11 @@ void Gecko_AssignString(nsAString* aThis, const nsAString* aOther)
 void Gecko_AppendString(nsAString* aThis, const nsAString* aOther)
 {
   aThis->Append(*aOther);
+}
+
+void Gecko_TruncateString(nsAString* aThis)
+{
+  aThis->Truncate();
 }
 
 } // extern "C"

@@ -258,9 +258,8 @@ private:
   // the max number of timers is reached.
   // * aCx - the JSContext rooting aName.
   // * aName - this is (should be) the name of the timer as JS::Value.
-  // * aTimestamp - the monotonicTimer for this context (taken from
-  //                window->performance.now() or from Now() -
-  //                workerPrivate->NowBaseTimeStamp() in workers.
+  // * aTimestamp - the monotonicTimer for this context taken from
+  //                performance.now().
   // * aTimerLabel - This label will be populated with the aName converted to a
   //                 string.
   // * aTimerValue - the StartTimer value stored into (or taken from)
@@ -277,11 +276,9 @@ private:
   // thread.
   // * aCx - this is the context that will root the returned value.
   // * aTimerLabel - this label must be what StartTimer received as aTimerLabel.
-  // * aTimerValue - this is what StartTimer received as aTimerValue
   // * aTimerStatus - the return value of StartTimer.
   JS::Value
   CreateStartTimerValue(JSContext* aCx, const nsAString& aTimerLabel,
-                        DOMHighResTimeStamp aTimerValue,
                         bool aTimerStatus) const;
 
   // StopTimer follows the same pattern as StartTimer: it runs on the
@@ -290,9 +287,8 @@ private:
   // the aName timer doesn't exist in the mTimerRegistry.
   // * aCx - the JSContext rooting aName.
   // * aName - this is (should be) the name of the timer as JS::Value.
-  // * aTimestamp - the monotonicTimer for this context (taken from
-  //                window->performance.now() or from Now() -
-  //                workerPrivate->NowBaseTimeStamp() in workers.
+  // * aTimestamp - the monotonicTimer for this context taken from
+  //                performance.now().
   // * aTimerLabel - This label will be populated with the aName converted to a
   //                 string.
   // * aTimerDuration - the difference between aTimestamp and when the timer

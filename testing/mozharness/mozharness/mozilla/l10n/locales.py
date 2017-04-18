@@ -9,6 +9,7 @@
 
 import os
 from urlparse import urljoin
+import pprint
 import sys
 from copy import deepcopy
 
@@ -67,9 +68,9 @@ class LocalesMixin(ChunkingMixin):
             locales = os.environ["MOZ_LOCALES"].split()
 
         # Command line or config
-        if not locales and c.get("locales", None):
+        if not locales and c.get("locales", []):
             locales = c["locales"]
-            self.debug("Using locales from config/CLI: %s" % locales)
+            self.debug("Using locales from config/CLI: %s" % ", ".join(locales))
 
         # parse locale:revision if set
         if locales:
@@ -122,11 +123,12 @@ class LocalesMixin(ChunkingMixin):
     def parse_locales_file(self, locales_file):
         locales = []
         c = self.config
+        self.info("Parsing locales file %s" % locales_file)
         platform = c.get("locales_platform", None)
 
         if locales_file.endswith('json'):
             locales_json = parse_config_file(locales_file)
-            for locale in locales_json.keys():
+            for locale in sorted(locales_json.keys()):
                 if isinstance(locales_json[locale], dict):
                     if platform and platform not in locales_json[locale]['platforms']:
                         continue
@@ -137,6 +139,8 @@ class LocalesMixin(ChunkingMixin):
                 locales.append(locale)
         else:
             locales = self.read_from_file(locales_file).split()
+        self.info("self.l10n_revisions: %s" % pprint.pformat(self.l10n_revisions))
+        self.info("locales: %s" % locales)
         return locales
 
     def run_compare_locales(self, locale, halt_on_failure=False):

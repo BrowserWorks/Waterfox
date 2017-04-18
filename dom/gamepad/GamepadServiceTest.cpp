@@ -35,7 +35,6 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(GamepadServiceTest)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(GamepadServiceTest,
                                                   DOMEventTargetHelper)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -113,7 +112,7 @@ GamepadServiceTest::DestroyPBackgroundActor()
 
 already_AddRefed<Promise>
 GamepadServiceTest::AddGamepad(const nsAString& aID,
-                               uint32_t aMapping,
+                               GamepadMappingType aMapping,
                                uint32_t aNumButtons,
                                uint32_t aNumAxes,
                                ErrorResult& aRv)
@@ -123,7 +122,7 @@ GamepadServiceTest::AddGamepad(const nsAString& aID,
   }
 
   GamepadAdded a(nsString(aID), 0,
-                 aMapping,
+                 aMapping, GamepadHand::_empty,
                  GamepadServiceType::Standard,
                  aNumButtons, aNumAxes);
   GamepadChangeEvent e(a);

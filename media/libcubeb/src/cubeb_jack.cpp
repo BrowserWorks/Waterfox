@@ -9,16 +9,10 @@
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 #define _POSIX_SOURCE
-#include <algorithm>
 #include <dlfcn.h>
-#include <limits>
 #include <stdio.h>
-#include <sys/time.h>
-#include <assert.h>
 #include <string.h>
 #include <limits.h>
-#include <poll.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <math.h>
@@ -120,6 +114,7 @@ static struct cubeb_ops const cbjack_ops = {
   .get_max_channel_count = cbjack_get_max_channel_count,
   .get_min_latency = cbjack_get_min_latency,
   .get_preferred_sample_rate = cbjack_get_preferred_sample_rate,
+  .get_preferred_channel_layout = NULL,
   .enumerate_devices = cbjack_enumerate_devices,
   .destroy = cbjack_destroy,
   .stream_init = cbjack_stream_init,
@@ -426,7 +421,6 @@ cbjack_process(jack_nframes_t nframes, void * arg)
   return 0;
 }
 
-
 static void
 cbjack_deinterleave_playback_refill_float(cubeb_stream * stream, float ** in, float ** bufs_out, jack_nframes_t nframes)
 {
@@ -438,7 +432,6 @@ cbjack_deinterleave_playback_refill_float(cubeb_stream * stream, float ** in, fl
   long needed_frames = (bufs_out != NULL) ? nframes : 0;
   long done_frames = 0;
   long input_frames_count = (in != NULL) ? nframes : 0;
-
 
   done_frames = cubeb_resampler_fill(stream->resampler,
                                      inptr,
@@ -940,7 +933,6 @@ cbjack_stream_set_volume(cubeb_stream * stm, float volume)
   return CUBEB_OK;
 }
 
-
 static int
 cbjack_stream_get_current_device(cubeb_stream * stm, cubeb_device ** const device)
 {
@@ -993,9 +985,9 @@ cbjack_enumerate_devices(cubeb * context, cubeb_device_type type,
   const char * j_out = "JACK playback";
 
   if (type & CUBEB_DEVICE_TYPE_OUTPUT) {
-    context->devinfo[i] = (cubeb_device_info *)malloc(sizeof(cubeb_device_info));
+    context->devinfo[i] = (cubeb_device_info *) malloc(sizeof(cubeb_device_info));
     context->devinfo[i]->device_id = strdup(j_out);
-    context->devinfo[i]->devid = context->devinfo[i]->device_id;
+    context->devinfo[i]->devid = (cubeb_devid) context->devinfo[i]->device_id;
     context->devinfo[i]->friendly_name = strdup(j_out);
     context->devinfo[i]->group_id = strdup(j_out);
     context->devinfo[i]->vendor_name = strdup(j_out);
@@ -1014,9 +1006,9 @@ cbjack_enumerate_devices(cubeb * context, cubeb_device_type type,
   }
 
   if (type & CUBEB_DEVICE_TYPE_INPUT) {
-    context->devinfo[i] = (cubeb_device_info *)malloc(sizeof(cubeb_device_info));
+    context->devinfo[i] = (cubeb_device_info *) malloc(sizeof(cubeb_device_info));
     context->devinfo[i]->device_id = strdup(j_in);
-    context->devinfo[i]->devid = context->devinfo[i]->device_id;
+    context->devinfo[i]->devid = (cubeb_devid) context->devinfo[i]->device_id;
     context->devinfo[i]->friendly_name = strdup(j_in);
     context->devinfo[i]->group_id = strdup(j_in);
     context->devinfo[i]->vendor_name = strdup(j_in);

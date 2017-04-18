@@ -9,6 +9,7 @@
 #include "H264Converter.h"
 #include "ImageContainer.h"
 #include "MediaInfo.h"
+#include "MediaPrefs.h"
 #include "mp4_demuxer/AnnexB.h"
 #include "mp4_demuxer/H264.h"
 
@@ -230,10 +231,11 @@ H264Converter::CreateDecoderAndInit(MediaRawData* aSample)
     // Queue the incoming sample.
     mMediaRawSamples.AppendElement(aSample);
 
-    mInitPromiseRequest.Begin(mDecoder->Init()
+    mDecoder->Init()
       ->Then(AbstractThread::GetCurrent()->AsTaskQueue(), __func__, this,
              &H264Converter::OnDecoderInitDone,
-             &H264Converter::OnDecoderInitFailed));
+             &H264Converter::OnDecoderInitFailed)
+      ->Track(mInitPromiseRequest);
     return NS_ERROR_NOT_INITIALIZED;
   }
   return rv;
@@ -286,6 +288,14 @@ H264Converter::CheckForSPSChange(MediaRawData* aSample)
                                             mCurrentConfig.mExtraData)) {
         return NS_OK;
       }
+
+  if (MediaPrefs::MediaDecoderCheckRecycling() &&
+      mDecoder->SupportDecoderRecycling()) {
+    // Do not recreate the decoder, reuse it.
+    UpdateConfigFromExtraData(extra_data);
+    mNeedKeyframe = true;
+    return NS_OK;
+  }
   // The SPS has changed, signal to flush the current decoder and create a
   // new one.
   mDecoder->Flush();

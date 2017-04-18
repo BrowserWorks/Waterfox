@@ -316,7 +316,7 @@ class Assembler : public AssemblerX86Shared
 
     // Copy the assembly code to the given buffer, and perform any pending
     // relocations relying on the target address.
-    void executableCopy(uint8_t* buffer);
+    void executableCopy(uint8_t* buffer, bool flushICache = true);
 
     // Actual assembly emitting functions.
 
@@ -358,6 +358,13 @@ class Assembler : public AssemblerX86Shared
     }
     CodeOffset movWithPatch(ImmPtr imm, Register dest) {
         return movWithPatch(ImmWord(uintptr_t(imm.value)), dest);
+    }
+
+    // This is for patching during code generation, not after.
+    void patchAddq(CodeOffset offset, int32_t n) {
+        unsigned char* code = masm.acquireData();
+        X86Encoding::SetInt32(code + offset.offset(), n);
+        masm.releaseData();
     }
 
     // Load an ImmWord value into a register. Note that this instruction will
@@ -553,6 +560,10 @@ class Assembler : public AssemblerX86Shared
 
     void addq(Imm32 imm, Register dest) {
         masm.addq_ir(imm.value, dest.encoding());
+    }
+    CodeOffset addqWithPatch(Imm32 imm, Register dest) {
+        masm.addq_i32r(imm.value, dest.encoding());
+        return CodeOffset(masm.currentOffset());
     }
     void addq(Imm32 imm, const Operand& dest) {
         switch (dest.kind()) {

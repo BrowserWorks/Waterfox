@@ -102,6 +102,11 @@
 #include "nsMixedContentBlocker.h"
 #include "HSTSPrimerListener.h"
 #include "CacheStorageService.h"
+#include "HttpChannelParent.h"
+
+#ifdef MOZ_TASK_TRACER
+#include "GeckoTaskTracer.h"
+#endif
 
 namespace mozilla { namespace net {
 
@@ -1578,7 +1583,7 @@ nsHttpChannel::ProcessSingleSecurityHeader(uint32_t aType,
         // Process header will now discard the headers itself if the channel
         // wasn't secure (whereas before it had to be checked manually)
         uint32_t failureResult;
-        rv = sss->ProcessHeader(aType, mURI, securityHeader.get(), aSSLStatus,
+        rv = sss->ProcessHeader(aType, mURI, securityHeader, aSSLStatus,
                                 aFlags, nullptr, nullptr, &failureResult);
         if (NS_FAILED(rv)) {
             nsAutoString consoleErrorCategory;
@@ -1887,7 +1892,7 @@ nsHttpChannel::ProcessAltService()
         proxyInfo = do_QueryInterface(mProxyInfo);
     }
 
-    NeckoOriginAttributes originAttributes;
+    OriginAttributes originAttributes;
     NS_GetOriginAttributes(this, originAttributes);
 
     AltSvcMapping::ProcessHeader(altSvc, scheme, originHost, originPort,
@@ -1915,11 +1920,11 @@ nsHttpChannel::ProcessResponse()
                                   mConnectionInfo->EndToEndSSL());
         }
 
-        // how often do we see something like Alternate-Protocol: "443:quic,p=1"
-        nsAutoCString alt_protocol;
-        mResponseHead->GetHeader(nsHttp::Alternate_Protocol, alt_protocol);
-        bool saw_quic = (!alt_protocol.IsEmpty() &&
-                         PL_strstr(alt_protocol.get(), "quic")) ? 1 : 0;
+        // how often do we see something like Alt-Svc: "443:quic,p=1"
+        nsAutoCString alt_service;
+        mResponseHead->GetHeader(nsHttp::Alternate_Service, alt_service);
+        bool saw_quic = (!alt_service.IsEmpty() &&
+                         PL_strstr(alt_service.get(), "quic")) ? 1 : 0;
         Telemetry::Accumulate(Telemetry::HTTP_SAW_QUIC_ALT_PROTOCOL, saw_quic);
 
         // Gather data on how many URLS get redirected
@@ -5550,6 +5555,61 @@ NS_IMETHODIMP nsHttpChannel::OnAuthCancelled(bool userCancel)
     return NS_OK;
 }
 
+NS_IMETHODIMP nsHttpChannel::CloseStickyConnection()
+{
+    LOG(("nsHttpChannel::CloseStickyConnection this=%p", this));
+
+    // Require we are between OnStartRequest and OnStopRequest, because
+    // what we do here takes effect in OnStopRequest (not reusing the
+    // connection for next authentication round).
+    if (!mIsPending) {
+        LOG(("  channel not pending"));
+        NS_ERROR("CloseStickyConnection not called before OnStopRequest, won't have any effect");
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    MOZ_ASSERT(mTransaction);
+    if (!mTransaction) {
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    if (!(mCaps & NS_HTTP_STICKY_CONNECTION ||
+          mTransaction->Caps() & NS_HTTP_STICKY_CONNECTION)) {
+        LOG(("  not sticky"));
+        return NS_OK;
+    }
+
+    RefPtr<nsAHttpConnection> conn = mTransaction->GetConnectionReference();
+    if (!conn) {
+        LOG(("  no connection"));
+        return NS_OK;
+    }
+
+    // This turns the IsPersistent() indicator on the connection to false,
+    // and makes us throw it away in OnStopRequest.
+    conn->DontReuse();
+    return NS_OK;
+}
+
+NS_IMETHODIMP nsHttpChannel::ForceNoSpdy()
+{
+    LOG(("nsHttpChannel::ForceNoSpdy this=%p", this));
+
+    MOZ_ASSERT(mTransaction);
+    if (!mTransaction) {
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    mAllowSpdy = 0;
+    mCaps |= NS_HTTP_DISALLOW_SPDY;
+
+    if (!(mTransaction->Caps() & NS_HTTP_DISALLOW_SPDY)) {
+        mTransaction->DisableSpdy();
+    }
+
+    return NS_OK;
+}
+
 //-----------------------------------------------------------------------------
 // nsHttpChannel::nsISupports
 //-----------------------------------------------------------------------------
@@ -5687,6 +5747,18 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context)
                "security flags in loadInfo but asyncOpen2() not called");
 
     LOG(("nsHttpChannel::AsyncOpen [this=%p]\n", this));
+#ifdef MOZ_TASK_TRACER
+    {
+        uint64_t sourceEventId, parentTaskId;
+        tasktracer::SourceEventType sourceEventType;
+        GetCurTraceInfo(&sourceEventId, &parentTaskId, &sourceEventType);
+        nsCOMPtr<nsIURI> uri;
+        GetURI(getter_AddRefs(uri));
+        nsAutoCString urispec;
+        uri->GetSpec(urispec);
+        tasktracer::AddLabel("nsHttpChannel::AsyncOpen %s", urispec.get());
+    }
+#endif
 
     NS_CompareLoadInfoAndLoadContext(this);
 
@@ -5727,6 +5799,11 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context)
 
     AddCookiesToRequest();
 
+    // Set user agent override, do so before OnOpeningRequest notification
+    // since we want to allow consumers of that notification change or remove
+    // the User-Agent request header.
+    HttpBaseChannel::SetDocshellUserAgentOverride();
+
     // After we notify any observers (on-opening-request, loadGroup, etc) we
     // must return NS_OK and return any errors asynchronously via
     // OnStart/OnStopRequest.  Observers may add a reference to the channel
@@ -5737,9 +5814,6 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context)
     if (!(mLoadFlags & LOAD_REPLACE)) {
         gHttpHandler->OnOpeningRequest(this);
     }
-
-    // Set user agent override
-    HttpBaseChannel::SetDocshellUserAgentOverride();
 
     mIsPending = true;
     mWasOpened = true;
@@ -5835,7 +5909,7 @@ nsHttpChannel::BeginConnect()
 
     SetDoNotTrack();
 
-    NeckoOriginAttributes originAttributes;
+    OriginAttributes originAttributes;
     NS_GetOriginAttributes(this, originAttributes);
 
     RefPtr<AltSvcMapping> mapping;
@@ -5925,11 +5999,11 @@ nsHttpChannel::BeginConnect()
         return AsyncCall(&nsHttpChannel::HandleAsyncAPIRedirect);
     }
     // Check to see if this principal exists on local blocklists.
-    RefPtr<nsChannelClassifier> channelClassifier = new nsChannelClassifier();
+    RefPtr<nsChannelClassifier> channelClassifier = new nsChannelClassifier(this);
     if (mLoadFlags & LOAD_CLASSIFY_URI) {
         nsCOMPtr<nsIURIClassifier> classifier = do_GetService(NS_URICLASSIFIERSERVICE_CONTRACTID);
         bool tpEnabled = false;
-        channelClassifier->ShouldEnableTrackingProtection(this, &tpEnabled);
+        channelClassifier->ShouldEnableTrackingProtection(&tpEnabled);
         if (classifier && tpEnabled) {
             // We skip speculative connections by setting mLocalBlocklist only
             // when tracking protection is enabled. Though we could do this for
@@ -5941,7 +6015,7 @@ nsHttpChannel::BeginConnect()
             if (NS_SUCCEEDED(rv) && uri) {
                 nsAutoCString tables;
                 Preferences::GetCString("urlclassifier.trackingTable", &tables);
-                nsAutoCString results;
+                nsTArray<nsCString> results;
                 rv = classifier->ClassifyLocalWithTables(uri, tables, results);
                 if (NS_SUCCEEDED(rv) && !results.IsEmpty()) {
                     LOG(("nsHttpChannel::ClassifyLocalWithTables found "
@@ -6052,7 +6126,7 @@ nsHttpChannel::BeginConnect()
     // be overridden.
     LOG(("nsHttpChannel::Starting nsChannelClassifier %p [this=%p]",
          channelClassifier.get(), this));
-    channelClassifier->Start(this);
+    channelClassifier->Start();
     if (callContinueBeginConnect) {
         return ContinueBeginConnectWithResult();
     }
@@ -6123,6 +6197,16 @@ nsHttpChannel::SetPriority(int32_t value)
     mPriority = newValue;
     if (mTransaction)
         gHttpHandler->RescheduleTransaction(mTransaction, mPriority);
+
+    // If this channel is the real channel for an e10s channel, notify the
+    // child side about the priority change as well.
+    nsCOMPtr<nsIParentChannel> parentChannel;
+    NS_QueryNotificationCallbacks(this, parentChannel);
+    RefPtr<HttpChannelParent> httpParent = do_QueryObject(parentChannel);
+    if (httpParent) {
+        httpParent->DoSendSetPriority(newValue);
+    }
+
     return NS_OK;
 }
 
@@ -6666,7 +6750,11 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
         // If we are using the transaction to serve content, we also save the
         // time since async open in the cache entry so we can compare telemetry
         // between cache and net response.
-        if (request == mTransactionPump && mCacheEntry &&
+        // Do not store the time of conditional requests because even if we
+        // fetch the data from the server, the time includes loading of the old
+        // cache entry which would skew the network load time.
+        if (request == mTransactionPump && mCacheEntry && !mDidReval &&
+            !mCustomConditionalRequest &&
             !mAsyncOpenTime.IsNull() && !mOnStartRequestTimestamp.IsNull()) {
             nsAutoCString onStartTime;
             onStartTime.AppendInt( (uint64_t) (mOnStartRequestTimestamp - mAsyncOpenTime).ToMilliseconds());
@@ -8070,19 +8158,24 @@ nsHttpChannel::OnHSTSPrimingFailed(nsresult aError, bool aCached)
 
     LOG(("HSTS Priming Failed [this=%p], %s the load", this,
                 (wouldBlock) ? "blocking" : "allowing"));
-    if (aCached) {
+    if (aError == NS_ERROR_HSTS_PRIMING_TIMEOUT) {
+        // A priming request was sent, but timed out
+        Telemetry::Accumulate(Telemetry::MIXED_CONTENT_HSTS_PRIMING_RESULT,
+                (wouldBlock) ?  HSTSPrimingResult::eHSTS_PRIMING_TIMEOUT_BLOCK :
+                HSTSPrimingResult::eHSTS_PRIMING_TIMEOUT_ACCEPT);
+    } else if (aCached) {
         // Between the time we marked for priming and started the priming request,
         // the host was found to not allow the upgrade, probably from another
         // priming request.
         Telemetry::Accumulate(Telemetry::MIXED_CONTENT_HSTS_PRIMING_RESULT,
                 (wouldBlock) ?  HSTSPrimingResult::eHSTS_PRIMING_CACHED_BLOCK :
-                                HSTSPrimingResult::eHSTS_PRIMING_CACHED_NO_UPGRADE);
+                HSTSPrimingResult::eHSTS_PRIMING_CACHED_NO_UPGRADE);
     } else {
         // A priming request was sent, and no HSTS header was found that allows
         // the upgrade.
         Telemetry::Accumulate(Telemetry::MIXED_CONTENT_HSTS_PRIMING_RESULT,
                 (wouldBlock) ?  HSTSPrimingResult::eHSTS_PRIMING_FAILED_BLOCK :
-                                HSTSPrimingResult::eHSTS_PRIMING_FAILED_ACCEPT);
+                HSTSPrimingResult::eHSTS_PRIMING_FAILED_ACCEPT);
     }
 
     // Don't visit again for at least

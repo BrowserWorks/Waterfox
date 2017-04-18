@@ -13,24 +13,65 @@ const Ci = Components.interfaces;
 Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+                                  "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "serializationHelper",
                                    "@mozilla.org/network/serialization-helper;1",
                                    "nsISerializationHelper");
+XPCOMUtils.defineLazyGetter(this, "SERIALIZED_SYSTEMPRINCIPAL", function() {
+  return Utils.serializePrincipal(Services.scriptSecurityManager.getSystemPrincipal());
+});
 
 function debug(msg) {
   Services.console.logStringMessage("Utils: " + msg);
 }
 
 this.Utils = Object.freeze({
-  makeURI: function (url) {
-    return Services.io.newURI(url, null, null);
+  get SERIALIZED_SYSTEMPRINCIPAL() { return SERIALIZED_SYSTEMPRINCIPAL; },
+
+  makeURI(url) {
+    return Services.io.newURI(url);
   },
 
-  makeInputStream: function (aString) {
+  makeInputStream(data) {
+    if (typeof data == "string") {
+      let stream = Cc["@mozilla.org/io/string-input-stream;1"].
+                   createInstance(Ci.nsISupportsCString);
+      stream.data = data;
+      return stream; // XPConnect will QI this to nsIInputStream for us.
+    }
+
     let stream = Cc["@mozilla.org/io/string-input-stream;1"].
                  createInstance(Ci.nsISupportsCString);
-    stream.data = aString;
+    stream.data = data.content;
+
+    if (data.headers) {
+      let mimeStream = Cc["@mozilla.org/network/mime-input-stream;1"]
+          .createInstance(Ci.nsIMIMEInputStream);
+
+      mimeStream.setData(stream);
+      for (let [name, value] of data.headers) {
+        mimeStream.addHeader(name, value);
+      }
+      return mimeStream;
+    }
+
     return stream; // XPConnect will QI this to nsIInputStream for us.
+  },
+
+  serializeInputStream(aStream) {
+    let data = {
+      content: NetUtil.readInputStreamToString(aStream, aStream.available()),
+    };
+
+    if (aStream instanceof Ci.nsIMIMEInputStream) {
+      data.headers = new Map();
+      aStream.visitHeaders((name, value) => {
+        data.headers.set(name, value);
+      });
+    }
+
+    return data;
   },
 
   /**
@@ -39,7 +80,7 @@ this.Utils = Object.freeze({
    * "mozilla.org", this will return true. It would return false the other way
    * around.
    */
-  hasRootDomain: function (url, domain) {
+  hasRootDomain(url, domain) {
     let host;
 
     try {
@@ -61,7 +102,7 @@ this.Utils = Object.freeze({
            (prevChar == "." || prevChar == "/");
   },
 
-  shallowCopy: function (obj) {
+  shallowCopy(obj) {
     let retval = {};
 
     for (let key of Object.keys(obj)) {

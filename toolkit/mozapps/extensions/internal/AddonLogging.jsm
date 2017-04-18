@@ -65,8 +65,7 @@ function getStackDetails(aException) {
       sourceName: stackFrame.filename,
       lineNumber: stackFrame.lineNumber
     };
-  }
-  catch (e) {
+  } catch (e) {
     return {
       sourceName: null,
       lineNumber: 0
@@ -81,7 +80,7 @@ function AddonLogger(aName) {
 AddonLogger.prototype = {
   name: null,
 
-  error: function(aStr, aException) {
+  error(aStr, aException) {
     let message = formatLogMessage("error", this.name, aStr, aException);
 
     let stack = getStackDetails(aException);
@@ -120,11 +119,10 @@ AddonLogger.prototype = {
                          message + " at " + stack.sourceName + ":" +
                          stack.lineNumber + "\n");
       writer.close();
-    }
-    catch (e) { }
+    } catch (e) { }
   },
 
-  warn: function(aStr, aException) {
+  warn(aStr, aException) {
     let message = formatLogMessage("warn", this.name, aStr, aException);
 
     let stack = getStackDetails(aException);
@@ -139,7 +137,7 @@ AddonLogger.prototype = {
       dump("*** " + message + "\n");
   },
 
-  log: function(aStr, aException) {
+  log(aStr, aException) {
     if (gDebugLogEnabled) {
       let message = formatLogMessage("log", this.name, aStr, aException);
       dump("*** " + message + "\n");
@@ -149,7 +147,7 @@ AddonLogger.prototype = {
 };
 
 this.LogManager = {
-  getLogger: function(aName, aTarget) {
+  getLogger(aName, aTarget) {
     let logger = new AddonLogger(aName);
 
     if (aTarget) {
@@ -167,22 +165,20 @@ this.LogManager = {
 };
 
 var PrefObserver = {
-  init: function() {
+  init() {
     Services.prefs.addObserver(PREF_LOGGING_ENABLED, this, false);
     Services.obs.addObserver(this, "xpcom-shutdown", false);
     this.observe(null, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID, PREF_LOGGING_ENABLED);
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic == "xpcom-shutdown") {
       Services.prefs.removeObserver(PREF_LOGGING_ENABLED, this);
       Services.obs.removeObserver(this, "xpcom-shutdown");
-    }
-    else if (aTopic == NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) {
+    } else if (aTopic == NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) {
       try {
         gDebugLogEnabled = Services.prefs.getBoolPref(PREF_LOGGING_ENABLED);
-      }
-      catch (e) {
+      } catch (e) {
         gDebugLogEnabled = false;
       }
     }

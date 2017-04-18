@@ -294,6 +294,8 @@ nsRange::CreateRange(nsIDOMNode* aStartParent, int32_t aStartOffset,
 
   RefPtr<nsRange> range = new nsRange(startParent);
 
+  // XXX this can be optimized by inlining SetStart/End and calling
+  // DoSetRange *once*.
   nsresult rv = range->SetStart(startParent, aStartOffset);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -351,7 +353,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsRange)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mEndParent)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRoot)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSelection)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(nsRange)
@@ -2886,7 +2887,7 @@ GetTextFrameForContent(nsIContent* aContent, bool aFlushLayout)
         static_cast<nsGenericDOMDataNode*>(aContent));
 
     if (aFlushLayout) {
-      aContent->OwnerDoc()->FlushPendingNotifications(Flush_Layout);
+      aContent->OwnerDoc()->FlushPendingNotifications(FlushType::Layout);
     }
 
     nsIFrame* frame = aContent->GetPrimaryFrame();
@@ -2971,7 +2972,7 @@ nsRange::CollectClientRectsAndText(nsLayoutUtils::RectCallback* aCollector,
   }
 
   if (aFlushLayout) {
-    aStartParent->OwnerDoc()->FlushPendingNotifications(Flush_Layout);
+    aStartParent->OwnerDoc()->FlushPendingNotifications(FlushType::Layout);
     // Recheck whether we're still in the document
     if (!aStartParent->IsInUncomposedDoc()) {
       return;
@@ -3117,7 +3118,7 @@ nsRange::GetUsedFontFaces(nsIDOMFontFaceList** aResult)
   // Flush out layout so our frames are up to date.
   nsIDocument* doc = mStartParent->OwnerDoc();
   NS_ENSURE_TRUE(doc, NS_ERROR_UNEXPECTED);
-  doc->FlushPendingNotifications(Flush_Frames);
+  doc->FlushPendingNotifications(FlushType::Frames);
 
   // Recheck whether we're still in the document
   NS_ENSURE_TRUE(mStartParent->IsInUncomposedDoc(), NS_ERROR_UNEXPECTED);
@@ -3260,7 +3261,7 @@ nsRange::ExcludeNonSelectableNodes(nsTArray<RefPtr<nsRange>>* aOutRanges)
             frame = p->GetPrimaryFrame();
           }
           if (frame) {
-            frame->IsSelectable(&selectable, nullptr);
+            selectable = frame->IsSelectable(nullptr);
           }
         }
       }
@@ -3384,13 +3385,14 @@ IsVisibleAndNotInReplacedElement(nsIFrame* aFrame)
 }
 
 static bool
-ElementIsVisible(Element* aElement)
+ElementIsVisibleNoFlush(Element* aElement)
 {
   if (!aElement) {
     return false;
   }
-  RefPtr<nsStyleContext> sc = nsComputedDOMStyle::GetStyleContextForElement(
-    aElement, nullptr, nullptr);
+  RefPtr<nsStyleContext> sc =
+    nsComputedDOMStyle::GetStyleContextForElementNoFlush(aElement, nullptr,
+                                                         nullptr);
   return sc && sc->StyleVisibility()->IsVisible();
 }
 
@@ -3518,7 +3520,7 @@ nsRange::GetInnerTextNoFlush(DOMString& aValue, ErrorResult& aError,
     if (currentState == AT_NODE) {
       bool isText = currentNode->IsNodeOfType(nsINode::eTEXT);
       if (isText && currentNode->GetParent()->IsHTMLElement(nsGkAtoms::rp) &&
-          ElementIsVisible(currentNode->GetParent()->AsElement())) {
+          ElementIsVisibleNoFlush(currentNode->GetParent()->AsElement())) {
         nsAutoString str;
         currentNode->GetTextContent(str, aError);
         result.Append(str);

@@ -33,6 +33,15 @@ interface nsIPartialSHistoryListener;
 interface nsISHistory: nsISupports
 {
   /**
+   * The size of the window of SHEntries which can have alive viewers in the
+   * bfcache around the currently active SHEntry.
+   *
+   * We try to keep viewers for SHEntries between index - VIEWER_WINDOW and
+   * index + VIEWER_WINDOW alive.
+   */
+  const long VIEWER_WINDOW = 3;
+
+  /**
    * An attribute denoting whether the nsISHistory is associated to a grouped
    * session history.
    *
@@ -73,7 +82,12 @@ interface nsISHistory: nsISupports
    readonly attribute long index;
 
   /**
-   * A readonly property of the interface that returns 
+   * A readonly property which equals index + globalIndexOffset.
+   */
+   readonly attribute long globalIndex;
+
+  /**
+   * A readonly property of the interface that returns
    * the index of the last document that started to load and
    * didn't finished yet. When document finishes the loading
    * value -1 is returned.
@@ -104,6 +118,13 @@ interface nsISHistory: nsISupports
    */
    nsISHEntry getEntryAtIndex(in long index, in boolean modifyIndex);
 
+  /**
+   * Load the entry at given index to root docshell directly in order to
+   * restore to an entry in grouped session history navigation or session
+   * restore case. This function will not notify nsISHistoryListener, as it's
+   * not considered a normal history navigation.
+   */
+   void restoreToEntryAtIndex(in long index);
 
   /**
    * Called to purge older documents from history.
@@ -203,13 +224,13 @@ interface nsISHistory: nsISupports
    *                          session history.
    * @param targetIndex       The local index to navigate to.
    */
-   void onPartialSessionHistoryActive(in long globalLength, in long targetIndex);
+   void onPartialSHistoryActive(in long globalLength, in long targetIndex);
 
   /**
    * Called when this nsISHistory has became inactive history of a grouped
    * session history.
    */
-   void onPartialSessionHistoryDeactive();
+   void onPartialSHistoryDeactive();
 
   /**
    * Called when it's attached to a nsIGroupedSHistory instance.
@@ -217,5 +238,5 @@ interface nsISHistory: nsISupports
    * @param offset            The number of entries in the grouped session
    *                          history before this session history object.
    */
-   void onAttachGroupedSessionHistory(in long offset);
+   void onAttachGroupedSHistory(in long offset);
 };

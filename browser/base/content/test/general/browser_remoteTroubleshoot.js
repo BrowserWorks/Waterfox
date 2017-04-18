@@ -5,9 +5,9 @@
 var {WebChannel} = Cu.import("resource://gre/modules/WebChannel.jsm", {});
 
 const TEST_URL_TAIL = "example.com/browser/browser/base/content/test/general/test_remoteTroubleshoot.html"
-const TEST_URI_GOOD = Services.io.newURI("https://" + TEST_URL_TAIL, null, null);
-const TEST_URI_BAD = Services.io.newURI("http://" + TEST_URL_TAIL, null, null);
-const TEST_URI_GOOD_OBJECT = Services.io.newURI("https://" + TEST_URL_TAIL + "?object", null, null);
+const TEST_URI_GOOD = Services.io.newURI("https://" + TEST_URL_TAIL);
+const TEST_URI_BAD = Services.io.newURI("http://" + TEST_URL_TAIL);
+const TEST_URI_GOOD_OBJECT = Services.io.newURI("https://" + TEST_URL_TAIL + "?object");
 
 // Creates a one-shot web-channel for the test data to be sent back from the test page.
 function promiseChannelResponse(channelID, originOrPermission) {
@@ -37,8 +37,8 @@ function promiseNewChannelResponse(uri) {
 add_task(function*() {
   // We haven't set a permission yet - so even the "good" URI should fail.
   let got = yield promiseNewChannelResponse(TEST_URI_GOOD);
-  // Should have no data.
-  Assert.ok(got.message === undefined, "should have failed to get any data");
+  // Should return an error.
+  Assert.ok(got.message.errno === 2, "should have failed with errno 2, no such channel");
 
   // Add a permission manager entry for our URI.
   Services.perms.add(TEST_URI_GOOD,
@@ -64,7 +64,7 @@ add_task(function*() {
     updateChannel = Cu.import("resource://gre/modules/UpdateUtils.jsm", {}).UpdateUtils.UpdateChannel;
   } catch (ex) {}
   if (!updateChannel) {
-    Assert.ok(!('updateChannel' in got.message.application),
+    Assert.ok(!("updateChannel" in got.message.application),
                 "should not have update channel where not available.");
   } else {
     Assert.equal(got.message.application.updateChannel, updateChannel,
@@ -76,9 +76,9 @@ add_task(function*() {
   Assert.ok(!got.message.modifiedPreferences, "should not have a modifiedPreferences key");
   Assert.ok(!got.message.crashes, "should not have crash info");
 
-  // Now a http:// URI - should get nothing even with the permission setup.
+  // Now a http:// URI - should receive an error
   got = yield promiseNewChannelResponse(TEST_URI_BAD);
-  Assert.ok(got.message === undefined, "should have failed to get any data");
+  Assert.ok(got.message.errno === 2, "should have failed with errno 2, no such channel");
 
   // Check that the page can send an object as well if it's in the whitelist
   let webchannelWhitelistPref = "webchannel.allowObject.urlWhitelist";

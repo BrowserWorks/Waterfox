@@ -21,7 +21,7 @@ function frame_script() {
 }
 
 var gAddonAndWindowListener = {
-  onOpenWindow: function(win) {
+  onOpenWindow(win) {
     var window = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
     info("Window opened");
 
@@ -37,8 +37,8 @@ var gAddonAndWindowListener = {
       window.document.documentElement.acceptDialog();
     }, window);
   },
-  onCloseWindow: function(win) { },
-  onInstallEnded: function(install) {
+  onCloseWindow(win) { },
+  onInstallEnded(install) {
     install.cancel();
   },
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediatorListener])
@@ -47,10 +47,6 @@ var gAddonAndWindowListener = {
 function installNext() {
   let tab = gQueuedForInstall.shift();
   tab.linkedBrowser.messageManager.sendAsyncMessage("Test:StartInstall");
-}
-
-function winForTab(t) {
-  return t.linkedBrowser.contentWindow;
 }
 
 function createTab(url) {

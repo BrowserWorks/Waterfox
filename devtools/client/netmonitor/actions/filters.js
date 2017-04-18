@@ -1,12 +1,13 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 const {
-  TOGGLE_FILTER_TYPE,
-  ENABLE_FILTER_TYPE_ONLY,
-  SET_FILTER_TEXT,
+  ENABLE_REQUEST_FILTER_TYPE_ONLY,
+  TOGGLE_REQUEST_FILTER_TYPE,
+  SET_REQUEST_FILTER_TEXT,
 } = require("../constants");
 
 /**
@@ -16,9 +17,9 @@ const {
  *
  * @param {string} filter - A filter type is going to be updated
  */
-function toggleFilterType(filter) {
+function toggleRequestFilterType(filter) {
   return {
-    type: TOGGLE_FILTER_TYPE,
+    type: TOGGLE_REQUEST_FILTER_TYPE,
     filter,
   };
 }
@@ -31,27 +32,27 @@ function toggleFilterType(filter) {
  *
  * @param {string} filter - A filter type is going to be updated
  */
-function enableFilterTypeOnly(filter) {
+function enableRequestFilterTypeOnly(filter) {
   return {
-    type: ENABLE_FILTER_TYPE_ONLY,
+    type: ENABLE_REQUEST_FILTER_TYPE_ONLY,
     filter,
   };
 }
 
 /**
- * Set filter text.
+ * Set filter text in toolbar.
  *
- * @param {string} url - A filter text is going to be set
+ * @param {string} text - A filter text is going to be set
  */
-function setFilterText(url) {
+function setRequestFilterText(text) {
   return {
-    type: SET_FILTER_TEXT,
-    url,
+    type: SET_REQUEST_FILTER_TEXT,
+    text,
   };
 }
 
 module.exports = {
-  toggleFilterType,
-  enableFilterTypeOnly,
-  setFilterText,
+  enableRequestFilterTypeOnly,
+  toggleRequestFilterType,
+  setRequestFilterText,
 };

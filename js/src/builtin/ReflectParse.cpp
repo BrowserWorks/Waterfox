@@ -2140,7 +2140,7 @@ ASTSerializer::exportDeclaration(ParseNode* pn, MutableHandleValue dst)
     MOZ_ASSERT(pn->isKind(PNK_EXPORT) ||
                pn->isKind(PNK_EXPORT_FROM) ||
                pn->isKind(PNK_EXPORT_DEFAULT));
-    MOZ_ASSERT(pn->getArity() == pn->isKind(PNK_EXPORT) ? PN_UNARY : PN_BINARY);
+    MOZ_ASSERT(pn->getArity() == (pn->isKind(PNK_EXPORT) ? PN_UNARY : PN_BINARY));
     MOZ_ASSERT_IF(pn->isKind(PNK_EXPORT_FROM), pn->pn_right->isKind(PNK_STRING));
 
     RootedValue decl(cx, NullValue());
@@ -3044,7 +3044,12 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
             MOZ_ASSERT(pn->pn_pos.encloses(next->pn_pos));
 
             RootedValue expr(cx);
-            expr.setString(next->pn_atom);
+            if (next->isKind(PNK_RAW_UNDEFINED)) {
+                expr.setUndefined();
+            } else {
+                MOZ_ASSERT(next->isKind(PNK_TEMPLATE_STRING));
+                expr.setString(next->pn_atom);
+            }
             cooked.infallibleAppend(expr);
         }
 
@@ -3136,6 +3141,7 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
       case PNK_TRUE:
       case PNK_FALSE:
       case PNK_NULL:
+      case PNK_RAW_UNDEFINED:
         return literal(pn, dst);
 
       case PNK_YIELD_STAR:
@@ -3276,6 +3282,10 @@ ASTSerializer::literal(ParseNode* pn, MutableHandleValue dst)
         val.setNull();
         break;
 
+      case PNK_RAW_UNDEFINED:
+        val.setUndefined();
+        break;
+
       case PNK_TRUE:
         val.setBoolean(true);
         break;
@@ -3407,15 +3417,10 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
         : GeneratorStyle::None;
 
     bool isAsync = pn->pn_funbox->isAsync();
-    bool isExpression =
-#if JS_HAS_EXPR_CLOSURES
-        func->isExprBody();
-#else
-        false;
-#endif
+    bool isExpression = pn->pn_funbox->isExprBody();
 
     RootedValue id(cx);
-    RootedAtom funcAtom(cx, func->name());
+    RootedAtom funcAtom(cx, func->explicitName());
     if (!optIdentifier(funcAtom, nullptr, &id))
         return false;
 
@@ -3423,7 +3428,7 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
     NodeVector defaults(cx);
 
     RootedValue body(cx), rest(cx);
-    if (func->hasRest())
+    if (pn->pn_funbox->hasRest())
         rest.setUndefined();
     else
         rest.setNull();

@@ -65,6 +65,7 @@ class MacroAssemblerMIPSShared : public Assembler
     void ma_li(Register dest, ImmGCPtr ptr);
 
     void ma_li(Register dest, Imm32 imm);
+    void ma_liPatchable(Register dest, Imm32 imm);
 
     // Shift operations
     void ma_sll(Register rd, Register rt, Imm32 shift);
@@ -163,7 +164,6 @@ class MacroAssemblerMIPSShared : public Assembler
 
     // fp instructions
     void ma_lis(FloatRegister dest, float value);
-    void ma_lis(FloatRegister dest, wasm::RawF32 value);
     void ma_liNegZero(FloatRegister dest);
 
     void ma_sd(FloatRegister fd, BaseIndex address);
@@ -183,6 +183,12 @@ class MacroAssemblerMIPSShared : public Assembler
     void ma_cmp_set(Register dst, Register lhs, Imm32 imm, Condition c);
     void ma_cmp_set_double(Register dst, FloatRegister lhs, FloatRegister rhs, DoubleCondition c);
     void ma_cmp_set_float32(Register dst, FloatRegister lhs, FloatRegister rhs, DoubleCondition c);
+
+    BufferOffset ma_BoundsCheck(Register bounded) {
+        BufferOffset bo = m_buffer.nextOffset();
+        ma_liPatchable(bounded, Imm32(0));
+        return bo;
+    }
 
     void moveToDoubleLo(Register src, FloatRegister dest) {
         as_mtc1(src, dest);
@@ -249,11 +255,6 @@ class MacroAssemblerMIPSShared : public Assembler
     void atomicExchange(int nbytes, bool signExtend, const BaseIndex& address, Register value,
                         Register valueTemp, Register offsetTemp, Register maskTemp,
                         Register output);
-
-  public:
-    struct AutoPrepareForPatching {
-        explicit AutoPrepareForPatching(MacroAssemblerMIPSShared&) {}
-    };
 };
 
 } // namespace jit

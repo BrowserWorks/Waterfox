@@ -71,8 +71,6 @@ public:
 
   virtual void EndFrame() override;
 
-  virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) override {}
-
   virtual void PrepareViewport(const gfx::IntSize& aSize);
 
   virtual bool SupportsPartialTextureUpdate() override{ return true; }
@@ -115,7 +113,7 @@ public:
   virtual void SetScreenRenderOffset(const ScreenPoint& aOffset) override
   {
     if (aOffset.x || aOffset.y) {
-      NS_RUNTIMEABORT("SetScreenRenderOffset not supported by CompositorD3D9.");
+      MOZ_CRASH("SetScreenRenderOffset not supported by CompositorD3D9.");
     }
     // If the offset is 0, 0 that's okay.
   }

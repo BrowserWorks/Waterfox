@@ -11,12 +11,10 @@ Cu.import("resource://testing-common/services/sync/utils.js");
 
 function run_test() {
   validate_all_future_pings();
-  let logger = Log.repository.rootLogger;
   Log.repository.rootLogger.addAppender(new Log.DumpAppender());
 
-  let guidSvc = new FakeGUIDService();
   let clients = new ServerCollection();
-  let meta_global = new ServerWBO('global');
+  let meta_global = new ServerWBO("global");
 
   let collectionsHelper = track_collections_helper();
   let upd = collectionsHelper.with_updated_collection;
@@ -55,7 +53,6 @@ function run_test() {
   }
 
   const GLOBAL_PATH = "/1.1/johndoe/storage/meta/global";
-  const INFO_PATH = "/1.1/johndoe/info/collections";
 
   let handlers = {
     "/1.1/johndoe/storage": storageHandler,
@@ -160,7 +157,6 @@ function run_test() {
     metaColl.delete({});
 
     _("Do an initial sync.");
-    let beforeSync = Date.now()/1000;
     Service.sync();
 
     _("Checking that remoteSetup returns true.");
@@ -224,7 +220,7 @@ function run_test() {
     let keys = Service.collectionKeys.asWBO();
     let b = new BulkKeyBundle("hmacerror");
     b.generateRandom();
-    collections.crypto = keys.modified = 100 + (Date.now()/1000);  // Future modification time.
+    collections.crypto = keys.modified = 100 + (Date.now() / 1000);  // Future modification time.
     keys.encrypt(b);
     keys.upload(Service.resource(Service.cryptoKeysURL));
 

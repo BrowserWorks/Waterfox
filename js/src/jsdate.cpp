@@ -354,7 +354,19 @@ MakeDate(double day, double time)
 JS_PUBLIC_API(double)
 JS::MakeDate(double year, unsigned month, unsigned day)
 {
+    MOZ_ASSERT(month <= 11);
+    MOZ_ASSERT(day >= 1 && day <= 31);
+
     return ::MakeDate(MakeDay(year, month, day), 0);
+}
+
+JS_PUBLIC_API(double)
+JS::MakeDate(double year, unsigned month, unsigned day, double time)
+{
+    MOZ_ASSERT(month <= 11);
+    MOZ_ASSERT(day >= 1 && day <= 31);
+
+    return ::MakeDate(MakeDay(year, month, day), time);
 }
 
 JS_PUBLIC_API(double)
@@ -3225,7 +3237,7 @@ js::DateConstructor(JSContext* cx, unsigned argc, Value* vp)
 static JSObject*
 CreateDatePrototype(JSContext* cx, JSProtoKey key)
 {
-    return cx->global()->createBlankPrototype(cx, &DateObject::protoClass_);
+    return GlobalObject::createBlankPrototype(cx, cx->global(), &DateObject::protoClass_);
 }
 
 static bool
@@ -3261,22 +3273,11 @@ const Class DateObject::class_ = {
     &DateObjectClassSpec
 };
 
-static const ClassSpec DateObjectProtoClassSpec = {
-    DELEGATED_CLASSSPEC(DateObject::class_.spec),
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    ClassSpec::IsDelegated
-};
-
 const Class DateObject::protoClass_ = {
     js_Object_str,
     JSCLASS_HAS_CACHED_PROTO(JSProto_Date),
     JS_NULL_CLASS_OPS,
-    &DateObjectProtoClassSpec
+    &DateObjectClassSpec
 };
 
 JSObject*

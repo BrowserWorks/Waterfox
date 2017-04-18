@@ -158,7 +158,7 @@ function wire(root, selectorOrElement, descriptor) {
   for (let i = 0; i < matches.length; i++) {
     let element = matches[i];
     forEach(descriptor.events, function (name, handler) {
-      element.addEventListener(name, handler, false);
+      element.addEventListener(name, handler);
     });
     forEach(descriptor.attributes, element.setAttribute);
   }
@@ -185,7 +185,7 @@ function showFilePicker(path, toSave, parentWindow, callback,
   if (typeof path == "string") {
     try {
       if (Services.io.extractScheme(path) == "file") {
-        let uri = Services.io.newURI(path, null, null);
+        let uri = Services.io.newURI(path);
         let file = uri.QueryInterface(Ci.nsIFileURL).file;
         callback(file);
         return;
@@ -230,5 +230,4 @@ function showFilePicker(path, toSave, parentWindow, callback,
   fp.appendFilter(getString(key + ".filter"), "*.css");
   fp.appendFilters(fp.filterAll);
   fp.open(fpCallback);
-  return;
 }

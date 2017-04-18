@@ -15,14 +15,14 @@ Cu.import("resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 
-Cu.importGlobalProperties(['URL']);
+Cu.importGlobalProperties(["URL"]);
 
 this.BrowserUtils = {
 
   /**
    * Prints arguments separated by a space and appends a new line.
    */
-  dumpLn: function (...args) {
+  dumpLn(...args) {
     for (let a of args)
       dump(a + " ");
     dump("\n");
@@ -32,7 +32,7 @@ this.BrowserUtils = {
    * restartApplication: Restarts the application, keeping it in
    * safe mode if it is already in safe mode.
    */
-  restartApplication: function() {
+  restartApplication() {
     let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"]
                        .getService(Ci.nsIAppStartup);
     let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
@@ -65,7 +65,7 @@ this.BrowserUtils = {
    *        Flags to be passed to checkLoadURIStr. If undefined,
    *        nsIScriptSecurityManager.STANDARD will be passed.
    */
-  urlSecurityCheck: function(aURL, aPrincipal, aFlags) {
+  urlSecurityCheck(aURL, aPrincipal, aFlags) {
     var secMan = Services.scriptSecurityManager;
     if (aFlags === undefined) {
       aFlags = secMan.STANDARD;
@@ -80,8 +80,7 @@ this.BrowserUtils = {
       let principalStr = "";
       try {
         principalStr = " from " + aPrincipal.URI.spec;
-      }
-      catch (e2) { }
+      } catch (e2) { }
 
       throw "Load of " + aURL + principalStr + " denied.";
     }
@@ -130,16 +129,16 @@ this.BrowserUtils = {
    * @param aBaseURI Base URI to resolve aURL, or null.
    * @return an nsIURI object based on aURL.
    */
-  makeURI: function(aURL, aOriginCharset, aBaseURI) {
+  makeURI(aURL, aOriginCharset, aBaseURI) {
     return Services.io.newURI(aURL, aOriginCharset, aBaseURI);
   },
 
-  makeFileURI: function(aFile) {
+  makeFileURI(aFile) {
     return Services.io.newFileURI(aFile);
   },
 
-  makeURIFromCPOW: function(aCPOWURI) {
-    return Services.io.newURI(aCPOWURI.spec, aCPOWURI.originCharset, null);
+  makeURIFromCPOW(aCPOWURI) {
+    return Services.io.newURI(aCPOWURI.spec, aCPOWURI.originCharset);
   },
 
   /**
@@ -148,7 +147,7 @@ this.BrowserUtils = {
    * be relative to the left/top of the tab. In the chrome process,
    * the coordinates are relative to the user's screen.
    */
-  getElementBoundingScreenRect: function(aElement) {
+  getElementBoundingScreenRect(aElement) {
     return this.getElementBoundingRect(aElement, true);
   },
 
@@ -158,7 +157,7 @@ this.BrowserUtils = {
    * the left/top of the topmost content area. If aInScreenCoords is true,
    * screen coordinates will be returned instead.
    */
-  getElementBoundingRect: function(aElement, aInScreenCoords) {
+  getElementBoundingRect(aElement, aInScreenCoords) {
     let rect = aElement.getBoundingClientRect();
     let win = aElement.ownerDocument.defaultView;
 
@@ -194,7 +193,7 @@ this.BrowserUtils = {
     return rect;
   },
 
-  onBeforeLinkTraversal: function(originalTarget, linkURI, linkNode, isAppTab) {
+  onBeforeLinkTraversal(originalTarget, linkURI, linkNode, isAppTab) {
     // Don't modify non-default targets or targets that aren't in top-level app
     // tab docshells (isAppTab will be false for app tab subframes).
     if (originalTarget != "" || !isAppTab)
@@ -231,7 +230,7 @@ this.BrowserUtils = {
    * @param aName The full-length name string of the plugin.
    * @return the simplified name string.
    */
-  makeNicePluginName: function (aName) {
+  makeNicePluginName(aName) {
     if (aName == "Shockwave Flash")
       return "Adobe Flash";
     // Regex checks if aName begins with "Java" + non-letter char
@@ -256,7 +255,7 @@ this.BrowserUtils = {
    * @param linkNode The <a> element, or null.
    * @return a boolean indicating if linkNode has a rel="noreferrer" attribute.
    */
-  linkHasNoReferrer: function (linkNode) {
+  linkHasNoReferrer(linkNode) {
     // A null linkNode typically means that we're checking a link that wasn't
     // provided via an <a> link, like a text-selected URL.  Don't leak
     // referrer information in this case.
@@ -270,7 +269,7 @@ this.BrowserUtils = {
     // The HTML spec says that rel should be split on spaces before looking
     // for particular rel values.
     let values = rel.split(/[ \t\r\n\f]/);
-    return values.indexOf('noreferrer') != -1;
+    return values.indexOf("noreferrer") != -1;
   },
 
   /**
@@ -279,7 +278,7 @@ this.BrowserUtils = {
    * @param mimeType
    *        The MIME type to check.
    */
-  mimeTypeIsTextBased: function(mimeType) {
+  mimeTypeIsTextBased(mimeType) {
     return mimeType.startsWith("text/") ||
            mimeType.endsWith("+xml") ||
            mimeType == "application/x-javascript" ||
@@ -298,7 +297,7 @@ this.BrowserUtils = {
    *        The window that is focused
    *
    */
-  shouldFastFind: function(elt, win) {
+  shouldFastFind(elt, win) {
     if (elt) {
       if (elt instanceof win.HTMLInputElement && elt.mozIsTextField(false))
         return false;
@@ -323,7 +322,7 @@ this.BrowserUtils = {
    *        The top level window that is focused
    *
    */
-  canFastFind: function(win) {
+  canFastFind(win) {
     if (!win)
       return false;
 
@@ -400,7 +399,7 @@ this.BrowserUtils = {
       .getInterface(Ci.nsIDOMWindow);
   },
 
-  getSelectionDetails: function(topWindow, aCharLen) {
+  getSelectionDetails(topWindow, aCharLen) {
     // selections of more than 150 characters aren't useful
     const kMaxSelectionLen = 150;
     const charLen = Math.min(aCharLen || kMaxSelectionLen, kMaxSelectionLen);
@@ -424,9 +423,8 @@ this.BrowserUtils = {
         try {
           url = this.makeURI(linkText);
         } catch (ex) {}
-      }
-      // Check if this could be a valid url, just missing the protocol.
-      else if (/^(?:[a-z\d-]+\.)+[a-z]+$/i.test(linkText)) {
+      } else if (/^(?:[a-z\d-]+\.)+[a-z]+$/i.test(linkText)) {
+        // Check if this could be a valid url, just missing the protocol.
         // Now let's see if this is an intentional link selection. Our guess is
         // based on whether the selection begins/ends with whitespace or is
         // preceded/followed by a non-word character.

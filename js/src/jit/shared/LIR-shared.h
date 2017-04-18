@@ -858,14 +858,14 @@ class LPointer : public LInstructionHelper<1, 0, 0>
 // Constant double.
 class LDouble : public LInstructionHelper<1, 0, 0>
 {
-    wasm::RawF64 d_;
+    double d_;
   public:
     LIR_HEADER(Double);
 
-    explicit LDouble(wasm::RawF64 d) : d_(d)
+    explicit LDouble(double d) : d_(d)
     { }
 
-    wasm::RawF64 getDouble() const {
+    const double& getDouble() const {
         return d_;
     }
 };
@@ -873,15 +873,15 @@ class LDouble : public LInstructionHelper<1, 0, 0>
 // Constant float32.
 class LFloat32 : public LInstructionHelper<1, 0, 0>
 {
-    wasm::RawF32 f_;
+    float f_;
   public:
     LIR_HEADER(Float32);
 
-    explicit LFloat32(wasm::RawF32 f)
+    explicit LFloat32(float f)
       : f_(f)
     { }
 
-    wasm::RawF32 getFloat() const {
+    const float& getFloat() const {
         return f_;
     }
 };
@@ -3760,6 +3760,20 @@ class LPowD : public LCallInstructionHelper<1, 2, 1>
     }
 };
 
+class LPowV : public LCallInstructionHelper<BOX_PIECES, 2 * BOX_PIECES, 0>
+{
+  public:
+    LIR_HEADER(PowV)
+
+    LPowV(const LBoxAllocation& value, const LBoxAllocation& power) {
+        setBoxOperand(ValueInput, value);
+        setBoxOperand(PowerInput, power);
+    }
+
+    static const size_t ValueInput = 0;
+    static const size_t PowerInput = BOX_PIECES;
+};
+
 class LMathFunctionD : public LCallInstructionHelper<1, 1, 1>
 {
   public:
@@ -4992,6 +5006,25 @@ class LLambdaArrow : public LInstructionHelper<1, 1 + BOX_PIECES, 0>
     }
     const MLambdaArrow* mir() const {
         return mir_->toLambdaArrow();
+    }
+};
+
+class LSetFunName : public LCallInstructionHelper<1, 1 + BOX_PIECES, 0>
+{
+  public:
+    LIR_HEADER(SetFunName)
+
+    static const size_t NameValue = 1;
+
+    LSetFunName(const LAllocation& fun, const LBoxAllocation& name) {
+        setOperand(0, fun);
+        setBoxOperand(NameValue, name);
+    }
+    const LAllocation* fun() {
+        return getOperand(0);
+    }
+    const MSetFunName* mir() const {
+        return mir_->toSetFunName();
     }
 };
 
@@ -6615,37 +6648,47 @@ class LCallGetIntrinsicValue : public LCallInstructionHelper<BOX_PIECES, 0, 0>
 
 // Patchable jump to stubs generated for a GetProperty cache, which loads a
 // boxed value.
-class LGetPropertyCacheV : public LInstructionHelper<BOX_PIECES, 1 + BOX_PIECES, 0>
+class LGetPropertyCacheV : public LInstructionHelper<BOX_PIECES, 1 + BOX_PIECES, 1>
 {
   public:
     LIR_HEADER(GetPropertyCacheV)
 
     static const size_t Id = 1;
 
-    LGetPropertyCacheV(const LAllocation& object, const LBoxAllocation& id) {
+    LGetPropertyCacheV(const LAllocation& object, const LBoxAllocation& id,
+                       const LDefinition& temp) {
         setOperand(0, object);
         setBoxOperand(Id, id);
+        setTemp(0, temp);
     }
     const MGetPropertyCache* mir() const {
         return mir_->toGetPropertyCache();
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
     }
 };
 
 // Patchable jump to stubs generated for a GetProperty cache, which loads a
 // value of a known type, possibly into an FP register.
-class LGetPropertyCacheT : public LInstructionHelper<1, 1 + BOX_PIECES, 0>
+class LGetPropertyCacheT : public LInstructionHelper<1, 1 + BOX_PIECES, 1>
 {
   public:
     LIR_HEADER(GetPropertyCacheT)
 
     static const size_t Id = 1;
 
-    LGetPropertyCacheT(const LAllocation& object, const LBoxAllocation& id) {
+    LGetPropertyCacheT(const LAllocation& object, const LBoxAllocation& id,
+                       const LDefinition& temp) {
         setOperand(0, object);
         setBoxOperand(Id, id);
+        setTemp(0, temp);
     }
     const MGetPropertyCache* mir() const {
         return mir_->toGetPropertyCache();
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
     }
 };
 
@@ -8871,6 +8914,27 @@ class LCheckIsObj : public LInstructionHelper<BOX_PIECES, BOX_PIECES, 0>
 
     MCheckIsObj* mir() const {
         return mir_->toCheckIsObj();
+    }
+};
+
+class LCheckIsCallable : public LInstructionHelper<BOX_PIECES, BOX_PIECES, 1>
+{
+  public:
+    LIR_HEADER(CheckIsCallable)
+
+    static const size_t CheckValue = 0;
+
+    LCheckIsCallable(const LBoxAllocation& value, const LDefinition& temp) {
+        setBoxOperand(CheckValue, value);
+        setTemp(0, temp);
+    }
+
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
+
+    MCheckIsCallable* mir() const {
+        return mir_->toCheckIsCallable();
     }
 };
 

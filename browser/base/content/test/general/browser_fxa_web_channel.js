@@ -5,7 +5,7 @@
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function () {
+XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function() {
   return Components.utils.import("resource://gre/modules/FxAccountsCommon.js", {});
 });
 
@@ -23,13 +23,13 @@ const TEST_CHANNEL_ID = "account_updates_test";
 var gTests = [
   {
     desc: "FxA Web Channel - should receive message about profile changes",
-    run: function* () {
+    *run() {
       let client = new FxAccountsWebChannel({
         content_uri: TEST_HTTP_PATH,
         channel_id: TEST_CHANNEL_ID,
       });
       let promiseObserver = new Promise((resolve, reject) => {
-        makeObserver(FxAccountsCommon.ON_PROFILE_CHANGE_NOTIFICATION, function (subject, topic, data) {
+        makeObserver(FxAccountsCommon.ON_PROFILE_CHANGE_NOTIFICATION, function(subject, topic, data) {
           Assert.equal(data, "abc123");
           client.tearDown();
           resolve();
@@ -37,7 +37,7 @@ var gTests = [
       });
 
       yield BrowserTestUtils.withNewTab({
-        gBrowser: gBrowser,
+        gBrowser,
         url: TEST_BASE_URL + "?profile_change"
       }, function* () {
         yield promiseObserver;
@@ -46,16 +46,16 @@ var gTests = [
   },
   {
     desc: "fxa web channel - login messages should notify the fxAccounts object",
-    run: function* () {
+    *run() {
 
       let promiseLogin = new Promise((resolve, reject) => {
         let login = (accountData) => {
-          Assert.equal(typeof accountData.authAt, 'number');
-          Assert.equal(accountData.email, 'testuser@testuser.com');
-          Assert.equal(accountData.keyFetchToken, 'key_fetch_token');
-          Assert.equal(accountData.sessionToken, 'session_token');
-          Assert.equal(accountData.uid, 'uid');
-          Assert.equal(accountData.unwrapBKey, 'unwrap_b_key');
+          Assert.equal(typeof accountData.authAt, "number");
+          Assert.equal(accountData.email, "testuser@testuser.com");
+          Assert.equal(accountData.keyFetchToken, "key_fetch_token");
+          Assert.equal(accountData.sessionToken, "session_token");
+          Assert.equal(accountData.uid, "uid");
+          Assert.equal(accountData.unwrapBKey, "unwrap_b_key");
           Assert.equal(accountData.verified, true);
 
           client.tearDown();
@@ -66,13 +66,13 @@ var gTests = [
           content_uri: TEST_HTTP_PATH,
           channel_id: TEST_CHANNEL_ID,
           helpers: {
-            login: login
+            login
           }
         });
       });
 
       yield BrowserTestUtils.withNewTab({
-        gBrowser: gBrowser,
+        gBrowser,
         url: TEST_BASE_URL + "?login"
       }, function* () {
         yield promiseLogin;
@@ -81,18 +81,18 @@ var gTests = [
   },
   {
     desc: "fxa web channel - can_link_account messages should respond",
-    run: function* () {
+    *run() {
       let properUrl = TEST_BASE_URL + "?can_link_account";
 
       let promiseEcho = new Promise((resolve, reject) => {
 
-        let webChannelOrigin = Services.io.newURI(properUrl, null, null);
+        let webChannelOrigin = Services.io.newURI(properUrl);
         // responses sent to content are echoed back over the
         // `fxaccounts_webchannel_response_echo` channel. Ensure the
         // fxaccounts:can_link_account message is responded to.
-        let echoWebChannel = new WebChannel('fxaccounts_webchannel_response_echo', webChannelOrigin);
+        let echoWebChannel = new WebChannel("fxaccounts_webchannel_response_echo", webChannelOrigin);
         echoWebChannel.listen((webChannelId, message, target) => {
-          Assert.equal(message.command, 'fxaccounts:can_link_account');
+          Assert.equal(message.command, "fxaccounts:can_link_account");
           Assert.equal(message.messageId, 2);
           Assert.equal(message.data.ok, true);
 
@@ -107,14 +107,14 @@ var gTests = [
           channel_id: TEST_CHANNEL_ID,
           helpers: {
             shouldAllowRelink(acctName) {
-              return acctName === 'testuser@testuser.com';
+              return acctName === "testuser@testuser.com";
             }
           }
         });
       });
 
       yield BrowserTestUtils.withNewTab({
-        gBrowser: gBrowser,
+        gBrowser,
         url: properUrl
       }, function* () {
         yield promiseEcho;
@@ -123,10 +123,10 @@ var gTests = [
   },
   {
     desc: "fxa web channel - logout messages should notify the fxAccounts object",
-    run: function* () {
+    *run() {
       let promiseLogout = new Promise((resolve, reject) => {
         let logout = (uid) => {
-          Assert.equal(uid, 'uid');
+          Assert.equal(uid, "uid");
 
           client.tearDown();
           resolve();
@@ -136,13 +136,13 @@ var gTests = [
           content_uri: TEST_HTTP_PATH,
           channel_id: TEST_CHANNEL_ID,
           helpers: {
-            logout: logout
+            logout
           }
         });
       });
 
       yield BrowserTestUtils.withNewTab({
-        gBrowser: gBrowser,
+        gBrowser,
         url: TEST_BASE_URL + "?logout"
       }, function* () {
         yield promiseLogout;
@@ -151,10 +151,10 @@ var gTests = [
   },
   {
     desc: "fxa web channel - delete messages should notify the fxAccounts object",
-    run: function* () {
+    *run() {
       let promiseDelete = new Promise((resolve, reject) => {
         let logout = (uid) => {
-          Assert.equal(uid, 'uid');
+          Assert.equal(uid, "uid");
 
           client.tearDown();
           resolve();
@@ -164,13 +164,13 @@ var gTests = [
           content_uri: TEST_HTTP_PATH,
           channel_id: TEST_CHANNEL_ID,
           helpers: {
-            logout: logout
+            logout
           }
         });
       });
 
       yield BrowserTestUtils.withNewTab({
-        gBrowser: gBrowser,
+        gBrowser,
         url: TEST_BASE_URL + "?delete"
       }, function* () {
         yield promiseDelete;
@@ -180,7 +180,7 @@ var gTests = [
 ]; // gTests
 
 function makeObserver(aObserveTopic, aObserveFunc) {
-  let callback = function (aSubject, aTopic, aData) {
+  let callback = function(aSubject, aTopic, aData) {
     if (aTopic == aObserveTopic) {
       removeMe();
       aObserveFunc(aSubject, aTopic, aData);

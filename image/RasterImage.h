@@ -264,11 +264,6 @@ public:
    */
   nsresult SetSourceSizeHint(uint32_t aSizeHint);
 
-  /* Provide a hint for the requested dimension of the resulting image. */
-  void SetRequestedSampleSize(int requestedSampleSize) {
-    mRequestedSampleSize = requestedSampleSize;
-  }
-
  nsCString GetURIString() {
     nsCString spec;
     if (GetURI()) {
@@ -307,7 +302,8 @@ private:
                           const nsIntSize& aSize,
                           const ImageRegion& aRegion,
                           gfx::SamplingFilter aSamplingFilter,
-                          uint32_t aFlags);
+                          uint32_t aFlags,
+                          float aOpacity);
 
   Pair<DrawResult, RefPtr<gfx::SourceSurface>>
     GetFrameInternal(const gfx::IntSize& aSize,
@@ -341,10 +337,12 @@ private:
    *
    * It's an error to call Decode() before this image's intrinsic size is
    * available. A metadata decode must successfully complete first.
+   *
+   * Returns true of the decode was run synchronously.
    */
-  NS_IMETHOD Decode(const gfx::IntSize& aSize,
-                    uint32_t aFlags,
-                    PlaybackType aPlaybackType);
+  bool Decode(const gfx::IntSize& aSize,
+              uint32_t aFlags,
+              PlaybackType aPlaybackType);
 
   /**
    * Creates and runs a metadata decoder, either synchronously or
@@ -405,9 +403,6 @@ private: // data
   // How many times we've decoded this image.
   // This is currently only used for statistics
   int32_t                        mDecodeCount;
-
-  // A hint for image decoder that directly scale the image to smaller buffer
-  int                        mRequestedSampleSize;
 
   // A weak pointer to our ImageContainer, which stays alive only as long as
   // the layer system needs it.
@@ -485,6 +480,8 @@ private: // data
   bool CanDiscard();
 
   bool IsOpaque();
+
+  DrawableSurface RequestDecodeForSizeInternal(const gfx::IntSize& aSize, uint32_t aFlags);
 
 protected:
   explicit RasterImage(ImageURL* aURI = nullptr);

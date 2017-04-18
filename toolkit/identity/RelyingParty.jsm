@@ -108,13 +108,13 @@ IdentityRelyingParty.prototype = {
 
       } else if (aRpCaller.loggedInUser === null) {
         // Generate assertion for existing login
-        let options = {loggedInUser: state.email, origin: origin};
+        let options = {loggedInUser: state.email, origin};
         return this._doLogin(aRpCaller, options);
       }
       // A loggedInUser different from state.email has been specified.
       // Change login identity.
 
-      let options = {loggedInUser: state.email, origin: origin};
+      let options = {loggedInUser: state.email, origin};
       return this._doLogin(aRpCaller, options);
 
     // If the user is not logged in, there are two cases:
@@ -124,7 +124,7 @@ IdentityRelyingParty.prototype = {
 
     }
     if (aRpCaller.loggedInUser) {
-      return this._doLogout(aRpCaller, {origin: origin});
+      return this._doLogout(aRpCaller, {origin});
     }
     return aRpCaller.doReady();
   },
@@ -216,7 +216,7 @@ IdentityRelyingParty.prototype = {
     objectCopy(aOptions, options);
 
     // Append URLs after resolving
-    let baseURI = Services.io.newURI(rp.origin, null, null);
+    let baseURI = Services.io.newURI(rp.origin);
     for (let optionName of ["privacyPolicy", "termsOfService"]) {
       if (aOptions[optionName]) {
         options[optionName] = baseURI.resolve(aOptions[optionName]);
@@ -240,7 +240,7 @@ IdentityRelyingParty.prototype = {
     if (rp && rp.origin) {
       let origin = rp.origin;
       log("logout: origin:", origin);
-      this._doLogout(rp, {origin: origin});
+      this._doLogout(rp, {origin});
     } else {
       log("logout: no RP found with id:", aRpCallerId);
     }
@@ -300,7 +300,7 @@ IdentityRelyingParty.prototype = {
       this._store.addIdentity(email, null, null);
     }
 
-    let cert = this._store.fetchIdentity(email)['cert'];
+    let cert = this._store.fetchIdentity(email)["cert"];
     if (cert) {
       this._generateAssertion(audience, email, function generatedAssertion(err, assertion) {
         if (err) {
@@ -331,7 +331,7 @@ IdentityRelyingParty.prototype = {
     log("_generateAssertion: audience:", aAudience, "identity:", aIdentity);
 
     let id = this._store.fetchIdentity(aIdentity);
-    if (! (id && id.cert)) {
+    if (!(id && id.cert)) {
       let errStr = "Cannot generate an assertion without a certificate";
       log("ERROR: _generateAssertion:", errStr);
       aCallback(errStr);
@@ -356,7 +356,7 @@ IdentityRelyingParty.prototype = {
   _cleanUpProvisionFlow: function RP_cleanUpProvisionFlow(aRPId, aProvId) {
     let rp = this._rpFlows[aRPId];
     if (rp) {
-      delete rp['provId'];
+      delete rp["provId"];
     } else {
       log("Error: Couldn't delete provision flow ", aProvId, " for RP ", aRPId);
     }

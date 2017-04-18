@@ -471,7 +471,7 @@ GLScreenBuffer::AssureBlitted()
 void
 GLScreenBuffer::Morph(UniquePtr<SurfaceFactory> newFactory)
 {
-    MOZ_ASSERT(newFactory);
+    MOZ_RELEASE_ASSERT(newFactory, "newFactory must not be null");
     mFactory = Move(newFactory);
 }
 
@@ -878,7 +878,7 @@ DrawBuffer::~DrawBuffer()
     GLuint rbs[] = {
         mColorMSRB,
         mDepthRB,
-        mStencilRB
+        (mStencilRB != mDepthRB) ? mStencilRB : 0, // Don't double-delete DEPTH_STENCIL RBs.
     };
 
     mGL->fDeleteFramebuffers(1, &fb);
@@ -966,11 +966,12 @@ ReadBuffer::~ReadBuffer()
     GLuint fb = mFB;
     GLuint rbs[] = {
         mDepthRB,
-        mStencilRB
+        (mStencilRB != mDepthRB) ? mStencilRB : 0, // Don't double-delete DEPTH_STENCIL RBs.
     };
 
     mGL->fDeleteFramebuffers(1, &fb);
     mGL->fDeleteRenderbuffers(2, rbs);
+
     mGL->mFBOMapping.erase(mFB);
 }
 

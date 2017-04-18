@@ -39,22 +39,22 @@ addEventListener("DOMContentLoaded", function domContentLoaded(event) {
     sendAsyncMessage("test:iframe:load", {url: iframe.contentDocument.location.href});
     // And an event listener for the test responses, which we send to the test
     // via a message.
-    iframe.contentWindow.addEventListener("FirefoxAccountsTestResponse", function (fxAccountsEvent) {
+    iframe.contentWindow.addEventListener("FirefoxAccountsTestResponse", function(fxAccountsEvent) {
       sendAsyncMessage("test:response", {data: fxAccountsEvent.detail.data});
     }, true);
   }, true);
 }, true);
 
 // Return the visibility state of a list of ids.
-addMessageListener("test:check-visibilities", function (message) {
+addMessageListener("test:check-visibilities", function(message) {
   let result = {};
   for (let id of message.data.ids) {
     let elt = content.document.getElementById(id);
     if (elt) {
       let displayStyle = content.window.getComputedStyle(elt).display;
-      if (displayStyle == 'none') {
+      if (displayStyle == "none") {
         result[id] = false;
-      } else if (displayStyle == 'block') {
+      } else if (displayStyle == "block") {
         result[id] = true;
       } else {
         result[id] = "strange: " + displayStyle; // tests should fail!
@@ -66,7 +66,7 @@ addMessageListener("test:check-visibilities", function (message) {
   sendAsyncMessage("test:check-visibilities-response", result);
 });
 
-addMessageListener("test:load-with-mocked-profile-path", function (message) {
+addMessageListener("test:load-with-mocked-profile-path", function(message) {
   addEventListener("DOMContentLoaded", function domContentLoaded(event) {
     removeEventListener("DOMContentLoaded", domContentLoaded, true);
     content.getDefaultProfilePath = () => message.data.profilePath;

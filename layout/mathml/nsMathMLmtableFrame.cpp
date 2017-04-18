@@ -190,7 +190,7 @@ ApplyBorderToStyle(const nsMathMLmtdFrame* aFrame,
   aFrame->GetColIndex(columnIndex);
 
   nscoord borderWidth =
-    aFrame->PresContext()->GetBorderWidthTable()[NS_STYLE_BORDER_WIDTH_THIN];
+    nsPresContext::GetBorderWidthForKeyword(NS_STYLE_BORDER_WIDTH_THIN);
 
   nsTArray<int8_t>* rowLinesList =
     FindCellProperty(aFrame, RowLinesProperty());
@@ -204,13 +204,13 @@ ApplyBorderToStyle(const nsMathMLmtdFrame* aFrame,
     // values, we simply repeat the last value.
     int32_t listLength = rowLinesList->Length();
     if (rowIndex < listLength) {
-      aStyleBorder.SetBorderStyle(NS_SIDE_TOP,
+      aStyleBorder.SetBorderStyle(eSideTop,
                     rowLinesList->ElementAt(rowIndex - 1));
     } else {
-      aStyleBorder.SetBorderStyle(NS_SIDE_TOP,
+      aStyleBorder.SetBorderStyle(eSideTop,
                     rowLinesList->ElementAt(listLength - 1));
     }
-    aStyleBorder.SetBorderWidth(NS_SIDE_TOP, borderWidth);
+    aStyleBorder.SetBorderWidth(eSideTop, borderWidth);
   }
 
   // We don't place a column line on the left of the first column.
@@ -219,13 +219,13 @@ ApplyBorderToStyle(const nsMathMLmtdFrame* aFrame,
     // values, we simply repeat the last value.
     int32_t listLength = columnLinesList->Length();
     if (columnIndex < listLength) {
-      aStyleBorder.SetBorderStyle(NS_SIDE_LEFT,
+      aStyleBorder.SetBorderStyle(eSideLeft,
                     columnLinesList->ElementAt(columnIndex - 1));
     } else {
-      aStyleBorder.SetBorderStyle(NS_SIDE_LEFT,
+      aStyleBorder.SetBorderStyle(eSideLeft,
                     columnLinesList->ElementAt(listLength - 1));
     }
-    aStyleBorder.SetBorderWidth(NS_SIDE_LEFT, borderWidth);
+    aStyleBorder.SetBorderWidth(eSideLeft, borderWidth);
   }
 }
 
@@ -301,7 +301,7 @@ public:
     nsStyleBorder styleBorder = *mFrame->StyleBorder();
     nsMathMLmtdFrame* frame = static_cast<nsMathMLmtdFrame*>(mFrame);
     ApplyBorderToStyle(frame, styleBorder);
-    nsRect bounds = CalculateBounds(styleBorder);
+    nsRect bounds = CalculateBounds(styleBorder).GetBounds();
     nsMargin overflow = ComputeBorderOverflow(frame, styleBorder);
     bounds.Inflate(overflow);
     return bounds;
@@ -858,8 +858,9 @@ nsMathMLmtableWrapperFrame::Reflow(nsPresContext*           aPresContext,
                        aReflowInput.ComputedSizeAsContainerIfConstrained());
       blockSize = rect.BSize(wm);
       do {
-        dy += rect.BStart(wm);
-        frame = frame->GetParent();
+        nsIFrame* parent = frame->GetParent();
+        dy += frame->BStart(wm, parent->GetSize());
+        frame = parent;
       } while (frame != this);
     }
   }

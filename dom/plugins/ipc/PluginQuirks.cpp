@@ -18,14 +18,6 @@ int GetQuirksFromMimeTypeAndFilename(const nsCString& aMimeType,
 
     nsPluginHost::SpecialType specialType = nsPluginHost::GetSpecialType(aMimeType);
 
-    if (specialType == nsPluginHost::eSpecialType_Silverlight) {
-        quirks |= QUIRK_SILVERLIGHT_DEFAULT_TRANSPARENT;
-#ifdef OS_WIN
-        quirks |= QUIRK_WINLESS_TRACKPOPUP_HOOK;
-        quirks |= QUIRK_SILVERLIGHT_FOCUS_CHECK_PARENT;
-#endif
-    }
-
     if (specialType == nsPluginHost::eSpecialType_Flash) {
         quirks |= QUIRK_FLASH_RETURN_EMPTY_DOCUMENT_ORIGIN;
 #ifdef OS_WIN
@@ -41,27 +33,10 @@ int GetQuirksFromMimeTypeAndFilename(const nsCString& aMimeType,
 #endif
     }
 
-#ifdef OS_WIN
-    // QuickTime plugin usually loaded with audio/mpeg mimetype
-    NS_NAMED_LITERAL_CSTRING(quicktime, "npqtplugin");
-    if (FindInReadable(quicktime, aPluginFilename)) {
-        quirks |= QUIRK_QUICKTIME_AVOID_SETWINDOW;
-    }
-#endif
-
 #ifdef XP_MACOSX
-    // Whitelist Flash and Quicktime to support offline renderer
-    NS_NAMED_LITERAL_CSTRING(quicktime, "QuickTime Plugin.plugin");
+    // Whitelist Flash to support offline renderer.
     if (specialType == nsPluginHost::eSpecialType_Flash) {
         quirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
-    } else if (FindInReadable(quicktime, aPluginFilename)) {
-        quirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
-    }
-#endif
-
-#ifdef OS_WIN
-    if (specialType == nsPluginHost::eSpecialType_Unity) {
-        quirks |= QUIRK_UNITY_FIXUP_MOUSE_CAPTURE;
     }
 #endif
 

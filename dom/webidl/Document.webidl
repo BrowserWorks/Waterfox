@@ -24,9 +24,9 @@ dictionary ElementCreationOptions {
 interface Document : Node {
   [Throws]
   readonly attribute DOMImplementation implementation;
-  [Pure, Throws]
+  [Pure, Throws, BinaryName="documentURIFromJS", NeedsCallerType]
   readonly attribute DOMString URL;
-  [Pure, Throws]
+  [Pure, Throws, BinaryName="documentURIFromJS", NeedsCallerType]
   readonly attribute DOMString documentURI;
   [Pure]
   readonly attribute DOMString compatMode;
@@ -152,9 +152,6 @@ partial interface Document {
 
   // Gecko extensions?
                 attribute EventHandler onwheel;
-                attribute EventHandler oncopy;
-                attribute EventHandler oncut;
-                attribute EventHandler onpaste;
                 attribute EventHandler onbeforescriptexecute;
                 attribute EventHandler onafterscriptexecute;
 
@@ -232,9 +229,9 @@ partial interface Document {
   readonly attribute boolean fullscreen;
   [BinaryName="fullscreen"]
   readonly attribute boolean mozFullScreen;
-  [LenientSetter, Func="nsDocument::IsUnprefixedFullscreenEnabled"]
+  [LenientSetter, Func="nsDocument::IsUnprefixedFullscreenEnabled", NeedsCallerType]
   readonly attribute boolean fullscreenEnabled;
-  [BinaryName="fullscreenEnabled"]
+  [BinaryName="fullscreenEnabled", NeedsCallerType]
   readonly attribute boolean mozFullScreenEnabled;
   [LenientSetter, Func="nsDocument::IsUnprefixedFullscreenEnabled"]
   readonly attribute Element? fullscreenElement;
@@ -443,8 +440,23 @@ partial interface Document {
   [Func="IsChromeOrXBL"] readonly attribute boolean inlineScriptAllowedByCSP;
 };
 
+// For more information on Flash classification, see
+// toolkit/components/url-classifier/flash-block-lists.rst
+enum FlashClassification {
+  "unclassified",   // Denotes a classification that has not yet been computed.
+                    // Allows for lazy classification.
+  "unknown",        // Site is not on the whitelist or blacklist
+  "allowed",        // Site is on the Flash whitelist
+  "denied"          // Site is on the Flash blacklist
+};
+partial interface Document {
+  [ChromeOnly]
+  readonly attribute FlashClassification documentFlashClassification;
+};
+
 Document implements XPathEvaluator;
 Document implements GlobalEventHandlers;
+Document implements DocumentAndElementEventHandlers;
 Document implements TouchEventHandlers;
 Document implements ParentNode;
 Document implements OnErrorEventHandlerForNodes;

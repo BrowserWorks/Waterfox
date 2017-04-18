@@ -22,8 +22,6 @@ const DEFAULT_URL   = "about:blank";
 
 gPort = PORT;
 
-// Path to source URI of installed add-on
-const INSTALL_URL1  = "/addons/test_AddonRepository_1.xpi";
 // Path to source URI of installing add-on
 const INSTALL_URL2  = "/addons/test_AddonRepository_2.xpi";
 // Path to source URI of non-active add-on (state = STATE_AVAILABLE)
@@ -320,12 +318,12 @@ function check_results(aActualAddons, aExpectedAddons, aAddonCount, aInstallNull
 // Complete a search, also testing cancelSearch() and isSearching
 function complete_search(aSearch, aSearchCallback) {
   var failCallback = {
-    searchSucceeded: function(addons, length, total) {
+    searchSucceeded(addons, length, total) {
       do_throw("failCallback.searchSucceeded should not be called");
       end_test();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       do_throw("failCallback.searchFailed should not be called");
       end_test();
     }
@@ -333,12 +331,12 @@ function complete_search(aSearch, aSearchCallback) {
 
   var callbackCalled = false;
   var testCallback = {
-    searchSucceeded: function(addons, length, total) {
+    searchSucceeded(addons, length, total) {
       do_throw("testCallback.searchSucceeded should not be called");
       end_test();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       callbackCalled = true;
     }
   };
@@ -402,8 +400,7 @@ function run_test() {
     AddonManager.getInstallForURL(BASE_URL + INSTALL_URL2, function addon_2_get(aInstall) {
       try {
         aInstall.install();
-      }
-      catch (e) {
+      } catch (e) {
         do_print("Failed to install add-on " + aInstall.sourceURI.spec);
         do_report_unexpected_exception(e);
       }
@@ -468,12 +465,12 @@ function run_test_1() {
   var tests = [{
     initiallyUndefined: true,
     preference:         PREF_GETADDONS_BROWSEADDONS,
-    urlTests:           urlTests,
+    urlTests,
     getURL:             () => AddonRepository.homepageURL
   }, {
     initiallyUndefined: true,
     preference:         PREF_GETADDONS_BROWSERECOMMENDED,
-    urlTests:           urlTests,
+    urlTests,
     getURL:             () => AddonRepository.getRecommendedURL()
   }, {
     initiallyUndefined: false,
@@ -504,12 +501,12 @@ function run_test_1() {
 function run_test_getAddonsByID_fails() {
   Services.prefs.setCharPref(GET_TEST.preference, GET_TEST.preferenceValue);
   var callback = {
-    searchSucceeded: function(aAddonsList, aAddonCount, aTotalResults) {
+    searchSucceeded(aAddonsList, aAddonCount, aTotalResults) {
       do_throw("searchAddons should not have succeeded");
       end_test();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       do_check_false(AddonRepository.isSearching);
       run_test_getAddonsByID_succeeds();
     }
@@ -523,13 +520,13 @@ function run_test_getAddonsByID_fails() {
 // Tests success of AddonRepository.getAddonsByIDs()
 function run_test_getAddonsByID_succeeds() {
   var callback = {
-    searchSucceeded: function(aAddonsList, aAddonCount, aTotalResults) {
+    searchSucceeded(aAddonsList, aAddonCount, aTotalResults) {
       do_check_eq(aTotalResults, -1);
       check_results(aAddonsList, GET_RESULTS, aAddonCount, true);
       run_test_retrieveRecommended_fails();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       do_throw("searchAddons should not have failed");
       end_test();
     }
@@ -545,12 +542,12 @@ function run_test_retrieveRecommended_fails() {
   Services.prefs.setCharPref(RECOMMENDED_TEST.preference,
                              RECOMMENDED_TEST.preferenceValue);
   var callback = {
-    searchSucceeded: function(aAddonsList, aAddonCount, aTotalResults) {
+    searchSucceeded(aAddonsList, aAddonCount, aTotalResults) {
       do_throw("retrieveRecommendedAddons should not have succeeded");
       end_test();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       do_check_false(AddonRepository.isSearching);
       run_test_retrieveRecommended_succeed();
     }
@@ -564,13 +561,13 @@ function run_test_retrieveRecommended_fails() {
 // Tests success of AddonRepository.retrieveRecommendedAddons()
 function run_test_retrieveRecommended_succeed() {
   var callback = {
-    searchSucceeded: function(aAddonsList, aAddonCount, aTotalResults) {
+    searchSucceeded(aAddonsList, aAddonCount, aTotalResults) {
       do_check_eq(aTotalResults, -1);
       check_results(aAddonsList, SEARCH_RESULTS, aAddonCount);
       run_test_searchAddons_fails();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       do_throw("retrieveRecommendedAddons should not have failed");
       end_test();
     }
@@ -585,12 +582,12 @@ function run_test_retrieveRecommended_succeed() {
 function run_test_searchAddons_fails() {
   Services.prefs.setCharPref(SEARCH_TEST.preference, SEARCH_TEST.preferenceValue);
   var callback = {
-    searchSucceeded: function(aAddonsList, aAddonCount, aTotalResults) {
+    searchSucceeded(aAddonsList, aAddonCount, aTotalResults) {
       do_throw("searchAddons should not have succeeded");
       end_test();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       do_check_false(AddonRepository.isSearching);
       run_test_searchAddons_succeeds();
     }
@@ -605,13 +602,13 @@ function run_test_searchAddons_fails() {
 // Tests success of AddonRepository.searchAddons()
 function run_test_searchAddons_succeeds() {
   var callback = {
-    searchSucceeded: function(aAddonsList, aAddonCount, aTotalResults) {
+    searchSucceeded(aAddonsList, aAddonCount, aTotalResults) {
       do_check_eq(aTotalResults, TOTAL_RESULTS);
       check_results(aAddonsList, SEARCH_RESULTS, aAddonCount);
       end_test();
     },
 
-    searchFailed: function() {
+    searchFailed() {
       do_throw("searchAddons should not have failed");
       end_test();
     }

@@ -8,7 +8,6 @@
 
 #include "GMPProcessParent.h"
 #include "GMPServiceParent.h"
-#include "GMPAudioDecoderParent.h"
 #include "GMPDecryptorParent.h"
 #include "GMPVideoDecoderParent.h"
 #include "GMPVideoEncoderParent.h"
@@ -72,20 +71,6 @@ enum GMPState {
 };
 
 class GMPContentParent;
-
-class GetGMPContentParentCallback
-{
-public:
-  GetGMPContentParentCallback()
-  {
-    MOZ_COUNT_CTOR(GetGMPContentParentCallback);
-  };
-  virtual ~GetGMPContentParentCallback()
-  {
-    MOZ_COUNT_DTOR(GetGMPContentParentCallback);
-  };
-  virtual void Done(GMPContentParent* aGMPContentParent) = 0;
-};
 
 class GMPParent final : public PGMPParent
 {
@@ -159,7 +144,7 @@ public:
   // Called when the child process has died.
   void ChildTerminated();
 
-  bool GetGMPContentParent(UniquePtr<GetGMPContentParentCallback>&& aCallback);
+  void GetGMPContentParent(UniquePtr<MozPromiseHolder<GetGMPContentParentPromise>>&& aPromiseHolder);
   already_AddRefed<GMPContentParent> ForgetGMPContentParent();
 
   bool EnsureProcessLoaded(base::ProcessId* aID);
@@ -175,7 +160,7 @@ private:
   bool EnsureProcessLoaded();
   RefPtr<GenericPromise> ReadGMPMetaData();
   RefPtr<GenericPromise> ReadGMPInfoFile(nsIFile* aFile);
-  RefPtr<GenericPromise> ParseChromiumManifest(nsString aJSON); // Main thread.
+  RefPtr<GenericPromise> ParseChromiumManifest(const nsAString& aJSON); // Main thread.
   RefPtr<GenericPromise> ReadChromiumManifestFile(nsIFile* aFile); // GMP thread.
 #ifdef MOZ_CRASHREPORTER
   void WriteExtraDataForMinidump(CrashReporter::AnnotationTable& notes);
@@ -186,29 +171,26 @@ private:
   PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) override;
   bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) override;
 
-  bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) override;
+  mozilla::ipc::IPCResult RecvPGMPStorageConstructor(PGMPStorageParent* actor) override;
   PGMPStorageParent* AllocPGMPStorageParent() override;
   bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) override;
 
   PGMPContentParent* AllocPGMPContentParent(Transport* aTransport,
                                             ProcessId aOtherPid) override;
 
-  bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) override;
+  mozilla::ipc::IPCResult RecvPGMPTimerConstructor(PGMPTimerParent* actor) override;
   PGMPTimerParent* AllocPGMPTimerParent() override;
   bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) override;
 
-  bool RecvAsyncShutdownComplete() override;
-  bool RecvAsyncShutdownRequired() override;
-
-  bool RecvPGMPContentChildDestroyed() override;
+  mozilla::ipc::IPCResult RecvPGMPContentChildDestroyed() override;
   bool IsUsed()
   {
-    return mGMPContentChildCount > 0;
+    return mGMPContentChildCount > 0 ||
+           !mGetContentParentPromises.IsEmpty();
   }
 
-
-  static void AbortWaitingForGMPAsyncShutdown(nsITimer* aTimer, void* aClosure);
-  nsresult EnsureAsyncShutdownTimeoutSet();
+  void ResolveGetContentParentPromises();
+  void RejectGetContentParentPromises();
 
   GMPState mState;
   nsCOMPtr<nsIFile> mDirectory; // plugin directory on disk
@@ -232,18 +214,14 @@ private:
   nsTArray<RefPtr<GMPTimerParent>> mTimers;
   nsTArray<RefPtr<GMPStorageParent>> mStorage;
   nsCOMPtr<nsIThread> mGMPThread;
-  nsCOMPtr<nsITimer> mAsyncShutdownTimeout; // GMP Thread only.
   // NodeId the plugin is assigned to, or empty if the the plugin is not
   // assigned to a NodeId.
   nsCString mNodeId;
   // This is used for GMP content in the parent, there may be more of these in
   // the content processes.
   RefPtr<GMPContentParent> mGMPContentParent;
-  nsTArray<UniquePtr<GetGMPContentParentCallback>> mCallbacks;
+  nsTArray<UniquePtr<MozPromiseHolder<GetGMPContentParentPromise>>> mGetContentParentPromises;
   uint32_t mGMPContentChildCount;
-
-  bool mAsyncShutdownRequired;
-  bool mAsyncShutdownInProgress;
 
   int mChildPid;
 

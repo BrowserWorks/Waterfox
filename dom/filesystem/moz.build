@@ -9,10 +9,10 @@ DIRS += ['compat']
 TEST_DIRS += ['tests']
 
 EXPORTS.mozilla.dom += [
-    'DeviceStorageFileSystem.h',
     'Directory.h',
     'FileSystemBase.h',
     'FileSystemRequestParent.h',
+    'FileSystemSecurity.h',
     'FileSystemTaskBase.h',
     'FileSystemUtils.h',
     'GetFilesHelper.h',
@@ -20,13 +20,10 @@ EXPORTS.mozilla.dom += [
 ]
 
 UNIFIED_SOURCES += [
-    'CreateDirectoryTask.cpp',
-    'CreateFileTask.cpp',
-    'DeviceStorageFileSystem.cpp',
     'Directory.cpp',
     'FileSystemBase.cpp',
-    'FileSystemPermissionRequest.cpp',
     'FileSystemRequestParent.cpp',
+    'FileSystemSecurity.cpp',
     'FileSystemTaskBase.cpp',
     'FileSystemUtils.cpp',
     'GetDirectoryListingTask.cpp',
@@ -34,7 +31,6 @@ UNIFIED_SOURCES += [
     'GetFilesHelper.cpp',
     'GetFilesTask.cpp',
     'OSFileSystem.cpp',
-    'RemoveTask.cpp',
 ]
 
 FINAL_LIBRARY = 'xul'

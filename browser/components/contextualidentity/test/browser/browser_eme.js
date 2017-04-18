@@ -7,11 +7,11 @@ const TEST_HOST = "example.com";
 const TEST_URL = "http://" + TEST_HOST + "/browser/browser/components/contextualidentity/test/browser/";
 
 const TESTKEY = {
-  initDataType: 'keyids',
+  initDataType: "keyids",
   initData: '{"kids":["LwVHf8JLtPrv2GUXFW2v_A"], "type":"persistent-license"}',
   kid: "LwVHf8JLtPrv2GUXFW2v_A",
   key: "97b9ddc459c8d5ff23c1f2754c95abe8",
-  sessionType: 'persistent-license',
+  sessionType: "persistent-license",
 };
 
 const USER_ID_DEFAULT = 0;
@@ -30,8 +30,7 @@ function* openTabInUserContext(uri, userContextId) {
   return {tab, browser};
 }
 
-function HexToBase64(hex)
-{
+function HexToBase64(hex) {
   var bin = "";
   for (var i = 0; i < hex.length; i += 2) {
     bin += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
@@ -39,8 +38,7 @@ function HexToBase64(hex)
   return window.btoa(bin).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-function Base64ToHex(str)
-{
+function Base64ToHex(str) {
   var bin = window.atob(str.replace(/-/g, "+").replace(/_/g, "/"));
   var res = "";
   for (var i = 0; i < bin.length; i++) {
@@ -62,7 +60,7 @@ function ByteArrayToHex(array) {
 
 function generateKeyObject(aKid, aKey) {
   let keyObj = {
-    kty: 'oct',
+    kty: "oct",
     kid: aKid,
     k: HexToBase64(aKey),
   };
@@ -85,15 +83,13 @@ function generateKeyInfo(aData) {
 
 add_task(function* setup() {
   // Make sure userContext is enabled.
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      [ "privacy.userContext.enabled", true ],
-      [ "media.mediasource.enabled", true ],
-      [ "media.eme.apiVisible", true ],
-      [ "media.mediasource.webm.enabled", true ],
-      [ "media.clearkey.persistent-license.enabled", true ],
-    ]}, resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+    [ "privacy.userContext.enabled", true ],
+    [ "media.mediasource.enabled", true ],
+    [ "media.eme.apiVisible", true ],
+    [ "media.mediasource.webm.enabled", true ],
+    [ "media.clearkey.persistent-license.enabled", true ],
+  ]});
 });
 
 add_task(function* test() {
@@ -105,12 +101,12 @@ add_task(function* test() {
 
   // Update the media key for the default container.
   let result = yield ContentTask.spawn(defaultContainer.browser, keyInfo, function* (aKeyInfo) {
-    let access = yield content.navigator.requestMediaKeySystemAccess('org.w3.clearkey',
+    let access = yield content.navigator.requestMediaKeySystemAccess("org.w3.clearkey",
                                                                      [{
                                                                        initDataTypes: [aKeyInfo.initDataType],
-                                                                       videoCapabilities: [{contentType: 'video/webm'}],
-                                                                       sessionTypes: ['persistent-license'],
-                                                                       persistentState: 'required',
+                                                                       videoCapabilities: [{contentType: "video/webm"}],
+                                                                       sessionTypes: ["persistent-license"],
+                                                                       persistentState: "required",
                                                                      }]);
     let mediaKeys = yield access.createMediaKeys();
     let session = mediaKeys.createSession(aKeyInfo.sessionType);
@@ -158,12 +154,12 @@ add_task(function* test() {
   let personalContainer = yield openTabInUserContext(TEST_URL + "empty_file.html", USER_ID_PERSONAL);
 
   yield ContentTask.spawn(personalContainer.browser, keyInfo, function* (aKeyInfo) {
-    let access = yield content.navigator.requestMediaKeySystemAccess('org.w3.clearkey',
+    let access = yield content.navigator.requestMediaKeySystemAccess("org.w3.clearkey",
                                                                      [{
                                                                        initDataTypes: [aKeyInfo.initDataType],
-                                                                       videoCapabilities: [{contentType: 'video/webm'}],
-                                                                       sessionTypes: ['persistent-license'],
-                                                                       persistentState: 'required',
+                                                                       videoCapabilities: [{contentType: "video/webm"}],
+                                                                       sessionTypes: ["persistent-license"],
+                                                                       persistentState: "required",
                                                                      }]);
     let mediaKeys = yield access.createMediaKeys();
     let session = mediaKeys.createSession(aKeyInfo.sessionType);

@@ -6,6 +6,7 @@
 
 #include "vm/ObjectGroup.h"
 
+#include "jsexn.h"
 #include "jshashutil.h"
 #include "jsobj.h"
 
@@ -252,7 +253,7 @@ ObjectGroup::useSingletonForAllocationSite(JSScript* script, jsbytecode* pc, con
 /////////////////////////////////////////////////////////////////////
 
 bool
-JSObject::shouldSplicePrototype(JSContext* cx)
+JSObject::shouldSplicePrototype()
 {
     /*
      * During bootstrapping, if inference is enabled we need to make sure not
@@ -265,33 +266,36 @@ JSObject::shouldSplicePrototype(JSContext* cx)
     return isSingleton();
 }
 
-bool
-JSObject::splicePrototype(JSContext* cx, const Class* clasp, Handle<TaggedProto> proto)
+/* static */ bool
+JSObject::splicePrototype(JSContext* cx, HandleObject obj, const Class* clasp,
+                          Handle<TaggedProto> proto)
 {
-    MOZ_ASSERT(cx->compartment() == compartment());
-
-    RootedObject self(cx, this);
+    MOZ_ASSERT(cx->compartment() == obj->compartment());
 
     /*
      * For singleton groups representing only a single JSObject, the proto
      * can be rearranged as needed without destroying type information for
      * the old or new types.
      */
-    MOZ_ASSERT(self->isSingleton());
+    MOZ_ASSERT(obj->isSingleton());
 
     // Windows may not appear on prototype chains.
     MOZ_ASSERT_IF(proto.isObject(), !IsWindow(proto.toObject()));
 
-    if (proto.isObject() && !proto.toObject()->setDelegate(cx))
-        return false;
+    if (proto.isObject()) {
+        RootedObject protoObj(cx, proto.toObject());
+        if (!JSObject::setDelegate(cx, protoObj))
+            return false;
+    }
 
     // Force type instantiation when splicing lazy group.
-    RootedObjectGroup group(cx, self->getGroup(cx));
+    RootedObjectGroup group(cx, JSObject::getGroup(cx, obj));
     if (!group)
         return false;
     RootedObjectGroup protoGroup(cx, nullptr);
     if (proto.isObject()) {
-        protoGroup = proto.toObject()->getGroup(cx);
+        RootedObject protoObj(cx, proto.toObject());
+        protoGroup = JSObject::getGroup(cx, protoObj);
         if (!protoGroup)
             return false;
     }
@@ -310,7 +314,7 @@ JSObject::makeLazyGroup(JSContext* cx, HandleObject obj)
     /* De-lazification of functions can GC, so we need to do it up here. */
     if (obj->is<JSFunction>() && obj->as<JSFunction>().isInterpretedLazy()) {
         RootedFunction fun(cx, &obj->as<JSFunction>());
-        if (!fun->getOrCreateScript(cx))
+        if (!JSFunction::getOrCreateScript(cx, fun))
             return nullptr;
     }
 
@@ -349,7 +353,7 @@ JSObject::makeLazyGroup(JSContext* cx, HandleObject obj)
 JSObject::setNewGroupUnknown(JSContext* cx, const js::Class* clasp, JS::HandleObject obj)
 {
     ObjectGroup::setDefaultNewGroupUnknown(cx, clasp, obj);
-    return obj->setFlags(cx, BaseShape::NEW_GROUP_UNKNOWN);
+    return JSObject::setFlags(cx, obj, BaseShape::NEW_GROUP_UNKNOWN);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -418,7 +422,7 @@ struct ObjectGroupCompartment::NewEntry
     }
 
     static inline bool match(const ObjectGroupCompartment::NewEntry& key, const Lookup& lookup) {
-        TaggedProto proto = key.group.unbarrieredGet()->proto().unbarrieredGet();
+        TaggedProto proto = key.group.unbarrieredGet()->proto();
         JSObject* assoc = key.associated;
         MOZ_ASSERT(proto.hasUniqueId());
         MOZ_ASSERT_IF(assoc, assoc->zone()->hasUniqueId(assoc));
@@ -517,7 +521,7 @@ ObjectGroup::defaultNewGroup(ExclusiveContext* cx, const Class* clasp,
 
     if (proto.isObject() && !proto.toObject()->isDelegate()) {
         RootedObject protoObj(cx, proto.toObject());
-        if (!protoObj->setDelegate(cx))
+        if (!JSObject::setDelegate(cx, protoObj))
             return nullptr;
 
         // Objects which are prototypes of one another should be singletons, so
@@ -578,11 +582,10 @@ ObjectGroup::defaultNewGroup(ExclusiveContext* cx, const Class* clasp,
         AddTypePropertyId(cx, group, nullptr, NameToId(names.lastIndex), TypeSet::Int32Type());
     } else if (clasp == &StringObject::class_) {
         AddTypePropertyId(cx, group, nullptr, NameToId(names.length), TypeSet::Int32Type());
-    } else if (ErrorObject::isErrorClass((clasp))) {
+    } else if (ErrorObject::isErrorClass(clasp)) {
         AddTypePropertyId(cx, group, nullptr, NameToId(names.fileName), TypeSet::StringType());
         AddTypePropertyId(cx, group, nullptr, NameToId(names.lineNumber), TypeSet::Int32Type());
         AddTypePropertyId(cx, group, nullptr, NameToId(names.columnNumber), TypeSet::Int32Type());
-        AddTypePropertyId(cx, group, nullptr, NameToId(names.stack), TypeSet::StringType());
     }
 
     return group;

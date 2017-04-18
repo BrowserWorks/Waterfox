@@ -29,13 +29,11 @@
 #include <errno.h>
 #include <math.h>
 
-#ifndef SPS_STANDALONE
 #include "ThreadResponsiveness.h"
 #include "nsThreadUtils.h"
 
 // Memory profile
 #include "nsMemoryReporterManager.h"
-#endif
 
 #include "platform.h"
 #include "GeckoSampler.h"
@@ -163,14 +161,14 @@ class PlatformData {
   pthread_t profiled_pthread_;
 };
 
-/* static */ PlatformData*
-Sampler::AllocPlatformData(int aThreadId)
+/* static */ auto
+Sampler::AllocPlatformData(int aThreadId) -> UniquePlatformData
 {
-  return new PlatformData;
+  return UniquePlatformData(new PlatformData);
 }
 
-/* static */ void
-Sampler::FreePlatformData(PlatformData* aData)
+void
+Sampler::PlatformDataDestructor::operator()(PlatformData* aData)
 {
   delete aData;
 }
@@ -211,7 +209,7 @@ class SamplerThread : public Thread {
       SamplerRegistry::sampler->DeleteExpiredMarkers();
       if (!SamplerRegistry::sampler->IsPaused()) {
         ::MutexAutoLock lock(*Sampler::sRegisteredThreadsMutex);
-        std::vector<ThreadInfo*> threads =
+        const std::vector<ThreadInfo*>& threads =
           SamplerRegistry::sampler->GetRegisteredThreads();
         bool isFirstProfiledThread = true;
         for (uint32_t i = 0; i < threads.size(); i++) {
@@ -227,9 +225,7 @@ class SamplerThread : public Thread {
             continue;
           }
 
-#ifndef SPS_STANDALONE
           info->Profile()->GetThreadResponsiveness()->Update();
-#endif
 
           ThreadProfile* thread_profile = info->Profile();
 
@@ -262,11 +258,9 @@ class SamplerThread : public Thread {
     sample->ussMemory = 0;
     sample->rssMemory = 0;
 
-#ifndef SPS_STANDALONE
     if (isFirstProfiledThread && Sampler::GetActiveSampler()->ProfileMemory()) {
       sample->rssMemory = nsMemoryReporterManager::ResidentFast();
     }
-#endif
 
     // We're using thread_suspend on OS X because pthread_kill (which is what
     // we're using on Linux) has less consistent performance and causes
@@ -358,80 +352,10 @@ Sampler::GetProfiledThread(PlatformData* aData)
   return aData->profiled_pthread();
 }
 
-#include <sys/syscall.h>
-pid_t gettid()
-{
-  return (pid_t) syscall(SYS_thread_selfid);
-}
-
 /* static */ Thread::tid_t
 Thread::GetCurrentId()
 {
   return gettid();
-}
-
-bool Sampler::RegisterCurrentThread(const char* aName,
-                                    PseudoStack* aPseudoStack,
-                                    bool aIsMainThread, void* stackTop)
-{
-  if (!Sampler::sRegisteredThreadsMutex)
-    return false;
-
-
-  ::MutexAutoLock lock(*Sampler::sRegisteredThreadsMutex);
-
-  int id = gettid();
-  for (uint32_t i = 0; i < sRegisteredThreads->size(); i++) {
-    ThreadInfo* info = sRegisteredThreads->at(i);
-    if (info->ThreadId() == id && !info->IsPendingDelete()) {
-      // Thread already registered. This means the first unregister will be
-      // too early.
-      ASSERT(false);
-      return false;
-    }
-  }
-
-  set_tls_stack_top(stackTop);
-
-  ThreadInfo* info = new StackOwningThreadInfo(aName, id,
-    aIsMainThread, aPseudoStack, stackTop);
-
-  if (sActiveSampler) {
-    sActiveSampler->RegisterThread(info);
-  }
-
-  sRegisteredThreads->push_back(info);
-
-  return true;
-}
-
-void Sampler::UnregisterCurrentThread()
-{
-  if (!Sampler::sRegisteredThreadsMutex)
-    return;
-
-  tlsStackTop.set(nullptr);
-
-  ::MutexAutoLock lock(*Sampler::sRegisteredThreadsMutex);
-
-  int id = gettid();
-
-  for (uint32_t i = 0; i < sRegisteredThreads->size(); i++) {
-    ThreadInfo* info = sRegisteredThreads->at(i);
-    if (info->ThreadId() == id && !info->IsPendingDelete()) {
-      if (profiler_is_active()) {
-        // We still want to show the results of this thread if you
-        // save the profile shortly after a thread is terminated.
-        // For now we will defer the delete to profile stop.
-        info->SetPendingDelete();
-        break;
-      } else {
-        delete info;
-        sRegisteredThreads->erase(sRegisteredThreads->begin() + i);
-        break;
-      }
-    }
-  }
 }
 
 void TickSample::PopulateContext(void* aContext)

@@ -13,7 +13,6 @@
 #include "mozilla/Telemetry.h"
 #include "nsNetUtil.h"
 #include "nsNetUtilInlines.h"
-#include "mozIApplicationClearPrivateDataParams.h"
 #include "nsCategoryCache.h"
 #include "nsContentUtils.h"
 #include "nsHashKeys.h"
@@ -80,6 +79,10 @@
 
 using namespace mozilla;
 using namespace mozilla::net;
+
+#define DEFAULT_USER_CONTROL_RP 3
+
+static uint32_t sUserControlRp = DEFAULT_USER_CONTROL_RP;
 
 nsresult /*NS_NewChannelWithNodeAndTriggeringPrincipal */
 NS_NewChannelWithTriggeringPrincipal(nsIChannel           **outChannel,
@@ -568,16 +571,12 @@ NS_LoadGroupMatchesPrincipal(nsILoadGroup *aLoadGroup,
                                   getter_AddRefs(loadContext));
     NS_ENSURE_TRUE(loadContext, false);
 
-    // Verify load context appId and browser flag match the principal
-    uint32_t contextAppId;
+    // Verify load context browser flag match the principal
     bool contextInIsolatedBrowser;
-    nsresult rv = loadContext->GetAppId(&contextAppId);
-    NS_ENSURE_SUCCESS(rv, false);
-    rv = loadContext->GetIsInIsolatedMozBrowserElement(&contextInIsolatedBrowser);
+    nsresult rv = loadContext->GetIsInIsolatedMozBrowserElement(&contextInIsolatedBrowser);
     NS_ENSURE_SUCCESS(rv, false);
 
-    return contextAppId == aPrincipal->GetAppId() &&
-           contextInIsolatedBrowser == aPrincipal->GetIsInIsolatedMozBrowserElement();
+    return contextInIsolatedBrowser == aPrincipal->GetIsInIsolatedMozBrowserElement();
 }
 
 nsresult
@@ -1250,7 +1249,7 @@ NS_UsePrivateBrowsing(nsIChannel *channel)
 
 bool
 NS_GetOriginAttributes(nsIChannel *aChannel,
-                       mozilla::NeckoOriginAttributes &aAttributes)
+                       mozilla::OriginAttributes &aAttributes)
 {
     nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
     if (!loadInfo) {
@@ -1263,38 +1262,15 @@ NS_GetOriginAttributes(nsIChannel *aChannel,
 }
 
 bool
-NS_GetAppInfo(nsIChannel *aChannel,
-              uint32_t *aAppID,
-              bool *aIsInIsolatedMozBrowserElement)
-{
-    NeckoOriginAttributes attrs;
-
-    if (!NS_GetOriginAttributes(aChannel, attrs)) {
-      return false;
-    }
-
-    *aAppID = attrs.mAppId;
-    *aIsInIsolatedMozBrowserElement = attrs.mInIsolatedMozBrowser;
-
-    return true;
-}
-
-bool
 NS_HasBeenCrossOrigin(nsIChannel* aChannel, bool aReport)
 {
   nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
   MOZ_RELEASE_ASSERT(loadInfo, "Origin tracking only works for channels created with a loadinfo");
 
-#ifdef DEBUG
-  // Don't enforce TYPE_DOCUMENT assertions for loads
-  // initiated by javascript tests.
-  bool skipContentTypeCheck = false;
-  skipContentTypeCheck = Preferences::GetBool("network.loadinfo.skip_type_assertion");
-#endif
-
-  MOZ_ASSERT(skipContentTypeCheck ||
-             loadInfo->GetExternalContentPolicyType() != nsIContentPolicy::TYPE_DOCUMENT,
-             "calling NS_HasBeenCrossOrigin on a top level load");
+  // TYPE_DOCUMENT loads have a null LoadingPrincipal and can not be cross origin.
+  if (!loadInfo->LoadingPrincipal()) {
+    return false;
+  }
 
   // Always treat tainted channels as cross-origin.
   if (loadInfo->GetTainting() != LoadTainting::Basic) {
@@ -1337,39 +1313,6 @@ NS_HasBeenCrossOrigin(nsIChannel* aChannel, bool aReport)
   }
 
   return NS_FAILED(loadingPrincipal->CheckMayLoad(uri, aReport, dataInherits));
-}
-
-nsresult
-NS_GetAppInfoFromClearDataNotification(nsISupports *aSubject,
-                                       uint32_t *aAppID,
-                                       bool *aBrowserOnly)
-{
-    nsresult rv;
-
-    nsCOMPtr<mozIApplicationClearPrivateDataParams>
-        clearParams(do_QueryInterface(aSubject));
-    MOZ_ASSERT(clearParams);
-    if (!clearParams) {
-        return NS_ERROR_UNEXPECTED;
-    }
-
-    uint32_t appId;
-    rv = clearParams->GetAppId(&appId);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    MOZ_ASSERT(appId != NECKO_UNKNOWN_APP_ID);
-    NS_ENSURE_SUCCESS(rv, rv);
-    if (appId == NECKO_UNKNOWN_APP_ID) {
-        return NS_ERROR_UNEXPECTED;
-    }
-
-    bool browserOnly = false;
-    rv = clearParams->GetBrowserOnly(&browserOnly);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    *aAppID = appId;
-    *aBrowserOnly = browserOnly;
-    return NS_OK;
 }
 
 bool
@@ -2216,8 +2159,10 @@ NS_IsSrcdocChannel(nsIChannel *aChannel)
   }
   nsCOMPtr<nsIViewSourceChannel> vsc = do_QueryInterface(aChannel);
   if (vsc) {
-    vsc->GetIsSrcdocChannel(&isSrcdoc);
-    return isSrcdoc;
+    nsresult rv = vsc->GetIsSrcdocChannel(&isSrcdoc);
+    if (NS_SUCCEEDED(rv)) {
+      return isSrcdoc;
+    }
   }
   return false;
 }
@@ -2394,33 +2339,22 @@ NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel)
     return NS_OK;
   }
 
-  uint32_t loadContextAppId = 0;
-  nsresult rv = loadContext->GetAppId(&loadContextAppId);
-  if (NS_FAILED(rv)) {
-    return NS_ERROR_UNEXPECTED;
-  }
-
   bool loadContextIsInBE = false;
-  rv = loadContext->GetIsInIsolatedMozBrowserElement(&loadContextIsInBE);
+  nsresult rv = loadContext->GetIsInIsolatedMozBrowserElement(&loadContextIsInBE);
   if (NS_FAILED(rv)) {
     return NS_ERROR_UNEXPECTED;
   }
 
   OriginAttributes originAttrsLoadInfo = loadInfo->GetOriginAttributes();
-  DocShellOriginAttributes originAttrsLoadContext;
+  OriginAttributes originAttrsLoadContext;
   loadContext->GetOriginAttributes(originAttrsLoadContext);
 
-  LOG(("NS_CompareLoadInfoAndLoadContext - loadInfo: %d, %d, %d, %d; "
-       "loadContext: %d %d, %d, %d. [channel=%p]",
-       originAttrsLoadInfo.mAppId, originAttrsLoadInfo.mInIsolatedMozBrowser,
-       originAttrsLoadInfo.mUserContextId, originAttrsLoadInfo.mPrivateBrowsingId,
-       loadContextAppId, loadContextIsInBE,
+  LOG(("NS_CompareLoadInfoAndLoadContext - loadInfo: %d, %d, %d; "
+       "loadContext: %d %d, %d. [channel=%p]",
+       originAttrsLoadInfo.mInIsolatedMozBrowser, originAttrsLoadInfo.mUserContextId,
+       originAttrsLoadInfo.mPrivateBrowsingId, loadContextIsInBE,
        originAttrsLoadContext.mUserContextId, originAttrsLoadContext.mPrivateBrowsingId,
        aChannel));
-
-  MOZ_ASSERT(originAttrsLoadInfo.mAppId == loadContextAppId,
-             "AppId in the loadContext and in the loadInfo are not the "
-             "same!");
 
   MOZ_ASSERT(originAttrsLoadInfo.mInIsolatedMozBrowser ==
              loadContextIsInBE,
@@ -2438,6 +2372,30 @@ NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel)
              "loadInfo are not the same!");
 
   return NS_OK;
+}
+
+uint32_t
+NS_GetDefaultReferrerPolicy()
+{
+  static bool preferencesInitialized = false;
+
+  if (!preferencesInitialized) {
+    mozilla::Preferences::AddUintVarCache(&sUserControlRp,
+                                          "network.http.referer.userControlPolicy",
+                                          DEFAULT_USER_CONTROL_RP);
+    preferencesInitialized = true;
+  }
+
+  switch (sUserControlRp) {
+    case 0:
+      return nsIHttpChannel::REFERRER_POLICY_NO_REFERRER;
+    case 1:
+      return nsIHttpChannel::REFERRER_POLICY_SAME_ORIGIN;
+    case 2:
+      return nsIHttpChannel::REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN;
+  }
+
+  return nsIHttpChannel::REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE;
 }
 
 namespace mozilla {

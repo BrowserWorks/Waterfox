@@ -15,7 +15,6 @@
 #include "mozilla/Casting.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/TimeStamp.h"
 #include "mozilla/Unused.h"
 #include "nsContentUtils.h"
 #include "nsICertOverrideService.h"
@@ -48,7 +47,6 @@ namespace {
 // Bits in bit mask for SSL_REASONS_FOR_NOT_FALSE_STARTING telemetry probe
 // These bits are numbered so that the least subtle issues have higher values.
 // This should make it easier for us to interpret the results.
-const uint32_t NPN_NOT_NEGOTIATED = 64;
 const uint32_t POSSIBLE_VERSION_DOWNGRADE = 4;
 const uint32_t POSSIBLE_CIPHER_SUITE_DOWNGRADE = 2;
 const uint32_t KEA_NOT_SUPPORTED = 1;
@@ -62,7 +60,7 @@ public:
 
   NS_IMETHOD Run();
 
-  nsNSSHttpRequestSession *mRequestSession;
+  RefPtr<nsNSSHttpRequestSession> mRequestSession;
   
   RefPtr<nsHTTPListener> mListener;
   bool mResponsibleForDoneSignal;
@@ -78,8 +76,6 @@ nsHTTPDownloadEvent::~nsHTTPDownloadEvent()
 {
   if (mResponsibleForDoneSignal && mListener)
     mListener->send_done_signal();
-
-  mRequestSession->Release();
 }
 
 NS_IMETHODIMP
@@ -117,8 +113,8 @@ nsHTTPDownloadEvent::Run()
   // For OCSP requests, only the first party domain aspect of origin attributes
   // is used. This means that OCSP requests are shared across different
   // containers.
-  if (mRequestSession->mOriginAttributes != NeckoOriginAttributes()) {
-    NeckoOriginAttributes attrs;
+  if (mRequestSession->mOriginAttributes != OriginAttributes()) {
+    OriginAttributes attrs;
     attrs.mFirstPartyDomain =
       mRequestSession->mOriginAttributes.mFirstPartyDomain;
 
@@ -233,8 +229,8 @@ nsNSSHttpRequestSession::createFcn(const nsNSSHttpServerSession* session,
                                    const char* http_protocol_variant,
                                    const char* path_and_query_string,
                                    const char* http_request_method,
-                                   const NeckoOriginAttributes& origin_attributes,
-                                   const PRIntervalTime timeout,
+                                   const OriginAttributes& origin_attributes,
+                                   const TimeDuration timeout,
                            /*out*/ nsNSSHttpRequestSession** pRequest)
 {
   if (!session || !http_protocol_variant || !path_and_query_string ||
@@ -247,14 +243,7 @@ nsNSSHttpRequestSession::createFcn(const nsNSSHttpServerSession* session,
     return Result::FATAL_ERROR_NO_MEMORY;
   }
 
-  rs->mTimeoutInterval = timeout;
-
-  // Use a maximum timeout value of 10 seconds because of bug 404059.
-  // FIXME: Use a better approach once 406120 is ready.
-  uint32_t maxBug404059Timeout = PR_TicksPerSecond() * 10;
-  if (timeout > maxBug404059Timeout) {
-    rs->mTimeoutInterval = maxBug404059Timeout;
-  }
+  rs->mTimeout = timeout;
 
   rs->mURL.Assign(http_protocol_variant);
   rs->mURL.AppendLiteral("://");
@@ -412,7 +401,6 @@ nsNSSHttpRequestSession::internal_send_receive_attempt(bool &retryable_error,
   }
 
   event->mListener = mListener;
-  this->AddRef();
   event->mRequestSession = this;
 
   nsresult rv = NS_DispatchToMainThread(event);
@@ -426,7 +414,7 @@ nsNSSHttpRequestSession::internal_send_receive_attempt(bool &retryable_error,
   {
     MutexAutoLock locker(waitLock);
 
-    const PRIntervalTime start_time = PR_IntervalNow();
+    const TimeStamp startTime = TimeStamp::NowLoRes();
     PRIntervalTime wait_interval;
 
     bool running_on_main_thread = NS_IsMainThread();
@@ -464,15 +452,13 @@ nsNSSHttpRequestSession::internal_send_receive_attempt(bool &retryable_error,
       }
 
       waitCondition.Wait(wait_interval);
-      
+
       if (!waitFlag)
         break;
 
       if (!request_canceled)
       {
-        bool timeout = 
-          (PRIntervalTime)(PR_IntervalNow() - start_time) > mTimeoutInterval;
- 
+        bool timeout = (TimeStamp::NowLoRes() - startTime) > mTimeout;
         if (timeout)
         {
           request_canceled = true;
@@ -555,10 +541,10 @@ nsNSSHttpRequestSession::internal_send_receive_attempt(bool &retryable_error,
 }
 
 nsNSSHttpRequestSession::nsNSSHttpRequestSession()
-: mRefCount(1),
-  mHasPostData(false),
-  mTimeoutInterval(0),
-  mListener(new nsHTTPListener)
+  : mRefCount(1)
+  , mHasPostData(false)
+  , mTimeout(0)
+  , mListener(new nsHTTPListener)
 {
 }
 
@@ -603,8 +589,8 @@ nsHTTPListener::FreeLoadGroup(bool aCancelLoad)
 
   if (mLoadGroup) {
     if (mLoadGroupOwnerThread != PR_GetCurrentThread()) {
-      NS_ASSERTION(false,
-                   "attempt to access nsHTTPDownloadEvent::mLoadGroup on multiple threads, leaking it!");
+      MOZ_ASSERT_UNREACHABLE(
+        "Attempt to access mLoadGroup on multiple threads, leaking it!");
     }
     else {
       lg = mLoadGroup;
@@ -947,8 +933,6 @@ CanFalseStartCallback(PRFileDesc* fd, void* client_data, PRBool *canFalseStart)
     return SECSuccess;
   }
 
-  nsSSLIOLayerHelpers& helpers = infoObject->SharedState().IOLayerHelpers();
-
   // Prevent version downgrade attacks from TLS 1.2, and avoid False Start for
   // TLS 1.3 and later. See Bug 861310 for all the details as to why.
   if (channelInfo.protocolVersion != SSL_LIBRARY_VERSION_TLS_1_2) {
@@ -982,18 +966,6 @@ CanFalseStartCallback(PRFileDesc* fd, void* client_data, PRBool *canFalseStart)
   // of an attacker leverage this capability by restricting false start
   // to the same protocol we previously saw for the server, after the
   // first successful connection to the server.
-
-  // Enforce NPN to do false start if policy requires it. Do this as an
-  // indicator if server compatibility.
-  if (helpers.mFalseStartRequireNPN) {
-    nsAutoCString negotiatedNPN;
-    if (NS_FAILED(infoObject->GetNegotiatedNPN(negotiatedNPN)) ||
-        !negotiatedNPN.Length()) {
-      MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("CanFalseStartCallback [%p] failed - "
-                                        "NPN cannot be verified\n", fd));
-      reasonsForNotFalseStarting |= NPN_NOT_NEGOTIATED;
-    }
-  }
 
   Telemetry::Accumulate(Telemetry::SSL_REASONS_FOR_NOT_FALSE_STARTING,
                         reasonsForNotFalseStarting);
@@ -1054,8 +1026,6 @@ AccumulateCipherSuite(Telemetry::ID probe, const SSLChannelInfo& channelInfo)
     case TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA: value = 5; break;
     case TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA: value = 6; break;
     case TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA: value = 7; break;
-    case TLS_ECDHE_RSA_WITH_RC4_128_SHA: value = 8; break;
-    case TLS_ECDHE_ECDSA_WITH_RC4_128_SHA: value = 9; break;
     case TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA: value = 10; break;
     case TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: value = 11; break;
     case TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256: value = 12; break;
@@ -1079,8 +1049,6 @@ AccumulateCipherSuite(Telemetry::ID probe, const SSLChannelInfo& channelInfo)
     case TLS_ECDH_RSA_WITH_AES_256_CBC_SHA: value = 44; break;
     case TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA: value = 45; break;
     case TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA: value = 46; break;
-    case TLS_ECDH_ECDSA_WITH_RC4_128_SHA: value = 47; break;
-    case TLS_ECDH_RSA_WITH_RC4_128_SHA: value = 48; break;
     // RSA key exchange
     case TLS_RSA_WITH_AES_128_CBC_SHA: value = 61; break;
     case TLS_RSA_WITH_CAMELLIA_128_CBC_SHA: value = 62; break;
@@ -1089,8 +1057,6 @@ AccumulateCipherSuite(Telemetry::ID probe, const SSLChannelInfo& channelInfo)
     case SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA: value = 65; break;
     case TLS_RSA_WITH_3DES_EDE_CBC_SHA: value = 66; break;
     case TLS_RSA_WITH_SEED_CBC_SHA: value = 67; break;
-    case TLS_RSA_WITH_RC4_128_SHA: value = 68; break;
-    case TLS_RSA_WITH_RC4_128_MD5: value = 69; break;
     // TLS 1.3 PSK resumption
     case TLS_AES_128_GCM_SHA256: value = 70; break;
     case TLS_CHACHA20_POLY1305_SHA256: value = 71; break;
@@ -1213,7 +1179,6 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                            infoObject->GetPort(),
                                            versions.max);
 
-  bool usesFallbackCipher = false;
   SSLChannelInfo channelInfo;
   rv = SSL_GetChannelInfo(fd, &channelInfo, sizeof(channelInfo));
   MOZ_ASSERT(rv == SECSuccess);
@@ -1233,8 +1198,6 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                 sizeof cipherInfo);
     MOZ_ASSERT(rv == SECSuccess);
     if (rv == SECSuccess) {
-      usesFallbackCipher = channelInfo.keaType == ssl_kea_dh;
-
       // keyExchange null=0, rsa=1, dh=2, fortezza=3, ecdh=4
       Telemetry::Accumulate(
         infoObject->IsFullHandshake()
@@ -1325,14 +1288,12 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
   } else {
     state = nsIWebProgressListener::STATE_IS_SECURE |
             nsIWebProgressListener::STATE_SECURE_HIGH;
-    if (!usesFallbackCipher) {
-      SSLVersionRange defVersion;
-      rv = SSL_VersionRangeGetDefault(ssl_variant_stream, &defVersion);
-      if (rv == SECSuccess && versions.max >= defVersion.max) {
-        // we know this site no longer requires a fallback cipher
-        ioLayerHelpers.removeInsecureFallbackSite(infoObject->GetHostName(),
-                                                  infoObject->GetPort());
-      }
+    SSLVersionRange defVersion;
+    rv = SSL_VersionRangeGetDefault(ssl_variant_stream, &defVersion);
+    if (rv == SECSuccess && versions.max >= defVersion.max) {
+      // we know this site no longer requires a version fallback
+      ioLayerHelpers.removeInsecureFallbackSite(infoObject->GetHostName(),
+                                                infoObject->GetPort());
     }
   }
 

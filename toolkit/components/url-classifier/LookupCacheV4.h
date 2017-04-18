@@ -25,7 +25,8 @@ public:
 
   virtual nsresult Init() override;
   virtual nsresult Has(const Completion& aCompletion,
-                       bool* aHas, bool* aComplete) override;
+                       bool* aHas, bool* aComplete,
+                       uint32_t* aMatchLength) override;
 
   nsresult Build(PrefixStringMap& aPrefixMap);
 
@@ -52,14 +53,6 @@ private:
 
   nsresult InitCrypto(nsCOMPtr<nsICryptoHash>& aCrypto);
   nsresult VerifyChecksum(const nsACString& aChecksum);
-
-  enum UPDATE_ERROR_TYPES {
-    DUPLICATE_PREFIX = 0,
-    INFINITE_LOOP = 1,
-    WRONG_REMOVAL_INDICES = 2,
-    CHECKSUM_MISMATCH = 3,
-    MISSING_CHECKSUM = 4,
-  };
 
   RefPtr<VariableLengthPrefixSet> mVLPrefixSet;
 };

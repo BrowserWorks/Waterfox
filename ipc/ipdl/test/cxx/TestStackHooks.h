@@ -22,31 +22,31 @@ public:
 
     void Main();
 
-protected:    
-    virtual bool RecvAsync() override {
+protected:
+    virtual mozilla::ipc::IPCResult RecvAsync() override {
         if (!mOnStack)
             fail("not on C++ stack?!");
-        return true;
+        return IPC_OK();
     }
 
-    virtual bool RecvSync() override {
+    virtual mozilla::ipc::IPCResult RecvSync() override {
         if (!mOnStack)
             fail("not on C++ stack?!");
-        return true;
+        return IPC_OK();
     }
 
-    virtual bool AnswerRpc() override {
+    virtual mozilla::ipc::IPCResult AnswerRpc() override {
         if (!mOnStack)
             fail("not on C++ stack?!");
-        return true;
+        return IPC_OK();
     }
 
-    virtual bool AnswerStackFrame() override;
+    virtual mozilla::ipc::IPCResult AnswerStackFrame() override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown != why)
-            fail("unexpected destruction!");  
+            fail("unexpected destruction!");
         passed("ok");
         QuitParent();
     }
@@ -81,9 +81,9 @@ public:
     void RunTests();
 
 protected:
-    virtual bool RecvStart() override;
+    virtual mozilla::ipc::IPCResult RecvStart() override;
 
-    virtual bool AnswerStackFrame() override;
+    virtual mozilla::ipc::IPCResult AnswerStackFrame() override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
@@ -120,6 +120,7 @@ private:
     int mEntered;
     int mExited;
     int mIncallDepth;
+    int32_t mNumAnswerStackFrame;
 };
 
 

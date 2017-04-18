@@ -298,6 +298,12 @@ typedef struct SSLPreliminaryChannelInfoStr {
     /* Cipher suite: test (valuesSet & ssl_preinfo_cipher_suite) */
     PRUint16 cipherSuite;
 
+    /* The following fields were added in NSS 3.29. */
+    /* |canSendEarlyData| is true when a 0-RTT is enabled. This can only be
+     * true after sending the ClientHello and before the handshake completes.
+     */
+    PRBool canSendEarlyData;
+
     /* When adding new fields to this structure, please document the
      * NSS version in which they were added. */
 } SSLPreliminaryChannelInfo;

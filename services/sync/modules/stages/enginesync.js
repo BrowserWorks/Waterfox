@@ -131,8 +131,7 @@ EngineSynchronizer.prototype = {
           this.onComplete(new Error("Remote setup failed after processing commands."));
           return;
         }
-      }
-      finally {
+      } finally {
         // Always immediately attempt to push back the local client (now
         // without commands).
         // Note that we don't abort here; if there's a 401 because we've
@@ -319,8 +318,7 @@ EngineSynchronizer.prototype = {
   _syncEngine: function _syncEngine(engine) {
     try {
       engine.sync();
-    }
-    catch(e) {
+    } catch (e) {
       if (e.status == 401) {
         // Maybe a 401, cluster update perhaps needed?
         // We rely on ErrorHandler observing the sync failure notification to
@@ -329,12 +327,19 @@ EngineSynchronizer.prototype = {
         // appropriate value.
         return false;
       }
+      // Note that policies.js has already logged info about the exception...
+      if (Async.isShutdownException(e)) {
+        // Failure due to a shutdown exception should prevent other engines
+        // trying to start and immediately failing.
+        this._log.info(`${engine.name} was interrupted by shutdown; no other engines will sync`);
+        return false;
+      }
     }
 
     return true;
   },
 
-  _updateEnabledFromMeta: function (meta, numClients, engineManager=this.service.engineManager) {
+  _updateEnabledFromMeta(meta, numClients, engineManager = this.service.engineManager) {
     this._log.info("Updating enabled engines: " +
                     numClients + " clients.");
 
@@ -438,7 +443,7 @@ EngineSynchronizer.prototype = {
     this.service._ignorePrefObserver = false;
   },
 
-  _updateEnabledEngines: function () {
+  _updateEnabledEngines() {
     let meta = this.service.recordManager.get(this.service.metaURL);
     let numClients = this.service.scheduler.numClients;
     let engineManager = this.service.engineManager;

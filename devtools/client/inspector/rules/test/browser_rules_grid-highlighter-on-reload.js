@@ -45,7 +45,7 @@ function* checkGridHighlighter() {
   let gridToggle = container.querySelector(".ruleview-grid");
 
   info("Toggling ON the CSS grid highlighter from the rule-view.");
-  let onHighlighterShown = highlighters.once("highlighter-shown");
+  let onHighlighterShown = highlighters.once("grid-highlighter-shown");
   gridToggle.click();
   yield onHighlighterShown;
 

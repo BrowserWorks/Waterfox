@@ -23,13 +23,9 @@ public:
 
   MessageLoop* GMPMessageLoop();
 
-  bool RecvPGMPAudioDecoderConstructor(PGMPAudioDecoderChild* aActor) override;
-  bool RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor) override;
-  bool RecvPGMPVideoDecoderConstructor(PGMPVideoDecoderChild* aActor, const uint32_t& aDecryptorId) override;
-  bool RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor) override;
-
-  PGMPAudioDecoderChild* AllocPGMPAudioDecoderChild() override;
-  bool DeallocPGMPAudioDecoderChild(PGMPAudioDecoderChild* aActor) override;
+  mozilla::ipc::IPCResult RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor) override;
+  mozilla::ipc::IPCResult RecvPGMPVideoDecoderConstructor(PGMPVideoDecoderChild* aActor, const uint32_t& aDecryptorId) override;
+  mozilla::ipc::IPCResult RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor) override;
 
   PGMPDecryptorChild* AllocPGMPDecryptorChild() override;
   bool DeallocPGMPDecryptorChild(PGMPDecryptorChild* aActor) override;

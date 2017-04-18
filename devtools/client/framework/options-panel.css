@@ -18,6 +18,10 @@
   float: left;
 }
 
+.options-vertical-pane:dir(rtl) {
+  float: right;
+}
+
 .options-vertical-pane {
   margin: 5px;
   width: calc(100%/3 - 10px);
@@ -104,4 +108,9 @@
 
 #devtools-sourceeditor-tabsize-select {
   min-width: 80px;
+}
+
+#screenshot-icon::before {
+  background-image: url(chrome://devtools/skin/images/command-screenshot.svg);
+  margin-inline-start: 5px;
 }

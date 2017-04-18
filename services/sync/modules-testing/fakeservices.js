@@ -39,7 +39,10 @@ this.FakeFilesystemService = function FakeFilesystemService(contents) {
   Utils.jsonSave = function jsonSave(filePath, that, obj, callback) {
     let json = typeof obj == "function" ? obj.call(that) : obj;
     self.fakeContents["weave/" + filePath + ".json"] = JSON.stringify(json);
-    callback.call(that);
+    if (callback) {
+      callback.call(that);
+    }
+    return Promise.resolve();
   };
 
   Utils.jsonLoad = function jsonLoad(filePath, that, cb) {
@@ -48,7 +51,10 @@ this.FakeFilesystemService = function FakeFilesystemService(contents) {
     if (json) {
       obj = JSON.parse(json);
     }
-    cb.call(that, obj);
+    if (cb) {
+      cb.call(that, obj);
+    }
+    return Promise.resolve(obj);
   };
 
   Utils.jsonMove = function jsonMove(aFrom, aTo, that) {
@@ -78,7 +84,7 @@ this.FakeGUIDService = function FakeGUIDService() {
   Utils.makeGUID = function makeGUID() {
     // ensure that this always returns a unique 12 character string
     let nextGUID = "fake-guid-" + String(latestGUID++).padStart(2, "0");
-    return nextGUID.slice(nextGUID.length-12, nextGUID.length);
+    return nextGUID.slice(nextGUID.length - 12, nextGUID.length);
   };
 }
 

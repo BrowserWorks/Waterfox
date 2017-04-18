@@ -39,7 +39,6 @@ namespace layers {
 class AsyncCanvasRenderer;
 class ImageClient;
 class ImageContainer;
-class ImageContainerChild;
 class ImageBridgeParent;
 class CompositableClient;
 struct CompositableTransaction;
@@ -169,10 +168,6 @@ public:
 
   virtual base::ProcessId GetParentPid() const override { return OtherPid(); }
 
-  PCompositableChild* AllocPCompositableChild(const TextureInfo& aInfo,
-                                              PImageContainerChild* aChild, uint64_t* aID) override;
-  bool DeallocPCompositableChild(PCompositableChild* aActor) override;
-
   virtual PTextureChild*
   AllocPTextureChild(const SurfaceDescriptor& aSharedData, const LayersBackend& aLayersBackend, const TextureFlags& aFlags, const uint64_t& aSerial) override;
 
@@ -184,32 +179,24 @@ public:
   bool
   DeallocPMediaSystemResourceManagerChild(PMediaSystemResourceManagerChild* aActor) override;
 
-  virtual PImageContainerChild*
-  AllocPImageContainerChild() override;
-  virtual bool
-  DeallocPImageContainerChild(PImageContainerChild* actor) override;
-
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessageData>&& aMessages) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvDidComposite(InfallibleTArray<ImageCompositeNotification>&& aNotifications) override;
 
   // Create an ImageClient from any thread.
   RefPtr<ImageClient> CreateImageClient(
     CompositableType aType,
-    ImageContainer* aImageContainer,
-    ImageContainerChild* aContainerChild);
+    ImageContainer* aImageContainer);
 
   // Create an ImageClient from the ImageBridge thread.
   RefPtr<ImageClient> CreateImageClientNow(
     CompositableType aType,
-    ImageContainer* aImageContainer,
-    ImageContainerChild* aContainerChild);
+    ImageContainer* aImageContainer);
 
   already_AddRefed<CanvasClient> CreateCanvasClient(CanvasClient::CanvasClientType aType,
                                                     TextureFlags aFlag);
-  void ReleaseImageContainer(RefPtr<ImageContainerChild> aChild);
   void UpdateAsyncCanvasRenderer(AsyncCanvasRenderer* aClient);
   void UpdateImageClient(RefPtr<ImageClient> aClient, RefPtr<ImageContainer> aContainer);
   static void DispatchReleaseTextureClient(TextureClient* aClient);
@@ -243,8 +230,7 @@ private:
     SynchronousTask* aTask,
     RefPtr<ImageClient>* result,
     CompositableType aType,
-    ImageContainer* aImageContainer,
-    ImageContainerChild* aContainerChild);
+    ImageContainer* aImageContainer);
 
   void ReleaseTextureClientNow(TextureClient* aClient);
 
@@ -278,7 +264,9 @@ public:
                                          TextureClient* aClientOnBlack,
                                          TextureClient* aClientOnWhite) override;
 
-  void Destroy(CompositableChild* aCompositable) override;
+  void ReleaseCompositable(const CompositableHandle& aHandle) override;
+
+  void ForgetImageContainer(const CompositableHandle& aHandle);
 
   /**
    * Hold TextureClient ref until end of usage on host side if TextureFlags::RECYCLE is set.
@@ -295,7 +283,7 @@ public:
   virtual void CancelWaitForRecycle(uint64_t aTextureId) override;
 
   virtual bool DestroyInTransaction(PTextureChild* aTexture, bool synchronously) override;
-  virtual bool DestroyInTransaction(PCompositableChild* aCompositable, bool synchronously) override;
+  bool DestroyInTransaction(const CompositableHandle& aHandle);
 
   virtual void RemoveTextureFromCompositable(CompositableClient* aCompositable,
                                              TextureClient* aTexture) override;
@@ -303,13 +291,13 @@ public:
   virtual void UseTiledLayerBuffer(CompositableClient* aCompositable,
                                    const SurfaceDescriptorTiles& aTileLayerDescriptor) override
   {
-    NS_RUNTIMEABORT("should not be called");
+    MOZ_CRASH("should not be called");
   }
 
   virtual void UpdateTextureRegion(CompositableClient* aCompositable,
                                    const ThebesBufferData& aThebesBufferData,
                                    const nsIntRegion& aUpdatedRegion) override {
-    NS_RUNTIMEABORT("should not be called");
+    MOZ_CRASH("should not be called");
   }
 
   // ISurfaceAllocator
@@ -372,6 +360,7 @@ protected:
   void DeallocPImageBridgeChild() override;
 
   bool CanSend() const;
+  bool CanPostTask() const;
 
   static void ShutdownSingleton();
 
@@ -379,7 +368,7 @@ private:
   CompositableTransaction* mTxn;
 
   bool mCanSend;
-  bool mCalledClose;
+  mozilla::Atomic<bool> mDestroyed;
 
   /**
    * Transaction id of CompositableForwarder.
@@ -392,6 +381,12 @@ private:
    * It defer calling of TextureClient recycle callback.
    */
   nsDataHashtable<nsUint64HashKey, RefPtr<TextureClient> > mTexturesWaitingRecycled;
+
+  /**
+   * Mapping from async compositable IDs to image containers.
+   */
+  Mutex mContainerMapLock;
+  nsDataHashtable<nsUint64HashKey, ImageContainer*> mImageContainers;
 };
 
 } // namespace layers

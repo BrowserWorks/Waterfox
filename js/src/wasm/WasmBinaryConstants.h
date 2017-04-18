@@ -27,8 +27,11 @@ namespace wasm {
 static const uint32_t MagicNumber        = 0x6d736100; // "\0asm"
 static const uint32_t EncodingVersion    = 0x01;
 
-enum class SectionId {
-    UserDefined                          = 0,
+static const char NameSectionName[]      = "name";
+
+enum class SectionId
+{
+    Custom                               = 0,
     Type                                 = 1,
     Import                               = 2,
     Function                             = 3,
@@ -41,8 +44,6 @@ enum class SectionId {
     Code                                 = 10,
     Data                                 = 11
 };
-
-static const char NameSectionName[] = "name";
 
 enum class TypeCode
 {
@@ -438,6 +439,45 @@ enum class Telemetry
     ASMJS = 0,
     WASM = 1
 };
+
+// Static offsets into the global data of every module that is compiled.
+
+static const unsigned NaN64GlobalDataOffset  = 0;
+static const unsigned NaN32GlobalDataOffset  = NaN64GlobalDataOffset + sizeof(double);
+static const unsigned InitialGlobalDataBytes = NaN32GlobalDataOffset + sizeof(float);
+
+// These limits are agreed upon with other engines for consistency.
+
+static const unsigned MaxTypes               =  1000000;
+static const unsigned MaxFuncs               =  1000000;
+static const unsigned MaxImports             =   100000;
+static const unsigned MaxExports             =   100000;
+static const unsigned MaxGlobals             =  1000000;
+static const unsigned MaxDataSegments        =   100000;
+static const unsigned MaxElemSegments        = 10000000;
+static const unsigned MaxTableLength         = 10000000;
+static const unsigned MaxStringBytes         =   100000;
+static const unsigned MaxLocals              =    50000;
+static const unsigned MaxParams              =     1000;
+static const unsigned MaxBrTableElems        =  1000000;
+static const unsigned MaxModuleBytes         = 1024 * 1024 * 1024;
+static const unsigned MaxFunctionBytes       =         128 * 1024;
+
+// To be able to assign function indices during compilation while the number of
+// imports is still unknown, asm.js sets a maximum number of imports so it can
+// immediately start handing out function indices starting at the maximum + 1.
+// this means that there is a "hole" between the last import and the first
+// definition, but that's fine.
+
+static const unsigned AsmJSMaxTypes          =   4 * 1024;
+static const unsigned AsmJSMaxFuncs          = 512 * 1024;
+static const unsigned AsmJSMaxImports        =   4 * 1024;
+static const unsigned AsmJSMaxTables         =   4 * 1024;
+static const unsigned AsmJSFirstDefFuncIndex = AsmJSMaxImports + 1;
+
+static_assert(AsmJSMaxTypes <= MaxTypes, "conservative");
+static_assert(AsmJSMaxImports <= MaxImports, "conservative");
+static_assert(AsmJSFirstDefFuncIndex < MaxFuncs, "conservative");
 
 } // namespace wasm
 } // namespace js

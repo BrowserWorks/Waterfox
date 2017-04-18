@@ -7,6 +7,7 @@
 #include "DocAccessibleWrap.h"
 
 #include "Compatibility.h"
+#include "mozilla/dom/TabChild.h"
 #include "DocAccessibleChild.h"
 #include "nsWinUtils.h"
 #include "Role.h"
@@ -65,8 +66,6 @@ DocAccessibleWrap::get_accParent(
 STDMETHODIMP
 DocAccessibleWrap::get_accValue(VARIANT aVarChild, BSTR __RPC_FAR* aValue)
 {
-  A11Y_TRYBLOCK_BEGIN
-
   if (!aValue)
     return E_INVALIDARG;
   *aValue = nullptr;
@@ -90,8 +89,6 @@ DocAccessibleWrap::get_accValue(VARIANT aVarChild, BSTR __RPC_FAR* aValue)
 
   *aValue = ::SysAllocStringLen(url.get(), url.Length());
   return *aValue ? S_OK : E_OUTOFMEMORY;
-
-  A11Y_TRYBLOCK_END
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +118,15 @@ DocAccessibleWrap::Shutdown()
 void*
 DocAccessibleWrap::GetNativeWindow() const
 {
-  return mHWND ? mHWND : DocAccessible::GetNativeWindow();
+  if (XRE_IsContentProcess()) {
+    DocAccessibleChild* ipcDoc = IPCDoc();
+    auto tab = static_cast<dom::TabChild*>(ipcDoc->Manager());
+    MOZ_ASSERT(tab);
+    return reinterpret_cast<HWND>(tab->GetNativeWindowHandle());
+  } else if (mHWND) {
+    return mHWND;
+  }
+  return DocAccessible::GetNativeWindow();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

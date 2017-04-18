@@ -15,7 +15,8 @@ const FIND_KEY = L10N.getStr("find.key");
 const FINDNEXT_KEY = L10N.getStr("findNext.key");
 const FINDPREV_KEY = L10N.getStr("findPrev.key");
 // the replace's key with the appropriate modifiers based on OS
-const REPLACE_KEY = OS == "Darwin" ? L10N.getStr("replaceAllMac.key") : L10N.getStr("replaceAll.key");
+const REPLACE_KEY = OS == "Darwin" ? L10N.getStr("replaceAllMac.key")
+                                   : L10N.getStr("replaceAll.key");
 
 // values like it's not selected – even if the selection is visible.
 // For the record, setting the selection's range immediately doesn't have
@@ -184,23 +185,23 @@ add_task(function* () {
     ["ne 3",
      {line: 2, ch: 11}],
     ["line 1",
-      {line: 0, ch: 9}],
+     {line: 0, ch: 9}],
     // Testing find prev
     ["line",
-      {line: 4, ch: 11},
-      true],
+     {line: 4, ch: 11},
+     true],
     ["line",
-      {line: 3, ch: 10},
-      true],
+     {line: 3, ch: 10},
+     true],
     ["line",
-      {line: 2, ch: 9},
-      true],
+     {line: 2, ch: 9},
+     true],
     ["line",
-      {line: 1, ch: 8},
-      true],
+     {line: 1, ch: 8},
+     true],
     ["line",
-      {line: 0, ch: 7},
-      true]
+     {line: 0, ch: 7},
+     true]
   ];
 
   for (let v of testVectors) {

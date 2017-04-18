@@ -23,12 +23,10 @@ function openTabInUserContext(uri, userContextId) {
 
 add_task(function* setup() {
   // make sure userContext is enabled.
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["privacy.userContext.enabled", true],
-      ["dom.ipc.processCount", 1]
-    ]}, resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+    ["privacy.userContext.enabled", true],
+    ["dom.ipc.processCount", 1]
+  ]});
 });
 
 let infos = [];
@@ -80,7 +78,7 @@ function allRegistered() {
 function promiseAllRegistered() {
   return new Promise(function(resolve) {
     let listener = {
-      onRegister: function() {
+      onRegister() {
         if (allRegistered()) {
           swm.removeListener(listener);
           resolve();
@@ -94,11 +92,11 @@ function promiseAllRegistered() {
 function promiseUnregister(info) {
   return new Promise(function(resolve) {
     swm.unregister(info.principal, {
-      unregisterSucceeded: function(aState) {
+      unregisterSucceeded(aState) {
         ok(aState, "ServiceWorkerRegistration exists");
         resolve();
       },
-      unregisterFailed: function(aState) {
+      unregisterFailed(aState) {
         ok(false, "unregister should succeed");
       }
     }, info.scope);

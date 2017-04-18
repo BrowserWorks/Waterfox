@@ -8,6 +8,7 @@
 
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h" // for nsIDOMEvent::InternalDOMEvent()
+#include "mozilla/dom/HTMLInputElement.h"
 #include "nsIFormAutoComplete.h"
 #include "nsIInputListAutoComplete.h"
 #include "nsIAutoCompleteSimpleResult.h"
@@ -205,6 +206,7 @@ void
 nsFormFillController::NodeWillBeDestroyed(const nsINode* aNode)
 {
   mPwmgrInputs.Remove(aNode);
+  mAutofillInputs.Remove(aNode);
   if (aNode == mListNode) {
     mListNode = nullptr;
     RevalidateDataList();
@@ -219,7 +221,7 @@ nsFormFillController::MaybeRemoveMutationObserver(nsINode* aNode)
 {
   // Nodes being tracked in mPwmgrInputs will have their observers removed when
   // they stop being tracked.
-  if (!mPwmgrInputs.Get(aNode)) {
+  if (!mPwmgrInputs.Get(aNode) && !mAutofillInputs.Get(aNode)) {
     aNode->RemoveMutationObserver(this);
   }
 }
@@ -294,6 +296,21 @@ nsFormFillController::MarkAsLoginManagerField(nsIDOMHTMLInputElement *aInput)
 
   if (!mLoginManager)
     mLoginManager = do_GetService("@mozilla.org/login-manager;1");
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsFormFillController::MarkAsAutofillField(nsIDOMHTMLInputElement *aInput)
+{
+  /*
+   * Support other components implementing form autofill and handle autocomplete
+   * for the field.
+   */
+  nsCOMPtr<nsINode> node = do_QueryInterface(aInput);
+  NS_ENSURE_STATE(node);
+  mAutofillInputs.Put(node, true);
+  node->AddMutationObserverUnlessExists(this);
 
   return NS_OK;
 }
@@ -519,6 +536,14 @@ nsFormFillController::GetSearchCount(uint32_t *aSearchCount)
 NS_IMETHODIMP
 nsFormFillController::GetSearchAt(uint32_t index, nsACString & _retval)
 {
+  if (mAutofillInputs.Get(mFocusedInputNode)) {
+    nsCOMPtr<nsIAutoCompleteSearch> profileSearch = do_GetService("@mozilla.org/autocomplete/search;1?name=autofill-profiles");
+    if (profileSearch) {
+      _retval.AssignLiteral("autofill-profiles");
+      return NS_OK;
+    }
+  }
+
   _retval.AssignLiteral("form-history");
   return NS_OK;
 }
@@ -527,7 +552,9 @@ NS_IMETHODIMP
 nsFormFillController::GetTextValue(nsAString & aTextValue)
 {
   if (mFocusedInput) {
-    mFocusedInput->GetValue(aTextValue);
+    nsCOMPtr<nsIContent> content = do_QueryInterface(mFocusedInput);
+    HTMLInputElement::FromContent(content)->GetValue(aTextValue,
+                                                     CallerType::System);
   } else {
     aTextValue.Truncate();
   }
@@ -920,6 +947,18 @@ void
 nsFormFillController::RemoveForDocument(nsIDocument* aDoc)
 {
   for (auto iter = mPwmgrInputs.Iter(); !iter.Done(); iter.Next()) {
+    const nsINode* key = iter.Key();
+    if (key && (!aDoc || key->OwnerDoc() == aDoc)) {
+      // mFocusedInputNode's observer is tracked separately, so don't remove it
+      // here.
+      if (key != mFocusedInputNode) {
+        const_cast<nsINode*>(key)->RemoveMutationObserver(this);
+      }
+      iter.Remove();
+    }
+  }
+
+  for (auto iter = mAutofillInputs.Iter(); !iter.Done(); iter.Next()) {
     const nsINode* key = iter.Key();
     if (key && (!aDoc || key->OwnerDoc() == aDoc)) {
       // mFocusedInputNode's observer is tracked separately, so don't remove it

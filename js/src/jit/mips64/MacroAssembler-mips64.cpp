@@ -258,36 +258,45 @@ MacroAssemblerMIPS64::ma_li(Register dest, ImmWord imm)
 {
     int64_t value = imm.value;
 
-    if (value >= INT16_MIN && value <= INT16_MAX) {
+    if (-1 == (value >> 15) || 0 == (value >> 15)) {
         as_addiu(dest, zero, value);
-    } else if (imm.value <= UINT16_MAX) {
-        as_ori(dest, zero, Imm16::Lower(Imm32(value)).encode());
-    } else if (value >= INT32_MIN && value <= INT32_MAX) {
-        as_lui(dest, Imm16::Upper(Imm32(value)).encode());
-        if (value & 0xffff)
-            as_ori(dest, dest, Imm16::Lower(Imm32(value)).encode());
-    } else if (imm.value <= UINT32_MAX) {
-        as_lui(dest, Imm16::Upper(Imm32(value)).encode());
-        if (value & 0xffff)
-            as_ori(dest, dest, Imm16::Lower(Imm32(value)).encode());
-        as_dinsu(dest, zero, 32, 32);
-    } else {
-        uint64_t high = imm.value >> 32;
+        return;
+    }
+    if (0 == (value >> 16)) {
+        as_ori(dest, zero, value);
+        return;
+    }
 
-        if (imm.value >> 48) {
-            as_lui(dest, Imm16::Upper(Imm32(high)).encode());
-            if (high & 0xffff)
-                as_ori(dest, dest, Imm16::Lower(Imm32(high)).encode());
+    if (-1 == (value >> 31) || 0 == (value >> 31)) {
+        as_lui(dest, uint16_t(value >> 16));
+    } else if (0 == (value >> 32)) {
+        as_lui(dest, uint16_t(value >> 16));
+        as_dinsu(dest, zero, 32, 32);
+    } else if (-1 == (value >> 47) || 0 == (value >> 47)) {
+        as_lui(dest, uint16_t(value >> 32));
+        if (uint16_t(value >> 16))
+            as_ori(dest, dest, uint16_t(value >> 16));
+        as_dsll(dest, dest, 16);
+    } else if (0 == (value >> 48)) {
+        as_lui(dest, uint16_t(value >> 32));
+        as_dinsu(dest, zero, 32, 32);
+        if (uint16_t(value >> 16))
+            as_ori(dest, dest, uint16_t(value >> 16));
+        as_dsll(dest, dest, 16);
+    } else {
+        as_lui(dest, uint16_t(value >> 48));
+        if (uint16_t(value >> 32))
+            as_ori(dest, dest, uint16_t(value >> 32));
+        if (uint16_t(value >> 16)) {
+            as_dsll(dest, dest, 16);
+            as_ori(dest, dest, uint16_t(value >> 16));
             as_dsll(dest, dest, 16);
         } else {
-            as_lui(dest, Imm16::Lower(Imm32(high)).encode());
+            as_dsll32(dest, dest, 32);
         }
-        if ((imm.value >> 16) & 0xffff)
-            as_ori(dest, dest, Imm16::Upper(Imm32(value)).encode());
-        as_dsll(dest, dest, 16);
-        if (value & 0xffff)
-            as_ori(dest, dest, Imm16::Lower(Imm32(value)).encode());
     }
+    if (uint16_t(value))
+        as_ori(dest, dest, uint16_t(value));
 }
 
 // This method generates lui, dsll and ori instruction block that can be modified
@@ -488,7 +497,7 @@ void
 MacroAssemblerMIPS64::ma_addTestOverflow(Register rd, Register rs, Imm32 imm, L overflow)
 {
     // Check for signed range because of as_daddiu
-    if (Imm16::IsInSignedRange(imm.value) && Imm16::IsInUnsignedRange(imm.value)) {
+    if (Imm16::IsInSignedRange(imm.value)) {
         as_daddiu(SecondScratchReg, rs, imm.value);
         as_addiu(rd, rs, imm.value);
         ma_b(rd, SecondScratchReg, overflow, Assembler::NotEqual);
@@ -1656,12 +1665,6 @@ MacroAssemblerMIPS64Compat::loadConstantFloat32(float f, FloatRegister dest)
 }
 
 void
-MacroAssemblerMIPS64Compat::loadConstantFloat32(wasm::RawF32 f, FloatRegister dest)
-{
-    ma_lis(dest, f);
-}
-
-void
 MacroAssemblerMIPS64Compat::loadInt32OrDouble(const Address& src, FloatRegister dest)
 {
     Label notInt32, end;
@@ -1709,15 +1712,6 @@ void
 MacroAssemblerMIPS64Compat::loadConstantDouble(double dp, FloatRegister dest)
 {
     ma_lid(dest, dp);
-}
-
-void
-MacroAssemblerMIPS64Compat::loadConstantDouble(wasm::RawF64 d, FloatRegister dest)
-{
-    ImmWord imm(d.bits());
-
-    ma_li(ScratchRegister, imm);
-    moveToDouble(ScratchRegister, dest);
 }
 
 Register
@@ -1885,7 +1879,7 @@ MacroAssemblerMIPS64Compat::storeValue(JSValueType type, Register reg, Address d
 void
 MacroAssemblerMIPS64Compat::storeValue(const Value& val, Address dest)
 {
-    if (val.isMarkable()) {
+    if (val.isGCThing()) {
         writeDataRelocation(val);
         movWithPatch(ImmWord(val.asRawBits()), SecondScratchReg);
     } else {

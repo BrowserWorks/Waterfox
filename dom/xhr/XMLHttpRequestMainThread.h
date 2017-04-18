@@ -165,6 +165,7 @@ class XMLHttpRequestMainThread final : public XMLHttpRequest,
                                        public nsSupportsWeakReference,
                                        public nsITimerCallback,
                                        public nsISizeOfEventTarget,
+                                       public nsINamed,
                                        public MutableBlobStorageCallback
 {
   friend class nsXHRParseEndListener;
@@ -230,6 +231,9 @@ public:
 
   // nsITimerCallback
   NS_DECL_NSITIMERCALLBACK
+
+  // nsINamed
+  NS_DECL_NSINAMED
 
   // nsISizeOfEventTarget
   virtual size_t
@@ -326,6 +330,8 @@ private:
   // interface ID.
   void PopulateNetworkInterfaceId();
 
+  void UnsuppressEventHandlingAndResume();
+
 public:
   virtual void
   Send(JSContext* /*aCx*/, ErrorResult& aRv) override
@@ -395,6 +401,11 @@ public:
     RequestBody<nsIInputStream> body(aStream);
     aRv = SendInternal(&body);
   }
+
+  void
+  RequestErrorSteps(const ProgressEventType aEventType,
+                    const nsresult aOptionalException,
+                    ErrorResult& aRv);
 
   void
   Abort() {
@@ -589,6 +600,8 @@ protected:
 
   nsresult OnRedirectVerifyCallback(nsresult result);
 
+  void SetTimerEventTarget(nsITimer* aTimer);
+
   already_AddRefed<nsXMLHttpRequestXPCOMifier> EnsureXPCOMifier();
 
   nsCOMPtr<nsISupports> mContext;
@@ -710,6 +723,9 @@ protected:
   nsCOMPtr<nsITimer> mTimeoutTimer;
   void StartTimeoutTimer();
   void HandleTimeoutCallback();
+
+  nsCOMPtr<nsIDocument> mSuspendedDoc;
+  nsCOMPtr<nsIRunnable> mResumeTimeoutRunnable;
 
   nsCOMPtr<nsITimer> mSyncTimeoutTimer;
 

@@ -22,7 +22,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(AudioParam)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(AudioParam)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNode)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(AudioParam)
@@ -35,13 +34,17 @@ NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(AudioParam, Release)
 
 AudioParam::AudioParam(AudioNode* aNode,
                        uint32_t aIndex,
+                       const char* aName,
                        float aDefaultValue,
-                       const char* aName)
+                       float aMinValue,
+                       float aMaxValue)
   : AudioParamTimeline(aDefaultValue)
   , mNode(aNode)
   , mName(aName)
   , mIndex(aIndex)
   , mDefaultValue(aDefaultValue)
+  , mMinValue(aMinValue)
+  , mMaxValue(aMaxValue)
 {
 }
 

@@ -133,7 +133,9 @@ EXPORTS.js += [
     '../public/ProfilingStack.h',
     '../public/Proxy.h',
     '../public/Realm.h',
+    '../public/RefCounted.h',
     '../public/RequiredDefines.h',
+    '../public/Result.h',
     '../public/RootingAPI.h',
     '../public/SliceBudget.h',
     '../public/StructuredClone.h',
@@ -196,6 +198,7 @@ UNIFIED_SOURCES += [
     'gc/Zone.cpp',
     'irregexp/NativeRegExpMacroAssembler.cpp',
     'irregexp/RegExpAST.cpp',
+    'irregexp/RegExpCharacters.cpp',
     'irregexp/RegExpEngine.cpp',
     'irregexp/RegExpInterpreter.cpp',
     'irregexp/RegExpMacroAssembler.cpp',
@@ -207,7 +210,7 @@ UNIFIED_SOURCES += [
     'jit/BacktrackingAllocator.cpp',
     'jit/Bailouts.cpp',
     'jit/BaselineBailouts.cpp',
-    'jit/BaselineCacheIR.cpp',
+    'jit/BaselineCacheIRCompiler.cpp',
     'jit/BaselineCompiler.cpp',
     'jit/BaselineDebugModeOSR.cpp',
     'jit/BaselineFrame.cpp',
@@ -219,6 +222,7 @@ UNIFIED_SOURCES += [
     'jit/BytecodeAnalysis.cpp',
     'jit/C1Spewer.cpp',
     'jit/CacheIR.cpp',
+    'jit/CacheIRCompiler.cpp',
     'jit/CodeGenerator.cpp',
     'jit/CompileWrappers.cpp',
     'jit/Disassembler.cpp',
@@ -232,7 +236,10 @@ UNIFIED_SOURCES += [
     'jit/Ion.cpp',
     'jit/IonAnalysis.cpp',
     'jit/IonBuilder.cpp',
+    'jit/IonCacheIRCompiler.cpp',
     'jit/IonCaches.cpp',
+    'jit/IonControlFlow.cpp',
+    'jit/IonIC.cpp',
     'jit/IonOptimizationLevels.cpp',
     'jit/JitcodeMap.cpp',
     'jit/JitFrames.cpp',
@@ -320,7 +327,6 @@ UNIFIED_SOURCES += [
     'vm/GlobalObject.cpp',
     'vm/HelperThreads.cpp',
     'vm/Id.cpp',
-    'vm/Interpreter.cpp',
     'vm/JSONParser.cpp',
     'vm/MemoryMetrics.cpp',
     'vm/NativeObject.cpp',
@@ -361,7 +367,6 @@ UNIFIED_SOURCES += [
     'vm/Xdr.cpp',
     'wasm/AsmJS.cpp',
     'wasm/WasmBaselineCompile.cpp',
-    'wasm/WasmBinaryFormat.cpp',
     'wasm/WasmBinaryIterator.cpp',
     'wasm/WasmBinaryToAST.cpp',
     'wasm/WasmBinaryToExperimentalText.cpp',
@@ -369,6 +374,7 @@ UNIFIED_SOURCES += [
     'wasm/WasmCode.cpp',
     'wasm/WasmCompartment.cpp',
     'wasm/WasmCompile.cpp',
+    'wasm/WasmDebugFrame.cpp',
     'wasm/WasmFrameIterator.cpp',
     'wasm/WasmGenerator.cpp',
     'wasm/WasmInstance.cpp',
@@ -380,7 +386,8 @@ UNIFIED_SOURCES += [
     'wasm/WasmTable.cpp',
     'wasm/WasmTextToBinary.cpp',
     'wasm/WasmTextUtils.cpp',
-    'wasm/WasmTypes.cpp'
+    'wasm/WasmTypes.cpp',
+    'wasm/WasmValidate.cpp'
 ]
 
 # jsarray.cpp and jsatom.cpp cannot be built in unified mode because
@@ -398,6 +405,8 @@ UNIFIED_SOURCES += [
 # StoreBuffer.cpp cannot be built in unified because its template
 # instantiations may or may not be needed depending on what it gets bundled
 # with.
+# vm/Interpreter.cpp is gigantic and destroys incremental build times for any
+# files unlucky enough to be unified with it.
 SOURCES += [
     'builtin/RegExp.cpp',
     'frontend/Parser.cpp',
@@ -408,6 +417,7 @@ SOURCES += [
     'jsmath.cpp',
     'jsutil.cpp',
     'vm/Initialization.cpp',
+    'vm/Interpreter.cpp',
 ]
 
 if CONFIG['JS_POSIX_NSPR']:
@@ -490,9 +500,6 @@ elif CONFIG['JS_CODEGEN_ARM']:
         UNIFIED_SOURCES += [
             'jit/arm/Simulator-arm.cpp'
         ]
-        # Configuration used only for testing.
-        if CONFIG['OS_ARCH'] == 'Linux' or CONFIG['OS_ARCH'] == 'Darwin':
-            CXXFLAGS += [ '-msse2', '-mfpmath=sse' ]
     elif CONFIG['OS_ARCH'] == 'Darwin':
         SOURCES += [
             'jit/arm/llvm-compiler-rt/arm/aeabi_idivmod.S',
@@ -637,7 +644,6 @@ jsautokw.inputs += [
 if CONFIG['JS_SHARED_LIBRARY']:
     GeckoSharedLibrary('js', linkage=None)
     SHARED_LIBRARY_NAME = CONFIG['JS_LIBRARY_NAME']
-    SDK_LIBRARY = True
 else:
     Library('js')
 
@@ -755,12 +761,14 @@ selfhosted.inputs = [
     'builtin/Function.js',
     'builtin/Generator.js',
     'builtin/Intl.js',
+    'builtin/IntlCurrency.js',
     'builtin/IntlData.js',
     'builtin/Iterator.js',
     'builtin/Map.js',
     'builtin/Module.js',
     'builtin/Number.js',
     'builtin/Object.js',
+    'builtin/Promise.js',
     'builtin/Reflect.js',
     'builtin/RegExp.js',
     'builtin/RegExpGlobalReplaceOpt.h.js',
@@ -773,9 +781,6 @@ selfhosted.inputs = [
     'builtin/WeakMap.js',
     'builtin/WeakSet.js'
 ]
-
-if CONFIG['SPIDERMONKEY_PROMISE']:
-    selfhosted.inputs += ['builtin/Promise.js']
 
 if CONFIG['JS_HAS_CTYPES']:
     if CONFIG['MOZ_SYSTEM_FFI']:

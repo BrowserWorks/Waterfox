@@ -5,11 +5,13 @@ import sys
 
 def main():
     if len(sys.argv) < 2:
-        raise Exception('Specify either "ld", asan", "msan", "sancov" or "ubsan" as argument.')
+        raise Exception('Specify either "asan", "msan", "sancov" or "ubsan" as argument.')
 
     sanitizer = sys.argv[1]
     if sanitizer == "ubsan":
-        print('-fsanitize=undefined -fno-sanitize-recover=undefined ', end='')
+        if len(sys.argv) < 3:
+            raise Exception('ubsan requires another argument.')
+        print('-fsanitize='+sys.argv[2]+' -fno-sanitize-recover=undefined ', end='')
         return
     if sanitizer == "asan":
         print('-fsanitize=address ', end='')
@@ -25,12 +27,7 @@ def main():
         print('-fsanitize-coverage='+sys.argv[2]+' ', end='')
         return
 
-    # We have to remove this from the ld flags when building asan.
-    if sanitizer == "ld":
-        print('-Wl,-z,defs ', end='')
-        return
-
-    raise Exception('Specify either "ld", asan", "msan", "sancov" or "ubsan" as argument.')
+    raise Exception('Specify either "asan", "msan", "sancov" or "ubsan" as argument.')
 
 if __name__ == '__main__':
     main()

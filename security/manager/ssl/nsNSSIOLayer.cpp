@@ -70,13 +70,6 @@ getSiteKey(const nsACString& hostName, uint16_t port,
   key.AppendInt(port);
 }
 
-// Historically, we have required that the server negotiate ALPN or NPN in
-// order to false start, as a compatibility hack to work around
-// implementations that just stop responding during false start. However, now
-// false start is resricted to modern crypto (TLS 1.2 and AEAD cipher suites)
-// so it is less likely that requring NPN or ALPN is still necessary.
-static const bool FALSE_START_REQUIRE_NPN_DEFAULT = false;
-
 } // unnamed namespace
 
 extern LazyLogModule gPIPNSSLog;
@@ -314,23 +307,34 @@ nsNSSSocketInfo::GetNegotiatedNPN(nsACString& aNegotiatedNPN)
 NS_IMETHODIMP
 nsNSSSocketInfo::GetAlpnEarlySelection(nsACString& aAlpnSelected)
 {
+  aAlpnSelected.Truncate();
+
   nsNSSShutDownPreventionLock locker;
   if (isAlreadyShutDown() || isPK11LoggedOut()) {
     return NS_ERROR_NOT_AVAILABLE;
   }
-  SSLNextProtoState alpnState;
-  unsigned char chosenAlpn[MAX_ALPN_LENGTH];
-  unsigned int chosenAlpnLen;
-  SECStatus rv = SSL_GetNextProto(mFd, &alpnState, chosenAlpn, &chosenAlpnLen,
-                                  AssertedCast<unsigned int>(ArrayLength(chosenAlpn)));
 
-  if (rv != SECSuccess || alpnState != SSL_NEXT_PROTO_EARLY_VALUE ||
-      chosenAlpnLen == 0) {
+  SSLPreliminaryChannelInfo info;
+  SECStatus rv = SSL_GetPreliminaryChannelInfo(mFd, &info, sizeof(info));
+  if (rv != SECSuccess || !info.canSendEarlyData) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  aAlpnSelected.Assign(BitwiseCast<char*, unsigned char*>(chosenAlpn),
-                       chosenAlpnLen);
+  SSLNextProtoState alpnState;
+  unsigned char chosenAlpn[MAX_ALPN_LENGTH];
+  unsigned int chosenAlpnLen;
+  rv = SSL_GetNextProto(mFd, &alpnState, chosenAlpn, &chosenAlpnLen,
+                        AssertedCast<unsigned int>(ArrayLength(chosenAlpn)));
+
+  if (rv != SECSuccess) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  if (alpnState == SSL_NEXT_PROTO_EARLY_VALUE) {
+    aAlpnSelected.Assign(BitwiseCast<char*, unsigned char*>(chosenAlpn),
+                         chosenAlpnLen);
+  }
+
   return NS_OK;
 }
 
@@ -589,8 +593,8 @@ nsNSSSocketInfo::SetCertVerificationWaiting()
   // mCertVerificationState may be before_cert_verification for the first
   // handshake on the connection, or after_cert_verification for subsequent
   // renegotiation handshakes.
-  NS_ASSERTION(mCertVerificationState != waiting_for_cert_verification,
-               "Invalid state transition to waiting_for_cert_verification");
+  MOZ_ASSERT(mCertVerificationState != waiting_for_cert_verification,
+             "Invalid state transition to waiting_for_cert_verification");
   mCertVerificationState = waiting_for_cert_verification;
 }
 
@@ -602,8 +606,8 @@ void
 nsNSSSocketInfo::SetCertVerificationResult(PRErrorCode errorCode,
                                            SSLErrorMessageType errorMessageType)
 {
-  NS_ASSERTION(mCertVerificationState == waiting_for_cert_verification,
-               "Invalid state transition to cert_verification_finished");
+  MOZ_ASSERT(mCertVerificationState == waiting_for_cert_verification,
+             "Invalid state transition to cert_verification_finished");
 
   if (mFd) {
     SECStatus rv = SSL_AuthCertificateComplete(mFd, errorCode);
@@ -757,14 +761,10 @@ nsSSLIOLayerHelpers::rememberTolerantAtVersion(const nsACString& hostName,
       entry.intolerant = entry.tolerant + 1;
       entry.intoleranceReason = 0; // lose the reason
     }
-    if (entry.strongCipherStatus == StrongCipherStatusUnknown) {
-      entry.strongCipherStatus = StrongCiphersWorked;
-    }
   } else {
     entry.tolerant = tolerant;
     entry.intolerant = 0;
     entry.intoleranceReason = 0;
-    entry.strongCipherStatus = StrongCiphersWorked;
   }
 
   entry.AssertInvariant();
@@ -787,9 +787,6 @@ nsSSLIOLayerHelpers::forgetIntolerance(const nsACString& hostName,
 
     entry.intolerant = 0;
     entry.intoleranceReason = 0;
-    if (entry.strongCipherStatus != StrongCiphersWorked) {
-      entry.strongCipherStatus = StrongCipherStatusUnknown;
-    }
 
     entry.AssertInvariant();
     mTLSIntoleranceInfo.Put(key, entry);
@@ -838,7 +835,6 @@ nsSSLIOLayerHelpers::rememberIntolerantAtVersion(const nsACString& hostName,
     }
   } else {
     entry.tolerant = 0;
-    entry.strongCipherStatus = StrongCipherStatusUnknown;
   }
 
   entry.intolerant = intolerant;
@@ -849,42 +845,10 @@ nsSSLIOLayerHelpers::rememberIntolerantAtVersion(const nsACString& hostName,
   return true;
 }
 
-// returns true if we should retry the handshake
-bool
-nsSSLIOLayerHelpers::rememberStrongCiphersFailed(const nsACString& hostName,
-                                                 int16_t port,
-                                                 PRErrorCode intoleranceReason)
-{
-  nsCString key;
-  getSiteKey(hostName, port, key);
-
-  MutexAutoLock lock(mutex);
-
-  IntoleranceEntry entry;
-  if (mTLSIntoleranceInfo.Get(key, &entry)) {
-    entry.AssertInvariant();
-    if (entry.strongCipherStatus != StrongCipherStatusUnknown) {
-      // We already know if the server supports a strong cipher.
-      return false;
-    }
-  } else {
-    entry.tolerant = 0;
-    entry.intolerant = 0;
-    entry.intoleranceReason = intoleranceReason;
-  }
-
-  entry.strongCipherStatus = StrongCiphersFailed;
-  entry.AssertInvariant();
-  mTLSIntoleranceInfo.Put(key, entry);
-
-  return true;
-}
-
 void
 nsSSLIOLayerHelpers::adjustForTLSIntolerance(const nsACString& hostName,
                                              int16_t port,
-                                             /*in/out*/ SSLVersionRange& range,
-                                             /*out*/ StrongCipherStatus& strongCipherStatus)
+                                             /*in/out*/ SSLVersionRange& range)
 {
   IntoleranceEntry entry;
 
@@ -907,7 +871,6 @@ nsSSLIOLayerHelpers::adjustForTLSIntolerance(const nsACString& hostName,
       range.max = entry.intolerant - 1;
     }
   }
-  strongCipherStatus = entry.strongCipherStatus;
 }
 
 PRErrorCode
@@ -947,7 +910,7 @@ nsSSLIOLayerClose(PRFileDesc* fd)
          (void*) fd));
 
   nsNSSSocketInfo* socketInfo = (nsNSSSocketInfo*) fd->secret;
-  NS_ASSERTION(socketInfo,"nsNSSSocketInfo was null for an fd");
+  MOZ_ASSERT(socketInfo, "nsNSSSocketInfo was null for an fd");
 
   return socketInfo->CloseSocketAndDestroy(locker);
 }
@@ -957,9 +920,9 @@ nsNSSSocketInfo::CloseSocketAndDestroy(
     const nsNSSShutDownPreventionLock& /*proofOfLock*/)
 {
   PRFileDesc* popped = PR_PopIOLayer(mFd, PR_TOP_IO_LAYER);
-  NS_ASSERTION(popped &&
+  MOZ_ASSERT(popped &&
                popped->identity == nsSSLIOLayerHelpers::nsSSLIOLayerIdentity,
-               "SSL Layer not on top of stack");
+             "SSL Layer not on top of stack");
 
   // The plain text layer is not always present - so its not a fatal error
   // if it cannot be removed
@@ -1128,28 +1091,6 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
                               socketInfo->GetPort());
 
     return false;
-  }
-
-  // Disallow PR_CONNECT_RESET_ERROR if fallback limit reached.
-  bool fallbackLimitReached =
-    helpers.fallbackLimitReached(socketInfo->GetHostName(), range.max);
-  if (err == PR_CONNECT_RESET_ERROR && fallbackLimitReached) {
-    return false;
-  }
-
-  if ((err == SSL_ERROR_NO_CYPHER_OVERLAP || err == PR_END_OF_FILE_ERROR ||
-       err == PR_CONNECT_RESET_ERROR) &&
-       nsNSSComponent::AreAnyWeakCiphersEnabled()) {
-    if (helpers.isInsecureFallbackSite(socketInfo->GetHostName()) ||
-        helpers.mUnrestrictedRC4Fallback) {
-      if (helpers.rememberStrongCiphersFailed(socketInfo->GetHostName(),
-                                              socketInfo->GetPort(), err)) {
-        Telemetry::Accumulate(Telemetry::SSL_WEAK_CIPHERS_FALLBACK,
-                              tlsIntoleranceTelemetryBucket(err));
-        return true;
-      }
-      Telemetry::Accumulate(Telemetry::SSL_WEAK_CIPHERS_FALLBACK, 0);
-    }
   }
 
   // When not using a proxy we'll see a connection reset error.
@@ -1370,8 +1311,8 @@ nsSSLIOLayerPoll(PRFileDesc* fd, int16_t in_flags, int16_t* out_flags)
                   "or NSS shutdown or SDR logout %d\n",
              fd, (int) in_flags));
 
-    NS_ASSERTION(in_flags & PR_POLL_EXCEPT,
-                 "caller did not poll for EXCEPT (canceled)");
+    MOZ_ASSERT(in_flags & PR_POLL_EXCEPT,
+               "Caller did not poll for EXCEPT (canceled)");
     // Since this poll method cannot return errors, we want the caller to call
     // PR_Send/PR_Recv right away to get the error, so we tell that we are
     // ready for whatever I/O they are asking for. (See getSocketInfoIfRunning).
@@ -1398,8 +1339,6 @@ nsSSLIOLayerPoll(PRFileDesc* fd, int16_t in_flags, int16_t* out_flags)
 nsSSLIOLayerHelpers::nsSSLIOLayerHelpers()
   : mTreatUnsafeNegotiationAsBroken(false)
   , mTLSIntoleranceInfo()
-  , mFalseStartRequireNPN(false)
-  , mUnrestrictedRC4Fallback(false)
   , mVersionFallbackLimit(SSL_LIBRARY_VERSION_TLS_1_0)
   , mutex("nsSSLIOLayerHelpers.mutex")
 {
@@ -1609,10 +1548,6 @@ PrefObserver::Observe(nsISupports* aSubject, const char* aTopic,
       bool enabled;
       Preferences::GetBool("security.ssl.treat_unsafe_negotiation_as_broken", &enabled);
       mOwner->setTreatUnsafeNegotiationAsBroken(enabled);
-    } else if (prefName.EqualsLiteral("security.ssl.false_start.require-npn")) {
-      mOwner->mFalseStartRequireNPN =
-        Preferences::GetBool("security.ssl.false_start.require-npn",
-                             FALSE_START_REQUIRE_NPN_DEFAULT);
     } else if (prefName.EqualsLiteral("security.tls.version.fallback-limit")) {
       mOwner->loadVersionFallbackLimit();
     } else if (prefName.EqualsLiteral("security.tls.insecure_fallback_hosts")) {
@@ -1621,9 +1556,6 @@ PrefObserver::Observe(nsISupports* aSubject, const char* aTopic,
       if (mOwner->isPublic()) {
         mOwner->initInsecureFallbackSites();
       }
-    } else if (prefName.EqualsLiteral("security.tls.unrestricted_rc4_fallback")) {
-      mOwner->mUnrestrictedRC4Fallback =
-        Preferences::GetBool("security.tls.unrestricted_rc4_fallback", false);
     }
   }
   return NS_OK;
@@ -1655,13 +1587,9 @@ nsSSLIOLayerHelpers::~nsSSLIOLayerHelpers()
     Preferences::RemoveObserver(mPrefObserver,
         "security.ssl.treat_unsafe_negotiation_as_broken");
     Preferences::RemoveObserver(mPrefObserver,
-        "security.ssl.false_start.require-npn");
-    Preferences::RemoveObserver(mPrefObserver,
         "security.tls.version.fallback-limit");
     Preferences::RemoveObserver(mPrefObserver,
         "security.tls.insecure_fallback_hosts");
-    Preferences::RemoveObserver(mPrefObserver,
-        "security.tls.unrestricted_rc4_fallback");
   }
 }
 
@@ -1714,25 +1642,16 @@ nsSSLIOLayerHelpers::Init()
   Preferences::GetBool("security.ssl.treat_unsafe_negotiation_as_broken", &enabled);
   setTreatUnsafeNegotiationAsBroken(enabled);
 
-  mFalseStartRequireNPN =
-    Preferences::GetBool("security.ssl.false_start.require-npn",
-                         FALSE_START_REQUIRE_NPN_DEFAULT);
   loadVersionFallbackLimit();
   initInsecureFallbackSites();
-  mUnrestrictedRC4Fallback =
-    Preferences::GetBool("security.tls.unrestricted_rc4_fallback", false);
 
   mPrefObserver = new PrefObserver(this);
   Preferences::AddStrongObserver(mPrefObserver,
                                  "security.ssl.treat_unsafe_negotiation_as_broken");
   Preferences::AddStrongObserver(mPrefObserver,
-                                 "security.ssl.false_start.require-npn");
-  Preferences::AddStrongObserver(mPrefObserver,
                                  "security.tls.version.fallback-limit");
   Preferences::AddStrongObserver(mPrefObserver,
                                  "security.tls.insecure_fallback_hosts");
-  Preferences::AddStrongObserver(mPrefObserver,
-                                 "security.tls.unrestricted_rc4_fallback");
   return NS_OK;
 }
 
@@ -1796,30 +1715,6 @@ bool
 nsSSLIOLayerHelpers::isPublic() const
 {
   return this == &PublicSSLState()->IOLayerHelpers();
-}
-
-void
-nsSSLIOLayerHelpers::addInsecureFallbackSite(const nsCString& hostname,
-                                             bool temporary)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  {
-    MutexAutoLock lock(mutex);
-    if (mInsecureFallbackSites.Contains(hostname)) {
-      return;
-    }
-    mInsecureFallbackSites.PutEntry(hostname);
-  }
-  if (!isPublic() || temporary) {
-    return;
-  }
-  nsCString value;
-  Preferences::GetCString("security.tls.insecure_fallback_hosts", &value);
-  if (!value.IsEmpty()) {
-    value.Append(',');
-  }
-  value.Append(hostname);
-  Preferences::SetCString("security.tls.insecure_fallback_hosts", value);
 }
 
 class FallbackPrefRemover final : public Runnable
@@ -1904,7 +1799,7 @@ nsSSLIOLayerNewSocket(int32_t family,
                       const char* host,
                       int32_t port,
                       nsIProxyInfo *proxy,
-                      const NeckoOriginAttributes& originAttributes,
+                      const OriginAttributes& originAttributes,
                       PRFileDesc** fd,
                       nsISupports** info,
                       bool forSTARTTLS,
@@ -2131,8 +2026,8 @@ nsNSS_SSLGetClientAuthData(void* arg, PRFileDesc* socket,
 
   UniqueCERTCertificate serverCert(SSL_PeerCertificate(socket));
   if (!serverCert) {
-    NS_NOTREACHED("Missing server certificate should have been detected during "
-                  "server cert authentication.");
+    MOZ_ASSERT_UNREACHABLE(
+      "Missing server cert should have been detected during server cert auth.");
     PR_SetError(SSL_ERROR_NO_CERTIFICATE, 0);
     return SECFailure;
   }
@@ -2451,7 +2346,7 @@ nsSSLIOLayerImportFD(PRFileDesc* fd,
   nsNSSShutDownPreventionLock locker;
   PRFileDesc* sslSock = SSL_ImportFD(nullptr, fd);
   if (!sslSock) {
-    NS_ASSERTION(false, "NSS: Error importing socket");
+    MOZ_ASSERT_UNREACHABLE("NSS: Error importing socket");
     return nullptr;
   }
   SSL_SetPKCS11PinArg(sslSock, (nsIInterfaceRequestor*) infoObject);
@@ -2475,12 +2370,12 @@ nsSSLIOLayerImportFD(PRFileDesc* fd,
   }
   if (SECSuccess != SSL_AuthCertificateHook(sslSock, AuthCertificateHook,
                                             infoObject)) {
-    NS_NOTREACHED("failed to configure AuthCertificateHook");
+    MOZ_ASSERT_UNREACHABLE("Failed to configure AuthCertificateHook");
     goto loser;
   }
 
   if (SECSuccess != SSL_SetURL(sslSock, host)) {
-    NS_NOTREACHED("SSL_SetURL failed");
+    MOZ_ASSERT_UNREACHABLE("SSL_SetURL failed");
     goto loser;
   }
 
@@ -2532,24 +2427,18 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
   }
 
   uint16_t maxEnabledVersion = range.max;
-  StrongCipherStatus strongCiphersStatus = StrongCipherStatusUnknown;
   infoObject->SharedState().IOLayerHelpers()
     .adjustForTLSIntolerance(infoObject->GetHostName(), infoObject->GetPort(),
-                             range, strongCiphersStatus);
+                             range);
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-         ("[%p] nsSSLIOLayerSetOptions: using TLS version range (0x%04x,0x%04x)%s\n",
+         ("[%p] nsSSLIOLayerSetOptions: using TLS version range (0x%04x,0x%04x)\n",
           fd, static_cast<unsigned int>(range.min),
-              static_cast<unsigned int>(range.max),
-          strongCiphersStatus == StrongCiphersFailed ? " with weak ciphers" : ""));
+              static_cast<unsigned int>(range.max)));
 
   if (SSL_VersionRangeSet(fd, &range) != SECSuccess) {
     return NS_ERROR_FAILURE;
   }
   infoObject->SetTLSVersionRange(range);
-
-  if (strongCiphersStatus == StrongCiphersFailed) {
-    nsNSSComponent::UseWeakCiphersOnSocket(fd);
-  }
 
   // when adjustForTLSIntolerance tweaks the maximum version downward,
   // we tell the server using this SCSV so they can detect a downgrade attack
@@ -2566,6 +2455,11 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
     if (SECSuccess != SSL_SetDowngradeCheckVersion(fd, maxEnabledVersion)) {
       return NS_ERROR_FAILURE;
     }
+  }
+
+  if (range.max > SSL_LIBRARY_VERSION_TLS_1_2) {
+    SSL_CipherPrefSet(fd, TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, false);
+    SSL_CipherPrefSet(fd, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, false);
   }
 
   // Include a modest set of named groups.
@@ -2637,7 +2531,7 @@ nsSSLIOLayerAddToSocket(int32_t family,
                         const char* host,
                         int32_t port,
                         nsIProxyInfo* proxy,
-                        const NeckoOriginAttributes& originAttributes,
+                        const OriginAttributes& originAttributes,
                         PRFileDesc* fd,
                         nsISupports** info,
                         bool forSTARTTLS,
@@ -2682,7 +2576,7 @@ nsSSLIOLayerAddToSocket(int32_t family,
 
   PRFileDesc* sslSock = nsSSLIOLayerImportFD(fd, infoObject, host);
   if (!sslSock) {
-    NS_ASSERTION(false, "NSS: Error importing socket");
+    MOZ_ASSERT_UNREACHABLE("NSS: Error importing socket");
     goto loser;
   }
 

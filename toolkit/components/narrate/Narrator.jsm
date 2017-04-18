@@ -8,8 +8,6 @@ const { interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "LanguageDetector",
-  "resource:///modules/translation/LanguageDetector.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
   "resource://gre/modules/Services.jsm");
 
@@ -24,29 +22,13 @@ const kTextStylesRules = ["font-family", "font-kerning", "font-size",
   "line-height", "letter-spacing", "text-orientation",
   "text-transform", "word-spacing"];
 
-function Narrator(win) {
+function Narrator(win, languagePromise) {
   this._winRef = Cu.getWeakReference(win);
+  this._languagePromise = languagePromise;
   this._inTest = Services.prefs.getBoolPref("narrate.test");
   this._speechOptions = {};
   this._startTime = 0;
   this._stopped = false;
-
-  this.languagePromise = new Promise(resolve => {
-    let detect = () => {
-      win.document.removeEventListener("AboutReaderContentReady", detect);
-      let sampleText = this._doc.getElementById(
-        "moz-reader-content").textContent.substring(0, 60 * 1024);
-      LanguageDetector.detectLanguage(sampleText).then(result => {
-        resolve(result.confident ? result.language : null);
-      });
-    };
-
-    if (win.document.body.classList.contains("loaded")) {
-      detect();
-    } else {
-      win.document.addEventListener("AboutReaderContentReady", detect);
-    }
-  });
 }
 
 Narrator.prototype = {
@@ -71,7 +53,7 @@ Narrator.prototype = {
         // For example, paragraphs. But nested anchors and other elements
         // are not interesting since their text already appears in their
         // parent's textContent.
-        acceptNode: function(node) {
+        acceptNode(node) {
           if (this._matches.has(node.parentNode)) {
             // Reject sub-trees of accepted nodes.
             return nf.FILTER_REJECT;
@@ -124,7 +106,7 @@ Narrator.prototype = {
       this._win.speechSynthesis.pending;
   },
 
-  _getVoice: function(voiceURI) {
+  _getVoice(voiceURI) {
     if (!this._voiceMap || !this._voiceMap.has(voiceURI)) {
       this._voiceMap = new Map(
         this._win.speechSynthesis.getVoices().map(v => [v.voiceURI, v]));
@@ -133,7 +115,7 @@ Narrator.prototype = {
     return this._voiceMap.get(voiceURI);
   },
 
-  _isParagraphInView: function(paragraph) {
+  _isParagraphInView(paragraph) {
     if (!paragraph) {
       return false;
     }
@@ -142,13 +124,13 @@ Narrator.prototype = {
     return bb.top >= 0 && bb.top < this._win.innerHeight;
   },
 
-  _sendTestEvent: function(eventType, detail) {
+  _sendTestEvent(eventType, detail) {
     let win = this._win;
     win.dispatchEvent(new win.CustomEvent(eventType,
       { detail: Cu.cloneInto(detail, win.document) }));
   },
 
-  _speakInner: function() {
+  _speakInner() {
     this._win.speechSynthesis.cancel();
     let tw = this._treeWalker;
     let paragraph = tw.currentNode;
@@ -238,18 +220,12 @@ Narrator.prototype = {
           return;
         }
 
-        // Match non-whitespace. This isn't perfect, but the most universal
-        // solution for now.
-        let reWordBoundary = /\S+/g;
-        // Match the first word from the boundary event offset.
-        reWordBoundary.lastIndex = e.charIndex;
-        let firstIndex = reWordBoundary.exec(paragraph.textContent);
-        if (firstIndex) {
-          highlighter.highlight(firstIndex.index, reWordBoundary.lastIndex);
+        if (e.charLength) {
+          highlighter.highlight(e.charIndex, e.charLength);
           if (this._inTest) {
             this._sendTestEvent("wordhighlight", {
-              start: firstIndex.index,
-              end: reWordBoundary.lastIndex
+              start: e.charIndex,
+              end: e.charIndex + e.charLength
             });
           }
         }
@@ -259,14 +235,14 @@ Narrator.prototype = {
     });
   },
 
-  start: function(speechOptions) {
+  start(speechOptions) {
     this._speechOptions = {
       rate: speechOptions.rate,
       voice: this._getVoice(speechOptions.voice)
     };
 
     this._stopped = false;
-    return this.languagePromise.then(language => {
+    return this._languagePromise.then(language => {
       if (!this._speechOptions.voice) {
         this._speechOptions.lang = language;
       }
@@ -288,32 +264,32 @@ Narrator.prototype = {
     });
   },
 
-  stop: function() {
+  stop() {
     this._stopped = true;
     this._win.speechSynthesis.cancel();
   },
 
-  skipNext: function() {
+  skipNext() {
     this._win.speechSynthesis.cancel();
   },
 
-  skipPrevious: function() {
+  skipPrevious() {
     this._goBackParagraphs(this._timeIntoParagraph < PREV_THRESHOLD ? 2 : 1);
   },
 
-  setRate: function(rate) {
+  setRate(rate) {
     this._speechOptions.rate = rate;
     /* repeat current paragraph */
     this._goBackParagraphs(1);
   },
 
-  setVoice: function(voice) {
+  setVoice(voice) {
     this._speechOptions.voice = this._getVoice(voice);
     /* repeat current paragraph */
     this._goBackParagraphs(1);
   },
 
-  _goBackParagraphs: function(count) {
+  _goBackParagraphs(count) {
     let tw = this._treeWalker;
     for (let i = 0; i < count; i++) {
       if (!tw.previousNode()) {
@@ -338,11 +314,11 @@ Highlighter.prototype = {
    * Highlight the range within offsets relative to the container.
    *
    * @param {Number} startOffset the start offset
-   * @param {Number} endOffset the end offset
+   * @param {Number} length the length in characters of the range
    */
-  highlight: function(startOffset, endOffset) {
+  highlight(startOffset, length) {
     let containerRect = this.container.getBoundingClientRect();
-    let range = this._getRange(startOffset, endOffset);
+    let range = this._getRange(startOffset, startOffset + length);
     let rangeRects = range.getClientRects();
     let win = this.container.ownerDocument.defaultView;
     let computedStyle = win.getComputedStyle(range.endContainer.parentNode);
@@ -386,7 +362,7 @@ Highlighter.prototype = {
   /**
    * Releases reference to container and removes all highlight nodes.
    */
-  remove: function() {
+  remove() {
     for (let node of this._nodes) {
       node.remove();
     }
@@ -400,7 +376,7 @@ Highlighter.prototype = {
    *
    * @param {Number} count number of nodes needed
    */
-  _getFreshHighlightNodes: function(count) {
+  _getFreshHighlightNodes(count) {
     let doc = this.container.ownerDocument;
     let nodes = Array.from(this._nodes);
 
@@ -427,7 +403,7 @@ Highlighter.prototype = {
    * @param {Number} startOffset the start offset
    * @param {Number} endOffset the end offset
    */
-  _getRange: function(startOffset, endOffset) {
+  _getRange(startOffset, endOffset) {
     let doc = this.container.ownerDocument;
     let i = 0;
     let treeWalker = doc.createTreeWalker(

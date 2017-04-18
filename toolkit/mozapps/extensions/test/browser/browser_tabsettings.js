@@ -5,7 +5,6 @@
 // Tests various aspects of the details view
 
 var gManagerWindow;
-var gCategoryUtilities;
 var gProvider;
 
 function test() {
@@ -23,7 +22,6 @@ function test() {
 
   open_manager("addons://list/extension", function(aWindow) {
     gManagerWindow = aWindow;
-    gCategoryUtilities = new CategoryUtilities(gManagerWindow);
 
     run_next_test();
   });
@@ -48,11 +46,11 @@ add_test(function() {
 
     var browser = gBrowser.selectedBrowser;
     browser.addEventListener("DOMContentLoaded", function() {
-      browser.removeEventListener("DOMContentLoaded", arguments.callee, false);
+      browser.removeEventListener("DOMContentLoaded", arguments.callee);
       is(browser.currentURI.spec, addon.mAddon.optionsURL, "New tab should have loaded the options URL");
       browser.contentWindow.close();
       run_next_test();
-    }, false);
+    });
     return;
   }
 
@@ -63,14 +61,14 @@ add_test(function() {
       case "domwindowclosed":
         // Give the preference window a chance to finish closing before
         // closing the add-ons manager.
-        waitForFocus(function () {
+        waitForFocus(function() {
           Services.ww.unregisterNotification(observer);
           run_next_test();
         });
         break;
       case "domwindowopened":
         let win = aSubject.QueryInterface(Ci.nsIDOMEventTarget);
-        waitForFocus(function () {
+        waitForFocus(function() {
           // If the openDialog privileges are wrong a new browser window
           // will open, let the test proceed (and fail) rather than timeout.
           if (win.location != addon.mAddon.optionsURL &&

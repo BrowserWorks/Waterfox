@@ -31,10 +31,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
 #include "BatteryManager.h"
-#include "mozilla/dom/DeviceStorageAreaListener.h"
-#ifdef MOZ_GAMEPAD
 #include "mozilla/dom/GamepadServiceTest.h"
-#endif
 #include "mozilla/dom/PowerManager.h"
 #include "mozilla/dom/WakeLock.h"
 #include "mozilla/dom/power/PowerManagerService.h"
@@ -46,6 +43,7 @@
 #include "mozilla/dom/StorageManager.h"
 #include "mozilla/dom/TCPSocket.h"
 #include "mozilla/dom/VRDisplay.h"
+#include "mozilla/dom/WebAuthentication.h"
 #include "mozilla/dom/workers/RuntimeService.h"
 #include "mozilla/Hal.h"
 #include "nsISiteSpecificUserAgent.h"
@@ -65,10 +63,7 @@
 #include "nsIHttpChannel.h"
 #include "nsIHttpChannelInternal.h"
 #include "TimeManager.h"
-#include "DeviceStorage.h"
 #include "nsStreamUtils.h"
-#include "nsIAppsService.h"
-#include "mozIApplication.h"
 #include "WidgetUtils.h"
 #include "nsIPresentationService.h"
 
@@ -208,6 +203,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPowerManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConnection)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mStorageManager)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mAuthentication)
 #ifdef MOZ_AUDIO_CHANNEL_MANAGER
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mAudioChannelManager)
 #endif
@@ -217,13 +213,9 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
 
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaKeySystemAccessManager)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDeviceStorageAreaListener)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPresentation)
-#ifdef MOZ_GAMEPAD
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGamepadServiceTest)
-#endif
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVRGetDisplaysPromises)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(Navigator)
@@ -281,15 +273,6 @@ Navigator::Invalidate()
   }
 #endif
 
-  uint32_t len = mDeviceStorageStores.Length();
-  for (uint32_t i = 0; i < len; ++i) {
-    RefPtr<nsDOMDeviceStorage> ds = do_QueryReferent(mDeviceStorageStores[i]);
-    if (ds) {
-      ds->Shutdown();
-    }
-  }
-  mDeviceStorageStores.Clear();
-
   if (mTimeManager) {
     mTimeManager = nullptr;
   }
@@ -305,16 +288,10 @@ Navigator::Invalidate()
     mMediaKeySystemAccessManager = nullptr;
   }
 
-  if (mDeviceStorageAreaListener) {
-    mDeviceStorageAreaListener = nullptr;
-  }
-
-#ifdef MOZ_GAMEPAD
   if (mGamepadServiceTest) {
     mGamepadServiceTest->Shutdown();
     mGamepadServiceTest = nullptr;
   }
-#endif
 
   mVRGetDisplaysPromises.Clear();
 }
@@ -323,8 +300,9 @@ Navigator::Invalidate()
 //    Navigator::nsIDOMNavigator
 //*****************************************************************************
 
-NS_IMETHODIMP
-Navigator::GetUserAgent(nsAString& aUserAgent)
+void
+Navigator::GetUserAgent(nsAString& aUserAgent, CallerType aCallerType,
+                        ErrorResult& aRv) const
 {
   nsCOMPtr<nsIURI> codebaseURI;
   nsCOMPtr<nsPIDOMWindowInner> window;
@@ -338,7 +316,7 @@ Navigator::GetUserAgent(nsAString& aUserAgent)
 
       if (!customUserAgent.IsEmpty()) {
         aUserAgent = customUserAgent;
-        return NS_OK;
+        return;
       }
 
       nsIDocument* doc = mWindow->GetExtantDoc();
@@ -348,8 +326,12 @@ Navigator::GetUserAgent(nsAString& aUserAgent)
     }
   }
 
-  return GetUserAgent(window, codebaseURI, nsContentUtils::IsCallerChrome(),
-                      aUserAgent);
+  nsresult rv = GetUserAgent(window, codebaseURI,
+                             aCallerType == CallerType::System,
+                             aUserAgent);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(rv);
+  }
 }
 
 NS_IMETHODIMP
@@ -368,17 +350,22 @@ Navigator::GetAppCodeName(nsAString& aAppCodeName)
   return rv;
 }
 
-NS_IMETHODIMP
-Navigator::GetAppVersion(nsAString& aAppVersion)
+void
+Navigator::GetAppVersion(nsAString& aAppVersion, CallerType aCallerType,
+                         ErrorResult& aRv) const
 {
-  return GetAppVersion(aAppVersion, /* aUsePrefOverriddenValue */ true);
+  nsresult rv = GetAppVersion(aAppVersion,
+    /* aUsePrefOverriddenValue = */ aCallerType != CallerType::System);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(rv);
+  }
 }
 
-NS_IMETHODIMP
-Navigator::GetAppName(nsAString& aAppName)
+void
+Navigator::GetAppName(nsAString& aAppName, CallerType aCallerType) const
 {
-  AppName(aAppName, /* aUsePrefOverriddenValue */ true);
-  return NS_OK;
+  AppName(aAppName,
+          /* aUsePrefOverriddenValue = */ aCallerType != CallerType::System);
 }
 
 /**
@@ -469,36 +456,47 @@ Navigator::GetLanguages(nsTArray<nsString>& aLanguages)
   // event has to be timed correctly.
 }
 
-NS_IMETHODIMP
-Navigator::GetPlatform(nsAString& aPlatform)
+void
+Navigator::GetPlatform(nsAString& aPlatform, CallerType aCallerType,
+                       ErrorResult& aRv) const
 {
-  return GetPlatform(aPlatform, /* aUsePrefOverriddenValue */ true);
+  nsresult rv = GetPlatform(aPlatform,
+    /* aUsePrefOverriddenValue = */ aCallerType != CallerType::System);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(rv);
+  }
 }
 
-NS_IMETHODIMP
-Navigator::GetOscpu(nsAString& aOSCPU)
+void
+Navigator::GetOscpu(nsAString& aOSCPU, CallerType aCallerType,
+                    ErrorResult& aRv) const
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aCallerType != CallerType::System) {
     const nsAdoptingString& override =
       Preferences::GetString("general.oscpu.override");
 
     if (override) {
       aOSCPU = override;
-      return NS_OK;
+      return;
     }
   }
 
   nsresult rv;
-
   nsCOMPtr<nsIHttpProtocolHandler>
     service(do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(rv);
+    return;
+  }
 
   nsAutoCString oscpu;
   rv = service->GetOscpu(oscpu);
-  CopyASCIItoUTF16(oscpu, aOSCPU);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(rv);
+    return;
+  }
 
-  return rv;
+  CopyASCIItoUTF16(oscpu, aOSCPU);
 }
 
 NS_IMETHODIMP
@@ -643,34 +641,36 @@ Navigator::OnLine()
   return !NS_IsOffline();
 }
 
-NS_IMETHODIMP
-Navigator::GetBuildID(nsAString& aBuildID)
+void
+Navigator::GetBuildID(nsAString& aBuildID, CallerType aCallerType,
+                      ErrorResult& aRv) const
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aCallerType != CallerType::System) {
     const nsAdoptingString& override =
       Preferences::GetString("general.buildID.override");
 
     if (override) {
       aBuildID = override;
-      return NS_OK;
+      return;
     }
   }
 
   nsCOMPtr<nsIXULAppInfo> appInfo =
     do_GetService("@mozilla.org/xre/app-info;1");
   if (!appInfo) {
-    return NS_ERROR_NOT_IMPLEMENTED;
+    aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+    return;
   }
 
   nsAutoCString buildID;
   nsresult rv = appInfo->GetAppBuildID(buildID);
-  if (NS_FAILED(rv)) {
-    return rv;
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(rv);
+    return;
   }
 
   aBuildID.Truncate();
   AppendASCIItoUTF16(buildID, aBuildID);
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -692,7 +692,7 @@ Navigator::GetDoNotTrack(nsAString &aResult)
 }
 
 bool
-Navigator::JavaEnabled(ErrorResult& aRv)
+Navigator::JavaEnabled(CallerType aCallerType, ErrorResult& aRv)
 {
   Telemetry::AutoTimer<Telemetry::CHECK_JAVA_ENABLED> telemetryTimer;
 
@@ -710,7 +710,7 @@ Navigator::JavaEnabled(ErrorResult& aRv)
 
   RefreshMIMEArray();
 
-  nsMimeType *mimeType = mMimeTypes->NamedItem(javaMIME);
+  nsMimeType *mimeType = mMimeTypes->NamedItem(javaMIME, aCallerType);
 
   return mimeType && mimeType->GetEnabledPlugin();
 }
@@ -1012,126 +1012,6 @@ Navigator::RegisterProtocolHandler(const nsAString& aProtocol,
                                            mWindow->GetOuterWindow());
 }
 
-DeviceStorageAreaListener*
-Navigator::GetDeviceStorageAreaListener(ErrorResult& aRv)
-{
-  if (!mDeviceStorageAreaListener) {
-    if (!mWindow || !mWindow->GetOuterWindow() || !mWindow->GetDocShell()) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return nullptr;
-    }
-    mDeviceStorageAreaListener = new DeviceStorageAreaListener(mWindow);
-  }
-
-  return mDeviceStorageAreaListener;
-}
-
-already_AddRefed<nsDOMDeviceStorage>
-Navigator::FindDeviceStorage(const nsAString& aName, const nsAString& aType)
-{
-  auto i = mDeviceStorageStores.Length();
-  while (i > 0) {
-    --i;
-    RefPtr<nsDOMDeviceStorage> storage =
-      do_QueryReferent(mDeviceStorageStores[i]);
-    if (storage) {
-      if (storage->Equals(mWindow, aName, aType)) {
-        return storage.forget();
-      }
-    } else {
-      mDeviceStorageStores.RemoveElementAt(i);
-    }
-  }
-  return nullptr;
-}
-
-already_AddRefed<nsDOMDeviceStorage>
-Navigator::GetDeviceStorage(const nsAString& aType, ErrorResult& aRv)
-{
-  if (!mWindow || !mWindow->GetOuterWindow() || !mWindow->GetDocShell()) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return nullptr;
-  }
-
-  nsString name;
-  nsDOMDeviceStorage::GetDefaultStorageName(aType, name);
-  RefPtr<nsDOMDeviceStorage> storage = FindDeviceStorage(name, aType);
-  if (storage) {
-    return storage.forget();
-  }
-
-  nsDOMDeviceStorage::CreateDeviceStorageFor(mWindow, aType,
-                                             getter_AddRefs(storage));
-
-  if (!storage) {
-    return nullptr;
-  }
-
-  mDeviceStorageStores.AppendElement(
-    do_GetWeakReference(static_cast<DOMEventTargetHelper*>(storage)));
-  return storage.forget();
-}
-
-void
-Navigator::GetDeviceStorages(const nsAString& aType,
-                             nsTArray<RefPtr<nsDOMDeviceStorage> >& aStores,
-                             ErrorResult& aRv)
-{
-  if (!mWindow || !mWindow->GetOuterWindow() || !mWindow->GetDocShell()) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return;
-  }
-
-  nsDOMDeviceStorage::VolumeNameArray volumes;
-  nsDOMDeviceStorage::GetOrderedVolumeNames(aType, volumes);
-  if (volumes.IsEmpty()) {
-    RefPtr<nsDOMDeviceStorage> storage = GetDeviceStorage(aType, aRv);
-    if (storage) {
-      aStores.AppendElement(storage.forget());
-    }
-  } else {
-    uint32_t len = volumes.Length();
-    aStores.SetCapacity(len);
-    for (uint32_t i = 0; i < len; ++i) {
-      RefPtr<nsDOMDeviceStorage> storage =
-        GetDeviceStorageByNameAndType(volumes[i], aType, aRv);
-      if (aRv.Failed()) {
-        break;
-      }
-
-      if (storage) {
-        aStores.AppendElement(storage.forget());
-      }
-    }
-  }
-}
-
-already_AddRefed<nsDOMDeviceStorage>
-Navigator::GetDeviceStorageByNameAndType(const nsAString& aName,
-                                         const nsAString& aType,
-                                         ErrorResult& aRv)
-{
-  if (!mWindow || !mWindow->GetOuterWindow() || !mWindow->GetDocShell()) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return nullptr;
-  }
-
-  RefPtr<nsDOMDeviceStorage> storage = FindDeviceStorage(aName, aType);
-  if (storage) {
-    return storage.forget();
-  }
-  nsDOMDeviceStorage::CreateDeviceStorageByNameAndType(mWindow, aName, aType,
-                                                       getter_AddRefs(storage));
-
-  if (!storage) {
-    return nullptr;
-  }
-
-  mDeviceStorageStores.AppendElement(
-    do_GetWeakReference(static_cast<DOMEventTargetHelper*>(storage)));
-  return storage.forget();
-}
-
 Geolocation*
 Navigator::GetGeolocation(ErrorResult& aRv)
 {
@@ -1279,7 +1159,9 @@ Navigator::SendBeacon(const nsAString& aUrl,
     aRv.Throw(NS_ERROR_DOM_BAD_URI);
     return false;
   }
-  httpChannel->SetReferrer(documentURI);
+  mozilla::net::ReferrerPolicy referrerPolicy = doc->GetReferrerPolicy();
+  rv = httpChannel->SetReferrerWithPolicy(documentURI, referrerPolicy);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   nsCString mimeType;
   if (!aData.IsNull()) {
@@ -1527,7 +1409,7 @@ Navigator::PublishServer(const nsAString& aName,
     return nullptr;
   }
 
-  mozPromise->Then(AbstractThread::MainThread(),
+  mozPromise->Then(global->AbstractMainThreadFor(TaskCategory::Other),
                    __func__,
                    [domPromise] (FlyWebPublishedServer* aServer) {
                      domPromise->MaybeResolve(aServer);
@@ -1584,7 +1466,6 @@ Navigator::MozTCPSocket()
   return socket.forget();
 }
 
-#ifdef MOZ_GAMEPAD
 void
 Navigator::GetGamepads(nsTArray<RefPtr<Gamepad> >& aGamepads,
                        ErrorResult& aRv)
@@ -1607,7 +1488,6 @@ Navigator::RequestGamepadServiceTest()
   }
   return mGamepadServiceTest;
 }
-#endif
 
 already_AddRefed<Promise>
 Navigator::GetVRDisplays(ErrorResult& aRv)
@@ -1706,7 +1586,7 @@ Navigator::GetConnection(ErrorResult& aRv)
       aRv.Throw(NS_ERROR_UNEXPECTED);
       return nullptr;
     }
-    mConnection = new network::Connection(mWindow);
+    mConnection = network::Connection::CreateForWindow(mWindow);
   }
 
   return mConnection;
@@ -1882,7 +1762,7 @@ Navigator::GetPlatform(nsAString& aPlatform, bool aUsePrefOverriddenValue)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
+  if (aUsePrefOverriddenValue) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.platform.override");
 
@@ -1927,7 +1807,7 @@ Navigator::GetAppVersion(nsAString& aAppVersion, bool aUsePrefOverriddenValue)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
+  if (aUsePrefOverriddenValue) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.appversion.override");
 
@@ -1964,7 +1844,7 @@ Navigator::AppName(nsAString& aAppName, bool aUsePrefOverriddenValue)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
+  if (aUsePrefOverriddenValue) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.appname.override");
 
@@ -2168,6 +2048,15 @@ Navigator::GetPresentation(ErrorResult& aRv)
   }
 
   return mPresentation;
+}
+
+WebAuthentication*
+Navigator::Authentication()
+{
+  if (!mAuthentication) {
+    mAuthentication = new WebAuthentication(GetWindow());
+  }
+  return mAuthentication;
 }
 
 } // namespace dom

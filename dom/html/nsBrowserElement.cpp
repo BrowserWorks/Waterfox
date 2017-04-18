@@ -16,10 +16,8 @@
 
 #include "AudioChannelService.h"
 
-#include "mozIApplication.h"
 #include "nsComponentManagerUtils.h"
 #include "nsFrameLoader.h"
-#include "nsIAppsService.h"
 #include "nsIDOMDOMRequest.h"
 #include "nsIDOMElement.h"
 #include "nsIMozBrowserFrame.h"
@@ -43,13 +41,13 @@ nsBrowserElement::IsBrowserElementOrThrow(ErrorResult& aRv)
 void
 nsBrowserElement::InitBrowserElementAPI()
 {
-  bool isMozBrowserOrApp;
+  bool isMozBrowser;
   nsCOMPtr<nsIFrameLoader> frameLoader = GetFrameLoader();
   NS_ENSURE_TRUE_VOID(frameLoader);
-  nsresult rv = frameLoader->GetOwnerIsMozBrowserOrAppFrame(&isMozBrowserOrApp);
+  nsresult rv = frameLoader->GetOwnerIsMozBrowserFrame(&isMozBrowser);
   NS_ENSURE_SUCCESS_VOID(rv);
 
-  if (!isMozBrowserOrApp) {
+  if (!isMozBrowser) {
     return;
   }
 
@@ -459,27 +457,6 @@ nsBrowserElement::RemoveNextPaintListener(BrowserElementNextPaintEventCallback& 
   }
 }
 
-already_AddRefed<DOMRequest>
-nsBrowserElement::SetInputMethodActive(bool aIsActive,
-                                       ErrorResult& aRv)
-{
-  NS_ENSURE_TRUE(IsBrowserElementOrThrow(aRv), nullptr);
-
-  nsCOMPtr<nsIDOMDOMRequest> req;
-  nsresult rv = mBrowserElementAPI->SetInputMethodActive(aIsActive,
-                                                         getter_AddRefs(req));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    if (rv == NS_ERROR_INVALID_ARG) {
-      aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-    } else {
-      aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
-    }
-    return nullptr;
-  }
-
-  return req.forget().downcast<DOMRequest>();
-}
-
 void
 nsBrowserElement::GetAllowedAudioChannels(
                  nsTArray<RefPtr<BrowserElementAudioChannel>>& aAudioChannels,
@@ -494,13 +471,13 @@ nsBrowserElement::GetAllowedAudioChannels(
       return;
     }
 
-    bool isMozBrowserOrApp;
-    aRv = frameLoader->GetOwnerIsMozBrowserOrAppFrame(&isMozBrowserOrApp);
+    bool isMozBrowser;
+    aRv = frameLoader->GetOwnerIsMozBrowserFrame(&isMozBrowser);
     if (NS_WARN_IF(aRv.Failed())) {
       return;
     }
 
-    if (!isMozBrowserOrApp) {
+    if (!isMozBrowser) {
       return;
     }
 

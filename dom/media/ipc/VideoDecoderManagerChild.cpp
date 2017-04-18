@@ -111,7 +111,9 @@ VideoDecoderManagerChild::GetManagerAbstractThread()
 }
 
 PVideoDecoderChild*
-VideoDecoderManagerChild::AllocPVideoDecoderChild()
+VideoDecoderManagerChild::AllocPVideoDecoderChild(const VideoInfo& aVideoInfo,
+                                                  const layers::TextureFactoryIdentifier& aIdentifier,
+                                                  bool* aSuccess)
 {
   return new VideoDecoderChild();
 }
@@ -217,12 +219,14 @@ VideoDecoderManagerChild::Readback(const SurfaceDescriptorGPUVideo& aSD)
 
   RefPtr<VideoDecoderManagerChild> ref = this;
   SurfaceDescriptor sd;
-  sVideoDecoderChildThread->Dispatch(NS_NewRunnableFunction([&]() {
+  if (NS_FAILED(sVideoDecoderChildThread->Dispatch(NS_NewRunnableFunction([&]() {
     AutoCompleteTask complete(&task);
     if (ref->CanSend()) {
       ref->SendReadback(aSD, &sd);
     }
-  }), NS_DISPATCH_NORMAL);
+  }), NS_DISPATCH_NORMAL))) {
+    return nullptr;
+  }
 
   task.Wait();
 

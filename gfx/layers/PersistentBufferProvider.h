@@ -66,6 +66,8 @@ public:
 
   virtual bool SetForwarder(ShadowLayerForwarder* aFwd) { return true; }
 
+  virtual void ClearCachedResources() {}
+
   /**
    * Return true if this provider preserves the drawing state (clips, transforms,
    * etc.) across frames. In practice this means users of the provider can skip
@@ -137,6 +139,8 @@ public:
 
   virtual bool SetForwarder(ShadowLayerForwarder* aFwd) override;
 
+  virtual void ClearCachedResources() override;
+
   virtual bool PreservesDrawingState() const override { return false; }
 protected:
   PersistentBufferProviderShared(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
@@ -145,7 +149,7 @@ protected:
 
   ~PersistentBufferProviderShared();
 
-  TextureClient* GetTexture(Maybe<uint32_t> aIndex);
+  TextureClient* GetTexture(const Maybe<uint32_t>& aIndex);
   bool CheckIndex(uint32_t aIndex) { return aIndex < mTextures.length(); }
 
   void Destroy();

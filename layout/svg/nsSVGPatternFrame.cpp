@@ -18,7 +18,7 @@
 #include "nsISVGChildFrame.h"
 #include "nsStyleContext.h"
 #include "nsSVGEffects.h"
-#include "nsSVGPathGeometryFrame.h"
+#include "SVGGeometryFrame.h"
 #include "mozilla/dom/SVGPatternElement.h"
 #include "nsSVGUtils.h"
 #include "nsSVGAnimatedTransformList.h"
@@ -392,7 +392,7 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
 
   if (aSource->IsFrameOfType(nsIFrame::eSVGGeometry)) {
     // Set the geometrical parent of the pattern we are rendering
-    patternWithChildren->mSource = static_cast<nsSVGPathGeometryFrame*>(aSource);
+    patternWithChildren->mSource = static_cast<SVGGeometryFrame*>(aSource);
   }
 
   // Delay checking NS_FRAME_DRAWING_AS_PAINTSERVER bit until here so we can
@@ -411,10 +411,7 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
         tm = static_cast<nsSVGElement*>(kid->GetContent())->
                PrependLocalTransformsTo(tm, eUserSpaceToParent);
       }
-      DrawResult result = nsSVGUtils::PaintFrameWithEffects(kid, *gfx, tm);
-      if (result != DrawResult::SUCCESS) {
-        return nullptr;
-      }
+      Unused << nsSVGUtils::PaintFrameWithEffects(kid, *gfx, tm);
     }
     patternWithChildren->RemoveStateBits(NS_FRAME_DRAWING_AS_PAINTSERVER);
   }

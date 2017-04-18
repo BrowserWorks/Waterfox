@@ -31,8 +31,8 @@
 #include "js/CharacterEncoding.h"
 #include "js/HashTable.h"
 #include "wasm/WasmAST.h"
-#include "wasm/WasmBinaryFormat.h"
 #include "wasm/WasmTypes.h"
+#include "wasm/WasmValidate.h"
 
 using namespace js;
 using namespace js::wasm;
@@ -373,7 +373,9 @@ IsWasmLetter(char16_t c)
 static bool
 IsNameAfterDollar(char16_t c)
 {
-    return IsWasmLetter(c) || IsWasmDigit(c) || c == '_' || c == '$' || c == '-' || c == '.';
+    return IsWasmLetter(c) ||
+           IsWasmDigit(c) ||
+           c == '_' || c == '$' || c == '-' || c == '.' || c == '>';
 }
 
 static bool
@@ -1562,6 +1564,28 @@ ParseBlockSignature(WasmParseContext& c, ExprType* type)
     return true;
 }
 
+static bool
+MaybeMatchName(WasmParseContext& c, const AstName& name)
+{
+    WasmToken tok;
+    if (c.ts.getIf(WasmToken::Name, &tok)) {
+        AstName otherName = tok.name();
+        if (otherName.empty())
+            return true;
+
+        if (name.empty()) {
+            c.ts.generateError(tok, "end name without a start name", c.error);
+            return false;
+        }
+
+        if (otherName != name) {
+            c.ts.generateError(tok, "start/end names don't match", c.error);
+            return false;
+        }
+    }
+    return true;
+}
+
 static AstBlock*
 ParseBlock(WasmParseContext& c, Op op, bool inParens)
 {
@@ -1589,6 +1613,8 @@ ParseBlock(WasmParseContext& c, Op op, bool inParens)
 
     if (!inParens) {
         if (!c.ts.match(WasmToken::End, c.error))
+            return nullptr;
+        if (!MaybeMatchName(c, name))
             return nullptr;
     }
 
@@ -1754,7 +1780,10 @@ ParseNaNLiteral(WasmParseContext& c, WasmToken token, const char16_t* cur, bool 
     }
 
     value = (isNegated ? Traits::kSignBit : 0) | Traits::kExponentBits | value;
-    return new (c.lifo) AstConst(Val(Raw<Float>::fromBits(value)));
+
+    Float flt;
+    BitwiseCast(value, &flt);
+    return new (c.lifo) AstConst(Val(flt));
 
   error:
     c.ts.generateError(token, c.error);
@@ -1906,7 +1935,7 @@ ParseFloatLiteral(WasmParseContext& c, WasmToken token)
     }
 
     if (token.kind() != WasmToken::Float)
-        return new (c.lifo) AstConst(Val(Raw<Float>(result)));
+        return new (c.lifo) AstConst(Val(Float(result)));
 
     const char16_t* begin = token.begin();
     const char16_t* end = token.end();
@@ -1957,7 +1986,7 @@ ParseFloatLiteral(WasmParseContext& c, WasmToken token)
     if (isNegated)
         result = -result;
 
-    return new (c.lifo) AstConst(Val(Raw<Float>(result)));
+    return new (c.lifo) AstConst(Val(Float(result)));
 }
 
 static AstConst*
@@ -2196,6 +2225,8 @@ ParseIf(WasmParseContext& c, bool inParens)
     AstExprVector elseExprs(c.lifo);
     if (!inParens || c.ts.getIf(WasmToken::OpenParen)) {
         if (c.ts.getIf(WasmToken::Else)) {
+            if (!MaybeMatchName(c, name))
+                return nullptr;
             if (!ParseExprList(c, &elseExprs, inParens))
                 return nullptr;
         } else if (inParens) {
@@ -2208,6 +2239,8 @@ ParseIf(WasmParseContext& c, bool inParens)
                 return nullptr;
         } else {
             if (!c.ts.match(WasmToken::End, c.error))
+                return nullptr;
+            if (!MaybeMatchName(c, name))
                 return nullptr;
         }
     }

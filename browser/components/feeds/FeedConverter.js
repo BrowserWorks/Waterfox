@@ -97,8 +97,7 @@ function safeGetCharPref(pref, defaultValue) {
       getService(Ci.nsIPrefBranch);
   try {
     return prefs.getCharPref(pref);
-  }
-  catch (e) {
+  } catch (e) {
   }
   return defaultValue;
 }
@@ -224,8 +223,7 @@ FeedConverter.prototype = {
               try {
                 let title = feed.title ? feed.title.plainText() : "";
                 let desc = feed.subtitle ? feed.subtitle.plainText() : "";
-                let feedReader = safeGetCharPref(getPrefActionForType(feed.type), "bookmarks");
-                feedService.addToClientReader(result.uri.spec, title, desc, feed.type, feedReader);
+                feedService.addToClientReader(result.uri.spec, title, desc, feed.type, handler);
                 return;
               } catch (ex) { /* fallback to preview mode */ }
           }
@@ -252,7 +250,7 @@ FeedConverter.prototype = {
         feedService.addFeedResult(result);
 
         // Now load the actual XUL document.
-        let aboutFeedsURI = ios.newURI("about:feeds", null, null);
+        let aboutFeedsURI = ios.newURI("about:feeds");
         chromeChannel = ios.newChannelFromURIWithLoadInfo(aboutFeedsURI, loadInfo);
         chromeChannel.originalURI = result.uri;
 
@@ -265,9 +263,8 @@ FeedConverter.prototype = {
       }
 
       chromeChannel.loadGroup = this._request.loadGroup;
-      chromeChannel.asyncOpen(this._listener, null);
-    }
-    finally {
+      chromeChannel.asyncOpen2(this._listener);
+    } finally {
       this._releaseHandles();
     }
   },
@@ -302,8 +299,7 @@ FeedConverter.prototype = {
 
       // Note: this throws if the header is not set.
       httpChannel.getResponseHeader("X-Moz-Is-Feed");
-    }
-    catch (ex) {
+    } catch (ex) {
       this._sniffed = true;
     }
 
@@ -342,7 +338,7 @@ FeedConverter.prototype = {
     if (iid.equals(Ci.nsIFeedResultListener) ||
         iid.equals(Ci.nsIStreamConverter) ||
         iid.equals(Ci.nsIStreamListener) ||
-        iid.equals(Ci.nsIRequestObserver)||
+        iid.equals(Ci.nsIRequestObserver) ||
         iid.equals(Ci.nsISupports))
       return this;
     throw Cr.NS_ERROR_NO_INTERFACE;
@@ -549,13 +545,13 @@ GenericProtocolHandler.prototype = {
 };
 
 function FeedProtocolHandler() {
-  this._init('feed');
+  this._init("feed");
 }
 FeedProtocolHandler.prototype = new GenericProtocolHandler();
 FeedProtocolHandler.prototype.classID = Components.ID("{4f91ef2e-57ba-472e-ab7a-b4999e42d6c0}");
 
 function PodCastProtocolHandler() {
-  this._init('pcast');
+  this._init("pcast");
 }
 PodCastProtocolHandler.prototype = new GenericProtocolHandler();
 PodCastProtocolHandler.prototype.classID = Components.ID("{1c31ed79-accd-4b94-b517-06e0c81999d5}");

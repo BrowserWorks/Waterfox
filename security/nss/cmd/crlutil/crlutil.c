@@ -66,8 +66,11 @@ FindCRL(CERTCertDBHandle *certHandle, char *name, int type)
             return ((CERTSignedCrl *)NULL);
         }
     } else {
-        SECITEM_CopyItem(NULL, &derName, &cert->derSubject);
+        SECStatus rv = SECITEM_CopyItem(NULL, &derName, &cert->derSubject);
         CERT_DestroyCertificate(cert);
+        if (rv != SECSuccess) {
+            return ((CERTSignedCrl *)NULL);
+        }
     }
 
     crl = SEC_FindCrlByName(certHandle, &derName, type);

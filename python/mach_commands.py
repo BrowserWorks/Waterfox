@@ -4,11 +4,19 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import __main__
 import argparse
 import logging
 import mozpack.path as mozpath
 import os
+
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+    thread,
+)
+
+import mozinfo
+from manifestparser import TestManifest
 
 from mozbuild.base import (
     MachCommandBase,
@@ -53,17 +61,22 @@ class MachCommands(MachCommandBase):
         action='store_true',
         help=('Collect all tests under given path instead of default '
               'test resolution. Supports pytest-style tests.'))
+    @CommandArgument('-j', '--jobs',
+        default=1,
+        type=int,
+        help='Number of concurrent jobs to run. Default is 1.')
     @CommandArgument('tests', nargs='*',
         metavar='TEST',
         help=('Tests to run. Each test can be a single file or a directory. '
-              'Default test resolution relies on PYTHON_UNIT_TESTS.'))
+              'Default test resolution relies on PYTHON_UNITTEST_MANIFESTS.'))
     def python_test(self,
                     tests=[],
                     test_objects=None,
                     subsuite=None,
                     verbose=False,
                     path_only=False,
-                    stop=False):
+                    stop=False,
+                    jobs=1):
         self._activate_virtualenv()
 
         def find_tests_by_path():
@@ -90,8 +103,6 @@ class MachCommands(MachCommandBase):
         # launching Python multiple times. Most tests are run via mozunit,
         # which produces output in the format Mozilla infrastructure expects.
         # Some tests are run via pytest.
-        return_code = 0
-        found_tests = False
         if test_objects is None:
             # If we're not being called from `mach test`, do our own
             # test resolution.
@@ -110,49 +121,90 @@ class MachCommands(MachCommandBase):
                     test_objects = resolver.resolve_tests(paths=tests,
                                                           flavor='python')
                 else:
-                    # Otherwise just run everything in PYTHON_UNIT_TESTS
+                    # Otherwise just run everything in PYTHON_UNITTEST_MANIFESTS
                     test_objects = resolver.resolve_tests(flavor='python')
 
-        for test in test_objects:
-            found_tests = True
-            f = test['path']
-            file_displayed_test = []  # Used as a boolean.
-
-            def _line_handler(line):
-                if not file_displayed_test:
-                    output = ('Ran' in line or 'collected' in line or
-                              line.startswith('TEST-'))
-                    if output:
-                        file_displayed_test.append(True)
-
-            inner_return_code = self.run_process(
-                [self.virtualenv_manager.python_path, f],
-                ensure_exit_code=False,  # Don't throw on non-zero exit code.
-                log_name='python-test',
-                # subprocess requires native strings in os.environ on Windows
-                append_env={b'PYTHONDONTWRITEBYTECODE': str('1')},
-                line_handler=_line_handler)
-            return_code += inner_return_code
-
-            if not file_displayed_test:
-                self.log(logging.WARN, 'python-test', {'file': f},
-                         'TEST-UNEXPECTED-FAIL | No test output (missing mozunit.main() call?): {file}')
-
-            if verbose:
-                if inner_return_code != 0:
-                    self.log(logging.INFO, 'python-test', {'file': f},
-                             'Test failed: {file}')
-                else:
-                    self.log(logging.INFO, 'python-test', {'file': f},
-                             'Test passed: {file}')
-            if stop and return_code > 0:
-                return 1
-
-        if not found_tests:
+        if not test_objects:
             message = 'TEST-UNEXPECTED-FAIL | No tests collected'
             if not path_only:
-                 message += ' (Not in PYTHON_UNIT_TESTS? Try --path-only?)'
+                message += ' (Not in PYTHON_UNITTEST_MANIFESTS? Try --path-only?)'
             self.log(logging.WARN, 'python-test', {}, message)
             return 1
 
-        return 0 if return_code == 0 else 1
+        mp = TestManifest()
+        mp.tests.extend(test_objects)
+        tests = mp.active_tests(disabled=False, **mozinfo.info)
+
+        self.jobs = jobs
+        self.terminate = False
+        self.verbose = verbose
+
+        return_code = 0
+        with ThreadPoolExecutor(max_workers=self.jobs) as executor:
+            futures = [executor.submit(self._run_python_test, test['path'])
+                       for test in tests]
+
+            try:
+                for future in as_completed(futures):
+                    output, ret, test_path = future.result()
+
+                    for line in output:
+                        self.log(logging.INFO, 'python-test', {'line': line.rstrip()}, '{line}')
+
+                    if ret and not return_code:
+                        self.log(logging.ERROR, 'python-test', {'test_path': test_path, 'ret': ret}, 'Setting retcode to {ret} from {test_path}')
+                    return_code = return_code or ret
+            except KeyboardInterrupt:
+                # Hack to force stop currently running threads.
+                # https://gist.github.com/clchiou/f2608cbe54403edb0b13
+                executor._threads.clear()
+                thread._threads_queues.clear()
+                raise
+
+        self.log(logging.INFO, 'python-test', {'return_code': return_code}, 'Return code from mach python-test: {return_code}')
+        return return_code
+
+    def _run_python_test(self, test_path):
+        from mozprocess import ProcessHandler
+
+        output = []
+
+        def _log(line):
+            # Buffer messages if more than one worker to avoid interleaving
+            if self.jobs > 1:
+                output.append(line)
+            else:
+                self.log(logging.INFO, 'python-test', {'line': line.rstrip()}, '{line}')
+
+        file_displayed_test = []  # used as boolean
+
+        def _line_handler(line):
+            if not file_displayed_test:
+                output = ('Ran' in line or 'collected' in line or
+                          line.startswith('TEST-'))
+                if output:
+                    file_displayed_test.append(True)
+
+            _log(line)
+
+        _log(test_path)
+        cmd = [self.virtualenv_manager.python_path, test_path]
+        env = os.environ.copy()
+        env[b'PYTHONDONTWRITEBYTECODE'] = b'1'
+
+        proc = ProcessHandler(cmd, env=env, processOutputLine=_line_handler, storeOutput=False)
+        proc.run()
+
+        return_code = proc.wait()
+
+        if not file_displayed_test:
+            _log('TEST-UNEXPECTED-FAIL | No test output (missing mozunit.main() '
+                 'call?): {}'.format(test_path))
+
+        if self.verbose:
+            if return_code != 0:
+                _log('Test failed: {}'.format(test_path))
+            else:
+                _log('Test passed: {}'.format(test_path))
+
+        return output, return_code, test_path

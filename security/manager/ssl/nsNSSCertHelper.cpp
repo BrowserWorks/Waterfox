@@ -6,15 +6,15 @@
 
 #include <algorithm>
 
+#include "DateTimeFormat.h"
 #include "ScopedNSSTypes.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/Casting.h"
 #include "mozilla/NotNull.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
-#include "nsDateTimeFormatCID.h"
-#include "nsIDateTimeFormat.h"
 #include "nsNSSASN1Object.h"
 #include "nsNSSCertTrust.h"
 #include "nsNSSCertValidity.h"
@@ -229,7 +229,7 @@ GetDefaultOIDFormat(SECItem *oid,
       return NS_ERROR_FAILURE;
 
     len += written;
-    NS_ASSERTION(len < sizeof(buf), "OID data to big to display in 300 chars.");
+    MOZ_ASSERT(len < sizeof(buf), "OID data too big to display in 300 chars.");
     val = 0;      
     invalid = false;
     first = false;
@@ -1614,20 +1614,15 @@ static nsresult
 ProcessTime(PRTime dispTime, const char16_t* displayName,
             nsIASN1Sequence* parentSequence)
 {
-  nsCOMPtr<nsIDateTimeFormat> dateFormatter = nsIDateTimeFormat::Create();
-  if (!dateFormatter) {
-    return NS_ERROR_FAILURE;
-  }
-
   nsString text;
   nsString tempString;
 
   PRExplodedTime explodedTime;
   PR_ExplodeTime(dispTime, PR_LocalTimeParameters, &explodedTime);
 
-  dateFormatter->FormatPRExplodedTime(nullptr, kDateFormatLong,
-                                      kTimeFormatSeconds, &explodedTime,
-                                      tempString);
+  DateTimeFormat::FormatPRExplodedTime(kDateFormatLong,
+                                       kTimeFormatSeconds, &explodedTime,
+                                       tempString);
 
   text.Append(tempString);
   text.AppendLiteral("\n(");
@@ -1635,9 +1630,9 @@ ProcessTime(PRTime dispTime, const char16_t* displayName,
   PRExplodedTime explodedTimeGMT;
   PR_ExplodeTime(dispTime, PR_GMTParameters, &explodedTimeGMT);
 
-  dateFormatter->FormatPRExplodedTime(nullptr, kDateFormatLong,
-                                      kTimeFormatSeconds, &explodedTimeGMT,
-                                      tempString);
+  DateTimeFormat::FormatPRExplodedTime(kDateFormatLong,
+                                       kTimeFormatSeconds, &explodedTimeGMT,
+                                       tempString);
 
   text.Append(tempString);
   text.AppendLiteral(" GMT)");
@@ -1967,13 +1962,16 @@ nsNSSCertificate::CreateASN1Struct(nsIASN1Object** aRetVal)
   nsCOMPtr<nsIMutableArray> asn1Objects;
   sequence->GetASN1Objects(getter_AddRefs(asn1Objects));
 
-  nsAutoString title;
-  nsresult rv = GetWindowTitle(title);
+  nsAutoString displayName;
+  nsresult rv = GetDisplayName(displayName);
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-  sequence->SetDisplayName(title);
+  rv = sequence->SetDisplayName(displayName);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
   sequence.forget(aRetVal);
 
   // This sequence will be contain the tbsCertificate, signatureAlgorithm,

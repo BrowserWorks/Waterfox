@@ -562,11 +562,20 @@ ReportRuntimeRedeclaration(JSContext* cx, HandlePropertyName name, const char* r
 
 enum class CheckIsObjectKind : uint8_t {
     IteratorNext,
+    IteratorReturn,
+    IteratorThrow,
     GetIterator
 };
 
 bool
 ThrowCheckIsObject(JSContext* cx, CheckIsObjectKind kind);
+
+enum class CheckIsCallableKind : uint8_t {
+    IteratorReturn
+};
+
+bool
+ThrowCheckIsCallable(JSContext* cx, CheckIsCallableKind kind);
 
 bool
 ThrowUninitializedThis(JSContext* cx, AbstractFramePtr frame);

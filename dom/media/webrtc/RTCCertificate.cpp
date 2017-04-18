@@ -13,6 +13,7 @@
 #include "mozilla/dom/RTCCertificateBinding.h"
 #include "mozilla/dom/WebCryptoCommon.h"
 #include "mozilla/dom/WebCryptoTask.h"
+#include "mozilla/Move.h"
 #include "mozilla/Sprintf.h"
 
 #include <cstdio>
@@ -83,23 +84,23 @@ private:
 
   nsresult GenerateCertificate()
   {
-    ScopedPK11SlotInfo slot(PK11_GetInternalSlot());
+    UniquePK11SlotInfo slot(PK11_GetInternalSlot());
     MOZ_ASSERT(slot.get());
 
-    ScopedCERTName subjectName(GenerateRandomName(slot.get()));
+    UniqueCERTName subjectName(GenerateRandomName(slot.get()));
     if (!subjectName) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
 
-    ScopedSECKEYPublicKey publicKey(mKeyPair->mPublicKey.get()->GetPublicKey());
-    ScopedCERTSubjectPublicKeyInfo spki(
-        SECKEY_CreateSubjectPublicKeyInfo(publicKey));
+    UniqueSECKEYPublicKey publicKey(mKeyPair->mPublicKey.get()->GetPublicKey());
+    UniqueCERTSubjectPublicKeyInfo spki(
+        SECKEY_CreateSubjectPublicKeyInfo(publicKey.get()));
     if (!spki) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
 
-    ScopedCERTCertificateRequest certreq(
-        CERT_CreateCertificateRequest(subjectName, spki, nullptr));
+    UniqueCERTCertificateRequest certreq(
+        CERT_CreateCertificateRequest(subjectName.get(), spki.get(), nullptr));
     if (!certreq) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
@@ -108,7 +109,7 @@ private:
     PRTime notBefore = now - EXPIRATION_SLACK;
     mExpires += now;
 
-    ScopedCERTValidity validity(CERT_CreateValidity(notBefore, mExpires));
+    UniqueCERTValidity validity(CERT_CreateValidity(notBefore, mExpires));
     if (!validity) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
@@ -117,15 +118,16 @@ private:
     // Note: This serial in principle could collide, but it's unlikely, and we
     // don't expect anyone to be validating certificates anyway.
     SECStatus rv =
-        PK11_GenerateRandomOnSlot(slot,
+        PK11_GenerateRandomOnSlot(slot.get(),
                                   reinterpret_cast<unsigned char *>(&serial),
                                   sizeof(serial));
     if (rv != SECSuccess) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
 
-    CERTCertificate* cert = CERT_CreateCertificate(serial, subjectName,
-                                                   validity, certreq);
+    CERTCertificate* cert = CERT_CreateCertificate(serial, subjectName.get(),
+                                                   validity.get(),
+                                                   certreq.get());
     if (!cert) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
@@ -159,9 +161,10 @@ private:
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
 
-    ScopedSECKEYPrivateKey privateKey(mKeyPair->mPrivateKey.get()->GetPrivateKey());
+    UniqueSECKEYPrivateKey privateKey(
+        mKeyPair->mPrivateKey.get()->GetPrivateKey());
     rv = SEC_DerSignData(arena, signedCert, innerDER.data, innerDER.len,
-                         privateKey, mSignatureAlg);
+                         privateKey.get(), mSignatureAlg);
     if (rv != SECSuccess) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
@@ -331,9 +334,9 @@ RTCCertificate::CreateDtlsIdentity() const
   if (isAlreadyShutDown() || !mPrivateKey || !mCertificate) {
     return nullptr;
   }
-  SECKEYPrivateKey* key = SECKEY_CopyPrivateKey(mPrivateKey.get());
-  CERTCertificate* cert = CERT_DupCertificate(mCertificate.get());
-  RefPtr<DtlsIdentity> id = new DtlsIdentity(key, cert, mAuthType);
+  UniqueSECKEYPrivateKey key(SECKEY_CopyPrivateKey(mPrivateKey.get()));
+  UniqueCERTCertificate cert(CERT_DupCertificate(mCertificate.get()));
+  RefPtr<DtlsIdentity> id = new DtlsIdentity(Move(key), Move(cert), mAuthType);
   return id;
 }
 
@@ -376,7 +379,7 @@ bool
 RTCCertificate::WriteCertificate(JSStructuredCloneWriter* aWriter,
                                  const nsNSSShutDownPreventionLock& /*proof*/) const
 {
-  ScopedCERTCertificateList certs(CERT_CertListFromCert(mCertificate.get()));
+  UniqueCERTCertificateList certs(CERT_CertListFromCert(mCertificate.get()));
   if (!certs || certs->len <= 0) {
     return false;
   }

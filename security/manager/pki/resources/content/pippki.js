@@ -37,7 +37,7 @@ function getDERString(cert)
 {
   var length = {};
   var derArray = cert.getRawDER(length);
-  var derString = '';
+  var derString = "";
   for (var i = 0; i < derArray.length; i++) {
     derString += String.fromCharCode(derArray[i]);
   }
@@ -48,7 +48,7 @@ function getPKCS7String(cert, chainMode)
 {
   var length = {};
   var pkcs7Array = cert.exportAsCMS(chainMode, length);
-  var pkcs7String = '';
+  var pkcs7String = "";
   for (var i = 0; i < pkcs7Array.length; i++) {
     pkcs7String += String.fromCharCode(pkcs7Array[i]);
   }
@@ -85,10 +85,7 @@ const DEFAULT_CERT_EXTENSION = "crt";
  *          Generated filename.
  */
 function certToFilename(cert) {
-  let filename = cert.commonName;
-  if (!filename) {
-    filename = cert.windowTitle;
-  }
+  let filename = cert.displayName;
 
   // Remove unneeded and/or unsafe characters.
   filename = filename.replace(/\s/g, "")
@@ -128,7 +125,7 @@ function exportToFile(parent, cert)
     return;
   }
 
-  var content = '';
+  var content = "";
   switch (fp.filterIndex) {
     case 1:
       content = getPEMString(cert);

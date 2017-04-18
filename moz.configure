@@ -157,6 +157,23 @@ def build_backends(backends):
 
 set_config('BUILD_BACKENDS', build_backends)
 
+option('--disable-gtest-in-build',
+       help='Force disable building the gtest libxul during the build.',
+       when='--enable-compile-environment')
+
+# Determine whether to build the gtest xul. This happens in automation
+# on Desktop platforms with the exception of Windows PGO, where linking
+# xul-gtest.dll takes too long.
+@depends('MOZ_PGO', build_project, target, 'MOZ_AUTOMATION', '--disable-gtest-in-build',
+         when='--enable-compile-environment')
+def build_gtest(pgo, build_project, target, automation, enabled):
+    if not enabled:
+        return None
+    if (automation and build_project == 'browser' and
+        not (pgo and target.os == 'WINNT')):
+        return True
+
+set_config('LINK_GTEST_DURING_COMPILE', build_gtest)
 
 # Awk detection
 # ==============================================================
@@ -338,4 +355,10 @@ def nsis_binary_type(nsis):
 
 # Fallthrough to autoconf-based configure
 include('build/moz.configure/old.configure')
-# Please do not add anything after the include of old.configure.
+
+@imports('__sandbox__')
+def all_paths():
+    return __sandbox__._all_paths
+
+set_config('ALL_CONFIGURE_PATHS', all_paths())
+# Please do not add anything after setting ALL_CONFIGURE_PATHS.

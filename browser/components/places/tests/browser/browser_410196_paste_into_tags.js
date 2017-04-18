@@ -4,8 +4,8 @@
 
 "use strict";
 
-const TEST_URL = Services.io.newURI("http://example.com/", null, null);
-const MOZURISPEC = Services.io.newURI("http://mozilla.com/", null, null);
+const TEST_URL = Services.io.newURI("http://example.com/");
+const MOZURISPEC = Services.io.newURI("http://mozilla.com/");
 
 add_task(function* () {
   let organizer = yield promiseLibrary();
@@ -23,7 +23,7 @@ add_task(function* () {
   yield PlacesTestUtils.addVisits(visits);
 
   // create an initial tag to work with
-  let bm = yield PlacesUtils.bookmarks.insert({
+  let newBookmark = yield PlacesUtils.bookmarks.insert({
     parentGuid: PlacesUtils.bookmarks.unfiledGuid,
     index: PlacesUtils.bookmarks.DEFAULT_INDEX,
     type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
@@ -31,7 +31,7 @@ add_task(function* () {
     url: TEST_URL
   });
 
-  ok(bm, "A bookmark was added");
+  ok(newBookmark, "A bookmark was added");
   PlacesUtils.tagging.tagURI(TEST_URL, ["foo"]);
   let tags = PlacesUtils.tagging.getTagsForURI(TEST_URL);
   is(tags[0], "foo", "tag is foo");
@@ -93,7 +93,7 @@ function focusTag(PlacesOrganizer) {
   let fooTag = tags.getChild(0);
   let tagNode = fooTag;
   PlacesOrganizer._places.selectNode(fooTag);
-  is(tagNode.title, 'foo', "tagNode title is foo");
+  is(tagNode.title, "foo", "tagNode title is foo");
   let ip = PlacesOrganizer._places.insertionPoint;
   ok(ip.isTag, "IP is a tag");
 }

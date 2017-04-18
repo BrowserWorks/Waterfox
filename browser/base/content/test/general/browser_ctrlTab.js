@@ -7,9 +7,9 @@ add_task(function* () {
 
   checkTabs(4);
 
-  yield ctrlTabTest([2],       1, 0);
+  yield ctrlTabTest([2], 1, 0);
   yield ctrlTabTest([2, 3, 1], 2, 2);
-  yield ctrlTabTest([],        4, 2);
+  yield ctrlTabTest([], 4, 2);
 
   {
     let selectedIndex = gBrowser.tabContainer.selectedIndex;
@@ -85,12 +85,12 @@ add_task(function* () {
   { // test for bug 445768
     let focusedWindow = document.commandDispatcher.focusedWindow;
     let eventConsumed = true;
-    let detectKeyEvent = function (event) {
+    let detectKeyEvent = function(event) {
       eventConsumed = event.defaultPrevented;
     };
-    document.addEventListener("keypress", detectKeyEvent, false);
+    document.addEventListener("keypress", detectKeyEvent);
     yield pressCtrlTab();
-    document.removeEventListener("keypress", detectKeyEvent, false);
+    document.removeEventListener("keypress", detectKeyEvent);
     ok(eventConsumed, "Ctrl+Tab consumed by the tabbed browser if one tab is open");
     is(focusedWindow, document.commandDispatcher.focusedWindow,
        "Ctrl+Tab doesn't change focus if one tab is open");
@@ -143,7 +143,7 @@ add_task(function* () {
   }
 
   function selectTabs(tabs) {
-    tabs.forEach(function (index) {
+    tabs.forEach(function(index) {
       gBrowser.selectedTab = gBrowser.tabs[index];
     });
   }
@@ -179,7 +179,7 @@ add_task(function* () {
     }
 
     is(gBrowser.tabContainer.selectedIndex, expectedIndex,
-       "With "+ tabCount +" tabs open and tab " + indexStart
+       "With " + tabCount + " tabs open and tab " + indexStart
        + " selected, Ctrl+Tab*" + tabTimes + " goes " + where);
   }
 });

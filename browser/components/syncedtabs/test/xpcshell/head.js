@@ -3,7 +3,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function () {
+XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function() {
   return Components.utils.import("resource://gre/modules/FxAccountsCommon.js", {});
 });
 
@@ -15,9 +15,9 @@ do_get_profile(); // fxa needs a profile directory for storage.
 let window = {
     document: {},
     location: {},
-    setTimeout: setTimeout,
-    setInterval: setInterval,
-    clearTimeout: clearTimeout,
+    setTimeout,
+    setInterval,
+    clearTimeout,
     clearinterval: clearInterval
 };
 let self = window;

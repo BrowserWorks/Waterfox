@@ -50,6 +50,7 @@
 #include "jsarray.h"
 #include "jsatom.h"
 #include "jscntxt.h"
+#include "jsfriendapi.h"
 #include "jsfun.h"
 #include "jsobj.h"
 #include "jsprf.h"
@@ -153,7 +154,6 @@ static const TimeDuration MAX_TIMEOUT_INTERVAL = TimeDuration::FromSeconds(1800.
 # define SHARED_MEMORY_DEFAULT 0
 #endif
 
-#ifdef SPIDERMONKEY_PROMISE
 using JobQueue = GCVector<JSObject*, 0, SystemAllocPolicy>;
 
 struct ShellAsyncTasks
@@ -166,7 +166,6 @@ struct ShellAsyncTasks
     size_t outstanding;
     Vector<JS::AsyncTask*> finished;
 };
-#endif // SPIDERMONKEY_PROMISE
 
 enum class ScriptKind
 {
@@ -271,12 +270,10 @@ struct ShellContext
     JS::PersistentRootedValue interruptFunc;
     bool lastWarningEnabled;
     JS::PersistentRootedValue lastWarning;
-#ifdef SPIDERMONKEY_PROMISE
     JS::PersistentRootedValue promiseRejectionTrackerCallback;
     JS::PersistentRooted<JobQueue> jobQueue;
     ExclusiveData<ShellAsyncTasks> asyncTasks;
     bool drainingJobQueue;
-#endif // SPIDERMONKEY_PROMISE
 
     /*
      * Watchdog thread state.
@@ -438,11 +435,9 @@ ShellContext::ShellContext(JSContext* cx)
     interruptFunc(cx, NullValue()),
     lastWarningEnabled(false),
     lastWarning(cx, NullValue()),
-#ifdef SPIDERMONKEY_PROMISE
     promiseRejectionTrackerCallback(cx, NullValue()),
     asyncTasks(mutexid::ShellAsyncTasks, cx),
     drainingJobQueue(false),
-#endif // SPIDERMONKEY_PROMISE
     watchdogLock(mutexid::ShellContextWatchdog),
     exitCode(0),
     quitting(false),
@@ -742,7 +737,6 @@ RunModule(JSContext* cx, const char* filename, FILE* file, bool compileOnly)
     return JS_CallFunction(cx, loaderObj, importFun, args, &value);
 }
 
-#ifdef SPIDERMONKEY_PROMISE
 static JSObject*
 ShellGetIncumbentGlobalCallback(JSContext* cx)
 {
@@ -779,63 +773,72 @@ ShellFinishAsyncTaskCallback(JS::AsyncTask* task)
     asyncTasks->outstanding--;
     return asyncTasks->finished.append(task);
 }
-#endif // SPIDERMONKEY_PROMISE
 
 static bool
 DrainJobQueue(JSContext* cx)
 {
-#ifdef SPIDERMONKEY_PROMISE
     ShellContext* sc = GetShellContext(cx);
     if (sc->quitting || sc->drainingJobQueue)
         return true;
 
-    // Wait for any outstanding async tasks to finish so that the
-    // finishedAsyncTasks list is fixed.
     while (true) {
-        AutoLockHelperThreadState lock;
-        if (!sc->asyncTasks.lock()->outstanding)
-            break;
-        HelperThreadState().wait(lock, GlobalHelperThreadState::CONSUMER);
-    }
-
-    // Lock the whole time while copying back the asyncTasks finished queue so
-    // that any new tasks created during finish() cannot racily join the job
-    // queue.  Call finish() only thereafter, to avoid a circular mutex
-    // dependency (see also bug 1297901).
-    Vector<JS::AsyncTask*> finished(cx);
-    {
-        ExclusiveData<ShellAsyncTasks>::Guard asyncTasks = sc->asyncTasks.lock();
-        finished = Move(asyncTasks->finished);
-        asyncTasks->finished.clear();
-    }
-
-    for (JS::AsyncTask* task : finished)
-        task->finish(cx);
-
-    // It doesn't make sense for job queue draining to be reentrant. At the
-    // same time we don't want to assert against it, because that'd make
-    // drainJobQueue unsafe for fuzzers. We do want fuzzers to test this, so
-    // we simply ignore nested calls of drainJobQueue.
-    sc->drainingJobQueue = true;
-
-    RootedObject job(cx);
-    JS::HandleValueArray args(JS::HandleValueArray::empty());
-    RootedValue rval(cx);
-    // Execute jobs in a loop until we've reached the end of the queue.
-    // Since executing a job can trigger enqueuing of additional jobs,
-    // it's crucial to re-check the queue length during each iteration.
-    for (size_t i = 0; i < sc->jobQueue.length(); i++) {
-        job = sc->jobQueue[i];
-        AutoCompartment ac(cx, job);
-        {
-            AutoReportException are(cx);
-            JS::Call(cx, UndefinedHandleValue, job, args, &rval);
+        // Wait for any outstanding async tasks to finish so that the
+        // finishedAsyncTasks list is fixed.
+        while (true) {
+            AutoLockHelperThreadState lock;
+            if (!sc->asyncTasks.lock()->outstanding)
+                break;
+            HelperThreadState().wait(lock, GlobalHelperThreadState::CONSUMER);
         }
-        sc->jobQueue[i].set(nullptr);
+
+        // Lock the whole time while copying back the asyncTasks finished queue
+        // so that any new tasks created during finish() cannot racily join the
+        // job queue.  Call finish() only thereafter, to avoid a circular mutex
+        // dependency (see also bug 1297901).
+        Vector<JS::AsyncTask*> finished(cx);
+        {
+            ExclusiveData<ShellAsyncTasks>::Guard asyncTasks = sc->asyncTasks.lock();
+            finished = Move(asyncTasks->finished);
+            asyncTasks->finished.clear();
+        }
+
+        for (JS::AsyncTask* task : finished)
+            task->finish(cx);
+
+        // It doesn't make sense for job queue draining to be reentrant. At the
+        // same time we don't want to assert against it, because that'd make
+        // drainJobQueue unsafe for fuzzers. We do want fuzzers to test this,
+        // so we simply ignore nested calls of drainJobQueue.
+        sc->drainingJobQueue = true;
+
+        RootedObject job(cx);
+        JS::HandleValueArray args(JS::HandleValueArray::empty());
+        RootedValue rval(cx);
+
+        // Execute jobs in a loop until we've reached the end of the queue.
+        // Since executing a job can trigger enqueuing of additional jobs,
+        // it's crucial to re-check the queue length during each iteration.
+        for (size_t i = 0; i < sc->jobQueue.length(); i++) {
+            job = sc->jobQueue[i];
+            AutoCompartment ac(cx, job);
+            {
+                AutoReportException are(cx);
+                JS::Call(cx, UndefinedHandleValue, job, args, &rval);
+            }
+            sc->jobQueue[i].set(nullptr);
+        }
+        sc->jobQueue.clear();
+        sc->drainingJobQueue = false;
+
+        // It's possible a job added an async task, and it's also possible
+        // that task has already finished.
+        {
+            ExclusiveData<ShellAsyncTasks>::Guard asyncTasks = sc->asyncTasks.lock();
+            if (asyncTasks->outstanding == 0 && asyncTasks->finished.length() == 0)
+                break;
+        }
     }
-    sc->jobQueue.clear();
-    sc->drainingJobQueue = false;
-#endif // SPIDERMONKEY_PROMISE
+
     return true;
 }
 
@@ -850,7 +853,6 @@ DrainJobQueue(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-#ifdef SPIDERMONKEY_PROMISE
 static void
 ForwardingPromiseRejectionTrackerCallback(JSContext* cx, JS::HandleObject promise,
                                           PromiseRejectionHandlingState state, void* data)
@@ -873,14 +875,12 @@ ForwardingPromiseRejectionTrackerCallback(JSContext* cx, JS::HandleObject promis
     if (!Call(cx, callback, UndefinedHandleValue, args, &rval))
         JS_ClearPendingException(cx);
 }
-#endif // SPIDERMONKEY_PROMISE
 
 static bool
 SetPromiseRejectionTrackerCallback(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-#ifdef SPIDERMONKEY_PROMISE
     if (!IsCallable(args.get(0))) {
         JS_ReportErrorASCII(cx,
                             "setPromiseRejectionTrackerCallback expects a function as its sole "
@@ -891,7 +891,6 @@ SetPromiseRejectionTrackerCallback(JSContext* cx, unsigned argc, Value* vp)
     GetShellContext(cx)->promiseRejectionTrackerCallback = args[0];
     JS::SetPromiseRejectionTrackerCallback(cx, ForwardingPromiseRejectionTrackerCallback);
 
-#endif // SPIDERMONKEY_PROMISE
     args.rval().setUndefined();
     return true;
 }
@@ -909,10 +908,14 @@ AddIntlExtras(JSContext* cx, unsigned argc, Value* vp)
 
     static const JSFunctionSpec funcs[] = {
         JS_SELF_HOSTED_FN("getCalendarInfo", "Intl_getCalendarInfo", 1, 0),
+        JS_SELF_HOSTED_FN("getDisplayNames", "Intl_getDisplayNames", 2, 0),
         JS_FS_END
     };
 
     if (!JS_DefineFunctions(cx, intl, funcs))
+        return false;
+
+    if (!js::AddPluralRulesConstructor(cx, intl))
         return false;
 
     args.rval().setUndefined();
@@ -1448,7 +1451,6 @@ my_LargeAllocFailCallback(void* data)
     MOZ_ASSERT(!rt->isHeapBusy());
 
     JS::PrepareForFullGC(cx);
-    AutoKeepAtoms keepAtoms(cx->perThreadData);
     rt->gc.gc(GC_NORMAL, JS::gcreason::SHARED_MEMORY_LIMIT);
 }
 
@@ -2315,7 +2317,7 @@ ValueToScript(JSContext* cx, HandleValue v, JSFunction** funp = nullptr)
         return nullptr;
     }
 
-    JSScript* script = fun->getOrCreateScript(cx);
+    JSScript* script = JSFunction::getOrCreateScript(cx, fun);
     if (!script)
         return nullptr;
 
@@ -2589,11 +2591,28 @@ Notes(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-JS_STATIC_ASSERT(JSTRY_CATCH == 0);
-JS_STATIC_ASSERT(JSTRY_FINALLY == 1);
-JS_STATIC_ASSERT(JSTRY_FOR_IN == 2);
+static const char*
+TryNoteName(JSTryNoteKind kind)
+{
+    switch (kind) {
+      case JSTRY_CATCH:
+        return "catch";
+      case JSTRY_FINALLY:
+        return "finally";
+      case JSTRY_FOR_IN:
+        return "for-in";
+      case JSTRY_FOR_OF:
+        return "for-of";
+      case JSTRY_LOOP:
+        return "loop";
+      case JSTRY_FOR_OF_ITERCLOSE:
+        return "for-of-iterclose";
+      case JSTRY_DESTRUCTURING_ITERCLOSE:
+        return "dstr-iterclose";
+    }
 
-static const char* const TryNoteNames[] = { "catch", "finally", "for-in", "for-of", "loop" };
+    MOZ_CRASH("Bad JSTryNoteKind");
+}
 
 static MOZ_MUST_USE bool
 TryNotes(JSContext* cx, HandleScript script, Sprinter* sp)
@@ -2601,17 +2620,16 @@ TryNotes(JSContext* cx, HandleScript script, Sprinter* sp)
     if (!script->hasTrynotes())
         return true;
 
-    if (sp->put("\nException table:\nkind      stack    start      end\n") < 0)
+    if (sp->put("\nException table:\nkind               stack    start      end\n") < 0)
         return false;
 
     JSTryNote* tn = script->trynotes()->vector;
     JSTryNote* tnlimit = tn + script->trynotes()->length;
     do {
-        MOZ_ASSERT(tn->kind < ArrayLength(TryNoteNames));
-        uint8_t startOff = script->pcToOffset(script->main()) + tn->start;
-        if (!sp->jsprintf(" %-7s %6u %8u %8u\n",
-                          TryNoteNames[tn->kind], tn->stackDepth,
-                          startOff, startOff + tn->length))
+        uint32_t startOff = script->pcToOffset(script->main()) + tn->start;
+        if (!sp->jsprintf(" %-16s %6u %8u %8u\n",
+                          TryNoteName(static_cast<JSTryNoteKind>(tn->kind)),
+                          tn->stackDepth, startOff, startOff + tn->length))
         {
             return false;
         }
@@ -2678,7 +2696,7 @@ DisassembleScript(JSContext* cx, HandleScript script, HandleFunction fun,
             if (sp->put(" CONSTRUCTOR") < 0)
                 return false;
         }
-        if (fun->isExprBody()) {
+        if (script->isExprBody()) {
             if (sp->put(" EXPRESSION_CLOSURE") < 0)
                 return false;
         }
@@ -2715,7 +2733,7 @@ DisassembleScript(JSContext* cx, HandleScript script, HandleFunction fun,
 
                 RootedFunction fun(cx, &obj->as<JSFunction>());
                 if (fun->isInterpreted()) {
-                    RootedScript script(cx, fun->getOrCreateScript(cx));
+                    RootedScript script(cx, JSFunction::getOrCreateScript(cx, fun));
                     if (script) {
                         if (!DisassembleScript(cx, script, fun, lines, recursive, sourceNotes, sp))
                             return false;
@@ -3191,9 +3209,9 @@ NewSandbox(JSContext* cx, bool lazy)
         RootedValue value(cx, BooleanValue(lazy));
         if (!JS_SetProperty(cx, obj, "lazy", value))
             return nullptr;
-    }
 
-    JS_FireOnNewGlobalObject(cx, obj);
+        JS_FireOnNewGlobalObject(cx, obj);
+    }
 
     if (!cx->compartment()->wrap(cx, &obj))
         return nullptr;
@@ -3326,12 +3344,10 @@ WorkerMain(void* arg)
         return;
     }
 
-#ifdef SPIDERMONKEY_PROMISE
     sc->jobQueue.init(cx, JobQueue(SystemAllocPolicy()));
     JS::SetEnqueuePromiseJobCallback(cx, ShellEnqueuePromiseJobCallback);
     JS::SetGetIncumbentGlobalCallback(cx, ShellGetIncumbentGlobalCallback);
     JS::SetAsyncTaskCallbacks(cx, ShellStartAsyncTaskCallback, ShellFinishAsyncTaskCallback);
-#endif // SPIDERMONKEY_PROMISE
 
     EnvironmentPreparer environmentPreparer(cx);
 
@@ -3362,11 +3378,9 @@ WorkerMain(void* arg)
 
     JS::SetLargeAllocationFailureCallback(cx, nullptr, nullptr);
 
-#ifdef SPIDERMONKEY_PROMISE
     JS::SetGetIncumbentGlobalCallback(cx, nullptr);
     JS::SetEnqueuePromiseJobCallback(cx, nullptr);
     sc->jobQueue.reset();
-#endif // SPIDERMONKEY_PROMISE
 
     KillWatchdog(cx);
 
@@ -3476,8 +3490,8 @@ GroupOf(JSContext* cx, unsigned argc, JS::Value* vp)
         JS_ReportErrorASCII(cx, "groupOf: object expected");
         return false;
     }
-    JSObject* obj = &args[0].toObject();
-    ObjectGroup* group = obj->getGroup(cx);
+    RootedObject obj(cx, &args[0].toObject());
+    ObjectGroup* group = JSObject::getGroup(cx, obj);
     if (!group)
         return false;
     args.rval().set(JS_NumberValue(double(uintptr_t(group) >> 3)));
@@ -4654,6 +4668,11 @@ NewGlobal(JSContext* cx, unsigned argc, Value* vp)
         if (v.isBoolean())
             creationOptions.setCloneSingletons(v.toBoolean());
 
+        if (!JS_GetProperty(cx, opts, "experimentalNumberFormatFormatToPartsEnabled", &v))
+            return false;
+        if (v.isBoolean())
+            creationOptions.setExperimentalNumberFormatFormatToPartsEnabled(v.toBoolean());
+
         if (!JS_GetProperty(cx, opts, "sameZoneAs", &v))
             return false;
         if (v.isObject())
@@ -4687,6 +4706,24 @@ NewGlobal(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     args.rval().setObject(*global);
+    return true;
+}
+
+static bool
+NukeCCW(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    if (args.length() != 1 || !args[0].isObject() ||
+        !IsCrossCompartmentWrapper(&args[0].toObject()))
+    {
+        JS_ReportErrorNumberASCII(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS,
+                                  "nukeCCW");
+        return false;
+    }
+
+    NukeCrossCompartmentWrapper(cx, &args[0].toObject());
+    args.rval().setUndefined();
     return true;
 }
 
@@ -4874,8 +4911,7 @@ SingleStepCallback(void* arg, jit::Simulator* sim, void* pc)
                 if (!stack.append(",", 1))
                     oomUnsafe.crash("stack.append");
             }
-            auto chars = frames[i].label.get();
-            if (!stack.append(chars, strlen(chars)))
+            if (!stack.append(frames[i].label, strlen(frames[i].label)))
                 oomUnsafe.crash("stack.append");
             frameNo++;
         }
@@ -5051,25 +5087,31 @@ GetSharedArrayBuffer(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     JSObject* newObj = nullptr;
-    bool rval = true;
 
-    sharedArrayBufferMailboxLock->lock();
-    SharedArrayRawBuffer* buf = sharedArrayBufferMailbox;
-    if (buf) {
-        buf->addReference();
-        // Shared memory is enabled globally in the shell: there can't be a worker
-        // that does not enable it if the main thread has it.
-        MOZ_ASSERT(cx->compartment()->creationOptions().getSharedMemoryAndAtomicsEnabled());
-        newObj = SharedArrayBufferObject::New(cx, buf);
-        if (!newObj) {
-            buf->dropReference();
-            rval = false;
+    {
+        sharedArrayBufferMailboxLock->lock();
+        auto unlockMailbox = MakeScopeExit([]() { sharedArrayBufferMailboxLock->unlock(); });
+
+        SharedArrayRawBuffer* buf = sharedArrayBufferMailbox;
+        if (buf) {
+            if (!buf->addReference()) {
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_SC_SAB_REFCNT_OFLO);
+                return false;
+            }
+
+            // Shared memory is enabled globally in the shell: there can't be a worker
+            // that does not enable it if the main thread has it.
+            MOZ_ASSERT(cx->compartment()->creationOptions().getSharedMemoryAndAtomicsEnabled());
+            newObj = SharedArrayBufferObject::New(cx, buf);
+            if (!newObj) {
+                buf->dropReference();
+                return false;
+            }
         }
     }
-    sharedArrayBufferMailboxLock->unlock();
 
     args.rval().setObjectOrNull(newObj);
-    return rval;
+    return true;
 }
 
 static bool
@@ -5083,18 +5125,24 @@ SetSharedArrayBuffer(JSContext* cx, unsigned argc, Value* vp)
     }
     else if (args.get(0).isObject() && args[0].toObject().is<SharedArrayBufferObject>()) {
         newBuffer = args[0].toObject().as<SharedArrayBufferObject>().rawBufferObject();
-        newBuffer->addReference();
+        if (!newBuffer->addReference()) {
+            JS_ReportErrorASCII(cx, "Reference count overflow on SharedArrayBuffer");
+            return false;
+        }
     } else {
         JS_ReportErrorASCII(cx, "Only a SharedArrayBuffer can be installed in the global mailbox");
         return false;
     }
 
-    sharedArrayBufferMailboxLock->lock();
-    SharedArrayRawBuffer* oldBuffer = sharedArrayBufferMailbox;
-    if (oldBuffer)
-        oldBuffer->dropReference();
-    sharedArrayBufferMailbox = newBuffer;
-    sharedArrayBufferMailboxLock->unlock();
+    {
+        sharedArrayBufferMailboxLock->lock();
+        auto unlockMailbox = MakeScopeExit([]() { sharedArrayBufferMailboxLock->unlock(); });
+
+        SharedArrayRawBuffer* oldBuffer = sharedArrayBufferMailbox;
+        if (oldBuffer)
+            oldBuffer->dropReference();
+        sharedArrayBufferMailbox = newBuffer;
+    }
 
     args.rval().setUndefined();
     return true;
@@ -5371,7 +5419,7 @@ DumpScopeChain(JSContext* cx, unsigned argc, Value* vp)
             ReportUsageErrorASCII(cx, callee, "Argument must be an interpreted function");
             return false;
         }
-        script = fun->getOrCreateScript(cx);
+        script = JSFunction::getOrCreateScript(cx, fun);
     } else {
         script = obj->as<ModuleObject>().script();
     }
@@ -5996,6 +6044,10 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "         principal is treated as if its bits were 0xffff, for subsumption\n"
 "         purposes. If this property is omitted, supply no principal."),
 
+    JS_FN_HELP("nukeCCW", NukeCCW, 1, 0,
+"nukeCCW(wrapper)",
+"  Nuke a CrossCompartmentWrapper, which turns it into a DeadProxyObject."),
+
     JS_FN_HELP("createMappedArrayBuffer", CreateMappedArrayBuffer, 1, 0,
 "createMappedArrayBuffer(filename, [offset, [size]])",
 "  Create an array buffer that mmaps the given file."),
@@ -6108,7 +6160,8 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "provided object (this should generally be Intl itself).  The added\n"
 "functions and their behavior are experimental: don't depend upon them\n"
 "unless you're willing to update your code if these experimental APIs change\n"
-"underneath you."),
+"underneath you.  Calling this function more than once in a realm/global\n"
+"will throw."),
 #endif // ENABLE_INTL_API
 
     JS_FS_HELP_END
@@ -7084,9 +7137,9 @@ NewGlobalObject(JSContext* cx, JS::CompartmentOptions& options,
 
         /* Initialize FakeDOMObject.prototype */
         InitDOMObject(domProto);
-    }
 
-    JS_FireOnNewGlobalObject(cx, glob);
+        JS_FireOnNewGlobalObject(cx, glob);
+    }
 
     return glob;
 }
@@ -7233,6 +7286,7 @@ SetContextOptions(JSContext* cx, const OptionParser& op)
                              .setAsmJS(enableAsmJS)
                              .setWasm(enableWasm)
                              .setWasmAlwaysBaseline(enableWasmAlwaysBaseline)
+                             .setWasmAllowDebugging(true)
                              .setNativeRegExp(enableNativeRegExp)
                              .setUnboxedArrays(enableUnboxedArrays);
 
@@ -7514,6 +7568,7 @@ SetWorkerContextOptions(JSContext* cx)
                              .setAsmJS(enableAsmJS)
                              .setWasm(enableWasm)
                              .setWasmAlwaysBaseline(enableWasmAlwaysBaseline)
+                             .setWasmAllowDebugging(true)
                              .setNativeRegExp(enableNativeRegExp)
                              .setUnboxedArrays(enableUnboxedArrays);
     cx->setOffthreadIonCompilationEnabled(offthreadCompilation);
@@ -7919,12 +7974,10 @@ main(int argc, char** argv, char** envp)
     if (!JS::InitSelfHostedCode(cx))
         return 1;
 
-#ifdef SPIDERMONKEY_PROMISE
     sc->jobQueue.init(cx, JobQueue(SystemAllocPolicy()));
     JS::SetEnqueuePromiseJobCallback(cx, ShellEnqueuePromiseJobCallback);
     JS::SetGetIncumbentGlobalCallback(cx, ShellGetIncumbentGlobalCallback);
     JS::SetAsyncTaskCallbacks(cx, ShellStartAsyncTaskCallback, ShellFinishAsyncTaskCallback);
-#endif // SPIDERMONKEY_PROMISE
 
     EnvironmentPreparer environmentPreparer(cx);
 
@@ -7954,11 +8007,9 @@ main(int argc, char** argv, char** envp)
 
     JS::SetLargeAllocationFailureCallback(cx, nullptr, nullptr);
 
-#ifdef SPIDERMONKEY_PROMISE
     JS::SetGetIncumbentGlobalCallback(cx, nullptr);
     JS::SetEnqueuePromiseJobCallback(cx, nullptr);
     sc->jobQueue.reset();
-#endif // SPIDERMONKEY_PROMISE
 
     KillWatchdog(cx);
 

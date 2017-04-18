@@ -205,8 +205,10 @@ ChannelFromScriptURL(nsIPrincipal* principal,
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(channel)) {
+    mozilla::net::ReferrerPolicy referrerPolicy = parentDoc ?
+      parentDoc->GetReferrerPolicy() : mozilla::net::RP_Unset;
     rv = nsContentUtils::SetFetchReferrerURIWithPolicy(principal, parentDoc,
-                                                       httpChannel, mozilla::net::RP_Default);
+                                                       httpChannel, referrerPolicy);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -226,6 +228,7 @@ struct ScriptLoadInfo
   , mExecutionScheduled(false)
   , mExecutionResult(false)
   , mCacheStatus(Uncached)
+  , mLoadFlags(nsIRequest::LOAD_NORMAL)
   { }
 
   ~ScriptLoadInfo()
@@ -287,6 +290,8 @@ struct ScriptLoadInfo
   };
 
   CacheStatus mCacheStatus;
+
+  nsLoadFlags mLoadFlags;
 
   Maybe<bool> mMutedErrorFlag;
 
@@ -412,7 +417,7 @@ private:
   nsTArray<RefPtr<CacheScriptLoader>> mLoaders;
 
   nsString mCacheName;
-  PrincipalOriginAttributes mOriginAttributes;
+  OriginAttributes mOriginAttributes;
 };
 
 NS_IMPL_ISUPPORTS0(CacheCreator)
@@ -900,7 +905,7 @@ private:
     ScriptLoadInfo& loadInfo = mLoadInfos[aIndex];
     nsresult& rv = loadInfo.mLoadResult;
 
-    nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL;
+    nsLoadFlags loadFlags = loadInfo.mLoadFlags;
 
     // Get the top-level worker.
     WorkerPrivate* topWorkerPrivate = mWorkerPrivate;
@@ -922,13 +927,6 @@ private:
           NS_ENSURE_SUCCESS(rv, rv);
         }
       }
-    }
-
-    // If we are loading a script for a ServiceWorker then we must not
-    // try to intercept it.  If the interception matches the current
-    // ServiceWorker's scope then we could deadlock the load.
-    if (mWorkerPrivate->IsServiceWorker()) {
-      loadFlags |= nsIChannel::LOAD_BYPASS_SERVICE_WORKER;
     }
 
     if (!channel) {
@@ -1231,7 +1229,7 @@ private:
 
           // Set ReferrerPolicy, default value is set in GetReferrerPolicy
           bool hasReferrerPolicy = false;
-          uint32_t rp = mozilla::net::RP_Default;
+          uint32_t rp = mozilla::net::RP_Unset;
           rv = csp->GetReferrerPolicy(&rp, &hasReferrerPolicy);
           NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2118,12 +2116,16 @@ LoadAllScripts(WorkerPrivate* aWorkerPrivate,
   aWorkerPrivate->AssertIsOnWorkerThread();
   NS_ASSERTION(!aLoadInfos.IsEmpty(), "Bad arguments!");
 
-  AutoSyncLoopHolder syncLoop(aWorkerPrivate);
+  AutoSyncLoopHolder syncLoop(aWorkerPrivate, Terminating);
+  nsCOMPtr<nsIEventTarget> syncLoopTarget = syncLoop.GetEventTarget();
+  if (!syncLoopTarget) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
 
   RefPtr<ScriptLoaderRunnable> loader =
-    new ScriptLoaderRunnable(aWorkerPrivate, syncLoop.EventTarget(),
-                             aLoadInfos, aIsMainScript, aWorkerScriptType,
-                             aRv);
+    new ScriptLoaderRunnable(aWorkerPrivate, syncLoopTarget, aLoadInfos,
+                             aIsMainScript, aWorkerScriptType, aRv);
 
   NS_ASSERTION(aLoadInfos.IsEmpty(), "Should have swapped!");
 
@@ -2184,7 +2186,7 @@ ChannelFromScriptURLWorkerThread(JSContext* aCx,
     new ChannelGetterRunnable(aParent, aScriptURL, aChannel);
 
   ErrorResult rv;
-  getter->Dispatch(rv);
+  getter->Dispatch(Terminating, rv);
   if (rv.Failed()) {
     NS_ERROR("Failed to dispatch!");
     return rv.StealNSResult();
@@ -2255,6 +2257,7 @@ LoadMainScript(WorkerPrivate* aWorkerPrivate,
 
   ScriptLoadInfo* info = loadInfos.AppendElement();
   info->mURL = aScriptURL;
+  info->mLoadFlags = aWorkerPrivate->GetLoadFlags();
 
   LoadAllScripts(aWorkerPrivate, loadInfos, true, aWorkerScriptType, aRv);
 }
@@ -2280,6 +2283,7 @@ Load(WorkerPrivate* aWorkerPrivate,
 
   for (uint32_t index = 0; index < urlCount; index++) {
     loadInfos[index].mURL = aScriptURLs[index];
+    loadInfos[index].mLoadFlags = aWorkerPrivate->GetLoadFlags();
   }
 
   LoadAllScripts(aWorkerPrivate, loadInfos, false, aWorkerScriptType, aRv);

@@ -6,15 +6,14 @@
 #if !defined(AndroidMediaReader_h_)
 #define AndroidMediaReader_h_
 
-#include "mozilla/Attributes.h"
-#include "MediaResource.h"
-#include "MediaDecoderReader.h"
 #include "ImageContainer.h"
+#include "MediaContainerType.h"
+#include "MediaDecoderReader.h"
+#include "MediaResource.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/layers/SharedRGBImage.h"
 
 #include "MPAPI.h"
-
-class nsACString;
 
 namespace mozilla {
 
@@ -26,7 +25,7 @@ class ImageContainer;
 
 class AndroidMediaReader : public MediaDecoderReader
 {
-  nsCString mType;
+  MediaContainerType mType;
   MPAPI::Decoder *mPlugin;
   bool mHasAudio;
   bool mHasVideo;
@@ -39,7 +38,7 @@ class AndroidMediaReader : public MediaDecoderReader
   MozPromiseRequestHolder<MediaDecoderReader::MediaDataPromise> mSeekRequest;
 public:
   AndroidMediaReader(AbstractMediaDecoder* aDecoder,
-                     const nsACString& aContentType);
+                     const MediaContainerType& aContainerType);
 
   nsresult ResetDecode(TrackSet aTracks = TrackSet(TrackInfo::kAudioTrack,
                                                    TrackInfo::kVideoTrack)) override;
@@ -48,7 +47,7 @@ public:
   bool DecodeVideoFrame(bool &aKeyframeSkip, int64_t aTimeThreshold) override;
 
   nsresult ReadMetadata(MediaInfo* aInfo, MetadataTags** aTags) override;
-  RefPtr<SeekPromise> Seek(SeekTarget aTarget, int64_t aEndTime) override;
+  RefPtr<SeekPromise> Seek(const SeekTarget& aTarget) override;
 
   RefPtr<ShutdownPromise> Shutdown() override;
 

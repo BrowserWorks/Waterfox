@@ -10,8 +10,6 @@
 #include "nsContainerFrame.h"
 #include "nsIPrintSettings.h"
 
-class nsIDateTimeFormat;
-
 namespace mozilla {
 namespace dom {
 
@@ -63,14 +61,14 @@ public:
   NS_DECL_FRAMEARENA_HELPERS
 
   // nsIFrame
-  virtual void Reflow(nsPresContext*      aPresContext,
-                      ReflowOutput& aDesiredSize,
-                      const ReflowInput& aMaxSize,
-                      nsReflowStatus&      aStatus) override;
+  void Reflow(nsPresContext* aPresContext,
+              ReflowOutput& aDesiredSize,
+              const ReflowInput& aMaxSize,
+              nsReflowStatus& aStatus) override;
 
-  virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
-                                const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) override;
+  void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                        const nsRect&           aDirtyRect,
+                        const nsDisplayListSet& aLists) override;
 
   // nsIPageSequenceFrame
   NS_IMETHOD SetPageNo(int32_t aPageNo) { return NS_OK;}
@@ -96,19 +94,19 @@ public:
 
   // We must allow Print Preview UI to have a background, no matter what the
   // user's settings
-  virtual bool HonorPrintBackgroundSettings() override { return false; }
+  bool HonorPrintBackgroundSettings() override { return false; }
 
-  virtual bool HasTransformGetter() const override { return true; }
+  bool HasTransformGetter() const override { return true; }
 
   /**
    * Get the "type" of the frame
    *
    * @see nsGkAtoms::sequenceFrame
    */
-  virtual nsIAtom* GetType() const override;
+  nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
-  virtual nsresult  GetFrameName(nsAString& aResult) const override;
+  nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
 protected:
@@ -138,9 +136,6 @@ protected:
   nsIFrame* GetCurrentPageFrame();
 
   nsMargin mMargin;
-
-  // I18N date formatter service which we'll want to cache locally.
-  nsCOMPtr<nsIDateTimeFormat> mDateFormatter;
 
   nsSize       mSize;
   nsSharedPageData* mPageData; // data shared by all the nsPageFrames

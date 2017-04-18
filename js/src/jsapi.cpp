@@ -11,6 +11,7 @@
 #include "jsapi.h"
 
 #include "mozilla/FloatingPoint.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/Sprintf.h"
 
@@ -107,6 +108,7 @@ using namespace js::gc;
 using mozilla::Maybe;
 using mozilla::PodCopy;
 using mozilla::PodZero;
+using mozilla::Some;
 
 using JS::AutoGCRooter;
 using JS::ToInt32;
@@ -159,6 +161,7 @@ JS::ObjectOpResult::reportStrictErrorOrWarning(JSContext* cx, HandleObject obj, 
                   "unsigned value of OkCode must not be an error code");
     MOZ_ASSERT(code_ != Uninitialized);
     MOZ_ASSERT(!ok());
+    assertSameCompartment(cx, obj);
 
     unsigned flags = strict ? JSREPORT_ERROR : (JSREPORT_WARNING | JSREPORT_STRICT);
     if (code_ == JSMSG_OBJECT_NOT_EXTENSIBLE || code_ == JSMSG_SET_NON_OBJECT_RECEIVER) {
@@ -193,6 +196,7 @@ JS::ObjectOpResult::reportStrictErrorOrWarning(JSContext* cx, HandleObject obj, 
     MOZ_ASSERT(code_ != Uninitialized);
     MOZ_ASSERT(!ok());
     MOZ_ASSERT(!ErrorTakesArguments(code_));
+    assertSameCompartment(cx, obj);
 
     unsigned flags = strict ? JSREPORT_ERROR : (JSREPORT_WARNING | JSREPORT_STRICT);
     return JS_ReportErrorFlagsAndNumberASCII(cx, flags, GetErrorMessage, nullptr, code_);
@@ -693,6 +697,12 @@ JS_SetWrapObjectCallbacks(JSContext* cx, const JSWrapObjectCallbacks* callbacks)
     cx->wrapObjectCallbacks = callbacks;
 }
 
+JS_PUBLIC_API(void)
+JS_SetExternalStringSizeofCallback(JSContext* cx, JSExternalStringSizeofCallback callback)
+{
+    cx->externalStringSizeofCallback = callback;
+}
+
 JS_PUBLIC_API(JSCompartment*)
 JS_EnterCompartment(JSContext* cx, JSObject* target)
 {
@@ -1020,7 +1030,7 @@ JS_ResolveStandardClass(JSContext* cx, HandleObject obj, HandleId id, bool* reso
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, obj, id);
 
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
     *resolved = false;
 
     if (!JSID_IS_ATOM(id))
@@ -1064,10 +1074,7 @@ JS_ResolveStandardClass(JSContext* cx, HandleObject obj, HandleId id, bool* reso
     // more way: its prototype chain is lazily initialized. That is,
     // global->getProto() might be null right now because we haven't created
     // Object.prototype yet. Force it now.
-    if (!global->getOrCreateObjectPrototype(cx))
-        return false;
-
-    return true;
+    return GlobalObject::getOrCreateObjectPrototype(cx, global);
 }
 
 JS_PUBLIC_API(bool)
@@ -1100,8 +1107,7 @@ JS_EnumerateStandardClasses(JSContext* cx, HandleObject obj)
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, obj);
-    MOZ_ASSERT(obj->is<GlobalObject>());
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
     return GlobalObject::initStandardClasses(cx, global);
 }
 
@@ -1157,7 +1163,8 @@ JS_GetObjectPrototype(JSContext* cx, HandleObject forObj)
 {
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, forObj);
-    return forObj->global().getOrCreateObjectPrototype(cx);
+    Rooted<GlobalObject*> global(cx, &forObj->global());
+    return GlobalObject::getOrCreateObjectPrototype(cx, global);
 }
 
 JS_PUBLIC_API(JSObject*)
@@ -1165,7 +1172,8 @@ JS_GetFunctionPrototype(JSContext* cx, HandleObject forObj)
 {
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, forObj);
-    return forObj->global().getOrCreateFunctionPrototype(cx);
+    Rooted<GlobalObject*> global(cx, &forObj->global());
+    return GlobalObject::getOrCreateFunctionPrototype(cx, global);
 }
 
 JS_PUBLIC_API(JSObject*)
@@ -1571,6 +1579,7 @@ JS::ToPrimitive(JSContext* cx, HandleObject obj, JSType hint, MutableHandleValue
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
+    assertSameCompartment(cx, obj);
     MOZ_ASSERT(obj != nullptr);
     MOZ_ASSERT(hint == JSTYPE_VOID || hint == JSTYPE_STRING || hint == JSTYPE_NUMBER);
     vp.setObject(*obj);
@@ -1850,6 +1859,7 @@ JS_FireOnNewGlobalObject(JSContext* cx, JS::HandleObject global)
     // to be able to throw errors during delicate global creation routines.
     // This infallibility will eat OOM and slow script, but if that happens
     // we'll likely run up into them again soon in a fallible context.
+    assertSameCompartment(cx, global);
     Rooted<js::GlobalObject*> globalObject(cx, &global->as<GlobalObject>());
     Debugger::onNewGlobalObject(cx, globalObject);
 }
@@ -1930,6 +1940,7 @@ JS::AssertObjectBelongsToCurrentThread(JSObject* obj)
 JS_PUBLIC_API(bool)
 JS_GetPrototype(JSContext* cx, HandleObject obj, MutableHandleObject result)
 {
+    assertSameCompartment(cx, obj);
     return GetPrototype(cx, obj, result);
 }
 
@@ -1947,24 +1958,28 @@ JS_PUBLIC_API(bool)
 JS_GetPrototypeIfOrdinary(JSContext* cx, HandleObject obj, bool* isOrdinary,
                           MutableHandleObject result)
 {
+    assertSameCompartment(cx, obj);
     return GetPrototypeIfOrdinary(cx, obj, isOrdinary, result);
 }
 
 JS_PUBLIC_API(bool)
 JS_IsExtensible(JSContext* cx, HandleObject obj, bool* extensible)
 {
+    assertSameCompartment(cx, obj);
     return IsExtensible(cx, obj, extensible);
 }
 
 JS_PUBLIC_API(bool)
 JS_PreventExtensions(JSContext* cx, JS::HandleObject obj, ObjectOpResult& result)
 {
+    assertSameCompartment(cx, obj);
     return PreventExtensions(cx, obj, result);
 }
 
 JS_PUBLIC_API(bool)
 JS_SetImmutablePrototype(JSContext *cx, JS::HandleObject obj, bool *succeeded)
 {
+    assertSameCompartment(cx, obj);
     return SetImmutablePrototype(cx, obj, succeeded);
 }
 
@@ -1974,6 +1989,7 @@ JS_GetOwnPropertyDescriptorById(JSContext* cx, HandleObject obj, HandleId id,
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
+    assertSameCompartment(cx, obj, id);
 
     return GetOwnPropertyDescriptor(cx, obj, id, desc);
 }
@@ -2004,6 +2020,7 @@ JS_PUBLIC_API(bool)
 JS_GetPropertyDescriptorById(JSContext* cx, HandleObject obj, HandleId id,
                              MutableHandle<PropertyDescriptor> desc)
 {
+    assertSameCompartment(cx, obj);
     return GetPropertyDescriptor(cx, obj, id, desc);
 }
 
@@ -2082,7 +2099,7 @@ DefinePropertyById(JSContext* cx, HandleObject obj, HandleId id, HandleValue val
         getter != JS_PropertyStub && setter != JS_StrictPropertyStub)
     {
         if (getter && !(attrs & JSPROP_GETTER)) {
-            RootedAtom atom(cx, IdToFunctionName(cx, id, "get"));
+            RootedAtom atom(cx, IdToFunctionName(cx, id, FunctionPrefixKind::Get));
             if (!atom)
                 return false;
             JSFunction* getobj = NewNativeFunction(cx, (Native) getter, 0, atom);
@@ -2098,7 +2115,7 @@ DefinePropertyById(JSContext* cx, HandleObject obj, HandleId id, HandleValue val
         if (setter && !(attrs & JSPROP_SETTER)) {
             // Root just the getter, since the setter is not yet a JSObject.
             AutoRooterGetterSetter getRoot(cx, JSPROP_GETTER, &getter, nullptr);
-            RootedAtom atom(cx, IdToFunctionName(cx, id, "set"));
+            RootedAtom atom(cx, IdToFunctionName(cx, id, FunctionPrefixKind::Set));
             if (!atom)
                 return false;
             JSFunction* setobj = NewNativeFunction(cx, (Native) setter, 1, atom);
@@ -2383,6 +2400,7 @@ static bool
 DefineElement(JSContext* cx, HandleObject obj, uint32_t index, HandleValue value,
               unsigned attrs, Native getter, Native setter)
 {
+    assertSameCompartment(cx, obj, value);
     AutoRooterGetterSetter gsRoot(cx, attrs, &getter, &setter);
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
@@ -2449,6 +2467,7 @@ JS_HasPropertyById(JSContext* cx, HandleObject obj, HandleId id, bool* foundp)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
+    assertSameCompartment(cx, obj, id);
 
     return HasProperty(cx, obj, id, foundp);
 }
@@ -2888,9 +2907,9 @@ JS_AlreadyHasOwnPropertyById(JSContext* cx, HandleObject obj, HandleId id, bool*
         return js::HasOwnProperty(cx, obj, id, foundp);
 
     RootedNativeObject nativeObj(cx, &obj->as<NativeObject>());
-    RootedShape prop(cx);
+    Rooted<PropertyResult> prop(cx);
     NativeLookupOwnPropertyNoResolve(cx, nativeObj, id, &prop);
-    *foundp = !!prop;
+    *foundp = prop.isFound();
     return true;
 }
 
@@ -3188,6 +3207,9 @@ JS::ObjectToCompletePropertyDescriptor(JSContext* cx,
                                        HandleValue descObj,
                                        MutableHandle<PropertyDescriptor> desc)
 {
+    // |obj| can be in a different compartment here. The caller is responsible
+    // for wrapping it (see JS_WrapPropertyDescriptor).
+    assertSameCompartment(cx, descObj);
     if (!ToPropertyDescriptor(cx, descObj, true, desc))
         return false;
     CompletePropertyDescriptor(desc);
@@ -3422,10 +3444,7 @@ JS::NewFunctionFromSpec(JSContext* cx, const JSFunctionSpec* fs, HandleId id)
         {
             return nullptr;
         }
-        JSFunction* fun = &funVal.toObject().as<JSFunction>();
-        if (fs->flags & JSFUN_HAS_REST)
-            fun->setHasRest();
-        return fun;
+        return &funVal.toObject().as<JSFunction>();
     }
 
     RootedAtom atom(cx, IdToFunctionName(cx, id));
@@ -3467,7 +3486,7 @@ CreateNonSyntacticEnvironmentChain(JSContext* cx, AutoObjectVector& envChain,
         // declaration was qualified by "var". There is only sadness.
         //
         // See JSObject::isQualifiedVarObj.
-        if (!env->setQualifiedVarObj(cx))
+        if (!JSObject::setQualifiedVarObj(cx, env))
             return false;
 
         // Also get a non-syntactic lexical environment to capture 'let' and
@@ -3527,7 +3546,7 @@ CloneFunctionObject(JSContext* cx, HandleObject funobj, HandleObject env, Handle
     RootedFunction fun(cx, &funobj->as<JSFunction>());
     if (fun->isInterpretedLazy()) {
         AutoCompartment ac(cx, funobj);
-        if (!fun->getOrCreateScript(cx))
+        if (!JSFunction::getOrCreateScript(cx, fun))
             return nullptr;
     }
 
@@ -3559,7 +3578,7 @@ CloneFunctionObject(JSContext* cx, HandleObject funobj, HandleObject env, Handle
         // Fail here if we OOM during debug asserting.
         // CloneFunctionReuseScript will delazify the script anyways, so we
         // are not creating an extra failure condition for DEBUG builds.
-        if (!fun->getOrCreateScript(cx))
+        if (!JSFunction::getOrCreateScript(cx, fun))
             return nullptr;
         MOZ_ASSERT(scope->as<GlobalScope>().isSyntactic() ||
                    fun->nonLazyScript()->hasNonSyntacticScope());
@@ -3605,7 +3624,7 @@ JS_GetFunctionObject(JSFunction* fun)
 JS_PUBLIC_API(JSString*)
 JS_GetFunctionId(JSFunction* fun)
 {
-    return fun->name();
+    return fun->explicitName();
 }
 
 JS_PUBLIC_API(JSString*)
@@ -3793,6 +3812,7 @@ JS::TransitiveCompileOptions::copyPODTransitiveOptions(const TransitiveCompileOp
     canLazilyParse = rhs.canLazilyParse;
     strictOption = rhs.strictOption;
     extraWarningsOption = rhs.extraWarningsOption;
+    forEachStatementOption = rhs.forEachStatementOption;
     werrorOption = rhs.werrorOption;
     asmJSOption = rhs.asmJSOption;
     throwOnAsmJSValidationFailureOption = rhs.throwOnAsmJSValidationFailureOption;
@@ -3914,6 +3934,7 @@ JS::CompileOptions::CompileOptions(JSContext* cx, JSVersion version)
 
     strictOption = cx->options().strictMode();
     extraWarningsOption = cx->compartment()->behaviors().extraWarnings(cx);
+    forEachStatementOption = cx->options().forEachStatement();
     werrorOption = cx->options().werror();
     if (!cx->options().asmJS())
         asmJSOption = AsmJSOption::Disabled;
@@ -4212,7 +4233,7 @@ JS_GetFunctionScript(JSContext* cx, HandleFunction fun)
         return nullptr;
     if (fun->isInterpretedLazy()) {
         AutoCompartment funCompartment(cx, fun);
-        JSScript* script = fun->getOrCreateScript(cx);
+        JSScript* script = JSFunction::getOrCreateScript(cx, fun);
         if (!script)
             MOZ_CRASH();
         return script;
@@ -4221,15 +4242,15 @@ JS_GetFunctionScript(JSContext* cx, HandleFunction fun)
 }
 
 /*
- * enclosingScope is a static enclosing scope, if any (e.g. a WithScope).  If
- * the enclosing scope is the global scope, this must be null.
+ * enclosingScope is a scope, if any (e.g. a WithScope).  If the scope is the
+ * global scope, this must be null.
  *
- * enclosingDynamicScope is a dynamic scope to use, if it's not the global.
+ * enclosingEnv is an environment to use, if it's not the global.
  */
 static bool
 CompileFunction(JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
-                const char* name, unsigned nargs, const char* const* argnames,
-                SourceBufferHolder& srcBuf,
+                const char* name,
+                SourceBufferHolder& srcBuf, uint32_t parameterListEnd,
                 HandleObject enclosingEnv, HandleScope enclosingScope,
                 MutableHandleFunction fun)
 {
@@ -4245,13 +4266,6 @@ CompileFunction(JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
             return false;
     }
 
-    Rooted<PropertyNameVector> formals(cx, PropertyNameVector(cx));
-    for (unsigned i = 0; i < nargs; i++) {
-        RootedAtom argAtom(cx, Atomize(cx, argnames[i], strlen(argnames[i])));
-        if (!argAtom || !formals.append(argAtom->asPropertyName()))
-            return false;
-    }
-
     fun.set(NewScriptedFunction(cx, 0, JSFunction::INTERPRETED_NORMAL, funAtom,
                                 /* proto = */ nullptr,
                                 gc::AllocKind::FUNCTION, TenuredObject,
@@ -4264,7 +4278,45 @@ CompileFunction(JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
     MOZ_ASSERT_IF(!IsGlobalLexicalEnvironment(enclosingEnv),
                   enclosingScope->hasOnChain(ScopeKind::NonSyntactic));
 
-    if (!frontend::CompileFunctionBody(cx, fun, optionsArg, formals, srcBuf, enclosingScope))
+    if (!frontend::CompileStandaloneFunction(cx, fun, optionsArg, srcBuf,
+                                             Some(parameterListEnd), enclosingScope))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+static MOZ_MUST_USE bool
+BuildFunctionString(unsigned nargs, const char* const* argnames,
+                    const SourceBufferHolder& srcBuf, StringBuffer* out,
+                    uint32_t* parameterListEnd)
+{
+    MOZ_ASSERT(out);
+    MOZ_ASSERT(parameterListEnd);
+
+    if (!out->ensureTwoByteChars())
+        return false;
+    if (!out->append("("))
+        return false;
+    for (unsigned i = 0; i < nargs; i++) {
+        if (i != 0) {
+            if (!out->append(", "))
+                return false;
+        }
+        if (!out->append(argnames[i], strlen(argnames[i])))
+            return false;
+    }
+
+    // Remember the position of ")".
+    *parameterListEnd = out->length();
+    MOZ_ASSERT(FunctionConstructorMedialSigils[0] == ')');
+
+    if (!out->append(FunctionConstructorMedialSigils))
+        return false;
+    if (!out->append(srcBuf.get(), srcBuf.length()))
+        return false;
+    if (!out->append(FunctionConstructorFinalBrace))
         return false;
 
     return true;
@@ -4280,7 +4332,16 @@ JS::CompileFunction(JSContext* cx, AutoObjectVector& envChain,
     RootedScope scope(cx);
     if (!CreateNonSyntacticEnvironmentChain(cx, envChain, &env, &scope))
         return false;
-    return CompileFunction(cx, options, name, nargs, argnames, srcBuf, env, scope, fun);
+
+    uint32_t parameterListEnd;
+    StringBuffer funStr(cx);
+    if (!BuildFunctionString(nargs, argnames, srcBuf, &funStr, &parameterListEnd))
+        return false;
+
+    size_t newLen = funStr.length();
+    SourceBufferHolder newSrcBuf(funStr.stealChars(), newLen, SourceBufferHolder::GiveOwnership);
+
+    return CompileFunction(cx, options, name, newSrcBuf, parameterListEnd, env, scope, fun);
 }
 
 JS_PUBLIC_API(bool)
@@ -4319,14 +4380,15 @@ JS_DecompileScript(JSContext* cx, HandleScript script, const char* name, unsigne
 
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
-    script->ensureNonLazyCanonicalFunction(cx);
+    script->ensureNonLazyCanonicalFunction();
     RootedFunction fun(cx, script->functionNonDelazifying());
     if (fun)
         return JS_DecompileFunction(cx, fun, indent);
     bool haveSource = script->scriptSource()->hasSourceData();
     if (!haveSource && !JSScript::loadSource(cx, script->scriptSource(), &haveSource))
         return nullptr;
-    return haveSource ? script->sourceData(cx) : NewStringCopyZ<CanGC>(cx, "[no source]");
+    return haveSource ? JSScript::sourceData(cx, script)
+                      : NewStringCopyZ<CanGC>(cx, "[no source]");
 }
 
 JS_PUBLIC_API(JSString*)
@@ -4794,7 +4856,7 @@ JS::CallOriginalPromiseResolve(JSContext* cx, JS::HandleValue resolutionValue)
     assertSameCompartment(cx, resolutionValue);
 
     RootedObject promise(cx, PromiseObject::unforgeableResolve(cx, resolutionValue));
-    MOZ_ASSERT_IF(promise, promise->is<PromiseObject>());
+    MOZ_ASSERT_IF(promise, CheckedUnwrap(promise)->is<PromiseObject>());
     return promise;
 }
 
@@ -4806,7 +4868,7 @@ JS::CallOriginalPromiseReject(JSContext* cx, JS::HandleValue rejectionValue)
     assertSameCompartment(cx, rejectionValue);
 
     RootedObject promise(cx, PromiseObject::unforgeableReject(cx, rejectionValue));
-    MOZ_ASSERT_IF(promise, promise->is<PromiseObject>());
+    MOZ_ASSERT_IF(promise, CheckedUnwrap(promise)->is<PromiseObject>());
     return promise;
 }
 
@@ -4897,12 +4959,6 @@ JS_PUBLIC_API(void)
 JS_RequestInterruptCallback(JSContext* cx)
 {
     cx->requestInterrupt(JSRuntime::RequestInterruptUrgent);
-}
-
-JS_PUBLIC_API(bool)
-JS_IsRunning(JSContext* cx)
-{
-    return cx->currentlyRunning();
 }
 
 JS::AutoSetAsyncStackForNewCalls::AutoSetAsyncStackForNewCalls(
@@ -5870,7 +5926,8 @@ JS_SetRegExpInput(JSContext* cx, HandleObject obj, HandleString input)
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, input);
 
-    RegExpStatics* res = obj->as<GlobalObject>().getRegExpStatics(cx);
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
+    RegExpStatics* res = GlobalObject::getRegExpStatics(cx, global);
     if (!res)
         return false;
 
@@ -5885,7 +5942,8 @@ JS_ClearRegExpStatics(JSContext* cx, HandleObject obj)
     CHECK_REQUEST(cx);
     MOZ_ASSERT(obj);
 
-    RegExpStatics* res = obj->as<GlobalObject>().getRegExpStatics(cx);
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
+    RegExpStatics* res = GlobalObject::getRegExpStatics(cx, global);
     if (!res)
         return false;
 
@@ -5900,7 +5958,8 @@ JS_ExecuteRegExp(JSContext* cx, HandleObject obj, HandleObject reobj, char16_t* 
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
 
-    RegExpStatics* res = obj->as<GlobalObject>().getRegExpStatics(cx);
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
+    RegExpStatics* res = GlobalObject::getRegExpStatics(cx, global);
     if (!res)
         return false;
 

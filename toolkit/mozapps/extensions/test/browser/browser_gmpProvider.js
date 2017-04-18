@@ -6,14 +6,12 @@
 
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
-var {AddonTestUtils} = Cu.import("resource://testing-common/AddonManagerTesting.jsm", {});
-var GMPScope = Cu.import("resource://gre/modules/addons/GMPProvider.jsm");
+var GMPScope = Cu.import("resource://gre/modules/addons/GMPProvider.jsm", {});
 
 const TEST_DATE = new Date(2013, 0, 1, 12);
 
 var gManagerWindow;
 var gCategoryUtilities;
-var gIsEnUsLocale;
 
 var gMockAddons = [];
 
@@ -51,27 +49,12 @@ MockGMPInstallManager.prototype = {
 
 var gOptionsObserver = {
   lastDisplayed: null,
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic == AddonManager.OPTIONS_NOTIFICATION_DISPLAYED) {
       this.lastDisplayed = aData;
     }
   }
 };
-
-function getInstallItem() {
-  let doc = gManagerWindow.document;
-  let list = doc.getElementById("addon-list");
-
-  let node = list.firstChild;
-  while (node) {
-    if (node.getAttribute("status") == "installing") {
-      return node;
-    }
-    node = node.nextSibling;
-  }
-
-  return null;
-}
 
 function openDetailsView(aId) {
   let view = get_current_view(gManagerWindow);
@@ -115,9 +98,6 @@ add_task(function* initializeState() {
     yield GMPScope.GMPProvider.shutdown();
     GMPScope.GMPProvider.startup();
   }));
-
-  let chrome = Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIXULChromeRegistry);
-  gIsEnUsLocale = chrome.getSelectedLocale("global") == "en-US";
 
   Services.obs.addObserver(gOptionsObserver, AddonManager.OPTIONS_NOTIFICATION_DISPLAYED, false);
 
@@ -267,10 +247,10 @@ add_task(function* testInstalledDetails() {
     let contextMenu = doc.getElementById("addonitem-popup");
     let deferred = Promise.defer();
     let listener = () => {
-      contextMenu.removeEventListener("popupshown", listener, false);
+      contextMenu.removeEventListener("popupshown", listener);
       deferred.resolve();
     };
-    contextMenu.addEventListener("popupshown", listener, false);
+    contextMenu.addEventListener("popupshown", listener);
     el = doc.getElementsByClassName("detail-view-container")[0];
     EventUtils.synthesizeMouse(el, 4, 4, { }, gManagerWindow);
     EventUtils.synthesizeMouse(el, 4, 4, { type: "contextmenu", button: 2 }, gManagerWindow);
@@ -381,7 +361,6 @@ add_task(function* testEmeSupport() {
 
   for (let addon of gMockAddons) {
     yield gCategoryUtilities.openType("plugin");
-    let doc = gManagerWindow.document;
     let item = get_addon_element(gManagerWindow, addon.id);
     if (addon.id == GMPScope.EME_ADOBE_ID) {
       if (AppConstants.isPlatformAndVersionAtLeast("win", "6")) {

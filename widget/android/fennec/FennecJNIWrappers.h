@@ -397,58 +397,6 @@ public:
     template<class Impl> class Natives;
 };
 
-class ScreenManagerHelper : public mozilla::jni::ObjectBase<ScreenManagerHelper>
-{
-public:
-    static const char name[];
-
-    explicit ScreenManagerHelper(const Context& ctx) : ObjectBase<ScreenManagerHelper>(ctx) {}
-
-    struct AddDisplay_t {
-        typedef ScreenManagerHelper Owner;
-        typedef int32_t ReturnType;
-        typedef int32_t SetterType;
-        typedef mozilla::jni::Args<
-                int32_t,
-                int32_t,
-                int32_t,
-                float> Args;
-        static constexpr char name[] = "addDisplay";
-        static constexpr char signature[] =
-                "(IIIF)I";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    struct RemoveDisplay_t {
-        typedef ScreenManagerHelper Owner;
-        typedef void ReturnType;
-        typedef void SetterType;
-        typedef mozilla::jni::Args<
-                int32_t> Args;
-        static constexpr char name[] = "removeDisplay";
-        static constexpr char signature[] =
-                "(I)V";
-        static const bool isStatic = true;
-        static const mozilla::jni::ExceptionMode exceptionMode =
-                mozilla::jni::ExceptionMode::ABORT;
-        static const mozilla::jni::CallingThread callingThread =
-                mozilla::jni::CallingThread::ANY;
-        static const mozilla::jni::DispatchTarget dispatchTarget =
-                mozilla::jni::DispatchTarget::CURRENT;
-    };
-
-    static const mozilla::jni::CallingThread callingThread =
-            mozilla::jni::CallingThread::ANY;
-
-    template<class Impl> class Natives;
-};
-
 class Telemetry : public mozilla::jni::ObjectBase<Telemetry>
 {
 public:
@@ -722,10 +670,11 @@ public:
         typedef mozilla::jni::Args<
                 mozilla::jni::Object::Param,
                 mozilla::jni::Object::Param,
-                mozilla::jni::Object::Param> Args;
+                mozilla::jni::Object::Param,
+                mozilla::jni::String::Param> Args;
         static constexpr char name[] = "create";
         static constexpr char signature[] =
-                "(Landroid/media/MediaFormat;Landroid/view/Surface;Lorg/mozilla/gecko/media/CodecProxy$Callbacks;)Lorg/mozilla/gecko/media/CodecProxy;";
+                "(Landroid/media/MediaFormat;Landroid/view/Surface;Lorg/mozilla/gecko/media/CodecProxy$Callbacks;Ljava/lang/String;)Lorg/mozilla/gecko/media/CodecProxy;";
         static const bool isStatic = true;
         static const mozilla::jni::ExceptionMode exceptionMode =
                 mozilla::jni::ExceptionMode::ABORT;
@@ -735,7 +684,7 @@ public:
                 mozilla::jni::DispatchTarget::CURRENT;
     };
 
-    static auto Create(mozilla::jni::Object::Param, mozilla::jni::Object::Param, mozilla::jni::Object::Param) -> CodecProxy::LocalRef;
+    static auto Create(mozilla::jni::Object::Param, mozilla::jni::Object::Param, mozilla::jni::Object::Param, mozilla::jni::String::Param) -> CodecProxy::LocalRef;
 
     struct Flush_t {
         typedef CodecProxy Owner;
@@ -778,6 +727,25 @@ public:
 
     auto Input(mozilla::jni::ByteBuffer::Param, mozilla::jni::Object::Param, mozilla::jni::Object::Param) const -> bool;
 
+    struct IsAdaptivePlaybackSupported_t {
+        typedef CodecProxy Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "isAdaptivePlaybackSupported";
+        static constexpr char signature[] =
+                "()Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto IsAdaptivePlaybackSupported() const -> bool;
+
     struct Release_t {
         typedef CodecProxy Owner;
         typedef bool ReturnType;
@@ -796,6 +764,27 @@ public:
     };
 
     auto Release() const -> bool;
+
+    struct ReleaseOutput_t {
+        typedef CodecProxy Owner;
+        typedef bool ReturnType;
+        typedef bool SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::Object::Param,
+                bool> Args;
+        static constexpr char name[] = "releaseOutput";
+        static constexpr char signature[] =
+                "(Lorg/mozilla/gecko/media/Sample;Z)Z";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto ReleaseOutput(mozilla::jni::Object::Param, bool) const -> bool;
 
     static const mozilla::jni::CallingThread callingThread =
             mozilla::jni::CallingThread::ANY;
@@ -1056,6 +1045,45 @@ public:
     };
 
     auto Destroy() const -> void;
+
+    struct GetMediaCrypto_t {
+        typedef MediaDrmProxy Owner;
+        typedef mozilla::jni::Object::LocalRef ReturnType;
+        typedef mozilla::jni::Object::Param SetterType;
+        typedef mozilla::jni::Args<
+                mozilla::jni::String::Param> Args;
+        static constexpr char name[] = "getMediaCrypto";
+        static constexpr char signature[] =
+                "(Ljava/lang/String;)Landroid/media/MediaCrypto;";
+        static const bool isStatic = true;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::ANY;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    static auto GetMediaCrypto(mozilla::jni::String::Param) -> mozilla::jni::Object::LocalRef;
+
+    struct GetStubId_t {
+        typedef MediaDrmProxy Owner;
+        typedef mozilla::jni::String::LocalRef ReturnType;
+        typedef mozilla::jni::String::Param SetterType;
+        typedef mozilla::jni::Args<> Args;
+        static constexpr char name[] = "getStubId";
+        static constexpr char signature[] =
+                "()Ljava/lang/String;";
+        static const bool isStatic = false;
+        static const mozilla::jni::ExceptionMode exceptionMode =
+                mozilla::jni::ExceptionMode::ABORT;
+        static const mozilla::jni::CallingThread callingThread =
+                mozilla::jni::CallingThread::GECKO;
+        static const mozilla::jni::DispatchTarget dispatchTarget =
+                mozilla::jni::DispatchTarget::CURRENT;
+    };
+
+    auto GetStubId() const -> mozilla::jni::String::LocalRef;
 
     struct IsSchemeSupported_t {
         typedef MediaDrmProxy Owner;

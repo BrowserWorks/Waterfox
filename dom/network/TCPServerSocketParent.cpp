@@ -10,7 +10,6 @@
 #include "nsJSUtils.h"
 #include "TCPSocketParent.h"
 #include "mozilla/Unused.h"
-#include "mozilla/AppProcessChecker.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/TabParent.h"
 
@@ -65,13 +64,7 @@ TCPServerSocketParent::Init()
 uint32_t
 TCPServerSocketParent::GetAppId()
 {
-  const PContentParent *content = Manager()->Manager();
-  if (PBrowserParent* browser = SingleManagedOrNull(content->ManagedPBrowserParent())) {
-    TabParent *tab = TabParent::GetFrom(browser);
-    return tab->OwnAppId();
-  } else {
-    return nsIScriptSecurityManager::UNKNOWN_APP_ID;
-  }
+  return nsIScriptSecurityManager::UNKNOWN_APP_ID;
 }
 
 bool
@@ -121,12 +114,12 @@ TCPServerSocketParent::SendCallbackAccept(TCPSocketParent *socket)
   return NS_OK;
 }
 
-bool
+mozilla::ipc::IPCResult
 TCPServerSocketParent::RecvClose()
 {
-  NS_ENSURE_TRUE(mServerSocket, true);
+  NS_ENSURE_TRUE(mServerSocket, IPC_OK());
   mServerSocket->Close();
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -139,11 +132,11 @@ TCPServerSocketParent::ActorDestroy(ActorDestroyReason why)
   mNeckoParent = nullptr;
 }
 
-bool
+mozilla::ipc::IPCResult
 TCPServerSocketParent::RecvRequestDelete()
 {
   mozilla::Unused << Send__delete__(this);
-  return true;
+  return IPC_OK();
 }
 
 void

@@ -83,7 +83,7 @@ var supported_properties = {
     "-moz-outline-radius-topleft": [ test_radius_transition ],
     "-moz-outline-radius-topright": [ test_radius_transition ],
     "background-color": [ test_color_transition,
-                          test_currentcolor_transition ],
+                          test_true_currentcolor_transition ],
     "background-position": [ test_background_position_transition,
                              // FIXME: We don't currently test clamping,
                              // since background-position uses calc() as
@@ -129,6 +129,9 @@ var supported_properties = {
     "bottom": [ test_length_transition, test_percent_transition,
                 test_length_percent_calc_transition,
                 test_length_unclamped, test_percent_unclamped ],
+    "caret-color": [ test_color_transition,
+                     test_true_currentcolor_transition,
+                     test_auto_color_transition ],
     "clip": [ test_rect_transition ],
     "clip-path": [ test_clip_path_transition ],
     "color": [ test_color_transition,
@@ -248,6 +251,8 @@ var supported_properties = {
     // test_length_percent_calc_transition.
     "stroke-width": [ test_length_transition_svg, test_percent_transition,
                       test_length_clamped_svg, test_percent_clamped ],
+    "-moz-tab-size": [ test_float_zeroToOne_transition,
+                       test_float_aboveOne_transition, test_length_clamped ],
     "text-decoration": [ test_color_shorthand_transition,
                          test_true_currentcolor_shorthand_transition ],
     "text-decoration-color": [ test_color_transition,
@@ -303,6 +308,10 @@ if (SupportsMaskShorthand()) {
                                      // since mask-size uses calc() as an
                                      // intermediate form.
                                      /* test_length_percent_pair_clamped */ ];
+}
+
+if (IsCSSPropertyPrefEnabled("layout.css.font-variations.enabled")) {
+  supported_properties["font-variation-settings"] = [ test_font_variations_transition ];
 }
 
 var div = document.getElementById("display");
@@ -1373,6 +1382,21 @@ function test_true_currentcolor_transition(prop, get_color=(x => x), is_shorthan
   div.style.removeProperty("color");
 }
 
+function test_auto_color_transition(prop, get_color=(x => x), is_shorthand=false) {
+  const msg_prefix = `color-valued property ${prop}: `;
+  const test_color = "rgb(51, 102, 153)";
+  div.style.setProperty("transition-property", "none", "");
+  div.style.setProperty(prop, "auto", "");
+  let used_value_of_auto = get_color(cs.getPropertyValue(prop));
+  isnot(used_value_of_auto, test_color,
+        msg_prefix + "ensure used auto value is different than our test color");
+
+  div.style.setProperty("transition-property", prop, "");
+  div.style.setProperty(prop, test_color, "");
+  is(get_color(cs.getPropertyValue(prop)), test_color,
+     msg_prefix + "not interpolatable between auto and rgb color");
+}
+
 function get_color_from_shorthand_value(value) {
   var m = value.match(/rgba?\([^, ]*, [^, ]*, [^, ]*(?:, [^, ]*)?\)/);
   isnot(m, null, "shorthand property value should contain color");
@@ -1557,6 +1581,7 @@ function test_filter_transition(prop) {
 }
 
 function test_shadow_transition(prop) {
+  var origTimingFunc = div.style.getPropertyValue("transition-timing-function");
   var spreadStr = (prop == "box-shadow") ? " 0px" : "";
 
   div.style.setProperty("transition-property", "none", "");
@@ -1644,7 +1669,24 @@ function test_shadow_transition(prop) {
     isnot(vals[6], "0px",
           "shadow-valued property " + prop + " (spread): clamping of negatives");
   }
-  div.style.setProperty("transition-timing-function", "linear", "");
+
+  // A test case that timing function produces values greater than 1.0.
+  div.style.setProperty("transition-timing-function",
+                        // This function produces 1.2989961788069297 at 25%.
+                        "cubic-bezier(0, 1.5, 0, 1.5)", "");
+  div.style.setProperty("transition-property", "none", "");
+  div.style.setProperty(prop, "none", "");
+  is(cs.getPropertyValue(prop), "none",
+     "shadow-valued property " + prop + ": computed value before transition");
+  div.style.setProperty("transition-property", prop, "");
+  div.style.setProperty(prop, "0px 0px 0px rgba(100, 100, 100, 0.5)", "");
+  // The alpha value, 0.5 * 1.2989961788069297 * 255, is clamped to 166 and then
+  // converted to 0.65.
+  is(cs.getPropertyValue(prop), "rgba(100, 100, 100, 0.65) 0px 0px 0px" + spreadStr,
+     "shadow-valued property " + prop + ": interpolation of shadows with " +
+     "timing function which produces values greater than 1.0");
+
+  div.style.setProperty("transition-timing-function", origTimingFunc, "");
 }
 
 function test_dasharray_transition(prop) {
@@ -2450,6 +2492,30 @@ function test_transform_transition(prop) {
   // FIXME: should perhaps test that no clamping occurs
 
   runOMTATest(runAsyncTests, SimpleTest.finish);
+}
+
+function test_font_variations_transition(prop) {
+  is(prop, "font-variation-settings", "only designed for one property");
+
+  div.style.setProperty("transition-property", "none", "");
+  div.style.setProperty(prop, "\"wght\" 0, \"wdth\" 1.5", "");
+  is(cs.getPropertyValue(prop), "\"wght\" 0, \"wdth\" 1.5",
+     "font-variation-settings property " + prop + ": computed value before transition");
+  div.style.setProperty("transition-property", prop, "");
+  div.style.setProperty(prop, "\"wght\" 2, \"wdth\" 0.5", "");
+  is(cs.getPropertyValue(prop), "\"wght\" 0.5, \"wdth\" 1.25",
+     "font-variation-settings property " + prop + ": interpolation of font-variation-settings");
+  check_distance(prop, "\"wght\" 0, \"wdth\" 1.5", "\"wght\" 0.5, \"wdth\" 1.25", "\"wght\" 2, \"wdth\" 0.5");
+
+  div.style.setProperty("transition-property", "none", "");
+  div.style.setProperty(prop, "\"wght\" 2, \"wdth\" 0.5", "");
+  is(cs.getPropertyValue(prop), "\"wght\" 2, \"wdth\" 0.5",
+     "font-variation-settings property " + prop + ": computed value before transition");
+  div.style.setProperty("transition-property", prop, "");
+  div.style.setProperty(prop, "\"wght\" 0, \"wdth\" 1.5", "");
+  is(cs.getPropertyValue(prop), "\"wght\" 1.5, \"wdth\" 0.75",
+     "font-variation-settings property " + prop + ": interpolation of font-variation-settings");
+  check_distance(prop, "\"wght\" 2, \"wdth\" 0.5", "\"wght\" 1.5, \"wdth\" 0.75", "\"wght\" 0, \"wdth\" 1.5");
 }
 
 function runAsyncTests() {

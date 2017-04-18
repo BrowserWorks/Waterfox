@@ -172,7 +172,7 @@ AboutNewTabService.prototype = {
       .replace("%VERSION%", this.remoteVersion)
       .replace("%LOCALE%", Locale.getLocale())
       .replace("%CHANNEL%", releaseName);
-    let mode = Services.prefs.getCharPref(PREF_REMOTE_MODE, "production");
+    let mode = Services.prefs.getCharPref(PREF_REMOTE_MODE);
     if (!(mode in NewTabRemoteResources.MODE_CHANNEL_MAP)) {
       mode = "production";
     }
@@ -191,7 +191,7 @@ AboutNewTabService.prototype = {
    */
   get defaultURL() {
     let csTest = Services.prefs.getBoolPref(PREF_REMOTE_CS_TEST);
-    if (this._remoteEnabled || csTest)  {
+    if (this._remoteEnabled || csTest) {
       return this._remoteURL;
     }
     return LOCAL_NEWTAB_URL;
@@ -229,7 +229,7 @@ AboutNewTabService.prototype = {
   },
 
   get remoteVersion() {
-    return Services.prefs.getCharPref(PREF_REMOTE_VERSION, "1");
+    return Services.prefs.getCharPref(PREF_REMOTE_VERSION);
   },
 
   get remoteReleaseName() {

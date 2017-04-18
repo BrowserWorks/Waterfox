@@ -11,9 +11,14 @@
  * Unless you are adding new features to the framework, you shouldn't have to
  * modify this file.  Use "head_common.js" or the "head.js" file of each
  * framework for shared code.
+ *
+ * This file expects Services & XPCOMUtils to be defined in the scope it is imported
+ * into. Additionally, it expects "Output" to be defined as well.
  */
 
 "use strict";
+
+/* global XPCOMUtils, Services, Output */
 
 /*
  * --------------------
@@ -104,12 +109,12 @@ function getTaskId(stackFrame) {
 
 // This is a shared helper for mochitest-chrome and mochitest-browser.
 var _mochitestAssert = {
-  ok: function (actual) {
+  ok(actual) {
     let stack = Components.stack.caller;
     ok(actual, "[" + stack.name + " : " + stack.lineNumber + "] " + actual +
                " == true");
   },
-  equal: function (actual, expected) {
+  equal(actual, expected) {
     let stack = Components.stack.caller;
     is(actual, expected, "[" + stack.name + " : " + stack.lineNumber + "] " +
                actual + " == " + expected);

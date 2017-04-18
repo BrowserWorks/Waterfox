@@ -14,31 +14,8 @@ function MapConstructorInit(iterable) {
     if (!IsCallable(adder))
         ThrowTypeError(JSMSG_NOT_FUNCTION, typeof adder);
 
-    // Step 6.c.
-    var iterFn = iterable[std_iterator];
-    if (!IsCallable(iterFn))
-        ThrowTypeError(JSMSG_NOT_ITERABLE, DecompileArg(0, iterable));
-
-    var iter = callContentFunction(iterFn, iterable);
-    if (!IsObject(iter))
-        ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, typeof iter);
-
-    // Step 7 (not applicable).
-
-    // Step 8.
-    while (true) {
-        // Step 8.a.
-        var next = callContentFunction(iter.next, iter);
-        if (!IsObject(next))
-            ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, typeof next);
-
-        // Step 8.b.
-        if (next.done)
-            return;
-
-        // Step 8.c.
-        var nextItem = next.value;
-
+    // Steps 6.c-8.
+    for (var nextItem of allowContentIter(iterable)) {
         // Step 8.d.
         if (!IsObject(nextItem))
             ThrowTypeError(JSMSG_INVALID_MAP_ITERABLE, "Map");
@@ -77,6 +54,11 @@ function MapForEach(callbackfn, thisArg = undefined) {
         callContentFunction(callbackfn, thisArg, entry[1], entry[0], M);
     }
 }
+
+function MapEntries() {
+    return callFunction(std_Map_iterator, this);
+}
+_SetCanonicalName(MapEntries, "entries");
 
 var iteratorTemp = { mapIterationResultPair : null };
 

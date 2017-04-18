@@ -264,7 +264,7 @@ nsSMILAnimationController::StartSampling(nsRefreshDriver* aRefreshDriver)
     // We're effectively resuming from a pause so update our current sample time
     // or else it will confuse our "average time between samples" calculations.
     mCurrentSampleTime = mozilla::TimeStamp::Now();
-    aRefreshDriver->AddRefreshObserver(this, Flush_Style);
+    aRefreshDriver->AddRefreshObserver(this, FlushType::Style);
     mRegisteredWithRefreshDriver = true;
   }
 }
@@ -277,7 +277,7 @@ nsSMILAnimationController::StopSampling(nsRefreshDriver* aRefreshDriver)
     // (and RefreshDriver), which would make GetRefreshDriver() return null.
     MOZ_ASSERT(!GetRefreshDriver() || aRefreshDriver == GetRefreshDriver(),
                "Stopping sampling with wrong refresh driver");
-    aRefreshDriver->RemoveRefreshObserver(this, Flush_Style);
+    aRefreshDriver->RemoveRefreshObserver(this, FlushType::Style);
     mRegisteredWithRefreshDriver = false;
   }
 }
@@ -321,6 +321,12 @@ nsSMILAnimationController::DoSample(bool aSkipUnchangedContainers)
 
   bool isStyleFlushNeeded = mResampleNeeded;
   mResampleNeeded = false;
+
+  if (mDocument->IsStyledByServo()) {
+    NS_ERROR("stylo: SMIL animations not supported yet");
+    return;
+  }
+
   nsCOMPtr<nsIDocument> document(mDocument);  // keeps 'this' alive too
 
   // Set running sample flag -- do this before flushing styles so that when we
@@ -377,6 +383,8 @@ nsSMILAnimationController::DoSample(bool aSkipUnchangedContainers)
   // Create the compositor table
   nsAutoPtr<nsSMILCompositorTable>
     currentCompositorTable(new nsSMILCompositorTable(0));
+  nsTArray<RefPtr<SVGAnimationElement>>
+    animElems(mAnimationElementTable.Count());
 
   for (auto iter = mAnimationElementTable.Iter(); !iter.Done(); iter.Next()) {
     SVGAnimationElement* animElem = iter.Get()->GetKey();
@@ -384,6 +392,7 @@ nsSMILAnimationController::DoSample(bool aSkipUnchangedContainers)
     AddAnimationToCompositorTable(animElem,
                                   currentCompositorTable,
                                   isStyleFlushNeeded);
+    animElems.AppendElement(animElem);
   }
   activeContainers.Clear();
 
@@ -427,7 +436,7 @@ nsSMILAnimationController::DoSample(bool aSkipUnchangedContainers)
   }
 
   if (isStyleFlushNeeded) {
-    document->FlushPendingNotifications(Flush_Style);
+    document->FlushPendingNotifications(FlushType::Style);
   }
 
   // WARNING:
@@ -731,7 +740,7 @@ nsSMILAnimationController::AddStyleUpdatesTo(RestyleTracker& aTracker)
     // mIsCSS true means that the rules are the ones returned from
     // Element::GetSMILOverrideStyleDeclaration (via nsSMILCSSProperty objects),
     // and mIsCSS false means the rules are nsSMILMappedAttribute objects
-    // returned from nsSVGElement::GetAnimatedContentStyleRule.
+    // returned from nsSVGElement::GetAnimatedContentDeclarationBlock.
     nsRestyleHint rshint = key.mIsCSS ? eRestyle_StyleAttribute_Animations
                                       : eRestyle_SVGAttrAnimations;
     aTracker.AddPendingRestyle(key.mElement, rshint, nsChangeHint(0));

@@ -121,15 +121,6 @@ constexpr char PresentationMediaPlayerManager::InvalidateAndScheduleComposite_t:
 constexpr char PresentationMediaPlayerManager::RemovePresentationSurface_t::name[];
 constexpr char PresentationMediaPlayerManager::RemovePresentationSurface_t::signature[];
 
-const char ScreenManagerHelper::name[] =
-        "org/mozilla/gecko/ScreenManagerHelper";
-
-constexpr char ScreenManagerHelper::AddDisplay_t::name[];
-constexpr char ScreenManagerHelper::AddDisplay_t::signature[];
-
-constexpr char ScreenManagerHelper::RemoveDisplay_t::name[];
-constexpr char ScreenManagerHelper::RemoveDisplay_t::signature[];
-
 const char Telemetry::name[] =
         "org/mozilla/gecko/Telemetry";
 
@@ -193,9 +184,9 @@ const char CodecProxy::name[] =
 constexpr char CodecProxy::Create_t::name[];
 constexpr char CodecProxy::Create_t::signature[];
 
-auto CodecProxy::Create(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, mozilla::jni::Object::Param a2) -> CodecProxy::LocalRef
+auto CodecProxy::Create(mozilla::jni::Object::Param a0, mozilla::jni::Object::Param a1, mozilla::jni::Object::Param a2, mozilla::jni::String::Param a3) -> CodecProxy::LocalRef
 {
-    return mozilla::jni::Method<Create_t>::Call(CodecProxy::Context(), nullptr, a0, a1, a2);
+    return mozilla::jni::Method<Create_t>::Call(CodecProxy::Context(), nullptr, a0, a1, a2, a3);
 }
 
 constexpr char CodecProxy::Flush_t::name[];
@@ -214,12 +205,28 @@ auto CodecProxy::Input(mozilla::jni::ByteBuffer::Param a0, mozilla::jni::Object:
     return mozilla::jni::Method<Input_t>::Call(CodecProxy::mCtx, nullptr, a0, a1, a2);
 }
 
+constexpr char CodecProxy::IsAdaptivePlaybackSupported_t::name[];
+constexpr char CodecProxy::IsAdaptivePlaybackSupported_t::signature[];
+
+auto CodecProxy::IsAdaptivePlaybackSupported() const -> bool
+{
+    return mozilla::jni::Method<IsAdaptivePlaybackSupported_t>::Call(CodecProxy::mCtx, nullptr);
+}
+
 constexpr char CodecProxy::Release_t::name[];
 constexpr char CodecProxy::Release_t::signature[];
 
 auto CodecProxy::Release() const -> bool
 {
     return mozilla::jni::Method<Release_t>::Call(CodecProxy::mCtx, nullptr);
+}
+
+constexpr char CodecProxy::ReleaseOutput_t::name[];
+constexpr char CodecProxy::ReleaseOutput_t::signature[];
+
+auto CodecProxy::ReleaseOutput(mozilla::jni::Object::Param a0, bool a1) const -> bool
+{
+    return mozilla::jni::Method<ReleaseOutput_t>::Call(CodecProxy::mCtx, nullptr, a0, a1);
 }
 
 const char CodecProxy::NativeCallbacks::name[] =
@@ -297,6 +304,22 @@ constexpr char MediaDrmProxy::Destroy_t::signature[];
 auto MediaDrmProxy::Destroy() const -> void
 {
     return mozilla::jni::Method<Destroy_t>::Call(MediaDrmProxy::mCtx, nullptr);
+}
+
+constexpr char MediaDrmProxy::GetMediaCrypto_t::name[];
+constexpr char MediaDrmProxy::GetMediaCrypto_t::signature[];
+
+auto MediaDrmProxy::GetMediaCrypto(mozilla::jni::String::Param a0) -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetMediaCrypto_t>::Call(MediaDrmProxy::Context(), nullptr, a0);
+}
+
+constexpr char MediaDrmProxy::GetStubId_t::name[];
+constexpr char MediaDrmProxy::GetStubId_t::signature[];
+
+auto MediaDrmProxy::GetStubId() const -> mozilla::jni::String::LocalRef
+{
+    return mozilla::jni::Method<GetStubId_t>::Call(MediaDrmProxy::mCtx, nullptr);
 }
 
 constexpr char MediaDrmProxy::IsSchemeSupported_t::name[];

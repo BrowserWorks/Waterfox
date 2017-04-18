@@ -79,7 +79,6 @@ public:
   nsresult DeleteData(uint32_t aOffset, uint32_t aCount);
   nsresult ReplaceData(uint32_t aOffset, uint32_t aCount,
                        const nsAString& aArg);
-  NS_IMETHOD MozRemove();
 
   // nsINode methods
   virtual uint32_t GetChildCount() const override;
@@ -90,7 +89,7 @@ public:
                                  bool aNotify) override;
   virtual void RemoveChildAt(uint32_t aIndex, bool aNotify) override;
   virtual void GetTextContentInternal(nsAString& aTextContent,
-                                      mozilla::ErrorResult& aError) override
+                                      mozilla::OOMReporter& aError) override
   {
     GetNodeValue(aTextContent);
   }

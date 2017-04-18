@@ -6,27 +6,46 @@
 "filename": "mozmake.exe"
 },
 {
-"version": "rustc 1.13.0 (2c6933acc 2016-11-07) repack",
-"size": 63966131,
-"digest": "a431492ca5ae3454e7d5de3962ff0b40d96f69a9046428a1fe310397a5dda9ba2f6b697958e8386b119d56b700563ffe1b58c63f84b527b2df320893306854cf",
+"version": "rustc 1.14.0 (e8a012324 2016-12-16) repack",
+"size": 69760089,
+"digest": "1ad9b88c90c70a11b76526a437f0f4df9590cd3dced50229a306b4b49fbf22b45871461cff9e33c8aabd00ef7734732f09dae131f1805587bac864e63f24f68f",
 "algorithm": "sha512",
 "visibility": "public",
 "filename": "rustc.tar.bz2",
 "unpack": true
 },
 {
-"size": 167175,
-"digest": "0b71a936edf5bd70cf274aaa5d7abc8f77fe8e7b5593a208f805cc9436fac646b9c4f0b43c2b10de63ff3da671497d35536077ecbc72dba7f8159a38b580f831",
+"version": "sccache rev b21198a7183a2fe226ff49348b1c0b51bae9f4f8",
 "algorithm": "sha512",
-"filename": "sccache.tar.bz2",
+"visibility": "public",
+"filename": "sccache2.tar.bz2",
+"unpack": true,
+"digest": "7dee5c5602b3830cb8ac45ebaa8542714bbac0e50eabbff58a06972a02ceeab75ed7c56ff22a23f760b8317ae8e9a01cdecfaf75a7acbd2a4cdd817967170d2e",
+"size": 1179901
+},
+{
+"version": "Visual Studio 2015 Update 3 14.0.25425.01 / SDK 10.0.14393.0",
+"size": 326656969,
+"digest": "babc414ffc0457d27f5a1ed24a8e4873afbe2f1c1a4075469a27c005e1babc3b2a788f643f825efedff95b79686664c67ec4340ed535487168a3482e68559bc7",
+"algorithm": "sha512",
+"filename": "vs2015u3.zip",
 "unpack": true
 },
 {
-"version": "clang 3.9.0/r262971",
-"size": 173306045,
-"digest": "806413640a964dad44c0c6055d2a89a1075730fb6f659ff37341378a14a7dc032e672941765225608b71f6b385ac721ed36bfa04eb38c211b07e2776cb72a0ee",
+"version": "clang 4.0pre/r286542",
+"size": 226755339,
+"digest": "3c598607c36e70788ca7dbdf0d835f9e44fbcaa7b1ed77ef9971d743a5a230bebc0ccd2bcdf97f63ed4546d1b83f4c3556f35c30589c755aaaefbd674f750e22",
 "algorithm": "sha512",
-"filename": "clang64.tar.bz2",
+"filename": "clang.tar.bz2",
 "unpack": true
+},
+{
+"version": "makecab rev d2bc6797648b7a834782714a55d339d2fd4e58c8",
+"algorithm": "sha512",
+"visibility": "public",
+"filename": "makecab.tar.bz2",
+"unpack": true,
+"digest": "196ac6a567c85559957dfe511c3d8654d23c94d5603259e19ccafe9d71e0e4ccee63ccc9a778f2699654b786cda54266108b7d4db543d01bb0b42545b4e6ec75",
+"size": 297118
 }
 ]

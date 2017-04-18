@@ -29,6 +29,7 @@
 #include "nsCocoaUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "gfxPlatform.h"
+#include "nsDeviceContext.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -38,7 +39,7 @@ extern PRLogModuleInfo* sCocoaLog;
 extern void EnsureLogInitialized();
 
 extern NSPasteboard* globalDragPboard;
-extern NSView* gLastDragView;
+extern ChildView* gLastDragView;
 extern NSEvent* gLastDragMouseDownEvent;
 extern bool gUserCancelledDrag;
 
@@ -46,18 +47,19 @@ extern bool gUserCancelledDrag;
 // file destination callback.
 nsIArray *gDraggedTransferables = nullptr;
 
-NSString* const kWildcardPboardType = @"MozillaWildcard";
-NSString* const kCorePboardType_url  = @"CorePasteboardFlavorType 0x75726C20"; // 'url '  url
-NSString* const kCorePboardType_urld = @"CorePasteboardFlavorType 0x75726C64"; // 'urld'  desc
-NSString* const kCorePboardType_urln = @"CorePasteboardFlavorType 0x75726C6E"; // 'urln'  title
-NSString* const kUTTypeURLName = @"public.url-name";
+NSString* const kWildcardPboardType    = @"org.mozilla.MozillaWildcard";
+NSString* const kCorePboardType_url    =
+  @"org.mozilla.CorePasteboardFlavorType0x75726C20"; // 'url '  url
+NSString* const kCorePboardType_urld   =
+  @"org.mozilla.CorePasteboardFlavorType0x75726C64"; // 'urld'  desc
+NSString* const kCorePboardType_urln   =
+  @"org.mozilla.CorePasteboardFlavorType0x75726C6E"; // 'urln'  title
+NSString* const kUTTypeURLName         = @"public.url-name";
 NSString* const kCustomTypesPboardType = @"org.mozilla.custom-clipdata";
 
 nsDragService::nsDragService()
+  : mNativeDragView(nil), mNativeDragEvent(nil), mDragImageChanged(false)
 {
-  mNativeDragView = nil;
-  mNativeDragEvent = nil;
-
   EnsureLogInitialized();
 }
 
@@ -65,83 +67,67 @@ nsDragService::~nsDragService()
 {
 }
 
-static nsresult SetUpDragClipboard(nsIArray* aTransferableArray)
+NSImage*
+nsDragService::ConstructDragImage(nsIDOMNode* aDOMNode,
+                                  nsIScriptableRegion* aRegion,
+                                  NSPoint* aDragPoint)
 {
-  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  if (!aTransferableArray)
-    return NS_ERROR_FAILURE;
+  CGFloat scaleFactor = nsCocoaUtils::GetBackingScaleFactor(mNativeDragView);
 
-  uint32_t count = 0;
-  aTransferableArray->GetLength(&count);
-
-  NSPasteboard* dragPBoard = [NSPasteboard pasteboardWithName:NSDragPboard];
-
-  for (uint32_t j = 0; j < count; j++) {
-    nsCOMPtr<nsITransferable> currentTransferable = do_QueryElementAt(aTransferableArray, j);
-    if (!currentTransferable)
-      return NS_ERROR_FAILURE;
-
-    // Transform the transferable to an NSDictionary
-    NSDictionary* pasteboardOutputDict = nsClipboard::PasteboardDictFromTransferable(currentTransferable);
-    if (!pasteboardOutputDict)
-      return NS_ERROR_FAILURE;
-
-    // write everything out to the general pasteboard
-    unsigned int typeCount = [pasteboardOutputDict count];
-    NSMutableArray* types = [NSMutableArray arrayWithCapacity:typeCount + 1];
-    [types addObjectsFromArray:[pasteboardOutputDict allKeys]];
-    // Gecko is initiating this drag so we always want its own views to consider
-    // it. Add our wildcard type to the pasteboard to accomplish this.
-    [types addObject:kWildcardPboardType]; // we don't increase the count for the loop below on purpose
-    [dragPBoard declareTypes:types owner:nil];
-    for (unsigned int k = 0; k < typeCount; k++) {
-      NSString* currentKey = [types objectAtIndex:k];
-      id currentValue = [pasteboardOutputDict valueForKey:currentKey];
-      if (currentKey == NSStringPboardType ||
-          currentKey == kCorePboardType_url ||
-          currentKey == kCorePboardType_urld ||
-          currentKey == kCorePboardType_urln) {
-        [dragPBoard setString:currentValue forType:currentKey];
-      }
-      else if (currentKey == NSHTMLPboardType) {
-        [dragPBoard setString:(nsClipboard::WrapHtmlForSystemPasteboard(currentValue))
-                      forType:currentKey];
-      }
-      else if (currentKey == NSTIFFPboardType ||
-               currentKey == kCustomTypesPboardType) {
-        [dragPBoard setData:currentValue forType:currentKey];
-      }
-      else if (currentKey == NSFilesPromisePboardType ||
-               currentKey == NSFilenamesPboardType) {
-        [dragPBoard setPropertyList:currentValue forType:currentKey];        
-      }
-    }
+  LayoutDeviceIntRect dragRect(0, 0, 20, 20);
+  NSImage* image = ConstructDragImage(mSourceNode, aRegion, mScreenPosition, &dragRect);
+  if (!image) {
+    // if no image was returned, just draw a rectangle
+    NSSize size;
+    size.width = nsCocoaUtils::DevPixelsToCocoaPoints(dragRect.width, scaleFactor);
+    size.height = nsCocoaUtils::DevPixelsToCocoaPoints(dragRect.height, scaleFactor);
+    image = [[NSImage alloc] initWithSize:size];
+    [image lockFocus];
+    [[NSColor grayColor] set];
+    NSBezierPath* path = [NSBezierPath bezierPath];
+    [path setLineWidth:2.0];
+    [path moveToPoint:NSMakePoint(0, 0)];
+    [path lineToPoint:NSMakePoint(0, size.height)];
+    [path lineToPoint:NSMakePoint(size.width, size.height)];
+    [path lineToPoint:NSMakePoint(size.width, 0)];
+    [path lineToPoint:NSMakePoint(0, 0)];
+    [path stroke];
+    [image unlockFocus];
   }
 
-  return NS_OK;
+  LayoutDeviceIntPoint pt(dragRect.x, dragRect.YMost());
+  NSPoint point = nsCocoaUtils::DevPixelsToCocoaPoints(pt, scaleFactor);
+  point.y = nsCocoaUtils::FlippedScreenY(point.y);
 
-  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+  point = nsCocoaUtils::ConvertPointFromScreen([mNativeDragView window], point);
+  *aDragPoint = [mNativeDragView convertPoint:point fromView:nil];
+
+  return image;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NIL;
 }
 
 NSImage*
 nsDragService::ConstructDragImage(nsIDOMNode* aDOMNode,
-                                  LayoutDeviceIntRect* aDragRect,
-                                  nsIScriptableRegion* aRegion)
-{
-  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
+                                  nsIScriptableRegion* aRegion,
+                                  CSSIntPoint aPoint,
+                                  LayoutDeviceIntRect* aDragRect)
+ {
+   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  CGFloat scaleFactor = nsCocoaUtils::GetBackingScaleFactor(gLastDragView);
+  CGFloat scaleFactor = nsCocoaUtils::GetBackingScaleFactor(mNativeDragView);
 
   RefPtr<SourceSurface> surface;
   nsPresContext* pc;
-  nsresult rv = DrawDrag(aDOMNode, aRegion, mScreenPosition,
+  nsresult rv = DrawDrag(aDOMNode, aRegion, aPoint,
                          aDragRect, &surface, &pc);
   if (pc && (!aDragRect->width || !aDragRect->height)) {
     // just use some suitable defaults
     int32_t size = nsCocoaUtils::CocoaPointsToDevPixels(20, scaleFactor);
-    aDragRect->SetRect(pc->CSSPixelsToDevPixels(mScreenPosition.x),
-                       pc->CSSPixelsToDevPixels(mScreenPosition.y), size, size);
+    aDragRect->SetRect(pc->CSSPixelsToDevPixels(aPoint.x),
+                       pc->CSSPixelsToDevPixels(aPoint.y), size, size);
   }
 
   if (NS_FAILED(rv) || !surface)
@@ -291,9 +277,6 @@ nsDragService::GetFilePath(NSPasteboardItem* item)
   NS_OBJC_END_TRY_ABORT_BLOCK_NIL;
 }
 
-// We can only invoke NSView's 'dragImage:at:offset:event:pasteboard:source:slideBack:' from
-// within NSView's 'mouseDown:' or 'mouseDragged:'. Luckily 'mouseDragged' is always on the
-// stack when InvokeDragSession gets called.
 nsresult
 nsDragService::InvokeDragSessionImpl(nsIArray* aTransferableArray,
                                      nsIScriptableRegion* aDragRgn,
@@ -301,65 +284,82 @@ nsDragService::InvokeDragSessionImpl(nsIArray* aTransferableArray,
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
-  mDataItems = aTransferableArray;
-
-  // put data on the clipboard
-  if (NS_FAILED(SetUpDragClipboard(aTransferableArray)))
+  if (!gLastDragView) {
+    // gLastDragView is only set during -[ChildView mouseDragged:].
+    // InvokeDragSessionImpl is only called while Gecko processes a mouse move
+    // event. So if we get here with gLastDragView being null, that means that
+    // the mouse button has already been released, and mouseMoved is on the
+    // stack instead of mouseDragged. In that case we need to abort the drag
+    // because the OS won't know where to drop whatever's being dragged, and we
+    // might end up with a stuck drag & drop session.
     return NS_ERROR_FAILURE;
-
-  CGFloat scaleFactor = nsCocoaUtils::GetBackingScaleFactor(gLastDragView);
-
-  LayoutDeviceIntRect dragRect(0, 0, 20, 20);
-  NSImage* image = ConstructDragImage(mSourceNode, &dragRect, aDragRgn);
-  if (!image) {
-    // if no image was returned, just draw a rectangle
-    NSSize size;
-    size.width = nsCocoaUtils::DevPixelsToCocoaPoints(dragRect.width, scaleFactor);
-    size.height = nsCocoaUtils::DevPixelsToCocoaPoints(dragRect.height, scaleFactor);
-    image = [[NSImage alloc] initWithSize:size];
-    [image lockFocus];
-    [[NSColor grayColor] set];
-    NSBezierPath* path = [NSBezierPath bezierPath];
-    [path setLineWidth:2.0];
-    [path moveToPoint:NSMakePoint(0, 0)];
-    [path lineToPoint:NSMakePoint(0, size.height)];
-    [path lineToPoint:NSMakePoint(size.width, size.height)];
-    [path lineToPoint:NSMakePoint(size.width, 0)];
-    [path lineToPoint:NSMakePoint(0, 0)];
-    [path stroke];
-    [image unlockFocus];
   }
 
-  LayoutDeviceIntPoint pt(dragRect.x, dragRect.YMost());
-  NSPoint point = nsCocoaUtils::DevPixelsToCocoaPoints(pt, scaleFactor);
-  point.y = nsCocoaUtils::FlippedScreenY(point.y);
+  mDataItems = aTransferableArray;
 
-  point = nsCocoaUtils::ConvertPointFromScreen([gLastDragView window], point);
-  NSPoint localPoint = [gLastDragView convertPoint:point fromView:nil];
- 
   // Save the transferables away in case a promised file callback is invoked.
   gDraggedTransferables = aTransferableArray;
 
-  nsBaseDragService::StartDragSession();
-  nsBaseDragService::OpenDragPopup();
-
-  // We need to retain the view and the event during the drag in case either gets destroyed.
+  // We need to retain the view and the event during the drag in case either
+  // gets destroyed.
   mNativeDragView = [gLastDragView retain];
   mNativeDragEvent = [gLastDragMouseDownEvent retain];
 
   gUserCancelledDrag = false;
-  [mNativeDragView dragImage:image
-                          at:localPoint
-                      offset:NSZeroSize
-                       event:mNativeDragEvent
-                  pasteboard:[NSPasteboard pasteboardWithName:NSDragPboard]
-                      source:mNativeDragView
-                   slideBack:YES];
-  gUserCancelledDrag = false;
 
-  if (mDoingDrag)
-    nsBaseDragService::EndDragSession(false);
-  
+  NSPasteboardItem* pbItem = [NSPasteboardItem new];
+  NSMutableArray* types = [NSMutableArray arrayWithCapacity:5];
+
+  if (gDraggedTransferables) {
+    uint32_t count = 0;
+    gDraggedTransferables->GetLength(&count);
+
+    for (uint32_t j = 0; j < count; j++) {
+      nsCOMPtr<nsITransferable> currentTransferable =
+        do_QueryElementAt(aTransferableArray, j);
+      if (!currentTransferable) {
+        return NS_ERROR_FAILURE;
+      }
+
+      // Transform the transferable to an NSDictionary
+      NSDictionary* pasteboardOutputDict =
+        nsClipboard::PasteboardDictFromTransferable(currentTransferable);
+      if (!pasteboardOutputDict) {
+        return NS_ERROR_FAILURE;
+      }
+
+      // write everything out to the general pasteboard
+      [types addObjectsFromArray:[pasteboardOutputDict allKeys]];
+      // Gecko is initiating this drag so we always want its own views to
+      // consider it. Add our wildcard type to the pasteboard to accomplish
+      // this.
+      [types addObject:kWildcardPboardType];
+    }
+  }
+  [pbItem setDataProvider:mNativeDragView forTypes:types];
+
+  NSPoint draggingPoint;
+  NSImage* image = ConstructDragImage(mSourceNode, aDragRgn, &draggingPoint);
+
+  NSRect localDragRect = image.alignmentRect;
+  localDragRect.origin.x = draggingPoint.x;
+  localDragRect.origin.y = draggingPoint.y - localDragRect.size.height;
+
+  NSDraggingItem* dragItem =
+    [[NSDraggingItem alloc] initWithPasteboardWriter:pbItem];
+  [pbItem release];
+  [dragItem setDraggingFrame:localDragRect contents:image];
+
+  nsBaseDragService::StartDragSession();
+  nsBaseDragService::OpenDragPopup();
+
+  NSDraggingSession* draggingSession =
+    [mNativeDragView beginDraggingSessionWithItems:
+        [NSArray arrayWithObject:[dragItem autorelease]]
+                                             event:mNativeDragEvent
+                                            source:mNativeDragView];
+  draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
+
   return NS_OK;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
@@ -643,6 +643,72 @@ nsDragService::GetNumDropItems(uint32_t* aNumItems)
   return NS_OK;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP
+nsDragService::UpdateDragImage(nsIDOMNode* aImage, int32_t aImageX, int32_t aImageY)
+{
+  nsBaseDragService::UpdateDragImage(aImage, aImageX, aImageY);
+  mDragImageChanged = true;
+  return NS_OK;
+}
+
+void
+nsDragService::DragMovedWithView(NSDraggingSession* aSession, NSPoint aPoint)
+{
+  aPoint.y = nsCocoaUtils::FlippedScreenY(aPoint.y);
+
+  // XXX It feels like we should be using the backing scale factor at aPoint
+  // rather than the initial drag view, but I've seen no ill effects of this.
+  CGFloat scaleFactor = nsCocoaUtils::GetBackingScaleFactor(mNativeDragView);
+  LayoutDeviceIntPoint devPoint = nsCocoaUtils::CocoaPointsToDevPixels(aPoint, scaleFactor);
+
+  // If the image has changed, call enumerateDraggingItemsWithOptions to get
+  // the item being dragged and update its image.
+  if (mDragImageChanged && mNativeDragView) {
+    mDragImageChanged = false;
+
+    nsPresContext* pc = nullptr;
+    nsCOMPtr<nsIContent> content = do_QueryInterface(mImage);
+    if (content) {
+      nsCOMPtr<nsIDocument> document = content->OwnerDoc();
+      if (document) {
+        nsIPresShell* shell = document->GetShell();
+        pc = shell ? shell->GetPresContext() : nullptr;
+      }
+    }
+
+    if (pc) {
+      void (^changeImageBlock) (NSDraggingItem*, NSInteger, BOOL*) =
+                              ^(NSDraggingItem* draggingItem, NSInteger idx, BOOL* stop) {
+        // We never add more than one item right now, but check just in case.
+        if (idx > 0) {
+          return;
+        }
+
+        nsPoint pt = LayoutDevicePixel::ToAppUnits(devPoint,
+                       pc->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom());
+        CSSIntPoint screenPoint = CSSIntPoint(nsPresContext::AppUnitsToIntCSSPixels(pt.x),
+                                              nsPresContext::AppUnitsToIntCSSPixels(pt.y));
+
+        // Create a new image; if one isn't returned don't change the current one.
+        LayoutDeviceIntRect newRect;
+        NSImage* image = ConstructDragImage(mSourceNode, nullptr, screenPoint, &newRect);
+        if (image) {
+          NSRect draggingRect = nsCocoaUtils::GeckoRectToCocoaRectDevPix(newRect, scaleFactor);
+          [draggingItem setDraggingFrame:draggingRect contents:image];
+        }
+      };
+
+      [aSession enumerateDraggingItemsWithOptions:NSDraggingItemEnumerationConcurrent
+                                          forView:nil
+                                          classes:[NSArray arrayWithObject:[NSPasteboardItem class]]
+                                    searchOptions:@{}
+                                       usingBlock:changeImageBlock];
+    }
+  }
+
+  DragMoved(devPoint.x, devPoint.y);
 }
 
 NS_IMETHODIMP

@@ -36,6 +36,12 @@ public:
    * aElement is the element pointer corresponding to this link.
    */
   explicit Link(Element* aElement);
+
+  /**
+   * This constructor is only used for testing.
+   */
+  explicit Link();
+
   virtual void SetLinkState(nsLinkState aState);
 
   /**
@@ -117,7 +123,7 @@ public:
                          nsWrapperCache::FlagsType aRequestedFlag);
 
   // This is called by HTMLLinkElement.
-  void TryDNSPrefetchPreconnectOrPrefetch();
+  void TryDNSPrefetchPreconnectOrPrefetchOrPrerender();
   void CancelPrefetch();
 
 protected:

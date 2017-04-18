@@ -40,8 +40,18 @@ add_task(function* setup() {
   let oldInternal = SyncedTabs._internal;
   SyncedTabs._internal = mockedInternal;
 
+  // This test hacks some observer states to simulate a user being signed
+  // in to Sync - restore them when the test completes.
+  let initialObserverStates = {};
+  for (let id of ["sync-reauth-state", "sync-setup-state", "sync-syncnow-state"]) {
+    initialObserverStates[id] = document.getElementById(id).hidden;
+  }
+
   registerCleanupFunction(() => {
     SyncedTabs._internal = oldInternal;
+    for (let [id, initial] of Object.entries(initialObserverStates)) {
+      document.getElementById(id).hidden = initial;
+    }
   });
 });
 
@@ -49,9 +59,6 @@ add_task(function* setup() {
 function* openPrefsFromMenuPanel(expectedPanelId, entryPoint) {
   info("Check Sync button functionality");
   Services.prefs.setCharPref("identity.fxaccounts.remote.signup.uri", "http://example.com/");
-
-  // add the Sync button to the panel
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
 
   // check the button's functionality
   yield PanelUI.show();
@@ -134,8 +141,6 @@ add_task(function* () {
   document.getElementById("sync-setup-state").hidden = true;
   document.getElementById("sync-syncnow-state").hidden = false;
 
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
-
   let syncPanel = document.getElementById("PanelUI-remotetabs");
   let links = syncPanel.querySelectorAll(".remotetabs-promo-link");
 
@@ -196,8 +201,6 @@ add_task(function* () {
   document.getElementById("sync-setup-state").hidden = true;
   document.getElementById("sync-syncnow-state").hidden = false;
 
-  // add the Sync button to the panel
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
   yield PanelUI.show();
   document.getElementById("sync-button").click();
   let syncPanel = document.getElementById("PanelUI-remotetabs");

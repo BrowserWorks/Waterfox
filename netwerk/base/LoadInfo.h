@@ -40,13 +40,8 @@ namespace net {
 
 /**
  * Class that provides an nsILoadInfo implementation.
- *
- * Note that there is no reason why this class should be MOZ_EXPORT, but
- * Thunderbird relies on some insane hacks which require this, so we'll leave it
- * as is for now, but hopefully we'll be able to remove the MOZ_EXPORT keyword
- * from this class at some point.  See bug 1149127 for the discussion.
  */
-class MOZ_EXPORT LoadInfo final : public nsILoadInfo
+class LoadInfo final : public nsILoadInfo
 {
 public:
   NS_DECL_ISUPPORTS
@@ -101,7 +96,7 @@ private:
            bool aEnforceSecurity,
            bool aInitialSecurityCheckDone,
            bool aIsThirdPartyRequest,
-           const NeckoOriginAttributes& aOriginAttributes,
+           const OriginAttributes& aOriginAttributes,
            nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChainIncludingInternalRedirects,
            nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChain,
            const nsTArray<nsCString>& aUnsafeHeaders,
@@ -145,7 +140,7 @@ private:
   bool                             mEnforceSecurity;
   bool                             mInitialSecurityCheckDone;
   bool                             mIsThirdPartyContext;
-  NeckoOriginAttributes            mOriginAttributes;
+  OriginAttributes                 mOriginAttributes;
   nsTArray<nsCOMPtr<nsIPrincipal>> mRedirectChainIncludingInternalRedirects;
   nsTArray<nsCOMPtr<nsIPrincipal>> mRedirectChain;
   nsTArray<nsCString>              mCorsUnsafeHeaders;

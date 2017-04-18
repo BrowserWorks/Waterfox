@@ -16,7 +16,7 @@ namespace mozilla {
 
 class AbstractMediaDecoder;
 class DecoderDoctorDiagnostics;
-class MediaContentType;
+class MediaContainerType;
 class MediaDecoder;
 class MediaDecoderOwner;
 class MediaDecoderReader;
@@ -29,9 +29,9 @@ enum CanPlayStatus {
 
 class DecoderTraits {
 public:
-  // Returns the CanPlayStatus indicating if we can handle this content type.
-  static CanPlayStatus CanHandleContentType(const MediaContentType& aContentType,
-                                            DecoderDoctorDiagnostics* aDiagnostics);
+  // Returns the CanPlayStatus indicating if we can handle this container type.
+  static CanPlayStatus CanHandleContainerType(const MediaContainerType& aContainerType,
+                                              DecoderDoctorDiagnostics* aDiagnostics);
 
   // Returns true if we should handle this MIME type when it appears
   // as an <object> or as a toplevel page. If, in practice, our support
@@ -48,7 +48,7 @@ public:
 
   // Create a reader for thew given MIME type aType. Returns null
   // if we were unable to create the reader.
-  static MediaDecoderReader* CreateReader(const nsACString& aType,
+  static MediaDecoderReader* CreateReader(const MediaContainerType& aType,
                                           AbstractMediaDecoder* aDecoder);
 
   // Returns true if MIME type aType is supported in video documents,
@@ -56,10 +56,10 @@ public:
   // vice versa.
   static bool IsSupportedInVideoDocument(const nsACString& aType);
 
-  static bool IsWebMTypeAndEnabled(const nsACString& aType);
-  static bool IsWebMAudioType(const nsACString& aType);
-  static bool IsMP4TypeAndEnabled(const nsACString& aType,
-                                  DecoderDoctorDiagnostics* aDiagnostics);
+  // Convenience function that returns false if MOZ_FMP4 is not defined,
+  // otherwise defers to MP4Decoder::IsSupportedType().
+  static bool IsMP4SupportedType(const MediaContainerType& aType,
+                                 DecoderDoctorDiagnostics* aDiagnostics);
 };
 
 } // namespace mozilla

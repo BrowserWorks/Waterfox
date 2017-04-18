@@ -331,6 +331,15 @@ nsPrintEngine::GetSeqFrameAndCountPagesInternal(nsPrintObject*  aPO,
 {
   NS_ENSURE_ARG_POINTER(aPO);
 
+  // This is sometimes incorrectly called before the pres shell has been created
+  // (bug 1141756). MOZ_DIAGNOSTIC_ASSERT so we'll still see the crash in
+  // Nightly/Aurora in case the other patch fixes this.
+  if (!aPO->mPresShell) {
+    MOZ_DIAGNOSTIC_ASSERT(false,
+                          "GetSeqFrameAndCountPages needs a non-null pres shell");
+    return NS_ERROR_FAILURE;
+  }
+
   // Finds the SimplePageSequencer frame
   nsIPageSequenceFrame* seqFrame = aPO->mPresShell->GetPageSequenceFrame();
   aSeqFrame = do_QueryFrame(seqFrame);
@@ -980,6 +989,13 @@ nsPrintEngine::CheckForPrinters(nsIPrintSettings* aPrintSettings)
   // Mac doesn't support retrieving a printer list.
   return NS_OK;
 #else
+#if defined(MOZ_X11)
+  // On Linux, default printer name should be requested on the parent side.
+  // Unless we are in the parent, we ignore this function
+  if (!XRE_IsParentProcess()) {
+    return NS_OK;
+  }
+#endif
   NS_ENSURE_ARG_POINTER(aPrintSettings);
 
   // See if aPrintSettings already has a printer
@@ -1607,7 +1623,7 @@ nsPrintEngine::ReconstructAndReflow(bool doSetPixelScale)
       }
     }
 
-    po->mPresShell->FlushPendingNotifications(Flush_Layout);
+    po->mPresShell->FlushPendingNotifications(FlushType::Layout);
 
     nsresult rv = UpdateSelectionAndShrinkPrintObject(po, documentIsTopLevel);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -2185,7 +2201,7 @@ nsPrintEngine::ReflowPrintObject(nsPrintObject * aPO)
   NS_ASSERTION(aPO->mPresShell, "Presshell should still be here");
 
   // Process the reflow event Initialize posted
-  aPO->mPresShell->FlushPendingNotifications(Flush_Layout);
+  aPO->mPresShell->FlushPendingNotifications(FlushType::Layout);
 
   rv = UpdateSelectionAndShrinkPrintObject(aPO, documentIsTopLevel);
   NS_ENSURE_SUCCESS(rv, rv);

@@ -16,6 +16,13 @@
 
 namespace mozilla {
 
+class ServoCSSRuleList;
+
+namespace css {
+class Loader;
+class Rule;
+}
+
 /**
  * CSS style sheet object that is a wrapper for a Servo Stylesheet.
  */
@@ -27,14 +34,19 @@ public:
                   net::ReferrerPolicy aReferrerPolicy,
                   const dom::SRIMetadata& aIntegrity);
 
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServoStyleSheet, StyleSheet)
+
   bool HasRules() const;
 
-  void SetOwningDocument(nsIDocument* aDocument);
+  void SetAssociatedDocument(nsIDocument* aDocument,
+                             DocumentAssociationMode aAssociationMode);
 
   ServoStyleSheet* GetParentSheet() const;
   void AppendStyleSheet(ServoStyleSheet* aSheet);
 
-  MOZ_MUST_USE nsresult ParseSheet(const nsAString& aInput,
+  MOZ_MUST_USE nsresult ParseSheet(css::Loader* aLoader,
+                                   const nsAString& aInput,
                                    nsIURI* aSheetURI,
                                    nsIURI* aBaseURI,
                                    nsIPrincipal* aSheetPrincipal,
@@ -54,15 +66,16 @@ public:
 #endif
 
   RawServoStyleSheet* RawSheet() const { return mSheet; }
-
-  // WebIDL StyleSheet API
-  nsMediaList* Media() final;
+  void SetSheetForImport(RawServoStyleSheet* aSheet) {
+    MOZ_ASSERT(!mSheet);
+    mSheet = aSheet;
+  }
 
   // WebIDL CSSStyleSheet API
   // Can't be inline because we can't include ImportRule here.  And can't be
   // called GetOwnerRule because that would be ambiguous with the ImportRule
   // version.
-  nsIDOMCSSRule* GetDOMOwnerRule() const final;
+  css::Rule* GetDOMOwnerRule() const final;
 
   void WillDirty() {}
   void DidDirty() {}
@@ -76,10 +89,14 @@ protected:
                               uint32_t aIndex, ErrorResult& aRv);
   void DeleteRuleInternal(uint32_t aIndex, ErrorResult& aRv);
 
+  void EnabledStateChangedInternal() {}
+
 private:
   void DropSheet();
+  void DropRuleList();
 
   RefPtr<RawServoStyleSheet> mSheet;
+  RefPtr<ServoCSSRuleList> mRuleList;
   StyleSheetInfo mSheetInfo;
 
   friend class StyleSheet;

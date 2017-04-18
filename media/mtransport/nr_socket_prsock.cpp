@@ -212,10 +212,9 @@ public:
     nsrefcnt count = ++mUseCount;
     if (count == 1) {
       // idle -> in-use
-      nsresult rv = NS_NewThread(getter_AddRefs(mThread));
+      nsresult rv = NS_NewNamedThread(mName, getter_AddRefs(mThread));
       MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv) && mThread,
                          "Should successfully create mtransport I/O thread");
-      NS_SetThreadName(mThread, mName);
       r_log(LOG_GENERIC,LOG_DEBUG,"Created wrapped SingletonThread %p",
             mThread.get());
     }
@@ -648,6 +647,10 @@ int NrSocket::create(nr_transport_addr *addr) {
 #endif
       break;
     case IPPROTO_TCP:
+      // TODO: Add TLS layer with nsISocketProviderService?
+      if (my_addr_.tls_host[0] != '\0')
+        ABORT(R_INTERNAL);
+
       if (!(fd_ = PR_OpenTCPSocket(naddr.raw.family))) {
         r_log(LOG_GENERIC,LOG_CRIT,"Couldn't create TCP socket, "
               "family=%d, err=%d", naddr.raw.family, PR_GetError());
@@ -1879,7 +1882,8 @@ int NrTcpSocketIpc::connect(nr_transport_addr *addr) {
                              remote_addr,
                              static_cast<uint16_t>(remote_port),
                              local_addr,
-                             static_cast<uint16_t>(local_port)),
+                             static_cast<uint16_t>(local_port),
+                             nsCString(my_addr_.tls_host)),
                 NS_DISPATCH_NORMAL);
 
   // Make caller wait for ready to write.
@@ -1955,7 +1959,8 @@ int NrTcpSocketIpc::accept(nr_transport_addr *addrp, nr_socket **sockp) {
 void NrTcpSocketIpc::connect_i(const nsACString &remote_addr,
                                uint16_t remote_port,
                                const nsACString &local_addr,
-                               uint16_t local_port) {
+                               uint16_t local_port,
+                               const nsACString &tls_host) {
   ASSERT_ON_THREAD(io_thread_);
   mirror_state_ = NR_CONNECTING;
 
@@ -1964,11 +1969,21 @@ void NrTcpSocketIpc::connect_i(const nsACString &remote_addr,
 
   // Bug 1285330: put filtering back in here
 
-  // XXX remove remote!
-  socket_child_->SendWindowlessOpenBind(this,
-                                        remote_addr, remote_port,
-                                        local_addr, local_port,
-                                        /* use ssl */ false);
+  if (tls_host.IsEmpty()) {
+    // XXX remove remote!
+    socket_child_->SendWindowlessOpenBind(this,
+                                          remote_addr, remote_port,
+                                          local_addr, local_port,
+                                          /* use ssl */ false,
+                                          /* reuse addr port */ true);
+  } else {
+    // XXX remove remote!
+    socket_child_->SendWindowlessOpenBind(this,
+                                          tls_host, remote_port,
+                                          local_addr, local_port,
+                                          /* use ssl */ true,
+                                          /* reuse addr port */ true);
+  }
 }
 
 void NrTcpSocketIpc::write_i(nsAutoPtr<InfallibleTArray<uint8_t>> arr,

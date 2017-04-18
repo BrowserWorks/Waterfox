@@ -109,16 +109,17 @@ MOZ_MTLOG_MODULE("mtransport")
 
 const char kNrIceTransportUdp[] = "udp";
 const char kNrIceTransportTcp[] = "tcp";
+const char kNrIceTransportTls[] = "tls";
 
 static bool initialized = false;
 
 // Implement NSPR-based crypto algorithms
 static int nr_crypto_nss_random_bytes(UCHAR *buf, int len) {
-  ScopedPK11SlotInfo slot(PK11_GetInternalSlot());
+  UniquePK11SlotInfo slot(PK11_GetInternalSlot());
   if (!slot)
     return R_INTERNAL;
 
-  SECStatus rv = PK11_GenerateRandomOnSlot(slot, buf, len);
+  SECStatus rv = PK11_GenerateRandomOnSlot(slot.get(), buf, len);
   if (rv != SECSuccess)
     return R_INTERNAL;
 
@@ -211,6 +212,13 @@ nsresult NrIceStunServer::ToNicerStunStruct(nr_ice_stun_server *server) const {
     server->transport = IPPROTO_UDP;
   } else if (transport_ == kNrIceTransportTcp) {
     server->transport = IPPROTO_TCP;
+  } else if (transport_ == kNrIceTransportTls) {
+    server->transport = IPPROTO_TCP;
+    if (has_addr_) {
+      // Refuse to try TLS without an FQDN
+      return NS_ERROR_INVALID_ARG;
+    }
+    server->tls = 1;
   } else {
     MOZ_MTLOG(ML_ERROR, "Unsupported STUN server transport: " << transport_);
     return NS_ERROR_FAILURE;
@@ -587,6 +595,7 @@ NrIceCtx::Initialize(const std::string& ufrag,
   nsCString mapping_type;
   nsCString filtering_type;
   bool block_udp = false;
+  bool block_tcp = false;
 
   nsresult rv;
   nsCOMPtr<nsIPrefService> pref_service =
@@ -605,6 +614,9 @@ NrIceCtx::Initialize(const std::string& ufrag,
       rv = pref_branch->GetBoolPref(
           "media.peerconnection.nat_simulator.block_udp",
           &block_udp);
+      rv = pref_branch->GetBoolPref(
+          "media.peerconnection.nat_simulator.block_tcp",
+          &block_tcp);
     }
   }
 
@@ -615,6 +627,7 @@ NrIceCtx::Initialize(const std::string& ufrag,
     test_nat->filtering_type_ = TestNat::ToNatBehavior(filtering_type.get());
     test_nat->mapping_type_ = TestNat::ToNatBehavior(mapping_type.get());
     test_nat->block_udp_ = block_udp;
+    test_nat->block_tcp_ = block_tcp;
     test_nat->enabled_ = true;
     SetNat(test_nat);
   }
@@ -969,6 +982,16 @@ nsresult NrIceCtx::Finalize() {
   }
 
   return NS_OK;
+}
+
+void NrIceCtx::UpdateNetworkState(bool online) {
+  MOZ_MTLOG(ML_INFO, "NrIceCtx(" << name_ << "): updating network state to " <<
+            (online ? "online" : "offline"));
+  if (online) {
+    nr_ice_peer_ctx_refresh_consent_all_streams(peer_);
+  } else {
+    nr_ice_peer_ctx_disconnect_all_streams(peer_);
+  }
 }
 
 void NrIceCtx::SetConnectionState(ConnectionState state) {

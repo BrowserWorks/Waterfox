@@ -352,14 +352,23 @@ struct Zone : public JS::shadow::Zone,
     // can't be determined by examining this zone by itself.
     ZoneSet gcZoneGroupEdges;
 
+    // Zones with dead proxies require an extra scan through the wrapper map,
+    // so track whether any dead proxies are known to exist.
+    bool hasDeadProxies;
+
     // Keep track of all TypeDescr and related objects in this compartment.
     // This is used by the GC to trace them all first when compacting, since the
     // TypedObject trace hook may access these objects.
-    using TypeDescrObjectSet = js::GCHashSet<js::HeapPtr<JSObject*>,
-                                             js::MovableCellHasher<js::HeapPtr<JSObject*>>,
+    //
+    // There are no barriers here - the set contains only tenured objects so no
+    // post-barrier is required, and these are weak references so no pre-barrier
+    // is required.
+    using TypeDescrObjectSet = js::GCHashSet<JSObject*,
+                                             js::MovableCellHasher<JSObject*>,
                                              js::SystemAllocPolicy>;
     JS::WeakCache<TypeDescrObjectSet> typeDescrObjects;
 
+    bool addTypeDescrObject(JSContext* cx, HandleObject obj);
 
     // Malloc counter to measure memory pressure for GC scheduling. It runs from
     // gcMaxMallocBytes down to zero. This counter should be used only when it's
@@ -411,9 +420,6 @@ struct Zone : public JS::shadow::Zone,
     bool isSystem;
 
     mozilla::Atomic<bool> usedByExclusiveThread;
-
-    // True when there are active frames.
-    bool active;
 
 #ifdef DEBUG
     unsigned gcLastZoneGroupIndex;

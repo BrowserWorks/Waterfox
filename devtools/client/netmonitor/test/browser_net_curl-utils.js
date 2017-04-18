@@ -31,20 +31,25 @@ add_task(function* () {
     multipartForm: RequestsMenu.getItemAtIndex(3)
   };
 
-  let data = yield createCurlData(requests.get.attachment, gNetwork);
+  let data = yield createCurlData(requests.get, gNetwork);
   testFindHeader(data);
 
-  data = yield createCurlData(requests.post.attachment, gNetwork);
+  data = yield createCurlData(requests.post, gNetwork);
   testIsUrlEncodedRequest(data);
   testWritePostDataTextParams(data);
 
-  data = yield createCurlData(requests.multipart.attachment, gNetwork);
+  data = yield createCurlData(requests.multipart, gNetwork);
   testIsMultipartRequest(data);
   testGetMultipartBoundary(data);
+  testMultiPartHeaders(data);
   testRemoveBinaryDataFromMultipartText(data);
 
-  data = yield createCurlData(requests.multipartForm.attachment, gNetwork);
-  testGetHeadersFromMultipartText(data);
+  data = yield createCurlData(requests.multipartForm, gNetwork);
+  testMultiPartHeaders(data);
+
+  testGetHeadersFromMultipartText({
+    postDataText: "Content-Type: text/plain\r\n\r\n",
+  });
 
   if (Services.appinfo.OS != "WINNT") {
     testEscapeStringPosix();
@@ -77,6 +82,14 @@ function testFindHeader(data) {
     "The search should be case insensitive.");
   is(doesNotExist, null,
     "Should return null when a header is not found.");
+}
+
+function testMultiPartHeaders(data) {
+  let headers = data.headers;
+  let contentType = CurlUtils.findHeader(headers, "Content-Type");
+
+  ok(contentType.startsWith("multipart/form-data; boundary="),
+     "Multi-part content type header is present in headers array");
 }
 
 function testWritePostDataTextParams(data) {

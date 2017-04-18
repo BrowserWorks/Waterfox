@@ -4,7 +4,7 @@ const ROOT = getRootDirectory(gTestPath).replace("chrome://mochitests/content/",
 let pageWithAlert = ROOT + "openPromptOffTimeout.html";
 
 registerCleanupFunction(function() {
-  Services.perms.removeAll(makeURI(pageWithAlert));
+  Services.perms.removeAll();
 });
 
 /*
@@ -15,7 +15,6 @@ registerCleanupFunction(function() {
  * checking the checkbox does actually enable that behaviour.
  */
 add_task(function*() {
-  yield SpecialPowers.pushPrefEnv({"set": [["browser.tabs.dontfocusfordialogs", true]]});
   let firstTab = gBrowser.selectedTab;
   // load page that opens prompt when page is hidden
   let openedTab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, pageWithAlert, true);

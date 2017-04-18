@@ -24,6 +24,7 @@
 #include "nsComponentManagerUtils.h"
 #include "nsRefPtrHashtable.h"
 
+#include "ipc/IPCMessageUtils.h"
 #include "VideoUtils.h"
 #include "MediaEngineCameraVideoSource.h"
 #include "VideoSegment.h"
@@ -36,6 +37,8 @@
 
 #include "MediaEngineWrapper.h"
 #include "mozilla/dom/MediaStreamTrackBinding.h"
+#include "CamerasChild.h"
+
 // WebRTC library includes follow
 #include "webrtc/common.h"
 // Audio Engine
@@ -52,11 +55,9 @@
 // Video Engine
 // conflicts with #include of scoped_ptr.h
 #undef FF
-#include "webrtc/video_engine/include/vie_base.h"
-#include "webrtc/video_engine/include/vie_codec.h"
-#include "webrtc/video_engine/include/vie_render.h"
-#include "webrtc/video_engine/include/vie_capture.h"
-#include "CamerasChild.h"
+
+// WebRTC imports
+#include "webrtc/modules/video_capture/video_capture_defines.h"
 
 #include "NullTransport.h"
 #include "AudioOutputObserver.h"
@@ -77,7 +78,7 @@ public:
   nsresult Allocate(const dom::MediaTrackConstraints& aConstraints,
                     const MediaEnginePrefs& aPrefs,
                     const nsString& aDeviceId,
-                    const nsACString& aOrigin,
+                    const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
                     AllocationHandle** aOutHandle,
                     const char** aOutBadConstraint) override
   {
@@ -191,8 +192,13 @@ public:
 
   int GetNumOfRecordingDevices(int& aDevices)
   {
+#ifdef MOZ_WIDGET_ANDROID
+    // OpenSL ES does not support enumerate device.
+    aDevices = 1;
+#else
     UpdateDeviceList();
     aDevices = mDeviceIndexes->Length();
+#endif
     return 0;
   }
 
@@ -222,17 +228,26 @@ public:
   {
     // Assert sMutex is held
     sMutex.AssertCurrentThreadOwns();
+#ifdef MOZ_WIDGET_ANDROID
+    aID = nullptr;
+    return true;
+#else
     int dev_index = DeviceIndex(aDeviceIndex);
     if (dev_index != -1) {
       aID = mDevices->device[dev_index]->devid;
       return true;
     }
     return false;
+#endif
   }
 
   int GetRecordingDeviceName(int aIndex, char aStrNameUTF8[128],
                              char aStrGuidUTF8[128])
   {
+#ifdef MOZ_WIDGET_ANDROID
+    aStrNameUTF8[0] = '\0';
+    aStrGuidUTF8[0] = '\0';
+#else
     int32_t devindex = DeviceIndex(aIndex);
     if (!mDevices || devindex < 0) {
       return 1;
@@ -240,6 +255,7 @@ public:
     PR_snprintf(aStrNameUTF8, 128, "%s%s", aIndex == -1 ? "default: " : "",
                 mDevices->device[devindex]->friendly_name);
     aStrGuidUTF8[0] = '\0';
+#endif
     return 0;
   }
 
@@ -253,13 +269,18 @@ public:
 
   void StartRecording(SourceMediaStream *aStream, AudioDataListener *aListener)
   {
+#ifdef MOZ_WIDGET_ANDROID
+    // OpenSL ES does not support enumerating devices.
+    MOZ_ASSERT(!mDevices);
+#else
     MOZ_ASSERT(mDevices);
+#endif
 
     if (mInUseCount == 0) {
-      ScopedCustomReleasePtr<webrtc::VoEExternalMedia> ptrVoERender;
-      ptrVoERender = webrtc::VoEExternalMedia::GetInterface(mVoiceEngine);
-      if (ptrVoERender) {
-        ptrVoERender->SetExternalRecordingStatus(true);
+      ScopedCustomReleasePtr<webrtc::VoEExternalMedia> ptrVoEXMedia;
+      ptrVoEXMedia = webrtc::VoEExternalMedia::GetInterface(mVoiceEngine);
+      if (ptrVoEXMedia) {
+        ptrVoEXMedia->SetExternalRecordingStatus(true);
       }
       mAnyInUse = true;
     }
@@ -475,9 +496,9 @@ public:
       const nsString& aDeviceId) const override;
 
   // VoEMediaProcess.
-  void Process(int channel, webrtc::ProcessingTypes type,
-               int16_t audio10ms[], int length,
-               int samplingFreq, bool isStereo) override;
+  virtual void Process(int channel, webrtc::ProcessingTypes type,
+                       int16_t audio10ms[], size_t length,
+                       int samplingFreq, bool isStereo) override;
 
   void Shutdown() override;
 

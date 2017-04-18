@@ -23,20 +23,18 @@ public:
   BufferMediaResource(const uint8_t* aBuffer,
                       uint32_t aLength,
                       nsIPrincipal* aPrincipal,
-                      const nsACString& aContentType) :
+                      const MediaContainerType& aContainerType) :
     mBuffer(aBuffer),
     mLength(aLength),
     mOffset(0),
     mPrincipal(aPrincipal),
-    mContentType(aContentType)
+    mContainerType(aContainerType)
   {
-    MOZ_COUNT_CTOR(BufferMediaResource);
   }
 
 protected:
   virtual ~BufferMediaResource()
   {
-    MOZ_COUNT_DTOR(BufferMediaResource);
   }
 
 private:
@@ -107,9 +105,9 @@ private:
 
   bool IsTransportSeekable() override { return true; }
 
-  const nsCString& GetContentType() const override
+  const MediaContainerType& GetContentType() const override
   {
-    return mContentType;
+    return mContainerType;
   }
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
@@ -118,7 +116,7 @@ private:
     // - mBuffer
     // - mPrincipal
     size_t size = MediaResource::SizeOfExcludingThis(aMallocSizeOf);
-    size += mContentType.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+    size += mContainerType.SizeOfExcludingThis(aMallocSizeOf);
 
     return size;
   }
@@ -133,7 +131,7 @@ private:
   uint32_t mLength;
   uint32_t mOffset;
   nsCOMPtr<nsIPrincipal> mPrincipal;
-  const nsCString mContentType;
+  const MediaContainerType mContainerType;
 };
 
 } // namespace mozilla

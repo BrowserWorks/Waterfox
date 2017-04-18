@@ -11,14 +11,6 @@
 
 namespace XPCNativeWrapper {
 
-// Given an XPCWrappedNative pointer and the name of the function on
-// XPCNativeScriptableFlags corresponding with a flag, returns 'true'
-// if the flag is set.
-// XXX Convert to using GetFlags() and not a macro.
-#define NATIVE_HAS_FLAG(_wn, _flag)                                           \
-  ((_wn)->GetScriptableInfo() &&                                              \
-   (_wn)->GetScriptableInfo()->GetFlags()._flag())
-
 bool
 AttachNewConstructorObject(JSContext* aCx, JS::HandleObject aGlobalObject);
 

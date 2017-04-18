@@ -509,7 +509,7 @@ class Build(MachCommandBase):
             # to avoid accidentally disclosing PII.
             telemetry_data['substs'] = {}
             try:
-                for key in ['MOZ_ARTIFACT_BUILDS', 'MOZ_USING_CCACHE']:
+                for key in ['MOZ_ARTIFACT_BUILDS', 'MOZ_USING_CCACHE', 'MOZ_USING_SCCACHE']:
                     value = self.substs.get(key, False)
                     telemetry_data['substs'][key] = value
             except BuildEnvironmentNotFoundException:
@@ -1111,6 +1111,8 @@ class RunProgram(MachCommandBase):
         help='Do not pass the --profile argument by default.')
     @CommandArgument('--disable-e10s', action='store_true', group=prog_group,
         help='Run the program with electrolysis disabled.')
+    @CommandArgument('--enable-crash-reporter', action='store_true', group=prog_group,
+        help='Run the program with the crash reporter enabled.')
 
     @CommandArgumentGroup('debugging')
     @CommandArgument('--debug', action='store_true', group='debugging',
@@ -1120,13 +1122,6 @@ class RunProgram(MachCommandBase):
     @CommandArgument('--debugparams', default=None, metavar='params', type=str,
         group='debugging',
         help='Command-line arguments to pass to the debugger itself; split as the Bourne shell would.')
-    # Bug 933807 introduced JS_DISABLE_SLOW_SCRIPT_SIGNALS to avoid clever
-    # segfaults induced by the slow-script-detecting logic for Ion/Odin JITted
-    # code.  If we don't pass this, the user will need to periodically type
-    # "continue" to (safely) resume execution.  There are ways to implement
-    # automatic resuming; see the bug.
-    @CommandArgument('--slowscript', action='store_true', group='debugging',
-        help='Do not set the JS_DISABLE_SLOW_SCRIPT_SIGNALS env variable; when not set, recoverable but misleading SIGSEGV instances may occur in Ion/Odin JIT code.')
 
     @CommandArgumentGroup('DMD')
     @CommandArgument('--dmd', action='store_true', group='DMD',
@@ -1137,8 +1132,9 @@ class RunProgram(MachCommandBase):
         help='Allocation stack trace coverage. The default is \'partial\'.')
     @CommandArgument('--show-dump-stats', action='store_true', group='DMD',
         help='Show stats when doing dumps.')
-    def run(self, params, remote, background, noprofile, disable_e10s, debug,
-        debugger, debugparams, slowscript, dmd, mode, stacks, show_dump_stats):
+    def run(self, params, remote, background, noprofile, disable_e10s,
+        enable_crash_reporter, debug, debugger, debugparams,
+        dmd, mode, stacks, show_dump_stats):
 
         if conditions.is_android(self):
             # Running Firefox for Android is completely different
@@ -1182,7 +1178,11 @@ class RunProgram(MachCommandBase):
                 args.append('-profile')
                 args.append(path)
 
-        extra_env = {'MOZ_CRASHREPORTER_DISABLE': '1'}
+        extra_env = {}
+
+        if not enable_crash_reporter:
+            extra_env['MOZ_CRASHREPORTER_DISABLE'] = '1'
+
         if disable_e10s:
             extra_env['MOZ_FORCE_DISABLE_E10S'] = '1'
 
@@ -1212,9 +1212,6 @@ class RunProgram(MachCommandBase):
                     print("The --debugparams you passed require a real shell to parse them.")
                     print("(We can't handle the %r character.)" % e.char)
                     return 1
-
-            if not slowscript:
-                extra_env['JS_DISABLE_SLOW_SCRIPT_SIGNALS'] = '1'
 
             # Prepend the debugger args.
             args = [self.debuggerInfo.path] + self.debuggerInfo.args + args

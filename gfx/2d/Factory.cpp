@@ -32,6 +32,7 @@
 
 #ifdef MOZ_WIDGET_GTK
 #include "ScaledFontFontconfig.h"
+#include "NativeFontResourceFontconfig.h"
 #endif
 
 #ifdef WIN32
@@ -40,6 +41,7 @@
 #include "NativeFontResourceDWrite.h"
 #include <d3d10_1.h>
 #include "HelpersD2D.h"
+#include "HelpersWinFonts.h"
 #endif
 
 #include "DrawTargetDual.h"
@@ -156,9 +158,14 @@ namespace gfx {
 // In Gecko, this value is managed by gfx.logging.level in gfxPrefs.
 int32_t LoggingPrefs::sGfxLogLevel = LOG_DEFAULT;
 
+#ifdef MOZ_ENABLE_FREETYPE
+FT_Library Factory::mFTLibrary = nullptr;
+#endif
+
 #ifdef WIN32
-ID3D11Device *Factory::mD3D11Device;
-ID2D1Device *Factory::mD2D1Device;
+ID3D11Device *Factory::mD3D11Device = nullptr;
+ID2D1Device *Factory::mD2D1Device = nullptr;
+IDWriteFactory *Factory::mDWriteFactory = nullptr;
 #endif
 
 DrawEventRecorder *Factory::mRecorder;
@@ -191,6 +198,12 @@ Factory::ShutDown()
     delete sConfig;
     sConfig = nullptr;
   }
+
+#ifdef MOZ_ENABLE_FREETYPE
+  if (mFTLibrary) {
+    mFTLibrary = nullptr;
+  }
+#endif
 }
 
 bool
@@ -254,7 +267,6 @@ Factory::CheckSurfaceSize(const IntSize &sz,
                           int32_t allocLimit)
 {
   if (sz.width <= 0 || sz.height <= 0) {
-    gfxDebug() << "Surface width or height <= 0!";
     return false;
   }
 
@@ -263,15 +275,6 @@ Factory::CheckSurfaceSize(const IntSize &sz,
     gfxDebug() << "Surface size too large (exceeds extent limit)!";
     return false;
   }
-
-#if defined(XP_MACOSX)
-  // CoreGraphics is limited to images < 32K in *height*,
-  // so clamp all surfaces on the Mac to that height
-  if (sz.height > SHRT_MAX) {
-    gfxDebug() << "Surface size too large (exceeds CoreGraphics limit)!";
-    return false;
-  }
-#endif
 
   // assuming 4 bytes per pixel, make sure the allocation size
   // doesn't overflow a int32_t either
@@ -500,6 +503,8 @@ Factory::CreateScaledFontForNativeFont(const NativeFont &aNativeFont, Float aSiz
 
 already_AddRefed<NativeFontResource>
 Factory::CreateNativeFontResource(uint8_t *aData, uint32_t aSize,
+                                  uint32_t aVariationCount,
+                                  const ScaledFont::VariationSetting* aVariations,
                                   FontType aType)
 {
   switch (aType) {
@@ -516,15 +521,18 @@ Factory::CreateNativeFontResource(uint8_t *aData, uint32_t aSize,
 #endif
     {
 #ifdef WIN32
-      if (GetDirect3D11Device()) {
+      if (GetDWriteFactory()) {
         return NativeFontResourceDWrite::Create(aData, aSize,
                                                 /* aNeedsCairo = */ true);
       } else {
         return NativeFontResourceGDI::Create(aData, aSize,
                                              /* aNeedsCairo = */ true);
       }
-#elif XP_DARWIN
-      return NativeFontResourceMac::Create(aData, aSize);
+#elif defined(XP_DARWIN)
+      return NativeFontResourceMac::Create(aData, aSize,
+                                           aVariationCount, aVariations);
+#elif defined(MOZ_WIDGET_GTK)
+      return NativeFontResourceFontconfig::Create(aData, aSize);
 #else
       gfxWarning() << "Unable to create cairo scaled font from truetype data";
       return nullptr;
@@ -532,6 +540,24 @@ Factory::CreateNativeFontResource(uint8_t *aData, uint32_t aSize,
     }
   default:
     gfxWarning() << "Unable to create requested font resource from truetype data";
+    return nullptr;
+  }
+}
+
+already_AddRefed<ScaledFont>
+Factory::CreateScaledFontFromFontDescriptor(FontType aType, const uint8_t* aData, uint32_t aDataLength, Float aSize)
+{
+  switch (aType) {
+#ifdef WIN32
+  case FontType::GDI:
+    return ScaledFontWin::CreateFromFontDescriptor(aData, aDataLength, aSize);
+#endif
+#ifdef MOZ_WIDGET_GTK
+  case FontType::FONTCONFIG:
+    return ScaledFontFontconfig::CreateFromFontDescriptor(aData, aDataLength, aSize);
+#endif
+  default:
+    gfxWarning() << "Invalid type specified for ScaledFont font descriptor";
     return nullptr;
   }
 }
@@ -578,6 +604,21 @@ Factory::CreateDualDrawTarget(DrawTarget *targetA, DrawTarget *targetB)
 }
 
 
+#ifdef MOZ_ENABLE_FREETYPE
+void
+Factory::SetFTLibrary(FT_Library aFTLibrary)
+{
+  mFTLibrary = aFTLibrary;
+}
+
+FT_Library
+Factory::GetFTLibrary()
+{
+  MOZ_ASSERT(mFTLibrary);
+  return mFTLibrary;
+}
+#endif
+
 #ifdef WIN32
 already_AddRefed<DrawTarget>
 Factory::CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat)
@@ -601,6 +642,13 @@ Factory::CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceForma
 
   // Failed
   return nullptr;
+}
+
+bool
+Factory::SetDWriteFactory(IDWriteFactory *aFactory)
+{
+  mDWriteFactory = aFactory;
+  return true;
 }
 
 bool
@@ -644,6 +692,12 @@ Factory::GetD2D1Device()
   return mD2D1Device;
 }
 
+IDWriteFactory*
+Factory::GetDWriteFactory()
+{
+  return mDWriteFactory;
+}
+
 bool
 Factory::SupportsD2D1()
 {
@@ -654,6 +708,15 @@ already_AddRefed<GlyphRenderingOptions>
 Factory::CreateDWriteGlyphRenderingOptions(IDWriteRenderingParams *aParams)
 {
   return MakeAndAddRef<GlyphRenderingOptionsDWrite>(aParams);
+}
+
+BYTE sSystemTextQuality = CLEARTYPE_QUALITY;
+void
+Factory::UpdateSystemTextQuality()
+{
+#ifdef WIN32
+  gfx::UpdateSystemTextQuality();
+#endif
 }
 
 uint64_t

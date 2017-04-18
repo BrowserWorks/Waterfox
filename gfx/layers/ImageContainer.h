@@ -15,7 +15,6 @@
 #include "mozilla/ReentrantMonitor.h"   // for ReentrantMonitorAutoEnter, etc
 #include "mozilla/TimeStamp.h"          // for TimeStamp
 #include "mozilla/gfx/Point.h"          // For IntSize
-#include "mozilla/layers/GonkNativeHandle.h"
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend, etc
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/mozalloc.h"           // for operator delete, etc
@@ -146,6 +145,7 @@ namespace layers {
 
 class ImageClient;
 class ImageCompositeNotification;
+class ImageContainer;
 class ImageContainerChild;
 class PImageContainerChild;
 class SharedPlanarYCbCrImage;
@@ -324,6 +324,24 @@ protected:
     const gfx::IntSize& aScaleHint,
     BufferRecycleBin *aRecycleBin);
 };
+
+// Used to notify ImageContainer::NotifyComposite()
+class ImageContainerListener final {
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ImageContainerListener)
+
+public:
+  explicit ImageContainerListener(ImageContainer* aImageContainer);
+
+  void NotifyComposite(const ImageCompositeNotification& aNotification);
+  void ClearImageContainer();
+private:
+  typedef mozilla::Mutex Mutex;
+
+  ~ImageContainerListener();
+
+  Mutex mLock;
+  ImageContainer* mImageContainer;
+};
  
 /**
  * A class that manages Images for an ImageLayer. The only reason
@@ -367,7 +385,7 @@ public:
    * async container ID.
    * @param aAsyncContainerID async container ID for which we are a proxy
    */
-  explicit ImageContainer(uint64_t aAsyncContainerID);
+  explicit ImageContainer(const CompositableHandle& aHandle);
 
   typedef uint32_t FrameID;
   typedef uint32_t ProducerID;
@@ -468,7 +486,7 @@ public:
    *
    * Can be called from any thread.
    */
-  uint64_t GetAsyncContainerID();
+  CompositableHandle GetAsyncContainerHandle();
 
   /**
    * Returns if the container currently has an image.
@@ -563,7 +581,14 @@ public:
     return mDroppedImageCount;
   }
 
+  void NotifyComposite(const ImageCompositeNotification& aNotification);
+
   PImageContainerChild* GetPImageContainerChild();
+
+  ImageContainerListener* GetImageContainerListener()
+  {
+    return mNotifyCompositeListener;
+  }
 
   /**
    * Main thread only.
@@ -584,9 +609,7 @@ private:
   // calling this function!
   void EnsureActiveImage();
 
-  void EnsureImageClient(bool aCreate);
-
-  void NotifyCompositeInternal(const ImageCompositeNotification& aNotification);
+  void EnsureImageClient();
 
   // ReentrantMonitor to protect thread safe access to the "current
   // image", and any other state which is shared between threads.
@@ -626,16 +649,15 @@ private:
   // asynchronusly using the ImageBridge IPDL protocol.
   RefPtr<ImageClient> mImageClient;
 
-  uint64_t mAsyncContainerID;
+  bool mIsAsync;
+  CompositableHandle mAsyncContainerHandle;
 
   nsTArray<FrameID> mFrameIDsNotYetComposited;
   // ProducerID for last current image(s), including the frames in
   // mFrameIDsNotYetComposited
   ProducerID mCurrentProducerID;
 
-  // Object must be released on the ImageBridge thread. Field is immutable
-  // after creation of the ImageContainer.
-  RefPtr<ImageContainerChild> mIPDLChild;
+  RefPtr<ImageContainerListener> mNotifyCompositeListener;
 
   static mozilla::Atomic<uint32_t> sGenerationCounter;
 };

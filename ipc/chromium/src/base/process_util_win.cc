@@ -19,9 +19,6 @@
 #include "base/win_util.h"
 
 #include <algorithm>
-#include "prenv.h"
-
-#include "mozilla/WindowsVersion.h"
 
 namespace {
 
@@ -239,7 +236,7 @@ LPPROC_THREAD_ATTRIBUTE_LIST CreateThreadAttributeList(HANDLE *handlesToInherit,
     return NULL;
 
   SIZE_T threadAttrSize;
-  LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList;
+  LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList = NULL;
 
   if (!(*InitializeProcThreadAttributeListPtr)(NULL, 1, 0, &threadAttrSize) &&
       GetLastError() != ERROR_INSUFFICIENT_BUFFER)
@@ -280,13 +277,11 @@ bool LaunchApp(const std::wstring& cmdline,
   // We want to inherit the std handles so dump() statements and assertion
   // messages in the child process can be seen - but we *do not* want to
   // blindly have all handles inherited.  Vista and later has a technique
-  // where only specified handles are inherited - so we use this technique if
-  // we can.  If that technique isn't available (or it fails), we just don't
-  // inherit anything.  This can cause us a problem for Windows XP testing,
-  // because we sometimes need the handles to get inherited for test logging to
-  // work. So we also inherit when a specific environment variable is set.
+  // where only specified handles are inherited - so we use this technique.
+  // If that fails we just don't inherit anything.
   DWORD dwCreationFlags = 0;
   BOOL bInheritHandles = FALSE;
+
   // We use a STARTUPINFOEX, but if we can't do the thread attribute thing, we
   // just pass the size of a STARTUPINFO.
   STARTUPINFOEX startup_info_ex;
@@ -296,43 +291,35 @@ bool LaunchApp(const std::wstring& cmdline,
   startup_info.dwFlags = STARTF_USESHOWWINDOW;
   startup_info.wShowWindow = start_hidden ? SW_HIDE : SW_SHOW;
 
+  // Per the comment in CreateThreadAttributeList, lpAttributeList will contain
+  // a pointer to handlesToInherit, so make sure they have the same lifetime.
   LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList = NULL;
-  // Don't even bother trying pre-Vista...
-  if (mozilla::IsVistaOrLater()) {
-    // setup our handle array first - if we end up with no handles that can
-    // be inherited we can avoid trying to do the ThreadAttributeList dance...
-    HANDLE handlesToInherit[2];
-    int handleCount = 0;
-    HANDLE stdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
-    HANDLE stdErr = ::GetStdHandle(STD_ERROR_HANDLE);
+  HANDLE handlesToInherit[2];
+  int handleCount = 0;
 
-    if (IsInheritableHandle(stdOut))
-      handlesToInherit[handleCount++] = stdOut;
-    if (stdErr != stdOut && IsInheritableHandle(stdErr))
-      handlesToInherit[handleCount++] = stdErr;
+  // setup our handle array first - if we end up with no handles that can
+  // be inherited we can avoid trying to do the ThreadAttributeList dance...
+  HANDLE stdOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+  HANDLE stdErr = ::GetStdHandle(STD_ERROR_HANDLE);
 
-    if (handleCount) {
-      lpAttributeList = CreateThreadAttributeList(handlesToInherit, handleCount);
-      if (lpAttributeList) {
-        // it's safe to inherit handles, so arrange for that...
-        startup_info.cb = sizeof(startup_info_ex);
-        startup_info.dwFlags |= STARTF_USESTDHANDLES;
-        startup_info.hStdOutput = stdOut;
-        startup_info.hStdError = stdErr;
-        startup_info.hStdInput = INVALID_HANDLE_VALUE;
-        startup_info_ex.lpAttributeList = lpAttributeList;
-        dwCreationFlags |= EXTENDED_STARTUPINFO_PRESENT;
-        bInheritHandles = TRUE;
-      }
+  if (IsInheritableHandle(stdOut))
+    handlesToInherit[handleCount++] = stdOut;
+  if (stdErr != stdOut && IsInheritableHandle(stdErr))
+    handlesToInherit[handleCount++] = stdErr;
+
+  if (handleCount) {
+    lpAttributeList = CreateThreadAttributeList(handlesToInherit, handleCount);
+    if (lpAttributeList) {
+      // it's safe to inherit handles, so arrange for that...
+      startup_info.cb = sizeof(startup_info_ex);
+      startup_info.dwFlags |= STARTF_USESTDHANDLES;
+      startup_info.hStdOutput = stdOut;
+      startup_info.hStdError = stdErr;
+      startup_info.hStdInput = INVALID_HANDLE_VALUE;
+      startup_info_ex.lpAttributeList = lpAttributeList;
+      dwCreationFlags |= EXTENDED_STARTUPINFO_PRESENT;
+      bInheritHandles = TRUE;
     }
-  } else if (PR_GetEnv("MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA")) {
-    // Even if we can't limit what gets inherited, we sometimes want to inherit
-    // stdout/err for testing purposes.
-    startup_info.dwFlags |= STARTF_USESTDHANDLES;
-    startup_info.hStdOutput = ::GetStdHandle(STD_OUTPUT_HANDLE);
-    startup_info.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
-    startup_info.hStdInput = INVALID_HANDLE_VALUE;
-    bInheritHandles = TRUE;
   }
 
   PROCESS_INFORMATION process_info;

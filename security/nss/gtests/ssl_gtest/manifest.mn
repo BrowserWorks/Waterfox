@@ -24,7 +24,9 @@ CPPSRCS = \
       ssl_ems_unittest.cc \
       ssl_exporter_unittest.cc \
       ssl_extension_unittest.cc \
+      ssl_fragment_unittest.cc \
       ssl_fuzz_unittest.cc \
+      ssl_gather_unittest.cc \
       ssl_gtest.cc \
       ssl_hrr_unittest.cc \
       ssl_loopback_unittest.cc \
@@ -40,6 +42,7 @@ CPPSRCS = \
       tls_hkdf_unittest.cc \
       tls_filter.cc \
       tls_parser.cc \
+      tls_protect.cc \
       $(NULL)
 
 INCLUDES += -I$(CORE_DEPTH)/gtests/google_test/gtest/include \

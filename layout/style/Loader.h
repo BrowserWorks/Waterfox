@@ -285,15 +285,19 @@ public:
    * @param aParentSheet the parent of this child sheet
    * @param aURL the URL of the child sheet
    * @param aMedia the already-parsed media list for the child sheet
-   * @param aRule the @import rule importing this child.  This is used to
-   *              properly order the child sheet list of aParentSheet.
+   * @param aGeckoParentRule the @import rule importing this child, when using
+   *                         Gecko's style system. This is used to properly
+   *                         order the child sheet list of aParentSheet.
+   * @param aServoParentRule the @import rule importing this child, when using
+   *                         Servo's style system.
    * @param aSavedSheets any saved style sheets which could be reused
    *              for this load
    */
   nsresult LoadChildSheet(StyleSheet* aParentSheet,
                           nsIURI* aURL,
                           nsMediaList* aMedia,
-                          ImportRule* aRule,
+                          ImportRule* aGeckoParentRule,
+                          const RawServoImportRule* aServoParentRule,
                           LoaderReusableStyleSheets* aSavedSheets);
 
   /**
@@ -368,7 +372,7 @@ public:
                      const nsCString& aCharset,
                      nsICSSLoaderObserver* aObserver,
                      CORSMode aCORSMode = CORS_NONE,
-                     ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default,
+                     ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Unset,
                      const nsAString& aIntegrity = EmptyString());
 
   /**
@@ -470,13 +474,13 @@ private:
 
   // Pass in either a media string or the nsMediaList from the
   // CSSParser.  Don't pass both.
-  // This method will set the sheet's enabled state based on isAlternate
+  // This method will set the sheet's enabled state based on aIsAlternate
   void PrepareSheet(StyleSheet* aSheet,
                     const nsAString& aTitle,
                     const nsAString& aMediaString,
                     nsMediaList* aMediaList,
                     dom::Element* aScopeElement,
-                    bool isAlternate);
+                    bool aIsAlternate);
 
   nsresult InsertSheetInDoc(StyleSheet* aSheet,
                             nsIContent* aLinkingContent,
@@ -484,7 +488,8 @@ private:
 
   nsresult InsertChildSheet(StyleSheet* aSheet,
                             StyleSheet* aParentSheet,
-                            ImportRule* aParentRule);
+                            ImportRule* aGeckoParentRule,
+                            const RawServoImportRule* aServoParentRule);
 
   nsresult InternalLoadNonDocumentSheet(nsIURI* aURL,
                                         bool aIsPreload,
@@ -495,7 +500,7 @@ private:
                                         RefPtr<StyleSheet>* aSheet,
                                         nsICSSLoaderObserver* aObserver,
                                         CORSMode aCORSMode = CORS_NONE,
-                                        ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default,
+                                        ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Unset,
                                         const nsAString& aIntegrity = EmptyString());
 
   // Post a load event for aObserver to be notified about aSheet.  The

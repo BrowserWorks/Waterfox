@@ -15,18 +15,15 @@ function createTemporarySaveDirectory() {
 function promiseNoCacheEntry(filename) {
   return new Promise((resolve, reject) => {
     Visitor.prototype = {
-      onCacheStorageInfo: function(num, consumption)
-      {
+      onCacheStorageInfo(num, consumption) {
         info("disk storage contains " + num + " entries");
       },
-      onCacheEntryInfo: function(uri)
-      {
+      onCacheEntryInfo(uri) {
         let urispec = uri.asciiSpec;
         info(urispec);
         is(urispec.includes(filename), false, "web content present in disk cache");
       },
-      onCacheEntryVisitCompleted: function()
-      {
+      onCacheEntryVisitCompleted() {
         resolve();
       }
     };
@@ -60,7 +57,7 @@ function promiseImageDownloaded() {
     MockFilePicker.displayDirectory = destDir;
     MockFilePicker.showCallback = function(fp) {
       fileName = fp.defaultString;
-      destFile.append (fileName);
+      destFile.append(fileName);
       MockFilePicker.returnFiles = [destFile];
       MockFilePicker.filterIndex = 1; // kSaveAsType_URL
     };
@@ -68,7 +65,7 @@ function promiseImageDownloaded() {
     mockTransferCallback = onTransferComplete;
     mockTransferRegisterer.register();
 
-    registerCleanupFunction(function () {
+    registerCleanupFunction(function() {
       mockTransferCallback = null;
       mockTransferRegisterer.unregister();
       MockFilePicker.cleanup();
@@ -110,6 +107,7 @@ add_task(function* () {
   yield BrowserTestUtils.closeWindow(privateWindow);
 });
 
+/* import-globals-from ../../../../../toolkit/content/tests/browser/common/mockTransfer.js */
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://mochitests/content/browser/toolkit/content/tests/browser/common/mockTransfer.js",

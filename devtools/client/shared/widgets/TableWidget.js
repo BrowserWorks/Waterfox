@@ -116,8 +116,8 @@ function TableWidget(node, options = {}) {
   this.onMousedown = this.onMousedown.bind(this);
   this.onRowRemoved = this.onRowRemoved.bind(this);
 
-  this.document.addEventListener("keydown", this.onKeydown, false);
-  this.document.addEventListener("mousedown", this.onMousedown, false);
+  this.document.addEventListener("keydown", this.onKeydown);
+  this.document.addEventListener("mousedown", this.onMousedown);
 }
 
 TableWidget.prototype = {
@@ -569,8 +569,8 @@ TableWidget.prototype = {
     this.off(EVENTS.ROW_SELECTED, this.bindSelectedRow);
     this.off(EVENTS.ROW_REMOVED, this.onRowRemoved);
 
-    this.document.removeEventListener("keydown", this.onKeydown, false);
-    this.document.removeEventListener("mousedown", this.onMousedown, false);
+    this.document.removeEventListener("keydown", this.onKeydown);
+    this.document.removeEventListener("mousedown", this.onMousedown);
 
     if (this._editableFieldsEngine) {
       this.off(EVENTS.TABLE_CLEARED, this._editableFieldsEngine.cancelEdit);
@@ -615,8 +615,13 @@ TableWidget.prototype = {
   /**
    * Populates the header context menu with the names of the columns along with
    * displaying which columns are hidden or visible.
+   *
+   * @param {Array} privateColumns=[]
+   *        An array of column names that should never appear in the table. This
+   *        allows us to e.g. have an invisible compound primary key for a
+   *        table's rows.
    */
-  populateMenuPopup: function () {
+  populateMenuPopup: function (privateColumns = []) {
     if (!this.menupopup) {
       return;
     }
@@ -626,6 +631,10 @@ TableWidget.prototype = {
     }
 
     for (let column of this.columns.values()) {
+      if (privateColumns.includes(column.id)) {
+        continue;
+      }
+
       let menuitem = this.document.createElementNS(XUL_NS, "menuitem");
       menuitem.setAttribute("label", column.header.getAttribute("value"));
       menuitem.setAttribute("data-id", column.id);
@@ -663,16 +672,21 @@ TableWidget.prototype = {
    * Creates the columns in the table. Without calling this method, data cannot
    * be inserted into the table unless `initialColumns` was supplied.
    *
-   * @param {object} columns
+   * @param {Object} columns
    *        A key value pair representing the columns of the table. Where the
    *        key represents the id of the column and the value is the displayed
    *        label in the header of the column.
-   * @param {string} sortOn
+   * @param {String} sortOn
    *        The id of the column on which the table will be initially sorted on.
-   * @param {array} hiddenColumns
+   * @param {Array} hiddenColumns
    *        Ids of all the columns that are hidden by default.
+   * @param {Array} privateColumns=[]
+   *        An array of column names that should never appear in the table. This
+   *        allows us to e.g. have an invisible compound primary key for a
+   *        table's rows.
    */
-  setColumns: function (columns, sortOn = this.sortedOn, hiddenColumns = []) {
+  setColumns: function (columns, sortOn = this.sortedOn, hiddenColumns = [],
+                        privateColumns = []) {
     for (let column of this.columns.values()) {
       column.destroy();
     }
@@ -702,13 +716,18 @@ TableWidget.prototype = {
       }
 
       this.columns.set(id, new Column(this, id, columns[id]));
-      if (hiddenColumns.indexOf(id) > -1) {
+      if (hiddenColumns.includes(id) || privateColumns.includes(id)) {
+        // Hide the column.
         this.columns.get(id).toggleColumn();
+
+        if (privateColumns.includes(id)) {
+          this.columns.get(id).private = true;
+        }
       }
     }
     this.sortedOn = sortOn;
     this.sortBy(this.sortedOn);
-    this.populateMenuPopup();
+    this.populateMenuPopup(privateColumns);
   },
 
   /**
@@ -776,6 +795,11 @@ TableWidget.prototype = {
     if (this.items.has(item[this.uniqueId])) {
       this.update(item);
       return;
+    }
+
+    if (this.editBookmark && !this.items.has(this.editBookmark)) {
+      // Key has been updated... update bookmark.
+      this.editBookmark = item[this.uniqueId];
     }
 
     let index = this.columns.get(this.sortedOn).push(item);
@@ -958,6 +982,9 @@ module.exports.TableWidget = TableWidget;
  *        The displayed string on the column's header.
  */
 function Column(table, id, header) {
+  // By default cells are visible in the UI.
+  this._private = false;
+
   this.tbody = table.tbody;
   this.document = table.document;
   this.window = table.window;
@@ -1038,6 +1065,23 @@ Column.prototype = {
    */
   get sorted() {
     return this._sortState || 0;
+  },
+
+  /**
+   * Get the private state of the column (visibility in the UI).
+   */
+  get private() {
+    return this._private;
+  },
+
+  /**
+   * Set the private state of the column (visibility in the UI).
+   *
+   * @param  {Boolean} state
+   *         Private (true or false)
+   */
+  set private(state) {
+    this._private = state;
   },
 
   /**
@@ -1463,7 +1507,7 @@ function Cell(column, item, nextCell) {
       // Make the ID of the clicked cell available as a property on the table.
       // It's then available for the popupshowing or command handler.
       column.table.contextMenuRowId = this.id;
-    }, false);
+    });
   }
 
   this.value = item[column.id];

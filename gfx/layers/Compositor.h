@@ -12,7 +12,7 @@
 #include "mozilla/gfx/2D.h"             // for DrawTarget
 #include "mozilla/gfx/MatrixFwd.h"      // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for IntSize, Point
-#include "mozilla/gfx/Polygon.h"        // for Polygon3D
+#include "mozilla/gfx/Polygon.h"        // for Polygon
 #include "mozilla/gfx/Rect.h"           // for Rect, IntRect
 #include "mozilla/gfx/Types.h"          // for Float
 #include "mozilla/gfx/Triangle.h"       // for Triangle, TexturedTriangle
@@ -123,7 +123,6 @@ namespace layers {
 struct Effect;
 struct EffectChain;
 class Image;
-class ImageHostOverlay;
 class Layer;
 class TextureSource;
 class DataTextureSource;
@@ -173,10 +172,6 @@ enum SurfaceInitMode
  *    construct an EffectChain for the quad,
  *    call DrawQuad,
  *  call EndFrame.
- * If the compositor is usually used for compositing but compositing is
- * temporarily done without the compositor, call EndFrameForExternalComposition
- * after compositing each frame so the compositor can remain internally
- * consistent.
  *
  * By default, the compositor will render to the screen, to render to a target,
  * call SetTargetContext or SetRenderTarget, the latter with a target created
@@ -317,14 +312,14 @@ public:
                     gfx::Float aOpacity,
                     const gfx::Matrix4x4& aTransform,
                     const gfx::Rect& aVisibleRect,
-                    const Maybe<gfx::Polygon3D>& aGeometry);
+                    const Maybe<gfx::Polygon>& aGeometry);
 
   void DrawGeometry(const gfx::Rect& aRect,
                     const gfx::IntRect& aClipRect,
                     const EffectChain &aEffectChain,
                     gfx::Float aOpacity,
                     const gfx::Matrix4x4& aTransform,
-                    const Maybe<gfx::Polygon3D>& aGeometry)
+                    const Maybe<gfx::Polygon>& aGeometry)
   {
     DrawGeometry(aRect, aClipRect, aEffectChain, aOpacity,
                  aTransform, aRect, aGeometry);
@@ -362,6 +357,11 @@ public:
                             const gfx::Rect& aVisibleRect)
   {
     MOZ_CRASH("Compositor::DrawTriangle is not implemented for the current platform!");
+  }
+
+  virtual bool SupportsLayerGeometry() const
+  {
+    return false;
   }
 
   /**
@@ -432,14 +432,9 @@ public:
    */
   virtual void EndFrame();
 
-  virtual void SetDispAcquireFence(Layer* aLayer);
+  virtual void CancelFrame() { ReadUnlockTextures(); }
 
-  /**
-   * Post-rendering stuff if the rendering is done outside of this Compositor
-   * e.g., by Composer2D.
-   * aTransform is the transform from user space to window space.
-   */
-  virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) = 0;
+  virtual void SetDispAcquireFence(Layer* aLayer);
 
   /**
    * Whether textures created by this compositor can receive partial updates.
@@ -522,12 +517,6 @@ public:
   virtual void FinishPendingComposite() {}
 
   widget::CompositorWidget* GetWidget() const { return mWidget; }
-
-  virtual bool HasImageHostOverlays() { return false; }
-
-  virtual void AddImageHostOverlay(ImageHostOverlay* aOverlay) {}
-
-  virtual void RemoveImageHostOverlay(ImageHostOverlay* aOverlay) {}
 
   /**
    * Debug-build assertion that can be called to ensure code is running on the
@@ -632,6 +621,21 @@ protected:
                                        gfx::Matrix4x4* aOutTransform,
                                        gfx::Rect* aOutLayerQuad = nullptr);
 
+  virtual void DrawTriangles(const nsTArray<gfx::TexturedTriangle>& aTriangles,
+                             const gfx::Rect& aRect,
+                             const gfx::IntRect& aClipRect,
+                             const EffectChain& aEffectChain,
+                             gfx::Float aOpacity,
+                             const gfx::Matrix4x4& aTransform,
+                             const gfx::Rect& aVisibleRect);
+
+  virtual void DrawPolygon(const gfx::Polygon& aPolygon,
+                           const gfx::Rect& aRect,
+                           const gfx::IntRect& aClipRect,
+                           const EffectChain& aEffectChain,
+                           gfx::Float aOpacity,
+                           const gfx::Matrix4x4& aTransform,
+                           const gfx::Rect& aVisibleRect);
 
   /**
    * An array of locks that will need to be unlocked after the next composition.

@@ -21,6 +21,7 @@
 #endif
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
+#include "GeckoProfiler.h"
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
@@ -120,7 +121,7 @@ Crash()
   }
 #endif
 
-  NS_RUNTIMEABORT("HangMonitor triggered");
+  MOZ_CRASH("HangMonitor triggered");
 }
 
 #ifdef REPORT_CHROME_HANGS
@@ -209,6 +210,7 @@ GetChromeHangReport(Telemetry::ProcessedStack& aStack,
 void
 ThreadMain(void*)
 {
+  AutoProfilerRegister registerThread("Hang Monitor");
   PR_SetCurrentThreadName("Hang Monitor");
 
   MonitorAutoLock lock(*gMonitor);

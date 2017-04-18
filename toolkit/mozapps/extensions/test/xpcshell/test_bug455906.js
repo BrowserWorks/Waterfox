@@ -119,12 +119,12 @@ var gTestCheck = null;
 
 // A fake plugin host for the blocklist service to use
 var PluginHost = {
-  getPluginTags: function(countRef) {
+  getPluginTags(countRef) {
     countRef.value = PLUGINS.length;
     return PLUGINS;
   },
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.nsIPluginHost)
      || iid.equals(Ci.nsISupports))
       return this;
@@ -136,7 +136,7 @@ var PluginHost = {
 // Don't need the full interface, attempts to call other methods will just
 // throw which is just fine
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, windowArguments) {
+  openWindow(parent, url, name, features, windowArguments) {
     // Should be called to list the newly blocklisted items
     do_check_eq(url, URI_EXTENSION_BLOCKLIST_DIALOG);
 
@@ -152,7 +152,7 @@ var WindowWatcher = {
     do_timeout(0, gTestCheck);
   },
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.nsIWindowWatcher)
      || iid.equals(Ci.nsISupports))
       return this;
@@ -314,8 +314,7 @@ function check_notification_pt2(args) {
         default:
           do_throw("Unknown addon: " + addon.item.name);
       }
-    }
-    else {
+    } else {
       switch (addon.item.id) {
         case "test_bug455906_2@tests.mozilla.org":
           do_check_false(addon.blocked);
@@ -395,8 +394,7 @@ function check_notification_pt3(args) {
         default:
           do_throw("Unknown addon: " + addon.item.name);
       }
-    }
-    else {
+    } else {
       switch (addon.item.id) {
         case "test_bug455906_2@tests.mozilla.org":
           do_check_true(addon.blocked);
@@ -444,11 +442,11 @@ function check_test_pt3() {
     do_check_eq(blocklist.getAddonBlocklistURL(addons[4]), create_blocklistURL(addons[4].id));
 
     // All plugins have the same blockID on the test
-    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[0]), create_blocklistURL('test_bug455906_plugin'));
-    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[1]), create_blocklistURL('test_bug455906_plugin'));
-    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[2]), create_blocklistURL('test_bug455906_plugin'));
-    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[3]), create_blocklistURL('test_bug455906_plugin'));
-    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[4]), create_blocklistURL('test_bug455906_plugin'));
+    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[0]), create_blocklistURL("test_bug455906_plugin"));
+    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[1]), create_blocklistURL("test_bug455906_plugin"));
+    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[2]), create_blocklistURL("test_bug455906_plugin"));
+    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[3]), create_blocklistURL("test_bug455906_plugin"));
+    do_check_eq(blocklist.getPluginBlocklistURL(PLUGINS[4]), create_blocklistURL("test_bug455906_plugin"));
 
     // Shouldn't be changed
     do_check_eq(check_addon_state(addons[5]), "false,false,true");

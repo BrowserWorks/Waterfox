@@ -16,6 +16,7 @@
 #include "prenv.h"
 
 #include "IPCMessageStart.h"
+#include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ipc/FileDescriptor.h"
 #include "mozilla/ipc/Shmem.h"
@@ -24,6 +25,7 @@
 #include "mozilla/LinkedList.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/NotNull.h"
 #include "mozilla/UniquePtr.h"
 #include "MainThreadUtils.h"
 
@@ -54,6 +56,8 @@ enum {
 };
 
 } // namespace
+
+class nsIEventTarget;
 
 namespace mozilla {
 namespace dom {
@@ -113,32 +117,14 @@ struct ActorHandle
     int mId;
 };
 
-// Used internally to represent a "trigger" that might cause a state
-// transition.  Triggers are normalized across parent+child to Send
-// and Recv (instead of child-in, child-out, parent-in, parent-out) so
-// that they can share the same state machine implementation.  To
-// further normalize, |Send| is used for 'call', |Recv| for 'answer'.
-struct Trigger
-{
-    enum Action { Send, Recv };
-
-    Trigger(Action action, int32_t msg) :
-        mAction(action),
-        mMessage(msg)
-    {
-      MOZ_ASSERT(0 <= msg && msg < INT32_MAX);
-    }
-
-    uint32_t mAction : 1;
-    uint32_t mMessage : 31;
-};
-
 // What happens if Interrupt calls race?
 enum RacyInterruptPolicy {
     RIPError,
     RIPChildWins,
     RIPParentWins
 };
+
+class IToplevelProtocol;
 
 class IProtocol : public HasResultCodes
 {
@@ -195,10 +181,25 @@ public:
     bool AllocUnsafeShmem(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType, Shmem* aOutMem);
     bool DeallocShmem(Shmem& aMem);
 
+    // Sets an event target to which all messages for aActor will be
+    // dispatched. This method must be called before right before the SendPFoo
+    // message for aActor is sent. And SendPFoo *must* be called if
+    // SetEventTargetForActor is called. The receiver when calling
+    // SetEventTargetForActor must be the actor that will be the manager for
+    // aActor.
+    void SetEventTargetForActor(IProtocol* aActor, nsIEventTarget* aEventTarget);
+
 protected:
+    friend class IToplevelProtocol;
+
     void SetId(int32_t aId) { mId = aId; }
-    void SetManager(IProtocol* aManager) { mManager = aManager; }
+    void SetManager(IProtocol* aManager);
     void SetIPCChannel(MessageChannel* aChannel) { mChannel = aChannel; }
+
+    virtual void SetEventTargetForActorInternal(IProtocol* aActor, nsIEventTarget* aEventTarget);
+
+    static const int32_t kNullActorId = 0;
+    static const int32_t kFreedActorId = 1;
 
 private:
     int32_t mId;
@@ -208,6 +209,26 @@ private:
 };
 
 typedef IPCMessageStart ProtocolId;
+
+#define IPC_OK() mozilla::ipc::IPCResult::Ok()
+#define IPC_FAIL(actor, why) mozilla::ipc::IPCResult::Fail(WrapNotNull(actor), __func__, (why))
+#define IPC_FAIL_NO_REASON(actor) mozilla::ipc::IPCResult::Fail(WrapNotNull(actor), __func__)
+
+/**
+ * All message deserializer and message handler should return this
+ * type via above macros. We use a less generic name here to avoid
+ * conflict with mozilla::Result because we have quite a few using
+ * namespace mozilla::ipc; in the code base.
+ */
+class IPCResult {
+public:
+    static IPCResult Ok() { return IPCResult(true); }
+    static IPCResult Fail(NotNull<IProtocol*> aActor, const char* aWhere, const char* aWhy = "");
+    MOZ_IMPLICIT operator bool() const { return mSuccess; }
+private:
+    explicit IPCResult(bool aResult) : mSuccess(aResult) {}
+    bool mSuccess;
+};
 
 template<class PFooSide>
 class Endpoint;
@@ -338,14 +359,29 @@ public:
     virtual void ProcessRemoteNativeEventsInInterruptCall() {
     }
 
-private:
+    virtual already_AddRefed<nsIEventTarget>
+    GetMessageEventTarget(const Message& aMsg);
+
+    already_AddRefed<nsIEventTarget>
+    GetActorEventTarget(IProtocol* aActor);
+
+protected:
+    virtual already_AddRefed<nsIEventTarget>
+    GetConstructedEventTarget(const Message& aMsg) { return nullptr; }
+
+    virtual void SetEventTargetForActorInternal(IProtocol* aActor, nsIEventTarget* aEventTarget);
+
+  private:
     ProtocolId mProtocolId;
     UniquePtr<Transport> mTrans;
     base::ProcessId mOtherPid;
-    IDMap<IProtocol> mActorMap;
+    IDMap<IProtocol*> mActorMap;
     int32_t mLastRouteId;
-    IDMap<Shmem::SharedMemory> mShmemMap;
+    IDMap<Shmem::SharedMemory*> mShmemMap;
     Shmem::id_t mLastShmemId;
+
+    Mutex mEventTargetMutex;
+    IDMap<nsCOMPtr<nsIEventTarget>> mEventTargetMap;
 };
 
 class IShmemAllocator

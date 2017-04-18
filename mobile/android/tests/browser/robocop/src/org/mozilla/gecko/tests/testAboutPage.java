@@ -29,8 +29,8 @@ public class testAboutPage extends PixelTest {
         verifyUrlInContentDescription(url);
 
         // Set up listeners to catch the page load we're about to do.
-        Actions.EventExpecter tabEventExpecter = mActions.expectGeckoEvent("Tab:Added");
-        Actions.EventExpecter contentEventExpecter = mActions.expectGeckoEvent("DOMContentLoaded");
+        Actions.EventExpecter tabEventExpecter = mActions.expectGlobalEvent(Actions.EventType.UI, "Tab:Added");
+        Actions.EventExpecter contentEventExpecter = mActions.expectGlobalEvent(Actions.EventType.GECKO, "Content:DOMContentLoaded");
 
         selectSettingsItem(mStringHelper.MOZILLA_SECTION_LABEL, mStringHelper.ABOUT_LABEL);
 

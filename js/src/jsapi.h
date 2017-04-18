@@ -14,7 +14,6 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Range.h"
 #include "mozilla/RangedPtr.h"
-#include "mozilla/RefCounted.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Variant.h"
 
@@ -34,6 +33,7 @@
 #include "js/Id.h"
 #include "js/Principals.h"
 #include "js/Realm.h"
+#include "js/RefCounted.h"
 #include "js/RootingAPI.h"
 #include "js/TracingAPI.h"
 #include "js/Utility.h"
@@ -649,8 +649,10 @@ typedef enum JSExnType {
         JSEXN_URIERR,
         JSEXN_DEBUGGEEWOULDRUN,
         JSEXN_WASMCOMPILEERROR,
+        JSEXN_WASMLINKERROR,
         JSEXN_WASMRUNTIMEERROR,
-    JSEXN_WARN,
+    JSEXN_ERROR_LIMIT,
+    JSEXN_WARN = JSEXN_ERROR_LIMIT,
     JSEXN_LIMIT
 } JSExnType;
 
@@ -725,6 +727,17 @@ typedef void
 typedef void
 (* JSCompartmentNameCallback)(JSContext* cx, JSCompartment* compartment,
                               char* buf, size_t bufsize);
+
+/**
+ * Callback used by memory reporting to ask the embedder how much memory an
+ * external string is keeping alive.  The embedder is expected to return a value
+ * that corresponds to the size of the allocation that will be released by the
+ * JSStringFinalizer passed to JS_NewExternalString for this string.
+ *
+ * Implementations of this callback MUST NOT do anything that can cause GC.
+ */
+using JSExternalStringSizeofCallback =
+    size_t (*)(JSString* str, mozilla::MallocSizeOf mallocSizeOf);
 
 /************************************************************************/
 
@@ -874,11 +887,7 @@ class MOZ_STACK_CLASS SourceBufferHolder final
 
 #define JSFUN_CONSTRUCTOR      0x400    /* native that can be called as a ctor */
 
-//                             0x800    /* Unused */
-
-#define JSFUN_HAS_REST        0x1000    /* function has ...rest parameter. */
-
-#define JSFUN_FLAGS_MASK      0x1e00    /* | of all the JSFUN_* flags */
+#define JSFUN_FLAGS_MASK       0x600    /* | of all the JSFUN_* flags */
 
 /*
  * If set, will allow redefining a non-configurable property, but only on a
@@ -1094,6 +1103,7 @@ class JS_PUBLIC_API(ContextOptions) {
         asmJS_(true),
         wasm_(false),
         wasmAlwaysBaseline_(false),
+        wasmAllowDebugging_(false),
         throwOnAsmJSValidationFailure_(false),
         nativeRegExp_(true),
         unboxedArrays_(false),
@@ -1102,7 +1112,12 @@ class JS_PUBLIC_API(ContextOptions) {
         dumpStackOnDebuggeeWouldRun_(false),
         werror_(false),
         strictMode_(false),
-        extraWarnings_(false)
+        extraWarnings_(false),
+#ifdef NIGHTLY_BUILD
+        forEachStatement_(false)
+#else
+        forEachStatement_(true)
+#endif
     {
     }
 
@@ -1153,6 +1168,11 @@ class JS_PUBLIC_API(ContextOptions) {
     }
     ContextOptions& toggleWasmAlwaysBaseline() {
         wasmAlwaysBaseline_ = !wasmAlwaysBaseline_;
+        return *this;
+    }
+    bool wasmAllowDebugging() const { return wasmAllowDebugging_; }
+    ContextOptions& setWasmAllowDebugging(bool flag) {
+        wasmAllowDebugging_ = flag;
         return *this;
     }
 
@@ -1226,12 +1246,19 @@ class JS_PUBLIC_API(ContextOptions) {
         return *this;
     }
 
+    bool forEachStatement() const { return forEachStatement_; }
+    ContextOptions& setForEachStatement(bool flag) {
+        forEachStatement_ = flag;
+        return *this;
+    }
+
   private:
     bool baseline_ : 1;
     bool ion_ : 1;
     bool asmJS_ : 1;
     bool wasm_ : 1;
     bool wasmAlwaysBaseline_ : 1;
+    bool wasmAllowDebugging_ : 1;
     bool throwOnAsmJSValidationFailure_ : 1;
     bool nativeRegExp_ : 1;
     bool unboxedArrays_ : 1;
@@ -1241,6 +1268,7 @@ class JS_PUBLIC_API(ContextOptions) {
     bool werror_ : 1;
     bool strictMode_ : 1;
     bool extraWarnings_ : 1;
+    bool forEachStatement_: 1;
 };
 
 JS_PUBLIC_API(ContextOptions&)
@@ -1284,6 +1312,9 @@ JS_SetCompartmentNameCallback(JSContext* cx, JSCompartmentNameCallback callback)
 
 extern JS_PUBLIC_API(void)
 JS_SetWrapObjectCallbacks(JSContext* cx, const JSWrapObjectCallbacks* callbacks);
+
+extern JS_PUBLIC_API(void)
+JS_SetExternalStringSizeofCallback(JSContext* cx, JSExternalStringSizeofCallback callback);
 
 extern JS_PUBLIC_API(void)
 JS_SetCompartmentPrivate(JSCompartment* compartment, void* data);
@@ -2186,6 +2217,7 @@ class JS_PUBLIC_API(CompartmentCreationOptions)
         mergeable_(false),
         preserveJitCode_(false),
         cloneSingletons_(false),
+        experimentalNumberFormatFormatToPartsEnabled_(false),
         sharedMemoryAndAtomics_(false),
         secureContext_(false)
     {
@@ -2250,6 +2282,23 @@ class JS_PUBLIC_API(CompartmentCreationOptions)
         return *this;
     }
 
+    // ECMA-402 is considering adding a "formatToParts" NumberFormat method,
+    // that exposes not just a formatted string but its subcomponents.  The
+    // method, its semantics, and its name aren't finalized, so for now it's
+    // exposed *only* if requested.
+    //
+    // Until "formatToParts" is included in a final specification edition, it's
+    // subject to change or removal at any time.  Do *not* rely on it in
+    // mission-critical code that can't be changed if ECMA-402 decides not to
+    // accept the method in its current form.
+    bool experimentalNumberFormatFormatToPartsEnabled() const {
+        return experimentalNumberFormatFormatToPartsEnabled_;
+    }
+    CompartmentCreationOptions& setExperimentalNumberFormatFormatToPartsEnabled(bool flag) {
+        experimentalNumberFormatFormatToPartsEnabled_ = flag;
+        return *this;
+    }
+
     bool getSharedMemoryAndAtomicsEnabled() const;
     CompartmentCreationOptions& setSharedMemoryAndAtomicsEnabled(bool flag);
 
@@ -2274,6 +2323,7 @@ class JS_PUBLIC_API(CompartmentCreationOptions)
     bool mergeable_;
     bool preserveJitCode_;
     bool cloneSingletons_;
+    bool experimentalNumberFormatFormatToPartsEnabled_;
     bool sharedMemoryAndAtomics_;
     bool secureContext_;
 };
@@ -2526,10 +2576,14 @@ struct JS_PUBLIC_API(PropertyDescriptor) {
     void trace(JSTracer* trc);
 };
 
-template <typename Outer>
-class PropertyDescriptorOperations
+} // namespace JS
+
+namespace js {
+
+template <typename Wrapper>
+class WrappedPtrOperations<JS::PropertyDescriptor, Wrapper>
 {
-    const PropertyDescriptor& desc() const { return static_cast<const Outer*>(this)->get(); }
+    const JS::PropertyDescriptor& desc() const { return static_cast<const Wrapper*>(this)->get(); }
 
     bool has(unsigned bit) const {
         MOZ_ASSERT(bit != 0);
@@ -2658,10 +2712,11 @@ class PropertyDescriptorOperations
     }
 };
 
-template <typename Outer>
-class MutablePropertyDescriptorOperations : public PropertyDescriptorOperations<Outer>
+template <typename Wrapper>
+class MutableWrappedPtrOperations<JS::PropertyDescriptor, Wrapper>
+    : public js::WrappedPtrOperations<JS::PropertyDescriptor, Wrapper>
 {
-    PropertyDescriptor& desc() { return static_cast<Outer*>(this)->get(); }
+    JS::PropertyDescriptor& desc() { return static_cast<Wrapper*>(this)->get(); }
 
   public:
     void clear() {
@@ -2672,7 +2727,7 @@ class MutablePropertyDescriptorOperations : public PropertyDescriptorOperations<
         value().setUndefined();
     }
 
-    void initFields(HandleObject obj, HandleValue v, unsigned attrs,
+    void initFields(JS::HandleObject obj, JS::HandleValue v, unsigned attrs,
                     JSGetterOp getterOp, JSSetterOp setterOp) {
         MOZ_ASSERT(getterOp != JS_PropertyStub);
         MOZ_ASSERT(setterOp != JS_StrictPropertyStub);
@@ -2684,7 +2739,7 @@ class MutablePropertyDescriptorOperations : public PropertyDescriptorOperations<
         setSetter(setterOp);
     }
 
-    void assign(PropertyDescriptor& other) {
+    void assign(JS::PropertyDescriptor& other) {
         object().set(other.obj);
         setAttributes(other.attrs);
         setGetter(other.getter);
@@ -2692,7 +2747,7 @@ class MutablePropertyDescriptorOperations : public PropertyDescriptorOperations<
         value().set(other.value);
     }
 
-    void setDataDescriptor(HandleValue v, unsigned attrs) {
+    void setDataDescriptor(JS::HandleValue v, unsigned attrs) {
         MOZ_ASSERT((attrs & ~(JSPROP_ENUMERATE |
                               JSPROP_PERMANENT |
                               JSPROP_READONLY |
@@ -2767,26 +2822,7 @@ class MutablePropertyDescriptorOperations : public PropertyDescriptorOperations<
     }
 };
 
-} /* namespace JS */
-
-namespace js {
-
-template <>
-class RootedBase<JS::PropertyDescriptor>
-  : public JS::MutablePropertyDescriptorOperations<JS::Rooted<JS::PropertyDescriptor>>
-{};
-
-template <>
-class HandleBase<JS::PropertyDescriptor>
-  : public JS::PropertyDescriptorOperations<JS::Handle<JS::PropertyDescriptor>>
-{};
-
-template <>
-class MutableHandleBase<JS::PropertyDescriptor>
-  : public JS::MutablePropertyDescriptorOperations<JS::MutableHandle<JS::PropertyDescriptor>>
-{};
-
-} /* namespace js */
+} // namespace js
 
 namespace JS {
 
@@ -3781,6 +3817,7 @@ class JS_FRIEND_API(TransitiveCompileOptions)
         canLazilyParse(true),
         strictOption(false),
         extraWarningsOption(false),
+        forEachStatementOption(false),
         werrorOption(false),
         asmJSOption(AsmJSOption::Disabled),
         throwOnAsmJSValidationFailureOption(false),
@@ -3816,6 +3853,7 @@ class JS_FRIEND_API(TransitiveCompileOptions)
     bool canLazilyParse;
     bool strictOption;
     bool extraWarningsOption;
+    bool forEachStatementOption;
     bool werrorOption;
     AsmJSOption asmJSOption;
     bool throwOnAsmJSValidationFailureOption;
@@ -4632,13 +4670,6 @@ typedef bool
  */
 extern JS_PUBLIC_API(void)
 SetAsyncTaskCallbacks(JSContext* cx, StartAsyncTaskCallback start, FinishAsyncTaskCallback finish);
-
-} // namespace JS
-
-extern JS_PUBLIC_API(bool)
-JS_IsRunning(JSContext* cx);
-
-namespace JS {
 
 /**
  * This class can be used to store a pointer to the youngest frame of a saved
@@ -6083,9 +6114,8 @@ SetBuildIdOp(JSContext* cx, BuildIdOp buildIdOp);
  * by calling createObject().
  */
 
-struct WasmModule : mozilla::external::AtomicRefCounted<WasmModule>
+struct WasmModule : js::AtomicRefCounted<WasmModule>
 {
-    MOZ_DECLARE_REFCOUNTED_TYPENAME(WasmModule)
     virtual ~WasmModule() {}
 
     virtual void serializedSize(size_t* maybeBytecodeSize, size_t* maybeCompiledSize) const = 0;
@@ -6172,6 +6202,12 @@ class MOZ_STACK_CLASS JS_PUBLIC_API(ForOfIterator) {
      * after this call, do not examine val.
      */
     bool next(JS::MutableHandleValue val, bool* done);
+
+    /**
+     * Close the iterator.
+     * For the case that completion type is throw.
+     */
+    void closeThrow();
 
     /**
      * If initialized with throwOnNonCallable = false, check whether
@@ -6626,5 +6662,14 @@ SetGetPerformanceGroupsCallback(JSContext*, GetGroupsCallback, void*);
 
 } /* namespace js */
 
+namespace js {
+
+enum class CompletionKind {
+    Normal,
+    Return,
+    Throw
+};
+
+} /* namespace js */
 
 #endif /* jsapi_h */

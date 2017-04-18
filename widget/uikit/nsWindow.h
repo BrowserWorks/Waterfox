@@ -35,27 +35,25 @@ public:
                                          nsWidgetInitData* aInitData = nullptr)
                                          override;
     virtual void Destroy() override;
-    NS_IMETHOD Show(bool aState) override;
-    NS_IMETHOD              Enable(bool aState) override {
-        return NS_OK;
-    }
+    virtual void Show(bool aState) override;
+    virtual void            Enable(bool aState) override {}
     virtual bool            IsEnabled() const override {
         return true;
     }
     virtual bool            IsVisible() const override {
         return mVisible;
     }
-    NS_IMETHOD              SetFocus(bool aState=false) override;
+    virtual nsresult        SetFocus(bool aState=false) override;
     virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
 
     virtual void SetBackgroundColor(const nscolor &aColor) override;
     virtual void* GetNativeData(uint32_t aDataType) override;
 
-    NS_IMETHOD              Move(double aX, double aY) override;
+    virtual void            Move(double aX, double aY) override;
     virtual void            SetSizeMode(nsSizeMode aMode) override;
     void                    EnteredFullScreen(bool aFullScreen);
-    NS_IMETHOD              Resize(double aWidth, double aHeight, bool aRepaint) override;
-    NS_IMETHOD              Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
+    virtual void            Resize(double aWidth, double aHeight, bool aRepaint) override;
+    virtual void            Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
     virtual LayoutDeviceIntRect GetScreenBounds() override;
     void                    ReportMoveEvent();
     void                    ReportSizeEvent();
@@ -72,27 +70,27 @@ public:
     }
     virtual int32_t         RoundsWidgetCoordinatesTo() override;
 
-    NS_IMETHOD              SetTitle(const nsAString& aTitle) override {
+    virtual nsresult        SetTitle(const nsAString& aTitle) override {
         return NS_OK;
     }
 
-    NS_IMETHOD Invalidate(const LayoutDeviceIntRect& aRect) override;
+    virtual void Invalidate(const LayoutDeviceIntRect& aRect) override;
     virtual nsresult ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override;
-    NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
-                             nsEventStatus& aStatus) override;
+    virtual nsresult DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
+                                   nsEventStatus& aStatus) override;
 
     void WillPaintWindow();
     bool PaintWindow(LayoutDeviceIntRegion aRegion);
 
     bool HasModalDescendents() { return false; }
 
-    //NS_IMETHOD NotifyIME(const IMENotification& aIMENotification) override;
-    NS_IMETHOD_(void) SetInputContext(
-                        const InputContext& aContext,
-                        const InputContextAction& aAction);
-    NS_IMETHOD_(InputContext) GetInputContext();
+    //virtual nsresult
+    //NotifyIME(const IMENotification& aIMENotification) override;
+    virtual void SetInputContext(const InputContext& aContext,
+                                 const InputContextAction& aAction);
+    virtual InputContext GetInputContext();
     /*
-    NS_IMETHOD_(bool) ExecuteNativeKeyBinding(
+    virtual bool ExecuteNativeKeyBinding(
                         NativeKeyBindingsType aType,
                         const mozilla::WidgetKeyboardEvent& aEvent,
                         DoCommandCallback aCallback,

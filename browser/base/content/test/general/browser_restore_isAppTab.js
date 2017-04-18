@@ -6,7 +6,7 @@ const {TabStateFlusher} = Cu.import("resource:///modules/sessionstore/TabStateFl
 const DUMMY = "http://example.com/browser/browser/base/content/test/general/dummy_page.html";
 
 function getMinidumpDirectory() {
-  let dir = Services.dirsvc.get('ProfD', Ci.nsIFile);
+  let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
   dir.append("minidumps");
   return dir;
 }
@@ -14,10 +14,10 @@ function getMinidumpDirectory() {
 // This observer is needed so we can clean up all evidence of the crash so
 // the testrunner thinks things are peachy.
 var CrashObserver = {
-  observe: function(subject, topic, data) {
-    is(topic, 'ipc:content-shutdown', 'Received correct observer topic.');
+  observe(subject, topic, data) {
+    is(topic, "ipc:content-shutdown", "Received correct observer topic.");
     ok(subject instanceof Ci.nsIPropertyBag2,
-       'Subject implements nsIPropertyBag2.');
+       "Subject implements nsIPropertyBag2.");
     // we might see this called as the process terminates due to previous tests.
     // We are only looking for "abnormal" exits...
     if (!subject.hasKey("abnormal")) {
@@ -26,26 +26,26 @@ var CrashObserver = {
     }
 
     let dumpID;
-    if ('nsICrashReporter' in Ci) {
-      dumpID = subject.getPropertyAsAString('dumpID');
+    if ("nsICrashReporter" in Ci) {
+      dumpID = subject.getPropertyAsAString("dumpID");
       ok(dumpID, "dumpID is present and not an empty string");
     }
 
     if (dumpID) {
       let minidumpDirectory = getMinidumpDirectory();
       let file = minidumpDirectory.clone();
-      file.append(dumpID + '.dmp');
+      file.append(dumpID + ".dmp");
       file.remove(true);
       file = minidumpDirectory.clone();
-      file.append(dumpID + '.extra');
+      file.append(dumpID + ".extra");
       file.remove(true);
     }
   }
 }
-Services.obs.addObserver(CrashObserver, 'ipc:content-shutdown', false);
+Services.obs.addObserver(CrashObserver, "ipc:content-shutdown", false);
 
 registerCleanupFunction(() => {
-  Services.obs.removeObserver(CrashObserver, 'ipc:content-shutdown');
+  Services.obs.removeObserver(CrashObserver, "ipc:content-shutdown");
 });
 
 function frameScript() {
@@ -74,7 +74,7 @@ function isBrowserAppTab(browser) {
     }
     // It looks like same-process messages may be reordered by the message
     // manager, so we need to wait one tick before sending the message.
-    executeSoon(function () {
+    executeSoon(function() {
       browser.messageManager.addMessageListener("Test:IsAppTab", listener);
       browser.messageManager.sendAsyncMessage("Test:GetIsAppTab");
     });

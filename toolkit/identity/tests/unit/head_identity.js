@@ -145,7 +145,7 @@ function makeObserver(aObserveTopic, aObserveFunc) {
     // nsIObserver is to be an observer
     QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports, Ci.nsIObserver]),
 
-    observe: function (aSubject, aTopic, aData) {
+    observe(aSubject, aTopic, aData) {
       if (aTopic == aObserveTopic) {
         aObserveFunc(aSubject, aTopic, aData);
         Services.obs.removeObserver(observer, aObserveTopic);
@@ -206,15 +206,15 @@ function setup_provisioning(identity, afterSetupCallback, doneProvisioningCallba
 
   let provId = uuid();
   IDService.IDP._provisionFlows[provId] = {
-    identity : identity,
+    identity,
     idpParams: TEST_IDPPARAMS,
-    callback: function(err) {
+    callback(err) {
       if (doneProvisioningCallback)
         doneProvisioningCallback(err);
     },
     sandbox: {
       // Emulate the free() method on the iframe sandbox
-      free: function() {}
+      free() {}
     }
   };
 
@@ -246,11 +246,15 @@ try {
 } catch (noPref) {}
 Services.prefs.setBoolPref("identity.fxaccounts.enabled", true);
 
-// after execution, restore prefs
 do_register_cleanup(function() {
   log("restoring prefs to their initial values");
   Services.prefs.setBoolPref("toolkit.identity.debug", initialPrefDebugValue);
   Services.prefs.setBoolPref("identity.fxaccounts.enabled", initialPrefFXAValue);
+
+  // Pre-emptively shut down to clear resources.
+  if (typeof IdentityService !== "undefined") {
+    IdentityService.shutdown();
+  } else if (typeof IDService !== "undefined") {
+    IDService.shutdown();
+  }
 });
-
-

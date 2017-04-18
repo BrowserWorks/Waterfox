@@ -69,7 +69,7 @@ ContentBridgeParent::DeferredDestroy()
   // |this| was just destroyed, hands off
 }
 
-bool
+mozilla::ipc::IPCResult
 ContentBridgeParent::RecvSyncMessage(const nsString& aMsg,
                                      const ClonedMessageData& aData,
                                      InfallibleTArray<jsipc::CpowEntry>&& aCpows,
@@ -80,7 +80,7 @@ ContentBridgeParent::RecvSyncMessage(const nsString& aMsg,
                                            aPrincipal, aRetvals);
 }
 
-bool
+mozilla::ipc::IPCResult
 ContentBridgeParent::RecvAsyncMessage(const nsString& aMsg,
                                       InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                       const IPC::Principal& aPrincipal,
@@ -103,7 +103,6 @@ ContentBridgeParent::SendPBrowserConstructor(PBrowserParent* aActor,
                                              const IPCTabContext& aContext,
                                              const uint32_t& aChromeFlags,
                                              const ContentParentId& aCpID,
-                                             const bool& aIsForApp,
                                              const bool& aIsForBrowser)
 {
   return PContentBridgeParent::SendPBrowserConstructor(aActor,
@@ -111,7 +110,6 @@ ContentBridgeParent::SendPBrowserConstructor(PBrowserParent* aActor,
                                                        aContext,
                                                        aChromeFlags,
                                                        aCpID,
-                                                       aIsForApp,
                                                        aIsForBrowser);
 }
 
@@ -144,14 +142,12 @@ ContentBridgeParent::AllocPBrowserParent(const TabId& aTabId,
                                          const IPCTabContext &aContext,
                                          const uint32_t& aChromeFlags,
                                          const ContentParentId& aCpID,
-                                         const bool& aIsForApp,
                                          const bool& aIsForBrowser)
 {
   return nsIContentParent::AllocPBrowserParent(aTabId,
                                                aContext,
                                                aChromeFlags,
                                                aCpID,
-                                               aIsForApp,
                                                aIsForBrowser);
 }
 

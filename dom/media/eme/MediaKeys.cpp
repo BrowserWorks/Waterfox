@@ -5,7 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/MediaKeys.h"
-#include "GMPService.h"
+#include "GMPCrashHelper.h"
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/dom/MediaKeysBinding.h"
 #include "mozilla/dom/MediaKeyMessageEvent.h"
@@ -409,14 +409,10 @@ MediaKeys::Init(ErrorResult& aRv)
     return promise.forget();
   }
 
-  nsIDocument* doc = window->GetExtantDoc();
-  const bool inPrivateBrowsing = nsContentUtils::IsInPrivateBrowsing(doc);
-
-  EME_LOG("MediaKeys[%p]::Create() (%s, %s), %s",
+  EME_LOG("MediaKeys[%p]::Create() (%s, %s)",
           this,
           origin.get(),
-          topLevelOrigin.get(),
-          (inPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
+          topLevelOrigin.get());
 
   // The CDMProxy's initialization is asynchronous. The MediaKeys is
   // refcounted, and its instance is returned to JS by promise once
@@ -432,20 +428,18 @@ MediaKeys::Init(ErrorResult& aRv)
   mProxy->Init(mCreatePromiseId,
                NS_ConvertUTF8toUTF16(origin),
                NS_ConvertUTF8toUTF16(topLevelOrigin),
-               KeySystemToGMPName(mKeySystem),
-               inPrivateBrowsing);
+               KeySystemToGMPName(mKeySystem));
 
   return promise.forget();
 }
 
 void
-MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId, const uint32_t aPluginId)
+MediaKeys::OnCDMCreated(PromiseId aId, const uint32_t aPluginId)
 {
   RefPtr<DetailedPromise> promise(RetrievePromise(aId));
   if (!promise) {
     return;
   }
-  mNodeId = aNodeId;
   RefPtr<MediaKeys> keys(this);
   EME_LOG("MediaKeys[%p]::OnCDMCreated() resolve promise id=%d", this, aId);
   promise->MaybeResolve(keys);
@@ -553,13 +547,6 @@ MediaKeys::GetPendingSession(uint32_t aToken)
   mPendingSessions.Get(aToken, getter_AddRefs(session));
   mPendingSessions.Remove(aToken);
   return session.forget();
-}
-
-const nsCString&
-MediaKeys::GetNodeId() const
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  return mNodeId;
 }
 
 bool

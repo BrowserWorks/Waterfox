@@ -16,8 +16,7 @@ var gPrintSetInterface = Components.interfaces.nsIPrintSettings;
 var doDebug            = false;
 
 // ---------------------------------------------------
-function initDialog()
-{
+function initDialog() {
   dialog = {};
 
   dialog.propertiesButton = document.getElementById("properties");
@@ -54,8 +53,7 @@ function initDialog()
 }
 
 // ---------------------------------------------------
-function checkInteger(element)
-{
+function checkInteger(element) {
   var value = element.value;
   if (value && value.length > 0) {
     value = value.replace(/[^0-9]/g, "");
@@ -69,16 +67,14 @@ function checkInteger(element)
 }
 
 // ---------------------------------------------------
-function stripTrailingWhitespace(element)
-{
+function stripTrailingWhitespace(element) {
   var value = element.value;
   value = value.replace(/\s+$/, "");
   element.value = value;
 }
 
 // ---------------------------------------------------
-function getPrinterDescription(printerName)
-{
+function getPrinterDescription(printerName) {
   var s = "";
 
   try {
@@ -91,16 +87,13 @@ function getPrinterDescription(printerName)
 }
 
 // ---------------------------------------------------
-function listElement(aListElement)
-  {
+function listElement(aListElement) {
     this.listElement = aListElement;
   }
 
 listElement.prototype =
   {
-    clearList:
-      function ()
-        {
+    clearList() {
           // remove the menupopup node child of the menulist.
           var popup = this.listElement.firstChild;
           if (popup) {
@@ -108,9 +101,7 @@ listElement.prototype =
           }
         },
 
-    appendPrinterNames:
-      function (aDataObject)
-        {
+    appendPrinterNames(aDataObject) {
           if ((null == aDataObject) || !aDataObject.hasMore()) {
             // disable dialog
             this.listElement.setAttribute("value", "");
@@ -123,12 +114,11 @@ listElement.prototype =
             dialog.propertiesButton.setAttribute("disabled", "true");
             dialog.fileCheck.setAttribute("disabled", "true");
             dialog.printButton.setAttribute("disabled", "true");
-          }
-          else {
+          } else {
             // build popup menu from printer names
             var list = document.getElementById("printerList");
             do {
-              printerNameStr = aDataObject.getNext();
+              let printerNameStr = aDataObject.getNext();
               list.appendItem(printerNameStr, printerNameStr, getPrinterDescription(printerNameStr));
             } while (aDataObject.hasMore());
             this.listElement.removeAttribute("disabled");
@@ -137,8 +127,7 @@ listElement.prototype =
   };
 
 // ---------------------------------------------------
-function getPrinters()
-{
+function getPrinters() {
   var selectElement = new listElement(dialog.printerList);
   selectElement.clearList();
 
@@ -160,8 +149,7 @@ function getPrinters()
 
 // ---------------------------------------------------
 // update gPrintSettings with the defaults for the selected printer
-function setPrinterDefaultsForSelectedPrinter()
-{
+function setPrinterDefaultsForSelectedPrinter() {
   gPrintSettings.printerName = dialog.printerList.value;
 
   dialog.descText.value = getPrinterDescription(gPrintSettings.printerName);
@@ -173,13 +161,12 @@ function setPrinterDefaultsForSelectedPrinter()
   printService.initPrintSettingsFromPrefs(gPrintSettings, true, gPrintSetInterface.kInitSaveAll);
 
   if (doDebug) {
-    dump("setPrinterDefaultsForSelectedPrinter: printerName='"+gPrintSettings.printerName+"', paperName='"+gPrintSettings.paperName+"'\n");
+    dump("setPrinterDefaultsForSelectedPrinter: printerName='" + gPrintSettings.printerName + "', paperName='" + gPrintSettings.paperName + "'\n");
   }
 }
 
 // ---------------------------------------------------
-function displayPropertiesDialog()
-{
+function displayPropertiesDialog() {
   gPrintSettings.numCopies = dialog.numCopiesInput.value;
   try {
     var printingPromptService = Components.classes["@mozilla.org/embedcomp/printingprompt-service;1"]
@@ -194,8 +181,7 @@ function displayPropertiesDialog()
 }
 
 // ---------------------------------------------------
-function doPrintRange(inx)
-{
+function doPrintRange(inx) {
   if (inx == 1) {
     dialog.frompageInput.removeAttribute("disabled");
     dialog.frompageLabel.removeAttribute("disabled");
@@ -210,8 +196,7 @@ function doPrintRange(inx)
 }
 
 // ---------------------------------------------------
-function loadDialog()
-{
+function loadDialog() {
   var print_copies        = 1;
   var print_selection_radio_enabled = false;
   var print_frametype     = gPrintSetInterface.kSelectedFrame;
@@ -245,10 +230,10 @@ function loadDialog()
 
   if (doDebug) {
     dump("loadDialog*********************************************\n");
-    dump("print_tofile            "+print_tofile+"\n");
-    dump("print_frame             "+print_frametype+"\n");
-    dump("print_howToEnableUI     "+print_howToEnableUI+"\n");
-    dump("selection_radio_enabled "+print_selection_radio_enabled+"\n");
+    dump("print_tofile            " + print_tofile + "\n");
+    dump("print_frame             " + print_frametype + "\n");
+    dump("print_howToEnableUI     " + print_howToEnableUI + "\n");
+    dump("selection_radio_enabled " + print_selection_radio_enabled + "\n");
   }
 
   dialog.printrangeGroup.selectedItem = dialog.allpagesRadio;
@@ -263,7 +248,7 @@ function loadDialog()
   dialog.numCopiesInput.value = print_copies;
 
   if (doDebug) {
-    dump("print_howToEnableUI: "+print_howToEnableUI+"\n");
+    dump("print_howToEnableUI: " + print_howToEnableUI + "\n");
   }
 
   // print frame
@@ -298,8 +283,7 @@ function loadDialog()
 }
 
 // ---------------------------------------------------
-function onLoad()
-{
+function onLoad() {
   // Init dialog.
   initDialog();
 
@@ -317,8 +301,7 @@ function onLoad()
 }
 
 // ---------------------------------------------------
-function onAccept()
-{
+function onAccept() {
   if (gPrintSettings != null) {
     var print_howToEnableUI = gPrintSetInterface.kFrameEnableNone;
 
@@ -356,13 +339,13 @@ function onAccept()
     gPrintSettings.printFrameType = frametype;
     if (doDebug) {
       dump("onAccept*********************************************\n");
-      dump("frametype      "+frametype+"\n");
-      dump("numCopies      "+gPrintSettings.numCopies+"\n");
-      dump("printRange     "+gPrintSettings.printRange+"\n");
-      dump("printerName    "+gPrintSettings.printerName+"\n");
-      dump("startPageRange "+gPrintSettings.startPageRange+"\n");
-      dump("endPageRange   "+gPrintSettings.endPageRange+"\n");
-      dump("printToFile    "+gPrintSettings.printToFile+"\n");
+      dump("frametype      " + frametype + "\n");
+      dump("numCopies      " + gPrintSettings.numCopies + "\n");
+      dump("printRange     " + gPrintSettings.printRange + "\n");
+      dump("printerName    " + gPrintSettings.printerName + "\n");
+      dump("startPageRange " + gPrintSettings.startPageRange + "\n");
+      dump("endPageRange   " + gPrintSettings.endPageRange + "\n");
+      dump("printToFile    " + gPrintSettings.printToFile + "\n");
     }
   }
 
@@ -371,10 +354,10 @@ function onAccept()
   saveToPrefs = gPrefs.getBoolPref("print.save_print_settings");
 
   if (saveToPrefs && printService != null) {
-    var flags = gPrintSetInterface.kInitSavePaperSize      |
-                gPrintSetInterface.kInitSaveEdges          |
-                gPrintSetInterface.kInitSaveInColor        |
-                gPrintSetInterface.kInitSaveShrinkToFit    |
+    var flags = gPrintSetInterface.kInitSavePaperSize |
+                gPrintSetInterface.kInitSaveEdges |
+                gPrintSetInterface.kInitSaveInColor |
+                gPrintSetInterface.kInitSaveShrinkToFit |
                 gPrintSetInterface.kInitSaveScaling;
     printService.savePrintSettingsToPrefs(gPrintSettings, true, flags);
   }
@@ -390,8 +373,7 @@ function onAccept()
 }
 
 // ---------------------------------------------------
-function onCancel()
-{
+function onCancel() {
   // set return value to "cancel"
   if (paramBlock) {
     paramBlock.SetInt(0, 0);
@@ -404,8 +386,7 @@ function onCancel()
 
 // ---------------------------------------------------
 const nsIFilePicker = Components.interfaces.nsIFilePicker;
-function chooseFile()
-{
+function chooseFile() {
   try {
     var fp = Components.classes["@mozilla.org/filepicker;1"]
                        .createInstance(nsIFilePicker);
@@ -422,4 +403,3 @@ function chooseFile()
 
   return false;
 }
-

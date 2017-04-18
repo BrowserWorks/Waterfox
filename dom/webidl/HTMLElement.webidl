@@ -12,6 +12,7 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLElement : Element {
   // metadata attributes
            attribute DOMString title;
@@ -28,6 +29,7 @@ interface HTMLElement : Element {
   // user interaction
   [SetterThrows, Pure]
            attribute boolean hidden;
+  [NeedsCallerType]
   void click();
   [SetterThrows, Pure]
            attribute long tabIndex;
@@ -64,11 +66,6 @@ interface HTMLElement : Element {
   // styling
   [PutForwards=cssText, Constant]
   readonly attribute CSSStyleDeclaration style;
-
-  // Mozilla specific stuff
-           attribute EventHandler oncopy;
-           attribute EventHandler oncut;
-           attribute EventHandler onpaste;
 };
 
 // http://dev.w3.org/csswg/cssom-view/#extensions-to-the-htmlelement-interface
@@ -101,6 +98,7 @@ interface TouchEventHandlers {
 };
 
 HTMLElement implements GlobalEventHandlers;
+HTMLElement implements DocumentAndElementEventHandlers;
 HTMLElement implements TouchEventHandlers;
 HTMLElement implements OnErrorEventHandlerForNodes;
 

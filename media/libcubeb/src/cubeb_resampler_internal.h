@@ -48,31 +48,6 @@ struct cubeb_resampler {
   virtual ~cubeb_resampler() {}
 };
 
-class noop_resampler : public cubeb_resampler {
-public:
-  noop_resampler(cubeb_stream * s,
-                 cubeb_data_callback cb,
-                 void * ptr)
-    : stream(s)
-    , data_callback(cb)
-    , user_ptr(ptr)
-  {
-  }
-
-  virtual long fill(void * input_buffer, long * input_frames_count,
-                    void * output_buffer, long output_frames);
-
-  virtual long latency()
-  {
-    return 0;
-  }
-
-private:
-  cubeb_stream * const stream;
-  const cubeb_data_callback data_callback;
-  void * const user_ptr;
-};
-
 /** Base class for processors. This is just used to share methods for now. */
 class processor {
 public:
@@ -91,6 +66,32 @@ protected:
   }
   /** The number of channel of the audio buffers to be resampled. */
   const uint32_t channels;
+};
+
+template<typename T>
+class passthrough_resampler : public cubeb_resampler
+                            , public processor {
+public:
+  passthrough_resampler(cubeb_stream * s,
+                        cubeb_data_callback cb,
+                        void * ptr,
+                        uint32_t input_channels);
+
+  virtual long fill(void * input_buffer, long * input_frames_count,
+                    void * output_buffer, long output_frames);
+
+  virtual long latency()
+  {
+    return 0;
+  }
+
+private:
+  cubeb_stream * const stream;
+  const cubeb_data_callback data_callback;
+  void * const user_ptr;
+  /* This allows to buffer some input to account for the fact that we buffer
+   * some inputs. */
+  auto_array<T> internal_input_buffer;
 };
 
 /** Bidirectional resampler, can resample an input and an output stream, or just
@@ -221,7 +222,7 @@ public:
 
   /** Returns a buffer containing exactly `output_frame_count` resampled frames.
     * The consumer should not hold onto the pointer. */
-  T * output(size_t output_frame_count)
+  T * output(size_t output_frame_count, size_t * input_frames_used)
   {
     if (resampling_out_buffer.capacity() < frames_to_samples(output_frame_count)) {
       resampling_out_buffer.reserve(frames_to_samples(output_frame_count));
@@ -238,6 +239,7 @@ public:
     /* This shifts back any unresampled samples to the beginning of the input
        buffer. */
     resampling_in_buffer.pop(nullptr, frames_to_samples(in_len));
+    *input_frames_used = in_len;
 
     return resampling_out_buffer.data();
   }
@@ -375,7 +377,7 @@ public:
    * @parameter frames_needed the number of frames to be returned.
    * @return a buffer containing the delayed frames. The consumer should not
    * hold onto the pointer. */
-  T * output(uint32_t frames_needed)
+  T * output(uint32_t frames_needed, size_t * input_frames_used)
   {
     if (delay_output_buffer.capacity() < frames_to_samples(frames_needed)) {
       delay_output_buffer.reserve(frames_to_samples(frames_needed));
@@ -385,6 +387,7 @@ public:
     delay_output_buffer.push(delay_input_buffer.data(),
                              frames_to_samples(frames_needed));
     delay_input_buffer.pop(nullptr, frames_to_samples(frames_needed));
+    *input_frames_used = frames_needed;
 
     return delay_output_buffer.data();
   }
@@ -480,7 +483,9 @@ cubeb_resampler_create_internal(cubeb_stream * stream,
       (output_params && output_params->rate == target_rate)) ||
       (input_params && !output_params && (input_params->rate == target_rate)) ||
       (output_params && !input_params && (output_params->rate == target_rate))) {
-    return new noop_resampler(stream, callback, user_ptr);
+    return new passthrough_resampler<T>(stream, callback,
+                                        user_ptr,
+                                        input_params ? input_params->channels : 0);
   }
 
   /* Determine if we need to resampler one or both directions, and create the

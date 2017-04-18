@@ -13,11 +13,11 @@ var pktPanelMessaging = (function() {
  }
 
  function prefixedMessageId(messageId) {
-   return 'PKT_' + messageId;
+   return "PKT_" + messageId;
  }
 
  function panelPrefixedMessageId(panelId, messageId) {
-   return prefixedMessageId(panelId + '_' + messageId);
+   return prefixedMessageId(panelId + "_" + messageId);
  }
 
  function addMessageListener(panelId, messageId, callback) {
@@ -28,7 +28,7 @@ var pktPanelMessaging = (function() {
 			// TODO: Figure out why e.target.parentNode is null
 			// e.target.parentNode.removeChild(e.target);
 
-		}, false);
+		});
 
 	}
 
@@ -40,7 +40,7 @@ var pktPanelMessaging = (function() {
    // Payload needs to be an object in format:
    // { panelId: panelId, data: {} }
    var messagePayload = {
-     panelId: panelId,
+     panelId,
      data: (payload || {})
    };
 
@@ -70,9 +70,9 @@ var pktPanelMessaging = (function() {
      * Public functions
      */
     return {
-      panelIdFromURL: panelIdFromURL,
-        addMessageListener : addMessageListener,
-        removeMessageListener : removeMessageListener,
-        sendMessage: sendMessage
+      panelIdFromURL,
+        addMessageListener,
+        removeMessageListener,
+        sendMessage
     };
 }());

@@ -8,6 +8,7 @@
 #define mozilla_dom_Navigator_h
 
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/Nullable.h"
 #include "mozilla/ErrorResult.h"
 #include "nsIDOMNavigator.h"
@@ -24,7 +25,6 @@ class nsPluginArray;
 class nsMimeTypeArray;
 class nsPIDOMWindowInner;
 class nsIDOMNavigatorSystemMessages;
-class nsDOMDeviceStorage;
 class nsIPrincipal;
 class nsIURI;
 
@@ -40,6 +40,7 @@ class ServiceWorkerContainer;
 class DOMRequest;
 struct FlyWebPublishOptions;
 struct FlyWebFilter;
+class WebAuthentication;
 } // namespace dom
 } // namespace mozilla
 
@@ -60,10 +61,8 @@ class Promise;
 
 class DesktopNotificationCenter;
 class MozIdleObserver;
-#ifdef MOZ_GAMEPAD
 class Gamepad;
 class GamepadServiceTest;
-#endif // MOZ_GAMEPAD
 class NavigatorUserMediaSuccessCallback;
 class NavigatorUserMediaErrorCallback;
 class MozGetUserMediaDevicesSuccessCallback;
@@ -73,7 +72,6 @@ class Connection;
 } // namespace network
 
 class PowerManager;
-class DeviceStorageAreaListener;
 class Presentation;
 class LegacyMozTCPSocket;
 class VRDisplay;
@@ -126,10 +124,13 @@ public:
 
   // The XPCOM GetProduct is OK
   // The XPCOM GetLanguage is OK
-  void GetUserAgent(nsString& aUserAgent, ErrorResult& /* unused */)
-  {
-    GetUserAgent(aUserAgent);
-  }
+  void GetAppName(nsAString& aAppName, CallerType aCallerType) const;
+  void GetAppVersion(nsAString& aAppName, CallerType aCallerType,
+                     ErrorResult& aRv) const;
+  void GetPlatform(nsAString& aPlatform, CallerType aCallerType,
+                   ErrorResult& aRv) const;
+  void GetUserAgent(nsAString& aUserAgent, CallerType aCallerType,
+                    ErrorResult& aRv) const;
   bool OnLine();
   void RegisterProtocolHandler(const nsAString& aScheme, const nsAString& aURL,
                                const nsAString& aTitle, ErrorResult& aRv);
@@ -170,20 +171,16 @@ public:
   {
     aRv = GetAppCodeName(aAppCodeName);
   }
-  void GetOscpu(nsString& aOscpu, ErrorResult& aRv)
-  {
-    aRv = GetOscpu(aOscpu);
-  }
+  void GetOscpu(nsAString& aOscpu, CallerType aCallerType,
+                ErrorResult& aRv) const;
   // The XPCOM GetVendor is OK
   // The XPCOM GetVendorSub is OK
   // The XPCOM GetProductSub is OK
   bool CookieEnabled();
-  void GetBuildID(nsString& aBuildID, ErrorResult& aRv)
-  {
-    aRv = GetBuildID(aBuildID);
-  }
+  void GetBuildID(nsAString& aBuildID, CallerType aCallerType,
+                  ErrorResult& aRv) const;
   PowerManager* GetMozPower(ErrorResult& aRv);
-  bool JavaEnabled(ErrorResult& aRv);
+  bool JavaEnabled(CallerType aCallerType, ErrorResult& aRv);
   uint64_t HardwareConcurrency();
   bool CpuHasSSE2();
   bool TaintEnabled()
@@ -194,28 +191,14 @@ public:
   void RemoveIdleObserver(MozIdleObserver& aObserver, ErrorResult& aRv);
   already_AddRefed<WakeLock> RequestWakeLock(const nsAString &aTopic,
                                              ErrorResult& aRv);
-  DeviceStorageAreaListener* GetDeviceStorageAreaListener(ErrorResult& aRv);
-
-  already_AddRefed<nsDOMDeviceStorage> GetDeviceStorage(const nsAString& aType,
-                                                        ErrorResult& aRv);
-
-  void GetDeviceStorages(const nsAString& aType,
-                         nsTArray<RefPtr<nsDOMDeviceStorage> >& aStores,
-                         ErrorResult& aRv);
-
-  already_AddRefed<nsDOMDeviceStorage>
-  GetDeviceStorageByNameAndType(const nsAString& aName, const nsAString& aType,
-                                ErrorResult& aRv);
 
   DesktopNotificationCenter* GetMozNotification(ErrorResult& aRv);
   already_AddRefed<LegacyMozTCPSocket> MozTCPSocket();
   network::Connection* GetConnection(ErrorResult& aRv);
   MediaDevices* GetMediaDevices(ErrorResult& aRv);
 
-#ifdef MOZ_GAMEPAD
   void GetGamepads(nsTArray<RefPtr<Gamepad> >& aGamepads, ErrorResult& aRv);
   GamepadServiceTest* RequestGamepadServiceTest();
-#endif // MOZ_GAMEPAD
   already_AddRefed<Promise> GetVRDisplays(ErrorResult& aRv);
   void GetActiveVRDisplays(nsTArray<RefPtr<VRDisplay>>& aDisplays) const;
 #ifdef MOZ_TIME_MANAGER
@@ -243,6 +226,8 @@ public:
                               ErrorResult& aRv);
 
   already_AddRefed<ServiceWorkerContainer> ServiceWorker();
+
+  mozilla::dom::WebAuthentication* Authentication();
 
   void GetLanguages(nsTArray<nsString>& aLanguages);
 
@@ -289,9 +274,6 @@ private:
   bool CheckPermission(const char* type);
   static bool CheckPermission(nsPIDOMWindowInner* aWindow, const char* aType);
 
-  already_AddRefed<nsDOMDeviceStorage> FindDeviceStorage(const nsAString& aName,
-                                                         const nsAString& aType);
-
   RefPtr<nsMimeTypeArray> mMimeTypes;
   RefPtr<nsPluginArray> mPlugins;
   RefPtr<Permissions> mPermissions;
@@ -301,19 +283,16 @@ private:
   RefPtr<Promise> mBatteryPromise;
   RefPtr<PowerManager> mPowerManager;
   RefPtr<network::Connection> mConnection;
+  RefPtr<WebAuthentication> mAuthentication;
 #ifdef MOZ_AUDIO_CHANNEL_MANAGER
   RefPtr<system::AudioChannelManager> mAudioChannelManager;
 #endif
   RefPtr<MediaDevices> mMediaDevices;
-  nsTArray<nsWeakPtr> mDeviceStorageStores;
   RefPtr<time::TimeManager> mTimeManager;
   RefPtr<ServiceWorkerContainer> mServiceWorkerContainer;
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
-  RefPtr<DeviceStorageAreaListener> mDeviceStorageAreaListener;
   RefPtr<Presentation> mPresentation;
-#ifdef MOZ_GAMEPAD
   RefPtr<GamepadServiceTest> mGamepadServiceTest;
-#endif
   nsTArray<RefPtr<Promise> > mVRGetDisplaysPromises;
   nsTArray<uint32_t> mRequestedVibrationPattern;
   RefPtr<StorageManager> mStorageManager;

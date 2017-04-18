@@ -16,7 +16,8 @@
 #include "AudioChannelAgent.h"
 #include "nsAttrValue.h"
 #include "mozilla/dom/AudioChannelBinding.h"
-#include "mozilla/Function.h"
+
+#include <functional>
 
 class nsIRunnable;
 class nsPIDOMWindowOuter;
@@ -24,10 +25,6 @@ struct PRLogModuleInfo;
 
 namespace mozilla {
 namespace dom {
-
-#ifdef MOZ_WIDGET_GONK
-class SpeakerManagerService;
-#endif
 
 class TabParent;
 
@@ -92,10 +89,16 @@ public:
 
   /**
    * Returns the AudioChannelServce singleton.
-   * If AudioChannelServce is not exist, create and return new one.
+   * If AudioChannelService doesn't exist, create and return new one.
    * Only to be called from main thread.
    */
   static already_AddRefed<AudioChannelService> GetOrCreate();
+
+  /**
+   * Returns the AudioChannelService singleton if one exists.
+   * If AudioChannelService doesn't exist, returns null.
+   */
+  static already_AddRefed<AudioChannelService> Get();
 
   static bool IsAudioChannelMutedByDefault();
 
@@ -151,6 +154,8 @@ public:
 
   bool IsAudioChannelActive(nsPIDOMWindowOuter* aWindow, AudioChannel aChannel);
 
+  bool IsWindowActive(nsPIDOMWindowOuter* aWindow);
+
   /**
    * Return true if there is a telephony channel active in this process
    * or one of its subprocesses.
@@ -189,20 +194,6 @@ public:
                               uint64_t aInnerWindowID,
                               bool aCapture);
 
-#ifdef MOZ_WIDGET_GONK
-  void RegisterSpeakerManager(SpeakerManagerService* aSpeakerManager)
-  {
-    if (!mSpeakerManager.Contains(aSpeakerManager)) {
-      mSpeakerManager.AppendElement(aSpeakerManager);
-    }
-  }
-
-  void UnregisterSpeakerManager(SpeakerManagerService* aSpeakerManager)
-  {
-    mSpeakerManager.RemoveElement(aSpeakerManager);
-  }
-#endif
-
   static const nsAttrValue::EnumTable* GetAudioChannelTable();
   static AudioChannel GetAudioChannel(const nsAString& aString);
   static AudioChannel GetDefaultAudioChannel();
@@ -219,7 +210,7 @@ private:
   ~AudioChannelService();
 
   void RefreshAgents(nsPIDOMWindowOuter* aWindow,
-                     mozilla::function<void(AudioChannelAgent*)> aFunc);
+                     std::function<void(AudioChannelAgent*)> aFunc);
 
   static void CreateServiceIfNeeded();
 
@@ -346,10 +337,6 @@ private:
   nsTObserverArray<nsAutoPtr<AudioChannelWindow>> mWindows;
 
   nsTObserverArray<nsAutoPtr<AudioChannelChildStatus>> mPlayingChildren;
-
-#ifdef MOZ_WIDGET_GONK
-  nsTArray<SpeakerManagerService*>  mSpeakerManager;
-#endif
 
   // Raw pointers because TabParents must unregister themselves.
   nsTArray<TabParent*> mTabParents;

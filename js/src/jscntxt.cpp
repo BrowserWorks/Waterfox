@@ -246,6 +246,13 @@ js::ReportOutOfMemory(ExclusiveContext* cxArg)
     cx->setPendingException(StringValue(cx->names().outOfMemory));
 }
 
+mozilla::GenericErrorResult<OOM&>
+js::ReportOutOfMemoryResult(ExclusiveContext* cx)
+{
+    ReportOutOfMemory(cx);
+    return cx->alreadyReportedOOM();
+}
+
 void
 js::ReportOverRecursed(JSContext* maybecx, unsigned errorNumber)
 {
@@ -803,7 +810,7 @@ js::ReportMissingArg(JSContext* cx, HandleValue v, unsigned arg)
 
     SprintfLiteral(argbuf, "%u", arg);
     if (IsFunctionObject(v)) {
-        RootedAtom name(cx, v.toObject().as<JSFunction>().name());
+        RootedAtom name(cx, v.toObject().as<JSFunction>().explicitName());
         bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, v, name);
         if (!bytes)
             return;
@@ -875,6 +882,34 @@ ExclusiveContext::recoverFromOutOfMemory()
         task->outOfMemory = false;
 }
 
+JS::Error ExclusiveContext::reportedError;
+JS::OOM ExclusiveContext::reportedOOM;
+
+mozilla::GenericErrorResult<OOM&>
+ExclusiveContext::alreadyReportedOOM()
+{
+#ifdef DEBUG
+    if (JSContext* maybecx = maybeJSContext()) {
+        MOZ_ASSERT(maybecx->isThrowingOutOfMemory());
+    } else {
+        // Keep in sync with addPendingOutOfMemory.
+        if (ParseTask* task = helperThread()->parseTask())
+            MOZ_ASSERT(task->outOfMemory);
+    }
+#endif
+    return mozilla::MakeGenericErrorResult(reportedOOM);
+}
+
+mozilla::GenericErrorResult<JS::Error&>
+ExclusiveContext::alreadyReportedError()
+{
+#ifdef DEBUG
+    if (JSContext* maybecx = maybeJSContext())
+        MOZ_ASSERT(maybecx->isExceptionPending());
+#endif
+    return mozilla::MakeGenericErrorResult(reportedError);
+}
+
 JSContext::JSContext(JSRuntime* parentRuntime)
   : ExclusiveContext(this, &this->JSRuntime::mainThread, Context_JS, JS::ContextOptions()),
     JSRuntime(parentRuntime),
@@ -941,12 +976,6 @@ JSContext::isThrowingDebuggeeWouldRun()
            unwrappedException_.isObject() &&
            unwrappedException_.toObject().is<ErrorObject>() &&
            unwrappedException_.toObject().as<ErrorObject>().type() == JSEXN_DEBUGGEEWOULDRUN;
-}
-
-bool
-JSContext::currentlyRunning() const
-{
-    return !!activation();
 }
 
 static bool
@@ -1038,12 +1067,12 @@ JSContext::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 }
 
 void
-JSContext::mark(JSTracer* trc)
+JSContext::trace(JSTracer* trc)
 {
     if (cycleDetectorSet.initialized())
         TraceCycleDetectionSet(trc, cycleDetectorSet);
 
-    if (compartment_)
+    if (trc->isMarkingTracer() && compartment_)
         compartment_->mark();
 }
 

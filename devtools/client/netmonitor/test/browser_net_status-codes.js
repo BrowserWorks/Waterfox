@@ -1,6 +1,6 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 /**
@@ -19,7 +19,6 @@ add_task(function* () {
   let requestItems = [];
 
   RequestsMenu.lazyUpdate = false;
-  NetworkDetails._params.lazyEmpty = false;
 
   const REQUEST_DATA = [
     {
@@ -114,7 +113,8 @@ add_task(function* () {
       requestItems[index] = item;
 
       info("Verifying request #" + index);
-      yield verifyRequestItemTarget(item, request.method, request.uri, request.details);
+      yield verifyRequestItemTarget(RequestsMenu, item,
+        request.method, request.uri, request.details);
 
       index++;
     }
@@ -155,14 +155,13 @@ add_task(function* () {
     let tabpanel = document.querySelectorAll("#details-pane tabpanel")[0];
 
     let { method, uri, details: { status, statusText } } = data;
-    is(tabpanel.querySelector("#headers-summary-url-value").getAttribute("value"),
-      uri, "The url summary value is incorrect.");
-    is(tabpanel.querySelector("#headers-summary-method-value").getAttribute("value"),
-      method, "The method summary value is incorrect.");
-    is(tabpanel.querySelector("#headers-summary-status-circle").getAttribute("code"),
-      status, "The status summary code is incorrect.");
-    is(tabpanel.querySelector("#headers-summary-status-value").getAttribute("value"),
-      status + " " + statusText, "The status summary value is incorrect.");
+    let summaryValues = tabpanel.querySelectorAll(".tabpanel-summary-value.textbox-input");
+    is(summaryValues[0].value, uri, "The url summary value is incorrect.");
+    is(summaryValues[1].value, method, "The method summary value is incorrect.");
+    is(tabpanel.querySelector(".requests-menu-status-icon").dataset.code, status,
+      "The status summary code is incorrect.");
+    is(summaryValues[3].value, status + " " + statusText,
+      "The status summary value is incorrect.");
   }
 
   /**
@@ -172,33 +171,32 @@ add_task(function* () {
     let tabpanel = document.querySelectorAll("#details-pane tabpanel")[2];
     let statusParamValue = data.uri.split("=").pop();
     let statusParamShownValue = "\"" + statusParamValue + "\"";
+    let treeSections = tabpanel.querySelectorAll(".tree-section");
 
-    is(tabpanel.querySelectorAll(".variables-view-scope").length, 1,
-      "There should be 1 param scope displayed in this tabpanel.");
-    is(tabpanel.querySelectorAll(".variable-or-property").length, 1,
-      "There should be 1 param value displayed in this tabpanel.");
-    is(tabpanel.querySelectorAll(".variables-view-empty-notice").length, 0,
+    is(treeSections.length, 1,
+      "There should be 1 param section displayed in this tabpanel.");
+    is(tabpanel.querySelectorAll("tr:not(.tree-section).treeRow").length, 1,
+      "There should be 1 param row displayed in this tabpanel.");
+    is(tabpanel.querySelectorAll(".empty-notice").length, 0,
       "The empty notice should not be displayed in this tabpanel.");
 
-    let paramsScope = tabpanel.querySelectorAll(".variables-view-scope")[0];
+    let labels = tabpanel
+      .querySelectorAll("tr:not(.tree-section) .treeLabelCell .treeLabel");
+    let values = tabpanel
+      .querySelectorAll("tr:not(.tree-section) .treeValueCell .objectBox");
 
-    is(paramsScope.querySelector(".name").getAttribute("value"),
+    is(treeSections[0].querySelector(".treeLabel").textContent,
       L10N.getStr("paramsQueryString"),
       "The params scope doesn't have the correct title.");
 
-    is(paramsScope.querySelectorAll(".variables-view-variable .name")[0]
-      .getAttribute("value"),
-      "sts", "The param name was incorrect.");
-    is(paramsScope.querySelectorAll(".variables-view-variable .value")[0]
-      .getAttribute("value"),
-      statusParamShownValue, "The param value was incorrect.");
+    is(labels[0].textContent, "sts", "The param name was incorrect.");
+    is(values[0].textContent, statusParamShownValue, "The param value was incorrect.");
 
-    is(tabpanel.querySelector("#request-params-box")
-      .hasAttribute("hidden"), false,
-      "The request params box should not be hidden.");
-    is(tabpanel.querySelector("#request-post-data-textarea-box")
-      .hasAttribute("hidden"), true,
-      "The request post data textarea box should be hidden.");
+    ok(tabpanel.querySelector(".treeTable"),
+      "The request params tree view should be displayed.");
+    is(tabpanel.querySelector(".editor-mount") === null,
+      true,
+      "The request post data editor should be hidden.");
   }
 
   /**
@@ -207,7 +205,8 @@ add_task(function* () {
    */
   function chooseRequest(index) {
     let onTabUpdated = monitor.panelWin.once(EVENTS.TAB_UPDATED);
-    EventUtils.sendMouseEvent({ type: "mousedown" }, requestItems[index].target);
+    let target = getItemTarget(RequestsMenu, requestItems[index]);
+    EventUtils.sendMouseEvent({ type: "mousedown" }, target);
     return onTabUpdated;
   }
 });

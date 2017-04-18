@@ -29,6 +29,7 @@ using mozilla::plugins::PluginInstanceParent;
 #include "gfxUtils.h"
 #include "gfxWindowsSurface.h"
 #include "gfxWindowsPlatform.h"
+#include "gfxDWriteFonts.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/Tools.h"
@@ -43,6 +44,7 @@ using mozilla::plugins::PluginInstanceParent;
 #include "nsDebug.h"
 #include "nsIXULRuntime.h"
 
+#include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/CompositorBridgeChild.h"
 #include "ClientLayerManager.h"
@@ -172,16 +174,17 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
 
   DeviceResetReason resetReason = DeviceResetReason::OK;
   if (gfxWindowsPlatform::GetPlatform()->DidRenderingDeviceReset(&resetReason)) {
-
     gfxCriticalNote << "(nsWindow) Detected device reset: " << (int)resetReason;
 
     gfxWindowsPlatform::GetPlatform()->UpdateRenderMode();
-    EnumAllWindows([] (nsWindow* aWindow) -> void {
-      aWindow->OnRenderingDeviceReset();
-    });
+
+    uint64_t resetSeqNo = GPUProcessManager::Get()->GetNextDeviceResetSequenceNumber();
+    nsTArray<nsWindow*> windows = EnumAllWindows();
+    for (nsWindow* window : windows) {
+      window->OnRenderingDeviceReset(resetSeqNo);
+    }
 
     gfxCriticalNote << "(nsWindow) Finished device reset.";
-
     return false;
   }
 

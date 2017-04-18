@@ -12,6 +12,7 @@
 #include "nsIIdleServiceInternal.h"
 #include "nsTArray.h"
 #include "AndroidJavaWrappers.h"
+#include "EventDispatcher.h"
 #include "GeneratedJNIWrappers.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/Mutex.h"
@@ -26,7 +27,6 @@ namespace mozilla {
     class WidgetTouchEvent;
 
     namespace layers {
-        class CompositorBridgeParent;
         class CompositorBridgeChild;
         class LayerManager;
         class APZCTreeManager;
@@ -96,6 +96,24 @@ private:
         void Detach();
     };
 
+    class AndroidView final : public nsIAndroidView
+    {
+        virtual ~AndroidView() {}
+
+    public:
+        const RefPtr<mozilla::widget::EventDispatcher> mEventDispatcher{
+            new mozilla::widget::EventDispatcher()};
+
+        AndroidView() {}
+
+        NS_DECL_ISUPPORTS
+        NS_DECL_NSIANDROIDVIEW
+
+        NS_FORWARD_NSIANDROIDEVENTDISPATCHER(mEventDispatcher->)
+    };
+
+    RefPtr<AndroidView> mAndroidView;
+
     class LayerViewSupport;
     // Object that implements native LayerView calls.
     // Owned by the Java LayerView instance.
@@ -138,64 +156,53 @@ public:
                                          const LayoutDeviceIntRect& aRect,
                                          nsWidgetInitData* aInitData) override;
     virtual void Destroy() override;
-    NS_IMETHOD ConfigureChildren(const nsTArray<nsIWidget::Configuration>&) override;
-    NS_IMETHOD SetParent(nsIWidget* aNewParent) override;
+    virtual nsresult ConfigureChildren(const nsTArray<nsIWidget::Configuration>&) override;
+    virtual void SetParent(nsIWidget* aNewParent) override;
     virtual nsIWidget *GetParent(void) override;
     virtual float GetDPI() override;
     virtual double GetDefaultScaleInternal() override;
-    NS_IMETHOD Show(bool aState) override;
+    virtual void Show(bool aState) override;
     virtual bool IsVisible() const override;
     virtual void ConstrainPosition(bool aAllowSlop,
                                    int32_t *aX,
                                    int32_t *aY) override;
-    NS_IMETHOD Move(double aX,
-                    double aY) override;
-    NS_IMETHOD Resize(double aWidth,
-                      double aHeight,
-                      bool   aRepaint) override;
-    NS_IMETHOD Resize(double aX,
-                      double aY,
-                      double aWidth,
-                      double aHeight,
-                      bool aRepaint) override;
+    virtual void Move(double aX,
+                      double aY) override;
+    virtual void Resize(double aWidth,
+                        double aHeight,
+                        bool   aRepaint) override;
+    virtual void Resize(double aX,
+                        double aY,
+                        double aWidth,
+                        double aHeight,
+                        bool aRepaint) override;
     void SetZIndex(int32_t aZIndex) override;
     virtual void SetSizeMode(nsSizeMode aMode) override;
-    NS_IMETHOD Enable(bool aState) override;
+    virtual void Enable(bool aState) override;
     virtual bool IsEnabled() const override;
-    NS_IMETHOD Invalidate(const LayoutDeviceIntRect& aRect) override;
-    NS_IMETHOD SetFocus(bool aRaise = false) override;
+    virtual void Invalidate(const LayoutDeviceIntRect& aRect) override;
+    virtual nsresult SetFocus(bool aRaise = false) override;
     virtual LayoutDeviceIntRect GetScreenBounds() override;
     virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
-    NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
-                             nsEventStatus& aStatus) override;
+    virtual nsresult DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
+                                   nsEventStatus& aStatus) override;
     nsEventStatus DispatchEvent(mozilla::WidgetGUIEvent* aEvent);
     virtual already_AddRefed<nsIScreen> GetWidgetScreen() override;
     virtual nsresult MakeFullScreen(bool aFullScreen,
                                     nsIScreen* aTargetScreen = nullptr)
                                     override;
 
-    NS_IMETHOD SetCursor(nsCursor aCursor) override { return NS_ERROR_NOT_IMPLEMENTED; }
-    NS_IMETHOD SetCursor(imgIContainer* aCursor,
-                         uint32_t aHotspotX,
-                         uint32_t aHotspotY) override { return NS_ERROR_NOT_IMPLEMENTED; }
-    NS_IMETHOD SetHasTransparentBackground(bool aTransparent) { return NS_OK; }
-    NS_IMETHOD GetHasTransparentBackground(bool& aTransparent) { aTransparent = false; return NS_OK; }
-    NS_IMETHOD HideWindowChrome(bool aShouldHide) override { return NS_ERROR_NOT_IMPLEMENTED; }
+    virtual void SetCursor(nsCursor aCursor) override {}
+    virtual nsresult SetCursor(imgIContainer* aCursor, uint32_t aHotspotX,
+                               uint32_t aHotspotY) override { return NS_ERROR_NOT_IMPLEMENTED; }
     void* GetNativeData(uint32_t aDataType) override;
     void SetNativeData(uint32_t aDataType, uintptr_t aVal) override;
-    NS_IMETHOD SetTitle(const nsAString& aTitle) override { return NS_OK; }
-    NS_IMETHOD SetIcon(const nsAString& aIconSpec) override { return NS_OK; }
-    NS_IMETHOD GetAttention(int32_t aCycleCount) override { return NS_ERROR_NOT_IMPLEMENTED; }
-    NS_IMETHOD BeginResizeDrag(mozilla::WidgetGUIEvent* aEvent,
-                               int32_t aHorizontal,
-                               int32_t aVertical) override
-    {
-        return NS_ERROR_NOT_IMPLEMENTED;
-    }
+    virtual nsresult SetTitle(const nsAString& aTitle) override { return NS_OK; }
+    virtual MOZ_MUST_USE nsresult GetAttention(int32_t aCycleCount) override { return NS_ERROR_NOT_IMPLEMENTED; }
 
-    NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
-                                      const InputContextAction& aAction) override;
-    NS_IMETHOD_(InputContext) GetInputContext() override;
+    virtual void SetInputContext(const InputContext& aContext,
+                                 const InputContextAction& aAction) override;
+    virtual InputContext GetInputContext() override;
     virtual nsIMEUpdatePreference GetIMEUpdatePreference() override;
 
     void SetSelectionDragState(bool aState);
@@ -231,7 +238,7 @@ public:
     nsresult SynthesizeNativeMouseMove(LayoutDeviceIntPoint aPoint,
                                        nsIObserver* aObserver) override;
 
-    CompositorBridgeParent* GetCompositorBridgeParent() const;
+    CompositorBridgeChild* GetCompositorBridgeChild() const;
 
     mozilla::jni::DependentRef<mozilla::java::GeckoLayerClient> GetLayerClient();
 
@@ -284,6 +291,8 @@ private:
     void RedrawAll();
 
     mozilla::java::LayerRenderer::Frame::GlobalRef mLayerRendererFrame;
+
+    int64_t GetRootLayerId() const;
 };
 
 #endif /* NSWINDOW_H_ */

@@ -11,9 +11,9 @@
 #include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsPIDOMWindow.h"
 
 class nsGlobalWindow;
+class nsIEventTarget;
 class nsIPrincipal;
 class nsITimeoutHandler;
 class nsITimer;
@@ -44,8 +44,19 @@ public:
   enum class Reason { eTimeoutOrInterval, eIdleCallbackTimeout };
 
 #ifdef DEBUG
-  bool HasRefCntOne() const;
+  bool HasRefCnt(uint32_t aCount) const;
 #endif // DEBUG
+
+  void SetWhenOrTimeRemaining(const TimeStamp& aBaseTime,
+                              const TimeDuration& aDelay);
+
+  void SetDummyWhen(const TimeStamp& aWhen);
+
+  // Can only be called when not frozen.
+  const TimeStamp& When() const;
+
+  // Can only be called when frozen.
+  const TimeDuration& TimeRemaining() const;
 
   // Window for which this timeout fires
   RefPtr<nsGlobalWindow> mWindow;
@@ -62,6 +73,9 @@ public:
   // True if this is a repeating/interval timer
   bool mIsInterval;
 
+  // True if this is a timeout coming from a tracking script
+  bool mIsTracking;
+
   Reason mReason;
 
   // Returned as value of setTimeout()
@@ -69,14 +83,6 @@ public:
 
   // Interval in milliseconds
   uint32_t mInterval;
-
-  // mWhen and mTimeRemaining can't be in a union, sadly, because they
-  // have constructors.
-  // Nominal time to run this timeout.  Use only when timeouts are not
-  // suspended.
-  TimeStamp mWhen;
-  // Remaining time to wait.  Used only when timeouts are suspended.
-  TimeDuration mTimeRemaining;
 
   // Principal with which to execute
   nsCOMPtr<nsIPrincipal> mPrincipal;
@@ -94,6 +100,14 @@ public:
   nsCOMPtr<nsITimeoutHandler> mScriptHandler;
 
 private:
+  // mWhen and mTimeRemaining can't be in a union, sadly, because they
+  // have constructors.
+  // Nominal time to run this timeout.  Use only when timeouts are not
+  // frozen.
+  TimeStamp mWhen;
+  // Remaining time to wait.  Used only when timeouts are frozen.
+  TimeDuration mTimeRemaining;
+
   ~Timeout();
 };
 

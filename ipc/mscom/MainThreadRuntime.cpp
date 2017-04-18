@@ -10,7 +10,6 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
-#include "mozilla/WindowsVersion.h"
 #include "nsDebug.h"
 #include "nsWindowsHelpers.h"
 
@@ -31,6 +30,9 @@ struct LocalFreeDeleter
 
 } // anonymous namespace
 
+// This API from oleaut32.dll is not declared in Windows SDK headers
+extern "C" void __cdecl SetOaNoCache(void);
+
 namespace mozilla {
 namespace mscom {
 
@@ -41,13 +43,6 @@ MainThreadRuntime::MainThreadRuntime()
   // cannot be configured once we start manipulating objects
   MOZ_ASSERT(mStaRegion.IsValidOutermost());
   if (NS_WARN_IF(!mStaRegion.IsValidOutermost())) {
-    return;
-  }
-
-  // Windows XP doesn't support setting of the COM exception policy, so we'll
-  // just stop here in that case.
-  if (!IsVistaOrLater()) {
-    mInitResult = S_OK;
     return;
   }
 
@@ -67,13 +62,13 @@ MainThreadRuntime::MainThreadRuntime()
     return;
   }
 
-  // Windows 7 has a policy that is even more strict. We should use that one
-  // whenever possible.
-  ULONG_PTR exceptionSetting = IsWin7OrLater() ?
-                               COMGLB_EXCEPTION_DONOT_HANDLE_ANY :
-                               COMGLB_EXCEPTION_DONOT_HANDLE;
-  mInitResult = globalOpts->Set(COMGLB_EXCEPTION_HANDLING, exceptionSetting);
+  // Disable COM's catch-all exception handler
+  mInitResult = globalOpts->Set(COMGLB_EXCEPTION_HANDLING,
+                                COMGLB_EXCEPTION_DONOT_HANDLE_ANY);
   MOZ_ASSERT(SUCCEEDED(mInitResult));
+
+  // Disable the BSTR cache (as it never invalidates, thus leaking memory)
+  ::SetOaNoCache();
 }
 
 HRESULT
@@ -177,4 +172,3 @@ MainThreadRuntime::InitializeSecurity()
 
 } // namespace mscom
 } // namespace mozilla
-

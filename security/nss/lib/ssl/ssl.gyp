@@ -63,9 +63,14 @@
             'NSS_SSL_ENABLE_ZLIB',
           ],
         }],
-        [ 'fuzz==1', {
+        [ 'fuzz_tls==1', {
           'defines': [
             'UNSAFE_FUZZER_MODE',
+          ],
+        }],
+        [ 'mozilla_client==1', {
+          'defines': [
+            'NSS_ENABLE_TLS13_SHORT_HEADERS',
           ],
         }],
       ],

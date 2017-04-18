@@ -151,12 +151,6 @@ class StringIteratorObject : public JSObject
     static const Class class_;
 };
 
-class ListIteratorObject : public JSObject
-{
-  public:
-    static const Class class_;
-};
-
 bool
 GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleObject objp);
 
@@ -188,6 +182,9 @@ CloseIterator(JSContext* cx, HandleObject iterObj);
 
 bool
 UnwindIteratorForException(JSContext* cx, HandleObject obj);
+
+bool
+IteratorCloseForException(JSContext* cx, HandleObject obj);
 
 void
 UnwindIteratorForUncatchableException(JSContext* cx, JSObject* obj);

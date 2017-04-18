@@ -258,14 +258,6 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
     }
   },
 
-  /**
-   * Since StyleSheetActor doesn't have a protocol.js parent actor that take
-   * care of its lifetime, implementing disconnect is required to cleanup.
-   */
-  disconnect: function () {
-    this.destroy();
-  },
-
   initialize: function (aStyleSheet, aParentActor, aWindow) {
     protocol.Actor.prototype.initialize.call(this, null);
 
@@ -334,12 +326,12 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
     let deferred = promise.defer();
 
     let onSheetLoaded = (event) => {
-      this.ownerNode.removeEventListener("load", onSheetLoaded, false);
+      this.ownerNode.removeEventListener("load", onSheetLoaded);
 
       deferred.resolve(this.rawSheet.cssRules);
     };
 
-    this.ownerNode.addEventListener("load", onSheetLoaded, false);
+    this.ownerNode.addEventListener("load", onSheetLoaded);
 
     // cache so we don't add many listeners if this is called multiple times.
     this._cssRules = deferred.promise;
@@ -449,6 +441,25 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
       return promise.resolve(content);
     }
 
+    return this.fetchStylesheet(this.href).then(({ content }) => {
+      this.text = content;
+      return content;
+    });
+  },
+
+  /**
+   * Fetch a stylesheet at the provided URL. Returns a promise that will resolve the
+   * result of the fetch command.
+   *
+   * @param  {String} href
+   *         The href of the stylesheet to retrieve.
+   * @return {Promise} a promise that resolves with an object with the following members
+   *         on success:
+   *           - content: the document at that URL, as a string,
+   *           - contentType: the content type of the document
+   *         If an error occurs, the promise is rejected with that error.
+   */
+  fetchStylesheet: Task.async(function* (href) {
     let options = {
       loadFromCache: true,
       policy: Ci.nsIContentPolicy.TYPE_INTERNAL_STYLESHEET,
@@ -459,19 +470,30 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
     // stylesheets instead of the content principal since such stylesheets
     // require system principal to load. At meanwhile, we strip the loadGroup
     // for preventing the assertion of the userContextId mismatching.
-    // The default internal stylesheets load from the 'resource:' URL.
-    // Bug 1287607, 1291321 - 'chrome' and 'file' protocols should also be handled in the
-    // same way.
-    if (!/^(chrome|file|resource):\/\//.test(this.href)) {
+
+    // chrome|file|resource|moz-extension protocols rely on the system principal.
+    let excludedProtocolsRe = /^(chrome|file|resource|moz-extension):\/\//;
+    if (!excludedProtocolsRe.test(this.href)) {
+      // Stylesheets using other protocols should use the content principal.
       options.window = this.window;
       options.principal = this.document.nodePrincipal;
     }
 
-    return fetch(this.href, options).then(({ content }) => {
-      this.text = content;
-      return content;
-    });
-  },
+    let result;
+    try {
+      result = yield fetch(this.href, options);
+    } catch (e) {
+      // The list of excluded protocols can be missing some protocols, try to use the
+      // system principal if the first fetch failed.
+      console.error(`stylesheets actor: fetch failed for ${this.href},` +
+        ` using system principal instead.`);
+      options.window = undefined;
+      options.principal = undefined;
+      result = yield fetch(this.href, options);
+    }
+
+    return result;
+  }),
 
   /**
    * Protocol method to get the original source (actors) for this
@@ -968,7 +990,7 @@ exports.StyleSheetsActor = StyleSheetsActor;
  * Normalize multiple relative paths towards the base paths on the right.
  */
 function normalize(...aURLs) {
-  let base = Services.io.newURI(aURLs.pop(), null, null);
+  let base = Services.io.newURI(aURLs.pop());
   let url;
   while ((url = aURLs.pop())) {
     base = Services.io.newURI(url, null, base);
@@ -978,5 +1000,5 @@ function normalize(...aURLs) {
 
 function dirname(aPath) {
   return Services.io.newURI(
-    ".", null, Services.io.newURI(aPath, null, null)).spec;
+    ".", null, Services.io.newURI(aPath)).spec;
 }

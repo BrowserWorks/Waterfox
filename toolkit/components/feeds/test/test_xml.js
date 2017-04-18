@@ -32,7 +32,7 @@ function FeedListener(testcase) {
 }
 
 FeedListener.prototype = {
-  handleResult: function(result) {
+  handleResult(result) {
     var feed = result.doc;
     try {
       do_print("Testing feed " + this.testcase.file.path);
@@ -56,7 +56,7 @@ function createTest(data) {
     var uri;
 
     if (data.base == null) {
-      uri = NetUtil.newURI('http://example.org/' + data.path);
+      uri = NetUtil.newURI("http://example.org/" + data.path);
     } else {
       uri = data.base;
     }

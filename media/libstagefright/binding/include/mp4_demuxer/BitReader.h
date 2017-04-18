@@ -5,10 +5,7 @@
 #ifndef BIT_READER_H_
 #define BIT_READER_H_
 
-#include "nsAutoPtr.h"
 #include "MediaData.h"
-
-namespace stagefright { class ABitReader; }
 
 namespace mp4_demuxer
 {
@@ -17,7 +14,8 @@ class BitReader
 {
 public:
   explicit BitReader(const mozilla::MediaByteBuffer* aBuffer);
-  BitReader(const uint8_t* aBuffer, size_t aLength);
+  BitReader(const mozilla::MediaByteBuffer* aBuffer, size_t aBits);
+  BitReader(const uint8_t* aBuffer, size_t aBits);
   ~BitReader();
   uint32_t ReadBits(size_t aNum);
   uint32_t ReadBit() { return ReadBits(1); }
@@ -34,10 +32,17 @@ public:
 
   // Return the number of bits parsed so far;
   size_t BitCount() const;
+  // Return the number of bits left.
+  size_t BitsLeft() const;
 
 private:
-  nsAutoPtr<stagefright::ABitReader> mBitReader;
-  const size_t mSize;
+  void FillReservoir();
+  const uint8_t* mData;
+  const size_t mOriginalBitSize;
+  size_t mTotalBitsLeft;
+  size_t mSize;           // Size left in bytes
+  uint32_t mReservoir;    // Left-aligned bits
+  size_t mNumBitsLeft;    // Number of bits left in reservoir.
 };
 
 } // namespace mp4_demuxer

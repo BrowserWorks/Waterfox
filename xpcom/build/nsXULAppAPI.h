@@ -12,7 +12,7 @@
 #include "nsXPCOM.h"
 #include "nsISupports.h"
 #include "mozilla/Logging.h"
-#include "nsXREAppData.h"
+#include "mozilla/XREAppData.h"
 #include "js/TypeDecls.h"
 
 #include "mozilla/ArrayUtils.h"
@@ -194,18 +194,18 @@
  *                  Windows, these should be in UTF8. On unix-like platforms
  *                  these are in the "native" character set.
  *
- * @param aAppData  Information about the application to be run.
- *
- * @param aFlags    Platform specific flags.
+ * @param aConfig  Information about the application to be run.
  *
  * @return         A native result code suitable for returning from main().
  *
  * @note           If the binary is linked against the standalone XPCOM glue,
  *                 XPCOMGlueStartup() should be called before this method.
  */
+namespace mozilla {
+struct BootstrapConfig;
+}
 XRE_API(int,
-        XRE_main, (int argc, char* argv[], const nsXREAppData* aAppData,
-                   uint32_t aFlags))
+        XRE_main, (int argc, char* argv[], const mozilla::BootstrapConfig& aConfig))
 
 /**
  * Given a path relative to the current working directory (or an absolute
@@ -362,18 +362,6 @@ XRE_API(void,
         XRE_TermEmbedding, ())
 
 /**
- * Create a new nsXREAppData structure from an application.ini file.
- *
- * @param aINIFile The application.ini file to parse.
- * @param aAppData A newly-allocated nsXREAppData structure. The caller is
- *                 responsible for freeing this structure using
- *                 XRE_FreeAppData.
- */
-XRE_API(nsresult,
-        XRE_CreateAppData, (nsIFile* aINIFile,
-                            nsXREAppData** aAppData))
-
-/**
  * Parse an INI file (application.ini or override.ini) into an existing
  * nsXREAppData structure.
  *
@@ -382,13 +370,7 @@ XRE_API(nsresult,
  */
 XRE_API(nsresult,
         XRE_ParseAppData, (nsIFile* aINIFile,
-                           nsXREAppData* aAppData))
-
-/**
- * Free a nsXREAppData structure that was allocated with XRE_CreateAppData.
- */
-XRE_API(void,
-        XRE_FreeAppData, (nsXREAppData* aAppData))
+                           mozilla::XREAppData& aAppData))
 
 enum GeckoProcessType
 {
@@ -422,6 +404,11 @@ static_assert(MOZ_ARRAY_LENGTH(kGeckoProcessTypeString) ==
 
 XRE_API(const char*,
         XRE_ChildProcessTypeToString, (GeckoProcessType aProcessType))
+
+#if defined(MOZ_WIDGET_ANDROID)
+XRE_API(void,
+        XRE_SetAndroidChildFds, (int crashFd, int ipcFd))
+#endif // defined(MOZ_WIDGET_ANDROID)
 
 XRE_API(void,
         XRE_SetProcessType, (const char* aProcessTypeString))
@@ -528,11 +515,8 @@ XRE_API(void,
 #include "LibFuzzerRegistry.h"
 
 XRE_API(void,
-        XRE_LibFuzzerSetMain, (int, char**, LibFuzzerMain))
+        XRE_LibFuzzerSetDriver, (LibFuzzerDriver))
 
-XRE_API(void,
-        XRE_LibFuzzerGetFuncs, (const char*, LibFuzzerInitFunc*,
-                                LibFuzzerTestingFunc*))
 #endif // LIBFUZZER
 
 #endif // _nsXULAppAPI_h__

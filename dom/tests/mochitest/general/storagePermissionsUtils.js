@@ -26,9 +26,7 @@ if (inFrame) {
 }
 
 function setCookieBehavior(behavior) {
-    return new Promise((resolve, reject) => {
-        SpecialPowers.pushPrefEnv({"set": [[kPrefName, behavior]]}, resolve);
-    });
+  return SpecialPowers.pushPrefEnv({"set": [[kPrefName, behavior]]});
 }
 
 function runIFrame(url) {
@@ -42,7 +40,7 @@ function runIFrame(url) {
 
       ok(!e.data.match(/^FAILURE/), e.data + " (IFRAME = " + url + ")");
     }
-    window.addEventListener('message', onMessage, false);
+    window.addEventListener('message', onMessage);
 
     document.querySelector('iframe').src = url;
   });

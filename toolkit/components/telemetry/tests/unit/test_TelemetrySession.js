@@ -98,13 +98,13 @@ function sendPing() {
 }
 
 function fakeGenerateUUID(sessionFunc, subsessionFunc) {
-  let session = Cu.import("resource://gre/modules/TelemetrySession.jsm");
+  let session = Cu.import("resource://gre/modules/TelemetrySession.jsm", {});
   session.Policy.generateSessionUUID = sessionFunc;
   session.Policy.generateSubsessionUUID = subsessionFunc;
 }
 
 function fakeIdleNotification(topic) {
-  let session = Cu.import("resource://gre/modules/TelemetrySession.jsm");
+  let session = Cu.import("resource://gre/modules/TelemetrySession.jsm", {});
   return session.TelemetryScheduler.observe(null, topic, null);
 }
 
@@ -132,7 +132,7 @@ function getSavedPingFile(basename) {
   if (pingFile.exists()) {
     pingFile.remove(true);
   }
-  do_register_cleanup(function () {
+  do_register_cleanup(function() {
     try {
       pingFile.remove(true);
     } catch (e) {
@@ -236,8 +236,8 @@ function checkPayloadInfo(data) {
 
   Assert.ok(Date.parse(data.subsessionStartDate) >= Date.parse(data.sessionStartDate));
   Assert.ok(data.profileSubsessionCounter >= data.subsessionCounter);
-  Assert.ok(data.timezoneOffset >= -12*60, "The timezone must be in a valid range.");
-  Assert.ok(data.timezoneOffset <= 12*60, "The timezone must be in a valid range.");
+  Assert.ok(data.timezoneOffset >= -12 * 60, "The timezone must be in a valid range.");
+  Assert.ok(data.timezoneOffset <= 12 * 60, "The timezone must be in a valid range.");
 }
 
 function checkScalars(processes) {
@@ -274,7 +274,7 @@ function checkScalars(processes) {
   const scalars = parentProcess.scalars;
   for (let name in scalars) {
     Assert.equal(typeof name, "string", "Scalar names must be strings.");
-    checkScalar(scalar[name]);
+    checkScalar(scalars [name]);
   }
 
   // Check that we have valid keyed scalar entries.
@@ -286,7 +286,7 @@ function checkScalars(processes) {
     for (let key in keyedScalars[name]) {
       Assert.equal(typeof key, "string", "Keyed scalar keys must be strings.");
       Assert.ok(key.length <= 70, "Keyed scalar keys can't have more than 70 characters.");
-      checkScalar(scalar[name][key]);
+      checkScalar(scalars[name][key]);
     }
   }
 }
@@ -427,8 +427,8 @@ function checkPayload(payload, reason, successfulPings, savedPings) {
   // Telemetry doesn't touch a memory reporter with these units that's
   // available on all platforms.
 
-  Assert.ok('MEMORY_JS_GC_HEAP' in payload.histograms); // UNITS_BYTES
-  Assert.ok('MEMORY_JS_COMPARTMENTS_SYSTEM' in payload.histograms); // UNITS_COUNT
+  Assert.ok("MEMORY_JS_GC_HEAP" in payload.histograms); // UNITS_BYTES
+  Assert.ok("MEMORY_JS_COMPARTMENTS_SYSTEM" in payload.histograms); // UNITS_COUNT
 
   // We should have included addon histograms.
   Assert.ok("addonHistograms" in payload);
@@ -716,6 +716,9 @@ add_task(function* test_checkSubsessionEvents() {
   Telemetry.clearEvents();
   yield TelemetryController.testReset();
 
+  // Enable recording for the test events.
+  Telemetry.setEventRecordingEnabled("telemetry.test", true);
+
   // Record some events.
   let expected = [
     ["telemetry.test", "test1", "object1", "a", null],
@@ -796,7 +799,7 @@ add_task(function* test_checkSubsessionHistograms() {
   // "classic" histograms. However, histograms can change
   // between us collecting the different payloads, so we only
   // check for deep equality on known stable histograms.
-  checkHistograms = (classic, subsession) => {
+  let checkHistograms = (classic, subsession) => {
     for (let id of Object.keys(classic)) {
       if (!registeredIds.has(id)) {
         continue;
@@ -814,7 +817,7 @@ add_task(function* test_checkSubsessionHistograms() {
   };
 
   // Same as above, except for keyed histograms.
-  checkKeyedHistograms = (classic, subsession) => {
+  let checkKeyedHistograms = (classic, subsession) => {
     for (let id of Object.keys(classic)) {
       if (!registeredIds.has(id)) {
         continue;
@@ -953,7 +956,7 @@ add_task(function* test_checkSubsessionData() {
   let activeTicksAtSubsessionStart = sessionRecorder.activeTicks;
   let expectedActiveTicks = activeTicksAtSubsessionStart;
 
-  incrementActiveTicks = () => {
+  let incrementActiveTicks = () => {
     sessionRecorder.incrementActiveTicks();
     ++expectedActiveTicks;
   }
@@ -1269,9 +1272,83 @@ add_task(function* test_environmentChange() {
 
   Assert.equal(ping.payload.histograms[COUNT_ID].sum, 0);
   Assert.ok(!(KEYED_ID in ping.payload.keyedHistograms));
+
+  yield TelemetryController.testShutdown();
+});
+
+add_task(function* test_experimentAnnotations_subsession() {
+  if (gIsAndroid) {
+    // We don't split subsessions on environment changes yet on Android.
+    return;
+  }
+
+  const EXPERIMENT1 = "experiment-1";
+  const EXPERIMENT1_BRANCH = "nice-branch";
+  const EXPERIMENT2 = "experiment-2";
+  const EXPERIMENT2_BRANCH = "other-branch";
+
+  yield TelemetryStorage.testClearPendingPings();
+  PingServer.clearRequests();
+
+  let now = fakeNow(2040, 1, 1, 12, 0, 0);
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
+
+  // Setup.
+  yield TelemetryController.testReset();
+  TelemetrySend.setServer("http://localhost:" + PingServer.port);
+  Assert.equal(TelemetrySession.getPayload().info.subsessionCounter, 1);
+
+  // Trigger a subsession split with a telemetry annotation.
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
+  let futureTestDate = futureDate(now, 10 * MILLISECONDS_PER_MINUTE);
+  now = fakeNow(futureTestDate);
+  TelemetryEnvironment.setExperimentActive(EXPERIMENT1, EXPERIMENT1_BRANCH);
+
+  let ping = yield PingServer.promiseNextPing();
+  Assert.ok(!!ping, "A ping must be received.");
+
+  Assert.equal(ping.type, PING_TYPE_MAIN, "The received ping must be a 'main' ping.");
+  Assert.equal(ping.payload.info.reason, REASON_ENVIRONMENT_CHANGE,
+               "The 'main' ping must be triggered by a change in the environment.");
+  // We expect the current experiments to be reported in the next ping, not this
+  // one.
+  Assert.ok(!("experiments" in ping.environment),
+            "The old environment must contain no active experiments.");
+  // Since this change wasn't throttled, the subsession counter must increase.
+  Assert.equal(TelemetrySession.getPayload().info.subsessionCounter, 2,
+               "The experiment annotation must trigger a new subsession.");
+
+  // Add another annotation to the environment. We're not advancing the fake
+  // timer, so no subsession split should happen due to throttling.
+  TelemetryEnvironment.setExperimentActive(EXPERIMENT2, EXPERIMENT2_BRANCH);
+  Assert.equal(TelemetrySession.getPayload().info.subsessionCounter, 2,
+               "The experiment annotation must not trigger a new subsession " +
+               "if throttling happens.");
+  let oldExperiments = TelemetryEnvironment.getActiveExperiments();
+
+  // Fake the timer and remove an annotation, we expect a new subsession split.
+  gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
+  now = fakeNow(futureDate(now, 10 * MILLISECONDS_PER_MINUTE));
+  TelemetryEnvironment.setExperimentInactive(EXPERIMENT1, EXPERIMENT1_BRANCH);
+
+  ping = yield PingServer.promiseNextPing();
+  Assert.ok(!!ping, "A ping must be received.");
+
+  Assert.equal(ping.type, PING_TYPE_MAIN, "The received ping must be a 'main' ping.");
+  Assert.equal(ping.payload.info.reason, REASON_ENVIRONMENT_CHANGE,
+               "The 'main' ping must be triggered by a change in the environment.");
+  // We expect both experiments to be in this environment.
+  Assert.deepEqual(ping.environment.experiments, oldExperiments,
+                   "The environment must contain both the experiments.");
+  Assert.equal(TelemetrySession.getPayload().info.subsessionCounter, 3,
+               "The removing an experiment annotation must trigger a new subsession.");
+
+  yield TelemetryController.testShutdown();
 });
 
 add_task(function* test_savedPingsOnShutdown() {
+  yield TelemetryController.testReset();
+
   // On desktop, we expect both "saved-session" and "shutdown" pings. We only expect
   // the former on Android.
   const expectedPingCount = (gIsAndroid) ? 1 : 2;

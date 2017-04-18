@@ -200,6 +200,23 @@ public:
   static bool     ThreadsafeIsCallerChrome();
   static bool     IsCallerContentXBL();
 
+  // The APIs for checking whether the caller is system (in the sense of system
+  // principal) should only be used when the JSContext is known to accurately
+  // represent the caller.  In practice, that means you should only use them in
+  // two situations at the moment:
+  //
+  // 1) Functions used in WebIDL Func annotations.
+  // 2) Bindings code or other code called directly from the JS engine.
+  //
+  // Use pretty much anywhere else is almost certainly wrong and should be
+  // replaced with [NeedsCallerType] annotations in bindings.
+
+  // Check whether the caller is system if you know you're on the main thread.
+  static bool IsSystemCaller(JSContext* aCx);
+
+  // Check whether the caller is system if you might be on a worker thread.
+  static bool ThreadsafeIsSystemCaller(JSContext* aCx);
+
   // In the traditional Gecko architecture, both C++ code and untrusted JS code
   // needed to rely on the same XPCOM method/getter/setter to get work done.
   // This required lots of security checks in the various exposed methods, which
@@ -788,13 +805,13 @@ public:
   /**
    * Returns origin attributes of the document.
    **/
-  static mozilla::PrincipalOriginAttributes
+  static mozilla::OriginAttributes
   GetOriginAttributes(nsIDocument* aDoc);
 
   /**
    * Returns origin attributes of the load group.
    **/
-  static mozilla::PrincipalOriginAttributes
+  static mozilla::OriginAttributes
   GetOriginAttributes(nsILoadGroup* aLoadGroup);
 
   /**
@@ -1010,14 +1027,20 @@ public:
   static bool IsChildOfSameType(nsIDocument* aDoc);
 
   /**
-  '* Returns true if the content-type is any of the supported script types.
+   * Returns true if the content-type is any of the supported script types.
    */
   static bool IsScriptType(const nsACString& aContentType);
 
   /**
-  '* Returns true if the content-type will be rendered as plain-text.
+   * Returns true if the content-type will be rendered as plain-text.
    */
   static bool IsPlainTextType(const nsACString& aContentType);
+
+  /**
+   * Returns true iff the type is rendered as plain text and doesn't support
+   * non-UTF-8 encodings.
+   */
+  static bool IsUtf8OnlyPlainTextType(const nsACString& aContentType);
 
   /**
    * Get the script file name to use when compiling the script
@@ -2060,16 +2083,6 @@ public:
   }
 
   /*
-   * Returns true if the browser should attempt to prevent content scripts
-   * from collecting distinctive information about the browser that could
-   * be used to "fingerprint" and track the user across websites.
-   */
-  static bool ResistFingerprinting()
-  {
-    return sPrivacyResistFingerprinting;
-  }
-
-  /*
    * Returns true if the browser should attempt to prevent the given caller type
    * from collecting distinctive information about the browser that could
    * be used to "fingerprint" and track the user across websites.
@@ -2077,7 +2090,7 @@ public:
   static bool ResistFingerprinting(mozilla::dom::CallerType aCallerType)
   {
     return aCallerType != mozilla::dom::CallerType::System &&
-           ResistFingerprinting();
+           sPrivacyResistFingerprinting;
   }
 
   /**
@@ -2562,7 +2575,7 @@ public:
    * Synthesize a mouse event to the given widget
    * (see nsIDOMWindowUtils.sendMouseEvent).
    */
-  static nsresult SendMouseEvent(nsCOMPtr<nsIPresShell> aPresShell,
+  static nsresult SendMouseEvent(const nsCOMPtr<nsIPresShell>& aPresShell,
                                  const nsAString& aType,
                                  float aX,
                                  float aY,
@@ -2573,6 +2586,7 @@ public:
                                  bool aIgnoreRootScrollFrame,
                                  float aPressure,
                                  unsigned short aInputSourceArg,
+                                 uint32_t aIdentifier,
                                  bool aToWindow,
                                  bool *aPreventDefault,
                                  bool aIsDOMEventSynthesized,
@@ -2718,6 +2732,26 @@ public:
                                  JS::MutableHandle<JSObject*> prototype);
 
   static bool AttemptLargeAllocationLoad(nsIHttpChannel* aChannel);
+
+  /**
+   * Appends all "document level" native anonymous content subtree roots for
+   * aDocument to aElements.  Document level NAC subtrees are those created
+   * by ancestor frames of the document element's primary frame, such as
+   * the scrollbar elements created by the root scroll frame.
+   */
+  static void AppendDocumentLevelNativeAnonymousContentTo(
+      nsIDocument* aDocument,
+      nsTArray<nsIContent*>& aElements);
+
+  /**
+   * Returns the content policy type that should be used for loading images
+   * for displaying in the UI.  The sources of such images can be <xul:image>,
+   * <xul:menuitem> on OSX where we load the image through nsMenuItemIconX, etc.
+   */
+  static void
+  GetContentPolicyTypeForUIImageLoading(nsIContent* aLoadingNode,
+                                        nsIPrincipal** aLoadingPrincipal,
+                                        nsContentPolicyType& aContentPolicyType);
 
 private:
   static bool InitializeEventTable();

@@ -11,11 +11,162 @@
 #include "mp4_demuxer/H264.h"
 #include <media/stagefright/foundation/ABitReader.h>
 #include <limits>
+#include <cmath>
+
+#define READSE(var, min, max)                                                  \
+  {                                                                            \
+    int32_t val = br.ReadSE();                                                 \
+    if (val < min || val > max) {                                              \
+      return false;                                                            \
+    }                                                                          \
+    aDest.var = val;                                                           \
+  }
+
+#define READUE(var, max)                                                       \
+  {                                                                            \
+    uint32_t uval = br.ReadUE();                                               \
+    if (uval > max) {                                                          \
+      return false;                                                            \
+    }                                                                          \
+    aDest.var = uval;                                                          \
+  }
 
 using namespace mozilla;
 
-namespace mp4_demuxer
+namespace mp4_demuxer {
+
+// Default scaling lists (per spec).
+// ITU H264:
+// Table 7-2 – Assignment of mnemonic names to scaling list indices and
+// specification of fall-back rule
+static const uint8_t Default_4x4_Intra[16] = {
+    6, 13, 13, 20,
+   20, 20, 28, 28,
+   28, 28, 32, 32,
+   32, 37, 37, 42
+};
+
+static const uint8_t Default_4x4_Inter[16] = {
+   10, 14, 14, 20,
+   20, 20, 24, 24,
+   24, 24, 27, 27,
+   27, 30, 30, 34
+};
+
+static const uint8_t Default_8x8_Intra[64] = {
+    6, 10, 10, 13, 11, 13, 16, 16,
+   16, 16, 18, 18, 18, 18, 18, 23,
+   23, 23, 23, 23, 23, 25, 25, 25,
+   25, 25, 25, 25, 27, 27, 27, 27,
+   27, 27, 27, 27, 29, 29, 29, 29,
+   29, 29, 29, 31, 31, 31, 31, 31,
+   31, 33, 33, 33, 33, 33, 36, 36,
+   36, 36, 38, 38, 38, 40, 40, 42
+};
+
+static const uint8_t Default_8x8_Inter[64] = {
+    9, 13, 13, 15, 13, 15, 17, 17,
+   17, 17, 19, 19, 19, 19, 19, 21,
+   21, 21, 21, 21, 21, 22, 22, 22,
+   22, 22, 22, 22, 24, 24, 24, 24,
+   24, 24, 24, 24, 25, 25, 25, 25,
+   25, 25, 25, 27, 27, 27, 27, 27,
+   27, 28, 28, 28, 28, 28, 30, 30,
+   30, 30, 32, 32, 32, 33, 33, 35
+};
+
+namespace detail {
+static void
+scaling_list(BitReader& aBr, uint8_t* aScalingList, int aSizeOfScalingList,
+             const uint8_t* aDefaultList, const uint8_t* aFallbackList)
 {
+  int32_t lastScale = 8;
+  int32_t nextScale = 8;
+  int32_t deltaScale;
+
+  // (pic|seq)_scaling_list_present_flag[i]
+  if (!aBr.ReadBit()) {
+    if (aFallbackList) {
+      memcpy(aScalingList, aFallbackList, aSizeOfScalingList);
+    }
+    return;
+  }
+
+  for (int i = 0; i < aSizeOfScalingList; i++) {
+    if (nextScale != 0) {
+      deltaScale = aBr.ReadSE();
+      nextScale = (lastScale + deltaScale + 256) % 256;
+      if (!i && !nextScale) {
+        memcpy(aScalingList, aDefaultList, aSizeOfScalingList);
+        return;
+      }
+    }
+    aScalingList[i] = (nextScale == 0) ? lastScale : nextScale;
+    lastScale = aScalingList[i];
+  }
+}
+} // namespace detail.
+
+template <size_t N>
+static void
+scaling_list(BitReader& aBr, uint8_t (&aScalingList)[N],
+             const uint8_t (&aDefaultList)[N], const uint8_t (&aFallbackList)[N])
+{
+  detail::scaling_list(aBr, aScalingList, N, aDefaultList, aFallbackList);
+}
+
+template <size_t N>
+static void
+scaling_list(BitReader& aBr, uint8_t (&aScalingList)[N], const uint8_t (&aDefaultList)[N])
+{
+  detail::scaling_list(aBr, aScalingList, N, aDefaultList, nullptr);
+}
+
+static uint32_t
+GetBitLength(const mozilla::MediaByteBuffer* aNAL)
+{
+  size_t size = aNAL->Length();
+
+  while (size > 0 && aNAL->ElementAt(size - 1) == 0) {
+    size--;
+  }
+
+  if (!size) {
+    return 0;
+  }
+
+  if (size > UINT32_MAX / 8) {
+    // We can't represent it, we'll use as much as we can.
+    return UINT32_MAX;
+  }
+
+  uint8_t v = aNAL->ElementAt(size - 1);
+  size *= 8;
+
+  // Remove the stop bit and following trailing zeros.
+  if (v) {
+    // Count the consecutive zero bits (trailing) on the right by binary search.
+    // Adapted from Matt Whitlock algorithm to only bother with 8 bits integers.
+    uint32_t c;
+    if (v & 1) {
+      // Special case for odd v (assumed to happen half of the time).
+      c = 0;
+    } else {
+      c = 1;
+      if ((v & 0xf) == 0) {
+        v >>= 4;
+        c += 4;
+      }
+      if ((v & 0x3) == 0) {
+        v >>= 2;
+        c += 2;
+      }
+      c -= v & 0x1;
+    }
+    size -= c + 1;
+  }
+  return size;
+}
 
 SPSData::SPSData()
 {
@@ -26,7 +177,30 @@ SPSData::SPSData()
   colour_primaries = 2;
   transfer_characteristics = 2;
   sample_ratio = 1.0;
+  memset(scaling_matrix4x4, 16, sizeof(scaling_matrix4x4));
+  memset(scaling_matrix8x8, 16, sizeof(scaling_matrix8x8));
 }
+
+PPSData::PPSData()
+{
+  PodZero(this);
+  memset(scaling_matrix4x4, 16, sizeof(scaling_matrix4x4));
+  memset(scaling_matrix8x8, 16, sizeof(scaling_matrix8x8));
+}
+
+const uint8_t H264::ZZ_SCAN[16] = { 0,  1,  4,  8,
+                                    5,  2,  3,  6,
+                                    9, 12, 13, 10,
+                                    7, 11, 14, 15 };
+
+const uint8_t H264::ZZ_SCAN8[64] = {  0,  1,  8, 16,  9,  2,  3, 10,
+                                     17, 24, 32, 25, 18, 11,  4,  5,
+                                     12, 19, 26, 33, 40, 48, 41, 34,
+                                     27, 20, 13,  6,  7, 14, 21, 28,
+                                     35, 42, 49, 56, 57, 50, 43, 36,
+                                     29, 22, 15, 23, 30, 37, 44, 51,
+                                     58, 59, 52, 45, 38, 31, 39, 46,
+                                     53, 60, 61, 54, 47, 55, 62, 63 };
 
 /* static */ already_AddRefed<mozilla::MediaByteBuffer>
 H264::DecodeNALUnit(const mozilla::MediaByteBuffer* aNAL)
@@ -41,10 +215,12 @@ H264::DecodeNALUnit(const mozilla::MediaByteBuffer* aNAL)
   ByteReader reader(aNAL);
   uint8_t nal_unit_type = reader.ReadU8() & 0x1f;
   uint32_t nalUnitHeaderBytes = 1;
-  if (nal_unit_type == 14 || nal_unit_type == 20 || nal_unit_type == 21) {
+  if (nal_unit_type == H264_NAL_PREFIX ||
+      nal_unit_type == H264_NAL_SLICE_EXT ||
+      nal_unit_type == H264_NAL_SLICE_EXT_DVC) {
     bool svc_extension_flag = false;
     bool avc_3d_extension_flag = false;
-    if (nal_unit_type != 21) {
+    if (nal_unit_type != H264_NAL_SLICE_EXT_DVC) {
       svc_extension_flag = reader.PeekU8() & 0x80;
     } else {
       avc_3d_extension_flag = reader.PeekU8() & 0x80;
@@ -89,11 +265,7 @@ H264::DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest)
   if (!aSPS) {
     return false;
   }
-  BitReader br(aSPS);
-
-  int32_t lastScale;
-  int32_t nextScale;
-  int32_t deltaScale;
+  BitReader br(aSPS, GetBitLength(aSPS));
 
   aDest.profile_idc = br.ReadBits(8);
   aDest.constraint_set0_flag = br.ReadBit();
@@ -104,48 +276,67 @@ H264::DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest)
   aDest.constraint_set5_flag = br.ReadBit();
   br.ReadBits(2); // reserved_zero_2bits
   aDest.level_idc = br.ReadBits(8);
-  aDest.seq_parameter_set_id = br.ReadUE();
+  READUE(seq_parameter_set_id, MAX_SPS_COUNT - 1);
+
   if (aDest.profile_idc == 100 || aDest.profile_idc == 110 ||
       aDest.profile_idc == 122 || aDest.profile_idc == 244 ||
       aDest.profile_idc == 44 || aDest.profile_idc == 83 ||
-     aDest.profile_idc == 86 || aDest.profile_idc == 118 ||
+      aDest.profile_idc == 86 || aDest.profile_idc == 118 ||
       aDest.profile_idc == 128 || aDest.profile_idc == 138 ||
       aDest.profile_idc == 139 || aDest.profile_idc == 134) {
-    if ((aDest.chroma_format_idc = br.ReadUE()) == 3) {
+    READUE(chroma_format_idc, 3);
+    if (aDest.chroma_format_idc == 3) {
       aDest.separate_colour_plane_flag = br.ReadBit();
     }
-    br.ReadUE();  // bit_depth_luma_minus8
-    br.ReadUE();  // bit_depth_chroma_minus8
-    br.ReadBit(); // qpprime_y_zero_transform_bypass_flag
-    if (br.ReadBit()) { // seq_scaling_matrix_present_flag
-      for (int idx = 0; idx < ((aDest.chroma_format_idc != 3) ? 8 : 12); ++idx) {
-        if (br.ReadBit()) { // Scaling list present
-          lastScale = nextScale = 8;
-          int sl_n = (idx < 6) ? 16 : 64;
-          for (int sl_i = 0; sl_i < sl_n; sl_i++) {
-            if (nextScale) {
-              deltaScale = br.ReadSE();
-              nextScale = (lastScale + deltaScale + 256) % 256;
-            }
-            lastScale = (nextScale == 0) ? lastScale : nextScale;
-          }
-        }
+    READUE(bit_depth_luma_minus8, 6);
+    READUE(bit_depth_chroma_minus8, 6);
+    br.ReadBit();       // qpprime_y_zero_transform_bypass_flag
+    aDest.seq_scaling_matrix_present_flag = br.ReadBit();
+    if (aDest.seq_scaling_matrix_present_flag) {
+      scaling_list(br, aDest.scaling_matrix4x4[0], Default_4x4_Intra,
+                   Default_4x4_Intra);
+      scaling_list(br, aDest.scaling_matrix4x4[1], Default_4x4_Intra,
+                   aDest.scaling_matrix4x4[0]);
+      scaling_list(br, aDest.scaling_matrix4x4[2], Default_4x4_Intra,
+                   aDest.scaling_matrix4x4[1]);
+      scaling_list(br, aDest.scaling_matrix4x4[3], Default_4x4_Inter,
+                   Default_4x4_Inter);
+      scaling_list(br, aDest.scaling_matrix4x4[4], Default_4x4_Inter,
+                   aDest.scaling_matrix4x4[3]);
+      scaling_list(br, aDest.scaling_matrix4x4[5], Default_4x4_Inter,
+                   aDest.scaling_matrix4x4[4]);
+
+      scaling_list(br, aDest.scaling_matrix8x8[0], Default_8x8_Intra,
+                   Default_8x8_Intra);
+      scaling_list(br, aDest.scaling_matrix8x8[1], Default_8x8_Inter,
+                   Default_8x8_Inter);
+      if (aDest.chroma_format_idc == 3) {
+        scaling_list(br, aDest.scaling_matrix8x8[2], Default_8x8_Intra,
+                     aDest.scaling_matrix8x8[0]);
+        scaling_list(br, aDest.scaling_matrix8x8[3], Default_8x8_Inter,
+                     aDest.scaling_matrix8x8[1]);
+        scaling_list(br, aDest.scaling_matrix8x8[4], Default_8x8_Intra,
+                     aDest.scaling_matrix8x8[2]);
+        scaling_list(br, aDest.scaling_matrix8x8[5], Default_8x8_Inter,
+                     aDest.scaling_matrix8x8[3]);
       }
     }
   } else if (aDest.profile_idc == 183) {
-      aDest.chroma_format_idc = 0;
+    aDest.chroma_format_idc = 0;
   } else {
     // default value if chroma_format_idc isn't set.
     aDest.chroma_format_idc = 1;
   }
-  aDest.log2_max_frame_num = br.ReadUE() + 4;
-  aDest.pic_order_cnt_type = br.ReadUE();
+  READUE(log2_max_frame_num, 12);
+  aDest.log2_max_frame_num += 4;
+  READUE(pic_order_cnt_type, 2);
   if (aDest.pic_order_cnt_type == 0) {
-    aDest.log2_max_pic_order_cnt_lsb = br.ReadUE() + 4;
+    READUE(log2_max_pic_order_cnt_lsb, 12);
+    aDest.log2_max_pic_order_cnt_lsb += 4;
   } else if (aDest.pic_order_cnt_type == 1) {
     aDest.delta_pic_order_always_zero_flag = br.ReadBit();
-    aDest.offset_for_non_ref_pic = br.ReadSE();
-    aDest.offset_for_top_to_bottom_field = br.ReadSE();
+    READSE(offset_for_non_ref_pic, -231, 230);
+    READSE(offset_for_top_to_bottom_field, -231, 230);
     uint32_t num_ref_frames_in_pic_order_cnt_cycle = br.ReadUE();
     for (uint32_t i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++) {
       br.ReadSE(); // offset_for_ref_frame[i]
@@ -160,7 +351,7 @@ H264::DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest)
     aDest.pic_height_in_map_units *= 2;
     aDest.mb_adaptive_frame_field_flag = br.ReadBit();
   }
-  br.ReadBit(); // direct_8x8_inference_flag
+  aDest.direct_8x8_inference_flag = br.ReadBit();
   aDest.frame_cropping_flag = br.ReadBit();
   if (aDest.frame_cropping_flag) {
     aDest.frame_crop_left_offset = br.ReadUE();
@@ -172,7 +363,9 @@ H264::DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest)
   aDest.sample_ratio = 1.0f;
   aDest.vui_parameters_present_flag = br.ReadBit();
   if (aDest.vui_parameters_present_flag) {
-    vui_parameters(br, aDest);
+    if (!vui_parameters(br, aDest)) {
+      return false;
+    }
   }
 
   // Calculate common values.
@@ -231,7 +424,7 @@ H264::DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest)
   return true;
 }
 
-/* static */ void
+/* static */ bool
 H264::vui_parameters(BitReader& aBr, SPSData& aDest)
 {
   aDest.aspect_ratio_info_present_flag = aBr.ReadBit();
@@ -240,7 +433,7 @@ H264::vui_parameters(BitReader& aBr, SPSData& aDest)
     aDest.sar_width = aDest.sar_height = 0;
 
     // From E.2.1 VUI parameters semantics (ITU-T H.264 02/2014)
-    switch (aDest.aspect_ratio_idc)  {
+    switch (aDest.aspect_ratio_idc) {
       case 0:
         // Unspecified
         break;
@@ -368,7 +561,7 @@ H264::vui_parameters(BitReader& aBr, SPSData& aDest)
         break;
       case 255:
         /* Extended_SAR */
-        aDest.sar_width  = aBr.ReadBits(16);
+        aDest.sar_width = aBr.ReadBits(16);
         aDest.sar_height = aBr.ReadBits(16);
         if (aDest.sar_width && aDest.sar_height) {
           aDest.sample_ratio = float(aDest.sar_width) / float(aDest.sar_height);
@@ -396,20 +589,43 @@ H264::vui_parameters(BitReader& aBr, SPSData& aDest)
 
   aDest.chroma_loc_info_present_flag = aBr.ReadBit();
   if (aDest.chroma_loc_info_present_flag) {
-    aDest.chroma_sample_loc_type_top_field = aBr.ReadUE();
-    aDest.chroma_sample_loc_type_bottom_field = aBr.ReadUE();
+    BitReader& br = aBr; // so that macro READUE works
+    READUE(chroma_sample_loc_type_top_field, 5);
+    READUE(chroma_sample_loc_type_bottom_field, 5);
   }
 
   aDest.timing_info_present_flag = aBr.ReadBit();
-  if (aDest.timing_info_present_flag ) {
+  if (aDest.timing_info_present_flag) {
     aDest.num_units_in_tick = aBr.ReadBits(32);
     aDest.time_scale = aBr.ReadBits(32);
     aDest.fixed_frame_rate_flag = aBr.ReadBit();
   }
+  return true;
 }
 
 /* static */ bool
-H264::DecodeSPSFromExtraData(const mozilla::MediaByteBuffer* aExtraData, SPSData& aDest)
+H264::DecodeSPSFromExtraData(const mozilla::MediaByteBuffer* aExtraData,
+                             SPSData& aDest)
+{
+  H264ParametersSet ps;
+  if (!DecodeSPSDataSetFromExtraData(aExtraData, ps.SPSes)) {
+    return false;
+  }
+
+  uint16_t spsId = 0;
+  if (DecodePPSDataSetFromExtraData(aExtraData, ps.SPSes, ps.PPSes)) {
+    // We can't know which PPS is in use without parsing slice header if we
+    // have multiple PPSes, so we always use the first one.
+    spsId = ps.PPSes[0].seq_parameter_set_id;
+  }
+
+  aDest = Move(ps.SPSes[spsId]);
+  return true;
+}
+
+/* static */ bool
+H264::DecodeSPSDataSetFromExtraData(const mozilla::MediaByteBuffer* aExtraData,
+                                    SPSDataSet& aDest)
 {
   if (!AnnexB::HasSPS(aExtraData)) {
     return false;
@@ -420,32 +636,40 @@ H264::DecodeSPSFromExtraData(const mozilla::MediaByteBuffer* aExtraData, SPSData
     return false;
   }
 
-  if (!(reader.ReadU8() & 0x1f)) {
+  uint8_t numSps = reader.ReadU8() & 0x1f;
+  if (!numSps) {
     // No SPS.
     return false;
   }
-  uint16_t length = reader.ReadU16();
 
-  if ((reader.PeekU8() & 0x1f) != 7) {
-    // Not a SPS NAL type.
-    return false;
+  for (uint32_t idx = 0; idx < numSps; idx++) {
+    uint16_t length = reader.ReadU16();
+
+    if ((reader.PeekU8() & 0x1f) != H264_NAL_SPS) {
+      // Not a SPS NAL type.
+      return false;
+    }
+    const uint8_t* ptr = reader.Read(length);
+    if (!ptr) {
+      return false;
+    }
+
+    RefPtr<mozilla::MediaByteBuffer> rawNAL = new mozilla::MediaByteBuffer;
+    rawNAL->AppendElements(ptr, length);
+
+    RefPtr<mozilla::MediaByteBuffer> sps = DecodeNALUnit(rawNAL);
+
+    if (!sps) {
+      return false;
+    }
+
+    SPSData spsData;
+    if (!DecodeSPS(sps, spsData)) {
+      return false;
+    }
+    aDest.AppendElement(spsData);
   }
-
-  const uint8_t* ptr = reader.Read(length);
-  if (!ptr) {
-    return false;
-  }
-
-  RefPtr<mozilla::MediaByteBuffer> rawNAL = new mozilla::MediaByteBuffer;
-  rawNAL->AppendElements(ptr, length);
-
-  RefPtr<mozilla::MediaByteBuffer> sps = DecodeNALUnit(rawNAL);
-
-  if (!sps) {
-    return false;
-  }
-
-  return DecodeSPS(sps, aDest);
+  return true;
 }
 
 /* static */ bool
@@ -455,8 +679,7 @@ H264::EnsureSPSIsSane(SPSData& aSPS)
   static const float default_aspect = 4.0f / 3.0f;
   if (aSPS.sample_ratio <= 0.0f || aSPS.sample_ratio > 6.0f) {
     if (aSPS.pic_width && aSPS.pic_height) {
-      aSPS.sample_ratio =
-        (float) aSPS.pic_width / (float) aSPS.pic_height;
+      aSPS.sample_ratio = (float)aSPS.pic_width / (float)aSPS.pic_height;
     } else {
       aSPS.sample_ratio = default_aspect;
     }
@@ -469,6 +692,213 @@ H264::EnsureSPSIsSane(SPSData& aSPS)
     valid = false;
   }
   return valid;
+}
+
+/* static */ bool
+H264::DecodePPSDataSetFromExtraData(const mozilla::MediaByteBuffer* aExtraData,
+                                    const SPSDataSet& aSPSes, PPSDataSet& aDest)
+{
+  if (!AnnexB::HasPPS(aExtraData)) {
+    return false;
+  }
+  ByteReader reader(aExtraData);
+
+  if (!reader.Read(5)) {
+    return false;
+  }
+
+  uint8_t numSps = reader.ReadU8() & 0x1f;
+  if (!numSps) {
+    // No SPS.
+    return false;
+  }
+  NS_ASSERTION(numSps == 1, "More than one SPS in extradata");
+  for (uint8_t i = 0; i < numSps; i++) {
+    uint16_t length = reader.ReadU16();
+
+    if ((reader.PeekU8() & 0x1f) != H264_NAL_SPS) {
+      // Not a SPS NAL type.
+      return false;
+    }
+    const uint8_t* ptr = reader.Read(length);
+    if (!ptr) {
+      return false;
+    }
+  }
+  uint8_t numPps = reader.ReadU8();
+  if (!numPps) {
+    // No PPs.
+    return false;
+  }
+
+  for (uint32_t idx = 0; idx < numPps; idx++) {
+    uint16_t length = reader.ReadU16();
+
+    if ((reader.PeekU8() & 0x1f) != H264_NAL_PPS) {
+      // Not a PPS NAL type.
+      return false;
+    }
+    const uint8_t* ptr = reader.Read(length);
+    if (!ptr) {
+      return false;
+    }
+
+    RefPtr<mozilla::MediaByteBuffer> rawNAL = new mozilla::MediaByteBuffer;
+    rawNAL->AppendElements(ptr, length);
+
+    RefPtr<mozilla::MediaByteBuffer> pps = DecodeNALUnit(rawNAL);
+
+    if (!pps) {
+      return false;
+    }
+
+    PPSData ppsData;
+    if (!DecodePPS(pps, aSPSes, ppsData)) {
+      return false;
+    }
+    if (ppsData.pic_parameter_set_id >= aDest.Length()) {
+      aDest.SetLength(ppsData.pic_parameter_set_id + 1);
+    }
+    aDest[ppsData.pic_parameter_set_id] = Move(ppsData);
+  }
+  return true;
+}
+
+/* static */ bool
+H264::DecodePPS(const mozilla::MediaByteBuffer* aPPS, const SPSDataSet& aSPSes,
+                PPSData& aDest)
+{
+  if (!aPPS) {
+    return false;
+  }
+
+  if (aSPSes.IsEmpty()) {
+    return false;
+  }
+
+  BitReader br(aPPS, GetBitLength(aPPS));
+
+  READUE(pic_parameter_set_id, MAX_PPS_COUNT - 1);
+  READUE(seq_parameter_set_id, MAX_SPS_COUNT - 1);
+
+  if (aDest.seq_parameter_set_id >= aSPSes.Length()) {
+    // Invalid SPS id.
+    return false;
+  }
+  const SPSData& sps = aSPSes[aDest.seq_parameter_set_id];
+
+  memcpy(aDest.scaling_matrix4x4, sps.scaling_matrix4x4,
+         sizeof(aDest.scaling_matrix4x4));
+  memcpy(aDest.scaling_matrix8x8, sps.scaling_matrix8x8,
+         sizeof(aDest.scaling_matrix8x8));
+
+  aDest.entropy_coding_mode_flag = br.ReadBit();
+  aDest.bottom_field_pic_order_in_frame_present_flag = br.ReadBit();
+  READUE(num_slice_groups_minus1, 7);
+  if (aDest.num_slice_groups_minus1 > 0) {
+    READUE(slice_group_map_type, 6);
+    switch (aDest.slice_group_map_type) {
+      case 0:
+        for (uint8_t iGroup = 0; iGroup <= aDest.num_slice_groups_minus1;
+             iGroup++) {
+          aDest.run_length_minus1[iGroup] = br.ReadUE();
+        }
+        break;
+      case 2:
+        for (uint8_t iGroup = 0; iGroup < aDest.num_slice_groups_minus1;
+             iGroup++) {
+          aDest.top_left[iGroup] = br.ReadUE();
+          aDest.bottom_right[iGroup] = br.ReadUE();
+        }
+        break;
+      case 3:
+      case 4:
+      case 5:
+        aDest.slice_group_change_direction_flag = br.ReadBit();
+        aDest.slice_group_change_rate_minus1 = br.ReadUE();
+        break;
+      case 6:
+        aDest.pic_size_in_map_units_minus1 = br.ReadUE();
+        for (uint32_t i = 0; i <= aDest.pic_size_in_map_units_minus1; i++) {
+          /* slice_group_id[ i ] identifies a slice group of the i-th slice group map
+            unit in raster scan order. The length of the slice_group_id[i] syntax
+            element is Ceil(Log2(num_slice_groups_minus1+1)) bits. The value of
+            slice_group_id[i] shall be in the range of 0 to num_slice_groups_minus1,
+            inclusive. */
+          br.ReadBits(std::ceil(std::log2(aDest.num_slice_groups_minus1 + 1)));
+        }
+        break;
+      default:
+        return false;
+    }
+  }
+  READUE(num_ref_idx_l0_default_active_minus1, 31);
+  READUE(num_ref_idx_l1_default_active_minus1, 31);
+  aDest.weighted_pred_flag = br.ReadBit();
+  aDest.weighted_bipred_idc = br.ReadBits(2);
+  READSE(pic_init_qp_minus26, -(26 + 6 * sps.bit_depth_luma_minus8), 25);
+  READSE(pic_init_qs_minus26, -26, 26);
+  READSE(chroma_qp_index_offset, -12, 12);
+  aDest.deblocking_filter_control_present_flag = br.ReadBit();
+  aDest.constrained_intra_pred_flag = br.ReadBit();
+  aDest.redundant_pic_cnt_present_flag = br.ReadBit();
+  if (br.BitsLeft()) {
+    aDest.transform_8x8_mode_flag = br.ReadBit();
+    if (br.ReadBit()) { // pic_scaling_matrix_present_flag
+      if (sps.seq_scaling_matrix_present_flag) {
+        scaling_list(br, aDest.scaling_matrix4x4[0], Default_4x4_Intra);
+        scaling_list(br, aDest.scaling_matrix4x4[1], Default_4x4_Intra,
+                     aDest.scaling_matrix4x4[0]);
+        scaling_list(br, aDest.scaling_matrix4x4[2], Default_4x4_Intra,
+                     aDest.scaling_matrix4x4[1]);
+        scaling_list(br, aDest.scaling_matrix4x4[3], Default_4x4_Inter);
+      } else {
+        scaling_list(br, aDest.scaling_matrix4x4[0], Default_4x4_Intra,
+                     Default_4x4_Intra);
+        scaling_list(br, aDest.scaling_matrix4x4[1], Default_4x4_Intra,
+                     aDest.scaling_matrix4x4[0]);
+        scaling_list(br, aDest.scaling_matrix4x4[2], Default_4x4_Intra,
+                     aDest.scaling_matrix4x4[1]);
+        scaling_list(br, aDest.scaling_matrix4x4[3], Default_4x4_Inter,
+                     Default_4x4_Inter);
+      }
+      scaling_list(br, aDest.scaling_matrix4x4[4], Default_4x4_Inter,
+                   aDest.scaling_matrix4x4[3]);
+      scaling_list(br, aDest.scaling_matrix4x4[5], Default_4x4_Inter,
+                   aDest.scaling_matrix4x4[4]);
+      if (aDest.transform_8x8_mode_flag) {
+        if (sps.seq_scaling_matrix_present_flag) {
+          scaling_list(br, aDest.scaling_matrix8x8[0], Default_8x8_Intra);
+          scaling_list(br, aDest.scaling_matrix8x8[1], Default_8x8_Inter);
+        } else {
+          scaling_list(br, aDest.scaling_matrix8x8[0], Default_8x8_Intra,
+                       Default_8x8_Intra);
+          scaling_list(br, aDest.scaling_matrix8x8[1], Default_8x8_Inter,
+                       Default_8x8_Inter);
+        }
+        if (sps.chroma_format_idc == 3) {
+          scaling_list(br, aDest.scaling_matrix8x8[2], Default_8x8_Intra,
+                       aDest.scaling_matrix8x8[0]);
+          scaling_list(br, aDest.scaling_matrix8x8[3], Default_8x8_Inter,
+                       aDest.scaling_matrix8x8[1]);
+          scaling_list(br, aDest.scaling_matrix8x8[4], Default_8x8_Intra,
+                       aDest.scaling_matrix8x8[2]);
+          scaling_list(br, aDest.scaling_matrix8x8[5], Default_8x8_Inter,
+                       aDest.scaling_matrix8x8[3]);
+        }
+      }
+    }
+    READSE(second_chroma_qp_index_offset, -12, 12);
+  }
+  return true;
+}
+
+/* static */ bool
+H264::DecodeParametersSet(const mozilla::MediaByteBuffer* aExtraData,
+                         H264ParametersSet& aDest)
+{
+  return DecodeSPSDataSetFromExtraData(aExtraData, aDest.SPSes) &&
+         DecodePPSDataSetFromExtraData(aExtraData, aDest.SPSes, aDest.PPSes);
 }
 
 /* static */ uint32_t
@@ -516,7 +946,7 @@ H264::GetFrameType(const mozilla::MediaRawData* aSample)
     if (!p) {
       return FrameType::INVALID;
     }
-    if ((p[0] & 0x1f) == 5) {
+    if ((p[0] & 0x1f) == H264_NAL_IDR_SLICE) {
       // IDR NAL.
       return FrameType::I_FRAME;
     }
@@ -524,5 +954,8 @@ H264::GetFrameType(const mozilla::MediaRawData* aSample)
 
   return FrameType::OTHER;
 }
+
+#undef READUE
+#undef READSE
 
 } // namespace mp4_demuxer

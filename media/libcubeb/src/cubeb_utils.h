@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <mutex>
 #include <type_traits>
 #if defined(WIN32)
 #include "cubeb_utils_win.h"
@@ -23,6 +24,7 @@ template<typename T>
 void PodCopy(T * destination, const T * source, size_t count)
 {
   static_assert(std::is_trivial<T>::value, "Requires trivial type");
+  assert(destination && source);
   memcpy(destination, source, count * sizeof(T));
 }
 
@@ -31,6 +33,7 @@ template<typename T>
 void PodMove(T * destination, const T * source, size_t count)
 {
   static_assert(std::is_trivial<T>::value, "Requires trivial type");
+  assert(destination && source);
   memmove(destination, source, count * sizeof(T));
 }
 
@@ -39,7 +42,65 @@ template<typename T>
 void PodZero(T * destination, size_t count)
 {
   static_assert(std::is_trivial<T>::value, "Requires trivial type");
+  assert(destination);
   memset(destination, 0,  count * sizeof(T));
+}
+
+namespace {
+template<typename T, typename Trait>
+void Copy(T * destination, const T * source, size_t count, Trait)
+{
+  for (size_t i = 0; i < count; i++) {
+    destination[i] = source[i];
+  }
+}
+
+template<typename T>
+void Copy(T * destination, const T * source, size_t count, std::true_type)
+{
+  PodCopy(destination, source, count);
+}
+}
+
+/**
+ * This allows copying a number of elements from a `source` pointer to a
+ * `destination` pointer, using `memcpy` if it is safe to do so, or a loop that
+ * calls the constructors and destructors otherwise.
+ */
+template<typename T>
+void Copy(T * destination, const T * source, size_t count)
+{
+  assert(destination && source);
+  Copy(destination, source, count, typename std::is_trivial<T>::type());
+}
+
+namespace {
+template<typename T, typename Trait>
+void ConstructDefault(T * destination, size_t count, Trait)
+{
+  for (size_t i = 0; i < count; i++) {
+    destination[i] = T();
+  }
+}
+
+template<typename T>
+void ConstructDefault(T * destination,
+                      size_t count, std::true_type)
+{
+  PodZero(destination, count);
+}
+}
+
+/**
+ * This allows zeroing (using memset) or default-constructing a number of
+ * elements calling the constructors and destructors if necessary.
+ */
+template<typename T>
+void ConstructDefault(T * destination, size_t count)
+{
+  assert(destination);
+  ConstructDefault(destination, count,
+                   typename std::is_arithmetic<T>::type());
 }
 
 template<typename T>
@@ -198,18 +259,6 @@ private:
   size_t length_;
 };
 
-struct auto_lock {
-  explicit auto_lock(owned_critical_section & lock)
-    : lock(lock)
-  {
-    lock.enter();
-  }
-  ~auto_lock()
-  {
-    lock.leave();
-  }
-private:
-  owned_critical_section & lock;
-};
+using auto_lock = std::lock_guard<owned_critical_section>;
 
 #endif /* CUBEB_UTILS */

@@ -87,6 +87,15 @@
 #define NS_CONSTRUCTOR_FASTCALL
 #endif
 
+/**
+ * Various API modifiers.
+ *
+ * - NS_IMETHOD/NS_IMETHOD_: use for in-class declarations and definitions.
+ * - NS_IMETHODIMP/NS_IMETHODIMP_: use for out-of-class definitions.
+ * - NS_METHOD_: usually used in conjunction with NS_CALLBACK_. Best avoided.
+ * - NS_CALLBACK_: used in some legacy situations. Best avoided.
+ */
+
 #ifdef XP_WIN
 
 #define NS_IMPORT __declspec(dllimport)
@@ -120,6 +129,9 @@
 #define NS_FROZENCALL
 
 #endif
+
+#define NS_IMETHOD          NS_IMETHOD_(nsresult)
+#define NS_IMETHODIMP       NS_IMETHODIMP_(nsresult)
 
 /**
  * Macro for creating typedefs for pointer-to-member types which are
@@ -160,21 +172,12 @@
 #endif
 
 /**
- * Generic API modifiers which return the standard XPCOM nsresult type
- *
- * - NS_IMETHOD: use for in-class declarations and definitions.
- * - NS_IMETHODIMP: use for out-of-class definitions.
- * - NS_METHOD: usually used in conjunction with NS_CALLBACK.
- * - NS_CALLBACK: used in some legacy situations. Best avoided.
- */
-#define NS_IMETHOD          NS_IMETHOD_(nsresult)
-#define NS_IMETHODIMP       NS_IMETHODIMP_(nsresult)
-#define NS_METHOD           NS_METHOD_(nsresult)
-#define NS_CALLBACK(_name)  NS_CALLBACK_(nsresult, _name)
-
-/**
  * Import/Export macros for XPCOM APIs
  */
+
+#define EXPORT_XPCOM_API(type) type
+#define IMPORT_XPCOM_API(type) type
+#define GLUE_XPCOM_API(type) type
 
 #ifdef __cplusplus
 #define NS_EXTERN_C extern "C"
@@ -182,17 +185,7 @@
 #define NS_EXTERN_C
 #endif
 
-#define EXPORT_XPCOM_API(type) NS_EXTERN_C NS_EXPORT type NS_FROZENCALL
-#define IMPORT_XPCOM_API(type) NS_EXTERN_C NS_IMPORT type NS_FROZENCALL
-#define GLUE_XPCOM_API(type) NS_EXTERN_C NS_HIDDEN_(type) NS_FROZENCALL
-
-#ifdef IMPL_LIBXUL
-#define XPCOM_API(type) EXPORT_XPCOM_API(type)
-#elif defined(XPCOM_GLUE)
-#define XPCOM_API(type) GLUE_XPCOM_API(type)
-#else
-#define XPCOM_API(type) IMPORT_XPCOM_API(type)
-#endif
+#define XPCOM_API(type) NS_EXTERN_C type
 
 #ifdef MOZILLA_INTERNAL_API
    /*

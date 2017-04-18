@@ -639,10 +639,14 @@ function TypedArrayKeys() {
 }
 
 // ES6 draft rev29 (2014/12/06) 22.2.3.16 %TypedArray%.prototype.lastIndexOf(searchElement [,fromIndex]).
-function TypedArrayLastIndexOf(searchElement, fromIndex = undefined) {
+function TypedArrayLastIndexOf(searchElement/*, fromIndex*/) {
     // This function is not generic.
     if (!IsObject(this) || !IsTypedArray(this)) {
-        return callFunction(CallTypedArrayMethodIfWrapped, this, searchElement, fromIndex,
+        if (arguments.length > 1) {
+            return callFunction(CallTypedArrayMethodIfWrapped, this, searchElement, arguments[1],
+                                "TypedArrayLastIndexOf");
+        }
+        return callFunction(CallTypedArrayMethodIfWrapped, this, searchElement,
                             "TypedArrayLastIndexOf");
     }
 
@@ -659,7 +663,7 @@ function TypedArrayLastIndexOf(searchElement, fromIndex = undefined) {
         return -1;
 
     // Steps 7-8.  Add zero to convert -0 to +0, per ES6 5.2.
-    var n = fromIndex === undefined ? len - 1 : ToInteger(fromIndex) + 0;
+    var n = arguments.length > 1 ? ToInteger(arguments[1]) + 0 : len - 1;
 
     // Steps 9-10.
     var k = n >= 0 ? std_Math_min(n, len - 1) : len + n;
@@ -1433,7 +1437,7 @@ function TypedArrayStaticFrom(source, mapfn = undefined, thisArg = undefined) {
             // 22.2.2.1.1 IterableToList, step 4.a.
             var next = callContentFunction(iterator.next, iterator);
             if (!IsObject(next))
-                ThrowTypeError(JSMSG_NEXT_RETURNED_PRIMITIVE);
+                ThrowTypeError(JSMSG_ITER_METHOD_RETURNED_PRIMITIVE, "next");
 
             // 22.2.2.1.1 IterableToList, step 4.b.
             if (next.done)
@@ -1560,7 +1564,7 @@ function IterableToList(items, method) {
         // Step 4.a.
         var next = callContentFunction(iterator.next, iterator);
         if (!IsObject(next))
-            ThrowTypeError(JSMSG_NEXT_RETURNED_PRIMITIVE);
+            ThrowTypeError(JSMSG_ITER_METHOD_RETURNED_PRIMITIVE, "next");
 
         // Step 4.b.
         if (next.done)
@@ -1720,6 +1724,10 @@ function SharedArrayBufferSlice(start, end) {
 
     // Step 14.
     if (new_ === O)
+        ThrowTypeError(JSMSG_SAME_SHARED_ARRAY_BUFFER_RETURNED);
+
+    // Steb 14b.
+    if (SharedArrayBuffersMemorySame(new_, O))
         ThrowTypeError(JSMSG_SAME_SHARED_ARRAY_BUFFER_RETURNED);
 
     // Step 15.

@@ -14,7 +14,7 @@ add_task(function* () {
   let { tab, monitor } = yield initNetMonitor(POST_RAW_WITH_HEADERS_URL);
   info("Starting test... ");
 
-  let { document, EVENTS, NetMonitorView } = monitor.panelWin;
+  let { document, NetMonitorView } = monitor.panelWin;
   let { RequestsMenu } = NetMonitorView;
 
   RequestsMenu.lazyUpdate = false;
@@ -25,74 +25,64 @@ add_task(function* () {
   });
   yield wait;
 
-  let onEvent = monitor.panelWin.once(EVENTS.TAB_UPDATED);
-  NetMonitorView.toggleDetailsPane({ visible: true });
-  RequestsMenu.selectedIndex = 0;
-  yield onEvent;
+  // Wait for all tree view updated by react
+  wait = waitForDOM(document, ".properties-view .treeTable");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.getElementById("details-pane-toggle"));
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll("#details-pane tab")[0]);
+  yield wait;
 
-  let tabEl = document.querySelectorAll("#details-pane tab")[0];
   let tabpanel = document.querySelectorAll("#details-pane tabpanel")[0];
-  let requestFromUploadScope = tabpanel.querySelectorAll(".variables-view-scope")[2];
 
-  is(tabEl.getAttribute("selected"), "true",
-    "The headers tab in the network details pane should be selected.");
-  is(tabpanel.querySelectorAll(".variables-view-scope").length, 3,
-    "There should be 3 header scopes displayed in this tabpanel.");
+  is(tabpanel.querySelectorAll(".tree-section .treeLabel").length, 3,
+    "There should be 3 header sections displayed in this tabpanel.");
 
-  is(requestFromUploadScope.querySelector(".name").getAttribute("value"),
+  is(tabpanel.querySelectorAll(".tree-section .treeLabel")[2].textContent,
     L10N.getStr("requestHeadersFromUpload") + " (" +
-    L10N.getFormatStr("networkMenu.sizeKB", L10N.numberWithDecimals(74 / 1024, 3)) + ")",
-    "The request headers from upload scope doesn't have the correct title.");
+    L10N.getFormatStr("networkMenu.sizeB", 74) + ")",
+    "The request headers from upload section doesn't have the correct title.");
 
-  is(requestFromUploadScope.querySelectorAll(".variables-view-variable").length, 2,
-    "There should be 2 headers displayed in the request headers from upload scope.");
+  let labels = tabpanel
+    .querySelectorAll(".properties-view tr:not(.tree-section) .treeLabelCell .treeLabel");
+  let values = tabpanel
+    .querySelectorAll(".properties-view tr:not(.tree-section) .treeValueCell .objectBox");
 
-  is(requestFromUploadScope.querySelectorAll(".variables-view-variable .name")[0]
-    .getAttribute("value"),
-    "content-type", "The first request header name was incorrect.");
-  is(requestFromUploadScope.querySelectorAll(".variables-view-variable .value")[0]
-    .getAttribute("value"), "\"application/x-www-form-urlencoded\"",
+  is(labels[labels.length - 2].textContent, "content-type",
+    "The first request header name was incorrect.");
+  is(values[values.length - 2].textContent, "\"application/x-www-form-urlencoded\"",
     "The first request header value was incorrect.");
-  is(requestFromUploadScope.querySelectorAll(".variables-view-variable .name")[1]
-    .getAttribute("value"),
-    "custom-header", "The second request header name was incorrect.");
-  is(requestFromUploadScope.querySelectorAll(".variables-view-variable .value")[1]
-    .getAttribute("value"),
-    "\"hello world!\"", "The second request header value was incorrect.");
+  is(labels[labels.length - 1].textContent, "custom-header",
+    "The second request header name was incorrect.");
+  is(values[values.length - 1].textContent, "\"hello world!\"",
+    "The second request header value was incorrect.");
 
-  onEvent = monitor.panelWin.once(EVENTS.TAB_UPDATED);
+  // Wait for all tree sections updated by react
+  wait = waitForDOM(document, "#params-tabpanel .tree-section");
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll("#details-pane tab")[2]);
-  yield onEvent;
+  yield wait;
 
-  tabEl = document.querySelectorAll("#details-pane tab")[2];
   tabpanel = document.querySelectorAll("#details-pane tabpanel")[2];
-  let formDataScope = tabpanel.querySelectorAll(".variables-view-scope")[0];
 
-  is(tab.getAttribute("selected"), "true",
-    "The response tab in the network details pane should be selected.");
-  is(tabpanel.querySelectorAll(".variables-view-scope").length, 1,
-    "There should be 1 header scope displayed in this tabpanel.");
+  ok(tabpanel.querySelector(".treeTable"),
+    "The params tree view should be displayed.");
+  ok(tabpanel.querySelector(".editor-mount") === null,
+    "The post data shouldn't be displayed.");
 
-  is(formDataScope.querySelector(".name").getAttribute("value"),
+  is(tabpanel.querySelector(".tree-section .treeLabel").textContent,
     L10N.getStr("paramsFormData"),
-    "The form data scope doesn't have the correct title.");
+    "The form data section doesn't have the correct title.");
 
-  is(formDataScope.querySelectorAll(".variables-view-variable").length, 2,
-    "There should be 2 payload values displayed in the form data scope.");
+  labels = tabpanel
+    .querySelectorAll("tr:not(.tree-section) .treeLabelCell .treeLabel");
+  values = tabpanel
+    .querySelectorAll("tr:not(.tree-section) .treeValueCell .objectBox");
 
-  is(formDataScope.querySelectorAll(".variables-view-variable .name")[0]
-    .getAttribute("value"),
-    "foo", "The first payload param name was incorrect.");
-  is(formDataScope.querySelectorAll(".variables-view-variable .value")[0]
-    .getAttribute("value"),
-    "\"bar\"", "The first payload param value was incorrect.");
-  is(formDataScope.querySelectorAll(".variables-view-variable .name")[1]
-    .getAttribute("value"),
-    "baz", "The second payload param name was incorrect.");
-  is(formDataScope.querySelectorAll(".variables-view-variable .value")[1]
-    .getAttribute("value"),
-    "\"123\"", "The second payload param value was incorrect.");
+  is(labels[0].textContent, "foo", "The first payload param name was incorrect.");
+  is(values[0].textContent, "\"bar\"", "The first payload param value was incorrect.");
+  is(labels[1].textContent, "baz", "The second payload param name was incorrect.");
+  is(values[1].textContent, "\"123\"", "The second payload param value was incorrect.");
 
   return teardown(monitor);
 });

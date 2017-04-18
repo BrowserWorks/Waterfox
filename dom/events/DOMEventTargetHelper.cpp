@@ -43,7 +43,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(DOMEventTargetHelper)
     NS_IMPL_CYCLE_COLLECTION_DESCRIBE(DOMEventTargetHelper, tmp->mRefCnt.get())
   }
 
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mListenerManager)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -322,14 +321,14 @@ DOMEventTargetHelper::GetEventHandler(nsIAtom* aType,
 {
   EventHandlerNonNull* handler = GetEventHandler(aType, EmptyString());
   if (handler) {
-    *aValue = JS::ObjectValue(*handler->Callable());
+    *aValue = JS::ObjectOrNullValue(handler->CallableOrNull());
   } else {
     *aValue = JS::NullValue();
   }
 }
 
 nsresult
-DOMEventTargetHelper::PreHandleEvent(EventChainPreVisitor& aVisitor)
+DOMEventTargetHelper::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = true;
   aVisitor.mParentTarget = nullptr;

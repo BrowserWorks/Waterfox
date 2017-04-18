@@ -55,13 +55,11 @@
 /**
  * This test will test Queries that use relative search terms and domain options
  */
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_searchterms_domain()
-{
+add_task(function* test_searchterms_domain() {
   yield task_populateDB(testData);
   var query = PlacesUtils.history.getNewQuery();
   query.searchTerms = "moz";
@@ -79,7 +77,7 @@ add_task(function* test_searchterms_domain()
   root.containerOpen = true;
 
   do_print("Number of items in result set: " + root.childCount);
-  for (var i=0; i < root.childCount; ++i) {
+  for (var i = 0; i < root.childCount; ++i) {
     do_print("result: " + root.getChild(i).uri + " Title: " + root.getChild(i).title);
   }
 

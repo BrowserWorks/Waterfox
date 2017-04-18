@@ -137,6 +137,8 @@ class Assembler : public AssemblerShared
 
     static Condition InvertCondition(Condition) { MOZ_CRASH(); }
 
+    static DoubleCondition InvertCondition(DoubleCondition) { MOZ_CRASH(); }
+
     template <typename T, typename S>
     static void PatchDataWithValueCheck(CodeLocationLabel, T, S) { MOZ_CRASH(); }
     static void PatchWrite_Imm32(CodeLocationLabel, Imm32) { MOZ_CRASH(); }
@@ -194,7 +196,7 @@ class MacroAssemblerNone : public Assembler
     static bool SupportsSimd() { return false; }
     static bool SupportsUnalignedAccesses() { return false; }
 
-    void executableCopy(void*) { MOZ_CRASH(); }
+    void executableCopy(void*, bool) { MOZ_CRASH(); }
     void copyJumpRelocationTable(uint8_t*) { MOZ_CRASH(); }
     void copyDataRelocationTable(uint8_t*) { MOZ_CRASH(); }
     void copyPreBarrierTable(uint8_t*) { MOZ_CRASH(); }
@@ -253,10 +255,10 @@ class MacroAssemblerNone : public Assembler
     template <typename T, typename S> void cmpPtrSet(Condition, T, S, Register) { MOZ_CRASH(); }
     template <typename T, typename S> void cmp32Set(Condition, T, S, Register) { MOZ_CRASH(); }
 
-    template <typename T, typename S> void mov(T, S) { MOZ_CRASH(); }
+    template <typename T> void mov(T, Register) { MOZ_CRASH(); }
+    template <typename T> void movePtr(T, Register) { MOZ_CRASH(); }
+    template <typename T> void move32(T, Register) { MOZ_CRASH(); }
     template <typename T, typename S> void movq(T, S) { MOZ_CRASH(); }
-    template <typename T, typename S> void movePtr(T, S) { MOZ_CRASH(); }
-    template <typename T, typename S> void move32(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void moveFloat32(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void moveDouble(T, S) { MOZ_CRASH(); }
     template <typename T, typename S> void move64(T, S) { MOZ_CRASH(); }
@@ -364,6 +366,7 @@ class MacroAssemblerNone : public Assembler
     template <typename T> void unboxDouble(T, FloatRegister) { MOZ_CRASH(); }
     void unboxValue(const ValueOperand&, AnyRegister) { MOZ_CRASH(); }
     void unboxNonDouble(const ValueOperand&, Register ) { MOZ_CRASH();}
+    void unboxNonDouble(const Address&, Register ) { MOZ_CRASH();}
     void notBoolean(ValueOperand) { MOZ_CRASH(); }
     Register extractObject(Address, Register) { MOZ_CRASH(); }
     Register extractObject(ValueOperand, Register) { MOZ_CRASH(); }
@@ -390,8 +393,6 @@ class MacroAssemblerNone : public Assembler
 
     void loadConstantDouble(double, FloatRegister) { MOZ_CRASH(); }
     void loadConstantFloat32(float, FloatRegister) { MOZ_CRASH(); }
-    void loadConstantDouble(wasm::RawF64, FloatRegister) { MOZ_CRASH(); }
-    void loadConstantFloat32(wasm::RawF32, FloatRegister) { MOZ_CRASH(); }
     Condition testInt32Truthy(bool, ValueOperand) { MOZ_CRASH(); }
     Condition testStringTruthy(bool, ValueOperand) { MOZ_CRASH(); }
 
@@ -421,16 +422,16 @@ class MacroAssemblerNone : public Assembler
     void profilerEnterFrame(Register , Register ) { MOZ_CRASH(); }
     void profilerExitFrame() { MOZ_CRASH(); }
 
+    void disableProtection() { MOZ_CRASH(); }
+    void enableProtection() { MOZ_CRASH(); }
+    void setLowerBoundForProtection(size_t) { MOZ_CRASH(); }
+    void unprotectRegion(unsigned char*, size_t) { MOZ_CRASH(); }
+    void reprotectRegion(unsigned char*, size_t) { MOZ_CRASH(); }
+
 #ifdef JS_NUNBOX32
     Address ToPayload(Address) { MOZ_CRASH(); }
     Address ToType(Address) { MOZ_CRASH(); }
 #endif
-
-    struct AutoPrepareForPatching {
-        explicit AutoPrepareForPatching(MacroAssemblerNone&) {
-            MOZ_CRASH();
-        }
-    };
 };
 
 typedef MacroAssemblerNone MacroAssemblerSpecific;

@@ -6,7 +6,7 @@ package org.mozilla.gecko.home.activitystream.menu;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BottomSheetBehavior;
+import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
@@ -17,7 +17,9 @@ import android.widget.TextView;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.activitystream.ActivityStream;
+import org.mozilla.gecko.activitystream.ActivityStreamTelemetry;
 import org.mozilla.gecko.home.HomePager;
+import org.mozilla.gecko.home.activitystream.model.Item;
 import org.mozilla.gecko.icons.IconCallback;
 import org.mozilla.gecko.icons.IconResponse;
 import org.mozilla.gecko.icons.Icons;
@@ -34,16 +36,17 @@ import static org.mozilla.gecko.activitystream.ActivityStream.extractLabel;
     private final NavigationView navigationView;
 
     public BottomSheetContextMenu(final Context context,
-                           final MenuMode mode,
-                           final String title, @NonNull final String url,
-                           HomePager.OnUrlOpenListener onUrlOpenListener,
-                           HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener,
-                           final int tilesWidth, final int tilesHeight) {
+                                  final ActivityStreamTelemetry.Extras.Builder telemetryExtraBuilder,
+                                  final MenuMode mode,
+                                  final Item item,
+                                  HomePager.OnUrlOpenListener onUrlOpenListener,
+                                  HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener,
+                                  final int tilesWidth, final int tilesHeight) {
 
         super(context,
+                telemetryExtraBuilder,
                 mode,
-                title,
-                url,
+                item,
                 onUrlOpenListener,
                 onUrlOpenInBackgroundListener);
 
@@ -53,9 +56,9 @@ import static org.mozilla.gecko.activitystream.ActivityStream.extractLabel;
         bottomSheetDialog = new BottomSheetDialog(context);
         bottomSheetDialog.setContentView(content);
 
-        ((TextView) content.findViewById(R.id.title)).setText(title);
+        ((TextView) content.findViewById(R.id.title)).setText(item.getTitle());
 
-        extractLabel(context, url, false, new ActivityStream.LabelCallback() {
+        extractLabel(context, item.getUrl(), false, new ActivityStream.LabelCallback() {
                 public void onLabelExtracted(String label) {
                     ((TextView) content.findViewById(R.id.url)).setText(label);
                 }
@@ -69,7 +72,7 @@ import static org.mozilla.gecko.activitystream.ActivityStream.extractLabel;
         faviconView.setLayoutParams(layoutParams);
 
         Icons.with(context)
-                .pageUrl(url)
+                .pageUrl(item.getUrl())
                 .skipNetwork()
                 .build()
                 .execute(new IconCallback() {

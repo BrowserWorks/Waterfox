@@ -15,7 +15,6 @@
 #include "nsStyleContext.h"
 #include "nsRenderingContext.h"
 #include "nsGkAtoms.h"
-#include "nsPresShell.h"
 #include "nsIPresShell.h"
 #include "nsDisplayList.h"
 #include "nsCSSFrameConstructor.h"
@@ -23,6 +22,7 @@
 #include "gfxPlatform.h"
 #include "nsPrintfCString.h"
 #include "mozilla/dom/AnonymousContent.h"
+#include "mozilla/PresShell.h"
 // for focus
 #include "nsIScrollableFrame.h"
 #ifdef DEBUG_CANVAS_FOCUS
@@ -35,6 +35,7 @@ using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::layout;
 using namespace mozilla::gfx;
+using namespace mozilla::layers;
 
 nsCanvasFrame*
 NS_NewCanvasFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
@@ -257,6 +258,38 @@ nsDisplayCanvasBackgroundColor::Paint(nsDisplayListBuilder* aBuilder,
       NSRectToSnappedRect(bgClipRect, appUnitsPerDevPixel, *drawTarget);
     drawTarget->FillRect(devPxRect, ColorPattern(ToDeviceColor(mColor)));
   }
+}
+
+already_AddRefed<Layer>
+nsDisplayCanvasBackgroundColor::BuildLayer(nsDisplayListBuilder* aBuilder,
+                                           LayerManager* aManager,
+                                           const ContainerLayerParameters& aContainerParameters)
+{
+  if (NS_GET_A(mColor) == 0) {
+    return nullptr;
+  }
+
+  RefPtr<ColorLayer> layer = static_cast<ColorLayer*>
+    (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, this));
+  if (!layer) {
+    layer = aManager->CreateColorLayer();
+    if (!layer) {
+      return nullptr;
+    }
+  }
+  layer->SetColor(ToDeviceColor(mColor));
+
+  nsCanvasFrame* frame = static_cast<nsCanvasFrame*>(mFrame);
+  nsPoint offset = ToReferenceFrame();
+  nsRect bgClipRect = frame->CanvasArea() + offset;
+
+  int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
+
+  layer->SetBounds(bgClipRect.ToNearestPixels(appUnitsPerDevPixel));
+  layer->SetBaseTransform(gfx::Matrix4x4::Translation(aContainerParameters.mOffset.x,
+                                                      aContainerParameters.mOffset.y, 0));
+
+  return layer.forget();
 }
 
 #ifdef MOZ_DUMP_PAINTING

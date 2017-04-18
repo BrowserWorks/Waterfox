@@ -13,7 +13,7 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-object-element
-[NeedResolve, UnsafeInPrerendering]
+[HTMLConstructor, NeedResolve, UnsafeInPrerendering]
 interface HTMLObjectElement : HTMLElement {
   [Pure, SetterThrows]
            attribute DOMString data;
@@ -44,9 +44,6 @@ interface HTMLObjectElement : HTMLElement {
   boolean checkValidity();
   boolean reportValidity();
   void setCustomValidity(DOMString error);
-
-  [Throws]
-  legacycaller any (any... arguments);
 };
 
 // http://www.whatwg.org/specs/web-apps/current-work/#HTMLObjectElement-partial

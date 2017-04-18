@@ -8,7 +8,6 @@ package org.mozilla.gecko;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,6 +19,7 @@ import org.mozilla.gecko.GeckoProfileDirectories.NoMozillaDirectoryException;
 import org.mozilla.gecko.GeckoProfileDirectories.NoSuchProfileException;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.util.FileUtils;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.INIParser;
 import org.mozilla.gecko.util.INISection;
 import org.mozilla.gecko.util.IntentUtils;
@@ -51,8 +51,8 @@ public final class GeckoProfile {
     private static final String TIMES_PATH = "times.json";
     private static final String PROFILE_CREATION_DATE_JSON_ATTR = "created";
 
-    // Only tests should need to do this.
-    // We can default this to AppConstants.RELEASE_OR_BETA once we fix Bug 1069687.
+    // Only tests should need to do this.  We can remove this entirely once we
+    // fix Bug 1069687.
     private static volatile boolean sAcceptDirectoryChanges = true;
 
     @RobocopTarget
@@ -227,9 +227,6 @@ public final class GeckoProfile {
         } else if (profileName == null) {
             // If only profile dir was passed in, use custom (anonymous) profile.
             profileName = CUSTOM_PROFILE;
-
-        } else if (AppConstants.DEBUG_BUILD) {
-            Log.v(LOGTAG, "Fetching profile: '" + profileName + "', '" + profileDir + "'");
         }
 
         // We require the profile dir to exist if specified, so create it here if needed.
@@ -266,11 +263,6 @@ public final class GeckoProfile {
                 if (!sAcceptDirectoryChanges || !profileDir.isDirectory()) {
                     throw new IllegalStateException(
                             "Refusing to reuse profile with a different directory.");
-                }
-
-                if (AppConstants.RELEASE_OR_BETA) {
-                    Log.e(LOGTAG, "Release build trying to switch out profile dir. " +
-                                  "This is an error, but let's do what we can.");
                 }
                 profile.setDir(profileDir);
             }
@@ -994,9 +986,9 @@ public final class GeckoProfile {
     public void enqueueInitialization(final File profileDir) {
         Log.i(LOGTAG, "Enqueuing profile init.");
 
-        final Bundle message = new Bundle(2);
-        message.putCharSequence("name", getName());
-        message.putCharSequence("path", profileDir.getAbsolutePath());
+        final GeckoBundle message = new GeckoBundle(2);
+        message.putString("name", getName());
+        message.putString("path", profileDir.getAbsolutePath());
         EventDispatcher.getInstance().dispatch("Profile:Create", message);
     }
 }

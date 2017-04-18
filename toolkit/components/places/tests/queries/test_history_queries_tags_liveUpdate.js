@@ -44,34 +44,29 @@ var gTestData = [
   },
 ];
 
-function newQueryWithOptions()
-{
+function newQueryWithOptions() {
   return [ PlacesUtils.history.getNewQuery(),
            PlacesUtils.history.getNewQueryOptions() ];
 }
 
-function testQueryContents(aQuery, aOptions, aCallback)
-{
+function testQueryContents(aQuery, aOptions, aCallback) {
   let root = PlacesUtils.history.executeQuery(aQuery, aOptions).root;
   root.containerOpen = true;
   aCallback(root);
   root.containerOpen = false;
 }
 
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_initialize()
-{
+add_task(function* test_initialize() {
   yield task_populateDB(gTestData);
 });
 
-add_task(function pages_query()
-{
+add_task(function pages_query() {
   let [query, options] = newQueryWithOptions();
-  testQueryContents(query, options, function (root) {
+  testQueryContents(query, options, function(root) {
     compareArrayToResult([gTestData[0], gTestData[1], gTestData[2]], root);
     for (let i = 0; i < root.childCount; i++) {
       let node = root.getChild(i);
@@ -85,11 +80,10 @@ add_task(function pages_query()
   });
 });
 
-add_task(function visits_query()
-{
+add_task(function visits_query() {
   let [query, options] = newQueryWithOptions();
   options.resultType = Ci.nsINavHistoryQueryOptions.RESULTS_AS_VISIT;
-  testQueryContents(query, options, function (root) {
+  testQueryContents(query, options, function(root) {
     compareArrayToResult([gTestData[0], gTestData[1], gTestData[2]], root);
     for (let i = 0; i < root.childCount; i++) {
       let node = root.getChild(i);
@@ -103,11 +97,10 @@ add_task(function visits_query()
   });
 });
 
-add_task(function bookmarks_query()
-{
+add_task(function bookmarks_query() {
   let [query, options] = newQueryWithOptions();
   query.setFolders([PlacesUtils.unfiledBookmarksFolderId], 1);
-  testQueryContents(query, options, function (root) {
+  testQueryContents(query, options, function(root) {
     compareArrayToResult([gTestData[0], gTestData[1], gTestData[2]], root);
     for (let i = 0; i < root.childCount; i++) {
       let node = root.getChild(i);
@@ -121,11 +114,10 @@ add_task(function bookmarks_query()
   });
 });
 
-add_task(function pages_searchterm_query()
-{
+add_task(function pages_searchterm_query() {
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "example";
-  testQueryContents(query, options, function (root) {
+  testQueryContents(query, options, function(root) {
     compareArrayToResult([gTestData[0], gTestData[1], gTestData[2]], root);
     for (let i = 0; i < root.childCount; i++) {
       let node = root.getChild(i);
@@ -139,12 +131,11 @@ add_task(function pages_searchterm_query()
   });
 });
 
-add_task(function visits_searchterm_query()
-{
+add_task(function visits_searchterm_query() {
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "example";
   options.resultType = Ci.nsINavHistoryQueryOptions.RESULTS_AS_VISIT;
-  testQueryContents(query, options, function (root) {
+  testQueryContents(query, options, function(root) {
     compareArrayToResult([gTestData[0], gTestData[1], gTestData[2]], root);
     for (let i = 0; i < root.childCount; i++) {
       let node = root.getChild(i);
@@ -158,13 +149,12 @@ add_task(function visits_searchterm_query()
   });
 });
 
-add_task(function pages_searchterm_is_tag_query()
-{
+add_task(function pages_searchterm_is_tag_query() {
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "test-tag";
-  testQueryContents(query, options, function (root) {
+  testQueryContents(query, options, function(root) {
     compareArrayToResult([], root);
-    gTestData.forEach(function (data) {
+    gTestData.forEach(function(data) {
       let uri = NetUtil.newURI(data.uri);
       PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
                                            uri,
@@ -178,14 +168,13 @@ add_task(function pages_searchterm_is_tag_query()
   });
 });
 
-add_task(function visits_searchterm_is_tag_query()
-{
+add_task(function visits_searchterm_is_tag_query() {
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "test-tag";
   options.resultType = Ci.nsINavHistoryQueryOptions.RESULTS_AS_VISIT;
-  testQueryContents(query, options, function (root) {
+  testQueryContents(query, options, function(root) {
     compareArrayToResult([], root);
-    gTestData.forEach(function (data) {
+    gTestData.forEach(function(data) {
       let uri = NetUtil.newURI(data.uri);
       PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
                                            uri,

@@ -12,7 +12,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
 XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
                                   "resource://gre/modules/Timer.jsm");
 
-let {Subprocess, SubprocessImpl} = Cu.import("resource://gre/modules/Subprocess.jsm");
+let {Subprocess, SubprocessImpl} = Cu.import("resource://gre/modules/Subprocess.jsm", {});
 
 
 // It's important that we use a space in this directory name to make sure we

@@ -106,6 +106,11 @@ private:
   bool                       mTopLevelMutation;
   /** true if it is known that the option list must be recreated. */
   bool                       mNeedsRebuild;
+  /** Whether we should be notifying when we make various method calls on
+      mSelect */
+  const bool                 mNotify;
+  /** The selected index at mutation start. */
+  int32_t                    mInitialSelectedIndex;
   /** Option list must be recreated if more than one mutation is detected. */
   nsMutationGuard            mGuard;
 };
@@ -273,12 +278,12 @@ public:
 
   using nsINode::Remove;
 
-
   // nsINode
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
                      EventChainPostVisitor& aVisitor) override;
 

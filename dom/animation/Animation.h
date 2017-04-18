@@ -9,6 +9,7 @@
 
 #include "nsWrapperCache.h"
 #include "nsCycleCollectionParticipant.h"
+#include "mozilla/AnimationPerformanceWarning.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/EffectCompositor.h" // For EffectCompositor::CascadeLevel
@@ -35,7 +36,7 @@
 struct JSContext;
 class nsCSSPropertyIDSet;
 class nsIDocument;
-class nsPresContext;
+class nsIFrame;
 
 namespace mozilla {
 
@@ -62,6 +63,7 @@ public:
     , mFinishedAtLastComposeStyle(false)
     , mIsRelevant(false)
     , mFinishedIsResolved(false)
+    , mSyncWithGeometricAnimations(false)
   {
   }
 
@@ -274,24 +276,19 @@ public:
     return GetEffect() && GetEffect()->IsInEffect();
   }
 
-  /**
-   * Returns true if this animation's playback state makes it a candidate for
-   * running on the compositor.
-   * We send animations to the compositor when their target effect is 'current'
-   * (a definition that is roughly equivalent to when they are in their before
-   * or active phase). However, we don't send animations to the compositor when
-   * they are paused/pausing (including being effectively paused due to
-   * having a zero playback rate), have a zero-duration active interval, or have
-   * no target effect at all.
-   */
-  bool IsPlayableOnCompositor() const
+  bool IsPlaying() const
   {
-    return HasCurrentEffect() &&
-           mPlaybackRate != 0.0 &&
+    return mPlaybackRate != 0.0 &&
+           mTimeline &&
            (PlayState() == AnimationPlayState::Running ||
-            mPendingState == PendingState::PlayPending) &&
-           !GetEffect()->IsActiveDurationZero();
+            mPendingState == PendingState::PlayPending);
   }
+
+  bool ShouldBeSynchronizedWithMainThread(
+    nsCSSPropertyID aProperty,
+    const nsIFrame* aFrame,
+    AnimationPerformanceWarning::Type& aPerformanceWarning) const;
+
   bool IsRelevant() const { return mIsRelevant; }
   void UpdateRelevance();
 
@@ -325,6 +322,17 @@ public:
                     const nsCSSPropertyIDSet& aPropertiesToSkip);
 
   void NotifyEffectTimingUpdated();
+  void NotifyGeometricAnimationsStartingThisFrame();
+
+  /**
+   * Used by subclasses to synchronously queue a cancel event in situations
+   * where the Animation may have been cancelled.
+   *
+   * We need to do this synchronously because after a CSS animation/transition
+   * is canceled, it will be released by its owning element and may not still
+   * exist when we would normally go to queue events on the next tick.
+   */
+  virtual void MaybeQueueCancelEvent(StickyTimeDuration aActiveTime) {};
 
 protected:
   void SilentlySetCurrentTime(const TimeDuration& aNewCurrentTime);
@@ -385,6 +393,18 @@ protected:
    */
   void ResetPendingTasks();
 
+  /**
+   * Returns true if this animation is not only play-pending, but has
+   * yet to be given a pending ready time. This roughly corresponds to
+   * animations that are waiting to be painted (since we set the pending
+   * ready time at the end of painting). Identifying such animations is
+   * useful because in some cases animations that are painted together
+   * may need to be synchronized.
+   */
+  bool IsNewlyStarted() const {
+    return mPendingState == PendingState::PlayPending &&
+           mPendingReadyTime.IsNull();
+  }
   bool IsPossiblyOrphanedPendingAnimation() const;
   StickyTimeDuration EffectEnd() const;
 
@@ -443,6 +463,11 @@ protected:
   // in that case mFinished is immediately reset to represent a new current
   // finished promise.
   bool mFinishedIsResolved;
+
+  // True if this animation was triggered at the same time as one or more
+  // geometric animations and hence we should run any transform animations on
+  // the main thread.
+  bool mSyncWithGeometricAnimations;
 
   nsString mId;
 };

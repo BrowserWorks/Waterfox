@@ -3,7 +3,7 @@ var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 const gfxFrameScript = {
   domUtils: null,
 
-  init: function() {
+  init() {
     let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
     let webProgress =  docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                        .getInterface(Ci.nsIWebProgress);
@@ -18,16 +18,16 @@ const gfxFrameScript = {
 
   },
 
-  handleEvent: function(aEvent) {
+  handleEvent(aEvent) {
     switch (aEvent.type) {
       case "MozAfterPaint":
-        sendAsyncMessage('gfxSanity:ContentLoaded');
+        sendAsyncMessage("gfxSanity:ContentLoaded");
         removeEventListener("MozAfterPaint", this);
         break;
     }
   },
 
-  isSanityTest: function(aUri) {
+  isSanityTest(aUri) {
     if (!aUri) {
       return false;
     }
@@ -35,7 +35,7 @@ const gfxFrameScript = {
     return aUri.endsWith("/sanitytest.html");
   },
 
-  onStateChange: function (webProgress, req, flags, status) {
+  onStateChange(webProgress, req, flags, status) {
     if (webProgress.isTopLevel &&
         (flags & Ci.nsIWebProgressListener.STATE_STOP) &&
         this.isSanityTest(req.name)) {
@@ -46,7 +46,7 @@ const gfxFrameScript = {
       if (this.domUtils.isMozAfterPaintPending) {
         addEventListener("MozAfterPaint", this);
       } else {
-        sendAsyncMessage('gfxSanity:ContentLoaded');
+        sendAsyncMessage("gfxSanity:ContentLoaded");
       }
     }
   },

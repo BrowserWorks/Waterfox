@@ -26,6 +26,7 @@
 
 namespace mozilla {
 
+class AbstractThread;
 class DOMHwMediaStream;
 class DOMLocalMediaStream;
 class DOMMediaStream;
@@ -84,7 +85,6 @@ class MediaStreamTrackSourceGetter : public nsISupports
 public:
   MediaStreamTrackSourceGetter()
   {
-    MOZ_COUNT_CTOR(MediaStreamTrackSourceGetter);
   }
 
   virtual already_AddRefed<dom::MediaStreamTrackSource>
@@ -93,7 +93,6 @@ public:
 protected:
   virtual ~MediaStreamTrackSourceGetter()
   {
-    MOZ_COUNT_DTOR(MediaStreamTrackSourceGetter);
   }
 };
 
@@ -591,6 +590,8 @@ public:
   // a dead pointer. Main thread only.
   void UnregisterTrackListener(TrackListener* aListener);
 
+  AbstractThread* AbstractMainThread() const { return mAbstractMainThread; }
+
 protected:
   virtual ~DOMMediaStream();
 
@@ -755,6 +756,7 @@ private:
   nsCOMPtr<nsIPrincipal> mVideoPrincipal;
   nsTArray<dom::PrincipalChangeObserver<DOMMediaStream>*> mPrincipalChangeObservers;
   CORSMode mCORSMode;
+  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(DOMMediaStream,

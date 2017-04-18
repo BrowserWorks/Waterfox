@@ -508,7 +508,7 @@ LIRGenerator::visitCall(MCall* call)
 
     // In case of oom, skip the rest of the allocations.
     if (!lowerCallArguments(call)) {
-        gen->abort("OOM: LIRGenerator::visitCall");
+        abort(AbortReason::Alloc, "OOM: LIRGenerator::visitCall");
         return;
     }
 
@@ -1565,12 +1565,22 @@ void
 LIRGenerator::visitPow(MPow* ins)
 {
     MDefinition* input = ins->input();
-    MOZ_ASSERT(input->type() == MIRType::Double);
-
     MDefinition* power = ins->power();
+    LInstruction* lir;
+
+    if (ins->specialization() == MIRType::None) {
+        MOZ_ASSERT(input->type() == MIRType::Value);
+        MOZ_ASSERT(power->type() == MIRType::Value);
+
+        lir = new(alloc()) LPowV(useBoxAtStart(input), useBoxAtStart(power));
+        defineReturn(lir, ins);
+        assignSafepoint(lir, ins);
+        return;
+    }
+
+    MOZ_ASSERT(input->type() == MIRType::Double);
     MOZ_ASSERT(power->type() == MIRType::Int32 || power->type() == MIRType::Double);
 
-    LInstruction* lir;
     if (power->type() == MIRType::Int32) {
         // Note: useRegisterAtStart here is safe, the temp is a GP register so
         // it will never get the same register.
@@ -2459,6 +2469,18 @@ LIRGenerator::visitLambdaArrow(MLambdaArrow* ins)
 }
 
 void
+LIRGenerator::visitSetFunName(MSetFunName* ins)
+{
+    MOZ_ASSERT(ins->fun()->type() == MIRType::Object);
+    MOZ_ASSERT(ins->name()->type() == MIRType::Value);
+
+    LSetFunName* lir = new(alloc()) LSetFunName(useRegisterAtStart(ins->fun()),
+                                                useBoxAtStart(ins->name()));
+    add(lir, ins);
+    assignSafepoint(lir, ins);
+}
+
+void
 LIRGenerator::visitKeepAliveObject(MKeepAliveObject* ins)
 {
     MDefinition* obj = ins->object();
@@ -2674,7 +2696,7 @@ IsNonNurseryConstant(MDefinition* def)
     if (!def->isConstant())
         return false;
     Value v = def->toConstant()->toJSValue();
-    return !v.isMarkable() || !IsInsideNursery(v.toMarkablePointer());
+    return !v.isGCThing() || !IsInsideNursery(v.toGCThing());
 }
 
 void
@@ -3619,16 +3641,24 @@ LIRGenerator::visitGetPropertyCache(MGetPropertyCache* ins)
     // constant to reduce register allocation pressure.
     bool useConstId = id->type() == MIRType::String || id->type() == MIRType::Symbol;
 
+    // We need a temp register if we can't use the output register as scratch.
+    // See IonIC::scratchRegisterForEntryJump.
+    LDefinition maybeTemp = LDefinition::BogusTemp();
+    if (EnableIonCacheIR && ins->type() == MIRType::Double)
+        maybeTemp = temp();
+
     if (ins->type() == MIRType::Value) {
         LGetPropertyCacheV* lir =
             new(alloc()) LGetPropertyCacheV(useRegister(ins->object()),
-                                            useBoxOrTypedOrConstant(id, useConstId));
+                                            useBoxOrTypedOrConstant(id, useConstId),
+                                            maybeTemp);
         defineBox(lir, ins);
         assignSafepoint(lir, ins);
     } else {
         LGetPropertyCacheT* lir =
             new(alloc()) LGetPropertyCacheT(useRegister(ins->object()),
-                                            useBoxOrTypedOrConstant(id, useConstId));
+                                            useBoxOrTypedOrConstant(id, useConstId),
+                                            maybeTemp);
         define(lir, ins);
         assignSafepoint(lir, ins);
     }
@@ -4298,7 +4328,7 @@ LIRGenerator::visitWasmCall(MWasmCall* ins)
 
     LAllocation* args = gen->allocate<LAllocation>(ins->numOperands());
     if (!args) {
-        gen->abort("Couldn't allocate for MWasmCall");
+        abort(AbortReason::Alloc, "Couldn't allocate for MWasmCall");
         return;
     }
 
@@ -4676,6 +4706,19 @@ LIRGenerator::visitCheckIsObj(MCheckIsObj* ins)
 }
 
 void
+LIRGenerator::visitCheckIsCallable(MCheckIsCallable* ins)
+{
+    MDefinition* checkVal = ins->checkValue();
+    MOZ_ASSERT(checkVal->type() == MIRType::Value);
+
+    LCheckIsCallable* lir = new(alloc()) LCheckIsCallable(useBox(checkVal),
+                                                          temp());
+    redefine(ins, checkVal);
+    add(lir, ins);
+    assignSafepoint(lir, ins);
+}
+
+void
 LIRGenerator::visitCheckObjCoercible(MCheckObjCoercible* ins)
 {
     MDefinition* checkVal = ins->checkValue();
@@ -4753,7 +4796,7 @@ LIRGenerator::visitInstruction(MInstruction* ins)
     if (LOsiPoint* osiPoint = popOsiPoint())
         add(osiPoint);
 
-    return !gen->errored();
+    return !errored();
 }
 
 void
@@ -4828,6 +4871,9 @@ LIRGenerator::visitBlock(MBasicBlock* block)
         uint32_t position = block->positionInPhiSuccessor();
         size_t lirIndex = 0;
         for (MPhiIterator phi(successor->phisBegin()); phi != successor->phisEnd(); phi++) {
+            if (!gen->ensureBallast())
+                return false;
+
             MDefinition* opd = phi->getOperand(position);
             ensureDefined(opd);
 

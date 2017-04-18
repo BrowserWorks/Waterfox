@@ -9,7 +9,12 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
+import android.support.v4.text.BidiFormatter;
+import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.view.View;
+
+import org.mozilla.gecko.util.ViewUtil;
 
 /**
  * Fades the end of the text by gecko:fadeWidth amount,
@@ -22,6 +27,7 @@ import android.util.AttributeSet;
 public class FadedSingleColorTextView extends FadedTextView {
     // Shader for the fading edge.
     private FadedTextGradient mTextGradient;
+    private boolean mIsTextDirectionRtl;
 
     public FadedSingleColorTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -37,10 +43,23 @@ public class FadedSingleColorTextView extends FadedTextView {
 
         final boolean needsEllipsis = needsEllipsis();
         if (needsEllipsis && needsNewGradient) {
-            mTextGradient = new FadedTextGradient(width, fadeWidth, color);
+            mTextGradient = new FadedTextGradient(width, fadeWidth, color, mIsTextDirectionRtl);
         }
 
         getPaint().setShader(needsEllipsis ? mTextGradient : null);
+    }
+
+    @Override
+    public void setText(CharSequence text, BufferType type) {
+        super.setText(text, type);
+        final boolean previousTextDirectionRtl = mIsTextDirectionRtl;
+        if (!TextUtils.isEmpty(text)) {
+            mIsTextDirectionRtl = BidiFormatter.getInstance().isRtl((String) text);
+        }
+        if (mIsTextDirectionRtl != previousTextDirectionRtl) {
+            mTextGradient = null;
+        }
+        ViewUtil.setTextDirectionRtlCompat(this, mIsTextDirectionRtl);
     }
 
     @Override
@@ -53,10 +72,11 @@ public class FadedSingleColorTextView extends FadedTextView {
         private final int mWidth;
         private final int mColor;
 
-        public FadedTextGradient(int width, int fadeWidth, int color) {
-            super(0, 0, width, 0,
-                  new int[] { color, color, 0x0 },
-                  new float[] { 0,  ((float) (width - fadeWidth) / width), 1.0f },
+        public FadedTextGradient(int width, int fadeWidth, int color, boolean isRTL) {
+            super(isRTL ? width : 0, 0,
+                  isRTL ? 0 : width, 0,
+                  new int[]{color, color, 0x0},
+                  new float[]{0, ((float) (width - fadeWidth) / width), 1.0f},
                   Shader.TileMode.CLAMP);
 
             mWidth = width;

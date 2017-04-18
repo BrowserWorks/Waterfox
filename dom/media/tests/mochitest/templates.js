@@ -90,12 +90,12 @@ function checkTrackStats(pc, rtpSenderOrReceiver, outbound) {
       (audio ? "audio" : "video") + " rtp track id " + track.id;
   return pc.getStats(track).then(stats => {
     ok(pc.hasStat(stats, {
-      type: outbound ? "outboundrtp" : "inboundrtp",
+      type: outbound ? "outbound-rtp" : "inbound-rtp",
       isRemote: false,
       mediaType: audio ? "audio" : "video"
     }), msg + " - found expected stats");
     ok(!pc.hasStat(stats, {
-      type: outbound ? "inboundrtp" : "outboundrtp",
+      type: outbound ? "inbound-rtp" : "outbound-rtp",
       isRemote: false
     }), msg + " - did not find extra stats with wrong direction");
     ok(!pc.hasStat(stats, {
@@ -118,7 +118,7 @@ var commandsPeerConnectionInitial = [
       test.setupSignalingClient();
       test.registerSignalingCallback("ice_candidate", function (message) {
         var pc = test.pcRemote ? test.pcRemote : test.pcLocal;
-        pc.storeOrAddIceCandidate(new RTCIceCandidate(message.ice_candidate));
+        pc.storeOrAddIceCandidate(message.ice_candidate);
       });
       test.registerSignalingCallback("end_of_trickle_ice", function (message) {
         test.signalingMessagesFinished();
@@ -408,6 +408,8 @@ var commandsPeerConnectionOfferAnswer = [
   function PC_LOCAL_CHECK_STATS(test) {
     return test.pcLocal.getStats().then(stats => {
       test.pcLocal.checkStats(stats, test.testOptions.steeplechase);
+    }).then(() => {
+      test.pcLocal.getStatsLegacy(null, test.pcLocal.checkLegacyStatTypeNames, e => {});
     });
   },
 
@@ -505,6 +507,16 @@ function PC_LOCAL_REMOVE_BUNDLE_FROM_OFFER(test) {
 function PC_LOCAL_REMOVE_RTCPMUX_FROM_OFFER(test) {
   test.originalOffer.sdp = sdputils.removeRtcpMux(test.originalOffer.sdp);
   info("Updated no RTCP-Mux offer: " + JSON.stringify(test.originalOffer));
+};
+
+function PC_LOCAL_REMOVE_SSRC_FROM_OFFER(test) {
+  test.originalOffer.sdp = sdputils.removeSSRCs(test.originalOffer.sdp);
+  info("Updated no SSRCs offer: " + JSON.stringify(test.originalOffer));
+};
+
+function PC_REMOTE_REMOVE_SSRC_FROM_ANSWER(test) {
+  test.originalAnswer.sdp = sdputils.removeSSRCs(test.originalAnswer.sdp);
+  info("Updated no SSRCs answer: " + JSON.stringify(test.originalAnswerr));
 };
 
 var addRenegotiation = (chain, commands, checks) => {

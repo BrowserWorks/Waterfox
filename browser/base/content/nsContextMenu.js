@@ -57,6 +57,7 @@ nsContextMenu.prototype = {
         onAudio: this.onAudio,
         onCanvas: this.onCanvas,
         onEditableArea: this.onEditableArea,
+        onPassword: this.onPassword,
         srcUrl: this.mediaURL,
         frameUrl: gContextMenuContentData ? gContextMenuContentData.docLocation : undefined,
         pageUrl: this.browser ? this.browser.currentURI.spec : undefined,
@@ -564,28 +565,10 @@ nsContextMenu.prototype = {
   },
 
   inspectNode: function() {
-    let {devtools} = Cu.import("resource://devtools/shared/Loader.jsm", {});
     let gBrowser = this.browser.ownerGlobal.gBrowser;
-    let target = devtools.TargetFactory.forTab(gBrowser.selectedTab);
-
-    return gDevTools.showToolbox(target, "inspector").then(toolbox => {
-      let inspector = toolbox.getCurrentPanel();
-
-      // new-node-front tells us when the node has been selected, whether the
-      // browser is remote or not.
-      let onNewNode = inspector.selection.once("new-node-front");
-
-      this.browser.messageManager.sendAsyncMessage("debug:inspect", {}, {node: this.target});
-      inspector.walker.findInspectingNode().then(nodeFront => {
-        inspector.selection.setNodeFront(nodeFront, "browser-context-menu");
-      });
-
-      return onNewNode.then(() => {
-        // Now that the node has been selected, wait until the inspector is
-        // fully updated.
-        return inspector.once("inspector-updated");
-      });
-    });
+    let { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+    let { gDevToolsBrowser } = require("devtools/client/framework/devtools-browser");
+    return gDevToolsBrowser.inspectNode(gBrowser.selectedTab, this.target);
   },
 
   // Set various context menu attributes based on the state of the world.
@@ -1145,10 +1128,12 @@ nsContextMenu.prototype = {
   // Change current window to the URL of the image, video, or audio.
   viewMedia: function(e) {
     let referrerURI = gContextMenuContentData.documentURIObject;
+    let systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
     if (this.onCanvas) {
       this._canvasToBlobURL(this.target).then(function(blobURL) {
         openUILink(blobURL, e, { disallowInheritPrincipal: true,
-                                 referrerURI: referrerURI });
+                                 referrerURI: referrerURI,
+                                 originPrincipal: systemPrincipal});
       }, Cu.reportError);
     }
     else {
@@ -1750,8 +1735,13 @@ nsContextMenu.prototype = {
 
   mediaCommand : function CM_mediaCommand(command, data) {
     let mm = this.browser.messageManager;
+    let win = this.browser.ownerGlobal;
+    let windowUtils = win.QueryInterface(Ci.nsIInterfaceRequestor)
+                         .getInterface(Ci.nsIDOMWindowUtils);
     mm.sendAsyncMessage("ContextMenu:MediaCommand",
-                        {command: command, data: data},
+                        {command: command,
+                         data: data,
+                         handlingUserInput: windowUtils.isHandlingUserInput},
                         {element: this.target});
   },
 
@@ -1807,7 +1797,10 @@ nsContextMenu.prototype = {
   },
 
   createContainerMenu: function(aEvent) {
-    return createUserContextMenu(aEvent, true,
-                                 gContextMenuContentData.userContextId);
+    let createMenuOptions = {
+      isContextMenu: true,
+      excludeUserContextId: gContextMenuContentData.userContextId,
+    };
+    return createUserContextMenu(aEvent, createMenuOptions);
   },
 };

@@ -245,15 +245,54 @@
  * example, write
  *
  *   MOZ_MUST_USE int foo();
- *
  * or
- *
  *   MOZ_MUST_USE int foo() { return 42; }
+ *
+ * MOZ_MUST_USE is most appropriate for functions where the return value is
+ * some kind of success/failure indicator -- often |nsresult|, |bool| or |int|
+ * -- because these functions are most commonly the ones that have missing
+ * checks. There are three cases of note.
+ *
+ * - Fallible functions whose return values should always be checked. For
+ *   example, a function that opens a file should always be checked because any
+ *   subsequent operations on the file will fail if opening it fails. Such
+ *   functions should be given a MOZ_MUST_USE annotation.
+ *
+ * - Fallible functions whose return value need not always be checked. For
+ *   example, a function that closes a file might not be checked because it's
+ *   common that no further operations would be performed on the file. Such
+ *   functions do not need a MOZ_MUST_USE annotation.
+ *
+ * - Infallible functions, i.e. ones that always return a value indicating
+ *   success. These do not need a MOZ_MUST_USE annotation. Ideally, they would
+ *   be converted to not return a success/failure indicator, though sometimes
+ *   interface constraints prevent this.
  */
 #if defined(__GNUC__) || defined(__clang__)
 #  define MOZ_MUST_USE __attribute__ ((warn_unused_result))
 #else
 #  define MOZ_MUST_USE
+#endif
+
+/**
+ * MOZ_MAYBE_UNUSED suppresses compiler warnings about functions that are
+ * never called (in this build configuration, at least).
+ *
+ * Place this attribute at the very beginning of a function declaration. For
+ * example, write
+ *
+ *   MOZ_MAYBE_UNUSED int foo();
+ *
+ * or
+ *
+ *   MOZ_MAYBE_UNUSED int foo() { return 42; }
+ */
+#if defined(__GNUC__) || defined(__clang__)
+#  define MOZ_MAYBE_UNUSED __attribute__ ((__unused__))
+#elif defined(_MSC_VER)
+#  define MOZ_MAYBE_UNUSED __pragma(warning(suppress:4505))
+#else
+#  define MOZ_MAYBE_UNUSED
 #endif
 
 /**
@@ -550,22 +589,6 @@
 #endif /* MOZ_CLANG_PLUGIN */
 
 #define MOZ_RAII MOZ_NON_TEMPORARY_CLASS MOZ_STACK_CLASS
-
-/*
- * MOZ_HAVE_REF_QUALIFIERS is defined for compilers that support C++11's rvalue
- * qualifier, "&&".
- */
-#if defined(_MSC_VER) && _MSC_VER >= 1900
-#  define MOZ_HAVE_REF_QUALIFIERS
-#elif defined(__clang__)
-// All supported Clang versions
-#  define MOZ_HAVE_REF_QUALIFIERS
-#elif defined(__GNUC__)
-#  include "mozilla/Compiler.h"
-#  if MOZ_GCC_VERSION_AT_LEAST(4, 8, 1)
-#    define MOZ_HAVE_REF_QUALIFIERS
-#  endif
-#endif
 
 #endif /* __cplusplus */
 

@@ -28,11 +28,16 @@ add_task(function* setup() {
     ["toolkit.telemetry.enabled", true]  // And Extended Telemetry to be enabled.
   ]});
 
+  // Enable event recording for the events tested here.
+  Services.telemetry.setEventRecordingEnabled("navigation", true);
+
   // Make sure to restore the engine once we're done.
   registerCleanupFunction(function* () {
     Services.search.currentEngine = originalEngine;
     Services.search.removeEngine(engineDefault);
     Services.search.removeEngine(engineOneOff);
+    yield PlacesTestUtils.clearHistory();
+    Services.telemetry.setEventRecordingEnabled("navigation", false);
   });
 });
 
@@ -66,14 +71,13 @@ add_task(function* test_context_menu() {
   searchItem.click();
 
   info("Validate the search metrics.");
-  const scalars =
-    Services.telemetry.snapshotKeyedScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
+  const scalars = getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
   checkKeyedScalar(scalars, SCALAR_CONTEXT_MENU, "search", 1);
   Assert.equal(Object.keys(scalars[SCALAR_CONTEXT_MENU]).length, 1,
                "This search must only increment one entry in the scalar.");
 
   // Make sure SEARCH_COUNTS contains identical values.
-  checkKeyedHistogram(search_hist, 'other-MozSearch.contextmenu', 1);
+  checkKeyedHistogram(search_hist, "other-MozSearch.contextmenu", 1);
 
   // Also check events.
   let events = Services.telemetry.snapshotBuiltinEvents(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
@@ -103,14 +107,13 @@ add_task(function* test_about_newtab() {
   yield p;
 
   // Check if the scalars contain the expected values.
-  const scalars =
-    Services.telemetry.snapshotKeyedScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
+  const scalars = getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
   checkKeyedScalar(scalars, SCALAR_ABOUT_NEWTAB, "search_enter", 1);
   Assert.equal(Object.keys(scalars[SCALAR_ABOUT_NEWTAB]).length, 1,
                "This search must only increment one entry in the scalar.");
 
   // Make sure SEARCH_COUNTS contains identical values.
-  checkKeyedHistogram(search_hist, 'other-MozSearch.newtab', 1);
+  checkKeyedHistogram(search_hist, "other-MozSearch.newtab", 1);
 
   // Also check events.
   let events = Services.telemetry.snapshotBuiltinEvents(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);

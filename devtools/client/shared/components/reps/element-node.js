@@ -9,9 +9,13 @@
 define(function (require, exports, module) {
   // ReactJS
   const React = require("devtools/client/shared/vendor/react");
-  const { isGrip } = require("./rep-utils");
 
   // Utils
+  const {
+    isGrip,
+    wrapRender,
+  } = require("./rep-utils");
+  const { MODE } = require("./constants");
   const nodeConstants = require("devtools/shared/dom-node-constants");
 
   // Shortcuts
@@ -25,7 +29,11 @@ define(function (require, exports, module) {
 
     propTypes: {
       object: React.PropTypes.object.isRequired,
-      mode: React.PropTypes.string,
+      // @TODO Change this to Object.values once it's supported in Node's version of V8
+      mode: React.PropTypes.oneOf(Object.keys(MODE).map(key => MODE[key])),
+      onDOMNodeMouseOver: React.PropTypes.func,
+      onDOMNodeMouseOut: React.PropTypes.func,
+      objectLink: React.PropTypes.func,
     },
 
     getElements: function (grip, mode) {
@@ -34,7 +42,7 @@ define(function (require, exports, module) {
         className: "tag-name theme-fg-color3"
       }, nodeName);
 
-      if (mode === "tiny") {
+      if (mode === MODE.TINY) {
         let elements = [nodeNameElement];
         if (attributes.id) {
           elements.push(
@@ -86,16 +94,33 @@ define(function (require, exports, module) {
       ];
     },
 
-    render: function () {
-      let {object, mode} = this.props;
+    render: wrapRender(function () {
+      let {
+        object,
+        mode,
+        onDOMNodeMouseOver,
+        onDOMNodeMouseOut
+      } = this.props;
       let elements = this.getElements(object, mode);
-      const baseElement = span({className: "objectBox"}, ...elements);
+      let objectLink = this.props.objectLink || span;
 
-      if (this.props.objectLink) {
-        return this.props.objectLink({object}, baseElement);
+      let baseConfig = {className: "objectBox objectBox-node"};
+      if (onDOMNodeMouseOver) {
+        Object.assign(baseConfig, {
+          onMouseOver: _ => onDOMNodeMouseOver(object)
+        });
       }
-      return baseElement;
-    },
+
+      if (onDOMNodeMouseOut) {
+        Object.assign(baseConfig, {
+          onMouseOut: onDOMNodeMouseOut
+        });
+      }
+
+      return objectLink({object},
+        span(baseConfig, ...elements)
+      );
+    }),
   });
 
   // Registration

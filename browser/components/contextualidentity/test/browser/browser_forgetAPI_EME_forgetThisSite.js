@@ -13,11 +13,11 @@ const USER_CONTEXTS = [
 ];
 
 const TEST_EME_KEY = {
-  initDataType: 'keyids',
+  initDataType: "keyids",
   initData: '{"kids":["LwVHf8JLtPrv2GUXFW2v_A"], "type":"persistent-license"}',
   kid: "LwVHf8JLtPrv2GUXFW2v_A",
   key: "97b9ddc459c8d5ff23c1f2754c95abe8",
-  sessionType: 'persistent-license',
+  sessionType: "persistent-license",
 };
 
 //
@@ -67,7 +67,7 @@ function ByteArrayToHex(array) {
 
 function generateKeyObject(aKid, aKey) {
   let keyObj = {
-    kty: 'oct',
+    kty: "oct",
     kid: aKid,
     k: HexToBase64(aKey),
   };
@@ -95,12 +95,12 @@ function* setupEMEKey(browser) {
 
   // Setup the EME key.
   let result = yield ContentTask.spawn(browser, keyInfo, function* (aKeyInfo) {
-    let access = yield content.navigator.requestMediaKeySystemAccess('org.w3.clearkey',
+    let access = yield content.navigator.requestMediaKeySystemAccess("org.w3.clearkey",
                                                                      [{
                                                                        initDataTypes: [aKeyInfo.initDataType],
-                                                                       videoCapabilities: [{contentType: 'video/webm'}],
-                                                                       sessionTypes: ['persistent-license'],
-                                                                       persistentState: 'required',
+                                                                       videoCapabilities: [{contentType: "video/webm"}],
+                                                                       sessionTypes: ["persistent-license"],
+                                                                       persistentState: "required",
                                                                      }]);
     let mediaKeys = yield access.createMediaKeys();
     let session = mediaKeys.createSession(aKeyInfo.sessionType);
@@ -150,12 +150,12 @@ function* checkEMEKey(browser, emeSessionId) {
   keyInfo.sessionId = emeSessionId;
 
   yield ContentTask.spawn(browser, keyInfo, function* (aKeyInfo) {
-    let access = yield content.navigator.requestMediaKeySystemAccess('org.w3.clearkey',
+    let access = yield content.navigator.requestMediaKeySystemAccess("org.w3.clearkey",
                                                                      [{
                                                                        initDataTypes: [aKeyInfo.initDataType],
-                                                                       videoCapabilities: [{contentType: 'video/webm'}],
-                                                                       sessionTypes: ['persistent-license'],
-                                                                       persistentState: 'required',
+                                                                       videoCapabilities: [{contentType: "video/webm"}],
+                                                                       sessionTypes: ["persistent-license"],
+                                                                       persistentState: "required",
                                                                      }]);
     let mediaKeys = yield access.createMediaKeys();
     let session = mediaKeys.createSession(aKeyInfo.sessionType);
@@ -191,7 +191,7 @@ add_task(function* test_EME_forgetThisSite() {
 
   for (let userContextId of Object.keys(USER_CONTEXTS)) {
     // Open our tab in the given user context.
-    tabs[userContextId] = yield* openTabInUserContext(TEST_URL+ "empty_file.html", userContextId);
+    tabs[userContextId] = yield* openTabInUserContext(TEST_URL + "empty_file.html", userContextId);
 
     // Setup EME Key.
     emeSessionIds[userContextId] = yield setupEMEKey(tabs[userContextId].browser);
@@ -208,7 +208,7 @@ add_task(function* test_EME_forgetThisSite() {
   // Open tabs again to check EME keys have been cleared.
   for (let userContextId of Object.keys(USER_CONTEXTS)) {
     // Open our tab in the given user context.
-    tabs[userContextId] = yield* openTabInUserContext(TEST_URL+ "empty_file.html", userContextId);
+    tabs[userContextId] = yield* openTabInUserContext(TEST_URL + "empty_file.html", userContextId);
 
     // Check whether EME Key has been cleared.
     yield checkEMEKey(tabs[userContextId].browser, emeSessionIds[userContextId]);

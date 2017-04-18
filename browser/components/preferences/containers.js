@@ -89,7 +89,7 @@ let gContainersManager = {
   createIconButtons(defaultIcon) {
     let radiogroup = document.createElement("radiogroup");
     radiogroup.setAttribute("id", "icon");
-    radiogroup.className = "icon-buttons";
+    radiogroup.className = "icon-buttons radio-buttons";
 
     for (let icon of this.icons) {
       let iconSwatch = document.createElement("radio");
@@ -105,7 +105,7 @@ let gContainersManager = {
       iconSwatch.setAttribute("label",
         containersBundle.GetStringFromName(`containers.${icon}.label`));
       let iconElement = document.createElement("hbox");
-      iconElement.className = 'userContext-icon';
+      iconElement.className = "userContext-icon";
       iconElement.setAttribute("data-identity-icon", icon);
 
       iconSwatch.appendChild(iconElement);
@@ -118,6 +118,7 @@ let gContainersManager = {
   createColorSwatches(defaultColor) {
     let radiogroup = document.createElement("radiogroup");
     radiogroup.setAttribute("id", "color");
+    radiogroup.className = "radio-buttons";
 
     for (let color of this.colors) {
       let colorSwatch = document.createElement("radio");
@@ -133,7 +134,7 @@ let gContainersManager = {
       colorSwatch.setAttribute("label",
         containersBundle.GetStringFromName(`containers.${color}.label`));
       let iconElement = document.createElement("hbox");
-      iconElement.className = 'userContext-icon';
+      iconElement.className = "userContext-icon";
       iconElement.setAttribute("data-identity-icon", "circle");
       iconElement.setAttribute("data-identity-color", color);
 

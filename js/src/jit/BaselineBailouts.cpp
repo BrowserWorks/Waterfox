@@ -356,11 +356,11 @@ struct BaselineStackBuilder
         BufferPointer<JitFrameLayout> topFrame = topFrameAddress();
         FrameType type = topFrame->prevType();
 
-        // For IonJS, IonAccessorIC and Entry frames, the "saved" frame pointer
+        // For IonJS, IonICCall and Entry frames, the "saved" frame pointer
         // in the baseline frame is meaningless, since Ion saves all registers
         // before calling other ion frames, and the entry frame saves all
         // registers too.
-        if (type == JitFrame_IonJS || type == JitFrame_Entry || type == JitFrame_IonAccessorIC)
+        if (type == JitFrame_IonJS || type == JitFrame_Entry || type == JitFrame_IonICCall)
             return nullptr;
 
         // BaselineStub - Baseline calling into Ion.
@@ -487,7 +487,7 @@ GetNextNonLoopEntryPc(jsbytecode* pc)
 }
 
 static bool
-HasLiveIteratorAtStackDepth(JSScript* script, jsbytecode* pc, uint32_t stackDepth)
+HasLiveStackValueAtDepth(JSScript* script, jsbytecode* pc, uint32_t stackDepth)
 {
     if (!script->hasTrynotes())
         return false;
@@ -501,14 +501,31 @@ HasLiveIteratorAtStackDepth(JSScript* script, jsbytecode* pc, uint32_t stackDept
         if (pcOffset >= tn->start + tn->length)
             continue;
 
-        // For-in loops have only the iterator on stack.
-        if (tn->kind == JSTRY_FOR_IN && stackDepth == tn->stackDepth)
-            return true;
+        switch (tn->kind) {
+          case JSTRY_FOR_IN:
+            // For-in loops have only the iterator on stack.
+            if (stackDepth == tn->stackDepth)
+                return true;
+            break;
 
-        // For-of loops have both the iterator and the result object on
-        // stack. The iterator is below the result object.
-        if (tn->kind == JSTRY_FOR_OF && stackDepth == tn->stackDepth - 1)
-            return true;
+          case JSTRY_FOR_OF:
+            // For-of loops have the iterator, the result object, and the value
+            // of the result object on stack. The iterator is below the result
+            // object and the value.
+            if (stackDepth == tn->stackDepth - 2)
+                return true;
+            break;
+
+          case JSTRY_DESTRUCTURING_ITERCLOSE:
+            // Destructuring code that need to call IteratorClose have both
+            // the iterator and the "done" value on the stack.
+            if (stackDepth == tn->stackDepth || stackDepth == tn->stackDepth - 1)
+                return true;
+            break;
+
+          default:
+            break;
+        }
     }
 
     return false;
@@ -907,9 +924,7 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
                 // We would love to just save all the arguments and leave them
                 // in the stub frame pushed below, but we will lose the inital
                 // argument which the function was called with, which we must
-                // return to the caller, even if the setter internally modifies
-                // its arguments. Stash the initial argument on the stack, to be
-                // later retrieved by the SetProp_Fallback stub.
+                // leave on the stack. It's pushed as the result of the SETPROP.
                 Value initialArg = savedCallerArgs[inlined_args - 1];
                 JitSpew(JitSpew_BaselineBailouts, "     pushing setter's initial argument");
                 if (!builder.writeValue(initialArg, "StackValue"))
@@ -945,7 +960,7 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
             // iterators, however, so read them out. They will be closed by
             // HandleExceptionBaseline.
             MOZ_ASSERT(cx->compartment()->isDebuggee());
-            if (iter.moreFrames() || HasLiveIteratorAtStackDepth(script, pc, i + 1)) {
+            if (iter.moreFrames() || HasLiveStackValueAtDepth(script, pc, i + 1)) {
                 v = iter.read();
             } else {
                 iter.skip();
@@ -1483,7 +1498,7 @@ jit::BailoutIonToBaseline(JSContext* cx, JitActivation* activation, JitFrameIter
                prevFrameType == JitFrame_BaselineStub ||
                prevFrameType == JitFrame_Entry ||
                prevFrameType == JitFrame_Rectifier ||
-               prevFrameType == JitFrame_IonAccessorIC);
+               prevFrameType == JitFrame_IonICCall);
 #endif
 
     // All incoming frames are going to look like this:

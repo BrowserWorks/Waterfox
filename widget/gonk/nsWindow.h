@@ -54,26 +54,26 @@ public:
                                          nsWidgetInitData* aInitData) override;
     virtual void Destroy();
 
-    NS_IMETHOD Show(bool aState);
+    virtual void Show(bool aState);
     virtual bool IsVisible() const;
-    NS_IMETHOD Move(double aX,
-                    double aY);
-    NS_IMETHOD Resize(double aWidth,
-                      double aHeight,
-                      bool  aRepaint);
-    NS_IMETHOD Resize(double aX,
-                      double aY,
-                      double aWidth,
-                      double aHeight,
-                      bool aRepaint);
-    NS_IMETHOD Enable(bool aState);
+    virtual void Move(double aX,
+                      double aY);
+    virtual void Resize(double aWidth,
+                        double aHeight,
+                        bool  aRepaint);
+    virtual void Resize(double aX,
+                        double aY,
+                        double aWidth,
+                        double aHeight,
+                        bool aRepaint);
+    virtual void Enable(bool aState);
     virtual bool IsEnabled() const;
-    NS_IMETHOD SetFocus(bool aRaise = false);
-    NS_IMETHOD ConfigureChildren(const nsTArray<nsIWidget::Configuration>&);
-    NS_IMETHOD Invalidate(const LayoutDeviceIntRect& aRect);
+    virtual nsresult SetFocus(bool aRaise = false);
+    virtual nsresult ConfigureChildren(const nsTArray<nsIWidget::Configuration>&);
+    virtual void Invalidate(const LayoutDeviceIntRect& aRect);
     virtual void* GetNativeData(uint32_t aDataType);
     virtual void SetNativeData(uint32_t aDataType, uintptr_t aVal);
-    NS_IMETHOD SetTitle(const nsAString& aTitle)
+    virtual nsresult SetTitle(const nsAString& aTitle)
     {
         return NS_OK;
     }
@@ -83,8 +83,8 @@ public:
                                   const ScrollableLayerGuid& aGuid,
                                   const uint64_t aInputBlockId,
                                   nsEventStatus aApzResponse);
-    NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
-                             nsEventStatus& aStatus);
+    virtual nsresult DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
+                                   nsEventStatus& aStatus);
     virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                                 TouchPointerState aPointerState,
                                                 LayoutDeviceIntPoint aPoint,
@@ -107,9 +107,9 @@ public:
                         LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT);
     virtual void DestroyCompositor();
 
-    NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
-                                      const InputContextAction& aAction);
-    NS_IMETHOD_(InputContext) GetInputContext();
+    virtual void SetInputContext(const InputContext& aContext,
+                                 const InputContextAction& aAction);
+    virtual InputContext GetInputContext();
 
     virtual uint32_t GetGLFrameBufferFormat() override;
 

@@ -16,12 +16,8 @@ import java.util.List;
 import java.util.Locale;
 
 import android.content.SharedPreferences;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.PrefsHelper;
@@ -39,7 +35,9 @@ import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 import org.mozilla.gecko.home.SearchLoader.SearchCursorLoader;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.toolbar.AutocompleteHandler;
-import org.mozilla.gecko.util.GeckoEventListener;
+import org.mozilla.gecko.util.BundleEventListener;
+import org.mozilla.gecko.util.EventCallback;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -78,7 +76,7 @@ import android.widget.TextView;
  * Fragment that displays frecency search results in a ListView.
  */
 public class BrowserSearch extends HomeFragment
-                           implements GeckoEventListener,
+                           implements BundleEventListener,
                                       SearchEngineBar.OnSearchBarClickListener {
 
     @RobocopTarget
@@ -309,7 +307,7 @@ public class BrowserSearch extends HomeFragment
     public void onDestroyView() {
         super.onDestroyView();
 
-        GeckoApp.getEventDispatcher().unregisterGeckoThreadListener(this,
+        EventDispatcher.getInstance().unregisterUiThreadListener(this,
             "SearchEngines:Data");
 
         mSearchEngineBar.setAdapter(null);
@@ -409,7 +407,7 @@ public class BrowserSearch extends HomeFragment
         });
 
         registerForContextMenu(mList);
-        GeckoApp.getEventDispatcher().registerGeckoThreadListener(this,
+        EventDispatcher.getInstance().registerUiThreadListener(this,
             "SearchEngines:Data");
 
         mSearchEngineBar.setOnSearchBarClickListener(this);
@@ -469,15 +467,11 @@ public class BrowserSearch extends HomeFragment
         loadIfVisible();
     }
 
-    @Override
-    public void handleMessage(String event, final JSONObject message) {
+    @Override // BundleEventListener
+    public void handleMessage(final String event, final GeckoBundle message,
+                              final EventCallback callback) {
         if (event.equals("SearchEngines:Data")) {
-            ThreadUtils.postToUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    setSearchEngines(message);
-                }
-            });
+            setSearchEngines(message);
         }
     }
 
@@ -556,7 +550,8 @@ public class BrowserSearch extends HomeFragment
             domains = new LinkedHashSet<String>(500);
             BufferedReader buf = null;
             try {
-                buf = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.raw.topdomains)));
+                buf = new BufferedReader(new InputStreamReader(
+                        getResources().openRawResource(R.raw.topdomains), StringUtils.UTF_8));
                 String res = null;
 
                 do {
@@ -672,16 +667,22 @@ public class BrowserSearch extends HomeFragment
         }
 
         // Suggestions from search engine
-        if (mSearchEngineSuggestionLoaderCallbacks == null) {
-            mSearchEngineSuggestionLoaderCallbacks = new SearchEngineSuggestionLoaderCallbacks();
+        if (mSuggestionsEnabled) {
+            if (mSearchEngineSuggestionLoaderCallbacks == null) {
+                mSearchEngineSuggestionLoaderCallbacks = new SearchEngineSuggestionLoaderCallbacks();
+            }
+            getLoaderManager().restartLoader(LOADER_ID_SUGGESTION, null, mSearchEngineSuggestionLoaderCallbacks);
         }
-        getLoaderManager().restartLoader(LOADER_ID_SUGGESTION, null, mSearchEngineSuggestionLoaderCallbacks);
 
         // Saved suggestions
-        if (mSearchHistorySuggestionLoaderCallback == null) {
-            mSearchHistorySuggestionLoaderCallback = new SearchHistorySuggestionLoaderCallbacks();
+        if (mSavedSearchesEnabled) {
+            if (mSearchHistorySuggestionLoaderCallback == null) {
+                mSearchHistorySuggestionLoaderCallback = new SearchHistorySuggestionLoaderCallbacks();
+            }
+            getLoaderManager().restartLoader(LOADER_ID_SAVED_SUGGESTION, null, mSearchHistorySuggestionLoaderCallback);
+        } else {
+            mSearchHistorySuggestions.clear();
         }
-        getLoaderManager().restartLoader(LOADER_ID_SAVED_SUGGESTION, null, mSearchHistorySuggestionLoaderCallback);
     }
 
     private void setSuggestions(ArrayList<String> suggestions) {
@@ -719,7 +720,7 @@ public class BrowserSearch extends HomeFragment
         return false;
     }
 
-    private void setSearchEngines(JSONObject data) {
+    private void setSearchEngines(final GeckoBundle data) {
         ThreadUtils.assertOnUiThread();
 
         // This method is called via a Runnable posted from the Gecko thread, so
@@ -729,59 +730,55 @@ public class BrowserSearch extends HomeFragment
             return;
         }
 
-        try {
-            final JSONObject suggest = data.getJSONObject("suggest");
-            final String suggestEngine = suggest.optString("engine", null);
-            final String suggestTemplate = suggest.optString("template", null);
-            final boolean suggestionsPrompted = suggest.getBoolean("prompted");
-            final JSONArray engines = data.getJSONArray("searchEngines");
+        final GeckoBundle suggest = data.getBundle("suggest");
+        final String suggestEngine = suggest.getString("engine", null);
+        final String suggestTemplate = suggest.getString("template", null);
+        final boolean suggestionsPrompted = suggest.getBoolean("prompted");
+        final GeckoBundle[] engines = data.getBundleArray("searchEngines");
 
-            mSuggestionsEnabled = suggest.getBoolean("enabled");
+        mSuggestionsEnabled = suggest.getBoolean("enabled");
 
-            ArrayList<SearchEngine> searchEngines = new ArrayList<SearchEngine>();
-            for (int i = 0; i < engines.length(); i++) {
-                final JSONObject engineJSON = engines.getJSONObject(i);
-                final SearchEngine engine = new SearchEngine((Context) getActivity(), engineJSON);
+        ArrayList<SearchEngine> searchEngines = new ArrayList<SearchEngine>();
+        for (int i = 0; i < engines.length; i++) {
+            final GeckoBundle engineBundle = engines[i];
+            final SearchEngine engine = new SearchEngine((Context) getActivity(), engineBundle);
 
-                if (engine.name.equals(suggestEngine) && suggestTemplate != null) {
-                    // Suggest engine should be at the front of the list.
-                    // We're baking in an assumption here that the suggest engine
-                    // is also the default engine.
-                    searchEngines.add(0, engine);
+            if (engine.name.equals(suggestEngine) && suggestTemplate != null) {
+                // Suggest engine should be at the front of the list.
+                // We're baking in an assumption here that the suggest engine
+                // is also the default engine.
+                searchEngines.add(0, engine);
 
-                    ensureSuggestClientIsSet(suggestTemplate);
-                } else {
-                    searchEngines.add(engine);
-                }
-            }
-
-            // checking if the new searchEngine is different from mSearchEngine, will have to re-layout if yes
-            boolean change = shouldUpdateSearchEngine(searchEngines);
-
-            if (mAdapter != null && change) {
-                mSearchEngines = Collections.unmodifiableList(searchEngines);
-                mLastLocale = Locale.getDefault();
-                updateSearchEngineBar();
-
-                mAdapter.notifyDataSetChanged();
-            }
-
-            final Tab tab = Tabs.getInstance().getSelectedTab();
-            final boolean isPrivate = (tab != null && tab.isPrivate());
-
-            // Show suggestions opt-in prompt only if suggestions are not enabled yet,
-            // user hasn't been prompted and we're not on a private browsing tab.
-            // The prompt might have been inflated already when this view was previously called.
-            // Remove the opt-in prompt if it has been inflated in the view and dealt with by the user,
-            // or if we're on a private browsing tab
-            if (!mSuggestionsEnabled && !suggestionsPrompted && !isPrivate) {
-                showSuggestionsOptIn();
+                ensureSuggestClientIsSet(suggestTemplate);
             } else {
-                removeSuggestionsOptIn();
+                searchEngines.add(engine);
             }
+        }
 
-        } catch (JSONException e) {
-            Log.e(LOGTAG, "Error getting search engine JSON", e);
+        // checking if the new searchEngine is different from mSearchEngine, will have to
+        // re-layout if yes
+        boolean change = shouldUpdateSearchEngine(searchEngines);
+
+        if (mAdapter != null && change) {
+            mSearchEngines = Collections.unmodifiableList(searchEngines);
+            mLastLocale = Locale.getDefault();
+            updateSearchEngineBar();
+
+            mAdapter.notifyDataSetChanged();
+        }
+
+        final Tab tab = Tabs.getInstance().getSelectedTab();
+        final boolean isPrivate = (tab != null && tab.isPrivate());
+
+        // Show suggestions opt-in prompt only if suggestions are not enabled yet,
+        // user hasn't been prompted and we're not on a private browsing tab.
+        // The prompt might have been inflated already when this view was previously called.
+        // Remove the opt-in prompt if it has been inflated in the view and dealt with by the user,
+        // or if we're on a private browsing tab
+        if (!mSuggestionsEnabled && !suggestionsPrompted && !isPrivate) {
+            showSuggestionsOptIn();
+        } else {
+            removeSuggestionsOptIn();
         }
 
         filterSuggestions();
@@ -882,14 +879,14 @@ public class BrowserSearch extends HomeFragment
             @Override
             public void run() {
                 SuggestClient client = mSuggestClient;
-                if (client != null) {
+                if (client != null && enabled) {
                     client.query(mSearchTerm);
                 }
             }
         });
 
         PrefsHelper.setPref("browser.search.suggest.prompted", true);
-        PrefsHelper.setPref("browser.search.suggest.enabled", enabled);
+        PrefsHelper.setPref(GeckoPreferences.PREFS_SEARCH_SUGGESTIONS_ENABLED, enabled);
 
         Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, (enabled ? "suggestions_optin_yes" : "suggestions_optin_no"));
 

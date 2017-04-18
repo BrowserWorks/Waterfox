@@ -2,6 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const {Utils} = Cu.import("resource://gre/modules/sessionstore/Utils.jsm", {});
+const triggeringPrincipal_base64 = Utils.SERIALIZED_SYSTEMPRINCIPAL;
+
 const TAB_STATE_NEEDS_RESTORE = 1;
 const TAB_STATE_RESTORING = 2;
 
@@ -123,7 +126,7 @@ function waitForBrowserState(aState, aSetStateCallback) {
     if (aTopic == "domwindowopened") {
       let newWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
       newWindow.addEventListener("load", function() {
-        newWindow.removeEventListener("load", arguments.callee, false);
+        newWindow.removeEventListener("load", arguments.callee);
 
         if (++windowsOpen == expectedWindows) {
           Services.ww.unregisterNotification(windowObserver);
@@ -134,7 +137,7 @@ function waitForBrowserState(aState, aSetStateCallback) {
         windows.push(newWindow);
         // Add the progress listener
         newWindow.gBrowser.tabContainer.addEventListener("SSTabRestored", onSSTabRestored, true);
-      }, false);
+      });
     }
   }
 
@@ -289,11 +292,11 @@ function promiseBrowserLoaded(aBrowser, ignoreSubFrames = true, wantLoad = null)
 
 function whenWindowLoaded(aWindow, aCallback = next) {
   aWindow.addEventListener("load", function windowLoadListener() {
-    aWindow.removeEventListener("load", windowLoadListener, false);
+    aWindow.removeEventListener("load", windowLoadListener);
     executeSoon(function executeWhenWindowLoaded() {
       aCallback(aWindow);
     });
-  }, false);
+  });
 }
 function promiseWindowLoaded(aWindow) {
   return new Promise(resolve => whenWindowLoaded(aWindow, resolve));
@@ -544,15 +547,11 @@ function modifySessionStorage(browser, data, options = {}) {
 }
 
 function pushPrefs(...aPrefs) {
-  return new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": aPrefs}, resolve);
-  });
+  return SpecialPowers.pushPrefEnv({"set": aPrefs});
 }
 
 function popPrefs() {
-  return new Promise(resolve => {
-    SpecialPowers.popPrefEnv(resolve);
-  });
+  return SpecialPowers.popPrefEnv();
 }
 
 function* checkScroll(tab, expected, msg) {

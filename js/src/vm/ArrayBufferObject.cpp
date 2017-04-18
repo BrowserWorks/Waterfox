@@ -44,7 +44,6 @@
 #include "js/MemoryMetrics.h"
 #include "vm/GlobalObject.h"
 #include "vm/Interpreter.h"
-#include "vm/SelfHosting.h"
 #include "vm/SharedArrayObject.h"
 #include "vm/WrapperObject.h"
 #include "wasm/WasmSignalHandlers.h"
@@ -88,25 +87,6 @@ js::ToClampedIndex(JSContext* cx, HandleValue v, uint32_t length, uint32_t* out)
     return true;
 }
 
-static bool
-arraybuffer_static_slice(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    if (args.length() < 1) {
-        ReportMissingArg(cx, args.calleev(), 1);
-        return false;
-    }
-
-    if (!GlobalObject::warnOnceAboutArrayBufferSlice(cx, cx->global()))
-        return false;
-
-    FixedInvokeArgs<2> args2(cx);
-    args2[0].set(args.get(1));
-    args2[1].set(args.get(2));
-    return CallSelfHostedFunction(cx, "ArrayBufferSlice", args[0], args2, args.rval());
-}
-
 /*
  * ArrayBufferObject
  *
@@ -119,28 +99,10 @@ arraybuffer_static_slice(JSContext* cx, unsigned argc, Value* vp)
  * ArrayBufferObject (base)
  */
 
-static const ClassSpec ArrayBufferObjectProtoClassSpec = {
-    DELEGATED_CLASSSPEC(ArrayBufferObject::class_.spec),
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    ClassSpec::IsDelegated
-};
-
-static const Class ArrayBufferObjectProtoClass = {
-    "ArrayBufferPrototype",
-    JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer),
-    JS_NULL_CLASS_OPS,
-    &ArrayBufferObjectProtoClassSpec
-};
-
 static JSObject*
 CreateArrayBufferPrototype(JSContext* cx, JSProtoKey key)
 {
-    return cx->global()->createBlankPrototype(cx, &ArrayBufferObjectProtoClass);
+    return GlobalObject::createBlankPrototype(cx, cx->global(), &ArrayBufferObject::protoClass_);
 }
 
 static const ClassOps ArrayBufferObjectClassOps = {
@@ -160,7 +122,6 @@ static const ClassOps ArrayBufferObjectClassOps = {
 
 static const JSFunctionSpec static_functions[] = {
     JS_FN("isView", ArrayBufferObject::fun_isView, 1, 0),
-    JS_FN("slice", arraybuffer_static_slice, 3, 0),
     JS_FS_END
 };
 
@@ -206,6 +167,13 @@ const Class ArrayBufferObject::class_ = {
     &ArrayBufferObjectClassExtension
 };
 
+const Class ArrayBufferObject::protoClass_ = {
+    "ArrayBufferPrototype",
+    JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer),
+    JS_NULL_CLASS_OPS,
+    &ArrayBufferObjectClassSpec
+};
+
 bool
 js::IsArrayBuffer(HandleValue v)
 {
@@ -238,6 +206,38 @@ js::AsArrayBuffer(JSObject* obj)
     return obj->as<ArrayBufferObject>();
 }
 
+bool
+js::IsArrayBufferMaybeShared(HandleValue v)
+{
+    return v.isObject() && v.toObject().is<ArrayBufferObjectMaybeShared>();
+}
+
+bool
+js::IsArrayBufferMaybeShared(HandleObject obj)
+{
+    return obj->is<ArrayBufferObjectMaybeShared>();
+}
+
+bool
+js::IsArrayBufferMaybeShared(JSObject* obj)
+{
+    return obj->is<ArrayBufferObjectMaybeShared>();
+}
+
+ArrayBufferObjectMaybeShared&
+js::AsArrayBufferMaybeShared(HandleObject obj)
+{
+    MOZ_ASSERT(IsArrayBufferMaybeShared(obj));
+    return obj->as<ArrayBufferObjectMaybeShared>();
+}
+
+ArrayBufferObjectMaybeShared&
+js::AsArrayBufferMaybeShared(JSObject* obj)
+{
+    MOZ_ASSERT(IsArrayBufferMaybeShared(obj));
+    return obj->as<ArrayBufferObjectMaybeShared>();
+}
+
 MOZ_ALWAYS_INLINE bool
 ArrayBufferObject::byteLengthGetterImpl(JSContext* cx, const CallArgs& args)
 {
@@ -265,37 +265,37 @@ ArrayBufferObject::fun_isView(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-/*
- * new ArrayBuffer(byteLength)
- */
+// ES2017 draft 24.1.2.1
 bool
 ArrayBufferObject::class_constructor(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
+    // Step 1.
     if (!ThrowIfNotConstructing(cx, args, "ArrayBuffer"))
         return false;
 
-    int32_t nbytes = 0;
-    if (argc > 0 && !ToInt32(cx, args[0], &nbytes))
+    // Step 2.
+    uint64_t byteLength;
+    if (!ToIndex(cx, args.get(0), &byteLength))
         return false;
 
-    if (nbytes < 0) {
-        /*
-         * We're just not going to support arrays that are bigger than what will fit
-         * as an integer value; if someone actually ever complains (validly), then we
-         * can fix.
-         */
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
-        return false;
-    }
-
+    // Step 3 (Inlined 24.1.1.1 AllocateArrayBuffer).
+    // 24.1.1.1, step 1 (Inlined 9.1.14 OrdinaryCreateFromConstructor).
     RootedObject proto(cx);
     RootedObject newTarget(cx, &args.newTarget().toObject());
     if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
         return false;
 
-    JSObject* bufobj = create(cx, uint32_t(nbytes), proto);
+    // 24.1.1.1, step 3 (Inlined 6.2.6.1 CreateByteDataBlock, step 2).
+    // Refuse to allocate too large buffers, currently limited to ~2 GiB.
+    if (byteLength > INT32_MAX) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
+        return false;
+    }
+
+    // 24.1.1.1, steps 1 and 4-6.
+    JSObject* bufobj = create(cx, uint32_t(byteLength), proto);
     if (!bufobj)
         return false;
     args.rval().setObject(*bufobj);
@@ -344,7 +344,7 @@ ArrayBufferObject::detach(JSContext* cx, Handle<ArrayBufferObject*> buffer,
         // Make sure the global object's group has been instantiated, so the
         // flag change will be observed.
         AutoEnterOOMUnsafeRegion oomUnsafe;
-        if (!cx->global()->getGroup(cx))
+        if (!JSObject::getGroup(cx, cx->global()))
             oomUnsafe.crash("ArrayBufferObject::detach");
         MarkObjectGroupFlags(cx, cx->global(), OBJECT_FLAG_TYPED_OBJECT_HAS_DETACHED_BUFFER);
         cx->compartment()->detachedTypedObjects = 1;
@@ -353,7 +353,7 @@ ArrayBufferObject::detach(JSContext* cx, Handle<ArrayBufferObject*> buffer,
     // Update all views of the buffer to account for the buffer having been
     // detached, and clear the buffer's data and list of views.
 
-    auto& innerViews = cx->compartment()->innerViews;
+    auto& innerViews = cx->compartment()->innerViews.get();
     if (InnerViewTable::ViewVector* views = innerViews.maybeViewsUnbarriered(buffer)) {
         for (size_t i = 0; i < views->length(); i++)
             NoteViewBufferWasDetached((*views)[i], newContents, cx);
@@ -428,7 +428,7 @@ ArrayBufferObject::changeContents(JSContext* cx, BufferContents newContents,
     setNewData(cx->runtime()->defaultFreeOp(), newContents, ownsState);
 
     // Update all views.
-    auto& innerViews = cx->compartment()->innerViews;
+    auto& innerViews = cx->compartment()->innerViews.get();
     if (InnerViewTable::ViewVector* views = innerViews.maybeViewsUnbarriered(this)) {
         for (size_t i = 0; i < views->length(); i++)
             changeViewContents(cx, (*views)[i], oldDataPointer, newContents);
@@ -443,12 +443,12 @@ ArrayBufferObject::changeContents(JSContext* cx, BufferContents newContents,
  * The linear heap in Wasm is an mmaped array buffer. Several
  * constants manage its lifetime:
  *
- *  - length - the wasm-visible current length of the buffer. Acesses in the
- *    range [0, length] succeed. May only increase
+ *  - length - the wasm-visible current length of the buffer. Accesses in the
+ *    range [0, length] succeed. May only increase.
  *
  *  - boundsCheckLimit - when !WASM_HUGE_MEMORY, the size against which we
  *    perform bounds checks. It is always a constant offset smaller than
- *    mappedSize. Currently that constant offset is 0.
+ *    mappedSize. Currently that constant offset is 64k (wasm::GuardSize).
  *
  *  - max - the optional declared limit on how much length can grow.
  *
@@ -456,10 +456,10 @@ ArrayBufferObject::changeContents(JSContext* cx, BufferContents newContents,
  *    [0, mappedSize] will either succeed, or be handled by the wasm signal
  *    handlers.
  *
- * The below diagram shows the layout of the wams heap. The wasm-visible
+ * The below diagram shows the layout of the wasm heap. The wasm-visible
  * portion of the heap starts at 0. There is one extra page prior to the
  * start of the wasm heap which contains the WasmArrayRawBuffer struct at
- * its end. (i.e. right before the start of the WASM heap).
+ * its end (i.e. right before the start of the WASM heap).
  *
  *  WasmArrayRawBuffer
  *      \    ArrayBufferObject::dataPointer()
@@ -1125,41 +1125,6 @@ ArrayBufferObject::createEmpty(JSContext* cx)
     return obj;
 }
 
-bool
-ArrayBufferObject::createDataViewForThisImpl(JSContext* cx, const CallArgs& args)
-{
-    MOZ_ASSERT(IsArrayBuffer(args.thisv()));
-
-    /*
-     * This method is only called for |DataView(alienBuf, ...)| which calls
-     * this as |createDataViewForThis.call(alienBuf, byteOffset, byteLength,
-     *                                     DataView.prototype)|,
-     * ergo there must be exactly 3 arguments.
-     */
-    MOZ_ASSERT(args.length() == 3);
-
-    uint32_t byteOffset = args[0].toPrivateUint32();
-    uint32_t byteLength = args[1].toPrivateUint32();
-    Rooted<ArrayBufferObject*> buffer(cx, &args.thisv().toObject().as<ArrayBufferObject>());
-
-    /*
-     * Pop off the passed-along prototype and delegate to normal DataViewObject
-     * construction.
-     */
-    JSObject* obj = DataViewObject::create(cx, byteOffset, byteLength, buffer, &args[2].toObject());
-    if (!obj)
-        return false;
-    args.rval().setObject(*obj);
-    return true;
-}
-
-bool
-ArrayBufferObject::createDataViewForThis(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    return CallNonGenericMethod<IsArrayBuffer, createDataViewForThisImpl>(cx, args);
-}
-
 /* static */ ArrayBufferObject::BufferContents
 ArrayBufferObject::externalizeContents(JSContext* cx, Handle<ArrayBufferObject*> buffer,
                                        bool hasStealableContents)
@@ -1549,6 +1514,8 @@ void
 ArrayBufferViewObject::notifyBufferDetached(JSContext* cx, void* newData)
 {
     if (is<DataViewObject>()) {
+        if (as<DataViewObject>().isSharedMemory())
+            return;
         as<DataViewObject>().notifyBufferDetached(newData);
     } else if (is<TypedArrayObject>()) {
         if (as<TypedArrayObject>().isSharedMemory())
@@ -1562,8 +1529,10 @@ ArrayBufferViewObject::notifyBufferDetached(JSContext* cx, void* newData)
 uint8_t*
 ArrayBufferViewObject::dataPointerUnshared(const JS::AutoRequireNoGC& nogc)
 {
-    if (is<DataViewObject>())
-        return static_cast<uint8_t*>(as<DataViewObject>().dataPointer());
+    if (is<DataViewObject>()) {
+        MOZ_ASSERT(!as<DataViewObject>().isSharedMemory());
+        return static_cast<uint8_t*>(as<DataViewObject>().dataPointerUnshared());
+    }
     if (is<TypedArrayObject>()) {
         MOZ_ASSERT(!as<TypedArrayObject>().isSharedMemory());
         return static_cast<uint8_t*>(as<TypedArrayObject>().viewDataUnshared());
@@ -1585,6 +1554,7 @@ void
 ArrayBufferViewObject::setDataPointerUnshared(uint8_t* data)
 {
     if (is<DataViewObject>()) {
+        MOZ_ASSERT(!as<DataViewObject>().isSharedMemory());
         as<DataViewObject>().setPrivate(data);
     } else if (is<TypedArrayObject>()) {
         MOZ_ASSERT(!as<TypedArrayObject>().isSharedMemory());
@@ -1606,7 +1576,7 @@ ArrayBufferViewObject::bufferObject(JSContext* cx, Handle<ArrayBufferViewObject*
         return thisObject->as<TypedArrayObject>().bufferEither();
     }
     MOZ_ASSERT(thisObject->is<DataViewObject>());
-    return &thisObject->as<DataViewObject>().arrayBuffer();
+    return &thisObject->as<DataViewObject>().arrayBufferEither();
 }
 
 /* JS Friend API */
@@ -1857,12 +1827,13 @@ JS_GetArrayBufferViewData(JSObject* obj, bool* isSharedMemory, const JS::AutoChe
     if (!obj)
         return nullptr;
     if (obj->is<DataViewObject>()) {
-        *isSharedMemory = false;
-        return obj->as<DataViewObject>().dataPointer();
+        DataViewObject& dv = obj->as<DataViewObject>();
+        *isSharedMemory = dv.isSharedMemory();
+        return dv.dataPointerEither().unwrap(/*safe - caller sees isSharedMemory flag*/);
     }
     TypedArrayObject& ta = obj->as<TypedArrayObject>();
     *isSharedMemory = ta.isSharedMemory();
-    return ta.viewDataEither().unwrap(/*safe - caller sees isShared flag*/);
+    return ta.viewDataEither().unwrap(/*safe - caller sees isSharedMemory flag*/);
 }
 
 JS_FRIEND_API(JSObject*)
@@ -1907,7 +1878,8 @@ JS_GetObjectAsArrayBufferView(JSObject* obj, uint32_t* length, bool* isSharedMem
 }
 
 JS_FRIEND_API(void)
-js::GetArrayBufferViewLengthAndData(JSObject* obj, uint32_t* length, bool* isSharedMemory, uint8_t** data)
+js::GetArrayBufferViewLengthAndData(JSObject* obj, uint32_t* length, bool* isSharedMemory,
+                                    uint8_t** data)
 {
     MOZ_ASSERT(obj->is<ArrayBufferViewObject>());
 
@@ -1916,13 +1888,16 @@ js::GetArrayBufferViewLengthAndData(JSObject* obj, uint32_t* length, bool* isSha
               : obj->as<TypedArrayObject>().byteLength();
 
     if (obj->is<DataViewObject>()) {
-        *isSharedMemory = false;
-        *data = static_cast<uint8_t*>(obj->as<DataViewObject>().dataPointer());
+        DataViewObject& dv = obj->as<DataViewObject>();
+        *isSharedMemory = dv.isSharedMemory();
+        *data = static_cast<uint8_t*>(
+            dv.dataPointerEither().unwrap(/*safe - caller sees isShared flag*/));
     }
     else {
         TypedArrayObject& ta = obj->as<TypedArrayObject>();
         *isSharedMemory = ta.isSharedMemory();
-        *data = static_cast<uint8_t*>(ta.viewDataEither().unwrap(/*safe - caller sees isShared flag*/));
+        *data = static_cast<uint8_t*>(
+            ta.viewDataEither().unwrap(/*safe - caller sees isShared flag*/));
     }
 }
 

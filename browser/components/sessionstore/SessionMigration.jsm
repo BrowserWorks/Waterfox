@@ -11,6 +11,9 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
 
+XPCOMUtils.defineLazyModuleGetter(this, "Utils",
+  "resource://gre/modules/sessionstore/Utils.jsm");
+
 // An encoder to UTF-8.
 XPCOMUtils.defineLazyGetter(this, "gEncoder", function () {
   return new TextEncoder();
@@ -27,7 +30,7 @@ var SessionMigrationInternal = {
    * only contain:
    * - open windows
    *   - with tabs
-   *     - with history entries with only title, url
+   *     - with history entries with only title, url, triggeringPrincipal
    *     - with pinned state
    *     - with tab group info (hidden + group id)
    *     - with selected tab info
@@ -45,9 +48,11 @@ var SessionMigrationInternal = {
       var win = {extData: {}};
       win.tabs = oldWin.tabs.map(function(oldTab) {
         var tab = {};
-        // Keep only titles and urls for history entries
+        // Keep only titles, urls and triggeringPrincipals for history entries
         tab.entries = oldTab.entries.map(function(entry) {
-          return {url: entry.url, title: entry.title};
+          return { url: entry.url,
+                   triggeringPrincipal_base64: entry.triggeringPrincipal_base64,
+                   title: entry.title };
         });
         tab.index = oldTab.index;
         tab.hidden = oldTab.hidden;
@@ -60,17 +65,18 @@ var SessionMigrationInternal = {
     });
     let url = "about:welcomeback";
     let formdata = {id: {sessionData: state}, url};
-    return {windows: [{tabs: [{entries: [{url}], formdata}]}]};
+    let entry = { url, triggeringPrincipal_base64: Utils.SERIALIZED_SYSTEMPRINCIPAL };
+    return { windows: [{ tabs: [{ entries: [ entry ], formdata}]}]};
   },
   /**
    * Asynchronously read session restore state (JSON) from a path
    */
   readState: function(aPath) {
-    return Task.spawn(function() {
+    return Task.spawn(function*() {
       let bytes = yield OS.File.read(aPath);
       let text = gDecoder.decode(bytes);
       let state = JSON.parse(text);
-      throw new Task.Result(state);
+      return state;
     });
   },
   /**
@@ -87,7 +93,7 @@ var SessionMigration = {
    * Migrate a limited set of session data from one path to another.
    */
   migrate: function(aFromPath, aToPath) {
-    return Task.spawn(function() {
+    return Task.spawn(function*() {
       let inState = yield SessionMigrationInternal.readState(aFromPath);
       let outState = SessionMigrationInternal.convertState(inState);
       // Unfortunately, we can't use SessionStore's own SessionFile to

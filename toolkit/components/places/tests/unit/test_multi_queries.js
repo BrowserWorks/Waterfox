@@ -16,17 +16,15 @@ function* add_visit(aURI, aDayOffset, aTransition) {
   yield PlacesTestUtils.addVisits({
     uri: aURI,
     transition: aTransition,
-    visitDate: (Date.now() + aDayOffset*86400000) * 1000
+    visitDate: (Date.now() + aDayOffset * 86400000) * 1000
   });
 }
 
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_execute()
-{
+add_task(function* test_execute() {
   yield add_visit(uri("http://mirror1.mozilla.com/a"), -1, TRANSITION_LINK);
   yield add_visit(uri("http://mirror2.mozilla.com/b"), -2, TRANSITION_LINK);
   yield add_visit(uri("http://mirror3.mozilla.com/c"), -4, TRANSITION_FRAMED_LINK);

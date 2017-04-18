@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 const { defer, all } = require("promise");
@@ -200,9 +201,7 @@ HarCollector.prototype = {
     this.files.set(actor, file);
 
     // Mimic the Net panel data structure
-    this.items.push({
-      attachment: file
-    });
+    this.items.push(file);
   },
 
   onNetworkEventUpdate: function (type, packet) {

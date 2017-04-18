@@ -16,7 +16,6 @@ var gProvider;
 
 var gUtilsBtn;
 var gUtilsMenu;
-var gDropdownMenu;
 var gSetDefault;
 var gResetToAutomatic;
 var gResetToManual;
@@ -63,10 +62,10 @@ function wait_for_popup(aCallback) {
   }
 
   gUtilsMenu.addEventListener("popupshown", function() {
-    gUtilsMenu.removeEventListener("popupshown", arguments.callee, false);
+    gUtilsMenu.removeEventListener("popupshown", arguments.callee);
     info("Utilities menu shown");
     aCallback();
-  }, false);
+  });
 }
 
 function wait_for_hide(aCallback) {
@@ -76,10 +75,10 @@ function wait_for_hide(aCallback) {
   }
 
   gUtilsMenu.addEventListener("popuphidden", function() {
-    gUtilsMenu.removeEventListener("popuphidden", arguments.callee, false);
+    gUtilsMenu.removeEventListener("popuphidden", arguments.callee);
     info("Utilities menu hidden");
     aCallback();
-  }, false);
+  });
 }
 
 add_test(function() {
@@ -100,7 +99,7 @@ add_test(function() {
                       "#1 Reset to Manual menuitem should be hidden");
 
     var listener = {
-      onPropertyChanged: function(aAddon, aProperties) {
+      onPropertyChanged(aAddon, aProperties) {
         AddonManager.removeAddonListener(listener);
         is(aAddon.id, gProvider.addons[0].id,
            "Should get onPropertyChanged event for correct addon");
@@ -219,7 +218,7 @@ add_test(function() {
                        "#5 Reset to manual menuitem should be visible");
 
     var listener = {
-      onPropertyChanged: function(aAddon, aProperties) {
+      onPropertyChanged(aAddon, aProperties) {
         AddonManager.removeAddonListener(listener);
         is(aAddon.id, gProvider.addons[0].id,
            "Should get onPropertyChanged event for correct addon");

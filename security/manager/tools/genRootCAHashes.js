@@ -62,7 +62,7 @@ function writeString(fos, string) {
 
 // Remove all colons from a string
 function stripColons(hexString) {
-  return hexString.replace(/:/g, '');
+  return hexString.replace(/:/g, "");
 }
 
 // Expect an array of bytes and make it C-formatted
@@ -110,7 +110,7 @@ function loadTrustAnchors(file) {
 function writeTrustAnchors(file) {
   let fos = FileUtils.openSafeFileOutputStream(file);
 
-  let serializedData = JSON.stringify(gTrustAnchors, null, '  ');
+  let serializedData = JSON.stringify(gTrustAnchors, null, "  ");
   fos.write(JSON_HEADER, JSON_HEADER.length);
   fos.write(serializedData, serializedData.length);
 
@@ -139,9 +139,7 @@ function writeRootHashes(fos) {
     writeString(fos, FP_POSTAMBLE);
 
     writeString(fos, "\n");
-
-  }
-  catch (e) {
+  } catch (e) {
     dump("ERROR: problem writing output: " + e + "\n");
   }
 }
@@ -193,7 +191,6 @@ function insertTrustAnchorsFromDatabase() {
 
        // Scan to see if this is already in the database.
       if (findTrustAnchorByFingerprint(encodedFingerprint) == ROOT_NOT_ASSIGNED) {
-
         // Let's get a usable name; some old certs do not have CN= filled out
         let label = getLabelForCert(cert);
 

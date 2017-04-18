@@ -31,6 +31,7 @@
 #include "jit/InstructionReordering.h"
 #include "jit/IonAnalysis.h"
 #include "jit/IonBuilder.h"
+#include "jit/IonIC.h"
 #include "jit/IonOptimizationLevels.h"
 #include "jit/JitcodeMap.h"
 #include "jit/JitCommon.h"
@@ -499,8 +500,10 @@ jit::FinishOffThreadBuilder(JSRuntime* runtime, IonBuilder* builder,
 
     // Clean up if compilation did not succeed.
     if (builder->script()->isIonCompilingOffThread()) {
-        IonScript* ion =
-            builder->abortReason() == AbortReason_Disable ? ION_DISABLED_SCRIPT : nullptr;
+        IonScript* ion = nullptr;
+        AbortReasonOr<Ok> status = builder->getOffThreadStatus();
+        if (status.isErr() && status.unwrapErr() == AbortReason::Disable)
+            ion = ION_DISABLED_SCRIPT;
         builder->script()->setIonScript(runtime, ion);
     }
 
@@ -597,7 +600,7 @@ jit::LazyLinkTopActivation(JSContext* cx)
 }
 
 /* static */ void
-JitRuntime::Mark(JSTracer* trc, AutoLockForExclusiveAccess& lock)
+JitRuntime::Trace(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 {
     MOZ_ASSERT(!trc->runtime()->isHeapMinorCollecting());
 
@@ -614,23 +617,23 @@ JitRuntime::Mark(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 }
 
 /* static */ void
-JitRuntime::MarkJitcodeGlobalTableUnconditionally(JSTracer* trc)
+JitRuntime::TraceJitcodeGlobalTable(JSTracer* trc)
 {
     if (trc->runtime()->spsProfiler.enabled() &&
         trc->runtime()->hasJitRuntime() &&
         trc->runtime()->jitRuntime()->hasJitcodeGlobalTable())
     {
-        trc->runtime()->jitRuntime()->getJitcodeGlobalTable()->markUnconditionally(trc);
+        trc->runtime()->jitRuntime()->getJitcodeGlobalTable()->trace(trc);
     }
 }
 
 /* static */ bool
-JitRuntime::MarkJitcodeGlobalTableIteratively(JSTracer* trc)
+JitRuntime::MarkJitcodeGlobalTableIteratively(GCMarker* marker)
 {
-    if (trc->runtime()->hasJitRuntime() &&
-        trc->runtime()->jitRuntime()->hasJitcodeGlobalTable())
+    if (marker->runtime()->hasJitRuntime() &&
+        marker->runtime()->jitRuntime()->hasJitcodeGlobalTable())
     {
-        return trc->runtime()->jitRuntime()->getJitcodeGlobalTable()->markIteratively(trc);
+        return marker->runtime()->jitRuntime()->getJitcodeGlobalTable()->markIteratively(marker);
     }
     return false;
 }
@@ -643,7 +646,7 @@ JitRuntime::SweepJitcodeGlobalTable(JSRuntime* rt)
 }
 
 void
-JitCompartment::mark(JSTracer* trc, JSCompartment* compartment)
+JitCompartment::trace(JSTracer* trc, JSCompartment* compartment)
 {
     // Free temporary OSR buffer.
     trc->runtime()->jitRuntime()->freeOsrTempData();
@@ -878,6 +881,8 @@ IonScript::IonScript()
     runtimeSize_(0),
     cacheIndex_(0),
     cacheEntries_(0),
+    icIndex_(0),
+    icEntries_(0),
     safepointIndexOffset_(0),
     safepointIndexEntries_(0),
     safepointsStart_(0),
@@ -908,7 +913,7 @@ IonScript::New(JSContext* cx, RecompileInfo recompileInfo,
                size_t snapshotsListSize, size_t snapshotsRVATableSize,
                size_t recoversSize, size_t bailoutEntries,
                size_t constants, size_t safepointIndices,
-               size_t osiIndices, size_t cacheEntries,
+               size_t osiIndices, size_t cacheEntries, size_t icEntries,
                size_t runtimeSize,  size_t safepointsSize,
                size_t backedgeEntries, size_t sharedStubEntries,
                OptimizationLevel optimizationLevel)
@@ -932,6 +937,7 @@ IonScript::New(JSContext* cx, RecompileInfo recompileInfo,
     size_t paddedSafepointIndicesSize = AlignBytes(safepointIndices * sizeof(SafepointIndex), DataAlignment);
     size_t paddedOsiIndicesSize = AlignBytes(osiIndices * sizeof(OsiIndex), DataAlignment);
     size_t paddedCacheEntriesSize = AlignBytes(cacheEntries * sizeof(uint32_t), DataAlignment);
+    size_t paddedICEntriesSize = AlignBytes(icEntries * sizeof(uint32_t), DataAlignment);
     size_t paddedRuntimeSize = AlignBytes(runtimeSize, DataAlignment);
     size_t paddedSafepointSize = AlignBytes(safepointsSize, DataAlignment);
     size_t paddedBackedgeSize = AlignBytes(backedgeEntries * sizeof(PatchableBackedge), DataAlignment);
@@ -944,6 +950,7 @@ IonScript::New(JSContext* cx, RecompileInfo recompileInfo,
                    paddedSafepointIndicesSize +
                    paddedOsiIndicesSize +
                    paddedCacheEntriesSize +
+                   paddedICEntriesSize +
                    paddedRuntimeSize +
                    paddedSafepointSize +
                    paddedBackedgeSize +
@@ -962,6 +969,10 @@ IonScript::New(JSContext* cx, RecompileInfo recompileInfo,
     script->cacheIndex_ = offsetCursor;
     script->cacheEntries_ = cacheEntries;
     offsetCursor += paddedCacheEntriesSize;
+
+    script->icIndex_ = offsetCursor;
+    script->icEntries_ = icEntries;
+    offsetCursor += paddedICEntriesSize;
 
     script->safepointIndexOffset_ = offsetCursor;
     script->safepointIndexEntries_ = safepointIndices;
@@ -1039,6 +1050,9 @@ IonScript::trace(JSTracer* trc)
     // Trace caches so that the JSScript pointer can be updated if moved.
     for (size_t i = 0; i < numCaches(); i++)
         getCacheFromIndex(i).trace(trc);
+
+    for (size_t i = 0; i < numICs(); i++)
+        getICFromIndex(i).trace(trc);
 }
 
 /* static */ void
@@ -1149,6 +1163,18 @@ IonScript::copyCacheEntries(const uint32_t* caches, MacroAssembler& masm)
     // final code address now.
     for (size_t i = 0; i < numCaches(); i++)
         getCacheFromIndex(i).updateBaseAddress(method_, masm);
+}
+
+void
+IonScript::copyICEntries(const uint32_t* icEntries, MacroAssembler& masm)
+{
+    memcpy(icIndex(), icEntries, numICs() * sizeof(uint32_t));
+
+    // Jumps in the caches reflect the offset of those jumps in the compiled
+    // code, not the absolute positions of the jumps. Update according to the
+    // final code address now.
+    for (size_t i = 0; i < numICs(); i++)
+        getICFromIndex(i).updateBaseAddress(method_, masm);
 }
 
 const SafepointIndex*
@@ -1342,6 +1368,13 @@ IonScript::purgeCaches()
 }
 
 void
+IonScript::purgeICs(Zone* zone)
+{
+    for (size_t i = 0; i < numICs(); i++)
+        getICFromIndex(i).reset(zone);
+}
+
+void
 IonScript::unlinkFromRuntime(FreeOp* fop)
 {
     // The writes to the executable buffer below may clobber backedge jumps, so
@@ -1519,6 +1552,17 @@ OptimizeMIR(MIRGenerator* mir)
         AssertBasicGraphCoherency(graph);
 
         if (mir->shouldCancel("Prune Unused Branches"))
+            return false;
+    }
+
+    {
+        AutoTraceLog log(logger, TraceLogger_FoldEmptyBlocks);
+        if (!FoldEmptyBlocks(graph))
+            return false;
+        gs.spewPass("Fold Empty Blocks");
+        AssertBasicGraphCoherency(graph);
+
+        if (mir->shouldCancel("Fold Empty Blocks"))
             return false;
     }
 
@@ -2156,56 +2200,56 @@ IonCompile(JSContext* cx, JSScript* script,
 
     // Make sure the script's canonical function isn't lazy. We can't de-lazify
     // it in a helper thread.
-    script->ensureNonLazyCanonicalFunction(cx);
+    script->ensureNonLazyCanonicalFunction();
 
     TrackPropertiesForSingletonScopes(cx, script, baselineFrame);
 
     LifoAlloc* alloc = cx->new_<LifoAlloc>(TempAllocator::PreferredLifoChunkSize);
     if (!alloc)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     ScopedJSDeletePtr<LifoAlloc> autoDelete(alloc);
 
     TempAllocator* temp = alloc->new_<TempAllocator>(alloc);
     if (!temp)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     JitContext jctx(cx, temp);
 
     if (!cx->compartment()->ensureJitCompartmentExists(cx))
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     if (!cx->compartment()->jitCompartment()->ensureIonStubsExist(cx))
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     MIRGraph* graph = alloc->new_<MIRGraph>(temp);
     if (!graph)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     InlineScriptTree* inlineScriptTree = InlineScriptTree::New(temp, nullptr, nullptr, script);
     if (!inlineScriptTree)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     CompileInfo* info = alloc->new_<CompileInfo>(script, script->functionNonDelazifying(), osrPc,
                                                  Analysis_None,
                                                  script->needsArgsObj(), inlineScriptTree);
     if (!info)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     BaselineInspector* inspector = alloc->new_<BaselineInspector>(script);
     if (!inspector)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     BaselineFrameInspector* baselineFrameInspector = nullptr;
     if (baselineFrame) {
         baselineFrameInspector = NewBaselineFrameInspector(temp, baselineFrame, info);
         if (!baselineFrameInspector)
-            return AbortReason_Alloc;
+            return AbortReason::Alloc;
     }
 
     CompilerConstraintList* constraints = NewCompilerConstraintList(*temp);
     if (!constraints)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     const OptimizationInfo* optimizationInfo = IonOptimizations.get(optimizationLevel);
     const JitCompileOptions options(cx);
@@ -2216,7 +2260,7 @@ IonCompile(JSContext* cx, JSScript* script,
                                                   inspector, info, optimizationInfo,
                                                   baselineFrameInspector);
     if (!builder)
-        return AbortReason_Alloc;
+        return AbortReason::Alloc;
 
     if (cx->runtime()->gc.storeBuffer.cancelIonCompilations())
         builder->setNotSafeForMinorGC();
@@ -2231,17 +2275,17 @@ IonCompile(JSContext* cx, JSScript* script,
 
     SpewBeginFunction(builder, builderScript);
 
-    bool succeeded;
+    AbortReasonOr<Ok> buildResult = Ok();
     {
         AutoEnterAnalysis enter(cx);
-        succeeded = builder->build();
+        buildResult = builder->build();
         builder->clearForBackEnd();
     }
 
-    if (!succeeded) {
-        AbortReason reason = builder->abortReason();
+    if (buildResult.isErr()) {
+        AbortReason reason = buildResult.unwrapErr();
         builder->graphSpewer().endFunction();
-        if (reason == AbortReason_PreliminaryObjects) {
+        if (reason == AbortReason::PreliminaryObjects) {
             // Some group was accessed which has associated preliminary objects
             // to analyze. Do this now and we will try to build again shortly.
             const MIRGenerator::ObjectGroupVector& groups = builder->abortedPreliminaryGroups();
@@ -2249,7 +2293,7 @@ IonCompile(JSContext* cx, JSScript* script,
                 ObjectGroup* group = groups[i];
                 if (group->newScript()) {
                     if (!group->newScript()->maybeAnalyze(cx, group, nullptr, /* force = */ true))
-                        return AbortReason_Alloc;
+                        return AbortReason::Alloc;
                 } else if (group->maybePreliminaryObjects()) {
                     group->maybePreliminaryObjects()->maybeAnalyze(cx, group, /* force = */ true);
                 } else {
@@ -2274,6 +2318,8 @@ IonCompile(JSContext* cx, JSScript* script,
         return reason;
     }
 
+    AssertBasicGraphCoherency(builder->graph());
+
     // If possible, compile the script off thread.
     if (options.offThreadCompilationAvailable()) {
         JitSpew(JitSpew_IonSyncLogs, "Can't log script %s:%" PRIuSIZE
@@ -2281,12 +2327,12 @@ IonCompile(JSContext* cx, JSScript* script,
                 builderScript->filename(), builderScript->lineno());
 
         if (!CreateMIRRootList(*builder))
-            return AbortReason_Alloc;
+            return AbortReason::Alloc;
 
         if (!StartOffThreadIonCompile(cx, builder)) {
             JitSpew(JitSpew_IonAbort, "Unable to start off-thread ion compilation.");
             builder->graphSpewer().endFunction();
-            return AbortReason_Alloc;
+            return AbortReason::Alloc;
         }
 
         if (!recompile)
@@ -2296,9 +2342,10 @@ IonCompile(JSContext* cx, JSScript* script,
         // processed in the finishedOffThreadCompilations list.
         autoDelete.forget();
 
-        return AbortReason_NoAbort;
+        return AbortReason::NoAbort;
     }
 
+    bool succeeded = false;
     {
         ScopedJSDeletePtr<CodeGenerator> codegen;
         AutoEnterAnalysis enter(cx);
@@ -2306,18 +2353,18 @@ IonCompile(JSContext* cx, JSScript* script,
         if (!codegen) {
             JitSpew(JitSpew_IonAbort, "Failed during back-end compilation.");
             if (cx->isExceptionPending())
-                return AbortReason_Error;
-            return AbortReason_Disable;
+                return AbortReason::Error;
+            return AbortReason::Disable;
         }
 
         succeeded = LinkCodeGen(cx, builder, codegen);
     }
 
     if (succeeded)
-        return AbortReason_NoAbort;
+        return AbortReason::NoAbort;
     if (cx->isExceptionPending())
-        return AbortReason_Error;
-    return AbortReason_Disable;
+        return AbortReason::Error;
+    return AbortReason::Disable;
 }
 
 static bool
@@ -2490,13 +2537,13 @@ Compile(JSContext* cx, HandleScript script, BaselineFrame* osrFrame, jsbytecode*
     }
 
     AbortReason reason = IonCompile(cx, script, osrFrame, osrPc, recompile, optimizationLevel);
-    if (reason == AbortReason_Error)
+    if (reason == AbortReason::Error)
         return Method_Error;
 
-    if (reason == AbortReason_Disable)
+    if (reason == AbortReason::Disable)
         return Method_CantCompile;
 
-    if (reason == AbortReason_Alloc) {
+    if (reason == AbortReason::Alloc) {
         ReportOutOfMemory(cx);
         return Method_Error;
     }
@@ -3051,8 +3098,8 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
           case JitFrame_Rectifier:
             JitSpew(JitSpew_IonInvalidate, "#%" PRIuSIZE " rectifier frame @ %p", frameno, it.fp());
             break;
-          case JitFrame_IonAccessorIC:
-            JitSpew(JitSpew_IonInvalidate, "#%" PRIuSIZE " ion IC getter/setter frame @ %p", frameno, it.fp());
+          case JitFrame_IonICCall:
+            JitSpew(JitSpew_IonInvalidate, "#%" PRIuSIZE " ion IC call frame @ %p", frameno, it.fp());
             break;
           case JitFrame_Entry:
             JitSpew(JitSpew_IonInvalidate, "#%" PRIuSIZE " entry frame @ %p", frameno, it.fp());
@@ -3088,6 +3135,7 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
         // prevent lastJump_ from appearing to be a bogus pointer, just
         // in case anyone tries to read it.
         ionScript->purgeCaches();
+        ionScript->purgeICs(script->zone());
         ionScript->purgeOptimizedStubs(script->zone());
 
         // Clean up any pointers from elsewhere in the runtime to this IonScript

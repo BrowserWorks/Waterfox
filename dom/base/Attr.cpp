@@ -59,8 +59,6 @@ Attr::Attr(nsDOMAttributeMap *aAttrMap,
 NS_IMPL_CYCLE_COLLECTION_CLASS(Attr)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Attr)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
-
   if (!nsINode::Traverse(tmp, cb)) {
     return NS_SUCCESS_INTERRUPTED_TRAVERSE;
   }
@@ -279,7 +277,7 @@ Attr::GetBaseURI(bool aTryUseXHRDocBaseURI) const
 
 void
 Attr::GetTextContentInternal(nsAString& aTextContent,
-                             ErrorResult& aError)
+                             OOMReporter& aError)
 {
   OwnerDoc()->WarnOnceAbout(nsIDocument::eTextContent);
 
@@ -346,7 +344,7 @@ Attr::RemoveChildAt(uint32_t aIndex, bool aNotify)
 }
 
 nsresult
-Attr::PreHandleEvent(EventChainPreVisitor& aVisitor)
+Attr::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = true;
   return NS_OK;

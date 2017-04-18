@@ -164,10 +164,18 @@ EVENT(change,
       eFormChange,
       EventNameType_HTMLXUL,
       eBasicEventClass)
+EVENT(auxclick,
+      eMouseAuxClick,
+      EventNameType_All,
+      eMouseEventClass)
 EVENT(click,
       eMouseClick,
       EventNameType_All,
       eMouseEventClass)
+EVENT(close,
+      eClose,
+      EventNameType_HTML,
+      eBasicEventClass)
 EVENT(contextmenu,
       eContextMenu,
       EventNameType_HTMLXUL,
@@ -262,22 +270,6 @@ EVENT(mozkeyuponplugin,
       eKeyUpOnPlugin,
       EventNameType_None,
       eKeyboardEventClass)
-NON_IDL_EVENT(mozbrowserbeforekeydown,
-              eBeforeKeyDown,
-              EventNameType_None,
-              eBeforeAfterKeyboardEventClass)
-NON_IDL_EVENT(mozbrowserafterkeydown,
-              eAfterKeyDown,
-              EventNameType_None,
-              eBeforeAfterKeyboardEventClass)
-NON_IDL_EVENT(mozbrowserbeforekeyup,
-              eBeforeKeyUp,
-              EventNameType_None,
-              eBeforeAfterKeyboardEventClass)
-NON_IDL_EVENT(mozbrowserafterkeyup,
-              eAfterKeyUp,
-              EventNameType_None,
-              eBeforeAfterKeyboardEventClass)
 NON_IDL_EVENT(mozaccesskeynotfound,
               eAccessKeyNotFound,
               EventNameType_None,
@@ -751,11 +743,6 @@ NON_IDL_EVENT(warning,
               EventNameType_None,
               eBasicEventClass)
 
-NON_IDL_EVENT(speakerforcedchange,
-              eSpeakerForcedChange,
-              EventNameType_None,
-              eBasicEventClass)
-
 // Events that only have on* attributes on XUL elements
 
  // "text" event is legacy event for modifying composition string in EditorBase.
@@ -897,7 +884,6 @@ NON_IDL_EVENT(MozScrolledAreaChanged,
               EventNameType_None,
               eScrollAreaEventClass)
 
-#ifdef MOZ_GAMEPAD
 NON_IDL_EVENT(gamepadbuttondown,
               eGamepadButtonDown,
               EventNameType_None,
@@ -918,7 +904,6 @@ NON_IDL_EVENT(gamepaddisconnected,
               eGamepadDisconnected,
               EventNameType_None,
               eBasicEventClass)
-#endif
 
 // Simple gesture events
 NON_IDL_EVENT(MozSwipeGestureMayStart,
@@ -997,6 +982,10 @@ EVENT(transitionrun,
       eTransitionEventClass)
 EVENT(transitionend,
       eTransitionEnd,
+      EventNameType_All,
+      eTransitionEventClass)
+EVENT(transitioncancel,
+      eTransitionCancel,
       EventNameType_All,
       eTransitionEventClass)
 EVENT(animationstart,
@@ -1105,4 +1094,3 @@ NON_IDL_EVENT(complete,
 #undef DOCUMENT_ONLY_EVENT
 #undef NON_IDL_EVENT
 #endif /* MESSAGE_TO_EVENT */
-

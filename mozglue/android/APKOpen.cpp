@@ -34,6 +34,7 @@
 #include "application.ini.h"
 
 #include "mozilla/arm.h"
+#include "mozilla/Bootstrap.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtr.h"
 #include "XREChildData.h"
@@ -70,7 +71,7 @@ extern "C" {
  * either because the way __dso_handle was used was already broken (and
  * the custom linker works around it).
  */
-  NS_EXPORT __attribute__((weak)) void *__dso_handle;
+  APKOPEN_EXPORT __attribute__((weak)) void *__dso_handle;
 }
 
 typedef int mozglueresult;
@@ -87,7 +88,7 @@ using namespace mozilla;
 static const int MAX_MAPPING_INFO = 32;
 static mapping_info lib_mapping[MAX_MAPPING_INFO];
 
-NS_EXPORT const struct mapping_info *
+APKOPEN_EXPORT const struct mapping_info *
 getLibraryMapping()
 {
   return lib_mapping;
@@ -155,19 +156,19 @@ abortThroughJava(const char* msg)
     env->PopLocalFrame(nullptr);
 }
 
-NS_EXPORT pthread_t
+APKOPEN_EXPORT pthread_t
 getJavaUiThread()
 {
     return sJavaUiThread;
 }
 
-extern "C" NS_EXPORT void MOZ_JNICALL
+extern "C" APKOPEN_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_GeckoThread_registerUiThread(JNIEnv*, jclass)
 {
     sJavaUiThread = pthread_self();
 }
 
-static void * xul_handle = nullptr;
+Bootstrap::UniquePtr gBootstrap;
 #ifndef MOZ_FOLD_LIBS
 static void * sqlite_handle = nullptr;
 static void * nspr_handle = nullptr;
@@ -178,12 +179,6 @@ static void * plc_handle = nullptr;
 #define plc_handle nss_handle
 #endif
 static void * nss_handle = nullptr;
-
-template <typename T> inline void
-xul_dlsym(const char *symbolName, T *value)
-{
-  *value = (T) (uintptr_t) __wrap_dlsym(xul_handle, symbolName);
-}
 
 static int mapping_count = 0;
 
@@ -215,8 +210,8 @@ delete_mapping(const char *name)
   }
 }
 
-static void*
-dlopenAPKLibrary(const char* apkName, const char* libraryName)
+static UniquePtr<char[]>
+getAPKLibraryName(const char* apkName, const char* libraryName)
 {
 #define APK_ASSETS_PATH "!/assets/" ANDROID_CPU_ARCH "/"
   size_t filenameLength = strlen(apkName) +
@@ -225,9 +220,16 @@ dlopenAPKLibrary(const char* apkName, const char* libraryName)
   auto file = MakeUnique<char[]>(filenameLength);
   snprintf(file.get(), filenameLength, "%s" APK_ASSETS_PATH "%s",
 	   apkName, libraryName);
-  return __wrap_dlopen(file.get(), RTLD_GLOBAL | RTLD_LAZY);
+  return file;
 #undef APK_ASSETS_PATH
 }
+
+static void*
+dlopenAPKLibrary(const char* apkName, const char* libraryName)
+{
+  return __wrap_dlopen(getAPKLibraryName(apkName, libraryName).get(), RTLD_GLOBAL | RTLD_LAZY);
+}
+
 static mozglueresult
 loadGeckoLibs(const char *apkName)
 {
@@ -236,14 +238,11 @@ loadGeckoLibs(const char *apkName)
   getrusage(RUSAGE_THREAD, &usage1_thread);
   getrusage(RUSAGE_SELF, &usage1);
 
-  xul_handle = dlopenAPKLibrary(apkName, "libxul.so");
-  if (!xul_handle) {
+  gBootstrap = GetBootstrap(getAPKLibraryName(apkName, "libxul.so").get());
+  if (!gBootstrap) {
     __android_log_print(ANDROID_LOG_ERROR, "GeckoLibLoad", "Couldn't get a handle to libxul!");
     return FAILURE;
   }
-
-  void (*XRE_StartupTimelineRecord)(int, TimeStamp);
-  xul_dlsym("XRE_StartupTimelineRecord", &XRE_StartupTimelineRecord);
 
   TimeStamp t1 = TimeStamp::Now();
   struct rusage usage2_thread, usage2;
@@ -263,8 +262,8 @@ loadGeckoLibs(const char *apkName)
                       usage2_thread.ru_majflt - usage1_thread.ru_majflt,
                       usage2.ru_majflt - usage1.ru_majflt);
 
-  XRE_StartupTimelineRecord(LINKER_INITIALIZED, t0);
-  XRE_StartupTimelineRecord(LIBRARIES_LOADED, t1);
+  gBootstrap->XRE_StartupTimelineRecord(LINKER_INITIALIZED, t0);
+  gBootstrap->XRE_StartupTimelineRecord(LIBRARIES_LOADED, t1);
   return SUCCESS;
 }
 
@@ -326,7 +325,7 @@ loadNSSLibs(const char *apkName)
   return setup_nss_functions(nss_handle, nspr_handle, plc_handle);
 }
 
-extern "C" NS_EXPORT void MOZ_JNICALL
+extern "C" APKOPEN_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_extractGeckoLibsNative(
     JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName)
 {
@@ -351,7 +350,7 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_extractGeckoLibsNative(
   jenv->ReleaseStringUTFChars(jApkName, apkName);
 }
 
-extern "C" NS_EXPORT void MOZ_JNICALL
+extern "C" APKOPEN_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_loadGeckoLibsNative(JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName)
 {
   jenv->GetJavaVM(&sJavaVM);
@@ -370,7 +369,7 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_loadGeckoLibsNative(JNIEnv *jenv, jcl
   jenv->ReleaseStringUTFChars(jApkName, str);
 }
 
-extern "C" NS_EXPORT void MOZ_JNICALL
+extern "C" APKOPEN_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_loadSQLiteLibsNative(JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName) {
   const char* str;
   // XXX: java doesn't give us true UTF8, we should figure out something
@@ -388,7 +387,7 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_loadSQLiteLibsNative(JNIEnv *jenv, jc
   jenv->ReleaseStringUTFChars(jApkName, str);
 }
 
-extern "C" NS_EXPORT void MOZ_JNICALL
+extern "C" APKOPEN_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_loadNSSLibsNative(JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName) {
   const char* str;
   // XXX: java doesn't give us true UTF8, we should figure out something
@@ -406,31 +405,73 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_loadNSSLibsNative(JNIEnv *jenv, jclas
   jenv->ReleaseStringUTFChars(jApkName, str);
 }
 
-typedef void (*GeckoStart_t)(JNIEnv*, char*, const nsXREAppData*);
-
-extern "C" NS_EXPORT void MOZ_JNICALL
-Java_org_mozilla_gecko_mozglue_GeckoLoader_nativeRun(JNIEnv *jenv, jclass jc, jstring jargs)
+static char**
+CreateArgvFromObjectArray(JNIEnv *jenv, jobjectArray jargs, int* length)
 {
-  GeckoStart_t GeckoStart;
-  xul_dlsym("GeckoStart", &GeckoStart);
-  if (GeckoStart == nullptr)
-    return;
-  // XXX: java doesn't give us true UTF8, we should figure out something
-  // better to do here
-  int len = jenv->GetStringUTFLength(jargs);
-  // GeckoStart needs to write in the args buffer, so we need a copy.
-  char *args = (char *) malloc(len + 1);
-  jenv->GetStringUTFRegion(jargs, 0, len, args);
-  args[len] = '\0';
-  ElfLoader::Singleton.ExpectShutdown(false);
-  GeckoStart(jenv, args, &sAppData);
-  ElfLoader::Singleton.ExpectShutdown(true);
-  free(args);
+  size_t stringCount = jenv->GetArrayLength(jargs);
+
+  if (length) {
+    *length = stringCount;
+  }
+
+  if (!stringCount) {
+    return nullptr;
+  }
+
+  char** argv = new char*[stringCount + 1];
+
+  argv[stringCount] = nullptr;
+
+  for (size_t ix = 0; ix < stringCount; ix++) {
+    jstring string = (jstring) (jenv->GetObjectArrayElement(jargs, ix));
+    const char* rawString = jenv->GetStringUTFChars(string, nullptr);
+    const int strLength = jenv->GetStringUTFLength(string);
+    argv[ix] = strndup(rawString, strLength);
+    jenv->ReleaseStringUTFChars(string, rawString);
+    jenv->DeleteLocalRef(string);
+  }
+
+  return argv;
 }
 
-typedef int GeckoProcessType;
+static void
+FreeArgv(char** argv, int argc)
+{
+  for (int ix=0; ix < argc; ix++) {
+    // String was allocated with strndup, so need to use free to deallocate.
+    free(argv[ix]);
+  }
+  delete[](argv);
+}
 
-extern "C" NS_EXPORT mozglueresult
+extern "C" APKOPEN_EXPORT void MOZ_JNICALL
+Java_org_mozilla_gecko_mozglue_GeckoLoader_nativeRun(JNIEnv *jenv, jclass jc, jobjectArray jargs, int crashFd, int ipcFd)
+{
+  int argc = 0;
+  char** argv = CreateArgvFromObjectArray(jenv, jargs, &argc);
+
+  if (ipcFd < 0) {
+    if (gBootstrap == nullptr) {
+      FreeArgv(argv, argc);
+      return;
+    }
+
+    ElfLoader::Singleton.ExpectShutdown(false);
+    gBootstrap->GeckoStart(jenv, argv, argc, sAppData);
+    ElfLoader::Singleton.ExpectShutdown(true);
+  } else {
+    gBootstrap->XRE_SetAndroidChildFds(crashFd, ipcFd);
+    gBootstrap->XRE_SetProcessType(argv[argc - 1]);
+
+    XREChildData childData;
+    gBootstrap->XRE_InitChildProcess(argc - 1, argv, &childData);
+  }
+
+  gBootstrap.reset();
+  FreeArgv(argv, argc);
+}
+
+extern "C" APKOPEN_EXPORT mozglueresult
 ChildProcessInit(int argc, char* argv[])
 {
   int i;
@@ -452,19 +493,13 @@ ChildProcessInit(int argc, char* argv[])
     return FAILURE;
   }
 
-  void (*fXRE_SetProcessType)(char*);
-  xul_dlsym("XRE_SetProcessType", &fXRE_SetProcessType);
-
-  mozglueresult (*fXRE_InitChildProcess)(int, char**, void*);
-  xul_dlsym("XRE_InitChildProcess", &fXRE_InitChildProcess);
-
-  fXRE_SetProcessType(argv[--argc]);
+  gBootstrap->XRE_SetProcessType(argv[--argc]);
 
   XREChildData childData;
-  return fXRE_InitChildProcess(argc, argv, &childData);
+  return NS_FAILED(gBootstrap->XRE_InitChildProcess(argc, argv, &childData));
 }
 
-extern "C" NS_EXPORT jboolean MOZ_JNICALL
+extern "C" APKOPEN_EXPORT jboolean MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_neonCompatible(JNIEnv *jenv, jclass jc)
 {
 #ifdef __ARM_EABI__

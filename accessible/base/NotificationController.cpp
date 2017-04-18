@@ -80,7 +80,7 @@ void
 NotificationController::Shutdown()
 {
   if (mObservingState != eNotObservingRefresh &&
-      mPresShell->RemoveRefreshObserver(this, Flush_Display)) {
+      mPresShell->RemoveRefreshObserver(this, FlushType::Display)) {
     mObservingState = eNotObservingRefresh;
   }
 
@@ -329,20 +329,27 @@ NotificationController::CoalesceMutationEvents()
           // queue, so we want to use the spot of the event with the higher
           // generation number, and keep that generation number.
           if (reorder && reorder->EventGeneration() < event->EventGeneration()) {
-            // There really should be a show or hide event before the first
-            // reorder event.
-            if (reorder->PrevEvent()) {
-              reorder->PrevEvent()->SetNextEvent(reorder->NextEvent());
-            } else {
-              mFirstMutationEvent = reorder->NextEvent();
-            }
-
-            reorder->NextEvent()->SetPrevEvent(reorder->PrevEvent());
-            event->PrevEvent()->SetNextEvent(reorder);
-            reorder->SetPrevEvent(event->PrevEvent());
-            event->SetPrevEvent(reorder);
-            reorder->SetNextEvent(event);
             reorder->SetEventGeneration(event->EventGeneration());
+
+            // It may be true that reorder was before event, and we coalesced
+            // away all the show / hide events between them.  In that case
+            // event is already immediately after reorder in the queue and we
+            // do not need to rearrange the list of events.
+            if (event != reorder->NextEvent()) {
+              // There really should be a show or hide event before the first
+              // reorder event.
+              if (reorder->PrevEvent()) {
+                reorder->PrevEvent()->SetNextEvent(reorder->NextEvent());
+              } else {
+                mFirstMutationEvent = reorder->NextEvent();
+              }
+
+              reorder->NextEvent()->SetPrevEvent(reorder->PrevEvent());
+              event->PrevEvent()->SetNextEvent(reorder);
+              reorder->SetPrevEvent(event->PrevEvent());
+              event->SetPrevEvent(reorder);
+              reorder->SetNextEvent(event);
+            }
           }
           DropMutationEvent(event);
           break;
@@ -437,7 +444,7 @@ NotificationController::ScheduleProcessing()
   // If notification flush isn't planed yet start notification flush
   // asynchronously (after style and layout).
   if (mObservingState == eNotObservingRefresh) {
-    if (mPresShell->AddRefreshObserver(this, Flush_Display))
+    if (mPresShell->AddRefreshObserver(this, FlushType::Display))
       mObservingState = eRefreshObserving;
   }
 }
@@ -848,26 +855,25 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
 
       Accessible* parent = childDoc->Parent();
       DocAccessibleChild* parentIPCDoc = mDocument->IPCDoc();
+      MOZ_DIAGNOSTIC_ASSERT(parentIPCDoc);
       uint64_t id = reinterpret_cast<uintptr_t>(parent->UniqueID());
-      MOZ_ASSERT(id);
+      MOZ_DIAGNOSTIC_ASSERT(id);
       DocAccessibleChild* ipcDoc = childDoc->IPCDoc();
       if (ipcDoc) {
         parentIPCDoc->SendBindChildDoc(ipcDoc, id);
         continue;
       }
 
-      ipcDoc = new DocAccessibleChild(childDoc);
+      ipcDoc = new DocAccessibleChild(childDoc, parentIPCDoc->Manager());
       childDoc->SetIPCDoc(ipcDoc);
 
 #if defined(XP_WIN)
-      MOZ_ASSERT(parentIPCDoc);
       parentIPCDoc->ConstructChildDocInParentProcess(ipcDoc, id,
                                                      AccessibleWrap::GetChildIDFor(childDoc));
 #else
       nsCOMPtr<nsITabChild> tabChild =
         do_GetInterface(mDocument->DocumentNode()->GetDocShell());
       if (tabChild) {
-        MOZ_ASSERT(parentIPCDoc);
         static_cast<TabChild*>(tabChild.get())->
           SendPDocAccessibleConstructor(ipcDoc, parentIPCDoc, id, 0, 0);
       }
@@ -885,7 +891,7 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
       mEvents.IsEmpty() && mTextHash.Count() == 0 &&
       mHangingChildDocuments.IsEmpty() &&
       mDocument->HasLoadState(DocAccessible::eCompletelyLoaded) &&
-      mPresShell->RemoveRefreshObserver(this, Flush_Display)) {
+      mPresShell->RemoveRefreshObserver(this, FlushType::Display)) {
     mObservingState = eNotObservingRefresh;
   }
 }

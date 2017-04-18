@@ -4,9 +4,9 @@ function waitForSecurityChange(numChanges = 1) {
   return new Promise(resolve => {
     let n = 0;
     let listener = {
-      onSecurityChange: function() {
+      onSecurityChange() {
         n = n + 1;
-        info ("Received onSecurityChange event " + n + " of " + numChanges);
+        info("Received onSecurityChange event " + n + " of " + numChanges);
         if (n >= numChanges) {
           gBrowser.removeProgressListener(listener);
           resolve();
@@ -18,10 +18,7 @@ function waitForSecurityChange(numChanges = 1) {
 }
 
 add_task(function* test_fetch() {
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({ set: [['privacy.trackingprotection.enabled', true]] },
-                              resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({ set: [["privacy.trackingprotection.enabled", true]] });
 
   yield BrowserTestUtils.withNewTab({ gBrowser, url: URL }, function* (newTabBrowser) {
     let securityChange = waitForSecurityChange();

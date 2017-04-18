@@ -8,6 +8,9 @@
 #ifndef nsStyleCoord_h___
 #define nsStyleCoord_h___
 
+#include <type_traits>
+
+#include "mozilla/EnumTypeTraits.h"
 #include "nsCoord.h"
 #include "nsStyleConsts.h"
 
@@ -15,7 +18,7 @@ namespace mozilla {
 
 class WritingMode;
 
-// Logical axis, edge and side constants for use in various places.
+// Logical axis, edge, side and corner constants for use in various places.
 enum LogicalAxis {
   eLogicalAxisBlock  = 0x0,
   eLogicalAxisInline = 0x1
@@ -29,6 +32,14 @@ enum LogicalSide {
   eLogicalSideBEnd   = (eLogicalAxisBlock  << 1) | eLogicalEdgeEnd,    // 0x1
   eLogicalSideIStart = (eLogicalAxisInline << 1) | eLogicalEdgeStart,  // 0x2
   eLogicalSideIEnd   = (eLogicalAxisInline << 1) | eLogicalEdgeEnd     // 0x3
+};
+
+enum LogicalCorner
+{
+  eLogicalCornerBStartIStart = 0,
+  eLogicalCornerBStartIEnd   = 1,
+  eLogicalCornerBEndIEnd     = 2,
+  eLogicalCornerBEndIStart   = 3
 };
 
 } // namespace mozilla
@@ -214,6 +225,14 @@ public:
   float       GetFlexFractionValue() const;
   Calc*       GetCalcValue() const;
   uint32_t    HashValue(uint32_t aHash) const;
+  template<typename T,
+           typename = typename std::enable_if<std::is_enum<T>::value>::type>
+  T GetEnumValue() const
+  {
+    MOZ_ASSERT(GetUnit() == eStyleUnit_Enumerated,
+               "The unit must be eStyleUnit_Enumerated!");
+    return static_cast<T>(GetIntValue());
+  }
 
   // Sets to null and releases any refcounted objects.  Only use this if the
   // object is initialized (i.e. don't use it in nsStyleCoord constructors).
@@ -229,6 +248,14 @@ public:
   void  SetAutoValue();
   void  SetNoneValue();
   void  SetCalcValue(Calc* aValue);
+  template<typename T,
+           typename = typename std::enable_if<std::is_enum<T>::value>::type>
+  void SetEnumValue(T aValue)
+  {
+    static_assert(mozilla::EnumTypeFitsWithin<T, int32_t>::value,
+                  "aValue must be an enum that fits within mValue.mInt!");
+    SetIntValue(static_cast<int32_t>(aValue), eStyleUnit_Enumerated);
+  }
 
   // Resets a coord represented by a unit/value pair.
   static inline void Reset(nsStyleUnit& aUnit, nsStyleUnion& aValue);
@@ -274,13 +301,13 @@ public:
   bool           operator==(const nsStyleSides& aOther) const;
   bool           operator!=(const nsStyleSides& aOther) const;
 
-  inline nsStyleUnit GetUnit(mozilla::css::Side aSide) const;
+  inline nsStyleUnit GetUnit(mozilla::Side aSide) const;
   inline nsStyleUnit GetLeftUnit() const;
   inline nsStyleUnit GetTopUnit() const;
   inline nsStyleUnit GetRightUnit() const;
   inline nsStyleUnit GetBottomUnit() const;
 
-  inline nsStyleCoord Get(mozilla::css::Side aSide) const;
+  inline nsStyleCoord Get(mozilla::Side aSide) const;
   inline nsStyleCoord GetLeft() const;
   inline nsStyleCoord GetTop() const;
   inline nsStyleCoord GetRight() const;
@@ -313,13 +340,13 @@ public:
   // constructors).
   void Reset();
 
-  inline void Set(mozilla::css::Side aSide, const nsStyleCoord& aCoord);
+  inline void Set(mozilla::Side aSide, const nsStyleCoord& aCoord);
   inline void SetLeft(const nsStyleCoord& aCoord);
   inline void SetTop(const nsStyleCoord& aCoord);
   inline void SetRight(const nsStyleCoord& aCoord);
   inline void SetBottom(const nsStyleCoord& aCoord);
 
-  nscoord ToLength(mozilla::css::Side aSide) const {
+  nscoord ToLength(mozilla::Side aSide) const {
     return nsStyleCoord::ToLength(mUnits[aSide], mValues[aSide]);
   }
 
@@ -548,79 +575,79 @@ inline bool nsStyleSides::operator!=(const nsStyleSides& aOther) const
   return !((*this) == aOther);
 }
 
-inline nsStyleUnit nsStyleSides::GetUnit(mozilla::css::Side aSide) const
+inline nsStyleUnit nsStyleSides::GetUnit(mozilla::Side aSide) const
 {
   return (nsStyleUnit)mUnits[aSide];
 }
 
 inline nsStyleUnit nsStyleSides::GetLeftUnit() const
 {
-  return GetUnit(NS_SIDE_LEFT);
+  return GetUnit(mozilla::eSideLeft);
 }
 
 inline nsStyleUnit nsStyleSides::GetTopUnit() const
 {
-  return GetUnit(NS_SIDE_TOP);
+  return GetUnit(mozilla::eSideTop);
 }
 
 inline nsStyleUnit nsStyleSides::GetRightUnit() const
 {
-  return GetUnit(NS_SIDE_RIGHT);
+  return GetUnit(mozilla::eSideRight);
 }
 
 inline nsStyleUnit nsStyleSides::GetBottomUnit() const
 {
-  return GetUnit(NS_SIDE_BOTTOM);
+  return GetUnit(mozilla::eSideBottom);
 }
 
-inline nsStyleCoord nsStyleSides::Get(mozilla::css::Side aSide) const
+inline nsStyleCoord nsStyleSides::Get(mozilla::Side aSide) const
 {
   return nsStyleCoord(mValues[aSide], nsStyleUnit(mUnits[aSide]));
 }
 
 inline nsStyleCoord nsStyleSides::GetLeft() const
 {
-  return Get(NS_SIDE_LEFT);
+  return Get(mozilla::eSideLeft);
 }
 
 inline nsStyleCoord nsStyleSides::GetTop() const
 {
-  return Get(NS_SIDE_TOP);
+  return Get(mozilla::eSideTop);
 }
 
 inline nsStyleCoord nsStyleSides::GetRight() const
 {
-  return Get(NS_SIDE_RIGHT);
+  return Get(mozilla::eSideRight);
 }
 
 inline nsStyleCoord nsStyleSides::GetBottom() const
 {
-  return Get(NS_SIDE_BOTTOM);
+  return Get(mozilla::eSideBottom);
 }
 
-inline void nsStyleSides::Set(mozilla::css::Side aSide, const nsStyleCoord& aCoord)
+inline void nsStyleSides::Set(mozilla::Side aSide, const nsStyleCoord& aCoord)
 {
   nsStyleCoord::SetValue(mUnits[aSide], mValues[aSide], aCoord);
 }
 
 inline void nsStyleSides::SetLeft(const nsStyleCoord& aCoord)
 {
-  Set(NS_SIDE_LEFT, aCoord);
+  Set(mozilla::eSideLeft, aCoord);
 }
 
 inline void nsStyleSides::SetTop(const nsStyleCoord& aCoord)
 {
-  Set(NS_SIDE_TOP, aCoord);
+  Set(mozilla::eSideTop, aCoord);
 }
 
 inline void nsStyleSides::SetRight(const nsStyleCoord& aCoord)
 {
-  Set(NS_SIDE_RIGHT, aCoord);
+  Set(mozilla::eSideRight, aCoord);
 }
 
 inline void nsStyleSides::SetBottom(const nsStyleCoord& aCoord)
 {
-  Set(NS_SIDE_BOTTOM, aCoord);
+  Set(mozilla::eSideBottom, aCoord);
 }
 
 // -------------------------

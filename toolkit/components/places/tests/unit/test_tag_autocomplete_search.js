@@ -25,21 +25,21 @@ AutoCompleteInput.prototype = {
     return this.searches.length;
   },
 
-  getSearchAt: function(aIndex) {
+  getSearchAt(aIndex) {
     return this.searches[aIndex];
   },
 
-  onSearchBegin: function() {},
-  onSearchComplete: function() {},
+  onSearchBegin() {},
+  onSearchComplete() {},
 
   popupOpen: false,
 
   popup: {
-    setSelectedIndex: function(aIndex) {},
-    invalidate: function() {},
+    setSelectedIndex(aIndex) {},
+    invalidate() {},
 
     // nsISupports implementation
-    QueryInterface: function(iid) {
+    QueryInterface(iid) {
       if (iid.equals(Ci.nsISupports) ||
           iid.equals(Ci.nsIAutoCompletePopup))
         return this;
@@ -49,7 +49,7 @@ AutoCompleteInput.prototype = {
   },
 
   // nsISupports implementation
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.nsISupports) ||
         iid.equals(Ci.nsIAutoCompleteInput))
       return this;
@@ -66,8 +66,7 @@ try {
   do_throw("Could not get tagging service\n");
 }
 
-function ensure_tag_results(results, searchTerm)
-{
+function ensure_tag_results(results, searchTerm) {
   var controller = Cc["@mozilla.org/autocomplete/controller;1"].
                    getService(Ci.nsIAutoCompleteController);
 
@@ -93,15 +92,14 @@ function ensure_tag_results(results, searchTerm)
                   Ci.nsIAutoCompleteController.STATUS_COMPLETE_NO_MATCH);
 
     do_check_eq(controller.matchCount, results.length);
-    for (var i=0; i<controller.matchCount; i++) {
+    for (var i = 0; i < controller.matchCount; i++) {
       do_check_eq(controller.getValueAt(i), results[i]);
     }
 
     if (current_test < (tests.length - 1)) {
       current_test++;
       tests[current_test]();
-    }
-    else {
+    } else {
       // finish once all tests have run
       do_test_finished();
     }

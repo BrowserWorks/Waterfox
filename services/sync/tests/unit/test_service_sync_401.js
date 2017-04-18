@@ -8,8 +8,9 @@ Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
 function login_handling(handler) {
-  return function (request, response) {
-    if (basic_auth_matches(request, "johndoe", "ilovejane")) {
+  return function(request, response) {
+    if (request.hasHeader("Authorization") &&
+        request.getHeader("Authorization").includes('Hawk id="id"')) {
       handler(request, response);
     } else {
       let body = "Unauthorized";
@@ -19,18 +20,15 @@ function login_handling(handler) {
   };
 }
 
-function run_test() {
-  let logger = Log.repository.rootLogger;
+add_task(async function run_test() {
   Log.repository.rootLogger.addAppender(new Log.DumpAppender());
 
   let collectionsHelper = track_collections_helper();
   let upd = collectionsHelper.with_updated_collection;
-  let collections = collectionsHelper.collections;
 
-  do_test_pending();
   let server = httpd_setup({
     "/1.1/johndoe/storage/crypto/keys": upd("crypto", new ServerWBO("keys").handler()),
-    "/1.1/johndoe/storage/meta/global": upd("meta",   new ServerWBO("global").handler()),
+    "/1.1/johndoe/storage/meta/global": upd("meta", new ServerWBO("global").handler()),
     "/1.1/johndoe/info/collections":    login_handling(collectionsHelper.handler)
   });
 
@@ -38,13 +36,13 @@ function run_test() {
 
   try {
     _("Set up test fixtures.");
-    new SyncTestingInfrastructure(server, "johndoe", "ilovejane", "foo");
+    await SyncTestingInfrastructure(server, "johndoe", "ilovejane");
     Service.scheduler.globalScore = GLOBAL_SCORE;
     // Avoid daily ping
     Svc.Prefs.set("lastPing", Math.floor(Date.now() / 1000));
 
     let threw = false;
-    Svc.Obs.add("weave:service:sync:error", function (subject, data) {
+    Svc.Obs.add("weave:service:sync:error", function(subject, data) {
       threw = true;
     });
 
@@ -54,7 +52,8 @@ function run_test() {
     do_check_eq(Service.status.login, LOGIN_SUCCEEDED);
 
     _("Simulate having changed the password somewhere else.");
-    Service.identity.basicPassword = "ilovejosephine";
+    Service.identity._token.id = "somethingelse";
+    Service.identity.unlockAndVerifyAuthState = () => Promise.resolve(LOGIN_FAILED_LOGIN_REJECTED);
 
     _("Let's try to sync.");
     Service.sync();
@@ -79,6 +78,6 @@ function run_test() {
 
   } finally {
     Svc.Prefs.resetBranch("");
-    server.stop(do_test_finished);
+    await promiseStopServer(server);
   }
-}
+});

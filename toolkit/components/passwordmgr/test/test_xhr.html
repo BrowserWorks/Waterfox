@@ -174,7 +174,7 @@ function doTest() {
 function makeRequest(uri) {
   var request = new XMLHttpRequest();
   request.open("GET", uri, true);
-  request.onreadystatechange = function () {
+  request.onreadystatechange = function() {
     if (request.readyState == 4)
       xhrLoad(request.responseXML);
   };
@@ -186,7 +186,7 @@ initLogins();
 
 // clear plain HTTP auth sessions before the test, to allow
 // running them more than once.
-var authMgr = SpecialPowers.Cc['@mozilla.org/network/http-auth-manager;1']
+var authMgr = SpecialPowers.Cc["@mozilla.org/network/http-auth-manager;1"]
                         .getService(SpecialPowers.Ci.nsIHttpAuthManager);
 authMgr.clearAll();
 

@@ -258,7 +258,7 @@ private:
 class NativeFileWatcherIOTask : public Runnable
 {
 public:
-  NativeFileWatcherIOTask(HANDLE aIOCompletionPort)
+  explicit NativeFileWatcherIOTask(HANDLE aIOCompletionPort)
     : mIOCompletionPort(aIOCompletionPort)
     , mShuttingDown(false)
   {
@@ -1253,16 +1253,14 @@ NativeFileWatcherService::Init()
 
   // Start the IO worker thread.
   mWorkerIORunnable = new NativeFileWatcherIOTask(completionPort);
-  nsresult rv = NS_NewThread(getter_AddRefs(mIOThread), mWorkerIORunnable);
+  nsresult rv = NS_NewNamedThread("FileWatcher IO", getter_AddRefs(mIOThread),
+                                  mWorkerIORunnable);
   if (NS_FAILED(rv)) {
     FILEWATCHERLOG(
       "NativeFileWatcherIOTask::Init - Unable to create and dispatch the worker thread (%x).",
       rv);
     return rv;
   }
-
-  // Set the name for the worker thread.
-  NS_SetThreadName(mIOThread, "FileWatcher IO");
 
   mIOCompletionPort = completionPort.forget();
 

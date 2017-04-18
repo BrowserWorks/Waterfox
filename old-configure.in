@@ -46,7 +46,7 @@ _SUBDIR_CONFIG_ARGS="$ac_configure_args"
 dnl Set the version number of the libs included with mozilla
 dnl ========================================================
 MOZJPEG=62
-MOZPNG=10625
+MOZPNG=10628
 NSPR_VERSION=4
 NSPR_MINVER=4.13.1
 NSS_VERSION=3
@@ -79,14 +79,6 @@ dnl  overridden by each platform.
 dnl ========================================================
 MOZ_USE_PTHREADS=
 _PTHREAD_LDFLAGS=""
-
-dnl Do not allow objdir == srcdir builds.
-dnl ==============================================================
-_topsrcdir=`cd \`dirname $0\`; pwd -W 2>/dev/null || pwd -P`
-_objdir=`pwd -P`
-
-MOZ_BUILD_ROOT=`pwd -W 2>/dev/null || pwd -P`
-DIST="$MOZ_BUILD_ROOT/dist"
 
 MOZ_DEFAULT_COMPILER
 
@@ -187,7 +179,6 @@ else
     AC_PROG_RANLIB
     MOZ_PATH_PROGS(AS, $AS as, $CC)
     AC_CHECK_PROGS(AR, ar, :)
-    AC_CHECK_PROGS(LD, ld, :)
     AC_CHECK_PROGS(STRIP, strip, :)
     AC_CHECK_PROGS(WINDRES, windres, :)
     AC_CHECK_PROGS(OTOOL, otool, :)
@@ -267,10 +258,6 @@ case "$target" in
             # -Zc:sizedDealloc- disables C++14 global sized deallocation (see bug 1160146)
             CXXFLAGS="$CXXFLAGS -Zc:sizedDealloc-"
 
-            # Disable C++11 thread-safe statics due to crashes on XP (bug 1204752)
-            # See https://connect.microsoft.com/VisualStudio/feedback/details/1789709/visual-c-2015-runtime-broken-on-windows-server-2003-c-11-magic-statics
-            CXXFLAGS="$CXXFLAGS -Zc:threadSafeInit-"
-
             # https://connect.microsoft.com/VisualStudio/feedback/details/888527/warnings-on-dbghelp-h
             # for dbghelp.h, imagehlp.h, and shobj.h
             # C4091: 'typedef ': ignored on left of '' when no variable is declared
@@ -305,7 +292,7 @@ case "$target" in
         fi
 
         # Check linker version
-        _LD_FULL_VERSION=`"${LD}" -v 2>&1 | sed -nre "$_MSVC_VER_FILTER"`
+        _LD_FULL_VERSION=`"${LINK}" -v 2>&1 | sed -nre "$_MSVC_VER_FILTER"`
         _LD_MAJOR_VERSION=`echo ${_LD_FULL_VERSION} | $AWK -F\. '{ print $1 }'`
         if test "$_LD_MAJOR_VERSION" != "$_CC_SUITE"; then
             AC_MSG_ERROR([The linker major version, $_LD_FULL_VERSION,  does not match the compiler suite version, $_CC_SUITE.])
@@ -434,7 +421,6 @@ AC_SUBST(MIDL_FLAGS)
 AC_SUBST(_MSC_VER)
 
 AC_SUBST(GNU_AS)
-AC_SUBST(GNU_LD)
 AC_SUBST(GNU_CC)
 AC_SUBST(GNU_CXX)
 
@@ -719,20 +705,6 @@ if test "$GNU_CC"; then
     _USE_CPP_INCLUDE_FLAG=1
 
     ASFLAGS="$ASFLAGS $_DEFINES_CFLAGS"
-
-else
-    MKSHLIB='$(LD) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
-    MKCSHLIB='$(LD) $(DSO_LDOPTS) -h $(DSO_SONAME) -o $@'
-
-    DSO_LDOPTS='-shared'
-    if test "$GNU_LD"; then
-        # Don't allow undefined symbols in libraries
-        DSO_LDOPTS="$DSO_LDOPTS -z defs"
-    fi
-
-    DSO_CFLAGS=''
-    DSO_PIC_CFLAGS='-KPIC'
-    _DEFINES_CFLAGS='$(ACDEFINES) -D_MOZILLA_CONFIG_H_ -DMOZILLA_CLIENT'
 fi
 
 if test "$GNU_CXX"; then
@@ -741,9 +713,6 @@ if test "$GNU_CXX"; then
 
     _DEFINES_CXXFLAGS='-DMOZILLA_CLIENT -include $(topobjdir)/mozilla-config.h'
     _USE_CPP_INCLUDE_FLAG=1
-
-else
-    _DEFINES_CXXFLAGS='-DMOZILLA_CLIENT -D_MOZILLA_CONFIG_H_ $(ACDEFINES)'
 fi
 
 dnl ========================================================
@@ -915,21 +884,6 @@ case "$target" in
         LDFLAGS=$_SAVE_LDFLAGS
     fi
 
-    dnl With newer linkers we need to pass -allow_heap_execute because of
-    dnl Microsoft Silverlight (5.1.10411.0 at least).
-    AC_MSG_CHECKING([for -allow_heap_execute option to ld])
-    _SAVE_LDFLAGS=$LDFLAGS
-    LDFLAGS="$LDFLAGS -Wl,-allow_heap_execute"
-    AC_TRY_LINK(,[return 0;],_HAVE_ALLOW_HEAP_EXECUTE=1,
-                _HAVE_ALLOW_HEAP_EXECUTE=)
-    if test -n "$_HAVE_ALLOW_HEAP_EXECUTE" ; then
-        AC_MSG_RESULT([yes])
-        MOZ_ALLOW_HEAP_EXECUTE_FLAGS="-Wl,-allow_heap_execute"
-    else
-        AC_MSG_RESULT([no])
-    fi
-    LDFLAGS=$_SAVE_LDFLAGS
-
     MOZ_FIX_LINK_PATHS="-Wl,-executable_path,${DIST}/bin"
     ;;
 
@@ -1005,7 +959,6 @@ case "$target" in
         MOZ_FOLD_LIBS_FLAGS=-mnop-fun-dllimport
     else
         TARGET_COMPILER_ABI=msvc
-        HOST_LD='$(LD)'
         if test "$AS_BIN"; then
             AS="$(basename "$AS_BIN")"
         fi
@@ -1020,14 +973,9 @@ case "$target" in
         DLL_PREFIX=
         LIB_PREFIX=
         IMPORT_LIB_SUFFIX=lib
-        MKSHLIB='$(LD) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
-        MKCSHLIB='$(LD) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
-        dnl Set subsystem version 5 for Windows XP.
-        if test "$CPU_ARCH" = "x86"; then
-            WIN32_SUBSYSTEM_VERSION=5.01
-        else
-            WIN32_SUBSYSTEM_VERSION=5.02
-        fi
+        MKSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
+        MKCSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
+        WIN32_SUBSYSTEM_VERSION=6.01
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
         DSO_LDOPTS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -1080,16 +1028,14 @@ case "$target" in
         # MSVC warning C4267 warns for narrowing type conversions from size_t
         # to 32-bit integer types on 64-bit platforms.  Since this is virtually
         # the same thing as C4244, we disable C4267, too.
-        # MSVC warning C4345 warns of newly conformant behavior as of VS2003.
-        # MSVC warning C4351 warns of newly conformant behavior as of VS2005.
         # MSVC warning C4800 warns when a value is implicitly cast to bool,
         # because this also forces narrowing to a single byte, which can be a
         # perf hit.  But this matters so little in practice (and often we want
         # that behavior) that it's better to turn it off.
-        # MSVC warning wd4595 warns non-member operator new or delete functions
+        # MSVC warning C4595 warns non-member operator new or delete functions
         # may not be declared inline, as of VS2015 Update 2.
         CFLAGS="$CFLAGS -wd4244 -wd4267"
-        CXXFLAGS="$CXXFLAGS -wd4251 -wd4244 -wd4267 -wd4345 -wd4351 -wd4800 -wd4595"
+        CXXFLAGS="$CXXFLAGS -wd4251 -wd4244 -wd4267 -wd4800 -wd4595"
         if test -n "$CLANG_CL"; then
             # XXX We should combine some of these with our generic GCC-style
             # warning checks.
@@ -1863,26 +1809,6 @@ if test "$GNU_CC"; then
   TARGET_COMPILER_ABI="${TARGET_COMPILER_ABI-${ARM_ABI_PREFIX}gcc3}"
 fi
 
-dnl Check to see if we can resolve ambiguity with |using|.
-AC_CACHE_CHECK(whether the C++ \"using\" keyword resolves ambiguity,
-               ac_cv_cpp_ambiguity_resolving_using,
-               [AC_TRY_COMPILE(class X {
-                                 public: int go(const X&) {return 3;}
-                                         int jo(const X&) {return 3;}
-                               };
-                               class Y : public X {
-                                 public:  int go(int) {return 2;}
-                                          int jo(int) {return 2;}
-                                          using X::jo;
-                                 private: using X::go;
-                               };,
-                               X x; Y y; y.jo(x);,
-                               ac_cv_cpp_ambiguity_resolving_using=yes,
-                               ac_cv_cpp_ambiguity_resolving_using=no)])
-if test "$ac_cv_cpp_ambiguity_resolving_using" = yes ; then
-   AC_DEFINE(HAVE_CPP_AMBIGUITY_RESOLVING_USING)
-fi
-
 dnl See if a dynamic_cast to void* gives the most derived object.
 AC_CACHE_CHECK(for C++ dynamic_cast to void*,
                ac_cv_cpp_dynamic_cast_void_ptr,
@@ -1996,15 +1922,6 @@ if test -n "$MOZ_LINKER" -a "$OS_TARGET" = "Android"; then
     NSPR_LDFLAGS="$NSPR_LDFLAGS -nostartfiles"
   fi
 fi
-
-dnl See if compiler supports some gcc-style attributes
-
-AC_CACHE_CHECK(for __attribute__((always_inline)),
-               ac_cv_attribute_always_inline,
-               [AC_TRY_COMPILE([inline void f(void) __attribute__((always_inline));],
-                               [],
-                               ac_cv_attribute_always_inline=yes,
-                               ac_cv_attribute_always_inline=no)])
 
 dnl End of C++ language/feature checks
 AC_LANG_C
@@ -2123,13 +2040,21 @@ MOZ_ARG_WITH_BOOL(system-nss,
     _USE_SYSTEM_NSS=1 )
 
 if test -n "$_USE_SYSTEM_NSS"; then
-    AM_PATH_NSS(3.28.3, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
+    AM_PATH_NSS(3.29.5, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
 fi
 
 if test -n "$MOZ_SYSTEM_NSS"; then
    NSS_LIBS="$NSS_LIBS -lcrmf"
 else
    NSS_CFLAGS="-I${DIST}/include/nss"
+   case "${OS_ARCH}" in
+        # Only few platforms have been tested with GYP
+        WINNT|Darwin|Linux|DragonFly|FreeBSD|NetBSD|OpenBSD)
+            ;;
+        *)
+            AC_MSG_ERROR([building in-tree NSS is not supported on this platform. Use --with-system-nss])
+            ;;
+   esac
 fi
 
 if test -z "$SKIP_LIBRARY_CHECKS"; then
@@ -2293,7 +2218,6 @@ MOZ_WEBRTC_HARDWARE_AEC_NS=
 MOZ_SCTP=
 MOZ_ANDROID_OMX=
 MOZ_OMX_PLUGIN=
-MOZ_VPX_ERROR_CONCEALMENT=
 VPX_USE_YASM=
 VPX_ASFLAGS=
 VPX_AS_CONVERSION=
@@ -2442,6 +2366,7 @@ if test -n "$MOZ_RUST"; then
     fi
     if test -n "$MOZ_RUST_URLPARSE"; then
         AC_DEFINE(MOZ_RUST_URLPARSE)
+        AC_SUBST(MOZ_RUST_URLPARSE)
     fi
 fi
 
@@ -2892,7 +2817,6 @@ if test -n "$MOZ_WEBRTC"; then
     dnl opt/production builds (via MOZ_CRASH())
     AC_DEFINE(MOZ_WEBRTC_ASSERT_ALWAYS)
     MOZ_RAW=1
-    MOZ_VPX_ERROR_CONCEALMENT=1
 
 dnl enable once Signaling lands
     MOZ_WEBRTC_SIGNALING=1
@@ -3053,10 +2977,6 @@ MOZ_ARG_WITH_BOOL(system-libvpx,
 MOZ_LIBVPX_CFLAGS=
 MOZ_LIBVPX_LIBS=
 
-if test -n "$MOZ_VPX_ERROR_CONCEALMENT" ; then
-    AC_DEFINE(MOZ_VPX_ERROR_CONCEALMENT)
-fi
-
 _SAVE_CFLAGS=$CFLAGS
 _SAVE_LIBS=$LIBS
 if test -n "$MOZ_SYSTEM_LIBVPX"; then
@@ -3132,7 +3052,7 @@ if test -z "$MOZ_SYSTEM_LIBVPX"; then
         dnl These flags are a lie; they're just used to enable the requisite
         dnl opcodes; actual arch detection is done at runtime.
         VPX_ASFLAGS="-march=armv7-a -mfpu=neon"
-        VPX_AS_CONVERSION='$(PERL) $(topsrcdir)/media/libvpx/build/make/ads2gas.pl'
+        VPX_AS_CONVERSION='$(PERL) $(topsrcdir)/media/libvpx/libvpx/build/make/ads2gas.pl'
         VPX_ARM_ASM=1
         dnl Building with -mfpu=neon requires either the "softfp" or the
         dnl "hardfp" ABI. Depending on the compiler's default target, and the
@@ -3313,9 +3233,6 @@ MOZ_D3D_CPU_SUFFIX=
 MOZ_HAS_WINSDK_WITH_D3D=
 MOZ_D3DCOMPILER_VISTA_DLL=
 MOZ_D3DCOMPILER_VISTA_DLL_PATH=
-MOZ_DIRECTX_SDK_PATH=
-MOZ_D3DCOMPILER_XP_DLL=
-MOZ_D3DCOMPILER_XP_CAB=
 
 if test "$COMPILE_ENVIRONMENT" ; then
 case "$target_os" in
@@ -3333,11 +3250,6 @@ x86_64)
   MOZ_D3D_CPU_SUFFIX=x64
   ;;
 esac
-
-MOZ_ARG_ENABLE_BOOL(require-all-d3dc-versions,
-[  --enable-require-all-d3dc-versions Require all versions of the D3D compiler needed for supported Windows systems.],
-    MOZ_REQUIRE_ALL_D3DCS=1,
-    MOZ_REQUIRE_ALL_D3DCS=)
 
 # This is potentially set in external mozconfig files; if it's set,
 # then the build exposes the "webgl" context name, which is reserved
@@ -3397,87 +3309,17 @@ if test -n "$MOZ_ANGLE_RENDERER"; then
   fi
 
   ######################################
-  # Find _43 for use by XP.
-
-  if test "$HAVE_64BIT_BUILD"; then
-    AC_MSG_RESULT([We are building a 64-bit binary, skip checking d3dcompiler_43.])
-  else
-    # Get the SDK path from the registry.
-    # First try to get the June 2010 SDK
-    MOZ_DIRECTX_SDK_REG_KEY=`reg query 'HKLM\Software\Microsoft\DirectX' //s | grep 'Microsoft DirectX SDK (June 2010)' | head -n 1`
-    if test -z "$MOZ_DIRECTX_SDK_REG_KEY" ; then
-      # Otherwise just take whatever comes first
-      MOZ_DIRECTX_SDK_REG_KEY=`reg query 'HKLM\Software\Microsoft\DirectX' //s | grep 'Microsoft DirectX SDK' | head -n 1`
-    fi
-    MOZ_DIRECTX_SDK_PATH=`reg query "$MOZ_DIRECTX_SDK_REG_KEY" //v InstallPath | grep REG_SZ | sed 's/.*\([[a-zA-Z]]\)\\:\\\\/\\1\\:\\\\/' | sed 's,\\\\,/,g'`
-
-    if test -n "$MOZ_DIRECTX_SDK_PATH" &&
-       test -f "$MOZ_DIRECTX_SDK_PATH"/lib/$MOZ_D3D_CPU_SUFFIX/dxguid.lib ; then
-      AC_MSG_RESULT([Found DirectX SDK via registry, using $MOZ_DIRECTX_SDK_PATH])
-    else
-      AC_MSG_RESULT([DirectX SDK not found.])
-      MOZ_DIRECTX_SDK_PATH=
-    fi
-
-    # Check that our DirectX SDK is acceptable.
-    if test -n "$MOZ_DIRECTX_SDK_PATH"; then
-      if test -n "`echo $MOZ_DIRECTX_SDK_REG_KEY | grep 'February 2010'`" ; then
-        AC_MSG_RESULT([Found the February 2010 DirectX SDK, which is unacceptable to ANGLE.])
-        MOZ_DIRECTX_SDK_PATH=
-      fi
-    fi
-
-    if test -n "$MOZ_DIRECTX_SDK_PATH"; then
-      # Find a D3D compiler DLL in the DirectX SDK, if we didn't find one already.
-      # Get the SDK numeric version (e.g. 43) by looking at the dependencies of d3dx9.lib
-      MOZ_D3DX9_VERSION=`dumpbin //headers "$MOZ_DIRECTX_SDK_PATH"/lib/$MOZ_D3D_CPU_SUFFIX/d3dx9.lib | egrep d3dx9_[[0-9]][[0-9]]\.dll | head -n1 | sed 's/.*\([[0-9]][[0-9]]\).*/\\1/g'`
-
-      if test -n "$MOZ_D3DX9_VERSION" ; then
-        MOZ_D3DCOMPILER_XP_CAB=`find "$MOZ_DIRECTX_SDK_PATH"/Redist -name *D3DCompiler_${MOZ_D3DX9_VERSION}_${MOZ_D3D_CPU_SUFFIX}.cab | head -n1`
-
-        if test -n "$MOZ_D3DCOMPILER_XP_CAB"; then
-          MOZ_D3DCOMPILER_XP_DLL=D3DCompiler_$MOZ_D3DX9_VERSION.dll
-        else
-          AC_MSG_RESULT([Couldn't find a CAB containing the D3D compiler DLL.])
-          AC_MSG_ERROR([DirectX SDK at "$MOZ_DIRECTX_SDK_PATH" appears broken.])
-          MOZ_DIRECTX_SDK_PATH=
-        fi
-      else
-        AC_MSG_RESULT([Couldn't determine the D3DX9 version for the DirectX SDK.])
-        MOZ_DIRECTX_SDK_PATH=
-      fi
-    else
-      AC_MSG_RESULT([Couldn't find an acceptable DirectX SDK for ANGLE, needed for d3dcompiler_43.])
-    fi
-  fi
-
-  ######################################
   # Check that we found what we needed.
   MOZ_FOUND_A_D3D_COMPILER=
-  MOZ_FOUND_BOTH_D3D_COMPILERS=1
 
   if test -n "$MOZ_D3DCOMPILER_VISTA_DLL"; then
     MOZ_FOUND_A_D3D_COMPILER=1
     AC_MSG_RESULT([Found d3dcompiler DLL for Vista+: $MOZ_D3DCOMPILER_VISTA_DLL])
-  else
-    MOZ_FOUND_BOTH_D3D_COMPILERS=
-  fi
-
-  if test -n "$MOZ_D3DCOMPILER_XP_DLL"; then
-    MOZ_FOUND_A_D3D_COMPILER=1
-    AC_MSG_RESULT([Found d3dcompiler DLL for XP: $MOZ_D3DCOMPILER_XP_DLL])
-  else
-    MOZ_FOUND_BOTH_D3D_COMPILERS=
   fi
 
   if test -z "$CROSS_COMPILE"; then
     if test -z "MOZ_FOUND_A_D3D_COMPILER"; then
       AC_MSG_ERROR([Couldn't find an acceptable D3D compiler DLL.])
-    fi
-
-    if test -n "$MOZ_REQUIRE_ALL_D3DCS" -a -z "$MOZ_FOUND_BOTH_D3D_COMPILERS"; then
-      AC_MSG_ERROR([Both D3D compilers _43 and _46+ are required by --enable-require-d3d-compilers.])
-      AC_MSG_ERROR([  Install Windows SDK 8.0+, as well as DirectX SDK (June 2010 version or newer), or reconfigure without this flag.])
     fi
   fi
 fi # MOZ_ANGLE_RENDERER
@@ -3488,41 +3330,31 @@ fi # COMPILE_ENVIRONMENT
 dnl ========================================================
 dnl Gamepad support
 dnl ========================================================
-MOZ_GAMEPAD=1
 MOZ_GAMEPAD_BACKEND=stub
 
-MOZ_ARG_DISABLE_BOOL(gamepad,
-[  --disable-gamepad   Disable gamepad support],
-    MOZ_GAMEPAD=,
-    MOZ_GAMEPAD=1)
+case "$OS_TARGET" in
+Darwin)
+    if test -z "$MOZ_IOS"; then
+        MOZ_GAMEPAD_BACKEND=cocoa
+    fi
+    ;;
+WINNT)
+    MOZ_GAMEPAD_BACKEND=windows
+    ;;
+Linux)
+    MOZ_CHECK_HEADER([linux/joystick.h])
+    if test "$ac_cv_header_linux_joystick_h" != "yes"; then
+      AC_MSG_ERROR([Can't find header linux/joystick.h, needed for gamepad support. Please install Linux kernel headers.])
+    fi
+    MOZ_GAMEPAD_BACKEND=linux
+    ;;
+Android)
+    MOZ_GAMEPAD_BACKEND=android
+    ;;
+*)
+    ;;
+esac
 
-if test "$MOZ_GAMEPAD"; then
-    case "$OS_TARGET" in
-    Darwin)
-        if test -z "$MOZ_IOS"; then
-            MOZ_GAMEPAD_BACKEND=cocoa
-        fi
-        ;;
-    WINNT)
-        MOZ_GAMEPAD_BACKEND=windows
-        ;;
-    Linux)
-        MOZ_CHECK_HEADER([linux/joystick.h])
-        if test "$ac_cv_header_linux_joystick_h" != "yes"; then
-          AC_MSG_ERROR([Can't find header linux/joystick.h, needed for gamepad support. Please install Linux kernel headers or reconfigure with --disable-gamepad to disable gamepad support.])
-        fi
-        MOZ_GAMEPAD_BACKEND=linux
-        ;;
-    Android)
-        MOZ_GAMEPAD_BACKEND=android
-        ;;
-    *)
-        ;;
-   esac
-
-  AC_DEFINE(MOZ_GAMEPAD)
-fi
-AC_SUBST(MOZ_GAMEPAD)
 AC_SUBST(MOZ_GAMEPAD_BACKEND)
 
 dnl ========================================================
@@ -4316,7 +4148,6 @@ AC_SUBST(MOZ_OPTIMIZE)
 AC_SUBST(MOZ_FRAMEPTR_FLAGS)
 AC_SUBST(MOZ_OPTIMIZE_FLAGS)
 AC_SUBST(MOZ_OPTIMIZE_LDFLAGS)
-AC_SUBST_LIST(MOZ_ALLOW_HEAP_EXECUTE_FLAGS)
 AC_SUBST(MOZ_PGO_OPTIMIZE_FLAGS)
 
 dnl ========================================================
@@ -5023,6 +4854,12 @@ if test "$USE_FC_FREETYPE"; then
 fi
 
 dnl ========================================================
+dnl Check if we need the 32-bit Linux SSE2 error dialog
+dnl ========================================================
+
+AC_SUBST(MOZ_LINUX_32_SSE2_STARTUP_ERROR)
+
+dnl ========================================================
 dnl Check for pixman and cairo
 dnl ========================================================
 
@@ -5234,17 +5071,6 @@ if test "$NECKO_COOKIES"; then
     _NON_GLOBAL_ACDEFINES="$_NON_GLOBAL_ACDEFINES NECKO_COOKIES"
 fi
 
-dnl
-dnl Always build Marionette if not Android or B2G
-dnl
-if test "$OS_TARGET" != Android -a x"$MOZ_WIDGET_TOOLKIT" != x"gonk"; then
-    AC_DEFINE(ENABLE_MARIONETTE)
-fi
-AC_SUBST(ENABLE_MARIONETTE)
-if test "$ENABLE_MARIONETTE"; then
-    AC_DEFINE(ENABLE_MARIONETTE)
-fi
-
 dnl ========================================================
 if test "$MOZ_DEBUG" -o "$MOZ_DMD"; then
     MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
@@ -5262,7 +5088,6 @@ AC_SUBST(AR_EXTRACT)
 AC_SUBST(AS)
 AC_SUBST(ASFLAGS)
 AC_SUBST(AS_DASH_C_FLAG)
-AC_SUBST(LD)
 AC_SUBST(RC)
 AC_SUBST(RCFLAGS)
 AC_SUBST(WINDRES)
@@ -5296,9 +5121,6 @@ AC_SUBST(MOZ_D3D_CPU_SUFFIX)
 AC_SUBST(MOZ_HAS_WINSDK_WITH_D3D)
 AC_SUBST(MOZ_D3DCOMPILER_VISTA_DLL)
 AC_SUBST(MOZ_D3DCOMPILER_VISTA_DLL_PATH)
-AC_SUBST(MOZ_DIRECTX_SDK_PATH)
-AC_SUBST(MOZ_D3DCOMPILER_XP_DLL)
-AC_SUBST(MOZ_D3DCOMPILER_XP_CAB)
 
 AC_SUBST(MOZ_ANDROID_APPLICATION_CLASS)
 AC_SUBST(MOZ_ANDROID_BROWSER_INTENT_CLASS)
@@ -5490,8 +5312,6 @@ if test -n "$MOZ_UA_OS_AGNOSTIC"; then
   AC_DEFINE(MOZ_UA_OS_AGNOSTIC)
 fi
 
-AC_SUBST(MOZ_APP_STATIC_INI)
-
 AC_SUBST(MOZ_PKG_SPECIAL)
 AC_SUBST(MOZ_SIMPLE_PACKAGE_NAME)
 
@@ -5607,7 +5427,6 @@ AC_SUBST(HOST_LDFLAGS)
 AC_SUBST(HOST_OPTIMIZE_FLAGS)
 AC_SUBST(HOST_AR)
 AC_SUBST(HOST_AR_FLAGS)
-AC_SUBST(HOST_LD)
 AC_SUBST(HOST_RANLIB)
 AC_SUBST(HOST_BIN_SUFFIX)
 
@@ -5645,7 +5464,6 @@ AC_SUBST_LIST(FFVPX_ASFLAGS)
 AC_SUBST(MOZ_DIRECTSHOW)
 AC_SUBST(MOZ_ANDROID_OMX)
 AC_SUBST(MOZ_OMX_PLUGIN)
-AC_SUBST(MOZ_VPX_ERROR_CONCEALMENT)
 AC_SUBST(VPX_USE_YASM)
 AC_SUBST_LIST(VPX_ASFLAGS)
 AC_SUBST(VPX_AS_CONVERSION)
@@ -5751,7 +5569,6 @@ dnl ========================================================
 dnl The following defines are used by xpcom
 _NON_GLOBAL_ACDEFINES="$_NON_GLOBAL_ACDEFINES
 CPP_THROW_NEW
-HAVE_CPP_AMBIGUITY_RESOLVING_USING
 HAVE_CPP_DYNAMIC_CAST_TO_VOID_PTR
 HAVE_CPP_PARTIAL_SPECIALIZATION
 HAVE_GETPAGESIZE
@@ -5787,14 +5604,8 @@ dnl ========================================================
 
 # The control structure code will be removed as soon as the feature is stable
 # Refer to bug 1281101 for more details.
-
-# Enable mask-as-shorthand property by default for nightly and aurora channels
-if test -z "$RELEASE_OR_BETA"; then
-  dnl mask as shorthand property enabled
-  MOZ_ENABLE_MASK_AS_SHORTHAND=1
-  AC_DEFINE(MOZ_ENABLE_MASK_AS_SHORTHAND)
-fi
-
+MOZ_ENABLE_MASK_AS_SHORTHAND=1
+AC_DEFINE(MOZ_ENABLE_MASK_AS_SHORTHAND)
 AC_SUBST(MOZ_ENABLE_MASK_AS_SHORTHAND)
 
 # Avoid using obsolete NSPR features
@@ -5930,7 +5741,6 @@ export RANLIB
 export CPP
 export CC
 export CXX
-export LD
 export ARFLAGS
 export CPPFLAGS
 export CFLAGS

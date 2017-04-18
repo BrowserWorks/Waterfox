@@ -6,11 +6,11 @@
 
 #include "IdleRequest.h"
 
-#include "mozilla/Function.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/dom/IdleDeadline.h"
 #include "mozilla/dom/Performance.h"
 #include "mozilla/dom/PerformanceTiming.h"
+#include "mozilla/dom/TimeoutManager.h"
 #include "mozilla/dom/WindowBinding.h"
 #include "nsComponentManagerUtils.h"
 #include "nsGlobalWindow.h"
@@ -64,7 +64,7 @@ nsresult
 IdleRequest::SetTimeout(uint32_t aTimeout)
 {
   int32_t handle;
-  nsresult rv = nsGlobalWindow::Cast(mWindow)->SetTimeoutOrInterval(
+  nsresult rv = mWindow->TimeoutManager().SetTimeout(
     this, aTimeout, false, Timeout::Reason::eIdleCallbackTimeout, &handle);
   mTimeoutHandle = Some(handle);
 
@@ -126,7 +126,7 @@ void
 IdleRequest::CancelTimeout()
 {
   if (mTimeoutHandle.isSome()) {
-    nsGlobalWindow::Cast(mWindow)->ClearTimeoutOrInterval(
+    mWindow->TimeoutManager().ClearTimeout(
       mTimeoutHandle.value(), Timeout::Reason::eIdleCallbackTimeout);
   }
 }

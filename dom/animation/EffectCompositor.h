@@ -28,7 +28,9 @@ namespace mozilla {
 
 class EffectSet;
 class RestyleTracker;
+class StyleAnimationValue;
 struct AnimationPerformanceWarning;
+struct AnimationProperty;
 struct NonOwningAnimationTarget;
 
 namespace dom {

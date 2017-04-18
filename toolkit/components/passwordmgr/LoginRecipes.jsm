@@ -8,7 +8,14 @@ this.EXPORTED_SYMBOLS = ["LoginRecipesContent", "LoginRecipesParent"];
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 const REQUIRED_KEYS = ["hosts"];
-const OPTIONAL_KEYS = ["description", "notUsernameSelector", "passwordSelector", "pathRegex", "usernameSelector"];
+const OPTIONAL_KEYS = [
+  "description",
+  "notPasswordSelector",
+  "notUsernameSelector",
+  "passwordSelector",
+  "pathRegex",
+  "usernameSelector",
+];
 const SUPPORTED_KEYS = REQUIRED_KEYS.concat(OPTIONAL_KEYS);
 
 Cu.importGlobalProperties(["URL"]);
@@ -97,7 +104,7 @@ LoginRecipesParent.prototype = {
 
       try {
         this.initializationPromise = new Promise(function(resolve) {
-          NetUtil.asyncFetch(channel, function (stream, result) {
+          NetUtil.asyncFetch(channel, function(stream, result) {
             if (!Components.isSuccessCode(result)) {
               throw new Error("Error fetching recipe file:" + result);
             }
@@ -226,7 +233,7 @@ var LoginRecipesContent = {
     // Find the first (most-specific recipe that involves field overrides).
     for (let recipe of recipes) {
       if (!recipe.usernameSelector && !recipe.passwordSelector &&
-          !recipe.notUsernameSelector) {
+          !recipe.notUsernameSelector && !recipe.notPasswordSelector) {
         continue;
       }
 

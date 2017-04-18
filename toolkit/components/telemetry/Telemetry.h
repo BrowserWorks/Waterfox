@@ -36,6 +36,8 @@ namespace Telemetry {
 
 struct Accumulation;
 struct KeyedAccumulation;
+struct ScalarAction;
+struct KeyedScalarAction;
 
 enum TimerResolution {
   Millisecond,
@@ -142,6 +144,20 @@ void AccumulateChild(GeckoProcessType aProcessType, const nsTArray<Accumulation>
  * @param aAccumulations - accumulation actions to perform
  */
 void AccumulateChildKeyed(GeckoProcessType aProcessType, const nsTArray<KeyedAccumulation>& aAccumulations);
+
+/**
+ * Update scalars for the given process type with the data coming from child process.
+ *
+ * @param aScalarActions - actions to update the scalar data
+ */
+void UpdateChildScalars(GeckoProcessType aProcessType, const nsTArray<ScalarAction>& aScalarActions);
+
+/**
+ * Update keyed  scalars for the given process type with the data coming from child process.
+ *
+ * @param aScalarActions - actions to update the keyed scalar data
+ */
+void UpdateChildKeyedScalars(GeckoProcessType aProcessType, const nsTArray<KeyedScalarAction>& aScalarActions);
 
 /**
  * Enable/disable recording for this histogram at runtime.
@@ -328,6 +344,17 @@ void RecordChromeHang(uint32_t aDuration,
                       int32_t aFirefoxUptime,
                       mozilla::UniquePtr<mozilla::HangMonitor::HangAnnotations>
                               aAnnotations);
+
+/**
+ * Record the current thread's call stack on demand. Note that, the stack is
+ * only captured once. Subsequent calls result in incrementing the capture
+ * counter.
+ *
+ * @param aKey - A user defined key associated with the captured stack.
+ *
+ * NOTE: Unwinding call stacks is an expensive operation performance-wise.
+ */
+void CaptureStack(const nsCString& aKey);
 #endif
 
 class ThreadHangStats;

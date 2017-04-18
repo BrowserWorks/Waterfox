@@ -19,11 +19,6 @@
 
 /* Rule View Tabpanel */
 
-.theme-firebug .ruleview {
-  font-family: monospace;
-  font-size: 11px;
-}
-
 #sidebar-panel-ruleview {
   margin: 0;
   display: flex;
@@ -383,7 +378,6 @@
 
 .ruleview-grid {
   background: url("chrome://devtools/skin/images/grid.svg");
-  background-size: 1em;
   border-radius: 0;
 }
 

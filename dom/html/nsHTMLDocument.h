@@ -20,6 +20,7 @@
 
 #include "nsICommandManager.h"
 #include "mozilla/dom/HTMLSharedElement.h"
+#include "mozilla/dom/BindingDeclarations.h"
 
 class nsIEditor;
 class nsIURI;
@@ -52,11 +53,6 @@ public:
   virtual void Reset(nsIChannel* aChannel, nsILoadGroup* aLoadGroup) override;
   virtual void ResetToURI(nsIURI* aURI, nsILoadGroup* aLoadGroup,
                           nsIPrincipal* aPrincipal) override;
-
-  virtual already_AddRefed<nsIPresShell> CreateShell(
-      nsPresContext* aContext,
-      nsViewManager* aViewManager,
-      mozilla::StyleSetHandle aStyleSet) override;
 
   virtual nsresult StartDocumentLoad(const char* aCommand,
                                      nsIChannel* aChannel,
@@ -93,7 +89,6 @@ public:
   using nsDocument::SetTitle;
   using nsDocument::GetLastStyleSheetSet;
   using nsDocument::MozSetImageElement;
-  using nsDocument::GetMozFullScreenElement;
 
   // nsIDOMNode interface
   NS_FORWARD_NSIDOMNODE_TO_NSINODE
@@ -222,13 +217,17 @@ public:
                      const mozilla::Maybe<nsIPrincipal*>& aSubjectPrincipal,
                      mozilla::ErrorResult& rv);
   bool ExecCommand(const nsAString& aCommandID, bool aDoShowUI,
-                   const nsAString& aValue, mozilla::ErrorResult& rv);
+                   const nsAString& aValue,
+                   mozilla::dom::CallerType aCallerType,
+                   mozilla::ErrorResult& rv);
   bool QueryCommandEnabled(const nsAString& aCommandID,
+                           mozilla::dom::CallerType aCallerType,
                            mozilla::ErrorResult& rv);
   bool QueryCommandIndeterm(const nsAString& aCommandID,
                             mozilla::ErrorResult& rv);
   bool QueryCommandState(const nsAString& aCommandID, mozilla::ErrorResult& rv);
-  bool QueryCommandSupported(const nsAString& aCommandID);
+  bool QueryCommandSupported(const nsAString& aCommandID,
+                             mozilla::dom::CallerType aCallerType);
   void QueryCommandValue(const nsAString& aCommandID, nsAString& aValue,
                          mozilla::ErrorResult& rv);
   // The XPCOM Get/SetFgColor work OK for us, since they never throw.

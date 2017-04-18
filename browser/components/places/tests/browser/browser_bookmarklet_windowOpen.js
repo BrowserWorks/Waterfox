@@ -1,25 +1,24 @@
 "use strict";
 
-const TEST_URL = 'http://example.com/browser/browser/components/places/tests/browser/pageopeningwindow.html';
+const TEST_URL = "http://example.com/browser/browser/components/places/tests/browser/pageopeningwindow.html";
 
 function makeBookmarkFor(url, keyword) {
   return Promise.all([
     PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
                                    title: "bookmarklet",
-                                   url: url }),
-    PlacesUtils.keywords.insert({url: url,
-                                 keyword: keyword})
+                                   url }),
+    PlacesUtils.keywords.insert({url,
+                                 keyword})
   ]);
 
 }
 
 add_task(function* openKeywordBookmarkWithWindowOpen() {
   // This is the current default, but let's not assume that...
-  yield new Promise((resolve, reject) => {
-    SpecialPowers.pushPrefEnv({ 'set': [[ 'browser.link.open_newwindow', 3 ],
-                                        [ 'dom.disable_open_during_load', true ]] },
-                              resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+    [ "browser.link.open_newwindow", 3 ],
+    [ "dom.disable_open_during_load", true ]
+  ]});
 
   let moztab;
   let tabOpened = BrowserTestUtils.openNewForegroundTab(gBrowser, "about:mozilla")

@@ -29,8 +29,12 @@
 #include "nsView.h"
 #include "Layers.h"
 
+// #define APZCCH_LOGGING 1
+#ifdef APZCCH_LOGGING
+#define APZCCH_LOG(...) printf_stderr("APZCCH: " __VA_ARGS__)
+#else
 #define APZCCH_LOG(...)
-// #define APZCCH_LOG(...) printf_stderr("APZCCH: " __VA_ARGS__)
+#endif
 
 namespace mozilla {
 namespace layers {
@@ -513,14 +517,15 @@ APZCCallbackHelper::DispatchMouseEvent(const nsCOMPtr<nsIPresShell>& aPresShell,
                                        int32_t aClickCount,
                                        int32_t aModifiers,
                                        bool aIgnoreRootScrollFrame,
-                                       unsigned short aInputSourceArg)
+                                       unsigned short aInputSourceArg,
+                                       uint32_t aPointerId)
 {
   NS_ENSURE_TRUE(aPresShell, true);
 
   bool defaultPrevented = false;
   nsContentUtils::SendMouseEvent(aPresShell, aType, aPoint.x, aPoint.y,
       aButton, nsIDOMWindowUtils::MOUSE_BUTTONS_NOT_SPECIFIED, aClickCount,
-      aModifiers, aIgnoreRootScrollFrame, 0, aInputSourceArg, false,
+      aModifiers, aIgnoreRootScrollFrame, 0, aInputSourceArg, aPointerId, false,
       &defaultPrevented, false, /* aIsWidgetEventSynthesized = */ false);
   return defaultPrevented;
 }
@@ -619,6 +624,7 @@ PrepareForSetTargetAPZCNotification(nsIWidget* aWidget,
     ? GetDisplayportElementFor(scrollAncestor)
     : GetRootDocumentElementFor(aWidget);
 
+#ifdef APZCCH_LOGGING
   nsAutoString dpElementDesc;
   if (dpElement) {
     dpElement->Describe(dpElementDesc);
@@ -626,6 +632,7 @@ PrepareForSetTargetAPZCNotification(nsIWidget* aWidget,
   APZCCH_LOG("For event at %s found scrollable element %p (%s)\n",
       Stringify(aRefPoint).c_str(), dpElement.get(),
       NS_LossyConvertUTF16toASCII(dpElementDesc).get());
+#endif
 
   bool guidIsValid = APZCCallbackHelper::GetOrCreateScrollIdentifiers(
     dpElement, &(guid.mPresShellId), &(guid.mScrollId));
@@ -745,7 +752,7 @@ SendSetTargetAPZCNotificationHelper(nsIWidget* aWidget,
   }
 }
 
-void
+bool
 APZCCallbackHelper::SendSetTargetAPZCNotification(nsIWidget* aWidget,
                                                   nsIDocument* aDocument,
                                                   const WidgetGUIEvent& aEvent,
@@ -753,7 +760,7 @@ APZCCallbackHelper::SendSetTargetAPZCNotification(nsIWidget* aWidget,
                                                   uint64_t aInputBlockId)
 {
   if (!aWidget || !aDocument) {
-    return;
+    return false;
   }
   if (aInputBlockId == sLastTargetAPZCNotificationInputBlock) {
     // We have already confirmed the target APZC for a previous event of this
@@ -762,7 +769,7 @@ APZCCallbackHelper::SendSetTargetAPZCNotification(nsIWidget* aWidget,
     // race the original confirmation (which needs to go through a layers
     // transaction).
     APZCCH_LOG("Not resending target APZC confirmation for input block %" PRIu64 "\n", aInputBlockId);
-    return;
+    return false;
   }
   sLastTargetAPZCNotificationInputBlock = aInputBlockId;
   if (nsIPresShell* shell = aDocument->GetShell()) {
@@ -794,8 +801,11 @@ APZCCallbackHelper::SendSetTargetAPZCNotification(nsIWidget* aWidget,
           Move(targets),
           waitForRefresh);
       }
+
+      return waitForRefresh;
     }
   }
+  return false;
 }
 
 void

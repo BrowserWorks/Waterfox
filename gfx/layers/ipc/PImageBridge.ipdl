@@ -5,9 +5,6 @@
 
 include LayersSurfaces;
 include LayersMessages;
-include protocol PCompositable;
-include protocol PImageContainer;
-include protocol PLayer;
 include protocol PTexture;
 include ProtocolTypes;
 include protocol PMediaSystemResourceManager;
@@ -16,6 +13,7 @@ include "mozilla/GfxMessageUtils.h";
 
 using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h";
 using mozilla::layers::TextureFlags from "mozilla/layers/CompositorTypes.h";
+using mozilla::layers::CompositableHandle from "mozilla/layers/LayersTypes.h";
 
 using PlatformThreadId from "base/platform_thread.h";
 
@@ -29,10 +27,8 @@ namespace layers {
  */
 sync protocol PImageBridge
 {
-  manages PCompositable;
   manages PTexture;
   manages PMediaSystemResourceManager;
-  manages PImageContainer;
 
 child:
   async ParentAsyncMessages(AsyncParentMessageData[] aMessages);
@@ -56,12 +52,11 @@ parent:
   // before sending closing the channel.
   sync WillClose();
 
-  sync PCompositable(TextureInfo aInfo,
-                     nullable PImageContainer aImageContainer) returns (uint64_t id);
   async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags, uint64_t aSerial);
   async PMediaSystemResourceManager();
-  async PImageContainer();
 
+  sync NewCompositable(CompositableHandle aHandle, TextureInfo aInfo);
+  async ReleaseCompositable(CompositableHandle aHandle);
 };
 
 

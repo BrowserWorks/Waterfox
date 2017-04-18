@@ -39,7 +39,6 @@ XPIDL_SOURCES += [
     'nsITokenDialogs.idl',
     'nsITokenPasswordDialogs.idl',
     'nsIU2FToken.idl',
-    'nsIWeakCryptoOverride.idl',
     'nsIX509Cert.idl',
     'nsIX509CertDB.idl',
     'nsIX509CertList.idl',
@@ -140,7 +139,6 @@ UNIFIED_SOURCES += [
     'SharedSSLState.cpp',
     'SSLServerCertVerification.cpp',
     'TransportSecurityInfo.cpp',
-    'WeakCryptoOverride.cpp',
 ]
 
 IPDL_SOURCES += [
@@ -182,11 +180,10 @@ DEFINES['NSS_ENABLE_ECC'] = 'True'
 for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
-DEFINES['CERT_AddTempCertToPerm'] = '__CERT_AddTempCertToPerm'
-
-USE_LIBS += [
-    'crmf',
-]
+if not CONFIG['MOZ_SYSTEM_NSS']:
+    USE_LIBS += [
+        'crmf',
+    ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

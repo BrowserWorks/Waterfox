@@ -13,6 +13,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 // Import common head.
 {
+  /* import-globals-from ../head_common.js */
   let commonFile = do_get_file("../head_common.js", false);
   let uri = Services.io.newFileURI(commonFile);
   Services.scriptloader.loadSubScript(uri.spec, this);
@@ -38,8 +39,7 @@ const olderthansixmonths = today - (DAY_MICROSEC * 31 * 7);
  * appropriate.  This function is an asynchronous task, it can be called using
  * "Task.spawn" or using the "yield" function inside another task.
  */
-function* task_populateDB(aArray)
-{
+function* task_populateDB(aArray) {
   // Iterate over aArray and execute all instructions.
   for (let arrayItem of aArray) {
     try {
@@ -64,11 +64,9 @@ function* task_populateDB(aArray)
           stmt.params.url = qdata.uri;
           try {
             stmt.executeAsync();
-          }
-          catch (ex) {
+          } catch (ex) {
             print("Error while setting visit_count.");
-          }
-          finally {
+          } finally {
             stmt.finalize();
           }
         }
@@ -82,11 +80,9 @@ function* task_populateDB(aArray)
         stmt.params.url = qdata.uri;
         try {
           stmt.executeAsync();
-        }
-        catch (ex) {
+        } catch (ex) {
           print("Error while setting hidden.");
-        }
-        finally {
+        } finally {
           stmt.finalize();
         }
       }
@@ -205,7 +201,7 @@ function* task_populateDB(aArray)
  */
 function queryData(obj) {
   this.isVisit = obj.isVisit ? obj.isVisit : false;
-  this.isBookmark = obj.isBookmark ? obj.isBookmark: false;
+  this.isBookmark = obj.isBookmark ? obj.isBookmark : false;
   this.uri = obj.uri ? obj.uri : "";
   this.lastVisit = obj.lastVisit ? obj.lastVisit : today;
   this.referrer = obj.referrer ? obj.referrer : null;
@@ -215,7 +211,7 @@ function queryData(obj) {
   this.title = obj.title ? obj.title : "";
   this.markPageAsTyped = obj.markPageAsTyped ? obj.markPageAsTyped : false;
   this.isPageAnnotation = obj.isPageAnnotation ? obj.isPageAnnotation : false;
-  this.removeAnnotation= obj.removeAnnotation ? true : false;
+  this.removeAnnotation = obj.removeAnnotation ? true : false;
   this.annoName = obj.annoName ? obj.annoName : "";
   this.annoVal = obj.annoVal ? obj.annoVal : "";
   this.annoFlags = obj.annoFlags ? obj.annoFlags : 0;
@@ -333,7 +329,7 @@ function isInResult(aQueryData, aRoot) {
     uri = aQueryData[0].uri;
   }
 
-  for (var i=0; i < aRoot.childCount; i++) {
+  for (var i = 0; i < aRoot.childCount; i++) {
     if (uri == aRoot.getChild(i).uri) {
       rv = true;
       break;
@@ -361,7 +357,7 @@ function displayResultSet(aRoot) {
     return;
   }
 
-  for (var i=0; i < aRoot.childCount; ++i) {
+  for (var i = 0; i < aRoot.childCount; ++i) {
     do_print("Result Set URI: " + aRoot.getChild(i).uri + "   Title: " +
         aRoot.getChild(i).title + "   Visit Time: " + aRoot.getChild(i).time);
   }

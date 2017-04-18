@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name =
     this.window ? window.location.pathname : "test_wasm_indexes.js";
@@ -18,7 +18,7 @@ function testSteps()
 
   if (!isWasmSupported()) {
     finishTest();
-    yield undefined;
+    return;
   }
 
   getWasmBinary('(module (func (nop)))');
@@ -76,5 +76,4 @@ function testSteps()
   yield undefined;
 
   finishTest();
-  yield undefined;
 }

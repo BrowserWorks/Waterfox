@@ -126,18 +126,19 @@ GetBidiControl(nsStyleContext* aStyleContext)
   return 0;
 }
 
-struct BidiParagraphData {
-  nsString            mBuffer;
+struct MOZ_STACK_CLASS BidiParagraphData
+{
+  nsAutoString        mBuffer;
   AutoTArray<char16_t, 16> mEmbeddingStack;
-  nsTArray<nsIFrame*> mLogicalFrames;
-  nsTArray<nsLineBox*> mLinePerFrame;
+  AutoTArray<nsIFrame*, 16> mLogicalFrames;
+  AutoTArray<nsLineBox*, 16> mLinePerFrame;
   nsDataHashtable<nsISupportsHashKey, int32_t> mContentToFrameIndex;
   // Cached presentation context for the frames we're processing.
   nsPresContext*      mPresContext;
   bool                mIsVisual;
   nsBidiLevel         mParaLevel;
   nsIContent*         mPrevContent;
-  nsAutoPtr<nsBidi>   mBidiEngine;
+  nsBidi              mBidiEngine;
   nsIFrame*           mPrevFrame;
 #ifdef DEBUG
   // Only used for NOISY debug output.
@@ -146,7 +147,6 @@ struct BidiParagraphData {
 
   void Init(nsBlockFrame* aBlockFrame)
   {
-    mBidiEngine = new nsBidi();
     mPrevContent = nullptr;
 #ifdef DEBUG
     mCurrentBlock = aBlockFrame;
@@ -184,8 +184,8 @@ struct BidiParagraphData {
 
   nsresult SetPara()
   {
-    return mBidiEngine->SetPara(mBuffer.get(), BufferLength(),
-                                mParaLevel);
+    return mBidiEngine.SetPara(mBuffer.get(), BufferLength(),
+                               mParaLevel);
   }
 
   /**
@@ -197,7 +197,7 @@ struct BidiParagraphData {
   {
     nsBidiLevel paraLevel = mParaLevel;
     if (paraLevel == NSBIDI_DEFAULT_LTR || paraLevel == NSBIDI_DEFAULT_RTL) {
-      mBidiEngine->GetParaLevel(&paraLevel);
+      mBidiEngine.GetParaLevel(&paraLevel);
     }
     return paraLevel;
   }
@@ -205,18 +205,18 @@ struct BidiParagraphData {
   nsBidiDirection GetDirection()
   {
     nsBidiDirection dir;
-    mBidiEngine->GetDirection(&dir);
+    mBidiEngine.GetDirection(&dir);
     return dir;
   }
 
-  nsresult CountRuns(int32_t *runCount){ return mBidiEngine->CountRuns(runCount); }
+  nsresult CountRuns(int32_t *runCount){ return mBidiEngine.CountRuns(runCount); }
 
   nsresult GetLogicalRun(int32_t aLogicalStart, 
                          int32_t* aLogicalLimit,
                          nsBidiLevel* aLevel)
   {
-    nsresult rv = mBidiEngine->GetLogicalRun(aLogicalStart,
-                                             aLogicalLimit, aLevel);
+    nsresult rv = mBidiEngine.GetLogicalRun(aLogicalStart,
+                                            aLogicalLimit, aLevel);
     if (mIsVisual || NS_FAILED(rv))
       *aLevel = GetParaLevel();
     return rv;
@@ -419,7 +419,7 @@ struct BidiLineData {
       auto originalCount = mLogicalFrames.Length();
       nsTArray<int32_t> realFrameMap(originalCount);
       size_t count = 0;
-      for (auto i : MakeRange(originalCount)) {
+      for (auto i : IntegerRange(originalCount)) {
         if (mLogicalFrames[i] == NS_BIDI_CONTROL_FRAME) {
           realFrameMap.AppendElement(-1);
         } else {
@@ -1022,8 +1022,6 @@ nsBidiPresUtils::TraverseFrames(nsBlockInFlowLineIterator* aLineIter,
      * twice.
      */
     nsIFrame* nextSibling = childFrame->GetNextSibling();
-    bool isLastFrame = !childFrame->GetNextContinuation();
-    bool isFirstFrame = !childFrame->GetPrevContinuation();
 
     // If the real frame for a placeholder is a first letter frame, we need to
     // drill down into it and include its contents in Bidi resolution.
@@ -1036,6 +1034,20 @@ nsBidiPresUtils::TraverseFrames(nsBlockInFlowLineIterator* aLineIter,
         frame = realFrame;
       }
     }
+
+    auto DifferentBidiValues = [](nsIFrame* aFrame1, nsIFrame* aFrame2) {
+      nsStyleContext* sc1 = aFrame1->StyleContext();
+      nsStyleContext* sc2 = aFrame2->StyleContext();
+      return GetBidiControl(sc1) != GetBidiControl(sc2) ||
+             GetBidiOverride(sc1) != GetBidiOverride(sc2);
+    };
+
+    nsIFrame* nextContinuation = frame->GetNextContinuation();
+    nsIFrame* prevContinuation = frame->GetPrevContinuation();
+    bool isLastFrame = !nextContinuation ||
+                       DifferentBidiValues(frame, nextContinuation);
+    bool isFirstFrame = !prevContinuation ||
+                        DifferentBidiValues(frame, prevContinuation);
 
     char16_t controlChar = 0;
     char16_t overrideChar = 0;

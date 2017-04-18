@@ -18,10 +18,10 @@ function resolveGeckoURI(uri) {
   }
   if (uri.startsWith("chrome://")) {
     let registry = Cc['@mozilla.org/chrome/chrome-registry;1'].getService(Ci["nsIChromeRegistry"]);
-    return registry.convertChromeURL(Services.io.newURI(uri, null, null)).spec;
+    return registry.convertChromeURL(Services.io.newURI(uri)).spec;
   } else if (uri.startsWith("resource://")) {
     let handler = Services.io.getProtocolHandler("resource").QueryInterface(Ci.nsIResProtocolHandler);
-    return handler.resolveURI(Services.io.newURI(uri, null, null));
+    return handler.resolveURI(Services.io.newURI(uri));
   }
   return uri;
 }
@@ -37,7 +37,7 @@ var JavaAddonManager = Object.freeze({
     if (!filename) {
       throw new Error("filename cannot be null");
     }
-    return Messaging.sendRequestForResult({
+    return EventDispatcher.instance.sendRequestForResult({
       type: "JavaAddonManagerV1:Load",
       classname: classname,
       filename: resolveGeckoURI(filename)
@@ -73,7 +73,7 @@ JavaAddonV1.prototype = Object.freeze({
       return;
     }
 
-    Messaging.sendRequestForResult({
+    EventDispatcher.instance.sendRequestForResult({
       type: "JavaAddonManagerV1:Unload",
       guid: this._guid
     })

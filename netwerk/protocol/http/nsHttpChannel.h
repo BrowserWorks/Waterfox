@@ -110,6 +110,8 @@ public:
     NS_IMETHOD SetWWWCredentials(const nsACString & aCredentials) override;
     NS_IMETHOD OnAuthAvailable() override;
     NS_IMETHOD OnAuthCancelled(bool userCancel) override;
+    NS_IMETHOD CloseStickyConnection() override;
+    NS_IMETHOD ForceNoSpdy() override;
     // Functions we implement from nsIHttpAuthenticableChannel but are
     // declared in HttpBaseChannel must be implemented in this class. We
     // just call the HttpBaseChannel:: impls.

@@ -354,7 +354,7 @@ this.FinderIterator = {
    *                                   to `true`.
    * @yield {nsIDOMRange}
    */
-  _yieldResult: function* (listener, rangeSource, window, withPause = true) {
+  *_yieldResult(listener, rangeSource, window, withPause = true) {
     // We keep track of the number of iterations to allow a short pause between
     // every `kIterationSizeMax` number of iterations.
     let iterCount = 0;
@@ -470,7 +470,7 @@ this.FinderIterator = {
 
     this._notifyListeners("start", this.params);
 
-    let { linksOnly, window, word } = this._currentParams;
+    let { linksOnly, window } = this._currentParams;
     // First we collect all frames we need to search through, whilst making sure
     // that the parent window gets dibs.
     let frames = [window].concat(this._collectFrames(window, finder));
@@ -533,7 +533,7 @@ this.FinderIterator = {
    * @param {nsIDOMWindow} window                The window to search in
    * @yield {nsIDOMRange}
    */
-  _iterateDocument: function* ({ caseSensitive, entireWord, word }, window) {
+  *_iterateDocument({ caseSensitive, entireWord, word }, window) {
     let doc = window.document;
     let body = (doc instanceof Ci.nsIDOMHTMLDocument && doc.body) ?
                doc.body : doc.documentElement;

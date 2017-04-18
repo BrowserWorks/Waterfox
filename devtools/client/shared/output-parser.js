@@ -27,7 +27,7 @@ const CSS_GRID_ENABLED_PREF = "layout.css.grid.enabled";
  * border radius, cubic-bezier etc.).
  *
  * Usage:
- *   const {OutputParser} = require("devtools/client/shared/output-parser");
+ *   const OutputParser = require("devtools/client/shared/output-parser");
  *
  *   let parser = new OutputParser(document, supportsType);
  *
@@ -40,8 +40,11 @@ const CSS_GRID_ENABLED_PREF = "layout.css.grid.enabled";
  *                   where CSS_TYPES is defined in devtools/shared/css/properties-db.js
  * @param {Function} isValidOnClient - A function that checks if a css property
  *                   name/value combo is valid.
+ * @param {Function} supportsCssColor4ColorFunction - A function for checking
+ *                   the supporting of css-color-4 color function.
  */
-function OutputParser(document, {supportsType, isValidOnClient}) {
+function OutputParser(document,
+                      {supportsType, isValidOnClient, supportsCssColor4ColorFunction}) {
   this.parsed = [];
   this.doc = document;
   this.supportsType = supportsType;
@@ -50,9 +53,9 @@ function OutputParser(document, {supportsType, isValidOnClient}) {
   this.angleSwatches = new WeakMap();
   this._onColorSwatchMouseDown = this._onColorSwatchMouseDown.bind(this);
   this._onAngleSwatchMouseDown = this._onAngleSwatchMouseDown.bind(this);
-}
 
-exports.OutputParser = OutputParser;
+  this.cssColor4 = supportsCssColor4ColorFunction();
+}
 
 OutputParser.prototype = {
   /**
@@ -158,12 +161,15 @@ OutputParser.prototype = {
       return (new angleUtils.CssAngle(angle)).valid;
     };
 
+    let spaceNeeded = false;
     while (true) {
       let token = tokenStream.nextToken();
       if (!token) {
         break;
       }
       if (token.tokenType === "comment") {
+        // This doesn't change spaceNeeded, because we didn't emit
+        // anything to the output.
         continue;
       }
 
@@ -188,7 +194,8 @@ OutputParser.prototype = {
 
             if (options.expectCubicBezier && token.text === "cubic-bezier") {
               this._appendCubicBezier(functionText, options);
-            } else if (colorOK() && colorUtils.isValidCSSColor(functionText)) {
+            } else if (colorOK() &&
+                       colorUtils.isValidCSSColor(functionText, this.cssColor4)) {
               this._appendColor(functionText, options);
             } else {
               this._appendTextNode(functionText);
@@ -205,7 +212,8 @@ OutputParser.prototype = {
                      options.expectDisplay && token.text === "grid" &&
                      text === token.text) {
             this._appendGrid(token.text, options);
-          } else if (colorOK() && colorUtils.isValidCSSColor(token.text)) {
+          } else if (colorOK() &&
+                     colorUtils.isValidCSSColor(token.text, this.cssColor4)) {
             this._appendColor(token.text, options);
           } else if (angleOK(token.text)) {
             this._appendAngle(token.text, options);
@@ -218,7 +226,12 @@ OutputParser.prototype = {
         case "id":
         case "hash": {
           let original = text.substring(token.startOffset, token.endOffset);
-          if (colorOK() && colorUtils.isValidCSSColor(original)) {
+          if (colorOK() && colorUtils.isValidCSSColor(original, this.cssColor4)) {
+            if (spaceNeeded) {
+              // Insert a space to prevent token pasting when a #xxx
+              // color is changed to something like rgb(...).
+              this._appendTextNode(" ");
+            }
             this._appendColor(original, options);
           } else {
             this._appendTextNode(original);
@@ -254,6 +267,13 @@ OutputParser.prototype = {
             text.substring(token.startOffset, token.endOffset));
           break;
       }
+
+      // If this token might possibly introduce token pasting when
+      // color-cycling, require a space.
+      spaceNeeded = (token.tokenType === "ident" || token.tokenType === "at" ||
+                     token.tokenType === "id" || token.tokenType === "hash" ||
+                     token.tokenType === "number" || token.tokenType === "dimension" ||
+                     token.tokenType === "percentage" || token.tokenType === "dimension");
     }
 
     let result = this._toDOM();
@@ -339,7 +359,7 @@ OutputParser.prototype = {
         class: options.angleSwatchClass
       });
       this.angleSwatches.set(swatch, angleObj);
-      swatch.addEventListener("mousedown", this._onAngleSwatchMouseDown, false);
+      swatch.addEventListener("mousedown", this._onAngleSwatchMouseDown);
 
       // Add click listener to stop event propagation when shift key is pressed
       // in order to prevent the value input to be focused.
@@ -349,7 +369,7 @@ OutputParser.prototype = {
         if (event.shiftKey) {
           event.stopPropagation();
         }
-      }, false);
+      });
       EventEmitter.decorate(swatch);
       container.appendChild(swatch);
     }
@@ -394,7 +414,7 @@ OutputParser.prototype = {
    *         _mergeOptions().
    */
   _appendColor: function (color, options = {}) {
-    let colorObj = new colorUtils.CssColor(color);
+    let colorObj = new colorUtils.CssColor(color, this.cssColor4);
 
     if (this._isValidColor(colorObj)) {
       let container = this._createNode("span", {
@@ -407,8 +427,7 @@ OutputParser.prototype = {
           style: "background-color:" + color
         });
         this.colorSwatches.set(swatch, colorObj);
-        swatch.addEventListener("mousedown", this._onColorSwatchMouseDown,
-                                false);
+        swatch.addEventListener("mousedown", this._onColorSwatchMouseDown);
         EventEmitter.decorate(swatch);
         container.appendChild(swatch);
       }
@@ -693,3 +712,5 @@ OutputParser.prototype = {
     return defaults;
   }
 };
+
+module.exports = OutputParser;

@@ -22,6 +22,8 @@ namespace mozilla {
 // block frame uses along with ReflowInput. Like ReflowInput, this
 // is read-only data that is passed down from a parent frame to its children.
 class BlockReflowInput {
+  using BandInfoType = nsFloatManager::BandInfoType;
+  using ShapeType = nsFloatManager::ShapeType;
 
   // Block reflow input flags.
   struct Flags {
@@ -121,10 +123,14 @@ public:
    */
   nsFlowAreaRect GetFloatAvailableSpace() const
     { return GetFloatAvailableSpace(mBCoord); }
+  nsFlowAreaRect GetFloatAvailableSpaceForPlacingFloat(nscoord aBCoord) const
+    { return GetFloatAvailableSpaceWithState(
+        aBCoord, ShapeType::Margin, nullptr); }
   nsFlowAreaRect GetFloatAvailableSpace(nscoord aBCoord) const
-    { return GetFloatAvailableSpaceWithState(aBCoord, nullptr); }
+    { return GetFloatAvailableSpaceWithState(
+        aBCoord, ShapeType::ShapeOutside, nullptr); }
   nsFlowAreaRect
-    GetFloatAvailableSpaceWithState(nscoord aBCoord,
+    GetFloatAvailableSpaceWithState(nscoord aBCoord, ShapeType aShapeType,
                                     nsFloatManager::SavedState *aState) const;
   nsFlowAreaRect
     GetFloatAvailableSpaceForBSize(nscoord aBCoord, nscoord aBSize,
@@ -191,9 +197,10 @@ public:
   }
 
   /**
-   * Retrieve the block-direction size "consumed" by any previous-in-flows.
+   * Retrieve the block-axis content size "consumed" by any prev-in-flows.
+   * @note the value is cached so subsequent calls will return the same value
    */
-  nscoord GetConsumedBSize();
+  nscoord ConsumedBSize();
 
   // Reconstruct the previous block-end margin that goes before |aLine|.
   void ReconstructMarginBefore(nsLineList::iterator aLine);

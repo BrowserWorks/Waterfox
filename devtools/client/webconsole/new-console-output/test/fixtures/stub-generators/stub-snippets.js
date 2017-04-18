@@ -3,10 +3,6 @@
 
 "use strict";
 
-var {DebuggerServer} = require("devtools/server/main");
-var longString = (new Array(DebuggerServer.LONG_STRING_LENGTH + 4)).join("a");
-var initialString = longString.substring(0, DebuggerServer.LONG_STRING_INITIAL_LENGTH);
-
 // Console API
 
 const consoleApiCommands = [
@@ -89,6 +85,21 @@ console.log(
   "color:red;background:\\165rl('http://example.com/test')");
 `});
 
+// CSS messages
+const cssMessage = new Map();
+
+cssMessage.set("Unknown property", `
+p {
+  such-unknown-property: wow;
+}
+`);
+
+cssMessage.set("Invalid property value", `
+p {
+  padding-top: invalid value;
+}
+`);
+
 // Evaluation Result
 const evaluationResultCommands = [
   "new Date(0)",
@@ -142,6 +153,7 @@ pageError.set("Reference Error", `
 
 module.exports = {
   consoleApi,
+  cssMessage,
   evaluationResult,
   networkEvent,
   pageError,

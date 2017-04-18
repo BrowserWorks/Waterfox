@@ -30,8 +30,9 @@ private:
   const nsCString mScope;
   const nsCString mScriptSpec;
   const nsString mCacheName;
+  const nsLoadFlags mLoadFlags;
   ServiceWorkerState mState;
-  PrincipalOriginAttributes mOriginAttributes;
+  OriginAttributes mOriginAttributes;
 
   // This id is shared with WorkerPrivate to match requests issued by service
   // workers to their corresponding serviceWorkerInfo.
@@ -45,6 +46,12 @@ private:
 
   RefPtr<ServiceWorkerPrivate> mServiceWorkerPrivate;
   bool mSkipWaitingFlag;
+
+  enum {
+    Unknown,
+    Enabled,
+    Disabled
+  } mHandlesFetch;
 
   ~ServiceWorkerInfo();
 
@@ -97,7 +104,8 @@ public:
   ServiceWorkerInfo(nsIPrincipal* aPrincipal,
                     const nsACString& aScope,
                     const nsACString& aScriptSpec,
-                    const nsAString& aCacheName);
+                    const nsAString& aCacheName,
+                    nsLoadFlags aLoadFlags);
 
   ServiceWorkerState
   State() const
@@ -105,7 +113,7 @@ public:
     return mState;
   }
 
-  const PrincipalOriginAttributes&
+  const OriginAttributes&
   GetOriginAttributes() const
   {
     return mOriginAttributes;
@@ -115,6 +123,12 @@ public:
   CacheName() const
   {
     return mCacheName;
+  }
+
+  nsLoadFlags
+  GetLoadFlags() const
+  {
+    return mLoadFlags;
   }
 
   uint64_t
@@ -132,6 +146,22 @@ public:
   {
     AssertIsOnMainThread();
     mState = aState;
+  }
+
+  void
+  SetHandlesFetch(bool aHandlesFetch)
+  {
+    AssertIsOnMainThread();
+    MOZ_DIAGNOSTIC_ASSERT(mHandlesFetch == Unknown);
+    mHandlesFetch = aHandlesFetch ? Enabled : Disabled;
+  }
+
+  bool
+  HandlesFetch() const
+  {
+    AssertIsOnMainThread();
+    MOZ_DIAGNOSTIC_ASSERT(mHandlesFetch != Unknown);
+    return mHandlesFetch != Disabled;
   }
 
   void

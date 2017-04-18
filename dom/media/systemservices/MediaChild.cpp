@@ -20,19 +20,18 @@ namespace mozilla {
 namespace media {
 
 already_AddRefed<Pledge<nsCString>>
-GetOriginKey(const nsCString& aOrigin, bool aPrivateBrowsing, bool aPersist)
+GetPrincipalKey(const ipc::PrincipalInfo& aPrincipalInfo, bool aPersist)
 {
   RefPtr<MediaManager> mgr = MediaManager::GetInstance();
   MOZ_ASSERT(mgr);
 
   RefPtr<Pledge<nsCString>> p = new Pledge<nsCString>();
-  uint32_t id = mgr->mGetOriginKeyPledges.Append(*p);
+  uint32_t id = mgr->mGetPrincipalKeyPledges.Append(*p);
 
   if (XRE_GetProcessType() == GeckoProcessType_Default) {
-    mgr->GetNonE10sParent()->RecvGetOriginKey(id, aOrigin, aPrivateBrowsing,
-                                              aPersist);
+    mgr->GetNonE10sParent()->RecvGetPrincipalKey(id, aPrincipalInfo, aPersist);
   } else {
-    Child::Get()->SendGetOriginKey(id, aOrigin, aPrivateBrowsing, aPersist);
+    Child::Get()->SendGetPrincipalKey(id, aPrincipalInfo, aPersist);
   }
   return p.forget();
 }
@@ -84,18 +83,20 @@ void Child::ActorDestroy(ActorDestroyReason aWhy)
   mActorDestroyed = true;
 }
 
-bool
-Child::RecvGetOriginKeyResponse(const uint32_t& aRequestId, const nsCString& aKey)
+mozilla::ipc::IPCResult
+Child::RecvGetPrincipalKeyResponse(const uint32_t& aRequestId,
+                                   const nsCString& aKey)
 {
   RefPtr<MediaManager> mgr = MediaManager::GetInstance();
   if (!mgr) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  RefPtr<Pledge<nsCString>> pledge = mgr->mGetOriginKeyPledges.Remove(aRequestId);
+  RefPtr<Pledge<nsCString>> pledge =
+    mgr->mGetPrincipalKeyPledges.Remove(aRequestId);
   if (pledge) {
     pledge->Resolve(aKey);
   }
-  return true;
+  return IPC_OK();
 }
 
 PMediaChild*

@@ -325,24 +325,6 @@ FennecJNIWrappers.cpp: $(ANNOTATION_PROCESSOR_JAR_FILES) $(FENNEC_JARS)
 		org.mozilla.gecko.annotationProcessors.AnnotationProcessor \
 		Fennec $(FENNEC_JARS)
 
-# Certain source files need to be preprocessed.  This special rule
-# generates these files into generated/org/mozilla/gecko for
-# consumption by the build system and IDEs.
-
-# The list in moz.build looks like
-# 'preprocessed/org/mozilla/gecko/AppConstants.java'.  The list in
-# constants_PP_JAVAFILES looks like
-# 'generated/preprocessed/org/mozilla/gecko/AppConstants.java'.  We
-# need to write AppConstants.java.in to
-# generated/preprocessed/org/mozilla/gecko.
-preprocessed := $(addsuffix .in,$(subst generated/preprocessed/org/mozilla/gecko/,,$(filter generated/preprocessed/org/mozilla/gecko/%,$(constants_PP_JAVAFILES))))
-
-preprocessed_PATH := generated/preprocessed/org/mozilla/gecko
-preprocessed_KEEP_PATH := 1
-preprocessed_FLAGS := --marker='//\\\#'
-
-PP_TARGETS += preprocessed
-
 include $(topsrcdir)/config/rules.mk
 
 not_android_res_files := \
@@ -586,9 +568,15 @@ libs:: classes.dex
 
 # Generate Java binder interfaces from AIDL files.
 aidl_src_path := $(srcdir)/aidl
+aidl_geckoview_src_path := $(srcdir)/../geckoview/src/main/aidl
 aidl_target_path := generated
 media_pkg := org/mozilla/gecko/media
+process_pkg := org/mozilla/gecko/process
 
 $(aidl_target_path)/$(media_pkg)/%.java:$(aidl_src_path)/$(media_pkg)/%.aidl
 	@echo "Processing AIDL: $< => $@"
 	$(AIDL) -p$(ANDROID_SDK)/framework.aidl -I$(aidl_src_path) -o$(aidl_target_path) $<
+
+$(aidl_target_path)/$(process_pkg)/%.java:$(aidl_geckoview_src_path)/$(process_pkg)/%.aidl
+	@echo "Processing AIDL: $< => $@"
+	$(AIDL) -p$(ANDROID_SDK)/framework.aidl -I$(aidl_geckoview_src_path) -o$(aidl_target_path) $<

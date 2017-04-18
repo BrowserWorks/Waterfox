@@ -10,7 +10,7 @@ const URL = ROOT + "browser_463205_sample.html";
  * website can't modify frame URLs and make us inject form data into the wrong
  * web pages.
  */
-add_task(function test_check_urls_before_restoring() {
+add_task(function* test_check_urls_before_restoring() {
   // Add a blank tab.
   let tab = gBrowser.addTab("about:blank");
   let browser = tab.linkedBrowser;
@@ -34,7 +34,7 @@ add_task(function test_check_urls_before_restoring() {
 
 function getState(url) {
   return JSON.stringify({
-    entries: [{url: URL}],
+    entries: [{url: URL, triggeringPrincipal_base64}],
     formdata: {url: url, id: {text: "foobar"}}
   });
 }

@@ -44,12 +44,10 @@ PostMessageEvent::PostMessageEvent(nsGlobalWindow* aSource,
   mSourceDocument(aSourceDocument),
   mTrustedCaller(aTrustedCaller)
 {
-  MOZ_COUNT_CTOR(PostMessageEvent);
 }
 
 PostMessageEvent::~PostMessageEvent()
 {
-  MOZ_COUNT_DTOR(PostMessageEvent);
 }
 
 NS_IMETHODIMP
@@ -115,8 +113,8 @@ PostMessageEvent::Run()
       NS_ENSURE_SUCCESS(rv, rv);
 
       MOZ_DIAGNOSTIC_ASSERT(providedOrigin != targetOrigin ||
-                            (BasePrincipal::Cast(mProvidedPrincipal)->OriginAttributesRef() ==
-                              BasePrincipal::Cast(targetPrin)->OriginAttributesRef()),
+                            (mProvidedPrincipal->OriginAttributesRef() ==
+                              targetPrin->OriginAttributesRef()),
                             "Unexpected postMessage call to a window with mismatched "
                             "origin attributes");
 

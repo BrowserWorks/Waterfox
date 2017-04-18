@@ -3,16 +3,21 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-#include "mozilla/dom/FileSystemRequestParent.h"
 
-#include "CreateDirectoryTask.h"
-#include "CreateFileTask.h"
+#include "mozilla/dom/FileSystemRequestParent.h"
+#include "mozilla/dom/PFileSystemParams.h"
+
 #include "GetDirectoryListingTask.h"
 #include "GetFileOrDirectoryTask.h"
-#include "RemoveTask.h"
 
-#include "mozilla/AppProcessChecker.h"
+#include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/FileSystemBase.h"
+#include "mozilla/dom/FileSystemSecurity.h"
+#include "mozilla/ipc/BackgroundParent.h"
+#include "mozilla/Unused.h"
+#include "nsProxyRelease.h"
+
+using namespace mozilla::ipc;
 
 namespace mozilla {
 namespace dom {
@@ -31,7 +36,7 @@ FileSystemRequestParent::~FileSystemRequestParent()
 #define FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(name)                         \
     case FileSystemParams::TFileSystem##name##Params: {                        \
       const FileSystem##name##Params& p = aParams;                             \
-      mFileSystem = FileSystemBase::DeserializeDOMPath(p.filesystem());        \
+      mFileSystem = new OSFileSystemParent(p.filesystem());                    \
       MOZ_ASSERT(mFileSystem);                                                 \
       mTask = name##TaskParent::Create(mFileSystem, p, this, rv);              \
       if (NS_WARN_IF(rv.Failed())) {                                           \
@@ -50,15 +55,12 @@ FileSystemRequestParent::Initialize(const FileSystemParams& aParams)
 
   switch (aParams.type()) {
 
-    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateDirectory)
-    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(CreateFile)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetDirectoryListing)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetFileOrDirectory)
     FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(GetFiles)
-    FILESYSTEM_REQUEST_PARENT_DISPATCH_ENTRY(Remove)
 
     default: {
-      NS_RUNTIMEABORT("not reached");
+      MOZ_CRASH("not reached");
       break;
     }
   }
@@ -68,26 +70,107 @@ FileSystemRequestParent::Initialize(const FileSystemParams& aParams)
     return false;
   }
 
-  if (mFileSystem->PermissionCheckType() != FileSystemBase::ePermissionCheckNotRequired) {
-    nsAutoCString access;
-    mTask->GetPermissionAccessType(access);
-
-    mPermissionName = mFileSystem->GetPermission();
-    mPermissionName.Append('-');
-    mPermissionName.Append(access);
-  }
-
   return true;
 }
+
+namespace {
+
+class CheckPermissionRunnable final : public Runnable
+{
+public:
+  CheckPermissionRunnable(already_AddRefed<ContentParent> aParent,
+                          FileSystemRequestParent* aActor,
+                          FileSystemTaskParentBase* aTask,
+                          const nsAString& aPath)
+    : mContentParent(aParent)
+    , mActor(aActor)
+    , mTask(aTask)
+    , mPath(aPath)
+    , mBackgroundEventTarget(NS_GetCurrentThread())
+  {
+    AssertIsInMainProcess();
+    AssertIsOnBackgroundThread();
+
+    MOZ_ASSERT(mContentParent);
+    MOZ_ASSERT(mActor);
+    MOZ_ASSERT(mTask);
+    MOZ_ASSERT(mBackgroundEventTarget);
+  }
+
+  NS_IMETHOD
+  Run() override
+  {
+    if (NS_IsMainThread()) {
+      auto raii = mozilla::MakeScopeExit([&] { mContentParent = nullptr; });
+
+
+      if (!mozilla::Preferences::GetBool("dom.filesystem.pathcheck.disabled", false)) {
+        RefPtr<FileSystemSecurity> fss = FileSystemSecurity::Get();
+        if (NS_WARN_IF(!fss ||
+                       !fss->ContentProcessHasAccessTo(mContentParent->ChildID(),
+                                                       mPath))) {
+          mContentParent->KillHard("This path is not allowed.");
+          return NS_OK;
+        }
+      }
+
+      return mBackgroundEventTarget->Dispatch(this, NS_DISPATCH_NORMAL);
+    }
+
+    AssertIsOnBackgroundThread();
+
+    // It can happen that this actor has been destroyed in the meantime we were
+    // on the main-thread.
+    if (!mActor->Destroyed()) {
+      mTask->Start();
+    }
+
+    return NS_OK;
+  }
+
+private:
+  ~CheckPermissionRunnable()
+  {
+     NS_ProxyRelease(mBackgroundEventTarget, mActor.forget());
+  }
+
+  RefPtr<ContentParent> mContentParent;
+  RefPtr<FileSystemRequestParent> mActor;
+  RefPtr<FileSystemTaskParentBase> mTask;
+  const nsString mPath;
+
+  nsCOMPtr<nsIEventTarget> mBackgroundEventTarget;
+};
+
+} // anonymous
 
 void
 FileSystemRequestParent::Start()
 {
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
   MOZ_ASSERT(!mDestroyed);
   MOZ_ASSERT(mFileSystem);
   MOZ_ASSERT(mTask);
 
-  mTask->Start();
+  nsAutoString path;
+  if (NS_WARN_IF(NS_FAILED(mTask->GetTargetPath(path)))) {
+    Unused << Send__delete__(this, FileSystemErrorResponse(NS_ERROR_DOM_SECURITY_ERR));
+    return;
+  }
+
+  RefPtr<ContentParent> parent = BackgroundParent::GetContentParent(Manager());
+
+  // If the ContentParent is null we are dealing with a same-process actor.
+  if (!parent) {
+    mTask->Start();
+    return;
+  }
+
+  RefPtr<Runnable> runnable =
+    new CheckPermissionRunnable(parent.forget(), this, mTask, path);
+  NS_DispatchToMainThread(runnable);
 }
 
 void

@@ -136,11 +136,11 @@
         <getter><![CDATA[
           // For security reasons delay searches on pasted values.
           if (this._valueIsPasted) {
-            let t = parseInt(this.getAttribute('pastetimeout'));
+            let t = parseInt(this.getAttribute("pastetimeout"));
             return isNaN(t) ? 1000 : t;
           }
 
-          let t = parseInt(this.getAttribute('timeout'));
+          let t = parseInt(this.getAttribute("timeout"));
           return isNaN(t) ? 50 : t;
         ]]></getter>
       </property>
@@ -330,8 +330,8 @@
             this.formatValue();
 
           this.mIgnoreInput = false;
-          var event = document.createEvent('Events');
-          event.initEvent('ValueChange', true, true);
+          var event = document.createEvent("Events");
+          event.initEvent("ValueChange", true, true);
           this.inputField.dispatchEvent(event);
           return val;
         ]]></setter>
@@ -403,7 +403,7 @@
         <body><![CDATA[
           // history dropmarker pushed state
           function cleanup(popup) {
-            popup.removeEventListener("popupshowing", onShow, false);
+            popup.removeEventListener("popupshowing", onShow);
           }
           function onShow(event) {
             var popup = event.target, input = popup.input;
@@ -411,11 +411,11 @@
             input.setAttribute("open", "true");
             function onHide() {
               input.removeAttribute("open");
-              popup.removeEventListener("popuphiding", onHide, false);
+              popup.removeEventListener("popuphiding", onHide);
             }
-            popup.addEventListener("popuphiding", onHide, false);
+            popup.addEventListener("popuphiding", onHide);
           }
-          this.popup.addEventListener("popupshowing", onShow, false);
+          this.popup.addEventListener("popupshowing", onShow);
           setTimeout(cleanup, 1000, this.popup);
 
           // Store our "normal" maxRows on the popup, so that it can reset the
@@ -618,16 +618,16 @@
           _autocomplete: this,
           _kGlobalClipboard: Components.interfaces.nsIClipboard.kGlobalClipboard,
           supportsCommand: aCommand => aCommand == "cmd_paste",
-          doCommand: function(aCommand) {
+          doCommand(aCommand) {
             this._autocomplete._valueIsPasted = true;
             this._autocomplete.editor.paste(this._kGlobalClipboard);
             this._autocomplete._valueIsPasted = false;
           },
-          isCommandEnabled: function(aCommand) {
+          isCommandEnabled(aCommand) {
             return this._autocomplete.editor.isSelectionEditable &&
                    this._autocomplete.editor.canPaste(this._kGlobalClipboard);
           },
-          onEvent: function() {}
+          onEvent() {}
         })
       ]]></field>
 
@@ -785,7 +785,7 @@
             this.tree.treeBoxObject.ensureRowIsVisible(val < 0 ? 0 : val);
           // Fire select event on xul:tree so that accessibility API
           // support layer can fire appropriate accessibility events.
-          var event = document.createEvent('Events');
+          var event = document.createEvent("Events");
           event.initEvent("select", true, true);
           this.tree.dispatchEvent(event);
           return val;
@@ -872,7 +872,7 @@
         <body><![CDATA[
           try {
             var amount = aPage ? 5 : 1;
-            this.selectedIndex = this.getNextIndex(aReverse, amount, this.selectedIndex, this.tree.view.rowCount-1);
+            this.selectedIndex = this.getNextIndex(aReverse, amount, this.selectedIndex, this.tree.view.rowCount - 1);
             if (this.selectedIndex == -1) {
               this.input._focus();
             }
@@ -971,7 +971,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
           if (aMaxRow < 0)
             return -1;
 
-          var newIdx = aIndex + (aReverse?-1:1)*aAmount;
+          var newIdx = aIndex + (aReverse ? -1 : 1) * aAmount;
           if (aReverse && aIndex == -1 || newIdx > aMaxRow && aIndex != aMaxRow)
             newIdx = aMaxRow;
           else if (!aReverse && aIndex == -1 || newIdx < 0 && aIndex != 0)
@@ -1347,8 +1347,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
                   continue;
                 }
               }
-            }
-            else {
+            } else {
               // need to create a new item
               item = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "richlistitem");
               item.setAttribute("dir", this.style.direction);
@@ -1367,8 +1366,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
               // re-use the existing item
               item._adjustAcItem();
               item.collapsed = false;
-            }
-            else {
+            } else {
               // set the class at the end so we can use the attributes
               // in the xbl constructor
               item.className = "autocomplete-richlistitem";
@@ -1548,6 +1546,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
         ]]></getter>
       </property>
 
+      <!-- Override _getSearchTokens to have the Learn More text emphasized -->
       <method name="_getSearchTokens">
         <parameter name="aSearch"/>
         <body>
@@ -2067,7 +2066,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             action = {
               type: "visiturl",
               params: {
-                url: originalUrl,
+                url: this.getAttribute("title"),
               },
             };
           }
@@ -2183,7 +2182,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
             title = displayUrl;
             titleLooksLikeUrl = true;
             try {
-              let uri = Services.io.newURI(originalUrl, null, null);
+              let uri = Services.io.newURI(originalUrl);
               // Not all valid URLs have a domain.
               if (uri.host)
                 title = uri.host;
@@ -2394,7 +2393,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
           let [, type, params] = aUrl.match(/^moz-action:([^,]+),(.*)$/);
 
           let action = {
-            type: type,
+            type,
           };
 
           try {

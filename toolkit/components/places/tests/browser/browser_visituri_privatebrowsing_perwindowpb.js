@@ -17,7 +17,7 @@ function test() {
 
   function doTest(aIsPrivateMode, aWindow, aTestURI, aCallback) {
     observer = {
-      observe: function(aSubject, aTopic, aData) {
+      observe(aSubject, aTopic, aData) {
         // The uri-visit-saved topic should only work when on normal mode.
         if (aTopic == "uri-visit-saved") {
           // Remove the observers set on per window private mode and normal
@@ -64,7 +64,7 @@ function test() {
     doTest(true, aWin, initialURL, function() {
       // then test when not on private mode
       testOnWindow({}, function(aWin2) {
-        doTest(false, aWin2, finalURL, function () {
+        doTest(false, aWin2, finalURL, function() {
           PlacesTestUtils.clearHistory().then(finish);
         });
       });

@@ -20,12 +20,14 @@ VariablesViewLink.propTypes = {
 };
 
 function VariablesViewLink(props) {
-  const { object, children } = props;
+  const { className, object, children } = props;
 
   return (
     dom.a({
       onClick: openVariablesView.bind(null, object),
-      className: "cm-variable",
+      // Context menu can use this actor id information to enable additional menu items.
+      "data-link-actor-id": object.actor,
+      className: className || "cm-variable",
       draggable: false,
     }, children)
   );

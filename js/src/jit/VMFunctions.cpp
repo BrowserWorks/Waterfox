@@ -560,7 +560,7 @@ CreateThis(JSContext* cx, HandleObject callee, HandleObject newTarget, MutableHa
     if (callee->is<JSFunction>()) {
         RootedFunction fun(cx, &callee->as<JSFunction>());
         if (fun->isInterpreted() && fun->isConstructor()) {
-            JSScript* script = fun->getOrCreateScript(cx);
+            JSScript* script = JSFunction::getOrCreateScript(cx, fun);
             if (!script || !script->ensureHasTypes(cx))
                 return false;
             if (fun->isBoundFunction() || script->isDerivedClassConstructor()) {
@@ -600,11 +600,11 @@ GetDynamicName(JSContext* cx, JSObject* envChain, JSString* str, Value* vp)
         return;
     }
 
-    Shape* shape = nullptr;
+    PropertyResult prop;
     JSObject* scope = nullptr;
     JSObject* pobj = nullptr;
-    if (LookupNameNoGC(cx, atom->asPropertyName(), envChain, &scope, &pobj, &shape)) {
-        if (FetchNameNoGC(pobj, shape, MutableHandleValue::fromMarkedLocation(vp)))
+    if (LookupNameNoGC(cx, atom->asPropertyName(), envChain, &scope, &pobj, &prop)) {
+        if (FetchNameNoGC(pobj, prop, MutableHandleValue::fromMarkedLocation(vp)))
             return;
     }
 
@@ -650,22 +650,20 @@ PostGlobalWriteBarrier(JSRuntime* rt, JSObject* obj)
     }
 }
 
-uint32_t
+int32_t
 GetIndexFromString(JSString* str)
 {
-    // Masks the return value UINT32_MAX as failure to get the index.
-    // I.e. it is impossible to distinguish between failing to get the index
-    // or the actual index UINT32_MAX.
+    // We shouldn't GC here as this is called directly from IC code.
+    JS::AutoCheckCannotGC nogc;
 
-    if (!str->isAtom())
-        return UINT32_MAX;
+    if (!str->isFlat())
+        return -1;
 
     uint32_t index;
-    JSAtom* atom = &str->asAtom();
-    if (!atom->isIndex(&index))
-        return UINT32_MAX;
+    if (!str->asFlat().isIndex(&index) || index > INT32_MAX)
+        return -1;
 
-    return index;
+    return int32_t(index);
 }
 
 bool
@@ -1322,10 +1320,21 @@ ThrowRuntimeLexicalError(JSContext* cx, unsigned errorNumber)
 }
 
 bool
-ThrowReadOnlyError(JSContext* cx, int32_t index)
+ThrowReadOnlyError(JSContext* cx, HandleObject obj, int32_t index)
 {
-    RootedValue val(cx, Int32Value(index));
-    ReportValueError(cx, JSMSG_READ_ONLY, JSDVG_IGNORE_STACK, val, nullptr);
+    // We have to throw different errors depending on whether |index| is past
+    // the array length, etc. It's simpler to just call SetProperty to ensure
+    // we match the interpreter.
+
+    RootedValue objVal(cx, ObjectValue(*obj));
+    RootedValue indexVal(cx, Int32Value(index));
+    RootedId id(cx);
+    if (!ValueToId<CanGC>(cx, indexVal, &id))
+        return false;
+
+    ObjectOpResult result;
+    MOZ_ALWAYS_FALSE(SetProperty(cx, obj, id, UndefinedHandleValue, objVal, result) &&
+                     result.checkStrictErrorOrWarning(cx, obj, id, /* strict = */ true));
     return false;
 }
 
@@ -1355,6 +1364,47 @@ bool
 BaselineGetFunctionThis(JSContext* cx, BaselineFrame* frame, MutableHandleValue res)
 {
     return GetFunctionThis(cx, frame, res);
+}
+
+bool
+CallNativeGetter(JSContext* cx, HandleFunction callee, HandleObject obj,
+                 MutableHandleValue result)
+{
+    MOZ_ASSERT(callee->isNative());
+    JSNative natfun = callee->native();
+
+    JS::AutoValueArray<2> vp(cx);
+    vp[0].setObject(*callee.get());
+    vp[1].setObject(*obj.get());
+
+    if (!natfun(cx, 0, vp.begin()))
+        return false;
+
+    result.set(vp[0]);
+    return true;
+}
+
+bool
+EqualStringsHelper(JSString* str1, JSString* str2)
+{
+    MOZ_ASSERT(str1->isAtom());
+    MOZ_ASSERT(!str2->isAtom());
+    MOZ_ASSERT(str1->length() == str2->length());
+
+    JSLinearString* str2Linear = str2->ensureLinear(nullptr);
+    if (!str2Linear)
+        return false;
+
+    return EqualChars(&str1->asLinear(), str2Linear);
+}
+
+bool
+CheckIsCallable(JSContext* cx, HandleValue v, CheckIsCallableKind kind)
+{
+    if (!IsCallable(v))
+        return ThrowCheckIsCallable(cx, kind);
+
+    return true;
 }
 
 } // namespace jit

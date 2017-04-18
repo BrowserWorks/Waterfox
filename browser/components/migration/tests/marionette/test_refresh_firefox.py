@@ -1,7 +1,9 @@
 import os
 import shutil
+import time
 
 from marionette_harness import MarionetteTestCase
+from marionette_driver.errors import NoAlertPresentException
 
 
 class TestFirefoxRefresh(MarionetteTestCase):
@@ -129,8 +131,16 @@ class TestFirefoxRefresh(MarionetteTestCase):
               }
             }
           });
+          let expectedTabs = new Set();
           for (let url of expectedURLs) {
-            gBrowser.addTab(url);
+            expectedTabs.add(gBrowser.addTab(url));
+          }
+          // Close any other tabs that might be open:
+          let allTabs = Array.from(gBrowser.tabs);
+          for (let tab of allTabs) {
+            if (!expectedTabs.has(tab)) {
+              gBrowser.removeTab(tab);
+            }
           }
         """, script_args=[self._expectedURLs])
 
@@ -260,11 +270,17 @@ class TestFirefoxRefresh(MarionetteTestCase):
         """)
         self.assertSequenceEqual(tabURIs, ["about:welcomeback"])
 
+        # Dismiss modal dialog if any. This is mainly to dismiss the check for
+        # default browser dialog if it shows up.
+        try:
+          alert = self.marionette.switch_to_alert()
+          alert.dismiss()
+        except NoAlertPresentException:
+          pass
+
         tabURIs = self.runAsyncCode("""
           let mm = gBrowser.selectedBrowser.messageManager;
-          let fs = function() {
-            content.document.getElementById("errorTryAgain").click();
-          };
+
           let {TabStateFlusher} = Cu.import("resource:///modules/sessionstore/TabStateFlusher.jsm", {});
           window.addEventListener("SSWindowStateReady", function testSSPostReset() {
             window.removeEventListener("SSWindowStateReady", testSSPostReset, false);
@@ -272,10 +288,20 @@ class TestFirefoxRefresh(MarionetteTestCase):
               marionetteScriptFinished([... gBrowser.browsers].map(b => b.currentURI && b.currentURI.spec));
             });
           }, false);
+
+          let fs = function() {
+            if (content.document.readyState === "complete") {
+              content.document.getElementById("errorTryAgain").click();
+            } else {
+              content.window.addEventListener("load", function(event) {
+                content.document.getElementById("errorTryAgain").click();
+              }, { once: true });
+            }
+          };
+
           mm.loadFrameScript("data:application/javascript,(" + fs.toString() + ")()", true);
         """)
-        self.assertSequenceEqual(tabURIs, ["about:blank"] + self._expectedURLs)
-        pass
+        self.assertSequenceEqual(tabURIs, self._expectedURLs)
 
     def checkProfile(self, hasMigrated=False):
         self.checkPassword()
@@ -343,21 +369,22 @@ class TestFirefoxRefresh(MarionetteTestCase):
 
         if self.reset_profile_path:
             # Remove ourselves from profiles.ini
-            profileLeafName = os.path.basename(os.path.normpath(self.reset_profile_path))
             self.runCode("""
-              let [salt, name] = arguments[0].split(".");
+              let name = arguments[0];
               let profile = global.profSvc.getProfileByName(name);
               profile.remove(false)
               global.profSvc.flush();
-            """, script_args=[profileLeafName])
+            """, script_args=[self.profileNameToRemove])
             # And delete all the files.
             shutil.rmtree(self.reset_profile_path, ignore_errors=False, onerror=handleRemoveReadonly)
 
     def doReset(self):
+        profileName = "marionette-test-profile-" + str(int(time.time() * 1000))
+        self.profileNameToRemove = profileName
         self.runCode("""
           // Ensure the current (temporary) profile is in profiles.ini:
           let profD = Services.dirsvc.get("ProfD", Ci.nsIFile);
-          let profileName = "marionette-test-profile-" + Date.now();
+          let profileName = arguments[1];
           let myProfile = global.profSvc.createProfile(profD, profileName);
           global.profSvc.flush()
 
@@ -375,7 +402,7 @@ class TestFirefoxRefresh(MarionetteTestCase):
           env.set("MOZ_RESET_PROFILE_RESTART", "1");
           env.set("XRE_PROFILE_PATH", arguments[0]);
           env.set("XRE_PROFILE_NAME", profileName);
-        """, script_args=[self.marionette.instance.profile.profile])
+        """, script_args=[self.marionette.instance.profile.profile, profileName])
 
         profileLeafName = os.path.basename(os.path.normpath(self.marionette.instance.profile.profile))
 

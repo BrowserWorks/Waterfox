@@ -292,6 +292,12 @@ class RefTest(object):
            '5.1' in platform.version() and options.e10s:
             prefs['layers.acceleration.disabled'] = True
 
+        # Bug 1300355: Disable canvas cache for win7 as it uses
+        # too much memory and causes OOMs.
+        if platform.system() in ("Windows", "Microsoft") and \
+           '6.1' in platform.version():
+            prefs['reftest.nocache'] = True
+
         if options.marionette:
             port = options.marionette.split(':')[1]
             prefs['marionette.defaultPrefs.port'] = int(port)
@@ -338,6 +344,8 @@ class RefTest(object):
             profile = mozprofile.Profile.clone(profile_to_clone, **kwargs)
         else:
             profile = mozprofile.Profile(**kwargs)
+
+        options.extraProfileFiles.append(os.path.join(here, 'chrome'))
 
         self.copyExtraFilesToProfile(options, profile)
         return profile
@@ -592,11 +600,8 @@ class RefTest(object):
             timeout = None
             signal.signal(signal.SIGINT, lambda sigid, frame: None)
 
-        if mozinfo.info.get('appname') == 'b2g' and mozinfo.info.get('toolkit') != 'gonk':
-            runner_cls = mozrunner.Runner
-        else:
-            runner_cls = mozrunner.runners.get(mozinfo.info.get('appname', 'firefox'),
-                                               mozrunner.Runner)
+        runner_cls = mozrunner.runners.get(mozinfo.info.get('appname', 'firefox'),
+                                           mozrunner.Runner)
         runner = runner_cls(profile=profile,
                             binary=binary,
                             process_class=mozprocess.ProcessHandlerMixin,

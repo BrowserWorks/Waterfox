@@ -16,7 +16,7 @@ add_test(function test_setup() {
   PlacesTestUtils.clearHistory().then(run_next_test);
 });
 
-add_test(function test_processIncoming_mobile_history_batched() {
+add_task(async function test_processIncoming_mobile_history_batched() {
   _("SyncEngine._processIncoming works on history engine.");
 
   let FAKE_DOWNLOAD_LIMIT = 100;
@@ -28,7 +28,7 @@ add_test(function test_processIncoming_mobile_history_batched() {
   let collection = new ServerCollection();
   collection.get_log = [];
   collection._get = collection.get;
-  collection.get = function (options) {
+  collection.get = function(options) {
     this.get_log.push(options);
     return this._get(options);
   };
@@ -37,16 +37,16 @@ add_test(function test_processIncoming_mobile_history_batched() {
     "/1.1/foo/storage/history": collection.handler()
   });
 
-  new SyncTestingInfrastructure(server);
+  await SyncTestingInfrastructure(server);
 
   // Let's create some 234 server side history records. They're all at least
   // 10 minutes old.
   let visitType = Ci.nsINavHistoryService.TRANSITION_LINK;
   for (var i = 0; i < 234; i++) {
-    let id = 'record-no' + ("00" + i).slice(-3);
-    let modified = Date.now()/1000 - 60*(i+10);
+    let id = "record-no" + ("00" + i).slice(-3);
+    let modified = Date.now() / 1000 - 60 * (i + 10);
     let payload = encryptPayload({
-      id: id,
+      id,
       histUri: "http://foo/bar?" + id,
         title: id,
         sortindex: i,
@@ -132,11 +132,10 @@ add_test(function test_processIncoming_mobile_history_batched() {
     }
 
   } finally {
-    PlacesTestUtils.clearHistory().then(() => {
-      server.stop(do_test_finished);
-      Svc.Prefs.resetBranch("");
-      Service.recordManager.clearCache();
-    });
+    await PlacesTestUtils.clearHistory();
+    await promiseStopServer(server);
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
   }
 });
 

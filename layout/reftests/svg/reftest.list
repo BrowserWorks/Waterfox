@@ -218,7 +218,7 @@ fuzzy-if(skiaContent,1,10000) == mask-basic-02.svg mask-basic-02-ref.svg
 == mask-transformed-02.svg pass.svg
 == mask-transformed-child-01.svg mask-transformed-child-01-ref.svg
 # fuzzy because of the differences between clipPath and mask clipping
-fuzzy(27,28) == mask-and-clipPath.html mask-and-clipPath-ref.html
+fuzzy(28,28) == mask-and-clipPath.html mask-and-clipPath-ref.html
 == mask-and-clipPath-2.svg pass.svg
 fuzzy-if(d2d||skiaContent,1,6400) == mask-type-01.svg mask-type-01-ref.svg
 fuzzy-if(d2d||skiaContent,1,6400) == mask-type-02.svg mask-type-01-ref.svg
@@ -454,10 +454,23 @@ fuzzy(1,32400) == clipPath-on-outflowElement-02b.html clipPath-on-outflowElement
 default-preferences
 
 == mask-on-outflowElement-01a.html clipPath-on-outflowElement-01-ref.html
-fails == mask-on-outflowElement-01b.html clipPath-on-outflowElement-01-ref.html
+== mask-on-outflowElement-01b.html clipPath-on-outflowElement-01-ref.html
 
 == clipPath-and-mask-on-outflowElement-01a.html clipPath-on-outflowElement-01-ref.html
 == clipPath-and-mask-on-outflowElement-01b.html clipPath-on-outflowElement-01-ref.html
 
+!= nested-mask-mode.svg about:blank
+== mask-empty-size.svg about:blank
+
+== paint-on-maskLayer-1a.html paint-on-maskLayer-1-ref.html
+== paint-on-maskLayer-1b.html paint-on-maskLayer-1-ref.html
+pref(layout.css.clip-path-shapes.enabled,true) == paint-on-maskLayer-1c.html paint-on-maskLayer-1-ref.html
+
+fuzzy(71,817) == filter-on-continuation-box-01.html filter-on-continuation-box-ref.html
 == mask-contains-inner-svg-01.svg pass.svg
 == mask-contains-inner-svg-02.svg pass.svg
+
+== mask-use-element-01.svg pass.svg
+== clip-use-element-01.svg pass.svg
+== clip-use-element-02.svg pass.svg
+== filter-use-element-01.svg pass.svg

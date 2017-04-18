@@ -19,7 +19,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gScriptSecurityManager",
                                    "@mozilla.org/scriptsecuritymanager;1",
                                    "nsIScriptSecurityManager");
 XPCOMUtils.defineLazyGetter(this, "WebConsoleUtils", () => {
-  return this.devtools.require("devtools/server/actors/utils/webconsole-utils").Utils;
+  return this.devtools.require("devtools/server/actors/utils/webconsole-utils").WebConsoleUtils;
 });
 
 /*
@@ -65,8 +65,7 @@ this.InsecurePasswordUtils = {
   _checkFormSecurity(aForm) {
     let isFormSubmitHTTP = false, isFormSubmitSecure = false;
     if (aForm.rootElement instanceof Ci.nsIDOMHTMLFormElement) {
-      let uri = Services.io.newURI(aForm.rootElement.action || aForm.rootElement.baseURI,
-                                   null, null);
+      let uri = Services.io.newURI(aForm.rootElement.action || aForm.rootElement.baseURI);
       let principal = gScriptSecurityManager.getCodebasePrincipal(uri);
 
       if (uri.schemeIs("http")) {

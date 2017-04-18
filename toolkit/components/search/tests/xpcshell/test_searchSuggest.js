@@ -25,7 +25,6 @@ function run_test() {
   Services.prefs.setBoolPref("browser.search.suggest.enabled", true);
 
   removeMetadata();
-  updateAppInfo();
 
   let server = useHttpServer();
   server.registerContentType("sjs", "sjs");
@@ -556,14 +555,14 @@ function updateSearchHistory(operation, value) {
   FormHistory.update({
                        op: operation,
                        fieldname: "searchbar-history",
-                       value: value,
+                       value,
                      },
                      {
-                       handleError: function (error) {
+                       handleError(error) {
                          do_throw("Error occurred updating form history: " + error);
                          deferred.reject(error);
                        },
-                       handleCompletion: function (reason) {
+                       handleCompletion(reason) {
                          if (!reason)
                            deferred.resolve();
                        }

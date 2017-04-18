@@ -167,7 +167,7 @@ typedef enum {
 
 /** An opaque handle used to refer a particular input or output device
  *  across calls. */
-typedef void * cubeb_devid;
+typedef void const * cubeb_devid;
 
 /** Level (verbosity) of logging for a particular cubeb context. */
 typedef enum {
@@ -176,12 +176,71 @@ typedef enum {
   CUBEB_LOG_VERBOSE = 2, /**< Verbose logging of callbacks, can have performance implications. */
 } cubeb_log_level;
 
+/** SMPTE channel layout (also known as wave order)
+ * DUAL-MONO      L   R
+ * DUAL-MONO-LFE  L   R   LFE
+ * MONO           M
+ * MONO-LFE       M   LFE
+ * STEREO         L   R
+ * STEREO-LFE     L   R   LFE
+ * 3F             L   R   C
+ * 3F-LFE         L   R   C    LFE
+ * 2F1            L   R   S
+ * 2F1-LFE        L   R   LFE  S
+ * 3F1            L   R   C    S
+ * 3F1-LFE        L   R   C    LFE S
+ * 2F2            L   R   LS   RS
+ * 2F2-LFE        L   R   LFE  LS   RS
+ * 3F2            L   R   C    LS   RS
+ * 3F2-LFE        L   R   C    LFE  LS   RS
+ * 3F3R-LFE       L   R   C    LFE  RC   LS   RS
+ * 3F4-LFE        L   R   C    LFE  RLS  RRS  LS   RS
+ *
+ * The abbreviation of channel name is defined in following table:
+ * Abbr  Channel name
+ * ---------------------------
+ * M     Mono
+ * L     Left
+ * R     Right
+ * C     Center
+ * LS    Left Surround
+ * RS    Right Surround
+ * RLS   Rear Left Surround
+ * RC    Rear Center
+ * RRS   Rear Right Surround
+ * LFE   Low Frequency Effects
+ */
+
+typedef enum {
+  CUBEB_LAYOUT_UNDEFINED, // Indicate the speaker's layout is undefined.
+  CUBEB_LAYOUT_DUAL_MONO,
+  CUBEB_LAYOUT_DUAL_MONO_LFE,
+  CUBEB_LAYOUT_MONO,
+  CUBEB_LAYOUT_MONO_LFE,
+  CUBEB_LAYOUT_STEREO,
+  CUBEB_LAYOUT_STEREO_LFE,
+  CUBEB_LAYOUT_3F,
+  CUBEB_LAYOUT_3F_LFE,
+  CUBEB_LAYOUT_2F1,
+  CUBEB_LAYOUT_2F1_LFE,
+  CUBEB_LAYOUT_3F1,
+  CUBEB_LAYOUT_3F1_LFE,
+  CUBEB_LAYOUT_2F2,
+  CUBEB_LAYOUT_2F2_LFE,
+  CUBEB_LAYOUT_3F2,
+  CUBEB_LAYOUT_3F2_LFE,
+  CUBEB_LAYOUT_3F3R_LFE,
+  CUBEB_LAYOUT_3F4_LFE,
+  CUBEB_LAYOUT_MAX
+} cubeb_channel_layout;
+
 /** Stream format initialization parameters. */
 typedef struct {
-  cubeb_sample_format format; /**< Requested sample format.  One of
-                                   #cubeb_sample_format. */
-  unsigned int rate;          /**< Requested sample rate.  Valid range is [1000, 192000]. */
-  unsigned int channels;      /**< Requested channel count.  Valid range is [1, 8]. */
+  cubeb_sample_format format;   /**< Requested sample format.  One of
+                                     #cubeb_sample_format. */
+  unsigned int rate;            /**< Requested sample rate.  Valid range is [1000, 192000]. */
+  unsigned int channels;        /**< Requested channel count.  Valid range is [1, 8]. */
+  cubeb_channel_layout layout;  /**< Requested channel layout. This must be consistent with the provided channels. */
 #if defined(__ANDROID__)
   cubeb_stream_type stream_type; /**< Used to map Android audio stream types */
 #endif
@@ -276,10 +335,10 @@ typedef enum {
  *  `cubeb_device_info_destroy`. */
 typedef struct {
   cubeb_devid devid;          /**< Device identifier handle. */
-  char * device_id;           /**< Device identifier which might be presented in a UI. */
-  char * friendly_name;       /**< Friendly device name which might be presented in a UI. */
-  char * group_id;            /**< Two devices have the same group identifier if they belong to the same physical device; for example a headset and microphone. */
-  char * vendor_name;         /**< Optional vendor name, may be NULL. */
+  char const * device_id;     /**< Device identifier which might be presented in a UI. */
+  char const * friendly_name; /**< Friendly device name which might be presented in a UI. */
+  char const * group_id;      /**< Two devices have the same group identifier if they belong to the same physical device; for example a headset and microphone. */
+  char const * vendor_name;   /**< Optional vendor name, may be NULL. */
 
   cubeb_device_type type;     /**< Type of device (Input/Output). */
   cubeb_device_state state;   /**< State of device disabled/enabled/unplugged. */
@@ -322,7 +381,7 @@ typedef struct {
             and the stream will enter a shutdown state. */
 typedef long (* cubeb_data_callback)(cubeb_stream * stream,
                                      void * user_ptr,
-                                     const void * input_buffer,
+                                     void const * input_buffer,
                                      void * output_buffer,
                                      long nframes);
 
@@ -347,7 +406,7 @@ typedef void (* cubeb_device_collection_changed_callback)(cubeb * context,
                                                           void * user_ptr);
 
 /** User supplied callback called when a message needs logging. */
-typedef void (* cubeb_log_callback)(const char * fmt, ...);
+typedef void (* cubeb_log_callback)(char const * fmt, ...);
 
 /** Initialize an application context.  This will perform any library or
     application scoped initialization.
@@ -376,7 +435,7 @@ CUBEB_EXPORT int cubeb_get_max_channel_count(cubeb * context, uint32_t * max_cha
 
 /** Get the minimal latency value, in frames, that is guaranteed to work
     when creating a stream for the specified sample rate. This is platform,
-    hardware and backend dependant.
+    hardware and backend dependent.
     @param context A pointer to the cubeb context.
     @param params On some backends, the minimum achievable latency depends on
                   the characteristics of the stream.
@@ -390,13 +449,22 @@ CUBEB_EXPORT int cubeb_get_min_latency(cubeb * context,
                                        uint32_t * latency_frames);
 
 /** Get the preferred sample rate for this backend: this is hardware and
-    platform dependant, and can avoid resampling, and/or trigger fastpaths.
+    platform dependent, and can avoid resampling, and/or trigger fastpaths.
     @param context A pointer to the cubeb context.
     @param rate The samplerate (in Hz) the current configuration prefers.
     @retval CUBEB_OK
     @retval CUBEB_ERROR_INVALID_PARAMETER
     @retval CUBEB_ERROR_NOT_SUPPORTED */
 CUBEB_EXPORT int cubeb_get_preferred_sample_rate(cubeb * context, uint32_t * rate);
+
+/** Get the preferred layout for this backend: this is hardware and
+    platform dependent.
+    @param context A pointer to the cubeb context.
+    @param layout The layout of the current speaker configuration.
+    @retval CUBEB_OK
+    @retval CUBEB_ERROR_INVALID_PARAMETER
+    @retval CUBEB_ERROR_NOT_SUPPORTED */
+CUBEB_EXPORT int cubeb_get_preferred_channel_layout(cubeb * context, cubeb_channel_layout * layout);
 
 /** Destroy an application context. This must be called after all stream have
  *  been destroyed.

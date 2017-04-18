@@ -111,6 +111,7 @@ function Script(extension, options, deferred = PromiseUtils.defer()) {
   this.css = this.options.css || [];
   this.remove_css = this.options.remove_css;
   this.match_about_blank = this.options.match_about_blank;
+  this.css_origin = this.options.css_origin;
 
   this.deferred = deferred;
 
@@ -151,10 +152,18 @@ Script.prototype = {
       return false;
     }
 
-    if (this.match_about_blank && ["about:blank", "about:srcdoc"].includes(uri.spec)) {
-      // When matching about:blank/srcdoc documents, the checks below
+    if (this.match_about_blank) {
+      // When matching top-level about:blank documents,
+      // allow loading into any with a NullPrincipal.
+      if (uri.spec === "about:blank" && window === window.top && principal.isNullPrincipal) {
+        return true;
+      }
+
+      // When matching about:blank/srcdoc iframes, the checks below
       // need to be performed against the "owner" document's URI.
-      uri = principal.URI;
+      if (["about:blank", "about:srcdoc"].includes(uri.spec)) {
+        uri = principal.URI;
+      }
     }
 
     // Documents from data: URIs also inherit the principal.
@@ -199,8 +208,9 @@ Script.prototype = {
       let winUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils);
 
+      let type = this.css_origin === "user" ? winUtils.USER_SHEET : winUtils.AUTHOR_SHEET;
       for (let url of this.cssURLs) {
-        runSafeSyncWithoutClone(winUtils.removeSheetUsingURIString, url, winUtils.AUTHOR_SHEET);
+        runSafeSyncWithoutClone(winUtils.removeSheetUsingURIString, url, type);
       }
     }
   },
@@ -238,8 +248,9 @@ Script.prototype = {
                              .getInterface(Ci.nsIDOMWindowUtils);
 
         let method = this.remove_css ? winUtils.removeSheetUsingURIString : winUtils.loadSheetUsingURIString;
+        let type = this.css_origin === "user" ? winUtils.USER_SHEET : winUtils.AUTHOR_SHEET;
         for (let url of cssURLs) {
-          runSafeSyncWithoutClone(method, url, winUtils.AUTHOR_SHEET);
+          runSafeSyncWithoutClone(method, url, type);
         }
 
         this.deferred.resolve();
@@ -249,15 +260,15 @@ Script.prototype = {
     let result;
     let scheduled = this.run_at || "document_idle";
     if (shouldRun(scheduled)) {
-      for (let url of this.js) {
-        url = this.extension.baseURI.resolve(url);
-
+      for (let [i, url] of this.js.entries()) {
         let options = {
           target: sandbox,
           charset: "UTF-8",
-          // Inject asynchronously unless we're expected to inject before any
-          // page scripts have run, and we haven't already missed that boat.
-          async: this.run_at !== "document_start" || when !== "document_start",
+          // Inject the last script asynchronously unless we're expected to
+          // inject before any page scripts have run, and we haven't already
+          // missed that boat.
+          async: (i === this.js.length - 1) &&
+                 (this.run_at !== "document_start" || when !== "document_start"),
         };
         try {
           result = Services.scriptloader.loadSubScriptWithOptions(url, options);
@@ -640,7 +651,7 @@ DocumentManager = {
 
     if (!promises.length) {
       let details = {};
-      for (let key of ["all_frames", "frame_id", "matches_about_blank", "matchesHost"]) {
+      for (let key of ["all_frames", "frame_id", "match_about_blank", "matchesHost"]) {
         if (key in options) {
           details[key] = options[key];
         }
@@ -794,12 +805,15 @@ class BrowserExtensionContent extends EventEmitter {
     this.localeData = new LocaleData(data.localeData);
 
     this.manifest = data.manifest;
-    this.baseURI = Services.io.newURI(data.baseURL, null, null);
+    this.baseURI = Services.io.newURI(data.baseURL);
 
     // Only used in addon processes.
     this.views = new Set();
 
-    let uri = Services.io.newURI(data.resourceURL, null, null);
+    // Only used for devtools views.
+    this.devtoolsViews = new Set();
+
+    let uri = Services.io.newURI(data.resourceURL);
 
     if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
       // Extension.jsm takes care of this in the parent.
@@ -894,10 +908,7 @@ ExtensionManager = {
       }
 
       case "Extension:FlushJarCache": {
-        let nsIFile = Components.Constructor("@mozilla.org/file/local;1", "nsIFile",
-                                             "initWithPath");
-        let file = new nsIFile(data.path);
-        flushJarCache(file);
+        flushJarCache(data.path);
         Services.cpmm.sendAsyncMessage("Extension:FlushJarCacheComplete");
         break;
       }
@@ -1027,11 +1038,15 @@ this.ExtensionContent = {
 
   init(global) {
     this.globals.set(global, new ExtensionGlobal(global));
-    ExtensionChild.init(global);
+    if (ExtensionManagement.isExtensionProcess) {
+      ExtensionChild.init(global);
+    }
   },
 
   uninit(global) {
-    ExtensionChild.uninit(global);
+    if (ExtensionManagement.isExtensionProcess) {
+      ExtensionChild.uninit(global);
+    }
     this.globals.get(global).uninit();
     this.globals.delete(global);
   },

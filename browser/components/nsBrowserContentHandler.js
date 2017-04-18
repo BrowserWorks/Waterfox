@@ -65,8 +65,7 @@ function resolveURIInternal(aCmdLine, aArgument) {
   try {
     if (uri.file.exists())
       return uri;
-  }
-  catch (e) {
+  } catch (e) {
     Components.utils.reportError(e);
   }
 
@@ -75,8 +74,7 @@ function resolveURIInternal(aCmdLine, aArgument) {
 
   try {
     uri = uriFixup.createFixupURI(aArgument, 0);
-  }
-  catch (e) {
+  } catch (e) {
     Components.utils.reportError(e);
   }
 
@@ -203,7 +201,7 @@ function openWindow(parent, url, target, features, args, noExternalArgs) {
     // put the URIs into argArray
     var uriArray = Components.classes["@mozilla.org/array;1"]
                        .createInstance(Components.interfaces.nsIMutableArray);
-    stringArgs.forEach(function (uri) {
+    stringArgs.forEach(function(uri) {
       var sstring = Components.classes["@mozilla.org/supports-string;1"]
                               .createInstance(nsISupportsString);
       sstring.data = uri;
@@ -341,8 +339,7 @@ nsBrowserContentHandler.prototype = {
                    uri.spec);
         cmdLine.preventDefault = true;
       }
-    }
-    catch (e) {
+    } catch (e) {
       Components.utils.reportError(e);
     }
 
@@ -352,8 +349,7 @@ nsBrowserContentHandler.prototype = {
         handURIToExistingBrowser(uri, nsIBrowserDOMWindow.OPEN_NEWTAB, cmdLine);
         cmdLine.preventDefault = true;
       }
-    }
-    catch (e) {
+    } catch (e) {
       Components.utils.reportError(e);
     }
 
@@ -383,8 +379,7 @@ nsBrowserContentHandler.prototype = {
           dump("*** Preventing load of web URI as chrome\n");
           dump("    If you're trying to load a webpage, do not pass --chrome.\n");
         }
-      }
-      catch (e) {
+      } catch (e) {
         Components.utils.reportError(e);
       }
     }
@@ -437,7 +432,7 @@ nsBrowserContentHandler.prototype = {
       cmdLine.preventDefault = true;
     }
 
-    if (AppConstants.platform  == "win") {
+    if (AppConstants.platform == "win") {
       // Handle "? searchterm" for Windows Vista start menu integration
       for (var i = cmdLine.length - 1; i >= 0; --i) {
         var param = cmdLine.getArgument(i);
@@ -586,8 +581,7 @@ nsBrowserContentHandler.prototype = {
           this.mFeatures += ",width=" + width;
         if (height)
           this.mFeatures += ",height=" + height;
-      }
-      catch (e) {
+      } catch (e) {
       }
 
       // The global PB Service consumes this flag, so only eat it in per-window
@@ -649,8 +643,7 @@ nsBrowserContentHandler.prototype = {
 };
 var gBrowserContentHandler = new nsBrowserContentHandler();
 
-function handURIToExistingBrowser(uri, location, cmdLine, forcePrivate)
-{
+function handURIToExistingBrowser(uri, location, cmdLine, forcePrivate) {
   if (!shouldLoadURI(uri))
     return;
 
@@ -697,18 +690,6 @@ nsDefaultCommandLineHandler.prototype = {
 
   /* nsICommandLineHandler */
   handle : function dch_handle(cmdLine) {
-    // The -url flag is inserted by the operating system when the default
-    // application handler is used. We check for default browser to remove
-    // instances where users explicitly decide to "open with" the browser.
-    // Note that users who launch firefox manually with the -url flag will
-    // get erroneously counted.
-    try {
-      if (cmdLine.findFlag("url", false) &&
-          ShellService.isDefaultBrowser(false, false)) {
-        Services.telemetry.getHistogramById("FX_STARTUP_EXTERNAL_CONTENT_HANDLER").add();
-      }
-    } catch (e) {}
-
     var urilist = [];
 
     if (AppConstants.platform == "win") {
@@ -723,8 +704,7 @@ nsDefaultCommandLineHandler.prototype = {
           // This will throw when a profile has not been selected.
           Services.dirsvc.get("ProfD", Components.interfaces.nsILocalFile);
           this._haveProfile = true;
-        }
-        catch (e) {
+        } catch (e) {
           while ((ar = cmdLine.handleFlagWithParam("url", false)));
           cmdLine.preventDefault = true;
         }
@@ -737,8 +717,7 @@ nsDefaultCommandLineHandler.prototype = {
         var uri = resolveURIInternal(cmdLine, ar);
         urilist.push(uri);
       }
-    }
-    catch (e) {
+    } catch (e) {
       Components.utils.reportError(e);
     }
 
@@ -752,8 +731,7 @@ nsDefaultCommandLineHandler.prototype = {
       } else {
         try {
           urilist.push(resolveURIInternal(cmdLine, curarg));
-        }
-        catch (e) {
+        } catch (e) {
           Components.utils.reportError("Error opening URI '" + curarg + "' from the command line: " + e + "\n");
         }
       }
@@ -767,8 +745,7 @@ nsDefaultCommandLineHandler.prototype = {
         try {
           handURIToExistingBrowser(urilist[0], nsIBrowserDOMWindow.OPEN_DEFAULTWINDOW, cmdLine);
           return;
-        }
-        catch (e) {
+        } catch (e) {
         }
       }
 
@@ -779,8 +756,7 @@ nsDefaultCommandLineHandler.prototype = {
                    URLlist);
       }
 
-    }
-    else if (!cmdLine.preventDefault) {
+    } else if (!cmdLine.preventDefault) {
       if (AppConstants.isPlatformAndVersionAtLeast("win", "10") &&
           cmdLine.state != nsICommandLine.STATE_INITIAL_LAUNCH &&
           WindowsUIUtils.inTabletMode) {

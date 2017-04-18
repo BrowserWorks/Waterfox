@@ -39,10 +39,15 @@ if CONFIG['MOZ_REPLACE_MALLOC']:
         'replace_malloc.c',
     ]
 
+if CONFIG['OS_TARGET'] == 'Darwin' and (CONFIG['MOZ_REPLACE_MALLOC'] or
+        CONFIG['MOZ_MEMORY'] and not CONFIG['MOZ_JEMALLOC4']):
+    SOURCES += [
+        'zone.c',
+    ]
+
 Library('memory')
 
 if CONFIG['MOZ_GLUE_IN_PROGRAM']:
-    SDK_LIBRARY = True
     DIST_INSTALL = True
 
 # Keep jemalloc separated when mozglue is statically linked

@@ -203,7 +203,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
 private:
-  ~UITimerCallback() {}
+  ~UITimerCallback() = default;
   uint32_t mPreviousCount;
 };
 
@@ -242,9 +242,7 @@ OverOutElementsWrapper::OverOutElementsWrapper()
 {
 }
 
-OverOutElementsWrapper::~OverOutElementsWrapper()
-{
-}
+OverOutElementsWrapper::~OverOutElementsWrapper() = default;
 
 NS_IMPL_CYCLE_COLLECTION(OverOutElementsWrapper,
                          mLastOverElement,
@@ -492,6 +490,7 @@ IsMessageMouseUserActivity(EventMessage aMessage)
   return aMessage == eMouseMove ||
          aMessage == eMouseUp ||
          aMessage == eMouseDown ||
+         aMessage == eMouseAuxClick ||
          aMessage == eMouseDoubleClick ||
          aMessage == eMouseClick ||
          aMessage == eMouseActivate ||
@@ -501,13 +500,9 @@ IsMessageMouseUserActivity(EventMessage aMessage)
 static bool
 IsMessageGamepadUserActivity(EventMessage aMessage)
 {
-#ifndef MOZ_GAMEPAD
-  return false;
-#else
   return aMessage == eGamepadButtonDown ||
          aMessage == eGamepadButtonUp ||
          aMessage == eGamepadAxisMove;
-#endif
 }
 
 nsresult
@@ -777,12 +772,8 @@ EventStateManager::PreHandleEvent(nsPresContext* aPresContext,
     }
     // then fall through...
     MOZ_FALLTHROUGH;
-  case eBeforeKeyDown:
   case eKeyDown:
-  case eAfterKeyDown:
-  case eBeforeKeyUp:
   case eKeyUp:
-  case eAfterKeyUp:
     {
       nsIContent* content = GetFocusedContent();
       if (content)
@@ -1277,65 +1268,20 @@ EventStateManager::IsRemoteTarget(nsIContent* target) {
     return true;
   }
 
-  // <frame/iframe mozbrowser/mozapp>
+  // <frame/iframe mozbrowser>
   nsCOMPtr<nsIMozBrowserFrame> browserFrame = do_QueryInterface(target);
-  if (browserFrame && browserFrame->GetReallyIsBrowserOrApp()) {
+  if (browserFrame && browserFrame->GetReallyIsBrowser()) {
     return !!TabParent::GetFrom(target);
   }
 
   return false;
 }
 
-static bool
-CrossProcessSafeEvent(const WidgetEvent& aEvent)
-{
-  switch (aEvent.mClass) {
-  case eKeyboardEventClass:
-  case eWheelEventClass:
-    return true;
-  case eMouseEventClass:
-    switch (aEvent.mMessage) {
-    case eMouseDown:
-    case eMouseUp:
-    case eMouseMove:
-    case eContextMenu:
-    case eMouseEnterIntoWidget:
-    case eMouseExitFromWidget:
-    case eMouseTouchDrag:
-      return true;
-    default:
-      return false;
-    }
-  case eTouchEventClass:
-    switch (aEvent.mMessage) {
-    case eTouchStart:
-    case eTouchMove:
-    case eTouchEnd:
-    case eTouchCancel:
-      return true;
-    default:
-      return false;
-    }
-  case eDragEventClass:
-    switch (aEvent.mMessage) {
-    case eDragOver:
-    case eDragExit:
-    case eDrop:
-      return true;
-    default:
-      return false;
-    }
-  default:
-    return false;
-  }
-}
-
 bool
 EventStateManager::HandleCrossProcessEvent(WidgetEvent* aEvent,
                                            nsEventStatus *aStatus) {
   if (*aStatus == nsEventStatus_eConsumeNoDefault ||
-      aEvent->mFlags.mNoCrossProcessBoundaryForwarding ||
-      !CrossProcessSafeEvent(*aEvent)) {
+      !aEvent->CanBeSentToRemoteProcess()) {
     return false;
   }
 
@@ -2864,8 +2810,7 @@ EventStateManager::PostHandleKeyboardEvent(WidgetKeyboardEvent* aKeyboardEvent,
                                            nsEventStatus& aStatus,
                                            bool dispatchedToContentProcess)
 {
-  if (aStatus == nsEventStatus_eConsumeNoDefault ||
-      aKeyboardEvent->mInputMethodAppState == WidgetKeyboardEvent::eHandling) {
+  if (aStatus == nsEventStatus_eConsumeNoDefault) {
     return;
   }
 
@@ -2972,7 +2917,14 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
       }
 
       nsCOMPtr<nsIContent> activeContent;
-      if (nsEventStatus_eConsumeNoDefault != *aStatus) {
+      // When content calls PreventDefault on pointerdown, we also call
+      // PreventDefault on the subsequent mouse events to suppress default
+      // behaviors. Normally, aStatus should be nsEventStatus_eConsumeNoDefault
+      // when the event is DefaultPrevented but it's reset to
+      // nsEventStatus_eIgnore in EventStateManager::PreHandleEvent. So we also
+      // check if the event is DefaultPrevented.
+      if (nsEventStatus_eConsumeNoDefault != *aStatus &&
+          !aEvent->DefaultPrevented()) {
         nsCOMPtr<nsIContent> newFocus;      
         bool suppressBlur = false;
         if (mCurrentTarget) {
@@ -3047,7 +2999,7 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
           // If the mousedown happened inside a popup, don't
           // try to set focus on one of its containing elements
           const nsStyleDisplay* display = currFrame->StyleDisplay();
-          if (display->mDisplay == StyleDisplay::Popup) {
+          if (display->mDisplay == StyleDisplay::MozPopup) {
             newFocus = nullptr;
             break;
           }
@@ -3352,6 +3304,20 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
     {
       NS_ASSERTION(aEvent->mClass == eDragEventClass, "Expected a drag event");
 
+      // Check if the drag is occurring inside a scrollable area. If so, scroll
+      // the area when the mouse is near the edges.
+      if (mCurrentTarget && aEvent->mMessage == eDragOver) {
+        nsIFrame* checkFrame = mCurrentTarget;
+        while (checkFrame) {
+          nsIScrollableFrame* scrollFrame = do_QueryFrame(checkFrame);
+          // Break out so only the innermost scrollframe is scrolled.
+          if (scrollFrame && scrollFrame->DragScroll(aEvent)) {
+            break;
+          }
+          checkFrame = checkFrame->GetParent();
+        }
+      }
+
       nsCOMPtr<nsIDragSession> dragSession = nsContentUtils::GetDragSession();
       if (!dragSession)
         break;
@@ -3474,9 +3440,7 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
     GenerateDragDropEnterExit(presContext, aEvent->AsDragEvent());
     break;
 
-  case eBeforeKeyUp:
   case eKeyUp:
-  case eAfterKeyUp:
     break;
 
   case eKeyPress:
@@ -3842,7 +3806,7 @@ class MOZ_STACK_CLASS ESMEventCB : public EventDispatchingCallback
 public:
   explicit ESMEventCB(nsIContent* aTarget) : mTarget(aTarget) {}
 
-  virtual void HandleEvent(EventChainPostVisitor& aVisitor)
+  void HandleEvent(EventChainPostVisitor& aVisitor) override
   {
     if (aVisitor.mPresContext) {
       nsIFrame* frame = aVisitor.mPresContext->GetPrimaryFrameFor(mTarget);
@@ -4029,7 +3993,7 @@ public:
     }
   }
 
-  ~EnterLeaveDispatcher()
+  void Dispatch()
   {
     if (mEventMessage == eMouseEnter || mEventMessage == ePointerEnter) {
       for (int32_t i = mTargets.Count() - 1; i >= 0; --i) {
@@ -4114,6 +4078,7 @@ EventStateManager::NotifyMouseOut(WidgetMouseEvent* aMouseEvent,
   // Fire mouseout
   DispatchMouseOrPointerEvent(aMouseEvent, isPointer ? ePointerOut : eMouseOut,
                               wrapper->mLastOverElement, aMovingInto);
+  leaveDispatcher.Dispatch();
 
   wrapper->mLastOverFrame = nullptr;
   wrapper->mLastOverElement = nullptr;
@@ -4187,6 +4152,7 @@ EventStateManager::NotifyMouseOver(WidgetMouseEvent* aMouseEvent,
       DispatchMouseOrPointerEvent(aMouseEvent,
                                   isPointer ? ePointerOver : eMouseOver,
                                   aContent, lastOverElement);
+    enterDispatcher->Dispatch();
     wrapper->mLastOverElement = aContent;
   } else {
     wrapper->mLastOverFrame = nullptr;
@@ -4509,6 +4475,7 @@ EventStateManager::FireDragEnterOrExit(nsPresContext* aPresContext,
   event.mModifiers = aDragEvent->mModifiers;
   event.buttons = aDragEvent->buttons;
   event.relatedTarget = aRelatedTarget;
+  event.pointerId = aDragEvent->pointerId;
   event.inputSource = aDragEvent->inputSource;
 
   mCurrentTargetContent = aTargetContent;
@@ -4641,6 +4608,33 @@ EventStateManager::SetClickCount(WidgetMouseEvent* aEvent,
 }
 
 nsresult
+EventStateManager::InitAndDispatchClickEvent(WidgetMouseEvent* aEvent,
+                                             nsEventStatus* aStatus,
+                                             EventMessage aMessage,
+                                             nsIPresShell* aPresShell,
+                                             nsIContent* aMouseTarget,
+                                             nsWeakFrame aCurrentTarget,
+                                             bool aNoContentDispatch)
+{
+  WidgetMouseEvent event(aEvent->IsTrusted(), aMessage,
+                         aEvent->mWidget, WidgetMouseEvent::eReal);
+
+  event.mRefPoint = aEvent->mRefPoint;
+  event.mClickCount = aEvent->mClickCount;
+  event.mModifiers = aEvent->mModifiers;
+  event.buttons = aEvent->buttons;
+  event.mTime = aEvent->mTime;
+  event.mTimeStamp = aEvent->mTimeStamp;
+  event.mFlags.mNoContentDispatch = aNoContentDispatch;
+  event.button = aEvent->button;
+  event.pointerId = aEvent->pointerId;
+  event.inputSource = aEvent->inputSource;
+
+  return aPresShell->HandleEventWithTarget(&event, aCurrentTarget,
+                                           aMouseTarget, aStatus);
+}
+
+nsresult
 EventStateManager::CheckForAndDispatchClick(WidgetMouseEvent* aEvent,
                                             nsEventStatus* aStatus)
 {
@@ -4659,17 +4653,7 @@ EventStateManager::CheckForAndDispatchClick(WidgetMouseEvent* aEvent,
      (aEvent->button == WidgetMouseEvent::eMiddleButton ||
       aEvent->button == WidgetMouseEvent::eRightButton);
 
-    WidgetMouseEvent event(aEvent->IsTrusted(), eMouseClick,
-                           aEvent->mWidget, WidgetMouseEvent::eReal);
-    event.mRefPoint = aEvent->mRefPoint;
-    event.mClickCount = aEvent->mClickCount;
-    event.mModifiers = aEvent->mModifiers;
-    event.buttons = aEvent->buttons;
-    event.mTime = aEvent->mTime;
-    event.mTimeStamp = aEvent->mTimeStamp;
-    event.mFlags.mNoContentDispatch = notDispatchToContents;
-    event.button = aEvent->button;
-    event.inputSource = aEvent->inputSource;
+    bool fireAuxClick = notDispatchToContents;
 
     nsCOMPtr<nsIPresShell> presShell = mPresContext->GetPresShell();
     if (presShell) {
@@ -4688,23 +4672,22 @@ EventStateManager::CheckForAndDispatchClick(WidgetMouseEvent* aEvent,
 
       // HandleEvent clears out mCurrentTarget which we might need again
       nsWeakFrame currentTarget = mCurrentTarget;
-      ret = presShell->HandleEventWithTarget(&event, currentTarget,
-                                             mouseContent, aStatus);
+      ret = InitAndDispatchClickEvent(aEvent, aStatus, eMouseClick,
+                                      presShell, mouseContent, currentTarget,
+                                      notDispatchToContents);
+
       if (NS_SUCCEEDED(ret) && aEvent->mClickCount == 2 &&
           mouseContent && mouseContent->IsInComposedDoc()) {
         //fire double click
-        WidgetMouseEvent event2(aEvent->IsTrusted(), eMouseDoubleClick,
-                                aEvent->mWidget, WidgetMouseEvent::eReal);
-        event2.mRefPoint = aEvent->mRefPoint;
-        event2.mClickCount = aEvent->mClickCount;
-        event2.mModifiers = aEvent->mModifiers;
-        event2.buttons = aEvent->buttons;
-        event2.mFlags.mNoContentDispatch = notDispatchToContents;
-        event2.button = aEvent->button;
-        event2.inputSource = aEvent->inputSource;
-
-        ret = presShell->HandleEventWithTarget(&event2, currentTarget,
-                                               mouseContent, aStatus);
+        ret = InitAndDispatchClickEvent(aEvent, aStatus, eMouseDoubleClick,
+                                        presShell, mouseContent, currentTarget,
+                                        notDispatchToContents);
+      }
+      if (NS_SUCCEEDED(ret) && mouseContent && fireAuxClick &&
+          mouseContent->IsInComposedDoc()) {
+        ret = InitAndDispatchClickEvent(aEvent, aStatus, eMouseAuxClick,
+                                        presShell, mouseContent, currentTarget,
+                                        false);
       }
     }
   }
@@ -5143,7 +5126,7 @@ EventStateManager::FlushPendingEvents(nsPresContext* aPresContext)
   NS_PRECONDITION(nullptr != aPresContext, "nullptr ptr");
   nsIPresShell *shell = aPresContext->GetPresShell();
   if (shell) {
-    shell->FlushPendingNotifications(Flush_InterruptibleLayout);
+    shell->FlushPendingNotifications(FlushType::InterruptibleLayout);
   }
 }
 

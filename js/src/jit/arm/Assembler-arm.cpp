@@ -171,6 +171,18 @@ ABIArgGenerator::next(MIRType type)
     return softNext(type);
 }
 
+bool
+js::jit::IsUnaligned(const wasm::MemoryAccessDesc& access)
+{
+    if (!access.align())
+        return false;
+
+    if (access.type() == Scalar::Float64 && access.align() >= 4)
+        return false;
+
+    return access.align() < access.byteSize();
+}
+
 // Encode a standard register when it is being used as src1, the dest, and an
 // extra register. These should never be called with an InvalidReg.
 uint32_t
@@ -659,11 +671,12 @@ Assembler::asmMergeWith(Assembler& other)
 }
 
 void
-Assembler::executableCopy(uint8_t* buffer)
+Assembler::executableCopy(uint8_t* buffer, bool flushICache)
 {
     MOZ_ASSERT(isFinished);
     m_buffer.executableCopy(buffer);
-    AutoFlushICache::setRange(uintptr_t(buffer), m_buffer.size());
+    if (flushICache)
+        AutoFlushICache::setRange(uintptr_t(buffer), m_buffer.size());
 }
 
 uint32_t
@@ -1010,6 +1023,14 @@ Assembler::ConditionWithoutEqual(Condition cond)
         MOZ_CRASH("unexpected condition");
     }
 }
+
+Assembler::DoubleCondition
+Assembler::InvertCondition(DoubleCondition cond)
+{
+    const uint32_t ConditionInversionBit = 0x10000000;
+    return DoubleCondition(ConditionInversionBit ^ cond);
+}
+
 Imm8::TwoImm8mData
 Imm8::EncodeTwoImms(uint32_t imm)
 {
@@ -2202,17 +2223,16 @@ Assembler::as_BranchPool(uint32_t value, RepatchLabel* label, ARMBuffer::PoolEnt
 }
 
 BufferOffset
-Assembler::as_FImm64Pool(VFPRegister dest, wasm::RawF64 value, Condition c)
+Assembler::as_FImm64Pool(VFPRegister dest, double d, Condition c)
 {
     MOZ_ASSERT(dest.isDouble());
     PoolHintPun php;
     php.phd.init(0, c, PoolHintData::PoolVDTR, dest);
-    uint64_t d = value.bits();
     return allocEntry(1, 2, (uint8_t*)&php.raw, (uint8_t*)&d);
 }
 
 BufferOffset
-Assembler::as_FImm32Pool(VFPRegister dest, wasm::RawF32 value, Condition c)
+Assembler::as_FImm32Pool(VFPRegister dest, float f, Condition c)
 {
     // Insert floats into the double pool as they have the same limitations on
     // immediate offset. This wastes 4 bytes padding per float. An alternative
@@ -2220,7 +2240,6 @@ Assembler::as_FImm32Pool(VFPRegister dest, wasm::RawF32 value, Condition c)
     MOZ_ASSERT(dest.isSingle());
     PoolHintPun php;
     php.phd.init(0, c, PoolHintData::PoolVDTR, dest);
-    uint32_t f = value.bits();
     return allocEntry(1, 1, (uint8_t*)&php.raw, (uint8_t*)&f);
 }
 

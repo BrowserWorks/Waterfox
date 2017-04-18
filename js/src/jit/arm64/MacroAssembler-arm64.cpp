@@ -356,6 +356,12 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
 }
 
 void
+MacroAssembler::storeRegsInMask(LiveRegisterSet set, Address dest, Register scratch)
+{
+    MOZ_CRASH("NYI: storeRegsInMask");
+}
+
+void
 MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
 {
     // The offset of the data from the stack pointer.
@@ -523,6 +529,16 @@ MacroAssembler::call(wasm::SymbolicAddress imm)
 }
 
 void
+MacroAssembler::call(const Address& addr)
+{
+    vixl::UseScratchRegisterScope temps(this);
+    const Register scratch = temps.AcquireX().asUnsized();
+    syncStackPtr();
+    loadPtr(addr, scratch);
+    call(scratch);
+}
+
+void
 MacroAssembler::call(JitCode* c)
 {
     vixl::UseScratchRegisterScope temps(this);
@@ -577,6 +593,25 @@ MacroAssembler::patchNopToNearJump(uint8_t* jump, uint8_t* target)
 
 void
 MacroAssembler::patchNearJumpToNop(uint8_t* jump)
+{
+    MOZ_CRASH("NYI");
+}
+
+CodeOffset
+MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc)
+{
+    MOZ_CRASH("NYI");
+    return CodeOffset();
+}
+
+void
+MacroAssembler::patchNopToCall(uint8_t* call, uint8_t* target)
+{
+    MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::patchCallToNop(uint8_t* call)
 {
     MOZ_CRASH("NYI");
 }

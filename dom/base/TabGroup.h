@@ -13,9 +13,12 @@
 #include "nsTHashtable.h"
 #include "nsString.h"
 
+#include "mozilla/Atomics.h"
+#include "mozilla/dom/Dispatcher.h"
 #include "mozilla/RefPtr.h"
 
 namespace mozilla {
+class AbstractThread;
 class ThrottledEventQueue;
 namespace dom {
 
@@ -36,7 +39,7 @@ namespace dom {
 
 class DocGroup;
 
-class TabGroup final : public nsISupports
+class TabGroup final : public Dispatcher
 {
 private:
   class HashEntry : public nsCStringHashKey
@@ -58,6 +61,14 @@ public:
 
   static TabGroup*
   GetChromeTabGroup();
+
+  // Checks if the PBrowserChild associated with aWindow already has a TabGroup
+  // assigned to it in IPDL. Returns this TabGroup if it does. This could happen
+  // if the parent process created the PBrowser and we needed to assign a
+  // TabGroup immediately upon receiving the IPDL message. This method is main
+  // thread only.
+  static TabGroup*
+  GetFromWindowActor(mozIDOMWindowProxy* aWindow);
 
   explicit TabGroup(bool aIsChrome = false);
 
@@ -100,16 +111,35 @@ public:
 
   nsTArray<nsPIDOMWindowOuter*> GetTopLevelWindows();
 
-  // Get the event queue that associated windows can use to issue runnables to
-  // the main thread.  This may return nullptr during browser shutdown.
-  ThrottledEventQueue*
-  GetThrottledEventQueue() const;
+  // This method is always safe to call off the main thread.
+  virtual nsresult Dispatch(const char* aName,
+                            TaskCategory aCategory,
+                            already_AddRefed<nsIRunnable>&& aRunnable) override;
+
+  // This method is always safe to call off the main thread. The nsIEventTarget
+  // can always be used off the main thread.
+  virtual nsIEventTarget* EventTargetFor(TaskCategory aCategory) const override;
+
+  TabGroup* AsTabGroup() override { return this; }
+
+  virtual AbstractThread*
+  AbstractMainThreadFor(TaskCategory aCategory) override;
 
 private:
+  void EnsureThrottledEventQueues();
+
   ~TabGroup();
+
+  // Thread-safe members
+  Atomic<bool> mLastWindowLeft;
+  Atomic<bool> mThrottledQueuesInitialized;
+  const bool mIsChrome;
+
+  // Main thread only
   DocGroupMap mDocGroups;
   nsTArray<nsPIDOMWindowOuter*> mWindows;
-  RefPtr<ThrottledEventQueue> mThrottledEventQueue;
+  nsCOMPtr<nsIEventTarget> mEventTargets[size_t(TaskCategory::Count)];
+  RefPtr<AbstractThread> mAbstractThreads[size_t(TaskCategory::Count)];
 };
 
 } // namespace dom

@@ -11,6 +11,7 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLIFrameElement : HTMLElement {
   [SetterThrows, Pure]
            attribute DOMString src;
@@ -58,12 +59,6 @@ partial interface HTMLIFrameElement {
   // nsIDOMMozBrowserFrame
   [ChromeOnly,SetterThrows]
            attribute boolean mozbrowser;
-};
-
-partial interface HTMLIFrameElement {
-  // nsIMozBrowserFrame
-  [ChromeOnly]
-  readonly attribute DOMString appManifestURL;
 };
 
 HTMLIFrameElement implements MozFrameLoaderOwner;

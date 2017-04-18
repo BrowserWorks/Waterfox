@@ -63,7 +63,6 @@ var ignoreClasses = {
     "JSLocaleCallbacks" : true,
     "JSC::ExecutableAllocator" : true,
     "PRIOMethods": true,
-    "XPCOMFunctions" : true, // I'm a little unsure of this one
     "_MD_IOVector" : true,
     "malloc_table_t": true, // replace_malloc
     "malloc_hook_table_t": true, // replace_malloc
@@ -227,6 +226,10 @@ var ignoreFunctions = {
     "PR_GetCurrentThread" : true,
     "calloc" : true,
 };
+
+function extraGCFunctions() {
+    return ["ffi_call"];
+}
 
 function isProtobuf(name)
 {

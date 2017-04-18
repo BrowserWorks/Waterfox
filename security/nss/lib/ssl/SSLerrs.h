@@ -504,4 +504,7 @@ ER3(SSL_ERROR_MALFORMED_PSK_KEY_EXCHANGE_MODES, (SSL_ERROR_BASE + 158),
     "SSL received a malformed PSK key exchange modes extension.")
 
 ER3(SSL_ERROR_MISSING_PSK_KEY_EXCHANGE_MODES, (SSL_ERROR_BASE + 159),
-    "SSL expected a missing PSK key exchange modes extension.")
+    "SSL expected a PSK key exchange modes extension.")
+
+ER3(SSL_ERROR_DOWNGRADE_WITH_EARLY_DATA, (SSL_ERROR_BASE + 160),
+    "SSL got a pre-TLS 1.3 version even though we sent early data.")

@@ -197,7 +197,10 @@ static_assert(int(ReferrerPolicy::_empty) == 0 &&
               int(ReferrerPolicy::Origin) == 3 &&
               int(ReferrerPolicy::Origin_when_cross_origin) == 4 &&
               int(ReferrerPolicy::Unsafe_url) == 5 &&
-              int(ReferrerPolicy::EndGuard_) == 6,
+              int(ReferrerPolicy::Same_origin) == 6 &&
+              int(ReferrerPolicy::Strict_origin) == 7 &&
+              int(ReferrerPolicy::Strict_origin_when_cross_origin) == 8 &&
+              int(ReferrerPolicy::EndGuard_) == 9,
               "ReferrerPolicy values are as expected");
 static_assert(int(RequestMode::Same_origin) == 0 &&
               int(RequestMode::No_cors) == 1 &&
@@ -1117,8 +1120,8 @@ QueryCache(mozIStorageConnection* aConn, CacheId aCacheId,
   MOZ_DIAGNOSTIC_ASSERT(aConn);
   MOZ_DIAGNOSTIC_ASSERT(aMaxResults > 0);
 
-  if (!aParams.ignoreMethod() && !aRequest.method().LowerCaseEqualsLiteral("get")
-                              && !aRequest.method().LowerCaseEqualsLiteral("head"))
+  if (!aParams.ignoreMethod() &&
+      !aRequest.method().LowerCaseEqualsLiteral("get"))
   {
     return NS_OK;
   }
@@ -1971,15 +1974,15 @@ ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
 
   aSavedResponseOut->mValue.principalInfo() = void_t();
   if (!serializedInfo.IsEmpty()) {
-    nsAutoCString originNoSuffix;
-    PrincipalOriginAttributes attrs;
-    if (!attrs.PopulateFromOrigin(serializedInfo, originNoSuffix)) {
+    nsAutoCString specNoSuffix;
+    OriginAttributes attrs;
+    if (!attrs.PopulateFromOrigin(serializedInfo, specNoSuffix)) {
       NS_WARNING("Something went wrong parsing a serialized principal!");
       return NS_ERROR_FAILURE;
     }
 
     aSavedResponseOut->mValue.principalInfo() =
-      mozilla::ipc::ContentPrincipalInfo(attrs, originNoSuffix);
+      mozilla::ipc::ContentPrincipalInfo(attrs, void_t(), specNoSuffix);
   }
 
   rv = state->GetBlobAsUTF8String(6, aSavedResponseOut->mValue.channelInfo().securityInfo());
@@ -2558,7 +2561,9 @@ Migrate(mozIStorageConnection* aConn)
     MOZ_DIAGNOSTIC_ASSERT(currentVersion > lastVersion);
   }
 
-  MOZ_DIAGNOSTIC_ASSERT(currentVersion == kLatestSchemaVersion);
+  // Don't release assert this since people do sometimes share profiles
+  // across schema versions.  Our check in Validate() will catch it.
+  MOZ_ASSERT(currentVersion == kLatestSchemaVersion);
 
   if (rewriteSchema) {
     // Now overwrite the master SQL for the entries table to remove the column

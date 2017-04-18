@@ -13,10 +13,10 @@ function openViewSourceWindow(aURI, aCallback) {
     // Wait for the inner window to load, not viewSourceWindow.
     if (event.target.location == "view-source:" + aURI) {
       info("View source window opened: " + event.target.location);
-      viewSourceWindow.removeEventListener("pageshow", pageShowHandler, false);
+      viewSourceWindow.removeEventListener("pageshow", pageShowHandler);
       aCallback(viewSourceWindow);
     }
-  }, false);
+  });
 }
 
 function loadViewSourceWindow(URL) {
@@ -27,7 +27,7 @@ function loadViewSourceWindow(URL) {
 
 function closeViewSourceWindow(aWindow, aCallback) {
   Services.wm.addListener({
-    onCloseWindow: function() {
+    onCloseWindow() {
       Services.wm.removeListener(this);
       executeSoon(aCallback);
     }
@@ -49,7 +49,7 @@ function waitForViewSourceWindow() {
         let win = xulWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindow);
         win.addEventListener("load", function listener() {
-          win.removeEventListener("load", listener, false);
+          win.removeEventListener("load", listener);
           if (win.document.documentElement.getAttribute("windowtype") !=
               WINDOW_TYPE) {
             return;
@@ -57,7 +57,7 @@ function waitForViewSourceWindow() {
           // Found the window
           resolve(win);
           Services.wm.removeListener(windowListener);
-        }, false);
+        });
       },
       onCloseWindow() {},
       onWindowTitleChange() {}
@@ -184,9 +184,7 @@ function* openDocumentSelect(aURI, aCSSSelector) {
 }
 
 function pushPrefs(...aPrefs) {
-  return new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": aPrefs}, resolve);
-  });
+  return SpecialPowers.pushPrefEnv({"set": aPrefs});
 }
 
 function waitForPrefChange(pref) {

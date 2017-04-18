@@ -462,8 +462,8 @@ fuzzy-if(skiaContent,2,3) == 339289-1.html 339289-1-ref.html
 != 345563-sub.xhtml 345563-sup.xhtml
 == 346189-1.xul 346189-1-ref.xul
 fuzzy-if(skiaContent,4,2) == 346774-1a.html 346774-1-ref.html
-== 346774-1b.html 346774-1-ref.html
-== 346774-1c.html 346774-1-ref.html
+fuzzy-if(skiaContent,4,2) == 346774-1b.html 346774-1-ref.html
+fuzzy-if(skiaContent,4,2) == 346774-1c.html 346774-1-ref.html
 == 347348-1.xhtml 347348-1-ref.xhtml
 == 347496-1.xhtml 347496-1-ref.xhtml
 == 347912-1.html 347912-1-ref.html
@@ -1562,8 +1562,8 @@ needs-focus == 568441.html 568441-ref.html
 == 572598-1.html 572598-ref.html
 == 574898-1.html 574898-ref.html
 # 574907 is a windows-only issue, result on other platforms depends on details of font support
-random-if(!winWidget) fails-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)) == 574907-1.html 574907-1-ref.html # Bug 1258240
-random-if(!winWidget) fails-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)) == 574907-2.html 574907-2-ref.html # Bug 1258240
+random-if(!winWidget) random-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)) == 574907-1.html 574907-1-ref.html # Bug 1258240
+random-if(!winWidget) random-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)) == 574907-2.html 574907-2-ref.html # Bug 1258240
 # 574907-3 only worked under directwrite, and even there it now depends on the rendering mode; marking as random for now
 random-if(!winWidget) fails-if(winWidget&&!dwrite) random-if(winWidget&&dwrite) != 574907-3.html 574907-3-notref.html
 == 577838-1.html 577838-1-ref.html
@@ -1676,6 +1676,11 @@ fails-if(layersGPUAccelerated&&cocoaWidget) fuzzy-if(!layersGPUAccelerated,41,26
 needs-focus == 652301-1a.html 652301-1-ref.html
 needs-focus == 652301-1b.html 652301-1-ref.html
 fuzzy-if(skiaContent,2,5) == 652775-1.html 652775-1-ref.html
+HTTP == 652991-1a.html 652991-1-ref.html
+HTTP == 652991-1b.html 652991-1-ref.html
+HTTP == 652991-2.html 652991-2-ref.html
+HTTP == 652991-3.html 652991-3-ref.html
+HTTP == 652991-4.html 652991-4-ref.html
 fuzzy-if(skiaContent,1,5) == 653930-1.html 653930-1-ref.html
 HTTP(..) == 654057-1.html 654057-1-ref.html
 fuzzy-if(skiaContent,1,4500) == 654950-1.html 654950-1-ref.html # Quartz alpha blending doesn't match GL alpha blending
@@ -1712,7 +1717,7 @@ needs-focus != 703186-1.html 703186-2.html
 fuzzy-if(true,1,21) fuzzy-if(d2d,68,173) fuzzy-if(cocoaWidget,1,170) == 718521.html 718521-ref.html # bug 773482
 == 720987.html 720987-ref.html
 == 722888-1.html 722888-1-ref.html
-fuzzy-if(Android,1,40000) == 722923-1.html 722923-1-ref.html
+fuzzy(1,40000) == 722923-1.html 722923-1-ref.html
 == 723484-1.html 723484-1-ref.html
 random-if(Android) == 728983-1.html 728983-1-ref.html
 == 729143-1.html 729143-1-ref.html
@@ -1820,7 +1825,7 @@ HTTP(..) == 983985-2.html 983985-2-ref.html
 == 985303-1a.html 985303-1-ref.html
 == 985303-1b.html 985303-1-ref.html
 == 987680-1.html 987680-1-ref.html
-fuzzy-if(d2d,1,36) == 991046-1.html 991046-1-ref.html
+fuzzy-if(d2d,1,601) == 991046-1.html 991046-1-ref.html
 pref(layout.css.overflow-clip-box.enabled,true) fuzzy-if(skiaContent,2,845) == 992447.html 992447-ref.html
 == 1003425-1.html 1003425-1-ref.html
 == 1003425-2.html 1003425-2-ref.html
@@ -1978,15 +1983,8 @@ fuzzy-if(Android,27,874) fuzzy-if(gtkWidget,14,29) == 1313772.xhtml 1313772-ref.
 fuzzy(2,320000) == 1315113-1.html 1315113-1-ref.html
 fuzzy(2,20000) == 1315113-2.html 1315113-2-ref.html
 == 1315632-1.html 1315632-1-ref.html
-fails == 1316719-1a.html 1316719-1-ref.html
-fails == 1316719-1b.html 1316719-1-ref.html
-fails == 1316719-1c.html 1316719-1-ref.html
+fuzzy(2,40000) == 1316719-1a.html 1316719-1-ref.html
+fuzzy(2,40000) == 1316719-1b.html 1316719-1-ref.html
+fuzzy(2,40000) == 1316719-1c.html 1316719-1-ref.html
 skip-if(Android) != 1318769-1.html 1318769-1-ref.html
-
-HTTP == 652991-1a.html 652991-1-ref.html
-HTTP == 652991-1b.html 652991-1-ref.html
-HTTP == 652991-2.html 652991-2-ref.html
-HTTP == 652991-3.html 652991-3-ref.html
-HTTP == 652991-4.html 652991-4-ref.html
-
-
+== 1322512-1.html 1322512-1-ref.html

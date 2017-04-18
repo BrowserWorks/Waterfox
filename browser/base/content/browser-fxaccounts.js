@@ -84,12 +84,34 @@ var gFxAccounts = {
     return Services.prefs.getBoolPref("services.sync.sendTabToDevice.enabled");
   },
 
+  isSendableURI(aURISpec) {
+    if (!aURISpec) {
+      return false;
+    }
+    // Disallow sending tabs with more than 65535 characters.
+    if (aURISpec.length > 65535) {
+      return false;
+    }
+    try {
+      // Filter out un-sendable URIs -- things like local files, object urls, etc.
+      const unsendableRegexp = new RegExp(
+        Services.prefs.getCharPref("services.sync.engine.tabs.filteredUrls"), "i");
+      return !unsendableRegexp.test(aURISpec);
+    } catch (e) {
+      // The preference has been removed, or is an invalid regexp, so we log an
+      // error and treat it as a valid URI -- and the more problematic case is
+      // the length, which we've already addressed.
+      Cu.reportError(`Failed to build url filter regexp for send tab: ${e}`);
+      return true;
+    }
+  },
+
   get remoteClients() {
     return Weave.Service.clientsEngine.remoteClients
            .sort((a, b) => a.name.localeCompare(b.name));
   },
 
-  init: function () {
+  init() {
     // Bail out if we're already initialized and for pop-up windows.
     if (this._initialized || !window.toolbar.visible) {
       return;
@@ -108,7 +130,7 @@ var gFxAccounts = {
     this.updateUI();
   },
 
-  uninit: function () {
+  uninit() {
     if (!this._initialized) {
       return;
     }
@@ -120,7 +142,7 @@ var gFxAccounts = {
     this._initialized = false;
   },
 
-  observe: function (subject, topic, data) {
+  observe(subject, topic, data) {
     switch (topic) {
       case "fxa-migration:state-changed":
         this.onMigrationStateChanged(data, subject);
@@ -134,7 +156,7 @@ var gFxAccounts = {
     }
   },
 
-  onMigrationStateChanged: function () {
+  onMigrationStateChanged() {
     // Since we nuked most of the migration code, this notification will fire
     // once after legacy Sync has been disconnected (and should never fire
     // again)
@@ -176,12 +198,12 @@ var gFxAccounts = {
     this.updateAppMenuItem();
   },
 
-  handleEvent: function (event) {
+  handleEvent(event) {
     this._inCustomizationMode = event.type == "customizationstarting";
     this.updateAppMenuItem();
   },
 
-  updateUI: function () {
+  updateUI() {
     // It's possible someone signed in to FxA after seeing our notification
     // about "Legacy Sync migration" (which now is actually "Legacy Sync
     // auto-disconnect") so kill that notification if it still exists.
@@ -195,7 +217,7 @@ var gFxAccounts = {
   },
 
   // Note that updateAppMenuItem() returns a Promise that's only used by tests.
-  updateAppMenuItem: function () {
+  updateAppMenuItem() {
     let profileInfoEnabled = false;
     try {
       profileInfoEnabled = Services.prefs.getBoolPref("identity.fxaccounts.profile_image.enabled");
@@ -325,7 +347,7 @@ var gFxAccounts = {
     });
   },
 
-  onMenuPanelCommand: function () {
+  onMenuPanelCommand() {
 
     switch (this.panelUIFooter.getAttribute("fxastatus")) {
     case "signedin":
@@ -346,11 +368,11 @@ var gFxAccounts = {
     PanelUI.hide();
   },
 
-  openPreferences: function () {
+  openPreferences() {
     openPreferences("paneSync", { urlParams: { entrypoint: "menupanel" } });
   },
 
-  openAccountsPage: function (action, urlParams={}) {
+  openAccountsPage(action, urlParams = {}) {
     let params = new URLSearchParams();
     if (action) {
       params.set("action", action);
@@ -366,15 +388,15 @@ var gFxAccounts = {
     });
   },
 
-  openSignInAgainPage: function (entryPoint) {
+  openSignInAgainPage(entryPoint) {
     this.openAccountsPage("reauth", { entrypoint: entryPoint });
   },
 
-  sendTabToDevice: function (url, clientId, title) {
+  sendTabToDevice(url, clientId, title) {
     Weave.Service.clientsEngine.sendURIToClientForDisplay(url, clientId, title);
   },
 
-  populateSendTabToDevicesMenu: function (devicesPopup, url, title) {
+  populateSendTabToDevicesMenu(devicesPopup, url, title) {
     // remove existing menu items
     while (devicesPopup.hasChildNodes()) {
       devicesPopup.removeChild(devicesPopup.firstChild);
@@ -383,10 +405,9 @@ var gFxAccounts = {
     const fragment = document.createDocumentFragment();
 
     const onTargetDeviceCommand = (event) => {
-      const clientId = event.target.getAttribute("clientId");
-      const clients = clientId
-                      ? [clientId]
-                      : this.remoteClients.map(client => client.id);
+      let clients = event.target.getAttribute("clientId") ?
+        [event.target.getAttribute("clientId")] :
+        this.remoteClients.map(client => client.id);
 
       clients.forEach(clientId => this.sendTabToDevice(url, clientId, title));
     }
@@ -416,30 +437,39 @@ var gFxAccounts = {
     devicesPopup.appendChild(fragment);
   },
 
-  updateTabContextMenu: function (aPopupMenu) {
+  updateTabContextMenu(aPopupMenu, aTargetTab) {
     if (!this.sendTabToDeviceEnabled) {
       return;
     }
 
-    const remoteClientPresent = this.remoteClients.length > 0;
+    const targetURI = aTargetTab.linkedBrowser.currentURI.spec;
+    const showSendTab = this.remoteClients.length > 0 && this.isSendableURI(targetURI);
+
     ["context_sendTabToDevice", "context_sendTabToDevice_separator"]
-    .forEach(id => { document.getElementById(id).hidden = !remoteClientPresent });
+    .forEach(id => { document.getElementById(id).hidden = !showSendTab });
   },
 
-  initPageContextMenu: function (contextMenu) {
+  initPageContextMenu(contextMenu) {
     if (!this.sendTabToDeviceEnabled) {
       return;
     }
 
     const remoteClientPresent = this.remoteClients.length > 0;
     // showSendLink and showSendPage are mutually exclusive
-    const showSendLink = remoteClientPresent
-                         && (contextMenu.onSaveableLink || contextMenu.onPlainTextLink);
+    let showSendLink = remoteClientPresent
+                       && (contextMenu.onSaveableLink || contextMenu.onPlainTextLink);
     const showSendPage = !showSendLink && remoteClientPresent
                          && !(contextMenu.isContentSelected ||
                               contextMenu.onImage || contextMenu.onCanvas ||
                               contextMenu.onVideo || contextMenu.onAudio ||
-                              contextMenu.onLink || contextMenu.onTextInput);
+                              contextMenu.onLink || contextMenu.onTextInput)
+                         && this.isSendableURI(contextMenu.browser.currentURI.spec);
+
+    if (showSendLink) {
+      // This isn't part of the condition above since we don't want to try and
+      // send the page if a link is clicked on or selected but is not sendable.
+      showSendLink = this.isSendableURI(contextMenu.linkURL);
+    }
 
     ["context-sendpagetodevice", "context-sep-sendpagetodevice"]
     .forEach(id => contextMenu.showItem(id, showSendPage));
@@ -448,7 +478,7 @@ var gFxAccounts = {
   }
 };
 
-XPCOMUtils.defineLazyGetter(gFxAccounts, "FxAccountsCommon", function () {
+XPCOMUtils.defineLazyGetter(gFxAccounts, "FxAccountsCommon", function() {
   return Cu.import("resource://gre/modules/FxAccountsCommon.js", {});
 });
 

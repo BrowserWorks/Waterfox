@@ -45,14 +45,14 @@ this.TelemetryUtils = {
    * @param aMsec A number of milliseconds since Unix epoch.
    * @return The number of whole days since Unix epoch.
    */
-  millisecondsToDays: function(aMsec) {
+  millisecondsToDays(aMsec) {
     return Math.floor(aMsec / MILLISECONDS_PER_DAY);
   },
 
   /**
    * Takes a date and returns it trunctated to a date with daily precision.
    */
-  truncateToDays: function(date) {
+  truncateToDays(date) {
     return new Date(date.getFullYear(),
                     date.getMonth(),
                     date.getDate(),
@@ -67,7 +67,7 @@ this.TelemetryUtils = {
    * @return {Boolean} True if the absolute time difference is within the tolerance, false
    *                   otherwise.
    */
-  areTimesClose: function(t1, t2, tolerance) {
+  areTimesClose(t1, t2, tolerance) {
     return Math.abs(t1 - t2) <= tolerance;
   },
 
@@ -76,7 +76,7 @@ this.TelemetryUtils = {
    * @param {Object} date The date object to check.
    * @return {Object} The Date object representing the next midnight.
    */
-  getNextMidnight: function(date) {
+  getNextMidnight(date) {
     let nextMidnight = new Date(this.truncateToDays(date));
     nextMidnight.setDate(nextMidnight.getDate() + 1);
     return nextMidnight;
@@ -89,7 +89,7 @@ this.TelemetryUtils = {
    * @return {Object} The Date object representing the closes midnight, or null if midnight
    *                  is not within the midnight tolerance.
    */
-  getNearestMidnight: function(date, tolerance) {
+  getNearestMidnight(date, tolerance) {
     let lastMidnight = this.truncateToDays(date);
     if (this.areTimesClose(date.getTime(), lastMidnight.getTime(), tolerance)) {
       return lastMidnight;
@@ -102,7 +102,7 @@ this.TelemetryUtils = {
     return null;
   },
 
-  generateUUID: function() {
+  generateUUID() {
     let str = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID().toString();
     // strip {}
     return str.substring(1, str.length - 1);
@@ -114,7 +114,7 @@ this.TelemetryUtils = {
    * @param {Object} aEndDate The ending date.
    * @return {Integer} The number of months between the two dates.
    */
-  getElapsedTimeInMonths: function(aStartDate, aEndDate) {
+  getElapsedTimeInMonths(aStartDate, aEndDate) {
     return (aEndDate.getMonth() - aStartDate.getMonth())
            + 12 * (aEndDate.getFullYear() - aStartDate.getFullYear());
   },
@@ -125,7 +125,7 @@ this.TelemetryUtils = {
    * @param {Object} date The input date.
    * @return {String} The local time ISO string.
    */
-  toLocalTimeISOString: function(date) {
+  toLocalTimeISOString(date) {
     function padNumber(number, places) {
       number = number.toString();
       while (number.length < places) {
@@ -136,10 +136,10 @@ this.TelemetryUtils = {
 
     let sign = (n) => n >= 0 ? "+" : "-";
     // getTimezoneOffset counter-intuitively returns -60 for UTC+1.
-    let tzOffset = - date.getTimezoneOffset();
+    let tzOffset = -date.getTimezoneOffset();
 
     // YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00)
-    return    padNumber(date.getFullYear(), 4)
+    return padNumber(date.getFullYear(), 4)
       + "-" + padNumber(date.getMonth() + 1, 2)
       + "-" + padNumber(date.getDate(), 2)
       + "T" + padNumber(date.getHours(), 2)

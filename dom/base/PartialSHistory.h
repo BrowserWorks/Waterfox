@@ -42,17 +42,28 @@ private:
   already_AddRefed<nsISHistory> GetSessionHistory();
   already_AddRefed<TabParent> GetTabParent();
 
+  nsresult SHistoryDidUpdate(bool aTruncate = false);
+
   // The cache of number of entries in corresponding nsISHistory. It's only
   // used for remote process case. If nsISHistory is in-process, mCount will not
   // be used at all.
   uint32_t mCount;
 
+  // The current local index of the active document in this partial SHistory.
+  uint32_t mIndex;
+
   // The cache of globalIndexOffset in corresponding nsISHistory. It's only
   // used for remote process case.
   uint32_t mGlobalIndexOffset;
 
+  // One of the possible active states from nsIPartialSHistory
+  int32_t mActive;
+
   // The frameloader which owns this PartialSHistory.
   nsCOMPtr<nsIFrameLoader> mOwnerFrameLoader;
+
+  // The GroupedSHistory which this PartialSHistory is part of, or null.
+  nsCOMPtr<nsIGroupedSHistory> mGroupedSHistory;
 };
 
 } // namespace dom

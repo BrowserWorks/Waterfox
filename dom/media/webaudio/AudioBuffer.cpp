@@ -27,7 +27,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(AudioBuffer)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(AudioBuffer)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(AudioBuffer)
@@ -157,11 +156,13 @@ AudioBufferMemoryTracker::CollectReports(nsIHandleReportCallback* aHandleReport,
   return NS_OK;
 }
 
-AudioBuffer::AudioBuffer(AudioContext* aContext, uint32_t aNumberOfChannels,
-                         uint32_t aLength, float aSampleRate,
+AudioBuffer::AudioBuffer(nsPIDOMWindowInner* aWindow,
+                         uint32_t aNumberOfChannels,
+                         uint32_t aLength,
+                         float aSampleRate,
                          already_AddRefed<ThreadSharedFloatArrayBufferList>
                            aInitialContents)
-  : mOwnerWindow(do_GetWeakReference(aContext->GetOwner())),
+  : mOwnerWindow(do_GetWeakReference(aWindow)),
     mSharedChannels(aInitialContents),
     mLength(aLength),
     mSampleRate(aSampleRate)
@@ -180,6 +181,23 @@ AudioBuffer::~AudioBuffer()
   mozilla::DropJSObjects(this);
 }
 
+/* static */ already_AddRefed<AudioBuffer>
+AudioBuffer::Constructor(const GlobalObject& aGlobal,
+                         const AudioBufferOptions& aOptions,
+                         ErrorResult& aRv)
+{
+  if (!aOptions.mNumberOfChannels) {
+    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    return nullptr;
+  }
+
+  nsCOMPtr<nsPIDOMWindowInner> window =
+    do_QueryInterface(aGlobal.GetAsSupports());
+
+  return Create(window, aOptions.mNumberOfChannels, aOptions.mLength,
+                aOptions.mSampleRate, aRv);
+}
+
 void
 AudioBuffer::ClearJSChannels()
 {
@@ -187,7 +205,7 @@ AudioBuffer::ClearJSChannels()
 }
 
 /* static */ already_AddRefed<AudioBuffer>
-AudioBuffer::Create(AudioContext* aContext, uint32_t aNumberOfChannels,
+AudioBuffer::Create(nsPIDOMWindowInner* aWindow, uint32_t aNumberOfChannels,
                     uint32_t aLength, float aSampleRate,
                     already_AddRefed<ThreadSharedFloatArrayBufferList>
                       aInitialContents,
@@ -205,7 +223,7 @@ AudioBuffer::Create(AudioContext* aContext, uint32_t aNumberOfChannels,
   }
 
   RefPtr<AudioBuffer> buffer =
-    new AudioBuffer(aContext, aNumberOfChannels, aLength, aSampleRate,
+    new AudioBuffer(aWindow, aNumberOfChannels, aLength, aSampleRate,
                     Move(aInitialContents));
 
   return buffer.forget();

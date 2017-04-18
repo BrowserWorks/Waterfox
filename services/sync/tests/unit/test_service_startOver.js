@@ -14,7 +14,7 @@ BlaEngine.prototype = {
   __proto__: SyncEngine.prototype,
 
   removed: false,
-  removeClientData: function() {
+  removeClientData() {
     this.removed = true;
   }
 
@@ -28,8 +28,8 @@ function run_test() {
   run_next_test();
 }
 
-add_identity_test(this, function* test_resetLocalData() {
-  yield configureIdentity();
+add_identity_test(this, async function test_resetLocalData() {
+  await configureIdentity();
   Service.status.enforceBackoff = true;
   Service.status.backoffInterval = 42;
   Service.status.minimumNextSync = 23;

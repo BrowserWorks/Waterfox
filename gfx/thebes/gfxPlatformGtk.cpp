@@ -348,6 +348,16 @@ gfxPlatformGtk::MakePlatformFont(const nsAString& aFontName,
                                            aFontData, aLength);
 }
 
+FT_Library
+gfxPlatformGtk::GetFTLibrary()
+{
+    if (sUseFcFontList) {
+        return gfxFcPlatformFontList::GetFTLibrary();
+    }
+
+    return gfxPangoFontGroup::GetFTLibrary();
+}
+
 bool
 gfxPlatformGtk::IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags)
 {
@@ -894,13 +904,6 @@ gfxPlatformGtk::CreateHardwareVsyncSource()
     NS_WARNING("SGI_video_sync unsupported. Falling back to software vsync.");
   }
   return gfxPlatform::CreateHardwareVsyncSource();
-}
-
-bool
-gfxPlatformGtk::SupportsApzTouchInput() const
-{
-  int value = gfxPrefs::TouchEventsEnabled();
-  return value == 1 || value == 2;
 }
 
 #endif

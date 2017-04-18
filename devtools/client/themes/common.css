@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+
 @import url("resource://devtools/client/themes/splitters.css");
+@namespace html url("http://www.w3.org/1999/xhtml");
 
 :root {
   font: message-box;
@@ -30,9 +32,13 @@
 }
 
 :root[platform="linux"] .devtools-monospace {
-  font-size: 80%;
+  font-size: 11px;
 }
 
+/* Override wrong system font from forms.css */
+html|button, html|select {
+  font: message-box;
+}
 
 /* Autocomplete Popup */
 
@@ -275,16 +281,13 @@ checkbox:-moz-focusring {
   content: "";
   display: block;
   position: absolute;
-  left: 50%;
-  top: 50%;
-  margin: -8px 0 0 -8px;
+  offset-inline-start: 50%;
+  offset-block-start: 50%;
+  margin-block-start: -8px;
+  margin-inline-start: -8px;
   background-size: cover;
   background-repeat: no-repeat;
   transition: opacity 0.05s ease-in-out;
-}
-
-.devtools-button:-moz-focusring {
-  outline: none;
 }
 
 /* Standalone buttons */
@@ -396,7 +399,7 @@ checkbox:-moz-focusring {
 .theme-firebug .devtools-button.checked,
 .theme-firebug .devtools-toolbarbutton:not([label])[checked=true],
 .theme-firebug .devtools-toolbarbutton:not([label])[open=true] {
-  background-color: #C8D8E7;
+  background: var(--toolbarbutton-checked-background);
 }
 
 /* Icon-and-text buttons */
@@ -486,8 +489,8 @@ checkbox:-moz-focusring {
  */
 .menu-filter-button {
   -moz-appearance: none;
-  background: rgba(128,128,128,0.1);
-  border: none;
+  background: var(--toolbarbutton-background);
+  border: var(--toolbarbutton-border);
   border-radius: 2px;
   min-width: 0;
   padding: 0 5px;
@@ -496,7 +499,8 @@ checkbox:-moz-focusring {
 }
 
 .menu-filter-button:hover {
-  background: rgba(128,128,128,0.2);
+  background: var(--toolbarbutton-hover-background);
+  border: var(--toolbarbutton-hover-border);
 }
 
 .menu-filter-button:hover:active {
@@ -504,8 +508,9 @@ checkbox:-moz-focusring {
 }
 
 .menu-filter-button:not(:active).checked {
-  background-color: var(--theme-selection-background);
-  color: var(--theme-selection-color);
+  background: var(--toolbarbutton-checked-background);
+  border: var(--toolbarbutton-checked-border);
+  color: var(--toolbarbutton-checked-color);
 }
 
 /* Text input */

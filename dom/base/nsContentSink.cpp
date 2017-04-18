@@ -536,7 +536,7 @@ nsContentSink::ProcessLinkHeader(const nsAString& aLinkData)
             while (ch != kNullCh && ch != kSemicolon && ch != kComma) {
               ++end;
 
-              ch = *end;
+              ch = *(end + 1);
             }
           }
         }
@@ -714,6 +714,14 @@ nsContentSink::ProcessLink(const nsSubstring& aAnchor, const nsSubstring& aHref,
   // prefetch href if relation is "next" or "prefetch"
   if (hasPrefetch || (linkTypes & nsStyleLinkElement::eNEXT)) {
     PrefetchHref(aHref, mDocument, hasPrefetch);
+  }
+
+  if (linkTypes & nsStyleLinkElement::ePRERENDER) {
+    nsCOMPtr<nsIURI> href;
+    nsresult rv = NS_NewURI(getter_AddRefs(href), aHref);
+    if (NS_SUCCEEDED(rv)) {
+      mDocument->PrerenderHref(href);
+    }
   }
 
   if (!aHref.IsEmpty() && (linkTypes & nsStyleLinkElement::eDNS_PREFETCH)) {

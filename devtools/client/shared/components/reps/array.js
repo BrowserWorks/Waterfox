@@ -10,8 +10,12 @@
 define(function (require, exports, module) {
   // Dependencies
   const React = require("devtools/client/shared/vendor/react");
-  const { createFactories } = require("./rep-utils");
+  const {
+    createFactories,
+    wrapRender,
+  } = require("./rep-utils");
   const { Caption } = createFactories(require("./caption"));
+  const { MODE } = require("./constants");
 
   // Shortcuts
   const DOM = React.DOM;
@@ -22,6 +26,13 @@ define(function (require, exports, module) {
    */
   let ArrayRep = React.createClass({
     displayName: "ArrayRep",
+
+    propTypes: {
+      // @TODO Change this to Object.values once it's supported in Node's version of V8
+      mode: React.PropTypes.oneOf(Object.keys(MODE).map(key => MODE[key])),
+      objectLink: React.PropTypes.func,
+      object: React.PropTypes.array.isRequired,
+    },
 
     getTitle: function (object, context) {
       return "[" + object.length + "]";
@@ -40,13 +51,13 @@ define(function (require, exports, module) {
           items.push(ItemRep({
             object: value,
             // Hardcode tiny mode to avoid recursive handling.
-            mode: "tiny",
+            mode: MODE.TINY,
             delim: delim
           }));
         } catch (exc) {
           items.push(ItemRep({
             object: exc,
-            mode: "tiny",
+            mode: MODE.TINY,
             delim: delim
           }));
         }
@@ -110,21 +121,24 @@ define(function (require, exports, module) {
     onClickBracket: function (event) {
     },
 
-    render: function () {
-      let mode = this.props.mode || "short";
-      let object = this.props.object;
+    render: wrapRender(function () {
+      let {
+        object,
+        mode = MODE.SHORT,
+      } = this.props;
+
       let items;
       let brackets;
       let needSpace = function (space) {
         return space ? { left: "[ ", right: " ]"} : { left: "[", right: "]"};
       };
 
-      if (mode == "tiny") {
+      if (mode === MODE.TINY) {
         let isEmpty = object.length === 0;
         items = [DOM.span({className: "length"}, isEmpty ? "" : object.length)];
         brackets = needSpace(false);
       } else {
-        let max = (mode == "short") ? 3 : 300;
+        let max = (mode === MODE.SHORT) ? 3 : 10;
         items = this.arrayIterator(object, max);
         brackets = needSpace(items.length > 0);
       }
@@ -149,7 +163,7 @@ define(function (require, exports, module) {
           )
         )
       );
-    },
+    }),
   });
 
   /**
@@ -158,7 +172,13 @@ define(function (require, exports, module) {
   let ItemRep = React.createFactory(React.createClass({
     displayName: "ItemRep",
 
-    render: function () {
+    propTypes: {
+      object: React.PropTypes.any.isRequired,
+      delim: React.PropTypes.string.isRequired,
+      mode: React.PropTypes.symbol,
+    },
+
+    render: wrapRender(function () {
       const { Rep } = createFactories(require("./rep"));
 
       let object = this.props.object;
@@ -170,7 +190,7 @@ define(function (require, exports, module) {
           delim
         )
       );
-    }
+    })
   }));
 
   function supportsObject(object, type) {

@@ -291,7 +291,7 @@ nsDownloadScanner::ScannerThreadFunction(void *p)
 // the main thread too
 class ReleaseDispatcher : public mozilla::Runnable {
 public:
-  ReleaseDispatcher(nsISupports *ptr)
+  explicit ReleaseDispatcher(nsISupports *ptr)
     : mPtr(ptr) {}
   NS_IMETHOD Run();
 private:
@@ -514,7 +514,7 @@ nsDownloadScanner::Scan::DoScan()
     NS_DispatchToMainThread(this);
   } else {
     // We timed out, so just release
-    ReleaseDispatcher* releaser = new ReleaseDispatcher(this);
+    ReleaseDispatcher* releaser = new ReleaseDispatcher(ToSupports(this));
     if(releaser) {
       NS_ADDREF(releaser);
       NS_DispatchToMainThread(releaser);
@@ -698,7 +698,7 @@ nsDownloadScannerWatchdog::WatchdogThread(void *p) {
     waitStatus = WaitForMultipleObjects(2, (waitHandles+1), FALSE, waitTime);
     CloseHandle(hThread);
 
-    ReleaseDispatcher* releaser = new ReleaseDispatcher(scan);
+    ReleaseDispatcher* releaser = new ReleaseDispatcher(ToSupports(scan));
     if(!releaser)
       continue;
     NS_ADDREF(releaser);

@@ -27,18 +27,21 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VideoDecoderParent)
 
   VideoDecoderParent(VideoDecoderManagerParent* aParent,
+                     const VideoInfo& aVideoInfo,
+                     const layers::TextureFactoryIdentifier& aIdentifier,
                      TaskQueue* aManagerTaskQueue,
-                     TaskQueue* aDecodeTaskQueue);
+                     TaskQueue* aDecodeTaskQueue,
+                     bool* aSuccess);
 
   void Destroy();
 
   // PVideoDecoderParent
-  bool RecvInit(const VideoInfo& aVideoInfo, const layers::TextureFactoryIdentifier& aIdentifier) override;
-  bool RecvInput(const MediaRawDataIPDL& aData) override;
-  bool RecvFlush() override;
-  bool RecvDrain() override;
-  bool RecvShutdown() override;
-  bool RecvSetSeekThreshold(const int64_t& aTime) override;
+  mozilla::ipc::IPCResult RecvInit() override;
+  mozilla::ipc::IPCResult RecvInput(const MediaRawDataIPDL& aData) override;
+  mozilla::ipc::IPCResult RecvFlush() override;
+  mozilla::ipc::IPCResult RecvDrain() override;
+  mozilla::ipc::IPCResult RecvShutdown() override;
+  mozilla::ipc::IPCResult RecvSetSeekThreshold(const int64_t& aTime) override;
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
@@ -50,6 +53,8 @@ public:
   bool OnReaderTaskQueue() override;
 
 private:
+  bool OnManagerThread();
+
   ~VideoDecoderParent();
 
   RefPtr<VideoDecoderManagerParent> mParent;

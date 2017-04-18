@@ -32,6 +32,7 @@
 #if defined(MOZ_CRASHREPORTER)
 #include "nsExceptionHandler.h"
 #endif
+#include "GeckoProfiler.h"
 
 #if defined(XP_WIN)
 #include <windows.h>
@@ -173,10 +174,9 @@ RunWatchdog(void* arg)
 class PR_CloseDelete
 {
 public:
-  constexpr PR_CloseDelete() {}
+  constexpr PR_CloseDelete() = default;
 
-  PR_CloseDelete(const PR_CloseDelete& aOther)
-  {}
+  PR_CloseDelete(const PR_CloseDelete& aOther) = default;
 
   void operator()(PRFileDesc* aPtr) const
   {
@@ -215,6 +215,7 @@ PRMonitor* gWriteReady = nullptr;
 
 void RunWriter(void* arg)
 {
+  AutoProfilerRegister registerThread("Shutdown Statistics Writer");
   PR_SetCurrentThreadName("Shutdown Statistics Writer");
 
   MOZ_LSAN_INTENTIONALLY_LEAK_OBJECT(arg);
@@ -342,8 +343,8 @@ nsTerminator::SelfInit()
     return NS_ERROR_UNEXPECTED;
   }
 
-  for (size_t i = 0; i < ArrayLength(sShutdownSteps); ++i) {
-    DebugOnly<nsresult> rv = os->AddObserver(this, sShutdownSteps[i].mTopic, false);
+  for (auto& shutdownStep : sShutdownSteps) {
+    DebugOnly<nsresult> rv = os->AddObserver(this, shutdownStep.mTopic, false);
     NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "AddObserver failed");
   }
 
@@ -507,18 +508,18 @@ nsTerminator::UpdateTelemetry()
   UniquePtr<nsCString> telemetryData(new nsCString());
   telemetryData->AppendLiteral("{");
   size_t fields = 0;
-  for (size_t i = 0; i < ArrayLength(sShutdownSteps); ++i) {
-    if (sShutdownSteps[i].mTicks < 0) {
+  for (auto& shutdownStep : sShutdownSteps) {
+    if (shutdownStep.mTicks < 0) {
       // Ignore this field.
       continue;
     }
     if (fields++ > 0) {
       telemetryData->Append(", ");
     }
-    telemetryData->AppendLiteral("\"");
-    telemetryData->Append(sShutdownSteps[i].mTopic);
-    telemetryData->AppendLiteral("\": ");
-    telemetryData->AppendInt(sShutdownSteps[i].mTicks);
+    telemetryData->AppendLiteral(R"(")");
+    telemetryData->Append(shutdownStep.mTopic);
+    telemetryData->AppendLiteral(R"(": )");
+    telemetryData->AppendInt(shutdownStep.mTicks);
   }
   telemetryData->AppendLiteral("}");
 

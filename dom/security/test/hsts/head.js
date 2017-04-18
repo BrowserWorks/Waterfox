@@ -16,6 +16,8 @@
  */
 'use strict';
 
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+
 var TOP_URI = "https://example.com/browser/dom/security/test/hsts/file_priming-top.html";
 
 var test_servers = {
@@ -47,6 +49,7 @@ var test_settings = {
     use_hsts: true,
     send_hsts_priming: true,
     type: 'script',
+    timeout: 0,
     result: {
       'no-ssl': 'insecure',
       'reject-upgrade': 'insecure',
@@ -60,6 +63,7 @@ var test_settings = {
     use_hsts: true,
     send_hsts_priming: true,
     type: 'script',
+    timeout: 0,
     result: {
       'no-ssl': 'blocked',
       'reject-upgrade': 'blocked',
@@ -74,6 +78,7 @@ var test_settings = {
     use_hsts: false,
     send_hsts_priming: true,
     type: 'script',
+    timeout: 0,
     result: {
       'no-ssl': 'blocked',
       'reject-upgrade': 'blocked',
@@ -87,6 +92,7 @@ var test_settings = {
     use_hsts: true,
     send_hsts_priming: true,
     type: 'img',
+    timeout: 0,
     result: {
       'no-ssl': 'insecure',
       'reject-upgrade': 'insecure',
@@ -100,6 +106,7 @@ var test_settings = {
     use_hsts: true,
     send_hsts_priming: true,
     type: 'img',
+    timeout: 0,
     result: {
       'no-ssl': 'blocked',
       'reject-upgrade': 'blocked',
@@ -109,10 +116,11 @@ var test_settings = {
   // mixed active content is blocked, priming will upgrade (css)
   block_active_css: {
     block_active: true,
-    block_display: false,
+    block_display: true,
     use_hsts: true,
     send_hsts_priming: true,
     type: 'css',
+    timeout: 0,
     result: {
       'no-ssl': 'blocked',
       'reject-upgrade': 'blocked',
@@ -128,17 +136,121 @@ var test_settings = {
     send_hsts_priming: true,
     type: 'script',
     redir: 'same',
+    timeout: 0,
     result: {
       'no-ssl': 'blocked',
       'reject-upgrade': 'blocked',
       'prime-hsts': 'secure',
     },
   },
+  // mixed active content is blocked, priming will upgrade
+  // redirect to the same host
+  timeout: {
+    block_active: true,
+    block_display: true,
+    use_hsts: true,
+    send_hsts_priming: true,
+    type: 'script',
+    timeout: 100000,
+    result: {
+      'no-ssl': 'blocked',
+      'reject-upgrade': 'blocked',
+      'prime-hsts': 'blocked',
+    },
+  },
 }
 // track which test we are on
 var which_test = "";
 
-const Observer = {
+/**
+ * A stream listener that just forwards all calls
+ */
+var StreamListener = function(subject) {
+  let channel = subject.QueryInterface(Ci.nsIHttpChannel);
+  let traceable = subject.QueryInterface(Ci.nsITraceableChannel);
+
+  this.uri = channel.URI.asciiSpec;
+  this.listener = traceable.setNewListener(this);
+  return this;
+};
+
+// Next three methods are part of `nsIStreamListener` interface and are
+// invoked by `nsIInputStreamPump.asyncRead`.
+StreamListener.prototype.onDataAvailable = function(request, context, input, offset, count) {
+  if (request.status == Cr.NS_ERROR_ABORT) {
+    this.listener = null;
+    return Cr.NS_SUCCESS;
+  }
+  let listener = this.listener;
+  if (listener) {
+    try {
+      let rv = listener.onDataAvailable(request, context, input, offset, count);
+      if (rv != Cr.NS_ERROR_ABORT) {
+        // If the channel gets canceled, we sometimes get NS_ERROR_ABORT here.
+        // Anything else is an error.
+        return rv;
+      }
+    } catch (e) {
+      if (e != Cr.NS_ERROR_ABORT) {
+        return e;
+      }
+    }
+  }
+  return Cr.NS_SUCCESS;
+};
+
+// Next two methods implement `nsIRequestObserver` interface and are invoked
+// by `nsIInputStreamPump.asyncRead`.
+StreamListener.prototype.onStartRequest = function(request, context) {
+  if (request.status == Cr.NS_ERROR_ABORT) {
+    this.listener = null;
+    return Cr.NS_SUCCESS;
+  }
+  let listener = this.listener;
+  if (listener) {
+    try {
+      let rv = listener.onStartRequest(request, context);
+      if (rv != Cr.NS_ERROR_ABORT) {
+        // If the channel gets canceled, we sometimes get NS_ERROR_ABORT here.
+        // Anything else is an error.
+        return rv;
+      }
+    } catch (e) {
+      if (e != Cr.NS_ERROR_ABORT) {
+        return e;
+      }
+    }
+  }
+  return Cr.NS_SUCCESS;
+};
+
+// Called to signify the end of an asynchronous request. We only care to
+// discover errors.
+StreamListener.prototype.onStopRequest = function(request, context, status) {
+  if (status == Cr.NS_ERROR_ABORT) {
+    this.listener = null;
+    return Cr.NS_SUCCESS;
+  }
+  let listener = this.listener;
+  if (listener) {
+    try {
+      let rv = listener.onStopRequest(request, context, status);
+      if (rv != Cr.NS_ERROR_ABORT) {
+        // If the channel gets canceled, we sometimes get NS_ERROR_ABORT here.
+        // Anything else is an error.
+        return rv;
+      }
+    } catch (e) {
+      if (e != Cr.NS_ERROR_ABORT) {
+        return e;
+      }
+    }
+  }
+  return Cr.NS_SUCCESS;
+};
+
+var Observer = {
+  listeners: {},
   observe: function (subject, topic, data) {
     switch (topic) {
       case 'console-api-log-event':
@@ -150,10 +262,13 @@ const Observer = {
     }
     throw "Can't handle topic "+topic;
   },
-  add_observers: function (services) {
+  add_observers: function (services, include_on_modify = false) {
     services.obs.addObserver(Observer, "console-api-log-event", false);
     services.obs.addObserver(Observer, "http-on-examine-response", false);
     services.obs.addObserver(Observer, "http-on-modify-request", false);
+  },
+  cleanup: function () {
+    this.listeners = {};
   },
   // When a load is blocked which results in an error event within a page, the
   // test logs to the console.
@@ -182,7 +297,7 @@ const Observer = {
   },
   get_current_test: function(uri) {
     for (let item in test_servers) {
-      let re = RegExp('https?://'+test_servers[item].host);
+      let re = RegExp('https?://'+test_servers[item].host+'.*\/browser/dom/security/test/hsts/file_testserver.sjs');
       if (re.test(uri)) {
         return test_servers[item];
       }
@@ -191,16 +306,26 @@ const Observer = {
   },
   http_on_modify_request: function (subject, topic, data) {
     let channel = subject.QueryInterface(Ci.nsIHttpChannel);
-    if (channel.requestMethod != 'HEAD') {
-      return;
-    }
+    let uri = channel.URI.asciiSpec;
 
     let curTest = this.get_current_test(channel.URI.asciiSpec);
 
     if (!curTest) {
       return;
     }
+    
+    if (!(uri in this.listeners)) {
+      // Add an nsIStreamListener to ensure that the listener is not NULL
+      this.listeners[uri] = new StreamListener(subject);
+    }
 
+    if (channel.requestMethod != 'HEAD') {
+      return;
+    }
+    if (typeof ok === 'undefined') {
+      // we are in the wrong thread and ok and is not available
+      return;
+    }
     ok(!(curTest.id in test_settings[which_test].priming), "Already saw a priming request for " + curTest.id);
     test_settings[which_test].priming[curTest.id] = true;
   },
@@ -209,6 +334,7 @@ const Observer = {
   http_on_examine_response: function (subject, topic, data) {
     let channel = subject.QueryInterface(Ci.nsIHttpChannel);
     let curTest = this.get_current_test(channel.URI.asciiSpec);
+    let uri = channel.URI.asciiSpec;
 
     if (!curTest) {
       return;
@@ -227,6 +353,9 @@ const Observer = {
     is(result, test_settings[which_test].result[curTest.id],
         "HSTS priming result " + which_test + ":" + curTest.id);
     test_settings[which_test].finished[curTest.id] = result;
+    if (this.listeners[uri]) {
+      this.listeners[uri] = undefined;
+    }
   },
 };
 
@@ -253,6 +382,8 @@ function do_cleanup() {
 
   Services.obs.removeObserver(Observer, "console-api-log-event");
   Services.obs.removeObserver(Observer, "http-on-examine-response");
+
+  Observer.cleanup();
 }
 
 function SetupPrefTestEnvironment(which, additional_prefs) {
@@ -272,7 +403,8 @@ function SetupPrefTestEnvironment(which, additional_prefs) {
                ["security.mixed_content.use_hsts",
                 settings.use_hsts],
                ["security.mixed_content.send_hsts_priming",
-                settings.send_hsts_priming]];
+                settings.send_hsts_priming],
+  ];
 
   if (additional_prefs) {
     for (let idx in additional_prefs) {
@@ -280,23 +412,24 @@ function SetupPrefTestEnvironment(which, additional_prefs) {
     }
   }
 
-  console.log("prefs=%s", prefs);
-
   SpecialPowers.pushPrefEnv({'set': prefs});
 }
 
 // make the top-level test uri
-function build_test_uri(base_uri, host, test_id, type) {
+function build_test_uri(base_uri, host, test_id, type, timeout) {
   return base_uri +
           "?host=" + escape(host) +
           "&id=" + escape(test_id) +
-          "&type=" + escape(type);
+          "&type=" + escape(type) +
+          "&timeout=" + escape(timeout)
+    ;
 }
 
 // open a new tab, load the test, and wait for it to finish
 function execute_test(test, mimetype) {
   var src = build_test_uri(TOP_URI, test_servers[test].host,
-      test, test_settings[which_test].type);
+      test, test_settings[which_test].type,
+      test_settings[which_test].timeout);
 
   let tab = openTab(src);
   test_servers[test]['tab'] = tab;

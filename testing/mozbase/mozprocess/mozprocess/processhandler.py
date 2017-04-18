@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import
 
+import errno
 import os
 import signal
 import subprocess
@@ -151,16 +152,28 @@ class ProcessHandlerMixin(object):
                         winprocess.GetExitCodeProcess(self._handle)
                         self._cleanup()
             else:
-                def send_sig(sig):
+                def send_sig(sig, retries=0):
                     pid = self.detached_pid or self.pid
                     if not self._ignore_children:
                         try:
                             os.killpg(pid, sig)
                         except BaseException as e:
-                            # Error 3 is a "no such process" failure, which is fine because the
+                            # On Mac OSX if the process group contains zombie
+                            # processes, killpg results in an EPERM.
+                            # In this case, zombie processes need to be reaped
+                            # before continuing
+                            # Note: A negative pid refers to the entire process
+                            # group
+                            if retries < 1 and getattr(e, "errno", None) == errno.EPERM:
+                                try:
+                                    os.waitpid(-pid, 0)
+                                finally:
+                                    return send_sig(sig, retries + 1)
+
+                            # ESRCH is a "no such process" failure, which is fine because the
                             # application might already have been terminated itself. Any other
                             # error would indicate a problem in killing the process.
-                            if getattr(e, "errno", None) != 3:
+                            if getattr(e, "errno", None) != errno.ESRCH:
                                 print >> sys.stderr, "Could not terminate process: %s" % self.pid
                                 raise
                     else:
@@ -739,7 +752,7 @@ falling back to not using job objects for managing child processes"""
 
         if isPosix:
             # Keep track of the initial process group in case the process detaches itself
-            self.proc.pgid = os.getpgid(self.proc.pid)
+            self.proc.pgid = self._getpgid(self.proc.pid)
             self.proc.detached_pid = None
 
         self.processOutput(timeout=timeout, outputTimeout=outputTimeout)
@@ -850,6 +863,15 @@ falling back to not using job objects for managing child processes"""
     def pid(self):
         return self.proc.pid
 
+    @classmethod
+    def _getpgid(cls, pid):
+        try:
+            return os.getpgid(pid)
+        except OSError as e:
+            # Do not raise for "No such process"
+            if e.errno != errno.ESRCH:
+                raise
+
     def check_for_detached(self, new_pid):
         """Check if the current process has been detached and mark it appropriately.
 
@@ -864,13 +886,7 @@ falling back to not using job objects for managing child processes"""
             return
 
         if isPosix:
-            new_pgid = None
-            try:
-                new_pgid = os.getpgid(new_pid)
-            except OSError as e:
-                # Do not consume errors except "No such process"
-                if e.errno != 3:
-                    raise
+            new_pgid = self._getpgid(new_pid)
 
             if new_pgid and new_pgid != self.proc.pgid:
                 self.proc.detached_pid = new_pid

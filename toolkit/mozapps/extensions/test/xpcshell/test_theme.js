@@ -21,7 +21,7 @@ profileDir.append("extensions");
 // when expected
 var gLWThemeChanged = false;
 var LightweightThemeObserver = {
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic != "lightweight-theme-styling-update")
       return;
 
@@ -297,8 +297,7 @@ function run_test_3() {
       addons.forEach(function(a) {
         if (a.id == "1@personas.mozilla.org") {
           seen = true;
-        }
-        else {
+        } else {
           dump("Checking theme " + a.id + "\n");
           do_check_false(a.isActive);
           do_check_true(a.userDisabled);
@@ -375,8 +374,7 @@ function run_test_4() {
       addons.forEach(function(a) {
         if (a.id == "2@personas.mozilla.org") {
           seen = true;
-        }
-        else {
+        } else {
           dump("Checking theme " + a.id + "\n");
           do_check_false(a.isActive);
           do_check_true(a.userDisabled);
@@ -1038,8 +1036,7 @@ function run_test_20() {
     try {
       d.userDisabled = true;
       do_throw("Disabling the default theme should throw an exception");
-    }
-    catch (e) {
+    } catch (e) {
     }
 
     do_execute_soon(run_test_21);
@@ -1068,7 +1065,7 @@ function run_test_21() {
 
     AddonManager.getAddonByID("1@personas.mozilla.org", function(p1) {
       AddonManager.addAddonListener({
-        onEnabling: function(aAddon) {
+        onEnabling(aAddon) {
           do_check_false(hasFlag(aAddon.permissions, AddonManager.PERM_CAN_ENABLE));
           do_check_true(hasFlag(aAddon.pendingOperations, AddonManager.PENDING_ENABLE));
 

@@ -219,7 +219,6 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt32)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt64)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsFloat)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsDouble)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsVoid)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsInterfacePointer)
 
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsConsoleService, Init)
@@ -865,7 +864,7 @@ SetICUMemoryFunctions()
   if (!sICUReporterInitialized) {
     if (!JS_SetICUMemoryFunctions(ICUReporter::Alloc, ICUReporter::Realloc,
                                   ICUReporter::Free)) {
-      NS_RUNTIMEABORT("JS_SetICUMemoryFunctions failed.");
+      MOZ_CRASH("JS_SetICUMemoryFunctions failed.");
     }
     sICUReporterInitialized = true;
   }
@@ -878,7 +877,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   HangMonitor::NotifyActivity();
 
   if (!NS_IsMainThread()) {
-    NS_RUNTIMEABORT("Shutdown on wrong thread");
+    MOZ_CRASH("Shutdown on wrong thread");
   }
 
   nsresult rv;
@@ -1051,7 +1050,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   // JS pseudo-stack's internal reference to the main thread JSContext,
   // duplicating the call in XPCJSContext::~XPCJSContext() in case that
   // never fired.
-  if (PseudoStack* stack = mozilla_get_pseudo_stack()) {
+  if (PseudoStack* stack = profiler_get_pseudo_stack()) {
     stack->sampleContext(nullptr);
   }
 #endif

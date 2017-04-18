@@ -68,8 +68,7 @@ function QI_node(aNode, aIID) {
   var result = null;
   try {
     result = aNode.QueryInterface(aIID);
-  }
-  catch (e) {
+  } catch (e) {
   }
   return result;
 }
@@ -175,8 +174,7 @@ function serializeNode(aNode, aIsLivemark) {
 
     if (aNode.tags)
       data.tags = aNode.tags;
-  }
-  else if (PlacesUtils.nodeIsContainer(aNode)) {
+  } else if (PlacesUtils.nodeIsContainer(aNode)) {
     // Tag containers accept only uri nodes.
     if (data.grandParentId == PlacesUtils.tagsFolderId)
       throw new Error("Unexpected node type");
@@ -189,19 +187,16 @@ function serializeNode(aNode, aIsLivemark) {
         data.type = PlacesUtils.TYPE_X_MOZ_PLACE;
         data.uri = aNode.uri;
         data.concreteId = concreteId;
-      }
-      else {
+      } else {
         // This is a bookmark folder.
         data.type = PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER;
       }
-    }
-    else {
+    } else {
       // This is a grouped container query, dynamically generated.
       data.type = PlacesUtils.TYPE_X_MOZ_PLACE;
       data.uri = aNode.uri;
     }
-  }
-  else if (PlacesUtils.nodeIsSeparator(aNode)) {
+  } else if (PlacesUtils.nodeIsSeparator(aNode)) {
     // Tag containers don't accept separators.
     if (data.parent == PlacesUtils.tagsFolderId ||
         data.grandParentId == PlacesUtils.tagsFolderId)
@@ -291,6 +286,18 @@ const SYNC_BOOKMARK_VALIDATORS = Object.freeze({
   site: v => v === null ? v : BOOKMARK_VALIDATORS.url(v),
   title: BOOKMARK_VALIDATORS.title,
   url: BOOKMARK_VALIDATORS.url,
+});
+
+// Sync change records are passed between `PlacesSyncUtils` and the Sync
+// bookmarks engine, and are used to update an item's sync status and change
+// counter at the end of a sync.
+const SYNC_CHANGE_RECORD_VALIDATORS = Object.freeze({
+  modified: simpleValidateFunc(v => typeof v == "number" && v >= 0),
+  counter: simpleValidateFunc(v => typeof v == "number" && v >= 0),
+  status: simpleValidateFunc(v => typeof v == "number" &&
+                                  Object.values(PlacesUtils.bookmarks.SYNC_STATUS).includes(v)),
+  tombstone: simpleValidateFunc(v => v === true || v === false),
+  synced: simpleValidateFunc(v => v === true || v === false),
 });
 
 this.PlacesUtils = {
@@ -509,6 +516,9 @@ this.PlacesUtils = {
    * @param behavior (object) [optional]
    *        Object defining special behavior for some of the properties.
    *        The following behaviors may be optionally set:
+   *         - required: this property is required.
+   *         - replaceWith: this property will be overwritten with the value
+   *                        provided
    *         - requiredIf: if the provided condition is satisfied, then this
    *                       property is required.
    *         - validIf: if the provided condition is not satisfied, then this
@@ -519,7 +529,7 @@ this.PlacesUtils = {
    * @throws if the object contains invalid data.
    * @note any unknown properties are pass-through.
    */
-  validateItemProperties(validators, props, behavior={}) {
+  validateItemProperties(validators, props, behavior = {}) {
     if (!props)
       throw new Error("Input should be a valid object");
     // Make a shallow copy of `props` to avoid mutating the original object
@@ -536,10 +546,13 @@ this.PlacesUtils = {
       }
       if (behavior[prop].hasOwnProperty("validIf") && input[prop] !== undefined &&
           !behavior[prop].validIf(input)) {
-        throw new Error(`Invalid value for property '${prop}': ${input[prop]}`);
+        throw new Error(`Invalid value for property '${prop}': ${JSON.stringify(input[prop])}`);
       }
       if (behavior[prop].hasOwnProperty("defaultValue") && input[prop] === undefined) {
         input[prop] = behavior[prop].defaultValue;
+      }
+      if (behavior[prop].hasOwnProperty("replaceWith")) {
+        input[prop] = behavior[prop].replaceWith;
       }
     }
 
@@ -565,6 +578,7 @@ this.PlacesUtils = {
 
   BOOKMARK_VALIDATORS,
   SYNC_BOOKMARK_VALIDATORS,
+  SYNC_CHANGE_RECORD_VALIDATORS,
 
   QueryInterface: XPCOMUtils.generateQI([
     Ci.nsIObserver
@@ -572,8 +586,7 @@ this.PlacesUtils = {
   ]),
 
   _shutdownFunctions: [],
-  registerShutdownFunction: function PU_registerShutdownFunction(aFunc)
-  {
+  registerShutdownFunction: function PU_registerShutdownFunction(aFunc) {
     // If this is the first registered function, add the shutdown observer.
     if (this._shutdownFunctions.length == 0) {
       Services.obs.addObserver(this, this.TOPIC_SHUTDOWN, false);
@@ -582,8 +595,7 @@ this.PlacesUtils = {
   },
 
   // nsIObserver
-  observe: function PU_observe(aSubject, aTopic, aData)
-  {
+  observe: function PU_observe(aSubject, aTopic, aData) {
     switch (aTopic) {
       case this.TOPIC_SHUTDOWN:
         Services.obs.removeObserver(this, this.TOPIC_SHUTDOWN);
@@ -610,29 +622,25 @@ this.PlacesUtils = {
     }
   },
 
-  onPageAnnotationSet: function() {},
-  onPageAnnotationRemoved: function() {},
+  onPageAnnotationSet() {},
+  onPageAnnotationRemoved() {},
 
 
   // nsITransactionListener
 
-  didDo: function PU_didDo(aManager, aTransaction, aDoResult)
-  {
+  didDo: function PU_didDo(aManager, aTransaction, aDoResult) {
     updateCommandsOnActiveWindow();
   },
 
-  didUndo: function PU_didUndo(aManager, aTransaction, aUndoResult)
-  {
+  didUndo: function PU_didUndo(aManager, aTransaction, aUndoResult) {
     updateCommandsOnActiveWindow();
   },
 
-  didRedo: function PU_didRedo(aManager, aTransaction, aRedoResult)
-  {
+  didRedo: function PU_didRedo(aManager, aTransaction, aRedoResult) {
     updateCommandsOnActiveWindow();
   },
 
-  didBeginBatch: function PU_didBeginBatch(aManager, aResult)
-  {
+  didBeginBatch: function PU_didBeginBatch(aManager, aResult) {
     // A no-op transaction is pushed to the stack, in order to make safe and
     // easy to implement "Undo" an unknown number of transactions (including 0),
     // "above" beginBatch and endBatch. Otherwise,implementing Undo that way
@@ -641,11 +649,11 @@ this.PlacesUtils = {
     // initial createItem transaction, or even worse, the batched editing of
     // some other item.
     // DO NOT MOVE this to the window scope, that would leak (bug 490068)!
-    this.transactionManager.doTransaction({ doTransaction: function() {},
-                                            undoTransaction: function() {},
-                                            redoTransaction: function() {},
+    this.transactionManager.doTransaction({ doTransaction() {},
+                                            undoTransaction() {},
+                                            redoTransaction() {},
                                             isTransient: false,
-                                            merge: function() { return false; }
+                                            merge() { return false; }
                                           });
   },
 
@@ -923,18 +931,17 @@ this.PlacesUtils = {
         // but drag and drop of files from the shell has parts.length = 1
         if (parts.length != 1 && parts.length % 2)
           break;
-        for (let i = 0; i < parts.length; i=i+2) {
+        for (let i = 0; i < parts.length; i = i + 2) {
           let uriString = parts[i];
           let titleString = "";
-          if (parts.length > i+1)
-            titleString = parts[i+1];
+          if (parts.length > i + 1)
+            titleString = parts[i + 1];
           else {
             // for drag and drop of files, try to use the leafName as title
             try {
               titleString = this._uri(uriString).QueryInterface(Ci.nsIURL)
                                 .fileName;
-            }
-            catch (e) {}
+            } catch (e) {}
           }
           // note:  this._uri() will throw if uriString is not a valid URI
           if (this._uri(uriString)) {
@@ -951,7 +958,7 @@ this.PlacesUtils = {
           let uriString = parts[i];
           // text/uri-list is converted to TYPE_UNICODE but it could contain
           // comments line prepended by #, we should skip them
-          if (uriString.substr(0, 1) == '\x23')
+          if (uriString.substr(0, 1) == "\x23")
             continue;
           // note: this._uri() will throw if uriString is not a valid URI
           if (uriString != "" && this._uri(uriString))
@@ -1057,8 +1064,7 @@ this.PlacesUtils = {
     aAnnos.forEach(function(anno) {
       if (anno.value === undefined || anno.value === null) {
         annosvc.removePageAnnotation(aURI, anno.name);
-      }
-      else {
+      } else {
         let flags = ("flags" in anno) ? anno.flags : 0;
         let expires = ("expires" in anno) ?
           anno.expires : Ci.nsIAnnotationService.EXPIRE_NEVER;
@@ -1082,8 +1088,7 @@ this.PlacesUtils = {
     aAnnos.forEach(function(anno) {
       if (anno.value === undefined || anno.value === null) {
         annosvc.removeItemAnnotation(aItemId, anno.name, aSource);
-      }
-      else {
+      } else {
         let flags = ("flags" in anno) ? anno.flags : 0;
         let expires = ("expires" in anno) ?
           anno.expires : Ci.nsIAnnotationService.EXPIRE_NEVER;
@@ -1166,8 +1171,7 @@ this.PlacesUtils = {
     stmt.params.post_data = aPostData;
     try {
       stmt.execute();
-    }
-    finally {
+    } finally {
       stmt.finalize();
     }
 
@@ -1206,8 +1210,7 @@ this.PlacesUtils = {
       if (!stmt.executeStep())
         return null;
       return stmt.row.post_data;
-    }
-    finally {
+    } finally {
       stmt.finalize();
     }
   },
@@ -1234,8 +1237,7 @@ this.PlacesUtils = {
       if (!stmt.executeStep())
         return [ null, null ];
       return [ stmt.row.url, stmt.row.post_data ];
-    }
-    finally {
+    } finally {
       stmt.finalize();
     }
   },
@@ -1475,8 +1477,7 @@ this.PlacesUtils = {
    * @note Children of live bookmarks folders are excluded. The callback function is
    *       not invoked if the request is cancelled or hits an error.
    */
-  asyncGetBookmarkIds: function PU_asyncGetBookmarkIds(aURI, aCallback)
-  {
+  asyncGetBookmarkIds: function PU_asyncGetBookmarkIds(aURI, aCallback) {
     let abort = false;
     let itemIds = [];
     Task.spawn(function* () {
@@ -1613,7 +1614,7 @@ this.PlacesUtils = {
       handleError: function handleError(aResultCode, aPlaceInfo) {
         deferred.reject(new Components.Exception("Error", aResultCode));
       },
-      handleCompletion: function() {
+      handleCompletion() {
         deferred.resolve(this._placeInfo);
       }
     });
@@ -1629,10 +1630,10 @@ this.PlacesUtils = {
    *           properties: { uri, dataLen, data, mimeType }
    * @rejects JavaScript exception if the given url has no associated favicon.
    */
-  promiseFaviconData: function (aPageUrl) {
+  promiseFaviconData(aPageUrl) {
     let deferred = Promise.defer();
     PlacesUtils.favicons.getFaviconDataForPage(NetUtil.newURI(aPageUrl),
-      function (aURI, aDataLen, aData, aMimeType) {
+      function(aURI, aDataLen, aData, aMimeType) {
         if (aURI) {
           deferred.resolve({ uri: aURI,
                              dataLen: aDataLen,
@@ -1652,7 +1653,7 @@ this.PlacesUtils = {
    * @resolves to the nsIURL of the favicon link
    * @rejects if the given url has no associated favicon.
    */
-  promiseFaviconLinkUrl: function (aPageUrl) {
+  promiseFaviconLinkUrl(aPageUrl) {
     let deferred = Promise.defer();
     if (!(aPageUrl instanceof Ci.nsIURI))
       aPageUrl = NetUtil.newURI(aPageUrl);
@@ -1694,6 +1695,10 @@ this.PlacesUtils = {
    */
   promiseItemId(aGuid) {
     return GuidHelper.getItemId(aGuid)
+  },
+
+  promiseManyItemIds(aGuids) {
+    return GuidHelper.getManyItemIds(aGuids);
   },
 
   /**
@@ -1843,7 +1848,7 @@ this.PlacesUtils = {
           break;
       }
       return item;
-    }.bind(this);
+    };
 
     const QUERY_STR =
       `/* do not warn (bug no): cannot use an index */
@@ -1963,7 +1968,7 @@ XPCOMUtils.defineLazyGetter(PlacesUtils, "history", function() {
              .QueryInterface(Ci.nsIBrowserHistory)
              .QueryInterface(Ci.nsPIPlacesDatabase);
   return Object.freeze(new Proxy(hs, {
-    get: function(target, name) {
+    get(target, name) {
       let property, object;
       if (name in target) {
         property = target[name];
@@ -2019,7 +2024,7 @@ XPCOMUtils.defineLazyGetter(PlacesUtils, "transactionManager", function() {
   let tm = Cc["@mozilla.org/transactionmanager;1"].
            createInstance(Ci.nsITransactionManager);
   tm.AddListener(PlacesUtils);
-  this.registerShutdownFunction(function () {
+  this.registerShutdownFunction(function() {
     // Clear all references to local transactions in the transaction manager,
     // this prevents from leaking it.
     this.transactionManager.RemoveListener(this);
@@ -2040,7 +2045,7 @@ XPCOMUtils.defineLazyGetter(PlacesUtils, "transactionManager", function() {
   // referenced by the transaction manager has the module itself as global.
   return Object.create(tm, {
     "doTransaction": {
-      value: function(aTransaction) {
+      value(aTransaction) {
         tm.doTransaction(aTransaction);
       }
     }
@@ -2145,7 +2150,7 @@ var Keywords = {
    * @resolves to an object in the form: { keyword, url, postData },
    *           or null if a keyword entry was not found.
    */
-  fetch(keywordOrEntry, onResult=null) {
+  fetch(keywordOrEntry, onResult = null) {
     if (typeof(keywordOrEntry) == "string")
       keywordOrEntry = { keyword: keywordOrEntry };
 
@@ -2232,7 +2237,7 @@ var Keywords = {
     // This also checks href for validity
     url = new URL(url);
 
-    return PlacesUtils.withConnectionWrapper("Keywords.insert",  Task.async(function*(db) {
+    return PlacesUtils.withConnectionWrapper("Keywords.insert", Task.async(function*(db) {
         let cache = yield gKeywordsCachePromise;
 
         // Trying to set the same keyword is a no-op.
@@ -2253,7 +2258,7 @@ var Keywords = {
              SET place_id = (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url),
                  post_data = :post_data
              WHERE keyword = :keyword
-            `, { url: url.href, keyword: keyword, post_data: postData });
+            `, { url: url.href, keyword, post_data: postData });
           yield notifyKeywordChange(oldEntry.url.href, "", source);
         } else {
           // An entry for the given page could be missing, in such a case we need to
@@ -2268,14 +2273,17 @@ var Keywords = {
           yield db.executeCached(
             `INSERT INTO moz_keywords (keyword, place_id, post_data)
              VALUES (:keyword, (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url), :post_data)
-            `, { url: url.href, keyword: keyword, post_data: postData });
+            `, { url: url.href, keyword, post_data: postData });
         }
+
+        yield PlacesSyncUtils.bookmarks.addSyncChangesForBookmarksWithURL(
+          db, url, PlacesSyncUtils.bookmarks.determineSyncChangeDelta(source));
 
         cache.set(keyword, { keyword, url, postData });
 
         // In any case, notify about the new keyword.
         yield notifyKeywordChange(url.href, keyword, source);
-      }.bind(this))
+      })
     );
   },
 
@@ -2298,7 +2306,7 @@ var Keywords = {
     let { keyword,
           source = Ci.nsINavBookmarksService.SOURCE_DEFAULT } = keywordOrEntry;
     keyword = keywordOrEntry.keyword.trim().toLowerCase();
-    return PlacesUtils.withConnectionWrapper("Keywords.remove",  Task.async(function*(db) {
+    return PlacesUtils.withConnectionWrapper("Keywords.remove", Task.async(function*(db) {
       let cache = yield gKeywordsCachePromise;
       if (!cache.has(keyword))
         return;
@@ -2308,9 +2316,12 @@ var Keywords = {
       yield db.execute(`DELETE FROM moz_keywords WHERE keyword = :keyword`,
                        { keyword });
 
+      yield PlacesSyncUtils.bookmarks.addSyncChangesForBookmarksWithURL(
+        db, url, PlacesSyncUtils.bookmarks.determineSyncChangeDelta(source));
+
       // Notify bookmarks about the removal.
       yield notifyKeywordChange(url.href, "", source);
-    }.bind(this))) ;
+    }));
   }
 };
 
@@ -2473,6 +2484,28 @@ var GuidHelper = {
     return itemId;
   }),
 
+  getManyItemIds: Task.async(function* (aGuids) {
+    let uncachedGuids = aGuids.filter(guid => !this.idsForGuids.has(guid));
+    if (uncachedGuids.length) {
+      yield PlacesUtils.withConnectionWrapper("GuidHelper.getItemId",
+                                              Task.async(function* (db) {
+        while (uncachedGuids.length) {
+          let chunk = uncachedGuids.splice(0, 100);
+          let rows = yield db.executeCached(
+            `SELECT b.id, b.guid from moz_bookmarks b WHERE
+             b.guid IN (${"?,".repeat(chunk.length - 1) + "?"})
+             LIMIT ${chunk.length}`, chunk);
+          if (rows.length < chunk.length)
+            throw new Error("Not all items were found!");
+          for (let row of rows) {
+            this.updateCache(row.getResultByIndex(0), row.getResultByIndex(1));
+          }
+        }
+      }.bind(this)));
+    }
+    return new Map(aGuids.map(guid => [guid, this.idsForGuids.get(guid)]));
+  }),
+
   getItemGuid: Task.async(function* (aItemId) {
     let cached = this.guidsForIds.get(aItemId);
     if (cached !== undefined)
@@ -2516,7 +2549,7 @@ var GuidHelper = {
     this.idsForGuids.delete(guid);
   },
 
-  ensureObservingRemovedItems: function () {
+  ensureObservingRemovedItems() {
     if (!("observer" in this)) {
       /**
        * This observers serves two purposes:
@@ -2540,11 +2573,11 @@ var GuidHelper = {
 
         QueryInterface: XPCOMUtils.generateQI(Ci.nsINavBookmarkObserver),
 
-        onBeginUpdateBatch: function() {},
-        onEndUpdateBatch: function() {},
-        onItemChanged: function() {},
-        onItemVisited: function() {},
-        onItemMoved: function() {},
+        onBeginUpdateBatch() {},
+        onEndUpdateBatch() {},
+        onItemChanged() {},
+        onItemVisited() {},
+        onItemMoved() {},
       };
       PlacesUtils.bookmarks.addObserver(this.observer, false);
       PlacesUtils.registerShutdownFunction(() => {
@@ -2560,8 +2593,7 @@ var GuidHelper = {
  * Updates commands in the undo group of the active window commands.
  * Inactive windows commands will be updated on focus.
  */
-function updateCommandsOnActiveWindow()
-{
+function updateCommandsOnActiveWindow() {
   let win = Services.focus.activeWindow;
   if (win && win instanceof Ci.nsIDOMWindow) {
     // Updating "undo" will cause a group update including "redo".
@@ -2576,8 +2608,7 @@ function updateCommandsOnActiveWindow()
  * @note To avoid leaks any non-primitive property should be copied.
  * @note Used internally, DO NOT EXPORT.
  */
-function TransactionItemCache()
-{
+function TransactionItemCache() {
 }
 
 TransactionItemCache.prototype = {
@@ -2644,8 +2675,7 @@ TransactionItemCache.prototype = {
  *
  * @note used internally, DO NOT EXPORT.
  */
-function BaseTransaction()
-{
+function BaseTransaction() {
 }
 
 BaseTransaction.prototype = {
@@ -2684,8 +2714,7 @@ BaseTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesAggregatedTransaction =
- function PlacesAggregatedTransaction(aName, aTransactions)
-{
+ function PlacesAggregatedTransaction(aName, aTransactions) {
   // Copy the transactions array to decouple it from its prototype, which
   // otherwise keeps alive its associated global object.
   this.childTransactions = aTransactions;
@@ -2694,8 +2723,7 @@ this.PlacesAggregatedTransaction =
 
   // Check child transactions number.  We will batch if we have more than
   // MIN_TRANSACTIONS_FOR_BATCH total number of transactions.
-  let countTransactions = function(aTransactions, aTxnCount)
-  {
+  let countTransactions = function(aTransactions, aTxnCount) {
     for (let i = 0;
          i < aTransactions.length && aTxnCount < MIN_TRANSACTIONS_FOR_BATCH;
          ++i, ++aTxnCount) {
@@ -2713,8 +2741,7 @@ this.PlacesAggregatedTransaction =
 PlacesAggregatedTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function ATXN_doTransaction()
-  {
+  doTransaction: function ATXN_doTransaction() {
     this._isUndo = false;
     if (this._useBatch)
       PlacesUtils.bookmarks.runInBatchMode(this, null);
@@ -2722,8 +2749,7 @@ PlacesAggregatedTransaction.prototype = {
       this.runBatched(false);
   },
 
-  undoTransaction: function ATXN_undoTransaction()
-  {
+  undoTransaction: function ATXN_undoTransaction() {
     this._isUndo = true;
     if (this._useBatch)
       PlacesUtils.bookmarks.runInBatchMode(this, null);
@@ -2731,8 +2757,7 @@ PlacesAggregatedTransaction.prototype = {
       this.runBatched(true);
   },
 
-  runBatched: function ATXN_runBatched()
-  {
+  runBatched: function ATXN_runBatched() {
     // Use a copy of the transactions array, so we won't reverse the original
     // one on undoing.
     let transactions = this.childTransactions.slice(0);
@@ -2769,8 +2794,7 @@ PlacesAggregatedTransaction.prototype = {
  */
 this.PlacesCreateFolderTransaction =
  function PlacesCreateFolderTransaction(aTitle, aParentId, aIndex, aAnnotations,
-                                        aChildTransactions)
-{
+                                        aChildTransactions) {
   this.item = new TransactionItemCache();
   this.item.title = aTitle;
   this.item.parentId = aParentId;
@@ -2782,8 +2806,7 @@ this.PlacesCreateFolderTransaction =
 PlacesCreateFolderTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function CFTXN_doTransaction()
-  {
+  doTransaction: function CFTXN_doTransaction() {
     this.item.id = PlacesUtils.bookmarks.createFolder(this.item.parentId,
                                                       this.item.title,
                                                       this.item.index);
@@ -2802,8 +2825,7 @@ PlacesCreateFolderTransaction.prototype = {
     }
   },
 
-  undoTransaction: function CFTXN_undoTransaction()
-  {
+  undoTransaction: function CFTXN_undoTransaction() {
     if (this.childTransactions && this.childTransactions.length > 0) {
       let txn = new PlacesAggregatedTransaction("Create folder childTxn",
                                                 this.childTransactions);
@@ -2846,8 +2868,7 @@ PlacesCreateFolderTransaction.prototype = {
 this.PlacesCreateBookmarkTransaction =
  function PlacesCreateBookmarkTransaction(aURI, aParentId, aIndex, aTitle,
                                           aKeyword, aAnnotations,
-                                          aChildTransactions, aPostData)
-{
+                                          aChildTransactions, aPostData) {
   this.item = new TransactionItemCache();
   this.item.uri = aURI;
   this.item.parentId = aParentId;
@@ -2862,8 +2883,7 @@ this.PlacesCreateBookmarkTransaction =
 PlacesCreateBookmarkTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function CITXN_doTransaction()
-  {
+  doTransaction: function CITXN_doTransaction() {
     this.item.id = PlacesUtils.bookmarks.insertBookmark(this.item.parentId,
                                                         this.item.uri,
                                                         this.item.index,
@@ -2890,8 +2910,7 @@ PlacesCreateBookmarkTransaction.prototype = {
     }
   },
 
-  undoTransaction: function CITXN_undoTransaction()
-  {
+  undoTransaction: function CITXN_undoTransaction() {
     if (this.childTransactions && this.childTransactions.length > 0) {
       // Undo transactions should always be done in reverse order.
       let txn = new PlacesAggregatedTransaction("Create item childTxn",
@@ -2916,8 +2935,7 @@ PlacesCreateBookmarkTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesCreateSeparatorTransaction =
- function PlacesCreateSeparatorTransaction(aParentId, aIndex)
-{
+ function PlacesCreateSeparatorTransaction(aParentId, aIndex) {
   this.item = new TransactionItemCache();
   this.item.parentId = aParentId;
   this.item.index = aIndex;
@@ -2926,14 +2944,12 @@ this.PlacesCreateSeparatorTransaction =
 PlacesCreateSeparatorTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function CSTXN_doTransaction()
-  {
+  doTransaction: function CSTXN_doTransaction() {
     this.item.id =
       PlacesUtils.bookmarks.insertSeparator(this.item.parentId, this.item.index);
   },
 
-  undoTransaction: function CSTXN_undoTransaction()
-  {
+  undoTransaction: function CSTXN_undoTransaction() {
     PlacesUtils.bookmarks.removeItem(this.item.id);
   }
 };
@@ -2961,8 +2977,7 @@ PlacesCreateSeparatorTransaction.prototype = {
  */
 this.PlacesCreateLivemarkTransaction =
  function PlacesCreateLivemarkTransaction(aFeedURI, aSiteURI, aTitle, aParentId,
-                                          aIndex, aAnnotations)
-{
+                                          aIndex, aAnnotations) {
   this.item = new TransactionItemCache();
   this.item.feedURI = aFeedURI;
   this.item.siteURI = aSiteURI;
@@ -2975,8 +2990,7 @@ this.PlacesCreateLivemarkTransaction =
 PlacesCreateLivemarkTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function CLTXN_doTransaction()
-  {
+  doTransaction: function CLTXN_doTransaction() {
     this._promise = PlacesUtils.livemarks.addLivemark(
       { title: this.item.title
       , feedURI: this.item.feedURI
@@ -2992,8 +3006,7 @@ PlacesCreateLivemarkTransaction.prototype = {
       }, Cu.reportError);
   },
 
-  undoTransaction: function CLTXN_undoTransaction()
-  {
+  undoTransaction: function CLTXN_undoTransaction() {
     // The getLivemark callback may fail, but it is used just to serialize,
     // so it doesn't matter.
     this._promise = PlacesUtils.livemarks.getLivemark({ id: this.item.id })
@@ -3013,8 +3026,7 @@ PlacesCreateLivemarkTransaction.prototype = {
  * @return nsITransaction object
  * @note used internally by PlacesRemoveItemTransaction, DO NOT EXPORT.
  */
-function PlacesRemoveLivemarkTransaction(aLivemarkId)
-{
+function PlacesRemoveLivemarkTransaction(aLivemarkId) {
   this.item = new TransactionItemCache();
   this.item.id = aLivemarkId;
   this.item.title = PlacesUtils.bookmarks.getItemTitle(this.item.id);
@@ -3035,8 +3047,7 @@ function PlacesRemoveLivemarkTransaction(aLivemarkId)
 PlacesRemoveLivemarkTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function RLTXN_doTransaction()
-  {
+  doTransaction: function RLTXN_doTransaction() {
     PlacesUtils.livemarks.getLivemark({ id: this.item.id })
       .then(aLivemark => {
         this.item.feedURI = aLivemark.feedURI;
@@ -3045,8 +3056,7 @@ PlacesRemoveLivemarkTransaction.prototype = {
       }, Cu.reportError);
   },
 
-  undoTransaction: function RLTXN_undoTransaction()
-  {
+  undoTransaction: function RLTXN_undoTransaction() {
     // Undo work must be serialized, otherwise won't be able to know the
     // feedURI and siteURI of the livemark.
     // The getLivemark callback is expected to receive a failure status but it
@@ -3083,8 +3093,7 @@ PlacesRemoveLivemarkTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesMoveItemTransaction =
- function PlacesMoveItemTransaction(aItemId, aNewParentId, aNewIndex)
-{
+ function PlacesMoveItemTransaction(aItemId, aNewParentId, aNewIndex) {
   this.item = new TransactionItemCache();
   this.item.id = aItemId;
   this.item.parentId = PlacesUtils.bookmarks.getFolderIdForItem(this.item.id);
@@ -3096,24 +3105,21 @@ this.PlacesMoveItemTransaction =
 PlacesMoveItemTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function MITXN_doTransaction()
-  {
+  doTransaction: function MITXN_doTransaction() {
     this.item.index = PlacesUtils.bookmarks.getItemIndex(this.item.id);
     PlacesUtils.bookmarks.moveItem(this.item.id,
                                    this.new.parentId, this.new.index);
     this._undoIndex = PlacesUtils.bookmarks.getItemIndex(this.item.id);
   },
 
-  undoTransaction: function MITXN_undoTransaction()
-  {
+  undoTransaction: function MITXN_undoTransaction() {
     // moving down in the same parent takes in count removal of the item
     // so to revert positions we must move to oldIndex + 1
     if (this.new.parentId == this.item.parentId &&
         this.item.index > this._undoIndex) {
       PlacesUtils.bookmarks.moveItem(this.item.id, this.item.parentId,
                                      this.item.index + 1);
-    }
-    else {
+    } else {
       PlacesUtils.bookmarks.moveItem(this.item.id, this.item.parentId,
                                      this.item.index);
     }
@@ -3130,8 +3136,7 @@ PlacesMoveItemTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesRemoveItemTransaction =
- function PlacesRemoveItemTransaction(aItemId)
-{
+ function PlacesRemoveItemTransaction(aItemId) {
   if (PlacesUtils.isRootItem(aItemId))
     throw Cr.NS_ERROR_INVALID_ARG;
 
@@ -3156,8 +3161,7 @@ this.PlacesRemoveItemTransaction =
     // Remove this folder itself.
     let txn = PlacesUtils.bookmarks.getRemoveFolderTransaction(this.item.id);
     this.childTransactions.push(txn);
-  }
-  else if (this.item.itemType == Ci.nsINavBookmarksService.TYPE_BOOKMARK) {
+  } else if (this.item.itemType == Ci.nsINavBookmarksService.TYPE_BOOKMARK) {
     this.item.uri = PlacesUtils.bookmarks.getBookmarkURI(this.item.id);
     this.item.keyword =
       PlacesUtils.bookmarks.getKeywordForBookmark(this.item.id);
@@ -3178,16 +3182,14 @@ this.PlacesRemoveItemTransaction =
 PlacesRemoveItemTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function RITXN_doTransaction()
-  {
+  doTransaction: function RITXN_doTransaction() {
     this.item.index = PlacesUtils.bookmarks.getItemIndex(this.item.id);
 
     if (this.item.itemType == Ci.nsINavBookmarksService.TYPE_FOLDER) {
       let txn = new PlacesAggregatedTransaction("Remove item childTxn",
                                                 this.childTransactions);
       txn.doTransaction();
-    }
-    else {
+    } else {
       // Before removing the bookmark, save its tags.
       let tags = this.item.uri ?
         PlacesUtils.tagging.getTagsForURI(this.item.uri) : null;
@@ -3202,8 +3204,7 @@ PlacesRemoveItemTransaction.prototype = {
     }
   },
 
-  undoTransaction: function RITXN_undoTransaction()
-  {
+  undoTransaction: function RITXN_undoTransaction() {
     if (this.item.itemType == Ci.nsINavBookmarksService.TYPE_BOOKMARK) {
       this.item.id = PlacesUtils.bookmarks.insertBookmark(this.item.parentId,
                                                           this.item.uri,
@@ -3218,13 +3219,11 @@ PlacesRemoveItemTransaction.prototype = {
           PlacesUtils.bookmarks.setPostDataForBookmark(this.item.id);
         }
       }
-    }
-    else if (this.item.itemType == Ci.nsINavBookmarksService.TYPE_FOLDER) {
+    } else if (this.item.itemType == Ci.nsINavBookmarksService.TYPE_FOLDER) {
       let txn = new PlacesAggregatedTransaction("Remove item childTxn",
                                                 this.childTransactions);
       txn.undoTransaction();
-    }
-    else { // TYPE_SEPARATOR
+    } else { // TYPE_SEPARATOR
       this.item.id = PlacesUtils.bookmarks.insertSeparator(this.item.parentId,
                                                             this.item.index);
     }
@@ -3242,8 +3241,7 @@ PlacesRemoveItemTransaction.prototype = {
   * of items within this folder.
   */
   _getFolderContentsTransactions:
-  function RITXN__getFolderContentsTransactions()
-  {
+  function RITXN__getFolderContentsTransactions() {
     let transactions = [];
     let contents =
       PlacesUtils.getFolderContents(this.item.id, false, false).root;
@@ -3269,8 +3267,7 @@ PlacesRemoveItemTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesEditItemTitleTransaction =
- function PlacesEditItemTitleTransaction(aItemId, aNewTitle)
-{
+ function PlacesEditItemTitleTransaction(aItemId, aNewTitle) {
   this.item = new TransactionItemCache();
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
@@ -3280,14 +3277,12 @@ this.PlacesEditItemTitleTransaction =
 PlacesEditItemTitleTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function EITTXN_doTransaction()
-  {
+  doTransaction: function EITTXN_doTransaction() {
     this.item.title = PlacesUtils.bookmarks.getItemTitle(this.item.id);
     PlacesUtils.bookmarks.setItemTitle(this.item.id, this.new.title);
   },
 
-  undoTransaction: function EITTXN_undoTransaction()
-  {
+  undoTransaction: function EITTXN_undoTransaction() {
     PlacesUtils.bookmarks.setItemTitle(this.item.id, this.item.title);
   }
 };
@@ -3314,8 +3309,7 @@ this.PlacesEditBookmarkURITransaction =
 PlacesEditBookmarkURITransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function EBUTXN_doTransaction()
-  {
+  doTransaction: function EBUTXN_doTransaction() {
     this.item.uri = PlacesUtils.bookmarks.getBookmarkURI(this.item.id);
     PlacesUtils.bookmarks.changeBookmarkURI(this.item.id, this.new.uri);
     // move tags from old URI to new URI
@@ -3328,8 +3322,7 @@ PlacesEditBookmarkURITransaction.prototype = {
     }
   },
 
-  undoTransaction: function EBUTXN_undoTransaction()
-  {
+  undoTransaction: function EBUTXN_undoTransaction() {
     PlacesUtils.bookmarks.changeBookmarkURI(this.item.id, this.item.uri);
     // move tags from new URI to old URI
     if (this.item.tags.length > 0) {
@@ -3355,8 +3348,7 @@ PlacesEditBookmarkURITransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesSetItemAnnotationTransaction =
- function PlacesSetItemAnnotationTransaction(aItemId, aAnnotationObject)
-{
+ function PlacesSetItemAnnotationTransaction(aItemId, aAnnotationObject) {
   this.item = new TransactionItemCache();
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
@@ -3366,8 +3358,7 @@ this.PlacesSetItemAnnotationTransaction =
 PlacesSetItemAnnotationTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function SIATXN_doTransaction()
-  {
+  doTransaction: function SIATXN_doTransaction() {
     let annoName = this.new.annotations[0].name;
     if (PlacesUtils.annotations.itemHasAnnotation(this.item.id, annoName)) {
       // fill the old anno if it is set
@@ -3379,10 +3370,9 @@ PlacesSetItemAnnotationTransaction.prototype = {
       this.item.annotations = [{ name: annoName,
                                 type: type.value,
                                 flags: flags.value,
-                                value: value,
+                                value,
                                 expires: expires.value }];
-    }
-    else {
+    } else {
       // create an empty old anno
       this.item.annotations = [{ name: annoName,
                                 flags: 0,
@@ -3393,8 +3383,7 @@ PlacesSetItemAnnotationTransaction.prototype = {
     PlacesUtils.setAnnotationsForItem(this.item.id, this.new.annotations);
   },
 
-  undoTransaction: function SIATXN_undoTransaction()
-  {
+  undoTransaction: function SIATXN_undoTransaction() {
     PlacesUtils.setAnnotationsForItem(this.item.id, this.item.annotations);
   }
 };
@@ -3413,8 +3402,7 @@ PlacesSetItemAnnotationTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesSetPageAnnotationTransaction =
- function PlacesSetPageAnnotationTransaction(aURI, aAnnotationObject)
-{
+ function PlacesSetPageAnnotationTransaction(aURI, aAnnotationObject) {
   this.item = new TransactionItemCache();
   this.item.uri = aURI;
   this.new = new TransactionItemCache();
@@ -3424,8 +3412,7 @@ this.PlacesSetPageAnnotationTransaction =
 PlacesSetPageAnnotationTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function SPATXN_doTransaction()
-  {
+  doTransaction: function SPATXN_doTransaction() {
     let annoName = this.new.annotations[0].name;
     if (PlacesUtils.annotations.pageHasAnnotation(this.item.uri, annoName)) {
       // fill the old anno if it is set
@@ -3436,10 +3423,9 @@ PlacesSetPageAnnotationTransaction.prototype = {
                                                             annoName);
       this.item.annotations = [{ name: annoName,
                                 flags: flags.value,
-                                value: value,
+                                value,
                                 expires: expires.value }];
-    }
-    else {
+    } else {
       // create an empty old anno
       this.item.annotations = [{ name: annoName,
                                 type: Ci.nsIAnnotationService.TYPE_STRING,
@@ -3451,8 +3437,7 @@ PlacesSetPageAnnotationTransaction.prototype = {
     PlacesUtils.setAnnotationsForURI(this.item.uri, this.new.annotations);
   },
 
-  undoTransaction: function SPATXN_undoTransaction()
-  {
+  undoTransaction: function SPATXN_undoTransaction() {
     PlacesUtils.setAnnotationsForURI(this.item.uri, this.item.annotations);
   }
 };
@@ -3487,8 +3472,7 @@ this.PlacesEditBookmarkKeywordTransaction =
 PlacesEditBookmarkKeywordTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function EBKTXN_doTransaction()
-  {
+  doTransaction: function EBKTXN_doTransaction() {
     let done = false;
     Task.spawn(function* () {
       if (this.item.keyword) {
@@ -3514,8 +3498,7 @@ PlacesEditBookmarkKeywordTransaction.prototype = {
     }
   },
 
-  undoTransaction: function EBKTXN_undoTransaction()
-  {
+  undoTransaction: function EBKTXN_undoTransaction() {
 
     let done = false;
     Task.spawn(function* () {
@@ -3553,8 +3536,7 @@ PlacesEditBookmarkKeywordTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesEditBookmarkPostDataTransaction =
- function PlacesEditBookmarkPostDataTransaction(aItemId, aPostData)
-{
+ function PlacesEditBookmarkPostDataTransaction(aItemId, aPostData) {
   this.item = new TransactionItemCache();
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
@@ -3592,8 +3574,7 @@ PlacesEditBookmarkPostDataTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesEditItemDateAddedTransaction =
- function PlacesEditItemDateAddedTransaction(aItemId, aNewDateAdded)
-{
+ function PlacesEditItemDateAddedTransaction(aItemId, aNewDateAdded) {
   this.item = new TransactionItemCache();
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
@@ -3603,8 +3584,7 @@ this.PlacesEditItemDateAddedTransaction =
 PlacesEditItemDateAddedTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function EIDATXN_doTransaction()
-  {
+  doTransaction: function EIDATXN_doTransaction() {
     // Child transactions have the id set as parentId.
     if (this.item.id == -1 && this.item.parentId != -1)
       this.item.id = this.item.parentId;
@@ -3613,8 +3593,7 @@ PlacesEditItemDateAddedTransaction.prototype = {
     PlacesUtils.bookmarks.setItemDateAdded(this.item.id, this.new.dateAdded);
   },
 
-  undoTransaction: function EIDATXN_undoTransaction()
-  {
+  undoTransaction: function EIDATXN_undoTransaction() {
     PlacesUtils.bookmarks.setItemDateAdded(this.item.id, this.item.dateAdded);
   }
 };
@@ -3631,8 +3610,7 @@ PlacesEditItemDateAddedTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesEditItemLastModifiedTransaction =
- function PlacesEditItemLastModifiedTransaction(aItemId, aNewLastModified)
-{
+ function PlacesEditItemLastModifiedTransaction(aItemId, aNewLastModified) {
   this.item = new TransactionItemCache();
   this.item.id = aItemId;
   this.new = new TransactionItemCache();
@@ -3643,8 +3621,7 @@ PlacesEditItemLastModifiedTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
   doTransaction:
-  function EILMTXN_doTransaction()
-  {
+  function EILMTXN_doTransaction() {
     // Child transactions have the id set as parentId.
     if (this.item.id == -1 && this.item.parentId != -1)
       this.item.id = this.item.parentId;
@@ -3655,8 +3632,7 @@ PlacesEditItemLastModifiedTransaction.prototype = {
   },
 
   undoTransaction:
-  function EILMTXN_undoTransaction()
-  {
+  function EILMTXN_undoTransaction() {
     PlacesUtils.bookmarks.setItemLastModified(this.item.id,
                                               this.item.lastModified);
   }
@@ -3672,8 +3648,7 @@ PlacesEditItemLastModifiedTransaction.prototype = {
  * @return nsITransaction object
  */
 this.PlacesSortFolderByNameTransaction =
- function PlacesSortFolderByNameTransaction(aFolderId)
-{
+ function PlacesSortFolderByNameTransaction(aFolderId) {
   this.item = new TransactionItemCache();
   this.item.id = aFolderId;
 }
@@ -3681,8 +3656,7 @@ this.PlacesSortFolderByNameTransaction =
 PlacesSortFolderByNameTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function SFBNTXN_doTransaction()
-  {
+  doTransaction: function SFBNTXN_doTransaction() {
     this._oldOrder = [];
 
     let contents =
@@ -3693,7 +3667,7 @@ PlacesSortFolderByNameTransaction.prototype = {
     let newOrder = [];
     let preSep = []; // temporary array for sorting each group of items
     let sortingMethod =
-      function (a, b) {
+      function(a, b) {
         if (PlacesUtils.nodeIsContainer(a) && !PlacesUtils.nodeIsContainer(b))
           return -1;
         if (!PlacesUtils.nodeIsContainer(a) && PlacesUtils.nodeIsContainer(b))
@@ -3711,8 +3685,7 @@ PlacesSortFolderByNameTransaction.prototype = {
           preSep.splice(0, preSep.length);
         }
         newOrder.push(item);
-      }
-      else
+      } else
         preSep.push(item);
     }
     contents.containerOpen = false;
@@ -3724,7 +3697,7 @@ PlacesSortFolderByNameTransaction.prototype = {
 
     // set the nex indexes
     let callback = {
-      runBatched: function() {
+      runBatched() {
         for (let i = 0; i < newOrder.length; ++i) {
           PlacesUtils.bookmarks.setItemIndex(newOrder[i].itemId, i);
         }
@@ -3733,11 +3706,10 @@ PlacesSortFolderByNameTransaction.prototype = {
     PlacesUtils.bookmarks.runInBatchMode(callback, null);
   },
 
-  undoTransaction: function SFBNTXN_undoTransaction()
-  {
+  undoTransaction: function SFBNTXN_undoTransaction() {
     let callback = {
       _self: this,
-      runBatched: function() {
+      runBatched() {
         for (let item in this._self._oldOrder)
           PlacesUtils.bookmarks.setItemIndex(item, this._self._oldOrder[item]);
       }
@@ -3759,8 +3731,7 @@ PlacesSortFolderByNameTransaction.prototype = {
  *        Array of tags to set for the given URL.
  */
 this.PlacesTagURITransaction =
- function PlacesTagURITransaction(aURI, aTags)
-{
+ function PlacesTagURITransaction(aURI, aTags) {
   this.item = new TransactionItemCache();
   this.item.uri = aURI;
   this.item.tags = aTags;
@@ -3769,8 +3740,7 @@ this.PlacesTagURITransaction =
 PlacesTagURITransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function TUTXN_doTransaction()
-  {
+  doTransaction: function TUTXN_doTransaction() {
     if (PlacesUtils.getMostRecentBookmarkForURI(this.item.uri) == -1) {
       // There is no bookmark for this uri, but we only allow to tag bookmarks.
       // Force an unfiled bookmark first.
@@ -3784,8 +3754,7 @@ PlacesTagURITransaction.prototype = {
     PlacesUtils.tagging.tagURI(this.item.uri, this.item.tags);
   },
 
-  undoTransaction: function TUTXN_undoTransaction()
-  {
+  undoTransaction: function TUTXN_undoTransaction() {
     if (this.item.id != -1) {
       PlacesUtils.bookmarks.removeItem(this.item.id);
       this.item.id = -1;
@@ -3807,8 +3776,7 @@ PlacesTagURITransaction.prototype = {
  *        url.
  */
 this.PlacesUntagURITransaction =
- function PlacesUntagURITransaction(aURI, aTags)
-{
+ function PlacesUntagURITransaction(aURI, aTags) {
   this.item = new TransactionItemCache();
   this.item.uri = aURI;
   if (aTags) {
@@ -3829,19 +3797,17 @@ this.PlacesUntagURITransaction =
 PlacesUntagURITransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function UTUTXN_doTransaction()
-  {
+  doTransaction: function UTUTXN_doTransaction() {
     // Filter tags existing on the bookmark, otherwise on undo we may try to
     // set nonexistent tags.
     let tags = PlacesUtils.tagging.getTagsForURI(this.item.uri);
-    this.item.tags = this.item.tags.filter(function (aTag) {
+    this.item.tags = this.item.tags.filter(function(aTag) {
       return tags.includes(aTag);
     });
     PlacesUtils.tagging.untagURI(this.item.uri, this.item.tags);
   },
 
-  undoTransaction: function UTUTXN_undoTransaction()
-  {
+  undoTransaction: function UTUTXN_undoTransaction() {
     PlacesUtils.tagging.tagURI(this.item.uri, this.item.tags);
   }
 };

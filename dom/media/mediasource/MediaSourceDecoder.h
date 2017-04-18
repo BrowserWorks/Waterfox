@@ -65,7 +65,7 @@ public:
 
   // Returns a string describing the state of the MediaSource internal
   // buffered data. Used for debugging purposes.
-  void GetMozDebugReaderData(nsAString& aString) override;
+  void GetMozDebugReaderData(nsACString& aString) override;
 
   void AddSizeOfResources(ResourceSizes* aSizes) override;
 
@@ -75,6 +75,8 @@ public:
   void NotifyWaitingForKey() override;
 
   MediaEventSource<void>* WaitingForKeyEvent() override;
+
+  bool IsMSE() const override { return true; }
 
 private:
   void DoSetMediaSourceDuration(double aDuration);

@@ -38,14 +38,14 @@ function promiseAddFakeVisits() {
   let place = {
     uri: makeURI(URL),
     title: "fake site",
-    visits: visits
+    visits
   };
   return new Promise((resolve, reject) => {
     PlacesUtils.asyncHistory.updatePlaces(place, {
       handleError: () => reject(new Error("Couldn't add visit")),
-      handleResult: function () {},
-      handleCompletion: function () {
-        NewTabUtils.links.populateCache(function () {
+      handleResult() {},
+      handleCompletion() {
+        NewTabUtils.links.populateCache(function() {
           NewTabUtils.allPages.update();
           resolve();
         }, true);

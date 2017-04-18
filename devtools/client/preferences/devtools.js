@@ -30,13 +30,14 @@ pref("devtools.toolbox.sidebar.width", 500);
 pref("devtools.toolbox.host", "bottom");
 pref("devtools.toolbox.previousHost", "side");
 pref("devtools.toolbox.selectedTool", "webconsole");
-pref("devtools.toolbox.toolbarSpec", '["splitconsole", "paintflashing toggle","scratchpad","resize toggle","screenshot --fullpage", "rulers", "measure"]');
+pref("devtools.toolbox.toolbarSpec", '["splitconsole", "paintflashing toggle","scratchpad","resize toggle","screenshot --fullpage --file", "rulers", "measure"]');
 pref("devtools.toolbox.sideEnabled", true);
 pref("devtools.toolbox.zoomValue", "1");
 pref("devtools.toolbox.splitconsoleEnabled", false);
 pref("devtools.toolbox.splitconsoleHeight", 100);
 
 // Toolbox Button preferences
+pref("devtools.command-button-pick.enabled", true);
 pref("devtools.command-button-frames.enabled", true);
 pref("devtools.command-button-splitconsole.enabled", true);
 pref("devtools.command-button-paintflashing.enabled", false);
@@ -63,12 +64,18 @@ pref("devtools.inspector.showUserAgentStyles", false);
 pref("devtools.inspector.showAllAnonymousContent", false);
 // Enable the MDN docs tooltip
 pref("devtools.inspector.mdnDocsTooltip.enabled", true);
+// Enable the new color widget
+pref("devtools.inspector.colorWidget.enabled", false);
 
 // Enable the Font Inspector
 pref("devtools.fontinspector.enabled", true);
 
 // Enable the Layout View
 pref("devtools.layoutview.enabled", false);
+
+// Grid highlighter preferences
+pref("devtools.gridinspector.showGridLineNumbers", false);
+pref("devtools.gridinspector.showInfiniteLines", false);
 
 // By how many times eyedropper will magnify pixels
 pref("devtools.eyedropper.zoom", 6);
@@ -114,6 +121,12 @@ pref("devtools.debugger.ui.panes-visible-on-startup", false);
 pref("devtools.debugger.ui.variables-sorting-enabled", true);
 pref("devtools.debugger.ui.variables-only-enum-visible", false);
 pref("devtools.debugger.ui.variables-searchbox-visible", false);
+pref("devtools.debugger.call-stack-visible", false);
+pref("devtools.debugger.scopes-visible", false);
+pref("devtools.debugger.start-panel-collapsed", false);
+pref("devtools.debugger.end-panel-collapsed", false);
+pref("devtools.debugger.tabs", "[]");
+pref("devtools.debugger.pending-selected-location", "{}");
 
 // Enable the Memory tools
 pref("devtools.memory.enabled", true);
@@ -172,12 +185,11 @@ pref("devtools.netmonitor.enabled", true);
 // The default Network Monitor UI settings
 pref("devtools.netmonitor.panes-network-details-width", 550);
 pref("devtools.netmonitor.panes-network-details-height", 450);
-pref("devtools.netmonitor.statistics", true);
 pref("devtools.netmonitor.filters", "[\"all\"]");
 
 // The default Network monitor HAR export setting
 pref("devtools.netmonitor.har.defaultLogDir", "");
-pref("devtools.netmonitor.har.defaultFileName", "Archive %y-%m-%d %H-%M-%S");
+pref("devtools.netmonitor.har.defaultFileName", "Archive %date");
 pref("devtools.netmonitor.har.jsonp", false);
 pref("devtools.netmonitor.har.jsonpCallback", "");
 pref("devtools.netmonitor.har.includeResponseBodies", true);
@@ -215,6 +227,10 @@ pref("devtools.styleeditor.mediaSidebarWidth", 238);
 pref("devtools.styleeditor.navSidebarWidth", 245);
 pref("devtools.styleeditor.transitions", true);
 
+// Screenshot Option Settings.
+pref("devtools.screenshot.clipboard.enabled", false);
+pref("devtools.screenshot.audio.enabled", true);
+
 // Enable the Shader Editor.
 pref("devtools.shadereditor.enabled", false);
 
@@ -246,6 +262,7 @@ pref("devtools.webconsole.filter.warn", true);
 pref("devtools.webconsole.filter.info", true);
 pref("devtools.webconsole.filter.log", true);
 pref("devtools.webconsole.filter.debug", true);
+pref("devtools.webconsole.filter.css", false);
 pref("devtools.webconsole.filter.net", false);
 pref("devtools.webconsole.filter.netxhr", false);
 // Deprecated - old console frontend
@@ -354,13 +371,8 @@ pref("devtools.editor.autocomplete", true);
 // version for each user.
 pref("devtools.telemetry.tools.opened.version", "{}");
 
-// Enable the JSON View tool (an inspector for application/json documents) on
-// Nightly and Dev. Edition.
-#ifdef RELEASE_OR_BETA
-pref("devtools.jsonview.enabled", false);
-#else
+// Enable the JSON View tool (an inspector for application/json documents).
 pref("devtools.jsonview.enabled", true);
-#endif
 
 // Enable the HTML responsive design mode for all channels.
 pref("devtools.responsive.html.enabled", true);

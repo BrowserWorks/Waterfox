@@ -19,7 +19,7 @@ using namespace js;
 using namespace js::jit;
 
 void
-MacroAssemblerX64::loadConstantDouble(wasm::RawF64 d, FloatRegister dest)
+MacroAssemblerX64::loadConstantDouble(double d, FloatRegister dest)
 {
     if (maybeInlineDouble(d, dest))
         return;
@@ -36,7 +36,7 @@ MacroAssemblerX64::loadConstantDouble(wasm::RawF64 d, FloatRegister dest)
 }
 
 void
-MacroAssemblerX64::loadConstantFloat32(wasm::RawF32 f, FloatRegister dest)
+MacroAssemblerX64::loadConstantFloat32(float f, FloatRegister dest)
 {
     if (maybeInlineFloat(f, dest))
         return;
@@ -58,18 +58,6 @@ MacroAssemblerX64::loadConstantSimd128Int(const SimdConstant& v, FloatRegister d
         return;
     JmpSrc j = masm.vmovdqa_ripr(dest.encoding());
     propagateOOM(val->uses.append(CodeOffset(j.offset())));
-}
-
-void
-MacroAssemblerX64::loadConstantFloat32(float f, FloatRegister dest)
-{
-    loadConstantFloat32(wasm::RawF32(f), dest);
-}
-
-void
-MacroAssemblerX64::loadConstantDouble(double d, FloatRegister dest)
-{
-    loadConstantDouble(wasm::RawF64(d), dest);
 }
 
 void
@@ -265,14 +253,14 @@ MacroAssemblerX64::finish()
         masm.haltingAlign(sizeof(double));
     for (const Double& d : doubles_) {
         bindOffsets(d.uses);
-        masm.int64Constant(d.value);
+        masm.doubleConstant(d.value);
     }
 
     if (!floats_.empty())
         masm.haltingAlign(sizeof(float));
     for (const Float& f : floats_) {
         bindOffsets(f.uses);
-        masm.int32Constant(f.value);
+        masm.floatConstant(f.value);
     }
 
     // SIMD memory values must be suitably aligned.
@@ -424,15 +412,34 @@ MacroAssembler::subFromStackPtr(Imm32 imm32)
         // On windows, we cannot skip very far down the stack without touching the
         // memory pages in-between.  This is a corner-case code for situations where the
         // Ion frame data for a piece of code is very large.  To handle this special case,
-        // for frames over 1k in size we allocate memory on the stack incrementally, touching
+        // for frames over 4k in size we allocate memory on the stack incrementally, touching
         // it as we go.
+        //
+        // When the amount is quite large, which it can be, we emit an actual loop, in order
+        // to keep the function prologue compact.  Compactness is a requirement for eg
+        // Wasm's CodeRange data structure, which can encode only 8-bit offsets.
         uint32_t amountLeft = imm32.value;
-        while (amountLeft > 4096) {
+        uint32_t fullPages = amountLeft / 4096;
+        if (fullPages <= 8) {
+            while (amountLeft > 4096) {
+                subq(Imm32(4096), StackPointer);
+                store32(Imm32(0), Address(StackPointer, 0));
+                amountLeft -= 4096;
+            }
+            subq(Imm32(amountLeft), StackPointer);
+        } else {
+            ScratchRegisterScope scratch(*this);
+            Label top;
+            move32(Imm32(fullPages), scratch);
+            bind(&top);
             subq(Imm32(4096), StackPointer);
             store32(Imm32(0), Address(StackPointer, 0));
-            amountLeft -= 4096;
+            subl(Imm32(1), scratch);
+            j(Assembler::NonZero, &top);
+            amountLeft -= fullPages * 4096;
+            if (amountLeft)
+                subq(Imm32(amountLeft), StackPointer);
         }
-        subq(Imm32(amountLeft), StackPointer);
     }
 }
 

@@ -37,6 +37,8 @@
 #include "nsContentUtils.h"
 #include "nsLayoutUtils.h"
 #include "nsDisplayList.h"
+#include "nsRefreshDriver.h"            // for nsAPostRefreshObserver
+#include "nsSVGIntegrationUtils.h"
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT
 #include "mozilla/Preferences.h"
 #include "mozilla/LookAndFeel.h"
@@ -81,6 +83,7 @@ NS_QUERYFRAME_TAIL_INHERITING(nsBoxFrame)
 
 nsSliderFrame::nsSliderFrame(nsStyleContext* aContext):
   nsBoxFrame(aContext),
+  mRatio(0.0f),
   mCurPos(0),
   mChange(0),
   mDragFinished(true),
@@ -929,20 +932,92 @@ nsSliderMediator::HandleEvent(nsIDOMEvent* aEvent)
   return NS_OK;
 }
 
+class AsyncScrollbarDragStarter : public nsAPostRefreshObserver {
+public:
+  AsyncScrollbarDragStarter(nsIPresShell* aPresShell,
+                            nsIWidget* aWidget,
+                            const AsyncDragMetrics& aDragMetrics)
+    : mPresShell(aPresShell)
+    , mWidget(aWidget)
+    , mDragMetrics(aDragMetrics)
+  {
+  }
+  virtual ~AsyncScrollbarDragStarter() {}
+
+  void DidRefresh() override {
+    if (!mPresShell) {
+      MOZ_ASSERT_UNREACHABLE("Post-refresh observer fired again after failed attempt at unregistering it");
+      return;
+    }
+
+    mWidget->StartAsyncScrollbarDrag(mDragMetrics);
+
+    if (!mPresShell->RemovePostRefreshObserver(this)) {
+      MOZ_ASSERT_UNREACHABLE("Unable to unregister post-refresh observer! Leaking it instead of leaving garbage registered");
+      // Graceful handling, just in case...
+      mPresShell = nullptr;
+      mWidget = nullptr;
+      return;
+    }
+
+    delete this;
+  }
+
+private:
+  RefPtr<nsIPresShell> mPresShell;
+  RefPtr<nsIWidget> mWidget;
+  AsyncDragMetrics mDragMetrics;
+};
+
 bool
-nsSliderFrame::StartAPZDrag()
+UsesSVGEffects(nsIFrame* aFrame)
 {
+  return aFrame->StyleEffects()->HasFilters()
+      || nsSVGIntegrationUtils::UsingMaskOrClipPathForFrame(aFrame);
+}
+
+bool
+ScrollFrameWillBuildScrollInfoLayer(nsIFrame* aScrollFrame)
+{
+  nsIFrame* current = aScrollFrame;
+  while (current) {
+    if (UsesSVGEffects(current)) {
+      return true;
+    }
+    current = nsLayoutUtils::GetParentOrPlaceholderForCrossDoc(current);
+  }
+  return false;
+}
+
+bool
+nsSliderFrame::StartAPZDrag(WidgetGUIEvent* aEvent)
+{
+  if (!aEvent->mFlags.mHandledByAPZ) {
+    return false;
+  }
+
   if (!gfxPlatform::GetPlatform()->SupportsApzDragInput()) {
     return false;
   }
 
-  nsContainerFrame* cf = GetScrollbar()->GetParent();
-  if (!cf) {
+  nsContainerFrame* scrollFrame = GetScrollbar()->GetParent();
+  if (!scrollFrame) {
     return false;
   }
 
-  nsIContent* scrollableContent = cf->GetContent();
+  nsIContent* scrollableContent = scrollFrame->GetContent();
   if (!scrollableContent) {
+    return false;
+  }
+
+  nsIScrollableFrame* scrollFrameAsScrollable = do_QueryFrame(scrollFrame);
+  if (!scrollFrameAsScrollable) {
+    return false;
+  }
+
+  // APZ dragging requires the scrollbar to be layerized, which doesn't
+  // happen for scroll info layers.
+  if (ScrollFrameWillBuildScrollInfoLayer(scrollFrame)) {
     return false;
   }
 
@@ -957,14 +1032,19 @@ nsSliderFrame::StartAPZDrag()
   nsIFrame* scrollbarBox = GetScrollbar();
   nsCOMPtr<nsIContent> scrollbar = GetContentOfBox(scrollbarBox);
 
-  // This rect is the range in which the scroll thumb can slide in.
-  nsRect sliderTrack = GetRect() - scrollbarBox->GetPosition();
-  CSSIntRect sliderTrackCSS = CSSIntRect::FromAppUnitsRounded(sliderTrack);
+  nsRect sliderTrack;
+  GetXULClientRect(sliderTrack);
 
+  // This rect is the range in which the scroll thumb can slide in.
+  sliderTrack = sliderTrack + GetRect().TopLeft() + scrollbarBox->GetPosition() -
+                scrollFrameAsScrollable->GetScrollPortRect().TopLeft();
+  CSSRect sliderTrackCSS = CSSRect::FromAppUnits(sliderTrack);
+
+  nsIPresShell* shell = PresContext()->PresShell();
   uint64_t inputblockId = InputAPZContext::GetInputBlockId();
-  uint32_t presShellId = PresContext()->PresShell()->GetPresShellId();
+  uint32_t presShellId = shell->GetPresShellId();
   AsyncDragMetrics dragMetrics(scrollTargetId, presShellId, inputblockId,
-                               NSAppUnitsToIntPixels(mDragStart,
+                               NSAppUnitsToFloatPixels(mDragStart,
                                  float(AppUnitsPerCSSPixel())),
                                sliderTrackCSS,
                                IsXULHorizontal() ? AsyncDragMetrics::HORIZONTAL :
@@ -976,7 +1056,15 @@ nsSliderFrame::StartAPZDrag()
 
   // When we start an APZ drag, we wont get mouse events for the drag.
   // APZ will consume them all and only notify us of the new scroll position.
-  this->GetNearestWidget()->StartAsyncScrollbarDrag(dragMetrics);
+  bool waitForRefresh = InputAPZContext::HavePendingLayerization();
+  nsIWidget* widget = this->GetNearestWidget();
+  if (waitForRefresh) {
+    waitForRefresh = shell->AddPostRefreshObserver(
+        new AsyncScrollbarDragStarter(shell, widget, dragMetrics));
+  }
+  if (!waitForRefresh) {
+    widget->StartAsyncScrollbarDrag(dragMetrics);
+  }
   return true;
 }
 
@@ -1047,7 +1135,7 @@ nsSliderFrame::StartDrag(nsIDOMEvent* aEvent)
 
   mDragStart = pos - mThumbStart;
 
-  mScrollingWithAPZ = StartAPZDrag();
+  mScrollingWithAPZ = StartAPZDrag(event);
 
 #ifdef DEBUG_SLIDER
   printf("Pressed mDragStart=%d\n",mDragStart);
@@ -1271,6 +1359,10 @@ nsSliderFrame::HandlePress(nsPresContext* aPresContext,
   if (!GetEventPoint(aEvent, eventPoint)) {
     return NS_OK;
   }
+
+  mozilla::Telemetry::Accumulate(mozilla::Telemetry::SCROLL_INPUT_METHODS,
+      (uint32_t) ScrollInputMethod::MainThreadScrollbarTrackClick);
+
   if (IsXULHorizontal() ? eventPoint.x < thumbRect.x 
                         : eventPoint.y < thumbRect.y)
     change = -1;

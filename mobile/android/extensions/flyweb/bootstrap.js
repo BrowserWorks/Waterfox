@@ -35,7 +35,7 @@ AboutFlyWeb.prototype = Object.freeze({
   },
 
   newChannel: function(aURI, aLoadInfo) {
-    let uri = Services.io.newURI("chrome://flyweb/content/aboutFlyWeb.xhtml", null, null);
+    let uri = Services.io.newURI("chrome://flyweb/content/aboutFlyWeb.xhtml");
     let channel = Services.io.newChannelFromURIWithLoadInfo(uri, aLoadInfo);
     channel.originalURI = aURI;
     return channel;
@@ -64,9 +64,9 @@ let windowListener = {
     // Wait for the window to finish loading
     let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
     domWindow.addEventListener("UIReady", function onLoad() {
-      domWindow.removeEventListener("UIReady", onLoad, false);
+      domWindow.removeEventListener("UIReady", onLoad);
       loadIntoWindow(domWindow);
-    }, false);
+    });
   },
 
   onCloseWindow: function(aWindow) {},

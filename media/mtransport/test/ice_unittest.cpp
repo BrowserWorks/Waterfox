@@ -645,7 +645,7 @@ class IceTestPeer : public sigslot::has_slots<> {
     std::vector<std::string> candidates = GetCandidates(stream);
 
     int host_net = 0;
-    for (auto c : candidates) {
+    for (const auto& c : candidates) {
       if (c.find("typ host") != std::string::npos) {
         nr_transport_addr addr;
         std::vector<std::string> tokens = split(c, ' ');
@@ -1366,6 +1366,26 @@ class IceTestPeer : public sigslot::has_slots<> {
         NS_DISPATCH_SYNC);
   }
 
+  void ChangeNetworkState_s(bool online) {
+    ice_ctx_->ctx()->UpdateNetworkState(online);
+  }
+
+  void ChangeNetworkStateToOffline() {
+    test_utils_->sts_target()->Dispatch(
+        WrapRunnable(this,
+                        &IceTestPeer::ChangeNetworkState_s,
+                        false),
+        NS_DISPATCH_SYNC);
+  }
+
+  void ChangeNetworkStateToOnline() {
+    test_utils_->sts_target()->Dispatch(
+        WrapRunnable(this,
+                        &IceTestPeer::ChangeNetworkState_s,
+                        true),
+        NS_DISPATCH_SYNC);
+  }
+
   int trickled() { return trickled_; }
 
   void SetControlling(NrIceCtx::Controlling controlling) {
@@ -1609,7 +1629,7 @@ class WebRtcIceGatherTest : public StunTest {
     std::cerr << "Candidates for stream " << stream << "->"
               << candidates.size() << std::endl;
 
-    for (auto c : candidates) {
+    for (const auto& c : candidates) {
       std::cerr << "Candidate: " << c << std::endl;
     }
   }
@@ -3348,6 +3368,49 @@ TEST_F(WebRtcIceConnectTest, TestConsentDelayed) {
   PR_Sleep(1000);
   AssertConsentRefresh();
   SendReceive();
+}
+
+TEST_F(WebRtcIceConnectTest, TestNetworkForcedOfflineAndRecovery) {
+  AddStream(1);
+  SetupAndCheckConsent();
+  p1_->ChangeNetworkStateToOffline();
+  ASSERT_TRUE_WAIT(p1_->ice_connected() == 0, kDefaultTimeout);
+  // Next round of consent check should switch it back to online
+  ASSERT_TRUE_WAIT(p1_->ice_connected(), kDefaultTimeout);
+}
+
+TEST_F(WebRtcIceConnectTest, TestNetworkForcedOfflineTwice) {
+  AddStream(1);
+  SetupAndCheckConsent();
+  p2_->ChangeNetworkStateToOffline();
+  ASSERT_TRUE_WAIT(p2_->ice_connected() == 0, kDefaultTimeout);
+  p2_->ChangeNetworkStateToOffline();
+  ASSERT_TRUE_WAIT(p2_->ice_connected() == 0, kDefaultTimeout);
+}
+
+TEST_F(WebRtcIceConnectTest, TestNetworkOnlineDoesntChangeState) {
+  AddStream(1);
+  SetupAndCheckConsent();
+  p2_->ChangeNetworkStateToOnline();
+  ASSERT_TRUE(p2_->ice_connected());
+  PR_Sleep(1500);
+  p2_->ChangeNetworkStateToOnline();
+  ASSERT_TRUE(p2_->ice_connected());
+}
+
+TEST_F(WebRtcIceConnectTest, TestNetworkOnlineTriggersConsent) {
+  // Let's emulate audio + video w/o rtcp-mux
+  AddStream(2);
+  AddStream(2);
+  SetupAndCheckConsent();
+  p1_->ChangeNetworkStateToOffline();
+  p1_->SetBlockStun(true);
+  ASSERT_TRUE_WAIT(p1_->ice_connected() == 0, kDefaultTimeout);
+  PR_Sleep(1500);
+  ASSERT_TRUE(p1_->ice_connected() == 0);
+  p1_->SetBlockStun(false);
+  p1_->ChangeNetworkStateToOnline();
+  ASSERT_TRUE_WAIT(p1_->ice_connected(), 500);
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectTurn) {

@@ -12,15 +12,16 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.TextViewCompat;
 import android.widget.ImageView;
 import android.widget.Toast;
-import org.json.JSONException;
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.SiteIdentity;
 import org.mozilla.gecko.SiteIdentity.SecurityMode;
@@ -29,12 +30,12 @@ import org.mozilla.gecko.SiteIdentity.TrackingMode;
 import org.mozilla.gecko.SnackbarBuilder;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.widget.AnchoredPopup;
 import org.mozilla.gecko.widget.DoorHanger;
 import org.mozilla.gecko.widget.DoorHanger.OnButtonClickListener;
-import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
@@ -97,8 +98,10 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
         mResources = mContext.getResources();
 
         mContentButtonClickListener = new ContentNotificationButtonListener();
+    }
 
-        GeckoApp.getEventDispatcher().registerGeckoThreadListener(this,
+    void registerListeners() {
+        EventDispatcher.getInstance().registerGeckoThreadListener(this,
                                                                   "Doorhanger:Logins",
                                                                   "Permissions:CheckResult");
     }
@@ -263,19 +266,18 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
         config.setMessage(message);
 
         // Set options.
-        final JSONObject options = new JSONObject();
+        final GeckoBundle options = new GeckoBundle();
 
         // Add action text only if there are other logins to select.
         if (logins.length() > 1) {
-
-            final JSONObject actionText = new JSONObject();
-            actionText.put("type", "SELECT");
+            final GeckoBundle actionText = new GeckoBundle();
+            actionText.putString("type", "SELECT");
 
             final JSONObject bundle = new JSONObject();
             bundle.put("logins", logins);
 
-            actionText.put("bundle", bundle);
-            options.put("actionText", actionText);
+            actionText.putBundle("bundle", GeckoBundle.fromJSONObject(bundle));
+            options.putBundle("actionText", actionText);
         }
 
         config.setOptions(options);
@@ -329,7 +331,7 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
             mMixedContentActivity.setVisibility(View.GONE);
             mLink.setVisibility(View.GONE);
         } else if (!siteIdentity.isSecure()) {
-            if (siteIdentity.getMixedModeActive() == MixedMode.MIXED_CONTENT_LOADED) {
+            if (siteIdentity.getMixedModeActive() == MixedMode.LOADED) {
                 // Active Mixed Content loaded because user has disabled blocking.
                 mIcon.setImageResource(R.drawable.lock_disabled);
                 clearSecurityStateIcon();
@@ -337,12 +339,12 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
                 mMixedContentActivity.setText(R.string.mixed_content_protection_disabled);
 
                 mLink.setVisibility(View.VISIBLE);
-            } else if (siteIdentity.getMixedModeDisplay() == MixedMode.MIXED_CONTENT_LOADED) {
+            } else if (siteIdentity.getMixedModeDisplay() == MixedMode.LOADED) {
                 // Passive Mixed Content loaded.
                 mIcon.setImageResource(R.drawable.lock_inactive);
                 setSecurityStateIcon(R.drawable.warning_major, 1);
                 mMixedContentActivity.setVisibility(View.VISIBLE);
-                if (siteIdentity.getMixedModeActive() == MixedMode.MIXED_CONTENT_BLOCKED) {
+                if (siteIdentity.getMixedModeActive() == MixedMode.BLOCKED) {
                     mMixedContentActivity.setText(R.string.mixed_content_blocked_some);
                 } else {
                     mMixedContentActivity.setText(R.string.mixed_content_display_loaded);
@@ -360,6 +362,14 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
 
             mSecurityState.setText(R.string.identity_connection_insecure);
             mSecurityState.setTextColor(ContextCompat.getColor(mContext, R.color.placeholder_active_grey));
+
+        } else if (siteIdentity.isSecurityException()) {
+
+            mIcon.setImageResource(R.drawable.lock_inactive);
+            setSecurityStateIcon(R.drawable.warning_major, 1);
+            mSecurityState.setText(R.string.identity_connection_insecure);
+            mSecurityState.setTextColor(ContextCompat.getColor(mContext, R.color.placeholder_active_grey));
+
         } else {
             // Connection is secure.
             mIcon.setImageResource(R.drawable.lock_secure);
@@ -369,8 +379,8 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
             mSecurityState.setText(R.string.identity_connection_secure);
 
             // Mixed content has been blocked, if present.
-            if (siteIdentity.getMixedModeActive() == MixedMode.MIXED_CONTENT_BLOCKED ||
-                siteIdentity.getMixedModeDisplay() == MixedMode.MIXED_CONTENT_BLOCKED) {
+            if (siteIdentity.getMixedModeActive() == MixedMode.BLOCKED ||
+                siteIdentity.getMixedModeDisplay() == MixedMode.BLOCKED) {
                 mMixedContentActivity.setVisibility(View.VISIBLE);
                 mMixedContentActivity.setText(R.string.mixed_content_blocked_all);
                 mLink.setVisibility(View.VISIBLE);
@@ -383,13 +393,13 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
 
     private void clearSecurityStateIcon() {
         mSecurityState.setCompoundDrawablePadding(0);
-        mSecurityState.setCompoundDrawables(null, null, null, null);
+        TextViewCompat.setCompoundDrawablesRelative(mSecurityState, null, null, null, null);
     }
 
     private void setSecurityStateIcon(int resource, int factor) {
         final Drawable stateIcon = ContextCompat.getDrawable(mContext, resource);
         stateIcon.setBounds(0, 0, stateIcon.getIntrinsicWidth() / factor, stateIcon.getIntrinsicHeight() / factor);
-        mSecurityState.setCompoundDrawables(stateIcon, null, null, null);
+        TextViewCompat.setCompoundDrawablesRelative(mSecurityState, stateIcon, null, null, null);
         mSecurityState.setCompoundDrawablePadding((int) mResources.getDimension(R.dimen.doorhanger_drawable_padding));
     }
     private void updateIdentityInformation(final SiteIdentity siteIdentity) {
@@ -423,14 +433,10 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
 
         final int icon = blocked ? R.drawable.shield_enabled : R.drawable.shield_disabled;
 
-        final JSONObject options = new JSONObject();
-        final JSONObject tracking = new JSONObject();
-        try {
-            tracking.put("enabled", blocked);
-            options.put("tracking_protection", tracking);
-        } catch (JSONException e) {
-            Log.e(LOGTAG, "Error adding tracking protection options", e);
-        }
+        final GeckoBundle options = new GeckoBundle();
+        final GeckoBundle tracking = new GeckoBundle();
+        tracking.putBoolean("enabled", blocked);
+        options.putBundle("tracking_protection", tracking);
         config.setOptions(options);
 
         config.setLink(mContext.getString(R.string.learn_more), TRACKING_CONTENT_SUPPORT_URL);
@@ -512,7 +518,7 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
                 final int dimen = (int) mResources.getDimension(R.dimen.browser_toolbar_favicon_size);
                 faviconDrawable.setBounds(0, 0, dimen, dimen);
 
-                mTitle.setCompoundDrawables(faviconDrawable, null, null, null);
+                TextViewCompat.setCompoundDrawablesRelative(mTitle, faviconDrawable, null, null, null);
                 mTitle.setCompoundDrawablePadding((int) mContext.getResources().getDimension(R.dimen.doorhanger_drawable_padding));
             }
         }
@@ -547,7 +553,10 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
     }
 
     void destroy() {
-        GeckoApp.getEventDispatcher().unregisterGeckoThreadListener(this,
+    }
+
+    void unregisterListeners() {
+        EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
                                                                     "Doorhanger:Logins",
                                                                     "Permissions:CheckResult");
     }
@@ -557,7 +566,7 @@ public class SiteIdentityPopup extends AnchoredPopup implements GeckoEventListen
         super.dismiss();
         removeTrackingContentNotification();
         removeSelectLoginDoorhanger();
-        mTitle.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
+        TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(mTitle, null, null, null, null);
         mDivider.setVisibility(View.GONE);
     }
 

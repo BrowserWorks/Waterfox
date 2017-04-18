@@ -26,6 +26,10 @@ Cu.importGlobalProperties(["TextEncoder"]);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+/* globals processCount */
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "processCount", "dom.ipc.processCount.extension");
+
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
@@ -363,6 +367,28 @@ this.ExtensionData = class {
     });
   }
 
+  // This method should return a structured representation of any
+  // capabilities this extension has access to, as derived from the
+  // manifest.  The current implementation just returns the contents
+  // of the permissions attribute, if we add things like url_overrides,
+  // they should also be added here.
+  userPermissions() {
+    let result = {
+      hosts: this.whiteListedHosts.pat,
+      apis: [...this.apiNames],
+    };
+
+    if (Array.isArray(this.manifest.content_scripts)) {
+      for (let entry of this.manifest.content_scripts) {
+        result.hosts.push(...entry.matches);
+      }
+    }
+    const EXP_PATTERN = /^experiments\.\w+/;
+    result.permissions = [...this.permissions]
+      .filter(p => !result.hosts.includes(p) && !EXP_PATTERN.test(p));
+    return result;
+  }
+
   // Reads the extension's |manifest.json| file, and stores its
   // parsed contents in |this.manifest|.
   readManifest() {
@@ -409,10 +435,21 @@ this.ExtensionData = class {
         // Errors are handled by the type checks above.
       }
 
+      let containersEnabled = true;
+      try {
+        containersEnabled = Services.prefs.getBoolPref("privacy.userContext.enabled");
+      } catch (e) {
+        // If we fail here, we are in some xpcshell test.
+      }
+
       let permissions = this.manifest.permissions || [];
 
       let whitelist = [];
       for (let perm of permissions) {
+        if (perm == "contextualIdentities" && !containersEnabled) {
+          continue;
+        }
+
         this.permissions.add(perm);
 
         let match = /^(\w+)(?:\.(\w+)(?:\.\w+)*)?$/.exec(perm);
@@ -454,7 +491,7 @@ this.ExtensionData = class {
   // Gecko-compatible variant. Currently, this means simply
   // replacing underscores with hyphens.
   normalizeLocaleCode(locale) {
-    return String.replace(locale, /_/g, "-");
+    return locale.replace(/_/g, "-");
   }
 
   // Reads the locale file for the given Gecko-compatible locale code, and
@@ -588,6 +625,14 @@ this.Extension = class extends ExtensionData {
     this.addonData = addonData;
     this.startupReason = startupReason;
 
+    this.remote = ExtensionManagement.useRemoteWebExtensions;
+
+    if (this.remote && processCount !== 1) {
+      throw new Error("Out-of-process WebExtensions are not supported with multiple child processes");
+    }
+    // This is filled in the first time an extension child is created.
+    this.parentMessageManager = null;
+
     this.id = addonData.id;
     this.baseURI = NetUtil.newURI(this.getURL("")).QueryInterface(Ci.nsIURL);
     this.principal = this.createPrincipal();
@@ -659,7 +704,7 @@ this.Extension = class extends ExtensionData {
 
   // Checks that the given URL is a child of our baseURI.
   isExtensionURL(url) {
-    let uri = Services.io.newURI(url, null, null);
+    let uri = Services.io.newURI(url);
 
     let common = this.baseURI.getCommonBaseSpec(uri);
     return common == this.baseURI.spec;
@@ -706,15 +751,35 @@ this.Extension = class extends ExtensionData {
 
   broadcast(msg, data) {
     return new Promise(resolve => {
-      let count = Services.ppmm.childCount;
-      Services.ppmm.addMessageListener(msg + "Complete", function listener() {
-        count--;
-        if (count == 0) {
-          Services.ppmm.removeMessageListener(msg + "Complete", listener);
+      let {ppmm} = Services;
+      let children = new Set();
+      for (let i = 0; i < ppmm.childCount; i++) {
+        children.add(ppmm.getChildAt(i));
+      }
+
+      let maybeResolve;
+      function listener(data) {
+        children.delete(data.target);
+        maybeResolve();
+      }
+      function observer(subject, topic, data) {
+        children.delete(subject);
+        maybeResolve();
+      }
+
+      maybeResolve = () => {
+        if (children.size === 0) {
+          ppmm.removeMessageListener(msg + "Complete", listener);
+          Services.obs.removeObserver(observer, "message-manager-close");
+          Services.obs.removeObserver(observer, "message-manager-disconnect");
           resolve();
         }
-      });
-      Services.ppmm.broadcastAsyncMessage(msg, data);
+      };
+      ppmm.addMessageListener(msg + "Complete", listener);
+      Services.obs.addObserver(observer, "message-manager-close", false);
+      Services.obs.addObserver(observer, "message-manager-disconnect", false);
+
+      ppmm.broadcastAsyncMessage(msg, data);
     });
   }
 
@@ -882,7 +947,7 @@ this.Extension = class extends ExtensionData {
   }
 
   observe(subject, topic, data) {
-    if (topic == "xpcom-shutdown") {
+    if (topic === "xpcom-shutdown") {
       this.cleanupGeneratedFile();
     }
   }

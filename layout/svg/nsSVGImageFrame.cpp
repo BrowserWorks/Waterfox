@@ -13,10 +13,10 @@
 #include "nsLayoutUtils.h"
 #include "imgINotificationObserver.h"
 #include "nsSVGEffects.h"
-#include "nsSVGPathGeometryFrame.h"
 #include "mozilla/dom/SVGSVGElement.h"
 #include "nsSVGUtils.h"
 #include "SVGContentUtils.h"
+#include "SVGGeometryFrame.h"
 #include "SVGImageContext.h"
 #include "mozilla/dom/SVGImageElement.h"
 #include "nsContentUtils.h"
@@ -46,7 +46,7 @@ private:
   nsSVGImageFrame *mFrame;
 };
 
-class nsSVGImageFrame : public nsSVGPathGeometryFrame
+class nsSVGImageFrame : public SVGGeometryFrame
                       , public nsIReflowCallback
 {
   friend nsIFrame*
@@ -54,7 +54,7 @@ class nsSVGImageFrame : public nsSVGPathGeometryFrame
 
 protected:
   explicit nsSVGImageFrame(nsStyleContext* aContext)
-    : nsSVGPathGeometryFrame(aContext)
+    : SVGGeometryFrame(aContext)
     , mReflowCallbackPosted(false)
   {
     EnableVisibilityTracking();
@@ -72,7 +72,7 @@ public:
   virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
   virtual void ReflowSVG() override;
 
-  // nsSVGPathGeometryFrame methods:
+  // SVGGeometryFrame methods:
   virtual uint16_t GetHitTestFlags() override;
 
   // nsIFrame interface:
@@ -154,7 +154,7 @@ nsSVGImageFrame::Init(nsIContent*       aContent,
   NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::image),
                "Content is not an SVG image!");
 
-  nsSVGPathGeometryFrame::Init(aContent, aParent, aPrevInFlow);
+  SVGGeometryFrame::Init(aContent, aParent, aPrevInFlow);
 
   if (GetStateBits() & NS_FRAME_IS_NONDISPLAY) {
     // Non-display frames are likely to be patterns, masks or the like.
@@ -165,7 +165,7 @@ nsSVGImageFrame::Init(nsIContent*       aContent,
   mListener = new nsSVGImageListener(this);
   nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
   if (!imageLoader) {
-    NS_RUNTIMEABORT("Why is this not an image loading content?");
+    MOZ_CRASH("Why is this not an image loading content?");
   }
 
   // We should have a PresContext now, so let's notify our image loader that
@@ -240,8 +240,8 @@ nsSVGImageFrame::AttributeChanged(int32_t         aNameSpaceID,
     }
   }
 
-  return nsSVGPathGeometryFrame::AttributeChanged(aNameSpaceID,
-                                                  aAttribute, aModType);
+  return SVGGeometryFrame::AttributeChanged(aNameSpaceID,
+                                            aAttribute, aModType);
 }
 
 void
@@ -250,13 +250,13 @@ nsSVGImageFrame::OnVisibilityChange(Visibility aNewVisibility,
 {
   nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
   if (!imageLoader) {
-    nsSVGPathGeometryFrame::OnVisibilityChange(aNewVisibility, aNonvisibleAction);
+    SVGGeometryFrame::OnVisibilityChange(aNewVisibility, aNonvisibleAction);
     return;
   }
 
   imageLoader->OnVisibilityChange(aNewVisibility, aNonvisibleAction);
 
-  nsSVGPathGeometryFrame::OnVisibilityChange(aNewVisibility, aNonvisibleAction);
+  SVGGeometryFrame::OnVisibilityChange(aNewVisibility, aNonvisibleAction);
 }
 
 gfx::Matrix
@@ -389,11 +389,7 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
       dirtyRect.MoveBy(-rootRect.TopLeft());
     }
 
-    // XXXbholley - I don't think huge images in SVGs are common enough to
-    // warrant worrying about the responsiveness impact of doing synchronous
-    // decodes. The extra code complexity of determinining when we want to
-    // force sync probably just isn't worth it, so always pass FLAG_SYNC_DECODE
-    uint32_t drawFlags = imgIContainer::FLAG_SYNC_DECODE;
+    uint32_t drawFlags = imgIContainer::FLAG_SYNC_DECODE_IF_FAST;
 
     if (mImageContainer->GetType() == imgIContainer::TYPE_VECTOR) {
       // Package up the attributes of this image element which can override the
@@ -499,7 +495,7 @@ nsSVGImageFrame::GetType() const
 }
 
 //----------------------------------------------------------------------
-// nsSVGPathGeometryFrame methods:
+// SVGGeometryFrame methods:
 
 // Lie about our fill/stroke so that covered region and hit detection work properly
 

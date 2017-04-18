@@ -2,10 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-disable mozilla/reject-some-requires */
+
 "use strict";
-/* eslint-disable mozilla/reject-some-requires */
+
 const { Ci, Cc, CC } = require("chrome");
-/* eslint-disable mozilla/reject-some-requires */
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "dirService", function () {
@@ -35,6 +36,17 @@ const OPEN_FLAGS = {
   TRUNCATE: parseInt("0x20", 16),
   EXCL: parseInt("0x80", 16)
 };
+
+function formatDate(date) {
+  let year = String(date.getFullYear() % 100).padStart(2, "0");
+  let month = String(date.getMonth() + 1).padStart(2, "0");
+  let day = String(date.getDate()).padStart(2, "0");
+  let hour = String(date.getHours()).padStart(2, "0");
+  let minutes = String(date.getMinutes()).padStart(2, "0");
+  let seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hour}-${minutes}-${seconds}`;
+}
 
 /**
  * Helper API for HAR export features.
@@ -67,10 +79,8 @@ var HarUtils = {
   getHarFileName: function (defaultFileName, jsonp, compress) {
     let extension = jsonp ? ".harp" : ".har";
 
-    // Read more about toLocaleFormat & format string.
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleFormat
     let now = new Date();
-    let name = now.toLocaleFormat(defaultFileName);
+    let name = defaultFileName.replace(/%date/g, formatDate(now));
     name = name.replace(/\:/gm, "-", "");
     name = name.replace(/\//gm, "_", "");
 

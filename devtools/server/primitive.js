@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { on, once, off, emit } = require("sdk/event/core");
 const { Class } = require("sdk/core/heritage");
 
 const WebGLPrimitivesType = {
@@ -23,14 +22,12 @@ const WebGLPrimitivesType = {
 const WebGLDrawArrays = "drawArrays";
 const WebGLDrawElements = "drawElements";
 
-var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
+exports.WebGLPrimitiveCounter = Class({
   initialize: function (tabActor) {
     this.tabActor = tabActor;
   },
 
-  destroy: function () {
-    this.stopRecording();
-  },
+  destroy: function () {},
 
   /**
    * Starts monitoring primitive draws, storing the primitives count per tick.
@@ -47,7 +44,7 @@ var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
    * Stops monitoring primitive draws, returning the recorded values.
    */
   getCounts: function () {
-    var result = {
+    let result = {
       tris: this._tris,
       vertices: this._vertices,
       points: this._points,
@@ -157,6 +154,7 @@ var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
       case WebGLPrimitivesType.TRIANGLE_FAN:
         this._tris += (count - 2);
         this._vertices += count;
+        break;
       default:
         console.error("_processDrawElements doesn't define this type.");
         break;

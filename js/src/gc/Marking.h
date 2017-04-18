@@ -239,6 +239,11 @@ class GCMarker : public JSTracer
 
     void markEphemeronValues(gc::Cell* markedCell, gc::WeakEntryVector& entry);
 
+    static GCMarker* fromTracer(JSTracer* trc) {
+        MOZ_ASSERT(trc->isMarkingTracer());
+        return static_cast<GCMarker*>(trc);
+    }
+
   private:
 #ifdef DEBUG
     void checkZone(void* p);
@@ -404,7 +409,7 @@ IsAboutToBeFinalizedDuringSweep(TenuredCell& tenured);
 inline Cell*
 ToMarkable(const Value& v)
 {
-    if (v.isMarkable())
+    if (v.isGCThing())
         return (Cell*)v.toGCThing();
     return nullptr;
 }

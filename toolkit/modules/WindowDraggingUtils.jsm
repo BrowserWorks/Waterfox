@@ -15,15 +15,15 @@ this.WindowDraggingElement = function WindowDraggingElement(elem) {
     return;
   }
 
-  this._elem.addEventListener("mousedown", this, false);
+  this._elem.addEventListener("mousedown", this);
 };
 
 WindowDraggingElement.prototype = {
-  mouseDownCheck: function(e) { return true; },
+  mouseDownCheck(e) { return true; },
   dragTags: ["box", "hbox", "vbox", "spacer", "label", "statusbarpanel", "stack",
              "toolbaritem", "toolbarseparator", "toolbarspring", "toolbarspacer",
              "radiogroup", "deck", "scrollbox", "arrowscrollbox", "tabs"],
-  shouldDrag: function(aEvent) {
+  shouldDrag(aEvent) {
     if (aEvent.button != 0 ||
         this._window.fullScreen ||
         !this.mouseDownCheck.call(this._elem, aEvent) ||
@@ -51,11 +51,11 @@ WindowDraggingElement.prototype = {
     }
     return true;
   },
-  isPanel : function() {
+  isPanel() {
     return this._elem instanceof Components.interfaces.nsIDOMXULElement &&
            this._elem.localName == "panel";
   },
-  handleEvent: function(aEvent) {
+  handleEvent(aEvent) {
     let isPanel = this.isPanel();
     switch (aEvent.type) {
       case "mousedown":
@@ -72,14 +72,13 @@ WindowDraggingElement.prototype = {
           let screenRect = this._elem.getOuterScreenRect();
           this._deltaX = aEvent.screenX - screenRect.left;
           this._deltaY = aEvent.screenY - screenRect.top;
-        }
-        else {
+        } else {
           this._deltaX = aEvent.screenX - this._window.screenX;
           this._deltaY = aEvent.screenY - this._window.screenY;
         }
         this._draggingWindow = true;
-        this._window.addEventListener("mousemove", this, false);
-        this._window.addEventListener("mouseup", this, false);
+        this._window.addEventListener("mousemove", this);
+        this._window.addEventListener("mouseup", this);
         break;
       case "mousemove":
         if (this._draggingWindow) {
@@ -90,8 +89,8 @@ WindowDraggingElement.prototype = {
       case "mouseup":
         if (this._draggingWindow) {
           this._draggingWindow = false;
-          this._window.removeEventListener("mousemove", this, false);
-          this._window.removeEventListener("mouseup", this, false);
+          this._window.removeEventListener("mousemove", this);
+          this._window.removeEventListener("mouseup", this);
         }
         break;
     }

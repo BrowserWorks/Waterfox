@@ -756,6 +756,13 @@ audio:not([controls]) {
   display: none;
 }
 
+audio[controls] {
+  /* This ensures that intrinsic sizing can reliably shrinkwrap our
+      controls (which are also always horizontal) and produce a
+      reasonable intrinsic size from them. */
+  writing-mode: horizontal-tb !important;
+}
+
 *|*::-moz-html-canvas-content {
   display: block !important;
   /* we want to be an absolute and fixed container */
@@ -763,6 +770,8 @@ audio:not([controls]) {
 }
 
 video > .caption-box {
+  width: 100%;
+  height: 100%;
   position: relative;
   overflow: hidden;
 }
@@ -774,24 +783,47 @@ input[type="time"] > xul|datetimebox {
   -moz-binding: url("chrome://global/content/bindings/datetimebox.xml#time-input");
 }
 
+input[type="date"] > xul|datetimebox {
+  display: flex;
+  -moz-binding: url("chrome://global/content/bindings/datetimebox.xml#date-input");
+}
+
 /* details & summary */
-/* Need to revert Bug 1259889 Part 2 when removing details preference. */
-@supports -moz-bool-pref("dom.details_element.enabled") {
-  details > summary:first-of-type,
-  details > summary:-moz-native-anonymous {
-    display: list-item;
-    list-style: disclosure-closed inside;
-  }
+details > summary:first-of-type,
+details > summary:-moz-native-anonymous {
+  display: list-item;
+  list-style: disclosure-closed inside;
+}
 
-  details[open] > summary:first-of-type,
-  details[open] > summary:-moz-native-anonymous {
-    list-style-type: disclosure-open;
-  }
+details[open] > summary:first-of-type,
+details[open] > summary:-moz-native-anonymous {
+  list-style-type: disclosure-open;
+}
 
-  details > summary:first-of-type > *|* {
-    /* Cancel "list-style-position: inside" inherited from summary. */
-    list-style-position: initial;
-  }
+details > summary:first-of-type > *|* {
+  /* Cancel "list-style-position: inside" inherited from summary. */
+  list-style-position: initial;
+}
+
+/* <dialog> element styles */
+
+dialog {
+  position: absolute;
+  offset-inline-start: 0;
+  offset-inline-end: 0;
+  color: black;
+  margin: auto;
+  border-width: initial;
+  border-style: solid;
+  border-color: initial;
+  border-image: initial;
+  padding: 1em;
+  background: white;
+  width: -moz-fit-content;
+}
+
+dialog:not([open]) {
+  display: none;
 }
 
 /* emulation of non-standard HTML <marquee> tag */

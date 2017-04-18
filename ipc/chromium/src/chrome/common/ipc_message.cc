@@ -13,13 +13,18 @@
 #include "chrome/common/file_descriptor_set_posix.h"
 #endif
 #ifdef MOZ_TASK_TRACER
-#include "GeckoTaskTracer.h"
+#include "GeckoTaskTracerImpl.h"
 #endif
 
 #include "mozilla/Move.h"
 
 #ifdef MOZ_TASK_TRACER
 using namespace mozilla::tasktracer;
+
+#define MSG_HEADER_SZ (GetOrCreateTraceInfo() == nullptr ?              \
+                       sizeof(Header) : sizeof(HeaderTaskTracer))
+#else
+#define MSG_HEADER_SZ sizeof(Header)
 #endif
 
 namespace IPC {
@@ -31,23 +36,27 @@ Message::~Message() {
 }
 
 Message::Message()
-    : Pickle(sizeof(Header)) {
+    : Pickle(MSG_HEADER_SZ) {
   MOZ_COUNT_CTOR(IPC::Message);
   header()->routing = header()->type = header()->flags = 0;
 #if defined(OS_POSIX)
   header()->num_fds = 0;
 #endif
 #ifdef MOZ_TASK_TRACER
-  header()->source_event_id = 0;
-  header()->parent_task_id = 0;
-  header()->source_event_type = SourceEventType::Unknown;
+  if (UseTaskTracerHeader()) {
+    header()->flags |= TASKTRACER_BIT;
+    HeaderTaskTracer* _header = static_cast<HeaderTaskTracer*>(header());
+    GetCurTraceInfo(&_header->source_event_id,
+                    &_header->parent_task_id,
+                    &_header->source_event_type);
+  }
 #endif
   InitLoggingVariables();
 }
 
 Message::Message(int32_t routing_id, msgid_t type, NestedLevel nestedLevel, PriorityValue priority,
-                 MessageCompression compression, const char* const aName)
-    : Pickle(sizeof(Header)) {
+                 MessageCompression compression, const char* const aName, bool recordWriteLatency)
+    : Pickle(MSG_HEADER_SZ) {
   MOZ_COUNT_CTOR(IPC::Message);
   header()->routing = routing_id;
   header()->type = type;
@@ -68,15 +77,30 @@ Message::Message(int32_t routing_id, msgid_t type, NestedLevel nestedLevel, Prio
   header()->cookie = 0;
 #endif
 #ifdef MOZ_TASK_TRACER
-  header()->source_event_id = 0;
-  header()->parent_task_id = 0;
-  header()->source_event_type = SourceEventType::Unknown;
+  if (UseTaskTracerHeader()) {
+    header()->flags |= TASKTRACER_BIT;
+    HeaderTaskTracer* _header = static_cast<HeaderTaskTracer*>(header());
+    GetCurTraceInfo(&_header->source_event_id,
+                    &_header->parent_task_id,
+                    &_header->source_event_type);
+  }
 #endif
+  if (recordWriteLatency) {
+    create_time_ = mozilla::TimeStamp::Now();
+  }
   InitLoggingVariables(aName);
 }
 
+#ifndef MOZ_TASK_TRACER
+#define MSG_HEADER_SZ_DATA sizeof(Header)
+#else
+#define MSG_HEADER_SZ_DATA                                            \
+  (reinterpret_cast<const Header*>(data)->flags & TASKTRACER_BIT ?  \
+   sizeof(HeaderTaskTracer) : sizeof(Header))
+#endif
+
 Message::Message(const char* data, int data_len)
-  : Pickle(sizeof(Header), data, data_len)
+  : Pickle(MSG_HEADER_SZ_DATA, data, data_len)
 {
   MOZ_COUNT_CTOR(IPC::Message);
   InitLoggingVariables();
@@ -87,11 +111,6 @@ Message::Message(Message&& other) : Pickle(mozilla::Move(other)) {
   InitLoggingVariables(other.name_);
 #if defined(OS_POSIX)
   file_descriptor_set_ = other.file_descriptor_set_.forget();
-#endif
-#ifdef MOZ_TASK_TRACER
-  header()->source_event_id = other.header()->source_event_id;
-  header()->parent_task_id = other.header()->parent_task_id;
-  header()->source_event_type = other.header()->source_event_type;
 #endif
 }
 
@@ -104,11 +123,6 @@ Message& Message::operator=(Message&& other) {
   InitLoggingVariables(other.name_);
 #if defined(OS_POSIX)
   file_descriptor_set_.swap(other.file_descriptor_set_);
-#endif
-#ifdef MOZ_TASK_TRACER
-  std::swap(header()->source_event_id, other.header()->source_event_id);
-  std::swap(header()->parent_task_id, other.header()->parent_task_id);
-  std::swap(header()->source_event_type, other.header()->source_event_type);
 #endif
   return *this;
 }
@@ -153,6 +167,54 @@ uint32_t Message::num_fds() const {
   return file_descriptor_set() ? file_descriptor_set()->size() : 0;
 }
 
+#endif
+
+#ifdef MOZ_TASK_TRACER
+void *MessageTask() {
+  return reinterpret_cast<void*>(&MessageTask);
+}
+
+void
+Message::TaskTracerDispatch() {
+  if (header()->flags & TASKTRACER_BIT) {
+    HeaderTaskTracer* _header = static_cast<HeaderTaskTracer*>(header());
+    _header->task_id = GenNewUniqueTaskId();
+    uintptr_t* vtab = reinterpret_cast<uintptr_t*>(&MessageTask);
+    LogVirtualTablePtr(_header->task_id,
+                       _header->source_event_id,
+                       vtab);
+    LogDispatch(_header->task_id,
+                _header->parent_task_id,
+                _header->source_event_id,
+                _header->source_event_type);
+  }
+}
+
+Message::AutoTaskTracerRun::AutoTaskTracerRun(Message& aMsg)
+  : mMsg(aMsg)
+  , mTaskId(0)
+  , mSourceEventId(0) {
+  if (mMsg.header()->flags & TASKTRACER_BIT) {
+    const HeaderTaskTracer* _header =
+      static_cast<HeaderTaskTracer*>(mMsg.header());
+    LogBegin(_header->task_id,
+             _header->source_event_id);
+    SetCurTraceInfo(_header->source_event_id,
+                    _header->task_id,
+                    _header->source_event_type);
+    mTaskId = _header->task_id;
+    mSourceEventId = _header->source_event_id;
+  } else {
+    SetCurTraceInfo(0, 0, SourceEventType::Unknown);
+  }
+}
+
+Message::AutoTaskTracerRun::~AutoTaskTracerRun() {
+  if (mTaskId) {
+    AddLabel("IPC Message %s", mMsg.name());
+    LogEnd(mTaskId, mSourceEventId);
+  }
+}
 #endif
 
 }  // namespace IPC

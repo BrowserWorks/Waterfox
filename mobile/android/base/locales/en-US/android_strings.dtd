@@ -156,6 +156,7 @@
 <!ENTITY overlay_share_bookmark_btn_label_already "Already bookmarked">
 <!ENTITY overlay_share_send_other "Send to other devices">
 
+<!ENTITY overlay_share_open_browser_btn_label "Open in &brandShortName;">
 <!-- Localization note (overlay_share_send_tab_btn_label) : Used on the
      share overlay menu to represent the "Send Tab" action when the user
      either has not set up Sync, or has no other devices to send a tab
@@ -386,6 +387,7 @@ size. -->
 <!ENTITY pref_history_search_suggestions "Show search history">
 <!ENTITY pref_import_options "Import options">
 <!ENTITY pref_import_android_summary "Import bookmarks and history from the native browser">
+<!ENTITY pref_private_data_openTabs "Open tabs">
 <!ENTITY pref_private_data_history2 "Browsing history">
 <!ENTITY pref_private_data_searchHistory "Search history">
 <!ENTITY pref_private_data_formdata2 "Form history">
@@ -535,6 +537,11 @@ size. -->
 
 <!ENTITY pref_tab_queue_title3 "Tab queue">
 <!ENTITY pref_tab_queue_summary4 "Save links until the next time you open &brandShortName;">
+
+<!-- Localization note (pref_compact_tabs): Label for setting that controls whether 1 wide column or
+     2 narrower (compact) columns are used for tabs in the tabs tray in portrait mode on phones. -->
+<!ENTITY pref_compact_tabs "Compact tabs">
+<!ENTITY pref_compact_tabs_summary2 "Arrange tabs in two columns in portrait mode">
 
 <!-- Localization note (page_removed): This string appears in a toast message when
      any page is removed frome about:home. This includes pages that are in history,
@@ -701,8 +708,8 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY updater_downloading_select2 "Touch to apply update once downloaded">
 <!ENTITY updater_downloading_retry2 "Touch to retry">
 
-<!ENTITY updater_apply_title2 "Update available for &brandShortName;">
-<!ENTITY updater_apply_select2 "Touch to update">
+<!ENTITY updater_apply_title3 "Update downloaded for &brandShortName;">
+<!ENTITY updater_apply_select3 "Touch to install">
 
 <!-- Localization note (updater_permission_text): This text is shown in a notification and as a snackbar
      if the app requires a runtime permission to download updates. Currently, the updater only sees
@@ -846,3 +853,6 @@ and allows hiding a URL/page from highlights or topsites. The page remains in hi
 is simply hidden from the Activity Stream panel. -->
 <!ENTITY activity_stream_dismiss "Dismiss">
 <!ENTITY activity_stream_delete_history "Delete from History">
+
+<!ENTITY activity_stream_welcome_title "Welcome to your Highlights">
+<!ENTITY activity_stream_welcome_content1 "&brandShortName; now creates highlights of things you\'ve discovered on the web so you can find your way back to great articles, videos, bookmarks, and other pages.">

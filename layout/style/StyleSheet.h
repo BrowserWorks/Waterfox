@@ -33,6 +33,10 @@ class CSSRuleList;
 class SRIMetadata;
 } // namespace dom
 
+namespace css {
+class Rule;
+}
+
 /**
  * Superclass for data common to CSSStyleSheet and ServoStyleSheet.
  */
@@ -44,7 +48,7 @@ protected:
   StyleSheet(const StyleSheet& aCopy,
              nsIDocument* aDocumentToUse,
              nsINode* aOwningNodeToUse);
-  virtual ~StyleSheet() {}
+  virtual ~StyleSheet();
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -66,6 +70,17 @@ public:
    */
   bool IsComplete() const;
   void SetComplete();
+
+  /**
+   * Set the stylesheet to be enabled.  This may or may not make it
+   * applicable.  Note that this WILL inform the sheet's document of
+   * its new applicable state if the state changes but WILL NOT call
+   * BeginUpdate() or EndUpdate() on the document -- calling those is
+   * the caller's responsibility.  This allows use of SetEnabled when
+   * batched updates are desired.  If you want updates handled for
+   * you, see nsIDOMStyleSheet::SetDisabled().
+   */
+  void SetEnabled(bool aEnabled);
 
   MOZ_DECL_STYLO_METHODS(CSSStyleSheet, ServoStyleSheet)
 
@@ -95,8 +110,22 @@ public:
   inline bool HasRules() const;
 
   // style sheet owner info
-  nsIDocument* GetOwningDocument() const { return mDocument; }
-  inline void SetOwningDocument(nsIDocument* aDocument);
+  enum DocumentAssociationMode {
+    // OwnedByDocument means mDocument owns us (possibly via a chain of other
+    // stylesheets).
+    OwnedByDocument,
+    // NotOwnedByDocument means we're owned by something that might have a
+    // different lifetime than mDocument.
+    NotOwnedByDocument
+  };
+  nsIDocument* GetAssociatedDocument() const { return mDocument; }
+  bool IsOwnedByDocument() const {
+    return mDocumentAssociationMode == OwnedByDocument;
+  }
+  // aDocument must not be null.
+  inline void SetAssociatedDocument(nsIDocument* aDocument,
+                                    DocumentAssociationMode aMode);
+  inline void ClearAssociatedDocument();
   nsINode* GetOwnerNode() const { return mOwningNode; }
   inline StyleSheet* GetParentSheet() const;
 
@@ -110,6 +139,9 @@ public:
    * a null pointer is allowed and is treated as a no-op.
    */
   inline void SetPrincipal(nsIPrincipal* aPrincipal);
+
+  void SetTitle(const nsAString& aTitle) { mTitle = aTitle; }
+  void SetMedia(nsMediaList* aMedia);
 
   // Get this style sheet's CORS mode
   inline CORSMode GetCORSMode() const;
@@ -129,12 +161,12 @@ public:
   // GetOwnerNode is defined above.
   inline StyleSheet* GetParentStyleSheet() const;
   // The XPCOM GetTitle is fine for WebIDL.
-  virtual nsMediaList* Media() = 0;
+  nsMediaList* Media();
   bool Disabled() const { return mDisabled; }
   // The XPCOM SetDisabled is fine for WebIDL.
 
   // WebIDL CSSStyleSheet API
-  virtual nsIDOMCSSRule* GetDOMOwnerRule() const = 0;
+  virtual css::Rule* GetDOMOwnerRule() const = 0;
   dom::CSSRuleList* GetCssRules(nsIPrincipal& aSubjectPrincipal,
                                 ErrorResult& aRv);
   uint32_t InsertRule(const nsAString& aRule, uint32_t aIndex,
@@ -192,9 +224,17 @@ protected:
   void SubjectSubsumesInnerPrincipal(nsIPrincipal& aSubjectPrincipal,
                                      ErrorResult& aRv);
 
+  // Drop our reference to mMedia
+  void DropMedia();
+
+  // Called from SetEnabled when the enabled state changed.
+  void EnabledStateChanged();
+
   nsString              mTitle;
   nsIDocument*          mDocument; // weak ref; parents maintain this for their children
   nsINode*              mOwningNode; // weak ref
+
+  RefPtr<nsMediaList> mMedia;
 
   // mParsingMode controls access to nonstandard style constructs that
   // are not safe for use on the public Web but necessary in UA sheets
@@ -203,6 +243,11 @@ protected:
 
   const StyleBackendType mType;
   bool                  mDisabled;
+
+  // mDocumentAssociationMode determines whether mDocument directly owns us (in
+  // the sense that if it's known-live then we're known-live).  Always
+  // NotOwnedByDocument when mDocument is null.
+  DocumentAssociationMode mDocumentAssociationMode;
 };
 
 } // namespace mozilla

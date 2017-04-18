@@ -36,7 +36,6 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.dom += [
     'AnimationEvent.h',
-    'BeforeAfterKeyboardEvent.h',
     'BeforeUnloadEvent.h',
     'ClipboardEvent.h',
     'CommandEvent.h',
@@ -79,7 +78,6 @@ if CONFIG['MOZ_WEBSPEECH']:
 UNIFIED_SOURCES += [
     'AnimationEvent.cpp',
     'AsyncEventDispatcher.cpp',
-    'BeforeAfterKeyboardEvent.cpp',
     'BeforeUnloadEvent.cpp',
     'ClipboardEvent.cpp',
     'CommandEvent.cpp',
@@ -141,7 +139,6 @@ LOCAL_INCLUDES += [
     '/docshell/base',
     '/dom/base',
     '/dom/html',
-    '/dom/settings',
     '/dom/storage',
     '/dom/svg',
     '/dom/workers',

@@ -5,7 +5,7 @@
 "use strict";
 
 const EventEmitter = require("devtools/shared/event-emitter");
-const {KeyShortcuts} = require("devtools/client/shared/key-shortcuts");
+const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
 const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 
 /**
@@ -135,7 +135,7 @@ SwatchBasedEditorTooltip.prototype = {
     this.swatches.set(swatchEl, {
       callbacks: callbacks
     });
-    swatchEl.addEventListener("click", this._onSwatchClick, false);
+    swatchEl.addEventListener("click", this._onSwatchClick);
   },
 
   removeSwatch: function (swatchEl) {
@@ -144,7 +144,7 @@ SwatchBasedEditorTooltip.prototype = {
         this.hide();
         this.activeSwatch = null;
       }
-      swatchEl.removeEventListener("click", this._onSwatchClick, false);
+      swatchEl.removeEventListener("click", this._onSwatchClick);
       this.swatches.delete(swatchEl);
     }
   },

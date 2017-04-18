@@ -77,7 +77,7 @@ IdentityProviderService.prototype = {
 
     let err = "No provisioning flow found with id " + aProvId;
     log("ERROR:", err);
-    if (typeof aErrBack === 'function') {
+    if (typeof aErrBack === "function") {
       aErrBack(err);
     }
 
@@ -123,7 +123,7 @@ IdentityProviderService.prototype = {
    */
   _provisionIdentity: function _provisionIdentity(aIdentity, aIDPParams, aProvId, aCallback) {
     let provPath = aIDPParams.idpParams.provisioning;
-    let url = Services.io.newURI("https://" + aIDPParams.domain, null, null).resolve(provPath);
+    let url = Services.io.newURI("https://" + aIDPParams.domain).resolve(provPath);
     log("_provisionIdentity: identity:", aIdentity, "url:", url);
 
     // If aProvId is not null, then we already have a flow
@@ -178,7 +178,6 @@ IdentityProviderService.prototype = {
     provFlow.caller = aCaller;
 
     let identity = provFlow.identity;
-    let frame = provFlow.provisioningFrame;
 
     // Determine recommended length of cert.
     let duration = this.certDuration;
@@ -254,7 +253,7 @@ IdentityProviderService.prototype = {
       // sandbox.
       log("genKeyPair: generated keypair for provisioning flow with id:", aProvId);
       provFlow.caller.doGenKeyPairCallback(provFlow.kp.serializedPublicKey);
-    }.bind(this));
+    });
   },
 
   /**
@@ -282,7 +281,7 @@ IdentityProviderService.prototype = {
       reportError("registerCertificate", "No provision flow or caller");
       return;
     }
-    if (!provFlow.kp)  {
+    if (!provFlow.kp) {
       let errStr = "Cannot register a certificate without a keypair";
       reportError("registerCertificate", errStr);
       provFlow.callback(errStr);
@@ -316,7 +315,7 @@ IdentityProviderService.prototype = {
 
     // extract authentication URL from idpParams
     let authPath = aIDPParams.idpParams.authentication;
-    let authURI = Services.io.newURI("https://" + aIDPParams.domain, null, null).resolve(authPath);
+    let authURI = Services.io.newURI("https://" + aIDPParams.domain).resolve(authPath);
 
     // beginAuthenticationFlow causes the "identity-auth" topic to be
     // observed.  Since it's sending a notification to the DOM, there's
@@ -381,7 +380,7 @@ IdentityProviderService.prototype = {
     let provId = authFlow.provId;
 
     // delete caller
-    delete authFlow['caller'];
+    delete authFlow["caller"];
     delete this._authenticationFlows[aAuthId];
 
     let provFlow = this.getProvisionFlow(provId);
@@ -412,7 +411,7 @@ IdentityProviderService.prototype = {
     let provId = authFlow.provId;
 
     // delete caller
-    delete authFlow['caller'];
+    delete authFlow["caller"];
     delete this._authenticationFlows[aAuthId];
 
     let provFlow = this.getProvisionFlow(provId);
@@ -428,7 +427,7 @@ IdentityProviderService.prototype = {
   /**
    * Called by the UI to set the ID and caller for the authentication flow after it gets its ID
    */
-  setAuthenticationFlow: function(aAuthId, aProvId) {
+  setAuthenticationFlow(aAuthId, aProvId) {
     // this is the transition point between the two flows,
     // provision and authenticate.  We tell the auth flow which
     // provisioning flow it is started from.
@@ -469,17 +468,17 @@ IdentityProviderService.prototype = {
    * that may be attached to it.
    */
   _cleanUpProvisionFlow: function _cleanUpProvisionFlow(aProvId) {
-    log('_cleanUpProvisionFlow:', aProvId);
+    log("_cleanUpProvisionFlow:", aProvId);
     let prov = this._provisionFlows[aProvId];
 
     // Clean up the sandbox, if there is one.
     if (prov.provisioningSandbox) {
-      let sandbox = this._provisionFlows[aProvId]['provisioningSandbox'];
+      let sandbox = this._provisionFlows[aProvId]["provisioningSandbox"];
       if (sandbox.free) {
-        log('_cleanUpProvisionFlow: freeing sandbox');
+        log("_cleanUpProvisionFlow: freeing sandbox");
         sandbox.free();
       }
-      delete this._provisionFlows[aProvId]['provisioningSandbox'];
+      delete this._provisionFlows[aProvId]["provisioningSandbox"];
     }
 
     // Clean up a related authentication flow, if there is one.

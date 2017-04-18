@@ -85,7 +85,7 @@ public:
   virtual void SetScreenRenderOffset(const ScreenPoint& aOffset) override
   {
     if (aOffset.x || aOffset.y) {
-      NS_RUNTIMEABORT("SetScreenRenderOffset not supported by CompositorD3D11.");
+      MOZ_CRASH("SetScreenRenderOffset not supported by CompositorD3D11.");
     }
     // If the offset is 0, 0 that's okay.
   }
@@ -115,11 +115,7 @@ public:
    */
   virtual void EndFrame() override;
 
-  /**
-   * Post rendering stuff if the rendering is outside of this Compositor
-   * e.g., by Composer2D
-   */
-  virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) override {}
+  virtual void CancelFrame() override;
 
   /**
    * Setup the viewport and projection matrix for rendering

@@ -27,7 +27,7 @@ const { Services } = Cu.import("resource://gre/modules/Services.jsm");
 
 function newURI(uriStr, base) {
   try {
-    let baseURI = base ? ios.newURI(base, null, null) : null;
+    let baseURI = base ? ios.newURI(base) : null;
     return ios.newURI(uriStr, null, baseURI);
   }
   catch (e) {
@@ -336,7 +336,7 @@ var isValidURI = exports.isValidURI = function (uri) {
 }
 
 function isLocalURL(url) {
-  if (String.indexOf(url, './') === 0)
+  if (String(url).indexOf('./') === 0)
     return true;
 
   try {

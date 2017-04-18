@@ -7,7 +7,7 @@
 #define mozilla_EditorBase_h
 
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc.
-#include "mozFlushType.h"               // for mozFlushType enum
+#include "mozilla/FlushType.h"          // for FlushType enum
 #include "mozilla/OwningNonNull.h"      // for OwningNonNull
 #include "mozilla/SelectionState.h"     // for RangeUpdater, etc.
 #include "mozilla/StyleSheet.h"   // for StyleSheet
@@ -25,6 +25,7 @@
 #include "nsIWeakReferenceUtils.h"      // for nsWeakPtr
 #include "nsLiteralString.h"            // for NS_LITERAL_STRING
 #include "nsString.h"                   // for nsCString
+#include "nsTArray.h"                   // for nsTArray and nsAutoTArray
 #include "nsWeakReference.h"            // for nsSupportsWeakReference
 #include "nscore.h"                     // for nsresult, nsAString, etc.
 
@@ -142,8 +143,7 @@ struct IMEState;
  * delegate the actual commands to the editor independent of the XPFE
  * implementation.
  */
-class EditorBase : public nsIEditor
-                 , public nsIEditorIMESupport
+class EditorBase : public nsIEditorIMESupport
                  , public nsSupportsWeakReference
                  , public nsIPhonetic
 {
@@ -235,6 +235,19 @@ public:
                         ErrorResult& aResult);
   nsresult JoinNodes(nsINode& aLeftNode, nsINode& aRightNode);
   nsresult MoveNode(nsIContent* aNode, nsINode* aParent, int32_t aOffset);
+
+  nsresult CloneAttribute(nsIAtom* aAttribute, Element* aDestElement,
+                          Element* aSourceElement);
+  nsresult RemoveAttribute(Element* aElement, nsIAtom* aAttribute);
+  virtual nsresult RemoveAttributeOrEquivalent(Element* aElement,
+                                               nsIAtom* aAttribute,
+                                               bool aSuppressTransaction) = 0;
+  nsresult SetAttribute(Element* aElement, nsIAtom* aAttribute,
+                        const nsAString& aValue);
+  virtual nsresult SetAttributeOrEquivalent(Element* aElement,
+                                            nsIAtom* aAttribute,
+                                            const nsAString& aValue,
+                                            bool aSuppressTransaction) = 0;
 
   /**
    * Method to replace certain CreateElementNS() calls.
@@ -945,7 +958,7 @@ public:
   {
     nsCOMPtr<nsIDocument> doc = GetDocument();
     if (doc) {
-      doc->FlushPendingNotifications(Flush_Frames);
+      doc->FlushPendingNotifications(FlushType::Frames);
     }
   }
 
@@ -986,11 +999,17 @@ protected:
   RefPtr<TextComposition> mComposition;
 
   // Listens to all low level actions on the doc.
-  nsTArray<OwningNonNull<nsIEditActionListener>> mActionListeners;
+  typedef AutoTArray<OwningNonNull<nsIEditActionListener>, 5>
+            AutoActionListenerArray;
+  AutoActionListenerArray mActionListeners;
   // Just notify once per high level change.
-  nsTArray<OwningNonNull<nsIEditorObserver>> mEditorObservers;
+  typedef AutoTArray<OwningNonNull<nsIEditorObserver>, 3>
+            AutoEditorObserverArray;
+  AutoEditorObserverArray mEditorObservers;
   // Listen to overall doc state (dirty or not, just created, etc.).
-  nsTArray<OwningNonNull<nsIDocumentStateListener>> mDocStateListeners;
+  typedef AutoTArray<OwningNonNull<nsIDocumentStateListener>, 1>
+            AutoDocumentStateListenerArray;
+  AutoDocumentStateListenerArray mDocStateListeners;
 
   // Cached selection for AutoSelectionRestorer.
   SelectionState mSavedSel;

@@ -120,7 +120,7 @@ function run_test() {
   let obs = AM_Cc["@mozilla.org/observer-service;1"].
     getService(AM_Ci.nsIObserverService);
   obs.addObserver({
-    observe: function(aSubject, aTopic, aData) {
+    observe(aSubject, aTopic, aData) {
       gCachePurged = true;
     }
   }, "startupcache-invalidate", false);
@@ -284,11 +284,11 @@ function run_test_1() {
 function run_test_2() {
   addon1.version = "1.1";
   writeInstallRDFForExtension(addon1, userDir);
-  addon2.version="2.1";
+  addon2.version = "2.1";
   writeInstallRDFForExtension(addon2, profileDir);
-  addon2.version="2.2";
+  addon2.version = "2.2";
   writeInstallRDFForExtension(addon2, globalDir);
-  addon2.version="2.3";
+  addon2.version = "2.3";
   writeInstallRDFForExtension(addon2, userDir);
   var dest = profileDir.clone();
   dest.append(do_get_expected_addon_name("addon3@tests.mozilla.org"));
@@ -643,7 +643,7 @@ function run_test_8() {
 
 // More hiding and revealing
 function run_test_9() {
-  Services.prefs.clearUserPref("extensions.enabledScopes", 0);
+  Services.prefs.clearUserPref("extensions.enabledScopes");
 
   var dest = userDir.clone();
   dest.append(do_get_expected_addon_name("addon1@tests.mozilla.org"));

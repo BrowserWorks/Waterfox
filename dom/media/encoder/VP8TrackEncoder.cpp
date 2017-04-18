@@ -19,21 +19,43 @@
 namespace mozilla {
 
 LazyLogModule gVP8TrackEncoderLog("VP8TrackEncoder");
-#define VP8LOG(msg, ...) MOZ_LOG(gVP8TrackEncoderLog, mozilla::LogLevel::Debug, \
-                                  (msg, ##__VA_ARGS__))
-// Debug logging macro with object pointer and class name.
+#define VP8LOG(level, msg, ...) MOZ_LOG(gVP8TrackEncoderLog, \
+                                        level, \
+                                        (msg, ##__VA_ARGS__))
 
 #define DEFAULT_BITRATE_BPS 2500000
-#define DEFAULT_ENCODE_FRAMERATE 30
 
 using namespace mozilla::gfx;
 using namespace mozilla::layers;
+using namespace mozilla::media;
+
+static already_AddRefed<SourceSurface>
+GetSourceSurface(already_AddRefed<Image> aImg)
+{
+  RefPtr<Image> img = aImg;
+  if (!img) {
+    return nullptr;
+  }
+
+  if (!img->AsGLImage() || NS_IsMainThread()) {
+    RefPtr<SourceSurface> surf = img->GetAsSourceSurface();
+    return surf.forget();
+  }
+
+  // GLImage::GetAsSourceSurface() only supports main thread
+  RefPtr<SourceSurface> surf;
+  RefPtr<Runnable> runnable = NewRunnableFrom([img, &surf]() -> nsresult {
+    surf = img->GetAsSourceSurface();
+    return NS_OK;
+  });
+
+  NS_DispatchToMainThread(runnable, NS_DISPATCH_SYNC);
+  return surf.forget();
+}
 
 VP8TrackEncoder::VP8TrackEncoder(TrackRate aTrackRate)
   : VideoTrackEncoder(aTrackRate)
-  , mEncodedFrameDuration(0)
   , mEncodedTimestamp(0)
-  , mRemainingTicks(0)
   , mVPXContext(new vpx_codec_ctx_t())
   , mVPXImageWrapper(new vpx_image_t())
 {
@@ -62,8 +84,6 @@ VP8TrackEncoder::Init(int32_t aWidth, int32_t aHeight, int32_t aDisplayWidth,
 
   ReentrantMonitorAutoEnter mon(mReentrantMonitor);
 
-  mEncodedFrameRate = DEFAULT_ENCODE_FRAMERATE;
-  mEncodedFrameDuration = mTrackRate / mEncodedFrameRate;
   mFrameWidth = aWidth;
   mFrameHeight = aHeight;
   mDisplayWidth = aDisplayWidth;
@@ -109,7 +129,7 @@ VP8TrackEncoder::Init(int32_t aWidth, int32_t aHeight, int32_t aDisplayWidth,
 
   // rate control settings
   config.rc_dropframe_thresh = 0;
-  config.rc_end_usage = VPX_CBR;
+  config.rc_end_usage = VPX_VBR;
   config.g_pass = VPX_RC_ONE_PASS;
   // ffmpeg doesn't currently support streams that use resize.
   // Therefore, for safety, we should turn it off until it does.
@@ -122,7 +142,7 @@ VP8TrackEncoder::Init(int32_t aWidth, int32_t aHeight, int32_t aDisplayWidth,
 
   config.kf_mode = VPX_KF_AUTO;
   // Ensure that we can output one I-frame per second.
-  config.kf_max_dist = mEncodedFrameRate;
+  config.kf_max_dist = 60;
 
   vpx_codec_flags_t flags = 0;
   flags |= VPX_CODEC_USE_OUTPUT_PARTITION;
@@ -163,12 +183,11 @@ VP8TrackEncoder::GetMetadata()
   meta->mHeight = mFrameHeight;
   meta->mDisplayWidth = mDisplayWidth;
   meta->mDisplayHeight = mDisplayHeight;
-  meta->mEncodedFrameRate = mEncodedFrameRate;
 
   return meta.forget();
 }
 
-bool
+nsresult
 VP8TrackEncoder::GetEncodedPartitions(EncodedFrameContainer& aData)
 {
   vpx_codec_iter_t iter = nullptr;
@@ -200,23 +219,45 @@ VP8TrackEncoder::GetEncodedPartitions(EncodedFrameContainer& aData)
     // Copy the encoded data to aData.
     EncodedFrame* videoData = new EncodedFrame();
     videoData->SetFrameType(frameType);
+
     // Convert the timestamp and duration to Usecs.
     CheckedInt64 timestamp = FramesToUsecs(pkt->data.frame.pts, mTrackRate);
-    if (timestamp.isValid()) {
-      videoData->SetTimeStamp((uint64_t)timestamp.value());
+    if (!timestamp.isValid()) {
+      NS_ERROR("Microsecond timestamp overflow");
+      return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
     }
-    CheckedInt64 duration = FramesToUsecs(pkt->data.frame.duration, mTrackRate);
-    if (duration.isValid()) {
-      videoData->SetDuration((uint64_t)duration.value());
+    videoData->SetTimeStamp((uint64_t)timestamp.value());
+
+    mExtractedDuration += pkt->data.frame.duration;
+    if (!mExtractedDuration.isValid()) {
+      NS_ERROR("Duration overflow");
+      return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
     }
+
+    CheckedInt64 totalDuration =
+      FramesToUsecs(mExtractedDuration.value(), mTrackRate);
+    if (!totalDuration.isValid()) {
+      NS_ERROR("Duration overflow");
+      return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
+    }
+
+    CheckedInt64 duration = totalDuration - mExtractedDurationUs;
+    if (!duration.isValid()) {
+      NS_ERROR("Duration overflow");
+      return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
+    }
+
+    mExtractedDurationUs = totalDuration;
+    videoData->SetDuration((uint64_t)duration.value());
     videoData->SwapInFrameData(frameData);
-    VP8LOG("GetEncodedPartitions TimeStamp %lld Duration %lld\n",
-           videoData->GetTimeStamp(), videoData->GetDuration());
-    VP8LOG("frameType %d\n", videoData->GetFrameType());
+    VP8LOG(LogLevel::Verbose,
+           "GetEncodedPartitions TimeStamp %lld, Duration %lld, FrameType %d",
+           videoData->GetTimeStamp(), videoData->GetDuration(),
+           videoData->GetFrameType());
     aData.AppendEncodedFrame(videoData);
   }
 
-  return !!pkt;
+  return pkt ? NS_OK : NS_ERROR_NOT_AVAILABLE;
 }
 
 static bool isYUV420(const PlanarYCbCrImage::Data *aData)
@@ -258,7 +299,8 @@ nsresult VP8TrackEncoder::PrepareRawFrame(VideoChunk &aChunk)
   }
 
   if (img->GetSize() != IntSize(mFrameWidth, mFrameHeight)) {
-    VP8LOG("Dynamic resolution changes (was %dx%d, now %dx%d) are unsupported\n",
+    VP8LOG(LogLevel::Error,
+           "Dynamic resolution changes (was %dx%d, now %dx%d) are unsupported",
            mFrameWidth, mFrameHeight, img->GetSize().width, img->GetSize().height);
     return NS_ERROR_FAILURE;
   }
@@ -351,29 +393,29 @@ nsresult VP8TrackEncoder::PrepareRawFrame(VideoChunk &aChunk)
                               mFrameWidth, mFrameHeight);
       yuvFormat = "I422";
     } else {
-      VP8LOG("Unsupported planar format\n");
+      VP8LOG(LogLevel::Error, "Unsupported planar format");
       NS_ASSERTION(false, "Unsupported planar format");
       return NS_ERROR_NOT_IMPLEMENTED;
     }
 
     if (rv != 0) {
-      VP8LOG("Converting an %s frame to I420 failed\n", yuvFormat.c_str());
+      VP8LOG(LogLevel::Error, "Converting an %s frame to I420 failed", yuvFormat.c_str());
       return NS_ERROR_FAILURE;
     }
 
-    VP8LOG("Converted an %s frame to I420\n", yuvFormat.c_str());
+    VP8LOG(LogLevel::Verbose, "Converted an %s frame to I420", yuvFormat.c_str());
   } else {
     // Not YCbCr at all. Try to get access to the raw data and convert.
 
     RefPtr<SourceSurface> surf = GetSourceSurface(img.forget());
     if (!surf) {
-      VP8LOG("Getting surface from %s image failed\n", Stringify(format).c_str());
+      VP8LOG(LogLevel::Error, "Getting surface from %s image failed", Stringify(format).c_str());
       return NS_ERROR_FAILURE;
     }
 
     RefPtr<DataSourceSurface> data = surf->GetDataSurface();
     if (!data) {
-      VP8LOG("Getting data surface from %s image with %s (%s) surface failed\n",
+      VP8LOG(LogLevel::Error, "Getting data surface from %s image with %s (%s) surface failed",
              Stringify(format).c_str(), Stringify(surf->GetType()).c_str(),
              Stringify(surf->GetFormat()).c_str());
       return NS_ERROR_FAILURE;
@@ -381,7 +423,7 @@ nsresult VP8TrackEncoder::PrepareRawFrame(VideoChunk &aChunk)
 
     DataSourceSurface::ScopedMap map(data, DataSourceSurface::READ);
     if (!map.IsMapped()) {
-      VP8LOG("Reading DataSourceSurface from %s image with %s (%s) surface failed\n",
+      VP8LOG(LogLevel::Error, "Reading DataSourceSurface from %s image with %s (%s) surface failed",
              Stringify(format).c_str(), Stringify(surf->GetType()).c_str(),
              Stringify(surf->GetFormat()).c_str());
       return NS_ERROR_FAILURE;
@@ -407,20 +449,20 @@ nsresult VP8TrackEncoder::PrepareRawFrame(VideoChunk &aChunk)
                                   mFrameWidth, mFrameHeight);
         break;
       default:
-        VP8LOG("Unsupported SourceSurface format %s\n",
+        VP8LOG(LogLevel::Error, "Unsupported SourceSurface format %s",
                Stringify(surf->GetFormat()).c_str());
         NS_ASSERTION(false, "Unsupported SourceSurface format");
         return NS_ERROR_NOT_IMPLEMENTED;
     }
 
     if (rv != 0) {
-      VP8LOG("%s to I420 conversion failed\n",
+      VP8LOG(LogLevel::Error, "%s to I420 conversion failed",
              Stringify(surf->GetFormat()).c_str());
       return NS_ERROR_FAILURE;
     }
 
-    VP8LOG("Converted a %s frame to I420\n",
-           Stringify(surf->GetFormat()).c_str());
+    VP8LOG(LogLevel::Verbose, "Converted a %s frame to I420",
+             Stringify(surf->GetFormat()).c_str());
   }
 
   mVPXImageWrapper->planes[VPX_PLANE_Y] = y;
@@ -431,37 +473,6 @@ nsresult VP8TrackEncoder::PrepareRawFrame(VideoChunk &aChunk)
   mVPXImageWrapper->stride[VPX_PLANE_V] = halfWidth;
 
   return NS_OK;
-}
-
-void
-VP8TrackEncoder::ReplyGetSourceSurface(already_AddRefed<gfx::SourceSurface> aSurf)
-{
-  mSourceSurface = aSurf;
-}
-
-already_AddRefed<gfx::SourceSurface>
-VP8TrackEncoder::GetSourceSurface(already_AddRefed<Image> aImg)
-{
-  RefPtr<Image> img = aImg;
-  mSourceSurface = nullptr;
-  if (img) {
-    if (img->AsGLImage() && !NS_IsMainThread()) {
-      // GLImage::GetAsSourceSurface() only support main thread
-      RefPtr<Runnable> getsourcesurface_runnable =
-        media::NewRunnableFrom([this, img]() -> nsresult {
-          // Due to the parameter DISPATCH_SYNC, encoder thread will stock at
-          // MediaRecorder::Session::Extract(bool). There is no chance
-          // that TrackEncoder will be destroyed during this period. So
-          // there is no need to use RefPtr to hold TrackEncoder.
-          ReplyGetSourceSurface(img->GetAsSourceSurface());
-          return NS_OK;
-        });
-      NS_DispatchToMainThread(getsourcesurface_runnable, NS_DISPATCH_SYNC);
-    } else {
-      mSourceSurface = img->GetAsSourceSurface();
-    }
-  }
-  return mSourceSurface.forget();
 }
 
 // These two define value used in GetNextEncodeOperation to determine the
@@ -479,8 +490,7 @@ VP8TrackEncoder::GetNextEncodeOperation(TimeDuration aTimeElapsed,
                                         StreamTime aProcessedDuration)
 {
   int64_t durationInUsec =
-    FramesToUsecs(aProcessedDuration + mEncodedFrameDuration,
-                  mTrackRate).value();
+    FramesToUsecs(aProcessedDuration, mTrackRate).value();
   if (aTimeElapsed.ToMicroseconds() > (durationInUsec * SKIP_FRAME_RATIO)) {
     // The encoder is too slow.
     // We should skip next frame to consume the mSourceSegment.
@@ -494,71 +504,20 @@ VP8TrackEncoder::GetNextEncodeOperation(TimeDuration aTimeElapsed,
   }
 }
 
-StreamTime
-VP8TrackEncoder::CalculateRemainingTicks(StreamTime aDurationCopied,
-                                         StreamTime aEncodedDuration)
-{
-  return mRemainingTicks + aEncodedDuration - aDurationCopied;
-}
-
-// Try to extend the encodedDuration as long as possible if the target frame
-// has a long duration.
-StreamTime
-VP8TrackEncoder::CalculateEncodedDuration(StreamTime aDurationCopied)
-{
-  StreamTime temp64 = aDurationCopied;
-  StreamTime encodedDuration = mEncodedFrameDuration;
-  temp64 -= mRemainingTicks;
-  while (temp64 > mEncodedFrameDuration) {
-    temp64 -= mEncodedFrameDuration;
-    encodedDuration += mEncodedFrameDuration;
-  }
-  return encodedDuration;
-}
-
 /**
  * Encoding flow in GetEncodedTrack():
  * 1: Check the mInitialized state and the packet duration.
  * 2: Move the data from mRawSegment to mSourceSegment.
  * 3: Encode the video chunks in mSourceSegment in a for-loop.
- * 3.1: Pick the video chunk by mRemainingTicks.
- * 3.2: Calculate the encoding duration for the parameter of vpx_codec_encode().
- *      The encoding duration is a multiple of mEncodedFrameDuration.
- * 3.3: Setup the video chunk to mVPXImageWrapper by PrepareRawFrame().
- * 3.4: Send frame into vp8 encoder by vpx_codec_encode().
- * 3.5: Get the output frame from encoder by calling GetEncodedPartitions().
- * 3.6: Calculate the mRemainingTicks for next target frame.
- * 3.7: Set the nextEncodeOperation for the next target frame.
+ * 3.1: The duration is taken straight from the video chunk's duration.
+ * 3.2: Setup the video chunk with mVPXImageWrapper by PrepareRawFrame().
+ * 3.3: Pass frame to vp8 encoder by vpx_codec_encode().
+ * 3.4: Get the encoded frame from encoder by GetEncodedPartitions().
+ * 3.5: Set the nextEncodeOperation for the next target frame.
  *      There is a heuristic: If the frame duration we have processed in
  *      mSourceSegment is 100ms, means that we can't spend more than 100ms to
  *      encode it.
  * 4. Remove the encoded chunks in mSourceSegment after for-loop.
- *
- * Ex1: Input frame rate is 100 => input frame duration is 10ms for each.
- *     mEncodedFrameRate is 30 => output frame duration is 33ms.
- *     In this case, the frame duration in mSourceSegment will be:
- *     1st : 0~10ms
- *     2nd : 10~20ms
- *     3rd : 20~30ms
- *     4th : 30~40ms
- *     ...
- *     The VP8 encoder will take the 1st and 4th frames to encode. At beginning
- *     mRemainingTicks is 0 for 1st frame, then the mRemainingTicks is set
- *     to 23 to pick the 4th frame. (mEncodedFrameDuration - 1st frame duration)
- *
- * Ex2: Input frame rate is 25 => frame duration is 40ms for each.
- *     mEncodedFrameRate is 30 => output frame duration is 33ms.
- *     In this case, the frame duration in mSourceSegment will be:
- *     1st : 0~40ms
- *     2nd : 40~80ms
- *     3rd : 80~120ms
- *     4th : 120~160ms
- *     ...
- *     Because the input frame duration is 40ms larger than 33ms, so the first
- *     encoded frame duration will be 66ms by calling CalculateEncodedDuration.
- *     And the mRemainingTicks will be set to 26
- *     (CalculateRemainingTicks 0+66-40) in order to pick the next frame(2nd)
- *     in mSourceSegment.
  */
 nsresult
 VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
@@ -573,8 +532,8 @@ VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
     // Wait if mEncoder is not initialized, or when not enough raw data, but is
     // not the end of stream nor is being canceled.
     while (!mCanceled && (!mInitialized ||
-           (mRawSegment.GetDuration() + mSourceSegment.GetDuration() <
-            mEncodedFrameDuration && !mEndOfStream))) {
+           (mRawSegment.GetDuration() + mSourceSegment.GetDuration() == 0 &&
+            !mEndOfStream))) {
       mon.Wait();
     }
     if (mCanceled || mEncodingComplete) {
@@ -584,92 +543,86 @@ VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
     EOS = mEndOfStream;
   }
 
-  VideoSegment::ChunkIterator iter(mSourceSegment);
-  StreamTime durationCopied = 0;
   StreamTime totalProcessedDuration = 0;
   TimeStamp timebase = TimeStamp::Now();
   EncodeOperation nextEncodeOperation = ENCODE_NORMAL_FRAME;
 
-  for (; !iter.IsEnded(); iter.Next()) {
+  for (VideoSegment::ChunkIterator iter(mSourceSegment);
+       !iter.IsEnded(); iter.Next()) {
     VideoChunk &chunk = *iter;
-    // Accumulate chunk's duration to durationCopied until it reaches
-    // mRemainingTicks.
-    durationCopied += chunk.GetDuration();
-    MOZ_ASSERT(mRemainingTicks <= mEncodedFrameDuration);
-    VP8LOG("durationCopied %lld mRemainingTicks %lld\n",
-           durationCopied, mRemainingTicks);
-    if (durationCopied >= mRemainingTicks) {
-      VP8LOG("nextEncodeOperation is %d\n",nextEncodeOperation);
-      // Calculate encodedDuration for this target frame.
-      StreamTime encodedDuration = CalculateEncodedDuration(durationCopied);
+    VP8LOG(LogLevel::Verbose, "nextEncodeOperation is %d for frame of duration %lld",
+             nextEncodeOperation, chunk.GetDuration());
 
-      // Encode frame.
-      if (nextEncodeOperation != SKIP_FRAME) {
-        nsresult rv = PrepareRawFrame(chunk);
-        NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
+    // Encode frame.
+    if (nextEncodeOperation != SKIP_FRAME) {
+      nsresult rv = PrepareRawFrame(chunk);
+      NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
-        // Encode the data with VP8 encoder
-        int flags = (nextEncodeOperation == ENCODE_NORMAL_FRAME) ?
-                    0 : VPX_EFLAG_FORCE_KF;
-        if (vpx_codec_encode(mVPXContext, mVPXImageWrapper, mEncodedTimestamp,
-                             (unsigned long)encodedDuration, flags,
-                             VPX_DL_REALTIME)) {
-          return NS_ERROR_FAILURE;
-        }
-        // Get the encoded data from VP8 encoder.
-        GetEncodedPartitions(aData);
-      } else {
-        // SKIP_FRAME
-        // Extend the duration of the last encoded data in aData
-        // because this frame will be skip.
-        RefPtr<EncodedFrame> last = aData.GetEncodedFrames().LastElement();
-        if (last) {
-          CheckedInt64 skippedDuration = FramesToUsecs(chunk.mDuration, mTrackRate);
-          if (skippedDuration.isValid() && skippedDuration.value() > 0) {
-            last->SetDuration(last->GetDuration() +
-                              (static_cast<uint64_t>(skippedDuration.value())));
-          }
-        }
+      // Encode the data with VP8 encoder
+      int flags = 0;
+      if (nextEncodeOperation == ENCODE_I_FRAME) {
+        VP8LOG(LogLevel::Warning, "MediaRecorder lagging behind. Encoding keyframe.");
+        flags |= VPX_EFLAG_FORCE_KF;
       }
-      // Move forward the mEncodedTimestamp.
-      mEncodedTimestamp += encodedDuration;
-      totalProcessedDuration += durationCopied;
-      // Calculate mRemainingTicks for next target frame.
-      mRemainingTicks = CalculateRemainingTicks(durationCopied,
-                                                encodedDuration);
+      if (vpx_codec_encode(mVPXContext, mVPXImageWrapper, mEncodedTimestamp,
+                           (unsigned long)chunk.GetDuration(), flags,
+                           VPX_DL_REALTIME)) {
+        return NS_ERROR_FAILURE;
+      }
+      // Get the encoded data from VP8 encoder.
+      rv = GetEncodedPartitions(aData);
+      NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
+    } else {
+      // SKIP_FRAME
+      // Extend the duration of the last encoded data in aData
+      // because this frame will be skipped.
+      VP8LOG(LogLevel::Warning, "MediaRecorder lagging behind. Skipping a frame.");
+      RefPtr<EncodedFrame> last = aData.GetEncodedFrames().LastElement();
+      if (last) {
+        mExtractedDuration += chunk.mDuration;
+        if (!mExtractedDuration.isValid()) {
+          NS_ERROR("skipped duration overflow");
+          return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
+        }
 
-      // Check the remain data is enough for next target frame.
-      if (mSourceSegment.GetDuration() - totalProcessedDuration
-          >= mEncodedFrameDuration) {
-        TimeDuration elapsedTime = TimeStamp::Now() - timebase;
-        nextEncodeOperation = GetNextEncodeOperation(elapsedTime,
-                                                     totalProcessedDuration);
-        // Reset durationCopied for next iteration.
-        durationCopied = 0;
-      } else {
-        // Process done, there is no enough data left for next iteration,
-        // break the for-loop.
-        break;
+        CheckedInt64 totalDuration = FramesToUsecs(mExtractedDuration.value(), mTrackRate);
+        CheckedInt64 skippedDuration = totalDuration - mExtractedDurationUs;
+        mExtractedDurationUs = totalDuration;
+        if (!skippedDuration.isValid()) {
+          NS_ERROR("skipped duration overflow");
+          return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
+        }
+        last->SetDuration(last->GetDuration() +
+                          (static_cast<uint64_t>(skippedDuration.value())));
       }
     }
+
+    // Move forward the mEncodedTimestamp.
+    mEncodedTimestamp += chunk.GetDuration();
+    totalProcessedDuration += chunk.GetDuration();
+
+    // Check what to do next.
+    TimeDuration elapsedTime = TimeStamp::Now() - timebase;
+    nextEncodeOperation = GetNextEncodeOperation(elapsedTime,
+                                                 totalProcessedDuration);
   }
+
   // Remove the chunks we have processed.
-  mSourceSegment.RemoveLeading(totalProcessedDuration);
-  VP8LOG("RemoveLeading %lld\n",totalProcessedDuration);
+  mSourceSegment.Clear();
 
   // End of stream, pull the rest frames in encoder.
   if (EOS) {
-    VP8LOG("mEndOfStream is true\n");
+    VP8LOG(LogLevel::Debug, "mEndOfStream is true");
     mEncodingComplete = true;
     // Bug 1243611, keep calling vpx_codec_encode and vpx_codec_get_cx_data
     // until vpx_codec_get_cx_data return null.
 
     do {
       if (vpx_codec_encode(mVPXContext, nullptr, mEncodedTimestamp,
-                           mEncodedFrameDuration, 0, VPX_DL_REALTIME)) {
+                           0, 0, VPX_DL_REALTIME)) {
         return NS_ERROR_FAILURE;
       }
-    } while(GetEncodedPartitions(aData));
+    } while(NS_SUCCEEDED(GetEncodedPartitions(aData)));
   }
 
   return NS_OK ;

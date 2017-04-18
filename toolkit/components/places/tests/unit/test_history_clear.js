@@ -10,15 +10,15 @@ function promiseOnClearHistoryObserved() {
   let deferred = Promise.defer();
 
   let historyObserver = {
-    onBeginUpdateBatch: function() {},
-    onEndUpdateBatch: function() {},
-    onVisit: function() {},
-    onTitleChanged: function() {},
-    onDeleteURI: function(aURI) {},
-    onPageChanged: function() {},
-    onDeleteVisits: function() {},
+    onBeginUpdateBatch() {},
+    onEndUpdateBatch() {},
+    onVisit() {},
+    onTitleChanged() {},
+    onDeleteURI(aURI) {},
+    onPageChanged() {},
+    onDeleteVisits() {},
 
-    onClearHistory: function() {
+    onClearHistory() {
       PlacesUtils.history.removeObserver(this, false);
       deferred.resolve();
     },
@@ -46,8 +46,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_history_clear()
-{
+add_task(function* test_history_clear() {
   yield promiseInit;
 
   yield PlacesTestUtils.addVisits([
@@ -106,7 +105,7 @@ add_task(function* test_history_clear()
 
   // Check that frecency for not cleared items (bookmarks) has been converted
   // to -1.
-  stmt = mDBConn.createStatement(
+  let stmt = mDBConn.createStatement(
     "SELECT h.id FROM moz_places h WHERE h.frecency > 0 ");
   do_check_false(stmt.executeStep());
   stmt.finalize();

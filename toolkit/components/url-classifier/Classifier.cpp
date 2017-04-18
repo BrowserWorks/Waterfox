@@ -22,6 +22,7 @@
 #include "mozilla/Unused.h"
 #include "mozilla/TypedEnumBits.h"
 #include "nsIUrlClassifierUtils.h"
+#include "nsUrlClassifierDBService.h"
 
 // MOZ_LOG=UrlClassifierDbService:5
 extern mozilla::LazyLogModule gUrlClassifierDbServiceLog;
@@ -144,6 +145,7 @@ Classifier::GetPrivateStoreDirectory(nsIFile* aRootStoreDirectory,
 }
 
 Classifier::Classifier()
+  : mIsTableRequestResultOutdated(true)
 {
 }
 
@@ -334,6 +336,11 @@ Classifier::DeleteTables(nsIFile* aDirectory, const nsTArray<nsCString>& aTables
 void
 Classifier::AbortUpdateAndReset(const nsCString& aTable)
 {
+  // We don't need to reset while shutting down. It will only slow us down.
+  if (nsUrlClassifierDBService::ShutdownHasStarted()) {
+    return;
+  }
+
   LOG(("Abort updating table %s.", aTable.get()));
 
   // ResetTables will clear both in-memory & on-disk data.
@@ -348,6 +355,16 @@ Classifier::AbortUpdateAndReset(const nsCString& aTable)
 void
 Classifier::TableRequest(nsACString& aResult)
 {
+  MOZ_ASSERT(!NS_IsMainThread(),
+             "TableRequest must be called on the classifier worker thread.");
+
+  // This function and all disk I/O are guaranteed to occur
+  // on the same thread so we don't need to add a lock around.
+  if (!mIsTableRequestResultOutdated) {
+    aResult = mTableRequestResult;
+    return;
+  }
+
   // Generating v2 table info.
   nsTArray<nsCString> tables;
   ActiveTables(tables);
@@ -387,8 +404,13 @@ Classifier::TableRequest(nsACString& aResult)
   // Specifically for v4 tables.
   nsCString metadata;
   nsresult rv = LoadMetadata(mRootStoreDirectory, metadata);
-  NS_ENSURE_SUCCESS_VOID(rv);
-  aResult.Append(metadata);
+  if (NS_SUCCEEDED(rv)) {
+    aResult.Append(metadata);
+  }
+
+  // Update the TableRequest result in-memory cache.
+  mTableRequestResult = aResult;
+  mIsTableRequestResultOutdated = false;
 }
 
 // This is used to record the matching statistics for v2 and v4.
@@ -447,23 +469,9 @@ Classifier::Check(const nsACString& aSpec,
     for (uint32_t i = 0; i < cacheArray.Length(); i++) {
       LookupCache *cache = cacheArray[i];
       bool has, complete;
+      uint32_t matchLength;
 
-      if (LookupCache::Cast<LookupCacheV4>(cache)) {
-        // TODO Bug 1312339 Return length in LookupCache.Has and support
-        // VariableLengthPrefix in LookupResultArray
-        rv = cache->Has(lookupHash, &has, &complete);
-        if (NS_FAILED(rv)) {
-          LOG(("Failed to lookup fragment %s V4", fragments[i].get()));
-        }
-        if (has) {
-          matchingStatistics |= PrefixMatch::eMatchV4Prefix;
-          // TODO: Bug 1311935 - Implement Safe Browsing v4 caching
-          // Should check cache expired
-        }
-        continue;
-      }
-
-      rv = cache->Has(lookupHash, &has, &complete);
+      rv = cache->Has(lookupHash, &has, &complete, &matchLength);
       NS_ENSURE_SUCCESS(rv, rv);
       if (has) {
         LookupResult *result = aResults.AppendElement();
@@ -488,8 +496,13 @@ Classifier::Check(const nsACString& aSpec,
         result->mComplete = complete;
         result->mFresh = (age < aFreshnessGuarantee);
         result->mTableName.Assign(cache->TableName());
+        result->mPartialHashLength = matchLength;
 
-        matchingStatistics |= PrefixMatch::eMatchV2Prefix;
+        if (LookupCache::Cast<LookupCacheV4>(cache)) {
+          matchingStatistics |= PrefixMatch::eMatchV4Prefix;
+        } else {
+          matchingStatistics |= PrefixMatch::eMatchV2Prefix;
+        }
       }
     }
 
@@ -503,7 +516,19 @@ Classifier::Check(const nsACString& aSpec,
 nsresult
 Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
 {
-  Telemetry::AutoTimer<Telemetry::URLCLASSIFIER_CL_UPDATE_TIME> timer;
+  if (!aUpdates || aUpdates->Length() == 0) {
+    return NS_OK;
+  }
+
+  nsCOMPtr<nsIUrlClassifierUtils> urlUtil =
+    do_GetService(NS_URLCLASSIFIERUTILS_CONTRACTID);
+
+  nsCString provider;
+  // Assume all TableUpdate objects should have the same provider.
+  urlUtil->GetTelemetryProvider((*aUpdates)[0]->TableName(), provider);
+
+  Telemetry::AutoTimer<Telemetry::URLCLASSIFIER_CL_KEYED_UPDATE_TIME>
+    keyedTimer(provider);
 
   PRIntervalTime clockStart = 0;
   if (LOG_ENABLED()) {
@@ -533,6 +558,10 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
         } else {
           rv = UpdateTableV4(aUpdates, updateTable);
         }
+
+        // We mark the table associated info outdated no matter the
+        // update is successful to avoid any possibile non-atomic update.
+        mIsTableRequestResultOutdated = true;
 
         if (NS_FAILED(rv)) {
           if (rv != NS_ERROR_OUT_OF_MEMORY) {
@@ -913,6 +942,10 @@ nsresult
 Classifier::UpdateHashStore(nsTArray<TableUpdate*>* aUpdates,
                             const nsACString& aTable)
 {
+  if (nsUrlClassifierDBService::ShutdownHasStarted()) {
+    return NS_ERROR_ABORT;
+  }
+
   LOG(("Classifier::UpdateHashStore(%s)", PromiseFlatCString(aTable).get()));
 
   HashStore store(aTable, GetProvider(aTable), mRootStoreDirectory);
@@ -1009,6 +1042,12 @@ nsresult
 Classifier::UpdateTableV4(nsTArray<TableUpdate*>* aUpdates,
                           const nsACString& aTable)
 {
+  MOZ_ASSERT(!NS_IsMainThread(),
+             "UpdateTableV4 must be called on the classifier worker thread.");
+  if (nsUrlClassifierDBService::ShutdownHasStarted()) {
+    return NS_ERROR_ABORT;
+  }
+
   LOG(("Classifier::UpdateTableV4(%s)", PromiseFlatCString(aTable).get()));
 
   if (!CheckValidUpdate(aUpdates, aTable)) {
@@ -1163,7 +1202,8 @@ Classifier::ReadNoiseEntries(const Prefix& aPrefix,
                              PrefixArray* aNoiseEntries)
 {
   // TODO : Bug 1297962, support adding noise for v4
-  LookupCacheV2 *cache = static_cast<LookupCacheV2*>(GetLookupCache(aTableName));
+  LookupCacheV2 *cache =
+    LookupCache::Cast<LookupCacheV2>(GetLookupCache(aTableName));
   if (!cache) {
     return NS_ERROR_FAILURE;
   }

@@ -7,12 +7,12 @@
 const MAX_ORDINAL = 99;
 const SPLITCONSOLE_ENABLED_PREF = "devtools.toolbox.splitconsoleEnabled";
 const SPLITCONSOLE_HEIGHT_PREF = "devtools.toolbox.splitconsoleHeight";
+const DISABLE_AUTOHIDE_PREF = "ui.popup.disable_autohide";
 const OS_HISTOGRAM = "DEVTOOLS_OS_ENUMERATED_PER_USER";
 const OS_IS_64_BITS = "DEVTOOLS_OS_IS_64_BITS_PER_USER";
 const HOST_HISTOGRAM = "DEVTOOLS_TOOLBOX_HOST";
 const SCREENSIZE_HISTOGRAM = "DEVTOOLS_SCREEN_RESOLUTION_ENUMERATED_PER_USER";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const { SourceMapService } = require("./source-map-service");
 
 var {Ci, Cu} = require("chrome");
 var promise = require("promise");
@@ -22,8 +22,6 @@ var {Task} = require("devtools/shared/task");
 var {gDevTools} = require("devtools/client/framework/devtools");
 var EventEmitter = require("devtools/shared/event-emitter");
 var Telemetry = require("devtools/client/shared/telemetry");
-var HUDService = require("devtools/client/webconsole/hudservice");
-var viewSource = require("devtools/client/shared/view-source");
 var { attachThread, detachThread } = require("./attach-thread");
 var Menu = require("devtools/client/framework/menu");
 var MenuItem = require("devtools/client/framework/menu-item");
@@ -55,13 +53,19 @@ loader.lazyRequireGetter(this, "system",
 loader.lazyRequireGetter(this, "getPreferenceFront",
   "devtools/shared/fronts/preference", true);
 loader.lazyRequireGetter(this, "KeyShortcuts",
-  "devtools/client/shared/key-shortcuts", true);
+  "devtools/client/shared/key-shortcuts");
 loader.lazyRequireGetter(this, "ZoomKeys",
   "devtools/client/shared/zoom-keys");
 loader.lazyRequireGetter(this, "settleAll",
   "devtools/shared/ThreadSafeDevToolsUtils", true);
 loader.lazyRequireGetter(this, "ToolboxButtons",
   "devtools/client/definitions", true);
+loader.lazyRequireGetter(this, "SourceMapService",
+  "devtools/client/framework/source-map-service", true);
+loader.lazyRequireGetter(this, "HUDService",
+  "devtools/client/webconsole/hudservice");
+loader.lazyRequireGetter(this, "viewSource",
+  "devtools/client/shared/view-source");
 
 loader.lazyGetter(this, "registerHarOverlay", () => {
   return require("devtools/client/netmonitor/har/toolbox-overlay").register;
@@ -105,7 +109,7 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId) {
   this._toolRegistered = this._toolRegistered.bind(this);
   this._toolUnregistered = this._toolUnregistered.bind(this);
   this._refreshHostTitle = this._refreshHostTitle.bind(this);
-  this._toggleAutohide = this._toggleAutohide.bind(this);
+  this._toggleNoAutohide = this._toggleNoAutohide.bind(this);
   this.showFramesMenu = this.showFramesMenu.bind(this);
   this._updateFrames = this._updateFrames.bind(this);
   this._splitConsoleOnKeypress = this._splitConsoleOnKeypress.bind(this);
@@ -113,7 +117,9 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId) {
   this.highlighterUtils = getHighlighterUtils(this);
   this._highlighterReady = this._highlighterReady.bind(this);
   this._highlighterHidden = this._highlighterHidden.bind(this);
-  this._prefChanged = this._prefChanged.bind(this);
+  this._applyCacheSettings = this._applyCacheSettings.bind(this);
+  this._applyServiceWorkersTestingSettings =
+    this._applyServiceWorkersTestingSettings.bind(this);
   this._saveSplitConsoleHeight = this._saveSplitConsoleHeight.bind(this);
   this._onFocus = this._onFocus.bind(this);
   this._onBrowserMessage = this._onBrowserMessage.bind(this);
@@ -125,12 +131,13 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId) {
   this._onPerformanceFrontEvent = this._onPerformanceFrontEvent.bind(this);
   this._onBottomHostWillChange = this._onBottomHostWillChange.bind(this);
   this._toggleMinimizeMode = this._toggleMinimizeMode.bind(this);
-  this._onTabbarFocus = this._onTabbarFocus.bind(this);
-  this._onTabbarArrowKeypress = this._onTabbarArrowKeypress.bind(this);
+  this._onToolbarFocus = this._onToolbarFocus.bind(this);
+  this._onToolbarArrowKeypress = this._onToolbarArrowKeypress.bind(this);
   this._onPickerClick = this._onPickerClick.bind(this);
   this._onPickerKeypress = this._onPickerKeypress.bind(this);
   this._onPickerStarted = this._onPickerStarted.bind(this);
   this._onPickerStopped = this._onPickerStopped.bind(this);
+  this.selectTool = this.selectTool.bind(this);
 
   this._target.on("close", this.destroy);
 
@@ -140,6 +147,9 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId) {
   this._defaultToolId = selectedTool;
 
   this._hostType = hostType;
+
+  this._isOpenDeferred = defer();
+  this.isOpen = this._isOpenDeferred.promise;
 
   EventEmitter.decorate(this);
 
@@ -178,7 +188,52 @@ Toolbox.prototype = {
     SIDE_ENABLED: "devtools.toolbox.sideEnabled",
   },
 
-  currentToolId: null,
+  get currentToolId() {
+    return this._currentToolId;
+  },
+
+  set currentToolId(id) {
+    this._currentToolId = id;
+    this.component.setCurrentToolId(id);
+  },
+
+  get panelDefinitions() {
+    return this._panelDefinitions;
+  },
+
+  set panelDefinitions(definitions) {
+    this._panelDefinitions = definitions;
+    this._combineAndSortPanelDefinitions();
+  },
+
+  get visibleAdditionalTools() {
+    if (!this._visibleAdditionalTools) {
+      this._visibleAdditionalTools = [];
+    }
+
+    return this._visibleAdditionalTools;
+  },
+
+  set visibleAdditionalTools(tools) {
+    this._visibleAdditionalTools = tools;
+    this._combineAndSortPanelDefinitions();
+  },
+
+  /**
+   * Combines the built-in panel definitions and the additional tool definitions that
+   * can be set by add-ons.
+   */
+  _combineAndSortPanelDefinitions() {
+    const definitions = [...this._panelDefinitions, ...this.getVisibleAdditionalTools()];
+    definitions.sort(definition => {
+      return -1 * (definition.ordinal == undefined || definition.ordinal < 0
+        ? MAX_ORDINAL
+        : definition.ordinal
+      );
+    });
+    this.component.setPanelDefinitions(definitions);
+  },
+
   lastUsedToolId: null,
 
   /**
@@ -364,16 +419,10 @@ Toolbox.prototype = {
       this.isReady = true;
       let framesPromise = this._listFrames();
 
-      this.closeButton = this.doc.getElementById("toolbox-close");
-      this.closeButton.addEventListener("click", this.destroy, true);
-
-      gDevTools.on("pref-changed", this._prefChanged);
-
-      let framesMenu = this.doc.getElementById("command-button-frames");
-      framesMenu.addEventListener("click", this.showFramesMenu, false);
-
-      let noautohideMenu = this.doc.getElementById("command-button-noautohide");
-      noautohideMenu.addEventListener("click", this._toggleAutohide, true);
+      Services.prefs.addObserver("devtools.cache.disabled", this._applyCacheSettings,
+                                false);
+      Services.prefs.addObserver("devtools.serviceWorkers.testing.enabled",
+                                 this._applyServiceWorkersTestingSettings, false);
 
       this.textBoxContextMenuPopup =
         this.doc.getElementById("toolbox-textbox-context-popup");
@@ -383,6 +432,10 @@ Toolbox.prototype = {
       this.shortcuts = new KeyShortcuts({
         window: this.doc.defaultView
       });
+      // Get the DOM element to mount the ToolboxController to.
+      this._componentMount = this.doc.getElementById("toolbox-toolbar-mount");
+
+      this._mountReactComponent();
       this._buildDockButtons();
       this._buildOptions();
       this._buildTabs();
@@ -396,10 +449,7 @@ Toolbox.prototype = {
         ZoomKeys.register(this.win);
       }
 
-      this.tabbar = this.doc.querySelector(".devtools-tabbar");
-      this.tabbar.addEventListener("focus", this._onTabbarFocus, true);
-      this.tabbar.addEventListener("click", this._onTabbarFocus, true);
-      this.tabbar.addEventListener("keypress", this._onTabbarArrowKeypress);
+      this._componentMount.addEventListener("keypress", this._onToolbarArrowKeypress);
 
       this.webconsolePanel = this.doc.querySelector("#toolbox-panel-webconsole");
       this.webconsolePanel.height = Services.prefs.getIntPref(SPLITCONSOLE_HEIGHT_PREF);
@@ -416,6 +466,10 @@ Toolbox.prototype = {
       if (!toolDef || !toolDef.isTargetSupported(this._target)) {
         this._defaultToolId = "webconsole";
       }
+
+      // Start rendering the toolbox toolbar before selecting the tool, as the tools
+      // can take a few hundred milliseconds seconds to start up.
+      this.component.setCanRender();
 
       yield this.selectTool(this._defaultToolId);
 
@@ -444,6 +498,7 @@ Toolbox.prototype = {
       }
 
       this.emit("ready");
+      this._isOpenDeferred.resolve();
     }.bind(this)).then(null, console.error.bind(console));
   },
 
@@ -461,6 +516,10 @@ Toolbox.prototype = {
 
   get ReactRedux() {
     return this.browserRequire("devtools/client/shared/vendor/react-redux");
+  },
+
+  get ToolboxController() {
+    return this.browserRequire("devtools/client/framework/components/toolbox-controller");
   },
 
   // Return HostType id for telemetry
@@ -486,26 +545,48 @@ Toolbox.prototype = {
   },
 
   /**
-   * Because our panels are lazy loaded this is a good place to watch for
-   * "pref-changed" events.
-   * @param  {String} event
-   *         The event type, "pref-changed".
-   * @param  {Object} data
-   *         {
-   *           newValue: The new value
-   *           oldValue:  The old value
-   *           pref: The name of the preference that has changed
-   *         }
+   * Create a simple object to store the state of a toolbox button. The checked state of
+   * a button can be updated arbitrarily outside of the scope of the toolbar and its
+   * controllers. In order to simplify this interaction this object emits an
+   * "updatechecked" event any time the isChecked value is updated, allowing any consuming
+   * components to listen and respond to updates.
+   *
+   * @param {Object} options:
+   *
+   * @property {String} id - The id of the button or command.
+   * @property {String} className - An optional additional className for the button.
+   * @property {String} description - The value that will display as a tooltip and in
+   *                    the options panel for enabling/disabling.
+   * @property {Function} onClick - The function to run when the button is activated by
+   *                      click or keyboard shortcut.
+   * @property {Boolean} isInStartContainer - Buttons can either be placed at the start
+   *                     of the toolbar, or at the end.
    */
-  _prefChanged: function (event, data) {
-    switch (data.pref) {
-      case "devtools.cache.disabled":
-        this._applyCacheSettings();
-        break;
-      case "devtools.serviceWorkers.testing.enabled":
-        this._applyServiceWorkersTestingSettings();
-        break;
-    }
+  _createButtonState: function (options) {
+    let isChecked = false;
+    const {id, className, description, onClick, isInStartContainer} = options;
+    const button = {
+      id,
+      className,
+      description,
+      onClick,
+      get isChecked() {
+        return isChecked;
+      },
+      set isChecked(value) {
+        isChecked = value;
+        this.emit("updatechecked");
+      },
+      // The preference for having this button visible.
+      visibilityswitch: `devtools.${id}.enabled`,
+      // The toolbar has a container at the start and end of the toolbar for
+      // holding buttons. By default the buttons are placed in the end container.
+      isInStartContainer: !!isInStartContainer
+    };
+
+    EventEmitter.decorate(button);
+
+    return button;
   },
 
   _buildOptions: function () {
@@ -596,7 +677,7 @@ Toolbox.prototype = {
                    event.preventDefault();
                  });
 
-    this.doc.addEventListener("keypress", this._splitConsoleOnKeypress, false);
+    this.doc.addEventListener("keypress", this._splitConsoleOnKeypress);
     this.doc.addEventListener("focus", this._onFocus, true);
     this.win.addEventListener("unload", this.destroy);
     this.win.addEventListener("message", this._onBrowserMessage, true);
@@ -605,7 +686,7 @@ Toolbox.prototype = {
   _removeHostListeners: function () {
     // The host iframe's contentDocument may already be gone.
     if (this.doc) {
-      this.doc.removeEventListener("keypress", this._splitConsoleOnKeypress, false);
+      this.doc.removeEventListener("keypress", this._splitConsoleOnKeypress);
       this.doc.removeEventListener("focus", this._onFocus, true);
       this.win.removeEventListener("unload", this.destroy);
       this.win.removeEventListener("message", this._onBrowserMessage, true);
@@ -770,29 +851,14 @@ Toolbox.prototype = {
    * the host changes.
    */
   _buildDockButtons: function () {
-    let dockBox = this.doc.getElementById("toolbox-dock-buttons");
-
-    while (dockBox.firstChild) {
-      dockBox.removeChild(dockBox.firstChild);
-    }
-
     if (!this._target.isLocalTab) {
+      this.component.setDockButtonsEnabled(false);
       return;
     }
 
     // Bottom-type host can be minimized, add a button for this.
     if (this.hostType == Toolbox.HostType.BOTTOM) {
-      let minimizeBtn = this.doc.createElementNS(HTML_NS, "button");
-      minimizeBtn.id = "toolbox-dock-bottom-minimize";
-      minimizeBtn.className = "devtools-button";
-      /* Bug 1177463 - The minimize button is currently hidden until we agree on
-         the UI for it, and until bug 1173849 is fixed too. */
-      minimizeBtn.setAttribute("hidden", "true");
-
-      minimizeBtn.addEventListener("click", this._toggleMinimizeMode);
-      dockBox.appendChild(minimizeBtn);
-      // Show the button in its maximized state.
-      this._onBottomHostMaximized();
+      this.component.setCanMinimize(true);
 
       // Maximize again when a tool gets selected.
       this.on("before-select", this._onToolSelectWhileMinimized);
@@ -800,14 +866,12 @@ Toolbox.prototype = {
       this.once("host-will-change", this._onBottomHostWillChange);
     }
 
-    if (this.hostType == Toolbox.HostType.WINDOW) {
-      this.closeButton.setAttribute("hidden", "true");
-    } else {
-      this.closeButton.removeAttribute("hidden");
-    }
+    this.component.setDockButtonsEnabled(true);
+    this.component.setCanCloseToolbox(this.hostType !== Toolbox.HostType.WINDOW);
 
     let sideEnabled = Services.prefs.getBoolPref(this._prefs.SIDE_ENABLED);
 
+    let hostTypes = [];
     for (let type in Toolbox.HostType) {
       let position = Toolbox.HostType[type];
       if (position == this.hostType ||
@@ -816,39 +880,21 @@ Toolbox.prototype = {
         continue;
       }
 
-      let button = this.doc.createElementNS(HTML_NS, "button");
-      button.id = "toolbox-dock-" + position;
-      button.className = "toolbox-dock-button devtools-button";
-      button.setAttribute("title", L10N.getStr("toolboxDockButtons." +
-                                                  position + ".tooltip"));
-      button.addEventListener("click", this.switchHost.bind(this, position));
-
-      dockBox.appendChild(button);
+      hostTypes.push({
+        position,
+        switchHost: this.switchHost.bind(this, position)
+      });
     }
-  },
 
-  _getMinimizeButtonShortcutTooltip: function () {
-    let str = L10N.getStr("toolbox.minimize.key");
-    let key = KeyShortcuts.parseElectronKey(this.win, str);
-    return "(" + KeyShortcuts.stringify(key) + ")";
+    this.component.setHostTypes(hostTypes);
   },
 
   _onBottomHostMinimized: function () {
-    let btn = this.doc.querySelector("#toolbox-dock-bottom-minimize");
-    btn.className = "minimized";
-
-    btn.setAttribute("title",
-      L10N.getStr("toolboxDockButtons.bottom.maximize") + " " +
-      this._getMinimizeButtonShortcutTooltip());
+    this.component.setMinimizeState("minimized");
   },
 
   _onBottomHostMaximized: function () {
-    let btn = this.doc.querySelector("#toolbox-dock-bottom-minimize");
-    btn.className = "maximized";
-
-    btn.setAttribute("title",
-      L10N.getStr("toolboxDockButtons.bottom.minimize") + " " +
-      this._getMinimizeButtonShortcutTooltip());
+    this.component.setMinimizeState("maximized");
   },
 
   _onToolSelectWhileMinimized: function () {
@@ -883,8 +929,8 @@ Toolbox.prototype = {
 
     // Calculate the height to which the host should be minimized so the
     // tabbar is still visible.
-    let toolbarHeight = this.tabbar.getBoxQuads({box: "content"})[0].bounds
-                                                                    .height;
+    let toolbarHeight = this._componentMount.getBoxQuads({box: "content"})[0].bounds
+                                                                             .height;
     this.postMessage({
       name: "toggle-minimize-mode",
       toolbarHeight
@@ -892,40 +938,56 @@ Toolbox.prototype = {
   },
 
   /**
-   * Add tabs to the toolbox UI for registered tools
+   * Initiate ToolboxTabs React component and all it's properties. Do the initial render.
    */
   _buildTabs: function () {
-    for (let definition of gDevTools.getToolDefinitionArray()) {
-      this._buildTabForTool(definition);
-    }
+    // Get the initial list of tab definitions. This list can be amended at a later time
+    // by tools registering themselves.
+    const definitions = gDevTools.getToolDefinitionArray();
+    definitions.forEach(definition => this._buildPanelForTool(definition));
+
+    // Get the definitions that will only affect the main tab area.
+    this.panelDefinitions = definitions.filter(definition =>
+      definition.isTargetSupported(this._target) && definition.id !== "options");
+
+    this.optionsDefinition = definitions.find(({id}) => id === "options");
+    // The options tool is treated slightly differently, and is in a different area.
+    this.component.setOptionsPanel(definitions.find(({id}) => id === "options"));
+  },
+
+  _mountReactComponent: function () {
+    // Ensure the toolbar doesn't try to render until the tool is ready.
+    const element = this.React.createElement(this.ToolboxController, {
+      L10N,
+      currentToolId: this.currentToolId,
+      selectTool: this.selectTool,
+      closeToolbox: this.destroy,
+      focusButton: this._onToolbarFocus,
+      toggleMinimizeMode: this._toggleMinimizeMode,
+    });
+
+    this.component = this.ReactDOM.render(element, this._componentMount);
   },
 
   /**
-   * Get all dev tools tab bar focusable elements. These are visible elements
-   * such as buttons or elements with tabindex.
-   */
-  get tabbarFocusableElms() {
-    return [...this.tabbar.querySelectorAll(
-      "[tabindex]:not([hidden]), button:not([hidden])")];
-  },
-
-  /**
-   * Reset tabindex attributes across all focusable elements inside the tabbar.
+   * Reset tabindex attributes across all focusable elements inside the toolbar.
    * Only have one element with tabindex=0 at a time to make sure that tabbing
-   * results in navigating away from the tabbar container.
+   * results in navigating away from the toolbar container.
    * @param  {FocusEvent} event
    */
-  _onTabbarFocus: function (event) {
-    this.tabbarFocusableElms.forEach(elm =>
-      elm.setAttribute("tabindex", event.target === elm ? "0" : "-1"));
+  _onToolbarFocus: function (id) {
+    this.component.setFocusedButton(id);
   },
 
   /**
-   * On left/right arrow press, attempt to move the focus inside the tabbar to
-   * the previous/next focusable element.
+   * On left/right arrow press, attempt to move the focus inside the toolbar to
+   * the previous/next focusable element. This is not in the React component
+   * as it is difficult to coordinate between different component elements.
+   * The components are responsible for setting the correct tabindex value
+   * for if they are the focused element.
    * @param  {KeyboardEvent} event
    */
-  _onTabbarArrowKeypress: function (event) {
+  _onToolbarArrowKeypress: function (event) {
     let { key, target, ctrlKey, shiftKey, altKey, metaKey } = event;
 
     // If any of the modifier keys are pressed do not attempt navigation as it
@@ -934,14 +996,12 @@ Toolbox.prototype = {
       return;
     }
 
-    let focusableElms = this.tabbarFocusableElms;
-    let curIndex = focusableElms.indexOf(target);
+    let buttons = [...this._componentMount.querySelectorAll("button")];
+    let curIndex = buttons.indexOf(target);
 
     if (curIndex === -1) {
       console.warn(target + " is not found among Developer Tools tab bar " +
-        "focusable elements. It needs to either be a button or have " +
-        "tabindex. If it is intended to be hidden, 'hidden' attribute must " +
-        "be used.");
+        "focusable elements.");
       return;
     }
 
@@ -952,19 +1012,17 @@ Toolbox.prototype = {
       if (curIndex === 0) {
         return;
       }
-      newTarget = focusableElms[curIndex - 1];
+      newTarget = buttons[curIndex - 1];
     } else if (key === "ArrowRight") {
       // Do nothing if already at the end.
-      if (curIndex === focusableElms.length - 1) {
+      if (curIndex === buttons.length - 1) {
         return;
       }
-      newTarget = focusableElms[curIndex + 1];
+      newTarget = buttons[curIndex + 1];
     } else {
       return;
     }
 
-    focusableElms.forEach(elm =>
-      elm.setAttribute("tabindex", newTarget === elm ? "0" : "-1"));
     newTarget.focus();
 
     event.preventDefault();
@@ -974,58 +1032,70 @@ Toolbox.prototype = {
   /**
    * Add buttons to the UI as specified in the devtools.toolbox.toolbarSpec pref
    */
-  _buildButtons: function () {
-    if (this.target.getTrait("highlightable")) {
-      this._buildPickerButton();
+  _buildButtons: Task.async(function* () {
+    // Beyond the normal preference filtering
+    this.toolbarButtons = [
+      this._buildPickerButton(),
+      this._buildFrameButton(),
+      yield this._buildNoAutoHideButton()
+    ];
+
+    // Build buttons from the GCLI commands only if the GCLI actor is supported and the
+    // target isn't chrome.
+    if (this.target.hasActor("gcli") && !this.target.chrome) {
+      const options = {
+        environment: CommandUtils.createEnvironment(this, "_target")
+      };
+
+      this._requisition = yield CommandUtils.createRequisition(this.target, options);
+      const spec = this.getToolbarSpec();
+      const commandButtons = yield CommandUtils.createCommandButtons(
+        spec, this.target, this.doc, this._requisition, this._createButtonState);
+      this.toolbarButtons = [...this.toolbarButtons, ...commandButtons];
     }
 
-    this.setToolboxButtonsVisibility();
-
-    // Old servers don't have a GCLI Actor, so just return
-    if (!this.target.hasActor("gcli")) {
-      return promise.resolve();
-    }
-    // Disable gcli in browser toolbox until there is usages of it
-    if (this.target.chrome) {
-      return promise.resolve();
-    }
-
-    const options = {
-      environment: CommandUtils.createEnvironment(this, "_target")
-    };
-    return CommandUtils.createRequisition(this.target, options).then(requisition => {
-      this._requisition = requisition;
-
-      const spec = CommandUtils.getCommandbarSpec("devtools.toolbox.toolbarSpec");
-      return CommandUtils.createButtons(spec, this.target, this.doc, requisition)
-        .then(buttons => {
-          let container = this.doc.getElementById("toolbox-buttons");
-          buttons.forEach(button => {
-            if (button) {
-              container.appendChild(button);
-            }
-          });
-          this.setToolboxButtonsVisibility();
-        });
+    // Mutate the objects here with their visibility.
+    this.toolbarButtons.forEach(command => {
+      const definition = ToolboxButtons.find(t => t.id === command.id);
+      command.isTargetSupported = definition.isTargetSupported
+        ? definition.isTargetSupported
+        : target => target.isLocalTab;
+      command.isVisible = this._commandIsVisible(command.id);
     });
+
+    this.component.setToolboxButtons(this.toolbarButtons);
+  }),
+
+  /**
+   * Button to select a frame for the inspector to target.
+   */
+  _buildFrameButton() {
+    this.frameButton = this._createButtonState({
+      id: "command-button-frames",
+      description: L10N.getStr("toolbox.frames.tooltip"),
+      onClick: this.showFramesMenu
+    });
+
+    return this.frameButton;
   },
 
   /**
-   * Adding the element picker button is done here unlike the other buttons
-   * since we want it to work for remote targets too
+   * Button that disables/enables auto-hiding XUL pop-ups. When enabled, XUL
+   * pop-ups will not automatically close when they lose focus.
    */
-  _buildPickerButton: function () {
-    this._pickerButton = this.doc.createElementNS(HTML_NS, "button");
-    this._pickerButton.id = "command-button-pick";
-    this._pickerButton.className =
-      "command-button command-button-invertable devtools-button";
-    this._pickerButton.setAttribute("title", L10N.getStr("pickButton.tooltip"));
+  _buildNoAutoHideButton: Task.async(function* () {
+    this.autohideButton = this._createButtonState({
+      id: "command-button-noautohide",
+      description: L10N.getStr("toolbox.noautohide.tooltip"),
+      onClick: this._toggleNoAutohide
+    });
 
-    let container = this.doc.querySelector("#toolbox-picker-container");
-    container.appendChild(this._pickerButton);
+    this._isDisableAutohideEnabled().then(enabled => {
+      this.autohideButton.isChecked = enabled;
+    });
 
-    this._pickerButton.addEventListener("click", this._onPickerClick, false);
-  },
+    return this.autohideButton;
+  }),
 
   /**
    * Toggle the picker, but also decide whether or not the highlighter should
@@ -1060,6 +1130,21 @@ Toolbox.prototype = {
   },
 
   /**
+   * The element picker button enables the ability to select a DOM node by clicking
+   * it on the page.
+   */
+  _buildPickerButton() {
+    this.pickerButton = this._createButtonState({
+      id: "command-button-pick",
+      description: L10N.getStr("pickButton.tooltip"),
+      onClick: this._onPickerClick,
+      isInStartContainer: true
+    });
+
+    return this.pickerButton;
+  },
+
+  /**
    * Apply the current cache setting from devtools.cache.disabled to this
    * toolbox's tab.
    */
@@ -1088,175 +1173,186 @@ Toolbox.prototype = {
     }
   },
 
-  /**
-   * Setter for the checked state of the picker button in the toolbar
-   * @param {Boolean} isChecked
-   */
-  set pickerButtonChecked(isChecked) {
-    if (isChecked) {
-      this._pickerButton.setAttribute("checked", "true");
-    } else {
-      this._pickerButton.removeAttribute("checked");
-    }
-  },
-
-  /**
-   * Return all toolbox buttons (command buttons, plus any others that were
-   * added manually).
-   */
-  get toolboxButtons() {
-    return ToolboxButtons.map(options => {
-      let button = this.doc.getElementById(options.id);
-      // Some buttons may not exist inside of Browser Toolbox
-      if (!button) {
-        return false;
-      }
-
-      return {
-        id: options.id,
-        button: button,
-        label: button.getAttribute("title"),
-        visibilityswitch: "devtools." + options.id + ".enabled",
-        isTargetSupported: options.isTargetSupported
-                           ? options.isTargetSupported
-                           : target => target.isLocalTab,
-      };
-    }).filter(button=>button);
-  },
-
-  /**
-   * Ensure the visibility of each toolbox button matches the
-   * preference value.  Simply hide buttons that are preffed off.
-   */
-  setToolboxButtonsVisibility: function () {
-    this.toolboxButtons.forEach(buttonSpec => {
-      let { visibilityswitch, button, isTargetSupported } = buttonSpec;
-      let on = true;
-      try {
-        on = Services.prefs.getBoolPref(visibilityswitch);
-      } catch (ex) {
-        // Do nothing.
-      }
-
-      on = on && isTargetSupported(this.target);
-
-      if (button) {
-        if (on) {
-          button.removeAttribute("hidden");
-        } else {
-          button.setAttribute("hidden", "true");
+ /**
+  * Get the toolbar spec for toolbox
+  */
+  getToolbarSpec: function () {
+    let spec = CommandUtils.getCommandbarSpec("devtools.toolbox.toolbarSpec");
+    // Special case for screenshot command button to check for clipboard preference
+    const clipboardEnabled = Services.prefs
+      .getBoolPref("devtools.screenshot.clipboard.enabled");
+    if (clipboardEnabled) {
+      for (let i = 0; i < spec.length; i++) {
+        if (spec[i] == "screenshot --fullpage --file") {
+          spec[i] += " --clipboard";
         }
       }
-    });
+    }
+    return spec;
+  },
 
-    this._updateNoautohideButton();
+ /**
+  * Return all toolbox buttons (command buttons, plus any others that were
+  * added manually).
+
+  /**
+   * Update the visibility of the buttons.
+   */
+  updateToolboxButtonsVisibility() {
+    this.toolbarButtons.forEach(command => {
+      command.isVisible = this._commandIsVisible(command.id);
+    });
+    this.component.setToolboxButtons(this.toolbarButtons);
   },
 
   /**
-   * Build a tab for one tool definition and add to the toolbox
+   * Ensure the visibility of each toolbox button matches the preference value.
+   */
+  _commandIsVisible: function (id) {
+    const {
+      isTargetSupported,
+      visibilityswitch
+    } = this.toolbarButtons.find(btn => btn.id === id);
+
+    let visible = true;
+    try {
+      visible = Services.prefs.getBoolPref(visibilityswitch);
+    } catch (ex) {
+      // Do nothing.
+    }
+
+    if (isTargetSupported) {
+      return visible && isTargetSupported(this.target);
+    }
+
+    return visible;
+  },
+
+  /**
+   * Build a panel for a tool definition.
    *
    * @param {string} toolDefinition
    *        Tool definition of the tool to build a tab for.
    */
-  _buildTabForTool: function (toolDefinition) {
+  _buildPanelForTool: function (toolDefinition) {
     if (!toolDefinition.isTargetSupported(this._target)) {
       return;
     }
 
-    let tabs = this.doc.getElementById("toolbox-tabs");
     let deck = this.doc.getElementById("toolbox-deck");
-
     let id = toolDefinition.id;
 
     if (toolDefinition.ordinal == undefined || toolDefinition.ordinal < 0) {
       toolDefinition.ordinal = MAX_ORDINAL;
     }
 
-    let radio = this.doc.createElement("radio");
-    // The radio element is not being used in the conventional way, thus
-    // the devtools-tab class replaces the radio XBL binding with its base
-    // binding (the control-item binding).
-    radio.className = "devtools-tab";
-    radio.id = "toolbox-tab-" + id;
-    radio.setAttribute("toolid", id);
-    radio.setAttribute("tabindex", "0");
-    radio.setAttribute("ordinal", toolDefinition.ordinal);
-    radio.setAttribute("tooltiptext", toolDefinition.tooltip);
-    if (toolDefinition.invertIconForLightTheme) {
-      radio.setAttribute("icon-invertable", "light-theme");
-    } else if (toolDefinition.invertIconForDarkTheme) {
-      radio.setAttribute("icon-invertable", "dark-theme");
-    }
-
-    radio.addEventListener("command", this.selectTool.bind(this, id));
-
-    // spacer lets us center the image and label, while allowing cropping
-    let spacer = this.doc.createElement("spacer");
-    spacer.setAttribute("flex", "1");
-    radio.appendChild(spacer);
-
-    if (toolDefinition.icon) {
-      let image = this.doc.createElement("image");
-      image.className = "default-icon";
-      image.setAttribute("src",
-                         toolDefinition.icon || toolDefinition.highlightedicon);
-      radio.appendChild(image);
-      // Adding the highlighted icon image
-      image = this.doc.createElement("image");
-      image.className = "highlighted-icon";
-      image.setAttribute("src",
-                         toolDefinition.highlightedicon || toolDefinition.icon);
-      radio.appendChild(image);
-    }
-
-    if (toolDefinition.label && !toolDefinition.iconOnly) {
-      let label = this.doc.createElement("label");
-      label.setAttribute("value", toolDefinition.label);
-      label.setAttribute("crop", "end");
-      label.setAttribute("flex", "1");
-      radio.appendChild(label);
-    }
-
     if (!toolDefinition.bgTheme) {
       toolDefinition.bgTheme = "theme-toolbar";
     }
-    let vbox = this.doc.createElement("vbox");
-    vbox.className = "toolbox-panel " + toolDefinition.bgTheme;
+    let panel = this.doc.createElement("vbox");
+    panel.className = "toolbox-panel " + toolDefinition.bgTheme;
 
     // There is already a container for the webconsole frame.
     if (!this.doc.getElementById("toolbox-panel-" + id)) {
-      vbox.id = "toolbox-panel-" + id;
+      panel.id = "toolbox-panel-" + id;
     }
 
-    if (id === "options") {
-      // Options panel is special.  It doesn't belong in the same container as
-      // the other tabs.
-      radio.setAttribute("role", "button");
-      let optionTabContainer = this.doc.getElementById("toolbox-option-container");
-      optionTabContainer.appendChild(radio);
-      deck.appendChild(vbox);
-    } else {
-      radio.setAttribute("role", "tab");
-
-      // If there is no tab yet, or the ordinal to be added is the largest one.
-      if (tabs.childNodes.length == 0 ||
-          tabs.lastChild.getAttribute("ordinal") <= toolDefinition.ordinal) {
-        tabs.appendChild(radio);
-        deck.appendChild(vbox);
-      } else {
-        // else, iterate over all the tabs to get the correct location.
-        Array.some(tabs.childNodes, (node, i) => {
-          if (+node.getAttribute("ordinal") > toolDefinition.ordinal) {
-            tabs.insertBefore(radio, node);
-            deck.insertBefore(vbox, deck.childNodes[i]);
-            return true;
-          }
-          return false;
-        });
-      }
-    }
+    deck.appendChild(panel);
 
     this._addKeysToWindow();
+  },
+
+  /**
+   * Lazily created map of the additional tools registered to this toolbox.
+   *
+   * @returns {Map<string, object>}
+   *          a map of the tools definitions registered to this
+   *          particular toolbox (the key is the toolId string, the value
+   *          is the tool definition plain javascript object).
+   */
+  get additionalToolDefinitions() {
+    if (!this._additionalToolDefinitions) {
+      this._additionalToolDefinitions = new Map();
+    }
+
+    return this._additionalToolDefinitions;
+  },
+
+  /**
+   * Retrieve the array of the additional tools registered to this toolbox.
+   *
+   * @return {Array<object>}
+   *         the array of additional tool definitions registered on this toolbox.
+   */
+  getAdditionalTools() {
+    if (this._additionalToolDefinitions) {
+      return Array.from(this.additionalToolDefinitions.values());
+    }
+    return [];
+  },
+
+  /**
+   * Get the additional tools that have been registered and are visible.
+   *
+   * @return {Array<object>}
+   *         the array of additional tool definitions registered on this toolbox.
+   */
+  getVisibleAdditionalTools() {
+    return this.visibleAdditionalTools
+               .map(toolId => this.additionalToolDefinitions.get(toolId));
+  },
+
+  /**
+   * Test the existence of a additional tools registered to this toolbox by tool id.
+   *
+   * @param {string} toolId
+   *        the id of the tool to test for existence.
+   *
+   * @return {boolean}
+   *
+   */
+  hasAdditionalTool(toolId) {
+    return this.additionalToolDefinitions.has(toolId);
+  },
+
+  /**
+   * Register and load an additional tool on this particular toolbox.
+   *
+   * @param {object} definition
+   *        the additional tool definition to register and add to this toolbox.
+   */
+  addAdditionalTool(definition) {
+    if (!definition.id) {
+      throw new Error("Tool definition id is missing");
+    }
+
+    if (this.isToolRegistered(definition.id)) {
+      throw new Error("Tool definition already registered: " +
+                      definition.id);
+    }
+    this.additionalToolDefinitions.set(definition.id, definition);
+    this.visibleAdditionalTools = [...this.visibleAdditionalTools, definition.id];
+
+    this._combineAndSortPanelDefinitions();
+    this._buildPanelForTool(definition);
+  },
+
+  /**
+   * Unregister and unload an additional tool from this particular toolbox.
+   *
+   * @param {string} toolId
+   *        the id of the additional tool to unregister and remove.
+   */
+  removeAdditionalTool(toolId) {
+    if (!this.hasAdditionalTool(toolId)) {
+      throw new Error("Tool definition not registered to this toolbox: " +
+                      toolId);
+    }
+
+    this.additionalToolDefinitions.delete(toolId);
+    this.visibleAdditionalTools = this.visibleAdditionalTools
+                                      .filter(id => id !== toolId);
+    this.unloadTool(toolId);
   },
 
   /**
@@ -1287,7 +1383,9 @@ Toolbox.prototype = {
       return deferred.promise;
     }
 
-    let definition = gDevTools.getToolDefinition(id);
+    // Retrieve the tool definition (from the global or the per-toolbox tool maps)
+    let definition = this.getToolDefinition(id);
+
     if (!definition) {
       deferred.reject(new Error("no such tool id " + id));
       return deferred.promise;
@@ -1308,6 +1406,7 @@ Toolbox.prototype = {
     if (!iframe.parentNode) {
       let vbox = this.doc.getElementById("toolbox-panel-" + id);
       vbox.appendChild(iframe);
+      vbox.visibility = "visible";
     }
 
     let onLoad = () => {
@@ -1445,18 +1544,6 @@ Toolbox.prototype = {
   selectTool: function (id) {
     this.emit("before-select", id);
 
-    let tabs = this.doc.querySelectorAll(".devtools-tab");
-    this.selectSingleNode(tabs, "toolbox-tab-" + id);
-
-    // If options is selected, the separator between it and the
-    // command buttons should be hidden.
-    let sep = this.doc.getElementById("toolbox-controls-separator");
-    if (id === "options") {
-      sep.setAttribute("invisible", "true");
-    } else {
-      sep.removeAttribute("invisible");
-    }
-
     if (this.currentToolId == id) {
       let panel = this._toolPanels.get(id);
       if (panel) {
@@ -1477,9 +1564,10 @@ Toolbox.prototype = {
       throw new Error("Can't select tool, wait for toolbox 'ready' event");
     }
 
-    let tab = this.doc.getElementById("toolbox-tab-" + id);
-
-    if (tab) {
+    // Check if the tool exists.
+    if (this.panelDefinitions.find((definition) => definition.id === id) ||
+        id === "options" ||
+        this.additionalToolDefinitions.get(id)) {
       if (this.currentToolId) {
         this._telemetry.toolClosed(this.currentToolId);
       }
@@ -1487,12 +1575,6 @@ Toolbox.prototype = {
     } else {
       throw new Error("No tool found");
     }
-
-    let tabstrip = this.doc.getElementById("toolbox-tabs");
-
-    // select the right tab, making 0th index the default tab if right tab not
-    // found.
-    tabstrip.selectedItem = tab || tabstrip.childNodes[0];
 
     // and select the right iframe
     let toolboxPanels = this.doc.querySelectorAll(".toolbox-panel");
@@ -1567,9 +1649,9 @@ Toolbox.prototype = {
     this._splitConsole = true;
     Services.prefs.setBoolPref(SPLITCONSOLE_ENABLED_PREF, true);
     this._refreshConsoleDisplay();
-    this.emit("split-console");
 
     return this.loadTool("webconsole").then(() => {
+      this.emit("split-console");
       this.focusConsoleInput();
     });
   },
@@ -1620,24 +1702,28 @@ Toolbox.prototype = {
    * Loads the tool next to the currently selected tool.
    */
   selectNextTool: function () {
-    let tools = this.doc.querySelectorAll(".devtools-tab");
-    let selected = this.doc.querySelector(".devtools-tab[selected]");
-    let nextIndex = [...tools].indexOf(selected) + 1;
-    let next = tools[nextIndex] || tools[0];
-    let tool = next.getAttribute("toolid");
-    return this.selectTool(tool);
+    const index = this.panelDefinitions.findIndex(({id}) => id === this.currentToolId);
+    let definition = this.panelDefinitions[index + 1];
+    if (!definition) {
+      definition = index === -1
+        ? this.panelDefinitions[0]
+        : this.optionsDefinition;
+    }
+    return this.selectTool(definition.id);
   },
 
   /**
    * Loads the tool just left to the currently selected tool.
    */
   selectPreviousTool: function () {
-    let tools = this.doc.querySelectorAll(".devtools-tab");
-    let selected = this.doc.querySelector(".devtools-tab[selected]");
-    let prevIndex = [...tools].indexOf(selected) - 1;
-    let prev = tools[prevIndex] || tools[tools.length - 1];
-    let tool = prev.getAttribute("toolid");
-    return this.selectTool(tool);
+    const index = this.panelDefinitions.findIndex(({id}) => id === this.currentToolId);
+    let definition = this.panelDefinitions[index - 1];
+    if (!definition) {
+      definition = index === -1
+        ? this.panelDefinitions[this.panelDefinitions.length - 1]
+        : this.optionsDefinition;
+    }
+    return this.selectTool(definition.id);
   },
 
   /**
@@ -1646,10 +1732,12 @@ Toolbox.prototype = {
    * @param {string} id
    *        The id of the tool to highlight
    */
-  highlightTool: function (id) {
-    let tab = this.doc.getElementById("toolbox-tab-" + id);
-    tab && tab.setAttribute("highlighted", "true");
-  },
+  highlightTool: Task.async(function* (id) {
+    if (!this.component) {
+      yield this.isOpen;
+    }
+    this.component.highlightTool(id);
+  }),
 
   /**
    * De-highlights the tool's tab.
@@ -1657,10 +1745,12 @@ Toolbox.prototype = {
    * @param {string} id
    *        The id of the tool to unhighlight
    */
-  unhighlightTool: function (id) {
-    let tab = this.doc.getElementById("toolbox-tab-" + id);
-    tab && tab.removeAttribute("highlighted");
-  },
+  unhighlightTool: Task.async(function* (id) {
+    if (!this.component) {
+      yield this.isOpen;
+    }
+    this.component.unhighlightTool(id);
+  }),
 
   /**
    * Raise the toolbox host.
@@ -1690,36 +1780,35 @@ Toolbox.prototype = {
 
   // Returns an instance of the preference actor
   get _preferenceFront() {
-    return this.target.root.then(rootForm => {
-      return getPreferenceFront(this.target.client, rootForm);
+    return this.isOpen.then(() => {
+      return this.target.root.then(rootForm => {
+        return getPreferenceFront(this.target.client, rootForm);
+      });
     });
   },
 
-  _toggleAutohide: Task.async(function* () {
-    let prefName = "ui.popup.disable_autohide";
+  _toggleNoAutohide: Task.async(function* () {
     let front = yield this._preferenceFront;
-    let current = yield front.getBoolPref(prefName);
-    yield front.setBoolPref(prefName, !current);
+    let toggledValue = !(yield this._isDisableAutohideEnabled(front));
 
-    this._updateNoautohideButton();
+    front.setBoolPref(DISABLE_AUTOHIDE_PREF, toggledValue);
+
+    this.autohideButton.isChecked = toggledValue;
   }),
 
-  _updateNoautohideButton: Task.async(function* () {
-    let menu = this.doc.getElementById("command-button-noautohide");
-    if (menu.getAttribute("hidden") === "true") {
-      return;
+  _isDisableAutohideEnabled: Task.async(function* (prefFront) {
+    // Ensure that the tools are open, and the button is visible.
+    yield this.isOpen;
+    if (!this.autohideButton.isVisible) {
+      return false;
     }
-    if (!this.target.root) {
-      return;
+
+    // If no prefFront was provided, then get one.
+    if (!prefFront) {
+      prefFront = yield this._preferenceFront;
     }
-    let prefName = "ui.popup.disable_autohide";
-    let front = yield this._preferenceFront;
-    let current = yield front.getBoolPref(prefName);
-    if (current) {
-      menu.setAttribute("checked", "true");
-    } else {
-      menu.removeAttribute("checked");
-    }
+
+    return yield prefFront.getBoolPref(DISABLE_AUTOHIDE_PREF);
   }),
 
   _listFrames: function (event) {
@@ -1761,11 +1850,11 @@ Toolbox.prototype = {
     });
 
     menu.once("open").then(() => {
-      target.setAttribute("open", "true");
+      this.frameButton.isChecked = true;
     });
 
     menu.once("close").then(() => {
-      target.removeAttribute("open");
+      this.frameButton.isChecked = false;
     });
 
     // Show a drop down menu with frames.
@@ -1853,13 +1942,12 @@ Toolbox.prototype = {
     // Note that only child frame has parentID.
     let frame = this.frameMap.get(this.selectedFrameId);
     let topFrameSelected = frame ? !frame.parentID : false;
-    let button = this.doc.getElementById("command-button-frames");
-    button.removeAttribute("checked");
+    this._framesButtonChecked = false;
 
     // If non-top level frame is selected the toolbar button is
     // marked as 'checked' indicating that a child frame is active.
     if (!topFrameSelected && this.selectedFrameId) {
-      button.setAttribute("checked", "true");
+      this._framesButtonChecked = false;
     }
   },
 
@@ -1914,41 +2002,47 @@ Toolbox.prototype = {
   },
 
   /**
-   * Return if the tool is available as a tab (i.e. if it's checked
-   * in the options panel). This is different from Toolbox.getPanel -
-   * a tool could be registered but not yet opened in which case
-   * isToolRegistered would return true but getPanel would return false.
+   * Test the availability of a tool (both globally registered tools and
+   * additional tools registered to this toolbox) by tool id.
+   *
+   * @param  {string} toolId
+   *         Id of the tool definition to search in the per-toolbox or globally
+   *         registered tools.
+   *
+   * @returns {bool}
+   *         Returns true if the tool is registered globally or on this toolbox.
    */
   isToolRegistered: function (toolId) {
-    return gDevTools.getToolDefinitionMap().has(toolId);
+    return !!this.getToolDefinition(toolId);
   },
 
   /**
-   * Handler for the tool-registered event.
-   * @param  {string} event
-   *         Name of the event ("tool-registered")
+   * Return the tool definition registered globally or additional tools registered
+   * to this toolbox.
+   *
    * @param  {string} toolId
-   *         Id of the tool that was registered
+   *         Id of the tool definition to retrieve for the per-toolbox and globally
+   *         registered tools.
+   *
+   * @returns {object}
+   *         The plain javascript object that represents the requested tool definition.
    */
-  _toolRegistered: function (event, toolId) {
-    let tool = gDevTools.getToolDefinition(toolId);
-    this._buildTabForTool(tool);
-    // Emit the event so tools can listen to it from the toolbox level
-    // instead of gDevTools
-    this.emit("tool-registered", toolId);
+  getToolDefinition: function (toolId) {
+    return gDevTools.getToolDefinition(toolId) ||
+      this.additionalToolDefinitions.get(toolId);
   },
 
   /**
-   * Handler for the tool-unregistered event.
-   * @param  {string} event
-   *         Name of the event ("tool-unregistered")
-   * @param  {string|object} toolId
-   *         Definition or id of the tool that was unregistered. Passing the
-   *         tool id should be avoided as it is a temporary measure.
+   * Internal helper that removes a loaded tool from the toolbox,
+   * it removes a loaded tool panel and tab from the toolbox without removing
+   * its definition, so that it can still be listed in options and re-added later.
+   *
+   * @param  {string} toolId
+   *         Id of the tool to be removed.
    */
-  _toolUnregistered: function (event, toolId) {
+  unloadTool: function (toolId) {
     if (typeof toolId != "string") {
-      toolId = toolId.id;
+      throw new Error("Unexpected non-string toolId received.");
     }
 
     if (this._toolPanels.has(toolId)) {
@@ -1957,24 +2051,31 @@ Toolbox.prototype = {
       this._toolPanels.delete(toolId);
     }
 
-    let radio = this.doc.getElementById("toolbox-tab-" + toolId);
     let panel = this.doc.getElementById("toolbox-panel-" + toolId);
 
-    if (radio) {
-      if (this.currentToolId == toolId) {
-        let nextToolName = null;
-        if (radio.nextSibling) {
-          nextToolName = radio.nextSibling.getAttribute("toolid");
-        }
-        if (radio.previousSibling) {
-          nextToolName = radio.previousSibling.getAttribute("toolid");
-        }
-        if (nextToolName) {
-          this.selectTool(nextToolName);
-        }
+    // Select another tool.
+    if (this.currentToolId == toolId) {
+      let index = this.panelDefinitions.findIndex(({id}) => id === toolId);
+      let nextTool = this.panelDefinitions[index + 1];
+      let previousTool = this.panelDefinitions[index - 1];
+      let toolNameToSelect;
+
+      if (nextTool) {
+        toolNameToSelect = nextTool.id;
       }
-      radio.parentNode.removeChild(radio);
+      if (previousTool) {
+        toolNameToSelect = previousTool.id;
+      }
+      if (toolNameToSelect) {
+        this.selectTool(toolNameToSelect);
+      }
     }
+
+    // Remove this tool from the current panel definitions.
+    this.panelDefinitions = this.panelDefinitions.filter(({id}) => id !== toolId);
+    this.visibleAdditionalTools = this.visibleAdditionalTools
+                                      .filter(id => id !== toolId);
+    this._combineAndSortPanelDefinitions();
 
     if (panel) {
       panel.parentNode.removeChild(panel);
@@ -1987,6 +2088,49 @@ Toolbox.prototype = {
         key.parentNode.removeChild(key);
       }
     }
+  },
+
+  /**
+   * Handler for the tool-registered event.
+   * @param  {string} event
+   *         Name of the event ("tool-registered")
+   * @param  {string} toolId
+   *         Id of the tool that was registered
+   */
+  _toolRegistered: function (event, toolId) {
+    // Tools can either be in the global devtools, or added to this specific toolbox
+    // as an additional tool.
+    let definition = gDevTools.getToolDefinition(toolId);
+    let isAdditionalTool = false;
+    if (!definition) {
+      definition = this.additionalToolDefinitions.get(toolId);
+      isAdditionalTool = true;
+    }
+
+    if (definition.isTargetSupported(this._target)) {
+      if (isAdditionalTool) {
+        this.visibleAdditionalTools = [...this.visibleAdditionalTools, toolId];
+        this._combineAndSortPanelDefinitions();
+      } else {
+        this.panelDefinitions = this.panelDefinitions.concat(definition);
+      }
+      this._buildPanelForTool(definition);
+
+      // Emit the event so tools can listen to it from the toolbox level
+      // instead of gDevTools.
+      this.emit("tool-registered", toolId);
+    }
+  },
+
+  /**
+   * Handler for the tool-unregistered event.
+   * @param  {string} event
+   *         Name of the event ("tool-unregistered")
+   * @param  {string} toolId
+   *         id of the tool that was unregistered
+   */
+  _toolUnregistered: function (event, toolId) {
+    this.unloadTool(toolId);
     // Emit the event so tools can listen to it from the toolbox level
     // instead of gDevTools
     this.emit("tool-unregistered", toolId);
@@ -2030,6 +2174,10 @@ Toolbox.prototype = {
       if (!this._inspector) {
         return;
       }
+
+      // Ensure that the inspector isn't still being initiated, otherwise race conditions
+      // in the initialization process can throw errors.
+      yield this._initInspector;
 
       // Releasing the walker (if it has been created)
       // This can fail, but in any case, we want to continue destroying the
@@ -2105,7 +2253,9 @@ Toolbox.prototype = {
     gDevTools.off("tool-registered", this._toolRegistered);
     gDevTools.off("tool-unregistered", this._toolUnregistered);
 
-    gDevTools.off("pref-changed", this._prefChanged);
+    Services.prefs.removeObserver("devtools.cache.disabled", this._applyCacheSettings);
+    Services.prefs.removeObserver("devtools.serviceWorkers.testing.enabled",
+                                  this._applyServiceWorkersTestingSettings);
 
     this._lastFocusedElement = null;
     if (this._sourceMapService) {
@@ -2119,20 +2269,15 @@ Toolbox.prototype = {
         this._saveSplitConsoleHeight);
       this.webconsolePanel = null;
     }
-    if (this.closeButton) {
-      this.closeButton.removeEventListener("click", this.destroy, true);
-      this.closeButton = null;
-    }
     if (this.textBoxContextMenuPopup) {
       this.textBoxContextMenuPopup.removeEventListener("popupshowing",
         this._updateTextBoxMenuItems, true);
       this.textBoxContextMenuPopup = null;
     }
-    if (this.tabbar) {
-      this.tabbar.removeEventListener("focus", this._onTabbarFocus, true);
-      this.tabbar.removeEventListener("click", this._onTabbarFocus, true);
-      this.tabbar.removeEventListener("keypress", this._onTabbarArrowKeypress);
-      this.tabbar = null;
+    if (this._componentMount) {
+      this._componentMount.removeEventListener("keypress", this._onToolbarArrowKeypress);
+      this.ReactDOM.unmountComponentAtNode(this._componentMount);
+      this._componentMount = null;
     }
 
     let outstanding = [];
@@ -2161,16 +2306,13 @@ Toolbox.prototype = {
     }
 
     // Destroying the walker and inspector fronts
-    outstanding.push(this.destroyInspector().then(() => {
-      // Removing buttons
-      if (this._pickerButton) {
-        this._pickerButton.removeEventListener("click", this._togglePicker, false);
-        this._pickerButton = null;
-      }
-    }));
+    outstanding.push(this.destroyInspector());
 
     // Destroy the profiler connection
     outstanding.push(this.destroyPerformance());
+
+    // Destroy the preference front
+    outstanding.push(this.destroyPreference());
 
     // Detach the thread
     detachThread(this._threadClient);
@@ -2332,6 +2474,14 @@ Toolbox.prototype = {
     this.performance.off("*", this._onPerformanceFrontEvent);
     yield this.performance.destroy();
     this._performance = null;
+  }),
+
+  /**
+   * Destroy the preferences actor when the toolbox is unloaded.
+   */
+  destroyPreference: Task.async(function* () {
+    let front = yield this._preferenceFront;
+    front.destroy();
   }),
 
   /**

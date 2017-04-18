@@ -6,15 +6,13 @@
 "use strict";
 
 function run_test() {
-  updateAppInfo();
-
   // The test engines used in this test need to be recognized as 'default'
   // engines or the resource URL won't be used
   let url = "resource://test/data/";
   let resProt = Services.io.getProtocolHandler("resource")
                         .QueryInterface(Ci.nsIResProtocolHandler);
   resProt.setSubstitution("search-plugins",
-                          Services.io.newURI(url, null, null));
+                          Services.io.newURI(url));
 
   run_next_test();
 }

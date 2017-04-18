@@ -52,6 +52,14 @@ template<> const char ObjectBase<Object, jobject>::name[] = "java/lang/Object";
 template<> const char ObjectBase<TypedObject<jstring>, jstring>::name[] = "java/lang/String";
 template<> const char ObjectBase<TypedObject<jclass>, jclass>::name[] = "java/lang/Class";
 template<> const char ObjectBase<TypedObject<jthrowable>, jthrowable>::name[] = "java/lang/Throwable";
+template<> const char ObjectBase<BoxedObject<jboolean>, jobject>::name[] = "java/lang/Boolean";
+template<> const char ObjectBase<BoxedObject<jbyte>, jobject>::name[] = "java/lang/Byte";
+template<> const char ObjectBase<BoxedObject<jchar>, jobject>::name[] = "java/lang/Character";
+template<> const char ObjectBase<BoxedObject<jshort>, jobject>::name[] = "java/lang/Short";
+template<> const char ObjectBase<BoxedObject<jint>, jobject>::name[] = "java/lang/Integer";
+template<> const char ObjectBase<BoxedObject<jlong>, jobject>::name[] = "java/lang/Long";
+template<> const char ObjectBase<BoxedObject<jfloat>, jobject>::name[] = "java/lang/Float";
+template<> const char ObjectBase<BoxedObject<jdouble>, jobject>::name[] = "java/lang/Double";
 template<> const char ObjectBase<TypedObject<jbooleanArray>, jbooleanArray>::name[] = "[Z";
 template<> const char ObjectBase<TypedObject<jbyteArray>, jbyteArray>::name[] = "[B";
 template<> const char ObjectBase<TypedObject<jcharArray>, jcharArray>::name[] = "[C";
@@ -249,7 +257,7 @@ jclass GetClassRef(JNIEnv* aEnv, const char* aClassName)
     // First try the default class loader.
     auto classRef = Class::LocalRef::Adopt(aEnv, aEnv->FindClass(aClassName));
 
-    if (!classRef && sClassLoader) {
+    if ((!classRef || aEnv->ExceptionCheck()) && sClassLoader) {
         // If the default class loader failed but we have an app class loader, try that.
         // Clear the pending exception from failed FindClass call above.
         aEnv->ExceptionClear();
@@ -258,14 +266,15 @@ jclass GetClassRef(JNIEnv* aEnv, const char* aClassName)
                                        StringParam(aClassName, aEnv).Get())));
     }
 
-    if (classRef) {
+    if (classRef && !aEnv->ExceptionCheck()) {
         return classRef.Forget();
     }
 
     __android_log_print(
             ANDROID_LOG_ERROR, "Gecko",
-            ">>> FATAL JNI ERROR! FindClass(className=\"%s\") failed. "
-            "Did ProGuard optimize away something it shouldn't have?",
+            ">>> FATAL JNI ERROR! FindClass(\"%s\") failed. "
+            "Does the class require a newer API version? "
+            "Or did ProGuard optimize away something it shouldn't have?",
             aClassName);
     aEnv->ExceptionDescribe();
     MOZ_CRASH("Cannot find JNI class");

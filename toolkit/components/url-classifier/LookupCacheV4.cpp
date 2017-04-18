@@ -80,9 +80,11 @@ LookupCacheV4::Init()
 
 nsresult
 LookupCacheV4::Has(const Completion& aCompletion,
-                   bool* aHas, bool* aComplete)
+                   bool* aHas, bool* aComplete,
+                   uint32_t* aMatchLength)
 {
-  *aHas = false;
+  *aHas = *aComplete = false;
+  *aMatchLength = 0;
 
   uint32_t length = 0;
   nsDependentCSubstring fullhash;
@@ -93,6 +95,7 @@ LookupCacheV4::Has(const Completion& aCompletion,
 
   *aHas = length >= PREFIX_SIZE;
   *aComplete = length == COMPLETE_SIZE;
+  *aMatchLength = length;
 
   if (LOG_ENABLED()) {
     uint32_t prefix = aCompletion.ToUint32();
@@ -231,9 +234,7 @@ LookupCacheV4::ApplyUpdate(TableUpdateV4* aTableUpdate,
     if (!isOldMapEmpty && !isAddMapEmpty) {
       if (smallestOldPrefix == smallestAddPrefix) {
         LOG(("Add prefix should not exist in the original prefix set."));
-        Telemetry::Accumulate(Telemetry::URLCLASSIFIER_UPDATE_ERROR_TYPE,
-                              DUPLICATE_PREFIX);
-        return NS_ERROR_FAILURE;
+        return NS_ERROR_UC_UPDATE_DUPLICATE_PREFIX;
       }
 
       // Compare the smallest string in old prefix set and add prefix set,
@@ -274,35 +275,28 @@ LookupCacheV4::ApplyUpdate(TableUpdateV4* aTableUpdate,
   // the number of original prefix plus add prefix.
   if (index <= 0) {
     LOG(("There are still prefixes remaining after reaching maximum runs."));
-    Telemetry::Accumulate(Telemetry::URLCLASSIFIER_UPDATE_ERROR_TYPE,
-                          INFINITE_LOOP);
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_UC_UPDATE_INFINITE_LOOP;
   }
 
   if (removalIndex < removalArray.Length()) {
     LOG(("There are still prefixes to remove after exhausting the old PrefixSet."));
-    Telemetry::Accumulate(Telemetry::URLCLASSIFIER_UPDATE_ERROR_TYPE,
-                          WRONG_REMOVAL_INDICES);
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_UC_UPDATE_WRONG_REMOVAL_INDICES;
   }
 
   nsAutoCString checksum;
   crypto->Finish(false, checksum);
   if (aTableUpdate->Checksum().IsEmpty()) {
     LOG(("Update checksum missing."));
-    Telemetry::Accumulate(Telemetry::URLCLASSIFIER_UPDATE_ERROR_TYPE,
-                          MISSING_CHECKSUM);
+    Telemetry::Accumulate(Telemetry::URLCLASSIFIER_UPDATE_ERROR, mProvider,
+        NS_ERROR_GET_CODE(NS_ERROR_UC_UPDATE_MISSING_CHECKSUM));
 
     // Generate our own checksum to tableUpdate to ensure there is always
     // checksum in .metadata
     std::string stdChecksum(checksum.BeginReading(), checksum.Length());
     aTableUpdate->NewChecksum(stdChecksum);
-
   } else if (aTableUpdate->Checksum() != checksum){
     LOG(("Checksum mismatch after applying partial update"));
-    Telemetry::Accumulate(Telemetry::URLCLASSIFIER_UPDATE_ERROR_TYPE,
-                          CHECKSUM_MISMATCH);
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_UC_UPDATE_CHECKSUM_MISMATCH;
   }
 
   return NS_OK;
@@ -447,6 +441,9 @@ nsresult
 LookupCacheV4::WriteMetadata(TableUpdateV4* aTableUpdate)
 {
   NS_ENSURE_ARG_POINTER(aTableUpdate);
+  if (nsUrlClassifierDBService::ShutdownHasStarted()) {
+    return NS_ERROR_ABORT;
+  }
 
   nsCOMPtr<nsIFile> metaFile;
   nsresult rv = mStoreDirectory->Clone(getter_AddRefs(metaFile));

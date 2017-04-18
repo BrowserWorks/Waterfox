@@ -8,20 +8,20 @@ Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/rotaryengine.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
-add_test(function test_processIncoming_abort() {
+add_task(async function test_processIncoming_abort() {
   _("An abort exception, raised in applyIncoming, will abort _processIncoming.");
   let engine = new RotaryEngine(Service);
 
   let collection = new ServerCollection();
   let id = Utils.makeGUID();
-  let payload = encryptPayload({id: id, denomination: "Record No. " + id});
+  let payload = encryptPayload({id, denomination: "Record No. " + id});
   collection.insert(id, payload);
 
   let server = sync_httpd_setup({
       "/1.1/foo/storage/rotary": collection.handler()
   });
 
-  new SyncTestingInfrastructure(server);
+  await SyncTestingInfrastructure(server);
   generateNewKeys(Service.collectionKeys);
 
   _("Create some server data.");
@@ -30,7 +30,7 @@ add_test(function test_processIncoming_abort() {
   meta_global.payload.engines = {rotary: {version: engine.version,
                                           syncID: engine.syncID}};
   _("Fake applyIncoming to abort.");
-  engine._store.applyIncoming = function (record) {
+  engine._store.applyIncoming = function(record) {
     let ex = {code: Engine.prototype.eEngineAbortApplyIncoming,
               cause: "Nooo"};
     _("Throwing: " + JSON.stringify(ex));
@@ -59,7 +59,7 @@ add_test(function test_processIncoming_abort() {
 
   do_check_eq(err, undefined);
 
-  server.stop(run_next_test);
+  await promiseStopServer(server);
   Svc.Prefs.resetBranch("");
   Service.recordManager.clearCache();
 });

@@ -74,8 +74,8 @@ AppendEscapedBase64Item(const SECItem* encodedRequest, nsACString& path)
 
 Result
 DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
-              const NeckoOriginAttributes& originAttributes,
-              const SECItem* encodedRequest, PRIntervalTime timeout,
+              const OriginAttributes& originAttributes,
+              const SECItem* encodedRequest, TimeDuration timeout,
               bool useGET,
       /*out*/ SECItem*& encodedResponse)
 {

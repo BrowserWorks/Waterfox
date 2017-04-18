@@ -15,12 +15,12 @@ using namespace ipc;
 namespace dom {
 namespace workers {
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyRegister(
                                      const ServiceWorkerRegistrationData& aData)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
@@ -28,16 +28,16 @@ ServiceWorkerManagerChild::RecvNotifyRegister(
     swm->LoadRegistration(aData);
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifySoftUpdate(
-                                      const PrincipalOriginAttributes& aOriginAttributes,
+                                      const OriginAttributes& aOriginAttributes,
                                       const nsString& aScope)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
@@ -45,38 +45,38 @@ ServiceWorkerManagerChild::RecvNotifySoftUpdate(
     swm->SoftUpdate(aOriginAttributes, NS_ConvertUTF16toUTF8(aScope));
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyUnregister(const PrincipalInfo& aPrincipalInfo,
                                                 const nsString& aScope)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
   if (!swm) {
     // browser shutdown
-    return true;
+    return IPC_OK();
   }
 
   nsCOMPtr<nsIPrincipal> principal = PrincipalInfoToPrincipal(aPrincipalInfo);
   if (NS_WARN_IF(!principal)) {
-    return true;
+    return IPC_OK();
   }
 
   nsresult rv = swm->NotifyUnregister(principal, aScope);
   Unused << NS_WARN_IF(NS_FAILED(rv));
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyRemove(const nsCString& aHost)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
@@ -84,14 +84,14 @@ ServiceWorkerManagerChild::RecvNotifyRemove(const nsCString& aHost)
     swm->Remove(aHost);
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyRemoveAll()
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
@@ -99,7 +99,7 @@ ServiceWorkerManagerChild::RecvNotifyRemoveAll()
     swm->RemoveAll();
   }
 
-  return true;
+  return IPC_OK();
 }
 
 } // namespace workers

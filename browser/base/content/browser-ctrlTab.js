@@ -11,8 +11,8 @@ var tabPreviews = {
       return;
     this._selectedTab = gBrowser.selectedTab;
 
-    gBrowser.tabContainer.addEventListener("TabSelect", this, false);
-    gBrowser.tabContainer.addEventListener("SSTabRestored", this, false);
+    gBrowser.tabContainer.addEventListener("TabSelect", this);
+    gBrowser.tabContainer.addEventListener("SSTabRestored", this);
 
     let screenManager = Cc["@mozilla.org/gfx/screenmanager;1"]
                           .getService(Ci.nsIScreenManager);
@@ -48,7 +48,7 @@ var tabPreviews = {
     let canvas = PageThumbs.createCanvas(window);
     PageThumbs.shouldStoreThumbnail(browser, (aDoStore) => {
       if (aDoStore && aShouldCache) {
-        PageThumbs.captureAndStore(browser, function () {
+        PageThumbs.captureAndStore(browser, function() {
           let img = new Image;
           img.src = PageThumbs.getThumbnailURL(uri);
           aTab.__thumbnail = img;
@@ -78,7 +78,7 @@ var tabPreviews = {
           // for tabs that will be closed. During that timeout, don't generate other
           // thumbnails in case multiple TabSelect events occur fast in succession.
           this._pendingUpdate = true;
-          setTimeout(function (self, aTab) {
+          setTimeout(function(self, aTab) {
             self._pendingUpdate = false;
             if (aTab.parentNode &&
                 !aTab.hasAttribute("busy") &&
@@ -96,29 +96,29 @@ var tabPreviews = {
 };
 
 var tabPreviewPanelHelper = {
-  opening: function (host) {
+  opening(host) {
     host.panel.hidden = false;
 
     var handler = this._generateHandler(host);
-    host.panel.addEventListener("popupshown", handler, false);
-    host.panel.addEventListener("popuphiding", handler, false);
+    host.panel.addEventListener("popupshown", handler);
+    host.panel.addEventListener("popuphiding", handler);
 
     host._prevFocus = document.commandDispatcher.focusedElement;
   },
-  _generateHandler: function (host) {
+  _generateHandler(host) {
     var self = this;
-    return function (event) {
+    return function(event) {
       if (event.target == host.panel) {
-        host.panel.removeEventListener(event.type, arguments.callee, false);
+        host.panel.removeEventListener(event.type, arguments.callee);
         self["_" + event.type](host);
       }
     };
   },
-  _popupshown: function (host) {
+  _popupshown(host) {
     if ("setupGUI" in host)
       host.setupGUI();
   },
-  _popuphiding: function (host) {
+  _popuphiding(host) {
     if ("suspendGUI" in host)
       host.suspendGUI();
 
@@ -139,33 +139,33 @@ var tabPreviewPanelHelper = {
  * Ctrl-Tab panel
  */
 var ctrlTab = {
-  get panel () {
+  get panel() {
     delete this.panel;
     return this.panel = document.getElementById("ctrlTab-panel");
   },
-  get showAllButton () {
+  get showAllButton() {
     delete this.showAllButton;
     return this.showAllButton = document.getElementById("ctrlTab-showAll");
   },
-  get previews () {
+  get previews() {
     delete this.previews;
     return this.previews = this.panel.getElementsByClassName("ctrlTab-preview");
   },
-  get maxTabPreviews () {
+  get maxTabPreviews() {
     delete this.maxTabPreviews;
     return this.maxTabPreviews = this.previews.length - 1;
   },
-  get canvasWidth () {
+  get canvasWidth() {
     delete this.canvasWidth;
     return this.canvasWidth = Math.ceil(screen.availWidth * .85 / this.maxTabPreviews);
   },
-  get canvasHeight () {
+  get canvasHeight() {
     delete this.canvasHeight;
     return this.canvasHeight = Math.round(this.canvasWidth * tabPreviews.aspectRatio);
   },
-  get keys () {
+  get keys() {
     var keys = {};
-    ["close", "find", "selectAll"].forEach(function (key) {
+    ["close", "find", "selectAll"].forEach(function(key) {
       keys[key] = document.getElementById("key_" + key)
                           .getAttribute("key")
                           .toLocaleLowerCase().charCodeAt(0);
@@ -174,22 +174,22 @@ var ctrlTab = {
     return this.keys = keys;
   },
   _selectedIndex: 0,
-  get selected () {
+  get selected() {
     return this._selectedIndex < 0 ?
              document.activeElement :
              this.previews.item(this._selectedIndex);
   },
-  get isOpen () {
+  get isOpen() {
     return this.panel.state == "open" || this.panel.state == "showing" || this._timer;
   },
-  get tabCount () {
+  get tabCount() {
     return this.tabList.length;
   },
-  get tabPreviewCount () {
+  get tabPreviewCount() {
     return Math.min(this.maxTabPreviews, this.tabCount);
   },
 
-  get tabList () {
+  get tabList() {
     return this._recentlyUsedTabs;
   },
 
@@ -219,7 +219,7 @@ var ctrlTab = {
     else
       this.uninit();
   },
-  observe: function (aSubject, aTopic, aPrefName) {
+  observe(aSubject, aTopic, aPrefName) {
     this.readPref();
   },
 
@@ -247,7 +247,6 @@ var ctrlTab = {
       aPreview.appendChild(tabPreviews.get(aTab));
       aPreview.setAttribute("label", aTab.label);
       aPreview.setAttribute("tooltiptext", aTab.label);
-      aPreview.setAttribute("crop", aTab.crop);
       aPreview.setAttribute("canvaswidth", canvasWidth);
       aPreview.setAttribute("canvasstyle",
                             "max-width:" + canvasWidth + "px;" +
@@ -347,7 +346,7 @@ var ctrlTab = {
 
     // Add a slight delay before showing the UI, so that a quick
     // "ctrl-tab" keypress just flips back to the MRU tab.
-    this._timer = setTimeout(function (self) {
+    this._timer = setTimeout(function(self) {
       self._timer = null;
       self._openPanel();
     }, 200, this);
@@ -388,7 +387,7 @@ var ctrlTab = {
     // Track mouse movement after a brief delay so that the item that happens
     // to be under the mouse pointer initially won't be selected unintentionally.
     this._trackMouseOver = false;
-    setTimeout(function (self) {
+    setTimeout(function(self) {
       if (self.isOpen)
         self._trackMouseOver = true;
     }, 0, this);
@@ -462,7 +461,7 @@ var ctrlTab = {
 
     // If the current tab is removed, another tab can steal our focus.
     if (aTab.selected && this.panel.state == "open") {
-      setTimeout(function (selected) {
+      setTimeout(function(selected) {
         selected.focus();
       }, 0, this.selected);
     }
@@ -474,7 +473,7 @@ var ctrlTab = {
         this._initRecentlyUsedTabs();
         break;
       case "TabAttrModified":
-        // tab attribute modified (e.g. label, crop, busy, image, selected)
+        // tab attribute modified (e.g. label, busy, image, selected)
         for (let i = this.previews.length - 1; i >= 0; i--) {
           if (this.previews[i]._tab && this.previews[i]._tab == event.target) {
             this.updatePreview(this.previews[i], event.target);
@@ -508,7 +507,7 @@ var ctrlTab = {
     }
   },
 
-  filterForThumbnailExpiration: function (aCallback) {
+  filterForThumbnailExpiration(aCallback) {
     // Save a few more thumbnails than we actually display, so that when tabs
     // are closed, the previews we add instead still get thumbnails.
     const extraThumbnails = 3;
@@ -522,7 +521,7 @@ var ctrlTab = {
     aCallback(urls);
   },
 
-  _initRecentlyUsedTabs: function () {
+  _initRecentlyUsedTabs() {
     this._recentlyUsedTabs =
       Array.filter(gBrowser.tabs, tab => !tab.closing)
            .sort((tab1, tab2) => tab2.lastAccessed - tab1.lastAccessed);

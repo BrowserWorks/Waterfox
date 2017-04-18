@@ -7,6 +7,7 @@
 #include "nsLayoutStatics.h"
 #include "nscore.h"
 
+#include "DateTimeFormat.h"
 #include "nsAttrValue.h"
 #include "nsAutoCopyListener.h"
 #include "nsColorNames.h"
@@ -62,7 +63,7 @@
 #include "nsMathMLAtoms.h"
 #include "nsMathMLOperators.h"
 #include "Navigator.h"
-#include "DOMStorageObserver.h"
+#include "StorageObserver.h"
 #include "CacheObserver.h"
 #include "DisplayItemClip.h"
 #include "ActiveLayerTracker.h"
@@ -127,7 +128,6 @@ using namespace mozilla::system;
 #include "TouchManager.h"
 #include "MediaDecoder.h"
 #include "MediaPrefs.h"
-#include "mozilla/dom/devicestorage/DeviceStorageStatics.h"
 #include "mozilla/ServoBindings.h"
 #include "mozilla/StaticPresData.h"
 #include "mozilla/dom/WebIDLGlobalNameHash.h"
@@ -158,7 +158,6 @@ nsLayoutStatics::Initialize()
   nsCSSPseudoClasses::AddRefAtoms();
   nsCSSPseudoElements::AddRefAtoms();
   nsCSSKeywords::AddRefTable();
-  nsCSSProps::AddRefAtoms();
   nsCSSProps::AddRefTable();
   nsColorNames::AddRefTable();
   nsGkAtoms::AddRefAtoms();
@@ -231,9 +230,9 @@ nsLayoutStatics::Initialize()
     return rv;
   }
 
-  rv = DOMStorageObserver::Init();
+  rv = StorageObserver::Init();
   if (NS_FAILED(rv)) {
-    NS_ERROR("Could not initialize DOMStorageObserver");
+    NS_ERROR("Could not initialize StorageObserver");
     return rv;
   }
 
@@ -308,13 +307,11 @@ nsLayoutStatics::Initialize()
 
   PromiseDebugging::Init();
 
-  mozilla::dom::devicestorage::DeviceStorageStatics::Initialize();
-
   mozilla::dom::WebCryptoThreadPool::Initialize();
 
-  // NB: We initialize servo in nsAppRunner.cpp, because we need to do it after
-  // creating the hidden DOM window to support some current stylo hacks. We
-  // should move initialization back here once those go away.
+#ifdef MOZ_STYLO
+  Servo_Initialize();
+#endif
 
 #ifndef MOZ_WIDGET_ANDROID
   // On Android, we instantiate it when constructing AndroidBridge.
@@ -330,12 +327,16 @@ nsLayoutStatics::Shutdown()
   // Don't need to shutdown nsWindowMemoryReporter, that will be done by the
   // memory reporter manager.
 
+#ifdef MOZ_STYLO
+  Servo_Shutdown();
+#endif
+
   nsMessageManagerScriptExecutor::Shutdown();
   nsFocusManager::Shutdown();
 #ifdef MOZ_XUL
   nsXULPopupManager::Shutdown();
 #endif
-  DOMStorageObserver::Shutdown();
+  StorageObserver::Shutdown();
   txMozillaXSLTProcessor::Shutdown();
   Attr::Shutdown();
   EventListenerManager::Shutdown();
@@ -428,6 +429,8 @@ nsLayoutStatics::Shutdown()
 
   nsHyphenationManager::Shutdown();
   nsDOMMutationObserver::Shutdown();
+
+  DateTimeFormat::Shutdown();
 
   ContentParent::ShutDown();
 

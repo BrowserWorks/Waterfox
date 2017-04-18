@@ -10,8 +10,14 @@ define(function (require, exports, module) {
   // ReactJS
   const React = require("devtools/client/shared/vendor/react");
   // Dependencies
-  const { createFactories, isGrip } = require("./rep-utils");
+  const {
+    createFactories,
+    isGrip,
+    wrapRender,
+  } = require("./rep-utils");
+
   const { PropRep } = createFactories(require("./prop-rep"));
+  const { MODE } = require("./constants");
   // Shortcuts
   const { span } = React.DOM;
 
@@ -23,7 +29,9 @@ define(function (require, exports, module) {
 
     propTypes: {
       object: React.PropTypes.object.isRequired,
-      mode: React.PropTypes.string,
+      // @TODO Change this to Object.values once it's supported in Node's version of V8
+      mode: React.PropTypes.oneOf(Object.keys(MODE).map(key => MODE[key])),
+      objectLink: React.PropTypes.func,
     },
 
     getTitle: function (object) {
@@ -44,7 +52,7 @@ define(function (require, exports, module) {
 
       return keys.map((key, i) => {
         return PropRep(Object.assign({}, this.props, {
-          mode: "tiny",
+          mode: MODE.TINY,
           name: `<${key}>`,
           object: promiseState[key],
           equal: ": ",
@@ -53,12 +61,12 @@ define(function (require, exports, module) {
       });
     },
 
-    render: function () {
+    render: wrapRender(function () {
       const object = this.props.object;
       const {promiseState} = object;
       let objectLink = this.props.objectLink || span;
 
-      if (this.props.mode == "tiny") {
+      if (this.props.mode === MODE.TINY) {
         let { Rep } = createFactories(require("./rep"));
 
         return (
@@ -92,7 +100,7 @@ define(function (require, exports, module) {
           }, " }")
         )
       );
-    },
+    }),
   });
 
   // Registration

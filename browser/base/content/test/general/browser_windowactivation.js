@@ -24,8 +24,7 @@ function reallyRunTests() {
   gURLBar.focus();
 
   var loadCount = 0;
-  function check()
-  {
+  function check() {
     // wait for both tabs to load
     if (++loadCount != 2) {
       return;
@@ -107,29 +106,26 @@ function reallyRunTests() {
   gBrowser.selectedTab = tab1;
 }
 
-function sendGetBackgroundRequest(ifChanged)
-{
-  browser1.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged: ifChanged });
-  browser2.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged: ifChanged });
+function sendGetBackgroundRequest(ifChanged) {
+  browser1.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged });
+  browser2.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged });
 }
 
 function runOtherWindowTests() {
   otherWindow = window.open("data:text/html,<body>Hi</body>", "", "chrome");
-  waitForFocus(function () {
+  waitForFocus(function() {
     sendGetBackgroundRequest(true);
   }, otherWindow);
 }
 
-function finishTest()
-{
+function finishTest() {
   gBrowser.removeCurrentTab();
   gBrowser.removeCurrentTab();
   otherWindow = null;
   finish();
 }
 
-function childFunction()
-{
+function childFunction() {
   let oldColor = null;
 
   let expectingResponse = false;
@@ -140,9 +136,9 @@ function childFunction()
     ifChanged = message.data.ifChanged;
   });
 
-  content.addEventListener("focus", function () {
+  content.addEventListener("focus", function() {
     sendAsyncMessage("Test:FocusReceived", { });
-  }, false);
+  });
 
   var windowGotActivate = false;
   var windowGotDeactivate = false;
@@ -163,7 +159,7 @@ function childFunction()
       windowGotDeactivate = true;
     });
 
-  content.setInterval(function () {
+  content.setInterval(function() {
     if (!expectingResponse) {
       return;
     }
@@ -177,7 +173,7 @@ function childFunction()
     if (oldColor != color || !ifChanged) {
       expectingResponse = false;
       oldColor = color;
-      sendAsyncMessage("Test:BackgroundColorChanged", { color: color });
+      sendAsyncMessage("Test:BackgroundColorChanged", { color });
     }
   }, 20);
 }

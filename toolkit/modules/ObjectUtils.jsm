@@ -33,7 +33,7 @@ this.ObjectUtils = {
    * @param b (mixed) Object or value to be compared.
    * @return Boolean Whether the objects are deep equal.
    */
-  deepEqual: function(a, b) {
+  deepEqual(a, b) {
     return _deepEqual(a, b);
   },
 
@@ -52,7 +52,7 @@ this.ObjectUtils = {
    *
    * Note that `strict` has no effect in non-DEBUG mode.
    */
-  strict: function(obj) {
+  strict(obj) {
     return _strict(obj);
   }
 };
@@ -71,7 +71,12 @@ function _deepEqual(a, b) {
   // 7.2 If the b value is a Date object, the a value is
   // equivalent if it is also a Date object that refers to the same time.
   }
-  if (instanceOf(a, "Date") && instanceOf(b, "Date")) {
+  let aIsDate = instanceOf(a, "Date");
+  let bIsDate = instanceOf(b, "Date");
+  if (aIsDate || bIsDate) {
+    if (!aIsDate || !bIsDate) {
+      return false;
+    }
     if (isNaN(a.getTime()) && isNaN(b.getTime()))
       return true;
     return a.getTime() === b.getTime();
@@ -79,8 +84,11 @@ function _deepEqual(a, b) {
   // equivalent if it is also a RegExp object with the same source and
   // properties (`global`, `multiline`, `lastIndex`, `ignoreCase`).
   }
-  if (instanceOf(a, "RegExp") && instanceOf(b, "RegExp")) {
-    return a.source === b.source &&
+  let aIsRegExp = instanceOf(a, "RegExp");
+  let bIsRegExp = instanceOf(b, "RegExp");
+  if (aIsRegExp || bIsRegExp) {
+    return aIsRegExp && bIsRegExp &&
+           a.source === b.source &&
            a.global === b.global &&
            a.multiline === b.multiline &&
            a.lastIndex === b.lastIndex &&
@@ -88,7 +96,7 @@ function _deepEqual(a, b) {
   // 7.4 Other pairs that do not both pass typeof value == "object",
   // equivalence is determined by ==.
   }
-  if (typeof a != "object" && typeof b != "object") {
+  if (typeof a != "object" || typeof b != "object") {
     return a == b;
   }
   // 7.5 For all other Object pairs, including Array objects, equivalence is
@@ -117,7 +125,7 @@ function objEquiv(a, b) {
     return false;
   }
   // An identical 'prototype' property.
-  if ((a.prototype || undefined)  != (b.prototype || undefined)) {
+  if ((a.prototype || undefined) != (b.prototype || undefined)) {
     return false;
   }
   // Object.keys may be broken through screwy arguments passing. Converting to
@@ -163,7 +171,7 @@ function _strict(obj) {
   }
 
   return new Proxy(obj, {
-    get: function(target, name) {
+    get(target, name) {
       if (name in obj) {
         return obj[name];
       }

@@ -33,11 +33,13 @@ protected:
     QuitParent();
   }
 
+  virtual void HandleFatalError(const char* aProtocolName, const char* aErrorMsg) const override;
+
   virtual PTestBadActorSubParent*
-  AllocPTestBadActorSubParent();
+  AllocPTestBadActorSubParent() override;
 
   virtual bool
-  DeallocPTestBadActorSubParent(PTestBadActorSubParent* actor) {
+  DeallocPTestBadActorSubParent(PTestBadActorSubParent* actor) override {
     delete actor;
     return true;
   }
@@ -52,7 +54,7 @@ public:
 
 protected:
   virtual void ActorDestroy(ActorDestroyReason why) override {}
-  virtual bool RecvPing();
+  virtual mozilla::ipc::IPCResult RecvPing() override;
 };
 
 class TestBadActorChild
@@ -73,7 +75,7 @@ protected:
     return true;
   }
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvPTestBadActorSubConstructor(PTestBadActorSubChild* actor);
 };
 

@@ -15,7 +15,9 @@ const {
 } = require("./utils/markup");
 const {
   getCurrentZoom,
-  setIgnoreLayoutChanges
+  setIgnoreLayoutChanges,
+  getWindowDimensions,
+  getMaxSurfaceSize,
 } = require("devtools/shared/layout/utils");
 const { stringifyGridFragments } = require("devtools/server/actors/utils/css-grid-utils");
 
@@ -51,6 +53,19 @@ const gCachedGridPattern = new WeakMap();
 const ROW_KEY = {};
 // WeakMap key for the Column grid pattern.
 const COLUMN_KEY = {};
+
+// That's the maximum size we can allocate for the canvas, in bytes. See:
+// http://searchfox.org/mozilla-central/source/gfx/thebes/gfxPrefs.h#401
+// It might become accessible as user preference, but at the moment we have to hard code
+// it (see: https://bugzilla.mozilla.org/show_bug.cgi?id=1282656).
+const MAX_ALLOC_SIZE = 500000000;
+// One pixel on canvas is using 4 bytes (R, G, B and Alpha); we use this to calculate the
+// proper memory allocation below
+const BYTES_PER_PIXEL = 4;
+// The maximum allocable pixels the canvas can have
+const MAX_ALLOC_PIXELS = MAX_ALLOC_SIZE / BYTES_PER_PIXEL;
+// The maximum allocable pixels per side in a square canvas
+const MAX_ALLOC_PIXELS_PER_SIDE = Math.sqrt(MAX_ALLOC_PIXELS)|0;
 
 /**
  * The CssGridHighlighter is the class that overlays a visual grid on top of
@@ -96,6 +111,17 @@ const COLUMN_KEY = {};
 function CssGridHighlighter(highlighterEnv) {
   AutoRefreshHighlighter.call(this, highlighterEnv);
 
+  this.maxCanvasSizePerSide = getMaxSurfaceSize(this.highlighterEnv.window);
+
+  // We cache the previous content's size so we're able to understand when it will
+  // change. The `width` and `height` are expressed in physical pixels in order to react
+  // also at any variation of zoom / pixel ratio.
+  // We initialize with `0` so it will check also at the first `_update()` iteration.
+  this._contentSize = {
+    width: 0,
+    height: 0
+  };
+
   this.markup = new CanvasFrameAnonymousContentHelper(this.highlighterEnv,
     this._buildMarkup.bind(this));
 
@@ -118,11 +144,20 @@ CssGridHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
       }
     });
 
+    let root = createNode(this.win, {
+      parent: container,
+      attributes: {
+        "id": "root",
+        "class": "root"
+      },
+      prefix: this.ID_CLASS_PREFIX
+    });
+
     // We use a <canvas> element so that we can draw an arbitrary number of lines
     // which wouldn't be possible with HTML or SVG without having to insert and remove
     // the whole markup on every update.
     createNode(this.win, {
-      parent: container,
+      parent: root,
       nodeType: "canvas",
       attributes: {
         "id": "canvas",
@@ -135,7 +170,7 @@ CssGridHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     // Build the SVG element
     let svg = createSVGNode(this.win, {
       nodeType: "svg",
-      parent: container,
+      parent: root,
       attributes: {
         "id": "elements",
         "width": "100%",
@@ -360,8 +395,16 @@ CssGridHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
   _update() {
     setIgnoreLayoutChanges(true);
 
+    let root = this.getElement("root");
+    // Hide the root element and force the reflow in order to get the proper window's
+    // dimensions without increasing them.
+    root.setAttribute("style", "display: none");
+    this.currentNode.offsetWidth;
+
+    let { width, height } = getWindowDimensions(this.win);
+
     // Clear the canvas the grid area highlights.
-    this.clearCanvas();
+    this.clearCanvas(width, height);
     this.clearGridAreas();
 
     // Start drawing the grid fragments.
@@ -379,6 +422,9 @@ CssGridHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     }
 
     this._showGrid();
+
+    root.setAttribute("style",
+      `position:absolute; width:${width}px;height:${height}px; overflow:hidden`);
 
     setIgnoreLayoutChanges(false, this.highlighterEnv.window.document.documentElement);
     return true;
@@ -439,15 +485,72 @@ CssGridHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     moveInfobar(container, bounds, this.win);
   },
 
-  clearCanvas() {
+  clearCanvas(width, height) {
     let ratio = parseFloat((this.win.devicePixelRatio || 1).toFixed(2));
-    let width = this.win.innerWidth;
-    let height = this.win.innerHeight;
+
+    height *= ratio;
+    width *= ratio;
+
+    let hasResolutionChanged = false;
+    if (height !== this._contentSize.height || width !== this._contentSize.width) {
+      hasResolutionChanged = true;
+      this._contentSize.width = width;
+      this._contentSize.height = height;
+    }
+
+    let isCanvasClipped = false;
+
+    if (height > this.maxCanvasSizePerSide) {
+      height = this.maxCanvasSizePerSide;
+      isCanvasClipped = true;
+    }
+
+    if (width > this.maxCanvasSizePerSide) {
+      width = this.maxCanvasSizePerSide;
+      isCanvasClipped = true;
+    }
+
+    // `maxCanvasSizePerSide` has the maximum size per side, but we have to consider
+    // also the memory allocation limit.
+    // For example, a 16384x16384 canvas will exceeds the current MAX_ALLOC_PIXELS
+    if (width * height > MAX_ALLOC_PIXELS) {
+      isCanvasClipped = true;
+      // We want to keep more or less the same ratio of the document's size.
+      // Therefore we don't only check if `height` is greater than `width`, but also
+      // that `width` is not greater than MAX_ALLOC_PIXELS_PER_SIDE (otherwise we'll end
+      // up to reduce `height` in favor of `width`, for example).
+      if (height > width && width < MAX_ALLOC_PIXELS_PER_SIDE) {
+        height = (MAX_ALLOC_PIXELS / width) |0;
+      } else if (width > height && height < MAX_ALLOC_PIXELS_PER_SIDE) {
+        width = (MAX_ALLOC_PIXELS / height) |0;
+      } else {
+        // fallback to a square canvas with the maximum pixels per side Available
+        height = width = MAX_ALLOC_PIXELS_PER_SIDE;
+      }
+    }
+
+    // We warn the user that we had to clip the canvas, but only if resolution has
+    // changed since the last time.
+    // This is only a temporary workaround, and the warning message is supposed to be
+    // non-localized.
+    // Bug 1345434 will get rid of this.
+    if (hasResolutionChanged && isCanvasClipped) {
+      // We display the warning in the web console, so the user will be able to see it.
+      // Unfortunately that would also display the source, where if clicked , will ends
+      // in a non-existing document.
+      // It's not ideal, but from an highlighter there is no an easy way to show such
+      // notification elsewhere.
+      this.win.console.warn("The CSS Grid Highlighter could have been clipped, due " +
+                            "the size of the document inspected\n" +
+                            "See https://bugzilla.mozilla.org/show_bug.cgi?id=1343217 " +
+                            "for further information.");
+    }
 
     // Resize the canvas taking the dpr into account so as to have crisp lines.
-    this.canvas.setAttribute("width", width * ratio);
-    this.canvas.setAttribute("height", height * ratio);
-    this.canvas.setAttribute("style", `width:${width}px;height:${height}px`);
+    this.canvas.setAttribute("width", width);
+    this.canvas.setAttribute("height", height);
+    this.canvas.setAttribute("style",
+      `width:${width / ratio}px;height:${height / ratio}px;`);
     this.ctx.scale(ratio, ratio);
 
     this.ctx.clearRect(0, 0, width, height);

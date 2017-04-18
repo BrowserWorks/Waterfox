@@ -63,8 +63,8 @@ onmessage = function(message) {
   r = new FileReader();
   is(r.readyState, FileReader.EMPTY, "correct initial text readyState");
   r.onload = getLoadHandler(testASCIIData, testASCIIData.length, "plain reading");
-  r.addEventListener("load", function() { onloadHasRunText = true }, false);
-  r.addEventListener("loadstart", function() { onloadStartHasRunText = true }, false);
+  r.addEventListener("load", function() { onloadHasRunText = true });
+  r.addEventListener("loadstart", function() { onloadStartHasRunText = true });
   r.readAsText(asciiFile);
   is(r.readyState, FileReader.LOADING, "correct loading text readyState");
   is(onloadHasRunText, false, "text loading must be async");
@@ -75,8 +75,8 @@ onmessage = function(message) {
   var onloadStartHasRunBinary = false;
   r = new FileReader();
   is(r.readyState, FileReader.EMPTY, "correct initial binary readyState");
-  r.addEventListener("load", function() { onloadHasRunBinary = true }, false);
-  r.addEventListener("loadstart", function() { onloadStartHasRunBinary = true }, false);
+  r.addEventListener("load", function() { onloadHasRunBinary = true });
+  r.addEventListener("loadstart", function() { onloadStartHasRunBinary = true });
   r.readAsBinaryString(binaryFile);
   r.onload = getLoadHandler(testBinaryData, testBinaryData.length, "binary reading");
   is(r.readyState, FileReader.LOADING, "correct loading binary readyState");
@@ -88,8 +88,8 @@ onmessage = function(message) {
   var onloadStartHasRunArrayBuffer = false;
   r = new FileReader();
   is(r.readyState, FileReader.EMPTY, "correct initial arrayBuffer readyState");
-  r.addEventListener("load", function() { onloadHasRunArrayBuffer = true }, false);
-  r.addEventListener("loadstart", function() { onloadStartHasRunArrayBuffer = true }, false);
+  r.addEventListener("load", function() { onloadHasRunArrayBuffer = true });
+  r.addEventListener("loadstart", function() { onloadStartHasRunArrayBuffer = true });
   r.readAsArrayBuffer(binaryFile);
   r.onload = getLoadHandlerForArrayBuffer(testBinaryData, testBinaryData.length, "array buffer reading");
   is(r.readyState, FileReader.LOADING, "correct loading arrayBuffer readyState");
@@ -169,13 +169,13 @@ onmessage = function(message) {
                             "to-be-reused reading text")
   var makeAnotherReadListener = function(event) {
     r = event.target;
-    r.removeEventListener("load", makeAnotherReadListener, false);
+    r.removeEventListener("load", makeAnotherReadListener);
     r.onload = getLoadHandler(testASCIIData,
                               testASCIIData.length,
                               "reused reading text");
     r.readAsText(asciiFile);
   };
-  r.addEventListener("load", makeAnotherReadListener, false);
+  r.addEventListener("load", makeAnotherReadListener);
   r.readAsText(asciiFile);
   expectedTestCount += 2;
 
@@ -185,13 +185,13 @@ onmessage = function(message) {
                             "to-be-reused reading binary")
   var makeAnotherReadListener2 = function(event) {
     r = event.target;
-    r.removeEventListener("load", makeAnotherReadListener2, false);
+    r.removeEventListener("load", makeAnotherReadListener2);
     r.onload = getLoadHandler(testBinaryData,
                               testBinaryData.length,
                               "reused reading binary");
     r.readAsBinaryString(binaryFile);
   };
-  r.addEventListener("load", makeAnotherReadListener2, false);
+  r.addEventListener("load", makeAnotherReadListener2);
   r.readAsBinaryString(binaryFile);
   expectedTestCount += 2;
 
@@ -201,13 +201,13 @@ onmessage = function(message) {
                             "to-be-reused reading data url")
   var makeAnotherReadListener3 = function(event) {
     r = event.target;
-    r.removeEventListener("load", makeAnotherReadListener3, false);
+    r.removeEventListener("load", makeAnotherReadListener3);
     r.onload = getLoadHandler(convertToDataURL(testBinaryData),
                               testBinaryData.length,
                               "reused reading data url");
     r.readAsDataURL(binaryFile);
   };
-  r.addEventListener("load", makeAnotherReadListener3, false);
+  r.addEventListener("load", makeAnotherReadListener3);
   r.readAsDataURL(binaryFile);
   expectedTestCount += 2;
 
@@ -217,13 +217,13 @@ onmessage = function(message) {
                                           "to-be-reused reading arrayBuffer")
   var makeAnotherReadListener4 = function(event) {
     r = event.target;
-    r.removeEventListener("load", makeAnotherReadListener4, false);
+    r.removeEventListener("load", makeAnotherReadListener4);
     r.onload = getLoadHandlerForArrayBuffer(testBinaryData,
                                             testBinaryData.length,
                                             "reused reading arrayBuffer");
     r.readAsArrayBuffer(binaryFile);
   };
-  r.addEventListener("load", makeAnotherReadListener4, false);
+  r.addEventListener("load", makeAnotherReadListener4);
   r.readAsArrayBuffer(binaryFile);
   expectedTestCount += 2;
 
@@ -235,13 +235,13 @@ onmessage = function(message) {
                                           "to-be-reused reading arrayBuffer")
   var makeAnotherReadListener5 = function(event) {
     r = event.target;
-    r.removeEventListener("load", makeAnotherReadListener5, false);
+    r.removeEventListener("load", makeAnotherReadListener5);
     r.onload = getLoadHandler(testBinaryData,
                               testBinaryData.length,
                               "reused reading binary string");
     r.readAsBinaryString(binaryFile);
   };
-  r.addEventListener("load", makeAnotherReadListener5, false);
+  r.addEventListener("load", makeAnotherReadListener5);
   r.readAsArrayBuffer(binaryFile);
   expectedTestCount += 2;
 
@@ -300,35 +300,37 @@ onmessage = function(message) {
   } catch(e) {
     abortThrew = true;
   }
-  is(abortThrew, true, "abort() must throw if not loading");
+  is(abortThrew, false, "abort() never throws");
   is(abortHasRun, false, "abort() is a no-op unless loading");
   r.readAsText(asciiFile);
   r.abort();
-  is(abortHasRun, true, "abort should fire sync");
+  is(abortHasRun, true, "1 abort should fire sync");
   is(loadEndHasRun, true, "loadend should fire sync");
 
   // Test calling readAsX to cause abort()
   var reuseAbortHasRun = false;
   r = new FileReader();
-  r.onabort = function (event) {
-    is(reuseAbortHasRun, false, "abort should only fire once");
-    reuseAbortHasRun = true;
-    is(event.target.readyState, FileReader.DONE, "should be DONE while firing onabort");
-    is(event.target.error.name, "AbortError", "error set to AbortError for aborted reads");
-    is(event.target.result, null, "file data should be null on aborted reads");
-  }
-  r.onload = function() { ok(false, "load should not fire for aborted reads") };
+  r.onabort = function (event) { reuseAbortHasRun = true; }
+  r.onload = function() { ok(true, "load should fire for aborted reads") };
   var abortThrew = false;
   try {
     r.abort();
   } catch(e) {
     abortThrew = true;
   }
-  is(abortThrew, true, "abort() must throw if not loading");
+  is(abortThrew, false, "abort() never throws");
   is(reuseAbortHasRun, false, "abort() is a no-op unless loading");
   r.readAsText(asciiFile);
+
+  var readThrew = false;
+  try {
   r.readAsText(asciiFile);
-  is(reuseAbortHasRun, true, "abort should fire sync");
+  } catch(e) {
+    readThrew = true;
+  }
+
+  is(readThrew, true, "readAsText() must throw if loading");
+  is(reuseAbortHasRun, false, "2 abort should fire sync");
   r.onload = getLoadHandler(testASCIIData, testASCIIData.length, "reuse-as-abort reading");
   expectedTestCount++;
 

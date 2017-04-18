@@ -63,7 +63,7 @@ function initExceptionDialog() {
     if (args[0].location) {
       // We were pre-seeded with a location.
       document.getElementById("locationTextBox").value = args[0].location;
-      document.getElementById('checkCertButton').disabled = false;
+      document.getElementById("checkCertButton").disabled = false;
 
       if (args[0].sslStatus) {
         gSSLStatus = args[0].sslStatus;
@@ -106,7 +106,7 @@ function checkCert() {
   var req = new XMLHttpRequest();
   try {
     if (uri) {
-      req.open('GET', uri.prePath, false);
+      req.open("GET", uri.prePath, false);
       req.channel.notificationCallbacks = new badCertListener();
       req.send(null);
     }
@@ -134,6 +134,10 @@ function checkCert() {
 /**
  * Build and return a URI, based on the information supplied in the
  * Certificate Location fields
+ *
+ * @returns {nsIURI}
+ *          URI constructed from the information supplied on success, null
+ *          otherwise.
  */
 function getURI() {
   // Use fixup service instead of just ioservice's newURI since it's quite
@@ -176,7 +180,7 @@ function resetDialog() {
  * Called by input textboxes to manage UI state
  */
 function handleTextChange() {
-  var checkCertButton = document.getElementById('checkCertButton');
+  var checkCertButton = document.getElementById("checkCertButton");
   checkCertButton.disabled = !(document.getElementById("locationTextBox").value);
   if (gNeedReset) {
     gNeedReset = false;
@@ -361,7 +365,7 @@ function addException() {
 }
 
 /**
- * Returns true if this dialog is in private browsing mode.
+ * @returns {Boolean} Whether this dialog is in private browsing mode.
  */
 function inPrivateBrowsingMode() {
   return PrivateBrowsingUtils.isWindowPrivate(window);

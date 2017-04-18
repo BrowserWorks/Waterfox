@@ -22,26 +22,62 @@ interface nsIGroupedSHistory : nsISupports
   [infallible] readonly attribute unsigned long count;
 
   /**
+   * The currently active frameloader controlled by this nsIGroupedSHistory.
+   */
+  readonly attribute nsIFrameLoader activeFrameLoader;
+
+  /**
    * Remove all partial histories after currently active one (if any) and then
    * append the given partial session history to the end of the list.
    */
-  void appendPartialSessionHistory(in nsIPartialSHistory aPartialHistory);
+  void appendPartialSHistory(in nsIPartialSHistory aPartialHistory);
 
   /**
    * Notify the grouped session history that the active partial session history
-   * has been modified. All partial session histories after the active one
-   * will be removed and destroy.
+   * has been modified.
+   *
+   * @param aPartialHistory The partial history which was updated
+   * @param aTruncate If this parameter is true, all partial session histories
+   *                  after this one will be removed.
    */
-  void onPartialSessionHistoryChange(in nsIPartialSHistory aPartialHistory);
+  void handleSHistoryUpdate(in nsIPartialSHistory aPartialHistory, in boolean aTruncate);
 
   /**
    * Find the proper partial session history and navigate to the entry
    * corresponding to the given global index. Note it doesn't swap frameloaders,
    * but rather return the target loader for the caller to swap.
    *
-   * @param aGlobalIndex        The global index to navigate to.
-   * @param aTargetLoaderToSwap The owner frameloader of the to-be-navigate
-   *                            partial session history.
+   * This function may throw NS_ERROR_NOT_AVAILABLE if the frameloader to swap
+   * to is dead.
+   *
+   * @param  aGlobalIndex
+   *         The global index to navigate to.
+   * @return The frameloader which needs to be swapped in, or null if no
+   *         frameloader needs to be swapped.
    */
-  void gotoIndex(in unsigned long aGlobalIndex, out nsIFrameLoader aTargetLoaderToSwap);
+  nsIFrameLoader gotoIndex(in unsigned long aGlobalIndex);
+
+  /**
+   * Close the FrameLoaderOwners of the inactive PartialSHistories in this GlobalSHistory.
+   * This does not remove the PartialSHistories from the GroupedSHistory.
+   */
+  void closeInactiveFrameLoaderOwners();
+
+  /**
+   * Add a partialSHistory as a "prerendering" partialSHistory. This
+   * partialSHistory's tab will have its lifetime managed by the
+   * GroupedSHistory, and will be closed when closeInactiveFrameLoaderOwners is
+   * called, or whenever a SHistory update is received.
+   */
+  void addPrerenderingPartialSHistory(in nsIPartialSHistory aPrerendering, in long aId);
+
+  /**
+   * Switch to the prerendering partialSHistory identified by aId, appending it after the current partialSHistory.
+   */
+  [implicit_jscontext] nsISupports activatePrerendering(in long aId);
+
+  /**
+   * Cancel the prerendering with the given ID.
+   */
+  void cancelPrerendering(in long aId);
 };

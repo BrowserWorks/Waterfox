@@ -72,7 +72,7 @@ BrowserView.prototype = {
 
     let tileContainer = document.getElementById("tile_container");
     tileContainer.addEventListener("mousedown", onMouseDown, true);
-    tileContainer.addEventListener("mouseup",   onMouseUp,   true);
+    tileContainer.addEventListener("mouseup", onMouseUp, true);
     tileContainer.addEventListener("mousemove", onMouseMove, true);
     this._tileContainer = tileContainer;
 
@@ -109,7 +109,6 @@ BrowserView.prototype = {
 
   scrollboxToViewportRect: function scrollboxToViewportRect(rect, clip) {
     let leftbar  = this._leftbar.getBoundingClientRect();
-    let rightbar = this._rightbar.getBoundingClientRect();
     let topbar   = this._topbar.getBoundingClientRect();
 
     let xtrans = -leftbar.width;
@@ -160,7 +159,7 @@ BrowserView.prototype = {
     let tileContainer = document.getElementById("tile_container");
     tileContainer.appendChild(canvas);
 
-    dump('++ ' + tile.toString() + endl);
+    dump("++ " + tile.toString() + endl);
   },
 
   removeTile: function removeTile(tile) {
@@ -169,7 +168,7 @@ BrowserView.prototype = {
     let tileContainer = document.getElementById("tile_container");
     tileContainer.removeChild(canvas);
 
-    dump('-- ' + tile.toString() + endl);
+    dump("-- " + tile.toString() + endl);
   },
 
   scrollBy: function scrollBy(dx, dy) {
@@ -209,17 +208,18 @@ BrowserView.prototype = {
       currentBrowser.mPanY = ws._viewingRect.y;
 
       // stop monitor paint events for this browser
-      currentBrowser.removeEventListener("MozAfterPaint", this.handleMozAfterPaint, false);
+      currentBrowser.removeEventListener("MozAfterPaint", this.handleMozAfterPaint);
       currentBrowser.setAttribute("type", "content");
       currentBrowser.docShell.isOffScreenBrowser = false;
     }
 
-    browser.setAttribute("type", "content-primary");
+    browser.setAttribute("type", "content");
+    browser.setAttribute("primary", "true");
     if (!skipZoom)
       browser.docShell.isOffScreenBrowser = true;
 
     // start monitoring paint events for this browser
-    browser.addEventListener("MozAfterPaint", this.handleMozAfterPaint, false);
+    browser.addEventListener("MozAfterPaint", this.handleMozAfterPaint);
 
     this._browser = browser;
 

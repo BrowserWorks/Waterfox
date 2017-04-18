@@ -39,6 +39,7 @@
 #include "vm/Interpreter.h"
 #include "vm/PIC.h"
 #include "vm/SelfHosting.h"
+#include "vm/SharedMem.h"
 #include "vm/TypedArrayCommon.h"
 #include "vm/WrapperObject.h"
 
@@ -361,7 +362,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
             return nullptr;
 
         const Class* clasp = TypedArrayObject::protoClassForType(ArrayTypeID());
-        return global->createBlankPrototypeInheriting(cx, clasp, typedArrayProto);
+        return GlobalObject::createBlankPrototypeInheriting(cx, global, clasp, typedArrayProto);
     }
 
     static JSObject*
@@ -823,7 +824,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
              */
             JSObject* wrapped = CheckedUnwrap(bufobj);
             if (!wrapped) {
-                JS_ReportErrorASCII(cx, "Permission denied to access object");
+                ReportAccessDenied(cx);
                 return nullptr;
             }
 
@@ -1209,7 +1210,7 @@ TypedArrayObjectTemplate<T>::fromTypedArray(JSContext* cx, HandleObject other, b
     } else {
         RootedObject unwrapped(cx, CheckedUnwrap(other));
         if (!unwrapped) {
-            JS_ReportErrorASCII(cx, "Permission denied to access object");
+            ReportAccessDenied(cx);
             return nullptr;
         }
 
@@ -1523,7 +1524,7 @@ TypedArrayObject::protoFunctions[] = {
     JS_SELF_HOSTED_FN("forEach", "TypedArrayForEach", 1, 0),
     JS_SELF_HOSTED_FN("indexOf", "TypedArrayIndexOf", 2, 0),
     JS_SELF_HOSTED_FN("join", "TypedArrayJoin", 1, 0),
-    JS_SELF_HOSTED_FN("lastIndexOf", "TypedArrayLastIndexOf", 2, 0),
+    JS_SELF_HOSTED_FN("lastIndexOf", "TypedArrayLastIndexOf", 1, 0),
     JS_SELF_HOSTED_FN("map", "TypedArrayMap", 1, 0),
     JS_SELF_HOSTED_FN("reduce", "TypedArrayReduce", 1, 0),
     JS_SELF_HOSTED_FN("reduceRight", "TypedArrayReduceRight", 1, 0),
@@ -1556,7 +1557,7 @@ TypedArrayObject::staticProperties[] = {
 
 static const ClassSpec
 TypedArrayObjectSharedTypedArrayPrototypeClassSpec = {
-    GenericCreateConstructor<TypedArrayConstructor, 3, gc::AllocKind::FUNCTION>,
+    GenericCreateConstructor<TypedArrayConstructor, 0, gc::AllocKind::FUNCTION>,
     GenericCreatePrototype,
     TypedArrayObject::staticFunctions,
     TypedArrayObject::staticProperties,
@@ -1695,7 +1696,7 @@ DataViewNewObjectKind(JSContext* cx, uint32_t byteLength, JSObject* proto)
 
 DataViewObject*
 DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
-                       Handle<ArrayBufferObject*> arrayBuffer, JSObject* protoArg)
+                       Handle<ArrayBufferObjectMaybeShared*> arrayBuffer, JSObject* protoArg)
 {
     if (arrayBuffer->isDetached()) {
         JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
@@ -1705,7 +1706,6 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
     MOZ_ASSERT(byteOffset <= INT32_MAX);
     MOZ_ASSERT(byteLength <= INT32_MAX);
     MOZ_ASSERT(byteOffset + byteLength < UINT32_MAX);
-    MOZ_ASSERT(!arrayBuffer || !arrayBuffer->is<SharedArrayBufferObject>());
 
     RootedObject proto(cx, protoArg);
     RootedObject obj(cx);
@@ -1736,36 +1736,62 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
     MOZ_ASSERT(byteOffset + byteLength <= arrayBuffer->byteLength());
 
     DataViewObject& dvobj = obj->as<DataViewObject>();
+
+    // The isSharedMemory property is invariant.  Self-hosting code that sets
+    // BUFFER_SLOT or the private slot (if it does) must maintain it by always
+    // setting those to reference shared memory.
+    bool isSharedMemory = IsSharedArrayBuffer(arrayBuffer.get());
+    if (isSharedMemory)
+        dvobj.setIsSharedMemory();
+
     dvobj.setFixedSlot(TypedArrayObject::BYTEOFFSET_SLOT, Int32Value(byteOffset));
     dvobj.setFixedSlot(TypedArrayObject::LENGTH_SLOT, Int32Value(byteLength));
     dvobj.setFixedSlot(TypedArrayObject::BUFFER_SLOT, ObjectValue(*arrayBuffer));
-    dvobj.initPrivate(arrayBuffer->dataPointer() + byteOffset);
+
+    SharedMem<uint8_t*> ptr = arrayBuffer->dataPointerEither();
+    // A pointer to raw shared memory is exposed through the private slot.  This
+    // is safe so long as getPrivate() is not used willy-nilly.  It is wrapped in
+    // other accessors in TypedArrayObject.h.
+    dvobj.initPrivate(ptr.unwrap(/*safe - see above*/) + byteOffset);
 
     // Include a barrier if the data view's data pointer is in the nursery, as
     // is done for typed arrays.
-    if (!IsInsideNursery(obj) && cx->runtime()->gc.nursery.isInside(arrayBuffer->dataPointer()))
-        cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+    if (!IsInsideNursery(obj) && cx->runtime()->gc.nursery.isInside(ptr)) {
+        // Shared buffer data should never be nursery-allocated, so we
+        // need to fail here if isSharedMemory.  However, mmap() can
+        // place a SharedArrayRawBuffer up against the bottom end of a
+        // nursery chunk, and a zero-length buffer will erroneously be
+        // perceived as being inside the nursery; sidestep that.
+        if (isSharedMemory) {
+            MOZ_ASSERT(arrayBuffer->byteLength() == 0 &&
+                       (uintptr_t(ptr.unwrapValue()) & gc::ChunkMask) == 0);
+        } else {
+            cx->runtime()->gc.storeBuffer.putWholeCell(obj);
+        }
+    }
 
     // Verify that the private slot is at the expected place
     MOZ_ASSERT(dvobj.numFixedSlots() == TypedArrayObject::DATA_SLOT);
 
-    if (!arrayBuffer->addView(cx, &dvobj))
-        return nullptr;
+    if (arrayBuffer->is<ArrayBufferObject>()) {
+        if (!arrayBuffer->as<ArrayBufferObject>().addView(cx, &dvobj))
+            return nullptr;
+    }
 
     return &dvobj;
 }
 
 bool
-DataViewObject::getAndCheckConstructorArgs(JSContext* cx, JSObject* bufobj, const CallArgs& args,
+DataViewObject::getAndCheckConstructorArgs(JSContext* cx, HandleObject bufobj, const CallArgs& args,
                                            uint32_t* byteOffsetPtr, uint32_t* byteLengthPtr)
 {
-    if (!IsArrayBuffer(bufobj)) {
+    if (!IsArrayBufferMaybeShared(bufobj)) {
         JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_NOT_EXPECTED_TYPE,
                                   "DataView", "ArrayBuffer", bufobj->getClass()->name);
         return false;
     }
 
-    Rooted<ArrayBufferObject*> buffer(cx, &AsArrayBuffer(bufobj));
+    Rooted<ArrayBufferObjectMaybeShared*> buffer(cx, &AsArrayBufferMaybeShared(bufobj));
     uint32_t byteOffset = 0;
     uint32_t byteLength = buffer->byteLength();
 
@@ -1838,7 +1864,7 @@ DataViewObject::constructSameCompartment(JSContext* cx, HandleObject bufobj, con
     if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
         return false;
 
-    Rooted<ArrayBufferObject*> buffer(cx, &AsArrayBuffer(bufobj));
+    Rooted<ArrayBufferObjectMaybeShared*> buffer(cx, &AsArrayBufferMaybeShared(bufobj));
     JSObject* obj = DataViewObject::create(cx, byteOffset, byteLength, buffer, proto);
     if (!obj)
         return false;
@@ -1871,9 +1897,9 @@ DataViewObject::constructWrapped(JSContext* cx, HandleObject bufobj, const CallA
     MOZ_ASSERT(args.isConstructing());
     MOZ_ASSERT(bufobj->is<WrapperObject>());
 
-    JSObject* unwrapped = CheckedUnwrap(bufobj);
+    RootedObject unwrapped(cx, CheckedUnwrap(bufobj));
     if (!unwrapped) {
-        JS_ReportErrorASCII(cx, "Permission denied to access object");
+        ReportAccessDenied(cx);
         return false;
     }
 
@@ -1891,20 +1917,32 @@ DataViewObject::constructWrapped(JSContext* cx, HandleObject bufobj, const CallA
 
     Rooted<GlobalObject*> global(cx, cx->compartment()->maybeGlobal());
     if (!proto) {
-        proto = global->getOrCreateDataViewPrototype(cx);
+        proto = GlobalObject::getOrCreateDataViewPrototype(cx, global);
         if (!proto)
             return false;
     }
 
-    FixedInvokeArgs<3> args2(cx);
+    RootedObject dv(cx);
+    {
+        JSAutoCompartment ac(cx, unwrapped);
 
-    args2[0].set(PrivateUint32Value(byteOffset));
-    args2[1].set(PrivateUint32Value(byteLength));
-    args2[2].setObject(*proto);
+        Rooted<ArrayBufferObjectMaybeShared*> buffer(cx);
+        buffer = &unwrapped->as<ArrayBufferObjectMaybeShared>();
 
-    RootedValue fval(cx, global->createDataViewForThis());
-    RootedValue thisv(cx, ObjectValue(*bufobj));
-    return js::Call(cx, fval, thisv, args2, args.rval());
+        RootedObject wrappedProto(cx, proto);
+        if (!cx->compartment()->wrap(cx, &wrappedProto))
+            return false;
+
+        dv = DataViewObject::create(cx, byteOffset, byteLength, buffer, wrappedProto);
+        if (!dv)
+            return false;
+    }
+
+    if (!cx->compartment()->wrap(cx, &dv))
+        return false;
+
+    args.rval().setObject(*dv);
+    return true;
 }
 
 bool
@@ -1925,20 +1963,20 @@ DataViewObject::class_constructor(JSContext* cx, unsigned argc, Value* vp)
 }
 
 template <typename NativeType>
-/* static */ uint8_t*
-DataViewObject::getDataPointer(JSContext* cx, Handle<DataViewObject*> obj, double offset)
+/* static */ SharedMem<uint8_t*>
+DataViewObject::getDataPointer(JSContext* cx, Handle<DataViewObject*> obj, uint64_t offset,
+                               bool* isSharedMemory)
 {
-    MOZ_ASSERT(offset >= 0);
-
     const size_t TypeSize = sizeof(NativeType);
     if (offset > UINT32_MAX - TypeSize || offset + TypeSize > obj->byteLength()) {
         JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_ARG_INDEX_OUT_OF_RANGE,
                                   "1");
-        return nullptr;
+        return SharedMem<uint8_t*>::unshared(nullptr);
     }
 
     MOZ_ASSERT(offset < UINT32_MAX);
-    return static_cast<uint8_t*>(obj->dataPointer()) + uint32_t(offset);
+    *isSharedMemory = obj->isSharedMemory();
+    return obj->dataPointerEither().cast<uint8_t*>() + uint32_t(offset);
 }
 
 static inline bool
@@ -1990,55 +2028,48 @@ template <> struct DataToRepType<uint32_t> { typedef uint32_t result; };
 template <> struct DataToRepType<float>    { typedef uint32_t result; };
 template <> struct DataToRepType<double>   { typedef uint64_t result; };
 
-template <typename DataType>
+static inline void
+Memcpy(uint8_t* dest, uint8_t* src, size_t nbytes)
+{
+    memcpy(dest, src, nbytes);
+}
+
+static inline void
+Memcpy(uint8_t* dest, SharedMem<uint8_t*> src, size_t nbytes)
+{
+    jit::AtomicOperations::memcpySafeWhenRacy(dest, src, nbytes);
+}
+
+static inline void
+Memcpy(SharedMem<uint8_t*> dest, uint8_t* src, size_t nbytes)
+{
+    jit::AtomicOperations::memcpySafeWhenRacy(dest, src, nbytes);
+}
+
+template <typename DataType, typename BufferPtrType>
 struct DataViewIO
 {
     typedef typename DataToRepType<DataType>::result ReadWriteType;
 
-    static void fromBuffer(DataType* dest, const uint8_t* unalignedBuffer, bool wantSwap)
+    static void fromBuffer(DataType* dest, BufferPtrType unalignedBuffer, bool wantSwap)
     {
         MOZ_ASSERT((reinterpret_cast<uintptr_t>(dest) & (Min<size_t>(MOZ_ALIGNOF(void*), sizeof(DataType)) - 1)) == 0);
-        memcpy((void*) dest, unalignedBuffer, sizeof(ReadWriteType));
+        Memcpy((uint8_t*) dest, unalignedBuffer, sizeof(ReadWriteType));
         if (wantSwap) {
             ReadWriteType* rwDest = reinterpret_cast<ReadWriteType*>(dest);
             *rwDest = swapBytes(*rwDest);
         }
     }
 
-    static void toBuffer(uint8_t* unalignedBuffer, const DataType* src, bool wantSwap)
+    static void toBuffer(BufferPtrType unalignedBuffer, const DataType* src, bool wantSwap)
     {
         MOZ_ASSERT((reinterpret_cast<uintptr_t>(src) & (Min<size_t>(MOZ_ALIGNOF(void*), sizeof(DataType)) - 1)) == 0);
         ReadWriteType temp = *reinterpret_cast<const ReadWriteType*>(src);
         if (wantSwap)
             temp = swapBytes(temp);
-        memcpy(unalignedBuffer, (void*) &temp, sizeof(ReadWriteType));
+        Memcpy(unalignedBuffer, (uint8_t*) &temp, sizeof(ReadWriteType));
     }
 };
-
-static bool
-ToIndex(JSContext* cx, HandleValue v, double* index)
-{
-    if (v.isUndefined()) {
-        *index = 0.0;
-        return true;
-    }
-
-    double integerIndex;
-    if (!ToInteger(cx, v, &integerIndex))
-        return false;
-
-    // Inlined version of ToLength.
-    // 1. Already an integer
-    // 2. Step eliminates < 0, +0 == -0 with SameValueZero
-    // 3/4. Limit to <= 2^53-1, so everything above should fail.
-    if (integerIndex < 0 || integerIndex > 9007199254740991) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
-        return false;
-    }
-
-    *index = integerIndex;
-    return true;
-}
 
 template<typename NativeType>
 /* static */ bool
@@ -2049,7 +2080,7 @@ DataViewObject::read(JSContext* cx, Handle<DataViewObject*> obj,
     // Step 3. unnecessary assert
 
     // Step 4.
-    double getIndex;
+    uint64_t getIndex;
     if (!ToIndex(cx, args.get(0), &getIndex))
         return false;
 
@@ -2057,18 +2088,26 @@ DataViewObject::read(JSContext* cx, Handle<DataViewObject*> obj,
     bool isLittleEndian = args.length() >= 2 && ToBoolean(args[1]);
 
     // Steps 6-7.
-    if (obj->arrayBuffer().isDetached()) {
+    if (obj->arrayBufferEither().isDetached()) {
         JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
         return false;
     }
 
     // Steps 8-12.
-    uint8_t* data = DataViewObject::getDataPointer<NativeType>(cx, obj, getIndex);
+    bool isSharedMemory;
+    SharedMem<uint8_t*> data = DataViewObject::getDataPointer<NativeType>(cx, obj, getIndex,
+                                                                          &isSharedMemory);
     if (!data)
         return false;
 
     // Step 13.
-    DataViewIO<NativeType>::fromBuffer(val, data, needToSwapBytes(isLittleEndian));
+    if (isSharedMemory) {
+        DataViewIO<NativeType, SharedMem<uint8_t*>>::fromBuffer(val, data,
+                                                                needToSwapBytes(isLittleEndian));
+    } else {
+        DataViewIO<NativeType, uint8_t*>::fromBuffer(val, data.unwrapUnshared(),
+                                                     needToSwapBytes(isLittleEndian));
+    }
     return true;
 }
 
@@ -2113,7 +2152,7 @@ DataViewObject::write(JSContext* cx, Handle<DataViewObject*> obj,
     // Step 3. unnecessary assert
 
     // Step 4.
-    double getIndex;
+    uint64_t getIndex;
     if (!ToIndex(cx, args.get(0), &getIndex))
         return false;
 
@@ -2132,18 +2171,26 @@ DataViewObject::write(JSContext* cx, Handle<DataViewObject*> obj,
     bool isLittleEndian = args.length() >= 3 && ToBoolean(args[2]);
 
     // Steps 7-8.
-    if (obj->arrayBuffer().isDetached()) {
+    if (obj->arrayBufferEither().isDetached()) {
         JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_DETACHED);
         return false;
     }
 
     // Steps 9-13.
-    uint8_t* data = DataViewObject::getDataPointer<NativeType>(cx, obj, getIndex);
+    bool isSharedMemory;
+    SharedMem<uint8_t*> data = DataViewObject::getDataPointer<NativeType>(cx, obj, getIndex,
+                                                                          &isSharedMemory);
     if (!data)
         return false;
 
     // Step 14.
-    DataViewIO<NativeType>::toBuffer(data, &value, needToSwapBytes(isLittleEndian));
+    if (isSharedMemory) {
+        DataViewIO<NativeType, SharedMem<uint8_t*>>::toBuffer(data, &value,
+                                                              needToSwapBytes(isLittleEndian));
+    } else {
+        DataViewIO<NativeType, uint8_t*>::toBuffer(data.unwrapUnshared(), &value,
+                                                   needToSwapBytes(isLittleEndian));
+    }
     return true;
 }
 
@@ -2734,30 +2781,6 @@ const Class TypedArrayObject::classes[Scalar::MaxTypedArrayViewType] = {
     IMPL_TYPED_ARRAY_CLASS(Uint8Clamped)
 };
 
-#define IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(_type) \
-{ \
-    DELEGATED_CLASSSPEC(TypedArrayObject::classes[Scalar::Type::_type].spec), \
-    nullptr, \
-    nullptr, \
-    nullptr, \
-    nullptr, \
-    nullptr, \
-    nullptr, \
-    JSProto_TypedArray | ClassSpec::IsDelegated \
-}
-
-static const ClassSpec TypedArrayObjectProtoClassSpecs[Scalar::MaxTypedArrayViewType] = {
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Int8),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Uint8),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Int16),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Uint16),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Int32),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Uint32),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Float32),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Float64),
-    IMPL_TYPED_ARRAY_PROTO_CLASS_SPEC(Uint8Clamped)
-};
-
 // The various typed array prototypes are supposed to 1) be normal objects,
 // 2) stringify to "[object <name of constructor>]", and 3) (Gecko-specific)
 // be xrayable.  The first and second requirements mandate (in the absence of
@@ -2777,7 +2800,7 @@ static const ClassSpec TypedArrayObjectProtoClassSpecs[Scalar::MaxTypedArrayView
     #_type "ArrayPrototype", \
     JSCLASS_HAS_CACHED_PROTO(JSProto_##_type##Array), \
     JS_NULL_CLASS_OPS, \
-    &TypedArrayObjectProtoClassSpecs[Scalar::Type::_type] \
+    &TypedArrayObjectClassSpecs[Scalar::Type::_type] \
 }
 
 const Class TypedArrayObject::protoClasses[Scalar::MaxTypedArrayViewType] = {
@@ -2869,7 +2892,7 @@ bool
 DataViewObject::defineGetter(JSContext* cx, PropertyName* name, HandleNativeObject proto)
 {
     RootedId id(cx, NameToId(name));
-    RootedAtom atom(cx, IdToFunctionName(cx, id, "get"));
+    RootedAtom atom(cx, IdToFunctionName(cx, id, FunctionPrefixKind::Get));
     if (!atom)
         return false;
     unsigned attrs = JSPROP_SHARED | JSPROP_GETTER;
@@ -2891,12 +2914,13 @@ DataViewObject::initClass(JSContext* cx)
     if (global->isStandardClassResolved(JSProto_DataView))
         return true;
 
-    RootedNativeObject proto(cx, global->createBlankPrototype(cx, &DataViewObject::protoClass));
+    RootedNativeObject proto(cx, GlobalObject::createBlankPrototype(cx, global,
+                                                                    &DataViewObject::protoClass));
     if (!proto)
         return false;
 
-    RootedFunction ctor(cx, global->createConstructor(cx, DataViewObject::class_constructor,
-                                                      cx->names().DataView, 3));
+    RootedFunction ctor(cx, GlobalObject::createConstructor(cx, DataViewObject::class_constructor,
+                                                            cx->names().DataView, 3));
     if (!ctor)
         return false;
 
@@ -2918,22 +2942,7 @@ DataViewObject::initClass(JSContext* cx)
     if (!DefineToStringTag(cx, proto, cx->names().DataView))
         return false;
 
-    /*
-     * Create a helper function to implement the craziness of
-     * |new DataView(new otherWindow.ArrayBuffer())|, and install it in the
-     * global for use by the DataViewObject constructor.
-     */
-    RootedFunction fun(cx, NewNativeFunction(cx, ArrayBufferObject::createDataViewForThis,
-                                             0, nullptr));
-    if (!fun)
-        return false;
-
-    if (!GlobalObject::initBuiltinConstructor(cx, global, JSProto_DataView, ctor, proto))
-        return false;
-
-    global->setCreateDataViewForThis(fun);
-
-    return true;
+    return GlobalObject::initBuiltinConstructor(cx, global, JSProto_DataView, ctor, proto);
 }
 
 void
@@ -3275,12 +3284,14 @@ JS_GetDataViewByteOffset(JSObject* obj)
 }
 
 JS_FRIEND_API(void*)
-JS_GetDataViewData(JSObject* obj, const JS::AutoCheckCannotGC&)
+JS_GetDataViewData(JSObject* obj, bool* isSharedMemory, const JS::AutoCheckCannotGC&)
 {
     obj = CheckedUnwrap(obj);
     if (!obj)
         return nullptr;
-    return obj->as<DataViewObject>().dataPointer();
+    DataViewObject& dv = obj->as<DataViewObject>();
+    *isSharedMemory = dv.isSharedMemory();
+    return dv.dataPointerEither().unwrap(/*safe - caller sees isSharedMemory*/);
 }
 
 JS_FRIEND_API(uint32_t)
@@ -3293,7 +3304,7 @@ JS_GetDataViewByteLength(JSObject* obj)
 }
 
 JS_FRIEND_API(JSObject*)
-JS_NewDataView(JSContext* cx, HandleObject arrayBuffer, uint32_t byteOffset, int32_t byteLength)
+JS_NewDataView(JSContext* cx, HandleObject buffer, uint32_t byteOffset, int32_t byteLength)
 {
     RootedObject constructor(cx);
     JSProtoKey key = JSCLASS_CACHED_PROTO_KEY(&DataViewObject::class_);
@@ -3302,7 +3313,7 @@ JS_NewDataView(JSContext* cx, HandleObject arrayBuffer, uint32_t byteOffset, int
 
     FixedConstructArgs<3> cargs(cx);
 
-    cargs[0].setObject(*arrayBuffer);
+    cargs[0].setObject(*buffer);
     cargs[1].setNumber(byteOffset);
     cargs[2].setInt32(byteLength);
 

@@ -1,6 +1,6 @@
 "use strict";
 
-let AutoMigrateBackstage = Cu.import("resource:///modules/AutoMigrate.jsm"); /* globals AutoMigrate */
+Cu.import("resource:///modules/AutoMigrate.jsm", this);
 
 let gShimmedMigratorKeyPicker = null;
 let gShimmedMigrator = null;
@@ -11,6 +11,8 @@ const kUsecPerMin = 60 * 1000000;
 // we get in trouble because the object itself is frozen, and Proxies can't
 // return a different value to an object when directly proxying a frozen
 // object.
+let AutoMigrateBackstage = Cu.import("resource:///modules/AutoMigrate.jsm", {});
+
 AutoMigrateBackstage.MigrationUtils = new Proxy({}, {
   get(target, name) {
     if (name == "getMigratorKeyForDefaultBrowser" && gShimmedMigratorKeyPicker) {
@@ -29,8 +31,7 @@ do_register_cleanup(function() {
 
 // This should be replaced by using History.fetch with a fetchVisits option,
 // once that becomes available
-function* visitsForURL(url)
-{
+function* visitsForURL(url) {
   let visitCount = 0;
   let db = yield PlacesUtils.promiseDBConnection();
   visitCount = yield db.execute(
@@ -247,15 +248,12 @@ add_task(function* checkUndoRemoval() {
 
   // Insert 2 history visits
   let now_uSec = Date.now() * 1000;
-  let visitedURI = Services.io.newURI("http://www.example.com/", null, null);
+  let visitedURI = Services.io.newURI("http://www.example.com/");
   let frecencyUpdatePromise = new Promise(resolve => {
-    let expectedChanges = 2;
     let observer = {
-      onFrecencyChanged: function() {
-        if (!--expectedChanges) {
-          PlacesUtils.history.removeObserver(observer);
-          resolve();
-        }
+      onManyFrecenciesChanged() {
+        PlacesUtils.history.removeObserver(observer);
+        resolve();
       },
     };
     PlacesUtils.history.addObserver(observer, false);
@@ -619,31 +617,31 @@ add_task(function* checkUndoVisitsState() {
   ]);
   let wrongMethodDeferred = PromiseUtils.defer();
   let observer = {
-    onBeginUpdateBatch: function() {},
-    onEndUpdateBatch: function() {},
-    onVisit: function(uri) {
+    onBeginUpdateBatch() {},
+    onEndUpdateBatch() {},
+    onVisit(uri) {
       wrongMethodDeferred.reject(new Error("Unexpected call to onVisit " + uri.spec));
     },
-    onTitleChanged: function(uri) {
+    onTitleChanged(uri) {
       wrongMethodDeferred.reject(new Error("Unexpected call to onTitleChanged " + uri.spec));
     },
-    onClearHistory: function() {
+    onClearHistory() {
       wrongMethodDeferred.reject("Unexpected call to onClearHistory");
     },
-    onPageChanged: function(uri) {
+    onPageChanged(uri) {
       wrongMethodDeferred.reject(new Error("Unexpected call to onPageChanged " + uri.spec));
     },
-    onFrecencyChanged: function(aURI) {
+    onFrecencyChanged(aURI) {
       do_print("frecency change");
       Assert.ok(frecencyChangesExpected.has(aURI.spec),
                 "Should be expecting frecency change for " + aURI.spec);
       frecencyChangesExpected.get(aURI.spec).resolve();
     },
-    onManyFrecenciesChanged: function() {
+    onManyFrecenciesChanged() {
       do_print("Many frecencies changed");
       wrongMethodDeferred.reject(new Error("This test can't deal with onManyFrecenciesChanged to be called"));
     },
-    onDeleteURI: function(aURI) {
+    onDeleteURI(aURI) {
       do_print("delete uri");
       Assert.ok(uriDeletedExpected.has(aURI.spec),
                 "Should be expecting uri deletion for " + aURI.spec);

@@ -11,7 +11,7 @@
  * and create derivative works of this document.
  */
 
-[Pref="dom.details_element.enabled"]
+[HTMLConstructor]
 interface HTMLDetailsElement : HTMLElement {
   [SetterThrows]
   attribute boolean open;

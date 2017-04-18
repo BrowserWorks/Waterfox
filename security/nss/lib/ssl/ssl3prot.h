@@ -287,7 +287,7 @@ typedef struct {
 
 /* NewSessionTicket handshake message. */
 typedef struct {
-    PRUint32 received_timestamp;
+    PRTime received_timestamp;
     PRUint32 ticket_lifetime_hint;
     PRUint32 flags;
     PRUint32 ticket_age_add;

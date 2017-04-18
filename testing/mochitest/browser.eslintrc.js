@@ -3,6 +3,7 @@ module.exports = {
   "rules": {
     "mozilla/import-headjs-globals": "warn",
     "mozilla/import-browserjs-globals": "warn",
+    "mozilla/import-test-globals": "warn",
     "mozilla/mark-test-function-used": "warn",
   },
 
@@ -13,7 +14,10 @@ module.exports = {
 
   // All globals made available in the test environment.
   "globals": {
+    // `$` is defined in SimpleTest.js
+    "$": false,
     "add_task": false,
+    "addLoadEvent": false,
     "Assert": false,
     "BrowserTestUtils": false,
     "content": false,
@@ -34,9 +38,9 @@ module.exports = {
     "is": false,
     "isnot": false,
     "ok": false,
+    "privateNoteIntentionalCrash": false,
     "registerCleanupFunction": false,
     "requestLongerTimeout": false,
-    "SimpleTest": false,
     "SpecialPowers": false,
     "TestUtils": false,
     "thisTestLeaksUncaughtRejectionsAndShouldBeFixed": false,

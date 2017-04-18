@@ -4,9 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsXULAppAPI.h"
-#include "mozilla/AppData.h"
+#include "mozilla/XREAppData.h"
 #include "application.ini.h"
-#include "nsXPCOMGlue.h"
+#include "mozilla/Bootstrap.h"
 #if defined(XP_WIN)
 #include <windows.h>
 #include <stdlib.h>
@@ -43,8 +43,57 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/WindowsDllBlocklist.h"
 
-#if !defined(MOZ_WIDGET_COCOA) && !defined(MOZ_WIDGET_ANDROID) \
-  && !(defined(XP_LINUX) && defined(MOZ_SANDBOX))
+#ifdef LIBFUZZER
+#include "FuzzerDefs.h"
+#endif
+
+#ifdef MOZ_LINUX_32_SSE2_STARTUP_ERROR
+#include <cpuid.h>
+#include "mozilla/Unused.h"
+
+static bool
+IsSSE2Available()
+{
+  // The rest of the app has been compiled to assume that SSE2 is present
+  // unconditionally, so we can't use the normal copy of SSE.cpp here.
+  // Since SSE.cpp caches the results and we need them only transiently,
+  // instead of #including SSE.cpp here, let's just inline the specific check
+  // that's needed.
+  unsigned int level = 1u;
+  unsigned int eax, ebx, ecx, edx;
+  unsigned int bits = (1u<<26);
+  unsigned int max = __get_cpuid_max(0, nullptr);
+  if (level > max) {
+    return false;
+  }
+  __cpuid_count(level, 0, eax, ebx, ecx, edx);
+  return (edx & bits) == bits;
+}
+
+static const char sSSE2Message[] =
+    "This browser version requires a processor with the SSE2 instruction "
+    "set extension.\nYou may be able to obtain a version that does not "
+    "require SSE2 from your Linux distribution.\n";
+
+__attribute__((constructor))
+static void
+SSE2Check()
+{
+  if (IsSSE2Available()) {
+    return;
+  }
+  // Using write() in order to avoid jemalloc-based buffering. Ignoring return
+  // values, since there isn't much we could do on failure and there is no
+  // point in trying to recover from errors.
+  MOZ_UNUSED(write(STDERR_FILENO,
+                   sSSE2Message,
+                   MOZ_ARRAY_LENGTH(sSSE2Message) - 1));
+  // _exit() instead of exit() to avoid running the usual "at exit" code.
+  _exit(255);
+}
+#endif
+
+#if !defined(MOZ_WIDGET_COCOA) && !defined(MOZ_WIDGET_ANDROID)
 #define MOZ_BROWSER_CAN_BE_CONTENTPROC
 #include "../../ipc/contentproc/plugin-container.cpp"
 #endif
@@ -116,81 +165,20 @@ static bool IsArg(const char* arg, const char* s)
   return false;
 }
 
-XRE_GetFileFromPathType XRE_GetFileFromPath;
-XRE_CreateAppDataType XRE_CreateAppData;
-XRE_FreeAppDataType XRE_FreeAppData;
-XRE_TelemetryAccumulateType XRE_TelemetryAccumulate;
-XRE_StartupTimelineRecordType XRE_StartupTimelineRecord;
-XRE_mainType XRE_main;
-XRE_StopLateWriteChecksType XRE_StopLateWriteChecks;
-XRE_XPCShellMainType XRE_XPCShellMain;
-XRE_GetProcessTypeType XRE_GetProcessType;
-XRE_SetProcessTypeType XRE_SetProcessType;
-XRE_InitChildProcessType XRE_InitChildProcess;
-XRE_EnableSameExecutableForContentProcType XRE_EnableSameExecutableForContentProc;
-#ifdef LIBFUZZER
-XRE_LibFuzzerSetMainType XRE_LibFuzzerSetMain;
-XRE_LibFuzzerGetFuncsType XRE_LibFuzzerGetFuncs;
-#endif
+Bootstrap::UniquePtr gBootstrap;
 
-static const nsDynamicFunctionLoad kXULFuncs[] = {
-    { "XRE_GetFileFromPath", (NSFuncPtr*) &XRE_GetFileFromPath },
-    { "XRE_CreateAppData", (NSFuncPtr*) &XRE_CreateAppData },
-    { "XRE_FreeAppData", (NSFuncPtr*) &XRE_FreeAppData },
-    { "XRE_TelemetryAccumulate", (NSFuncPtr*) &XRE_TelemetryAccumulate },
-    { "XRE_StartupTimelineRecord", (NSFuncPtr*) &XRE_StartupTimelineRecord },
-    { "XRE_main", (NSFuncPtr*) &XRE_main },
-    { "XRE_StopLateWriteChecks", (NSFuncPtr*) &XRE_StopLateWriteChecks },
-    { "XRE_XPCShellMain", (NSFuncPtr*) &XRE_XPCShellMain },
-    { "XRE_GetProcessType", (NSFuncPtr*) &XRE_GetProcessType },
-    { "XRE_SetProcessType", (NSFuncPtr*) &XRE_SetProcessType },
-    { "XRE_InitChildProcess", (NSFuncPtr*) &XRE_InitChildProcess },
-    { "XRE_EnableSameExecutableForContentProc", (NSFuncPtr*) &XRE_EnableSameExecutableForContentProc },
-#ifdef LIBFUZZER
-    { "XRE_LibFuzzerSetMain", (NSFuncPtr*) &XRE_LibFuzzerSetMain },
-    { "XRE_LibFuzzerGetFuncs", (NSFuncPtr*) &XRE_LibFuzzerGetFuncs },
-#endif
-    { nullptr, nullptr }
-};
-
-#ifdef LIBFUZZER
-int libfuzzer_main(int argc, char **argv);
-
-/* This wrapper is used by the libFuzzer main to call into libxul */
-
-void libFuzzerGetFuncs(const char* moduleName, LibFuzzerInitFunc* initFunc,
-                       LibFuzzerTestingFunc* testingFunc) {
-  return XRE_LibFuzzerGetFuncs(moduleName, initFunc, testingFunc);
-}
-#endif
-
-static int do_main(int argc, char* argv[], char* envp[], nsIFile *xreDirectory)
+static int do_main(int argc, char* argv[], char* envp[])
 {
-  nsCOMPtr<nsIFile> appini;
-  nsresult rv;
-  uint32_t mainFlags = 0;
-
   // Allow firefox.exe to launch XULRunner apps via -app <application.ini>
   // Note that -app must be the *first* argument.
   const char *appDataFile = getenv("XUL_APP_FILE");
-  if (appDataFile && *appDataFile) {
-    rv = XRE_GetFileFromPath(appDataFile, getter_AddRefs(appini));
-    if (NS_FAILED(rv)) {
-      Output("Invalid path found: '%s'", appDataFile);
-      return 255;
-    }
-  }
-  else if (argc > 1 && IsArg(argv[1], "app")) {
+  if ((!appDataFile || !*appDataFile) &&
+      (argc > 1 && IsArg(argv[1], "app"))) {
     if (argc == 2) {
       Output("Incorrect number of arguments passed to -app");
       return 255;
     }
-
-    rv = XRE_GetFileFromPath(argv[2], getter_AddRefs(appini));
-    if (NS_FAILED(rv)) {
-      Output("application.ini path not recognized: '%s'", argv[2]);
-      return 255;
-    }
+    appDataFile = argv[2];
 
     char appEnv[MAXPATHLEN];
     SprintfLiteral(appEnv, "XUL_APP_FILE=%s", argv[2]);
@@ -212,55 +200,19 @@ static int do_main(int argc, char* argv[], char* envp[], nsIFile *xreDirectory)
       sandboxing::GetInitializedBrokerServices();
 #endif
 
-    return XRE_XPCShellMain(--argc, argv, envp, &shellData);
+    return gBootstrap->XRE_XPCShellMain(--argc, argv, envp, &shellData);
   }
 
-  if (appini) {
-    nsXREAppData *appData;
-    rv = XRE_CreateAppData(appini, &appData);
-    if (NS_FAILED(rv)) {
-      Output("Couldn't read application.ini");
-      return 255;
-    }
-#if defined(HAS_DLL_BLOCKLIST)
-    // The dll blocklist operates in the exe vs. xullib. Pass a flag to
-    // xullib so automated tests can check the result once the browser
-    // is up and running.
-    appData->flags |=
-      DllBlocklist_CheckStatus() ? NS_XRE_DLL_BLOCKLIST_ENABLED : 0;
-#endif
-    // xreDirectory already has a refcount from NS_NewLocalFile
-    appData->xreDirectory = xreDirectory;
-    int result = XRE_main(argc, argv, appData, mainFlags);
-    XRE_FreeAppData(appData);
-    return result;
+  BootstrapConfig config;
+
+  if (appDataFile && *appDataFile) {
+    config.appData = nullptr;
+    config.appDataPath = appDataFile;
+  } else {
+    // no -app flag so we use the compiled-in app data
+    config.appData = &sAppData;
+    config.appDataPath = kDesktopFolder;
   }
-
-  ScopedAppData appData(&sAppData);
-  nsCOMPtr<nsIFile> exeFile;
-  rv = mozilla::BinaryPath::GetFile(argv[0], getter_AddRefs(exeFile));
-  if (NS_FAILED(rv)) {
-    Output("Couldn't find the application directory.\n");
-    return 255;
-  }
-
-  nsCOMPtr<nsIFile> greDir;
-  exeFile->GetParent(getter_AddRefs(greDir));
-#ifdef XP_MACOSX
-  greDir->SetNativeLeafName(NS_LITERAL_CSTRING(kOSXResourcesFolder));
-#endif
-  nsCOMPtr<nsIFile> appSubdir;
-  greDir->Clone(getter_AddRefs(appSubdir));
-  appSubdir->Append(NS_LITERAL_STRING(kDesktopFolder));
-
-  SetStrongPtr(appData.directory, static_cast<nsIFile*>(appSubdir.get()));
-  // xreDirectory already has a refcount from NS_NewLocalFile
-  appData.xreDirectory = xreDirectory;
-
-#if defined(HAS_DLL_BLOCKLIST)
-  appData.flags |=
-    DllBlocklist_CheckStatus() ? NS_XRE_DLL_BLOCKLIST_ENABLED : 0;
-#endif
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
   sandbox::BrokerServices* brokerServices =
@@ -271,88 +223,36 @@ static int do_main(int argc, char* argv[], char* envp[], nsIFile *xreDirectory)
     return 255;
   }
 #endif
-  appData.sandboxBrokerServices = brokerServices;
+  config.sandboxBrokerServices = brokerServices;
 #endif
 
 #ifdef LIBFUZZER
   if (getenv("LIBFUZZER"))
-    XRE_LibFuzzerSetMain(argc, argv, libfuzzer_main);
+    gBootstrap->XRE_LibFuzzerSetDriver(fuzzer::FuzzerDriver);
 #endif
 
-  return XRE_main(argc, argv, &appData, mainFlags);
-}
-
-static bool
-FileExists(const char *path)
-{
-#ifdef XP_WIN
-  wchar_t wideDir[MAX_PATH];
-  MultiByteToWideChar(CP_UTF8, 0, path, -1, wideDir, MAX_PATH);
-  DWORD fileAttrs = GetFileAttributesW(wideDir);
-  return fileAttrs != INVALID_FILE_ATTRIBUTES;
-#else
-  return access(path, R_OK) == 0;
-#endif
+  return gBootstrap->XRE_main(argc, argv, config);
 }
 
 static nsresult
-InitXPCOMGlue(const char *argv0, nsIFile **xreDirectory)
+InitXPCOMGlue(const char *argv0)
 {
-  char exePath[MAXPATHLEN];
-
-  nsresult rv = mozilla::BinaryPath::Get(argv0, exePath);
-  if (NS_FAILED(rv)) {
+  UniqueFreePtr<char> exePath = BinaryPath::Get(argv0);
+  if (!exePath) {
     Output("Couldn't find the application directory.\n");
-    return rv;
-  }
-
-  char *lastSlash = strrchr(exePath, XPCOM_FILE_PATH_SEPARATOR[0]);
-  if (!lastSlash ||
-      (size_t(lastSlash - exePath) > MAXPATHLEN - sizeof(XPCOM_DLL) - 1))
-    return NS_ERROR_FAILURE;
-
-  strcpy(lastSlash + 1, XPCOM_DLL);
-
-  if (!FileExists(exePath)) {
-    Output("Could not find the Mozilla runtime.\n");
     return NS_ERROR_FAILURE;
   }
 
-  // We do this because of data in bug 771745
-  XPCOMGlueEnablePreload();
-
-  rv = XPCOMGlueStartup(exePath);
-  if (NS_FAILED(rv)) {
+  gBootstrap = mozilla::GetBootstrap(exePath.get());
+  if (!gBootstrap) {
     Output("Couldn't load XPCOM.\n");
-    return rv;
-  }
-
-  rv = XPCOMGlueLoadXULFunctions(kXULFuncs);
-  if (NS_FAILED(rv)) {
-    Output("Couldn't load XRE functions.\n");
-    return rv;
+    return NS_ERROR_FAILURE;
   }
 
   // This will set this thread as the main thread.
-  NS_LogInit();
+  gBootstrap->NS_LogInit();
 
-  if (xreDirectory) {
-    // chop XPCOM_DLL off exePath
-    *lastSlash = '\0';
-#ifdef XP_MACOSX
-    lastSlash = strrchr(exePath, XPCOM_FILE_PATH_SEPARATOR[0]);
-    strcpy(lastSlash + 1, kOSXResourcesFolder);
-#endif
-#ifdef XP_WIN
-    rv = NS_NewLocalFile(NS_ConvertUTF8toUTF16(exePath), false,
-                         xreDirectory);
-#else
-    rv = NS_NewNativeLocalFile(nsDependentCString(exePath), false,
-                               xreDirectory);
-#endif
-  }
-
-  return rv;
+  return NS_OK;
 }
 
 int main(int argc, char* argv[], char* envp[])
@@ -361,14 +261,6 @@ int main(int argc, char* argv[], char* envp[])
 
 #ifdef HAS_DLL_BLOCKLIST
   DllBlocklist_Initialize();
-
-#ifdef DEBUG
-  // In order to be effective against AppInit DLLs, the blocklist must be
-  // initialized before user32.dll is loaded into the process (bug 932100).
-  if (GetModuleHandleA("user32.dll")) {
-    fprintf(stderr, "DLL blocklist was unable to intercept AppInit DLLs.\n");
-  }
-#endif
 #endif
 
 #ifdef MOZ_BROWSER_CAN_BE_CONTENTPROC
@@ -384,37 +276,35 @@ int main(int argc, char* argv[], char* envp[])
     }
 #endif
 
-    nsresult rv = InitXPCOMGlue(argv[0], nullptr);
+    nsresult rv = InitXPCOMGlue(argv[0]);
     if (NS_FAILED(rv)) {
       return 255;
     }
 
-    int result = content_process_main(argc, argv);
+    int result = content_process_main(gBootstrap.get(), argc, argv);
 
     // InitXPCOMGlue calls NS_LogInit, so we need to balance it here.
-    NS_LogTerm();
+    gBootstrap->NS_LogTerm();
 
     return result;
   }
 #endif
 
 
-  nsIFile *xreDirectory;
-
-  nsresult rv = InitXPCOMGlue(argv[0], &xreDirectory);
+  nsresult rv = InitXPCOMGlue(argv[0]);
   if (NS_FAILED(rv)) {
     return 255;
   }
 
-  XRE_StartupTimelineRecord(mozilla::StartupTimeline::START, start);
+  gBootstrap->XRE_StartupTimelineRecord(mozilla::StartupTimeline::START, start);
 
 #ifdef MOZ_BROWSER_CAN_BE_CONTENTPROC
-  XRE_EnableSameExecutableForContentProc();
+  gBootstrap->XRE_EnableSameExecutableForContentProc();
 #endif
 
-  int result = do_main(argc, argv, envp, xreDirectory);
+  int result = do_main(argc, argv, envp);
 
-  NS_LogTerm();
+  gBootstrap->NS_LogTerm();
 
 #ifdef XP_MACOSX
   // Allow writes again. While we would like to catch writes from static
@@ -422,8 +312,10 @@ int main(int argc, char* argv[], char* envp[])
   // at least one such write that we don't control (see bug 826029). For
   // now we enable writes again and early exits will have to use exit instead
   // of _exit.
-  XRE_StopLateWriteChecks();
+  gBootstrap->XRE_StopLateWriteChecks();
 #endif
+
+  gBootstrap.reset();
 
   return result;
 }

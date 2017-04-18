@@ -56,11 +56,13 @@ public:
 
   already_AddRefed<nsStyleContext>
   ResolveStyleFor(dom::Element* aElement,
-                  nsStyleContext* aParentContext);
+                  nsStyleContext* aParentContext,
+                  LazyComputeBehavior aMayCompute);
 
   already_AddRefed<nsStyleContext>
   ResolveStyleFor(dom::Element* aElement,
                   nsStyleContext* aParentContext,
+                  LazyComputeBehavior aMayCompute,
                   TreeMatchContext& aTreeMatchContext);
 
   already_AddRefed<nsStyleContext>
@@ -71,10 +73,17 @@ public:
   ResolveStyleForOtherNonElement(nsStyleContext* aParentContext);
 
   already_AddRefed<nsStyleContext>
-  ResolvePseudoElementStyle(dom::Element* aParentElement,
+  ResolvePseudoElementStyle(dom::Element* aOriginatingElement,
                             mozilla::CSSPseudoElementType aType,
                             nsStyleContext* aParentContext,
                             dom::Element* aPseudoElement);
+
+  // Resolves style for a (possibly-pseudo) Element without assuming that the
+  // style has been resolved, and without worrying about setting the style
+  // context up to live in the style context tree (a null parent is used).
+  already_AddRefed<nsStyleContext>
+  ResolveTransientStyle(dom::Element* aElement,
+                        mozilla::CSSPseudoElementType aPseudoType);
 
   // aFlags is an nsStyleSet flags bitfield
   already_AddRefed<nsStyleContext>
@@ -99,12 +108,12 @@ public:
 
   // check whether there is ::before/::after style for an element
   already_AddRefed<nsStyleContext>
-  ProbePseudoElementStyle(dom::Element* aParentElement,
+  ProbePseudoElementStyle(dom::Element* aOriginatingElement,
                           mozilla::CSSPseudoElementType aType,
                           nsStyleContext* aParentContext);
 
   already_AddRefed<nsStyleContext>
-  ProbePseudoElementStyle(dom::Element* aParentElement,
+  ProbePseudoElementStyle(dom::Element* aOriginatingElement,
                           mozilla::CSSPseudoElementType aType,
                           nsStyleContext* aParentContext,
                           TreeMatchContext& aTreeMatchContext,
@@ -118,39 +127,57 @@ public:
     dom::Element* aPseudoElement, EventStates aStateMask);
 
   /**
-   * Computes a restyle hint given a element and a previous element snapshot.
-   */
-  nsRestyleHint ComputeRestyleHint(dom::Element* aElement,
-                                   ServoElementSnapshot* aSnapshot);
-
-  /**
    * Performs a Servo traversal to compute style for all dirty nodes in the
    * document. The root element must be non-null.
-   *
-   * If aLeaveDirtyBits is true, the dirty/dirty-descendant bits are not
-   * cleared.
    */
-  void StyleDocument(bool aLeaveDirtyBits);
+  void StyleDocument();
 
   /**
-   * Eagerly styles a subtree of dirty nodes that were just appended to the
+   * Eagerly styles a subtree of unstyled nodes that was just appended to the
    * tree. This is used in situations where we need the style immediately and
    * cannot wait for a future batch restyle.
-   *
-   * The subtree must have the root dirty bit set, which currently gets
-   * propagated to all descendants. The dirty bits are cleared before
-   * returning.
    */
-  void StyleNewSubtree(nsIContent* aContent);
+  void StyleNewSubtree(Element* aRoot);
 
   /**
-   * Like the above, but does not assume that the root node is dirty. When
-   * appending multiple children to a potentially-non-dirty node, it's
-   * preferable to call StyleNewChildren on the node rather than making multiple
-   * calls to StyleNewSubtree on each child, since it allows for more
-   * parallelism.
+   * Like the above, but skips the root node, and only styles unstyled children.
+   * When potentially appending multiple children, it's preferable to call
+   * StyleNewChildren on the node rather than making multiple calls to
+   * StyleNewSubtree on each child, since it allows for more parallelism.
    */
-  void StyleNewChildren(nsIContent* aParent);
+  void StyleNewChildren(Element* aParent);
+
+  /**
+   * Records that the contents of style sheets have changed since the last
+   * restyle.  Calling this will ensure that the Stylist rebuilds its
+   * selector maps.
+   */
+  void NoteStyleSheetsChanged();
+
+#ifdef DEBUG
+  void AssertTreeIsClean();
+#else
+  void AssertTreeIsClean() {}
+#endif
+
+  /**
+   * Rebuild the style data. This will force a stylesheet flush, and also
+   * recompute the default computed styles.
+   */
+  void RebuildData();
+
+  /**
+   * Resolve style for the given element, and return it as a
+   * ServoComputedValues, not an nsStyleContext.
+   */
+  already_AddRefed<ServoComputedValues> ResolveServoStyle(dom::Element* aElement);
+
+  /**
+   * Restyle with added declaration, for use in animations.
+   */
+  ServoComputedValuesStrong RestyleWithAddedDeclaration(
+    RawServoDeclarationBlock* aDeclarations,
+    const ServoComputedValues* aPreviousStyle);
 
 private:
   already_AddRefed<nsStyleContext> GetContext(already_AddRefed<ServoComputedValues>,
@@ -161,7 +188,8 @@ private:
   already_AddRefed<nsStyleContext> GetContext(nsIContent* aContent,
                                               nsStyleContext* aParentContext,
                                               nsIAtom* aPseudoTag,
-                                              CSSPseudoElementType aPseudoType);
+                                              CSSPseudoElementType aPseudoType,
+                                              LazyComputeBehavior aMayCompute);
 
   nsPresContext* mPresContext;
   UniquePtr<RawServoStyleSet> mRawSet;

@@ -50,7 +50,7 @@ this.Social = {
     // front-end can generate UI
     if (SocialService.hasEnabledProviders) {
       // Retrieve the current set of providers, and set the current provider.
-      SocialService.getOrderedProviderList(function (providers) {
+      SocialService.getOrderedProviderList(function(providers) {
         Social._updateProviderCache(providers);
         Social._updateEnabledState(SocialService.enabled);
         deferred.resolve(false);
@@ -92,14 +92,14 @@ this.Social = {
     return deferred.promise;
   },
 
-  _updateEnabledState: function(enable) {
+  _updateEnabledState(enable) {
     for (let p of Social.providers) {
       p.enabled = enable;
     }
   },
 
   // Called to update our cache of providers and set the current provider
-  _updateProviderCache: function (providers) {
+  _updateProviderCache(providers) {
     this.providers = providers;
     Services.obs.notifyObservers(null, "social:providers-changed", null);
   },
@@ -108,7 +108,7 @@ this.Social = {
     return !this._disabledForSafeMode && this.providers.length > 0;
   },
 
-  _getProviderFromOrigin: function (origin) {
+  _getProviderFromOrigin(origin) {
     for (let p of this.providers) {
       if (p.origin == origin) {
         return p;
@@ -117,20 +117,20 @@ this.Social = {
     return null;
   },
 
-  getManifestByOrigin: function(origin) {
+  getManifestByOrigin(origin) {
     return SocialService.getManifestByOrigin(origin);
   },
 
-  installProvider: function(data, installCallback, options={}) {
+  installProvider(data, installCallback, options = {}) {
     SocialService.installProvider(data, installCallback, options);
   },
 
-  uninstallProvider: function(origin, aCallback) {
+  uninstallProvider(origin, aCallback) {
     SocialService.uninstallProvider(origin, aCallback);
   },
 
   // Activation functionality
-  activateFromOrigin: function (origin, callback) {
+  activateFromOrigin(origin, callback) {
     // It's OK if the provider has already been activated - we still get called
     // back with it.
     SocialService.enableProvider(origin, callback);
@@ -225,7 +225,7 @@ DynamicResizeWatcher.prototype = {
 
 
 this.OpenGraphBuilder = {
-  generateEndpointURL: function(URLTemplate, pageData) {
+  generateEndpointURL(URLTemplate, pageData) {
     // support for existing oexchange style endpoints by supporting their
     // querystring arguments. parse the query string template and do
     // replacements where necessary the query names may be different than ours,
@@ -233,8 +233,8 @@ this.OpenGraphBuilder = {
     let [endpointURL, queryString] = URLTemplate.split("?");
     let query = {};
     if (queryString) {
-      queryString.split('&').forEach(function (val) {
-        let [name, value] = val.split('=');
+      queryString.split("&").forEach(function(val) {
+        let [name, value] = val.split("=");
         let p = /%\{(.+)\}/.exec(value);
         if (!p) {
           // preserve non-template query vars

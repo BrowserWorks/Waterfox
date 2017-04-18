@@ -9,6 +9,8 @@
 #include "mozilla/Casting.h"
 #include "mozilla/SizePrintfMacros.h"
 
+#include "jsfun.h"
+
 #include "jit/BaselineIC.h"
 #include "jit/BaselineJIT.h"
 #include "jit/FixedList.h"
@@ -1145,7 +1147,7 @@ BaselineCompiler::emit_JSOP_PICK()
     //     after : A B D E C
 
     // First, move value at -(amount + 1) into R0.
-    int depth = -(GET_INT8(pc) + 1);
+    int32_t depth = -(GET_INT8(pc) + 1);
     masm.loadValue(frame.addressOfStackValue(frame.peek(depth)), R0);
 
     // Move the other values down.
@@ -1160,6 +1162,34 @@ BaselineCompiler::emit_JSOP_PICK()
     // Push R0.
     frame.pop();
     frame.push(R0);
+    return true;
+}
+
+bool
+BaselineCompiler::emit_JSOP_UNPICK()
+{
+    frame.syncStack(0);
+
+    // Pick takes the top of the stack value and moves it under the nth value.
+    // For instance, unpick 2:
+    //     before: A B C D E
+    //     after : A B E C D
+
+    // First, move value at -1 into R0.
+    masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), R0);
+
+    // Move the other values up.
+    int32_t depth = -(GET_INT8(pc) + 1);
+    for (int32_t i = -1; i > depth; i--) {
+        Address source = frame.addressOfStackValue(frame.peek(i - 1));
+        Address dest = frame.addressOfStackValue(frame.peek(i));
+        masm.loadValue(source, R1);
+        masm.storeValue(R1, dest);
+    }
+
+    // Store R0 under the nth value.
+    Address dest = frame.addressOfStackValue(frame.peek(depth));
+    masm.storeValue(R0, dest);
     return true;
 }
 
@@ -1348,6 +1378,26 @@ BaselineCompiler::emit_JSOP_CHECKISOBJ()
         return false;
 
     masm.bind(&ok);
+    return true;
+}
+
+typedef bool (*CheckIsCallableFn)(JSContext*, HandleValue, CheckIsCallableKind);
+static const VMFunction CheckIsCallableInfo =
+    FunctionInfo<CheckIsCallableFn>(CheckIsCallable, "CheckIsCallable");
+
+bool
+BaselineCompiler::emit_JSOP_CHECKISCALLABLE()
+{
+    frame.syncStack(0);
+    masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), R0);
+
+    prepareVMCall();
+
+    pushArg(Imm32(GET_UINT8(pc)));
+    pushArg(R0);
+    if (!callVM(CheckIsCallableInfo))
+        return false;
+
     return true;
 }
 
@@ -1679,6 +1729,29 @@ BaselineCompiler::emit_JSOP_LAMBDA_ARROW()
     masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
     frame.push(R0);
     return true;
+}
+
+typedef bool (*SetFunNameFn)(JSContext*, HandleFunction, HandleValue, FunctionPrefixKind);
+static const VMFunction SetFunNameInfo =
+    FunctionInfo<SetFunNameFn>(js::SetFunctionNameIfNoOwnName, "SetFunName");
+
+bool
+BaselineCompiler::emit_JSOP_SETFUNNAME()
+{
+    frame.popRegsAndSync(2);
+
+    frame.push(R0);
+    frame.syncStack(0);
+
+    FunctionPrefixKind prefixKind = FunctionPrefixKind(GET_UINT8(pc));
+    masm.unboxObject(R0, R0.scratchReg());
+
+    prepareVMCall();
+
+    pushArg(Imm32(int32_t(prefixKind)));
+    pushArg(R1);
+    pushArg(R0.scratchReg());
+    return callVM(SetFunNameInfo);
 }
 
 void
@@ -2130,16 +2203,19 @@ BaselineCompiler::emit_JSOP_MUTATEPROTO()
 bool
 BaselineCompiler::emit_JSOP_INITPROP()
 {
-    // Keep lhs in R0, rhs in R1.
-    frame.popRegsAndSync(2);
-
-    // Push the object to store the result of the IC.
-    frame.push(R0);
+    // Load lhs in R0, rhs in R1.
     frame.syncStack(0);
+    masm.loadValue(frame.addressOfStackValue(frame.peek(-2)), R0);
+    masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), R1);
 
     // Call IC.
     ICSetProp_Fallback::Compiler compiler(cx);
-    return emitOpIC(compiler.getStub(&stubSpace_));
+    if (!emitOpIC(compiler.getStub(&stubSpace_)))
+        return false;
+
+    // Leave the object on the stack.
+    frame.pop();
+    return true;
 }
 
 bool
@@ -2365,13 +2441,15 @@ BaselineCompiler::emit_JSOP_SETPROP()
     // Keep lhs in R0, rhs in R1.
     frame.popRegsAndSync(2);
 
+    // Keep RHS on the stack.
+    frame.push(R1);
+    frame.syncStack(0);
+
     // Call IC.
     ICSetProp_Fallback::Compiler compiler(cx);
     if (!emitOpIC(compiler.getStub(&stubSpace_)))
         return false;
 
-    // The IC will return the RHS value in R0, mark it as pushed value.
-    frame.push(R0);
     return true;
 }
 
@@ -2534,8 +2612,8 @@ BaselineCompiler::emit_JSOP_SETALIASEDVAR()
         // this as a SETPROP.
 
         // Load rhs into R1.
-        frame.syncStack(1);
-        frame.popValue(R1);
+        frame.syncStack(0);
+        masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), R1);
 
         // Load and box lhs into R0.
         getEnvironmentCoordinateObject(R2.scratchReg());
@@ -2546,8 +2624,6 @@ BaselineCompiler::emit_JSOP_SETALIASEDVAR()
         if (!emitOpIC(compiler.getStub(&stubSpace_)))
             return false;
 
-        // The IC will return the RHS value in R0, mark it as pushed value.
-        frame.push(R0);
         return true;
     }
 
@@ -3922,7 +3998,7 @@ BaselineCompiler::emit_JSOP_MOREITER()
 }
 
 bool
-BaselineCompiler::emit_JSOP_ISNOITER()
+BaselineCompiler::emitIsMagicValue()
 {
     frame.syncStack(0);
 
@@ -3941,6 +4017,12 @@ BaselineCompiler::emit_JSOP_ISNOITER()
 }
 
 bool
+BaselineCompiler::emit_JSOP_ISNOITER()
+{
+    return emitIsMagicValue();
+}
+
+bool
 BaselineCompiler::emit_JSOP_ENDITER()
 {
     if (!emit_JSOP_JUMPTARGET())
@@ -3949,6 +4031,12 @@ BaselineCompiler::emit_JSOP_ENDITER()
 
     ICIteratorClose_Fallback::Compiler compiler(cx);
     return emitOpIC(compiler.getStub(&stubSpace_));
+}
+
+bool
+BaselineCompiler::emit_JSOP_ISGENCLOSING()
+{
+    return emitIsMagicValue();
 }
 
 bool

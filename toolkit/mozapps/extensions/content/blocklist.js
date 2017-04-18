@@ -6,6 +6,8 @@
 
 "use strict";
 
+/* exported init, finish */
+
 Components.utils.import("resource://gre/modules/Services.jsm");
 
 var gArgs;
@@ -26,7 +28,7 @@ function init() {
 
   var richlist = document.getElementById("addonList");
   var list = gArgs.list;
-  list.sort(function(a, b) { return String.localeCompare(a.name, b.name); });
+  list.sort((a, b) => String(a.name).localeCompare(b.name));
   for (let listItem of list) {
     let item = document.createElement("richlistitem");
     item.setAttribute("name", listItem.name);
@@ -35,8 +37,7 @@ function init() {
     if (listItem.blocked) {
       item.setAttribute("class", "hardBlockedAddon");
       hasHardBlocks = true;
-    }
-    else {
+    } else {
       item.setAttribute("class", "softBlockedAddon");
       hasSoftBlocks = true;
     }
@@ -53,8 +54,7 @@ function init() {
   var link = document.getElementById("moreInfo");
   if (list.length == 1 && list[0].url) {
     link.setAttribute("href", list[0].url);
-  }
-  else {
+  } else {
     var url = Services.urlFormatter.formatURLPref("extensions.blocklist.detailsURL");
     link.setAttribute("href", url);
   }

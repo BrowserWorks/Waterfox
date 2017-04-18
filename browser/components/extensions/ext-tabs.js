@@ -25,29 +25,21 @@ var {
 // This function is pretty tightly tied to Extension.jsm.
 // Its job is to fill in the |tab| property of the sender.
 function getSender(extension, target, sender) {
+  let tabId;
   if ("tabId" in sender) {
-    // The message came from an ExtensionContext. In that case, it should
-    // include a tabId property (which is filled in by the page-open
-    // listener below).
-    let tab = TabManager.getTab(sender.tabId, null, null);
+    // The message came from a privileged extension page running in a tab. In
+    // that case, it should include a tabId property (which is filled in by the
+    // page-open listener below).
+    tabId = sender.tabId;
     delete sender.tabId;
+  } else if (target instanceof Ci.nsIDOMXULElement) {
+    tabId = getBrowserInfo(target).tabId;
+  }
+
+  if (tabId) {
+    let tab = TabManager.getTab(tabId, null, null);
     if (tab) {
       sender.tab = TabManager.convert(extension, tab);
-      return;
-    }
-  }
-  if (target instanceof Ci.nsIDOMXULElement) {
-    // If the message was sent from a content script to a <browser> element,
-    // then we can just get the `tab` from `target`.
-    let tabbrowser = target.ownerGlobal.gBrowser;
-    if (tabbrowser) {
-      let tab = tabbrowser.getTabForBrowser(target);
-
-      // `tab` can be `undefined`, e.g. for extension popups. This condition is
-      // reached if `getSender` is called for a popup without a valid `tabId`.
-      if (tab) {
-        sender.tab = TabManager.convert(extension, tab);
-      }
     }
   }
 }
@@ -76,7 +68,13 @@ extensions.on("page-shutdown", (type, context) => {
 });
 
 extensions.on("fill-browser-data", (type, browser, data) => {
-  data.tabId = browser ? TabManager.getBrowserId(browser) : -1;
+  let tabId, windowId;
+  if (browser) {
+    ({tabId, windowId} = getBrowserInfo(browser));
+  }
+
+  data.tabId = tabId || -1;
+  data.windowId = windowId || -1;
 });
 /* eslint-enable mozilla/balanced-listeners */
 
@@ -140,7 +138,7 @@ let tabListener = {
   },
 
   handleWindowOpen(window) {
-    if (window.arguments[0] instanceof window.XULElement) {
+    if (window.arguments && window.arguments[0] instanceof window.XULElement) {
       // If the first window argument is a XUL element, it means the
       // window is about to adopt a tab from another window to replace its
       // initial tab.
@@ -391,11 +389,13 @@ extensions.registerSchemaAPI("tabs", "addon_parent", context => {
       }).api(),
 
       onUpdated: new EventManager(context, "tabs.onUpdated", fire => {
+        const restricted = ["url", "favIconUrl", "title"];
+
         function sanitize(extension, changeInfo) {
           let result = {};
           let nonempty = false;
           for (let prop in changeInfo) {
-            if ((prop != "favIconUrl" && prop != "url") || extension.hasPermission("tabs")) {
+            if (extension.hasPermission("tabs") || !restricted.includes(prop)) {
               nonempty = true;
               result[prop] = changeInfo[prop];
             }
@@ -427,6 +427,9 @@ extensions.registerSchemaAPI("tabs", "addon_parent", context => {
             if (changed.includes("soundplaying")) {
               needed.push("audible");
             }
+            if (changed.includes("label")) {
+              needed.push("title");
+            }
           } else if (event.type == "TabPinned") {
             needed.push("pinned");
           } else if (event.type == "TabUnpinned") {
@@ -434,7 +437,7 @@ extensions.registerSchemaAPI("tabs", "addon_parent", context => {
           }
 
           if (needed.length && !extension.hasPermission("tabs")) {
-            needed = needed.filter(attr => attr != "url" && attr != "favIconUrl");
+            needed = needed.filter(attr => !restricted.includes(attr));
           }
 
           if (needed.length) {
@@ -549,6 +552,10 @@ extensions.registerSchemaAPI("tabs", "addon_parent", context => {
               options.userContextId = containerId;
             }
           }
+
+          // Make sure things like about:blank and data: URIs never inherit,
+          // and instead always get a NullPrincipal.
+          options.disallowInheritPrincipal = true;
 
           tabListener.initTabReady();
           let tab = window.gBrowser.addTab(url || window.BROWSER_NEW_TAB_URL, options);
@@ -698,7 +705,7 @@ extensions.registerSchemaAPI("tabs", "addon_parent", context => {
             return false;
           }
 
-          if (pattern && !pattern.matches(Services.io.newURI(tab.url, null, null))) {
+          if (pattern && !pattern.matches(Services.io.newURI(tab.url))) {
             return false;
           }
 
@@ -843,6 +850,11 @@ extensions.registerSchemaAPI("tabs", "addon_parent", context => {
           options.run_at = details.runAt;
         } else {
           options.run_at = "document_idle";
+        }
+        if (details.cssOrigin !== null) {
+          options.css_origin = details.cssOrigin;
+        } else {
+          options.css_origin = "author";
         }
 
         return tabListener.awaitTabReady(tab).then(() => {

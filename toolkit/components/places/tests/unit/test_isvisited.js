@@ -4,30 +4,28 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_execute()
-{
+add_task(function* test_execute() {
   var referrer = uri("about:blank");
 
   // add a http:// uri
   var uri1 = uri("http://mozilla.com");
-  yield PlacesTestUtils.addVisits({uri: uri1, referrer: referrer});
+  yield PlacesTestUtils.addVisits({uri: uri1, referrer});
   do_check_guid_for_uri(uri1);
   do_check_true(yield promiseIsURIVisited(uri1));
 
   // add a https:// uri
   var uri2 = uri("https://etrade.com");
-  yield PlacesTestUtils.addVisits({uri: uri2, referrer: referrer});
+  yield PlacesTestUtils.addVisits({uri: uri2, referrer});
   do_check_guid_for_uri(uri2);
   do_check_true(yield promiseIsURIVisited(uri2));
 
   // add a ftp:// uri
   var uri3 = uri("ftp://ftp.mozilla.org");
-  yield PlacesTestUtils.addVisits({uri: uri3, referrer: referrer});
+  yield PlacesTestUtils.addVisits({uri: uri3, referrer});
   do_check_guid_for_uri(uri3);
   do_check_true(yield promiseIsURIVisited(uri3));
 
@@ -55,15 +53,14 @@ add_task(function* test_execute()
   for (let currentURL of URLS) {
     try {
       var cantAddUri = uri(currentURL);
-    }
-    catch (e) {
+    } catch (e) {
       // nsIIOService.newURI() can throw if e.g. our app knows about imap://
       // but the account is not set up and so the URL is invalid for us.
       // Note this in the log but ignore as it's not the subject of this test.
       do_print("Could not construct URI for '" + currentURL + "'; ignoring");
     }
     if (cantAddUri) {
-      PlacesTestUtils.addVisits({uri: cantAddUri, referrer: referrer}).then(() => {
+      PlacesTestUtils.addVisits({uri: cantAddUri, referrer}).then(() => {
         do_throw("Should not have added history for invalid URI.");
       }, error => {
         do_check_true(error.message.includes("No items were added to history"));

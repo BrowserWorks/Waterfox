@@ -21,11 +21,9 @@ function* openTabInUserContext(uri, userContextId) {
 
 add_task(function* setup() {
   // make sure userContext is enabled.
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["privacy.userContext.enabled", true]
-    ]}, resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+    ["privacy.userContext.enabled", true]
+  ]});
 });
 
 add_task(function* test() {
@@ -35,10 +33,10 @@ add_task(function* test() {
 
   // reflect the received message on title
   yield ContentTask.spawn(receiver.browser, channelName,
-    function (name) {
+    function(name) {
       content.window.testPromise = new content.window.Promise(resolve => {
         content.window.bc = new content.window.BroadcastChannel(name);
-        content.window.bc.onmessage = function (e) {
+        content.window.bc.onmessage = function(e) {
           content.document.title += e.data;
           resolve();
         }
@@ -57,7 +55,7 @@ add_task(function* test() {
     yield ContentTask.spawn(
         sender.browser,
         { name: channelName, message: sender.message },
-        function (opts) {
+        function(opts) {
           let bc = new content.window.BroadcastChannel(opts.name);
           bc.postMessage(opts.message);
         });

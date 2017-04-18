@@ -44,6 +44,9 @@ Push Information
    the symbolic ref containing ``head_rev`` that should be pulled from
    ``head_repository``.
 
+``include_nightly``
+   Include nightly builds and tests in the graph.
+
 ``owner``
    Email address indicating the person who made the push.  Note that this
    value may be forged and *must not* be relied on for authentication.
@@ -89,9 +92,17 @@ those in the target set, recursively.  In a decision task, this set can be
 specified programmatically using one of a variety of methods (e.g., parsing try
 syntax or reading a project-specific configuration file).
 
+``filters``
+    List of filter functions (from ``taskcluster/taskgraph/filter_tasks.py``) to
+    apply. This is usually defined internally, as filters are typically
+    global.
+
 ``target_tasks_method``
     The method to use to determine the target task set.  This is the suffix of
     one of the functions in ``tascluster/taskgraph/target_tasks.py``.
 
 ``optimize_target_tasks``
    If true, then target tasks are eligible for optimization.
+
+``include_nightly``
+   If true, then nightly tasks are eligible for optimization.

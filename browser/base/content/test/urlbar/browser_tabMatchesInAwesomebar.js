@@ -162,8 +162,7 @@ function ensure_opentabs_match_db() {
   });
 }
 
-function checkAutocompleteResults(aExpected, aCallback)
-{
+function checkAutocompleteResults(aExpected, aCallback) {
   gController.input = {
     timeout: 10,
     textValue: "",
@@ -171,13 +170,12 @@ function checkAutocompleteResults(aExpected, aCallback)
     searchParam: "enable-actions",
     popupOpen: false,
     minResultsForPopup: 0,
-    invalidate: function() {},
+    invalidate() {},
     disableAutoComplete: false,
     completeDefaultIndex: false,
     get popup() { return this; },
-    onSearchBegin: function() {},
-    onSearchComplete:  function ()
-    {
+    onSearchBegin() {},
+    onSearchComplete() {
       info("Found " + gController.matchCount + " matches.");
       // Check to see the expected uris and titles match up (in any order)
       for (let i = 0; i < gController.matchCount; i++) {
@@ -202,9 +200,9 @@ function checkAutocompleteResults(aExpected, aCallback)
 
       executeSoon(aCallback);
     },
-    setSelectedIndex: function() {},
+    setSelectedIndex() {},
     get searchCount() { return this.searches.length; },
-    getSearchAt: function(aIndex) { return this.searches[aIndex]; },
+    getSearchAt(aIndex) { return this.searches[aIndex]; },
     QueryInterface: XPCOMUtils.generateQI([
       Ci.nsIAutoCompleteInput,
       Ci.nsIAutoCompletePopup,

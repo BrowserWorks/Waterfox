@@ -11,7 +11,6 @@ Components.utils.import("resource://testing-common/httpd.js");
 var gServer = new HttpServer();
 gServer.start(-1);
 gPort = gServer.identity.primaryPort;
-var COMPATIBILITY_PREF;
 
 // register static files with server and interpolate port numbers in them
 mapFile("/data/test_AddonRepository_compatmode_ignore.xml", gServer);
@@ -38,14 +37,14 @@ function run_test_1() {
   Services.prefs.setBoolPref(PREF_EM_STRICT_COMPATIBILITY, false);
 
   AddonRepository.searchAddons("test", 6, {
-    searchSucceeded: function(aAddons) {
+    searchSucceeded(aAddons) {
       do_check_neq(aAddons, null);
       do_check_eq(aAddons.length, 1);
       do_check_eq(aAddons[0].id, "compatmode-normal@tests.mozilla.org");
 
       run_test_2();
     },
-    searchFailed: function() {
+    searchFailed() {
       do_throw("Search should not have failed");
     }
   });
@@ -57,14 +56,14 @@ function run_test_2() {
   Services.prefs.setBoolPref(PREF_EM_STRICT_COMPATIBILITY, true);
 
   AddonRepository.searchAddons("test", 6, {
-    searchSucceeded: function(aAddons) {
+    searchSucceeded(aAddons) {
       do_check_neq(aAddons, null);
       do_check_eq(aAddons.length, 1);
       do_check_eq(aAddons[0].id, "compatmode-strict@tests.mozilla.org");
 
       run_test_3();
     },
-    searchFailed: function() {
+    searchFailed() {
       do_throw("Search should not have failed");
     }
   });
@@ -76,14 +75,14 @@ function run_test_3() {
   AddonManager.checkCompatibility = false;
 
   AddonRepository.searchAddons("test", 6, {
-    searchSucceeded: function(aAddons) {
+    searchSucceeded(aAddons) {
       do_check_neq(aAddons, null);
       do_check_eq(aAddons.length, 1);
       do_check_eq(aAddons[0].id, "compatmode-ignore@tests.mozilla.org");
 
       end_test();
     },
-    searchFailed: function() {
+    searchFailed() {
       do_throw("Search should not have failed");
     }
   });

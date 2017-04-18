@@ -7,22 +7,8 @@ var SuspendedType = {
   SUSPENDED_PAUSE_DISPOSABLE : 3
 };
 
-function* wait_for_tab_playing_event(tab, expectPlaying) {
-  if (tab.soundPlaying == expectPlaying) {
-    ok(true, "The tab should " + (expectPlaying ? "" : "not ") + "be playing");
-  } else {
-    yield BrowserTestUtils.waitForEvent(tab, "TabAttrModified", false, (event) => {
-      if (event.detail.changed.indexOf("soundplaying") >= 0) {
-        is(tab.soundPlaying, expectPlaying, "The tab should " + (expectPlaying ? "" : "not ") + "be playing");
-        return true;
-      }
-      return false;
-    });
-  }
-}
-
 function check_audio_suspended(suspendedType) {
-  var autoPlay = content.document.getElementById('autoplay');
+  var autoPlay = content.document.getElementById("autoplay");
   if (!autoPlay) {
     ok(false, "Can't get the audio element!");
   }
@@ -32,12 +18,10 @@ function check_audio_suspended(suspendedType) {
 }
 
 add_task(function* setup_test_preference() {
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["media.useAudioChannelService.testing", true],
-      ["media.block-autoplay-until-in-foreground", true]
-    ]}, resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+    ["media.useAudioChannelService.testing", true],
+    ["media.block-autoplay-until-in-foreground", true]
+  ]});
 });
 
 add_task(function* block_autoplay_media() {
@@ -63,7 +47,7 @@ add_task(function* block_autoplay_media() {
   yield BrowserTestUtils.switchTab(window.gBrowser, tab1);
 
   info("- media should be unblocked because the tab was visited -");
-  yield wait_for_tab_playing_event(tab1, true);
+  yield waitForTabPlayingEvent(tab1, true);
   yield ContentTask.spawn(tab1.linkedBrowser, SuspendedType.NONE_SUSPENDED,
                           check_audio_suspended);
 
@@ -71,12 +55,12 @@ add_task(function* block_autoplay_media() {
   let tab3 = yield BrowserTestUtils.openNewForegroundTab(window.gBrowser,
                                                          "about:blank");
   info("- should still play media from tab1 -");
-  yield wait_for_tab_playing_event(tab1, true);
+  yield waitForTabPlayingEvent(tab1, true);
   yield ContentTask.spawn(tab1.linkedBrowser, SuspendedType.NONE_SUSPENDED,
                           check_audio_suspended);
 
   info("- should still block media from tab2 -");
-  yield wait_for_tab_playing_event(tab2, false);
+  yield waitForTabPlayingEvent(tab2, false);
   yield ContentTask.spawn(tab2.linkedBrowser, SuspendedType.SUSPENDED_BLOCK,
                           check_audio_suspended);
 

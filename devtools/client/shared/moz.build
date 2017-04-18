@@ -28,6 +28,7 @@ DevToolsModules(
     'devtools-file-watcher.js',
     'DOMHelpers.jsm',
     'doorhanger.js',
+    'enum.js',
     'file-watcher-worker.js',
     'file-watcher.js',
     'getjson.js',
@@ -52,3 +53,9 @@ DevToolsModules(
     'webgl-utils.js',
     'zoom-keys.js',
 )
+
+with Files('**'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools')
+
+with Files('components/**'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools: Shared Components')

@@ -13,10 +13,13 @@ struct ServiceWorkerRegistrationData
 {
   nsCString scope;
   nsCString currentWorkerURL;
+  bool currentWorkerHandlesFetch;
 
   nsString cacheName;
 
   PrincipalInfo principal;
+
+  uint32_t loadFlags;
 };
 
 } // namespace dom

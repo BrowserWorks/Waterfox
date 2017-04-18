@@ -1,5 +1,14 @@
 // Helpers for Media Source Extensions tests
 
+var gMSETestPrefs = [
+  [ "media.mediasource.enabled", true ]
+];
+
+// Called before runWithMSE() to set the prefs before running MSE tests.
+function addMSEPrefs(...prefs) {
+  gMSETestPrefs = gMSETestPrefs.concat(prefs);
+}
+
 function runWithMSE(testFunction) {
   function bootstrapTest() {
     var ms = new MediaSource();
@@ -10,17 +19,17 @@ function runWithMSE(testFunction) {
 
     document.body.appendChild(el);
     SimpleTest.registerCleanupFunction(function () {
-      el.parentNode.removeChild(el);
+      el.remove();
+      // Don't trigger load algorithm to prevent 'error' events.
+      el.preload = "none";
+      el.src = null;
     });
 
     testFunction(ms, el);
   }
 
   addLoadEvent(function () {
-    SpecialPowers.pushPrefEnv({"set": [
-      [ "media.mediasource.enabled", true ],
-    ]},
-                              bootstrapTest);
+    SpecialPowers.pushPrefEnv({"set": gMSETestPrefs}, bootstrapTest);
   });
 }
 

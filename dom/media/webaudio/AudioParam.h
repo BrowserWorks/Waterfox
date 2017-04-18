@@ -27,8 +27,10 @@ class AudioParam final : public nsWrapperCache,
 public:
   AudioParam(AudioNode* aNode,
              uint32_t aIndex,
+             const char* aName,
              float aDefaultValue,
-             const char* aName);
+             float aMinValue = -std::numeric_limits<float>::infinity(),
+             float aMaxValue = std::numeric_limits<float>::infinity());
 
   NS_IMETHOD_(MozExternalRefCountType) AddRef(void);
   NS_IMETHOD_(MozExternalRefCountType) Release(void);
@@ -54,6 +56,7 @@ public:
     }
     aValues.ComputeLengthAndData();
 
+    aStartTime = std::max(aStartTime, GetParentObject()->CurrentTime());
     EventInsertionHelper(aRv, AudioTimelineEvent::SetValueCurve,
                          aStartTime, 0.0f, 0.0f, aDuration, aValues.Data(),
                          aValues.Length());
@@ -82,6 +85,7 @@ public:
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
       return this;
     }
+    aStartTime = std::max(aStartTime, GetParentObject()->CurrentTime());
     EventInsertionHelper(aRv, AudioTimelineEvent::SetValueAtTime,
                          aStartTime, aValue);
 
@@ -95,6 +99,7 @@ public:
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
       return this;
     }
+    aEndTime = std::max(aEndTime, GetParentObject()->CurrentTime());
     EventInsertionHelper(aRv, AudioTimelineEvent::LinearRamp, aEndTime, aValue);
     return this;
   }
@@ -106,6 +111,7 @@ public:
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
       return this;
     }
+    aEndTime = std::max(aEndTime, GetParentObject()->CurrentTime());
     EventInsertionHelper(aRv, AudioTimelineEvent::ExponentialRamp,
                          aEndTime, aValue);
     return this;
@@ -119,6 +125,7 @@ public:
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
       return this;
     }
+    aStartTime = std::max(aStartTime, GetParentObject()->CurrentTime());
     EventInsertionHelper(aRv, AudioTimelineEvent::SetTarget,
                          aStartTime, aTarget,
                          aTimeConstant);
@@ -132,6 +139,8 @@ public:
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
       return this;
     }
+
+    aStartTime = std::max(aStartTime, GetParentObject()->CurrentTime());
 
     // Remove some events on the main thread copy.
     AudioEventTimeline::CancelScheduledValues(aStartTime);
@@ -156,6 +165,16 @@ public:
   float DefaultValue() const
   {
     return mDefaultValue;
+  }
+
+  float MinValue() const
+  {
+    return mMinValue;
+  }
+
+  float MaxValue() const
+  {
+    return mMaxValue;
   }
 
   const nsTArray<AudioNode::InputNode>& InputNodes() const
@@ -237,6 +256,8 @@ private:
   RefPtr<MediaInputPort> mNodeStreamPort;
   const uint32_t mIndex;
   const float mDefaultValue;
+  const float mMinValue;
+  const float mMaxValue;
 };
 
 } // namespace dom

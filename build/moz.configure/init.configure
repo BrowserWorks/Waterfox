@@ -71,6 +71,14 @@ set_config('MOZ_BUILD_ROOT', delayed_getattr(check_build_environment,
                                              'topobjdir'))
 set_config('DIST', delayed_getattr(check_build_environment, 'dist'))
 
+add_old_configure_assignment(
+    '_topsrcdir', delayed_getattr(check_build_environment, 'topsrcdir'))
+add_old_configure_assignment(
+    '_objdir', delayed_getattr(check_build_environment, 'topobjdir'))
+add_old_configure_assignment(
+    'MOZ_BUILD_ROOT', delayed_getattr(check_build_environment, 'topobjdir'))
+add_old_configure_assignment(
+    'DIST', delayed_getattr(check_build_environment, 'dist'))
 
 option(env='MOZ_AUTOMATION', help='Enable options for automated builds')
 set_config('MOZ_AUTOMATION', depends_if('MOZ_AUTOMATION')(lambda x: True))
@@ -220,12 +228,20 @@ def early_options():
 
 early_options = early_options()
 
-@depends(mozconfig, '--help')
+@depends(mozconfig, 'MOZ_AUTOMATION', '--help')
 # This gives access to the sandbox. Don't copy this blindly.
 @imports('__sandbox__')
 @imports('os')
-def mozconfig_options(mozconfig, help):
+def mozconfig_options(mozconfig, automation, help):
     if mozconfig['path']:
+        if 'MOZ_AUTOMATION_MOZCONFIG' in mozconfig['env']['added']:
+            if not automation:
+                log.error('%s directly or indirectly includes an in-tree '
+                          'mozconfig.', mozconfig['path'])
+                log.error('In-tree mozconfigs make strong assumptions about '
+                          'and are only meant to be used by Mozilla '
+                          'automation.')
+                die("Please don't use them.")
         helper = __sandbox__._helper
         log.info('Adding configure options from %s' % mozconfig['path'])
         for arg in mozconfig['configure_args']:
@@ -380,6 +396,9 @@ def split_triplet(triplet):
     elif cpu.startswith('aarch64'):
         canonical_cpu = 'aarch64'
         endianness = 'little'
+    elif cpu == 'sh4':
+        canonical_cpu = 'sh4'
+        endianness = 'little'
     else:
         die('Unknown CPU type: %s' % cpu)
 
@@ -454,8 +473,8 @@ def host_for_old_configure(host):
 
 add_old_configure_arg(host_for_old_configure)
 
-@depends(host, target)
-def target_for_old_configure(host, target):
+@depends(target)
+def target_for_old_configure(target):
     target_alias = target.alias
     # old-configure does plenty of tests against $target and $target_os
     # and expects darwin for iOS, so make it happy.
@@ -520,6 +539,7 @@ def host_variables(host):
         HOST_OS_ARCH=os_arch,
     )
 
+set_config('HOST_CPU_ARCH', delayed_getattr(host, 'cpu'))
 set_config('HOST_OS_ARCH', delayed_getattr(host_variables, 'HOST_OS_ARCH'))
 add_old_configure_assignment('HOST_OS_ARCH',
                              delayed_getattr(host_variables, 'HOST_OS_ARCH'))
@@ -721,10 +741,10 @@ def enabled_in_nightly(milestone, _):
 
 # Set the MOZ_CONFIGURE_OPTIONS variable with all the options that
 # were passed somehow (environment, command line, mozconfig)
-@depends(mozconfig_options)
+@dependable
 @imports(_from='mozbuild.shellutil', _import='quote')
 @imports('__sandbox__')
-def all_configure_options(_):
+def all_configure_options():
     result = []
     previous = None
     for option in __sandbox__._options.itervalues():

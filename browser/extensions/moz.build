@@ -6,17 +6,30 @@
 
 DIRS += [
     'aushelper',
-    'deployment-checker',
     'e10srollout',
     'pdfjs',
     'webcompat',
 ]
 
 # Only include the following system add-ons if building Aurora or Nightly
-if 'a' in CONFIG['GRE_MILESTONE']:
+if not CONFIG['RELEASE_OR_BETA']:
     DIRS += [
         'flyweb',
         'formautofill',
+        'presentation',
+        'shield-recipe-client',
+    ]
+
+# Only include mortar system add-ons if we locally enable it
+if CONFIG['MOZ_MORTAR']:
+    DIRS += [
+        'mortar',
+    ]
+
+# Nightly-only system add-ons
+if CONFIG['NIGHTLY_BUILD']:
+    DIRS += [
+        'webcompat-reporter',
     ]
 
 FINAL_TARGET_FILES.features += [

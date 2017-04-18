@@ -116,6 +116,7 @@
 #include "nsLayoutStylesheetCache.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -264,14 +265,6 @@ nsHTMLDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
   // document, after all. Once we start getting data, this may be
   // changed.
   SetContentTypeInternal(nsDependentCString("text/html"));
-}
-
-already_AddRefed<nsIPresShell>
-nsHTMLDocument::CreateShell(nsPresContext* aContext,
-                            nsViewManager* aViewManager,
-                            StyleSetHandle aStyleSet)
-{
-  return doCreateShell(aContext, aViewManager, aStyleSet);
 }
 
 void
@@ -549,6 +542,9 @@ nsHTMLDocument::StartDocumentLoad(const char* aCommand,
     return NS_ERROR_INVALID_ARG;
   }
 
+  bool forceUtf8 = plainText &&
+    nsContentUtils::IsUtf8OnlyPlainTextType(contentType);
+
   bool loadAsHtml5 = true;
 
   if (!viewSource && xhtml) {
@@ -668,7 +664,12 @@ nsHTMLDocument::StartDocumentLoad(const char* aCommand,
     }
   }
 
-  if (!IsHTMLDocument() || !docShell) { // no docshell for text/html XHR
+  if (forceUtf8) {
+    charsetSource = kCharsetFromUtf8OnlyMime;
+    charset.AssignLiteral("UTF-8");
+    parserCharsetSource = charsetSource;
+    parserCharset = charset;
+  } else if (!IsHTMLDocument() || !docShell) { // no docshell for text/html XHR
     charsetSource = IsHTMLDocument() ? kCharsetFromFallback
                                      : kCharsetFromDocTypeDefault;
     charset.AssignLiteral("UTF-8");
@@ -1782,7 +1783,7 @@ nsHTMLDocument::Close(ErrorResult& rv)
   //
   // XXXhsivonen keeping this around for bug 577508 / 253951 still :-(
   if (GetShell()) {
-    FlushPendingNotifications(Flush_Layout);
+    FlushPendingNotifications(FlushType::Layout);
   }
 
   // Removing the wyciwygChannel here is wrong when document.close() is
@@ -2637,7 +2638,7 @@ nsHTMLDocument::EditingStateChanged()
   // Flush out style changes on our _parent_ document, if any, so that
   // our check for a presshell won't get stale information.
   if (mParentDocument) {
-    mParentDocument->FlushPendingNotifications(Flush_Style);
+    mParentDocument->FlushPendingNotifications(FlushType::Style);
   }
 
   // get editing session, make sure this is a strong reference so the
@@ -2795,17 +2796,21 @@ nsHTMLDocument::EditingStateChanged()
     // Set the editor to not insert br's on return when in p
     // elements by default.
     // XXX Do we only want to do this for designMode?
-    bool unused;
-    rv = ExecCommand(NS_LITERAL_STRING("insertBrOnReturn"), false,
-                     NS_LITERAL_STRING("false"), &unused);
+    // Note that it doesn't matter what CallerType we pass, because the callee
+    // doesn't use it for this command.  Play it safe and pass the more
+    // restricted one.
+    ErrorResult errorResult;
+    Unused << ExecCommand(NS_LITERAL_STRING("insertBrOnReturn"), false,
+                          NS_LITERAL_STRING("false"), CallerType::NonSystem,
+                          errorResult);
 
-    if (NS_FAILED(rv)) {
+    if (errorResult.Failed()) {
       // Editor setup failed. Editing is not on after all.
       // XXX Should we reset the editable flag on nodes?
       editSession->TearDownEditorOnWindow(window);
       mEditingState = eOff;
 
-      return rv;
+      return errorResult.StealNSResult();
     }
   }
 
@@ -3121,22 +3126,11 @@ ConvertToMidasInternalCommand(const nsAString & inCommandID,
                                             dummyBool, dummyBool, true);
 }
 
-/* TODO: don't let this call do anything if the page is not done loading */
-NS_IMETHODIMP
-nsHTMLDocument::ExecCommand(const nsAString& commandID,
-                            bool doShowUI,
-                            const nsAString& value,
-                            bool* _retval)
-{
-  ErrorResult rv;
-  *_retval = ExecCommand(commandID, doShowUI, value, rv);
-  return rv.StealNSResult();
-}
-
 bool
 nsHTMLDocument::ExecCommand(const nsAString& commandID,
                             bool doShowUI,
                             const nsAString& value,
+                            CallerType aCallerType,
                             ErrorResult& rv)
 {
   //  for optional parameters see dom/src/base/nsHistory.cpp: HistoryImpl::Go()
@@ -3196,7 +3190,7 @@ nsHTMLDocument::ExecCommand(const nsAString& commandID,
   }
 
   bool restricted = commandID.LowerCaseEqualsLiteral("paste");
-  if (restricted && !nsContentUtils::IsCallerChrome()) {
+  if (restricted && aCallerType != CallerType::System) {
     return false;
   }
 
@@ -3260,17 +3254,10 @@ nsHTMLDocument::ExecCommand(const nsAString& commandID,
   return !rv.Failed();
 }
 
-NS_IMETHODIMP
-nsHTMLDocument::QueryCommandEnabled(const nsAString& commandID,
-                                    bool* _retval)
-{
-  ErrorResult rv;
-  *_retval = QueryCommandEnabled(commandID, rv);
-  return rv.StealNSResult();
-}
-
 bool
-nsHTMLDocument::QueryCommandEnabled(const nsAString& commandID, ErrorResult& rv)
+nsHTMLDocument::QueryCommandEnabled(const nsAString& commandID,
+                                    CallerType aCallerType,
+                                    ErrorResult& rv)
 {
   nsAutoCString cmdToDispatch;
   if (!ConvertToMidasInternalCommand(commandID, cmdToDispatch)) {
@@ -3286,7 +3273,7 @@ nsHTMLDocument::QueryCommandEnabled(const nsAString& commandID, ErrorResult& rv)
 
   // Report false for restricted commands
   bool restricted = commandID.LowerCaseEqualsLiteral("paste");
-  if (restricted && !nsContentUtils::IsCallerChrome()) {
+  if (restricted && aCallerType != CallerType::System) {
     return false;
   }
 
@@ -3454,16 +3441,9 @@ nsHTMLDocument::QueryCommandState(const nsAString& commandID, ErrorResult& rv)
   return retval;
 }
 
-NS_IMETHODIMP
-nsHTMLDocument::QueryCommandSupported(const nsAString & commandID,
-                                      bool *_retval)
-{
-  *_retval = QueryCommandSupported(commandID);
-  return NS_OK;
-}
-
 bool
-nsHTMLDocument::QueryCommandSupported(const nsAString& commandID)
+nsHTMLDocument::QueryCommandSupported(const nsAString& commandID,
+                                      CallerType aCallerType)
 {
   // Gecko technically supports all the clipboard commands including
   // cut/copy/paste, but non-privileged content will be unable to call
@@ -3471,7 +3451,7 @@ nsHTMLDocument::QueryCommandSupported(const nsAString& commandID)
   // may also be disallowed to be called from non-privileged content.
   // For that reason, we report the support status of corresponding
   // command accordingly.
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aCallerType != CallerType::System) {
     if (commandID.LowerCaseEqualsLiteral("paste")) {
       return false;
     }
@@ -3599,7 +3579,7 @@ nsHTMLDocument::IsEditingOnAfterFlush()
   if (doc) {
     // Make sure frames are up to date, since that can affect whether
     // we're editable.
-    doc->FlushPendingNotifications(Flush_Frames);
+    doc->FlushPendingNotifications(FlushType::Frames);
   }
 
   return IsEditingOn();
@@ -3638,7 +3618,7 @@ nsHTMLDocument::WillIgnoreCharsetOverride()
     MOZ_ASSERT(mType == eXHTML);
     return true;
   }
-  if (mCharacterSetSource == kCharsetFromByteOrderMark) {
+  if (mCharacterSetSource >= kCharsetFromByteOrderMark) {
     return true;
   }
   if (!EncodingUtils::IsAsciiCompatible(mCharacterSet)) {

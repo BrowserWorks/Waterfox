@@ -34,9 +34,7 @@ jobs:
     sm-package/opt:
         description: "Spidermonkey source package and test"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-package-opt
+            job-name: sm-package-opt
         treeherder:
             symbol: SM-tc(pkg)
         run:
@@ -71,9 +69,9 @@ jobs:
     sm-mozjs-sys/debug:
         description: "Build js/src as the mozjs_sys Rust crate"
         index:
-            job-name:
-                gecko-v2: sm-mozjs-sys-debug
+            job-name: sm-mozjs-sys-debug
         treeherder:
+            platform: linux64/debug
             symbol: SM-tc(mozjs-crate)
         run:
             using: spidermonkey-mozjs-crate
@@ -86,9 +84,7 @@ jobs:
     sm-plain/debug:
         description: "Spidermonkey Plain"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-plaindebug-debug
+            job-name: sm-plaindebug-debug
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(p)
@@ -107,10 +103,9 @@ jobs:
     sm-arm-sim/debug:
         description: "Spidermonkey ARM sim"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-arm-sim-debug
+            job-name: sm-arm-sim-debug
         treeherder:
+            platform: linux32/debug
             symbol: SM-tc(arm)
         run:
             spidermonkey-variant: arm-sim
@@ -118,10 +113,9 @@ jobs:
     sm-arm64-sim/debug:
         description: "Spidermonkey ARM64 sim"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-arm64-sim-debug
+            job-name: sm-arm64-sim-debug
         treeherder:
+            platform: linux64/debug
             symbol: SM-tc(arm64)
         run:
             spidermonkey-variant: arm64-sim
@@ -129,9 +123,7 @@ jobs:
     sm-asan/opt:
         description: "Spidermonkey Address Sanitizer"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-asan-opt
+            job-name: sm-asan-opt
         treeherder:
             symbol: SM-tc(asan)
         run:
@@ -141,10 +133,9 @@ jobs:
     sm-compacting/debug:
         description: "Spidermonkey Compacting"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-compacting-debug
+            job-name: sm-compacting-debug
         treeherder:
+            platform: linux64/debug
             symbol: SM-tc(cgc)
         run:
             spidermonkey-variant: compacting
@@ -152,9 +143,7 @@ jobs:
     sm-msan/opt:
         description: "Spidermonkey Memory Sanitizer"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-msan-opt
+            job-name: sm-msan-opt
         treeherder:
             symbol: SM-tc(msan)
         run:
@@ -164,9 +153,7 @@ jobs:
     sm-tsan/opt:
         description: "Spidermonkey Thread Sanitizer"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-tsan-opt
+            job-name: sm-tsan-opt
         treeherder:
             symbol: SM-tc(tsan)
             tier: 3
@@ -178,10 +165,9 @@ jobs:
     sm-rootanalysis/debug:
         description: "Spidermonkey Root Analysis"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-rootanalysis-debug
+            job-name: sm-rootanalysis-debug
         treeherder:
+            platform: linux64/debug
             symbol: SM-tc(r)
         run:
             spidermonkey-variant: rootanalysis
@@ -189,9 +175,7 @@ jobs:
     sm-nonunified/debug:
         description: "Spidermonkey Non-Unified Debug"
         index:
-            job-name:
-                buildbot: sm-plain
-                gecko-v2: sm-nonunified-debug
+            job-name: sm-nonunified-debug
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(nu)

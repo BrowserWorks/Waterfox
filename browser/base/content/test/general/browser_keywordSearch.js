@@ -20,14 +20,14 @@ function test() {
   waitForExplicitFinish();
 
   let windowObserver = {
-    observe: function(aSubject, aTopic, aData) {
+    observe(aSubject, aTopic, aData) {
       if (aTopic == "domwindowopened") {
         ok(false, "Alert window opened");
         let win = aSubject.QueryInterface(Ci.nsIDOMEventTarget);
         win.addEventListener("load", function() {
-          win.removeEventListener("load", arguments.callee, false);
+          win.removeEventListener("load", arguments.callee);
           win.close();
-        }, false);
+        });
         executeSoon(finish);
       }
     }
@@ -58,7 +58,7 @@ function test() {
   };
   gBrowser.addProgressListener(listener);
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.ww.unregisterNotification(windowObserver);
 
     gBrowser.removeProgressListener(listener);

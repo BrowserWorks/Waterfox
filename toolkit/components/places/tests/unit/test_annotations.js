@@ -13,7 +13,7 @@ try {
 
 // Get annotation service
 try {
-  var annosvc= Cc["@mozilla.org/browser/annotation-service;1"].getService(Ci.nsIAnnotationService);
+  var annosvc = Cc["@mozilla.org/browser/annotation-service;1"].getService(Ci.nsIAnnotationService);
 } catch (ex) {
   do_throw("Could not get annotation service\n");
 }
@@ -22,41 +22,39 @@ var annoObserver = {
   PAGE_lastSet_URI: "",
   PAGE_lastSet_AnnoName: "",
 
-  onPageAnnotationSet: function(aURI, aName) {
+  onPageAnnotationSet(aURI, aName) {
     this.PAGE_lastSet_URI = aURI.spec;
     this.PAGE_lastSet_AnnoName = aName;
   },
 
   ITEM_lastSet_Id: -1,
   ITEM_lastSet_AnnoName: "",
-  onItemAnnotationSet: function(aItemId, aName) {
+  onItemAnnotationSet(aItemId, aName) {
     this.ITEM_lastSet_Id = aItemId;
     this.ITEM_lastSet_AnnoName = aName;
   },
 
   PAGE_lastRemoved_URI: "",
   PAGE_lastRemoved_AnnoName: "",
-  onPageAnnotationRemoved: function(aURI, aName) {
+  onPageAnnotationRemoved(aURI, aName) {
     this.PAGE_lastRemoved_URI = aURI.spec;
     this.PAGE_lastRemoved_AnnoName = aName;
   },
 
   ITEM_lastRemoved_Id: -1,
   ITEM_lastRemoved_AnnoName: "",
-  onItemAnnotationRemoved: function(aItemId, aName) {
+  onItemAnnotationRemoved(aItemId, aName) {
     this.ITEM_lastRemoved_Id = aItemId;
     this.ITEM_lastRemoved_AnnoName = aName;
   }
 };
 
 // main
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_execute()
-{
+add_task(function* test_execute() {
   var testURI = uri("http://mozilla.com/");
   var testItemId = bmsvc.insertBookmark(bmsvc.bookmarksMenuFolder, testURI, -1, "");
   var testAnnoName = "moz-test-places/annotations";
@@ -292,8 +290,7 @@ add_task(function* test_execute()
     try {
       annosvc.setItemAnnotation(id, "foo", "bar", 0, 0);
       do_throw("setItemAnnotation* should throw for invalid item id: " + id)
-    }
-    catch (ex) { }
+    } catch (ex) { }
   }
 
   // setting an annotation with EXPIRE_HISTORY for an item should throw
@@ -301,8 +298,7 @@ add_task(function* test_execute()
   try {
     annosvc.setItemAnnotation(itemId, "foo", "bar", 0, annosvc.EXPIRE_WITH_HISTORY);
     do_throw("setting an item annotation with EXPIRE_HISTORY should throw");
-  }
-  catch (ex) {
+  } catch (ex) {
   }
 
   annosvc.removeObserver(annoObserver);
@@ -352,8 +348,7 @@ add_test(function test_getAnnotationsHavingName() {
         else
           do_check_eq(result.itemId, fid);
         do_check_guid_for_bookmark(result.itemId, result.guid);
-      }
-      else {
+      } else {
         do_check_guid_for_uri(result.uri, result.guid);
       }
     }

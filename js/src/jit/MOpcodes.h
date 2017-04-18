@@ -161,6 +161,7 @@ namespace jit {
     _(StringReplace)                                                        \
     _(Lambda)                                                               \
     _(LambdaArrow)                                                          \
+    _(SetFunName)                                                           \
     _(KeepAliveObject)                                                      \
     _(Slots)                                                                \
     _(Elements)                                                             \
@@ -284,6 +285,7 @@ namespace jit {
     _(ArrowNewTarget)                                                       \
     _(CheckReturn)                                                          \
     _(CheckIsObj)                                                           \
+    _(CheckIsCallable)                                                      \
     _(CheckObjCoercible)                                                    \
     _(DebugCheckSelfHosted)                                                 \
     _(AsmJSNeg)                                                             \

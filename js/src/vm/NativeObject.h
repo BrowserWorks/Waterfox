@@ -1452,7 +1452,7 @@ extern bool
 NativeLookupOwnProperty(ExclusiveContext* cx,
                         typename MaybeRooted<NativeObject*, allowGC>::HandleType obj,
                         typename MaybeRooted<jsid, allowGC>::HandleType id,
-                        typename MaybeRooted<Shape*, allowGC>::MutableHandleType propp);
+                        typename MaybeRooted<PropertyResult, allowGC>::MutableHandleType propp);
 
 /*
  * Get a property from `receiver`, after having already done a lookup and found
@@ -1466,19 +1466,6 @@ NativeGetExistingProperty(JSContext* cx, HandleObject receiver, HandleNativeObje
                           HandleShape shape, MutableHandleValue vp);
 
 /* * */
-
-/*
- * If obj has an already-resolved data property for id, return true and
- * store the property value in *vp.
- */
-extern bool
-HasDataProperty(JSContext* cx, NativeObject* obj, jsid id, Value* vp);
-
-inline bool
-HasDataProperty(JSContext* cx, NativeObject* obj, PropertyName* name, Value* vp)
-{
-    return HasDataProperty(cx, obj, NameToId(name), vp);
-}
 
 extern bool
 GetPropertyForNameLookup(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp);

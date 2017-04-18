@@ -348,16 +348,17 @@ WebGLContext::DeleteFramebuffer(WebGLFramebuffer* fbuf)
 void
 WebGLContext::DeleteRenderbuffer(WebGLRenderbuffer* rbuf)
 {
-    if (!ValidateDeleteObject("deleteRenderbuffer", rbuf))
+    const char funcName[] = "deleteRenderbuffer";
+    if (!ValidateDeleteObject(funcName, rbuf))
         return;
 
     if (mBoundDrawFramebuffer)
-        mBoundDrawFramebuffer->DetachRenderbuffer(rbuf);
+        mBoundDrawFramebuffer->DetachRenderbuffer(funcName, rbuf);
 
     if (mBoundReadFramebuffer)
-        mBoundReadFramebuffer->DetachRenderbuffer(rbuf);
+        mBoundReadFramebuffer->DetachRenderbuffer(funcName, rbuf);
 
-    rbuf->InvalidateStatusOfAttachedFBs();
+    rbuf->InvalidateStatusOfAttachedFBs(funcName);
 
     if (mBoundRenderbuffer == rbuf)
         BindRenderbuffer(LOCAL_GL_RENDERBUFFER, nullptr);
@@ -368,14 +369,15 @@ WebGLContext::DeleteRenderbuffer(WebGLRenderbuffer* rbuf)
 void
 WebGLContext::DeleteTexture(WebGLTexture* tex)
 {
-    if (!ValidateDeleteObject("deleteTexture", tex))
+    const char funcName[] = "deleteTexture";
+    if (!ValidateDeleteObject(funcName, tex))
         return;
 
     if (mBoundDrawFramebuffer)
-        mBoundDrawFramebuffer->DetachTexture(tex);
+        mBoundDrawFramebuffer->DetachTexture(funcName, tex);
 
     if (mBoundReadFramebuffer)
-        mBoundReadFramebuffer->DetachTexture(tex);
+        mBoundReadFramebuffer->DetachTexture(funcName, tex);
 
     GLuint activeTexture = mActiveTexture;
     for (int32_t i = 0; i < mGLMaxTextureUnits; i++) {
@@ -1551,18 +1553,32 @@ WebGLContext::ReadPixelsImpl(GLint x, GLint y, GLsizei rawWidth, GLsizei rawHeig
         return;
     }
 
+    ////
+
+    int32_t readX, readY;
+    int32_t writeX, writeY;
+    int32_t rwWidth, rwHeight;
+    if (!Intersect(srcWidth, x, width, &readX, &writeX, &rwWidth) ||
+        !Intersect(srcHeight, y, height, &readY, &writeY, &rwHeight))
+    {
+        ErrorOutOfMemory("readPixels: Bad subrect selection.");
+        return;
+    }
+
     ////////////////
     // Now that the errors are out of the way, on to actually reading!
 
     OnBeforeReadCall();
 
-    uint32_t readX, readY;
-    uint32_t writeX, writeY;
-    uint32_t rwWidth, rwHeight;
-    Intersect(srcWidth, x, width, &readX, &writeX, &rwWidth);
-    Intersect(srcHeight, y, height, &readY, &writeY, &rwHeight);
+    if (!rwWidth || !rwHeight) {
+        // Disjoint rects, so we're done already.
+        DummyReadFramebufferOperation("readPixels");
+        return;
+    }
 
-    if (rwWidth == uint32_t(width) && rwHeight == uint32_t(height)) {
+    if (uint32_t(rwWidth) == width &&
+        uint32_t(rwHeight) == height)
+    {
         DoReadPixelsAndConvert(srcFormat->format, x, y, width, height, packFormat,
                                packType, dest, dataLen, rowStride);
         return;
@@ -1580,12 +1596,6 @@ WebGLContext::ReadPixelsImpl(GLint x, GLint y, GLsizei rawWidth, GLsizei rawHeig
 
     ////////////////////////////////////
     // Read only the in-bounds pixels.
-
-    if (!rwWidth || !rwHeight) {
-        // There aren't any, so we're 'done'.
-        DummyReadFramebufferOperation("readPixels");
-        return;
-    }
 
     if (IsWebGL2()) {
         if (!mPixelStore_PackRowLength) {
@@ -1606,7 +1616,7 @@ WebGLContext::ReadPixelsImpl(GLint x, GLint y, GLsizei rawWidth, GLsizei rawHeig
 
         uint8_t* row = (uint8_t*)dest + writeX * bytesPerPixel;
         row += writeY * rowStride;
-        for (uint32_t j = 0; j < rwHeight; j++) {
+        for (uint32_t j = 0; j < uint32_t(rwHeight); j++) {
             DoReadPixelsAndConvert(srcFormat->format, readX, readY+j, rwWidth, 1,
                                    packFormat, packType, row, dataLen, rowStride);
             row += rowStride;

@@ -258,6 +258,7 @@ struct WorkerLoadInfo
   nsString mServiceWorkerCacheName;
 
   ChannelInfo mChannelInfo;
+  nsLoadFlags mLoadFlags;
 
   uint64_t mWindowID;
   uint64_t mServiceWorkerID;
@@ -270,7 +271,7 @@ struct WorkerLoadInfo
   bool mPrincipalIsSystem;
   bool mStorageAllowed;
   bool mServiceWorkersTestingInWindow;
-  PrincipalOriginAttributes mOriginAttributes;
+  OriginAttributes mOriginAttributes;
 
   WorkerLoadInfo();
   ~WorkerLoadInfo();

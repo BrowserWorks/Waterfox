@@ -45,18 +45,13 @@ public:
 
   void ReadUpdatedMetadata(MediaInfo* aInfo) override;
 
-  RefPtr<SeekPromise>
-  Seek(SeekTarget aTarget, int64_t aUnused) override;
+  RefPtr<SeekPromise> Seek(const SeekTarget& aTarget) override;
 
 protected:
   void NotifyDataArrivedInternal() override;
 
 public:
   media::TimeIntervals GetBuffered() override;
-
-  RefPtr<BufferedUpdatePromise> UpdateBufferedWithPromise() override;
-
-  bool ForceZeroStartTime() const override;
 
   // For Media Resource Management
   void ReleaseResources() override;
@@ -72,20 +67,6 @@ public:
   bool IsWaitForDataSupported() const override { return true; }
   RefPtr<WaitForDataPromise> WaitForData(MediaData::Type aType) override;
 
-  // MediaFormatReader supports demuxed-only mode.
-  bool IsDemuxOnlySupported() const override { return true; }
-
-  void SetDemuxOnly(bool aDemuxedOnly) override
-  {
-    if (OnTaskQueue()) {
-      mDemuxOnly = aDemuxedOnly;
-      return;
-    }
-    nsCOMPtr<nsIRunnable> r = NewRunnableMethod<bool>(
-      this, &MediaDecoderReader::SetDemuxOnly, aDemuxedOnly);
-    OwnerThread()->Dispatch(r.forget());
-  }
-
   bool UseBufferingHeuristics() const override
   {
     return mTrackDemuxersMayBlock;
@@ -95,7 +76,7 @@ public:
 
   // Returns a string describing the state of the decoder data.
   // Used for debugging purposes.
-  void GetMozDebugReaderData(nsAString& aString);
+  void GetMozDebugReaderData(nsACString& aString);
 
   void SetVideoBlankDecode(bool aIsBlankDecode) override;
 
@@ -547,12 +528,8 @@ private:
   // Set to true if any of our track buffers may be blocking.
   bool mTrackDemuxersMayBlock;
 
-  // Set the demuxed-only flag.
-  Atomic<bool> mDemuxOnly;
-
   // Seeking objects.
   void SetSeekTarget(const SeekTarget& aTarget);
-  media::TimeUnit DemuxStartTime();
   bool IsSeeking() const { return mPendingSeekTime.isSome(); }
   bool IsVideoSeeking() const
   {
@@ -568,7 +545,7 @@ private:
 
   void NotifyCompositorUpdated(RefPtr<layers::KnowsCompositor> aKnowsCompositor)
   {
-    mKnowsCompositor = aKnowsCompositor;
+    mKnowsCompositor = aKnowsCompositor.forget();
   }
 
   void DoAudioSeek();
@@ -594,6 +571,18 @@ private:
   UniquePtr<DecoderFactory> mDecoderFactory;
 
   MediaEventListener mCompositorUpdatedListener;
+
+  void OnFirstDemuxCompleted(TrackInfo::TrackType aType,
+                             RefPtr<MediaTrackDemuxer::SamplesHolder> aSamples);
+
+  void OnFirstDemuxFailed(TrackInfo::TrackType aType, const MediaResult& aError);
+
+  void MaybeResolveMetadataPromise();
+
+  UniquePtr<MetadataTags> mTags;
+
+  // A flag indicating if the start time is known or not.
+  bool mHasStartTime = false;
 };
 
 } // namespace mozilla

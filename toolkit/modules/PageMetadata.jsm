@@ -174,7 +174,7 @@ this.PageMetadata = {
    * @param {Document} document - Document to extract data from.
    * @param {Object}  result - Existing result object to add properties to.
    */
-  _getLinkData: function(document, result) {
+  _getLinkData(document, result) {
     let elements = document.querySelectorAll("head > link[rel], head > link[id]");
 
     for (let element of elements) {
@@ -283,8 +283,8 @@ this.PageMetadata = {
    * @return {string} Result URL.
    */
   _validateURL(document, url) {
-    let docURI = Services.io.newURI(document.documentURI, null, null);
-    let uri = Services.io.newURI(docURI.resolve(url), null, null);
+    let docURI = Services.io.newURI(document.documentURI);
+    let uri = Services.io.newURI(docURI.resolve(url));
 
     if (["http", "https"].indexOf(uri.scheme) < 0) {
       return null;

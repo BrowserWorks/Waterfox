@@ -24,6 +24,34 @@ class Variant;
 
 namespace detail {
 
+template <typename...>
+struct FirstTypeIsInRest;
+
+template <typename First>
+struct FirstTypeIsInRest<First> : FalseType {};
+
+template <typename First, typename Second, typename... Rest>
+struct FirstTypeIsInRest<First, Second, Rest...>
+{
+  static constexpr bool value =
+    IsSame<First, Second>::value ||
+    FirstTypeIsInRest<First, Rest...>::value;
+};
+
+template <typename...>
+struct TypesAreDistinct;
+
+template <>
+struct TypesAreDistinct<> : TrueType { };
+
+template<typename First, typename... Rest>
+struct TypesAreDistinct<First, Rest...>
+{
+  static constexpr bool value =
+    !FirstTypeIsInRest<First, Rest...>::value &&
+    TypesAreDistinct<Rest...>::value;
+};
+
 // MaxSizeOf computes the maximum sizeof(T) for each T in Ts.
 
 template<typename T, typename... Ts>
@@ -49,16 +77,10 @@ template<typename Needle, typename... Haystack>
 struct IsVariant;
 
 template<typename Needle>
-struct IsVariant<Needle>
-{
-  static const bool value = false;
-};
+struct IsVariant<Needle> : FalseType {};
 
 template<typename Needle, typename... Haystack>
-struct IsVariant<Needle, Needle, Haystack...>
-{
-  static const bool value = true;
-};
+struct IsVariant<Needle, Needle, Haystack...> : TrueType {};
 
 template<typename Needle, typename T, typename... Haystack>
 struct IsVariant<Needle, T, Haystack...> : public IsVariant<Needle, Haystack...> { };
@@ -434,6 +456,7 @@ struct AsVariantTemporary
 template<typename... Ts>
 class MOZ_INHERIT_TYPE_ANNOTATIONS_FROM_TEMPLATE_ARGS Variant
 {
+  static_assert(detail::TypesAreDistinct<Ts...>::value, "Variant with duplicate types is not supported");
   using Tag = typename detail::VariantTag<Ts...>::Type;
   using Impl = detail::VariantImplementation<Tag, 0, Ts...>;
   using RawData = AlignedStorage<detail::MaxSizeOf<Ts...>::size>;
@@ -552,7 +575,7 @@ public:
   T& as() {
     static_assert(detail::IsVariant<T, Ts...>::value,
                   "provided a type not found in this Variant's type list");
-    MOZ_ASSERT(is<T>());
+    MOZ_RELEASE_ASSERT(is<T>());
     return *reinterpret_cast<T*>(&raw);
   }
 
@@ -561,7 +584,7 @@ public:
   const T& as() const {
     static_assert(detail::IsVariant<T, Ts...>::value,
                   "provided a type not found in this Variant's type list");
-    MOZ_ASSERT(is<T>());
+    MOZ_RELEASE_ASSERT(is<T>());
     return *reinterpret_cast<const T*>(&raw);
   }
 

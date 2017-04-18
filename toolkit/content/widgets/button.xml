@@ -29,9 +29,9 @@
             this.boxObject.openMenu(val);
           } else if (val) {
             // Fall back to just setting the attribute
-            this.setAttribute('open', 'true');
+            this.setAttribute("open", "true");
           } else {
-            this.removeAttribute('open');
+            this.removeAttribute("open");
           }
           return val;
         ]]></setter>
@@ -198,7 +198,7 @@
         // Search for accesskey in the list of buttons for this doc and each subdoc
         // Get the buttons for the main document and all sub-frames
         for (var frameCount = -1; frameCount < window.top.frames.length; frameCount++) {
-          var doc = (frameCount == -1)? window.top.document:
+          var doc = (frameCount == -1) ? window.top.document :
             window.top.frames[frameCount].document
           if (this.fireAccessKeyButton(doc.documentElement, charPressedLower))
             return;
@@ -301,8 +301,7 @@
           if (!v && this.buttondown) {
             this.buttondown = false;
             this._pendingActive = true;
-          }
-          else if (this._pendingActive) {
+          } else if (this._pendingActive) {
             this.buttondown = true;
             this._pendingActive = false;
           }

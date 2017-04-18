@@ -49,6 +49,8 @@ public:
   static nsresult Startup();
   static void Shutdown();
 
+  void SetDelayInternal(uint32_t aDelay, TimeStamp aBase = TimeStamp::Now());
+
   void Fire(int32_t aGeneration);
 
 #ifdef MOZ_TASK_TRACER
@@ -145,6 +147,8 @@ public:
         "invalid ordering of timer types!");
     return mType >= nsITimer::TYPE_REPEATING_SLACK;
   }
+
+  void GetName(nsACString& aName);
 
   nsCOMPtr<nsIEventTarget> mEventTarget;
 

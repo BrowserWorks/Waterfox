@@ -138,18 +138,17 @@ already_AddRefed<Element>
 HTMLEditor::CreateResizer(int16_t aLocation,
                           nsIDOMNode* aParentNode)
 {
-  nsCOMPtr<nsIDOMElement> retDOM;
-  nsresult rv = CreateAnonymousElement(NS_LITERAL_STRING("span"),
-                                       aParentNode,
-                                       NS_LITERAL_STRING("mozResizer"),
-                                       false,
-                                       getter_AddRefs(retDOM));
-
-  NS_ENSURE_SUCCESS(rv, nullptr);
-  NS_ENSURE_TRUE(retDOM, nullptr);
+  RefPtr<Element> ret =
+    CreateAnonymousElement(nsGkAtoms::span,
+                           aParentNode,
+                           NS_LITERAL_STRING("mozResizer"),
+                           false);
+  if (NS_WARN_IF(!ret)) {
+    return nullptr;
+  }
 
   // add the mouse listener so we can detect a click on a resizer
-  nsCOMPtr<nsIDOMEventTarget> evtTarget = do_QueryInterface(retDOM);
+  nsCOMPtr<nsIDOMEventTarget> evtTarget = do_QueryInterface(ret);
   evtTarget->AddEventListener(NS_LITERAL_STRING("mousedown"), mEventListener,
                               true);
 
@@ -183,9 +182,8 @@ HTMLEditor::CreateResizer(int16_t aLocation,
       break;
   }
 
-  nsCOMPtr<Element> ret = do_QueryInterface(retDOM);
-  rv = ret->SetAttr(kNameSpaceID_None, nsGkAtoms::anonlocation, locationStr,
-                    true);
+  nsresult rv =
+    ret->SetAttr(kNameSpaceID_None, nsGkAtoms::anonlocation, locationStr, true);
   NS_ENSURE_SUCCESS(rv, nullptr);
   return ret.forget();
 }
@@ -195,20 +193,15 @@ HTMLEditor::CreateShadow(nsIDOMNode* aParentNode,
                          nsIDOMElement* aOriginalObject)
 {
   // let's create an image through the element factory
-  nsAutoString name;
+  nsCOMPtr<nsIAtom> name;
   if (HTMLEditUtils::IsImage(aOriginalObject)) {
-    name.AssignLiteral("img");
+    name = nsGkAtoms::img;
   } else {
-    name.AssignLiteral("span");
+    name = nsGkAtoms::span;
   }
-  nsCOMPtr<nsIDOMElement> retDOM;
-  CreateAnonymousElement(name, aParentNode,
-                         NS_LITERAL_STRING("mozResizingShadow"), true,
-                         getter_AddRefs(retDOM));
-
-  NS_ENSURE_TRUE(retDOM, nullptr);
-
-  nsCOMPtr<Element> ret = do_QueryInterface(retDOM);
+  RefPtr<Element> ret =
+    CreateAnonymousElement(name, aParentNode,
+                           NS_LITERAL_STRING("mozResizingShadow"), true);
   return ret.forget();
 }
 
@@ -216,12 +209,9 @@ already_AddRefed<Element>
 HTMLEditor::CreateResizingInfo(nsIDOMNode* aParentNode)
 {
   // let's create an info box through the element factory
-  nsCOMPtr<nsIDOMElement> retDOM;
-  CreateAnonymousElement(NS_LITERAL_STRING("span"), aParentNode,
-                         NS_LITERAL_STRING("mozResizingInfo"), true,
-                         getter_AddRefs(retDOM));
-
-  nsCOMPtr<Element> ret = do_QueryInterface(retDOM);
+  RefPtr<Element> ret =
+    CreateAnonymousElement(nsGkAtoms::span, aParentNode,
+                           NS_LITERAL_STRING("mozResizingInfo"), true);
   return ret.forget();
 }
 
@@ -251,16 +241,16 @@ HTMLEditor::SetAllResizersPosition()
   int32_t rw  = (int32_t)((resizerWidth + 1) / 2);
   int32_t rh =  (int32_t)((resizerHeight+ 1) / 2);
 
-  SetAnonymousElementPosition(x-rw,     y-rh, static_cast<nsIDOMElement*>(GetAsDOMNode(mTopLeftHandle)));
-  SetAnonymousElementPosition(x+w/2-rw, y-rh, static_cast<nsIDOMElement*>(GetAsDOMNode(mTopHandle)));
-  SetAnonymousElementPosition(x+w-rw-1, y-rh, static_cast<nsIDOMElement*>(GetAsDOMNode(mTopRightHandle)));
+  SetAnonymousElementPosition(x-rw,     y-rh, mTopLeftHandle);
+  SetAnonymousElementPosition(x+w/2-rw, y-rh, mTopHandle);
+  SetAnonymousElementPosition(x+w-rw-1, y-rh, mTopRightHandle);
 
-  SetAnonymousElementPosition(x-rw,     y+h/2-rh, static_cast<nsIDOMElement*>(GetAsDOMNode(mLeftHandle)));
-  SetAnonymousElementPosition(x+w-rw-1, y+h/2-rh, static_cast<nsIDOMElement*>(GetAsDOMNode(mRightHandle)));
+  SetAnonymousElementPosition(x-rw,     y+h/2-rh, mLeftHandle);
+  SetAnonymousElementPosition(x+w-rw-1, y+h/2-rh, mRightHandle);
 
-  SetAnonymousElementPosition(x-rw,     y+h-rh-1, static_cast<nsIDOMElement*>(GetAsDOMNode(mBottomLeftHandle)));
-  SetAnonymousElementPosition(x+w/2-rw, y+h-rh-1, static_cast<nsIDOMElement*>(GetAsDOMNode(mBottomHandle)));
-  SetAnonymousElementPosition(x+w-rw-1, y+h-rh-1, static_cast<nsIDOMElement*>(GetAsDOMNode(mBottomRightHandle)));
+  SetAnonymousElementPosition(x-rw,     y+h-rh-1, mBottomLeftHandle);
+  SetAnonymousElementPosition(x+w/2-rw, y+h-rh-1, mBottomHandle);
+  SetAnonymousElementPosition(x+w-rw-1, y+h-rh-1, mBottomRightHandle);
 
   return NS_OK;
 }
@@ -728,7 +718,7 @@ HTMLEditor::SetShadowPosition(Element* aShadow,
                               int32_t aOriginalObjectX,
                               int32_t aOriginalObjectY)
 {
-  SetAnonymousElementPosition(aOriginalObjectX, aOriginalObjectY, static_cast<nsIDOMElement*>(GetAsDOMNode(aShadow)));
+  SetAnonymousElementPosition(aOriginalObjectX, aOriginalObjectY, aShadow);
 
   if (HTMLEditUtils::IsImage(aOriginalObject)) {
     nsAutoString imageSource;
@@ -920,35 +910,30 @@ HTMLEditor::SetFinalSize(int32_t aX,
   // we want one transaction only from a user's point of view
   AutoEditBatch batchIt(this);
 
-  NS_NAMED_LITERAL_STRING(widthStr,  "width");
-  NS_NAMED_LITERAL_STRING(heightStr, "height");
-
-  nsCOMPtr<Element> resizedObject = do_QueryInterface(mResizedObject);
-  NS_ENSURE_TRUE(resizedObject, );
   if (mResizedObjectIsAbsolutelyPositioned) {
     if (setHeight) {
-      mCSSEditUtils->SetCSSPropertyPixels(*resizedObject, *nsGkAtoms::top, y);
+      mCSSEditUtils->SetCSSPropertyPixels(*mResizedObject, *nsGkAtoms::top, y);
     }
     if (setWidth) {
-      mCSSEditUtils->SetCSSPropertyPixels(*resizedObject, *nsGkAtoms::left, x);
+      mCSSEditUtils->SetCSSPropertyPixels(*mResizedObject, *nsGkAtoms::left, x);
     }
   }
   if (IsCSSEnabled() || mResizedObjectIsAbsolutelyPositioned) {
     if (setWidth && mResizedObject->HasAttr(kNameSpaceID_None, nsGkAtoms::width)) {
-      RemoveAttribute(static_cast<nsIDOMElement*>(GetAsDOMNode(mResizedObject)), widthStr);
+      RemoveAttribute(mResizedObject, nsGkAtoms::width);
     }
 
     if (setHeight && mResizedObject->HasAttr(kNameSpaceID_None,
                                              nsGkAtoms::height)) {
-      RemoveAttribute(static_cast<nsIDOMElement*>(GetAsDOMNode(mResizedObject)), heightStr);
+      RemoveAttribute(mResizedObject, nsGkAtoms::height);
     }
 
     if (setWidth) {
-      mCSSEditUtils->SetCSSPropertyPixels(*resizedObject, *nsGkAtoms::width,
+      mCSSEditUtils->SetCSSPropertyPixels(*mResizedObject, *nsGkAtoms::width,
                                           width);
     }
     if (setHeight) {
-      mCSSEditUtils->SetCSSPropertyPixels(*resizedObject, *nsGkAtoms::height,
+      mCSSEditUtils->SetCSSPropertyPixels(*mResizedObject, *nsGkAtoms::height,
                                           height);
     }
   } else {
@@ -958,30 +943,30 @@ HTMLEditor::SetFinalSize(int32_t aX,
     // triggering an immediate reflow; otherwise, we have problems
     // with asynchronous reflow
     if (setWidth) {
-      mCSSEditUtils->SetCSSPropertyPixels(*resizedObject, *nsGkAtoms::width,
+      mCSSEditUtils->SetCSSPropertyPixels(*mResizedObject, *nsGkAtoms::width,
                                           width);
     }
     if (setHeight) {
-      mCSSEditUtils->SetCSSPropertyPixels(*resizedObject, *nsGkAtoms::height,
+      mCSSEditUtils->SetCSSPropertyPixels(*mResizedObject, *nsGkAtoms::height,
                                           height);
     }
     if (setWidth) {
       nsAutoString w;
       w.AppendInt(width);
-      SetAttribute(static_cast<nsIDOMElement*>(GetAsDOMNode(mResizedObject)), widthStr, w);
+      SetAttribute(mResizedObject, nsGkAtoms::width, w);
     }
     if (setHeight) {
       nsAutoString h;
       h.AppendInt(height);
-      SetAttribute(static_cast<nsIDOMElement*>(GetAsDOMNode(mResizedObject)), heightStr, h);
+      SetAttribute(mResizedObject, nsGkAtoms::height, h);
     }
 
     if (setWidth) {
-      mCSSEditUtils->RemoveCSSProperty(*resizedObject, *nsGkAtoms::width,
+      mCSSEditUtils->RemoveCSSProperty(*mResizedObject, *nsGkAtoms::width,
                                        EmptyString());
     }
     if (setHeight) {
-      mCSSEditUtils->RemoveCSSProperty(*resizedObject, *nsGkAtoms::height,
+      mCSSEditUtils->RemoveCSSProperty(*mResizedObject, *nsGkAtoms::height,
                                        EmptyString());
     }
   }

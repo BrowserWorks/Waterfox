@@ -1161,7 +1161,9 @@ DownloadsPlacesView.prototype = {
   isCommandEnabled(aCommand) {
     switch (aCommand) {
       case "cmd_copy":
-        return this._richlistbox.selectedItems.length > 0;
+      case "downloadsCmd_openReferrer":
+      case "downloadShowMenuItem":
+        return this._richlistbox.selectedItems.length == 1;
       case "cmd_selectAll":
         return true;
       case "cmd_paste":
@@ -1215,7 +1217,7 @@ DownloadsPlacesView.prototype = {
       let [url, name] = data.value.QueryInterface(Ci.nsISupportsString)
                             .data.split("\n");
       if (url) {
-        return [NetUtil.newURI(url, null, null).spec, name];
+        return [NetUtil.newURI(url).spec, name];
       }
     } catch (ex) {}
 
@@ -1295,6 +1297,7 @@ DownloadsPlacesView.prototype = {
     let download = element._shell.download;
     contextMenu.setAttribute("state",
                              DownloadsCommon.stateOfDownload(download));
+    contextMenu.setAttribute("exists", "true");
     contextMenu.classList.toggle("temporary-block",
                                  !!download.hasBlockedData);
 

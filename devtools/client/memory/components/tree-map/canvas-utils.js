@@ -51,7 +51,7 @@ Canvases.prototype = {
    *
    * @return {type}  description
    */
-  destroy : function () {
+  destroy: function () {
     this.removeHandlers();
     this.container.removeChild(this.main.canvas);
     this.container.removeChild(this.zoom.canvas);
@@ -125,10 +125,10 @@ function handleResizes(canvases, debounceRate) {
     ? debounce(resize, debounceRate)
     : resize;
 
-  window.addEventListener("resize", debouncedResize, false);
+  window.addEventListener("resize", debouncedResize);
   resize();
 
   return function removeResizeHandlers() {
-    window.removeEventListener("resize", debouncedResize, false);
+    window.removeEventListener("resize", debouncedResize);
   };
 }

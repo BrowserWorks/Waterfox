@@ -75,12 +75,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         this._mayTrimURLs = this._prefs.getBoolPref("trimURLs");
         this._cacheUserMadeSearchSuggestionsChoice();
         this.inputField.controllers.insertControllerAt(0, this._copyCutController);
-        this.inputField.addEventListener("paste", this, false);
-        this.inputField.addEventListener("mousedown", this, false);
-        this.inputField.addEventListener("mousemove", this, false);
-        this.inputField.addEventListener("mouseout", this, false);
-        this.inputField.addEventListener("overflow", this, false);
-        this.inputField.addEventListener("underflow", this, false);
+        this.inputField.addEventListener("paste", this);
+        this.inputField.addEventListener("mousedown", this);
+        this.inputField.addEventListener("mousemove", this);
+        this.inputField.addEventListener("mouseout", this);
+        this.inputField.addEventListener("overflow", this);
+        this.inputField.addEventListener("underflow", this);
 
         var textBox = document.getAnonymousElementByAttribute(this,
                                                 "anonid", "textbox-input-box");
@@ -96,7 +96,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             pasteAndGo.removeAttribute("disabled");
           else
             pasteAndGo.setAttribute("disabled", "true");
-        }, false);
+        });
 
         var insertLocation = cxmenu.firstChild;
         while (insertLocation.nextSibling &&
@@ -120,12 +120,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         this._prefs.removeObserver("", this);
         this._prefs = null;
         this.inputField.controllers.removeController(this._copyCutController);
-        this.inputField.removeEventListener("paste", this, false);
-        this.inputField.removeEventListener("mousedown", this, false);
-        this.inputField.removeEventListener("mousemove", this, false);
-        this.inputField.removeEventListener("mouseout", this, false);
-        this.inputField.removeEventListener("overflow", this, false);
-        this.inputField.removeEventListener("underflow", this, false);
+        this.inputField.removeEventListener("paste", this);
+        this.inputField.removeEventListener("mousedown", this);
+        this.inputField.removeEventListener("mousemove", this);
+        this.inputField.removeEventListener("mouseout", this);
+        this.inputField.removeEventListener("overflow", this);
+        this.inputField.removeEventListener("underflow", this);
       ]]></destructor>
 
       <field name="_value">""</field>
@@ -554,9 +554,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           let params = {
             postData,
             allowThirdPartyFixup: true,
-            currentBrowser: browser,
           };
           if (openUILinkWhere == "current") {
+            params.targetBrowser = browser;
             params.indicateErrorPageLoad = true;
             params.allowPinnedTabHostChange = true;
             params.disallowInheritPrincipal = !mayInheritPrincipal;
@@ -700,42 +700,81 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         ]]></body>
       </method>
 
+      <!-- Returns:
+           null if there's a security issue and we should do nothing.
+           a URL object if there is one that we're OK with loading,
+           a text value otherwise.
+           -->
+      <method name="_getDroppableItem">
+        <parameter name="aEvent"/>
+        <body><![CDATA[
+          let links;
+          try {
+            links = browserDragAndDrop.dropLinks(aEvent);
+          } catch (ex) {
+            // this is possibly a security exception, in which case we should return
+            // null. Always return null because we can't *know* what exception is
+            // being returned.
+            return null;
+          }
+          // The URL bar automatically handles inputs with newline characters,
+          // so we can get away with treating text/x-moz-url flavours as text/plain.
+          if (links.length > 0 && links[0].url) {
+            aEvent.preventDefault();
+            let url = links[0].url;
+            let strippedURL = stripUnsafeProtocolOnPaste(url);
+            if (strippedURL != url) {
+              aEvent.stopImmediatePropagation();
+              return null;
+            }
+            let urlObj;
+            try {
+              // If this throws, urlSecurityCheck would also throw, as that's what it
+              // does with things that don't pass the IO service's newURI constructor
+              // without fixup. It's conceivable we may want to relax this check in
+              // the future (so e.g. www.foo.com gets fixed up), but not right now.
+              urlObj = new URL(url);
+              // If we succeed, try to pass security checks. If this works, return the
+              // URL object. If the *security checks* fail, return null.
+              try {
+                urlSecurityCheck(url,
+                                 gBrowser.contentPrincipal,
+                                 Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
+                return urlObj;
+              } catch (ex) {
+                return null;
+              }
+            } catch (ex) {
+              // We couldn't make a URL out of this. Continue on, and return text below.
+            }
+          }
+          return aEvent.dataTransfer.getData("text/unicode");
+        ]]></body>
+      </method>
+
       <method name="onDragOver">
         <parameter name="aEvent"/>
-        <body>
-          var types = aEvent.dataTransfer.types;
-          if (types.includes("application/x-moz-file") ||
-              types.includes("text/x-moz-url") ||
-              types.includes("text/uri-list") ||
-              types.includes("text/unicode"))
-            aEvent.preventDefault();
-        </body>
+        <body><![CDATA[
+          if (!this._getDroppableItem(aEvent)) {
+            aEvent.dataTransfer.dropEffect = "none";
+          }
+        ]]></body>
       </method>
 
       <method name="onDrop">
         <parameter name="aEvent"/>
         <body><![CDATA[
-          let links = browserDragAndDrop.dropLinks(aEvent);
-
-          // The URL bar automatically handles inputs with newline characters,
-          // so we can get away with treating text/x-moz-url flavours as text/plain.
-          if (links.length > 0 && links[0].url) {
-            let url = links[0].url;
-            aEvent.preventDefault();
-            this.value = url;
+          let droppedItem = this._getDroppableItem(aEvent);
+          if (droppedItem) {
+            this.value = droppedItem instanceof URL ? droppedItem.href : droppedItem;
             SetPageProxyState("invalid");
             this.focus();
-            try {
-              urlSecurityCheck(url,
-                               gBrowser.contentPrincipal,
-                               Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
-            } catch (ex) {
-              return;
+            if (droppedItem instanceof URL) {
+              this.handleCommand();
+              // Force not showing the dropped URI immediately.
+              gBrowser.userTypedValue = null;
+              URLBarSetURI();
             }
-            this.handleCommand();
-            // Force not showing the dropped URI immediately.
-            gBrowser.userTypedValue = null;
-            URLBarSetURI();
           }
         ]]></body>
       </method>
@@ -744,7 +783,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         <body><![CDATA[
           // Grab the actual input field's value, not our value, which could include moz-action:
           var inputVal = this.inputField.value;
-          var selectedVal = inputVal.substring(this.selectionStart, this.selectionEnd);
+          let selection = this.editor.selection;
+          var selectedVal = selection.toString();
+
+          // Handle multiple-range selection as a string for simplicity.
+          if (selection.rangeCount > 1) {
+             return selectedVal;
+          }
 
           // If the selection doesn't start at the beginning or doesn't span the full domain or
           // the URL bar is modified or there is no text at all, nothing else to do here.
@@ -783,19 +828,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             uri = uriFixup.createExposableURI(uri);
           } catch (ex) {}
 
-          // If the entire URL is selected, just use the actual loaded URI.
-          if (inputVal == selectedVal) {
-            // ... but only if  isn't a javascript: or data: URI, since those
-            // are hard to read when encoded
-            if (!uri.schemeIs("javascript") && !uri.schemeIs("data")) {
-              selectedVal = uri.spec;
-            }
-
-            return selectedVal;
+          // If the entire URL is selected, just use the actual loaded URI,
+          // unless we want a decoded URI, or it's a data: or javascript: URI,
+          // since those are hard to read when encoded.
+          if (inputVal == selectedVal &&
+              !uri.schemeIs("javascript") && !uri.schemeIs("data") &&
+              !Services.prefs.getBoolPref("browser.urlbar.decodeURLsOnCopy")) {
+            return uri.spec;
           }
 
-          // Just the beginning of the URL is selected, check for a trimmed
-          // value
+          // Just the beginning of the URL is selected, or we want a decoded
+          // url. First check for a trimmed value.
           let spec = uri.spec;
           let trimmedSpec = this.trimValue(spec);
           if (spec != trimmedSpec) {
@@ -813,7 +856,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
       <field name="_copyCutController"><![CDATA[
         ({
           urlbar: this,
-          doCommand: function(aCommand) {
+          doCommand(aCommand) {
             var urlbar = this.urlbar;
             var val = urlbar._getSelectedValueForClipboard();
             if (!val)
@@ -837,7 +880,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               .getService(Ci.nsIClipboardHelper)
               .copyString(val);
           },
-          supportsCommand: function(aCommand) {
+          supportsCommand(aCommand) {
             switch (aCommand) {
               case "cmd_copy":
               case "cmd_cut":
@@ -845,12 +888,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             }
             return false;
           },
-          isCommandEnabled: function(aCommand) {
+          isCommandEnabled(aCommand) {
             return this.supportsCommand(aCommand) &&
                    (aCommand != "cmd_cut" || !this.urlbar.readOnly) &&
                    this.urlbar.selectionStart < this.urlbar.selectionEnd;
           },
-          onEvent: function(aEventName) {}
+          onEvent(aEventName) {}
         })
       ]]></field>
 
@@ -926,7 +969,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                 // Unfortunately we're not allowed to set the bits being pasted
                 // so cancel this event:
                 aEvent.preventDefault();
-                aEvent.stopPropagation();
+                aEvent.stopImmediatePropagation();
 
                 this.inputField.value = oldStart + pasteData + oldEnd;
                 // Fix up cursor/selection:
@@ -1007,7 +1050,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           let [, type, params] = aUrl.match(MOZ_ACTION_REGEX);
 
           let action = {
-            type: type,
+            type,
           };
 
           action.params = JSON.parse(params);
@@ -1102,13 +1145,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           // handleEnter, in such a case it won't have been cleared.
           this.handleEnterInstance = {
             searchString: this.mController.searchString,
-            event: event
+            event
           };
 
           if (this.popup.selectedIndex != 0 || this.gotResultForCurrentQuery) {
             this.maybeCanonizeURL(event, this.value);
             let rv = this.mController.handleEnter(false, event);
             this.handleEnterInstance = null;
+            this.popup.overrideValue = null;
             return rv;
           }
 
@@ -1183,6 +1227,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         if (event.originalTarget == this.inputField) {
           this._hideURLTooltip();
           this.formatValue();
+          if (this.getAttribute("pageproxystate") != "valid") {
+            UpdatePopupNotificationsVisibility();
+          }
         }
       ]]></handler>
 
@@ -1190,6 +1237,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         if (event.originalTarget == this.inputField) {
           this._clearNoActions();
           this.formatValue();
+          if (this.getAttribute("pageproxystate") != "valid") {
+            UpdatePopupNotificationsVisibility();
+          }
         }
         if (ExtensionSearchHandler.hasActiveInputSession()) {
           ExtensionSearchHandler.handleInputCancelled();
@@ -1246,87 +1296,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
       ]]></handler>
     </handlers>
 
-  </binding>
-
-  <!-- Note: this binding is applied to the autocomplete popup used in web page content and extended in search.xml for the searchbar. -->
-  <binding id="browser-autocomplete-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-result-popup">
-    <implementation>
-      <field name="AppConstants" readonly="true">
-        (Components.utils.import("resource://gre/modules/AppConstants.jsm", {})).AppConstants;
-      </field>
-
-      <method name="openAutocompletePopup">
-        <parameter name="aInput"/>
-        <parameter name="aElement"/>
-        <body>
-          <![CDATA[
-          // initially the panel is hidden
-          // to avoid impacting startup / new window performance
-          aInput.popup.hidden = false;
-
-          // this method is defined on the base binding
-          this._openAutocompletePopup(aInput, aElement);
-        ]]></body>
-      </method>
-
-      <method name="onPopupClick">
-        <parameter name="aEvent"/>
-        <body><![CDATA[
-          // Ignore all right-clicks
-          if (aEvent.button == 2)
-            return;
-
-          var controller = this.view.QueryInterface(Components.interfaces.nsIAutoCompleteController);
-
-          var searchBar = BrowserSearch.searchBar;
-          var popupForSearchBar = searchBar && searchBar.textbox == this.mInput;
-          if (popupForSearchBar) {
-            searchBar.telemetrySearchDetails = {
-              index: controller.selection.currentIndex,
-              kind: "mouse"
-            };
-          }
-
-          // Check for unmodified left-click, and use default behavior
-          if (aEvent.button == 0 && !aEvent.shiftKey && !aEvent.ctrlKey &&
-              !aEvent.altKey && !aEvent.metaKey) {
-            controller.handleEnter(true, aEvent);
-            return;
-          }
-
-          // Check for middle-click or modified clicks on the search bar
-          if (popupForSearchBar) {
-            // Handle search bar popup clicks
-            var search = controller.getValueAt(this.selectedIndex);
-
-            // open the search results according to the clicking subtlety
-            var where = whereToOpenLink(aEvent, false, true);
-            let params = {};
-
-            // But open ctrl/cmd clicks on autocomplete items in a new background tab.
-            let modifier = this.AppConstants.platform == "macosx" ?
-                           aEvent.metaKey :
-                           aEvent.ctrlKey;
-            if (where == "tab" && (aEvent instanceof MouseEvent) &&
-                (aEvent.button == 1 || modifier))
-              params.inBackground = true;
-
-            // leave the popup open for background tab loads
-            if (!(where == "tab" && params.inBackground)) {
-              // close the autocomplete popup and revert the entered search term
-              this.closePopup();
-              controller.handleEscape();
-            }
-
-            searchBar.doSearch(search, where, null, params);
-            if (where == "tab" && params.inBackground)
-              searchBar.focus();
-            else
-              searchBar.value = search;
-          }
-        ]]></body>
-      </method>
-    </implementation>
   </binding>
 
   <binding id="urlbar-rich-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-rich-result-popup">
@@ -1526,7 +1495,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         </getter>
       </property>
 
-      <property name="maxResults" readonly="true">
+      <property name="maxResults">
         <getter>
           <![CDATA[
             if (!this._maxResults) {
@@ -1538,6 +1507,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             return this._maxResults;
           ]]>
         </getter>
+        <setter>
+          <![CDATA[
+            return this._maxResults = parseInt(val);
+          ]]>
+        </setter>
       </property>
 
       <method name="openAutocompletePopup">
@@ -1626,8 +1600,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               document.getElementById("identity-icon").getBoundingClientRect();
             this.siteIconStart = popupDirection == "rtl" ? identityRect.right
                                                          : identityRect.left;
-          }
-          else {
+          } else {
             // Reset the alignment so that the site icons are positioned
             // according to whatever's in the CSS.
             this.siteIconStart = undefined;
@@ -1820,7 +1793,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             }
 
             let types = item.getAttribute("type").split(/\s+/);
-            let type = types.find(type => type != "action" && type != "heuristic");
+            let type = types.find(t => t != "action" && t != "heuristic");
             try {
               // Some types intentionally do not map to strings, which is not
               // an error.
@@ -1859,6 +1832,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                 if (this.input.mController.searchString == searchString) {
                   this.input.maybeCanonizeURL(event, searchString);
                   this.input.mController.handleEnter(false, event);
+                  this.overrideValue = null;
                 }
               }, 0);
             }
@@ -1880,7 +1854,99 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           //    the default -1 value. Then handleEnter will know it should not
           //    delay the action, cause a result wont't ever arrive.
           this.input.controller.setInitiallySelectedIndex(0);
-          this.overrideValue = null;
+        ]]></body>
+      </method>
+
+      <field name="_addonIframe">null</field>
+      <field name="_addonIframeOwner">null</field>
+      <field name="_addonIframeOverriddenFunctionsByName">{}</field>
+
+      <!-- These methods must be overridden and properly handled by the API
+           runtime so that it doesn't break the popup.  If any of these methods
+           is not overridden, then initAddonIframe should throw. -->
+      <field name="_addonIframeOverrideFunctionNames">[
+        "_invalidate",
+      ]</field>
+
+      <field name="_addonIframeHiddenAnonids">[
+        "search-suggestions-notification",
+        "richlistbox",
+        "one-off-search-buttons",
+      ]</field>
+      <field name="_addonIframeHiddenDisplaysByAnonid">{}</field>
+
+      <method name="initAddonIframe">
+        <parameter name="owner"/>
+        <parameter name="overrides"/>
+        <body><![CDATA[
+          if (this._addonIframeOwner) {
+            // Another add-on has already requested the iframe.  Return null to
+            // signal to the calling add-on that it should not take over the
+            // popup.  First add-on wins for now.
+            return null;
+          }
+          // Make sure all overrides are provided before doing anything.
+          for (let name of this._addonIframeOverrideFunctionNames) {
+            if (typeof(overrides[name]) != "function") {
+              throw new Error(
+                "Override for method '" + name + "' must be given"
+              );
+            }
+          }
+          // OK, insert the iframe.
+          this._addonIframeOwner = owner;
+          this._addonIframe = this._makeAddonIframe();
+          this._addonIframeOverriddenFunctionsByName = {};
+          for (let name of this._addonIframeOverrideFunctionNames) {
+            this._addonIframeOverriddenFunctionsByName[name] = this[name];
+            this[name] = overrides[name];
+          }
+          return this._addonIframe;
+        ]]></body>
+      </method>
+
+      <method name="destroyAddonIframe">
+        <parameter name="owner"/>
+        <body><![CDATA[
+          if (this._addonIframeOwner != owner) {
+            throw new Error("You're not the iframe owner");
+          }
+          this._addonIframeOwner = null;
+          this._addonIframe.remove();
+          this._addonIframe = null;
+          for (let anonid of this._addonIframeHiddenAnonids) {
+            let child = document.getAnonymousElementByAttribute(
+              this, "anonid", anonid
+            );
+            child.style.display =
+              this._addonIframeHiddenDisplaysByAnonid[anonid];
+          }
+          for (let name in this._addonIframeOverriddenFunctionsByName) {
+            this[name] = this._addonIframeOverriddenFunctionsByName[name];
+          }
+          this._addonIframeOverriddenFunctionsByName = {};
+        ]]></body>
+      </method>
+
+      <method name="_makeAddonIframe">
+        <body><![CDATA[
+          this._addonIframeHiddenDisplaysByAnonid = {};
+          for (let anonid of this._addonIframeHiddenAnonids) {
+            let child = document.getAnonymousElementByAttribute(
+              this, "anonid", anonid
+            );
+            this._addonIframeHiddenDisplaysByAnonid[anonid] =
+              child.style.display;
+            child.style.display = "none";
+          }
+          let XUL_NS =
+            "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+          let iframe = document.createElementNS(XUL_NS, "iframe");
+          iframe.setAttribute("type", "content");
+          iframe.setAttribute("flex", "1");
+          iframe.style.transition = "height 100ms";
+          this.appendChild(iframe);
+          return iframe;
         ]]></body>
       </method>
 
@@ -1964,8 +2030,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         <body><![CDATA[
           if (aMaxProgress == -1) {
             this.progressmeter.setAttribute("mode", "undetermined");
-          }
-          else {
+          } else {
             this.progressmeter.setAttribute("mode", "determined");
             this.progressmeter.setAttribute("value", (aProgress * 100) / aMaxProgress);
           }
@@ -2006,8 +2071,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           installs.forEach(function(aInstall) {
             try {
               aInstall.cancel();
-            }
-            catch (e) {
+            } catch (e) {
               // Cancel will throw if the download has already failed
             }
           }, this);
@@ -2045,8 +2109,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             } else {
               PopupNotifications.remove(this.notification);
             }
-          }
-          else {
+          } else {
             this.setProgress(progress, maxProgress);
           }
         ]]></body>
@@ -2113,8 +2176,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         if (this.action.fallbackType == Ci.nsIObjectLoadingContent.PLUGIN_ACTIVE) {
           if (this.action.pluginPermissionType == Ci.nsIPermissionManager.EXPIRE_SESSION) {
             curState = "allownow";
-          }
-          else {
+          } else {
             curState = "allowalways";
           }
         }
@@ -2137,8 +2199,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             gPluginHandler.managePlugins();
           };
           document.getAnonymousElementByAttribute(this, "anonid", "center-item-warning-icon").hidden = true;
-        }
-        else {
+        } else {
           url = this.action.detailsLink;
 
           switch (this.action.blocklistState) {
@@ -2182,10 +2243,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             link.href = url;
           }
           if (linkHandler) {
-            link.addEventListener("click", linkHandler, false);
+            link.addEventListener("click", linkHandler);
           }
-        }
-        else {
+        } else {
           link.hidden = true;
         }
       ]]></constructor>
@@ -2334,8 +2394,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                              child.action.permissionString;
             }
             showBox.hidden = false;
-          }
-          else {
+          } else {
             for (let child of this.childNodes) {
               if (child.tagName != "row") {
                 continue;
@@ -2396,8 +2455,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             if (isWindowPrivate) {
               this._buttonContainer.hidden = true;
             }
-          }
-          else if (action.pluginTag.enabledState == Ci.nsIPluginTag.STATE_DISABLED) {
+          } else if (action.pluginTag.enabledState == Ci.nsIPluginTag.STATE_DISABLED) {
             let linkElement =
               document.getAnonymousElementByAttribute(
                          this, "anonid", "click-to-play-plugins-notification-link");
@@ -2409,16 +2467,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               "pluginActivateDisabled.message", [action.pluginName, this._brandShortName]) + " ";
             this._buttonContainer.hidden = true;
             return;
-          }
-          else if (action.blocklistState == Ci.nsIBlocklistService.STATE_BLOCKED) {
+          } else if (action.blocklistState == Ci.nsIBlocklistService.STATE_BLOCKED) {
             let descElement = document.getAnonymousElementByAttribute(this, "anonid", "click-to-play-plugins-notification-description");
             descElement.textContent = gNavigatorBundle.getFormattedString(
               "pluginActivateBlocked.message", [action.pluginName, this._brandShortName]) + " ";
             this._setupLink("pluginActivate.learnMore", action.detailsLink);
             this._buttonContainer.hidden = true;
             return;
-          }
-          else {
+          } else {
             button1 = {
               label: "pluginActivateNow.label",
               accesskey: "pluginActivateNow.accesskey",
@@ -2470,8 +2526,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           this._secondaryButton.setAttribute("action", button2.action);
           if (button1.default) {
             this._primaryButton.setAttribute("default", "true");
-          }
-          else if (button2.default) {
+          } else if (button2.default) {
             this._secondaryButton.setAttribute("default", "true");
           }
         ]]></body>
@@ -2581,8 +2636,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           aEvent.preventDefault();
           if (this._primaryButton.getAttribute("default") == "true") {
             this._primaryButton.click();
-          }
-          else if (this._secondaryButton.getAttribute("default") == "true") {
+          } else if (this._secondaryButton.getAttribute("default") == "true") {
             this._secondaryButton.click();
           }
         ]]></body>
@@ -2595,131 +2649,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
     </handlers>
   </binding>
 
-  <binding id="splitmenu">
-    <content>
-      <xul:hbox anonid="menuitem" flex="1"
-                class="splitmenu-menuitem"
-                xbl:inherits="iconic,label,disabled,onclick=oncommand,_moz-menuactive=active"/>
-      <xul:menu anonid="menu" class="splitmenu-menu"
-                xbl:inherits="disabled,_moz-menuactive=active"
-                oncommand="event.stopPropagation();">
-        <children includes="menupopup"/>
-      </xul:menu>
-    </content>
-
-    <implementation implements="nsIDOMEventListener">
-      <constructor><![CDATA[
-        this._parentMenupopup.addEventListener("DOMMenuItemActive", this, false);
-        this._parentMenupopup.addEventListener("popuphidden", this, false);
-      ]]></constructor>
-
-      <destructor><![CDATA[
-        this._parentMenupopup.removeEventListener("DOMMenuItemActive", this, false);
-        this._parentMenupopup.removeEventListener("popuphidden", this, false);
-      ]]></destructor>
-
-      <field name="menuitem" readonly="true">
-        document.getAnonymousElementByAttribute(this, "anonid", "menuitem");
-      </field>
-      <field name="menu" readonly="true">
-        document.getAnonymousElementByAttribute(this, "anonid", "menu");
-      </field>
-
-      <field name="_menuDelay">600</field>
-
-      <field name="_parentMenupopup"><![CDATA[
-        this._getParentMenupopup(this);
-      ]]></field>
-
-      <method name="_getParentMenupopup">
-        <parameter name="aNode"/>
-        <body><![CDATA[
-          let node = aNode.parentNode;
-          while (node) {
-            if (node.localName == "menupopup")
-              break;
-            node = node.parentNode;
-          }
-          return node;
-        ]]></body>
-      </method>
-
-      <method name="handleEvent">
-        <parameter name="event"/>
-        <body><![CDATA[
-          switch (event.type) {
-            case "DOMMenuItemActive":
-              if (this.getAttribute("active") == "true" &&
-                  event.target != this &&
-                  this._getParentMenupopup(event.target) == this._parentMenupopup)
-                this.removeAttribute("active");
-              break;
-            case "popuphidden":
-              if (event.target == this._parentMenupopup)
-                this.removeAttribute("active");
-              break;
-          }
-        ]]></body>
-      </method>
-    </implementation>
-
-    <handlers>
-      <handler event="mouseover"><![CDATA[
-        if (this.getAttribute("active") != "true") {
-          this.setAttribute("active", "true");
-
-          let event = document.createEvent("Events");
-          event.initEvent("DOMMenuItemActive", true, false);
-          this.dispatchEvent(event);
-
-          if (this.getAttribute("disabled") != "true") {
-            let self = this;
-            setTimeout(function () {
-              if (self.getAttribute("active") == "true")
-                self.menu.open = true;
-            }, this._menuDelay);
-          }
-        }
-      ]]></handler>
-
-      <handler event="popupshowing"><![CDATA[
-        if (event.target == this.firstChild &&
-            this._parentMenupopup._currentPopup)
-          this._parentMenupopup._currentPopup.hidePopup();
-      ]]></handler>
-
-      <handler event="click" phase="capturing"><![CDATA[
-        if (this.getAttribute("disabled") == "true") {
-          // Prevent the command from being carried out
-          event.stopPropagation();
-          return;
-        }
-
-        let node = event.originalTarget;
-        while (true) {
-          if (node == this.menuitem)
-            break;
-          if (node == this)
-            return;
-          node = node.parentNode;
-        }
-
-        this._parentMenupopup.hidePopup();
-      ]]></handler>
-    </handlers>
-  </binding>
-
-  <binding id="menuitem-tooltip" extends="chrome://global/content/bindings/menu.xml#menuitem">
-    <implementation>
-      <constructor><![CDATA[
-        this.setAttribute("tooltiptext", this.getAttribute("acceltext"));
-        // TODO: Simplify this to this.setAttribute("acceltext", "") once bug
-        // 592424 is fixed
-        document.getAnonymousElementByAttribute(this, "anonid", "accel").firstChild.setAttribute("value", "");
-      ]]></constructor>
-    </implementation>
-  </binding>
-
+  <!-- This binding is only retained for add-ons compatibility -->
   <binding id="menuitem-iconic-tooltip" extends="chrome://global/content/bindings/menu.xml#menuitem-iconic">
     <implementation>
       <constructor><![CDATA[

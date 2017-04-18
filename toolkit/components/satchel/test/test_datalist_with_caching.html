@@ -30,6 +30,9 @@ Form History test: form field autocomplete
 
 <pre id="test">
 <script class="testbody" type="text/javascript">
+/* import-globals-from ../../../../testing/mochitest/tests/SimpleTest/EventUtils.js */
+/* import-globals-from ../../../../testing/mochitest/tests/SimpleTest/SpawnTask.js */
+/* import-globals-from satchel_common.js */
 
 var input = $_(1, "field1");
 
@@ -76,8 +79,7 @@ function popupShownListener() {
   if (expectingPopup) {
     expectingPopup();
     expectingPopup = null;
-  }
-  else {
+  } else {
     ok(false, "Autocomplete popup not expected during test " + testNum);
   }
 }
@@ -94,7 +96,7 @@ function checkMenuEntries(expectedValues) {
   var actualValues = getMenuEntries();
   is(actualValues.length, expectedValues.length, testNum + " Checking length of expected menu");
   for (var i = 0; i < expectedValues.length; i++)
-    is(actualValues[i], expectedValues[i], testNum + " Checking menu entry #"+i);
+    is(actualValues[i], expectedValues[i], testNum + " Checking menu entry #" + i);
 }
 
 function* runTests() {

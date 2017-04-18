@@ -5,6 +5,8 @@
 package org.mozilla.gecko.home.activitystream.topsites;
 
 import android.graphics.Color;
+import android.support.annotation.Nullable;
+import android.support.v4.widget.TextViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -12,9 +14,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.activitystream.ActivityStream;
+import org.mozilla.gecko.activitystream.ActivityStreamTelemetry;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.home.HomePager;
 import org.mozilla.gecko.home.activitystream.menu.ActivityStreamContextMenu;
+import org.mozilla.gecko.home.activitystream.model.TopSite;
 import org.mozilla.gecko.icons.IconCallback;
 import org.mozilla.gecko.icons.IconResponse;
 import org.mozilla.gecko.icons.Icons;
@@ -34,7 +41,7 @@ class TopSitesCard extends RecyclerView.ViewHolder
     private final ImageView menuButton;
     private Future<IconResponse> ongoingIconLoad;
 
-    private String url;
+    private TopSite topSite;
 
     private final HomePager.OnUrlOpenListener onUrlOpenListener;
     private final HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener;
@@ -58,25 +65,28 @@ class TopSitesCard extends RecyclerView.ViewHolder
         ViewUtil.enableTouchRipple(menuButton);
     }
 
-    void bind(final TopSitesPageAdapter.TopSite topSite) {
-        ActivityStream.extractLabel(itemView.getContext(), topSite.url, true, new ActivityStream.LabelCallback() {
+    void bind(final TopSite topSite) {
+        this.topSite = topSite;
+
+        ActivityStream.extractLabel(itemView.getContext(), topSite.getUrl(), true, new ActivityStream.LabelCallback() {
             @Override
             public void onLabelExtracted(String label) {
                 title.setText(label);
             }
         });
 
-        this.url = topSite.url;
-
         if (ongoingIconLoad != null) {
             ongoingIconLoad.cancel(true);
         }
 
         ongoingIconLoad = Icons.with(itemView.getContext())
-                .pageUrl(topSite.url)
+                .pageUrl(topSite.getUrl())
                 .skipNetwork()
                 .build()
                 .execute(this);
+
+        final int pinResourceId = (topSite.isPinned() ? R.drawable.pin : 0);
+        TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(title, pinResourceId, 0, 0, 0);
     }
 
     @Override
@@ -91,15 +101,32 @@ class TopSitesCard extends RecyclerView.ViewHolder
 
     @Override
     public void onClick(View clickedView) {
+        ActivityStreamTelemetry.Extras.Builder extras = ActivityStreamTelemetry.Extras.builder()
+                .set(ActivityStreamTelemetry.Contract.SOURCE_TYPE, ActivityStreamTelemetry.Contract.TYPE_TOPSITES)
+                .forTopSiteType(topSite.getType());
+
         if (clickedView == itemView) {
-            onUrlOpenListener.onUrlOpen(url, EnumSet.noneOf(HomePager.OnUrlOpenListener.Flags.class));
+            onUrlOpenListener.onUrlOpen(topSite.getUrl(), EnumSet.noneOf(HomePager.OnUrlOpenListener.Flags.class));
+
+            Telemetry.sendUIEvent(
+                    TelemetryContract.Event.LOAD_URL,
+                    TelemetryContract.Method.LIST_ITEM,
+                    extras.build()
+            );
         } else if (clickedView == menuButton) {
             ActivityStreamContextMenu.show(clickedView.getContext(),
                     menuButton,
+                    extras,
                     ActivityStreamContextMenu.MenuMode.TOPSITE,
-                    title.getText().toString(), url,
+                    topSite,
                     onUrlOpenListener, onUrlOpenInBackgroundListener,
                     faviconView.getWidth(), faviconView.getHeight());
+
+            Telemetry.sendUIEvent(
+                    TelemetryContract.Event.SHOW,
+                    TelemetryContract.Method.CONTEXT_MENU,
+                    extras.build()
+            );
         }
     }
 }

@@ -88,38 +88,6 @@ var AdbController = {
 
   updateState: function() {
     this.umsActive = false;
-    this.storages = navigator.getDeviceStorages('sdcard');
-    this.updateStorageState(0);
-  },
-
-  updateStorageState: function(storageIndex) {
-    if (storageIndex >= this.storages.length) {
-      // We've iterated through all of the storage objects, now we can
-      // really do updateStateInternal.
-      this.updateStateInternal();
-      return;
-    }
-    let storage = this.storages[storageIndex];
-    DEBUG && debug("Checking availability of storage: '" + storage.storageName + "'");
-
-    let req = storage.available();
-    req.onsuccess = function(e) {
-      DEBUG && debug("Storage: '" + storage.storageName + "' is '" + e.target.result + "'");
-      if (e.target.result == 'shared') {
-        // We've found a storage area that's being shared with the PC.
-        // We can stop looking now.
-        this.umsActive = true;
-        this.updateStateInternal();
-        return;
-      }
-      this.updateStorageState(storageIndex + 1);
-    }.bind(this);
-    req.onerror = function(e) {
-
-      Cu.reportError("AdbController: error querying storage availability for '" +
-                     this.storages[storageIndex].storageName + "' (ignoring)\n");
-      this.updateStorageState(storageIndex + 1);
-    }.bind(this);
   },
 
   updateStateInternal: function() {
@@ -166,19 +134,6 @@ var AdbController = {
       (!(this.lockEnabled && this.locked) || usbFuncActive);
 
     let useDisableAdbTimer = true;
-    try {
-      if (Services.prefs.getBoolPref("marionette.defaultPrefs.enabled")) {
-        // Marionette is enabled. Marionette requires that adb be on (and also
-        // requires that remote debugging be off). The fact that marionette
-        // is enabled also implies that we're doing a non-production build, so
-        // we want adb enabled all of the time.
-        enableAdb = true;
-        useDisableAdbTimer = false;
-      }
-    } catch (e) {
-      // This means that the pref doesn't exist. Which is fine. We just leave
-      // enableAdb alone.
-    }
 
     // Check wakelock to prevent adb from disconnecting when phone is locked
     let lockFile = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsIFile);

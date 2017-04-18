@@ -6,6 +6,7 @@
 
 #include "ADTSDecoder.h"
 #include "ADTSDemuxer.h"
+#include "MediaContainerType.h"
 #include "MediaDecoderStateMachine.h"
 #include "MediaFormatReader.h"
 #include "PDMFactory.h"
@@ -38,12 +39,15 @@ ADTSDecoder::IsEnabled()
 }
 
 /* static */ bool
-ADTSDecoder::CanHandleMediaType(const nsACString& aType,
-                                const nsAString& aCodecs)
+ADTSDecoder::IsSupportedType(const MediaContainerType& aContainerType)
 {
-  if (aType.EqualsASCII("audio/aac") || aType.EqualsASCII("audio/aacp") ||
-      aType.EqualsASCII("audio/x-aac")) {
-    return IsEnabled() && (aCodecs.IsEmpty() || aCodecs.EqualsASCII("aac"));
+  if (aContainerType.Type() == MEDIAMIMETYPE("audio/aac")
+      || aContainerType.Type() == MEDIAMIMETYPE("audio/aacp")
+      || aContainerType.Type() == MEDIAMIMETYPE("audio/x-aac")) {
+    return
+      IsEnabled()
+      && (aContainerType.ExtendedType().Codecs().IsEmpty()
+          || aContainerType.ExtendedType().Codecs().AsString().EqualsASCII("aac"));
   }
 
   return false;

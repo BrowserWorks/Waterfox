@@ -138,12 +138,9 @@ nsHttpTransaction::nsHttpTransaction()
     , mSubmittedRatePacing(false)
     , mPassedRatePacing(false)
     , mSynchronousRatePaceRequest(false)
-    , mCountRecv(0)
-    , mCountSent(0)
-    , mAppId(NECKO_NO_APP_ID)
-    , mIsInIsolatedMozBrowser(false)
     , mClassOfService(0)
     , m0RTTInProgress(false)
+    , mTransportStatus(NS_OK)
 {
     LOG(("Creating nsHttpTransaction @%p\n", this));
     gHttpHandler->GetMaxPipelineObjectSize(&mMaxPipelineObjectSize);
@@ -258,19 +255,6 @@ nsHttpTransaction::Init(uint32_t caps,
         mActivityDistributor = nullptr;
     }
     mChannel = do_QueryInterface(eventsink);
-    nsCOMPtr<nsIChannel> channel = do_QueryInterface(eventsink);
-    if (channel) {
-        NS_GetAppInfo(channel, &mAppId, &mIsInIsolatedMozBrowser);
-    }
-
-#ifdef MOZ_WIDGET_GONK
-    if (mAppId != NECKO_NO_APP_ID) {
-        nsCOMPtr<nsINetworkInfo> activeNetworkInfo;
-        GetActiveNetworkInfo(activeNetworkInfo);
-        mActiveNetworkInfo =
-            new nsMainThreadPtrHolder<nsINetworkInfo>(activeNetworkInfo);
-    }
-#endif
 
     nsCOMPtr<nsIHttpChannelInternal> httpChannelInternal =
         do_QueryInterface(eventsink);
@@ -550,6 +534,50 @@ nsHttpTransaction::OnTransportStatus(nsITransport* transport,
     LOG(("nsHttpTransaction::OnSocketStatus [this=%p status=%x progress=%lld]\n",
         this, status, progress));
 
+    // A transaction can given to multiple HalfOpen sockets (this is a bug in
+    // nsHttpConnectionMgr). We are going to fix it here as a work around to be
+    // able to uplift it.
+    switch(status) {
+    case NS_NET_STATUS_RESOLVING_HOST:
+        if (mTransportStatus != NS_OK) {
+            LOG(("nsHttpTransaction::OnSocketStatus - ignore socket events "
+                 "from backup transport"));
+            return;
+        }
+        break;
+    case NS_NET_STATUS_RESOLVED_HOST:
+        if (mTransportStatus != NS_NET_STATUS_RESOLVING_HOST &&
+            mTransportStatus != NS_OK) {
+            LOG(("nsHttpTransaction::OnSocketStatus - ignore socket events "
+                 "from backup transport"));
+            return;
+        }
+        break;
+    case NS_NET_STATUS_CONNECTING_TO:
+        if (mTransportStatus != NS_NET_STATUS_RESOLVING_HOST &&
+            mTransportStatus != NS_NET_STATUS_RESOLVED_HOST  &&
+            mTransportStatus != NS_OK) {
+            LOG(("nsHttpTransaction::OnSocketStatus - ignore socket events "
+                 "from backup transport"));
+            return;
+        }
+        break;
+    case NS_NET_STATUS_CONNECTED_TO:
+        if (mTransportStatus != NS_NET_STATUS_RESOLVING_HOST &&
+            mTransportStatus != NS_NET_STATUS_RESOLVED_HOST &&
+            mTransportStatus != NS_NET_STATUS_CONNECTING_TO &&
+            mTransportStatus != NS_OK) {
+            LOG(("nsHttpTransaction::OnSocketStatus - ignore socket events "
+                 "from backup transport"));
+            return;
+        }
+        break;
+    default:
+        LOG(("nsHttpTransaction::OnSocketStatus - a new event"));
+    }
+
+    mTransportStatus = status;
+
     if (status == NS_NET_STATUS_CONNECTED_TO ||
         status == NS_NET_STATUS_WAITING_FOR) {
         nsISocketTransport *socketTransport =
@@ -694,6 +722,9 @@ nsHttpTransaction::ReadRequestSegment(nsIInputStream *stream,
                                       uint32_t count,
                                       uint32_t *countRead)
 {
+    // For the tracking of sent bytes that we used to do for the networkstats
+    // API, please see bug 1318883 where it was removed.
+
     nsHttpTransaction *trans = (nsHttpTransaction *) closure;
     nsresult rv = trans->mReader->OnReadSegment(buf, count, countRead);
     if (NS_FAILED(rv)) return rv;
@@ -703,7 +734,6 @@ nsHttpTransaction::ReadRequestSegment(nsIInputStream *stream,
         trans->SetRequestStart(TimeStamp::Now(), true);
     }
 
-    trans->CountSentBytes(*countRead);
     trans->mSentData = true;
     return NS_OK;
 }
@@ -799,7 +829,6 @@ nsHttpTransaction::WritePipeSegment(nsIOutputStream *stream,
     if (NS_FAILED(rv)) return rv; // caller didn't want to write anything
 
     MOZ_ASSERT(*countWritten > 0, "bad writer");
-    trans->CountRecvBytes(*countWritten);
     trans->mReceivedData = true;
     trans->mTransferSize += *countWritten;
 
@@ -875,45 +904,6 @@ nsHttpTransaction::WriteSegments(nsAHttpSegmentWriter *writer,
 
     reentrantFlag = false;
     return rv;
-}
-
-nsresult
-nsHttpTransaction::SaveNetworkStats(bool enforce)
-{
-#ifdef MOZ_WIDGET_GONK
-    // Check if active network and appid are valid.
-    if (!mActiveNetworkInfo || mAppId == NECKO_NO_APP_ID) {
-        return NS_OK;
-    }
-
-    if (mCountRecv <= 0 && mCountSent <= 0) {
-        // There is no traffic, no need to save.
-        return NS_OK;
-    }
-
-    // If |enforce| is false, the traffic amount is saved
-    // only when the total amount exceeds the predefined
-    // threshold.
-    uint64_t totalBytes = mCountRecv + mCountSent;
-    if (!enforce && totalBytes < NETWORK_STATS_THRESHOLD) {
-        return NS_OK;
-    }
-
-    // Create the event to save the network statistics.
-    // the event is then dispatched to the main thread.
-    RefPtr<Runnable> event =
-        new SaveNetworkStatsEvent(mAppId, mIsInIsolatedMozBrowser, mActiveNetworkInfo,
-                                  mCountRecv, mCountSent, false);
-    NS_DispatchToMainThread(event);
-
-    // Reset the counters after saving.
-    mCountSent = 0;
-    mCountRecv = 0;
-
-    return NS_OK;
-#else
-    return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 void
@@ -1132,9 +1122,6 @@ nsHttpTransaction::Close(nsresult reason)
         mConnection = nullptr;
     }
 
-    // save network statistics in the end of transaction
-    SaveNetworkStats(true);
-
     mStatus = reason;
     mTransactionDone = true; // forcibly flag the transaction as complete
     mClosed = true;
@@ -1326,6 +1313,8 @@ nsHttpTransaction::Restart()
             mRequestHead->SetHeader(nsHttp::Alternate_Service_Used, NS_LITERAL_CSTRING("0"));
         }
     }
+
+    mTransportStatus = NS_OK;
 
     return gHttpHandler->InitiateTransaction(this, mPriority);
 }
@@ -2026,6 +2015,11 @@ nsHttpTransaction::CheckForStickyAuthScheme()
   MOZ_ASSERT(mHaveAllHeaders);
   MOZ_ASSERT(mResponseHead);
   MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
+
+  if (mClosed) {
+      LOG(("  closed, not checking"));
+      return;
+  }
 
   CheckForStickyAuthSchemeAt(nsHttp::WWW_Authenticate);
   CheckForStickyAuthSchemeAt(nsHttp::Proxy_Authenticate);

@@ -57,7 +57,7 @@ class TestQuitRestart(MarionetteTestCase):
         self.assertEqual(self.marionette.session_id, self.session_id)
 
         # An in-app restart will keep the same process id only on Linux
-        if self.marionette.session_capabilities['platformName'] == 'linux':
+        if self.marionette.session_capabilities["platformName"] == "linux":
             self.assertEqual(self.marionette.process_id, self.pid)
         else:
             self.assertNotEqual(self.marionette.process_id, self.pid)
@@ -72,7 +72,7 @@ class TestQuitRestart(MarionetteTestCase):
         self.assertEqual(self.marionette.session_id, self.session_id)
 
         # An in-app restart will keep the same process id only on Linux
-        if self.marionette.session_capabilities['platformName'] == 'linux':
+        if self.marionette.session_capabilities["platformName"] == "linux":
             self.assertEqual(self.marionette.process_id, self.pid)
         else:
             self.assertNotEqual(self.marionette.process_id, self.pid)
@@ -135,7 +135,7 @@ class TestQuitRestart(MarionetteTestCase):
         self.marionette.restart(in_app=True)
 
         # An in-app restart will keep the same process id only on Linux
-        if self.marionette.session_capabilities['platformName'] == 'linux':
+        if self.marionette.session_capabilities["platformName"] == "linux":
             self.assertEqual(self.marionette.process_id, self.pid)
         else:
             self.assertNotEqual(self.marionette.process_id, self.pid)
@@ -153,12 +153,12 @@ class TestQuitRestart(MarionetteTestCase):
             self.marionette.restart(in_app=True)
 
             # An in-app restart will keep the same process id only on Linux
-            if self.marionette.session_capabilities['platformName'] == 'linux':
+            if self.marionette.session_capabilities["platformName"] == "linux":
                 self.assertEqual(self.marionette.process_id, self.pid)
             else:
                 self.assertNotEqual(self.marionette.process_id, self.pid)
 
-            self.assertIn('chrome://', self.marionette.get_url(),
+            self.assertIn("chrome://", self.marionette.get_url(),
                           "Not in chrome context after a restart with using_context")
 
     def shutdown(self, restart=False):

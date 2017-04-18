@@ -36,6 +36,47 @@ function checkEventFormat(events) {
   }
 }
 
+add_task(function* test_recording_state() {
+  const events = [
+    ["telemetry.test", "test1", "object1"],
+    ["telemetry.test.second", "test", "object1"],
+  ];
+
+  // Both test categories should be off by default.
+  events.forEach(e => Telemetry.recordEvent(...e));
+  let snapshot = Telemetry.snapshotBuiltinEvents(OPTIN, true);
+  Assert.deepEqual(snapshot, [], "Should not have recorded any events.");
+
+  // Enable one test category and see that we record correctly.
+  Telemetry.setEventRecordingEnabled("telemetry.test", true);
+  events.forEach(e => Telemetry.recordEvent(...e));
+  snapshot = Telemetry.snapshotBuiltinEvents(OPTIN, true);
+  Assert.equal(snapshot.length, 1, "Should have recorded one event.");
+  Assert.equal(snapshot[0][1], "telemetry.test", "Should have recorded one event in telemetry.test");
+
+  // Also enable the other test category and see that we record correctly.
+  Telemetry.setEventRecordingEnabled("telemetry.test.second", true);
+  events.forEach(e => Telemetry.recordEvent(...e));
+  snapshot = Telemetry.snapshotBuiltinEvents(OPTIN, true);
+  Assert.equal(snapshot.length, 2, "Should have recorded two events.");
+  Assert.equal(snapshot[0][1], "telemetry.test", "Should have recorded one event in telemetry.test");
+  Assert.equal(snapshot[1][1], "telemetry.test.second", "Should have recorded one event in telemetry.test.second");
+
+  // Now turn of one category again and check that this works as expected.
+  Telemetry.setEventRecordingEnabled("telemetry.test", false);
+  events.forEach(e => Telemetry.recordEvent(...e));
+  snapshot = Telemetry.snapshotBuiltinEvents(OPTIN, true);
+  Assert.equal(snapshot.length, 1, "Should have recorded one event.");
+  Assert.equal(snapshot[0][1], "telemetry.test.second", "Should have recorded one event in telemetry.test.second");
+});
+
+add_task(function* recording_setup() {
+  // Make sure both test categories are enabled for the remaining tests.
+  // Otherwise their event recording won't work.
+  Telemetry.setEventRecordingEnabled("telemetry.test", true);
+  Telemetry.setEventRecordingEnabled("telemetry.test.second", true);
+});
+
 add_task(function* test_recording() {
   Telemetry.clearEvents();
 
@@ -106,7 +147,7 @@ add_task(function* test_recording() {
 
   // Check serializing only opt-out events.
   events = Telemetry.snapshotBuiltinEvents(OPTOUT, false);
-  filtered = expected.filter(e => e.optout == true);
+  let filtered = expected.filter(e => e.optout == true);
   checkEvents(events, filtered);
 });
 
@@ -196,13 +237,13 @@ add_task(function* test_valueLimits() {
   let LIMIT = 80;
   let expected = [
     ["telemetry.test", "test1", "object1", "a".repeat(LIMIT - 10), null],
-    ["telemetry.test", "test1", "object1", "a".repeat(LIMIT     ), null],
-    ["telemetry.test", "test1", "object1", "a".repeat(LIMIT +  1), null],
+    ["telemetry.test", "test1", "object1", "a".repeat(LIMIT ), null],
+    ["telemetry.test", "test1", "object1", "a".repeat(LIMIT + 1), null],
     ["telemetry.test", "test1", "object1", "a".repeat(LIMIT + 10), null],
 
     ["telemetry.test", "test1", "object1", null, {key1: "a".repeat(LIMIT - 10)}],
-    ["telemetry.test", "test1", "object1", null, {key1: "a".repeat(LIMIT     )}],
-    ["telemetry.test", "test1", "object1", null, {key1: "a".repeat(LIMIT +  1)}],
+    ["telemetry.test", "test1", "object1", null, {key1: "a".repeat(LIMIT )}],
+    ["telemetry.test", "test1", "object1", null, {key1: "a".repeat(LIMIT + 1)}],
     ["telemetry.test", "test1", "object1", null, {key1: "a".repeat(LIMIT + 10)}],
   ];
 

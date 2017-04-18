@@ -140,6 +140,9 @@
         <h1 class="section-name">&aboutTelemetry.scalarsSection;</h1>
         <span class="toggle-caption">&aboutTelemetry.toggle;</span>
         <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+        <div class="processes-ui">
+          <select id="scalars-processes" class="process-picker"></select>
+        </div>
         <div id="scalars" class="data">
         </div>
       </section>
@@ -149,6 +152,9 @@
         <h1 class="section-name">&aboutTelemetry.keyedScalarsSection;</h1>
         <span class="toggle-caption">&aboutTelemetry.toggle;</span>
         <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+        <div class="processes-ui">
+          <select id="keyed-scalars-processes" class="process-picker"></select>
+        </div>
         <div id="keyed-scalars" class="data">
         </div>
       </section>
@@ -182,7 +188,7 @@
 
       <section id="events-section" class="data-section">
         <input type="checkbox" class="statebox"/>
-        <h1 class="section-name">Events</h1>
+        <h1 class="section-name">&aboutTelemetry.eventsSection;</h1>
         <span class="toggle-caption">&aboutTelemetry.toggle;</span>
         <span class="empty-caption">&aboutTelemetry.emptySection;</span>
         <div id="events" class="data">
@@ -271,6 +277,21 @@
         <span class="toggle-caption">&aboutTelemetry.toggle;</span>
         <span class="empty-caption">&aboutTelemetry.emptySection;</span>
         <div id="addon-histograms" class="data">
+        </div>
+      </section>
+
+      <section id="captured-stacks-section" class="data-section">
+        <input type="checkbox" class="statebox"/>
+        <h1 class="section-name">&aboutTelemetry.capturedStacksSection;</h1>
+        <span class="toggle-caption">&aboutTelemetry.toggle;</span>
+        <span class="empty-caption">&aboutTelemetry.emptySection;</span>
+        <div id="captured-stacks" class="data">
+          <a id="captured-stacks-fetch-symbols" href="#">&aboutTelemetry.fetchSymbols;</a>
+          <a id="captured-stacks-hide-symbols" class="hidden" href="#">&aboutTelemetry.hideSymbols;</a>
+          <br/>
+          <br/>
+          <div id="captured-stacks-data">
+          </div>
         </div>
       </section>
 

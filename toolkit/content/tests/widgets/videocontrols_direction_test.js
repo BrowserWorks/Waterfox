@@ -22,13 +22,13 @@ RemoteCanvas.prototype.load = function(callback) {
     info("iframe loaded");
     var m = iframe.contentDocument.getElementById("av");
     m.addEventListener("suspend", function(aEvent) {
-      m.removeEventListener("suspend", arguments.callee, false);
+      m.removeEventListener("suspend", arguments.callee);
       setTimeout(function() {
         me.remotePageLoaded(callback);
       }, 0);
-    }, false);
+    });
     m.src = m.getAttribute("source");
-  }, false);
+  });
   window.document.body.appendChild(iframe);
 };
 
@@ -61,8 +61,7 @@ function runTest(index) {
       if (result) {
         canvases[0].cleanup();
         canvases[1].cleanup();
-      }
-      else {
+      } else {
         info("Snapshot of canvas 1: " + canvases[0].snapshot.toDataURL());
         info("Snapshot of canvas 2: " + canvases[1].snapshot.toDataURL());
       }

@@ -8,7 +8,7 @@
 Components.utils.import("resource://gre/modules/Promise.jsm");
 
 // Load XPI Provider to get schema version ID
-var XPIScope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
+var XPIScope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm", {});
 const DB_SCHEMA = XPIScope.DB_SCHEMA;
 
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
@@ -22,8 +22,7 @@ function run_test() {
 function checkPending() {
   try {
     do_check_false(Services.prefs.getBoolPref("extensions.pendingOperations"));
-  }
-  catch (e) {
+  } catch (e) {
     // OK
   }
 }
@@ -31,8 +30,7 @@ function checkPending() {
 function checkString(aPref, aValue) {
   try {
     do_check_eq(Services.prefs.getCharPref(aPref), aValue)
-  }
-  catch (e) {
+  } catch (e) {
     // OK
   }
 }
@@ -65,7 +63,7 @@ add_task(function* first_run() {
 // Now do something that causes a DB load, and re-check
 function* trigger_db_load() {
   let addonDefer = Promise.defer();
-  AddonManager.getAddonsByTypes(['extension'], addonDefer.resolve);
+  AddonManager.getAddonsByTypes(["extension"], addonDefer.resolve);
   let addonList = yield addonDefer.promise;
 
   do_check_eq(addonList.length, 0);
@@ -95,4 +93,3 @@ add_task(function upgrade_schema_version() {
   do_check_eq(Services.prefs.getIntPref("extensions.databaseSchema"), DB_SCHEMA);
   check_empty_state();
 });
-

@@ -12,8 +12,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.system.Os;
 import android.util.Log;
-import android.view.ViewConfiguration;
+
+import org.mozilla.gecko.SysInfo;
+import org.mozilla.geckoview.BuildConfig;
 
 public final class HardwareUtils {
     private static final String LOGTAG = "GeckoHardwareUtils";
@@ -83,24 +86,45 @@ public final class HardwareUtils {
     }
 
     public static boolean isX86System() {
-        return Build.CPU_ABI != null && Build.CPU_ABI.equals("x86");
+        if (Build.CPU_ABI != null && Build.CPU_ABI.equals("x86")) {
+            return true;
+        }
+        if (Build.VERSION.SDK_INT >= 21) {
+            // On some devices we have to look into the kernel release string.
+            try {
+                return Os.uname().release.contains("-x86_");
+            } catch (final Exception e) {
+                Log.w(LOGTAG, "Cannot get uname", e);
+            }
+        }
+        return false;
+    }
+
+    public static String getRealAbi() {
+        if (isX86System() && isARMSystem()) {
+            // Some x86 devices try to make us believe we're ARM,
+            // in which case CPU_ABI is not reliable.
+            return "x86";
+        }
+        return Build.CPU_ABI;
     }
 
     /**
      * @return false if the current system is not supported (e.g. APK/system ABI mismatch).
      */
     public static boolean isSupportedSystem() {
-        if (Build.VERSION.SDK_INT < AppConstants.Versions.MIN_SDK_VERSION ||
-            Build.VERSION.SDK_INT > AppConstants.Versions.MAX_SDK_VERSION) {
+        // We've had crash reports from users on API 10 (with minSDK==15). That shouldn't even install,
+        // but since it does we need to protect against it:
+        if (Build.VERSION.SDK_INT < AppConstants.Versions.MIN_SDK_VERSION) {
             return false;
         }
 
         // See http://developer.android.com/ndk/guides/abis.html
-        final boolean isSystemARM = isARMSystem();
         final boolean isSystemX86 = isX86System();
+        final boolean isSystemARM = !isSystemX86 && isARMSystem();
 
-        final boolean isAppARM = AppConstants.ANDROID_CPU_ARCH.startsWith("armeabi-v7a");
-        final boolean isAppX86 = AppConstants.ANDROID_CPU_ARCH.startsWith("x86");
+        boolean isAppARM = BuildConfig.ANDROID_CPU_ARCH.startsWith("armeabi-v7a");
+        boolean isAppX86 = BuildConfig.ANDROID_CPU_ARCH.startsWith("x86");
 
         // Only reject known incompatible ABIs. Better safe than sorry.
         if ((isSystemX86 && isAppARM) || (isSystemARM && isAppX86)) {
@@ -111,7 +135,7 @@ public final class HardwareUtils {
             return true;
         }
 
-        Log.w(LOGTAG, "Unknown app/system ABI combination: " + AppConstants.MOZ_APP_ABI + " / " + Build.CPU_ABI);
+        Log.w(LOGTAG, "Unknown app/system ABI combination: " + BuildConfig.MOZ_APP_ABI + " / " + Build.CPU_ABI);
         return true;
     }
 }

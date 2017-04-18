@@ -39,8 +39,12 @@ js::Allocate(ExclusiveContext* cx, AllocKind kind, size_t nDynamicSlots, Initial
     MOZ_ASSERT_IF(nDynamicSlots != 0, clasp->isNative() || clasp->isProxy());
 
     // Off-main-thread alloc cannot trigger GC or make runtime assertions.
-    if (!cx->isJSContext())
-        return GCRuntime::tryNewTenuredObject<NoGC>(cx, kind, thingSize, nDynamicSlots);
+    if (!cx->isJSContext()) {
+        JSObject* obj = GCRuntime::tryNewTenuredObject<NoGC>(cx, kind, thingSize, nDynamicSlots);
+        if (MOZ_UNLIKELY(allowGC && !obj))
+            ReportOutOfMemory(cx);
+        return obj;
+    }
 
     JSContext* ncx = cx->asJSContext();
     JSRuntime* rt = ncx->runtime();
@@ -166,7 +170,6 @@ GCRuntime::tryNewTenuredThing(ExclusiveContext* cx, AllocKind kind, size_t thing
             // all-compartments, non-incremental, shrinking GC and wait for
             // sweeping to finish.
             JS::PrepareForFullGC(cx->asJSContext());
-            AutoKeepAtoms keepAtoms(cx->perThreadData);
             cx->asJSContext()->gc.gc(GC_SHRINK, JS::gcreason::LAST_DITCH);
             cx->asJSContext()->gc.waitBackgroundSweepOrAllocEnd();
 
@@ -240,7 +243,6 @@ GCRuntime::gcIfNeededPerAllocation(JSContext* cx)
         cx->zone()->usage.gcBytes() > cx->zone()->threshold.gcTriggerBytes())
     {
         PrepareZoneForGC(cx->zone());
-        AutoKeepAtoms keepAtoms(cx->perThreadData);
         gc(GC_NORMAL, JS::gcreason::INCREMENTAL_TOO_SLOW);
     }
 

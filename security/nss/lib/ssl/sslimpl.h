@@ -34,7 +34,7 @@
 #include "sslt.h" /* for some formerly private types, now public */
 
 typedef struct sslSocketStr sslSocket;
-
+typedef struct ssl3CipherSpecStr ssl3CipherSpec;
 #include "ssl3ext.h"
 
 /* to make some of these old enums public without namespace pollution,
@@ -200,6 +200,9 @@ typedef sslSessionID *(*sslSessionIDLookupFunc)(const PRIPv6Addr *addr,
                                                 unsigned char *sid,
                                                 unsigned int sidLen,
                                                 CERTCertDBHandle *dbHandle);
+typedef void (*sslCipherSpecChangedFunc)(void *arg,
+                                         PRBool sending,
+                                         ssl3CipherSpec *newSpec);
 
 /* Socket ops */
 struct sslSocketOpsStr {
@@ -367,6 +370,10 @@ struct sslGatherStr {
 
     /* the start of the buffered DTLS record in dtlsPacket */
     unsigned int dtlsPacketOffset;
+
+    /* tracks whether we've seen a v3-type record before and must reject
+     * any further v2-type records. */
+    PRBool rejectV2Records;
 };
 
 /* sslGather.state */
@@ -469,7 +476,7 @@ typedef struct DTLSRecvdRecordsStr {
 ** Access to the pointers to these specs, and all the specs' contents
 ** (direct and indirect) is protected by the reader/writer lock ss->specLock.
 */
-typedef struct {
+struct ssl3CipherSpecStr {
     PRCList link;
     const ssl3BulkCipherDef *cipher_def;
     const ssl3MACDef *mac_def;
@@ -499,7 +506,7 @@ typedef struct {
 
     PRUint8 refCt;
     const char *phase;
-} ssl3CipherSpec;
+};
 
 typedef enum { never_cached,
                in_client_cache,
@@ -894,6 +901,11 @@ struct ssl3StateStr {
     ssl3CipherSpec *cwSpec; /* current write spec. */
     ssl3CipherSpec *pwSpec; /* pending write spec. */
 
+    /* Internal callback for when we do a cipher suite change. Used for
+     * debugging in TLS 1.3. This can only be set by non-public functions. */
+    sslCipherSpecChangedFunc changedCipherSpecFunc;
+    void *changedCipherSpecArg;
+
     CERTCertificate *clientCertificate;   /* used by client */
     SECKEYPrivateKey *clientPrivateKey;   /* used by client */
     CERTCertificateList *clientCertChain; /* used by client */
@@ -1208,17 +1220,13 @@ struct sslSocketStr {
     SSLProtocolVariant protocolVariant;
 };
 
-/* All the global data items declared here should be protected using the
-** ssl_global_data_lock, which is a reader/writer lock.
-*/
-extern NSSRWLock *ssl_global_data_lock;
 extern char ssl_debug;
 extern char ssl_trace;
 extern FILE *ssl_trace_iob;
 extern FILE *ssl_keylog_iob;
 extern CERTDistNames *ssl3_server_ca_list;
-extern PRUint32 ssl_sid_timeout;
 extern PRUint32 ssl3_sid_timeout;
+extern PRUint32 ssl_ticket_lifetime;
 
 extern const char *const ssl3_cipherName[];
 
@@ -1647,12 +1655,13 @@ extern SECStatus ssl3_AppendHandshakeVariable(sslSocket *ss,
                                               const SSL3Opaque *src, PRInt32 bytes, PRInt32 lenSize);
 extern SECStatus ssl3_AppendSignatureAndHashAlgorithm(
     sslSocket *ss, const SSLSignatureAndHashAlg *sigAndHash);
-extern SECStatus ssl3_ConsumeHandshake(sslSocket *ss, void *v, PRInt32 bytes,
+extern SECStatus ssl3_ConsumeHandshake(sslSocket *ss, void *v, PRUint32 bytes,
                                        SSL3Opaque **b, PRUint32 *length);
-extern PRInt32 ssl3_ConsumeHandshakeNumber(sslSocket *ss, PRInt32 bytes,
-                                           SSL3Opaque **b, PRUint32 *length);
+extern SECStatus ssl3_ConsumeHandshakeNumber(sslSocket *ss, PRUint32 *num,
+                                             PRUint32 bytes, SSL3Opaque **b,
+                                             PRUint32 *length);
 extern SECStatus ssl3_ConsumeHandshakeVariable(sslSocket *ss, SECItem *i,
-                                               PRInt32 bytes, SSL3Opaque **b,
+                                               PRUint32 bytes, SSL3Opaque **b,
                                                PRUint32 *length);
 extern PRUint8 *ssl_EncodeUintX(PRUint64 value, unsigned int bytes,
                                 PRUint8 *to);
@@ -1686,10 +1695,6 @@ extern PRBool ssl_GetSessionTicketKeys(SECKEYPrivateKey *svrPrivKey,
                                        unsigned char *keyName, PK11SymKey **aesKey,
                                        PK11SymKey **macKey);
 extern SECStatus ssl3_SessionTicketShutdown(void *appData, void *nssData);
-
-/* Tell clients to consider tickets valid for this long. */
-#define TLS_EX_SESS_TICKET_LIFETIME_HINT (2 * 24 * 60 * 60) /* 2 days */
-#define TLS_EX_SESS_TICKET_VERSION (0x0103)
 
 extern SECStatus ssl3_ValidateNextProtoNego(const unsigned char *data,
                                             unsigned int length);
@@ -1835,6 +1840,7 @@ extern void ssl3_CheckCipherSuiteOrderConsistency();
 extern int ssl_MapLowLevelError(int hiLevelError);
 
 extern PRUint32 ssl_Time(void);
+extern PRBool ssl_TicketTimeValid(const NewSessionTicket *ticket);
 
 extern void SSL_AtomicIncrementLong(long *x);
 
@@ -1844,11 +1850,10 @@ extern HASH_HashType
 ssl3_GetTls12HashType(sslSocket *ss);
 
 extern SECStatus
-ssl3_TLSPRFWithMasterSecret(ssl3CipherSpec *spec,
+ssl3_TLSPRFWithMasterSecret(sslSocket *ss, ssl3CipherSpec *spec,
                             const char *label, unsigned int labelLen,
                             const unsigned char *val, unsigned int valLen,
-                            unsigned char *out, unsigned int outLen,
-                            HASH_HashType tls12HashType);
+                            unsigned char *out, unsigned int outLen);
 
 #ifdef TRACE
 #define SSL_TRACE(msg) ssl_Trace msg

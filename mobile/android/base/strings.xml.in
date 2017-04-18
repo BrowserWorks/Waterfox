@@ -131,6 +131,7 @@
   <string name="media_pause">&media_pause;</string>
   <string name="media_stop">&media_stop;</string>
 
+  <string name="overlay_share_open_browser_btn_label">&overlay_share_open_browser_btn_label;</string>
   <string name="overlay_share_send_other">&overlay_share_send_other;</string>
   <string name="overlay_share_label">&overlay_share_label;</string>
   <string name="overlay_share_bookmark_btn_label">&overlay_share_bookmark_btn_label;</string>
@@ -278,6 +279,7 @@
   <string name="pref_sync_summary">&pref_sync_summary2;</string>
   <string name="pref_search_suggestions">&pref_search_suggestions;</string>
   <string name="pref_history_search_suggestions">&pref_history_search_suggestions;</string>
+  <string name="pref_private_data_openTabs">&pref_private_data_openTabs;</string>
   <string name="pref_private_data_history2">&pref_private_data_history2;</string>
   <string name="pref_private_data_searchHistory">&pref_private_data_searchHistory;</string>
   <string name="pref_private_data_formdata2">&pref_private_data_formdata2;</string>
@@ -429,6 +431,9 @@
   <string name="pref_scroll_title_bar2">&pref_scroll_title_bar2;</string>
   <string name="pref_scroll_title_bar_summary">&pref_scroll_title_bar_summary2;</string>
 
+  <string name="pref_compact_tabs">&pref_compact_tabs;</string>
+  <string name="pref_compact_tabs_summary">&pref_compact_tabs_summary2;</string>
+
   <string name="page_removed">&page_removed;</string>
 
   <string name="bookmark_edit_title">&bookmark_edit_title;</string>
@@ -544,8 +549,8 @@
   <string name="updater_downloading_select">&updater_downloading_select2;</string>
   <string name="updater_downloading_retry">&updater_downloading_retry2;</string>
 
-  <string name="updater_apply_title">&updater_apply_title2;</string>
-  <string name="updater_apply_select">&updater_apply_select2;</string>
+  <string name="updater_apply_title">&updater_apply_title3;</string>
+  <string name="updater_apply_select">&updater_apply_select3;</string>
 
   <string name="updater_permission_title">&brandShortName;</string>
   <string name="updater_permission_text">&updater_permission_text;</string>
@@ -636,4 +641,7 @@
   <string name="activity_stream_highlight_label_visited">&activity_stream_highlight_label_visited;</string>
   <string name="activity_stream_dismiss">&activity_stream_dismiss;</string>
   <string name="activity_stream_delete_history">&activity_stream_delete_history;</string>
+
+  <string name="activity_stream_welcome_title">&activity_stream_welcome_title;</string>
+  <string name="activity_stream_welcome_content">&activity_stream_welcome_content1;</string>
 </resources>

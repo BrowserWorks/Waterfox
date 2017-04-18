@@ -16,12 +16,11 @@ import android.util.Log;
 import com.google.android.gms.cast.CastMediaControlIntent;
 
 import org.json.JSONObject;
-import org.mozilla.gecko.annotation.JNITarget;
 import org.mozilla.gecko.annotation.ReflectionTarget;
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
-import org.mozilla.gecko.util.NativeEventListener;
-import org.mozilla.gecko.util.NativeJSObject;
+import org.mozilla.gecko.util.GeckoBundle;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,7 +30,7 @@ import java.util.Map;
  * Manages a list of GeckoMediaPlayers methods (i.e. Chromecast/Miracast). Routes messages
  * from Gecko to the correct caster based on the id of the display
  */
-public class MediaPlayerManager extends Fragment implements NativeEventListener {
+public class MediaPlayerManager extends Fragment implements BundleEventListener {
     /**
      * Create a new instance of DetailsFragment, initialized to
      * show the text at 'index'.
@@ -79,7 +78,8 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        GeckoApp.getEventDispatcher().registerGeckoThreadListener(this,
+
+        EventDispatcher.getInstance().registerGeckoThreadListener(this,
                                                                   "MediaPlayer:Load",
                                                                   "MediaPlayer:Start",
                                                                   "MediaPlayer:Stop",
@@ -94,10 +94,8 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
     }
 
     @Override
-    @JNITarget
     public void onDestroy() {
-        super.onDestroy();
-        GeckoApp.getEventDispatcher().unregisterGeckoThreadListener(this,
+        EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
                                                                     "MediaPlayer:Load",
                                                                     "MediaPlayer:Start",
                                                                     "MediaPlayer:Stop",
@@ -109,11 +107,14 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                                                                     "AndroidCastDevice:Start",
                                                                     "AndroidCastDevice:Stop",
                                                                     "AndroidCastDevice:SyncDevice");
+
+        super.onDestroy();
     }
 
-    // GeckoEventListener implementation
+    // BundleEventListener implementation
     @Override
-    public void handleMessage(String event, final NativeJSObject message, final EventCallback callback) {
+    public void handleMessage(final String event, final GeckoBundle message,
+                              final EventCallback callback) {
         debug(event);
         if (event.startsWith("MediaPlayer:")) {
             final GeckoMediaPlayer player = players.get(message.getString("id"));
@@ -137,12 +138,12 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                 player.end(callback);
             } else if ("MediaPlayer:Mirror".equals(event)) {
                 player.mirror(callback);
-            } else if ("MediaPlayer:Message".equals(event) && message.has("data")) {
+            } else if ("MediaPlayer:Message".equals(event) && message.containsKey("data")) {
                 player.message(message.getString("data"), callback);
             } else if ("MediaPlayer:Load".equals(event)) {
-                final String url = message.optString("source", "");
-                final String type = message.optString("type", "video/mp4");
-                final String title = message.optString("title", "");
+                final String url = message.getString("source", "");
+                final String type = message.getString("type", "video/mp4");
+                final String title = message.getString("title", "");
                 player.load(title, url, type, callback);
             }
         }
@@ -187,18 +188,18 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                 updatePresentation();
 
                 // Remove from presentation display list.
-                displays.remove(route.getId());
-                GeckoAppShell.notifyObservers("AndroidCastDevice:Removed", route.getId());
+                if (displays.remove(route.getId()) != null) {
+                    GeckoAppShell.notifyObservers("AndroidCastDevice:Removed", route.getId());
+                }
             }
 
-            @SuppressWarnings("unused")
-            public void onRouteSelected(MediaRouter router, int type, MediaRouter.RouteInfo route) {
+            @Override
+            public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
                 updatePresentation();
             }
 
-            // These methods aren't used by the support version Media Router
-            @SuppressWarnings("unused")
-            public void onRouteUnselected(MediaRouter router, int type, RouteInfo route) {
+            @Override
+            public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
                 updatePresentation();
             }
 
@@ -229,7 +230,8 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                 saveAndNotifyOfPlayer("MediaPlayer:Changed", route, player);
                 updatePresentation();
 
-                final GeckoPresentationDisplay display = displays.get(route.getId());
+                // onRouteAdded might not be called in some devices.
+                final GeckoPresentationDisplay display = getPresentationDisplayForRoute(route);
                 saveAndNotifyOfDisplay("AndroidCastDevice:Changed", route, display);
             }
 

@@ -16,7 +16,7 @@ function* throttleUploadTest(actuallyThrottle) {
 
   info("Starting test... (actuallyThrottle = " + actuallyThrottle + ")");
 
-  let { NetMonitorView } = monitor.panelWin;
+  let { NetMonitorController, NetMonitorView } = monitor.panelWin;
   let { RequestsMenu } = NetMonitorView;
 
   const size = 4096;
@@ -24,15 +24,15 @@ function* throttleUploadTest(actuallyThrottle) {
 
   const request = {
     "NetworkMonitor.throttleData": {
-      roundTripTimeMean: 0,
-      roundTripTimeMax: 0,
+      latencyMean: 0,
+      latencyMax: 0,
       downloadBPSMean: 200000,
       downloadBPSMax: 200000,
       uploadBPSMean: uploadSize,
       uploadBPSMax: uploadSize,
     },
   };
-  let client = monitor._controller.webConsoleClient;
+  let client = NetMonitorController.webConsoleClient;
 
   info("sending throttle request");
   let deferred = promise.defer();

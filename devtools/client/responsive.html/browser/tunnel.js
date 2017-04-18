@@ -144,6 +144,7 @@ function tunnelToInnerBrowser(outer, inner) {
       // down to the inner browser by this tunnel, the tab's remoteness effectively is the
       // remoteness of the inner browser.
       outer.setAttribute("remote", "true");
+      outer.setAttribute("remoteType", inner.remoteType);
 
       // Clear out any cached state that references the current non-remote XBL binding,
       // such as form fill controllers.  Otherwise they will remain in place and leak the
@@ -237,7 +238,7 @@ function tunnelToInnerBrowser(outer, inner) {
       // outside the main focus of RDM.
       let { detail } = event;
       event.preventDefault();
-      let uri = Services.io.newURI(detail.url, null, null);
+      let uri = Services.io.newURI(detail.url);
       // This API is used mainly because it's near the path used for <a target/> with
       // regular browser tabs (which calls `openURIInFrame`).  The more elaborate APIs
       // that support openers, window features, etc. didn't seem callable from JS and / or
@@ -270,6 +271,7 @@ function tunnelToInnerBrowser(outer, inner) {
 
       // Reset @remote since this is now back to a regular, non-remote browser
       outer.setAttribute("remote", "false");
+      outer.removeAttribute("remoteType");
 
       // Delete browser window properties exposed on content's owner global
       delete inner.ownerGlobal.PopupNotifications;
@@ -324,11 +326,6 @@ MessageManagerTunnel.prototype = {
    * the outer browser's real message manager.
    */
   PASS_THROUGH_METHODS: [
-    "killChild",
-    "assertPermission",
-    "assertContainApp",
-    "assertAppHasPermission",
-    "assertAppHasStatus",
     "removeDelayedFrameScript",
     "getDelayedFrameScripts",
     "loadProcessScript",
@@ -464,13 +461,11 @@ MessageManagerTunnel.prototype = {
 
   init() {
     for (let method of this.PASS_THROUGH_METHODS) {
-      // Workaround bug 449811 to ensure a fresh binding each time through the loop
-      let _method = method;
-      this[_method] = (...args) => {
+      this[method] = (...args) => {
         if (!this.outerParentMM) {
           return null;
         }
-        return this.outerParentMM[_method](...args);
+        return this.outerParentMM[method](...args);
       };
     }
 
@@ -514,13 +509,11 @@ MessageManagerTunnel.prototype = {
     // ensure it keeps working after tunnel close, rewrite the overidden methods as pass
     // through methods.
     for (let method of this.OVERRIDDEN_METHODS) {
-      // Workaround bug 449811 to ensure a fresh binding each time through the loop
-      let _method = method;
-      this[_method] = (...args) => {
+      this[method] = (...args) => {
         if (!this.outerParentMM) {
           return null;
         }
-        return this.outerParentMM[_method](...args);
+        return this.outerParentMM[method](...args);
       };
     }
   },

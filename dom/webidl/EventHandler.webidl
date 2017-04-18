@@ -33,11 +33,12 @@ interface GlobalEventHandlers {
 //         attribute OnErrorEventHandler onerror;
            attribute EventHandler onfocus;
            //(Not implemented)attribute EventHandler oncancel;
+           attribute EventHandler onauxclick;
            attribute EventHandler oncanplay;
            attribute EventHandler oncanplaythrough;
            attribute EventHandler onchange;
            attribute EventHandler onclick;
-           //(Not implemented)attribute EventHandler onclose;
+           attribute EventHandler onclose;
            attribute EventHandler oncontextmenu;
            //(Not implemented)attribute EventHandler oncuechange;
            attribute EventHandler ondblclick;
@@ -93,7 +94,6 @@ interface GlobalEventHandlers {
            [Pref="dom.select_events.enabled"]
            attribute EventHandler onselectstart;
 
-           [Pref="dom.details_element.enabled"]
            attribute EventHandler ontoggle;
 
            // Pointer events handlers
@@ -131,11 +131,10 @@ interface GlobalEventHandlers {
            attribute EventHandler onanimationend;
            attribute EventHandler onanimationiteration;
            attribute EventHandler onanimationstart;
+           attribute EventHandler ontransitioncancel;
            attribute EventHandler ontransitionend;
-           // We will ship transitionrun and transitionstart events
-           // on Firefox 53. (For detail, see bug 1324985)
-//           attribute EventHandler ontransitionrun;
-//           attribute EventHandler ontransitionstart;
+           attribute EventHandler ontransitionrun;
+           attribute EventHandler ontransitionstart;
 
            // CSS-Animation and CSS-Transition legacy handlers.
            // This handler isn't standard.
@@ -160,6 +159,13 @@ interface WindowEventHandlers {
            attribute EventHandler onpopstate;
            attribute EventHandler onstorage;
            attribute EventHandler onunload;
+};
+
+[NoInterfaceObject]
+interface DocumentAndElementEventHandlers {
+  attribute EventHandler oncopy;
+  attribute EventHandler oncut;
+  attribute EventHandler onpaste;
 };
 
 // The spec has |attribute OnErrorEventHandler onerror;| on

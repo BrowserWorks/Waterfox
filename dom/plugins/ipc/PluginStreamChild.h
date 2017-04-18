@@ -24,8 +24,8 @@ public:
 
   virtual bool IsBrowserStream() override { return false; }
 
-  virtual bool Answer__delete__(const NPReason& reason,
-                                const bool& artificial) override;
+  virtual mozilla::ipc::IPCResult Answer__delete__(const NPReason& reason,
+                                                   const bool& artificial) override;
 
   int32_t NPN_Write(int32_t length, void* buffer);
   void NPP_DestroyStream(NPError reason);
@@ -33,12 +33,12 @@ public:
   void EnsureCorrectInstance(PluginInstanceChild* i)
   {
     if (i != Instance())
-      NS_RUNTIMEABORT("Incorrect stream instance");
+      MOZ_CRASH("Incorrect stream instance");
   }
   void EnsureCorrectStream(NPStream* s)
   {
     if (s != &mStream)
-      NS_RUNTIMEABORT("Incorrect stream data");
+      MOZ_CRASH("Incorrect stream data");
   }
 
 private:

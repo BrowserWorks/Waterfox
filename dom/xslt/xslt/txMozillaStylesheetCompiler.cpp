@@ -84,7 +84,7 @@ public:
     NS_IMETHOD WillInterrupt(void) override { return NS_OK; }
     NS_IMETHOD WillResume(void) override { return NS_OK; }
     NS_IMETHOD SetParser(nsParserBase* aParser) override { return NS_OK; }
-    virtual void FlushPendingNotifications(mozFlushType aType) override { }
+    virtual void FlushPendingNotifications(mozilla::FlushType aType) override { }
     NS_IMETHOD SetDocumentCharset(nsACString& aCharset) override { return NS_OK; }
     virtual nsISupports *GetTarget() override { return nullptr; }
 
@@ -414,7 +414,7 @@ txCompileObserver::loadURI(const nsAString& aUri,
     rv = NS_NewURI(getter_AddRefs(referrerUri), aReferrerUri);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PrincipalOriginAttributes attrs;
+    OriginAttributes attrs;
     nsCOMPtr<nsIPrincipal> referrerPrincipal =
       BasePrincipal::CreateCodebasePrincipal(referrerUri, attrs);
     NS_ENSURE_TRUE(referrerPrincipal, NS_ERROR_FAILURE);
@@ -619,7 +619,7 @@ txSyncCompileObserver::loadURI(const nsAString& aUri,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIPrincipal> referrerPrincipal =
-      BasePrincipal::CreateCodebasePrincipal(referrerUri, PrincipalOriginAttributes());
+      BasePrincipal::CreateCodebasePrincipal(referrerUri, OriginAttributes());
     NS_ENSURE_TRUE(referrerPrincipal, NS_ERROR_FAILURE);
 
     // This is probably called by js, a loadGroup for the channel doesn't

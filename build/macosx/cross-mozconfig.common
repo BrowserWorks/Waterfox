@@ -7,7 +7,6 @@ MOZ_AUTOMATION_L10N_CHECK=0
 if [ "x$IS_NIGHTLY" = "xyes" ]; then
   # Some nightlies (eg: Mulet) don't want these set.
   MOZ_AUTOMATION_UPDATE_PACKAGING=${MOZ_AUTOMATION_UPDATE_PACKAGING-1}
-  MOZ_AUTOMATION_SDK=${MOZ_AUTOMATION_SDK-1}
 fi
 . "$topsrcdir/build/mozconfig.common"
 
@@ -15,6 +14,12 @@ fi
 mk_add_options "export LD_LIBRARY_PATH=$topsrcdir/clang/lib"
 
 CROSS_CCTOOLS_PATH=$topsrcdir/cctools
+# This SDK was copied from a local XCode install and uploaded to tooltool.
+# Generate the tarball by running this command with the proper SDK version:
+#   sdk_path=$(xcrun --sdk macosx10.12 --show-sdk-path)
+#   tar -C $(dirname ${sdk_path}) -cHjf /tmp/$(basename ${sdk_path}).tar.bz2 $(basename ${sdk_path})
+# Upload the resulting tarball from /tmp to tooltool, and change the entry in
+# `browser/config/tooltool-manifests/macosx64/cross-releng.manifest`.
 CROSS_SYSROOT=$topsrcdir/MacOSX10.7.sdk
 CROSS_PRIVATE_FRAMEWORKS=$CROSS_SYSROOT/System/Library/PrivateFrameworks
 FLAGS="-target x86_64-apple-darwin10 -mlinker-version=136 -B $CROSS_CCTOOLS_PATH/bin -isysroot $CROSS_SYSROOT"

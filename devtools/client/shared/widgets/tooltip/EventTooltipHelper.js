@@ -12,6 +12,8 @@ const L10N = new LocalizationHelper("devtools/client/locales/inspector.propertie
 const Editor = require("devtools/client/sourceeditor/editor");
 const beautify = require("devtools/shared/jsbeautify/beautify");
 
+loader.lazyRequireGetter(this, "viewSource", "devtools/client/shared/view-source");
+
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 const CONTAINER_WIDTH = 500;
 
@@ -79,6 +81,10 @@ EventTooltip.prototype = {
         let openInDebugger = L10N.getStr("eventsTooltip.openInDebugger");
         debuggerIcon.setAttribute("title", openInDebugger);
         header.appendChild(debuggerIcon);
+      } else {
+        let debuggerDiv = doc.createElementNS(XHTML_NS, "div");
+        debuggerDiv.className = "event-tooltip-debugger-spacer";
+        header.appendChild(debuggerDiv);
       }
 
       if (!listener.hide.type) {
@@ -89,13 +95,19 @@ EventTooltip.prototype = {
         header.appendChild(eventTypeLabel);
       }
 
-      if (!listener.hide.filename) {
-        let filename = doc.createElementNS(XHTML_NS, "span");
-        filename.className = "event-tooltip-filename devtools-monospace";
-        filename.textContent = listener.origin;
-        filename.setAttribute("title", listener.origin);
-        header.appendChild(filename);
+      let filename = doc.createElementNS(XHTML_NS, "span");
+      filename.className = "event-tooltip-filename devtools-monospace";
+
+      let text = listener.origin;
+      let title = text;
+      if (listener.hide.filename) {
+        text = L10N.getStr("eventsTooltip.unknownLocation");
+        title = L10N.getStr("eventsTooltip.unknownLocationExplanation");
       }
+
+      filename.textContent = text;
+      filename.setAttribute("title", title);
+      header.appendChild(filename);
 
       let attributesContainer = doc.createElementNS(XHTML_NS, "div");
       attributesContainer.className = "event-tooltip-attributes-container";
@@ -145,10 +157,10 @@ EventTooltip.prototype = {
       this._eventEditors.set(content, {
         editor: editor,
         handler: listener.handler,
-        searchString: listener.searchString,
         uri: listener.origin,
         dom0: listener.DOM0,
-        appended: false
+        native: listener.native,
+        appended: false,
       });
 
       content.className = "event-tooltip-content-box";
@@ -222,7 +234,7 @@ EventTooltip.prototype = {
     let header = event.currentTarget;
     let content = header.nextElementSibling;
 
-    let {uri, searchString, dom0} = this._eventEditors.get(content);
+    let {uri} = this._eventEditors.get(content);
 
     if (uri && uri !== "?") {
       // Save a copy of toolbox as it will be set to null when we hide the tooltip.
@@ -232,51 +244,15 @@ EventTooltip.prototype = {
 
       uri = uri.replace(/"/g, "");
 
-      let showSource = ({ DebuggerView }) => {
-        let matches = uri.match(/(.*):(\d+$)/);
-        let line = 1;
+      let matches = uri.match(/(.*):(\d+$)/);
+      let line = 1;
 
-        if (matches) {
-          uri = matches[1];
-          line = matches[2];
-        }
+      if (matches) {
+        uri = matches[1];
+        line = matches[2];
+      }
 
-        let item = DebuggerView.Sources.getItemForAttachment(a => a.source.url === uri);
-        if (item) {
-          let actor = item.attachment.source.actor;
-          DebuggerView.setEditorLocation(
-            actor, line, {noDebug: true}
-          ).then(() => {
-            if (dom0) {
-              let text = DebuggerView.editor.getText();
-              let index = text.indexOf(searchString);
-              let lastIndex = text.lastIndexOf(searchString);
-
-              // To avoid confusion we only search for DOM0 event handlers when
-              // there is only one possible match in the file.
-              if (index !== -1 && index === lastIndex) {
-                text = text.substr(0, index);
-                let newlineMatches = text.match(/\n/g);
-
-                if (newlineMatches) {
-                  DebuggerView.editor.setCursor({
-                    line: newlineMatches.length
-                  });
-                }
-              }
-            }
-          });
-        }
-      };
-
-      let debuggerAlreadyOpen = toolbox.getPanel("jsdebugger");
-      toolbox.selectTool("jsdebugger").then(({ panelWin: dbg }) => {
-        if (debuggerAlreadyOpen) {
-          showSource(dbg);
-        } else {
-          dbg.once(dbg.EVENTS.SOURCES_ADDED, () => showSource(dbg));
-        }
-      });
+      viewSource.viewSourceInDebugger(toolbox, uri, line);
     }
   },
 

@@ -13,7 +13,6 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/BinarySearch.h"
 #include "mozilla/fallible.h"
-#include "mozilla/Function.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Move.h"
@@ -29,8 +28,10 @@
 #include "nsDebug.h"
 #include "nsISupportsImpl.h"
 #include "nsRegionFwd.h"
+#include <functional>
 #include <initializer_list>
 #include <new>
+#include <iterator>
 
 namespace JS {
 template<class T>
@@ -46,6 +47,7 @@ struct TileClient;
 
 namespace mozilla {
 struct SerializedStructuredCloneBuffer;
+class SourceBufferTask;
 } // namespace mozilla
 
 namespace mozilla {
@@ -174,14 +176,14 @@ struct nsTArrayInfallibleAllocatorBase
 
   static ResultTypeProxy FailureResult()
   {
-    NS_RUNTIMEABORT("Infallible nsTArray should never fail");
+    MOZ_CRASH("Infallible nsTArray should never fail");
     return ResultTypeProxy();
   }
 
   static ResultType ConvertBoolToResultType(bool aValue)
   {
     if (!aValue) {
-      NS_RUNTIMEABORT("infallible nsTArray should never convert false to ResultType");
+      MOZ_CRASH("infallible nsTArray should never convert false to ResultType");
     }
   }
 };
@@ -352,6 +354,124 @@ struct nsTArray_SafeElementAtHelper<mozilla::OwningNonNull<E>, Derived>
       return static_cast<const Derived*>(this)->ElementAt(aIndex);
     }
     return nullptr;
+  }
+};
+
+// We have implemented a custom iterator class for nsTArray rather than using
+// raw pointers into the backing storage to improve the safety of C++11-style
+// range based iteration in the presence of array mutation, or script execution
+// (bug 1299489).
+//
+// Mutating an array which is being iterated is still wrong, and will either
+// cause elements to be missed or firefox to crash, but will not trigger memory
+// safety problems due to the release-mode bounds checking found in ElementAt.
+//
+// This iterator implements the full standard random access iterator spec, and
+// can be treated in may ways as though it is a pointer.
+template<class Element>
+class nsTArrayIterator
+{
+public:
+  typedef nsTArray<typename mozilla::RemoveConst<Element>::Type> array_type;
+  typedef nsTArrayIterator<Element>       iterator_type;
+  typedef typename array_type::index_type index_type;
+  typedef Element                         value_type;
+  typedef ptrdiff_t                       difference_type;
+  typedef value_type*                     pointer;
+  typedef value_type&                     reference;
+  typedef std::random_access_iterator_tag iterator_category;
+
+private:
+  const array_type* mArray;
+  index_type mIndex;
+
+public:
+  nsTArrayIterator() : mArray(nullptr), mIndex(0) {}
+  nsTArrayIterator(const iterator_type& aOther)
+    : mArray(aOther.mArray), mIndex(aOther.mIndex) {}
+  nsTArrayIterator(const array_type& aArray, index_type aIndex)
+    : mArray(&aArray), mIndex(aIndex) {}
+
+  iterator_type& operator=(const iterator_type& aOther) {
+    mArray = aOther.mArray;
+    mIndex = aOther.mIndex;
+    return *this;
+  }
+
+  bool operator==(const iterator_type& aRhs) const {
+    return mIndex == aRhs.mIndex;
+  }
+  bool operator!=(const iterator_type& aRhs) const {
+    return !(*this == aRhs);
+  }
+  bool operator<(const iterator_type& aRhs) const {
+    return mIndex < aRhs.mIndex;
+  }
+  bool operator>(const iterator_type& aRhs) const {
+    return mIndex > aRhs.mIndex;
+  }
+  bool operator<=(const iterator_type& aRhs) const {
+    return mIndex <= aRhs.mIndex;
+  }
+  bool operator>=(const iterator_type& aRhs) const {
+    return mIndex >= aRhs.mIndex;
+  }
+
+  // These operators depend on the release mode bounds checks in
+  // nsTArray::ElementAt for safety.
+  value_type* operator->() const {
+    return const_cast<value_type*>(&(*mArray)[mIndex]);
+  }
+  value_type& operator*() const {
+    return const_cast<value_type&>((*mArray)[mIndex]);
+  }
+
+  iterator_type& operator++() {
+    ++mIndex;
+    return *this;
+  }
+  iterator_type operator++(int) {
+    iterator_type it = *this;
+    ++*this;
+    return it;
+  }
+  iterator_type& operator--() {
+    --mIndex;
+    return *this;
+  }
+  iterator_type operator--(int) {
+    iterator_type it = *this;
+    --*this;
+    return it;
+  }
+
+  iterator_type& operator+=(difference_type aDiff) {
+    mIndex += aDiff;
+    return *this;
+  }
+  iterator_type& operator-=(difference_type aDiff) {
+    mIndex -= aDiff;
+    return *this;
+  }
+
+  iterator_type operator+(difference_type aDiff) const {
+    iterator_type it = *this;
+    it += aDiff;
+    return it;
+  }
+  iterator_type operator-(difference_type aDiff) const {
+    iterator_type it = *this;
+    it -= aDiff;
+    return it;
+  }
+
+  difference_type operator-(const iterator_type& aOther) const {
+    return static_cast<difference_type>(mIndex) -
+      static_cast<difference_type>(aOther.mIndex);
+  }
+
+  value_type& operator[](difference_type aIndex) const {
+    return *this->operator+(aIndex);
   }
 };
 
@@ -736,6 +856,13 @@ DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::indexedDB::ObjectStoreCursorResponse
 DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::indexedDB::SerializedStructuredCloneReadInfo);
 DECLARE_USE_COPY_CONSTRUCTORS(JSStructuredCloneData)
 DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::MessagePortMessage)
+DECLARE_USE_COPY_CONSTRUCTORS(mozilla::SourceBufferTask)
+
+template<typename T>
+struct nsTArray_CopyChooser<std::function<T>>
+{
+  typedef nsTArray_CopyWithConstructors<std::function<T>> Type;
+};
 
 
 //
@@ -851,10 +978,10 @@ public:
   typedef nsTArray_Impl<E, Alloc>                    self_type;
   typedef nsTArrayElementTraits<E>                   elem_traits;
   typedef nsTArray_SafeElementAtHelper<E, self_type> safeelementat_helper_type;
-  typedef elem_type*                                 iterator;
-  typedef const elem_type*                           const_iterator;
-  typedef mozilla::ReverseIterator<elem_type*>       reverse_iterator;
-  typedef mozilla::ReverseIterator<const elem_type*> const_reverse_iterator;
+  typedef nsTArrayIterator<elem_type>                iterator;
+  typedef nsTArrayIterator<const elem_type>          const_iterator;
+  typedef mozilla::ReverseIterator<iterator>         reverse_iterator;
+  typedef mozilla::ReverseIterator<const_iterator>   const_reverse_iterator;
 
   using safeelementat_helper_type::SafeElementAt;
   using base_type::EmptyHdr;
@@ -1092,11 +1219,11 @@ public:
   }
 
   // Methods for range-based for loops.
-  iterator begin() { return Elements(); }
-  const_iterator begin() const { return Elements(); }
+  iterator begin() { return iterator(*this, 0); }
+  const_iterator begin() const { return const_iterator(*this, 0); }
   const_iterator cbegin() const { return begin(); }
-  iterator end() { return Elements() + Length(); }
-  const_iterator end() const { return Elements() + Length(); }
+  iterator end() { return iterator(*this, Length()); }
+  const_iterator end() const { return const_iterator(*this, Length()); }
   const_iterator cend() const { return end(); }
 
   // Methods for reverse iterating.
@@ -1521,6 +1648,12 @@ protected:
   template<class Item, typename ActualAlloc = Alloc>
   elem_type* AppendElements(const Item* aArray, size_type aArrayLen);
 
+  template<class Item, size_t Length, typename ActualAlloc = Alloc>
+  elem_type* AppendElements(const mozilla::Array<Item, Length>& aArray)
+  {
+    return AppendElements<Item, ActualAlloc>(&aArray[0], Length);
+  }
+
 public:
 
   template<class Item>
@@ -1884,6 +2017,16 @@ public:
   // 'operator<' is defined for elem_type.
   void Sort() { Sort(nsDefaultComparator<elem_type, elem_type>()); }
 
+  // This method reverses the array in place.
+  void Reverse()
+  {
+    elem_type* elements = Elements();
+    const size_type len = Length();
+    for (index_type i = 0, iend = len / 2; i < iend; ++i) {
+      mozilla::Swap(elements[i], elements[len - i - 1]);
+    }
+  }
+
 protected:
   using base_type::Hdr;
   using base_type::ShrinkCapacity;
@@ -1919,6 +2062,10 @@ auto
 nsTArray_Impl<E, Alloc>::ReplaceElementsAt(index_type aStart, size_type aCount,
                                            const Item* aArray, size_type aArrayLen) -> elem_type*
 {
+  if (MOZ_UNLIKELY(aStart > Length())) {
+    InvalidArrayIndex_CRASH(aStart, Length());
+  }
+
   // Adjust memory allocation up-front to catch errors.
   if (!ActualAlloc::Successful(this->template EnsureCapacity<ActualAlloc>(
         Length() + aArrayLen - aCount, sizeof(elem_type)))) {
@@ -1998,6 +2145,10 @@ template<typename ActualAlloc>
 auto
 nsTArray_Impl<E, Alloc>::InsertElementAt(index_type aIndex) -> elem_type*
 {
+  if (MOZ_UNLIKELY(aIndex > Length())) {
+    InvalidArrayIndex_CRASH(aIndex, Length());
+  }
+
   if (!ActualAlloc::Successful(this->template EnsureCapacity<ActualAlloc>(
         Length() + 1, sizeof(elem_type)))) {
     return nullptr;
@@ -2014,6 +2165,10 @@ template<class Item, typename ActualAlloc>
 auto
 nsTArray_Impl<E, Alloc>::InsertElementAt(index_type aIndex, Item&& aItem) -> elem_type*
 {
+  if (MOZ_UNLIKELY(aIndex > Length())) {
+    InvalidArrayIndex_CRASH(aIndex, Length());
+  }
+
   if (!ActualAlloc::Successful(this->template EnsureCapacity<ActualAlloc>(
          Length() + 1, sizeof(elem_type)))) {
     return nullptr;

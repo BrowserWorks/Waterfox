@@ -1,5 +1,4 @@
-add_task(function* ()
-{
+add_task(function* () {
   const kPrefName_AutoScroll = "general.autoScroll";
   Services.prefs.setBoolPref(kPrefName_AutoScroll, false);
 
@@ -41,7 +40,7 @@ add_task(function* ()
     return new Promise(resolve => {
       function checkScroll() {
         let msg = "";
-        let elem = content.document.getElementById('i');
+        let elem = content.document.getElementById("i");
         if (elem.scrollTop != 0) {
           msg += "element should not have scrolled vertically";
         }

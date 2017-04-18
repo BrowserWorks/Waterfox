@@ -105,11 +105,12 @@ public class LocalBrowserDB extends BrowserDB {
     private volatile SuggestedSites mSuggestedSites;
 
     // Constants used when importing history data from legacy browser.
-    public static String HISTORY_VISITS_DATE = "date";
-    public static String HISTORY_VISITS_COUNT = "visits";
-    public static String HISTORY_VISITS_URL = "url";
+    public static final String HISTORY_VISITS_DATE = "date";
+    public static final String HISTORY_VISITS_COUNT = "visits";
+    public static final String HISTORY_VISITS_URL = "url";
 
-    private static final String TELEMETRY_HISTOGRAM_ACITIVITY_STREAM_TOPSITES = "FENNEC_ACTIVITY_STREAM_TOPSITES_LOADER_TIME_MS";
+    private static final String TELEMETRY_HISTOGRAM_ACTIVITY_STREAM_TOPSITES = "FENNEC_ACTIVITY_STREAM_TOPSITES_LOADER_TIME_MS";
+    private static final String TELEMETRY_HISTOGRAM_ACTIVITY_STREAM_HIGHLIGHTS = "FENNEC_ACTIVITY_STREAM_HIGHLIGHTS_LOADER_TIME_MS";
 
     private final Uri mBookmarksUriWithProfile;
     private final Uri mParentsUriWithProfile;
@@ -1730,6 +1731,55 @@ public class LocalBrowserDB extends BrowserDB {
     }
 
     @Override
+    public void pinSiteForAS(ContentResolver cr, String url, String title) {
+        ContentValues values = new ContentValues();
+        final long now = System.currentTimeMillis();
+        values.put(Bookmarks.TITLE, title);
+        values.put(Bookmarks.URL, url);
+        values.put(Bookmarks.PARENT, Bookmarks.FIXED_PINNED_LIST_ID);
+        values.put(Bookmarks.DATE_MODIFIED, now);
+        values.put(Bookmarks.POSITION, Bookmarks.FIXED_AS_PIN_POSITION);
+        values.put(Bookmarks.IS_DELETED, 0);
+
+        cr.insert(mBookmarksUriWithProfile, values);
+    }
+
+    @Override
+    public void unpinSiteForAS(ContentResolver cr, String url) {
+        cr.delete(mBookmarksUriWithProfile,
+                Bookmarks.PARENT + " == ? AND " +
+                Bookmarks.POSITION + " == ? AND " +
+                Bookmarks.URL + " = ?",
+                new String[] {
+                        String.valueOf(Bookmarks.FIXED_PINNED_LIST_ID),
+                        String.valueOf(Bookmarks.FIXED_AS_PIN_POSITION),
+                        url
+                });
+    }
+
+    @Override
+    public boolean isPinnedForAS(ContentResolver cr, String url) {
+        final Cursor c = cr.query(bookmarksUriWithLimit(1),
+                new String[] { Bookmarks._ID },
+                Bookmarks.URL + " = ? AND " + Bookmarks.PARENT + " = ? AND " + Bookmarks.POSITION + " = ?",
+                new String[] {
+                        url,
+                        String.valueOf(Bookmarks.FIXED_PINNED_LIST_ID),
+                        String.valueOf(Bookmarks.FIXED_AS_PIN_POSITION)
+                }, null);
+
+        if (c == null) {
+            throw new IllegalStateException("Null cursor in isPinnedByUrl");
+        }
+
+        try {
+            return c.getCount() > 0;
+        } finally {
+            c.close();
+        }
+    }
+
+    @Override
     @RobocopTarget
     public Cursor getBookmarkForUrl(ContentResolver cr, String url) {
         Cursor c = cr.query(bookmarksUriWithLimit(1),
@@ -1851,11 +1901,16 @@ public class LocalBrowserDB extends BrowserDB {
         }
     }
 
-    public CursorLoader getActivityStreamTopSites(Context context, int limit) {
+    public CursorLoader getActivityStreamTopSites(Context context, int suggestedRangeLimit, int limit) {
         final Uri uri = mTopSitesUriWithProfile.buildUpon()
                 .appendQueryParameter(BrowserContract.PARAM_LIMIT,
                         String.valueOf(limit))
-                .appendQueryParameter(BrowserContract.PARAM_TOPSITES_DISABLE_PINNED, Boolean.TRUE.toString())
+                .appendQueryParameter(BrowserContract.PARAM_SUGGESTEDSITES_LIMIT,
+                        String.valueOf(suggestedRangeLimit))
+                .appendQueryParameter(BrowserContract.PARAM_NON_POSITIONED_PINS,
+                        String.valueOf(true))
+                .appendQueryParameter(BrowserContract.PARAM_TOPSITES_EXCLUDE_REMOTE_ONLY,
+                        String.valueOf(true))
                 .build();
 
         return new TelemetrisedCursorLoader(context,
@@ -1868,7 +1923,7 @@ public class LocalBrowserDB extends BrowserDB {
                 null,
                 null,
                 null,
-                TELEMETRY_HISTOGRAM_ACITIVITY_STREAM_TOPSITES);
+                TELEMETRY_HISTOGRAM_ACTIVITY_STREAM_TOPSITES);
     }
 
     @Override
@@ -1925,7 +1980,8 @@ public class LocalBrowserDB extends BrowserDB {
                 .appendQueryParameter(BrowserContract.PARAM_LIMIT, String.valueOf(limit))
                 .build();
 
-        return new CursorLoader(context, uri, null, null, null, null);
+        return new TelemetrisedCursorLoader(context, uri, null, null, null, null,
+                TELEMETRY_HISTOGRAM_ACTIVITY_STREAM_HIGHLIGHTS);
     }
 
     @Override

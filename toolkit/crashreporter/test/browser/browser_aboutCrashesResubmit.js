@@ -21,7 +21,7 @@ function check_crash_list(crashes) {
     "about:crashes lists correct number of crash reports");
   // no point in checking this if the lists aren't the same length
   if (crashlinks.length == crashes.length) {
-    for (let i=0; i<crashes.length; i++) {
+    for (let i = 0; i < crashes.length; i++) {
       Assert.equal(crashlinks[i].id, crashes[i].id, i + ": crash ID is correct");
       if (crashes[i].pending) {
         // we set the breakpad.reportURL pref in test()
@@ -48,7 +48,7 @@ function check_submit_pending(tab, crashes) {
   let CrashURL = null;
   function csp_onload() {
     // loaded the crash report page
-    ok(true, 'got submission onload');
+    ok(true, "got submission onload");
 
     ContentTask.spawn(browser, null, function() {
       // grab the Crash ID here to verify later
@@ -133,11 +133,11 @@ function test() {
   // we don't need much data here, it's not going to a real Socorro
   crashes.push(addPendingCrashreport(crD,
                                      crashes[crashes.length - 1].date + 60000,
-                                     {'ServerURL': 'http://example.com/browser/toolkit/crashreporter/test/browser/crashreport.sjs',
-                                      'ProductName': 'Test App',
+                                     {"ServerURL": "http://example.com/browser/toolkit/crashreporter/test/browser/crashreport.sjs",
+                                      "ProductName": "Test App",
                                       // test that we don't truncate
                                       // at = (bug 512853)
-                                      'Foo': 'ABC=XYZ'
+                                      "Foo": "ABC=XYZ"
                                      }));
   crashes.sort((a, b) => b.date - a.date);
 

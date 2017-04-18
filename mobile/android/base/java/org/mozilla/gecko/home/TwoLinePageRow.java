@@ -10,6 +10,8 @@ import java.util.concurrent.Future;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.TextViewCompat;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -66,7 +68,7 @@ public class TwoLinePageRow extends LinearLayout
 
         LayoutInflater.from(context).inflate(R.layout.two_line_page_row, this);
         // Merge layouts lose their padding, so set it dynamically.
-        setPadding(0, 0, (int) getResources().getDimension(R.dimen.page_row_edge_padding), 0);
+        ViewCompat.setPaddingRelative(this, 0, 0, (int) getResources().getDimension(R.dimen.page_row_edge_padding), 0);
 
         mTitle = (TextView) findViewById(R.id.title);
         mUrl = (TextView) findViewById(R.id.url);
@@ -163,7 +165,7 @@ public class TwoLinePageRow extends LinearLayout
         }
 
         mSwitchToTabIconId = iconId;
-        mUrl.setCompoundDrawablesWithIntrinsicBounds(mSwitchToTabIconId, 0, 0, 0);
+        TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(mUrl, mSwitchToTabIconId, 0, 0, 0);
     }
 
     private void updateStatusIcon(boolean isBookmark, boolean isReaderItem) {

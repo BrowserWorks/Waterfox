@@ -27,23 +27,23 @@ var gDataNotificationInfoBar = {
     return this._log = Log.repository.getLoggerWithMessagePrefix(LOGGER_NAME, LOGGER_PREFIX);
   },
 
-  init: function() {
+  init() {
     window.addEventListener("unload", () => {
       for (let o of this._OBSERVERS) {
         Services.obs.removeObserver(this, o);
       }
-    }, false);
+    });
 
     for (let o of this._OBSERVERS) {
       Services.obs.addObserver(this, o, true);
     }
   },
 
-  _getDataReportingNotification: function (name=this._DATA_REPORTING_NOTIFICATION) {
+  _getDataReportingNotification(name = this._DATA_REPORTING_NOTIFICATION) {
     return this._notificationBox.getNotificationWithValue(name);
   },
 
-  _displayDataPolicyInfoBar: function (request) {
+  _displayDataPolicyInfoBar(request) {
     if (this._getDataReportingNotification()) {
       return;
     }
@@ -88,7 +88,7 @@ var gDataNotificationInfoBar = {
     request.onUserNotifyComplete();
   },
 
-  _clearPolicyNotification: function () {
+  _clearPolicyNotification() {
     let notification = this._getDataReportingNotification();
     if (notification) {
       this._log.debug("Closing notification.");
@@ -96,7 +96,7 @@ var gDataNotificationInfoBar = {
     }
   },
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     switch (topic) {
       case "datareporting:notify-data-policy:request":
         let request = subject.wrappedJSObject.object;
@@ -104,7 +104,6 @@ var gDataNotificationInfoBar = {
           this._displayDataPolicyInfoBar(request);
         } catch (ex) {
           request.onUserNotifyFailed(ex);
-          return;
         }
         break;
 

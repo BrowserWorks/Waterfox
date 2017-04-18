@@ -25,6 +25,8 @@
         'ssl_exporter_unittest.cc',
         'ssl_extension_unittest.cc',
         'ssl_fuzz_unittest.cc',
+        'ssl_fragment_unittest.cc',
+        'ssl_gather_unittest.cc',
         'ssl_gtest.cc',
         'ssl_hrr_unittest.cc',
         'ssl_loopback_unittest.cc',
@@ -39,7 +41,8 @@
         'tls_connect.cc',
         'tls_filter.cc',
         'tls_hkdf_unittest.cc',
-        'tls_parser.cc'
+        'tls_parser.cc',
+        'tls_protect.cc'
       ],
       'dependencies': [
         '<(DEPTH)/exports.gyp:nss_exports',
@@ -94,8 +97,12 @@
       '../../gtests/common',
       '../../lib/ssl'
     ],
+    'defines': [
+      'NSS_USE_STATIC_LIBS'
+    ],
   },
   'variables': {
     'module': 'nss',
+    'use_static_libs': 1,
   }
 }

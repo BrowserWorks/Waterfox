@@ -6,6 +6,8 @@
 
 #include "js/Proxy.h"
 
+#include "mozilla/Attributes.h"
+
 #include <string.h>
 
 #include "jsapi.h"
@@ -34,7 +36,7 @@ js::AutoEnterPolicy::reportErrorIfExceptionIsNotPending(JSContext* cx, jsid id)
         return;
 
     if (JSID_IS_VOID(id)) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_OBJECT_ACCESS_DENIED);
+        ReportAccessDenied(cx);
     } else {
         RootedValue idVal(cx, IdToValue(id));
         JSString* str = ValueToSource(cx, idVal);
@@ -277,7 +279,7 @@ ValueToWindowProxyIfWindow(const Value& v)
     return v;
 }
 
-bool
+MOZ_ALWAYS_INLINE bool
 Proxy::get(JSContext* cx, HandleObject proxy, HandleValue receiver_, HandleId id,
            MutableHandleValue vp)
 {
@@ -307,6 +309,25 @@ Proxy::get(JSContext* cx, HandleObject proxy, HandleValue receiver_, HandleId id
     }
 
     return handler->get(cx, proxy, receiver, id, vp);
+}
+
+bool
+js::ProxyGetProperty(JSContext* cx, HandleObject proxy, HandleId id, MutableHandleValue vp)
+{
+    RootedValue receiver(cx, ObjectValue(*proxy));
+    return Proxy::get(cx, proxy, receiver, id, vp);
+}
+
+bool
+js::ProxyGetPropertyByValue(JSContext* cx, HandleObject proxy, HandleValue idVal,
+                            MutableHandleValue vp)
+{
+    RootedId id(cx);
+    if (!ValueToId<CanGC>(cx, idVal, &id))
+        return false;
+
+    RootedValue receiver(cx, ObjectValue(*proxy));
+    return Proxy::get(cx, proxy, receiver, id, vp);
 }
 
 bool
@@ -543,72 +564,30 @@ Proxy::trace(JSTracer* trc, JSObject* proxy)
     handler->trace(trc, proxy);
 }
 
-bool
-js::proxy_LookupProperty(JSContext* cx, HandleObject obj, HandleId id,
-                         MutableHandleObject objp, MutableHandleShape propp)
+static bool
+proxy_LookupProperty(JSContext* cx, HandleObject obj, HandleId id,
+                     MutableHandleObject objp, MutableHandle<JS::PropertyResult> propp)
 {
     bool found;
     if (!Proxy::has(cx, obj, id, &found))
         return false;
 
     if (found) {
-        MarkNonNativePropertyFound<CanGC>(propp);
+        propp.setNonNativeProperty();
         objp.set(obj);
     } else {
+        propp.setNotFound();
         objp.set(nullptr);
-        propp.set(nullptr);
     }
     return true;
 }
 
-bool
-js::proxy_DefineProperty(JSContext* cx, HandleObject obj, HandleId id,
-                         Handle<PropertyDescriptor> desc,
-                         ObjectOpResult& result)
-{
-    return Proxy::defineProperty(cx, obj, id, desc, result);
-}
-
-bool
-js::proxy_HasProperty(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool* foundp)
-{
-    return Proxy::has(cx, obj, id, foundp);
-}
-
-bool
-js::proxy_GetProperty(JSContext* cx, HandleObject obj, HandleValue receiver, HandleId id,
-                      MutableHandleValue vp)
-{
-    return Proxy::get(cx, obj, receiver, id, vp);
-}
-
-bool
-js::proxy_SetProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
-                      HandleValue receiver, ObjectOpResult& result)
-{
-    return Proxy::set(cx, obj, id, v, receiver, result);
-}
-
-bool
-js::proxy_GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
-                                   MutableHandle<PropertyDescriptor> desc)
-{
-    return Proxy::getOwnPropertyDescriptor(cx, obj, id, desc);
-}
-
-bool
-js::proxy_DeleteProperty(JSContext* cx, HandleObject obj, HandleId id, ObjectOpResult& result)
+static bool
+proxy_DeleteProperty(JSContext* cx, HandleObject obj, HandleId id, ObjectOpResult& result)
 {
     if (!Proxy::delete_(cx, obj, id, result))
         return false;
     return SuppressDeletedProperty(cx, obj, id); // XXX is this necessary?
-}
-
-void
-js::proxy_Trace(JSTracer* trc, JSObject* obj)
-{
-    MOZ_ASSERT(obj->is<ProxyObject>());
-    ProxyObject::trace(trc, obj);
 }
 
 /* static */ void
@@ -656,28 +635,22 @@ js::proxy_WeakmapKeyDelegate(JSObject* obj)
     return obj->as<ProxyObject>().handler()->weakmapKeyDelegate(obj);
 }
 
-void
-js::proxy_Finalize(FreeOp* fop, JSObject* obj)
+static void
+proxy_Finalize(FreeOp* fop, JSObject* obj)
 {
     // Suppress a bogus warning about finalize().
     JS::AutoSuppressGCAnalysis nogc;
 
     MOZ_ASSERT(obj->is<ProxyObject>());
     obj->as<ProxyObject>().handler()->finalize(fop, obj);
-    js_free(detail::GetProxyDataLayout(obj)->values);
+    js_free(js::detail::GetProxyDataLayout(obj)->values);
 }
 
-void
-js::proxy_ObjectMoved(JSObject* obj, const JSObject* old)
+static void
+proxy_ObjectMoved(JSObject* obj, const JSObject* old)
 {
     MOZ_ASSERT(obj->is<ProxyObject>());
     obj->as<ProxyObject>().handler()->objectMoved(obj, old);
-}
-
-bool
-js::proxy_HasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v, bool* bp)
-{
-    return Proxy::hasInstance(cx, proxy, v, bp);
 }
 
 bool
@@ -698,31 +671,6 @@ js::proxy_Construct(JSContext* cx, unsigned argc, Value* vp)
     return Proxy::construct(cx, proxy, args);
 }
 
-bool
-js::proxy_Watch(JSContext* cx, HandleObject obj, HandleId id, HandleObject callable)
-{
-    return Proxy::watch(cx, obj, id, callable);
-}
-
-bool
-js::proxy_Unwatch(JSContext* cx, HandleObject obj, HandleId id)
-{
-    return Proxy::unwatch(cx, obj, id);
-}
-
-bool
-js::proxy_GetElements(JSContext* cx, HandleObject proxy, uint32_t begin, uint32_t end,
-                      ElementAdder* adder)
-{
-    return Proxy::getElements(cx, proxy, begin, end, adder);
-}
-
-JSString*
-js::proxy_FunToString(JSContext* cx, HandleObject proxy, unsigned indent)
-{
-    return Proxy::fun_toString(cx, proxy, indent);
-}
-
 const ClassOps js::ProxyClassOps = {
     nullptr,                 /* addProperty */
     nullptr,                 /* delProperty */
@@ -731,29 +679,29 @@ const ClassOps js::ProxyClassOps = {
     nullptr,                 /* enumerate   */
     nullptr,                 /* resolve     */
     nullptr,                 /* mayResolve  */
-    js::proxy_Finalize,      /* finalize    */
+    proxy_Finalize,          /* finalize    */
     nullptr,                 /* call        */
-    js::proxy_HasInstance,   /* hasInstance */
+    Proxy::hasInstance,      /* hasInstance */
     nullptr,                 /* construct   */
-    js::proxy_Trace,         /* trace       */
+    ProxyObject::trace,      /* trace       */
 };
 
 const ClassExtension js::ProxyClassExtension = PROXY_MAKE_EXT(
-    js::proxy_ObjectMoved
+    proxy_ObjectMoved
 );
 
 const ObjectOps js::ProxyObjectOps = {
-    js::proxy_LookupProperty,
-    js::proxy_DefineProperty,
-    js::proxy_HasProperty,
-    js::proxy_GetProperty,
-    js::proxy_SetProperty,
-    js::proxy_GetOwnPropertyDescriptor,
-    js::proxy_DeleteProperty,
-    js::proxy_Watch, js::proxy_Unwatch,
-    js::proxy_GetElements,
+    proxy_LookupProperty,
+    Proxy::defineProperty,
+    Proxy::has,
+    Proxy::get,
+    Proxy::set,
+    Proxy::getOwnPropertyDescriptor,
+    proxy_DeleteProperty,
+    Proxy::watch, Proxy::unwatch,
+    Proxy::getElements,
     nullptr,  /* enumerate */
-    js::proxy_FunToString
+    Proxy::fun_toString
 };
 
 const Class js::ProxyObject::proxyClass =
@@ -796,9 +744,9 @@ js::InitProxyClass(JSContext* cx, HandleObject obj)
         JS_FS_END
     };
 
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
     RootedFunction ctor(cx);
-    ctor = global->createConstructor(cx, proxy, cx->names().Proxy, 2);
+    ctor = GlobalObject::createConstructor(cx, proxy, cx->names().Proxy, 2);
     if (!ctor)
         return nullptr;
 

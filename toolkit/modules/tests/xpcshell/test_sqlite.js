@@ -1,6 +1,3 @@
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
-
 "use strict";
 
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
@@ -26,7 +23,7 @@ function sleep(ms) {
                 .createInstance(Ci.nsITimer);
 
   timer.initWithCallback({
-    notify: function () {
+    notify() {
       deferred.resolve();
     },
   }, ms, timer.TYPE_ONE_SHOT);
@@ -36,13 +33,13 @@ function sleep(ms) {
 
 // When testing finalization, use this to tell Sqlite.jsm to not throw
 // an uncatchable `Promise.reject`
-function failTestsOnAutoClose(enabled)  {
+function failTestsOnAutoClose(enabled) {
   Cu.getGlobalForObject(Sqlite).Debugging.failTestsOnAutoClose = enabled;
 }
 
-function getConnection(dbName, extraOptions={}) {
+function getConnection(dbName, extraOptions = {}) {
   let path = dbName + ".sqlite";
-  let options = {path: path};
+  let options = {path};
   for (let [k, v] of Object.entries(extraOptions)) {
     options[k] = v;
   }
@@ -50,7 +47,7 @@ function getConnection(dbName, extraOptions={}) {
   return Sqlite.openConnection(options);
 }
 
-function* getDummyDatabase(name, extraOptions={}) {
+function* getDummyDatabase(name, extraOptions = {}) {
   const TABLES = {
     dirs: "id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT",
     files: "id INTEGER PRIMARY KEY AUTOINCREMENT, dir_id INTEGER, path TEXT",
@@ -67,7 +64,7 @@ function* getDummyDatabase(name, extraOptions={}) {
   return c;
 }
 
-function* getDummyTempDatabase(name, extraOptions={}) {
+function* getDummyTempDatabase(name, extraOptions = {}) {
   const TABLES = {
     dirs: "id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT",
     files: "id INTEGER PRIMARY KEY AUTOINCREMENT, dir_id INTEGER, path TEXT",
@@ -84,12 +81,10 @@ function* getDummyTempDatabase(name, extraOptions={}) {
   return c;
 }
 
-function run_test() {
+add_task(function* test_setup() {
   Cu.import("resource://testing-common/services/common/logging.js");
   initTestLogging("Trace");
-
-  run_next_test();
-}
+});
 
 add_task(function* test_open_normal() {
   let c = yield Sqlite.openConnection({path: "test_open_normal.sqlite"});
@@ -99,7 +94,7 @@ add_task(function* test_open_normal() {
 add_task(function* test_open_unshared() {
   let path = OS.Path.join(OS.Constants.Path.profileDir, "test_open_unshared.sqlite");
 
-  let c = yield Sqlite.openConnection({path: path, sharedMemoryCache: false});
+  let c = yield Sqlite.openConnection({path, sharedMemoryCache: false});
   yield c.close();
 });
 
@@ -494,10 +489,9 @@ add_task(function* test_no_shrink_on_init() {
   let c = yield getConnection("no_shrink_on_init",
                               {shrinkMemoryOnConnectionIdleMS: 200});
 
-  let oldShrink = c._connectionData.shrinkMemory;
   let count = 0;
   Object.defineProperty(c._connectionData, "shrinkMemory", {
-    value: function () {
+    value() {
       count++;
     },
   });
@@ -523,7 +517,7 @@ add_task(function* test_idle_shrink_fires() {
 
   let count = 0;
   Object.defineProperty(c._connectionData, "shrinkMemory", {
-    value: function () {
+    value() {
       count++;
       let promise = oldShrink.call(c._connectionData);
       shrinkPromises.push(promise);
@@ -567,7 +561,7 @@ add_task(function* test_idle_shrink_reset_on_operation() {
   let count = 0;
 
   Object.defineProperty(c._connectionData, "shrinkMemory", {
-    value: function () {
+    value() {
       count++;
       let promise = oldShrink.call(c._connectionData);
       shrinkPromises.push(promise);
@@ -759,11 +753,11 @@ add_task(function* test_programmatic_binding_transaction_partial_rollback() {
   try {
     yield c.executeTransaction(function* transaction() {
       // Insert one row. This won't implicitly start a transaction.
-      let result = yield c.execute(sql, bindings[0]);
+      yield c.execute(sql, bindings[0]);
 
       // Insert multiple rows. mozStorage will want to start a transaction.
       // One of the inserts will fail, so the transaction should be rolled back.
-      result = yield c.execute(sql, bindings);
+      yield c.execute(sql, bindings);
       secondSucceeded = true;
     });
   } catch (ex) {
@@ -795,7 +789,7 @@ add_task(function* test_programmatic_binding_implicit_transaction() {
   let secondSucceeded = false;
   yield c.execute(sql, {id: 1, path: "works"});
   try {
-    let result = yield c.execute(sql, bindings);
+    yield c.execute(sql, bindings);
     secondSucceeded = true;
   } catch (ex) {
     print("Caught expected exception: " + ex);
@@ -838,7 +832,7 @@ add_task(function* test_direct() {
 
   let deferred = Promise.defer();
   begin.executeAsync({
-    handleCompletion: function (reason) {
+    handleCompletion(reason) {
       deferred.resolve();
     }
   });
@@ -849,10 +843,10 @@ add_task(function* test_direct() {
   deferred = Promise.defer();
   print("Executing async.");
   statement.executeAsync({
-    handleResult: function (resultSet) {
+    handleResult(resultSet) {
     },
 
-    handleError:  function (error) {
+    handleError(error) {
       print("Error when executing SQL (" + error.result + "): " +
             error.message);
       print("Original error: " + error.error);
@@ -860,7 +854,7 @@ add_task(function* test_direct() {
       deferred.reject();
     },
 
-    handleCompletion: function (reason) {
+    handleCompletion(reason) {
       print("Completed.");
       deferred.resolve();
     }
@@ -870,7 +864,7 @@ add_task(function* test_direct() {
 
   deferred = Promise.defer();
   end.executeAsync({
-    handleCompletion: function (reason) {
+    handleCompletion(reason) {
       deferred.resolve();
     }
   });
@@ -881,7 +875,7 @@ add_task(function* test_direct() {
   end.finalize();
 
   deferred = Promise.defer();
-  db.asyncClose(function () {
+  db.asyncClose(function() {
     deferred.resolve()
   });
   yield deferred.promise;
@@ -918,7 +912,7 @@ add_task(function* test_cloneStorageConnection() {
 // Test Sqlite.cloneStorageConnection invalid argument.
 add_task(function* test_cloneStorageConnection() {
   try {
-    let clone = yield Sqlite.cloneStorageConnection({ connection: null });
+    yield Sqlite.cloneStorageConnection({ connection: null });
     do_throw(new Error("Should throw on invalid connection"));
   } catch (ex) {
     if (ex.name != "TypeError") {
@@ -942,7 +936,7 @@ add_task(function* test_clone() {
 // Test clone(readOnly) method.
 add_task(function* test_readOnly_clone() {
   let path = OS.Path.join(OS.Constants.Path.profileDir, "test_readOnly_clone.sqlite");
-  let c = yield Sqlite.openConnection({path: path, sharedMemoryCache: false});
+  let c = yield Sqlite.openConnection({path, sharedMemoryCache: false});
 
   let clone = yield c.clone(true);
   // Just check that it works.
@@ -1003,7 +997,7 @@ add_task(function* test_warning_message_on_finalization() {
   let deferred = Promise.defer();
 
   let listener = {
-    observe: function(msg) {
+    observe(msg) {
       let messageText = msg.message;
       // Make sure the message starts with a warning containing the
       // connection identifier
@@ -1029,7 +1023,7 @@ add_task(function* test_error_message_on_unknown_finalization() {
   let deferred = Promise.defer();
 
   let listener = {
-    observe: function(msg) {
+    observe(msg) {
       let messageText = msg.message;
       if (messageText.indexOf("Error: Attempt to finalize unknown " +
                               "Sqlite connection: foo") !== -1) {
@@ -1051,7 +1045,7 @@ add_task(function* test_forget_witness_on_close() {
   let forgetCalled = false;
   let oldWitness = c._witness;
   c._witness = {
-    forget: function () {
+    forget() {
       forgetCalled = true;
       oldWitness.forget();
     },
@@ -1091,4 +1085,60 @@ add_task(function* test_close_database_on_gc() {
 
   yield finalPromise;
   failTestsOnAutoClose(true);
+});
+
+// Test all supported datatypes
+add_task(function* test_datatypes() {
+  let c = yield getConnection("datatypes");
+  yield c.execute("DROP TABLE IF EXISTS datatypes");
+  yield c.execute(`CREATE TABLE datatypes (
+                     null_col    NULL,
+                     integer_col INTEGER NOT NULL,
+                     text_col    TEXT    NOT NULL,
+                     blob_col    BLOB    NOT NULL,
+                     real_col    REAL    NOT NULL,
+                     numeric_col NUMERIC NOT NULL
+                   )`);
+  const bindings = [
+    {
+      null_col: null,
+      integer_col: 12345,
+      text_col: "qwerty",
+      blob_col: new Uint8Array(256).map( (value, index) => index % 256 ),
+      real_col: 3.14159265359,
+      numeric_col: true
+    },
+    {
+      null_col: null,
+      integer_col: -12345,
+      text_col: "",
+      blob_col: new Uint8Array(256 * 2).map( (value, index) => index % 256 ),
+      real_col: Number.NEGATIVE_INFINITY,
+      numeric_col: false
+    }
+  ];
+
+  yield c.execute(`INSERT INTO datatypes VALUES (
+                     :null_col,
+                     :integer_col,
+                     :text_col,
+                     :blob_col,
+                     :real_col,
+                     :numeric_col
+                   )`, bindings);
+
+  let rows = yield c.execute("SELECT * FROM datatypes");
+  Assert.ok(Array.isArray(rows));
+  Assert.equal(rows.length, bindings.length);
+  for (let i = 0 ; i < bindings.length; ++i) {
+    let binding = bindings[i];
+    let row = rows[i];
+    for (let colName in binding) {
+      // In Sqlite bool is stored and then retrieved as numeric.
+      let val = typeof binding[colName] == "boolean" ? +binding[colName]
+                                                       : binding[colName];
+      Assert.deepEqual(val, row.getResultByName(colName));
+    }
+  }
+  yield c.close();
 });

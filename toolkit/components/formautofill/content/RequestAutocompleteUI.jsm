@@ -25,7 +25,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
 /**
  * Handles the requestAutocomplete user interface.
  */
-this.RequestAutocompleteUI = function (aAutofillData) {
+this.RequestAutocompleteUI = function(aAutofillData) {
   this._autofillData = aAutofillData;
 }
 
@@ -40,14 +40,14 @@ this.RequestAutocompleteUI.prototype = {
 
     // Wrap the callback function so that it survives XPCOM.
     let args = {
-      resolveFn: resolveFn,
+      resolveFn,
       autofillData: this._autofillData,
     };
     args.wrappedJSObject = args;
 
     // Open the window providing the function to call when it closes.
     Services.ww.openWindow(null,
-                           "chrome://formautofill/content/requestAutocomplete.xhtml",
+                           "chrome://requestautocomplete/content/requestAutocomplete.xhtml",
                            "Toolkit:RequestAutocomplete",
                            "chrome,dialog=no,resizable",
                            args);

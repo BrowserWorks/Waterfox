@@ -159,9 +159,9 @@ public:
   explicit nsAsyncInstantiateEvent(nsObjectLoadingContent* aContent)
   : mContent(aContent) {}
 
-  ~nsAsyncInstantiateEvent() {}
+  ~nsAsyncInstantiateEvent() override = default;
 
-  NS_IMETHOD Run();
+  NS_IMETHOD Run() override;
 
 private:
   nsCOMPtr<nsIObjectLoadingContent> mContent;
@@ -192,9 +192,9 @@ public:
   explicit CheckPluginStopEvent(nsObjectLoadingContent* aContent)
   : mContent(aContent) {}
 
-  ~CheckPluginStopEvent() {}
+  ~CheckPluginStopEvent() override = default;
 
-  NS_IMETHOD Run();
+  NS_IMETHOD Run() override;
 
 private:
   nsCOMPtr<nsIObjectLoadingContent> mContent;
@@ -238,7 +238,7 @@ CheckPluginStopEvent::Run()
   LOG(("OBJLC [%p]: CheckPluginStopEvent - No frame, flushing layout", this));
   nsIDocument* composedDoc = content->GetComposedDoc();
   if (composedDoc) {
-    composedDoc->FlushPendingNotifications(Flush_Layout);
+    composedDoc->FlushPendingNotifications(FlushType::Layout);
     if (objLC->mPendingCheckPluginStopEvent != this) {
       LOG(("OBJLC [%p]: CheckPluginStopEvent - superseded in layout flush",
            this));
@@ -290,9 +290,9 @@ public:
     MOZ_ASSERT(aTarget && aDocument);
   }
 
-  ~nsSimplePluginEvent() {}
+  ~nsSimplePluginEvent() override = default;
 
-  NS_IMETHOD Run();
+  NS_IMETHOD Run() override;
 
 private:
   nsCOMPtr<nsISupports> mTarget;
@@ -338,9 +338,9 @@ public:
       mSubmittedCrashReport(submittedCrashReport)
   {}
 
-  ~nsPluginCrashedEvent() {}
+  ~nsPluginCrashedEvent() override = default;
 
-  NS_IMETHOD Run();
+  NS_IMETHOD Run() override;
 };
 
 NS_IMETHODIMP
@@ -371,78 +371,6 @@ nsPluginCrashedEvent::Run()
   event->WidgetEventPtr()->mFlags.mOnlyChromeDispatch = true;
 
   EventDispatcher::DispatchDOMEvent(mContent, nullptr, event, nullptr, nullptr);
-  return NS_OK;
-}
-
-class nsStopPluginRunnable : public Runnable, public nsITimerCallback
-{
-public:
-  NS_DECL_ISUPPORTS_INHERITED
-
-  nsStopPluginRunnable(nsPluginInstanceOwner* aInstanceOwner,
-                       nsObjectLoadingContent* aContent)
-    : mInstanceOwner(aInstanceOwner)
-    , mContent(aContent)
-  {
-    NS_ASSERTION(aInstanceOwner, "need an owner");
-    NS_ASSERTION(aContent, "need a nsObjectLoadingContent");
-  }
-
-  // Runnable
-  NS_IMETHOD Run() override;
-
-  // nsITimerCallback
-  NS_IMETHOD Notify(nsITimer* timer) override;
-
-protected:
-  virtual ~nsStopPluginRunnable() {}
-
-private:
-  nsCOMPtr<nsITimer> mTimer;
-  RefPtr<nsPluginInstanceOwner> mInstanceOwner;
-  nsCOMPtr<nsIObjectLoadingContent> mContent;
-};
-
-NS_IMPL_ISUPPORTS_INHERITED(nsStopPluginRunnable, Runnable, nsITimerCallback)
-
-NS_IMETHODIMP
-nsStopPluginRunnable::Notify(nsITimer *aTimer)
-{
-  return Run();
-}
-
-NS_IMETHODIMP
-nsStopPluginRunnable::Run()
-{
-  // InitWithCallback calls Release before AddRef so we need to hold a
-  // strong ref on 'this' since we fall through to this scope if it fails.
-  nsCOMPtr<nsITimerCallback> kungFuDeathGrip = this;
-  nsCOMPtr<nsIAppShell> appShell = do_GetService(kAppShellCID);
-  if (appShell) {
-    uint32_t currentLevel = 0;
-    appShell->GetEventloopNestingLevel(&currentLevel);
-    if (currentLevel > mInstanceOwner->GetLastEventloopNestingLevel()) {
-      if (!mTimer)
-        mTimer = do_CreateInstance("@mozilla.org/timer;1");
-      if (mTimer) {
-        // Fire 100ms timer to try to tear down this plugin as quickly as
-        // possible once the nesting level comes back down.
-        nsresult rv = mTimer->InitWithCallback(this, 100,
-                                               nsITimer::TYPE_ONE_SHOT);
-        if (NS_SUCCEEDED(rv)) {
-          return rv;
-        }
-      }
-      NS_ERROR("Failed to setup a timer to stop the plugin later (at a safe "
-               "time). Stopping the plugin now, this might crash.");
-    }
-  }
-
-  mTimer = nullptr;
-
-  static_cast<nsObjectLoadingContent*>(mContent.get())->
-    DoStopPlugin(mInstanceOwner, false, true);
-
   return NS_OK;
 }
 
@@ -716,11 +644,13 @@ nsObjectLoadingContent::UnbindFromTree(bool aDeep, bool aNullParent)
     ///             would keep the docshell around, but trash the frameloader
     UnloadObject();
   }
-  nsIDocument* doc = thisContent->GetComposedDoc();
-  if (doc && doc->IsActive()) {
-    nsCOMPtr<nsIRunnable> ev = new nsSimplePluginEvent(doc,
-                                                       NS_LITERAL_STRING("PluginRemoved"));
-    NS_DispatchToCurrentThread(ev);
+  if (mType == eType_Plugin) {
+    nsIDocument* doc = thisContent->GetComposedDoc();
+    if (doc && doc->IsActive()) {
+      nsCOMPtr<nsIRunnable> ev = new nsSimplePluginEvent(doc,
+                                                         NS_LITERAL_STRING("PluginRemoved"));
+      NS_DispatchToCurrentThread(ev);
+    }
   }
 }
 
@@ -791,7 +721,7 @@ nsObjectLoadingContent::InstantiatePluginInstance(bool aIsLoading)
 
   // Flush layout so that the frame is created if possible and the plugin is
   // initialized with the latest information.
-  doc->FlushPendingNotifications(Flush_Layout);
+  doc->FlushPendingNotifications(FlushType::Layout);
   // Flushing layout may have re-entered and loaded something underneath us
   NS_ENSURE_TRUE(mInstantiating, NS_OK);
 
@@ -1189,8 +1119,6 @@ nsObjectLoadingContent::OnStopRequest(nsIRequest *aRequest,
     }
   }
 
-  NS_ENSURE_TRUE(nsContentUtils::LegacyIsCallerChromeOrNativeCode(), NS_ERROR_NOT_AVAILABLE);
-
   if (aRequest != mChannel) {
     return NS_BINDING_ABORTED;
   }
@@ -1216,8 +1144,6 @@ nsObjectLoadingContent::OnDataAvailable(nsIRequest *aRequest,
                                         nsIInputStream *aInputStream,
                                         uint64_t aOffset, uint32_t aCount)
 {
-  NS_ENSURE_TRUE(nsContentUtils::LegacyIsCallerChromeOrNativeCode(), NS_ERROR_NOT_AVAILABLE);
-
   if (aRequest != mChannel) {
     return NS_BINDING_ABORTED;
   }
@@ -1249,17 +1175,6 @@ nsObjectLoadingContent::GetFrameLoader()
 {
   RefPtr<nsFrameLoader> loader = mFrameLoader;
   return loader.forget();
-}
-
-NS_IMETHODIMP
-nsObjectLoadingContent::GetParentApplication(mozIApplication** aApplication)
-{
-  if (!aApplication) {
-    return NS_ERROR_FAILURE;
-  }
-
-  *aApplication = nullptr;
-  return NS_OK;
 }
 
 void
@@ -1385,7 +1300,7 @@ public:
   {}
 
 protected:
-  ~ObjectInterfaceRequestorShim() {}
+  ~ObjectInterfaceRequestorShim() = default;
   nsCOMPtr<nsIObjectLoadingContent> mContent;
 };
 
@@ -2186,10 +2101,14 @@ nsObjectLoadingContent::LoadObject(bool aNotify,
   nsIDocument* doc = thisContent->OwnerDoc();
   nsresult rv = NS_OK;
 
-  // Sanity check
-  if (!InActiveDocument(thisContent)) {
-    NS_NOTREACHED("LoadObject called while not bound to an active document");
-    return NS_ERROR_UNEXPECTED;
+  // Per bug 1318303, if the parent document is not active, load the alternative
+  // and return.
+  if (!doc->IsCurrentActiveDocument()) {
+    // Since this can be triggered on change of attributes, make sure we've
+    // unloaded whatever is loaded first.
+    UnloadObject();
+    LoadFallback(eFallbackAlternate, false);
+    return NS_OK;
   }
 
   // XXX(johns): In these cases, we refuse to touch our content and just
@@ -2835,7 +2754,7 @@ nsObjectLoadingContent::NotifyStateChanged(ObjectType aOldType,
     if (aSync) {
       NS_ASSERTION(InActiveDocument(thisContent), "Something is confused");
       // Make sure that frames are actually constructed immediately.
-      doc->FlushPendingNotifications(Flush_Frames);
+      doc->FlushPendingNotifications(FlushType::Frames);
     }
   } else if (aOldType != mType) {
     // If our state changed, then we already recreated frames
@@ -3089,29 +3008,6 @@ nsObjectLoadingContent::GetSrcURI(nsIURI** aURI)
   return NS_OK;
 }
 
-static bool
-DoDelayedStop(nsPluginInstanceOwner* aInstanceOwner,
-              nsObjectLoadingContent* aContent,
-              bool aDelayedStop)
-{
-  // Don't delay stopping QuickTime (bug 425157), Flip4Mac (bug 426524),
-  // XStandard (bug 430219), CMISS Zinc (bug 429604).
-  if (aDelayedStop
-#if !(defined XP_WIN || defined MOZ_X11)
-      && !aInstanceOwner->MatchPluginName("QuickTime")
-      && !aInstanceOwner->MatchPluginName("Flip4Mac")
-      && !aInstanceOwner->MatchPluginName("XStandard plugin")
-      && !aInstanceOwner->MatchPluginName("CMISS Zinc Plugin")
-#endif
-      ) {
-    nsCOMPtr<nsIRunnable> evt =
-      new nsStopPluginRunnable(aInstanceOwner, aContent);
-    NS_DispatchToCurrentThread(evt);
-    return true;
-  }
-  return false;
-}
-
 void
 nsObjectLoadingContent::LoadFallback(FallbackType aType, bool aNotify) {
   EventStates oldState = ObjectState();
@@ -3175,16 +3071,13 @@ nsObjectLoadingContent::LoadFallback(FallbackType aType, bool aNotify) {
 }
 
 void
-nsObjectLoadingContent::DoStopPlugin(nsPluginInstanceOwner* aInstanceOwner,
-                                     bool aDelayedStop,
-                                     bool aForcedReentry)
+nsObjectLoadingContent::DoStopPlugin(nsPluginInstanceOwner* aInstanceOwner)
 {
   // DoStopPlugin can process events -- There may be pending
   // CheckPluginStopEvent events which can drop in underneath us and destroy the
-  // instance we are about to destroy. We prevent that with the mPluginStopping
-  // flag.  (aForcedReentry is only true from the callback of an earlier delayed
-  // stop)
-  if (mIsStopping && !aForcedReentry) {
+  // instance we are about to destroy. We prevent that with the mIsStopping
+  // flag.
+  if (mIsStopping) {
     return;
   }
   mIsStopping = true;
@@ -3193,10 +3086,6 @@ nsObjectLoadingContent::DoStopPlugin(nsPluginInstanceOwner* aInstanceOwner,
   RefPtr<nsNPAPIPluginInstance> inst;
   aInstanceOwner->GetInstance(getter_AddRefs(inst));
   if (inst) {
-    if (DoDelayedStop(aInstanceOwner, this, aDelayedStop)) {
-      return;
-    }
-
 #if defined(XP_MACOSX)
     aInstanceOwner->HidePluginWindow();
 #endif
@@ -3249,27 +3138,11 @@ nsObjectLoadingContent::StopPluginInstance()
   // the instance owner until the plugin is stopped.
   mInstanceOwner->SetFrame(nullptr);
 
-  bool delayedStop = false;
-#ifdef XP_WIN
-  // Force delayed stop for Real plugin only; see bug 420886, 426852.
-  RefPtr<nsNPAPIPluginInstance> inst;
-  mInstanceOwner->GetInstance(getter_AddRefs(inst));
-  if (inst) {
-    const char* mime = nullptr;
-    if (NS_SUCCEEDED(inst->GetMIMEType(&mime)) && mime) {
-      if (nsPluginHost::GetSpecialType(nsDependentCString(mime)) ==
-          nsPluginHost::eSpecialType_RealPlayer) {
-        delayedStop = true;
-      }
-    }
-  }
-#endif
-
   RefPtr<nsPluginInstanceOwner> ownerGrip(mInstanceOwner);
   mInstanceOwner = nullptr;
 
   // This can/will re-enter
-  DoStopPlugin(ownerGrip, delayedStop);
+  DoStopPlugin(ownerGrip);
 
   return NS_OK;
 }
@@ -3349,14 +3222,6 @@ nsObjectLoadingContent::DefaultFallbackType()
     return PLUGIN_ACTIVE;
   }
   return reason;
-}
-
-NS_IMETHODIMP
-nsObjectLoadingContent::GetHasRunningPlugin(bool *aHasPlugin)
-{
-  NS_ENSURE_TRUE(nsContentUtils::IsCallerChrome(), NS_ERROR_NOT_AVAILABLE);
-  *aHasPlugin = HasRunningPlugin();
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -3443,6 +3308,7 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
   // * Assume a default of click-to-play
   // * If globally disabled, per-site permissions cannot override.
   // * If blocklisted, override the reason with the blocklist reason
+  // * Check if the flash blocking status for this page denies flash from loading.
   // * Check per-site permissions and follow those if specified.
   // * Honor per-plugin disabled permission
   // * Blocklisted plugins are forced to CtP
@@ -3478,9 +3344,7 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
     aReason = eFallbackVulnerableNoUpdate;
   }
 
-  // Check the permission manager for permission based on the principal of
-  // the toplevel content.
-
+  // Document and window lookup
   nsCOMPtr<nsIContent> thisContent = do_QueryInterface(static_cast<nsIObjectLoadingContent*>(this));
   MOZ_ASSERT(thisContent);
   nsIDocument* ownerDoc = thisContent->OwnerDoc();
@@ -3494,6 +3358,18 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
   nsCOMPtr<nsIDocument> topDoc = topWindow->GetDoc();
   NS_ENSURE_TRUE(topDoc, false);
 
+  // Check the flash blocking status for this page (this applies to Flash only)
+  FlashClassification documentClassification = FlashClassification::Unknown;
+  if (IsFlashMIME(mContentType)) {
+    documentClassification = ownerDoc->DocumentFlashClassification();
+  }
+  if (documentClassification == FlashClassification::Denied) {
+    aReason = eFallbackSuppressed;
+    return false;
+  }
+
+  // Check the permission manager for permission based on the principal of
+  // the toplevel content.
   nsCOMPtr<nsIPermissionManager> permissionManager = services::GetPermissionManager();
   NS_ENSURE_TRUE(permissionManager, false);
 
@@ -3558,10 +3434,16 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
     return false;
   }
 
+  // On the following switch we don't need to handle the case where
+  // documentClassification is FlashClassification::Denied because
+  // that's already handled above.
   switch (enabledState) {
   case nsIPluginTag::STATE_ENABLED:
     return true;
   case nsIPluginTag::STATE_CLICKTOPLAY:
+    if (documentClassification == FlashClassification::Allowed) {
+      return true;
+    }
     return false;
   }
   MOZ_CRASH("Unexpected enabledState");
@@ -3718,90 +3600,6 @@ nsObjectLoadingContent::GetContentDocument(nsIPrincipal& aSubjectPrincipal)
   }
 
   return sub_doc;
-}
-
-void
-nsObjectLoadingContent::LegacyCall(JSContext* aCx,
-                                   JS::Handle<JS::Value> aThisVal,
-                                   const Sequence<JS::Value>& aArguments,
-                                   JS::MutableHandle<JS::Value> aRetval,
-                                   ErrorResult& aRv)
-{
-  nsCOMPtr<nsIContent> thisContent =
-    do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
-  JS::Rooted<JSObject*> obj(aCx, thisContent->GetWrapper());
-  MOZ_ASSERT(obj, "How did we get called?");
-
-  // Make sure we're not dealing with an Xray.  Our DoCall code can't handle
-  // random cross-compartment wrappers, so we're going to have to wrap
-  // everything up into our compartment, but that means we need to check that
-  // this is not an Xray situation by hand.
-  if (!JS_WrapObject(aCx, &obj)) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return;
-  }
-
-  if (nsDOMClassInfo::ObjectIsNativeWrapper(aCx, obj)) {
-    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
-    return;
-  }
-
-  obj = thisContent->GetWrapper();
-  // Now wrap things up into the compartment of "obj"
-  JSAutoCompartment ac(aCx, obj);
-  JS::AutoValueVector args(aCx);
-  if (!args.append(aArguments.Elements(), aArguments.Length())) {
-    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
-    return;
-  }
-
-  for (size_t i = 0; i < args.length(); i++) {
-    if (!JS_WrapValue(aCx, args[i])) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return;
-    }
-  }
-
-  JS::Rooted<JS::Value> thisVal(aCx, aThisVal);
-  if (!JS_WrapValue(aCx, &thisVal)) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return;
-  }
-
-  RefPtr<nsNPAPIPluginInstance> pi;
-  nsresult rv = ScriptRequestPluginInstance(aCx, getter_AddRefs(pi));
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
-    return;
-  }
-
-  // if there's no plugin around for this object, throw.
-  if (!pi) {
-    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
-    return;
-  }
-
-  JS::Rooted<JSObject*> pi_obj(aCx);
-  JS::Rooted<JSObject*> pi_proto(aCx);
-
-  rv = GetPluginJSObject(aCx, obj, pi, &pi_obj, &pi_proto);
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
-    return;
-  }
-
-  if (!pi_obj) {
-    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
-    return;
-  }
-
-  bool ok = JS::Call(aCx, thisVal, pi_obj, args, aRetval);
-  if (!ok) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return;
-  }
-
-  Telemetry::Accumulate(Telemetry::PLUGIN_CALLED_DIRECTLY, true);
 }
 
 void
@@ -4049,10 +3847,6 @@ nsObjectLoadingContent::MaybeFireErrorEvent()
 nsObjectLoadingContent::SetupProtoChainRunner::SetupProtoChainRunner(
     nsObjectLoadingContent* aContent)
   : mContent(aContent)
-{
-}
-
-nsObjectLoadingContent::SetupProtoChainRunner::~SetupProtoChainRunner()
 {
 }
 

@@ -55,6 +55,7 @@ ClientPaintedLayer::PaintThebes()
 
   if (!state.mRegionToDraw.IsEmpty() && !ClientManager()->GetPaintedLayerCallback()) {
     ClientManager()->SetTransactionIncomplete();
+    mContentClient->EndPaint(nullptr);
     return;
   }
 
@@ -99,7 +100,7 @@ ClientPaintedLayer::PaintThebes()
     mValidRegion.Or(mValidRegion, state.mRegionToDraw);
 
     ContentClientRemote* contentClientRemote = static_cast<ContentClientRemote*>(mContentClient.get());
-    MOZ_ASSERT(contentClientRemote->GetIPDLActor());
+    MOZ_ASSERT(contentClientRemote->GetIPCHandle());
 
     // Hold(this) ensures this layer is kept alive through the current transaction
     // The ContentClient assumes this layer is kept alive (e.g., in CreateBuffer),

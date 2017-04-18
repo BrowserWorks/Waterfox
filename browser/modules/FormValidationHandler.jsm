@@ -25,13 +25,13 @@ var FormValidationHandler =
    * Public apis
    */
 
-  init: function () {
+  init() {
     let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
     mm.addMessageListener("FormValidation:ShowPopup", this);
     mm.addMessageListener("FormValidation:HidePopup", this);
   },
 
-  uninit: function () {
+  uninit() {
     let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
     mm.removeMessageListener("FormValidation:ShowPopup", this);
     mm.removeMessageListener("FormValidation:HidePopup", this);
@@ -39,7 +39,7 @@ var FormValidationHandler =
     this._anchor = null;
   },
 
-  hidePopup: function () {
+  hidePopup() {
     this._hidePopup();
   },
 
@@ -47,7 +47,7 @@ var FormValidationHandler =
    * Events
    */
 
-  receiveMessage: function (aMessage) {
+  receiveMessage(aMessage) {
     let window = aMessage.target.ownerGlobal;
     let json = aMessage.json;
     let tabBrowser = window.gBrowser;
@@ -66,11 +66,11 @@ var FormValidationHandler =
     }
   },
 
-  observe: function (aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     this._hidePopup();
   },
 
-  handleEvent: function (aEvent) {
+  handleEvent(aEvent) {
     switch (aEvent.type) {
       case "FullZoomChange":
       case "TextZoomChange":
@@ -88,13 +88,13 @@ var FormValidationHandler =
    * Internal
    */
 
-  _onPopupHiding: function (aEvent) {
+  _onPopupHiding(aEvent) {
     aEvent.originalTarget.removeEventListener("popuphiding", this, true);
     let tabBrowser = aEvent.originalTarget.ownerDocument.getElementById("content");
     tabBrowser.selectedBrowser.removeEventListener("scroll", this, true);
-    tabBrowser.selectedBrowser.removeEventListener("FullZoomChange", this, false);
-    tabBrowser.selectedBrowser.removeEventListener("TextZoomChange", this, false);
-    tabBrowser.selectedBrowser.removeEventListener("ZoomChangeUsingMouseWheel", this, false);
+    tabBrowser.selectedBrowser.removeEventListener("FullZoomChange", this);
+    tabBrowser.selectedBrowser.removeEventListener("TextZoomChange", this);
+    tabBrowser.selectedBrowser.removeEventListener("ZoomChangeUsingMouseWheel", this);
 
     this._panel.hidden = true;
     this._panel = null;
@@ -115,7 +115,7 @@ var FormValidationHandler =
    *   position - popup positional string constants.
    *   message - the form element validation message text.
    */
-  _showPopup: function (aWindow, aPanelData) {
+  _showPopup(aWindow, aPanelData) {
     let previouslyShown = !!this._panel;
     this._panel = aWindow.document.getElementById("invalid-form-popup");
     this._panel.firstChild.textContent = aPanelData.message;
@@ -136,9 +136,9 @@ var FormValidationHandler =
 
       // Hide if the user scrolls the page
       tabBrowser.selectedBrowser.addEventListener("scroll", this, true);
-      tabBrowser.selectedBrowser.addEventListener("FullZoomChange", this, false);
-      tabBrowser.selectedBrowser.addEventListener("TextZoomChange", this, false);
-      tabBrowser.selectedBrowser.addEventListener("ZoomChangeUsingMouseWheel", this, false);
+      tabBrowser.selectedBrowser.addEventListener("FullZoomChange", this);
+      tabBrowser.selectedBrowser.addEventListener("TextZoomChange", this);
+      tabBrowser.selectedBrowser.addEventListener("ZoomChangeUsingMouseWheel", this);
 
       // Open the popup
       this._panel.openPopup(this._anchor, aPanelData.position, 0, 0, false);
@@ -149,7 +149,7 @@ var FormValidationHandler =
    * Hide the popup if currently displayed. Will fire an event to onPopupHiding
    * above if visible.
    */
-  _hidePopup: function () {
+  _hidePopup() {
     if (this._panel) {
       this._panel.hidePopup();
     }

@@ -91,6 +91,7 @@ class NrIceMediaStream;
 
 extern const char kNrIceTransportUdp[];
 extern const char kNrIceTransportTcp[];
+extern const char kNrIceTransportTls[];
 
 class NrIceStunServer {
  public:
@@ -313,6 +314,9 @@ class NrIceCtx {
 
   // Start checking
   nsresult StartChecks();
+
+  // Notify that the network has gone online/offline
+  void UpdateNetworkState(bool online);
 
   // Finalize the ICE negotiation. I.e., there will be no
   // more forking.

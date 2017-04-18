@@ -497,14 +497,14 @@ nsWindow::~nsWindow()
 /* static */ void
 nsWindow::ReleaseGlobals()
 {
-  for (uint32_t i = 0; i < ArrayLength(gCursorCache); ++i) {
-    if (gCursorCache[i]) {
+  for (auto & cursor : gCursorCache) {
+    if (cursor) {
 #if (MOZ_WIDGET_GTK == 3)
-      g_object_unref(gCursorCache[i]);
+      g_object_unref(cursor);
 #else
-      gdk_cursor_unref(gCursorCache[i]);
+      gdk_cursor_unref(cursor);
 #endif
-      gCursorCache[i] = nullptr;
+      cursor = nullptr;
     }
   }
 }
@@ -660,7 +660,7 @@ SetWidgetForHierarchy(GdkWindow *aWindow,
         if (!GTK_IS_WIDGET(data))
             return;
 
-        GtkWidget* widget = static_cast<GtkWidget*>(data);
+        auto* widget = static_cast<GtkWidget*>(data);
         if (gtk_widget_get_parent(widget) != aOldWidget)
             return;
 
@@ -837,12 +837,12 @@ nsWindow::GetDefaultScaleInternal()
     return GdkScaleFactor() * gfxPlatformGtk::GetDPIScale();
 }
 
-NS_IMETHODIMP
+void
 nsWindow::SetParent(nsIWidget *aNewParent)
 {
     if (mContainer || !mGdkWindow) {
         NS_NOTREACHED("nsWindow::SetParent called illegally");
-        return NS_ERROR_NOT_IMPLEMENTED;
+        return;
     }
 
     nsCOMPtr<nsIWidget> kungFuDeathGrip = this;
@@ -858,7 +858,7 @@ nsWindow::SetParent(nsIWidget *aNewParent)
         // reparent.
         MOZ_ASSERT(gdk_window_is_destroyed(mGdkWindow),
                    "live GdkWindow with no widget");
-        return NS_OK;
+        return;
     }
 
     if (aNewParent) {
@@ -874,7 +874,6 @@ nsWindow::SetParent(nsIWidget *aNewParent)
         ReparentNativeWidgetInternal(aNewParent, newContainer, newParentWindow,
                                      oldContainer);
     }
-    return NS_OK;
 }
 
 bool
@@ -901,7 +900,7 @@ nsWindow::ReparentNativeWidget(nsIWidget* aNewParent)
     MOZ_ASSERT(!gdk_window_is_destroyed(mGdkWindow),
                "destroyed GdkWindow with widget");
 
-    nsWindow* newParent = static_cast<nsWindow*>(aNewParent);
+    auto* newParent = static_cast<nsWindow*>(aNewParent);
     GdkWindow* newParentWindow = newParent->mGdkWindow;
     GtkWidget* newContainer = newParent->GetMozContainerWidget();
     GtkWindow* shell = GTK_WINDOW(mShell);
@@ -946,7 +945,7 @@ nsWindow::ReparentNativeWidgetInternal(nsIWidget* aNewParent,
         }
     }
 
-    nsWindow* newParent = static_cast<nsWindow*>(aNewParent);
+    auto* newParent = static_cast<nsWindow*>(aNewParent);
     bool parentHasMappedToplevel =
         newParent && newParent->mHasMappedToplevel;
     if (mHasMappedToplevel != parentHasMappedToplevel) {
@@ -1069,11 +1068,11 @@ void nsWindow::SetSizeConstraints(const SizeConstraints& aConstraints)
     }
 }
 
-NS_IMETHODIMP
+void
 nsWindow::Show(bool aState)
 {
     if (aState == mIsShown)
-        return NS_OK;
+        return;
 
     // Clear our cached resources when the window is hidden.
     if (mIsShown && !aState) {
@@ -1096,7 +1095,7 @@ nsWindow::Show(bool aState)
     if ((aState && !AreBoundsSane()) || !mCreated) {
         LOG(("\tbounds are insane or window hasn't been created yet\n"));
         mNeedsShow = true;
-        return NS_OK;
+        return;
     }
 
     // If someone is hiding this widget, clear any needing show flag.
@@ -1109,11 +1108,9 @@ nsWindow::Show(bool aState)
 #endif
 
     NativeShow(aState);
-
-    return NS_OK;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
 {
     double scale = BoundsUseDesktopPixels() ? GetDesktopToDeviceScale().scale : 1.0;
@@ -1128,7 +1125,7 @@ nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
     mBounds.SizeTo(width, height);
 
     if (!mCreated)
-        return NS_OK;
+        return;
 
     NativeResize();
 
@@ -1140,10 +1137,10 @@ nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
         DispatchResized();
     }
 
-    return NS_OK;
+    return;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::Resize(double aX, double aY, double aWidth, double aHeight,
                  bool aRepaint)
 {
@@ -1159,7 +1156,7 @@ nsWindow::Resize(double aX, double aY, double aWidth, double aHeight,
     mBounds.SizeTo(width, height);
 
     if (!mCreated)
-        return NS_OK;
+        return;
 
     NativeMoveResize();
 
@@ -1170,7 +1167,7 @@ nsWindow::Resize(double aX, double aY, double aWidth, double aHeight,
         DispatchResized();
     }
 
-    return NS_OK;
+    return;
 }
 
 void
@@ -1180,7 +1177,7 @@ nsWindow::ResizePluginSocketWidget()
     // nsPluginNativeWindowGtk wrapper. We are responsible for resizing
     // the embedded socket widget.
     if (mWindowType == eWindowType_plugin_ipc_chrome) {
-        nsPluginNativeWindowGtk* wrapper = (nsPluginNativeWindowGtk*)
+        auto* wrapper = (nsPluginNativeWindowGtk*)
           GetNativeData(NS_NATIVE_PLUGIN_OBJECT_PTR);
         if (wrapper) {
             wrapper->width = mBounds.width;
@@ -1190,12 +1187,10 @@ nsWindow::ResizePluginSocketWidget()
     }
 }
 
-NS_IMETHODIMP
+void
 nsWindow::Enable(bool aState)
 {
     mEnabled = aState;
-
-    return NS_OK;
 }
 
 bool
@@ -1204,9 +1199,7 @@ nsWindow::IsEnabled() const
     return mEnabled;
 }
 
-
-
-NS_IMETHODIMP
+void
 nsWindow::Move(double aX, double aY)
 {
     LOG(("nsWindow::Move [%p] %f %f\n", (void *)this,
@@ -1226,7 +1219,7 @@ nsWindow::Move(double aX, double aY)
     // popup window.
     if (x == mBounds.x && y == mBounds.y &&
         mWindowType != eWindowType_popup)
-        return NS_OK;
+        return;
 
     // XXX Should we do some AreBoundsSane check here?
 
@@ -1234,12 +1227,11 @@ nsWindow::Move(double aX, double aY)
     mBounds.y = y;
 
     if (!mCreated)
-        return NS_OK;
+        return;
 
     NativeMove();
 
     NotifyRollupGeometryChange();
-    return NS_OK;
 }
 
 
@@ -1405,7 +1397,7 @@ nsWindow::GetLastUserInputTime()
     return timestamp;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::SetFocus(bool aRaise)
 {
     // Make sure that our owning widget has focus.  If it doesn't try to
@@ -1574,8 +1566,8 @@ nsWindow::UpdateClientOffset()
     }
 
     // data returned is in the order left, right, top, bottom
-    int32_t left = int32_t(frame_extents[0]);
-    int32_t top = int32_t(frame_extents[2]);
+    auto left = int32_t(frame_extents[0]);
+    auto top = int32_t(frame_extents[2]);
 
     g_free(frame_extents);
 
@@ -1604,7 +1596,7 @@ nsWindow::OnPropertyNotifyEvent(GtkWidget* aWidget, GdkEventProperty* aEvent)
   return FALSE;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::SetCursor(nsCursor aCursor)
 {
     // if we're not the toplevel window pass up the cursor request to
@@ -1612,9 +1604,10 @@ nsWindow::SetCursor(nsCursor aCursor)
     if (!mContainer && mGdkWindow) {
         nsWindow *window = GetContainerWindow();
         if (!window)
-            return NS_ERROR_FAILURE;
+            return;
 
-        return window->SetCursor(aCursor);
+        window->SetCursor(aCursor);
+        return;
     }
 
     // Only change cursor if it's actually been changed
@@ -1628,16 +1621,14 @@ nsWindow::SetCursor(nsCursor aCursor)
             mCursor = aCursor;
 
             if (!mContainer)
-                return NS_OK;
+                return;
 
             gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(mContainer)), newCursor);
         }
     }
-
-    return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::SetCursor(imgIContainer* aCursor,
                     uint32_t aHotspotX, uint32_t aHotspotY)
 {
@@ -1701,19 +1692,17 @@ nsWindow::SetCursor(imgIContainer* aCursor,
     return rv;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::Invalidate(const LayoutDeviceIntRect& aRect)
 {
     if (!mGdkWindow)
-        return NS_OK;
+        return;
 
     GdkRectangle rect = DevicePixelsToGdkRectRoundOut(aRect);
     gdk_window_invalidate_rect(mGdkWindow, &rect, FALSE);
 
     LOGDRAW(("Invalidate (rect) [%p]: %d %d %d %d\n", (void *)this,
              rect.x, rect.y, rect.width, rect.height));
-
-    return NS_OK;
 }
 
 void*
@@ -1789,7 +1778,7 @@ nsWindow::SetNativeData(uint32_t aDataType, uintptr_t aVal)
     mPluginNativeWindow = (nsPluginNativeWindowGtk*)aVal;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::SetTitle(const nsAString& aTitle)
 {
     if (!mShell)
@@ -1811,11 +1800,11 @@ nsWindow::SetTitle(const nsAString& aTitle)
     return NS_OK;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::SetIcon(const nsAString& aIconSpec)
 {
     if (!mShell)
-        return NS_OK;
+        return;
 
     nsAutoCString iconName;
 
@@ -1872,8 +1861,6 @@ nsWindow::SetIcon(const nsAString& aIconSpec)
     if (foundIcon) {
         gtk_window_set_icon_name(GTK_WINDOW(mShell), iconName.get());
     }
-
-    return NS_OK;
 }
 
 
@@ -1943,7 +1930,7 @@ nsWindow::CaptureRollupEvents(nsIRollupListener *aListener,
     }
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::GetAttention(int32_t aCycleCount)
 {
     LOG(("nsWindow::GetAttention [%p]\n", (void *)this));
@@ -2564,8 +2551,8 @@ nsWindow::OnEnterNotifyEvent(GdkEventCrossing *aEvent)
 static bool
 is_top_level_mouse_exit(GdkWindow* aWindow, GdkEventCrossing *aEvent)
 {
-    gint x = gint(aEvent->x_root);
-    gint y = gint(aEvent->y_root);
+    auto x = gint(aEvent->x_root);
+    auto y = gint(aEvent->y_root);
     GdkDisplay* display = gdk_window_get_display(aWindow);
     GdkWindow* winAtPt = gdk_display_get_window_at_pointer(display, &x, &y);
     if (!winAtPt)
@@ -3391,7 +3378,7 @@ nsWindow::ThemeChanged()
     while (children) {
         GdkWindow *gdkWin = GDK_WINDOW(children->data);
 
-        nsWindow *win = (nsWindow*) g_object_get_data(G_OBJECT(gdkWin),
+        auto *win = (nsWindow*) g_object_get_data(G_OBJECT(gdkWin),
                                                       "nsWindow");
 
         if (win && win != this) { // guard against infinite recursion
@@ -4403,7 +4390,7 @@ nsWindow::ConfigureChildren(const nsTArray<Configuration>& aConfigurations)
 
     for (uint32_t i = 0; i < aConfigurations.Length(); ++i) {
         const Configuration& configuration = aConfigurations[i];
-        nsWindow* w = static_cast<nsWindow*>(configuration.mChild.get());
+        auto* w = static_cast<nsWindow*>(configuration.mChild.get());
         NS_ASSERTION(w->GetParent() == this,
                      "Configured widget is not a child");
         w->SetWindowClipRegion(configuration.mClipRegion, true);
@@ -4492,7 +4479,7 @@ nsWindow::ResizeTransparencyBitmap()
 
     int32_t newRowBytes = GetBitmapStride(mBounds.width);
     int32_t newSize = newRowBytes * mBounds.height;
-    gchar* newBits = new gchar[newSize];
+    auto* newBits = new gchar[newSize];
     // fill new mask with "transparent", first
     memset(newBits, 0, newSize);
 
@@ -5124,20 +5111,21 @@ nsWindow::MakeFullScreen(bool aFullScreen, nsIScreen* aTargetScreen)
     return NS_OK;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::HideWindowChrome(bool aShouldHide)
 {
     if (!mShell) {
         // Pass the request to the toplevel window
         GtkWidget *topWidget = GetToplevelWidget();
         if (!topWidget)
-            return NS_ERROR_FAILURE;
+            return;
 
         nsWindow *topWindow = get_window_for_gtk_widget(topWidget);
         if (!topWindow)
-            return NS_ERROR_FAILURE;
+            return;
 
-        return topWindow->HideWindowChrome(aShouldHide);
+        topWindow->HideWindowChrome(aShouldHide);
+        return;
     }
 
     // Sawfish, metacity, and presumably other window managers get
@@ -5171,8 +5159,6 @@ nsWindow::HideWindowChrome(bool aShouldHide)
 #else
     gdk_flush ();
 #endif /* MOZ_X11 */
-
-    return NS_OK;
 }
 
 bool
@@ -5190,7 +5176,7 @@ nsWindow::CheckForRollup(gdouble aMouseX, gdouble aMouseY,
     }
 
     bool retVal = false;
-    GdkWindow *currentPopup =
+    auto *currentPopup =
         (GdkWindow *)rollupWidget->GetNativeData(NS_NATIVE_WINDOW);
     if (aAlwaysRollup || !is_mouse_in_window(currentPopup, aMouseX, aMouseY)) {
         bool rollup = true;
@@ -5207,7 +5193,7 @@ nsWindow::CheckForRollup(gdouble aMouseX, gdouble aMouseY,
             uint32_t sameTypeCount = rollupListener->GetSubmenuWidgetChain(&widgetChain);
             for (uint32_t i=0; i<widgetChain.Length(); ++i) {
                 nsIWidget* widget = widgetChain[i];
-                GdkWindow* currWindow =
+                auto* currWindow =
                     (GdkWindow*) widget->GetNativeData(NS_NATIVE_WINDOW);
                 if (is_mouse_in_window(currWindow, aMouseX, aMouseY)) {
                   // don't roll up if the mouse event occurred within a
@@ -5671,8 +5657,8 @@ leave_notify_event_cb(GtkWidget *widget,
 
     // bug 369599: Suppress LeaveNotify events caused by pointer grabs to
     // avoid generating spurious mouse exit events.
-    gint x = gint(event->x_root);
-    gint y = gint(event->y_root);
+    auto x = gint(event->x_root);
+    auto y = gint(event->y_root);
     GdkDisplay* display = gtk_widget_get_display(widget);
     GdkWindow* winAtPt = gdk_display_get_window_at_pointer(display, &x, &y);
     if (winAtPt == event->window) {
@@ -5795,7 +5781,7 @@ popup_take_focus_filter(GdkXEvent *gdk_xevent,
                         GdkEvent *event,
                         gpointer data)
 {
-    XEvent* xevent = static_cast<XEvent*>(gdk_xevent);
+    auto* xevent = static_cast<XEvent*>(gdk_xevent);
     if (xevent->type != ClientMessage)
         return GDK_FILTER_CONTINUE;
 
@@ -6294,7 +6280,7 @@ get_inner_gdk_window (GdkWindow *aWindow,
     for (GList *child = g_list_last(children);
          child;
          child = g_list_previous(child)) {
-        GdkWindow *childWindow = (GdkWindow *) child->data;
+        auto *childWindow = (GdkWindow *) child->data;
         if (get_window_for_gdk_window(childWindow)) {
 #if (MOZ_WIDGET_GTK == 2)
             gdk_window_get_geometry(childWindow, &cx, &cy, &cw, &ch, nullptr);
@@ -6406,15 +6392,11 @@ nsWindow::DispatchRestoreEventAccessible(void)
 
 // nsChildWindow class
 
-nsChildWindow::nsChildWindow()
-{
-}
+nsChildWindow::nsChildWindow() = default;
 
-nsChildWindow::~nsChildWindow()
-{
-}
+nsChildWindow::~nsChildWindow() = default;
 
-NS_IMETHODIMP_(void)
+void
 nsWindow::SetInputContext(const InputContext& aContext,
                           const InputContextAction& aAction)
 {
@@ -6424,7 +6406,7 @@ nsWindow::SetInputContext(const InputContext& aContext,
     mIMContext->SetInputContext(this, &aContext, &aAction);
 }
 
-NS_IMETHODIMP_(InputContext)
+InputContext
 nsWindow::GetInputContext()
 {
   InputContext context;
@@ -6446,7 +6428,7 @@ nsWindow::GetIMEUpdatePreference()
     return mIMContext->GetIMEUpdatePreference();
 }
 
-NS_IMETHODIMP_(TextEventDispatcherListener*)
+TextEventDispatcherListener*
 nsWindow::GetNativeTextEventDispatcherListener()
 {
     if (NS_WARN_IF(!mIMContext)) {
@@ -6472,7 +6454,7 @@ nsWindow::ExecuteNativeKeyBindingRemapped(NativeKeyBindingsType aType,
     return keyBindings->Execute(modifiedEvent, aCallback, aCallbackData);
 }
 
-NS_IMETHODIMP_(bool)
+bool
 nsWindow::ExecuteNativeKeyBinding(NativeKeyBindingsType aType,
                                   const WidgetKeyboardEvent& aEvent,
                                   DoCommandCallback aCallback,
@@ -6639,7 +6621,7 @@ nsWindow::GetDragInfo(WidgetMouseEvent* aMouseEvent,
     return true;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::BeginMoveDrag(WidgetMouseEvent* aEvent)
 {
     MOZ_ASSERT(aEvent, "must have event");
@@ -6661,7 +6643,7 @@ nsWindow::BeginMoveDrag(WidgetMouseEvent* aEvent)
     return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::BeginResizeDrag(WidgetGUIEvent* aEvent,
                           int32_t aHorizontal,
                           int32_t aVertical)

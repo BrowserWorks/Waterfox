@@ -4,7 +4,6 @@
 
 import json
 import os
-import shutil
 import sys
 import tempfile
 import traceback
@@ -240,7 +239,6 @@ class RobocopTestRunner(MochitestDesktop):
         self.localProfile = self.options.profilePath
         self.log.debug("Profile created at %s" % self.localProfile)
         # some files are not needed for robocop; save time by not pushing
-        shutil.rmtree(os.path.join(self.localProfile, 'webapps'))
         os.remove(os.path.join(self.localProfile, 'userChrome.css'))
         try:
             self.dm.pushDir(self.localProfile, self.remoteProfileCopy)
@@ -398,8 +396,6 @@ class RobocopTestRunner(MochitestDesktop):
             xrePath=None,
             debugger=None)
         # remove desktop environment not used on device
-        if "MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA" in browserEnv:
-            del browserEnv["MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA"]
         if "XPCOM_MEM_BLOAT_LOG" in browserEnv:
             del browserEnv["XPCOM_MEM_BLOAT_LOG"]
         browserEnv["MOZ_LOG_FILE"] = os.path.join(

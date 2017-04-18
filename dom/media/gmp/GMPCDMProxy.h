@@ -31,8 +31,7 @@ public:
   void Init(PromiseId aPromiseId,
             const nsAString& aOrigin,
             const nsAString& aTopLevelOrigin,
-            const nsAString& aGMPName,
-            bool aInPrivateBrowsing) override;
+            const nsAString& aGMPName) override;
 
   void OnSetDecryptorId(uint32_t aId) override;
 
@@ -123,15 +122,14 @@ private:
     nsString mTopLevelOrigin;
     nsString mGMPName;
     RefPtr<GMPCrashHelper> mCrashHelper;
-    bool mInPrivateBrowsing;
   };
 
   // GMP thread only.
-  void gmp_Init(nsAutoPtr<InitData>&& aData);
-  void gmp_InitDone(GMPDecryptorProxy* aCDM, nsAutoPtr<InitData>&& aData);
+  void gmp_Init(UniquePtr<InitData>&& aData);
+  void gmp_InitDone(GMPDecryptorProxy* aCDM, UniquePtr<InitData>&& aData);
   void gmp_InitGetGMPDecryptor(nsresult aResult,
                                const nsACString& aNodeId,
-                               nsAutoPtr<InitData>&& aData);
+                               UniquePtr<InitData>&& aData);
 
   // GMP thread only.
   void gmp_Shutdown();
@@ -147,21 +145,21 @@ private:
     nsTArray<uint8_t> mInitData;
   };
   // GMP thread only.
-  void gmp_CreateSession(nsAutoPtr<CreateSessionData> aData);
+  void gmp_CreateSession(UniquePtr<CreateSessionData>&& aData);
 
   struct SessionOpData {
     PromiseId mPromiseId;
     nsCString mSessionId;
   };
   // GMP thread only.
-  void gmp_LoadSession(nsAutoPtr<SessionOpData> aData);
+  void gmp_LoadSession(UniquePtr<SessionOpData>&& aData);
 
   struct SetServerCertificateData {
     PromiseId mPromiseId;
     nsTArray<uint8_t> mCert;
   };
   // GMP thread only.
-  void gmp_SetServerCertificate(nsAutoPtr<SetServerCertificateData> aData);
+  void gmp_SetServerCertificate(UniquePtr<SetServerCertificateData>&& aData);
 
   struct UpdateSessionData {
     PromiseId mPromiseId;
@@ -169,13 +167,13 @@ private:
     nsTArray<uint8_t> mResponse;
   };
   // GMP thread only.
-  void gmp_UpdateSession(nsAutoPtr<UpdateSessionData> aData);
+  void gmp_UpdateSession(UniquePtr<UpdateSessionData>&& aData);
 
   // GMP thread only.
-  void gmp_CloseSession(nsAutoPtr<SessionOpData> aData);
+  void gmp_CloseSession(UniquePtr<SessionOpData>&& aData);
 
   // GMP thread only.
-  void gmp_RemoveSession(nsAutoPtr<SessionOpData> aData);
+  void gmp_RemoveSession(UniquePtr<SessionOpData>&& aData);
 
   class DecryptJob {
   public:
@@ -238,7 +236,7 @@ private:
 
   GMPDecryptorProxy* mCDM;
 
-  nsAutoPtr<GMPCDMCallbackProxy> mCallback;
+  UniquePtr<GMPCDMCallbackProxy> mCallback;
 
   // Decryption jobs sent to CDM, awaiting result.
   // GMP thread only.

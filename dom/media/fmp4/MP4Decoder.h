@@ -13,7 +13,7 @@
 
 namespace mozilla {
 
-class MediaContentType;
+class MediaContainerType;
 
 // Decoder that uses a bundled MP4 demuxer and platform decoders to play MP4.
 class MP4Decoder : public MediaDecoder
@@ -30,10 +30,11 @@ public:
 
   MediaDecoderStateMachine* CreateStateMachine() override;
 
-  // Returns true if aType is a type that we think we can render with the
-  // a MP4 platform decoder backend.
-  static bool CanHandleMediaType(const MediaContentType& aType,
-                                 DecoderDoctorDiagnostics* aDiagnostics);
+  // Returns true if aContainerType is an MP4 type that we think we can render
+  // with the a platform decoder backend.
+  // If provided, codecs are checked for support.
+  static bool IsSupportedType(const MediaContainerType& aContainerType,
+                              DecoderDoctorDiagnostics* aDiagnostics);
 
   // Return true if aMimeType is a one of the strings used by our demuxers to
   // identify H264. Does not parse general content type strings, i.e. white
@@ -51,7 +52,7 @@ public:
   static already_AddRefed<dom::Promise>
   IsVideoAccelerated(layers::KnowsCompositor* aKnowsCompositor, nsIGlobalObject* aParent);
 
-  void GetMozDebugReaderData(nsAString& aString) override;
+  void GetMozDebugReaderData(nsACString& aString) override;
 
 private:
   RefPtr<MediaFormatReader> mReader;

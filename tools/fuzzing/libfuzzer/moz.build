@@ -12,7 +12,6 @@ DIRS += [
 
 SOURCES += [
     'FuzzerCrossOver.cpp',
-    'FuzzerCustomMain.cpp',
     'FuzzerDriver.cpp',
     'FuzzerExtFunctionsDlsym.cpp',
     'FuzzerExtFunctionsWeak.cpp',
@@ -23,4 +22,6 @@ SOURCES += [
     'FuzzerTracePC.cpp',
     'FuzzerTraceState.cpp',
     'FuzzerUtil.cpp',
+    'FuzzerUtilDarwin.cpp',
+    'FuzzerUtilLinux.cpp',
 ]

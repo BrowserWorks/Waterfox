@@ -17,8 +17,6 @@
 #include "nsDataHashtable.h"
 #include "nsThreadUtils.h"
 
-class GMPCrashHelper;
-
 namespace mozilla
 {
 
@@ -27,11 +25,13 @@ namespace layers
   class ImageContainer;
   class KnowsCompositor;
 } // namespace layers
+class AbstractThread;
 class MediaResource;
 class ReentrantMonitor;
 class VideoFrameContainer;
 class MediaDecoderOwner;
 class CDMProxy;
+class GMPCrashHelper;
 
 typedef nsDataHashtable<nsCStringHashKey, nsCString> MetadataTags;
 
@@ -90,6 +90,9 @@ public:
   {
     return nullptr;
   }
+
+  // Return an abstract thread on which to run main thread runnables.
+  virtual AbstractThread* AbstractMainThread() const = 0;
 
 protected:
   virtual void UpdateEstimatedMediaDuration(int64_t aDuration) {};

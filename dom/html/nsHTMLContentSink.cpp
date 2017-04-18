@@ -96,14 +96,12 @@ NS_NewHTMLNOTUSEDElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
   return nullptr;
 }
 
-#define HTML_TAG(_tag, _classname) NS_NewHTML##_classname##Element,
-#define HTML_HTMLELEMENT_TAG(_tag) NS_NewHTMLElement,
+#define HTML_TAG(_tag, _classname, _interfacename) NS_NewHTML##_classname##Element,
 #define HTML_OTHER(_tag) NS_NewHTMLNOTUSEDElement,
 static const contentCreatorCallback sContentCreatorCallbacks[] = {
   NS_NewHTMLUnknownElement,
 #include "nsHTMLTagList.h"
 #undef HTML_TAG
-#undef HTML_HTMLELEMENT_TAG
 #undef HTML_OTHER
   NS_NewHTMLUnknownElement
 };
@@ -139,7 +137,7 @@ public:
   NS_IMETHOD WillInterrupt(void) override;
   NS_IMETHOD WillResume(void) override;
   NS_IMETHOD SetParser(nsParserBase* aParser) override;
-  virtual void FlushPendingNotifications(mozFlushType aType) override;
+  virtual void FlushPendingNotifications(FlushType aType) override;
   NS_IMETHOD SetDocumentCharset(nsACString& aCharset) override;
   virtual nsISupports *GetTarget() override;
   virtual bool IsScriptExecuting() override;
@@ -1055,7 +1053,7 @@ HTMLContentSink::UpdateChildCounts()
 }
 
 void
-HTMLContentSink::FlushPendingNotifications(mozFlushType aType)
+HTMLContentSink::FlushPendingNotifications(FlushType aType)
 {
   // Only flush tags if we're not doing the notification ourselves
   // (since we aren't reentrant)
@@ -1063,11 +1061,11 @@ HTMLContentSink::FlushPendingNotifications(mozFlushType aType)
     // Only flush if we're still a document observer (so that our child counts
     // should be correct).
     if (mIsDocumentObserver) {
-      if (aType >= Flush_ContentAndNotify) {
+      if (aType >= FlushType::ContentAndNotify) {
         FlushTags();
       }
     }
-    if (aType >= Flush_InterruptibleLayout) {
+    if (aType >= FlushType::InterruptibleLayout) {
       // Make sure that layout has started so that the reflow flush
       // will actually happen.
       StartLayout(true);

@@ -91,11 +91,11 @@ var OldStyleSheetActor = protocol.ActorClassWithSpec(oldStyleSheetSpec, {
     let ownerNode = this.rawSheet.ownerNode;
     if (ownerNode) {
       let onSheetLoaded = (event) => {
-        ownerNode.removeEventListener("load", onSheetLoaded, false);
+        ownerNode.removeEventListener("load", onSheetLoaded);
         this._notifyPropertyChanged("ruleCount");
       };
 
-      ownerNode.addEventListener("load", onSheetLoaded, false);
+      ownerNode.addEventListener("load", onSheetLoaded);
     }
   },
 
@@ -364,7 +364,7 @@ var StyleEditorActor = exports.StyleEditorActor = protocol.ActorClassWithSpec(st
       this._onDocumentLoaded();
     }
     else {
-      this.window.addEventListener("load", this._onDocumentLoaded, false);
+      this.window.addEventListener("load", this._onDocumentLoaded);
     }
     return {};
   },
@@ -375,7 +375,7 @@ var StyleEditorActor = exports.StyleEditorActor = protocol.ActorClassWithSpec(st
    */
   _onDocumentLoaded: function (event) {
     if (event) {
-      this.window.removeEventListener("load", this._onDocumentLoaded, false);
+      this.window.removeEventListener("load", this._onDocumentLoaded);
     }
 
     let documents = [this.document];
@@ -514,7 +514,7 @@ exports.StyleEditorActor = StyleEditorActor;
  * Normalize multiple relative paths towards the base paths on the right.
  */
 function normalize(...aURLs) {
-  let base = Services.io.newURI(aURLs.pop(), null, null);
+  let base = Services.io.newURI(aURLs.pop());
   let url;
   while ((url = aURLs.pop())) {
     base = Services.io.newURI(url, null, base);
@@ -524,5 +524,5 @@ function normalize(...aURLs) {
 
 function dirname(aPath) {
   return Services.io.newURI(
-    ".", null, Services.io.newURI(aPath, null, null)).spec;
+    ".", null, Services.io.newURI(aPath)).spec;
 }

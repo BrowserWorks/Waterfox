@@ -187,13 +187,12 @@
 /* Invert the colors of certain light theme images for displaying
  * inside of the dark theme.
  */
-.devtools-tab[icon-invertable] > image,
+.devtools-tab.icon-invertable > img,
 .devtools-toolbarbutton > image,
 .devtools-button::before,
 .scrollbutton-up > .toolbarbutton-icon,
 .scrollbutton-down > .toolbarbutton-icon,
 #black-boxed-message-button .button-icon,
-#requests-menu-perf-notice-button .button-icon,
 #canvas-debugging-empty-notice-button .button-icon,
 #toggle-breakpoints[checked] > image,
 .event-tooltip-debugger-icon {

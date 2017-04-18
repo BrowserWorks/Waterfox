@@ -952,6 +952,13 @@ VARIABLES = {
         a Cargo.toml file that exists in this moz.build's directory.
         """),
 
+    'RUST_LIBRARY_FEATURES': (List, list,
+        """Cargo features to activate for this library.
+
+        This variable should not be used directly; you should be using the
+        RustLibrary template instead.
+        """),
+
     'UNIFIED_SOURCES': (ContextDerivedTypedList(SourcePath, StrictOrderingOnAppendList), list,
         """Source code files that can be compiled together.
 
@@ -963,13 +970,15 @@ VARIABLES = {
 
     'GENERATED_FILES': (StrictOrderingOnAppendListWithFlagsFactory({
                 'script': unicode,
-                'inputs': list }), list,
+                'inputs': list,
+                'flags': list, }), list,
         """Generic generated files.
 
         This variable contains a list of files for the build system to
         generate at export time. The generation method may be declared
-        with optional ``script`` and ``inputs`` flags on individual entries.
-        If the optional ``script`` flag is not present on an entry, it
+        with optional ``script``, ``inputs`` and ``flags`` attributes on
+        individual entries.
+        If the optional ``script`` attribute is not present on an entry, it
         is assumed that rules for generating the file are present in
         the associated Makefile.in.
 
@@ -1003,6 +1012,9 @@ VARIABLES = {
 
         The chosen script entry point may optionally return a set of strings,
         indicating extra files the output depends on.
+
+        When the ``flags`` attribute is present, the given list of flags is
+        passed as extra arguments following the inputs.
         """),
 
     'DEFINES': (InitializedDefines, dict,
@@ -1154,10 +1166,6 @@ VARIABLES = {
         Implies FORCE_SHARED_LIB.
         """),
 
-    'PYTHON_UNIT_TESTS': (StrictOrderingOnAppendList, list,
-        """A list of python unit tests.
-        """),
-
     'HOST_LIBRARY_NAME': (unicode, unicode,
         """Name of target library generated when cross compiling.
         """),
@@ -1292,26 +1300,6 @@ VARIABLES = {
            BRANDING_FILES.images.subdir += ['bar.png']
         """),
 
-    'SDK_FILES': (ContextDerivedTypedHierarchicalStringList(Path), list,
-        """List of files to be installed into the sdk directory.
-
-        ``SDK_FILES`` will copy (or symlink, if the platform supports it)
-        the contents of its files to the ``dist/sdk`` directory. Files that
-        are destined for a subdirectory can be specified by accessing a field.
-        For example, to export ``foo.py`` to the top-level directory and
-        ``bar.py`` to the directory ``subdir``, append to
-        ``SDK_FILES`` like so::
-
-           SDK_FILES += ['foo.py']
-           SDK_FILES.subdir += ['bar.py']
-        """),
-
-    'SDK_LIBRARY': (bool, bool,
-        """Whether the library built in the directory is part of the SDK.
-
-        The library will be copied into ``SDK_LIB_DIR`` (``$DIST/sdk/lib``).
-        """),
-
     'SIMPLE_PROGRAMS': (StrictOrderingOnAppendList, list,
         """Compile a list of executable names.
 
@@ -1340,6 +1328,20 @@ VARIABLES = {
         If the configuration token ``HOST_BIN_SUFFIX`` is set, its value will
         be automatically appended to each name. If a name already ends with
         ``HOST_BIN_SUFFIX``, the name will remain unchanged.
+        """),
+
+    'RUST_PROGRAMS': (StrictOrderingOnAppendList, list,
+        """Compile a list of Rust host executable names.
+
+        Each name in this variable corresponds to an executable built from
+        the Cargo.toml in the same directory.
+        """),
+
+    'HOST_RUST_PROGRAMS': (StrictOrderingOnAppendList, list,
+        """Compile a list of Rust executable names.
+
+        Each name in this variable corresponds to an executable built from
+        the Cargo.toml in the same directory.
         """),
 
     'CONFIGURE_SUBST_FILES': (ContextDerivedTypedList(SourcePath, StrictOrderingOnAppendList), list,
@@ -1575,6 +1577,11 @@ VARIABLES = {
         """List of manifest files defining xpcshell tests.
         """),
 
+    'PYTHON_UNITTEST_MANIFESTS': (ManifestparserManifestList, list,
+        """List of manifest files defining python unit tests.
+        """),
+
+
     # The following variables are used to control the target of installed files.
     'XPI_NAME': (unicode, unicode,
         """The name of an extension XPI to generate.
@@ -1624,7 +1631,10 @@ VARIABLES = {
             'variables': dict,
             'input': unicode,
             'sandbox_vars': dict,
+            'no_chromium': bool,
+            'no_unified': bool,
             'non_unified_sources': StrictOrderingOnAppendList,
+            'action_overrides': dict,
         }), list,
         """Defines a list of object directories handled by gyp configurations.
 
@@ -1639,9 +1649,15 @@ VARIABLES = {
             - sandbox_vars, a dictionary containing variables and values to
               pass to the mozbuild processor on top of those derived from gyp
               configuration.
+            - no_chromium, a boolean which if set to True disables some
+              special handling that emulates gyp_chromium.
+            - no_unified, a boolean which if set to True disables source
+              file unification entirely.
             - non_unified_sources, a list containing sources files, relative to
               the current moz.build, that should be excluded from source file
               unification.
+            - action_overrides, a dict of action_name to values of the `script`
+              attribute to use for GENERATED_FILES for the specified action.
 
         Typical use looks like:
             GYP_DIRS += ['foo', 'bar']

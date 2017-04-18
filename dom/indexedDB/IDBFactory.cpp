@@ -608,6 +608,7 @@ IDBFactory::OpenInternal(JSContext* aCx,
       MOZ_CRASH("Figure out security checks for workers!");
     }
     MOZ_ASSERT(nsContentUtils::IsCallerChrome());
+    MOZ_DIAGNOSTIC_ASSERT(mPrivateBrowsingMode == (aPrincipal->GetPrivateBrowsingId() > 0));
 
     if (NS_WARN_IF(NS_FAILED(PrincipalToPrincipalInfo(aPrincipal,
                                                       &principalInfo)))) {
@@ -884,7 +885,6 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTION_CLASS(IDBFactory)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBFactory)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 

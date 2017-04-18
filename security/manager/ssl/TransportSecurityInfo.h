@@ -9,6 +9,7 @@
 
 #include "ScopedNSSTypes.h"
 #include "certt.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
@@ -63,10 +64,10 @@ public:
   nsresult GetPort(int32_t *aPort);
   nsresult SetPort(int32_t aPort);
 
-  const NeckoOriginAttributes& GetOriginAttributes() const {
+  const OriginAttributes& GetOriginAttributes() const {
     return mOriginAttributes;
   }
-  nsresult SetOriginAttributes(const NeckoOriginAttributes& aOriginAttributes);
+  nsresult SetOriginAttributes(const OriginAttributes& aOriginAttributes);
 
   PRErrorCode GetErrorCode() const;
   
@@ -106,7 +107,7 @@ private:
 
   int32_t mPort;
   nsXPIDLCString mHostName;
-  NeckoOriginAttributes mOriginAttributes;
+  OriginAttributes mOriginAttributes;
 
   /* SSL Status */
   RefPtr<nsSSLStatus> mSSLStatus;

@@ -24,6 +24,7 @@ class nsBaseWidget;
 namespace mozilla {
 namespace layers {
 class IAPZCTreeManager;
+class CompositorOptions;
 class CompositorSession;
 class CompositorUpdateObserver;
 class PCompositorBridgeChild;
@@ -56,6 +57,7 @@ class GPUProcessManager final : public GPUProcessHost::Listener
 {
   friend class layers::RemoteCompositorSession;
 
+  typedef layers::CompositorOptions CompositorOptions;
   typedef layers::CompositorSession CompositorSession;
   typedef layers::CompositorUpdateObserver CompositorUpdateObserver;
   typedef layers::IAPZCTreeManager IAPZCTreeManager;
@@ -77,13 +79,13 @@ public:
   // Ensure that GPU-bound methods can be used. If no GPU process is being
   // used, or one is launched and ready, this function returns immediately.
   // Otherwise it blocks until the GPU process has finished launching.
-  void EnsureGPUReady();
+  bool EnsureGPUReady();
 
   RefPtr<CompositorSession> CreateTopLevelCompositor(
     nsBaseWidget* aWidget,
     LayerManager* aLayerManager,
     CSSToLayoutDeviceScale aScale,
-    bool aUseAPZ,
+    const CompositorOptions& aOptions,
     bool aUseExternalSurfaceSize,
     const gfx::IntSize& aSurfaceSize);
 
@@ -148,6 +150,14 @@ public:
     return mNumProcessAttempts > 0;
   }
 
+  // Returns the next compositor reset sequence number, a monotonic counter
+  // for when the compositing device resets. Since content processes are
+  // notified of resets through each individual tab, this allows content to
+  // only re-acquire devices once for each reset.
+  uint64_t GetNextDeviceResetSequenceNumber() {
+    return ++mNextResetSequenceNo;
+  }
+
 private:
   // Called from our xpcom-shutdown observer.
   void OnXPCOMShutdown();
@@ -183,13 +193,14 @@ private:
 
   void EnsureImageBridgeChild();
   void EnsureVRManager();
+  void EnsureUiCompositorController();
 
   RefPtr<CompositorSession> CreateRemoteSession(
     nsBaseWidget* aWidget,
     LayerManager* aLayerManager,
     const uint64_t& aRootLayerTreeId,
     CSSToLayoutDeviceScale aScale,
-    bool aUseAPZ,
+    const CompositorOptions& aOptions,
     bool aUseExternalSurfaceSize,
     const gfx::IntSize& aSurfaceSize);
 
@@ -213,6 +224,7 @@ private:
   ipc::TaskFactory<GPUProcessManager> mTaskFactory;
   RefPtr<VsyncIOThreadHolder> mVsyncIOThread;
   uint64_t mNextLayerTreeId;
+  uint64_t mNextResetSequenceNo;
   uint32_t mNumProcessAttempts;
 
   nsTArray<RefPtr<RemoteCompositorSession>> mRemoteSessions;

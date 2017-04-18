@@ -56,6 +56,7 @@ nsBaseChannel::nsBaseChannel()
   , mSynthProgressEvents(false)
   , mAllowThreadRetargeting(true)
   , mWaitingOnAsyncRedirect(false)
+  , mOpenRedirectChannel(false)
   , mStatus(NS_OK)
   , mContentDispositionHint(UINT32_MAX)
   , mContentLength(-1)
@@ -312,9 +313,9 @@ nsBaseChannel::ClassifyURI()
   }
 
   if (mLoadFlags & LOAD_CLASSIFY_URI) {
-    RefPtr<nsChannelClassifier> classifier = new nsChannelClassifier();
+    RefPtr<nsChannelClassifier> classifier = new nsChannelClassifier(this);
     if (classifier) {
-      classifier->Start(this);
+      classifier->Start();
     } else {
       Cancel(NS_ERROR_OUT_OF_MEMORY);
     }
@@ -700,7 +701,10 @@ nsBaseChannel::AsyncOpen2(nsIStreamListener *aListener)
 {
   nsCOMPtr<nsIStreamListener> listener = aListener;
   nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_FAILED(rv)) {
+    mCallbacks = nullptr;
+    return rv;
+  }
   return AsyncOpen(listener, nullptr);
 }
 

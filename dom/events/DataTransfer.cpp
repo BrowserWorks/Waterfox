@@ -57,7 +57,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(DataTransfer)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mItems)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDragTarget)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDragImage)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(DataTransfer)
 
@@ -311,8 +310,7 @@ DataTransfer::GetFiles(nsIDOMFileList** aFileList)
 }
 
 void
-DataTransfer::GetTypes(nsTArray<nsString>& aTypes,
-                       nsIPrincipal& aSubjectPrincipal) const
+DataTransfer::GetTypes(nsTArray<nsString>& aTypes, CallerType aCallerType) const
 {
   // When called from bindings, aTypes will be empty, but since we might have
   // Gecko-internal callers too, clear it to be safe.
@@ -327,12 +325,15 @@ DataTransfer::GetTypes(nsTArray<nsString>& aTypes,
     DataTransferItem* item = items->ElementAt(i);
     MOZ_ASSERT(item);
 
-    if (item->ChromeOnly() && !nsContentUtils::IsSystemPrincipal(&aSubjectPrincipal)) {
+    if (item->ChromeOnly() && aCallerType != CallerType::System) {
       continue;
     }
 
+    // NOTE: The reason why we get the internal type here is because we want
+    // kFileMime to appear in the types list for backwards compatibility
+    // reasons.
     nsAutoString type;
-    item->GetType(type);
+    item->GetInternalType(type);
     if (item->Kind() == DataTransferItem::KIND_STRING || type.EqualsASCII(kFileMime)) {
       // If the entry has kind KIND_STRING, we want to add it to the list.
       aTypes.AppendElement(type);
@@ -498,7 +499,8 @@ DataTransfer::GetMozSourceNode(nsIDOMNode** aSourceNode)
 }
 
 already_AddRefed<DOMStringList>
-DataTransfer::MozTypesAt(uint32_t aIndex, ErrorResult& aRv) const
+DataTransfer::MozTypesAt(uint32_t aIndex, CallerType aCallerType,
+                         ErrorResult& aRv) const
 {
   // Only the first item is valid for clipboard events
   if (aIndex > 0 &&
@@ -515,12 +517,15 @@ DataTransfer::MozTypesAt(uint32_t aIndex, ErrorResult& aRv) const
 
     bool addFile = false;
     for (uint32_t i = 0; i < items.Length(); i++) {
-      if (items[i]->ChromeOnly() && !nsContentUtils::LegacyIsCallerChromeOrNativeCode()) {
+      if (items[i]->ChromeOnly() && aCallerType != CallerType::System) {
         continue;
       }
 
+      // NOTE: The reason why we get the internal type here is because we want
+      // kFileMime to appear in the types list for backwards compatibility
+      // reasons.
       nsAutoString type;
-      items[i]->GetType(type);
+      items[i]->GetInternalType(type);
       if (NS_WARN_IF(!types->Add(type))) {
         aRv.Throw(NS_ERROR_FAILURE);
         return nullptr;
@@ -537,15 +542,6 @@ DataTransfer::MozTypesAt(uint32_t aIndex, ErrorResult& aRv) const
   }
 
   return types.forget();
-}
-
-NS_IMETHODIMP
-DataTransfer::MozTypesAt(uint32_t aIndex, nsISupports** aTypes)
-{
-  ErrorResult rv;
-  RefPtr<DOMStringList> types = MozTypesAt(aIndex, rv);
-  types.forget(aTypes);
-  return rv.StealNSResult();
 }
 
 nsresult
@@ -767,28 +763,36 @@ DataTransfer::MozClearDataAtHelper(const nsAString& aFormat, uint32_t aIndex,
 }
 
 void
-DataTransfer::SetDragImage(Element& aImage, int32_t aX, int32_t aY,
-                           ErrorResult& aRv)
+DataTransfer::SetDragImage(Element& aImage, int32_t aX, int32_t aY)
 {
-  if (mReadOnly) {
-    aRv.Throw(NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR);
-    return;
+  if (!mReadOnly) {
+    mDragImage = &aImage;
+    mDragImageX = aX;
+    mDragImageY = aY;
   }
-
-  mDragImage = &aImage;
-  mDragImageX = aX;
-  mDragImageY = aY;
 }
 
 NS_IMETHODIMP
 DataTransfer::SetDragImage(nsIDOMElement* aImage, int32_t aX, int32_t aY)
 {
-  ErrorResult rv;
   nsCOMPtr<Element> image = do_QueryInterface(aImage);
   if (image) {
-    SetDragImage(*image, aX, aY, rv);
+    SetDragImage(*image, aX, aY);
   }
-  return rv.StealNSResult();
+  return NS_OK;
+}
+
+void
+DataTransfer::UpdateDragImage(Element& aImage, int32_t aX, int32_t aY)
+{
+  if (mEventMessage < eDragDropEventFirst || mEventMessage > eDragDropEventLast) {
+    return;
+  }
+
+  nsCOMPtr<nsIDragSession> dragSession = nsContentUtils::GetDragSession();
+  if (dragSession) {
+    dragSession->UpdateDragImage(aImage.AsDOMNode(), aX, aY);
+  }
 }
 
 already_AddRefed<Promise>
@@ -980,7 +984,7 @@ DataTransfer::GetTransferable(uint32_t aIndex, nsILoadContext* aLoadContext)
       }
 
       nsAutoString type;
-      formatitem->GetType(type);
+      formatitem->GetInternalType(type);
 
       // If the data is of one of the well-known formats, use it directly.
       bool isCustomFormat = true;
@@ -1477,30 +1481,37 @@ DataTransfer::FillInExternalCustomTypes(nsIVariant* aData, uint32_t aIndex,
     return;
   }
 
-  stream->SetInputStream(stringStream);
+  rv = stream->SetInputStream(stringStream);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   uint32_t type;
   do {
-    stream->Read32(&type);
+    rv = stream->Read32(&type);
+    NS_ENSURE_SUCCESS_VOID(rv);
     if (type == eCustomClipboardTypeId_String) {
       uint32_t formatLength;
-      stream->Read32(&formatLength);
+      rv = stream->Read32(&formatLength);
+      NS_ENSURE_SUCCESS_VOID(rv);
       char* formatBytes;
-      stream->ReadBytes(formatLength, &formatBytes);
+      rv = stream->ReadBytes(formatLength, &formatBytes);
+      NS_ENSURE_SUCCESS_VOID(rv);
       nsAutoString format;
       format.Adopt(reinterpret_cast<char16_t*>(formatBytes),
                    formatLength / sizeof(char16_t));
 
       uint32_t dataLength;
-      stream->Read32(&dataLength);
+      rv = stream->Read32(&dataLength);
+      NS_ENSURE_SUCCESS_VOID(rv);
       char* dataBytes;
-      stream->ReadBytes(dataLength, &dataBytes);
+      rv = stream->ReadBytes(dataLength, &dataBytes);
+      NS_ENSURE_SUCCESS_VOID(rv);
       nsAutoString data;
       data.Adopt(reinterpret_cast<char16_t*>(dataBytes),
                  dataLength / sizeof(char16_t));
 
       RefPtr<nsVariantCC> variant = new nsVariantCC();
-      variant->SetAsAString(data);
+      rv = variant->SetAsAString(data);
+      NS_ENSURE_SUCCESS_VOID(rv);
 
       SetDataWithPrincipal(format, variant, aIndex, aPrincipal);
     }

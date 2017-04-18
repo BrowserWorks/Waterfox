@@ -21,7 +21,7 @@ function do_state_written(aSubject, aTopic, aData) {
   ok(stateFile.exists());
   let stateFileContents = readFile(stateFile);
   // the last part is removed because it's the empty string after the final \n
-  let lines = stateFileContents.split('\n').slice(0, -1);
+  let lines = stateFileContents.split("\n").slice(0, -1);
   // We can receive multiple data-storage-written events. In particular, we
   // may receive one where DataStorage wrote out data before we were done
   // processing all of our headers. In this case, the data may not be
@@ -55,7 +55,7 @@ function do_state_read(aSubject, aTopic, aData) {
                              "frequentlyused.example.com", 0));
   let sslStatus = new FakeSSLStatus();
   for (let i = 0; i < 2000; i++) {
-    let uri = Services.io.newURI("http://bad" + i + ".example.com", null, null);
+    let uri = Services.io.newURI("http://bad" + i + ".example.com");
     gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                             "max-age=1000", sslStatus, 0);
   }

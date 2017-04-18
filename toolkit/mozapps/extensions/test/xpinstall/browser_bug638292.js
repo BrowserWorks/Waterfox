@@ -1,16 +1,14 @@
 // ----------------------------------------------------------------------------
 // Test whether an InstallTrigger.enabled is working
-add_task(function * ()
-{
+add_task(function * () {
   let testtab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, TESTROOT + "bug638292.html");
 
-  function* verify(link, button)
-  {
+  function* verify(link, button) {
     info("Clicking " + link);
 
     let waitForNewTabPromise = BrowserTestUtils.waitForNewTab(gBrowser);
 
-    yield BrowserTestUtils.synthesizeMouseAtCenter("#" + link, { button: button },
+    yield BrowserTestUtils.synthesizeMouseAtCenter("#" + link, { button },
                                                    gBrowser.selectedBrowser);
 
     let newtab = yield waitForNewTabPromise;

@@ -28,7 +28,7 @@ function verifySignatures() {
     Services.obs.addObserver(observer, "xpi-signature-changed", false);
 
     do_print("Verifying signatures");
-    let XPIscope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
+    let XPIscope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm", {});
     XPIscope.XPIProvider.verifySignatures();
   });
 }
@@ -112,8 +112,7 @@ function verify_enables([startFile, startState], [endFile, endState]) {
         ["onEnabling", false],
         "onEnabled"
       ];
-    }
-    else {
+    } else {
       events[ID] = [
         ["onPropertyChanged", ["appDisabled"]],
         "onEnabling"
@@ -174,8 +173,7 @@ function verify_disables([startFile, startState], [endFile, endState]) {
         ["onDisabling", false],
         "onDisabled"
       ];
-    }
-    else {
+    } else {
       events[ID] = [
         ["onPropertyChanged", ["appDisabled"]],
         "onDisabling"

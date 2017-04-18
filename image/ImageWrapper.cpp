@@ -209,16 +209,23 @@ ImageWrapper::Draw(gfxContext* aContext,
                    uint32_t aWhichFrame,
                    SamplingFilter aSamplingFilter,
                    const Maybe<SVGImageContext>& aSVGContext,
-                   uint32_t aFlags)
+                   uint32_t aFlags,
+                   float aOpacity)
 {
   return mInnerImage->Draw(aContext, aSize, aRegion, aWhichFrame,
-                           aSamplingFilter, aSVGContext, aFlags);
+                           aSamplingFilter, aSVGContext, aFlags, aOpacity);
 }
 
 NS_IMETHODIMP
-ImageWrapper::StartDecoding()
+ImageWrapper::StartDecoding(uint32_t aFlags)
 {
-  return mInnerImage->StartDecoding();
+  return mInnerImage->StartDecoding(aFlags);
+}
+
+bool
+ImageWrapper::StartDecodingWithResult(uint32_t aFlags)
+{
+  return mInnerImage->StartDecodingWithResult(aFlags);
 }
 
 NS_IMETHODIMP

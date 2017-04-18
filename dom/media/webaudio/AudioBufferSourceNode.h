@@ -7,19 +7,22 @@
 #ifndef AudioBufferSourceNode_h_
 #define AudioBufferSourceNode_h_
 
-#include "AudioNode.h"
+#include "AudioScheduledSourceNode.h"
 #include "AudioBuffer.h"
 
 namespace mozilla {
 namespace dom {
 
+struct AudioBufferSourceOptions;
 class AudioParam;
 
-class AudioBufferSourceNode final : public AudioNode,
-                                    public MainThreadMediaStreamListener
+class AudioBufferSourceNode final : public AudioScheduledSourceNode
+                                  , public MainThreadMediaStreamListener
 {
 public:
-  explicit AudioBufferSourceNode(AudioContext* aContext);
+  static already_AddRefed<AudioBufferSourceNode>
+  Create(JSContext* aCx, AudioContext& aAudioContext,
+         const AudioBufferSourceOptions& aOptions, ErrorResult& aRv);
 
   void DestroyMediaStream() override;
 
@@ -32,13 +35,23 @@ public:
     return this;
   }
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioBufferSourceNode, AudioNode)
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioBufferSourceNode,
+                                           AudioScheduledSourceNode)
+
+  static already_AddRefed<AudioBufferSourceNode>
+  Constructor(const GlobalObject& aGlobal, AudioContext& aAudioContext,
+              const AudioBufferSourceOptions& aOptions, ErrorResult& aRv)
+  {
+    return Create(aGlobal.Context(), aAudioContext, aOptions, aRv);
+  }
 
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void Start(double aWhen, double aOffset,
              const Optional<double>& aDuration, ErrorResult& aRv);
-  void Stop(double aWhen, ErrorResult& aRv);
+
+  void Start(double aWhen, ErrorResult& aRv) override;
+  void Stop(double aWhen, ErrorResult& aRv) override;
 
   AudioBuffer* GetBuffer(JSContext* aCx) const
   {
@@ -87,8 +100,6 @@ public:
   }
   void SendDopplerShiftToStream(double aDopplerShift);
 
-  IMPL_EVENT_HANDLER(ended)
-
   void NotifyMainThreadStreamFinished() override;
 
   const char* NodeType() const override
@@ -99,10 +110,10 @@ public:
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
-protected:
-  virtual ~AudioBufferSourceNode();
-
 private:
+  explicit AudioBufferSourceNode(AudioContext* aContext);
+  ~AudioBufferSourceNode() = default;
+
   friend class AudioBufferSourceNodeEngine;
   // START is sent during Start().
   // STOP is sent during Stop().
@@ -130,7 +141,6 @@ private:
   void SendBufferParameterToStream(JSContext* aCx);
   void SendOffsetAndDurationParametersToStream(AudioNodeStream* aStream);
 
-private:
   double mLoopStart;
   double mLoopEnd;
   double mOffset;
@@ -146,4 +156,3 @@ private:
 } // namespace mozilla
 
 #endif
-

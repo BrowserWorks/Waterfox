@@ -109,6 +109,14 @@
 @BINPATH@/gtk2/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
 #endif
 
+; We don't have a complete view of which dlls to expect when doing an artifact
+; build because we haven't run all of configure, so we trust what's in
+; dist/bin, because everything there was extracted from our original build's
+; package.
+#if defined(MOZ_ARTIFACT_BUILDS) && defined(XP_WIN)
+@BINPATH@/*.dll
+#endif
+
 [browser]
 ; [Base Browser Files]
 #ifndef XP_UNIX
@@ -184,12 +192,11 @@
 @RESPATH@/components/content_webrtc.xpt
 #endif
 @RESPATH@/components/content_xslt.xpt
-@RESPATH@/components/cookie.xpt
 @RESPATH@/components/directory.xpt
 @RESPATH@/components/docshell.xpt
 @RESPATH@/components/dom.xpt
-@RESPATH@/components/dom_apps.xpt
 @RESPATH@/components/dom_base.xpt
+@RESPATH@/components/dom_file.xpt
 @RESPATH@/components/dom_system.xpt
 @RESPATH@/components/dom_canvas.xpt
 @RESPATH@/components/dom_core.xpt
@@ -207,8 +214,6 @@
 @RESPATH@/components/dom_quota.xpt
 @RESPATH@/components/dom_range.xpt
 @RESPATH@/components/dom_security.xpt
-@RESPATH@/components/dom_settings.xpt
-@RESPATH@/components/dom_permissionsettings.xpt
 @RESPATH@/components/dom_sidebar.xpt
 @RESPATH@/components/dom_storage.xpt
 @RESPATH@/components/dom_stylesheets.xpt
@@ -224,7 +229,6 @@
 @RESPATH@/components/dom_presentation.xpt
 @RESPATH@/components/downloads.xpt
 @RESPATH@/components/editor.xpt
-@RESPATH@/components/embed_base.xpt
 @RESPATH@/components/extensions.xpt
 @RESPATH@/components/exthandler.xpt
 @RESPATH@/components/exthelper.xpt
@@ -233,7 +237,6 @@
 #ifdef MOZ_GTK
 @RESPATH@/components/filepicker.xpt
 #endif
-@RESPATH@/components/find.xpt
 @RESPATH@/components/gfx.xpt
 @RESPATH@/components/html5.xpt
 @RESPATH@/components/htmlparser.xpt
@@ -328,6 +331,7 @@
 #ifdef XP_MACOSX
 @RESPATH@/components/widget_cocoa.xpt
 #endif
+@RESPATH@/components/windowcreator.xpt
 @RESPATH@/components/windowds.xpt
 @RESPATH@/components/windowwatcher.xpt
 @RESPATH@/components/xpcom_base.xpt
@@ -349,8 +353,6 @@
 @RESPATH@/components/ConsoleAPIStorage.js
 @RESPATH@/components/BrowserElementParent.manifest
 @RESPATH@/components/BrowserElementParent.js
-@RESPATH@/components/BrowserElementProxy.manifest
-@RESPATH@/components/BrowserElementProxy.js
 @RESPATH@/components/FeedProcessor.manifest
 @RESPATH@/components/FeedProcessor.js
 @RESPATH@/components/WellKnownOpportunisticUtils.js
@@ -415,7 +417,6 @@
 @RESPATH@/components/amContentHandler.js
 @RESPATH@/components/amInstallTrigger.js
 @RESPATH@/components/amWebAPI.js
-@RESPATH@/components/amWebInstallListener.js
 @RESPATH@/components/nsBlocklistService.js
 @RESPATH@/components/nsBlocklistServiceContent.js
 #ifdef MOZ_UPDATER
@@ -504,17 +505,11 @@
 @RESPATH@/components/XULStore.manifest
 @RESPATH@/components/messageWakeupService.js
 @RESPATH@/components/messageWakeupService.manifest
-@RESPATH@/components/SettingsManager.js
-@RESPATH@/components/SettingsManager.manifest
-@RESPATH@/components/AppsService.js
-@RESPATH@/components/AppsService.manifest
 @RESPATH@/components/recording-cmdline.js
 @RESPATH@/components/recording-cmdline.manifest
 @RESPATH@/components/htmlMenuBuilder.js
 @RESPATH@/components/htmlMenuBuilder.manifest
 
-@RESPATH@/components/PermissionSettings.js
-@RESPATH@/components/PermissionSettings.manifest
 @RESPATH@/components/NotificationStorage.js
 @RESPATH@/components/NotificationStorage.manifest
 @RESPATH@/components/Push.js
@@ -551,11 +546,7 @@
 @RESPATH@/components/PresentationDataChannelSessionTransport.js
 @RESPATH@/components/PresentationDataChannelSessionTransport.manifest
 
-; InputMethod API
-@RESPATH@/components/MozKeyboard.js
-@RESPATH@/components/InputMethod.manifest
-
-#ifdef MOZ_DEBUG
+#if defined(ENABLE_TESTS) && defined(MOZ_DEBUG)
 @RESPATH@/components/TestInterfaceJS.js
 @RESPATH@/components/TestInterfaceJS.manifest
 @RESPATH@/components/TestInterfaceJSMaplike.js
@@ -593,10 +584,6 @@
 #ifdef MOZ_D3DCOMPILER_VISTA_DLL
 @BINPATH@/@MOZ_D3DCOMPILER_VISTA_DLL@
 #endif
-
-#ifdef MOZ_D3DCOMPILER_XP_DLL
-@BINPATH@/@MOZ_D3DCOMPILER_XP_DLL@
-#endif
 #endif # MOZ_ANGLE_RENDERER
 
 ; [Browser Chrome Files]
@@ -606,7 +593,6 @@
 @RESPATH@/browser/chrome/pdfjs.manifest
 @RESPATH@/browser/chrome/pdfjs/*
 @RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/chrome.manifest
-@RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/icon.png
 @RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/install.rdf
 @RESPATH@/chrome/toolkit@JAREXT@
 @RESPATH@/chrome/toolkit.manifest
@@ -813,7 +799,7 @@ bin/libfreebl_32int64_3.so
 
 ; media
 @RESPATH@/gmp-clearkey/0.1/@DLL_PREFIX@clearkey@DLL_SUFFIX@
-@RESPATH@/gmp-clearkey/0.1/clearkey.info
+@RESPATH@/gmp-clearkey/0.1/manifest.json
 
 ; gfx
 #ifdef XP_WIN

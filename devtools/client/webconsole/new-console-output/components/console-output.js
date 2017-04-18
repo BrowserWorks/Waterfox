@@ -9,7 +9,6 @@ const {
   DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const ReactDOM = require("devtools/client/shared/vendor/react-dom");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
 const {
@@ -30,8 +29,13 @@ const ConsoleOutput = createClass({
     messagesUi: PropTypes.object.isRequired,
     serviceContainer: PropTypes.shape({
       attachRefToHud: PropTypes.func.isRequired,
+      openContextMenu: PropTypes.func.isRequired,
     }),
     autoscroll: PropTypes.bool.isRequired,
+    dispatch: PropTypes.func.isRequired,
+    timestampsVisible: PropTypes.bool,
+    groups: PropTypes.object.isRequired,
+    messagesTableData: PropTypes.object.isRequired,
   },
 
   componentDidMount() {
@@ -59,6 +63,12 @@ const ConsoleOutput = createClass({
     }
   },
 
+  onContextMenu(e) {
+    this.props.serviceContainer.openContextMenu(e);
+    e.stopPropagation();
+    e.preventDefault();
+  },
+
   render() {
     let {
       dispatch,
@@ -68,6 +78,7 @@ const ConsoleOutput = createClass({
       messagesTableData,
       serviceContainer,
       groups,
+      timestampsVisible,
     } = this.props;
 
     let messageNodes = messages.map((message) => {
@@ -89,9 +100,17 @@ const ConsoleOutput = createClass({
         })
       );
     });
+
+    let classList = ["webconsole-output"];
+
+    if (!timestampsVisible) {
+      classList.push("hideTimestamps");
+    }
+
     return (
       dom.div({
-        className: "webconsole-output",
+        className: classList.join(" "),
+        onContextMenu: this.onContextMenu,
         ref: node => {
           this.outputNode = node;
         },
@@ -119,6 +138,7 @@ function mapStateToProps(state, props) {
     messagesTableData: getAllMessagesTableDataById(state),
     autoscroll: getScrollSetting(state),
     groups: getAllGroupsById(state),
+    timestampsVisible: state.ui.timestampsVisible,
   };
 }
 

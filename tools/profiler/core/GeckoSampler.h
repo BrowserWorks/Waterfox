@@ -8,12 +8,10 @@
 
 #include "platform.h"
 #include "ProfileEntry.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/Vector.h"
 #include "ThreadProfile.h"
 #include "ThreadInfo.h"
-#ifndef SPS_STANDALONE
-#include "IntelPowerGadget.h"
-#endif
 #ifdef MOZ_TASK_TRACER
 #include "GeckoTaskTracer.h"
 #endif
@@ -69,8 +67,7 @@ class GeckoSampler: public Sampler {
       return;
     }
 
-    ThreadProfile* profile = new ThreadProfile(aInfo, mBuffer);
-    aInfo->SetProfile(profile);
+    aInfo->SetProfile(mozilla::MakeUnique<ThreadProfile>(aInfo, mBuffer));
   }
 
   // Called within a signal. This function must be reentrant
@@ -83,47 +80,23 @@ class GeckoSampler: public Sampler {
   virtual void RequestSave() override
   {
     mSaveRequested = true;
-#ifdef MOZ_TASK_TRACER
-    if (mTaskTracer) {
-      mozilla::tasktracer::StopLogging();
-    }
-#endif
   }
 
   virtual void HandleSaveRequest() override;
   virtual void DeleteExpiredMarkers() override;
 
-  ThreadProfile* GetPrimaryThreadProfile()
-  {
-    if (!mPrimaryThreadProfile) {
-      ::MutexAutoLock lock(*sRegisteredThreadsMutex);
-
-      for (uint32_t i = 0; i < sRegisteredThreads->size(); i++) {
-        ThreadInfo* info = sRegisteredThreads->at(i);
-        if (info->IsMainThread() && !info->IsPendingDelete()) {
-          mPrimaryThreadProfile = info->Profile();
-          break;
-        }
-      }
-    }
-
-    return mPrimaryThreadProfile;
-  }
-
   void ToStreamAsJSON(std::ostream& stream, double aSinceTime = 0);
-#ifndef SPS_STANDALONE
   virtual JSObject *ToJSObject(JSContext *aCx, double aSinceTime = 0);
   void GetGatherer(nsISupports** aRetVal);
-#endif
   mozilla::UniquePtr<char[]> ToJSON(double aSinceTime = 0);
   virtual void ToJSObjectAsync(double aSinceTime = 0, mozilla::dom::Promise* aPromise = 0);
+  void ToFileAsync(const nsACString& aFileName, double aSinceTime = 0);
   void StreamMetaJSCustomObject(SpliceableJSONWriter& aWriter);
   void StreamTaskTracer(SpliceableJSONWriter& aWriter);
   void FlushOnJSShutdown(JSContext* aContext);
   bool ProfileJS() const { return mProfileJS; }
   bool ProfileJava() const { return mProfileJava; }
   bool ProfileGPU() const { return mProfileGPU; }
-  bool ProfilePower() const { return mProfilePower; }
   bool ProfileThreads() const override { return mProfileThreads; }
   bool InPrivacyMode() const { return mPrivacyMode; }
   bool AddMainThreadIO() const { return mAddMainThreadIO; }
@@ -146,8 +119,6 @@ protected:
 
   void StreamJSON(SpliceableJSONWriter& aWriter, double aSinceTime);
 
-  // This represent the application's main thread (SAMPLER_INIT)
-  ThreadProfile* mPrimaryThreadProfile;
   RefPtr<ProfileBuffer> mBuffer;
   bool mSaveRequested;
   bool mAddLeafAddresses;
@@ -156,7 +127,6 @@ protected:
   bool mProfileGPU;
   bool mProfileThreads;
   bool mProfileJava;
-  bool mProfilePower;
   bool mLayersDump;
   bool mDisplayListDump;
   bool mProfileRestyle;
@@ -169,9 +139,6 @@ protected:
   bool mAddMainThreadIO;
   bool mProfileMemory;
   bool mTaskTracer;
-#if defined(XP_WIN)
-  IntelPowerGadget* mIntelPowerGadget;
-#endif
 
 private:
   RefPtr<mozilla::ProfileGatherer> mGatherer;

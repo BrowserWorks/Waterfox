@@ -461,7 +461,7 @@ intrinsic_FinishBoundFunctionInit(JSContext* cx, unsigned argc, Value* vp)
     // Try to avoid invoking the resolve hook.
     if (targetObj->is<JSFunction>() && !targetObj->as<JSFunction>().hasResolvedLength()) {
         RootedValue targetLength(cx);
-        if (!targetObj->as<JSFunction>().getUnresolvedLength(cx, &targetLength))
+        if (!JSFunction::getUnresolvedLength(cx, targetObj.as<JSFunction>(), &targetLength))
             return false;
 
         length = Max(0.0, targetLength.toNumber() - argCount);
@@ -841,37 +841,6 @@ intrinsic_NewStringIterator(JSContext* cx, unsigned argc, Value* vp)
 }
 
 static bool
-intrinsic_NewListIterator(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    MOZ_ASSERT(args.length() == 0);
-
-    RootedObject proto(cx, GlobalObject::getOrCreateIteratorPrototype(cx, cx->global()));
-    if (!proto)
-        return false;
-
-    RootedObject iterator(cx);
-    iterator = NewObjectWithGivenProto(cx, &ListIteratorObject::class_, proto);
-    if (!iterator)
-        return false;
-
-    args.rval().setObject(*iterator);
-    return true;
-}
-
-static bool
-intrinsic_ActiveFunction(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    MOZ_ASSERT(args.length() == 0);
-
-    ScriptFrameIter iter(cx);
-    MOZ_ASSERT(iter.isFunctionFrame());
-    args.rval().setObject(*iter.callee(cx));
-    return true;
-}
-
-static bool
 intrinsic_SetCanonicalName(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -996,7 +965,7 @@ intrinsic_IsWrappedArrayBuffer(JSContext* cx, unsigned argc, Value* vp)
 
     JSObject* unwrapped = CheckedUnwrap(obj);
     if (!unwrapped) {
-        JS_ReportErrorASCII(cx, "Permission denied to access object");
+        ReportAccessDenied(cx);
         return false;
     }
 
@@ -1027,7 +996,7 @@ intrinsic_PossiblyWrappedArrayBufferByteLength(JSContext* cx, unsigned argc, Val
 
     JSObject* obj = CheckedUnwrap(&args[0].toObject());
     if (!obj) {
-        JS_ReportErrorASCII(cx, "Permission denied to access object");
+        ReportAccessDenied(cx);
         return false;
     }
 
@@ -1052,7 +1021,7 @@ intrinsic_ArrayBufferCopyData(JSContext* cx, unsigned argc, Value* vp)
         MOZ_ASSERT(wrapped->is<WrapperObject>());
         RootedObject toBufferObj(cx, CheckedUnwrap(wrapped));
         if (!toBufferObj) {
-            JS_ReportErrorASCII(cx, "Permission denied to access object");
+            ReportAccessDenied(cx);
             return false;
         }
         toBuffer = toBufferObj.as<T>();
@@ -1064,6 +1033,29 @@ intrinsic_ArrayBufferCopyData(JSContext* cx, unsigned argc, Value* vp)
     T::copyData(toBuffer, fromBuffer, fromIndex, count);
 
     args.rval().setUndefined();
+    return true;
+}
+
+// Arguments must both be SharedArrayBuffer or wrapped SharedArrayBuffer.
+static bool
+intrinsic_SharedArrayBuffersMemorySame(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    MOZ_ASSERT(args.length() == 2);
+
+    JSObject* lhs = CheckedUnwrap(&args[0].toObject());
+    if (!lhs) {
+        ReportAccessDenied(cx);
+        return false;
+    }
+    JSObject* rhs = CheckedUnwrap(&args[1].toObject());
+    if (!rhs) {
+        ReportAccessDenied(cx);
+        return false;
+    }
+
+    args.rval().setBoolean(lhs->as<SharedArrayBufferObject>().rawBufferObject() ==
+                           rhs->as<SharedArrayBufferObject>().rawBufferObject());
     return true;
 }
 
@@ -1135,7 +1127,7 @@ intrinsic_IsPossiblyWrappedTypedArray(JSContext* cx, unsigned argc, Value* vp)
     if (args[0].isObject()) {
         JSObject* obj = CheckedUnwrap(&args[0].toObject());
         if (!obj) {
-            JS_ReportErrorASCII(cx, "Permission denied to access object");
+            ReportAccessDenied(cx);
             return false;
         }
 
@@ -1208,7 +1200,7 @@ intrinsic_PossiblyWrappedTypedArrayLength(JSContext* cx, unsigned argc, Value* v
 
     JSObject* obj = CheckedUnwrap(&args[0].toObject());
     if (!obj) {
-        JS_ReportErrorASCII(cx, "Permission denied to access object");
+        ReportAccessDenied(cx);
         return false;
     }
 
@@ -1227,7 +1219,7 @@ intrinsic_PossiblyWrappedTypedArrayHasDetachedBuffer(JSContext* cx, unsigned arg
 
     JSObject* obj = CheckedUnwrap(&args[0].toObject());
     if (!obj) {
-        JS_ReportErrorASCII(cx, "Permission denied to access object");
+        ReportAccessDenied(cx);
         return false;
     }
 
@@ -1905,6 +1897,40 @@ intrinsic_AddContentTelemetry(JSContext* cx, unsigned argc, Value* vp)
 }
 
 static bool
+intrinsic_WarnDeprecatedStringMethod(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    MOZ_ASSERT(args.length() == 2);
+    MOZ_ASSERT(args[0].isInt32());
+    MOZ_ASSERT(args[1].isString());
+
+    uint32_t id = uint32_t(args[0].toInt32());
+    MOZ_ASSERT(id < STRING_GENERICS_METHODS_LIMIT);
+
+    uint32_t mask = (1 << id);
+    if (!(cx->compartment()->warnedAboutStringGenericsMethods & mask)) {
+        JSFlatString* name = args[1].toString()->ensureFlat(cx);
+        if (!name)
+            return false;
+
+        AutoStableStringChars stableChars(cx);
+        if (!stableChars.initTwoByte(cx, name))
+            return false;
+        const char16_t* nameChars = stableChars.twoByteRange().begin().get();
+
+        if (!JS_ReportErrorFlagsAndNumberUC(cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
+                                            JSMSG_DEPRECATED_STRING_METHOD, nameChars, nameChars))
+        {
+            return false;
+        }
+        cx->compartment()->warnedAboutStringGenericsMethods |= mask;
+    }
+
+    args.rval().setUndefined();
+    return true;
+}
+
+static bool
 intrinsic_ConstructFunction(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -2294,11 +2320,6 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_FN("CallArrayIteratorMethodIfWrapped",
           CallNonGenericSelfhostedMethod<Is<ArrayIteratorObject>>,      2,0),
 
-    JS_FN("NewListIterator",         intrinsic_NewListIterator,         0,0),
-    JS_FN("CallListIteratorMethodIfWrapped",
-          CallNonGenericSelfhostedMethod<Is<ListIteratorObject>>,       2,0),
-    JS_FN("ActiveFunction",          intrinsic_ActiveFunction,          0,0),
-
     JS_FN("_SetCanonicalName",       intrinsic_SetCanonicalName,        2,0),
 
     JS_INLINABLE_FN("IsArrayIterator",
@@ -2313,9 +2334,6 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_INLINABLE_FN("IsStringIterator",
                     intrinsic_IsInstanceOfBuiltin<StringIteratorObject>, 1,0,
                     IntrinsicIsStringIterator),
-    JS_INLINABLE_FN("IsListIterator",
-                    intrinsic_IsInstanceOfBuiltin<ListIteratorObject>,  1,0,
-                    IntrinsicIsListIterator),
 
     JS_FN("_CreateMapIterationResultPair", intrinsic_CreateMapIterationResultPair, 0, 0),
     JS_INLINABLE_FN("_GetNextMapEntryForIterator", intrinsic_GetNextMapEntryForIterator, 2,0,
@@ -2372,6 +2390,8 @@ static const JSFunctionSpec intrinsic_functions[] = {
           intrinsic_PossiblyWrappedArrayBufferByteLength<SharedArrayBufferObject>, 1,0),
     JS_FN("SharedArrayBufferCopyData",
           intrinsic_ArrayBufferCopyData<SharedArrayBufferObject>,       5,0),
+    JS_FN("SharedArrayBuffersMemorySame",
+          intrinsic_SharedArrayBuffersMemorySame,                       2,0),
 
     JS_FN("IsUint8TypedArray",        intrinsic_IsUint8TypedArray,      1,0),
     JS_FN("IsInt8TypedArray",         intrinsic_IsInt8TypedArray,       1,0),
@@ -2477,11 +2497,15 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_FN("intl_FormatDateTime", intl_FormatDateTime, 2,0),
     JS_FN("intl_FormatNumber", intl_FormatNumber, 2,0),
     JS_FN("intl_GetCalendarInfo", intl_GetCalendarInfo, 1,0),
+    JS_FN("intl_ComputeDisplayNames", intl_ComputeDisplayNames, 3,0),
     JS_FN("intl_IsValidTimeZoneName", intl_IsValidTimeZoneName, 1,0),
     JS_FN("intl_NumberFormat", intl_NumberFormat, 2,0),
     JS_FN("intl_NumberFormat_availableLocales", intl_NumberFormat_availableLocales, 0,0),
     JS_FN("intl_numberingSystem", intl_numberingSystem, 1,0),
     JS_FN("intl_patternForSkeleton", intl_patternForSkeleton, 2,0),
+    JS_FN("intl_PluralRules_availableLocales", intl_PluralRules_availableLocales, 0,0),
+    JS_FN("intl_GetPluralCategories", intl_GetPluralCategories, 2, 0),
+    JS_FN("intl_SelectPluralRule", intl_SelectPluralRule, 2,0),
 
     JS_INLINABLE_FN("IsRegExpObject",
                     intrinsic_IsInstanceOfBuiltin<RegExpObject>, 1,0,
@@ -2512,6 +2536,7 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_INLINABLE_FN("StringSplitString", intrinsic_StringSplitString, 2, 0,
                     IntrinsicStringSplitString),
     JS_FN("StringSplitStringLimit", intrinsic_StringSplitStringLimit, 3, 0),
+    JS_FN("WarnDeprecatedStringMethod", intrinsic_WarnDeprecatedStringMethod, 2, 0),
 
     // See builtin/RegExp.h for descriptions of the regexp_* functions.
     JS_FN("regexp_exec_no_statics", regexp_exec_no_statics, 2,0),
@@ -2531,7 +2556,6 @@ static const JSFunctionSpec intrinsic_functions[] = {
           intrinsic_InstantiateModuleFunctionDeclarations, 1, 0),
     JS_FN("SetModuleState", intrinsic_SetModuleState, 1, 0),
     JS_FN("EvaluateModule", intrinsic_EvaluateModule, 1, 0),
-    JS_FN("IsModuleNamespace", intrinsic_IsInstanceOfBuiltin<ModuleNamespaceObject>, 1, 0),
     JS_FN("NewModuleNamespace", intrinsic_NewModuleNamespace, 2, 0),
     JS_FN("AddModuleNamespaceBinding", intrinsic_AddModuleNamespaceBinding, 4, 0),
     JS_FN("ModuleNamespaceExports", intrinsic_ModuleNamespaceExports, 1, 0),
@@ -2721,7 +2745,7 @@ JSRuntime::finishSelfHosting()
 }
 
 void
-JSRuntime::markSelfHostingGlobal(JSTracer* trc)
+JSRuntime::traceSelfHostingGlobal(JSTracer* trc)
 {
     if (selfHostingGlobal_ && !parentRuntime)
         TraceRoot(trc, &selfHostingGlobal_, "self-hosting global");
@@ -2878,7 +2902,7 @@ CloneObject(JSContext* cx, HandleNativeObject selfHostedObject)
     RootedObject clone(cx);
     if (selfHostedObject->is<JSFunction>()) {
         RootedFunction selfHostedFunction(cx, &selfHostedObject->as<JSFunction>());
-        bool hasName = selfHostedFunction->name() != nullptr;
+        bool hasName = selfHostedFunction->explicitName() != nullptr;
 
         // Arrow functions use the first extended slot for their lexical |this| value.
         MOZ_ASSERT(!selfHostedFunction->isArrow());
@@ -2894,7 +2918,7 @@ CloneObject(JSContext* cx, HandleNativeObject selfHostedObject)
         // self-hosting compartment has to be stored on the clone.
         if (clone && hasName) {
             clone->as<JSFunction>().setExtendedSlot(LAZY_FUNCTION_NAME_SLOT,
-                                                    StringValue(selfHostedFunction->name()));
+                                                    StringValue(selfHostedFunction->explicitName()));
         }
     } else if (selfHostedObject->is<RegExpObject>()) {
         RegExpObject& reobj = selfHostedObject->as<RegExpObject>();
@@ -2977,10 +3001,10 @@ JSRuntime::createLazySelfHostedFunctionClone(JSContext* cx, HandlePropertyName s
         return false;
 
     if (!selfHostedFun->isClassConstructor() && !selfHostedFun->hasGuessedAtom() &&
-        selfHostedFun->name() != selfHostedName)
+        selfHostedFun->explicitName() != selfHostedName)
     {
         MOZ_ASSERT(selfHostedFun->getExtendedSlot(HAS_SELFHOSTED_CANONICAL_NAME_SLOT).toBoolean());
-        funName = selfHostedFun->name();
+        funName = selfHostedFun->explicitName();
     }
 
     fun.set(NewScriptedFunction(cx, nargs, JSFunction::INTERPRETED_LAZY,
@@ -3006,7 +3030,7 @@ JSRuntime::cloneSelfHostedFunctionScript(JSContext* cx, HandlePropertyName name,
     MOZ_ASSERT(targetFun->isInterpretedLazy());
     MOZ_ASSERT(targetFun->isSelfHostedBuiltin());
 
-    RootedScript sourceScript(cx, sourceFun->getOrCreateScript(cx));
+    RootedScript sourceScript(cx, JSFunction::getOrCreateScript(cx, sourceFun));
     if (!sourceScript)
         return false;
 
@@ -3022,7 +3046,7 @@ JSRuntime::cloneSelfHostedFunctionScript(JSContext* cx, HandlePropertyName name,
     MOZ_ASSERT(!targetFun->isInterpretedLazy());
 
     MOZ_ASSERT(sourceFun->nargs() == targetFun->nargs());
-    MOZ_ASSERT(sourceFun->hasRest() == targetFun->hasRest());
+    MOZ_ASSERT(sourceScript->hasRest() == targetFun->nonLazyScript()->hasRest());
 
     // The target function might have been relazified after its flags changed.
     targetFun->setFlags(targetFun->flags() | sourceFun->flags());

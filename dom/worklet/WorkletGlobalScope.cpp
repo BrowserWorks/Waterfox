@@ -22,8 +22,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(WorkletGlobalScope)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(WorkletGlobalScope)
-
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConsole)
   tmp->TraverseHostObjectURIs(cb);
@@ -54,18 +52,6 @@ WorkletGlobalScope::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto
 {
   MOZ_CRASH("We should never get here!");
   return nullptr;
-}
-
-bool
-WorkletGlobalScope::WrapGlobalObject(JSContext* aCx,
-                                     nsIPrincipal* aPrincipal,
-                                     JS::MutableHandle<JSObject*> aReflector)
-{
-  JS::CompartmentOptions options;
-  return WorkletGlobalScopeBinding::Wrap(aCx, this, this,
-                                         options,
-                                         nsJSPrincipals::get(aPrincipal),
-                                         true, aReflector);
 }
 
 Console*

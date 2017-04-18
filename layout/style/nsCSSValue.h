@@ -299,35 +299,25 @@ class FontFamilyListRefCnt final : public FontFamilyList {
 public:
     FontFamilyListRefCnt()
         : FontFamilyList()
-    {
-        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
-    }
+    {}
 
     explicit FontFamilyListRefCnt(FontFamilyType aGenericType)
         : FontFamilyList(aGenericType)
-    {
-        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
-    }
+    {}
 
     FontFamilyListRefCnt(const nsAString& aFamilyName,
                          QuotedName aQuoted)
         : FontFamilyList(aFamilyName, aQuoted)
-    {
-        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
-    }
+    {}
 
     FontFamilyListRefCnt(const FontFamilyListRefCnt& aOther)
         : FontFamilyList(aOther)
-    {
-        MOZ_COUNT_CTOR(FontFamilyListRefCnt);
-    }
+    {}
 
     NS_INLINE_DECL_REFCOUNTING(FontFamilyListRefCnt);
 
 private:
-    ~FontFamilyListRefCnt() {
-        MOZ_COUNT_DTOR(FontFamilyListRefCnt);
-    }
+    ~FontFamilyListRefCnt() {}
 };
 
 struct RGBAColorData
@@ -900,11 +890,11 @@ public:
   void SetIntValue(int32_t aValue, nsCSSUnit aUnit);
   template<typename T,
            typename = typename std::enable_if<std::is_enum<T>::value>::type>
-  void SetIntValue(T aValue, nsCSSUnit aUnit)
+  void SetEnumValue(T aValue)
   {
     static_assert(mozilla::EnumTypeFitsWithin<T, int32_t>::value,
                   "aValue must be an enum that fits within mValue.mInt");
-    SetIntValue(static_cast<int32_t>(aValue), aUnit);
+    SetIntValue(static_cast<int32_t>(aValue), eCSSUnit_Enumerated);
   }
   void SetPercentValue(float aValue);
   void SetFloatValue(float aValue, nsCSSUnit aUnit);
@@ -1120,7 +1110,6 @@ private:
     : mRefCnt(0)
     , mCount(aItemCount)
   {
-    MOZ_COUNT_CTOR(nsCSSValue::Array);
     CSSVALUE_LIST_FOR_EXTRA_VALUES(val) {
       new (val) nsCSSValue();
     }
@@ -1128,7 +1117,6 @@ private:
 
   ~Array()
   {
-    MOZ_COUNT_DTOR(nsCSSValue::Array);
     CSSVALUE_LIST_FOR_EXTRA_VALUES(val) {
       val->~nsCSSValue();
     }
@@ -1198,14 +1186,12 @@ struct nsCSSValueSharedList final {
   nsCSSValueSharedList()
     : mHead(nullptr)
   {
-    MOZ_COUNT_CTOR(nsCSSValueSharedList);
   }
 
   // Takes ownership of aList.
   explicit nsCSSValueSharedList(nsCSSValueList* aList)
     : mHead(aList)
   {
-    MOZ_COUNT_CTOR(nsCSSValueSharedList);
   }
 
 private:
@@ -1842,16 +1828,12 @@ public:
     , mComponent2(aComponent2)
     , mComponent3(aComponent3)
     , mAlpha(aAlpha)
-  {
-    MOZ_COUNT_CTOR(nsCSSValueFloatColor);
-  }
+  {}
 
 private:
   // Private destructor, to discourage deletion outside of Release():
   ~nsCSSValueFloatColor()
-  {
-    MOZ_COUNT_DTOR(nsCSSValueFloatColor);
-  }
+  {}
 
 public:
   bool operator==(nsCSSValueFloatColor& aOther) const;

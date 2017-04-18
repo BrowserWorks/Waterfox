@@ -88,13 +88,11 @@ var testDataBookmark = [3, 8, 11];
  * harness.  It is where you do the work of creating the query, running it, and
  * playing with the result set.
  */
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_transitions()
-{
+add_task(function* test_transitions() {
   let timeNow = Date.now();
   for (let item of testData) {
     yield PlacesTestUtils.addVisits({
@@ -108,12 +106,12 @@ add_task(function* test_transitions()
   // dump_table("moz_places");
   // dump_table("moz_historyvisits");
 
-  var numSortFunc = function (a, b) { return (a - b); };
+  var numSortFunc = function(a, b) { return (a - b); };
   var arrs = testDataTyped.concat(testDataDownload).concat(testDataBookmark)
               .sort(numSortFunc);
 
   // Four tests which compare the result of a query to an expected set.
-  var data = arrs.filter(function (index) {
+  var data = arrs.filter(function(index) {
       return (testData[index].uri.match(/arewefastyet\.com/) &&
               testData[index].transType ==
                 Ci.nsINavHistoryService.TRANSITION_DOWNLOAD);

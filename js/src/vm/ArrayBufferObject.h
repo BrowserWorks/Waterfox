@@ -229,6 +229,7 @@ class ArrayBufferObject : public ArrayBufferObjectMaybeShared
     };
 
     static const Class class_;
+    static const Class protoClass_;
 
     static bool byteLengthGetter(JSContext* cx, unsigned argc, Value* vp);
 
@@ -253,12 +254,8 @@ class ArrayBufferObject : public ArrayBufferObjectMaybeShared
     // initialize()d to become a real, content-visible ArrayBufferObject.
     static ArrayBufferObject* createEmpty(JSContext* cx);
 
-    static bool createDataViewForThisImpl(JSContext* cx, const CallArgs& args);
-    static bool createDataViewForThis(JSContext* cx, unsigned argc, Value* vp);
-
     template<typename T>
     static bool createTypedArrayFromBufferImpl(JSContext* cx, const CallArgs& args);
-
     template<typename T>
     static bool createTypedArrayFromBuffer(JSContext* cx, unsigned argc, Value* vp);
 
@@ -451,6 +448,15 @@ bool IsArrayBuffer(JSObject* obj);
 ArrayBufferObject& AsArrayBuffer(HandleObject obj);
 ArrayBufferObject& AsArrayBuffer(JSObject* obj);
 
+/*
+ * Ditto for ArrayBufferObjectMaybeShared.
+ */
+bool IsArrayBufferMaybeShared(HandleValue v);
+bool IsArrayBufferMaybeShared(HandleObject obj);
+bool IsArrayBufferMaybeShared(JSObject* obj);
+ArrayBufferObjectMaybeShared& AsArrayBufferMaybeShared(HandleObject obj);
+ArrayBufferObjectMaybeShared& AsArrayBufferMaybeShared(JSObject* obj);
+
 extern uint32_t JS_FASTCALL
 ClampDoubleToUint8(const double x);
 
@@ -545,7 +551,6 @@ class InnerViewTable
     typedef Vector<ArrayBufferViewObject*, 1, SystemAllocPolicy> ViewVector;
 
     friend class ArrayBufferObject;
-    friend class WeakCacheBase<InnerViewTable>;
 
   private:
     struct MapGCPolicy {
@@ -606,23 +611,15 @@ class InnerViewTable
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 };
 
-template <>
-class WeakCacheBase<InnerViewTable>
+template <typename Wrapper>
+class MutableWrappedPtrOperations<InnerViewTable, Wrapper>
+    : public WrappedPtrOperations<InnerViewTable, Wrapper>
 {
     InnerViewTable& table() {
-        return static_cast<JS::WeakCache<InnerViewTable>*>(this)->get();
-    }
-    const InnerViewTable& table() const {
-        return static_cast<const JS::WeakCache<InnerViewTable>*>(this)->get();
+        return static_cast<Wrapper*>(this)->get();
     }
 
   public:
-    InnerViewTable::ViewVector* maybeViewsUnbarriered(ArrayBufferObject* obj) {
-        return table().maybeViewsUnbarriered(obj);
-    }
-    void removeViews(ArrayBufferObject* obj) { table().removeViews(obj); }
-    void sweepAfterMinorGC() { table().sweepAfterMinorGC(); }
-    bool needsSweepAfterMinorGC() const { return table().needsSweepAfterMinorGC(); }
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) {
         return table().sizeOfExcludingThis(mallocSizeOf);
     }

@@ -28,6 +28,7 @@
 #include "nsContentUtils.h"
 
 using namespace mozilla;
+using namespace mozilla::css;
 
 static bool
 IsLocalRefURL(nsStringBuffer* aString)
@@ -953,7 +954,7 @@ struct CSSValueSerializeCalcOps {
     aValue.AppendToString(mProperty, mResult, mValueSerialization);
   }
 
-  void AppendNumber(const input_type& aValue)
+  void AppendCoefficient(const input_type& aValue)
   {
     MOZ_ASSERT(aValue.GetUnit() == eCSSUnit_Number, "unexpected unit");
     aValue.AppendToString(mProperty, mResult, mValueSerialization);
@@ -1022,10 +1023,10 @@ nsCSSValue::AppendCircleOrEllipseToString(nsCSSKeyword aFunctionId,
   // closest-side is the default, so we don't need to
   // output it if all values are closest-side.
   if (array->Item(1).GetUnit() == eCSSUnit_Enumerated &&
-      array->Item(1).GetIntValue() == NS_RADIUS_CLOSEST_SIDE &&
+      StyleShapeRadius(array->Item(1).GetIntValue()) == StyleShapeRadius::ClosestSide &&
       (aFunctionId == eCSSKeyword_circle ||
        (array->Item(2).GetUnit() == eCSSUnit_Enumerated &&
-        array->Item(2).GetIntValue() == NS_RADIUS_CLOSEST_SIDE))) {
+        StyleShapeRadius(array->Item(2).GetIntValue()) == StyleShapeRadius::ClosestSide))) {
     hasRadii = false;
   } else {
     AppendPositionCoordinateToString(array->Item(1), aProperty,
@@ -1613,13 +1614,16 @@ nsCSSValue::AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
         aResult.AppendLiteral("transparent");
       } else {
         // For brevity, we omit the alpha component if it's equal to 255 (full
-        // opaque). Also, we try to preserve the author-specified function name,
-        // unless it's rgba() and we're omitting the alpha component - then we
-        // use rgb().
+        // opaque). Also, we use "rgba" rather than "rgb" when the color includes
+        // the non-opaque alpha value, for backwards-compat (even though they're
+        // aliases as of css-color-4).
+        // e.g.:
+        //   rgba(1, 2, 3, 1.0) => rgb(1, 2, 3)
+        //   rgba(1, 2, 3, 0.5) => rgba(1, 2, 3, 0.5)
         uint8_t a = NS_GET_A(color);
         bool showAlpha = (a != 255);
 
-        if (unit == eCSSUnit_RGBAColor && showAlpha) {
+        if (showAlpha) {
           aResult.AppendLiteral("rgba(");
         } else {
           aResult.AppendLiteral("rgb(");
@@ -2404,7 +2408,6 @@ nsCSSValueList_heap::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) co
 
 nsCSSValueSharedList::~nsCSSValueSharedList()
 {
-  MOZ_COUNT_DTOR(nsCSSValueSharedList);
   if (mHead) {
     NS_CSS_DELETE_LIST_MEMBER(nsCSSValueList, mHead, mNext);
     delete mHead;
@@ -2520,8 +2523,8 @@ nsCSSRect_heap::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
   return n;
 }
 
-static_assert(NS_SIDE_TOP == 0 && NS_SIDE_RIGHT == 1 &&
-              NS_SIDE_BOTTOM == 2 && NS_SIDE_LEFT == 3,
+static_assert(eSideTop == 0 && eSideRight == 1 &&
+              eSideBottom == 2 && eSideLeft == 3,
               "box side constants not top/right/bottom/left == 0/1/2/3");
 
 /* static */ const nsCSSRect::side_type nsCSSRect::sides[4] = {
@@ -3060,14 +3063,10 @@ nsCSSValueTokenStream::nsCSSValueTokenStream()
   : mPropertyID(eCSSProperty_UNKNOWN)
   , mShorthandPropertyID(eCSSProperty_UNKNOWN)
   , mLevel(SheetType::Count)
-{
-  MOZ_COUNT_CTOR(nsCSSValueTokenStream);
-}
+{}
 
 nsCSSValueTokenStream::~nsCSSValueTokenStream()
-{
-  MOZ_COUNT_DTOR(nsCSSValueTokenStream);
-}
+{}
 
 size_t
 nsCSSValueTokenStream::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
@@ -3208,8 +3207,8 @@ nsCSSCornerSizes::Reset()
   }
 }
 
-static_assert(NS_CORNER_TOP_LEFT == 0 && NS_CORNER_TOP_RIGHT == 1 &&
-              NS_CORNER_BOTTOM_RIGHT == 2 && NS_CORNER_BOTTOM_LEFT == 3,
+static_assert(eCornerTopLeft == 0 && eCornerTopRight == 1 &&
+              eCornerBottomRight == 2 && eCornerBottomLeft == 3,
               "box corner constants not tl/tr/br/bl == 0/1/2/3");
 
 /* static */ const nsCSSCornerSizes::corner_type

@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Cu.import('resource://gre/modules/NetUtil.jsm');
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const gAppRep = Cc["@mozilla.org/downloads/application-reputation-service;1"].
@@ -89,6 +89,14 @@ add_task(function* test_setup() {
     do_throw("This test should never make a remote lookup");
   });
   gHttpServ.start(4444);
+
+  do_register_cleanup(function() {
+    return Task.spawn(function* () {
+      yield new Promise(resolve => {
+        gHttpServ.stop(resolve);
+      });
+    });
+  });
 });
 
 function run_test() {

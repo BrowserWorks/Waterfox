@@ -16,7 +16,7 @@ namespace a11y {
 
 static StaticAutoPtr<PlatformChild> sPlatformChild;
 
-DocAccessibleChild::DocAccessibleChild(DocAccessible* aDoc)
+DocAccessibleChild::DocAccessibleChild(DocAccessible* aDoc, IProtocol* aManager)
   : DocAccessibleChildBase(aDoc)
   , mIsRemoteConstructed(false)
 {
@@ -25,6 +25,8 @@ DocAccessibleChild::DocAccessibleChild(DocAccessible* aDoc)
     sPlatformChild = new PlatformChild();
     ClearOnShutdown(&sPlatformChild, ShutdownPhase::Shutdown);
   }
+
+  SetManager(aManager);
 }
 
 DocAccessibleChild::~DocAccessibleChild()
@@ -44,7 +46,7 @@ DocAccessibleChild::Shutdown()
   DetachDocument();
 }
 
-bool
+ipc::IPCResult
 DocAccessibleChild::RecvParentCOMProxy(const IAccessibleHolder& aParentCOMProxy)
 {
   MOZ_ASSERT(!mParentProxy && !aParentCOMProxy.IsNull());
@@ -57,7 +59,7 @@ DocAccessibleChild::RecvParentCOMProxy(const IAccessibleHolder& aParentCOMProxy)
 
   mDeferredEvents.Clear();
 
-  return true;
+  return IPC_OK();
 }
 
 void

@@ -7,8 +7,10 @@
 #ifndef mozilla_ServoRestyleManager_h
 #define mozilla_ServoRestyleManager_h
 
+#include "mozilla/DocumentStyleRootIterator.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/RestyleManagerBase.h"
+#include "mozilla/ServoBindings.h"
 #include "mozilla/ServoElementSnapshot.h"
 #include "nsChangeHint.h"
 #include "nsHashKeys.h"
@@ -77,11 +79,7 @@ public:
 
   nsresult ReparentStyleContext(nsIFrame* aFrame);
 
-  bool HasPendingRestyles()
-  {
-    return !mModifiedElements.IsEmpty() ||
-           PresContext()->Document()->HasDirtyDescendantsForServo();
-  }
+  inline bool HasPendingRestyles();
 
 
   /**
@@ -93,31 +91,34 @@ public:
   static nsIFrame* FrameForPseudoElement(const nsIContent* aContent,
                                          nsIAtom* aPseudoTagOrNull);
 
-protected:
-  ~ServoRestyleManager() {}
-
-private:
-  ServoElementSnapshot* SnapshotForElement(Element* aElement);
+  /**
+   * Clears the ServoElementData and HasDirtyDescendants from all elements
+   * in the subtree rooted at aElement.
+   */
+  static void ClearServoDataFromSubtree(Element* aElement);
 
   /**
-   * The element-to-element snapshot table to compute restyle hints.
+   * Clears HasDirtyDescendants from all elements in the subtree rooted at
+   * aElement.
    */
-  nsClassHashtable<nsRefPtrHashKey<Element>, ServoElementSnapshot>
-    mModifiedElements;
+  static void ClearDirtyDescendantsFromSubtree(Element* aElement);
 
+protected:
+  ~ServoRestyleManager() { MOZ_ASSERT(!mReentrantChanges); }
+
+private:
   /**
    * Traverses a tree of content that Servo has just restyled, recreating style
    * contexts for their frames with the new style data.
    */
-  void RecreateStyleContexts(nsIContent* aContent,
+  void RecreateStyleContexts(Element* aElement,
                              nsStyleContext* aParentContext,
                              ServoStyleSet* aStyleSet,
                              nsStyleChangeList& aChangeList);
 
-  /**
-   * Marks the tree with the appropriate dirty flags for the given restyle hint.
-   */
-  static void NoteRestyleHint(Element* aElement, nsRestyleHint aRestyleHint);
+  void RecreateStyleContextsForText(nsIContent* aTextNode,
+                                    nsStyleContext* aParentContext,
+                                    ServoStyleSet* aStyleSet);
 
   inline ServoStyleSet* StyleSet() const
   {
@@ -126,6 +127,19 @@ private:
                "style backend");
     return PresContext()->StyleSet()->AsServo();
   }
+
+  // We use a separate data structure from nsStyleChangeList because we need a
+  // frame to create nsStyleChangeList entries, and the primary frame may not be
+  // attached yet.
+  struct ReentrantChange {
+    nsCOMPtr<nsIContent> mContent;
+    nsChangeHint mHint;
+  };
+  typedef AutoTArray<ReentrantChange, 10> ReentrantChangeList;
+
+  // Only non-null while processing change hints. See the comment in
+  // ProcessPendingRestyles.
+  ReentrantChangeList* mReentrantChanges;
 };
 
 } // namespace mozilla

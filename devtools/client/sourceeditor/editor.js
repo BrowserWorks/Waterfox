@@ -32,9 +32,9 @@ const RE_JUMP_TO_LINE = /^(\d+):?(\d+)?/;
 const Services = require("Services");
 const promise = require("promise");
 const events = require("devtools/shared/event-emitter");
-const { PrefObserver } = require("devtools/client/styleeditor/utils");
+const { PrefObserver } = require("devtools/client/shared/prefs");
 const { getClientCssProperties } = require("devtools/shared/fronts/css-properties");
-const {KeyShortcuts} = require("devtools/client/shared/key-shortcuts");
+const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
 
 const {LocalizationHelper} = require("devtools/shared/l10n");
 const L10N = new LocalizationHelper("devtools/client/locales/sourceeditor.properties");
@@ -50,6 +50,10 @@ const CM_STYLES = [
   "chrome://devtools/content/sourceeditor/codemirror/addon/dialog/dialog.css",
   "chrome://devtools/content/sourceeditor/codemirror/mozilla.css"
 ];
+
+CM_STYLES.push(
+  "chrome://devtools/content/sourceeditor/codemirror/old-debugger.css"
+);
 
 const CM_SCRIPTS = [
   "chrome://devtools/content/sourceeditor/codemirror/codemirror.bundle.js",
@@ -257,10 +261,12 @@ Editor.prototype = {
     let cm = editors.get(this);
 
     if (!env) {
-      env = el.ownerDocument.createElementNS(XUL_NS, "iframe");
-    }
+      env = el.ownerDocument.createElementNS(el.namespaceURI, "iframe");
 
-    env.flex = 1;
+      if (el.namespaceURI === XUL_NS) {
+        env.flex = 1;
+      }
+    }
 
     if (cm) {
       throw new Error("You can append an editor only once.");
@@ -379,7 +385,7 @@ Editor.prototype = {
 
       this.emit("popupOpen", ev, popup);
       popup.openPopupAtScreen(ev.screenX, ev.screenY, true);
-    }, false);
+    });
 
     cm.on("focus", () => this.emit("focus"));
     cm.on("scroll", () => this.emit("scroll"));

@@ -535,16 +535,6 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetURL(const char *aURL,
   nsresult rv = NS_NewURI(getter_AddRefs(uri), aURL, baseURI);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
-  if (aDoCheckLoadURIChecks) {
-    nsCOMPtr<nsIScriptSecurityManager> secMan(
-      do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv));
-    NS_ENSURE_TRUE(secMan, NS_ERROR_FAILURE);
-
-    rv = secMan->CheckLoadURIWithPrincipal(content->NodePrincipal(), uri,
-                                           nsIScriptSecurityManager::STANDARD);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
   nsCOMPtr<nsIInputStream> headersDataStream;
   if (aPostStream && aHeadersData) {
     if (!aHeadersDataLen)
@@ -563,8 +553,21 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetURL(const char *aURL,
     Preferences::GetInt("privacy.popups.disable_from_plugins");
   nsAutoPopupStatePusher popupStatePusher((PopupControlState)blockPopups);
 
+
+  // if security checks (in particular CheckLoadURIWithPrincipal) needs
+  // to be skipped we are creating a codebasePrincipal to make sure
+  // that security check succeeds. Please note that we do not want to
+  // fall back to using the systemPrincipal, because that would also
+  // bypass ContentPolicy checks which should still be enforced.
+  nsCOMPtr<nsIPrincipal> triggeringPrincipal;
+  if (!aDoCheckLoadURIChecks) {
+    mozilla::OriginAttributes attrs =
+      BasePrincipal::Cast(content->NodePrincipal())->OriginAttributesRef();
+    triggeringPrincipal = BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+  }
+
   rv = lh->OnLinkClick(content, uri, unitarget.get(), NullString(),
-                       aPostStream, headersDataStream, true);
+                       aPostStream, headersDataStream, true, triggeringPrincipal);
 
   return rv;
 }
@@ -607,7 +610,7 @@ NS_IMETHODIMP nsPluginInstanceOwner::InvalidateRect(NPRect *invalidRect)
 #endif
 
 #ifndef XP_MACOSX
-  // Silverlight calls invalidate for windowed plugins so this needs to work.
+  // Invalidate for windowed plugins needs to work.
   if (mWidget) {
     mWidget->Invalidate(
       LayoutDeviceIntRect(invalidRect->left, invalidRect->top,
@@ -2532,6 +2535,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
       NS_ASSERTION(anEvent.mMessage == eMouseDown ||
                    anEvent.mMessage == eMouseUp ||
                    anEvent.mMessage == eMouseDoubleClick ||
+                   anEvent.mMessage == eMouseAuxClick ||
                    anEvent.mMessage == eMouseOver ||
                    anEvent.mMessage == eMouseOut ||
                    anEvent.mMessage == eMouseMove ||
@@ -2594,6 +2598,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
         switch (anEvent.mMessage) {
           case eMouseClick:
           case eMouseDoubleClick:
+          case eMouseAuxClick:
             // Button up/down events sent instead.
             return rv;
           default:
@@ -2797,6 +2802,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
         switch (anEvent.mMessage) {
           case eMouseClick:
           case eMouseDoubleClick:
+          case eMouseAuxClick:
             // Button up/down events sent instead.
             return rv;
           default:

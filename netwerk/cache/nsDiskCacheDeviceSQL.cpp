@@ -54,7 +54,7 @@
 
 using namespace mozilla;
 using namespace mozilla::storage;
-using mozilla::NeckoOriginAttributes;
+using mozilla::OriginAttributes;
 
 static const char OFFLINE_CACHE_DEVICE_ID[] = { "offline" };
 
@@ -2494,7 +2494,7 @@ nsOfflineCacheDevice::Evict(nsILoadContextInfo *aInfo)
 
   mozilla::OriginAttributes const *oa = aInfo->OriginAttributesPtr();
 
-  if (oa->mAppId == NECKO_NO_APP_ID && oa->mInIsolatedMozBrowser == false) {
+  if (oa->mInIsolatedMozBrowser == false) {
     nsCOMPtr<nsICacheService> serv = do_GetService(kCacheServiceCID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2573,7 +2573,7 @@ OriginMatch::OnFunctionCall(mozIStorageValueArray* aFunctionArguments, nsIVarian
 
   nsDependentCSubstring suffix(groupId.BeginReading() + hash, groupId.Length() - hash);
 
-  mozilla::NeckoOriginAttributes oa;
+  mozilla::OriginAttributes oa;
   bool ok = oa.PopulateFromSuffix(suffix);
   NS_ENSURE_TRUE(ok, NS_ERROR_UNEXPECTED);
 

@@ -84,6 +84,7 @@ struct VisitData {
   , referrerVisitId(0)
   , titleChanged(false)
   , shouldUpdateFrecency(true)
+  , redirect(false)
   {
     guid.SetIsVoid(true);
     title.SetIsVoid(true);
@@ -105,6 +106,7 @@ struct VisitData {
   , referrerVisitId(0)
   , titleChanged(false)
   , shouldUpdateFrecency(true)
+  , redirect(false)
   {
     MOZ_ASSERT(aURI);
     if (aURI) {
@@ -162,6 +164,9 @@ struct VisitData {
 
   // Indicates whether frecency should be updated for this visit.
   bool shouldUpdateFrecency;
+
+  // Whether this is a redirect source.
+  bool redirect;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -653,7 +658,8 @@ public:
                                 mPlace.referrerVisitId, mPlace.transitionType,
                                 mPlace.guid, mPlace.hidden,
                                 mPlace.visitCount + 1, // Add current visit.
-                                static_cast<uint32_t>(mPlace.typed));
+                                static_cast<uint32_t>(mPlace.typed),
+                                mPlace.title);
     }
 
     nsCOMPtr<nsIObserverService> obsService =
@@ -666,7 +672,9 @@ public:
 
     History* history = History::GetService();
     NS_ENSURE_STATE(history);
-    history->AppendToRecentlyVisitedURIs(uri);
+    if (PR_Now() - mPlace.visitTime < RECENTLY_VISITED_URIS_MAX_AGE) {
+      mHistory->AppendToRecentlyVisitedURIs(uri);
+    }
     history->NotifyVisited(uri);
 
     return NS_OK;
@@ -798,8 +806,10 @@ private:
 class NotifyCompletion : public Runnable
 {
 public:
-  explicit NotifyCompletion(const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback)
+  explicit NotifyCompletion(const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback,
+                            uint32_t aUpdatedCount = 0)
   : mCallback(aCallback)
+  , mUpdatedCount(aUpdatedCount)
   {
     MOZ_ASSERT(aCallback, "Must pass a non-null callback!");
   }
@@ -807,7 +817,7 @@ public:
   NS_IMETHOD Run() override
   {
     if (NS_IsMainThread()) {
-      (void)mCallback->HandleCompletion();
+      (void)mCallback->HandleCompletion(mUpdatedCount);
     }
     else {
       (void)NS_DispatchToMainThread(this);
@@ -817,6 +827,7 @@ public:
 
 private:
   nsMainThreadPtrHandle<mozIVisitInfoCallback> mCallback;
+  uint32_t mUpdatedCount;
 };
 
 /**
@@ -860,6 +871,22 @@ CanAddURI(nsIURI* aURI,
   return false;
 }
 
+class NotifyManyFrecenciesChanged final : public Runnable
+{
+public:
+  NotifyManyFrecenciesChanged() {}
+
+  NS_IMETHOD Run() override
+  {
+    MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
+    nsNavHistory* navHistory = nsNavHistory::GetHistoryService();
+    NS_ENSURE_STATE(navHistory);
+    navHistory->NotifyManyFrecenciesChanged();
+    return NS_OK;
+  }
+};
+
+
 /**
  * Adds a visit to the database.
  */
@@ -875,10 +902,14 @@ public:
    *        The locations to record visits.
    * @param [optional] aCallback
    *        The callback to notify about the visit.
+   * @param [optional] aGroupNotifications
+   *        Whether to group any observer notifications rather than
+   *        sending them out individually.
    */
   static nsresult Start(mozIStorageConnection* aConnection,
                         nsTArray<VisitData>& aPlaces,
-                        mozIVisitInfoCallback* aCallback = nullptr)
+                        mozIVisitInfoCallback* aCallback = nullptr,
+                        bool aGroupNotifications = false)
   {
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
     MOZ_ASSERT(aPlaces.Length() > 0, "Must pass a non-empty array!");
@@ -892,8 +923,17 @@ public:
 
     nsMainThreadPtrHandle<mozIVisitInfoCallback>
       callback(new nsMainThreadPtrHolder<mozIVisitInfoCallback>(aCallback));
+    bool ignoreErrors = false, ignoreResults = false;
+    if (aCallback) {
+      // We ignore errors from either of these methods in case old JS consumers
+      // don't implement them (in which case they will get error/result
+      // notifications as normal).
+      Unused << aCallback->GetIgnoreErrors(&ignoreErrors);
+      Unused << aCallback->GetIgnoreResults(&ignoreResults);
+    }
     RefPtr<InsertVisitedURIs> event =
-      new InsertVisitedURIs(aConnection, aPlaces, callback);
+      new InsertVisitedURIs(aConnection, aPlaces, callback, aGroupNotifications,
+                            ignoreErrors, ignoreResults);
 
     // Get the target thread, and then start the work!
     nsCOMPtr<nsIEventTarget> target = do_GetInterface(aConnection);
@@ -908,6 +948,20 @@ public:
   {
     MOZ_ASSERT(!NS_IsMainThread(), "This should not be called on the main thread");
 
+    // The inner run method may bail out at any point, so we ensure we do
+    // whatever we can and then notify the main thread we're done.
+    nsresult rv = InnerRun();
+
+    if (mSuccessfulUpdatedCount > 0 && mGroupNotifications) {
+      NS_DispatchToMainThread(new NotifyManyFrecenciesChanged());
+    }
+    if (!!mCallback) {
+      NS_DispatchToMainThread(new NotifyCompletion(mCallback, mSuccessfulUpdatedCount));
+    }
+    return rv;
+  }
+
+  nsresult InnerRun() {
     // Prevent the main thread from shutting down while this is running.
     MutexAutoLock lockedScope(mHistory->GetShutdownMutex());
     if (mHistory->IsShuttingDown()) {
@@ -933,7 +987,7 @@ public:
       if (!known) {
         nsresult rv = mHistory->FetchPageInfo(place, &known);
         if (NS_FAILED(rv)) {
-          if (!!mCallback) {
+          if (!!mCallback && !mIgnoreErrors) {
             nsCOMPtr<nsIRunnable> event =
               new NotifyPlaceInfoCallback(mCallback, place, true, rv);
             return NS_DispatchToMainThread(event);
@@ -973,19 +1027,28 @@ public:
 
       nsresult rv = DoDatabaseInserts(known, place);
       if (!!mCallback) {
-        nsCOMPtr<nsIRunnable> event =
-          new NotifyPlaceInfoCallback(mCallback, place, true, rv);
-        nsresult rv2 = NS_DispatchToMainThread(event);
-        NS_ENSURE_SUCCESS(rv2, rv2);
+        // Check if consumers wanted to be notified about success/failure,
+        // depending on whether this action succeeded or not.
+        if ((NS_SUCCEEDED(rv) && !mIgnoreResults) ||
+            (NS_FAILED(rv) && !mIgnoreErrors)) {
+          nsCOMPtr<nsIRunnable> event =
+            new NotifyPlaceInfoCallback(mCallback, place, true, rv);
+          nsresult rv2 = NS_DispatchToMainThread(event);
+          NS_ENSURE_SUCCESS(rv2, rv2);
+        }
       }
       NS_ENSURE_SUCCESS(rv, rv);
+
+      // If we get here, we must have been successful adding/updating this
+      // visit/place, so update the count:
+      mSuccessfulUpdatedCount++;
 
       nsCOMPtr<nsIRunnable> event = new NotifyVisitObservers(place);
       rv = NS_DispatchToMainThread(event);
       NS_ENSURE_SUCCESS(rv, rv);
 
       // Notify about title change if needed.
-      if ((!known && !place.title.IsVoid()) || place.titleChanged) {
+      if (place.titleChanged) {
         event = new NotifyTitleObservers(place.spec, place.title, place.guid);
         rv = NS_DispatchToMainThread(event);
         NS_ENSURE_SUCCESS(rv, rv);
@@ -1000,9 +1063,16 @@ public:
 private:
   InsertVisitedURIs(mozIStorageConnection* aConnection,
                     nsTArray<VisitData>& aPlaces,
-                    const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback)
+                    const nsMainThreadPtrHandle<mozIVisitInfoCallback>& aCallback,
+                    bool aGroupNotifications,
+                    bool aIgnoreErrors,
+                    bool aIgnoreResults)
   : mDBConn(aConnection)
   , mCallback(aCallback)
+  , mGroupNotifications(aGroupNotifications)
+  , mIgnoreErrors(aIgnoreErrors)
+  , mIgnoreResults(aIgnoreResults)
+  , mSuccessfulUpdatedCount(0)
   , mHistory(History::GetService())
   {
     MOZ_ASSERT(NS_IsMainThread(), "This should be called on the main thread");
@@ -1042,7 +1112,7 @@ private:
     }
     // Otherwise, the page was not in moz_places, so now we have to add it.
     else {
-      rv = mHistory->InsertPlace(aPlace);
+      rv = mHistory->InsertPlace(aPlace, !mGroupNotifications);
       NS_ENSURE_SUCCESS(rv, rv);
       aPlace.placeId = nsNavHistory::sLastInsertedPlaceId;
     }
@@ -1161,18 +1231,32 @@ private:
     nsresult rv;
     { // First, set our frecency to the proper value.
       nsCOMPtr<mozIStorageStatement> stmt;
-      stmt = mHistory->GetStatement(
-        "UPDATE moz_places "
-        "SET frecency = NOTIFY_FRECENCY("
-          "CALCULATE_FRECENCY(:page_id), "
-          "url, guid, hidden, last_visit_date"
-        ") "
-        "WHERE id = :page_id"
-      );
+      if (!mGroupNotifications) {
+        // If we're notifying for individual frecency updates, use
+        // the notify_frecency sql function which will call us back.
+        stmt = mHistory->GetStatement(
+          "UPDATE moz_places "
+          "SET frecency = NOTIFY_FRECENCY("
+            "CALCULATE_FRECENCY(:page_id, :redirect), "
+            "url, guid, hidden, last_visit_date"
+          ") "
+          "WHERE id = :page_id"
+        );
+      } else {
+        // otherwise, just update the frecency without notifying.
+        stmt = mHistory->GetStatement(
+          "UPDATE moz_places "
+          "SET frecency = CALCULATE_FRECENCY(:page_id, :redirect) "
+          "WHERE id = :page_id"
+        );
+      }
       NS_ENSURE_STATE(stmt);
       mozStorageStatementScoper scoper(stmt);
 
       rv = stmt->BindInt64ByName(NS_LITERAL_CSTRING("page_id"), aPlace.placeId);
+      NS_ENSURE_SUCCESS(rv, rv);
+
+      rv = stmt->BindInt32ByName(NS_LITERAL_CSTRING("redirect"), aPlace.redirect);
       NS_ENSURE_SUCCESS(rv, rv);
 
       rv = stmt->Execute();
@@ -1205,6 +1289,14 @@ private:
   nsTArray<VisitData> mPlaces;
 
   nsMainThreadPtrHandle<mozIVisitInfoCallback> mCallback;
+
+  bool mGroupNotifications;
+
+  bool mIgnoreErrors;
+
+  bool mIgnoreResults;
+
+  uint32_t mSuccessfulUpdatedCount;
 
   /**
    * Strong reference to the History object because we do not want it to
@@ -1395,6 +1487,18 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
   }
 
+  NS_IMETHOD GetIgnoreResults(bool *aIgnoreResults) override
+  {
+    *aIgnoreResults = false;
+    return NS_OK;
+  }
+
+  NS_IMETHOD GetIgnoreErrors(bool *aIgnoreErrors) override
+  {
+    *aIgnoreErrors = false;
+    return NS_OK;
+  }
+
   NS_IMETHOD HandleError(nsresult aResultCode, mozIPlaceInfo *aPlaceInfo) override
   {
     // Just don't add the annotations in case the visit isn't added.
@@ -1463,7 +1567,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD HandleCompletion() override
+  NS_IMETHOD HandleCompletion(uint32_t aUpdatedCount) override
   {
     return NS_OK;
   }
@@ -2029,7 +2133,7 @@ History::GetIsVisitedStatement(mozIStorageCompletionCallback* aCallback)
 }
 
 nsresult
-History::InsertPlace(VisitData& aPlace)
+History::InsertPlace(VisitData& aPlace, bool aShouldNotifyFrecencyChanged)
 {
   MOZ_ASSERT(aPlace.placeId == 0, "should not have a valid place id!");
   MOZ_ASSERT(!aPlace.shouldUpdateHidden, "We should not need to update hidden");
@@ -2077,12 +2181,14 @@ History::InsertPlace(VisitData& aPlace)
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Post an onFrecencyChanged observer notification.
-  const nsNavHistory* navHistory = nsNavHistory::GetConstHistoryService();
-  NS_ENSURE_STATE(navHistory);
-  navHistory->DispatchFrecencyChangedNotification(aPlace.spec, frecency,
-                                                  aPlace.guid,
-                                                  aPlace.hidden,
-                                                  aPlace.visitTime);
+  if (aShouldNotifyFrecencyChanged) {
+    const nsNavHistory* navHistory = nsNavHistory::GetConstHistoryService();
+    NS_ENSURE_STATE(navHistory);
+    navHistory->DispatchFrecencyChangedNotification(aPlace.spec, frecency,
+                                                    aPlace.guid,
+                                                    aPlace.hidden,
+                                                    aPlace.visitTime);
+  }
 
   return NS_OK;
 }
@@ -2441,8 +2547,8 @@ History::VisitURI(nsIURI* aURI,
   }
 
   place.SetTransitionType(transitionType);
-  place.hidden = GetHiddenState(aFlags & IHistory::REDIRECT_SOURCE,
-                                transitionType);
+  place.redirect = aFlags & IHistory::REDIRECT_SOURCE;
+  place.hidden = GetHiddenState(place.redirect, place.transitionType);
 
   // Error pages should never be autocompleted.
   if (aFlags & IHistory::UNRECOVERABLE_ERROR) {
@@ -2573,12 +2679,12 @@ History::SetURITitle(nsIURI* aURI, const nsAString& aTitle)
     URIParams uri;
     SerializeURI(aURI, uri);
 
-    mozilla::dom::ContentChild * cpc = 
+    mozilla::dom::ContentChild * cpc =
       mozilla::dom::ContentChild::GetSingleton();
     NS_ASSERTION(cpc, "Content Protocol is NULL!");
     (void)cpc->SendSetURITitle(uri, PromiseFlatString(aTitle));
     return NS_OK;
-  } 
+  }
 
   nsNavHistory* navHistory = nsNavHistory::GetHistoryService();
 
@@ -2779,6 +2885,7 @@ History::GetPlacesInfo(JS::Handle<JS::Value> aPlaceIdentifiers,
 NS_IMETHODIMP
 History::UpdatePlaces(JS::Handle<JS::Value> aPlaceInfos,
                       mozIVisitInfoCallback* aCallback,
+                      bool aGroupNotifications,
                       JSContext* aCtx)
 {
   NS_ENSURE_TRUE(NS_IsMainThread(), NS_ERROR_UNEXPECTED);
@@ -2898,15 +3005,18 @@ History::UpdatePlaces(JS::Handle<JS::Value> aPlaceInfos,
   // CanAddURI, which isn't an error.  If we have no visits to add, however,
   // we should not call InsertVisitedURIs::Start.
   if (visitData.Length()) {
-    nsresult rv = InsertVisitedURIs::Start(dbConn, visitData, callback);
+    nsresult rv = InsertVisitedURIs::Start(dbConn, visitData,
+                                           callback, aGroupNotifications);
     NS_ENSURE_SUCCESS(rv, rv);
-  }
+  } else if (aCallback) {
+    // Be sure to notify that all of our operations are complete.  This
+    // is dispatched to the background thread first and redirected to the
+    // main thread from there to make sure that all database notifications
+    // and all embed or canAddURI notifications have finished.
 
-  // Be sure to notify that all of our operations are complete.  This
-  // is dispatched to the background thread first and redirected to the
-  // main thread from there to make sure that all database notifications
-  // and all embed or canAddURI notifications have finished.
-  if (aCallback) {
+    // Note: if we're inserting anything, it's the responsibility of
+    // InsertVisitedURIs to call the completion callback, as here we won't
+    // know how yet many items we will successfully insert/update.
     nsCOMPtr<nsIEventTarget> backgroundThread = do_GetInterface(dbConn);
     NS_ENSURE_TRUE(backgroundThread, NS_ERROR_UNEXPECTED);
     nsCOMPtr<nsIRunnable> event = new NotifyCompletion(callback);

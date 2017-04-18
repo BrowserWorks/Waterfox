@@ -156,9 +156,13 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "AudioProcessingEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "AudioScheduledSourceNode",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "AudioStreamTrack",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "BarProp",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "BaseAudioContext",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "BatteryManager",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -246,7 +250,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSMozDocumentRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "CSSNameSpaceRule",
+    "CSSNamespaceRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSPageRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -444,6 +448,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLDetailsElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "HTMLDialogElement", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLDirectoryElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLDivElement",
@@ -640,19 +646,19 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaError",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaKeyError", android: false},
+    "MediaKeyError",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaEncryptedEvent", android: false},
+    "MediaEncryptedEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaKeys", android: false},
+    "MediaKeys",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaKeySession", android: false},
+    "MediaKeySession",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaKeySystemAccess", android: false},
+    "MediaKeySystemAccess",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaKeyMessageEvent", android: false},
+    "MediaKeyMessageEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaKeyStatusMap", android: false},
+    "MediaKeyStatusMap",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -781,21 +787,21 @@ var interfaceNamesInGlobalScope =
     {name: "PresentationDeviceInfoManager",
      disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "Presentation", disabled: true},
+    {name: "Presentation", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationAvailability", disabled: true},
+    {name: "PresentationAvailability", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationConnection", disabled: true},
+    {name: "PresentationConnection", desktop: false, release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationConnectionAvailableEvent", disabled: true},
+    {name: "PresentationConnectionAvailableEvent", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationConnectionClosedEvent", disabled: true},
+    {name: "PresentationConnectionCloseEvent", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationConnectionList", disabled: true},
+    {name: "PresentationConnectionList", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationReceiver", disabled: true},
+    {name: "PresentationReceiver", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationRequest", disabled: true},
+    {name: "PresentationRequest", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ProcessingInstruction",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -863,7 +869,9 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ServiceWorkerRegistration",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "SettingsLock",
+    {name: "ScopedCredential", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "ScopedCredentialInfo", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ShadowRoot", // Bogus, but the test harness forces it on.  See bug 1159768.
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1008,6 +1016,8 @@ var interfaceNamesInGlobalScope =
     "SVGForeignObjectElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SVGGElement",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "SVGGeometryElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SVGGradientElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1216,6 +1226,12 @@ var interfaceNamesInGlobalScope =
     {name: "VTTRegion", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WaveShaperNode",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebAuthnAssertion", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebAuthnAttestation", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebAuthentication", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLActiveInfo",
 // IMPORTANT: Do not change this list without review from a DOM peer!

@@ -38,10 +38,6 @@ const kEventConstructors = {
                                              },
   AudioProcessingEvent:                      { create: null, // Cannot create untrusted event from JS.
                                              },
-  BeforeAfterKeyboardEvent:                  { create: function (aName, aProps) {
-                                                         return new BeforeAfterKeyboardEvent(aName, aProps);
-                                                       },
-                                             },
   BeforeUnloadEvent:                         { create: function (aName, aProps) {
                                                          var e = document.createEvent("beforeunloadevent");
                                                          e.initEvent(aName, aProps.bubbles, aProps.cancelable);
@@ -118,14 +114,6 @@ const kEventConstructors = {
                                              },
   DeviceProximityEvent:                      { create: function (aName, aProps) {
                                                          return new DeviceProximityEvent(aName, aProps);
-                                                       },
-                                             },
-  DeviceStorageAreaChangedEvent:             { create: function (aName, aProps) {
-                                                         return new DeviceStorageAreaChangedEvent(aName, aProps);
-                                                       },
-                                             },
-  DeviceStorageChangeEvent:                  { create: function (aName, aProps) {
-                                                         return new DeviceStorageChangeEvent(aName, aProps);
                                                        },
                                              },
   DownloadEvent:                             { create: function (aName, aProps) {
@@ -263,32 +251,12 @@ const kEventConstructors = {
                                                           return new MozOtaStatusEvent(aName, aProps);
                                                        },
                                              },
-  MozSettingsEvent:                          { create: function (aName, aProps) {
-                                                         return new MozSettingsEvent(aName, aProps);
-                                                       },
-                                             },
-  MozSettingsTransactionEvent:               { create: function (aName, aProps) {
-                                                         return new MozSettingsTransactionEvent(aName, aProps);
-                                                       },
-                                             },
   MozSmsEvent:                               { create: function (aName, aProps) {
                                                          return new MozSmsEvent(aName, aProps);
                                                        },
                                              },
   MozStkCommandEvent:                        { create: function (aName, aProps) {
                                                           return new MozStkCommandEvent(aName, aProps);
-                                                       },
-                                             },
-  MozWifiConnectionInfoEvent:                { create: function (aName, aProps) {
-                                                         return new MozWifiConnectionInfoEvent(aName, aProps);
-                                                       },
-                                             },
-  MozWifiStatusChangeEvent:                  { create: function (aName, aProps) {
-                                                          return new MozWifiStatusChangeEvent(aName, aProps);
-                                                       },
-                                             },
-  MozWifiStationInfoEvent:                   { create: function (aName, aProps) {
-                                                          return new MozWifiStationInfoEvent(aName, aProps);
                                                        },
                                              },
   MutationEvent:                             { create: function (aName, aProps) {
@@ -305,7 +273,14 @@ const kEventConstructors = {
                                                          return e;
                                                        },
                                              },
-  OfflineAudioCompletionEvent:               { create: null, // Cannot create untrusted event from JS.
+  OfflineAudioCompletionEvent:               { create: "AudioContext" in self
+                                                        ? function (aName, aProps) {
+                                                            var ac = new AudioContext();
+                                                            var ab = new AudioBuffer({ length: 42, sampleRate: ac.sampleRate });
+                                                            aProps.renderedBuffer = ab;
+                                                            return new OfflineAudioCompletionEvent(aName, aProps);
+                                                          }
+                                                        : null,
                                              },
   PageTransitionEvent:                       { create: function (aName, aProps) {
                                                          return new PageTransitionEvent(aName, aProps);

@@ -24,10 +24,11 @@ add_task(function* test_phase_simple_async() {
                              [],
                              [() => "some state"],
                              [function() {
-                               throw new Error("State BOOM"); }],
+                               throw new Error("State BOOM");
+}],
                              [function() {
                                return {
-                                 toJSON: function() {
+                                 toJSON() {
                                    throw new Error("State.toJSON BOOM");
                                  }
                                };

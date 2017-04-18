@@ -31,18 +31,18 @@ function CallbackCaller(callback) {
 }
 
 CallbackCaller.prototype = {
-  handleResult: function(contentPref) {
+  handleResult(contentPref) {
     cbHandleResult(this._callback,
                    new ContentPref(contentPref.domain,
                                    contentPref.name,
                                    contentPref.value));
   },
 
-  handleError: function(result) {
+  handleError(result) {
     cbHandleError(this._callback, result);
   },
 
-  handleCompletion: function(reason) {
+  handleCompletion(reason) {
     cbHandleCompletion(this._callback, reason);
   },
 };
@@ -56,7 +56,7 @@ var ContentPrefServiceChild = {
   _mm: Cc["@mozilla.org/childprocessmessagemanager;1"]
          .getService(Ci.nsIMessageSender),
 
-  _getRandomId: function() {
+  _getRandomId() {
     return Cc["@mozilla.org/uuid-generator;1"]
              .getService(Ci.nsIUUIDGenerator).generateUUID().toString();
   },
@@ -64,13 +64,13 @@ var ContentPrefServiceChild = {
   // Map from random ID string -> CallbackCaller, per request
   _requests: new Map(),
 
-  init: function() {
+  init() {
     this._mm.addMessageListener("ContentPrefs:HandleResult", this);
     this._mm.addMessageListener("ContentPrefs:HandleError", this);
     this._mm.addMessageListener("ContentPrefs:HandleCompletion", this);
   },
 
-  receiveMessage: function(msg) {
+  receiveMessage(msg) {
     let data = msg.data;
     let callback;
     switch (msg.name) {
@@ -104,9 +104,9 @@ var ContentPrefServiceChild = {
     }
   },
 
-  _callFunction: function(call, args, callback) {
+  _callFunction(call, args, callback) {
     let requestId = this._getRandomId();
-    let data = { call: call, args: args, requestId: requestId };
+    let data = { call, args, requestId };
 
     this._mm.sendAsyncMessage("ContentPrefs:FunctionCall", data);
 
@@ -117,7 +117,7 @@ var ContentPrefServiceChild = {
   getCachedBySubdomainAndName: NYI,
   getCachedGlobal: NYI,
 
-  addObserverForName: function(name, observer) {
+  addObserverForName(name, observer) {
     let set = this._observers.get(name);
     if (!set) {
       set = new Set();
@@ -128,14 +128,14 @@ var ContentPrefServiceChild = {
 
       // This is the first observer for this name. Start listening for changes
       // to it.
-      this._mm.sendAsyncMessage("ContentPrefs:AddObserverForName", { name: name });
+      this._mm.sendAsyncMessage("ContentPrefs:AddObserverForName", { name });
       this._observers.set(name, set);
     }
 
     set.add(observer);
   },
 
-  removeObserverForName: function(name, observer) {
+  removeObserverForName(name, observer) {
     let set = this._observers.get(name);
     if (!set)
       return;
@@ -143,7 +143,7 @@ var ContentPrefServiceChild = {
     set.delete(observer);
     if (set.size === 0) {
       // This was the last observer for this name. Stop listening for changes.
-      this._mm.sendAsyncMessage("ContentPrefs:RemoveObserverForName", { name: name });
+      this._mm.sendAsyncMessage("ContentPrefs:RemoveObserverForName", { name });
 
       this._observers.delete(name);
       if (this._observers.size === 0) {

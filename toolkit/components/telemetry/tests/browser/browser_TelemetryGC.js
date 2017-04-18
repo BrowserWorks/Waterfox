@@ -106,13 +106,14 @@ add_task(function* test() {
   let multiprocess = Services.appinfo.browserTabsRemoteAutostart;
 
   // Set these prefs to ensure that we get measurements.
-  const prefs = {"set": [["javascript.options.mem.notify", true]]};
-  yield new Promise(resolve => SpecialPowers.pushPrefEnv(prefs, resolve));
+  yield SpecialPowers.pushPrefEnv({"set": [["javascript.options.mem.notify", true]]});
 
   function runRemote(f) {
     gBrowser.selectedBrowser.messageManager.loadFrameScript(`data:,(${f})()`, false);
   }
 
+  // These are available to frame scripts.
+  /* global addMessageListener:false, removeMessageListener: false */
   function initScript() {
     const {GCTelemetry} = Components.utils.import("resource://gre/modules/GCTelemetry.jsm", {});
 

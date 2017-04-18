@@ -145,7 +145,7 @@ public:
     }
   }
 
-  bool PreservingWrapper()
+  bool PreservingWrapper() const
   {
     return HasWrapperFlag(WRAPPER_BIT_PRESERVED);
   }
@@ -164,7 +164,7 @@ public:
   /**
    * Returns true if the object has a non-gray wrapper.
    */
-  bool IsBlack();
+  bool IsBlack() const;
 
   /**
    * Returns true if the object has a black wrapper,
@@ -272,6 +272,9 @@ protected:
   }
 
 private:
+  // Friend declarations for things that need to be able to call
+  // SetIsNotDOMBinding().  The goal is to get rid of all of these, and
+  // SetIsNotDOMBinding() too.
   friend class mozilla::dom::TabChildGlobal;
   friend class mozilla::dom::ProcessGlobal;
   friend class SandboxPrivate;
@@ -331,8 +334,7 @@ private:
    * causes between the native object and the JS object, so it is important that
    * any native object that supports preserving of its wrapper
    * traces/traverses/unlinks the cached JS object (see
-   * NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER,
-   * NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS and
+   * NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER and
    * NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER).
    */
   enum { WRAPPER_BIT_PRESERVED = 1 << 0 };
@@ -383,7 +385,6 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsWrapperCache, NS_WRAPPERCACHE_IID)
     NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER   \
   NS_IMPL_CYCLE_COLLECTION_UNLINK_END                   \
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(_class)       \
-    NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS    \
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END                 \
   NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(_class)
 
@@ -395,7 +396,6 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsWrapperCache, NS_WRAPPERCACHE_IID)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_END                      \
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(_class)          \
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(__VA_ARGS__)         \
-    NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS       \
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END                    \
   NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(_class)
 

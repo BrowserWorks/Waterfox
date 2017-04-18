@@ -75,11 +75,6 @@ const gMozillaSpecificProperties = {
     from: "ignore",
     to: "stretch-to-fit"
   },
-  "-moz-tab-size": {
-    // https://drafts.csswg.org/css-text-3/#propdef-tab-size
-    from: "1",
-    to: "5"
-  },
   "-moz-text-size-adjust": {
     // https://drafts.csswg.org/css-size-adjust/#propdef-text-size-adjust
     from: "none",
@@ -141,18 +136,6 @@ for (let property in gMozillaSpecificProperties) {
                           { time: 960,  expected: to.toLowerCase() }]);
   }, property + " should animate between '"
    + from + "' and '" + to + "' with keyframe easing");
-}
-
-function propertyToIDL(property) {
-  var prefixMatch = property.match(/^-(\w+)-/);
-  if (prefixMatch) {
-    var prefix = prefixMatch[1] === "moz" ? "Moz" : prefixMatch[1];
-    property = prefix + property.substring(prefixMatch[0].length - 1);
-  }
-  // https://drafts.csswg.org/cssom/#css-property-to-idl-attribute
-  return property.replace(/-([a-z])/gi, function(str, group) {
-    return group.toUpperCase();
-  });
 }
 
 function testAnimationSamples(animation, idlName, testSamples) {

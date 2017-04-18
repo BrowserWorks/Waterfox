@@ -54,13 +54,13 @@ RokuApp.prototype = {
       if (callback) {
         callback({ state: "unknown" });
       }
-    }).bind(this), false);
+    }).bind(this));
 
     xhr.addEventListener("error", (function() {
       if (callback) {
         callback({ state: "unknown" });
       }
-    }).bind(this), false);
+    }));
 
     xhr.send(null);
   },
@@ -91,13 +91,13 @@ RokuApp.prototype = {
       if (callback) {
         callback(xhr.status === 200);
       }
-    }).bind(this), false);
+    }));
 
     xhr.addEventListener("error", (function() {
       if (callback) {
         callback(false);
       }
-    }).bind(this), false);
+    }));
 
     xhr.send(null);
   },
@@ -114,13 +114,13 @@ RokuApp.prototype = {
       if (callback) {
         callback(xhr.status === 200);
       }
-    }).bind(this), false);
+    }));
 
     xhr.addEventListener("error", (function() {
       if (callback) {
         callback(false);
       }
-    }).bind(this), false);
+    }));
 
     xhr.send(null);
   },
@@ -144,7 +144,7 @@ function RemoteMedia(url, listener) {
   this._listener = listener;
   this._status = "uninitialized";
 
-  let serverURI = Services.io.newURI(this._url, null, null);
+  let serverURI = Services.io.newURI(this._url);
   this._socket = Cc["@mozilla.org/network/socket-transport-service;1"].getService(Ci.nsISocketTransportService).createTransport(null, 0, serverURI.host, 9191, null);
   this._outputStream = this._socket.openOutputStream(0, 0, 0);
 
@@ -157,10 +157,10 @@ function RemoteMedia(url, listener) {
 }
 
 RemoteMedia.prototype = {
-  onStartRequest: function(request, context) {
+  onStartRequest(request, context) {
   },
 
-  onDataAvailable: function(request, context, stream, offset, count) {
+  onDataAvailable(request, context, stream, offset, count) {
     this._scriptableStream.init(stream);
     let data = this._scriptableStream.read(count);
     if (!data) {
@@ -186,7 +186,7 @@ RemoteMedia.prototype = {
     }
   },
 
-  onStopRequest: function(request, context, result) {
+  onStopRequest(request, context, result) {
     if (this._listener && "onRemoteMediaStop" in this._listener)
       this._listener.onRemoteMediaStop(this);
   },

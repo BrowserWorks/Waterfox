@@ -7,7 +7,8 @@ def main():
     cc = os.environ.get('CC', 'cc')
     sink = open(os.devnull, 'wb')
     try:
-        cc_is_clang = 'clang' in subprocess.check_output([cc, '--version'], stderr=sink)
+        cc_is_clang = 'clang' in subprocess.check_output(
+          [cc, '--version'], universal_newlines=True, stderr=sink)
     except OSError:
         # We probably just don't have CC/cc.
         return
@@ -25,6 +26,7 @@ def main():
             try:
                 v = subprocess.check_output([cc, '-dumpversion'], stderr=sink)
                 v = v.strip(' \r\n').split('.')
+                v = list(map(int, v))
                 if v[0] < 4 or (v[0] == 4 and v[1] < 8):
                     # gcc 4.8 minimum
                     return False

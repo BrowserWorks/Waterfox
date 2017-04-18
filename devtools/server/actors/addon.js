@@ -9,7 +9,7 @@ var Services = require("Services");
 var { ActorPool } = require("devtools/server/actors/common");
 var { TabSources } = require("./utils/TabSources");
 var makeDebugger = require("./utils/make-debugger");
-var { ConsoleAPIListener } = require("devtools/server/actors/utils/webconsole-utils");
+var { ConsoleAPIListener } = require("devtools/server/actors/utils/webconsole-listeners");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var { assert, update } = DevToolsUtils;
 
@@ -20,9 +20,9 @@ loader.lazyRequireGetter(this, "WebConsoleActor", "devtools/server/actors/webcon
 
 loader.lazyImporter(this, "AddonManager", "resource://gre/modules/AddonManager.jsm");
 
-function BrowserAddonActor(aConnection, aAddon) {
-  this.conn = aConnection;
-  this._addon = aAddon;
+function BrowserAddonActor(connection, addon) {
+  this.conn = connection;
+  this._addon = addon;
   this._contextPool = new ActorPool(this.conn);
   this.conn.addActorPool(this._contextPool);
   this.threadActor = null;
@@ -70,8 +70,7 @@ BrowserAddonActor.prototype = {
     return this._sources;
   },
 
-
-  form: function BAA_form() {
+  form: function BAAForm() {
     assert(this.actorID, "addon should have an actorID.");
     if (!this._consoleActor) {
       this._consoleActor = new AddonConsoleActor(this._addon, this.conn, this);
@@ -95,7 +94,7 @@ BrowserAddonActor.prototype = {
     };
   },
 
-  disconnect: function BAA_disconnect() {
+  destroy() {
     this.conn.removeActorPool(this._contextPool);
     this._contextPool = null;
     this._consoleActor = null;
@@ -104,31 +103,31 @@ BrowserAddonActor.prototype = {
     AddonManager.removeAddonListener(this);
   },
 
-  setOptions: function BAA_setOptions(aOptions) {
-    if ("global" in aOptions) {
-      this._global = aOptions.global;
+  setOptions: function BAASetOptions(options) {
+    if ("global" in options) {
+      this._global = options.global;
     }
   },
 
-  onInstalled: function BAA_updateAddonWrapper(aAddon) {
-    if (aAddon.id != this._addon.id) {
+  onInstalled: function BAAUpdateAddonWrapper(addon) {
+    if (addon.id != this._addon.id) {
       return;
     }
 
     // Update the AddonManager's addon object on reload/update.
-    this._addon = aAddon;
+    this._addon = addon;
   },
 
-  onDisabled: function BAA_onDisabled(aAddon) {
-    if (aAddon != this._addon) {
+  onDisabled: function BAAOnDisabled(addon) {
+    if (addon != this._addon) {
       return;
     }
 
     this._global = null;
   },
 
-  onUninstalled: function BAA_onUninstalled(aAddon) {
-    if (aAddon != this._addon) {
+  onUninstalled: function BAAOnUninstalled(addon) {
+    if (addon != this._addon) {
       return;
     }
 
@@ -140,10 +139,10 @@ BrowserAddonActor.prototype = {
       this.conn.send({ from: this.actorID, type: "tabDetached" });
     }
 
-    this.disconnect();
+    this.destroy();
   },
 
-  onAttach: function BAA_onAttach() {
+  onAttach: function BAAOnAttach() {
     if (this.exited) {
       return { type: "exited" };
     }
@@ -156,7 +155,7 @@ BrowserAddonActor.prototype = {
     return { type: "tabAttached", threadActor: this.threadActor.actorID };
   },
 
-  onDetach: function BAA_onDetach() {
+  onDetach: function BAAOnDetach() {
     if (!this.attached) {
       return { error: "wrongState" };
     }
@@ -169,10 +168,11 @@ BrowserAddonActor.prototype = {
     return { type: "detached" };
   },
 
-  onReload: function BAA_onReload() {
+  onReload: function BAAOnReload() {
     return this._addon.reload()
       .then(() => {
-        return {}; // send an empty response
+        // send an empty response
+        return {};
       });
   },
 
@@ -202,15 +202,17 @@ BrowserAddonActor.prototype = {
    * Return true if the given global is associated with this addon and should be
    * added as a debuggee, false otherwise.
    */
-  _shouldAddNewGlobalAsDebuggee: function (aGlobal) {
-    const global = unwrapDebuggerObjectGlobal(aGlobal);
+  _shouldAddNewGlobalAsDebuggee: function (givenGlobal) {
+    const global = unwrapDebuggerObjectGlobal(givenGlobal);
     try {
       // This will fail for non-Sandbox objects, hence the try-catch block.
       let metadata = Cu.getSandboxMetadata(global);
       if (metadata) {
         return metadata.addonID === this.id;
       }
-    } catch (e) {}
+    } catch (e) {
+      // ignore
+    }
 
     if (global instanceof Ci.nsIDOMWindow) {
       return mapURIToAddonID(global.document.documentURIObject) == this.id;
@@ -218,13 +220,12 @@ BrowserAddonActor.prototype = {
 
     // Check the global for a __URI__ property and then try to map that to an
     // add-on
-    let uridescriptor = aGlobal.getOwnPropertyDescriptor("__URI__");
+    let uridescriptor = givenGlobal.getOwnPropertyDescriptor("__URI__");
     if (uridescriptor && "value" in uridescriptor && uridescriptor.value) {
       let uri;
       try {
-        uri = Services.io.newURI(uridescriptor.value, null, null);
-      }
-      catch (e) {
+        uri = Services.io.newURI(uridescriptor.value);
+      } catch (e) {
         DevToolsUtils.reportException(
           "BrowserAddonActor.prototype._shouldAddNewGlobalAsDebuggee",
           new Error("Invalid URI: " + uridescriptor.value)
@@ -245,9 +246,9 @@ BrowserAddonActor.prototype = {
    * sure every script and source with a URL is stored when debugging
    * add-ons.
    */
-  _allowSource: function (aSource) {
+  _allowSource: function (source) {
     // XPIProvider.jsm evals some code in every add-on's bootstrap.js. Hide it.
-    if (aSource.url === "resource://gre/modules/addons/XPIProvider.jsm") {
+    if (source.url === "resource://gre/modules/addons/XPIProvider.jsm") {
       return false;
     }
 
@@ -274,17 +275,16 @@ BrowserAddonActor.prototype.requestTypes = {
  * console feature.
  *
  * @constructor
- * @param object aAddon
+ * @param object addon
  *        The add-on that this console watches.
- * @param object aConnection
+ * @param object connection
  *        The connection to the client, DebuggerServerConnection.
- * @param object aParentActor
+ * @param object parentActor
  *        The parent BrowserAddonActor actor.
  */
-function AddonConsoleActor(aAddon, aConnection, aParentActor)
-{
-  this.addon = aAddon;
-  WebConsoleActor.call(this, aConnection, aParentActor);
+function AddonConsoleActor(addon, connection, parentActor) {
+  this.addon = addon;
+  WebConsoleActor.call(this, connection, parentActor);
 }
 
 AddonConsoleActor.prototype = Object.create(WebConsoleActor.prototype);
@@ -309,26 +309,24 @@ update(AddonConsoleActor.prototype, {
   /**
    * Destroy the current AddonConsoleActor instance.
    */
-  disconnect: function ACA_disconnect()
-  {
-    WebConsoleActor.prototype.disconnect.call(this);
+  destroy() {
+    WebConsoleActor.prototype.destroy.call(this);
     this.addon = null;
   },
 
   /**
    * Handler for the "startListeners" request.
    *
-   * @param object aRequest
+   * @param object request
    *        The JSON request object received from the Web Console client.
    * @return object
    *         The response object which holds the startedListeners array.
    */
-  onStartListeners: function ACA_onStartListeners(aRequest)
-  {
+  onStartListeners: function ACAOnStartListeners(request) {
     let startedListeners = [];
 
-    while (aRequest.listeners.length > 0) {
-      let listener = aRequest.listeners.shift();
+    while (request.listeners.length > 0) {
+      let listener = request.listeners.shift();
       switch (listener) {
         case "ConsoleAPI":
           if (!this.consoleAPIListener) {
@@ -348,5 +346,8 @@ update(AddonConsoleActor.prototype, {
   },
 });
 
-AddonConsoleActor.prototype.requestTypes = Object.create(WebConsoleActor.prototype.requestTypes);
-AddonConsoleActor.prototype.requestTypes.startListeners = AddonConsoleActor.prototype.onStartListeners;
+AddonConsoleActor.prototype.requestTypes = Object.create(
+  WebConsoleActor.prototype.requestTypes
+);
+AddonConsoleActor.prototype.requestTypes.startListeners =
+  AddonConsoleActor.prototype.onStartListeners;

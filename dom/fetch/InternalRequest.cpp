@@ -82,7 +82,7 @@ InternalRequest::InternalRequest(const nsACString& aURL,
   , mContentPolicyType(nsIContentPolicy::TYPE_FETCH)
   , mReferrer(NS_LITERAL_STRING(kFETCH_CLIENT_REFERRER_STR))
   , mReferrerPolicy(ReferrerPolicy::_empty)
-  , mEnvironmentReferrerPolicy(net::RP_Default)
+  , mEnvironmentReferrerPolicy(net::RP_Unset)
   , mMode(RequestMode::No_cors)
   , mCredentialsMode(RequestCredentials::Omit)
   , mResponseTainting(LoadTainting::Basic)
@@ -121,7 +121,7 @@ InternalRequest::InternalRequest(const nsACString& aURL,
   , mContentPolicyType(aContentPolicyType)
   , mReferrer(aReferrer)
   , mReferrerPolicy(aReferrerPolicy)
-  , mEnvironmentReferrerPolicy(net::RP_Default)
+  , mEnvironmentReferrerPolicy(net::RP_Unset)
   , mMode(aMode)
   , mCredentialsMode(aRequestCredentials)
   , mResponseTainting(LoadTainting::Basic)
@@ -442,25 +442,7 @@ InternalRequest::MapChannelToRequestCredentials(nsIChannel* aChannel)
   nsCOMPtr<nsILoadInfo> loadInfo;
   MOZ_ALWAYS_SUCCEEDS(aChannel->GetLoadInfo(getter_AddRefs(loadInfo)));
 
-
-  // TODO: Remove following code after stylesheet and image support cookie policy
-  if (loadInfo->GetSecurityMode() == nsILoadInfo::SEC_NORMAL) {
-    uint32_t loadFlags;
-    aChannel->GetLoadFlags(&loadFlags);
-
-    if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
-      return RequestCredentials::Omit;
-    } else {
-      bool includeCrossOrigin;
-      nsCOMPtr<nsIHttpChannelInternal> internalChannel = do_QueryInterface(aChannel);
-
-      internalChannel->GetCorsIncludeCredentials(&includeCrossOrigin);
-      if (includeCrossOrigin) {
-        return RequestCredentials::Include;
-      }
-    }
-    return RequestCredentials::Same_origin;
-  }
+  MOZ_DIAGNOSTIC_ASSERT(loadInfo->GetSecurityMode() != nsILoadInfo::SEC_NORMAL);
 
   uint32_t cookiePolicy = loadInfo->GetCookiePolicy();
 

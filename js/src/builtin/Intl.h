@@ -20,6 +20,8 @@
 #include "unicode/utypes.h"
 #endif
 
+class JSLinearString;
+
 /*
  * The Intl module specified by standard ECMA-402,
  * ECMAScript Internationalization API Specification.
@@ -82,7 +84,7 @@ class SharedIntlData
             JS::AutoCheckCannotGC nogc;
             HashNumber hash;
 
-            explicit Lookup(JSFlatString* timeZone);
+            explicit Lookup(JSLinearString* timeZone);
         };
 
         static js::HashNumber hash(const Lookup& lookup) { return lookup.hash; }
@@ -361,6 +363,44 @@ intl_patternForSkeleton(JSContext* cx, unsigned argc, Value* vp);
 extern MOZ_MUST_USE bool
 intl_FormatDateTime(JSContext* cx, unsigned argc, Value* vp);
 
+/******************** PluralRules ********************/
+
+/**
+ * Returns an object indicating the supported locales for plural rules
+ * by having a true-valued property for each such locale with the
+ * canonicalized language tag as the property name. The object has no
+ * prototype.
+ *
+ * Usage: availableLocales = intl_PluralRules_availableLocales()
+ */
+extern MOZ_MUST_USE bool
+intl_PluralRules_availableLocales(JSContext* cx, unsigned argc, Value* vp);
+
+/**
+ * Returns a plural rule for the number x according to the effective
+ * locale and the formatting options of the given PluralRules.
+ *
+ * A plural rule is a grammatical category that expresses count distinctions
+ * (such as "one", "two", "few" etc.).
+ *
+ * Usage: rule = intl_SelectPluralRule(pluralRules, x)
+ */
+extern MOZ_MUST_USE bool
+intl_SelectPluralRule(JSContext* cx, unsigned argc, Value* vp);
+
+/**
+ * Returns an array of plural rules categories for a given
+ * locale and type.
+ *
+ * Usage: categories = intl_GetPluralCategories(locale, type)
+ *
+ * Example:
+ *
+ * intl_getPluralCategories('pl', 'cardinal'); // ['one', 'few', 'many', 'other']
+ */
+extern MOZ_MUST_USE bool
+intl_GetPluralCategories(JSContext* cx, unsigned argc, Value* vp);
+
 /**
  * Returns a plain object with calendar information for a single valid locale
  * (callers must perform this validation).  The object will have these
@@ -387,6 +427,48 @@ intl_FormatDateTime(JSContext* cx, unsigned argc, Value* vp);
 extern MOZ_MUST_USE bool
 intl_GetCalendarInfo(JSContext* cx, unsigned argc, Value* vp);
 
+/**
+ * Returns an Array with CLDR-based fields display names.
+ * The function takes three arguments:
+ *
+ *   locale
+ *     BCP47 compliant locale string
+ *   style
+ *     A string with values: long or short or narrow
+ *   keys
+ *     An array or path-like strings that identify keys to be returned
+ *     At the moment the following types of keys are supported:
+ *
+ *       'dates/fields/{year|month|week|day}'
+ *       'dates/gregorian/months/{january|...|december}'
+ *       'dates/gregorian/weekdays/{sunday|...|saturday}'
+ *       'dates/gregorian/dayperiods/{am|pm}'
+ *
+ * Example:
+ *
+ * let info = intl_ComputeDisplayNames(
+ *   'en-US',
+ *   'long',
+ *   [
+ *     'dates/fields/year',
+ *     'dates/gregorian/months/january',
+ *     'dates/gregorian/weekdays/monday',
+ *     'dates/gregorian/dayperiods/am',
+ *   ]
+ * );
+ *
+ * Returned value:
+ *
+ * [
+ *   'year',
+ *   'January',
+ *   'Monday',
+ *   'AM'
+ * ]
+ */
+extern MOZ_MUST_USE bool
+intl_ComputeDisplayNames(JSContext* cx, unsigned argc, Value* vp);
+
 #if ENABLE_INTL_API
 /**
  * Cast char16_t* strings to UChar* strings used by ICU.
@@ -402,6 +484,19 @@ Char16ToUChar(char16_t* chars)
 {
   return reinterpret_cast<UChar*>(chars);
 }
+
+inline char16_t*
+UCharToChar16(UChar* chars)
+{
+  return reinterpret_cast<char16_t*>(chars);
+}
+
+inline const char16_t*
+UCharToChar16(const UChar* chars)
+{
+  return reinterpret_cast<const char16_t*>(chars);
+}
+
 #endif // ENABLE_INTL_API
 
 } // namespace js

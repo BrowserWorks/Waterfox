@@ -34,7 +34,7 @@
 #include "mtransport_test_utils.h"
 #include "runnable_utils.h"
 
-#include "webrtc/modules/interface/module_common_types.h"
+#include "webrtc/modules/include/module_common_types.h"
 
 #include "FakeIPC.h"
 #include "FakeIPC.cpp"
@@ -662,11 +662,11 @@ TEST_F(MediaPipelineFilterTest, TestRemoteSDPNoSSRCs) {
   ASSERT_TRUE(Filter(filter, 0, 555, 110));
 }
 
-TEST_F(MediaPipelineTest, DISABLED_TestAudioSendNoMux) {
+TEST_F(MediaPipelineTest, TestAudioSendNoMux) {
   TestAudioSend(false);
 }
 
-TEST_F(MediaPipelineTest, DISABLED_TestAudioSendMux) {
+TEST_F(MediaPipelineTest, TestAudioSendMux) {
   TestAudioSend(true);
 }
 

@@ -29,8 +29,9 @@ namespace mozilla {
 
 AudioNodeStream::AudioNodeStream(AudioNodeEngine* aEngine,
                                  Flags aFlags,
-                                 TrackRate aSampleRate)
-  : ProcessedMediaStream(),
+                                 TrackRate aSampleRate,
+                                 AbstractThread* aMainThread)
+  : ProcessedMediaStream(aMainThread),
     mEngine(aEngine),
     mSampleRate(aSampleRate),
     mFlags(aFlags),
@@ -77,7 +78,8 @@ AudioNodeStream::Create(AudioContext* aCtx, AudioNodeEngine* aEngine,
   AudioNode* node = aEngine->NodeMainThread();
 
   RefPtr<AudioNodeStream> stream =
-    new AudioNodeStream(aEngine, aFlags, aGraph->GraphRate());
+    new AudioNodeStream(aEngine, aFlags, aGraph->GraphRate(),
+      aCtx->GetOwnerGlobal()->AbstractMainThreadFor(TaskCategory::Other));
   stream->mSuspendedCount += aCtx->ShouldSuspendNewStream();
   if (node) {
     stream->SetChannelMixingParametersImpl(node->ChannelCount(),
@@ -350,11 +352,6 @@ AudioNodeStream::SetChannelMixingParametersImpl(uint32_t aNumberOfChannels,
                                                 ChannelCountMode aChannelCountMode,
                                                 ChannelInterpretation aChannelInterpretation)
 {
-  // Make sure that we're not clobbering any significant bits by fitting these
-  // values in 16 bits.
-  MOZ_ASSERT(int(aChannelCountMode) < INT16_MAX);
-  MOZ_ASSERT(int(aChannelInterpretation) < INT16_MAX);
-
   mNumberOfInputChannels = aNumberOfChannels;
   mChannelCountMode = aChannelCountMode;
   mChannelInterpretation = aChannelInterpretation;

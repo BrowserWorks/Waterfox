@@ -12,7 +12,7 @@ use super::Error;
 extern crate test_assembler;
 use self::test_assembler::*;
 
-use boxes::BoxType;
+use boxes::{BoxType, FourCC};
 
 enum BoxSize {
     Short(u32),
@@ -130,11 +130,11 @@ fn read_ftyp() {
     assert_eq!(stream.head.name, BoxType::FileTypeBox);
     assert_eq!(stream.head.size, 24);
     let parsed = super::read_ftyp(&mut stream).unwrap();
-    assert_eq!(parsed.major_brand, 0x6d703432); // mp42
+    assert_eq!(parsed.major_brand, FourCC::from("mp42")); // mp42
     assert_eq!(parsed.minor_version, 0);
     assert_eq!(parsed.compatible_brands.len(), 2);
-    assert_eq!(parsed.compatible_brands[0], 0x69736f6d); // isom
-    assert_eq!(parsed.compatible_brands[1], 0x6d703432); // mp42
+    assert_eq!(parsed.compatible_brands[0], FourCC::from("isom")); // isom
+    assert_eq!(parsed.compatible_brands[1], FourCC::from("mp42")); // mp42
 }
 
 #[test]
@@ -148,8 +148,8 @@ fn read_truncated_ftyp() {
     let mut context = MediaContext::new();
     match read_mp4(&mut stream, &mut context) {
         Err(Error::UnexpectedEOF) => (),
-        Ok(_) => assert!(false, "expected an error result"),
-        _ => assert!(false, "expected a different error result"),
+        Ok(_) => panic!("expected an error result"),
+        _ => panic!("expected a different error result"),
     }
 }
 
@@ -172,11 +172,11 @@ fn read_ftyp_case() {
     assert_eq!(stream.head.name, BoxType::FileTypeBox);
     assert_eq!(stream.head.size, 24);
     let parsed = super::read_ftyp(&mut stream).unwrap();
-    assert_eq!(parsed.major_brand, 0x4d503432);
+    assert_eq!(parsed.major_brand, FourCC::from("MP42"));
     assert_eq!(parsed.minor_version, 0);
     assert_eq!(parsed.compatible_brands.len(), 2);
-    assert_eq!(parsed.compatible_brands[0], 0x49534f4d); // ISOM
-    assert_eq!(parsed.compatible_brands[1], 0x4d503432); // MP42
+    assert_eq!(parsed.compatible_brands[0], FourCC::from("ISOM")); // ISOM
+    assert_eq!(parsed.compatible_brands[1], FourCC::from("MP42")); // MP42
 }
 
 #[test]
@@ -404,7 +404,7 @@ fn read_hdlr() {
     assert_eq!(stream.head.name, BoxType::HandlerBox);
     assert_eq!(stream.head.size, 45);
     let parsed = super::read_hdlr(&mut stream).unwrap();
-    assert_eq!(parsed.handler_type, 0x76696465); // vide
+    assert_eq!(parsed.handler_type, FourCC::from("vide"));
 }
 
 #[test]
@@ -422,7 +422,7 @@ fn read_hdlr_short_name() {
     assert_eq!(stream.head.name, BoxType::HandlerBox);
     assert_eq!(stream.head.size, 33);
     let parsed = super::read_hdlr(&mut stream).unwrap();
-    assert_eq!(parsed.handler_type, 0x76696465); // vide
+    assert_eq!(parsed.handler_type, FourCC::from("vide"));
 }
 
 #[test]
@@ -439,7 +439,7 @@ fn read_hdlr_zero_length_name() {
     assert_eq!(stream.head.name, BoxType::HandlerBox);
     assert_eq!(stream.head.size, 32);
     let parsed = super::read_hdlr(&mut stream).unwrap();
-    assert_eq!(parsed.handler_type, 0x76696465); // vide
+    assert_eq!(parsed.handler_type, FourCC::from("vide"));
 }
 
 fn flac_streaminfo() -> Vec<u8> {
@@ -593,8 +593,8 @@ fn serialize_opus_header() {
     };
     let mut v = Vec::<u8>::new();
     super::serialize_opus_header(&opus, &mut v).unwrap();
-    assert!(v.len() == 19);
-    assert!(v == vec![
+    assert_eq!(v.len(), 19);
+    assert_eq!(v, vec![
             0x4f, 0x70, 0x75, 0x73, 0x48,0x65, 0x61, 0x64,
             0x01, 0x01, 0x56, 0x01,
             0xc0, 0x5d, 0x00, 0x00,
@@ -615,8 +615,8 @@ fn serialize_opus_header() {
     };
     let mut v = Vec::<u8>::new();
     super::serialize_opus_header(&opus, &mut v).unwrap();
-    assert!(v.len() == 27);
-    assert!(v == vec![
+    assert_eq!(v.len(), 27);
+    assert_eq!(v, vec![
             0x4f, 0x70, 0x75, 0x73, 0x48,0x65, 0x61, 0x64,
             0x01, 0x06, 0x98, 0x00,
             0x80, 0xbb, 0x00, 0x00,
@@ -645,8 +645,8 @@ fn avcc_limit() {
     let mut track = super::Track::new(0);
     match super::read_video_sample_entry(&mut stream, &mut track) {
         Err(Error::InvalidData(s)) => assert_eq!(s, "avcC box exceeds BUF_SIZE_LIMIT"),
-        Ok(_) => assert!(false, "expected an error result"),
-        _ => assert!(false, "expected a different error result"),
+        Ok(_) => panic!("expected an error result"),
+        _ => panic!("expected a different error result"),
     }
 }
 
@@ -671,8 +671,8 @@ fn esds_limit() {
     let mut track = super::Track::new(0);
     match super::read_audio_sample_entry(&mut stream, &mut track) {
         Err(Error::InvalidData(s)) => assert_eq!(s, "esds box exceeds BUF_SIZE_LIMIT"),
-        Ok(_) => assert!(false, "expected an error result"),
-        _ => assert!(false, "expected a different error result"),
+        Ok(_) => panic!("expected an error result"),
+        _ => panic!("expected a different error result"),
     }
 }
 
@@ -697,8 +697,8 @@ fn esds_limit_2() {
     let mut track = super::Track::new(0);
     match super::read_audio_sample_entry(&mut stream, &mut track) {
         Err(Error::UnexpectedEOF) => (),
-        Ok(_) => assert!(false, "expected an error result"),
-        _ => assert!(false, "expected a different error result"),
+        Ok(_) => panic!("expected an error result"),
+        _ => panic!("expected a different error result"),
     }
 }
 
@@ -713,8 +713,8 @@ fn read_elst_zero_entries() {
     let mut stream = iter.next_box().unwrap().unwrap();
     match super::read_elst(&mut stream) {
         Err(Error::InvalidData(s)) => assert_eq!(s, "invalid edit count"),
-        Ok(_) => assert!(false, "expected an error result"),
-        _ => assert!(false, "expected a different error result"),
+        Ok(_) => panic!("expected an error result"),
+        _ => panic!("expected a different error result"),
     }
 }
 
@@ -741,8 +741,8 @@ fn read_edts_bogus() {
     let mut track = super::Track::new(0);
     match super::read_edts(&mut stream, &mut track) {
         Err(Error::InvalidData(s)) => assert_eq!(s, "expected additional edit"),
-        Ok(_) => assert!(false, "expected an error result"),
-        _ => assert!(false, "expected a different error result"),
+        Ok(_) => panic!("expected an error result"),
+        _ => panic!("expected a different error result"),
     }
 }
 
@@ -827,7 +827,7 @@ fn skip_padding_in_stsd() {
 fn read_qt_wave_atom() {
     let esds = make_fullbox(BoxSize::Auto, b"esds", 0, |s| {
         s.B8(0x03)  // elementary stream descriptor tag
-         .B8(0x0b)  // esds length
+         .B8(0x12)  // esds length
          .append_repeated(0, 2)
          .B8(0x00)  // flags
          .B8(0x04)  // decoder config descriptor tag
@@ -857,4 +857,30 @@ fn read_qt_wave_atom() {
     super::read_audio_sample_entry(&mut stream, &mut track)
           .expect("fail to read qt wave atom");
     assert_eq!(track.codec_type, super::CodecType::MP3);
+}
+
+#[test]
+fn read_esds() {
+    let aac_esds =
+        vec![
+            0x03, 0x24, 0x00, 0x00, 0x00, 0x04, 0x1c, 0x40,
+            0x15, 0x00, 0x12, 0x00, 0x00, 0x01, 0xf4, 0x00,
+            0x00, 0x01, 0xf4, 0x00, 0x05, 0x0d, 0x13, 0x00,
+            0x05, 0x88, 0x05, 0x00, 0x48, 0x21, 0x10, 0x00,
+            0x56, 0xe5, 0x98, 0x06, 0x01, 0x02,
+        ];
+    let mut stream = make_box(BoxSize::Auto, b"esds", |s| {
+        s.B32(0) // reserved
+         .append_bytes(aac_esds.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+
+    let es = super::read_esds(&mut stream).unwrap();
+
+    assert_eq!(es.audio_codec, super::CodecType::AAC);
+    assert_eq!(es.audio_object_type, Some(2));
+    assert_eq!(es.audio_sample_rate, Some(24000));
+    assert_eq!(es.audio_channel_count, Some(6));
+    assert_eq!(es.codec_esds, aac_esds);
 }

@@ -36,6 +36,7 @@ const MessageContainer = createClass({
     serviceContainer: PropTypes.object.isRequired,
     autoscroll: PropTypes.bool.isRequired,
     indent: PropTypes.number.isRequired,
+    tableData: PropTypes.object,
   },
 
   getDefaultProps: function () {
@@ -66,6 +67,7 @@ function getMessageComponent(message) {
       return componentMap.get("ConsoleApiCall");
     case MESSAGE_SOURCE.NETWORK:
       return componentMap.get("NetworkEventMessage");
+    case MESSAGE_SOURCE.CSS:
     case MESSAGE_SOURCE.JAVASCRIPT:
       switch (message.type) {
         case MESSAGE_TYPE.COMMAND:

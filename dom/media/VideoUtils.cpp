@@ -7,9 +7,8 @@
 #include "mozilla/Base64.h"
 #include "mozilla/TaskQueue.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/Function.h"
 
-#include "MediaContentType.h"
+#include "MediaContainerType.h"
 #include "MediaPrefs.h"
 #include "MediaResource.h"
 #include "TimeUnits.h"
@@ -26,13 +25,13 @@
 #include "nsCharSeparatedTokenizer.h"
 #include "nsContentTypeParser.h"
 
+#include <functional>
 #include <stdint.h>
 
 namespace mozilla {
 
 NS_NAMED_LITERAL_CSTRING(kEMEKeySystemClearkey, "org.w3.clearkey");
 NS_NAMED_LITERAL_CSTRING(kEMEKeySystemWidevine, "com.widevine.alpha");
-NS_NAMED_LITERAL_CSTRING(kEMEKeySystemPrimetime, "com.adobe.primetime");
 
 using layers::PlanarYCbCrImage;
 
@@ -502,19 +501,19 @@ CreateTrackInfoWithMIMEType(const nsACString& aCodecMIMEType)
 }
 
 UniquePtr<TrackInfo>
-CreateTrackInfoWithMIMETypeAndContentTypeExtraParameters(
+CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
   const nsACString& aCodecMIMEType,
-  const MediaContentType& aContentType)
+  const MediaContainerType& aContainerType)
 {
   UniquePtr<TrackInfo> trackInfo = CreateTrackInfoWithMIMEType(aCodecMIMEType);
   if (trackInfo) {
     VideoInfo* videoInfo = trackInfo->GetAsVideoInfo();
     if (videoInfo) {
-      Maybe<int32_t> maybeWidth = aContentType.GetWidth();
+      Maybe<int32_t> maybeWidth = aContainerType.ExtendedType().GetWidth();
       if (maybeWidth && *maybeWidth > 0) {
         videoInfo->mImage.width = *maybeWidth;
       }
-      Maybe<int32_t> maybeHeight = aContentType.GetHeight();
+      Maybe<int32_t> maybeHeight = aContainerType.ExtendedType().GetHeight();
       if (maybeHeight && *maybeHeight > 0) {
         videoInfo->mImage.height = *maybeHeight;
       }

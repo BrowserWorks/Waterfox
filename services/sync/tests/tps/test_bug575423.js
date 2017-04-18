@@ -58,10 +58,10 @@ var history2 = [
   { uri: "http://www.google.com/language_tools?hl=en",
     title: "Language Tools",
     visits: [
-      { type: 1, 
+      { type: 1,
         date: 0
       },
-      { type: 2, 
+      { type: 2,
         date: -40
       }
     ]
@@ -71,14 +71,14 @@ var history2 = [
 /*
  * Test phases
  */
-Phase('phase1', [
+Phase("phase1", [
   [History.add, history1],
   [Sync],
   [History.add, history2],
   [Sync]
 ]);
 
-Phase('phase2', [
+Phase("phase2", [
   [Sync],
   [History.verify, history2]
 ]);

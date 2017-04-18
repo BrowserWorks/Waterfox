@@ -132,7 +132,7 @@ const SSL3ProtocolVersion kDtlsRecordVersion = SSL_LIBRARY_VERSION_TLS_1_1;
 PR_STATIC_ASSERT(SSL_LIBRARY_VERSION_MAX_SUPPORTED <=
                  SSL_LIBRARY_VERSION_TLS_1_3);
 
-/* Use this instead of FATAL_ERROR when an alert isn't possible. */
+/* Use this instead of FATAL_ERROR when no alert shall be sent. */
 #define LOG_ERROR(ss, prError)                                                     \
     do {                                                                           \
         SSL_TRC(3, ("%d: TLS13[%d]: fatal error %d in %s (%s:%d)",                 \
@@ -163,15 +163,21 @@ static char *
 tls13_HandshakeState(SSL3WaitState st)
 {
     switch (st) {
+        STATE_CASE(idle_handshake);
         STATE_CASE(wait_client_hello);
         STATE_CASE(wait_client_cert);
+        STATE_CASE(wait_client_key);
         STATE_CASE(wait_cert_verify);
+        STATE_CASE(wait_change_cipher);
         STATE_CASE(wait_finished);
         STATE_CASE(wait_server_hello);
+        STATE_CASE(wait_certificate_status);
         STATE_CASE(wait_server_cert);
+        STATE_CASE(wait_server_key);
         STATE_CASE(wait_cert_request);
+        STATE_CASE(wait_hello_done);
+        STATE_CASE(wait_new_session_ticket);
         STATE_CASE(wait_encrypted_extensions);
-        STATE_CASE(idle_handshake);
         default:
             break;
     }
@@ -426,10 +432,7 @@ tls13_SetupClientHello(sslSocket *ss)
     session_ticket = &sid->u.ssl3.locked.sessionTicket;
     PORT_Assert(session_ticket && session_ticket->ticket.data);
 
-    if (session_ticket->ticket_lifetime_hint == 0 ||
-        (session_ticket->ticket_lifetime_hint +
-             session_ticket->received_timestamp >
-         ssl_Time())) {
+    if (ssl_TicketTimeValid(session_ticket)) {
         ss->statelessResume = PR_TRUE;
     }
 
@@ -1670,7 +1673,7 @@ SECStatus
 tls13_HandleHelloRetryRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
     SECStatus rv;
-    PRInt32 tmp;
+    PRUint32 tmp;
     SSL3ProtocolVersion version;
 
     SSL_TRC(3, ("%d: TLS13[%d]: handle hello retry request",
@@ -1719,8 +1722,8 @@ tls13_HandleHelloRetryRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     }
 
     /* Extensions. */
-    tmp = ssl3_ConsumeHandshakeNumber(ss, 2, &b, &length);
-    if (tmp < 0) {
+    rv = ssl3_ConsumeHandshakeNumber(ss, &tmp, 2, &b, &length);
+    if (rv != SECSuccess) {
         return SECFailure; /* error code already set */
     }
     /* Extensions must be non-empty and use the remainder of the message.
@@ -1758,7 +1761,7 @@ tls13_HandleCertificateRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     TLS13CertificateRequest *certRequest = NULL;
     SECItem context = { siBuffer, NULL, 0 };
     PLArenaPool *arena;
-    PRInt32 extensionsLength;
+    PRUint32 extensionsLength;
 
     SSL_TRC(3, ("%d: TLS13[%d]: handle certificate_request sequence",
                 SSL_GETPID(), ss->fd));
@@ -1817,8 +1820,8 @@ tls13_HandleCertificateRequest(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         goto loser; /* alert already sent */
 
     /* Verify that the extensions length is correct. */
-    extensionsLength = ssl3_ConsumeHandshakeNumber(ss, 2, &b, &length);
-    if (extensionsLength < 0) {
+    rv = ssl3_ConsumeHandshakeNumber(ss, &extensionsLength, 2, &b, &length);
+    if (rv != SECSuccess) {
         goto loser; /* alert already sent */
     }
     if (extensionsLength != length) {
@@ -2781,6 +2784,10 @@ tls13_SetCipherSpec(sslSocket *ss, TrafficKeyType type,
                 spec->phase, spec->epoch,
                 direction == CipherSpecRead ? "read" : "write"));
 
+    if (ss->ssl3.changedCipherSpecFunc) {
+        ss->ssl3.changedCipherSpecFunc(ss->ssl3.changedCipherSpecArg,
+                                       direction == CipherSpecWrite, spec);
+    }
     return SECSuccess;
 }
 
@@ -2852,6 +2859,9 @@ void
 tls13_DestroyKeyShares(PRCList *list)
 {
     PRCList *cur_p;
+
+    /* The list must be initialized. */
+    PORT_Assert(PR_LIST_HEAD(list));
 
     while (!PR_CLIST_IS_EMPTY(list)) {
         cur_p = PR_LIST_TAIL(list);
@@ -2926,6 +2936,7 @@ tls13_WriteNonce(ssl3KeyMaterial *keys,
     for (i = 0; i < 8; ++i) {
         nonce[4 + i] ^= seqNumBuf[i];
     }
+    PRINT_BUF(50, (NULL, "Nonce", nonce, nonceLen));
 }
 
 /* Implement the SSLAEADCipher interface defined in sslimpl.h.
@@ -3015,7 +3026,7 @@ static SECStatus
 tls13_HandleEncryptedExtensions(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
     SECStatus rv;
-    PRInt32 innerLength;
+    PRUint32 innerLength;
     SECItem oldNpn = { siBuffer, NULL, 0 };
 
     PORT_Assert(ss->opt.noLocks || ssl_HaveRecvBufLock(ss));
@@ -3030,8 +3041,8 @@ tls13_HandleEncryptedExtensions(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         return SECFailure;
     }
 
-    innerLength = ssl3_ConsumeHandshakeNumber(ss, 2, &b, &length);
-    if (innerLength < 0) {
+    rv = ssl3_ConsumeHandshakeNumber(ss, &innerLength, 2, &b, &length);
+    if (rv != SECSuccess) {
         return SECFailure; /* Alert already sent. */
     }
     if (innerLength != length) {
@@ -3799,7 +3810,7 @@ tls13_SendNewSessionTicket(sslSocket *ss)
         ticket.flags |= ticket_allow_early_data;
         max_early_data_size_len = 8; /* type + len + value. */
     }
-    ticket.ticket_lifetime_hint = TLS_EX_SESS_TICKET_LIFETIME_HINT;
+    ticket.ticket_lifetime_hint = ssl_ticket_lifetime;
 
     rv = ssl3_EncodeSessionTicket(ss, &ticket, &ticket_data);
     if (rv != SECSuccess)
@@ -3818,7 +3829,7 @@ tls13_SendNewSessionTicket(sslSocket *ss)
         goto loser;
 
     /* This is a fixed value. */
-    rv = ssl3_AppendHandshakeNumber(ss, TLS_EX_SESS_TICKET_LIFETIME_HINT, 4);
+    rv = ssl3_AppendHandshakeNumber(ss, ssl_ticket_lifetime, 4);
     if (rv != SECSuccess)
         goto loser;
 
@@ -3873,7 +3884,6 @@ static SECStatus
 tls13_HandleNewSessionTicket(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 {
     SECStatus rv;
-    PRInt32 tmp;
     PRUint32 utmp;
     NewSessionTicket ticket = { 0 };
     SECItem data;
@@ -3893,14 +3903,14 @@ tls13_HandleNewSessionTicket(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         return SECFailure;
     }
 
-    ticket.received_timestamp = ssl_Time();
-    tmp = ssl3_ConsumeHandshakeNumber(ss, 4, &b, &length);
-    if (tmp < 0) {
+    ticket.received_timestamp = PR_Now();
+    rv = ssl3_ConsumeHandshakeNumber(ss, &ticket.ticket_lifetime_hint, 4, &b,
+                                     &length);
+    if (rv != SECSuccess) {
         FATAL_ERROR(ss, SSL_ERROR_RX_MALFORMED_NEW_SESSION_TICKET,
                     decode_error);
         return SECFailure;
     }
-    ticket.ticket_lifetime_hint = (PRUint32)tmp;
     ticket.ticket.type = siBuffer;
 
     rv = ssl3_ConsumeHandshake(ss, &utmp, sizeof(utmp),
@@ -4321,8 +4331,7 @@ tls13_MaybeDo0RTTHandshake(sslSocket *ss)
     ssl_ReleaseSpecReadLock(ss);
 
     /* Cipher suite already set in tls13_SetupClientHello. */
-    ss->ssl3.hs.preliminaryInfo = 0; /* TODO(ekr@rtfm.com) Fill this in.
-                                      * bug 1281255. */
+    ss->ssl3.hs.preliminaryInfo = 0;
 
     rv = tls13_DeriveSecret(ss, ss->ssl3.hs.currentSecret,
                             kHkdfLabelClient,

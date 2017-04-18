@@ -9,6 +9,8 @@
 #include "mozilla/layers/Compositor.h"
 #include "mozilla/layers/TextureHost.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Triangle.h"
+#include "mozilla/gfx/Polygon.h"
 
 namespace mozilla {
 namespace layers {
@@ -80,6 +82,8 @@ public:
 
   virtual bool SupportsEffect(EffectTypes aEffect) override;
 
+  bool SupportsLayerGeometry() const override;
+
   virtual void SetRenderTarget(CompositingRenderTarget *aSource) override
   {
     mRenderTarget = static_cast<BasicCompositingRenderTarget*>(aSource);
@@ -106,13 +110,12 @@ public:
                           gfx::IntRect *aClipRectOut = nullptr,
                           gfx::IntRect *aRenderBoundsOut = nullptr) override;
   virtual void EndFrame() override;
-  virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) override;
 
   virtual bool SupportsPartialTextureUpdate() override { return true; }
   virtual bool CanUseCanvasLayerForSize(const gfx::IntSize &aSize) override { return true; }
   virtual int32_t GetMaxTextureSize() const override;
   virtual void SetDestinationSurfaceSize(const gfx::IntSize& aSize) override { }
-  
+
   virtual void SetScreenRenderOffset(const ScreenPoint& aOffset) override {
   }
 
@@ -137,6 +140,24 @@ public:
 
 private:
 
+  template<typename Geometry>
+  void DrawGeometry(const Geometry& aGeometry,
+                    const gfx::Rect& aRect,
+                    const gfx::IntRect& aClipRect,
+                    const EffectChain& aEffectChain,
+                    gfx::Float aOpacity,
+                    const gfx::Matrix4x4& aTransform,
+                    const gfx::Rect& aVisibleRect,
+                    const bool aEnableAA);
+
+  virtual void DrawPolygon(const gfx::Polygon& aPolygon,
+                           const gfx::Rect& aRect,
+                           const gfx::IntRect& aClipRect,
+                           const EffectChain& aEffectChain,
+                           gfx::Float aOpacity,
+                           const gfx::Matrix4x4& aTransform,
+                           const gfx::Rect& aVisibleRect) override;
+
   void TryToEndRemoteDrawing(bool aForceToEnd = false);
 
   bool NeedsToDeferEndRemoteDrawing();
@@ -148,7 +169,6 @@ private:
 
   LayoutDeviceIntRect mInvalidRect;
   LayoutDeviceIntRegion mInvalidRegion;
-  bool mDidExternalComposition;
 
   uint32_t mMaxTextureSize;
   bool mIsPendingEndRemoteDrawing;

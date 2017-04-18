@@ -61,7 +61,7 @@
             var state = this.currentItem ? this.currentItem.id : "";
             if (this.selType == "multiple" && this.selectedCount) {
               let getId = function getId(aItem) { return aItem.id; }
-              state += " " + [... this.selectedItems].filter(getId).map(getId).join(" ");
+              state += " " + [...this.selectedItems].filter(getId).map(getId).join(" ");
             }
             if (state)
               this.setAttribute("last-selected", state);
@@ -334,8 +334,8 @@
           ({
             mOuter: this,
             item: null,
-            willRebuild: function(builder) { },
-            didRebuild: function(builder) {
+            willRebuild(builder) { },
+            didRebuild(builder) {
               this.mOuter._refreshSelection();
             }
           });
@@ -374,8 +374,7 @@
 
                 if (this.scrollBoxObject.height) {
                   this.ensureElementIsVisible(currentItem);
-                }
-                else {
+                } else {
                   // XXX hack around a bug in ensureElementIsVisible as it will
                   // scroll beyond the last element, bug 493645.
                   var previousElement = this.dir == "reverse" ? currentItem.nextSibling :

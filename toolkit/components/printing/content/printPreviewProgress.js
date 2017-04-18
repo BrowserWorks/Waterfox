@@ -17,9 +17,8 @@ var docTitle = "";
 var docURL   = "";
 var progressParams = null;
 
-function ellipseString(aStr, doFront)
-{
-  if (aStr.length > 3 && (aStr.substr(0, 3) == "..." || aStr.substr(aStr.length-4, 3) == "..."))
+function ellipseString(aStr, doFront) {
+  if (aStr.length > 3 && (aStr.substr(0, 3) == "..." || aStr.substr(aStr.length - 4, 3) == "..."))
     return aStr;
 
   var fixedLen = 64;
@@ -27,7 +26,7 @@ function ellipseString(aStr, doFront)
     return aStr;
 
   if (doFront)
-    return "..." + aStr.substr(aStr.length-fixedLen, fixedLen);
+    return "..." + aStr.substr(aStr.length - fixedLen, fixedLen);
 
   return aStr.substr(0, fixedLen) + "...";
 }
@@ -35,14 +34,12 @@ function ellipseString(aStr, doFront)
 // all progress notifications are done through the nsIWebProgressListener implementation...
 var progressListener = {
 
-  onStateChange: function (aWebProgress, aRequest, aStateFlags, aStatus)
-  {
+  onStateChange(aWebProgress, aRequest, aStateFlags, aStatus) {
     if (aStateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP)
       window.close();
   },
 
-  onProgressChange: function (aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress)
-  {
+  onProgressChange(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
     if (!progressParams)
       return;
     var docTitleStr = ellipseString(progressParams.docTitle, false);
@@ -58,17 +55,15 @@ var progressListener = {
     }
   },
 
-  onLocationChange: function (aWebProgress, aRequest, aLocation, aFlags) {},
-  onSecurityChange: function (aWebProgress, aRequest, state) {},
+  onLocationChange(aWebProgress, aRequest, aLocation, aFlags) {},
+  onSecurityChange(aWebProgress, aRequest, state) {},
 
-  onStatusChange: function (aWebProgress, aRequest, aStatus, aMessage)
-  {
+  onStatusChange(aWebProgress, aRequest, aStatus, aMessage) {
     if (aMessage)
       dialog.title.setAttribute("value", aMessage);
   },
 
-  QueryInterface: function (iid)
-  {
+  QueryInterface(iid) {
     if (iid.equals(Components.interfaces.nsIWebProgressListener) || iid.equals(Components.interfaces.nsISupportsWeakReference))
       return this;
     throw Components.results.NS_NOINTERFACE;
@@ -106,22 +101,20 @@ function onLoad() {
   window.setTimeout(doneIniting, 100);
 }
 
-function onUnload()
-{
+function onUnload() {
   if (!printProgress)
     return;
   try {
     printProgress.unregisterListener(progressListener);
     printProgress = null;
-  }
-  catch (e) {}
+  } catch (e) {}
 }
 
-function getString (stringId) {
+function getString(stringId) {
   // Check if we've fetched this string already.
   if (!(stringId in dialog.strings)) {
     // Try to get it.
-    var elem = document.getElementById( "dialog.strings."+stringId);
+    var elem = document.getElementById( "dialog.strings." + stringId);
     try {
       if (elem && elem.childNodes && elem.childNodes[0] &&
           elem.childNodes[0].nodeValue)
@@ -135,20 +128,17 @@ function getString (stringId) {
 }
 
 // If the user presses cancel, tell the app launcher and close the dialog...
-function onCancel ()
-{
+function onCancel() {
   // Cancel app launcher.
   try {
     printProgress.processCanceledByUser = true;
-  }
-  catch (e) { return true; }
+  } catch (e) { return true; }
 
   // don't Close up dialog by returning false, the backend will close the dialog when everything will be aborted.
   return false;
 }
 
-function doneIniting()
-{
+function doneIniting() {
   // called by function timeout in onLoad
   printProgress.doneIniting();
 }

@@ -17,18 +17,15 @@ try {
     const DevToolsUtils = require("devtools/shared/DevToolsUtils");
     const { dumpn } = DevToolsUtils;
     const { DebuggerServer, ActorPool } = require("devtools/server/main");
+    const { ContentActor } = require("devtools/server/actors/childtab");
 
     if (!DebuggerServer.initialized) {
       DebuggerServer.init();
-      // For non-e10s mode, there is only one server instance, so be sure the browser
-      // actors get loaded.
-      DebuggerServer.addBrowserActors();
     }
-
-    // In case of apps being loaded in parent process, DebuggerServer is already
-    // initialized, but child specific actors are not registered. Otherwise, for apps in
-    // child process, we need to load actors the first time we load child.js.
-    DebuggerServer.addChildActors();
+    // We want a special server without any root actor and only tab actors.
+    // We are going to spawn a ContentActor instance in the next few lines,
+    // it is going to act like a root actor without being one.
+    DebuggerServer.registerActors({ root: false, browser: false, tab: true });
 
     let connections = new Map();
 
@@ -42,7 +39,7 @@ try {
       conn.parentMessageManager = mm;
       connections.set(prefix, conn);
 
-      let actor = new DebuggerServer.ContentActor(conn, chromeGlobal, prefix);
+      let actor = new ContentActor(conn, chromeGlobal, prefix);
       let actorPool = new ActorPool(conn);
       actorPool.addActor(actor);
       conn.addActorPool(actorPool);
@@ -61,7 +58,7 @@ try {
       try {
         m = require(module);
 
-        if (!setupChild in m) {
+        if (!(setupChild in m)) {
           dumpn(`ERROR: module '${module}' does not export '${setupChild}'`);
           return false;
         }
@@ -112,15 +109,6 @@ try {
       }
       connections.clear();
     });
-
-    let onInspect = DevToolsUtils.makeInfallible(function (msg) {
-      // Store the node to be inspected in a global variable (gInspectingNode). Later
-      // we'll fetch this variable again using the findInspectingNode request over the
-      // remote debugging protocol.
-      let inspector = require("devtools/server/actors/inspector");
-      inspector.setInspectingNode(msg.objects.node);
-    });
-    addMessageListener("debug:inspect", onInspect);
   })();
 } catch (e) {
   dump(`Exception in app child process: ${e}\n`);

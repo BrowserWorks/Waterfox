@@ -111,7 +111,7 @@ public:
   , mOwnerCalledDestroy(false)
   {}
 
-  bool Recv__delete__() override { return true; }
+  mozilla::ipc::IPCResult Recv__delete__() override { return IPC_OK(); }
 
   LayersIPCChannel* GetAllocator() { return mTextureForwarder; }
 
@@ -392,7 +392,7 @@ DeallocateTextureClient(TextureDeallocParams params)
     // ..except if the lovely mWorkaroundAnnoyingSharedSurfaceOwnershipIssues member
     // is set to true. In this case we are in a special situation where this
     // TextureClient is in wrapped into another TextureClient which assumes it owns
-    // our data. This is specific to the gralloc SharedSurface.
+    // our data.
     bool shouldDeallocate = !params.workAroundSharedSurfaceOwnershipIssue;
     DestroyTextureData(params.data, params.allocator,
                        shouldDeallocate,
@@ -851,6 +851,11 @@ bool
 TextureClient::InitIPDLActor(CompositableForwarder* aForwarder)
 {
   MOZ_ASSERT(aForwarder && aForwarder->GetTextureForwarder()->GetMessageLoop() == mAllocator->GetMessageLoop());
+
+  if (mActor && !mActor->IPCOpen()) {
+    return false;
+  }
+
   if (mActor && !mActor->mDestroyed) {
     CompositableForwarder* currentFwd = mActor->mCompositableForwarder;
     TextureForwarder* currentTexFwd = mActor->mTextureForwarder;
@@ -1580,10 +1585,10 @@ ShmemTextureReadLock::ReadUnlock() {
   int32_t readCount = PR_ATOMIC_DECREMENT(&info->readCount);
   MOZ_ASSERT(readCount >= 0);
   if (readCount <= 0) {
-    if (mClientAllocator) {
+    if (mClientAllocator && mClientAllocator->GetTileLockAllocator()) {
       mClientAllocator->GetTileLockAllocator()->DeallocShmemSection(mShmemSection);
     } else {
-      // we are on the compositor process
+      // we are on the compositor process, or IPC is down.
       FixedSizeSmallShmemSectionAllocator::FreeShmemSection(mShmemSection);
     }
   }

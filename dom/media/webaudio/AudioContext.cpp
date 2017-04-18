@@ -12,10 +12,28 @@
 #include "mozilla/OwningNonNull.h"
 
 #include "mozilla/dom/AnalyserNode.h"
+#include "mozilla/dom/AnalyserNodeBinding.h"
+#include "mozilla/dom/AudioBufferSourceNodeBinding.h"
 #include "mozilla/dom/AudioContextBinding.h"
+#include "mozilla/dom/BaseAudioContextBinding.h"
+#include "mozilla/dom/BiquadFilterNodeBinding.h"
+#include "mozilla/dom/ChannelMergerNodeBinding.h"
+#include "mozilla/dom/ChannelSplitterNodeBinding.h"
+#include "mozilla/dom/ConvolverNodeBinding.h"
+#include "mozilla/dom/DelayNodeBinding.h"
+#include "mozilla/dom/DynamicsCompressorNodeBinding.h"
+#include "mozilla/dom/GainNodeBinding.h"
+#include "mozilla/dom/IIRFilterNodeBinding.h"
 #include "mozilla/dom/HTMLMediaElement.h"
+#include "mozilla/dom/MediaElementAudioSourceNodeBinding.h"
+#include "mozilla/dom/MediaStreamAudioSourceNodeBinding.h"
 #include "mozilla/dom/OfflineAudioContextBinding.h"
+#include "mozilla/dom/OscillatorNodeBinding.h"
+#include "mozilla/dom/PannerNodeBinding.h"
+#include "mozilla/dom/PeriodicWaveBinding.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/dom/StereoPannerNodeBinding.h"
+#include "mozilla/dom/WaveShaperNodeBinding.h"
 
 #include "AudioBuffer.h"
 #include "AudioBufferSourceNode.h"
@@ -122,6 +140,7 @@ AudioContext::AudioContext(nsPIDOMWindowInner* aWindow,
   , mIsShutDown(false)
   , mCloseCalled(false)
   , mSuspendCalled(false)
+  , mIsDisconnecting(false)
 {
   bool mute = aWindow->AddAudioContext(this);
 
@@ -242,7 +261,9 @@ AudioContext::Constructor(const GlobalObject& aGlobal,
 
 bool AudioContext::CheckClosed(ErrorResult& aRv)
 {
-  if (mAudioContextState == AudioContextState::Closed) {
+  if (mAudioContextState == AudioContextState::Closed ||
+      mIsShutDown ||
+      mIsDisconnecting) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return true;
   }
@@ -252,13 +273,9 @@ bool AudioContext::CheckClosed(ErrorResult& aRv)
 already_AddRefed<AudioBufferSourceNode>
 AudioContext::CreateBufferSource(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<AudioBufferSourceNode> bufferNode =
-    new AudioBufferSourceNode(this);
-  return bufferNode.forget();
+  return AudioBufferSourceNode::Create(nullptr, *this,
+                                       AudioBufferSourceOptions(),
+                                       aRv);
 }
 
 already_AddRefed<ConstantSourceNode>
@@ -283,7 +300,7 @@ AudioContext::CreateBuffer(uint32_t aNumberOfChannels, uint32_t aLength,
     return nullptr;
   }
 
-  return AudioBuffer::Create(this, aNumberOfChannels, aLength,
+  return AudioBuffer::Create(GetOwner(), aNumberOfChannels, aLength,
                              aSampleRate, aRv);
 }
 
@@ -310,18 +327,8 @@ bool IsValidBufferSize(uint32_t aBufferSize) {
 already_AddRefed<MediaStreamAudioDestinationNode>
 AudioContext::CreateMediaStreamDestination(ErrorResult& aRv)
 {
-  if (mIsOffline) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
-
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<MediaStreamAudioDestinationNode> node =
-      new MediaStreamAudioDestinationNode(this);
-  return node.forget();
+  return MediaStreamAudioDestinationNode::Create(*this, AudioNodeOptions(),
+                                                 aRv);
 }
 
 already_AddRefed<ScriptProcessorNode>
@@ -351,234 +358,110 @@ AudioContext::CreateScriptProcessor(uint32_t aBufferSize,
 already_AddRefed<AnalyserNode>
 AudioContext::CreateAnalyser(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<AnalyserNode> analyserNode = new AnalyserNode(this);
-  return analyserNode.forget();
+  return AnalyserNode::Create(*this, AnalyserOptions(), aRv);
 }
 
 already_AddRefed<StereoPannerNode>
 AudioContext::CreateStereoPanner(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<StereoPannerNode> stereoPannerNode = new StereoPannerNode(this);
-  return stereoPannerNode.forget();
+  return StereoPannerNode::Create(*this, StereoPannerOptions(), aRv);
 }
 
 already_AddRefed<MediaElementAudioSourceNode>
 AudioContext::CreateMediaElementSource(HTMLMediaElement& aMediaElement,
                                        ErrorResult& aRv)
 {
-  if (mIsOffline) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
+  MediaElementAudioSourceOptions options;
+  options.mMediaElement = aMediaElement;
 
-  if (aMediaElement.ContainsRestrictedContent()) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
-
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<DOMMediaStream> stream =
-    aMediaElement.CaptureAudio(aRv, mDestination->Stream()->Graph());
-  if (aRv.Failed()) {
-    return nullptr;
-  }
-  return MediaElementAudioSourceNode::Create(this, stream, aRv);
+  return MediaElementAudioSourceNode::Create(*this, options, aRv);
 }
 
 already_AddRefed<MediaStreamAudioSourceNode>
 AudioContext::CreateMediaStreamSource(DOMMediaStream& aMediaStream,
                                       ErrorResult& aRv)
 {
-  if (mIsOffline) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
+  MediaStreamAudioSourceOptions options;
+  options.mMediaStream = aMediaStream;
 
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  return MediaStreamAudioSourceNode::Create(this, &aMediaStream, aRv);
+  return MediaStreamAudioSourceNode::Create(*this, options, aRv);
 }
 
 already_AddRefed<GainNode>
 AudioContext::CreateGain(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<GainNode> gainNode = new GainNode(this);
-  return gainNode.forget();
+  return GainNode::Create(*this, GainOptions(), aRv);
 }
 
 already_AddRefed<WaveShaperNode>
 AudioContext::CreateWaveShaper(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<WaveShaperNode> waveShaperNode = new WaveShaperNode(this);
-  return waveShaperNode.forget();
+  return WaveShaperNode::Create(*this, WaveShaperOptions(), aRv);
 }
 
 already_AddRefed<DelayNode>
 AudioContext::CreateDelay(double aMaxDelayTime, ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  if (aMaxDelayTime > 0. && aMaxDelayTime < 180.) {
-    RefPtr<DelayNode> delayNode = new DelayNode(this, aMaxDelayTime);
-    return delayNode.forget();
-  }
-
-  aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-  return nullptr;
+  DelayOptions options;
+  options.mMaxDelayTime = aMaxDelayTime;
+  return DelayNode::Create(*this, options, aRv);
 }
 
 already_AddRefed<PannerNode>
 AudioContext::CreatePanner(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<PannerNode> pannerNode = new PannerNode(this);
-  mPannerNodes.PutEntry(pannerNode);
-  return pannerNode.forget();
+  return PannerNode::Create(*this, PannerOptions(), aRv);
 }
 
 already_AddRefed<ConvolverNode>
 AudioContext::CreateConvolver(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<ConvolverNode> convolverNode = new ConvolverNode(this);
-  return convolverNode.forget();
+  return ConvolverNode::Create(nullptr, *this, ConvolverOptions(), aRv);
 }
 
 already_AddRefed<ChannelSplitterNode>
 AudioContext::CreateChannelSplitter(uint32_t aNumberOfOutputs, ErrorResult& aRv)
 {
-  if (aNumberOfOutputs == 0 ||
-      aNumberOfOutputs > WebAudioUtils::MaxChannelCount) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
-    return nullptr;
-  }
-
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<ChannelSplitterNode> splitterNode =
-    new ChannelSplitterNode(this, aNumberOfOutputs);
-  return splitterNode.forget();
+  ChannelSplitterOptions options;
+  options.mNumberOfOutputs = aNumberOfOutputs;
+  return ChannelSplitterNode::Create(*this, options, aRv);
 }
 
 already_AddRefed<ChannelMergerNode>
 AudioContext::CreateChannelMerger(uint32_t aNumberOfInputs, ErrorResult& aRv)
 {
-  if (aNumberOfInputs == 0 ||
-      aNumberOfInputs > WebAudioUtils::MaxChannelCount) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
-    return nullptr;
-  }
-
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<ChannelMergerNode> mergerNode =
-    new ChannelMergerNode(this, aNumberOfInputs);
-  return mergerNode.forget();
+  ChannelMergerOptions options;
+  options.mNumberOfInputs = aNumberOfInputs;
+  return ChannelMergerNode::Create(*this, options, aRv);
 }
 
 already_AddRefed<DynamicsCompressorNode>
 AudioContext::CreateDynamicsCompressor(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<DynamicsCompressorNode> compressorNode =
-    new DynamicsCompressorNode(this);
-  return compressorNode.forget();
+  return DynamicsCompressorNode::Create(*this, DynamicsCompressorOptions(), aRv);
 }
 
 already_AddRefed<BiquadFilterNode>
 AudioContext::CreateBiquadFilter(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<BiquadFilterNode> filterNode =
-    new BiquadFilterNode(this);
-  return filterNode.forget();
+  return BiquadFilterNode::Create(*this, BiquadFilterOptions(), aRv);
 }
 
 already_AddRefed<IIRFilterNode>
-AudioContext::CreateIIRFilter(const mozilla::dom::binding_detail::AutoSequence<double>& aFeedforward,
-                              const mozilla::dom::binding_detail::AutoSequence<double>& aFeedback,
+AudioContext::CreateIIRFilter(const Sequence<double>& aFeedforward,
+                              const Sequence<double>& aFeedback,
                               mozilla::ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  if (aFeedforward.Length() == 0 || aFeedforward.Length() > 20) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
-
-  if (aFeedback.Length() == 0 || aFeedback.Length() > 20) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
-
-  bool feedforwardAllZeros = true;
-  for (size_t i = 0; i < aFeedforward.Length(); ++i) {
-    if (aFeedforward.Elements()[i] != 0.0) {
-      feedforwardAllZeros = false;
-    }
-  }
-
-  if (feedforwardAllZeros || aFeedback.Elements()[0] == 0.0) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return nullptr;
-  }
-
-  RefPtr<IIRFilterNode> filterNode =
-    new IIRFilterNode(this, aFeedforward, aFeedback);
-  return filterNode.forget();
+  IIRFilterOptions options;
+  options.mFeedforward = aFeedforward;
+  options.mFeedback = aFeedback;
+  return IIRFilterNode::Create(*this, options, aRv);
 }
 
 already_AddRefed<OscillatorNode>
 AudioContext::CreateOscillator(ErrorResult& aRv)
 {
-  if (CheckClosed(aRv)) {
-    return nullptr;
-  }
-
-  RefPtr<OscillatorNode> oscillatorNode =
-    new OscillatorNode(this);
-  return oscillatorNode.forget();
+  return OscillatorNode::Create(*this, OscillatorOptions(), aRv);
 }
 
 already_AddRefed<PeriodicWave>
@@ -592,7 +475,7 @@ AudioContext::CreatePeriodicWave(const Float32Array& aRealData,
 
   if (aRealData.Length() != aImagData.Length() ||
       aRealData.Length() == 0) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return nullptr;
   }
 
@@ -660,12 +543,12 @@ AudioContext::DecodeAudioData(const ArrayBuffer& aBuffer,
   if (aSuccessCallback.WasPassed()) {
     successCallback = &aSuccessCallback.Value();
   }
-  RefPtr<WebAudioDecodeJob> job(
+  UniquePtr<WebAudioDecodeJob> job(
     new WebAudioDecodeJob(contentType, this,
                           promise, successCallback, failureCallback));
   AsyncDecodeWebAudio(contentType.get(), data, length, *job);
   // Transfer the ownership to mDecodeJobs
-  mDecodeJobs.AppendElement(job.forget());
+  mDecodeJobs.AppendElement(Move(job));
 
   return promise.forget();
 }
@@ -673,7 +556,14 @@ AudioContext::DecodeAudioData(const ArrayBuffer& aBuffer,
 void
 AudioContext::RemoveFromDecodeQueue(WebAudioDecodeJob* aDecodeJob)
 {
-  mDecodeJobs.RemoveElement(aDecodeJob);
+  // Since UniquePtr doesn't provide an operator== which allows you to compare
+  // against raw pointers, we need to iterate manually.
+  for (uint32_t i = 0; i < mDecodeJobs.Length(); ++i) {
+    if (mDecodeJobs[i].get() == aDecodeJob) {
+      mDecodeJobs.RemoveElementAt(i);
+      break;
+    }
+  }
 }
 
 void
@@ -747,21 +637,31 @@ AudioContext::CurrentTime() const
   return stream->StreamTimeToSeconds(stream->GetCurrentTime());
 }
 
+void AudioContext::DisconnectFromOwner()
+{
+  mIsDisconnecting = true;
+  Shutdown();
+  DOMEventTargetHelper::DisconnectFromOwner();
+}
+
 void
 AudioContext::Shutdown()
 {
   mIsShutDown = true;
 
-  if (!mIsOffline) {
-    ErrorResult dummy;
-    RefPtr<Promise> ignored = Close(dummy);
-  }
+  // We don't want to touch promises if the global is going away soon.
+  if (!mIsDisconnecting) {
+    if (!mIsOffline) {
+      IgnoredErrorResult dummy;
+      RefPtr<Promise> ignored = Close(dummy);
+    }
 
-  for (auto p : mPromiseGripArray) {
-    p->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
-  }
+    for (auto p : mPromiseGripArray) {
+      p->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    }
 
-  mPromiseGripArray.Clear();
+    mPromiseGripArray.Clear();
+  }
 
   // Release references to active nodes.
   // Active AudioNodes don't unregister in destructors, at which point the

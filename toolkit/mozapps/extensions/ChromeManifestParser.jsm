@@ -45,10 +45,10 @@ this.ChromeManifestParser = {
    * @return Array of objects describing each manifest instruction, in the form:
    *         { type: instruction-type, baseURI: string-uri, args: [arguments] }
    **/
-  parseSync: function(aURI) {
+  parseSync(aURI) {
     function parseLine(aLine) {
       let line = aLine.trim();
-      if (line.length == 0 || line.charAt(0) == '#')
+      if (line.length == 0 || line.charAt(0) == "#")
         return;
       let tokens = line.split(/\s+/);
       let type = tokens.shift();
@@ -56,7 +56,7 @@ this.ChromeManifestParser = {
         let uri = NetUtil.newURI(tokens.shift(), null, aURI);
         data = data.concat(this.parseSync(uri));
       } else {
-        data.push({type: type, baseURI: baseURI, args: tokens});
+        data.push({type, baseURI, args: tokens});
       }
     }
 
@@ -81,7 +81,7 @@ this.ChromeManifestParser = {
     return data;
   },
 
-  _readFromJar: function(aURI) {
+  _readFromJar(aURI) {
     let data = "";
     let entries = [];
     let readers = [];
@@ -112,8 +112,7 @@ this.ChromeManifestParser = {
       // First entry is the actual file we want to read.
       let zis = reader.getInputStream(entries[0]);
       data = NetUtil.readInputStreamToString(zis, zis.available());
-    }
-    finally {
+    } finally {
       // Close readers in reverse order.
       for (let i = readers.length - 1; i >= 0; i--) {
         readers[i].close();
@@ -124,7 +123,7 @@ this.ChromeManifestParser = {
     return data;
   },
 
-  _readFromFile: function(aURI) {
+  _readFromFile(aURI) {
     let file = aURI.QueryInterface(Ci.nsIFileURL).file;
     if (!file.exists() || !file.isFile())
       return "";
@@ -151,7 +150,7 @@ this.ChromeManifestParser = {
   *         Instruction type to filter by.
   * @return True if any matching instructions were found in the manifest.
   */
-  hasType: function(aManifest, aType) {
+  hasType(aManifest, aType) {
     return aManifest.some(entry => entry.type == aType);
   }
 };

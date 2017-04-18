@@ -6,8 +6,8 @@
   <title>Mouse Capture Tests</title>
   <link rel="stylesheet" href="chrome://global/skin/" type="text/css"/>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
-  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script> 
-  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script> 
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
 </head>
 <body id="body" xmlns="http://www.w3.org/1999/xhtml">
   <p id="display"/><div id="content" style="display: none"/><pre id="test"/>
@@ -23,8 +23,7 @@ var cachedMouseDown = null;
 var previousWidth = 0, originalWidth = 0;
 var loadInWindow = false;
 
-function splitterCallback(adjustment)
-{
+function splitterCallback(adjustment) {
   var newWidth = Number($("leftbox").width); // getBoundingClientRect().width;
   var expectedWidth = previousWidth + adjustment;
   if (expectedWidth > $("splitterbox").getBoundingClientRect().width)
@@ -33,13 +32,11 @@ function splitterCallback(adjustment)
   previousWidth = newWidth;
 }
 
-function selectionCallback(adjustment)
-{
+function selectionCallback(adjustment) {
   if (adjustment == 4000) {
     is(frames[0].getSelection().toString(), "This is some text", "selection after drag (" + adjustment + ")");
     ok(frames[0].scrollY > 40, "selection caused scroll down (" + adjustment + ")");
-  }
-  else {
+  } else {
     if (adjustment == 0) {
       is(frames[0].getSelection().toString(), ".", "selection after drag (" + adjustment + ")");
     }
@@ -47,8 +44,7 @@ function selectionCallback(adjustment)
   }
 }
 
-function framesetCallback(adjustment)
-{
+function framesetCallback(adjustment) {
   var newWidth = frames[1].frames[0].document.documentElement.clientWidth;
   var expectedWidth = originalWidth + adjustment;
   if (adjustment == 0)
@@ -61,8 +57,7 @@ function framesetCallback(adjustment)
 
 var otherWindow = null;
 
-function selectionScrollCheck()
-{
+function selectionScrollCheck() {
   var element = otherWindow.document.documentElement;
 
   var count = 0;
@@ -71,7 +66,7 @@ function selectionScrollCheck()
     if (count++ < 6)
       return;
 
-    otherWindow.removeEventListener("scroll", selectionScrollDone, false);
+    otherWindow.removeEventListener("scroll", selectionScrollDone);
 
     var selectedText = otherWindow.getSelection().toString().replace(/\r/g, "");
     is(selectedText, "One\n\nTwo", "text is selected");
@@ -94,8 +89,7 @@ function selectionScrollCheck()
 
     if (loadInWindow) {
       SimpleTest.finish();
-    }
-    else {
+    } else {
       // now try again, but open the page in a new window
       loadInWindow = true;
       synthesizeMouse(document.getElementById("custom"), 2, 2, { type: "mousedown" });
@@ -106,16 +100,15 @@ function selectionScrollCheck()
     }
   }
 
-  SimpleTest.executeSoon(function () {
+  SimpleTest.executeSoon(function() {
     disableNonTestMouseEvents(true);
     synthesizeMouse(element, 2, 2, { type: "mousedown" }, otherWindow);
     synthesizeMouse(element, 100, otherWindow.innerHeight + 20, { type: "mousemove" }, otherWindow);
-    otherWindow.addEventListener("scroll", selectionScrollDone, false);
+    otherWindow.addEventListener("scroll", selectionScrollDone);
   });
 }
 
-function runTests()
-{
+function runTests() {
   previousWidth = $("leftbox").getBoundingClientRect().width;
   runCaptureTest($("splitter"), splitterCallback);
 
@@ -173,9 +166,6 @@ function runTests()
   var scrollX = parent ? parent.scrollX : 0;
   var scrollY = parent ? parent.scrollY : 0;
 
-  var b = frames[0].document.getElementById("b");
-//  runCaptureTest(b, selectionCallback);
-
   // restore scroll
   if (parent) parent.scroll(scrollX, scrollY);
 
@@ -218,8 +208,7 @@ function runTests()
   SimpleTest.waitForFocus(selectionScrollCheck, otherWindow);
 }
 
-function runCaptureTest(element, callback)
-{
+function runCaptureTest(element, callback) {
   var expectedTarget = null;
 
   var win = element.ownerDocument.defaultView;
@@ -228,7 +217,7 @@ function runCaptureTest(element, callback)
     is(event.originalTarget, expectedTarget,
        expectedTarget.id + " target for point " + event.clientX + "," + event.clientY);
   }
-  win.addEventListener("mousemove", mouseMoved, false);
+  win.addEventListener("mousemove", mouseMoved);
 
   expectedTarget = element;
 
@@ -274,7 +263,7 @@ function runCaptureTest(element, callback)
   if (callback)
     callback(0);
 
-  win.removeEventListener("mousemove", mouseMoved, false);
+  win.removeEventListener("mousemove", mouseMoved);
 }
 
 SimpleTest.waitForFocus(runTests);
@@ -337,4 +326,3 @@ SimpleTest.waitForFocus(runTests);
 </body>
 
 </html>
-

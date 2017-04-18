@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "EMEDecoderModule.h"
-#include "EMEAudioDecoder.h"
 #include "EMEVideoDecoder.h"
 #include "MediaDataDecoderProxy.h"
 #include "mozIGeckoMediaPluginService.h"
@@ -17,6 +16,7 @@
 #include "nsClassHashtable.h"
 #include "GMPDecoderModule.h"
 #include "MP4Decoder.h"
+#include "DecryptThroughputLimit.h"
 
 namespace mozilla {
 
@@ -36,6 +36,7 @@ public:
     , mProxy(aProxy)
     , mSamplesWaitingForKey(new SamplesWaitingForKey(this, this->mCallback,
                                                      mTaskQueue, mProxy))
+    , mThroughputLimiter(aDecodeTaskQueue)
     , mIsShutdown(false)
   {
   }
@@ -55,15 +56,41 @@ public:
       return;
     }
 
+    ThrottleDecode(aSample);
+  }
+
+  void ThrottleDecode(MediaRawData* aSample)
+  {
+    RefPtr<EMEDecryptor> self = this;
+    mThroughputLimiter.Throttle(aSample)
+      ->Then(mTaskQueue, __func__,
+             [self, this] (MediaRawData* aSample) {
+               mThrottleRequest.Complete();
+               AttemptDecode(aSample);
+             },
+             [self, this]() {
+                mThrottleRequest.Complete();
+             })
+      ->Track(mThrottleRequest);
+  }
+
+  void AttemptDecode(MediaRawData* aSample)
+  {
+    MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
+    if (mIsShutdown) {
+      NS_WARNING("EME encrypted sample arrived after shutdown");
+      return;
+    }
     nsAutoPtr<MediaRawDataWriter> writer(aSample->CreateWriter());
     mProxy->GetSessionIdsForKeyId(aSample->mCrypto.mKeyId,
                                   writer->mCrypto.mSessionIds);
 
     mDecrypts.Put(aSample, new DecryptPromiseRequestHolder());
-    mDecrypts.Get(aSample)->Begin(mProxy->Decrypt(aSample)->Then(
+    mProxy->Decrypt(aSample)->Then(
       mTaskQueue, __func__, this,
       &EMEDecryptor::Decrypted,
-      &EMEDecryptor::Decrypted));
+      &EMEDecryptor::Decrypted)
+    ->Track(*mDecrypts.Get(aSample));
     return;
   }
 
@@ -99,11 +126,7 @@ public:
       }
     } else {
       MOZ_ASSERT(!mIsShutdown);
-      // The Adobe GMP AAC decoder gets confused if we pass it non-encrypted
-      // samples with valid crypto data. So clear the crypto data, since the
-      // sample should be decrypted now anyway. If we don't do this and we're
-      // using the Adobe GMP for unencrypted decoding of data that is decrypted
-      // by gmp-clearkey, decoding will fail.
+      // The sample is no longer encrypted, so clear its crypto metadata.
       UniquePtr<MediaRawDataWriter> writer(aDecrypted.mSample->CreateWriter());
       writer->mCrypto = CryptoSample();
       mDecoder->Input(aDecrypted.mSample);
@@ -118,6 +141,8 @@ public:
       holder->DisconnectIfExists();
       iter.Remove();
     }
+    mThrottleRequest.DisconnectIfExists();
+    mThroughputLimiter.Flush();
     mDecoder->Flush();
     mSamplesWaitingForKey->Flush();
   }
@@ -157,6 +182,8 @@ private:
   RefPtr<CDMProxy> mProxy;
   nsClassHashtable<nsRefPtrHashKey<MediaRawData>, DecryptPromiseRequestHolder> mDecrypts;
   RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  DecryptThroughputLimit mThroughputLimiter;
+  MozPromiseRequestHolder<DecryptThroughputLimit::ThrottlePromise> mThrottleRequest;
   bool mIsShutdown;
 };
 
@@ -263,16 +290,10 @@ EMEDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
 {
   MOZ_ASSERT(aParams.mConfig.mCrypto.mValid);
 
-  if (SupportsMimeType(aParams.mConfig.mMimeType, nullptr)) {
-    // GMP decodes. Assume that means it can decrypt too.
-    RefPtr<MediaDataDecoderProxy> wrapper =
-      CreateDecoderWrapper(aParams.mCallback, mProxy, aParams.mTaskQueue);
-    auto gmpParams = GMPAudioDecoderParams(aParams).WithCallback(wrapper);
-    wrapper->SetProxyTarget(new EMEAudioDecoder(mProxy, gmpParams));
-    return wrapper.forget();
-  }
-
+  // We don't support using the GMP to decode audio.
+  MOZ_ASSERT(!SupportsMimeType(aParams.mConfig.mMimeType, nullptr));
   MOZ_ASSERT(mPDM);
+
   RefPtr<MediaDataDecoder> decoder(mPDM->CreateDecoder(aParams));
   if (!decoder) {
     return nullptr;

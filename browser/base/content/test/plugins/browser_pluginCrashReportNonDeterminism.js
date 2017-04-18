@@ -49,7 +49,7 @@ const CRASHED_MESSAGE = "BrowserPlugins:NPAPIPluginProcessCrashed";
  *        the crash reporter state.
  */
 function preparePlugin(browser, pluginFallbackState) {
-  return ContentTask.spawn(browser, pluginFallbackState, function* (pluginFallbackState) {
+  return ContentTask.spawn(browser, pluginFallbackState, function* (contentPluginFallbackState) {
     let plugin = content.document.getElementById("plugin");
     plugin.QueryInterface(Ci.nsIObjectLoadingContent);
     // CRASH_URL will load a plugin that crashes immediately. We
@@ -68,8 +68,8 @@ function preparePlugin(browser, pluginFallbackState) {
     // Somehow, I'm able to get away with overriding the getter for
     // this XPCOM object. Probably because I've got chrome privledges.
     Object.defineProperty(plugin, "pluginFallbackType", {
-      get: function() {
-        return pluginFallbackState;
+      get() {
+        return contentPluginFallbackState;
       }
     });
     return plugin.runID;
@@ -162,7 +162,7 @@ add_task(function* testChromeHearsPluginCrashFirst() {
     // actually crashing the plugin again. We hack around this by overriding
     // the pluginFallbackType again.
     Object.defineProperty(plugin, "pluginFallbackType", {
-      get: function() {
+      get() {
         return Ci.nsIObjectLoadingContent.PLUGIN_CRASHED;
       },
     });

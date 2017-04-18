@@ -10,7 +10,7 @@ add_task(function* () {
   var contextMenu;
 
   // We want select events to be fired.
-  yield new Promise(resolve => SpecialPowers.pushPrefEnv({"set": [["dom.select_events.enabled", true]]}, resolve));
+  yield SpecialPowers.pushPrefEnv({set: [["dom.select_events.enabled", true]]});
 
   let envService = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
   let originalValue = envService.get("XPCSHELL_TEST_PROFILE_DIR");
@@ -21,7 +21,7 @@ add_task(function* () {
                         .QueryInterface(Ci.nsIResProtocolHandler);
   let originalSubstitution = resProt.getSubstitution("search-plugins");
   resProt.setSubstitution("search-plugins",
-                          Services.io.newURI(url, null, null));
+                          Services.io.newURI(url));
 
   let searchDonePromise;
   yield new Promise(resolve => {
@@ -76,7 +76,7 @@ add_task(function* () {
   info("checkContextMenu");
   var searchItem = contextMenu.getElementsByAttribute("id", "context-searchselect")[0];
   ok(searchItem, "Got search context menu item");
-  is(searchItem.label, 'Search ' + ENGINE_NAME + ' for \u201ctest search\u201d', "Check context menu label");
+  is(searchItem.label, "Search " + ENGINE_NAME + " for \u201ctest search\u201d", "Check context menu label");
   is(searchItem.disabled, false, "Check that search context menu item is enabled");
 
   yield BrowserTestUtils.openNewForegroundTab(gBrowser, () => {

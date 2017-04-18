@@ -24,10 +24,6 @@
 #include "FFmpegRuntimeLinker.h"
 #endif
 
-#if defined(XP_WIN)
-#include "mozilla/WindowsVersion.h"
-#endif
-
 static mozilla::LazyLogModule sDecoderDoctorLog("DecoderDoctor");
 #define DD_LOG(level, arg, ...) MOZ_LOG(sDecoderDoctorLog, level, (arg, ##__VA_ARGS__))
 #define DD_DEBUG(arg, ...) DD_LOG(mozilla::LogLevel::Debug, arg, ##__VA_ARGS__)
@@ -250,15 +246,13 @@ DecoderDoctorDocumentWatcher::EnsureTimerIsStarted()
   }
 }
 
-static const NotificationAndReportStringId sMediaWidevineNoWMFNoSilverlight =
+// Note: ReportStringIds are limited to alphanumeric only.
+static const NotificationAndReportStringId sMediaWidevineNoWMF=
   { dom::DecoderDoctorNotificationType::Platform_decoder_not_found,
-    "MediaWidevineNoWMFNoSilverlight" };
+    "MediaWidevineNoWMF" };
 static const NotificationAndReportStringId sMediaWMFNeeded =
   { dom::DecoderDoctorNotificationType::Platform_decoder_not_found,
     "MediaWMFNeeded" };
-static const NotificationAndReportStringId sMediaUnsupportedBeforeWindowsVista =
-  { dom::DecoderDoctorNotificationType::Platform_decoder_not_found,
-    "MediaUnsupportedBeforeWindowsVista" };
 static const NotificationAndReportStringId sMediaPlatformDecoderNotFound =
   { dom::DecoderDoctorNotificationType::Platform_decoder_not_found,
     "MediaPlatformDecoderNotFound" };
@@ -275,12 +269,11 @@ static const NotificationAndReportStringId sUnsupportedLibavcodec =
   { dom::DecoderDoctorNotificationType::Unsupported_libavcodec,
     "MediaUnsupportedLibavcodec" };
 
-static const NotificationAndReportStringId*
+static const NotificationAndReportStringId *const
 sAllNotificationsAndReportStringIds[] =
 {
-  &sMediaWidevineNoWMFNoSilverlight,
+  &sMediaWidevineNoWMF,
   &sMediaWMFNeeded,
-  &sMediaUnsupportedBeforeWindowsVista,
   &sMediaPlatformDecoderNotFound,
   &sMediaCannotPlayNoDecoders,
   &sMediaNoDecoders,
@@ -373,33 +366,6 @@ ReportAnalysis(nsIDocument* aDocument,
     DispatchNotification(
       aDocument->GetInnerWindow(), aNotification, aIsSolved, aParams);
   }
-}
-
-enum SilverlightPresence {
-  eNoSilverlight,
-  eSilverlightDisabled,
-  eSilverlightEnabled
-};
-static SilverlightPresence
-CheckSilverlight()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
-  if (!pluginHost) {
-    return eNoSilverlight;
-  }
-  nsTArray<nsCOMPtr<nsIInternalPluginTag>> plugins;
-  pluginHost->GetPlugins(plugins, /*aIncludeDisabled*/ true);
-  for (const auto& plugin : plugins) {
-    for (const auto& mime : plugin->MimeTypes()) {
-      if (mime.LowerCaseEqualsLiteral("application/x-silverlight")
-          || mime.LowerCaseEqualsLiteral("application/x-silverlight-2")) {
-        return plugin->IsEnabled() ? eSilverlightEnabled : eSilverlightDisabled;
-      }
-    }
-  }
-
-  return eNoSilverlight;
 }
 
 static nsString
@@ -554,14 +520,11 @@ DecoderDoctorDocumentWatcher::SynthesizeAnalysis()
     // No supported key systems!
     switch (lastKeySystemIssue) {
       case DecoderDoctorDiagnostics::eWidevineWithNoWMF:
-        if (CheckSilverlight() != eSilverlightEnabled) {
-          DD_INFO("DecoderDoctorDocumentWatcher[%p, doc=%p]::SynthesizeAnalysis() - unsupported key systems: %s, widevine without WMF nor Silverlight",
-                  this, mDocument, NS_ConvertUTF16toUTF8(unsupportedKeySystems).get());
-          ReportAnalysis(mDocument, sMediaWidevineNoWMFNoSilverlight,
-                         false, unsupportedKeySystems);
-          return;
-        }
-        break;
+        DD_INFO("DecoderDoctorDocumentWatcher[%p, doc=%p]::SynthesizeAnalysis() - unsupported key systems: %s, Widevine without WMF",
+                this, mDocument, NS_ConvertUTF16toUTF8(unsupportedKeySystems).get());
+        ReportAnalysis(mDocument, sMediaWidevineNoWMF, false,
+                       unsupportedKeySystems);
+        return;
       default:
         break;
     }
@@ -575,16 +538,9 @@ DecoderDoctorDocumentWatcher::SynthesizeAnalysis()
       // going through expected decoders from most to least desirable.
 #if defined(XP_WIN)
       if (!formatsRequiringWMF.IsEmpty()) {
-        if (IsVistaOrLater()) {
-          DD_INFO("DecoderDoctorDocumentWatcher[%p, doc=%p]::SynthesizeAnalysis() - unplayable formats: %s -> Cannot play media because WMF was not found",
-                  this, mDocument, NS_ConvertUTF16toUTF8(formatsRequiringWMF).get());
-          ReportAnalysis(mDocument, sMediaWMFNeeded, false, formatsRequiringWMF);
-        } else {
-          DD_INFO("DecoderDoctorDocumentWatcher[%p, doc=%p]::SynthesizeAnalysis() - unplayable formats: %s -> Cannot play media before Windows Vista",
-                  this, mDocument, NS_ConvertUTF16toUTF8(formatsRequiringWMF).get());
-          ReportAnalysis(mDocument, sMediaUnsupportedBeforeWindowsVista,
-                         false, formatsRequiringWMF);
-        }
+        DD_INFO("DecoderDoctorDocumentWatcher[%p, doc=%p]::SynthesizeAnalysis() - unplayable formats: %s -> Cannot play media because WMF was not found",
+                this, mDocument, NS_ConvertUTF16toUTF8(formatsRequiringWMF).get());
+        ReportAnalysis(mDocument, sMediaWMFNeeded, false, formatsRequiringWMF);
         return;
       }
 #endif

@@ -48,8 +48,11 @@ namespace stagefright {
 static const int64_t OVERFLOW_ERROR = -INT64_MAX;
 
 // Calculate units*1,000,000/hz, trying to avoid overflow.
-// Return OVERFLOW_ERROR in case of unavoidable overflow.
+// Return OVERFLOW_ERROR in case of unavoidable overflow, or div by hz==0.
 int64_t unitsToUs(int64_t units, int64_t hz) {
+    if (hz == 0) {
+        return OVERFLOW_ERROR;
+    }
     const int64_t MAX_S = INT64_MAX / 1000000;
     if (std::abs(units) <= MAX_S) {
         return units * 1000000 / hz;
@@ -750,7 +753,6 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         case FOURCC('m', 'o', 'o', 'f'):
         case FOURCC('t', 'r', 'a', 'f'):
         case FOURCC('m', 'f', 'r', 'a'):
-        case FOURCC('u', 'd', 't', 'a'):
         case FOURCC('i', 'l', 's', 't'):
         case FOURCC('s', 'i', 'n', 'f'):
         case FOURCC('s', 'c', 'h', 'i'):
@@ -1648,7 +1650,8 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
 
             if (mPath.Length() >= 2
                     && (mPath[mPath.Length() - 2] == FOURCC('m', 'p', '4', 'a') ||
-                       (mPath[mPath.Length() - 2] == FOURCC('e', 'n', 'c', 'a')))) {
+                       (mPath[mPath.Length() - 2] == FOURCC('e', 'n', 'c', 'a')) ||
+                       (mPath[mPath.Length() - 2] == FOURCC('w', 'a', 'v', 'e')))) {
                 // Information from the ESDS must be relied on for proper
                 // setup of sample rate and channel count for MPEG4 Audio.
                 // The generic header appears to only contain generic

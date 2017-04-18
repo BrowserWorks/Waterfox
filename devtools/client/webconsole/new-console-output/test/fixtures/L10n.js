@@ -15,12 +15,36 @@ class L10n {
         return "XHR";
       case "webConsoleMoreInfoLabel":
         return "Learn More";
+      default:
+        return str;
     }
-    return str;
   }
 
   getFormatStr(str) {
     return this.getStr(str);
+  }
+
+  timestampString(milliseconds) {
+    let d = new Date(milliseconds ? milliseconds : null);
+    let hours = d.getHours(), minutes = d.getMinutes();
+    let seconds = d.getSeconds();
+    milliseconds = d.getMilliseconds();
+
+    // String.prototype.padStart isn't supported in node
+    function padZeros(str, len) {
+      str = new String(str);
+      while (str.len < len) {
+        str = "0" + str;
+      }
+      return str;
+    }
+
+    hours = padZeros(hours, 2);
+    minutes = padZeros(minutes, 2);
+    seconds = padZeros(seconds, 2);
+    milliseconds = padZeros(milliseconds, 3);
+
+    return `${hours}:${minutes}:${seconds}.${milliseconds}`;
   }
 }
 

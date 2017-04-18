@@ -57,7 +57,7 @@ imgRequest::imgRequest(imgLoader* aLoader, const ImageCacheKey& aCacheKey)
  , mValidator(nullptr)
  , mInnerWindowId(0)
  , mCORSMode(imgIRequest::CORS_NONE)
- , mReferrerPolicy(mozilla::net::RP_Default)
+ , mReferrerPolicy(mozilla::net::RP_Unset)
  , mImageErrorCode(NS_OK)
  , mMutex("imgRequest")
  , mProgressTracker(new ProgressTracker())
@@ -973,6 +973,7 @@ PrepareForNewPart(nsIRequest* aRequest, nsIInputStream* aInStr, uint32_t aCount,
     if (result.mIsFirstPart) {
       // First part for a multipart channel. Create the MultipartImage wrapper.
       MOZ_ASSERT(aProgressTracker, "Shouldn't have given away tracker yet");
+      aProgressTracker->SetIsMultipart();
       result.mImage =
         ImageFactory::CreateMultipartImage(partImage, aProgressTracker);
     } else {
@@ -1048,7 +1049,7 @@ imgRequest::FinishPreparingForNewPart(const NewPartResult& aResult)
   }
 
   if (IsDecodeRequested()) {
-    aResult.mImage->StartDecoding();
+    aResult.mImage->StartDecoding(imgIContainer::FLAG_NONE);
   }
 }
 

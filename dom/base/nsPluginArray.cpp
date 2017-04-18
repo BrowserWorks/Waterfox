@@ -43,15 +43,7 @@ nsPluginArray::Init()
   }
 }
 
-nsPluginArray::~nsPluginArray()
-{
-}
-
-static bool
-ResistFingerprinting() {
-  return !nsContentUtils::ThreadsafeIsCallerChrome() &&
-         nsContentUtils::ResistFingerprinting();
-}
+nsPluginArray::~nsPluginArray() = default;
 
 nsPIDOMWindowInner*
 nsPluginArray::GetParentObject() const
@@ -134,17 +126,17 @@ nsPluginArray::GetCTPMimeTypes(nsTArray<RefPtr<nsMimeType>>& aMimeTypes)
 }
 
 nsPluginElement*
-nsPluginArray::Item(uint32_t aIndex)
+nsPluginArray::Item(uint32_t aIndex, CallerType aCallerType)
 {
   bool unused;
-  return IndexedGetter(aIndex, unused);
+  return IndexedGetter(aIndex, unused, aCallerType);
 }
 
 nsPluginElement*
-nsPluginArray::NamedItem(const nsAString& aName)
+nsPluginArray::NamedItem(const nsAString& aName, CallerType aCallerType)
 {
   bool unused;
-  return NamedGetter(aName, unused);
+  return NamedGetter(aName, unused, aCallerType);
 }
 
 void
@@ -193,11 +185,11 @@ nsPluginArray::Refresh(bool aReloadDocuments)
 }
 
 nsPluginElement*
-nsPluginArray::IndexedGetter(uint32_t aIndex, bool &aFound)
+nsPluginArray::IndexedGetter(uint32_t aIndex, bool &aFound, CallerType aCallerType)
 {
   aFound = false;
 
-  if (!AllowPlugins() || ResistFingerprinting()) {
+  if (!AllowPlugins() || nsContentUtils::ResistFingerprinting(aCallerType)) {
     return nullptr;
   }
 
@@ -240,11 +232,12 @@ FindPlugin(const nsTArray<RefPtr<nsPluginElement> >& aPlugins,
 }
 
 nsPluginElement*
-nsPluginArray::NamedGetter(const nsAString& aName, bool &aFound)
+nsPluginArray::NamedGetter(const nsAString& aName, bool &aFound,
+                           CallerType aCallerType)
 {
   aFound = false;
 
-  if (!AllowPlugins() || ResistFingerprinting()) {
+  if (!AllowPlugins() || nsContentUtils::ResistFingerprinting(aCallerType)) {
     return nullptr;
   }
 
@@ -276,9 +269,9 @@ void nsPluginArray::NotifyHiddenPluginTouched(nsPluginElement* aHiddenElement)
 }
 
 uint32_t
-nsPluginArray::Length()
+nsPluginArray::Length(CallerType aCallerType)
 {
-  if (!AllowPlugins() || ResistFingerprinting()) {
+  if (!AllowPlugins() || nsContentUtils::ResistFingerprinting(aCallerType)) {
     return 0;
   }
 
@@ -288,11 +281,12 @@ nsPluginArray::Length()
 }
 
 void
-nsPluginArray::GetSupportedNames(nsTArray<nsString>& aRetval)
+nsPluginArray::GetSupportedNames(nsTArray<nsString>& aRetval,
+                                 CallerType aCallerType)
 {
   aRetval.Clear();
 
-  if (!AllowPlugins()) {
+  if (!AllowPlugins() || nsContentUtils::ResistFingerprinting(aCallerType)) {
     return;
   }
 
@@ -317,9 +311,15 @@ nsPluginArray::Observe(nsISupports *aSubject, const char *aTopic,
 bool
 nsPluginArray::AllowPlugins() const
 {
-  nsCOMPtr<nsIDocShell> docShell = mWindow ? mWindow->GetDocShell() : nullptr;
+  if (!mWindow) {
+    return false;
+  }
+  nsCOMPtr<nsIDocument> doc = mWindow->GetDoc();
+  if (!doc) {
+    return false;
+  }
 
-  return docShell && docShell->PluginsAllowedInCurrentDoc();
+  return doc->GetAllowPlugins();
 }
 
 static bool
@@ -331,7 +331,7 @@ operator<(const RefPtr<nsPluginElement>& lhs,
 }
 
 static bool
-PluginShouldBeHidden(nsCString aName) {
+PluginShouldBeHidden(const nsCString& aName) {
   // This only supports one hidden plugin
   return Preferences::GetCString("plugins.navigator.hidden_ctp_plugin").Equals(aName);
 }
@@ -415,9 +415,7 @@ nsPluginElement::nsPluginElement(nsPIDOMWindowInner* aWindow,
 {
 }
 
-nsPluginElement::~nsPluginElement()
-{
-}
+nsPluginElement::~nsPluginElement() = default;
 
 nsPIDOMWindowInner*
 nsPluginElement::GetParentObject() const

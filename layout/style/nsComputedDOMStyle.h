@@ -53,6 +53,7 @@ private:
   // Convenience typedefs:
   typedef nsCSSProps::KTableEntry KTableEntry;
   typedef mozilla::dom::CSSValue CSSValue;
+  typedef mozilla::StyleGeometryBox StyleGeometryBox;
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -87,6 +88,16 @@ public:
   GetStyleContextForElement(mozilla::dom::Element* aElement, nsIAtom* aPseudo,
                             nsIPresShell* aPresShell,
                             StyleType aStyleType = eAll);
+
+  enum AnimationFlag {
+    eWithAnimation,
+    eWithoutAnimation,
+  };
+  // Similar to the above but ignoring animation rules and with StyleType::eAll.
+  static already_AddRefed<nsStyleContext>
+  GetStyleContextForElementWithoutAnimation(mozilla::dom::Element* aElement,
+                                            nsIAtom* aPseudo,
+                                            nsIPresShell* aPresShell);
 
   static already_AddRefed<nsStyleContext>
   GetStyleContextForElementNoFlush(mozilla::dom::Element* aElement,
@@ -143,6 +154,13 @@ private:
   void SetResolvedStyleContext(RefPtr<nsStyleContext>&& aContext);
   void SetFrameStyleContext(nsStyleContext* aContext);
 
+  static already_AddRefed<nsStyleContext>
+  DoGetStyleContextForElementNoFlush(mozilla::dom::Element* aElement,
+                                     nsIAtom* aPseudo,
+                                     nsIPresShell* aPresShell,
+                                     StyleType aStyleType,
+                                     AnimationFlag aAnimationFlag);
+
 #define STYLE_STRUCT(name_, checkdata_cb_)                              \
   const nsStyle##name_ * Style##name_() {                               \
     return mStyleContext->Style##name_();                               \
@@ -151,29 +169,29 @@ private:
 #undef STYLE_STRUCT
 
   already_AddRefed<CSSValue> GetEllipseRadii(const nsStyleCorners& aRadius,
-                                             uint8_t aFullCorner);
+                                             mozilla::Corner aFullCorner);
 
-  already_AddRefed<CSSValue> GetOffsetWidthFor(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetOffsetWidthFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetAbsoluteOffset(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetAbsoluteOffset(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetRelativeOffset(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetRelativeOffset(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetStickyOffset(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetStickyOffset(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetStaticOffset(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetStaticOffset(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetPaddingWidthFor(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetPaddingWidthFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetBorderColorsFor(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetBorderColorsFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetBorderStyleFor(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetBorderStyleFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetBorderWidthFor(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetBorderWidthFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetBorderColorFor(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetBorderColorFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetMarginWidthFor(mozilla::css::Side aSide);
+  already_AddRefed<CSSValue> GetMarginWidthFor(mozilla::Side aSide);
 
   already_AddRefed<CSSValue> GetSVGPaintFor(bool aFill);
 
@@ -201,12 +219,6 @@ private:
   already_AddRefed<CSSValue> GetCSSShadowArray(nsCSSShadowArray* aArray,
                                                const nscolor& aDefaultColor,
                                                bool aIsBoxShadow);
-
-  already_AddRefed<CSSValue> GetBackgroundList(
-    uint8_t nsStyleImageLayers::Layer::* aMember,
-    uint32_t nsStyleImageLayers::* aCount,
-    const nsStyleImageLayers& aLayers,
-    const KTableEntry aTable[]);
 
   void GetCSSGradientString(const nsStyleGradient* aGradient,
                             nsAString& aString);
@@ -256,6 +268,7 @@ private:
   already_AddRefed<CSSValue> DoGetColor();
   already_AddRefed<CSSValue> DoGetFontFamily();
   already_AddRefed<CSSValue> DoGetFontFeatureSettings();
+  already_AddRefed<CSSValue> DoGetFontVariationSettings();
   already_AddRefed<CSSValue> DoGetFontKerning();
   already_AddRefed<CSSValue> DoGetFontLanguageOverride();
   already_AddRefed<CSSValue> DoGetFontSize();
@@ -486,6 +499,7 @@ private:
   already_AddRefed<CSSValue> DoGetShapeOutside();
 
   /* User interface properties */
+  already_AddRefed<CSSValue> DoGetCaretColor();
   already_AddRefed<CSSValue> DoGetCursor();
   already_AddRefed<CSSValue> DoGetForceBrokenImageIcon();
   already_AddRefed<CSSValue> DoGetIMEMode();
@@ -580,8 +594,6 @@ private:
 
   /* Custom properties */
   already_AddRefed<CSSValue> DoGetCustomProperty(const nsAString& aPropertyName);
-
-  nsDOMCSSValueList* GetROCSSValueList(bool aCommaDelimited);
 
   /* Helper functions */
   void SetToRGBAColor(nsROCSSPrimitiveValue* aValue, nscolor aColor);

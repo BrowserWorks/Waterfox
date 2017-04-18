@@ -91,13 +91,10 @@ class ProxyObject : public ShapedObject
         // are "sane". They have to quack enough like proxies for us to belive
         // they should be treated as such.
 
-        // proxy_Trace is just a trivial wrapper around ProxyObject::trace for
-        // friend api exposure.
-
         // Proxy classes are not allowed to have call or construct hooks directly. Their
         // callability is instead decided by handler()->isCallable().
         return clasp->isProxy() &&
-               clasp->isTrace(proxy_Trace) &&
+               clasp->isTrace(ProxyObject::trace) &&
                !clasp->getCall() && !clasp->getConstruct();
     }
 
@@ -108,7 +105,7 @@ class ProxyObject : public ShapedObject
 
     static void trace(JSTracer* trc, JSObject* obj);
 
-    void nuke(const BaseProxyHandler* handler);
+    void nuke();
 
     // There is no class_ member to force specialization of JSObject::is<T>().
     // The implementation in JSObject is incorrect for proxies since it doesn't

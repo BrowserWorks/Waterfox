@@ -99,6 +99,9 @@ public:
   nsresult OpenAlternativeOutputStream(const nsACString & type, nsIOutputStream * *_retval);
 
   void InvokeAsyncOpen(nsresult rv);
+
+  // Calls SendSetPriority if mIPCClosed is false.
+  void DoSendSetPriority(int16_t aValue);
 protected:
   // used to connect redirected-to channel in parent with just created
   // ChildChannel.  Used during redirects.
@@ -145,31 +148,33 @@ protected:
                    const uint64_t&            aContentWindowId,
                    const nsCString&           aPreferredAlternativeType);
 
-  virtual bool RecvSetPriority(const uint16_t& priority) override;
-  virtual bool RecvSetClassOfService(const uint32_t& cos) override;
-  virtual bool RecvSetCacheTokenCachedCharset(const nsCString& charset) override;
-  virtual bool RecvSuspend() override;
-  virtual bool RecvResume() override;
-  virtual bool RecvCancel(const nsresult& status) override;
-  virtual bool RecvRedirect2Verify(const nsresult& result,
-                                   const RequestHeaderTuples& changedHeaders,
-                                   const uint32_t& loadFlags,
-                                   const OptionalURIParams& apiRedirectUri,
-                                   const OptionalCorsPreflightArgs& aCorsPreflightArgs,
-                                   const bool& aForceHSTSPriming,
-                                   const bool& aMixedContentWouldBlock,
-                                   const bool& aChooseAppcache) override;
-  virtual bool RecvUpdateAssociatedContentSecurity(const int32_t& broken,
+  virtual mozilla::ipc::IPCResult RecvSetPriority(const uint16_t& priority) override;
+  virtual mozilla::ipc::IPCResult RecvSetClassOfService(const uint32_t& cos) override;
+  virtual mozilla::ipc::IPCResult RecvSetCacheTokenCachedCharset(const nsCString& charset) override;
+  virtual mozilla::ipc::IPCResult RecvSuspend() override;
+  virtual mozilla::ipc::IPCResult RecvResume() override;
+  virtual mozilla::ipc::IPCResult RecvCancel(const nsresult& status) override;
+  virtual mozilla::ipc::IPCResult RecvRedirect2Verify(const nsresult& result,
+                                                      const RequestHeaderTuples& changedHeaders,
+                                                      const uint32_t& loadFlags,
+                                                      const uint32_t& referrerPolicy,
+                                                      const OptionalURIParams& aReferrerURI,
+                                                      const OptionalURIParams& apiRedirectUri,
+                                                      const OptionalCorsPreflightArgs& aCorsPreflightArgs,
+                                                      const bool& aForceHSTSPriming,
+                                                      const bool& aMixedContentWouldBlock,
+                                                      const bool& aChooseAppcache) override;
+  virtual mozilla::ipc::IPCResult RecvUpdateAssociatedContentSecurity(const int32_t& broken,
                                                    const int32_t& no) override;
-  virtual bool RecvDocumentChannelCleanup() override;
-  virtual bool RecvMarkOfflineCacheEntryAsForeign() override;
-  virtual bool RecvDivertOnDataAvailable(const nsCString& data,
+  virtual mozilla::ipc::IPCResult RecvDocumentChannelCleanup() override;
+  virtual mozilla::ipc::IPCResult RecvMarkOfflineCacheEntryAsForeign() override;
+  virtual mozilla::ipc::IPCResult RecvDivertOnDataAvailable(const nsCString& data,
                                          const uint64_t& offset,
                                          const uint32_t& count) override;
-  virtual bool RecvDivertOnStopRequest(const nsresult& statusCode) override;
-  virtual bool RecvDivertComplete() override;
-  virtual bool RecvRemoveCorsPreflightCacheEntry(const URIParams& uri,
-                                                 const mozilla::ipc::PrincipalInfo& requestingPrincipal) override;
+  virtual mozilla::ipc::IPCResult RecvDivertOnStopRequest(const nsresult& statusCode) override;
+  virtual mozilla::ipc::IPCResult RecvDivertComplete() override;
+  virtual mozilla::ipc::IPCResult RecvRemoveCorsPreflightCacheEntry(const URIParams& uri,
+                                                                    const mozilla::ipc::PrincipalInfo& requestingPrincipal) override;
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
   // Supporting function for ADivertableParentChannel.
@@ -188,8 +193,8 @@ protected:
   // send any more messages after that. Bug 1274886
   bool DoSendDeleteSelf();
   // Called to notify the parent channel to not send any more IPC messages.
-  virtual bool RecvDeletingChannel() override;
-  virtual bool RecvFinishInterceptedRedirect() override;
+  virtual mozilla::ipc::IPCResult RecvDeletingChannel() override;
+  virtual mozilla::ipc::IPCResult RecvFinishInterceptedRedirect() override;
 
 private:
   void UpdateAndSerializeSecurityInfo(nsACString& aSerializedSecurityInfoOut);

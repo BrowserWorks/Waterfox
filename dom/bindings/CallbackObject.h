@@ -46,7 +46,7 @@ public:
   NS_DECLARE_STATIC_IID_ACCESSOR(DOM_CALLBACKOBJECT_IID)
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(CallbackObject)
+  NS_DECL_CYCLE_COLLECTION_SKIPPABLE_SCRIPT_HOLDER_CLASS(CallbackObject)
 
   // The caller may pass a global object which will act as an override for the
   // incumbent script settings object when the callback is invoked (overriding
@@ -79,7 +79,15 @@ public:
     Init(aCallback, aAsyncStack, aIncumbentGlobal);
   }
 
-  JS::Handle<JSObject*> Callback() const
+  // This is guaranteed to be non-null from the time the CallbackObject is
+  // created until JavaScript has had a chance to run. It will only return null
+  // after a JavaScript caller has called nukeSandbox on a Sandbox object, and
+  // the cycle collector has had a chance to run.
+  //
+  // This means that any native callee which receives a CallbackObject as an
+  // argument can safely rely on the callback being non-null so long as it
+  // doesn't trigger any scripts before it accesses it.
+  JS::Handle<JSObject*> CallbackOrNull() const
   {
     mCallback.exposeToActiveJS();
     return CallbackPreserveColor();
@@ -113,7 +121,7 @@ public:
 
   /*
    * If the callback is known to be non-gray, then this method can be
-   * used instead of Callback() to avoid the overhead of
+   * used instead of CallbackOrNull() to avoid the overhead of
    * ExposeObjectToActiveJS().
    */
   JS::Handle<JSObject*> CallbackKnownNotGray() const
@@ -160,12 +168,32 @@ protected:
 
   bool operator==(const CallbackObject& aOther) const
   {
-    JSObject* thisObj =
-      js::UncheckedUnwrap(CallbackPreserveColor());
-    JSObject* otherObj =
-      js::UncheckedUnwrap(aOther.CallbackPreserveColor());
+    JSObject* wrappedThis = CallbackPreserveColor();
+    JSObject* wrappedOther = aOther.CallbackPreserveColor();
+    if (!wrappedThis || !wrappedOther) {
+      return this == &aOther;
+    }
+
+    JSObject* thisObj = js::UncheckedUnwrap(wrappedThis);
+    JSObject* otherObj = js::UncheckedUnwrap(wrappedOther);
     return thisObj == otherObj;
   }
+
+  class JSObjectsDropper final
+  {
+  public:
+    explicit JSObjectsDropper(CallbackObject* aHolder)
+      : mHolder(aHolder)
+    {}
+
+    ~JSObjectsDropper()
+    {
+      mHolder->DropJSObjects();
+    }
+
+  private:
+    RefPtr<CallbackObject> mHolder;
+  };
 
 private:
   inline void InitNoHold(JSObject* aCallback, JSObject* aCreationStack,
@@ -213,9 +241,10 @@ protected:
   void Trace(JSTracer* aTracer);
 
   // For use from subclasses that want to be traced for a bit then possibly
-  // switch to HoldJSObjects.  If we have more than one owner, this will
-  // HoldJSObjects; otherwise it will just forget all our JS references.
-  void HoldJSObjectsIfMoreThanOneOwner();
+  // switch to HoldJSObjects and do other slow JS-related init work we might do.
+  // If we have more than one owner, this will HoldJSObjects and do said slow
+  // init work; otherwise it will just forget all our JS references.
+  void FinishSlowJSInitIfMoreThanOneOwner(JSContext* aCx);
 
   // Struct used as a way to force a CallbackObject constructor to not call
   // HoldJSObjects. We're putting it here so that CallbackObject subclasses will
@@ -227,21 +256,14 @@ protected:
   };
 
   // Just like the public version without the FastCallbackConstructor argument,
-  // except for not calling HoldJSObjects.  If you use this, you MUST ensure
-  // that the object is traced until the HoldJSObjects happens!
-  CallbackObject(JSContext* aCx, JS::Handle<JSObject*> aCallback,
-                 nsIGlobalObject* aIncumbentGlobal,
+  // except for not calling HoldJSObjects and not capturing async stacks (on the
+  // assumption that we will do that last whenever we decide to actually
+  // HoldJSObjects; see FinishSlowJSInitIfMoreThanOneOwner).  If you use this,
+  // you MUST ensure that the object is traced until the HoldJSObjects happens!
+  CallbackObject(JS::Handle<JSObject*> aCallback,
                  const FastCallbackConstructor&)
   {
-    if (aCx && JS::ContextOptionsRef(aCx).asyncStack()) {
-      JS::RootedObject stack(aCx);
-      if (!JS::CaptureCurrentStack(aCx, &stack)) {
-        JS_ClearPendingException(aCx);
-      }
-      InitNoHold(aCallback, stack, aIncumbentGlobal);
-    } else {
-      InitNoHold(aCallback, nullptr, aIncumbentGlobal);
-    }
+    InitNoHold(aCallback, nullptr, nullptr);
   }
 
   // mCallback is not unwrapped, so it can be a cross-compartment-wrapper.
@@ -489,8 +511,11 @@ public:
     nsCOMPtr<nsISupports> supp =
       CallbackObjectHolderBase::ToXPCOMCallback(GetWebIDLCallback(),
                                                 NS_GET_TEMPLATE_IID(XPCOMCallbackT));
-    // ToXPCOMCallback already did the right QI for us.
-    return supp.forget().downcast<XPCOMCallbackT>();
+    if (supp) {
+      // ToXPCOMCallback already did the right QI for us.
+      return supp.forget().downcast<XPCOMCallbackT>();
+    }
+    return nullptr;
   }
 
   // Try to return a WebIDLCallbackT version of this object.
@@ -530,7 +555,9 @@ ImplCycleCollectionTraverse(nsCycleCollectionTraversalCallback& aCallback,
                             const char* aName,
                             uint32_t aFlags = 0)
 {
-  CycleCollectionNoteChild(aCallback, aField.GetISupports(), aName, aFlags);
+  if (aField) {
+    CycleCollectionNoteChild(aCallback, aField.GetISupports(), aName, aFlags);
+  }
 }
 
 template<class T, class U>
@@ -545,11 +572,12 @@ ImplCycleCollectionUnlink(CallbackObjectHolder<T, U>& aField)
 // it ensures that the callback is traced, and that if something is holding onto
 // the callback when we're done with it HoldJSObjects is called.
 template<typename T>
-class RootedCallback : public JS::Rooted<T>
+class MOZ_RAII RootedCallback : public JS::Rooted<T>
 {
 public:
   explicit RootedCallback(JSContext* cx)
     : JS::Rooted<T>(cx)
+    , mCx(cx)
   {}
 
   // We need a way to make assignment from pointers (how we're normally used)
@@ -567,20 +595,20 @@ public:
     this->get().operator=(arg);
   }
 
-  // Codegen relies on being able to do Callback() on us.
-  JS::Handle<JSObject*> Callback() const
+  // Codegen relies on being able to do CallbackOrNull() on us.
+  JS::Handle<JSObject*> CallbackOrNull() const
   {
-    return this->get()->Callback();
+    return this->get()->CallbackOrNull();
   }
 
   ~RootedCallback()
   {
     // Ensure that our callback starts holding on to its own JS objects as
-    // needed.  Having to null-check here when T is OwningNonNull is a bit
-    // silly, but it's simpler than creating two separate RootedCallback
-    // instantiations for OwningNonNull and RefPtr.
+    // needed.  We really do need to check that things are initialized even when
+    // T is OwningNonNull, because we might be running before the OwningNonNull
+    // ever got assigned to!
     if (IsInitialized(this->get())) {
-      this->get()->HoldJSObjectsIfMoreThanOneOwner();
+      this->get()->FinishSlowJSInitIfMoreThanOneOwner(mCx);
     }
   }
 
@@ -599,6 +627,8 @@ private:
   {
     return aOwningNonNull.isInitialized();
   }
+
+  JSContext* mCx;
 };
 
 } // namespace dom

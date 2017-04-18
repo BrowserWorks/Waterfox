@@ -19,7 +19,7 @@ add_task(function* setup() {
 
 add_task(function* initial_state() {
   let path = OS.Path.join(OS.Constants.Path.profileDir, DB_FILENAME);
-  let db = yield Sqlite.openConnection({ path: path });
+  let db = yield Sqlite.openConnection({ path });
 
   Assert.equal((yield getTotalGuidAnnotationsCount(db)), 1,
                "There should be 1 obsolete guid annotation");
@@ -34,8 +34,7 @@ add_task(function* database_is_valid() {
   Assert.equal((yield db.getSchemaVersion()), CURRENT_SCHEMA_VERSION);
 });
 
-add_task(function* test_bookmark_guid_annotation_removed()
-{
+add_task(function* test_bookmark_guid_annotation_removed() {
   let db = yield PlacesUtils.promiseDBConnection();
   Assert.equal((yield getTotalGuidAnnotationsCount(db)), 0,
                "There should be no more obsolete GUID annotations.");

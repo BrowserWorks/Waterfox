@@ -83,7 +83,7 @@ addEventListener("blur", function(event) {
   LoginManagerContent.onUsernameInput(event);
 });
 
-var handleContentContextMenu = function (event) {
+var handleContentContextMenu = function(event) {
   let defaultPrevented = event.defaultPrevented;
   if (!Services.prefs.getBoolPref("dom.event.contextmenu.enabled")) {
     let plugin = null;
@@ -103,8 +103,8 @@ var handleContentContextMenu = function (event) {
 
   let addonInfo = {};
   let subject = {
-    event: event,
-    addonInfo: addonInfo,
+    event,
+    addonInfo,
   };
   subject.wrappedJSObject = subject;
   Services.obs.notifyObservers(subject, "content-contextmenu", null);
@@ -190,25 +190,24 @@ var handleContentContextMenu = function (event) {
                      frameOuterWindowID, selectionInfo, disableSetDesktopBg,
                      loginFillInfo, parentAllowsMixedContent, userContextId },
                    { event, popupNode: event.target });
-  }
-  else {
+  } else {
     // Break out to the parent window and pass the add-on info along
     let browser = docShell.chromeEventHandler;
     let mainWin = browser.ownerGlobal;
     mainWin.gContextMenuContentData = {
       isRemote: false,
-      event: event,
+      event,
       popupNode: event.target,
-      browser: browser,
-      addonInfo: addonInfo,
+      browser,
+      addonInfo,
       documentURIObject: doc.documentURIObject,
-      docLocation: docLocation,
-      charSet: charSet,
-      referrer: referrer,
-      referrerPolicy: referrerPolicy,
-      contentType: contentType,
-      contentDisposition: contentDisposition,
-      selectionInfo: selectionInfo,
+      docLocation,
+      charSet,
+      referrer,
+      referrerPolicy,
+      contentType,
+      contentDisposition,
+      selectionInfo,
       disableSetDesktopBackground: disableSetDesktopBg,
       loginFillInfo,
       parentAllowsMixedContent,
@@ -262,14 +261,14 @@ function getSerializedSecurityInfo(docShell) {
 }
 
 var AboutNetAndCertErrorListener = {
-  init: function(chromeGlobal) {
+  init(chromeGlobal) {
     addMessageListener("CertErrorDetails", this);
     addMessageListener("Browser:CaptivePortalFreed", this);
-    chromeGlobal.addEventListener('AboutNetErrorLoad', this, false, true);
-    chromeGlobal.addEventListener('AboutNetErrorOpenCaptivePortal', this, false, true);
-    chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
-    chromeGlobal.addEventListener('AboutNetErrorOverride', this, false, true);
-    chromeGlobal.addEventListener('AboutNetErrorResetPreferences', this, false, true);
+    chromeGlobal.addEventListener("AboutNetErrorLoad", this, false, true);
+    chromeGlobal.addEventListener("AboutNetErrorOpenCaptivePortal", this, false, true);
+    chromeGlobal.addEventListener("AboutNetErrorSetAutomatic", this, false, true);
+    chromeGlobal.addEventListener("AboutNetErrorOverride", this, false, true);
+    chromeGlobal.addEventListener("AboutNetErrorResetPreferences", this, false, true);
   },
 
   get isAboutNetError() {
@@ -280,7 +279,7 @@ var AboutNetAndCertErrorListener = {
     return content.document.documentURI.startsWith("about:certerror");
   },
 
-  receiveMessage: function(msg) {
+  receiveMessage(msg) {
     if (!this.isAboutCertError) {
       return;
     }
@@ -303,11 +302,11 @@ var AboutNetAndCertErrorListener = {
 
     switch (msg.data.code) {
       case SEC_ERROR_UNKNOWN_ISSUER:
-        learnMoreLink.href = baseURL  + "security-error";
+        learnMoreLink.href = baseURL + "security-error";
         break;
 
-      // in case the certificate expired we make sure the system clock
-      // matches settings server (kinto) time
+      // In case the certificate expired we make sure the system clock
+      // matches the blocklist ping (Kinto) time and is not before the build date.
       case SEC_ERROR_EXPIRED_CERTIFICATE:
       case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
       case SEC_ERROR_OCSP_FUTURE_RESPONSE:
@@ -315,31 +314,59 @@ var AboutNetAndCertErrorListener = {
       case MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE:
       case MOZILLA_PKIX_ERROR_NOT_YET_VALID_ISSUER_CERTIFICATE:
 
-        // use blocklist stats if available
+        // We check against Kinto time first if available, because that allows us
+        // to give the user an approximation of what the correct time is.
+        let difference = 0;
         if (Services.prefs.getPrefType(PREF_BLOCKLIST_CLOCK_SKEW_SECONDS)) {
-          let difference = Services.prefs.getIntPref(PREF_BLOCKLIST_CLOCK_SKEW_SECONDS);
+          difference = Services.prefs.getIntPref(PREF_BLOCKLIST_CLOCK_SKEW_SECONDS);
+        }
 
-          // if the difference is more than a day
-          if (Math.abs(difference) > 60 * 60 * 24) {
+        // If the difference is more than a day.
+        if (Math.abs(difference) > 60 * 60 * 24) {
+          let formatter = new Intl.DateTimeFormat();
+          let systemDate = formatter.format(new Date());
+          // negative difference means local time is behind server time
+          let actualDate = formatter.format(new Date(Date.now() - difference * 1000));
+
+          content.document.getElementById("wrongSystemTime_URL")
+            .textContent = content.document.location.hostname;
+          content.document.getElementById("wrongSystemTime_systemDate")
+            .textContent = systemDate;
+          content.document.getElementById("wrongSystemTime_actualDate")
+            .textContent = actualDate;
+
+          content.document.getElementById("errorShortDesc")
+            .style.display = "none";
+          content.document.getElementById("wrongSystemTimePanel")
+            .style.display = "block";
+
+        // If there is no clock skew with Kinto servers, check against the build date.
+        // (The Kinto ping could have happened when the time was still right, or not at all)
+        } else {
+          let appBuildID = Services.appinfo.appBuildID;
+
+          let year = parseInt(appBuildID.substr(0, 4), 10);
+          let month = parseInt(appBuildID.substr(4, 2), 10) - 1;
+          let day = parseInt(appBuildID.substr(6, 2), 10);
+
+          let buildDate = new Date(year, month, day);
+          let systemDate = new Date();
+
+          if (buildDate > systemDate) {
             let formatter = new Intl.DateTimeFormat();
-            let systemDate = formatter.format(new Date());
-            // negative difference means local time is behind server time
-            let actualDate = formatter.format(new Date(Date.now() - difference * 1000));
 
-            content.document.getElementById("wrongSystemTime_URL")
+            content.document.getElementById("wrongSystemTimeWithoutReference_URL")
               .textContent = content.document.location.hostname;
-            content.document.getElementById("wrongSystemTime_systemDate")
-              .textContent = systemDate;
-            content.document.getElementById("wrongSystemTime_actualDate")
-              .textContent = actualDate;
+            content.document.getElementById("wrongSystemTimeWithoutReference_systemDate")
+              .textContent = formatter.format(systemDate);
 
             content.document.getElementById("errorShortDesc")
               .style.display = "none";
-            content.document.getElementById("wrongSystemTimePanel")
+            content.document.getElementById("wrongSystemTimeWithoutReferencePanel")
               .style.display = "block";
           }
         }
-        learnMoreLink.href = baseURL  + "time-errors";
+        learnMoreLink.href = baseURL + "time-errors";
         break;
     }
   },
@@ -348,7 +375,7 @@ var AboutNetAndCertErrorListener = {
     content.dispatchEvent(new content.CustomEvent("AboutNetErrorCaptivePortalFreed"));
   },
 
-  handleEvent: function(aEvent) {
+  handleEvent(aEvent) {
     if (!this.isAboutNetError && !this.isAboutCertError) {
       return;
     }
@@ -372,7 +399,7 @@ var AboutNetAndCertErrorListener = {
     }
   },
 
-  changedCertPrefs: function () {
+  changedCertPrefs() {
     for (let prefName of PREF_SSL_IMPACT) {
       if (Services.prefs.prefHasUserValue(prefName)) {
         return true;
@@ -382,7 +409,7 @@ var AboutNetAndCertErrorListener = {
     return false;
   },
 
-  onPageLoad: function(evt) {
+  onPageLoad(evt) {
     if (this.isAboutCertError) {
       let originalTarget = evt.originalTarget;
       let ownerDoc = originalTarget.ownerDocument;
@@ -394,7 +421,7 @@ var AboutNetAndCertErrorListener = {
       detail: JSON.stringify({
         enabled: Services.prefs.getBoolPref("security.ssl.errorReporting.enabled"),
         changedCertPrefs: this.changedCertPrefs(),
-        automatic: automatic
+        automatic
       })
     }));
 
@@ -402,16 +429,16 @@ var AboutNetAndCertErrorListener = {
                      {reportStatus: TLS_ERROR_REPORT_TELEMETRY_UI_SHOWN});
   },
 
-  openCaptivePortalPage: function(evt) {
+  openCaptivePortalPage(evt) {
     sendAsyncMessage("Browser:OpenCaptivePortalPage");
   },
 
 
-  onResetPreferences: function(evt) {
+  onResetPreferences(evt) {
     sendAsyncMessage("Browser:ResetSSLPreferences");
   },
 
-  onSetAutomatic: function(evt) {
+  onSetAutomatic(evt) {
     sendAsyncMessage("Browser:SetSSLErrorReportAuto", {
       automatic: evt.detail
     });
@@ -427,7 +454,7 @@ var AboutNetAndCertErrorListener = {
     }
   },
 
-  onOverride: function(evt) {
+  onOverride(evt) {
     let {host, port} = content.document.mozDocumentURIIfNotForErrorPages;
     sendAsyncMessage("Browser:OverrideWeakCrypto", { uri: {host, port} });
   }
@@ -443,7 +470,7 @@ var ClickEventHandler = {
       .addSystemEventListener(global, "click", this, true);
   },
 
-  handleEvent: function(event) {
+  handleEvent(event) {
     if (!event.isTrusted || event.defaultPrevented || event.button == 2) {
       return;
     }
@@ -484,7 +511,8 @@ var ClickEventHandler = {
     let json = { button: event.button, shiftKey: event.shiftKey,
                  ctrlKey: event.ctrlKey, metaKey: event.metaKey,
                  altKey: event.altKey, href: null, title: null,
-                 bookmark: false, referrerPolicy: referrerPolicy,
+                 bookmark: false, referrerPolicy,
+                 triggeringPrincipal: principal,
                  originAttributes: principal ? principal.originAttributes : {},
                  isContentWindowPrivate: PrivateBrowsingUtils.isContentWindowPrivate(ownerDoc.defaultView)};
 
@@ -535,7 +563,7 @@ var ClickEventHandler = {
     }
   },
 
-  onCertError: function (targetElement, ownerDoc) {
+  onCertError(targetElement, ownerDoc) {
     let docShell = ownerDoc.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
                                        .getInterface(Ci.nsIWebNavigation)
                                        .QueryInterface(Ci.nsIDocShell);
@@ -547,22 +575,22 @@ var ClickEventHandler = {
     });
   },
 
-  onAboutBlocked: function (targetElement, ownerDoc) {
-    var reason = 'phishing';
+  onAboutBlocked(targetElement, ownerDoc) {
+    var reason = "phishing";
     if (/e=malwareBlocked/.test(ownerDoc.documentURI)) {
-      reason = 'malware';
+      reason = "malware";
     } else if (/e=unwantedBlocked/.test(ownerDoc.documentURI)) {
-      reason = 'unwanted';
+      reason = "unwanted";
     }
     sendAsyncMessage("Browser:SiteBlockedError", {
       location: ownerDoc.location.href,
-      reason: reason,
+      reason,
       elementId: targetElement.getAttribute("id"),
       isTopFrame: (ownerDoc.defaultView.parent === ownerDoc.defaultView)
     });
   },
 
-  onAboutNetError: function (event, documentURI) {
+  onAboutNetError(event, documentURI) {
     let elmId = event.originalTarget.getAttribute("id");
     if (elmId == "returnButton") {
       sendAsyncMessage("Browser:SSLErrorGoBack", {});
@@ -591,7 +619,7 @@ var ClickEventHandler = {
    *       element. This includes SVG links, because callers expect |node|
    *       to behave like an <a> element, which SVG links (XLink) don't.
    */
-  _hrefAndLinkNodeForClickEvent: function(event) {
+  _hrefAndLinkNodeForClickEvent(event) {
     function isHTMLLink(aNode) {
       // Be consistent with what nsContextMenu.js does.
       return ((aNode instanceof content.HTMLAnchorElement && aNode.href) ||
@@ -656,7 +684,7 @@ addMessageListener("webrtc:StartBrowserSharing", () => {
   let windowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
                         .getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
   sendAsyncMessage("webrtc:response:StartBrowserSharing", {
-    windowID: windowID
+    windowID
   });
 });
 
@@ -699,7 +727,7 @@ var PageMetadataMessenger = {
 }
 PageMetadataMessenger.init();
 
-addEventListener("ActivateSocialFeature", function (aEvent) {
+addEventListener("ActivateSocialFeature", function(aEvent) {
   let document = content.document;
   let dwu = content.QueryInterface(Ci.nsIInterfaceRequestor)
                    .getInterface(Ci.nsIDOMWindowUtils);
@@ -744,38 +772,41 @@ addMessageListener("ContextMenu:SaveVideoFrameAsImage", (message) => {
 });
 
 addMessageListener("ContextMenu:MediaCommand", (message) => {
-  let media = message.objects.element;
-
-  switch (message.data.command) {
-    case "play":
-      media.play();
-      break;
-    case "pause":
-      media.pause();
-      break;
-    case "loop":
-      media.loop = !media.loop;
-      break;
-    case "mute":
-      media.muted = true;
-      break;
-    case "unmute":
-      media.muted = false;
-      break;
-    case "playbackRate":
-      media.playbackRate = message.data.data;
-      break;
-    case "hidecontrols":
-      media.removeAttribute("controls");
-      break;
-    case "showcontrols":
-      media.setAttribute("controls", "true");
-      break;
-    case "fullscreen":
-      if (content.document.fullscreenEnabled)
-        media.requestFullscreen();
-      break;
-  }
+  E10SUtils.wrapHandlingUserInput(
+    content, message.data.handlingUserInput,
+    () => {
+      let media = message.objects.element;
+      switch (message.data.command) {
+        case "play":
+          media.play();
+          break;
+        case "pause":
+          media.pause();
+          break;
+        case "loop":
+          media.loop = !media.loop;
+          break;
+        case "mute":
+          media.muted = true;
+          break;
+        case "unmute":
+          media.muted = false;
+          break;
+        case "playbackRate":
+          media.playbackRate = message.data.data;
+          break;
+        case "hidecontrols":
+          media.removeAttribute("controls");
+          break;
+        case "showcontrols":
+          media.setAttribute("controls", "true");
+          break;
+        case "fullscreen":
+          if (content.document.fullscreenEnabled)
+            media.requestFullscreen();
+          break;
+      }
+    });
 });
 
 addMessageListener("ContextMenu:Canvas:ToBlobURL", (message) => {
@@ -851,7 +882,7 @@ addMessageListener("ContextMenu:SearchFieldBookmarkData", (message) => {
         ((type == "checkbox" || type == "radio") && el.checked)) {
       formData.push(escapeNameValuePair(el.name, el.value, isURLEncoded));
     } else if (el instanceof content.HTMLSelectElement && el.selectedIndex >= 0) {
-      for (let j=0; j < el.options.length; j++) {
+      for (let j = 0; j < el.options.length; j++) {
         if (el.options[j].selected)
           formData.push(escapeNameValuePair(el.name, el.options[j].value,
                                             isURLEncoded));
@@ -876,20 +907,20 @@ addMessageListener("Bookmarks:GetPageDetails", (message) => {
   let doc = content.document;
   let isErrorPage = /^about:(neterror|certerror|blocked)/.test(doc.documentURI);
   sendAsyncMessage("Bookmarks:GetPageDetails:Result",
-                   { isErrorPage: isErrorPage,
+                   { isErrorPage,
                      description: PlacesUIUtils.getDescriptionFromDocument(doc) });
 });
 
 var LightWeightThemeWebInstallListener = {
   _previewWindow: null,
 
-  init: function() {
+  init() {
     addEventListener("InstallBrowserTheme", this, false, true);
     addEventListener("PreviewBrowserTheme", this, false, true);
     addEventListener("ResetBrowserThemePreview", this, false, true);
   },
 
-  handleEvent: function (event) {
+  handleEvent(event) {
     switch (event.type) {
       case "InstallBrowserTheme": {
         sendAsyncMessage("LightWeightThemeWebInstaller:Install", {
@@ -923,7 +954,7 @@ var LightWeightThemeWebInstallListener = {
     }
   },
 
-  _resetPreviewWindow: function () {
+  _resetPreviewWindow() {
     this._previewWindow.removeEventListener("pagehide", this, true);
     this._previewWindow = null;
   }
@@ -969,8 +1000,7 @@ addMessageListener("ContextMenu:SetAsDesktopBackground", (message) => {
       let dataUrl = canvas.toDataURL();
       sendAsyncMessage("ContextMenu:SetAsDesktopBackground:Result",
                        { dataUrl });
-    }
-    catch (e) {
+    } catch (e) {
       Cu.reportError(e);
       disable = true;
     }
@@ -982,11 +1012,11 @@ addMessageListener("ContextMenu:SetAsDesktopBackground", (message) => {
 
 var PageInfoListener = {
 
-  init: function() {
+  init() {
     addMessageListener("PageInfo:getData", this);
   },
 
-  receiveMessage: function(message) {
+  receiveMessage(message) {
     let strings = message.data.strings;
     let window;
     let document;
@@ -997,8 +1027,7 @@ var PageInfoListener = {
     if (frameOuterWindowID) {
       window = Services.wm.getOuterWindowWithId(frameOuterWindowID);
       document = window.document;
-    }
-    else {
+    } else {
       window = content.window;
       document = content.document;
     }
@@ -1017,7 +1046,7 @@ var PageInfoListener = {
     this.getMediaInfo(document, window, strings);
   },
 
-  getImageInfo: function(imageElement) {
+  getImageInfo(imageElement) {
     let imageInfo = null;
     if (imageElement) {
       imageInfo = {
@@ -1030,7 +1059,7 @@ var PageInfoListener = {
     return imageInfo;
   },
 
-  getMetaInfo: function(document) {
+  getMetaInfo(document) {
     let metaViewRows = [];
 
     // Get the meta tags from the page.
@@ -1044,21 +1073,20 @@ var PageInfoListener = {
     return metaViewRows;
   },
 
-  getWindowInfo: function(window) {
+  getWindowInfo(window) {
     let windowInfo = {};
     windowInfo.isTopWindow = window == window.top;
 
     let hostName = null;
     try {
       hostName = window.location.host;
-    }
-    catch (exception) { }
+    } catch (exception) { }
 
     windowInfo.hostName = hostName;
     return windowInfo;
   },
 
-  getDocumentInfo: function(document) {
+  getDocumentInfo(document) {
     let docInfo = {};
     docInfo.title = document.title;
     docInfo.location = document.location.toString();
@@ -1079,7 +1107,7 @@ var PageInfoListener = {
     return docInfo;
   },
 
-  getFeedsInfo: function(document, strings) {
+  getFeedsInfo(document, strings) {
     let feeds = [];
     // Get the feeds from the page.
     let linkNodes = document.getElementsByTagName("link");
@@ -1110,14 +1138,12 @@ var PageInfoListener = {
   },
 
   // Only called once to get the media tab's media elements from the content page.
-  getMediaInfo: function(document, window, strings)
-  {
+  getMediaInfo(document, window, strings) {
     let frameList = this.goThroughFrames(document, window);
     Task.spawn(() => this.processFrames(document, frameList, strings));
   },
 
-  goThroughFrames: function(document, window)
-  {
+  goThroughFrames(document, window) {
     let frameList = [document];
     if (window && window.frames.length > 0) {
       let num = window.frames.length;
@@ -1130,8 +1156,7 @@ var PageInfoListener = {
     return frameList;
   },
 
-  processFrames: function*(document, frameList, strings)
-  {
+  *processFrames(document, frameList, strings) {
     let nodeCount = 0;
     for (let doc of frameList) {
       let iterator = doc.createTreeWalker(doc, content.NodeFilter.SHOW_ELEMENT);
@@ -1155,16 +1180,15 @@ var PageInfoListener = {
     sendAsyncMessage("PageInfo:mediaData", {isComplete: true});
   },
 
-  getMediaItems: function(document, strings, elem)
-  {
+  getMediaItems(document, strings, elem) {
     // Check for images defined in CSS (e.g. background, borders)
     let computedStyle = elem.ownerGlobal.getComputedStyle(elem);
     // A node can have multiple media items associated with it - for example,
     // multiple background images.
     let mediaItems = [];
 
-    let addImage = (url, type, alt, elem, isBg) => {
-      let element = this.serializeElementInfo(document, url, type, alt, elem, isBg);
+    let addImage = (url, type, alt, el, isBg) => {
+      let element = this.serializeElementInfo(document, url, type, alt, el, isBg);
       mediaItems.push([url, type, alt, element, isBg]);
     };
 
@@ -1172,8 +1196,7 @@ var PageInfoListener = {
       let addImgFunc = (label, val) => {
         if (val.primitiveType == content.CSSPrimitiveValue.CSS_URI) {
           addImage(val.getStringValue(), label, strings.notSet, elem, true);
-        }
-        else if (val.primitiveType == content.CSSPrimitiveValue.CSS_STRING) {
+        } else if (val.primitiveType == content.CSSPrimitiveValue.CSS_STRING) {
           // This is for -moz-image-rect.
           // TODO: Reimplement once bug 714757 is fixed.
           let strVal = val.getStringValue();
@@ -1181,8 +1204,7 @@ var PageInfoListener = {
             let url = strVal.replace(/^.*url\(\"?/, "").replace(/\"?\).*$/, "");
             addImage(url, label, strings.notSet, elem, true);
           }
-        }
-        else if (val.cssValueType == content.CSSValue.CSS_VALUE_LIST) {
+        } else if (val.cssValueType == content.CSSValue.CSS_VALUE_LIST) {
           // Recursively resolve multiple nested CSS value lists.
           for (let i = 0; i < val.length; i++) {
             addImgFunc(label, val.item(i));
@@ -1200,36 +1222,31 @@ var PageInfoListener = {
     if (elem instanceof content.HTMLImageElement) {
       addImage(elem.src, strings.mediaImg,
                (elem.hasAttribute("alt")) ? elem.alt : strings.notSet, elem, false);
-    }
-    else if (elem instanceof content.SVGImageElement) {
+    } else if (elem instanceof content.SVGImageElement) {
       try {
         // Note: makeURLAbsolute will throw if either the baseURI is not a valid URI
         //       or the URI formed from the baseURI and the URL is not a valid URI.
-        let href = makeURLAbsolute(elem.baseURI, elem.href.baseVal);
-        addImage(href, strings.mediaImg, "", elem, false);
+        if (elem.href.baseVal) {
+          let href = Services.io.newURI(elem.href.baseVal, null, Services.io.newURI(elem.baseURI)).spec;
+          addImage(href, strings.mediaImg, "", elem, false);
+        }
       } catch (e) { }
-    }
-    else if (elem instanceof content.HTMLVideoElement) {
+    } else if (elem instanceof content.HTMLVideoElement) {
       addImage(elem.currentSrc, strings.mediaVideo, "", elem, false);
-    }
-    else if (elem instanceof content.HTMLAudioElement) {
+    } else if (elem instanceof content.HTMLAudioElement) {
       addImage(elem.currentSrc, strings.mediaAudio, "", elem, false);
-    }
-    else if (elem instanceof content.HTMLLinkElement) {
+    } else if (elem instanceof content.HTMLLinkElement) {
       if (elem.rel && /\bicon\b/i.test(elem.rel)) {
         addImage(elem.href, strings.mediaLink, "", elem, false);
       }
-    }
-    else if (elem instanceof content.HTMLInputElement || elem instanceof content.HTMLButtonElement) {
+    } else if (elem instanceof content.HTMLInputElement || elem instanceof content.HTMLButtonElement) {
       if (elem.type.toLowerCase() == "image") {
         addImage(elem.src, strings.mediaInput,
                  (elem.hasAttribute("alt")) ? elem.alt : strings.notSet, elem, false);
       }
-    }
-    else if (elem instanceof content.HTMLObjectElement) {
+    } else if (elem instanceof content.HTMLObjectElement) {
       addImage(elem.data, strings.mediaObject, this.getValueText(elem), elem, false);
-    }
-    else if (elem instanceof content.HTMLEmbedElement) {
+    } else if (elem instanceof content.HTMLEmbedElement) {
       addImage(elem.src, strings.mediaEmbed, "", elem, false);
     }
 
@@ -1241,8 +1258,7 @@ var PageInfoListener = {
    * makePreview in pageInfo.js uses to figure out how to display the preview.
    */
 
-  serializeElementInfo: function(document, url, type, alt, item, isBG)
-  {
+  serializeElementInfo(document, url, type, alt, item, isBG) {
     let result = {};
 
     let imageText;
@@ -1322,8 +1338,7 @@ var PageInfoListener = {
   // Other Misc Stuff
   // Modified from the Links Panel v2.3, http://segment7.net/mozilla/links/links.html
   // parse a node to extract the contents of the node
-  getValueText: function(node)
-  {
+  getValueText(node) {
 
     let valueText = "";
 
@@ -1344,14 +1359,12 @@ var PageInfoListener = {
       // Text nodes are where the goods are.
       if (nodeType == content.Node.TEXT_NODE) {
         valueText += " " + childNode.nodeValue;
-      }
-      // And elements can have more text inside them.
-      else if (nodeType == content.Node.ELEMENT_NODE) {
+      } else if (nodeType == content.Node.ELEMENT_NODE) {
+        // And elements can have more text inside them.
         // Images are special, we want to capture the alt text as if the image weren't there.
         if (childNode instanceof content.HTMLImageElement) {
           valueText += " " + this.getAltText(childNode);
-        }
-        else {
+        } else {
           valueText += " " + this.getValueText(childNode);
         }
       }
@@ -1362,8 +1375,7 @@ var PageInfoListener = {
 
   // Copied from the Links Panel v2.3, http://segment7.net/mozilla/links/links.html.
   // Traverse the tree in search of an img or area element and grab its alt tag.
-  getAltText: function(node)
-  {
+  getAltText(node) {
     let altText = "";
 
     if (node.alt) {
@@ -1380,8 +1392,7 @@ var PageInfoListener = {
 
   // Copied from the Links Panel v2.3, http://segment7.net/mozilla/links/links.html.
   // Strip leading and trailing whitespace, and replace multiple consecutive whitespace characters with a single space.
-  stripWS: function(text)
-  {
+  stripWS(text) {
     let middleRE = /\s+/g;
     let endRE = /(^\s+)|(\s+$)/g;
 

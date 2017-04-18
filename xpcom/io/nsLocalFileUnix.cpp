@@ -828,7 +828,7 @@ nsLocalFile::CopyToNative(nsIFile* aNewParent, const nsACString& aNewName)
 #endif
 
     // actually create the file.
-    nsLocalFile* newFile = new nsLocalFile();
+    auto* newFile = new nsLocalFile();
     nsCOMPtr<nsIFile> fileRef(newFile); // release on exit
 
     rv = newFile->InitWithNativePath(newPathName);
@@ -1041,7 +1041,7 @@ nsLocalFile::Remove(bool aRecursive)
   }
 
   if (aRecursive) {
-    nsDirEnumeratorUnix* dir = new nsDirEnumeratorUnix();
+    auto* dir = new nsDirEnumeratorUnix();
 
     nsCOMPtr<nsISimpleEnumerator> dirRef(dir); // release on exit
 
@@ -1288,7 +1288,8 @@ nsLocalFile::GetFileSizeOfLink(int64_t* aFileSize)
  * Fails when /proc/self/mountinfo or diven device don't exist.
  */
 static bool
-GetDeviceName(int aDeviceMajor, int aDeviceMinor, nsACString& aDeviceName)
+GetDeviceName(unsigned int aDeviceMajor, unsigned int aDeviceMinor,
+              nsACString& aDeviceName)
 {
   bool ret = false;
 
@@ -1298,7 +1299,7 @@ GetDeviceName(int aDeviceMajor, int aDeviceMinor, nsACString& aDeviceName)
   char mountinfoLine[kMountInfoLineLength];
   char deviceNum[kMountInfoLineLength];
 
-  SprintfLiteral(deviceNum, "%d:%d", aDeviceMajor, aDeviceMinor);
+  SprintfLiteral(deviceNum, "%u:%u", aDeviceMajor, aDeviceMinor);
 
   FILE* f = fopen("/proc/self/mountinfo", "rt");
   if (!f) {
@@ -1558,8 +1559,8 @@ nsLocalFile::IsExecutable(bool* aResult)
       "jar"   // java application bundle
     };
     nsDependentSubstring ext = Substring(path, dotIdx + 1);
-    for (size_t i = 0; i < ArrayLength(executableExts); i++) {
-      if (ext.EqualsASCII(executableExts[i])) {
+    for (auto executableExt : executableExts) {
+      if (ext.EqualsASCII(executableExt)) {
         // Found a match.  Set result and quit.
         *aResult = true;
         return NS_OK;

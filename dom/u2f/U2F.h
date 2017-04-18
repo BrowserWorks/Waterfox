@@ -10,6 +10,7 @@
 #include "js/TypeDecls.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/CryptoBuffer.h"
 #include "mozilla/dom/Nullable.h"
 #include "mozilla/dom/U2FBinding.h"
 #include "mozilla/ErrorResult.h"
@@ -23,9 +24,12 @@
 #include "nsProxyRelease.h"
 #include "nsWrapperCache.h"
 
-#include "USBToken.h"
+#include "U2FAuthenticator.h"
 
 namespace mozilla {
+
+class AbstractThread;
+
 namespace dom {
 
 class U2FRegisterCallback;
@@ -53,19 +57,6 @@ struct LocalRegisteredKey
   // Nullable<nsTArray<Transport>> mTransports;
 };
 
-// These enumerations are defined in the FIDO U2F Javascript API under the
-// interface "ErrorCode" as constant integers, and thus in the U2F.webidl file.
-// Any changes to these must occur in both locations.
-enum class ErrorCode {
-  OK = 0,
-  OTHER_ERROR = 1,
-  BAD_REQUEST = 2,
-  CONFIGURATION_UNSUPPORTED = 3,
-  DEVICE_INELIGIBLE = 4,
-  TIMEOUT = 5
-};
-
-typedef nsCOMPtr<nsIU2FToken> Authenticator;
 typedef MozPromise<nsString, ErrorCode, false> U2FPromise;
 typedef MozPromise<Authenticator, ErrorCode, false> U2FPrepPromise;
 
@@ -75,7 +66,8 @@ typedef MozPromise<Authenticator, ErrorCode, false> U2FPrepPromise;
 class U2FPrepTask : public Runnable
 {
 public:
-  explicit U2FPrepTask(const Authenticator& aAuthenticator);
+  explicit U2FPrepTask(const Authenticator& aAuthenticator,
+                       AbstractThread* aMainThread);
 
   RefPtr<U2FPrepPromise> Execute();
 
@@ -84,6 +76,7 @@ protected:
 
   Authenticator mAuthenticator;
   MozPromiseHolder<U2FPrepPromise> mPromise;
+  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 // Determine whether the provided Authenticator already knows
@@ -92,7 +85,8 @@ class U2FIsRegisteredTask final : public U2FPrepTask
 {
 public:
   U2FIsRegisteredTask(const Authenticator& aAuthenticator,
-                      const LocalRegisteredKey& aRegisteredKey);
+                      const LocalRegisteredKey& aRegisteredKey,
+                      AbstractThread* aMainThread);
 
   NS_DECL_NSIRUNNABLE
 private:
@@ -106,13 +100,15 @@ class U2FTask : public Runnable
 public:
   U2FTask(const nsAString& aOrigin,
           const nsAString& aAppId,
-          const Authenticator& aAuthenticator);
+          const Authenticator& aAuthenticator,
+          AbstractThread* aMainThread);
 
   RefPtr<U2FPromise> Execute();
 
   nsString mOrigin;
   nsString mAppId;
   Authenticator mAuthenticator;
+  const RefPtr<AbstractThread> mAbstractMainThread;
 
 protected:
   virtual ~U2FTask();
@@ -130,7 +126,8 @@ public:
                   const Authenticator& aAuthenticator,
                   const CryptoBuffer& aAppParam,
                   const CryptoBuffer& aChallengeParam,
-                  const LocalRegisterRequest& aRegisterEntry);
+                  const LocalRegisterRequest& aRegisterEntry,
+                  AbstractThread* aMainThread);
 
   NS_DECL_NSIRUNNABLE
 private:
@@ -153,7 +150,8 @@ public:
               const CryptoBuffer& aAppParam,
               const CryptoBuffer& aChallengeParam,
               const CryptoBuffer& aClientData,
-              const CryptoBuffer& aKeyHandle);
+              const CryptoBuffer& aKeyHandle,
+              AbstractThread* aMainThread);
 
   NS_DECL_NSIRUNNABLE
 private:
@@ -201,7 +199,8 @@ class U2FRunnable : public Runnable
                   , public nsNSSShutDownObject
 {
 public:
-  U2FRunnable(const nsAString& aOrigin, const nsAString& aAppId);
+  U2FRunnable(const nsAString& aOrigin, const nsAString& aAppId,
+              AbstractThread* aMainThread);
 
   // No NSS resources to release.
   virtual
@@ -213,6 +212,7 @@ protected:
 
   nsString mOrigin;
   nsString mAppId;
+  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 // This U2FRunnable completes a single application-requested U2F Register
@@ -225,7 +225,8 @@ public:
                       const Sequence<RegisterRequest>& aRegisterRequests,
                       const Sequence<RegisteredKey>& aRegisteredKeys,
                       const Sequence<Authenticator>& aAuthenticators,
-                      U2FRegisterCallback* aCallback);
+                      U2FRegisterCallback* aCallback,
+                      AbstractThread* aMainThread);
 
   void SendResponse(const RegisterResponse& aResponse);
   void SetTimeout(const int32_t aTimeoutMillis);
@@ -251,7 +252,8 @@ public:
                   const nsAString& aChallenge,
                   const Sequence<RegisteredKey>& aRegisteredKeys,
                   const Sequence<Authenticator>& aAuthenticators,
-                  U2FSignCallback* aCallback);
+                  U2FSignCallback* aCallback,
+                  AbstractThread* aMainThread);
 
   void SendResponse(const SignResponse& aResponse);
   void SetTimeout(const int32_t aTimeoutMillis);
@@ -317,6 +319,7 @@ private:
   nsString mOrigin;
   Sequence<Authenticator> mAuthenticators;
   bool mInitialized;
+  RefPtr<AbstractThread> mAbstractMainThread;
 
   ~U2F();
 };

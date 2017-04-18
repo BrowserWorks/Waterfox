@@ -30,6 +30,8 @@
 using namespace mozilla;
 using namespace mozilla::gfx;
 
+using mozilla::dom::FontFamilyListEntry;
+
 // cribbed from CTFontManager.h
 enum {
    kAutoActivationDisabled = 1
@@ -108,6 +110,14 @@ gfxPlatformMac::CreatePlatformFontList()
     }
     gfxPlatformFontList::Shutdown();
     return nullptr;
+}
+
+void
+gfxPlatformMac::GetSystemFontFamilyList(
+    InfallibleTArray<FontFamilyListEntry>* aFontFamilies)
+{
+    gfxMacPlatformFontList::PlatformFontList()->
+        GetSystemFontFamilyList(aFontFamilies);
 }
 
 already_AddRefed<gfxASurface>
@@ -390,7 +400,7 @@ public:
   {
   }
 
-  virtual Display& GetGlobalDisplay() override
+  Display& GetGlobalDisplay() override
   {
     return mGlobalDisplay;
   }
@@ -405,7 +415,7 @@ public:
       mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
     }
 
-    ~OSXDisplay()
+    ~OSXDisplay() override
     {
       MOZ_ASSERT(NS_IsMainThread());
     }
@@ -418,7 +428,7 @@ public:
       osxDisplay->EnableVsync();
     }
 
-    virtual void EnableVsync() override
+    void EnableVsync() override
     {
       MOZ_ASSERT(NS_IsMainThread());
       if (IsVsyncEnabled()) {
@@ -478,7 +488,7 @@ public:
       }
     }
 
-    virtual void DisableVsync() override
+    void DisableVsync() override
     {
       MOZ_ASSERT(NS_IsMainThread());
       if (!IsVsyncEnabled()) {
@@ -492,18 +502,18 @@ public:
       }
     }
 
-    virtual bool IsVsyncEnabled() override
+    bool IsVsyncEnabled() override
     {
       MOZ_ASSERT(NS_IsMainThread());
       return mDisplayLink != nullptr;
     }
 
-    virtual TimeDuration GetVsyncRate() override
+    TimeDuration GetVsyncRate() override
     {
       return mVsyncRate;
     }
 
-    virtual void Shutdown() override
+    void Shutdown() override
     {
       MOZ_ASSERT(NS_IsMainThread());
       mTimer->Cancel();
@@ -526,9 +536,7 @@ public:
   }; // OSXDisplay
 
 private:
-  virtual ~OSXVsyncSource()
-  {
-  }
+  ~OSXVsyncSource() override = default;
 
   OSXDisplay mGlobalDisplay;
 }; // OSXVsyncSource

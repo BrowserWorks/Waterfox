@@ -31,7 +31,7 @@ var ShortcutUtils = {
     * @return string
     *         A prettified and properly separated modifier keys string.
     */
-  prettifyShortcut: function(aElemKey, aNoCloverLeaf) {
+  prettifyShortcut(aElemKey, aNoCloverLeaf) {
     let elemString = "";
     let elemMod = aElemKey.getAttribute("modifiers");
     let haveCloverLeaf = false;
@@ -93,7 +93,7 @@ var ShortcutUtils = {
         key = Keys.GetStringFromName(keyCode.toUpperCase());
       } catch (ex) {
         Cu.reportError("Error finding " + keyCode + ": " + ex);
-        key = keyCode.replace(/^VK_/, '');
+        key = keyCode.replace(/^VK_/, "");
       }
     } else {
       key = aElemKey.getAttribute("key");
@@ -102,7 +102,7 @@ var ShortcutUtils = {
     return elemString + key;
   },
 
-  findShortcut: function(aElemCommand) {
+  findShortcut(aElemCommand) {
     let document = aElemCommand.ownerDocument;
     return document.querySelector("key[command=\"" + aElemCommand.getAttribute("id") + "\"]");
   }

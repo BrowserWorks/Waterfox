@@ -48,7 +48,7 @@ nsSimpleURI::~nsSimpleURI()
 NS_IMPL_ADDREF(nsSimpleURI)
 NS_IMPL_RELEASE(nsSimpleURI)
 NS_INTERFACE_TABLE_HEAD(nsSimpleURI)
-NS_INTERFACE_TABLE(nsSimpleURI, nsIURI, nsIURIWithQuery, nsISerializable,
+NS_INTERFACE_TABLE(nsSimpleURI, nsIURI, nsISerializable,
                    nsIClassInfo, nsIMutable, nsIIPCSerializableURI)
 NS_INTERFACE_TABLE_TO_MAP_SEGUE
   if (aIID.Equals(kThisSimpleURIImplementationCID))
@@ -424,7 +424,10 @@ nsSimpleURI::SetPath(const nsACString &aPath)
 {
     NS_ENSURE_STATE(mMutable);
 
-    nsAutoCString path(aPath);
+    nsAutoCString path;
+    if (!path.Assign(aPath, fallible)) {
+        return NS_ERROR_OUT_OF_MEMORY;
+    }
     int32_t queryPos = path.FindChar('?');
     int32_t hashPos = path.FindChar('#');
 
@@ -780,10 +783,6 @@ size_t
 nsSimpleURI::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const {
   return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
 }
-
-//----------------------------------------------------------------------------
-// nsSimpleURI::nsIURIWithQuery
-//----------------------------------------------------------------------------
 
 NS_IMETHODIMP
 nsSimpleURI::GetFilePath(nsACString& aFilePath)

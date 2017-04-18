@@ -72,7 +72,7 @@ this.Feeds = {
    *         Whether this is already a known feed or not, if true only a security
    *         check will be performed.
    */
-  isValidFeed: function(aLink, aPrincipal, aIsFeed) {
+  isValidFeed(aLink, aPrincipal, aIsFeed) {
     if (!aLink || !aPrincipal)
       return false;
 
@@ -93,8 +93,7 @@ this.Feeds = {
         BrowserUtils.urlSecurityCheck(aLink.href, principalToCheck,
                                       Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
         return type || "application/rss+xml";
-      }
-      catch (ex) {
+      } catch (ex) {
       }
     }
 

@@ -1209,15 +1209,16 @@ js::InitNumberClass(JSContext* cx, HandleObject obj)
     /* XXX must do at least once per new thread, so do it per JSContext... */
     FIX_FPU();
 
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
 
-    RootedObject numberProto(cx, global->createBlankPrototype(cx, &NumberObject::class_));
+    RootedObject numberProto(cx, GlobalObject::createBlankPrototype(cx, global,
+                                                                    &NumberObject::class_));
     if (!numberProto)
         return nullptr;
     numberProto->as<NumberObject>().setPrimitiveValue(0);
 
     RootedFunction ctor(cx);
-    ctor = global->createConstructor(cx, Number, cx->names().Number, 1);
+    ctor = GlobalObject::createConstructor(cx, Number, cx->names().Number, 1);
     if (!ctor)
         return nullptr;
 
@@ -1814,8 +1815,9 @@ js::ToLengthClamped<JSContext>(JSContext*, HandleValue, uint32_t*, bool*);
 template bool
 js::ToLengthClamped<ExclusiveContext>(ExclusiveContext*, HandleValue, uint32_t*, bool*);
 
+// Non-standard: Used by SIMD and Atomics.
 bool
-js::ToIntegerIndex(JSContext* cx, JS::HandleValue v, uint64_t* index)
+js::NonStandardToIndex(JSContext* cx, HandleValue v, uint64_t* index)
 {
     // Fast common case.
     if (v.isInt32()) {
@@ -1860,6 +1862,35 @@ js::ToIntegerIndex(JSContext* cx, JS::HandleValue v, uint64_t* index)
     }
 
     *index = i;
+    return true;
+}
+
+// ES2017 draft 7.1.17 ToIndex
+bool
+js::ToIndex(JSContext* cx, JS::HandleValue v, uint64_t* index)
+{
+    // Step 1.
+    if (v.isUndefined()) {
+        *index = 0;
+        return true;
+    }
+
+    // Step 2.a.
+    double integerIndex;
+    if (!ToInteger(cx, v, &integerIndex))
+        return false;
+
+    // Inlined version of ToLength.
+    // 1. Already an integer.
+    // 2. Step eliminates < 0, +0 == -0 with SameValueZero.
+    // 3/4. Limit to <= 2^53-1, so everything above should fail.
+    if (integerIndex < 0 || integerIndex >= DOUBLE_INTEGRAL_PRECISION_LIMIT) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
+        return false;
+    }
+
+    // Step 3.
+    *index = uint64_t(integerIndex);
     return true;
 }
 

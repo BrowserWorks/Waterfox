@@ -227,7 +227,7 @@ class BookmarkValidator {
         synced = false;
       }
       let guid = PlacesSyncUtils.bookmarks.guidToSyncId(treeNode.guid);
-      let itemType = 'item';
+      let itemType = "item";
       treeNode.ignored = !synced;
       treeNode.id = guid;
       switch (treeNode.type) {
@@ -238,9 +238,9 @@ class BookmarkValidator {
               name === PlacesSyncUtils.bookmarks.SMART_BOOKMARKS_ANNO);
           }
           if (query && query.value) {
-            itemType = 'query';
+            itemType = "query";
           } else {
-            itemType = 'bookmark';
+            itemType = "bookmark";
           }
           break;
         case PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER:
@@ -259,7 +259,7 @@ class BookmarkValidator {
           itemType = isLivemark ? "livemark" : "folder";
           break;
         case PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR:
-          itemType = 'separator';
+          itemType = "separator";
           break;
       }
 
@@ -274,7 +274,7 @@ class BookmarkValidator {
       records.push(treeNode);
       // We want to use the "real" guid here.
       recordsByGuid.set(treeNode.guid, treeNode);
-      if (treeNode.type === 'folder') {
+      if (treeNode.type === "folder") {
         treeNode.childGUIDs = [];
         if (!treeNode.children) {
           treeNode.children = [];
@@ -288,7 +288,7 @@ class BookmarkValidator {
       }
     }
     traverse(clientTree, false);
-    clientTree.id = 'places';
+    clientTree.id = "places";
     this._followQueries(recordsByGuid);
     return records;
   }
@@ -324,7 +324,6 @@ class BookmarkValidator {
     let deletedRecords = [];
 
     let folders = [];
-    let problems = [];
 
     let problemData = new BookmarkProblemData();
 
@@ -337,12 +336,10 @@ class BookmarkValidator {
       }
       if (record.deleted) {
         deletedItemIds.add(record.id);
-      } else {
-        if (idToRecord.has(record.id)) {
+      } else if (idToRecord.has(record.id)) {
           problemData.duplicates.push(record.id);
           continue;
         }
-      }
       idToRecord.set(record.id, record);
 
       if (record.children) {
@@ -380,14 +377,14 @@ class BookmarkValidator {
       }
     }
 
-    let root = idToRecord.get('places');
+    let root = idToRecord.get("places");
 
     if (!root) {
       // Fabricate a root. We want to remember that it's fake so that we can
       // avoid complaining about stuff like it missing it's childGUIDs later.
-      root = { id: 'places', children: [], type: 'folder', title: '', fake: true };
+      root = { id: "places", children: [], type: "folder", title: "", fake: true };
       resultRecords.push(root);
-      idToRecord.set('places', root);
+      idToRecord.set("places", root);
     } else {
       problemData.rootOnServer = true;
     }
@@ -415,7 +412,7 @@ class BookmarkValidator {
         continue;
       }
 
-      if (parent.type !== 'folder') {
+      if (parent.type !== "folder") {
         problemData.parentNotFolder.push(record.id);
         if (!parent.children) {
           parent.children = [];
@@ -622,8 +619,6 @@ class BookmarkValidator {
 
     this._validateClient(problemData, clientRecords);
 
-    let matches = [];
-
     let allRecords = new Map();
     let serverDeletedLookup = new Set(inspectionInfo.deletedRecords.map(r => r.id));
 
@@ -676,7 +671,7 @@ class BookmarkValidator {
 
       if (client.parentid || server.parentid) {
         if (client.parentid !== server.parentid) {
-          structuralDifferences.push('parentid');
+          structuralDifferences.push("parentid");
         }
       }
 
@@ -684,7 +679,7 @@ class BookmarkValidator {
         let cl = client.tags || [];
         let sl = server.tags || [];
         if (cl.length !== sl.length || !cl.every((tag, i) => sl.indexOf(tag) >= 0)) {
-          differences.push('tags');
+          differences.push("tags");
         }
       }
 
@@ -697,13 +692,13 @@ class BookmarkValidator {
 
 
       if (!sameType) {
-        differences.push('type');
+        differences.push("type");
       } else {
         switch (server.type) {
-          case 'bookmark':
-          case 'query':
+          case "bookmark":
+          case "query":
             if (server.bmkUri !== client.bmkUri) {
-              differences.push('bmkUri');
+              differences.push("bmkUri");
             }
             break;
           case "livemark":
@@ -714,8 +709,8 @@ class BookmarkValidator {
               differences.push("siteUri");
             }
             break;
-          case 'folder':
-            if (server.id === 'places' && !problemData.rootOnServer) {
+          case "folder":
+            if (server.id === "places" && !problemData.rootOnServer) {
               // It's the fabricated places root. It won't have the GUIDs, but
               // it doesn't matter.
               break;
@@ -724,7 +719,7 @@ class BookmarkValidator {
               let cl = client.childGUIDs || [];
               let sl = server.childGUIDs || [];
               if (cl.length !== sl.length || !cl.every((id, i) => sl[i] === id)) {
-                structuralDifferences.push('childGUIDs');
+                structuralDifferences.push("childGUIDs");
               }
             }
             break;
@@ -768,7 +763,7 @@ class BookmarkValidator {
       let serverRecordCount = serverState.length;
       let result = self.compareServerWithClient(serverState, clientTree);
       let end = Date.now();
-      let duration = end-start;
+      let duration = end - start;
       return {
         duration,
         version: self.version,
@@ -778,7 +773,7 @@ class BookmarkValidator {
     });
   }
 
-};
+}
 
 BookmarkValidator.prototype.version = BOOKMARK_VALIDATOR_VERSION;
 

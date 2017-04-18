@@ -7,7 +7,6 @@
 #include <algorithm>
 
 #include "mozilla/Attributes.h"
-#include "mozilla/Function.h"
 #include "mozilla/Likely.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/dom/FunctionBinding.h"
@@ -151,7 +150,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(nsJSScriptTimeoutHandler)
 
   if (tmp->mFunction) {
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFunction)
-    NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 

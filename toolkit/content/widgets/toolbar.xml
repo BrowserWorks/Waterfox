@@ -57,8 +57,8 @@
           if (this.toolbarset) {
             // Create each toolbar described by the toolbarset.
             var index = 0;
-            while (toolbarset.hasAttribute("toolbar"+(++index))) {
-              var toolbarInfo = toolbarset.getAttribute("toolbar"+index);
+            while (toolbarset.hasAttribute("toolbar" + (++index))) {
+              var toolbarInfo = toolbarset.getAttribute("toolbar" + index);
               var infoSplit = toolbarInfo.split(":");
               this.appendCustomToolbar(infoSplit[0], infoSplit[1]);
             }
@@ -137,12 +137,12 @@
           } else {
             // Need to wait until XUL overlays are loaded. See bug 554279.
             let self = this;
-            document.addEventListener("readystatechange", function (event) {
+            document.addEventListener("readystatechange", function(event) {
               if (document.readyState != "complete")
                 return;
-              document.removeEventListener("readystatechange", arguments.callee, false);
+              document.removeEventListener("readystatechange", arguments.callee);
               self._init();
-            }, false);
+            });
           }
         ]]>
       </constructor>
@@ -395,7 +395,7 @@
           var defaultOrNoninteractive = (this.getAttribute("defaultset") || "")
                                           .split(",")
                                           .concat(["separator", "spacer", "spring"]);
-          return aCurrentSet.split(",").some(function (item) {
+          return aCurrentSet.split(",").some(function(item) {
             return defaultOrNoninteractive.indexOf(item) == -1;
           });
         ]]></body>
@@ -419,11 +419,11 @@
         toolbar: this,
         contextMenu: null,
 
-        get active () {
+        get active() {
           return !!this.contextMenu;
         },
 
-        init: function (event) {
+        init(event) {
           var node = event.target;
           while (node != this.toolbar) {
             if (node.localName == "menupopup")
@@ -439,21 +439,21 @@
           if (!this.contextMenu)
             return;
 
-          this.contextMenu.addEventListener("popupshown", this, false);
-          this.contextMenu.addEventListener("popuphiding", this, false);
-          this.toolbar.addEventListener("mousemove", this, false);
+          this.contextMenu.addEventListener("popupshown", this);
+          this.contextMenu.addEventListener("popuphiding", this);
+          this.toolbar.addEventListener("mousemove", this);
         },
-        handleEvent: function (event) {
+        handleEvent(event) {
           switch (event.type) {
             case "popupshown":
-              this.toolbar.removeEventListener("mousemove", this, false);
+              this.toolbar.removeEventListener("mousemove", this);
               break;
             case "popuphiding":
             case "mousemove":
               this.toolbar._setInactiveAsync();
-              this.toolbar.removeEventListener("mousemove", this, false);
-              this.contextMenu.removeEventListener("popuphiding", this, false);
-              this.contextMenu.removeEventListener("popupshown", this, false);
+              this.toolbar.removeEventListener("mousemove", this);
+              this.contextMenu.removeEventListener("popuphiding", this);
+              this.contextMenu.removeEventListener("popupshown", this);
               this.contextMenu = null;
               break;
           }
@@ -468,7 +468,7 @@
 
       <method name="_setInactiveAsync">
         <body><![CDATA[
-          this._inactiveTimeout = setTimeout(function (self) {
+          this._inactiveTimeout = setTimeout(function(self) {
             if (self.getAttribute("autohide") == "true") {
               self._inactiveTimeout = null;
               self._setInactive();

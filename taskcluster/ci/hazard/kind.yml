@@ -18,14 +18,15 @@ job-defaults:
         implementation: docker-worker
         max-run-time: 36000
         docker-image: {in-tree: desktop-build}
+        env:
+            MOZ_AUTOMATION: "1"
 
 jobs:
     linux64-shell-haz/debug:
         description: "JS Shell Hazard Analysis Linux"
         index:
             product: firefox
-            job-name:
-                gecko-v2: shell-haz-debug
+            job-name: shell-haz-debug
         treeherder:
             platform: linux64/debug
             symbol: SM-tc(H)
@@ -44,8 +45,7 @@ jobs:
         description: "Browser Hazard Analysis Linux"
         index:
             product: firefox
-            job-name:
-                gecko-v2: browser-haz-debug
+            job-name: browser-haz-debug
         treeherder:
             platform: linux64/debug
             symbol: tc(H)

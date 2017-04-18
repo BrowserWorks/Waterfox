@@ -36,8 +36,6 @@ XPCOMUtils.defineLazyGetter(this, 'MemoryFront', function() {
   return devtools.require('devtools/server/actors/memory').MemoryFront;
 });
 
-Cu.import('resource://gre/modules/Frames.jsm');
-
 var _telemetryDebug = false;
 
 function telemetryDebug(...args) {
@@ -54,7 +52,6 @@ function telemetryDebug(...args) {
  */
 var developerHUD = {
 
-  _targets: new Map(),
   _histograms: new Set(),
   _customHistograms: new Set(),
   _client: null,
@@ -99,13 +96,6 @@ var developerHUD = {
       }
     }
 
-    Frames.addObserver(this);
-
-    let appFrames = Frames.list().filter(frame => frame.getAttribute('mozapp'));
-    for (let frame of appFrames) {
-      this.trackFrame(frame);
-    }
-
     SettingsListener.observe('hud.logging', this._logging, enabled => {
       this._logging = enabled;
     });
@@ -124,61 +114,8 @@ var developerHUD = {
       return;
     }
 
-    for (let frame of this._targets.keys()) {
-      this.untrackFrame(frame);
-    }
-
-    Frames.removeObserver(this);
-
     this._client.close();
     delete this._client;
-  },
-
-  /**
-   * This method will ask all registered watchers to track and update metrics
-   * on an app frame.
-   */
-  trackFrame(frame) {
-    if (this._targets.has(frame)) {
-      return;
-    }
-
-    DebuggerServer.connectToChild(this._conn, frame).then(actor => {
-      let target = new Target(frame, actor);
-      this._targets.set(frame, target);
-
-      for (let w of this._watchers) {
-        w.trackTarget(target);
-      }
-    });
-  },
-
-  untrackFrame(frame) {
-    let target = this._targets.get(frame);
-    if (target) {
-      for (let w of this._watchers) {
-        w.untrackTarget(target);
-      }
-
-      target.destroy();
-      this._targets.delete(frame);
-    }
-  },
-
-  onFrameCreated(frame, isFirstAppFrame) {
-    let mozapp = frame.getAttribute('mozapp');
-    if (!mozapp) {
-      return;
-    }
-    this.trackFrame(frame);
-  },
-
-  onFrameDestroyed(frame, isLastAppFrame) {
-    let mozapp = frame.getAttribute('mozapp');
-    if (!mozapp) {
-      return;
-    }
-    this.untrackFrame(frame);
   },
 
   log(message) {
@@ -380,62 +317,7 @@ Target.prototype = {
   },
 
   _logHistogram(metric) {
-    if (!developerHUD._telemetry || metric.skipTelemetry) {
-      return;
-    }
-
-    metric.appName = this.appName;
-    if (!metric.appName) {
-      return;
-    }
-
-    let metricName = metric.name.toUpperCase();
-    let metricAppName = metric.appName.toUpperCase();
-    if (!metric.custom) {
-      let keyedMetricName = 'DEVTOOLS_HUD_' + metricName;
-      try {
-        let keyed = Services.telemetry.getKeyedHistogramById(keyedMetricName);
-        if (keyed) {
-          keyed.add(metric.appName, parseInt(metric.value, 10));
-          developerHUD._histograms.add(keyedMetricName);
-          telemetryDebug(keyedMetricName, metric.value, metric.appName);
-        }
-      } catch(err) {
-        console.error('Histogram error is metricname added to histograms.json:'
-          + keyedMetricName);
-      }
-    } else {
-      let histogramName = CUSTOM_HISTOGRAM_PREFIX + metricAppName + '_'
-        + metricName;
-      // This is a call to add a value to an existing histogram.
-      if (typeof metric.value !== 'undefined') {
-        Services.telemetry.getAddonHistogram(metricAppName,
-          CUSTOM_HISTOGRAM_PREFIX + metricName).add(parseInt(metric.value, 10));
-        telemetryDebug(histogramName, metric.value);
-        return;
-      }
-
-      // The histogram already exists and are not adding data to it.
-      if (developerHUD._customHistograms.has(histogramName)) {
-        return;
-      }
-
-      // This is a call to create a new histogram.
-      try {
-        let metricType = parseInt(metric.type, 10);
-        if (metricType === Services.telemetry.HISTOGRAM_COUNT) {
-          Services.telemetry.registerAddonHistogram(metricAppName,
-            CUSTOM_HISTOGRAM_PREFIX + metricName, metricType);
-        } else {
-          Services.telemetry.registerAddonHistogram(metricAppName,
-            CUSTOM_HISTOGRAM_PREFIX + metricName, metricType, metric.min,
-            metric.max, metric.buckets);
-        }
-        developerHUD._customHistograms.add(histogramName);
-      } catch (err) {
-        console.error('Histogram error: ' + err);
-      }
-    }
+    //method left as no-op as histograms are not in use anymore.
   }
 };
 

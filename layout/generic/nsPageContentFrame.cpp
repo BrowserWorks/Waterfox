@@ -9,8 +9,7 @@
 #include "nsIPresShell.h"
 #include "nsSimplePageSequenceFrame.h"
 
-using mozilla::LogicalSize;
-using mozilla::WritingMode;
+using namespace mozilla;
 
 nsPageContentFrame*
 NS_NewPageContentFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
@@ -79,7 +78,7 @@ nsPageContentFrame::Reflow(nsPresContext*           aPresContext,
       nscoord xmost = aDesiredSize.ScrollableOverflow().XMost();
       if (xmost > aDesiredSize.Width()) {
         nscoord widthToFit = xmost + padding.right +
-          kidReflowInput.mStyleBorder->GetComputedBorderWidth(NS_SIDE_RIGHT);
+          kidReflowInput.mStyleBorder->GetComputedBorderWidth(eSideRight);
         float ratio = float(maxSize.width) / widthToFit;
         NS_ASSERTION(ratio >= 0.0 && ratio < 1.0, "invalid shrink-to-fit ratio");
         mPD->mShrinkToFitRatio = std::min(mPD->mShrinkToFitRatio, ratio);

@@ -8,47 +8,44 @@ var PointerlockFsWarning = {
   _element: null,
   _origin: null,
 
-  init: function() {
-    this.Timeout.prototype = {
-      start: function() {
-        this.cancel();
-        this._id = setTimeout(() => this._handle(), this._delay);
-      },
-      cancel: function() {
-        if (this._id) {
-          clearTimeout(this._id);
-          this._id = 0;
-        }
-      },
-      _handle: function() {
-        this._id = 0;
-        this._func();
-      },
-      get delay() {
-        return this._delay;
-      }
-    };
-  },
-
   /**
    * Timeout object for managing timeout request. If it is started when
    * the previous call hasn't finished, it would automatically cancelled
    * the previous one.
    */
-  Timeout: function(func, delay) {
-    this._id = 0;
-    this._func = func;
-    this._delay = delay;
+  Timeout: class {
+    constructor(func, delay) {
+      this._id = 0;
+      this._func = func;
+      this._delay = delay;
+    }
+    start() {
+      this.cancel();
+      this._id = setTimeout(() => this._handle(), this._delay);
+    }
+    cancel() {
+      if (this._id) {
+        clearTimeout(this._id);
+        this._id = 0;
+      }
+    }
+    _handle() {
+      this._id = 0;
+      this._func();
+    }
+    get delay() {
+      return this._delay;
+    }
   },
 
-  showPointerLock: function(aOrigin) {
+  showPointerLock(aOrigin) {
     if (!document.fullscreen) {
       let timeout = gPrefService.getIntPref("pointer-lock-api.warning.timeout");
       this.show(aOrigin, "pointerlock-warning", timeout, 0);
     }
   },
 
-  showFullScreen: function(aOrigin) {
+  showFullScreen(aOrigin) {
     let timeout = gPrefService.getIntPref("full-screen-api.warning.timeout");
     let delay = gPrefService.getIntPref("full-screen-api.warning.delay");
     this.show(aOrigin, "fullscreen-warning", timeout, delay);
@@ -56,7 +53,7 @@ var PointerlockFsWarning = {
 
   // Shows a warning that the site has entered fullscreen or
   // pointer lock for a short duration.
-  show: function(aOrigin, elementId, timeout, delay) {
+  show(aOrigin, elementId, timeout, delay) {
 
     if (!this._element) {
       this._element = document.getElementById(elementId);
@@ -111,7 +108,7 @@ var PointerlockFsWarning = {
     this._timeoutHide.start();
   },
 
-  close: function() {
+  close() {
     if (!this._element) {
       return;
     }
@@ -180,7 +177,7 @@ var PointerlockFsWarning = {
     }
   },
 
-  handleEvent: function(event) {
+  handleEvent(event) {
     switch (event.type) {
     case "mousemove": {
       let state = this._state;
@@ -226,12 +223,12 @@ var PointerlockFsWarning = {
 
 var PointerLock = {
 
-  init: function() {
+  init() {
     window.messageManager.addMessageListener("PointerLock:Entered", this);
     window.messageManager.addMessageListener("PointerLock:Exited", this);
   },
 
-  receiveMessage: function(aMessage) {
+  receiveMessage(aMessage) {
     switch (aMessage.name) {
       case "PointerLock:Entered": {
         PointerlockFsWarning.showPointerLock(aMessage.data.originNoSuffix);
@@ -253,7 +250,7 @@ var FullScreen = {
     "DOMFullscreen:Painted",
   ],
 
-  init: function() {
+  init() {
     // called when we go into full screen, even if initiated by a web page script
     window.addEventListener("fullscreen", this, true);
     window.addEventListener("MozDOMFullscreen:Entered", this,
@@ -270,14 +267,14 @@ var FullScreen = {
       this.toggle();
   },
 
-  uninit: function() {
+  uninit() {
     for (let type of this._MESSAGES) {
       window.messageManager.removeMessageListener(type, this);
     }
     this.cleanup();
   },
 
-  toggle: function () {
+  toggle() {
     var enterFS = window.fullScreen;
 
     // Toggle the View:FullScreen command, which controls elements like the
@@ -297,8 +294,8 @@ var FullScreen = {
 
     if (!this._fullScrToggler) {
       this._fullScrToggler = document.getElementById("fullscr-toggler");
-      this._fullScrToggler.addEventListener("mouseover", this._expandCallback, false);
-      this._fullScrToggler.addEventListener("dragenter", this._expandCallback, false);
+      this._fullScrToggler.addEventListener("mouseover", this._expandCallback);
+      this._fullScrToggler.addEventListener("dragenter", this._expandCallback);
       this._fullScrToggler.addEventListener("touchmove", this._expandCallback, {passive: true});
     }
 
@@ -317,14 +314,13 @@ var FullScreen = {
       this._updateToolbars(enterFS);
 
     if (enterFS) {
-      document.addEventListener("keypress", this._keyToggleCallback, false);
-      document.addEventListener("popupshown", this._setPopupOpen, false);
-      document.addEventListener("popuphidden", this._setPopupOpen, false);
+      document.addEventListener("keypress", this._keyToggleCallback);
+      document.addEventListener("popupshown", this._setPopupOpen);
+      document.addEventListener("popuphidden", this._setPopupOpen);
       // In DOM fullscreen mode, we hide toolbars with CSS
       if (!document.fullscreenElement)
         this.hideNavToolbox(true);
-    }
-    else {
+    } else {
       this.showNavToolbox(false);
       // This is needed if they use the context menu to quit fullscreen
       this._isPopupOpen = false;
@@ -343,11 +339,11 @@ var FullScreen = {
     }
   },
 
-  exitDomFullScreen : function() {
+  exitDomFullScreen() {
     document.exitFullscreen();
   },
 
-  handleEvent: function (event) {
+  handleEvent(event) {
     switch (event.type) {
       case "fullscreen":
         this.toggle();
@@ -378,7 +374,7 @@ var FullScreen = {
     }
   },
 
-  receiveMessage: function(aMessage) {
+  receiveMessage(aMessage) {
     let browser = aMessage.target;
     switch (aMessage.name) {
       case "DOMFullscreen:Request": {
@@ -404,7 +400,7 @@ var FullScreen = {
     }
   },
 
-  enterDomFullscreen : function(aBrowser) {
+  enterDomFullscreen(aBrowser) {
 
     if (!document.fullscreenElement) {
       return;
@@ -457,16 +453,16 @@ var FullScreen = {
     window.addEventListener("activate", this);
   },
 
-  cleanup: function () {
+  cleanup() {
     if (!window.fullScreen) {
       MousePosTracker.removeListener(this);
-      document.removeEventListener("keypress", this._keyToggleCallback, false);
-      document.removeEventListener("popupshown", this._setPopupOpen, false);
-      document.removeEventListener("popuphidden", this._setPopupOpen, false);
+      document.removeEventListener("keypress", this._keyToggleCallback);
+      document.removeEventListener("popupshown", this._setPopupOpen);
+      document.removeEventListener("popuphidden", this._setPopupOpen);
     }
   },
 
-  cleanupDomFullscreen: function () {
+  cleanupDomFullscreen() {
     window.messageManager
           .broadcastAsyncMessage("DOMFullscreen:CleanUp");
 
@@ -479,7 +475,7 @@ var FullScreen = {
     document.documentElement.removeAttribute("inDOMFullscreen");
   },
 
-  _isRemoteBrowser: function (aBrowser) {
+  _isRemoteBrowser(aBrowser) {
     return gMultiProcessBrowser && aBrowser.getAttribute("remote") == "true";
   },
 
@@ -488,36 +484,32 @@ var FullScreen = {
                  .getInterface(Ci.nsIDOMWindowUtils);
   },
 
-  getMouseTargetRect: function()
-  {
+  getMouseTargetRect() {
     return this._mouseTargetRect;
   },
 
   // Event callbacks
-  _expandCallback: function()
-  {
+  _expandCallback() {
     FullScreen.showNavToolbox();
   },
-  onMouseEnter: function()
-  {
+  onMouseEnter() {
     FullScreen.hideNavToolbox();
   },
-  _keyToggleCallback: function(aEvent)
-  {
+  _keyToggleCallback(aEvent) {
     // if we can use the keyboard (eg Ctrl+L or Ctrl+E) to open the toolbars, we
     // should provide a way to collapse them too.
     if (aEvent.keyCode == aEvent.DOM_VK_ESCAPE) {
       FullScreen.hideNavToolbox();
-    }
-    // F6 is another shortcut to the address bar, but its not covered in OpenLocation()
-    else if (aEvent.keyCode == aEvent.DOM_VK_F6)
+    } else if (aEvent.keyCode == aEvent.DOM_VK_F6) {
+      // F6 is another shortcut to the address bar, but its not covered in OpenLocation()
       FullScreen.showNavToolbox();
+    }
   },
 
   // Checks whether we are allowed to collapse the chrome
   _isPopupOpen: false,
   _isChromeCollapsed: false,
-  _safeToCollapse: function () {
+  _safeToCollapse() {
     if (!gPrefService.getBoolPref("browser.fullscreen.autohide"))
       return false;
 
@@ -539,8 +531,7 @@ var FullScreen = {
     return true;
   },
 
-  _setPopupOpen: function(aEvent)
-  {
+  _setPopupOpen(aEvent) {
     // Popups should only veto chrome collapsing if they were opened when the chrome was not collapsed.
     // Otherwise, they would not affect chrome and the user would expect the chrome to go away.
     // e.g. we wouldn't want the autoscroll icon firing this event, so when the user
@@ -557,18 +548,16 @@ var FullScreen = {
   },
 
   // Autohide helpers for the context menu item
-  getAutohide: function(aItem)
-  {
+  getAutohide(aItem) {
     aItem.setAttribute("checked", gPrefService.getBoolPref("browser.fullscreen.autohide"));
   },
-  setAutohide: function()
-  {
+  setAutohide() {
     gPrefService.setBoolPref("browser.fullscreen.autohide", !gPrefService.getBoolPref("browser.fullscreen.autohide"));
     // Try again to hide toolbar when we change the pref.
     FullScreen.hideNavToolbox(true);
   },
 
-  showNavToolbox: function(trackMouse = true) {
+  showNavToolbox(trackMouse = true) {
     this._fullScrToggler.hidden = true;
     gNavToolbox.removeAttribute("fullscreenShouldAnimate");
     gNavToolbox.style.marginTop = "";
@@ -592,7 +581,7 @@ var FullScreen = {
     this._isChromeCollapsed = false;
   },
 
-  hideNavToolbox: function (aAnimate = false) {
+  hideNavToolbox(aAnimate = false) {
     if (this._isChromeCollapsed || !this._safeToCollapse())
       return;
 
@@ -616,7 +605,7 @@ var FullScreen = {
     MousePosTracker.removeListener(this);
   },
 
-  _updateToolbars: function (aEnterFS) {
+  _updateToolbars(aEnterFS) {
     for (let el of document.querySelectorAll("toolbar[fullscreentoolbar=true]")) {
       if (aEnterFS) {
         // Give the main nav bar and the tab bar the fullscreen context menu,
@@ -655,8 +644,7 @@ var FullScreen = {
     if (fullscreenctls.parentNode == navbar && ctlsOnTabbar) {
       fullscreenctls.removeAttribute("flex");
       document.getElementById("TabsToolbar").appendChild(fullscreenctls);
-    }
-    else if (fullscreenctls.parentNode.id == "TabsToolbar" && !ctlsOnTabbar) {
+    } else if (fullscreenctls.parentNode.id == "TabsToolbar" && !ctlsOnTabbar) {
       fullscreenctls.setAttribute("flex", "1");
       navbar.appendChild(fullscreenctls);
     }

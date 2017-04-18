@@ -5,6 +5,7 @@
 #include "LoadContextInfo.h"
 
 #include "mozilla/dom/ToJSValue.h"
+#include "nsDocShell.h"
 #include "nsIChannel.h"
 #include "nsILoadContext.h"
 #include "nsIWebNavigation.h"
@@ -18,7 +19,8 @@ namespace net {
 
 NS_IMPL_ISUPPORTS(LoadContextInfo, nsILoadContextInfo)
 
-LoadContextInfo::LoadContextInfo(bool aIsAnonymous, NeckoOriginAttributes aOriginAttributes)
+LoadContextInfo::LoadContextInfo(bool aIsAnonymous,
+                                 OriginAttributes aOriginAttributes)
   : mIsAnonymous(aIsAnonymous)
   , mOriginAttributes(aOriginAttributes)
 {
@@ -40,7 +42,7 @@ NS_IMETHODIMP LoadContextInfo::GetIsAnonymous(bool *aIsAnonymous)
   return NS_OK;
 }
 
-NeckoOriginAttributes const* LoadContextInfo::OriginAttributesPtr()
+OriginAttributes const* LoadContextInfo::OriginAttributesPtr()
 {
   return &mOriginAttributes;
 }
@@ -60,14 +62,15 @@ NS_IMPL_ISUPPORTS(LoadContextInfoFactory, nsILoadContextInfoFactory)
 
 NS_IMETHODIMP LoadContextInfoFactory::GetDefault(nsILoadContextInfo * *aDefault)
 {
-  nsCOMPtr<nsILoadContextInfo> info = GetLoadContextInfo(false, NeckoOriginAttributes());
+  nsCOMPtr<nsILoadContextInfo> info =
+    GetLoadContextInfo(false, OriginAttributes());
   info.forget(aDefault);
   return NS_OK;
 }
 
 NS_IMETHODIMP LoadContextInfoFactory::GetPrivate(nsILoadContextInfo * *aPrivate)
 {
-  NeckoOriginAttributes attrs;
+  OriginAttributes attrs;
   attrs.SyncAttributesWithPrivateBrowsing(true);
   nsCOMPtr<nsILoadContextInfo> info = GetLoadContextInfo(false, attrs);
   info.forget(aPrivate);
@@ -76,7 +79,8 @@ NS_IMETHODIMP LoadContextInfoFactory::GetPrivate(nsILoadContextInfo * *aPrivate)
 
 NS_IMETHODIMP LoadContextInfoFactory::GetAnonymous(nsILoadContextInfo * *aAnonymous)
 {
-  nsCOMPtr<nsILoadContextInfo> info = GetLoadContextInfo(true, NeckoOriginAttributes());
+  nsCOMPtr<nsILoadContextInfo> info =
+    GetLoadContextInfo(true, OriginAttributes());
   info.forget(aAnonymous);
   return NS_OK;
 }
@@ -85,7 +89,7 @@ NS_IMETHODIMP LoadContextInfoFactory::Custom(bool aAnonymous,
                                              JS::HandleValue aOriginAttributes, JSContext *cx,
                                              nsILoadContextInfo * *_retval)
 {
-  NeckoOriginAttributes attrs;
+  OriginAttributes attrs;
   bool status = attrs.Init(cx, aOriginAttributes);
   NS_ENSURE_TRUE(status, NS_ERROR_FAILURE);
 
@@ -126,7 +130,7 @@ GetLoadContextInfo(nsIChannel * aChannel)
     anon = !!(loadFlags & nsIChannel::LOAD_ANONYMOUS);
   }
 
-  NeckoOriginAttributes oa;
+  OriginAttributes oa;
   NS_GetOriginAttributes(aChannel, oa);
   MOZ_ASSERT(pb == (oa.mPrivateBrowsingId > 0));
 
@@ -137,19 +141,21 @@ LoadContextInfo *
 GetLoadContextInfo(nsILoadContext *aLoadContext, bool aIsAnonymous)
 {
   if (!aLoadContext) {
-    return new LoadContextInfo(aIsAnonymous,
-                               NeckoOriginAttributes(nsILoadContextInfo::NO_APP_ID, false));
+    return new LoadContextInfo(aIsAnonymous, OriginAttributes());
   }
 
-  DebugOnly<bool> pb = aLoadContext->UsePrivateBrowsing();
-  DocShellOriginAttributes doa;
-  aLoadContext->GetOriginAttributes(doa);
-  MOZ_ASSERT(pb == (doa.mPrivateBrowsingId > 0));
+  OriginAttributes oa;
+  aLoadContext->GetOriginAttributes(oa);
+  oa.StripAttributes(OriginAttributes::STRIP_ADDON_ID);
 
-  NeckoOriginAttributes noa;
-  noa.InheritFromDocShellToNecko(doa);
+#ifdef DEBUG
+  nsCOMPtr<nsIDocShellTreeItem> docShell = do_QueryInterface(aLoadContext);
+  if (!docShell || docShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
+    MOZ_ASSERT(aLoadContext->UsePrivateBrowsing() == (oa.mPrivateBrowsingId > 0));
+  }
+#endif
 
-  return new LoadContextInfo(aIsAnonymous, noa);
+  return new LoadContextInfo(aIsAnonymous, oa);
 }
 
 LoadContextInfo*
@@ -171,10 +177,9 @@ GetLoadContextInfo(nsILoadContextInfo *aInfo)
 
 LoadContextInfo *
 GetLoadContextInfo(bool const aIsAnonymous,
-                   NeckoOriginAttributes const &aOriginAttributes)
+                   OriginAttributes const &aOriginAttributes)
 {
-  return new LoadContextInfo(aIsAnonymous,
-                             aOriginAttributes);
+  return new LoadContextInfo(aIsAnonymous, aOriginAttributes);
 }
 
 } // namespace net

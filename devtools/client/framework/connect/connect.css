@@ -37,12 +37,20 @@ label {
 label > span {
   display: inline-block;
   min-width: 150px;
-  text-align: right;
-  margin-right: 10px;
+  text-align: end;
+  margin-inline-end: 10px;
 }
 
 #submit {
   float: right;
+}
+
+#submit:dir(rtl) {
+  float: left;
+}
+
+input {
+  direction: ltr;
 }
 
 input:invalid {

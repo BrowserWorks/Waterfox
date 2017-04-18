@@ -41,7 +41,7 @@ const MAX_SUGGESTIONS = 6;
  *     data: the entry, a string
  *   GetSuggestions
  *     Retrieves an array of search suggestions given a search string.
- *     data: { engineName, searchString, [remoteTimeout] }
+ *     data: { engineName, searchString }
  *   GetState
  *     Retrieves the current search engine state.
  *     data: null
@@ -108,7 +108,7 @@ this.ContentSearch = {
   // fetch cancellation from _cancelSuggestions.
   _currentSuggestion: null,
 
-  init: function () {
+  init() {
     Cc["@mozilla.org/globalmessagemanager;1"].
       getService(Ci.nsIMessageListenerManager).
       addMessageListener(INBOUND_MESSAGE, this);
@@ -133,7 +133,7 @@ this.ContentSearch = {
     return this._searchSuggestionUIStrings;
   },
 
-  destroy: function () {
+  destroy() {
     if (this._destroyedPromise) {
       return this._destroyedPromise;
     }
@@ -154,13 +154,13 @@ this.ContentSearch = {
    * @param  messageManager
    *         The MessageManager object of the selected browser.
    */
-  focusInput: function (messageManager) {
+  focusInput(messageManager) {
     messageManager.sendAsyncMessage(OUTBOUND_MESSAGE, {
       type: "FocusInput"
     });
   },
 
-  receiveMessage: function (msg) {
+  receiveMessage(msg) {
     // Add a temporary event handler that exists only while the message is in
     // the event queue.  If the message's source docshell changes browsers in
     // the meantime, then we need to update msg.target.  event.detail will be
@@ -190,13 +190,13 @@ this.ContentSearch = {
     this._processEventQueue();
   },
 
-  observe: function (subj, topic, data) {
+  observe(subj, topic, data) {
     switch (topic) {
     case "nsPref:changed":
     case "browser-search-engine-modified":
       this._eventQueue.push({
         type: "Observe",
-        data: data,
+        data,
       });
       this._processEventQueue();
       break;
@@ -207,7 +207,7 @@ this.ContentSearch = {
     }
   },
 
-  removeFormHistoryEntry: function (msg, entry) {
+  removeFormHistoryEntry(msg, entry) {
     let browserData = this._suggestionDataForBrowser(msg.target);
     if (browserData && browserData.previousFormHistoryResult) {
       let { previousFormHistoryResult } = browserData;
@@ -220,7 +220,7 @@ this.ContentSearch = {
     }
   },
 
-  performSearch: function (msg, data) {
+  performSearch(msg, data) {
     this._ensureDataHasProperties(data, [
       "engineName",
       "searchString",
@@ -257,7 +257,7 @@ this.ContentSearch = {
     return;
   },
 
-  getSuggestions: Task.async(function* (engineName, searchString, browser, remoteTimeout=null) {
+  getSuggestions: Task.async(function* (engineName, searchString, browser) {
     let engine = Services.search.getEngineByName(engineName);
     if (!engine) {
       throw new Error("Unknown engine name: " + engineName);
@@ -268,11 +268,10 @@ this.ContentSearch = {
     let ok = SearchSuggestionController.engineOffersSuggestions(engine);
     controller.maxLocalResults = ok ? MAX_LOCAL_SUGGESTIONS : MAX_SUGGESTIONS;
     controller.maxRemoteResults = ok ? MAX_SUGGESTIONS : 0;
-    controller.remoteTimeout = remoteTimeout || undefined;
     let priv = PrivateBrowsingUtils.isBrowserPrivate(browser);
     // fetch() rejects its promise if there's a pending request, but since we
     // process our event queue serially, there's never a pending request.
-    this._currentSuggestion = { controller: controller, target: browser };
+    this._currentSuggestion = { controller, target: browser };
     let suggestions = yield controller.fetch(searchString, priv, engine);
     this._currentSuggestion = null;
 
@@ -297,7 +296,7 @@ this.ContentSearch = {
     return result;
   }),
 
-  addFormHistoryEntry: Task.async(function* (browser, entry="") {
+  addFormHistoryEntry: Task.async(function* (browser, entry = "") {
     let isPrivate = false;
     try {
       // isBrowserPrivate assumes that the passed-in browser has all the normal
@@ -324,7 +323,7 @@ this.ContentSearch = {
     return true;
   }),
 
-  currentStateObj: Task.async(function* (uriFlag=false) {
+  currentStateObj: Task.async(function* (uriFlag = false) {
     let state = {
       engines: [],
       currentEngine: yield this._currentEngineObj(),
@@ -349,7 +348,7 @@ this.ContentSearch = {
     return state;
   }),
 
-  _processEventQueue: function () {
+  _processEventQueue() {
     if (this._currentEventPromise || !this._eventQueue.length) {
       return;
     }
@@ -368,7 +367,7 @@ this.ContentSearch = {
     }.bind(this));
   },
 
-  _cancelSuggestions: function (msg) {
+  _cancelSuggestions(msg) {
     let cancelled = false;
     // cancel active suggestion request
     if (this._currentSuggestion && this._currentSuggestion.target === msg.target) {
@@ -400,25 +399,25 @@ this.ContentSearch = {
     }
   }),
 
-  _onMessageGetState: function (msg, data) {
+  _onMessageGetState(msg, data) {
     return this.currentStateObj().then(state => {
       this._reply(msg, "State", state);
     });
   },
 
-  _onMessageGetStrings: function (msg, data) {
+  _onMessageGetStrings(msg, data) {
     this._reply(msg, "Strings", this.searchSuggestionUIStrings);
   },
 
-  _onMessageSearch: function (msg, data) {
+  _onMessageSearch(msg, data) {
     this.performSearch(msg, data);
   },
 
-  _onMessageSetCurrentEngine: function (msg, data) {
+  _onMessageSetCurrentEngine(msg, data) {
     Services.search.currentEngine = Services.search.getEngineByName(data);
   },
 
-  _onMessageManageEngines: function (msg, data) {
+  _onMessageManageEngines(msg, data) {
     let browserWin = msg.target.ownerGlobal;
     browserWin.openPreferences("paneSearch");
   },
@@ -443,11 +442,11 @@ this.ContentSearch = {
     yield this.addFormHistoryEntry(msg, entry);
   }),
 
-  _onMessageRemoveFormHistoryEntry: function (msg, entry) {
+  _onMessageRemoveFormHistoryEntry(msg, entry) {
     this.removeFormHistoryEntry(msg, entry);
   },
 
-  _onMessageSpeculativeConnect: function (msg, engineName) {
+  _onMessageSpeculativeConnect(msg, engineName) {
     let engine = Services.search.getEngineByName(engineName);
     if (!engine) {
       throw new Error("Unknown engine name: " + engineName);
@@ -463,8 +462,7 @@ this.ContentSearch = {
     if (data === "engine-current") {
       let engine = yield this._currentEngineObj();
       this._broadcast("CurrentEngine", engine);
-    }
-    else if (data !== "engine-default") {
+    } else if (data !== "engine-default") {
       // engine-default is always sent with engine-current and isn't otherwise
       // relevant to content searches.
       let state = yield this.currentStateObj();
@@ -472,7 +470,7 @@ this.ContentSearch = {
     }
   }),
 
-  _suggestionDataForBrowser: function (browser, create=false) {
+  _suggestionDataForBrowser(browser, create = false) {
     let data = this._suggestionMap.get(browser);
     if (!data && create) {
       // Since one SearchSuggestionController instance is meant to be used per
@@ -486,7 +484,7 @@ this.ContentSearch = {
     return data;
   },
 
-  _reply: function (msg, type, data) {
+  _reply(msg, type, data) {
     // We reply asyncly to messages, and by the time we reply the browser we're
     // responding to may have been destroyed.  messageManager is null then.
     if (!Cu.isDeadWrapper(msg.target) && msg.target.messageManager) {
@@ -494,16 +492,16 @@ this.ContentSearch = {
     }
   },
 
-  _broadcast: function (type, data) {
+  _broadcast(type, data) {
     Cc["@mozilla.org/globalmessagemanager;1"].
       getService(Ci.nsIMessageListenerManager).
       broadcastAsyncMessage(...this._msgArgs(type, data));
   },
 
-  _msgArgs: function (type, data) {
+  _msgArgs(type, data) {
     return [OUTBOUND_MESSAGE, {
-      type: type,
-      data: data,
+      type,
+      data,
     }];
   },
 
@@ -514,13 +512,13 @@ this.ContentSearch = {
       "searchWithEngine", [engine.name], 1);
     let obj = {
       name: engine.name,
-      placeholder: placeholder,
+      placeholder,
       iconBuffer: yield this._arrayBufferFromDataURI(favicon),
     };
     return obj;
   }),
 
-  _arrayBufferFromDataURI: function (uri) {
+  _arrayBufferFromDataURI(uri) {
     if (!uri) {
       return Promise.resolve(null);
     }
@@ -538,14 +536,13 @@ this.ContentSearch = {
     try {
       // This throws if the URI is erroneously encoded.
       xhr.send();
-    }
-    catch (err) {
+    } catch (err) {
       return Promise.resolve(null);
     }
     return deferred.promise;
   },
 
-  _ensureDataHasProperties: function (data, requiredProperties) {
+  _ensureDataHasProperties(data, requiredProperties) {
     for (let prop of requiredProperties) {
       if (!(prop in data)) {
         throw new Error("Message data missing required property: " + prop);
@@ -553,7 +550,7 @@ this.ContentSearch = {
     }
   },
 
-  _initService: function () {
+  _initService() {
     if (!this._initServicePromise) {
       let deferred = Promise.defer();
       this._initServicePromise = deferred.promise;

@@ -208,13 +208,13 @@ static SECStatus
 tls13_HandleKeyShareEntry(const sslSocket *ss, TLSExtensionData *xtnData, SECItem *data)
 {
     SECStatus rv;
-    PRInt32 group;
+    PRUint32 group;
     const sslNamedGroupDef *groupDef;
     TLS13KeyShareEntry *ks = NULL;
     SECItem share = { siBuffer, NULL, 0 };
 
-    group = ssl3_ExtConsumeHandshakeNumber(ss, 2, &data->data, &data->len);
-    if (group < 0) {
+    rv = ssl3_ExtConsumeHandshakeNumber(ss, &group, 2, &data->data, &data->len);
+    if (rv != SECSuccess) {
         PORT_SetError(SSL_ERROR_RX_MALFORMED_KEY_SHARE);
         goto loser;
     }
@@ -256,11 +256,10 @@ tls13_ClientHandleKeyShareXtn(const sslSocket *ss, TLSExtensionData *xtnData, PR
     PORT_Assert(PR_CLIST_IS_EMPTY(&xtnData->remoteKeyShares));
 
     PORT_Assert(!ss->sec.isServer);
+
+    /* The server must not send this extension when negotiating < TLS 1.3. */
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
-        /* This can't happen because the extension processing
-         * code filters out TLS 1.3 extensions when not in
-         * TLS 1.3 mode. */
-        PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
+        PORT_SetError(SSL_ERROR_EXTENSION_DISALLOWED_FOR_VERSION);
         return SECFailure;
     }
 
@@ -285,7 +284,7 @@ SECStatus
 tls13_ClientHandleKeyShareXtnHrr(const sslSocket *ss, TLSExtensionData *xtnData, PRUint16 ex_type, SECItem *data)
 {
     SECStatus rv;
-    PRInt32 tmp;
+    PRUint32 tmp;
     const sslNamedGroupDef *group;
 
     PORT_Assert(!ss->sec.isServer);
@@ -294,8 +293,8 @@ tls13_ClientHandleKeyShareXtnHrr(const sslSocket *ss, TLSExtensionData *xtnData,
     SSL_TRC(3, ("%d: SSL3[%d]: handle key_share extension in HRR",
                 SSL_GETPID(), ss->fd));
 
-    tmp = ssl3_ExtConsumeHandshakeNumber(ss, 2, &data->data, &data->len);
-    if (tmp < 0) {
+    rv = ssl3_ExtConsumeHandshakeNumber(ss, &tmp, 2, &data->data, &data->len);
+    if (rv != SECSuccess) {
         return SECFailure; /* error code already set */
     }
     if (data->len) {
@@ -335,7 +334,7 @@ SECStatus
 tls13_ServerHandleKeyShareXtn(const sslSocket *ss, TLSExtensionData *xtnData, PRUint16 ex_type, SECItem *data)
 {
     SECStatus rv;
-    PRInt32 length;
+    PRUint32 length;
 
     PORT_Assert(ss->sec.isServer);
     PORT_Assert(PR_CLIST_IS_EMPTY(&xtnData->remoteKeyShares));
@@ -349,9 +348,9 @@ tls13_ServerHandleKeyShareXtn(const sslSocket *ss, TLSExtensionData *xtnData, PR
 
     /* Redundant length because of TLS encoding (this vector consumes
      * the entire extension.) */
-    length = ssl3_ExtConsumeHandshakeNumber(ss, 2, &data->data,
-                                            &data->len);
-    if (length < 0)
+    rv = ssl3_ExtConsumeHandshakeNumber(ss, &length, 2, &data->data,
+                                        &data->len);
+    if (rv != SECSuccess)
         goto loser;
     if (length != data->len) {
         /* Check for consistency */
@@ -487,7 +486,7 @@ tls13_ClientSendPreSharedKeyXtn(const sslSocket *ss, TLSExtensionData *xtnData,
 
     if (append) {
         SECStatus rv;
-        PRUint32 age;
+        PRTime age;
         unsigned int prefixLength;
         PRUint8 binder[TLS13_MAX_FINISHED_SIZE];
         unsigned int binderLen;
@@ -508,7 +507,8 @@ tls13_ClientSendPreSharedKeyXtn(const sslSocket *ss, TLSExtensionData *xtnData,
             goto loser;
 
         /* Obfuscated age. */
-        age = ssl_Time() - session_ticket->received_timestamp;
+        age = PR_Now() - session_ticket->received_timestamp;
+        age /= PR_USEC_PER_MSEC;
         age += session_ticket->ticket_age_add;
         rv = ssl3_ExtAppendHandshakeNumber(ss, age, 4);
         if (rv != SECSuccess)
@@ -684,18 +684,20 @@ SECStatus
 tls13_ClientHandlePreSharedKeyXtn(const sslSocket *ss, TLSExtensionData *xtnData, PRUint16 ex_type,
                                   SECItem *data)
 {
-    PRInt32 index;
+    PRUint32 index;
+    SECStatus rv;
 
     SSL_TRC(3, ("%d: SSL3[%d]: handle pre_shared_key extension",
                 SSL_GETPID(), ss->fd));
 
-    /* If we are doing < TLS 1.3, then ignore this. */
+    /* The server must not send this extension when negotiating < TLS 1.3. */
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
-        return SECSuccess;
+        PORT_SetError(SSL_ERROR_EXTENSION_DISALLOWED_FOR_VERSION);
+        return SECFailure;
     }
 
-    index = ssl3_ExtConsumeHandshakeNumber(ss, 2, &data->data, &data->len);
-    if (index < 0)
+    rv = ssl3_ExtConsumeHandshakeNumber(ss, &index, 2, &data->data, &data->len);
+    if (rv != SECSuccess)
         return SECFailure;
 
     /* This should be the end of the extension. */
@@ -746,10 +748,10 @@ tls13_ClientSendEarlyDataXtn(const sslSocket *ss, TLSExtensionData *xtnData,
         rv = ssl3_ExtAppendHandshakeNumber(ss, 0, 2);
         if (rv != SECSuccess)
             return -1;
-    }
 
-    xtnData->advertised[xtnData->numAdvertised++] =
-        ssl_tls13_early_data_xtn;
+        xtnData->advertised[xtnData->numAdvertised++] =
+            ssl_tls13_early_data_xtn;
+    }
 
     return extension_length;
 }
@@ -814,7 +816,7 @@ tls13_ClientHandleEarlyDataXtn(const sslSocket *ss, TLSExtensionData *xtnData, P
     SSL_TRC(3, ("%d: TLS13[%d]: handle early_data extension",
                 SSL_GETPID(), ss->fd));
 
-    /* If we are doing < TLS 1.3, then ignore this. */
+    /* The server must not send this extension when negotiating < TLS 1.3. */
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
         PORT_SetError(SSL_ERROR_EXTENSION_DISALLOWED_FOR_VERSION);
         return SECFailure;
@@ -841,7 +843,7 @@ tls13_ClientHandleTicketEarlyDataInfoXtn(const sslSocket *ss, TLSExtensionData *
     SSL_TRC(3, ("%d: TLS13[%d]: handle early_data_info extension",
                 SSL_GETPID(), ss->fd));
 
-    /* If we are doing < TLS 1.3, then ignore this. */
+    /* The server must not send this extension when negotiating < TLS 1.3. */
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
         PORT_SetError(SSL_ERROR_EXTENSION_DISALLOWED_FOR_VERSION);
         return SECFailure;
@@ -1091,6 +1093,13 @@ tls13_SendShortHeaderXtn(const sslSocket *ss,
         return 0;
     }
 
+    /* Don't send this if TLS 1.3 isn't at least possible. */
+    if (ss->vrange.max < SSL_LIBRARY_VERSION_TLS_1_3) {
+        /* This should only happen on the client. */
+        PORT_Assert(!ss->sec.isServer);
+        return 0;
+    }
+
     SSL_TRC(3, ("%d: TLS13[%d]: send short_header extension",
                 SSL_GETPID(), ss->fd));
 
@@ -1122,10 +1131,10 @@ tls13_HandleShortHeaderXtn(
     const sslSocket *ss, TLSExtensionData *xtnData, PRUint16 ex_type,
     SECItem *data)
 {
-    SSL_TRC(3, ("%d: TLS13[%d]: handle early_data extension",
+    SSL_TRC(3, ("%d: TLS13[%d]: handle short_header extension",
                 SSL_GETPID(), ss->fd));
 
-    /* If we are doing < TLS 1.3, then ignore this. */
+    /* The client might have asked for this, but we didn't negotiate TLS 1.3. */
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
         return SECSuccess;
     }

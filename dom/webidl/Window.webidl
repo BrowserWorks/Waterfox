@@ -15,6 +15,8 @@
  * http://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html
  * https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
  * https://w3c.github.io/requestidlecallback/
+ * https://webaudio.github.io/web-audio-api/#widl-Window-audioWorklet
+ * https://drafts.css-houdini.org/css-paint-api-1/#dom-window-paintworklet
  */
 
 interface ApplicationCache;
@@ -154,10 +156,10 @@ partial interface Window {
   //[Throws] void moveBy(double x, double y);
   //[Throws] void resizeTo(double x, double y);
   //[Throws] void resizeBy(double x, double y);
-  [Throws, UnsafeInPrerendering] void moveTo(long x, long y);
-  [Throws, UnsafeInPrerendering] void moveBy(long x, long y);
-  [Throws, UnsafeInPrerendering] void resizeTo(long x, long y);
-  [Throws, UnsafeInPrerendering] void resizeBy(long x, long y);
+  [Throws, UnsafeInPrerendering, NeedsCallerType] void moveTo(long x, long y);
+  [Throws, UnsafeInPrerendering, NeedsCallerType] void moveBy(long x, long y);
+  [Throws, UnsafeInPrerendering, NeedsCallerType] void resizeTo(long x, long y);
+  [Throws, UnsafeInPrerendering, NeedsCallerType] void resizeBy(long x, long y);
 
   // viewport
   // These are writable because we allow chrome to write them.  And they need
@@ -274,7 +276,7 @@ partial interface Window {
   /**
    * Method for sizing this window to the content in the window.
    */
-  [Throws, UnsafeInPrerendering] void             sizeToContent();
+  [Throws, UnsafeInPrerendering, NeedsCallerType] void sizeToContent();
 
   // XXX Shouldn't this be in nsIDOMChromeWindow?
   [ChromeOnly, Replaceable, Throws] readonly attribute MozControllers controllers;
@@ -372,9 +374,9 @@ partial interface Window {
                                                                    optional DOMString options = "",
                                                                    any... extraArguments);
 
-  [Replaceable, Throws] readonly attribute object? content;
+  [Replaceable, Throws, NeedsCallerType] readonly attribute object? content;
 
-  [ChromeOnly, Throws] readonly attribute object? __content;
+  [ChromeOnly, Throws, NeedsCallerType] readonly attribute object? __content;
 
   [Throws, ChromeOnly] any getInterface(IID iid);
 
@@ -484,10 +486,16 @@ partial interface Window {
   attribute EventHandler onvrdisplaypresentchange;
 };
 
-// For testing worklet only
+// https://webaudio.github.io/web-audio-api/#widl-Window-audioWorklet
 partial interface Window {
-  [Pref="dom.worklet.testing.enabled", Throws]
-  Worklet createWorklet();
+  [Pref="dom.audioWorklet.enabled", Throws, SameObject]
+  readonly attribute Worklet audioWorklet;
+};
+
+// https://drafts.css-houdini.org/css-paint-api-1/#dom-window-paintworklet
+partial interface Window {
+    [Pref="dom.paintWorklet.enabled", Throws, SameObject]
+    readonly attribute Worklet paintWorklet;
 };
 
 Window implements ChromeWindow;

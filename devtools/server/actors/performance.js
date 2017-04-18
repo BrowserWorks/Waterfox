@@ -4,7 +4,6 @@
 
 "use strict";
 
-const { Cu } = require("chrome");
 const { Task } = require("devtools/shared/task");
 const { Actor, ActorClassWithSpec } = require("devtools/shared/protocol");
 const { actorBridgeWithSpec } = require("devtools/server/actors/common");
@@ -51,14 +50,6 @@ var PerformanceActor = ActorClassWithSpec(performanceSpec, {
     this._onRecorderEvent = this._onRecorderEvent.bind(this);
     this.bridge = new PerformanceRecorder(conn, tabActor);
     events.on(this.bridge, "*", this._onRecorderEvent);
-  },
-
-  /**
-   * `disconnect` method required to call destroy, since this
-   * actor is not managed by a parent actor.
-   */
-  disconnect: function () {
-    this.destroy();
   },
 
   destroy: function () {

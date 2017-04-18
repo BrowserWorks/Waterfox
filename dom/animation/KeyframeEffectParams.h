@@ -14,6 +14,7 @@
 #undef None
 #endif
 #include "mozilla/dom/KeyframeEffectBinding.h" // IterationCompositeOperation
+#include "mozilla/dom/BindingDeclarations.h"   // CallerType
 
 namespace mozilla {
 
@@ -54,11 +55,12 @@ struct KeyframeEffectParams
                            SpacingMode& aSpacingMode,
                            nsCSSPropertyID& aPacedProperty,
                            nsAString& aInvalidPacedProperty,
+                           dom::CallerType aCallerType,
                            ErrorResult& aRv);
 
   dom::IterationCompositeOperation mIterationComposite =
     dom::IterationCompositeOperation::Replace;
-  // FIXME: Bug 1216844: Add CompositeOperation
+  dom::CompositeOperation mComposite = dom::CompositeOperation::Replace;
   SpacingMode mSpacingMode = SpacingMode::distribute;
   nsCSSPropertyID mPacedProperty = eCSSProperty_UNKNOWN;
 };

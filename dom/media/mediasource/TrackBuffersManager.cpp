@@ -23,15 +23,15 @@
 
 extern mozilla::LogModule* GetMediaSourceLog();
 
-#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("TrackBuffersManager(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#define MSE_DEBUGV(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Verbose, ("TrackBuffersManager(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("TrackBuffersManager(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUGV(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Verbose, ("TrackBuffersManager(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
 
 mozilla::LogModule* GetMediaSourceSamplesLog()
 {
   static mozilla::LazyLogModule sLogModule("MediaSourceSamples");
   return sLogModule;
 }
-#define SAMPLE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceSamplesLog(), mozilla::LogLevel::Debug, ("TrackBuffersManager(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define SAMPLE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceSamplesLog(), mozilla::LogLevel::Debug, ("TrackBuffersManager(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 
@@ -85,7 +85,7 @@ private:
 };
 
 TrackBuffersManager::TrackBuffersManager(MediaSourceDecoder* aParentDecoder,
-                                         const nsACString& aType)
+                                         const MediaContainerType& aType)
   : mInputBuffer(new MediaByteBuffer)
   , mBufferFull(false)
   , mFirstInitializationSegmentReceived(false)
@@ -96,6 +96,7 @@ TrackBuffersManager::TrackBuffersManager(MediaSourceDecoder* aParentDecoder,
   , mProcessedInput(0)
   , mTaskQueue(aParentDecoder->GetDemuxer()->GetTaskQueue())
   , mParentDecoder(new nsMainThreadPtrHolder<MediaSourceDecoder>(aParentDecoder, false /* strict */))
+  , mAbstractMainThread(aParentDecoder->AbstractMainThread())
   , mEnded(false)
   , mVideoEvictionThreshold(Preferences::GetUint("media.mediasource.eviction_threshold.video",
                                                  100 * 1024 * 1024))
@@ -121,16 +122,14 @@ TrackBuffersManager::AppendData(MediaByteBuffer* aData,
 
   mEnded = false;
 
-  RefPtr<MediaByteBuffer> buffer = aData;
-
-  return InvokeAsync(GetTaskQueue(), this,
-                     __func__, &TrackBuffersManager::DoAppendData,
-                     buffer, aAttributes);
+  return InvokeAsync<RefPtr<MediaByteBuffer>, SourceBufferAttributes&&>(
+           GetTaskQueue(), this, __func__,
+           &TrackBuffersManager::DoAppendData, aData, aAttributes);
 }
 
 RefPtr<TrackBuffersManager::AppendPromise>
-TrackBuffersManager::DoAppendData(RefPtr<MediaByteBuffer> aData,
-                                  SourceBufferAttributes aAttributes)
+TrackBuffersManager::DoAppendData(MediaByteBuffer* aData,
+                                  const SourceBufferAttributes& aAttributes)
 {
   RefPtr<AppendBufferTask> task = new AppendBufferTask(aData, aAttributes);
   RefPtr<AppendPromise> p = task->mPromise.Ensure(__func__);
@@ -735,20 +734,21 @@ TrackBuffersManager::SegmentParserLoop()
 
       // 3. If the input buffer contains one or more complete coded frames, then run the coded frame processing algorithm.
       RefPtr<TrackBuffersManager> self = this;
-      mProcessingRequest.Begin(CodedFrameProcessing()
-          ->Then(GetTaskQueue(), __func__,
-                 [self] (bool aNeedMoreData) {
-                   self->mProcessingRequest.Complete();
-                   if (aNeedMoreData) {
-                     self->NeedMoreData();
-                   } else {
-                     self->ScheduleSegmentParserLoop();
-                   }
-                 },
-                 [self] (const MediaResult& aRejectValue) {
-                   self->mProcessingRequest.Complete();
-                   self->RejectAppend(aRejectValue, __func__);
-                 }));
+      CodedFrameProcessing()
+        ->Then(GetTaskQueue(), __func__,
+               [self] (bool aNeedMoreData) {
+                 self->mProcessingRequest.Complete();
+                 if (aNeedMoreData) {
+                   self->NeedMoreData();
+                 } else {
+                   self->ScheduleSegmentParserLoop();
+                 }
+               },
+               [self] (const MediaResult& aRejectValue) {
+                 self->mProcessingRequest.Complete();
+                 self->RejectAppend(aRejectValue, __func__);
+               })
+        ->Track(mProcessingRequest);
       return;
     }
   }
@@ -811,15 +811,15 @@ TrackBuffersManager::CreateDemuxerforMIMEType()
 {
   ShutdownDemuxers();
 
-  if (mType.LowerCaseEqualsLiteral("video/webm") ||
-      mType.LowerCaseEqualsLiteral("audio/webm")) {
+  if (mType.Type() == MEDIAMIMETYPE("video/webm") ||
+      mType.Type() == MEDIAMIMETYPE("audio/webm")) {
     mInputDemuxer = new WebMDemuxer(mCurrentInputBuffer, true /* IsMediaSource*/ );
     return;
   }
 
 #ifdef MOZ_FMP4
-  if (mType.LowerCaseEqualsLiteral("video/mp4") ||
-      mType.LowerCaseEqualsLiteral("audio/mp4")) {
+  if (mType.Type() == MEDIAMIMETYPE("video/mp4")
+      || mType.Type() == MEDIAMIMETYPE("audio/mp4")) {
     mInputDemuxer = new MP4Demuxer(mCurrentInputBuffer);
     return;
   }
@@ -844,11 +844,12 @@ TrackBuffersManager::ResetDemuxingState()
     RejectAppend(NS_ERROR_FAILURE, __func__);
     return;
   }
-  mDemuxerInitRequest.Begin(mInputDemuxer->Init()
-                      ->Then(GetTaskQueue(), __func__,
-                             this,
-                             &TrackBuffersManager::OnDemuxerResetDone,
-                             &TrackBuffersManager::OnDemuxerInitFailed));
+  mInputDemuxer->Init()
+    ->Then(GetTaskQueue(), __func__,
+           this,
+           &TrackBuffersManager::OnDemuxerResetDone,
+           &TrackBuffersManager::OnDemuxerInitFailed)
+    ->Track(mDemuxerInitRequest);
 }
 
 void
@@ -900,16 +901,27 @@ void
 TrackBuffersManager::InitializationSegmentReceived()
 {
   MOZ_ASSERT(mParser->HasCompleteInitData());
+
+  int64_t endInit = mParser->InitSegmentRange().mEnd;
+  if (mInputBuffer->Length() > mProcessedInput ||
+      int64_t(mProcessedInput - mInputBuffer->Length()) > endInit) {
+    // Something is not quite right with the data appended. Refuse it.
+    RejectAppend(MediaResult(NS_ERROR_FAILURE,
+                             "Invalid state following initialization segment"),
+                 __func__);
+    return;
+  }
+
   mCurrentInputBuffer = new SourceBufferResource(mType);
   // The demuxer isn't initialized yet ; we don't want to notify it
   // that data has been appended yet ; so we simply append the init segment
   // to the resource.
   mCurrentInputBuffer->AppendData(mParser->InitData());
-  uint32_t length =
-    mParser->InitSegmentRange().mEnd - (mProcessedInput - mInputBuffer->Length());
+  uint32_t length = endInit - (mProcessedInput - mInputBuffer->Length());
   if (mInputBuffer->Length() == length) {
     mInputBuffer = nullptr;
   } else {
+    MOZ_RELEASE_ASSERT(length <= mInputBuffer->Length());
     mInputBuffer->RemoveElementsAt(0, length);
   }
   CreateDemuxerforMIMEType();
@@ -918,11 +930,12 @@ TrackBuffersManager::InitializationSegmentReceived()
     RejectAppend(NS_ERROR_DOM_NOT_SUPPORTED_ERR, __func__);
     return;
   }
-  mDemuxerInitRequest.Begin(mInputDemuxer->Init()
-                      ->Then(GetTaskQueue(), __func__,
-                             this,
-                             &TrackBuffersManager::OnDemuxerInitDone,
-                             &TrackBuffersManager::OnDemuxerInitFailed));
+  mInputDemuxer->Init()
+    ->Then(GetTaskQueue(), __func__,
+           this,
+           &TrackBuffersManager::OnDemuxerInitDone,
+           &TrackBuffersManager::OnDemuxerInitFailed)
+    ->Track(mDemuxerInitRequest);
 }
 
 void
@@ -961,10 +974,10 @@ TrackBuffersManager::OnDemuxerInitDone(nsresult)
   int64_t duration = std::max(videoDuration, audioDuration);
   // 1. Update the duration attribute if it currently equals NaN.
   // Those steps are performed by the MediaSourceDecoder::SetInitialDuration
-  AbstractThread::MainThread()->Dispatch(NewRunnableMethod<int64_t>
-                                         (mParentDecoder,
-                                          &MediaSourceDecoder::SetInitialDuration,
-                                          duration ? duration : -1));
+  mAbstractMainThread->Dispatch(NewRunnableMethod<int64_t>
+                                (mParentDecoder.get(),
+                                &MediaSourceDecoder::SetInitialDuration,
+                                duration ? duration : -1));
 
   // 2. If the initialization segment has no audio, video, or text tracks, then
   // run the append error algorithm with the decode error parameter set to true
@@ -1202,10 +1215,11 @@ TrackBuffersManager::DoDemuxVideo()
     DoDemuxAudio();
     return;
   }
-  mVideoTracks.mDemuxRequest.Begin(mVideoTracks.mDemuxer->GetSamples(-1)
-                             ->Then(GetTaskQueue(), __func__, this,
-                                    &TrackBuffersManager::OnVideoDemuxCompleted,
-                                    &TrackBuffersManager::OnVideoDemuxFailed));
+  mVideoTracks.mDemuxer->GetSamples(-1)
+    ->Then(GetTaskQueue(), __func__, this,
+           &TrackBuffersManager::OnVideoDemuxCompleted,
+           &TrackBuffersManager::OnVideoDemuxFailed)
+    ->Track(mVideoTracks.mDemuxRequest);
 }
 
 void
@@ -1226,10 +1240,11 @@ TrackBuffersManager::DoDemuxAudio()
     CompleteCodedFrameProcessing();
     return;
   }
-  mAudioTracks.mDemuxRequest.Begin(mAudioTracks.mDemuxer->GetSamples(-1)
-                             ->Then(GetTaskQueue(), __func__, this,
-                                    &TrackBuffersManager::OnAudioDemuxCompleted,
-                                    &TrackBuffersManager::OnAudioDemuxFailed));
+  mAudioTracks.mDemuxer->GetSamples(-1)
+    ->Then(GetTaskQueue(), __func__, this,
+           &TrackBuffersManager::OnAudioDemuxCompleted,
+           &TrackBuffersManager::OnAudioDemuxFailed)
+    ->Track(mAudioTracks.mDemuxRequest);
 }
 
 void
@@ -1695,8 +1710,8 @@ TrackBuffersManager::InsertFrames(TrackBuffer& aSamples,
 
   if (intersection.Length()) {
     if (aSamples[0]->mKeyframe &&
-        (mType.LowerCaseEqualsLiteral("video/webm") ||
-         mType.LowerCaseEqualsLiteral("audio/webm"))) {
+        (mType.Type() == MEDIAMIMETYPE("video/webm")
+         || mType.Type() == MEDIAMIMETYPE("audio/webm"))) {
       // We are starting a new GOP, we do not have to worry about breaking an
       // existing current coded frame group. Reset the next insertion index
       // so the search for when to start our frames removal can be exhaustive.

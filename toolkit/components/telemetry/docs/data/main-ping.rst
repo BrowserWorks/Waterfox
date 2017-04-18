@@ -62,6 +62,7 @@ Structure:
       keyedHistograms: {...},
       chromeHangs: {...},
       threadHangStats: [...],
+      capturedStacks: {...},
       log: [...],
       webrtc: {...},
       gc: {...},
@@ -104,11 +105,17 @@ Structure:
       ... other processes ...
       "parent": {
         scalars: {...},
+        keyedScalars: {...},
       },
       "content": {
+        scalars: {...},
+        keyedScalars: {...},
         histograms: {...},
         keyedHistograms: {...},
       },
+      "gpu": {
+        ...
+      }
     }
 
 histograms and keyedHistograms
@@ -117,9 +124,9 @@ This section contains histograms and keyed histograms accumulated on content pro
 
 This format was adopted in Firefox 51 via bug 1218576.
 
-scalars
-~~~~~~~
-This section contains the :doc:`../collection/scalars` that are valid for the current platform. Scalars are not created nor submitted if no data was added to them, and are only reported with subsession pings. Scalar data is only currently reported for the main process. Their type and format is described by the ``Scalars.yaml`` file. Its most recent version is available `here <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Scalars.yaml>`_. The ``info.revision`` field indicates the revision of the file that describes the reported scalars.
+scalars and keyedScalars
+~~~~~~~~~~~~~~~~~~~~~~~~
+This section contains the :doc:`../collection/scalars` that are valid for the current platform. Scalars are only submitted if if data was added to them, and are only reported with subsession pings. The record scalars are described in the `Scalars.yaml <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Scalars.yaml>`_ file. The ``info.revision`` field indicates the revision of the file that describes the reported scalars.
 
 childPayloads
 -------------
@@ -224,7 +231,7 @@ As of Firefox 48, this section does not contain empty keyed histograms anymore.
 
 threadHangStats
 ---------------
-Contains the statistics about the hangs in main and background threads. Note that hangs in this section capture the [C++ pseudostack](https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Profiling_with_the_Built-in_Profiler#Native_stack_vs._Pseudo_stack) and an incomplete JS stack, which is not 100% precise.
+Contains the statistics about the hangs in main and background threads. Note that hangs in this section capture the `C++ pseudostack <https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Profiling_with_the_Built-in_Profiler#Native_stack_vs._Pseudo_stack>`_ and an incomplete JS stack, which is not 100% precise.
 
 To avoid submitting overly large payloads, some limits are applied:
 
@@ -262,6 +269,39 @@ Structure:
       },
       ... other threads ...
      ]
+
+capturedStacks
+--------------
+Contains information about stacks captured on demand via Telemetry API. This is similar to `chromeHangs`, but only stacks captured on the main thread of the parent process are reported. It reports precise C++ stacks are reported and is only available on Windows, either in Firefox Nightly or in builds using "--enable-profiling" switch.
+
+Limits for captured stacks are the same as for chromeHangs (see below). Furthermore:
+
+* the key length is limited to 50 characters,
+* keys are restricted to alpha-numeric characters and `-`.
+
+Structure:
+
+.. code-block:: js
+
+    "capturedStacks" : {
+      "memoryMap": [
+        ["wgdi32.pdb", "08A541B5942242BDB4AEABD8C87E4CFF2"],
+        ["igd10iumd32.pdb", "D36DEBF2E78149B5BE1856B772F1C3991"],
+        // ... other entries in the format ["module name", "breakpad identifier"] ...
+      ],
+      "stacks": [
+        [
+           [
+             0, // the module index or -1 for invalid module indices
+             190649 // the offset of this program counter in its module or an absolute pc
+           ],
+           [1, 2540075],
+           // ... other frames ...
+        ],
+        // ... other stacks ...
+      ],
+      "captures": [["string-key", stack-index, count], ... ]
+    }
 
 chromeHangs
 -----------
@@ -401,7 +441,7 @@ Structure:
           // Reasons include "None", "NonIncrementalRequested",
           // "AbortRequested", "KeepAtomsSet", "IncrementalDisabled",
           // "ModeChange", "MallocBytesTrigger", "GCBytesTrigger",
-          // "ZoneChange".
+          // "ZoneChange", "CompartmentRevived".
           "nonincremental_reason": "None",
           "allocated": 37, // In megabytes.
           "added_chunks": 54,

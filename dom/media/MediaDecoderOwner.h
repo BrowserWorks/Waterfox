@@ -10,6 +10,7 @@
 
 namespace mozilla {
 
+class AbstractThread;
 class VideoFrameContainer;
 class MediaResult;
 
@@ -43,6 +44,9 @@ public:
   {
     return nullptr;
   }
+
+  // Return an abstract thread on which to run main thread runnables.
+  virtual AbstractThread* AbstractMainThread() const = 0;
 
   // Return true if decoding should be paused
   virtual bool GetPaused() = 0;
@@ -138,7 +142,7 @@ public:
   // Called by media decoder when the audible state changed
   virtual void SetAudibleState(bool aAudible) = 0;
 
-  // Notified by the shutdown manager that XPCOM shutdown has begun.
+  // Notified by the decoder that XPCOM shutdown has begun.
   // The decoder owner should call Shutdown() on the decoder and drop the
   // reference to the decoder to prevent further calls into the decoder.
   virtual void NotifyXPCOMShutdown() = 0;

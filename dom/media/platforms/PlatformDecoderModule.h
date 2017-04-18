@@ -14,7 +14,7 @@
 #include "mozilla/layers/KnowsCompositor.h"
 #include "nsTArray.h"
 #include "mozilla/RefPtr.h"
-#include "GMPService.h"
+#include "GMPCrashHelper.h"
 #include <queue>
 #include "MediaResult.h"
 
@@ -302,6 +302,12 @@ public:
   // video decoder implements this API to improve seek performance.
   // Note: it should be called before Input() or after Flush().
   virtual void SetSeekThreshold(const media::TimeUnit& aTime) {}
+
+  // When playing adaptive playback, recreating an Android video decoder will
+  // cause the transition not smooth during resolution change.
+  // Reuse the decoder if the decoder support recycling.
+  // Currently, only Android video decoder will return true.
+  virtual bool SupportDecoderRecycling() const { return false; }
 };
 
 } // namespace mozilla

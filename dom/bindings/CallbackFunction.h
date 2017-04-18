@@ -40,9 +40,9 @@ public:
   {
   }
 
-  JS::Handle<JSObject*> Callable() const
+  JS::Handle<JSObject*> CallableOrNull() const
   {
-    return Callback();
+    return CallbackOrNull();
   }
 
   JS::Handle<JSObject*> CallablePreserveColor() const
@@ -63,11 +63,9 @@ protected:
   }
 
   // See CallbackObject for an explanation of the arguments.
-  CallbackFunction(JSContext* aCx, JS::Handle<JSObject*> aCallable,
-                   nsIGlobalObject* aIncumbentGlobal,
+  CallbackFunction(JS::Handle<JSObject*> aCallable,
                    const FastCallbackConstructor&)
-    : CallbackObject(aCx, aCallable, aIncumbentGlobal,
-                     FastCallbackConstructor())
+    : CallbackObject(aCallable, FastCallbackConstructor())
   {
   }
 };

@@ -451,6 +451,12 @@ public:
     YUVColorSpace mYUVColorSpace = YUVColorSpace::BT601;
   };
 
+  class Listener {
+  public:
+    virtual void OnSentToCompositor() = 0;
+    virtual ~Listener() {}
+  };
+
   // Constructs a VideoData object. If aImage is nullptr, creates a new Image
   // holding a copy of the YCbCr data passed in aBuffer. If aImage is not
   // nullptr, it's stored as the underlying video image and aBuffer is assumed
@@ -473,6 +479,17 @@ public:
                                                        int64_t aTimecode,
                                                        const IntRect& aPicture);
 
+  static already_AddRefed<VideoData> CreateAndCopyData(const VideoInfo& aInfo,
+                                                       ImageContainer* aContainer,
+                                                       int64_t aOffset,
+                                                       int64_t aTime,
+                                                       int64_t aDuration,
+                                                       const YCbCrBuffer &aBuffer,
+                                                       const YCbCrBuffer::Plane &aAlphaPlane,
+                                                       bool aKeyframe,
+                                                       int64_t aTimecode,
+                                                       const IntRect& aPicture);
+
   static already_AddRefed<VideoData> CreateAndCopyIntoTextureClient(const VideoInfo& aInfo,
                                                                     int64_t aOffset,
                                                                     int64_t aTime,
@@ -490,29 +507,6 @@ public:
                                                      bool aKeyframe,
                                                      int64_t aTimecode,
                                                      const IntRect& aPicture);
-
-  // Creates a new VideoData identical to aOther, but with a different
-  // specified duration. All data from aOther is copied into the new
-  // VideoData. The new VideoData's mImage field holds a reference to
-  // aOther's mImage, i.e. the Image is not copied. This function is useful
-  // in reader backends that can't determine the duration of a VideoData
-  // until the next frame is decoded, i.e. it's a way to change the const
-  // duration field on a VideoData.
-  static already_AddRefed<VideoData> ShallowCopyUpdateDuration(const VideoData* aOther,
-                                                               int64_t aDuration);
-
-  // Creates a new VideoData identical to aOther, but with a different
-  // specified timestamp. All data from aOther is copied into the new
-  // VideoData, as ShallowCopyUpdateDuration() does.
-  static already_AddRefed<VideoData> ShallowCopyUpdateTimestamp(const VideoData* aOther,
-                                                                int64_t aTimestamp);
-
-  // Creates a new VideoData identical to aOther, but with a different
-  // specified timestamp and duration. All data from aOther is copied
-  // into the new VideoData, as ShallowCopyUpdateDuration() does.
-  static already_AddRefed<VideoData>
-  ShallowCopyUpdateTimestampAndDuration(const VideoData* aOther, int64_t aTimestamp,
-                                        int64_t aDuration);
 
   // Initialize PlanarYCbCrImage. Only When aCopyData is true,
   // video data is copied to PlanarYCbCrImage.
@@ -534,8 +528,6 @@ public:
 
   int32_t mFrameID;
 
-  bool mSentToCompositor;
-
   VideoData(int64_t aOffset,
             int64_t aTime,
             int64_t aDuration,
@@ -544,8 +536,18 @@ public:
             IntSize aDisplay,
             uint32_t aFrameID);
 
+  void SetListener(UniquePtr<Listener> aListener);
+  void MarkSentToCompositor();
+  bool IsSentToCompositor() { return mSentToCompositor; }
+
+  void UpdateDuration(int64_t aDuration);
+  void UpdateTimestamp(int64_t aTimestamp);
+
 protected:
   ~VideoData();
+
+  bool mSentToCompositor;
+  UniquePtr<Listener> mListener;
 };
 
 class CryptoTrack
@@ -621,15 +623,22 @@ private:
 class MediaRawData : public MediaData {
 public:
   MediaRawData();
-  MediaRawData(const uint8_t* aData, size_t mSize);
+  MediaRawData(const uint8_t* aData, size_t aSize);
+  MediaRawData(const uint8_t* aData, size_t aSize,
+               const uint8_t* aAlphaData, size_t aAlphaSize);
 
   // Pointer to data or null if not-yet allocated
   const uint8_t* Data() const { return mBuffer.Data(); }
+  // Pointer to alpha data or null if not-yet allocated
+  const uint8_t* AlphaData() const { return mAlphaBuffer.Data(); }
   // Size of buffer.
   size_t Size() const { return mBuffer.Length(); }
+  size_t AlphaSize() const { return mAlphaBuffer.Length(); }
   size_t ComputedSizeOfIncludingThis() const
   {
-    return sizeof(*this) + mBuffer.ComputedSizeOfExcludingThis();
+    return sizeof(*this)
+           + mBuffer.ComputedSizeOfExcludingThis()
+           + mAlphaBuffer.ComputedSizeOfExcludingThis();
   }
 
   const CryptoSample& mCrypto;
@@ -658,6 +667,7 @@ protected:
 private:
   friend class MediaRawDataWriter;
   AlignedByteBuffer mBuffer;
+  AlignedByteBuffer mAlphaBuffer;
   CryptoSample mCryptoInternal;
   MediaRawData(const MediaRawData&); // Not implemented
 };

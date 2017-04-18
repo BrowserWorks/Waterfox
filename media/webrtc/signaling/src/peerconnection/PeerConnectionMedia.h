@@ -270,7 +270,8 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
   // Activate or remove ICE transports at the conclusion of offer/answer,
   // or when rollback occurs.
-  void ActivateOrRemoveTransports(const JsepSession& aSession);
+  void ActivateOrRemoveTransports(const JsepSession& aSession,
+                                  const bool forceIceTcp);
 
   // Start ICE checks.
   void StartIceChecks(const JsepSession& session);
@@ -291,6 +292,9 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // Process a trickle ICE candidate.
   void AddIceCandidate(const std::string& candidate, const std::string& mid,
                        uint32_t aMLine);
+
+  // Handle notifications of network online/offline events.
+  void UpdateNetworkState(bool online);
 
   // Handle complete media pipelines.
   nsresult UpdateMediaPipelines(const JsepSession& session);
@@ -410,13 +414,13 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
         static_cast<VideoSessionConduit*>(it->second.second.get()));
   }
 
+  void AddVideoConduit(size_t level, const RefPtr<VideoSessionConduit> &aConduit) {
+    mConduits[level] = std::make_pair(true, aConduit);
+  }
+
   // Add a conduit
   void AddAudioConduit(size_t level, const RefPtr<AudioSessionConduit> &aConduit) {
     mConduits[level] = std::make_pair(false, aConduit);
-  }
-
-  void AddVideoConduit(size_t level, const RefPtr<VideoSessionConduit> &aConduit) {
-    mConduits[level] = std::make_pair(true, aConduit);
   }
 
   // ICE state signals
@@ -432,6 +436,8 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
       SignalUpdateDefaultCandidate;
   sigslot::signal1<uint16_t>
       SignalEndOfLocalCandidates;
+
+  RefPtr<WebRtcCallWrapper> mCall;
 
  private:
   nsresult InitProxy();
@@ -489,6 +495,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void AddIceCandidate_s(const std::string& aCandidate, const std::string& aMid,
                          uint32_t aMLine);
 
+  void UpdateNetworkState_s(bool online);
 
   // ICE events
   void IceGatheringStateChange_s(NrIceCtx* ctx,

@@ -343,11 +343,6 @@ nsComponentManagerImpl::Init()
 
   InitializeStaticModules();
 
-  nsresult rv = mNativeModuleLoader.Init();
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
   nsCategoryManager::GetSingleton()->SuppressNotifications(true);
 
   RegisterModule(&kXPCOMModule, nullptr);
@@ -632,31 +627,9 @@ nsComponentManagerImpl::ManifestBinaryComponent(ManifestProcessingContext& aCx,
                                                 int aLineNo,
                                                 char* const* aArgv)
 {
-  if (aCx.mFile.IsZip()) {
-    NS_WARNING("Cannot load binary components from a jar.");
-    LogMessageWithContext(aCx.mFile, aLineNo,
-                          "Cannot load binary components from a jar.");
-    return;
-  }
-
-  FileLocation f(aCx.mFile, aArgv[0]);
-  nsCString uri;
-  f.GetURIString(uri);
-
-  if (mKnownModules.Get(uri)) {
-    NS_WARNING("Attempting to register a binary component twice.");
-    LogMessageWithContext(aCx.mFile, aLineNo,
-                          "Attempting to register a binary component twice.");
-    return;
-  }
-
-  const mozilla::Module* m = mNativeModuleLoader.LoadModule(f);
-  // The native module loader should report an error here, we don't have to
-  if (!m) {
-    return;
-  }
-
-  RegisterModule(m, &f);
+  LogMessageWithContext(aCx.mFile, aLineNo,
+                        "Binary XPCOM components are no longer supported.");
+  return;
 }
 
 static void
@@ -748,7 +721,7 @@ nsComponentManagerImpl::ManifestComponent(ManifestProcessingContext& aCx,
   *permanentCID = cid;
 
   PL_ARENA_ALLOCATE(place, &mArena, sizeof(mozilla::Module::CIDEntry));
-  mozilla::Module::CIDEntry* e = new (place) mozilla::Module::CIDEntry();
+  auto* e = new (place) mozilla::Module::CIDEntry();
   e->cid = permanentCID;
 
   f = new nsFactoryEntry(e, km);
@@ -882,9 +855,6 @@ nsresult nsComponentManagerImpl::Shutdown(void)
 
   delete sStaticModules;
   delete sModuleLocations;
-
-  // Unload libraries
-  mNativeModuleLoader.UnloadLibraries();
 
   // delete arena for strings and small objects
   PL_FinishArenaPool(&mArena);
@@ -1721,7 +1691,7 @@ nsComponentManagerImpl::EnumerateCIDs(nsISimpleEnumerator** aEnumerator)
 NS_IMETHODIMP
 nsComponentManagerImpl::EnumerateContractIDs(nsISimpleEnumerator** aEnumerator)
 {
-  nsTArray<nsCString>* array = new nsTArray<nsCString>;
+  auto* array = new nsTArray<nsCString>;
   for (auto iter = mContractIDs.Iter(); !iter.Done(); iter.Next()) {
     const nsACString& contract = iter.Key();
     array->AppendElement(contract);
@@ -1811,7 +1781,6 @@ nsComponentManagerImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   // - mMon
   // - sStaticModules' entries
   // - sModuleLocations' entries
-  // - mNativeModuleLoader
   // - mKnownStaticModules' entries?
   // - mKnownModules' keys and values?
 
@@ -1834,8 +1803,8 @@ nsFactoryEntry::nsFactoryEntry(const nsCID& aCID, nsIFactory* aFactory)
   , mModule(nullptr)
   , mFactory(aFactory)
 {
-  mozilla::Module::CIDEntry* e = new mozilla::Module::CIDEntry();
-  nsCID* cid = new nsCID;
+  auto* e = new mozilla::Module::CIDEntry();
+  auto* cid = new nsCID;
   *cid = aCID;
   e->cid = cid;
   mCIDEntry = e;

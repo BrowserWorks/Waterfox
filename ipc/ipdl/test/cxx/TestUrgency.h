@@ -22,12 +22,12 @@ public:
 
     void Main();
 
-    bool RecvTest1(uint32_t *value);
-    bool RecvTest2();
-    bool RecvTest3(uint32_t *value);
-    bool RecvTest4_Begin();
-    bool RecvTest4_NestedSync();
-    bool RecvFinalTest_Begin();
+    mozilla::ipc::IPCResult RecvTest1(uint32_t *value) override;
+    mozilla::ipc::IPCResult RecvTest2() override;
+    mozilla::ipc::IPCResult RecvTest3(uint32_t *value) override;
+    mozilla::ipc::IPCResult RecvTest4_Begin();
+    mozilla::ipc::IPCResult RecvTest4_NestedSync();
+    mozilla::ipc::IPCResult RecvFinalTest_Begin() override;
 
     bool ShouldContinueFromReplyTimeout() override
     {
@@ -51,9 +51,9 @@ public:
     TestUrgencyChild();
     virtual ~TestUrgencyChild();
 
-    bool RecvStart();
-    bool RecvReply1(uint32_t *reply);
-    bool RecvReply2(uint32_t *reply);
+    mozilla::ipc::IPCResult RecvStart() override;
+    mozilla::ipc::IPCResult RecvReply1(uint32_t *reply) override;
+    mozilla::ipc::IPCResult RecvReply2(uint32_t *reply) override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {

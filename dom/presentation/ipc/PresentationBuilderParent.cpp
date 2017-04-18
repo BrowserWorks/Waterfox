@@ -110,13 +110,10 @@ NS_IMPL_ISUPPORTS(PresentationBuilderParent,
 PresentationBuilderParent::PresentationBuilderParent(PresentationParent* aParent)
   : mParent(aParent)
 {
-  MOZ_COUNT_CTOR(PresentationBuilderParent);
 }
 
 PresentationBuilderParent::~PresentationBuilderParent()
 {
-  MOZ_COUNT_DTOR(PresentationBuilderParent);
-
   if (mNeedDestroyActor) {
     Unused << NS_WARN_IF(!Send__delete__(this));
   }
@@ -198,69 +195,69 @@ PresentationBuilderParent::ActorDestroy(ActorDestroyReason aWhy)
   mBuilderListener = nullptr;
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvSendOffer(const nsString& aSDP)
 {
   RefPtr<DCPresentationChannelDescription> description =
     new DCPresentationChannelDescription(aSDP);
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->SendOffer(description)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvSendAnswer(const nsString& aSDP)
 {
   RefPtr<DCPresentationChannelDescription> description =
     new DCPresentationChannelDescription(aSDP);
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->SendAnswer(description)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvSendIceCandidate(const nsString& aCandidate)
 {
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->SendIceCandidate(aCandidate)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvClose(const nsresult& aReason)
 {
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->Close(aReason)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
 // Delegate to nsIPresentationSessionTransportBuilderListener
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvOnSessionTransport()
 {
   RefPtr<PresentationBuilderParent> kungFuDeathGrip = this;
   Unused <<
     NS_WARN_IF(!mBuilderListener ||
                NS_FAILED(mBuilderListener->OnSessionTransport(mIPCSessionTransport)));
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvOnSessionTransportError(const nsresult& aReason)
 {
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->OnError(aReason)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
 } // namespace dom

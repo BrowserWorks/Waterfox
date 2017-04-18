@@ -36,12 +36,11 @@ registerCleanupFunction(function() {
 var gTests = [
 {
   desc: "Test the remote commands",
-  teardown: function* () {
+  *teardown() {
     gBrowser.removeCurrentTab();
     yield signOut();
   },
-  run: function* ()
-  {
+  *run() {
     setPref("identity.fxaccounts.remote.signup.uri",
             "https://example.com/browser/browser/base/content/test/general/accounts_testRemoteCommands.html");
     let tab = yield promiseNewTabLoadEvent("about:accounts");
@@ -76,8 +75,7 @@ var gTests = [
 {
   desc: "Test action=signin - no user logged in",
   teardown: () => gBrowser.removeCurrentTab(),
-  run: function* ()
-  {
+  *run() {
     // When this loads with no user logged-in, we expect the "normal" URL
     const expected_url = "https://example.com/?is_sign_in";
     setPref("identity.fxaccounts.remote.signin.uri", expected_url);
@@ -95,12 +93,11 @@ var gTests = [
 },
 {
   desc: "Test action=signin - user logged in",
-  teardown: function* () {
+  *teardown() {
     gBrowser.removeCurrentTab();
     yield signOut();
   },
-  run: function* ()
-  {
+  *run() {
     // When this loads with a user logged-in, we expect the normal URL to
     // have been ignored and the "manage" page to be shown.
     const expected_url = "https://example.com/?is_sign_in";
@@ -124,8 +121,7 @@ var gTests = [
 {
   desc: "Test action=signin - captive portal",
   teardown: () => gBrowser.removeCurrentTab(),
-  run: function* ()
-  {
+  *run() {
     const signinUrl = "https://redirproxy.example.com/test";
     setPref("identity.fxaccounts.remote.signin.uri", signinUrl);
     let [tab, ] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signin");
@@ -144,8 +140,7 @@ var gTests = [
     gBrowser.removeCurrentTab();
     BrowserOffline.toggleOfflineStatus();
   },
-  run: function* ()
-  {
+  *run() {
     BrowserOffline.toggleOfflineStatus();
     Services.cache2.clear();
 
@@ -164,8 +159,7 @@ var gTests = [
 {
   desc: "Test action=signup - no user logged in",
   teardown: () => gBrowser.removeCurrentTab(),
-  run: function* ()
-  {
+  *run() {
     const expected_url = "https://example.com/?is_sign_up";
     setPref("identity.fxaccounts.remote.signup.uri", expected_url);
     let [tab, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?action=signup");
@@ -183,8 +177,7 @@ var gTests = [
 {
   desc: "Test action=signup - user logged in",
   teardown: () => gBrowser.removeCurrentTab(),
-  run: function* ()
-  {
+  *run() {
     const expected_url = "https://example.com/?is_sign_up";
     setPref("identity.fxaccounts.remote.signup.uri", expected_url);
     yield setSignedInUser();
@@ -202,12 +195,11 @@ var gTests = [
 },
 {
   desc: "Test action=reauth",
-  teardown: function* () {
+  *teardown() {
     gBrowser.removeCurrentTab();
     yield signOut();
   },
-  run: function* ()
-  {
+  *run() {
     const expected_url = "https://example.com/?is_force_auth";
     setPref("identity.fxaccounts.remote.force_auth.uri", expected_url);
 
@@ -220,12 +212,11 @@ var gTests = [
 },
 {
   desc: "Test with migrateToDevEdition enabled (success)",
-  teardown: function* () {
+  *teardown() {
     gBrowser.removeCurrentTab();
     yield signOut();
   },
-  run: function* ()
-  {
+  *run() {
     let fxAccountsCommon = {};
     Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
     const pref = "identity.fxaccounts.migrateToDevEdition";
@@ -281,12 +272,11 @@ var gTests = [
 },
 {
   desc: "Test with migrateToDevEdition enabled (no user to migrate)",
-  teardown: function* () {
+  *teardown() {
     gBrowser.removeCurrentTab();
     yield signOut();
   },
-  run: function* ()
-  {
+  *run() {
     const pref = "identity.fxaccounts.migrateToDevEdition";
     changedPrefs.add(pref);
     Services.prefs.setBoolPref(pref, true);
@@ -321,24 +311,25 @@ var gTests = [
 },
 {
   desc: "Test observers about:accounts",
-  teardown: function() {
+  teardown() {
     gBrowser.removeCurrentTab();
   },
-  run: function* () {
+  *run() {
     setPref("identity.fxaccounts.remote.signup.uri", "https://example.com/");
     yield setSignedInUser();
     let tab = yield promiseNewTabLoadEvent("about:accounts");
     // sign the user out - the tab should have action=signin
+    let loadPromise = promiseOneMessage(tab, "test:document:load");
     yield signOut();
     // wait for the new load.
-    yield promiseOneMessage(tab, "test:document:load");
+    yield loadPromise;
     is(tab.linkedBrowser.contentDocument.location.href, "about:accounts?action=signin");
   }
 },
 {
   desc: "Test entrypoint query string, no action, no user logged in",
   teardown: () => gBrowser.removeCurrentTab(),
-  run: function* () {
+  *run() {
     // When this loads with no user logged-in, we expect the "normal" URL
     setPref("identity.fxaccounts.remote.signup.uri", "https://example.com/");
     let [, url] = yield promiseNewTabWithIframeLoadEvent("about:accounts?entrypoint=abouthome");
@@ -348,7 +339,7 @@ var gTests = [
 {
   desc: "Test entrypoint query string for signin",
   teardown: () => gBrowser.removeCurrentTab(),
-  run: function* () {
+  *run() {
     // When this loads with no user logged-in, we expect the "normal" URL
     const expected_url = "https://example.com/?is_sign_in";
     setPref("identity.fxaccounts.remote.signin.uri", expected_url);
@@ -359,7 +350,7 @@ var gTests = [
 {
   desc: "Test entrypoint query string for signup",
   teardown: () => gBrowser.removeCurrentTab(),
-  run: function* () {
+  *run() {
     // When this loads with no user logged-in, we expect the "normal" URL
     const sign_up_url = "https://example.com/?is_sign_up";
     setPref("identity.fxaccounts.remote.signup.uri", sign_up_url);
@@ -373,7 +364,7 @@ var gTests = [
   teardown() {
     gBrowser.removeCurrentTab();
   },
-  run: function* () {
+  *run() {
     let signupURL = "https://example.com/";
     setPref("identity.fxaccounts.remote.signup.uri", signupURL);
     let queryStr = "email=foo%40example.com&foo=bar&baz=quux";
@@ -389,7 +380,7 @@ var gTests = [
   teardown() {
     gBrowser.removeCurrentTab();
   },
-  run: function* () {
+  *run() {
     let signupURL = "https://example.com/?param";
     setPref("identity.fxaccounts.remote.signup.uri", signupURL);
     let queryStr = "email=foo%40example.com&foo=bar&baz=quux";
@@ -401,8 +392,7 @@ var gTests = [
 },
 ]; // gTests
 
-function test()
-{
+function test() {
   waitForExplicitFinish();
 
   Task.spawn(function* () {
@@ -429,18 +419,16 @@ function promiseOneMessage(tab, messageName) {
   return deferred.promise;
 }
 
-function promiseNewTabLoadEvent(aUrl)
-{
+function promiseNewTabLoadEvent(aUrl) {
   let tab = gBrowser.selectedTab = gBrowser.addTab(aUrl);
   let browser = tab.linkedBrowser;
   let mm = browser.messageManager;
 
-  // give it an e10s-friendly content script to help with our tests.
-  mm.loadFrameScript(CHROME_BASE + "content_aboutAccounts.js", true);
+  // give it an e10s-friendly content script to help with our tests,
   // and wait for it to tell us about the load.
-  return promiseOneMessage(tab, "test:document:load").then(
-    () => tab
-  );
+  let promise = promiseOneMessage(tab, "test:document:load");
+  mm.loadFrameScript(CHROME_BASE + "content_aboutAccounts.js", true);
+  return promise.then(() => tab);
 }
 
 // Returns a promise which is resolved with the iframe's URL after a new
@@ -451,13 +439,13 @@ function promiseNewTabWithIframeLoadEvent(aUrl) {
   let browser = tab.linkedBrowser;
   let mm = browser.messageManager;
 
-  // give it an e10s-friendly content script to help with our tests.
-  mm.loadFrameScript(CHROME_BASE + "content_aboutAccounts.js", true);
+  // give it an e10s-friendly content script to help with our tests,
   // and wait for it to tell us about the iframe load.
   mm.addMessageListener("test:iframe:load", function onFrameLoad(message) {
     mm.removeMessageListener("test:iframe:load", onFrameLoad);
     deferred.resolve([tab, message.data.url]);
   });
+  mm.loadFrameScript(CHROME_BASE + "content_aboutAccounts.js", true);
   return deferred.promise;
 }
 
@@ -472,7 +460,7 @@ function checkVisibilities(tab, data) {
     }
     deferred.resolve();
   });
-  mm.sendAsyncMessage("test:check-visibilities", {ids: ids});
+  mm.sendAsyncMessage("test:check-visibilities", {ids});
   return deferred.promise;
 }
 

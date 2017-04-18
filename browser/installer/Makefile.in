@@ -61,9 +61,6 @@ DEFINES += -DMOZ_ANGLE_RENDERER=$(MOZ_ANGLE_RENDERER)
 ifdef MOZ_D3DCOMPILER_VISTA_DLL
 DEFINES += -DMOZ_D3DCOMPILER_VISTA_DLL=$(MOZ_D3DCOMPILER_VISTA_DLL)
 endif
-ifdef MOZ_D3DCOMPILER_XP_DLL
-DEFINES += -DMOZ_D3DCOMPILER_XP_DLL=$(MOZ_D3DCOMPILER_XP_DLL)
-endif
 endif
 
 DEFINES += -DMOZ_CHILD_PROCESS_NAME=$(MOZ_CHILD_PROCESS_NAME)
@@ -98,8 +95,6 @@ MOZ_PKG_MAC_BACKGROUND=branding/background.png
 MOZ_PKG_MAC_ICON=branding/disk.icns
 MOZ_PKG_MAC_EXTRA=--symlink '/Applications:/ '
 endif
-
-INSTALL_SDK = 1
 
 include $(topsrcdir)/toolkit/mozapps/installer/signing.mk
 include $(topsrcdir)/toolkit/mozapps/installer/packager.mk

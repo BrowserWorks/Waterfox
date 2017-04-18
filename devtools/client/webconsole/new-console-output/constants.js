@@ -12,6 +12,7 @@ const actionTypes = {
   MESSAGE_OPEN: "MESSAGE_OPEN",
   MESSAGE_CLOSE: "MESSAGE_CLOSE",
   MESSAGE_TABLE_RECEIVE: "MESSAGE_TABLE_RECEIVE",
+  TIMESTAMPS_TOGGLE: "TIMESTAMPS_TOGGLE",
   FILTER_TOGGLE: "FILTER_TOGGLE",
   FILTER_TEXT_SET: "FILTER_TEXT_SET",
   FILTERS_CLEAR: "FILTERS_CLEAR",
@@ -26,6 +27,7 @@ const prefs = {
       INFO: "devtools.webconsole.filter.info",
       LOG: "devtools.webconsole.filter.log",
       DEBUG: "devtools.webconsole.filter.debug",
+      CSS: "devtools.webconsole.filter.css",
       NET: "devtools.webconsole.filter.net",
       NETXHR: "devtools.webconsole.filter.netxhr",
     },
@@ -38,6 +40,7 @@ const prefs = {
 const chromeRDPEnums = {
   MESSAGE_SOURCE: {
     XML: "xml",
+    CSS: "css",
     JAVASCRIPT: "javascript",
     NETWORK: "network",
     CONSOLE_API: "console-api",

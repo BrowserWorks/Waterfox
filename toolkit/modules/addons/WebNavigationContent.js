@@ -25,15 +25,15 @@ addMessageListener("Extension:DisableWebNavigation", () => {
 
 var FormSubmitListener = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                          Ci.nsIFormSubmitObserver,
-                                          Ci.nsISupportsWeakReference]),
+                                         Ci.nsIFormSubmitObserver,
+                                         Ci.nsISupportsWeakReference]),
   init() {
     this.formSubmitWindows = new WeakSet();
     Services.obs.addObserver(FormSubmitListener, "earlyformsubmit", false);
   },
 
   uninit() {
-    Services.obs.removeObserver(FormSubmitListener, "earlyformsubmit", false);
+    Services.obs.removeObserver(FormSubmitListener, "earlyformsubmit");
     this.formSubmitWindows = new WeakSet();
   },
 

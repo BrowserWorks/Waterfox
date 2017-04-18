@@ -22,12 +22,12 @@ namespace a11y {
 class DocAccessibleChild : public DocAccessibleChildBase
 {
 public:
-  explicit DocAccessibleChild(DocAccessible* aDoc);
+  DocAccessibleChild(DocAccessible* aDoc, IProtocol* aManager);
   ~DocAccessibleChild();
 
   virtual void Shutdown() override;
 
-  virtual bool
+  virtual ipc::IPCResult
   RecvParentCOMProxy(const IAccessibleHolder& aParentCOMProxy) override;
 
   IAccessible* GetParentIAccessible() const { return mParentProxy.get(); }

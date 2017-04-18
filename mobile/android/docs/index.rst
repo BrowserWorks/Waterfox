@@ -13,10 +13,12 @@ Contents:
 
    localeswitching
    uitelemetry
+   activitystreamtelemetry
    adjust
    defaultdomains
    bouncer
    shutdown
+   push
 
 Indices and tables
 ==================

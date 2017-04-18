@@ -330,6 +330,8 @@ var ViewSourceContent = {
                     .createInstance(Ci.nsISHEntry);
     shEntry.setURI(BrowserUtils.makeURI(viewSrcURL, null, null));
     shEntry.setTitle(viewSrcURL);
+    let systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
+    shEntry.triggeringPrincipal = systemPrincipal;
     shEntry.loadType = Ci.nsIDocShellLoadInfo.loadHistory;
     shEntry.cacheKey = shEntrySource.cacheKey;
     docShell.QueryInterface(Ci.nsIWebNavigation)
@@ -391,7 +393,7 @@ var ViewSourceContent = {
         docShell.QueryInterface(Ci.nsIWebNavigation)
                 .loadURIWithOptions(content.location.href,
                                     Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CLASSIFIER,
-                                    null, Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
+                                    null, Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
                                     null, null, null);
       }
     }
@@ -449,8 +451,8 @@ var ViewSourceContent = {
   onContextMenu(event) {
     let addonInfo = {};
     let subject = {
-      event: event,
-      addonInfo: addonInfo,
+      event,
+      addonInfo,
     };
 
     subject.wrappedJSObject = subject;
@@ -542,8 +544,7 @@ var ViewSourceContent = {
       if (offset < node.data.length) {
         // The same text node spans across the "\n", just focus where we were.
         selection.extend(node, offset);
-      }
-      else {
+      } else {
         // There is another tag just after the "\n", hook there. We need
         // to focus a safe point because there are edgy cases such as
         // <span>...\n</span><span>...</span> vs.
@@ -766,18 +767,17 @@ var ViewSourceContent = {
    * @param drawSelection true to highlight the selection
    * @param baseURI base URI of the original document
    */
-  viewSourceWithSelection(uri, drawSelection, baseURI)
-  {
+  viewSourceWithSelection(uri, drawSelection, baseURI) {
     this.needsDrawSelection = drawSelection;
 
     // all our content is held by the data:URI and URIs are internally stored as utf-8 (see nsIURI.idl)
     let loadFlags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
-    let referrerPolicy = Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT;
+    let referrerPolicy = Ci.nsIHttpChannel.REFERRER_POLICY_UNSET;
     let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
     webNav.loadURIWithOptions(uri, loadFlags,
                               null, referrerPolicy,  // referrer
                               null, null,  // postData, headers
-                              Services.io.newURI(baseURI, null, null));
+                              Services.io.newURI(baseURI));
   },
 
   /**
@@ -876,8 +876,7 @@ var ViewSourceContent = {
                                  Ci.nsISelectionController.SELECTION_NORMAL,
                                  Ci.nsISelectionController.SELECTION_ANCHOR_REGION,
                                  true);
-    }
-    catch (e) { }
+    } catch (e) { }
 
     // restore the current find state
     findService.matchCase     = matchCase;

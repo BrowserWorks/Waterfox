@@ -32,13 +32,13 @@ private:
     MOZ_ASSERT(!mPort);
   }
 
-  virtual bool
-  RecvEntangled(nsTArray<MessagePortMessage>&& aMessages) override;
+  virtual mozilla::ipc::IPCResult
+  RecvEntangled(nsTArray<ClonedMessageData>&& aMessages) override;
 
-  virtual bool
-  RecvReceiveData(nsTArray<MessagePortMessage>&& aMessages) override;
+  virtual mozilla::ipc::IPCResult
+  RecvReceiveData(nsTArray<ClonedMessageData>&& aMessages) override;
 
-  virtual bool RecvStopSendingDataConfirmed() override;
+  virtual mozilla::ipc::IPCResult RecvStopSendingDataConfirmed() override;
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 

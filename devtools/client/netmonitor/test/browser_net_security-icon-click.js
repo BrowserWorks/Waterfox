@@ -1,6 +1,6 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 /**
@@ -42,13 +42,13 @@ add_task(function* () {
   }
 
   function* clickAndTestSecurityIcon() {
-    let item = RequestsMenu.items[0];
-    let icon = $(".requests-security-state-icon", item.target);
+    let item = RequestsMenu.getItemAtIndex(0);
+    let target = getItemTarget(RequestsMenu, item);
+    let icon = $(".requests-security-state-icon", target);
 
-    info("Clicking security icon of the first request and waiting for the " +
-         "panel to update.");
+    info("Clicking security icon of the first request and waiting for panel update.");
+    EventUtils.synthesizeMouseAtCenter(icon, {}, monitor.panelWin);
 
-    icon.click();
     yield monitor.panelWin.once(EVENTS.TAB_UPDATED);
 
     is(NetworkDetails.widget.selectedPanel, $("#security-tabpanel"),

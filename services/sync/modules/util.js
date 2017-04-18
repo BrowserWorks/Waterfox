@@ -93,8 +93,7 @@ this.Utils = {
     return function WrappedCatch() {
       try {
         return func.call(thisArg);
-      }
-      catch(ex) {
+      } catch (ex) {
         thisArg._log.debug("Exception calling " + (func.name || "anonymous function"), ex);
         if (exceptionCallback) {
           return exceptionCallback.call(thisArg, ex);
@@ -119,8 +118,7 @@ this.Utils = {
 
       try {
         return func.call(thisArg);
-      }
-      finally {
+      } finally {
         thisArg.unlock();
       }
     };
@@ -166,8 +164,7 @@ this.Utils = {
           let ret = func.call(thisArg);
           notify("finish", ret);
           return ret;
-        }
-        catch(ex) {
+        } catch (ex) {
           notify("error", ex);
           throw ex;
         }
@@ -207,14 +204,14 @@ this.Utils = {
 
     // Create a getter if it doesn't exist yet
     if (!prot.__lookupGetter__(prop)) {
-      prot.__defineGetter__(prop, function () {
+      prot.__defineGetter__(prop, function() {
         return this[defer][prop];
       });
     }
 
     // Create a setter if it doesn't exist yet
     if (!prot.__lookupSetter__(prop)) {
-      prot.__defineSetter__(prop, function (val) {
+      prot.__defineSetter__(prop, function(val) {
         this[defer][prop] = val;
       });
     }
@@ -271,14 +268,14 @@ this.Utils = {
    */
   base32ToFriendly: function base32ToFriendly(input) {
     return input.toLowerCase()
-                .replace(/l/g, '8')
-                .replace(/o/g, '9');
+                .replace(/l/g, "8")
+                .replace(/o/g, "9");
   },
 
   base32FromFriendly: function base32FromFriendly(input) {
     return input.toUpperCase()
-                .replace(/8/g, 'L')
-                .replace(/9/g, 'O');
+                .replace(/8/g, "L")
+                .replace(/9/g, "O");
   },
 
   /**
@@ -332,6 +329,10 @@ this.Utils = {
     return Utils.encodeKeyBase32(atob(encodedKey));
   },
 
+  jsonFilePath(filePath) {
+    return OS.Path.normalize(OS.Path.join(OS.Constants.Path.profileDir, "weave", filePath + ".json"));
+  },
+
   /**
    * Load a JSON file from disk in the profile directory.
    *
@@ -346,7 +347,7 @@ this.Utils = {
    *        could not be loaded, the first argument will be undefined.
    */
   jsonLoad: Task.async(function*(filePath, that, callback) {
-    let path = OS.Path.join(OS.Constants.Path.profileDir, "weave", filePath + ".json");
+    let path = Utils.jsonFilePath(filePath);
 
     if (that._log) {
       that._log.trace("Loading json from disk: " + filePath);
@@ -360,14 +361,15 @@ this.Utils = {
       if (e instanceof OS.File.Error && e.becauseNoSuchFile) {
         // Ignore non-existent files, but explicitly return null.
         json = null;
-      } else {
-        if (that._log) {
+      } else if (that._log) {
           that._log.debug("Failed to load json", e);
         }
-      }
     }
 
-    callback.call(that, json);
+    if (callback) {
+      callback.call(that, json);
+    }
+    return json;
   }),
 
   /**
@@ -495,7 +497,7 @@ this.Utils = {
    *     take user input for account/username, cleaning up appropriately.
    */
 
-  isPassphrase: function(s) {
+  isPassphrase(s) {
     if (s) {
       return /^[abcdefghijkmnpqrstuvwxyz23456789]{26}$/.test(Utils.normalizePassphrase(s));
     }
@@ -525,7 +527,7 @@ this.Utils = {
       return data + "-";
 
     // Hyphenate it.
-    let y = data.substr(0,1);
+    let y = data.substr(0, 1);
     let z = data.substr(1).replace(/(.{1,5})/g, "-$1");
 
     // Correct length? We're done.
@@ -543,7 +545,7 @@ this.Utils = {
 
     // 20-char sync key.
     if (pp.length == 23 &&
-        [5, 11, 17].every(i => pp[i] == '-')) {
+        [5, 11, 17].every(i => pp[i] == "-")) {
 
       return pp.slice(0, 5) + pp.slice(6, 11)
              + pp.slice(12, 17) + pp.slice(18, 23);
@@ -551,7 +553,7 @@ this.Utils = {
 
     // "Modern" 26-char key.
     if (pp.length == 31 &&
-        [1, 7, 13, 19, 25].every(i => pp[i] == '-')) {
+        [1, 7, 13, 19, 25].every(i => pp[i] == "-")) {
 
       return pp.slice(0, 1) + pp.slice(2, 7)
              + pp.slice(8, 13) + pp.slice(14, 19)
@@ -595,34 +597,20 @@ this.Utils = {
    * Is there a master password configured, regardless of current lock state?
    */
   mpEnabled: function mpEnabled() {
-    let modules = Cc["@mozilla.org/security/pkcs11moduledb;1"]
-                    .getService(Ci.nsIPKCS11ModuleDB);
-    let sdrSlot = modules.findSlotByName("");
-    let status  = sdrSlot.status;
-    let slots = Ci.nsIPKCS11Slot;
-
-    return status != slots.SLOT_UNINITIALIZED && status != slots.SLOT_READY;
+    let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
+                    .getService(Ci.nsIPK11TokenDB);
+    let token = tokenDB.getInternalKeyToken();
+    return token.hasPassword;
   },
 
   /**
    * Is there a master password configured and currently locked?
    */
   mpLocked: function mpLocked() {
-    let modules = Cc["@mozilla.org/security/pkcs11moduledb;1"]
-                    .getService(Ci.nsIPKCS11ModuleDB);
-    let sdrSlot = modules.findSlotByName("");
-    let status  = sdrSlot.status;
-    let slots = Ci.nsIPKCS11Slot;
-
-    if (status == slots.SLOT_READY || status == slots.SLOT_LOGGED_IN
-                                   || status == slots.SLOT_UNINITIALIZED)
-      return false;
-
-    if (status == slots.SLOT_NOT_LOGGED_IN)
-      return true;
-
-    // something wacky happened, pretend MP is locked
-    return true;
+    let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
+                    .getService(Ci.nsIPK11TokenDB);
+    let token = tokenDB.getInternalKeyToken();
+    return token.hasPassword && !token.isLoggedIn();
   },
 
   // If Master Password is enabled and locked, present a dialog to unlock it.
@@ -636,7 +624,7 @@ this.Utils = {
     try {
       sdr.encryptString("bacon");
       return true;
-    } catch(e) {}
+    } catch (e) {}
     return false;
   },
 
@@ -661,7 +649,7 @@ this.Utils = {
    * In general, these hosts will not have their passwords synced, will be
    * reset when we drop sync credentials, etc.
    */
-  getSyncCredentialsHosts: function() {
+  getSyncCredentialsHosts() {
     let result = new Set(this.getSyncCredentialsHostsLegacy());
     for (let host of this.getSyncCredentialsHostsFxA()) {
       result.add(host);
@@ -672,7 +660,7 @@ this.Utils = {
   /*
    * Get the "legacy" identity hosts.
    */
-  getSyncCredentialsHostsLegacy: function() {
+  getSyncCredentialsHostsLegacy() {
     // the legacy sync host
     return new Set([PWDMGR_HOST]);
   },
@@ -680,7 +668,7 @@ this.Utils = {
   /*
    * Get the FxA identity hosts.
    */
-  getSyncCredentialsHostsFxA: function() {
+  getSyncCredentialsHostsFxA() {
     let result = new Set();
     // the FxA host
     result.add(FxAccountsCommon.FXA_PWDMGR_HOST);
@@ -791,7 +779,7 @@ this.Str = {};
   XPCOMUtils.defineLazyGetter(Str, lazy, Utils.lazyStrings(lazy));
 });
 
-Svc.Obs.add("xpcom-shutdown", function () {
+Svc.Obs.add("xpcom-shutdown", function() {
   for (let name in Svc)
     delete Svc[name];
 });

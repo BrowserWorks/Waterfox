@@ -4,12 +4,11 @@
 
 "use strict";
 
+/* exported ProductAddonChecker */
+
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 const LOCAL_EME_SOURCES = [{
-  "id": "gmp-eme-adobe",
-  "src": "chrome://global/content/gmp-sources/eme-adobe.json"
-}, {
   "id": "gmp-gmpopenh264",
   "src": "chrome://global/content/gmp-sources/openh264.json"
 }, {
@@ -47,7 +46,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ServiceRequest",
 // the addon update XML file.
 var CreateXHR = function() {
   return Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].
-  createInstance(Ci.nsISupports);
+    createInstance(Ci.nsISupports);
 }
 
 var logger = Log.repository.getLogger("addons.productaddons");
@@ -61,10 +60,6 @@ var logger = Log.repository.getLogger("addons.productaddons");
  * that we fail cleanly in such case.
  */
 const TIMEOUT_DELAY_MS = 20000;
-// Chunk size for the incremental downloader
-const DOWNLOAD_CHUNK_BYTES_SIZE = 300000;
-// Incremental downloader interval
-const DOWNLOAD_INTERVAL  = 0;
 // How much of a file to read into memory at a time for hashing
 const HASH_CHUNK_SIZE = 8192;
 
@@ -80,8 +75,7 @@ function getRequestStatus(request) {
   let status = null;
   try {
     status = request.status;
-  }
-  catch (e) {
+  } catch (e) {
   }
 
   if (status != null) {
@@ -137,7 +131,7 @@ function downloadXML(url, allowNonBuiltIn = false, allowedCerts = null) {
     let fail = (event) => {
       let request = event.target;
       let status = getRequestStatus(request);
-      let message = "Failed downloading XML, status: " + status +  ", reason: " + event.type;
+      let message = "Failed downloading XML, status: " + status + ", reason: " + event.type;
       logger.warn(message);
       let ex = new Error(message);
       ex.status = status;
@@ -160,10 +154,10 @@ function downloadXML(url, allowNonBuiltIn = false, allowedCerts = null) {
       resolve(request.responseXML);
     };
 
-    request.addEventListener("error", fail, false);
-    request.addEventListener("abort", fail, false);
-    request.addEventListener("timeout", fail, false);
-    request.addEventListener("load", success, false);
+    request.addEventListener("error", fail);
+    request.addEventListener("abort", fail);
+    request.addEventListener("timeout", fail);
+    request.addEventListener("load", success);
 
     logger.info("sending request to: " + url);
     request.send(null);
@@ -320,7 +314,7 @@ function downloadFile(url) {
     let fail = (event) => {
       let request = event.target;
       let status = getRequestStatus(request);
-      let message = "Failed downloading via XHR, status: " + status +  ", reason: " + event.type;
+      let message = "Failed downloading via XHR, status: " + status + ", reason: " + event.type;
       logger.warn(message);
       let ex = new Error(message);
       ex.status = status;
@@ -383,8 +377,7 @@ var computeHash = Task.async(function*(hashFunction, path) {
     } while (bytes.length == HASH_CHUNK_SIZE);
 
     return binaryToHex(hasher.finish(false));
-  }
-  finally {
+  } finally {
     yield file.close();
   }
 });
@@ -412,7 +405,7 @@ var verifyFile = Task.async(function*(properties, path) {
     let expectedDigest = properties.hashValue.toLowerCase();
     let digest = yield computeHash(properties.hashFunction, path);
     if (digest != expectedDigest) {
-      throw new Error("Hash was `" + digest + "` but expected `" + expectedDigest +  "`.");
+      throw new Error("Hash was `" + digest + "` but expected `" + expectedDigest + "`.");
     }
   }
 });
@@ -433,7 +426,7 @@ const ProductAddonChecker = {
    *         and whether the local fallback was used, or rejects with a JS
    *         exception in case of error.
    */
-  getProductAddonList: function(url, allowNonBuiltIn = false, allowedCerts = null) {
+  getProductAddonList(url, allowNonBuiltIn = false, allowedCerts = null) {
     if (!GMPPrefs.get(GMPPrefs.KEY_UPDATE_ENABLED, true)) {
       logger.info("Updates are disabled via media.gmp-manager.updateEnabled");
       return Promise.resolve({usedFallback: true, gmpAddons: []});
@@ -458,8 +451,7 @@ const ProductAddonChecker = {
     try {
       yield verifyFile(addon, path);
       return path;
-    }
-    catch (e) {
+    } catch (e) {
       yield OS.File.remove(path);
       throw e;
     }

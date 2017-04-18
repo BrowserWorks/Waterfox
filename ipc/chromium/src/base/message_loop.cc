@@ -130,6 +130,12 @@ MessageLoop::MessageLoop(Type type, nsIThread* aThread)
     pump_ = new mozilla::ipc::MessagePumpForNonMainUIThreads(aThread);
     return;
 #endif
+#if defined(MOZ_WIDGET_ANDROID)
+  case TYPE_MOZILLA_ANDROID_UI:
+    MOZ_RELEASE_ASSERT(aThread);
+    pump_ = new mozilla::ipc::MessagePumpForAndroidUI(aThread);
+    return;
+#endif // defined(MOZ_WIDGET_ANDROID)
   default:
     // Create one of Chromium's standard MessageLoop types below.
     break;
@@ -289,7 +295,13 @@ void MessageLoop::PostTask_Helper(already_AddRefed<Runnable> task, int delay_ms)
     return;
   }
 
+#ifdef MOZ_TASK_TRACER
+  RefPtr<Runnable> tracedTask = mozilla::tasktracer::CreateTracedRunnable(Move(task));
+  (static_cast<mozilla::tasktracer::TracedRunnable*>(tracedTask.get()))->DispatchTask();
+  PendingTask pending_task(tracedTask.forget(), true);
+#else
   PendingTask pending_task(Move(task), true);
+#endif
 
   if (delay_ms > 0) {
     pending_task.delayed_run_time =

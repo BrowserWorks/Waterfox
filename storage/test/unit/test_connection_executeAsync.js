@@ -53,10 +53,10 @@ add_task(function* test_first_create_and_add() {
     db,
     stmts,
     function(aResultSet) {
-      ok(false, 'we only did inserts so we should not have gotten results!');
+      ok(false, "we only did inserts so we should not have gotten results!");
     });
   equal(Ci.mozIStorageStatementCallback.REASON_FINISHED, execResult,
-        'execution should have finished successfully.');
+        "execution should have finished successfully.");
 
   // Check that the result is in the table
   let stmt = db.createStatement(
@@ -74,8 +74,7 @@ add_task(function* test_first_create_and_add() {
     do_check_eq(BLOB.length, count.value);
     for (let i = 0; i < BLOB.length; i++)
       do_check_eq(BLOB[i], blob.value[i]);
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 
@@ -86,8 +85,7 @@ add_task(function* test_first_create_and_add() {
   try {
     do_check_true(stmt.executeStep());
     do_check_eq(2, stmt.getInt32(0));
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 
@@ -134,8 +132,7 @@ add_task(function* test_last_multiple_bindings_on_statements() {
   try {
     do_check_true(countStmt.executeStep());
     currentRows = countStmt.row.count;
-  }
-  finally {
+  } finally {
     countStmt.reset();
   }
 
@@ -144,18 +141,17 @@ add_task(function* test_last_multiple_bindings_on_statements() {
     db,
     stmts,
     function(aResultSet) {
-      ok(false, 'we only did inserts so we should not have gotten results!');
+      ok(false, "we only did inserts so we should not have gotten results!");
     });
   equal(Ci.mozIStorageStatementCallback.REASON_FINISHED, execResult,
-        'execution should have finished successfully.');
+        "execution should have finished successfully.");
 
   // Check to make sure we added all of our rows.
   try {
     do_check_true(countStmt.executeStep());
     do_check_eq(currentRows + (ITERATIONS * AMOUNT_TO_ADD),
                 countStmt.row.count);
-  }
-  finally {
+  } finally {
     countStmt.finalize();
   }
 

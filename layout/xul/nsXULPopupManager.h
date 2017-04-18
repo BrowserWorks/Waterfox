@@ -55,6 +55,7 @@ class nsMenuParent;
 class nsIDOMKeyEvent;
 class nsIDocShellTreeItem;
 class nsPIDOMWindowOuter;
+class nsRefreshDriver;
 
 // when a menu command is executed, the closemenu attribute may be used
 // to define how the menu should be closed up
@@ -138,6 +139,13 @@ private:
   bool mOnMenuBar; // true if the menu is on a menu bar
   nsIgnoreKeys mIgnoreKeys; // indicates how keyboard listeners should be used
 
+  // True if the popup should maintain its position relative to the anchor when
+  // the anchor moves.
+  bool mFollowAnchor;
+
+  // The last seen position of the anchor, relative to the screen.
+  nsRect mCurrentRect;
+
   nsMenuChainItem* mParent;
   nsMenuChainItem* mChild;
 
@@ -148,6 +156,7 @@ public:
       mIsContext(aIsContext),
       mOnMenuBar(false),
       mIgnoreKeys(eIgnoreKeys_False),
+      mFollowAnchor(false),
       mParent(nullptr),
       mChild(nullptr)
   {
@@ -171,12 +180,15 @@ public:
   void SetOnMenuBar(bool aOnMenuBar) { mOnMenuBar = aOnMenuBar; }
   nsMenuChainItem* GetParent() { return mParent; }
   nsMenuChainItem* GetChild() { return mChild; }
+  bool FollowsAnchor() { return mFollowAnchor; }
+  void UpdateFollowAnchor();
+  void CheckForAnchorChange();
 
   // set the parent of this item to aParent, also changing the parent
   // to have this as a child.
   void SetParent(nsMenuChainItem* aParent);
 
-  // removes an item from the chain. The root pointer must be supplied in case
+  // Removes an item from the chain. The root pointer must be supplied in case
   // the item is the first item in the chain in which case the pointer will be
   // set to the next item, or null if there isn't another item. After detaching,
   // this item will not have a parent or a child.
@@ -368,12 +380,16 @@ public:
   //          returns the item before it, while GetNextMenuItem returns the
   //          item after it.
   // aIsPopup - true for menupopups, false for menubars
+  // aWrap - true to wrap around to the beginning and continue searching if not
+  //         found. False to end at the beginning or end of the menu.
   static nsMenuFrame* GetPreviousMenuItem(nsContainerFrame* aParent,
                                           nsMenuFrame* aStart,
-                                          bool aIsPopup);
+                                          bool aIsPopup,
+                                          bool aWrap);
   static nsMenuFrame* GetNextMenuItem(nsContainerFrame* aParent,
                                       nsMenuFrame* aStart,
-                                      bool aIsPopup);
+                                      bool aIsPopup,
+                                      bool aWrap);
 
   // returns true if the menu item aContent is a valid menuitem which may
   // be navigated to. aIsPopup should be true for items on a popup, or false
@@ -496,12 +512,6 @@ public:
                  nsIContent* aLastPopup = nullptr);
 
   /**
-   * Hide the popup aFrame. This method is called by the view manager when the
-   * close button is pressed.
-   */
-  void HidePopup(nsIFrame* aFrame);
-
-  /**
    * Hide a popup after a short delay. This is used when rolling over menu items.
    * This timer is stored in mCloseTimer. The timer may be cancelled and the popup
    * closed by calling KillMenuTimer.
@@ -521,6 +531,19 @@ public:
    * aShouldRollup - whether the panel is no longer noautohide
    */
   void EnableRollup(nsIContent* aPopup, bool aShouldRollup);
+
+  /**
+   * Check if any popups need to be repositioned or hidden after a style or
+   * layout change. This will update, for example, any arrow type panels when
+   * the anchor that is is pointing to has moved, resized or gone away.
+   * Only those popups that pertain to the supplied aRefreshDriver are updated.
+   */
+  void UpdatePopupPositions(nsRefreshDriver* aRefreshDriver);
+
+  /**
+   * Enable or disable anchor following on the popup if needed.
+   */
+  void UpdateFollowAnchor(nsMenuPopupFrame* aPopup);
 
   /**
    * Execute a menu command from the triggering event aEvent.
@@ -658,6 +681,9 @@ public:
    */
   bool HandleKeyboardEventWithKeyCode(nsIDOMKeyEvent* aKeyEvent,
                                       nsMenuChainItem* aTopVisibleMenuItem);
+
+  // Sets mIgnoreKeys of the Top Visible Menu Item
+  nsresult UpdateIgnoreKeys(bool aIgnoreKeys);
 
   nsresult KeyUp(nsIDOMKeyEvent* aKeyEvent);
   nsresult KeyDown(nsIDOMKeyEvent* aKeyEvent);

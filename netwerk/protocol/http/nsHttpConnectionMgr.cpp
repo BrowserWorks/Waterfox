@@ -1023,7 +1023,7 @@ nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri)
     // private versions of this host
     RefPtr<nsHttpConnectionInfo> ci =
         new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
-                                 NeckoOriginAttributes(), usingSSL);
+                                 OriginAttributes(), usingSSL);
     ci->SetAnonymous(false);
     ci->SetPrivate(false);
     PipelineFeedbackInfo(ci, RedCorruptedContent, nullptr, 0);
@@ -3089,9 +3089,8 @@ nsHalfOpenSocket::SetupStreams(nsISocketTransport **transport,
 
     socketTransport->SetConnectionFlags(tmpFlags);
 
-    NeckoOriginAttributes originAttributes =
-        mEnt->mConnInfo->GetOriginAttributes();
-    if (originAttributes != NeckoOriginAttributes()) {
+    const OriginAttributes& originAttributes = mEnt->mConnInfo->GetOriginAttributes();
+    if (originAttributes != OriginAttributes()) {
         socketTransport->SetOriginAttributes(originAttributes);
     }
 

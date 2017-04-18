@@ -82,7 +82,7 @@ exports.register = register;
 /**
  * The HighlighterActor class
  */
-var HighlighterActor = exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
+exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
   initialize: function (inspector, autohide) {
     protocol.Actor.prototype.initialize.call(this, null);
 
@@ -255,7 +255,8 @@ var HighlighterActor = exports.HighlighterActor = protocol.ActorClassWithSpec(hi
       // If shift is pressed, this is only a preview click, send the event to
       // the client, but don't stop picking.
       if (event.shiftKey) {
-        events.emit(this._walker, "picker-node-previewed", this._findAndAttachElement(event));
+        events.emit(this._walker, "picker-node-previewed",
+          this._findAndAttachElement(event));
         return;
       }
 
@@ -351,8 +352,8 @@ var HighlighterActor = exports.HighlighterActor = protocol.ActorClassWithSpec(hi
             (!IS_OSX && event.ctrlKey && event.shiftKey)) {
             this.cancelPick();
             events.emit(this._walker, "picker-node-canceled");
-            return;
           }
+          return;
         default: return;
       }
 
@@ -370,7 +371,7 @@ var HighlighterActor = exports.HighlighterActor = protocol.ActorClassWithSpec(hi
   /**
    * This pick method also focuses the highlighter's target window.
    */
-  pickAndFocus: function() {
+  pickAndFocus: function () {
     // Go ahead and pass on the results to help future-proof this method.
     let pickResults = this.pick();
     this._highlighterEnv.window.focus();
@@ -429,7 +430,7 @@ var HighlighterActor = exports.HighlighterActor = protocol.ActorClassWithSpec(hi
  * A generic highlighter actor class that instantiate a highlighter given its
  * type name and allows to show/hide it.
  */
-var CustomHighlighterActor = exports.CustomHighlighterActor = protocol.ActorClassWithSpec(customHighlighterSpec, {
+exports.CustomHighlighterActor = protocol.ActorClassWithSpec(customHighlighterSpec, {
   /**
    * Create a highlighter instance given its typename
    * The typename must be one of HIGHLIGHTER_CLASSES and the class must
@@ -526,8 +527,8 @@ var CustomHighlighterActor = exports.CustomHighlighterActor = protocol.ActorClas
 /**
  * The HighlighterEnvironment is an object that holds all the required data for
  * highlighters to work: the window, docShell, event listener target, ...
- * It also emits "will-navigate" and "navigate" events, similarly to the
- * TabActor.
+ * It also emits "will-navigate", "navigate" and "window-ready" events,
+ * similarly to the TabActor.
  *
  * It can be initialized either from a TabActor (which is the most frequent way
  * of using it, since highlighters are usually initialized by the
@@ -537,6 +538,7 @@ var CustomHighlighterActor = exports.CustomHighlighterActor = protocol.ActorClas
  * instance from a gcli command).
  */
 function HighlighterEnvironment() {
+  this.relayTabActorWindowReady = this.relayTabActorWindowReady.bind(this);
   this.relayTabActorNavigate = this.relayTabActorNavigate.bind(this);
   this.relayTabActorWillNavigate = this.relayTabActorWillNavigate.bind(this);
 
@@ -548,6 +550,7 @@ exports.HighlighterEnvironment = HighlighterEnvironment;
 HighlighterEnvironment.prototype = {
   initFromTabActor: function (tabActor) {
     this._tabActor = tabActor;
+    events.on(this._tabActor, "window-ready", this.relayTabActorWindowReady);
     events.on(this._tabActor, "navigate", this.relayTabActorNavigate);
     events.on(this._tabActor, "will-navigate", this.relayTabActorWillNavigate);
   },
@@ -649,6 +652,10 @@ HighlighterEnvironment.prototype = {
     return this.docShell.chromeEventHandler;
   },
 
+  relayTabActorWindowReady: function (data) {
+    this.emit("window-ready", data);
+  },
+
   relayTabActorNavigate: function (data) {
     this.emit("navigate", data);
   },
@@ -659,6 +666,7 @@ HighlighterEnvironment.prototype = {
 
   destroy: function () {
     if (this._tabActor) {
+      events.off(this._tabActor, "window-ready", this.relayTabActorWindowReady);
       events.off(this._tabActor, "navigate", this.relayTabActorNavigate);
       events.off(this._tabActor, "will-navigate", this.relayTabActorWillNavigate);
     }

@@ -16,12 +16,12 @@ Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 var ContentClick = {
-  init: function() {
+  init() {
     let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
     mm.addMessageListener("Content:Click", this);
   },
 
-  receiveMessage: function (message) {
+  receiveMessage(message) {
     switch (message.name) {
       case "Content:Click":
         this.contentAreaClick(message.json, message.target)
@@ -29,7 +29,7 @@ var ContentClick = {
     }
   },
 
-  contentAreaClick: function (json, browser) {
+  contentAreaClick(json, browser) {
     // This is heavily based on contentAreaClick from browser.js (Bug 903016)
     // The json is set up in a way to look like an Event.
     let window = browser.ownerGlobal;
@@ -49,7 +49,7 @@ var ContentClick = {
       // the title that should be used for the sidebar panel.
       PlacesUIUtils.showBookmarkDialog({ action: "add"
                                        , type: "bookmark"
-                                       , uri: Services.io.newURI(json.href, null, null)
+                                       , uri: Services.io.newURI(json.href)
                                        , title: json.title
                                        , loadBookmarkInSidebar: true
                                        , hiddenRows: [ "description"

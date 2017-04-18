@@ -153,7 +153,6 @@ class CollectionValidator {
       }
     }
 
-    let recordPairs = [];
     let seenClient = new Map();
     for (let record of clientItems) {
       let id = record[this.idProp];
@@ -163,7 +162,7 @@ class CollectionValidator {
       if (combined) {
         combined.client = record;
       } else {
-        allRecords.set(id,  { client: record, server: null });
+        allRecords.set(id, { client: record, server: null });
       }
     }
 

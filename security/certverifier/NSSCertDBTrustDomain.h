@@ -40,16 +40,18 @@ SECStatus InitializeNSS(const char* dir, bool readOnly, bool loadPKCS11Modules);
 
 void DisableMD5();
 
-extern const char BUILTIN_ROOTS_MODULE_DEFAULT_NAME[];
-
-// The dir parameter is the path to the directory containing the NSS builtin
-// roots module. Usually this is the same as the path to the other NSS shared
-// libraries. If it is null then the (library) path will be searched.
-//
-// The modNameUTF8 parameter should usually be
-// BUILTIN_ROOTS_MODULE_DEFAULT_NAME.
-SECStatus LoadLoadableRoots(/*optional*/ const char* dir,
-                            const char* modNameUTF8);
+/**
+ * Loads root certificates from a module.
+ *
+ * @param dir
+ *        The path to the directory containing the NSS builtin roots module.
+ *        Usually the same as the path to the other NSS shared libraries.
+ *        If empty, the (library) path will be searched.
+ * @param modNameUTF8
+ *        The UTF-8 name to give the module for display purposes.
+ * @return true if the roots were successfully loaded, false otherwise.
+ */
+bool LoadLoadableRoots(const nsCString& dir, const nsCString& modNameUTF8);
 
 void UnloadLoadableRoots(const char* modNameUTF8);
 
@@ -81,7 +83,7 @@ public:
                        ValidityCheckingMode validityCheckingMode,
                        CertVerifier::SHA1Mode sha1Mode,
                        NetscapeStepUpPolicy netscapeStepUpPolicy,
-                       const NeckoOriginAttributes& originAttributes,
+                       const OriginAttributes& originAttributes,
                        UniqueCERTCertList& builtChain,
           /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr,
           /*optional*/ const char* hostname = nullptr);
@@ -185,7 +187,7 @@ private:
   ValidityCheckingMode mValidityCheckingMode;
   CertVerifier::SHA1Mode mSHA1Mode;
   NetscapeStepUpPolicy mNetscapeStepUpPolicy;
-  const NeckoOriginAttributes& mOriginAttributes;
+  const OriginAttributes& mOriginAttributes;
   UniqueCERTCertList& mBuiltChain; // non-owning
   PinningTelemetryInfo* mPinningTelemetryInfo;
   const char* mHostname; // non-owning - only used for pinning checks

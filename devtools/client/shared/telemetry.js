@@ -145,7 +145,6 @@ Telemetry.prototype = {
     },
     "scratchpad-window": {
       histogram: "DEVTOOLS_SCRATCHPAD_WINDOW_OPENED_COUNT",
-      timerHistogram: "DEVTOOLS_SCRATCHPAD_WINDOW_TIME_ACTIVE_SECONDS"
     },
     responsive: {
       histogram: "DEVTOOLS_RESPONSIVE_OPENED_COUNT",
@@ -162,6 +161,12 @@ Telemetry.prototype = {
     },
     toolbareyedropper: {
       histogram: "DEVTOOLS_TOOLBAR_EYEDROPPER_OPENED_COUNT",
+    },
+    copyuniquecssselector: {
+      histogram: "DEVTOOLS_COPY_UNIQUE_CSS_SELECTOR_OPENED_COUNT",
+    },
+    copyfullcssselector: {
+      histogram: "DEVTOOLS_COPY_FULL_CSS_SELECTOR_OPENED_COUNT",
     },
     developertoolbar: {
       histogram: "DEVTOOLS_DEVELOPERTOOLBAR_OPENED_COUNT",

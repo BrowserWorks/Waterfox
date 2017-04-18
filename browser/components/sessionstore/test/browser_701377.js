@@ -2,8 +2,8 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 var state = {windows:[{tabs:[
-  {entries:[{url:"http://example.com#1"}]},
-  {entries:[{url:"http://example.com#2"}], hidden: true}
+  {entries:[{url:"http://example.com#1", triggeringPrincipal_base64}]},
+  {entries:[{url:"http://example.com#2", triggeringPrincipal_base64}], hidden: true}
 ]}]};
 
 function test() {
@@ -15,12 +15,12 @@ function test() {
 
     let tabShown = false;
     let tabShowCallback = () => tabShown = true;
-    tab.addEventListener("TabShow", tabShowCallback, false);
+    tab.addEventListener("TabShow", tabShowCallback);
 
     let tabState = ss.getTabState(tab);
     ss.setTabState(tab, tabState);
 
-    tab.removeEventListener("TabShow", tabShowCallback, false);
+    tab.removeEventListener("TabShow", tabShowCallback);
     ok(tab.hidden && !tabShown, "tab remains hidden");
 
     finish();

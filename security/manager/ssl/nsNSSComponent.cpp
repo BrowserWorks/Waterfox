@@ -13,6 +13,7 @@
 #include "cert.h"
 #include "certdb.h"
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/Casting.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PublicSSL.h"
@@ -64,6 +65,11 @@
 #include "wincrypt.h"
 #include "nsIWindowsRegKey.h"
 #endif
+
+#ifdef ANDROID
+#include "mozilla/PodOperations.h"
+#include "nsPrintfCString.h"
+#endif // ANDROID
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -162,13 +168,13 @@ bool EnsureNSSInitialized(EnsureNSSOperator op)
     return true;
 
   case nssInitSucceeded:
-    NS_ASSERTION(loading, "Bad call to EnsureNSSInitialized(nssInitSucceeded)");
+    MOZ_ASSERT(loading, "Bad call to EnsureNSSInitialized(nssInitSucceeded)");
     loading = false;
     PR_AtomicSet(&haveLoaded, 1);
     return true;
 
   case nssInitFailed:
-    NS_ASSERTION(loading, "Bad call to EnsureNSSInitialized(nssInitFailed)");
+    MOZ_ASSERT(loading, "Bad call to EnsureNSSInitialized(nssInitFailed)");
     loading = false;
     MOZ_FALLTHROUGH;
 
@@ -201,7 +207,7 @@ bool EnsureNSSInitialized(EnsureNSSOperator op)
     }
 
   default:
-    NS_ASSERTION(false, "Bad operator to EnsureNSSInitialized");
+    MOZ_ASSERT_UNREACHABLE("Bad operator to EnsureNSSInitialized");
     return false;
   }
 }
@@ -258,7 +264,8 @@ nsNSSComponent::nsNSSComponent()
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("nsNSSComponent::ctor\n"));
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
 
-  NS_ASSERTION( (0 == mInstanceCount), "nsNSSComponent is a singleton, but instantiated multiple times!");
+  MOZ_ASSERT(mInstanceCount == 0,
+             "nsNSSComponent is a singleton, but instantiated multiple times!");
   ++mInstanceCount;
 }
 
@@ -1205,9 +1212,7 @@ nsNSSComponent::LoadLoadableRoots()
     }
 
     NS_ConvertUTF16toUTF8 modNameUTF8(modName);
-    if (mozilla::psm::LoadLoadableRoots(
-            libDir.Length() > 0 ? libDir.get() : nullptr,
-            modNameUTF8.get()) == SECSuccess) {
+    if (mozilla::psm::LoadLoadableRoots(libDir, modNameUTF8)) {
       break;
     }
   }
@@ -1282,26 +1287,16 @@ nsNSSComponent::InitializePIPNSSBundle()
 
   nsresult rv;
   nsCOMPtr<nsIStringBundleService> bundleService(do_GetService(NS_STRINGBUNDLE_CONTRACTID, &rv));
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-  MOZ_RELEASE_ASSERT(bundleService);
-#endif
   if (NS_FAILED(rv) || !bundleService)
     return NS_ERROR_FAILURE;
 
   bundleService->CreateBundle("chrome://pipnss/locale/pipnss.properties",
                               getter_AddRefs(mPIPNSSBundle));
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(mPIPNSSBundle);
-#endif
   if (!mPIPNSSBundle)
     rv = NS_ERROR_FAILURE;
 
   bundleService->CreateBundle("chrome://pipnss/locale/nsserrors.properties",
                               getter_AddRefs(mNSSErrorsBundle));
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(mNSSErrorsBundle);
-#endif
   if (!mNSSErrorsBundle)
     rv = NS_ERROR_FAILURE;
 
@@ -1313,7 +1308,6 @@ typedef struct {
   const char* pref;
   long id;
   bool enabledByDefault;
-  bool weak;
 } CipherPref;
 
 // Update the switch statement in AccumulateCipherSuite in nsNSSCallbacks.cpp
@@ -1369,31 +1363,6 @@ static const CipherPref sCipherPrefs[] = {
  { nullptr, 0 } // end marker
 };
 
-// Bit flags indicating what weak ciphers are enabled.
-// The bit index will correspond to the index in sCipherPrefs.
-// Wrtten by the main thread, read from any threads.
-static Atomic<uint32_t> sEnabledWeakCiphers;
-static_assert(MOZ_ARRAY_LENGTH(sCipherPrefs) - 1 <= sizeof(uint32_t) * CHAR_BIT,
-              "too many cipher suites");
-
-/*static*/ bool
-nsNSSComponent::AreAnyWeakCiphersEnabled()
-{
-  return !!sEnabledWeakCiphers;
-}
-
-/*static*/ void
-nsNSSComponent::UseWeakCiphersOnSocket(PRFileDesc* fd)
-{
-  const uint32_t enabledWeakCiphers = sEnabledWeakCiphers;
-  const CipherPref* const cp = sCipherPrefs;
-  for (size_t i = 0; cp[i].pref; ++i) {
-    if (enabledWeakCiphers & ((uint32_t)1 << i)) {
-      SSL_CipherPrefSet(fd, cp[i].id, true);
-    }
-  }
-}
-
 // This function will convert from pref values like 1, 2, ...
 // to the internal values of SSL_LIBRARY_VERSION_TLS_1_0,
 // SSL_LIBRARY_VERSION_TLS_1_1, ...
@@ -1434,7 +1403,6 @@ nsNSSComponent::FillTLSVersionRange(SSLVersionRange& rangeOut,
 static const int32_t OCSP_ENABLED_DEFAULT = 1;
 static const bool REQUIRE_SAFE_NEGOTIATION_DEFAULT = false;
 static const bool FALSE_START_ENABLED_DEFAULT = true;
-static const bool NPN_ENABLED_DEFAULT = true;
 static const bool ALPN_ENABLED_DEFAULT = false;
 static const bool ENABLED_0RTT_DATA_DEFAULT = false;
 
@@ -1474,13 +1442,12 @@ StaticRefPtr<CipherSuiteChangeObserver> CipherSuiteChangeObserver::sObserver;
 nsresult
 CipherSuiteChangeObserver::StartObserve()
 {
-  NS_ASSERTION(NS_IsMainThread(), "CipherSuiteChangeObserver::StartObserve() can only be accessed in main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "CipherSuiteChangeObserver::StartObserve() can only be accessed "
+             "on the main thread");
   if (!sObserver) {
     RefPtr<CipherSuiteChangeObserver> observer = new CipherSuiteChangeObserver();
     nsresult rv = Preferences::AddStrongObserver(observer.get(), "security.");
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
     if (NS_FAILED(rv)) {
       sObserver = nullptr;
       return rv;
@@ -1497,11 +1464,13 @@ CipherSuiteChangeObserver::StartObserve()
 }
 
 nsresult
-CipherSuiteChangeObserver::Observe(nsISupports* aSubject,
+CipherSuiteChangeObserver::Observe(nsISupports* /*aSubject*/,
                                    const char* aTopic,
                                    const char16_t* someData)
 {
-  NS_ASSERTION(NS_IsMainThread(), "CipherSuiteChangeObserver::Observe can only be accessed in main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "CipherSuiteChangeObserver::Observe can only be accessed on main "
+             "thread");
   if (nsCRT::strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) == 0) {
     NS_ConvertUTF16toUTF8  prefName(someData);
     // Look through the cipher table and set according to pref setting
@@ -1510,22 +1479,8 @@ CipherSuiteChangeObserver::Observe(nsISupports* aSubject,
       if (prefName.Equals(cp[i].pref)) {
         bool cipherEnabled = Preferences::GetBool(cp[i].pref,
                                                   cp[i].enabledByDefault);
-        if (cp[i].weak) {
-          // Weak ciphers will not be used by default even if they
-          // are enabled in prefs. They are only used on specific
-          // sockets as a part of a fallback mechanism.
-          // Only the main thread will change sEnabledWeakCiphers.
-          uint32_t enabledWeakCiphers = sEnabledWeakCiphers;
-          if (cipherEnabled) {
-            enabledWeakCiphers |= ((uint32_t)1 << i);
-          } else {
-            enabledWeakCiphers &= ~((uint32_t)1 << i);
-          }
-          sEnabledWeakCiphers = enabledWeakCiphers;
-        } else {
-          SSL_CipherPrefSetDefault(cp[i].id, cipherEnabled);
-          SSL_ClearSessionCache();
-        }
+        SSL_CipherPrefSetDefault(cp[i].id, cipherEnabled);
+        SSL_ClearSessionCache();
         break;
       }
     }
@@ -1730,9 +1685,6 @@ GetNSSProfilePath(nsAutoCString& aProfilePath)
 #else
   rv = profileFile->GetNativePath(aProfilePath);
 #endif
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
   if (NS_FAILED(rv)) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Error,
            ("Could not get native path for profile directory.\n"));
@@ -1743,6 +1695,10 @@ GetNSSProfilePath(nsAutoCString& aProfilePath)
           ("NSS profile at '%s'\n", aProfilePath.get()));
   return NS_OK;
 }
+
+#ifdef ANDROID
+static char sCrashReasonBuffer[1024];
+#endif // ANDROID
 
 nsresult
 nsNSSComponent::InitializeNSS()
@@ -1760,9 +1716,6 @@ nsNSSComponent::InitializeNSS()
 
   MutexAutoLock lock(mutex);
 
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(!mNSSInitialized);
-#endif
   if (mNSSInitialized) {
     // We should never try to initialize NSS more than once in a process.
     MOZ_ASSERT_UNREACHABLE("Trying to initialize NSS twice");
@@ -1781,9 +1734,6 @@ nsNSSComponent::InitializeNSS()
 
   nsAutoCString profileStr;
   nsresult rv = GetNSSProfilePath(profileStr);
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
   if (NS_FAILED(rv)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -1797,9 +1747,6 @@ nsNSSComponent::InitializeNSS()
   // modules will be loaded).
   if (runtime) {
     rv = runtime->GetInSafeMode(&inSafeMode);
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -1825,13 +1772,18 @@ nsNSSComponent::InitializeNSS()
   if (nocertdb || init_rv != SECSuccess) {
     init_rv = NSS_NoDB_Init(nullptr);
 #ifdef ANDROID
-    MOZ_RELEASE_ASSERT(init_rv == SECSuccess);
-#endif
+    if (init_rv != SECSuccess) {
+      nsPrintfCString message("NSS_NoDB_Init failed with PRErrorCode %d",
+                              PR_GetError());
+      mozilla::PodArrayZero(sCrashReasonBuffer);
+      strncpy(sCrashReasonBuffer, message.get(),
+              sizeof(sCrashReasonBuffer) - 1);
+      MOZ_CRASH_ANNOTATE(sCrashReasonBuffer);
+      MOZ_REALLY_CRASH();
+    }
+#endif // ANDROID
   }
   if (init_rv != SECSuccess) {
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(false);
-#endif
     MOZ_LOG(gPIPNSSLog, LogLevel::Error, ("could not initialize NSS - panicking\n"));
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -1853,9 +1805,6 @@ nsNSSComponent::InitializeNSS()
   SSL_OptionSetDefault(SSL_V2_COMPATIBLE_HELLO, false);
 
   rv = setEnabledTLSVersions();
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
   if (NS_FAILED(rv)) {
     return NS_ERROR_UNEXPECTED;
   }
@@ -1864,9 +1813,6 @@ nsNSSComponent::InitializeNSS()
   LoadLoadableRoots();
 
   rv = LoadExtendedValidationInfo();
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
   if (NS_FAILED(rv)) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Error, ("failed to load EV info"));
     return rv;
@@ -1890,13 +1836,10 @@ nsNSSComponent::InitializeNSS()
                        Preferences::GetBool("security.ssl.enable_false_start",
                                             FALSE_START_ENABLED_DEFAULT));
 
-  // SSL_ENABLE_NPN and SSL_ENABLE_ALPN also require calling
-  // SSL_SetNextProtoNego in order for the extensions to be negotiated.
-  // WebRTC does not do that so it will not use NPN or ALPN even when these
-  // preferences are true.
-  SSL_OptionSetDefault(SSL_ENABLE_NPN,
-                       Preferences::GetBool("security.ssl.enable_npn",
-                                            NPN_ENABLED_DEFAULT));
+  // SSL_ENABLE_ALPN also requires calling SSL_SetNextProtoNego in order for
+  // the extensions to be negotiated.
+  // WebRTC does not do that so it will not use ALPN even when this preference
+  // is true.
   SSL_OptionSetDefault(SSL_ENABLE_ALPN,
                        Preferences::GetBool("security.ssl.enable_alpn",
                                             ALPN_ENABLED_DEFAULT));
@@ -1906,9 +1849,6 @@ nsNSSComponent::InitializeNSS()
                                             ENABLED_0RTT_DATA_DEFAULT));
 
   if (NS_FAILED(InitializeCipherSuite())) {
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(false);
-#endif
     MOZ_LOG(gPIPNSSLog, LogLevel::Error, ("Unable to initialize cipher suite settings\n"));
     return NS_ERROR_FAILURE;
   }
@@ -1921,17 +1861,11 @@ nsNSSComponent::InitializeNSS()
   // Note that this must occur before any calls to SSL_ClearSessionCache
   // (otherwise memory will leak).
   if (SSL_ConfigServerSessionIDCache(1000, 0, 0, nullptr) != SECSuccess) {
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(false);
-#endif
     return NS_ERROR_FAILURE;
   }
 
   // ensure the CertBlocklist is initialised
   nsCOMPtr<nsICertBlocklist> certList = do_GetService(NS_CERTBLOCKLIST_CONTRACTID);
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(certList);
-#endif
   if (!certList) {
     return NS_ERROR_FAILURE;
   }
@@ -1948,9 +1882,6 @@ nsNSSComponent::InitializeNSS()
   // Initialize the site security service
   nsCOMPtr<nsISiteSecurityService> sssService =
     do_GetService(NS_SSSERVICE_CONTRACTID);
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(sssService);
-#endif
   if (!sssService) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("Cannot initialize site security service\n"));
     return NS_ERROR_FAILURE;
@@ -1959,9 +1890,6 @@ nsNSSComponent::InitializeNSS()
   // Initialize the cert override service
   nsCOMPtr<nsICertOverrideService> coService =
     do_GetService(NS_CERTOVERRIDE_CONTRACTID);
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(coService);
-#endif
   if (!coService) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("Cannot initialize cert override service\n"));
     return NS_ERROR_FAILURE;
@@ -2033,9 +1961,6 @@ nsNSSComponent::Init()
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("Beginning NSS initialization\n"));
 
   rv = InitializePIPNSSBundle();
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
   if (NS_FAILED(rv)) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Error, ("Unable to create pipnss bundle.\n"));
     return rv;
@@ -2056,9 +1981,6 @@ nsNSSComponent::Init()
 
 
   rv = InitializeNSS();
-#ifdef ANDROID
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-#endif
   if (NS_FAILED(rv)) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Error,
             ("nsNSSComponent::InitializeNSS() failed\n"));
@@ -2101,10 +2023,6 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
       SSL_OptionSetDefault(SSL_ENABLE_FALSE_START,
                            Preferences::GetBool("security.ssl.enable_false_start",
                                                 FALSE_START_ENABLED_DEFAULT));
-    } else if (prefName.EqualsLiteral("security.ssl.enable_npn")) {
-      SSL_OptionSetDefault(SSL_ENABLE_NPN,
-                           Preferences::GetBool("security.ssl.enable_npn",
-                                                NPN_ENABLED_DEFAULT));
     } else if (prefName.EqualsLiteral("security.ssl.enable_alpn")) {
       SSL_OptionSetDefault(SSL_ENABLE_ALPN,
                            Preferences::GetBool("security.ssl.enable_alpn",
@@ -2220,9 +2138,6 @@ nsNSSComponent::RegisterObservers()
 
   nsCOMPtr<nsIObserverService> observerService(
     do_GetService("@mozilla.org/observer-service;1"));
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(observerService);
-#endif
   if (!observerService) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
             ("nsNSSComponent: couldn't get observer service\n"));
@@ -2441,12 +2356,10 @@ namespace psm {
 nsresult
 InitializeCipherSuite()
 {
-  NS_ASSERTION(NS_IsMainThread(), "InitializeCipherSuite() can only be accessed in main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "InitializeCipherSuite() can only be accessed on the main thread");
 
   if (NSS_SetDomesticPolicy() != SECSuccess) {
-#ifdef ANDROID
-    MOZ_RELEASE_ASSERT(false);
-#endif
     return NS_ERROR_FAILURE;
   }
 
@@ -2457,22 +2370,12 @@ InitializeCipherSuite()
   }
 
   // Now only set SSL/TLS ciphers we knew about at compile time
-  uint32_t enabledWeakCiphers = 0;
   const CipherPref* const cp = sCipherPrefs;
   for (size_t i = 0; cp[i].pref; ++i) {
     bool cipherEnabled = Preferences::GetBool(cp[i].pref,
                                               cp[i].enabledByDefault);
-    if (cp[i].weak) {
-      // Weak ciphers are not used by default. See the comment
-      // in CipherSuiteChangeObserver::Observe for details.
-      if (cipherEnabled) {
-        enabledWeakCiphers |= ((uint32_t)1 << i);
-      }
-    } else {
-      SSL_CipherPrefSetDefault(cp[i].id, cipherEnabled);
-    }
+    SSL_CipherPrefSetDefault(cp[i].id, cipherEnabled);
   }
-  sEnabledWeakCiphers = enabledWeakCiphers;
 
   // Enable ciphers for PKCS#12
   SEC_PKCS12EnableCipher(PKCS12_RC4_40, 1);

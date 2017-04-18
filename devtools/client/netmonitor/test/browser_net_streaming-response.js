@@ -13,12 +13,12 @@ add_task(function* () {
 
   info("Starting test... ");
   let { panelWin } = monitor;
-  let { document, Editor, NetMonitorView } = panelWin;
+  let { document, NetMonitorView } = panelWin;
   let { RequestsMenu } = NetMonitorView;
 
   const REQUESTS = [
-    [ "hls-m3u8", /^#EXTM3U/, Editor.modes.text ],
-    [ "mpeg-dash", /^<\?xml/, Editor.modes.html ]
+    [ "hls-m3u8", /^#EXTM3U/ ],
+    [ "mpeg-dash", /^<\?xml/ ]
   ];
 
   RequestsMenu.lazyUpdate = false;
@@ -33,37 +33,52 @@ add_task(function* () {
   yield wait;
 
   REQUESTS.forEach(([ fmt ], i) => {
-    verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
+    verifyRequestItemTarget(RequestsMenu, RequestsMenu.getItemAtIndex(i),
       "GET", CONTENT_TYPE_SJS + "?fmt=" + fmt, {
         status: 200,
         statusText: "OK"
       });
   });
 
+  wait = waitForDOM(document, "#response-tabpanel");
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.getElementById("details-pane-toggle"));
   EventUtils.sendMouseEvent({ type: "mousedown" },
     document.querySelectorAll("#details-pane tab")[3]);
+  yield wait;
 
-  yield panelWin.once(panelWin.EVENTS.RESPONSE_BODY_DISPLAYED);
-  let editor = yield NetMonitorView.editor("#response-content-textarea");
+  RequestsMenu.selectedIndex = -1;
 
+  yield selectIndexAndWaitForEditor(0);
   // the hls-m3u8 part
-  testEditorContent(editor, REQUESTS[0]);
+  testEditorContent(REQUESTS[0]);
 
-  RequestsMenu.selectedIndex = 1;
-  yield panelWin.once(panelWin.EVENTS.TAB_UPDATED);
-  yield panelWin.once(panelWin.EVENTS.RESPONSE_BODY_DISPLAYED);
-
+  yield selectIndexAndWaitForEditor(1);
   // the mpeg-dash part
-  testEditorContent(editor, REQUESTS[1]);
+  testEditorContent(REQUESTS[1]);
 
   return teardown(monitor);
 
-  function testEditorContent(e, [ fmt, textRe, mode ]) {
-    ok(e.getText().match(textRe),
+  function* selectIndexAndWaitForEditor(index) {
+    let editor = document.querySelector("#response-tabpanel .editor-mount iframe");
+    if (!editor) {
+      let waitDOM = waitForDOM(document, "#response-tabpanel .editor-mount iframe");
+      RequestsMenu.selectedIndex = index;
+      [editor] = yield waitDOM;
+      yield once(editor, "DOMContentLoaded");
+    } else {
+      RequestsMenu.selectedIndex = index;
+    }
+
+    yield waitForDOM(editor.contentDocument, ".CodeMirror-code");
+  }
+
+  function testEditorContent([ fmt, textRe ]) {
+    let editor = document.querySelector("#response-tabpanel .editor-mount iframe");
+    let text = editor.contentDocument
+          .querySelector(".CodeMirror-line").textContent;
+
+    ok(text.match(textRe),
       "The text shown in the source editor for " + fmt + " is correct.");
-    is(e.getMode(), mode,
-      "The mode active in the source editor for " + fmt + " is correct.");
   }
 });

@@ -32,12 +32,9 @@ function test_deprecated_api() {
 
   check_actors(true);
 
-  check_except(() => {
-    DebuggerServer.registerModule("xpcshell-test/registertestactors-01");
-  });
-  check_except(() => {
-    DebuggerServer.registerModule("xpcshell-test/registertestactors-02");
-  });
+  // Calling registerModule again is just a no-op and doesn't throw
+  DebuggerServer.registerModule("xpcshell-test/registertestactors-01");
+  DebuggerServer.registerModule("xpcshell-test/registertestactors-02");
 
   DebuggerServer.unregisterModule("xpcshell-test/registertestactors-01");
   DebuggerServer.unregisterModule("xpcshell-test/registertestactors-02");
@@ -95,7 +92,7 @@ function test_lazy_api() {
     do_check_true(isActorLoaded);
     do_check_true(isActorInstanciated);
 
-    Services.obs.removeObserver(onActorEvent, "actor", false);
+    Services.obs.removeObserver(onActorEvent, "actor");
     client.close().then(() => run_next_test());
   }
 }

@@ -70,6 +70,7 @@ public:
     gGraph = new MediaStreamGraph();
     return gGraph;
   }
+  uint32_t GraphRate() { return 16000; }
 };
 }
 
@@ -185,8 +186,6 @@ class Fake_MediaStream {
 
  public:
   Fake_MediaStream () : mListeners(), mTrackListeners(), mMutex("Fake MediaStream") {}
-
-  static uint32_t GraphRate() { return 16000; }
 
   void AddListener(Fake_MediaStreamListener *aListener) {
     mozilla::MutexAutoLock lock(mMutex);
@@ -409,13 +408,21 @@ public:
   std::string GetId() const { return mID; }
   void AssignId(const std::string& id) { mID = id; }
   mozilla::MediaStreamGraphImpl* GraphImpl() { return nullptr; }
+  Fake_MediaStreamTrack* AsVideoStreamTrack()
+  {
+    return mIsVideo ? this : nullptr;
+  }
+  Fake_MediaStreamTrack* AsAudioStreamTrack()
+  {
+    return mIsVideo ? nullptr : this;
+  }
   const Fake_MediaStreamTrack* AsVideoStreamTrack() const
   {
-    return mIsVideo? this : nullptr;
+    return mIsVideo ? this : nullptr;
   }
   const Fake_MediaStreamTrack* AsAudioStreamTrack() const
   {
-    return mIsVideo? nullptr : this;
+    return mIsVideo ? nullptr : this;
   }
   uint32_t typeSize () const
   {
@@ -429,13 +436,17 @@ public:
   void RemoveListener(Fake_MediaStreamTrackListener *aListener);
   void AddDirectListener(Fake_DirectMediaStreamTrackListener *aListener)
   {
-    AddListener(aListener);
     aListener->NotifyDirectListenerInstalled(
       Fake_DirectMediaStreamTrackListener::InstallationResult::STREAM_NOT_SUPPORTED);
   }
-  void RemoveDirectListener(Fake_DirectMediaStreamTrackListener *aListener)
+  void RemoveDirectListener(Fake_DirectMediaStreamTrackListener *aListener) {}
+  void AddVideoOutput(Fake_MediaStreamVideoSink *aOutput)
   {
-    RemoveListener(aListener);
+    AddDirectListener(aOutput);
+  }
+  void RemoveVideoOutput(Fake_MediaStreamVideoSink *aOutput)
+  {
+    RemoveDirectListener(aOutput);
   }
 
   class PrincipalChangeObserver
@@ -650,6 +661,7 @@ typedef Fake_MediaStreamVideoSink MediaStreamVideoSink;
 namespace dom {
 typedef Fake_MediaStreamTrack MediaStreamTrack;
 typedef Fake_MediaStreamTrackSource MediaStreamTrackSource;
+typedef Fake_MediaStreamTrack VideoStreamTrack;
 }
 }
 

@@ -24,11 +24,11 @@ namespace gmp {
 
 class GMPLoaderImpl : public GMPLoader {
 public:
-  explicit GMPLoaderImpl(SandboxStarter* aStarter)
-    : mSandboxStarter(aStarter)
+  explicit GMPLoaderImpl(UniquePtr<SandboxStarter> aStarter)
+    : mSandboxStarter(Move(aStarter))
     , mAdapter(nullptr)
   {}
-  virtual ~GMPLoaderImpl() {}
+  ~GMPLoaderImpl() override = default;
 
   bool Load(const char* aUTF8LibPath,
             uint32_t aUTF8LibPathLen,
@@ -49,17 +49,17 @@ public:
 #endif
 
 private:
-  SandboxStarter* mSandboxStarter;
+  UniquePtr<SandboxStarter> mSandboxStarter;
   UniquePtr<GMPAdapter> mAdapter;
 };
 
-UniquePtr<GMPLoader> CreateGMPLoader(SandboxStarter* aStarter) {
-  return MakeUnique<GMPLoaderImpl>(aStarter);
+UniquePtr<GMPLoader> CreateGMPLoader(UniquePtr<SandboxStarter> aStarter) {
+  return MakeUnique<GMPLoaderImpl>(Move(aStarter));
 }
 
 class PassThroughGMPAdapter : public GMPAdapter {
 public:
-  ~PassThroughGMPAdapter() {
+  ~PassThroughGMPAdapter() override {
     // Ensure we're always shutdown, even if caller forgets to call GMPShutdown().
     GMPShutdown();
   }

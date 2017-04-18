@@ -16,8 +16,7 @@ XPCOMUtils.defineLazyGetter(this, "gLangBundle", () =>
 const kPermissionType = "translate";
 const kLanguagesPref = "browser.translation.neverForLanguages";
 
-function Tree(aId, aData)
-{
+function Tree(aId, aData) {
   this._data = aData;
   this._tree = document.getElementById(aId);
   this._tree.view = this;
@@ -33,7 +32,7 @@ Tree.prototype = {
   get hasSelection() {
     return this.selection.count > 0;
   },
-  getSelectedItems: function() {
+  getSelectedItems() {
     let result = [];
 
     let rc = this.selection.getRangeCount();
@@ -51,49 +50,48 @@ Tree.prototype = {
   get rowCount() {
     return this._data.length;
   },
-  getCellText: function (aRow, aColumn) {
+  getCellText(aRow, aColumn) {
     return this._data[aRow];
   },
-  isSeparator: function(aIndex) {
+  isSeparator(aIndex) {
     return false;
   },
-  isSorted: function() {
+  isSorted() {
     return false;
   },
-  isContainer: function(aIndex) {
+  isContainer(aIndex) {
     return false;
   },
-  setTree: function(aTree) {},
-  getImageSrc: function(aRow, aColumn) {},
-  getProgressMode: function(aRow, aColumn) {},
-  getCellValue: function(aRow, aColumn) {},
-  cycleHeader: function(column) {},
-  getRowProperties: function(row) {
+  setTree(aTree) {},
+  getImageSrc(aRow, aColumn) {},
+  getProgressMode(aRow, aColumn) {},
+  getCellValue(aRow, aColumn) {},
+  cycleHeader(column) {},
+  getRowProperties(row) {
     return "";
   },
-  getColumnProperties: function(column) {
+  getColumnProperties(column) {
     return "";
   },
-  getCellProperties: function(row, column) {
+  getCellProperties(row, column) {
     return "";
   },
   QueryInterface: XPCOMUtils.generateQI([Ci.nsITreeView])
 };
 
-function Lang(aCode)
-{
+function Lang(aCode) {
   this.langCode = aCode;
   this._label = gLangBundle.GetStringFromName(aCode);
 }
 
 Lang.prototype = {
-  toString: function() {
+  toString() {
     return this._label;
   }
 }
 
 var gTranslationExceptions = {
-  onLoad: function() {
+  onLoad() {
     if (this._siteTree) {
       // Re-using an open dialog, clear the old observers.
       this.uninit();
@@ -123,7 +121,7 @@ var gTranslationExceptions = {
   },
 
   // Get the list of languages we don't translate as an array.
-  getLanguageExceptions: function() {
+  getLanguageExceptions() {
     let langs = Services.prefs.getCharPref(kLanguagesPref);
     if (!langs)
       return [];
@@ -134,15 +132,14 @@ var gTranslationExceptions = {
     return result;
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic == "perm-changed") {
       if (aData == "cleared") {
         if (!this._sites.length)
           return;
         let removed = this._sites.splice(0, this._sites.length);
-        this._siteTree.boxObject.rowCountChanged(0, - removed.length);
-      }
-      else {
+        this._siteTree.boxObject.rowCountChanged(0, -removed.length);
+      } else {
         let perm = aSubject.QueryInterface(Ci.nsIPermission);
         if (perm.type != kPermissionType)
           return;
@@ -155,8 +152,7 @@ var gTranslationExceptions = {
           let boxObject = this._siteTree.boxObject;
           boxObject.rowCountChanged(0, 1);
           boxObject.invalidate();
-        }
-        else if (aData == "deleted") {
+        } else if (aData == "deleted") {
           let index = this._sites.indexOf(perm.principal.origin);
           if (index == -1)
             return;
@@ -167,8 +163,7 @@ var gTranslationExceptions = {
         }
       }
       this.onSiteSelected();
-    }
-    else if (aTopic == "nsPref:changed") {
+    } else if (aTopic == "nsPref:changed") {
       this._langs = this.getLanguageExceptions();
       let change = this._langs.length - this._langTree.rowCount;
       this._langTree._data = this._langs;
@@ -180,22 +175,22 @@ var gTranslationExceptions = {
     }
   },
 
-  _handleButtonDisabling: function(aTree, aIdPart) {
+  _handleButtonDisabling(aTree, aIdPart) {
     let empty = aTree.isEmpty;
     document.getElementById("removeAll" + aIdPart + "s").disabled = empty;
     document.getElementById("remove" + aIdPart).disabled =
       empty || !aTree.hasSelection;
   },
 
-  onLanguageSelected: function() {
+  onLanguageSelected() {
     this._handleButtonDisabling(this._langTree, "Language");
   },
 
-  onSiteSelected: function() {
+  onSiteSelected() {
     this._handleButtonDisabling(this._siteTree, "Site");
   },
 
-  onLanguageDeleted: function() {
+  onLanguageDeleted() {
     let langs = Services.prefs.getCharPref(kLanguagesPref);
     if (!langs)
       return;
@@ -206,11 +201,11 @@ var gTranslationExceptions = {
     Services.prefs.setCharPref(kLanguagesPref, langs.join(","));
   },
 
-  onAllLanguagesDeleted: function() {
+  onAllLanguagesDeleted() {
     Services.prefs.setCharPref(kLanguagesPref, "");
   },
 
-  onSiteDeleted: function() {
+  onSiteDeleted() {
     let removedSites = this._siteTree.getSelectedItems();
     for (let origin of removedSites) {
       let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(origin);
@@ -218,7 +213,7 @@ var gTranslationExceptions = {
     }
   },
 
-  onAllSitesDeleted: function() {
+  onAllSitesDeleted() {
     if (this._siteTree.isEmpty)
       return;
 
@@ -233,22 +228,22 @@ var gTranslationExceptions = {
     this.onSiteSelected();
   },
 
-  onSiteKeyPress: function(aEvent) {
+  onSiteKeyPress(aEvent) {
     if (aEvent.keyCode == KeyEvent.DOM_VK_DELETE)
       this.onSiteDeleted();
   },
 
-  onLanguageKeyPress: function(aEvent) {
+  onLanguageKeyPress(aEvent) {
     if (aEvent.keyCode == KeyEvent.DOM_VK_DELETE)
       this.onLanguageDeleted();
   },
 
-  onWindowKeyPress: function(aEvent) {
+  onWindowKeyPress(aEvent) {
     if (aEvent.keyCode == KeyEvent.DOM_VK_ESCAPE)
       window.close();
   },
 
-  uninit: function() {
+  uninit() {
     Services.obs.removeObserver(this, "perm-changed");
     Services.prefs.removeObserver(kLanguagesPref, this);
   }

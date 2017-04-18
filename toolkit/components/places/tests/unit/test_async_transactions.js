@@ -18,7 +18,7 @@ var observer = {
 
   tagRelatedGuids: new Set(),
 
-  reset: function () {
+  reset() {
     this.itemsAdded = new Map();
     this.itemsRemoved = new Map();
     this.itemsChanged = new Map();
@@ -27,17 +27,16 @@ var observer = {
     this.endUpdateBatch = false;
   },
 
-  onBeginUpdateBatch: function () {
+  onBeginUpdateBatch() {
     this.beginUpdateBatch = true;
   },
 
-  onEndUpdateBatch: function () {
+  onEndUpdateBatch() {
     this.endUpdateBatch = true;
   },
 
-  onItemAdded:
-  function (aItemId, aParentId, aIndex, aItemType, aURI, aTitle, aDateAdded,
-            aGuid, aParentGuid) {
+  onItemAdded(aItemId, aParentId, aIndex, aItemType, aURI, aTitle, aDateAdded,
+           aGuid, aParentGuid) {
     // Ignore tag items.
     if (aParentId == PlacesUtils.tagsFolderId ||
         (aParentId != PlacesUtils.placesRootId &&
@@ -54,8 +53,7 @@ var observer = {
                                , url:            aURI });
   },
 
-  onItemRemoved:
-  function (aItemId, aParentId, aIndex, aItemType, aURI, aGuid, aParentGuid) {
+  onItemRemoved(aItemId, aParentId, aIndex, aItemType, aURI, aGuid, aParentGuid) {
     if (this.tagRelatedGuids.has(aGuid))
       return;
 
@@ -64,9 +62,8 @@ var observer = {
                                  , itemType:   aItemType });
   },
 
-  onItemChanged:
-  function (aItemId, aProperty, aIsAnnoProperty, aNewValue, aLastModified,
-            aItemType, aParentId, aGuid, aParentGuid) {
+  onItemChanged(aItemId, aProperty, aIsAnnoProperty, aNewValue, aLastModified,
+           aItemType, aParentId, aGuid, aParentGuid) {
     if (this.tagRelatedGuids.has(aGuid))
       return;
 
@@ -84,7 +81,7 @@ var observer = {
         newValue = null;
     }
     let change = { isAnnoProperty: aIsAnnoProperty
-                 , newValue: newValue
+                 , newValue
                  , lastModified: aLastModified
                  , itemType: aItemType };
     changesForGuid.set(aProperty, change);
@@ -92,9 +89,8 @@ var observer = {
 
   onItemVisited: () => {},
 
-  onItemMoved:
-  function (aItemId, aOldParent, aOldIndex, aNewParent, aNewIndex, aItemType,
-            aGuid, aOldParentGuid, aNewParentGuid) {
+  onItemMoved(aItemId, aOldParent, aOldIndex, aNewParent, aNewIndex, aItemType,
+           aGuid, aOldParentGuid, aNewParentGuid) {
     this.itemsMoved.set(aGuid, { oldParentGuid: aOldParentGuid
                                , oldIndex:      aOldIndex
                                , newParentGuid: aNewParentGuid
@@ -109,7 +105,7 @@ var bmStartIndex = 0;
 
 function run_test() {
   bmsvc.addObserver(observer, false);
-  do_register_cleanup(function () {
+  do_register_cleanup(function() {
     bmsvc.removeObserver(observer);
   });
 
@@ -185,8 +181,7 @@ function ensureItemsRemoved(...items) {
     // We accept both guids and full info object here.
     if (typeof(item) == "string") {
       Assert.ok(observer.itemsRemoved.has(item));
-    }
-    else {
+    } else {
       Assert.ok(observer.itemsRemoved.has(item.guid));
       let info = observer.itemsRemoved.get(item.guid);
       Assert.equal(info.parentGuid, item.parentGuid);
@@ -286,23 +281,19 @@ function* ensureEqualBookmarksTrees(aOriginal,
                                         false,
                                         true);
       }
-    }
-    else if (property == "guid") {
+    } else if (property == "guid") {
       // guid shouldn't be copied if the item was not restored.
       Assert.notEqual(aOriginal.guid, aNew.guid);
-    }
-    else if (property == "dateAdded") {
+    } else if (property == "dateAdded") {
       // dateAdded shouldn't be copied if the item was not restored.
       Assert.ok(is_time_ordered(aOriginal.dateAdded, aNew.dateAdded));
-    }
-    else if (property == "lastModified") {
+    } else if (property == "lastModified") {
       // same same, except for the never-changed case
       if (!aOriginal.lastModified)
         Assert.ok(!aNew.lastModified);
       else
         Assert.ok(is_time_ordered(aOriginal.lastModified, aNew.lastModified));
-    }
-    else if (aCheckParentAndPosition ||
+    } else if (aCheckParentAndPosition ||
              (property != "parentGuid" && property != "index")) {
       Assert.deepEqual(aOriginal[property], aNew[property]);
     }
@@ -332,8 +323,7 @@ add_task(function* test_recycled_transactions() {
     try {
       yield aTransaction.transact();
       do_throw("Shouldn't be able to use the same transaction twice");
-    }
-    catch (ex) { }
+    } catch (ex) { }
     ensureUndoState(txns, undoPosition);
   }
 
@@ -355,8 +345,7 @@ add_task(function* test_recycled_transactions() {
     try {
       yield txn_a.transact();
       do_throw("Shouldn't be able to use the same transaction twice");
-    }
-    catch (ex) { }
+    } catch (ex) { }
     ensureUndoState();
     yield txn_b.transact();
   });
@@ -1218,12 +1207,10 @@ add_task(function* test_untag_uri() {
     if (aInfo instanceof Ci.nsIURI) {
       urls = [aInfo];
       tagsRemoved = [];
-    }
-    else if (Array.isArray(aInfo)) {
+    } else if (Array.isArray(aInfo)) {
       urls = aInfo;
       tagsRemoved = [];
-    }
-    else {
+    } else {
       urls = "url" in aInfo ? [aInfo.url] : aInfo.urls;
       tagsRemoved = "tag" in aInfo ? [aInfo.tag] : aInfo.tags;
     }
@@ -1344,18 +1331,18 @@ add_task(function* test_annotate_multiple() {
     Assert.deepEqual(currentAnnos, expectedAnnos);
   }
 
-  yield PT.Annotate({ guid: guid, annotations: annos(1, 2) }).transact();
+  yield PT.Annotate({ guid, annotations: annos(1, 2) }).transact();
   verifyAnnoValues(1, 2);
   yield PT.undo();
   verifyAnnoValues();
   yield PT.redo();
   verifyAnnoValues(1, 2);
 
-  yield PT.Annotate({ guid: guid
+  yield PT.Annotate({ guid
                     , annotation: { name: "A" } }).transact();
   verifyAnnoValues(null, 2);
 
-  yield PT.Annotate({ guid: guid
+  yield PT.Annotate({ guid
                     , annotation: { name: "B", value: 0 } }).transact();
   verifyAnnoValues(null, 0);
   yield PT.undo();
@@ -1471,7 +1458,7 @@ add_task(function* test_livemark_txns() {
 add_task(function* test_copy() {
   function* duplicate_and_test(aOriginalGuid) {
     let txn = PT.Copy({ guid: aOriginalGuid, newParentGuid: rootGuid });
-    yield duplicateGuid = yield txn.transact();
+    let duplicateGuid = yield txn.transact();
     let originalInfo = yield PlacesUtils.promiseBookmarksTree(aOriginalGuid);
     let duplicateInfo = yield PlacesUtils.promiseBookmarksTree(duplicateGuid);
     yield ensureEqualBookmarksTrees(originalInfo, duplicateInfo, false);
@@ -1589,13 +1576,13 @@ add_task(function* test_copy_excluding_annotations() {
     yield PT.Copy({ guid: folderGuid
                   , newParentGuid: rootGuid
                   , excludingAnnotation: "a" }).transact();
-  yield ensureAnnosSet(excluding_a_dupeGuid,  "b", "c");
+  yield ensureAnnosSet(excluding_a_dupeGuid, "b", "c");
 
   let excluding_ac_dupeGuid =
     yield PT.Copy({ guid: folderGuid
                   , newParentGuid: rootGuid
                   , excludingAnnotations: ["a", "c"] }).transact();
-  yield ensureAnnosSet(excluding_ac_dupeGuid,  "b");
+  yield ensureAnnosSet(excluding_ac_dupeGuid, "b");
 
   // Cleanup
   yield PT.undo();

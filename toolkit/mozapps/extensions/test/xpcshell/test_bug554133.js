@@ -35,7 +35,7 @@ var TESTS = [
 
 var gCurrentTest = 0;
 var SearchCallback = {
-  searchSucceeded: function(addons, length, total) {
+  searchSucceeded(addons, length, total) {
     do_check_false(AddonRepository.isSearching);
     do_check_eq(addons.length, length);
     do_check_eq(length, TESTS[gCurrentTest].length);
@@ -45,7 +45,7 @@ var SearchCallback = {
     run_current_test();
   },
 
-  searchFailed: function() {
+  searchFailed() {
     server.stop(do_test_finished);
     do_throw("Search results failed");
   }
@@ -56,13 +56,11 @@ function run_current_test() {
     var query = TESTS[gCurrentTest].query;
     var maxResults = TESTS[gCurrentTest].maxResults;
     AddonRepository.searchAddons(query, maxResults, SearchCallback);
-  }
-  else
+  } else
     server.stop(do_test_finished);
 }
 
-function run_test()
-{
+function run_test() {
   // Setup for test
   do_test_pending();
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9");

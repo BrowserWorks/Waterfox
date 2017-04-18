@@ -8,9 +8,15 @@
 const {Task} = require("devtools/shared/task");
 const EventEmitter = require("devtools/shared/event-emitter");
 const {LocalizationHelper, ELLIPSIS} = require("devtools/shared/l10n");
-const {KeyShortcuts} = require("devtools/client/shared/key-shortcuts");
+const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
 const JSOL = require("devtools/client/shared/vendor/jsol");
 const {KeyCodes} = require("devtools/client/shared/keycodes");
+
+// GUID to be used as a separator in compound keys. This must match the same
+// constant in devtools/server/actors/storage.js,
+// devtools/client/storage/test/head.js and
+// devtools/server/tests/browser/head.js
+const SEPARATOR_GUID = "{9d414cc5-8319-0a04-0586-c0a6ae01670a}";
 
 loader.lazyRequireGetter(this, "TreeWidget",
                          "devtools/client/shared/widgets/TreeWidget", true);
@@ -35,13 +41,6 @@ const GENERIC_VARIABLES_VIEW_SETTINGS = {
   searchPlaceholder: L10N.getStr("storage.search.placeholder"),
   preventDescriptorModifiers: true
 };
-
-// Columns which are hidden by default in the storage table
-const HIDDEN_COLUMNS = [
-  "creationTime",
-  "isDomain",
-  "isSecure"
-];
 
 const REASON = {
   NEW_ROW: "new-row",
@@ -574,7 +573,7 @@ StorageUI.prototype = {
   },
 
   /**
-   * Populates the selected entry from teh table in the sidebar for a more
+   * Populates the selected entry from the table in the sidebar for a more
    * detailed view.
    */
   displayObjectSidebar: Task.async(function* () {
@@ -616,6 +615,11 @@ StorageUI.prototype = {
         let otherProps = itemProps.filter(
           e => !["name", "value", "valueActor"].includes(e));
         for (let prop of otherProps) {
+          let column = this.table.columns.get(prop);
+          if (column && column.private) {
+            continue;
+          }
+
           let cookieProp = COOKIE_KEY_MAP[prop] || prop;
           // The pseduo property of HostOnly refers to converse of isDomain property
           rawObject[cookieProp] = (prop === "isDomain") ? !item[prop] : item[prop];
@@ -627,6 +631,11 @@ StorageUI.prototype = {
     } else {
       // Case when displaying IndexedDB db/object store properties.
       for (let key in item) {
+        let column = this.table.columns.get(key);
+        if (column && column.private) {
+          continue;
+        }
+
         mainScope.addItem(key, {}, true).setGrip(item[key]);
         this.parseItemValue(key, item[key]);
       }
@@ -786,6 +795,8 @@ StorageUI.prototype = {
     let uniqueKey = null;
     let columns = {};
     let editableFields = [];
+    let hiddenFields = [];
+    let privateFields = [];
     let fields = yield this.getCurrentActor().getFields(subtype);
 
     fields.forEach(f => {
@@ -797,10 +808,21 @@ StorageUI.prototype = {
         editableFields.push(f.name);
       }
 
+      if (f.hidden) {
+        hiddenFields.push(f.name);
+      }
+
+      if (f.private) {
+        privateFields.push(f.name);
+      }
+
       columns[f.name] = f.name;
       let columnName;
       try {
-        columnName = L10N.getStr("table.headers." + type + "." + f.name);
+        // Path key names for l10n in the case of a string change.
+        let name = f.name === "keyPath" ? "keyPath2" : f.name;
+
+        columnName = L10N.getStr("table.headers." + type + "." + name);
       } catch (e) {
         columnName = COOKIE_KEY_MAP[f.name];
       }
@@ -812,7 +834,7 @@ StorageUI.prototype = {
       }
     });
 
-    this.table.setColumns(columns, null, HIDDEN_COLUMNS);
+    this.table.setColumns(columns, null, hiddenFields, privateFields);
     this.hideSidebar();
 
     yield this.makeFieldsEditable(editableFields);
@@ -927,10 +949,13 @@ StorageUI.prototype = {
 
     let rowId = this.table.contextMenuRowId;
     let data = this.table.items.get(rowId);
-    let name = addEllipsis(data[this.table.uniqueId]);
+    let name = data[this.table.uniqueId];
+
+    let separatorRegex = new RegExp(SEPARATOR_GUID, "g");
+    let label = addEllipsis((name + "").replace(separatorRegex, "-"));
 
     this._tablePopupDelete.setAttribute("label",
-      L10N.getFormatStr("storage.popupMenu.deleteLabel", name));
+      L10N.getFormatStr("storage.popupMenu.deleteLabel", label));
 
     if (type === "cookies") {
       let host = addEllipsis(data.host);

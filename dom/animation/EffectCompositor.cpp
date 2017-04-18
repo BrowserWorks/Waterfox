@@ -17,6 +17,7 @@
 #include "mozilla/LayerAnimationInfo.h"
 #include "mozilla/RestyleManagerHandle.h"
 #include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/StyleAnimationValue.h"
 #include "nsComputedDOMStyle.h" // nsComputedDOMStyle::GetPresShellForContent
 #include "nsCSSPropertyIDSet.h"
 #include "nsCSSProps.h"
@@ -55,6 +56,56 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(EffectCompositor, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(EffectCompositor, Release)
 
+namespace {
+enum class MatchForCompositor {
+  // This animation matches and should run on the compositor if possible.
+  Yes,
+  // This (not currently playing) animation matches and can be run on the
+  // compositor if there are other animations for this property that return
+  // 'Yes'.
+  IfNeeded,
+  // This animation does not match or can't be run on the compositor.
+  No,
+  // This animation does not match or can't be run on the compositor and,
+  // furthermore, its presence means we should not run any animations for this
+  // property on the compositor.
+  NoAndBlockThisProperty
+};
+}
+
+static MatchForCompositor
+IsMatchForCompositor(const KeyframeEffectReadOnly& aEffect,
+                     nsCSSPropertyID aProperty,
+                     const nsIFrame* aFrame)
+{
+  const Animation* animation = aEffect.GetAnimation();
+  MOZ_ASSERT(animation);
+
+  if (!animation->IsRelevant()) {
+    return MatchForCompositor::No;
+  }
+
+  AnimationPerformanceWarning::Type warningType;
+  if (animation->ShouldBeSynchronizedWithMainThread(aProperty, aFrame,
+                                                    warningType)) {
+    EffectCompositor::SetPerformanceWarning(
+      aFrame, aProperty,
+      AnimationPerformanceWarning(warningType));
+    // For a given |aFrame|, we don't want some animations of |aProperty| to
+    // run on the compositor and others to run on the main thread, so if any
+    // need to be synchronized with the main thread, run them all there.
+    return MatchForCompositor::NoAndBlockThisProperty;
+  }
+
+  if (!aEffect.HasEffectiveAnimationOfProperty(aProperty)) {
+    return MatchForCompositor::No;
+  }
+
+  return animation->IsPlaying()
+         ? MatchForCompositor::Yes
+         : MatchForCompositor::IfNeeded;
+}
+
 // Helper function to factor out the common logic from
 // GetAnimationsForCompositor and HasAnimationsForCompositor.
 //
@@ -74,6 +125,18 @@ FindAnimationsForCompositor(const nsIFrame* aFrame,
     return false;
   }
 
+  // First check for newly-started transform animations that should be
+  // synchronized with geometric animations. We need to do this before any
+  // other early returns (the one above is ok) since we can only check this
+  // state when the animation is newly-started.
+  if (aProperty == eCSSProperty_transform) {
+    PendingAnimationTracker* tracker =
+      aFrame->PresContext()->Document()->GetPendingAnimationTracker();
+    if (tracker) {
+      tracker->MarkAnimationsThatMightNeedSynchronization();
+    }
+  }
+
   // If the property will be added to the animations level of the cascade but
   // there is an !important rule for that property in the cascade then the
   // animation will not be applied since the !important rule overrides it.
@@ -83,6 +146,11 @@ FindAnimationsForCompositor(const nsIFrame* aFrame,
   }
 
   if (aFrame->RefusedAsyncAnimation()) {
+    return false;
+  }
+
+  if (aFrame->StyleContext()->StyleSource().IsServoComputedValues()) {
+    NS_ERROR("stylo: cannot handle compositor-driven animations yet");
     return false;
   }
 
@@ -126,45 +194,48 @@ FindAnimationsForCompositor(const nsIFrame* aFrame,
     content = content->GetParent();
   }
 
-  bool foundSome = false;
+  bool foundRunningAnimations = false;
   for (KeyframeEffectReadOnly* effect : *effects) {
-    MOZ_ASSERT(effect && effect->GetAnimation());
-    Animation* animation = effect->GetAnimation();
+    MatchForCompositor matchResult =
+      IsMatchForCompositor(*effect, aProperty, aFrame);
 
-    if (!animation->IsPlayableOnCompositor()) {
-      continue;
-    }
-
-    AnimationPerformanceWarning::Type warningType;
-    if (aProperty == eCSSProperty_transform &&
-        effect->ShouldBlockAsyncTransformAnimations(aFrame,
-                                                    warningType)) {
+    if (matchResult == MatchForCompositor::NoAndBlockThisProperty) {
+      // For a given |aFrame|, we don't want some animations of |aProperty| to
+      // run on the compositor and others to run on the main thread, so if any
+      // need to be synchronized with the main thread, run them all there.
       if (aMatches) {
         aMatches->Clear();
       }
-      EffectCompositor::SetPerformanceWarning(
-        aFrame, aProperty,
-        AnimationPerformanceWarning(warningType));
       return false;
     }
 
-    if (!effect->HasEffectiveAnimationOfProperty(aProperty)) {
+    if (matchResult == MatchForCompositor::No) {
       continue;
     }
 
     if (aMatches) {
-      aMatches->AppendElement(animation);
+      aMatches->AppendElement(effect->GetAnimation());
     }
-    foundSome = true;
+
+    if (matchResult == MatchForCompositor::Yes) {
+      foundRunningAnimations = true;
+    }
   }
 
-  MOZ_ASSERT(!foundSome || !aMatches || !aMatches->IsEmpty(),
+  // If all animations we added were not currently playing animations, don't
+  // send them to the compositor.
+  if (aMatches && !foundRunningAnimations) {
+    aMatches->Clear();
+  }
+
+  MOZ_ASSERT(!foundRunningAnimations || !aMatches || !aMatches->IsEmpty(),
              "If return value is true, matches array should be non-empty");
 
-  if (aMatches && foundSome) {
+  if (aMatches && foundRunningAnimations) {
     aMatches->Sort(AnimationPtrComparator<RefPtr<dom::Animation>>());
   }
-  return foundSome;
+
+  return foundRunningAnimations;
 }
 
 void
@@ -203,9 +274,11 @@ EffectCompositor::RequestRestyle(dom::Element* aElement,
 
   if (aRestyleType == RestyleType::Layer) {
     // Prompt layers to re-sync their animations.
-    MOZ_ASSERT(mPresContext->RestyleManager()->IsGecko(),
-               "stylo: Servo-backed style system should not be using "
+    if (mPresContext->RestyleManager()->IsServo()) {
+      NS_ERROR("stylo: Servo-backed style system should not be using "
                "EffectCompositor");
+      return;
+    }
     mPresContext->RestyleManager()->AsGecko()->IncrementAnimationGeneration();
     EffectSet* effectSet =
       EffectSet::GetEffectSet(aElement, aPseudoType);

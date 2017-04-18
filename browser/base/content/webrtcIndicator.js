@@ -55,8 +55,7 @@ function updateIndicatorState() {
     let stringId = "webrtcIndicator.sharing" + shareTypes.join("And") + ".tooltip";
     audioVideoButton.setAttribute("tooltiptext",
                                    gStringBundle.GetStringFromName(stringId));
-  }
-  else {
+  } else {
     audioVideoButton.removeAttribute("tooltiptext");
   }
 
@@ -67,8 +66,7 @@ function updateIndicatorState() {
       webrtcUI.showScreenSharingIndicator + ".tooltip";
     screenShareButton.setAttribute("tooltiptext",
                                     gStringBundle.GetStringFromName(stringId));
-  }
-  else {
+  } else {
     screenShareButton.removeAttribute("tooltiptext");
   }
 
@@ -88,16 +86,15 @@ function updateWindowAttr(attr, value) {
 
 function onPopupMenuShowing(event) {
   let popup = event.target;
-  let type = popup.getAttribute("type");
 
   let activeStreams;
-  if (type == "Devices")
+  if (popup.getAttribute("type") == "Devices")
     activeStreams = webrtcUI.getActiveStreams(true, true, false);
   else
     activeStreams = webrtcUI.getActiveStreams(false, false, true);
 
   if (activeStreams.length == 1) {
-    webrtcUI.showSharingDoorhanger(activeStreams[0], type);
+    webrtcUI.showSharingDoorhanger(activeStreams[0]);
     event.preventDefault();
     return;
   }
@@ -118,9 +115,7 @@ function onPopupMenuHiding(event) {
 }
 
 function onPopupMenuCommand(event) {
-  let item = event.target;
-  webrtcUI.showSharingDoorhanger(item.stream,
-                                 item.parentNode.getAttribute("type"));
+  webrtcUI.showSharingDoorhanger(event.target.stream);
 }
 
 function onFirefoxButtonClick(event) {
@@ -132,7 +127,7 @@ function onFirefoxButtonClick(event) {
 var PositionHandler = {
   positionCustomized: false,
   threshold: 10,
-  adjustPosition: function() {
+  adjustPosition() {
     if (!this.positionCustomized) {
       // Center the window horizontally on the screen (not the available area).
       // Until we have moved the window to y=0, 'screen.width' may give a value
@@ -153,14 +148,14 @@ var PositionHandler = {
       this.setXPosition(window.screenX);
     }
   },
-  setXPosition: function(desiredX) {
+  setXPosition(desiredX) {
     // Ensure the indicator isn't moved outside the available area of the screen.
     desiredX = Math.max(desiredX, screen.availLeft);
     let maxX =
       screen.availLeft + screen.availWidth - document.documentElement.clientWidth;
     window.moveTo(Math.min(desiredX, maxX), screen.availTop);
   },
-  handleEvent: function(aEvent) {
+  handleEvent(aEvent) {
     switch (aEvent.type) {
       case "mousedown":
         if (aEvent.button != 0 || aEvent.defaultPrevented)

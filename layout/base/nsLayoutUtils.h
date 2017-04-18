@@ -30,7 +30,7 @@
 #include "mozilla/ReflowOutput.h"
 #include "ImageContainer.h"
 #include "gfx2DGlue.h"
-
+#include "nsStyleConsts.h"
 #include <limits>
 #include <algorithm>
 
@@ -152,6 +152,7 @@ public:
   typedef mozilla::CSSRect CSSRect;
   typedef mozilla::ScreenMargin ScreenMargin;
   typedef mozilla::LayoutDeviceIntSize LayoutDeviceIntSize;
+  typedef mozilla::StyleGeometryBox StyleGeometryBox;
 
   /**
    * Finds previously assigned ViewID for the given content element, if any.
@@ -803,7 +804,11 @@ public:
     /**
      * When set, return only content in the same document as aFrame.
      */
-    IGNORE_CROSS_DOC = 0x04
+    IGNORE_CROSS_DOC = 0x04,
+    /**
+     * When set, return only content that is actually visible.
+     */
+    ONLY_VISIBLE = 0x08
   };
 
   /**
@@ -1541,8 +1546,18 @@ public:
   static nscoord MinISizeFromInline(nsIFrame* aFrame,
                                     nsRenderingContext* aRenderingContext);
 
-  // Get a suitable foreground color for painting aProperty for aFrame.
-  static nscolor GetColor(nsIFrame* aFrame, nsCSSPropertyID aProperty);
+  // Get a suitable foreground color for painting aColor for aFrame.
+  static nscolor DarkenColorIfNeeded(nsIFrame* aFrame, nscolor aColor);
+
+  // Get a suitable foreground color for painting aField for aFrame.
+  // Type of aFrame is made a template parameter because nsIFrame is not
+  // a complete type in the header. Type-safety is not harmed given that
+  // DarkenColorIfNeeded requires an nsIFrame pointer.
+  template<typename Frame, typename T, typename S>
+  static nscolor GetColor(Frame* aFrame, T S::* aField) {
+    nscolor color = aFrame->GetVisitedDependentColor(aField);
+    return DarkenColorIfNeeded(aFrame, color);
+  }
 
   // Get a baseline y position in app units that is snapped to device pixels.
   static gfxFloat GetSnappedBaselineY(nsIFrame* aFrame, gfxContext* aContext,
@@ -1750,7 +1765,8 @@ public:
                                         const nsPoint&      aAnchor,
                                         const nsRect&       aDirty,
                                         uint32_t            aImageFlags,
-                                        ExtendMode          aExtendMode);
+                                        ExtendMode          aExtendMode,
+                                        float               aOpacity);
 
   /**
    * Draw an image.
@@ -1775,7 +1791,8 @@ public:
                               const nsRect&       aFill,
                               const nsPoint&      aAnchor,
                               const nsRect&       aDirty,
-                              uint32_t            aImageFlags);
+                              uint32_t            aImageFlags,
+                              float               aOpacity = 1.0);
 
   static inline void InitDashPattern(StrokeOptions& aStrokeOptions,
                                      uint8_t aBorderStyle) {
@@ -1938,7 +1955,7 @@ public:
    * given side.
    */
   static bool HasNonZeroCornerOnSide(const nsStyleCorners& aCorners,
-                                       mozilla::css::Side aSide);
+                                       mozilla::Side aSide);
 
   /**
    * Determine if a widget is likely to require transparency or translucency.
@@ -2864,6 +2881,9 @@ public:
    *                          next line exists, null otherwise.
    */
   static bool IsInvisibleBreak(nsINode* aNode, nsIFrame** aNextLineFrame = nullptr);
+
+  static nsRect ComputeGeometryBox(nsIFrame* aFrame,
+                                   StyleGeometryBox aGeometryBox);
 
 private:
   static uint32_t sFontSizeInflationEmPerLine;

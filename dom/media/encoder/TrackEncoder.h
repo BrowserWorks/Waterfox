@@ -76,7 +76,7 @@ public:
   {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     mCanceled = true;
-    mReentrantMonitor.NotifyAll();
+    NotifyEndOfStream();
   }
 
   virtual void SetBitrate(const uint32_t aBitrate) {}
@@ -255,10 +255,11 @@ public:
     , mDisplayWidth(0)
     , mDisplayHeight(0)
     , mTrackRate(aTrackRate)
-    , mTotalFrameDuration(0)
-    , mLastFrameDuration(0)
+    , mEncodedTicks(0)
     , mVideoBitrate(0)
-  {}
+  {
+    mLastChunk.mDuration = 0;
+  }
 
   /**
    * Notified by the same callback of MediaEncoder when it has received a track
@@ -339,22 +340,27 @@ protected:
   TrackRate mTrackRate;
 
   /**
-   * The total duration of frames in encoded video in StreamTime, kept track of
-   * in subclasses.
-   */
-  StreamTime mTotalFrameDuration;
-
-  /**
    * The last unique frame and duration we've sent to track encoder,
    * kept track of in subclasses.
    */
-  VideoFrame mLastFrame;
-  StreamTime mLastFrameDuration;
+  VideoChunk mLastChunk;
 
   /**
    * A segment queue of audio track data, protected by mReentrantMonitor.
    */
   VideoSegment mRawSegment;
+
+  /**
+   * The number of mTrackRate ticks we have passed to the encoder.
+   * Only accessed in AppendVideoSegment().
+   */
+  StreamTime mEncodedTicks;
+
+  /**
+   * The time of the first real video frame passed to the encoder.
+   * Only accessed in AppendVideoSegment().
+   */
+  TimeStamp mStartOffset;
 
   uint32_t mVideoBitrate;
 };

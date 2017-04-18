@@ -5,15 +5,6 @@
 
 #include "LibFuzzerRegistry.h"
 
-extern "C" {
-    void MOZ_EXPORT XRE_LibFuzzerGetFuncs(const char* moduleName, LibFuzzerInitFunc* initFunc, LibFuzzerTestingFunc* testingFunc) {
-        std::string moduleNameStr(moduleName);
-        mozilla::LibFuzzerFunctions funcs = mozilla::LibFuzzerRegistry::getInstance().getModuleFunctions(moduleNameStr);
-        *initFunc = funcs.first;
-        *testingFunc = funcs.second;
-    }
-}
-
 namespace mozilla {
 
 LibFuzzerRegistry& LibFuzzerRegistry::getInstance() {

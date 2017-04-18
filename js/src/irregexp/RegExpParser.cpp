@@ -243,10 +243,10 @@ RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
 
 template <typename CharT>
 RegExpTree*
-RegExpParser<CharT>::ReportError(unsigned errorNumber)
+RegExpParser<CharT>::ReportError(unsigned errorNumber, const char* param /* = nullptr */)
 {
     gc::AutoSuppressGC suppressGC(ts.context());
-    ts.reportError(errorNumber);
+    ts.reportError(errorNumber, param);
     return nullptr;
 }
 
@@ -350,7 +350,7 @@ RegExpParser<CharT>::ParseBracedHexEscape(widechar* value)
         }
         code = (code << 4) | d;
         if (code > unicode::NonBMPMax) {
-            ReportError(JSMSG_UNICODE_OVERFLOW);
+            ReportError(JSMSG_UNICODE_OVERFLOW, "regular expression");
             return false;
         }
         Advance();
@@ -446,6 +446,21 @@ IsSyntaxCharacter(widechar c)
   }
 }
 
+inline bool
+IsInRange(int value, int lower_limit, int higher_limit)
+{
+    MOZ_ASSERT(lower_limit <= higher_limit);
+    return static_cast<unsigned int>(value - lower_limit) <=
+           static_cast<unsigned int>(higher_limit - lower_limit);
+}
+
+inline bool
+IsDecimalDigit(widechar c)
+{
+    // ECMA-262, 3rd, 7.8.3 (p 16)
+    return IsInRange(c, '0', '9');
+}
+
 #ifdef DEBUG
 // Currently only used in an assert.kASSERT.
 static bool
@@ -522,14 +537,17 @@ RegExpParser<CharT>::ParseClassCharacterEscape(widechar* code)
         *code = '\\';
         return true;
       }
-      case '0': case '1': case '2': case '3': case '4': case '5':
-      case '6': case '7':
+      case '0':
         if (unicode_) {
-            if (current() == '0') {
-                Advance();
-                *code = 0;
-                return true;
-            }
+            Advance();
+            if (IsDecimalDigit(current()))
+                return ReportError(JSMSG_INVALID_DECIMAL_ESCAPE);
+            *code = 0;
+            return true;
+        }
+        MOZ_FALLTHROUGH;
+      case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+        if (unicode_) {
             ReportError(JSMSG_INVALID_IDENTITY_ESCAPE);
             return false;
         }
@@ -1156,21 +1174,6 @@ RegExpParser<CharT>::ScanForCaptures()
     }
     capture_count_ = capture_count;
     is_scanned_for_captures_ = true;
-}
-
-inline bool
-IsInRange(int value, int lower_limit, int higher_limit)
-{
-    MOZ_ASSERT(lower_limit <= higher_limit);
-    return static_cast<unsigned int>(value - lower_limit) <=
-           static_cast<unsigned int>(higher_limit - lower_limit);
-}
-
-inline bool
-IsDecimalDigit(widechar c)
-{
-    // ECMA-262, 3rd, 7.8.3 (p 16)
-    return IsInRange(c, '0', '9');
 }
 
 template <typename CharT>
@@ -1834,7 +1837,9 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
              bool multiline, bool match_only, bool unicode, bool ignore_case,
              bool global, bool sticky, RegExpCompileData* data)
 {
-    if (match_only) {
+    // We shouldn't strip pattern for exec, or test with global/sticky,
+    // to reflect correct match position and lastIndex.
+    if (match_only && !global && !sticky) {
         // Try to strip a leading '.*' from the RegExp, but only if it is not
         // followed by a '?' (which will affect how the .* is parsed). This
         // pattern will affect the captures produced by the RegExp, but not
@@ -1846,13 +1851,9 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
 
         // Try to strip a trailing '.*' from the RegExp, which as above will
         // affect the captures but not whether there is a match. Only do this
-        // when the following conditions are met:
-        //   1. there are no other meta characters in the RegExp, so that we
-        //      are sure this will not affect how the RegExp is parsed
-        //   2. global and sticky flags are not set, as lastIndex needs to be
-        //      set properly on global or sticky match
+        // when there are no other meta characters in the RegExp, so that we
+        // are sure this will not affect how the RegExp is parsed.
         if (length >= 3 && !HasRegExpMetaChars(chars, length - 2) &&
-            !global && !sticky &&
             chars[length - 2] == '.' && chars[length - 1] == '*')
         {
             length -= 2;

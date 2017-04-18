@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko.gfx;
 
-import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.util.FloatUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -30,7 +29,8 @@ public class DynamicToolbarAnimator {
         RELAYOUT,
         ACTION_MODE,
         FULL_SCREEN,
-        CARET_DRAG
+        CARET_DRAG,
+        PAGE_LOADING
     }
 
     private final Set<PinReason> pinFlags = Collections.synchronizedSet(EnumSet.noneOf(PinReason.class));
@@ -588,18 +588,6 @@ public class DynamicToolbarAnimator {
                 mContinueAnimation = false;
             }
             return mContinueAnimation;
-        }
-    }
-
-    class SnapMetrics {
-        public final int viewportWidth;
-        public final int viewportHeight;
-        public final float scrollChangeY;
-
-        SnapMetrics(ImmutableViewportMetrics aMetrics, float aScrollChange) {
-            viewportWidth = aMetrics.viewportRectWidth;
-            viewportHeight = aMetrics.viewportRectHeight;
-            scrollChangeY = aScrollChange;
         }
     }
 }

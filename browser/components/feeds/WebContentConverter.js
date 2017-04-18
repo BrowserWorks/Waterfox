@@ -30,7 +30,6 @@ const PREF_SELECTED_WEB = "browser.feeds.handlers.webservice";
 const PREF_SELECTED_ACTION = "browser.feeds.handler";
 const PREF_SELECTED_READER = "browser.feeds.handler.default";
 const PREF_HANDLER_EXTERNAL_PREFIX = "network.protocol-handler.external";
-const PREF_ALLOW_DIFFERENT_HOST = "gecko.handlerService.allowRegisterFromDifferentHost";
 
 const STRING_BUNDLE_URI = "chrome://browser/locale/feeds/subscribe.properties";
 
@@ -156,11 +155,8 @@ const Utils = {
     }
 
     // We also reject handlers registered from a different host (see bug 402287)
-    // The pref allows us to test the feature
-    let pb = Services.prefs;
-    if (!pb.getBoolPref(PREF_ALLOW_DIFFERENT_HOST) &&
-        (!["http:", "https:"].includes(aContentWindow.location.protocol) ||
-         aContentWindow.location.hostname != uri.host)) {
+    if (!["http:", "https:"].includes(aContentWindow.location.protocol) ||
+        aContentWindow.location.hostname != uri.host) {
       throw this.getSecurityError(
         "Permission denied to add " + uri.spec + " as a content or protocol handler",
         aContentWindow);
@@ -190,8 +186,7 @@ const Utils = {
     let allowed;
     try {
       allowed = pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "." + aProtocol);
-    }
-    catch (e) {
+    } catch (e) {
       allowed = pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "-default");
     }
     if (!allowed) {
@@ -435,13 +430,12 @@ WebContentConverterRegistrar.prototype = {
 
       callback(aNotification, aButtonInfo) {
           let protocol = aButtonInfo.protocolInfo.protocol;
-          let uri      = aButtonInfo.protocolInfo.uri;
           let name     = aButtonInfo.protocolInfo.name;
 
           let handler = Cc["@mozilla.org/uriloader/web-handler-app;1"].
                         createInstance(Ci.nsIWebHandlerApp);
           handler.name = name;
-          handler.uriTemplate = uri;
+          handler.uriTemplate = aButtonInfo.protocolInfo.uri;
 
           let eps = Cc["@mozilla.org/uriloader/external-protocol-service;1"].
                     getService(Ci.nsIExternalProtocolService);
@@ -507,8 +501,7 @@ WebContentConverterRegistrar.prototype = {
       }
 
       this._appendFeedReaderNotification(uri, aTitle, notificationBox);
-    }
-    else {
+    } else {
       this._registerContentHandler(contentType, aURIString, aTitle);
     }
   },
@@ -639,8 +632,7 @@ WebContentConverterRegistrar.prototype = {
       try {
         typeBranch.getCharPref("type");
         ++i;
-      }
-      catch (e) {
+      } catch (e) {
         // No more handlers
         break;
       }
@@ -916,7 +908,7 @@ WebContentConverterRegistrarContent.prototype = {
       .sort();
 
     // now register them
-    for (num of nums) {
+    for (let num of nums) {
       let branch = ps.getBranch(PREF_CONTENTHANDLERS_BRANCH + num + ".");
       try {
         this._registerContentHandlerHavingBranch(branch);

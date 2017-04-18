@@ -54,6 +54,7 @@ AudioNode::AudioNode(AudioContext* aContext,
   , mChannelInterpretation(aChannelInterpretation)
   , mId(gId++)
   , mPassThrough(false)
+  , mAbstractMainThread(aContext->GetOwnerGlobal()->AbstractMainThreadFor(TaskCategory::Other))
 {
   MOZ_ASSERT(aContext);
   DOMEventTargetHelper::BindToOwner(aContext->GetParentObject());
@@ -69,6 +70,28 @@ AudioNode::~AudioNode()
              "The webaudio-node-demise notification must have been sent");
   if (mContext) {
     mContext->UnregisterNode(this);
+  }
+}
+
+void
+AudioNode::Initialize(const AudioNodeOptions& aOptions, ErrorResult& aRv)
+{
+  if (aOptions.mChannelCount.WasPassed()) {
+    SetChannelCount(aOptions.mChannelCount.Value(), aRv);
+    if (NS_WARN_IF(aRv.Failed())) {
+      return;
+    }
+  }
+
+  if (aOptions.mChannelCountMode.WasPassed()) {
+    SetChannelCountModeValue(aOptions.mChannelCountMode.Value(), aRv);
+    if (NS_WARN_IF(aRv.Failed())) {
+      return;
+    }
+  }
+
+  if (aOptions.mChannelInterpretation.WasPassed()) {
+    SetChannelInterpretationValue(aOptions.mChannelInterpretation.Value());
   }
 }
 
@@ -184,7 +207,7 @@ AudioNode::Connect(AudioNode& aDestination, uint32_t aOutput,
   }
 
   if (Context() != aDestination.Context()) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return nullptr;
   }
 
@@ -235,7 +258,7 @@ AudioNode::Connect(AudioParam& aDestination, uint32_t aOutput,
   }
 
   if (Context() != aDestination.GetParentObject()) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return;
   }
 

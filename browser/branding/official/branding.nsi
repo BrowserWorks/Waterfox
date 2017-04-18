@@ -18,6 +18,8 @@
 ; Beta since they share the same branding when building with other branches that
 ; set the update channel to beta.
 !define OFFICIAL
+!define URLStubDownload32 "https://www.waterfoxproject.org/downloads"
+!define URLStubDownload64 "https://www.waterfoxproject.org/downloads"
 !define URLStubDownload "https://www.waterfoxproject.org/downloads"
 !define URLManualDownload "https://www.waterfoxproject.org/downloads"
 !define URLSystemRequirements "https://www.waterfoxproject.org/downloads"

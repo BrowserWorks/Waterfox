@@ -70,11 +70,15 @@ add_task(function* setup() {
   // Enable Extended Telemetry.
   yield SpecialPowers.pushPrefEnv({"set": [["toolkit.telemetry.enabled", true]]});
 
+  // Enable event recording for the events tested here.
+  Services.telemetry.setEventRecordingEnabled("navigation", true);
+
   // Make sure to restore the engine once we're done.
   registerCleanupFunction(function* () {
     Services.search.currentEngine = originalEngine;
     Services.search.removeEngine(engineDefault);
     Services.search.removeEngine(engineOneOff);
+    Services.telemetry.setEventRecordingEnabled("navigation", false);
   });
 });
 
@@ -93,14 +97,13 @@ add_task(function* test_plainQuery() {
   yield p;
 
   // Check if the scalars contain the expected values.
-  const scalars =
-    Services.telemetry.snapshotKeyedScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
+  const scalars = getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
   checkKeyedScalar(scalars, SCALAR_SEARCHBAR, "search_enter", 1);
   Assert.equal(Object.keys(scalars[SCALAR_SEARCHBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
 
   // Make sure SEARCH_COUNTS contains identical values.
-  checkKeyedHistogram(search_hist, 'other-MozSearch.searchbar', 1);
+  checkKeyedHistogram(search_hist, "other-MozSearch.searchbar", 1);
 
   // Also check events.
   let events = Services.telemetry.snapshotBuiltinEvents(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
@@ -128,14 +131,13 @@ add_task(function* test_oneOff() {
   yield p;
 
   // Check if the scalars contain the expected values.
-  const scalars =
-    Services.telemetry.snapshotKeyedScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
+  const scalars = getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
   checkKeyedScalar(scalars, SCALAR_SEARCHBAR, "search_oneoff", 1);
   Assert.equal(Object.keys(scalars[SCALAR_SEARCHBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
 
   // Make sure SEARCH_COUNTS contains identical values.
-  checkKeyedHistogram(search_hist, 'other-MozSearch2.searchbar', 1);
+  checkKeyedHistogram(search_hist, "other-MozSearch2.searchbar", 1);
 
   // Also check events.
   let events = Services.telemetry.snapshotBuiltinEvents(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
@@ -174,15 +176,14 @@ add_task(function* test_suggestion() {
   yield p;
 
   // Check if the scalars contain the expected values.
-  const scalars =
-    Services.telemetry.snapshotKeyedScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
+  const scalars = getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
   checkKeyedScalar(scalars, SCALAR_SEARCHBAR, "search_suggestion", 1);
   Assert.equal(Object.keys(scalars[SCALAR_SEARCHBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
 
   // Make sure SEARCH_COUNTS contains identical values.
-  let searchEngineId = 'other-' + suggestionEngine.name;
-  checkKeyedHistogram(search_hist, searchEngineId + '.searchbar', 1);
+  let searchEngineId = "other-" + suggestionEngine.name;
+  checkKeyedHistogram(search_hist, searchEngineId + ".searchbar", 1);
 
   // Also check events.
   let events = Services.telemetry.snapshotBuiltinEvents(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);

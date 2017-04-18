@@ -551,6 +551,8 @@ js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
     // Step 1.
     uint32_t newLen;
     if (attrs & JSPROP_IGNORE_VALUE) {
+        MOZ_ASSERT(value.isUndefined());
+
         // The spec has us calling OrdinaryDefineOwnProperty if
         // Desc.[[Value]] is absent, but our implementation is so different that
         // this is impossible. Instead, set newLen to the current length and
@@ -560,7 +562,6 @@ js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
         // Step 2 is irrelevant in our implementation.
 
         // Steps 3-7.
-        MOZ_ASSERT_IF(attrs & JSPROP_IGNORE_VALUE, value.isUndefined());
         if (!CanonicalizeArrayLengthValue(cx, value, &newLen))
             return false;
 
@@ -620,7 +621,7 @@ js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
         // for..in iteration over the array. Keys deleted before being reached
         // during the iteration must not be visited, and suppressing them here
         // would be too costly.
-        ObjectGroup* arrGroup = arr->getGroup(cx);
+        ObjectGroup* arrGroup = JSObject::getGroup(cx, arr);
         if (MOZ_UNLIKELY(!arrGroup))
             return false;
         if (!arr->isIndexed() && !MOZ_UNLIKELY(arrGroup->hasAllFlags(OBJECT_FLAG_ITERATED))) {
@@ -905,7 +906,7 @@ js::IsWrappedArrayConstructor(JSContext* cx, const Value& v, bool* result)
     if (v.toObject().is<WrapperObject>()) {
         JSObject* obj = CheckedUnwrap(&v.toObject());
         if (!obj) {
-            JS_ReportErrorASCII(cx, "Permission denied to access object");
+            ReportAccessDenied(cx);
             return false;
         }
 
@@ -1323,7 +1324,7 @@ InitArrayElements(JSContext* cx, HandleObject obj, uint32_t start,
     if (count == 0)
         return true;
 
-    ObjectGroup* group = obj->getGroup(cx);
+    ObjectGroup* group = JSObject::getGroup(cx, obj);
     if (!group)
         return false;
 
@@ -1711,11 +1712,11 @@ MatchNumericComparator(JSContext* cx, const Value& v)
     if (!obj.is<JSFunction>())
         return Match_None;
 
-    JSFunction* fun = &obj.as<JSFunction>();
+    RootedFunction fun(cx, &obj.as<JSFunction>());
     if (!fun->isInterpreted() || fun->isClassConstructor())
         return Match_None;
 
-    JSScript* script = fun->getOrCreateScript(cx);
+    JSScript* script = JSFunction::getOrCreateScript(cx, fun);
     if (!script)
         return Match_Failure;
 
@@ -1894,19 +1895,11 @@ js::array_sort(JSContext* cx, unsigned argc, Value* vp)
          * Non-optimized user supplied comparators perform much better when
          * called from within a self-hosted sorting function.
          */
-        RootedAtom selfHostedSortAtom(cx, Atomize(cx, "ArraySort", 9));
-        RootedPropertyName selfHostedSortName(cx, selfHostedSortAtom->asPropertyName());
-        RootedValue selfHostedSortValue(cx);
+        FixedInvokeArgs<1> args2(cx);
+        args2[0].set(fval);
 
-        if (!GlobalObject::getIntrinsicValue(cx, cx->global(), selfHostedSortName,
-            &selfHostedSortValue)) {
-            return false;
-        }
-
-        MOZ_ASSERT(selfHostedSortValue.isObject());
-        MOZ_ASSERT(selfHostedSortValue.toObject().is<JSFunction>());
-
-        return Call(cx, selfHostedSortValue, args.thisv(), fval, args.rval());
+        RootedValue thisv(cx, ObjectValue(*obj));
+        return CallSelfHostedFunction(cx, cx->names().ArraySort, thisv, args2, args.rval());
     }
 
     uint32_t len;
@@ -1931,15 +1924,6 @@ js::array_sort(JSContext* cx, unsigned argc, Value* vp)
     }
 #endif
 
-    /*
-     * Initialize vec as a root. We will clear elements of vec one by
-     * one while increasing the rooted amount of vec when we know that the
-     * property at the corresponding index exists and its value must be rooted.
-     *
-     * In this way when sorting a huge mostly sparse array we will not
-     * access the tail of vec corresponding to properties that do not
-     * exist, allowing OS to avoiding committing RAM. See bug 330812.
-     */
     size_t n, undefs;
     {
         Rooted<GCVector<Value>> vec(cx, GCVector<Value>(cx));
@@ -1963,7 +1947,6 @@ js::array_sort(JSContext* cx, unsigned argc, Value* vp)
             if (!CheckForInterrupt(cx))
                 return false;
 
-            /* Clear vec[newlen] before including it in the rooted set. */
             bool hole;
             if (!GetElement(cx, obj, i, &hole, &v))
                 return false;
@@ -1977,7 +1960,6 @@ js::array_sort(JSContext* cx, unsigned argc, Value* vp)
             allStrings = allStrings && v.isString();
             allInts = allInts && v.isInt32();
         }
-
 
         /*
          * If the array only contains holes, we're done.  But if it contains
@@ -2195,7 +2177,7 @@ ArrayShiftDenseKernel(JSContext* cx, HandleObject obj, MutableHandleValue rval)
     if (ObjectMayHaveExtraIndexedProperties(obj))
         return DenseElementResult::Incomplete;
 
-    RootedObjectGroup group(cx, obj->getGroup(cx));
+    RootedObjectGroup group(cx, JSObject::getGroup(cx, obj));
     if (MOZ_UNLIKELY(!group))
         return DenseElementResult::Failure;
 
@@ -2398,7 +2380,7 @@ CanOptimizeForDenseStorage(HandleObject arr, uint32_t startingIndex, uint32_t co
      * deleted if a hole is moved from one location to another location not yet
      * visited.  See bug 690622.
      */
-    ObjectGroup* arrGroup = arr->getGroup(cx);
+    ObjectGroup* arrGroup = JSObject::getGroup(cx, arr);
     if (!arrGroup) {
         cx->recoverFromOutOfMemory();
         return false;
@@ -3283,7 +3265,7 @@ static JSObject*
 CreateArrayPrototype(JSContext* cx, JSProtoKey key)
 {
     MOZ_ASSERT(key == JSProto_Array);
-    RootedObject proto(cx, cx->global()->getOrCreateObjectPrototype(cx));
+    RootedObject proto(cx, GlobalObject::getOrCreateObjectPrototype(cx, cx->global()));
     if (!proto)
         return nullptr;
 
@@ -3303,7 +3285,7 @@ CreateArrayPrototype(JSContext* cx, JSProtoKey key)
                                                               metadata));
     if (!arrayProto ||
         !JSObject::setSingleton(cx, arrayProto) ||
-        !arrayProto->setDelegate(cx) ||
+        !JSObject::setDelegate(cx, arrayProto) ||
         !AddLengthProperty(cx, arrayProto))
     {
         return nullptr;
@@ -3636,7 +3618,7 @@ js::NewPartlyAllocatedArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup g
 // UnboxedArrayObject::MaximumCapacity might be exceeded).
 template <uint32_t maxLength>
 static inline JSObject*
-NewArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
+NewArrayTryReuseGroup(JSContext* cx, HandleObject obj, size_t length,
                       NewObjectKind newKind = GenericObject)
 {
     if (!obj->is<ArrayObject>() && !obj->is<UnboxedArrayObject>())
@@ -3645,7 +3627,7 @@ NewArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
     if (obj->staticPrototype() != cx->global()->maybeGetArrayPrototype())
         return NewArray<maxLength>(cx, length, nullptr, newKind);
 
-    RootedObjectGroup group(cx, obj->getGroup(cx));
+    RootedObjectGroup group(cx, JSObject::getGroup(cx, obj));
     if (!group)
         return nullptr;
 
@@ -3653,14 +3635,14 @@ NewArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
 }
 
 JSObject*
-js::NewFullyAllocatedArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
+js::NewFullyAllocatedArrayTryReuseGroup(JSContext* cx, HandleObject obj, size_t length,
                                         NewObjectKind newKind)
 {
     return NewArrayTryReuseGroup<UINT32_MAX>(cx, obj, length, newKind);
 }
 
 JSObject*
-js::NewPartlyAllocatedArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length)
+js::NewPartlyAllocatedArrayTryReuseGroup(JSContext* cx, HandleObject obj, size_t length)
 {
     return NewArrayTryReuseGroup<ArrayObject::EagerAllocationMaxLength>(cx, obj, length);
 }

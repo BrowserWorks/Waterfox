@@ -64,6 +64,7 @@
 namespace mozilla {
 namespace dom {
 class EventTarget;
+class PendingGlobalHistoryEntry;
 typedef uint32_t ScreenOrientationInternal;
 } // namespace dom
 } // namespace mozilla
@@ -200,15 +201,18 @@ public:
                          const nsAString& aFileName,
                          nsIInputStream* aPostDataStream,
                          nsIInputStream* aHeadersDataStream,
-                         bool aIsTrusted) override;
+                         bool aIsTrusted,
+                         nsIPrincipal* aTriggeringPrincipal) override;
   NS_IMETHOD OnLinkClickSync(nsIContent* aContent,
                              nsIURI* aURI,
                              const char16_t* aTargetSpec,
                              const nsAString& aFileName,
                              nsIInputStream* aPostDataStream = 0,
                              nsIInputStream* aHeadersDataStream = 0,
+                             bool aNoOpenerImplied = false,
                              nsIDocShell** aDocShell = 0,
-                             nsIRequest** aRequest = 0) override;
+                             nsIRequest** aRequest = 0,
+                             nsIPrincipal* aTriggeringPrincipal = nullptr) override;
   NS_IMETHOD OnOverLink(nsIContent* aContent,
                         nsIURI* aURI,
                         const char16_t* aTargetSpec) override;
@@ -274,13 +278,13 @@ private:
   bool CanSetOriginAttributes();
 
 public:
-  const mozilla::DocShellOriginAttributes&
+  const mozilla::OriginAttributes&
   GetOriginAttributes()
   {
     return mOriginAttributes;
   }
 
-  nsresult SetOriginAttributes(const mozilla::DocShellOriginAttributes& aAttrs);
+  nsresult SetOriginAttributes(const mozilla::OriginAttributes& aAttrs);
 
   void GetInterceptedDocumentId(nsAString& aId)
   {
@@ -330,7 +334,8 @@ protected:
   // passed in, the about:blank principal will end up being used.
   nsresult CreateAboutBlankContentViewer(nsIPrincipal* aPrincipal,
                                          nsIURI* aBaseURI,
-                                         bool aTryToSaveOldPresentation = true);
+                                         bool aTryToSaveOldPresentation = true,
+                                         bool aCheckPermitUnload = true);
   nsresult CreateContentViewer(const nsACString& aContentType,
                                nsIRequest* aRequest,
                                nsIStreamListener** aContentHandler);
@@ -750,9 +755,15 @@ protected:
 
   /**
    * Initializes mTiming if it isn't yet.
-   * After calling this, mTiming is non-null.
+   * After calling this, mTiming is non-null. This method returns true if the
+   * initialization of the Timing can be reset (basically this is true if a new
+   * Timing object is created).
+   * In case the loading is aborted, MaybeResetInitTiming() can be called
+   * passing the return value of MaybeInitTiming(): if it's possible to reset
+   * the Timing, this method will do it.
    */
-  void MaybeInitTiming();
+  MOZ_MUST_USE bool MaybeInitTiming();
+  void MaybeResetInitTiming(bool aReset);
 
   bool DisplayLoadError(nsresult aError, nsIURI* aURI, const char16_t* aURL,
                         nsIChannel* aFailedChannel)
@@ -783,8 +794,6 @@ protected:
   static const nsCString FrameTypeToString(uint32_t aFrameType)
   {
     switch (aFrameType) {
-      case FRAME_TYPE_APP:
-        return NS_LITERAL_CSTRING("app");
       case FRAME_TYPE_BROWSER:
         return NS_LITERAL_CSTRING("browser");
       case FRAME_TYPE_REGULAR:
@@ -798,6 +807,8 @@ protected:
   uint32_t GetInheritedFrameType();
 
   bool HasUnloadedParent();
+
+  void UpdateGlobalHistoryTitle(nsIURI* aURI);
 
   // Dimensions of the docshell
   nsIntRect mBounds;
@@ -1004,7 +1015,7 @@ protected:
   bool mInEnsureScriptEnv;
 #endif
 
-  uint64_t mHistoryID;
+  nsID mHistoryID;
   uint32_t mDefaultLoadFlags;
 
   static nsIURIFixup* sURIFixup;
@@ -1033,7 +1044,9 @@ private:
   nsTObserverArray<nsWeakPtr> mScrollObservers;
   nsCString mOriginalUriString;
   nsWeakPtr mOpener;
-  mozilla::DocShellOriginAttributes mOriginAttributes;
+  mozilla::OriginAttributes mOriginAttributes;
+
+  mozilla::UniquePtr<mozilla::dom::PendingGlobalHistoryEntry> mPrerenderGlobalHistory;
 
   // A depth count of how many times NotifyRunToCompletionStart
   // has been called without a matching NotifyRunToCompletionStop.

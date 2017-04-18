@@ -13,6 +13,7 @@
 
 #include "jit/CompileInfo.h"
 #include "jit/JitFrames.h"
+#include "vm/Interpreter.h"
 
 namespace js {
 
@@ -112,7 +113,7 @@ struct VMFunction
         RootNone = 0,
         RootObject,
         RootString,
-        RootPropertyName,
+        RootId,
         RootFunction,
         RootValue,
         RootCell
@@ -284,6 +285,7 @@ template <> struct TypeToDataType<Handle<Scope*> > { static const DataType resul
 template <> struct TypeToDataType<HandleScript> { static const DataType result = Type_Handle; };
 template <> struct TypeToDataType<HandleValue> { static const DataType result = Type_Handle; };
 template <> struct TypeToDataType<MutableHandleValue> { static const DataType result = Type_Handle; };
+template <> struct TypeToDataType<HandleId> { static const DataType result = Type_Handle; };
 
 // Convert argument types to properties of the argument known by the jit.
 template <class T> struct TypeToArgProperties {
@@ -338,6 +340,9 @@ template <> struct TypeToArgProperties<HandleValue> {
 template <> struct TypeToArgProperties<MutableHandleValue> {
     static const uint32_t result = TypeToArgProperties<Value>::result | VMFunction::ByRef;
 };
+template <> struct TypeToArgProperties<HandleId> {
+    static const uint32_t result = TypeToArgProperties<jsid>::result | VMFunction::ByRef;
+};
 template <> struct TypeToArgProperties<HandleShape> {
     static const uint32_t result = TypeToArgProperties<Shape*>::result | VMFunction::ByRef;
 };
@@ -365,7 +370,7 @@ template <> struct TypeToRootType<HandleString> {
     static const uint32_t result = VMFunction::RootString;
 };
 template <> struct TypeToRootType<HandlePropertyName> {
-    static const uint32_t result = VMFunction::RootPropertyName;
+    static const uint32_t result = VMFunction::RootString;
 };
 template <> struct TypeToRootType<HandleFunction> {
     static const uint32_t result = VMFunction::RootFunction;
@@ -375,6 +380,9 @@ template <> struct TypeToRootType<HandleValue> {
 };
 template <> struct TypeToRootType<MutableHandleValue> {
     static const uint32_t result = VMFunction::RootValue;
+};
+template <> struct TypeToRootType<HandleId> {
+    static const uint32_t result = VMFunction::RootId;
 };
 template <> struct TypeToRootType<HandleShape> {
     static const uint32_t result = VMFunction::RootCell;
@@ -657,7 +665,9 @@ void PostWriteBarrier(JSRuntime* rt, JSObject* obj);
 void PostWriteElementBarrier(JSRuntime* rt, JSObject* obj, int32_t index);
 void PostGlobalWriteBarrier(JSRuntime* rt, JSObject* obj);
 
-uint32_t GetIndexFromString(JSString* str);
+// If |str| is an index in the range [0, INT32_MAX], return it. If the string
+// is not an index in this range, return -1.
+int32_t GetIndexFromString(JSString* str);
 
 MOZ_MUST_USE bool
 DebugPrologue(JSContext* cx, BaselineFrame* frame, jsbytecode* pc, bool* mustReturn);
@@ -788,7 +798,7 @@ MOZ_MUST_USE bool
 ThrowRuntimeLexicalError(JSContext* cx, unsigned errorNumber);
 
 MOZ_MUST_USE bool
-ThrowReadOnlyError(JSContext* cx, int32_t index);
+ThrowReadOnlyError(JSContext* cx, HandleObject obj, int32_t index);
 
 MOZ_MUST_USE bool
 BaselineThrowUninitializedThis(JSContext* cx, BaselineFrame* frame);
@@ -801,6 +811,17 @@ ThrowObjectCoercible(JSContext* cx, HandleValue v);
 
 MOZ_MUST_USE bool
 BaselineGetFunctionThis(JSContext* cx, BaselineFrame* frame, MutableHandleValue res);
+
+MOZ_MUST_USE bool
+CallNativeGetter(JSContext* cx, HandleFunction callee, HandleObject obj,
+                 MutableHandleValue result);
+
+
+MOZ_MUST_USE bool
+EqualStringsHelper(JSString* str1, JSString* str2);
+
+MOZ_MUST_USE bool
+CheckIsCallable(JSContext* cx, HandleValue v, CheckIsCallableKind kind);
 
 } // namespace jit
 } // namespace js

@@ -10,7 +10,7 @@ const gTests = [
   test_openUILink
 ];
 
-function test () {
+function test() {
   waitForExplicitFinish();
   executeSoon(runNextTest);
 }
@@ -20,8 +20,7 @@ function runNextTest() {
     let testFun = gTests.shift();
     info("Running " + testFun.name);
     testFun()
-  }
-  else {
+  } else {
     finish();
   }
 }

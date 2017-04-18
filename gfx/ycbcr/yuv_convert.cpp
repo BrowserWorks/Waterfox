@@ -101,48 +101,48 @@ void ConvertYCbCrToRGB32(const uint8* y_buf,
                                    y_pitch, uv_pitch, rgb_pitch, yuv_type);
     return;
   }
+
+  libyuv::YuvConstants* yuvconstants = nullptr;
+  if (yuv_color_space == mozilla::YUVColorSpace::BT709) {
+    yuvconstants = const_cast<libyuv::YuvConstants*>(&libyuv::kYuvH709Constants);
+  } else {
+    yuvconstants = const_cast<libyuv::YuvConstants*>(&libyuv::kYuvI601Constants);
+  }
                                     
   if (yuv_type == YV24) {
     const uint8* src_y = y_buf + y_pitch * pic_y + pic_x;
     const uint8* src_u = u_buf + uv_pitch * pic_y + pic_x;
     const uint8* src_v = v_buf + uv_pitch * pic_y + pic_x;
-    DebugOnly<int> err = libyuv::I444ToARGB(src_y, y_pitch,
-                                            src_u, uv_pitch,
-                                            src_v, uv_pitch,
-                                            rgb_buf, rgb_pitch,
-                                            pic_width, pic_height);
+    DebugOnly<int> err = libyuv::I444ToARGBMatrix(src_y, y_pitch,
+                                                  src_u, uv_pitch,
+                                                  src_v, uv_pitch,
+                                                  rgb_buf, rgb_pitch,
+                                                  yuvconstants,
+                                                  pic_width, pic_height);
     MOZ_ASSERT(!err);
   } else if (yuv_type == YV16) {
     const uint8* src_y = y_buf + y_pitch * pic_y + pic_x;
     const uint8* src_u = u_buf + uv_pitch * pic_y + pic_x / 2;
     const uint8* src_v = v_buf + uv_pitch * pic_y + pic_x / 2;
-    DebugOnly<int> err = libyuv::I422ToARGB(src_y, y_pitch,
-                                            src_u, uv_pitch,
-                                            src_v, uv_pitch,
-                                            rgb_buf, rgb_pitch,
-                                            pic_width, pic_height);
+    DebugOnly<int> err = libyuv::I422ToARGBMatrix(src_y, y_pitch,
+                                                  src_u, uv_pitch,
+                                                  src_v, uv_pitch,
+                                                  rgb_buf, rgb_pitch,
+                                                  yuvconstants,
+                                                  pic_width, pic_height);
     MOZ_ASSERT(!err);
   } else {
     MOZ_ASSERT(yuv_type == YV12);
     const uint8* src_y = y_buf + y_pitch * pic_y + pic_x;
     const uint8* src_u = u_buf + (uv_pitch * pic_y + pic_x) / 2;
     const uint8* src_v = v_buf + (uv_pitch * pic_y + pic_x) / 2;
-    if (yuv_color_space == YUVColorSpace::BT709) {
-      DebugOnly<int> err = libyuv::H420ToARGB(src_y, y_pitch,
-                                              src_u, uv_pitch,
-                                              src_v, uv_pitch,
-                                              rgb_buf, rgb_pitch,
-                                              pic_width, pic_height);
-      MOZ_ASSERT(!err);
-    } else {
-      MOZ_ASSERT(yuv_color_space == YUVColorSpace::BT601);
-      DebugOnly<int> err = libyuv::I420ToARGB(src_y, y_pitch,
-                                              src_u, uv_pitch,
-                                              src_v, uv_pitch,
-                                              rgb_buf, rgb_pitch,
-                                              pic_width, pic_height);
-      MOZ_ASSERT(!err);
-    }
+    DebugOnly<int> err = libyuv::I420ToARGBMatrix(src_y, y_pitch,
+                                                  src_u, uv_pitch,
+                                                  src_v, uv_pitch,
+                                                  rgb_buf, rgb_pitch,
+                                                  yuvconstants,
+                                                  pic_width, pic_height);
+    MOZ_ASSERT(!err);
   }
 }
 
@@ -504,6 +504,27 @@ void ScaleYCbCrToRGB32_deprecated(const uint8* y_buf,
   // MMX used for FastConvertYUVToRGB32Row and FilterRows requires emms.
   if (has_mmx)
     EMMS();
+}
+void ConvertYCbCrAToARGB32(const uint8* y_buf,
+                           const uint8* u_buf,
+                           const uint8* v_buf,
+                           const uint8* a_buf,
+                           uint8* argb_buf,
+                           int pic_width,
+                           int pic_height,
+                           int ya_pitch,
+                           int uv_pitch,
+                           int argb_pitch) {
+
+  // The downstream graphics stack expects an attenuated input, hence why the
+  // attenuation parameter is set.
+  DebugOnly<int> err = libyuv::I420AlphaToARGB(y_buf, ya_pitch,
+                                               u_buf, uv_pitch,
+                                               v_buf, uv_pitch,
+                                               a_buf, ya_pitch,
+                                               argb_buf, argb_pitch,
+                                               pic_width, pic_height, 1);
+  MOZ_ASSERT(!err);
 }
 
 } // namespace gfx

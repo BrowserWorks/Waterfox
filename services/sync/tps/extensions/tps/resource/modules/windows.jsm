@@ -23,14 +23,14 @@ var BrowserWindows = {
    * @param aPrivate The private option.
    * @return nothing
    */
-  Add: function(aPrivate, fn) {
+  Add(aPrivate, fn) {
     let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
                .getService(Ci.nsIWindowMediator);
     let mainWindow = wm.getMostRecentWindow("navigator:browser");
     let win = mainWindow.OpenBrowserWindow({private: aPrivate});
     win.addEventListener("load", function onLoad() {
-      win.removeEventListener("load", onLoad, false);
+      win.removeEventListener("load", onLoad);
       fn.call(win);
-    }, false);
+    });
   }
 };

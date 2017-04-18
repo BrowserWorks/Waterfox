@@ -1477,7 +1477,7 @@ gfxUtils::ThreadSafeGetFeatureStatus(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
                                    status);
 
     ErrorResult rv;
-    runnable->Dispatch(rv);
+    runnable->Dispatch(dom::workers::Terminating, rv);
     if (rv.Failed()) {
         // XXXbz This is totally broken, since we're supposed to just abort
         // everything up the callstack but the callers basically eat the
@@ -1489,25 +1489,6 @@ gfxUtils::ThreadSafeGetFeatureStatus(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
   }
 
   return gfxInfo->GetFeatureStatus(feature, failureId, status);
-}
-
-/* static */ bool
-gfxUtils::IsFeatureBlacklisted(nsCOMPtr<nsIGfxInfo> gfxInfo, int32_t feature,
-                               nsACString* const out_blacklistId)
-{
-  if (!gfxInfo) {
-    gfxInfo = services::GetGfxInfo();
-  }
-
-  int32_t status;
-  if (!NS_SUCCEEDED(gfxUtils::ThreadSafeGetFeatureStatus(gfxInfo, feature,
-                                                         *out_blacklistId, &status)))
-  {
-    out_blacklistId->AssignLiteral("");
-    return true;
-  }
-
-  return status != nsIGfxInfo::FEATURE_STATUS_OK;
 }
 
 /* static */ bool

@@ -25,11 +25,11 @@
 #include "SplitNodeTransaction.h"       // for SplitNodeTransaction
 #include "StyleSheetTransactions.h"     // for AddStyleSheetTransaction, etc.
 #include "TextEditUtils.h"              // for TextEditUtils
-#include "mozFlushType.h"               // for mozFlushType::Flush_Frames
 #include "mozInlineSpellChecker.h"      // for mozInlineSpellChecker
 #include "mozilla/CheckedInt.h"         // for CheckedInt
 #include "mozilla/EditorUtils.h"        // for AutoRules, etc.
 #include "mozilla/EditTransactionBase.h" // for EditTransactionBase
+#include "mozilla/FlushType.h"          // for FlushType::Frames
 #include "mozilla/IMEStateManager.h"    // for IMEStateManager
 #include "mozilla/Preferences.h"        // for Preferences
 #include "mozilla/dom/Selection.h"      // for Selection, etc.
@@ -731,7 +731,8 @@ EditorBase::DoTransaction(nsITransaction* aTxn)
 
     nsresult rv;
     if (mTxnMgr) {
-      rv = mTxnMgr->DoTransaction(aTxn);
+      RefPtr<nsTransactionManager> txnMgr = mTxnMgr;
+      rv = txnMgr->DoTransaction(aTxn);
     } else {
       rv = aTxn->DoTransaction();
     }
@@ -816,8 +817,9 @@ EditorBase::Undo(uint32_t aCount)
     return NS_OK;
   }
 
+  RefPtr<nsTransactionManager> txnMgr = mTxnMgr;
   for (uint32_t i = 0; i < aCount; ++i) {
-    nsresult rv = mTxnMgr->UndoTransaction();
+    nsresult rv = txnMgr->UndoTransaction();
     NS_ENSURE_SUCCESS(rv, rv);
 
     DoAfterUndoTransaction();
@@ -855,8 +857,9 @@ EditorBase::Redo(uint32_t aCount)
     return NS_OK;
   }
 
+  RefPtr<nsTransactionManager> txnMgr = mTxnMgr;
   for (uint32_t i = 0; i < aCount; ++i) {
-    nsresult rv = mTxnMgr->RedoTransaction();
+    nsresult rv = txnMgr->RedoTransaction();
     NS_ENSURE_SUCCESS(rv, rv);
 
     DoAfterRedoTransaction();
@@ -887,7 +890,8 @@ EditorBase::BeginTransaction()
   BeginUpdateViewBatch();
 
   if (mTxnMgr) {
-    mTxnMgr->BeginBatch(nullptr);
+    RefPtr<nsTransactionManager> txnMgr = mTxnMgr;
+    txnMgr->BeginBatch(nullptr);
   }
 
   return NS_OK;
@@ -897,7 +901,8 @@ NS_IMETHODIMP
 EditorBase::EndTransaction()
 {
   if (mTxnMgr) {
-    mTxnMgr->EndBatch(false);
+    RefPtr<nsTransactionManager> txnMgr = mTxnMgr;
+    txnMgr->EndBatch(false);
   }
 
   EndUpdateViewBatch();
@@ -1210,12 +1215,23 @@ EditorBase::SetAttribute(nsIDOMElement* aElement,
                          const nsAString& aAttribute,
                          const nsAString& aValue)
 {
+  if (NS_WARN_IF(aAttribute.IsEmpty())) {
+    return NS_ERROR_FAILURE;
+  }
   nsCOMPtr<Element> element = do_QueryInterface(aElement);
   NS_ENSURE_TRUE(element, NS_ERROR_NULL_POINTER);
   nsCOMPtr<nsIAtom> attribute = NS_Atomize(aAttribute);
 
+  return SetAttribute(element, attribute, aValue);
+}
+
+nsresult
+EditorBase::SetAttribute(Element* aElement,
+                         nsIAtom* aAttribute,
+                         const nsAString& aValue)
+{
   RefPtr<ChangeAttributeTransaction> transaction =
-    CreateTxnForSetAttribute(*element, *attribute, aValue);
+    CreateTxnForSetAttribute(*aElement, *aAttribute, aValue);
   return DoTransaction(transaction);
 }
 
@@ -1244,12 +1260,22 @@ NS_IMETHODIMP
 EditorBase::RemoveAttribute(nsIDOMElement* aElement,
                             const nsAString& aAttribute)
 {
+  if (NS_WARN_IF(aAttribute.IsEmpty())) {
+    return NS_ERROR_FAILURE;
+  }
   nsCOMPtr<Element> element = do_QueryInterface(aElement);
   NS_ENSURE_TRUE(element, NS_ERROR_NULL_POINTER);
   nsCOMPtr<nsIAtom> attribute = NS_Atomize(aAttribute);
 
+  return RemoveAttribute(element, attribute);
+}
+
+nsresult
+EditorBase::RemoveAttribute(Element* aElement,
+                            nsIAtom* aAttribute)
+{
   RefPtr<ChangeAttributeTransaction> transaction =
-    CreateTxnForRemoveAttribute(*element, *attribute);
+    CreateTxnForRemoveAttribute(*aElement, *aAttribute);
   return DoTransaction(transaction);
 }
 
@@ -1366,9 +1392,12 @@ EditorBase::CreateNode(nsIAtom* aTag,
 
   AutoRules beginRulesSniffing(this, EditAction::createNode, nsIEditor::eNext);
 
-  for (auto& listener : mActionListeners) {
-    listener->WillCreateNode(nsDependentAtomString(aTag),
-                             GetAsDOMNode(aParent), aPosition);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->WillCreateNode(nsDependentAtomString(aTag),
+                               GetAsDOMNode(aParent), aPosition);
+    }
   }
 
   nsCOMPtr<Element> ret;
@@ -1383,9 +1412,12 @@ EditorBase::CreateNode(nsIAtom* aTag,
 
   mRangeUpdater.SelAdjCreateNode(aParent, aPosition);
 
-  for (auto& listener : mActionListeners) {
-    listener->DidCreateNode(nsDependentAtomString(aTag), GetAsDOMNode(ret),
-                            GetAsDOMNode(aParent), aPosition, rv);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->DidCreateNode(nsDependentAtomString(aTag), GetAsDOMNode(ret),
+                              GetAsDOMNode(aParent), aPosition, rv);
+    }
   }
 
   return ret.forget();
@@ -1410,9 +1442,12 @@ EditorBase::InsertNode(nsIContent& aNode,
 {
   AutoRules beginRulesSniffing(this, EditAction::insertNode, nsIEditor::eNext);
 
-  for (auto& listener : mActionListeners) {
-    listener->WillInsertNode(aNode.AsDOMNode(), aParent.AsDOMNode(),
-                             aPosition);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->WillInsertNode(aNode.AsDOMNode(), aParent.AsDOMNode(),
+                               aPosition);
+    }
   }
 
   RefPtr<InsertNodeTransaction> transaction =
@@ -1421,9 +1456,12 @@ EditorBase::InsertNode(nsIContent& aNode,
 
   mRangeUpdater.SelAdjInsertNode(aParent.AsDOMNode(), aPosition);
 
-  for (auto& listener : mActionListeners) {
-    listener->DidInsertNode(aNode.AsDOMNode(), aParent.AsDOMNode(), aPosition,
-                            rv);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->DidInsertNode(aNode.AsDOMNode(), aParent.AsDOMNode(), aPosition,
+                              rv);
+    }
   }
 
   return rv;
@@ -1449,8 +1487,11 @@ EditorBase::SplitNode(nsIContent& aNode,
 {
   AutoRules beginRulesSniffing(this, EditAction::splitNode, nsIEditor::eNext);
 
-  for (auto& listener : mActionListeners) {
-    listener->WillSplitNode(aNode.AsDOMNode(), aOffset);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->WillSplitNode(aNode.AsDOMNode(), aOffset);
+    }
   }
 
   RefPtr<SplitNodeTransaction> transaction =
@@ -1463,9 +1504,12 @@ EditorBase::SplitNode(nsIContent& aNode,
   mRangeUpdater.SelAdjSplitNode(aNode, aOffset, newNode);
 
   nsresult rv = aResult.StealNSResult();
-  for (auto& listener : mActionListeners) {
-    listener->DidSplitNode(aNode.AsDOMNode(), aOffset, GetAsDOMNode(newNode),
-                           rv);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->DidSplitNode(aNode.AsDOMNode(), aOffset, GetAsDOMNode(newNode),
+                             rv);
+    }
   }
   // Note: result might be a success code, so we can't use Throw() to
   // set it on aResult.
@@ -1501,9 +1545,12 @@ EditorBase::JoinNodes(nsINode& aLeftNode,
   // Find the number of children of the lefthand node
   uint32_t oldLeftNodeLen = aLeftNode.Length();
 
-  for (auto& listener : mActionListeners) {
-    listener->WillJoinNodes(aLeftNode.AsDOMNode(), aRightNode.AsDOMNode(),
-                            parent->AsDOMNode());
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->WillJoinNodes(aLeftNode.AsDOMNode(), aRightNode.AsDOMNode(),
+                              parent->AsDOMNode());
+    }
   }
 
   nsresult rv = NS_OK;
@@ -1516,9 +1563,12 @@ EditorBase::JoinNodes(nsINode& aLeftNode,
   mRangeUpdater.SelAdjJoinNodes(aLeftNode, aRightNode, *parent, offset,
                                 (int32_t)oldLeftNodeLen);
 
-  for (auto& listener : mActionListeners) {
-    listener->DidJoinNodes(aLeftNode.AsDOMNode(), aRightNode.AsDOMNode(),
-                           parent->AsDOMNode(), rv);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->DidJoinNodes(aLeftNode.AsDOMNode(), aRightNode.AsDOMNode(),
+                             parent->AsDOMNode(), rv);
+    }
   }
 
   return rv;
@@ -1539,8 +1589,11 @@ EditorBase::DeleteNode(nsINode* aNode)
                                nsIEditor::ePrevious);
 
   // save node location for selection updating code.
-  for (auto& listener : mActionListeners) {
-    listener->WillDeleteNode(aNode->AsDOMNode());
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->WillDeleteNode(aNode->AsDOMNode());
+    }
   }
 
   RefPtr<DeleteNodeTransaction> transaction;
@@ -1549,8 +1602,11 @@ EditorBase::DeleteNode(nsINode* aNode)
     rv = DoTransaction(transaction);
   }
 
-  for (auto& listener : mActionListeners) {
-    listener->DidDeleteNode(aNode->AsDOMNode(), rv);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->DidDeleteNode(aNode->AsDOMNode(), rv);
+    }
   }
 
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1825,7 +1881,7 @@ void
 EditorBase::NotifyEditorObservers(NotificationForEditorObservers aNotification)
 {
   // Copy the observers since EditAction()s can modify mEditorObservers.
-  nsTArray<mozilla::OwningNonNull<nsIEditorObserver>> observers(mEditorObservers);
+  AutoEditorObserverArray observers(mEditorObservers);
   switch (aNotification) {
     case eNotifyEditorObserversOfEnd:
       mIsInEditAction = false;
@@ -2189,25 +2245,28 @@ EditorBase::CloneAttribute(const nsAString& aAttribute,
                            nsIDOMNode* aSourceNode)
 {
   NS_ENSURE_TRUE(aDestNode && aSourceNode, NS_ERROR_NULL_POINTER);
-
-  nsCOMPtr<nsIDOMElement> destElement = do_QueryInterface(aDestNode);
-  nsCOMPtr<nsIDOMElement> sourceElement = do_QueryInterface(aSourceNode);
-  NS_ENSURE_TRUE(destElement && sourceElement, NS_ERROR_NO_INTERFACE);
-
-  nsAutoString attrValue;
-  bool isAttrSet;
-  nsresult rv = GetAttributeValue(sourceElement,
-                                  aAttribute,
-                                  attrValue,
-                                  &isAttrSet);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (isAttrSet) {
-    rv = SetAttribute(destElement, aAttribute, attrValue);
-  } else {
-    rv = RemoveAttribute(destElement, aAttribute);
+  if (NS_WARN_IF(aAttribute.IsEmpty())) {
+    return NS_ERROR_FAILURE;
   }
 
-  return rv;
+  nsCOMPtr<Element> destElement = do_QueryInterface(aDestNode);
+  nsCOMPtr<Element> sourceElement = do_QueryInterface(aSourceNode);
+  NS_ENSURE_TRUE(destElement && sourceElement, NS_ERROR_NO_INTERFACE);
+
+  nsCOMPtr<nsIAtom> attribute = NS_Atomize(aAttribute);
+  return CloneAttribute(attribute, destElement, sourceElement);
+}
+
+nsresult
+EditorBase::CloneAttribute(nsIAtom* aAttribute,
+                           Element* aDestElement,
+                           Element* aSourceElement)
+{
+  nsAutoString attrValue;
+  if (aSourceElement->GetAttr(kNameSpaceID_None, aAttribute, attrValue)) {
+    return SetAttribute(aDestElement, aAttribute, attrValue);
+  }
+  return RemoveAttribute(aDestElement, aAttribute);
 }
 
 /**
@@ -2246,11 +2305,9 @@ EditorBase::CloneAttributes(Element* aDest,
   RefPtr<nsDOMAttributeMap> destAttributes = aDest->Attributes();
   while (RefPtr<Attr> attr = destAttributes->Item(0)) {
     if (destInBody) {
-      RemoveAttribute(static_cast<nsIDOMElement*>(GetAsDOMNode(aDest)),
-                      attr->NodeName());
+      RemoveAttribute(aDest, attr->NodeInfo()->NameAtom());
     } else {
-      ErrorResult ignored;
-      aDest->RemoveAttribute(attr->NodeName(), ignored);
+      aDest->UnsetAttr(kNameSpaceID_None, attr->NodeInfo()->NameAtom(), true);
     }
   }
 
@@ -2262,13 +2319,13 @@ EditorBase::CloneAttributes(Element* aDest,
     nsAutoString value;
     attr->GetValue(value);
     if (destInBody) {
-      SetAttributeOrEquivalent(static_cast<nsIDOMElement*>(GetAsDOMNode(aDest)),
-                               attr->NodeName(), value, false);
+      SetAttributeOrEquivalent(aDest, attr->NodeInfo()->NameAtom(), value,
+                               false);
     } else {
       // The element is not inserted in the document yet, we don't want to put
       // a transaction on the UndoStack
-      SetAttributeOrEquivalent(static_cast<nsIDOMElement*>(GetAsDOMNode(aDest)),
-                               attr->NodeName(), value, true);
+      SetAttributeOrEquivalent(aDest, attr->NodeInfo()->NameAtom(), value,
+                               true);
     }
   }
 }
@@ -2486,10 +2543,13 @@ EditorBase::InsertTextIntoTextNodeImpl(const nsAString& aStringToInsert,
   }
 
   // Let listeners know what's up
-  for (auto& listener : mActionListeners) {
-    listener->WillInsertText(
-      static_cast<nsIDOMCharacterData*>(insertedTextNode->AsDOMNode()),
-      insertedOffset, aStringToInsert);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->WillInsertText(
+        static_cast<nsIDOMCharacterData*>(insertedTextNode->AsDOMNode()),
+        insertedOffset, aStringToInsert);
+    }
   }
 
   // XXX We may not need these view batches anymore.  This is handled at a
@@ -2499,10 +2559,13 @@ EditorBase::InsertTextIntoTextNodeImpl(const nsAString& aStringToInsert,
   EndUpdateViewBatch();
 
   // let listeners know what happened
-  for (auto& listener : mActionListeners) {
-    listener->DidInsertText(
-      static_cast<nsIDOMCharacterData*>(insertedTextNode->AsDOMNode()),
-      insertedOffset, aStringToInsert, rv);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->DidInsertText(
+        static_cast<nsIDOMCharacterData*>(insertedTextNode->AsDOMNode()),
+        insertedOffset, aStringToInsert, rv);
+    }
   }
 
   // Added some cruft here for bug 43366.  Layout was crashing because we left
@@ -2564,8 +2627,7 @@ EditorBase::NotifyDocumentListeners(
     return NS_OK;
   }
 
-  nsTArray<OwningNonNull<nsIDocumentStateListener>>
-    listeners(mDocStateListeners);
+  AutoDocumentStateListenerArray listeners(mDocStateListeners);
   nsresult rv = NS_OK;
 
   switch (aNotificationType) {
@@ -2637,19 +2699,25 @@ EditorBase::DeleteText(nsGenericDOMDataNode& aCharData,
                                nsIEditor::ePrevious);
 
   // Let listeners know what's up
-  for (auto& listener : mActionListeners) {
-    listener->WillDeleteText(
-        static_cast<nsIDOMCharacterData*>(GetAsDOMNode(&aCharData)), aOffset,
-        aLength);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->WillDeleteText(
+          static_cast<nsIDOMCharacterData*>(GetAsDOMNode(&aCharData)), aOffset,
+          aLength);
+    }
   }
 
   nsresult rv = DoTransaction(transaction);
 
   // Let listeners know what happened
-  for (auto& listener : mActionListeners) {
-    listener->DidDeleteText(
-        static_cast<nsIDOMCharacterData*>(GetAsDOMNode(&aCharData)), aOffset,
-        aLength, rv);
+  {
+    AutoActionListenerArray listeners(mActionListeners);
+    for (auto& listener : listeners) {
+      listener->DidDeleteText(
+          static_cast<nsIDOMCharacterData*>(GetAsDOMNode(&aCharData)), aOffset,
+          aLength, rv);
+    }
   }
 
   return rv;
@@ -2775,7 +2843,7 @@ EditorBase::SplitNodeImpl(nsIContent& aExistingRightNode,
   // Handle selection
   nsCOMPtr<nsIPresShell> ps = GetPresShell();
   if (ps) {
-    ps->FlushPendingNotifications(Flush_Frames);
+    ps->FlushPendingNotifications(FlushType::Frames);
   }
 
   bool shouldSetSelection = GetShouldTxnSetSelection();
@@ -4015,17 +4083,20 @@ EditorBase::DeleteSelectionImpl(EDirection aAction,
   if (NS_SUCCEEDED(rv)) {
     AutoRules beginRulesSniffing(this, EditAction::deleteSelection, aAction);
     // Notify nsIEditActionListener::WillDelete[Selection|Text|Node]
-    if (!deleteNode) {
-      for (auto& listener : mActionListeners) {
-        listener->WillDeleteSelection(selection);
-      }
-    } else if (deleteCharData) {
-      for (auto& listener : mActionListeners) {
-        listener->WillDeleteText(deleteCharData, deleteCharOffset, 1);
-      }
-    } else {
-      for (auto& listener : mActionListeners) {
-        listener->WillDeleteNode(deleteNode->AsDOMNode());
+    {
+      AutoActionListenerArray listeners(mActionListeners);
+      if (!deleteNode) {
+        for (auto& listener : listeners) {
+          listener->WillDeleteSelection(selection);
+        }
+      } else if (deleteCharData) {
+        for (auto& listener : listeners) {
+          listener->WillDeleteText(deleteCharData, deleteCharOffset, 1);
+        }
+      } else {
+        for (auto& listener : listeners) {
+          listener->WillDeleteNode(deleteNode->AsDOMNode());
+        }
       }
     }
 
@@ -4033,17 +4104,20 @@ EditorBase::DeleteSelectionImpl(EDirection aAction,
     rv = DoTransaction(transaction);
 
     // Notify nsIEditActionListener::DidDelete[Selection|Text|Node]
-    if (!deleteNode) {
-      for (auto& listener : mActionListeners) {
-        listener->DidDeleteSelection(selection);
-      }
-    } else if (deleteCharData) {
-      for (auto& listener : mActionListeners) {
-        listener->DidDeleteText(deleteCharData, deleteCharOffset, 1, rv);
-      }
-    } else {
-      for (auto& listener : mActionListeners) {
-        listener->DidDeleteNode(deleteNode->AsDOMNode(), rv);
+    {
+      AutoActionListenerArray listeners(mActionListeners);
+      if (!deleteNode) {
+        for (auto& listener : mActionListeners) {
+          listener->DidDeleteSelection(selection);
+        }
+      } else if (deleteCharData) {
+        for (auto& listener : mActionListeners) {
+          listener->DidDeleteText(deleteCharData, deleteCharOffset, 1, rv);
+        }
+      } else {
+        for (auto& listener : mActionListeners) {
+          listener->DidDeleteNode(deleteNode->AsDOMNode(), rv);
+        }
       }
     }
   }
@@ -4599,21 +4673,32 @@ EditorBase::CreateHTMLContent(nsIAtom* aTag)
                          kNameSpaceID_XHTML);
 }
 
-nsresult
+NS_IMETHODIMP
 EditorBase::SetAttributeOrEquivalent(nsIDOMElement* aElement,
                                      const nsAString& aAttribute,
                                      const nsAString& aValue,
                                      bool aSuppressTransaction)
 {
-  return SetAttribute(aElement, aAttribute, aValue);
+  nsCOMPtr<Element> element = do_QueryInterface(aElement);
+  if (NS_WARN_IF(!element)) {
+    return NS_ERROR_NULL_POINTER;
+  }
+  nsCOMPtr<nsIAtom> attribute = NS_Atomize(aAttribute);
+  return SetAttributeOrEquivalent(element, attribute, aValue,
+                                  aSuppressTransaction);
 }
 
-nsresult
+NS_IMETHODIMP
 EditorBase::RemoveAttributeOrEquivalent(nsIDOMElement* aElement,
                                         const nsAString& aAttribute,
                                         bool aSuppressTransaction)
 {
-  return RemoveAttribute(aElement, aAttribute);
+  nsCOMPtr<Element> element = do_QueryInterface(aElement);
+  if (NS_WARN_IF(!element)) {
+    return NS_ERROR_NULL_POINTER;
+  }
+  nsCOMPtr<nsIAtom> attribute = NS_Atomize(aAttribute);
+  return RemoveAttributeOrEquivalent(element, attribute, aSuppressTransaction);
 }
 
 nsresult

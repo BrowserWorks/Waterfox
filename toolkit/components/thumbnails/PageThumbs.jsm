@@ -33,7 +33,7 @@ Cu.import("resource://gre/modules/PromiseWorker.jsm", this);
 Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
 
-Cu.importGlobalProperties(['FileReader']);
+Cu.importGlobalProperties(["FileReader"]);
 
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
   "resource://gre/modules/NetUtil.jsm");
@@ -50,14 +50,14 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
 XPCOMUtils.defineLazyServiceGetter(this, "gUpdateTimerManager",
   "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
 
-XPCOMUtils.defineLazyGetter(this, "gCryptoHash", function () {
+XPCOMUtils.defineLazyGetter(this, "gCryptoHash", function() {
   return Cc["@mozilla.org/security/hash;1"].createInstance(Ci.nsICryptoHash);
 });
 
-XPCOMUtils.defineLazyGetter(this, "gUnicodeConverter", function () {
+XPCOMUtils.defineLazyGetter(this, "gUnicodeConverter", function() {
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
                     .createInstance(Ci.nsIScriptableUnicodeConverter);
-  converter.charset = 'utf8';
+  converter.charset = "utf8";
   return converter;
 });
 
@@ -214,7 +214,7 @@ this.PageThumbs = {
    * @param aArgs (optional) Additional named parameters:
    *   fullScale - request that a non-downscaled image be returned.
    */
-  captureToCanvas: function (aBrowser, aCanvas, aCallback, aArgs) {
+  captureToCanvas(aBrowser, aCanvas, aCallback, aArgs) {
     let telemetryCaptureTime = new Date();
     let args = {
       fullScale: aArgs ? aArgs.fullScale : false
@@ -241,7 +241,7 @@ this.PageThumbs = {
    *   completed. aResult is a boolean indicating the combined result of the
    *   security checks performed.
    */
-  shouldStoreThumbnail: function (aBrowser, aCallback) {
+  shouldStoreThumbnail(aBrowser, aCallback) {
     // Don't capture in private browsing mode.
     if (PrivateBrowsingUtils.isBrowserPrivate(aBrowser)) {
       aCallback(false);
@@ -249,7 +249,7 @@ this.PageThumbs = {
     }
     if (aBrowser.isRemoteBrowser) {
       let mm = aBrowser.messageManager;
-      let resultFunc = function (aMsg) {
+      let resultFunc = function(aMsg) {
         mm.removeMessageListener("Browser:Thumbnail:CheckState:Response", resultFunc);
         aCallback(aMsg.data.result);
       }
@@ -270,7 +270,7 @@ this.PageThumbs = {
 
   // The background thumbnail service captures to canvas but doesn't want to
   // participate in this service's telemetry, which is why this method exists.
-  _captureToCanvas: function (aBrowser, aCanvas, aArgs, aCallback) {
+  _captureToCanvas(aBrowser, aCanvas, aArgs, aCallback) {
     if (aBrowser.isRemoteBrowser) {
       Task.spawn(function* () {
         let data =
@@ -308,7 +308,7 @@ this.PageThumbs = {
    *   fullScale - request that a non-downscaled image be returned.
    * @return a promise
    */
-  _captureRemoteThumbnail: function (aBrowser, aWidth, aHeight, aArgs) {
+  _captureRemoteThumbnail(aBrowser, aWidth, aHeight, aArgs) {
     let deferred = Promise.defer();
 
     // The index we send with the request so we can identify the
@@ -319,7 +319,7 @@ this.PageThumbs = {
     let mm = aBrowser.messageManager;
 
     // Browser:Thumbnail:Response handler
-    let thumbFunc = function (aMsg) {
+    let thumbFunc = function(aMsg) {
       // Ignore events unrelated to our request
       if (aMsg.data.id != index) {
         return;
@@ -331,14 +331,14 @@ this.PageThumbs = {
       let reader = new FileReader();
       reader.addEventListener("loadend", function() {
         let image = doc.createElementNS(PageThumbUtils.HTML_NAMESPACE, "img");
-        image.onload = function () {
+        image.onload = function() {
           let thumbnail = doc.createElementNS(PageThumbUtils.HTML_NAMESPACE, "canvas");
           thumbnail.width = image.naturalWidth;
           thumbnail.height = image.naturalHeight;
           let ctx = thumbnail.getContext("2d");
           ctx.drawImage(image, 0, 0);
           deferred.resolve({
-            thumbnail: thumbnail
+            thumbnail
           });
         }
         image.src = reader.result;
@@ -513,8 +513,7 @@ this.PageThumbs = {
   _prefEnabled: function PageThumbs_prefEnabled() {
     try {
       return !Services.prefs.getBoolPref("browser.pagethumbnails.capturing_disabled");
-    }
-    catch (e) {
+    } catch (e) {
       return true;
     }
   },
@@ -686,7 +685,7 @@ this.PageThumbsStorage = {
     let promise = PageThumbsWorker.post("wipe", [this.path]);
     try {
       yield promise;
-    }  finally {
+    } finally {
        // Generally, we will be done much before profileBeforeChange,
        // so let's not hoard blockers.
        if ("removeBlocker" in AsyncShutdown.profileBeforeChange) {
@@ -889,12 +888,12 @@ var PageThumbsHistoryObserver = {
     PageThumbsStorage.wipe();
   },
 
-  onTitleChanged: function () {},
-  onBeginUpdateBatch: function () {},
-  onEndUpdateBatch: function () {},
-  onVisit: function () {},
-  onPageChanged: function () {},
-  onDeleteVisits: function () {},
+  onTitleChanged() {},
+  onBeginUpdateBatch() {},
+  onEndUpdateBatch() {},
+  onVisit() {},
+  onPageChanged() {},
+  onDeleteVisits() {},
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver,
                                          Ci.nsISupportsWeakReference])

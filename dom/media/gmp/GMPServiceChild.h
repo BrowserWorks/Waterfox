@@ -19,20 +19,6 @@ namespace gmp {
 class GMPContentParent;
 class GMPServiceChild;
 
-class GetServiceChildCallback
-{
-public:
-  GetServiceChildCallback()
-  {
-    MOZ_COUNT_CTOR(GetServiceChildCallback);
-  }
-  virtual ~GetServiceChildCallback()
-  {
-    MOZ_COUNT_DTOR(GetServiceChildCallback);
-  }
-  virtual void Done(GMPServiceChild* aGMPServiceChild) = 0;
-};
-
 class GeckoMediaPluginServiceChild : public GeckoMediaPluginService
 {
   friend class GMPServiceChild;
@@ -46,7 +32,6 @@ public:
   NS_IMETHOD GetNodeId(const nsAString& aOrigin,
                        const nsAString& aTopLevelOrigin,
                        const nsAString& aGMPName,
-                       bool aInPrivateBrowsingMode,
                        UniquePtr<GetNodeIdCallback>&& aCallback) override;
 
   NS_DECL_NSIOBSERVER
@@ -62,20 +47,21 @@ protected:
   {
     // Nothing to do here.
   }
-  bool GetContentParentFrom(GMPCrashHelper* aHelper,
-                            const nsACString& aNodeId,
-                            const nsCString& aAPI,
-                            const nsTArray<nsCString>& aTags,
-                            UniquePtr<GetGMPContentParentCallback>&& aCallback)
-    override;
+
+  virtual RefPtr<GetGMPContentParentPromise>
+  GetContentParent(GMPCrashHelper* aHelper,
+                   const nsACString& aNodeId,
+                   const nsCString& aAPI,
+                   const nsTArray<nsCString>& aTags) override;
 
 private:
   friend class OpenPGMPServiceChild;
 
-  void GetServiceChild(UniquePtr<GetServiceChildCallback>&& aCallback);
+  typedef MozPromise<GMPServiceChild*, nsresult, /* IsExclusive = */ true> GetServiceChildPromise;
+  RefPtr<GetServiceChildPromise> GetServiceChild();
 
+  nsTArray<MozPromiseHolder<GetServiceChildPromise>> mGetServiceChildPromises;
   UniquePtr<GMPServiceChild> mServiceChild;
-  nsTArray<UniquePtr<GetServiceChildCallback>> mGetServiceChildCallbacks;
 };
 
 class GMPServiceChild : public PGMPServiceChild

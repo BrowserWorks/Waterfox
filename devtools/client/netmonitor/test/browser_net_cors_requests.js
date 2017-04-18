@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -26,7 +25,8 @@ add_task(function* () {
 
   info("Checking the preflight and flight methods");
   ["OPTIONS", "POST"].forEach((method, i) => {
-    verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i), method, requestUrl);
+    verifyRequestItemTarget(RequestsMenu, RequestsMenu.getItemAtIndex(i),
+      method, requestUrl);
   });
 
   yield teardown(monitor);

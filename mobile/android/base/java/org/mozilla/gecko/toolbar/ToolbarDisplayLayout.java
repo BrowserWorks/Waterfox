@@ -19,6 +19,7 @@ import org.mozilla.gecko.SiteIdentity.MixedMode;
 import org.mozilla.gecko.SiteIdentity.SecurityMode;
 import org.mozilla.gecko.SiteIdentity.TrackingMode;
 import org.mozilla.gecko.Tab;
+import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.toolbar.BrowserToolbarTabletBase.ForwardButtonAnimation;
@@ -31,6 +32,7 @@ import org.mozilla.gecko.widget.themed.ThemedTextView;
 import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.v4.view.ViewCompat;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -168,6 +170,14 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout {
 
         mIsAttached = true;
 
+        final Tab selectedTab = Tabs.getInstance().getSelectedTab();
+        if (selectedTab != null) {
+            // A tab was selected before we became ready; update to that tab now.
+            updateFromTab(selectedTab, EnumSet.allOf(UpdateFlags.class));
+        }
+
+        mSiteIdentityPopup.registerListeners();
+
         mSiteSecurity.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -194,6 +204,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout {
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mIsAttached = false;
+        mSiteIdentityPopup.unregisterListeners();
     }
 
     @Override
@@ -355,16 +366,20 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout {
         final MixedMode activeMixedMode;
         final MixedMode displayMixedMode;
         final TrackingMode trackingMode;
+        final boolean securityException;
+
         if (siteIdentity == null) {
             securityMode = SecurityMode.UNKNOWN;
             activeMixedMode = MixedMode.UNKNOWN;
             displayMixedMode = MixedMode.UNKNOWN;
             trackingMode = TrackingMode.UNKNOWN;
+            securityException = false;
         } else {
             securityMode = siteIdentity.getSecurityMode();
             activeMixedMode = siteIdentity.getMixedModeActive();
             displayMixedMode = siteIdentity.getMixedModeDisplay();
             trackingMode = siteIdentity.getTrackingMode();
+            securityException = siteIdentity.isSecurityException();
         }
 
         // This is a bit tricky, but we have one icon and three potential indicators.
@@ -383,13 +398,15 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout {
         if (AboutPages.isTitlelessAboutPage(tab.getURL())) {
             // We always want to just show a search icon on about:home
             imageLevel = LEVEL_SEARCH_ICON;
+        } else if (securityException) {
+            imageLevel = LEVEL_WARNING_MINOR;
         } else if (trackingMode == TrackingMode.TRACKING_CONTENT_LOADED) {
             imageLevel = LEVEL_SHIELD_DISABLED;
         } else if (trackingMode == TrackingMode.TRACKING_CONTENT_BLOCKED) {
             imageLevel = LEVEL_SHIELD_ENABLED;
-        } else if (activeMixedMode == MixedMode.MIXED_CONTENT_LOADED) {
+        } else if (activeMixedMode == MixedMode.LOADED) {
             imageLevel = LEVEL_LOCK_DISABLED;
-        } else if (displayMixedMode == MixedMode.MIXED_CONTENT_LOADED) {
+        } else if (displayMixedMode == MixedMode.LOADED) {
             imageLevel = LEVEL_WARNING_MINOR;
         }
 
@@ -466,16 +483,20 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout {
         mSiteIdentityPopup.setAnchor(view);
     }
 
+    private boolean isLayoutRtl() {
+        return ViewCompat.getLayoutDirection(this) == ViewCompat.LAYOUT_DIRECTION_RTL;
+    }
+
     void prepareForwardAnimation(PropertyAnimator anim, ForwardButtonAnimation animation, int width) {
         if (animation == ForwardButtonAnimation.HIDE) {
             // We animate these items individually, rather than this entire view,
             // so that we don't animate certain views, e.g. the stop button.
             anim.attach(mTitle,
                         PropertyAnimator.Property.TRANSLATION_X,
-                        0);
+                        isLayoutRtl() ? width : 0);
             anim.attach(mSiteSecurity,
                         PropertyAnimator.Property.TRANSLATION_X,
-                        0);
+                        isLayoutRtl() ? width : 0);
 
             // We're hiding the forward button. We're going to reset the margin before
             // the animation starts, so we shift these items to the right so that they don't
@@ -485,10 +506,10 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout {
         } else {
             anim.attach(mTitle,
                         PropertyAnimator.Property.TRANSLATION_X,
-                        width);
+                        isLayoutRtl() ? 0 : width);
             anim.attach(mSiteSecurity,
                         PropertyAnimator.Property.TRANSLATION_X,
-                        width);
+                        isLayoutRtl() ? 0 : width);
         }
     }
 

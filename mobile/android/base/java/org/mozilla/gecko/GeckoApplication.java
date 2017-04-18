@@ -9,7 +9,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -31,7 +30,9 @@ import org.mozilla.gecko.preferences.DistroSharedPrefsImport;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.EventCallback;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.util.PRNGFixes;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.io.File;
@@ -40,8 +41,6 @@ import java.lang.reflect.Method;
 public class GeckoApplication extends Application
     implements ContextGetter {
     private static final String LOG_TAG = "GeckoApplication";
-
-    private static volatile GeckoApplication instance;
 
     private boolean mInBackground;
     private boolean mPausedGecko;
@@ -52,11 +51,6 @@ public class GeckoApplication extends Application
 
     public GeckoApplication() {
         super();
-        instance = this;
-    }
-
-    public static GeckoApplication get() {
-        return instance;
     }
 
     public static RefWatcher getRefWatcher(Context context) {
@@ -147,14 +141,20 @@ public class GeckoApplication extends Application
     }
 
     @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        AppConstants.maybeInstallMultiDex(base);
-    }
-
-    @Override
     public void onCreate() {
         Log.i(LOG_TAG, "zerdatime " + SystemClock.uptimeMillis() + " - Fennec application start");
+
+        // PRNG is a pseudorandom number generator.
+        // We need to apply PRNG Fixes before any use of Java Cryptography Architecture.
+        // We make use of various JCA methods in data providers for generating GUIDs, as part of FxA
+        // flow and during syncing. Note that this is a no-op for devices running API>18, and so we
+        // accept the performance penalty on older devices.
+        try {
+            PRNGFixes.apply();
+        } catch (Exception e) {
+            // Not much to be done here: it was weak before, so it's weak now.  Not worth aborting.
+            Log.e(LOG_TAG, "Got exception applying PRNGFixes! Cryptographic data produced on this device may be weak. Ignoring.", e);
+        }
 
         mRefWatcher = LeakCanary.install(this);
 
@@ -291,11 +291,11 @@ public class GeckoApplication extends Application
         }
 
         @Override // BundleEventListener
-        public void handleMessage(final String event, final Bundle message,
+        public void handleMessage(final String event, final GeckoBundle message,
                                   final EventCallback callback) {
             if ("Profile:Create".equals(event)) {
-                onProfileCreate(message.getCharSequence("name").toString(),
-                                message.getCharSequence("path").toString());
+                onProfileCreate(message.getString("name"),
+                                message.getString("path"));
             }
         }
     }

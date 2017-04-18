@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-'use strict';
+"use strict";
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
@@ -440,13 +440,12 @@ function getCanApplyUpdates() {
           try {
             // KEY_UPDROOT will fail and throw an exception if
             // appDir is not under the Program Files, so we rely on that
-            let dir = Services.dirsvc.get(KEY_UPDROOT, Ci.nsIFile);
+            Services.dirsvc.get(KEY_UPDROOT, Ci.nsIFile);
             // appDir is under Program Files, so check if the user can elevate
             userCanElevate = Services.appinfo.QueryInterface(Ci.nsIWinAppHelper).
                              userCanElevate;
             LOG("getCanApplyUpdates - on Vista, userCanElevate: " + userCanElevate);
-          }
-          catch (ex) {
+          } catch (ex) {
             // When the installation directory is not under Program Files,
             // fall through to checking if write access to the
             // installation directory is available.
@@ -636,8 +635,7 @@ function LOG(string) {
 function getPref(func, preference, defaultValue) {
   try {
     return Services.prefs[func](preference);
-  }
-  catch (e) {
+  } catch (e) {
   }
   return defaultValue;
 }
@@ -725,8 +723,7 @@ function getStatusTextFromCode(code, defaultCode) {
     reason = gUpdateBundle.GetStringFromName("check_error-" + code);
     LOG("getStatusTextFromCode - transfer error: " + reason + ", code: " +
         code);
-  }
-  catch (e) {
+  } catch (e) {
     // Use the default reason
     reason = gUpdateBundle.GetStringFromName("check_error-" + defaultCode);
     LOG("getStatusTextFromCode - transfer error: " + reason +
@@ -934,7 +931,7 @@ function shouldUseService() {
   // This structure is described at:
   // http://msdn.microsoft.com/en-us/library/ms724833%28v=vs.85%29.aspx
   const SZCSDVERSIONLENGTH = 128;
-  const OSVERSIONINFOEXW = new ctypes.StructType('OSVERSIONINFOEXW',
+  const OSVERSIONINFOEXW = new ctypes.StructType("OSVERSIONINFOEXW",
     [
       {dwOSVersionInfoSize: DWORD},
       {dwMajorVersion: DWORD},
@@ -1286,8 +1283,7 @@ function handleFallbackToCompleteUpdate(update, postStaging) {
                  downloadUpdate(update, !postStaging);
     if (status == STATE_NONE)
       cleanupActiveUpdate();
-  }
-  else {
+  } else {
     LOG("handleFallbackToCompleteUpdate - install of complete or " +
         "only one patch offered failed.");
   }
@@ -1681,8 +1677,7 @@ Update.prototype = {
         // Try using a default details URL supplied by the distribution
         // if the update XML does not supply one.
         return Services.urlFormatter.formatURLPref(PREF_APP_UPDATE_URL_DETAILS);
-      }
-      catch (e) {
+      } catch (e) {
       }
     }
     return this._detailsURL || "";
@@ -1792,7 +1787,7 @@ Update.prototype = {
 
 const UpdateServiceFactory = {
   _instance: null,
-  createInstance: function (outer, iid) {
+  createInstance(outer, iid) {
     if (outer != null)
       throw Cr.NS_ERROR_NO_AGGREGATION;
     return this._instance == null ? this._instance = new UpdateService() :
@@ -2087,7 +2082,6 @@ UpdateService.prototype = {
       let prompter = Cc["@mozilla.org/updates/update-prompt;1"].
                      createInstance(Ci.nsIUpdatePrompt);
       prompter.showUpdateElevationRequired();
-      return;
     } else {
       // If there was an I/O error it is assumed that the patch is not invalid
       // and it is set to pending so an attempt to apply it again will happen
@@ -2823,8 +2817,7 @@ function UpdateManager() {
     if (readStatusFile(getUpdatesDir()) == STATE_NONE) {
       cleanUpUpdatesDir();
       this._writeUpdatesToXMLFile([], getUpdateFile([FILE_ACTIVE_UPDATE_XML]));
-    }
-    else
+    } else
       this._activeUpdate = updates[0];
   }
 }
@@ -2902,8 +2895,7 @@ UpdateManager.prototype = {
         }
         result.push(update);
       }
-    }
-    catch (e) {
+    } catch (e) {
       LOG("UpdateManager:_loadXMLFileIntoArray - error constructing update " +
           "list. Exception: " + e);
     }
@@ -2972,8 +2964,7 @@ UpdateManager.prototype = {
       // If |activeUpdate| is null, we have updated both lists - the active list
       // and the history list, so we want to write both files.
       this.saveUpdates();
-    }
-    else
+    } else
       this._writeUpdatesToXMLFile([this._activeUpdate],
                                   getUpdateFile([FILE_ACTIVE_UPDATE_XML]));
     return activeUpdate;
@@ -3273,8 +3264,8 @@ Checker.prototype = {
     this._request.setRequestHeader("Pragma", "no-cache");
 
     var self = this;
-    this._request.addEventListener("error", function(event) { self.onError(event); }, false);
-    this._request.addEventListener("load", function(event) { self.onLoad(event); }, false);
+    this._request.addEventListener("error", function(event) { self.onError(event); });
+    this._request.addEventListener("load", function(event) { self.onLoad(event); });
 
     LOG("Checker:checkForUpdates - sending request to: " + url);
     this._request.send(null);
@@ -3330,8 +3321,7 @@ Checker.prototype = {
     var status = 0;
     try {
       status = request.status;
-    }
-    catch (e) {
+    } catch (e) {
     }
 
     if (status == 0)
@@ -3831,7 +3821,7 @@ Downloader.prototype = {
     let interval = this.background ? update.getProperty("backgroundInterval")
                                    : DOWNLOAD_FOREGROUND_INTERVAL;
 
-    var uri = Services.io.newURI(this._patch.URL, null, null);
+    var uri = Services.io.newURI(this._patch.URL);
     LOG("Downloader:downloadUpdate - url: " + uri.spec + ", path: " +
         patchFile.path + ", interval: " + interval);
 
@@ -4030,8 +4020,7 @@ Downloader.prototype = {
         writeVersionFile(getUpdatesDir(), this._update.appVersion);
         this._update.installDate = (new Date()).getTime();
         this._update.statusText = gUpdateBundle.GetStringFromName("installPending");
-      }
-      else {
+      } else {
         LOG("Downloader:onStopRequest - download verification failed");
         state = STATE_DOWNLOAD_FAILED;
         status = Cr.NS_ERROR_CORRUPTED_CONTENT;
@@ -4116,8 +4105,7 @@ Downloader.prototype = {
     if (deleteActiveUpdate) {
       this._update.installDate = (new Date()).getTime();
       um.activeUpdate = null;
-    }
-    else if (um.activeUpdate) {
+    } else if (um.activeUpdate) {
       um.activeUpdate.state = state;
     }
     um.saveUpdates();
@@ -4405,7 +4393,7 @@ UpdatePrompt.prototype = {
       updatePrompt: this,
       service: null,
       timer: null,
-      notify: function () {
+      notify() {
         // the user hasn't restarted yet => prompt when idle
         this.service.removeObserver(this, "quit-application");
         // If the update window is already open skip showing the UI
@@ -4413,7 +4401,7 @@ UpdatePrompt.prototype = {
           return;
         this.updatePrompt._showUIWhenIdle(parent, uri, features, name, page, update);
       },
-      observe: function (aSubject, aTopic, aData) {
+      observe(aSubject, aTopic, aData) {
         switch (aTopic) {
           case "quit-application":
             if (this.timer)
@@ -4481,7 +4469,7 @@ UpdatePrompt.prototype = {
     } else {
       var observer = {
         updatePrompt: this,
-        observe: function (aSubject, aTopic, aData) {
+        observe(aSubject, aTopic, aData) {
           switch (aTopic) {
             case "idle":
               // If the update window is already open skip showing the UI
@@ -4528,8 +4516,7 @@ UpdatePrompt.prototype = {
       if (page && "setCurrentPage" in win)
         win.setCurrentPage(page);
       win.focus();
-    }
-    else {
+    } else {
       var openFeatures = "chrome,centerscreen,dialog=no,resizable=no,titlebar,toolbar=no";
       if (features)
         openFeatures += "," + features;

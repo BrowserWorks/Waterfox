@@ -23,6 +23,7 @@ Test for Form History Autocomplete Untrusted Events: Bug 511615
 
 <pre id="test">
 <script class="testbody" type="text/javascript">
+/* import-globals-from satchel_common.js */
 
 var resolvePopupShownListener;
 registerPopupShownListener(() => resolvePopupShownListener());
@@ -74,7 +75,7 @@ function checkSelectedIndexAfterResponseTime(expectedIndex) {
 
 function doKeyUnprivileged(key) {
   let keyName = "DOM_VK_" + key.toUpperCase();
-  let keycode, charcode;
+  let keycode, charcode, alwaysval;
 
   if (key.length == 1) {
       keycode = 0;
@@ -88,13 +89,15 @@ function doKeyUnprivileged(key) {
       alwaysval = keycode;
   }
 
-  let dnEvent = document.createEvent('KeyboardEvent');
-  let prEvent = document.createEvent('KeyboardEvent');
-  let upEvent = document.createEvent('KeyboardEvent');
+  let dnEvent = document.createEvent("KeyboardEvent");
+  let prEvent = document.createEvent("KeyboardEvent");
+  let upEvent = document.createEvent("KeyboardEvent");
 
+  /* eslint-disable no-multi-spaces */
   dnEvent.initKeyEvent("keydown",  true, true, null, false, false, false, false, alwaysval, 0);
   prEvent.initKeyEvent("keypress", true, true, null, false, false, false, false, keycode, charcode);
   upEvent.initKeyEvent("keyup",    true, true, null, false, false, false, false, alwaysval, 0);
+  /* eslint-enable no-multi-spaces */
 
   input.dispatchEvent(dnEvent);
   input.dispatchEvent(prEvent);
@@ -102,13 +105,15 @@ function doKeyUnprivileged(key) {
 }
 
 function doClickWithMouseEventUnprivileged() {
-  let dnEvent = document.createEvent('MouseEvent');
-  let upEvent = document.createEvent('MouseEvent');
-  let ckEvent = document.createEvent('MouseEvent');
+  let dnEvent = document.createEvent("MouseEvent");
+  let upEvent = document.createEvent("MouseEvent");
+  let ckEvent = document.createEvent("MouseEvent");
 
+  /* eslint-disable no-multi-spaces */
   dnEvent.initMouseEvent("mousedown",  true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
   upEvent.initMouseEvent("mouseup",    true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
   ckEvent.initMouseEvent("mouseclick", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+  /* eslint-enable no-multi-spaces */
 
   input.dispatchEvent(dnEvent);
   input.dispatchEvent(upEvent);

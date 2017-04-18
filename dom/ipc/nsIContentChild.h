@@ -69,7 +69,6 @@ public:
                           const IPCTabContext& aContext,
                           const uint32_t& aChromeFlags,
                           const ContentParentId& aCpID,
-                          const bool& aIsForApp,
                           const bool& aIsForBrowser) = 0;
 
   virtual mozilla::ipc::PFileDescriptorSetChild*
@@ -86,9 +85,15 @@ protected:
                                             const IPCTabContext& aContext,
                                             const uint32_t& aChromeFlags,
                                             const ContentParentId& aCpId,
-                                            const bool& aIsForApp,
                                             const bool& aIsForBrowser);
   virtual bool DeallocPBrowserChild(PBrowserChild*);
+
+  virtual mozilla::ipc::IPCResult RecvPBrowserConstructor(PBrowserChild* aActor,
+                                                          const TabId& aTabId,
+                                                          const IPCTabContext& aContext,
+                                                          const uint32_t& aChromeFlags,
+                                                          const ContentParentId& aCpID,
+                                                          const bool& aIsForBrowse);
 
   virtual PBlobChild* AllocPBlobChild(const BlobConstructorParams& aParams);
 
@@ -104,10 +109,10 @@ protected:
   virtual bool
   DeallocPFileDescriptorSetChild(mozilla::ipc::PFileDescriptorSetChild* aActor);
 
-  virtual bool RecvAsyncMessage(const nsString& aMsg,
-                                InfallibleTArray<jsipc::CpowEntry>&& aCpows,
-                                const IPC::Principal& aPrincipal,
-                                const ClonedMessageData& aData);
+  virtual mozilla::ipc::IPCResult RecvAsyncMessage(const nsString& aMsg,
+                                                   InfallibleTArray<jsipc::CpowEntry>&& aCpows,
+                                                   const IPC::Principal& aPrincipal,
+                                                   const ClonedMessageData& aData);
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIContentChild, NS_ICONTENTCHILD_IID)

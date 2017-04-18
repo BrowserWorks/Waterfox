@@ -417,8 +417,6 @@ IDBRequest::GetError(ErrorResult& aRv)
 NS_IMPL_CYCLE_COLLECTION_CLASS(IDBRequest)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(IDBRequest, IDBWrapperCache)
-  // Don't need NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS because
-  // DOMEventTargetHelper does it for us.
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSourceAsObjectStore)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSourceAsIndex)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSourceAsCursor)
@@ -451,7 +449,7 @@ NS_IMPL_ADDREF_INHERITED(IDBRequest, IDBWrapperCache)
 NS_IMPL_RELEASE_INHERITED(IDBRequest, IDBWrapperCache)
 
 nsresult
-IDBRequest::PreHandleEvent(EventChainPreVisitor& aVisitor)
+IDBRequest::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   AssertIsOnOwningThread();
 

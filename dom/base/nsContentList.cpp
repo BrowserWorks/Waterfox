@@ -54,7 +54,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsBaseContentList)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsBaseContentList)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mElements)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(nsBaseContentList)
 
@@ -491,7 +490,7 @@ nsContentList::Item(uint32_t aIndex, bool aDoFlush)
     nsIDocument* doc = mRootNode->GetUncomposedDoc();
     if (doc) {
       // Flush pending content changes Bug 4891.
-      doc->FlushPendingNotifications(Flush_ContentAndNotify);
+      doc->FlushPendingNotifications(FlushType::ContentAndNotify);
     }
   }
 
@@ -985,7 +984,7 @@ nsContentList::BringSelfUpToDate(bool aDoFlush)
     nsIDocument* doc = mRootNode->GetUncomposedDoc();
     if (doc) {
       // Flush pending content changes Bug 4891.
-      doc->FlushPendingNotifications(Flush_ContentAndNotify);
+      doc->FlushPendingNotifications(FlushType::ContentAndNotify);
     }
   }
 

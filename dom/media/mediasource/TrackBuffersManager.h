@@ -13,6 +13,7 @@
 #include "AutoTaskQueue.h"
 #include "mozilla/dom/SourceBufferBinding.h"
 
+#include "MediaContainerType.h"
 #include "MediaData.h"
 #include "MediaDataDemuxer.h"
 #include "MediaResult.h"
@@ -21,11 +22,11 @@
 #include "TimeUnits.h"
 #include "nsAutoPtr.h"
 #include "nsProxyRelease.h"
-#include "nsString.h"
 #include "nsTArray.h"
 
 namespace mozilla {
 
+class AbstractThread;
 class ContainerParser;
 class MediaByteBuffer;
 class MediaRawData;
@@ -91,7 +92,7 @@ public:
 
   // Interface for SourceBuffer
   TrackBuffersManager(MediaSourceDecoder* aParentDecoder,
-                      const nsACString& aType);
+                      const MediaContainerType& aType);
 
   // Queue a task to add data to the end of the input buffer and run the MSE
   // Buffer Append Algorithm
@@ -173,8 +174,8 @@ private:
   friend class MediaSourceDemuxer;
   ~TrackBuffersManager();
   // All following functions run on the taskqueue.
-  RefPtr<AppendPromise> DoAppendData(RefPtr<MediaByteBuffer> aData,
-                                     SourceBufferAttributes aAttributes);
+  RefPtr<AppendPromise> DoAppendData(MediaByteBuffer* aData,
+                                     const SourceBufferAttributes& aAttributes);
   void ScheduleSegmentParserLoop();
   void SegmentParserLoop();
   void InitializationSegmentReceived();
@@ -212,7 +213,7 @@ private:
   // Set to true once a new segment is started.
   bool mNewMediaSegmentStarted;
   bool mActiveTrack;
-  nsCString mType;
+  MediaContainerType mType;
 
   // ContainerParser objects and methods.
   // Those are used to parse the incoming input buffer.
@@ -233,7 +234,7 @@ private:
   RefPtr<SourceBufferResource> mCurrentInputBuffer;
   RefPtr<MediaDataDemuxer> mInputDemuxer;
   // Length already processed in current media segment.
-  uint32_t mProcessedInput;
+  uint64_t mProcessedInput;
   Maybe<media::TimeUnit> mLastParsedEndTime;
 
   void OnDemuxerInitDone(nsresult);
@@ -466,6 +467,8 @@ private:
 
   // Strong references to external objects.
   nsMainThreadPtrHandle<MediaSourceDecoder> mParentDecoder;
+
+  const RefPtr<AbstractThread> mAbstractMainThread;
 
   // Return public highest end time across all aTracks.
   // Monitor must be held.

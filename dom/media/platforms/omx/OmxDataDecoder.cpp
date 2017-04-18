@@ -160,8 +160,8 @@ OmxDataDecoder::Init()
 
   // TODO: it needs to get permission from resource manager before allocating
   //       Omx component.
-  InvokeAsync(mOmxTaskQueue, mOmxLayer.get(), __func__, &OmxPromiseLayer::Init,
-              mTrackInfo.get())
+  InvokeAsync<const TrackInfo*>(mOmxTaskQueue, mOmxLayer.get(), __func__,
+                                &OmxPromiseLayer::Init, mTrackInfo.get())
     ->Then(mOmxTaskQueue, __func__,
       [self] () {
         // Omx state should be OMX_StateIdle.
@@ -267,7 +267,6 @@ OmxDataDecoder::DoAsyncShutdown()
            [self] () {
              self->mOmxLayer->Shutdown();
            })
-    ->CompletionPromise()
     ->Then(mOmxTaskQueue, __func__,
            [self] () -> RefPtr<OmxCommandPromise> {
              RefPtr<OmxCommandPromise> p =
@@ -290,7 +289,6 @@ OmxDataDecoder::DoAsyncShutdown()
            [self] () {
              self->mOmxLayer->Shutdown();
            })
-    ->CompletionPromise()
     ->Then(mOmxTaskQueue, __func__,
            [self] () {
              LOGL("DoAsyncShutdown: OMX_StateLoaded, it is safe to shutdown omx");
@@ -819,7 +817,6 @@ OmxDataDecoder::PortSettingsChanged()
              [self] () {
                self->NotifyError(OMX_ErrorUndefined, __func__);
              })
-      ->CompletionPromise()
       ->Then(mOmxTaskQueue, __func__,
              [self] () {
                LOGL("PortSettingsChanged: port settings changed complete");

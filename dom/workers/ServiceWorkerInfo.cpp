@@ -61,6 +61,15 @@ ServiceWorkerInfo::GetDebugger(nsIWorkerDebugger** aResult)
 }
 
 NS_IMETHODIMP
+ServiceWorkerInfo::GetHandlesFetchEvents(bool* aValue)
+{
+  MOZ_ASSERT(aValue);
+  AssertIsOnMainThread();
+  *aValue = HandlesFetch();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 ServiceWorkerInfo::AttachDebugger()
 {
   return mServiceWorkerPrivate->AttachDebugger();
@@ -171,19 +180,22 @@ ServiceWorkerInfo::UpdateState(ServiceWorkerState aState)
 ServiceWorkerInfo::ServiceWorkerInfo(nsIPrincipal* aPrincipal,
                                      const nsACString& aScope,
                                      const nsACString& aScriptSpec,
-                                     const nsAString& aCacheName)
+                                     const nsAString& aCacheName,
+                                     nsLoadFlags aLoadFlags)
   : mPrincipal(aPrincipal)
   , mScope(aScope)
   , mScriptSpec(aScriptSpec)
   , mCacheName(aCacheName)
+  , mLoadFlags(aLoadFlags)
   , mState(ServiceWorkerState::EndGuard_)
   , mServiceWorkerID(GetNextID())
   , mServiceWorkerPrivate(new ServiceWorkerPrivate(this))
   , mSkipWaitingFlag(false)
+  , mHandlesFetch(Unknown)
 {
   MOZ_ASSERT(mPrincipal);
   // cache origin attributes so we can use them off main thread
-  mOriginAttributes = BasePrincipal::Cast(mPrincipal)->OriginAttributesRef();
+  mOriginAttributes = mPrincipal->OriginAttributesRef();
   MOZ_ASSERT(!mScope.IsEmpty());
   MOZ_ASSERT(!mScriptSpec.IsEmpty());
   MOZ_ASSERT(!mCacheName.IsEmpty());

@@ -28,17 +28,16 @@ struct DestroyPolicy
 template<typename T>
 using GMPUniquePtr = mozilla::UniquePtr<T, DestroyPolicy<T>>;
 
-bool GetEMEVoucherPath(nsIFile** aPath);
-
-bool EMEVoucherFileExists();
-
 void
 SplitAt(const char* aDelims,
         const nsACString& aInput,
         nsTArray<nsCString>& aOutTokens);
 
 nsCString
-ToBase64(const nsTArray<uint8_t>& aBytes);
+ToHexString(const nsTArray<uint8_t>& aBytes);
+
+nsCString
+ToHexString(const uint8_t* aBytes, uint32_t aLength);
 
 bool
 FileExists(nsIFile* aFile);
@@ -69,11 +68,6 @@ public:
 private:
   nsClassHashtable<nsCStringHashKey, nsCString> mValues;
 };
-
-bool
-ReadIntoArray(nsIFile* aFile,
-              nsTArray<uint8_t>& aOutDst,
-              size_t aMaxLength);
 
 bool
 ReadIntoString(nsIFile* aFile,

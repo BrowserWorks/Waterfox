@@ -79,7 +79,7 @@ var MockAsyncShutdown = {
   hook: null,
   status: null,
   profileBeforeChange: {
-    addBlocker: function(name, blocker, options) {
+    addBlocker(name, blocker, options) {
       MockAsyncShutdown.hook = blocker;
       MockAsyncShutdown.status = options.fetchState;
     }
@@ -559,7 +559,7 @@ var AddonTestUtils = {
 
         // Force the XPIProvider provider to reload to better
         // simulate real-world usage.
-        let XPIscope = Cu.import("resource://gre/modules/addons/XPIProvider.jsm");
+        let XPIscope = Cu.import("resource://gre/modules/addons/XPIProvider.jsm", {});
         // This would be cleaner if I could get it as the rejection reason from
         // the AddonManagerInternal.shutdown() promise
         let shutdownError = XPIscope.XPIProvider._shutdownError;
@@ -608,7 +608,7 @@ var AddonTestUtils = {
       rdf += escaped`  <Description about="urn:mozilla:extension:${addon}"><em:updates><Seq>\n`;
 
       for (let versionData of data[addon]) {
-        rdf += '    <li><Description>\n';
+        rdf += "    <li><Description>\n";
         rdf += this._writeProps(versionData, ["version", "multiprocessCompatible"],
                                 `      `);
         for (let app of versionData.targetApplications || []) {
@@ -617,9 +617,9 @@ var AddonTestUtils = {
                                   `        `);
           rdf += "      </Description></em:targetApplication>\n";
         }
-        rdf += '    </Description></li>\n';
+        rdf += "    </Description></li>\n";
       }
-      rdf += '  </Seq></em:updates></Description>\n';
+      rdf += "  </Seq></em:updates></Description>\n";
     }
     rdf += "</RDF>\n";
 
@@ -874,6 +874,7 @@ var AddonTestUtils = {
         for (let part of entry.split("/"))
           target.append(part);
         zip.extract(entry, target);
+        target.permissions |= FileUtils.PERMS_FILE;
       }
       zip.close();
 
@@ -1014,7 +1015,7 @@ var AddonTestUtils = {
    *
    * @param {AddonInstall} install
    *        The add-on to install.
-   * @returns {Promise}
+   * @returns {Promise<AddonInstall>}
    *        Resolves when the install completes, either successfully or
    *        in failure.
    */
@@ -1034,6 +1035,7 @@ var AddonTestUtils = {
       install.install();
     }).then(() => {
       install.removeListener(listener);
+      return install;
     });
   },
 
@@ -1049,17 +1051,17 @@ var AddonTestUtils = {
    *        Resolves when the install has completed.
    */
   promiseInstallFile(file, ignoreIncompatible = false) {
-    return new Promise((resolve, reject) => {
-      AddonManager.getInstallForFile(file, install => {
-        if (!install)
-          reject(new Error(`No AddonInstall created for ${file.path}`));
-        else if (install.state != AddonManager.STATE_DOWNLOADED)
-          reject(new Error(`Expected file to be downloaded for install of ${file.path}`));
-        else if (ignoreIncompatible && install.addon.appDisabled)
-          resolve();
-        else
-          resolve(this.promiseCompleteInstall(install));
-      });
+    return AddonManager.getInstallForFile(file).then(install => {
+      if (!install)
+        throw new Error(`No AddonInstall created for ${file.path}`);
+
+      if (install.state != AddonManager.STATE_DOWNLOADED)
+        throw new Error(`Expected file to be downloaded for install of ${file.path}`);
+
+      if (ignoreIncompatible && install.addon.appDisabled)
+        return null;
+
+      return this.promiseCompleteInstall(install);
     });
   },
 
@@ -1085,30 +1087,6 @@ var AddonTestUtils = {
   },
 
   /**
-   * A promise-based variant of AddonManager.getAddonsByIDs.
-   *
-   * @param {Array<string>} list
-   *        As the first argument of AddonManager.getAddonsByIDs
-   * @return {Promise<Array<Addon>>}
-   *        Resolves to the array of add-ons for the given IDs.
-   */
-  promiseAddonsByIDs(list) {
-    return new Promise(resolve => AddonManager.getAddonsByIDs(list, resolve));
-  },
-
-  /**
-   * A promise-based variant of AddonManager.getAddonByID.
-   *
-   * @param {string} id
-   *        The ID of the add-on.
-   * @return {Promise<Addon>}
-   *        Resolves to the add-on with the given ID.
-   */
-  promiseAddonByID(id) {
-    return new Promise(resolve => AddonManager.getAddonByID(id, resolve));
-  },
-
-  /**
    * Returns a promise that will be resolved when an add-on update check is
    * complete. The value resolved will be an AddonInstall if a new version was
    * found.
@@ -1122,7 +1100,7 @@ var AddonTestUtils = {
     return new Promise((resolve, reject) => {
       let result = {};
       addon.findUpdates({
-        onNoCompatibilityUpdateAvailable: function(addon2) {
+        onNoCompatibilityUpdateAvailable(addon2) {
           if ("compatibilityUpdate" in result) {
             throw new Error("Saw multiple compatibility update events");
           }
@@ -1130,7 +1108,7 @@ var AddonTestUtils = {
           result.compatibilityUpdate = false;
         },
 
-        onCompatibilityUpdateAvailable: function(addon2) {
+        onCompatibilityUpdateAvailable(addon2) {
           if ("compatibilityUpdate" in result) {
             throw new Error("Saw multiple compatibility update events");
           }
@@ -1138,7 +1116,7 @@ var AddonTestUtils = {
           result.compatibilityUpdate = true;
         },
 
-        onNoUpdateAvailable: function(addon2) {
+        onNoUpdateAvailable(addon2) {
           if ("updateAvailable" in result) {
             throw new Error("Saw multiple update available events");
           }
@@ -1146,7 +1124,7 @@ var AddonTestUtils = {
           result.updateAvailable = false;
         },
 
-        onUpdateAvailable: function(addon2, install) {
+        onUpdateAvailable(addon2, install) {
           if ("updateAvailable" in result) {
             throw new Error("Saw multiple update available events");
           }
@@ -1154,7 +1132,7 @@ var AddonTestUtils = {
           result.updateAvailable = install;
         },
 
-        onUpdateFinished: function(addon2, error) {
+        onUpdateFinished(addon2, error) {
           equal(addon, addon2, "onUpdateFinished");
           if (error == AddonManager.UPDATE_STATUS_NO_ERROR) {
             resolve(result);
@@ -1165,19 +1143,6 @@ var AddonTestUtils = {
         }
       }, reason);
     });
-  },
-
-  /**
-   * A promise-based variant of AddonManager.getAddonsWithOperationsByTypes
-   *
-   * @param {Array<string>} types
-   *        The first argument to AddonManager.getAddonsWithOperationsByTypes
-   * @return {Promise<Array<Addon>>}
-   *        Resolves to an array of add-ons with the given operations
-   *        pending.
-   */
-  promiseAddonsWithOperationsByTypes(types) {
-    return new Promise(resolve => AddonManager.getAddonsWithOperationsByTypes(types, resolve));
   },
 
   /**

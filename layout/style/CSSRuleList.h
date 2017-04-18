@@ -7,6 +7,7 @@
 #define mozilla_dom_CSSRuleList_h
 
 #include "mozilla/StyleSheetInlines.h"
+#include "mozilla/css/Rule.h"
 #include "nsIDOMCSSRule.h"
 #include "nsIDOMCSSRuleList.h"
 #include "nsWrapperCache.h"
@@ -28,7 +29,7 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(CSSRuleList)
 
-  virtual CSSStyleSheet* GetParentObject() = 0;
+  virtual StyleSheet* GetParentObject() = 0;
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override final;
 
   NS_IMETHOD
@@ -45,13 +46,13 @@ public:
   }
 
   // WebIDL API
-  nsIDOMCSSRule* Item(uint32_t aIndex)
+  css::Rule* Item(uint32_t aIndex)
   {
     bool unused;
     return IndexedGetter(aIndex, unused);
   }
 
-  virtual nsIDOMCSSRule* IndexedGetter(uint32_t aIndex, bool& aFound) = 0;
+  virtual css::Rule* IndexedGetter(uint32_t aIndex, bool& aFound) = 0;
   virtual uint32_t Length() = 0;
 
 protected:

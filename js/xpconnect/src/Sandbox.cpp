@@ -66,7 +66,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(SandboxPrivate)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(SandboxPrivate)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   tmp->TraverseHostObjectURIs(cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -617,11 +616,10 @@ NS_IMPL_ADDREF(nsXPCComponents_utils_Sandbox)
 NS_IMPL_RELEASE(nsXPCComponents_utils_Sandbox)
 
 // We use the nsIXPScriptable macros to generate lots of stuff for us.
-#define XPC_MAP_CLASSNAME           nsXPCComponents_utils_Sandbox
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_utils_Sandbox"
-#define                             XPC_MAP_WANT_CALL
-#define                             XPC_MAP_WANT_CONSTRUCT
-#define XPC_MAP_FLAGS               0
+#define XPC_MAP_CLASSNAME         nsXPCComponents_utils_Sandbox
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_utils_Sandbox"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_CALL | \
+                       XPC_SCRIPTABLE_WANT_CONSTRUCT)
 #include "xpc_map_end.h" /* This #undef's the above. */
 
 const xpc::SandboxProxyHandler xpc::sandboxProxyHandler;
@@ -1207,13 +1205,6 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
 
         if (!options.globalProperties.DefineInSandbox(cx, sandbox))
             return NS_ERROR_XPC_UNEXPECTED;
-
-#ifndef SPIDERMONKEY_PROMISE
-        // Promise is supposed to be part of ES, and therefore should appear on
-        // every global.
-        if (!dom::PromiseBinding::GetConstructorObject(cx))
-            return NS_ERROR_XPC_UNEXPECTED;
-#endif // SPIDERMONKEY_PROMISE
     }
 
     // We handle the case where the context isn't in a compartment for the
@@ -1228,6 +1219,7 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
 
     xpc::SetSandboxMetadata(cx, sandbox, options.metadata);
 
+    JSAutoCompartment ac(cx, sandbox);
     JS_FireOnNewGlobalObject(cx, sandbox);
 
     return NS_OK;
@@ -1254,7 +1246,7 @@ nsXPCComponents_utils_Sandbox::Construct(nsIXPConnectWrappedNative* wrapper, JSC
  * we use the related Codebase Principal for the sandbox.
  */
 bool
-ParsePrincipal(JSContext* cx, HandleString codebase, const PrincipalOriginAttributes& aAttrs,
+ParsePrincipal(JSContext* cx, HandleString codebase, const OriginAttributes& aAttrs,
                nsIPrincipal** principal)
 {
     MOZ_ASSERT(principal);
@@ -1338,7 +1330,7 @@ GetExpandedPrincipal(JSContext* cx, HandleObject arrayObj,
     // strings, then we will use a default OriginAttribute.
     // Otherwise, we will use the origin attributes of the passed object(s). If
     // more than one object is specified, we ensure that the OAs match.
-    Maybe<PrincipalOriginAttributes> attrs;
+    Maybe<OriginAttributes> attrs;
     if (options.originAttributes) {
         attrs.emplace();
         JS::RootedValue val(cx, JS::ObjectValue(*options.originAttributes));
@@ -1383,8 +1375,8 @@ GetExpandedPrincipal(JSContext* cx, HandleObject arrayObj,
             NS_ENSURE_TRUE(principal, false);
 
             if (!options.originAttributes) {
-                const PrincipalOriginAttributes prinAttrs =
-                    BasePrincipal::Cast(principal)->OriginAttributesRef();
+                const OriginAttributes prinAttrs =
+                    principal->OriginAttributesRef();
                 if (attrs.isNothing()) {
                     attrs.emplace(prinAttrs);
                 } else if (prinAttrs != attrs.ref()) {
@@ -1758,7 +1750,7 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative* wrappe
 
     if (args[0].isString()) {
         RootedString str(cx, args[0].toString());
-        PrincipalOriginAttributes attrs;
+        OriginAttributes attrs;
         if (options.originAttributes) {
             JS::RootedValue val(cx, JS::ObjectValue(*options.originAttributes));
             if (!attrs.Init(cx, val)) {

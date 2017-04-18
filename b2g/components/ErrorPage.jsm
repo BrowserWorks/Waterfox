@@ -138,7 +138,7 @@ var ErrorPage = {
     let win = frameLoaderOwner.ownerDocument.defaultView;
     let mm = frameLoaderOwner.frameLoader.messageManager;
 
-    let uri = Services.io.newURI(aMessage.data.url, null, null);
+    let uri = Services.io.newURI(aMessage.data.url);
     let sslExceptions = new SSLExceptions((function() {
       mm.sendAsyncMessage('ErrorPage:ReloadPage');
     }).bind(this), uri, win);
@@ -176,8 +176,8 @@ var ErrorPage = {
 
   observe: function errorPageObserve(aSubject, aTopic, aData) {
     let frameLoader = aSubject.QueryInterface(Ci.nsIFrameLoader);
-    // Ignore notifications that aren't from a BrowserOrApp
-    if (!frameLoader.ownerIsMozBrowserOrAppFrame) {
+    // Ignore notifications that aren't from a Browser
+    if (!frameLoader.ownerIsMozBrowserFrame) {
       return;
     }
     this._listenError(frameLoader);

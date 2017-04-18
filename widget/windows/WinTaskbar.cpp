@@ -125,7 +125,7 @@ class DefaultController final : public nsITaskbarPreviewController
   ~DefaultController() {}
   HWND mWnd;
 public:
-  DefaultController(HWND hWnd)
+  explicit DefaultController(HWND hWnd)
     : mWnd(hWnd)
   {
   }
@@ -339,9 +339,6 @@ WinTaskbar::GetDefaultGroupId(nsAString & aDefaultGroupId) {
 // (static) Called from AppShell
 bool
 WinTaskbar::RegisterAppUserModelID() {
-  if (!IsWin7OrLater())
-    return false;
-
   SetCurrentProcessExplicitAppUserModelIDPtr funcAppUserModelID = nullptr;
   bool retVal = false;
 
@@ -372,7 +369,7 @@ NS_IMETHODIMP
 WinTaskbar::GetAvailable(bool *aAvailable) {
   // ITaskbarList4::HrInit() may fail with shell extensions like blackbox
   // installed. Initialize early to return available=false in those cases.
-  *aAvailable = IsWin7OrLater() && Initialize();
+  *aAvailable = Initialize();
 
   return NS_OK;
 }

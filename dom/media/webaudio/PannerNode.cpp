@@ -209,7 +209,8 @@ public:
           RefPtr<PlayingRefChangeHandler> refchanged =
             new PlayingRefChangeHandler(aStream, PlayingRefChangeHandler::RELEASE);
           aStream->Graph()->
-            DispatchToMainThreadAfterStreamStateUpdate(refchanged.forget());
+          DispatchToMainThreadAfterStreamStateUpdate(mAbstractMainThread,
+                                                     refchanged.forget());
         }
         aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
         return;
@@ -219,7 +220,8 @@ public:
         RefPtr<PlayingRefChangeHandler> refchanged =
           new PlayingRefChangeHandler(aStream, PlayingRefChangeHandler::ADDREF);
         aStream->Graph()->
-          DispatchToMainThreadAfterStreamStateUpdate(refchanged.forget());
+          DispatchToMainThreadAfterStreamStateUpdate(mAbstractMainThread,
+                                                     refchanged.forget());
       }
       mLeftOverData = mHRTFPanner->maxTailFrames();
     }
@@ -301,12 +303,12 @@ PannerNode::PannerNode(AudioContext* aContext)
   // Please keep these default values consistent with PannerNodeEngine::PannerNodeEngine above.
   , mPanningModel(PanningModelType::Equalpower)
   , mDistanceModel(DistanceModelType::Inverse)
-  , mPositionX(new AudioParam(this, PannerNode::POSITIONX, 0., this->NodeType()))
-  , mPositionY(new AudioParam(this, PannerNode::POSITIONY, 0., this->NodeType()))
-  , mPositionZ(new AudioParam(this, PannerNode::POSITIONZ, 0., this->NodeType()))
-  , mOrientationX(new AudioParam(this, PannerNode::ORIENTATIONX, 1., this->NodeType()))
-  , mOrientationY(new AudioParam(this, PannerNode::ORIENTATIONY, 0., this->NodeType()))
-  , mOrientationZ(new AudioParam(this, PannerNode::ORIENTATIONZ, 0., this->NodeType()))
+  , mPositionX(new AudioParam(this, PannerNode::POSITIONX, this->NodeType(), 0.f))
+  , mPositionY(new AudioParam(this, PannerNode::POSITIONY, this->NodeType(), 0.f))
+  , mPositionZ(new AudioParam(this, PannerNode::POSITIONZ, this->NodeType(), 0.f))
+  , mOrientationX(new AudioParam(this, PannerNode::ORIENTATIONX, this->NodeType(), 1.0f))
+  , mOrientationY(new AudioParam(this, PannerNode::ORIENTATIONY, this->NodeType(), 0.f))
+  , mOrientationZ(new AudioParam(this, PannerNode::ORIENTATIONZ, this->NodeType(), 0.f))
   , mVelocity()
   , mRefDistance(1.)
   , mMaxDistance(10000.)
@@ -328,6 +330,38 @@ PannerNode::~PannerNode()
   if (Context()) {
     Context()->UnregisterPannerNode(this);
   }
+}
+
+/* static */ already_AddRefed<PannerNode>
+PannerNode::Create(AudioContext& aAudioContext,
+                   const PannerOptions& aOptions,
+                   ErrorResult& aRv)
+{
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<PannerNode> audioNode = new PannerNode(&aAudioContext);
+
+  audioNode->Initialize(aOptions, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  audioNode->SetPanningModel(aOptions.mPanningModel);
+  audioNode->SetDistanceModel(aOptions.mDistanceModel);
+  audioNode->SetPosition(aOptions.mPositionX, aOptions.mPositionY,
+                         aOptions.mPositionZ);
+  audioNode->SetOrientation(aOptions.mOrientationX, aOptions.mOrientationY,
+                            aOptions.mOrientationZ);
+  audioNode->SetRefDistance(aOptions.mRefDistance);
+  audioNode->SetMaxDistance(aOptions.mMaxDistance);
+  audioNode->SetRolloffFactor(aOptions.mRolloffFactor);
+  audioNode->SetConeInnerAngle(aOptions.mConeInnerAngle);
+  audioNode->SetConeOuterAngle(aOptions.mConeOuterAngle);
+  audioNode->SetConeOuterGain(aOptions.mConeOuterGain);
+
+  return audioNode.forget();
 }
 
 void PannerNode::SetPanningModel(PanningModelType aPanningModel)
@@ -783,4 +817,3 @@ PannerNode::SendDopplerToSourcesIfNeeded()
 
 } // namespace dom
 } // namespace mozilla
-

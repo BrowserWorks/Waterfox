@@ -320,11 +320,10 @@ nsTableCellFrame::DecorateForSelection(DrawTarget* aDrawTarget, nsPoint aPt)
           LookAndFeel::GetColor(LookAndFeel::eColorID_TextSelectBackground);
       }
       nscoord threePx = nsPresContext::CSSPixelsToAppUnits(3);
-      if ((mRect.width > threePx) && (mRect.height > threePx))
-      {
-        //compare bordercolor to ((nsStyleColor *)myColor)->mBackgroundColor)
-        bordercolor = EnsureDifferentColors(bordercolor,
-                                            StyleBackground()->mBackgroundColor);
+      if ((mRect.width > threePx) && (mRect.height > threePx)) {
+        //compare bordercolor to background-color
+        bordercolor = EnsureDifferentColors(
+          bordercolor, StyleBackground()->BackgroundColor(this));
 
         int32_t appUnitsPerDevPixel = PresContext()->AppUnitsPerDevPixel();
         Point devPixelOffset = NSPointToPoint(aPt, appUnitsPerDevPixel);
@@ -377,7 +376,7 @@ nsTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
                                                 aRenderingContext,
                                                 aDirtyRect, rect,
                                                 this, aFlags);
-  return nsCSSRendering::PaintBackground(params);
+  return nsCSSRendering::PaintStyleImageLayer(params);
 }
 
 // Called by nsTablePainter
@@ -501,7 +500,8 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     
       // display background if we need to.
       if (aBuilder->IsForEventDelivery() ||
-          !StyleBackground()->IsTransparent() || StyleDisplay()->mAppearance) {
+          !StyleBackground()->IsTransparent(this) ||
+          StyleDisplay()->mAppearance) {
         if (!tableFrame->IsBorderCollapse()) {
           nsDisplayBackgroundImage::AppendBackgroundItemsToTop(aBuilder,
               this,
@@ -1208,7 +1208,6 @@ nsBCTableCellFrame::GetBorderOverflow()
   return halfBorder.GetPhysicalMargin(wm);
 }
 
-
 DrawResult
 nsBCTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
                                     const nsRect&        aDirtyRect,
@@ -1234,5 +1233,6 @@ nsBCTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
                                                 aRenderingContext, aDirtyRect,
                                                 rect, this,
                                                 aFlags);
-  return nsCSSRendering::PaintBackgroundWithSC(params, StyleContext(), myBorder);
+  return nsCSSRendering::PaintStyleImageLayerWithSC(params, StyleContext(),
+                                                    myBorder);
 }

@@ -53,6 +53,7 @@
 #include "mozilla/dom/ShadowRoot.h"
 #include "mozilla/dom/URL.h"
 #include "mozilla/AsyncEventDispatcher.h"
+#include "mozilla/ServoBindings.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/ConsoleReportCollector.h"
@@ -61,7 +62,7 @@
 #include "nsXULPrototypeCache.h"
 #endif
 
-#include "nsIMediaList.h"
+#include "nsMediaList.h"
 #include "nsIDOMStyleSheet.h"
 #include "nsError.h"
 
@@ -1277,17 +1278,9 @@ Loader::PrepareSheet(StyleSheet* aSheet,
                      const nsSubstring& aMediaString,
                      nsMediaList* aMediaList,
                      Element* aScopeElement,
-                     bool isAlternate)
+                     bool aIsAlternate)
 {
   NS_PRECONDITION(aSheet, "Must have a sheet!");
-
-  // XXXheycam Need to set media, title, etc. on ServoStyleSheets.
-  if (aSheet->IsServo()) {
-    NS_WARNING("stylo: should set metadata on ServoStyleSheets. See bug 1290209.");
-    return;
-  }
-
-  CSSStyleSheet* sheet = aSheet->AsGecko();
 
   RefPtr<nsMediaList> mediaList(aMediaList);
 
@@ -1300,14 +1293,21 @@ Loader::PrepareSheet(StyleSheet* aSheet,
 
     // We have aMediaString only when linked from link elements, style
     // elements, or PIs, so pass true.
-    mediumParser.ParseMediaList(aMediaString, nullptr, 0, mediaList, true);
+    mediumParser.ParseMediaList(aMediaString, nullptr, 0, mediaList);
   }
 
-  sheet->SetMedia(mediaList);
+  aSheet->SetMedia(mediaList);
 
-  sheet->SetTitle(aTitle);
-  sheet->SetEnabled(!isAlternate);
-  sheet->SetScopeElement(aScopeElement);
+  aSheet->SetTitle(aTitle);
+  aSheet->SetEnabled(!aIsAlternate);
+
+  if (aSheet->IsGecko()) {
+    aSheet->AsGecko()->SetScopeElement(aScopeElement);
+  } else {
+    if (aScopeElement) {
+      NS_WARNING("stylo: scoped style sheets not supported");
+    }
+  }
 }
 
 /**
@@ -1405,29 +1405,27 @@ Loader::InsertSheetInDoc(StyleSheet* aSheet,
 nsresult
 Loader::InsertChildSheet(StyleSheet* aSheet,
                          StyleSheet* aParentSheet,
-                         ImportRule* aParentRule)
+                         ImportRule* aGeckoParentRule,
+                         const RawServoImportRule* aServoParentRule)
 {
   LOG(("css::Loader::InsertChildSheet"));
-  NS_PRECONDITION(aSheet, "Nothing to insert");
-  NS_PRECONDITION(aParentSheet, "Need a parent to insert into");
-  NS_PRECONDITION(aParentSheet, "How did we get imported?");
-
-  // XXXheycam The InsertChildSheet API doesn't work with ServoStyleSheets,
-  // since they won't have Gecko ImportRules in them.
-  if (aSheet->IsServo()) {
-    return NS_ERROR_FAILURE;
+  MOZ_ASSERT(aSheet, "Nothing to insert");
+  MOZ_ASSERT(aParentSheet, "Need a parent to insert into");
+  MOZ_ASSERT_IF(aSheet->IsGecko(), aGeckoParentRule && !aServoParentRule);
+  MOZ_ASSERT_IF(aSheet->IsServo(), aServoParentRule && !aGeckoParentRule);
+  if (aSheet->IsGecko()) {
+    // child sheets should always start out enabled, even if they got
+    // cloned off of top-level sheets which were disabled
+    aSheet->AsGecko()->SetEnabled(true);
+    aGeckoParentRule->SetSheet(aSheet->AsGecko()); // This sets the ownerRule on the sheet
+  } else {
+    RefPtr<RawServoStyleSheet> sheet =
+      Servo_ImportRule_GetSheet(aServoParentRule).Consume();
+    aSheet->AsServo()->SetSheetForImport(sheet);
   }
-
-  // child sheets should always start out enabled, even if they got
-  // cloned off of top-level sheets which were disabled
-  aSheet->AsGecko()->SetEnabled(true);
-
   aParentSheet->AppendStyleSheet(aSheet);
-  aParentRule->SetSheet(aSheet->AsGecko()); // This sets the ownerRule on the sheet
 
   LOG(("  Inserting into parent sheet"));
-  //  LOG(("  Inserting into parent sheet at position %d", insertionPoint));
-
   return NS_OK;
 }
 
@@ -1775,7 +1773,8 @@ Loader::ParseSheet(const nsAString& aInput,
                            aLoadData->mLineNumber);
   } else {
     rv =
-      aLoadData->mSheet->AsServo()->ParseSheet(aInput, sheetURI, baseURI,
+      aLoadData->mSheet->AsServo()->ParseSheet(this,
+                                               aInput, sheetURI, baseURI,
                                                aLoadData->mSheet->Principal(),
                                                aLoadData->mLineNumber);
   }
@@ -1991,7 +1990,7 @@ Loader::LoadInlineStyle(nsIContent* aElement,
                         bool* aIsAlternate)
 {
   LOG(("css::Loader::LoadInlineStyle"));
-  NS_ASSERTION(mParsingDatas.Length() == 0, "We're in the middle of a parse?");
+  MOZ_ASSERT(mParsingDatas.IsEmpty(), "We're in the middle of a parse?");
 
   *aCompleted = true;
 
@@ -2197,12 +2196,18 @@ nsresult
 Loader::LoadChildSheet(StyleSheet* aParentSheet,
                        nsIURI* aURL,
                        nsMediaList* aMedia,
-                       ImportRule* aParentRule,
+                       ImportRule* aGeckoParentRule,
+                       const RawServoImportRule* aServoParentRule,
                        LoaderReusableStyleSheets* aReusableSheets)
 {
   LOG(("css::Loader::LoadChildSheet"));
   NS_PRECONDITION(aURL, "Must have a URI to load");
   NS_PRECONDITION(aParentSheet, "Must have a parent sheet");
+
+  // Servo doesn't support reusable sheets.
+  MOZ_ASSERT_IF(aReusableSheets, aParentSheet->IsGecko());
+  MOZ_ASSERT_IF(aParentSheet->IsGecko(), aGeckoParentRule && !aServoParentRule);
+  MOZ_ASSERT_IF(aParentSheet->IsServo(), aServoParentRule && !aGeckoParentRule);
 
   if (!mEnabled) {
     LOG_WARN(("  Not enabled"));
@@ -2213,9 +2218,13 @@ Loader::LoadChildSheet(StyleSheet* aParentSheet,
 
   nsCOMPtr<nsINode> owningNode;
 
-  // check for an owning document: if none, don't bother walking up the parent
-  // sheets
-  if (aParentSheet->GetOwningDocument()) {
+  // check for an associated document: if none, don't bother walking up the
+  // parent sheets
+  //
+  // FIXME(emilio): Figure out whether this walk up is necessary (try seems
+  // green without it), and fix the parenting of stylesheets in the servo case
+  // if that's the case.
+  if (aParentSheet->GetAssociatedDocument() && aParentSheet->IsGecko()) {
     StyleSheet* topSheet = aParentSheet;
     while (StyleSheet* parent = topSheet->GetParentSheet()) {
       topSheet = parent;
@@ -2266,7 +2275,7 @@ Loader::LoadChildSheet(StyleSheet* aParentSheet,
   StyleSheetState state;
   if (aReusableSheets && aReusableSheets->FindReusableStyleSheet(aURL, reusableSheet)) {
     sheet = reusableSheet;
-    aParentRule->SetSheet(reusableSheet);
+    aGeckoParentRule->SetSheet(reusableSheet);
     state = eSheetComplete;
   } else {
     bool isAlternate;
@@ -2283,7 +2292,8 @@ Loader::LoadChildSheet(StyleSheet* aParentSheet,
     PrepareSheet(sheet, empty, empty, aMedia, nullptr, isAlternate);
   }
 
-  rv = InsertChildSheet(sheet, aParentSheet, aParentRule);
+  rv = InsertChildSheet(sheet, aParentSheet, aGeckoParentRule,
+                        aServoParentRule);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (state == eSheetComplete) {

@@ -3,6 +3,7 @@
 "use strict";
 
 add_task(function* testExecuteScript() {
+  let {ExtensionManagement} = Cu.import("resource://gre/modules/ExtensionManagement.jsm", {});
   let {MessageChannel} = Cu.import("resource://gre/modules/MessageChannel.jsm", {});
 
   function countMM(messageManagerMap) {
@@ -84,6 +85,20 @@ add_task(function* testExecuteScript() {
 
           browser.test.assertTrue(/\/file_iframe_document\.html$/.test(result[0]), "First result is correct");
           browser.test.assertEq("http://mochi.test:8888/", result[1], "Second result is correct");
+        }),
+
+        browser.tabs.executeScript({
+          code: "location.href;",
+          allFrames: true,
+          matchAboutBlank: true,
+        }).then(result => {
+          browser.test.assertTrue(Array.isArray(result), "Result is an array");
+
+          browser.test.assertEq(3, result.length, "Result has correct length");
+
+          browser.test.assertTrue(/\/file_iframe_document\.html$/.test(result[0]), "First result is correct");
+          browser.test.assertEq("http://mochi.test:8888/", result[1], "Second result is correct");
+          browser.test.assertEq("about:blank", result[2], "Thirds result is correct");
         }),
 
         browser.tabs.executeScript({
@@ -187,6 +202,12 @@ add_task(function* testExecuteScript() {
           await browser.tabs.remove(tab.id);
         }),
 
+        browser.tabs.create({url: "about:blank"}).then(async tab => {
+          const result = await browser.tabs.executeScript(tab.id, {code: "location.href", matchAboutBlank: true});
+          browser.test.assertEq("about:blank", result[0], "Script executed correctly in new tab");
+          await browser.tabs.remove(tab.id);
+        }),
+
         new Promise(resolve => {
           browser.runtime.onMessage.addListener(message => {
             browser.test.assertEq("script ran", message, "Expected runtime message");
@@ -229,6 +250,8 @@ add_task(function* testExecuteScript() {
   // Make sure that we're not holding on to references to closed message
   // managers.
   is(countMM(MessageChannel.messageManagers), messageManagersSize, "Message manager count");
-  is(countMM(MessageChannel.responseManagers), responseManagersSize, "Response manager count");
+  if (!ExtensionManagement.useRemoteWebExtensions) {
+    is(countMM(MessageChannel.responseManagers), responseManagersSize, "Response manager count");
+  }
   is(MessageChannel.pendingResponses.size, 0, "Pending response count");
 });

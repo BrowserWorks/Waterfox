@@ -110,6 +110,20 @@ void nsMenuChainItem::Detach(nsMenuChainItem** aRoot)
   }
 }
 
+void
+nsMenuChainItem::UpdateFollowAnchor()
+{
+  mFollowAnchor = mFrame->ShouldFollowAnchor(mCurrentRect);
+}
+
+void
+nsMenuChainItem::CheckForAnchorChange()
+{
+  if (mFollowAnchor) {
+    mFrame->CheckForAnchorChange(mCurrentRect);
+  }
+}
+
 bool nsXULPopupManager::sDevtoolsDisableAutoHide = false;
 
 const char* kPrefDevtoolsDisableAutoHide =
@@ -555,7 +569,7 @@ nsXULPopupManager::GetPopupFrameForContent(nsIContent* aContent, bool aShouldFlu
     if (document) {
       nsCOMPtr<nsIPresShell> presShell = document->GetShell();
       if (presShell)
-        presShell->FlushPendingNotifications(Flush_Layout);
+        presShell->FlushPendingNotifications(FlushType::Layout);
     }
   }
 
@@ -944,8 +958,10 @@ nsXULPopupManager::ShowPopupCallback(nsIContent* aPopup,
     SetCaptureState(oldmenu);
   }
 
+  item->UpdateFollowAnchor();
+
   if (aSelectFirstItem) {
-    nsMenuFrame* next = GetNextMenuItem(aPopupFrame, nullptr, true);
+    nsMenuFrame* next = GetNextMenuItem(aPopupFrame, nullptr, true, false);
     aPopupFrame->SetCurrentMenuItem(next);
   }
 
@@ -1185,6 +1201,9 @@ nsXULPopupManager::HidePopupCallback(nsIContent* aPopup,
                             &event, nullptr, &status);
   ENSURE_TRUE(weakFrame.IsAlive());
 
+  // Force any popups that might be anchored on elements within this popup to update.
+  UpdatePopupPositions(aPopupFrame->PresContext()->RefreshDriver());
+
   // if there are more popups to close, look for the next one
   if (aNextPopup && aPopup != aLastPopup) {
     nsMenuChainItem* foundMenu = nullptr;
@@ -1223,14 +1242,6 @@ nsXULPopupManager::HidePopupCallback(nsIContent* aPopup,
                            foundMenu->PopupType(), aDeselectMenu, false);
     }
   }
-}
-
-void
-nsXULPopupManager::HidePopup(nsIFrame* aFrame)
-{
-  nsMenuPopupFrame* popup = do_QueryFrame(aFrame);
-  if (popup)
-    HidePopup(aFrame->GetContent(), false, true, false, false);
 }
 
 void
@@ -1363,6 +1374,41 @@ nsXULPopupManager::HidePopupsInDocShell(nsIDocShellTreeItem* aDocShellToHide)
   }
 
   HidePopupsInList(popupsToHide);
+}
+
+void
+nsXULPopupManager::UpdatePopupPositions(nsRefreshDriver* aRefreshDriver)
+{
+  if (!mPopups && !mNoHidePanels) {
+    return;
+  }
+
+  for (int32_t i = 0; i < 2; i++) {
+    nsMenuChainItem* item = i == 0 ? mPopups : mNoHidePanels;
+    while (item) {
+      if (item->Frame()->PresContext()->RefreshDriver() == aRefreshDriver) {
+        item->CheckForAnchorChange();
+      }
+
+      item = item->GetParent();
+    }
+  }
+}
+
+void
+nsXULPopupManager::UpdateFollowAnchor(nsMenuPopupFrame* aPopup)
+{
+  for (int32_t i = 0; i < 2; i++) {
+    nsMenuChainItem* item = i == 0 ? mPopups : mNoHidePanels;
+    while (item) {
+      if (item->Frame() == aPopup) {
+        item->UpdateFollowAnchor();
+        break;
+      }
+
+      item = item->GetParent();
+    }
+  }
 }
 
 void
@@ -1597,7 +1643,7 @@ nsXULPopupManager::FirePopupHidingEvent(nsIContent* aPopup,
 
         if (!animate.EqualsLiteral("false") &&
             (!animate.EqualsLiteral("cancel") || aIsCancel)) {
-          presShell->FlushPendingNotifications(Flush_Layout);
+          presShell->FlushPendingNotifications(FlushType::Layout);
 
           // Get the frame again in case the flush caused it to go away
           popupFrame = do_QueryFrame(aPopup->GetPrimaryFrame());
@@ -2207,8 +2253,8 @@ nsXULPopupManager::HandleKeyboardNavigation(uint32_t aKeyCode)
   
     if (NS_DIRECTION_IS_INLINE(theDirection)) {
       nsMenuFrame* nextItem = (theDirection == eNavigationDirection_End) ?
-                              GetNextMenuItem(mActiveMenuBar, currentMenu, false) : 
-                              GetPreviousMenuItem(mActiveMenuBar, currentMenu, false);
+                              GetNextMenuItem(mActiveMenuBar, currentMenu, false, true) : 
+                              GetPreviousMenuItem(mActiveMenuBar, currentMenu, false, true);
       mActiveMenuBar->ChangeMenuItem(nextItem, true, true);
       return true;
     }
@@ -2243,7 +2289,7 @@ nsXULPopupManager::HandleKeyboardNavigationInPopup(nsMenuChainItem* item,
     // We've been opened, but we haven't had anything selected.
     // We can handle End, but our parent handles Start.
     if (aDir == eNavigationDirection_End) {
-      nsMenuFrame* nextItem = GetNextMenuItem(aFrame, nullptr, true);
+      nsMenuFrame* nextItem = GetNextMenuItem(aFrame, nullptr, true, false);
       if (nextItem) {
         aFrame->ChangeMenuItem(nextItem, false, true);
         return true;
@@ -2277,14 +2323,28 @@ nsXULPopupManager::HandleKeyboardNavigationInPopup(nsMenuChainItem* item,
       NS_DIRECTION_IS_BLOCK_TO_EDGE(aDir)) {
     nsMenuFrame* nextItem;
 
-    if (aDir == eNavigationDirection_Before)
-      nextItem = GetPreviousMenuItem(aFrame, currentMenu, true);
-    else if (aDir == eNavigationDirection_After)
-      nextItem = GetNextMenuItem(aFrame, currentMenu, true);
-    else if (aDir == eNavigationDirection_First)
-      nextItem = GetNextMenuItem(aFrame, nullptr, true);
-    else
-      nextItem = GetPreviousMenuItem(aFrame, nullptr, true);
+    if (aDir == eNavigationDirection_Before ||
+        aDir == eNavigationDirection_After) {
+      // Cursor navigation does not wrap on Mac or for menulists on Windows.
+      bool wrap =
+#ifdef XP_WIN
+        aFrame->IsMenuList() ? false : true;
+#elif defined XP_MACOSX
+        false;
+#else
+        true;
+#endif
+
+      if (aDir == eNavigationDirection_Before) {
+        nextItem = GetPreviousMenuItem(aFrame, currentMenu, true, wrap);
+      } else {
+        nextItem = GetNextMenuItem(aFrame, currentMenu, true, wrap);
+      }
+    } else if (aDir == eNavigationDirection_First) {
+      nextItem = GetNextMenuItem(aFrame, nullptr, true, false);
+    } else {
+      nextItem = GetPreviousMenuItem(aFrame, nullptr, true, false);
+    }
 
     if (nextItem) {
       aFrame->ChangeMenuItem(nextItem, false, true);
@@ -2417,7 +2477,8 @@ nsXULPopupManager::HandleKeyboardEventWithKeyCode(
 nsMenuFrame*
 nsXULPopupManager::GetNextMenuItem(nsContainerFrame* aParent,
                                    nsMenuFrame* aStart,
-                                   bool aIsPopup)
+                                   bool aIsPopup,
+                                   bool aWrap)
 {
   nsPresContext* presContext = aParent->PresContext();
   auto insertion = presContext->PresShell()->
@@ -2452,6 +2513,10 @@ nsXULPopupManager::GetNextMenuItem(nsContainerFrame* aParent,
       currFrame = currFrame->GetNextSibling();
   }
 
+  if (!aWrap) {
+    return aStart;
+  }
+
   currFrame = immediateParent->PrincipalChildList().FirstChild();
 
   // Still don't have anything. Try cycling from the beginning.
@@ -2478,7 +2543,8 @@ nsXULPopupManager::GetNextMenuItem(nsContainerFrame* aParent,
 nsMenuFrame*
 nsXULPopupManager::GetPreviousMenuItem(nsContainerFrame* aParent,
                                        nsMenuFrame* aStart,
-                                       bool aIsPopup)
+                                       bool aIsPopup,
+                                       bool aWrap)
 {
   nsPresContext* presContext = aParent->PresContext();
   auto insertion = presContext->PresShell()->
@@ -2515,6 +2581,10 @@ nsXULPopupManager::GetPreviousMenuItem(nsContainerFrame* aParent,
       currFrame = currFrame->GetParent()->GetPrevSibling();
     else
       currFrame = currFrame->GetPrevSibling();
+  }
+
+  if (!aWrap) {
+    return aStart;
   }
 
   currFrame = frames.LastChild();
@@ -2595,6 +2665,17 @@ nsXULPopupManager::HandleEvent(nsIDOMEvent* aEvent)
 
   NS_ABORT();
 
+  return NS_OK;
+}
+
+nsresult
+nsXULPopupManager::UpdateIgnoreKeys(bool aIgnoreKeys)
+{
+  nsMenuChainItem* item = GetTopVisibleMenu();
+  if (item) {
+    item->SetIgnoreKeys(aIgnoreKeys ? eIgnoreKeys_True : eIgnoreKeys_Shortcuts);
+  }
+  UpdateKeyboardListeners();
   return NS_OK;
 }
 

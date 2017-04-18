@@ -60,8 +60,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Promise",
  * expectations, for example by ensuring the target file exists when the
  * download is successful, even if the source has a size of zero bytes.
  */
-function DownloadLegacyTransfer()
-{
+function DownloadLegacyTransfer() {
   this._deferDownload = Promise.defer();
 }
 
@@ -77,8 +76,7 @@ DownloadLegacyTransfer.prototype = {
   // nsIWebProgressListener
 
   onStateChange: function DLT_onStateChange(aWebProgress, aRequest, aStateFlags,
-                                            aStatus)
-  {
+                                            aStatus) {
     if (!Components.isSuccessCode(aStatus)) {
       this._componentFailed = true;
     }
@@ -159,18 +157,16 @@ DownloadLegacyTransfer.prototype = {
                                                   aCurSelfProgress,
                                                   aMaxSelfProgress,
                                                   aCurTotalProgress,
-                                                  aMaxTotalProgress)
-  {
+                                                  aMaxTotalProgress) {
     this.onProgressChange64(aWebProgress, aRequest, aCurSelfProgress,
                             aMaxSelfProgress, aCurTotalProgress,
                             aMaxTotalProgress);
   },
 
-  onLocationChange: function () { },
+  onLocationChange() { },
 
   onStatusChange: function DLT_onStatusChange(aWebProgress, aRequest, aStatus,
-                                              aMessage)
-  {
+                                              aMessage) {
     // The status change may optionally be received in addition to the state
     // change, but if no network request actually started, it is possible that
     // we only receive a status change with an error status code.
@@ -184,7 +180,7 @@ DownloadLegacyTransfer.prototype = {
     }
   },
 
-  onSecurityChange: function () { },
+  onSecurityChange() { },
 
   // nsIWebProgressListener2
 
@@ -192,8 +188,7 @@ DownloadLegacyTransfer.prototype = {
                                                       aCurSelfProgress,
                                                       aMaxSelfProgress,
                                                       aCurTotalProgress,
-                                                      aMaxTotalProgress)
-  {
+                                                      aMaxTotalProgress) {
     // Wait for the associated Download object to be available.
     this._deferDownload.promise.then(function DLT_OPC64_onDownload(aDownload) {
       aDownload.saver.onProgressBytes(aCurTotalProgress, aMaxTotalProgress);
@@ -201,8 +196,7 @@ DownloadLegacyTransfer.prototype = {
   },
 
   onRefreshAttempted: function DLT_onRefreshAttempted(aWebProgress, aRefreshURI,
-                                                      aMillis, aSameURI)
-  {
+                                                      aMillis, aSameURI) {
     // Indicate that refreshes and redirects are allowed by default.  However,
     // note that download components don't usually call this method at all.
     return true;
@@ -211,8 +205,7 @@ DownloadLegacyTransfer.prototype = {
   // nsITransfer
 
   init: function DLT_init(aSource, aTarget, aDisplayName, aMIMEInfo, aStartTime,
-                          aTempFile, aCancelable, aIsPrivate)
-  {
+                          aTempFile, aCancelable, aIsPrivate) {
     this._cancelable = aCancelable;
 
     let launchWhenSucceeded = false, contentType = null, launcherPath = null;
@@ -237,9 +230,9 @@ DownloadLegacyTransfer.prototype = {
       target: { path: aTarget.QueryInterface(Ci.nsIFileURL).file.path,
                 partFilePath: aTempFile && aTempFile.path },
       saver: "legacy",
-      launchWhenSucceeded: launchWhenSucceeded,
-      contentType: contentType,
-      launcherPath: launcherPath
+      launchWhenSucceeded,
+      contentType,
+      launcherPath
     }).then(function DLT_I_onDownload(aDownload) {
       // Legacy components keep partial data when they use a ".part" file.
       if (aTempFile) {
@@ -257,18 +250,15 @@ DownloadLegacyTransfer.prototype = {
     }.bind(this)).then(null, Cu.reportError);
   },
 
-  setSha256Hash: function (hash)
-  {
+  setSha256Hash(hash) {
     this._sha256Hash = hash;
   },
 
-  setSignatureInfo: function (signatureInfo)
-  {
+  setSignatureInfo(signatureInfo) {
     this._signatureInfo = signatureInfo;
   },
 
-  setRedirects: function (redirects)
-  {
+  setRedirects(redirects) {
     this._redirects = redirects;
   },
 

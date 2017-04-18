@@ -52,6 +52,9 @@ namespace mozilla {
  * Note that when deriving from RefCounted or AtomicRefCounted, you
  * should add MOZ_DECLARE_REFCOUNTED_TYPENAME(ClassName) to the public
  * section of your class, where ClassName is the name of your class.
+ *
+ * Note: SpiderMonkey should use js::RefCounted instead since that type
+ * will use appropriate js_delete and also not break ref-count logging.
  */
 namespace detail {
 const MozRefCountType DEAD = 0xffffdead;

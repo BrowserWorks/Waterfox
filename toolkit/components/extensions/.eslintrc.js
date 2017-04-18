@@ -3,10 +3,6 @@
 module.exports = { // eslint-disable-line no-undef
   "extends": "../../.eslintrc.js",
 
-  "parserOptions": {
-    "ecmaVersion": 8,
-  },
-
   "globals": {
     "Cc": true,
     "Ci": true,
@@ -20,7 +16,13 @@ module.exports = { // eslint-disable-line no-undef
     "Extension": true,
     "ExtensionManagement": true,
     "extensions": true,
+    "getContainerForCookieStoreId": true,
+    "getCookieStoreIdForContainer": true,
     "global": true,
+    "isContainerCookieStoreId": true,
+    "isDefaultCookieStoreId": true,
+    "isPrivateCookieStoreId": true,
+    "isValidCookieStoreId": true,
     "NetUtil": true,
     "openOptionsPage": true,
     "require": false,
@@ -99,7 +101,7 @@ module.exports = { // eslint-disable-line no-undef
     "generator-star-spacing": ["error", {"before": false, "after": true}],
 
     // Two space indent
-    "indent": ["error", 2, {"SwitchCase": 1}],
+    "indent": ["error", 2, {"SwitchCase": 1, "ArrayExpression": "first", "ObjectExpression": "first"}],
 
     // Space after colon not before in property declarations
     "key-spacing": ["error", {"beforeColon": false, "afterColon": true, "mode": "minimum"}],
@@ -173,9 +175,6 @@ module.exports = { // eslint-disable-line no-undef
     // No reassigning native JS objects
     "no-native-reassign": "error",
 
-    // No (!foo in bar)
-    "no-negated-in-lhs": "error",
-
     // Nested ternary statements are confusing
     "no-nested-ternary": "error",
 
@@ -248,7 +247,7 @@ module.exports = { // eslint-disable-line no-undef
     "comma-dangle": ["error", "always-multiline"],
 
     // Warn about cyclomatic complexity in functions.
-    "complexity": "warn",
+    "complexity": "error",
 
     // Don't warn for inconsistent naming when capturing this (not so important
     // with auto-binding fat arrow functions).

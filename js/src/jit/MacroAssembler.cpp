@@ -2384,6 +2384,12 @@ MacroAssembler::icBuildOOLFakeExitFrame(void* fakeReturnAddr, AfterICSaveLive& a
     return buildOOLFakeExitFrame(fakeReturnAddr);
 }
 
+bool
+MacroAssembler::icBuildOOLFakeExitFrame(void* fakeReturnAddr, AutoSaveLiveRegisters& save)
+{
+    return buildOOLFakeExitFrame(fakeReturnAddr);
+}
+
 void
 MacroAssembler::icRestoreLive(LiveRegisterSet& liveRegs, AfterICSaveLive& aic)
 {
@@ -2511,13 +2517,15 @@ MacroAssembler::PushEmptyRooted(VMFunction::RootType rootType)
         MOZ_CRASH("Handle must have root type");
       case VMFunction::RootObject:
       case VMFunction::RootString:
-      case VMFunction::RootPropertyName:
       case VMFunction::RootFunction:
       case VMFunction::RootCell:
         Push(ImmPtr(nullptr));
         break;
       case VMFunction::RootValue:
         Push(UndefinedValue());
+        break;
+      case VMFunction::RootId:
+        Push(ImmWord(JSID_BITS(JSID_VOID)));
         break;
     }
 }
@@ -2531,9 +2539,9 @@ MacroAssembler::popRooted(VMFunction::RootType rootType, Register cellReg,
         MOZ_CRASH("Handle must have root type");
       case VMFunction::RootObject:
       case VMFunction::RootString:
-      case VMFunction::RootPropertyName:
       case VMFunction::RootFunction:
       case VMFunction::RootCell:
+      case VMFunction::RootId:
         Pop(cellReg);
         break;
       case VMFunction::RootValue:
@@ -2947,6 +2955,17 @@ MacroAssembler::BranchGCPtr::emit(MacroAssembler& masm)
 {
     MOZ_ASSERT(isInitialized());
     masm.branchPtr(cond(), reg(), ptr_, jump());
+}
+
+void
+MacroAssembler::debugAssertIsObject(const ValueOperand& val)
+{
+#ifdef DEBUG
+    Label ok;
+    branchTestObject(Assembler::Equal, val, &ok);
+    assumeUnreachable("Expected an object!");
+    bind(&ok);
+#endif
 }
 
 namespace js {

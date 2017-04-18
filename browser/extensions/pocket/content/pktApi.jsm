@@ -101,8 +101,7 @@ var pktApi = (function() {
             if (o && typeof o === "object" && o !== null) {
                 return o;
             }
-        }
-        catch (e) { }
+        } catch (e) { }
 
         return undefined;
     };
@@ -141,8 +140,7 @@ var pktApi = (function() {
 
         if (!value)
             prefBranch.clearUserPref(key);
-        else
-        {
+        else {
             // We use complexValue as tags can have utf-8 characters in them
             var str = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
             str.data = value;
@@ -178,20 +176,20 @@ var pktApi = (function() {
         var pocketCookies = getCookiesFromPocket();
 
         // If no cookie was found just return undefined
-        if (typeof pocketCookies['ftv1'] === "undefined") {
+        if (typeof pocketCookies["ftv1"] === "undefined") {
             return undefined;
         }
 
         // Check if a new user logged in in the meantime and clearUserData if so
-        var sessionId = pocketCookies['fsv1'];
-        var lastSessionId = getSetting('fsv1');
+        var sessionId = pocketCookies["fsv1"];
+        var lastSessionId = getSetting("fsv1");
         if (sessionId !== lastSessionId) {
             clearUserData();
             setSetting("fsv1", sessionId);
         }
 
         // Return access token
-        return pocketCookies['ftv1'];
+        return pocketCookies["ftv1"];
     }
 
     /**
@@ -203,7 +201,7 @@ var pktApi = (function() {
         if (typeof premiumStatus === "undefined") {
             // Premium status is not in settings try get it from cookie
             var pocketCookies = getCookiesFromPocket();
-            premiumStatus = pocketCookies['ps'];
+            premiumStatus = pocketCookies["ps"];
         }
         return premiumStatus;
     }
@@ -294,8 +292,8 @@ var pktApi = (function() {
         };
 
         // Set headers
-        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-        request.setRequestHeader('X-Accept', ' application/json');
+        request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+        request.setRequestHeader("X-Accept", " application/json");
 
         // Serialize and Fire off the request
         var str = [];
@@ -332,12 +330,12 @@ var pktApi = (function() {
      */
     function addLink(url, options) {
 
-        var since = getSetting('latestSince');
+        var since = getSetting("latestSince");
         var accessToken = getAccessToken();
 
         var sendData = {
             access_token: accessToken,
-            url: url,
+            url,
             since: since ? since : 0
         };
 
@@ -348,13 +346,13 @@ var pktApi = (function() {
         return apiRequest({
             path: "/firefox/save",
             data: sendData,
-            success: function(data) {
+            success(data) {
 
                 // Update premium status, tags and since
                 var tags = data.tags;
                 if ((typeof tags !== "undefined") && Array.isArray(tags)) {
                     // If a tagslist is in the response replace the tags
-                    setSetting('tags', JSON.stringify(data.tags));
+                    setSetting("tags", JSON.stringify(data.tags));
                 }
 
                 // Update premium status
@@ -365,7 +363,7 @@ var pktApi = (function() {
                 }
 
                 // Save since value for further requests
-                setSetting('latestSince', data.since);
+                setSetting("latestSince", data.since);
 
                 if (options.success) {
                     options.success.apply(options, Array.apply(null, arguments));
@@ -404,7 +402,7 @@ var pktApi = (function() {
     function sendAction(action, options) {
         // Options can have an 'actionInfo' object. This actionInfo object gets
         // passed through to the action object that will be send to the API endpoint
-        if (typeof options.actionInfo !== 'undefined') {
+        if (typeof options.actionInfo !== "undefined") {
             action = extend(action, options.actionInfo);
         }
         return sendActions([action], options);
@@ -458,7 +456,7 @@ var pktApi = (function() {
      * @return {Boolean} Returns Boolean whether the api call started sucessfully
      */
     function addTagsToURL(url, tags, options) {
-        return addTags({url: url}, tags, options);
+        return addTags({url}, tags, options);
     }
 
     /**
@@ -475,7 +473,7 @@ var pktApi = (function() {
         // Tags add action
         var action = {
             action: "tags_add",
-            tags: tags
+            tags
         };
         action = extend(action, actionPart);
 
@@ -584,7 +582,7 @@ var pktApi = (function() {
      * @return {Boolean} Returns Boolean whether the api call started sucessfully
      */
     function getSuggestedTagsForURL(url, options) {
-        return getSuggestedTags({url: url}, options);
+        return getSuggestedTags({url}, options);
     }
 
     /**
@@ -600,7 +598,7 @@ var pktApi = (function() {
 
         return apiRequest({
             path: "/getSuggestedTags",
-            data: data,
+            data,
             success: options.success,
             error: options.error
         });
@@ -610,18 +608,17 @@ var pktApi = (function() {
      * Helper function to get current signup AB group the user is in
      */
     function getSignupPanelTabTestVariant() {
-        return getMultipleTestOption('panelSignUp', {control: 1, v1: 8, v2: 1 })
+        return getMultipleTestOption("panelSignUp", {control: 1, v1: 8, v2: 1 })
     }
 
     function getMultipleTestOption(testName, testOptions) {
         // Get the test from preferences if we've already assigned the user to a test
-        var settingName = 'test.' + testName;
+        var settingName = "test." + testName;
         var assignedValue = getSetting(settingName);
         var valArray = [];
 
         // If not assigned yet, pick and store a value
-        if (!assignedValue)
-        {
+        if (!assignedValue) {
             // Get a weighted array of test variants from the testOptions object
             Object.keys(testOptions).forEach(function(key) {
               for (var i = 0; i < testOptions[key]; i++) {
@@ -642,16 +639,16 @@ var pktApi = (function() {
      * Public functions
      */
     return {
-        isUserLoggedIn : isUserLoggedIn,
-        clearUserData: clearUserData,
-        addLink: addLink,
-        deleteItem: deleteItem,
-        addTagsToItem: addTagsToItem,
-        addTagsToURL: addTagsToURL,
-        getTags: getTags,
-        isPremiumUser: isPremiumUser,
-        getSuggestedTagsForItem: getSuggestedTagsForItem,
-        getSuggestedTagsForURL: getSuggestedTagsForURL,
-        getSignupPanelTabTestVariant: getSignupPanelTabTestVariant,
+        isUserLoggedIn,
+        clearUserData,
+        addLink,
+        deleteItem,
+        addTagsToItem,
+        addTagsToURL,
+        getTags,
+        isPremiumUser,
+        getSuggestedTagsForItem,
+        getSuggestedTagsForURL,
+        getSignupPanelTabTestVariant,
     };
 }());

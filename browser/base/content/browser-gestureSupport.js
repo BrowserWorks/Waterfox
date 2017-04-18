@@ -134,9 +134,9 @@ var gGestureSupport = {
     let isLatched = false;
 
     // Create the update function here to capture closure state
-    this._doUpdate = function GS__doUpdate(aEvent) {
+    this._doUpdate = function GS__doUpdate(updateEvent) {
       // Update the offset with new event data
-      offset += aEvent.delta;
+      offset += updateEvent.delta;
 
       // Check if the cumulative deltas exceed the threshold
       if (Math.abs(offset) > aPref["threshold"]) {
@@ -145,7 +145,7 @@ var gGestureSupport = {
         // initial motion; or we're latched and going the opposite way
         let sameDir = (latchDir ^ offset) >= 0;
         if (!aPref["latched"] || (isLatched ^ sameDir)) {
-          this._doAction(aEvent, [aGesture, offset > 0 ? aInc : aDec]);
+          this._doAction(updateEvent, [aGesture, offset > 0 ? aInc : aDec]);
 
           // We must be getting latched or leaving it, so just toggle
           isLatched = !isLatched;
@@ -242,8 +242,8 @@ var gGestureSupport = {
     this._doEnd = function GS__doEnd(aEvent) {
       gHistorySwipeAnimation.swipeEndEventReceived();
 
-      this._doUpdate = function (aEvent) {};
-      this._doEnd = function (aEvent) {};
+      this._doUpdate = function() {};
+      this._doEnd = function() {};
     }
   },
 
@@ -260,7 +260,7 @@ var gGestureSupport = {
     let num = 1 << aArray.length;
     while (--num >= 0) {
       // Only select array elements where the current bit is set
-      yield aArray.reduce(function (aPrev, aCurr, aIndex) {
+      yield aArray.reduce(function(aPrev, aCurr, aIndex) {
         if (num & 1 << aIndex)
           aPrev.push(aCurr);
         return aPrev;
@@ -338,8 +338,7 @@ var gGestureSupport = {
         node.dispatchEvent(cmdEvent);
       }
 
-    }
-    else {
+    } else {
       goDoCommand(aCommand);
     }
   },
@@ -351,7 +350,7 @@ var gGestureSupport = {
    * @param aEvent
    *        The continual motion update event to handle
    */
-  _doUpdate: function(aEvent) {},
+  _doUpdate(aEvent) {},
 
   /**
    * Handle gesture end events.  This function will be set by _setupSwipe.
@@ -359,7 +358,7 @@ var gGestureSupport = {
    * @param aEvent
    *        The gesture end event to handle
    */
-  _doEnd: function(aEvent) {},
+  _doEnd(aEvent) {},
 
   /**
    * Convert the swipe gesture into a browser action based on the direction.
@@ -405,8 +404,7 @@ var gGestureSupport = {
     if ((gHistorySwipeAnimation.isAnimationRunning()) &&
         (aDir == "RIGHT" || aDir == "LEFT")) {
       gHistorySwipeAnimation.processSwipeEvent(aEvent, aDir);
-    }
-    else {
+    } else {
       this.processSwipeEvent(aEvent, aDir);
     }
   },
@@ -432,8 +430,7 @@ var gGestureSupport = {
       else if (type == "number")
         getFunc = "Int";
       return gPrefService["get" + getFunc + "Pref"](branch + aPref);
-    }
-    catch (e) {
+    } catch (e) {
       return aDef;
     }
   },
@@ -444,7 +441,7 @@ var gGestureSupport = {
    * @param aEvent
    *        The MozRotateGestureUpdate event triggering this call
    */
-  rotate: function(aEvent) {
+  rotate(aEvent) {
     if (!(content.document instanceof ImageDocument))
       return;
 
@@ -463,7 +460,7 @@ var gGestureSupport = {
   /**
    * Perform a rotation end for ImageDocuments
    */
-  rotateEnd: function() {
+  rotateEnd() {
     if (!(content.document instanceof ImageDocument))
       return;
 
@@ -531,7 +528,7 @@ var gGestureSupport = {
    * When the location/tab changes, need to reload the current rotation for the
    * image
    */
-  restoreRotationState: function() {
+  restoreRotationState() {
     // Bug 863514 - Make gesture support work in electrolysis
     if (gMultiProcessBrowser)
       return;
@@ -560,7 +557,7 @@ var gGestureSupport = {
   /**
    * Removes the transition rule by removing the completeRotation class
    */
-  _clearCompleteRotation: function() {
+  _clearCompleteRotation() {
     let contentElement = content.document &&
                          content.document instanceof ImageDocument &&
                          content.document.body &&
@@ -601,11 +598,11 @@ var gHistorySwipeAnimation = {
     // If we don't store any, we handle horizontal swipes without animations.
     if (this._maxSnapshots > 0) {
       this.active = true;
-      gBrowser.addEventListener("pagehide", this, false);
-      gBrowser.addEventListener("pageshow", this, false);
-      gBrowser.addEventListener("popstate", this, false);
-      gBrowser.addEventListener("DOMModalDialogClosed", this, false);
-      gBrowser.tabContainer.addEventListener("TabClose", this, false);
+      gBrowser.addEventListener("pagehide", this);
+      gBrowser.addEventListener("pageshow", this);
+      gBrowser.addEventListener("popstate", this);
+      gBrowser.addEventListener("DOMModalDialogClosed", this);
+      gBrowser.tabContainer.addEventListener("TabClose", this);
     }
   },
 
@@ -613,11 +610,11 @@ var gHistorySwipeAnimation = {
    * Uninitializes the support for history swipe animations.
    */
   uninit: function HSA_uninit() {
-    gBrowser.removeEventListener("pagehide", this, false);
-    gBrowser.removeEventListener("pageshow", this, false);
-    gBrowser.removeEventListener("popstate", this, false);
-    gBrowser.removeEventListener("DOMModalDialogClosed", this, false);
-    gBrowser.tabContainer.removeEventListener("TabClose", this, false);
+    gBrowser.removeEventListener("pagehide", this);
+    gBrowser.removeEventListener("pageshow", this);
+    gBrowser.removeEventListener("popstate", this);
+    gBrowser.removeEventListener("DOMModalDialogClosed", this);
+    gBrowser.tabContainer.removeEventListener("TabClose", this);
 
     this.active = false;
     this.isLTR = false;
@@ -649,8 +646,7 @@ var gHistorySwipeAnimation = {
         this._handleFastSwiping();
       }
       this.updateAnimation(0);
-    }
-    else {
+    } else {
       // Get the session history from SessionStore.
       let updateSessionHistory = sessionHistory => {
         this._startingIndex = sessionHistory.index;
@@ -731,7 +727,7 @@ var gHistorySwipeAnimation = {
     }
   },
 
-  _getCurrentHistoryIndex: function() {
+  _getCurrentHistoryIndex() {
     return SessionStore.getSessionHistory(gBrowser.selectedTab).index;
   },
 
@@ -850,8 +846,7 @@ var gHistorySwipeAnimation = {
   _doesIndexExistInHistory: function HSA__doesIndexExistInHistory(aIndex) {
     try {
       return SessionStore.getSessionHistory(gBrowser.selectedTab).entries[aIndex] != null;
-    }
-    catch (ex) {
+    } catch (ex) {
       return false;
     }
   },
@@ -1154,11 +1149,10 @@ var gHistorySwipeAnimation = {
       img.onload = function() {
         URL.revokeObjectURL(url);
       };
-    }
-    finally {
+    } finally {
       img.src = url;
-      return img;
     }
+    return img;
   },
 
   /**

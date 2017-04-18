@@ -168,7 +168,9 @@ function swapToInnerBrowser({ tab, containerURL, getInnerBrowser }) {
       // 5. Force the original browser tab to be remote since web content is
       //    loaded in the child process, and we're about to swap the content
       //    into this tab.
-      gBrowser.updateBrowserRemoteness(tab.linkedBrowser, true);
+      gBrowser.updateBrowserRemoteness(tab.linkedBrowser, true, {
+        remoteType: contentBrowser.remoteType,
+      });
 
       // 6. Swap the content into the original browser tab and close the
       //    temporary tab used to hold the content via
@@ -248,6 +250,15 @@ function addXULBrowserDecorations(browser) {
     Object.defineProperty(browser, "isRemoteBrowser", {
       get() {
         return this.getAttribute("remote") == "true";
+      },
+      configurable: true,
+      enumerable: true,
+    });
+  }
+  if (browser.remoteType == undefined) {
+    Object.defineProperty(browser, "remoteType", {
+      get() {
+        return this.getAttribute("remoteType");
       },
       configurable: true,
       enumerable: true,

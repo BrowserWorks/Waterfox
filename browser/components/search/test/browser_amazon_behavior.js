@@ -32,7 +32,7 @@ function test() {
     {
       name: "context menu search",
       searchURL: base,
-      run: function () {
+      run() {
         // Simulate a contextmenu search
         // FIXME: This is a bit "low-level"...
         BrowserSearch.loadSearch("foo", false, "contextmenu");
@@ -41,7 +41,7 @@ function test() {
     {
       name: "keyword search",
       searchURL: base,
-      run: function () {
+      run() {
         gURLBar.value = "? foo";
         gURLBar.focus();
         EventUtils.synthesizeKey("VK_RETURN", {});
@@ -50,7 +50,7 @@ function test() {
     {
       name: "keyword search",
       searchURL: base,
-      run: function () {
+      run() {
         gURLBar.value = "a foo";
         gURLBar.focus();
         EventUtils.synthesizeKey("VK_RETURN", {});
@@ -59,11 +59,11 @@ function test() {
     {
       name: "search bar search",
       searchURL: base,
-      run: function () {
+      run() {
         let sb = BrowserSearch.searchBar;
         sb.focus();
         sb.value = "foo";
-        registerCleanupFunction(function () {
+        registerCleanupFunction(function() {
           sb.value = "";
         });
         EventUtils.synthesizeKey("VK_RETURN", {});
@@ -72,7 +72,7 @@ function test() {
     {
       name: "new tab search",
       searchURL: base,
-      run: function () {
+      run() {
         function doSearch(doc) {
           // Re-add the listener, and perform a search
           gBrowser.addProgressListener(listener);
@@ -85,25 +85,24 @@ function test() {
         gBrowser.removeProgressListener(listener);
         gBrowser.loadURI("about:newtab");
         info("Waiting for about:newtab load");
-        tab.linkedBrowser.addEventListener("load", function load(event) {
-          if (event.originalTarget != tab.linkedBrowser.contentDocument ||
-              event.target.location.href == "about:blank") {
+        tab.linkedBrowser.addEventListener("load", function load(loadEvent) {
+          if (loadEvent.originalTarget != tab.linkedBrowser.contentDocumentAsCPOW ||
+              loadEvent.target.location.href == "about:blank") {
             info("skipping spurious load event");
             return;
           }
           tab.linkedBrowser.removeEventListener("load", load, true);
 
           // Observe page setup
-          let win = gBrowser.contentWindow;
+          let win = gBrowser.contentWindowAsCPOW;
           if (win.gSearch.currentEngineName ==
               Services.search.currentEngine.name) {
             doSearch(win.document);
-          }
-          else {
+          } else {
             info("Waiting for newtab search init");
-            win.addEventListener("ContentSearchService", function done(event) {
-              info("Got newtab search event " + event.detail.type);
-              if (event.detail.type == "State") {
+            win.addEventListener("ContentSearchService", function done(contentSearchServiceEvent) {
+              info("Got newtab search event " + contentSearchServiceEvent.detail.type);
+              if (contentSearchServiceEvent.detail.type == "State") {
                 win.removeEventListener("ContentSearchService", done);
                 // Let gSearch respond to the event before continuing.
                 executeSoon(() => doSearch(win.document));
@@ -151,7 +150,7 @@ function test() {
     }
   }
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     engine.alias = undefined;
     gBrowser.removeProgressListener(listener);
     gBrowser.removeTab(tab);

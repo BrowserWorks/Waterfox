@@ -288,6 +288,22 @@ nsUrlClassifierUtils::GetProvider(const nsACString& aTableName,
 }
 
 NS_IMETHODIMP
+nsUrlClassifierUtils::GetTelemetryProvider(const nsACString& aTableName,
+                                  nsACString& aProvider)
+{
+  GetProvider(aTableName, aProvider);
+  // Filter out build-in providers: mozilla, google, google4
+  // Empty provider is filtered as "other"
+  if (!NS_LITERAL_CSTRING("mozilla").Equals(aProvider) &&
+      !NS_LITERAL_CSTRING("google").Equals(aProvider) &&
+      !NS_LITERAL_CSTRING("google4").Equals(aProvider)) {
+    aProvider.Assign(NS_LITERAL_CSTRING("other"));
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsUrlClassifierUtils::GetProtocolVersion(const nsACString& aProvider,
                                          nsACString& aVersion)
 {
@@ -340,6 +356,118 @@ nsUrlClassifierUtils::MakeUpdateRequestV4(const char** aListNames,
   NS_ENSURE_SUCCESS(rv, rv);
 
   aRequest = out;
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsUrlClassifierUtils::MakeFindFullHashRequestV4(const char** aListNames,
+                                                const char** aListStatesBase64,
+                                                const char** aPrefixesBase64,
+                                                uint32_t aListCount,
+                                                uint32_t aPrefixCount,
+                                                nsACString &aRequest)
+{
+  FindFullHashesRequest r;
+  r.set_allocated_client(CreateClientInfo());
+
+  nsresult rv;
+
+  // Set up FindFullHashesRequest.client_states.
+  for (uint32_t i = 0; i < aListCount; i++) {
+    nsCString stateBinary;
+    rv = Base64Decode(nsCString(aListStatesBase64[i]), stateBinary);
+    NS_ENSURE_SUCCESS(rv, rv);
+    r.add_client_states(stateBinary.get(), stateBinary.Length());
+  }
+
+  //-------------------------------------------------------------------
+  // Set up FindFullHashesRequest.threat_info.
+  auto threatInfo = r.mutable_threat_info();
+
+  // 1) Set threat types.
+  for (uint32_t i = 0; i < aListCount; i++) {
+    uint32_t threatType;
+    rv = ConvertListNameToThreatType(nsCString(aListNames[i]), &threatType);
+    NS_ENSURE_SUCCESS(rv, rv);
+    threatInfo->add_threat_types((ThreatType)threatType);
+  }
+
+  // 2) Set platform type.
+  threatInfo->add_platform_types(GetPlatformType());
+
+  // 3) Set threat entry type.
+  threatInfo->add_threat_entry_types(URL);
+
+  // 4) Set threat entries.
+  for (uint32_t i = 0; i < aPrefixCount; i++) {
+    nsCString prefixBinary;
+    rv = Base64Decode(nsCString(aPrefixesBase64[i]), prefixBinary);
+    threatInfo->add_threat_entries()->set_hash(prefixBinary.get(),
+                                               prefixBinary.Length());
+  }
+  //-------------------------------------------------------------------
+
+  // Then serialize.
+  std::string s;
+  r.SerializeToString(&s);
+
+  nsCString out;
+  rv = Base64URLEncode(s.size(),
+                       (const uint8_t*)s.c_str(),
+                       Base64URLEncodePaddingPolicy::Include,
+                       out);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  aRequest = out;
+
+  return NS_OK;
+}
+
+static uint32_t
+DurationToMs(const Duration& aDuration)
+{
+  return aDuration.seconds() * 1000 + aDuration.nanos() / 1000;
+}
+
+NS_IMETHODIMP
+nsUrlClassifierUtils::ParseFindFullHashResponseV4(const nsACString& aResponse,
+                                                  nsIUrlClassifierParseFindFullHashCallback *aCallback)
+{
+  enum CompletionErrorType {
+    SUCCESS = 0,
+    PARSING_FAILURE = 1,
+    UNKNOWN_THREAT_TYPE = 2,
+  };
+
+  FindFullHashesResponse r;
+  if (!r.ParseFromArray(aResponse.BeginReading(), aResponse.Length())) {
+    NS_WARNING("Invalid response");
+    Telemetry::Accumulate(Telemetry::URLCLASSIFIER_COMPLETION_ERROR,
+                          PARSING_FAILURE);
+    return NS_ERROR_FAILURE;
+  }
+
+  bool hasUnknownThreatType = false;
+  auto minWaitDuration = DurationToMs(r.minimum_wait_duration());
+  auto negCacheDuration = DurationToMs(r.negative_cache_duration());
+  for (auto& m : r.matches()) {
+    nsCString tableNames;
+    nsresult rv = ConvertThreatTypeToListNames(m.threat_type(), tableNames);
+    if (NS_FAILED(rv)) {
+      hasUnknownThreatType = true;
+      continue; // Ignore un-convertable threat type.
+    }
+    auto& hash = m.threat().hash();
+    aCallback->OnCompleteHashFound(nsCString(hash.c_str(), hash.length()),
+                                   tableNames,
+                                   minWaitDuration,
+                                   negCacheDuration,
+                                   DurationToMs(m.cache_duration()));
+  }
+
+  Telemetry::Accumulate(Telemetry::URLCLASSIFIER_COMPLETION_ERROR,
+                        hasUnknownThreatType ? UNKNOWN_THREAT_TYPE : SUCCESS);
 
   return NS_OK;
 }

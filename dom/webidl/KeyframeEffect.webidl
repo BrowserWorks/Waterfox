@@ -45,7 +45,7 @@ interface KeyframeEffectReadOnly : AnimationEffectReadOnly {
 // Non-standard extensions
 dictionary AnimationPropertyValueDetails {
   required double             offset;
-  required DOMString          value;
+           DOMString          value;
            DOMString          easing;
   required CompositeOperation composite;
 };
@@ -68,10 +68,10 @@ partial interface KeyframeEffectReadOnly {
  Constructor (KeyframeEffectReadOnly source)]
 interface KeyframeEffect : KeyframeEffectReadOnly {
   inherit attribute (Element or CSSPseudoElement)? target;
+  [NeedsCallerType]
   inherit attribute IterationCompositeOperation    iterationComposite;
-  // Bug 1216844 - implement additive animation
-  // inherit attribute CompositeOperation          composite;
-  [SetterThrows]
+  inherit attribute CompositeOperation          composite;
+  [SetterThrows, NeedsCallerType]
   inherit attribute DOMString                   spacing;
   [Throws]
   void setKeyframes (object? keyframes);

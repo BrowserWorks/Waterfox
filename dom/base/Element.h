@@ -16,13 +16,14 @@
 #include "mozilla/dom/FragmentOrElement.h" // for base class
 #include "nsChangeHint.h"                  // for enum
 #include "mozilla/EventStates.h"           // for member
+#include "mozilla/ServoTypes.h"
 #include "mozilla/dom/DirectionalityUtils.h"
 #include "nsIDOMElement.h"
 #include "nsILinkHandler.h"
 #include "nsINodeList.h"
 #include "nsNodeUtils.h"
 #include "nsAttrAndChildArray.h"
-#include "mozFlushType.h"
+#include "mozilla/FlushType.h"
 #include "nsDOMAttributeMap.h"
 #include "nsPresContext.h"
 #include "mozilla/CORSMode.h"
@@ -65,6 +66,7 @@ namespace dom {
   class DOMIntersectionObserver;
   class ElementOrCSSPseudoElement;
   class UnrestrictedDoubleOrKeyframeAnimationOptions;
+  enum class CallerType : uint32_t;
 } // namespace dom
 } // namespace mozilla
 
@@ -163,6 +165,14 @@ public:
                "Bad NodeType in aNodeInfo");
     SetIsElement();
   }
+
+  ~Element()
+  {
+#ifdef MOZ_STYLO
+    NS_ASSERTION(!HasServoData(), "expected ServoData to be cleared earlier");
+#endif
+  }
+
 #endif // MOZILLA_INTERNAL_API
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_ELEMENT_IID)
@@ -235,14 +245,26 @@ public:
   }
 
   /**
+   * StyleStateLocks is used to specify which event states should be locked,
+   * and whether they should be locked to on or off.
+   */
+  struct StyleStateLocks {
+    // mLocks tracks which event states should be locked.
+    EventStates mLocks;
+    // mValues tracks if the locked state should be on or off.
+    EventStates mValues;
+  };
+
+  /**
    * The style state locks applied to this element.
    */
-  EventStates LockedStyleStates() const;
+  StyleStateLocks LockedStyleStates() const;
 
   /**
    * Add a style state lock on this element.
+   * aEnabled is the value to lock the given state bits to.
    */
-  void LockStyleStates(EventStates aStates);
+  void LockStyleStates(EventStates aStates, bool aEnabled);
 
   /**
    * Remove a style state lock on this element.
@@ -257,7 +279,7 @@ public:
   /**
    * Get the inline style declaration, if any, for this element.
    */
-  virtual DeclarationBlock* GetInlineStyleDeclaration();
+  DeclarationBlock* GetInlineStyleDeclaration() const;
 
   /**
    * Set the inline style declaration for this element. This will send
@@ -377,7 +399,7 @@ public:
     }
   }
 
-  bool GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult);
+  bool GetBindingURL(nsIDocument* aDocument, css::URLValue **aResult);
 
   // The bdi element defaults to dir=auto if it has no dir attribute set.
   // Other elements will only have dir=auto if they have an explicit dir=auto,
@@ -389,6 +411,43 @@ public:
   }
 
   Directionality GetComputedDirectionality() const;
+
+  inline Element* GetFlattenedTreeParentElement() const;
+  inline Element* GetFlattenedTreeParentElementForStyle() const;
+
+  bool HasDirtyDescendantsForServo() const
+  {
+    MOZ_ASSERT(IsStyledByServo());
+    return HasFlag(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO);
+  }
+
+  void SetHasDirtyDescendantsForServo() {
+    MOZ_ASSERT(IsStyledByServo());
+    SetFlags(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO);
+  }
+
+  void UnsetHasDirtyDescendantsForServo() {
+    MOZ_ASSERT(IsStyledByServo());
+    UnsetFlags(NODE_HAS_DIRTY_DESCENDANTS_FOR_SERVO);
+  }
+
+  inline bool ShouldTraverseForServo();
+
+  inline void NoteDirtyDescendantsForServo();
+
+#ifdef DEBUG
+  inline bool DirtyDescendantsBitIsPropagatedForServo();
+#endif
+
+  bool HasServoData() {
+#ifdef MOZ_STYLO
+    return !!mServoData.Get();
+#else
+    MOZ_CRASH("Accessing servo node data in non-stylo build");
+#endif
+  }
+
+  void ClearServoData();
 
 protected:
   /**
@@ -773,6 +832,14 @@ public:
         (aRetargetToElement ? CAPTURE_RETARGETTOELEMENT : 0));
     }
   }
+
+  void SetCaptureAlways(bool aRetargetToElement)
+  {
+    nsIPresShell::SetCapturingContent(this,
+        CAPTURE_PREVENTDRAG | CAPTURE_IGNOREALLOWED |
+        (aRetargetToElement ? CAPTURE_RETARGETTOELEMENT : 0));
+  }
+
   void ReleaseCapture()
   {
     if (nsIPresShell::GetCapturingContent() == this) {
@@ -780,8 +847,8 @@ public:
     }
   }
 
-  void RequestFullscreen(ErrorResult& aError);
-  void RequestPointerLock();
+  void RequestFullscreen(CallerType aCallerType, ErrorResult& aError);
+  void RequestPointerLock(CallerType aCallerType);
   Attr* GetAttributeNode(const nsAString& aName);
   already_AddRefed<Attr> SetAttributeNode(Attr& aNewAttr,
                                           ErrorResult& aError);
@@ -955,11 +1022,11 @@ public:
   /**
    * Get the primary frame for this content with flushing
    *
-   * @param aType the kind of flush to do, typically Flush_Frames or
-   *              Flush_Layout
+   * @param aType the kind of flush to do, typically FlushType::Frames or
+   *              FlushType::Layout
    * @return the primary frame
    */
-  nsIFrame* GetPrimaryFrame(mozFlushType aType);
+  nsIFrame* GetPrimaryFrame(FlushType aType);
   // Work around silly C++ name hiding stuff
   nsIFrame* GetPrimaryFrame() const { return nsIContent::GetPrimaryFrame(); }
 
@@ -1346,7 +1413,7 @@ protected:
   /**
    * Handle status bar updates before they can be cancelled.
    */
-  nsresult PreHandleEventForLinks(EventChainPreVisitor& aVisitor);
+  nsresult GetEventTargetParentForLinks(EventChainPreVisitor& aVisitor);
 
   /**
    * Handle default actions for link event if the event isn't consumed yet.
@@ -1368,7 +1435,7 @@ protected:
   nsDOMTokenList* GetTokenList(nsIAtom* aAtom,
                                const DOMTokenListSupportedTokenArray aSupportedTokens = nullptr);
 
-  nsTArray<nsDOMSlots::IntersectionObserverRegistration>* RegisteredIntersectionObservers();
+  nsDataHashtable<nsPtrHashKey<DOMIntersectionObserver>, int32_t>* RegisteredIntersectionObservers();
 
 private:
   /**
@@ -1382,6 +1449,10 @@ private:
 
   // Data members
   EventStates mState;
+#ifdef MOZ_STYLO
+  // Per-node data managed by Servo.
+  mozilla::ServoCell<ServoNodeData*> mServoData;
+#endif
 };
 
 class RemoveFromBindingManagerRunnable : public mozilla::Runnable
@@ -1479,7 +1550,7 @@ inline const mozilla::dom::Element* nsINode::AsElement() const
 
 inline void nsINode::UnsetRestyleFlagsIfGecko()
 {
-  if (IsElement() && !IsStyledByServo()) {
+  if (IsElement() && !AsElement()->IsStyledByServo()) {
     UnsetFlags(ELEMENT_ALL_RESTYLE_FLAGS);
   }
 }
@@ -1737,171 +1808,5 @@ NS_IMETHOD GetElementsByClassName(const nsAString& classes,                   \
                                                                   override    \
 {                                                                             \
   return Element::GetElementsByClassName(classes, _retval);                   \
-}                                                                             \
-NS_IMETHOD GetChildElements(nsIDOMNodeList** aChildElements) final override   \
-{                                                                             \
-  nsIHTMLCollection* list = FragmentOrElement::Children();                    \
-  return CallQueryInterface(list, aChildElements);                            \
-}                                                                             \
-NS_IMETHOD GetFirstElementChild(nsIDOMElement** aFirstElementChild) final     \
-  override                                                                    \
-{                                                                             \
-  Element* element = Element::GetFirstElementChild();                         \
-  if (!element) {                                                             \
-    *aFirstElementChild = nullptr;                                            \
-    return NS_OK;                                                             \
-  }                                                                           \
-  return CallQueryInterface(element, aFirstElementChild);                     \
-}                                                                             \
-NS_IMETHOD GetLastElementChild(nsIDOMElement** aLastElementChild) final       \
-  override                                                                    \
-{                                                                             \
-  Element* element = Element::GetLastElementChild();                          \
-  if (!element) {                                                             \
-    *aLastElementChild = nullptr;                                             \
-    return NS_OK;                                                             \
-  }                                                                           \
-  return CallQueryInterface(element, aLastElementChild);                      \
-}                                                                             \
-NS_IMETHOD GetPreviousElementSibling(nsIDOMElement** aPreviousElementSibling) \
-  final override                                                              \
-{                                                                             \
-  Element* element = Element::GetPreviousElementSibling();                    \
-  if (!element) {                                                             \
-    *aPreviousElementSibling = nullptr;                                       \
-    return NS_OK;                                                             \
-  }                                                                           \
-  return CallQueryInterface(element, aPreviousElementSibling);                \
-}                                                                             \
-NS_IMETHOD GetNextElementSibling(nsIDOMElement** aNextElementSibling)         \
-  final override                                                              \
-{                                                                             \
-  Element* element = Element::GetNextElementSibling();                        \
-  if (!element) {                                                             \
-    *aNextElementSibling = nullptr;                                           \
-    return NS_OK;                                                             \
-  }                                                                           \
-  return CallQueryInterface(element, aNextElementSibling);                    \
-}                                                                             \
-NS_IMETHOD GetChildElementCount(uint32_t* aChildElementCount) final override  \
-{                                                                             \
-  *aChildElementCount = Element::ChildElementCount();                         \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD MozRemove() final override                                         \
-{                                                                             \
-  nsINode::Remove();                                                          \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetClientRects(nsIDOMClientRectList** _retval) final override      \
-{                                                                             \
-  *_retval = Element::GetClientRects().take();                                \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetBoundingClientRect(nsIDOMClientRect** _retval) final override   \
-{                                                                             \
-  *_retval = Element::GetBoundingClientRect().take();                         \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetScrollTop(int32_t* aScrollTop) final override                   \
-{                                                                             \
-  *aScrollTop = Element::ScrollTop();                                         \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD SetScrollTop(int32_t aScrollTop) final override                    \
-{                                                                             \
-  Element::SetScrollTop(aScrollTop);                                          \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetScrollLeft(int32_t* aScrollLeft) final override                 \
-{                                                                             \
-  *aScrollLeft = Element::ScrollLeft();                                       \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD SetScrollLeft(int32_t aScrollLeft) final override                  \
-{                                                                             \
-  Element::SetScrollLeft(aScrollLeft);                                        \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetScrollWidth(int32_t* aScrollWidth) final override               \
-{                                                                             \
-  *aScrollWidth = Element::ScrollWidth();                                     \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetScrollHeight(int32_t* aScrollHeight) final override             \
-{                                                                             \
-  *aScrollHeight = Element::ScrollHeight();                                   \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetClientTop(int32_t* aClientTop) final override                   \
-{                                                                             \
-  *aClientTop = Element::ClientTop();                                         \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetClientLeft(int32_t* aClientLeft) final override                 \
-{                                                                             \
-  *aClientLeft = Element::ClientLeft();                                       \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetClientWidth(int32_t* aClientWidth) final override               \
-{                                                                             \
-  *aClientWidth = Element::ClientWidth();                                     \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetClientHeight(int32_t* aClientHeight) final override             \
-{                                                                             \
-  *aClientHeight = Element::ClientHeight();                                   \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetScrollLeftMax(int32_t* aScrollLeftMax) final override           \
-{                                                                             \
-  *aScrollLeftMax = Element::ScrollLeftMax();                                 \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD GetScrollTopMax(int32_t* aScrollTopMax) final override             \
-{                                                                             \
-  *aScrollTopMax = Element::ScrollTopMax();                                   \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD MozMatchesSelector(const nsAString& selector,                      \
-                              bool* _retval) final override                   \
-{                                                                             \
-  mozilla::ErrorResult rv;                                                    \
-  *_retval = Element::Matches(selector, rv);                                  \
-  return rv.StealNSResult();                                                  \
-}                                                                             \
-NS_IMETHOD SetCapture(bool retargetToElement) final override                  \
-{                                                                             \
-  Element::SetCapture(retargetToElement);                                     \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD ReleaseCapture(void) final override                                \
-{                                                                             \
-  Element::ReleaseCapture();                                                  \
-  return NS_OK;                                                               \
-}                                                                             \
-NS_IMETHOD MozRequestFullScreen(void) final override                          \
-{                                                                             \
-  mozilla::ErrorResult rv;                                                    \
-  Element::RequestFullscreen(rv);                                    \
-  return rv.StealNSResult();                                                  \
-}                                                                             \
-NS_IMETHOD MozRequestPointerLock(void) final override                         \
-{                                                                             \
-  Element::RequestPointerLock();                                              \
-  return NS_OK;                                                               \
-}                                                                             \
-using nsINode::QuerySelector;                                                 \
-NS_IMETHOD QuerySelector(const nsAString& aSelector,                          \
-                         nsIDOMElement **aReturn) final override              \
-{                                                                             \
-  return nsINode::QuerySelector(aSelector, aReturn);                          \
-}                                                                             \
-using nsINode::QuerySelectorAll;                                              \
-NS_IMETHOD QuerySelectorAll(const nsAString& aSelector,                       \
-                            nsIDOMNodeList **aReturn) final override          \
-{                                                                             \
-  return nsINode::QuerySelectorAll(aSelector, aReturn);                       \
 }
-
 #endif // mozilla_dom_Element_h__

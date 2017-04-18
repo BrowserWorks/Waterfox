@@ -87,7 +87,7 @@ var tests = [];
 // not returned.
 var observe_failures = function observe_failures(promise) {
   promise.catch(function onReject(reason) {
-    test.do_throw("Observed failure in test " + test + ": " + reason);
+    do_throw("Observed failure in test: " + reason);
   });
 };
 
@@ -123,7 +123,7 @@ tests.push(make_promise_test(
 
     // Install a number of observers before resolving
     let i;
-    for (i = 0; i < SIZE/2; ++i) {
+    for (i = 0; i < SIZE / 2; ++i) {
       install_observer(i);
     }
 
@@ -251,7 +251,7 @@ tests.push(make_promise_test(
 
     // Install a number of observers before resolving
     let i;
-    for (i = 0; i < SIZE/2; ++i) {
+    for (i = 0; i < SIZE / 2; ++i) {
       install_observer(i);
     }
 
@@ -275,7 +275,7 @@ tests.push(make_promise_test(
 // does not prevent other observers from receiving the notification
 // of success.
 tests.push(
-  make_promise_test(function exceptions_do_not_stop_notifications(test)  {
+  make_promise_test(function exceptions_do_not_stop_notifications(test) {
     let source = Promise.defer();
 
     let exception_thrown = false;
@@ -287,7 +287,7 @@ tests.push(
         throw exception_content;
       });
 
-    let observer_2 = source.promise.then(
+    source.promise.then(
       function onResolve() {
         do_check_true(exception_thrown, "Second observer called after first observer has thrown");
       }
@@ -960,7 +960,6 @@ function wait_for_uncaught(aMustAppear, aTimeout = undefined) {
   }
   let deferred = Promise.defer();
   let print = do_print;
-  let execute_soon = do_execute_soon;
   let observer = function({message, stack}) {
     let data = message + stack;
     print("Observing " + message + ", looking for " + aMustAppear.join(", "));
@@ -1014,7 +1013,7 @@ function wait_for_uncaught(aMustAppear, aTimeout = undefined) {
     let error = new Error("This is an uncaught error " + salt);
     return {
       mustFind: [error.message, error.fileName, error.lineNumber, error.stack],
-      error: error
+      error
     };
   };
   let make_exception_rejection = function make_exception_rejection() {
@@ -1098,8 +1097,7 @@ tests.push(
   })
 );
 
-function run_test()
-{
+function run_test() {
   do_test_pending();
   run_promise_tests(tests, do_test_finished);
 }

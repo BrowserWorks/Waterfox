@@ -63,8 +63,7 @@ DistributionCustomizer.prototype = {
     let locale;
     try {
       locale = this._prefs.getCharPref("general.useragent.locale");
-    }
-    catch (e) {
+    } catch (e) {
       locale = "en-US";
     }
     this.__defineGetter__("_locale", () => locale);
@@ -98,7 +97,7 @@ DistributionCustomizer.prototype = {
   },
 
   _makeURI: function DIST__makeURI(spec) {
-    return this._ioSvc.newURI(spec, null, null);
+    return this._ioSvc.newURI(spec);
   },
 
   _parseBookmarksSection: Task.async(function* (parentGuid, section) {
@@ -285,8 +284,7 @@ DistributionCustomizer.prototype = {
     try {
       bmProcessedPref = this._ini.getString("Global",
                                             "bookmarks.initialized.pref");
-    }
-    catch (e) {
+    } catch (e) {
       bmProcessedPref = "distribution." +
         this._ini.getString("Global", "id") + ".bookmarksProcessed";
     }
@@ -294,8 +292,7 @@ DistributionCustomizer.prototype = {
     let bmProcessed = false;
     try {
       bmProcessed = this._prefs.getBoolPref(bmProcessedPref);
-    }
-    catch (e) {}
+    } catch (e) {}
 
     if (!bmProcessed) {
       if (sections["BookmarksMenu"])
@@ -439,8 +436,8 @@ DistributionCustomizer.prototype = {
             value = value.replace(/%LOCALE%/g, this._locale);
             value = value.replace(/%LANGUAGE%/g, this._language);
             localizedStr.data = "data:text/plain," + key + "=" + value;
+            defaults._prefBranch.setComplexValue(key, Ci.nsIPrefLocalizedString, localizedStr);
           }
-          defaults._prefBranch.setComplexValue(key, Ci.nsIPrefLocalizedString, localizedStr);
         } catch (e) { /* ignore bad prefs and move on */ }
       }
     }

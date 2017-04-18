@@ -130,6 +130,9 @@ include css-sizing/reftest.list
 # css transitions
 include css-transitions/reftest.list
 
+# css ui
+include css-ui/reftest.list
+
 # css :-moz-ui-invalid
 include css-ui-invalid/reftest.list
 
@@ -364,6 +367,9 @@ include transform-3d/reftest.list
 
 # unicode/ (verify that we don't do expend effort doing unicode-aware case checks)
 include unicode/reftest.list
+
+# usercss
+include usercss/reftest.list
 
 include view-source/reftest.list
 

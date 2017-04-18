@@ -42,7 +42,7 @@ function timeDaysAgo(numDays) {
 }
 
 // utility function to make a visit for insetion into places db
-function makeVisit(index, daysAgo, isTyped, domain=TEST_URL) {
+function makeVisit(index, daysAgo, isTyped, domain = TEST_URL) {
   let {
     TRANSITION_TYPED,
     TRANSITION_LINK
@@ -145,15 +145,14 @@ add_task(function* test_Links_onLinkChanged() {
 
   let linkChangedPromise = new Promise(resolve => {
     let handler = (_, link) => { // jshint ignore:line
-      /* There are 3 linkChanged events:
+      /* There are 2 linkChanged events:
        * 1. visit insertion (-1 frecency by default)
        * 2. frecency score update (after transition type calculation etc)
-       * 3. title change
        */
       if (link.url === url) {
         equal(link.url, url, `expected url on linkChanged event`);
         linkChangedMsgCount += 1;
-        if (linkChangedMsgCount === 3) {
+        if (linkChangedMsgCount === 2) {
           ok(true, `all linkChanged events captured`);
           provider.off("linkChanged", this);
           resolve();
@@ -331,16 +330,14 @@ add_task(function* test_Links_execute_query() {
   try {
     yield provider.executePlacesQuery("select from moz");
     do_throw("bad sql should've thrown");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true("expected failure - bad sql");
   }
   // missing bindings
   try {
     yield provider.executePlacesQuery("select * from moz_places limit :limit");
     do_throw("bad sql should've thrown");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true("expected failure - missing bidning");
   }
   // non-existent column name
@@ -348,8 +345,7 @@ add_task(function* test_Links_execute_query() {
     yield provider.executePlacesQuery("select * from moz_places limit :limit",
                                      {columns: ["no-such-column"], params: {limit: 4}});
     do_throw("bad sql should've thrown");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true("expected failure - wrong column name");
   }
 

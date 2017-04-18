@@ -7,6 +7,7 @@
 #include "DirectShowDecoder.h"
 #include "DirectShowReader.h"
 #include "DirectShowUtils.h"
+#include "MediaContainerType.h"
 #include "MediaDecoderStateMachine.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/WindowsVersion.h"
@@ -20,21 +21,17 @@ MediaDecoderStateMachine* DirectShowDecoder::CreateStateMachine()
 
 /* static */
 bool
-DirectShowDecoder::GetSupportedCodecs(const nsACString& aType,
-                                      char const *const ** aCodecList)
+DirectShowDecoder::GetSupportedCodecs(const MediaContainerType& aType,
+                                      MediaCodecs* aOutCodecs)
 {
   if (!IsEnabled()) {
     return false;
   }
 
-  static char const *const mp3AudioCodecs[] = {
-    "mp3",
-    nullptr
-  };
-  if (aType.EqualsASCII("audio/mpeg") ||
-      aType.EqualsASCII("audio/mp3")) {
-    if (aCodecList) {
-      *aCodecList = mp3AudioCodecs;
+  if (aType.Type() == MEDIAMIMETYPE("audio/mpeg")
+      || aType.Type() == MEDIAMIMETYPE("audio/mp3")) {
+    if (aOutCodecs) {
+      *aOutCodecs = MediaCodecs("mp3");
     }
     return true;
   }
@@ -53,13 +50,9 @@ DirectShowDecoder::IsEnabled()
 DirectShowDecoder::DirectShowDecoder(MediaDecoderOwner* aOwner)
   : MediaDecoder(aOwner)
 {
-  MOZ_COUNT_CTOR(DirectShowDecoder);
 }
 
-DirectShowDecoder::~DirectShowDecoder()
-{
-  MOZ_COUNT_DTOR(DirectShowDecoder);
-}
+DirectShowDecoder::~DirectShowDecoder() = default;
 
 } // namespace mozilla
 

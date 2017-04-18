@@ -3,8 +3,8 @@
 const DUMMY1 = "http://example.com/browser/toolkit/modules/tests/browser/dummy_page.html";
 const DUMMY2 = "http://example.org/browser/toolkit/modules/tests/browser/dummy_page.html"
 
-function waitForLoad(browser = gBrowser.selectedBrowser) {
-  return BrowserTestUtils.browserLoaded(browser);
+function waitForLoad(uri) {
+  return BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser, false, uri);
 }
 
 function waitForPageShow(browser = gBrowser.selectedBrowser) {
@@ -14,7 +14,7 @@ function waitForPageShow(browser = gBrowser.selectedBrowser) {
 function makeURI(url) {
   return Cc["@mozilla.org/network/io-service;1"].
          getService(Ci.nsIIOService).
-         newURI(url, null, null);
+         newURI(url);
 }
 
 // Tests that loadURI accepts a referrer and it is included in the load.
@@ -26,10 +26,10 @@ add_task(function* test_referrer() {
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
                                 makeURI(DUMMY2),
                                 null, null);
-  yield waitForLoad();
+  yield waitForLoad(DUMMY1);
 
   yield ContentTask.spawn(browser, [ DUMMY1, DUMMY2 ], function([dummy1, dummy2]) {
-    is(content.location, dummy1, "Should have loaded the right URL");
+    is(content.location.href, dummy1, "Should have loaded the right URL");
     is(content.document.referrer, dummy2, "Should have the right referrer");
   });
 
@@ -51,12 +51,12 @@ add_task(function* test_history() {
   browser.webNavigation.loadURI(DUMMY1,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
                                 null, null, null);
-  yield waitForLoad();
+  yield waitForLoad(DUMMY1);
 
   browser.webNavigation.loadURI(DUMMY2,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
                                 null, null, null);
-  yield waitForLoad();
+  yield waitForLoad(DUMMY2);
 
   yield ContentTask.spawn(browser, [DUMMY1, DUMMY2], function([dummy1, dummy2]) {
     let history = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -107,18 +107,18 @@ add_task(function* test_flags() {
   browser.webNavigation.loadURI(DUMMY1,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
                                 null, null, null);
-  yield waitForLoad();
+  yield waitForLoad(DUMMY1);
 
   browser.webNavigation.loadURI(DUMMY2,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_REPLACE_HISTORY,
                                 null, null, null);
-  yield waitForLoad();
+  yield waitForLoad(DUMMY2);
   yield checkHistory(browser, { count: 1, index: 0 });
 
   browser.webNavigation.loadURI(DUMMY1,
                                 Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY,
                                 null, null, null);
-  yield waitForLoad();
+  yield waitForLoad(DUMMY1);
   yield checkHistory(browser, { count: 1, index: 0 });
 
   gBrowser.removeCurrentTab();
@@ -137,8 +137,7 @@ add_task(function* test_badarguments() {
                                   Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
                                   null, {}, null);
     ok(false, "Should have seen an exception from trying to pass some postdata");
-  }
-  catch (e) {
+  } catch (e) {
     ok(true, "Should have seen an exception from trying to pass some postdata");
   }
 
@@ -147,8 +146,7 @@ add_task(function* test_badarguments() {
                                   Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
                                   null, null, {});
     ok(false, "Should have seen an exception from trying to pass some headers");
-  }
-  catch (e) {
+  } catch (e) {
     ok(true, "Should have seen an exception from trying to pass some headers");
   }
 

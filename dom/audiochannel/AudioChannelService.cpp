@@ -25,11 +25,9 @@
 #include "nsGlobalWindow.h"
 #include "nsPIDOMWindow.h"
 #include "nsServiceManagerUtils.h"
-#include "mozilla/dom/SettingChangeNotificationBinding.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsJSUtils.h"
-#include "SpeakerManagerService.h"
 #endif
 
 #include "mozilla/Preferences.h"
@@ -216,6 +214,17 @@ AudioChannelService::GetOrCreate()
   return service.forget();
 }
 
+/* static */ already_AddRefed<AudioChannelService>
+AudioChannelService::Get()
+{
+  if (sXPCOMShuttingDown) {
+    return nullptr;
+  }
+
+  RefPtr<AudioChannelService> service = gAudioChannelService.get();
+  return service.forget();
+}
+
 /* static */ PRLogModuleInfo*
 AudioChannelService::GetAudioChannelLog()
 {
@@ -237,20 +246,12 @@ AudioChannelService::Shutdown()
 
       if (IsParentProcess()) {
         obs->RemoveObserver(gAudioChannelService, "ipc:content-shutdown");
-
-#ifdef MOZ_WIDGET_GONK
-        // To monitor the volume settings based on audio channel.
-        obs->RemoveObserver(gAudioChannelService, "mozsettings-changed");
-#endif
       }
     }
 
     gAudioChannelService->mWindows.Clear();
     gAudioChannelService->mPlayingChildren.Clear();
     gAudioChannelService->mTabParents.Clear();
-#ifdef MOZ_WIDGET_GONK
-    gAudioChannelService->mSpeakerManager.Clear();
-#endif
 
     gAudioChannelService = nullptr;
   }
@@ -284,11 +285,6 @@ AudioChannelService::AudioChannelService()
     obs->AddObserver(this, "outer-window-destroyed", false);
     if (IsParentProcess()) {
       obs->AddObserver(this, "ipc:content-shutdown", false);
-
-#ifdef MOZ_WIDGET_GONK
-      // To monitor the volume settings based on audio channel.
-      obs->AddObserver(this, "mozsettings-changed", false);
-#endif
     }
   }
 
@@ -341,13 +337,6 @@ AudioChannelService::UnregisterAudioChannelAgent(AudioChannelAgent* aAgent)
   // released in their callback.
   RefPtr<AudioChannelAgent> kungFuDeathGrip(aAgent);
   winData->RemoveAgent(aAgent);
-
-#ifdef MOZ_WIDGET_GONK
-  bool active = AnyAudioChannelIsActive();
-  for (uint32_t i = 0; i < mSpeakerManager.Length(); i++) {
-    mSpeakerManager[i]->SetAudioChannelActive(active);
-  }
-#endif
 
   MaybeSendStatusUpdate();
 }
@@ -574,12 +563,6 @@ AudioChannelService::Observe(nsISupports* aSubject, const char* aTopic,
       }
     }
 
-#ifdef MOZ_WIDGET_GONK
-    bool active = AnyAudioChannelIsActive();
-    for (uint32_t i = 0; i < mSpeakerManager.Length(); i++) {
-      mSpeakerManager[i]->SetAudioChannelActive(active);
-    }
-#endif
   } else if (!strcmp(aTopic, "ipc:content-shutdown")) {
     nsCOMPtr<nsIPropertyBag2> props = do_QueryInterface(aSubject);
     if (!props) {
@@ -633,7 +616,7 @@ AudioChannelService::RefreshAgentsVolumeAndPropagate(AudioChannel aAudioChannel,
 
 void
 AudioChannelService::RefreshAgents(nsPIDOMWindowOuter* aWindow,
-                                   mozilla::function<void(AudioChannelAgent*)> aFunc)
+                                   std::function<void(AudioChannelAgent*)> aFunc)
 {
   MOZ_ASSERT(aWindow);
   MOZ_ASSERT(aWindow->IsOuterWindow());
@@ -828,6 +811,10 @@ AudioChannelService::GetAudioChannelVolume(mozIDOMWindowProxy* aWindow,
   MOZ_ASSERT(NS_IsMainThread());
 
   auto* window = nsPIDOMWindowOuter::From(aWindow)->GetScriptableTop();
+  if (!window) {
+    *aVolume = 0.f;
+    return NS_ERROR_FAILURE;
+  }
   *aVolume = GetAudioChannelVolume(window, (AudioChannel)aAudioChannel);
   return NS_OK;
 }
@@ -858,6 +845,9 @@ AudioChannelService::SetAudioChannelVolume(mozIDOMWindowProxy* aWindow,
   MOZ_ASSERT(NS_IsMainThread());
 
   auto* window = nsPIDOMWindowOuter::From(aWindow)->GetScriptableTop();
+  if (!window) {
+    return NS_ERROR_FAILURE;
+  }
   SetAudioChannelVolume(window, (AudioChannel)aAudioChannel, aVolume);
   return NS_OK;
 }
@@ -882,6 +872,10 @@ AudioChannelService::GetAudioChannelMuted(mozIDOMWindowProxy* aWindow,
   MOZ_ASSERT(NS_IsMainThread());
 
   auto* window = nsPIDOMWindowOuter::From(aWindow)->GetScriptableTop();
+  if (!window) {
+    *aMuted = false;
+    return NS_ERROR_FAILURE;
+  }
   *aMuted = GetAudioChannelMuted(window, (AudioChannel)aAudioChannel);
   return NS_OK;
 }
@@ -917,6 +911,9 @@ AudioChannelService::SetAudioChannelMuted(mozIDOMWindowProxy* aWindow,
   MOZ_ASSERT(NS_IsMainThread());
 
   auto* window = nsPIDOMWindowOuter::From(aWindow)->GetScriptableTop();
+  if (!window) {
+    return NS_ERROR_FAILURE;
+  }
   SetAudioChannelMuted(window, (AudioChannel)aAudioChannel, aMuted);
   return NS_OK;
 }
@@ -941,9 +938,27 @@ AudioChannelService::IsAudioChannelActive(mozIDOMWindowProxy* aWindow,
   MOZ_ASSERT(NS_IsMainThread());
 
   auto* window = nsPIDOMWindowOuter::From(aWindow)->GetScriptableTop();
+  if (!window) {
+    *aActive = false;
+    return NS_ERROR_FAILURE;
+  }
   *aActive = IsAudioChannelActive(window, (AudioChannel)aAudioChannel);
   return NS_OK;
 }
+
+bool
+AudioChannelService::IsWindowActive(nsPIDOMWindowOuter* aWindow)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  auto* window = nsPIDOMWindowOuter::From(aWindow)->GetScriptableTop();
+  if (!window) {
+    return false;
+  }
+  AudioChannelWindow* winData = GetOrCreateWindowData(window);
+  return !winData->mAudibleAgents.IsEmpty();
+}
+
 void
 AudioChannelService::SetDefaultVolumeControlChannel(int32_t aChannel,
                                                     bool aVisible)

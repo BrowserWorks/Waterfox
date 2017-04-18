@@ -200,6 +200,18 @@ MacroAssembler::add64(Imm64 imm, Register64 dest)
     ma_daddu(dest.reg, ScratchRegister);
 }
 
+CodeOffset
+MacroAssembler::add32ToPtrWithPatch(Register src, Register dest)
+{
+    MOZ_CRASH("NYI - add32ToPtrWithPatch");
+}
+
+void
+MacroAssembler::patchAdd32ToPtr(CodeOffset offset, Imm32 imm)
+{
+    MOZ_CRASH("NYI - patchAdd32ToPtr");
+}
+
 void
 MacroAssembler::subPtr(Register src, Register dest)
 {
@@ -706,8 +718,12 @@ MacroAssembler::wasmBoundsCheck(Condition cond, Register index, L label)
 void
 MacroAssembler::wasmPatchBoundsCheck(uint8_t* patchAt, uint32_t limit)
 {
+    Instruction* inst = (Instruction*) patchAt;
+    InstImm* i0 = (InstImm*) inst;
+    InstImm* i1 = (InstImm*) i0->next();
+
     // Replace with new value
-    Assembler::UpdateLoad64Value((Instruction*) patchAt, limit);
+    AssemblerMIPSShared::UpdateLuiOriValue(i0, i1, limit);
 }
 
 //}}} check_macroassembler_style

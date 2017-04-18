@@ -3,15 +3,25 @@
 
 const trimPref = "browser.urlbar.trimURLs";
 const phishyUserPassPref = "network.http.phishy-userpass-length";
+const decodeURLpref = "browser.urlbar.decodeURLsOnCopy";
+
+function toUnicode(input) {
+  let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+                    .createInstance(Ci.nsIScriptableUnicodeConverter);
+  converter.charset = "UTF-8";
+
+  return converter.ConvertToUnicode(input);
+}
 
 function test() {
 
   let tab = gBrowser.selectedTab = gBrowser.addTab();
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     gBrowser.removeTab(tab);
     Services.prefs.clearUserPref(trimPref);
     Services.prefs.clearUserPref(phishyUserPassPref);
+    Services.prefs.clearUserPref(decodeURLpref);
     URLBarSetURI();
   });
 
@@ -34,6 +44,22 @@ var tests = [
     copyVal: "<e>xample.com",
     copyExpected: "e"
   },
+  {
+    copyVal: "<e>x<a>mple.com",
+    copyExpected: "ea"
+  },
+  {
+    copyVal: "<e><xa>mple.com",
+    copyExpected: "exa"
+  },
+  {
+    copyVal: "<e><xa>mple.co<m>",
+    copyExpected: "exam"
+  },
+  {
+    copyVal: "<e><xample.co><m>",
+    copyExpected: "example.com"
+  },
 
   // pageproxystate="valid" from this point on (due to the load)
   {
@@ -52,6 +78,14 @@ var tests = [
   {
     copyVal: "<e>xample.com",
     copyExpected: "e"
+  },
+  {
+    copyVal: "<e>xample.co<m>",
+    copyExpected: "em"
+  },
+  {
+    copyVal: "<exam><ple.com>",
+    copyExpected: "example.com"
   },
 
   {
@@ -141,50 +175,87 @@ var tests = [
   {
     copyVal: "<data:text/html,(%C3%A9 %25P>)",
     copyExpected: "data:text/html,(%C3%A9 %25P",
-  }
+  },
+  {
+    setup() { Services.prefs.setBoolPref(decodeURLpref, true); },
+    loadURL: "http://example.com/%D0%B1%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8F",
+    expectedURL: toUnicode("example.com/биография"),
+    copyExpected: toUnicode("http://example.com/биография")
+  },
+  {
+    copyVal: toUnicode("<example.com/би>ография"),
+    copyExpected: toUnicode("http://example.com/би")
+  },
 ];
 
 function nextTest() {
-  let test = tests.shift();
+  let testCase = tests.shift();
   if (tests.length == 0)
-    runTest(test, finish);
+    runTest(testCase, finish);
   else
-    runTest(test, nextTest);
+    runTest(testCase, nextTest);
 }
 
-function runTest(test, cb) {
+function runTest(testCase, cb) {
   function doCheck() {
-    if (test.setURL || test.loadURL) {
-      gURLBar.valueIsTyped = !!test.setURL;
-      is(gURLBar.textValue, test.expectedURL, "url bar value set");
+    if (testCase.setURL || testCase.loadURL) {
+      gURLBar.valueIsTyped = !!testCase.setURL;
+      is(gURLBar.textValue, testCase.expectedURL, "url bar value set");
     }
 
-    testCopy(test.copyVal, test.copyExpected, cb);
+    testCopy(testCase.copyVal, testCase.copyExpected, cb);
   }
 
-  if (test.loadURL) {
-    loadURL(test.loadURL, doCheck);
+  if (testCase.setup) {
+    testCase.setup();
+  }
+
+  if (testCase.loadURL) {
+    loadURL(testCase.loadURL, doCheck);
   } else {
-    if (test.setURL)
-      gURLBar.value = test.setURL;
+    if (testCase.setURL)
+      gURLBar.value = testCase.setURL;
     doCheck();
   }
 }
 
 function testCopy(copyVal, targetValue, cb) {
   info("Expecting copy of: " + targetValue);
-  waitForClipboard(targetValue, function () {
+  waitForClipboard(targetValue, function() {
     gURLBar.focus();
     if (copyVal) {
-      let startBracket = copyVal.indexOf("<");
-      let endBracket = copyVal.indexOf(">");
-      if (startBracket == -1 || endBracket == -1 ||
-          startBracket > endBracket ||
-          copyVal.replace("<", "").replace(">", "") != gURLBar.textValue) {
+      let offsets = [];
+      while (true) {
+        let startBracket = copyVal.indexOf("<");
+        let endBracket = copyVal.indexOf(">");
+        if (startBracket == -1 && endBracket == -1) {
+          break;
+        }
+        if (startBracket > endBracket || startBracket == -1) {
+          offsets = [];
+          break;
+        }
+        offsets.push([startBracket, endBracket - 1]);
+        copyVal = copyVal.replace("<", "").replace(">", "");
+      }
+      if (offsets.length == 0 ||
+          copyVal != gURLBar.textValue) {
         ok(false, "invalid copyVal: " + copyVal);
       }
-      gURLBar.selectionStart = startBracket;
-      gURLBar.selectionEnd = endBracket - 1;
+      gURLBar.selectionStart = offsets[0][0];
+      gURLBar.selectionEnd = offsets[0][1];
+      if (offsets.length > 1) {
+        let sel = gURLBar.editor.selection;
+        let r0 = sel.getRangeAt(0);
+        let node0 = r0.startContainer;
+        sel.removeAllRanges();
+        offsets.map(function(startEnd) {
+          let range = r0.cloneRange();
+          range.setStart(node0, startEnd[0]);
+          range.setEnd(node0, startEnd[1]);
+          sel.addRange(range);
+        });
+      }
     } else {
       gURLBar.select();
     }

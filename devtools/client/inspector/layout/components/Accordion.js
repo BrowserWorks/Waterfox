@@ -21,6 +21,8 @@ const Accordion = React.createClass({
     items: PropTypes.array
   },
 
+  mixins: [ React.addons.PureRenderMixin ],
+
   getInitialState: function () {
     return { opened: this.props.items.map(item => item.opened),
              created: [] };
@@ -63,7 +65,7 @@ const Accordion = React.createClass({
       (created[i] || opened[i]) ?
         div(
           { className: "_content",
-              style: { display: opened[i] ? "block" : "none" }
+            style: { display: opened[i] ? "block" : "none" }
           },
           React.createElement(item.component, item.componentProps || {})
         ) :

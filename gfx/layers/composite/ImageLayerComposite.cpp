@@ -80,7 +80,7 @@ ImageLayerComposite::GetLayer()
 }
 
 void
-ImageLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
+ImageLayerComposite::SetLayerManager(HostLayerManager* aManager)
 {
   LayerComposite::SetLayerManager(aManager);
   mManager = aManager;
@@ -90,7 +90,8 @@ ImageLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
 }
 
 void
-ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
+ImageLayerComposite::RenderLayer(const IntRect& aClipRect,
+                                 const Maybe<gfx::Polygon>& aGeometry)
 {
   if (!mImageHost || !mImageHost->IsAttached()) {
     return;

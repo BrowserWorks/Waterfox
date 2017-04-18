@@ -13,8 +13,14 @@ scopes:
   - docker-worker:*
   - scheduler:*
 
-# Available mustache parameters (see the mozilla-taskcluster source):
+# This file undergoes substitution to create tasks.  For on-push tasks, that
+# substitution is done by mozilla-taskcluster.  For cron tasks, that substitution
+# is done by `taskcluster/taskgraph/cron/decision.py`.  If you change any of the
+# template parameters, please do so in all three places!
 #
+# Available template parameters:
+#
+# - now:            current time
 # - owner:          push user (email address)
 # - source:         URL of this YAML file
 # - url:            repository URL
@@ -22,14 +28,14 @@ scopes:
 #                   the repo url)
 # - level:          SCM level of the destination repository
 #                   (1 = try, 3 = core)
-# - revision:       (short) hg revision of the head of the push
-# - revision_hash:  (long) hg revision of the head of the push
+# - revision:       hg revision of the head of the push
 # - comment:        comment of the push
 # - pushlog_id:     id in the pushlog table of the repository
 #
 # and functions:
 # - as_slugid:      convert a label into a slugId
 # - from_now:       generate a timestamp at a fixed offset from now
+# - shellquote:     quote the contents for injection into shell
 
 # The resulting tasks' taskGroupId will be equal to the taskId of the first
 # task listed here, which should be the decision task.  This gives other tools
@@ -55,13 +61,6 @@ tasks:
       tags:
         createdForUser: {{owner}}
 
-      scopes:
-        # Bug 1269443: cache scopes, etc. must be listed explicitly
-        - "docker-worker:cache:level-{{level}}-*"
-        - "docker-worker:cache:tooltool-cache"
-        # mozilla-taskcluster will append the appropriate assume:repo:<repo>
-        # scope here.
-
       routes:
         - "index.gecko.v2.{{project}}.latest.firefox.decision"
         - "tc-treeherder.v2.{{project}}.{{revision}}.{{pushlog_id}}"
@@ -85,8 +84,8 @@ tasks:
           chainOfTrust: true
 
         # Note: This task is built server side without the context or tooling that
-        # exist in tree so we must hard code the version
-        image: 'taskcluster/decision:0.1.7'
+        # exist in tree so we must hard code the hash
+        image: 'taskcluster/decision@sha256:0f59f922d86c471e208b7ea08ab077fc68c3920ed5e6895d69a23e8f3457dc24'
 
         maxRunTime: 1800
 
@@ -112,7 +111,6 @@ tasks:
               --head-repository='{{{url}}}'
               --head-ref='{{revision}}'
               --head-rev='{{revision}}'
-              --revision-hash='{{revision_hash}}'
 
         artifacts:
           'public':

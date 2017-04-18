@@ -1,7 +1,7 @@
 function wait_while_tab_is_busy() {
   return new Promise(resolve => {
     let progressListener = {
-      onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
+      onStateChange(aWebProgress, aRequest, aStateFlags, aStatus) {
         if (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) {
           gBrowser.removeProgressListener(this);
           setTimeout(resolve, 0);
@@ -23,11 +23,9 @@ var with_new_tab_opened = Task.async(function* (options, taskFn) {
 });
 
 add_task(function*() {
-  yield new Promise((resolve) => {
-    SpecialPowers.pushPrefEnv({"set": [
-                                ["view_source.tab", true],
-                              ]}, resolve);
-  });
+  yield SpecialPowers.pushPrefEnv({"set": [
+                                    ["view_source.tab", true],
+                                  ]});
 });
 
 add_task(function* test_regular_page() {

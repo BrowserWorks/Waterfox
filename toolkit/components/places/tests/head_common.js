@@ -3,7 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const CURRENT_SCHEMA_VERSION = 35;
+// It is expected that the test files importing this file define Cu etc.
+/* global Cu, Ci, Cc, Cr */
+
+const CURRENT_SCHEMA_VERSION = 36;
 const FIRST_UPGRADABLE_SCHEMA_VERSION = 11;
 
 const NS_APP_USER_PROFILE_50_DIR = "ProfD";
@@ -110,7 +113,7 @@ function DBConn(aForceNewConnection) {
 
   // If the Places database connection has been closed, create a new connection.
   if (!gDBConn || aForceNewConnection) {
-    let file = Services.dirsvc.get('ProfD', Ci.nsIFile);
+    let file = Services.dirsvc.get("ProfD", Ci.nsIFile);
     file.append("places.sqlite");
     let dbConn = gDBConn = Services.storage.openDatabase(file);
 
@@ -218,7 +221,7 @@ function compareArrays(aArray1, aArray2) {
   for (let i = 0; i < aArray1.length; i++) {
     if (aArray1[i] != aArray2[i]) {
       print("compareArrays: arrays differ at index " + i + ": " +
-            "(" + aArray1[i] + ") != (" + aArray2[i] +")\n");
+            "(" + aArray1[i] + ") != (" + aArray2[i] + ")\n");
       return false;
     }
   }
@@ -232,7 +235,7 @@ function compareArrays(aArray1, aArray2) {
  */
 function clearDB() {
   try {
-    let file = Services.dirsvc.get('ProfD', Ci.nsIFile);
+    let file = Services.dirsvc.get("ProfD", Ci.nsIFile);
     file.append("places.sqlite");
     if (file.exists())
       file.remove(false);
@@ -246,8 +249,7 @@ function clearDB() {
  * @param aName
  *        The name of the table or view to output.
  */
-function dump_table(aName)
-{
+function dump_table(aName) {
   let stmt = DBConn().createStatement("SELECT * FROM " + aName);
 
   print("\n*** Printing data from " + aName);
@@ -295,8 +297,7 @@ function dump_table(aName)
  *        nsIURI or address to look for.
  * @return place id of the page or 0 if not found
  */
-function page_in_database(aURI)
-{
+function page_in_database(aURI) {
   let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
   let stmt = DBConn().createStatement(
     "SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url"
@@ -306,8 +307,7 @@ function page_in_database(aURI)
     if (!stmt.executeStep())
       return 0;
     return stmt.getInt64(0);
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 }
@@ -318,8 +318,7 @@ function page_in_database(aURI)
  *        nsIURI or address to look for.
  * @return number of visits found.
  */
-function visits_in_database(aURI)
-{
+function visits_in_database(aURI) {
   let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
   let stmt = DBConn().createStatement(
     `SELECT count(*) FROM moz_historyvisits v
@@ -331,8 +330,7 @@ function visits_in_database(aURI)
     if (!stmt.executeStep())
       return 0;
     return stmt.getInt64(0);
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 }
@@ -367,8 +365,7 @@ function check_no_bookmarks() {
  * @resolves The array [aSubject, aData] from the observed notification.
  * @rejects Never.
  */
-function promiseTopicObserved(aTopic)
-{
+function promiseTopicObserved(aTopic) {
   return new Promise(resolve => {
     Services.obs.addObserver(function observe(aObsSubject, aObsTopic, aObsData) {
       Services.obs.removeObserver(observe, aObsTopic);
@@ -532,8 +529,7 @@ function check_JSON_backup(aIsAutomaticBackup) {
  *        The URI or spec to get frecency for.
  * @return the frecency value.
  */
-function frecencyForUrl(aURI)
-{
+function frecencyForUrl(aURI) {
   let url = aURI;
   if (aURI instanceof Ci.nsIURI) {
     url = aURI.spec;
@@ -561,8 +557,7 @@ function frecencyForUrl(aURI)
  *        The URI or spec to get hidden for.
  * @return @return true if the url is hidden, false otherwise.
  */
-function isUrlHidden(aURI)
-{
+function isUrlHidden(aURI) {
   let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
   let stmt = DBConn().createStatement(
     "SELECT hidden FROM moz_places WHERE url_hash = hash(?1) AND url = ?1"
@@ -601,8 +596,7 @@ function is_time_ordered(before, after) {
  * @param aCallback
  *        Function to be called when done.
  */
-function waitForConnectionClosed(aCallback)
-{
+function waitForConnectionClosed(aCallback) {
   promiseTopicObserved("places-connection-closed").then(aCallback);
   shutdownPlaces();
 }
@@ -616,8 +610,7 @@ function waitForConnectionClosed(aCallback)
  *        The stack frame used to report the error.
  */
 function do_check_valid_places_guid(aGuid,
-                                    aStack)
-{
+                                    aStack) {
   if (!aStack) {
     aStack = Components.stack.caller;
   }
@@ -634,8 +627,7 @@ function do_check_valid_places_guid(aGuid,
  * @return the associated the guid.
  */
 function do_get_guid_for_uri(aURI,
-                             aStack)
-{
+                             aStack) {
   if (!aStack) {
     aStack = Components.stack.caller;
   }
@@ -661,8 +653,7 @@ function do_get_guid_for_uri(aURI,
  *        The expected guid in the database.
  */
 function do_check_guid_for_uri(aURI,
-                               aGUID)
-{
+                               aGUID) {
   let caller = Components.stack.caller;
   let guid = do_get_guid_for_uri(aURI, caller);
   if (aGUID) {
@@ -681,8 +672,7 @@ function do_check_guid_for_uri(aURI,
  * @return the associated the guid.
  */
 function do_get_guid_for_bookmark(aId,
-                                  aStack)
-{
+                                  aStack) {
   if (!aStack) {
     aStack = Components.stack.caller;
   }
@@ -708,8 +698,7 @@ function do_get_guid_for_bookmark(aId,
  *        The expected guid in the database.
  */
 function do_check_guid_for_bookmark(aId,
-                                    aGUID)
-{
+                                    aGUID) {
   let caller = Components.stack.caller;
   let guid = do_get_guid_for_bookmark(aId, caller);
   if (aGUID) {
@@ -729,8 +718,7 @@ function do_check_guid_for_bookmark(aId,
  *        Whether the comparison should take in count position of the elements.
  * @return true if the arrays contain the same elements, false otherwise.
  */
-function do_compare_arrays(a1, a2, sorted)
-{
+function do_compare_arrays(a1, a2, sorted) {
   if (a1.length != a2.length)
     return false;
 
@@ -748,13 +736,13 @@ function do_compare_arrays(a1, a2, sorted)
 function NavBookmarkObserver() {}
 
 NavBookmarkObserver.prototype = {
-  onBeginUpdateBatch: function () {},
-  onEndUpdateBatch: function () {},
-  onItemAdded: function () {},
-  onItemRemoved: function () {},
-  onItemChanged: function () {},
-  onItemVisited: function () {},
-  onItemMoved: function () {},
+  onBeginUpdateBatch() {},
+  onEndUpdateBatch() {},
+  onItemAdded() {},
+  onItemRemoved() {},
+  onItemChanged() {},
+  onItemVisited() {},
+  onItemMoved() {},
   QueryInterface: XPCOMUtils.generateQI([
     Ci.nsINavBookmarkObserver,
   ])
@@ -767,14 +755,14 @@ NavBookmarkObserver.prototype = {
 function NavHistoryObserver() {}
 
 NavHistoryObserver.prototype = {
-  onBeginUpdateBatch: function () {},
-  onEndUpdateBatch: function () {},
-  onVisit: function () {},
-  onTitleChanged: function () {},
-  onDeleteURI: function () {},
-  onClearHistory: function () {},
-  onPageChanged: function () {},
-  onDeleteVisits: function () {},
+  onBeginUpdateBatch() {},
+  onEndUpdateBatch() {},
+  onVisit() {},
+  onTitleChanged() {},
+  onDeleteURI() {},
+  onClearHistory() {},
+  onPageChanged() {},
+  onDeleteVisits() {},
   QueryInterface: XPCOMUtils.generateQI([
     Ci.nsINavHistoryObserver,
   ])
@@ -788,22 +776,22 @@ NavHistoryObserver.prototype = {
 function NavHistoryResultObserver() {}
 
 NavHistoryResultObserver.prototype = {
-  batching: function () {},
-  containerStateChanged: function () {},
-  invalidateContainer: function () {},
-  nodeAnnotationChanged: function () {},
-  nodeDateAddedChanged: function () {},
-  nodeHistoryDetailsChanged: function () {},
-  nodeIconChanged: function () {},
-  nodeInserted: function () {},
-  nodeKeywordChanged: function () {},
-  nodeLastModifiedChanged: function () {},
-  nodeMoved: function () {},
-  nodeRemoved: function () {},
-  nodeTagsChanged: function () {},
-  nodeTitleChanged: function () {},
-  nodeURIChanged: function () {},
-  sortingChanged: function () {},
+  batching() {},
+  containerStateChanged() {},
+  invalidateContainer() {},
+  nodeAnnotationChanged() {},
+  nodeDateAddedChanged() {},
+  nodeHistoryDetailsChanged() {},
+  nodeIconChanged() {},
+  nodeInserted() {},
+  nodeKeywordChanged() {},
+  nodeLastModifiedChanged() {},
+  nodeMoved() {},
+  nodeRemoved() {},
+  nodeTagsChanged() {},
+  nodeTitleChanged() {},
+  nodeURIChanged() {},
+  sortingChanged() {},
   QueryInterface: XPCOMUtils.generateQI([
     Ci.nsINavHistoryResultObserver,
   ])
@@ -866,4 +854,18 @@ function* foreign_count(url) {
      WHERE url_hash = hash(:url) AND url = :url
     `, { url });
   return rows.length == 0 ? 0 : rows[0].getResultByName("foreign_count");
+}
+
+function compareAscending(a, b) {
+  if (a > b) {
+    return 1;
+  }
+  if (a < b) {
+    return -1;
+  }
+  return 0;
+}
+
+function sortBy(array, prop) {
+  return array.sort((a, b) => compareAscending(a[prop], b[prop]));
 }

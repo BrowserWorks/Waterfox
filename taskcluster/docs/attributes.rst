@@ -122,3 +122,30 @@ nightly
 
 Signals whether the task is part of a nightly graph. Useful when filtering
 out nightly tasks from full task set at target stage.
+
+all_locales
+===========
+
+For the ``l10n`` and ``nightly-l10n`` kinds, this attribute contains the list
+of relevant locales for the platform.
+
+all_locales_with_changesets
+===========================
+
+Contains a dict of l10n changesets, mapped by locales (same as in ``all_locales``).
+
+l10n_chunk
+==========
+For the ``l10n`` and ``nightly-l10n`` kinds, this attribute contains the chunk
+number of the job. Note that this is a string!
+
+chunk_locales
+=============
+For the ``l10n`` and ``nightly-l10n`` kinds, this attribute contains an array of
+the individual locales this chunk is responsible for processing.
+
+locale
+======
+For jobs that operate on only one locale, we set the attribute ``locale`` to the
+specific locale involved. Currently this is only in l10n versions of the
+``beetmover`` and ``balrog`` kinds.

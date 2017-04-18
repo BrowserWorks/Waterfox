@@ -21,7 +21,7 @@ function setup() {
   gPrefService.setBoolPref("browser.altClickSave", true);
 
   let testPage =
-    'data:text/html,' +
+    "data:text/html," +
     '<p><a id="commonlink" href="http://mochi.test/moz/">Common link</a></p>' +
     '<p><math id="mathxlink" xmlns="http://www.w3.org/1998/Math/MathML" xlink:type="simple" xlink:href="http://mochi.test/moz/"><mtext>MathML XLink</mtext></math></p>' +
     '<p><svg id="svgxlink" xmlns="http://www.w3.org/2000/svg" width="100px" height="50px" version="1.1"><a xlink:type="simple" xlink:href="http://mochi.test/moz/"><text transform="translate(10, 25)">SVG XLink</text></a></svg></p>';
@@ -44,8 +44,7 @@ function* clean_up() {
   yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 }
 
-add_task(function* test_alt_click()
-{
+add_task(function* test_alt_click() {
   yield setup();
 
   let downloadList = yield Downloads.getList(Downloads.ALL);
@@ -54,7 +53,7 @@ add_task(function* test_alt_click()
   // When 1 download has been attempted then resolve the promise.
   let finishedAllDownloads = new Promise( (resolve) => {
     downloadView = {
-      onDownloadAdded: function (aDownload) {
+      onDownloadAdded(aDownload) {
         downloads.push(aDownload);
         resolve();
       },
@@ -73,8 +72,7 @@ add_task(function* test_alt_click()
   yield* clean_up();
 });
 
-add_task(function* test_alt_click_on_xlinks()
-{
+add_task(function* test_alt_click_on_xlinks() {
   yield setup();
 
   let downloadList = yield Downloads.getList(Downloads.ALL);
@@ -83,7 +81,7 @@ add_task(function* test_alt_click_on_xlinks()
   // When all 2 downloads have been attempted then resolve the promise.
   let finishedAllDownloads = new Promise( (resolve) => {
     downloadView = {
-      onDownloadAdded: function (aDownload) {
+      onDownloadAdded(aDownload) {
         downloads.push(aDownload);
         if (downloads.length == 2) {
           resolve();

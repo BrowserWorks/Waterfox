@@ -28,8 +28,6 @@ class XPCNativeSet;
 class XPCWrappedNative;
 class XPCWrappedNativeProto;
 class XPCWrappedNativeTearOff;
-class XPCNativeScriptableInfo;
-class XPCNativeScriptableCreateInfo;
 
 class XPCTraceableVariant;
 class XPCJSObjectHolder;

@@ -786,7 +786,8 @@ public class ActivityChooserModel extends DataSetObservable {
                     }
 
                     resolveInfo.labelRes = R.string.overlay_share_send_other;
-                    resolveInfo.icon = R.drawable.icon_shareplane;
+                    resolveInfo.activityInfo.icon = R.drawable.icon_shareplane;
+
                 }
 
                 mActivities.add(new ActivityResolveInfo(resolveInfo));
@@ -1316,7 +1317,7 @@ public class ActivityChooserModel extends DataSetObservable {
         final BrowserDB browserDB = BrowserDB.from(mContext);
         final TabsAccessor tabsAccessor = browserDB.getTabsAccessor();
         final Cursor remoteClientsCursor = tabsAccessor
-                .getRemoteClientsByRecencyCursor(mContext);
+                .getRemoteClientsNoStaleSorted(mContext);
         if (remoteClientsCursor == null) {
             return false;
         }

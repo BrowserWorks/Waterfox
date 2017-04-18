@@ -390,6 +390,9 @@ private:
   // mIsOverridingKeyboardLayout is true if the instance temporarily overriding
   // keyboard layout with specified by the constructor.
   bool    mIsOverridingKeyboardLayout;
+  // mCanIgnoreModifierStateAtKeyPress is true if it's allowed to remove
+  // Ctrl or Alt modifier state at dispatching eKeyPress.
+  bool    mCanIgnoreModifierStateAtKeyPress;
 
   nsTArray<FakeCharMsg>* mFakeCharMsgs;
 
@@ -555,11 +558,6 @@ private:
    *          hwnd may be different window.
    */
   bool GetFollowingCharMessage(MSG& aCharMsg);
-
-  /**
-   * Whether the key event can compute virtual keycode from the scancode value.
-   */
-  bool CanComputeVirtualKeyCodeFromScanCode() const;
 
   /**
    * Wraps MapVirtualKeyEx() with MAPVK_VSC_TO_VK.

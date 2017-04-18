@@ -33,21 +33,10 @@ this.AccessFu = { // jshint ignore:line
     Utils.init(aWindow);
 
     try {
-      Services.androidBridge.handleGeckoMessage(
-          { type: 'Accessibility:Ready' });
+      Services.androidBridge.dispatch('Accessibility:Ready');
       Services.obs.addObserver(this, 'Accessibility:Settings', false);
     } catch (x) {
       // Not on Android
-      if (aWindow.navigator.mozSettings) {
-        let lock = aWindow.navigator.mozSettings.createLock();
-        let req = lock.get(SCREENREADER_SETTING);
-        req.addEventListener('success', () => {
-          this._systemPref = req.result[SCREENREADER_SETTING];
-          this._enableOrDisable();
-        });
-        aWindow.navigator.mozSettings.addObserver(
-          SCREENREADER_SETTING, this.handleEvent);
-      }
     }
 
     this._activatePref = new PrefCache(
@@ -66,9 +55,6 @@ this.AccessFu = { // jshint ignore:line
     }
     if (Utils.MozBuildApp === 'mobile/android') {
       Services.obs.removeObserver(this, 'Accessibility:Settings');
-    } else if (Utils.win.navigator.mozSettings) {
-      Utils.win.navigator.mozSettings.removeObserver(
-        SCREENREADER_SETTING, this.handleEvent);
     }
     delete this._activatePref;
     Utils.uninit();
@@ -342,9 +328,9 @@ this.AccessFu = { // jshint ignore:line
       case 'remote-browser-shown':
       case 'inprocess-browser-shown':
       {
-        // Ignore notifications that aren't from a BrowserOrApp
+        // Ignore notifications that aren't from a Browser
         let frameLoader = aSubject.QueryInterface(Ci.nsIFrameLoader);
-        if (!frameLoader.ownerIsMozBrowserOrAppFrame) {
+        if (!frameLoader.ownerIsMozBrowserFrame) {
           return;
         }
         this._handleMessageManager(frameLoader.messageManager);
@@ -602,7 +588,6 @@ var Output = {
     }
 
     for (let androidEvent of aDetails) {
-      androidEvent.type = 'Accessibility:Event';
       if (androidEvent.bounds) {
         androidEvent.bounds = AccessFu.adjustContentBounds(
           androidEvent.bounds, aBrowser);
@@ -622,7 +607,9 @@ var Output = {
             androidEvent.brailleOutput);
           break;
       }
-      this.androidBridge.handleGeckoMessage(androidEvent);
+      let win = Utils.win;
+      let view = win && win.QueryInterface(Ci.nsIAndroidView);
+      view.dispatch('Accessibility:Event', androidEvent);
     }
   },
 
@@ -818,8 +805,9 @@ var Input = {
 
         if (Utils.MozBuildApp == 'mobile/android') {
           // Return focus to native Android browser chrome.
-          Services.androidBridge.handleGeckoMessage(
-              { type: 'ToggleChrome:Focus' });
+          let win = Utils.win;
+          let view = win && win.QueryInterface(Ci.nsIAndroidView);
+          view.dispatch('ToggleChrome:Focus');
         }
         break;
       case aEvent.DOM_VK_RETURN:

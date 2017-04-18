@@ -7,8 +7,7 @@
 const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu, manager: Cm} =
   Components;
 
-this.EXPORTED_SYMBOLS = [ "EME_ADOBE_ID",
-                          "GMP_PLUGIN_IDS",
+this.EXPORTED_SYMBOLS = [ "GMP_PLUGIN_IDS",
                           "GMPPrefs",
                           "GMPUtils",
                           "OPEN_H264_ID",
@@ -20,9 +19,8 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 
 // GMP IDs
 const OPEN_H264_ID  = "gmp-gmpopenh264";
-const EME_ADOBE_ID  = "gmp-eme-adobe";
 const WIDEVINE_ID   = "gmp-widevinecdm";
-const GMP_PLUGIN_IDS = [ OPEN_H264_ID, EME_ADOBE_ID, WIDEVINE_ID ];
+const GMP_PLUGIN_IDS = [ OPEN_H264_ID, WIDEVINE_ID ];
 
 var GMPPluginUnsupportedReason = {
   NOT_WINDOWS: 1,
@@ -41,7 +39,7 @@ this.GMPUtils = {
    * @param   aPlugin
    *          The plugin to check.
    */
-  isPluginHidden: function(aPlugin) {
+  isPluginHidden(aPlugin) {
     if (this._is32bitModeMacOS()) {
       // GMPs are hidden on MacOS when running in 32 bit mode.
       // See bug 1291537.
@@ -68,14 +66,11 @@ this.GMPUtils = {
    * @param   aPlugin
    *          The plugin to check.
    */
-  _isPluginSupported: function(aPlugin) {
+  _isPluginSupported(aPlugin) {
     if (this._isPluginForceSupported(aPlugin)) {
       return true;
     }
-    if (aPlugin.id == EME_ADOBE_ID) {
-      // Windows Vista and later only supported by Adobe EME.
-      return AppConstants.isPlatformAndVersionAtLeast("win", "6");
-    } else if (aPlugin.id == WIDEVINE_ID) {
+    if (aPlugin.id == WIDEVINE_ID) {
       // The Widevine plugin is available for Windows versions Vista and later,
       // Mac OSX, and Linux.
       return AppConstants.isPlatformAndVersionAtLeast("win", "6") ||
@@ -86,7 +81,7 @@ this.GMPUtils = {
     return true;
   },
 
-  _is32bitModeMacOS: function() {
+  _is32bitModeMacOS() {
     if (AppConstants.platform != "macosx") {
       return false;
     }
@@ -100,7 +95,7 @@ this.GMPUtils = {
    * @param   aPlugin
    *          The plugin to check.
    */
-  _isPluginVisible: function(aPlugin) {
+  _isPluginVisible(aPlugin) {
     return GMPPrefs.get(GMPPrefs.KEY_PLUGIN_VISIBLE, false, aPlugin.id);
   },
 
@@ -111,7 +106,7 @@ this.GMPUtils = {
    * @param   aPlugin
    *          The plugin to check.
    */
-  _isPluginForceSupported: function(aPlugin) {
+  _isPluginForceSupported(aPlugin) {
     return GMPPrefs.get(GMPPrefs.KEY_PLUGIN_FORCE_SUPPORTED, false, aPlugin.id);
   },
 };
@@ -151,7 +146,7 @@ this.GMPPrefs = {
    * @param aPlugin The plugin to scope the preference to.
    * @return The obtained preference value, or the defaultValue if none exists.
    */
-  get: function(aKey, aDefaultValue, aPlugin) {
+  get(aKey, aDefaultValue, aPlugin) {
     if (aKey === this.KEY_APP_DISTRIBUTION ||
         aKey === this.KEY_APP_DISTRIBUTION_VERSION) {
       let prefValue = "default";
@@ -171,7 +166,7 @@ this.GMPPrefs = {
    * @param aVal The value to set.
    * @param aPlugin The plugin to scope the preference to.
    */
-  set: function(aKey, aVal, aPlugin) {
+  set(aKey, aVal, aPlugin) {
     Preferences.set(this.getPrefKey(aKey, aPlugin), aVal);
   },
 
@@ -182,7 +177,7 @@ this.GMPPrefs = {
    * @param aPlugin The plugin to scope the preference to.
    * @return true if the preference is set, false otherwise.
    */
-  isSet: function(aKey, aPlugin) {
+  isSet(aKey, aPlugin) {
     return Preferences.isSet(this.getPrefKey(aKey, aPlugin));
   },
 
@@ -192,7 +187,7 @@ this.GMPPrefs = {
    * @param aKey The preference key value to use.
    * @param aPlugin The plugin to scope the preference to.
    */
-  reset: function(aKey, aPlugin) {
+  reset(aKey, aPlugin) {
     Preferences.reset(this.getPrefKey(aKey, aPlugin));
   },
 
@@ -202,7 +197,7 @@ this.GMPPrefs = {
    * @param aPlugin The plugin to scope the preference to.
    * @return A preference key scoped to the specified plugin.
    */
-  getPrefKey: function(aKey, aPlugin) {
+  getPrefKey(aKey, aPlugin) {
     return aKey.replace("{0}", aPlugin || "");
   },
 };

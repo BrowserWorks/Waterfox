@@ -32,6 +32,7 @@ JS::Zone::Zone(JSRuntime* rt)
     compartments(),
     gcGrayRoots(),
     gcWeakKeys(SystemAllocPolicy(), rt->randomHashCodeScrambler()),
+    hasDeadProxies(false),
     typeDescrObjects(this, SystemAllocPolicy()),
     gcMallocBytes(0),
     gcMallocGCTriggered(false),
@@ -43,7 +44,6 @@ JS::Zone::Zone(JSRuntime* rt)
     data(nullptr),
     isSystem(false),
     usedByExclusiveThread(false),
-    active(false),
     jitZone_(nullptr),
     gcState_(NoGC),
     gcScheduled_(false),
@@ -129,11 +129,6 @@ Zone::onTooMuchMalloc()
 void
 Zone::beginSweepTypes(FreeOp* fop, bool releaseTypes)
 {
-    // Periodically release observed types for all scripts. This is safe to
-    // do when there are no frames for the zone on the stack.
-    if (active)
-        releaseTypes = false;
-
     AutoClearTypeInferenceStateOnOOM oom(this);
     types.beginSweep(fop, releaseTypes, oom);
 }
@@ -244,6 +239,13 @@ Zone::discardJitCode(FreeOp* fop, bool discardBaselineCode)
              * opcodes are setting array holes or accessing getter properties.
              */
             script->resetWarmUpCounter();
+
+            /*
+             * Make it impossible to use the control flow graphs cached on the
+             * BaselineScript. They get deleted.
+             */
+            if (script->hasBaselineScript())
+                script->baselineScript()->setControlFlowGraph(nullptr);
         }
 
         /*
@@ -254,8 +256,17 @@ Zone::discardJitCode(FreeOp* fop, bool discardBaselineCode)
          *
          * Defer freeing any allocated blocks until after the next minor GC.
          */
-        if (discardBaselineCode)
+        if (discardBaselineCode) {
             jitZone()->optimizedStubSpace()->freeAllAfterMinorGC(fop->runtime());
+            jitZone()->purgeIonCacheIRStubInfo();
+        }
+
+        /*
+         * Free all control flow graphs that are cached on BaselineScripts.
+         * Assuming this happens on the mainthread and all control flow
+         * graph reads happen on the mainthread, this is save.
+         */
+        jitZone()->cfgSpace()->lifoAlloc().freeAll();
     }
 }
 
@@ -368,6 +379,21 @@ void
 Zone::fixupAfterMovingGC()
 {
     fixupInitialShapeTable();
+}
+
+bool
+Zone::addTypeDescrObject(JSContext* cx, HandleObject obj)
+{
+    // Type descriptor objects are always tenured so we don't need post barriers
+    // on the set.
+    MOZ_ASSERT(!IsInsideNursery(obj));
+
+    if (!typeDescrObjects.put(obj)) {
+        ReportOutOfMemory(cx);
+        return false;
+    }
+
+    return true;
 }
 
 ZoneList::ZoneList()

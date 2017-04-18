@@ -53,6 +53,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/ServoStyleSet.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/Element.h"
 
@@ -318,7 +319,7 @@ nsXBLStreamListener::HandleEvent(nsIDOMEvent* aEvent)
       nsXBLBindingRequest* req = mBindingRequests.ElementAt(0);
       nsIDocument* document = req->mBoundElement->GetUncomposedDoc();
       if (document)
-        document->FlushPendingNotifications(Flush_ContentAndNotify);
+        document->FlushPendingNotifications(FlushType::ContentAndNotify);
     }
 
     // Remove ourselves from the set of pending docs.
@@ -406,6 +407,34 @@ nsXBLService::IsChromeOrResourceURI(nsIURI* aURI)
   return false;
 }
 
+// RAII class to invoke StyleNewChildren for Elements in Servo-backed documents
+// on destruction.
+class MOZ_STACK_CLASS AutoStyleNewChildren
+{
+public:
+  explicit AutoStyleNewChildren(Element* aElement) : mElement(aElement) { MOZ_ASSERT(mElement); }
+  ~AutoStyleNewChildren()
+  {
+    nsIPresShell* presShell = mElement->OwnerDoc()->GetShell();
+    ServoStyleSet* servoSet = presShell ? presShell->StyleSet()->GetAsServo() : nullptr;
+    if (servoSet) {
+      // In general the element is always styled by the time we're applying XBL
+      // bindings, because we need to style the element to know what the binding
+      // URI is. However, programmatic consumers of the XBL service (like the
+      // XML pretty printer) _can_ apply bindings without having styled the bound
+      // element. We could assert against this and require the callers manually
+      // resolve the style first, but it's easy enough to just handle here.
+      if (MOZ_UNLIKELY(!mElement->HasServoData())) {
+        servoSet->StyleNewSubtree(mElement);
+      } else {
+        servoSet->StyleNewChildren(mElement);
+      }
+    }
+  }
+
+private:
+  Element* mElement;
+};
 
 // This function loads a particular XBL file and installs all of the bindings
 // onto the element.
@@ -434,6 +463,22 @@ nsXBLService::LoadBindings(nsIContent* aContent, nsIURI* aURL,
     // Block an attempt to load a binding that has special wrapper
     // automation needs.
     return NS_OK;
+  }
+
+  // There are various places in this function where we shuffle content around
+  // the subtree and rebind things to and from insertion points. Once all that's
+  // done, we want to invoke StyleNewChildren to style any unstyled children
+  // that we may have after bindings have been removed and applied. This includes
+  // anonymous content created in this function, explicit children for which we
+  // defer styling until after XBL bindings are applied, and elements whose existing
+  // style was invalidated by a call to SetXBLInsertionParent.
+  //
+  // However, we skip this styling if aContent is not in the document, since we
+  // should keep such elements unstyled.  (There are some odd cases where we do
+  // apply bindings to elements not in the document.)
+  Maybe<AutoStyleNewChildren> styleNewChildren;
+  if (aContent->IsInComposedDoc()) {
+    styleNewChildren.emplace(aContent->AsElement());
   }
 
   nsXBLBinding *binding = aContent->GetXBLBinding();

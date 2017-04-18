@@ -45,7 +45,7 @@ class HashableValue
     MOZ_MUST_USE bool setValue(JSContext* cx, HandleValue v);
     HashNumber hash(const mozilla::HashCodeScrambler& hcs) const;
     bool operator==(const HashableValue& other) const;
-    HashableValue mark(JSTracer* trc) const;
+    HashableValue trace(JSTracer* trc) const;
     Value get() const { return value.get(); }
 
     void trace(JSTracer* trc) {
@@ -53,14 +53,22 @@ class HashableValue
     }
 };
 
-template <>
-class RootedBase<HashableValue> {
+template <typename Wrapper>
+class WrappedPtrOperations<HashableValue, Wrapper>
+{
+  public:
+    Value value() const {
+        return static_cast<const Wrapper*>(this)->get().get();
+    }
+};
+
+template <typename Wrapper>
+class MutableWrappedPtrOperations<HashableValue, Wrapper>
+  : public WrappedPtrOperations<HashableValue, Wrapper>
+{
   public:
     MOZ_MUST_USE bool setValue(JSContext* cx, HandleValue v) {
-        return static_cast<JS::Rooted<HashableValue>*>(this)->get().setValue(cx, v);
-    }
-    Value value() const {
-        return static_cast<const JS::Rooted<HashableValue>*>(this)->get().get();
+        return static_cast<Wrapper*>(this)->get().setValue(cx, v);
     }
 };
 
@@ -95,8 +103,8 @@ class MapObject : public NativeObject {
                   "IteratorKind Entries must match self-hosting define for item kind "
                   "key-and-value.");
 
-    static JSObject* initClass(JSContext* cx, JSObject* obj);
     static const Class class_;
+    static const Class protoClass_;
 
     enum { NurseryKeysSlot, SlotCount };
 
@@ -126,6 +134,7 @@ class MapObject : public NativeObject {
     friend class OrderedHashTableRef<MapObject>;
 
   private:
+    static const ClassSpec classSpec_;
     static const ClassOps classOps_;
 
     static const JSPropertySpec properties[];
@@ -134,7 +143,7 @@ class MapObject : public NativeObject {
     ValueMap* getData() { return static_cast<ValueMap*>(getPrivate()); }
     static ValueMap& extract(HandleObject o);
     static ValueMap& extract(const CallArgs& args);
-    static void mark(JSTracer* trc, JSObject* obj);
+    static void trace(JSTracer* trc, JSObject* obj);
     static void finalize(FreeOp* fop, JSObject* obj);
     static MOZ_MUST_USE bool construct(JSContext* cx, unsigned argc, Value* vp);
 
@@ -201,8 +210,8 @@ class SetObject : public NativeObject {
                   "IteratorKind Entries must match self-hosting define for item kind "
                   "key-and-value.");
 
-    static JSObject* initClass(JSContext* cx, JSObject* obj);
     static const Class class_;
+    static const Class protoClass_;
 
     enum { NurseryKeysSlot, SlotCount };
 
@@ -226,6 +235,7 @@ class SetObject : public NativeObject {
     friend class OrderedHashTableRef<SetObject>;
 
   private:
+    static const ClassSpec classSpec_;
     static const ClassOps classOps_;
 
     static const JSPropertySpec properties[];
@@ -235,7 +245,7 @@ class SetObject : public NativeObject {
     ValueSet* getData() { return static_cast<ValueSet*>(getPrivate()); }
     static ValueSet& extract(HandleObject o);
     static ValueSet& extract(const CallArgs& args);
-    static void mark(JSTracer* trc, JSObject* obj);
+    static void trace(JSTracer* trc, JSObject* obj);
     static void finalize(FreeOp* fop, JSObject* obj);
     static bool construct(JSContext* cx, unsigned argc, Value* vp);
 
@@ -329,12 +339,6 @@ IsOptimizableInitForSet(JSContext* cx, HandleObject setObject, HandleValue itera
 
     return stubChain->tryOptimizeArray(cx, array.as<ArrayObject>(), optimized);
 }
-
-extern JSObject*
-InitMapClass(JSContext* cx, HandleObject obj);
-
-extern JSObject*
-InitSetClass(JSContext* cx, HandleObject obj);
 
 } /* namespace js */
 

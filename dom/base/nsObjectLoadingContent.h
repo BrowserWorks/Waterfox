@@ -331,8 +331,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
 
     void CreateStaticClone(nsObjectLoadingContent* aDest) const;
 
-    void DoStopPlugin(nsPluginInstanceOwner* aInstanceOwner, bool aDelayedStop,
-                      bool aForcedReentry = false);
+    void DoStopPlugin(nsPluginInstanceOwner* aInstanceOwner);
 
     nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                         nsIContent* aBindingParent,
@@ -591,7 +590,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // Helper class for SetupProtoChain
     class SetupProtoChainRunner final : public nsIRunnable
     {
-      ~SetupProtoChainRunner();
+      ~SetupProtoChainRunner() = default;
     public:
       NS_DECL_ISUPPORTS
 

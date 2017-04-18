@@ -10,7 +10,11 @@
 define(function (require, exports, module) {
   // Dependencies
   const React = require("devtools/client/shared/vendor/react");
-  const { cropString } = require("./rep-utils");
+
+  const {
+    cropString,
+    wrapRender,
+  } = require("./rep-utils");
 
   // Shortcuts
   const { span } = React.DOM;
@@ -24,6 +28,9 @@ define(function (require, exports, module) {
     propTypes: {
       useQuotes: React.PropTypes.bool,
       style: React.PropTypes.object,
+      object: React.PropTypes.string.isRequired,
+      member: React.PropTypes.any,
+      cropLimit: React.PropTypes.number,
     },
 
     getDefaultProps: function () {
@@ -32,7 +39,7 @@ define(function (require, exports, module) {
       };
     },
 
-    render: function () {
+    render: wrapRender(function () {
       let text = this.props.object;
       let member = this.props.member;
       let style = this.props.style;
@@ -53,7 +60,7 @@ define(function (require, exports, module) {
         "\"" + croppedString + "\"" : croppedString;
 
       return span(config, formattedString);
-    },
+    }),
   });
 
   function supportsObject(object, type) {

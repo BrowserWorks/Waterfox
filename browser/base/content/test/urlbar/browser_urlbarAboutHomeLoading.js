@@ -1,5 +1,6 @@
 "use strict";
 
+const {SessionSaver} = Cu.import("resource:///modules/sessionstore/SessionSaver.jsm", {});
 const {TabStateFlusher} = Cu.import("resource:///modules/sessionstore/TabStateFlusher.jsm", {});
 
 /**
@@ -84,11 +85,13 @@ add_task(function* dontTemporarilyShowAboutHome() {
   yield BrowserTestUtils.closeWindow(win);
   ok(SessionStore.getClosedWindowCount(), "Should have a closed window");
 
+  yield SessionSaver.run();
+
   windowOpenedPromise = BrowserTestUtils.waitForNewWindow();
   win = SessionStore.undoCloseWindow(0);
   yield windowOpenedPromise;
   let wpl = {
-    onLocationChange(wpl, request, location, flags) {
+    onLocationChange() {
       is(win.gURLBar.value, "", "URL bar value should stay empty.");
     },
   };

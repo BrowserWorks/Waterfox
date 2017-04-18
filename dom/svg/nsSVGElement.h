@@ -13,14 +13,13 @@
 */
 
 #include "mozilla/Attributes.h"
-#include "mozilla/css/StyleRule.h"
 #include "nsAutoPtr.h"
 #include "nsChangeHint.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsError.h"
 #include "mozilla/dom/DOMRect.h"
-#include "mozilla/dom/ElementInlines.h"
+#include "mozilla/dom/Element.h"
 #include "nsISupportsImpl.h"
 #include "nsStyledElement.h"
 #include "nsSVGClass.h"
@@ -39,6 +38,8 @@ class nsSVGString;
 class nsSVGViewBox;
 
 namespace mozilla {
+class DeclarationBlock;
+
 namespace dom {
 class SVGSVGElement;
 
@@ -78,7 +79,7 @@ protected:
   friend nsresult NS_NewSVGElement(mozilla::dom::Element **aResult,
                                    already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
   nsresult Init();
-  virtual ~nsSVGElement(){}
+  virtual ~nsSVGElement();
 
 public:
 
@@ -343,9 +344,9 @@ protected:
                                               nsIAtom* aAttribute,
                                               const nsAString& aValue);
 
-  void UpdateContentStyleRule();
-  void UpdateAnimatedContentStyleRule();
-  mozilla::css::StyleRule* GetAnimatedContentStyleRule();
+  void UpdateContentDeclarationBlock();
+  void UpdateAnimatedContentDeclarationBlock();
+  mozilla::DeclarationBlock* GetAnimatedContentDeclarationBlock();
 
   nsAttrValue WillChangeValue(nsIAtom* aName);
   // aNewValue is set to the old value. This value may be invalid if
@@ -635,7 +636,7 @@ private:
 
   nsSVGClass mClassAttribute;
   nsAutoPtr<nsAttrValue> mClassAnimAttr;
-  RefPtr<mozilla::css::StyleRule> mContentStyleRule;
+  RefPtr<mozilla::DeclarationBlock> mContentDeclarationBlock;
 };
 
 /**
@@ -715,7 +716,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER                            \
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END                                          \
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(_val)                                \
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(_element)                                \
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS                           \
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END                                        \
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(_val)                                   \
 NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER                             \

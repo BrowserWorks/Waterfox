@@ -16,11 +16,7 @@ tags:
   createdForUser: {{owner}}
 
 scopes:
-  # Bug 1269443: cache scopes, etc. must be listed explicitly
-  - "docker-worker:cache:level-1-*"
-  - "docker-worker:cache:tooltool-cache"
-  - "secrets:get:project/taskcluster/gecko/hgfingerprint"
-  - "assume:repo:hg.mozilla.org/try:*"
+  - {{repo_scope}}
 
 routes:
   - "tc-treeherder.v2.{{project}}.{{head_rev}}.{{pushlog_id}}"
@@ -59,9 +55,7 @@ payload:
     - >
         cd /home/worker/checkouts/gecko &&
         ln -s /home/worker/artifacts artifacts &&
-        ./mach --log-no-times taskgraph action-task
-        --decision-id='{{decision_task_id}}'
-        --task-label='{{task_labels}}'
+        ./mach --log-no-times taskgraph {{action}} {{action_args}}
 
   artifacts:
     'public':

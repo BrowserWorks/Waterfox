@@ -78,7 +78,7 @@ function* testClean() {
 }
 
 add_task(function* testSyncedTabsSidebarList() {
-  yield SidebarUI.show('viewTabsSidebar');
+  yield SidebarUI.show("viewTabsSidebar");
 
   Assert.equal(SidebarUI.currentID, "viewTabsSidebar", "Sidebar should have SyncedTabs loaded");
 
@@ -134,7 +134,7 @@ add_task(function* testSyncedTabsSidebarList() {
 add_task(testClean);
 
 add_task(function* testSyncedTabsSidebarFilteredList() {
-  yield SidebarUI.show('viewTabsSidebar');
+  yield SidebarUI.show("viewTabsSidebar");
   let syncedTabsDeckComponent = window.SidebarUI.browser.contentWindow.syncedTabsDeckComponent;
   let SyncedTabs = window.SidebarUI.browser.contentWindow.SyncedTabs;
 
@@ -195,7 +195,7 @@ add_task(testClean);
 add_task(function* testSyncedTabsSidebarStatus() {
   let accountExists = false;
 
-  yield SidebarUI.show('viewTabsSidebar');
+  yield SidebarUI.show("viewTabsSidebar");
   let syncedTabsDeckComponent = window.SidebarUI.browser.contentWindow.syncedTabsDeckComponent;
   let SyncedTabs = window.SidebarUI.browser.contentWindow.SyncedTabs;
 
@@ -256,7 +256,7 @@ add_task(function* testSyncedTabsSidebarStatus() {
 add_task(testClean);
 
 add_task(function* testSyncedTabsSidebarContextMenu() {
-  yield SidebarUI.show('viewTabsSidebar');
+  yield SidebarUI.show("viewTabsSidebar");
   let syncedTabsDeckComponent = window.SidebarUI.browser.contentWindow.syncedTabsDeckComponent;
   let SyncedTabs = window.SidebarUI.browser.contentWindow.SyncedTabs;
 
@@ -310,6 +310,7 @@ add_task(function* testSyncedTabsSidebarContextMenu() {
     ["menuitem#syncedTabsBookmarkSelected", { hidden: false }],
     ["menuitem#syncedTabsCopySelected", { hidden: false }],
     ["menuseparator", { hidden: false }],
+    ["menuitem#syncedTabsOpenAllInTabs", { hidden: true }],
     ["menuitem#syncedTabsRefresh", { hidden: false }],
   ];
   yield* testContextMenu(syncedTabsDeckComponent,
@@ -317,7 +318,7 @@ add_task(function* testSyncedTabsSidebarContextMenu() {
                          "#tab-7cqCr77ptzX3-0",
                          tabMenuItems);
 
-  info("Right-clicking a client shouldn't show any actions");
+  info("Right-clicking a client should show the Open All in Tabs action");
   let sidebarMenuItems = [
     ["menuitem#syncedTabsOpenSelected", { hidden: true }],
     ["menuitem#syncedTabsOpenSelectedInTab", { hidden: true }],
@@ -327,12 +328,31 @@ add_task(function* testSyncedTabsSidebarContextMenu() {
     ["menuitem#syncedTabsBookmarkSelected", { hidden: true }],
     ["menuitem#syncedTabsCopySelected", { hidden: true }],
     ["menuseparator", { hidden: true }],
+    ["menuitem#syncedTabsOpenAllInTabs", { hidden: false }],
+    ["menuitem#syncedTabsRefresh", { hidden: false }],
+  ];
+  yield* testContextMenu(syncedTabsDeckComponent,
+                         "#SyncedTabsSidebarContext",
+                         "#item-7cqCr77ptzX3",
+                         sidebarMenuItems);
+
+  info("Right-clicking a client without any tabs should not show the Open All in Tabs action");
+  let menuItems = [
+    ["menuitem#syncedTabsOpenSelected", { hidden: true }],
+    ["menuitem#syncedTabsOpenSelectedInTab", { hidden: true }],
+    ["menuitem#syncedTabsOpenSelectedInWindow", { hidden: true }],
+    ["menuitem#syncedTabsOpenSelectedInPrivateWindow", { hidden: true }],
+    ["menuseparator", { hidden: true }],
+    ["menuitem#syncedTabsBookmarkSelected", { hidden: true }],
+    ["menuitem#syncedTabsCopySelected", { hidden: true }],
+    ["menuseparator", { hidden: true }],
+    ["menuitem#syncedTabsOpenAllInTabs", { hidden: true }],
     ["menuitem#syncedTabsRefresh", { hidden: false }],
   ];
   yield* testContextMenu(syncedTabsDeckComponent,
                          "#SyncedTabsSidebarContext",
                          "#item-OL3EJCsdb2JD",
-                         sidebarMenuItems);
+                         menuItems);
 });
 
 add_task(testClean);

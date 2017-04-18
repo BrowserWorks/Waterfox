@@ -58,7 +58,7 @@ var SocialServiceInternal = {
   get manifests() {
     return this.manifestsGenerator();
   },
-  getManifestPrefname: function(origin) {
+  getManifestPrefname(origin) {
     // Retrieve the prefname for a given origin/manifest.
     // If no existing pref, return a generated prefname.
     let MANIFEST_PREFS = Services.prefs.getBranch("social.manifest.");
@@ -74,12 +74,12 @@ var SocialServiceInternal = {
                        ", exception: " + err);
       }
     }
-    let originUri = Services.io.newURI(origin, null, null);
-    return originUri.hostPort.replace('.', '-');
+    let originUri = Services.io.newURI(origin);
+    return originUri.hostPort.replace(".", "-");
   },
-  orderedProviders: function(aCallback) {
+  orderedProviders(aCallback) {
     if (SocialServiceInternal.providerArray.length < 2) {
-      schedule(function () {
+      schedule(function() {
         aCallback(SocialServiceInternal.providerArray);
       });
       return;
@@ -106,7 +106,7 @@ var SocialServiceInternal = {
 
     try {
       stmt.executeAsync({
-        handleResult: function(aResultSet) {
+        handleResult(aResultSet) {
           let row;
           while ((row = aResultSet.getNextRow())) {
             let rh = row.getResultByName("host");
@@ -114,10 +114,10 @@ var SocialServiceInternal = {
             providers[rh].frecency = parseInt(frecency) || 0;
           }
         },
-        handleError: function(aError) {
+        handleError(aError) {
           Cu.reportError(aError.message + " (Result = " + aError.result + ")");
         },
-        handleCompletion: function(aReason) {
+        handleCompletion(aReason) {
           // the query may not have returned all our providers, so we have
           // stamped the frecency on the provider and sort here. This makes sure
           // all enabled providers get sorted even with frecency zero.
@@ -132,7 +132,7 @@ var SocialServiceInternal = {
   }
 };
 
-XPCOMUtils.defineLazyGetter(SocialServiceInternal, "providers", function () {
+XPCOMUtils.defineLazyGetter(SocialServiceInternal, "providers", function() {
   initService();
   let providers = {};
   for (let manifest of this.manifests) {
@@ -152,13 +152,13 @@ XPCOMUtils.defineLazyGetter(SocialServiceInternal, "providers", function () {
 
 function getOriginActivationType(origin) {
   // if this is an about uri, treat it as a directory
-  let URI = Services.io.newURI(origin, null, null);
+  let URI = Services.io.newURI(origin);
   let principal = Services.scriptSecurityManager.createCodebasePrincipal(URI, {});
   if (Services.scriptSecurityManager.isSystemPrincipal(principal) || origin == "moz-safe-about:home") {
     return "internal";
   }
 
-  let directories = Services.prefs.getCharPref("social.directories").split(',');
+  let directories = Services.prefs.getCharPref("social.directories").split(",");
   if (directories.indexOf(origin) >= 0)
     return "directory";
 
@@ -177,21 +177,21 @@ var ActiveProviders = {
     return this._providers;
   },
 
-  has: function (origin) {
+  has(origin) {
     return (origin in this._providers);
   },
 
-  add: function (origin) {
+  add(origin) {
     this._providers[origin] = 1;
     this._deferredTask.arm();
   },
 
-  delete: function (origin) {
+  delete(origin) {
     delete this._providers[origin];
     this._deferredTask.arm();
   },
 
-  flush: function () {
+  flush() {
     this._deferredTask.disarm();
     this._persist();
   },
@@ -201,7 +201,7 @@ var ActiveProviders = {
     return this._deferredTask = new DeferredTask(this._persist.bind(this), 0);
   },
 
-  _persist: function () {
+  _persist() {
     let string = Cc["@mozilla.org/supports-string;1"].
                  createInstance(Ci.nsISupportsString);
     string.data = JSON.stringify(this._providers);
@@ -405,7 +405,7 @@ this.SocialService = {
     SocialServiceInternal.providers[provider.origin] = provider;
     ActiveProviders.add(provider.origin);
 
-    this.getOrderedProviderList(function (providers) {
+    this.getOrderedProviderList(function(providers) {
       this._notifyProviderListeners("provider-enabled", provider.origin, providers);
       if (onDone)
         onDone(provider);
@@ -438,7 +438,7 @@ this.SocialService = {
       AddonManagerPrivate.callAddonListeners("onDisabled", addon);
     }
 
-    this.getOrderedProviderList(function (providers) {
+    this.getOrderedProviderList(function(providers) {
       this._notifyProviderListeners("provider-disabled", origin, providers);
       if (onDone)
         onDone();
@@ -448,19 +448,19 @@ this.SocialService = {
   // Returns a single provider object with the specified origin.  The provider
   // must be "installed" (ie, in ActiveProviders)
   getProvider: function getProvider(origin, onDone) {
-    schedule((function () {
+    schedule((function() {
       onDone(SocialServiceInternal.providers[origin] || null);
-    }).bind(this));
+    }));
   },
 
   // Returns an unordered array of installed providers
-  getProviderList: function(onDone) {
-    schedule(function () {
+  getProviderList(onDone) {
+    schedule(function() {
       onDone(SocialServiceInternal.providerArray);
     });
   },
 
-  getManifestByOrigin: function(origin) {
+  getManifestByOrigin(origin) {
     for (let manifest of SocialServiceInternal.manifests) {
       if (origin == manifest.origin) {
         return manifest;
@@ -470,11 +470,11 @@ this.SocialService = {
   },
 
   // Returns an array of installed providers, sorted by frecency
-  getOrderedProviderList: function(onDone) {
+  getOrderedProviderList(onDone) {
     SocialServiceInternal.orderedProviders(onDone);
   },
 
-  getOriginActivationType: function (origin) {
+  getOriginActivationType(origin) {
     return getOriginActivationType(origin);
   },
 
@@ -486,7 +486,7 @@ this.SocialService = {
     this._providerListeners.delete(listener);
   },
 
-  _notifyProviderListeners: function (topic, origin, providers) {
+  _notifyProviderListeners(topic, origin, providers) {
     for (let [listener, ] of this._providerListeners) {
       try {
         listener(topic, origin, providers);
@@ -496,20 +496,20 @@ this.SocialService = {
     }
   },
 
-  _manifestFromData: function(type, data, installOrigin) {
-    let featureURLs = ['shareURL'];
-    let resolveURLs = featureURLs.concat(['postActivationURL']);
+  _manifestFromData(type, data, installOrigin) {
+    let featureURLs = ["shareURL"];
+    let resolveURLs = featureURLs.concat(["postActivationURL"]);
 
-    if (type == 'directory' || type == 'internal') {
+    if (type == "directory" || type == "internal") {
       // directory provided manifests must have origin in manifest, use that
-      if (!data['origin']) {
+      if (!data["origin"]) {
         Cu.reportError("SocialService.manifestFromData directory service provided manifest without origin.");
         return null;
       }
       installOrigin = data.origin;
     }
     // force/fixup origin
-    let URI = Services.io.newURI(installOrigin, null, null);
+    let URI = Services.io.newURI(installOrigin);
     let principal = Services.scriptSecurityManager.createCodebasePrincipal(URI, {});
     data.origin = principal.origin;
 
@@ -519,14 +519,14 @@ this.SocialService = {
       Cu.reportError("SocialService.manifestFromData manifest missing required urls.");
       return null;
     }
-    if (!data['name'] || !data['iconURL']) {
+    if (!data["name"] || !data["iconURL"]) {
       Cu.reportError("SocialService.manifestFromData manifest missing name or iconURL.");
       return null;
     }
     for (let url of resolveURLs) {
       if (data[url]) {
         try {
-          let resolved = Services.io.newURI(principal.URI.resolve(data[url]), null, null);
+          let resolved = Services.io.newURI(principal.URI.resolve(data[url]));
           if (!(resolved.schemeIs("http") || resolved.schemeIs("https"))) {
             Cu.reportError("SocialService.manifestFromData unsupported scheme '" + resolved.scheme + "' for " + principal.origin);
             return null;
@@ -541,7 +541,7 @@ this.SocialService = {
     return data;
   },
 
-  _showInstallNotification: function(data, aAddonInstaller) {
+  _showInstallNotification(data, aAddonInstaller) {
     let brandBundle = Services.strings.createBundle("chrome://branding/locale/brand.properties");
     let browserBundle = Services.strings.createBundle("chrome://browser/locale/browser.properties");
 
@@ -551,7 +551,7 @@ this.SocialService = {
     if (data.installType == "internal" || data.installType == "directory") {
       url = data.manifest.origin;
     }
-    let requestingURI =  Services.io.newURI(url, null, null);
+    let requestingURI =  Services.io.newURI(url);
     let productName = brandBundle.GetStringFromName("brandShortName");
 
     let message = browserBundle.formatStringFromName("service.install.description",
@@ -560,13 +560,14 @@ this.SocialService = {
     let action = {
       label: browserBundle.GetStringFromName("service.install.ok.label"),
       accessKey: browserBundle.GetStringFromName("service.install.ok.accesskey"),
-      callback: function() {
+      callback() {
         aAddonInstaller.install();
       },
     };
 
     let options = {
                     learnMoreURL: Services.urlFormatter.formatURLPref("app.support.baseURL") + "social-api",
+                    persistent: true,
                   };
     let anchor = "servicesInstall-notification-icon";
     let notificationid = "servicesInstall";
@@ -575,7 +576,7 @@ this.SocialService = {
                                         action, [], options);
   },
 
-  installProvider: function(data, installCallback, options={}) {
+  installProvider(data, installCallback, options = {}) {
     data.installType = getOriginActivationType(data.origin);
     // if we get data, we MUST have a valid manifest generated from the data
     let manifest = this._manifestFromData(data.installType, data.manifest, data.origin);
@@ -596,7 +597,7 @@ this.SocialService = {
         aAddon.cancelUninstall();
         aAddon.userDisabled = false;
       }
-      schedule(function () {
+      schedule(function() {
         try {
           this._installProvider(data, options, aManifest => {
               this._notifyProviderListeners("provider-installed", aManifest.origin);
@@ -610,7 +611,7 @@ this.SocialService = {
     }.bind(this));
   },
 
-  _installProvider: function(data, options, installCallback) {
+  _installProvider(data, options, installCallback) {
     if (!data.manifest)
       throw new Error("Cannot install provider without manifest data");
 
@@ -619,7 +620,7 @@ this.SocialService = {
 
     // if installing from any website, the install must happen over https.
     // "internal" are installs from about:home or similar
-    if (data.installType != "internal" && !Services.io.newURI(data.origin, null, null).schemeIs("https")) {
+    if (data.installType != "internal" && !Services.io.newURI(data.origin).schemeIs("https")) {
       throw new Error("attempt to activate provider over unsecured channel: " + data.origin);
     }
 
@@ -632,7 +633,7 @@ this.SocialService = {
       this._showInstallNotification(data, installer);
   },
 
-  createWrapper: function(manifest) {
+  createWrapper(manifest) {
     return new AddonWrapper(manifest);
   },
 
@@ -641,7 +642,7 @@ this.SocialService = {
    * have knowledge of the currently selected provider here, we will notify
    * the front end to deal with any reload.
    */
-  updateProvider: function(aUpdateOrigin, aManifest) {
+  updateProvider(aUpdateOrigin, aManifest) {
     let installType = this.getOriginActivationType(aUpdateOrigin);
     // if we get data, we MUST have a valid manifest generated from the data
     let manifest = this._manifestFromData(installType, aManifest, aUpdateOrigin);
@@ -669,7 +670,7 @@ this.SocialService = {
 
   },
 
-  uninstallProvider: function(origin, aCallback) {
+  uninstallProvider(origin, aCallback) {
     let manifest = SocialService.getManifestByOrigin(origin);
     let addon = new AddonWrapper(manifest);
     addon.uninstall(aCallback);
@@ -701,7 +702,7 @@ function SocialProvider(input) {
   this.shareURL = input.shareURL;
   this.postActivationURL = input.postActivationURL;
   this.origin = input.origin;
-  let originUri = Services.io.newURI(input.origin, null, null);
+  let originUri = Services.io.newURI(input.origin);
   this.principal = Services.scriptSecurityManager.createCodebasePrincipal(originUri, {});
   this.ambientNotificationIcons = {};
   this.errorState = null;
@@ -715,7 +716,7 @@ function SocialProvider(input) {
 }
 
 SocialProvider.prototype = {
-  reload: function() {
+  reload() {
     // calling terminate/activate does not set the enabled state whereas setting
     // enabled will call terminate/activate
     this.enabled = false;
@@ -746,7 +747,7 @@ SocialProvider.prototype = {
     return SocialService.getManifestByOrigin(this.origin);
   },
 
-  getPageSize: function(name) {
+  getPageSize(name) {
     let manifest = this.manifest;
     if (manifest && manifest.pageSize)
       return manifest.pageSize[name];
@@ -773,7 +774,7 @@ SocialProvider.prototype = {
       return false;
     if (typeof uri == "string") {
       try {
-        uri = Services.io.newURI(uri, null, null);
+        uri = Services.io.newURI(uri);
       } catch (ex) {
         // an invalid URL can't be loaded!
         return false;
@@ -801,7 +802,7 @@ SocialProvider.prototype = {
   resolveUri: function resolveUri(url) {
     try {
       let fullURL = this.principal.URI.resolve(url);
-      return Services.io.newURI(fullURL, null, null);
+      return Services.io.newURI(fullURL);
     } catch (ex) {
       Cu.reportError("mozSocial: failed to resolve window URL: " + url + "; " + ex);
       return null;
@@ -810,7 +811,7 @@ SocialProvider.prototype = {
 };
 
 function getAddonIDFromOrigin(origin) {
-  let originUri = Services.io.newURI(origin, null, null);
+  let originUri = Services.io.newURI(origin);
   return originUri.host + ID_SUFFIX;
 }
 
@@ -853,11 +854,11 @@ function AddonInstaller(sourceURI, aManifest, installCallback) {
 }
 
 var SocialAddonProvider = {
-  startup: function() {},
+  startup() {},
 
-  shutdown: function() {},
+  shutdown() {},
 
-  updateAddonAppDisabledStates: function() {
+  updateAddonAppDisabledStates() {
     // we wont bother with "enabling" services that are released from blocklist
     for (let manifest of SocialServiceInternal.manifests) {
       try {
@@ -873,7 +874,7 @@ var SocialAddonProvider = {
     }
   },
 
-  getAddonByID: function(aId, aCallback) {
+  getAddonByID(aId, aCallback) {
     for (let manifest of SocialServiceInternal.manifests) {
       if (aId == getAddonIDFromOrigin(manifest.origin)) {
         aCallback(new AddonWrapper(manifest));
@@ -883,7 +884,7 @@ var SocialAddonProvider = {
     aCallback(null);
   },
 
-  getAddonsByTypes: function(aTypes, aCallback) {
+  getAddonsByTypes(aTypes, aCallback) {
     if (aTypes && aTypes.indexOf(ADDON_TYPE_SERVICE) == -1) {
       aCallback([]);
       return;
@@ -891,7 +892,7 @@ var SocialAddonProvider = {
     aCallback([...SocialServiceInternal.manifests].map(a => new AddonWrapper(a)));
   },
 
-  removeAddon: function(aAddon, aCallback) {
+  removeAddon(aAddon, aCallback) {
     AddonManagerPrivate.callAddonListeners("onUninstalling", aAddon, false);
     aAddon.pendingOperations |= AddonManager.PENDING_UNINSTALL;
     Services.prefs.clearUserPref(getPrefnameFromOrigin(aAddon.manifest.origin));
@@ -942,7 +943,7 @@ AddonWrapper.prototype = {
     return false;
   },
 
-  isCompatibleWith: function(appVersion, platformVersion) {
+  isCompatibleWith(appVersion, platformVersion) {
     return true;
   },
 
@@ -992,7 +993,7 @@ AddonWrapper.prototype = {
     return permissions;
   },
 
-  findUpdates: function(listener, reason, appVersion, platformVersion) {
+  findUpdates(listener, reason, appVersion, platformVersion) {
     if ("onNoCompatibilityUpdateAvailable" in listener)
       listener.onNoCompatibilityUpdateAvailable(this);
     if ("onNoUpdateAvailable" in listener)
@@ -1068,7 +1069,7 @@ AddonWrapper.prototype = {
     return val;
   },
 
-  uninstall: function(aCallback) {
+  uninstall(aCallback) {
     let prefName = getPrefnameFromOrigin(this.manifest.origin);
     if (Services.prefs.prefHasUserValue(prefName)) {
       if (ActiveProviders.has(this.manifest.origin)) {
@@ -1083,7 +1084,7 @@ AddonWrapper.prototype = {
     }
   },
 
-  cancelUninstall: function() {
+  cancelUninstall() {
     this._pending -= AddonManager.PENDING_UNINSTALL;
     AddonManagerPrivate.callAddonListeners("onOperationCancelled", this);
   }

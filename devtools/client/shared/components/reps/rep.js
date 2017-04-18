@@ -12,6 +12,7 @@ define(function (require, exports, module) {
   const React = require("devtools/client/shared/vendor/react");
 
   const { isGrip } = require("./rep-utils");
+  const { MODE } = require("./constants");
 
   // Load all existing rep templates
   const { Undefined } = require("./undefined");
@@ -37,6 +38,7 @@ define(function (require, exports, module) {
   const { CommentNode } = require("./comment-node");
   const { ElementNode } = require("./element-node");
   const { TextNode } = require("./text-node");
+  const { ErrorRep } = require("./error");
   const { Window } = require("./window");
   const { ObjectWithText } = require("./object-with-text");
   const { ObjectWithURL } = require("./object-with-url");
@@ -64,6 +66,7 @@ define(function (require, exports, module) {
     Window,
     ObjectWithText,
     ObjectWithURL,
+    ErrorRep,
     GripArray,
     GripMap,
     Grip,
@@ -88,7 +91,8 @@ define(function (require, exports, module) {
     propTypes: {
       object: React.PropTypes.any,
       defaultRep: React.PropTypes.object,
-      mode: React.PropTypes.string
+      // @TODO Change this to Object.values once it's supported in Node's version of V8
+      mode: React.PropTypes.oneOf(Object.keys(MODE).map(key => MODE[key])),
     },
 
     render: function () {
@@ -141,4 +145,36 @@ define(function (require, exports, module) {
 
   // Exports from this module
   exports.Rep = Rep;
+
+  // Export all reps
+  exports.REPS = {
+    ArrayRep,
+    Attribute,
+    CommentNode,
+    DateTime,
+    Document,
+    ElementNode,
+    ErrorRep,
+    Event,
+    Func,
+    Grip,
+    GripArray,
+    GripMap,
+    InfinityRep,
+    LongStringRep,
+    NaNRep,
+    Null,
+    Number,
+    ObjectWithText,
+    ObjectWithURL,
+    PromiseRep,
+    RegExp,
+    Rep,
+    StringRep,
+    StyleSheet,
+    SymbolRep,
+    TextNode,
+    Undefined,
+    Window,
+  };
 });

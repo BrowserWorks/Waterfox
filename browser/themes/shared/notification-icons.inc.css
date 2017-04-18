@@ -22,37 +22,13 @@
    type of icon displayed. This rule must be defined before the others in order
    for its list-style-image to be overridden. */
 .notification-anchor-icon {
-%ifdef MOZ_WIDGET_GTK
-  list-style-image: url(moz-icon://stock/gtk-dialog-info?size=16);
-%else
-  list-style-image: url(chrome://global/skin/icons/information-16.png);
-%endif
-}
-
-@media (min-resolution: 1.1dppx) {
-  .notification-anchor-icon {
-%ifdef MOZ_WIDGET_GTK
-    list-style-image: url(moz-icon://stock/gtk-dialog-info?size=dialog);
-%else
-    list-style-image: url(chrome://global/skin/icons/information-32.png);
-%endif
-  }
-}
-
-.popup-notification-icon {
-  width: 64px;
-  height: 64px;
-  margin-inline-end: 10px;
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#default-info);
 }
 
 .notification-anchor-icon:not(.plugin-blocked):-moz-lwtheme,
 #blocked-permissions-container > .blocked-permission-icon:-moz-lwtheme {
-  filter: url(chrome://browser/skin/filters.svg#fill);
+  filter: url(chrome://global/skin/filters.svg#fill);
   fill: currentColor;
-}
-
-.notification-anchor-icon:not(.plugin-blocked):not(:hover) {
-  opacity: .8;
 }
 
 /* INDIVIDUAL NOTIFICATIONS */

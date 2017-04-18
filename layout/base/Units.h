@@ -194,6 +194,10 @@ struct CSSPixel {
 
   // Conversions from app units
 
+  static CSSCoord FromAppUnits(nscoord aCoord) {
+    return NSAppUnitsToFloatPixels(aCoord, float(AppUnitsPerCSSPixel()));
+  }
+
   static CSSPoint FromAppUnits(const nsPoint& aPoint) {
     return CSSPoint(NSAppUnitsToFloatPixels(aPoint.x, float(AppUnitsPerCSSPixel())),
                     NSAppUnitsToFloatPixels(aPoint.y, float(AppUnitsPerCSSPixel())));
@@ -237,6 +241,10 @@ struct CSSPixel {
   }
 
   // Conversions to app units
+
+  static nscoord ToAppUnits(CSSCoord aCoord) {
+    return NSToCoordRoundWithClamp(aCoord * float(AppUnitsPerCSSPixel()));
+  }
 
   static nsPoint ToAppUnits(const CSSPoint& aPoint) {
     return nsPoint(NSToCoordRoundWithClamp(aPoint.x * float(AppUnitsPerCSSPixel())),
@@ -316,6 +324,10 @@ struct LayoutDevicePixel {
 
   static LayoutDeviceIntRect FromAppUnitsToInside(const nsRect& aRect, nscoord aAppUnitsPerDevPixel) {
     return LayoutDeviceIntRect::FromUnknownRect(aRect.ToInsidePixels(aAppUnitsPerDevPixel));
+  }
+
+  static LayoutDeviceIntRect FromAppUnitsToOutside(const nsRect& aRect, nscoord aAppUnitsPerDevPixel) {
+    return LayoutDeviceIntRect::FromUnknownRect(aRect.ToOutsidePixels(aAppUnitsPerDevPixel));
   }
 
   static LayoutDeviceIntSize FromAppUnitsRounded(const nsSize& aSize, nscoord aAppUnitsPerDevPixel) {

@@ -127,7 +127,7 @@ nsViewManager::CreateView(const nsRect& aBounds,
                           nsView* aParent,
                           nsViewVisibility aVisibilityFlag)
 {
-  nsView *v = new nsView(this, aVisibilityFlag);
+  auto *v = new nsView(this, aVisibilityFlag);
   v->SetParent(aParent);
   v->SetPosition(aBounds.x, aBounds.y);
   nsRect dim(0, 0, aBounds.width, aBounds.height);
@@ -405,7 +405,7 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
     return; // presentation might have been torn down
   }
   if (aFlushDirtyRegion) {
-    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_START);
+    GeckoProfilerTracingRAII tracer("Paint", "DisplayList");
     nsAutoScriptBlocker scriptBlocker;
     SetPainting(true);
     for (uint32_t i = 0; i < widgets.Length(); ++i) {
@@ -416,7 +416,6 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
       }
     }
     SetPainting(false);
-    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_END);
   }
 }
 
@@ -732,7 +731,7 @@ void nsViewManager::WillPaintWindow(nsIWidget* aWidget)
 }
 
 bool nsViewManager::PaintWindow(nsIWidget* aWidget,
-                                LayoutDeviceIntRegion aRegion)
+                                const LayoutDeviceIntRegion& aRegion)
 {
   if (!aWidget || !mContext)
     return false;
@@ -836,11 +835,7 @@ void nsViewManager::ReparentChildWidgets(nsView* aView, nsIWidget *aNewWidget)
     if (parentWidget) {
       // Child widget
       if (parentWidget != aNewWidget) {
-#ifdef DEBUG
-        nsresult rv =
-#endif
-          widget->SetParent(aNewWidget);
-        NS_ASSERTION(NS_SUCCEEDED(rv), "SetParent failed!");
+        widget->SetParent(aNewWidget);
       }
     } else {
       // Toplevel widget (popup, dialog, etc)
@@ -939,15 +934,6 @@ nsViewManager::InsertChild(nsView *aParent, nsView *aChild, nsView *aSibling,
       if (aParent->GetFloating())
         aChild->SetFloating(true);
     }
-}
-
-void
-nsViewManager::InsertChild(nsView *aParent, nsView *aChild, int32_t aZIndex)
-{
-  // no-one really calls this with anything other than aZIndex == 0 on a fresh view
-  // XXX this method should simply be eliminated and its callers redirected to the real method
-  SetViewZIndex(aChild, false, aZIndex);
-  InsertChild(aParent, aChild, nullptr, true);
 }
 
 void

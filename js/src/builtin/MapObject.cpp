@@ -84,7 +84,7 @@ HashValue(const Value& v, const mozilla::HashCodeScrambler& hcs)
     if (v.isObject())
         return hcs.scramble(v.asRawBits());
 
-    MOZ_ASSERT(v.isNull() || !v.isGCThing(), "do not reveal pointers via hash codes");
+    MOZ_ASSERT(!v.isGCThing(), "do not reveal pointers via hash codes");
     return v.asRawBits();
 }
 
@@ -112,7 +112,7 @@ HashableValue::operator==(const HashableValue& other) const
 }
 
 HashableValue
-HashableValue::mark(JSTracer* trc) const
+HashableValue::trace(JSTracer* trc) const
 {
     HashableValue hv(*this);
     TraceEdge(trc, &hv.value, "key");
@@ -164,7 +164,7 @@ MapIteratorObject::kind() const
     return MapObject::IteratorKind(i);
 }
 
-bool
+/* static */ bool
 GlobalObject::initMapIteratorProto(JSContext* cx, Handle<GlobalObject*> global)
 {
     Rooted<JSObject*> base(cx, GlobalObject::getOrCreateIteratorPrototype(cx, global));
@@ -278,6 +278,12 @@ MapIteratorObject::createResultPair(JSContext* cx)
 
 /*** Map *****************************************************************************************/
 
+static JSObject*
+CreateMapPrototype(JSContext* cx, JSProtoKey key)
+{
+    return GlobalObject::createBlankPrototype(cx, cx->global(), &MapObject::protoClass_);
+}
+
 const ClassOps MapObject::classOps_ = {
     nullptr, // addProperty
     nullptr, // delProperty
@@ -290,7 +296,16 @@ const ClassOps MapObject::classOps_ = {
     nullptr, // call
     nullptr, // hasInstance
     nullptr, // construct
-    mark
+    trace
+};
+
+const ClassSpec MapObject::classSpec_ = {
+    GenericCreateConstructor<MapObject::construct, 0, gc::AllocKind::FUNCTION>,
+    CreateMapPrototype,
+    nullptr,
+    MapObject::staticProperties,
+    MapObject::methods,
+    MapObject::properties,
 };
 
 const Class MapObject::class_ = {
@@ -299,11 +314,20 @@ const Class MapObject::class_ = {
     JSCLASS_HAS_RESERVED_SLOTS(MapObject::SlotCount) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Map) |
     JSCLASS_FOREGROUND_FINALIZE,
-    &MapObject::classOps_
+    &MapObject::classOps_,
+    &MapObject::classSpec_
+};
+
+const Class MapObject::protoClass_ = {
+    js_Object_str,
+    JSCLASS_HAS_CACHED_PROTO(JSProto_Map),
+    JS_NULL_CLASS_OPS,
+    &MapObject::classSpec_
 };
 
 const JSPropertySpec MapObject::properties[] = {
     JS_PSG("size", size, 0),
+    JS_STRING_SYM_PS(toStringTag, "Map", JSPROP_READONLY),
     JS_PS_END
 };
 
@@ -316,6 +340,10 @@ const JSFunctionSpec MapObject::methods[] = {
     JS_FN("values", values, 0, 0),
     JS_FN("clear", clear, 0, 0),
     JS_SELF_HOSTED_FN("forEach", "MapForEach", 2, 0),
+    // MapEntries only exists to preseve the equal identity of
+    // entries and @@iterator.
+    JS_SELF_HOSTED_FN("entries", "MapEntries", 0, 0),
+    JS_SELF_HOSTED_SYM_FN(iterator, "MapEntries", 0, 0),
     JS_FS_END
 };
 
@@ -324,58 +352,11 @@ const JSPropertySpec MapObject::staticProperties[] = {
     JS_PS_END
 };
 
-static JSObject*
-InitClass(JSContext* cx, Handle<GlobalObject*> global, const Class* clasp, JSProtoKey key, Native construct,
-          const JSPropertySpec* properties, const JSFunctionSpec* methods,
-          const JSPropertySpec* staticProperties)
-{
-    RootedPlainObject proto(cx, NewBuiltinClassInstance<PlainObject>(cx));
-    if (!proto)
-        return nullptr;
-
-    Rooted<JSFunction*> ctor(cx, global->createConstructor(cx, construct, ClassName(key, cx), 0));
-    if (!ctor ||
-        !JS_DefineProperties(cx, ctor, staticProperties) ||
-        !LinkConstructorAndPrototype(cx, ctor, proto) ||
-        !DefinePropertiesAndFunctions(cx, proto, properties, methods) ||
-        !GlobalObject::initBuiltinConstructor(cx, global, key, ctor, proto))
-    {
-        return nullptr;
-    }
-    return proto;
-}
-
-JSObject*
-MapObject::initClass(JSContext* cx, JSObject* obj)
-{
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
-    RootedObject proto(cx,
-        InitClass(cx, global, &class_, JSProto_Map, construct, properties, methods,
-                  staticProperties));
-    if (proto) {
-        // Define the "entries" method.
-        JSFunction* fun = JS_DefineFunction(cx, proto, "entries", entries, 0, 0);
-        if (!fun)
-            return nullptr;
-
-        // Define its alias.
-        RootedValue funval(cx, ObjectValue(*fun));
-        RootedId iteratorId(cx, SYMBOL_TO_JSID(cx->wellKnownSymbols().iterator));
-        if (!JS_DefinePropertyById(cx, proto, iteratorId, funval, 0))
-            return nullptr;
-
-        // Define Map.prototype[@@toStringTag].
-        if (!DefineToStringTag(cx, proto, cx->names().Map))
-            return nullptr;
-    }
-    return proto;
-}
-
 template <class Range>
 static void
-MarkKey(Range& r, const HashableValue& key, JSTracer* trc)
+TraceKey(Range& r, const HashableValue& key, JSTracer* trc)
 {
-    HashableValue newKey = key.mark(trc);
+    HashableValue newKey = key.trace(trc);
 
     if (newKey.get() != key.get()) {
         // The hash function only uses the bits of the Value, so it is safe to
@@ -385,11 +366,11 @@ MarkKey(Range& r, const HashableValue& key, JSTracer* trc)
 }
 
 void
-MapObject::mark(JSTracer* trc, JSObject* obj)
+MapObject::trace(JSTracer* trc, JSObject* obj)
 {
     if (ValueMap* map = obj->as<MapObject>().getData()) {
         for (ValueMap::Range r = map->all(); !r.empty(); r.popFront()) {
-            MarkKey(r, r.front().key, trc);
+            TraceKey(r, r.front().key, trc);
             TraceEdge(trc, &r.front().value, "value");
         }
     }
@@ -767,7 +748,7 @@ MapObject::delete_(JSContext *cx, HandleObject obj, HandleValue key, bool *rval)
 bool
 MapObject::delete_impl(JSContext *cx, const CallArgs& args)
 {
-    // MapObject::mark does not mark deleted entries. Incremental GC therefore
+    // MapObject::trace does not trace deleted entries. Incremental GC therefore
     // requires that no HeapPtr<Value> objects pointing to heap values be left
     // alive in the ValueMap.
     //
@@ -877,12 +858,6 @@ MapObject::clear(JSContext* cx, HandleObject obj)
     return true;
 }
 
-JSObject*
-js::InitMapClass(JSContext* cx, HandleObject obj)
-{
-    return MapObject::initClass(cx, obj);
-}
-
 
 /*** SetIterator *********************************************************************************/
 
@@ -924,7 +899,7 @@ SetIteratorObject::kind() const
     return SetObject::IteratorKind(i);
 }
 
-bool
+/* static */ bool
 GlobalObject::initSetIteratorProto(JSContext* cx, Handle<GlobalObject*> global)
 {
     Rooted<JSObject*> base(cx, GlobalObject::getOrCreateIteratorPrototype(cx, global));
@@ -1025,6 +1000,12 @@ SetIteratorObject::createResult(JSContext* cx)
 
 /*** Set *****************************************************************************************/
 
+static JSObject*
+CreateSetPrototype(JSContext* cx, JSProtoKey key)
+{
+    return GlobalObject::createBlankPrototype(cx, cx->global(), &SetObject::protoClass_);
+}
+
 const ClassOps SetObject::classOps_ = {
     nullptr, // addProperty
     nullptr, // delProperty
@@ -1037,7 +1018,16 @@ const ClassOps SetObject::classOps_ = {
     nullptr, // call
     nullptr, // hasInstance
     nullptr, // construct
-    mark
+    trace
+};
+
+const ClassSpec SetObject::classSpec_ = {
+    GenericCreateConstructor<SetObject::construct, 0, gc::AllocKind::FUNCTION>,
+    CreateSetPrototype,
+    nullptr,
+    SetObject::staticProperties,
+    SetObject::methods,
+    SetObject::properties,
 };
 
 const Class SetObject::class_ = {
@@ -1046,11 +1036,20 @@ const Class SetObject::class_ = {
     JSCLASS_HAS_RESERVED_SLOTS(SetObject::SlotCount) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Set) |
     JSCLASS_FOREGROUND_FINALIZE,
-    &SetObject::classOps_
+    &SetObject::classOps_,
+    &SetObject::classSpec_,
+};
+
+const Class SetObject::protoClass_ = {
+    js_Object_str,
+    JSCLASS_HAS_CACHED_PROTO(JSProto_Set),
+    JS_NULL_CLASS_OPS,
+    &SetObject::classSpec_
 };
 
 const JSPropertySpec SetObject::properties[] = {
     JS_PSG("size", size, 0),
+    JS_STRING_SYM_PS(toStringTag, "Set", JSPROP_READONLY),
     JS_PS_END
 };
 
@@ -1061,6 +1060,11 @@ const JSFunctionSpec SetObject::methods[] = {
     JS_FN("entries", entries, 0, 0),
     JS_FN("clear", clear, 0, 0),
     JS_SELF_HOSTED_FN("forEach", "SetForEach", 2, 0),
+    // SetValues only exists to preseve the equal identity of
+    // values, keys and @@iterator.
+    JS_SELF_HOSTED_FN("values", "SetValues", 0, 0),
+    JS_SELF_HOSTED_FN("keys", "SetValues", 0, 0),
+    JS_SELF_HOSTED_SYM_FN(iterator, "SetValues", 0, 0),
     JS_FS_END
 };
 
@@ -1068,36 +1072,6 @@ const JSPropertySpec SetObject::staticProperties[] = {
     JS_SELF_HOSTED_SYM_GET(species, "SetSpecies", 0),
     JS_PS_END
 };
-
-JSObject*
-SetObject::initClass(JSContext* cx, JSObject* obj)
-{
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
-    RootedObject proto(cx,
-        InitClass(cx, global, &class_, JSProto_Set, construct, properties, methods,
-                  staticProperties));
-    if (proto) {
-        // Define the "values" method.
-        JSFunction* fun = JS_DefineFunction(cx, proto, "values", values, 0, 0);
-        if (!fun)
-            return nullptr;
-
-        // Define its aliases.
-        RootedValue funval(cx, ObjectValue(*fun));
-        if (!JS_DefineProperty(cx, proto, "keys", funval, 0))
-            return nullptr;
-
-        RootedId iteratorId(cx, SYMBOL_TO_JSID(cx->wellKnownSymbols().iterator));
-        if (!JS_DefinePropertyById(cx, proto, iteratorId, funval, 0))
-            return nullptr;
-
-        // Define Set.prototype[@@toStringTag].
-        if (!DefineToStringTag(cx, proto, cx->names().Set))
-            return nullptr;
-    }
-    return proto;
-}
-
 
 bool
 SetObject::keys(JSContext* cx, HandleObject obj, JS::MutableHandle<GCVector<JS::Value>> keys)
@@ -1154,12 +1128,12 @@ SetObject::create(JSContext* cx, HandleObject proto /* = nullptr */)
 }
 
 void
-SetObject::mark(JSTracer* trc, JSObject* obj)
+SetObject::trace(JSTracer* trc, JSObject* obj)
 {
     SetObject* setobj = static_cast<SetObject*>(obj);
     if (ValueSet* set = setobj->getData()) {
         for (ValueSet::Range r = set->all(); !r.empty(); r.popFront())
-            MarkKey(r, r.front(), trc);
+            TraceKey(r, r.front(), trc);
     }
 }
 
@@ -1464,12 +1438,6 @@ SetObject::clear(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     return CallNonGenericMethod(cx, is, clear_impl, args);
-}
-
-JSObject*
-js::InitSetClass(JSContext* cx, HandleObject obj)
-{
-    return SetObject::initClass(cx, obj);
 }
 
 /*** JS static utility functions *********************************************/

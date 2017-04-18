@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 // The panel's window global is an EventEmitter firing the following events:
@@ -50,12 +54,6 @@ const EVENTS = {
 
   // When the request post params are displayed in the UI.
   REQUEST_POST_PARAMS_DISPLAYED: "NetMonitor:RequestPostParamsAvailable",
-
-  // When the response body is displayed in the UI.
-  RESPONSE_BODY_DISPLAYED: "NetMonitor:ResponseBodyAvailable",
-
-  // When the html response preview is displayed in the UI.
-  RESPONSE_HTML_PREVIEW_DISPLAYED: "NetMonitor:ResponseHtmlPreviewAvailable",
 
   // When the image response thumbnail is displayed in the UI.
   RESPONSE_IMAGE_THUMBNAIL_DISPLAYED:

@@ -234,7 +234,7 @@ CompositorBridgeParent*
 CompositorBridgeChild::InitSameProcess(widget::CompositorWidget* aWidget,
                                        const uint64_t& aLayerTreeId,
                                        CSSToLayoutDeviceScale aScale,
-                                       bool aUseAPZ,
+                                       const CompositorOptions& aOptions,
                                        bool aUseExternalSurface,
                                        const gfx::IntSize& aSurfaceSize)
 {
@@ -242,7 +242,7 @@ CompositorBridgeChild::InitSameProcess(widget::CompositorWidget* aWidget,
     gfxPlatform::GetPlatform()->GetHardwareVsync()->GetGlobalDisplay().GetVsyncRate();
 
   mCompositorBridgeParent =
-    new CompositorBridgeParent(aScale, vsyncRate, aUseExternalSurface, aSurfaceSize);
+    new CompositorBridgeParent(aScale, vsyncRate, aOptions, aUseExternalSurface, aSurfaceSize);
 
   bool ok = Open(mCompositorBridgeParent->GetIPCChannel(),
                  CompositorThreadHolder::Loop(),
@@ -250,7 +250,7 @@ CompositorBridgeChild::InitSameProcess(widget::CompositorWidget* aWidget,
   MOZ_RELEASE_ASSERT(ok);
 
   InitIPDL();
-  mCompositorBridgeParent->InitSameProcess(aWidget, aLayerTreeId, aUseAPZ);
+  mCompositorBridgeParent->InitSameProcess(aWidget, aLayerTreeId);
   return mCompositorBridgeParent;
 }
 
@@ -296,6 +296,24 @@ CompositorBridgeChild::ChildProcessHasCompositorBridge()
   return sCompositorBridge != nullptr;
 }
 
+/* static */ bool
+CompositorBridgeChild::CompositorIsInGPUProcess()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (XRE_IsParentProcess()) {
+    return !!GPUProcessManager::Get()->GetGPUChild();
+  }
+
+  MOZ_ASSERT(XRE_IsContentProcess());
+  CompositorBridgeChild* bridge = CompositorBridgeChild::Get();
+  if (!bridge) {
+    return false;
+  }
+
+  return bridge->OtherPid() != dom::ContentChild::GetSingleton()->OtherPid();
+}
+
 PLayerTransactionChild*
 CompositorBridgeChild::AllocPLayerTransactionChild(const nsTArray<LayersBackend>& aBackendHints,
                                                    const uint64_t& aId,
@@ -322,7 +340,7 @@ CompositorBridgeChild::DeallocPLayerTransactionChild(PLayerTransactionChild* act
   return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvInvalidateLayers(const uint64_t& aLayersId)
 {
   if (mLayerManager) {
@@ -333,19 +351,24 @@ CompositorBridgeChild::RecvInvalidateLayers(const uint64_t& aLayersId)
       child->InvalidateLayers();
     }
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvCompositorUpdated(const uint64_t& aLayersId,
-                                             const TextureFactoryIdentifier& aNewIdentifier)
+                                             const TextureFactoryIdentifier& aNewIdentifier,
+                                             const uint64_t& aSeqNo)
 {
   if (mLayerManager) {
     // This case is handled directly by nsBaseWidget.
     MOZ_ASSERT(aLayersId == 0);
   } else if (aLayersId != 0) {
-    if (dom::TabChild* child = dom::TabChild::GetFrom(aLayersId)) {
-      child->CompositorUpdated(aNewIdentifier);
+    // Update gfxPlatform if this is the first time we're seeing this compositor
+    // update (we will get an update for each connected tab).
+    static uint64_t sLastSeqNo = 0;
+    if (sLastSeqNo != aSeqNo) {
+      gfxPlatform::GetPlatform()->CompositorUpdated();
+      sLastSeqNo = aSeqNo;
 
       // If we still get device reset here, something must wrong when creating
       // d3d11 devices.
@@ -354,12 +377,16 @@ CompositorBridgeChild::RecvCompositorUpdated(const uint64_t& aLayersId,
                                updating compositor.";
       }
     }
+
+    if (dom::TabChild* child = dom::TabChild::GetFrom(aLayersId)) {
+      child->CompositorUpdated(aNewIdentifier);
+    }
     if (!mCanSend) {
-      return true;
+      return IPC_OK();
     }
     SendAcknowledgeCompositorUpdate(aLayersId);
   }
-  return true;
+  return IPC_OK();
 }
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
@@ -399,7 +426,7 @@ static void CalculatePluginClip(const LayoutDeviceIntRect& aBounds,
 }
 #endif
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint& aContentOffset,
                                                       const LayoutDeviceIntRegion& aParentLayerVisibleRegion,
                                                       nsTArray<PluginWindowData>&& aPlugins)
@@ -407,7 +434,7 @@ CompositorBridgeChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
   NS_NOTREACHED("CompositorBridgeChild::RecvUpdatePluginConfigurations calls "
                 "unexpected on this platform.");
-  return false;
+  return IPC_FAIL_NO_REASON(this);
 #else
   // Now that we are on the main thread, update plugin widget config.
   // This should happen a little before we paint to the screen assuming
@@ -449,18 +476,15 @@ CompositorBridgeChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint
         // by a child window move, and will call invalidate on the plugin
         // parent window which the browser owns. The latter gets picked up in
         // our OnPaint handler and forwarded over to the plugin process async.
-        rv = widget->Resize(aContentOffset.x + bounds.x,
-                            aContentOffset.y + bounds.y,
-                            bounds.width, bounds.height, true);
-        NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+        widget->Resize(aContentOffset.x + bounds.x,
+                       aContentOffset.y + bounds.y,
+                       bounds.width, bounds.height, true);
       }
 
-      rv = widget->Enable(isVisible);
-      NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+      widget->Enable(isVisible);
 
       // visible state - updated after clipping, prior to invalidating
-      rv = widget->Show(isVisible);
-      NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+      widget->Show(isVisible);
 
       // Handle invalidation, this can be costly, avoid if it is not needed.
       if (isVisible) {
@@ -472,8 +496,7 @@ CompositorBridgeChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint
         mozilla::widget::WinUtils::InvalidatePluginAsWorkaround(
           widget, visibleBounds);
 #else
-        rv = widget->Invalidate(visibleBounds);
-        NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+        widget->Invalidate(visibleBounds);
 #endif
         visiblePluginIds.AppendElement(aPlugins[pluginsIdx].windowId());
       }
@@ -483,10 +506,10 @@ CompositorBridgeChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint
   // not associated with visible content.
   nsIWidget::UpdateRegisteredPluginWindowVisibility((uintptr_t)parent, visiblePluginIds);
   if (!mCanSend) {
-    return true;
+    return IPC_OK();
   }
   SendRemotePluginsReady();
-  return true;
+  return IPC_OK();
 #endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
 }
 
@@ -499,7 +522,7 @@ ScheduleSendAllPluginsCaptured(CompositorBridgeChild* aThis, MessageLoop* aLoop)
 }
 #endif
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvCaptureAllPlugins(const uintptr_t& aParentWidget)
 {
 #if defined(XP_WIN)
@@ -511,34 +534,34 @@ CompositorBridgeChild::RecvCaptureAllPlugins(const uintptr_t& aParentWidget)
   ImageBridgeChild::GetSingleton()->GetMessageLoop()->PostTask(
     NewRunnableFunction(&ScheduleSendAllPluginsCaptured, this,
                         MessageLoop::current()));
-  return true;
+  return IPC_OK();
 #else
   MOZ_ASSERT_UNREACHABLE(
     "CompositorBridgeChild::RecvCaptureAllPlugins calls unexpected.");
-  return false;
+  return IPC_FAIL_NO_REASON(this);
 #endif
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvHideAllPlugins(const uintptr_t& aParentWidget)
 {
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
   NS_NOTREACHED("CompositorBridgeChild::RecvHideAllPlugins calls "
                 "unexpected on this platform.");
-  return false;
+  return IPC_FAIL_NO_REASON(this);
 #else
   MOZ_ASSERT(NS_IsMainThread());
   nsTArray<uintptr_t> list;
   nsIWidget::UpdateRegisteredPluginWindowVisibility(aParentWidget, list);
   if (!mCanSend) {
-    return true;
+    return IPC_OK();
   }
   SendRemotePluginsReady();
-  return true;
+  return IPC_OK();
 #endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId,
                                         const TimeStamp& aCompositeStart,
                                         const TimeStamp& aCompositeEnd)
@@ -559,17 +582,17 @@ CompositorBridgeChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTr
     mTexturePools[i]->ReturnDeferredClients();
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvOverfill(const uint32_t &aOverfill)
 {
   for (size_t i = 0; i < mOverfillObservers.Length(); i++) {
     mOverfillObservers[i]->RunOverfillCallback(aOverfill);
   }
   mOverfillObservers.Clear();
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -579,14 +602,14 @@ CompositorBridgeChild::AddOverfillObserver(ClientLayerManager* aLayerManager)
   mOverfillObservers.AppendElement(aLayerManager);
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvClearCachedResources(const uint64_t& aId)
 {
   dom::TabChild* child = dom::TabChild::GetFrom(aId);
   if (child) {
     child->ClearCachedResources();
   }
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -605,7 +628,7 @@ CompositorBridgeChild::ActorDestroy(ActorDestroyReason aWhy)
   }
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvSharedCompositorFrameMetrics(
     const mozilla::ipc::SharedMemoryBasic::Handle& metrics,
     const CrossProcessMutexHandle& handle,
@@ -615,10 +638,10 @@ CompositorBridgeChild::RecvSharedCompositorFrameMetrics(
   SharedFrameMetricsData* data = new SharedFrameMetricsData(
     metrics, handle, aLayersId, aAPZCId);
   mFrameMetricsTable.Put(data->GetViewID(), data);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvReleaseSharedCompositorFrameMetrics(
     const ViewID& aId,
     const uint32_t& aAPZCId)
@@ -630,7 +653,7 @@ CompositorBridgeChild::RecvReleaseSharedCompositorFrameMetrics(
   if (data && (data->GetAPZCId() == aAPZCId)) {
     mFrameMetricsTable.Remove(aId);
   }
-  return true;
+  return IPC_OK();
 }
 
 CompositorBridgeChild::SharedFrameMetricsData::SharedFrameMetricsData(
@@ -691,7 +714,7 @@ CompositorBridgeChild::SharedFrameMetricsData::GetAPZCId()
 }
 
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvRemotePaintIsReady()
 {
   // Used on the content thread, this bounces the message to the
@@ -703,14 +726,14 @@ CompositorBridgeChild::RecvRemotePaintIsReady()
   if (!iTabChildBase) {
     MOZ_LAYERS_LOG(("[RemoteGfx] Note: TabChild was released before RemotePaintIsReady. "
         "MozAfterRemotePaint will not be sent to listener."));
-    return true;
+    return IPC_OK();
   }
   TabChildBase* tabChildBase = static_cast<TabChildBase*>(iTabChildBase.get());
   TabChild* tabChild = static_cast<TabChild*>(tabChildBase);
   MOZ_ASSERT(tabChild);
   Unused << tabChild->SendRemotePaintIsReady();
   mWeakTabChild = nullptr;
-  return true;
+  return IPC_OK();
 }
 
 
@@ -882,7 +905,7 @@ CompositorBridgeChild::DeallocPTextureChild(PTextureChild* actor)
   return TextureClient::DestroyIPDLActor(actor);
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessageData>&& aMessages)
 {
   for (AsyncParentMessageArray::index_type i = 0; i < aMessages.Length(); ++i) {
@@ -896,13 +919,13 @@ CompositorBridgeChild::RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessa
       }
       default:
         NS_ERROR("unknown AsyncParentMessageData type");
-        return false;
+        return IPC_FAIL_NO_REASON(this);
     }
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorBridgeChild::RecvObserveLayerUpdate(const uint64_t& aLayersId,
                                               const uint64_t& aEpoch,
                                               const bool& aActive)
@@ -915,7 +938,7 @@ CompositorBridgeChild::RecvObserveLayerUpdate(const uint64_t& aLayersId,
   if (RefPtr<dom::TabParent> tab = dom::TabParent::GetTabParentFromLayersId(aLayersId)) {
     tab->LayerTreeUpdate(aEpoch, aActive);
   }
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -1005,7 +1028,6 @@ CompositorBridgeChild::ClearTexturePool()
 FixedSizeSmallShmemSectionAllocator*
 CompositorBridgeChild::GetTileLockAllocator()
 {
-  MOZ_ASSERT(IPCOpen());
   if (!IPCOpen()) {
     return nullptr;
   }
@@ -1070,25 +1092,6 @@ CompositorBridgeChild::DeallocPCompositorWidgetChild(PCompositorWidgetChild* aAc
 #else
   return false;
 #endif
-}
-
-RefPtr<IAPZCTreeManager>
-CompositorBridgeChild::GetAPZCTreeManager(uint64_t aLayerTreeId)
-{
-  bool apzEnabled = false;
-  Unused << SendAsyncPanZoomEnabled(aLayerTreeId, &apzEnabled);
-
-  if (!apzEnabled) {
-    return nullptr;
-  }
-
-  PAPZCTreeManagerChild* child = SendPAPZCTreeManagerConstructor(aLayerTreeId);
-  if (!child) {
-    return nullptr;
-  }
-  APZCTreeManagerChild* parent = static_cast<APZCTreeManagerChild*>(child);
-
-  return RefPtr<IAPZCTreeManager>(parent);
 }
 
 PAPZCTreeManagerChild*

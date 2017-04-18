@@ -6,13 +6,11 @@
 // manager is open
 
 var gManagerWindow;
-var gCategoryUtilities;
 
 add_task(function* test() {
   waitForExplicitFinish();
 
   gManagerWindow = yield open_manager("addons://list/extension");
-  gCategoryUtilities = new CategoryUtilities(gManagerWindow);
 });
 
 function get_list_item_count() {
@@ -32,7 +30,7 @@ function install_addon(aXpi) {
     AddonManager.getInstallForURL(TESTROOT + "addons/" + aXpi + ".xpi",
                                   function(aInstall) {
       aInstall.addListener({
-        onInstallEnded: function(aInstall) {
+        onInstallEnded(aInstall) {
           resolve();
         }
       });

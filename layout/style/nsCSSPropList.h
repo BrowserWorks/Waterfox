@@ -434,7 +434,7 @@ CSS_PROP_DISPLAY(
     "",
     // FIXME: The spec should say something about 'inherit' and 'initial'
     // not being allowed.
-    VARIANT_NONE | VARIANT_IDENTIFIER_NO_INHERIT, // used by list parsing
+    VARIANT_NONE | VARIANT_IDENTIFIER_NO_INHERIT | VARIANT_STRING, // used by list parsing
     nullptr,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_None)
@@ -462,7 +462,7 @@ CSS_PROP_DISPLAY(
     eStyleAnimType_None)
 CSS_PROP_DISPLAY(
     -moz-appearance,
-    appearance,
+    _moz_appearance,
     CSS_PROP_DOMPROP_PREFIXED(Appearance),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -538,7 +538,7 @@ CSS_PROP_BACKGROUND(
     VARIANT_HC,
     nullptr,
     offsetof(nsStyleBackground, mBackgroundColor),
-    eStyleAnimType_Color)
+    eStyleAnimType_ComplexColor)
 CSS_PROP_BACKGROUND(
     background-image,
     background_image,
@@ -564,7 +564,7 @@ CSS_PROP_BACKGROUND(
         CSS_PROPERTY_VALUE_LIST_USES_COMMAS,
     "",
     VARIANT_KEYWORD, // used by list parsing
-    kImageLayerOriginKTable,
+    kBackgroundOriginKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
 CSS_PROP_SHORTHAND(
@@ -632,7 +632,7 @@ CSS_PROP_BACKGROUND(
     eStyleAnimType_Custom)
 CSS_PROP_DISPLAY(
     -moz-binding,
-    binding,
+    _moz_binding,
     CSS_PROP_DOMPROP_PREFIXED(Binding),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -794,7 +794,7 @@ CSS_PROP_BORDER(
     eStyleAnimType_ComplexColor)
 CSS_PROP_BORDER(
     -moz-border-bottom-colors,
-    border_bottom_colors,
+    _moz_border_bottom_colors,
     CSS_PROP_DOMPROP_PREFIXED(BorderBottomColors),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER |
@@ -1058,7 +1058,7 @@ CSS_PROP_BORDER(
     eStyleAnimType_ComplexColor)
 CSS_PROP_BORDER(
     -moz-border-left-colors,
-    border_left_colors,
+    _moz_border_left_colors,
     CSS_PROP_DOMPROP_PREFIXED(BorderLeftColors),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER |
@@ -1120,7 +1120,7 @@ CSS_PROP_BORDER(
     eStyleAnimType_ComplexColor)
 CSS_PROP_BORDER(
     -moz-border-right-colors,
-    border_right_colors,
+    _moz_border_right_colors,
     CSS_PROP_DOMPROP_PREFIXED(BorderRightColors),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER |
@@ -1194,7 +1194,7 @@ CSS_PROP_BORDER(
     eStyleAnimType_ComplexColor)
 CSS_PROP_BORDER(
     -moz-border-top-colors,
-    border_top_colors,
+    _moz_border_top_colors,
     CSS_PROP_DOMPROP_PREFIXED(BorderTopColors),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER |
@@ -1277,7 +1277,7 @@ CSS_PROP_POSITION(
     eStyleAnimType_Sides_Bottom)
 CSS_PROP_XUL(
     -moz-box-align,
-    box_align,
+    _moz_box_align,
     CSS_PROP_DOMPROP_PREFIXED(BoxAlign),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -1297,7 +1297,7 @@ CSS_PROP_BORDER(
     eStyleAnimType_Discrete)
 CSS_PROP_XUL(
     -moz-box-direction,
-    box_direction,
+    _moz_box_direction,
     CSS_PROP_DOMPROP_PREFIXED(BoxDirection),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -1307,7 +1307,7 @@ CSS_PROP_XUL(
     eStyleAnimType_Discrete) // XXX bug 3935
 CSS_PROP_XUL(
     -moz-box-flex,
-    box_flex,
+    _moz_box_flex,
     CSS_PROP_DOMPROP_PREFIXED(BoxFlex),
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE,
@@ -1318,7 +1318,7 @@ CSS_PROP_XUL(
     eStyleAnimType_float) // XXX bug 3935
 CSS_PROP_XUL(
     -moz-box-ordinal-group,
-    box_ordinal_group,
+    _moz_box_ordinal_group,
     CSS_PROP_DOMPROP_PREFIXED(BoxOrdinalGroup),
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE,
@@ -1329,7 +1329,7 @@ CSS_PROP_XUL(
     eStyleAnimType_Discrete)
 CSS_PROP_XUL(
     -moz-box-orient,
-    box_orient,
+    _moz_box_orient,
     CSS_PROP_DOMPROP_PREFIXED(BoxOrient),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -1339,7 +1339,7 @@ CSS_PROP_XUL(
     eStyleAnimType_Discrete) // XXX bug 3935
 CSS_PROP_XUL(
     -moz-box-pack,
-    box_pack,
+    _moz_box_pack,
     CSS_PROP_DOMPROP_PREFIXED(BoxPack),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -1381,6 +1381,17 @@ CSS_PROP_TABLEBORDER(
     kCaptionSideKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
+CSS_PROP_USERINTERFACE(
+    caret-color,
+    caret_color,
+    CaretColor,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
+    "",
+    VARIANT_AUTO | VARIANT_HC,
+    nullptr,
+    offsetof(nsStyleUserInterface, mCaretColor),
+    eStyleAnimType_ComplexColor)
 CSS_PROP_DISPLAY(
     clear,
     clear,
@@ -1804,7 +1815,7 @@ CSS_PROP_DISPLAY(
     eStyleAnimType_Discrete)
 CSS_PROP_BORDER(
     -moz-float-edge,
-    float_edge,
+    _moz_float_edge,
     CSS_PROP_DOMPROP_PREFIXED(FloatEdge),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -2037,6 +2048,20 @@ CSS_PROP_FONT(
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
 CSS_PROP_FONT(
+    font-variation-settings,
+    font_variation_settings,
+    FontVariationSettings,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_VALUE_PARSER_FUNCTION |
+        CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
+        CSS_PROPERTY_APPLIES_TO_FIRST_LETTER_AND_FIRST_LINE |
+        CSS_PROPERTY_APPLIES_TO_PLACEHOLDER,
+    "layout.css.font-variations.enabled",
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_Custom)
+CSS_PROP_FONT(
     font-weight,
     font_weight,
     FontWeight,
@@ -2052,7 +2077,7 @@ CSS_PROP_FONT(
     eStyleAnimType_Custom)
 CSS_PROP_UIRESET(
     -moz-force-broken-image-icon,
-    force_broken_image_icon,
+    _moz_force_broken_image_icon,
     CSS_PROP_DOMPROP_PREFIXED(ForceBrokenImageIcon),
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE,
@@ -2281,7 +2306,7 @@ CSS_PROP_VISIBILITY(
     eStyleAnimType_Discrete)
 CSS_PROP_LIST(
     -moz-image-region,
-    image_region,
+    _moz_image_region,
     CSS_PROP_DOMPROP_PREFIXED(ImageRegion),
     CSS_PROPERTY_PARSE_FUNCTION,
     "",
@@ -2672,7 +2697,7 @@ CSS_PROP_SVGRESET(
         CSS_PROPERTY_VALUE_LIST_USES_COMMAS,
     "",
     VARIANT_KEYWORD, // used by list parsing
-    kImageLayerOriginKTable,
+    kMaskClipKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
 CSS_PROP_SVGRESET(
@@ -2718,7 +2743,7 @@ CSS_PROP_SVGRESET(
         CSS_PROPERTY_VALUE_LIST_USES_COMMAS,
     "",
     VARIANT_KEYWORD, // used by list parsing
-    kImageLayerOriginKTable,
+    kMaskOriginKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Discrete)
 CSS_PROP_SHORTHAND(
@@ -2791,7 +2816,7 @@ CSS_PROP_SVGRESET(
 #ifndef CSS_PROP_LIST_EXCLUDE_INTERNAL
 CSS_PROP_FONT(
     -moz-math-display,
-    math_display,
+    _moz_math_display,
     MathDisplay,
     CSS_PROPERTY_INTERNAL |
         CSS_PROPERTY_ENABLED_IN_UA_SHEETS |
@@ -2803,7 +2828,7 @@ CSS_PROP_FONT(
     eStyleAnimType_None)
 CSS_PROP_FONT(
     -moz-math-variant,
-    math_variant,
+    _moz_math_variant,
     MathVariant,
     CSS_PROPERTY_INTERNAL |
         CSS_PROPERTY_PARSE_INACCESSIBLE,
@@ -3073,7 +3098,7 @@ CSS_PROP_POSITION(
     eStyleAnimType_Custom) // <integer>
 CSS_PROP_DISPLAY(
     -moz-orient,
-    orient,
+    _moz_orient,
     CSS_PROP_DOMPROP_PREFIXED(Orient),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -3083,7 +3108,7 @@ CSS_PROP_DISPLAY(
     eStyleAnimType_Discrete)
 CSS_PROP_FONT(
     -moz-osx-font-smoothing,
-    osx_font_smoothing,
+    _moz_osx_font_smoothing,
     CSS_PROP_DOMPROP_PREFIXED(OsxFontSmoothing),
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER_AND_FIRST_LINE |
@@ -3128,7 +3153,7 @@ CSS_PROP_SHORTHAND(
     "")
 CSS_PROP_OUTLINE(
     -moz-outline-radius-bottomleft,
-    _moz_outline_radius_bottomLeft,
+    _moz_outline_radius_bottomleft,
     CSS_PROP_DOMPROP_PREFIXED(OutlineRadiusBottomleft),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
@@ -3140,7 +3165,7 @@ CSS_PROP_OUTLINE(
     eStyleAnimType_Corner_BottomLeft)
 CSS_PROP_OUTLINE(
     -moz-outline-radius-bottomright,
-    _moz_outline_radius_bottomRight,
+    _moz_outline_radius_bottomright,
     CSS_PROP_DOMPROP_PREFIXED(OutlineRadiusBottomright),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
@@ -3152,7 +3177,7 @@ CSS_PROP_OUTLINE(
     eStyleAnimType_Corner_BottomRight)
 CSS_PROP_OUTLINE(
     -moz-outline-radius-topleft,
-    _moz_outline_radius_topLeft,
+    _moz_outline_radius_topleft,
     CSS_PROP_DOMPROP_PREFIXED(OutlineRadiusTopleft),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
@@ -3164,7 +3189,7 @@ CSS_PROP_OUTLINE(
     eStyleAnimType_Corner_TopLeft)
 CSS_PROP_OUTLINE(
     -moz-outline-radius-topright,
-    _moz_outline_radius_topRight,
+    _moz_outline_radius_topright,
     CSS_PROP_DOMPROP_PREFIXED(OutlineRadiusTopright),
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
@@ -3194,7 +3219,7 @@ CSS_PROP_OUTLINE(
     VARIANT_HKL | VARIANT_CALC,
     kBorderWidthKTable,
     offsetof(nsStyleOutline, mOutlineWidth),
-    eStyleAnimType_Coord)
+    eStyleAnimType_nscoord)
 CSS_PROP_SHORTHAND(
     overflow,
     overflow,
@@ -3560,7 +3585,7 @@ CSS_PROP_TEXT(
 #ifndef CSS_PROP_LIST_EXCLUDE_INTERNAL
 CSS_PROP_FONT(
     -moz-script-level,
-    script_level,
+    _moz_script_level,
     ScriptLevel,
     // We only allow 'script-level' when unsafe rules are enabled, because
     // otherwise it could interfere with rulenode optimizations if used in
@@ -3578,7 +3603,7 @@ CSS_PROP_FONT(
     eStyleAnimType_None)
 CSS_PROP_FONT(
     -moz-script-min-size,
-    script_min_size,
+    _moz_script_min_size,
     ScriptMinSize,
     CSS_PROPERTY_INTERNAL |
         CSS_PROPERTY_PARSE_INACCESSIBLE,
@@ -3589,7 +3614,7 @@ CSS_PROP_FONT(
     eStyleAnimType_None)
 CSS_PROP_FONT(
     -moz-script-size-multiplier,
-    script_size_multiplier,
+    _moz_script_size_multiplier,
     ScriptSizeMultiplier,
     CSS_PROPERTY_INTERNAL |
         CSS_PROPERTY_PARSE_INACCESSIBLE,
@@ -3724,7 +3749,7 @@ CSS_PROP_TABLE(
 #endif // CSS_PROP_LIST_ONLY_COMPONENTS_OF_ALL_SHORTHAND
 CSS_PROP_XUL(
     -moz-stack-sizing,
-    stack_sizing,
+    _moz_stack_sizing,
     CSS_PROP_DOMPROP_PREFIXED(StackSizing),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -3861,10 +3886,10 @@ CSS_PROP_TEXT(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE,
     "",
-    VARIANT_HI,
+    VARIANT_INHERIT | VARIANT_LNCALC,
     nullptr,
     offsetof(nsStyleText, mTabSize),
-    eStyleAnimType_Discrete)
+    eStyleAnimType_Coord)
 CSS_PROP_TABLE(
     table-layout,
     table_layout,
@@ -4076,7 +4101,7 @@ CSS_PROP_TEXT(
     eStyleAnimType_Shadow)
 CSS_PROP_TEXT(
     -moz-text-size-adjust,
-    text_size_adjust,
+    _moz_text_size_adjust,
     CSS_PROP_DOMPROP_PREFIXED(TextSizeAdjust),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -4302,7 +4327,7 @@ CSS_PROP_TEXTRESET(
 #endif // CSS_PROP_LIST_ONLY_COMPONENTS_OF_ALL_SHORTHAND
 CSS_PROP_USERINTERFACE(
     -moz-user-focus,
-    user_focus,
+    _moz_user_focus,
     CSS_PROP_DOMPROP_PREFIXED(UserFocus),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -4312,7 +4337,7 @@ CSS_PROP_USERINTERFACE(
     eStyleAnimType_Discrete) // XXX bug 3935
 CSS_PROP_USERINTERFACE(
     -moz-user-input,
-    user_input,
+    _moz_user_input,
     CSS_PROP_DOMPROP_PREFIXED(UserInput),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -4322,7 +4347,7 @@ CSS_PROP_USERINTERFACE(
     eStyleAnimType_Discrete) // XXX ??? // XXX bug 3935
 CSS_PROP_USERINTERFACE(
     -moz-user-modify,
-    user_modify,
+    _moz_user_modify,
     CSS_PROP_DOMPROP_PREFIXED(UserModify),
     CSS_PROPERTY_PARSE_VALUE,
     "",
@@ -4332,7 +4357,7 @@ CSS_PROP_USERINTERFACE(
     eStyleAnimType_Discrete) // XXX bug 3935
 CSS_PROP_UIRESET(
     -moz-user-select,
-    user_select,
+    _moz_user_select,
     CSS_PROP_DOMPROP_PREFIXED(UserSelect),
     CSS_PROPERTY_PARSE_VALUE,
     "",

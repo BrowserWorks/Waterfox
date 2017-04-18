@@ -1,6 +1,6 @@
 #include <functional>
-#include "mozilla/Function.h"
 #define MOZ_STRONG_REF __attribute__((annotate("moz_strong_ref")))
+#define MOZ_IMPLICIT __attribute__((annotate("moz_implicit")))
 
 struct RefCountedBase {
   void AddRef();
@@ -9,12 +9,16 @@ struct RefCountedBase {
 
 template <class T>
 struct SmartPtr {
+  SmartPtr();
+  MOZ_IMPLICIT SmartPtr(T*);
   T* MOZ_STRONG_REF t;
   T* operator->() const;
 };
 
 struct R : RefCountedBase {
   void method();
+private:
+  void privateMethod();
 };
 
 void take(...);
@@ -213,107 +217,6 @@ void b() {
     take(localptr);
   });
   std::function<void(SmartPtr<R>)>([&sp](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    take(sp);
-    take(argsp);
-    take(localsp);
-  });
-}
-
-void c() {
-  R* ptr;
-  SmartPtr<R> sp;
-  mozilla::function<void(R*)>([&](R* argptr) {
-    R* localptr;
-    ptr->method();
-    argptr->method();
-    localptr->method();
-  });
-  mozilla::function<void(SmartPtr<R>)>([&](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    sp->method();
-    argsp->method();
-    localsp->method();
-  });
-  mozilla::function<void(R*)>([&](R* argptr) {
-    R* localptr;
-    take(ptr);
-    take(argptr);
-    take(localptr);
-  });
-  mozilla::function<void(SmartPtr<R>)>([&](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    take(sp);
-    take(argsp);
-    take(localsp);
-  });
-  mozilla::function<void(R*)>([=](R* argptr) {
-    R* localptr;
-    ptr->method(); // expected-error{{Refcounted variable 'ptr' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
-    argptr->method();
-    localptr->method();
-  });
-  mozilla::function<void(SmartPtr<R>)>([=](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    sp->method();
-    argsp->method();
-    localsp->method();
-  });
-  mozilla::function<void(R*)>([=](R* argptr) {
-    R* localptr;
-    take(ptr); // expected-error{{Refcounted variable 'ptr' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
-    take(argptr);
-    take(localptr);
-  });
-  mozilla::function<void(SmartPtr<R>)>([=](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    take(sp);
-    take(argsp);
-    take(localsp);
-  });
-  mozilla::function<void(R*)>([ptr](R* argptr) { // expected-error{{Refcounted variable 'ptr' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
-    R* localptr;
-    ptr->method();
-    argptr->method();
-    localptr->method();
-  });
-  mozilla::function<void(SmartPtr<R>)>([sp](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    sp->method();
-    argsp->method();
-    localsp->method();
-  });
-  mozilla::function<void(R*)>([ptr](R* argptr) { // expected-error{{Refcounted variable 'ptr' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
-    R* localptr;
-    take(ptr);
-    take(argptr);
-    take(localptr);
-  });
-  mozilla::function<void(SmartPtr<R>)>([sp](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    take(sp);
-    take(argsp);
-    take(localsp);
-  });
-  mozilla::function<void(R*)>([&ptr](R* argptr) {
-    R* localptr;
-    ptr->method();
-    argptr->method();
-    localptr->method();
-  });
-  mozilla::function<void(SmartPtr<R>)>([&sp](SmartPtr<R> argsp) {
-    SmartPtr<R> localsp;
-    sp->method();
-    argsp->method();
-    localsp->method();
-  });
-  mozilla::function<void(R*)>([&ptr](R* argptr) {
-    R* localptr;
-    take(ptr);
-    take(argptr);
-    take(localptr);
-  });
-  mozilla::function<void(SmartPtr<R>)>([&sp](SmartPtr<R> argsp) {
     SmartPtr<R> localsp;
     take(sp);
     take(argsp);
@@ -648,4 +551,71 @@ void e() {
       take(localsp);
     });
   };
+}
+
+void
+R::privateMethod() {
+  SmartPtr<R> self = this;
+  std::function<void()>([&]() {
+    self->method();
+  });
+  std::function<void()>([&]() {
+    self->privateMethod();
+  });
+  std::function<void()>([&]() {
+    this->method();
+  });
+  std::function<void()>([&]() {
+    this->privateMethod();
+  });
+  std::function<void()>([=]() {
+    self->method();
+  });
+  std::function<void()>([=]() {
+    self->privateMethod();
+  });
+  std::function<void()>([=]() {
+    this->method(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([=]() {
+    this->privateMethod(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([self]() {
+    self->method();
+  });
+  std::function<void()>([self]() {
+    self->privateMethod();
+  });
+  std::function<void()>([this]() {
+    this->method(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([this]() {
+    this->privateMethod(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([this]() {
+    method(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([this]() {
+    privateMethod(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([=]() {
+    method(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([=]() {
+    privateMethod(); // expected-error{{Refcounted variable 'this' of type 'R' cannot be captured by a lambda}} expected-note{{Please consider using a smart pointer}}
+  });
+  std::function<void()>([&]() {
+    method();
+  });
+  std::function<void()>([&]() {
+    privateMethod();
+  });
+
+  // It should be OK to go through `this` if we have captured a reference to it.
+  std::function<void()>([this, self]() {
+    this->method();
+    this->privateMethod();
+    method();
+    privateMethod();
+  });
 }
