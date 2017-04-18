@@ -4743,7 +4743,6 @@ XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig)
   XREMain main;
 
   int result = main.XRE_main(argc, argv, aConfig);
-  mozilla::RecordShutdownEndTimeStamp();
   return result;
 }
 
