@@ -12,6 +12,7 @@ ID
 *.egg-info
 *.rej
 *.orig
+*.log
 
 # Vim swap files.
 .*.sw[a-z]

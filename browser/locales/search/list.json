@@ -4,6 +4,8 @@
       "bing", "ddg", "disconnect", "ecosia", "google", "startpage", "yahoo", "wikipedia"
     ]
   },
+  "regionOverrides": {
+  },
   "locales": {
     "en-US": {
       "default": {

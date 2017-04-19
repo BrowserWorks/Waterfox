@@ -134,6 +134,15 @@ pref("app.update.badge", true);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
+#ifdef XP_WIN
+pref("app.update.url", "https://www.waterfoxproject.org/update/win64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+#endif
+#ifdef XP_MACOSX
+pref("app.update.url", "https://www.waterfoxproject.org/update/osx64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+#endif
+#ifdef XP_LINUX
+pref("app.update.url", "https://www.waterfoxproject.org/update/linux64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+#endif
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
 
