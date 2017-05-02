@@ -1260,10 +1260,6 @@ VARIABLES = {
         """Whether profile-guided optimization is disable in this directory.
         """),
 
-    'NO_VISIBILITY_FLAGS': (bool, bool,
-        """Build sources listed in this file without VISIBILITY_FLAGS.
-        """),
-
     'OS_LIBS': (List, list,
         """System link libraries.
 
@@ -2206,6 +2202,16 @@ DEPRECATION_HINTS = {
         instead of
 
             LIBRARY_NAME = 'foo'
+        ''',
+
+    'NO_VISIBILITY_FLAGS': '''
+        Please use
+
+            NoVisibilityFlags()
+
+        instead of
+
+            NO_VISIBILITY_FLAGS = True
         ''',
 
     'PROGRAM': '''

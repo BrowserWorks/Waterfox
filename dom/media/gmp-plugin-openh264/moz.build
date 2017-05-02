@@ -25,6 +25,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 USE_STATIC_LIBS = True
-NO_VISIBILITY_FLAGS = True
+NoVisibilityFlags()
 # Don't use STL wrappers; this isn't Gecko code
 DISABLE_STL_WRAPPING = True
