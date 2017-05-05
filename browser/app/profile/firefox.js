@@ -1252,29 +1252,24 @@ pref("plain_text.wrap_long_lines", true);
 // before content.
 pref("dom.debug.propagate_gesture_events_through_content", false);
 
-// The request URL of the GeoLocation backend.
-#ifdef RELEASE_OR_BETA
-pref("geo.wifi.uri", "https://www.googleapis.com/geolocation/v1/geolocate?key=%GOOGLE_API_KEY%");
-#else
-pref("geo.wifi.uri", "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%");
-#endif
+pref("geo.wifi.uri", "");
 
 #ifdef XP_MACOSX
 #ifdef RELEASE_OR_BETA
-pref("geo.provider.use_corelocation", false);
+sticky_pref("geo.provider.use_corelocation", true);
 #else
 pref("geo.provider.use_corelocation", true);
 #endif
 #endif
 
 #ifdef XP_WIN
-pref("geo.provider.ms-windows-location", false);
+sticky_pref("geo.provider.ms-windows-location", true);
 #endif
 
 #ifdef MOZ_WIDGET_GTK
 #ifdef MOZ_GPSD
 #ifdef RELEASE_OR_BETA
-pref("geo.provider.use_gpsd", false);
+sticky_pref("geo.provider.use_gpsd", true);
 #else
 pref("geo.provider.use_gpsd", true);
 #endif
