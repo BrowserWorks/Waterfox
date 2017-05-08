@@ -7,7 +7,7 @@ ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platf
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
 elif test `uname -s` = MINGW32_NT-6.2; then
-ac_add_options --enable-optimize="-O2"
+ac_add_options --enable-optimize="-O2 -D_ATL_XP_TARGETING"
 ac_add_options --host=x86_64-pc-mingw32
 ac_add_options --target=x86_64-pc-mingw32
 #export CC="clang-cl"
