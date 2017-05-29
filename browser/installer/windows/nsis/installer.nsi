@@ -320,7 +320,7 @@ Section "-Application" APP_IDX
   ; Default for creating Quick Launch shortcut (1 = create, 0 = don't create)
   ${If} $AddQuickLaunchSC == ""
     ; Don't install the quick launch shortcut on Windows 7
-    ${If} ${AtLeastWin7}
+    ${If} ${AtLeastWinXP}
       StrCpy $AddQuickLaunchSC "0"
     ${Else}
       StrCpy $AddQuickLaunchSC "1"
@@ -526,7 +526,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                            "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -548,7 +548,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" \
                                              "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID"  "true"
       ${EndIf}
@@ -561,7 +561,7 @@ Section "-Application" APP_IDX
   ; If elevated the Quick Launch shortcut must be added from the unelevated
   ; original process.
   ${If} $AddQuickLaunchSC == 1
-    ${Unless} ${AtLeastWin7}
+    ${Unless} ${AtLeastWinXP}
       ClearErrors
       ${GetParameters} $0
       ${GetOptions} "$0" "/UAC:" $0
@@ -939,7 +939,7 @@ Function leaveShortcuts
   ${MUI_INSTALLOPTIONS_READ} $AddStartMenuSC "shortcuts.ini" "Field 3" "State"
 
   ; Don't install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     ${MUI_INSTALLOPTIONS_READ} $AddQuickLaunchSC "shortcuts.ini" "Field 4" "State"
   ${EndUnless}
 
@@ -1143,7 +1143,7 @@ Function .onInit
   System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R7"
 
   ; Windows NT 6.0 (Vista/Server 2008) and lower are not supported.
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     ${If} "$R7" == "0"
       strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
     ${Else}
@@ -1227,7 +1227,7 @@ Function .onInit
 
   ; Setup the shortcuts.ini file for the Custom Shortcuts Page
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "3"
   ${Else}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "4"
@@ -1258,7 +1258,7 @@ Function .onInit
   WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 3" State  "1"
 
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Type   "checkbox"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Text   "$(ICONS_QUICKLAUNCH)"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Left   "0"

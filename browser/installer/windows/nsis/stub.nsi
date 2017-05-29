@@ -327,7 +327,7 @@ Function .onInit
   System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R7"
 
   ; Windows NT 6.0 (Vista/Server 2008) and lower are not supported.
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     ${If} "$R7" == "0"
       strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
     ${Else}
@@ -1029,7 +1029,7 @@ Function createOptions
 
   Call UpdateFreeSpaceLabel
 
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     StrCpy $0 "$(ADD_SC_DESKTOP_TASKBAR)"
   ${Else}
     StrCpy $0 "$(ADD_SC_DESKTOP_QUICKLAUNCHBAR)"

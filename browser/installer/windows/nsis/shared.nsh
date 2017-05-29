@@ -263,7 +263,7 @@
     CreateShortCut "$DESKTOP\${BrandFullName}.lnk" "$INSTDIR\${FileMainEXE}"
     ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -274,7 +274,7 @@
         ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
           ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" \
                                                  "$INSTDIR"
-          ${If} ${AtLeastWin7}
+          ${If} ${AtLeastWinXP}
           ${AndIf} "$AppUserModelID" != ""
             ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID" "true"
           ${EndIf}
@@ -289,7 +289,7 @@
     ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                              "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -301,7 +301,7 @@
         ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
           ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                                  "$INSTDIR"
-          ${If} ${AtLeastWin7}
+          ${If} ${AtLeastWinXP}
           ${AndIf} "$AppUserModelID" != ""
             ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
           ${EndIf}
@@ -311,7 +311,7 @@
   ${EndUnless}
 
   ; Windows 7 doesn't use the QuickLaunch directory
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
   ${AndUnless} ${FileExists} "$QUICKLAUNCH\${BrandFullName}.lnk"
     CreateShortCut "$QUICKLAUNCH\${BrandFullName}.lnk" \
                    "$INSTDIR\${FileMainEXE}"
@@ -936,7 +936,7 @@
     ${If} ${Errors}
       ClearErrors
       WriteIniStr "$0" "TASKBAR" "Migrated" "true"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
         ; If we didn't run the stub installer, AddTaskbarSC will be empty.
         ; We determine whether to pin based on whether we're the default
         ; browser, or if we're on win8 or later, we always pin.
@@ -971,7 +971,7 @@
 ; model ID removes a pinned pinned Start Menu shortcut this will also add a
 ; pinned Start Menu shortcut.
 !macro PinToTaskBar
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     StrCpy $8 "false" ; Whether a shortcut had to be created
     ${IsPinnedToTaskBar} "$INSTDIR\${FileMainEXE}" $R9
     ${If} "$R9" == "false"
@@ -1073,7 +1073,7 @@
                 ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
                   ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                                          "$INSTDIR"
-                  ${If} ${AtLeastWin7}
+                  ${If} ${AtLeastWinXP}
                   ${AndIf} "$AppUserModelID" != ""
                     ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" \
                                        "$AppUserModelID" "true"
@@ -1306,7 +1306,7 @@ FunctionEnd
 
 ; Helper for updating the shortcut application model IDs.
 Function FixShortcutAppModelIDs
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
   ${AndIf} "$AppUserModelID" != ""
     ${UpdateShortcutAppModelIDs} "$INSTDIR\${FileMainEXE}" "$AppUserModelID" $0
   ${EndIf}
